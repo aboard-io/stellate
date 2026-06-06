@@ -1,4 +1,4 @@
-// csd-engine.js — pure generator for the vaporwave song builder.
+// csd-engine.js — pure generator for the vaporwave/synthwave/downtempo song builder.
 // buildEvents(state) -> {pitched, drums, found, bpm, totalBeats}
 // buildCsd(state)    -> full <CsoundSynthesizer> (uses buildEvents)
 // Csound AND MIDI derive from buildEvents so they never drift.
@@ -12,6 +12,20 @@
   function pchToMidi(s){ const [o,ss]=String(s).split("."); return (parseInt(o,10)-3)*12+parseInt(ss,10); }
   function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 
+  const NOTE={C:0,"C#":1,Db:1,D:2,"D#":3,Eb:3,E:4,F:5,"F#":6,Gb:6,G:7,"G#":8,Ab:8,A:9,"A#":10,Bb:10,B:11};
+  const QUAL={maj:[0,4,7],min:[0,3,7],maj7:[0,4,7,11],min7:[0,3,7,10],dom7:[0,4,7,10],m7b5:[0,3,6,10],sus4:[0,5,7]};
+  // build a chord voicing from root name + quality (consistent with the hand ones)
+  function voicing(rootName, quality){
+    const r=NOTE[rootName]||0;
+    const iv=QUAL[quality]||QUAL.maj;
+    const four=iv.length>=4?iv.slice(0,4):[iv[0],iv[1],iv[2],iv[0]+12];
+    const pads=four.map(i=>pchAdd(toPch(84+r),i));      // octave 7 base
+    const lead=four.map(i=>pchAdd(toPch(96+r),i));      // octave 8 base
+    const bass={ r5:toPch(60+r), r6:toPch(72+r), f6:pchAdd(toPch(72+r),7) };
+    return { name:rootName+quality, pads, bass, lead };
+  }
+  const prog=(label,specs)=>({ label, chords: specs.map(([r,q])=>voicing(r,q)) });
+
   const PROGRESSIONS = {
     royal_road:{ label:"Royal Road (IVΔ7-V7-iii7-vi7) — city pop / vaporwave", chords:[
       {name:"Fmaj7",pads:["7.05","7.09","8.00","8.04"],bass:{r5:"5.05",r6:"6.05",f6:"6.00"},lead:["8.05","8.09","9.00","9.04"]},
@@ -20,7 +34,7 @@
       {name:"Am7",  pads:["7.09","8.00","8.04","8.07"],bass:{r5:"5.09",r6:"6.09",f6:"6.04"},lead:["8.09","9.00","9.04","9.07"]}],
       composed:[[0,1.5,"8.09"],[1.5,0.5,"8.07"],[2,1,"8.09"],[3,2,"9.00"],[5,1.5,"9.04"],[6.5,1.5,"9.02"],[8,1,"9.02"],[9,1,"8.11"],[10,2,"8.07"],[12,1,"8.09"],[13,1,"8.11"],[14,2,"9.02"],[16,1.5,"9.04"],[17.5,0.5,"9.02"],[18,2,"8.11"],[20,1.5,"8.07"],[21.5,0.5,"8.09"],[22,2,"8.11"],[24,1,"9.00"],[25,1,"8.11"],[26,2,"8.09"],[28,1.5,"9.04"],[29.5,0.5,"9.00"],[30,2,"8.09"]],
       composed2:[[0,1,"9.00"],[1,1,"9.04"],[2,1,"9.05"],[3,1,"9.04"],[4,2,"9.02"],[6,1,"9.00"],[7,1,"8.11"],[8,1.5,"9.02"],[9.5,0.5,"9.04"],[10,1,"9.05"],[11,1,"9.04"],[12,2,"9.02"],[14,2,"8.11"],[16,1,"9.04"],[17,1,"9.07"],[18,1,"9.04"],[19,1,"9.02"],[20,2,"8.11"],[22,2,"9.02"],[24,1,"9.00"],[25,1,"9.04"],[26,1.5,"9.07"],[27.5,0.5,"9.04"],[28,1,"9.00"],[29,1,"8.09"],[30,2,"8.09"]] },
-    four_chords:{ label:"Four chords (I-V-vi-IV) — stadium pop", chords:[
+    four_chords:{ label:"Four chords (I-V-vi-IV)", chords:[
       {name:"C", pads:["7.00","7.04","7.07","8.00"],bass:{r5:"5.00",r6:"6.00",f6:"6.07"},lead:["8.00","8.04","8.07","9.00"]},
       {name:"G", pads:["7.07","7.11","8.02","8.07"],bass:{r5:"5.07",r6:"6.07",f6:"6.02"},lead:["8.07","8.11","9.02","9.07"]},
       {name:"Am",pads:["7.09","8.00","8.04","8.09"],bass:{r5:"5.09",r6:"6.09",f6:"6.04"},lead:["8.09","9.00","9.04","9.09"]},
@@ -40,17 +54,31 @@
       {name:"G7",   pads:["7.07","7.11","8.02","8.05"],bass:{r5:"5.07",r6:"6.07",f6:"6.02"},lead:["8.07","8.11","9.02","9.05"]},
       {name:"Cmaj7",pads:["7.00","7.04","7.07","7.11"],bass:{r5:"5.00",r6:"6.00",f6:"6.07"},lead:["8.00","8.04","8.07","8.11"]}] }
   };
+  // generated additions (way more progressions)
+  Object.assign(PROGRESSIONS, {
+    pop_1625:   prog("Pop I-vi-ii-V",            [["C","maj7"],["A","min7"],["D","min7"],["G","dom7"]]),
+    synthwave:  prog("Synthwave i-VI-III-VII",   [["A","min7"],["F","maj7"],["C","maj7"],["G","dom7"]]),
+    andalusian: prog("Andalusian i-VII-VI-V",    [["A","min7"],["G","maj"],["F","maj7"],["E","dom7"]]),
+    minor_run:  prog("Minor i-iv-VII-III",       [["A","min7"],["D","min7"],["G","dom7"],["C","maj7"]]),
+    neosoul:    prog("Neo-soul descending",      [["F","maj7"],["E","min7"],["D","min7"],["C","maj7"]]),
+    lofi:       prog("Lo-fi ii-V-I-vi",          [["D","min7"],["G","dom7"],["C","maj7"],["A","min7"]]),
+    epic_min:   prog("Epic i-VI-VII",            [["A","min7"],["F","maj7"],["G","dom7"],["G","dom7"]]),
+    house_min:  prog("House i-VII-VI-VII",       [["A","min7"],["G","maj"],["F","maj7"],["G","dom7"]]),
+    dream:      prog("Dreamy IVΔ-Imaj7",         [["F","maj7"],["C","maj7"],["D","min7"],["G","dom7"]]),
+    canon:      prog("Pachelbel canon",          [["C","maj"],["G","maj"],["A","min7"],["E","min7"],["F","maj7"],["C","maj"],["F","maj7"],["G","dom7"]])
+  });
 
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
   const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub"];
   const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double"];
+  const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap"];
 
   function defaultInstruments(){
     return {
-      pad:    { wave:"saw",  cutoff:1400, res:0.15, detune:0.006, attack:1.5, level:0.7, send:0.55 },
-      bass:   { wave:"saw",  cutoff:700,  res:0.15, level:1.0, send:0.08 },
-      melody: { wave:"sine", cutoff:3400, res:0.05, vibrato:0.006, vibRate:5.2, level:0.6, send:0.45 },
+      pad:    { wave:"saw",  cutoff:1400, res:0.15, detune:0.006, attack:1.5, level:0.7, send:0.55, dsend:0.15 },
+      bass:   { wave:"saw",  cutoff:700,  res:0.15, level:1.0, send:0.08, dsend:0.0 },
+      melody: { wave:"sine", cutoff:3400, res:0.05, vibrato:0.006, vibRate:5.2, level:0.6, send:0.45, dsend:0.25 },
       drums:  { kick:1.0, snare:1.0, hat:1.0, tune:1.0 }
     };
   }
@@ -59,9 +87,47 @@
     return { pad:{...D.pad,...s.pad}, bass:{...D.bass,...s.bass}, melody:{...D.melody,...s.melody}, drums:{...D.drums,...s.drums} };
   }
 
+  // style presets — pick one to recast the whole song
+  const STYLES = {
+    vaporwave:{ label:"Vaporwave", bpm:88, reverb:0.85, delay:{beats:0.75,feedback:0.30,cutoff:2600},
+      progression:"royal_road", song:{bass:"simple",drums:"full",melody:"composed"},
+      instruments:{ pad:{wave:"saw",cutoff:1400,detune:0.006,dsend:0.15}, bass:{wave:"saw",cutoff:700}, melody:{wave:"sine",cutoff:3400,dsend:0.25} } },
+    synthwave:{ label:"Synthwave", bpm:112, reverb:0.5, delay:{beats:0.5,feedback:0.35,cutoff:4200},
+      progression:"synthwave", song:{bass:"octaves",drums:"four",melody:"updown"},
+      instruments:{ pad:{wave:"saw",cutoff:2800,res:0.2,detune:0.012,dsend:0.2}, bass:{wave:"saw",cutoff:1400,level:1.0}, melody:{wave:"saw",cutoff:4000,vibrato:0.004,dsend:0.3} } },
+    downtempo:{ label:"Downtempo", bpm:76, reverb:0.8, delay:{beats:0.75,feedback:0.28,cutoff:2200},
+      progression:"neosoul", song:{bass:"simple",drums:"boombap",melody:"sparse"},
+      instruments:{ pad:{wave:"saw",cutoff:1100,detune:0.008,dsend:0.2}, bass:{wave:"sine",cutoff:500}, melody:{wave:"sine",cutoff:2600,dsend:0.3} } },
+    lofi:{ label:"Lo-fi", bpm:82, reverb:0.6, delay:{beats:0.5,feedback:0.22,cutoff:2000},
+      progression:"lofi", song:{bass:"simple",drums:"boombap",melody:"pentaup"},
+      instruments:{ pad:{wave:"sine",cutoff:1200,dsend:0.18}, bass:{wave:"saw",cutoff:600}, melody:{wave:"sine",cutoff:2400,dsend:0.25} } }
+  };
+
+  let _sid=0; const sid=()=>"s"+(++_sid);
+  // a whole song with named sections; rotates found sources; pads always paired
+  // with found (never soloed); a fill leads into each chorus.
+  function generateSong(opts){
+    opts=opts||{};
+    const fids=(opts.foundIds&&opts.foundIds.length)?opts.foundIds.slice():[null];
+    let fi=0; const nextF=()=>{ const id=fids[fi%fids.length]; fi++; return id; };
+    const bass=opts.bass||"simple", drums=opts.drums||"full", melody=opts.melody||"composed";
+    const S=(name,o)=>Object.assign({id:sid(),name,cycles:1,pads:true,bass:"off",drums:"off",melody:"off",found:{sourceId:null,role:"bed"},fillInto:false},o);
+    return [
+      S("intro",      {found:{sourceId:nextF(),role:"bed"}}),
+      S("verse",      {bass, found:{sourceId:nextF(),role:"bed"}}),
+      S("pre-chorus", {bass, drums:"kick", fillInto:true}),
+      S("chorus",     {bass, drums, melody}),
+      S("verse 2",    {bass, drums:(drums==="off"?"kick":"full"), found:{sourceId:nextF(),role:"bed"}}),
+      S("bridge",     {melody, found:{sourceId:nextF(),role:"bed"}, fillInto:true}),
+      S("chorus 2",   {bass, drums, melody}),
+      S("outro",      {found:{sourceId:nextF(),role:"bed"}})
+    ];
+  }
+
   function defaultState(){
     return {
       bpm:88, keyOffset:0, progression:"royal_road", reverb:0.85, seed:1, swing:0, humanize:0,
+      delay:{ beats:0.75, feedback:0.30, cutoff:2600 },
       instruments: defaultInstruments(),
       foundSources:[
         { id:"tokyo",   label:"Tokyo Station",   url:"https://archive.org/download/aporee_20938_24294/nov19tokyostation1934.ogg", pitch:0.78, stretch:0.45 },
@@ -69,16 +135,7 @@
         { id:"asakusa", label:"Asakusa Noodles", url:"https://archive.org/download/aporee_21091_24510/nov92013asakusaNoodleSoupRest1910.mp3", pitch:0.72, stretch:0.45 },
         { id:"paris",   label:"Paris Market",    url:"https://archive.org/download/aporee_5287_6734/ParisNoisielIndoorFoodMarket.mp3", pitch:0.8, stretch:0.5 }
       ],
-      sections:[
-        { id:"s1", name:"intro",     cycles:1, pads:false, bass:"off",     drums:"off",  melody:"off",       found:{sourceId:"tokyo",role:"solo"}, fillInto:false },
-        { id:"s2", name:"A pads",    cycles:1, pads:true,  bass:"off",     drums:"off",  melody:"off",       found:{sourceId:null,role:"bed"},    fillInto:false },
-        { id:"s3", name:"B +bass",   cycles:1, pads:true,  bass:"simple",  drums:"off",  melody:"off",       found:{sourceId:null,role:"bed"},    fillInto:false },
-        { id:"s4", name:"C +kick",   cycles:1, pads:true,  bass:"simple",  drums:"kick", melody:"off",       found:{sourceId:null,role:"bed"},    fillInto:true },
-        { id:"s5", name:"D full",    cycles:1, pads:true,  bass:"simple",  drums:"full", melody:"composed",  found:{sourceId:null,role:"bed"},    fillInto:false },
-        { id:"s6", name:"interlude", cycles:1, pads:false, bass:"off",     drums:"off",  melody:"off",       found:{sourceId:"tokyo",role:"solo"}, fillInto:true },
-        { id:"s7", name:"E reprise", cycles:1, pads:true,  bass:"walking", drums:"open", melody:"composed2", found:{sourceId:null,role:"bed"},    fillInto:false },
-        { id:"s8", name:"outro",     cycles:1, pads:false, bass:"off",     drums:"off",  melody:"off",       found:{sourceId:"tokyo",role:"solo"}, fillInto:false }
-      ]
+      sections: generateSong({ foundIds:["tokyo","tsukiji","asakusa","paris"], bass:"simple", drums:"full", melody:"composed" })
     };
   }
 
@@ -92,21 +149,23 @@
       case "sixteenths": L=[]; for(let i=0;i<16;i++) L.push([i*0.5,0.45,[r5,r6,f6,r6][i%4]]); break;
       case "dub":        L=[[2.5,1.0,r5],[3.5,0.5,r6],[6.5,1.0,r5],[7.5,0.5,f6]]; break;
       case "walking":    L=[[0,1.0,r5],[1,0.5,r6],[1.5,0.5,f6],[2.5,0.5,r5],[3,1.0,r6],[4,0.5,r5],[4.5,0.5,f6],[5.5,0.5,r6],[6,1.0,r5],[7,0.5,r6],[7.5,0.5,f6]]; break;
-      default:           L=[[0,1.5,r5],[2,0.5,r6],[3,1.0,f6],[4.5,0.5,r5],[5,1.0,r6],[6.5,1.5,r5]]; // simple
+      default:           L=[[0,1.5,r5],[2,0.5,r6],[3,1.0,f6],[4.5,0.5,r5],[5,1.0,r6],[6.5,1.5,r5]];
     }
     return L.map(([o,d,p])=>({voice:"bass",beat:S+o,dur:d,pch:p,amp:0.22}));
   }
-  function drumEvents(kind,S){
+  function drumEvents(kind,S,ci,nc){
     const out=[];
     const k=(o,a)=>out.push({drum:"kick",beat:S+o,dur:0.35,amp:a});
     const s=(o,a)=>out.push({drum:"snare",beat:S+o,dur:0.30,amp:a});
     const h=(o,a,dur)=>out.push({drum:"hat",beat:S+o,dur:dur||0.10,amp:a,open:(dur||0)>0.2});
-    if(kind==="kick"){ k(0,0.65);k(4,0.65);h(3.5,0.10);h(7.5,0.10); }
-    else if(kind==="full"||kind==="open"){
-      k(0,0.65);k(2.5,0.38);k(4,0.65);k(6.5,0.38); s(2,0.42);s(6,0.42);
-      const open=kind==="open"; if(open){ s(3.5,0.16); s(7.5,0.16); }
-      for(let i=0;i<8;i++){ const o=0.5+i; if(open&&(o===3.5||o===7.5)) h(o,0.16,0.30); else h(o,0.13); }
-    }
+    if(kind==="kick"){ k(0,.65);k(4,.65);h(3.5,.1);h(7.5,.1); }
+    else if(kind==="full"){ k(0,.65);k(2.5,.38);k(4,.65);k(6.5,.38);s(2,.42);s(6,.42); for(let i=0;i<8;i++)h(.5+i,.13); }
+    else if(kind==="open"){ k(0,.65);k(2.5,.38);k(4,.65);k(6.5,.38);s(2,.42);s(6,.42);s(3.5,.16);s(7.5,.16); for(let i=0;i<8;i++){const o=.5+i; if(o===3.5||o===7.5)h(o,.16,.3); else h(o,.13);} }
+    else if(kind==="four"){ for(let i=0;i<8;i+=2)k(i,.6); s(2,.4);s(6,.4); for(let i=0;i<8;i++)h(.5+i,.12); }
+    else if(kind==="boombap"){ k(0,.62);k(3,.4);k(4.5,.45); s(2,.5);s(6,.5); for(let i=0;i<8;i++)h(.5+i,(i%2?.08:.12)); }
+    else if(kind==="halftime"){ k(0,.66); s(4,.55); for(let i=0;i<8;i++)h(.5+i,.12); }
+    else if(kind==="trap"){ k(0,.6);k(2.5,.45);k(5,.45); s(4,.5); for(let i=0;i<16;i++)h(i*.5,.1); h(6,.09);h(6.25,.09);h(6.5,.09);h(6.75,.09); }
+    if(ci===nc-1 && kind!=="off" && kind!=="halftime"){ s(6.5,.3);s(7,.34);s(7.25,.38);s(7.5,.42);s(7.75,.46); }
     return out;
   }
   function fillEvents(S){
@@ -116,36 +175,33 @@
       {drum:"kick",beat:S+0,dur:0.30,amp:0.55}];
   }
   const MEL_ORDERS={ arpup:[0,1,2,3,2,1,2,3], arpdown:[3,2,1,0,1,2,1,0], updown:[0,1,2,3,3,2,1,0], pentaup:[0,2,1,3,2,3,2,3] };
-  function melodyEvents(style,base,prog,chords,k,rng){
+  function melodyEvents(style,base,prg,chords,k,rng){
     const out=[], cycleBeats=chords.length*CHORD_BEATS;
-    const comp = style==="composed"?prog.composed : style==="composed2"?prog.composed2 : null;
+    const comp = style==="composed"?prg.composed : style==="composed2"?prg.composed2 : null;
     if(comp && cycleBeats===32){ comp.forEach(([o,d,p])=>out.push({voice:"melody",beat:base+o,dur:d,pch:pchAdd(p,k),amp:0.14})); return out; }
     let gen=style; if(style==="composed"||style==="composed2") gen="arpup";
     chords.forEach((chord,ci)=>{
-      const S=base+ci*CHORD_BEATS, lead=chord.lead.map(p=>pchAdd(p,k));
-      if(gen==="sparse"){ out.push({voice:"melody",beat:S,dur:3,pch:lead[2],amp:0.14},{voice:"melody",beat:S+4,dur:3,pch:lead[3],amp:0.14}); return; }
-      if(gen==="double"){ const pat=[0,1,2,3,0,1,2,3,1,2,3,0,2,3,0,1]; for(let i=0;i<16;i++) out.push({voice:"melody",beat:S+i*0.5,dur:0.45,pch:lead[pat[i]],amp:0.12}); return; }
-      let order=MEL_ORDERS[gen];
-      if(!order){ order=[]; for(let i=0;i<8;i++) order.push(Math.floor(rng()*4)); }
-      for(let i=0;i<8;i++) out.push({voice:"melody",beat:S+i,dur:0.9,pch:lead[order[i]],amp:0.14});
+      const Sb=base+ci*CHORD_BEATS, lead=chord.lead.map(p=>pchAdd(p,k));
+      if(gen==="sparse"){ out.push({voice:"melody",beat:Sb,dur:3,pch:lead[2],amp:0.14},{voice:"melody",beat:Sb+4,dur:3,pch:lead[3],amp:0.14}); return; }
+      if(gen==="double"){ const pat=[0,1,2,3,0,1,2,3,1,2,3,0,2,3,0,1]; for(let i=0;i<16;i++) out.push({voice:"melody",beat:Sb+i*0.5,dur:0.45,pch:lead[pat[i]],amp:0.12}); return; }
+      let order=MEL_ORDERS[gen]; if(!order){ order=[]; for(let i=0;i<8;i++) order.push(Math.floor(rng()*4)); }
+      for(let i=0;i<8;i++) out.push({voice:"melody",beat:Sb+i,dur:0.9,pch:lead[order[i]],amp:0.14});
     });
     return out;
   }
-
   function applyGroove(events, swing, humanize, rng){
-    const sw=swing||0, hz=humanize||0;
-    if(!sw && !hz) return;
+    const sw=swing||0, hz=humanize||0; if(!sw && !hz) return;
     for(const e of events){
       let b=e.beat; const f=b-Math.floor(b);
-      if(sw && Math.abs(f-0.5)<0.001) b += sw*0.16;           // swing the off-eighths
+      if(sw && Math.abs(f-0.5)<0.001) b += sw*0.16;
       if(hz){ b += (rng()*2-1)*hz*0.04; if(e.amp!=null) e.amp=Math.max(0.01, e.amp*(1+(rng()*2-1)*hz*0.25)); }
       e.beat=Math.max(0,b);
     }
   }
 
   function buildEvents(state){
-    const prog=PROGRESSIONS[state.progression]||PROGRESSIONS.royal_road;
-    const chords=prog.chords, k=state.keyOffset|0, cycleBeats=chords.length*CHORD_BEATS;
+    const prg=PROGRESSIONS[state.progression]||PROGRESSIONS.royal_road;
+    const chords=prg.chords, k=state.keyOffset|0, cycleBeats=chords.length*CHORD_BEATS;
     const srcById={};
     state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".wav"),pitch:s.pitch??0.78,stretch:s.stretch??0.45}; });
     const rng=mulberry32((state.seed??1)>>>0);
@@ -158,12 +214,12 @@
       for(let c=0;c<cycles;c++){
         const cycleBase=cur+c*cycleBeats;
         chords.forEach((chord,ci)=>{
-          const S=cycleBase+ci*CHORD_BEATS;
-          if(sec.pads) chord.pads.forEach(p=>pitched.push({voice:"pad",beat:S,dur:CHORD_BEATS,pch:pchAdd(p,k),amp:0.085}));
-          if(sec.bass&&sec.bass!=="off") bassEvents(sec.bass,S,chord.bass,k).forEach(e=>pitched.push(e));
-          if(sec.drums&&sec.drums!=="off") drumEvents(sec.drums,S).forEach(e=>drums.push(e));
+          const Sp=cycleBase+ci*CHORD_BEATS;
+          if(sec.pads) chord.pads.forEach(p=>pitched.push({voice:"pad",beat:Sp,dur:CHORD_BEATS,pch:pchAdd(p,k),amp:0.085}));
+          if(sec.bass&&sec.bass!=="off") bassEvents(sec.bass,Sp,chord.bass,k).forEach(e=>pitched.push(e));
+          if(sec.drums&&sec.drums!=="off") drumEvents(sec.drums,Sp,ci,chords.length).forEach(e=>drums.push(e));
         });
-        if(sec.melody&&sec.melody!=="off") melodyEvents(sec.melody,cycleBase,prog,chords,k,rng).forEach(e=>pitched.push(e));
+        if(sec.melody&&sec.melody!=="off") melodyEvents(sec.melody,cycleBase,prg,chords,k,rng).forEach(e=>pitched.push(e));
       }
       if(sec.fillInto) fillEvents(cur+secBeats-2).forEach(e=>drums.push(e));
       cur+=secBeats;
@@ -174,7 +230,7 @@
     return { bpm:state.bpm, totalBeats:cur+8, pitched, drums, found, srcById };
   }
 
-  // ---------- orchestra (per-instrument params) ----------
+  // ---------- orchestra ----------
   function waveRHS(wave,f){
     if(wave==="sine")   return `oscili 1, ${f}`;
     if(wave==="square") return `vco2 1, ${f}, 2, 0.5`;
@@ -184,9 +240,10 @@
   function orchestra(state, sources){
     const I=mergedInstruments(state);
     const ft=sources.map(s=>`gi_src${s.tableNum} ftgen ${s.tableNum}, 0, 0, 1, "${s.fsPath}", 0, 0, 1`).join("\n");
-    const dLo=(1-I.pad.detune).toFixed(4), dHi=(1+I.pad.detune).toFixed(4);
-    const atk=Math.max(0.05,I.pad.attack);
-    const dt=I.drums.tune;
+    const dLo=(1-I.pad.detune).toFixed(4), dHi=(1+I.pad.detune).toFixed(4), atk=Math.max(0.05,I.pad.attack), dt=I.drums.tune;
+    const dl=state.delay||{beats:0.75,feedback:0.3,cutoff:2600};
+    const dsec=Math.min(1.9, Math.max(0.02, (dl.beats||0.75)*60/state.bpm));
+    const dfb=Math.min(0.92, Math.max(0, dl.feedback==null?0.3:dl.feedback)), dcut=dl.cutoff||2600;
     return `<CsoundSynthesizer>
 <CsInstruments>
 sr=44100
@@ -195,6 +252,8 @@ nchnls=2
 0dbfs=1
 gaRevL init 0
 gaRevR init 0
+gaDelL init 0
+gaDelR init 0
 gaMixL init 0
 gaMixR init 0
 giwin ftgen 1, 0, 16384, 20, 2, 1
@@ -216,6 +275,8 @@ instr 1
   gaMixR=gaMixR+asig*${I.pad.level}
   gaRevL=gaRevL+asig*${I.pad.send}
   gaRevR=gaRevR+asig*${I.pad.send}
+  gaDelL=gaDelL+asig*${I.pad.dsend}
+  gaDelR=gaDelR+asig*${I.pad.dsend}
 endin
 
 instr 2
@@ -229,6 +290,8 @@ instr 2
   gaMixR=gaMixR+asig*${I.bass.level}
   gaRevL=gaRevL+asig*${I.bass.send}
   gaRevR=gaRevR+asig*${I.bass.send}
+  gaDelL=gaDelL+asig*${I.bass.dsend}
+  gaDelR=gaDelR+asig*${I.bass.dsend}
 endin
 
 instr 3
@@ -259,6 +322,8 @@ instr 4
   gaMixR=gaMixR+asig*${I.melody.level}
   gaRevL=gaRevL+asig*${I.melody.send}
   gaRevR=gaRevR+asig*${I.melody.send}
+  gaDelL=gaDelL+asig*${I.melody.dsend}
+  gaDelR=gaDelR+asig*${I.melody.dsend}
 endin
 
 instr 10
@@ -295,6 +360,22 @@ instr 12
   gaMixR=gaMixR+asig*0.7
 endin
 
+instr 98
+  abufL delayr 2.0
+  atL deltap ${dsec}
+  atL tone atL, ${dcut}
+  delayw gaDelL + atL*${dfb}
+  abufR delayr 2.0
+  atR deltap ${dsec}
+  atR tone atR, ${dcut}
+  delayw gaDelR + atR*${dfb}
+  gaMixL=gaMixL+atL
+  gaMixR=gaMixR+atR
+  gaRevL=gaRevL+atL*0.2
+  gaRevR=gaRevR+atR*0.2
+  clear gaDelL, gaDelR
+endin
+
 instr 99
   aL, aR reverbsc gaRevL, gaRevR, ${state.reverb}, 12000
   gaMixL=gaMixL+aL
@@ -316,7 +397,7 @@ endin
     const ev=buildEvents(state);
     const used=new Set(ev.found.map(f=>f.tableNum));
     const srcByTable=Object.values(ev.srcById).filter(s=>used.has(s.tableNum)).sort((a,b)=>a.tableNum-b.tableNum);
-    const L=[`t 0 ${state.bpm}`, `i 100 0 ${ev.totalBeats}`, `i 99 0 ${ev.totalBeats}`];
+    const L=[`t 0 ${state.bpm}`, `i 100 0 ${ev.totalBeats}`, `i 99 0 ${ev.totalBeats}`, `i 98 0 ${ev.totalBeats}`];
     ev.found.forEach(f=>L.push(`i 3 ${f.beat.toFixed(3)} ${f.dur} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.stretch}`));
     const inst={pad:1,bass:2,melody:4};
     ev.pitched.forEach(p=>L.push(`i ${inst[p.voice]} ${p.beat.toFixed(3)} ${p.dur.toFixed(3)} ${p.pch} ${p.amp.toFixed(4)}`));
@@ -325,7 +406,8 @@ endin
     return orchestra(state,srcByTable)+"\n<CsScore>\n"+L.join("\n")+"\ne\n</CsScore>\n</CsoundSynthesizer>\n";
   }
 
-  const api={ buildCsd, buildEvents, defaultState, defaultInstruments, PROGRESSIONS, WAVES, BASS_PATTERNS, MELODY_PATTERNS, pchAdd, pchToMidi };
+  const api={ buildCsd, buildEvents, defaultState, defaultInstruments, generateSong, voicing,
+    PROGRESSIONS, STYLES, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, pchAdd, pchToMidi };
   if(typeof module!=="undefined" && module.exports) module.exports=api;
   else root.CsdEngine=api;
 })(typeof window!=="undefined" ? window : globalThis);
