@@ -55,21 +55,54 @@
     return new Uint8Array(buf);
   }
 
-  async function decodeUrlToWav(url) {
+  // syncgrain only needs a window of the recording, so trim to this many seconds
+  // after decode — shrinks the WAV encode and the Csound ftgen table load ~4x.
+  const FOUND_MAX_SECONDS = 45;
+  const FOUND_CHUNK_BYTES = 1024 * 1024;   // ~1MB ≈ a minute+ of mp3/ogg
+
+  // Fetch only the first chunk via a Range request; fall back to the whole file
+  // if the host ignores Range or the truncated stream won't decode.
+  async function fetchAudioBytes(url) {
+    try {
+      const r = await fetch(url, { mode: "cors", headers: { Range: "bytes=0-" + (FOUND_CHUNK_BYTES - 1) } });
+      if (r.status === 206 || r.ok) return { buf: await r.arrayBuffer(), partial: r.status === 206 };
+    } catch (e) { /* CORS/preflight on Range failed — fall through */ }
+    const r2 = await fetch(url, { mode: "cors" });
+    if (!r2.ok) throw new Error("fetch " + r2.status + " for " + url);
+    return { buf: await r2.arrayBuffer(), partial: false };
+  }
+
+  // returns a Promise<Uint8Array>; the promise is cached so concurrent callers
+  // (prewarm + a Play click) share one fetch/decode instead of racing.
+  function decodeUrlToWav(url) {
     if (_wavCache.has(url)) return _wavCache.get(url);
-    const resp = await fetch(url, { mode: "cors" });
-    if (!resp.ok) throw new Error("fetch " + resp.status + " for " + url);
-    const arr = await resp.arrayBuffer();
-    const audio = await audioCtx().decodeAudioData(arr.slice(0));
-    const n = audio.length, ch = audio.numberOfChannels;
-    const mono = new Float32Array(n);
-    for (let c = 0; c < ch; c++) {
-      const d = audio.getChannelData(c);
-      for (let i = 0; i < n; i++) mono[i] += d[i] / ch;
-    }
-    const wav = encodeWav(mono, audio.sampleRate);
-    _wavCache.set(url, wav);
-    return wav;
+    const job = (async () => {
+      let { buf, partial } = await fetchAudioBytes(url);
+      let audio;
+      try {
+        audio = await audioCtx().decodeAudioData(buf.slice(0));
+      } catch (e) {
+        if (!partial) throw e;               // already had the whole file; genuine decode error
+        const r = await fetch(url, { mode: "cors" });  // chunk wouldn't decode → get it all
+        buf = await r.arrayBuffer();
+        audio = await audioCtx().decodeAudioData(buf.slice(0));
+      }
+      const ch = audio.numberOfChannels;
+      const n = Math.min(audio.length, Math.floor(audio.sampleRate * FOUND_MAX_SECONDS));
+      const mono = new Float32Array(n);
+      for (let c = 0; c < ch; c++) {
+        const d = audio.getChannelData(c);
+        for (let i = 0; i < n; i++) mono[i] += d[i] / ch;
+      }
+      return encodeWav(mono, audio.sampleRate);
+    })();
+    _wavCache.set(url, job);
+    job.catch(() => _wavCache.delete(url));   // don't cache failures
+    return job;
+  }
+  // pre-decode sources in the background so the first Play is instant
+  async function prewarm(sources) {
+    for (const s of (sources || [])) { try { await decodeUrlToWav(s.url); } catch (e) {} }
   }
 
   // write each source's audio into Csound's virtual FS at found/<id>.wav
@@ -147,5 +180,5 @@
     return new Blob([bytes], { type: "audio/wav" });
   }
 
-  root.WasmAudio = { boot, play, stopLive, render, decodeUrlToWav, encodeWav, stripOptions, ctxState };
+  root.WasmAudio = { boot, play, stopLive, render, decodeUrlToWav, encodeWav, stripOptions, ctxState, prewarm };
 })(window);

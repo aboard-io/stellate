@@ -428,6 +428,8 @@ $("expJson").onclick=doExportJson;$("impJson").onclick=()=>$("impFile").click();
 $("impFile").onchange=e=>{if(e.target.files[0])doImportJson(e.target.files[0]);};
 
 renderAll();
+// pre-decode the arrangement's found sources in the background → first Play is instant
+try{ if(window.WasmAudio&&WasmAudio.prewarm){ const n=neededSources(state); if(n.length){ setStatus("preloading found sound…"); WasmAudio.prewarm(n).then(()=>setStatus("ready ✦")); } } }catch(e){}
 </script>
 </body>
 </html>
