@@ -60,6 +60,30 @@ makes them recoverable; that script is the committed recipe, the audio is not.
 - **Treatment:** ~70 BPM, three detuned saw pads (chorus/width), a slow
   tape-wow pitch wobble, a warm lowpass, and a big hall reverb. **The chords
   are the easy part — the genre lives in the slowed, drenched treatment.**
+- **Voices:** pads (`instr 1`), a syncopated city-pop bass (`instr 2`), the
+  granular found sound (`instr 3`), a wistful lead melody (`instr 4`), and a
+  synthesized kit — kick (`10`), snare/rim (`11`), hats (`12`). Everything is
+  summed on a master bus (`instr 100`) with a soft limiter, so stacking the
+  full arrangement never hard-clips.
+
+## The build (nothing starts at once)
+
+It comes in layer by layer, the vaporwave way:
+
+| beats | section | what's playing |
+|---|---|---|
+| 0–16 | intro | the city alone (Tokyo Station) |
+| 16–48 | A | + pads |
+| 48–80 | B | + bass |
+| 80–112 | C | + kick pulse (drums creep in) |
+| 112–144 | D | + full kit + melody — everything |
+| 144–160 | interlude | band out, the city alone again |
+| 160–192 | E | full reprise |
+| 192–208 | outro | the city alone, fading |
+
+The score expresses this with `PAD` / `BASS` / `DRUMKICK` / `DRUMS` / `MEL`
+macros, each taking a start beat — so the arrangement reads as a stack of
+labelled section calls, not hundreds of raw note rows.
 
 ## How you'd actually verify it (the loop)
 
