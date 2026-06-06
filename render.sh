@@ -1,14 +1,25 @@
 #!/usr/bin/env bash
-# Render the Royal Road vaporwave sketch from its committed source.
-# The .wav is DERIVED and git-ignored — regenerate it any time from royal-road.csd.
+# Render the Royal Road vaporwave sketch from its committed source, then encode
+# an MP3. Both outputs are DERIVED and git-ignored — regenerate them any time.
 #
-#   ./render.sh            -> writes vaporwave.wav next to this script
-#   ./render.sh out.wav    -> writes to a chosen path
+#   ./render.sh            -> vaporwave.wav + vaporwave.mp3 next to this script
+#   ./render.sh out        -> out.wav + out.mp3
 #
-# Requires: csound (tested with 6.18).
+# Needs the found-sound layer first:  ./fetch-found-sound.sh
+# Requires: csound (tested 6.18), ffmpeg.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-out="${1:-vaporwave.wav}"
-csound royal-road.csd -o "$out"
-echo "Rendered: $(pwd)/$out"
+base="${1:-vaporwave}"
+wav="${base}.wav"
+mp3="${base}.mp3"
+
+if [ ! -f found/tokyo_station.wav ]; then
+  echo "Missing found-sound layer. Run ./fetch-found-sound.sh first." >&2
+  exit 1
+fi
+
+csound royal-road.csd -o "$wav"
+ffmpeg -y -loglevel error -i "$wav" -codec:a libmp3lame -b:a 160k "$mp3"
+echo "Rendered: $(pwd)/$wav"
+echo "Encoded:  $(pwd)/$mp3"

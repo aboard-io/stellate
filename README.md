@@ -26,11 +26,29 @@ are regenerated from it.
 ## Run it
 
 ```bash
-./render.sh              # writes vaporwave.wav next to the script
-./render.sh out.wav      # or to a path you choose
+./fetch-found-sound.sh   # download + prep the Internet Archive field recordings
+./render.sh              # writes vaporwave.wav AND vaporwave.mp3
+./render.sh mytake       # or a name of your choice -> mytake.wav / mytake.mp3
 ```
 
-Requires `csound` (tested with 6.18).
+Requires `csound` (tested 6.18), `ffmpeg`, `curl`.
+
+## Found sound (the part that makes it vaporwave)
+
+The chords are a skeleton. The character comes from **found sound off the
+Internet Archive** — radio aporee field recordings, currently the **Tokyo
+Station** ambience (metro voices and announcements). It does not play dry:
+`royal-road.csd` runs it through Csound's **`syncgrain`** (granular
+time-stretch, pitched down a few semitones) and sends it to the hall reverb,
+so the city is smeared into haze rather than sampled literally.
+
+The arrangement uses it the vaporwave way — the band drops out and **the city
+plays alone** at the intro, a mid-piece interlude, and the fade-out, with a
+quiet found-sound bed under everything.
+
+The recordings are **external, CC-licensed, and not committed** — see
+[`SOURCES.md`](SOURCES.md) for items and attribution. `fetch-found-sound.sh`
+makes them recoverable; that script is the committed recipe, the audio is not.
 
 ## The music
 
