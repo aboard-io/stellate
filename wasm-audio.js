@@ -22,9 +22,10 @@
     const mod = await import(/* webpackIgnore: true */ CSOUND_CDN);
     const Csound = mod.Csound || (mod.default && mod.default.Csound);
     if (!Csound) throw new Error("Could not load @csound/browser");
-    // Hand Csound our own (already-resumed) AudioContext for realtime, so output
-    // isn't stuck behind the autoplay policy. Offline render passes none.
-    const cs = await Csound(audioContext ? { audioContext } : undefined);
+    // Hand Csound our own (already-resumed) AudioContext for realtime, and use
+    // the ScriptProcessor backend (useSPN) — the most compatible path on a plain
+    // HTTPS host (no COOP/COEP / SharedArrayBuffer needed). Offline passes none.
+    const cs = await Csound(audioContext ? { audioContext, useSPN: true } : undefined);
     for (const o of (options || [])) await cs.setOption(o);
     return cs;
   }
@@ -102,31 +103,40 @@
 
   async function stopLive() {
     if (_live) {
-      try { await _live.stop(); } catch (e) {}
-      try { await _live.destroy && _live.destroy(); } catch (e) {}
-      _live = null;
+      const c = _live; _live = null;
+      try { await c.stop(); } catch (e) {}
+      try { if (c.destroy) await c.destroy(); } catch (e) {}
     }
   }
 
   const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
-  // offline render -> WAV Blob. estSeconds bounds the wait if no event fires.
+  // offline render -> WAV Blob. Tears down any live instance first — Csound WASM
+  // does not tolerate two concurrent instances (that was the OOB crash).
   async function render(csd, sources, estSeconds, onStatus) {
+    await stopLive();
     if (onStatus) onStatus("booting (offline)…");
-    const cs = await boot(["--nosound", "-o", "out.wav", "-W"]);
+    const cs = await boot(["--nosound", "-W", "--output=render.wav"]);
+    _live = cs;
     await writeFound(cs, sources, onStatus);
     if (onStatus) onStatus("compiling…");
     await cs.compileCsdText(stripOptions(csd));
-    let done;
-    const ended = new Promise(r => { done = r; });
-    try { cs.on && cs.on("renderEnded", () => done()); } catch (e) {}
     if (onStatus) onStatus("rendering…");
     await cs.start();
-    await Promise.race([ended, delay(Math.max(3000, (estSeconds || 30) * 1000 + 4000))]);
-    let bytes;
-    try { bytes = await cs.fs.readFile("out.wav"); } catch (e) { bytes = null; }
+    // Poll the output until it stops growing (offline render finished writing),
+    // then stop() to finalize the WAV header and read it. renderEnded doesn't
+    // fire reliably here, and start() may not resolve at score end.
+    const cap = Math.max(15000, (estSeconds || 30) * 1000 + 6000);
+    const t0 = Date.now(); let last = -1, stable = 0;
+    while (Date.now() - t0 < cap) {
+      await delay(400);
+      let n = 0; try { const b = await cs.fs.readFile("render.wav"); n = b ? b.length : 0; } catch (e) {}
+      if (n > 1000 && n === last) { if (++stable >= 2) break; } else { stable = 0; last = n; }
+    }
     try { await cs.stop(); } catch (e) {}
-    try { cs.destroy && (await cs.destroy()); } catch (e) {}
+    await delay(150);
+    let bytes = null; try { bytes = await cs.fs.readFile("render.wav"); } catch (e) {}
+    _live = null; try { if (cs.destroy) await cs.destroy(); } catch (e) {}
     if (!bytes || bytes.length < 64) throw new Error("render produced no audio");
     if (onStatus) onStatus("done");
     return new Blob([bytes], { type: "audio/wav" });
