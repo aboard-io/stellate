@@ -117,16 +117,19 @@ require it. Press Play — browsers need a click to start audio.)
 
 ### The song builder (`builder.html`)
 
-Every option, live, as a **clip matrix** — sections run top-to-bottom (time),
-instruments are the columns (Pads / Bass / Drums / Melody / Found, each its own
-color). Click a cell to set it; **▶ a cell to audition just that layer**;
-transition strips between rows toggle a **fill** or **insert** a section. A
-**playhead highlights the playing section row**, Ableton-style. Controls:
-tempo, key, progression (Royal Road + four-chords / sad-pop / doo-wop / ii-V-I),
-reverb, pad detune/cutoff, plus **Reset** (default song) and **Reseed** (a fresh
-random variation). **Add your own audio by URL** — any browser-decodable file
-(mp3/ogg/wav/m4a) from a CORS-friendly host. Export a **WAV**, an **MP3** (via
-`ffmpeg.wasm`), a **MIDI** file, or a **preset JSON**.
+A neon **clip matrix** — sections run top-to-bottom (time), instruments are the
+columns (Pads / Bass / Drums / Melody / Found, color-coded). Click a cell to set
+it; **▶ to audition** just that layer; **drag ⠿ to reorder**; ⚡ fill / ＋ insert.
+A **playhead highlights and auto-scrolls to the playing section**. Click an
+**instrument header to open its synth editor** (waveform, cutoff/resonance,
+detune, attack, vibrato, levels, reverb send). Globals: tempo, key, progression
+(Royal Road + four-chords / sad-pop / doo-wop / ii-V-I), reverb, **swing**, and
+**humanize**. Bass patterns (root / simple / walking / octaves / sixteenths /
+dub) and melody styles (composed / arp / updown / pentaup / wander / sparse /
+double). **Reset** and **Reseed** (a fresh random, build-shaped variation).
+Several built-in found sources (Tokyo Station, Tsukiji, Asakusa, Paris) plus
+**add your own audio by URL** (mp3/ogg/wav/m4a, CORS-friendly). Export **WAV**,
+**MP3** (`ffmpeg.wasm`), **MIDI**, or a **preset JSON**.
 
 ### Files behind it
 
