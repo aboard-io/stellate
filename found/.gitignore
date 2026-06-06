@@ -1,0 +1,6 @@
+# Found sound is fetched from the Internet Archive, never committed.
+# It's external CC-licensed material (see ../SOURCES.md) and, like the renders,
+# fully regenerable: ../fetch-found-sound.sh. Ignore everything here but keep
+# the directory and this file.
+*
+!.gitignore
