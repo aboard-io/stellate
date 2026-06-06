@@ -145,6 +145,28 @@ Several built-in found sources (Tokyo Station, Tsukiji, Asakusa, Paris) plus
 Csound and MIDI both derive from one `buildEvents(state)` walk, so they never
 drift.
 
+## The good loop, as built
+
+This tool *is* a generator → verifier → feedback loop, the article's thesis as
+software:
+
+- **Generator** — `csd-engine.js` builds the song (15 progressions, 4 **style**
+  presets — vaporwave / synthwave / downtempo / lo-fi, a **delay** bus routed
+  per-instrument like reverb, 8 drum kits with 4-bar fills, named song structure).
+- **Verifier** — `song-verifier.js` (`analyzeSong`) scores a song on
+  banger-relevant, music-theory-grounded dimensions (build & dynamics, the drop,
+  hook/repetition, groove, fullness, space, tension & release, harmony, form) and
+  returns actionable feedback.
+- **Feedback** — the suggestions, plus `improveSong` which acts on them (fill the
+  drop, lead into the chorus, repeat the hook, add groove).
+
+It's a heuristic gate, not a trained model: "banger" is irreducibly taste
+(catalog verifiers **12.33** genre-conformance, **17.43** no-formal-verifier).
+A learned discriminator would be the next rung — the honest gate ships now.
+
+Found sounds are cached in **IndexedDB**, so they survive reloads without
+re-hitting the Internet Archive. The UI is mobile-responsive.
+
 `csd-engine.js` is the same engine as `royal-road.csd`; only the score is
 data-driven so the UI can rearrange it. The generator is verified offline
 (`engine.test.js` renders every progression / key / melody through real

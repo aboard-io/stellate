@@ -104,6 +104,28 @@
   .legend span{display:inline-flex;align-items:center;gap:.3rem}
   .hint{color:var(--dim);font-size:.74rem}
   details summary{color:var(--cyan);font-size:.82rem}
+  /* ---- mobile ---- */
+  @media(max-width:640px){
+    main.container{padding:0 .5rem 96px}
+    h1{font-size:1.4rem}
+    .sub{font-size:.92rem}
+    section.card{padding:.7rem .65rem;border-radius:11px}
+    .knobs{grid-template-columns:1fr 1fr}
+    .mrow{grid-template-columns:104px repeat(5,minmax(40px,1fr));gap:4px}
+    .hcell{font-size:.58rem;padding:.2rem .1rem}
+    .col-h{padding:.25rem .3rem}
+    .col-h input[type=text]{font-size:.7rem}
+    .ic{width:24px;height:24px;font-size:.8rem}
+    .clip{min-height:44px;font-size:.64rem}
+    .clip .pv{opacity:.9}
+    #transport{gap:.3rem;padding:.5rem .55rem}
+    #transport button{padding:.5rem .7rem;font-size:.72rem}
+    #transport #play{order:-1}
+    #status{min-width:60px}
+    #pop{min-width:150px;max-width:92vw}
+    #scoreNum{font-size:1.6rem;min-width:48px}
+    #dims div div:last-child{display:none}  /* hide per-dim notes on tiny screens */
+  }
 </style>
 </head>
 <body>
@@ -131,12 +153,16 @@
   </section>
 
   <section class="card">
-    <div class="h"><h2>Global</h2></div>
+    <div class="h"><h2>Global</h2>
+      <div><label style="display:inline;margin-right:.3rem">Style</label><select id="style" style="width:auto;display:inline-block;margin:0"></select></div>
+    </div>
     <div class="knobs">
-      <div><label>Tempo <output id="bpmv"></output></label><input type="range" id="bpm" min="50" max="130" step="1"></div>
+      <div><label>Tempo <output id="bpmv"></output></label><input type="range" id="bpm" min="50" max="140" step="1"></div>
       <div><label>Swing <output id="swv"></output></label><input type="range" id="sw" min="0" max="0.6" step="0.02"></div>
       <div><label>Humanize <output id="hzv"></output></label><input type="range" id="hz" min="0" max="1" step="0.05"></div>
       <div><label>Reverb <output id="revv"></output></label><input type="range" id="rev" min="0.4" max="0.95" step="0.01"></div>
+      <div><label>Delay time <output id="dtv"></output> beats</label><input type="range" id="dt" min="0" max="1.5" step="0.0625"></div>
+      <div><label>Delay feedback <output id="dfv"></output></label><input type="range" id="df" min="0" max="0.9" step="0.02"></div>
       <div><label>Key</label><select id="key"></select></div>
       <div><label>Progression</label><select id="prog"></select></div>
     </div>
@@ -160,6 +186,23 @@
       <span>· drag ⠿ to reorder · ⚡ fill · ＋ insert</span>
     </div>
   </section>
+
+  <section class="card" id="verifierCard">
+    <div class="h">
+      <h2>Banger check <span class="hint" style="font-family:var(--disp)">— the verifier half of the loop</span></h2>
+      <div style="display:flex;gap:.35rem">
+        <button class="secondary outline mini" id="checkBtn">✓ Check</button>
+        <button class="secondary outline mini" id="improveBtn">✦ Improve</button>
+      </div>
+    </div>
+    <div id="scoreRow" style="display:flex;align-items:center;gap:.8rem;margin-bottom:.6rem">
+      <div id="scoreNum" style="font-family:var(--disp);font-size:2rem;font-weight:700;min-width:64px">—</div>
+      <div id="scoreGrade" class="hint" style="font-size:1rem"></div>
+    </div>
+    <div id="dims"></div>
+    <ul id="suggestions" style="margin:.5rem 0 0;padding-left:1.1rem;font-size:.82rem;color:var(--dim)"></ul>
+    <p class="hint" style="margin-top:.5rem">Heuristic music-theory gate — "banger" is irreducibly taste (catalog 12.33 / 17.43); a trained model would be the next rung.</p>
+  </section>
 </main>
 
 <div id="pop"></div>
@@ -178,6 +221,7 @@
 </div>
 
 <script src="csd-engine.js"></script>
+<script src="song-verifier.js"></script>
 <script src="midi-export.js"></script>
 <script src="wasm-audio.js"></script>
 <script src="wasm-ffmpeg.js"></script>
@@ -190,14 +234,14 @@ const KEYS=["C","C#/Db","D","D#/Eb","E","F","F#/Gb","G","G#/Ab","A","A#/Bb","B"]
 const LAYERS=[
   {key:"pads",  label:"Pads",  color:"var(--c-pads)",  kind:"toggle"},
   {key:"bass",  label:"Bass",  color:"var(--c-bass)",  kind:"opts", opts:E.BASS_PATTERNS},
-  {key:"drums", label:"Drums", color:"var(--c-drums)", kind:"opts", opts:["off","kick","full","open"]},
+  {key:"drums", label:"Drums", color:"var(--c-drums)", kind:"opts", opts:E.DRUM_PATTERNS},
   {key:"melody",label:"Melody",color:"var(--c-melody)",kind:"opts", opts:E.MELODY_PATTERNS},
   {key:"found", label:"Found", color:"var(--c-found)", kind:"found"},
 ];
 const EDITORS={
-  pads:[["wave","wave"],["cutoff","r",300,5000,10],["res","r",0,.6,.01],["detune","r",0,.02,.001],["attack","r",.05,3,.05],["level","r",0,1,.01],["send","r",0,1,.01]],
-  bass:[["wave","wave"],["cutoff","r",100,2000,10],["res","r",0,.6,.01],["level","r",0,1.2,.01],["send","r",0,.6,.01]],
-  melody:[["wave","wave"],["cutoff","r",800,6000,10],["res","r",0,.4,.01],["vibrato","r",0,.02,.001],["vibRate","r",0,9,.1],["level","r",0,1,.01],["send","r",0,1,.01]],
+  pads:[["wave","wave"],["cutoff","r",300,5000,10],["res","r",0,.6,.01],["detune","r",0,.02,.001],["attack","r",.05,3,.05],["level","r",0,1,.01],["send","r",0,1,.01],["dsend","r",0,1,.01]],
+  bass:[["wave","wave"],["cutoff","r",100,2000,10],["res","r",0,.6,.01],["level","r",0,1.2,.01],["send","r",0,.6,.01],["dsend","r",0,.6,.01]],
+  melody:[["wave","wave"],["cutoff","r",800,6000,10],["res","r",0,.4,.01],["vibrato","r",0,.02,.001],["vibRate","r",0,9,.1],["level","r",0,1,.01],["send","r",0,1,.01],["dsend","r",0,1,.01]],
   drums:[["kick","r",0,2,.05],["snare","r",0,2,.05],["hat","r",0,2,.05],["tune","r",.5,1.5,.01]],
 };
 const IKEY={pads:"pad",bass:"bass",drums:"drums",melody:"melody"};
@@ -216,13 +260,45 @@ if(!state.instruments) state.instruments=E.defaultInstruments();
 
 // ---- globals / sources ----
 function renderGlobals(){
+  state.delay=state.delay||{beats:0.75,feedback:0.3,cutoff:2600};
   $("bpm").value=state.bpm;$("bpmv").value=state.bpm;
   $("sw").value=state.swing;$("swv").value=state.swing;
   $("hz").value=state.humanize;$("hzv").value=state.humanize;
   $("rev").value=state.reverb;$("revv").value=state.reverb;
+  $("dt").value=state.delay.beats;$("dtv").value=state.delay.beats;
+  $("df").value=state.delay.feedback;$("dfv").value=state.delay.feedback;
+  const sty=$("style");if(!sty.options.length){sty.add(new Option("— apply style —",""));Object.keys(E.STYLES).forEach(k=>sty.add(new Option(E.STYLES[k].label,k)));}
   const key=$("key");if(!key.options.length)KEYS.forEach((k,i)=>key.add(new Option(k,i)));key.value=state.keyOffset;
   const prog=$("prog");prog.innerHTML="";Object.keys(E.PROGRESSIONS).forEach(k=>prog.add(new Option(E.PROGRESSIONS[k].label,k)));prog.value=state.progression;
 }
+function applyStyle(name){
+  const st=E.STYLES[name]; if(!st)return; stopPlayhead();
+  state.bpm=st.bpm; state.reverb=st.reverb; state.delay=JSON.parse(JSON.stringify(st.delay)); state.progression=st.progression;
+  state.instruments=state.instruments||E.defaultInstruments();
+  for(const ik of Object.keys(st.instruments)) state.instruments[ik]=Object.assign({}, E.defaultInstruments()[ik], st.instruments[ik]);
+  state.sections=E.generateSong(Object.assign({foundIds:state.foundSources.map(s=>s.id)}, st.song));
+  renderAll(); runVerifier(); setStatus(st.label+" ✦"); maybePrewarm();
+}
+function runVerifier(){
+  if(!window.SongVerifier)return;
+  const r=SongVerifier.analyzeSong(state);
+  $("scoreNum").textContent=r.score;
+  $("scoreNum").style.color = r.score>=85?"var(--mint)":r.score>=70?"var(--yellow)":r.score>=55?"var(--cyan)":"var(--pink)";
+  $("scoreGrade").textContent=r.grade;
+  const dims=$("dims"); dims.innerHTML="";
+  r.dimensions.forEach(d=>{
+    const row=el("div"); row.style.cssText="display:flex;align-items:center;gap:.5rem;margin:.15rem 0;font-size:.74rem";
+    const lab=el("div",null,d.name); lab.style.cssText="width:120px;color:var(--dim)";
+    const bar=el("div"); bar.style.cssText="flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden";
+    const f=el("div"); f.style.cssText="height:100%;width:"+d.score+"%;background:linear-gradient(90deg,var(--pink),var(--cyan))"; bar.appendChild(f);
+    const note=el("div",null,d.note||""); note.style.cssText="width:104px;color:var(--dim);font-size:.66rem;text-align:right";
+    row.append(lab,bar,note); dims.appendChild(row);
+  });
+  const ul=$("suggestions"); ul.innerHTML="";
+  (r.suggestions.length?r.suggestions:["No notes — ship it. 🔥"]).forEach(s=>{const li=el("li",null,s);ul.appendChild(li);});
+}
+function doImprove(){ if(!window.SongVerifier)return; state=SongVerifier.improveSong(state); renderAll(); runVerifier(); setStatus("improved ✦"); }
+function maybePrewarm(){ try{ if(window.WasmAudio&&WasmAudio.prewarm){ const n=neededSources(state); if(n.length){ WasmAudio.prewarm(n); } } }catch(e){} }
 const escAttr=s=>String(s).replace(/"/g,"&quot;");
 function renderSources(){
   const box=$("sources");box.innerHTML="";
@@ -336,6 +412,7 @@ function renderMatrix(){
   });
   m.appendChild(rowsBox);
   initSortable(rowsBox);
+  if(window.SongVerifier) runVerifier();
 }
 function cellClick(cell,sec,layer){
   if(layer.key==="pads"){sec.pads=!sec.pads;renderMatrix();return;}
@@ -420,6 +497,11 @@ $("hz").oninput=e=>{state.humanize=+e.target.value;$("hzv").value=state.humanize
 $("rev").oninput=e=>{state.reverb=+e.target.value;$("revv").value=state.reverb;};
 $("key").onchange=e=>{state.keyOffset=+e.target.value;};
 $("prog").onchange=e=>{state.progression=e.target.value;renderMatrix();};
+$("style").onchange=e=>{ if(e.target.value){ applyStyle(e.target.value); e.target.value=""; } };
+$("dt").oninput=e=>{state.delay.beats=+e.target.value;$("dtv").value=e.target.value;};
+$("df").oninput=e=>{state.delay.feedback=+e.target.value;$("dfv").value=e.target.value;};
+$("checkBtn").onclick=runVerifier;
+$("improveBtn").onclick=doImprove;
 $("nsAdd").onclick=()=>{const url=$("nsUrl").value.trim();if(!url){setStatus("need a URL",true);return;}state.foundSources.push({id:uid(),label:$("nsLabel").value.trim()||("source "+(state.foundSources.length+1)),url,pitch:parseFloat($("nsPitch").value)||0.78,stretch:parseFloat($("nsStretch").value)||0.45});$("nsUrl").value="";$("nsLabel").value="";renderSources();renderMatrix();setStatus("source added");};
 $("reset").onclick=reset;$("reseed").onclick=reseed;
 $("play").onclick=doPlay;$("stop").onclick=doStop;

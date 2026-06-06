@@ -72,11 +72,28 @@
     return { buf: await r2.arrayBuffer(), partial: false };
   }
 
+  // persistent cache of decoded WAVs across reloads (IndexedDB, not localStorage,
+  // which is string-only and ~5MB — these trimmed WAVs are a few MB each).
+  const DB_NAME = "vaporwave-found", STORE = "wav";
+  function idbOpen(){ return new Promise((res, rej) => {
+    try { const r = indexedDB.open(DB_NAME, 1);
+      r.onupgradeneeded = () => r.result.createObjectStore(STORE);
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    } catch (e) { rej(e); } }); }
+  async function idbGet(key){ try { const db = await idbOpen(); return await new Promise(res => {
+    const q = db.transaction(STORE,"readonly").objectStore(STORE).get(key);
+    q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); }); } catch (e) { return null; } }
+  async function idbSet(key, val){ try { const db = await idbOpen(); await new Promise(res => {
+    const q = db.transaction(STORE,"readwrite").objectStore(STORE).put(val, key);
+    q.onsuccess = () => res(); q.onerror = () => res(); }); } catch (e) {} }
+
   // returns a Promise<Uint8Array>; the promise is cached so concurrent callers
   // (prewarm + a Play click) share one fetch/decode instead of racing.
   function decodeUrlToWav(url) {
     if (_wavCache.has(url)) return _wavCache.get(url);
     const job = (async () => {
+      const cached = await idbGet(url);
+      if (cached) return cached instanceof Uint8Array ? cached : new Uint8Array(cached);
       let { buf, partial } = await fetchAudioBytes(url);
       let audio;
       try {
@@ -94,7 +111,9 @@
         const d = audio.getChannelData(c);
         for (let i = 0; i < n; i++) mono[i] += d[i] / ch;
       }
-      return encodeWav(mono, audio.sampleRate);
+      const wav = encodeWav(mono, audio.sampleRate);
+      idbSet(url, wav);                       // persist for next reload
+      return wav;
     })();
     _wavCache.set(url, job);
     job.catch(() => _wavCache.delete(url));   // don't cache failures

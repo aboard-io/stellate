@@ -5,7 +5,7 @@ const { spawnSync } = require("child_process");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
-const { buildCsd, defaultState, PROGRESSIONS } = require("./csd-engine.js");
+const { buildCsd, defaultState, PROGRESSIONS, STYLES, generateSong } = require("./csd-engine.js");
 
 const HERE = __dirname;
 const TOKYO = path.join(HERE, "found", "tokyo_station.wav");
@@ -110,6 +110,22 @@ for (const mel of ["updown","pentaup","sparse","double"]) {
     drums:  { kick:1.4, snare:0.8, hat:1.2, tune:0.85 }
   };
   allOk &= 0<render("instr_groove", s);
+}
+
+// 9) new drum kits
+for (const d of ["four","boombap","halftime","trap"]) {
+  const s = defaultState();
+  s.sections = [{ id:"d", name:"d", cycles:2, pads:true, bass:"simple", drums:d, melody:"off", found:{sourceId:null}, fillInto:false }];
+  allOk &= 0<render("drum_"+d, s);
+}
+
+// 10) styles (delay bus + per-instrument synth params)
+for (const key of Object.keys(STYLES)) {
+  const st = STYLES[key], s = defaultState();
+  s.bpm=st.bpm; s.reverb=st.reverb; s.delay=st.delay; s.progression=st.progression;
+  for (const ik of Object.keys(st.instruments)) Object.assign(s.instruments[ik], st.instruments[ik]);
+  s.sections = generateSong(Object.assign({ foundIds:["tokyo"] }, st.song));
+  allOk &= 0<render("style_"+key, s);
 }
 
 console.log(allOk ? "\nALL PASS" : "\nFAILURES");
