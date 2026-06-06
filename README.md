@@ -101,6 +101,47 @@ Mariya Takeuchi — *Plastic Love*): render, listen side by side, adjust the
 detune / reverb / tempo, repeat. Generator → reference-similarity verifier →
 feedback. A good loop.
 
+## Run it in the browser (Csound WASM)
+
+The same capability runs in a browser tab via [Csound](https://csound.com)
+compiled to WebAssembly (`@csound/browser`). Two pages:
+
+```bash
+./serve.sh                       # static server on http://localhost:8777
+# open http://localhost:8777/play.html      — plays this exact royal-road.csd
+# open http://localhost:8777/builder.html   — the full interactive song builder
+```
+
+(They need `http://localhost`, not `file://`, because `fetch` + AudioWorklet
+require it. Press Play — browsers need a click to start audio.)
+
+### The song builder (`builder.html`)
+
+Every option, live: tempo, key, progression (Royal Road + four-chords /
+sad-pop / doo-wop / ii-V-I), reverb, pad detune/cutoff, and a per-section
+arrangement where you stack layers (pads / bass / drums / melody / found
+sound) section by section. **Add your own audio by URL** — any
+browser-decodable file (mp3/ogg/wav/m4a) from a CORS-friendly host (the
+Internet Archive works); it's fetched, decoded via Web Audio, and granulated
+just like the Tokyo Station bed. Export a **WAV**, an **MP3** (via
+`ffmpeg.wasm`), the **`.csd`** source, or a **preset JSON**.
+
+### Files behind it
+
+| file | role |
+|---|---|
+| `csd-engine.js` | pure generator: `buildCsd(state)` → Csound text. No DOM. |
+| `wasm-audio.js` | boots `@csound/browser`, decodes audio URLs → WAV, play + offline render |
+| `wasm-ffmpeg.js` | MP3 export via `ffmpeg.wasm` (single-thread core, no COOP/COEP needed) |
+| `builder.html` / `play.html` | the two UIs |
+| `engine.test.js` | **render-verifies** generated CSDs through the native `csound` binary (`node engine.test.js`) |
+
+`csd-engine.js` is the same engine as `royal-road.csd`; only the score is
+data-driven so the UI can rearrange it. The generator is verified offline
+(`engine.test.js` renders every progression / key / melody through real
+`csound`); the in-tab WASM playback and export use the documented
+`@csound/browser` + `ffmpeg.wasm` APIs.
+
 ## Catalog cross-reference
 
 The harmonic knowledge here is also encoded as data in

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vaporwave Song Builder — Royal Road</title>
+<style>
+  :root{
+    --bg:#0e0b1a; --panel:#171231; --panel2:#1f1840; --ink:#e9e6ff; --dim:#a99fd6;
+    --teal:#46e0d0; --pink:#ff77c8; --gold:#ffd36e; --line:#2c2456; --bad:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(160deg,#0e0b1a,#160f2e 60%,#1a0f2a);
+    color:var(--ink);font:15px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    padding-bottom:80px}
+  a{color:var(--teal)}
+  header{padding:26px 22px 16px;background:
+    radial-gradient(120% 140% at 20% 0%,rgba(255,119,200,.18),transparent 60%),
+    radial-gradient(120% 140% at 90% 0%,rgba(70,224,208,.16),transparent 60%);
+    border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:26px;letter-spacing:.5px;
+    background:linear-gradient(90deg,var(--pink),var(--gold),var(--teal));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  header p{margin:6px 0 0;color:var(--dim);max-width:70ch}
+  main{max-width:1080px;margin:0 auto;padding:20px 16px}
+  .grid{display:grid;gap:16px;grid-template-columns:1fr 1fr}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+  .card h2{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1.4px;color:var(--teal)}
+  label{display:block;font-size:12px;color:var(--dim);margin:8px 0 3px}
+  input,select,button,textarea{font:inherit;color:var(--ink)}
+  input[type=text],input[type=url],input[type=number],select,textarea{
+    width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+  input[type=range]{width:100%}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .row>*{flex:1;min-width:90px}
+  button{cursor:pointer;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 13px}
+  button:hover{border-color:var(--teal)}
+  button.primary{background:linear-gradient(90deg,var(--pink),#b24cff);border:none;color:#fff;font-weight:600}
+  button.ghost{background:transparent}
+  button.sm{padding:4px 9px;font-size:13px;min-width:auto;flex:none}
+  .sec{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:10px}
+  .sec .hd{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .sec .hd input{flex:1}
+  .tag{font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);color:var(--dim);flex:none}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+  .chk{display:flex;align-items:center;gap:7px;color:var(--ink);font-size:13px}
+  .chk input{width:auto}
+  .src{display:grid;grid-template-columns:1fr 2fr 70px 70px 30px;gap:8px;align-items:center;margin-bottom:8px}
+  @media(max-width:680px){.src{grid-template-columns:1fr 1fr}}
+  .muted{color:var(--dim);font-size:12.5px}
+  #transport{position:fixed;left:0;right:0;bottom:0;background:rgba(14,11,26,.94);
+    border-top:1px solid var(--line);backdrop-filter:blur(8px);padding:10px 16px;
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap;z-index:10}
+  #status{flex:1;min-width:180px;color:var(--dim);font-size:13px}
+  #status.err{color:var(--bad)}
+  details>summary{cursor:pointer;color:var(--teal);font-size:13px}
+  textarea{height:260px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+  .pill{font-size:11px;color:var(--gold)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Vaporwave Song Builder</h1>
+  <p>Built on the Royal Road progression, rendered live in your browser by
+  <a href="https://csound.com" target="_blank" rel="noopener">Csound</a> (WebAssembly).
+  Add audio by URL, stack layers, and export a WAV, an MP3, or the Csound
+  source itself. Nothing is uploaded — audio is fetched and rendered client-side.
+  Serve this folder over <code>http://localhost</code> (see <code>serve.sh</code>);
+  press Play (a click is required to start audio).</p>
+</header>
+
+<main>
+  <div class="grid">
+    <div class="card">
+      <h2>Global</h2>
+      <div class="row">
+        <div><label>Tempo (BPM): <span id="bpmv"></span></label>
+          <input type="range" id="bpm" min="50" max="130" step="1"></div>
+        <div><label>Key</label><select id="key"></select></div>
+      </div>
+      <label>Progression</label><select id="prog"></select>
+      <div class="row">
+        <div><label>Reverb: <span id="revv"></span></label>
+          <input type="range" id="rev" min="0.4" max="0.95" step="0.01"></div>
+        <div><label>Pad detune: <span id="detv"></span></label>
+          <input type="range" id="det" min="0" max="0.02" step="0.001"></div>
+        <div><label>Pad cutoff (Hz): <span id="cutv"></span></label>
+          <input type="range" id="cut" min="500" max="4000" step="50"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Found sound (add audio URLs)</h2>
+      <div id="sources"></div>
+      <details style="margin-top:6px"><summary>Add a source</summary>
+        <div style="margin-top:8px">
+          <label>Label</label><input type="text" id="nsLabel" placeholder="e.g. Shibuya crossing">
+          <label>Audio URL (Internet Archive, etc. — must allow CORS)</label>
+          <input type="url" id="nsUrl" placeholder="https://archive.org/download/…/file.ogg">
+          <div class="row" style="margin-top:8px">
+            <div><label>Pitch (×, <1 = lower)</label><input type="number" id="nsPitch" value="0.78" step="0.01"></div>
+            <div><label>Stretch (prate, <1 = slower)</label><input type="number" id="nsStretch" value="0.45" step="0.01"></div>
+          </div>
+          <button class="sm" id="nsAdd" style="margin-top:8px">+ Add source</button>
+          <p class="muted">Audio is decoded with the Web Audio API, so mp3/ogg/wav/m4a all work.
+          Respect each source's license (the Tokyo Station default is CC BY-NC-SA, see SOURCES.md).</p>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Arrangement (layers come in section by section)</h2>
+    <div id="sections"></div>
+    <div class="row" style="margin-top:6px">
+      <button class="sm" id="addChords">+ chord section</button>
+      <button class="sm" id="addSolo">+ found-sound solo</button>
+      <button class="sm ghost" id="reset">reset to default song</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>View generated Csound source (<span class="pill">the capability, live</span>)</summary>
+      <p class="muted">This is regenerated from your choices every time you Play or Export.
+      Download it and it runs offline via <code>render.sh</code>.</p>
+      <textarea id="csdview" readonly spellcheck="false"></textarea>
+    </details>
+  </div>
+</main>
+
+<div id="transport">
+  <button class="primary" id="play">▶ Play</button>
+  <button id="stop">■ Stop</button>
+  <button id="expWav">⤓ WAV</button>
+  <button id="expMp3">⤓ MP3</button>
+  <button id="expCsd">⤓ .csd</button>
+  <button id="expJson">⤓ preset</button>
+  <button id="impJson">⤒ load</button>
+  <input type="file" id="impFile" accept="application/json" style="display:none">
+  <span id="status">ready</span>
+</div>
+
+<script src="csd-engine.js"></script>
+<script src="wasm-audio.js"></script>
+<script src="wasm-ffmpeg.js"></script>
+<script>
+const E = CsdEngine;
+let state = E.defaultState();
+
+const $ = (id) => document.getElementById(id);
+const KEYS = ["C","C#/Db","D","D#/Eb","E","F","F#/Gb","G","G#/Ab","A","A#/Bb","B"];
+const BASS_OPTS = ["off","simple","walking"];
+const DRUM_OPTS = ["off","kick","full","open"];
+const MEL_OPTS  = ["off","composed","composed2","arpup","arpdown","wander"];
+
+function setStatus(msg, err){ const s=$("status"); s.textContent=msg; s.className=err?"err":""; }
+
+function uid(){ return "s"+Math.random().toString(36).slice(2,7); }
+
+// ---- estimate render seconds (mirrors engine's beat math) ----
+function totalBeats(){
+  const prog = E.PROGRESSIONS[state.progression] || E.PROGRESSIONS.royal_road;
+  let b=0;
+  for(const sec of state.sections){
+    b += sec.type==="solo" ? (sec.cycles||1)*16 : (sec.cycles||1)*prog.chords.length*8;
+  }
+  return b+8;
+}
+function estSeconds(){ return totalBeats()*60/state.bpm; }
+
+function neededSources(){
+  const ids = new Set(state.sections.filter(s=>s.found&&s.found.sourceId).map(s=>s.found.sourceId));
+  return state.foundSources.filter(s=>ids.has(s.id));
+}
+
+// ---------- render the UI from state ----------
+function renderGlobals(){
+  $("bpm").value=state.bpm; $("bpmv").textContent=state.bpm;
+  $("rev").value=state.reverb; $("revv").textContent=state.reverb;
+  $("det").value=state.padDetune; $("detv").textContent=state.padDetune;
+  $("cut").value=state.padCutoff; $("cutv").textContent=state.padCutoff;
+  const key=$("key"); if(!key.options.length){ KEYS.forEach((k,i)=>key.add(new Option(k,i))); }
+  key.value=state.keyOffset;
+  const prog=$("prog"); prog.innerHTML="";
+  Object.keys(E.PROGRESSIONS).forEach(k=>prog.add(new Option(E.PROGRESSIONS[k].label,k)));
+  prog.value=state.progression;
+}
+
+function renderSources(){
+  const box=$("sources"); box.innerHTML="";
+  state.foundSources.forEach(s=>{
+    const d=document.createElement("div"); d.className="src";
+    d.innerHTML=`<input type="text" value="${escAttr(s.label)}" data-f="label">
+      <input type="url" value="${escAttr(s.url)}" data-f="url">
+      <input type="number" value="${s.pitch}" step="0.01" data-f="pitch" title="pitch">
+      <input type="number" value="${s.stretch}" step="0.01" data-f="stretch" title="stretch">
+      <button class="sm ghost" title="remove">✕</button>`;
+    d.querySelectorAll("[data-f]").forEach(inp=>inp.addEventListener("change",()=>{
+      const f=inp.dataset.f; s[f]=(f==="pitch"||f==="stretch")?parseFloat(inp.value):inp.value; sync();
+    }));
+    d.querySelector("button").addEventListener("click",()=>{
+      state.foundSources=state.foundSources.filter(x=>x!==s);
+      state.sections.forEach(se=>{ if(se.found&&se.found.sourceId===s.id) se.found.sourceId=null; });
+      renderSources(); renderSections(); sync();
+    });
+    box.appendChild(d);
+  });
+}
+
+function sel(value, opts, cb){
+  const s=document.createElement("select");
+  opts.forEach(o=>s.add(new Option(o,o)));
+  s.value=value; s.addEventListener("change",()=>cb(s.value)); return s;
+}
+
+function renderSections(){
+  const box=$("sections"); box.innerHTML="";
+  state.sections.forEach((sec,idx)=>{
+    const c=document.createElement("div"); c.className="sec";
+    const hd=document.createElement("div"); hd.className="hd";
+    const name=document.createElement("input"); name.value=sec.name;
+    name.addEventListener("change",()=>{sec.name=name.value;});
+    const tag=document.createElement("span"); tag.className="tag"; tag.textContent=sec.type;
+    hd.appendChild(tag); hd.appendChild(name);
+    [["▲",()=>move(idx,-1)],["▼",()=>move(idx,1)],["✕",()=>{state.sections.splice(idx,1);renderSections();sync();}]]
+      .forEach(([t,fn])=>{const b=document.createElement("button");b.className="sm ghost";b.textContent=t;b.onclick=fn;hd.appendChild(b);});
+    c.appendChild(hd);
+
+    const opts=document.createElement("div"); opts.className="opts";
+    const add=(labelText,node)=>{const w=document.createElement("div");const l=document.createElement("label");l.textContent=labelText;w.appendChild(l);w.appendChild(node);opts.appendChild(w);};
+
+    const cyc=document.createElement("input"); cyc.type="number"; cyc.min=1; cyc.max=8; cyc.value=sec.cycles||1;
+    cyc.addEventListener("change",()=>{sec.cycles=Math.max(1,parseInt(cyc.value)||1);sync();});
+    add("cycles",cyc);
+
+    if(sec.type==="chords"){
+      const padc=document.createElement("label"); padc.className="chk";
+      padc.innerHTML=`<input type="checkbox" ${sec.pads?"checked":""}> pads`;
+      padc.querySelector("input").addEventListener("change",e=>{sec.pads=e.target.checked;sync();});
+      const padw=document.createElement("div"); padw.appendChild(document.createElement("label")).textContent="";
+      padw.appendChild(padc); opts.appendChild(padw);
+
+      add("bass", sel(sec.bass||"off",BASS_OPTS,v=>{sec.bass=v;sync();}));
+      add("drums", sel(sec.drums||"off",DRUM_OPTS,v=>{sec.drums=v;sync();}));
+      add("melody", sel(sec.melody||"off",MEL_OPTS,v=>{sec.melody=v;sync();}));
+    }
+
+    // found-sound source + role (both section types)
+    const srcSel=document.createElement("select");
+    srcSel.add(new Option("— none —",""));
+    state.foundSources.forEach(s=>srcSel.add(new Option(s.label,s.id)));
+    srcSel.value=(sec.found&&sec.found.sourceId)||"";
+    srcSel.addEventListener("change",()=>{ sec.found=sec.found||{}; sec.found.sourceId=srcSel.value||null; sync(); });
+    add("found sound",srcSel);
+    if(sec.type==="chords"){
+      add("found role", sel((sec.found&&sec.found.role)||"bed",["bed","solo"],v=>{sec.found=sec.found||{};sec.found.role=v;sync();}));
+    } else { sec.found=sec.found||{role:"solo"}; sec.found.role="solo"; }
+
+    const fillc=document.createElement("label"); fillc.className="chk";
+    fillc.innerHTML=`<input type="checkbox" ${sec.fillInto?"checked":""}> fill into next`;
+    fillc.querySelector("input").addEventListener("change",e=>{sec.fillInto=e.target.checked;sync();});
+    const fw=document.createElement("div"); fw.appendChild(document.createElement("label")).textContent=" ";
+    fw.appendChild(fillc); opts.appendChild(fw);
+
+    c.appendChild(opts);
+    box.appendChild(c);
+  });
+}
+
+function move(i,d){ const j=i+d; if(j<0||j>=state.sections.length)return;
+  const a=state.sections; [a[i],a[j]]=[a[j],a[i]]; renderSections(); sync(); }
+
+function escAttr(s){ return String(s).replace(/"/g,"&quot;"); }
+
+// regenerate CSD view + duration; called on any change
+function sync(){
+  try{ $("csdview").value = E.buildCsd(state); }catch(e){ $("csdview").value="// "+e.message; }
+}
+
+function renderAll(){ renderGlobals(); renderSources(); renderSections(); sync(); }
+
+// ---------- transport ----------
+async function doPlay(){
+  try{ setStatus("starting…"); await WasmAudio.play(E.buildCsd(state), neededSources(), setStatus); }
+  catch(e){ setStatus("play failed: "+e.message, true); console.error(e); }
+}
+async function doStop(){ try{ await WasmAudio.stopLive(); setStatus("stopped"); }catch(e){} }
+
+function download(blob, name){
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name;
+  a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+
+async function renderWavBlob(){
+  return WasmAudio.render(E.buildCsd(state), neededSources(), estSeconds(), setStatus);
+}
+async function doWav(){
+  try{ const b=await renderWavBlob(); download(b,"vaporwave.wav"); setStatus("WAV downloaded"); }
+  catch(e){ setStatus("WAV render failed: "+e.message,true); console.error(e); }
+}
+async function doMp3(){
+  try{
+    setStatus("rendering audio…");
+    const wav=await renderWavBlob();
+    const wavBytes=new Uint8Array(await wav.arrayBuffer());
+    const mp3=await WasmFFmpeg.wavToMp3(wavBytes,160,setStatus);
+    download(mp3,"vaporwave.mp3"); setStatus("MP3 downloaded");
+  }catch(e){ setStatus("MP3 export failed: "+e.message,true); console.error(e); }
+}
+function doCsd(){
+  // add CsOptions so the downloaded file runs offline via render.sh / csound
+  const csd=E.buildCsd(state).replace("<CsoundSynthesizer>",
+    "<CsoundSynthesizer>\n<CsOptions>\n-o vaporwave.wav -W\n</CsOptions>");
+  download(new Blob([csd],{type:"text/plain"}),"royal-road.csd"); setStatus(".csd downloaded");
+}
+function doExportJson(){ download(new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),"vaporwave-preset.json"); }
+function doImportJson(file){ const r=new FileReader(); r.onload=()=>{ try{ state=JSON.parse(r.result); renderAll(); setStatus("preset loaded"); }catch(e){ setStatus("bad preset: "+e.message,true);} }; r.readAsText(file); }
+
+// ---------- wire up ----------
+$("bpm").addEventListener("input",e=>{state.bpm=+e.target.value;$("bpmv").textContent=state.bpm;sync();});
+$("rev").addEventListener("input",e=>{state.reverb=+e.target.value;$("revv").textContent=state.reverb;sync();});
+$("det").addEventListener("input",e=>{state.padDetune=+e.target.value;$("detv").textContent=state.padDetune;sync();});
+$("cut").addEventListener("input",e=>{state.padCutoff=+e.target.value;$("cutv").textContent=state.padCutoff;sync();});
+$("key").addEventListener("change",e=>{state.keyOffset=+e.target.value;sync();});
+$("prog").addEventListener("change",e=>{state.progression=e.target.value;sync();});
+
+$("nsAdd").addEventListener("click",()=>{
+  const url=$("nsUrl").value.trim(); if(!url){setStatus("need a URL",true);return;}
+  const label=$("nsLabel").value.trim()||("source "+(state.foundSources.length+1));
+  state.foundSources.push({id:uid(),label,url,pitch:parseFloat($("nsPitch").value)||0.78,stretch:parseFloat($("nsStretch").value)||0.45});
+  $("nsUrl").value="";$("nsLabel").value="";
+  renderSources(); renderSections(); sync(); setStatus("source added");
+});
+
+$("addChords").addEventListener("click",()=>{ state.sections.push(
+  {id:uid(),name:"section",type:"chords",cycles:1,pads:true,bass:"simple",drums:"full",melody:"arpup",found:{sourceId:null,role:"bed"},fillInto:false});
+  renderSections(); sync(); });
+$("addSolo").addEventListener("click",()=>{ state.sections.push(
+  {id:uid(),name:"solo",type:"solo",cycles:1,found:{sourceId:(state.foundSources[0]||{}).id||null,role:"solo"},fillInto:false});
+  renderSections(); sync(); });
+$("reset").addEventListener("click",()=>{ state=E.defaultState(); renderAll(); setStatus("reset"); });
+
+$("play").addEventListener("click",doPlay);
+$("stop").addEventListener("click",doStop);
+$("expWav").addEventListener("click",doWav);
+$("expMp3").addEventListener("click",doMp3);
+$("expCsd").addEventListener("click",doCsd);
+$("expJson").addEventListener("click",doExportJson);
+$("impJson").addEventListener("click",()=>$("impFile").click());
+$("impFile").addEventListener("change",e=>{ if(e.target.files[0]) doImportJson(e.target.files[0]); });
+
+renderAll();
+</script>
+</body>
+</html>
