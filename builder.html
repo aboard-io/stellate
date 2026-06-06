@@ -61,12 +61,13 @@
   .col-h{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:.3rem .4rem;display:flex;flex-direction:column;gap:.25rem;justify-content:center}
   .col-h .r1{display:flex;align-items:center;gap:.25rem}
   .grip{cursor:grab;color:var(--dim);font-size:.95rem;flex:none;touch-action:none;padding:0 .15rem}
+  .grip:active{cursor:grabbing}
   .grip:hover{color:var(--cyan)}
-  .secrow.dragging{opacity:.28;filter:saturate(.4)}
-  .secrow.dropzone{box-shadow:0 -3px 0 0 var(--cyan)}
-  .dragclone{position:fixed;z-index:500;pointer-events:none;left:0;top:0;transform:translate(-30%,-50%);
-    background:var(--pink);color:#160a28;font-family:var(--disp);font-size:.72rem;font-weight:700;padding:.3rem .65rem;border-radius:9px;
-    box-shadow:0 10px 28px rgba(0,0,0,.55),0 0 18px var(--pink);white-space:nowrap}
+  .rows{display:flex;flex-direction:column;gap:5px}
+  /* SortableJS states */
+  .secrow.row-ghost{opacity:1;border:1px dashed var(--cyan)!important;background:rgba(1,205,254,.08)!important;box-shadow:none!important;animation:none!important}
+  .secrow.row-ghost>*{visibility:hidden}
+  .secrow.row-drag{opacity:.97!important;box-shadow:0 14px 36px rgba(0,0,0,.6),0 0 24px var(--pink)!important;border-radius:11px;cursor:grabbing}
   .col-h input[type=text]{font-size:.78rem;font-weight:600;margin:0;padding:.12rem .35rem;background:var(--ground);flex:1}
   .col-h .r2{display:flex;align-items:center;gap:.18rem;flex-wrap:wrap}
   .ic{width:20px;height:20px;padding:0;line-height:1;border-radius:5px;background:var(--ground);border:1px solid var(--line);color:var(--dim);margin:0;font-size:.72rem}
@@ -180,6 +181,7 @@
 <script src="midi-export.js"></script>
 <script src="wasm-audio.js"></script>
 <script src="wasm-ffmpeg.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
 <script>
 const E=CsdEngine;
 let state=E.defaultState();
@@ -279,34 +281,20 @@ function clipMeta(sec,layer){
   }
   const v=sec[layer.key]||"off";return{on:v!=="off",text:v==="off"?"·":v};
 }
-// pointer-based sortable: floating chip + live row shuffle
-let dragIdx=null, dragging=false, dragClone=null;
-function moveClone(e){ if(dragClone){ dragClone.style.left=(e.clientX)+"px"; dragClone.style.top=(e.clientY)+"px"; } }
-function startDrag(e,idx){
-  e.preventDefault();
-  dragIdx=idx; dragging=true;
-  dragClone=el("div","dragclone","⠿ "+(state.sections[idx].name||"section"));
-  document.body.appendChild(dragClone); moveClone(e);
-  window.addEventListener("pointermove",onDragMove);
-  window.addEventListener("pointerup",onDragUp,{once:true});
-  renderMatrix();
-}
-function onDragMove(e){
-  if(!dragging)return;
-  moveClone(e);
-  const rows=[...document.querySelectorAll(".secrow")];
-  let to=rows.length;
-  for(let i=0;i<rows.length;i++){ const b=rows[i].getBoundingClientRect(); if(e.clientY < b.top+b.height/2){ to=i; break; } }
-  const from=dragIdx, dest = to>from ? to-1 : to;
-  if(dest!==from && dest>=0 && dest<state.sections.length){
-    const a=state.sections; const [mv]=a.splice(from,1); a.splice(dest,0,mv); dragIdx=dest; renderMatrix();
-  }
-}
-function onDragUp(){
-  dragging=false; window.removeEventListener("pointermove",onDragMove);
-  if(dragClone){ dragClone.remove(); dragClone=null; }
-  const moved=dragIdx; dragIdx=null; renderMatrix();
-  setStatus("reordered → "+(state.sections[moved]?state.sections[moved].name:""));
+// drag-and-drop reordering via SortableJS (proper ghost + animation, no glitching)
+let sortable=null;
+function initSortable(box){
+  if(!window.Sortable) return;
+  if(sortable){ try{ sortable.destroy(); }catch(e){} }
+  sortable=Sortable.create(box,{
+    handle:".grip", animation:160, forceFallback:true, fallbackOnBody:true,
+    ghostClass:"row-ghost", chosenClass:"row-chosen", fallbackClass:"row-drag",
+    onEnd:e=>{
+      if(e.oldIndex===e.newIndex || e.newIndex==null) return;
+      const a=state.sections; const [mv]=a.splice(e.oldIndex,1); a.splice(e.newIndex,0,mv);
+      renderMatrix(); setStatus("reordered → "+(a[e.newIndex].name||""));
+    }
+  });
 }
 function renderMatrix(){
   const m=$("matrix");m.innerHTML="";
@@ -318,12 +306,12 @@ function renderMatrix(){
     hr.appendChild(c);
   });
   m.appendChild(hr);
-
+  const rowsBox=el("div","rows");
   state.sections.forEach((sec,idx)=>{
-    const row=el("div","secrow mrow"+(dragging&&idx===dragIdx?" dragging":""));row.dataset.i=idx;
+    const row=el("div","secrow mrow");row.dataset.i=idx;
     const h=el("div","col-h");
     const r1=el("div","r1");
-    const grip=el("span","grip","⠿");grip.title="drag to reorder";grip.onpointerdown=e=>startDrag(e,idx);
+    const grip=el("span","grip","⠿");grip.title="drag to reorder";
     const name=document.createElement("input");name.type="text";name.value=sec.name;name.onchange=()=>{sec.name=name.value;};
     r1.append(grip,name);h.appendChild(r1);
     const r2=el("div","r2");
@@ -332,7 +320,8 @@ function renderMatrix(){
       Object.assign(el("span","cycn",String(sec.cycles||1)),{}),
       btn("ic","+",()=>{sec.cycles=(sec.cycles||1)+1;renderMatrix();}),
       (()=>{const b=btn("ic fill"+(sec.fillInto?" on":""),"⚡",()=>{sec.fillInto=!sec.fillInto;b.classList.toggle("on");});b.title="fill into next";return b;})(),
-      btn("ic","◀",()=>move(idx,-1)),btn("ic","▶",()=>move(idx,1)),btn("ic","✕",()=>{state.sections.splice(idx,1);renderMatrix();})
+      (()=>{const b=btn("ic","⊕",()=>insertAfter(idx));b.title="insert section after";return b;})(),
+      btn("ic","✕",()=>{state.sections.splice(idx,1);renderMatrix();})
     );
     h.appendChild(r2);row.appendChild(h);
     LAYERS.forEach(layer=>{
@@ -343,9 +332,10 @@ function renderMatrix(){
       const pv=el("span","pv","▶");pv.title="audition";pv.onclick=e=>{e.stopPropagation();preview(sec,layer);};c.appendChild(pv);
       row.appendChild(c);
     });
-    m.appendChild(row);
-    const gap=el("div","addgap");gap.appendChild(btn(null,"＋ insert",()=>insertAfter(idx)));m.appendChild(gap);
+    rowsBox.appendChild(row);
   });
+  m.appendChild(rowsBox);
+  initSortable(rowsBox);
 }
 function cellClick(cell,sec,layer){
   if(layer.key==="pads"){sec.pads=!sec.pads;renderMatrix();return;}
