@@ -1,0 +1,6 @@
+# Renders are DERIVED from royal-road.csd — never committed, always regenerable.
+# The source is the capability; the audio is disposable. (This is the whole point.)
+*.wav
+*.mp3
+*.aiff
+*.flac
