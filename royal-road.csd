@@ -68,18 +68,41 @@ instr 1
 endin
 
 ; ============================================================================
-; instr 2 — lazy root bass (one note per chord, an octave or two down)
+; instr 2 — bass voice (now plays a moving, syncopated line — see score macro)
+;   Pluckier envelope so repeated notes articulate instead of smearing.
 ; ============================================================================
 instr 2
   ipch  = cpspch(p4)
   iamp  = p5
-  aenv  linsegr 0, 0.08, iamp, p3 - 0.2, iamp, 0.4, 0
+  aenv  linsegr 0, 0.012, iamp, p3 - 0.05, iamp * 0.5, 0.10, 0
   a1    vco2  1, ipch, 0
-  a1    moogladder a1, 450, 0.1
+  a1    moogladder a1, 700, 0.15
   asig  =     a1 * aenv
   outs  asig, asig
-  gaRevL = gaRevL + asig * 0.1
-  gaRevR = gaRevR + asig * 0.1
+  gaRevL = gaRevL + asig * 0.08
+  gaRevR = gaRevR + asig * 0.08
+endin
+
+; ============================================================================
+; instr 4 — lead melody. Two detuned sines + a soft octave partial, gentle
+;   vibrato, a little attack, sent to the reverb. Sits above the pads, the
+;   bittersweet top line over the Royal Road.
+; ============================================================================
+instr 4
+  ipch  = cpspch(p4)
+  iamp  = p5
+  kvib  lfo   ipch * 0.006, 5.2, 0       ; gentle vibrato
+  kf    =     ipch + kvib
+  aenv  linsegr 0, 0.05, iamp, p3 - 0.12, iamp * 0.85, 0.30, 0
+  a1    oscili 1, kf
+  a2    oscili 1, kf * 1.004              ; slight detune shimmer
+  a3    oscili 0.16, kf * 2               ; soft octave for sheen
+  asig  =     (a1 + a2) * 0.5 + a3
+  asig  moogladder asig, 3400, 0.05
+  asig  =     asig * aenv
+  outs  asig * 0.6, asig * 0.6
+  gaRevL = gaRevL + asig * 0.45
+  gaRevR = gaRevR + asig * 0.45
 endin
 
 ; ============================================================================
@@ -115,75 +138,83 @@ endin
 <CsScore>
 t 0 70                      ; ~70 BPM — slow it down
 
-i 99 0  84                  ; reverb running for the whole piece + tail
-
-; A vaporwave move: the found city plays ALONE at the edges, the band drops
-; out for an interlude, then crashes back. Structure (beats, t=70):
+; Structure (beats, t=70):
 ;   intro  0-8   : Tokyo Station solo
-;   passI  8-40  : Royal Road, Fmaj7-G7-Em7-Am7
+;   passI  8-40  : Royal Road — pads + moving bass + lead melody
 ;   inter 40-48  : Tokyo Station solo (band out)
 ;   passII 48-80 : Royal Road again
 ;   outro 80-88  : Tokyo Station alone, fading
-; A quiet found-sound BED runs underneath the whole thing for haze.
+; A quiet found-sound BED runs underneath for haze.
 ; pch: .00=C .02=D .04=E .05=F .07=G .09=A .11=B ; octave 8 = middle-C octave.
 
-; ---- found sound: quiet bed + three featured solos ----
-i 3 0   88 0 0.06           ; haze bed, whole piece
-i 3 0   8  0 0.42           ; intro solo
-i 3 40  8  0 0.42           ; interlude solo (band out)
-i 3 80  8  0 0.42           ; outro solo, fading
+; --- PAD(start' 4 chord tones) : the held Royal Road voicing ---
+#define PAD(S'N1'N2'N3'N4) #
+i 1 $S 8 $N1 0.085
+i 1 $S 8 $N2 0.085
+i 1 $S 8 $N3 0.085
+i 1 $S 8 $N4 0.085 #
 
-; ---- Pass I ----
-; Fmaj7 (F A C E)
-i 1 8   8  7.05 0.10
-i 1 8   8  7.09 0.10
-i 1 8   8  8.00 0.10
-i 1 8   8  8.04 0.10
-i 2 8   8  5.05 0.22
-; G7 (G B D F)
-i 1 16  8  7.07 0.10
-i 1 16  8  7.11 0.10
-i 1 16  8  8.02 0.10
-i 1 16  8  8.05 0.10
-i 2 16  8  5.07 0.22
-; Em7 (E G B D)
-i 1 24  8  7.04 0.10
-i 1 24  8  7.07 0.10
-i 1 24  8  7.11 0.10
-i 1 24  8  8.02 0.10
-i 2 24  8  5.04 0.22
-; Am7 (A C E G)
-i 1 32  8  7.09 0.10
-i 1 32  8  8.00 0.10
-i 1 32  8  8.04 0.10
-i 1 32  8  8.07 0.10
-i 2 32  8  5.09 0.22
+; --- BASS(start' root5' octave-root6' fifth6) : syncopated city-pop figure ---
+#define BASS(S'R5'R6'F6) #
+i 2 [$S+0]   1.5 $R5 0.22
+i 2 [$S+2]   0.5 $R6 0.18
+i 2 [$S+3]   1.0 $F6 0.18
+i 2 [$S+4.5] 0.5 $R5 0.22
+i 2 [$S+5]   1.0 $R6 0.18
+i 2 [$S+6.5] 1.5 $R5 0.22 #
 
-; ---- Pass II (after the interlude) ----
-; Fmaj7
-i 1 48  8  7.05 0.10
-i 1 48  8  7.09 0.10
-i 1 48  8  8.00 0.10
-i 1 48  8  8.04 0.10
-i 2 48  8  5.05 0.22
-; G7
-i 1 56  8  7.07 0.10
-i 1 56  8  7.11 0.10
-i 1 56  8  8.02 0.10
-i 1 56  8  8.05 0.10
-i 2 56  8  5.07 0.22
-; Em7
-i 1 64  8  7.04 0.10
-i 1 64  8  7.07 0.10
-i 1 64  8  7.11 0.10
-i 1 64  8  8.02 0.10
-i 2 64  8  5.04 0.22
-; Am7
-i 1 72  8  7.09 0.10
-i 1 72  8  8.00 0.10
-i 1 72  8  8.04 0.10
-i 1 72  8  8.07 0.10
-i 2 72  8  5.09 0.22
+; --- MEL(passStart) : the lead line across all four chords of a pass ---
+#define MEL(O) #
+i 4 [$O+0]    1.5 8.09 0.14
+i 4 [$O+1.5]  0.5 8.07 0.14
+i 4 [$O+2]    1.0 8.09 0.14
+i 4 [$O+3]    2.0 9.00 0.14
+i 4 [$O+5]    1.5 9.04 0.14
+i 4 [$O+6.5]  1.5 9.02 0.14
+i 4 [$O+8]    1.0 9.02 0.14
+i 4 [$O+9]    1.0 8.11 0.14
+i 4 [$O+10]   2.0 8.07 0.14
+i 4 [$O+12]   1.0 8.09 0.14
+i 4 [$O+13]   1.0 8.11 0.14
+i 4 [$O+14]   2.0 9.02 0.14
+i 4 [$O+16]   1.5 9.04 0.14
+i 4 [$O+17.5] 0.5 9.02 0.14
+i 4 [$O+18]   2.0 8.11 0.14
+i 4 [$O+20]   1.5 8.07 0.14
+i 4 [$O+21.5] 0.5 8.09 0.14
+i 4 [$O+22]   2.0 8.11 0.14
+i 4 [$O+24]   1.0 9.00 0.14
+i 4 [$O+25]   1.0 8.11 0.14
+i 4 [$O+26]   2.0 8.09 0.14
+i 4 [$O+28]   1.5 9.04 0.14
+i 4 [$O+29.5] 0.5 9.00 0.14
+i 4 [$O+30]   2.0 8.09 0.14 #
+
+i 3 0   88 0 0.06           ; found-sound haze bed, whole piece
+i 99 0  88                  ; reverb running for the whole piece + tail
+
+; ---- intro: city alone ----
+i 3 0   8  0 0.42
+
+; ---- Pass I (Fmaj7 G7 Em7 Am7) ----
+$PAD(8'7.05'7.09'8.00'8.04)   $BASS(8'5.05'6.05'6.00)
+$PAD(16'7.07'7.11'8.02'8.05)  $BASS(16'5.07'6.07'6.02)
+$PAD(24'7.04'7.07'7.11'8.02)  $BASS(24'5.04'6.04'5.11)
+$PAD(32'7.09'8.00'8.04'8.07)  $BASS(32'5.09'6.09'6.04)
+$MEL(8)
+
+; ---- interlude: city alone (band out) ----
+i 3 40  8  0 0.42
+
+; ---- Pass II ----
+$PAD(48'7.05'7.09'8.00'8.04)  $BASS(48'5.05'6.05'6.00)
+$PAD(56'7.07'7.11'8.02'8.05)  $BASS(56'5.07'6.07'6.02)
+$PAD(64'7.04'7.07'7.11'8.02)  $BASS(64'5.04'6.04'5.11)
+$PAD(72'7.09'8.00'8.04'8.07)  $BASS(72'5.09'6.09'6.04)
+$MEL(48)
+
+; ---- outro: city alone, fading ----
+i 3 80  8  0 0.42
 
 e
 </CsScore>
