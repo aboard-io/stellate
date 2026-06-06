@@ -116,7 +116,7 @@ endin
 ; ============================================================================
 ; instr 10 — kick: sine with a fast pitch drop + percussive decay
 instr 10
-  iamp  = p5
+  iamp  = p4                                ; amp is p4 for drums (no pitch p-field)
   kp    expseg 110, 0.06, 46, p3 - 0.06, 40
   aenv  transeg 1, p3, -4, 0
   a1    oscili iamp * aenv, kp
@@ -129,7 +129,7 @@ endin
 
 ; instr 11 — snare / rimshot: band-passed noise + two soft tones
 instr 11
-  iamp  = p5
+  iamp  = p4
   aenv  transeg 1, p3, -6, 0
   anz   noise  iamp, 0
   anz   butbp  anz, 1800, 1600
@@ -144,7 +144,7 @@ endin
 
 ; instr 12 — hi-hat: high-passed noise, very short
 instr 12
-  iamp  = p5
+  iamp  = p4
   aenv  transeg 1, p3, -8, 0
   anz   noise  iamp, 0
   anz   buthp  anz, 7000
