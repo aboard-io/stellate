@@ -117,24 +117,30 @@ require it. Press Play — browsers need a click to start audio.)
 
 ### The song builder (`builder.html`)
 
-Every option, live: tempo, key, progression (Royal Road + four-chords /
-sad-pop / doo-wop / ii-V-I), reverb, pad detune/cutoff, and a per-section
-arrangement where you stack layers (pads / bass / drums / melody / found
-sound) section by section. **Add your own audio by URL** — any
-browser-decodable file (mp3/ogg/wav/m4a) from a CORS-friendly host (the
-Internet Archive works); it's fetched, decoded via Web Audio, and granulated
-just like the Tokyo Station bed. Export a **WAV**, an **MP3** (via
-`ffmpeg.wasm`), the **`.csd`** source, or a **preset JSON**.
+Every option, live, as a **clip matrix** — sections run top-to-bottom (time),
+instruments are the columns (Pads / Bass / Drums / Melody / Found, each its own
+color). Click a cell to set it; **▶ a cell to audition just that layer**;
+transition strips between rows toggle a **fill** or **insert** a section. A
+**playhead highlights the playing section row**, Ableton-style. Controls:
+tempo, key, progression (Royal Road + four-chords / sad-pop / doo-wop / ii-V-I),
+reverb, pad detune/cutoff, plus **Reset** (default song) and **Reseed** (a fresh
+random variation). **Add your own audio by URL** — any browser-decodable file
+(mp3/ogg/wav/m4a) from a CORS-friendly host. Export a **WAV**, an **MP3** (via
+`ffmpeg.wasm`), a **MIDI** file, or a **preset JSON**.
 
 ### Files behind it
 
 | file | role |
 |---|---|
-| `csd-engine.js` | pure generator: `buildCsd(state)` → Csound text. No DOM. |
+| `csd-engine.js` | pure generator: `buildEvents(state)` → notes; `buildCsd(state)` → Csound text. No DOM. |
+| `midi-export.js` | `buildMidi(state)` → Standard MIDI File, from the same `buildEvents` |
 | `wasm-audio.js` | boots `@csound/browser`, decodes audio URLs → WAV, play + offline render |
 | `wasm-ffmpeg.js` | MP3 export via `ffmpeg.wasm` (single-thread core, no COOP/COEP needed) |
 | `builder.html` / `play.html` | the two UIs |
 | `engine.test.js` | **render-verifies** generated CSDs through the native `csound` binary (`node engine.test.js`) |
+
+Csound and MIDI both derive from one `buildEvents(state)` walk, so they never
+drift.
 
 `csd-engine.js` is the same engine as `royal-road.csd`; only the score is
 data-driven so the UI can rearrange it. The generator is verified offline
