@@ -85,6 +85,12 @@ The score expresses this with `PAD` / `BASS` / `DRUMKICK` / `DRUMS` / `MEL`
 macros, each taking a start beat — so the arrangement reads as a stack of
 labelled section calls, not hundreds of raw note rows.
 
+The reprise (cyc E) is **not** a copy of cyc D — it uses variation macros:
+`BASS2` (busier eighth-note walking bass), `MEL2` (higher, more ornamented
+lead), and `DRUMS2` (ghost snares + open hats). `FILL` drops a 2-beat
+snare-roll into each transition (into the full kit, and out of the
+interlude). Tempo is **88 BPM** — slowed, but with a pulse.
+
 ## How you'd actually verify it (the loop)
 
 There is no unit test for "is this vaporwave." Genre conformance is
