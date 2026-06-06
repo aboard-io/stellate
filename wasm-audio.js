@@ -18,14 +18,17 @@
     return _audioCtx;
   }
 
-  async function boot(options) {
+  async function boot(options, audioContext) {
     const mod = await import(/* webpackIgnore: true */ CSOUND_CDN);
     const Csound = mod.Csound || (mod.default && mod.default.Csound);
     if (!Csound) throw new Error("Could not load @csound/browser");
-    const cs = await Csound();
+    // Hand Csound our own (already-resumed) AudioContext for realtime, so output
+    // isn't stuck behind the autoplay policy. Offline render passes none.
+    const cs = await Csound(audioContext ? { audioContext } : undefined);
     for (const o of (options || [])) await cs.setOption(o);
     return cs;
   }
+  function ctxState(){ return _audioCtx ? _audioCtx.state : "none"; }
 
   // 16-bit PCM mono WAV from a Float32Array
   function encodeWav(samples, sampleRate) {
@@ -79,18 +82,21 @@
 
   let _live = null;
   async function play(csd, sources, onStatus) {
+    // CRITICAL: resume the AudioContext synchronously, inside the click's
+    // user-gesture window, BEFORE any await — otherwise it stays suspended
+    // through the async boot/decode and no audio ever comes out.
+    const ctx = audioCtx();
+    try { ctx.resume(); } catch (e) {}
     await stopLive();
     if (onStatus) onStatus("booting Csound…");
-    const cs = await boot(["-odac"]);
+    const cs = await boot(["-odac"], ctx);
     await writeFound(cs, sources, onStatus);
     if (onStatus) onStatus("compiling…");
-    const res = await cs.compileCsdText(stripOptions(csd));
-    if (res !== 0 && res !== undefined && res !== null) {
-      // some builds return 0 on success; non-zero -> surface
-    }
+    await cs.compileCsdText(stripOptions(csd));
     await cs.start();
+    try { if (ctx.state !== "running") await ctx.resume(); } catch (e) {}
     _live = cs;
-    if (onStatus) onStatus("playing");
+    if (onStatus) onStatus(ctx.state === "running" ? "playing" : "playing (audio suspended — click again)");
     return cs;
   }
 
@@ -126,5 +132,5 @@
     return new Blob([bytes], { type: "audio/wav" });
   }
 
-  root.WasmAudio = { boot, play, stopLive, render, decodeUrlToWav, encodeWav, stripOptions };
+  root.WasmAudio = { boot, play, stopLive, render, decodeUrlToWav, encodeWav, stripOptions, ctxState };
 })(window);
