@@ -14,7 +14,12 @@
   const _wavCache = new Map(); // url -> Uint8Array (decoded mono WAV)
   let _audioCtx = null;
   function audioCtx() {
-    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!_audioCtx || _audioCtx.state === "closed") {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      // match the CSD's sr=44100 so Csound's output isn't resampled/mismatched
+      try { _audioCtx = new AC({ sampleRate: 44100, latencyHint: "interactive" }); }
+      catch (e) { _audioCtx = new AC(); }
+    }
     return _audioCtx;
   }
 
@@ -22,10 +27,10 @@
     const mod = await import(/* webpackIgnore: true */ CSOUND_CDN);
     const Csound = mod.Csound || (mod.default && mod.default.Csound);
     if (!Csound) throw new Error("Could not load @csound/browser");
-    // Hand Csound our own (already-resumed) AudioContext for realtime, and use
-    // the ScriptProcessor backend (useSPN) — the most compatible path on a plain
-    // HTTPS host (no COOP/COEP / SharedArrayBuffer needed). Offline passes none.
-    const cs = await Csound(audioContext ? { audioContext, useSPN: true } : undefined);
+    // Hand Csound our own (already-resumed) AudioContext for realtime: the
+    // single-thread worklet connects to its destination and (unlike SPN) does
+    // NOT close a provided context on teardown, so it survives replays.
+    const cs = await Csound(audioContext ? { audioContext } : undefined);
     for (const o of (options || [])) await cs.setOption(o);
     return cs;
   }
