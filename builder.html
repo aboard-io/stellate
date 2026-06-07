@@ -73,6 +73,8 @@
   .ic{width:20px;height:20px;padding:0;line-height:1;border-radius:5px;background:var(--ground);border:1px solid var(--line);color:var(--dim);margin:0;font-size:.72rem}
   .ic:hover{color:var(--ink);border-color:var(--cyan)}
   .ic.fill.on{background:var(--pink);color:#180a2a;border:none;box-shadow:0 0 9px var(--pink)}
+  .trsel{margin:0;padding:0 .12rem;height:20px;font-size:.62rem;width:auto;max-width:80px;background:var(--ground);border:1px solid var(--line);border-radius:5px;color:var(--dim);font-family:inherit;cursor:pointer}
+  .trsel.on{color:#180a2a;background:var(--pink);border:none;box-shadow:0 0 8px var(--pink)}
   .cycn{min-width:13px;text-align:center;font-family:'VT323',monospace}
   .clip{position:relative;border:1px solid var(--line);border-radius:8px;min-height:38px;display:flex;align-items:center;justify-content:center;
     font-size:.7rem;font-weight:600;cursor:pointer;user-select:none;background:rgba(20,12,40,.6);color:var(--dim)}
@@ -396,10 +398,11 @@ function renderMatrix(){
       Object.assign(el("span","cycn",String(sec.cycles||1)),{}),
       btn("ic","+",()=>{sec.cycles=(sec.cycles||1)+1;renderMatrix();}),
       (()=>{const cur=sec.fill||(sec.fillInto?"drum fill":"off");
-        const b=btn("ic fill"+(cur!=="off"?" on":""),"⚡");
-        b.title="transition into next: "+cur;
-        b.onclick=(e)=>{e.stopPropagation();openPop(b,"transition →",p=>E.TRANSITIONS.forEach(o=>optBtn(p,o,(sec.fill||(sec.fillInto?"drum fill":"off"))===o,()=>{sec.fill=o;delete sec.fillInto;renderMatrix();closePop();})));};
-        return b;})(),
+        const sel=document.createElement("select"); sel.className="trsel"+(cur!=="off"?" on":"");
+        E.TRANSITIONS.forEach(o=>sel.add(new Option(o==="off"?"⚡ –":"⚡ "+o, o)));
+        sel.value=cur; sel.title="transition into next section";
+        sel.onchange=()=>{ sec.fill=sel.value; delete sec.fillInto; renderMatrix(); };
+        return sel;})(),
       (()=>{const b=btn("ic","⊕",()=>insertAfter(idx));b.title="insert section after";return b;})(),
       btn("ic","✕",()=>{state.sections.splice(idx,1);renderMatrix();})
     );
