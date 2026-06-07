@@ -258,6 +258,51 @@
     return new Blob([bytes], { type: "audio/wav" });
   }
 
+  // ---- realtime capture export (offline render is realtime in this worklet
+  // build, so capture the live output instead — audible, with progress) ----
+  function concatF32(bufs){ let n=0; for(const b of bufs) n+=b.length; const o=new Float32Array(n); let p=0; for(const b of bufs){ o.set(b,p); p+=b.length; } return o; }
+  function stereoWav(L,R,sr){
+    const n=L.length, buf=new ArrayBuffer(44+n*4), v=new DataView(buf);
+    const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+    ws(0,"RIFF");v.setUint32(4,36+n*4,true);ws(8,"WAVE");ws(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,2,true);v.setUint32(24,sr,true);v.setUint32(28,sr*4,true);v.setUint16(32,4,true);v.setUint16(34,16,true);ws(36,"data");v.setUint32(40,n*4,true);
+    let off=44; for(let i=0;i<n;i++){ let l=Math.max(-1,Math.min(1,L[i])),r=Math.max(-1,Math.min(1,R[i])); v.setInt16(off,l<0?l*0x8000:l*0x7fff,true); v.setInt16(off+2,r<0?r*0x8000:r*0x7fff,true); off+=4; }
+    return new Uint8Array(buf);
+  }
+  async function captureExport(csd, sources, estSeconds, onStatus){
+    const ctx = audioCtx(); try { ctx.resume(); } catch(e){}
+    await stopLive();
+    const cap = ctx.createScriptProcessor(8192, 2, 2);
+    const Ls=[], Rs=[];
+    cap.onaudioprocess = e => {
+      const iL=e.inputBuffer.getChannelData(0), iR=e.inputBuffer.numberOfChannels>1?e.inputBuffer.getChannelData(1):e.inputBuffer.getChannelData(0);
+      Ls.push(new Float32Array(iL)); Rs.push(new Float32Array(iR));
+      e.outputBuffer.getChannelData(0).set(iL); e.outputBuffer.getChannelData(1).set(iR);
+    };
+    cap.connect(ctx.destination);
+    const orig = AudioNode.prototype.connect;
+    AudioNode.prototype.connect = function(d,...a){ if(d===ctx.destination) return orig.call(this, cap); return orig.apply(this,[d,...a]); };
+    let cs;
+    try {
+      if(onStatus) onStatus("starting…");
+      cs = await boot(["-odac","-m0","-d"], ctx); _live = cs;
+      await writeFound(cs, sources, onStatus);
+      if(onStatus) onStatus("compiling…");
+      await cs.compileCsdText(stripOptions(csd));
+      await cs.start();
+    } finally { AudioNode.prototype.connect = orig; }
+    try { if(ctx.state!=="running") await ctx.resume(); } catch(e){}
+    const total=(estSeconds||30)+1.4, t0=performance.now();
+    await new Promise(res=>{ const iv=setInterval(()=>{ const el=(performance.now()-t0)/1000;
+      if(onStatus) onStatus("recording "+Math.min(99,Math.round(el/total*100))+"%");
+      if(el>=total){ clearInterval(iv); res(); } }, 300); });
+    try { cap.disconnect(); } catch(e){}
+    await stopLive();
+    if(onStatus) onStatus("encoding…");
+    const sr=ctx.sampleRate, L=concatF32(Ls), R=concatF32(Rs);
+    if(L.length<sr*0.2) throw new Error("captured no audio");
+    return new Blob([stereoWav(L,R,sr)], { type:"audio/wav" });
+  }
+
   async function scoreTime(){ try { return _live ? await _live.getScoreTime() : -1; } catch (e) { return -2; } }
-  root.WasmAudio = { boot, play, playLive, stopLive, render, decodeUrlToWav, encodeWav, stripOptions, ctxState, prewarm, scoreTime, _liveLog };
+  root.WasmAudio = { boot, play, playLive, stopLive, render, captureExport, decodeUrlToWav, encodeWav, stripOptions, ctxState, prewarm, scoreTime, _liveLog };
 })(window);

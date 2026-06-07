@@ -50,11 +50,11 @@ document.getElementById("play").onclick=async()=>{
 document.getElementById("stop").onclick=()=>WasmAudio.stopLive().then(()=>status("stopped"));
 async function dl(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();}
 document.getElementById("wav").onclick=async()=>{
-  try{ status("rendering…"); const b=await WasmAudio.render(await getCsd(),SOURCES,160,status); await dl(b,"vaporwave.wav"); status("WAV downloaded"); }
+  try{ status("rendering…"); const b=await WasmAudio.captureExport(await getCsd(),SOURCES,160,status); await dl(b,"vaporwave.wav"); status("WAV downloaded"); }
   catch(e){ status("render failed: "+e.message,true); console.error(e); }
 };
 document.getElementById("mp3").onclick=async()=>{
-  try{ status("rendering…"); const b=await WasmAudio.render(await getCsd(),SOURCES,160,status);
+  try{ status("rendering…"); const b=await WasmAudio.captureExport(await getCsd(),SOURCES,160,status);
     const mp3=await WasmFFmpeg.wavToMp3(new Uint8Array(await b.arrayBuffer()),160,status); await dl(mp3,"vaporwave.mp3"); status("MP3 downloaded"); }
   catch(e){ status("MP3 failed: "+e.message,true); console.error(e); }
 };
