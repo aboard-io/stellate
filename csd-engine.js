@@ -212,10 +212,13 @@
       const fsrc = sec.found&&sec.found.sourceId ? srcById[sec.found.sourceId] : null;
       const cycles=sec.cycles||1, secBeats=cycles*cycleBeats;
       if(sec.sfx && sec.sfx!=="off"){
-        const ty=SFX_NUM[sec.sfx]||6, lead=(sec.sfx==="impact"||sec.sfx==="noise")?0:4;
-        sfx.push({beat:Math.max(0,cur-lead), dur:lead?4:1.5, type:ty, amp:0.35});
+        const ty=SFX_NUM[sec.sfx]||6, hit=(sec.sfx==="impact"||sec.sfx==="noise");
+        // build-ups (riser/sweep/downlift/reverse) belong in the FINAL bar of the
+        // section, rising into the next; hits land on this section's downbeat.
+        const sbeat = hit ? cur : (cur + secBeats - 4);
+        sfx.push({beat:Math.max(0,sbeat), dur:hit?1.5:4, type:ty, amp:0.4});
       }
-      if(fsrc){ const amp=(sec.found.role==="solo")?0.42:0.05; found.push({beat:cur,dur:secBeats,amp,tableNum:fsrc.tableNum,pitch:fsrc.pitch,stretch:fsrc.stretch}); }
+      if(fsrc){ const amp=(sec.found.role==="solo")?0.45:0.22; found.push({beat:cur,dur:secBeats,amp,tableNum:fsrc.tableNum,pitch:fsrc.pitch,stretch:fsrc.stretch}); }
       for(let c=0;c<cycles;c++){
         const cycleBase=cur+c*cycleBeats;
         chords.forEach((chord,ci)=>{
