@@ -145,11 +145,13 @@
   // ---- LIVE mode: schedule each section just-in-time, reading current state ----
   // so edits to not-yet-played sections take effect when they play. Csound is
   // kept alive with `f 0`; events use absolute score time (seconds, no t-tempo).
-  function injectSection(cs, st, idx, startBeat, spb, E){
+  // NOTE: csound inputMessage schedules p2 as a delay FROM NOW (not absolute
+  // score time), so we send p2 = eventAbsoluteSeconds - currentScoreTime(now).
+  function injectSection(cs, st, idx, startBeat, spb, E, now){
     const one = Object.assign({}, st, { sections:[ st.sections[idx] ] });
     const ev = E.buildEvents(one);
     const I={pad:1,bass:2,melody:4}, D={kick:10,snare:11,hat:12};
-    const at=(b)=>((startBeat+b)*spb).toFixed(3), du=(d)=>(d*spb).toFixed(3);
+    const at=(b)=>Math.max(0.01,(startBeat+b)*spb - now).toFixed(3), du=(d)=>(d*spb).toFixed(3);
     ev.found.forEach(f=>liveSend(cs,`i 3 ${at(f.beat)} ${du(f.dur)} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.stretch}`));
     ev.pitched.forEach(p=>liveSend(cs,`i ${I[p.voice]} ${at(p.beat)} ${du(p.dur)} ${p.pch} ${p.amp.toFixed(4)}`));
     ev.drums.forEach(d=>liveSend(cs,`i ${D[d.drum]} ${at(d.beat)} ${du(d.dur)} ${d.amp.toFixed(4)}`));
@@ -182,7 +184,7 @@
       for(const sec of st.sections){ starts.push(cur); cur += (sec.cycles||1)*cycleBeats; }
       let t=0; try { t = await cs.getScoreTime(); } catch(e){}
       while(scheduled < st.sections.length && starts[scheduled]*spb <= t + 1.5){
-        injectSection(cs, st, scheduled, starts[scheduled], spb, E);
+        injectSection(cs, st, scheduled, starts[scheduled], spb, E, t);
         scheduled++;
       }
       if(scheduled >= st.sections.length && t > cur*spb + 5){ stopLive(); if(onStatus) onStatus("done"); return; }
