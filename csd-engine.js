@@ -114,15 +114,16 @@
     const fids=(opts.foundIds&&opts.foundIds.length)?opts.foundIds.slice():[null];
     let fi=0; const nextF=()=>{ const id=fids[fi%fids.length]; fi++; return id; };
     const bass=opts.bass||"simple", drums=opts.drums||"full", melody=opts.melody||"composed";
+    const altBass={simple:"walking",walking:"octaves",octaves:"simple",root:"simple",sixteenths:"dub",dub:"walking"}[bass]||"walking";
     const S=(name,o)=>Object.assign({id:sid(),name,cycles:1,pads:true,bass:"off",drums:"off",melody:"off",found:{sourceId:null,role:"bed"},fill:"off"},o);
     return [
       S("intro",      {found:{sourceId:nextF(),role:"bed"}}),
       S("verse",      {bass, found:{sourceId:nextF(),role:"bed"}}),
-      S("pre-chorus", {bass, drums:"kick", fill:"riser"}),
+      S("pre-chorus", {bass:"root", drums:"kick", fill:"riser"}),
       S("chorus",     {bass, drums, melody}),
-      S("verse 2",    {bass, drums:(drums==="off"?"kick":"full"), found:{sourceId:nextF(),role:"bed"}}),
-      S("bridge",     {melody, found:{sourceId:nextF(),role:"bed"}, fill:"drum fill"}),
-      S("chorus 2",   {bass, drums, melody}),
+      S("verse 2",    {bass:altBass, drums:(drums==="off"?"kick":"full"), found:{sourceId:nextF(),role:"bed"}}),
+      S("bridge",     {bass:"root", melody, found:{sourceId:nextF(),role:"bed"}, fill:"drum fill"}),
+      S("chorus 2",   {bass:altBass, drums, melody}),
       S("outro",      {found:{sourceId:nextF(),role:"bed"}})
     ];
   }
@@ -176,7 +177,14 @@
       {drum:"snare",beat:S+1.5,dur:0.20,amp:0.45},{drum:"snare",beat:S+1.75,dur:0.20,amp:0.48},
       {drum:"kick",beat:S+0,dur:0.30,amp:0.55}];
   }
-  const MEL_ORDERS={ arpup:[0,1,2,3,2,1,2,3], arpdown:[3,2,1,0,1,2,1,0], updown:[0,1,2,3,3,2,1,0], pentaup:[0,2,1,3,2,3,2,3] };
+  // generative melody phrases: [beatOffset, dur, leadIndex, octaveShift] over an
+  // 8-beat chord — each style has a distinct rhythm + contour (not just chord arps).
+  const MEL_PHRASES={
+    arpup:   [[0,1,0,0],[1,0.5,1,0],[1.5,0.5,2,0],[2,1,3,0],[3,1,2,0],[4,1,3,0],[5,1,0,1],[6,2,2,1]],
+    arpdown: [[0,1.5,3,1],[1.5,0.5,2,1],[2,1,3,0],[3,1,2,0],[4,1,1,0],[5,1,2,0],[6,2,0,0]],
+    updown:  [[0,1,0,0],[1,1,2,0],[2,1,3,0],[3,1,2,1],[4,1,3,0],[5,1,2,0],[6,1,1,0],[7,1,0,0]],
+    pentaup: [[0,0.5,0,0],[0.5,0.5,2,0],[1,1,3,0],[2,0.5,1,1],[2.5,0.5,3,0],[3,1,0,1],[4.5,0.5,2,0],[5,1,3,0],[6,2,0,1]]
+  };
   function melodyEvents(style,base,prg,chords,k,rng){
     const out=[], cycleBeats=chords.length*CHORD_BEATS;
     const comp = style==="composed"?prg.composed : style==="composed2"?prg.composed2 : null;
@@ -184,10 +192,14 @@
     let gen=style; if(style==="composed"||style==="composed2") gen="arpup";
     chords.forEach((chord,ci)=>{
       const Sb=base+ci*CHORD_BEATS, lead=chord.lead.map(p=>pchAdd(p,k));
-      if(gen==="sparse"){ out.push({voice:"melody",beat:Sb,dur:3,pch:lead[2],amp:0.14},{voice:"melody",beat:Sb+4,dur:3,pch:lead[3],amp:0.14}); return; }
+      const note=(o,d,idx,oct)=>out.push({voice:"melody",beat:Sb+o,dur:d,pch:pchAdd(lead[idx],12*(oct||0)),amp:0.14});
+      if(gen==="sparse"){ note(0,3,2,0); note(4,3,3,0); return; }
       if(gen==="double"){ const pat=[0,1,2,3,0,1,2,3,1,2,3,0,2,3,0,1]; for(let i=0;i<16;i++) out.push({voice:"melody",beat:Sb+i*0.5,dur:0.45,pch:lead[pat[i]],amp:0.12}); return; }
-      let order=MEL_ORDERS[gen]; if(!order){ order=[]; for(let i=0;i<8;i++) order.push(Math.floor(rng()*4)); }
-      for(let i=0;i<8;i++) out.push({voice:"melody",beat:Sb+i,dur:0.9,pch:lead[order[i]],amp:0.14});
+      const ph=MEL_PHRASES[gen];
+      if(ph){ ph.forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
+      // wander: rhythmic random walk over chord tones, occasional octave leap
+      const rh=[1,0.5,0.5,1,1,2]; let t=0,i=0,prev=Math.floor(rng()*4);
+      while(t<8){ const d=rh[i%rh.length]; prev=Math.max(0,Math.min(3,prev+(Math.floor(rng()*3)-1))); note(t,Math.min(d,8-t)*0.92,prev,rng()<0.18?1:0); t+=d; i++; }
     });
     return out;
   }
@@ -307,7 +319,7 @@ endin
 instr 3
   iamp=p5
   aenv linsegr 0, 1.5, iamp, p3-3.0, iamp, 1.5, 0
-  asig syncgrain iamp, 28, p7, 0.12, p8, p6, giwin, 100
+  asig syncgrain 1, 28, p7, 0.12, p8, p6, giwin, 100
   asig moogladder asig, 2600, 0.1
   asig=asig*aenv
   gaMixL=gaMixL+asig*0.55
