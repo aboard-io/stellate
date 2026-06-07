@@ -13,7 +13,7 @@
     --pico-font-size:100%; --pico-border-radius:9px;
     --pico-primary:#ff71ce; --pico-primary-background:#ff71ce; --pico-primary-hover-background:#ff8fd8;
     --pink:#ff71ce; --cyan:#01cdfe; --purple:#b967ff; --mint:#05ffa1; --yellow:#fffb96;
-    --c-pads:var(--purple); --c-bass:var(--mint); --c-drums:var(--pink); --c-melody:var(--yellow); --c-found:var(--cyan);
+    --c-pads:var(--purple); --c-bass:var(--mint); --c-drums:var(--pink); --c-melody:var(--yellow); --c-found:var(--cyan); --c-sfx:#cbb6ff;
     --ink:#f3e9ff; --dim:#b9a9e0; --line:#3a2a64; --panel:rgba(24,14,46,.78); --panel2:rgba(38,22,72,.7); --ground:#120a24;
     --disp:'Orbitron',sans-serif;
   }
@@ -46,7 +46,7 @@
 
   /* matrix */
   .matrix{display:flex;flex-direction:column;gap:0}
-  .mrow{display:grid;grid-template-columns:150px repeat(5,minmax(66px,1fr));gap:5px;align-items:stretch}
+  .mrow{display:grid;grid-template-columns:150px repeat(6,minmax(56px,1fr));gap:5px;align-items:stretch}
   .headrow{margin-bottom:5px;position:sticky;top:0;z-index:5;background:linear-gradient(180deg,var(--ground),rgba(18,10,36,.7));padding:3px 0}
   .hcell{display:flex;align-items:center;justify-content:center;gap:.3rem;font-family:var(--disp);font-size:.66rem;letter-spacing:.04em;color:var(--ink);padding:.25rem;border-radius:7px}
   .hcell.synth{cursor:pointer;border:1px solid transparent}
@@ -83,7 +83,7 @@
 
   .srcrow{display:grid;grid-template-columns:1fr 2fr 64px 64px 30px;gap:.4rem;align-items:center;margin-bottom:.35rem}
   .srcrow input{margin:0}
-  @media(max-width:720px){.srcrow{grid-template-columns:1fr 1fr}.mrow{grid-template-columns:120px repeat(5,minmax(48px,1fr))}}
+  @media(max-width:720px){.srcrow{grid-template-columns:1fr 1fr}.mrow{grid-template-columns:120px repeat(6,minmax(44px,1fr))}}
 
   #pop{position:fixed;z-index:200;background:var(--panel2);border:1px solid var(--purple);border-radius:13px;padding:.6rem;box-shadow:0 0 0 1px rgba(185,103,255,.4),0 20px 60px rgba(0,0,0,.6);display:none;min-width:180px;max-height:80vh;overflow:auto;backdrop-filter:blur(10px)}
   #pop .ttl{font-family:var(--disp);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);margin:.1rem .2rem .45rem}
@@ -111,7 +111,7 @@
     .sub{font-size:.92rem}
     section.card{padding:.7rem .65rem;border-radius:11px}
     .knobs{grid-template-columns:1fr 1fr}
-    .mrow{grid-template-columns:104px repeat(5,minmax(40px,1fr));gap:4px}
+    .mrow{grid-template-columns:96px repeat(6,minmax(34px,1fr));gap:3px}
     .hcell{font-size:.58rem;padding:.2rem .1rem}
     .col-h{padding:.25rem .3rem}
     .col-h input[type=text]{font-size:.7rem}
@@ -183,6 +183,7 @@
       <span><i class="dot" style="color:var(--c-drums)"></i>Drums</span>
       <span><i class="dot" style="color:var(--c-melody)"></i>Melody</span>
       <span><i class="dot" style="color:var(--c-found)"></i>Found</span>
+      <span><i class="dot" style="color:var(--c-sfx)"></i>SFX</span>
       <span>· drag ⠿ to reorder · ⚡ fill · ＋ insert</span>
     </div>
   </section>
@@ -237,6 +238,7 @@ const LAYERS=[
   {key:"drums", label:"Drums", color:"var(--c-drums)", kind:"opts", opts:E.DRUM_PATTERNS},
   {key:"melody",label:"Melody",color:"var(--c-melody)",kind:"opts", opts:E.MELODY_PATTERNS},
   {key:"found", label:"Found", color:"var(--c-found)", kind:"found"},
+  {key:"sfx",   label:"SFX",   color:"var(--c-sfx)",   kind:"opts", opts:E.SFX_TYPES},
 ];
 const EDITORS={
   pads:[["wave","wave"],["cutoff","r",300,5000,10],["res","r",0,.6,.01],["detune","r",0,.02,.001],["attack","r",.05,3,.05],["level","r",0,1,.01],["send","r",0,1,.01],["dsend","r",0,1,.01]],
@@ -378,7 +380,7 @@ function renderMatrix(){
   LAYERS.forEach(l=>{
     const c=el("div","hcell");c.style.color=l.color;
     c.innerHTML=`<i class="dot"></i>${l.label}`;
-    if(l.key!=="found"){c.classList.add("synth");c.title="edit "+l.label+" synth";c.onclick=()=>openEditor(l.key);c.innerHTML+=' <span style="font-size:.7rem">⚙</span>';}
+    if(EDITORS[l.key]){c.classList.add("synth");c.title="edit "+l.label+" synth";c.onclick=()=>openEditor(l.key);c.innerHTML+=' <span style="font-size:.7rem">⚙</span>';}
     hr.appendChild(c);
   });
   m.appendChild(hr);
