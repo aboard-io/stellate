@@ -147,7 +147,6 @@
 <main class="container">
   <hgroup>
     <h1>VAPORWAVE BUILDER</h1>
-    <p class="sub">ヴェイパーウェイヴ・ビルダー — Royal Road harmony, Csound in your browser. time ↓ · instruments → · ▶ a cell to audition</p>
   </hgroup>
 
   <section class="card">
@@ -524,7 +523,7 @@ async function preview(sec,layer){
   try{setStatus("audition "+layer.label+"…");await WasmAudio.play(E.buildCsd(mini),neededSources(mini),setStatus);}catch(e){setStatus("preview failed: "+e.message,true);console.error(e);}
 }
 function download(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);}
-async function renderWavBlob(){return WasmAudio.render(E.buildCsd(state),neededSources(state),estSeconds(),setStatus);}
+async function renderWavBlob(){return WasmAudio.captureExport(E.buildCsd(state),neededSources(state),estSeconds(),setStatus);}
 async function doWav(){try{download(await renderWavBlob(),"vaporwave.wav");setStatus("WAV ✓");}catch(e){setStatus("WAV failed: "+e.message,true);}}
 async function doMp3(){try{setStatus("rendering…");const w=await renderWavBlob();const b=await WasmFFmpeg.wavToMp3(new Uint8Array(await w.arrayBuffer()),160,setStatus);download(b,"vaporwave.mp3");setStatus("MP3 ✓");}catch(e){setStatus("MP3 failed: "+e.message,true);}}
 function doMidi(){try{download(new Blob([MidiExport.buildMidi(state)],{type:"audio/midi"}),"vaporwave.mid");setStatus("MIDI ✓");}catch(e){setStatus("MIDI failed: "+e.message,true);console.error(e);}}
