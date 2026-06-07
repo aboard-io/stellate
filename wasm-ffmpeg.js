@@ -29,11 +29,15 @@
         bits = dv.getUint16(off+22, true);
       } else if (id === "data"){
         const start = off + 8;
+        const avail = bytes.byteLength - start;
+        // Csound may leave the data-chunk size as 0/placeholder when not fully
+        // finalized — fall back to the actual remaining bytes.
+        const dsz = (sz > 0 && sz <= avail) ? sz : avail;
         let samples;
         if (bits === 16){
-          samples = new Int16Array(bytes.buffer, bytes.byteOffset + start, sz >> 1);
+          samples = new Int16Array(bytes.buffer, bytes.byteOffset + start, dsz >> 1);
         } else { // 32-bit float fallback
-          const f = new Float32Array(bytes.buffer, bytes.byteOffset + start, sz >> 2);
+          const f = new Float32Array(bytes.buffer, bytes.byteOffset + start, dsz >> 2);
           samples = new Int16Array(f.length);
           for (let i=0;i<f.length;i++){ const s=Math.max(-1,Math.min(1,f[i])); samples[i] = s<0 ? s*0x8000 : s*0x7fff; }
         }

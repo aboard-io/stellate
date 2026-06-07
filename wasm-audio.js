@@ -213,17 +213,19 @@
     return cs;
   }
 
+  const delay = (ms) => new Promise(r => setTimeout(r, ms));
+  // cap how long we wait on a promise (csound stop() can hang and "time out")
+  const capped = (pr, ms) => Promise.race([Promise.resolve(pr).catch(()=>{}), delay(ms)]);
+
   async function stopLive() {
     _liveAbort = true;
     if (_liveTimer) { clearTimeout(_liveTimer); _liveTimer = null; }
     if (_live) {
       const c = _live; _live = null;
-      try { await c.stop(); } catch (e) {}
-      try { if (c.destroy) await c.destroy(); } catch (e) {}
+      try { await capped(c.stop && c.stop(), 500); } catch (e) {}
+      try { await capped(c.destroy && c.destroy(), 500); } catch (e) {}
     }
   }
-
-  const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
   // offline render -> WAV Blob. Tears down any live instance first — Csound WASM
   // does not tolerate two concurrent instances (that was the OOB crash).
@@ -247,10 +249,10 @@
       let n = 0; try { const b = await cs.fs.readFile("render.wav"); n = b ? b.length : 0; } catch (e) {}
       if (n > 1000 && n === last) { if (++stable >= 2) break; } else { stable = 0; last = n; }
     }
-    try { await cs.stop(); } catch (e) {}
+    try { await capped(cs.stop && cs.stop(), 1500); } catch (e) {}   // finalize WAV header
     await delay(150);
     let bytes = null; try { bytes = await cs.fs.readFile("render.wav"); } catch (e) {}
-    _live = null; try { if (cs.destroy) await cs.destroy(); } catch (e) {}
+    _live = null; try { await capped(cs.destroy && cs.destroy(), 500); } catch (e) {}
     if (!bytes || bytes.length < 64) throw new Error("render produced no audio");
     if (onStatus) onStatus("done");
     return new Blob([bytes], { type: "audio/wav" });
