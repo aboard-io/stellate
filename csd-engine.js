@@ -73,8 +73,9 @@
   const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub"];
   const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double"];
   const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap"];
-  const SFX_TYPES=["off","riser","sweep","downlift","impact","reverse","noise"];
   const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
+  // the ⚡ transition control: what happens at the end of a section, into the next
+  const TRANSITIONS=["off","drum fill","riser","sweep","downlift","impact","reverse","noise"];
 
   function defaultInstruments(){
     return {
@@ -113,14 +114,14 @@
     const fids=(opts.foundIds&&opts.foundIds.length)?opts.foundIds.slice():[null];
     let fi=0; const nextF=()=>{ const id=fids[fi%fids.length]; fi++; return id; };
     const bass=opts.bass||"simple", drums=opts.drums||"full", melody=opts.melody||"composed";
-    const S=(name,o)=>Object.assign({id:sid(),name,cycles:1,pads:true,bass:"off",drums:"off",melody:"off",found:{sourceId:null,role:"bed"},fillInto:false},o);
+    const S=(name,o)=>Object.assign({id:sid(),name,cycles:1,pads:true,bass:"off",drums:"off",melody:"off",found:{sourceId:null,role:"bed"},fill:"off"},o);
     return [
       S("intro",      {found:{sourceId:nextF(),role:"bed"}}),
       S("verse",      {bass, found:{sourceId:nextF(),role:"bed"}}),
-      S("pre-chorus", {bass, drums:"kick", fillInto:true}),
+      S("pre-chorus", {bass, drums:"kick", fill:"riser"}),
       S("chorus",     {bass, drums, melody}),
       S("verse 2",    {bass, drums:(drums==="off"?"kick":"full"), found:{sourceId:nextF(),role:"bed"}}),
-      S("bridge",     {melody, found:{sourceId:nextF(),role:"bed"}, fillInto:true}),
+      S("bridge",     {melody, found:{sourceId:nextF(),role:"bed"}, fill:"drum fill"}),
       S("chorus 2",   {bass, drums, melody}),
       S("outro",      {found:{sourceId:nextF(),role:"bed"}})
     ];
@@ -211,13 +212,6 @@
     for(const sec of state.sections){
       const fsrc = sec.found&&sec.found.sourceId ? srcById[sec.found.sourceId] : null;
       const cycles=sec.cycles||1, secBeats=cycles*cycleBeats;
-      if(sec.sfx && sec.sfx!=="off"){
-        const ty=SFX_NUM[sec.sfx]||6, hit=(sec.sfx==="impact"||sec.sfx==="noise");
-        // build-ups (riser/sweep/downlift/reverse) belong in the FINAL bar of the
-        // section, rising into the next; hits land on this section's downbeat.
-        const sbeat = hit ? cur : (cur + secBeats - 4);
-        sfx.push({beat:Math.max(0,sbeat), dur:hit?1.5:4, type:ty, amp:0.4});
-      }
       if(fsrc){ const amp=(sec.found.role==="solo")?0.45:0.22; found.push({beat:cur,dur:secBeats,amp,tableNum:fsrc.tableNum,pitch:fsrc.pitch,stretch:fsrc.stretch}); }
       for(let c=0;c<cycles;c++){
         const cycleBase=cur+c*cycleBeats;
@@ -229,7 +223,15 @@
         });
         if(sec.melody&&sec.melody!=="off") melodyEvents(sec.melody,cycleBase,prg,chords,k,rng).forEach(e=>pitched.push(e));
       }
-      if(sec.fillInto) fillEvents(cur+secBeats-2).forEach(e=>drums.push(e));
+      // ⚡ transition into the next section
+      const tr = sec.fill || (sec.fillInto ? "drum fill" : "off");
+      if(tr==="drum fill"){
+        fillEvents(cur+secBeats-2).forEach(e=>drums.push(e));
+      } else if(SFX_NUM[tr]){
+        const hit=(tr==="impact"||tr==="noise");
+        const sbeat = hit ? cur+secBeats : cur+secBeats-4;   // hit on next downbeat; build in final bar
+        sfx.push({beat:Math.max(0,sbeat), dur:hit?1.5:4, type:SFX_NUM[tr], amp:0.4});
+      }
       cur+=secBeats;
     }
     const grng=mulberry32(((state.seed??1)+777)>>>0);
@@ -460,7 +462,7 @@ endin
   }
 
   const api={ buildCsd, buildEvents, defaultState, defaultInstruments, generateSong, voicing,
-    PROGRESSIONS, STYLES, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, SFX_TYPES, pchAdd, pchToMidi };
+    PROGRESSIONS, STYLES, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS, pchAdd, pchToMidi };
   if(typeof module!=="undefined" && module.exports) module.exports=api;
   else root.CsdEngine=api;
 })(typeof window!=="undefined" ? window : globalThis);

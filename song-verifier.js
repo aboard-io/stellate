@@ -81,9 +81,9 @@
     dims.push({ name:"Space / texture", w:0.8, score: Math.max(0,space), note:"" });
 
     // 8 — tension & release
-    const fills = secs.filter(s=>s.fillInto).length;
-    dims.push({ name:"Tension & release", w:0.8, score: fills>=1?100:50, note: fills+" fills" });
-    if(fills===0) sugg.push("Add a drum fill (⚡) into the chorus for lift.");
+    const fills = secs.filter(s=>(s.fill&&s.fill!=="off")||s.fillInto).length;
+    dims.push({ name:"Tension & release", w:0.8, score: fills>=1?100:50, note: fills+" transitions" });
+    if(fills===0) sugg.push("Add a transition (⚡ → fill / riser) into the chorus for lift.");
 
     // 9 — form / length
     dims.push({ name:"Form", w:0.8, score: secs.length>=6?100:secs.length>=4?75:40, note: secs.length+" sections" });
@@ -107,7 +107,7 @@
     if(!c.bass || c.bass==="off") c.bass = "simple";
     if(!c.drums || c.drums==="off") c.drums = "full";
     if(!c.melody || c.melody==="off") c.melody = (s.progression==="royal_road")?"composed":"arpup";
-    if(peak>0) secs[peak-1].fillInto = true;           // fill into the drop
+    if(peak>0){ secs[peak-1].fill = "riser"; delete secs[peak-1].fillInto; }   // build into the drop
     // ensure a second chorus-level section (a repeated hook)
     const hi = energy.map(e=>e>=Math.max(...energy)*0.85).filter(Boolean).length;
     if(hi<2 && secs.length>peak+2){
