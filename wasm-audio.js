@@ -138,7 +138,60 @@
     return csd.replace(/<CsOptions>[\s\S]*?<\/CsOptions>\s*/i, "");
   }
 
-  let _live = null;
+  let _live = null, _liveTimer = null, _liveAbort = false;
+  const _liveLog = [];
+  function liveSend(cs, msg){ try { cs.inputMessage(msg); } catch (e) {} if (_liveLog.length < 500) _liveLog.push(msg); }
+
+  // ---- LIVE mode: schedule each section just-in-time, reading current state ----
+  // so edits to not-yet-played sections take effect when they play. Csound is
+  // kept alive with `f 0`; events use absolute score time (seconds, no t-tempo).
+  function injectSection(cs, st, idx, startBeat, spb, E){
+    const one = Object.assign({}, st, { sections:[ st.sections[idx] ] });
+    const ev = E.buildEvents(one);
+    const I={pad:1,bass:2,melody:4}, D={kick:10,snare:11,hat:12};
+    const at=(b)=>((startBeat+b)*spb).toFixed(3), du=(d)=>(d*spb).toFixed(3);
+    ev.found.forEach(f=>liveSend(cs,`i 3 ${at(f.beat)} ${du(f.dur)} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.stretch}`));
+    ev.pitched.forEach(p=>liveSend(cs,`i ${I[p.voice]} ${at(p.beat)} ${du(p.dur)} ${p.pch} ${p.amp.toFixed(4)}`));
+    ev.drums.forEach(d=>liveSend(cs,`i ${D[d.drum]} ${at(d.beat)} ${du(d.dur)} ${d.amp.toFixed(4)}`));
+    ev.sfx.forEach(s=>liveSend(cs,`i 20 ${at(s.beat)} ${du(s.dur)} ${s.type} ${s.amp}`));
+  }
+  async function playLive(getState, sources, onStatus){
+    const E = root.CsdEngine; if(!E) throw new Error("engine missing");
+    const ctx = audioCtx(); try { ctx.resume(); } catch(e){}
+    await stopLive();
+    _liveAbort = false; _liveLog.length = 0;
+    const st0 = getState();
+    if(onStatus) onStatus("booting Csound…");
+    const cs = await boot(["-odac"], ctx);
+    _live = cs;
+    await writeFound(cs, sources, onStatus);
+    if(onStatus) onStatus("compiling…");
+    const orc = stripOptions(E.buildCsd(st0)).replace(/<CsScore>[\s\S]*?<\/CsScore>/, "<CsScore>\nf 0 360000\n</CsScore>");
+    await cs.compileCsdText(orc);
+    await cs.start();
+    try { if(ctx.state!=="running") await ctx.resume(); } catch(e){}
+    liveSend(cs,"i 98 0 360000"); liveSend(cs,"i 99 0 360000"); liveSend(cs,"i 100 0 360000");
+    if(onStatus) onStatus(ctx.state==="running" ? "playing (live)" : "playing (tap again if silent)");
+    let scheduled = 0;
+    const tick = async () => {
+      if(_liveAbort || _live!==cs) return;
+      const st = getState();
+      const prg = E.PROGRESSIONS[st.progression] || E.PROGRESSIONS.royal_road;
+      const cycleBeats = prg.chords.length*8, spb = 60/st.bpm;
+      const starts=[]; let cur=0;
+      for(const sec of st.sections){ starts.push(cur); cur += (sec.cycles||1)*cycleBeats; }
+      let t=0; try { t = await cs.getScoreTime(); } catch(e){}
+      while(scheduled < st.sections.length && starts[scheduled]*spb <= t + 1.5){
+        injectSection(cs, st, scheduled, starts[scheduled], spb, E);
+        scheduled++;
+      }
+      if(scheduled >= st.sections.length && t > cur*spb + 5){ stopLive(); if(onStatus) onStatus("done"); return; }
+      _liveTimer = setTimeout(tick, 150);
+    };
+    tick();
+    return cs;
+  }
+
   async function play(csd, sources, onStatus) {
     // CRITICAL: resume the AudioContext synchronously, inside the click's
     // user-gesture window, BEFORE any await — otherwise it stays suspended
@@ -159,6 +212,8 @@
   }
 
   async function stopLive() {
+    _liveAbort = true;
+    if (_liveTimer) { clearTimeout(_liveTimer); _liveTimer = null; }
     if (_live) {
       const c = _live; _live = null;
       try { await c.stop(); } catch (e) {}
@@ -199,5 +254,5 @@
     return new Blob([bytes], { type: "audio/wav" });
   }
 
-  root.WasmAudio = { boot, play, stopLive, render, decodeUrlToWav, encodeWav, stripOptions, ctxState, prewarm };
+  root.WasmAudio = { boot, play, playLive, stopLive, render, decodeUrlToWav, encodeWav, stripOptions, ctxState, prewarm, _liveLog };
 })(window);
