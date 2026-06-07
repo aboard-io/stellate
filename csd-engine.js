@@ -73,6 +73,8 @@
   const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub"];
   const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double"];
   const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap"];
+  const SFX_TYPES=["off","riser","sweep","downlift","impact","reverse","noise"];
+  const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
 
   function defaultInstruments(){
     return {
@@ -205,11 +207,15 @@
     const srcById={};
     state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".wav"),pitch:s.pitch??0.78,stretch:s.stretch??0.45}; });
     const rng=mulberry32((state.seed??1)>>>0);
-    const pitched=[], drums=[], found=[];
+    const pitched=[], drums=[], found=[], sfx=[];
     let cur=0;
     for(const sec of state.sections){
       const fsrc = sec.found&&sec.found.sourceId ? srcById[sec.found.sourceId] : null;
       const cycles=sec.cycles||1, secBeats=cycles*cycleBeats;
+      if(sec.sfx && sec.sfx!=="off"){
+        const ty=SFX_NUM[sec.sfx]||6, lead=(sec.sfx==="impact"||sec.sfx==="noise")?0:4;
+        sfx.push({beat:Math.max(0,cur-lead), dur:lead?4:1.5, type:ty, amp:0.35});
+      }
       if(fsrc){ const amp=(sec.found.role==="solo")?0.42:0.05; found.push({beat:cur,dur:secBeats,amp,tableNum:fsrc.tableNum,pitch:fsrc.pitch,stretch:fsrc.stretch}); }
       for(let c=0;c<cycles;c++){
         const cycleBase=cur+c*cycleBeats;
@@ -227,7 +233,7 @@
     const grng=mulberry32(((state.seed??1)+777)>>>0);
     applyGroove(pitched, state.swing, state.humanize, grng);
     applyGroove(drums,   state.swing, state.humanize, grng);
-    return { bpm:state.bpm, totalBeats:cur+8, pitched, drums, found, srcById };
+    return { bpm:state.bpm, totalBeats:cur+8, pitched, drums, found, sfx, srcById };
   }
 
   // ---------- orchestra ----------
@@ -360,6 +366,50 @@ instr 12
   gaMixR=gaMixR+asig*0.7
 endin
 
+instr 20
+  itype=p4
+  iamp=p5
+  if (itype == 1) then
+    kc expseg 300, p3, 8000
+    ke linseg 0, p3*0.9, iamp, p3*0.1, iamp*1.2
+    an noise 1, 0
+    an moogladder an, kc, 0.3
+    asig = an*ke
+  elseif (itype == 2) then
+    kf expseg 400, p3, 6000
+    an noise 1, 0
+    an butbp an, kf, kf*0.4
+    asig = an*iamp*1.5
+  elseif (itype == 3) then
+    kc expseg 8000, p3, 300
+    ke linseg iamp, p3*0.8, iamp, p3*0.2, 0
+    an noise 1, 0
+    an moogladder an, kc, 0.3
+    asig = an*ke
+  elseif (itype == 4) then
+    ke expon iamp, p3, 0.001
+    kp expseg 120, 0.3, 40
+    aboom oscili 1, kp
+    an noise 0.5, 0
+    an butlp an, 1200
+    asig = (aboom + an)*ke
+  elseif (itype == 5) then
+    ke linseg 0, p3*0.95, iamp, p3*0.05, 0
+    an noise 1, 0
+    an buthp an, 3000
+    asig = an*ke
+  else
+    ke expon iamp, p3, 0.001
+    an noise 1, 0
+    asig = an*ke
+  endif
+  asig clip asig, 0, 0.9
+  gaMixL=gaMixL+asig
+  gaMixR=gaMixR+asig
+  gaRevL=gaRevL+asig*0.3
+  gaRevR=gaRevR+asig*0.3
+endin
+
 instr 98
   abufL delayr 2.0
   atL deltap ${dsec}
@@ -403,11 +453,12 @@ endin
     ev.pitched.forEach(p=>L.push(`i ${inst[p.voice]} ${p.beat.toFixed(3)} ${p.dur.toFixed(3)} ${p.pch} ${p.amp.toFixed(4)}`));
     const dinst={kick:10,snare:11,hat:12};
     ev.drums.forEach(d=>L.push(`i ${dinst[d.drum]} ${d.beat.toFixed(3)} ${d.dur.toFixed(3)} ${d.amp.toFixed(4)}`));
+    ev.sfx.forEach(s=>L.push(`i 20 ${s.beat.toFixed(3)} ${s.dur} ${s.type} ${s.amp}`));
     return orchestra(state,srcByTable)+"\n<CsScore>\n"+L.join("\n")+"\ne\n</CsScore>\n</CsoundSynthesizer>\n";
   }
 
   const api={ buildCsd, buildEvents, defaultState, defaultInstruments, generateSong, voicing,
-    PROGRESSIONS, STYLES, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, pchAdd, pchToMidi };
+    PROGRESSIONS, STYLES, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, SFX_TYPES, pchAdd, pchToMidi };
   if(typeof module!=="undefined" && module.exports) module.exports=api;
   else root.CsdEngine=api;
 })(typeof window!=="undefined" ? window : globalThis);
