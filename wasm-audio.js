@@ -164,7 +164,7 @@
     _liveAbort = false; _liveLog.length = 0;
     const st0 = getState();
     if(onStatus) onStatus("booting Csound…");
-    const cs = await boot(["-odac"], ctx);
+    const cs = await boot(["-odac","-m0","-d"], ctx);
     _live = cs;
     await writeFound(cs, sources, onStatus);
     if(onStatus) onStatus("compiling…");
@@ -202,7 +202,7 @@
     try { ctx.resume(); } catch (e) {}
     await stopLive();
     if (onStatus) onStatus("booting Csound…");
-    const cs = await boot(["-odac"], ctx);
+    const cs = await boot(["-odac","-m0","-d"], ctx);
     await writeFound(cs, sources, onStatus);
     if (onStatus) onStatus("compiling…");
     await cs.compileCsdText(stripOptions(csd));
@@ -230,7 +230,7 @@
   async function render(csd, sources, estSeconds, onStatus) {
     await stopLive();
     if (onStatus) onStatus("booting (offline)…");
-    const cs = await boot(["--nosound", "-W", "--output=render.wav"]);
+    const cs = await boot(["--nosound","-m0","-d","-W","--output=render.wav"]);
     _live = cs;
     await writeFound(cs, sources, onStatus);
     if (onStatus) onStatus("compiling…");
@@ -256,5 +256,6 @@
     return new Blob([bytes], { type: "audio/wav" });
   }
 
-  root.WasmAudio = { boot, play, playLive, stopLive, render, decodeUrlToWav, encodeWav, stripOptions, ctxState, prewarm, _liveLog };
+  async function scoreTime(){ try { return _live ? await _live.getScoreTime() : -1; } catch (e) { return -2; } }
+  root.WasmAudio = { boot, play, playLive, stopLive, render, decodeUrlToWav, encodeWav, stripOptions, ctxState, prewarm, scoreTime, _liveLog };
 })(window);
