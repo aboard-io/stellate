@@ -152,7 +152,7 @@
     const ev = E.buildEvents(one);
     const I={pad:1,bass:2,melody:4}, D={kick:10,snare:11,hat:12};
     const at=(b)=>Math.max(0.01,(startBeat+b)*spb - now).toFixed(3), du=(d)=>(d*spb).toFixed(3);
-    ev.found.forEach(f=>liveSend(cs,`i 3 ${at(f.beat)} ${du(f.dur)} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.stretch}`));
+    ev.found.forEach(f=>liveSend(cs,`i 3 ${at(f.beat)} ${du(f.dur)} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.stretch} ${f.cutoff}`));
     ev.pitched.forEach(p=>liveSend(cs,`i ${I[p.voice]} ${at(p.beat)} ${du(p.dur)} ${p.pch} ${p.amp.toFixed(4)}`));
     ev.drums.forEach(d=>liveSend(cs,`i ${D[d.drum]} ${at(d.beat)} ${du(d.dur)} ${d.amp.toFixed(4)}`));
     ev.sfx.forEach(s=>liveSend(cs,`i 20 ${at(s.beat)} ${du(s.dur)} ${s.type} ${s.amp}`));

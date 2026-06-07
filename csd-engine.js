@@ -217,14 +217,14 @@
     const prg=PROGRESSIONS[state.progression]||PROGRESSIONS.royal_road;
     const chords=prg.chords, k=state.keyOffset|0, cycleBeats=chords.length*CHORD_BEATS;
     const srcById={};
-    state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".wav"),pitch:s.pitch??0.78,stretch:s.stretch??0.45}; });
+    state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".wav"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600}; });
     const rng=mulberry32((state.seed??1)>>>0);
     const pitched=[], drums=[], found=[], sfx=[];
     let cur=0;
     for(const sec of state.sections){
       const fsrc = sec.found&&sec.found.sourceId ? srcById[sec.found.sourceId] : null;
       const cycles=sec.cycles||1, secBeats=cycles*cycleBeats;
-      if(fsrc){ const amp=(sec.found.role==="solo")?0.45:0.22; found.push({beat:cur,dur:secBeats,amp,tableNum:fsrc.tableNum,pitch:fsrc.pitch,stretch:fsrc.stretch}); }
+      if(fsrc){ found.push({beat:cur,dur:secBeats,amp:fsrc.vol,tableNum:fsrc.tableNum,pitch:fsrc.pitch,stretch:fsrc.stretch,cutoff:fsrc.cutoff}); }
       for(let c=0;c<cycles;c++){
         const cycleBase=cur+c*cycleBeats;
         chords.forEach((chord,ci)=>{
@@ -319,8 +319,9 @@ endin
 instr 3
   iamp=p5
   aenv linsegr 0, 1.5, iamp, p3-3.0, iamp, 1.5, 0
+  icut = (p9 > 0 ? p9 : 2600)
   asig syncgrain 1, 28, p7, 0.12, p8, p6, giwin, 100
-  asig moogladder asig, 2600, 0.1
+  asig moogladder asig, icut, 0.1
   asig=asig*aenv
   gaMixL=gaMixL+asig*0.55
   gaMixR=gaMixR+asig*0.55
@@ -464,7 +465,7 @@ endin
     const used=new Set(ev.found.map(f=>f.tableNum));
     const srcByTable=Object.values(ev.srcById).filter(s=>used.has(s.tableNum)).sort((a,b)=>a.tableNum-b.tableNum);
     const L=[`t 0 ${state.bpm}`, `i 100 0 ${ev.totalBeats}`, `i 99 0 ${ev.totalBeats}`, `i 98 0 ${ev.totalBeats}`];
-    ev.found.forEach(f=>L.push(`i 3 ${f.beat.toFixed(3)} ${f.dur} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.stretch}`));
+    ev.found.forEach(f=>L.push(`i 3 ${f.beat.toFixed(3)} ${f.dur} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.stretch} ${f.cutoff}`));
     const inst={pad:1,bass:2,melody:4};
     ev.pitched.forEach(p=>L.push(`i ${inst[p.voice]} ${p.beat.toFixed(3)} ${p.dur.toFixed(3)} ${p.pch} ${p.amp.toFixed(4)}`));
     const dinst={kick:10,snare:11,hat:12};
