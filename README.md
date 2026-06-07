@@ -167,6 +167,16 @@ A learned discriminator would be the next rung — the honest gate ships now.
 Found sounds are cached in **IndexedDB**, so they survive reloads without
 re-hitting the Internet Archive. The UI is mobile-responsive.
 
+**SFX channel** — a 6th matrix column of transition one-shots (riser / sweep /
+downlift / impact / reverse swell / noise), one per section, routed to mix +
+reverb.
+
+**Live editing** — Play uses a just-in-time scheduler (`playLive` in
+`wasm-audio.js`): Csound is kept alive with `f 0` and each section's events are
+injected ~1.5s before they play via `inputMessage`, reading the *current* state
+each time. So edits to a section that hasn't played yet take effect when it
+plays. (Verified: a section toggled drums-on mid-playback comes out with drums.)
+
 `csd-engine.js` is the same engine as `royal-road.csd`; only the score is
 data-driven so the UI can rearrange it. The generator is verified offline
 (`engine.test.js` renders every progression / key / melody through real

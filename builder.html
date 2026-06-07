@@ -470,7 +470,7 @@ function tick(){
 function stopPlayhead(){phOn=false;cancelAnimationFrame(phRAF);document.querySelectorAll(".secrow.playing").forEach(e=>e.classList.remove("playing"));}
 
 // ---- transport ----
-async function doPlay(){try{setStatus("starting…");await WasmAudio.play(E.buildCsd(state),neededSources(state),setStatus);startPlayhead();}catch(e){setStatus("play failed: "+e.message,true);console.error(e);}}
+async function doPlay(){try{setStatus("starting…");await WasmAudio.playLive(()=>state,neededSources(state),setStatus);startPlayhead();}catch(e){setStatus("play failed: "+e.message,true);console.error(e);}}
 async function doStop(){stopPlayhead();try{await WasmAudio.stopLive();setStatus("stopped");}catch(e){}}
 function previewSec(sec,layer,src){
   const b={id:"pv",name:"pv",cycles:1,pads:false,bass:"off",drums:"off",melody:"off",found:{sourceId:null,role:"bed"},fillInto:false};
