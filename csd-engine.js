@@ -134,10 +134,9 @@
       foundSources:[
         { id:"tokyo",   label:"Tokyo Station",   url:"https://archive.org/download/aporee_20938_24294/nov19tokyostation1934.ogg", pitch:0.78, stretch:0.45 },
         { id:"tsukiji", label:"Tsukiji Market",  url:"https://archive.org/download/aporee_35166_40406/201714020750tsukijifishmarket01.mp3", pitch:0.8, stretch:0.5 },
-        { id:"asakusa", label:"Asakusa Noodles", url:"https://archive.org/download/aporee_21091_24510/nov92013asakusaNoodleSoupRest1910.mp3", pitch:0.72, stretch:0.45 },
-        { id:"paris",   label:"Paris Market",    url:"https://archive.org/download/aporee_5287_6734/ParisNoisielIndoorFoodMarket.mp3", pitch:0.8, stretch:0.5 }
+        { id:"asakusa", label:"Asakusa Noodles", url:"https://archive.org/download/aporee_21091_24510/nov92013asakusaNoodleSoupRest1910.mp3", pitch:0.72, stretch:0.45 }
       ],
-      sections: generateSong({ foundIds:["tokyo","tsukiji","asakusa","paris"], bass:"simple", drums:"full", melody:"composed" })
+      sections: generateSong({ foundIds:["tokyo","tsukiji","asakusa"], bass:"simple", drums:"full", melody:"composed" })
     };
   }
 
