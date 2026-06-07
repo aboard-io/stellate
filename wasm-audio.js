@@ -303,6 +303,34 @@
     return new Blob([stereoWav(L,R,sr)], { type:"audio/wav" });
   }
 
+  function bufToWav(buf){
+    const L=buf.getChannelData(0), R=buf.numberOfChannels>1?buf.getChannelData(1):buf.getChannelData(0);
+    return new Blob([stereoWav(L,R,buf.sampleRate)], { type:"audio/wav" });
+  }
+  // Fast(er) offline render: drive Csound's worklet inside an OfflineAudioContext,
+  // which renders faster than real time and silently. Progress via suspend().
+  async function renderOffline(csd, sources, estSeconds, onStatus){
+    await stopLive();
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if(!OAC) throw new Error("no OfflineAudioContext");
+    const len = Math.max(2, (estSeconds||30) + 1.5);
+    const off = new OAC(2, Math.ceil(44100*len), 44100);
+    const realAC = window.AudioContext;
+    if(onStatus) onStatus("preparing render…");
+    let cs;
+    window.AudioContext = OAC;                 // make the lib's instanceof check accept the offline ctx
+    try { cs = await boot(["-odac","-m0","-d"], off); } finally { window.AudioContext = realAC; }
+    _live = cs;
+    await writeFound(cs, sources, onStatus);
+    await cs.compileCsdText(stripOptions(csd));
+    for(let i=1;i<=9;i++){ const t=len*i/10; off.suspend(t).then(()=>{ if(onStatus) onStatus("rendering "+(i*10)+"%"); try{ off.resume(); }catch(e){} }).catch(()=>{}); }
+    if(onStatus) onStatus("rendering 0%");
+    await cs.start();
+    const buf = await off.startRendering();
+    _live = null; try { if(cs.destroy) await cs.destroy(); } catch(e){}
+    return bufToWav(buf);
+  }
+
   async function scoreTime(){ try { return _live ? await _live.getScoreTime() : -1; } catch (e) { return -2; } }
-  root.WasmAudio = { boot, play, playLive, stopLive, render, captureExport, decodeUrlToWav, encodeWav, stripOptions, ctxState, prewarm, scoreTime, _liveLog };
+  root.WasmAudio = { boot, play, playLive, stopLive, render, captureExport, renderOffline, decodeUrlToWav, encodeWav, stripOptions, ctxState, prewarm, scoreTime, _liveLog };
 })(window);
