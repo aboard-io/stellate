@@ -230,6 +230,13 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
 <script>
 const E=CsdEngine;
+// resilience: if a cached/older engine.js lacks newer option lists, fall back so
+// the UI never blanks on a version mismatch (hard-refresh still recommended).
+E.TRANSITIONS=E.TRANSITIONS||["off","drum fill","riser","sweep","downlift","impact","reverse","noise"];
+E.BASS_PATTERNS=E.BASS_PATTERNS||["off","root","simple","walking","octaves","sixteenths","dub"];
+E.MELODY_PATTERNS=E.MELODY_PATTERNS||["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double"];
+E.DRUM_PATTERNS=E.DRUM_PATTERNS||["off","kick","full","open","four","boombap","halftime","trap"];
+E.WAVES=E.WAVES||["sine","saw","square","pulse"];
 let state=E.defaultState();
 const $=id=>document.getElementById(id);
 const KEYS=["C","C#/Db","D","D#/Eb","E","F","F#/Gb","G","G#/Ab","A","A#/Bb","B"];
