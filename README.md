@@ -20,8 +20,8 @@ This folder is the fix. The source is committed; the audio is not.
 
 If `render.sh` turns the committed text back into sound, the capability is intact.
 A WAV in git is a smell; a `.csd` in git is the thing itself. This mirrors how the
-rest of the repo works — `verifiers.json` is source of truth, the `.db` and `.html`
-are regenerated from it.
+[methods catalog](verifier-catalog/) works — `verifiers.json` is source of truth,
+the `.db` and `.html` are regenerated from it.
 
 ## Run it
 
@@ -185,9 +185,25 @@ data-driven so the UI can rearrange it. The generator is verified offline
 
 ## Catalog cross-reference
 
-The harmonic knowledge here is also encoded as data in
-[`../../gen_data/k_music.py`](../../gen_data/k_music.py) — the
-`generate_symbolic_music` generator, whose `domain_notes` for `vaporwave`,
-`city_pop`, and `genre_harmony` describe this exact progression and the
-"production, not chords" caveat. This folder is that prose given an
-**executable twin**.
+This project began life inside the
+[verifier-catalog](https://github.com/ftrain/verifier-catalog) repo and still
+leans on it — the catalog is vendored here as a **git submodule** at
+[`verifier-catalog/`](verifier-catalog/):
+
+```bash
+git submodule update --init   # after cloning this repo
+```
+
+The submodule does double duty:
+
+1. **Reference data.** The harmonic knowledge here is also encoded as data in
+   [`verifier-catalog/gen_data/k_music.py`](verifier-catalog/gen_data/k_music.py) —
+   the `generate_symbolic_music` generator, whose `domain_notes` for `vaporwave`,
+   `city_pop`, and `genre_harmony` describe this exact progression and the
+   "production, not chords" caveat. This repo is that prose given an
+   **executable twin**.
+2. **Live reference tool.** `.mcp.json` points Claude Code at the catalog's MCP
+   server (`search_methods`, `get_method`, `neighbors`, `plan_architecture`), so
+   any session in this repo can consult the methods corpus directly. Needs `uv`
+   on PATH; the server self-provisions (builds `methods.db` from the committed
+   JSONs on first query).
