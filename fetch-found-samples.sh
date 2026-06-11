@@ -77,6 +77,45 @@ apollo "$IA/Apollo11Audio/11-03301.mp3" 25  3.2 apollo_a
 apollo "$IA/Apollo11Audio/11-03305.mp3" 40  2.8 apollo_b
 apollo "$IA/Apollo11Audio/11-03310.mp3" 60  3.0 apollo_c
 
+# --- 78rpm shellac (George Blood digitization, public-domain audio) ---
+# crusty acoustic-era beds + one-shot horn/string phrases for triphop/jazz/vapor
+sev8(){ # item | file | start | dur | name
+  local out="found/samples/78s/${5}.wav"
+  [ -s "$out" ] && return 0
+  echo "→ 78rpm $5"
+  local enc; enc=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$2")
+  curl -sL --max-time 240 -o /tmp/78.mp3 "$IA/$1/$enc"
+  ffmpeg -y -loglevel error -ss "$3" -t "$4" -i /tmp/78.mp3 -ac 1 -ar 44100     -af "highpass=f=180,lowpass=f=6500,loudnorm=I=-16:TP=-1" "$out"
+}
+mkdir -p found/samples/78s
+sev8 78_st-louis-blues_louis-armstrong-and-his-orchestra-w-c-handy_gbia0001837b "78_st-louis-blues_louis-armstrong-and-his-orchestra-w-c-handy_gbia0001837b_01_2.3_CT_EQ.mp3" 12 12 horns_78
+sev8 78_after-youve-gone_pee-wee-hunt-and-his-orchestra-crammer-layton_gbia0262239b "AFTER YOU'VE GONE - PEE WEE HUNT and his Orchestra.mp3" 8 10 blues_vox_78
+
+# more rave one-shots from deeper in the Dangerous CD
+for t in 12 20; do
+  marker="found/samples/hits/.dcc${t}.done"
+  if [ ! -f "$marker" ]; then
+    echo "→ dcc track $t (silence-split)"
+    { curl -sL --max-time 300 -o /tmp/dcc.flac       "$IA/dangerous-cd-company-danger-1-sample-cd/Dangerous%20CD%20Company/${t}%20Track%20${t}.flac" &&     python3 - "$t" <<'PYEOF2'
+import subprocess, sys, re
+t = sys.argv[1]
+det = subprocess.run(["ffmpeg","-i","/tmp/dcc.flac","-af","silencedetect=noise=-35dB:d=0.25","-f","null","-"],capture_output=True,text=True).stderr
+ends=[float(m) for m in re.findall(r"silence_end: ([\d.]+)",det)]
+starts=[float(m) for m in re.findall(r"silence_start: ([\d.]+)",det)]
+n=0
+for e in ends:
+    nxt=min([s for s in starts if s>e],default=None)
+    if nxt and 0.2<=nxt-e<=2.5 and n<16:
+        subprocess.run(["ffmpeg","-y","-loglevel","error","-ss",str(max(0,e-0.02)),"-t",str(nxt-e+0.06),
+          "-i","/tmp/dcc.flac","-ac","1","-ar","44100","-af","loudnorm=I=-16:TP=-1",
+          f"found/samples/hits/dcc{t}_{n:02d}.wav"],check=True); n+=1
+print(f"  kept {n} from track {t}")
+PYEOF2
+    } || echo "  skip track $t"
+    touch "$marker"
+  fi
+done
+
 # --- speech synthesis as an instrument (espeak-ng, generated locally) ---
 # robotic spoken phrases, pitched/paced per vibe; the kernel schedules them
 # as one-shot hits like any other vocal sample
@@ -105,7 +144,7 @@ python3 - <<'PYEOF'
 import json, os, subprocess
 root = "found/samples"
 out = []
-for sub, cls in (("breaks","break"),("hits","hit"),("vox","vox"),("speech","speech")):
+for sub, cls in (("breaks","break"),("hits","hit"),("vox","vox"),("speech","speech"),("78s","seventy8")):
     d = os.path.join(root, sub)
     for f in sorted(os.listdir(d)):
         if not f.endswith(".wav"): continue

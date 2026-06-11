@@ -82,12 +82,12 @@
 
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
-  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab"];
+  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic"];
   const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon"];
   const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle"];
   const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
   // the ⚡ transition control: what happens at the end of a section, into the next
-  const TRANSITIONS=["off","drum fill","tom fill","break fill","riser","sweep","downlift","impact","reverse","noise"];
+  const TRANSITIONS=["off","drum fill","tom fill","break fill","hat rush","cut","riser","sweep","downlift","impact","reverse","noise"];
 
   // models: pad saw|organ|fm · bass saw|sub|acid|reese · melody stack|pluck|fm
   // · kick boom|808|909 · snare noise|crack|clap · hat noise|metal
@@ -157,7 +157,7 @@
   }
 
   // ---------- event generators ----------
-  function bassEvents(kind,S,b,k){
+  function bassEvents(kind,S,b,k,rng){
     const r5=pchAdd(b.r5,k), r6=pchAdd(b.r6,k), f6=pchAdd(b.f6,k);
     let L;
     switch(kind){
@@ -169,6 +169,16 @@
       case "rolling":    L=[]; for(let i=0;i<8;i++)  L.push([i+0.5,0.4,r5]);  break;   // offbeat 8ths — house/techno roll
       case "sub":        L=[[0,3.8,pchAdd(r5,-12)],[4,3.8,pchAdd(r5,-12)]];   break;   // long sub pressure — jungle/dub
       case "stab":       L=[[0,0.3,r5],[1.5,0.3,r6],[3,0.3,r5],[4.5,0.3,r6],[6,0.3,r5],[7,0.3,f6]]; break;   // syncopated stabs
+      case "melodic": {  // generative: walks chord tones with approach/passing notes — never the same bar twice
+        L=[]; const rr=rng||(()=>0.5); const tones=[r5,r6,f6,pchAdd(r5,3),pchAdd(r6,-2)];
+        let t=0;
+        while(t<7.5){
+          const d=[0.5,0.5,1,1,1.5,2][Math.floor(rr()*6)];
+          let p=tones[Math.floor(rr()*tones.length)];
+          if(rr()<0.22) p=pchAdd(p, rr()<0.5?-1:2);
+          if(rr()<0.12){ t+=d; continue; }                    // breathe
+          L.push([t, Math.min(d,7.6-t)*0.9, p]); t+=d;
+        } break; }
       case "walking":    L=[[0,1.0,r5],[1,0.5,r6],[1.5,0.5,f6],[2.5,0.5,r5],[3,1.0,r6],[4,0.5,r5],[4.5,0.5,f6],[5.5,0.5,r6],[6,1.0,r5],[7,0.5,r6],[7.5,0.5,f6]]; break;
       default:           L=[[0,1.5,r5],[2,0.5,r6],[3,1.0,f6],[4.5,0.5,r5],[5,1.0,r6],[6.5,1.5,r5]];
     }
@@ -398,8 +408,12 @@
           const Sp=cycleBase+ci*CHORD_BEATS;
           if(sec.pads) chord.pads.forEach(p=>pitched.push({voice:"pad",beat:Sp,dur:CHORD_BEATS,pch:pchAdd(p,k),amp:0.085}));
           if(sec.bass&&sec.bass!=="off"){
-            const be=bassEvents(sec.bass,Sp,chord.bass,k);
-            be.forEach(e=>{ if(rng()<0.05) e.pch=pchAdd(e.pch,12); pitched.push(e); });  // octave pops
+            const be=bassEvents(sec.bass,Sp,chord.bass,k,rng);
+            be.forEach(e=>{
+              if(rng()<0.05) e.pch=pchAdd(e.pch,12);                  // octave pops
+              if(rng()<0.06&&e.beat-Sp>0.4){ e.beat+=0.25; }          // lazy push
+              if(rng()<0.05) return;                                  // rest
+              pitched.push(e); });
           }
           if(sec.drums&&sec.drums!=="off"){
             let de=drumEvents(sec.drums,Sp,ci,chords.length,rng);
@@ -407,6 +421,11 @@
             de=de.filter(e=>!(e.drum==="hat"&&rng()<0.09));
             de.forEach(e=>{ if(rng()<0.25) e.amp=Math.max(0.03,e.amp*(0.85+rng()*0.3)); });
             if(rng()<0.4) de.push({drum:"snare",beat:Sp+[1.75,3.25,5.75,6.75][Math.floor(rng()*4)],dur:0.15,amp:0.06+rng()*0.04});
+            // evolution: later cycles of a section get busier (density rises with c)
+            if(c>0&&rng()<Math.min(0.5,0.18*c)){
+              de.push({drum:"hat",beat:Sp+Math.floor(rng()*16)*0.5,dur:0.08,amp:0.07+rng()*0.05});
+              if(rng()<0.4) de.push({drum:"kick",beat:Sp+[3.5,7.5,5.75][Math.floor(rng()*3)],dur:0.3,amp:0.25+rng()*0.1});
+            }
             de.forEach(e=>drums.push(e));
           }
         });
@@ -427,6 +446,12 @@
         bigFillEvents(cur+secBeats-4,rng).forEach(e=>drums.push(e));
       } else if(tr==="break fill"){
         breakFillEvents(cur+secBeats-2,rng).forEach(e=>drums.push(e));
+      } else if(tr==="hat rush"){
+        let o=0,st=0.5;
+        while(o<2){ drums.push({drum:"hat",beat:cur+secBeats-2+o,dur:0.08,amp:0.08+o*0.06}); o+=st; st=Math.max(0.125,st*0.8); }
+      } else if(tr==="cut"){
+        const cutFrom=cur+secBeats-2;        // the cut: drums vanish, the drop hits harder
+        for(let i=drums.length-1;i>=0;i--) if(drums[i].beat>=cutFrom&&drums[i].beat<cur+secBeats) drums.splice(i,1);
       } else if(SFX_NUM[tr]){
         const hit=(tr==="impact"||tr==="noise");
         const sbeat = hit ? cur+secBeats : cur+secBeats-4;   // hit on next downbeat; build in final bar
@@ -479,7 +504,25 @@
   asig = asig*kdec
   asig butlp asig, ${Math.round(cut)}`;
   }
+  function brassSource(cut){
+    return `  kcf expseg 500, 0.09, ${Math.round(cut*1.4)}, p3, ${Math.round(cut*0.6)}
+  ab1 vco2 1, kf
+  ab2 vco2 1, kf*1.007
+  asig = (ab1+ab2)*0.5
+  asig moogladder asig, kcf, 0.22`;
+  }
+  function stringsSource(cut){
+    return `  as1 vco2 1, kf*0.995
+  as2 vco2 1, kf
+  as3 vco2 1, kf*1.005
+  as4 vco2 1, kf*1.01
+  asig = (as1+as2+as3+as4)*0.24
+  asig butlp asig, ${Math.round(cut)}
+  asig butlp asig, ${Math.round(cut*1.6)}`;
+  }
   function padSource(p){
+    if(p.model==="brass")   return brassSource(p.cutoff);
+    if(p.model==="strings") return stringsSource(p.cutoff);
     if(p.model==="choir") return choirSource(Math.min(8000,p.cutoff*2.5));
     if(p.model==="bell")  return bellSource(Math.min(9000,p.cutoff*2.5));
     if(p.model==="piano") return pianoSource("kf", Math.min(8000,p.cutoff*2));
@@ -518,6 +561,8 @@
     return null;
   }
   function leadSource(m){
+    if(m.model==="brass")   return brassSource(m.cutoff);
+    if(m.model==="strings") return stringsSource(m.cutoff);
     if(m.model==="choir") return choirSource(Math.min(9000,m.cutoff*2.5));
     if(m.model==="bell")  return bellSource(Math.min(10000,m.cutoff*2.5));
     if(m.model==="piano") return pianoSource("kf", Math.min(9000,m.cutoff*2));
@@ -588,6 +633,16 @@
       : pump>0
       ? `  kphs phasor ${(state.bpm/60).toFixed(4)}\n  kduck = 1 - ${pump.toFixed(3)}*exp(-6*kphs)\n  aL = aL*kduck\n  aR = aR*kduck\n`
       : "";
+    const grit=Math.min(1,Math.max(0,state.grit||0));
+    const masterGrit = live
+      ? `  kgrt chnget "grit"
+  kgrt limit kgrt, 0, 1
+  aL = tanh(aL*(1+kgrt*2.6))*(1/(1+kgrt*0.7))
+  aR = tanh(aR*(1+kgrt*2.6))*(1/(1+kgrt*0.7))
+`
+      : grit>0 ? `  aL = tanh(aL*${(1+grit*2.6).toFixed(3)})*${(1/(1+grit*0.7)).toFixed(3)}
+  aR = tanh(aR*${(1+grit*2.6).toFixed(3)})*${(1/(1+grit*0.7)).toFixed(3)}
+` : "";
     const comp=Math.min(1,Math.max(0,state.comp||0));
     const masterComp = comp>0
       ? `  aL dam aL, ${(0.55-0.35*comp).toFixed(3)}, ${(1-0.55*comp).toFixed(3)}, 1, 0.01, 0.09\n` +
@@ -789,7 +844,7 @@ instr 100
 ${hasSweeps?`  kcc limit gkCut, 180, 21000
   aL butlp aL, kcc
   aR butlp aR, kcc
-`:""}${masterPump}${masterComp}${masterTone}  aL clip aL, 0, 0.95
+`:""}${masterPump}${masterGrit}${masterComp}${masterTone}  aL clip aL, 0, 0.95
   aR clip aR, 0, 0.95
   outs aL, aR
   clear gaMixL, gaMixR

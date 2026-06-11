@@ -251,8 +251,12 @@ svg.addEventListener("pointerdown",e=>{
     return;
   }
   lastTap={t:now,x:pt.x,y:pt.y};
+  if(e.button===2&&wp!=null){ const w=[...S.waypoints]; w.splice(+wp,1);
+    set({waypoints:w,travel:{seg:0,t:0},status:"waypoint erased"}); return; }
+  if(e.button!==0) return;
   if(wp!=null){ dragWp=+wp; }
-  else dragging=true;
+  else if(S.waypoints.length<2) dragging=true;   // with a path, the traveler owns the cursor
+  else { set({status:"path active — the traveler steers (✕ path to drag freely)"}); return; }
   document.body.classList.add("dragging");
   svg.setPointerCapture(e.pointerId);
   if(dragging) retarget(pt);
@@ -279,6 +283,7 @@ const DIMS=[
   ["pump",st=>st.pump||0,(st,v)=>{st.pump=v;S.target&&(S.target.pump=v);},0,.8,.01],
   ["crackle",st=>st.crackle||0,(st,v)=>{st.crackle=v;S.target&&(S.target.crackle=v);},0,.9,.01],
   ["compress",st=>st.comp||0,(st,v)=>{st.comp=v;S.target&&(S.target.comp=v);},0,.9,.01],
+  ["grit",st=>st.grit||0,(st,v)=>{st.grit=v;S.target&&(S.target.grit=v);},0,.8,.01],
   ["snare",st=>st.instruments.drums.snare,(st,v)=>{st.instruments.drums.snare=v;S.target&&(S.target.instruments.drums.snare=v);},.3,1.4,.01],
   ["voices",st=>st.instruments.melody.voices,(st,v)=>{st.instruments.melody.voices=Math.round(v);S.target&&(S.target.instruments.melody.voices=Math.round(v));},1,8,1],
   ["found",st=>st.foundSources[0].vol,(st,v)=>{st.foundSources[0].vol=v;S.target&&(S.target.foundSources[0].vol=v);},0,.4,.01],
