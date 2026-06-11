@@ -1,0 +1,198 @@
+{
+  "bpm": 126,
+  "keyOffset": 11,
+  "progression": "drone_min",
+  "reverb": 0.7535,
+  "seed": 2431,
+  "swing": 0.025,
+  "humanize": 0.129,
+  "pump": 0.1819,
+  "crackle": 0.0804,
+  "tone": {
+    "lowcut": 31,
+    "highcut": 0
+  },
+  "delay": {
+    "beats": 0.8394,
+    "feedback": 0.3717,
+    "cutoff": 2585
+  },
+  "instruments": {
+    "pad": {
+      "wave": "saw",
+      "cutoff": 1217.8562,
+      "res": 0.15,
+      "detune": 0.0132,
+      "attack": 2.4718,
+      "level": 0.5847,
+      "send": 0.6982,
+      "dsend": 0.1827
+    },
+    "bass": {
+      "wave": "sine",
+      "cutoff": 563.9957,
+      "res": 0.1463,
+      "level": 1.1258,
+      "send": 0.0573,
+      "dsend": 0
+    },
+    "melody": {
+      "wave": "sine",
+      "cutoff": 2915.9322,
+      "res": 0.05,
+      "vibrato": 0.0041,
+      "vibRate": 5.2,
+      "level": 0.3978,
+      "send": 0.5821,
+      "dsend": 0.3408,
+      "voices": 4,
+      "spread": 0.0116
+    },
+    "drums": {
+      "kick": 1.2551,
+      "snare": 1.379,
+      "hat": 0.5199,
+      "tune": 1.0458,
+      "send": 0.3357
+    }
+  },
+  "foundSources": [
+    {
+      "id": "factory",
+      "label": "Metallurgy Plant",
+      "url": "https://archive.org/download/aporee_63765_73460/ATA025Antofagastasiderurgiausinacamionesencarretera.mp3",
+      "vol": 0.1592,
+      "pitch": 0.7471,
+      "stretch": 0.5474,
+      "cutoff": 1533
+    }
+  ],
+  "sections": [
+    {
+      "id": "g217",
+      "name": "intro",
+      "cycles": 25,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "factory",
+        "role": "chops"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g218",
+      "name": "verse",
+      "cycles": 25,
+      "pads": true,
+      "bass": "drive",
+      "drums": "four",
+      "melody": "off",
+      "found": {
+        "sourceId": "factory",
+        "role": "chops"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g219",
+      "name": "pre-chorus",
+      "cycles": 25,
+      "pads": true,
+      "bass": "drive",
+      "drums": "four",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "reverse"
+    },
+    {
+      "id": "g220",
+      "name": "chorus",
+      "cycles": 25,
+      "pads": true,
+      "bass": "drive",
+      "drums": "four",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g221",
+      "name": "verse 2",
+      "cycles": 25,
+      "pads": true,
+      "bass": "drive",
+      "drums": "four",
+      "melody": "off",
+      "found": {
+        "sourceId": "factory",
+        "role": "chops"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g222",
+      "name": "bridge",
+      "cycles": 25,
+      "pads": true,
+      "bass": "drive",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "factory",
+        "role": "bed"
+      },
+      "fill": "break fill"
+    },
+    {
+      "id": "g223",
+      "name": "chorus 2",
+      "cycles": 25,
+      "pads": true,
+      "bass": "drive",
+      "drums": "four",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g224",
+      "name": "outro",
+      "cycles": 25,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "factory",
+        "role": "chops"
+      },
+      "fill": "off"
+    }
+  ],
+  "genreMeta": {
+    "genres": [
+      "synthwave",
+      "jungle"
+    ],
+    "t": 0.483,
+    "seed": 2431,
+    "form": "pop",
+    "kit": "four",
+    "progression": "drone_min",
+    "bass": "drive",
+    "lead": "off",
+    "found": "factory/chops"
+  }
+}

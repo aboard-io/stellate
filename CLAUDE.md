@@ -49,6 +49,8 @@ Requires `csound` (tested 6.18), `ffmpeg`, `curl`, `node`.
 - `builder.html` — full song builder UI (WASM csound, live edit-while-playing,
   OfflineAudioContext WAV render, lamejs MP3 export)
 - `play.html` — simple player
+- `genre-kernel.js` — genre as a point in multidimensional space; blend/track/
+  playlist generators emitting engine states (design: GENRE-SPACE.md)
 - `song-verifier.js` — `analyzeSong`/`improveSong`: the verifier half of the loop
 - `engine.test.js` — offline render verification against real csound
 - `video-layer.js` — laserdisc background video: dual-<video> crossfade, switches

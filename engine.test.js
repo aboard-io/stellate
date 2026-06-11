@@ -108,6 +108,24 @@ for (const mel of ["updown","pentaup","sparse","double","hero"]) {
   allOk &= 0<render("supersaw_pulse_fill", s);
 }
 
+// 7c) genre-kernel engine vocabulary: new kits, bass, chops, pump, crackle, tone
+for (const d of ["techno","house","breaks","jungle"]) {
+  const s = defaultState();
+  s.sections = [{ id:"k", name:"k", cycles:2, pads:false, bass:"rolling", drums:d, melody:"off", found:{sourceId:null}, fill:"break fill" }];
+  allOk &= 0<render("kit_"+d, s);
+}
+for (const b of ["sub","stab"]) {
+  const s = defaultState();
+  s.sections = [{ id:"b2", name:"b2", cycles:1, pads:true, bass:b, drums:"off", melody:"off", found:{sourceId:null}, fill:"off" }];
+  allOk &= 0<render("bass_"+b, s);
+}
+{
+  const s = defaultState();
+  s.progression = "drone_min"; s.pump = 0.5; s.crackle = 0.5; s.tone = { lowcut:40, highcut:9000 };
+  s.sections = [{ id:"pc", name:"pc", cycles:4, pads:true, bass:"rolling", drums:"techno", melody:"off", found:{sourceId:"tokyo",role:"chops"}, fill:"off" }];
+  allOk &= 0<render("pump_crackle_chops", s);
+}
+
 // 8) per-instrument params + swing + humanize
 {
   const s = defaultState();

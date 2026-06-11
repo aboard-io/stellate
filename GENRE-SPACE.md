@@ -1,0 +1,101 @@
+# GENRE-SPACE — the genre kernel
+
+`genre-kernel.js` treats a *genre* as a **point in a multidimensional space**
+and a *song* as a **seeded sample near a point**. Blending genres is movement
+through that space; a playlist is a **path** through it. The kernel's job is
+twofold: make every point sound like *somewhere* (coherence), and make every
+track sound like *itself* (distinctness — the anti-homogeneity rules below are
+as load-bearing as the genre vectors).
+
+## The dimensions
+
+A point is not one vector of floats — it's a bundle of typed dimensions, each
+with its own blend rule:
+
+| dimension | type | examples | blend rule |
+|---|---|---|---|
+| **tempo** | scalar range | techno 120-140, jungle 160-172, vaporwave 62-88 | lerp ranges, then sample |
+| **meter feel** | enum | straight / swung / halftime / broken | probabilistic pick ∝ t |
+| **rhythm** | pool of kits | four-on-floor, pulse, breaks, jungle chop, boombap, none | weighted pool union |
+| **harmonic motion** | scalar + pool | techno ≈ 0 (drone), city pop ≈ 1 (changes every 2 bars) | lerp rate, pick progression from pooled candidates compatible with rate |
+| **harmonic color** | pool | maj7/9 (vapor, lofi), minor triads (synthwave), single minor drone (techno) | pool union |
+| **key** | offset + mode bias | jungle/techno favor minor; vapor favors major-ish IVΔ | walked, not blended (see playlist) |
+| **bass** | pool + recipe | sub whole-notes (jungle), rolling offbeat 16ths (house/techno), drive 8ths (synthwave) | pool union; recipe params lerp |
+| **lead** | pool + recipe | supersaw hero (synthwave), sparse sine (downtempo), **off** (techno — absence is a choice) | pool union incl. weighted "off" |
+| **pads** | prob + recipe | washy saw (vapor), absent (jungle), drone (ambient) | prob lerp, recipe lerp |
+| **sound design** | recipe params | voices/spread (supersaw↔pure), cutoffs, attacks, drum tuning/levels | continuous lerp |
+| **production** | scalars | reverb size, delay time/feedback, **pump** (sidechain duck), **crackle** (vinyl dust), tone tilt (lo-cut/hi-cut), drum reverb send | continuous lerp |
+| **sampling / found sound** | role + source pool | granular **bed** (vapor: stations, malls) vs rhythmic **chops** (jungle, triphop); source pools per genre from archive.org (aporee field recordings, PD items) | role by threshold, source from pooled candidates |
+| **form** | enum + params | **pop** (verse/chorus, the current builder shape), **dj** (long additive plateaus, techno/house), **wave** (slow swells, ambient) | pick ∝ t; section count/cycle params lerp |
+| **transitions** | pool | tom fill (synthwave), break fill (jungle), riser (everything), **drop-cut** (dj forms), none | pool union |
+
+Genres are **anchors**: named points with curated values on every dimension,
+grounded in the genre literature (techno: rhythm-over-harmony, drones, DJ
+form; house: 4-floor + claps, 8-bar additive builds; jungle: chopped breaks,
+sub pressure, rhythm-as-melody; trip hop: slowed dusty breaks, jazz color,
+melancholy; plus vaporwave, synthwave, lofi, downtempo, ambient, electro).
+
+## Blending
+
+`blend(a, b, t, rng)` is **not** naive lerp across the board:
+
+- **Scalars** (bpm, reverb, pump, recipe params) lerp, then snap to feasible
+  values.
+- **Pools** (kits, progressions, basslines, fills, sources) form a weighted
+  union: at t=0.3 you draw from A's pool with p=0.7, B's with p=0.3. You get
+  *house drums under vaporwave harmony*, not a smeared average of two kits —
+  hybrid identity comes from **combinatorial mixing, not averaging**.
+- **Enums** (form, found role) switch probabilistically near the midpoint, so
+  a journey has a *moment where the form flips* — an audible event, which is
+  what makes the in-between space interesting rather than mushy.
+- **Constraints** run last: drone progressions force lead density down;
+  jungle-side tempo forces halftime pads; chops role requires a choppable
+  source. Constraints are what keep midpoints *songs* instead of noise.
+
+## Playlists as paths
+
+`playlist(waypoints, nTracks, hours)` walks waypoint-to-waypoint (techno →
+vaporwave → synthwave → jungle), placing each track at a position along the
+path, then:
+
+- **Tempo arcs** monotonically within a leg (with jitter) — a 6-hour set has
+  DJ-shaped tempo geography, not random jumps.
+- **Key walks** the circle of fifths ±1 step per track (never blended —
+  adjacent tracks are mix-compatible, distant tracks genuinely far).
+- **Novelty memory**: the generator remembers the last N tracks' kit,
+  progression, fill, lead pattern, and found source, and *rerolls* any track
+  that repeats too much of its neighbors. This is the direct fix for "same
+  drum fill and same effects across all songs" — repetition is rejected at
+  generation time, not hoped away.
+- **Duration** targets are met by scaling section counts and cycle counts per
+  form (a 12-minute techno track is a long dj-form plateau; a 4-minute
+  synthwave track is a pop form).
+
+## Why this teaches genre
+
+Every track ships with its coordinates: the state JSON records the blend
+position and every resolved choice (kit, progression, recipe, source). A→B
+playlists are *audible lessons* in what actually separates two genres — you
+hear exactly which dimension flips when, because the kernel flips them one at
+a time, not all at once.
+
+## Engine support (csd-engine.js)
+
+The kernel emits ordinary engine states. New engine vocabulary added for it:
+kits `techno`, `house`, `breaks`, `jungle`; bass `rolling`, `sub`, `stab`;
+progressions `drone_min`, `deep_two`, `house_min7`; fill `break fill`;
+production state fields `pump` (mix-bus sidechain duck), `crackle` (dust2
+vinyl noise), `tone` {lowcut, highcut}; found role `"chops"` (instr 5 slice
+player) alongside the granular `"bed"` (instr 3). All defaults preserve
+existing renders.
+
+## CLI
+
+```bash
+node genre-kernel.js anchors                        # list genres + dimensions
+node genre-kernel.js track jungle --seed 7          # one track state -> json
+node genre-kernel.js blend techno vaporwave 0.5     # a midpoint state
+node genre-kernel.js playlist techno vaporwave synthwave jungle \
+     --tracks 30 --hours 6 --out playlist/          # the full journey (json)
+node genre-kernel.js render <state.json|preset>     # csound+ffmpeg -> mp3
+```

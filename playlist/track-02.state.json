@@ -1,0 +1,198 @@
+{
+  "bpm": 131,
+  "keyOffset": 10,
+  "progression": "deep_two",
+  "reverb": 0.7171,
+  "seed": 1117,
+  "swing": 0.06,
+  "humanize": 0.125,
+  "pump": 0.3408,
+  "crackle": 0,
+  "tone": {
+    "lowcut": 41,
+    "highcut": 0
+  },
+  "delay": {
+    "beats": 0.5763,
+    "feedback": 0.4146,
+    "cutoff": 2896
+  },
+  "instruments": {
+    "pad": {
+      "wave": "saw",
+      "cutoff": 981.3707,
+      "res": 0.15,
+      "detune": 0.0065,
+      "attack": 2.0818,
+      "level": 0.5493,
+      "send": 0.5868,
+      "dsend": 0.1651
+    },
+    "bass": {
+      "wave": "saw",
+      "cutoff": 805.7059,
+      "res": 0.31,
+      "level": 1.1457,
+      "send": 0.0812,
+      "dsend": 0.056
+    },
+    "melody": {
+      "wave": "square",
+      "cutoff": 2105.3935,
+      "res": 0.05,
+      "vibrato": 0.0007,
+      "vibRate": 5.2,
+      "level": 0.4659,
+      "send": 0.2967,
+      "dsend": 0.3361,
+      "voices": 1,
+      "spread": 0.0024
+    },
+    "drums": {
+      "kick": 1.4532,
+      "snare": 0.8758,
+      "hat": 0.8714,
+      "tune": 0.9451,
+      "send": 0.1277
+    }
+  },
+  "foundSources": [
+    {
+      "id": "shibuya",
+      "label": "Shibuya Street",
+      "url": "https://archive.org/download/aporee_20542_23865/nov820131617shibuya.ogg",
+      "vol": 0.18,
+      "pitch": 0.9568,
+      "stretch": 0.4976,
+      "cutoff": 2216
+    }
+  ],
+  "sections": [
+    {
+      "id": "g17",
+      "name": "warmup",
+      "cycles": 14,
+      "pads": false,
+      "bass": "off",
+      "drums": "pulse",
+      "melody": "off",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "chops"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g18",
+      "name": "build",
+      "cycles": 14,
+      "pads": false,
+      "bass": "rolling",
+      "drums": "pulse",
+      "melody": "off",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "chops"
+      },
+      "fill": "riser"
+    },
+    {
+      "id": "g19",
+      "name": "main",
+      "cycles": 14,
+      "pads": false,
+      "bass": "rolling",
+      "drums": "pulse",
+      "melody": "off",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "chops"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g20",
+      "name": "lift",
+      "cycles": 14,
+      "pads": false,
+      "bass": "rolling",
+      "drums": "pulse",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g21",
+      "name": "breakdown",
+      "cycles": 7,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g22",
+      "name": "rebuild",
+      "cycles": 7,
+      "pads": false,
+      "bass": "rolling",
+      "drums": "kick",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "riser"
+    },
+    {
+      "id": "g23",
+      "name": "peak",
+      "cycles": 21,
+      "pads": false,
+      "bass": "rolling",
+      "drums": "pulse",
+      "melody": "off",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "chops"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g24",
+      "name": "outro",
+      "cycles": 14,
+      "pads": false,
+      "bass": "rolling",
+      "drums": "pulse",
+      "melody": "off",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "chops"
+      },
+      "fill": "off"
+    }
+  ],
+  "genreMeta": {
+    "genres": [
+      "techno",
+      "vaporwave"
+    ],
+    "t": 0.103,
+    "seed": 1117,
+    "form": "dj",
+    "kit": "pulse",
+    "progression": "deep_two",
+    "bass": "rolling",
+    "lead": "off",
+    "found": "shibuya/chops"
+  }
+}

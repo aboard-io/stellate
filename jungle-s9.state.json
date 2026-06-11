@@ -1,0 +1,198 @@
+{
+  "bpm": 161,
+  "keyOffset": 0,
+  "progression": "minor_run",
+  "reverb": 0.7317,
+  "seed": 9,
+  "swing": 0.085,
+  "humanize": 0.128,
+  "pump": 0.0852,
+  "crackle": 0.082,
+  "tone": {
+    "lowcut": 33,
+    "highcut": 0
+  },
+  "delay": {
+    "beats": 0.9691,
+    "feedback": 0.4607,
+    "cutoff": 2948
+  },
+  "instruments": {
+    "pad": {
+      "wave": "saw",
+      "cutoff": 1225.7871,
+      "res": 0.15,
+      "detune": 0.0064,
+      "attack": 2.7895,
+      "level": 0.5488,
+      "send": 0.5649,
+      "dsend": 0.2751
+    },
+    "bass": {
+      "wave": "sine",
+      "cutoff": 396.8213,
+      "res": 0.0925,
+      "level": 1.3845,
+      "send": 0.023,
+      "dsend": 0
+    },
+    "melody": {
+      "wave": "sine",
+      "cutoff": 2146.3936,
+      "res": 0.05,
+      "vibrato": 0.006,
+      "vibRate": 5.2,
+      "level": 0.4311,
+      "send": 0.438,
+      "dsend": 0.4355,
+      "voices": 2,
+      "spread": 0.0046
+    },
+    "drums": {
+      "kick": 1.3111,
+      "snare": 1.1689,
+      "hat": 0.6239,
+      "tune": 1.0978,
+      "send": 0.2119
+    }
+  },
+  "foundSources": [
+    {
+      "id": "factory",
+      "label": "Metallurgy Plant",
+      "url": "https://archive.org/download/aporee_63765_73460/ATA025Antofagastasiderurgiausinacamionesencarretera.mp3",
+      "vol": 0.2014,
+      "pitch": 1.0101,
+      "stretch": 0.5313,
+      "cutoff": 2795
+    }
+  ],
+  "sections": [
+    {
+      "id": "g1",
+      "name": "warmup",
+      "cycles": 2,
+      "pads": false,
+      "bass": "off",
+      "drums": "jungle",
+      "melody": "off",
+      "found": {
+        "sourceId": "factory",
+        "role": "chops"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g2",
+      "name": "build",
+      "cycles": 2,
+      "pads": false,
+      "bass": "dub",
+      "drums": "jungle",
+      "melody": "off",
+      "found": {
+        "sourceId": "factory",
+        "role": "chops"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g3",
+      "name": "main",
+      "cycles": 2,
+      "pads": true,
+      "bass": "dub",
+      "drums": "jungle",
+      "melody": "off",
+      "found": {
+        "sourceId": "factory",
+        "role": "chops"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g4",
+      "name": "lift",
+      "cycles": 2,
+      "pads": true,
+      "bass": "dub",
+      "drums": "jungle",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "reverse"
+    },
+    {
+      "id": "g5",
+      "name": "breakdown",
+      "cycles": 1,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "factory",
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g6",
+      "name": "rebuild",
+      "cycles": 1,
+      "pads": true,
+      "bass": "dub",
+      "drums": "kick",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "reverse"
+    },
+    {
+      "id": "g7",
+      "name": "peak",
+      "cycles": 3,
+      "pads": true,
+      "bass": "dub",
+      "drums": "jungle",
+      "melody": "off",
+      "found": {
+        "sourceId": "factory",
+        "role": "chops"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g8",
+      "name": "outro",
+      "cycles": 2,
+      "pads": false,
+      "bass": "dub",
+      "drums": "jungle",
+      "melody": "off",
+      "found": {
+        "sourceId": "factory",
+        "role": "chops"
+      },
+      "fill": "off"
+    }
+  ],
+  "genreMeta": {
+    "genres": [
+      "jungle",
+      "jungle"
+    ],
+    "t": 0,
+    "seed": 9,
+    "form": "dj",
+    "kit": "jungle",
+    "progression": "minor_run",
+    "bass": "dub",
+    "lead": "off",
+    "found": "factory/chops"
+  }
+}
