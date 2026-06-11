@@ -79,6 +79,46 @@ playlists are *audible lessons* in what actually separates two genres — you
 hear exactly which dimension flips when, because the kernel flips them one at
 a time, not all at once.
 
+## Timbre, mixing, sampling (v2)
+
+Three lessons from listening, now structural:
+
+- **Timbre is a dimension.** Every voice has a synthesis *model* chosen per
+  anchor: pads saw/organ/FM, bass saw/sub/acid/reese, lead stack/pluck/FM,
+  drums kick boom/808/909 · snare noise/crack/clap · hat noise/metal. Jungle's
+  hiss-wall was three shared noise generators; now its snare is a tight crack,
+  its kick an 808 sub, its hats sparse — and house claps while techno's 909
+  clicks.
+- **Mixing is a dimension.** Per-anchor compression (mix-bus `dam`), drum
+  reverb sends (jungle/techno nearly dry — the wash was vaporwave leaking into
+  everything), drum DELAY sends (dub throws on the snare), sidechain pump,
+  crackle, tone tilt. The snare LEVEL is explicitly disciplined: ghost snares
+  are quiet by construction and anchors keep snare under kick almost
+  everywhere.
+- **Sampling is a layer, not a bed.** `fetch-found-samples.sh` pulls real
+  material: four Amen variants (source bpm in filename → chops beat-sync by
+  pitch ratio), silence-split rave one-shots from a 1990s sample CD, and
+  public-domain Apollo radio voice clips. Roles: `break` (slice-sequenced,
+  patterns rotate per chord and mutate per seed), `hits` (one-shot
+  stabs/shouts/vox as events, never loops), plus the granular `bed` and `chops`.
+  Synth rave stabs (instr 6) ride chord roots on off-beat patterns.
+
+**Humanity rule:** nothing loops verbatim. Melody phrases drop/push/octave-color
+notes per chord; drum patterns vary per chord AND get a per-cycle pass (hats
+drop out, levels breathe); fills resolve differently each time; break chops
+re-slice every chord. All seeded — same seed, same song.
+
+## The verifier loop
+
+`genre-verifier.js` extracts symbolic features from `buildEvents` (syncopation,
+snare/kick balance, hat density, harmonic motion, seventh color, reverb wash,
+sub presence, break usage, swing, compression, variation ratio) and scores any
+state against per-genre target ranges. `node genre-verifier.js matrix` builds a
+**confusion matrix** over all anchors — the kernel is tuned until every genre
+scores highest as itself (currently 9/9 diagonal-dominant). That's the
+falsifiable answer to "does this actually sound like jungle?", and the loop to
+re-run after every kernel change.
+
 ## Engine support (csd-engine.js)
 
 The kernel emits ordinary engine states. New engine vocabulary added for it:
