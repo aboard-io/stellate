@@ -15,6 +15,10 @@ illustrative render, not a release.
 |---|---|---|---|
 | `tokyo_station` | [`aporee_20938_24294`](https://archive.org/details/aporee_20938_24294) — `nov19tokyostation1934.ogg` | Tokyo Station — metro voices, announcements, platform ambience | ✅ (vaporwave) |
 | `highway_night` | [`aporee_44512_50607`](https://archive.org/details/aporee_44512_50607) — `soundmap201905198.mp3` (CC BY-NC-ND) | night highway, Kouhu Township, Yunlin County TW | ✅ (synthwave) |
+| `factory` | [`aporee_63765_73460`](https://archive.org/details/aporee_63765_73460) (CC BY-NC-SA) | metallurgy plant, La Negra, Chile | genre-kernel: techno |
+| `frogs` | [`aporee_61056_70186`](https://archive.org/details/aporee_61056_70186) (CC BY-NC-ND) | frog chorus, Nishiaizu, Fukushima | genre-kernel: jungle |
+| `iriomote` | [`aporee_30783_35405`](https://archive.org/details/aporee_30783_35405) (public domain) | Iriomote Island day/night | genre-kernel: ambient/downtempo |
+| `shibuya` | [`aporee_20542_23865`](https://archive.org/details/aporee_20542_23865) (CC BY-SA) | Udagawachō street walk, Shibuya | genre-kernel: house |
 
 ## Recordings used historically (available to re-layer)
 

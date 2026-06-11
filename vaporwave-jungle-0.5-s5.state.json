@@ -1,0 +1,198 @@
+{
+  "bpm": 124,
+  "keyOffset": 0,
+  "progression": "deep_two",
+  "reverb": 0.8406,
+  "seed": 5,
+  "swing": 0.085,
+  "humanize": 0.119,
+  "pump": 0,
+  "crackle": 0.1931,
+  "tone": {
+    "lowcut": 17,
+    "highcut": 0
+  },
+  "delay": {
+    "beats": 1.1337,
+    "feedback": 0.4409,
+    "cutoff": 2714
+  },
+  "instruments": {
+    "pad": {
+      "wave": "saw",
+      "cutoff": 1059.5571,
+      "res": 0.15,
+      "detune": 0.005,
+      "attack": 2.7456,
+      "level": 0.5884,
+      "send": 0.6065,
+      "dsend": 0.2729
+    },
+    "bass": {
+      "wave": "sine",
+      "cutoff": 615.6992,
+      "res": 0.1741,
+      "level": 1.0281,
+      "send": 0.0669,
+      "dsend": 0.015
+    },
+    "melody": {
+      "wave": "sine",
+      "cutoff": 2222.822,
+      "res": 0.05,
+      "vibrato": 0.0046,
+      "vibRate": 5.2,
+      "level": 0.519,
+      "send": 0.4417,
+      "dsend": 0.3045,
+      "voices": 2,
+      "spread": 0.0033
+    },
+    "drums": {
+      "kick": 1.0748,
+      "snare": 1.0908,
+      "hat": 0.7706,
+      "tune": 1.1271,
+      "send": 0.2764
+    }
+  },
+  "foundSources": [
+    {
+      "id": "frogs",
+      "label": "Frog Chorus",
+      "url": "https://archive.org/download/aporee_61056_70186/soundmap202307117.mp3",
+      "vol": 0.2532,
+      "pitch": 0.8518,
+      "stretch": 0.4613,
+      "cutoff": 3237
+    }
+  ],
+  "sections": [
+    {
+      "id": "g1",
+      "name": "intro",
+      "cycles": 2,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "frogs",
+        "role": "chops"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g2",
+      "name": "verse",
+      "cycles": 2,
+      "pads": true,
+      "bass": "sub",
+      "drums": "breaks",
+      "melody": "off",
+      "found": {
+        "sourceId": "frogs",
+        "role": "chops"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g3",
+      "name": "pre-chorus",
+      "cycles": 2,
+      "pads": true,
+      "bass": "sub",
+      "drums": "breaks",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "drum fill"
+    },
+    {
+      "id": "g4",
+      "name": "chorus",
+      "cycles": 2,
+      "pads": true,
+      "bass": "sub",
+      "drums": "breaks",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g5",
+      "name": "verse 2",
+      "cycles": 2,
+      "pads": true,
+      "bass": "sub",
+      "drums": "breaks",
+      "melody": "off",
+      "found": {
+        "sourceId": "frogs",
+        "role": "chops"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g6",
+      "name": "bridge",
+      "cycles": 2,
+      "pads": true,
+      "bass": "sub",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "frogs",
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g7",
+      "name": "chorus 2",
+      "cycles": 2,
+      "pads": true,
+      "bass": "sub",
+      "drums": "breaks",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g8",
+      "name": "outro",
+      "cycles": 2,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "frogs",
+        "role": "chops"
+      },
+      "fill": "off"
+    }
+  ],
+  "genreMeta": {
+    "genres": [
+      "vaporwave",
+      "jungle"
+    ],
+    "t": 0.5,
+    "seed": 5,
+    "form": "pop",
+    "kit": "breaks",
+    "progression": "deep_two",
+    "bass": "sub",
+    "lead": "off",
+    "found": "frogs/chops"
+  }
+}

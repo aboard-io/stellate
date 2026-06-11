@@ -17,6 +17,11 @@ recordings=(
   "tokyo_station|aporee_20938_24294|nov19tokyostation1934.ogg|18|40|tokyo_station"
   # night highway, Yunlin County TW (CC BY-NC-ND) — the synthwave/Kavinsky bed
   "highway_night|aporee_44512_50607|soundmap201905198.mp3|10|40|highway_night"
+  # genre-kernel beds (see genre-kernel.js GENRES):
+  "factory|aporee_63765_73460|ATA025Antofagastasiderurgiausinacamionesencarretera.mp3|20|40|factory"     # CC BY-NC-SA — techno
+  "frogs|aporee_61056_70186|soundmap202307117.mp3|10|40|frogs"                                            # CC BY-NC-ND — jungle
+  "iriomote|aporee_30783_35405|iriomoteaporee.ogg|30|40|iriomote"                                         # PD — ambient
+  "shibuya|aporee_20542_23865|nov820131617shibuya.ogg|25|40|shibuya"                                      # CC BY-SA — house
   # More recordings used historically (uncomment to layer them in the .csd):
   # "tsukiji|aporee_35166_40406|<file>.ogg|0|40|tsukiji"
   # "asakusa|aporee_21091_24510|<file>.ogg|0|40|asakusa"

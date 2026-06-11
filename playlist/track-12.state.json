@@ -1,0 +1,198 @@
+{
+  "bpm": 76,
+  "keyOffset": 4,
+  "progression": "royal_road",
+  "reverb": 0.8473,
+  "seed": 1118,
+  "swing": 0.054,
+  "humanize": 0.098,
+  "pump": 0,
+  "crackle": 0.0957,
+  "tone": {
+    "lowcut": 0,
+    "highcut": 0
+  },
+  "delay": {
+    "beats": 0.7621,
+    "feedback": 0.31,
+    "cutoff": 3076
+  },
+  "instruments": {
+    "pad": {
+      "wave": "saw",
+      "cutoff": 1260.3442,
+      "res": 0.15,
+      "detune": 0.0076,
+      "attack": 1.9543,
+      "level": 0.7598,
+      "send": 0.6222,
+      "dsend": 0.1538
+    },
+    "bass": {
+      "wave": "saw",
+      "cutoff": 678.873,
+      "res": 0.1975,
+      "level": 1.034,
+      "send": 0.0777,
+      "dsend": 0.0811
+    },
+    "melody": {
+      "wave": "sine",
+      "cutoff": 3524.0967,
+      "res": 0.05,
+      "vibrato": 0.0042,
+      "vibRate": 5.2,
+      "level": 0.5613,
+      "send": 0.5397,
+      "dsend": 0.3541,
+      "voices": 2,
+      "spread": 0.0046
+    },
+    "drums": {
+      "kick": 0.9575,
+      "snare": 1.1464,
+      "hat": 0.7526,
+      "tune": 1.071,
+      "send": 0.3152
+    }
+  },
+  "foundSources": [
+    {
+      "id": "shibuya",
+      "label": "Shibuya Street",
+      "url": "https://archive.org/download/aporee_20542_23865/nov820131617shibuya.ogg",
+      "vol": 0.1991,
+      "pitch": 0.7801,
+      "stretch": 0.4327,
+      "cutoff": 2974
+    }
+  ],
+  "sections": [
+    {
+      "id": "g105",
+      "name": "intro",
+      "cycles": 3,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g106",
+      "name": "verse",
+      "cycles": 3,
+      "pads": true,
+      "bass": "simple",
+      "drums": "full",
+      "melody": "off",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g107",
+      "name": "pre-chorus",
+      "cycles": 3,
+      "pads": true,
+      "bass": "simple",
+      "drums": "full",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "drum fill"
+    },
+    {
+      "id": "g108",
+      "name": "chorus",
+      "cycles": 3,
+      "pads": true,
+      "bass": "simple",
+      "drums": "full",
+      "melody": "updown",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g109",
+      "name": "verse 2",
+      "cycles": 3,
+      "pads": true,
+      "bass": "simple",
+      "drums": "full",
+      "melody": "off",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g110",
+      "name": "bridge",
+      "cycles": 3,
+      "pads": true,
+      "bass": "simple",
+      "drums": "off",
+      "melody": "sparse",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "bed"
+      },
+      "fill": "riser"
+    },
+    {
+      "id": "g111",
+      "name": "chorus 2",
+      "cycles": 3,
+      "pads": true,
+      "bass": "simple",
+      "drums": "full",
+      "melody": "updown",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g112",
+      "name": "outro",
+      "cycles": 3,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "bed"
+      },
+      "fill": "off"
+    }
+  ],
+  "genreMeta": {
+    "genres": [
+      "vaporwave",
+      "synthwave"
+    ],
+    "t": 0.138,
+    "seed": 1118,
+    "form": "pop",
+    "kit": "full",
+    "progression": "royal_road",
+    "bass": "simple",
+    "lead": "updown",
+    "found": "shibuya/bed"
+  }
+}

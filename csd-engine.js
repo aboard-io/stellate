@@ -65,17 +65,21 @@
     epic_min:   prog("Epic i-VI-VII",            [["A","min7"],["F","maj7"],["G","dom7"],["G","dom7"]]),
     house_min:  prog("House i-VII-VI-VII",       [["A","min7"],["G","maj"],["F","maj7"],["G","dom7"]]),
     dream:      prog("Dreamy IVΔ-Imaj7",         [["F","maj7"],["C","maj7"],["D","min7"],["G","dom7"]]),
-    canon:      prog("Pachelbel canon",          [["C","maj"],["G","maj"],["A","min7"],["E","min7"],["F","maj7"],["C","maj"],["F","maj7"],["G","dom7"]])
+    canon:      prog("Pachelbel canon",          [["C","maj"],["G","maj"],["A","min7"],["E","min7"],["F","maj7"],["C","maj"],["F","maj7"],["G","dom7"]]),
+    // genre-kernel additions — low/zero harmonic motion for techno/dj forms
+    drone_min:  prog("Drone (i, no motion)",     [["A","min7"]]),
+    deep_two:   prog("Deep two-chord (i-VI)",    [["A","min7"],["F","maj7"]]),
+    house_min7: prog("House stabs (i-i-iv-v)",   [["A","min7"],["A","min7"],["D","min7"],["E","min7"]])
   });
 
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
-  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive"];
+  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab"];
   const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero"];
-  const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse"];
+  const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle"];
   const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
   // the ⚡ transition control: what happens at the end of a section, into the next
-  const TRANSITIONS=["off","drum fill","tom fill","riser","sweep","downlift","impact","reverse","noise"];
+  const TRANSITIONS=["off","drum fill","tom fill","break fill","riser","sweep","downlift","impact","reverse","noise"];
 
   function defaultInstruments(){
     return {
@@ -152,12 +156,16 @@
       case "sixteenths": L=[]; for(let i=0;i<16;i++) L.push([i*0.5,0.45,[r5,r6,f6,r6][i%4]]); break;
       case "dub":        L=[[2.5,1.0,r5],[3.5,0.5,r6],[6.5,1.0,r5],[7.5,0.5,f6]]; break;
       case "drive":      L=[]; for(let i=0;i<16;i++) L.push([i*0.5,0.42,r5]); break;   // straight 8ths on the root — the night-drive pulse
+      case "rolling":    L=[]; for(let i=0;i<8;i++)  L.push([i+0.5,0.4,r5]);  break;   // offbeat 8ths — house/techno roll
+      case "sub":        L=[[0,3.8,pchAdd(r5,-12)],[4,3.8,pchAdd(r5,-12)]];   break;   // long sub pressure — jungle/dub
+      case "stab":       L=[[0,0.3,r5],[1.5,0.3,r6],[3,0.3,r5],[4.5,0.3,r6],[6,0.3,r5],[7,0.3,f6]]; break;   // syncopated stabs
       case "walking":    L=[[0,1.0,r5],[1,0.5,r6],[1.5,0.5,f6],[2.5,0.5,r5],[3,1.0,r6],[4,0.5,r5],[4.5,0.5,f6],[5.5,0.5,r6],[6,1.0,r5],[7,0.5,r6],[7.5,0.5,f6]]; break;
       default:           L=[[0,1.5,r5],[2,0.5,r6],[3,1.0,f6],[4.5,0.5,r5],[5,1.0,r6],[6.5,1.5,r5]];
     }
     return L.map(([o,d,p])=>({voice:"bass",beat:S+o,dur:d,pch:p,amp:0.22}));
   }
-  function drumEvents(kind,S,ci,nc){
+  function drumEvents(kind,S,ci,nc,rng){
+    const R=rng||(()=>0.5);   // older kits never call R; new kits vary per chord + seed
     const out=[];
     const k=(o,a)=>out.push({drum:"kick",beat:S+o,dur:0.35,amp:a});
     const s=(o,a)=>out.push({drum:"snare",beat:S+o,dur:0.30,amp:a});
@@ -175,6 +183,36 @@
       s(ci%2?5.5:3.75,.14); s(ci===nc-1?7.25:1.75,.11);
       if(ci%2)k(7.75,.3); else k(3.5,.26);
       for(let i=0;i<16;i++){const o=i*.5; if(o===3.5||o===7.5)h(o,.16,.3); else h(o,i%2?.07:.13);}
+    }
+    else if(kind==="techno"){ // machine four: offbeat opens, minimal snare, rotating ghost perc
+      for(let i=0;i<8;i+=2)k(i,.66);
+      for(let i=0;i<8;i++)h(i+1,.17,.28);                          // offbeat open hats
+      for(let i=0;i<16;i++)h(i*.5,i%2?.05:.09);                    // 16th ride bed
+      if(R()<0.7){s(2,.22);s(6,.22);}                              // snare is optional color
+      const g=[1.75,3.25,5.75,7.25][ci%4]; h(g,.2);                // the rotating ghost
+      if(R()<0.35)k(7.5,.3);
+    }
+    else if(kind==="house"){ // four + claps on 2/4, skipping hats
+      for(let i=0;i<8;i+=2)k(i,.62);
+      s(2,.46);s(6,.46);                                           // claps
+      for(let i=0;i<16;i++){const o=i*.5; h(o,i%4===2?.16:(i%2?.06:.11));}
+      h(ci%2?4.5:0.5,.18,.3);                                      // open hat skips around
+      if(ci%2)s(7.75,.13);
+    }
+    else if(kind==="breaks"){ // mid-tempo broken beat — displaced kicks, dragged snares
+      k(0,.62); k(ci%2?2.75:2.5,.4); k(R()<0.5?4.5:5,.45);
+      s(2,.5); s(6,.5); s(ci%2?5.25:3.75,.18); if(R()<0.4)s(7.5,.2);
+      for(let i=0;i<8;i++)h(.5+i,(i%2?.08:.13));
+      h(ci%2?6.5:2.5,.15,.3);
+    }
+    else if(kind==="jungle"){ // chopped-break feel: the pattern itself mutates every chord
+      k(0,.6); k(2.75,.42); if(ci%2)k(5.5,.45); else k(6.25,.4);
+      s(1.5,.42); s(4,.46);                                        // displaced backbeats
+      const chops=[[3.25,3.5],[5.75,6],[7,7.25],[2.25,6.75]][ci%4];
+      chops.forEach((o,j)=>s(o,.22+j*.06));                        // double-hit chop pair
+      if(R()<0.5)s(7.75,.3);                                       // edge-of-bar push
+      for(let i=0;i<16;i++){if(R()<0.7)h(i*.5,(i%2?.06:.1));}      // broken 16th hats
+      h(ci%2?3.5:7.5,.14,.3);
     }
     if(ci===nc-1 && kind!=="off" && kind!=="halftime"){ s(6.5,.3);s(7,.34);s(7.25,.38);s(7.5,.42);s(7.75,.46); }
     return out;
@@ -200,6 +238,15 @@
     if(r()<0.5){ s(3,.56); s(3.25,.60); s(3.5,.64); s(3.75,.68); }
     else       { s(3,.56); s(3.33,.61); s(3.67,.67); }     // triplet roll
     k(3.75,.4);
+    return out;
+  }
+  // jungle-style chop fill — two beats of 32nd-flavored snare stutter
+  function breakFillEvents(S,rng){
+    const r=rng||Math.random, out=[];
+    const s=(o,a)=>out.push({drum:"snare",beat:S+o,dur:0.18,amp:a});
+    out.push({drum:"kick",beat:S+0,dur:0.3,amp:0.5});
+    let o=0,a=0.24;
+    while(o<2){ s(o,a); a=Math.min(0.55,a+0.04); o+=(r()<0.4?0.125:0.25); }
     return out;
   }
   // generative melody phrases: [beatOffset, dur, leadIndex, octaveShift] over an
@@ -254,14 +301,24 @@
     for(const sec of state.sections){
       const fsrc = sec.found&&sec.found.sourceId ? srcById[sec.found.sourceId] : null;
       const cycles=sec.cycles||1, secBeats=cycles*cycleBeats;
-      if(fsrc){ found.push({beat:cur,dur:secBeats,amp:fsrc.vol,tableNum:fsrc.tableNum,pitch:fsrc.pitch,stretch:fsrc.stretch,cutoff:fsrc.cutoff}); }
+      if(fsrc){
+        if((sec.found.role||"bed")==="chops"){
+          // rhythmic slice hits on a seeded 8th grid instead of one long bed
+          for(let b=0;b<secBeats;b++){
+            if(rng()<0.55) found.push({chop:1,beat:cur+b+(rng()<0.3?0.5:0),dur:0.35+rng()*0.5,
+              amp:fsrc.vol*1.7,tableNum:fsrc.tableNum,pitch:fsrc.pitch,offset:rng(),cutoff:fsrc.cutoff});
+          }
+        } else {
+          found.push({beat:cur,dur:secBeats,amp:fsrc.vol,tableNum:fsrc.tableNum,pitch:fsrc.pitch,stretch:fsrc.stretch,cutoff:fsrc.cutoff});
+        }
+      }
       for(let c=0;c<cycles;c++){
         const cycleBase=cur+c*cycleBeats;
         chords.forEach((chord,ci)=>{
           const Sp=cycleBase+ci*CHORD_BEATS;
           if(sec.pads) chord.pads.forEach(p=>pitched.push({voice:"pad",beat:Sp,dur:CHORD_BEATS,pch:pchAdd(p,k),amp:0.085}));
           if(sec.bass&&sec.bass!=="off") bassEvents(sec.bass,Sp,chord.bass,k).forEach(e=>pitched.push(e));
-          if(sec.drums&&sec.drums!=="off") drumEvents(sec.drums,Sp,ci,chords.length).forEach(e=>drums.push(e));
+          if(sec.drums&&sec.drums!=="off") drumEvents(sec.drums,Sp,ci,chords.length,rng).forEach(e=>drums.push(e));
         });
         if(sec.melody&&sec.melody!=="off") melodyEvents(sec.melody,cycleBase,prg,chords,k,rng).forEach(e=>pitched.push(e));
       }
@@ -271,6 +328,8 @@
         fillEvents(cur+secBeats-2).forEach(e=>drums.push(e));
       } else if(tr==="tom fill"){
         bigFillEvents(cur+secBeats-4,rng).forEach(e=>drums.push(e));
+      } else if(tr==="break fill"){
+        breakFillEvents(cur+secBeats-2,rng).forEach(e=>drums.push(e));
       } else if(SFX_NUM[tr]){
         const hit=(tr==="impact"||tr==="noise");
         const sbeat = hit ? cur+secBeats : cur+secBeats-4;   // hit on next downbeat; build in final bar
@@ -316,6 +375,15 @@
     const dl=state.delay||{beats:0.75,feedback:0.3,cutoff:2600};
     const dsec=Math.min(1.9, Math.max(0.02, (dl.beats||0.75)*60/state.bpm));
     const dfb=Math.min(0.92, Math.max(0, dl.feedback==null?0.3:dl.feedback)), dcut=dl.cutoff||2600;
+    // production: sidechain pump, vinyl crackle, master tone tilt (all default-off)
+    const pump=Math.min(0.9,Math.max(0,state.pump||0));
+    const tone=state.tone||{};
+    const masterTone =
+      (tone.lowcut ?`  aL buthp aL, ${tone.lowcut}\n  aR buthp aR, ${tone.lowcut}\n`:"") +
+      (tone.highcut?`  aL butlp aL, ${tone.highcut}\n  aR butlp aR, ${tone.highcut}\n`:"");
+    const masterPump = pump>0
+      ? `  kphs phasor ${(state.bpm/60).toFixed(4)}\n  kduck = 1 - ${pump.toFixed(3)}*exp(-6*kphs)\n  aL = aL*kduck\n  aR = aR*kduck\n`
+      : "";
     return `<CsoundSynthesizer>
 <CsInstruments>
 sr=44100
@@ -377,6 +445,36 @@ instr 3
   gaMixR=gaMixR+asig*0.55
   gaRevL=gaRevL+asig*0.6
   gaRevR=gaRevR+asig*0.6
+endin
+
+instr 5
+  itab = p6
+  ipit = p7
+  ioff = p8
+  icut = (p9 > 0 ? p9 : 3500)
+  aenv linsegr 0, 0.006, p5, p3-0.04, p5*0.85, 0.03, 0
+  andx phasor (sr*ipit)/nsamp(itab)
+  asig tablei frac(andx + ioff), itab, 1, 0, 1
+  asig moogladder asig, icut, 0.08
+  asig = asig*aenv
+  gaMixL=gaMixL+asig
+  gaMixR=gaMixR+asig
+  gaRevL=gaRevL+asig*0.3
+  gaRevR=gaRevR+asig*0.3
+  gaDelL=gaDelL+asig*0.2
+  gaDelR=gaDelR+asig*0.2
+endin
+
+instr 97
+  icrk = p4
+  adust dust2 icrk*0.5, 30 + icrk*220
+  adust butlp adust, 6500
+  adust buthp adust, 300
+  ahiss noise icrk*0.004, 0
+  ahiss butlp ahiss, 4000
+  asig = adust + ahiss
+  gaMixL=gaMixL+asig
+  gaMixR=gaMixR+asig
 endin
 
 instr 4
@@ -502,8 +600,10 @@ instr 99
 endin
 
 instr 100
-  aL clip gaMixL, 0, 0.95
-  aR clip gaMixR, 0, 0.95
+  aL = gaMixL
+  aR = gaMixR
+${masterPump}${masterTone}  aL clip aL, 0, 0.95
+  aR clip aR, 0, 0.95
   outs aL, aR
   clear gaMixL, gaMixR
 endin
@@ -516,7 +616,11 @@ endin
     const used=new Set(ev.found.map(f=>f.tableNum));
     const srcByTable=Object.values(ev.srcById).filter(s=>used.has(s.tableNum)).sort((a,b)=>a.tableNum-b.tableNum);
     const L=[`t 0 ${state.bpm}`, `i 100 0 ${ev.totalBeats}`, `i 99 0 ${ev.totalBeats}`, `i 98 0 ${ev.totalBeats}`];
-    ev.found.forEach(f=>L.push(`i 3 ${f.beat.toFixed(3)} ${f.dur} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.stretch} ${f.cutoff}`));
+    if(state.crackle>0) L.push(`i 97 0 ${ev.totalBeats} ${Math.min(1,state.crackle)}`);
+    ev.found.forEach(f=>{
+      if(f.chop) L.push(`i 5 ${f.beat.toFixed(3)} ${f.dur.toFixed(3)} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.offset.toFixed(3)} ${f.cutoff}`);
+      else L.push(`i 3 ${f.beat.toFixed(3)} ${f.dur} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.stretch} ${f.cutoff}`);
+    });
     const inst={pad:1,bass:2,melody:4};
     ev.pitched.forEach(p=>L.push(`i ${inst[p.voice]} ${p.beat.toFixed(3)} ${p.dur.toFixed(3)} ${p.pch} ${p.amp.toFixed(4)}`));
     const dinst={kick:10,snare:11,hat:12};

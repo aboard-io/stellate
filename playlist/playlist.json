@@ -1,0 +1,692 @@
+[
+  {
+    "i": 0,
+    "from": "techno",
+    "to": "vaporwave",
+    "t": 0,
+    "seconds": 577,
+    "bpm": 124,
+    "key": 5,
+    "meta": {
+      "genres": [
+        "techno",
+        "vaporwave"
+      ],
+      "t": 0,
+      "seed": 7,
+      "form": "dj",
+      "kit": "techno",
+      "progression": "deep_two",
+      "bass": "sixteenths",
+      "lead": "double",
+      "found": "shibuya/chops"
+    }
+  },
+  {
+    "i": 1,
+    "from": "techno",
+    "to": "vaporwave",
+    "t": 0.103,
+    "seconds": 773,
+    "bpm": 131,
+    "key": 10,
+    "meta": {
+      "genres": [
+        "techno",
+        "vaporwave"
+      ],
+      "t": 0.103,
+      "seed": 1117,
+      "form": "dj",
+      "kit": "pulse",
+      "progression": "deep_two",
+      "bass": "rolling",
+      "lead": "off",
+      "found": "shibuya/chops"
+    }
+  },
+  {
+    "i": 2,
+    "from": "techno",
+    "to": "vaporwave",
+    "t": 0.207,
+    "seconds": 680,
+    "bpm": 113,
+    "key": 5,
+    "meta": {
+      "genres": [
+        "techno",
+        "vaporwave"
+      ],
+      "t": 0.207,
+      "seed": 209,
+      "form": "dj",
+      "kit": "techno",
+      "progression": "drone_min",
+      "bass": "rolling",
+      "lead": "off",
+      "found": "factory/chops"
+    }
+  },
+  {
+    "i": 3,
+    "from": "techno",
+    "to": "vaporwave",
+    "t": 0.31,
+    "seconds": 602,
+    "bpm": 122,
+    "key": 10,
+    "meta": {
+      "genres": [
+        "techno",
+        "vaporwave"
+      ],
+      "t": 0.31,
+      "seed": 310,
+      "form": "dj",
+      "kit": "techno",
+      "progression": "deep_two",
+      "bass": "stab",
+      "lead": "double",
+      "found": "iriomote/chops"
+    }
+  },
+  {
+    "i": 4,
+    "from": "techno",
+    "to": "vaporwave",
+    "t": 0.414,
+    "seconds": 766,
+    "bpm": 116,
+    "key": 5,
+    "meta": {
+      "genres": [
+        "techno",
+        "vaporwave"
+      ],
+      "t": 0.414,
+      "seed": 411,
+      "form": "dj",
+      "kit": "full",
+      "progression": "pop_1625",
+      "bass": "root",
+      "lead": "double",
+      "found": "iriomote/chops"
+    }
+  },
+  {
+    "i": 5,
+    "from": "techno",
+    "to": "vaporwave",
+    "t": 0.517,
+    "seconds": 627,
+    "bpm": 111,
+    "key": 10,
+    "meta": {
+      "genres": [
+        "techno",
+        "vaporwave"
+      ],
+      "t": 0.517,
+      "seed": 512,
+      "form": "dj",
+      "kit": "pulse",
+      "progression": "royal_road",
+      "bass": "rolling",
+      "lead": "updown",
+      "found": "shibuya/bed"
+    }
+  },
+  {
+    "i": 6,
+    "from": "techno",
+    "to": "vaporwave",
+    "t": 0.621,
+    "seconds": 731,
+    "bpm": 90,
+    "key": 5,
+    "meta": {
+      "genres": [
+        "techno",
+        "vaporwave"
+      ],
+      "t": 0.621,
+      "seed": 613,
+      "form": "pop",
+      "kit": "halftime",
+      "progression": "drone_min",
+      "bass": "simple",
+      "lead": "arpup",
+      "found": "factory/bed"
+    }
+  },
+  {
+    "i": 7,
+    "from": "techno",
+    "to": "vaporwave",
+    "t": 0.724,
+    "seconds": 696,
+    "bpm": 89,
+    "key": 0,
+    "meta": {
+      "genres": [
+        "techno",
+        "vaporwave"
+      ],
+      "t": 0.724,
+      "seed": 714,
+      "form": "pop",
+      "kit": "halftime",
+      "progression": "royal_road",
+      "bass": "walking",
+      "lead": "off",
+      "found": "shibuya/bed"
+    }
+  },
+  {
+    "i": 8,
+    "from": "techno",
+    "to": "vaporwave",
+    "t": 0.828,
+    "seconds": 728,
+    "bpm": 85,
+    "key": 7,
+    "meta": {
+      "genres": [
+        "techno",
+        "vaporwave"
+      ],
+      "t": 0.828,
+      "seed": 1824,
+      "form": "pop",
+      "kit": "full",
+      "progression": "neosoul",
+      "bass": "walking",
+      "lead": "off",
+      "found": "iriomote/bed"
+    }
+  },
+  {
+    "i": 9,
+    "from": "techno",
+    "to": "vaporwave",
+    "t": 0.931,
+    "seconds": 859,
+    "bpm": 90,
+    "key": 2,
+    "meta": {
+      "genres": [
+        "techno",
+        "vaporwave"
+      ],
+      "t": 0.931,
+      "seed": 916,
+      "form": "pop",
+      "kit": "open",
+      "progression": "dream",
+      "bass": "root",
+      "lead": "arpup",
+      "found": "tokyo_station/bed"
+    }
+  },
+  {
+    "i": 10,
+    "from": "vaporwave",
+    "to": "synthwave",
+    "t": 0.034,
+    "seconds": 897,
+    "bpm": 69,
+    "key": 9,
+    "meta": {
+      "genres": [
+        "vaporwave",
+        "synthwave"
+      ],
+      "t": 0.034,
+      "seed": 1017,
+      "form": "pop",
+      "kit": "four",
+      "progression": "dream",
+      "bass": "root",
+      "lead": "updown",
+      "found": "shibuya/bed"
+    }
+  },
+  {
+    "i": 11,
+    "from": "vaporwave",
+    "to": "synthwave",
+    "t": 0.138,
+    "seconds": 613,
+    "bpm": 76,
+    "key": 4,
+    "meta": {
+      "genres": [
+        "vaporwave",
+        "synthwave"
+      ],
+      "t": 0.138,
+      "seed": 1118,
+      "form": "pop",
+      "kit": "full",
+      "progression": "royal_road",
+      "bass": "simple",
+      "lead": "updown",
+      "found": "shibuya/bed"
+    }
+  },
+  {
+    "i": 12,
+    "from": "vaporwave",
+    "to": "synthwave",
+    "t": 0.241,
+    "seconds": 712,
+    "bpm": 87,
+    "key": 9,
+    "meta": {
+      "genres": [
+        "vaporwave",
+        "synthwave"
+      ],
+      "t": 0.241,
+      "seed": 1219,
+      "form": "pop",
+      "kit": "pulse",
+      "progression": "royal_road",
+      "bass": "root",
+      "lead": "composed",
+      "found": "highway_night/bed"
+    }
+  },
+  {
+    "i": 13,
+    "from": "vaporwave",
+    "to": "synthwave",
+    "t": 0.345,
+    "seconds": 822,
+    "bpm": 94,
+    "key": 4,
+    "meta": {
+      "genres": [
+        "vaporwave",
+        "synthwave"
+      ],
+      "t": 0.345,
+      "seed": 1320,
+      "form": "pop",
+      "kit": "pulse",
+      "progression": "neosoul",
+      "bass": "drive",
+      "lead": "composed2",
+      "found": "highway_night/bed"
+    }
+  },
+  {
+    "i": 14,
+    "from": "vaporwave",
+    "to": "synthwave",
+    "t": 0.448,
+    "seconds": 789,
+    "bpm": 98,
+    "key": 9,
+    "meta": {
+      "genres": [
+        "vaporwave",
+        "synthwave"
+      ],
+      "t": 0.448,
+      "seed": 1421,
+      "form": "pop",
+      "kit": "halftime",
+      "progression": "andalusian",
+      "bass": "drive",
+      "lead": "arpup",
+      "found": "highway_night/bed"
+    }
+  },
+  {
+    "i": 15,
+    "from": "vaporwave",
+    "to": "synthwave",
+    "t": 0.552,
+    "seconds": 764,
+    "bpm": 81,
+    "key": 2,
+    "meta": {
+      "genres": [
+        "vaporwave",
+        "synthwave"
+      ],
+      "t": 0.552,
+      "seed": 1522,
+      "form": "pop",
+      "kit": "full",
+      "progression": "epic_min",
+      "bass": "sixteenths",
+      "lead": "composed2",
+      "found": "factory/bed"
+    }
+  },
+  {
+    "i": 16,
+    "from": "vaporwave",
+    "to": "synthwave",
+    "t": 0.655,
+    "seconds": 917,
+    "bpm": 101,
+    "key": 7,
+    "meta": {
+      "genres": [
+        "vaporwave",
+        "synthwave"
+      ],
+      "t": 0.655,
+      "seed": 1623,
+      "form": "pop",
+      "kit": "halftime",
+      "progression": "epic_min",
+      "bass": "walking",
+      "lead": "arpdown",
+      "found": "highway_night/bed"
+    }
+  },
+  {
+    "i": 17,
+    "from": "vaporwave",
+    "to": "synthwave",
+    "t": 0.759,
+    "seconds": 920,
+    "bpm": 84,
+    "key": 0,
+    "meta": {
+      "genres": [
+        "vaporwave",
+        "synthwave"
+      ],
+      "t": 0.759,
+      "seed": 1724,
+      "form": "pop",
+      "kit": "four",
+      "progression": "andalusian",
+      "bass": "octaves",
+      "lead": "updown",
+      "found": "highway_night/bed"
+    }
+  },
+  {
+    "i": 18,
+    "from": "vaporwave",
+    "to": "synthwave",
+    "t": 0.862,
+    "seconds": 595,
+    "bpm": 104,
+    "key": 7,
+    "meta": {
+      "genres": [
+        "vaporwave",
+        "synthwave"
+      ],
+      "t": 0.862,
+      "seed": 1825,
+      "form": "pop",
+      "kit": "halftime",
+      "progression": "minor_run",
+      "bass": "drive",
+      "lead": "hero",
+      "found": "highway_night/bed"
+    }
+  },
+  {
+    "i": 19,
+    "from": "vaporwave",
+    "to": "synthwave",
+    "t": 0.966,
+    "seconds": 703,
+    "bpm": 110,
+    "key": 2,
+    "meta": {
+      "genres": [
+        "vaporwave",
+        "synthwave"
+      ],
+      "t": 0.966,
+      "seed": 2935,
+      "form": "pop",
+      "kit": "open",
+      "progression": "minor_run",
+      "bass": "drive",
+      "lead": "arpdown",
+      "found": "factory/bed"
+    }
+  },
+  {
+    "i": 20,
+    "from": "synthwave",
+    "to": "jungle",
+    "t": 0.069,
+    "seconds": 516,
+    "bpm": 120,
+    "key": 9,
+    "meta": {
+      "genres": [
+        "synthwave",
+        "jungle"
+      ],
+      "t": 0.069,
+      "seed": 2027,
+      "form": "pop",
+      "kit": "open",
+      "progression": "epic_min",
+      "bass": "octaves",
+      "lead": "off",
+      "found": "frogs/bed"
+    }
+  },
+  {
+    "i": 21,
+    "from": "synthwave",
+    "to": "jungle",
+    "t": 0.172,
+    "seconds": 813,
+    "bpm": 114,
+    "key": 4,
+    "meta": {
+      "genres": [
+        "synthwave",
+        "jungle"
+      ],
+      "t": 0.172,
+      "seed": 2128,
+      "form": "pop",
+      "kit": "jungle",
+      "progression": "minor_run",
+      "bass": "drive",
+      "lead": "hero",
+      "found": "highway_night/bed"
+    }
+  },
+  {
+    "i": 22,
+    "from": "synthwave",
+    "to": "jungle",
+    "t": 0.276,
+    "seconds": 655,
+    "bpm": 115,
+    "key": 11,
+    "meta": {
+      "genres": [
+        "synthwave",
+        "jungle"
+      ],
+      "t": 0.276,
+      "seed": 2229,
+      "form": "dj",
+      "kit": "open",
+      "progression": "epic_min",
+      "bass": "dub",
+      "lead": "hero",
+      "found": "highway_night/chops"
+    }
+  },
+  {
+    "i": 23,
+    "from": "synthwave",
+    "to": "jungle",
+    "t": 0.379,
+    "seconds": 908,
+    "bpm": 119,
+    "key": 4,
+    "meta": {
+      "genres": [
+        "synthwave",
+        "jungle"
+      ],
+      "t": 0.379,
+      "seed": 2330,
+      "form": "pop",
+      "kit": "pulse",
+      "progression": "andalusian",
+      "bass": "drive",
+      "lead": "hero",
+      "found": "factory/bed"
+    }
+  },
+  {
+    "i": 24,
+    "from": "synthwave",
+    "to": "jungle",
+    "t": 0.483,
+    "seconds": 766,
+    "bpm": 126,
+    "key": 11,
+    "meta": {
+      "genres": [
+        "synthwave",
+        "jungle"
+      ],
+      "t": 0.483,
+      "seed": 2431,
+      "form": "pop",
+      "kit": "four",
+      "progression": "drone_min",
+      "bass": "drive",
+      "lead": "off",
+      "found": "factory/chops"
+    }
+  },
+  {
+    "i": 25,
+    "from": "synthwave",
+    "to": "jungle",
+    "t": 0.586,
+    "seconds": 653,
+    "bpm": 133,
+    "key": 6,
+    "meta": {
+      "genres": [
+        "synthwave",
+        "jungle"
+      ],
+      "t": 0.586,
+      "seed": 2532,
+      "form": "dj",
+      "kit": "pulse",
+      "progression": "minor_run",
+      "bass": "drive",
+      "lead": "updown",
+      "found": "frogs/chops"
+    }
+  },
+  {
+    "i": 26,
+    "from": "synthwave",
+    "to": "jungle",
+    "t": 0.69,
+    "seconds": 620,
+    "bpm": 137,
+    "key": 11,
+    "meta": {
+      "genres": [
+        "synthwave",
+        "jungle"
+      ],
+      "t": 0.69,
+      "seed": 2633,
+      "form": "dj",
+      "kit": "jungle",
+      "progression": "minor_run",
+      "bass": "dub",
+      "lead": "pentaup",
+      "found": "factory/chops"
+    }
+  },
+  {
+    "i": 27,
+    "from": "synthwave",
+    "to": "jungle",
+    "t": 0.793,
+    "seconds": 651,
+    "bpm": 154,
+    "key": 6,
+    "meta": {
+      "genres": [
+        "synthwave",
+        "jungle"
+      ],
+      "t": 0.793,
+      "seed": 4752,
+      "form": "pop",
+      "kit": "jungle",
+      "progression": "deep_two",
+      "bass": "sub",
+      "lead": "off",
+      "found": "factory/chops"
+    }
+  },
+  {
+    "i": 28,
+    "from": "synthwave",
+    "to": "jungle",
+    "t": 0.897,
+    "seconds": 759,
+    "bpm": 158,
+    "key": 1,
+    "meta": {
+      "genres": [
+        "synthwave",
+        "jungle"
+      ],
+      "t": 0.897,
+      "seed": 2835,
+      "form": "dj",
+      "kit": "breaks",
+      "progression": "drone_min",
+      "bass": "drive",
+      "lead": "off",
+      "found": "frogs/chops"
+    }
+  },
+  {
+    "i": 29,
+    "from": "synthwave",
+    "to": "jungle",
+    "t": 1,
+    "seconds": 551,
+    "bpm": 168,
+    "key": 6,
+    "meta": {
+      "genres": [
+        "synthwave",
+        "jungle"
+      ],
+      "t": 1,
+      "seed": 2936,
+      "form": "dj",
+      "kit": "jungle",
+      "progression": "deep_two",
+      "bass": "dub",
+      "lead": "pentaup",
+      "found": "frogs/chops"
+    }
+  }
+]

@@ -1,0 +1,198 @@
+{
+  "bpm": 98,
+  "keyOffset": 9,
+  "progression": "andalusian",
+  "reverb": 0.9134,
+  "seed": 1421,
+  "swing": 0.046,
+  "humanize": 0.098,
+  "pump": 0.0704,
+  "crackle": 0.2033,
+  "tone": {
+    "lowcut": 17,
+    "highcut": 0
+  },
+  "delay": {
+    "beats": 0.708,
+    "feedback": 0.3395,
+    "cutoff": 2369
+  },
+  "instruments": {
+    "pad": {
+      "wave": "saw",
+      "cutoff": 1950.2208,
+      "res": 0.15,
+      "detune": 0.0096,
+      "attack": 1.2097,
+      "level": 0.6313,
+      "send": 0.6009,
+      "dsend": 0.1801
+    },
+    "bass": {
+      "wave": "saw",
+      "cutoff": 834.8004,
+      "res": 0.2433,
+      "level": 1.1877,
+      "send": 0.1132,
+      "dsend": 0.0063
+    },
+    "melody": {
+      "wave": "sine",
+      "cutoff": 3170.3376,
+      "res": 0.05,
+      "vibrato": 0.0072,
+      "vibRate": 5.2,
+      "level": 0.6263,
+      "send": 0.5439,
+      "dsend": 0.3408,
+      "voices": 3,
+      "spread": 0.0089
+    },
+    "drums": {
+      "kick": 1.0999,
+      "snare": 1.086,
+      "hat": 0.6553,
+      "tune": 0.9609,
+      "send": 0.3897
+    }
+  },
+  "foundSources": [
+    {
+      "id": "highway_night",
+      "label": "Night Highway",
+      "url": "https://archive.org/download/aporee_44512_50607/soundmap201905198.mp3",
+      "vol": 0.1828,
+      "pitch": 0.7957,
+      "stretch": 0.5176,
+      "cutoff": 2271
+    }
+  ],
+  "sections": [
+    {
+      "id": "g129",
+      "name": "intro",
+      "cycles": 5,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "highway_night",
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g130",
+      "name": "verse",
+      "cycles": 5,
+      "pads": true,
+      "bass": "drive",
+      "drums": "halftime",
+      "melody": "off",
+      "found": {
+        "sourceId": "highway_night",
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g131",
+      "name": "pre-chorus",
+      "cycles": 5,
+      "pads": true,
+      "bass": "drive",
+      "drums": "halftime",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "tom fill"
+    },
+    {
+      "id": "g132",
+      "name": "chorus",
+      "cycles": 5,
+      "pads": true,
+      "bass": "drive",
+      "drums": "halftime",
+      "melody": "arpup",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g133",
+      "name": "verse 2",
+      "cycles": 5,
+      "pads": true,
+      "bass": "drive",
+      "drums": "halftime",
+      "melody": "off",
+      "found": {
+        "sourceId": "highway_night",
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g134",
+      "name": "bridge",
+      "cycles": 5,
+      "pads": true,
+      "bass": "drive",
+      "drums": "off",
+      "melody": "sparse",
+      "found": {
+        "sourceId": "highway_night",
+        "role": "bed"
+      },
+      "fill": "tom fill"
+    },
+    {
+      "id": "g135",
+      "name": "chorus 2",
+      "cycles": 5,
+      "pads": true,
+      "bass": "drive",
+      "drums": "halftime",
+      "melody": "arpup",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g136",
+      "name": "outro",
+      "cycles": 5,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "highway_night",
+        "role": "bed"
+      },
+      "fill": "off"
+    }
+  ],
+  "genreMeta": {
+    "genres": [
+      "vaporwave",
+      "synthwave"
+    ],
+    "t": 0.448,
+    "seed": 1421,
+    "form": "pop",
+    "kit": "halftime",
+    "progression": "andalusian",
+    "bass": "drive",
+    "lead": "arpup",
+    "found": "highway_night/bed"
+  }
+}

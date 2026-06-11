@@ -1,0 +1,198 @@
+{
+  "bpm": 87,
+  "keyOffset": 9,
+  "progression": "royal_road",
+  "reverb": 0.8687,
+  "seed": 1219,
+  "swing": 0.024,
+  "humanize": 0.121,
+  "pump": 0.1585,
+  "crackle": 0,
+  "tone": {
+    "lowcut": 0,
+    "highcut": 0
+  },
+  "delay": {
+    "beats": 1.3094,
+    "feedback": 0.3811,
+    "cutoff": 2663
+  },
+  "instruments": {
+    "pad": {
+      "wave": "saw",
+      "cutoff": 1393.3671,
+      "res": 0.15,
+      "detune": 0.0088,
+      "attack": 1.8695,
+      "level": 0.6139,
+      "send": 0.5882,
+      "dsend": 0.1293
+    },
+    "bass": {
+      "wave": "saw",
+      "cutoff": 832.7895,
+      "res": 0.2286,
+      "level": 0.9715,
+      "send": 0.0497,
+      "dsend": 0.0024
+    },
+    "melody": {
+      "wave": "saw",
+      "cutoff": 2886.0683,
+      "res": 0.05,
+      "vibrato": 0.0048,
+      "vibRate": 5.2,
+      "level": 0.5214,
+      "send": 0.433,
+      "dsend": 0.3922,
+      "voices": 3,
+      "spread": 0.0054
+    },
+    "drums": {
+      "kick": 0.9764,
+      "snare": 1.0522,
+      "hat": 0.8095,
+      "tune": 0.9317,
+      "send": 0.3714
+    }
+  },
+  "foundSources": [
+    {
+      "id": "highway_night",
+      "label": "Night Highway",
+      "url": "https://archive.org/download/aporee_44512_50607/soundmap201905198.mp3",
+      "vol": 0.1585,
+      "pitch": 0.8247,
+      "stretch": 0.4417,
+      "cutoff": 2831
+    }
+  ],
+  "sections": [
+    {
+      "id": "g113",
+      "name": "intro",
+      "cycles": 4,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "highway_night",
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g114",
+      "name": "verse",
+      "cycles": 4,
+      "pads": true,
+      "bass": "root",
+      "drums": "pulse",
+      "melody": "off",
+      "found": {
+        "sourceId": "highway_night",
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g115",
+      "name": "pre-chorus",
+      "cycles": 4,
+      "pads": true,
+      "bass": "root",
+      "drums": "pulse",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "downlift"
+    },
+    {
+      "id": "g116",
+      "name": "chorus",
+      "cycles": 4,
+      "pads": true,
+      "bass": "root",
+      "drums": "pulse",
+      "melody": "composed",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g117",
+      "name": "verse 2",
+      "cycles": 4,
+      "pads": true,
+      "bass": "root",
+      "drums": "pulse",
+      "melody": "off",
+      "found": {
+        "sourceId": "highway_night",
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g118",
+      "name": "bridge",
+      "cycles": 4,
+      "pads": true,
+      "bass": "root",
+      "drums": "off",
+      "melody": "sparse",
+      "found": {
+        "sourceId": "highway_night",
+        "role": "bed"
+      },
+      "fill": "downlift"
+    },
+    {
+      "id": "g119",
+      "name": "chorus 2",
+      "cycles": 4,
+      "pads": true,
+      "bass": "root",
+      "drums": "pulse",
+      "melody": "composed",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g120",
+      "name": "outro",
+      "cycles": 4,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "highway_night",
+        "role": "bed"
+      },
+      "fill": "off"
+    }
+  ],
+  "genreMeta": {
+    "genres": [
+      "vaporwave",
+      "synthwave"
+    ],
+    "t": 0.241,
+    "seed": 1219,
+    "form": "pop",
+    "kit": "pulse",
+    "progression": "royal_road",
+    "bass": "root",
+    "lead": "composed",
+    "found": "highway_night/bed"
+  }
+}
