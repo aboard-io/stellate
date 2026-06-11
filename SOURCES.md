@@ -46,6 +46,8 @@ Timestamps were hand-curated by sampling frames across each disc (2026-06).
 | [`video-drug-2-phuture-laser-disc-1990`](https://archive.org/details/video-drug-2-phuture-laser-disc-1990) | Video Drug 2: Phuture (1990, JP ambient video) | kaleidoscope, red lattice, rainbow rings, green nebula, blue electric tracery, night-light kaleidoscope | none stated |
 | [`video-drug-1-deep-laser-disc-1990`](https://archive.org/details/video-drug-1-deep-laser-disc-1990) | Video Drug 1: Deep (1990) | monochrome face collage, static-glitch face, TV in a dark red room | none stated |
 | [`ss098-0001`](https://archive.org/details/ss098-0001) | NASA SpaceDisc Vol. 1 (1984) | Earth from orbit, STS spacewalk | NASA footage — public domain |
+| [`tokyo-night-drive-4-k-2016`](https://archive.org/details/tokyo-night-drive-4-k-2016) | Tokyo Night Drive 首都高 (2016) | blue-hour expressway, dusk highway, Rainbow Bridge | public domain |
+| [`from-SF`](https://archive.org/details/from-SF) | Night drive from SF | taillights at an intersection | public domain |
 
 The NASA material is public domain. The demo discs and Video Drug volumes carry
 no explicit license; they're used here as brief, transformed, muted excerpts in

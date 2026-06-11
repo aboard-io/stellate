@@ -88,7 +88,7 @@ for (const mel of ["arpup","arpdown","wander"]) {
 }
 
 // 7) new bass + melody patterns
-for (const bass of ["root","octaves","sixteenths","dub"]) {
+for (const bass of ["root","octaves","sixteenths","dub","drive"]) {
   const s = defaultState();
   s.sections = [{ id:"b", name:"b", cycles:1, pads:true, bass, drums:"full", melody:"off", found:{sourceId:null}, fillInto:false }];
   allOk &= 0<render("bass_"+bass, s);
@@ -97,6 +97,14 @@ for (const mel of ["updown","pentaup","sparse","double"]) {
   const s = defaultState();
   s.sections = [{ id:"m", name:"m", cycles:1, pads:true, bass:"simple", drums:"off", melody:mel, found:{sourceId:null}, fillInto:false }];
   allOk &= 0<render("mel_"+mel, s);
+}
+
+// 7b) the big tom fill + drum reverb send
+{
+  const s = defaultState();
+  s.instruments.drums.send = 0.55;
+  s.sections = [{ id:"tf", name:"tf", cycles:1, pads:true, bass:"drive", drums:"four", melody:"off", found:{sourceId:null}, fill:"tom fill" }];
+  allOk &= 0<render("tom_fill_bigverb", s);
 }
 
 // 8) per-instrument params + swing + humanize

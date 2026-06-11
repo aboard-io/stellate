@@ -70,19 +70,19 @@
 
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
-  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub"];
+  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive"];
   const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double"];
   const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap"];
   const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
   // the ⚡ transition control: what happens at the end of a section, into the next
-  const TRANSITIONS=["off","drum fill","riser","sweep","downlift","impact","reverse","noise"];
+  const TRANSITIONS=["off","drum fill","tom fill","riser","sweep","downlift","impact","reverse","noise"];
 
   function defaultInstruments(){
     return {
       pad:    { wave:"saw",  cutoff:1400, res:0.15, detune:0.006, attack:1.5, level:0.7, send:0.55, dsend:0.15 },
       bass:   { wave:"saw",  cutoff:700,  res:0.15, level:1.0, send:0.08, dsend:0.0 },
       melody: { wave:"sine", cutoff:3400, res:0.05, vibrato:0.006, vibRate:5.2, level:0.6, send:0.45, dsend:0.25 },
-      drums:  { kick:1.0, snare:1.0, hat:1.0, tune:1.0 }
+      drums:  { kick:1.0, snare:1.0, hat:1.0, tune:1.0, send:0.18 }
     };
   }
   function mergedInstruments(state){
@@ -151,6 +151,7 @@
       case "octaves":    L=[[0,1,r5],[1,1,r6],[2,1,r5],[3,1,r6],[4,1,r5],[5,1,r6],[6,1,r5],[7,1,r6]]; break;
       case "sixteenths": L=[]; for(let i=0;i<16;i++) L.push([i*0.5,0.45,[r5,r6,f6,r6][i%4]]); break;
       case "dub":        L=[[2.5,1.0,r5],[3.5,0.5,r6],[6.5,1.0,r5],[7.5,0.5,f6]]; break;
+      case "drive":      L=[]; for(let i=0;i<16;i++) L.push([i*0.5,0.42,r5]); break;   // straight 8ths on the root — the night-drive pulse
       case "walking":    L=[[0,1.0,r5],[1,0.5,r6],[1.5,0.5,f6],[2.5,0.5,r5],[3,1.0,r6],[4,0.5,r5],[4.5,0.5,f6],[5.5,0.5,r6],[6,1.0,r5],[7,0.5,r6],[7.5,0.5,f6]]; break;
       default:           L=[[0,1.5,r5],[2,0.5,r6],[3,1.0,f6],[4.5,0.5,r5],[5,1.0,r6],[6.5,1.5,r5]];
     }
@@ -176,6 +177,17 @@
       {drum:"snare",beat:S+1,dur:0.22,amp:0.40},{drum:"snare",beat:S+1.25,dur:0.20,amp:0.42},
       {drum:"snare",beat:S+1.5,dur:0.20,amp:0.45},{drum:"snare",beat:S+1.75,dur:0.20,amp:0.48},
       {drum:"kick",beat:S+0,dur:0.30,amp:0.55}];
+  }
+  // the big one — four beats, halves into quarters into a crescendo roll
+  // ("In the Air Tonight" energy; crank instruments.drums.send to gate-wash it)
+  function bigFillEvents(S){
+    const out=[];
+    const s=(o,a)=>out.push({drum:"snare",beat:S+o,dur:0.3,amp:a});
+    const k=(o,a)=>out.push({drum:"kick",beat:S+o,dur:0.4,amp:a});
+    k(0,.60); s(0,.40); s(1,.44);
+    k(2,.62); s(2,.48); s(2.5,.52);
+    s(3,.56); s(3.25,.60); s(3.5,.64); s(3.75,.68);
+    return out;
   }
   // generative melody phrases: [beatOffset, dur, leadIndex, octaveShift] over an
   // 8-beat chord — each style has a distinct rhythm + contour (not just chord arps).
@@ -239,6 +251,8 @@
       const tr = sec.fill || (sec.fillInto ? "drum fill" : "off");
       if(tr==="drum fill"){
         fillEvents(cur+secBeats-2).forEach(e=>drums.push(e));
+      } else if(tr==="tom fill"){
+        bigFillEvents(cur+secBeats-4).forEach(e=>drums.push(e));
       } else if(SFX_NUM[tr]){
         const hit=(tr==="impact"||tr==="noise");
         const sbeat = hit ? cur+secBeats : cur+secBeats-4;   // hit on next downbeat; build in final bar
@@ -357,6 +371,8 @@ instr 10
   a1 = tanh(a1*1.4)*0.8
   gaMixL=gaMixL+a1
   gaMixR=gaMixR+a1
+  gaRevL=gaRevL+a1*${(I.drums.send*0.35).toFixed(3)}
+  gaRevR=gaRevR+a1*${(I.drums.send*0.35).toFixed(3)}
 endin
 
 instr 11
@@ -369,8 +385,8 @@ instr 11
   asig=(anz+at1+at2)*aenv
   gaMixL=gaMixL+asig
   gaMixR=gaMixR+asig
-  gaRevL=gaRevL+asig*0.18
-  gaRevR=gaRevR+asig*0.18
+  gaRevL=gaRevL+asig*${I.drums.send}
+  gaRevR=gaRevR+asig*${I.drums.send}
 endin
 
 instr 12
@@ -381,6 +397,8 @@ instr 12
   asig=anz*aenv
   gaMixL=gaMixL+asig*0.7
   gaMixR=gaMixR+asig*0.7
+  gaRevL=gaRevL+asig*${(I.drums.send*0.3).toFixed(3)}
+  gaRevR=gaRevR+asig*${(I.drums.send*0.3).toFixed(3)}
 endin
 
 instr 20
