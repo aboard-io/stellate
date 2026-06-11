@@ -239,23 +239,30 @@ function drawMap(){
 const toXY=ev=>{const r=svg.getBoundingClientRect();const p=ev.touches?ev.touches[0]:ev;
   return {x:Math.max(0,Math.min(500,(p.clientX-r.left)*500/r.width)),
           y:Math.max(0,Math.min(400,(p.clientY-r.top)*400/r.height))};};
-let dragging=false, dragWp=-1;
+let dragging=false, dragWp=-1, lastTap={t:0,x:0,y:0};
 svg.addEventListener("pointerdown",e=>{
-  e.preventDefault();
+  // NOTE: no preventDefault here — it would suppress dblclick. Selection is
+  // handled by CSS user-select; double-add is detected manually (mouse+touch).
+  const pt=toXY(e), now=performance.now();
   const wp=e.target.dataset&&e.target.dataset.wp;
+  if(wp==null && now-lastTap.t<380 && Math.hypot(pt.x-lastTap.x,pt.y-lastTap.y)<16){
+    lastTap={t:0,x:0,y:0};
+    set({waypoints:[...S.waypoints,pt],status:"waypoint "+(S.waypoints.length+1)+" added — dbl-click again to extend"});
+    return;
+  }
+  lastTap={t:now,x:pt.x,y:pt.y};
   if(wp!=null){ dragWp=+wp; }
   else dragging=true;
   document.body.classList.add("dragging");
   svg.setPointerCapture(e.pointerId);
-  if(dragging) retarget(toXY(e));
+  if(dragging) retarget(pt);
 });
 svg.addEventListener("pointermove",e=>{
   if(dragWp>=0){ const pt=toXY(e); S.waypoints[dragWp]=pt; set({}); }
   else if(dragging){ e.preventDefault(); retarget(toXY(e)); }
 });
 addEventListener("pointerup",()=>{dragging=false;dragWp=-1;document.body.classList.remove("dragging");});
-svg.addEventListener("dblclick",e=>{ e.preventDefault();
-  set({waypoints:[...S.waypoints,toXY(e)],status:"waypoint "+(S.waypoints.length+1)+" added"}); });
+svg.addEventListener("dblclick",e=>e.preventDefault());   // handled via double-tap above
 svg.addEventListener("contextmenu",e=>{
   const wp=e.target.dataset&&e.target.dataset.wp;
   if(wp!=null){ e.preventDefault();
