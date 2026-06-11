@@ -111,7 +111,7 @@
       bpm:[62,88], swing:[0,.12], humanize:[.05,.25],
       progressions:["royal_road","dream","pop_1625","neosoul"], kits:["full","open","halftime"], fills:["drum fill","riser","downlift","off"],
       bass:{patterns:["simple","walking","root"], recipe:{model:["saw"],cutoff:[500,900],res:[.1,.25],level:[.9,1.1],send:[.05,.15],dsend:[0,.1]}},
-      lead:{patterns:["composed","composed2","arpup","updown"], recipe:{model:["stack"],wave:"sine",voices:[1,2],spread:[.003,.006],cutoff:[2800,4000],level:[.5,.65],send:[.4,.6],dsend:[.2,.4],vibrato:[.004,.009]}},
+      lead:{patterns:["composed","composed2","arpup","updown"], recipe:{model:["stack"],wave:"sine",voices:[1,2],spread:[.003,.006],cutoff:[2800,4000],level:[.4,.52],send:[.4,.6],dsend:[.2,.4],vibrato:[.004,.009]}},
       pads:{prob:1, recipe:{model:["saw"],wave:"saw",cutoff:[1100,1800],detune:[.004,.009],attack:[1.2,2.4],level:[.6,.8],send:[.5,.7],dsend:[.1,.25]}},
       drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.9,1.15],snare:[.6,.85],hat:[.75,1.05],tune:[.95,1.1],send:[.15,.3],dsend:[0,.1]},
       fx:{reverb:[.8,.92], delayBeats:[.75,1.5], delayFb:[.25,.4], delayCut:[2200,3200], pump:[0,.1], crackle:[.05,.3], lowcut:[0,0], highcut:[0,0], comp:[0,.15]},
@@ -162,53 +162,139 @@
       found:{role:"bed", vol:[.2,.32], pitch:[.6,.8], stretch:[.45,.6], cutoff:[2000,3400], sources:["iriomote","frogs","tokyo_station"]},
       stab:["off"], hits:{sources:["vox_a","sp_herenow"], pattern:"sparse", prob:.15},
       form:"wave" },
+    neoclassical: { label:"Neoclassical", info:"felt piano, slow counterpoint, room air, rubato",
+      bpm:[58,82], swing:[0,.1], humanize:[.3,.55],
+      progressions:["canon","neosoul","dream","ii_v_i"], kits:["off"], fills:["off"],
+      bass:{patterns:["root","off","simple"], recipe:{model:["piano"],cutoff:[800,1600],res:[.05,.1],level:[.7,.95],send:[.25,.45],dsend:[0,.1]}},
+      lead:{patterns:["canon","wander","arpup","sparse"], recipe:{model:["piano"],wave:"sine",voices:[1,2],spread:[.001,.003],cutoff:[2400,3600],level:[.5,.65],send:[.35,.55],dsend:[.05,.2]}},
+      pads:{prob:.55, recipe:{model:["piano","organ"],wave:"sine",cutoff:[1000,1800],detune:[.002,.005],attack:[.3,1],level:[.4,.6],send:[.4,.6],dsend:[0,.1]}},
+      drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.5,.8],snare:[.4,.6],hat:[.3,.5],tune:[.9,1],send:[.2,.4],dsend:[0,0]},
+      fx:{reverb:[.6,.8], delayBeats:[.75,1.5], delayFb:[.15,.3], delayCut:[2000,3000], pump:[0,0], crackle:[0,.35], lowcut:[0,0], highcut:[0,0], comp:[0,.15]},
+      found:{role:"bed", vol:[.06,.14], pitch:[.7,.9], stretch:[.45,.6], cutoff:[1800,2800], sources:["iriomote","tokyo_station"]},
+      stab:["off"], hits:{sources:["sp_herenow"], pattern:"sparse", prob:.1},
+      form:"wave" },
+    dancepop: { label:"Dance pop", info:"New Order-ish: melodic synth bass up high, bright leads, big pop changes",
+      bpm:[116,128], swing:[0,.1], humanize:[.05,.2],
+      progressions:["four_chords","sad_pop","doo_wop"], kits:["four","pulse","open"], fills:["drum fill","tom fill","riser"],
+      bass:{patterns:["octaves","drive","rolling"], recipe:{model:["saw"],cutoff:[900,1500],res:[.1,.25],level:[1.05,1.25],send:[.05,.15],dsend:[0,.1]}},
+      lead:{patterns:["hero","updown","arpup"], recipe:{model:["stack"],wave:"saw",voices:[3,5],spread:[.006,.012],cutoff:[2800,3800],level:[.45,.6],send:[.3,.5],dsend:[.2,.35]}},
+      pads:{prob:.85, recipe:{model:["saw","organ"],wave:"saw",cutoff:[1200,2000],detune:[.006,.012],attack:[.8,1.8],level:[.5,.7],send:[.35,.55],dsend:[.1,.25]}},
+      drums:{kickModel:["909","boom"],snareModel:["noise","clap"],hatModel:["noise"],kick:[1.1,1.35],snare:[.8,1.05],hat:[.6,.9],tune:[.9,1.05],send:[.25,.45],dsend:[.05,.15]},
+      fx:{reverb:[.5,.7], delayBeats:[.5,.75], delayFb:[.2,.35], delayCut:[2400,3600], pump:[.05,.25], crackle:[0,.1], lowcut:[30,45], highcut:[0,0], comp:[.3,.5]},
+      found:{role:"bed", vol:[.06,.12], pitch:[.8,1], stretch:[.45,.6], cutoff:[1500,2500], sources:["shibuya","highway_night"]},
+      stab:["off","sparse"], hits:{sources:["rave_b","vox_a"], pattern:"sparse", prob:.3},
+      form:"pop" },
+    edm: { label:"EDM", info:"festival big-room: riser into THE DROP, max pump, supersaw walls",
+      bpm:[124,132], swing:[0,.05], humanize:[0,.1],
+      progressions:["epic_min","minor_run","sad_pop","drone_min"], kits:["four","pulse"], fills:["riser","riser","impact","sweep"],
+      bass:{patterns:["rolling","drive","stab"], recipe:{model:["saw","reese"],cutoff:[500,900],res:[.2,.35],level:[1.15,1.35],send:[0,.08],dsend:[0,0]}},
+      lead:{patterns:["hero","updown","double"], recipe:{model:["stack"],wave:"saw",voices:[6,8],spread:[.012,.02],cutoff:[3000,4200],level:[.5,.65],send:[.35,.55],dsend:[.2,.35]}},
+      pads:{prob:.9, recipe:{model:["saw"],wave:"saw",cutoff:[1400,2600],detune:[.012,.02],attack:[.6,1.6],level:[.6,.8],send:[.4,.6],dsend:[.1,.25]}},
+      drums:{kickModel:["909"],snareModel:["clap","noise"],hatModel:["noise","metal"],kick:[1.35,1.6],snare:[.8,1.05],hat:[.5,.8],tune:[.95,1.1],send:[.2,.4],dsend:[.05,.2]},
+      fx:{reverb:[.45,.65], delayBeats:[.375,.5], delayFb:[.25,.4], delayCut:[2500,4000], pump:[.55,.8], crackle:[0,0], lowcut:[30,45], highcut:[0,0], comp:[.6,.8]},
+      found:{role:"chops", vol:[.08,.15], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2500,4000], sources:["shibuya","factory"]},
+      stab:["rave","offbeat"], hits:{sources:["rave_a","rave_c","sp_energy"], pattern:"offbeat", prob:.6},
+      form:"drop" },
+    dubstep: { label:"Dubstep", info:"140 halftime: wobble bass, snare on three, cavernous space",
+      bpm:[136,146], swing:[0,.08], humanize:[.05,.2],
+      progressions:["drone_min","deep_two","minor_run"], kits:["halftime","breaks"], fills:["break fill","riser","impact","off"],
+      bass:{patterns:["sub","dub","stab"], recipe:{model:["wobble","reese","sub"],wobbleHz:[1.5,4.5],cutoff:[300,650],res:[.2,.4],level:[1.2,1.45],send:[0,.08],dsend:[0,.1]}},
+      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1800,3000],level:[.3,.45],send:[.35,.55],dsend:[.3,.5]}},
+      pads:{prob:.5, recipe:{model:["saw","choir"],wave:"saw",cutoff:[700,1300],detune:[.006,.014],attack:[1.5,3],level:[.4,.6],send:[.5,.7],dsend:[.15,.3]}},
+      drums:{kickModel:["808","909"],snareModel:["crack","clap"],hatModel:["noise","metal"],kick:[1.2,1.45],snare:[.85,1.1],hat:[.4,.7],tune:[.9,1.05],send:[.15,.35],dsend:[.25,.5]},
+      fx:{reverb:[.5,.7], delayBeats:[.75,1.5], delayFb:[.35,.55], delayCut:[1800,3000], pump:[.1,.3], crackle:[0,.15], lowcut:[25,40], highcut:[0,0], comp:[.4,.6]},
+      found:{role:"chops", vol:[.1,.18], pitch:[.85,1.1], stretch:[.4,.6], cutoff:[2000,3500], sources:["factory","frogs"]},
+      stab:["off","sparse"], hits:{sources:["vox_c","sp_pressure","rave_d"], pattern:"dub", prob:.55},
+      form:"drop" },
+    blues: { label:"Blues", info:"12-bar dom7 changes, swung shuffle, worn-record air",
+      bpm:[78,100], swing:[.24,.42], humanize:[.3,.55],
+      progressions:["blues_12"], kits:["boombap","breaks"], fills:["off","drum fill"],
+      bass:{patterns:["walking","simple","root"], recipe:{model:["piano","sub"],cutoff:[500,1000],res:[.05,.15],level:[.9,1.1],send:[.1,.2],dsend:[0,.05]}},
+      lead:{patterns:["blues","wander","sparse"], recipe:{model:["piano","pluck"],wave:"sine",voices:[1,2],spread:[.001,.004],cutoff:[2200,3400],level:[.5,.65],send:[.3,.5],dsend:[.1,.25]}},
+      pads:{prob:.7, recipe:{model:["organ","piano"],wave:"saw",cutoff:[900,1500],detune:[.003,.007],attack:[.4,1.2],level:[.4,.6],send:[.3,.5],dsend:[.05,.15]}},
+      drums:{kickModel:["boom","808"],snareModel:["noise"],hatModel:["noise"],kick:[.9,1.15],snare:[.6,.85],hat:[.5,.8],tune:[.85,1],send:[.15,.3],dsend:[0,.1]},
+      fx:{reverb:[.45,.65], delayBeats:[.5,.75], delayFb:[.1,.25], delayCut:[2000,3000], pump:[0,0], crackle:[.25,.55], lowcut:[0,30], highcut:[8000,12000], comp:[.15,.3]},
+      found:{role:"bed", vol:[.05,.12], pitch:[.8,1], stretch:[.45,.6], cutoff:[1500,2500], sources:["shibuya","tokyo_station"]},
+      stab:["off"], hits:{sources:["sp_slowdown"], pattern:"sparse", prob:.15},
+      form:"pop" },
+    jazz: { label:"Jazz", info:"ii-V-I machinery, walking bass, brushed kit, piano comping",
+      bpm:[96,144], swing:[.28,.48], humanize:[.35,.6],
+      progressions:["ii_v_i","neosoul","lofi","pop_1625"], kits:["breaks","boombap"], fills:["off","drum fill"],
+      bass:{patterns:["walking","walking","dub"], recipe:{model:["sub","piano"],cutoff:[400,800],res:[.05,.12],level:[.95,1.15],send:[.1,.2],dsend:[0,.05]}},
+      lead:{patterns:["wander","sparse","canon"], recipe:{model:["piano","fm"],wave:"sine",voices:[1,2],spread:[.001,.004],cutoff:[2400,3600],level:[.45,.6],send:[.35,.55],dsend:[.1,.3]}},
+      pads:{prob:.8, recipe:{model:["piano","fm"],wave:"sine",cutoff:[1000,1700],detune:[.002,.006],attack:[.2,.8],level:[.4,.6],send:[.35,.55],dsend:[.05,.2]}},
+      drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.6,.9],snare:[.45,.7],hat:[.8,1.15],tune:[.9,1.05],send:[.2,.4],dsend:[0,.1]},
+      fx:{reverb:[.5,.7], delayBeats:[.5,.75], delayFb:[.1,.25], delayCut:[2200,3400], pump:[0,0], crackle:[.15,.4], lowcut:[0,25], highcut:[9000,14000], comp:[.1,.25]},
+      found:{role:"bed", vol:[.05,.12], pitch:[.8,1], stretch:[.45,.6], cutoff:[1500,2600], sources:["tokyo_station","shibuya"]},
+      stab:["off"], hits:{sources:["vox_b"], pattern:"sparse", prob:.1},
+      form:"pop" },
   };
 
-  // ---------- blending ----------
-  function resolve(aName, bName, t, seed){
-    const A=GENRES[aName], B=GENRES[bName]||A;
-    if(!A) throw new Error("unknown genre "+aName);
-    t = Math.max(0, Math.min(1, t||0));
+  // ---------- blending: N-way weighted mixing ----------
+  // weights: [{g, w}] (normalized inside). Scalars weighted-average; discrete
+  // dimensions draw a parent genre proportional to weight, per dimension —
+  // standing on one anchor (w=1) is purely that genre.
+  function resolveMulti(weights, seed){
+    const ws = weights.filter(x=>GENRES[x.g] && x.w>0);
+    if(!ws.length) throw new Error("no valid genres in weights");
+    const tot = ws.reduce((s,x)=>s+x.w,0);
+    ws.forEach(x=>x.w/=tot);
     const rng = mulberry32(seed>>>0);
-    const side = () => (rng() < 1-t ? A : B);
-    const blendRecipe = (ra, rb) => {
-      const out={};
-      for(const k of new Set([...Object.keys(ra),...Object.keys(rb)])){
-        const va=ra[k]!=null?ra[k]:rb[k], vb=rb[k]!=null?rb[k]:ra[k];
-        if(Array.isArray(va)&&typeof va[0]==="string") out[k]=pick(rng,(rng()<1-t?va:vb));      // model pools
-        else if(Array.isArray(va)&&Array.isArray(vb)) out[k]=round(inRange(rng,lerpRange(va,vb,t)),4);
-        else if(typeof va==="number") out[k]=round(lerp(va,vb,t),4);
-        else out[k]=(rng()<1-t?va:vb);
+    const side = () => { let r=rng(), acc=0;
+      for(const x of ws){ acc+=x.w; if(r<=acc) return GENRES[x.g]; }
+      return GENRES[ws[ws.length-1].g]; };
+    const wRange = (get) => { let lo=0,hi=0;
+      for(const x of ws){ const r=get(GENRES[x.g]); lo+=r[0]*x.w; hi+=r[1]*x.w; }
+      return [lo,hi]; };
+    const blendRecipe = (get) => {
+      const out={}, keys=new Set();
+      ws.forEach(x=>Object.keys(get(GENRES[x.g])).forEach(k=>keys.add(k)));
+      for(const k of keys){
+        // parents missing a key sit out; weights renormalize over those that have it
+        const have=ws.filter(x=>get(GENRES[x.g])[k]!=null);
+        if(!have.length) continue;
+        const v=get(have[0].g?GENRES[have[0].g]:GENRES[ws[0].g])[k];
+        if(Array.isArray(v)&&typeof v[0]==="string"){                 // model pool: draw a parent that has it
+          let r=rng()*have.reduce((s,x)=>s+x.w,0), acc=0, src=have[have.length-1];
+          for(const x of have){ acc+=x.w; if(r<=acc){ src=x; break; } }
+          out[k]=pick(rng, get(GENRES[src.g])[k]);
+        } else if(Array.isArray(v)||typeof v==="number"){
+          let lo=0,hi=0,tw=0;
+          for(const x of have){ const r=get(GENRES[x.g])[k]; const rr=Array.isArray(r)?r:[r,r];
+            lo+=rr[0]*x.w; hi+=rr[1]*x.w; tw+=x.w; }
+          out[k]=round(inRange(rng,[lo/tw,hi/tw]),4);
+        } else out[k]=v;
       }
       return out;
     };
     const hitsSide=side();
     const choice = {
-      genres:[aName,bName], t: round(t,3), seed,
-      bpm: Math.round(inRange(rng, lerpRange(A.bpm,B.bpm,t))),
-      swing: round(inRange(rng, lerpRange(A.swing,B.swing,t)),3),
-      humanize: round(inRange(rng, lerpRange(A.humanize,B.humanize,t)),3),
+      genres:ws.map(x=>x.g), weights:ws.map(x=>round(x.w,3)), t:round(1-(ws[0]?ws[0].w:1),3), seed,
+      bpm: Math.round(inRange(rng, wRange(g=>g.bpm))),
+      swing: round(inRange(rng, wRange(g=>g.swing)),3),
+      humanize: round(inRange(rng, wRange(g=>g.humanize)),3),
       progression: pick(rng, side().progressions),
       kit: pick(rng, side().kits),
       fills: side().fills,
       bassPattern: pick(rng, side().bass.patterns),
-      bassRecipe: blendRecipe(A.bass.recipe, B.bass.recipe),
+      bassRecipe: blendRecipe(g=>g.bass.recipe),
       leadPattern: pick(rng, side().lead.patterns),
-      leadRecipe: blendRecipe(A.lead.recipe, B.lead.recipe),
-      padsOn: rng() < lerp(A.pads.prob,B.pads.prob,t),
-      padRecipe: blendRecipe(A.pads.recipe, B.pads.recipe),
-      drumRecipe: blendRecipe(A.drums, B.drums),
-      fx: blendRecipe(A.fx, B.fx),
+      leadRecipe: blendRecipe(g=>g.lead.recipe),
+      padsOn: rng() < ws.reduce((s,x)=>s+GENRES[x.g].pads.prob*x.w,0),
+      padRecipe: blendRecipe(g=>g.pads.recipe),
+      drumRecipe: blendRecipe(g=>g.drums),
+      fx: blendRecipe(g=>g.fx),
       foundRole: side().found.role,
       foundSource: pick(rng, side().found.sources),
-      foundRecipe: blendRecipe(
-        {vol:A.found.vol,pitch:A.found.pitch,stretch:A.found.stretch,cutoff:A.found.cutoff},
-        {vol:B.found.vol,pitch:B.found.pitch,stretch:B.found.stretch,cutoff:B.found.cutoff}),
+      foundRecipe: blendRecipe(g=>({vol:g.found.vol,pitch:g.found.pitch,stretch:g.found.stretch,cutoff:g.found.cutoff})),
       stab: pick(rng, side().stab),
-      hits: rng()<hitsSide.hits.prob*lerp(1,1,t) ? {source:pick(rng,hitsSide.hits.sources), pattern:hitsSide.hits.pattern} : null,
+      hits: rng()<hitsSide.hits.prob ? {source:pick(rng,hitsSide.hits.sources), pattern:hitsSide.hits.pattern} : null,
       form: side().form,
       rng,
     };
+    return constrain(choice);
+  }
+  function constrain(choice){
     // ---- constraints: keep midpoints songs ----
     const nch=(E.PROGRESSIONS[choice.progression]||{chords:[]}).chords.length;
     if(nch<=2 && ["composed","composed2"].includes(choice.leadPattern)) choice.leadPattern="arpup";
@@ -221,6 +307,10 @@
     if(choice.foundRole!=="break" && (SAMPLES[choice.foundSource]||{}).kind==="break"){
       choice.foundRole="break"; }
     return choice;
+  }
+  function resolve(aName, bName, t, seed){
+    t=Math.max(0,Math.min(1,t||0));
+    return resolveMulti([{g:aName,w:1-t},{g:bName||aName,w:t}], seed);
   }
 
   // ---------- forms ----------
@@ -245,6 +335,18 @@
         S("peak",     {cycles:3*norm, drums:kit, bass, pads:c.padsOn, melody:lead, found:fnd(), stab:c.stab, hits:hit()}),
         S("outro",    {cycles:2*norm, drums:kit, bass, found:fnd()}),
       ];
+    } else if(c.form==="drop"){
+      secs=[
+        S("intro",  {cycles:1*norm, pads:c.padsOn, found:fnd()}),
+        S("build",  {cycles:1*norm, drums:"kick", bass, pads:c.padsOn, fill:"riser", sweep:"open"}),
+        S("drop",   {cycles:2*norm, drums:kit, bass, pads:c.padsOn, melody:lead, stab:c.stab, hits:hit(), found:fnd()}),
+        S("break",  {cycles:1*norm, pads:true, melody:lead==="off"?"off":"sparse", found:fnd("bed"), sweep:"close", hits:hit()}),
+        S("build 2",{cycles:1*norm, drums:"kick", bass, fill:"riser", sweep:"open"}),
+        S("drop 2", {cycles:2*norm, drums:kit, bass, pads:c.padsOn, melody:lead, stab:c.stab, hits:hit(), found:fnd()}),
+        S("outro",  {cycles:1*norm, pads:c.padsOn, found:fnd()}),
+      ];
+      // the impact lands ON each drop downbeat
+      secs[1].fill="impact"; secs[4].fill="impact";
     } else if(c.form==="wave"){
       secs=[
         S("arrive", {cycles:1*norm, pads:true, found:fnd()}),
@@ -350,7 +452,8 @@
     return out;
   }
 
-  const api={ GENRES, SOURCES, SAMPLES, resolve, track, blend, playlist };
+  function mix(weights, opts){ opts=opts||{}; return toState(resolveMulti(weights, opts.seed!=null?opts.seed:1), opts); }
+  const api={ GENRES, SOURCES, SAMPLES, resolve, resolveMulti, track, blend, mix, playlist };
   if(isNode) module.exports=api; else root.GenreKernel=api;
 
   // ---------- CLI ----------

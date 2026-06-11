@@ -123,6 +123,17 @@
   async function prewarm(sources) {
     for (const s of (sources || [])) { try { await decodeUrlToWav(s.url); } catch (e) {} }
   }
+  // the SAMPLE POOL: decode a whole list (urls or site-relative paths) up front,
+  // with progress — cached in memory + IndexedDB, so it persists across visits
+  async function prewarmPool(urls, onProgress) {
+    let done = 0, ok = 0;
+    for (const u of (urls || [])) {
+      try { await decodeUrlToWav(u); ok++; } catch (e) {}
+      done++;
+      if (onProgress) onProgress(done, urls.length, ok);
+    }
+    return ok;
+  }
 
   // write each source's audio into Csound's virtual FS at found/<id>.wav
   async function writeFound(cs, sources, onStatus) {
@@ -331,6 +342,101 @@
     return bufToWav(buf);
   }
 
+  // ---- EXPLORE mode: a persistent live synth. The header (buses/FX) boots
+  // once with channel-driven FX; instruments hot-recompile via compileOrc when
+  // timbre changes; one chord-bar of the CURRENT state is injected just-in-time
+  // (the genre evolves as you drag); sample tables load on demand from the pool.
+  async function exploreLive(getState, onStatus, opts) {
+    opts = opts || {};
+    const E = root.CsdEngine; if (!E) throw new Error("engine missing");
+    const ctx = audioCtx(); try { ctx.resume(); } catch (e) {}
+    await stopLive();
+    _liveAbort = false;
+    const st0 = getState();
+    if (onStatus) onStatus("booting live engine…");
+    const cs = await boot(["-odac", "-m0", "-d"], ctx);
+    _live = cs;
+    const parts = E.liveParts(st0);
+    const csd = parts.header.slice(0, parts.header.lastIndexOf("</CsInstruments>")) +
+      parts.instruments + "\n</CsInstruments>\n<CsScore>\nf 0 360000\n</CsScore>\n</CsoundSynthesizer>";
+    const rc = await cs.compileCsdText(csd);
+    if (rc !== 0) { await stopLive(); throw new Error("live orchestra failed to compile (see console)"); }
+    await cs.start();
+    try { if (ctx.state !== "running") await ctx.resume(); } catch (e) {}
+    liveSend(cs, "i 98 0 360000"); liveSend(cs, "i 99 0 360000");
+    liveSend(cs, "i 100 0 360000"); liveSend(cs, "i 97 0 360000");
+    const tabs = {}; let nextTab = 50, lastSig = "", ci = 0, serial = 0, nextTime = 0.5;
+    async function setChannels(st) {
+      const dl = st.delay || { beats: 0.75, feedback: 0.3, cutoff: 2600 };
+      const ch = { reverb: st.reverb || 0.7, ddt: Math.min(1.9, (dl.beats || 0.75) * 60 / st.bpm),
+        dfb: dl.feedback || 0.3, dcut: dl.cutoff || 2600, pump: st.pump || 0,
+        crackle: st.crackle || 0, lowcut: (st.tone && st.tone.lowcut) || 10,
+        highcut: (st.tone && st.tone.highcut) || 0, bps: st.bpm / 60 };
+      for (const k in ch) { try { await cs.setControlChannel(k, ch[k]); } catch (e) {} }
+    }
+    async function ensureTable(s) {
+      if (tabs[s.id]) return tabs[s.id];
+      const wav = await decodeUrlToWav(s.url || s.samplePath);
+      await cs.fs.writeFile("found/" + s.id + ".wav", wav);
+      const n = nextTab++;
+      await cs.compileOrc(`gi_x${n} ftgen ${n}, 0, 0, 1, "found/${s.id}.wav", 0, 0, 1`);
+      tabs[s.id] = n;
+      return n;
+    }
+    // the groove: loop the state's fullest section (peak/chorus/drop), not the form
+    function grooveSec(st) {
+      const score = s => (s.pads ? 1 : 0) + (s.bass && s.bass !== "off" ? 1 : 0) +
+        (s.drums && s.drums !== "off" ? 2 : 0) + (s.melody && s.melody !== "off" ? 1 : 0);
+      let best = st.sections[0];
+      for (const s of st.sections)
+        if (score(s) > score(best) || (/peak|chorus|drop|lift|swell/.test(s.name) && score(s) >= score(best))) best = s;
+      return best;
+    }
+    async function injectChord(st, t) {
+      const prg = (E.PROGRESSIONS[st.progression] || E.PROGRESSIONS.royal_road);
+      const nch = prg.chords.length;
+      ci = ci % nch;
+      const sec = Object.assign({}, grooveSec(st), { cycles: 1, fill: "off", sweep: "off" });
+      const one = Object.assign({}, st, { sections: [sec], seed: ((st.seed || 1) + serial * 7919) >>> 0 });
+      for (const s of one.foundSources) await ensureTable(s);
+      const ev = E.buildEvents(one);
+      const lo = ci * 8, hi = lo + 8, spb = 60 / st.bpm;
+      if (opts.onBar) try { opts.onBar({ serial, ci, nch, when: nextTime, spb,
+        chord: (prg.chords[ci]||{}).name || "", section: sec.name }); } catch (e) {}
+      const at = b => Math.max(0.01, nextTime + (b - lo) * spb - t).toFixed(3);
+      const du = d => Math.max(0.05, d * spb).toFixed(3);
+      const tabOf = f => tabs[(one.foundSources[f.tableNum - 2] || {}).id] || 0;
+      const I = { pad: 1, bass: 2, melody: 4 }, D = { kick: 10, snare: 11, hat: 12 };
+      const win = e => e.beat >= lo && e.beat < hi;
+      ev.found.filter(f => f.chop ? win(f) : ci === 0).forEach(f => {
+        const tn = tabOf(f); if (!tn) return;
+        if (f.chop) liveSend(cs, `i 5 ${at(f.beat)} ${du(f.dur)} 0 ${f.amp} ${tn} ${f.pitch} ${f.offset.toFixed(3)} ${f.cutoff}`);
+        else liveSend(cs, `i 3 ${at(0)} ${du(f.dur)} 0 ${f.amp} ${tn} ${f.pitch} ${f.stretch} ${f.cutoff}`);
+      });
+      ev.pitched.filter(win).forEach(p => liveSend(cs, `i ${I[p.voice]} ${at(p.beat)} ${du(p.dur)} ${p.pch} ${p.amp.toFixed(4)}`));
+      ev.drums.filter(win).forEach(d => liveSend(cs, `i ${D[d.drum]} ${at(d.beat)} ${du(d.dur)} ${d.amp.toFixed(4)}`));
+      ev.sfx.filter(s => s.stab && win(s)).forEach(s => liveSend(cs, `i 6 ${at(s.beat)} ${du(s.dur)} ${s.pch} ${s.amp.toFixed(3)}`));
+      nextTime += 8 * spb;
+      ci++; serial++;
+    }
+    const tick = async () => {
+      if (_liveAbort || _live !== cs) return;
+      try {
+        const st = getState();
+        await setChannels(st);
+        const sig = JSON.stringify(st.instruments);
+        if (sig !== lastSig) { await cs.compileOrc(E.instrumentBlock(st)); lastSig = sig; }
+        let t = 0; try { t = await cs.getScoreTime(); } catch (e) {}
+        if (nextTime < t) nextTime = t + 0.1;          // dropped behind (tab sleep) — resync
+        while (nextTime < t + 2.2 && !_liveAbort) await injectChord(st, t);
+      } catch (e) { console.error("exploreLive tick", e); }
+      _liveTimer = setTimeout(tick, 160);
+    };
+    if (onStatus) onStatus(ctx.state === "running" ? "live — drag the space" : "live (tap again if silent)");
+    tick();
+    return cs;
+  }
+
   async function scoreTime(){ try { return _live ? await _live.getScoreTime() : -1; } catch (e) { return -2; } }
-  root.WasmAudio = { boot, play, playLive, stopLive, render, captureExport, renderOffline, decodeUrlToWav, encodeWav, stripOptions, ctxState, prewarm, scoreTime, _liveLog };
+  root.WasmAudio = { boot, play, playLive, stopLive, render, captureExport, renderOffline, decodeUrlToWav, encodeWav, stripOptions, ctxState, prewarm, prewarmPool, exploreLive, scoreTime, _liveLog };
 })(window);
