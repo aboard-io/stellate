@@ -2,49 +2,50 @@
   "bpm": 92,
   "keyOffset": 2,
   "progression": "synthwave",
-  "reverb": 0.8,
+  "reverb": 0.88,
   "seed": 77,
   "swing": 0,
-  "humanize": 0.15,
+  "humanize": 0.1,
   "delay": {
     "beats": 0.5,
-    "feedback": 0.38,
-    "cutoff": 1800
+    "feedback": 0.32,
+    "cutoff": 2000
   },
   "instruments": {
     "pad": {
       "wave": "saw",
-      "cutoff": 1000,
+      "cutoff": 1400,
       "res": 0.18,
-      "detune": 0.012,
-      "attack": 2.2,
-      "level": 0.75,
+      "detune": 0.015,
+      "attack": 1.8,
+      "level": 0.8,
       "send": 0.6,
       "dsend": 0.2
     },
     "bass": {
       "wave": "saw",
-      "cutoff": 520,
-      "res": 0.22,
-      "level": 1.15,
+      "cutoff": 650,
+      "res": 0.18,
+      "level": 1.2,
       "send": 0.05,
       "dsend": 0
     },
     "melody": {
-      "wave": "square",
-      "cutoff": 2000,
-      "res": 0.12,
-      "vibrato": 0.004,
-      "vibRate": 4.5,
-      "level": 0.5,
-      "send": 0.55,
-      "dsend": 0.35
+      "wave": "saw",
+      "cutoff": 2600,
+      "res": 0.08,
+      "vibrato": 0.003,
+      "vibRate": 4.2,
+      "level": 0.55,
+      "send": 0.5,
+      "dsend": 0.3
     },
     "drums": {
-      "kick": 1.25,
-      "snare": 1.15,
-      "hat": 0.7,
-      "tune": 0.85
+      "kick": 1.35,
+      "snare": 1.45,
+      "hat": 0.45,
+      "tune": 0.9,
+      "send": 0.6
     }
   },
   "foundSources": [
@@ -54,8 +55,8 @@
       "url": "https://archive.org/download/aporee_44512_50607/soundmap201905198.mp3",
       "pitch": 0.7,
       "stretch": 0.5,
-      "vol": 0.26,
-      "cutoff": 1800
+      "vol": 0.12,
+      "cutoff": 1200
     }
   ],
   "sections": [
@@ -78,8 +79,8 @@
       "name": "verse",
       "cycles": 1,
       "pads": true,
-      "bass": "octaves",
-      "drums": "off",
+      "bass": "drive",
+      "drums": "four",
       "melody": "off",
       "found": {
         "sourceId": "highway",
@@ -92,22 +93,22 @@
       "name": "pre-chorus",
       "cycles": 1,
       "pads": true,
-      "bass": "octaves",
-      "drums": "kick",
+      "bass": "drive",
+      "drums": "four",
       "melody": "off",
       "found": {
         "sourceId": null,
         "role": "bed"
       },
-      "fill": "riser"
+      "fill": "tom fill"
     },
     {
       "id": "s12",
       "name": "chorus",
       "cycles": 1,
       "pads": true,
-      "bass": "octaves",
-      "drums": "four",
+      "bass": "drive",
+      "drums": "open",
       "melody": "updown",
       "found": {
         "sourceId": null,
@@ -120,8 +121,8 @@
       "name": "verse 2",
       "cycles": 1,
       "pads": true,
-      "bass": "octaves",
-      "drums": "halftime",
+      "bass": "drive",
+      "drums": "four",
       "melody": "off",
       "found": {
         "sourceId": "highway",
@@ -134,22 +135,22 @@
       "name": "bridge",
       "cycles": 1,
       "pads": true,
-      "bass": "octaves",
-      "drums": "off",
+      "bass": "drive",
+      "drums": "halftime",
       "melody": "sparse",
       "found": {
         "sourceId": "highway",
         "role": "bed"
       },
-      "fill": "drum fill"
+      "fill": "tom fill"
     },
     {
       "id": "s15",
       "name": "chorus 2",
       "cycles": 1,
       "pads": true,
-      "bass": "octaves",
-      "drums": "four",
+      "bass": "drive",
+      "drums": "open",
       "melody": "updown",
       "found": {
         "sourceId": null,

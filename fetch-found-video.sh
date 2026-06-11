@@ -20,6 +20,8 @@ VD2="$IA/video-drug-2-phuture-laser-disc-1990/Video Drug 2 - Phuture (LaserDisc,
 PIO="$IA/pioneer-laser-optics-ii-laserdisc/Pioneer Laser Optics II [Laserdisc].mp4"
 LV="$IA/laser-vision-demonstration-1986/LaserVision Demonstration (1986).mp4"
 SP="$IA/ss098-0001/SS098-0001 SpaceDisc Vol. 1 Space Shuttle Mission Reports STS 5,6 & 7 (Side 1, English) (ld-decode, QTGMC, TV→PC).mp4"
+TK="$IA/tokyo-night-drive-4-k-2016/Tokyo night drive 4K 2016 首都高.mp4"
+SF="$IA/from-SF/from-SF.mp4"
 
 # name|url|start(s)|dur(s)|credit
 clips() { cat <<'EOF'
@@ -40,10 +42,14 @@ night_lines|VD2|894|34|Video Drug 2: Phuture (1990) — blue electric tracery on
 night_lights|VD2|1294|34|Video Drug 2: Phuture (1990) — night-light kaleidoscope
 dark_face|VD1|444|32|Video Drug 1: Deep (1990) — static-glitch face
 tv_room|VD1|194|32|Video Drug 1: Deep (1990) — TV set in a dark red room
+drive_bluehour|TK|115|34|Tokyo Night Drive (2016, PD) — blue-hour expressway
+drive_dusk|TK|695|32|Tokyo Night Drive (2016, PD) — dusk highway
+drive_bridge|TK|1290|36|Tokyo Night Drive (2016, PD) — Rainbow Bridge
+drive_taillights|SF|50|30|Night drive from SF (PD) — taillights at an intersection
 EOF
 }
 
-resolve() { case "$1" in VD1) echo "$VD1";; VD2) echo "$VD2";; PIO) echo "$PIO";; LV) echo "$LV";; SP) echo "$SP";; esac; }
+resolve() { case "$1" in VD1) echo "$VD1";; VD2) echo "$VD2";; PIO) echo "$PIO";; LV) echo "$LV";; SP) echo "$SP";; TK) echo "$TK";; SF) echo "$SF";; esac; }
 
 manifest="found/video/clips.json"
 echo "[" > "$manifest.tmp"
