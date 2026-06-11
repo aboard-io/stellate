@@ -17,7 +17,7 @@
   .wrap{max-width:1020px;margin:0 auto}
   h1{font-family:Orbitron,sans-serif;font-size:1.3rem;letter-spacing:.05em;margin:0 0 .15rem;
     background:linear-gradient(90deg,var(--amber),var(--pink) 52%,var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .sub{color:var(--dim);font-size:.8rem;margin:0 0 1rem;max-width:74ch}
+  .sub{color:var(--dim);font-size:.8rem;margin:0 0 1rem;max-width:76ch}
   .cols{display:grid;grid-template-columns:1.25fr 1fr;gap:1rem}
   @media(max-width:780px){.cols{grid-template-columns:1fr}}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:.9rem}
@@ -28,12 +28,14 @@
   body.dragging{user-select:none;-webkit-user-select:none;cursor:crosshair}
   .anchor{font:12px VT323,monospace;fill:#9b93c6}
   .wlabel{font:11px VT323,monospace;fill:#4dffb0}
+  .wpn{font:11px VT323,monospace;fill:#0c0a1a;font-weight:700}
   #playhead{font:14px VT323,monospace;color:var(--mint);background:var(--panel2);border:1px solid var(--line);
-    border-radius:9px;padding:.5rem .7rem;margin:.6rem 0 0;line-height:1.5;white-space:pre-wrap;min-height:5.4em}
+    border-radius:9px;padding:.5rem .7rem;margin:.6rem 0 0;line-height:1.5;white-space:pre-wrap;min-height:6.6em}
   .row{display:flex;align-items:center;gap:.5rem;margin:.3rem 0}
   .row label{width:86px;font-size:.7rem;color:var(--dim)}
-  .row input[type=range]{flex:1;accent-color:var(--pink);margin:0;transition:none}
+  .row input[type=range]{flex:1;accent-color:var(--pink);margin:0}
   .row output{width:46px;text-align:right;color:var(--mint);font-variant-numeric:tabular-nums;font-size:.74rem}
+  .row select{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.25rem .4rem;font-size:.78rem}
   button{font:inherit;cursor:pointer;border-radius:9px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);padding:.45rem .8rem}
   button.go{background:linear-gradient(90deg,var(--pink),var(--purple));border:none;color:#0c081a;font-weight:700}
   .btns{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem}
@@ -44,274 +46,306 @@
   .sc .v{width:28px;text-align:right;color:var(--mint);font-variant-numeric:tabular-nums}
   #status{color:var(--cyan);font-size:.78rem;min-height:1.2em;margin-top:.55rem}
   #pool{color:var(--dim);font-size:.7rem;margin-top:.3rem}
-  #seedrow input{width:90px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.3rem .5rem}
+  .seedin{width:90px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.3rem .5rem}
+  .hint{color:var(--dim);font-size:.7rem;margin-top:.45rem}
   a{color:var(--cyan)}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>GENRE SPACE — explorer</h1>
-  <p class="sub">Drag through a 15-genre space — the cursor sets a <em>destination</em>. The playing song
-  <b>journeys</b> there: tempo shifts a few bpm per bar, dimensions ease over ~16 bars, and the composition
-  (kit, bassline, lead, synth models, progression, samples, form) migrates one piece every couple of bars.
-  Watch the sliders creep. Sit on an anchor and everything else falls to zero.</p>
+  <p class="sub"><b>Drag</b> to set a destination — the song journeys there, never jumps.
+  <b>Double-click</b> to drop path waypoints: lines connect them and a traveler walks the path,
+  morphing the music through every genre it crosses — the path <em>is</em> the mix.
+  Drag waypoints to move them, right-click to erase. Mode/scale is a dimension below.</p>
   <div class="cols">
     <div class="card">
-      <h2>The space — cursor sets the destination</h2>
+      <h2>The space — dbl-click builds the mix path</h2>
       <svg id="map" viewBox="0 0 500 400"></svg>
-      <div id="playhead">▶ press LIVE to start the journey</div>
+      <div id="playhead">▶ press LIVE</div>
     </div>
-    <div class="card">
-      <h2>Now playing — dimensions evolve toward the cursor</h2>
-      <div class="row" id="seedrow"><label>seed</label><input type="number" id="seed" value="1"><button id="dice" title="reroll">🎲</button></div>
-      <div id="sliders"></div>
-      <div class="btns">
-        <button class="go" id="play">▶ LIVE</button>
-        <button id="stop">■ STOP</button>
-        <button id="dl">⤓ preset</button>
-      </div>
-      <div id="scores"></div>
-      <div id="status">ready — drag the space, then ▶ LIVE</div>
-      <div id="pool"></div>
-    </div>
+    <div class="card" id="panel"></div>
   </div>
 </div>
 <script src="csd-engine.js"></script>
 <script src="genre-kernel.js"></script>
 <script src="genre-verifier.js"></script>
 <script src="wasm-audio.js"></script>
-<script>
+<script type="module">
+import { h, render } from "https://esm.sh/preact@10.19.3";
+import htm from "https://esm.sh/htm@3.1.1";
+const html = htm.bind(h);
 const K=GenreKernel, V=GenreVerifier, E=CsdEngine;
-const $=id=>document.getElementById(id);
 const POS={ ambient:[55,55], neoclassical:[65,165], vaporwave:[150,100], lofi:[105,250],
   downtempo:[190,180], blues:[140,330], jazz:[225,330], triphop:[240,255],
   synthwave:[295,115], dancepop:[345,70], edm:[420,60], house:[345,215],
   techno:[420,145], dubstep:[420,265], jungle:[455,335] };
-const SNAP=26, CUTOFF=175;
+const SNAP=26, CUTOFF=175, BARS_PER_SEG=16;
 const KEYS=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-// tonic offset within the (C-relative) progression + mode/scale flavor
 const PROG_MODE={ royal_road:[0,"major · royal road"], four_chords:[0,"major"], sad_pop:[9,"minor"],
   doo_wop:[0,"major"], ii_v_i:[0,"major · ii-V-I"], pop_1625:[0,"major"], synthwave:[9,"minor"],
   andalusian:[9,"minor · andalusian"], minor_run:[9,"minor"], neosoul:[0,"major · lydian air"],
   lofi:[0,"major · jazzy"], epic_min:[9,"minor"], house_min:[9,"minor"], dream:[0,"major · dreamy"],
   canon:[0,"major · canon"], drone_min:[9,"minor · drone"], deep_two:[9,"minor"],
-  house_min7:[9,"minor"], blues_12:[0,"blues · dom7 12-bar"] };
+  house_min7:[9,"minor"], blues_12:[0,"blues · dom7 12-bar"],
+  mode_dorian:[9,"dorian"], mode_phrygian:[9,"phrygian"], mode_lydian:[0,"lydian"], mode_mixo:[0,"mixolydian"] };
+const MODE_LOCKS={ auto:null, major:"dream", minor:"minor_run", dorian:"mode_dorian",
+  phrygian:"mode_phrygian", lydian:"mode_lydian", mixolydian:"mode_mixo", blues:"blues_12" };
 
-let cursor={x:250,y:165}, weights=[], live=false;
-let target=null;     // where the cursor points
-let state=null;      // what is PLAYING — glides toward target
-let glideQueue=[], lastTargetSig="", barCount=0, barInfo=null;
+// ---------- store ----------
+const S={ cursor:{x:250,y:165}, waypoints:[], travel:{seg:0,t:0}, weights:[],
+  target:null, playing:null, queue:[], barCount:0, barInfo:null, live:false,
+  seed:1, modeLock:"auto", scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
+  pool:"", beatLine:"▶ press LIVE" };
+const subs=[];
+function set(patch){ Object.assign(S,patch); subs.forEach(f=>f()); }
+const deep=o=>JSON.parse(JSON.stringify(o));
 
-// ---- weights ----
-function calcWeights(){
-  const ds=Object.entries(POS).map(([g,[x,y]])=>({g,d:Math.hypot(cursor.x-x,cursor.y-y)}));
-  ds.sort((a,b)=>a.d-b.d);
+// ---------- weights / targeting ----------
+function weightsAt(pt){
+  const ds=Object.entries(POS).map(([g,[x,y]])=>({g,d:Math.hypot(pt.x-x,pt.y-y)})).sort((a,b)=>a.d-b.d);
   if(ds[0].d<SNAP) return [{g:ds[0].g,w:1}];
   const base=1/(CUTOFF*CUTOFF+80);
   let ws=ds.map(({g,d})=>({g,w:Math.max(0,1/(d*d+80)-base)})).filter(x=>x.w>0).slice(0,4);
   const tot=ws.reduce((s,x)=>s+x.w,0)||1;
   return ws.map(x=>({g:x.g,w:x.w/tot}));
 }
+let lastSig="";
+function retarget(pt){
+  const weights=weightsAt(pt);
+  const target=K.mix(weights.map(w=>({...w})),{seed:S.seed});
+  if(MODE_LOCKS[S.modeLock]) target.progression=MODE_LOCKS[S.modeLock];
+  const patch={weights,target,cursor:pt};
+  if(!S.playing){ patch.playing=deep(target); }
+  set(patch);
+  const sig=JSON.stringify(weights.map(w=>w.g+Math.round(w.w*20)))+S.modeLock;
+  if(sig!==lastSig){ lastSig=sig; rebuildQueue(); }
+}
 
-// ---- map ----
-const svg=$("map"), NS="http://www.w3.org/2000/svg";
-function el(t,attrs){const e=document.createElementNS(NS,t);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+// ---------- glide ----------
+const PATHS=["swing","humanize","reverb","pump","crackle","comp","delay.beats","delay.feedback","delay.cutoff",
+  "tone.lowcut","tone.highcut","instruments.pad.cutoff","instruments.pad.level","instruments.pad.send","instruments.pad.detune",
+  "instruments.bass.cutoff","instruments.bass.level","instruments.melody.cutoff","instruments.melody.level",
+  "instruments.melody.send","instruments.melody.voices","instruments.melody.spread","instruments.drums.kick",
+  "instruments.drums.snare","instruments.drums.hat","instruments.drums.send","instruments.drums.dsend"];
+const getP=(o,p)=>p.split(".").reduce((a,k)=>a&&a[k],o);
+const setP=(o,p,v)=>{const ks=p.split("."),l=ks.pop();ks.reduce((a,k)=>a[k]=a[k]||{},o)[l]=v;};
+const DISCRETE=[
+  ["pad voice",c=>c.instruments.pad.model,(c,t)=>c.instruments.pad.model=t.instruments.pad.model],
+  ["bass voice",c=>c.instruments.bass.model,(c,t)=>c.instruments.bass.model=t.instruments.bass.model],
+  ["lead voice",c=>c.instruments.melody.model,(c,t)=>c.instruments.melody.model=t.instruments.melody.model],
+  ["kick",c=>c.instruments.drums.kickModel,(c,t)=>c.instruments.drums.kickModel=t.instruments.drums.kickModel],
+  ["snare",c=>c.instruments.drums.snareModel,(c,t)=>c.instruments.drums.snareModel=t.instruments.drums.snareModel],
+  ["hat",c=>c.instruments.drums.hatModel,(c,t)=>c.instruments.drums.hatModel=t.instruments.drums.hatModel],
+  ["drum kit",c=>c.genreMeta.kit,(c,t)=>{c.genreMeta.kit=t.genreMeta.kit;
+    c.sections.forEach(s=>{if(s.drums&&s.drums!=="off"&&s.drums!=="kick")s.drums=t.genreMeta.kit;});}],
+  ["bassline",c=>(c.sections.find(s=>s.bass&&s.bass!=="off")||{}).bass,
+    (c,t)=>{const b=(t.sections.find(s=>s.bass&&s.bass!=="off")||{}).bass;
+      if(b)c.sections.forEach(s=>{if(s.bass&&s.bass!=="off")s.bass=b;});}],
+  ["lead line",c=>(c.sections.find(s=>s.melody&&s.melody!=="off")||{}).melody,
+    (c,t)=>{const m=(t.sections.find(s=>s.melody&&s.melody!=="off")||{}).melody;
+      if(m)c.sections.forEach(s=>{if(s.melody&&s.melody!=="off")s.melody=m;});}],
+  ["harmony",c=>c.progression,(c,t)=>c.progression=t.progression],
+  ["sample",c=>c.foundSources.map(s=>s.id).join(),
+    (c,t)=>{c.foundSources=deep(t.foundSources);
+      c.sections.forEach((s,i)=>{const ts=t.sections[i%t.sections.length];
+        if(s.found&&ts&&ts.found)s.found=deep(ts.found);
+        if(ts&&ts.hits)s.hits=deep(ts.hits); else delete s.hits;});}],
+  ["form",c=>c.genreMeta.form,(c,t)=>{c.sections=deep(t.sections);Object.assign(c.genreMeta,{form:t.genreMeta.form,kit:t.genreMeta.kit});}],
+];
+function rebuildQueue(){
+  if(!S.playing||!S.target)return;
+  const seed=S.barCount*131+7;
+  const diffs=DISCRETE.filter(([n,get])=>{try{return JSON.stringify(get(S.playing))!==JSON.stringify(get(S.target));}catch(e){return false;}});
+  set({queue:diffs.map((d,i)=>[((seed*9301+i*49297)%233280)/233280,d]).sort((a,b)=>a[0]-b[0]).map(x=>x[1])});
+}
+function glideStep(){
+  const c=S.playing, t=S.target; if(!c||!t)return;
+  const db=t.bpm-c.bpm;
+  if(Math.abs(db)>0.5) c.bpm=Math.round((c.bpm+Math.sign(db)*Math.min(3,Math.abs(db)))*10)/10;
+  c.keyOffset=t.keyOffset;
+  for(const p of PATHS){
+    const tv=getP(t,p); if(typeof tv!=="number")continue;
+    let cv=getP(c,p); if(typeof cv!=="number")cv=tv;
+    const nv=Math.abs(tv-cv)<1e-3?tv:cv+(tv-cv)*0.13;
+    setP(c,p,p.endsWith("voices")?Math.round(nv):Math.round(nv*1e4)/1e4);
+  }
+  c.foundSources.forEach((s,i)=>{const ts=t.foundSources[i]||t.foundSources[0];
+    if(ts&&typeof ts.vol==="number") s.vol+=(ts.vol-s.vol)*0.13;});
+  if(S.barCount%2===0&&S.queue.length){
+    const [name,,apply]=S.queue[0];
+    try{ apply(c,t); set({queue:S.queue.slice(1),status:"journey: "+name}); }catch(e){}
+  }
+  if(S.barCount%4===0) rescore();
+  set({});   // re-render sliders/playhead
+}
+function rescore(){
+  if(!S.playing)return;
+  const a=V.analyze(S.playing);
+  set({scores:Object.entries(a.scores).sort((x,y)=>y[1]-x[1]).slice(0,5), best:a.best});
+}
+
+// ---------- path travel: the traveler IS the destination ----------
+function travelStep(){
+  if(S.waypoints.length<2)return;
+  let {seg,t}=S.travel;
+  t+=1/BARS_PER_SEG;
+  if(t>=1){ t=0; seg=(seg+1)%(S.waypoints.length-1||1); }
+  const a=S.waypoints[seg], b=S.waypoints[seg+1]||a;
+  const pt={x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t};
+  set({travel:{seg,t}});
+  retarget(pt);
+}
+
+// ---------- live engine ----------
+async function goLive(){
+  try{
+    set({live:true,barCount:0}); rebuildQueue();
+    await WasmAudio.exploreLive(()=>S.playing, m=>set({status:m}), { onBar:(info)=>{
+      set({barInfo:info,barCount:S.barCount+1});
+      if(S.waypoints.length>=2) travelStep();
+      glideStep();
+    }});
+  }catch(e){ set({live:false,status:"live failed: "+e.message}); console.error(e); }
+}
+function stopLive(){ set({live:false}); WasmAudio.stopLive().then(()=>set({status:"stopped"})); }
+setInterval(()=>{ if(!S.live&&S.playing&&S.target){ set({barCount:S.barCount+1}); glideStep(); } },1400);
+
+// ---------- map (imperative SVG: 60Hz drags stay cheap) ----------
+const svg=document.getElementById("map"), NS="http://www.w3.org/2000/svg";
+const el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
 function drawMap(){
   svg.innerHTML="";
-  const wmap=Object.fromEntries(weights.map(w=>[w.g,w.w]));
+  if(S.waypoints.length>1)
+    svg.appendChild(el("polyline",{points:S.waypoints.map(w=>w.x+","+w.y).join(" "),
+      fill:"none",stroke:"#45e0ff","stroke-width":1.5,"stroke-dasharray":"5 4",opacity:.7}));
+  const wmap=Object.fromEntries(S.weights.map(w=>[w.g,w.w]));
   for(const [g,[x,y]] of Object.entries(POS)){
     const w=wmap[g]||0;
     if(w>0.01) svg.appendChild(el("circle",{cx:x,cy:y,r:6+w*26,fill:"#a06bff",opacity:.12+w*.3}));
-    svg.appendChild(el("circle",{cx:x,cy:y,r:4.5,fill:w>0.01?"#ff6ec7":"#a06bff",opacity:.95}));
+    svg.appendChild(el("circle",{cx:x,cy:y,r:4.5,fill:w>0.01?"#ff6ec7":"#a06bff"}));
     const t=el("text",{x:x+8,y:y+4,"class":"anchor"});t.textContent=g;svg.appendChild(t);
     if(w>0.01){const wl=el("text",{x:x+8,y:y+16,"class":"wlabel"});wl.textContent=Math.round(w*100)+"%";svg.appendChild(wl);}
   }
-  svg.appendChild(el("circle",{cx:cursor.x,cy:cursor.y,r:9,fill:"none",stroke:"#ff6ec7","stroke-width":2}));
-  svg.appendChild(el("circle",{cx:cursor.x,cy:cursor.y,r:2.5,fill:"#ff6ec7"}));
+  S.waypoints.forEach((w,i)=>{
+    const c=el("circle",{cx:w.x,cy:w.y,r:9,fill:"#ffd86b",stroke:"#0c0a1a","stroke-width":1.5,cursor:"grab"});
+    c.dataset.wp=i; svg.appendChild(c);
+    const n=el("text",{x:w.x,y:w.y+3.5,"text-anchor":"middle","class":"wpn"});n.textContent=i+1;
+    svg.appendChild(n);
+  });
+  svg.appendChild(el("circle",{cx:S.cursor.x,cy:S.cursor.y,r:9,fill:"none",stroke:"#ff6ec7","stroke-width":2}));
+  svg.appendChild(el("circle",{cx:S.cursor.x,cy:S.cursor.y,r:2.5,fill:"#ff6ec7"}));
 }
-let dragging=false;
-const toXY=(ev)=>{const r=svg.getBoundingClientRect();const p=ev.touches?ev.touches[0]:ev;
+const toXY=ev=>{const r=svg.getBoundingClientRect();const p=ev.touches?ev.touches[0]:ev;
   return {x:Math.max(0,Math.min(500,(p.clientX-r.left)*500/r.width)),
           y:Math.max(0,Math.min(400,(p.clientY-r.top)*400/r.height))};};
-svg.addEventListener("pointerdown",e=>{e.preventDefault();dragging=true;document.body.classList.add("dragging");svg.setPointerCapture(e.pointerId);move(e);});
-svg.addEventListener("pointermove",e=>{if(dragging){e.preventDefault();move(e);}});
-addEventListener("pointerup",()=>{dragging=false;document.body.classList.remove("dragging");});
-function move(e){ cursor=toXY(e); weights=calcWeights(); retarget(); drawMap(); }
+let dragging=false, dragWp=-1;
+svg.addEventListener("pointerdown",e=>{
+  e.preventDefault();
+  const wp=e.target.dataset&&e.target.dataset.wp;
+  if(wp!=null){ dragWp=+wp; }
+  else dragging=true;
+  document.body.classList.add("dragging");
+  svg.setPointerCapture(e.pointerId);
+  if(dragging) retarget(toXY(e));
+});
+svg.addEventListener("pointermove",e=>{
+  if(dragWp>=0){ const pt=toXY(e); S.waypoints[dragWp]=pt; set({}); }
+  else if(dragging){ e.preventDefault(); retarget(toXY(e)); }
+});
+addEventListener("pointerup",()=>{dragging=false;dragWp=-1;document.body.classList.remove("dragging");});
+svg.addEventListener("dblclick",e=>{ e.preventDefault();
+  set({waypoints:[...S.waypoints,toXY(e)],status:"waypoint "+(S.waypoints.length+1)+" added"}); });
+svg.addEventListener("contextmenu",e=>{
+  const wp=e.target.dataset&&e.target.dataset.wp;
+  if(wp!=null){ e.preventDefault();
+    const w=[...S.waypoints]; w.splice(+wp,1);
+    set({waypoints:w,travel:{seg:0,t:0},status:"waypoint erased"}); }
+});
 
-// ---- targeting: drag NEVER touches the playing state, only the destination ----
-function retarget(){
-  const seed=+$("seed").value||1;
-  target=K.mix(weights.map(w=>({...w})),{seed});
-  const sig=JSON.stringify(weights.map(w=>w.g+Math.round(w.w*20)));
-  if(sig!==lastTargetSig){ lastTargetSig=sig; rebuildGlideQueue(); }
-  if(!state){ state=deep(target); buildSliders(); score(); }
-}
-const deep=o=>JSON.parse(JSON.stringify(o));
-
-// ---- the glide: scalars ease, tempo steps, composition migrates piecewise ----
-const PATHS=[ "swing","humanize","reverb","pump","crackle","comp",
-  "delay.beats","delay.feedback","delay.cutoff","tone.lowcut","tone.highcut",
-  "instruments.pad.cutoff","instruments.pad.level","instruments.pad.send","instruments.pad.detune",
-  "instruments.bass.cutoff","instruments.bass.level",
-  "instruments.melody.cutoff","instruments.melody.level","instruments.melody.send","instruments.melody.voices","instruments.melody.spread",
-  "instruments.drums.kick","instruments.drums.snare","instruments.drums.hat","instruments.drums.send","instruments.drums.dsend" ];
-const getP=(o,p)=>p.split(".").reduce((a,k)=>a&&a[k],o);
-const setP=(o,p,v)=>{const ks=p.split("."),last=ks.pop();const t=ks.reduce((a,k)=>a[k]=a[k]||{},o);t[last]=v;};
-const DISCRETE=[
-  ["pad voice",  c=>c.instruments.pad.model,    (c,t)=>{c.instruments.pad.model=t.instruments.pad.model;}],
-  ["bass voice", c=>c.instruments.bass.model,   (c,t)=>{c.instruments.bass.model=t.instruments.bass.model;}],
-  ["lead voice", c=>c.instruments.melody.model, (c,t)=>{c.instruments.melody.model=t.instruments.melody.model;}],
-  ["kick",  c=>c.instruments.drums.kickModel,  (c,t)=>{c.instruments.drums.kickModel=t.instruments.drums.kickModel;}],
-  ["snare", c=>c.instruments.drums.snareModel, (c,t)=>{c.instruments.drums.snareModel=t.instruments.drums.snareModel;}],
-  ["hat",   c=>c.instruments.drums.hatModel,   (c,t)=>{c.instruments.drums.hatModel=t.instruments.drums.hatModel;}],
-  ["drum kit", c=>c.genreMeta.kit, (c,t)=>{c.genreMeta.kit=t.genreMeta.kit;
-      c.sections.forEach(s=>{if(s.drums&&s.drums!=="off"&&s.drums!=="kick")s.drums=t.genreMeta.kit;});}],
-  ["bassline", c=>JSON.stringify((c.sections.find(s=>s.bass&&s.bass!=="off")||{}).bass),
-      (c,t)=>{const b=(t.sections.find(s=>s.bass&&s.bass!=="off")||{}).bass;
-        if(b)c.sections.forEach(s=>{if(s.bass&&s.bass!=="off")s.bass=b;});}],
-  ["lead line", c=>JSON.stringify((c.sections.find(s=>s.melody&&s.melody!=="off")||{}).melody),
-      (c,t)=>{const m=(t.sections.find(s=>s.melody&&s.melody!=="off")||{}).melody;
-        if(m)c.sections.forEach(s=>{if(s.melody&&s.melody!=="off")s.melody=m;});}],
-  ["harmony", c=>c.progression, (c,t)=>{c.progression=t.progression;}],
-  ["sample",  c=>JSON.stringify(c.foundSources.map(s=>s.id)),
-      (c,t)=>{c.foundSources=deep(t.foundSources);
-        c.sections.forEach((s,i)=>{const ts=t.sections[i%t.sections.length];
-          if(s.found&&ts&&ts.found)s.found=deep(ts.found);
-          if(ts&&ts.hits)s.hits=deep(ts.hits); else delete s.hits;});}],
-  ["form",    c=>c.genreMeta.form, (c,t)=>{c.sections=deep(t.sections);c.genreMeta.form=t.genreMeta.form;
-      c.genreMeta.kit=t.genreMeta.kit;}],
-];
-function rebuildGlideQueue(){
-  if(!state||!target)return;
-  const seed=barCount*131+7;
-  const diffs=DISCRETE.filter(([n,get])=>{try{return JSON.stringify(get(state))!==JSON.stringify(get(target));}catch(e){return false;}});
-  // deterministic shuffle so the journey order is stable per position
-  glideQueue=diffs.map((d,i)=>[((seed*9301+i*49297)%233280)/233280,d]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
-}
-function glideStep(){
-  if(!state||!target)return;
-  // tempo: a few bpm per bar, never a jump
-  const db=target.bpm-state.bpm;
-  if(Math.abs(db)>0.5) state.bpm=Math.round((state.bpm+Math.sign(db)*Math.min(3,Math.abs(db)))*10)/10;
-  state.keyOffset=target.keyOffset;
-  // scalars: exponential ease, ~16 bars to arrive
-  for(const p of PATHS){
-    const tv=getP(target,p); if(typeof tv!=="number")continue;
-    let cv=getP(state,p); if(typeof cv!=="number")cv=tv;
-    const nv=Math.abs(tv-cv)<1e-3?tv:cv+(tv-cv)*0.13;
-    setP(state,p,p.endsWith("voices")?Math.round(nv):Math.round(nv*1e4)/1e4);
-  }
-  state.foundSources.forEach((s,i)=>{const ts=target.foundSources[i]||target.foundSources[0];
-    if(ts&&typeof ts.vol==="number"&&typeof s.vol==="number") s.vol+= (ts.vol-s.vol)*0.13;});
-  // composition: one discrete flip every 2 bars
-  if(barCount%2===0&&glideQueue.length){
-    const [name,,apply]=glideQueue.shift();
-    try{ apply(state,target); setStatus("journey: "+name+" → "+(weights[0]||{}).g); }catch(e){}
-  }
-  updateSliders(); if(barCount%4===0) score();
-}
-
-// ---- sliders: bound to the PLAYING state; they creep, you can still grab them ----
+// ---------- Preact panel ----------
 const DIMS=[
-  ["bpm",     st=>st.bpm,                    (st,v)=>{st.bpm=Math.round(v); if(target)target.bpm=Math.round(v);}, 50,180,1],
-  ["swing",   st=>st.swing,                  (st,v)=>{st.swing=v;target&&(target.swing=v);},0,.45,.01],
-  ["humanize",st=>st.humanize,               (st,v)=>{st.humanize=v;target&&(target.humanize=v);},0,.7,.01],
-  ["reverb",  st=>st.reverb,                 (st,v)=>{st.reverb=v;target&&(target.reverb=v);},.3,.95,.01],
-  ["pump",    st=>st.pump||0,                (st,v)=>{st.pump=v;target&&(target.pump=v);},0,.8,.01],
-  ["crackle", st=>st.crackle||0,             (st,v)=>{st.crackle=v;target&&(target.crackle=v);},0,.9,.01],
-  ["compress",st=>st.comp||0,                (st,v)=>{st.comp=v;target&&(target.comp=v);},0,.9,.01],
-  ["snare",   st=>st.instruments.drums.snare,(st,v)=>{st.instruments.drums.snare=v;target&&(target.instruments.drums.snare=v);},.3,1.4,.01],
-  ["voices",  st=>st.instruments.melody.voices,(st,v)=>{st.instruments.melody.voices=Math.round(v);target&&(target.instruments.melody.voices=Math.round(v));},1,8,1],
-  ["found",   st=>st.foundSources[0].vol,    (st,v)=>{st.foundSources[0].vol=v;target&&(target.foundSources[0].vol=v);},0,.4,.01],
+  ["bpm",st=>st.bpm,(st,v)=>{st.bpm=Math.round(v);S.target&&(S.target.bpm=Math.round(v));},50,180,1],
+  ["swing",st=>st.swing,(st,v)=>{st.swing=v;S.target&&(S.target.swing=v);},0,.45,.01],
+  ["humanize",st=>st.humanize,(st,v)=>{st.humanize=v;S.target&&(S.target.humanize=v);},0,.7,.01],
+  ["reverb",st=>st.reverb,(st,v)=>{st.reverb=v;S.target&&(S.target.reverb=v);},.3,.95,.01],
+  ["pump",st=>st.pump||0,(st,v)=>{st.pump=v;S.target&&(S.target.pump=v);},0,.8,.01],
+  ["crackle",st=>st.crackle||0,(st,v)=>{st.crackle=v;S.target&&(S.target.crackle=v);},0,.9,.01],
+  ["compress",st=>st.comp||0,(st,v)=>{st.comp=v;S.target&&(S.target.comp=v);},0,.9,.01],
+  ["snare",st=>st.instruments.drums.snare,(st,v)=>{st.instruments.drums.snare=v;S.target&&(S.target.instruments.drums.snare=v);},.3,1.4,.01],
+  ["voices",st=>st.instruments.melody.voices,(st,v)=>{st.instruments.melody.voices=Math.round(v);S.target&&(S.target.instruments.melody.voices=Math.round(v));},1,8,1],
+  ["found",st=>st.foundSources[0].vol,(st,v)=>{st.foundSources[0].vol=v;S.target&&(S.target.foundSources[0].vol=v);},0,.4,.01],
 ];
-const sliderRefs={};
-function buildSliders(){
-  const box=$("sliders");box.innerHTML="";
-  for(const [name,get,set,min,max,step] of DIMS){
-    const row=document.createElement("div");row.className="row";
-    const lab=document.createElement("label");lab.textContent=name;
-    const inp=document.createElement("input");inp.type="range";inp.min=min;inp.max=max;inp.step=step;inp.value=get(state);
-    const out=document.createElement("output");out.textContent=(+inp.value).toFixed(step>=1?0:2);
-    inp.oninput=()=>{set(state,+inp.value);out.textContent=(+inp.value).toFixed(step>=1?0:2);};
-    row.append(lab,inp,out);box.appendChild(row);
-    sliderRefs[name]={inp,out,get,step};
-  }
+function Panel(){
+  if(!S.playing) return html`<div>…</div>`;
+  return html`
+    <h2>Now playing — evolves toward the cursor/path</h2>
+    <div class="row"><label>seed</label>
+      <input class="seedin" type="number" value=${S.seed}
+        onchange=${e=>{set({seed:+e.target.value||1});retarget(S.cursor);}} />
+      <button onclick=${()=>{set({seed:Math.floor(Math.random()*99999)});retarget(S.cursor);}}>🎲</button></div>
+    <div class="row"><label>mode/scale</label>
+      <select value=${S.modeLock} onchange=${e=>{set({modeLock:e.target.value});retarget(S.cursor);}}>
+        ${Object.keys(MODE_LOCKS).map(m=>html`<option value=${m}>${m}</option>`)}
+      </select></div>
+    ${DIMS.map(([name,get,setv,min,max,step])=>html`
+      <div class="row"><label>${name}</label>
+        <input type="range" min=${min} max=${max} step=${step} value=${get(S.playing)}
+          onInput=${e=>{setv(S.playing,+e.target.value);set({});}} />
+        <output>${(+get(S.playing)).toFixed(step>=1?0:2)}</output></div>`)}
+    <div class="btns">
+      <button class="go" onclick=${goLive}>▶ LIVE</button>
+      <button onclick=${stopLive}>■ STOP</button>
+      <button onclick=${()=>{
+        const a=document.createElement("a");
+        a.href=URL.createObjectURL(new Blob([JSON.stringify(S.playing,null,2)],{type:"application/json"}));
+        a.download="genre-space-preset.json";a.click();}}>⤓ preset</button>
+      ${S.waypoints.length?html`<button onclick=${()=>set({waypoints:[],travel:{seg:0,t:0}})}>✕ path</button>`:""}
+    </div>
+    <div>${S.scores.map(([g,s])=>html`
+      <div class="sc"><div class="g">${g}</div>
+        <div class="bar"><div class="f" style=${"width:"+s+"%"}></div></div>
+        <div class="v">${s}</div></div>`)}</div>
+    <div id="status">${S.status}</div>
+    <div id="pool">${S.pool}</div>
+    <p class="hint">dbl-click the map to build a mix path · right-click a waypoint to erase ·
+    <a href="builder.html">open the builder</a></p>`;
 }
-function updateSliders(){
-  for(const name in sliderRefs){
-    const {inp,out,get,step}=sliderRefs[name];
-    if(inp.matches(":active"))continue;          // don't fight the user's hand
-    const v=get(state);
-    inp.value=v; out.textContent=(+v).toFixed(step>=1?0:2);
-  }
-}
+const panel=document.getElementById("panel");
+subs.push(()=>{ render(Panel(),panel); drawMap(); });
 
-// ---- verifier + playhead summary ----
-function score(){
-  if(!state)return;
-  const a=V.analyze(state);
-  const box=$("scores");box.innerHTML="";
-  Object.entries(a.scores).sort((x,y)=>y[1]-x[1]).slice(0,5).forEach(([g,s])=>{
-    box.insertAdjacentHTML("beforeend",
-      `<div class="sc"><div class="g">${g}</div><div class="bar"><div class="f" style="width:${s}%"></div></div><div class="v">${s}</div></div>`);
-  });
-  state._best=a.best;
-}
+// ---------- playhead ----------
 function keyModeOf(st){
   const [off,mode]=PROG_MODE[st.progression]||[0,"major"];
   return KEYS[(off+(st.keyOffset||0))%12]+" "+mode;
 }
 async function playheadTick(){
-  if(!state){requestAnimationFrame(()=>setTimeout(playheadTick,200));return;}
-  let line1="▶ press LIVE to start the journey";
-  if(live&&barInfo){
-    let t=0; try{ t=await WasmAudio.scoreTime(); }catch(e){}
-    const beat=Math.max(0,Math.min(7.99,(t-barInfo.when)/barInfo.spb+8));   // when = NEXT bar start
-    line1=`▶ bar ${barInfo.serial+1} · beat ${1+Math.floor(beat%8)} · ${barInfo.chord||"—"} (${barInfo.ci+1}/${barInfo.nch}) · ${barInfo.section}`;
-  }
-  const m=state.genreMeta||{};
-  const journey=glideQueue.length?` · journey: ${glideQueue.length} changes to go`:" · arrived";
-  $("playhead").textContent=
+  if(S.playing){
+    let line1="▶ press LIVE";
+    if(S.live&&S.barInfo){
+      let t=0; try{ t=await WasmAudio.scoreTime(); }catch(e){}
+      const b=S.barInfo, beat=Math.max(0,Math.min(7.99,(t-b.when)/b.spb+8));
+      line1=`▶ bar ${b.serial+1} · beat ${1+Math.floor(beat%8)} · ${b.chord||"—"} (${b.ci+1}/${b.nch}) · ${b.section}`+
+        (S.waypoints.length>=2?` · path ${S.travel.seg+1}→${S.travel.seg+2}`:"");
+    }
+    const m=S.playing.genreMeta||{};
+    document.getElementById("playhead").textContent=
 `${line1}
-key ${keyModeOf(state)} · ${state.bpm}bpm · form ${m.form}
-mix: ${weights.map(w=>`${w.g} ${Math.round(w.w*100)}%`).join(" · ")}${live?journey:""}
-kit ${m.kit} · bass ${(state.sections.find(s=>s.bass&&s.bass!=="off")||{}).bass||"—"}(${state.instruments.bass.model}) · lead ${(state.sections.find(s=>s.melody&&s.melody!=="off")||{}).melody||"—"}(${state.instruments.melody.model})
-sample ${state.foundSources.map(s=>s.id).join("+")} · verifier says: ${state._best||"…"}`;
+key ${keyModeOf(S.playing)} · ${S.playing.bpm}bpm · form ${m.form}
+mix: ${S.weights.map(w=>`${w.g} ${Math.round(w.w*100)}%`).join(" · ")}${S.live&&S.queue.length?` · ${S.queue.length} changes to go`:""}
+kit ${m.kit} · bass ${(S.playing.sections.find(s=>s.bass&&s.bass!=="off")||{}).bass||"—"}(${S.playing.instruments.bass.model}) · lead ${(S.playing.sections.find(s=>s.melody&&s.melody!=="off")||{}).melody||"—"}(${S.playing.instruments.melody.model})
+sample ${S.playing.foundSources.map(s=>s.id).join("+")} · verifier says: ${S.best}`;
+  }
   setTimeout(playheadTick,250);
 }
-const setStatus=m=>$("status").textContent=m;
 
-// ---- live engine ----
-$("play").onclick=async()=>{
-  try{
-    live=true; barCount=0; rebuildGlideQueue();
-    await WasmAudio.exploreLive(()=>state, setStatus, { onBar:(info)=>{
-      barInfo=info; barCount++; glideStep();
-    }});
-  } catch(e){ live=false; setStatus("live failed: "+e.message); console.error(e); }
-};
-$("stop").onclick=()=>{ live=false; WasmAudio.stopLive().then(()=>setStatus("stopped")); };
-$("dl").onclick=()=>{
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:"application/json"}));
-  a.download="genre-space-preset.json";a.click();
-};
-$("seed").onchange=()=>retarget();
-$("dice").onclick=()=>{$("seed").value=Math.floor(Math.random()*99999);retarget();};
-
-// when stopped, the journey still walks (wall-clock bars) so the UI never jumps
-setInterval(()=>{ if(!live&&state&&target){ barCount++; glideStep(); } }, 1400);
-
-// ---- the sample pool ----
+// ---------- pool + boot ----------
 (function(){
   const pool=[...Object.values(K.SOURCES).map(s=>s.url),
               ...Object.values(K.SAMPLES).map(s=>"found/samples/"+s.file)];
-  WasmAudio.prewarmPool(pool,(done,total,ok)=>{
-    $("pool").textContent=`sample pool: ${done}/${total} cached`+(done===total?` ✓`:"…");
-  });
+  WasmAudio.prewarmPool(pool,(done,total)=>set({pool:`sample pool: ${done}/${total} cached`+(done===total?" ✓":"…")}));
 })();
-
-weights=calcWeights(); retarget(); drawMap(); score(); playheadTick();
+retarget(S.cursor); rescore(); playheadTick();
 </script>
 </body>
 </html>

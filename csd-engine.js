@@ -70,6 +70,11 @@
     drone_min:  prog("Drone (i, no motion)",     [["A","min7"]]),
     deep_two:   prog("Deep two-chord (i-VI)",    [["A","min7"],["F","maj7"]]),
     house_min7: prog("House stabs (i-i-iv-v)",   [["A","min7"],["A","min7"],["D","min7"],["E","min7"]]),
+    // modal colors — the MODE dimension (tonic stays A/C-relative; keyOffset moves it)
+    mode_dorian:    prog("Dorian i7-IV7 vamp",      [["A","min7"],["D","dom7"],["A","min7"],["G","maj7"]]),
+    mode_phrygian:  prog("Phrygian i-bII",          [["A","min"],["Bb","maj7"],["A","min"],["G","min7"]]),
+    mode_lydian:    prog("Lydian IΔ-II",            [["C","maj7"],["D","dom7"],["C","maj7"],["D","dom7"]]),
+    mode_mixo:      prog("Mixolydian I7-bVII",      [["C","dom7"],["Bb","maj7"],["F","maj7"],["C","dom7"]]),
     blues_12:   prog("12-bar blues (all dom7)",  [["C","dom7"],["C","dom7"],["C","dom7"],["C","dom7"],
                                                   ["F","dom7"],["F","dom7"],["C","dom7"],["C","dom7"],
                                                   ["G","dom7"],["F","dom7"],["C","dom7"],["G","dom7"]])
