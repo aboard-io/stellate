@@ -13,7 +13,8 @@ illustrative render, not a release.
 
 | local name | Internet Archive item | content | currently layered |
 |---|---|---|---|
-| `tokyo_station` | [`aporee_20938_24294`](https://archive.org/details/aporee_20938_24294) — `nov19tokyostation1934.ogg` | Tokyo Station — metro voices, announcements, platform ambience | ✅ |
+| `tokyo_station` | [`aporee_20938_24294`](https://archive.org/details/aporee_20938_24294) — `nov19tokyostation1934.ogg` | Tokyo Station — metro voices, announcements, platform ambience | ✅ (vaporwave) |
+| `highway_night` | [`aporee_44512_50607`](https://archive.org/details/aporee_44512_50607) — `soundmap201905198.mp3` (CC BY-NC-ND) | night highway, Kouhu Township, Yunlin County TW | ✅ (synthwave) |
 
 ## Recordings used historically (available to re-layer)
 
@@ -42,8 +43,8 @@ Timestamps were hand-curated by sampling frames across each disc (2026-06).
 |---|---|---|---|
 | [`laser-vision-demonstration-1986`](https://archive.org/details/laser-vision-demonstration-1986) | LaserVision Demonstration (1986) | disc-as-sunset, bamboo forest, blue studio dinner | none stated |
 | [`pioneer-laser-optics-ii-laserdisc`](https://archive.org/details/pioneer-laser-optics-ii-laserdisc) | Pioneer Laser Optics II demo (1989) | riders across a giant sun, chrome type over a skyline, Symbolics CGI | none stated |
-| [`video-drug-2-phuture-laser-disc-1990`](https://archive.org/details/video-drug-2-phuture-laser-disc-1990) | Video Drug 2: Phuture (1990, JP ambient video) | kaleidoscope, red lattice, rainbow rings, green nebula | none stated |
-| [`video-drug-1-deep-laser-disc-1990`](https://archive.org/details/video-drug-1-deep-laser-disc-1990) | Video Drug 1: Deep (1990) | monochrome face collage | none stated |
+| [`video-drug-2-phuture-laser-disc-1990`](https://archive.org/details/video-drug-2-phuture-laser-disc-1990) | Video Drug 2: Phuture (1990, JP ambient video) | kaleidoscope, red lattice, rainbow rings, green nebula, blue electric tracery, night-light kaleidoscope | none stated |
+| [`video-drug-1-deep-laser-disc-1990`](https://archive.org/details/video-drug-1-deep-laser-disc-1990) | Video Drug 1: Deep (1990) | monochrome face collage, static-glitch face, TV in a dark red room | none stated |
 | [`ss098-0001`](https://archive.org/details/ss098-0001) | NASA SpaceDisc Vol. 1 (1984) | Earth from orbit, STS spacewalk | NASA footage — public domain |
 
 The NASA material is public domain. The demo discs and Video Drug volumes carry

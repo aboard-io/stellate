@@ -1,0 +1,175 @@
+{
+  "bpm": 92,
+  "keyOffset": 2,
+  "progression": "synthwave",
+  "reverb": 0.8,
+  "seed": 77,
+  "swing": 0,
+  "humanize": 0.15,
+  "delay": {
+    "beats": 0.5,
+    "feedback": 0.38,
+    "cutoff": 1800
+  },
+  "instruments": {
+    "pad": {
+      "wave": "saw",
+      "cutoff": 1000,
+      "res": 0.18,
+      "detune": 0.012,
+      "attack": 2.2,
+      "level": 0.75,
+      "send": 0.6,
+      "dsend": 0.2
+    },
+    "bass": {
+      "wave": "saw",
+      "cutoff": 520,
+      "res": 0.22,
+      "level": 1.15,
+      "send": 0.05,
+      "dsend": 0
+    },
+    "melody": {
+      "wave": "square",
+      "cutoff": 2000,
+      "res": 0.12,
+      "vibrato": 0.004,
+      "vibRate": 4.5,
+      "level": 0.5,
+      "send": 0.55,
+      "dsend": 0.35
+    },
+    "drums": {
+      "kick": 1.25,
+      "snare": 1.15,
+      "hat": 0.7,
+      "tune": 0.85
+    }
+  },
+  "foundSources": [
+    {
+      "id": "highway",
+      "label": "Night Highway",
+      "url": "https://archive.org/download/aporee_44512_50607/soundmap201905198.mp3",
+      "pitch": 0.7,
+      "stretch": 0.5,
+      "vol": 0.26,
+      "cutoff": 1800
+    }
+  ],
+  "sections": [
+    {
+      "id": "s9",
+      "name": "intro",
+      "cycles": 1,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "highway",
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "s10",
+      "name": "verse",
+      "cycles": 1,
+      "pads": true,
+      "bass": "octaves",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "highway",
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "s11",
+      "name": "pre-chorus",
+      "cycles": 1,
+      "pads": true,
+      "bass": "octaves",
+      "drums": "kick",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "riser"
+    },
+    {
+      "id": "s12",
+      "name": "chorus",
+      "cycles": 1,
+      "pads": true,
+      "bass": "octaves",
+      "drums": "four",
+      "melody": "updown",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "s13",
+      "name": "verse 2",
+      "cycles": 1,
+      "pads": true,
+      "bass": "octaves",
+      "drums": "halftime",
+      "melody": "off",
+      "found": {
+        "sourceId": "highway",
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "s14",
+      "name": "bridge",
+      "cycles": 1,
+      "pads": true,
+      "bass": "octaves",
+      "drums": "off",
+      "melody": "sparse",
+      "found": {
+        "sourceId": "highway",
+        "role": "bed"
+      },
+      "fill": "drum fill"
+    },
+    {
+      "id": "s15",
+      "name": "chorus 2",
+      "cycles": 1,
+      "pads": true,
+      "bass": "octaves",
+      "drums": "four",
+      "melody": "updown",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "s16",
+      "name": "outro",
+      "cycles": 1,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "highway",
+        "role": "bed"
+      },
+      "fill": "off"
+    }
+  ]
+}
