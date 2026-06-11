@@ -365,13 +365,16 @@
     try { if (ctx.state !== "running") await ctx.resume(); } catch (e) {}
     liveSend(cs, "i 98 0 360000"); liveSend(cs, "i 99 0 360000");
     liveSend(cs, "i 100 0 360000"); liveSend(cs, "i 97 0 360000");
-    const tabs = {}; let nextTab = 50, lastSig = "", ci = 0, serial = 0, nextTime = 0.5;
+    const tabs = {}; let nextTab = 50, lastModelSig = "", lastNumSig = "", ci = 0, serial = 0, nextTime = 0.5;
+    let secIdx = 0, cycIdx = 0;
+    const modelSig = st => { const i = st.instruments; return [i.pad.model, i.pad.wave, i.bass.model, i.bass.wave,
+      i.melody.model, i.melody.wave, i.melody.voices, i.drums.kickModel, i.drums.snareModel, i.drums.hatModel].join("|"); };
     async function setChannels(st) {
       const dl = st.delay || { beats: 0.75, feedback: 0.3, cutoff: 2600 };
       const ch = { reverb: st.reverb || 0.7, ddt: Math.min(1.9, (dl.beats || 0.75) * 60 / st.bpm),
         dfb: dl.feedback || 0.3, dcut: dl.cutoff || 2600, pump: st.pump || 0,
         crackle: st.crackle || 0, lowcut: (st.tone && st.tone.lowcut) || 10,
-        highcut: (st.tone && st.tone.highcut) || 0, bps: st.bpm / 60 };
+        highcut: (st.tone && st.tone.highcut) || 0, grit: st.grit || 0, bps: st.bpm / 60 };
       for (const k in ch) { try { await cs.setControlChannel(k, ch[k]); } catch (e) {} }
     }
     async function ensureTable(s) {
@@ -396,7 +399,13 @@
       const prg = (E.PROGRESSIONS[st.progression] || E.PROGRESSIONS.royal_road);
       const nch = prg.chords.length;
       ci = ci % nch;
-      const sec = Object.assign({}, grooveSec(st), { cycles: 1, fill: "off", sweep: "off" });
+      const secs = st.sections && st.sections.length ? st.sections : [grooveSec(st)];
+      secIdx = secIdx % secs.length;
+      const cur = secs[secIdx], lastCyc = cycIdx >= (cur.cycles || 1) - 1;
+      // fills/sweeps fire only on the section's final cycle — real form, live
+      const sec = Object.assign({}, cur, { cycles: 1,
+        fill: lastCyc ? (cur.fill || "off") : "off",
+        sweep: (cycIdx === 0 && cur.sweep === "open") || (lastCyc && cur.sweep === "close") ? cur.sweep : "off" });
       const one = Object.assign({}, st, { sections: [sec], seed: ((st.seed || 1) + serial * 7919) >>> 0 });
       for (const s of one.foundSources) await ensureTable(s);
       const ev = E.buildEvents(one);
@@ -418,17 +427,22 @@
       ev.sfx.filter(s => s.stab && win(s)).forEach(s => liveSend(cs, `i 6 ${at(s.beat)} ${du(s.dur)} ${s.pch} ${s.amp.toFixed(3)}`));
       nextTime += 8 * spb;
       ci++; serial++;
+      if (ci >= nch) { ci = 0; cycIdx++;
+        if (cycIdx >= (secs[secIdx].cycles || 1)) { cycIdx = 0; secIdx = (secIdx + 1) % secs.length; } }
     }
     const tick = async () => {
       if (_liveAbort || _live !== cs) return;
       try {
         const st = getState();
         await setChannels(st);
-        const sig = JSON.stringify(st.instruments);
-        if (sig !== lastSig) { await cs.compileOrc(E.instrumentBlock(st)); lastSig = sig; }
+        const ms = modelSig(st), ns = JSON.stringify(st.instruments);
+        if (ms !== lastModelSig || (ns !== lastNumSig && serial % 8 === 0)) {
+          lastModelSig = ms; lastNumSig = ns;
+          await cs.compileOrc(E.instrumentBlock(st));   // throttled: timbre swap or 8-bar numeric refresh
+        }
         let t = 0; try { t = await cs.getScoreTime(); } catch (e) {}
         if (nextTime < t) nextTime = t + 0.1;          // dropped behind (tab sleep) — resync
-        while (nextTime < t + 2.2 && !_liveAbort) await injectChord(st, t);
+        while (nextTime < t + 4.5 && !_liveAbort) await injectChord(st, t);
       } catch (e) { console.error("exploreLive tick", e); }
       _liveTimer = setTimeout(tick, 160);
     };
