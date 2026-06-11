@@ -62,7 +62,7 @@ const PRESETS = {
       st.instruments = E.defaultInstruments();
       Object.assign(st.instruments.pad,    { wave: "saw", cutoff: 1400, res: 0.18, detune: 0.015, attack: 1.8, level: 0.8, send: 0.6, dsend: 0.2 });
       Object.assign(st.instruments.bass,   { wave: "saw", cutoff: 650, res: 0.18, level: 1.2, send: 0.05, dsend: 0 });
-      Object.assign(st.instruments.melody, { wave: "saw", cutoff: 2600, res: 0.08, vibrato: 0.003, vibRate: 4.2, level: 0.55, send: 0.5, dsend: 0.3 });
+      Object.assign(st.instruments.melody, { wave: "saw", cutoff: 3000, res: 0.08, vibrato: 0.003, vibRate: 4.2, level: 0.5, send: 0.5, dsend: 0.3, voices: 7, spread: 0.014 });   // supersaw
       Object.assign(st.instruments.drums,  { kick: 1.35, snare: 1.45, hat: 0.45, tune: 0.9, send: 0.6 });
       st.foundSources = [{
         id: "highway", label: "Night Highway",
@@ -73,12 +73,12 @@ const PRESETS = {
       st.sections = E.generateSong({ foundIds: ["highway"], bass: "drive", drums: "four", melody: "sparse" });
       for (const s of st.sections) if (s.bass && s.bass !== "off") s.bass = "drive";  // the pulse never lifts
       const by = n => st.sections.find(s => s.name === n) || {};
-      by("verse").drums = "four";
+      by("verse").drums = "pulse";
       by("pre-chorus").drums = "four";  by("pre-chorus").fill = "tom fill";
-      by("chorus").drums = "open";      by("chorus").melody = "updown";
-      by("verse 2").drums = "four";
+      by("chorus").drums = "pulse";     by("chorus").melody = "hero";
+      by("verse 2").drums = "pulse";
       by("bridge").drums = "halftime";  by("bridge").fill = "tom fill";
-      by("chorus 2").drums = "open";    by("chorus 2").melody = "updown";
+      by("chorus 2").drums = "pulse";   by("chorus 2").melody = "hero";
       return st;
     },
     vibe: [

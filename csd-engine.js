@@ -71,8 +71,8 @@
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
   const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive"];
-  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double"];
-  const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap"];
+  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero"];
+  const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse"];
   const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
   // the ⚡ transition control: what happens at the end of a section, into the next
   const TRANSITIONS=["off","drum fill","tom fill","riser","sweep","downlift","impact","reverse","noise"];
@@ -81,7 +81,7 @@
     return {
       pad:    { wave:"saw",  cutoff:1400, res:0.15, detune:0.006, attack:1.5, level:0.7, send:0.55, dsend:0.15 },
       bass:   { wave:"saw",  cutoff:700,  res:0.15, level:1.0, send:0.08, dsend:0.0 },
-      melody: { wave:"sine", cutoff:3400, res:0.05, vibrato:0.006, vibRate:5.2, level:0.6, send:0.45, dsend:0.25 },
+      melody: { wave:"sine", cutoff:3400, res:0.05, vibrato:0.006, vibRate:5.2, level:0.6, send:0.45, dsend:0.25, voices:2, spread:0.004 },
       drums:  { kick:1.0, snare:1.0, hat:1.0, tune:1.0, send:0.18 }
     };
   }
@@ -169,6 +169,13 @@
     else if(kind==="boombap"){ k(0,.62);k(3,.4);k(4.5,.45); s(2,.5);s(6,.5); for(let i=0;i<8;i++)h(.5+i,(i%2?.08:.12)); }
     else if(kind==="halftime"){ k(0,.66); s(4,.55); for(let i=0;i<8;i++)h(.5+i,.12); }
     else if(kind==="trap"){ k(0,.6);k(2.5,.45);k(5,.45); s(4,.5); for(let i=0;i<16;i++)h(i*.5,.1); h(6,.09);h(6.25,.09);h(6.5,.09);h(6.75,.09); }
+    else if(kind==="pulse"){ // driving four with ghost snares + wandering push-kick; varies per chord
+      for(let i=0;i<8;i+=2)k(i,.62);
+      s(2,.5);s(6,.5);
+      s(ci%2?5.5:3.75,.14); s(ci===nc-1?7.25:1.75,.11);
+      if(ci%2)k(7.75,.3); else k(3.5,.26);
+      for(let i=0;i<16;i++){const o=i*.5; if(o===3.5||o===7.5)h(o,.16,.3); else h(o,i%2?.07:.13);}
+    }
     if(ci===nc-1 && kind!=="off" && kind!=="halftime"){ s(6.5,.3);s(7,.34);s(7.25,.38);s(7.5,.42);s(7.75,.46); }
     return out;
   }
@@ -179,14 +186,20 @@
       {drum:"kick",beat:S+0,dur:0.30,amp:0.55}];
   }
   // the big one — four beats, halves into quarters into a crescendo roll
-  // ("In the Air Tonight" energy; crank instruments.drums.send to gate-wash it)
-  function bigFillEvents(S){
+  // ("In the Air Tonight" energy; crank instruments.drums.send to gate-wash it).
+  // rng varies the roll (straight 16ths vs triplets) and adds flams, so no two
+  // fills in a song are identical.
+  function bigFillEvents(S,rng){
+    const r=rng||Math.random;
     const out=[];
     const s=(o,a)=>out.push({drum:"snare",beat:S+o,dur:0.3,amp:a});
     const k=(o,a)=>out.push({drum:"kick",beat:S+o,dur:0.4,amp:a});
-    k(0,.60); s(0,.40); s(1,.44);
-    k(2,.62); s(2,.48); s(2.5,.52);
-    s(3,.56); s(3.25,.60); s(3.5,.64); s(3.75,.68);
+    k(0,.60); s(0,.40); s(0.06,.20);                       // flam
+    s(1,.44); if(r()<0.4)s(1.5,.22);
+    k(2,.62); s(2,.48); s(2.06,.22); s(2.5,.52);
+    if(r()<0.5){ s(3,.56); s(3.25,.60); s(3.5,.64); s(3.75,.68); }
+    else       { s(3,.56); s(3.33,.61); s(3.67,.67); }     // triplet roll
+    k(3.75,.4);
     return out;
   }
   // generative melody phrases: [beatOffset, dur, leadIndex, octaveShift] over an
@@ -195,7 +208,11 @@
     arpup:   [[0,1,0,0],[1,0.5,1,0],[1.5,0.5,2,0],[2,1,3,0],[3,1,2,0],[4,1,3,0],[5,1,0,1],[6,2,2,1]],
     arpdown: [[0,1.5,3,1],[1.5,0.5,2,1],[2,1,3,0],[3,1,2,0],[4,1,1,0],[5,1,2,0],[6,2,0,0]],
     updown:  [[0,1,0,0],[1,1,2,0],[2,1,3,0],[3,1,2,1],[4,1,3,0],[5,1,2,0],[6,1,1,0],[7,1,0,0]],
-    pentaup: [[0,0.5,0,0],[0.5,0.5,2,0],[1,1,3,0],[2,0.5,1,1],[2.5,0.5,3,0],[3,1,0,1],[4.5,0.5,2,0],[5,1,3,0],[6,2,0,1]]
+    pentaup: [[0,0.5,0,0],[0.5,0.5,2,0],[1,1,3,0],[2,0.5,1,1],[2.5,0.5,3,0],[3,1,0,1],[4.5,0.5,2,0],[5,1,3,0],[6,2,0,1]],
+    // "hero" — 16th-note runs, syncopation, octave leaps; A/B variants alternate
+    // per chord so the line evolves across the progression (supersaw fuel)
+    hero:  [[0,.5,0,0],[.5,.5,1,0],[1,.5,2,0],[1.5,.5,3,0],[2,.75,2,1],[2.75,.25,3,0],[3,.5,1,0],[3.5,.5,2,0],[4,.5,3,1],[4.5,.5,2,0],[5,.75,0,1],[5.75,.25,3,0],[6,.5,2,0],[6.5,.5,1,0],[7,1,0,1]],
+    hero2: [[0,.25,3,0],[.25,.25,2,0],[.5,.5,3,0],[1,.5,2,1],[1.5,.5,1,0],[2,.5,2,0],[2.5,.5,3,0],[3,1,2,1],[4,.25,0,1],[4.25,.25,1,0],[4.5,.5,2,0],[5,.5,3,0],[5.5,.5,2,1],[6,.5,1,0],[6.5,.5,3,0],[7,.5,2,0],[7.5,.5,0,1]]
   };
   function melodyEvents(style,base,prg,chords,k,rng){
     const out=[], cycleBeats=chords.length*CHORD_BEATS;
@@ -205,6 +222,7 @@
     chords.forEach((chord,ci)=>{
       const Sb=base+ci*CHORD_BEATS, lead=chord.lead.map(p=>pchAdd(p,k));
       const note=(o,d,idx,oct)=>out.push({voice:"melody",beat:Sb+o,dur:d,pch:pchAdd(lead[idx],12*(oct||0)),amp:0.14});
+      if(gen==="hero"){ (ci%2?MEL_PHRASES.hero2:MEL_PHRASES.hero).forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       if(gen==="sparse"){ note(0,3,2,0); note(4,3,3,0); return; }
       if(gen==="double"){ const pat=[0,1,2,3,0,1,2,3,1,2,3,0,2,3,0,1]; for(let i=0;i<16;i++) out.push({voice:"melody",beat:Sb+i*0.5,dur:0.45,pch:lead[pat[i]],amp:0.12}); return; }
       const ph=MEL_PHRASES[gen];
@@ -252,7 +270,7 @@
       if(tr==="drum fill"){
         fillEvents(cur+secBeats-2).forEach(e=>drums.push(e));
       } else if(tr==="tom fill"){
-        bigFillEvents(cur+secBeats-4).forEach(e=>drums.push(e));
+        bigFillEvents(cur+secBeats-4,rng).forEach(e=>drums.push(e));
       } else if(SFX_NUM[tr]){
         const hit=(tr==="impact"||tr==="noise");
         const sbeat = hit ? cur+secBeats : cur+secBeats-4;   // hit on next downbeat; build in final bar
@@ -272,6 +290,24 @@
     if(wave==="square") return `vco2 1, ${f}, 2, 0.5`;
     if(wave==="pulse")  return `vco2 1, ${f}, 2, 0.22`;
     return `vco2 1, ${f}, 0`;
+  }
+  // melody oscillator stack — voices<=2 emits the original two-osc code verbatim
+  // (so old presets render identically); 3+ builds a detuned unison (supersaw at
+  // 6-7 saw voices with spread ~0.012-0.02)
+  function melodyStack(m){
+    const v=Math.max(1,Math.min(9,(m.voices|0)||2)), sp=(m.spread!=null?m.spread:0.004);
+    if(v<=2) return `  a1 ${waveRHS(m.wave,"kf")}
+  a2 ${waveRHS(m.wave,`kf*${(1+sp).toFixed(5)}`)}
+  a3 oscili 0.16, kf*2
+  asig=(a1+a2)*0.5+a3`;
+    const L=[];
+    for(let i=0;i<v;i++){
+      const det=1+sp*((2*i/(v-1))-1);
+      L.push(`  a${i+1} ${waveRHS(m.wave,`kf*${det.toFixed(5)}`)}`);
+    }
+    L.push(`  aoct oscili 0.12, kf*2`);
+    L.push(`  asig=(${Array.from({length:v},(_,i)=>"a"+(i+1)).join("+")})*${(0.95/v).toFixed(4)}+aoct`);
+    return L.join("\n");
   }
   function orchestra(state, sources){
     const I=mergedInstruments(state);
@@ -349,10 +385,7 @@ instr 4
   kvib lfo ipch*${I.melody.vibrato}, ${I.melody.vibRate}, 0
   kf=ipch+kvib
   aenv linsegr 0, 0.05, iamp, p3-0.12, iamp*0.85, 0.30, 0
-  a1 ${waveRHS(I.melody.wave,`kf`)}
-  a2 ${waveRHS(I.melody.wave,`kf*1.004`)}
-  a3 oscili 0.16, kf*2
-  asig=(a1+a2)*0.5+a3
+${melodyStack(I.melody)}
   asig moogladder asig, ${I.melody.cutoff}, ${I.melody.res}
   asig=asig*aenv
   gaMixL=gaMixL+asig*${I.melody.level}
