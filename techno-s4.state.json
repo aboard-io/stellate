@@ -1,0 +1,236 @@
+{
+  "bpm": 129,
+  "keyOffset": 0,
+  "progression": "deep_two",
+  "reverb": 0.5413,
+  "seed": 4,
+  "swing": 0.013,
+  "humanize": 0.012,
+  "pump": 0.572,
+  "crackle": 0.0555,
+  "comp": 0.6535,
+  "tone": {
+    "lowcut": 50,
+    "highcut": 0
+  },
+  "delay": {
+    "beats": 0.501,
+    "feedback": 0.3722,
+    "cutoff": 3358
+  },
+  "instruments": {
+    "pad": {
+      "model": "saw",
+      "wave": "saw",
+      "cutoff": 1103.6362,
+      "res": 0.15,
+      "detune": 0.0064,
+      "attack": 1.9946,
+      "level": 0.4321,
+      "send": 0.3121,
+      "dsend": 0.1624
+    },
+    "bass": {
+      "model": "reese",
+      "wave": "saw",
+      "cutoff": 756.5563,
+      "res": 0.2793,
+      "level": 1.1487,
+      "send": 0.0337,
+      "dsend": 0.049
+    },
+    "melody": {
+      "model": "pluck",
+      "wave": "square",
+      "cutoff": 2327.4294,
+      "res": 0.05,
+      "vibrato": 0,
+      "vibRate": 5.2,
+      "level": 0.3633,
+      "send": 0.2014,
+      "dsend": 0.2912,
+      "voices": 2,
+      "spread": 0.0031
+    },
+    "drums": {
+      "kickModel": "909",
+      "snareModel": "crack",
+      "hatModel": "noise",
+      "kick": 1.3375,
+      "snare": 0.5965,
+      "hat": 0.8976,
+      "tune": 1.0248,
+      "send": 0.0568,
+      "dsend": 0.2151
+    }
+  },
+  "foundSources": [
+    {
+      "id": "shibuya",
+      "label": "shibuya",
+      "url": "https://archive.org/download/aporee_20542_23865/nov820131617shibuya.ogg",
+      "vol": 0.1004,
+      "pitch": 0.9479,
+      "stretch": 0.5009,
+      "cutoff": 2903
+    },
+    {
+      "id": "rave_a",
+      "label": "rave_a",
+      "url": "",
+      "samplePath": "found/samples/hits/dcc30_00.wav",
+      "durSec": 1.2,
+      "vol": 0.22,
+      "pitch": 1,
+      "stretch": 0.5,
+      "cutoff": 4500
+    }
+  ],
+  "sections": [
+    {
+      "id": "g1",
+      "name": "warmup",
+      "cycles": 4,
+      "pads": false,
+      "bass": "off",
+      "drums": "pulse",
+      "melody": "off",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "chops"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g2",
+      "name": "build",
+      "cycles": 4,
+      "pads": false,
+      "bass": "sixteenths",
+      "drums": "pulse",
+      "melody": "off",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "chops"
+      },
+      "fill": "sweep"
+    },
+    {
+      "id": "g3",
+      "name": "main",
+      "cycles": 4,
+      "pads": false,
+      "bass": "sixteenths",
+      "drums": "pulse",
+      "melody": "off",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "chops"
+      },
+      "fill": "off",
+      "stab": "offbeat"
+    },
+    {
+      "id": "g4",
+      "name": "lift",
+      "cycles": 4,
+      "pads": false,
+      "bass": "sixteenths",
+      "drums": "pulse",
+      "melody": "arpup",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "riser",
+      "stab": "offbeat",
+      "hits": {
+        "sourceId": "rave_a",
+        "pattern": "sparse"
+      }
+    },
+    {
+      "id": "g5",
+      "name": "breakdown",
+      "cycles": 2,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "sparse",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "bed"
+      },
+      "fill": "off",
+      "hits": {
+        "sourceId": "rave_a",
+        "pattern": "sparse"
+      }
+    },
+    {
+      "id": "g6",
+      "name": "rebuild",
+      "cycles": 2,
+      "pads": false,
+      "bass": "sixteenths",
+      "drums": "kick",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "sweep"
+    },
+    {
+      "id": "g7",
+      "name": "peak",
+      "cycles": 6,
+      "pads": false,
+      "bass": "sixteenths",
+      "drums": "pulse",
+      "melody": "arpup",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "chops"
+      },
+      "fill": "off",
+      "stab": "offbeat",
+      "hits": {
+        "sourceId": "rave_a",
+        "pattern": "sparse"
+      }
+    },
+    {
+      "id": "g8",
+      "name": "outro",
+      "cycles": 4,
+      "pads": false,
+      "bass": "sixteenths",
+      "drums": "pulse",
+      "melody": "off",
+      "found": {
+        "sourceId": "shibuya",
+        "role": "chops"
+      },
+      "fill": "off"
+    }
+  ],
+  "genreMeta": {
+    "genres": [
+      "techno",
+      "techno"
+    ],
+    "t": 0,
+    "seed": 4,
+    "form": "dj",
+    "kit": "pulse",
+    "progression": "deep_two",
+    "bass": "sixteenths(reese)",
+    "lead": "arpup(pluck)",
+    "pad": "saw",
+    "drums": "909/crack/noise",
+    "found": "shibuya/chops",
+    "stab": "offbeat",
+    "hits": "rave_a"
+  }
+}

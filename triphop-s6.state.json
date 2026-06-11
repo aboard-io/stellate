@@ -1,0 +1,233 @@
+{
+  "bpm": 72,
+  "keyOffset": 0,
+  "progression": "neosoul",
+  "reverb": 0.6596,
+  "seed": 6,
+  "swing": 0.249,
+  "humanize": 0.251,
+  "pump": 0,
+  "crackle": 0.4432,
+  "comp": 0.2625,
+  "tone": {
+    "lowcut": 0,
+    "highcut": 10803
+  },
+  "delay": {
+    "beats": 0.969,
+    "feedback": 0.3513,
+    "cutoff": 1833
+  },
+  "instruments": {
+    "pad": {
+      "model": "fm",
+      "wave": "sine",
+      "cutoff": 927.8076,
+      "res": 0.15,
+      "detune": 0.009,
+      "attack": 1.6074,
+      "level": 0.6047,
+      "send": 0.5657,
+      "dsend": 0.2828
+    },
+    "bass": {
+      "model": "sub",
+      "wave": "saw",
+      "cutoff": 315.4621,
+      "res": 0.1179,
+      "level": 1.1961,
+      "send": 0.0942,
+      "dsend": 0.0481
+    },
+    "melody": {
+      "model": "pluck",
+      "wave": "sine",
+      "cutoff": 2980.7417,
+      "res": 0.05,
+      "vibrato": 0.0097,
+      "vibRate": 5.2,
+      "level": 0.4838,
+      "send": 0.5889,
+      "dsend": 0.4923,
+      "voices": 2,
+      "spread": 0.0054
+    },
+    "drums": {
+      "kickModel": "boom",
+      "snareModel": "crack",
+      "hatModel": "noise",
+      "kick": 1.2526,
+      "snare": 0.7011,
+      "hat": 0.6258,
+      "tune": 0.8543,
+      "send": 0.2487,
+      "dsend": 0.1543
+    }
+  },
+  "foundSources": [
+    {
+      "id": "amen_165",
+      "label": "amen_165",
+      "url": "",
+      "samplePath": "found/samples/breaks/amen_165_02.wav",
+      "bpm": 165,
+      "vol": 0.1592,
+      "pitch": 1,
+      "stretch": 0.5,
+      "cutoff": 3665
+    },
+    {
+      "id": "vox_c",
+      "label": "vox_c",
+      "url": "",
+      "samplePath": "found/samples/vox/apollo_c.wav",
+      "durSec": 3,
+      "vol": 0.22,
+      "pitch": 1,
+      "stretch": 0.5,
+      "cutoff": 4500
+    }
+  ],
+  "sections": [
+    {
+      "id": "g1",
+      "name": "intro",
+      "cycles": 1,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "amen_165",
+        "role": "break"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g2",
+      "name": "verse",
+      "cycles": 1,
+      "pads": true,
+      "bass": "sub",
+      "drums": "halftime",
+      "melody": "off",
+      "found": {
+        "sourceId": "amen_165",
+        "role": "break"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g3",
+      "name": "pre-chorus",
+      "cycles": 1,
+      "pads": true,
+      "bass": "sub",
+      "drums": "halftime",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g4",
+      "name": "chorus",
+      "cycles": 1,
+      "pads": true,
+      "bass": "sub",
+      "drums": "halftime",
+      "melody": "sparse",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off",
+      "stab": "off",
+      "hits": {
+        "sourceId": "vox_c",
+        "pattern": "sparse"
+      }
+    },
+    {
+      "id": "g5",
+      "name": "verse 2",
+      "cycles": 1,
+      "pads": true,
+      "bass": "sub",
+      "drums": "halftime",
+      "melody": "off",
+      "found": {
+        "sourceId": "amen_165",
+        "role": "break"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g6",
+      "name": "bridge",
+      "cycles": 1,
+      "pads": true,
+      "bass": "sub",
+      "drums": "off",
+      "melody": "sparse",
+      "found": {
+        "sourceId": "amen_165",
+        "role": "bed"
+      },
+      "fill": "drum fill",
+      "hits": {
+        "sourceId": "vox_c",
+        "pattern": "sparse"
+      }
+    },
+    {
+      "id": "g7",
+      "name": "chorus 2",
+      "cycles": 1,
+      "pads": true,
+      "bass": "sub",
+      "drums": "halftime",
+      "melody": "sparse",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "off",
+      "stab": "off"
+    },
+    {
+      "id": "g8",
+      "name": "outro",
+      "cycles": 1,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "off",
+      "found": {
+        "sourceId": "amen_165",
+        "role": "break"
+      },
+      "fill": "off"
+    }
+  ],
+  "genreMeta": {
+    "genres": [
+      "triphop",
+      "triphop"
+    ],
+    "t": 0,
+    "seed": 6,
+    "form": "pop",
+    "kit": "halftime",
+    "progression": "neosoul",
+    "bass": "sub(sub)",
+    "lead": "sparse(pluck)",
+    "pad": "fm",
+    "drums": "boom/crack/noise",
+    "found": "amen_165/break",
+    "stab": "off",
+    "hits": "vox_c"
+  }
+}

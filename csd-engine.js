@@ -81,12 +81,14 @@
   // the ⚡ transition control: what happens at the end of a section, into the next
   const TRANSITIONS=["off","drum fill","tom fill","break fill","riser","sweep","downlift","impact","reverse","noise"];
 
+  // models: pad saw|organ|fm · bass saw|sub|acid|reese · melody stack|pluck|fm
+  // · kick boom|808|909 · snare noise|crack|clap · hat noise|metal
   function defaultInstruments(){
     return {
-      pad:    { wave:"saw",  cutoff:1400, res:0.15, detune:0.006, attack:1.5, level:0.7, send:0.55, dsend:0.15 },
-      bass:   { wave:"saw",  cutoff:700,  res:0.15, level:1.0, send:0.08, dsend:0.0 },
-      melody: { wave:"sine", cutoff:3400, res:0.05, vibrato:0.006, vibRate:5.2, level:0.6, send:0.45, dsend:0.25, voices:2, spread:0.004 },
-      drums:  { kick:1.0, snare:1.0, hat:1.0, tune:1.0, send:0.18 }
+      pad:    { model:"saw", wave:"saw",  cutoff:1400, res:0.15, detune:0.006, attack:1.5, level:0.7, send:0.55, dsend:0.15 },
+      bass:   { model:"saw", wave:"saw",  cutoff:700,  res:0.15, level:1.0, send:0.08, dsend:0.0 },
+      melody: { model:"stack", wave:"sine", cutoff:3400, res:0.05, vibrato:0.006, vibRate:5.2, level:0.6, send:0.45, dsend:0.25, voices:2, spread:0.004 },
+      drums:  { kickModel:"boom", snareModel:"noise", hatModel:"noise", kick:1.0, snare:1.0, hat:1.0, tune:1.0, send:0.18, dsend:0 }
     };
   }
   function mergedInstruments(state){
@@ -200,19 +202,19 @@
       if(ci%2)s(7.75,.13);
     }
     else if(kind==="breaks"){ // mid-tempo broken beat — displaced kicks, dragged snares
-      k(0,.62); k(ci%2?2.75:2.5,.4); k(R()<0.5?4.5:5,.45);
-      s(2,.5); s(6,.5); s(ci%2?5.25:3.75,.18); if(R()<0.4)s(7.5,.2);
+      k(0,.68); k(ci%2?2.75:2.5,.46); k(R()<0.5?4.5:5,.5);
+      s(2,.38); s(6,.38); s(ci%2?5.25:3.75,.13); if(R()<0.4)s(7.5,.15);
       for(let i=0;i<8;i++)h(.5+i,(i%2?.08:.13));
       h(ci%2?6.5:2.5,.15,.3);
     }
     else if(kind==="jungle"){ // chopped-break feel: the pattern itself mutates every chord
-      k(0,.6); k(2.75,.42); if(ci%2)k(5.5,.45); else k(6.25,.4);
-      s(1.5,.42); s(4,.46);                                        // displaced backbeats
+      k(0,.68); k(2.75,.5); if(ci%2)k(5.5,.52); else k(6.25,.46);
+      s(1.5,.32); s(4,.35);                                        // displaced backbeats
       const chops=[[3.25,3.5],[5.75,6],[7,7.25],[2.25,6.75]][ci%4];
-      chops.forEach((o,j)=>s(o,.22+j*.06));                        // double-hit chop pair
-      if(R()<0.5)s(7.75,.3);                                       // edge-of-bar push
-      for(let i=0;i<16;i++){if(R()<0.7)h(i*.5,(i%2?.06:.1));}      // broken 16th hats
-      h(ci%2?3.5:7.5,.14,.3);
+      chops.forEach((o,j)=>s(o,.15+j*.04));                        // double-hit chop pair
+      if(R()<0.5)s(7.75,.22);                                      // edge-of-bar push
+      for(let i=0;i<16;i++){if(R()<0.55)h(i*.5,(i%2?.05:.09));}    // broken 16th hats (sparser)
+      h(ci%2?3.5:7.5,.13,.3);
     }
     if(ci===nc-1 && kind!=="off" && kind!=="halftime"){ s(6.5,.3);s(7,.34);s(7.25,.38);s(7.5,.42);s(7.75,.46); }
     return out;
@@ -244,9 +246,9 @@
   function breakFillEvents(S,rng){
     const r=rng||Math.random, out=[];
     const s=(o,a)=>out.push({drum:"snare",beat:S+o,dur:0.18,amp:a});
-    out.push({drum:"kick",beat:S+0,dur:0.3,amp:0.5});
-    let o=0,a=0.24;
-    while(o<2){ s(o,a); a=Math.min(0.55,a+0.04); o+=(r()<0.4?0.125:0.25); }
+    out.push({drum:"kick",beat:S+0,dur:0.3,amp:0.6});
+    let o=0,a=0.17;
+    while(o<2){ s(o,a); a=Math.min(0.4,a+0.03); o+=(r()<0.4?0.125:0.25); }
     return out;
   }
   // generative melody phrases: [beatOffset, dur, leadIndex, octaveShift] over an
@@ -264,11 +266,21 @@
   function melodyEvents(style,base,prg,chords,k,rng){
     const out=[], cycleBeats=chords.length*CHORD_BEATS;
     const comp = style==="composed"?prg.composed : style==="composed2"?prg.composed2 : null;
-    if(comp && cycleBeats===32){ comp.forEach(([o,d,p])=>out.push({voice:"melody",beat:base+o,dur:d,pch:pchAdd(p,k),amp:0.14})); return out; }
+    if(comp && cycleBeats===32){
+      comp.forEach(([o,d,p])=>{ if(rng()<0.06) return;            // composed lines breathe too
+        out.push({voice:"melody",beat:base+o,dur:d,pch:pchAdd(p,k),amp:0.135+rng()*0.015}); });
+      return out;
+    }
     let gen=style; if(style==="composed"||style==="composed2") gen="arpup";
     chords.forEach((chord,ci)=>{
       const Sb=base+ci*CHORD_BEATS, lead=chord.lead.map(p=>pchAdd(p,k));
-      const note=(o,d,idx,oct)=>out.push({voice:"melody",beat:Sb+o,dur:d,pch:pchAdd(lead[idx],12*(oct||0)),amp:0.14});
+        // humanity: every chord's phrase mutates a little — drops, pushes, octave color
+      const note=(o,d,idx,oct)=>{
+        if(rng()<0.09) return;
+        if(rng()<0.11 && o+0.5+d<=8) o+=0.5;
+        if(rng()<0.09) oct=(oct||0)===0?1:0;
+        out.push({voice:"melody",beat:Sb+o,dur:d,pch:pchAdd(lead[idx],12*(oct||0)),amp:0.13+rng()*0.025});
+      };
       if(gen==="hero"){ (ci%2?MEL_PHRASES.hero2:MEL_PHRASES.hero).forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       if(gen==="sparse"){ note(0,3,2,0); note(4,3,3,0); return; }
       if(gen==="double"){ const pat=[0,1,2,3,0,1,2,3,1,2,3,0,2,3,0,1]; for(let i=0;i<16;i++) out.push({voice:"melody",beat:Sb+i*0.5,dur:0.45,pch:lead[pat[i]],amp:0.12}); return; }
@@ -290,11 +302,21 @@
     }
   }
 
+  // break-chop slice sequences: 16 8th-slots per chord, slice index 0-7 or -1 rest
+  const BREAK_PATTERNS=[
+    [0,1,2,3,4,5,6,7,0,1,2,3,4,5,6,7],
+    [0,1,2,3,0,1,4,5,2,3,6,7,4,7,6,7],
+    [0,2,1,3,4,4,6,7,0,2,1,3,7,6,5,4],
+    [0,-1,2,-1,4,5,-1,7,0,-1,2,3,-1,5,6,7],
+  ];
+  const STAB_PATTERNS={ offbeat:[1.5,3.5,5.5,7.5], rave:[0,1.5,3,4.5,6,7], sparse:[3.5,7] };
+  const HIT_PATTERNS={ sparse:[0], offbeat:[3.5], dub:[2.5,6.5] };
+
   function buildEvents(state){
     const prg=PROGRESSIONS[state.progression]||PROGRESSIONS.royal_road;
     const chords=prg.chords, k=state.keyOffset|0, cycleBeats=chords.length*CHORD_BEATS;
     const srcById={};
-    state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".wav"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600}; });
+    state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".wav"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec}; });
     const rng=mulberry32((state.seed??1)>>>0);
     const pitched=[], drums=[], found=[], sfx=[];
     let cur=0;
@@ -302,14 +324,54 @@
       const fsrc = sec.found&&sec.found.sourceId ? srcById[sec.found.sourceId] : null;
       const cycles=sec.cycles||1, secBeats=cycles*cycleBeats;
       if(fsrc){
-        if((sec.found.role||"bed")==="chops"){
+        const role=sec.found.role||"bed";
+        if(role==="chops"){
           // rhythmic slice hits on a seeded 8th grid instead of one long bed
           for(let b=0;b<secBeats;b++){
             if(rng()<0.55) found.push({chop:1,beat:cur+b+(rng()<0.3?0.5:0),dur:0.35+rng()*0.5,
               amp:fsrc.vol*1.7,tableNum:fsrc.tableNum,pitch:fsrc.pitch,offset:rng(),cutoff:fsrc.cutoff});
           }
+        } else if(role==="break"){
+          // beat-synced break chopping: slice patterns rotate per chord, mutate per seed
+          const sync=fsrc.bpm?state.bpm/fsrc.bpm:1;
+          for(let cb=0;cb<secBeats/CHORD_BEATS;cb++){
+            const pat=BREAK_PATTERNS[(cb+Math.floor(rng()*2))%BREAK_PATTERNS.length];
+            for(let i8=0;i8<16;i8++){
+              let sl=pat[i8];
+              if(sl<0||rng()<0.08) continue;
+              if(rng()<0.1) sl=Math.floor(rng()*8);                  // surprise slice
+              const beat=cur+cb*CHORD_BEATS+i8*0.5;
+              found.push({chop:1,beat,dur:0.52,amp:fsrc.vol*2.1,tableNum:fsrc.tableNum,
+                pitch:sync,offset:sl/8,cutoff:fsrc.cutoff||5000});
+              if(rng()<0.07) found.push({chop:1,beat:beat+0.25,dur:0.26,amp:fsrc.vol*1.6,
+                tableNum:fsrc.tableNum,pitch:sync,offset:sl/8,cutoff:fsrc.cutoff||5000});  // stutter
+            }
+          }
         } else {
           found.push({beat:cur,dur:secBeats,amp:fsrc.vol,tableNum:fsrc.tableNum,pitch:fsrc.pitch,stretch:fsrc.stretch,cutoff:fsrc.cutoff});
+        }
+      }
+      // one-shot sample hits (stabs/shouts/vox) — separate layer from the bed/break
+      if(sec.hits&&sec.hits.sourceId&&srcById[sec.hits.sourceId]){
+        const hsrc=srcById[sec.hits.sourceId];
+        const pat=HIT_PATTERNS[sec.hits.pattern]||HIT_PATTERNS.sparse;
+        const hdur=Math.min(4,(hsrc.durSec||1.2)*state.bpm/60);
+        for(let cb=0;cb<secBeats/CHORD_BEATS;cb++){
+          for(const o of pat){
+            if(rng()<0.45) continue;                                 // hits are events, not loops
+            found.push({chop:1,beat:cur+cb*CHORD_BEATS+o,dur:hdur,amp:(hsrc.vol||0.2)*1.8,
+              tableNum:hsrc.tableNum,pitch:1+(rng()*0.06-0.03),offset:0,cutoff:hsrc.cutoff||4500});
+          }
+        }
+      }
+      // synth stabs (rave chords on the chord root)
+      if(sec.stab&&sec.stab!=="off"&&STAB_PATTERNS[sec.stab]){
+        for(let cb=0;cb<secBeats/CHORD_BEATS;cb++){
+          const chord=chords[cb%chords.length];
+          for(const o of STAB_PATTERNS[sec.stab]){
+            if(rng()<0.2) continue;
+            sfx.push({stab:1,beat:cur+cb*CHORD_BEATS+o,dur:0.32,pch:pchAdd(chord.bass.r6,k+12),amp:0.16+rng()*0.05});
+          }
         }
       }
       for(let c=0;c<cycles;c++){
@@ -317,8 +379,18 @@
         chords.forEach((chord,ci)=>{
           const Sp=cycleBase+ci*CHORD_BEATS;
           if(sec.pads) chord.pads.forEach(p=>pitched.push({voice:"pad",beat:Sp,dur:CHORD_BEATS,pch:pchAdd(p,k),amp:0.085}));
-          if(sec.bass&&sec.bass!=="off") bassEvents(sec.bass,Sp,chord.bass,k).forEach(e=>pitched.push(e));
-          if(sec.drums&&sec.drums!=="off") drumEvents(sec.drums,Sp,ci,chords.length,rng).forEach(e=>drums.push(e));
+          if(sec.bass&&sec.bass!=="off"){
+            const be=bassEvents(sec.bass,Sp,chord.bass,k);
+            be.forEach(e=>{ if(rng()<0.05) e.pch=pchAdd(e.pch,12); pitched.push(e); });  // octave pops
+          }
+          if(sec.drums&&sec.drums!=="off"){
+            let de=drumEvents(sec.drums,Sp,ci,chords.length,rng);
+            // humanity pass: hats drop out, levels breathe, ghost snares stay QUIET
+            de=de.filter(e=>!(e.drum==="hat"&&rng()<0.09));
+            de.forEach(e=>{ if(rng()<0.25) e.amp=Math.max(0.03,e.amp*(0.85+rng()*0.3)); });
+            if(rng()<0.4) de.push({drum:"snare",beat:Sp+[1.75,3.25,5.75,6.75][Math.floor(rng()*4)],dur:0.15,amp:0.06+rng()*0.04});
+            de.forEach(e=>drums.push(e));
+          }
         });
         if(sec.melody&&sec.melody!=="off") melodyEvents(sec.melody,cycleBase,prg,chords,k,rng).forEach(e=>pitched.push(e));
       }
@@ -349,6 +421,45 @@
     if(wave==="square") return `vco2 1, ${f}, 2, 0.5`;
     if(wave==="pulse")  return `vco2 1, ${f}, 2, 0.22`;
     return `vco2 1, ${f}, 0`;
+  }
+  // ---- per-voice synthesis models (the timbre dimension) ----
+  function padSource(p){
+    if(p.model==="organ") return `  a1 oscili 0.9, kf
+  a2 oscili 0.55, kf*2
+  a3 oscili 0.36, kf*3
+  a4 oscili 0.27, kf*4
+  a5 oscili 0.17, kf*6
+  asig = (a1+a2+a3+a4+a5)*0.32
+  asig butlp asig, ${Math.round(Math.min(9000,p.cutoff*2.2))}`;
+    if(p.model==="fm") return `  kidx linsegr 2.6, 1.1, 0.9, 0.8, 0.3
+  amod oscili kidx*kf, kf*2.001
+  asig oscili 1, kf + amod
+  asig butlp asig, ${Math.round(Math.min(8000,p.cutoff*1.7))}`;
+    return null;  // default detuned-saw stack stays inline in the orchestra
+  }
+  function bassSource(b){
+    const c=Math.round(b.cutoff);
+    if(b.model==="sub") return `  a1 oscili 1, ipch
+  a1 = tanh(a1*1.6)
+  a1 butlp a1, ${c}`;
+    if(b.model==="acid") return `  a1 vco2 1, ipch, 0
+  kcut expseg ${c*4}, 0.16, ${c}, p3, ${Math.max(120,c*0.8)}
+  a1 moogladder a1, kcut, ${Math.min(0.9,(b.res||0.15)+0.5).toFixed(2)}`;
+    if(b.model==="reese") return `  a1 vco2 1, ipch*0.994, 0
+  a2 vco2 1, ipch*1.006, 0
+  a1 = (a1+a2)*0.5
+  a1 butlp a1, ${c}
+  a1 = tanh(a1*1.7)*0.85`;
+    return null;
+  }
+  function leadSource(m){
+    if(m.model==="pluck") return `  asig pluck 1, kf, ipch, 0, 1
+  asig butlp asig, ${Math.round(m.cutoff)}`;
+    if(m.model==="fm") return `  kidx linsegr 3.5, p3*0.5, 1.0, 0.2, 0
+  amod oscili kidx*kf, kf*1.4
+  asig oscili 1, kf + amod
+  asig butlp asig, ${Math.round(m.cutoff)}`;
+    return null;
   }
   // melody oscillator stack — voices<=2 emits the original two-osc code verbatim
   // (so old presets render identically); 3+ builds a detuned unison (supersaw at
@@ -384,6 +495,66 @@
     const masterPump = pump>0
       ? `  kphs phasor ${(state.bpm/60).toFixed(4)}\n  kduck = 1 - ${pump.toFixed(3)}*exp(-6*kphs)\n  aL = aL*kduck\n  aR = aR*kduck\n`
       : "";
+    const comp=Math.min(1,Math.max(0,state.comp||0));
+    const masterComp = comp>0
+      ? `  aL dam aL, ${(0.55-0.35*comp).toFixed(3)}, ${(1-0.55*comp).toFixed(3)}, 1, 0.01, 0.09\n` +
+        `  aR dam aR, ${(0.55-0.35*comp).toFixed(3)}, ${(1-0.55*comp).toFixed(3)}, 1, 0.01, 0.09\n` +
+        `  aL = aL*${(1+0.8*comp).toFixed(3)}\n  aR = aR*${(1+0.8*comp).toFixed(3)}\n`
+      : "";
+    const padSrc = padSource(I.pad) || `  a1 ${waveRHS(I.pad.wave,`kf*${dLo}`)}
+  a2 ${waveRHS(I.pad.wave,`kf`)}
+  a3 ${waveRHS(I.pad.wave,`kf*${dHi}`)}
+  asig = (a1+a2+a3)*0.33
+  asig moogladder asig, ${I.pad.cutoff}, ${I.pad.res}`;
+    const bassSrc = bassSource(I.bass) || `  a1 ${waveRHS(I.bass.wave,`ipch`)}
+  a1 moogladder a1, ${I.bass.cutoff}, ${I.bass.res}`;
+    const leadSrc = leadSource(I.melody) || melodyStack(I.melody);
+    const ddsend=Math.min(1,Math.max(0,I.drums.dsend||0));
+    const drumDel = ddsend>0 ? (v)=>`  gaDelL=gaDelL+${v}*${ddsend.toFixed(3)}\n  gaDelR=gaDelR+${v}*${ddsend.toFixed(3)}\n` : ()=>"";
+    const kickSrc = I.drums.kickModel==="808" ? `  kp expseg ${72*dt}, 0.09, ${45*dt}, p3-0.09, ${38*dt}
+  aenv transeg 1, p3, -2, 0
+  a1 oscili iamp*aenv, kp
+  a1 = tanh(a1*1.15)*0.9`
+      : I.drums.kickModel==="909" ? `  kp expseg ${165*dt}, 0.04, ${55*dt}, p3-0.04, ${46*dt}
+  aenv transeg 1, p3, -6, 0
+  a1 oscili iamp*aenv, kp
+  aclk noise iamp*0.5, 0
+  aclk buthp aclk, 5000
+  kce transeg 1, 0.005, -4, 0
+  a1 = a1 + aclk*kce
+  a1 = tanh(a1*1.5)*0.8`
+      : `  kp expseg ${110*dt}, 0.06, ${46*dt}, p3-0.06, ${40*dt}
+  aenv transeg 1, p3, -4, 0
+  a1 oscili iamp*aenv, kp
+  a1 = tanh(a1*1.4)*0.8`;
+    const snareSrc = I.drums.snareModel==="crack" ? `  aenv transeg 1, p3, -9, 0
+  anz noise iamp, 0
+  anz butbp anz, 3100, 2300
+  at1 oscili iamp*0.5, 215
+  asig=(anz*0.8+at1)*aenv`
+      : I.drums.snareModel==="clap" ? `  aenv transeg 1, p3, -6, 0
+  anz noise iamp, 0
+  anz butbp anz, 1250, 950
+  aflut oscili 0.4, 41
+  asig=anz*(0.72+aflut)*aenv`
+      : `  aenv transeg 1, p3, -6, 0
+  anz noise iamp, 0
+  anz butbp anz, 1800, 1600
+  at1 oscili iamp*0.5, 300
+  at2 oscili iamp*0.3, 185
+  asig=(anz+at1+at2)*aenv`;
+    const hatSrc = I.drums.hatModel==="metal" ? `  aenv transeg 1, p3, -8, 0
+  am1 vco2 0.3, 6317, 2, 0.5
+  am2 vco2 0.25, 8429, 2, 0.5
+  am3 vco2 0.2, 10781, 2, 0.5
+  anz noise 0.4, 0
+  asig=(am1+am2+am3+anz)*iamp
+  asig buthp asig, 7600
+  asig=asig*aenv`
+      : `  aenv transeg 1, p3, -8, 0
+  anz noise iamp, 0
+  anz buthp anz, 7000
+  asig=anz*aenv`;
     return `<CsoundSynthesizer>
 <CsInstruments>
 sr=44100
@@ -405,11 +576,7 @@ instr 1
   kwow lfo ipch*0.004, 0.3, 0
   kf = ipch+kwow
   aenv linsegr 0, ${atk}, iamp, p3-${atk}, iamp*0.8, 2.5, 0
-  a1 ${waveRHS(I.pad.wave,`kf*${dLo}`)}
-  a2 ${waveRHS(I.pad.wave,`kf`)}
-  a3 ${waveRHS(I.pad.wave,`kf*${dHi}`)}
-  asig = (a1+a2+a3)*0.33
-  asig moogladder asig, ${I.pad.cutoff}, ${I.pad.res}
+${padSrc}
   asig = asig*aenv
   gaMixL=gaMixL+asig*${I.pad.level}
   gaMixR=gaMixR+asig*${I.pad.level}
@@ -423,8 +590,7 @@ instr 2
   ipch=cpspch(p4)
   iamp=p5
   aenv linsegr 0, 0.012, iamp, p3-0.05, iamp*0.5, 0.10, 0
-  a1 ${waveRHS(I.bass.wave,`ipch`)}
-  a1 moogladder a1, ${I.bass.cutoff}, ${I.bass.res}
+${bassSrc}
   asig=a1*aenv
   gaMixL=gaMixL+asig*${I.bass.level}
   gaMixR=gaMixR+asig*${I.bass.level}
@@ -483,7 +649,7 @@ instr 4
   kvib lfo ipch*${I.melody.vibrato}, ${I.melody.vibRate}, 0
   kf=ipch+kvib
   aenv linsegr 0, 0.05, iamp, p3-0.12, iamp*0.85, 0.30, 0
-${melodyStack(I.melody)}
+${leadSrc}
   asig moogladder asig, ${I.melody.cutoff}, ${I.melody.res}
   asig=asig*aenv
   gaMixL=gaMixL+asig*${I.melody.level}
@@ -496,10 +662,7 @@ endin
 
 instr 10
   iamp=p4*${I.drums.kick}
-  kp expseg ${110*dt}, 0.06, ${46*dt}, p3-0.06, ${40*dt}
-  aenv transeg 1, p3, -4, 0
-  a1 oscili iamp*aenv, kp
-  a1 = tanh(a1*1.4)*0.8
+${kickSrc}
   gaMixL=gaMixL+a1
   gaMixR=gaMixR+a1
   gaRevL=gaRevL+a1*${(I.drums.send*0.35).toFixed(3)}
@@ -508,28 +671,39 @@ endin
 
 instr 11
   iamp=p4*${I.drums.snare}
-  aenv transeg 1, p3, -6, 0
-  anz noise iamp, 0
-  anz butbp anz, 1800, 1600
-  at1 oscili iamp*0.5, 300
-  at2 oscili iamp*0.3, 185
-  asig=(anz+at1+at2)*aenv
+${snareSrc}
   gaMixL=gaMixL+asig
   gaMixR=gaMixR+asig
   gaRevL=gaRevL+asig*${I.drums.send}
   gaRevR=gaRevR+asig*${I.drums.send}
-endin
+${drumDel("asig")}endin
 
 instr 12
   iamp=p4*${I.drums.hat}
-  aenv transeg 1, p3, -8, 0
-  anz noise iamp, 0
-  anz buthp anz, 7000
-  asig=anz*aenv
+${hatSrc}
   gaMixL=gaMixL+asig*0.7
   gaMixR=gaMixR+asig*0.7
   gaRevL=gaRevL+asig*${(I.drums.send*0.3).toFixed(3)}
   gaRevR=gaRevR+asig*${(I.drums.send*0.3).toFixed(3)}
+${drumDel("asig*0.5")}endin
+
+instr 6
+  ipch=cpspch(p4)
+  iamp=p5
+  aenv transeg 1, p3, -5, 0
+  a1 vco2 1, ipch, 0
+  a2 vco2 1, ipch*1.189, 0
+  a3 vco2 1, ipch*1.498, 0
+  a4 vco2 1, ipch*2.003, 0
+  asig=(a1+a2+a3+a4)*0.25
+  asig moogladder asig, 3200, 0.2
+  asig=asig*aenv*iamp
+  gaMixL=gaMixL+asig
+  gaMixR=gaMixR+asig
+  gaRevL=gaRevL+asig*0.35
+  gaRevR=gaRevR+asig*0.35
+  gaDelL=gaDelL+asig*0.3
+  gaDelR=gaDelR+asig*0.3
 endin
 
 instr 20
@@ -602,7 +776,7 @@ endin
 instr 100
   aL = gaMixL
   aR = gaMixR
-${masterPump}${masterTone}  aL clip aL, 0, 0.95
+${masterPump}${masterComp}${masterTone}  aL clip aL, 0, 0.95
   aR clip aR, 0, 0.95
   outs aL, aR
   clear gaMixL, gaMixR
@@ -625,7 +799,10 @@ endin
     ev.pitched.forEach(p=>L.push(`i ${inst[p.voice]} ${p.beat.toFixed(3)} ${p.dur.toFixed(3)} ${p.pch} ${p.amp.toFixed(4)}`));
     const dinst={kick:10,snare:11,hat:12};
     ev.drums.forEach(d=>L.push(`i ${dinst[d.drum]} ${d.beat.toFixed(3)} ${d.dur.toFixed(3)} ${d.amp.toFixed(4)}`));
-    ev.sfx.forEach(s=>L.push(`i 20 ${s.beat.toFixed(3)} ${s.dur} ${s.type} ${s.amp}`));
+    ev.sfx.forEach(s=>{
+      if(s.stab) L.push(`i 6 ${s.beat.toFixed(3)} ${s.dur} ${s.pch} ${s.amp.toFixed(3)}`);
+      else L.push(`i 20 ${s.beat.toFixed(3)} ${s.dur} ${s.type} ${s.amp}`);
+    });
     return orchestra(state,srcByTable)+"\n<CsScore>\n"+L.join("\n")+"\ne\n</CsScore>\n</CsoundSynthesizer>\n";
   }
 

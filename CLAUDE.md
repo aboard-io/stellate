@@ -51,6 +51,9 @@ Requires `csound` (tested 6.18), `ffmpeg`, `curl`, `node`.
 - `play.html` — simple player
 - `genre-kernel.js` — genre as a point in multidimensional space; blend/track/
   playlist generators emitting engine states (design: GENRE-SPACE.md)
+- `genre-verifier.js` — symbolic genre-conformance scoring + confusion matrix
+  (`node genre-verifier.js matrix` must stay diagonal-dominant)
+- `fetch-found-samples.sh` — breaks/one-shots/vox sample layer from archive.org
 - `song-verifier.js` — `analyzeSong`/`improveSong`: the verifier half of the loop
 - `engine.test.js` — offline render verification against real csound
 - `video-layer.js` — laserdisc background video: dual-<video> crossfade, switches
