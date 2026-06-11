@@ -50,7 +50,9 @@
       chopUse: +role("chops").toFixed(2),
       bedUse: +role("bed").toFixed(2),
       crackle: state.crackle||0, pump: state.pump||0, comp: state.comp||0,
-      swing: state.swing||0,
+      swing: state.swing||0, humanize: state.humanize||0,
+      acoustic: ["piano","organ"].includes(I.melody.model)||["piano","organ"].includes(I.pad.model)
+        ? (["piano"].includes(I.melody.model)?1:0.6) : 0,
       leadVoices: I.melody.voices||2,
       softTop: state.tone&&state.tone.highcut>0?1:0,
     };
@@ -77,6 +79,19 @@
                 snareBalance:[0,.8,1], bedUse:[.4,1,1] },
     ambient:  { bpm:[52,76,2], drumDensity:[0,.6,3], wash:[.4,1,3], motion:[0,.9,1], pump:[0,.1,1],
                 snareBalance:[0,1,0.5], bedUse:[.6,1,2] },
+    neoclassical:{ bpm:[55,85,2], drumDensity:[0,.4,3], acoustic:[.6,1,3], humanize:[.28,.7,2],
+                motion:[.5,1,1], wash:[.25,.7,1], pump:[0,.05,1], breakUse:[0,0,1] },
+    dancepop: { bpm:[112,130,3], motion:[.6,1,2], leadVoices:[2,6,1], snareBalance:[.3,1.3,1],
+                drumDensity:[1.2,3.2,1], swing:[0,.12,1], pump:[0,.35,1], breakUse:[0,.1,1], acoustic:[0,.3,1],
+                seventh:[0,.6,2] },
+    edm:      { bpm:[121,134,3], pump:[.5,1,3], comp:[.55,1,2], leadVoices:[5,9,2], wash:[.1,.5,1],
+                motion:[0,.8,1], crackle:[0,.1,1], swing:[0,.07,1] },
+    dubstep:  { bpm:[133,148,3], sub:[.6,1,2], drumDensity:[.4,2.2,2], snareBalance:[.3,1.3,1],
+                pump:[0,.35,1], offgrid:[.05,.55,1], wash:[.15,.55,1], crackle:[0,.2,1] },
+    blues:    { bpm:[74,102,3], swing:[.22,.46,3], acoustic:[.4,1,2], seventh:[.85,1,3],
+                motion:[.5,.7,2], crackle:[.2,.6,1], drumDensity:[.7,2.6,1], pump:[0,.05,1] },
+    jazz:     { bpm:[92,148,2], swing:[.26,.52,3], acoustic:[.4,1,2], seventh:[.6,1,1],
+                motion:[.55,1,2], snareBalance:[0,.75,1], hatDensity:[.7,2.6,1], humanize:[.3,.7,1] },
   };
 
   function scoreAgainst(f, genre){

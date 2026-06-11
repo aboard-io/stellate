@@ -69,13 +69,16 @@
     // genre-kernel additions — low/zero harmonic motion for techno/dj forms
     drone_min:  prog("Drone (i, no motion)",     [["A","min7"]]),
     deep_two:   prog("Deep two-chord (i-VI)",    [["A","min7"],["F","maj7"]]),
-    house_min7: prog("House stabs (i-i-iv-v)",   [["A","min7"],["A","min7"],["D","min7"],["E","min7"]])
+    house_min7: prog("House stabs (i-i-iv-v)",   [["A","min7"],["A","min7"],["D","min7"],["E","min7"]]),
+    blues_12:   prog("12-bar blues (all dom7)",  [["C","dom7"],["C","dom7"],["C","dom7"],["C","dom7"],
+                                                  ["F","dom7"],["F","dom7"],["C","dom7"],["C","dom7"],
+                                                  ["G","dom7"],["F","dom7"],["C","dom7"],["G","dom7"]])
   });
 
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
   const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab"];
-  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero"];
+  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon"];
   const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle"];
   const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
   // the ⚡ transition control: what happens at the end of a section, into the next
@@ -261,6 +264,8 @@
     // "hero" — 16th-note runs, syncopation, octave leaps; A/B variants alternate
     // per chord so the line evolves across the progression (supersaw fuel)
     hero:  [[0,.5,0,0],[.5,.5,1,0],[1,.5,2,0],[1.5,.5,3,0],[2,.75,2,1],[2.75,.25,3,0],[3,.5,1,0],[3.5,.5,2,0],[4,.5,3,1],[4.5,.5,2,0],[5,.75,0,1],[5.75,.25,3,0],[6,.5,2,0],[6.5,.5,1,0],[7,1,0,1]],
+    // blues lick: leans on the b7 (idx 3 of a dom7 voicing) with swung phrasing
+    blues: [[0,.75,3,0],[1,.25,2,0],[1.5,.5,3,0],[2,1.5,0,1],[4,.75,3,0],[5,.25,2,0],[5.5,.5,1,0],[6,1.75,0,0]],
     hero2: [[0,.25,3,0],[.25,.25,2,0],[.5,.5,3,0],[1,.5,2,1],[1.5,.5,1,0],[2,.5,2,0],[2.5,.5,3,0],[3,1,2,1],[4,.25,0,1],[4.25,.25,1,0],[4.5,.5,2,0],[5,.5,3,0],[5.5,.5,2,1],[6,.5,1,0],[6.5,.5,3,0],[7,.5,2,0],[7.5,.5,0,1]]
   };
   function melodyEvents(style,base,prg,chords,k,rng){
@@ -281,6 +286,14 @@
         if(rng()<0.09) oct=(oct||0)===0?1:0;
         out.push({voice:"melody",beat:Sb+o,dur:d,pch:pchAdd(lead[idx],12*(oct||0)),amp:0.13+rng()*0.025});
       };
+      if(gen==="canon"){
+        // 2-voice counterpoint: the line + its echo two beats later, a chord tone lower
+        const ph=MEL_PHRASES.updown;
+        ph.forEach(([o,d,idx,oct])=>note(o,d,idx,oct));
+        ph.forEach(([o,d,idx,oct])=>{ if(o+2+d<=8) note(o+2,d,Math.max(0,idx-1),(oct||0)-1); });
+        return;
+      }
+      if(gen==="blues"){ MEL_PHRASES.blues.forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       if(gen==="hero"){ (ci%2?MEL_PHRASES.hero2:MEL_PHRASES.hero).forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       if(gen==="sparse"){ note(0,3,2,0); note(4,3,3,0); return; }
       if(gen==="double"){ const pat=[0,1,2,3,0,1,2,3,1,2,3,0,2,3,0,1]; for(let i=0;i<16;i++) out.push({voice:"melody",beat:Sb+i*0.5,dur:0.45,pch:lead[pat[i]],amp:0.12}); return; }
@@ -430,7 +443,41 @@
     return `vco2 1, ${f}, 0`;
   }
   // ---- per-voice synthesis models (the timbre dimension) ----
+  // struck-string piano: inharmonic partials + hammer noise, natural decay
+  function pianoSource(freq,cut){
+    return `  ah noise 0.35, 0
+  ah buthp ah, 2400
+  khe transeg 1, 0.008, -4, 0
+  kdec transeg 1, p3, -3, 0.05
+  ap1 oscili 1, ${freq}
+  ap2 oscili 0.5, ${freq}*2.004
+  ap3 oscili 0.24, ${freq}*3.011
+  ap4 oscili 0.11, ${freq}*4.022
+  asig = (ap1 + (ap2+ap3+ap4)*kdec)*0.42*kdec + ah*khe*0.4
+  asig butlp asig, ${Math.round(cut)}`;
+  }
+  // fof formant choir ("ah" vowel) and inharmonic FM bell — shared by pad/lead
+  function choirSource(cut){
+    return `  kvib oscili kf*0.007, 4.7
+  kfu = kf*0.5 + kvib
+  af1 fof 0.5, kfu, 800, 0, 60, 0.003, 0.02, 0.007, 14, gisine, gisig, p3
+  af2 fof 0.35, kfu, 1150, 0, 90, 0.003, 0.02, 0.007, 14, gisine, gisig, p3
+  af3 fof 0.18, kfu, 2800, 0, 120, 0.003, 0.02, 0.007, 14, gisine, gisig, p3
+  asig = (af1+af2+af3)*0.85
+  asig butlp asig, ${Math.round(cut)}`;
+  }
+  function bellSource(cut){
+    return `  kidx transeg 4, p3, -4, 0.3
+  amod oscili kidx*kf, kf*3.53
+  asig oscili 1, kf + amod
+  kdec transeg 1, p3, -5, 0.04
+  asig = asig*kdec
+  asig butlp asig, ${Math.round(cut)}`;
+  }
   function padSource(p){
+    if(p.model==="choir") return choirSource(Math.min(8000,p.cutoff*2.5));
+    if(p.model==="bell")  return bellSource(Math.min(9000,p.cutoff*2.5));
+    if(p.model==="piano") return pianoSource("kf", Math.min(8000,p.cutoff*2));
     if(p.model==="organ") return `  a1 oscili 0.9, kf
   a2 oscili 0.55, kf*2
   a3 oscili 0.36, kf*3
@@ -446,6 +493,12 @@
   }
   function bassSource(b){
     const c=Math.round(b.cutoff);
+    if(b.model==="wobble") return `  a1 vco2 1, ipch, 0
+  klfo oscili 0.5, ${(b.wobbleHz||2.4).toFixed(2)}
+  kcf = ${c} * (0.5 + (klfo+0.5)*1.1)
+  a1 moogladder a1, kcf, ${Math.min(0.85,(b.res||0.2)+0.4).toFixed(2)}
+  a1 = tanh(a1*1.5)*0.85`;
+    if(b.model==="piano") return pianoSource("ipch", Math.min(4000,c*2.5)).replace(/asig/g,"a1");
     if(b.model==="sub") return `  a1 oscili 1, ipch
   a1 = tanh(a1*1.6)
   a1 butlp a1, ${c}`;
@@ -460,6 +513,9 @@
     return null;
   }
   function leadSource(m){
+    if(m.model==="choir") return choirSource(Math.min(9000,m.cutoff*2.5));
+    if(m.model==="bell")  return bellSource(Math.min(10000,m.cutoff*2.5));
+    if(m.model==="piano") return pianoSource("kf", Math.min(9000,m.cutoff*2));
     if(m.model==="pluck") return `  asig pluck 1, kf, ipch, 0, 1
   asig butlp asig, ${Math.round(m.cutoff)}`;
     if(m.model==="fm") return `  kidx linsegr 3.5, p3*0.5, 1.0, 0.2, 0
@@ -486,21 +542,45 @@
     L.push(`  asig=(${Array.from({length:v},(_,i)=>"a"+(i+1)).join("+")})*${(0.95/v).toFixed(4)}+aoct`);
     return L.join("\n");
   }
-  function orchestra(state, sources){
+  // codegen splits the orchestra into a HEADER (buses, tables, FX — boot once)
+  // and an INSTRUMENT block (recompilable live via csound compileOrc).
+  // opts.channels=true makes FX read live control channels:
+  //   reverb, ddt, dfb, dcut, pump, crackle, lowcut, highcut
+  function codegen(state, sources, opts){
+    opts = opts || {};
+    const live = !!opts.channels;
     const I=mergedInstruments(state);
     const ft=sources.map(s=>`gi_src${s.tableNum} ftgen ${s.tableNum}, 0, 0, 1, "${s.fsPath}", 0, 0, 1`).join("\n");
     const dLo=(1-I.pad.detune).toFixed(4), dHi=(1+I.pad.detune).toFixed(4), atk=Math.max(0.05,I.pad.attack), dt=I.drums.tune;
     const dl=state.delay||{beats:0.75,feedback:0.3,cutoff:2600};
     const dsec=Math.min(1.9, Math.max(0.02, (dl.beats||0.75)*60/state.bpm));
     const dfb=Math.min(0.92, Math.max(0, dl.feedback==null?0.3:dl.feedback)), dcut=dl.cutoff||2600;
-    const hasSweeps=(state.sections||[]).some(s=>s.sweep&&s.sweep!=="off");
+    const hasSweeps=live||(state.sections||[]).some(s=>s.sweep&&s.sweep!=="off");
     // production: sidechain pump, vinyl crackle, master tone tilt (all default-off)
     const pump=Math.min(0.9,Math.max(0,state.pump||0));
     const tone=state.tone||{};
-    const masterTone =
-      (tone.lowcut ?`  aL buthp aL, ${tone.lowcut}\n  aR buthp aR, ${tone.lowcut}\n`:"") +
-      (tone.highcut?`  aL butlp aL, ${tone.highcut}\n  aR butlp aR, ${tone.highcut}\n`:"");
-    const masterPump = pump>0
+    const masterTone = live
+      ? `  klc chnget "lowcut"
+  klc limit klc, 10, 400
+  aL buthp aL, klc
+  aR buthp aR, klc
+  khc chnget "highcut"
+  khc = (khc < 100 ? 21000 : khc)
+  aL butlp aL, khc
+  aR butlp aR, khc
+`
+      : (tone.lowcut ?`  aL buthp aL, ${tone.lowcut}\n  aR buthp aR, ${tone.lowcut}\n`:"") +
+        (tone.highcut?`  aL butlp aL, ${tone.highcut}\n  aR butlp aR, ${tone.highcut}\n`:"");
+    const masterPump = live
+      ? `  kbps chnget "bps"
+  kbps = (kbps <= 0 ? 2 : kbps)
+  kphs phasor kbps
+  kpmp chnget "pump"
+  kduck = 1 - kpmp*exp(-6*kphs)
+  aL = aL*kduck
+  aR = aR*kduck
+`
+      : pump>0
       ? `  kphs phasor ${(state.bpm/60).toFixed(4)}\n  kduck = 1 - ${pump.toFixed(3)}*exp(-6*kphs)\n  aL = aL*kduck\n  aR = aR*kduck\n`
       : "";
     const comp=Math.min(1,Math.max(0,state.comp||0));
@@ -563,7 +643,9 @@
   anz noise iamp, 0
   anz buthp anz, 7000
   asig=anz*aenv`;
-    return `<CsoundSynthesizer>
+    const crkAmp = live ? `kcrk chnget "crackle"` : `kcrk init 0
+  kcrk = p4`;
+    const header = `<CsoundSynthesizer>
 <CsInstruments>
 sr=44100
 ksmps=32
@@ -577,9 +659,139 @@ gaMixL init 0
 gaMixR init 0
 gkCut init 21000
 giwin ftgen 1, 0, 16384, 20, 2, 1
+gisine ftgen 0, 0, 8192, 10, 1
+gisig ftgen 0, 0, 1024, 19, 0.5, 0.5, 270, 0.5
 ${ft}
 
-instr 1
+instr 3
+  iamp=p5
+  aenv linsegr 0, 1.5, iamp, p3-3.0, iamp, 1.5, 0
+  icut = (p9 > 0 ? p9 : 2600)
+  asig syncgrain 1, 28, p7, 0.12, p8, p6, giwin, 100
+  asig moogladder asig, icut, 0.1
+  asig=asig*aenv
+  gaMixL=gaMixL+asig*0.55
+  gaMixR=gaMixR+asig*0.55
+  gaRevL=gaRevL+asig*0.6
+  gaRevR=gaRevR+asig*0.6
+endin
+
+instr 96
+  ; master filter sweep: glide gkCut from p4 to p5 over p3 (global persists after)
+  gkCut expon p4, p3, p5
+endin
+
+instr 97
+  ${crkAmp}
+  adust dust2 kcrk*0.5, 30 + kcrk*220
+  adust butlp adust, 6500
+  adust buthp adust, 300
+  ahiss noise 0.004, 0
+  ahiss = ahiss*kcrk
+  ahiss butlp ahiss, 4000
+  asig = adust + ahiss
+  gaMixL=gaMixL+asig
+  gaMixR=gaMixR+asig
+endin
+
+instr 20
+  itype=p4
+  iamp=p5
+  if (itype == 1) then
+    kc expseg 300, p3, 8000
+    ke linseg 0, p3*0.9, iamp, p3*0.1, iamp*1.2
+    an noise 1, 0
+    an moogladder an, kc, 0.3
+    asig = an*ke
+  elseif (itype == 2) then
+    kf expseg 400, p3, 6000
+    an noise 1, 0
+    an butbp an, kf, kf*0.4
+    asig = an*iamp*1.5
+  elseif (itype == 3) then
+    kc expseg 8000, p3, 300
+    ke linseg iamp, p3*0.8, iamp, p3*0.2, 0
+    an noise 1, 0
+    an moogladder an, kc, 0.3
+    asig = an*ke
+  elseif (itype == 4) then
+    ke expon iamp, p3, 0.001
+    kp expseg 120, 0.3, 40
+    aboom oscili 1, kp
+    an noise 0.5, 0
+    an butlp an, 1200
+    asig = (aboom + an)*ke
+  elseif (itype == 5) then
+    ke linseg 0, p3*0.95, iamp, p3*0.05, 0
+    an noise 1, 0
+    an buthp an, 3000
+    asig = an*ke
+  else
+    ke expon iamp, p3, 0.001
+    an noise 1, 0
+    asig = an*ke
+  endif
+  asig clip asig, 0, 0.9
+  gaMixL=gaMixL+asig
+  gaMixR=gaMixR+asig
+  gaRevL=gaRevL+asig*0.3
+  gaRevR=gaRevR+asig*0.3
+endin
+
+instr 98
+${live?`  kddt chnget "ddt"
+  kddt limit kddt, 0.02, 1.9
+  kdfb chnget "dfb"
+  kdfb limit kdfb, 0, 0.92
+  kdcut chnget "dcut"
+  kdcut limit kdcut, 300, 9000
+  abufL delayr 2.0
+  atL deltap kddt
+  atL tone atL, kdcut
+  delayw gaDelL + atL*kdfb
+  abufR delayr 2.0
+  atR deltap kddt
+  atR tone atR, kdcut
+  delayw gaDelR + atR*kdfb`
+:`  abufL delayr 2.0
+  atL deltap ${dsec}
+  atL tone atL, ${dcut}
+  delayw gaDelL + atL*${dfb}
+  abufR delayr 2.0
+  atR deltap ${dsec}
+  atR tone atR, ${dcut}
+  delayw gaDelR + atR*${dfb}`}
+  gaMixL=gaMixL+atL
+  gaMixR=gaMixR+atR
+  gaRevL=gaRevL+atL*0.2
+  gaRevR=gaRevR+atR*0.2
+  clear gaDelL, gaDelR
+endin
+
+instr 99
+${live?`  krev chnget "reverb"
+  krev limit krev, 0.3, 0.95
+  aL, aR reverbsc gaRevL, gaRevR, krev, 12000`
+:`  aL, aR reverbsc gaRevL, gaRevR, ${state.reverb}, 12000`}
+  gaMixL=gaMixL+aL
+  gaMixR=gaMixR+aR
+  clear gaRevL, gaRevR
+endin
+
+instr 100
+  aL = gaMixL
+  aR = gaMixR
+${hasSweeps?`  kcc limit gkCut, 180, 21000
+  aL butlp aL, kcc
+  aR butlp aR, kcc
+`:""}${masterPump}${masterComp}${masterTone}  aL clip aL, 0, 0.95
+  aR clip aR, 0, 0.95
+  outs aL, aR
+  clear gaMixL, gaMixR
+endin
+
+</CsInstruments>`;
+    const instruments = `instr 1
   ipch=cpspch(p4)
   iamp=p5
   kwow lfo ipch*0.004, 0.3, 0
@@ -609,19 +821,6 @@ ${bassSrc}
   gaDelR=gaDelR+asig*${I.bass.dsend}
 endin
 
-instr 3
-  iamp=p5
-  aenv linsegr 0, 1.5, iamp, p3-3.0, iamp, 1.5, 0
-  icut = (p9 > 0 ? p9 : 2600)
-  asig syncgrain 1, 28, p7, 0.12, p8, p6, giwin, 100
-  asig moogladder asig, icut, 0.1
-  asig=asig*aenv
-  gaMixL=gaMixL+asig*0.55
-  gaMixR=gaMixR+asig*0.55
-  gaRevL=gaRevL+asig*0.6
-  gaRevR=gaRevR+asig*0.6
-endin
-
 instr 5
   itab = p6
   ipit = p7
@@ -638,23 +837,6 @@ instr 5
   gaRevR=gaRevR+asig*0.3
   gaDelL=gaDelL+asig*0.2
   gaDelR=gaDelR+asig*0.2
-endin
-
-instr 96
-  ; master filter sweep: glide gkCut from p4 to p5 over p3 (global persists after)
-  gkCut expon p4, p3, p5
-endin
-
-instr 97
-  icrk = p4
-  adust dust2 icrk*0.5, 30 + icrk*220
-  adust butlp adust, 6500
-  adust buthp adust, 300
-  ahiss noise icrk*0.004, 0
-  ahiss butlp ahiss, 4000
-  asig = adust + ahiss
-  gaMixL=gaMixL+asig
-  gaMixR=gaMixR+asig
 endin
 
 instr 4
@@ -719,87 +901,12 @@ instr 6
   gaDelL=gaDelL+asig*0.3
   gaDelR=gaDelR+asig*0.3
 endin
-
-instr 20
-  itype=p4
-  iamp=p5
-  if (itype == 1) then
-    kc expseg 300, p3, 8000
-    ke linseg 0, p3*0.9, iamp, p3*0.1, iamp*1.2
-    an noise 1, 0
-    an moogladder an, kc, 0.3
-    asig = an*ke
-  elseif (itype == 2) then
-    kf expseg 400, p3, 6000
-    an noise 1, 0
-    an butbp an, kf, kf*0.4
-    asig = an*iamp*1.5
-  elseif (itype == 3) then
-    kc expseg 8000, p3, 300
-    ke linseg iamp, p3*0.8, iamp, p3*0.2, 0
-    an noise 1, 0
-    an moogladder an, kc, 0.3
-    asig = an*ke
-  elseif (itype == 4) then
-    ke expon iamp, p3, 0.001
-    kp expseg 120, 0.3, 40
-    aboom oscili 1, kp
-    an noise 0.5, 0
-    an butlp an, 1200
-    asig = (aboom + an)*ke
-  elseif (itype == 5) then
-    ke linseg 0, p3*0.95, iamp, p3*0.05, 0
-    an noise 1, 0
-    an buthp an, 3000
-    asig = an*ke
-  else
-    ke expon iamp, p3, 0.001
-    an noise 1, 0
-    asig = an*ke
-  endif
-  asig clip asig, 0, 0.9
-  gaMixL=gaMixL+asig
-  gaMixR=gaMixR+asig
-  gaRevL=gaRevL+asig*0.3
-  gaRevR=gaRevR+asig*0.3
-endin
-
-instr 98
-  abufL delayr 2.0
-  atL deltap ${dsec}
-  atL tone atL, ${dcut}
-  delayw gaDelL + atL*${dfb}
-  abufR delayr 2.0
-  atR deltap ${dsec}
-  atR tone atR, ${dcut}
-  delayw gaDelR + atR*${dfb}
-  gaMixL=gaMixL+atL
-  gaMixR=gaMixR+atR
-  gaRevL=gaRevL+atL*0.2
-  gaRevR=gaRevR+atR*0.2
-  clear gaDelL, gaDelR
-endin
-
-instr 99
-  aL, aR reverbsc gaRevL, gaRevR, ${state.reverb}, 12000
-  gaMixL=gaMixL+aL
-  gaMixR=gaMixR+aR
-  clear gaRevL, gaRevR
-endin
-
-instr 100
-  aL = gaMixL
-  aR = gaMixR
-${hasSweeps?`  kcc limit gkCut, 180, 21000
-  aL butlp aL, kcc
-  aR butlp aR, kcc
-`:""}${masterPump}${masterComp}${masterTone}  aL clip aL, 0, 0.95
-  aR clip aR, 0, 0.95
-  outs aL, aR
-  clear gaMixL, gaMixR
-endin
-
-</CsInstruments>`;
+`;
+    return { header, instruments };
+  }
+  function orchestra(state, sources){
+    const c = codegen(state, sources);
+    return c.header.slice(0, c.header.lastIndexOf("</CsInstruments>")) + c.instruments + "\n</CsInstruments>";
   }
 
   function buildCsd(state){
@@ -824,7 +931,10 @@ endin
     return orchestra(state,srcByTable)+"\n<CsScore>\n"+L.join("\n")+"\ne\n</CsScore>\n</CsoundSynthesizer>\n";
   }
 
-  const api={ buildCsd, buildEvents, defaultState, defaultInstruments, generateSong, voicing,
+  // live mode: header boots once; instruments recompile via csound compileOrc
+  const liveParts=(state,sources)=>codegen(state,sources||[],{channels:true});
+  const api={ buildCsd, buildEvents, defaultState, defaultInstruments, generateSong, voicing, liveParts,
+    instrumentBlock:(state)=>codegen(state,[],{channels:true}).instruments,
     PROGRESSIONS, STYLES, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS, pchAdd, pchToMidi };
   if(typeof module!=="undefined" && module.exports) module.exports=api;
   else root.CsdEngine=api;
