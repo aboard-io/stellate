@@ -224,6 +224,7 @@
 <div id="transport">
   <button id="play">▶ PLAY</button>
   <button class="secondary outline" id="stop">■ STOP</button>
+  <button class="secondary outline mini" id="vidBtn" hidden>📼</button>
   <span class="grow"></span>
   <button class="contrast outline mini" id="expWav">⤓ WAV</button>
   <button class="contrast outline mini" id="expMp3">⤓ MP3</button>
@@ -239,6 +240,7 @@
 <script src="midi-export.js"></script>
 <script src="wasm-audio.js"></script>
 <script src="wasm-ffmpeg.js"></script>
+<script src="video-layer.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
 <script>
 const E=CsdEngine;
@@ -305,7 +307,7 @@ function runVerifier(){
   if(!window.SongVerifier)return;
   const r=SongVerifier.analyzeSong(state);
   $("scoreNum").textContent=r.score;
-  $("scoreNum").style.color = r.score>=85?"var(--mint)":r.score>=70?"var(--yellow)":r.score>=55?"var(--cyan)":"var(--pink)";
+  $("scoreNum").style.color = r.score>=85?"var(--mint)":r.score>=70?"var(--amber)":r.score>=55?"var(--cyan)":"var(--pink)";
   $("scoreGrade").textContent=r.grade;
   const dims=$("dims"); dims.innerHTML="";
   r.dimensions.forEach(d=>{
@@ -459,7 +461,6 @@ function cellClick(cell,sec,layer,dir){
   renderMatrix();
 }
 function insertAfter(idx){state.sections.splice(idx+1,0,{id:uid(),name:"section",cycles:1,pads:true,bass:"simple",drums:"full",melody:"arpup",found:{sourceId:null,role:"bed"},fillInto:false});renderMatrix();}
-function move(i,d){const j=i+d;if(j<0||j>=state.sections.length)return;const a=state.sections;[a[i],a[j]]=[a[j],a[i]];renderMatrix();}
 function renderAll(){renderGlobals();renderSources();renderMatrix();}
 
 // ---- reset / reseed ----
@@ -479,12 +480,12 @@ function reseed(){
 }
 
 // ---- playhead (auto-scroll + light up) ----
-let phStart=0,phOn=false,phRAF=0,phR=null,phTot=0,phLast=-2;
-function startPlayhead(){const r=sectionRanges();phR=r.ranges;phTot=r.total;phStart=performance.now();phOn=true;phLast=-2;cancelAnimationFrame(phRAF);tick();}
+let phStart=0,phOn=false,phRAF=0,phR=null,phTot=0,phLast=-2,phVidLast=-2;
+function startPlayhead(){const r=sectionRanges();phR=r.ranges;phTot=r.total;phStart=performance.now();phOn=true;phLast=-2;phVidLast=-2;cancelAnimationFrame(phRAF);tick();}
 function tick(){
   if(!phOn)return;
   const beat=(performance.now()-phStart)/1000*state.bpm/60;
-  if(beat>=phTot){stopPlayhead();return;}
+  if(beat>=phTot){stopPlayhead();setStatus("done ✓");return;}
   let cur=-1;for(const r of phR){if(beat>=r.start&&beat<r.end){cur=r.i;break;}}
   if(cur!==phLast){
     document.querySelectorAll(".secrow").forEach(e=>e.classList.toggle("playing",+e.dataset.i===cur));
@@ -492,9 +493,20 @@ function tick(){
     if(row)row.scrollIntoView({block:"center",behavior:"smooth"});
     phLast=cur;
   }
+  // video leads by the crossfade length (1.6s) so the fade RESOLVES on the downbeat
+  const vbeat=beat+1.6*state.bpm/60;
+  let vcur=-1;for(const r of phR){if(vbeat>=r.start&&vbeat<r.end){vcur=r.i;break;}}
+  if(vcur>=0&&vcur!==phVidLast){if(window.VideoLayer)VideoLayer.onSection(vcur);phVidLast=vcur;}
   phRAF=requestAnimationFrame(tick);
 }
-function stopPlayhead(){phOn=false;cancelAnimationFrame(phRAF);document.querySelectorAll(".secrow.playing").forEach(e=>e.classList.remove("playing"));}
+function stopPlayhead(){phOn=false;cancelAnimationFrame(phRAF);clearTimeout(secTimer);document.querySelectorAll(".secrow.playing").forEach(e=>e.classList.remove("playing"));if(window.VideoLayer)VideoLayer.idle();}
+// single-section highlight that clears itself when the section's audio ends
+let secTimer=0;
+function flashSection(idx,beats){
+  clearTimeout(secTimer);
+  document.querySelectorAll(".secrow").forEach(e=>e.classList.toggle("playing",+e.dataset.i===idx));
+  secTimer=setTimeout(()=>{document.querySelectorAll(".secrow.playing").forEach(e=>e.classList.remove("playing"));setStatus("done ✓");},(beats*60/state.bpm+2.5)*1000);
+}
 
 // ---- transport ----
 // Whole-song play: Csound schedules the full score internally (no JS timer), so
@@ -505,7 +517,8 @@ async function playSection(idx){
   const one={...state, sections:[state.sections[idx]]};
   try{ setStatus("▶ "+(state.sections[idx].name||"section"));
     await WasmAudio.play(E.buildCsd(one), neededSources(one), setStatus);
-    document.querySelectorAll(".secrow").forEach(e=>e.classList.toggle("playing",+e.dataset.i===idx));
+    if(window.VideoLayer)VideoLayer.onSection(idx);
+    flashSection(idx,(state.sections[idx].cycles||1)*secLen()+8);
   }catch(e){ setStatus("section play failed: "+e.message,true); console.error(e); }
 }
 async function doStop(){stopPlayhead();try{await WasmAudio.stopLive();setStatus("stopped");}catch(e){}}
@@ -532,7 +545,13 @@ async function doWav(){try{download(await renderWavBlob(),"vaporwave.wav");setSt
 async function doMp3(){try{setStatus("rendering…");const w=await renderWavBlob();const b=await WasmFFmpeg.wavToMp3(new Uint8Array(await w.arrayBuffer()),160,setStatus);download(b,"vaporwave.mp3");setStatus("MP3 ✓");}catch(e){setStatus("MP3 failed: "+e.message,true);}}
 function doMidi(){try{download(new Blob([MidiExport.buildMidi(state)],{type:"audio/midi"}),"vaporwave.mid");setStatus("MIDI ✓");}catch(e){setStatus("MIDI failed: "+e.message,true);console.error(e);}}
 function doExportJson(){download(new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),"vaporwave-preset.json");}
-function doImportJson(f){const r=new FileReader();r.onload=()=>{try{state=JSON.parse(r.result);if(!state.instruments)state.instruments=E.defaultInstruments();renderAll();setStatus("preset loaded");}catch(e){setStatus("bad preset",true);}};r.readAsText(f);}
+function doImportJson(f){const r=new FileReader();r.onload=()=>{try{
+  const p=JSON.parse(r.result);
+  if(!p||!Array.isArray(p.sections)||!Array.isArray(p.foundSources))throw new Error("not a builder preset");
+  state=Object.assign(E.defaultState(),p);
+  if(!state.instruments)state.instruments=E.defaultInstruments();
+  renderAll();setStatus("preset loaded");maybePrewarm();
+}catch(e){setStatus("bad preset — "+e.message,true);}};r.readAsText(f);}
 
 $("bpm").oninput=e=>{state.bpm=+e.target.value;$("bpmv").value=state.bpm;};
 $("sw").oninput=e=>{state.swing=+e.target.value;$("swv").value=state.swing;};
@@ -555,6 +574,14 @@ $("impFile").onchange=e=>{if(e.target.files[0])doImportJson(e.target.files[0]);}
 renderAll();
 // pre-decode the arrangement's found sources in the background → first Play is instant
 try{ if(window.WasmAudio&&WasmAudio.prewarm){ const n=neededSources(state); if(n.length){ setStatus("preloading found sound…"); WasmAudio.prewarm(n).then(()=>setStatus("ready ✦")); } } }catch(e){}
+// laserdisc background — only appears if fetch-found-video.sh has been run
+if(window.VideoLayer)VideoLayer.init().then(ok=>{
+  if(!ok)return;
+  const b=$("vidBtn");b.hidden=false;
+  const lab=()=>{b.textContent=VideoLayer.enabled()?"📼 on":"📼 off";
+    b.title="laserdisc background · "+VideoLayer.credits().map(c=>c.credit).join("\n");};
+  lab();b.onclick=()=>{VideoLayer.setEnabled(!VideoLayer.enabled());lab();};
+});
 </script>
 </body>
 </html>

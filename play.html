@@ -29,12 +29,14 @@
     <button id="stop" class="alt">■ Stop</button>
     <button id="wav" class="alt">⤓ WAV</button>
     <button id="mp3" class="alt">⤓ MP3</button>
+    <button id="vid" class="alt" hidden>📼 video</button>
   </div>
   <div id="status">Want every knob? Open <a href="builder.html">builder.html</a>.</div>
 </div>
 
 <script src="wasm-audio.js"></script>
 <script src="wasm-ffmpeg.js"></script>
+<script src="video-layer.js"></script>
 <script>
 const TOKYO_URL="https://archive.org/download/aporee_20938_24294/nov19tokyostation1934.ogg";
 // id must match the path royal-road.csd expects: found/tokyo_station.wav
@@ -49,15 +51,28 @@ document.getElementById("play").onclick=async()=>{
 };
 document.getElementById("stop").onclick=()=>WasmAudio.stopLive().then(()=>status("stopped"));
 async function dl(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();}
+// fast offline render first (silent, faster than realtime); realtime capture only as fallback
+async function renderBlob(){
+  const csd=await getCsd();
+  try{ return await WasmAudio.renderOffline(csd,SOURCES,160,status); }
+  catch(e){ status("offline render unavailable — capturing live…"); return WasmAudio.captureExport(csd,SOURCES,160,status); }
+}
 document.getElementById("wav").onclick=async()=>{
-  try{ status("rendering…"); const b=await WasmAudio.captureExport(await getCsd(),SOURCES,160,status); await dl(b,"vaporwave.wav"); status("WAV downloaded"); }
+  try{ status("rendering…"); await dl(await renderBlob(),"vaporwave.wav"); status("WAV downloaded"); }
   catch(e){ status("render failed: "+e.message,true); console.error(e); }
 };
 document.getElementById("mp3").onclick=async()=>{
-  try{ status("rendering…"); const b=await WasmAudio.captureExport(await getCsd(),SOURCES,160,status);
+  try{ status("rendering…"); const b=await renderBlob();
     const mp3=await WasmFFmpeg.wavToMp3(new Uint8Array(await b.arrayBuffer()),160,status); await dl(mp3,"vaporwave.mp3"); status("MP3 downloaded"); }
   catch(e){ status("MP3 failed: "+e.message,true); console.error(e); }
 };
+// laserdisc background — slow ambient crossfades (needs ./fetch-found-video.sh)
+VideoLayer.init().then(ok=>{
+  if(!ok)return;
+  const b=document.getElementById("vid");b.hidden=false;
+  const lab=()=>{b.textContent=VideoLayer.enabled()?"📼 on":"📼 off";};
+  lab();b.onclick=()=>{VideoLayer.setEnabled(!VideoLayer.enabled());lab();};
+});
 </script>
 </body>
 </html>
