@@ -64,8 +64,8 @@
     // VCR on-screen display — flashes on clip switches
     osd = document.createElement("div");
     osd.style.cssText = "position:absolute;top:16px;left:22px;opacity:0;transition:opacity .25s;" +
-      "font:26px 'VT323',ui-monospace,Menlo,monospace;color:rgba(235,255,240,.85);" +
-      "letter-spacing:.06em;text-shadow:2px 2px 0 rgba(0,0,0,.65)";
+      "font:26px 'VT323',ui-monospace,Menlo,monospace;color:rgba(235,255,240,.45);" +
+      "letter-spacing:.06em;text-shadow:2px 2px 0 rgba(0,0,0,.35)";
     const st = document.createElement("style");
     st.textContent = "@keyframes vhsgrain{0%{transform:translate(0,0)}25%{transform:translate(-70px,40px)}" +
       "50%{transform:translate(45px,-90px)}75%{transform:translate(-30px,-35px)}100%{transform:translate(60px,70px)}}";
@@ -81,17 +81,23 @@
     osdTimer = setTimeout(() => { osd.style.opacity = "0"; }, 1900);
   }
 
-  // one ~0.1-0.25s glitch burst: chroma jump + horizontal shove + tracking tear
+  // one ~1-1.7s glitch smear: color/blur glide out and back, tear band drifts —
+  // a slow tape wobble, not a snap
   function burst() {
     if (!ready || !on || reduced || !vbox) return;
     const dx = (Math.random() < .5 ? -1 : 1) * (4 + Math.random() * 7);
-    vbox.style.filter = "saturate(2.7) contrast(1.5) hue-rotate(" + ((Math.random() * 70 - 35) | 0) + "deg)";
-    vbox.style.transform = "translateX(" + dx + "px) scaleY(1.03)";
-    tear.style.top = (8 + Math.random() * 78) + "%";
+    const dur = 1000 + Math.random() * 700;
+    vbox.style.transition = "filter " + (dur / 2) + "ms ease-in-out, transform " + (dur / 2) + "ms ease-in-out";
+    vbox.style.filter = "saturate(2.4) contrast(1.4) hue-rotate(" + ((Math.random() * 50 - 25) | 0) + "deg) blur(1.3px)";
+    vbox.style.transform = "translateX(" + dx + "px) scaleY(1.025)";
+    const top0 = 8 + Math.random() * 70;
+    tear.style.transition = "opacity " + (dur / 2.2) + "ms ease-in-out, top " + dur + "ms linear";
+    tear.style.top = top0 + "%";
     tear.style.opacity = "1";
+    requestAnimationFrame(() => { tear.style.top = (top0 + 12) + "%"; });   // slow roll downward
     setTimeout(() => {
       vbox.style.filter = "none"; vbox.style.transform = "none"; tear.style.opacity = "0";
-    }, 90 + Math.random() * 160);
+    }, dur / 2);
   }
   function glitchLoop() {
     clearTimeout(glitchTimer);

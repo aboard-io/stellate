@@ -15,6 +15,8 @@ mkdir -p found
 # id|archive.org item|file|trim-start(s)|trim-len(s)|local name
 recordings=(
   "tokyo_station|aporee_20938_24294|nov19tokyostation1934.ogg|18|40|tokyo_station"
+  # night highway, Yunlin County TW (CC BY-NC-ND) — the synthwave/Kavinsky bed
+  "highway_night|aporee_44512_50607|soundmap201905198.mp3|10|40|highway_night"
   # More recordings used historically (uncomment to layer them in the .csd):
   # "tsukiji|aporee_35166_40406|<file>.ogg|0|40|tsukiji"
   # "asakusa|aporee_21091_24510|<file>.ogg|0|40|asakusa"

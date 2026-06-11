@@ -36,6 +36,10 @@ green_nebula|VD2|1492|32|Video Drug 2: Phuture (1990) — green nebula
 deep_face|VD1|592|28|Video Drug 1: Deep (1990) — monochrome face collage
 earth_orbit|SP|992|34|NASA SpaceDisc Vol. 1 (1984) — Earth from the shuttle
 spacewalk|SP|1692|32|NASA SpaceDisc Vol. 1 (1984) — STS spacewalk
+night_lines|VD2|894|34|Video Drug 2: Phuture (1990) — blue electric tracery on black
+night_lights|VD2|1294|34|Video Drug 2: Phuture (1990) — night-light kaleidoscope
+dark_face|VD1|444|32|Video Drug 1: Deep (1990) — static-glitch face
+tv_room|VD1|194|32|Video Drug 1: Deep (1990) — TV set in a dark red room
 EOF
 }
 
