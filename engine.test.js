@@ -93,18 +93,19 @@ for (const bass of ["root","octaves","sixteenths","dub","drive"]) {
   s.sections = [{ id:"b", name:"b", cycles:1, pads:true, bass, drums:"full", melody:"off", found:{sourceId:null}, fillInto:false }];
   allOk &= 0<render("bass_"+bass, s);
 }
-for (const mel of ["updown","pentaup","sparse","double"]) {
+for (const mel of ["updown","pentaup","sparse","double","hero"]) {
   const s = defaultState();
   s.sections = [{ id:"m", name:"m", cycles:1, pads:true, bass:"simple", drums:"off", melody:mel, found:{sourceId:null}, fillInto:false }];
   allOk &= 0<render("mel_"+mel, s);
 }
 
-// 7b) the big tom fill + drum reverb send
+// 7b) the big tom fill + drum reverb send + supersaw hero lead + pulse kit
 {
   const s = defaultState();
   s.instruments.drums.send = 0.55;
-  s.sections = [{ id:"tf", name:"tf", cycles:1, pads:true, bass:"drive", drums:"four", melody:"off", found:{sourceId:null}, fill:"tom fill" }];
-  allOk &= 0<render("tom_fill_bigverb", s);
+  s.instruments.melody = Object.assign(s.instruments.melody, { wave:"saw", voices:7, spread:0.015 });
+  s.sections = [{ id:"tf", name:"tf", cycles:1, pads:true, bass:"drive", drums:"pulse", melody:"hero", found:{sourceId:null}, fill:"tom fill" }];
+  allOk &= 0<render("supersaw_pulse_fill", s);
 }
 
 // 8) per-instrument params + swing + humanize

@@ -248,8 +248,8 @@ const E=CsdEngine;
 // the UI never blanks on a version mismatch (hard-refresh still recommended).
 E.TRANSITIONS=E.TRANSITIONS||["off","drum fill","tom fill","riser","sweep","downlift","impact","reverse","noise"];
 E.BASS_PATTERNS=E.BASS_PATTERNS||["off","root","simple","walking","octaves","sixteenths","dub","drive"];
-E.MELODY_PATTERNS=E.MELODY_PATTERNS||["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double"];
-E.DRUM_PATTERNS=E.DRUM_PATTERNS||["off","kick","full","open","four","boombap","halftime","trap"];
+E.MELODY_PATTERNS=E.MELODY_PATTERNS||["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero"];
+E.DRUM_PATTERNS=E.DRUM_PATTERNS||["off","kick","full","open","four","boombap","halftime","trap","pulse"];
 E.WAVES=E.WAVES||["sine","saw","square","pulse"];
 let state=E.defaultState();
 const $=id=>document.getElementById(id);
@@ -265,7 +265,7 @@ const LAYERS=[
 const EDITORS={
   pads:[["wave","wave"],["cutoff","r",300,5000,10],["res","r",0,.6,.01],["detune","r",0,.02,.001],["attack","r",.05,3,.05],["level","r",0,1,.01],["send","r",0,1,.01],["dsend","r",0,1,.01]],
   bass:[["wave","wave"],["cutoff","r",100,2000,10],["res","r",0,.6,.01],["level","r",0,1.2,.01],["send","r",0,.6,.01],["dsend","r",0,.6,.01]],
-  melody:[["wave","wave"],["cutoff","r",800,6000,10],["res","r",0,.4,.01],["vibrato","r",0,.02,.001],["vibRate","r",0,9,.1],["level","r",0,1,.01],["send","r",0,1,.01],["dsend","r",0,1,.01]],
+  melody:[["wave","wave"],["voices","r",1,8,1],["spread","r",0,.03,.001],["cutoff","r",800,6000,10],["res","r",0,.4,.01],["vibrato","r",0,.02,.001],["vibRate","r",0,9,.1],["level","r",0,1,.01],["send","r",0,1,.01],["dsend","r",0,1,.01]],
   drums:[["kick","r",0,2,.05],["snare","r",0,2,.05],["hat","r",0,2,.05],["tune","r",.5,1.5,.01],["send","r",0,1,.01]],
 };
 const IKEY={pads:"pad",bass:"bass",drums:"drums",melody:"melody"};

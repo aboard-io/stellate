@@ -32,13 +32,15 @@
     },
     "melody": {
       "wave": "saw",
-      "cutoff": 2600,
+      "cutoff": 3000,
       "res": 0.08,
       "vibrato": 0.003,
       "vibRate": 4.2,
-      "level": 0.55,
+      "level": 0.5,
       "send": 0.5,
-      "dsend": 0.3
+      "dsend": 0.3,
+      "voices": 7,
+      "spread": 0.014
     },
     "drums": {
       "kick": 1.35,
@@ -80,7 +82,7 @@
       "cycles": 1,
       "pads": true,
       "bass": "drive",
-      "drums": "four",
+      "drums": "pulse",
       "melody": "off",
       "found": {
         "sourceId": "highway",
@@ -108,8 +110,8 @@
       "cycles": 1,
       "pads": true,
       "bass": "drive",
-      "drums": "open",
-      "melody": "updown",
+      "drums": "pulse",
+      "melody": "hero",
       "found": {
         "sourceId": null,
         "role": "bed"
@@ -122,7 +124,7 @@
       "cycles": 1,
       "pads": true,
       "bass": "drive",
-      "drums": "four",
+      "drums": "pulse",
       "melody": "off",
       "found": {
         "sourceId": "highway",
@@ -150,8 +152,8 @@
       "cycles": 1,
       "pads": true,
       "bass": "drive",
-      "drums": "open",
-      "melody": "updown",
+      "drums": "pulse",
+      "melody": "hero",
       "found": {
         "sourceId": null,
         "role": "bed"
