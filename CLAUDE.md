@@ -33,9 +33,11 @@ changes in the catalog's own checkout and bump the submodule pointer.
 
 ```bash
 ./fetch-found-sound.sh   # one-time: Internet Archive field recordings -> found/
+./fetch-found-video.sh   # one-time: Internet Archive laserdisc clips -> found/video/
 ./render.sh              # csound + ffmpeg -> vaporwave.wav + vaporwave.mp3
 ./serve.sh               # http://localhost:8777/{play,builder}.html (needs http, not file://)
 node engine.test.js      # render-verifies every progression/key/melody via real csound
+node render-sample-video.js  # sample.mp4: song + video layer, cuts locked to section downbeats
 ```
 
 Requires `csound` (tested 6.18), `ffmpeg`, `curl`, `node`.
@@ -49,4 +51,15 @@ Requires `csound` (tested 6.18), `ffmpeg`, `curl`, `node`.
 - `play.html` — simple player
 - `song-verifier.js` — `analyzeSong`/`improveSong`: the verifier half of the loop
 - `engine.test.js` — offline render verification against real csound
-- `found/` — fetched found-sound layers (gitignored except `.gitignore`)
+- `video-layer.js` — laserdisc background video: dual-<video> crossfade, switches
+  on section changes during playback, ambient cycling when idle
+- `found/` — fetched found-sound + found-video layers (gitignored except `.gitignore`;
+  recipes: `fetch-found-sound.sh`, `fetch-found-video.sh`, credits in SOURCES.md)
+
+## Deployment
+
+The working tree **is** the web root: nginx serves it at
+`https://aboardresearch.com/projects/vaporwave/` (alias block in
+`/etc/nginx/sites-enabled/aboardresearch`, `Cache-Control: no-cache`). File
+moves/renames here are production changes; gitignored-but-present files
+(`found/`, `found/video/`) are required for the live site.

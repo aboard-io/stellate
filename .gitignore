@@ -4,3 +4,7 @@
 *.mp3
 *.aiff
 *.flac
+
+# found-video clips are DERIVED via fetch-found-video.sh — never committed
+*.mp4
+*.webm
