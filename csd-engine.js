@@ -394,6 +394,13 @@
         });
         if(sec.melody&&sec.melody!=="off") melodyEvents(sec.melody,cycleBase,prg,chords,k,rng).forEach(e=>pitched.push(e));
       }
+      // master filter sweep across this section
+      if(sec.sweep==="open"){
+        sfx.push({sweep:1,beat:cur,dur:secBeats,from:260,to:18000});
+      } else if(sec.sweep==="close"){
+        sfx.push({sweep:1,beat:cur,dur:secBeats,from:16000,to:380});
+        sfx.push({sweep:1,beat:cur+secBeats,dur:0.05,from:21000,to:21000});   // the drop: snap open
+      }
       // ⚡ transition into the next section
       const tr = sec.fill || (sec.fillInto ? "drum fill" : "off");
       if(tr==="drum fill"){
@@ -486,6 +493,7 @@
     const dl=state.delay||{beats:0.75,feedback:0.3,cutoff:2600};
     const dsec=Math.min(1.9, Math.max(0.02, (dl.beats||0.75)*60/state.bpm));
     const dfb=Math.min(0.92, Math.max(0, dl.feedback==null?0.3:dl.feedback)), dcut=dl.cutoff||2600;
+    const hasSweeps=(state.sections||[]).some(s=>s.sweep&&s.sweep!=="off");
     // production: sidechain pump, vinyl crackle, master tone tilt (all default-off)
     const pump=Math.min(0.9,Math.max(0,state.pump||0));
     const tone=state.tone||{};
@@ -567,6 +575,7 @@ gaDelL init 0
 gaDelR init 0
 gaMixL init 0
 gaMixR init 0
+gkCut init 21000
 giwin ftgen 1, 0, 16384, 20, 2, 1
 ${ft}
 
@@ -629,6 +638,11 @@ instr 5
   gaRevR=gaRevR+asig*0.3
   gaDelL=gaDelL+asig*0.2
   gaDelR=gaDelR+asig*0.2
+endin
+
+instr 96
+  ; master filter sweep: glide gkCut from p4 to p5 over p3 (global persists after)
+  gkCut expon p4, p3, p5
 endin
 
 instr 97
@@ -776,7 +790,10 @@ endin
 instr 100
   aL = gaMixL
   aR = gaMixR
-${masterPump}${masterComp}${masterTone}  aL clip aL, 0, 0.95
+${hasSweeps?`  kcc limit gkCut, 180, 21000
+  aL butlp aL, kcc
+  aR butlp aR, kcc
+`:""}${masterPump}${masterComp}${masterTone}  aL clip aL, 0, 0.95
   aR clip aR, 0, 0.95
   outs aL, aR
   clear gaMixL, gaMixR
@@ -801,6 +818,7 @@ endin
     ev.drums.forEach(d=>L.push(`i ${dinst[d.drum]} ${d.beat.toFixed(3)} ${d.dur.toFixed(3)} ${d.amp.toFixed(4)}`));
     ev.sfx.forEach(s=>{
       if(s.stab) L.push(`i 6 ${s.beat.toFixed(3)} ${s.dur} ${s.pch} ${s.amp.toFixed(3)}`);
+      else if(s.sweep) L.push(`i 96 ${s.beat.toFixed(3)} ${s.dur} ${s.from} ${s.to}`);
       else L.push(`i 20 ${s.beat.toFixed(3)} ${s.dur} ${s.type} ${s.amp}`);
     });
     return orchestra(state,srcByTable)+"\n<CsScore>\n"+L.join("\n")+"\ne\n</CsScore>\n</CsoundSynthesizer>\n";

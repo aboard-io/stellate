@@ -126,6 +126,19 @@ for (const b of ["sub","stab"]) {
   allOk &= 0<render("pump_crackle_chops", s);
 }
 
+// 7d) filter sweeps + synthesis models + stabs
+{
+  const s = defaultState();
+  s.comp = 0.5;
+  s.instruments.pad.model = "organ"; s.instruments.bass.model = "acid"; s.instruments.melody.model = "pluck";
+  s.instruments.drums = Object.assign(s.instruments.drums, { kickModel:"909", snareModel:"clap", hatModel:"metal", dsend:0.3 });
+  s.sections = [
+    { id:"s1", name:"s1", cycles:1, pads:true, bass:"rolling", drums:"techno", melody:"double", found:{sourceId:null}, sweep:"open", stab:"offbeat" },
+    { id:"s2", name:"s2", cycles:1, pads:true, bass:"rolling", drums:"techno", melody:"off", found:{sourceId:null}, sweep:"close" },
+  ];
+  allOk &= 0<render("sweeps_models_stabs", s);
+}
+
 // 8) per-instrument params + swing + humanize
 {
   const s = defaultState();

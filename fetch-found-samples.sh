@@ -77,12 +77,35 @@ apollo "$IA/Apollo11Audio/11-03301.mp3" 25  3.2 apollo_a
 apollo "$IA/Apollo11Audio/11-03305.mp3" 40  2.8 apollo_b
 apollo "$IA/Apollo11Audio/11-03310.mp3" 60  3.0 apollo_c
 
+# --- speech synthesis as an instrument (espeak-ng, generated locally) ---
+# robotic spoken phrases, pitched/paced per vibe; the kernel schedules them
+# as one-shot hits like any other vocal sample
+mkdir -p found/samples/speech
+say() { # name | text | pitch | speed | extra-af
+  local out="found/samples/speech/${1}.wav"
+  [ -s "$out" ] && return 0
+  echo "→ speech $1"
+  espeak-ng -v en-us -p "$3" -s "$4" -w /tmp/say.wav "$2"
+  ffmpeg -y -loglevel error -i /tmp/say.wav -ac 1 -ar 44100 \
+    -af "${5:-anull},loudnorm=I=-15:TP=-1" "$out"
+}
+say plaza      "welcome to the digital plaza"        28 118 "asetrate=44100*0.92,aresample=44100"
+say shopping   "thank you for shopping with us"      30 112 "asetrate=44100*0.9,aresample=44100"
+say system     "system online"                       18 105 "anull"
+say energy     "energy levels rising"                22 120 "anull"
+say rewind     "rewind. selecta"                     14  95 "asetrate=44100*0.85,aresample=44100"
+say pressure   "maximum pressure"                    16 100 "anull"
+say rhythm     "feel the rhythm inside"              35 125 "anull"
+say nightdrive "night drive engaged"                 20 100 "asetrate=44100*0.95,aresample=44100"
+say herenow    "you are here now"                    25  85 "anull"
+say slowdown   "slow down. breathe"                  24  90 "anull"
+
 # --- manifest: duration + crude class for every sample ---
 python3 - <<'PYEOF'
 import json, os, subprocess
 root = "found/samples"
 out = []
-for sub, cls in (("breaks","break"),("hits","hit"),("vox","vox")):
+for sub, cls in (("breaks","break"),("hits","hit"),("vox","vox"),("speech","speech")):
     d = os.path.join(root, sub)
     for f in sorted(os.listdir(d)):
         if not f.endswith(".wav"): continue

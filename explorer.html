@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GENRE SPACE — explorer</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0c0a1a;--panel:#15122c;--panel2:#1c1838;--line:#2c2750;--line2:#3b3568;
+    --ink:#ece9ff;--dim:#9b93c6;--pink:#ff6ec7;--cyan:#45e0ff;--mint:#4dffb0;--amber:#ffd86b;--purple:#a06bff}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);
+    font:14px/1.55 ui-sans-serif,system-ui,sans-serif;padding:1.2rem 1rem 6rem}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;background:
+    radial-gradient(70% 48% at 50% -10%,rgba(255,110,199,.14),transparent 60%),
+    radial-gradient(95% 60% at 50% -10%,rgba(160,107,255,.1),transparent 72%)}
+  .wrap{max-width:980px;margin:0 auto}
+  h1{font-family:Orbitron,sans-serif;font-size:1.3rem;letter-spacing:.05em;margin:0 0 .15rem;
+    background:linear-gradient(90deg,var(--amber),var(--pink) 52%,var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .sub{color:var(--dim);font-size:.8rem;margin:0 0 1rem;max-width:70ch}
+  .cols{display:grid;grid-template-columns:1.2fr 1fr;gap:1rem}
+  @media(max-width:760px){.cols{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:.9rem}
+  .card h2{font-family:Orbitron,sans-serif;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:0 0 .6rem}
+  #map{width:100%;aspect-ratio:1.25;background:var(--panel2);border:1px solid var(--line);border-radius:10px;cursor:crosshair;touch-action:none}
+  .anchor{font:12px VT323,monospace;fill:var(--dim)}
+  .row{display:flex;align-items:center;gap:.5rem;margin:.32rem 0}
+  .row label{width:86px;font-size:.7rem;color:var(--dim)}
+  .row input[type=range]{flex:1;accent-color:var(--pink);margin:0}
+  .row output{width:46px;text-align:right;color:var(--mint);font-variant-numeric:tabular-nums;font-size:.74rem}
+  button{font:inherit;cursor:pointer;border-radius:9px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);padding:.45rem .8rem}
+  button.go{background:linear-gradient(90deg,var(--pink),var(--purple));border:none;color:#0c081a;font-weight:700}
+  .btns{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem}
+  #coords{font:13px VT323,monospace;color:var(--cyan);white-space:pre-wrap;line-height:1.45}
+  #scores{margin-top:.5rem}
+  .sc{display:flex;align-items:center;gap:.5rem;font-size:.72rem;margin:.18rem 0}
+  .sc .g{width:74px;color:var(--dim)}
+  .sc .bar{flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
+  .sc .f{height:100%;background:linear-gradient(90deg,var(--pink),var(--cyan))}
+  .sc .v{width:30px;text-align:right;color:var(--mint);font-variant-numeric:tabular-nums}
+  #status{color:var(--cyan);font-size:.78rem;min-height:1.2em;margin-top:.55rem}
+  #seedrow input{width:90px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.3rem .5rem}
+  a{color:var(--cyan)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>GENRE SPACE — explorer</h1>
+  <p class="sub">Drag the cursor through the space — every position blends the two nearest genre anchors
+  (combinatorially: kits, harmony, basslines, samples draw from either parent). Each song is just a
+  <em>state</em>: tweak the dimensions, hit play (csound WASM, ~10s to boot first time), download the preset,
+  or <a href="builder.html">open the builder</a> and load it. The bars are the symbolic genre verifier scoring live.</p>
+  <div class="cols">
+    <div class="card">
+      <h2>The space</h2>
+      <svg id="map" viewBox="0 0 500 400"></svg>
+      <div id="coords">…</div>
+    </div>
+    <div class="card">
+      <h2>This song's dimensions</h2>
+      <div class="row" id="seedrow"><label>seed</label><input type="number" id="seed" value="1"><button id="dice" title="reroll">🎲</button></div>
+      <div id="sliders"></div>
+      <div class="btns">
+        <button class="go" id="play">▶ PLAY</button>
+        <button id="stop">■ STOP</button>
+        <button id="dl">⤓ preset</button>
+      </div>
+      <div id="scores"></div>
+      <div id="status">ready — drag the map, then PLAY</div>
+    </div>
+  </div>
+</div>
+<script src="csd-engine.js"></script>
+<script src="genre-kernel.js"></script>
+<script src="genre-verifier.js"></script>
+<script src="wasm-audio.js"></script>
+<script>
+const K=GenreKernel, V=GenreVerifier, E=CsdEngine;
+const $=id=>document.getElementById(id);
+// hand layout: x ≈ drive/tempo, y ≈ atmosphere(top) -> grit(bottom)
+const POS={ ambient:[60,70], vaporwave:[140,120], lofi:[105,210], downtempo:[185,180],
+  triphop:[230,260], synthwave:[280,120], house:[340,230], techno:[400,140], jungle:[440,310] };
+let cursor={x:240,y:170}, state=null, lastBlend=null;
+
+// ---- map ----
+const svg=$("map"), NS="http://www.w3.org/2000/svg";
+function el(t,attrs){const e=document.createElementNS(NS,t);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+function drawMap(){
+  svg.innerHTML="";
+  for(const [g,[x,y]] of Object.entries(POS)){
+    svg.appendChild(el("circle",{cx:x,cy:y,r:5,fill:"#a06bff",opacity:.9}));
+    const t=el("text",{x:x+8,y:y+4,"class":"anchor"});t.textContent=g;svg.appendChild(t);
+  }
+  if(lastBlend){
+    const [a,b]=lastBlend.pair;
+    svg.appendChild(el("line",{x1:POS[a][0],y1:POS[a][1],x2:POS[b][0],y2:POS[b][1],stroke:"#45e0ff",opacity:.3,"stroke-dasharray":"3 4"}));
+  }
+  svg.appendChild(el("circle",{cx:cursor.x,cy:cursor.y,r:9,fill:"none",stroke:"#ff6ec7","stroke-width":2}));
+  svg.appendChild(el("circle",{cx:cursor.x,cy:cursor.y,r:2.5,fill:"#ff6ec7"}));
+}
+function nearest2(){
+  const d=Object.entries(POS).map(([g,[x,y]])=>({g,d:Math.hypot(cursor.x-x,cursor.y-y)})).sort((p,q)=>p.d-q.d);
+  const t=d[0].d/(d[0].d+d[1].d+1e-6);
+  return {a:d[0].g,b:d[1].g,t:Math.min(0.5,t)*2*0.5}; // t in [0,0.5]: nearest anchor dominates
+}
+let dragging=false;
+const toXY=(ev)=>{const r=svg.getBoundingClientRect();const p=ev.touches?ev.touches[0]:ev;
+  return {x:(p.clientX-r.left)*500/r.width, y:(p.clientY-r.top)*400/r.height};};
+svg.addEventListener("pointerdown",e=>{dragging=true;cursor=toXY(e);regen();});
+svg.addEventListener("pointermove",e=>{if(dragging){cursor=toXY(e);regen();}});
+addEventListener("pointerup",()=>dragging=false);
+
+// ---- dimension sliders (post-resolution overrides) ----
+const DIMS=[
+  ["bpm",   st=>st.bpm,                  (st,v)=>st.bpm=Math.round(v),            50,180,1],
+  ["swing", st=>st.swing,                (st,v)=>st.swing=v,                      0,.4,.01],
+  ["reverb",st=>st.reverb,               (st,v)=>st.reverb=v,                     .3,.95,.01],
+  ["pump",  st=>st.pump||0,              (st,v)=>st.pump=v,                       0,.8,.01],
+  ["crackle",st=>st.crackle||0,          (st,v)=>st.crackle=v,                    0,.9,.01],
+  ["compress",st=>st.comp||0,            (st,v)=>st.comp=v,                       0,.9,.01],
+  ["snare", st=>st.instruments.drums.snare,(st,v)=>st.instruments.drums.snare=v,  .3,1.4,.01],
+  ["voices",st=>st.instruments.melody.voices,(st,v)=>st.instruments.melody.voices=Math.round(v),1,8,1],
+  ["found", st=>st.foundSources[0].vol,  (st,v)=>st.foundSources[0].vol=v,        0,.4,.01],
+];
+function renderSliders(){
+  const box=$("sliders");box.innerHTML="";
+  for(const [name,get,set,min,max,step] of DIMS){
+    const row=document.createElement("div");row.className="row";
+    const lab=document.createElement("label");lab.textContent=name;
+    const inp=document.createElement("input");inp.type="range";inp.min=min;inp.max=max;inp.step=step;inp.value=get(state);
+    const out=document.createElement("output");out.textContent=(+inp.value).toFixed(step>=1?0:2);
+    inp.oninput=()=>{set(state,+inp.value);out.textContent=(+inp.value).toFixed(step>=1?0:2);score();};
+    row.append(lab,inp,out);box.appendChild(row);
+  }
+}
+
+// ---- generate / score / play ----
+function regen(){
+  const n=nearest2(), seed=+$("seed").value||1;
+  lastBlend={pair:[n.a,n.b],t:n.t};
+  state=K.blend(n.a,n.b,n.t,{seed});
+  drawMap();renderSliders();score();
+  const m=state.genreMeta;
+  $("coords").textContent=
+`${n.a} ←${(1-n.t).toFixed(2)}·····${n.t.toFixed(2)}→ ${n.b}   seed ${seed}
+form ${m.form} · ${state.bpm}bpm · ${m.progression}
+kit ${m.kit} · drums ${m.drums}
+bass ${m.bass} · lead ${m.lead}
+sample ${m.found} · hits ${m.hits} · stabs ${m.stab}`;
+}
+function score(){
+  const a=V.analyze(state);
+  const box=$("scores");box.innerHTML="";
+  Object.entries(a.scores).sort((x,y)=>y[1]-x[1]).slice(0,5).forEach(([g,s])=>{
+    box.insertAdjacentHTML("beforeend",
+      `<div class="sc"><div class="g">${g}</div><div class="bar"><div class="f" style="width:${s}%"></div></div><div class="v">${s}</div></div>`);
+  });
+}
+const setStatus=m=>$("status").textContent=m;
+function playableSources(){
+  return state.foundSources.map(s=>Object.assign({},s,{url:s.url||s.samplePath}));
+}
+$("play").onclick=async()=>{
+  try{ setStatus("starting…"); await WasmAudio.play(E.buildCsd(state), playableSources(), setStatus); }
+  catch(e){ setStatus("play failed: "+e.message); console.error(e); }
+};
+$("stop").onclick=()=>WasmAudio.stopLive().then(()=>setStatus("stopped"));
+$("dl").onclick=()=>{
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:"application/json"}));
+  a.download="genre-space-preset.json";a.click();
+};
+$("seed").onchange=regen;
+$("dice").onclick=()=>{$("seed").value=Math.floor(Math.random()*99999);regen();};
+regen();
+</script>
+</body>
+</html>
