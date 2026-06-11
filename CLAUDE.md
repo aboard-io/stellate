@@ -53,7 +53,15 @@ Requires `csound` (tested 6.18), `ffmpeg`, `curl`, `node`.
   playlist generators emitting engine states (design: GENRE-SPACE.md)
 - `genre-verifier.js` — symbolic genre-conformance scoring + confusion matrix
   (`node genre-verifier.js matrix` must stay diagonal-dominant)
-- `fetch-found-samples.sh` — breaks/one-shots/vox sample layer from archive.org
+- `audio-verifier.py` — EMPIRICAL gate: Essentia Discogs-EffNet genre model on
+  rendered audio. Setup: `python3 -m venv .venv-verify && .venv-verify/bin/pip
+  install essentia-tensorflow`, then download to `models/`:
+  `discogs-effnet-bs64-1.pb` (essentia.upf.edu/models/feature-extractors/discogs-effnet/)
+  and `genre_discogs400-discogs-effnet-1.{pb,json}` (…/classification-heads/genre_discogs400/).
+  Use via `node genre-kernel.js track jungle --render --audio-verify`.
+- `fetch-found-samples.sh` — breaks/one-shots/vox from archive.org + espeak-ng
+  speech synthesis as an instrument; manifest in found/samples/
+- `make-mix-page.js` — mix/index.html + mix.m3u from a rendered playlist dir
 - `song-verifier.js` — `analyzeSong`/`improveSong`: the verifier half of the loop
 - `engine.test.js` — offline render verification against real csound
 - `video-layer.js` — laserdisc background video: dual-<video> crossfade, switches

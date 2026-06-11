@@ -1,0 +1,241 @@
+{
+  "bpm": 163,
+  "keyOffset": 7,
+  "progression": "drone_min",
+  "reverb": 0.4928,
+  "seed": 604,
+  "swing": 0.021,
+  "humanize": 0.138,
+  "pump": 0.0977,
+  "crackle": 0.054,
+  "comp": 0.3725,
+  "tone": {
+    "lowcut": 32,
+    "highcut": 0
+  },
+  "delay": {
+    "beats": 0.9027,
+    "feedback": 0.479,
+    "cutoff": 1817
+  },
+  "instruments": {
+    "pad": {
+      "model": "organ",
+      "wave": "saw",
+      "cutoff": 727.6226,
+      "res": 0.15,
+      "detune": 0.0084,
+      "attack": 3.4055,
+      "level": 0.4992,
+      "send": 0.5692,
+      "dsend": 0.2432
+    },
+    "bass": {
+      "model": "reese",
+      "wave": "saw",
+      "cutoff": 414.8611,
+      "res": 0.1212,
+      "level": 1.3075,
+      "send": 0.026,
+      "dsend": 0
+    },
+    "melody": {
+      "model": "pluck",
+      "wave": "sine",
+      "cutoff": 2581.8969,
+      "res": 0.05,
+      "vibrato": 0.0034,
+      "vibRate": 5.2,
+      "level": 0.3926,
+      "send": 0.3749,
+      "dsend": 0.4892,
+      "voices": 1,
+      "spread": 0.0037
+    },
+    "drums": {
+      "kickModel": "808",
+      "snareModel": "crack",
+      "hatModel": "noise",
+      "kick": 1.2957,
+      "snare": 0.6326,
+      "hat": 0.6018,
+      "tune": 1.0926,
+      "send": 0.1185,
+      "dsend": 0.4094
+    }
+  },
+  "foundSources": [
+    {
+      "id": "amen_175",
+      "label": "amen_175",
+      "url": "",
+      "samplePath": "found/samples/breaks/amen_175_01.wav",
+      "bpm": 175,
+      "vol": 0.2288,
+      "pitch": 1,
+      "stretch": 0.5,
+      "cutoff": 6005
+    },
+    {
+      "id": "sp_rewind",
+      "label": "sp_rewind",
+      "url": "",
+      "samplePath": "found/samples/speech/rewind.wav",
+      "durSec": 1.8,
+      "vol": 0.22,
+      "pitch": 1,
+      "stretch": 0.5,
+      "cutoff": 4500
+    }
+  ],
+  "sections": [
+    {
+      "id": "g41",
+      "name": "warmup",
+      "cycles": 10,
+      "pads": false,
+      "bass": "off",
+      "drums": "jungle",
+      "melody": "off",
+      "found": {
+        "sourceId": "amen_175",
+        "role": "break"
+      },
+      "fill": "off"
+    },
+    {
+      "id": "g42",
+      "name": "build",
+      "cycles": 10,
+      "pads": false,
+      "bass": "dub",
+      "drums": "jungle",
+      "melody": "off",
+      "found": {
+        "sourceId": "amen_175",
+        "role": "break"
+      },
+      "fill": "reverse",
+      "sweep": "open"
+    },
+    {
+      "id": "g43",
+      "name": "main",
+      "cycles": 10,
+      "pads": false,
+      "bass": "dub",
+      "drums": "jungle",
+      "melody": "off",
+      "found": {
+        "sourceId": "amen_175",
+        "role": "break"
+      },
+      "fill": "off",
+      "stab": "sparse"
+    },
+    {
+      "id": "g44",
+      "name": "lift",
+      "cycles": 10,
+      "pads": false,
+      "bass": "dub",
+      "drums": "jungle",
+      "melody": "pentaup",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "break fill",
+      "stab": "sparse",
+      "hits": {
+        "sourceId": "sp_rewind",
+        "pattern": "dub"
+      }
+    },
+    {
+      "id": "g45",
+      "name": "breakdown",
+      "cycles": 5,
+      "pads": true,
+      "bass": "off",
+      "drums": "off",
+      "melody": "sparse",
+      "found": {
+        "sourceId": "amen_175",
+        "role": "bed"
+      },
+      "fill": "off",
+      "hits": {
+        "sourceId": "sp_rewind",
+        "pattern": "dub"
+      },
+      "sweep": "close"
+    },
+    {
+      "id": "g46",
+      "name": "rebuild",
+      "cycles": 5,
+      "pads": false,
+      "bass": "dub",
+      "drums": "kick",
+      "melody": "off",
+      "found": {
+        "sourceId": null,
+        "role": "bed"
+      },
+      "fill": "break fill",
+      "sweep": "off"
+    },
+    {
+      "id": "g47",
+      "name": "peak",
+      "cycles": 16,
+      "pads": false,
+      "bass": "dub",
+      "drums": "jungle",
+      "melody": "pentaup",
+      "found": {
+        "sourceId": "amen_175",
+        "role": "break"
+      },
+      "fill": "off",
+      "stab": "sparse",
+      "hits": {
+        "sourceId": "sp_rewind",
+        "pattern": "dub"
+      }
+    },
+    {
+      "id": "g48",
+      "name": "outro",
+      "cycles": 10,
+      "pads": false,
+      "bass": "dub",
+      "drums": "jungle",
+      "melody": "off",
+      "found": {
+        "sourceId": "amen_175",
+        "role": "break"
+      },
+      "fill": "off"
+    }
+  ],
+  "genreMeta": {
+    "genres": [
+      "synthwave",
+      "jungle"
+    ],
+    "t": 1,
+    "seed": 604,
+    "form": "dj",
+    "kit": "jungle",
+    "progression": "drone_min",
+    "bass": "dub(reese)",
+    "lead": "pentaup(pluck)",
+    "pad": "organ",
+    "drums": "808/crack/noise",
+    "found": "amen_175/break",
+    "stab": "sparse",
+    "hits": "sp_rewind"
+  }
+}

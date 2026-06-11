@@ -8,3 +8,7 @@
 # found-video clips are DERIVED via fetch-found-video.sh — never committed
 *.mp4
 *.webm
+
+# audio-verifier deps: venv + Essentia models are derived (see CLAUDE.md)
+.venv-verify/
+models/
