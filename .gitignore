@@ -12,3 +12,8 @@
 # audio-verifier deps: venv + Essentia models are derived (see CLAUDE.md)
 .venv-verify/
 models/
+
+# Scratch states from `genre-kernel.js track <genre>` land in the root —
+# derived, regenerable. The intentional demo sets live in playlist/ and mix/,
+# which the leading slash leaves tracked.
+/*.state.json
