@@ -88,6 +88,25 @@ const PRESETS = {
       [/bridge/i, "deep_face"], [/outro/i, "drive_bluehour"],
     ],
   },
+  // planetarium dinosaur soundtrack: the dino-synth ritual over Willis O'Brien's
+  // 1925 stop-motion dinosaurs (The Lost World, PD). Cold, high-contrast film grade
+  // + letterbox + heavy grain so the 100-year-old footage reads as a planetarium reel.
+  dinosynth: {
+    out: "dinosynth.mp4", fade: 2.2, seed: 0xD1405A, noise: 22, bars: 56,
+    grade: "eq=contrast=1.5:saturation=0.55:gamma=0.9:brightness=-0.03," +
+           "colorbalance=bs=0.14:bm=0.07:gh=0.03,unsharp=5:5:1.3",
+    state() {
+      const K = require("./genre-kernel.js");
+      const st = K.track("dinosynth", { seed: 7 });
+      st.foundSources.forEach(s => { s.fsPath = s.samplePath ? path.join(HERE, s.samplePath) : found(s.id + ".wav"); });
+      return st;
+    },
+    vibe: [
+      [/dawn/i, "lw_plateau"], [/theme/i, "lw_herd"],
+      [/call/i, "lw_graze"], [/answer/i, "lw_valley"],
+      [/shred/i, "lw_london"], [/finale/i, "lw_rampage"],
+    ],
+  },
 };
 
 const presetName = process.argv[2] || "vaporwave";

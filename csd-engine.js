@@ -68,6 +68,7 @@
     canon:      prog("Pachelbel canon",          [["C","maj"],["G","maj"],["A","min7"],["E","min7"],["F","maj7"],["C","maj"],["F","maj7"],["G","dom7"]]),
     // genre-kernel additions — low/zero harmonic motion for techno/dj forms
     drone_min:  prog("Drone (i, no motion)",     [["A","min7"]]),
+    primeval:   prog("Primeval i-bVII-bIII-bVI",  [["A","min7"],["G","dom7"],["C","maj7"],["F","maj7"]]),   // cinematic lift — planetarium grandeur
     deep_two:   prog("Deep two-chord (i-VI)",    [["A","min7"],["F","maj7"]]),
     house_min7: prog("House stabs (i-i-iv-v)",   [["A","min7"],["A","min7"],["D","min7"],["E","min7"]]),
     // modal colors — the MODE dimension (tonic stays A/C-relative; keyOffset moves it)
@@ -83,8 +84,8 @@
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
   const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic"];
-  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon"];
-  const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle"];
+  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar"];
+  const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal"];
   const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
   // the ⚡ transition control: what happens at the end of a section, into the next
   const TRANSITIONS=["off","drum fill","tom fill","break fill","hat rush","cut","riser","sweep","downlift","impact","reverse","noise"];
@@ -234,7 +235,17 @@
       for(let i=0;i<16;i++){if(R()<0.55)h(i*.5,(i%2?.05:.09));}    // broken 16th hats (sparser)
       h(ci%2?3.5:7.5,.13,.3);
     }
-    if(ci===nc-1 && kind!=="off" && kind!=="halftime"){ s(6.5,.3);s(7,.34);s(7.25,.38);s(7.5,.42);s(7.75,.46); }
+    else if(kind==="tribal"){ // full ritual kit: galloping kicks, BUSY hand-hats + open-hat swells, quiet tom accents (no snare roll)
+      k(0,.66); k(0.75,.32); k(2,.5); k(2.5,.28); k(4,.62); k(4.75,.32); k(6,.5);   // dense galloping low toms
+      s(1.5,.26); s(5.5,.26); s(ci%2?3.5:7,.18);                   // toms = snare voice, kept QUIET
+      for(let i=0;i<16;i++){ const o=i*.5;                         // the whole kit: 16th hand-hat bed
+        if(o===3.5||o===7.5) h(o,.16,.32);                         //   open-hat swells
+        else h(o, i%4===0?.12 : i%2?.05:.09); }                    //   accented closed hats
+      h([1,3,5,7][ci%4]+0.25,.13,.26);                             // rotating ghost open-hat per chord
+      h(ci%2?2.75:6.25,.10);                                       // extra syncopated shaker
+      if(R()<0.5) k(7.5,.32);                                      // occasional pickup kick (not a snare fill)
+    }
+    if(ci===nc-1 && kind!=="off" && kind!=="halftime" && kind!=="tribal"){ s(6.5,.3);s(7,.34);s(7.25,.38);s(7.5,.42);s(7.75,.46); }
     return out;
   }
   function fillEvents(S){
@@ -311,6 +322,10 @@
       if(gen==="blues"){ MEL_PHRASES.blues.forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       if(gen==="hero"){ (ci%2?MEL_PHRASES.hero2:MEL_PHRASES.hero).forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       if(gen==="sparse"){ note(0,3,2,0); note(4,3,3,0); return; }
+      if(gen==="roar"){   // a creature bellow: one long held low note, sometimes a second answering call
+        out.push({voice:"melody",beat:Sb,dur:5.0,pch:pchAdd(lead[0],-12),amp:0.17});
+        if(rng()<0.55) out.push({voice:"melody",beat:Sb+5.4,dur:2.3,pch:pchAdd(lead[2],-12),amp:0.14});
+        return; }
       if(gen==="double"){ const pat=[0,1,2,3,0,1,2,3,1,2,3,0,2,3,0,1]; for(let i=0;i<16;i++) out.push({voice:"melody",beat:Sb+i*0.5,dur:0.45,pch:lead[pat[i]],amp:0.12}); return; }
       const ph=MEL_PHRASES[gen];
       if(ph){ ph.forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
@@ -392,6 +407,29 @@
           }
         }
       }
+      // glitched paleontologist voiceover: the phrase plays, then gets stuttered /
+      // pitch-jumped "like crazy" — instr 5 slice retriggers with random offset+rate
+      if(sec.vox&&sec.vox.sourceId&&srcById[sec.vox.sourceId]){
+        const vs=srcById[sec.vox.sourceId];
+        const phraseBeats=Math.min(secBeats-1, Math.max(3,(vs.durSec||3)*state.bpm/60));
+        // 1) let it TALK: the phrase plays clean and fairly dry up front
+        found.push({chop:1,beat:cur+1,dur:phraseBeats,amp:(vs.vol||0.42),tableNum:vs.tableNum,
+          pitch:vs.pitch||1,offset:0,cutoff:vs.cutoff||6000,dsend:0.05});
+        // 2) only AFTER it has spoken, occasional glitch bursts (sparser) — slow-down
+        //    pitches only, with delay swelling in and out burst-to-burst
+        let b=phraseBeats+2, burst=0;
+        while(b<secBeats-1){
+          if(rng()<0.3){
+            const off=rng(), pit=[0.5,0.7,0.85,1,1][Math.floor(rng()*5)];           // <=1: only slows down
+            const n=2+Math.floor(rng()*4), step=[0.125,0.25][Math.floor(rng()*2)];
+            const ds=(burst%2)?0.55:0.06;                                           // delay in / out, burst to burst
+            for(let j=0;j<n&&b+j*step<secBeats-0.5;j++)
+              found.push({chop:1,beat:cur+b+j*step,dur:step*1.5,amp:(vs.vol||0.42)*0.8,tableNum:vs.tableNum,
+                pitch:Math.min(1,pit*(1-rng()*0.06)),offset:Math.min(0.98,off+j*0.03),cutoff:vs.cutoff||7000,dsend:ds});
+            burst++; b+=n*step+2+rng()*3;
+          } else b+=1+rng()*2;
+        }
+      }
       // synth stabs (rave chords on the chord root)
       if(sec.stab&&sec.stab!=="off"&&STAB_PATTERNS[sec.stab]){
         for(let cb=0;cb<secBeats/CHORD_BEATS;cb++){
@@ -429,7 +467,11 @@
             de.forEach(e=>drums.push(e));
           }
         });
-        if(sec.melody&&sec.melody!=="off") melodyEvents(sec.melody,cycleBase,prg,chords,k,rng).forEach(e=>pitched.push(e));
+        if(sec.melody&&sec.melody!=="off"){
+          const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,rng);
+          if(sec.solo) mel.forEach(e=>{ e.solo=sec.solo; if(sec.soloOctave) e.pch=pchAdd(e.pch,12*sec.soloOctave); });
+          mel.forEach(e=>pitched.push(e));
+        }
       }
       // master filter sweep across this section
       if(sec.sweep==="open"){
@@ -572,6 +614,12 @@
   amod oscili kidx*kf, kf*1.4
   asig oscili 1, kf + amod
   asig butlp asig, ${Math.round(m.cutoff)}`;
+    if(m.model==="fuzz") return `  a1 vco2 1, kf
+  a2 vco2 1, kf*1.006
+  asig=(a1+a2)*0.5
+  asig moogladder asig, ${Math.round(Math.min(9000,m.cutoff*1.3))}, ${Math.min(0.92,(m.res||0.2)+0.45).toFixed(2)}
+  asig=tanh(asig*${(3.2+(m.drive||0)*4).toFixed(2)})*0.6
+  asig butlp asig, ${Math.round(Math.min(11000,m.cutoff*2.2))}`;
     return null;
   }
   // melody oscillator stack — voices<=2 emits the original two-osc code verbatim
@@ -591,6 +639,22 @@
     L.push(`  aoct oscili 0.12, kf*2`);
     L.push(`  asig=(${Array.from({length:v},(_,i)=>"a"+(i+1)).join("+")})*${(0.95/v).toFixed(4)}+aoct`);
     return L.join("\n");
+  }
+  // Per-section solo voices: any section with a `solo` recipe gets its own melody
+  // instrument (instr 7,8,…) so different "dinosaurs" / a fuzz guitar can each take
+  // a section. Deterministic from state.sections so codegen + score routing agree.
+  function soloVoices(state, baseMel){
+    const out=[], seen=new Map(); let num=7;
+    baseMel = baseMel || (state.instruments&&state.instruments.melody) || defaultInstruments().melody;
+    for(const s of (state.sections||[])){
+      if(!s.solo) continue;
+      const key=JSON.stringify(s.solo);
+      if(seen.has(key)) continue;
+      seen.set(key,num);
+      out.push({ key, num, recipe:Object.assign({}, baseMel, s.solo) });
+      num++;
+    }
+    return out;
   }
   // codegen splits the orchestra into a HEADER (buses, tables, FX — boot once)
   // and an INSTRUMENT block (recompilable live via csound compileOrc).
@@ -656,7 +720,25 @@
   asig moogladder asig, ${I.pad.cutoff}, ${I.pad.res}`;
     const bassSrc = bassSource(I.bass) || `  a1 ${waveRHS(I.bass.wave,`ipch`)}
   a1 moogladder a1, ${I.bass.cutoff}, ${I.bass.res}`;
-    const leadSrc = leadSource(I.melody) || melodyStack(I.melody);
+    // melody voice block, parameterized so solo sections can each get their own
+    // (instr 4 = the main lead; solos get 7,8,… — see soloVoices)
+    const melodyVoiceBlock=(num,m)=>`instr ${num}
+  ipch=cpspch(p4)
+  iamp=p5
+  kvib lfo ipch*${m.vibrato}, ${m.vibRate}, 0
+  kf=ipch+kvib
+  aenv linsegr 0, 0.05, iamp, p3-0.12, iamp*0.85, 0.30, 0
+${leadSource(m) || melodyStack(m)}
+  asig moogladder asig, ${m.cutoff}, ${m.res}
+  asig=asig*aenv
+  gaMixL=gaMixL+asig*${m.level}
+  gaMixR=gaMixR+asig*${m.level}
+  gaRevL=gaRevL+asig*${m.send}
+  gaRevR=gaRevR+asig*${m.send}
+  gaDelL=gaDelL+asig*${m.dsend}
+  gaDelR=gaDelR+asig*${m.dsend}
+endin`;
+    const soloInstrBlocks = soloVoices(state, I.melody).map(v=>melodyVoiceBlock(v.num, v.recipe)).join("\n\n");
     const ddsend=Math.min(1,Math.max(0,I.drums.dsend||0));
     const drumDel = ddsend>0 ? (v)=>`  gaDelL=gaDelL+${v}*${ddsend.toFixed(3)}\n  gaDelR=gaDelR+${v}*${ddsend.toFixed(3)}\n` : ()=>"";
     const kickSrc = I.drums.kickModel==="808" ? `  kp expseg ${72*dt}, 0.09, ${45*dt}, p3-0.09, ${38*dt}
@@ -886,6 +968,7 @@ instr 5
   ipit = p7
   ioff = p8
   icut = (p9 > 0 ? p9 : 3500)
+  idsend = (p10 > 0 ? p10 : 0.2)        ; per-event delay send (default 0.2; VO modulates it in/out)
   aenv linsegr 0, 0.006, p5, p3-0.04, p5*0.85, 0.03, 0
   andx phasor (sr*ipit)/nsamp(itab)
   asig tablei frac(andx + ioff), itab, 1, 0, 1
@@ -895,26 +978,11 @@ instr 5
   gaMixR=gaMixR+asig
   gaRevL=gaRevL+asig*0.3
   gaRevR=gaRevR+asig*0.3
-  gaDelL=gaDelL+asig*0.2
-  gaDelR=gaDelR+asig*0.2
+  gaDelL=gaDelL+asig*idsend
+  gaDelR=gaDelR+asig*idsend
 endin
 
-instr 4
-  ipch=cpspch(p4)
-  iamp=p5
-  kvib lfo ipch*${I.melody.vibrato}, ${I.melody.vibRate}, 0
-  kf=ipch+kvib
-  aenv linsegr 0, 0.05, iamp, p3-0.12, iamp*0.85, 0.30, 0
-${leadSrc}
-  asig moogladder asig, ${I.melody.cutoff}, ${I.melody.res}
-  asig=asig*aenv
-  gaMixL=gaMixL+asig*${I.melody.level}
-  gaMixR=gaMixR+asig*${I.melody.level}
-  gaRevL=gaRevL+asig*${I.melody.send}
-  gaRevR=gaRevR+asig*${I.melody.send}
-  gaDelL=gaDelL+asig*${I.melody.dsend}
-  gaDelR=gaDelR+asig*${I.melody.dsend}
-endin
+${melodyVoiceBlock(4, I.melody)}${soloInstrBlocks?"\n\n"+soloInstrBlocks:""}
 
 instr 10
   iamp=p4*${I.drums.kick}
@@ -976,11 +1044,16 @@ endin
     const L=[`t 0 ${state.bpm}`, `i 100 0 ${ev.totalBeats}`, `i 99 0 ${ev.totalBeats}`, `i 98 0 ${ev.totalBeats}`];
     if(state.crackle>0) L.push(`i 97 0 ${ev.totalBeats} ${Math.min(1,state.crackle)}`);
     ev.found.forEach(f=>{
-      if(f.chop) L.push(`i 5 ${f.beat.toFixed(3)} ${f.dur.toFixed(3)} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.offset.toFixed(3)} ${f.cutoff}`);
+      if(f.chop) L.push(`i 5 ${f.beat.toFixed(3)} ${f.dur.toFixed(3)} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.offset.toFixed(3)} ${f.cutoff}${f.dsend!=null?" "+f.dsend.toFixed(3):""}`);
       else L.push(`i 3 ${f.beat.toFixed(3)} ${f.dur} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.stretch} ${f.cutoff}`);
     });
     const inst={pad:1,bass:2,melody:4};
-    ev.pitched.forEach(p=>L.push(`i ${inst[p.voice]} ${p.beat.toFixed(3)} ${p.dur.toFixed(3)} ${p.pch} ${p.amp.toFixed(4)}`));
+    const solos=soloVoices(state, state.instruments&&state.instruments.melody);
+    ev.pitched.forEach(p=>{
+      let n=inst[p.voice];
+      if(p.voice==="melody"&&p.solo){ const v=solos.find(x=>x.key===JSON.stringify(p.solo)); if(v) n=v.num; }
+      L.push(`i ${n} ${p.beat.toFixed(3)} ${p.dur.toFixed(3)} ${p.pch} ${p.amp.toFixed(4)}`);
+    });
     const dinst={kick:10,snare:11,hat:12};
     ev.drums.forEach(d=>L.push(`i ${dinst[d.drum]} ${d.beat.toFixed(3)} ${d.dur.toFixed(3)} ${d.amp.toFixed(4)}`));
     ev.sfx.forEach(s=>{
