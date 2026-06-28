@@ -84,7 +84,7 @@
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
   const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic"];
-  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem"];
+  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16"];
   const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal"];
   const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
   // the ⚡ transition control: what happens at the end of a section, into the next
@@ -331,6 +331,10 @@
         if(rng()<0.55) out.push({voice:"melody",beat:Sb+5.4,dur:2.3,pch:pchAdd(lead[2],-12),amp:0.14});
         return; }
       if(gen==="double"){ const pat=[0,1,2,3,0,1,2,3,1,2,3,0,2,3,0,1]; for(let i=0;i<16;i++) out.push({voice:"melody",beat:Sb+i*0.5,dur:0.45,pch:lead[pat[i]],amp:0.12}); return; }
+      if(gen==="arp16"){   // steady 16th-note up-arpeggio (U2/Edge texture); octave lift each beat
+        for(let i=0;i<32;i++){ const idx=[0,1,2,3][i%4], oct=(i%8>=4)?1:0;
+          out.push({voice:"melody",beat:Sb+i*0.25,dur:0.22,pch:pchAdd(lead[idx],12*oct),amp:0.1}); }
+        return; }
       const ph=MEL_PHRASES[gen];
       if(ph){ ph.forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       // wander: rhythmic random walk over chord tones, occasional octave leap
