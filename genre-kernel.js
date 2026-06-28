@@ -34,6 +34,12 @@
     frogs:        { label:"Frog Chorus",     url:"https://archive.org/download/aporee_61056_70186/soundmap202307117.mp3" },
     iriomote:     { label:"Iriomote Island", url:"https://archive.org/download/aporee_30783_35405/iriomoteaporee.ogg" },
     shibuya:      { label:"Shibuya Street",  url:"https://archive.org/download/aporee_20542_23865/nov820131617shibuya.ogg" },
+    loon:         { label:"Common Loon (USFWS, PD)", url:"https://archive.org/download/CommonLoon/loons.mp3" },   // the loonie's bird — Canadian wilderness bed
+    // Leacock, "The Dawn of Canadian History" (PD) — four chunks from different chapters
+    leacock1:     { label:"Leacock ch.1", url:"https://archive.org/download/aboriginal_canada/aboriginalcanada_01_leacock.mp3" },
+    leacock2:     { label:"Leacock ch.2", url:"https://archive.org/download/aboriginal_canada/aboriginalcanada_02_leacock.mp3" },
+    leacock3:     { label:"Leacock ch.3", url:"https://archive.org/download/aboriginal_canada/aboriginalcanada_03_leacock.mp3" },
+    leacock4:     { label:"Leacock ch.5", url:"https://archive.org/download/aboriginal_canada/aboriginalcanada_05_leacock.mp3" },
   };
   // sample layer: local files under found/samples/ (kind: break|hit|vox)
   const SAMPLES = {
@@ -66,6 +72,26 @@
     sp_paleo_rex:     { file:"speech/paleo_rex.wav",      kind:"speech", durSec:5.84 },
     sp_paleo_bones:   { file:"speech/paleo_bones.wav",    kind:"speech", durSec:7.37 },
     sp_paleo_skies:   { file:"speech/paleo_skies.wav",    kind:"speech", durSec:3.30 },
+    // canawave — Canadian news narration + the loon call
+    ca_loon:      { file:"hits/loon.wav",         kind:"hit",    durSec:24.1 },
+    sp_ca_news:   { file:"speech/ca_news.wav",    kind:"speech", durSec:6.11 },
+    sp_ca_maple:  { file:"speech/ca_maple.wav",   kind:"speech", durSec:4.45 },
+    sp_ca_gold:   { file:"speech/ca_gold.wav",    kind:"speech", durSec:4.89 },
+    sp_ca_lights: { file:"speech/ca_lights.wav",  kind:"speech", durSec:2.81 },
+    sp_ca_rockies:{ file:"speech/ca_rockies.wav", kind:"speech", durSec:6.02 },
+    sp_ca_sorry:  { file:"speech/ca_sorry.wav",   kind:"speech", durSec:4.40 },
+    sp_ca_justwatchme:{ file:"speech/ca_justwatchme.wav", kind:"speech", durSec:2.66 },
+    sp_ca_cities: { file:"speech/ca_cities.wav",  kind:"speech", durSec:13.30 },   // rhyming-cities poem (chopped texture)
+    // hockey, hockey lore, hockey stuff
+    sp_ca_hnic:    { file:"speech/ca_hnic.wav",     kind:"speech", durSec:2.60 },
+    sp_ca_cup:     { file:"speech/ca_cup.wav",      kind:"speech", durSec:5.31 },
+    sp_ca_topshelf:{ file:"speech/ca_topshelf.wav", kind:"speech", durSec:4.10 },
+    sp_ca_fivehole:{ file:"speech/ca_fivehole.wav", kind:"speech", durSec:4.02 },
+    sp_ca_gretzky: { file:"speech/ca_gretzky.wav",  kind:"speech", durSec:4.38 },
+    sp_ca_save:    { file:"speech/ca_save.wav",     kind:"speech", durSec:3.08 },
+    sp_ca_overtime:{ file:"speech/ca_overtime.wav", kind:"speech", durSec:5.21 },
+    sp_ca_hockey:  { file:"speech/ca_he_shoots.wav",kind:"speech", durSec:3.09 },   // "he shoots, he scores!"
+    ca_horn:       { file:"hits/goal_horn.wav",     kind:"hit",    durSec:3.43 },   // NHL goal horn (real)
     horns_78:{ file:"78s/horns_78.wav", kind:"hit", durSec:6 },
     blues_vox_78:{ file:"78s/blues_vox_78.wav", kind:"hit", durSec:6 },
   };
@@ -184,6 +210,23 @@
       vox:{sources:["sp_paleo_welcome","sp_paleo_mesozoic","sp_paleo_sauropod","sp_paleo_rex","sp_paleo_bones","sp_paleo_skies"], vol:0.5, pitch:0.96, cutoff:6500},   // glitched paleontologist narration
       stab:["off"], hits:{sources:["sp_herenow","vox_a"], pattern:"sparse", prob:.15},
       form:"ritual" },   // creature solos + fuzz solo + glitched VO (see buildSections)
+    canawave: { label:"Canawave", info:"proud Canadiana pop: bright major anthem, arpeggiated guitar, toms + hi-hats, loon calls and the national news",
+      bpm:[108,114], swing:[0,.06], humanize:[.08,.2],
+      progressions:["four_chords","pop_1625","doo_wop","sad_pop"],   // anthemic pop (I-V-vi-IV, I-vi-ii-V…)
+      kits:["open","four"], fills:["tom fill","tom fill","riser"],   // toms into every lift, bright hats throughout
+      bass:{patterns:["root","octaves","walking"], recipe:{model:["saw","sub"],cutoff:[520,900],res:[.1,.22],level:[1.0,1.2],send:[.05,.15],dsend:[0,.08]}},
+      lead:{patterns:["anthem"], recipe:{model:["kpluck"],wave:"saw",drive:.7,cutoff:[2400,3200],level:[.5,.62],send:[.34,.5],dsend:[.15,.26]}},   // Karplus-Strong guitar playing a hymn-like Canadian anthem (rhythmic, fewer/harder-working notes)
+      pads:{prob:1, recipe:{model:["organ"],wave:"saw",cutoff:[1600,2400],detune:[.004,.009],attack:[.2,.6],level:[.5,.66],send:[.22,.4],dsend:[.05,.15]}},   // organ (was Rhodes)
+      drums:{kickModel:["boom","909"],snareModel:["noise","clap"],hatModel:["noise"],kick:[.9,1.1],snare:[.55,.75],hat:[1.05,1.35],tune:[.95,1.1],send:[.1,.22],dsend:[.04,.12]},   // leveled down so they don't eat the mix; HATS up
+      fx:{reverb:[.32,.5], delayBeats:[.5,.75], delayFb:[.15,.3], delayCut:[2800,4200], pump:[.1,.3], crackle:[0,.06], lowcut:[30,45], highcut:[0,0], comp:[.45,.62], grit:[0,.06]},   // reverb + echo down, drums compressed harder
+      found:{role:"narration", vol:[.32,.42], pitch:[.95,.98], stretch:[.45,.6], cutoff:[2600,3800], sources:["leacock1","leacock2","leacock3","leacock4"]},   // Leacock — DIFFERENT chunks (chapters 1/2/3/5) rotate across sections
+      vox:{sources:["sp_ca_hockey","sp_ca_hnic","sp_ca_cup","sp_ca_topshelf","sp_ca_fivehole","sp_ca_gretzky","sp_ca_save","sp_ca_overtime","sp_ca_news","sp_ca_justwatchme"], vol:0.62, pitch:1, cutoff:8000, clean:true},   // HOCKEY play-by-play + lore (clean), with a little national news
+      voxPoem:"sp_ca_cities",   // the rhyming-cities poem, chopped into verse 2
+      hits:{sources:["ca_loon"], pattern:"sparse", prob:1, wet:true, glitch:true, vol:0.04},   // the loon — quiet but present (verse 1 only)
+      hornSource:"ca_horn",   // the goal horn — FULL volume opener only
+      realHats:true,          // real (sampled) hi-hats from the GM drum kit
+      stab:["off"],
+      form:"anthem" },   // pop structure, toms into the choruses (see buildSections)
     neoclassical: { label:"Neoclassical", info:"felt piano, slow counterpoint, room air, rubato",
       bpm:[58,82], swing:[0,.1], humanize:[.3,.55],
       progressions:["canon","neosoul","dream","ii_v_i"], kits:["off"], fills:["off"],
@@ -308,14 +351,18 @@
       fx: blendRecipe(g=>g.fx),
       foundRole: side().found.role,
       foundSource: pick(rng, side().found.sources),
-      foundPool: (()=>{ const a=side().found.sources.slice(), o=[], n=Math.min(3,a.length);   // up to 3 distinct beds to rotate (kills the one-loop repeat)
+      foundPool: (()=>{ const a=side().found.sources.slice(), o=[], n=Math.min(6,a.length);   // distinct beds/narration chunks to rotate (kills the one-loop repeat)
         while(o.length<n&&a.length) o.push(a.splice(Math.floor(rng()*a.length),1)[0]); return o; })(),
-      voxPool: (side().vox ? (()=>{ const a=side().vox.sources.slice(), o=[], n=Math.min(3,a.length);   // glitched VO lines to rotate across sections
+      voxPool: (side().vox ? (()=>{ const a=side().vox.sources.slice(), o=[], n=Math.min(3,a.length);   // VO lines to rotate across sections
         while(o.length<n&&a.length) o.push(a.splice(Math.floor(rng()*a.length),1)[0]); return o; })() : []),
       voxRecipe: side().vox || null,
+      voxClean: !!(side().vox && side().vox.clean),
+      voxPoem: side().voxPoem || null,
+      hornSource: side().hornSource || null,
+      realHats: !!side().realHats,
       foundRecipe: blendRecipe(g=>({vol:g.found.vol,pitch:g.found.pitch,stretch:g.found.stretch,cutoff:g.found.cutoff})),
       stab: pick(rng, side().stab),
-      hits: rng()<hitsSide.hits.prob ? {source:pick(rng,hitsSide.hits.sources), pattern:hitsSide.hits.pattern} : null,
+      hits: rng()<hitsSide.hits.prob ? {source:pick(rng,hitsSide.hits.sources), pattern:hitsSide.hits.pattern, wet:hitsSide.hits.wet, glitch:hitsSide.hits.glitch, vol:hitsSide.hits.vol} : null,
       form: side().form,
       rng,
     };
@@ -398,6 +445,26 @@
         S("shred",  {cycles:1, drums:kit, bass, pads:true, melody:"hero",   solo:fuzz,     found:fnd("bed"), vox:vox(), sweep:"open"}),  // sweep up into the distorted solo + glitch VO
         S("finale", {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd("bed"), vox:vox(), sweep:"open"}),     // theme reprise + swell
       ];
+    } else if(c.form==="anthem"){
+      // proud Canadian pop, ~3 min: arpeggiated guitar in from the verse, tom fills
+      // into every chorus, hi-hats throughout, loon calls + the national news on top.
+      const vox=()=>({sourceId:"vox", clean:c.voxClean});    // clean hockey calls / news (intelligible)
+      const poem=()=>({sourceId:"poem", clean:false});       // the rhyming-cities poem, cut up as texture
+      const horn=()=>({sourceId:"horn"});                    // the goal horn — FULL volume opener
+      const brass={model:"brass", cutoff:1700, level:0.46, voices:1};   // the brass section / countermelody
+      const ctr=()=>({pattern:"sparse", solo:brass, octave:-1});        // low brass countermelody (body + development)
+      const arpgtr={model:"kpluck", cutoff:3600, drive:0.25, level:0.4};// a brighter Karplus guitar
+      const arp=()=>({pattern:"arpup", solo:arpgtr, octave:2});         // the arpeggiated guitar — shimmering over the verses (octave-down voice compensated)
+      // ~2:42: Leacock bed plays under EVERY section; horn only in the opener;
+      // one quiet loon early; arpeggiated guitar in the verses, brass in the choruses.
+      secs=[
+        S("intro",    {cycles:1, pads:true, found:fnd(), vox:vox(), hits:horn(), sweep:"open"}),                     // FULL goal horn opener + "hockey night in canada"
+        S("verse",    {cycles:2, drums:kit, bass, pads:true, melody:lead, counter:arp(), found:fnd(), hits:hit(), fill:"tom fill"}), // anthem lead + ARPEGGIATED GUITAR; TOM FILL into chorus
+        S("chorus",   {cycles:2, drums:kit, bass, pads:true, melody:lead, counter:ctr(), stab:c.stab, found:fnd()}), // brass countermelody enters
+        S("verse 2",  {cycles:1, drums:kit, bass, pads:true, melody:lead, counter:arp(), found:fnd(), vox:poem(), fill:"tom fill"}), // anthem lead + ARPEGGIATED GUITAR + cities poem
+        S("bridge",   {cycles:1, drums:kit, bass, pads:true, melody:"sparse", counter:ctr(), found:fnd(), fill:"tom fill"}), // Leacock narration + brass + TOM FILL
+        S("chorus 2", {cycles:2, drums:kit, bass, pads:true, melody:lead, counter:ctr(), found:fnd()}),   // final chorus, Leacock + brass develops
+      ];
     } else {
       secs=[
         S("intro",      {cycles:1*norm, pads:c.padsOn, found:fnd()}),
@@ -425,7 +492,7 @@
     const foundSources=[];
     // bed role rotates through up to 3 sources (each pitched a hair differently so it
     // reads as a different place); break/chops keep the single tempo-locked source.
-    const bedPool=(c.foundRole==="bed"&&c.foundPool&&c.foundPool.length>1)?c.foundPool:[c.foundSource];
+    const bedPool=((c.foundRole==="bed"||c.foundRole==="narration")&&c.foundPool&&c.foundPool.length>1)?c.foundPool:[c.foundSource];
     bedPool.forEach((sid,ix)=>{
       const isS=!!SAMPLES[sid];
       const sr=isS?SAMPLES[sid]:(SOURCES[sid]||{});
@@ -438,9 +505,16 @@
     if(c.hits){
       const h=SAMPLES[c.hits.source];
       if(h) foundSources.push({id:c.hits.source,label:c.hits.source,url:"",samplePath:"found/samples/"+h.file,
-        durSec:h.durSec,vol:0.22,pitch:1,stretch:0.5,cutoff:4500});
+        durSec:h.durSec,vol:(c.hits.vol!=null?c.hits.vol:0.22),pitch:1,stretch:0.5,cutoff:4500,wet:!!c.hits.wet,glitch:!!c.hits.glitch});
     }
-    (c.voxPool||[]).forEach(vid=>{   // paleontologist VO lines, glitched at render
+    if(c.hornSource&&SAMPLES[c.hornSource]){   // the goal horn — FULL volume opener (intro only)
+      const hh=SAMPLES[c.hornSource];
+      foundSources.push({id:c.hornSource,label:c.hornSource,url:"",samplePath:"found/samples/"+hh.file,
+        durSec:hh.durSec,vol:0.42,pitch:1,stretch:0.5,cutoff:6000,wet:true});
+    }
+    const voxIds=(c.voxPool||[]).slice();
+    if(c.voxPoem) voxIds.push(c.voxPoem);
+    voxIds.forEach(vid=>{   // VO lines (news clean, poem chopped) + the cities poem
       const v=SAMPLES[vid]; if(!v) return;
       foundSources.push({id:vid,label:vid,url:"",samplePath:"found/samples/"+v.file,durSec:v.durSec,
         vol:(c.voxRecipe&&c.voxRecipe.vol)||0.5, pitch:(c.voxRecipe&&c.voxRecipe.pitch)||0.96,
@@ -449,6 +523,7 @@
     const state={
       bpm:c.bpm, keyOffset:opts.keyOffset!=null?opts.keyOffset:0, progression:c.progression,
       reverb:c.fx.reverb, seed:c.seed, swing:c.swing, humanize:c.humanize,
+      realHats:!!c.realHats,
       pump:c.fx.pump>0.05?c.fx.pump:0, crackle:c.fx.crackle>0.05?c.fx.crackle:0,
       comp:c.fx.comp>0.05?c.fx.comp:0, grit:(c.fx.grit||0)>0.05?c.fx.grit:0,
       tone:{lowcut:c.fx.lowcut>10?Math.round(c.fx.lowcut):0, highcut:c.fx.highcut>1000?Math.round(c.fx.highcut):0},
@@ -463,8 +538,10 @@
       sections:(()=>{ let bi=0, vi=0; return secs.map(s=>{
         if(s.found&&s.found.sourceId==="src"){ s.found.sourceId=bedPool[bi%bedPool.length]; bi++; }
         if(s.hits&&s.hits.sourceId==="hit")s.hits.sourceId=c.hits?c.hits.source:null;
+        if(s.hits&&s.hits.sourceId==="horn")s.hits.sourceId=c.hornSource||null;
         if(s.hits&&!s.hits.sourceId)delete s.hits;
         if(s.vox&&s.vox.sourceId==="vox"){ if(c.voxPool&&c.voxPool.length){ s.vox.sourceId=c.voxPool[vi%c.voxPool.length]; vi++; } else delete s.vox; }
+        else if(s.vox&&s.vox.sourceId==="poem"){ if(c.voxPoem) s.vox.sourceId=c.voxPoem; else delete s.vox; }
         return s; }); })(),
     };
     state.genreMeta={genres:c.genres,t:c.t,seed:c.seed,form:c.form,kit:c.kit,progression:c.progression,
