@@ -606,7 +606,10 @@
         `<CsoundSynthesizer>\n<CsOptions>\n--nosound -o ${wav} -W\n</CsOptions>`);
       fs.writeFileSync("/tmp/"+path.basename(base)+".csd",csd);
       execFileSync("csound",["/tmp/"+path.basename(base)+".csd"],{stdio:["ignore","ignore","ignore"]});
-      execFileSync("ffmpeg",["-y","-v","error","-i",wav,"-codec:a","libmp3lame","-b:a","160k",base+".mp3"]);
+      // fade the ending out instead of stopping abruptly
+      const beats=state.sections.reduce((n,s)=>n+(s.cycles||1)*(E.PROGRESSIONS[state.progression]||E.PROGRESSIONS.royal_road).chords.length*8,0)+8;
+      const dur=beats*60/state.bpm, fade=Math.min(4,dur*0.1), st=Math.max(0,dur-fade);
+      execFileSync("ffmpeg",["-y","-v","error","-i",wav,"-af",`afade=t=out:st=${st.toFixed(2)}:d=${fade.toFixed(2)}`,"-codec:a","libmp3lame","-b:a","160k",base+".mp3"]);
       console.log("✓ "+base+".mp3");
     }
     if(cmd==="anchors"){
