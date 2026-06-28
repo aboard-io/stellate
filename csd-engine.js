@@ -261,13 +261,34 @@
   function bigFillEvents(S,rng){
     const r=rng||Math.random;
     const out=[];
-    const t=(o,a,p)=>out.push({drum:"tom",beat:S+o,dur:0.3,amp:a,pitch:p});   // real toms, descending
+    // dur is always < the spacing so toms never overlap/stumble
+    const t=(o,a,p,d)=>out.push({drum:"tom",beat:S+o,dur:d,amp:a,pitch:p});
     const k=(o,a)=>out.push({drum:"kick",beat:S+o,dur:0.4,amp:a});
-    k(0,.55); t(0,.6,200); t(1,.62,165);                   // quarter-note toms, high→mid
-    t(2,.66,140); t(2.5,.68,120);
-    if(r()<0.5){ t(3,.66,150); t(3.25,.7,125); t(3.5,.74,105); t(3.75,.8,90); }    // descending 16th roll into the floor tom
-    else       { t(3,.66,150); t(3.33,.72,120); t(3.67,.8,95); }                   // triplet roll
-    k(3.75,.5);
+    const s=(o,a)=>out.push({drum:"snare",beat:S+o,dur:0.3,amp:a});
+    const T=[152,130,112,95,80,66];                        // deep toms, hi -> lo
+    k(0,.6);
+    const v=Math.floor(r()*4);                             // four variants -> each fill differs
+    if(v===0){                                             // LINEAR snare<->tom 16ths, descending (Peart-ish)
+      const seq=[1,0,2,0, 0,3,4,0, 2,3,0,4, 5,5,0,5];      // 0 = snare, else tom index
+      for(let i=0;i<16;i++){ const o=i*0.25, x=seq[i];
+        if(x===0) s(o,.5+r()*0.18); else t(o,.76+r()*0.14,T[x],0.2); }
+      k(2,.5);
+    } else if(v===1){                                      // tom doubles answered by snare, syncopated
+      s(0,.6); t(0.5,.8,T[1],0.22); t(0.75,.8,T[2],0.22);
+      s(1.25,.58); t(1.75,.82,T[3],0.22); t(2,.84,T[3],0.22);
+      s(2.5,.6); t(2.75,.84,T[4],0.22); t(3,.86,T[4],0.2); t(3.25,.86,T[5],0.2); s(3.5,.6); t(3.75,.9,T[5],0.2);
+      k(2,.45);
+    } else if(v===2){                                      // triplet tom roll w/ snare accents
+      const tr=2.0/3;
+      for(let i=0;i<6;i++){ const o=i*tr; (i%3===0)?s(o,.6):t(o,.8+r()*0.1,T[Math.min(1+i,5)],tr*0.8); }
+      for(let i=0;i<3;i++){ const o=2+i*tr; t(o,.84,T[Math.min(3+i,5)],tr*0.8); }
+      s(3.34,.6); t(3.67,.9,T[5],0.2);
+    } else {                                               // snare buzz building into a deep tom tumble
+      let o=0,a=.34; while(o<1.75){ s(o,a); a=Math.min(.62,a+0.03); o+=0.25; }
+      t(2,.8,T[1],0.22); s(2.25,.55); t(2.5,.82,T[2],0.22); t(2.75,.84,T[3],0.22);
+      s(3,.6); t(3.25,.86,T[4],0.2); t(3.5,.88,T[5],0.2); t(3.75,.9,T[5],0.2);
+    }
+    k(3.75,.62);
     return out;
   }
   // jungle-style chop fill — two beats of 32nd-flavored snare stutter
@@ -331,9 +352,12 @@
         if(rng()<0.55) out.push({voice:"melody",beat:Sb+5.4,dur:2.3,pch:pchAdd(lead[2],-12),amp:0.14});
         return; }
       if(gen==="double"){ const pat=[0,1,2,3,0,1,2,3,1,2,3,0,2,3,0,1]; for(let i=0;i<16;i++) out.push({voice:"melody",beat:Sb+i*0.5,dur:0.45,pch:lead[pat[i]],amp:0.12}); return; }
-      if(gen==="arp16"){   // steady 16th-note up-arpeggio (U2/Edge texture); octave lift each beat
-        for(let i=0;i<32;i++){ const idx=[0,1,2,3][i%4], oct=(i%8>=4)?1:0;
-          out.push({voice:"melody",beat:Sb+i*0.25,dur:0.22,pch:pchAdd(lead[idx],12*oct),amp:0.1}); }
+      if(gen==="arp16"){   // 16th-note arp that traces a MELODIC contour (not just the chord) — Edge-style
+        const ext=[lead[0],lead[1],lead[2],lead[3],pchAdd(lead[0],12),pchAdd(lead[1],12),pchAdd(lead[2],12)];
+        const motif=[0,2,4,5, 4,3,2,4, 5,4,2,3, 1,2,4,0];   // a rising-to-a-peak melodic figure, resolves
+        for(let i=0;i<32;i++){ const p=ext[motif[i%16]];
+          out.push({voice:"melody",beat:Sb+i*0.25,dur:0.24,pch:pchAdd(p,-12),amp:0.12});   // melodic arp, octave lower (main)
+          out.push({voice:"melody",beat:Sb+i*0.25,dur:0.22,pch:p,amp:0.05}); }              // octave doubling
         return; }
       const ph=MEL_PHRASES[gen];
       if(ph){ ph.forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
@@ -489,7 +513,8 @@
         const cycleBase=cur+c*cycleBeats;
         chords.forEach((chord,ci)=>{
           const Sp=cycleBase+ci*CHORD_BEATS;
-          if(sec.pads) chord.pads.forEach(p=>pitched.push({voice:"pad",beat:Sp,dur:CHORD_BEATS,pch:pchAdd(p,k),amp:0.085}));
+          if(sec.pads){ const padAmp=sec.swell ? 0.085*(0.5+1.9*((Sp-cur)/Math.max(1,secBeats))) : 0.085;
+            chord.pads.forEach(p=>pitched.push({voice:"pad",beat:Sp,dur:CHORD_BEATS,pch:pchAdd(p,k),amp:padAmp})); }
           if(sec.bass&&sec.bass!=="off"){
             const be=bassEvents(sec.bass,Sp,chord.bass,k,rng);
             be.forEach(e=>{
@@ -519,7 +544,8 @@
         }
         if(sec.counter&&sec.counter.pattern){              // countermelody layer (e.g. a brass section) over the main melody
           const cm=melodyEvents(sec.counter.pattern,cycleBase,prg,chords,k,rng);
-          cm.forEach(e=>{ e.solo=sec.counter.solo; if(sec.counter.octave) e.pch=pchAdd(e.pch,12*sec.counter.octave); });
+          cm.forEach(e=>{ e.solo=sec.counter.solo; if(sec.counter.octave) e.pch=pchAdd(e.pch,12*sec.counter.octave);
+            if(sec.swell) e.amp *= 0.3 + 1.9*((e.beat-cur)/Math.max(1,secBeats)); });   // crescendo build across the section
           cm.forEach(e=>pitched.push(e));
         }
       }
@@ -597,11 +623,23 @@
   asig butlp asig, ${Math.round(cut)}`;
   }
   function brassSource(cut){
-    return `  kcf expseg 500, 0.09, ${Math.round(cut*1.4)}, p3, ${Math.round(cut*0.6)}
-  ab1 vco2 1, kf
-  ab2 vco2 1, kf*1.007
-  asig = (ab1+ab2)*0.5
-  asig moogladder asig, kcf, 0.22`;
+    // big organic brass section: 7 detuned sawtooth voices (lots of overlap) + vibrato,
+    // and a filter that OPENS with loudness (the classic brass "bite" — brightens as it
+    // swells). Lightly filtered on purpose (cut only caps the very top).
+    return `  kbite linsegr 0, 0.08, 1, p3, 1
+  kvb lfo 0.005, 5.2, 0
+  kfv = kf*(1+kvb)
+  ab1 vco2 1, kfv*0.990
+  ab2 vco2 1, kfv*0.996
+  ab3 vco2 1, kfv*0.9995
+  ab4 vco2 1, kfv*1.004
+  ab5 vco2 1, kfv*1.009
+  ab6 vco2 1, kfv*0.983
+  ab7 vco2 1, kfv*1.017
+  asig = (ab1+ab2+ab3+ab4+ab5+ab6+ab7)*0.15
+  kcf limit 500 + kbite*1300 + p5*16000, 200, ${Math.round(Math.min(12000,cut))}
+  asig moogladder asig, kcf, 0.1
+  asig = asig + tanh(asig*1.5)*0.22`;
   }
   function stringsSource(cut){
     return `  as1 vco2 1, kf*0.995
@@ -807,7 +845,7 @@
   gaDelR=gaDelR+asig*${m.dsend}
 endin` : m.model==="kpluck" ? `instr ${num}
   iamp=p5
-  ipch=cpspch(p4)*0.5
+  ipch=cpspch(p4)
   asig pluck 1, ipch, ipch, 0, 1
   a2 pluck 0.5, ipch*1.0013, ipch, 0, 1
   ah pluck 0.34, ipch*2, ipch*2, 0, 1
@@ -826,6 +864,16 @@ endin` : m.model==="kpluck" ? `instr ${num}
   ac1 vdelay asig, 11+adl1, 40
   ac2 vdelay asig, 13+adl2, 40
   asig = asig*0.66 + ac1*0.34 + ac2*0.34
+  ; phaser/flanger that EVOLVES over the whole song (driven by absolute time so the
+  ; sweep is continuous across notes; rate, depth and feedback grow as the song goes)
+  ktm times
+  kpos limit ktm/164, 0, 1
+  kfr = 0.12 + kpos*0.9
+  kdp = 0.3 + kpos*0.65
+  kfsw = sin(ktm*kfr*6.28319)
+  adfl = a(0.0006 + 0.003*kdp*(kfsw*0.5+0.5))
+  aflg flanger asig, adfl, 0.55+kpos*0.32, 0.02
+  asig = asig*0.5 + aflg*0.62
   aenv linsegr 0, 0.002, iamp, p3-0.05, iamp*0.55, 0.05, 0
   asig = asig*aenv
   gaMixL=gaMixL+asig*${m.level}
@@ -893,10 +941,11 @@ endin`;
   asig=(am1+am2+am3+anz)*iamp
   asig buthp asig, 7600
   asig=asig*aenv`
-      : `  aenv transeg 1, p3, -8, 0
-  anz noise iamp, 0
-  anz buthp anz, 7000
-  asig=anz*aenv`;
+      : `  aenv transeg 1, p3, -5, 0
+  anz noise iamp*1.7, 0
+  anz buthp anz, 6500
+  am1 vco2 0.15*iamp, 8200, 2, 0.5
+  asig=(anz+am1)*aenv`;
     const crkAmp = live ? `kcrk chnget "crackle"` : `kcrk init 0
   kcrk = p4`;
     const header = `<CsoundSynthesizer>
@@ -1133,21 +1182,23 @@ ${drumDel("asig*0.5")}endin
 
 instr 13
   iamp=p4*${(I.drums.tom!=null?I.drums.tom:1)}
-  ipt = (p5 > 0 ? p5 : 150)
-  kp expseg ipt*1.4, 0.035, ipt, p3-0.035, ipt*0.82
-  aenv transeg 1, p3, -3.5, 0
+  ipt = (p5 > 0 ? p5 : 105)
+  ; low, grungy tom: sub-octave depth, mallet attack, then driven dirty
+  kp expseg ipt*1.14, 0.03, ipt
+  aenv transeg 1, p3, -3, 0
   a1 oscili 1, kp
   a2 oscili 0.5, kp*1.5
-  acl noise 0.55, 0
-  acl butlp acl, 2600
+  asub oscili 0.4, kp*0.5
+  acl noise 0.85, 0
+  acl butbp acl, ipt*2.4, ipt*1.5
   kcl expseg 1, 0.012, 0.001
-  acl = acl*kcl
-  asig = (a1+a2+acl)*aenv*iamp
-  asig = tanh(asig*1.3)*0.9
+  abody = (a1+a2+asub)*aenv + acl*kcl*0.6
+  adirt = tanh(abody*3.4)
+  asig = (abody*0.35 + adirt*0.75)*0.72*iamp
   gaMixL=gaMixL+asig
   gaMixR=gaMixR+asig
-  gaRevL=gaRevL+asig*${I.drums.send}
-  gaRevR=gaRevR+asig*${I.drums.send}
+  gaRevL=gaRevL+asig*${(I.drums.send*1.4).toFixed(3)}
+  gaRevR=gaRevR+asig*${(I.drums.send*1.4).toFixed(3)}
 ${drumDel("asig")}endin
 
 instr 6

@@ -214,19 +214,18 @@
       bpm:[108,114], swing:[0,.06], humanize:[.08,.2],
       progressions:["four_chords","pop_1625","doo_wop","sad_pop"],   // anthemic pop (I-V-vi-IV, I-vi-ii-V…)
       kits:["open","four"], fills:["tom fill","tom fill","riser"],   // toms into every lift, bright hats throughout
-      bass:{patterns:["root","octaves","walking"], recipe:{model:["saw","sub"],cutoff:[520,900],res:[.1,.22],level:[1.0,1.2],send:[.05,.15],dsend:[0,.08]}},
-      lead:{patterns:["anthem"], recipe:{model:["kpluck"],wave:"saw",drive:.7,cutoff:[2400,3200],level:[.5,.62],send:[.34,.5],dsend:[.15,.26]}},   // Karplus-Strong guitar playing a hymn-like Canadian anthem (rhythmic, fewer/harder-working notes)
-      pads:{prob:1, recipe:{model:["organ"],wave:"saw",cutoff:[1600,2400],detune:[.004,.009],attack:[.2,.6],level:[.5,.66],send:[.22,.4],dsend:[.05,.15]}},   // organ (was Rhodes)
-      drums:{kickModel:["boom","909"],snareModel:["noise","clap"],hatModel:["noise"],kick:[.9,1.1],snare:[.55,.75],hat:[1.05,1.35],tune:[.95,1.1],send:[.1,.22],dsend:[.04,.12]},   // leveled down so they don't eat the mix; HATS up
-      fx:{reverb:[.32,.5], delayBeats:[.6667,.6667], delayFb:[.42,.52], delayCut:[3200,4600], pump:[.1,.3], crackle:[0,.06], lowcut:[30,45], highcut:[0,0], comp:[.45,.62], grit:[0,.06]},   // 1/4-triplet delay (U2/Edge), cascading feedback
-      found:{role:"narration", vol:[.32,.42], pitch:[.95,.98], stretch:[.45,.6], cutoff:[2600,3800], sources:["leacock1","leacock2","leacock3","leacock4"]},   // Leacock — DIFFERENT chunks (chapters 1/2/3/5) rotate across sections
-      vox:{sources:["sp_ca_hockey","sp_ca_hnic","sp_ca_cup","sp_ca_topshelf","sp_ca_fivehole","sp_ca_gretzky","sp_ca_save","sp_ca_overtime","sp_ca_news","sp_ca_justwatchme"], vol:0.62, pitch:1, cutoff:8000, clean:true},   // HOCKEY play-by-play + lore (clean), with a little national news
+      bass:{patterns:["walking"], recipe:{model:["saw"],cutoff:[600,900],res:[.1,.18],level:[.6,.75],send:[.03,.07],dsend:[0,.04]}},   // walking (diatonic, in key); FAR lower in the mix
+      lead:{patterns:["arp16"], recipe:{model:["kpluck"],wave:"saw",drive:.45,cutoff:[3000,3800],level:[.62,.74],send:[.16,.26],dsend:[.46,.56]}},   // THE lead = octave-lower octave-doubled 16th arp, distortion + chorus + 1/4T echo (Edge), BIGGER
+      pads:{prob:1, recipe:{model:["organ"],wave:"saw",cutoff:[1500,2200],detune:[.004,.008],attack:[.3,.7],level:[.4,.52],send:[.16,.26],dsend:[0,.06]}},   // organ, supportive (behind)
+      drums:{kickModel:["boom","909"],snareModel:["noise","clap"],hatModel:["noise"],kick:[1.1,1.3],snare:[.95,1.15],hat:[1.3,1.6],tom:[.85,1.05],tune:[.95,1.1],send:[.12,.2],dsend:[.03,.07]},   // snare up, hats UP (clearly audible), toms natural + not loud
+      fx:{reverb:[.28,.4], delayBeats:[.6667,.6667], delayFb:[.3,.4], delayCut:[3200,4600], pump:[0,.12], crackle:[0,0], lowcut:[30,45], highcut:[0,0], comp:[.25,.4], grit:[0,0]},   // simplified: 1/4T delay kept (for the guitar), less reverb/feedback/comp, no grit/crackle
+      found:{role:"narration", vol:[.28,.38], pitch:[.95,.98], stretch:[.45,.6], cutoff:[2600,3800], sources:["leacock1","leacock2","leacock3","leacock4"]},   // Leacock — different chapters rotate
+      vox:{sources:["sp_ca_hockey","sp_ca_hnic","sp_ca_cup","sp_ca_topshelf","sp_ca_fivehole","sp_ca_gretzky","sp_ca_save","sp_ca_overtime","sp_ca_news","sp_ca_justwatchme"], vol:0.5, pitch:1, cutoff:8000, clean:true},   // hockey play-by-play + lore
       voxPoem:"sp_ca_cities",   // the rhyming-cities poem, chopped into verse 2
-      hits:{sources:["ca_loon"], pattern:"sparse", prob:1, wet:true, glitch:true, vol:0.04},   // the loon — quiet but present (verse 1 only)
+      hits:{sources:["ca_loon"], pattern:"sparse", prob:1, wet:true, glitch:true, vol:0.035},   // the loon — a quiet whisper, verse 1 only
       hornSource:"ca_horn",   // the goal horn — FULL volume opener only
-      realHats:true,          // real (sampled) hi-hats from the GM drum kit
       stab:["off"],
-      form:"anthem" },   // pop structure, toms into the choruses (see buildSections)
+      form:"anthem" },   // pop structure; grand brass swell at the bridge (see buildSections)
     neoclassical: { label:"Neoclassical", info:"felt piano, slow counterpoint, room air, rubato",
       bpm:[58,82], swing:[0,.1], humanize:[.3,.55],
       progressions:["canon","neosoul","dream","ii_v_i"], kits:["off"], fills:["off"],
@@ -451,21 +450,17 @@
       const vox=()=>({sourceId:"vox", clean:c.voxClean});    // clean hockey calls / news (intelligible)
       const poem=()=>({sourceId:"poem", clean:false});       // the rhyming-cities poem, cut up as texture
       const horn=()=>({sourceId:"horn"});                    // the goal horn — FULL volume opener
-      const brass={model:"brass", cutoff:1700, level:0.46, voices:1};   // the brass section / countermelody
-      const ctr=()=>({pattern:"sparse", solo:brass, octave:-1});        // low brass countermelody (body + development)
-      const arpgtr={model:"kpluck", cutoff:3800, drive:0.12, level:0.42, send:0.22, dsend:0.5};// chiming Karplus guitar, soaked in the 1/4T delay
-      const arp=()=>({pattern:"arp16", solo:arpgtr, octave:2});         // the U2/Edge 16th-note arpeggio
-      const swellBrass={model:"brass", cutoff:2300, level:0.82, voices:1};   // LOUD triumphant brass for the swell
-      // The 16th-note arpeggiated guitar (1/4T delay) runs through the band sections;
-      // a big grand brass swell at the bridge (midpoint). Structure/length unchanged
-      // so the new audio grafts onto the existing video.
+      const swellBrass={model:"brass", cutoff:9000, level:1.9, voices:1};   // big organic brass — high cutoff so it isn't over-filtered (brassSource shapes it)
+      // THE lead is the Edge 16th-note arp guitar (lead==="arp16"). One big grand
+      // brass swell owns the bridge (midpoint). Structure/length unchanged so the new
+      // audio grafts onto the existing video.
       secs=[
         S("intro",    {cycles:1, pads:true, found:fnd(), vox:vox(), hits:horn(), sweep:"open"}),                     // FULL goal horn opener + "hockey night in canada"
-        S("verse",    {cycles:2, drums:kit, bass, pads:true, melody:lead, counter:arp(), found:fnd(), hits:hit(), fill:"tom fill"}), // anthem lead + 16th ARP GUITAR; TOM FILL into chorus
-        S("chorus",   {cycles:2, drums:kit, bass, pads:true, melody:lead, counter:arp(), stab:c.stab, found:fnd()}), // anthem + 16th arp guitar
-        S("verse 2",  {cycles:1, drums:kit, bass, pads:true, melody:lead, counter:arp(), found:fnd(), vox:poem(), fill:"tom fill"}), // arp guitar + cities poem
-        S("bridge",   {cycles:1, drums:kit, bass, pads:true, melody:lead, counter:{pattern:"anthem", solo:swellBrass, octave:0}, found:fnd(), fill:"tom fill", sweep:"open", stab:c.stab}), // GRAND TRIUMPHANT BRASS SWELL (midpoint)
-        S("chorus 2", {cycles:2, drums:kit, bass, pads:true, melody:lead, counter:arp(), found:fnd()}),   // final chorus, arp guitar
+        S("verse",    {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd(), hits:hit(), fill:"tom fill"}), // Edge arp lead + moving bass; Peart tom fill into chorus
+        S("chorus",   {cycles:2, drums:kit, bass, pads:true, melody:lead, stab:c.stab, found:fnd()}),
+        S("verse 2",  {cycles:1, drums:kit, bass, pads:true, melody:lead, found:fnd(), vox:poem(), fill:"tom fill"}), // + cities poem
+        S("bridge",   {cycles:1, pads:true, bass:"root", melody:"off", counter:{pattern:"anthem", solo:swellBrass, octave:0}, fill:"tom fill", sweep:"open", swell:true}), // GRAND BRASS SWELL — drums/narration DROP OUT so it's exposed: bass drone + swelling pads + loud crescendo brass + Peart fill back in
+        S("chorus 2", {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd()}),   // final chorus
       ];
     } else {
       secs=[
