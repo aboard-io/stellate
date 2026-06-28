@@ -107,6 +107,27 @@ const PRESETS = {
       [/shred/i, "lw_london"], [/finale/i, "lw_rampage"],
     ],
   },
+  // proud Canadiana pop over a mish-mash of 1997 CTV/CBC/Global/ATV TV ads
+  // (Nova Scotia). Warm, saturated VHS grade — peak retro-Canadian-television.
+  canawave: {
+    out: "canawave.mp4", fade: 1.8, seed: 0xCA2ADA, noise: 18, bars: 0,
+    grade: "eq=contrast=1.22:saturation=1.55:gamma=0.97,colorbalance=rh=0.04:gm=0.02,unsharp=5:5:1.1",
+    state() {
+      const K = require("./genre-kernel.js");
+      const st = K.track("canawave", { seed: 3 });
+      st.foundSources.forEach(s => { s.fsPath = s.samplePath ? path.join(HERE, s.samplePath) : found(s.id + ".wav"); });
+      return st;
+    },
+    // ads cut WITH Canadian imagery (Vancouver, Alberta, the Rockies) — alternating
+    vibe: [
+      [/intro/i, "dc_vancouver"],          // open proud: Vancouver, city + mountains
+      [/verse\s*2/i, "ca_canada"],         // ad: "Now available in Canada"
+      [/verse/i, "ca_tide"],               // ad: Ultra Tide
+      [/chorus\s*2/i, "dc_rockies"],       // imagery: snowy Rockies
+      [/chorus/i, "dc_alberta"],           // imagery: the prairies
+      [/bridge/i, "dc_skyline"],           // imagery: downtown skyline (avoids news content in the ad reel)
+    ],
+  },
 };
 
 const presetName = process.argv[2] || "vaporwave";

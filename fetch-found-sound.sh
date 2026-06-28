@@ -22,6 +22,12 @@ recordings=(
   "frogs|aporee_61056_70186|soundmap202307117.mp3|10|40|frogs"                                            # CC BY-NC-ND — jungle
   "iriomote|aporee_30783_35405|iriomoteaporee.ogg|30|40|iriomote"                                         # PD — ambient
   "shibuya|aporee_20542_23865|nov820131617shibuya.ogg|25|40|shibuya"                                      # CC BY-SA — house
+  "loon|CommonLoon|loons.mp3|0|24|loon"                                                                   # USFWS, public domain — canawave (the loonie's bird)
+  # Leacock, "The Dawn of Canadian History" (PD) — four chunks from different chapters (canawave narration)
+  "leacock1|aboriginal_canada|aboriginalcanada_01_leacock.mp3|150|90|leacock1"
+  "leacock2|aboriginal_canada|aboriginalcanada_02_leacock.mp3|280|90|leacock2"
+  "leacock3|aboriginal_canada|aboriginalcanada_03_leacock.mp3|420|90|leacock3"
+  "leacock4|aboriginal_canada|aboriginalcanada_05_leacock.mp3|520|90|leacock4"
   # More recordings used historically (uncomment to layer them in the .csd):
   # "tsukiji|aporee_35166_40406|<file>.ogg|0|40|tsukiji"
   # "asakusa|aporee_21091_24510|<file>.ogg|0|40|asakusa"

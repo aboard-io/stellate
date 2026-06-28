@@ -23,6 +23,8 @@ SP="$IA/ss098-0001/SS098-0001 SpaceDisc Vol. 1 Space Shuttle Mission Reports STS
 TK="$IA/tokyo-night-drive-4-k-2016/Tokyo night drive 4K 2016 首都高.mp4"
 SF="$IA/from-SF/from-SF.mp4"
 LW="$IA/TheLostWorld1925/TheLostWorld1925_512.mp4"   # Willis O'Brien stop-motion dinosaurs (1925, PD)
+CA="$IA/youtube-hxiZR3Hp_4o/hxiZR3Hp_4o.mp4"         # random CTV/CBC/Global/ATV ads, Nova Scotia, August 1997 — canawave
+DC="$IA/discovering-canada-1992-vhs/DiscoveringCanada(1992)VHS.mp4"   # Discovering Canada (1992) travelogue — canawave imagery
 
 # name|url|start(s)|dur(s)|credit
 clips() { cat <<'EOF'
@@ -53,10 +55,22 @@ lw_herd|LW|4170|30|The Lost World (1925, PD) — dinosaur herd in the mist
 lw_valley|LW|4255|26|The Lost World (1925, PD) — dinosaurs in the valley
 lw_london|LW|5225|40|The Lost World (1925, PD) — Brontosaurus loose in London
 lw_rampage|LW|5278|22|The Lost World (1925, PD) — Brontosaurus on the streets
+ca_canada|CA|252|26|CTV/CBC ads 1997 — "Now available in Canada"
+ca_kids|CA|82|26|CTV/CBC ads 1997 — kids at play
+ca_cereal|CA|421|26|CTV/CBC ads 1997 — "which side are you on?"
+ca_tide|CA|589|26|CTV/CBC ads 1997 — Ultra Tide
+ca_chrysler|CA|1139|26|CTV/CBC ads 1997 — Chrysler Marathon II sales event
+ca_bumper|CA|1342|26|CTV/CBC ads 1997 — channel bumper
+ca_street|CA|1592|26|CTV/CBC ads 1997 — city street
+dc_vancouver|DC|3188|26|Discovering Canada (1992) — Vancouver, city and mountains
+dc_alberta|DC|2585|26|Discovering Canada (1992) — the prairies
+dc_rockies|DC|4185|26|Discovering Canada (1992) — snowy mountains
+dc_village|DC|594|26|Discovering Canada (1992) — Nova Scotia fishing village
+dc_skyline|DC|1994|26|Discovering Canada (1992) — downtown skyline
 EOF
 }
 
-resolve() { case "$1" in VD1) echo "$VD1";; VD2) echo "$VD2";; PIO) echo "$PIO";; LV) echo "$LV";; SP) echo "$SP";; TK) echo "$TK";; SF) echo "$SF";; LW) echo "$LW";; esac; }
+resolve() { case "$1" in VD1) echo "$VD1";; VD2) echo "$VD2";; PIO) echo "$PIO";; LV) echo "$LV";; SP) echo "$SP";; TK) echo "$TK";; SF) echo "$SF";; LW) echo "$LW";; CA) echo "$CA";; DC) echo "$DC";; esac; }
 
 manifest="found/video/clips.json"
 echo "[" > "$manifest.tmp"

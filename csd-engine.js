@@ -84,7 +84,7 @@
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
   const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic"];
-  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar"];
+  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem"];
   const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal"];
   const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
   // the ⚡ transition control: what happens at the end of a section, into the next
@@ -97,7 +97,7 @@
       pad:    { model:"saw", wave:"saw",  cutoff:1400, res:0.15, detune:0.006, attack:1.5, level:0.7, send:0.55, dsend:0.15 },
       bass:   { model:"saw", wave:"saw",  cutoff:700,  res:0.15, level:1.0, send:0.08, dsend:0.0 },
       melody: { model:"stack", wave:"sine", cutoff:3400, res:0.05, vibrato:0.006, vibRate:5.2, level:0.6, send:0.45, dsend:0.25, voices:2, spread:0.004 },
-      drums:  { kickModel:"boom", snareModel:"noise", hatModel:"noise", kick:1.0, snare:1.0, hat:1.0, tune:1.0, send:0.18, dsend:0 }
+      drums:  { kickModel:"boom", snareModel:"noise", hatModel:"noise", kick:1.0, snare:1.0, hat:1.0, tom:1.0, tune:1.0, send:0.18, dsend:0 }
     };
   }
   function mergedInstruments(state){
@@ -261,14 +261,13 @@
   function bigFillEvents(S,rng){
     const r=rng||Math.random;
     const out=[];
-    const s=(o,a)=>out.push({drum:"snare",beat:S+o,dur:0.3,amp:a});
+    const t=(o,a,p)=>out.push({drum:"tom",beat:S+o,dur:0.3,amp:a,pitch:p});   // real toms, descending
     const k=(o,a)=>out.push({drum:"kick",beat:S+o,dur:0.4,amp:a});
-    k(0,.60); s(0,.40); s(0.06,.20);                       // flam
-    s(1,.44); if(r()<0.4)s(1.5,.22);
-    k(2,.62); s(2,.48); s(2.06,.22); s(2.5,.52);
-    if(r()<0.5){ s(3,.56); s(3.25,.60); s(3.5,.64); s(3.75,.68); }
-    else       { s(3,.56); s(3.33,.61); s(3.67,.67); }     // triplet roll
-    k(3.75,.4);
+    k(0,.55); t(0,.6,200); t(1,.62,165);                   // quarter-note toms, high→mid
+    t(2,.66,140); t(2.5,.68,120);
+    if(r()<0.5){ t(3,.66,150); t(3.25,.7,125); t(3.5,.74,105); t(3.75,.8,90); }    // descending 16th roll into the floor tom
+    else       { t(3,.66,150); t(3.33,.72,120); t(3.67,.8,95); }                   // triplet roll
+    k(3.75,.5);
     return out;
   }
   // jungle-style chop fill — two beats of 32nd-flavored snare stutter
@@ -292,7 +291,11 @@
     hero:  [[0,.5,0,0],[.5,.5,1,0],[1,.5,2,0],[1.5,.5,3,0],[2,.75,2,1],[2.75,.25,3,0],[3,.5,1,0],[3.5,.5,2,0],[4,.5,3,1],[4.5,.5,2,0],[5,.75,0,1],[5.75,.25,3,0],[6,.5,2,0],[6.5,.5,1,0],[7,1,0,1]],
     // blues lick: leans on the b7 (idx 3 of a dom7 voicing) with swung phrasing
     blues: [[0,.75,3,0],[1,.25,2,0],[1.5,.5,3,0],[2,1.5,0,1],[4,.75,3,0],[5,.25,2,0],[5.5,.5,1,0],[6,1.75,0,0]],
-    hero2: [[0,.25,3,0],[.25,.25,2,0],[.5,.5,3,0],[1,.5,2,1],[1.5,.5,1,0],[2,.5,2,0],[2.5,.5,3,0],[3,1,2,1],[4,.25,0,1],[4.25,.25,1,0],[4.5,.5,2,0],[5,.5,3,0],[5.5,.5,2,1],[6,.5,1,0],[6.5,.5,3,0],[7,.5,2,0],[7.5,.5,0,1]]
+    hero2: [[0,.25,3,0],[.25,.25,2,0],[.5,.5,3,0],[1,.5,2,1],[1.5,.5,1,0],[2,.5,2,0],[2.5,.5,3,0],[3,1,2,1],[4,.25,0,1],[4.25,.25,1,0],[4.5,.5,2,0],[5,.5,3,0],[5.5,.5,2,1],[6,.5,1,0],[6.5,.5,3,0],[7,.5,2,0],[7.5,.5,0,1]],
+    // anthemic, hymn-like: fewer notes that work harder — dotted/syncopated rhythm,
+    // held notes, octave-leap payoff, space. A/B alternate per chord for variation.
+    anthem:  [[0,1.5,0,0],[1.5,.5,1,0],[2,1.5,3,0],[3.5,.5,2,0],[4,2,3,1],[6,1.5,0,1],[7.5,.5,2,0]],
+    anthem2: [[0,2,2,0],[2,1,3,0],[3,1,2,0],[4,1.5,0,1],[5.5,.5,1,0],[6,2,3,0]]
   };
   function melodyEvents(style,base,prg,chords,k,rng){
     const out=[], cycleBeats=chords.length*CHORD_BEATS;
@@ -321,6 +324,7 @@
       }
       if(gen==="blues"){ MEL_PHRASES.blues.forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       if(gen==="hero"){ (ci%2?MEL_PHRASES.hero2:MEL_PHRASES.hero).forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
+      if(gen==="anthem"){ (ci%2?MEL_PHRASES.anthem2:MEL_PHRASES.anthem).forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       if(gen==="sparse"){ note(0,3,2,0); note(4,3,3,0); return; }
       if(gen==="roar"){   // a creature bellow: one long held low note, sometimes a second answering call
         out.push({voice:"melody",beat:Sb,dur:5.0,pch:pchAdd(lead[0],-12),amp:0.17});
@@ -359,10 +363,10 @@
     const prg=PROGRESSIONS[state.progression]||PROGRESSIONS.royal_road;
     const chords=prg.chords, k=state.keyOffset|0, cycleBeats=chords.length*CHORD_BEATS;
     const srcById={};
-    state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".wav"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec}; });
+    state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".wav"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec,wet:!!s.wet,glitch:!!s.glitch,distant:!!s.distant}; });
     const rng=mulberry32((state.seed??1)>>>0);
     const pitched=[], drums=[], found=[], sfx=[];
-    let cur=0;
+    let cur=0, narrOffset=0;   // narration plays through the clip across sections (always playing)
     for(const sec of state.sections){
       const fsrc = sec.found&&sec.found.sourceId ? srcById[sec.found.sourceId] : null;
       const cycles=sec.cycles||1, secBeats=cycles*cycleBeats;
@@ -390,6 +394,26 @@
                 tableNum:fsrc.tableNum,pitch:sync,offset:sl/8,cutoff:fsrc.cutoff||5000});  // stutter
             }
           }
+        } else if(role==="narration" && !sec.vox){
+          // recognizable spoken Leacock — but NEVER over a synth voice (no overlay).
+          // A chunk from a RANDOM point in the clip (picks more, varied), then glitched.
+          const pit=0.94+(rng()*0.05-0.025);
+          const cut=Math.round((fsrc.cutoff||3200)*(0.8+rng()*0.5));
+          found.push({chop:1,beat:cur,dur:secBeats,amp:(fsrc.vol||0.3)*1.5,tableNum:fsrc.tableNum,
+            pitch:pit,offset:rng()*0.5,cutoff:cut,rsend:0.4,dsend:0.3,fade:0.2});
+          // glitch it: random stutter clusters across the section
+          let gb=2+rng()*2;
+          while(gb<secBeats-2){
+            if(rng()<0.6){
+              const off=rng(), n=2+Math.floor(rng()*4), step=[0.0625,0.125][Math.floor(rng()*2)];
+              for(let j=0;j<n&&gb+j*step<secBeats-1;j++)
+                found.push({chop:1,beat:cur+gb+j*step,dur:step*1.7,amp:(fsrc.vol||0.3)*1.3,tableNum:fsrc.tableNum,
+                  pitch:[0.85,1,1,1.5][Math.floor(rng()*4)],offset:Math.min(0.98,off+j*0.03),cutoff:cut,rsend:0.4,dsend:0.45});
+              gb+=n*step+1+rng()*2;
+            } else gb+=1+rng()*1.5;
+          }
+        } else if(role==="narration"){
+          // narration skipped here because a synth voice speaks this section
         } else {
           found.push({beat:cur,dur:secBeats,amp:fsrc.vol,tableNum:fsrc.tableNum,pitch:fsrc.pitch,stretch:fsrc.stretch,cutoff:fsrc.cutoff});
         }
@@ -397,14 +421,35 @@
       // one-shot sample hits (stabs/shouts/vox) — separate layer from the bed/break
       if(sec.hits&&sec.hits.sourceId&&srcById[sec.hits.sourceId]){
         const hsrc=srcById[sec.hits.sourceId];
+        if(hsrc.glitch){
+          // the LOON, glitched a ton + faded in/out: long pitched swells (slow fade)
+          // interleaved with rapid stutter clusters, all soaked in reverb + echo
+          for(let cb=0;cb<secBeats/CHORD_BEATS;cb++){
+            const base=cur+cb*CHORD_BEATS;
+            if(rng()<0.6){                                            // a fading swell (gentle)
+              found.push({chop:1,beat:base+rng()*3,dur:3+rng()*4,amp:(hsrc.vol||0.2)*1.4,tableNum:hsrc.tableNum,
+                pitch:0.55+rng()*0.7,offset:rng(),cutoff:hsrc.cutoff||4500,rsend:0.32,dsend:0.3,fade:1+rng()*1.5});
+            }
+            if(rng()<0.6){                                           // a stutter cluster
+              const off=rng(), n=2+Math.floor(rng()*4), step=[0.0625,0.125,0.1875][Math.floor(rng()*3)], sb=base+rng()*5;
+              for(let j=0;j<n&&sb+j*step<base+CHORD_BEATS;j++)
+                found.push({chop:1,beat:sb+j*step,dur:step*1.7,amp:(hsrc.vol||0.2)*1.3,tableNum:hsrc.tableNum,
+                  pitch:[0.5,0.75,1,1.5,2][Math.floor(rng()*5)],offset:Math.min(0.98,off+j*0.05),cutoff:hsrc.cutoff||5500,rsend:0.3,dsend:0.3});
+            }
+          }
+        } else {
         const pat=HIT_PATTERNS[sec.hits.pattern]||HIT_PATTERNS.sparse;
         const hdur=Math.min(4,(hsrc.durSec||1.2)*state.bpm/60);
         for(let cb=0;cb<secBeats/CHORD_BEATS;cb++){
           for(const o of pat){
             if(rng()<0.45) continue;                                 // hits are events, not loops
-            found.push({chop:1,beat:cur+cb*CHORD_BEATS+o,dur:hdur,amp:(hsrc.vol||0.2)*1.8,
-              tableNum:hsrc.tableNum,pitch:1+(rng()*0.06-0.03),offset:0,cutoff:hsrc.cutoff||4500});
+            const ev={chop:1,beat:cur+cb*CHORD_BEATS+o,dur:hdur,amp:(hsrc.vol||0.2)*1.8,
+              tableNum:hsrc.tableNum,pitch:1+(rng()*0.06-0.03),offset:0,cutoff:hsrc.cutoff||4500};
+            if(hsrc.distant){ ev.amp*=0.32; ev.rsend=0.9; ev.dsend=0.72; ev.fade=0.4; }  // across the lake: way down, drenched, muffled
+            else if(hsrc.wet){ ev.rsend=0.6; ev.dsend=0.45; }        // rides reverb + echo
+            found.push(ev);
           }
+        }
         }
       }
       // glitched paleontologist voiceover: the phrase plays, then gets stuttered /
@@ -412,22 +457,18 @@
       if(sec.vox&&sec.vox.sourceId&&srcById[sec.vox.sourceId]){
         const vs=srcById[sec.vox.sourceId];
         const phraseBeats=Math.min(secBeats-1, Math.max(3,(vs.durSec||3)*state.bpm/60));
-        // 1) let it TALK: the phrase plays clean and fairly dry up front
+        // the phrase plays ONCE (no looping/double-speak), treated with reverb + delay
         found.push({chop:1,beat:cur+1,dur:phraseBeats,amp:(vs.vol||0.42),tableNum:vs.tableNum,
-          pitch:vs.pitch||1,offset:0,cutoff:vs.cutoff||6000,dsend:0.05});
-        // 2) only AFTER it has spoken, occasional glitch bursts (sparser) — slow-down
-        //    pitches only, with delay swelling in and out burst-to-burst
-        let b=phraseBeats+2, burst=0;
-        while(b<secBeats-1){
-          if(rng()<0.3){
-            const off=rng(), pit=[0.5,0.7,0.85,1,1][Math.floor(rng()*5)];           // <=1: only slows down
-            const n=2+Math.floor(rng()*4), step=[0.125,0.25][Math.floor(rng()*2)];
-            const ds=(burst%2)?0.55:0.06;                                           // delay in / out, burst to burst
+          pitch:vs.pitch||1,offset:0,cutoff:vs.cutoff||6500,rsend:0.32,dsend:0.26,fade:0.12});
+        // glitch the voice: a couple of stutter clusters (more if it's the chopped poem)
+        const nbursts=sec.vox.clean?1:2;
+        for(let bi=0;bi<nbursts;bi++){
+          if(rng()<0.85){
+            const off=rng()*0.85, n=2+Math.floor(rng()*3), step=[0.0625,0.125][Math.floor(rng()*2)], b=1+rng()*Math.max(1,secBeats-4);
             for(let j=0;j<n&&b+j*step<secBeats-0.5;j++)
-              found.push({chop:1,beat:cur+b+j*step,dur:step*1.5,amp:(vs.vol||0.42)*0.8,tableNum:vs.tableNum,
-                pitch:Math.min(1,pit*(1-rng()*0.06)),offset:Math.min(0.98,off+j*0.03),cutoff:vs.cutoff||7000,dsend:ds});
-            burst++; b+=n*step+2+rng()*3;
-          } else b+=1+rng()*2;
+              found.push({chop:1,beat:cur+b+j*step,dur:step*1.6,amp:(vs.vol||0.42)*0.85,tableNum:vs.tableNum,
+                pitch:[0.8,1,1,1.5][Math.floor(rng()*4)],offset:Math.min(0.98,off+j*0.03),cutoff:vs.cutoff||7000,rsend:0.35,dsend:0.4});
+          }
         }
       }
       // synth stabs (rave chords on the chord root)
@@ -471,6 +512,11 @@
           const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,rng);
           if(sec.solo) mel.forEach(e=>{ e.solo=sec.solo; if(sec.soloOctave) e.pch=pchAdd(e.pch,12*sec.soloOctave); });
           mel.forEach(e=>pitched.push(e));
+        }
+        if(sec.counter&&sec.counter.pattern){              // countermelody layer (e.g. a brass section) over the main melody
+          const cm=melodyEvents(sec.counter.pattern,cycleBase,prg,chords,k,rng);
+          cm.forEach(e=>{ e.solo=sec.counter.solo; if(sec.counter.octave) e.pch=pchAdd(e.pch,12*sec.counter.octave); });
+          cm.forEach(e=>pitched.push(e));
         }
       }
       // master filter sweep across this section
@@ -579,6 +625,12 @@
   amod oscili kidx*kf, kf*2.001
   asig oscili 1, kf + amod
   asig butlp asig, ${Math.round(Math.min(8000,p.cutoff*1.7))}`;
+    if(p.model==="rhodes") return `  kidx transeg 1.4, 0.5, -3, 0.25
+  amod oscili kidx*kf, kf
+  asig oscili 1, kf + amod
+  atine oscili 0.22*kidx, kf*14
+  asig = asig + atine*0.3
+  asig butlp asig, ${Math.round(Math.min(8000,p.cutoff*2))}`;   // warm FM electric piano w/ a tine bark
     return null;  // default detuned-saw stack stays inline in the orchestra
   }
   function bassSource(b){
@@ -610,6 +662,12 @@
     if(m.model==="piano") return pianoSource("kf", Math.min(9000,m.cutoff*2));
     if(m.model==="pluck") return `  asig pluck 1, kf, ipch, 0, 1
   asig butlp asig, ${Math.round(m.cutoff)}`;
+    if(m.model==="kpluck") return `  asig pluck 1, kf, ipch, 0, 1
+  a2 pluck 0.6, kf*1.0009, ipch, 0, 1
+  asig = asig + a2*0.5
+  asig butlp asig, ${Math.round(m.cutoff)}
+  asig = tanh(asig*${(1.7+(m.drive||0)*2.6).toFixed(2)})*0.78
+  asig butlp asig, ${Math.round(Math.min(9000,m.cutoff*1.5))}`;   // Karplus-Strong guitar: dual detuned pluck + saturation
     if(m.model==="fm") return `  kidx linsegr 3.5, p3*0.5, 1.0, 0.2, 0
   amod oscili kidx*kf, kf*1.4
   asig oscili 1, kf + amod
@@ -647,12 +705,14 @@
     const out=[], seen=new Map(); let num=7;
     baseMel = baseMel || (state.instruments&&state.instruments.melody) || defaultInstruments().melody;
     for(const s of (state.sections||[])){
-      if(!s.solo) continue;
-      const key=JSON.stringify(s.solo);
-      if(seen.has(key)) continue;
-      seen.set(key,num);
-      out.push({ key, num, recipe:Object.assign({}, baseMel, s.solo) });
-      num++;
+      for(const recipe of [s.solo, s.counter&&s.counter.solo]){   // solo voices + countermelody voices
+        if(!recipe) continue;
+        const key=JSON.stringify(recipe);
+        if(seen.has(key)) continue;
+        seen.set(key,num);
+        out.push({ key, num, recipe:Object.assign({}, baseMel, recipe) });
+        num++;
+      }
     }
     return out;
   }
@@ -665,6 +725,11 @@
     const live = !!opts.channels;
     const I=mergedInstruments(state);
     const ft=sources.map(s=>`gi_src${s.tableNum} ftgen ${s.tableNum}, 0, 0, 1, "${s.fsPath}", 0, 0, 1`).join("\n");
+    // soundfont guitar: load a GM .sf2 only when a "guitar" lead/solo voice is used
+    // (sfplay plays real sampled guitar; CLI-render path only — browser preset stays synth)
+    const guitarUsed = I.melody.model==="guitar" || soloVoices(state,I.melody).some(v=>v.recipe&&v.recipe.model==="guitar");
+    const sfUsed = guitarUsed || state.realHats;            // soundfont needed for the guitar OR the real (sampled) hi-hats
+    const sfLoad = sfUsed ? `gisf sfload "${state.soundfont||"/usr/share/sounds/sf2/TimGM6mb.sf2"}"\nsfpassign 0, gisf\n` : "";
     const dLo=(1-I.pad.detune).toFixed(4), dHi=(1+I.pad.detune).toFixed(4), atk=Math.max(0.05,I.pad.attack), dt=I.drums.tune;
     const dl=state.delay||{beats:0.75,feedback:0.3,cutoff:2600};
     const dsec=Math.min(1.9, Math.max(0.02, (dl.beats||0.75)*60/state.bpm));
@@ -722,7 +787,50 @@
   a1 moogladder a1, ${I.bass.cutoff}, ${I.bass.res}`;
     // melody voice block, parameterized so solo sections can each get their own
     // (instr 4 = the main lead; solos get 7,8,… — see soloVoices)
-    const melodyVoiceBlock=(num,m)=>`instr ${num}
+    const melodyVoiceBlock=(num,m)=> m.model==="guitar" ? `instr ${num}
+  iamp=p5
+  inote = 12*log(cpspch(p4)/440)/log(2) + 69
+  ag1, ag2 sfplay3 100, inote, iamp*${((m.level||0.5)*0.0022).toFixed(7)}, cpspch(p4), ${m.preset!=null?m.preset:25}
+  asig = (ag1+ag2)*0.5
+  asig moogladder asig, ${Math.round(m.cutoff||4500)}, 0.05
+  aenv linsegr 1, p3-0.04, 1, 0.04, 0
+  asig = asig*aenv
+  gaMixL=gaMixL+asig
+  gaMixR=gaMixR+asig
+  gaRevL=gaRevL+asig*${m.send}
+  gaRevR=gaRevR+asig*${m.send}
+  gaDelL=gaDelL+asig*${m.dsend}
+  gaDelR=gaDelR+asig*${m.dsend}
+endin` : m.model==="kpluck" ? `instr ${num}
+  iamp=p5
+  ipch=cpspch(p4)*0.5
+  asig pluck 1, ipch, ipch, 0, 1
+  a2 pluck 0.5, ipch*1.0013, ipch, 0, 1
+  ah pluck 0.34, ipch*2, ipch*2, 0, 1
+  asig = asig + a2*0.5 + ah*0.42
+  apk noise 0.6, 0
+  kpk expseg 1, 0.008, 0.0001
+  apk butbp apk, ${Math.round(Math.min(8000,(m.cutoff||3000)*1.6))}, 1800
+  asig = asig + apk*kpk*0.7
+  abdy reson asig, 118, 80, 1
+  abd2 reson asig, 230, 140, 1
+  asig = asig*0.7 + abdy*0.45 + abd2*0.3
+  asig butlp asig, ${Math.round(Math.min(12000,(m.cutoff||3000)*2.4))}
+  asig = tanh(asig*${(2.4+(m.drive||0)*3.2).toFixed(2)})*0.72
+  adl1 oscili 2.6, 0.7
+  adl2 oscili 2.2, 1.1
+  ac1 vdelay asig, 11+adl1, 40
+  ac2 vdelay asig, 13+adl2, 40
+  asig = asig*0.66 + ac1*0.34 + ac2*0.34
+  aenv linsegr 0, 0.002, iamp, p3-0.05, iamp*0.55, 0.05, 0
+  asig = asig*aenv
+  gaMixL=gaMixL+asig*${m.level}
+  gaMixR=gaMixR+asig*${m.level}
+  gaRevL=gaRevL+asig*${(m.send*0.7).toFixed(3)}
+  gaRevR=gaRevR+asig*${(m.send*0.7).toFixed(3)}
+  gaDelL=gaDelL+asig*${m.dsend}
+  gaDelR=gaDelR+asig*${m.dsend}
+endin` : `instr ${num}
   ipch=cpspch(p4)
   iamp=p5
   kvib lfo ipch*${m.vibrato}, ${m.vibRate}, 0
@@ -804,7 +912,7 @@ giwin ftgen 1, 0, 16384, 20, 2, 1
 gisine ftgen 0, 0, 8192, 10, 1
 gisig ftgen 0, 0, 1024, 19, 0.5, 0.5, 270, 0.5
 ${ft}
-
+${sfLoad}
 instr 3
   iamp=p5
   aenv linsegr 0, 1.5, iamp, p3-3.0, iamp, 1.5, 0
@@ -969,15 +1077,21 @@ instr 5
   ioff = p8
   icut = (p9 > 0 ? p9 : 3500)
   idsend = (p10 > 0 ? p10 : 0.2)        ; per-event delay send (default 0.2; VO modulates it in/out)
-  aenv linsegr 0, 0.006, p5, p3-0.04, p5*0.85, 0.03, 0
+  irsend = (p11 > 0 ? p11 : 0.3)        ; per-event reverb send (default 0.3; loon rides it wet)
+  ifade = (p12 > 0 ? p12 : 0)           ; long fade in/out (loon swells); 0 = the normal quick env
+  if (ifade > 0) then
+    aenv linsegr 0, ifade, p5, p3-ifade*2, p5, ifade, 0
+  else
+    aenv linsegr 0, 0.006, p5, p3-0.04, p5*0.85, 0.03, 0
+  endif
   andx phasor (sr*ipit)/nsamp(itab)
   asig tablei frac(andx + ioff), itab, 1, 0, 1
   asig moogladder asig, icut, 0.08
   asig = asig*aenv
   gaMixL=gaMixL+asig
   gaMixR=gaMixR+asig
-  gaRevL=gaRevL+asig*0.3
-  gaRevR=gaRevR+asig*0.3
+  gaRevL=gaRevL+asig*irsend
+  gaRevR=gaRevR+asig*irsend
   gaDelL=gaDelL+asig*idsend
   gaDelR=gaDelR+asig*idsend
 endin
@@ -1004,12 +1118,33 @@ ${drumDel("asig")}endin
 
 instr 12
   iamp=p4*${I.drums.hat}
-${hatSrc}
+${state.realHats ? `  inote = (p5 > 0 ? 46 : 42)              ; real sampled hi-hat: 46=open, 42=closed (GM drum kit)
+  ah1, ah2 sfplay3 100, inote, iamp*0.00042, cpsmidinn(inote), 128
+  asig = (ah1+ah2)*0.5` : hatSrc}
   gaMixL=gaMixL+asig*0.7
   gaMixR=gaMixR+asig*0.7
   gaRevL=gaRevL+asig*${(I.drums.send*0.3).toFixed(3)}
   gaRevR=gaRevR+asig*${(I.drums.send*0.3).toFixed(3)}
 ${drumDel("asig*0.5")}endin
+
+instr 13
+  iamp=p4*${(I.drums.tom!=null?I.drums.tom:1)}
+  ipt = (p5 > 0 ? p5 : 150)
+  kp expseg ipt*1.4, 0.035, ipt, p3-0.035, ipt*0.82
+  aenv transeg 1, p3, -3.5, 0
+  a1 oscili 1, kp
+  a2 oscili 0.5, kp*1.5
+  acl noise 0.55, 0
+  acl butlp acl, 2600
+  kcl expseg 1, 0.012, 0.001
+  acl = acl*kcl
+  asig = (a1+a2+acl)*aenv*iamp
+  asig = tanh(asig*1.3)*0.9
+  gaMixL=gaMixL+asig
+  gaMixR=gaMixR+asig
+  gaRevL=gaRevL+asig*${I.drums.send}
+  gaRevR=gaRevR+asig*${I.drums.send}
+${drumDel("asig")}endin
 
 instr 6
   ipch=cpspch(p4)
@@ -1044,7 +1179,11 @@ endin
     const L=[`t 0 ${state.bpm}`, `i 100 0 ${ev.totalBeats}`, `i 99 0 ${ev.totalBeats}`, `i 98 0 ${ev.totalBeats}`];
     if(state.crackle>0) L.push(`i 97 0 ${ev.totalBeats} ${Math.min(1,state.crackle)}`);
     ev.found.forEach(f=>{
-      if(f.chop) L.push(`i 5 ${f.beat.toFixed(3)} ${f.dur.toFixed(3)} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.offset.toFixed(3)} ${f.cutoff}${f.dsend!=null?" "+f.dsend.toFixed(3):""}`);
+      if(f.chop){ const pp=[];
+        if(f.dsend!=null||f.rsend!=null||f.fade!=null) pp.push((f.dsend!=null?f.dsend:0.2).toFixed(3));
+        if(f.rsend!=null||f.fade!=null) pp.push((f.rsend!=null?f.rsend:0.3).toFixed(3));
+        if(f.fade!=null) pp.push(f.fade.toFixed(3));
+        L.push(`i 5 ${f.beat.toFixed(3)} ${f.dur.toFixed(3)} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.offset.toFixed(3)} ${f.cutoff}${pp.length?" "+pp.join(" "):""}`); }
       else L.push(`i 3 ${f.beat.toFixed(3)} ${f.dur} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.stretch} ${f.cutoff}`);
     });
     const inst={pad:1,bass:2,melody:4};
@@ -1054,8 +1193,11 @@ endin
       if(p.voice==="melody"&&p.solo){ const v=solos.find(x=>x.key===JSON.stringify(p.solo)); if(v) n=v.num; }
       L.push(`i ${n} ${p.beat.toFixed(3)} ${p.dur.toFixed(3)} ${p.pch} ${p.amp.toFixed(4)}`);
     });
-    const dinst={kick:10,snare:11,hat:12};
-    ev.drums.forEach(d=>L.push(`i ${dinst[d.drum]} ${d.beat.toFixed(3)} ${d.dur.toFixed(3)} ${d.amp.toFixed(4)}`));
+    const dinst={kick:10,snare:11,hat:12,tom:13};
+    ev.drums.forEach(d=>{
+      const p5 = d.drum==="tom" ? " "+Math.round(d.pitch||150) : d.drum==="hat" ? " "+(d.open?1:0) : "";
+      L.push(`i ${dinst[d.drum]} ${d.beat.toFixed(3)} ${d.dur.toFixed(3)} ${d.amp.toFixed(4)}${p5}`);
+    });
     ev.sfx.forEach(s=>{
       if(s.stab) L.push(`i 6 ${s.beat.toFixed(3)} ${s.dur} ${s.pch} ${s.amp.toFixed(3)}`);
       else if(s.sweep) L.push(`i 96 ${s.beat.toFixed(3)} ${s.dur} ${s.from} ${s.to}`);

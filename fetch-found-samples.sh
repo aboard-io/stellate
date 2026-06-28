@@ -17,6 +17,10 @@ mkdir -p found/samples/breaks found/samples/hits found/samples/vox
 
 IA="https://archive.org/download"
 
+# canawave: the loon call as a one-shot hit (USFWS, public domain)
+echo "→ hit loon"
+ffmpeg -y -loglevel error -i "$IA/CommonLoon/loons.mp3" -ac 1 -ar 44100 found/samples/hits/loon.wav
+
 # --- drum breaks: Amen Break Pack (source bpm encoded in filename) ---
 breaks=( cw_amen01_175 cw_amen02_165 cw_amen04_170 cw_amen07_172 )
 for b in "${breaks[@]}"; do
@@ -146,6 +150,31 @@ say paleo_sauropod "behold the sauropod. the largest creature ever to walk the e
 say paleo_rex      "in the late cretaceous, the tyrannosaurus ruled"          16 86  "anull"
 say paleo_bones    "these bones tell a story, sixty six million years old"    26 90  "anull"
 say paleo_skies    "look up. once, these skies belonged to the pterosaurs"    34 92  "asetrate=44100*0.95,aresample=44100"
+
+# --- the national news (canawave voiceover; espeak en-ca if available, else en) ---
+sayca() { local out="found/samples/speech/${1}.wav"; echo "→ news $1"; espeak-ng -v en-ca -p "$3" -s "$4" -w /tmp/say.wav "$2" 2>/dev/null || espeak-ng -v en-us -p "$3" -s "$4" -w /tmp/say.wav "$2"; ffmpeg -y -loglevel error -i /tmp/say.wav -ac 1 -ar 44100 -af "$5" "$out"; }
+sayca ca_news    "good evening. coast to coast to coast, this is the national." 40 98  "anull"
+sayca ca_maple   "the maple harvest is the largest on record."                 42 100 "anull"
+sayca ca_gold    "and Canada takes the gold, in overtime!"                      46 104 "anull"
+sayca ca_lights  "the northern lights lit up the territory skies tonight."     38 98  "asetrate=44100*0.98,aresample=44100"
+sayca ca_rockies "from the rockies to the atlantic, a beautiful day, eh."      44 100 "anull"
+sayca ca_sorry   "and that's the news. thank you. and sorry."                  40 96  "anull"
+sayca ca_justwatchme "well. just watch me."                                    36 92  "anull"
+sayca ca_hockey  "he shoots, he scores!"                                       50 118 "anull"
+sayca ca_cities  "Saskatoon beneath the moon. Medicine Hat, the sky falls flat. Moose Jaw, Red Deer, Thunder Bay. Gander, oh Gander, we wander away. Halifax to Kelowna, this land, we proudly own her." 40 165 "anull"
+# hockey, hockey lore, hockey stuff
+sayca ca_he_shoots "he shoots... he scores!"                                    48 112 "anull"
+sayca ca_hnic      "hockey night in canada!"                                    44 110 "anull"
+sayca ca_cup       "and lord stanley's cup, comes home to canada!"              40 104 "anull"
+sayca ca_topshelf  "top shelf, where mama hides the cookies!"                   48 116 "anull"
+sayca ca_fivehole  "five hole! oh, what a beauty!"                              46 116 "anull"
+sayca ca_gretzky   "gretzky, behind the net, he scores!"                        42 112 "anull"
+sayca ca_save      "glove save! and a beauty!"                                  50 118 "anull"
+sayca ca_overtime  "overtime. sudden death. the nation holds its breath."       36 100 "anull"
+
+# the NHL goal horn (real; archive.org, academic use)
+echo "→ hit goal_horn"
+ffmpeg -y -loglevel error -i "$IA/washingtoncapitalsgoalhorn/Washington Capitals Goal Horn.mp3" -ac 1 -ar 44100 found/samples/hits/goal_horn.wav
 
 # --- manifest: duration + crude class for every sample ---
 python3 - <<'PYEOF'

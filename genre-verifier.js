@@ -48,7 +48,7 @@
       seventh: +(prog.chords.filter(c=>/7/.test(c.name)).length/prog.chords.length).toFixed(2),
       breakUse: +role("break").toFixed(2),
       chopUse: +role("chops").toFixed(2),
-      bedUse: +role("bed").toFixed(2),
+      bedUse: +(role("bed")+role("narration")).toFixed(2),
       crackle: state.crackle||0, pump: state.pump||0, comp: state.comp||0,
       swing: state.swing||0, humanize: state.humanize||0,
       acoustic: ["piano","organ"].includes(I.melody.model)||["piano","organ"].includes(I.pad.model)
@@ -82,6 +82,8 @@
     dinosynth:{ bpm:[68,98,2], drumDensity:[1.6,3.3,3], hatDensity:[1.2,2.3,2], snareBalance:[0,.45,2],
                 swing:[0,.07,2], motion:[.5,1,1], wash:[.4,.78,2], crackle:[0,.2,1], bedUse:[.5,1,2],
                 comp:[.35,.72,3], pump:[0,.08,1] },
+    canawave: { bpm:[102,118,2], motion:[.5,1,2], leadVoices:[1,3,2], bedUse:[.3,1,2], hatDensity:[1,2.4,2],
+                snareBalance:[.3,1.1,1], wash:[.15,.55,2], crackle:[0,.15,1], comp:[.2,.5,1], drumDensity:[1.2,3.3,1], swing:[0,.12,1] },
     neoclassical:{ bpm:[55,85,2], drumDensity:[0,.4,3], acoustic:[.6,1,3], humanize:[.28,.7,2],
                 motion:[.5,1,1], wash:[.25,.7,1], pump:[0,.05,1], breakUse:[0,0,1] },
     dancepop: { bpm:[112,130,3], motion:[.6,1,2], leadVoices:[2,6,1], snareBalance:[.3,1.3,1],
