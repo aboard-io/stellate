@@ -22,6 +22,7 @@ LV="$IA/laser-vision-demonstration-1986/LaserVision Demonstration (1986).mp4"
 SP="$IA/ss098-0001/SS098-0001 SpaceDisc Vol. 1 Space Shuttle Mission Reports STS 5,6 & 7 (Side 1, English) (ld-decode, QTGMC, TV→PC).mp4"
 TK="$IA/tokyo-night-drive-4-k-2016/Tokyo night drive 4K 2016 首都高.mp4"
 SF="$IA/from-SF/from-SF.mp4"
+LW="$IA/TheLostWorld1925/TheLostWorld1925_512.mp4"   # Willis O'Brien stop-motion dinosaurs (1925, PD)
 
 # name|url|start(s)|dur(s)|credit
 clips() { cat <<'EOF'
@@ -46,10 +47,16 @@ drive_bluehour|TK|115|34|Tokyo Night Drive (2016, PD) — blue-hour expressway
 drive_dusk|TK|695|32|Tokyo Night Drive (2016, PD) — dusk highway
 drive_bridge|TK|1290|36|Tokyo Night Drive (2016, PD) — Rainbow Bridge
 drive_taillights|SF|50|30|Night drive from SF (PD) — taillights at an intersection
+lw_plateau|LW|3460|30|The Lost World (1925, PD) — the lost plateau
+lw_graze|LW|3898|16|The Lost World (1925, PD) — a dinosaur grazing
+lw_herd|LW|4170|30|The Lost World (1925, PD) — dinosaur herd in the mist
+lw_valley|LW|4255|26|The Lost World (1925, PD) — dinosaurs in the valley
+lw_london|LW|5225|40|The Lost World (1925, PD) — Brontosaurus loose in London
+lw_rampage|LW|5278|22|The Lost World (1925, PD) — Brontosaurus on the streets
 EOF
 }
 
-resolve() { case "$1" in VD1) echo "$VD1";; VD2) echo "$VD2";; PIO) echo "$PIO";; LV) echo "$LV";; SP) echo "$SP";; TK) echo "$TK";; SF) echo "$SF";; esac; }
+resolve() { case "$1" in VD1) echo "$VD1";; VD2) echo "$VD2";; PIO) echo "$PIO";; LV) echo "$LV";; SP) echo "$SP";; TK) echo "$TK";; SF) echo "$SF";; LW) echo "$LW";; esac; }
 
 manifest="found/video/clips.json"
 echo "[" > "$manifest.tmp"

@@ -33,7 +33,9 @@ Genres are **anchors**: named points with curated values on every dimension,
 grounded in the genre literature (techno: rhythm-over-harmony, drones, DJ
 form; house: 4-floor + claps, 8-bar additive builds; jungle: chopped breaks,
 sub pressure, rhythm-as-melody; trip hop: slowed dusty breaks, jazz color,
-melancholy; plus vaporwave, synthwave, lofi, downtempo, ambient, electro).
+melancholy; plus vaporwave, synthwave, lofi, downtempo, ambient, neoclassical,
+dancepop, edm, dubstep, blues, jazz, and dinosynth — dinosaur-themed dungeon
+synth: dark-ambient drones, medieval choir, tribal log-drums, primordial swamp).
 
 ## Blending
 
@@ -115,9 +117,11 @@ snare/kick balance, hat density, harmonic motion, seventh color, reverb wash,
 sub presence, break usage, swing, compression, variation ratio) and scores any
 state against per-genre target ranges. `node genre-verifier.js matrix` builds a
 **confusion matrix** over all anchors — the kernel is tuned until every genre
-scores highest as itself (currently 9/9 diagonal-dominant). That's the
+scores highest as itself (currently 16/16 diagonal-dominant). That's the
 falsifiable answer to "does this actually sound like jungle?", and the loop to
-re-run after every kernel change.
+re-run after every kernel change. Adding the `dinosynth` anchor (dinosaur-themed
+dungeon synth) is a worked example: its tribal log-drum pulse + low swing are
+what the matrix needs to keep it off ambient's and trip-hop's diagonals.
 
 ## Engine support (csd-engine.js)
 

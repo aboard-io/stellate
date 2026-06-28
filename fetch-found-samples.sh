@@ -139,6 +139,14 @@ say nightdrive "night drive engaged"                 20 100 "asetrate=44100*0.95
 say herenow    "you are here now"                    25  85 "anull"
 say slowdown   "slow down. breathe"                  24  90 "anull"
 
+# --- paleontologist narration (dino-synth / planetarium voiceover; glitched at render) ---
+say paleo_welcome "welcome, to the age of the dinosaurs"                     30 88  "asetrate=44100*0.94,aresample=44100"
+say paleo_mesozoic "the mesozoic era began, two hundred fifty million years ago" 24 92 "anull"
+say paleo_sauropod "behold the sauropod. the largest creature ever to walk the earth" 20 90 "asetrate=44100*0.92,aresample=44100"
+say paleo_rex      "in the late cretaceous, the tyrannosaurus ruled"          16 86  "anull"
+say paleo_bones    "these bones tell a story, sixty six million years old"    26 90  "anull"
+say paleo_skies    "look up. once, these skies belonged to the pterosaurs"    34 92  "asetrate=44100*0.95,aresample=44100"
+
 # --- manifest: duration + crude class for every sample ---
 python3 - <<'PYEOF'
 import json, os, subprocess

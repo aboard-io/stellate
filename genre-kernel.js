@@ -59,6 +59,13 @@
     sp_nightdrive:{ file:"speech/nightdrive.wav", kind:"speech", durSec:1.6 },
     sp_herenow:{ file:"speech/herenow.wav", kind:"speech", durSec:1.7 },
     sp_slowdown:{ file:"speech/slowdown.wav", kind:"speech", durSec:1.9 },
+    // paleontologist narration (dino-synth voiceover, glitched at render)
+    sp_paleo_welcome: { file:"speech/paleo_welcome.wav",  kind:"speech", durSec:2.51 },
+    sp_paleo_mesozoic:{ file:"speech/paleo_mesozoic.wav", kind:"speech", durSec:8.06 },
+    sp_paleo_sauropod:{ file:"speech/paleo_sauropod.wav", kind:"speech", durSec:3.75 },
+    sp_paleo_rex:     { file:"speech/paleo_rex.wav",      kind:"speech", durSec:5.84 },
+    sp_paleo_bones:   { file:"speech/paleo_bones.wav",    kind:"speech", durSec:7.37 },
+    sp_paleo_skies:   { file:"speech/paleo_skies.wav",    kind:"speech", durSec:3.30 },
     horns_78:{ file:"78s/horns_78.wav", kind:"hit", durSec:6 },
     blues_vox_78:{ file:"78s/blues_vox_78.wav", kind:"hit", durSec:6 },
   };
@@ -164,6 +171,19 @@
       found:{role:"bed", vol:[.2,.32], pitch:[.6,.8], stretch:[.45,.6], cutoff:[2000,3400], sources:["iriomote","frogs","tokyo_station"]},
       stab:["off"], hits:{sources:["vox_a","sp_herenow"], pattern:"sparse", prob:.15},
       form:"wave" },
+    dinosynth: { label:"Dino synth", info:"dinosaur-themed dungeon synth: dark-ambient drones, medieval choir, tribal log-drums, primordial swamp",
+      bpm:[72,96], swing:[0,.05], humanize:[.15,.35],
+      progressions:["primeval","epic_min","andalusian","minor_run","mode_phrygian"],   // cinematic, moving — no static drone
+      kits:["tribal"], fills:["off","off","downlift"],   // full tribal kit carries it; fills mostly off (no fill-reliance)
+      bass:{patterns:["root","sub","off"], recipe:{model:["sub","reese"],cutoff:[240,460],res:[.05,.18],level:[.85,1.1],send:[.15,.35],dsend:[0,.1]}},
+      lead:{patterns:["wander","updown","pentaup"], recipe:{model:["brass","stack"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1500,2600],level:[.36,.5],send:[.55,.78],dsend:[.3,.5],vibrato:[.004,.01]}},   // warm theme (no inharmonic bell-FM)
+      pads:{prob:1, recipe:{model:["choir","strings","saw"],wave:"saw",cutoff:[700,1300],detune:[.006,.014],attack:[2.5,4.5],level:[.62,.82],send:[.6,.82],dsend:[.15,.3]}},
+      drums:{kickModel:["boom","808"],snareModel:["noise"],hatModel:["noise"],kick:[1.3,1.6],snare:[.5,.72],hat:[.55,.85],tune:[.78,.95],send:[.25,.45],dsend:[.3,.55]},   // kick hard, snare DOWN, hats up (whole kit), echo on the throws
+      fx:{reverb:[.82,.94], delayBeats:[.75,1.5], delayFb:[.5,.68], delayCut:[1500,2500], pump:[0,.05], crackle:[.04,.12], lowcut:[0,25], highcut:[8000,13000], comp:[.4,.62], grit:[.25,.5]},   // crackle way down; compressed + long dub echo
+      found:{role:"bed", vol:[.18,.3], pitch:[.6,.78], stretch:[.45,.6], cutoff:[1800,3000], sources:["frogs","iriomote","tokyo_station","factory"]},   // 4 beds rotate — pitched-down city recordings read as tar-pit / geothermal swamp
+      vox:{sources:["sp_paleo_welcome","sp_paleo_mesozoic","sp_paleo_sauropod","sp_paleo_rex","sp_paleo_bones","sp_paleo_skies"], vol:0.5, pitch:0.96, cutoff:6500},   // glitched paleontologist narration
+      stab:["off"], hits:{sources:["sp_herenow","vox_a"], pattern:"sparse", prob:.15},
+      form:"ritual" },   // creature solos + fuzz solo + glitched VO (see buildSections)
     neoclassical: { label:"Neoclassical", info:"felt piano, slow counterpoint, room air, rubato",
       bpm:[58,82], swing:[0,.1], humanize:[.3,.55],
       progressions:["canon","neosoul","dream","ii_v_i"], kits:["off"], fills:["off"],
@@ -288,6 +308,11 @@
       fx: blendRecipe(g=>g.fx),
       foundRole: side().found.role,
       foundSource: pick(rng, side().found.sources),
+      foundPool: (()=>{ const a=side().found.sources.slice(), o=[], n=Math.min(3,a.length);   // up to 3 distinct beds to rotate (kills the one-loop repeat)
+        while(o.length<n&&a.length) o.push(a.splice(Math.floor(rng()*a.length),1)[0]); return o; })(),
+      voxPool: (side().vox ? (()=>{ const a=side().vox.sources.slice(), o=[], n=Math.min(3,a.length);   // glitched VO lines to rotate across sections
+        while(o.length<n&&a.length) o.push(a.splice(Math.floor(rng()*a.length),1)[0]); return o; })() : []),
+      voxRecipe: side().vox || null,
       foundRecipe: blendRecipe(g=>({vol:g.found.vol,pitch:g.found.pitch,stretch:g.found.stretch,cutoff:g.found.cutoff})),
       stab: pick(rng, side().stab),
       hits: rng()<hitsSide.hits.prob ? {source:pick(rng,hitsSide.hits.sources), pattern:hitsSide.hits.pattern} : null,
@@ -357,6 +382,22 @@
         S("recede", {cycles:2*norm, pads:true, melody:lead==="off"?"off":"sparse", found:fnd(), sweep:"close"}),
         S("depart", {cycles:1*norm, pads:true, found:fnd()}),
       ];
+    } else if(c.form==="ritual"){
+      // planetarium dinosaur soundtrack: narrated, cinematic, SHORT. The theme melody
+      // enters early; two creatures solo (each its own voice); a grungy fuzz solo; the
+      // paleontologist VO is glitched throughout. Fixed cycles (no norm) = tight runtime.
+      const sauropod={model:"brass",cutoff:900, level:0.6, voices:1};                            // huge low bellow
+      const raptor  ={model:"stack",wave:"saw",cutoff:3500,res:0.2,level:0.48,voices:2,spread:0.01,vibrato:0.024}; // wailing cry with bite — saw + resonance (harmonic, not bell-FM)
+      const fuzz    ={model:"fuzz", cutoff:2600,level:0.66,voices:2,res:0.3,drive:1};            // noisy distorted solo
+      const vox=()=>({sourceId:"vox"});
+      secs=[
+        S("dawn",   {cycles:1, pads:true, found:fnd("bed"), vox:vox(), sweep:"open"}),                                  // "welcome to the age of dinosaurs"
+        S("theme",  {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd("bed")}),                             // melody/theme IN early
+        S("call",   {cycles:1, drums:kit, bass, pads:true, melody:"roar",   solo:sauropod, soloOctave:-1, found:fnd("bed"), vox:vox()}),
+        S("answer", {cycles:1, drums:kit, bass, pads:true, melody:"sparse", solo:raptor,   soloOctave:0,  sweep:"close"}),  // filter dives before the drop
+        S("shred",  {cycles:1, drums:kit, bass, pads:true, melody:"hero",   solo:fuzz,     found:fnd("bed"), vox:vox(), sweep:"open"}),  // sweep up into the distorted solo + glitch VO
+        S("finale", {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd("bed"), vox:vox(), sweep:"open"}),     // theme reprise + swell
+      ];
     } else {
       secs=[
         S("intro",      {cycles:1*norm, pads:c.padsOn, found:fnd()}),
@@ -382,17 +423,29 @@
       if(k>1.15||k<0.85) secs.forEach(s=>{s.cycles=Math.max(1,Math.round(s.cycles*k));});
     }
     const foundSources=[];
-    const isSample=!!SAMPLES[c.foundSource];
-    const src=isSample?SAMPLES[c.foundSource]:(SOURCES[c.foundSource]||{});
-    foundSources.push(Object.assign({id:c.foundSource,label:c.foundSource,url:src.url||""},
-      isSample?{samplePath:"found/samples/"+src.file,bpm:src.bpm,durSec:src.durSec}:{},
-      {vol:c.foundRecipe.vol,pitch:c.foundRole==="break"?1:c.foundRecipe.pitch,
-       stretch:c.foundRecipe.stretch,cutoff:Math.round(c.foundRecipe.cutoff)}));
+    // bed role rotates through up to 3 sources (each pitched a hair differently so it
+    // reads as a different place); break/chops keep the single tempo-locked source.
+    const bedPool=(c.foundRole==="bed"&&c.foundPool&&c.foundPool.length>1)?c.foundPool:[c.foundSource];
+    bedPool.forEach((sid,ix)=>{
+      const isS=!!SAMPLES[sid];
+      const sr=isS?SAMPLES[sid]:(SOURCES[sid]||{});
+      const pj=1+(ix*0.06-0.03);
+      foundSources.push(Object.assign({id:sid,label:sid,url:sr.url||""},
+        isS?{samplePath:"found/samples/"+sr.file,bpm:sr.bpm,durSec:sr.durSec}:{},
+        {vol:c.foundRecipe.vol,pitch:c.foundRole==="break"?1:round(c.foundRecipe.pitch*pj,3),
+         stretch:c.foundRecipe.stretch,cutoff:Math.round(c.foundRecipe.cutoff)}));
+    });
     if(c.hits){
       const h=SAMPLES[c.hits.source];
       if(h) foundSources.push({id:c.hits.source,label:c.hits.source,url:"",samplePath:"found/samples/"+h.file,
         durSec:h.durSec,vol:0.22,pitch:1,stretch:0.5,cutoff:4500});
     }
+    (c.voxPool||[]).forEach(vid=>{   // paleontologist VO lines, glitched at render
+      const v=SAMPLES[vid]; if(!v) return;
+      foundSources.push({id:vid,label:vid,url:"",samplePath:"found/samples/"+v.file,durSec:v.durSec,
+        vol:(c.voxRecipe&&c.voxRecipe.vol)||0.5, pitch:(c.voxRecipe&&c.voxRecipe.pitch)||0.96,
+        stretch:0.5, cutoff:(c.voxRecipe&&c.voxRecipe.cutoff)||6500});
+    });
     const state={
       bpm:c.bpm, keyOffset:opts.keyOffset!=null?opts.keyOffset:0, progression:c.progression,
       reverb:c.fx.reverb, seed:c.seed, swing:c.swing, humanize:c.humanize,
@@ -407,11 +460,12 @@
         drums:Object.assign(E.defaultInstruments().drums, c.drumRecipe),
       },
       foundSources,
-      sections:secs.map(s=>{
-        if(s.found&&s.found.sourceId==="src")s.found.sourceId=c.foundSource;
+      sections:(()=>{ let bi=0, vi=0; return secs.map(s=>{
+        if(s.found&&s.found.sourceId==="src"){ s.found.sourceId=bedPool[bi%bedPool.length]; bi++; }
         if(s.hits&&s.hits.sourceId==="hit")s.hits.sourceId=c.hits?c.hits.source:null;
         if(s.hits&&!s.hits.sourceId)delete s.hits;
-        return s; }),
+        if(s.vox&&s.vox.sourceId==="vox"){ if(c.voxPool&&c.voxPool.length){ s.vox.sourceId=c.voxPool[vi%c.voxPool.length]; vi++; } else delete s.vox; }
+        return s; }); })(),
     };
     state.genreMeta={genres:c.genres,t:c.t,seed:c.seed,form:c.form,kit:c.kit,progression:c.progression,
       bass:c.bassPattern+"("+c.bassRecipe.model+")",lead:c.leadPattern+"("+c.leadRecipe.model+")",
