@@ -87,6 +87,9 @@ Drag waypoints to move them, right-click to erase. Set the pace in the panel.
 <script src="wasm-audio.js"></script>
 <script src="video-layer.js"></script>
 <script src="strudel-export.js"></script>
+<script src="faust/state-engine.js"></script>
+<script src="faust/found-player.js"></script>
+<script src="faust/live.js"></script>
 <script type="module">
 import { h, render } from "https://esm.sh/preact@10.19.3";
 import htm from "https://esm.sh/htm@3.1.1";
@@ -247,9 +250,21 @@ function genreVideo(info){
 }
 
 // ---------- live engine ----------
+// ?engine=faust -> the Faust per-voice engine (FAUST-PORT.md phase 3 A/B flag)
+const FAUST=!/[?&]engine=csound/.test(location.search)&&window.FaustLive;   // Faust is the engine; ?engine=csound = legacy escape hatch
+let faustHandle=null;
 async function goLive(){
   try{
     set({live:true,barCount:0}); rebuildQueue();
+    if(FAUST){
+      faustHandle=await FaustLive.exploreLive(()=>S.playing, m=>set({status:m}), { onLoad:(r)=>{S.load=r;}, onBar:(info)=>{
+        set({barInfo:info,barCount:S.barCount+1});
+        if(S.waypoints.length>=2) travelStep();
+        glideStep();
+        genreVideo(info);
+      }});
+      return;
+    }
     await WasmAudio.exploreLive(()=>S.playing, m=>set({status:m}), { onLoad:(r)=>{S.load=r;}, onBar:(info)=>{
       set({barInfo:info,barCount:S.barCount+1});
       if(S.waypoints.length>=2) travelStep();
@@ -258,7 +273,9 @@ async function goLive(){
     }});
   }catch(e){ set({live:false,status:"live failed: "+e.message}); console.error(e); }
 }
-function stopLive(){ set({live:false}); WasmAudio.stopLive().then(()=>set({status:"stopped"})); }
+function stopLive(){ set({live:false});
+  if(faustHandle){ try{faustHandle.stop();}catch(e){} faustHandle=null; set({status:"stopped"}); return; }
+  WasmAudio.stopLive().then(()=>set({status:"stopped"})); }
 setInterval(()=>{ if(!S.live&&S.playing&&S.target){ set({barCount:S.barCount+1}); glideStep(); } },1400);
 
 // ---------- map (imperative SVG: 60Hz drags stay cheap) ----------

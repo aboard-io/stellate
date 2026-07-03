@@ -10,8 +10,9 @@ gate  = button("gate");
 decay = hslider("decay", 0.12, 0.02, 1, 0.005);
 level = hslider("level", 0.8, 0, 2, 0.01);
 
-// transeg -9 is a sharply convex decay; a short exponential release nails it
-aenv = en.are(0.0002, decay, gate);
+dec(tau) = ba.impulsify(gate) : (+ ~ *(ba.tau2pole(max(tau, 0.0005))));
+
+aenv = dec(decay/9);                    // transeg -9 ~ tau p3/9
 
 // butbp center 3100, bandwidth 2300  ->  Q = 3100/2300 ~= 1.35
 nz   = no.noise : fi.resonbp(3100, 1.35, 1);

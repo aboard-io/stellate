@@ -44,12 +44,14 @@ export async function createEngine(ctx, fixture) {
     throw new Error(`no param ${name}`);
   };
 
-  // ---- fx bus: 2 Faust inputs = ONE WebAudio input with 2 channels ----
+  // ---- fx bus: 6 Faust inputs = ONE WebAudio input with 6 channels ----
+  // (0 dryL, 1 dryR, 2 reverb send, 3 delay send, 4 ping-pong send, 5 sidechain;
+  // dry stays on native GainNode routes here, so 0/1/4/5 are left silent)
   const fx = await mkNode("fx_bus", "fx");
-  const fxMerge = ctx.createChannelMerger(2);
+  const fxMerge = ctx.createChannelMerger(6);
   fxMerge.connect(fx); fx.connect(master);
-  const revBus = ctx.createGain(); revBus.connect(fxMerge, 0, 0); // ch0 = reverb send
-  const delBus = ctx.createGain(); delBus.connect(fxMerge, 0, 1); // ch1 = delay send
+  const revBus = ctx.createGain(); revBus.connect(fxMerge, 0, 2); // ch2 = reverb send
+  const delBus = ctx.createGain(); delBus.connect(fxMerge, 0, 3); // ch3 = delay send
   const R = fixture.recipes;
   const spb = 60 / fixture.bpm;
   P(fx, "dtime").value = Math.min(1.5, R.delayBeats * spb);

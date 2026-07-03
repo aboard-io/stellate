@@ -1,20 +1,96 @@
-// fx_bus — the shared FX sends, imitating csd-engine.js instr 99 (reverbsc)
-// and instr 98 (feedback delay). TWO mono inputs:
-//   in 0 = reverb send bus (gaRevL/R analogue)
-//   in 1 = delay send bus  (gaDelL/R analogue)
-// Stereo out is 100% wet; the dry paths are native WebAudio GainNode routes.
-// A touch of delay feeds the reverb, like the csound delay tail washing.
+// fx_bus — the WHOLE csd-engine.js master section in one stereo module:
+//   instr 98 delay (feedback delay, tone lowpass in loop, 0.2 bleed to reverb)
+//   instr 95 ping-pong (cross-fed L<->R taps, tone darkening, 0.12 to reverb)
+//   instr 99 reverb (reverbsc -> zita_rev1_stereo here)
+//   instr 97 crackle (dust2 -> no.sparse_noise + hiss, way under the music)
+//   instr 96/100 master: gkCut sweep lowpass (mcut), sidechain pump (phasor
+//   duck like csound, optionally blended with an an.amp_follower on the sc
+//   input), grit (tanh drive), comp (dam -> co.compressor_stereo +
+//   makeup), tone tilt (lowcut/highcut butterworths), then
+//   co.limiter_1176_R4_stereo + the 0.95 clip.
+// Inputs: 0 dryL, 1 dryR, 2 reverb send, 3 delay send, 4 ping-pong send,
+//         5 sidechain source (kick bus; optional, silence = pure phasor pump)
 declare name "fx_bus";
 import("stdfaust.lib");
 
-dtime = hslider("dtime", 0.375, 0.02, 1.5, 0.001);  // delay time (s) — dotted 8th at 120
-dfb   = hslider("dfb", 0.35, 0, 0.9, 0.01);         // delay feedback
-rgain = hslider("rgain", 1, 0, 2, 0.01);            // reverb return level
-dgain = hslider("dgain", 0.8, 0, 2, 0.01);          // delay return level
+// delay (instr 98)
+dtime = hslider("dtime", 0.375, 0.02, 1.9, 0.001);
+dfb   = hslider("dfb", 0.35, 0, 0.92, 0.01);
+dcut  = hslider("dcut", 2600, 300, 9000, 1);
+dgain = hslider("dgain", 1, 0, 2, 0.01);
+// ping-pong (instr 95)
+pptime = hslider("pptime", 0.75, 0.05, 2.4, 0.001);
+ppfb   = hslider("ppfb", 0.66, 0, 0.85, 0.01);
+pptone = hslider("pptone", 3000, 300, 9000, 1);
+// reverb (instr 99)
+rgain = hslider("rgain", 1, 0, 3.5, 0.01);
+// crackle (instr 97)
+crackle = hslider("crackle", 0, 0, 1, 0.01);
+// master (instr 96 + 100)
+mcut    = hslider("mcut", 21000, 180, 21000, 1) : si.smoo;
+pump    = hslider("pump", 0, 0, 0.9, 0.01);
+bps     = hslider("bps", 2, 0.2, 8, 0.001);
+scmix   = hslider("scmix", 0, 0, 1, 0.01);       // 0 = phasor duck (csound), 1 = amp-follower duck
+grit    = hslider("grit", 0, 0, 1, 0.01);
+comp    = hslider("comp", 0, 0, 1, 0.01);
+lowcut  = hslider("lowcut", 10, 10, 400, 1);
+highcut = hslider("highcut", 20500, 1000, 20500, 1);
 
-// zita_rev1_stereo(rdel, f1, f2, t60dc, t60m, fsmax) — mid t60 ~2.6s, dark-ish top
-process(revin, delin) = ((rin, rin : re.zita_rev1_stereo(40, 200, 5500, 3.2, 2.6, 48000)), (d, d)) :> _, _
+MAXD = 131072;   // ~3 s at 44.1k
+
+// instr 98: tap -> tone -> out & *fb -> back into the write head
+fbdel(x) = ((+(x) : de.fdelay(MAXD, dtime*ma.SR) : fi.lowpass(1, dcut)) ~ *(dfb));
+
+// instr 95: cross-feeding stereo taps (mono gaPPL feed, like the csound bus)
+pingpong(x) = pl, pr letrec {
+  'pl = (x + pr*ppfb) : de.delay(MAXD, int(pptime*ma.SR)) : fi.lowpass(1, pptone);
+  'pr = (pl*ppfb)     : de.delay(MAXD, int(pptime*ma.SR)) : fi.lowpass(1, pptone);
+};
+
+// instr 97: dust2(kcrk*0.5, 30+kcrk*220) + hiss, band-limited, *0.3
+crk = (no.sparse_noise(30 + crackle*220)*crackle*0.5
+        : fi.lowpass(2, 6500) : fi.highpass(2, 300))
+    + (no.noise*0.004*crackle : fi.lowpass(2, 4000)) : *(0.3);
+
+// master chain (instr 100 order: sweep, pump, grit, comp, tone, clip)
+duckenv(sc) = (1-scmix)*exp(-6*os.lf_sawpos(bps)) + scmix*min(1.0, an.amp_follower(0.12, sc)*3);
+gritfx(x) = ma.tanh(x*(1 + grit*2.6)) * (1.0/(1 + grit*0.7));
+gritmix(x) = x + (gritfx(x) - x)*min(1.0, grit*8);
+cratio  = 1.0/max(0.45, 1 - 0.55*comp);
+cthresh = 20*log10(max(0.2, 0.55 - 0.35*comp));
+makeup  = 1 + 0.8*comp;
+master(sc, l, r) = l, r
+  : (fi.lowpass(2, min(mcut, 20500)), fi.lowpass(2, min(mcut, 20500)))
+  : (*(duck), *(duck))
+  : (gritmix, gritmix)
+  : co.compressor_stereo(cratio, cthresh, 0.01, 0.09)
+  : (*(makeup), *(makeup))
+  : (fi.highpass(2, lowcut), fi.highpass(2, lowcut))
+  : (fi.lowpass(2, highcut), fi.lowpass(2, highcut))
+  : (clip, clip)
 with {
-  d   = (delin : ef.echo(2.0, dtime, dfb)) * dgain;
-  rin = (revin + d*0.25) * rgain;
+  duck = 1 - pump*duckenv(sc);
+  // csound `clip aL, 0, 0.95` = Bram de Jong soft clip (method 0, iarg 0.5):
+  // linear below 0.5*limit, saturating knee, hard cap at (0.5+1)/2*limit =
+  // 0.7125 (the csound renders' exact -2.9 dB max). The 1176 limiter that
+  // used to sit here gain-reduced hot mixes ~5 dB below the csound render —
+  // replaced during the Phase-2 six-genre A/B gate.
+  clip(x) = ma.signum(x)*0.95*bdj(min(abs(x)/0.95, 1.0)) with {
+    a = 0.5;
+    bdj(v) = ba.if(v < a, v, a + (v-a)/(1.0 + ((v-a)/(1.0-a))^2));
+  };
+};
+
+process(dl, dr, rev, del, pp, sc) = master(sc, mixL, mixR)
+with {
+  d   = fbdel(del) * dgain;
+  ppl = pingpong(pp) : _, !;      // identical subtrees are hash-consed:
+  ppr = pingpong(pp) : !, _;      // one ping-pong, one zita instance
+  rin = (rev + d*0.2 + (ppl + ppr)*0.12) * rgain;
+  // dark crossover/return + LONG t60: reverbsc at fb 0.85 has a much longer,
+  // darker tail than stock zita — this is what pulls the A/B centroid in line
+  rl  = (rin, rin) : re.zita_rev1_stereo(40, 200, 2000, 5.0, 3.5, 48000) : fi.lowpass(1, 2000), ! ;
+  rr  = (rin, rin) : re.zita_rev1_stereo(40, 200, 2000, 5.0, 3.5, 48000) : !, fi.lowpass(1, 2000);
+  mixL = dl + rl + d + ppl + crk;
+  mixR = dr + rr + d + ppr + crk;
 };
