@@ -19,6 +19,15 @@ illustrative render, not a release.
 | `frogs` | [`aporee_61056_70186`](https://archive.org/details/aporee_61056_70186) (CC BY-NC-ND) | frog chorus, Nishiaizu, Fukushima | genre-kernel: jungle |
 | `iriomote` | [`aporee_30783_35405`](https://archive.org/details/aporee_30783_35405) (public domain) | Iriomote Island day/night | genre-kernel: ambient/downtempo |
 | `shibuya` | [`aporee_20542_23865`](https://archive.org/details/aporee_20542_23865) (CC BY-SA) | Udagawachō street walk, Shibuya | genre-kernel: house |
+| `tw_intrain` | [`radio_aporee_log_2014_06_02_12_21_50`](https://archive.org/details/radio_aporee_log_2014_06_02_12_21_50) | aboard a train, Hagen Hbf — interior clatter | genre-kernel: transitwave |
+| `tw_trains` | [`aporee_51245_58484`](https://archive.org/details/aporee_51245_58484) — `RailwayStationDivaaSlovenia.mp3` | passenger & cargo trains, Divača station, Slovenia | genre-kernel: transitwave |
+| `tw_stationhall` | [`aporee_39219_48146`](https://archive.org/details/aporee_39219_48146) — `soundmap201812162.mp3` | walking into Taoyuan station hall, Taiwan | genre-kernel: transitwave |
+| `tw_platform` | [`aporee_72529_84687`](https://archive.org/details/aporee_72529_84687) | Hastings railway station approach, UK | genre-kernel: transitwave |
+| `tw_arrival` / `tw_pass` (one-shots) | [`aporee_9730_11655`](https://archive.org/details/aporee_9730_11655) — `CuteffectMuggenhof.mp3` | a train passing, Muggenhof, Nuremberg — trimmed to two one-shots in `fetch-found-samples.sh` | genre-kernel: transitwave |
+
+The transitwave station-PA voice (train-schedule announcements + the departures litany)
+is **synthesized** with `espeak-ng` through a telephone-band filter — see the
+`saytransit` recipes in `fetch-found-samples.sh`. Not a found recording.
 
 ## Recordings used historically (available to re-layer)
 
@@ -52,8 +61,46 @@ Timestamps were hand-curated by sampling frames across each disc (2026-06).
 | [`ss098-0001`](https://archive.org/details/ss098-0001) | NASA SpaceDisc Vol. 1 (1984) | Earth from orbit, STS spacewalk | NASA footage — public domain |
 | [`tokyo-night-drive-4-k-2016`](https://archive.org/details/tokyo-night-drive-4-k-2016) | Tokyo Night Drive 首都高 (2016) | blue-hour expressway, dusk highway, Rainbow Bridge | public domain |
 | [`from-SF`](https://archive.org/details/from-SF) | Night drive from SF | taillights at an intersection | public domain |
+| [`201359_Subways`](https://archive.org/details/201359_Subways) | The Wreck of the NY Subways (Newsreel, 1970) | NYC subway platform, train, terminal — transitwave | newsreel |
+| [`0845_Last_Clear_Chance_The_08_29_26_00`](https://archive.org/details/0845_Last_Clear_Chance_The_08_29_26_00) | Last Clear Chance (1959, Prelinger) | express train speeding, the rails — transitwave | Prelinger Archives |
+| [`HMIronHorseRamble98234`](https://archive.org/details/HMIronHorseRamble98234) | Iron Horse Ramble, Reading RR (home movie, 1960) | from the train — transitwave | home movie |
+| [`098243`](https://archive.org/details/098243) | PA rail fan: Dearborn station (home movie, 1960–61) | station platform & concourse — transitwave | home movie |
 
 The NASA material is public domain. The demo discs and Video Drug volumes carry
 no explicit license; they're used here as brief, transformed, muted excerpts in
 a non-commercial art context. Don't redistribute the clips as media — point
 people at the recipe and the Archive items instead.
+
+# Voice / radio / poetry sources & attribution
+
+The found-voice layer (`found/vx_*.wav`) is talking, poetry, old radio, numbers
+stations and time signals from the **Internet Archive**. Not committed —
+`fetch-found-voice.sh` is the committed recipe (curl + ffmpeg trim to ≤90s mono
+44.1k). Licenses vary **per item**; ND-licensed entries are fine for local
+sketches but flag a human decision before any release that chops/pitches them.
+
+| local name | Internet Archive item | content / creator | license |
+|---|---|---|---|
+| `vx_burroughs` | [`naropa_william_s_burroughs3`](https://archive.org/details/naropa_william_s_burroughs3) | William S. Burroughs reading — Naropa Poetics Audio Archive | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_ginsberg` | [`Allen_Ginsberg_and_Anne_Waldman_reading_April_1977_77C002`](https://archive.org/details/Allen_Ginsberg_and_Anne_Waldman_reading_April_1977_77C002) | Allen Ginsberg & Anne Waldman reading, April 1977 — Naropa | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_waldman` | [`Anne_Waldman_reading_1978_August_1978_78P110`](https://archive.org/details/Anne_Waldman_reading_1978_August_1978_78P110) | Anne Waldman reading, August 1978 — Naropa | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_conet_poacher` | [`ird059`](https://archive.org/details/ird059) — `tcp_d1_06` | The Conet Project: The Lincolnshire Poacher (MI6 numbers station) — Irdial-Discs | Irdial "Free Music Philosophy" (free to copy; ⚠ no CC grant) |
+| `vx_conet_swedish` | [`ird059`](https://archive.org/details/ird059) — `tcp_d1_01` | The Conet Project: The Swedish Rhapsody — Irdial-Discs | Irdial "Free Music Philosophy" (free to copy; ⚠ no CC grant) |
+| `vx_blake` | [`songsofinnocenceandexperience_2001_librivox`](https://archive.org/details/songsofinnocenceandexperience_2001_librivox) | Blake, *Songs of Experience* — LibriVox volunteers | public domain |
+| `vx_dickinson` | [`dickinson_poems_bm_librivox`](https://archive.org/details/dickinson_poems_bm_librivox) | Dickinson, "Because I could not stop for Death" — LibriVox (Becky Miller) | public domain |
+| `vx_whitman` | [`leaves_of_grass_librivox`](https://archive.org/details/leaves_of_grass_librivox) | Whitman, *Song of Myself* pt. 1 — LibriVox volunteers | public domain |
+| `vx_xminusone` | [`OTRR_X_Minus_One_Singles`](https://archive.org/details/OTRR_X_Minus_One_Singles) | *X Minus One*, "The Cave of Night" (NBC, 1956) — countdown intro | OTRR collection tagged **CC BY-NC-ND 3.0** (⚠ ND; underlying show OTRR-certified PD) |
+| `vx_suspense` | [`OTRR_Suspense_Singles_By_Year_1942`](https://archive.org/details/OTRR_Suspense_Singles_By_Year_1942) | *Suspense*, "The Hitch-Hiker" w/ Orson Welles (CBS, 1942) — opening | OTRR collection tagged **CC BY-NC-ND 4.0** (⚠ ND; underlying show OTRR-certified PD) |
+| `vx_fdr` | [`FDRFiresideChatWarOnJapan`](https://archive.org/details/FDRFiresideChatWarOnJapan) | FDR fireside chat, Dec 9 1941 | public domain (PD mark) |
+| `vx_dday` | [`Complete_Broadcast_Day_D-Day`](https://archive.org/details/Complete_Broadcast_Day_D-Day) | CBS complete broadcast day, June 6 1944, part 1 — first bulletins | public domain |
+| `vx_wwvh` | [`sraa-7ov2e9got5ntfl3y4r9mnblppuzdkm`](https://archive.org/details/sraa-7ov2e9got5ntfl3y4r9mnblppuzdkm) | NIST WWVH time station as heard in the 1980s — Shortwave Radio Audio Archive | **CC BY-NC 3.0** (derivatives OK, non-commercial) |
+| `vx_apollo` | [`apollo11_highlights`](https://archive.org/details/apollo11_highlights) | Apollo 11 mission audio highlights (capcom/crew loop) | NASA voice traffic — public domain (item has no license statement) |
+| `vx_timelady` | [`AtTheTone01`](https://archive.org/details/AtTheTone01) | "At The Tone" 01 — telephone time-of-day / weather announcement recordings, comp. J Frederick | ⚠ none stated |
+| `vx_cn_east` | [`sailing-the-seas-depends-on-the-helmsman-english`](https://archive.org/details/sailing-the-seas-depends-on-the-helmsman-english) | "The East Is Red", massed chorus + orchestra — China Record Corp., 1967 (chinawave) | **CC0** |
+| `vx_cn_march` | [`Music_of_the_Chinese_Revolution`](https://archive.org/details/Music_of_the_Chinese_Revolution) | "March of the People's Liberation Army", band (chinawave) | ⚠ none stated (LP rip) |
+| `vx_cn_opera` | [`lp_arias-from-the-opera-the-white-haired-g_china-opera-and-dance-drama-theatre`](https://archive.org/details/lp_arias-from-the-opera-the-white-haired-g_china-opera-and-dance-drama-theatre) | "The North Wind Blows" from *The White-Haired Girl* — China Opera and Dance Drama Theatre, 1950s (chinawave) | ⚠ none stated (LP rip) |
+| `vx_cn_speech` | [`sraa-radio-peking-1963`](https://archive.org/details/sraa-radio-peking-1963) | Radio Peking shortwave broadcast, 1963 (rec. Ian Holder) — Shortwave Radio Audio Archive (chinawave) | **CC BY-NC 3.0** (derivatives OK, non-commercial) |
+| `vx_sv_choir` | [`78_polushko-polie…gbia0060054b`](https://archive.org/details/78_polushko-polie-my-own-my-beloved-field_a-v-alexandrov-peoples-artist-of-the-u_gbia0060054b) | "Polyushko-Polye" — A.V. Alexandrov Red Army Ensemble, 78rpm (sovietwave) | pre-1946 Soviet recording, PD-old; George Blood rip, no license stated |
+| `vx_sv_march` | [`78_march-of-the-tanks…gbia0033872b`](https://archive.org/details/78_march-of-the-tanks_chorus-and-orch-gabt-ussr-elen-senkewich-v-timofeiev-m-bl_gbia0033872b) | "March of the Tanks" — chorus & orch. GABT USSR, 1941 78rpm (sovietwave) | pre-1946, PD-old; no license stated |
+| `vx_sv_speech` | [`leninspeeches1919-1921`](https://archive.org/details/leninspeeches1919-1921) | V.I. Lenin, speeches recorded on gramophone discs, 1919–1921 (sovietwave) | PD-old (1919–21 recordings) |
+| `vx_sv_radio` | [`sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977`](https://archive.org/details/sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977) | Radio Moscow English service, Soyuz 26 launch, Dec 10 1977 — Shortwave Radio Audio Archive (sovietwave) | **CC BY-NC 3.0** (derivatives OK, non-commercial) |

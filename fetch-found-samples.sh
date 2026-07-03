@@ -92,7 +92,8 @@ sev8(){ # item | file | start | dur | name
   ffmpeg -y -loglevel error -ss "$3" -t "$4" -i /tmp/78.mp3 -ac 1 -ar 44100     -af "highpass=f=180,lowpass=f=6500,loudnorm=I=-16:TP=-1" "$out"
 }
 mkdir -p found/samples/78s
-sev8 78_st-louis-blues_louis-armstrong-and-his-orchestra-w-c-handy_gbia0001837b "78_st-louis-blues_louis-armstrong-and-his-orchestra-w-c-handy_gbia0001837b_01_2.3_CT_EQ.mp3" 12 12 horns_78
+# (was St. Louis Blues / gbia0001837b — that item went access-restricted; Europe's Society Orchestra brass band, PD 1914, is the replacement)
+sev8 Europes_Society_Orch-Castle_Rag "Europes_Society_Orch-Castle_House_Rag-Victor-35372.mp3" 20 12 horns_78
 sev8 78_after-youve-gone_pee-wee-hunt-and-his-orchestra-crammer-layton_gbia0262239b "AFTER YOU'VE GONE - PEE WEE HUNT and his Orchestra.mp3" 8 10 blues_vox_78
 
 # more rave one-shots from deeper in the Dangerous CD
@@ -171,6 +172,150 @@ sayca ca_fivehole  "five hole! oh, what a beauty!"                              
 sayca ca_gretzky   "gretzky, behind the net, he scores!"                        42 112 "anull"
 sayca ca_save      "glove save! and a beauty!"                                  50 118 "anull"
 sayca ca_overtime  "overtime. sudden death. the nation holds its breath."       36 100 "anull"
+
+# --- transitwave: station-PA train-schedule announcements (espeak; telephone band + slight slowdown = PA timbre) ---
+saytransit() { # name | text | pitch | speed | extra-af
+  local out="found/samples/speech/${1}.wav"
+  [ -s "$out" ] && return 0
+  echo "→ transit $1"
+  espeak-ng -v en-us -p "$3" -s "$4" -w /tmp/say.wav "$2"
+  # harmonize the PA voice: root + a fifth above + an octave below, mixed together.
+  # rubberband pitch-shifts WITHOUT changing duration, so the three voices stay
+  # time-aligned = a station-announcement robot choir (telephone-band, slightly glitched
+  # later by the engine).
+  ffmpeg -y -loglevel error -i /tmp/say.wav -filter_complex \
+    "[0:a]highpass=f=280,lowpass=f=3600,${5:-anull}[b];[b]asplit=3[r][f][o];\
+[f]rubberband=pitch=1.4983,volume=0.5[fifth];[o]rubberband=pitch=0.5,volume=0.55[oct];\
+[r][fifth][oct]amix=inputs=3:normalize=0,loudnorm=I=-15:TP=-1[out]" \
+    -map "[out]" -ac 1 -ar 44100 "$out"
+}
+saytransit tw_next      "the next regional train, to poughkeepsie, departs from track nine, at nine fourteen"        30 148 "asetrate=44100*0.97,aresample=44100"
+saytransit tw_arriving  "now arriving on track two, the seven forty five express, to new haven"                      28 150 "anull"
+saytransit tw_standclear "stand clear of the closing doors, please"                                                 22 138 "anull"
+saytransit tw_express   "this is a manhattan bound express train. the next stop is, fourteenth street, union square" 26 150 "anull"
+saytransit tw_delay     "the northbound train to croton harmon, is delayed, approximately ten minutes"              30 150 "asetrate=44100*0.97,aresample=44100"
+saytransit tw_gap       "please mind the gap, between the train, and the platform"                                   26 142 "anull"
+saytransit tw_aboard    "all aboard. the empire service to albany, now boarding"                                    22 134 "anull"
+saytransit tw_local     "this is a brooklyn bound local train. transfer is available, for the A, C, and E trains"    28 150 "anull"
+saytransit tw_terminus  "this train terminates here. last stop, grand central terminal. please take your belongings" 24 140 "anull"
+saytransit tw_tickets   "tickets, please. have your tickets ready, for inspection"                                  30 146 "anull"
+# the departures litany — the schedule itself, read out (chopped texture, Reich-style)
+saytransit tw_schedule  "departures. eight oh two, hudson line, local. eight fifteen, harlem line, express. eight twenty nine, new haven. eight forty one, port jervis. eight fifty three, montauk. nine oh seven, ronkonkoma. nine nineteen, babylon. now boarding, all stations." 32 165 "anull"
+
+# --- station names from major metros worldwide (buried, triggered every measure; the engine
+#     glitches them downward + gates the amplitude with a square LFO) ---
+saystation() { # name | text
+  local out="found/samples/speech/${1}.wav"
+  [ -s "$out" ] && return 0
+  echo "→ station $1"
+  espeak-ng -v en-us+f3 -p 38 -s 148 -w /tmp/say.wav "$2"   # +f3 = a feminine voice
+  ffmpeg -y -loglevel error -i /tmp/say.wav -ac 1 -ar 44100 -af "highpass=f=300,lowpass=f=6500,loudnorm=I=-15:TP=-1.5" "$out"
+}
+saystation st_oxford   "Oxford Circus"          # London
+saystation st_baker    "Baker Street"           # London
+saystation st_kings    "King's Cross"           # London
+saystation st_chatelet "Chatelet"               # Paris
+saystation st_bastille "Bastille"               # Paris
+saystation st_montpar  "Montparnasse"           # Paris
+saystation st_shinjuku "Shinjuku"               # Tokyo
+saystation st_shibuya  "Shibuya"                # Tokyo
+saystation st_ginza    "Ginza"                  # Tokyo
+saystation st_alex     "Alexanderplatz"         # Berlin
+saystation st_zoo      "Zoo Station"            # Berlin
+saystation st_komso    "Komsomolskaya"          # Moscow
+saystation st_times    "Times Square"           # New York
+saystation st_grand    "Grand Central"          # New York
+saystation st_gangnam  "Gangnam"                # Seoul
+saystation st_sol      "Puerta del Sol"         # Madrid
+saystation st_marien   "Marienplatz"            # Munich
+saystation st_central  "Central"                # Hong Kong
+saystation st_circular "Circular Quay"          # Sydney
+saystation st_dam      "Dam Square"             # Amsterdam
+# many more global stops so they don't repeat within a track
+saystation st_victoria "Victoria"               # London
+saystation st_waterloo "Waterloo"               # London
+saystation st_bank     "Bank"                   # London
+saystation st_liverpool "Liverpool Street"      # London
+saystation st_paddington "Paddington"           # London
+saystation st_camden   "Camden Town"            # London
+saystation st_brixton  "Brixton"                # London
+saystation st_lazare   "Saint Lazare"           # Paris
+saystation st_nord     "Gare du Nord"           # Paris
+saystation st_nation   "Nation"                 # Paris
+saystation st_opera    "Opera"                  # Paris
+saystation st_pigalle  "Pigalle"                # Paris
+saystation st_belleville "Belleville"           # Paris
+saystation st_ueno     "Ueno"                   # Tokyo
+saystation st_akiba    "Akihabara"              # Tokyo
+saystation st_shinagawa "Shinagawa"             # Tokyo
+saystation st_roppongi "Roppongi"               # Tokyo
+saystation st_ikebukuro "Ikebukuro"             # Tokyo
+saystation st_nakano   "Nakano"                 # Tokyo
+saystation st_union    "Union Square"           # New York
+saystation st_penn     "Penn Station"           # New York
+saystation st_fulton   "Fulton Street"          # New York
+saystation st_atlantic "Atlantic Avenue"        # New York
+saystation st_coney    "Coney Island"           # New York
+saystation st_astoria  "Astoria"                # New York
+saystation st_bedford  "Bedford Avenue"         # New York
+saystation st_potsdamer "Potsdamer Platz"       # Berlin
+saystation st_kotti    "Kottbusser Tor"         # Berlin
+saystation st_hbf      "Hauptbahnhof"           # Berlin
+saystation st_warschauer "Warschauer Strasse"   # Berlin
+saystation st_arbat    "Arbatskaya"             # Moscow
+saystation st_kiev     "Kievskaya"              # Moscow
+saystation st_atocha   "Atocha"                 # Madrid
+saystation st_granvia  "Gran Via"               # Madrid
+saystation st_hongdae  "Hongdae"                # Seoul
+saystation st_itaewon  "Itaewon"                # Seoul
+saystation st_jamsil   "Jamsil"                 # Seoul
+saystation st_mongkok  "Mong Kok"               # Hong Kong
+saystation st_causeway "Causeway Bay"           # Hong Kong
+saystation st_admiralty "Admiralty"             # Hong Kong
+saystation st_orchard  "Orchard"                # Singapore
+saystation st_raffles  "Raffles Place"          # Singapore
+saystation st_bugis    "Bugis"                  # Singapore
+saystation st_townhall "Town Hall"              # Sydney
+saystation st_wynyard  "Wynyard"                # Sydney
+saystation st_bloor    "Bloor Yonge"            # Toronto
+saystation st_spadina  "Spadina"                # Toronto
+saystation st_zocalo   "Zocalo"                 # Mexico City
+saystation st_pino     "Pino Suarez"            # Mexico City
+saystation st_rajiv    "Rajiv Chowk"            # Delhi
+saystation st_chandni  "Chandni Chowk"          # Delhi
+saystation st_taksim   "Taksim"                 # Istanbul
+saystation st_kadikoy  "Kadikoy"                # Istanbul
+saystation st_tcentralen "T Centralen"          # Stockholm
+saystation st_slussen  "Slussen"                # Stockholm
+saystation st_stephans "Stephansplatz"          # Vienna
+saystation st_rossio   "Rossio"                 # Lisbon
+saystation st_mustek   "Mustek"                 # Prague
+saystation st_catalunya "Catalunya"             # Barcelona
+saystation st_sagrada  "Sagrada Familia"        # Barcelona
+saystation st_termini  "Termini"                # Rome
+saystation st_colosseo "Colosseo"               # Rome
+saystation st_belmont  "Belmont"                # Chicago
+saystation st_parkst   "Park Street"            # Boston
+saystation st_harvard  "Harvard"                # Boston
+saystation st_embarcadero "Embarcadero"         # San Francisco
+saystation st_powell   "Powell Street"          # San Francisco
+saystation st_metrocenter "Metro Center"        # Washington
+saystation st_dupont   "Dupont Circle"          # Washington
+saystation st_centraal "Centraal"               # Amsterdam
+saystation st_se       "Se"                     # Sao Paulo
+saystation st_paulista "Paulista"               # Sao Paulo
+saystation st_retiro   "Retiro"                 # Buenos Aires
+saystation st_sadat    "Sadat"                  # Cairo
+
+# --- transitwave: real train one-shots (radio aporee — a train pass at Muggenhof, Nuremberg, CC) ---
+echo "→ hit train_arrival / train_pass"
+TW_TRAIN="$IA/aporee_9730_11655/CuteffectMuggenhof.mp3"
+[ -s found/samples/hits/train_arrival.wav ] || ffmpeg -y -loglevel error -ss 40 -t 8 -i "$TW_TRAIN" -ac 1 -ar 44100 -af "highpass=f=55,loudnorm=I=-15:TP=-1" found/samples/hits/train_arrival.wav
+[ -s found/samples/hits/train_pass.wav ]    || ffmpeg -y -loglevel error -ss 46 -t 4 -i "$TW_TRAIN" -ac 1 -ar 44100 -af "highpass=f=55,loudnorm=I=-15:TP=-1" found/samples/hits/train_pass.wav
+
+# the transit door "ding ding" chime — two-tone bell (F6 then C6), synthesized
+echo "→ hit door_ding"
+[ -s found/samples/hits/door_ding.wav ] || ffmpeg -y -loglevel error -f lavfi -i "aevalsrc='(exp(-t*7)*(0.6*sin(2*PI*1397*t)+0.25*sin(2*PI*2794*t)+0.1*sin(2*PI*3850*t)))*lt(t\,0.62) + (exp(-(t-0.72)*6)*(0.6*sin(2*PI*1047*(t-0.72))+0.25*sin(2*PI*2094*(t-0.72))+0.1*sin(2*PI*2890*(t-0.72))))*gte(t\,0.72)':d=1.6:s=44100" -ac 1 -ar 44100 -af "loudnorm=I=-16:TP=-1.5" found/samples/hits/door_ding.wav
 
 # the NHL goal horn (real; archive.org, academic use)
 echo "→ hit goal_horn"

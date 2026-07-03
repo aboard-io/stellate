@@ -38,6 +38,9 @@ changes in the catalog's own checkout and bump the submodule pointer.
 ./serve.sh               # http://localhost:8777/{play,builder}.html (needs http, not file://)
 node engine.test.js      # render-verifies every progression/key/melody via real csound
 node render-sample-video.js  # sample.mp4: song + video layer, cuts locked to section downbeats
+node genre-kernel.js journey genre-space-path.json --hours 4 --out journey/ --render --video
+                         # explorer-drawn path (⤓ path) -> mp3s + genre-affine videos
+                         # + gapless journey.mp3/.mp4 + mix page (see GENRE-SPACE.md)
 ```
 
 Requires `csound` (tested 6.18), `ffmpeg`, `curl`, `node`.
