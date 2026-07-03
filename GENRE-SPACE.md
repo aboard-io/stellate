@@ -144,4 +144,45 @@ node genre-kernel.js blend techno vaporwave 0.5     # a midpoint state
 node genre-kernel.js playlist techno vaporwave synthwave jungle \
      --tracks 30 --hours 6 --out playlist/          # the full journey (json)
 node genre-kernel.js render <state.json|preset>     # csound+ffmpeg -> mp3
+node genre-kernel.js journey genre-space-path.json \
+     --hours 4 --out journey/ --render --video      # a DRAWN path -> hours of
+                                                    # mp3s + genre-affine video +
+                                                    # journey.mp3/.mp4 + mix page
 ```
+
+## Journeys (drawn paths → hours of music + video)
+
+The explorer's **⤓ path** button exports the drawn waypoints as
+`genre-space-path.json` — each waypoint carries its blend weights
+(`[{g,w},…]`), so a point *between* anchors is a first-class waypoint.
+`journey()` generalizes `playlist()`: waypoints may be genre names **or**
+weight vectors; weights lerp along each leg and every track resolves via the
+same N-way `resolveMulti` the live explorer uses, with playlist discipline
+(key walks the circle of fifths, novelty memory rerolls repeats, duration
+targets met by section/cycle scaling). `--render` produces per-track mp3s,
+one gapless `journey.mp3`, and the mix page; `--video` renders each track's
+mp4 (`render-sample-video.js journey <state>`) with clips drawn from a
+per-genre affinity pool — a blend's pool is the union of its parents' pools,
+dominant genre first, cuts locked to section downbeats — then concatenates
+`journey.mp4`.
+
+## Strudel export (a third target)
+
+`strudel-export.js` proves the states are backend-agnostic a second time
+(after MIDI): it maps a state to **live-codeable Strudel** (strudel.cc, the
+TidalCycles JS port) at the *dimension* level, not as an event dump. One
+Strudel cycle = one 8-beat chord-bar (`setcpm(bpm/8)`); kits become idiomatic
+patterns + `bank()` drum machines (909→RolandTR909, 808→RolandTR808,
+boom→OberheimDMX); the humanity rule is re-encoded in their algebra
+(`degradeBy`/`sometimesBy`/`every` — nothing loops verbatim there either);
+swing→`swingBy(swing, 8)`, the mix dimensions→`room/size/delay*/lpf`,
+crackle→Strudel's `crackle` noise synth, breaks→`splice(8, …)` over the same
+slice tables, and the sample layer loads our own shelf same-origin via
+`strudel-samples.json` (relative paths; no `_base`, so it also resolves when
+fetched absolutely). `shareUrl(state)` targets `remix.html` — a self-hosted
+REPL over the vendored unmodified `@strudel/repl` 1.3.0 build in
+`strudel/vendor/` (AGPL-3.0; attribution in the page footer + vendor README) —
+and `strudelccUrl(state)` targets the mothership with the absolute map URL.
+All choices are seeded (same state → same code); the mix page links every
+track with **⧉ strudel**. CLI: `node strudel-export.js <genre|state.json>
+[--seed N] [--url]`.

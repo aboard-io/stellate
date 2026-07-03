@@ -28,6 +28,11 @@ recordings=(
   "leacock2|aboriginal_canada|aboriginalcanada_02_leacock.mp3|280|90|leacock2"
   "leacock3|aboriginal_canada|aboriginalcanada_03_leacock.mp3|420|90|leacock3"
   "leacock4|aboriginal_canada|aboriginalcanada_05_leacock.mp3|520|90|leacock4"
+  # transitwave beds — train interiors + station ambiences (radio aporee, CC) — the clatter
+  "tw_intrain|radio_aporee_log_2014_06_02_12_21_50|radio_aporee_log_2014_06_02_12_21_50.mp3|40|40|tw_intrain"   # in a train, Hagen Hbf
+  "tw_trains|aporee_51245_58484|RailwayStationDivaaSlovenia.mp3|120|40|tw_trains"                               # passenger & cargo trains, Divača
+  "tw_stationhall|aporee_39219_48146|soundmap201812162.mp3|30|40|tw_stationhall"                                # walking into the station, Taoyuan
+  "tw_platform|aporee_72529_84687|202605291903.mp3|60|40|tw_platform"                                           # station approach, Hastings
   # More recordings used historically (uncomment to layer them in the .csd):
   # "tsukiji|aporee_35166_40406|<file>.ogg|0|40|tsukiji"
   # "asakusa|aporee_21091_24510|<file>.ogg|0|40|asakusa"
