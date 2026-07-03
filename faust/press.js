@@ -173,6 +173,14 @@ async function press(state, outPath, opts) {
         for (const [sfx, v] of Object.entries(dxParams)) proc.setParamValue(sfx.startsWith("/DX7") ? sfx : "/DX7" + sfx, v);
       procs.push({ proc, R, changes: [], ivals: [], busyUntil: -1 });
     }
+    // per-voice INSERT chain (state.instruments.<voice>.inserts contract):
+    // voices accumulate into a unit-local buffer, the chain processes it
+    // whole-song (LFO phase + tails continuous), THEN the layer/fx sends
+    // apply — same insert point as live's node->chain->sends. Units without
+    // inserts keep the original direct-mix path untouched (bit-identical).
+    const hasIns = u.inserts && u.inserts.length;
+    const ubuf = hasIns ? new Float32Array(TOTAL) : null;
+
     // supersaw release tail must survive the gate-off
     let tail = u.tail || 1;
     if (u.module === "supersaw") tail = Math.max(tail, (u.params.release || 0.3) + 0.3);
@@ -219,18 +227,43 @@ async function press(state, outPath, opts) {
           while (ci < v.changes.length && v.changes[ci][0] < s + len) { applyChange(v.changes[ci]); ci++; }
           const ins = u.vocoder && speech ? [speech.subarray(s, s + len)] : (u.vocoder ? [new Float32Array(len)] : []);
           const o = v.proc.render(ins, len)[0];
-          const dg = (u.dry != null ? u.dry : 1) * curOut, rg = (u.rev || 0) * curOut,
-                lg = (u.del || 0) * curOut, pg = curPP * curOut;
-          for (let i = 0; i < len; i++) {
-            const x = o[i];
-            dry[s + i] += x * dg; rev[s + i] += x * rg; del[s + i] += x * lg;
-            if (pg) pp[s + i] += x * pg;
+          if (ubuf) {
+            // pre-insert: only per-note out gain applies (matches live, where
+            // the voice's out GainNode feeds the chain); sends come after.
+            for (let i = 0; i < len; i++) ubuf[s + i] += o[i] * curOut;
+          } else {
+            const dg = (u.dry != null ? u.dry : 1) * curOut, rg = (u.rev || 0) * curOut,
+                  lg = (u.del || 0) * curOut, pg = curPP * curOut;
+            for (let i = 0; i < len; i++) {
+              const x = o[i];
+              dry[s + i] += x * dg; rev[s + i] += x * rg; del[s + i] += x * lg;
+              if (pg) pp[s + i] += x * pg;
+            }
           }
           rendered += len;
         }
       }
     }
-    console.log(`  ${key}: ${events.length} ev -> ${u.module} x${P}, ${(rendered / SR).toFixed(1)}s voiced`);
+    if (ubuf) {
+      for (const eff of u.inserts) {
+        const ip = await mkProc(eff.module);
+        const IR = "/" + rootOf(eff.module) + "/";
+        for (const [k, pv] of Object.entries(eff.params)) ip.setParamValue(IR + k, pv);
+        if (eff.barSec) ip.setParamValue(IR + "barSec", 4 * spb); // tempo-synced LFO
+        for (let s = 0; s < TOTAL; s += BS) {
+          const len = Math.min(BS, TOTAL - s);
+          const o = ip.render([ubuf.subarray(s, s + len)], len)[0];
+          for (let i = 0; i < len; i++) ubuf[s + i] = o[i];
+        }
+      }
+      const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
+      for (let i = 0; i < TOTAL; i++) {
+        const x = ubuf[i];
+        dry[i] += x * dg; rev[i] += x * rg; del[i] += x * lg;
+      }
+    }
+    console.log(`  ${key}: ${events.length} ev -> ${u.module} x${P}, ${(rendered / SR).toFixed(1)}s voiced` +
+      (hasIns ? ` [inserts: ${u.inserts.map(i => i.type).join(">")}]` : ""));
   }
 
   // ---- fx_bus master section over the whole length ----

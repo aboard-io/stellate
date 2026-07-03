@@ -77,6 +77,35 @@ Conventions shared by all voice modules:
 | rave stab (instr 6) | `stab` | freq, decay, gain |
 | master filter sweep (instr 96) | `fx_bus` `mcut` param | engine automates exponentially, like `gkCut expon` |
 
+## Per-voice inserts (state.instruments.\<voice\>.inserts)
+
+The kernel may put 0-2 insert effects on any pitched recipe (pad/bass/melody;
+solos inherit melody's chain via soloVoices' recipe merge). They are applied
+INSERT-style between the voice and its layer tap / fx sends — never on the
+shared buses. `state-engine.insertChain` normalizes the contract (rate = Hz,
+`rateBars` = sweep period in bars, filtersweep `lo/hi` = OCTAVES relative to
+the voice's recipe cutoff → converted to Hz per voice); modules exist only
+when a state requests them.
+
+| type | module | params | notes |
+|---|---|---|---|
+| distort | `insert_distort` | drive, mix (+tone, default 4500) | ef.cubicnl + 1-pole tone; −14 dB/drive makeup keeps mix rides from being volume rides |
+| phaser | `insert_phaser` | rate, depth, mix | hand-rolled 4-stage tf1 allpass (shared coeff), fb 0.5, 180–3200 Hz exponential sweep |
+| chorus | `insert_chorus` | rate, depth, mix | modulated fdelay 15 ms ±9 ms·depth (6–24 ms) |
+| filtersweep | `insert_filtersweep` | rateBars, lo, hi, res, **barSec** | moog_vcf_2bn, raised-cosine LFO starting at lo; the ENGINE sets `barSec` (= 4·spb) from state.bpm and re-sets it on glides — full-wet by design |
+
+mix 0 is a bit-exact bypass (verified) — live never disconnects to bypass.
+Live wiring (live.js `ensureInserts`): pool voices sum into `pre` →
+chain → `tail` → `post` → pool-level dry/rev/del/pp sends; type changes
+rebuild the chain under a ~20 ms crossfade (old tail→0, new tail→1), param
+changes glide via setTargetAtTime, and the four processor registrations are
+prewarmed ~1.5 s after go-live (a mid-run type swap otherwise stalls the
+render thread ~10 ms on audio-thread module setup). Pools with no inserts
+keep the original per-node routing — a no-insert state renders byte-identical
+to pre-insert builds (regression-gated). Press (press.js): voices accumulate
+into a unit buffer, the chain processes it whole-song (continuous LFO phase +
+tails), then the unit's dry/rev/del sends apply.
+
 ## fx_bus (the whole master section, stereo out)
 
 Inputs: `0 dryL, 1 dryR, 2 reverb send, 3 delay send, 4 ping-pong send,

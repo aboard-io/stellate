@@ -97,7 +97,9 @@
   const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal","bossa","electro","newjack"];
   const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
   // the ⚡ transition control: what happens at the end of a section, into the next
-  const TRANSITIONS=["off","drum fill","tom fill","break fill","hat rush","cut","riser","sweep","downlift","impact","reverse","noise"];
+  // (2026-07: + "snare roll" march-crescendo, "stutter" last-half-bar gate,
+  //  "dropout" kick-drop silence beat — see buildEvents transition chain)
+  const TRANSITIONS=["off","drum fill","tom fill","break fill","hat rush","cut","riser","sweep","downlift","impact","reverse","noise","snare roll","stutter","dropout"];
   // synthesis-model vocabulary. FAUST-PORT: the voices themselves live in
   // faust/state-engine.js (pitchedUnit) + faust/dist/ modules; this predicate is
   // the engine-side canon anchors and validators check against — keep it in sync
@@ -116,11 +118,18 @@
 
   // models: pad saw|organ|fm · bass saw|sub|acid|reese · melody stack|pluck|fm
   // · kick boom|808|909 · snare noise|crack|clap · hat noise|metal
+  // `inserts` — per-voice insert-FX chain (0-2 entries), a first-class state
+  // dimension resolved by the genre kernel. CONTRACT (Faust engine consumes):
+  //   inserts: [{type:"distort",drive,mix} | {type:"phaser",rate,depth,mix} |
+  //             {type:"chorus",rate,depth,mix} |
+  //             {type:"filtersweep",rateBars,lo,hi,res}]
+  //   rate in Hz; rateBars = sweep period in BARS; lo/hi = octaves relative to
+  //   the voice's cutoff; drive/depth/mix/res in 0..1. Empty array = bypass.
   function defaultInstruments(){
     return {
-      pad:    { model:"saw", wave:"saw",  cutoff:1400, res:0.15, detune:0.006, attack:1.5, level:0.7, send:0.55, dsend:0.15 },
-      bass:   { model:"saw", wave:"saw",  cutoff:700,  res:0.15, level:1.0, send:0.08, dsend:0.0 },
-      melody: { model:"stack", wave:"sine", cutoff:3400, res:0.05, vibrato:0.006, vibRate:5.2, level:0.6, send:0.45, dsend:0.25, voices:2, spread:0.004 },
+      pad:    { model:"saw", wave:"saw",  cutoff:1400, res:0.15, detune:0.006, attack:1.5, level:0.7, send:0.55, dsend:0.15, inserts:[] },
+      bass:   { model:"saw", wave:"saw",  cutoff:700,  res:0.15, level:1.0, send:0.08, dsend:0.0, inserts:[] },
+      melody: { model:"stack", wave:"sine", cutoff:3400, res:0.05, vibrato:0.006, vibRate:5.2, level:0.6, send:0.45, dsend:0.25, voices:2, spread:0.004, inserts:[] },
       drums:  { kickModel:"boom", snareModel:"noise", hatModel:"noise", kick:1.0, snare:1.0, hat:1.0, tom:1.0, tune:1.0, send:0.18, dsend:0 }
     };
   }
@@ -354,6 +363,15 @@
       s(3,.6); t(3.25,.86,T[4],0.2); t(3.5,.88,T[5],0.2); t(3.75,.9,T[5],0.2);
     }
     k(3.75,.62);
+    return out;
+  }
+  // snare-roll crescendo — a full bar of straight 16ths swelling into the next
+  // downbeat (the march/big-band build; rng breathes the individual hit levels)
+  function snareRollEvents(S,rng){
+    const r=rng||Math.random, out=[];
+    out.push({drum:"kick",beat:S,dur:0.3,amp:0.5});
+    for(let i=0;i<16;i++) out.push({drum:"snare",beat:S+i*0.25,dur:0.16,amp:0.1+(i/16)*0.38+r()*0.04});
+    out.push({drum:"kick",beat:S+3.75,dur:0.3,amp:0.6});
     return out;
   }
   // jungle-style chop fill — two beats of 32nd-flavored snare stutter
@@ -686,6 +704,25 @@
       } else if(tr==="cut"){
         const cutFrom=cur+secBeats-2;        // the cut: drums vanish, the drop hits harder
         for(let i=drums.length-1;i>=0;i--) if(drums[i].beat>=cutFrom&&drums[i].beat<cur+secBeats) drums.splice(i,1);
+      } else if(tr==="snare roll"){
+        snareRollEvents(cur+secBeats-4,rng).forEach(e=>drums.push(e));
+      } else if(tr==="stutter"){
+        // stutter-gate the last half-bar: existing hits are replaced by a 16th-grid
+        // retrigger of the loudest survivor, amp ramping up into the downbeat
+        const from=cur+secBeats-2, upto=cur+secBeats;
+        let proto=null;
+        for(let i=drums.length-1;i>=0;i--) if(drums[i].beat>=from&&drums[i].beat<upto){
+          if(!proto||drums[i].amp>proto.amp) proto=drums[i];
+          drums.splice(i,1);
+        }
+        const dr=proto?proto.drum:"snare";
+        for(let i=0;i<8;i++) drums.push({drum:dr,beat:from+i*0.25,dur:0.12,amp:0.14+i*0.045+rng()*0.02});
+      } else if(tr==="dropout"){
+        // kick-drop silence: the final beat empties completely (drums AND any
+        // pitched note that starts inside it) so the next downbeat slams
+        const from=cur+secBeats-1, upto=cur+secBeats;
+        for(let i=drums.length-1;i>=0;i--) if(drums[i].beat>=from&&drums[i].beat<upto) drums.splice(i,1);
+        pitched=pitched.filter(e=>!(e.beat>=from&&e.beat<upto&&!e.solo));
       } else if(SFX_NUM[tr]){
         const hit=(tr==="impact"||tr==="noise");
         const sbeat = hit ? cur+secBeats : cur+secBeats-4;   // hit on next downbeat; build in final bar

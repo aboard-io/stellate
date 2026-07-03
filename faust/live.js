@@ -73,7 +73,47 @@
     const dryBus = ctx.createGain(), revBus = ctx.createGain(), delBus = ctx.createGain(), ppBus = ctx.createGain();
     dryBus.connect(merger, 0, 0); dryBus.connect(merger, 0, 1);
     revBus.connect(merger, 0, 2); delBus.connect(merger, 0, 3); ppBus.connect(merger, 0, 4);
-    const found = FP.FoundLive(ctx, { dry: dryBus, rev: revBus, del: delBus, pp: ppBus });
+
+    // ---- MIXER LAYER TAPS ----
+    // Every logical layer owns four collector gains (dry/rev/del/pp) sitting
+    // between the per-unit send gains and the master buses, plus a small
+    // analyser fed by dry+rev for a ~10Hz meter. Layer gain/mute/solo scale
+    // these collectors — a monitoring/override bus that never touches kernel
+    // state. lastBar tracks scheduling for the "not playing vs quiet" answer.
+    const LAYER_DEFS = [
+      ["pad", "pads"], ["bass", "bass"], ["lead", "lead"],
+      ["kick", "kick"], ["snare", "snare"], ["hats", "hats/toms"],
+      ["fx", "stabs/sfx"], ["beds", "found bed"], ["chops", "found chops"], ["vox", "hits/vox"],
+    ];
+    const layers = new Map();
+    for (const [id, label] of LAYER_DEFS) {
+      const mk = (bus) => { const g = ctx.createGain(); g.connect(bus); return g; };
+      const L = { id, label, gainVal: 1, muted: false, solo: false, lastBar: -99,
+        dry: mk(dryBus), rev: mk(revBus), del: mk(delBus), pp: mk(ppBus),
+        an: ctx.createAnalyser() };
+      L.an.fftSize = 512; L.buf = new Float32Array(512);
+      L.dry.connect(L.an); L.rev.connect(L.an);   // meter = dry+rev presence
+      layers.set(id, L);
+    }
+    const LAYER_OF_UNIT = (key) =>
+      key === "pad" ? "pad" : key === "bass" ? "bass"
+      : key === "melody" || key.slice(0, 5) === "solo:" ? "lead"
+      : key === "kick" ? "kick" : key === "snare" ? "snare"
+      : key === "hat" || key === "tom" ? "hats"
+      : key === "stab" || key === "sfx" ? "fx" : "fx";
+    function applyLayerGains() {
+      const anySolo = [...layers.values()].some((l) => l.solo);
+      const t = ctx.currentTime;
+      for (const L of layers.values()) {
+        const eff = (L.muted || (anySolo && !L.solo)) ? 0 : L.gainVal;
+        for (const g of [L.dry, L.rev, L.del, L.pp]) g.gain.setTargetAtTime(eff, t, 0.01);
+      }
+    }
+    const layerDests = (id) => { const L = layers.get(id); return { dry: L.dry, rev: L.rev, del: L.del, pp: L.pp }; };
+    const foundBeds = FP.FoundLive(ctx, layerDests("beds"));
+    const foundChops = FP.FoundLive(ctx, layerDests("chops"));
+    const foundVox = FP.FoundLive(ctx, layerDests("vox"));
+    const VOXISH = /^(sp_|vx_|vox_|tw_)/;
 
     const fxCache = {};
     function applyFx(state, when) {
@@ -102,20 +142,22 @@
     // ---- voice pools: unitKey -> {module, spec, nodes:[...], paramSig} ----
     const pools = new Map();
     let dx7Presets = null;
+    let curBarSec = 2;   // seconds per 4-beat bar; injectChord updates from bpm
     const POOL_SIZE = { pad: 4, bass: 2, melody: 3, solo: 2 };
     async function ensurePool(key, u) {
       let pool = pools.get(key);
-      if (pool && pool.module === u.module) { retune(pool, u); return pool; }
+      if (pool && pool.module === u.module) { await ensureInserts(key, pool, u); retune(pool, u); return pool; }
       if (pool) retirePool(pool);
       const n = u.drum || u.hold ? (u.pool > 1 ? 2 : 1) : (POOL_SIZE[u.role] || u.pool || 2);
       const nodes = [];
       for (let i = 0; i < n; i++) {
         const node = await mkNode(u.module, key + i);
         const out = ctx.createGain(); out.gain.value = 1; node.connect(out);
-        const dry = ctx.createGain(); dry.gain.value = u.dry != null ? u.dry : 1; out.connect(dry); dry.connect(dryBus);
-        const rev = ctx.createGain(); rev.gain.value = u.rev || 0; out.connect(rev); rev.connect(revBus);
-        const del = ctx.createGain(); del.gain.value = u.del || 0; out.connect(del); del.connect(delBus);
-        const pp = ctx.createGain(); pp.gain.value = 0; out.connect(pp); pp.connect(ppBus); // per-EVENT ping-pong send (snarePP)
+        const LY = layers.get(LAYER_OF_UNIT(key));   // this unit's mixer layer
+        const dry = ctx.createGain(); dry.gain.value = u.dry != null ? u.dry : 1; out.connect(dry); dry.connect(LY.dry);
+        const rev = ctx.createGain(); rev.gain.value = u.rev || 0; out.connect(rev); rev.connect(LY.rev);
+        const del = ctx.createGain(); del.gain.value = u.del || 0; out.connect(del); del.connect(LY.del);
+        const pp = ctx.createGain(); pp.gain.value = 0; out.connect(pp); pp.connect(LY.pp); // per-EVENT ping-pong send (snarePP)
         if (u.dx7 || u.dx7Preset || u.dx7Params) {
           let pre = null;
           if (u.dx7Params) pre = { params: u.dx7Params };   // state.dx7 contract: inline params
@@ -139,8 +181,88 @@
       }
       pool = { module: u.module, spec: u, nodes, paramSig: "" };
       pools.set(key, pool);
+      await ensureInserts(key, pool, u);
       retune(pool, u);
       return pool;
+    }
+
+    // ---- per-voice INSERT chains (state.instruments.<voice>.inserts) ----
+    // Chain sits between the pool's voices and its layer tap / fx sends:
+    //   voice out -> pre -> [insert nodes] -> tail -> post -> {dry,rev,del,pp}
+    // Insert nodes exist ONLY when the state requests them (a pool with no
+    // inserts keeps its original per-node send routing, zero extra nodes).
+    // Type changes rebuild the chain under a ~20ms equal-power-ish crossfade
+    // (old tail -> 0, new tail -> 1); param changes glide via setTargetAtTime;
+    // bypass inside a module is mix 0, never a disconnect.
+    async function ensureInserts(key, pool, u) {
+      const list = u.inserts || [];
+      const sig = list.map((i) => i.type).join(">");
+      if (!pool.ins) {
+        if (!sig) return;   // plain pool: path untouched (regression-identical)
+        // convert routing once: abandon the per-node send gains, sum into pre
+        const LY = layers.get(LAYER_OF_UNIT(key));
+        const pre = ctx.createGain(), post = ctx.createGain();
+        const gains = { dry: ctx.createGain(), rev: ctx.createGain(), del: ctx.createGain(), pp: ctx.createGain() };
+        gains.dry.gain.value = u.dry != null ? u.dry : 1; gains.rev.gain.value = u.rev || 0;
+        gains.del.gain.value = u.del || 0; gains.pp.gain.value = 0;
+        post.connect(gains.dry); gains.dry.connect(LY.dry);
+        post.connect(gains.rev); gains.rev.connect(LY.rev);
+        post.connect(gains.del); gains.del.connect(LY.del);
+        post.connect(gains.pp); gains.pp.connect(LY.pp);
+        for (const v of pool.nodes) {
+          try { v.out.disconnect(); } catch (e) {}
+          v.out.connect(pre);
+          v.gains = gains;   // retune + per-event pp now address the pool sends
+        }
+        pool.ins = { pre, post, gains, sig: null, paramSig: "", chain: null };
+      }
+      if (pool.ins.sig !== sig) {
+        // (re)build chain — new path fades in while the old fades out
+        const built = [];
+        for (const eff of list) built.push({ node: await mkNode(eff.module, key + ":" + eff.type), eff });
+        const tail = ctx.createGain(); tail.gain.value = 0;
+        let src = pool.ins.pre;
+        for (const b of built) { src.connect(b.node); src = b.node; }
+        src.connect(tail); tail.connect(pool.ins.post);
+        setInsertParams(built, true);
+        const t = ctx.currentTime, old = pool.ins.chain;
+        tail.gain.setTargetAtTime(1, t, 0.02);
+        if (old) {
+          old.tail.gain.setTargetAtTime(0, t, 0.02);
+          setTimeout(() => { try { old.tail.disconnect(); for (const b of old.built) b.node.disconnect(); } catch (e) {} }, 400);
+        }
+        pool.ins.chain = { built, tail };
+        pool.ins.sig = sig;
+        pool.ins.paramSig = JSON.stringify(list) + "|" + curBarSec;
+        return;
+      }
+      const psig = JSON.stringify(list) + "|" + curBarSec;
+      if (pool.ins.paramSig !== psig) {
+        pool.ins.paramSig = psig;
+        // params changed under the same types: glide them (declicked)
+        if (pool.ins.chain) {
+          for (let i = 0; i < list.length; i++) {
+            const b = pool.ins.chain.built[i];
+            if (b) b.eff = list[i];
+          }
+          setInsertParams(pool.ins.chain.built, false);
+        }
+      }
+    }
+    function setInsertParams(built, initial) {
+      const t = ctx.currentTime;
+      for (const b of built) {
+        for (const [k, v] of Object.entries(b.eff.params || {})) {
+          const p = P(b.node, k); if (!p) continue;
+          const vv = Math.min(p.maxValue, Math.max(p.minValue, v));
+          if (initial) p.value = vv; else p.setTargetAtTime(vv, t, 0.02);
+        }
+        if (b.eff.barSec) {   // tempo-synced sweep: engine owns barSec (bpm glides too)
+          const p = P(b.node, "barSec");
+          if (p) { const vv = Math.min(p.maxValue, Math.max(p.minValue, curBarSec));
+            if (initial) p.value = vv; else p.setTargetAtTime(vv, t, 0.05); }
+        }
+      }
     }
     function retune(pool, u, when) {
       const sig = JSON.stringify([u.params, u.dry, u.rev, u.del]);
@@ -170,6 +292,11 @@
         const g = P(v.node, "gate"); if (g) { g.cancelScheduledValues(0); g.value = 0; }
         setTimeout(() => { try { v.node.disconnect(); v.out.disconnect(); } catch (e) {} }, 1500);
       }
+      if (pool.ins) setTimeout(() => { try {
+        pool.ins.pre.disconnect(); pool.ins.post.disconnect();
+        if (pool.ins.chain) { pool.ins.chain.tail.disconnect(); for (const b of pool.ins.chain.built) b.node.disconnect(); }
+        for (const g of Object.values(pool.ins.gains)) g.disconnect();
+      } catch (e) {} }, 1500);
     }
     async function feedSpeech(node) { // vocoder modulator: looped speech buffer -> audio input
       try {
@@ -225,6 +352,7 @@
         sweep: (cycIdx === 0 && cur.sweep === "open") || (lastCyc && cur.sweep === "close") ? cur.sweep : "off" });
       const one = Object.assign({}, st, { sections: [sec], seed: ((st.seed || 1) + serial * 7919) >>> 0 });
       const spb = 60 / st.bpm;
+      curBarSec = 4 * spb;   // insert filtersweep LFOs sync to this (bpm glides too)
       const lo = ci * 8, hi = lo + 8;
       const t0 = nextTime;
 
@@ -293,6 +421,7 @@
         if (g) { g.setValueAtTime(1, tOn); g.setValueAtTime(0, tOff); }
         v.busyUntil = tOff;
         v.tailUntil = tOff + (pool.spec.tail != null ? pool.spec.tail : 1);
+        layers.get(LAYER_OF_UNIT(e.unit)).lastBar = serial;
         schedLog(e.drum ? "drum:" + e.unit : e.unit, beatAbs(e.beat), tOn);
       }
       // found: chop events in-window; bed re-anchored at bar start of chord 0
@@ -301,13 +430,16 @@
         const buf = bufs[f.srcId];
         if (!buf) continue;
         if (f.type === "chop") {
-          found.chop(buf, at(f.beat), { durSec: f.durB * spb, amp: f.amp, pitch: f.pitch,
+          const lane = VOXISH.test(f.srcId) ? "vox" : "chops";
+          (lane === "vox" ? foundVox : foundChops).chop(buf, at(f.beat), { durSec: f.durB * spb, amp: f.amp, pitch: f.pitch,
             offset: f.offset, cutoff: f.cutoff, rsend: f.rsend, dsend: f.dsend, ppsend: f.ppsend,
             fade: f.fade, sqRate: f.sqRate, sqDepth: f.sqDepth });
+          layers.get(lane).lastBar = serial;
           schedLog("found:chop", beatAbs(f.beat), at(f.beat));
         } else if (ci === 0) {
-          found.bed(buf, at(lo), { durSec: f.durB * spb, amp: f.amp, pitch: f.pitch,
+          foundBeds.bed(buf, at(lo), { durSec: f.durB * spb, amp: f.amp, pitch: f.pitch,
             stretch: f.stretch, cutoff: f.cutoff });
+          layers.get("beds").lastBar = serial;
           schedLog("found:bed", beatAbs(lo), at(lo));
         }
       }
@@ -379,11 +511,38 @@
     }
     status(ctx.state === "running" ? "live (faust) — drag the space" : "live (tap again if silent)");
     tick();
+    // prewarm the insert-module processor registrations while load is light:
+    // a mid-run insert TYPE swap otherwise pays the audio-thread addModule/
+    // wasm setup right then (measured: a ~0.95 load blip 2s after the swap).
+    // The prewarmed nodes are never connected — zero render cost — and are
+    // dropped immediately; later mkNodes of the same module just instantiate.
+    setTimeout(() => { if (!abort)
+      for (const m of ["insert_distort", "insert_phaser", "insert_chorus", "insert_filtersweep"])
+        mkNode(m, "prewarm:" + m).catch(() => {});
+    }, 1500);
 
     const rmsBuf = new Float32Array(analyser.fftSize);
     const handle = {
       ctx, analyser, errors,
       _sched: schedEvents, _bars: schedBars,   // probe/debug (drift gate)
+      layers() {   // mixer view: monitoring/override bus over the layer taps
+        return LAYER_DEFS.map(([id]) => {
+          const L = layers.get(id);
+          return {
+            id, label: L.label,
+            gain: L.gainVal, muted: L.muted, solo: L.solo,
+            active: serial - L.lastBar <= 2,
+            rms() {
+              try { L.an.getFloatTimeDomainData(L.buf); } catch (e) { return 0; }
+              let s = 0; for (let i = 0; i < L.buf.length; i++) s += L.buf[i] * L.buf[i];
+              return Math.sqrt(s / L.buf.length);
+            },
+            setGain(v) { L.gainVal = Math.max(0, Math.min(2, +v || 0)); applyLayerGains(); },
+            setMute(b) { L.muted = !!b; applyLayerGains(); },
+            setSolo(b) { L.solo = !!b; applyLayerGains(); },
+          };
+        });
+      },
       loadRatio: () => loadRatio,
       ecoLevel: () => eco.level,
       rms() {
@@ -407,7 +566,7 @@
           master.gain.setValueAtTime(master.gain.value, tNow);
           master.gain.linearRampToValueAtTime(0, tNow + 0.06);
         } catch (e) {}
-        found.stopAll();
+        foundBeds.stopAll(); foundChops.stopAll(); foundVox.stopAll();
         for (const s of speechSrcs) { try { s.stop(); } catch (e) {} }
         for (const [, p] of pools) retirePool(p);
         setTimeout(() => { try { ctx.close(); } catch (e) {} }, 1200);
