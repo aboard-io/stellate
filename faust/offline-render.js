@@ -70,14 +70,15 @@ async function main() {
     }
   }
 
-  // fx bus: in0 = reverb sends, in1 = delay sends; out = stereo wet
-  const revIn = new Float32Array(TOTAL), delIn = new Float32Array(TOTAL);
+  // fx bus (6 ins: dryL, dryR, rev, del, pingpong, sidechain) — dry is mixed
+  // natively below, so only the rev/del sends are fed here
+  const revIn = new Float32Array(TOTAL), delIn = new Float32Array(TOTAL), zero = new Float32Array(TOTAL);
   for (const v of all) for (let i = 0; i < TOTAL; i++) { revIn[i] += v.out[i] * v.rev; delIn[i] += v.out[i] * v.del; }
   const fx = await mkProc("fx_bus");
   fx.setParamValue("/fx_bus/dtime", Math.min(1.5, R.delayBeats * spb));
   fx.setParamValue("/fx_bus/dfb", R.delayFb);
   fx.setParamValue("/fx_bus/rgain", Math.min(2, R.reverb * 2.2));
-  const wet = fx.render([revIn, delIn], TOTAL);
+  const wet = fx.render([zero, zero, revIn, delIn, zero, zero], TOTAL);
 
   // mix: dry (mono -> both channels) + wet, master 0.9, hard-clip guard
   const L = new Float32Array(TOTAL), Rt = new Float32Array(TOTAL);

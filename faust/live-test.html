@@ -1,0 +1,52 @@
+<!doctype html>
+<!-- faust/live-test.html — minimal harness for the FaustLive facade.
+     Served from the repo root (so found/ sample paths resolve):
+       node faust/live-test-run.js       (headless playwright gate)
+     or open http://localhost:8777/faust/live-test.html and click Go. -->
+<html>
+<head><meta charset="utf-8"><title>FaustLive test</title></head>
+<body style="background:#111;color:#9fe;font:14px monospace;padding:1em">
+<button id="go">Go live (jungle)</button>
+<button id="swap">Swap to house</button>
+<button id="stop">Stop</button>
+<pre id="log"></pre>
+<script src="../csd-engine.js"></script>
+<script src="../genre-kernel.js"></script>
+<script src="state-engine.js"></script>
+<script src="found-player.js"></script>
+<script src="live.js"></script>
+<script>
+  const logEl = document.getElementById("log");
+  const log = (m) => { logEl.textContent += m + "\n"; };
+  let handle = null, state = null;
+  const bars = [], loads = [];
+  window.TEST = { bars, loads, rms: [], errors: [], status: [] };
+
+  window.goLive = async function (genre, seed) {
+    state = GenreKernel.track(genre || "jungle", { seed: seed || 3 });
+    handle = await FaustLive.exploreLive(
+      () => state,
+      (m) => { TEST.status.push(m); log("status: " + m); },
+      { onBar: (b) => { bars.push(b); log(`bar ${b.serial} ${b.section} ${b.chord}`); },
+        onLoad: (r, e) => { loads.push({ t: performance.now()/1000, r, e }); } });
+    window.handle = handle;
+    // sample output RMS every 500ms
+    window._rmsTimer = setInterval(() => { if (handle) TEST.rms.push(handle.rms()); }, 500);
+    return true;
+  };
+  window.swapTo = function (genre, seed) {
+    state = GenreKernel.track(genre, { seed: seed || 3 });
+    log("swapped state -> " + genre);
+    return true;
+  };
+  window.stopLive = function () {
+    clearInterval(window._rmsTimer);
+    if (handle) { TEST.errors.push(...handle.errors); handle.stop(); handle = null; }
+    return TEST;
+  };
+  document.getElementById("go").onclick = () => goLive("jungle", 3);
+  document.getElementById("swap").onclick = () => swapTo("house", 3);
+  document.getElementById("stop").onclick = () => stopLive();
+</script>
+</body>
+</html>

@@ -1107,11 +1107,12 @@
           state.sections.forEach(s=>{ if(s.vocal) delete s.vocal; }); }
       }
       resolvePaths(state);
+      // FAUST-PORT phase 3: the press runs on the Faust engine (legacy csound
+      // path preserved on branch legacy-csound)
       const wav="/tmp/"+path.basename(base)+".wav";
-      const csd=E.buildCsd(state).replace("<CsoundSynthesizer>",
-        `<CsoundSynthesizer>\n<CsOptions>\n--nosound -o ${wav} -W\n</CsOptions>`);
-      fs.writeFileSync("/tmp/"+path.basename(base)+".csd",csd);
-      execFileSync("csound",["/tmp/"+path.basename(base)+".csd"],{stdio:["ignore","ignore","ignore"]});
+      const sj="/tmp/"+path.basename(base)+".state.json";
+      fs.writeFileSync(sj,JSON.stringify(state));
+      execFileSync("node",[path.join(__dirname,"faust","press.js"),sj,wav],{stdio:["ignore","ignore","inherit"]});
       // fade the ending out instead of stopping abruptly
       const beats=state.sections.reduce((n,s)=>n+(s.cycles||1)*(E.PROGRESSIONS[state.progression]||E.PROGRESSIONS.royal_road).chords.length*8,0)+8;
       const dur=beats*60/state.bpm, fade=Math.min(4,dur*0.1), st=Math.max(0,dur-fade);

@@ -1,10 +1,10 @@
-// supersaw — imitation of csd-engine.js melodyStack() with voices>=3:
-//   N detuned vco2 saws, det = 1 + spread*((2i/(N-1))-1), summed *0.95/N
-//   + quiet sine octave double (the "bell" sheen, octave=0.12)
-//   -> moogladder cutoff/res  (per-note fenv handled by sweeping cutoff live)
-//   env: linsegr 0, atk, 1, 0.06, sus, rel, 0   (the "plucky" branch)
-// voices fixed at 7 at compile time; detune/cutoff/res are LIVE params —
-// the whole point: timbre glides are setParamValue, not orchestra recompiles.
+// supersaw — the "stack" lead of csd-engine.js melodyStack(), now covering the
+// WHOLE recipe surface: runtime voices (1..7), spread, wave (sine/saw/square/
+// pulse), sine-octave double (the bell sheen), vibrato, attack/release.
+//   det(i) = 1 + spread*((2i/(v-1))-1), summed *0.95/v, + octave sine
+//   -> moogladder(cutoff, res); env = linsegr atk / 0.06 / sus / rel
+// voices<=2 in csound uses {kf, kf*(1+sp)} — here symmetric ±sp (center off by
+// sp/2 ≈ a few cents at recipe spreads; inaudible, noted in VOICES.md).
 declare name "supersaw";
 import("stdfaust.lib");
 
@@ -12,19 +12,32 @@ freq   = hslider("freq", 440, 20, 8000, 0.01) : si.smoo;
 gate   = button("gate");
 cutoff = hslider("cutoff", 2600, 80, 18000, 1) : si.smoo;
 res    = hslider("res", 0.2, 0, 0.95, 0.01);
-detune = hslider("detune", 0.012, 0, 0.05, 0.0001);
+detune = hslider("detune", 0.012, 0, 0.05, 0.0001);   // = recipe spread
+voices = hslider("voices", 7, 1, 7, 1);
+wave   = hslider("wave", 1, 0, 3, 1);                 // 0 sine 1 saw 2 square 3 pulse
+octave = hslider("octave", 0.12, 0, 0.4, 0.001);
+vib    = hslider("vibrato", 0, 0, 0.03, 0.0001);
+vibRate= hslider("vibRate", 5.2, 0.1, 12, 0.01);
+attack = hslider("attack", 0.01, 0.001, 2, 0.001);
+sustain= hslider("sustain", 0.85, 0, 1, 0.01);
+release= hslider("release", 0.30, 0.01, 3, 0.005);
 level  = hslider("level", 0.5, 0, 1, 0.01);
+gain   = hslider("gain", 1, 0, 2, 0.01);
+
+kf = freq * (1 + vib*os.osc(vibRate));
+
+oscw(f) = select2(wave >= 2,
+            select2(wave >= 1, os.osc(f), os.sawtooth(f)),
+            select2(wave >= 3, os.square(f), pulse(f)))
+with { pulse(ff) = (os.lf_sawpos(ff) < 0.22)*2.0 - 1.0; };
 
 N = 7;
-det(i) = 1 + detune*((2*float(i)/(N-1)) - 1);
-saws = par(i, N, os.sawtooth(freq*det(i))) :> *(0.95/N);
-oct  = os.osc(freq*2) * 0.12;
+den    = max(1.0, voices - 1);
+det(i) = 1 + detune*((2.0*float(i)/den) - 1);
+on(i)  = float(i) < voices;
+stack  = sum(i, N, oscw(kf*det(i)) * on(i)) * (0.95/max(1.0, voices));
+oct    = os.osc(kf*2) * octave;
 
-// csound: aenv linsegr 0, atk, 1, 0.06, 0.85, rel, 0  (atk=0.01, rel=0.30)
-env = en.adsr(0.01, 0.06, 0.85, 0.30, gate);
+env = en.adsr(attack, 0.06, sustain, release, gate);
 
-// csound moogladder res 0..1 -> Q; ve.moogLadder takes normalized freq + Q
-q  = 0.707 + res*7;
-nf = min(cutoff/(ma.SR/2.0), 0.49);
-
-process = (saws + oct) : ve.moogLadder(nf, q) : *(env*level);
+process = (stack + oct) : ve.moog_vcf_2bn(res, max(30, min(cutoff, 16000))) : *(env*level*gain);
