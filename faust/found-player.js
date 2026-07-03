@@ -257,7 +257,9 @@
       const aT = fade || Math.min(0.006, durSec / 2), rT = fade || Math.min(0.03, durSec / 2);
       g.setValueAtTime(0, when);
       g.linearRampToValueAtTime(f.amp, when + aT);
-      g.setValueAtTime(fade ? f.amp : f.amp * 0.85, Math.max(when + aT, when + durSec - rT));
+      // csound linsegr RAMPS amp -> amp*0.85 across the middle; a
+      // setValueAtTime step here was a 15% click on every un-faded chop
+      g.linearRampToValueAtTime(fade ? f.amp : f.amp * 0.85, Math.max(when + aT, when + durSec - rT));
       g.linearRampToValueAtTime(0, when + durSec);
       let tail = env;
       if (f.sqDepth > 0) { // square-LFO gate: osc -> depth/2 -> gain.gain (base 1-depth/2)
@@ -305,13 +307,15 @@
           if (t > horizon) break;
           if (t >= ctx.currentTime + 0.002) {   // value curves can't start in the past
             const s = ctx.createBufferSource(); s.buffer = buffer;
-            s.playbackRate.value = f.pitch;
+            s.loop = true;   // wrap like csound tablei(wrap=1): grains that read
+            s.playbackRate.value = f.pitch;   // past the buffer end must not truncate mid-hann (click)
             const w = ctx.createGain(); w.gain.value = 0;
             w.gain.setValueCurveAtTime(HANN, t, GRAIN_SEC);   // hann, like mixPCM
             s.connect(w); w.connect(lp);
             const off = (state.pointer % buffer.duration + buffer.duration) % buffer.duration;
             _stats.grains++;
-            s.start(t, off, GRAIN_SEC * f.pitch + 0.01);
+            s.start(t, off);
+            s.stop(t + GRAIN_SEC + 0.02);
             s.onended = () => { try { w.disconnect(); } catch (e) {} };
           }
           state.pointer += advance;
