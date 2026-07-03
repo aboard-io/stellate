@@ -76,6 +76,9 @@
     mode_phrygian:  prog("Phrygian i-bII",          [["A","min"],["Bb","maj7"],["A","min"],["G","min7"]]),
     mode_lydian:    prog("Lydian IΔ-II",            [["C","maj7"],["D","dom7"],["C","maj7"],["D","dom7"]]),
     mode_mixo:      prog("Mixolydian I7-bVII",      [["C","dom7"],["Bb","maj7"],["F","maj7"],["C","dom7"]]),
+    // genre-kernel additions — trance lift + disco/funk vamp
+    uplift:     prog("Uplift (i-VI-VII-i)",      [["A","min7"],["F","maj7"],["G","maj"],["A","min7"]]),
+    funk_vamp:  prog("Funk vamp (i7-IV7)",       [["A","min7"],["D","dom7"]]),
     blues_12:   prog("12-bar blues (all dom7)",  [["C","dom7"],["C","dom7"],["C","dom7"],["C","dom7"],
                                                   ["F","dom7"],["F","dom7"],["C","dom7"],["C","dom7"],
                                                   ["G","dom7"],["F","dom7"],["C","dom7"],["G","dom7"]])
@@ -84,7 +87,7 @@
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
   const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic"];
-  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16"];
+  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16","motorik","motorik23"];
   const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal"];
   const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
   // the ⚡ transition control: what happens at the end of a section, into the next
@@ -318,6 +321,19 @@
     anthem:  [[0,1.5,0,0],[1.5,.5,1,0],[2,1.5,3,0],[3.5,.5,2,0],[4,2,3,1],[6,1.5,0,1],[7.5,.5,2,0]],
     anthem2: [[0,2,2,0],[2,1,3,0],[3,1,2,0],[4,1.5,0,1],[5.5,.5,1,0],[6,2,3,0]]
   };
+  // arpeggiation direction for the motorik sequencer — cycles as the song plays, advancing
+  // each chord (gci). `random` is a deterministic shuffle seeded by gci so the main arp and
+  // its counter (which plays the REVERSE = contrary motion) agree on the same base order.
+  const ARP_DIRS=["up","down","updown","random","up","downup","down","random"];
+  function arpDir(mode,gci){
+    if(mode==="up") return [0,1,2,3];
+    if(mode==="down") return [3,2,1,0];
+    if(mode==="updown") return [0,1,2,3,2,1];
+    if(mode==="downup") return [3,2,1,0,1,2];
+    const s=mulberry32((0x9e3779b1 ^ (gci*2654435761))>>>0), a=[0,1,2,3];
+    for(let i=3;i>0;i--){ const j=Math.floor(s()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; }
+    return a;
+  }
   function melodyEvents(style,base,prg,chords,k,rng){
     const out=[], cycleBeats=chords.length*CHORD_BEATS;
     const comp = style==="composed"?prg.composed : style==="composed2"?prg.composed2 : null;
@@ -352,6 +368,24 @@
         if(rng()<0.55) out.push({voice:"melody",beat:Sb+5.4,dur:2.3,pch:pchAdd(lead[2],-12),amp:0.14});
         return; }
       if(gen==="double"){ const pat=[0,1,2,3,0,1,2,3,1,2,3,0,2,3,0,1]; for(let i=0;i<16;i++) out.push({voice:"melody",beat:Sb+i*0.5,dur:0.45,pch:lead[pat[i]],amp:0.12}); return; }
+      if(gen==="motorik"||gen==="motorik23"){
+        // Kraftwerk sequencer, octave-INTERLEAVED — each cell note is followed half a step
+        // later by the same note an octave up (note, note+8ve, next…), a relentless weaving arp.
+        // The arpeggiation DIRECTION cycles as the song plays (up, down, up-down, random),
+        // advancing each chord. `motorik23` is the COUNTER: 2/3 the speed and the MIRROR of the
+        // main's direction, so as one arp climbs the other descends (contrary motion).
+        const slow=gen==="motorik23";
+        const gci=Math.round(Sb/CHORD_BEATS);                                   // global chord index — the direction varies across the whole song
+        const base=arpDir(ARP_DIRS[gci%ARP_DIRS.length], gci);
+        const cell=slow?base.slice().reverse():base;                            // the counter mirrors the main = contrary motion
+        const step=slow?0.75:0.5, n=Math.floor((CHORD_BEATS)/step);             // EIGHTH notes (main), dotted-8th (counter at 2/3 speed)
+        for(let i=0;i<n;i++){
+          let p=lead[cell[i%cell.length]];
+          if(i%2===1) p=pchAdd(p,12);                                           // octave weave on alternate 8ths (the Kraftwerk weave, now at 8th-note rate)
+          out.push({voice:"melody",beat:Sb+i*step,dur:step*0.45,pch:p,amp:0.12});   // staccato — more bite
+        }
+        return;
+      }
       if(gen==="arp16"){   // 16th-note arp that traces a MELODIC contour (not just the chord) — Edge-style
         const ext=[lead[0],lead[1],lead[2],lead[3],pchAdd(lead[0],12),pchAdd(lead[1],12),pchAdd(lead[2],12)];
         const motif=[0,2,4,5, 4,3,2,4, 5,4,2,3, 1,2,4,0];   // a rising-to-a-peak melodic figure, resolves
@@ -499,6 +533,25 @@
           }
         }
       }
+      // the sung CHORUS: a pre-rendered WORLD-vocoder vocal (generated to match this bpm+key),
+      // played once from the section downbeat at natural pitch, with space (reverb + delay)
+      if(sec.vocal&&srcById[sec.vocal]){
+        const vc=srcById[sec.vocal], vdur=Math.min(secBeats-0.25,(vc.durSec||16)*state.bpm/60);
+        found.push({chop:1,beat:cur+0.02,dur:vdur,amp:(vc.vol||0.5),tableNum:vc.tableNum,
+          pitch:1,offset:0,cutoff:vc.cutoff||9000,rsend:0.34,dsend:0.2});
+      }
+      // door "ding ding": the chime one-shot at the section downbeat (doors closing as the
+      // train departs) and again near the end (doors opening at the next stop)
+      if(sec.ding&&srcById[sec.ding]){
+        const dg=srcById[sec.ding], ddur=Math.min(2.2,(dg.durSec||1)*state.bpm/60);
+        for(const at of [0.25, secBeats-ddur-0.5]){
+          if(at<0) continue;
+          // always low-passed (soft chime) and fed to the long ping-pong so it repeats for a
+          // couple measures; little of the short delay (let the ping-pong carry the tail)
+          found.push({chop:1,beat:cur+at,dur:ddur,amp:(dg.vol||0.4),tableNum:dg.tableNum,
+            pitch:1,offset:0,cutoff:Math.min(dg.cutoff||2400,2400),rsend:0.26,dsend:0.04,ppsend:0.7});
+        }
+      }
       // synth stabs (rave chords on the chord root)
       if(sec.stab&&sec.stab!=="off"&&STAB_PATTERNS[sec.stab]){
         for(let cb=0;cb<secBeats/CHORD_BEATS;cb++){
@@ -580,6 +633,29 @@
     const grng=mulberry32(((state.seed??1)+777)>>>0);
     applyGroove(pitched, state.swing, state.humanize, grng);
     applyGroove(drums,   state.swing, state.humanize, grng);
+    // feed individual snare hits to the long ping-pong delay at random (>=4 beats apart)
+    if(state.snarePP>0){ let last=-99;
+      for(const d of drums){ if(d.drum==="snare" && d.beat-last>=4 && grng()<0.6){ d.pp=state.snarePP; last=d.beat; } } }
+    // EVERY measure, without fail: a world-metro station name, BURIED, glitched mostly
+    // downward, with a square-LFO amplitude gate at varying intensity (audio interest).
+    if(state.stationPool&&state.stationPool.length){
+      const sp=state.stationPool.map(id=>srcById[id]).filter(Boolean);
+      for(let i=sp.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); const t=sp[i]; sp[i]=sp[j]; sp[j]=t; }   // shuffle: random global order, each used once before any repeat
+      if(sp.length){ let si=0;
+        for(let b=0;b<cur-2;b+=4){                                   // every measure (4 beats)
+          const st=sp[si%sp.length]; si++;
+          const sdur=Math.min(2.6,(st.durSec||1)*state.bpm/60);
+          const sqd=[0.3,0.55,0.75,0.92][Math.floor(rng()*4)];       // varying square-LFO intensity
+          const sqr=[3,5,8,12][Math.floor(rng()*4)];                 // varying rate
+          found.push({chop:1,beat:b+0.5,dur:sdur,amp:(st.vol||0.26),tableNum:st.tableNum,pitch:1,offset:0,
+            cutoff:st.cutoff||5200,rsend:0.3,dsend:0.22,sqRate:sqr,sqDepth:sqd});
+          if(rng()<0.7){ const nb=2+Math.floor(rng()*2), stp=0.125;  // glitch mostly DOWNWARD
+            for(let j=0;j<nb;j++) found.push({chop:1,beat:b+0.85+j*stp,dur:stp*1.5,amp:(st.vol||0.12)*0.8,
+              tableNum:st.tableNum,pitch:[0.5,0.6,0.7,0.8][Math.floor(rng()*4)],offset:Math.min(0.9,rng()*0.5),
+              cutoff:st.cutoff||2600,rsend:0.3,dsend:0.3}); }
+        }
+      }
+    }
     return { bpm:state.bpm, totalBeats:cur+8, pitched, drums, found, sfx, srcById };
   }
 
@@ -722,21 +798,58 @@
   asig butlp asig, ${Math.round(Math.min(11000,m.cutoff*2.2))}`;
     return null;
   }
+  // "vocoder" model — speech-synthesizer cross-synthesis. The modulator is SPEECH
+  // streamed straight from its GEN01 function table (the same found/ tables instr
+  // 3/5 read) via pvstanal; the carrier is 3 detuned vco2 saws at the played pitch
+  // plus a quiet octave double (choir weight), analyzed with pvsanal; pvsvoc puts
+  // the speech's spectral envelope on the carrier and pvsynth resynthesizes: a
+  // robot choir that SPEAKS while singing the note. Kept CHEAP for the realtime
+  // WASM worklet: ONE pvstanal + ONE pvsanal + pvsvoc + pvsynth per voice,
+  // fftsize 1024 / hop 256, no filters beyond the voice's own recipe lowpass.
+  // Table resolution: offline renders bake the table number in (state.vocoderSourceId
+  // -> that foundSource's table, see codegen/buildCsd). LIVE mode (opts.channels)
+  // reads control channel "voctab" at i-time — the explorer creates speech tables
+  // dynamically at 50+ and sets the channel; the baked/default number is the
+  // fallback so notes still sound if the channel was never set.
+  // Each note starts reading the speech at a deterministic scatter point
+  // (golden-ratio walk on p2) so phrases differ note to note without RNG.
+  function vocoderSource(m, vocTab, live){
+    const tabLine = live
+      ? `  ivtab chnget "voctab"
+  ivtab = (ivtab < 2 ? ${vocTab||50} : ivtab)`
+      : `  ivtab = ${vocTab}`;
+    return `${tabLine}
+  ilen = nsamp(ivtab)/sr
+  iofs = ilen * frac(p2*0.1618)
+  fspc pvstanal 1, ${(m.vocAmp!=null?m.vocAmp:6).toFixed(2)}, 1, ivtab, 1, 1, iofs, 1024, 256
+  ac1 vco2 1, kf*0.996
+  ac2 vco2 1, kf
+  ac3 vco2 1, kf*1.004
+  ac4 vco2 0.5, kf*2
+  acar = (ac1+ac2+ac3)*0.3 + ac4*0.18
+  fcar pvsanal acar, 1024, 256, 1024, 1
+  fvoc pvsvoc fspc, fcar, 1, ${(m.vocGain!=null?m.vocGain:2).toFixed(2)}
+  asig pvsynth fvoc
+  asig = tanh(asig*${(m.vocMakeup!=null?m.vocMakeup:5).toFixed(2)})*0.8`;   // makeup gain (vocoded speech runs quiet) + tanh ceiling = broadcast squash, in character
+  }
   // melody oscillator stack — voices<=2 emits the original two-osc code verbatim
   // (so old presets render identically); 3+ builds a detuned unison (supersaw at
   // 6-7 saw voices with spread ~0.012-0.02)
   function melodyStack(m){
     const v=Math.max(1,Math.min(9,(m.voices|0)||2)), sp=(m.spread!=null?m.spread:0.004);
+    // `octave` = amount of a pure-sine octave mixed in. Historically hardcoded (0.16/0.12)
+    // — that sine octave is what makes leads read as bell/steel-drum. Recipe-driven now
+    // (default preserves the old sound); set it to 0 for a clean saw/square lead.
     if(v<=2) return `  a1 ${waveRHS(m.wave,"kf")}
   a2 ${waveRHS(m.wave,`kf*${(1+sp).toFixed(5)}`)}
-  a3 oscili 0.16, kf*2
+  a3 oscili ${(m.octave??0.16).toFixed(3)}, kf*2
   asig=(a1+a2)*0.5+a3`;
     const L=[];
     for(let i=0;i<v;i++){
       const det=1+sp*((2*i/(v-1))-1);
       L.push(`  a${i+1} ${waveRHS(m.wave,`kf*${det.toFixed(5)}`)}`);
     }
-    L.push(`  aoct oscili 0.12, kf*2`);
+    L.push(`  aoct oscili ${(m.octave??0.12).toFixed(3)}, kf*2`);
     L.push(`  asig=(${Array.from({length:v},(_,i)=>"a"+(i+1)).join("+")})*${(0.95/v).toFixed(4)}+aoct`);
     return L.join("\n");
   }
@@ -776,6 +889,11 @@
     const dl=state.delay||{beats:0.75,feedback:0.3,cutoff:2600};
     const dsec=Math.min(1.9, Math.max(0.02, (dl.beats||0.75)*60/state.bpm));
     const dfb=Math.min(0.92, Math.max(0, dl.feedback==null?0.3:dl.feedback)), dcut=dl.cutoff||2600;
+    // long rhythmic PING-PONG delay (separate bus gaPP): a dotted-8th tap that cross-feeds
+    // L<->R and decays over ~a couple measures. Snare hits + the door ding feed it.
+    const ppb=(state.pingpong&&state.pingpong.beats)||0.75;
+    const ppsec=Math.min(2.4, Math.max(0.05, ppb*60/state.bpm));
+    const ppfb=Math.min(0.85, (state.pingpong&&state.pingpong.feedback)||0.66), pptone=(state.pingpong&&state.pingpong.cutoff)||3000;
     const hasSweeps=live||(state.sections||[]).some(s=>s.sweep&&s.sweep!=="off");
     // production: sidechain pump, vinyl crackle, master tone tilt (all default-off)
     const pump=Math.min(0.9,Math.max(0,state.pump||0));
@@ -820,7 +938,16 @@
         `  aR dam aR, ${(0.55-0.35*comp).toFixed(3)}, ${(1-0.55*comp).toFixed(3)}, 1, 0.01, 0.09\n` +
         `  aL = aL*${(1+0.8*comp).toFixed(3)}\n  aR = aR*${(1+0.8*comp).toFixed(3)}\n`
       : "";
-    const padSrc = padSource(I.pad) || `  a1 ${waveRHS(I.pad.wave,`kf*${dLo}`)}
+    // vocoder table resolution: state.vocoderSourceId names a foundSource whose
+    // GEN01 table feeds the "vocoder" model; else first speech-ish source by id.
+    // (buildCsd force-loads that table even when no found EVENT plays it.)
+    const vocPref = (sources||[]).find(s=>s.id===state.vocoderSourceId)
+      || (sources||[]).find(s=>/^(sp_|vx_|vox_)/.test(s.id||""));
+    const vocTab = vocPref ? vocPref.tableNum : 0;
+    const vocOk = (m)=>m.model==="vocoder" && (vocTab>0 || live);   // no table + offline -> fall back to synth stack (never crash)
+    const padSrc = (vocOk(I.pad) ? vocoderSource(I.pad, vocTab, live)+`
+  asig butlp asig, ${Math.round(Math.min(9000,I.pad.cutoff*2))}` : null)
+      || padSource(I.pad) || `  a1 ${waveRHS(I.pad.wave,`kf*${dLo}`)}
   a2 ${waveRHS(I.pad.wave,`kf`)}
   a3 ${waveRHS(I.pad.wave,`kf*${dHi}`)}
   asig = (a1+a2+a3)*0.33
@@ -829,7 +956,8 @@
   a1 moogladder a1, ${I.bass.cutoff}, ${I.bass.res}`;
     // melody voice block, parameterized so solo sections can each get their own
     // (instr 4 = the main lead; solos get 7,8,… — see soloVoices)
-    const melodyVoiceBlock=(num,m)=> m.model==="guitar" ? `instr ${num}
+    const melodyVoiceBlock=(num,m)=>{
+      if(m.model==="guitar") return `instr ${num}
   iamp=p5
   inote = 12*log(cpspch(p4)/440)/log(2) + 69
   ag1, ag2 sfplay3 100, inote, iamp*${((m.level||0.5)*0.0022).toFixed(7)}, cpspch(p4), ${m.preset!=null?m.preset:25}
@@ -843,7 +971,8 @@
   gaRevR=gaRevR+asig*${m.send}
   gaDelL=gaDelL+asig*${m.dsend}
   gaDelR=gaDelR+asig*${m.dsend}
-endin` : m.model==="kpluck" ? `instr ${num}
+endin`;
+      if(m.model==="kpluck") return `instr ${num}
   iamp=p5
   ipch=cpspch(p4)
   asig pluck 1, ipch, ipch, 0, 1
@@ -882,22 +1011,46 @@ endin` : m.model==="kpluck" ? `instr ${num}
   gaRevR=gaRevR+asig*${(m.send*0.7).toFixed(3)}
   gaDelL=gaDelL+asig*${m.dsend}
   gaDelR=gaDelR+asig*${m.dsend}
-endin` : `instr ${num}
+endin`;
+      // articulation + filter are recipe-driven. A genre that sets NONE of attack/release/
+      // fenv gets the legacy sustained voice VERBATIM (p3-based hold, 0.30s release tail).
+      // Setting any of them opts into a percussive voice with FIXED short segment durations
+      // (safe for very short staccato notes — no negative-p3 segments) plus an optional
+      // per-note filter envelope (cutoff snaps high then closes to `cutoff` over a resonant
+      // moogladder = the classic "sawtooth filtering" pluck). This knob is what lets a genre
+      // be its OWN vector instead of collapsing onto the one default lead.
+      const plucky = (m.attack!=null || m.release!=null || m.fenv);
+      const atk=m.attack??0.05, rel=m.release??0.30, sus=m.sustain??0.85, fenv=m.fenv||0;
+      const envLine = plucky
+        ? `  aenv linsegr 0, ${atk}, iamp, 0.06, iamp*${sus}, ${rel}, 0`        // attack -> short decay -> release (staccato-safe)
+        : `  aenv linsegr 0, 0.05, iamp, p3-0.12, iamp*0.85, 0.30, 0`;          // legacy sustained voice (unchanged)
+      const filt = fenv>0
+        ? `  kcf expseg ${Math.round(Math.min(18000,m.cutoff*(1+fenv)))}, ${(atk+0.06).toFixed(3)}, ${Math.round(m.cutoff)}\n  asig moogladder asig, kcf, ${m.res}`
+        : `  asig moogladder asig, ${m.cutoff}, ${m.res}`;
+      // `drive` adds raw analog grit (tanh) — rougher without changing the oscillator;
+      // `swellDepth/Hz/Phase` is a slow amplitude LFO over absolute time so the line breathes
+      // up and down across notes (give the counter the opposite phase and the two arps trade).
+      const drive=m.drive||0;
+      const driveLine = drive>0 ? `  asig = tanh(asig*${(1+drive*2.4).toFixed(2)})*${(1/(1+drive*0.55)).toFixed(3)}\n` : "";
+      const swDepth=m.swellDepth||0;
+      const swellLine = swDepth>0 ? `  ktmS times\n  kswl = ${(1-swDepth).toFixed(3)} + ${swDepth.toFixed(3)}*(0.5+0.5*sin(6.28318*(ktmS*${(m.swellHz||0.12).toFixed(3)} + ${(m.swellPhase||0).toFixed(3)})))\n  asig = asig*kswl\n` : "";
+      return `instr ${num}
   ipch=cpspch(p4)
   iamp=p5
   kvib lfo ipch*${m.vibrato}, ${m.vibRate}, 0
   kf=ipch+kvib
-  aenv linsegr 0, 0.05, iamp, p3-0.12, iamp*0.85, 0.30, 0
-${leadSource(m) || melodyStack(m)}
-  asig moogladder asig, ${m.cutoff}, ${m.res}
-  asig=asig*aenv
-  gaMixL=gaMixL+asig*${m.level}
+${envLine}
+${vocOk(m) ? vocoderSource(m, vocTab, live) : (leadSource(m) || melodyStack(m))}
+${filt}
+${driveLine}  asig=asig*aenv
+${swellLine}  gaMixL=gaMixL+asig*${m.level}
   gaMixR=gaMixR+asig*${m.level}
   gaRevL=gaRevL+asig*${m.send}
   gaRevR=gaRevR+asig*${m.send}
   gaDelL=gaDelL+asig*${m.dsend}
   gaDelR=gaDelR+asig*${m.dsend}
 endin`;
+    };
     const soloInstrBlocks = soloVoices(state, I.melody).map(v=>melodyVoiceBlock(v.num, v.recipe)).join("\n\n");
     const ddsend=Math.min(1,Math.max(0,I.drums.dsend||0));
     const drumDel = ddsend>0 ? (v)=>`  gaDelL=gaDelL+${v}*${ddsend.toFixed(3)}\n  gaDelR=gaDelR+${v}*${ddsend.toFixed(3)}\n` : ()=>"";
@@ -951,13 +1104,15 @@ endin`;
     const header = `<CsoundSynthesizer>
 <CsInstruments>
 sr=44100
-ksmps=32
+ksmps=${live?128:32}
 nchnls=2
 0dbfs=1
 gaRevL init 0
 gaRevR init 0
 gaDelL init 0
 gaDelR init 0
+gaPPL init 0
+gaPPR init 0
 gaMixL init 0
 gaMixR init 0
 gkCut init 21000
@@ -992,7 +1147,7 @@ instr 97
   ahiss noise 0.004, 0
   ahiss = ahiss*kcrk
   ahiss butlp ahiss, 4000
-  asig = adust + ahiss
+  asig = (adust + ahiss)*0.3    ; vinyl dust sits WAY under the music, not on it
   gaMixL=gaMixL+asig
   gaMixR=gaMixR+asig
 endin
@@ -1039,6 +1194,24 @@ instr 20
   gaMixR=gaMixR+asig
   gaRevL=gaRevL+asig*0.3
   gaRevR=gaRevR+asig*0.3
+endin
+
+instr 95
+  ; long rhythmic ping-pong: each tap cross-feeds to the OTHER side, so a hit fed to gaPPL
+  ; bounces L -> R -> L -> R, darkening + decaying over a couple measures
+  abufL delayr 2.5
+  atL deltap ${ppsec.toFixed(4)}
+  atL tone atL, ${pptone}
+  abufR delayr 2.5
+  atR deltap ${ppsec.toFixed(4)}
+  atR tone atR, ${pptone}
+  delayw gaPPL + atR*${ppfb.toFixed(3)}
+  delayw gaPPR + atL*${ppfb.toFixed(3)}
+  gaMixL=gaMixL+atL
+  gaMixR=gaMixR+atR
+  gaRevL=gaRevL+atL*0.12
+  gaRevR=gaRevR+atR*0.12
+  clear gaPPL, gaPPR
 endin
 
 instr 98
@@ -1132,6 +1305,9 @@ instr 5
   idsend = (p10 > 0 ? p10 : 0.2)        ; per-event delay send (default 0.2; VO modulates it in/out)
   irsend = (p11 > 0 ? p11 : 0.3)        ; per-event reverb send (default 0.3; loon rides it wet)
   ifade = (p12 > 0 ? p12 : 0)           ; long fade in/out (loon swells); 0 = the normal quick env
+  ippsend = (p13 > 0 ? p13 : 0)         ; per-event PING-PONG send (the door ding rides it for a couple measures)
+  isqr = (p14 > 0 ? p14 : 0)            ; square-LFO rate (Hz) — chops the AMPLITUDE (station-name texture)
+  isqd = (p15 > 0 ? p15 : 0)            ; square-LFO depth (intensity); 0 = off
   if (ifade > 0) then
     aenv linsegr 0, ifade, p5, p3-ifade*2, p5, ifade, 0
   else
@@ -1141,12 +1317,17 @@ instr 5
   asig tablei frac(andx + ioff), itab, 1, 0, 1
   asig moogladder asig, icut, 0.08
   asig = asig*aenv
+  if (isqd > 0) then
+    ksq lfo 1, isqr, 2                  ; +/-1 square wave -> a gate between 1 and (1-depth)
+    asig = asig*(1 - isqd*(0.5 - 0.5*ksq))
+  endif
   gaMixL=gaMixL+asig
   gaMixR=gaMixR+asig
   gaRevL=gaRevL+asig*irsend
   gaRevR=gaRevR+asig*irsend
   gaDelL=gaDelL+asig*idsend
   gaDelR=gaDelR+asig*idsend
+  gaPPL=gaPPL+asig*ippsend
 endin
 
 ${melodyVoiceBlock(4, I.melody)}${soloInstrBlocks?"\n\n"+soloInstrBlocks:""}
@@ -1162,11 +1343,13 @@ endin
 
 instr 11
   iamp=p4*${I.drums.snare}
+  ipp = (p5 > 0 ? p5 : 0)        ; some snare hits get fed to the long ping-pong delay
 ${snareSrc}
   gaMixL=gaMixL+asig
   gaMixR=gaMixR+asig
   gaRevL=gaRevL+asig*${I.drums.send}
   gaRevR=gaRevR+asig*${I.drums.send}
+  gaPPL=gaPPL+asig*ipp
 ${drumDel("asig")}endin
 
 instr 12
@@ -1230,14 +1413,24 @@ endin
   function buildCsd(state){
     const ev=buildEvents(state);
     const used=new Set(ev.found.map(f=>f.tableNum));
+    // the "vocoder" model reads speech from a table even when no found EVENT
+    // plays that source — force-load its table so the modulator exists
+    const Iv=mergedInstruments(state);
+    const vocNeeded = Iv.melody.model==="vocoder" || Iv.pad.model==="vocoder"
+      || soloVoices(state, Iv.melody).some(v=>v.recipe && v.recipe.model==="vocoder");
+    if(vocNeeded){
+      const vs = ev.srcById[state.vocoderSourceId]
+        || Object.values(ev.srcById).find(s=>/^(sp_|vx_|vox_)/.test(s.id||""));
+      if(vs) used.add(vs.tableNum);
+    }
     const srcByTable=Object.values(ev.srcById).filter(s=>used.has(s.tableNum)).sort((a,b)=>a.tableNum-b.tableNum);
-    const L=[`t 0 ${state.bpm}`, `i 100 0 ${ev.totalBeats}`, `i 99 0 ${ev.totalBeats}`, `i 98 0 ${ev.totalBeats}`];
+    const L=[`t 0 ${state.bpm}`, `i 100 0 ${ev.totalBeats}`, `i 99 0 ${ev.totalBeats}`, `i 98 0 ${ev.totalBeats}`, `i 95 0 ${ev.totalBeats}`];
     if(state.crackle>0) L.push(`i 97 0 ${ev.totalBeats} ${Math.min(1,state.crackle)}`);
     ev.found.forEach(f=>{
-      if(f.chop){ const pp=[];
-        if(f.dsend!=null||f.rsend!=null||f.fade!=null) pp.push((f.dsend!=null?f.dsend:0.2).toFixed(3));
-        if(f.rsend!=null||f.fade!=null) pp.push((f.rsend!=null?f.rsend:0.3).toFixed(3));
-        if(f.fade!=null) pp.push(f.fade.toFixed(3));
+      if(f.chop){   // optional trailing p-fields p10..p15 (dsend, rsend, fade, ppsend, sqRate, sqDepth)
+        const opt=[f.dsend,f.rsend,f.fade,f.ppsend,f.sqRate,f.sqDepth], def=[0.2,0.3,0,0,0,0];
+        let lastDef=-1; opt.forEach((v,i)=>{ if(v!=null) lastDef=i; });
+        const pp=[]; for(let i=0;i<=lastDef;i++) pp.push((opt[i]!=null?opt[i]:def[i]).toFixed(3));
         L.push(`i 5 ${f.beat.toFixed(3)} ${f.dur.toFixed(3)} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.offset.toFixed(3)} ${f.cutoff}${pp.length?" "+pp.join(" "):""}`); }
       else L.push(`i 3 ${f.beat.toFixed(3)} ${f.dur} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.stretch} ${f.cutoff}`);
     });
@@ -1250,7 +1443,7 @@ endin
     });
     const dinst={kick:10,snare:11,hat:12,tom:13};
     ev.drums.forEach(d=>{
-      const p5 = d.drum==="tom" ? " "+Math.round(d.pitch||150) : d.drum==="hat" ? " "+(d.open?1:0) : "";
+      const p5 = d.drum==="tom" ? " "+Math.round(d.pitch||150) : d.drum==="hat" ? " "+(d.open?1:0) : d.drum==="snare" ? " "+(d.pp||0).toFixed(3) : "";
       L.push(`i ${dinst[d.drum]} ${d.beat.toFixed(3)} ${d.dur.toFixed(3)} ${d.amp.toFixed(4)}${p5}`);
     });
     ev.sfx.forEach(s=>{
@@ -1263,7 +1456,7 @@ endin
 
   // live mode: header boots once; instruments recompile via csound compileOrc
   const liveParts=(state,sources)=>codegen(state,sources||[],{channels:true});
-  const api={ buildCsd, buildEvents, defaultState, defaultInstruments, generateSong, voicing, liveParts,
+  const api={ buildCsd, buildEvents, defaultState, defaultInstruments, generateSong, voicing, liveParts, soloVoices,
     instrumentBlock:(state)=>codegen(state,[],{channels:true}).instruments,
     PROGRESSIONS, STYLES, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS, pchAdd, pchToMidi };
   if(typeof module!=="undefined" && module.exports) module.exports=api;

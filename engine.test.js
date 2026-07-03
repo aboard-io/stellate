@@ -93,7 +93,7 @@ for (const bass of ["root","octaves","sixteenths","dub","drive"]) {
   s.sections = [{ id:"b", name:"b", cycles:1, pads:true, bass, drums:"full", melody:"off", found:{sourceId:null}, fillInto:false }];
   allOk &= 0<render("bass_"+bass, s);
 }
-for (const mel of ["updown","pentaup","sparse","double","hero"]) {
+for (const mel of ["updown","pentaup","sparse","double","hero","motorik"]) {
   const s = defaultState();
   s.sections = [{ id:"m", name:"m", cycles:1, pads:true, bass:"simple", drums:"off", melody:mel, found:{sourceId:null}, fillInto:false }];
   allOk &= 0<render("mel_"+mel, s);

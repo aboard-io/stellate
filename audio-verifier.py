@@ -37,6 +37,9 @@ ANCHOR_MAP = {
     "downtempo":["Electronic---Downtempo", "Electronic---Chill-out", "Electronic---Future Jazz"],
     "ambient":  ["Electronic---Ambient", "Electronic---Dark Ambient", "Electronic---Drone",
                  "Electronic---New Age"],
+    "transitwave":["Electronic---Synthwave", "Rock---Krautrock", "Electronic---Berlin-School",
+                 "Electronic---Minimal", "Electronic---Electro", "Electronic---New Wave",
+                 "Electronic---Leftfield"],
 }
 
 def analyze(path):
