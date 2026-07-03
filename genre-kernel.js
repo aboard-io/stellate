@@ -285,23 +285,45 @@
     sovietwave: ["ind_furnace","ind_molten","cs_manhatta","cs_liner","sp_lander","spacewalk","earth_orbit","tw_rails"],
   };
 
+  // ---------- DX7 patch registry (the genre-space thesis applied to INSTRUMENTS) ----------
+  // A patch is a point in a ~144-dim parameter space (per-operator envelopes,
+  // levels, tuning — decoded from real cartridge banks by faust/sysex2params.js
+  // into faust/dx7-presets.json). Anchors may declare a pad/lead/bass model
+  // "dx7" plus a patchPool of names; resolveMulti picks per side() like every
+  // other pool, and BLENDING two dx7 parents with the SAME algorithm lerps the
+  // param vectors by weight — patch-space morphing, exactly like genre blending.
+  // Different algorithms are different topologies: pick a side, never smear.
+  // toState emits state.instruments.<voice>.dx7 = {algorithm, params} — the
+  // contract the Faust engine consumes; the legacy csound path maps model
+  // "dx7" to its closest legacy voice (see csd-engine mergedInstruments).
+  const DX7_PATCHES=(()=>{
+    let raw={};
+    if(isNode){ try{ raw=require("./faust/dx7-presets.json"); }catch(e){} }
+    else if(root.DX7_PRESETS) raw=root.DX7_PRESETS;   // browser: page may inline the presets
+    const reg={};
+    for(const [name,p] of Object.entries(raw||{}))
+      if(p&&p.params) reg[name]={algorithm:p.alg, params:p.params};
+    return reg;
+  })();
+
   // ---------- the anchors ----------
   const GENRES = {
     techno: { label:"Techno", info:"rhythm over harmony: drones, machine four, DJ plateaus",   // SYNTH-FORWARD: samples are texture, not the hook
       bpm:[124,140], swing:[0,0.06], humanize:[0,0.15],
       progressions:["drone_min","deep_two"], kits:["techno","pulse"], fills:["off","riser","cut","hat rush"],
+      euclid:{hat:[7,16]},   // E(7,16) rotating closed-hat undergrid beneath the machine four (opens survive)
       bass:{patterns:["rolling","stab","sixteenths"], recipe:{model:["acid","saw","reese"],cutoff:[450,800],res:[.2,.35],level:[1.0,1.2],send:[0,.08],dsend:[0,.1]}},
       lead:{patterns:["double","double","arpup","off"], recipe:{model:["pluck","stack"],wave:"square",voices:[1,2],spread:[.002,.006],cutoff:[1500,2600],level:[.3,.42],send:[.15,.3],dsend:[.2,.4],vibrato:[0,.002]}},
       pads:{prob:.3, recipe:{model:["organ","saw"],wave:"saw",cutoff:[550,900],detune:[.004,.01],attack:[1.5,3],level:[.3,.45],send:[.3,.5],dsend:[.1,.2]}},   // dark low pad, mostly ABSENT — no royal-road wash here
       drums:{kickModel:["909"],snareModel:["clap","crack"],hatModel:["metal","noise"],kick:[1.25,1.5],snare:[.55,.8],hat:[.7,1],tune:[.95,1.1],send:[.05,.15],dsend:[.1,.25]},
-      fx:{reverb:[.35,.55], delayBeats:[.5,.75], delayFb:[.3,.45], delayCut:[2000,3500], pump:[.4,.65], crackle:[0,.1], lowcut:[35,50], highcut:[0,0], comp:[.5,.7], grit:[.2,.45]},
+      fx:{reverb:[.35,.55], delayBeats:[.5,.75], delayFb:[.3,.45], delayCut:[2000,3500], pump:[.4,.65], crackle:[0,.1], lowcut:[35,50], highcut:[0,0], comp:[.5,.7], grit:[.2,.45], jux:[.15,.35]},
       found:{role:"chops", vol:[.1,.18], pitch:[.9,1.1], stretch:[.4,.6], cutoff:[1800,3200], sources:["factory","shibuya","vx_wwvh"]},
       stab:["offbeat","offbeat","rave","sparse"], hits:{sources:["vox_b","rave_a","sp_system","sp_energy"], pattern:"sparse", prob:.5},
       form:"dj" },
     house: { label:"House", info:"Chicago house: four-on-floor + claps + open-hat offbeats, warm organ stabs, piano color, min7 sevenths",   // sample-mid: chops present, synths carry
       bpm:[120,126], swing:[.08,.15], humanize:[.05,.18],
       progressions:["house_min7","lofi","deep_two"], kits:["house","house","four"], fills:["off","hat rush","riser"],
-      bass:{patterns:["rolling","stab","melodic"], recipe:{model:["saw","sub"],cutoff:[380,700],res:[.15,.3],level:[1.0,1.2],send:[0,.08],dsend:[0,.05]}},
+      bass:{patterns:["rolling","stab","melodic"], patchPool:["SYN-BASS 2"], recipe:{model:["saw","sub","dx7"],cutoff:[380,700],res:[.15,.3],level:[1.0,1.2],send:[0,.08],dsend:[0,.05]}},   // ~1/3 of seeds: the DX7 SYN-BASS 2 patch (Faust engine; csound maps -> sub)
       lead:{patterns:["double","pentaup","arpup","off"], recipe:{model:["piano","fm"],wave:"pulse",voices:[1,3],spread:[.003,.008],cutoff:[2200,3400],level:[.4,.52],send:[.25,.4],dsend:[.2,.35]}},   // piano riffs — the Marshall Jefferson move
       pads:{prob:.9, recipe:{model:["organ"],wave:"saw",cutoff:[1000,1600],detune:[.004,.009],attack:[.15,.4],level:[.5,.65],send:[.25,.4],dsend:[.1,.25]}},   // ORGAN STABS: fast attack = stabby, not washy
       drums:{kickModel:["909","boom"],snareModel:["clap"],hatModel:["noise"],kick:[1.15,1.4],snare:[.6,.85],hat:[1.0,1.3],tune:[.95,1.1],send:[.1,.25],dsend:[.05,.15]},   // hats UP — the open-hat offbeat must be heard
@@ -312,11 +334,12 @@
     jungle: { label:"Jungle", info:"chopped breaks, sub pressure, rhythm-as-melody, dub space",   // SAMPLE-FORWARD: the amen IS the track
       bpm:[158,172], swing:[0,.08], humanize:[.1,.25],
       progressions:["deep_two","drone_min","minor_run"], kits:["jungle","breaks"], fills:["break fill","break fill","reverse","off"],
+      euclid:{kick:[3,16]},   // E(3,16) tresillo kicks rotating under the amen — breakbeat kick science
       bass:{patterns:["sub","dub"], recipe:{model:["sub","reese"],cutoff:[260,480],res:[.05,.2],level:[1.2,1.45],send:[0,.05],dsend:[0,0]}},
       lead:{patterns:["off","off","sparse","pentaup"], recipe:{model:["pluck","fm"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1600,2800],level:[.3,.42],send:[.3,.5],dsend:[.3,.5]}},
       pads:{prob:.25, recipe:{model:["saw","organ"],wave:"saw",cutoff:[500,850],detune:[.005,.012],attack:[2,3.5],level:[.3,.42],send:[.45,.65],dsend:[.15,.3]}},   // dark, mostly ABSENT — no soft royal-road wash under the amen
       drums:{kickModel:["808"],snareModel:["crack"],hatModel:["noise"],kick:[1.15,1.4],snare:[.6,.85],hat:[.4,.7],tune:[1.0,1.15],send:[.05,.15],dsend:[.35,.6]},
-      fx:{reverb:[.35,.55], delayBeats:[.75,1.5], delayFb:[.4,.6], delayCut:[1800,3000], pump:[0,.15], crackle:[.05,.2], lowcut:[25,40], highcut:[0,0], comp:[.35,.55], grit:[.15,.35]},
+      fx:{reverb:[.35,.55], delayBeats:[.75,1.5], delayFb:[.4,.6], delayCut:[1800,3000], pump:[0,.15], crackle:[.05,.2], lowcut:[25,40], highcut:[0,0], comp:[.35,.55], grit:[.15,.35], jux:[.25,.5]},
       found:{role:"break", vol:[.3,.45], pitch:[1,1], stretch:[.5,.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175"]},   // the BREAK DOMINATES: loud + wide open, real sampled drums not "light FM"
       stab:["off","sparse"], hits:{sources:["vox_a","rave_d","sp_rewind","sp_pressure"], pattern:"dub", prob:.75},
       form:"dj" },
@@ -335,7 +358,7 @@
       bpm:[62,88], swing:[0,.12], humanize:[.05,.25],
       progressions:["royal_road","dream","pop_1625","neosoul"], kits:["full","open","halftime"], fills:["drum fill","riser","downlift","off"],
       bass:{patterns:["simple","walking","root"], recipe:{model:["saw"],cutoff:[500,900],res:[.1,.25],level:[.9,1.1],send:[.05,.15],dsend:[0,.1]}},
-      lead:{patterns:["composed","composed2","arpup","updown"], recipe:{model:["stack"],wave:"sine",voices:[1,2],spread:[.003,.006],cutoff:[2800,4000],level:[.4,.52],send:[.4,.6],dsend:[.2,.4],vibrato:[.004,.009]}},
+      lead:{patterns:["composed","composed2","arpup","updown"], patchPool:["E.PIANO 1","TUB BELLS"], recipe:{model:["stack","stack","dx7"],wave:"sine",voices:[1,2],spread:[.003,.006],cutoff:[2800,4000],level:[.4,.52],send:[.4,.6],dsend:[.2,.4],vibrato:[.004,.009]}},   // ~1/3: DX7 E.PIANO 1 / TUB BELLS — THE city-pop leads; both alg 5, so blends MORPH between them (csound maps -> fm)
       pads:{prob:1, recipe:{model:["saw","choir","strings"],wave:"saw",cutoff:[1100,1800],detune:[.004,.009],attack:[1.2,2.4],level:[.6,.8],send:[.5,.7],dsend:[.1,.25]}},
       drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.9,1.15],snare:[.6,.85],hat:[.75,1.05],tune:[.95,1.1],send:[.15,.3],dsend:[0,.1]},
       fx:{reverb:[.8,.92], delayBeats:[.75,1.5], delayFb:[.25,.4], delayCut:[2200,3200], pump:[0,.1], crackle:[.05,.3], lowcut:[0,0], highcut:[0,0], comp:[0,.15]},
@@ -357,7 +380,7 @@
       bpm:[72,88], swing:[.18,.32], humanize:[.25,.5],
       progressions:["lofi","neosoul","ii_v_i","pop_1625"], kits:["boombap","halftime"], fills:["off","off","drum fill"],
       bass:{patterns:["simple","dub","root"], recipe:{model:["sub","saw"],cutoff:[350,650],res:[.05,.15],level:[.9,1.1],send:[.05,.12],dsend:[0,.05]}},
-      lead:{patterns:["pentaup","sparse","wander"], recipe:{model:["fm","pluck"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1800,2800],level:[.4,.52],send:[.35,.5],dsend:[.2,.35],vibrato:[.005,.012]}},
+      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1"], recipe:{model:["fm","pluck","dx7"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1800,2800],level:[.4,.52],send:[.35,.5],dsend:[.2,.35],vibrato:[.005,.012]}},   // ~1/3: DX7 E.PIANO 1 through the dust (csound maps -> fm)
       pads:{prob:.9, recipe:{model:["fm"],wave:"sine",cutoff:[900,1500],detune:[.003,.008],attack:[.8,1.8],level:[.5,.68],send:[.35,.55],dsend:[.1,.2]}},
       drums:{kickModel:["808"],snareModel:["noise"],hatModel:["noise"],kick:[1.0,1.25],snare:[.55,.8],hat:[.55,.85],tune:[.8,.95],send:[.1,.22],dsend:[0,.1]},
       fx:{reverb:[.5,.7], delayBeats:[.5,.75], delayFb:[.2,.35], delayCut:[1800,2800], pump:[0,.1], crackle:[.5,.8], lowcut:[0,25], highcut:[7500,11000], comp:[.15,.3]},
@@ -380,7 +403,7 @@
       progressions:["dream","deep_two","drone_min","mode_lydian"], kits:["off","off","kick"], fills:["off"],
       bass:{patterns:["off","off","root"], recipe:{model:["sub"],cutoff:[250,450],res:[.05,.1],level:[.7,.95],send:[.2,.4],dsend:[0,.1]}},
       lead:{patterns:["off","sparse"], recipe:{model:["fm","stack"],wave:"sine",voices:[1,2],spread:[.002,.004],cutoff:[2000,3200],level:[.3,.45],send:[.6,.8],dsend:[.3,.5],vibrato:[.002,.006]}},
-      pads:{prob:1, recipe:{model:["organ","saw"],wave:"saw",cutoff:[600,1200],detune:[.006,.014],attack:[3,5],level:[.65,.85],send:[.65,.85],dsend:[.15,.3]}},
+      pads:{prob:1, patchPool:["TUB BELLS"], recipe:{model:["organ","saw","dx7"],wave:"saw",cutoff:[600,1200],detune:[.006,.014],attack:[3,5],level:[.65,.85],send:[.65,.85],dsend:[.15,.3]}},   // ~1/3: DX7 TUB BELLS in the enormous reverb (csound maps -> bell)
       drums:{kickModel:["808"],snareModel:["noise"],hatModel:["noise"],kick:[.6,.9],snare:[.4,.65],hat:[.4,.7],tune:[.8,1],send:[.3,.5],dsend:[0,.1]},
       fx:{reverb:[.88,.95], delayBeats:[1,1.5], delayFb:[.4,.6], delayCut:[1500,2500], pump:[0,0], crackle:[0,.2], lowcut:[0,0], highcut:[0,0], comp:[0,.1]},
       found:{role:"bed", vol:[.2,.32], pitch:[.6,.8], stretch:[.45,.6], cutoff:[2000,3400], sources:["iriomote","frogs","tokyo_station","vx_wwvh","vx_apollo"]},
@@ -465,13 +488,14 @@
       vocSource:"sp_energy",
       pads:{prob:.9, recipe:{model:["saw"],wave:"saw",cutoff:[1400,2600],detune:[.012,.02],attack:[.6,1.6],level:[.6,.8],send:[.4,.6],dsend:[.1,.25]}},
       drums:{kickModel:["909"],snareModel:["clap","noise"],hatModel:["noise","metal"],kick:[1.35,1.6],snare:[.8,1.05],hat:[.5,.8],tune:[.95,1.1],send:[.2,.4],dsend:[.05,.2]},
-      fx:{reverb:[.45,.65], delayBeats:[.375,.5], delayFb:[.25,.4], delayCut:[2500,4000], pump:[.55,.8], crackle:[0,0], lowcut:[30,45], highcut:[0,0], comp:[.6,.8], grit:[.2,.4]},
+      fx:{reverb:[.45,.65], delayBeats:[.375,.5], delayFb:[.25,.4], delayCut:[2500,4000], pump:[.55,.8], crackle:[0,0], lowcut:[30,45], highcut:[0,0], comp:[.6,.8], grit:[.2,.4], jux:[.2,.45]},
       found:{role:"chops", vol:[.08,.15], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2500,4000], sources:["shibuya","factory","vx_xminusone"]},
       stab:["rave","offbeat"], hits:{sources:["rave_a","rave_c","sp_energy"], pattern:"offbeat", prob:.6},
       form:"drop" },
     dubstep: { label:"Dubstep", info:"140 halftime: wobble bass, snare on three, cavernous space",
       bpm:[136,146], swing:[0,.08], humanize:[.05,.2],
       progressions:["drone_min","deep_two","minor_run"], kits:["halftime","breaks"], fills:["break fill","riser","impact","off"],
+      euclid:{hat:[5,16]},   // E(5,16) sparse uneven hats rotating over the halftime frame
       bass:{patterns:["sub","dub","stab"], recipe:{model:["wobble","reese","sub"],wobbleHz:[1.5,4.5],cutoff:[300,650],res:[.2,.4],level:[1.2,1.45],send:[0,.08],dsend:[0,.1]}},
       lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm","vocoder"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1800,3000],level:[.3,.45],send:[.35,.55],dsend:[.3,.5]}},   // rare vocoder: pitched vox stabs
       vocSource:"sp_pressure",
@@ -561,6 +585,7 @@
     garage: { label:"UK garage", info:"2-step shuffle at 130: swung skippy drums, sub weight, chopped vox",   // sample-mid: vox chops as percussion
       bpm:[128,136], swing:[.2,.3], humanize:[.1,.25],
       progressions:["house_min7","deep_two","lofi"], kits:["breaks","house"], fills:["off","hat rush","cut","break fill"],
+      euclid:{hat:[7,16]},   // E(7,16) skippy 2-step hats, rotation per chord (swing rides on top)
       bass:{patterns:["sub","dub","stab"], recipe:{model:["sub"],cutoff:[300,500],res:[.05,.18],level:[1.15,1.35],send:[0,.06],dsend:[0,.05]}},
       lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2200,3200],level:[.36,.48],send:[.3,.45],dsend:[.25,.4],attack:.004,release:[.05,.09],sustain:[.55,.65],fenv:[.4,.7]}},
       pads:{prob:.4, recipe:{model:["organ","fm"],wave:"saw",cutoff:[700,1100],detune:[.004,.009],attack:[.2,.6],level:[.34,.46],send:[.25,.4],dsend:[.1,.25]}},   // dark chord stabs, often absent
@@ -585,7 +610,7 @@
       progressions:["dream","mode_lydian","canon"], kits:["off"], fills:["off"],
       bass:{patterns:["root","simple","off"], recipe:{model:["sub"],cutoff:[250,450],res:[.05,.12],level:[.8,1],send:[.15,.3],dsend:[0,.1]}},
       lead:{patterns:["sparse","wander","arpup"], recipe:{model:["stack","fm"],wave:"sine",voices:[1,2],spread:[.002,.004],cutoff:[2200,3400],level:[.4,.5],send:[.5,.7],dsend:[.25,.4],vibrato:[.006,.012],attack:[.15,.4],release:[.5,.8],sustain:[.85,.95]}},   // the melody is PRESENT — distinct from ambient
-      pads:{prob:1, recipe:{model:["choir","strings"],wave:"saw",cutoff:[900,1600],detune:[.005,.012],attack:[2.5,4.5],level:[.6,.8],send:[.6,.8],dsend:[.1,.25]}},
+      pads:{prob:1, patchPool:["TUB BELLS"], recipe:{model:["choir","strings","dx7"],wave:"saw",cutoff:[900,1600],detune:[.005,.012],attack:[2.5,4.5],level:[.6,.8],send:[.6,.8],dsend:[.1,.25]}},   // ~1/3: DX7 TUB BELLS — luminous new-age chimes (csound maps -> bell)
       drums:{kickModel:["808"],snareModel:["noise"],hatModel:["noise"],kick:[.5,.8],snare:[.35,.55],hat:[.3,.5],tune:[.9,1.05],send:[.25,.45],dsend:[0,.1]},
       fx:{reverb:[.8,.92], delayBeats:[1,1.5], delayFb:[.35,.5], delayCut:[1800,2800], pump:[0,0], crackle:[0,.05], lowcut:[0,0], highcut:[0,0], comp:[0,.15], grit:[0,0]},
       found:{role:"bed", vol:[.16,.26], pitch:[.75,.9], stretch:[.45,.6], cutoff:[2400,3800], sources:["frogs","iriomote","vx_whitman"]},
@@ -605,12 +630,13 @@
     industrial: { label:"Industrial", info:"detuned machine music: metal hats, phrygian drones, the metallurgy plant finally stars",   // SAMPLE-FORWARD: the factory IS the hook (chops role)
       bpm:[100,126], swing:[0,.05], humanize:[0,.15],
       progressions:["mode_phrygian","drone_min","deep_two"], kits:["techno","pulse"], fills:["cut","impact","noise","hat rush"],
+      euclid:{hat:[11,16]},   // E(11,16) relentless uneven metal-hat clatter — the machine's gait
       bass:{patterns:["stab","rolling","drive"], recipe:{model:["reese","acid"],cutoff:[300,520],res:[.25,.4],level:[1.1,1.3],send:[0,.08],dsend:[0,.1]}},
       lead:{patterns:["double","sparse","off"], recipe:{model:["fuzz","stack","vocoder"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[1600,2600],res:[.3,.45],level:[.38,.5],send:[.2,.35],dsend:[.3,.5],attack:.004,release:[.06,.1],sustain:[.5,.62],fenv:[.6,1]}},   // rare vocoder: the numbers station sings
       vocSource:"vx_conet_poacher",
       pads:{prob:.3, recipe:{model:["organ","saw"],wave:"saw",cutoff:[550,900],detune:[.006,.012],attack:[.8,2],level:[.3,.42],send:[.25,.4],dsend:[.15,.3]}},   // dark, mostly ABSENT
       drums:{kickModel:["909","808"],snareModel:["crack","clap"],hatModel:["metal"],kick:[1.3,1.55],snare:[.7,.95],hat:[.8,1.15],tune:[.8,.9],send:[.1,.2],dsend:[.15,.35]},   // tuned DOWN — the kit as machinery
-      fx:{reverb:[.45,.65], delayBeats:[.5,.75], delayFb:[.35,.5], delayCut:[1800,2800], pump:[.1,.3], crackle:[0,.08], lowcut:[35,50], highcut:[0,0], comp:[.5,.7], grit:[.5,.8]},
+      fx:{reverb:[.45,.65], delayBeats:[.5,.75], delayFb:[.35,.5], delayCut:[1800,2800], pump:[.1,.3], crackle:[0,.08], lowcut:[35,50], highcut:[0,0], comp:[.5,.7], grit:[.5,.8], jux:[.3,.55]},
       found:{role:"chops", vol:[.16,.26], pitch:[.85,1], stretch:[.4,.6], cutoff:[2500,4000], sources:["factory","factory","vx_conet_poacher"]},   // siderurgia, sliced; the numbers station cuts through
       stab:["offbeat","sparse"], hits:{sources:["sp_system","sp_pressure","rave_d"], pattern:"dub", prob:.55},
       form:"dj" },
@@ -632,7 +658,7 @@
       lead:{patterns:["arpup","arpdown","double"], recipe:{model:["pluck","stack"],wave:"square",voices:[1,2],spread:[.001,.003],cutoff:[3500,5000],level:[.5,.62],send:[.15,.3],dsend:[.15,.3],vibrato:[0,.002],attack:.002,release:[.03,.06],sustain:[.5,.6],octave:0}},
       pads:{prob:.5, recipe:{model:["saw"],wave:"square",cutoff:[1500,2500],detune:[.003,.007],attack:[.1,.4],level:[.35,.48],send:[.15,.3],dsend:[.05,.15]}},
       drums:{kickModel:["909"],snareModel:["noise","clap"],hatModel:["noise"],kick:[1.1,1.35],snare:[.7,.95],hat:[.8,1.15],tune:[1,1.15],send:[.05,.12],dsend:[0,.1]},
-      fx:{reverb:[.3,.45], delayBeats:[.375,.5], delayFb:[.15,.3], delayCut:[3000,4500], pump:[0,.15], crackle:[0,0], lowcut:[0,0], highcut:[0,0], comp:[.3,.5], grit:[.15,.35]},
+      fx:{reverb:[.3,.45], delayBeats:[.375,.5], delayFb:[.15,.3], delayCut:[3000,4500], pump:[0,.15], crackle:[0,0], lowcut:[0,0], highcut:[0,0], comp:[.3,.5], grit:[.15,.35], jux:[.25,.45]},   // SID-chip hard-ish channel panning
       found:{role:"bed", vol:[.04,.08], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2000,3200], sources:["shibuya","vx_xminusone"]},
       stab:["off","sparse"], hits:{sources:["rave_a","sp_energy"], pattern:"offbeat", prob:.4},
       form:"pop" },
@@ -652,7 +678,7 @@
       bpm:[90,112], swing:[0,.06], humanize:[.05,.2],
       progressions:["epic_min","minor_run","uplift"], kits:["pulse","four"], fills:["riser","tom fill","downlift"],
       bass:{patterns:["drive","octaves"], recipe:{model:["saw"],cutoff:[550,900],res:[.12,.22],level:[1,1.2],send:[0,.08],dsend:[0,.05]}},
-      lead:{patterns:["arpup","updown","hero"], recipe:{model:["vocoder","vocoder","stack"],wave:"saw",voices:[2,3],spread:[.004,.009],cutoff:[2400,3400],level:[.6,.72],send:[.35,.5],dsend:[.25,.4],vibrato:[0,.004]}},   // the genre's voice: vocoded speech SINGS the arps
+      lead:{patterns:["arpup","updown","hero"], patchPool:["BRASS   2"], recipe:{model:["vocoder","vocoder","stack","dx7"],wave:"saw",voices:[2,3],spread:[.004,.009],cutoff:[2400,3400],level:[.6,.72],send:[.35,.5],dsend:[.25,.4],vibrato:[0,.004]}},   // the genre's voice: vocoded speech SINGS the arps; ~1/4: DX7 BRASS 2, the state-radio fanfare (csound maps -> fm)
       pads:{prob:1, recipe:{model:["choir","strings"],wave:"saw",cutoff:[900,1500],detune:[.005,.011],attack:[1.5,3],level:[.55,.75],send:[.5,.65],dsend:[.1,.2]}},
       drums:{kickModel:["boom","909"],snareModel:["noise","clap"],hatModel:["noise"],kick:[1.1,1.3],snare:[.7,.95],hat:[.6,.9],tune:[.9,1.05],send:[.2,.35],dsend:[.05,.15]},
       fx:{reverb:[.65,.8], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[2000,3000], pump:[0,.15], crackle:[.2,.4], lowcut:[0,30], highcut:[0,0], comp:[.25,.45], grit:[0,.15]},
@@ -730,13 +756,42 @@
     // could check canawave's .vox then read ambient's — a crash on any
     // vox-genre × plain-genre blend.
     const hitsSide=side(), voxSide=side(), foundSide=side(), extraSide=side();
+    // DX7 patch-space resolution: when a voice resolved to model "dx7", each
+    // parent with a patchPool for that voice nominates one patch (per side(),
+    // like every other pool). SAME algorithm across nominees -> lerp the
+    // ~144-dim param vectors by weight (patch-space morphing); different
+    // algorithms are different FM topologies -> pick a side. Returns
+    // {algorithm, params, name} or null (no valid patch -> caller falls back).
+    const dx7For=(getVoice, recipe)=>{
+      if(!recipe||recipe.model!=="dx7") return null;
+      const cands=ws.map(x=>({w:x.w, pool:(getVoice(GENRES[x.g])||{}).patchPool}))
+        .filter(c=>Array.isArray(c.pool)&&c.pool.length)
+        .map(c=>({w:c.w, name:pick(rng,c.pool)}))
+        .filter(p=>DX7_PATCHES[p.name]);
+      if(!cands.length) return null;
+      const algs=new Set(cands.map(p=>DX7_PATCHES[p.name].algorithm));
+      if(cands.length>1&&algs.size===1&&new Set(cands.map(p=>p.name)).size>1){
+        const tot=cands.reduce((s,p)=>s+p.w,0), P0=DX7_PATCHES[cands[0].name];
+        const params={};
+        for(const k of Object.keys(P0.params)){
+          let v=0; for(const p of cands) v+=(DX7_PATCHES[p.name].params[k]||0)*(p.w/tot);
+          params[k]=round(v,2);
+        }
+        return {algorithm:P0.algorithm, params, name:cands.map(p=>p.name.trim()).join("~")};
+      }
+      let r=rng()*cands.reduce((s,p)=>s+p.w,0), acc=0, src=cands[cands.length-1];
+      for(const p of cands){ acc+=p.w; if(r<=acc){ src=p; break; } }
+      const P=DX7_PATCHES[src.name];
+      return {algorithm:P.algorithm, params:Object.assign({},P.params), name:src.name.trim()};
+    };
+    let kitSide=null;   // captured so euclid coheres with the KIT parent (same rng draw order as before)
     const choice = {
       genres:ws.map(x=>x.g), weights:ws.map(x=>round(x.w,3)), t:round(1-(ws[0]?ws[0].w:1),3), seed,
       bpm: Math.round(inRange(rng, wRange(g=>g.bpm))),
       swing: round(inRange(rng, wRange(g=>g.swing)),3),
       humanize: round(inRange(rng, wRange(g=>g.humanize)),3),
       progression: pick(rng, side().progressions),
-      kit: pick(rng, side().kits),
+      kit: pick(rng, (kitSide=side()).kits),
       fills: side().fills,
       bassPattern: pick(rng, side().bass.patterns),
       bassRecipe: blendRecipe(g=>g.bass.recipe),
@@ -769,6 +824,17 @@
       form: side().form,
       rng,
     };
+    // Strudel-borrowed euclid rhythm rides the kit's parent (a kit-level option)
+    choice.euclid = kitSide&&kitSide.euclid ? JSON.parse(JSON.stringify(kitSide.euclid)) : null;
+    // resolve dx7 patches per voice; a voice that picked "dx7" but found no
+    // patch (empty registry, browser without presets) falls back to a legacy
+    // model so the state always renders on every engine.
+    choice.bassDx7 = dx7For(g=>g.bass, choice.bassRecipe);
+    choice.leadDx7 = dx7For(g=>g.lead, choice.leadRecipe);
+    choice.padDx7  = dx7For(g=>g.pads, choice.padRecipe);
+    if(choice.bassRecipe.model==="dx7"&&!choice.bassDx7) choice.bassRecipe.model="sub";
+    if(choice.leadRecipe.model==="dx7"&&!choice.leadDx7) choice.leadRecipe.model="fm";
+    if(choice.padRecipe.model==="dx7"&&!choice.padDx7)   choice.padRecipe.model="bell";
     return constrain(choice);
   }
   function constrain(choice){
@@ -984,14 +1050,19 @@
       bpm:c.bpm, keyOffset:opts.keyOffset!=null?opts.keyOffset:0, progression:c.progression,
       reverb:c.fx.reverb, seed:c.seed, swing:c.swing, humanize:c.humanize,
       realHats:!!c.realHats, snarePP:c.snarePP||0, stationPool:(c.stations||[]),
+      euclid:c.euclid||undefined,                      // kit-level euclidean rhythm spec (csd-engine drumEvents)
+      jux:(c.fx.jux||0)>0.05?c.fx.jux:0,               // stereo divergence: buildEvents emits per-event pan offsets
       pump:c.fx.pump>0.05?c.fx.pump:0, crackle:c.fx.crackle>0.05?c.fx.crackle:0,
       comp:c.fx.comp>0.05?c.fx.comp:0, grit:(c.fx.grit||0)>0.05?c.fx.grit:0,
       tone:{lowcut:c.fx.lowcut>10?Math.round(c.fx.lowcut):0, highcut:c.fx.highcut>1000?Math.round(c.fx.highcut):0},
       delay:{beats:c.fx.delayBeats, feedback:c.fx.delayFb, cutoff:Math.round(c.fx.delayCut)},
       instruments:{
-        pad:Object.assign(E.defaultInstruments().pad, c.padRecipe),
-        bass:Object.assign(E.defaultInstruments().bass, c.bassRecipe),
-        melody:Object.assign(E.defaultInstruments().melody, c.leadRecipe, {voices:Math.round(c.leadRecipe.voices||2)}),
+        // model "dx7" carries its resolved patch: instruments.<voice>.dx7 =
+        // {algorithm, params[, name]} — the Faust engine's contract; the
+        // legacy csound path maps the model and ignores the blob.
+        pad:Object.assign(E.defaultInstruments().pad, c.padRecipe, c.padDx7?{dx7:c.padDx7}:{}),
+        bass:Object.assign(E.defaultInstruments().bass, c.bassRecipe, c.bassDx7?{dx7:c.bassDx7}:{}),
+        melody:Object.assign(E.defaultInstruments().melody, c.leadRecipe, {voices:Math.round(c.leadRecipe.voices||2)}, c.leadDx7?{dx7:c.leadDx7}:{}),
         drums:Object.assign(E.defaultInstruments().drums, c.drumRecipe),
       },
       foundSources,
@@ -1007,8 +1078,9 @@
         return s; }); })(),
     };
     state.genreMeta={genres:c.genres,t:c.t,seed:c.seed,form:c.form,kit:c.kit,progression:c.progression,
-      bass:c.bassPattern+"("+c.bassRecipe.model+")",lead:c.leadPattern+"("+c.leadRecipe.model+")",
-      pad:c.padRecipe.model,drums:c.drumRecipe.kickModel+"/"+c.drumRecipe.snareModel+"/"+c.drumRecipe.hatModel,
+      bass:c.bassPattern+"("+c.bassRecipe.model+(c.bassDx7?":"+c.bassDx7.name:"")+")",
+      lead:c.leadPattern+"("+c.leadRecipe.model+(c.leadDx7?":"+c.leadDx7.name:"")+")",
+      pad:c.padRecipe.model+(c.padDx7?":"+c.padDx7.name:""),drums:c.drumRecipe.kickModel+"/"+c.drumRecipe.snareModel+"/"+c.drumRecipe.hatModel,
       found:c.foundSource+"/"+c.foundRole, stab:c.stab, hits:c.hits?c.hits.source:"-"};
     return state;
   }
@@ -1080,7 +1152,7 @@
   function playlist(waypoints, opts){ return journey(waypoints, Object.assign({tracks:12}, opts||{})); }
 
   function mix(weights, opts){ opts=opts||{}; return toState(resolveMulti(weights, opts.seed!=null?opts.seed:1), opts); }
-  const api={ GENRES, SOURCES, SAMPLES, GENRE_CLIPS, resolve, resolveMulti, track, blend, mix, playlist, journey };
+  const api={ GENRES, SOURCES, SAMPLES, GENRE_CLIPS, DX7_PATCHES, resolve, resolveMulti, track, blend, mix, playlist, journey };
   if(isNode) module.exports=api; else root.GenreKernel=api;
 
   // ---------- CLI ----------

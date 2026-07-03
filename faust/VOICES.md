@@ -34,9 +34,9 @@ Conventions shared by all voice modules:
 
 | model | module | params | notes |
 |---|---|---|---|
-| saw | `bass_saw` | cutoff, res | moog_vcf_2bn (see "ladder" below) |
+| saw | `bass_saw` | cutoff, res, release, fenv | moog_vcf_2bn (see "ladder" below); release/fenv only set when the recipe asks |
 | sub | `bass_sub` | cutoff | sine → tanh(1.6) → LP |
-| acid | `bass_acid` | cutoff, res | note-on cutoff×4 zap, settles at 0.16 s |
+| acid | `bass_acid` | cutoff, res, release, fenv | fenv default 3 = the stock note-on cutoff×4 zap, settles at 0.16 s; per-recipe override |
 | reese | `bass_reese` | cutoff | ±0.6 % saw pair → LP → tanh |
 | wobble | `bass_wobble` | cutoff, res, wobbleHz | LFO on ladder cutoff |
 | piano | `piano` | (shared module) | engine maps cutoff·2.5 capped 4 k |
@@ -50,7 +50,7 @@ Conventions shared by all voice modules:
 | strings | `strings` | cutoff, attack | butlp(cut) + butlp(cut·1.6) inside |
 | choir | `choir` | cutoff, attack | pass min(8–9 k, cutoff·2.5); sings octave below, 4.7 Hz vibrato |
 | fm (pad) | `fm2op` | ratio=2.001 idx0=2.6 idx1=0.9 idxTime=1.1 | pass min(8000, cutoff·1.7) |
-| fm (lead) | `fm2op` | ratio=1.4 idx0=3.5 idx1=1.0 idxTime=dur/2 | pass recipe cutoff |
+| fm (lead) | `fm2op` | ratio=1.4 idx0=3.5 idx1=1.0 idxTime=dur/2 (+decay/sustain/release/fenv when the recipe is plucky) | pass recipe cutoff |
 | brass | `brass` | cutoff (cap), bite, attack | bite = note velocity (csound p5·16000 brightness) |
 | piano | `piano` | cutoff, decay(=note dur) | pad min(8k,c·2) / lead min(9k,c·2) |
 | bell | `bell` | cutoff, res, decay(=note dur) | internal butlp(c·2.5 cap 10k) + moog(c) like instr 4 |
@@ -60,10 +60,10 @@ Conventions shared by all voice modules:
 
 | model | module | params | notes |
 |---|---|---|---|
-| stack | `supersaw` | voices(1–7 runtime), wave(0 sine/1 saw/2 square/3 pulse), detune(=spread), octave, vibrato+vibRate, attack/sustain/release, cutoff, res | covers 2-osc city-pop stack AND 7-voice supersaw; voices≤2 center off by spread/2 (~3 cents) vs csound |
-| pluck | `lead_pluck` | cutoff, res, damp | KS comb; csound `pluck` averaging is darker — damp 2000 default matches |
+| stack | `supersaw` | voices(1–7 runtime), wave(0 sine/1 saw/2 square/3 pulse), detune(=spread), octave, vibrato+vibRate, attack/sustain/release, fenv, cutoff, res | covers 2-osc city-pop stack AND 7-voice supersaw; voices≤2 center off by spread/2 (~3 cents) vs csound |
+| pluck | `lead_pluck` | cutoff, res, damp, release, fenv | KS comb; csound `pluck` averaging is darker — damp 2000 default matches |
 | kpluck (KS guitar) | `lead_kpluck` | cutoff, drive, flangePos | dual+octave KS, body resonators 118/230, chorus, flanger. csound's flanger sweeps absolute song time; engine automates `flangePos` 0→1 instead |
-| fuzz | `lead_fuzz` | cutoff, res, drive, vibrato | pure tanh drive (ef.cubicnl added even harmonics the csound fuzz lacks — A/B'd out); res-loss trim restores moogladder passband droop |
+| fuzz | `lead_fuzz` | cutoff, res, drive, vibrato, attack/sustain/release, fenv | pure tanh drive (ef.cubicnl added even harmonics the csound fuzz lacks — A/B'd out); res-loss trim restores moogladder passband droop |
 | brass / strings / choir / bell / piano / fm | shared modules above | | |
 | guitar | `lead_guitar` | cutoff, pluckPos | **substitution** — pm.lib waveguide replaces the CLI-only TimGM6mb.sf2 sfplay (samples can't ship to the browser). Darker than the sf2 steel guitar (A/B CHECK, intended) |
 | vocoder | `robot_choir` | cutoff, res, makeup | ve.vocoder 32-band channel vocoder; speech is an AUDIO INPUT (in 0). Envelope-correlation verified (vocoder-test.js) + A/B PASS |
@@ -83,7 +83,7 @@ Inputs: `0 dryL, 1 dryR, 2 reverb send, 3 delay send, 4 ping-pong send,
 
 | csound | fx_bus | params |
 |---|---|---|
-| instr 99 reverbsc | zita_rev1 (f2 2000, t60 5.0/3.5, 2 kHz return tone) | `rgain` ≈ state.reverb·3.2 (A/B-calibrated) |
+| instr 99 reverbsc | zita_rev1 (f2 2000, t60 5.0/3.5, return tone param) | `rgain` ≈ state.reverb·3.2 (A/B-calibrated); `rtone` return lowpass (default 2000 = legacy fixed value; live eco-3 dulls to 900) |
 | instr 98 delay | tone-in-loop feedback delay | `dtime dfb dcut dgain`; bleeds ·0.2 into reverb |
 | instr 95 ping-pong | cross-fed letrec pair | `pptime ppfb pptone`; ·0.12 into reverb |
 | instr 97 crackle | no.sparse_noise dust + hiss | `crackle` |
@@ -106,6 +106,16 @@ Adopted substitutions and available upgrades:
   alternates; direct ports PASS so these stay opt-in per genre.
 - **GOTCHA:** dx7.lib exposes NO output-gain param — scale DX7 voices with a
   GainNode (they run ~15 dB hotter than the csound pads at recipe levels).
+  Per-note velocity is that same external scale: `min(1, extGainPerAmp·amp)`
+  (GainNode in live, `@out` pseudo-param in press's PCM mix).
+- **state.dx7 contract:** an instrument recipe carrying
+  `{dx7:{algorithm:N, params:{"/Operator_…": v, …}}}` (melody/pad/solo/bass)
+  plays `dist/dx7_alg<N>` with those params applied at `/DX7<suffix>`
+  (full `/DX7/...` addresses also accepted). press.js generates + compiles a
+  missing `dsp/dx7_alg<N>.dsp` on first use (per-algorithm builds — the
+  runtime 32-algo switch OOMs libfaust-wasm); live loads only what's in
+  `dist/`, so press once (or `node build.js dx7_algN`) to materialize new
+  algorithms for the browser.
 
 ## Known gaps / Phase-2 notes
 
@@ -129,5 +139,15 @@ Adopted substitutions and available upgrades:
   per role exactly as csd-engine.js codegen did (mappings in the tables above).
 - fx_send A/B passes with `rgain = reverb*3.2`; the old prototype mapping
   (`*2.2` in offline-render.js/engine.js fixtures) is conservative but fine.
+- `state.snarePP`: buildEvents tags sparse snare hits with `d.pp`; the engine
+  routes it as a per-EVENT ping-pong send (csound instr 11 p5 → gaPPL) — a
+  per-node GainNode into the pp bus in live, `@pp` pseudo-param in press.
+- per-recipe articulation (csound instr-4 "plucky" opt-in): setting ANY of
+  attack/release/fenv on a lead recipe swaps the legacy sustained env for
+  attack → 0.06 decay → sustain → release and an optional filter zap
+  (`fenv`: cutoff·(1+fenv) settling to cutoff at attack+0.06). Mapped onto
+  supersaw / fm2op / lead_pluck / lead_fuzz; bass_saw/bass_acid take
+  release/fenv when the recipe sets them. Defaults reproduce the A/B'd
+  legacy behavior exactly.
 - Found-sound (instr 3/5 syncgrain/table chops) is deliberately NOT ported:
   per FAUST-PORT.md it moves to native AudioBufferSourceNodes + a JS scheduler.

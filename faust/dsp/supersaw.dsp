@@ -21,6 +21,7 @@ vibRate= hslider("vibRate", 5.2, 0.1, 12, 0.01);
 attack = hslider("attack", 0.01, 0.001, 2, 0.001);
 sustain= hslider("sustain", 0.85, 0, 1, 0.01);
 release= hslider("release", 0.30, 0.01, 3, 0.005);
+fenv   = hslider("fenv", 0, 0, 3, 0.01);              // per-note filter zap: cutoff*(1+fenv) -> cutoff
 level  = hslider("level", 0.5, 0, 1, 0.01);
 gain   = hslider("gain", 1, 0, 2, 0.01);
 
@@ -40,4 +41,9 @@ oct    = os.osc(kf*2) * octave;
 
 env = en.adsr(attack, 0.06, sustain, release, gate);
 
-process = (stack + oct) : ve.moog_vcf_2bn(res, max(30, min(cutoff, 16000))) : *(env*level*gain);
+// csound plucky filter env: kcf expseg cutoff*(1+fenv), attack+0.06, cutoff —
+// note-on exponential settling AT attack+0.06 (tau = T/3 like the other ports)
+fdec = ba.impulsify(gate) : (+ ~ *(ba.tau2pole(max((attack + 0.06)/3, 0.003))));
+kcut = max(30, min(cutoff*(1 + fenv*fdec), 16000));
+
+process = (stack + oct) : ve.moog_vcf_2bn(res, kcut) : *(env*level*gain);

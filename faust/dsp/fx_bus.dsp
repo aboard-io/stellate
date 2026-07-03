@@ -24,6 +24,7 @@ ppfb   = hslider("ppfb", 0.66, 0, 0.85, 0.01);
 pptone = hslider("pptone", 3000, 300, 9000, 1);
 // reverb (instr 99)
 rgain = hslider("rgain", 1, 0, 3.5, 0.01);
+rtone = hslider("rtone", 2000, 500, 6000, 1) : si.smoo;   // return tone (2000 = legacy fixed value; eco-3 dulls it)
 // crackle (instr 97)
 crackle = hslider("crackle", 0, 0, 1, 0.01);
 // master (instr 96 + 100)
@@ -89,8 +90,8 @@ with {
   rin = (rev + d*0.2 + (ppl + ppr)*0.12) * rgain;
   // dark crossover/return + LONG t60: reverbsc at fb 0.85 has a much longer,
   // darker tail than stock zita — this is what pulls the A/B centroid in line
-  rl  = (rin, rin) : re.zita_rev1_stereo(40, 200, 2000, 5.0, 3.5, 48000) : fi.lowpass(1, 2000), ! ;
-  rr  = (rin, rin) : re.zita_rev1_stereo(40, 200, 2000, 5.0, 3.5, 48000) : !, fi.lowpass(1, 2000);
+  rl  = (rin, rin) : re.zita_rev1_stereo(40, 200, 2000, 5.0, 3.5, 48000) : fi.lowpass(1, rtone), ! ;
+  rr  = (rin, rin) : re.zita_rev1_stereo(40, 200, 2000, 5.0, 3.5, 48000) : !, fi.lowpass(1, rtone);
   mixL = dl + rl + d + ppl + crk;
   mixR = dr + rr + d + ppr + crk;
 };

@@ -42,15 +42,39 @@
     const c = m.cutoff || 2000, res = clamp(m.res != null ? m.res : 0.15, 0, 0.95);
     const atk = clamp(Math.max(role === "pad" ? 0.05 : 0.005, m.attack != null ? m.attack : (role === "pad" ? 1.5 : 0.05)), 0.005, 5);
     const model = m.model || (role === "pad" || role === "bass" ? "saw" : "stack");
+    // csound instr-4 "plucky" opt-in: setting ANY of attack/release/fenv swaps
+    // the legacy sustained env for attack -> 0.06 decay -> sustain -> release
+    // plus an optional per-note filter zap (kcf expseg cutoff*(1+fenv) -> cutoff)
+    const plucky = m.attack != null || m.release != null || !!m.fenv;
+    const rel = clamp(m.release != null ? m.release : 0.3, 0.01, 3);
+    const sus = clamp(m.sustain != null ? m.sustain : 0.85, 0, 1);
+    const fev = clamp(m.fenv || 0, 0, 3);
+    // per-recipe release/fenv on the bass modules (only when the recipe asks)
+    const bassArt = {
+      ...(m.release != null ? { release: clamp(m.release, 0.01, 3) } : {}),
+      ...(m.fenv != null ? { fenv: clamp(m.fenv, 0, 4) } : {}),
+    };
+
+    // NEW CONTRACT — recipe carries {dx7:{algorithm:N, params:{...}}}: play the
+    // per-algorithm dx7.lib module with those params. dx7.lib has no output
+    // gain — the engine scales externally (GainNode live / PCM in press),
+    // per NOTE via extGainPerAmp*amp (same calibration as the rhodes preset).
+    if (m.dx7 && m.dx7.algorithm != null) {
+      const alg = Math.round(clamp(m.dx7.algorithm, 1, 32));
+      return { ...base, module: "dx7_alg" + alg, dx7: true, dx7Params: m.dx7.params || {},
+        freqMax: 1000, extGainPerAmp: 1.333 * lvl, params: {} };
+    }
 
     if (role === "bass") {
       switch (model) {
         case "sub":    return { ...base, module: "bass_sub",   params: { ...base.params, cutoff: clamp(c, 80, 12000) } };
-        case "acid":   return { ...base, module: "bass_acid",  params: { ...base.params, cutoff: clamp(c, 80, 12000), res } };
+        case "acid":   return { ...base, module: "bass_acid",  params: { ...base.params, cutoff: clamp(c, 80, 12000), res,
+          ...(m.release != null ? { release: clamp(m.release, 0.01, 3) } : {}),
+          ...(m.fenv != null ? { fenv: clamp(m.fenv, 0, 6) } : {}) } };
         case "reese":  return { ...base, module: "bass_reese", params: { ...base.params, cutoff: clamp(c, 80, 12000) } };
         case "wobble": return { ...base, module: "bass_wobble",params: { ...base.params, cutoff: clamp(c, 80, 12000), res, wobbleHz: clamp(m.wobbleHz || 2.4, 0.1, 12) } };
         case "piano":  return { ...base, module: "piano", decayFromDur: true, params: { ...base.params, cutoff: clamp(Math.min(4000, c * 2.5), 200, 14000) } };
-        default:       return { ...base, module: "bass_saw",   params: { ...base.params, cutoff: clamp(c, 80, 12000), res } };
+        default:       return { ...base, module: "bass_saw",   params: { ...base.params, cutoff: clamp(c, 80, 12000), res, ...bassArt } };
       }
     }
     const isPad = role === "pad";
@@ -63,14 +87,17 @@
       case "brass":   return { ...base, module: "brass", biteFromAmp: true, params: { ...base.params, cutoff: clamp(Math.min(12000, c), 500, 12000), attack: clamp(isPad ? atk : (m.attack != null ? m.attack : 0.08), 0.005, 3) } };
       case "fm":      return isPad
         ? { ...base, module: "fm2op", params: { ...base.params, cutoff: clamp(Math.min(8000, c * 1.7), 200, 14000), ratio: 2.001, idx0: 2.6, idx1: 0.9, idxTime: 1.1, attack: atk, vibrato: 0 } }
-        : { ...base, module: "fm2op", fmLead: true, params: { ...base.params, cutoff: clamp(c, 200, 14000), ratio: 1.4, idx0: 3.5, idx1: 1.0, attack: clamp(m.attack != null ? m.attack : 0.05, 0.001, 5), vibrato: clamp(m.vibrato || 0, 0, 0.03), vibRate: clamp(m.vibRate || 5.2, 0.1, 12) } };
-      case "rhodes":  return { ...base, module: "dx7_alg5", dx7Preset: "E.PIANO 1", freqMax: 1000,
+        : { ...base, module: "fm2op", fmLead: true, params: { ...base.params, cutoff: clamp(c, 200, 14000), ratio: 1.4, idx0: 3.5, idx1: 1.0, attack: clamp(m.attack != null ? m.attack : 0.05, 0.001, 5), vibrato: clamp(m.vibrato || 0, 0, 0.03), vibRate: clamp(m.vibRate || 5.2, 0.1, 12),
+            ...(plucky ? { decay: 0.06, sustain: sus, release: rel, fenv: fev } : {}) } };
+      case "rhodes":  return { ...base, module: "dx7_alg5", dx7: true, dx7Preset: "E.PIANO 1", freqMax: 1000,
         // dx7.lib has no output gain; ab-render matched csound at raw*0.28 vs
         // csound amp 0.3 * level 0.7 => external scale = 1.333 * amp * level
         extGainPerAmp: 1.333 * lvl, params: {} };
-      case "pluck":   return { ...base, module: "lead_pluck",  params: { ...base.params, cutoff: clamp(c, 200, 14000), res, damp: 2000 } };
+      case "pluck":   return { ...base, module: "lead_pluck",  params: { ...base.params, cutoff: clamp(c, 200, 14000), res, damp: 2000,
+        ...(plucky ? { release: rel, fenv: fev } : {}) } };
       case "kpluck":  return { ...base, module: "lead_kpluck", flangeFromTime: true, params: { ...base.params, cutoff: clamp(c, 200, 14000), drive: clamp(m.drive || 0, 0, 1) } };
-      case "fuzz":    return { ...base, module: "lead_fuzz",   params: { ...base.params, cutoff: clamp(c, 200, 14000), res, drive: clamp(m.drive || 0, 0, 1), vibrato: clamp(m.vibrato || 0, 0, 0.03), vibRate: clamp(m.vibRate || 5.2, 0.1, 12) } };
+      case "fuzz":    return { ...base, module: "lead_fuzz",   params: { ...base.params, cutoff: clamp(c, 200, 14000), res, drive: clamp(m.drive || 0, 0, 1), vibrato: clamp(m.vibrato || 0, 0, 0.03), vibRate: clamp(m.vibRate || 5.2, 0.1, 12),
+        ...(plucky ? { attack: clamp(m.attack != null ? m.attack : 0.05, 0.001, 5), sustain: sus, release: rel, fenv: fev } : {}) } };
       case "guitar":  return { ...base, module: "lead_guitar", params: { ...base.params, cutoff: clamp(c || 4500, 200, 14000), pluckPos: 0.75 } };
       case "vocoder": return { ...base, module: "robot_choir", vocoder: true, params: { ...base.params, cutoff: clamp(isPad ? Math.min(9000, c * 2) : c, 200, 14000), res, makeup: 5 } };
       default: { // "stack"/"saw" -> pad_saw (pads) or supersaw (leads)
@@ -83,8 +110,7 @@
           vibrato: clamp(m.vibrato || 0, 0, 0.03), vibRate: clamp(m.vibRate || 5.2, 0.1, 12),
           cutoff: clamp(c, 80, 18000), res,
           attack: clamp(m.attack != null ? m.attack : 0.05, 0.001, 2),
-          release: clamp(m.release != null ? m.release : 0.3, 0.01, 3),
-          sustain: clamp(m.sustain != null ? m.sustain : 0.85, 0, 1) } };
+          release: rel, sustain: sus, fenv: fev } };
       }
     }
   }
@@ -122,6 +148,7 @@
     const pp = state.pingpong || {};
     return {
       rgain: clamp((state.reverb != null ? state.reverb : 0.7) * 3.2, 0, 2), dgain: 1,
+      rtone: 2000,   // reverb return tone (legacy fixed 2 kHz; live eco-3 dulls it)
       dtime: clamp((dl.beats || 0.75) * spb, 0.02, 1.9),
       dfb: clamp(dl.feedback != null ? dl.feedback : 0.3, 0, 0.92),
       dcut: clamp(dl.cutoff || 2600, 300, 9000),
@@ -156,7 +183,7 @@
       const u = units[key]; if (!u) continue;
       const durB = Math.max(0.02, p.dur);
       const sets = { freq: clamp(cpspch(p.pch), 20, u.freqMax || 4000) };
-      if (!u.dx7Preset) sets.gain = clamp(p.amp * u.gmul, 0, 2);
+      if (!u.dx7) sets.gain = clamp(p.amp * u.gmul, 0, 2);
       if (u.decayFromDur) sets.decay = clamp(durB * spb, 0.1, u.module === "bell" ? 6 : 8);
       if (u.fmLead) sets.idxTime = clamp(durB * spb / 2, 0.01, 4);
       if (u.biteFromAmp) sets.bite = clamp(p.amp, 0, 1);
@@ -168,7 +195,9 @@
       const u = units[d.drum]; if (!u) continue;
       const sets = { level: clamp(u.lvl * d.amp, 0, 2), decay: clamp(d.dur * spb, 0.05, 2) };
       if (d.drum === "tom") sets.pitch = clamp(d.pitch || 105, 40, 400);
-      out.push({ unit: d.drum, beat: d.beat, durB: d.dur, sets, drum: true });
+      // state.snarePP: buildEvents tags sparse snare hits with d.pp — a per-EVENT
+      // ping-pong send (csound instr 11 p5 -> gaPPL += asig*ipp)
+      out.push({ unit: d.drum, beat: d.beat, durB: d.dur, sets, drum: true, pp: clamp(d.pp || 0, 0, 2) });
     }
     for (const s of ev.sfx) {
       if (s.sweep) { if (win(s.beat)) sweeps.push({ beat: s.beat, durB: s.dur, from: s.from, to: s.to }); continue; }

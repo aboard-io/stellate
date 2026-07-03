@@ -73,6 +73,11 @@
     function applyFx(state, when) {
       const fxp = SE.fxParams(state);
       if (eco.level) { fxp.crackle = 0; }
+      if (eco.level >= 3) {  // eco 3: thin the FX themselves (feedback tails are the load)
+        fxp.dfb = Math.min(fxp.dfb, 0.25);
+        fxp.ppfb = Math.min(fxp.ppfb, 0.25);
+        fxp.rtone = 900;     // duller reverb return
+      }
       for (const [k, v] of Object.entries(fxp)) {
         const vv = Math.round(v * 1e4) / 1e4;
         if (fxCache[k] === vv) continue;
@@ -98,17 +103,22 @@
         const dry = ctx.createGain(); dry.gain.value = u.dry != null ? u.dry : 1; out.connect(dry); dry.connect(dryBus);
         const rev = ctx.createGain(); rev.gain.value = u.rev || 0; out.connect(rev); rev.connect(revBus);
         const del = ctx.createGain(); del.gain.value = u.del || 0; out.connect(del); del.connect(delBus);
-        if (u.dx7Preset) {
-          dx7Presets = dx7Presets || await (await fetch(BASE + "dx7-presets.json")).json();
-          const pre = dx7Presets[u.dx7Preset];
+        const pp = ctx.createGain(); pp.gain.value = 0; out.connect(pp); pp.connect(ppBus); // per-EVENT ping-pong send (snarePP)
+        if (u.dx7 || u.dx7Preset || u.dx7Params) {
+          let pre = null;
+          if (u.dx7Params) pre = { params: u.dx7Params };   // state.dx7 contract: inline params
+          else if (u.dx7Preset) {
+            dx7Presets = dx7Presets || await (await fetch(BASE + "dx7-presets.json")).json();
+            pre = dx7Presets[u.dx7Preset];
+          }
           if (pre) for (const [sfx, v] of Object.entries(pre.params)) {
-            const p = node.parameters.get("/DX7" + sfx); if (p) p.value = v;
+            const p = node.parameters.get(sfx.slice(0, 4) === "/DX7" ? sfx : "/DX7" + sfx); if (p) p.value = v;
           }
           // dx7.lib has no output gain — external GainNode holds it ~-15dB down
           out.gain.value = 0.18;
         }
         if (u.vocoder) await feedSpeech(node);
-        nodes.push({ node, out, gains: { dry, rev, del }, busyUntil: 0 });
+        nodes.push({ node, out, gains: { dry, rev, del, pp }, ppLast: 0, busyUntil: 0 });
       }
       pool = { module: u.module, spec: u, nodes, paramSig: "" };
       pools.set(key, pool);
@@ -219,8 +229,13 @@
           const p = P(v.node, k);
           if (p) p.setValueAtTime(Math.min(p.maxValue, Math.max(p.minValue, vv)), Math.max(ctx.currentTime, tOn - 0.006));
         }
-        if (pool.spec.dx7Preset) // per-note velocity via the external GainNode
-          v.out.gain.setValueAtTime(Math.min(1, (pool.spec.extGainPerAmp || 1) * (e.amp || 0.1)), Math.max(ctx.currentTime, tOn - 0.006));
+        if (pool.spec.extGainPerAmp) // DX7 per-note velocity via the external GainNode
+          v.out.gain.setValueAtTime(Math.min(1, pool.spec.extGainPerAmp * (e.amp || 0.1)), Math.max(ctx.currentTime, tOn - 0.006));
+        const ppv = e.pp || 0;   // per-event ping-pong send (snarePP snare hits)
+        if (v.gains.pp && ppv !== v.ppLast) {
+          v.gains.pp.gain.setValueAtTime(ppv, Math.max(ctx.currentTime, tOn - 0.006));
+          v.ppLast = ppv;
+        }
         const g = P(v.node, "gate");
         if (g) { g.setValueAtTime(1, tOn); g.setValueAtTime(0, tOff); }
         v.busyUntil = tOff;
@@ -263,11 +278,13 @@
         const r = (a - lastAudio) / ((w - lastWall) / 1000);
         if (r > 0 && r < 3) loadRatio = loadRatio * 0.7 + r * 0.3;
         if (loadRatio < 0.95) { eco.bad++; eco.good = 0; } else if (loadRatio > 0.995) { eco.good++; eco.bad = 0; }
-        if (eco.bad > 8 && eco.level < 2) { eco.level++; eco.bad = 0;
+        if (eco.bad > 8 && eco.level < 3) { eco.level++; eco.bad = 0;
           for (const [k, p] of pools) p.paramSig = ""; // force retune with eco caps
+          for (const k of Object.keys(fxCache)) delete fxCache[k]; // re-apply FX with eco thinning
           status("eco mode " + eco.level + " — shedding load"); }
         if (eco.good > 240 && eco.level > 0 && (opts.ecoStart == null || eco.level > opts.ecoStart)) { eco.level--; eco.good = 0;
           for (const [k, p] of pools) p.paramSig = "";
+          for (const k of Object.keys(fxCache)) delete fxCache[k];
           status(eco.level ? "eco mode " + eco.level : "full quality restored"); }
         if (opts.onLoad) try { opts.onLoad(loadRatio, eco.level); } catch (e) {}
       }
