@@ -1,0 +1,188 @@
+// faust/sf2.js — minimal zero-dep SoundFont 2 (RIFF) reader + zone extractor.
+//
+// WHY THIS EXISTS ("can Faust play soundfonts?"): no — Faust's `soundfile`
+// primitive reads plain audio files and has no notion of SF2 preset/zone/
+// loop-point structure, and per-algorithm WASM builds can't embed a 150MB
+// font anyway. But the engine's NATIVE sampler path (AudioBufferSourceNode
+// live / PCM mix in press — the same path found-sound uses per FAUST-PORT.md)
+// plays extracted zones perfectly. So: parse the SF2 offline, extract the
+// presets we want as wav zones + zones.json (root key, key range, loop
+// points), and the sampler model consumes those. The font itself is never
+// shipped; found/samples/instruments/ holds only the zones we use.
+//
+// Format notes (SoundFont 2.01 spec):
+//   RIFF sfbk -> LIST INFO / LIST sdta (smpl: 16-bit LE PCM words)
+//             -> LIST pdta: phdr(38B recs) pbag(4B) pmod(10B) pgen(4B)
+//                           inst(22B)      ibag(4B) imod(10B) igen(4B)
+//                           shdr(46B: name,start,end,loopStart,loopEnd,sr,
+//                                origPitch,pitchCorr,link,type)
+//   generators used: 41 instrument (pgen terminal), 53 sampleID (igen
+//   terminal), 43 keyRange (lo|hi bytes), 44 velRange, 54 sampleModes
+//   (1/3 = looping), 58 overridingRootKey, 51/52 coarse/fineTune.
+//   Limitation (documented): preset-level relative generators are ignored —
+//   we only extract instrument-level zones, which is exact for the pitch/
+//   loop data we need from FluidR3-class fonts.
+//
+// CLI:
+//   node faust/sf2.js list <font.sf2>
+//   node faust/sf2.js extract <font.sf2> "/NAME/" <outDir> [--max-zones 6]
+//     -> outDir/<slug>/zNN_r<root>.wav (mono 16-bit 44100) + zones.json
+(function (root, factory) {
+  if (typeof module !== "undefined" && module.exports) module.exports = factory();
+  else root.SF2 = factory();
+})(typeof window !== "undefined" ? window : globalThis, function () {
+  "use strict";
+
+  function parse(buf) { // buf: Uint8Array | Buffer | ArrayBuffer
+    const u8 = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    const tag = (o) => String.fromCharCode(u8[o], u8[o + 1], u8[o + 2], u8[o + 3]);
+    const str = (o, n) => { let s = ""; for (let i = 0; i < n; i++) { const c = u8[o + i]; if (!c) break; s += String.fromCharCode(c); } return s.trim(); };
+    if (tag(0) !== "RIFF" || tag(8) !== "sfbk") throw new Error("not a SoundFont (RIFF sfbk)");
+    // walk top-level LISTs, then pdta sub-chunks
+    const chunks = {};   // pdta name -> {off,len}; plus smpl
+    let o = 12;
+    while (o + 8 <= u8.length) {
+      const id = tag(o), len = dv.getUint32(o + 4, true);
+      if (id === "LIST") {
+        const kind = tag(o + 8);
+        let p = o + 12;
+        const end = o + 8 + len;
+        while (p + 8 <= end) {
+          const cid = tag(p), clen = dv.getUint32(p + 4, true);
+          if (kind === "sdta" && cid === "smpl") chunks.smpl = { off: p + 8, len: clen };
+          if (kind === "pdta") chunks[cid] = { off: p + 8, len: clen };
+          p += 8 + clen + (clen & 1);
+        }
+      }
+      o += 8 + len + (len & 1);
+    }
+    for (const need of ["phdr", "pbag", "pgen", "inst", "ibag", "igen", "shdr", "smpl"])
+      if (!chunks[need]) throw new Error("missing chunk: " + need);
+    const rec = (c, size, fn) => { const out = []; for (let p = c.off; p + size <= c.off + c.len; p += size) out.push(fn(p)); return out; };
+    const phdr = rec(chunks.phdr, 38, (p) => ({ name: str(p, 20), preset: dv.getUint16(p + 20, true), bank: dv.getUint16(p + 22, true), bagNdx: dv.getUint16(p + 24, true) }));
+    const pbag = rec(chunks.pbag, 4, (p) => ({ genNdx: dv.getUint16(p, true) }));
+    const pgen = rec(chunks.pgen, 4, (p) => ({ oper: dv.getUint16(p, true), amount: dv.getUint16(p + 2, true) }));
+    const inst = rec(chunks.inst, 22, (p) => ({ name: str(p, 20), bagNdx: dv.getUint16(p + 20, true) }));
+    const ibag = rec(chunks.ibag, 4, (p) => ({ genNdx: dv.getUint16(p, true) }));
+    const igen = rec(chunks.igen, 4, (p) => ({ oper: dv.getUint16(p, true), amount: dv.getUint16(p + 2, true) }));
+    const shdr = rec(chunks.shdr, 46, (p) => ({ name: str(p, 20), start: dv.getUint32(p + 20, true), end: dv.getUint32(p + 24, true),
+      loopStart: dv.getUint32(p + 28, true), loopEnd: dv.getUint32(p + 32, true), rate: dv.getUint32(p + 36, true),
+      origPitch: u8[p + 40], pitchCorr: dv.getInt8(p + 41), type: dv.getUint16(p + 44, true) }));
+
+    // resolve one preset's instrument zones (see limitation note above)
+    function zonesOf(presetIx) {
+      const P = phdr[presetIx];
+      const bagEnd = (phdr[presetIx + 1] || { bagNdx: pbag.length - 1 }).bagNdx;
+      const instIxs = [];
+      for (let b = P.bagNdx; b < bagEnd; b++) {
+        const g0 = pbag[b].genNdx, g1 = (pbag[b + 1] || { genNdx: pgen.length }).genNdx;
+        for (let g = g0; g < g1; g++) if (pgen[g].oper === 41) instIxs.push(pgen[g].amount);
+      }
+      const zones = [];
+      for (const ii of instIxs) {
+        const I = inst[ii]; if (!I) continue;
+        const iEnd = (inst[ii + 1] || { bagNdx: ibag.length - 1 }).bagNdx;
+        let globals = {};
+        for (let b = I.bagNdx; b < iEnd; b++) {
+          const g0 = ibag[b].genNdx, g1 = (ibag[b + 1] || { genNdx: igen.length }).genNdx;
+          const gens = Object.assign({}, globals);
+          let hasSample = false;
+          for (let g = g0; g < g1; g++) { gens[igen[g].oper] = igen[g].amount; if (igen[g].oper === 53) hasSample = true; }
+          if (!hasSample) { if (b === I.bagNdx) globals = gens; continue; }   // global zone = defaults
+          const s = shdr[gens[53]]; if (!s || s.type === 2) continue;         // skip right-channel halves
+          const kr = gens[43] != null ? gens[43] : 0x7f00;
+          const vr = gens[44] != null ? gens[44] : 0x7f00;
+          const vLo = vr & 0xff, vHi = (vr >> 8) & 0xff;
+          if (!(vLo <= 100 && 100 <= vHi)) continue;                          // one velocity layer (forte-ish)
+          const modes = gens[54] != null ? gens[54] : 0;
+          zones.push({
+            keyLo: kr & 0xff, keyHi: (kr >> 8) & 0xff,
+            root: gens[58] != null ? gens[58] : s.origPitch,
+            coarse: (gens[51] != null ? (gens[51] << 16 >> 16) : 0),
+            fine: (gens[52] != null ? (gens[52] << 16 >> 16) : 0) + s.pitchCorr,
+            loop: modes === 1 || modes === 3,
+            sample: s,
+          });
+        }
+      }
+      return zones;
+    }
+    function pcmOf(s) { // shdr -> Float32Array (16-bit words from smpl)
+      const n = s.end - s.start;
+      const out = new Float32Array(Math.max(0, n));
+      const base = chunks.smpl.off + s.start * 2;
+      for (let i = 0; i < n; i++) out[i] = dv.getInt16(base + i * 2, true) / 32768;
+      return out;
+    }
+    return { presets: phdr.slice(0, -1), zonesOf, pcmOf };
+  }
+
+  return { parse };
+});
+
+// ---------------------------------------------------------------- CLI (node)
+if (typeof module !== "undefined" && require.main === module) {
+  const fs = require("fs");
+  const path = require("path");
+  const SF2 = module.exports;
+  const args = process.argv.slice(2);
+  const cmd = args[0];
+  if (cmd === "list") {
+    const sf = SF2.parse(fs.readFileSync(args[1]));
+    for (const p of sf.presets) console.log(`bank ${String(p.bank).padStart(3)} prog ${String(p.preset).padStart(3)}  ${p.name}`);
+  } else if (cmd === "extract") {
+    const [, font, pick, outBase] = args;
+    const maxZones = args.includes("--max-zones") ? +args[args.indexOf("--max-zones") + 1] : 6;
+    const OUT_SR = 44100;
+    const sf = SF2.parse(fs.readFileSync(font));
+    const want = pick.replace(/^\/|\/$/g, "").toUpperCase();
+    // prefer bank 0 (GM); exact name beats substring ("Trumpet" != "Muted Trumpet")
+    let ix = sf.presets.findIndex((p) => p.bank === 0 && p.name.toUpperCase() === want);
+    if (ix < 0) ix = sf.presets.findIndex((p) => p.bank === 0 && p.name.toUpperCase().includes(want));
+    if (ix < 0) { console.error("preset not found: " + pick); process.exit(1); }
+    const P = sf.presets[ix];
+    let zones = sf.zonesOf(ix);
+    if (!zones.length) { console.error("no zones in preset " + P.name); process.exit(1); }
+    zones.sort((a, b) => a.root - b.root || a.keyLo - b.keyLo);
+    // dedupe stereo twins (same keyrange+root) and thin to maxZones spread across the keymap
+    const seen = new Set();
+    zones = zones.filter((z) => { const k = z.keyLo + ":" + z.keyHi + ":" + z.root; if (seen.has(k)) return false; seen.add(k); return true; });
+    if (zones.length > maxZones) {
+      const kept = [];
+      for (let i = 0; i < maxZones; i++) kept.push(zones[Math.round(i * (zones.length - 1) / (maxZones - 1))]);
+      zones = [...new Set(kept)];
+    }
+    const slug = P.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+    const dir = path.join(outBase, slug);
+    fs.mkdirSync(dir, { recursive: true });
+    const meta = { name: P.name, sr: OUT_SR, zones: [] };
+    zones.forEach((z, i) => {
+      let pcm = sf.pcmOf(z.sample);
+      let ls = z.sample.loopStart - z.sample.start, le = z.sample.loopEnd - z.sample.start;
+      if (z.sample.rate !== OUT_SR) {   // linear resample to the engine rate; scale loop points
+        const k = OUT_SR / z.sample.rate, n = Math.floor(pcm.length * k), r = new Float32Array(n);
+        for (let j = 0; j < n; j++) { const x = j / k, x0 = Math.floor(x), f = x - x0; r[j] = pcm[x0] + f * ((pcm[x0 + 1] || 0) - pcm[x0]); }
+        pcm = r; ls = Math.round(ls * k); le = Math.round(le * k);
+      }
+      const file = `z${String(i).padStart(2, "0")}_r${z.root}.wav`;
+      const data = Buffer.alloc(pcm.length * 2);
+      for (let j = 0; j < pcm.length; j++) data.writeInt16LE(Math.max(-1, Math.min(1, pcm[j])) * 32767 | 0, j * 2);
+      const h = Buffer.alloc(44);
+      h.write("RIFF", 0); h.writeUInt32LE(36 + data.length, 4); h.write("WAVEfmt ", 8);
+      h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(1, 22);
+      h.writeUInt32LE(OUT_SR, 24); h.writeUInt32LE(OUT_SR * 2, 28); h.writeUInt16LE(2, 32); h.writeUInt16LE(16, 34);
+      h.write("data", 36); h.writeUInt32LE(data.length, 40);
+      fs.writeFileSync(path.join(dir, file), Buffer.concat([h, data]));
+      // fine/coarse tune folded into an effective (possibly fractional) root
+      const rootEff = z.root - z.coarse - z.fine / 100;
+      meta.zones.push({ file, root: Math.round(rootEff * 100) / 100, lo: z.keyLo, hi: z.keyHi,
+        loop: z.loop && le > ls + 8, loopStart: ls, loopEnd: le, len: pcm.length });
+      console.log(`  ${file}  root=${rootEff} keys=${z.keyLo}-${z.keyHi} loop=${z.loop ? ls + ".." + le : "-"} ${(pcm.length / OUT_SR).toFixed(2)}s`);
+    });
+    fs.writeFileSync(path.join(dir, "zones.json"), JSON.stringify(meta, null, 1));
+    console.log(`✓ ${dir}: ${meta.zones.length} zones (${P.name})`);
+  } else {
+    console.log("usage: sf2.js list <font.sf2> | extract <font.sf2> /NAME/ <outDir> [--max-zones N]");
+  }
+}

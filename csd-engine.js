@@ -92,7 +92,7 @@
 
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
-  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic","habanera"];
+  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic","habanera","syncopated","pedal"];
   const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16","motorik","motorik23"];
   const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal","bossa","electro","newjack"];
   const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
@@ -111,7 +111,7 @@
     model==="reese"||model==="wobble"||model==="piano"||model==="organ"||model==="strings"||
     model==="choir"||model==="bell"||model==="brass"||model==="fm"||model==="rhodes"||
     model==="pluck"||model==="kpluck"||model==="fuzz"||model==="guitar"||model==="vocoder"||
-    model==="dx7"||
+    model==="dx7"||model==="sampler"||   // sampler: native pitched sample zones (found/samples/instruments/)
     // drums: kick boom|808|909 · snare noise|crack|clap · hat noise|metal
     model==="boom"||model==="808"||model==="909"||model==="noise"||model==="crack"||
     model==="clap"||model==="metal";
@@ -210,6 +210,11 @@
         } break; }
       case "walking":    L=[[0,1.0,r5],[1,0.5,r6],[1.5,0.5,f6],[2.5,0.5,r5],[3,1.0,r6],[4,0.5,r5],[4.5,0.5,f6],[5.5,0.5,r6],[6,1.0,r5],[7,0.5,r6],[7.5,0.5,f6]]; break;
       case "habanera":   L=[[0,1.4,r5],[1.5,0.5,f6],[2,1,r6],[3,1,r5],[4,1.4,r5],[5.5,0.5,f6],[6,1,r6],[7,1,f6]]; break;   // DUM..da-DUM-DUM ×2 — the tango/milonga cell IS the groove
+      case "syncopated": // push-pull funk line: downbeat anchor, then off-beat pushes that land early
+        L=[[0,0.7,r5],[1.5,0.45,r5],[2.5,0.7,r6],[3.75,0.45,r5],[4.5,0.7,r5],[5.75,0.45,f6],[6.5,0.7,r6],[7.25,0.45,r5]]; break;
+      case "pedal":      // pedal-octave 8ths with chromatic passing tones into the bar turns
+        L=[[0,0.42,r5],[0.5,0.42,r5],[1,0.42,r6],[1.5,0.42,r5],[2,0.42,r5],[2.5,0.42,r6],[3,0.42,r5],[3.5,0.42,pchAdd(r5,2)],
+           [4,0.42,r5],[4.5,0.42,r5],[5,0.42,r6],[5.5,0.42,r5],[6,0.42,r5],[6.5,0.42,pchAdd(r6,-1)],[7,0.42,r6],[7.5,0.42,pchAdd(r5,-1)]]; break;
       default:           L=[[0,1.5,r5],[2,0.5,r6],[3,1.0,f6],[4.5,0.5,r5],[5,1.0,r6],[6.5,1.5,r5]];
     }
     return L.map(([o,d,p])=>({voice:"bass",beat:S+o,dur:d,pch:p,amp:0.22}));
@@ -442,12 +447,22 @@
       if(gen==="blues"){ MEL_PHRASES.blues.forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       if(gen==="hero"){ (ci%2?MEL_PHRASES.hero2:MEL_PHRASES.hero).forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       if(gen==="anthem"){ (ci%2?MEL_PHRASES.anthem2:MEL_PHRASES.anthem).forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
-      if(gen==="sparse"){ note(0,3,2,0); note(4,3,3,0); return; }
+      if(gen==="sparse"){ note(0,3,2,0); note(4,3,3,0);
+        if(rng()<0.3) note(7,0.75,1,0);                               // occasional pickup into the next bar — sparse breathes across cycles
+        return; }
       if(gen==="roar"){   // a creature bellow: one long held low note, sometimes a second answering call
         out.push({voice:"melody",beat:Sb,dur:5.0,pch:pchAdd(lead[0],-12),amp:0.17});
         if(rng()<0.55) out.push({voice:"melody",beat:Sb+5.4,dur:2.3,pch:pchAdd(lead[2],-12),amp:0.14});
         return; }
-      if(gen==="double"){ const pat=[0,1,2,3,0,1,2,3,1,2,3,0,2,3,0,1]; for(let i=0;i<16;i++) out.push({voice:"melody",beat:Sb+i*0.5,dur:0.45,pch:lead[pat[i]],amp:0.12}); return; }
+      if(gen==="double"){ // 8th-note double-time riff — ROTATES per chord (verbatim loops were the arp fatigue) + humanity drops/octave pops
+        const pat=[0,1,2,3,0,1,2,3,1,2,3,0,2,3,0,1];
+        const rot=(Math.round(Sb/CHORD_BEATS)%4)*4;                   // pattern phase advances each chord/cycle
+        for(let i=0;i<16;i++){
+          if(rng()<0.07) continue;                                    // breathe
+          let p=lead[pat[(i+rot)%16]];
+          if(rng()<0.06) p=pchAdd(p,12);                              // octave pop
+          out.push({voice:"melody",beat:Sb+i*0.5,dur:0.45,pch:p,amp:0.115+rng()*0.01});
+        } return; }
       if(gen==="motorik"||gen==="motorik23"){
         // Kraftwerk sequencer, octave-INTERLEAVED — each cell note is followed half a step
         // later by the same note an octave up (note, note+8ve, next…), a relentless weaving arp.

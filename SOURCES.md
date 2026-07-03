@@ -104,3 +104,26 @@ sketches but flag a human decision before any release that chops/pitches them.
 | `vx_sv_march` | [`78_march-of-the-tanks…gbia0033872b`](https://archive.org/details/78_march-of-the-tanks_chorus-and-orch-gabt-ussr-elen-senkewich-v-timofeiev-m-bl_gbia0033872b) | "March of the Tanks" — chorus & orch. GABT USSR, 1941 78rpm (sovietwave) | pre-1946, PD-old; no license stated |
 | `vx_sv_speech` | [`leninspeeches1919-1921`](https://archive.org/details/leninspeeches1919-1921) | V.I. Lenin, speeches recorded on gramophone discs, 1919–1921 (sovietwave) | PD-old (1919–21 recordings) |
 | `vx_sv_radio` | [`sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977`](https://archive.org/details/sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977) | Radio Moscow English service, Soyuz 26 launch, Dec 10 1977 — Shortwave Radio Audio Archive (sovietwave) | **CC BY-NC 3.0** (derivatives OK, non-commercial) |
+
+## Sampled instruments (found/samples/instruments/ — fetch-found-samples.sh, faust/sf2.js)
+
+The SAMPLER voice model plays real instrument zones extracted from a SoundFont
+at fetch time (SF2 → wav zones + zones.json with root keys and loop points;
+the font itself is never committed or shipped).
+
+| local dir | source | content | license |
+|---|---|---|---|
+| `alto_sax` `tenor_sax` `trumpet` `flute` `clarinet` `vibraphone` `strings` `nylon_string_guitar` `steel_string_guitar` `bandoneon` | **FluidR3 GM/GS** SoundFont by Frank Wen, via [`fluidr3-gm-gs`](https://archive.org/details/fluidr3-gm-gs) on archive.org | single-note multi-zone keymaps (6 zones each, SF2 loop points preserved) | **MIT** — FluidR3 is distributed under the MIT license (Frank Wen, 2000-2002; license text ships with the canonical FluidR3_GM.zip distributions, e.g. member.keymusician.com/Member/FluidR3_GM/). The archive.org item's CC-BY-ND tag is the uploader's, not the font's grant. |
+
+## DX7 patch bank (faust/dx7-presets.json — committed source, not audio)
+
+113 presets decoded (faust/sysex2params.js) from the eight **Yamaha DX7
+factory ROM cartridges** (ROM1A "Master" … ROM4B, 1983), fetched from the
+[yamahablackboxes.com](https://yamahablackboxes.com/synth-diy/yamaha-dx7-keyboard/) sysex
+mirrors (`patches/dx7/factory/rom{1a..4b}.syx`). These banks have been freely
+redistributed by Yamaha-adjacent archives, synth museums, and every DX7
+editor project for four decades (Dexed ships them; bwhitman/learnfm's 31k-patch
+corpus contains them); Yamaha has never asserted rights over the patch DATA —
+PD-adjacent by long convention, noted here rather than claimed as a formal
+grant. Curation: all 113 decoded patches render non-silent (scratch audit,
+2026-07); SFX novelties (TRAIN, EXPLOSION, LASER GUN…) were not decoded.

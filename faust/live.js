@@ -35,7 +35,7 @@
 
   async function exploreLive(getState, onStatus, opts) {
     opts = opts || {};
-    const E = root.CsdEngine, SE = root.FaustStateEngine, FP = root.FoundPlayer;
+    const E = root.CsdEngine, SE = root.FaustStateEngine, FP = root.FoundPlayer, SP = root.FaustSampler;
     if (!E || !SE || !FP) throw new Error("FaustLive needs csd-engine.js, faust/state-engine.js, faust/found-player.js loaded first");
     const status = (m) => { if (onStatus) try { onStatus(m); } catch (e) {} };
 
@@ -114,6 +114,24 @@
     const foundChops = FP.FoundLive(ctx, layerDests("chops"));
     const foundVox = FP.FoundLive(ctx, layerDests("vox"));
     const VOXISH = /^(sp_|vx_|vox_|tw_)/;
+    // SAMPLER voice model (faust/sampler.js): per-unit players into the
+    // unit's mixer layer; zone buffers decode RAW (no lead-in trim/boost)
+    const samplerPlayers = new Map();
+    const samplerOf = (key) => {
+      if (!SP) return null;
+      if (!samplerPlayers.has(key)) samplerPlayers.set(key, SP.SamplerLive(ctx, layerDests(LAYER_OF_UNIT(key))));
+      return samplerPlayers.get(key);
+    };
+    const samplerBufs = {};   // srcId -> AudioBuffer | null (decoded once)
+    async function ensureSamplerBufs(u, st) {
+      for (const z of (u.sampler.zones || [])) {
+        if (samplerBufs[z.srcId] !== undefined) continue;
+        const src = (st.foundSources || []).find(s => s.id === z.srcId);
+        const url = src && (src.url || (src.samplePath ? new URL(src.samplePath, SITE).href : null));
+        try { samplerBufs[z.srcId] = url && SP ? await SP.decodeUrlRaw(ctx, url) : null; }
+        catch (e) { samplerBufs[z.srcId] = null; console.warn("sampler decode failed:", url, e); }
+      }
+    }
 
     const fxCache = {};
     function applyFx(state, when) {
@@ -373,7 +391,11 @@
       // clamping against a different re-sampled ctx.currentTime (that per-
       // event clamp across decode awaits was the instrument-drift bug).
       const usedKeys = new Set(m.events.map(e => e.unit));
-      for (const key of usedKeys) if (units[key]) await ensurePool(key, units[key]);
+      for (const key of usedKeys) {
+        const u = units[key]; if (!u) continue;
+        if (u.sampler) await ensureSamplerBufs(u, one);   // native path: buffers, not pools
+        else await ensurePool(key, u);
+      }
       const bufs = {};   // srcId -> AudioBuffer, prefetched
       for (const f of m.found) {
         if (bufs[f.srcId] !== undefined) continue;
@@ -386,6 +408,24 @@
       const at = (b) => t0 + late + (b - lo) * spb;
       const beatAbs = (b) => serial * 8 + (b - lo);   // musical beat since start
       for (const e of m.events) {
+        const uSpec = units[e.unit];
+        if (uSpec && uSpec.sampler) {   // SAMPLER note: native buffer playback
+          const player = samplerOf(e.unit);
+          const midi = SP ? SP.midiOfFreq(e.sets.freq) : 0;
+          const z = SP ? SP.zoneFor(uSpec.sampler.zones, midi) : null;
+          const buf = z && samplerBufs[z.srcId];
+          if (player && buf) {
+            const zsr = uSpec.sampler.sr || 44100;
+            player.note(buf, at(e.beat), { rate: SP.rateFor(z, midi), durSec: e.durB * spb,
+              gain: (uSpec.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
+              atk: uSpec.sampler.atk, rel: uSpec.sampler.rel,
+              dry: uSpec.dry != null ? uSpec.dry : 1, rsend: uSpec.rev || 0, dsend: uSpec.del || 0,
+              loop: !!z.loop, loopStartSec: (z.loopStart || 0) / zsr, loopEndSec: (z.loopEnd || 0) / zsr });
+            layers.get(LAYER_OF_UNIT(e.unit)).lastBar = serial;
+            schedLog("sampler:" + e.unit, beatAbs(e.beat), at(e.beat));
+          }
+          continue;
+        }
         const pool = pools.get(e.unit); if (!pool) continue;
         const tOn = at(e.beat);
         const durSec = e.durB * spb;
@@ -567,6 +607,7 @@
           master.gain.linearRampToValueAtTime(0, tNow + 0.06);
         } catch (e) {}
         foundBeds.stopAll(); foundChops.stopAll(); foundVox.stopAll();
+        for (const [, p] of samplerPlayers) p.stopAll();
         for (const s of speechSrcs) { try { s.stop(); } catch (e) {} }
         for (const [, p] of pools) retirePool(p);
         setTimeout(() => { try { ctx.close(); } catch (e) {} }, 1200);

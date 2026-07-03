@@ -181,3 +181,29 @@ Adopted substitutions and available upgrades:
   legacy behavior exactly.
 - Found-sound (instr 3/5 syncgrain/table chops) is deliberately NOT ported:
   per FAUST-PORT.md it moves to native AudioBufferSourceNodes + a JS scheduler.
+
+## SAMPLER voice model + the expanded DX7 bank (2026-07 variety round)
+
+- **sampler** (model `"sampler"`): real sampled instruments through the NATIVE
+  buffer path (faust/sampler.js — AudioBufferSourceNode live, PCM mix in
+  press), not a Faust module. Contract: `instruments.<voice>.sampler = {id,
+  sr, zones:[{srcId, root, lo, hi, loop, loopStart, loopEnd}]}`; zone wavs
+  ride `foundSources` at vol 0 (both engines decode through existing paths;
+  live decodes RAW — no found-player lead-in trim, which would break loop
+  offsets). playbackRate = 2^((midi−root)/12), root may be fractional (SF2
+  fine-tune); looped zones sustain under the gate, attack/release from the
+  recipe declick. Kernel: `samplerPool` per voice, resolved like patchPool;
+  registry + zone tables in genre-kernel.js `SAMPLERS`. Zones are extracted
+  from FluidR3_GM (MIT) by **faust/sf2.js** at fetch time — that is also the
+  answer to "can Faust play soundfonts": Faust's `soundfile` can't read SF2,
+  the engine's native sampler plays extracted zones instead. Instruments:
+  alto/tenor sax, trumpet, flute, clarinet, vibraphone, string ensemble,
+  nylon + steel guitar, bandoneon (tango's voice). Inserts are dropped on
+  sampler voices (constrain) so live and press render identically.
+- **DX7 bank**: dx7-presets.json now carries **114 presets** decoded from the
+  eight Yamaha factory ROMs (sysex2params.js; provenance in SOURCES.md), all
+  render-audited non-silent. Every algorithm the bank needs is precompiled
+  (24 `dx7_algN` modules in dist/). Anchors reference them via `patchPool`;
+  same-algorithm pools (the alg-5 E.PIANO/TUB BELLS/SHIMMER family, alg-22
+  brass, alg-29 organs, alg-17 basses, alg-18 horns) morph param-space in
+  blends.
