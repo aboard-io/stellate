@@ -105,6 +105,27 @@
         freqMax: 1000, extGainPerAmp: 1.333 * lvl, params: {} };
     }
 
+    // native pitched sample zones (faust/sampler.js) — no Faust module. ALL
+    // roles including bass (upright walking lines). Contract: m.sampler =
+    // {id, sr, zones:[{srcId, root, lo, hi, loop, loopStart, loopEnd}]}
+    // (kernel toState; zone wavs ride foundSources at vol 0 so both engines
+    // decode them through the existing paths). Bass default envelope is
+    // shorter/percussive so looped zones never smear a walking line.
+    const samplerUnit = () => {
+      const sp = m.sampler || {};
+      // bass calibration: FluidR3 bass zones peak near full scale while bass
+      // events run ~1.7x melody amp — an upright at lead calibration lands
+      // ~+10dB over the Faust bass modules at equal recipe level. x0.5 keeps
+      // the upright audibly forward (~+4.5dB vs the old piano bass) without
+      // drowning the mids (A/B-measured against mix/track-0N band balance).
+      return { ...base, gmul: base.gmul * (role === "bass" ? 0.5 : 1), module: null, sampler: {
+          id: sp.id || "?", sr: sp.sr || 44100,
+          zones: Array.isArray(sp.zones) ? sp.zones : [],
+          atk: clamp(m.attack != null ? m.attack : (role === "bass" ? 0.006 : 0.012), 0.003, 0.5),
+          rel: clamp(m.release != null ? m.release : (role === "bass" ? 0.07 : 0.09), 0.02, 1.5),
+        }, freqMax: 4000 };
+    };
+
     if (role === "bass") {
       switch (model) {
         case "sub":    return { ...base, module: "bass_sub",   params: { ...base.params, cutoff: clamp(c, 80, 12000) } };
@@ -114,6 +135,7 @@
         case "reese":  return { ...base, module: "bass_reese", params: { ...base.params, cutoff: clamp(c, 80, 12000) } };
         case "wobble": return { ...base, module: "bass_wobble",params: { ...base.params, cutoff: clamp(c, 80, 12000), res, wobbleHz: clamp(m.wobbleHz || 2.4, 0.1, 12) } };
         case "piano":  return { ...base, module: "piano", decayFromDur: true, params: { ...base.params, cutoff: clamp(Math.min(4000, c * 2.5), 200, 14000) } };
+        case "sampler": return samplerUnit();   // the upright &co (native path)
         default:       return { ...base, module: "bass_saw",   params: { ...base.params, cutoff: clamp(c, 80, 12000), res, ...bassArt } };
       }
     }
@@ -133,18 +155,7 @@
         // dx7.lib has no output gain; ab-render matched csound at raw*0.28 vs
         // csound amp 0.3 * level 0.7 => external scale = 1.333 * amp * level
         extGainPerAmp: 1.333 * lvl, params: {} };
-      case "sampler": { // native pitched sample zones (faust/sampler.js) — no Faust module.
-        // Contract: m.sampler = {id, sr, zones:[{srcId, root, lo, hi, loop,
-        // loopStart, loopEnd}]} (kernel toState; zone wavs ride foundSources
-        // at vol 0 so both engines decode them through the existing paths).
-        const sp = m.sampler || {};
-        return { ...base, module: null, sampler: {
-            id: sp.id || "?", sr: sp.sr || 44100,
-            zones: Array.isArray(sp.zones) ? sp.zones : [],
-            atk: clamp(m.attack != null ? m.attack : 0.012, 0.003, 0.5),
-            rel: clamp(m.release != null ? m.release : 0.09, 0.02, 1.5),
-          }, freqMax: 4000 };
-      }
+      case "sampler": return samplerUnit();
       case "pluck":   return { ...base, module: "lead_pluck",  params: { ...base.params, cutoff: clamp(c, 200, 14000), res, damp: 2000,
         ...(plucky ? { release: rel, fenv: fev } : {}) } };
       case "kpluck":  return { ...base, module: "lead_kpluck", flangeFromTime: true, params: { ...base.params, cutoff: clamp(c, 200, 14000), drive: clamp(m.drive || 0, 0, 1) } };
@@ -240,7 +251,10 @@
       if (u.fmLead) sets.idxTime = clamp(durB * spb / 2, 0.01, 4);
       if (u.biteFromAmp) sets.bite = clamp(p.amp, 0, 1);
       if (u.flangeFromTime) sets.flangePos = clamp(p.beat * spb / 164, 0, 1);
-      out.push({ unit: key, beat: p.beat, durB, sets, amp: p.amp });
+      // blue-note bend contract (VOICES.md): only sampler units render it;
+      // Faust-module voices carry no matching param and simply ignore it.
+      out.push({ unit: key, beat: p.beat, durB, sets, amp: p.amp,
+        ...(p.bend ? { bend: p.bend } : {}) });
     }
     for (const d of ev.drums) {
       if (!win(d.beat)) continue;

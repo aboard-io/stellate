@@ -198,8 +198,22 @@ Adopted substitutions and available upgrades:
   answer to "can Faust play soundfonts": Faust's `soundfile` can't read SF2,
   the engine's native sampler plays extracted zones instead. Instruments:
   alto/tenor sax, trumpet, flute, clarinet, vibraphone, string ensemble,
-  nylon + steel guitar, bandoneon (tango's voice). Inserts are dropped on
-  sampler voices (constrain) so live and press render identically.
+  nylon + steel guitar, bandoneon (tango's voice), upright acoustic bass +
+  percussive/rock organ (the 2026-07 blues acoustic pass). Inserts are
+  dropped on sampler voices (constrain) so live and press render identically.
+  The BASS voice is sampler-capable too (kernel `bass.samplerPool` →
+  `instruments.bass.sampler`, same contract; state-engine resolves model
+  "sampler" for every role, with a shorter default attack/release on bass so
+  looped zones never smear a walking line).
+- **Blue-note bend** (per-note, sampler-only): a pitched event may carry
+  `bend: {from, ms}` — `from` in SEMITONES (negative = start under pitch,
+  the blues slide), `ms` = glide length. The engines map it to a playbackRate
+  glide into the target pitch: live = `linearRampToValueAtTime` on
+  `source.playbackRate`; press = the same linear-in-rate ramp accumulated
+  sample-wise in `sampler.js mixPCM` (unbent notes keep the bit-exact fixed-
+  rate path). csd-engine's "blues" lead pattern marks ~30-40% of phrase notes
+  (seeded, biased onto thirds/fifths) with `from` −0.5..−1, `ms` 60-140.
+  NON-sampler voices ignore `bend` — no Faust module has a matching param.
 - **DX7 bank**: dx7-presets.json now carries **114 presets** decoded from the
   eight Yamaha factory ROMs (sysex2params.js; provenance in SOURCES.md), all
   render-audited non-silent. Every algorithm the bank needs is precompiled

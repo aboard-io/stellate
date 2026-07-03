@@ -339,6 +339,21 @@ if [ ! -s found/samples/instruments/alto_sax/zones.json ]; then
   done
   rm -f /tmp/FluidR3_GM_GS.sf2
 fi
+# --- FluidR3 blues batch (2026-07 acoustic pass): upright bass + real organs ---
+# Separate guard so trees that fetched the first batch pick these up. GM 32
+# "Acoustic Bass" = the upright (blues/jazz/bossa/exotica/spokenword BASS
+# voice); GM 17/18 = the comping organs. GM 16 is "DrawbarOrgan" (one space-
+# less name in FluidR3) and extracts as a SINGLE zone rooted at C7 — useless
+# for chords (3-4 octaves of down-pitch), so Percussive Organ stands in.
+if [ ! -s found/samples/instruments/acoustic_bass/zones.json ]; then
+  echo "→ FluidR3_GM_GS.sf2 (blues batch: upright bass + organs)"
+  [ -s /tmp/FluidR3_GM_GS.sf2 ] || curl -sL --max-time 900 -o /tmp/FluidR3_GM_GS.sf2 \
+    "$IA/fluidr3-gm-gs/FluidR3_GM_GS.sf2"
+  for p in "Acoustic Bass" "Percussive Organ" "Rock Organ"; do
+    node faust/sf2.js extract /tmp/FluidR3_GM_GS.sf2 "/$p/" found/samples/instruments --max-zones 6
+  done
+  rm -f /tmp/FluidR3_GM_GS.sf2
+fi
 # NOTE: the zone tables are mirrored statically in genre-kernel.js SAMPLERS —
 # if you re-extract with different --max-zones, regenerate that table.
 

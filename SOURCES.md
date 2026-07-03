@@ -113,7 +113,7 @@ the font itself is never committed or shipped).
 
 | local dir | source | content | license |
 |---|---|---|---|
-| `alto_sax` `tenor_sax` `trumpet` `flute` `clarinet` `vibraphone` `strings` `nylon_string_guitar` `steel_string_guitar` `bandoneon` | **FluidR3 GM/GS** SoundFont by Frank Wen, via [`fluidr3-gm-gs`](https://archive.org/details/fluidr3-gm-gs) on archive.org | single-note multi-zone keymaps (6 zones each, SF2 loop points preserved) | **MIT** — FluidR3 is distributed under the MIT license (Frank Wen, 2000-2002; license text ships with the canonical FluidR3_GM.zip distributions, e.g. member.keymusician.com/Member/FluidR3_GM/). The archive.org item's CC-BY-ND tag is the uploader's, not the font's grant. |
+| `alto_sax` `tenor_sax` `trumpet` `flute` `clarinet` `vibraphone` `strings` `nylon_string_guitar` `steel_string_guitar` `bandoneon` `acoustic_bass` `percussive_organ` `rock_organ` | **FluidR3 GM/GS** SoundFont by Frank Wen, via [`fluidr3-gm-gs`](https://archive.org/details/fluidr3-gm-gs) on archive.org | single-note multi-zone keymaps (6 zones each, SF2 loop points preserved) | **MIT** — FluidR3 is distributed under the MIT license (Frank Wen, 2000-2002; license text ships with the canonical FluidR3_GM.zip distributions, e.g. member.keymusician.com/Member/FluidR3_GM/). The archive.org item's CC-BY-ND tag is the uploader's, not the font's grant. |
 
 ## DX7 patch bank (faust/dx7-presets.json — committed source, not audio)
 

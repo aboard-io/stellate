@@ -12,6 +12,11 @@
 //   live; wrapped linear-interp read in mixPCM); unlooped zones one-shot.
 //   gain envelope: linear attack + release declick ramps (recipe attack/
 //   release honored via the unit spec).
+//   BLUE-NOTE BEND (per note, optional): {bendFrom: -semitones, bendMs} —
+//   the note STARTS bendFrom semitones off target and glides into pitch over
+//   bendMs (linear in playbackRate: live = linearRampToValueAtTime on
+//   src.playbackRate; press = the same linear rate ramp accumulated sample-
+//   wise). Notes without bendFrom keep the exact original fixed-rate path.
 //
 // (a) mixPCM(notes, buffers, sr, into): pure-JS render for press.js (node).
 // (b) SamplerLive(ctx, dests): AudioBufferSourceNode scheduling for live.js.
@@ -60,8 +65,17 @@
       const loop = z.loop && z.loopEnd > z.loopStart + 8;
       const loopLen = loop ? z.loopEnd - z.loopStart : 0;
       const g = (n.gain != null ? n.gain : 0.5) * GAIN;
+      // blue-note bend: start bendFrom semitones off target, linear-in-rate
+      // glide over bendMs (matches live's linearRampToValueAtTime), then the
+      // fixed target rate. pos accumulates ONLY on the bend path so unbent
+      // notes keep the original bit-exact i*rate read.
+      const bendN = n.bendFrom ? Math.max(1, Math.floor(((n.bendMs || 90) / 1000) * sr)) : 0;
+      const r0 = bendN ? rate * Math.pow(2, n.bendFrom / 12) : rate;
+      let posAcc = 0;
       for (let i = 0; i < outN; i++) {
-        let pos = i * rate;
+        let pos;
+        if (bendN) { pos = posAcc; posAcc += i < bendN ? r0 + (rate - r0) * (i / bendN) : rate; }
+        else pos = i * rate;
         if (loop && pos >= z.loopEnd) pos = z.loopStart + ((pos - z.loopStart) % loopLen);
         if (pos >= src.length - 1) break;                    // unlooped: natural end
         const i0 = pos | 0, fr = pos - i0;
@@ -98,11 +112,16 @@
   function SamplerLive(ctx, dests) {
     const live = { active: new Set() };
     // buffer: AudioBuffer (raw-decoded); f: {rate, when, durSec, amp(gain),
-    // atk, rel, rsend, dsend, loop, loopStartSec, loopEndSec}
+    // atk, rel, rsend, dsend, loop, loopStartSec, loopEndSec,
+    // bendFrom (semitones, negative = start under pitch), bendMs}
     live.note = function (buffer, when, f) {
       const src = ctx.createBufferSource();
       src.buffer = buffer;
-      src.playbackRate.value = f.rate;
+      if (f.bendFrom) {   // blue-note bend: glide into the target pitch
+        const r0 = f.rate * Math.pow(2, f.bendFrom / 12);
+        src.playbackRate.setValueAtTime(r0, when);
+        src.playbackRate.linearRampToValueAtTime(f.rate, when + Math.max(0.01, (f.bendMs || 90) / 1000));
+      } else src.playbackRate.value = f.rate;
       if (f.loop && f.loopEndSec > f.loopStartSec) {
         src.loop = true; src.loopStart = f.loopStartSec; src.loopEnd = f.loopEndSec;
       }

@@ -1,13 +1,17 @@
 // engine.test.js — faust-press smoke test: real offline renders, non-silence gates.
-//   node engine.test.js
+//   node engine.test.js [--quick]
 //
 // The old csound render matrix (every progression/key/melody through the csound
 // CLI) lives on branch legacy-csound. Post FAUST-PORT phase 3 this verifies the
 // one true render path — faust/press.js over the same buildEvents states — by
 // pressing three very different states and asserting real audio came out.
+// The three presses run CONCURRENTLY (independent child processes, one core
+// each); result lines print in a fixed order once all land. --quick presses
+// 8s instead of 24s — enough for the kit and bed to prove non-silence — and is
+// what verify.sh's fast loop uses; the full 24s stays the pre-ship gate.
 // Requires: ffmpeg, found/ + found/samples/ (fetch scripts), faust/node_modules.
 "use strict";
-const { execFileSync } = require("child_process");
+const { execFile } = require("child_process");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -15,7 +19,8 @@ const E = require("./csd-engine.js");
 const K = require("./genre-kernel.js");
 
 const HERE = __dirname;
-const DUR = 24;   // seconds pressed per state — enough for drums+bass+found to enter
+const QUICK = process.argv.includes("--quick");
+const DUR = QUICK ? 8 : 24;   // seconds pressed per state — enough for drums+bass+found to enter
 
 function resolvePaths(state) {
   for (const s of state.foundSources) {
@@ -42,34 +47,40 @@ function press(name, state) {
   const sj = path.join(os.tmpdir(), `eng_${name}.state.json`);
   const wav = path.join(os.tmpdir(), `eng_${name}.wav`);
   fs.writeFileSync(sj, JSON.stringify(state));
-  try {
-    execFileSync("node", [path.join(HERE, "faust", "press.js"), sj, wav, "--dur", String(DUR)],
-      { stdio: ["ignore", "ignore", "pipe"] });
-  } catch (e) {
-    console.log(`FAIL  ${name.padEnd(22)} press error: ${String(e.stderr || e.message).slice(0, 160)}`);
-    return false;
+  return new Promise((resolve) => {
+    execFile("node", [path.join(HERE, "faust", "press.js"), sj, wav, "--dur", String(DUR)],
+      { maxBuffer: 16 * 1024 * 1024 }, (err, _stdout, stderr) => {
+        if (err) {
+          resolve({ ok: false, line: `FAIL  ${name.padEnd(22)} press error: ${String(stderr || err.message).slice(0, 160)}` });
+          return;
+        }
+        const sz = fs.existsSync(wav) ? fs.statSync(wav).size : 0;
+        const rms = sz > 1000 ? wavRms(wav) : 0;
+        const ok = sz > 100000 && rms > 0.01;   // real, non-silent audio
+        resolve({ ok, line: `${ok ? "PASS" : "FAIL"}  ${name.padEnd(22)} wav=${(sz / 1024 | 0)}KB rms=${rms.toFixed(4)}` });
+      });
+  });
+}
+
+(async () => {
+  const presses = [];
+
+  // 1) the committed default song (royal road, tokyo bed) — engine's own state
+  {
+    const s = E.defaultState();   // ids tokyo/tsukiji/asakusa all map to the one real local wav
+    s.foundSources.forEach((f) => { f.fsPath = path.join(HERE, "found", "tokyo_station.wav"); });
+    presses.push(press("default_song", s));
   }
-  const sz = fs.existsSync(wav) ? fs.statSync(wav).size : 0;
-  const rms = sz > 1000 ? wavRms(wav) : 0;
-  const ok = sz > 100000 && rms > 0.01;   // real, non-silent audio
-  console.log(`${ok ? "PASS" : "FAIL"}  ${name.padEnd(22)} wav=${(sz / 1024 | 0)}KB rms=${rms.toFixed(4)}`);
-  return ok;
-}
 
-let allOk = true;
+  // 2) a break-chop genre — slice scheduling + jungle kit + local samples
+  presses.push(press("jungle_s2", K.track("jungle", { seed: 2 })));
 
-// 1) the committed default song (royal road, tokyo bed) — engine's own state
-{
-  const s = E.defaultState();   // ids tokyo/tsukiji/asakusa all map to the one real local wav
-  s.foundSources.forEach((f) => { f.fsPath = path.join(HERE, "found", "tokyo_station.wav"); });
-  allOk = press("default_song", s) && allOk;
-}
+  // 3) a voice-led genre — granular bed layer + quiet boombap (the spokenword path)
+  presses.push(press("spokenword_s3", K.track("spokenword", { seed: 3 })));
 
-// 2) a break-chop genre — slice scheduling + jungle kit + local samples
-allOk = press("jungle_s2", K.track("jungle", { seed: 2 })) && allOk;
-
-// 3) a voice-led genre — granular bed layer + quiet boombap (the spokenword path)
-allOk = press("spokenword_s3", K.track("spokenword", { seed: 3 })) && allOk;
-
-console.log(allOk ? "\nALL PASS" : "\nFAILURES");
-process.exit(allOk ? 0 : 1);
+  const results = await Promise.all(presses);
+  results.forEach((r) => console.log(r.line));
+  const allOk = results.every((r) => r.ok);
+  console.log(allOk ? "\nALL PASS" : "\nFAILURES");
+  process.exit(allOk ? 0 : 1);
+})();
