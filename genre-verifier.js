@@ -76,7 +76,7 @@
     lofi:     { bpm:[66,92,3], crackle:[.4,1,3], swing:[.14,.4,2], seventh:[.5,1,1], softTop:[1,1,2],
                 snareBalance:[0,.8,1], wash:[.1,.5,1] },
     downtempo:{ bpm:[60,90,3], wash:[.28,.8,2], drumDensity:[.2,2.2,2], motion:[.3,1,1], comp:[0,.4,1],
-                snareBalance:[0,.8,1], bedUse:[.4,1,1], sub:[.5,1,2] },
+                snareBalance:[0,.8,1], bedUse:[.4,1,1], sub:[.5,1,2], seventh:[.5,1,1] },   // warm EXTENDED harmony — wintersynth's bare frost triads stay off this diagonal
     ambient:  { bpm:[52,76,2], drumDensity:[0,.6,3], wash:[.4,1,3], motion:[0,.9,1], pump:[0,.1,1],
                 snareBalance:[0,1,0.5], bedUse:[.6,1,2], comp:[0,.2,2] },
     dinosynth:{ bpm:[68,98,2], drumDensity:[1.6,3.3,3], hatDensity:[1.2,2.3,2], snareBalance:[0,.45,2],
@@ -115,7 +115,8 @@
     doomdrone:{ bpm:[44,64,3], comp:[.4,.85,3], drumDensity:[0,1.2,2], wash:[.5,1,2], motion:[0,.7,1],
                 pump:[0,.06,1], swing:[0,.05,1], crackle:[0,.15,1], snareBalance:[0,.5,1] },
     newage:   { bpm:[54,80,2], drumDensity:[0,.5,3], motion:[.3,1,3], wash:[.4,1,2], pump:[0,.05,1],
-                crackle:[0,.1,2], comp:[0,.25,2], swing:[0,.06,1], bedUse:[.5,1,2], acoustic:[0,.3,2] },
+                crackle:[0,.1,2], comp:[0,.25,2], swing:[0,.06,1], bedUse:[.5,1,2], acoustic:[0,.3,2],
+                seventh:[.4,1,2] },   // luminous EXTENDED harmony — wintersynth's frost triads (seventh 0) stay off this diagonal
     exotica:  { bpm:[82,108,3], swing:[.1,.26,2], acoustic:[.4,1,2], seventh:[.8,1,1], bedUse:[.4,1,1],
                 crackle:[0,.2,1], drumDensity:[.6,2.4,1], snareBalance:[0,.8,1], softTop:[0,0,1], motion:[.5,1,1] },
     industrial:{ bpm:[96,128,3], chopUse:[.25,1,2], pump:[0,.35,2], comp:[.4,.85,1], motion:[0,.7,2],
@@ -128,6 +129,65 @@
                 bedUse:[.4,1,2], acoustic:[0,.3,1], swing:[0,.05,1], pump:[0,.1,1], sub:[0,.5,1] },   // march snare UP + shellac dust + triadic majors (vs sovietwave's minor 7ths, quiet snare)
     sovietwave:{ bpm:[86,116,2], crackle:[.15,.45,2], seventh:[.6,1,2], snareBalance:[0,.6,2], leadVoices:[1,4,2],
                 bedUse:[.4,1,2], motion:[.5,1,1], wash:[.25,.7,1], swing:[0,.06,1], acoustic:[0,.3,1], pump:[0,.2,1] },   // minor-anthem 7ths + radio dust; few lead voices (vs synthwave supersaw)
+    // ---- round 3 ----
+    citypop:  { bpm:[90,108,3], seventh:[.8,1,2], swing:[.03,.14,2], wash:[0,.2,2], crackle:[0,.12,2],
+                motion:[.5,1,1], acoustic:[0,.3,1], hatDensity:[.35,1.4,1], pump:[0,.12,1], comp:[.05,.3,1] },   // bright maj7 pop, DRY next to vaporwave, no disco organ, light master
+    shibuyakei:{ bpm:[112,130,3], swing:[.12,.26,3], crackle:[0,.1,2], acoustic:[0,.25,1], leadVoices:[1,3,1],
+                motion:[.6,1,1], pump:[0,.1,1], wash:[0,.25,1], snareBalance:[.3,1.1,1], breakUse:[0,.05,1] },   // twee SWING at pop tempo — dancepop can't swing, disco can't get this clean
+    bossanova:{ bpm:[82,102,2], swing:[.06,.2,2], softTop:[1,1,2], acoustic:[.5,1,2], seventh:[.8,1,1],
+                crackle:[.05,.3,1], drumDensity:[1.4,2.6,1], snareBalance:[0,.6,1], humanize:[.2,.5,1] },   // soft-top nylon whisper — exotica is brighter (softTop 0), jazz swings way harder
+    idm:      { bpm:[84,120,2], humanize:[.28,.55,3], swing:[0,.06,2], crackle:[0,.12,2], chopUse:[.2,1,2],
+                wash:[0,.25,1], variation:[.4,1,1], pump:[0,.15,1], comp:[.25,.55,1] },   // precise-but-drunk: high humanize with ZERO swing — the signature contradiction
+    electro:  { bpm:[115,132,3], snareBalance:[.35,1.2,2], swing:[0,.07,2], chopUse:[.2,1,1], sub:[0,.7,1],
+                pump:[0,.25,1], comp:[.35,.65,1], crackle:[0,.12,1], hatDensity:[1.5,2.8,1] },   // tresillo claps + dry machine funk — techno pumps, electro doesn't
+    miamibass:{ bpm:[98,130,2], sub:[.6,1,3], hatDensity:[1.1,2.2,2], swing:[0,.08,2], snareBalance:[.3,1.1,1],
+                crackle:[0,.1,1], pump:[0,.25,1], comp:[.2,.5,1], chopUse:[0,.1,1], acoustic:[0,.25,1] },   // the 808 sub + fast hats, all machine — electro's sub-light sibling
+    phonk:    { bpm:[122,146,3], crackle:[.3,.7,3], sub:[.6,1,2], softTop:[1,1,2], swing:[0,.12,1],
+                hatDensity:[1.6,3.2,1], motion:[0,.5,1], comp:[.3,.7,1] },   // tape filth at dubstep tempo — dubstep is CLEAN, lofi is SLOW
+    witchhouse:{ bpm:[56,80,3], wash:[.35,.8,3], sub:[.6,1,2], drumDensity:[1,3.2,1], motion:[0,.7,1],
+                swing:[0,.1,2], crackle:[0,.18,1], comp:[.15,.45,1], pump:[0,.12,1] },   // slowed 808s UNDER the cathedral — vaporwave majors, this drones minor
+    mallsoft: { bpm:[44,62,3], drumDensity:[0,1.5,3], wash:[.4,1,2], seventh:[.5,1,1], motion:[.5,1,1],
+                bedUse:[.4,1,2], comp:[0,.2,1], pump:[0,.05,1], crackle:[.05,.35,1] },   // slower + emptier than vaporwave: the kit nearly gone, the bed louder
+    wintersynth:{ bpm:[60,88,2], seventh:[0,.55,3], drumDensity:[.05,1,2], wash:[.4,1,2], acoustic:[0,.3,2],
+                crackle:[0,.15,1], swing:[0,.06,1], motion:[.4,1,1], comp:[0,.35,1], pump:[0,.05,1] },   // FROST TRIADS (seventh≈0) — newage/ambient live in extended-harmony wash
+    gabber:   { bpm:[150,190,3], offgrid:[0,.2,2], breakUse:[0,.08,2], comp:[.5,1,2], swing:[0,.05,2],
+                pump:[.3,.8,1], crackle:[0,.08,1], drumDensity:[1.8,4.5,1], chopUse:[.2,1,1] },   // straight distorted four at jungle tempo — jungle breaks, gabber hammers
+    psytrance:{ bpm:[136,150,3], motion:[0,.7,2], leadVoices:[1,4,2], pump:[.25,.7,2], swing:[0,.04,2],
+                snareBalance:[0,.6,2], comp:[.4,.8,1], crackle:[0,.05,1], breakUse:[0,.05,1] },   // rolling acid line, FEW voices — trance needs the supersaw choir
+    minimal:  { bpm:[117,131,3], drumDensity:[.5,2.2,2], wash:[0,.2,3], motion:[0,.4,2], snareBalance:[0,.65,2],
+                pump:[.05,.3,1], swing:[0,.05,1], hatDensity:[.3,1.2,1], crackle:[0,.1,1], comp:[.2,.5,1] },   // techno with the air let out: SPARSE and DRY, master barely touched
+    deephouse:{ bpm:[115,126,3], sub:[.6,1,3], swing:[.06,.18,2], snareBalance:[0,.6,2], pump:[.1,.4,1],
+                seventh:[.8,1,1], hatDensity:[1.2,2.6,1], chopUse:[0,.1,1], wash:[.1,.4,1], crackle:[0,.25,1] },   // subby + quiet claps — house pumps harder and chops vocals
+    coldwave: { bpm:[96,122,3], wash:[0,.15,3], crackle:[.1,.4,2], seventh:[0,.4,2], swing:[0,.07,2],
+                snareBalance:[.4,1.2,1], pump:[0,.15,1], leadVoices:[1,3,1], acoustic:[0,.2,1] },   // dry triads + cassette hiss — italo sparkles, this shrugs
+    ebm:      { bpm:[114,132,3], snareBalance:[.1,1.1,2], chopUse:[0,.1,2], comp:[.4,.8,2], drumDensity:[2.2,4.2,2],
+                swing:[0,.05,2], sub:[.6,1,1], pump:[.1,.5,1], crackle:[0,.08,1], motion:[0,.7,1] },   // dense piston kit — industrial chops the factory, industrialmetal slams halftime
+    krautrock:{ bpm:[98,120,3], acoustic:[.4,.8,3], swing:[0,.06,2], motion:[0,.7,2], pump:[0,.12,1],
+                crackle:[.05,.3,1], drumDensity:[1.5,3.4,1], wash:[0,.25,1], leadVoices:[1,3,1] },   // ORGAN over the motorik pulse — transitwave is all-synth (acoustic 0)
+    newjack:  { bpm:[96,118,3], swing:[.14,.3,3], snareBalance:[.5,1.4,2], seventh:[.8,1,1], crackle:[0,.15,1],
+                pump:[0,.25,1], hatDensity:[.8,2,1], comp:[.3,.6,1], motion:[.3,1,1], acoustic:[.3,.8,1] },   // swingbeat at 108 — garage swings at 130, house barely swings at all
+    breakcore:{ bpm:[166,200,3], breakUse:[.3,1,3], comp:[.5,.9,2], offgrid:[.2,.8,1], humanize:[.15,.45,1],
+                drumDensity:[2,6,1], snareBalance:[.3,1.2,1], swing:[0,.07,1], pump:[0,.3,1] },   // the amen PAST jungle tempo, compressed to death
+    acidhouse:{ bpm:[115,128,3], swing:[0,.09,2], crackle:[.05,.35,2], pump:[.2,.6,2], snareBalance:[.45,1.2,2],
+                motion:[0,.7,2], seventh:[.8,1,1], chopUse:[0,.1,1], comp:[.3,.7,1] },   // loud claps + record dust — techno's snare is optional color, house chops vox
+    surfrock: { bpm:[122,148,3], swing:[.05,.16,2], crackle:[.1,.4,2], seventh:[0,.6,2], acoustic:[.3,.8,1],
+                leadVoices:[1,2,1], drumDensity:[1.6,3,1], hatDensity:[.9,1.8,1], pump:[0,.1,1], humanize:[.1,.4,1] },   // 45rpm twang — chiptune is bone-dry and swingless at this tempo
+    spacelounge:{ bpm:[82,104,3], swing:[.08,.22,2], acoustic:[.4,.8,2], wash:[.25,.6,2], drumDensity:[.2,1.4,2],
+                hatDensity:[0,1,2], seventh:[.4,1,1], bedUse:[.4,1,1], crackle:[.05,.3,1], pump:[0,.05,1] },   // theremin over organ, kit nearly gone — exotica keeps a real (brushed) kit
+    arabpop:  { bpm:[92,118,2], seventh:[.3,.8,2], motion:[.4,1,2], drumDensity:[1.1,2.6,2], swing:[0,.12,1],
+                hatDensity:[.5,1.6,1], snareBalance:[0,.6,1], crackle:[0,.25,1], humanize:[.1,.35,1], comp:[.2,.5,1], pump:[0,.12,1] },   // hijaz color (mixed 7ths) + darbuka density at pop tempo — dinosynth is slower and washier
+    tango:    { bpm:[92,120,2], acoustic:[.7,1,2], humanize:[.28,.6,2], drumDensity:[0,.8,3], crackle:[.1,.4,2],
+                seventh:[0,.8,1], motion:[.5,1,1], swing:[0,.08,1], pump:[0,.05,1], wash:[.1,.4,1] },   // habanera piano, kitless, 78rpm dust — neoclassical has no dust and no dance
+    afrobeat: { bpm:[96,118,2], acoustic:[.4,.8,2], swing:[.02,.14,2], hatDensity:[1.3,2.6,2], drumDensity:[1.8,3.4,1],
+                seventh:[.7,1,1], crackle:[.05,.3,1], comp:[.25,.55,1], pump:[0,.12,2], snareBalance:[.2,.9,1] },   // interlocking euclids + organ stabs — disco's hats are straighter and thinner
+    desertblues:{ bpm:[80,108,3], swing:[.04,.18,2], crackle:[.15,.5,2], softTop:[1,1,2], motion:[0,.7,2],
+                acoustic:[.4,.8,1], sub:[.6,1,1], drumDensity:[.8,2.2,1], humanize:[.15,.45,1], pump:[0,.05,1] },   // modal vamp loops, tape-worn — blues needs the full 12-bar swing
+    sludgemetal:{ bpm:[48,72,3], snareBalance:[.4,1.2,2], drumDensity:[.8,2,2], comp:[.4,.8,2], wash:[0,.35,2],
+                sub:[.6,1,1], swing:[0,.07,1], crackle:[0,.25,1], pump:[0,.1,1], motion:[0,.7,1] },   // a BACKBEAT in the tar — doomdrone has no snare and lives in the wash
+    industrialmetal:{ bpm:[96,130,3], snareBalance:[.45,1.3,2], comp:[.5,.9,2], drumDensity:[.9,2.3,2], chopUse:[0,.1,2],
+                hatDensity:[.2,1.1,2], crackle:[0,.12,1], swing:[0,.06,1], pump:[0,.35,1], motion:[0,.8,1], sub:[.6,1,1] },   // halftime SLAM, hats sparse — ebm's kit is twice as dense, miami's hats twice as fast, industrial chops the factory
+    darksynth:{ bpm:[118,138,3], snareBalance:[.25,1.2,2], pump:[0,.35,2], sub:[.6,1,2], leadVoices:[3,7,1],
+                comp:[.4,.7,1], motion:[.4,1,1], crackle:[0,.08,1], swing:[0,.06,1], wash:[.1,.45,1] },   // gated snare + reese at 132 — dubstep starts at 133, trance/edm need the PUMP, synthwave is 30bpm slower
   };
 
   function scoreAgainst(f, genre){

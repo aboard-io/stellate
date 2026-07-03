@@ -20,3 +20,6 @@ models/
 faust/node_modules/
 .venv-sing/
 journey/
+
+# scratch/ — parked derived renders & state.jsons (regenerable via seeds)
+scratch/
