@@ -29,6 +29,16 @@
 
   const GRAIN_HZ = 28, GRAIN_SEC = 0.12;
 
+  // hann grain window for the LIVE grain scheduler (parity with mixPCM's
+  // 0.5-0.5cos window; was a triangle ramp) — one shared curve, applied per
+  // grain via setValueCurveAtTime on that grain's own GainNode.
+  const HANN = (() => {
+    const N = 64, w = new Float32Array(N);
+    for (let i = 0; i < N; i++) w[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1));
+    w[N - 1] = 0;
+    return w;
+  })();
+
   // ---- 2x cascaded RBJ Butterworth lowpass (~24 dB/oct, stands in for
   // moogladder at the low res instr 3/5 use) ----
   function lp24(x, fc, sr) {
@@ -136,7 +146,7 @@
   // ---------------------------------------------------------------- decode
   // browser-only. Reimplementation of wasm-audio.js decodeUrlToWav's fetch+
   // decode strategy, returning a mono AudioBuffer (trimmed to maxSeconds).
-  const FOUND_MAX_SECONDS = 45, FOUND_CHUNK_BYTES = 1024 * 1024;
+  const FOUND_MAX_SECONDS = 90, FOUND_CHUNK_BYTES = 1024 * 1024;
   const _bufCache = new Map(); // url -> Promise<AudioBuffer>
   function decodeUrlToBuffer(ctx, url, maxSeconds) {
     if (_bufCache.has(url)) return _bufCache.get(url);
@@ -235,14 +245,11 @@
           const t = when + state.g * hop;
           if (t >= when + durSec) { state.stopped = true; break; }
           if (t > horizon) break;
-          if (t >= ctx.currentTime - 0.05) {
+          if (t >= ctx.currentTime + 0.002) {   // value curves can't start in the past
             const s = ctx.createBufferSource(); s.buffer = buffer;
             s.playbackRate.value = f.pitch;
             const w = ctx.createGain(); w.gain.value = 0;
-            // triangle window ~ hann-ish; cheap and click-free
-            w.gain.setValueAtTime(0, t);
-            w.gain.linearRampToValueAtTime(1, t + GRAIN_SEC / 2);
-            w.gain.linearRampToValueAtTime(0, t + GRAIN_SEC);
+            w.gain.setValueCurveAtTime(HANN, t, GRAIN_SEC);   // hann, like mixPCM
             s.connect(w); w.connect(lp);
             const off = (state.pointer % buffer.duration + buffer.duration) % buffer.duration;
             s.start(t, off, GRAIN_SEC * f.pitch + 0.01);

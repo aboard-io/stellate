@@ -9,11 +9,13 @@ freq   = hslider("freq", 65, 20, 500, 0.01) : si.smoo;
 gate   = button("gate");
 cutoff = hslider("cutoff", 600, 60, 6000, 1);
 res    = hslider("res", 0.15, 0, 0.4, 0.01);    // csound caps res+0.5 at 0.9
+release= hslider("release", 0.10, 0.01, 3, 0.005);
+fenv   = hslider("fenv", 3, 0, 6, 0.01);        // zap depth; 3 = the stock cutoff*4 -> cutoff
 level  = hslider("level", 1, 0, 2, 0.01);
 gain   = hslider("gain", 0.35, 0, 2, 0.01);
 
-env  = en.adsr(0.012, 0.4, 0.5, 0.10, gate);
-fenv = ba.impulsify(gate) : (+ ~ *(ba.tau2pole(0.053)));   // expseg settles AT 0.16s
-kcut = max(30, min(cutoff * (1 + 3*fenv), 16000));
+env  = en.adsr(0.012, 0.4, 0.5, release, gate);
+fdec = ba.impulsify(gate) : (+ ~ *(ba.tau2pole(0.053)));   // expseg settles AT 0.16s
+kcut = max(30, min(cutoff * (1 + fenv*fdec), 16000));
 
 process = os.sawtooth(freq) : ve.moog_vcf_2bn(min(0.9, res + 0.5), kcut) : *(env*level*gain);

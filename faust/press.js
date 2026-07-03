@@ -50,10 +50,31 @@ function writeWav(file, L, R) {
   fs.writeFileSync(file, Buffer.concat([h, data]));
 }
 
+// state.dx7 contract: any algorithm 1..32 may be requested; only the ones a
+// preset has needed so far are precompiled. Generate the (6-line) per-algorithm
+// .dsp and build just that module, synchronously, the first time it's asked for.
+function ensureDx7Module(mod) {
+  const m = /^dx7_alg([0-9]+)$/.exec(mod);
+  if (!m) return;
+  const alg = +m[1];
+  if (alg < 1 || alg > 32) throw new Error("dx7 algorithm out of range: " + alg);
+  const dspPath = path.join(__dirname, "dsp", `${mod}.dsp`);
+  if (!fs.existsSync(dspPath))
+    fs.writeFileSync(dspPath, `// ${mod} — generated on demand for the state.dx7 contract (see dx7_alg5.dsp:
+// per-algorithm builds because the runtime 32-algo switch OOMs libfaust-wasm).
+declare name "${mod}";
+import("stdfaust.lib");
+process = dx.algorithm(${alg});
+`);
+  console.log(`  dx7: compiling ${mod} (first use)…`);
+  execFileSync(process.execPath, [path.join(__dirname, "build.js"), mod], { stdio: "inherit" });
+}
+
 let _gen = null;
 const _factories = {};
 async function factory(mod) {
   if (!_factories[mod]) {
+    if (!fs.existsSync(path.join(__dirname, "dist", `${mod}-module.wasm`))) ensureDx7Module(mod);
     const code = fs.readFileSync(path.join(__dirname, "dist", `${mod}-module.wasm`));
     _factories[mod] = { cfactory: 0, code: new Uint8Array(code), module: await WebAssembly.compile(code),
       json: fs.readFileSync(path.join(__dirname, "dist", `${mod}-meta.json`), "utf8"), poly: false };
@@ -147,8 +168,9 @@ async function press(state, outPath, opts) {
       const proc = await mkProc(u.module);
       const R = "/" + rootOf(u.module) + "/";
       for (const [k, v] of Object.entries(u.params || {})) proc.setParamValue(R + k, v);
-      if (u.dx7Preset && dx7Presets[u.dx7Preset])
-        for (const [sfx, v] of Object.entries(dx7Presets[u.dx7Preset].params)) proc.setParamValue("/DX7" + sfx, v);
+      const dxParams = u.dx7Params || (u.dx7Preset && dx7Presets[u.dx7Preset] && dx7Presets[u.dx7Preset].params);
+      if (dxParams)
+        for (const [sfx, v] of Object.entries(dxParams)) proc.setParamValue(sfx.startsWith("/DX7") ? sfx : "/DX7" + sfx, v);
       procs.push({ proc, R, changes: [], ivals: [], busyUntil: -1 });
     }
     // supersaw release tail must survive the gate-off
@@ -157,7 +179,6 @@ async function press(state, outPath, opts) {
     const relTail = Math.ceil(tail * SR);
 
     // allocation: first free voice, else the one free soonest (round-robin-ish)
-    let ampSum = 0;
     for (const e of events) {
       const s = Math.max(BS, Math.floor(e.beat * spb * SR));
       const durS = e.durB * spb;
@@ -167,12 +188,15 @@ async function press(state, outPath, opts) {
       let v = procs.find(p => p.busyUntil <= s) ||
               procs.reduce((a, b) => (a.busyUntil <= b.busyUntil ? a : b));
       for (const [k, val] of Object.entries(e.sets)) v.changes.push([s - BS, v.R + k, val]);
+      // JS-side per-note gains ("@" pseudo-params, applied in the mix loop, not
+      // setParamValue): @out = DX7 velocity (GainNode-equivalent, matches live's
+      // min(1, extGainPerAmp*amp)); @pp = per-EVENT ping-pong send (snarePP).
+      if (u.extGainPerAmp) v.changes.push([s - BS, "@out", Math.min(1, u.extGainPerAmp * (e.amp || 0.1))]);
+      v.changes.push([s - BS, "@pp", e.pp || 0]);
       v.changes.push([s, v.R + "gate", 1], [offS, v.R + "gate", 0]);
       v.ivals.push([s - BS, Math.min(TOTAL, offS + relTail)]);
       v.busyUntil = offS;
-      ampSum += e.amp || 0;
     }
-    const outScale = u.extGainPerAmp ? u.extGainPerAmp * (ampSum / events.length || 0.085) : 1;
 
     // render each pool voice over its merged active segments only
     let rendered = 0;
@@ -180,20 +204,27 @@ async function press(state, outPath, opts) {
       if (!v.changes.length) continue;
       v.changes.sort((a, b) => a[0] - b[0]);
       const segs = mergeIvals(v.ivals);
-      let ci = 0;
+      let ci = 0, curOut = 1, curPP = 0;
+      const applyChange = (c) => {
+        if (c[1] === "@out") curOut = c[2];
+        else if (c[1] === "@pp") curPP = c[2];
+        else v.proc.setParamValue(c[1], c[2]);
+      };
       for (const [a, b] of segs) {
         const from = Math.max(0, Math.floor(a / BS) * BS), to = Math.min(TOTAL, b);
         // apply any changes that fell before this segment (kept in order)
-        while (ci < v.changes.length && v.changes[ci][0] < from) { v.proc.setParamValue(v.changes[ci][1], v.changes[ci][2]); ci++; }
+        while (ci < v.changes.length && v.changes[ci][0] < from) { applyChange(v.changes[ci]); ci++; }
         for (let s = from; s < to; s += BS) {
           const len = Math.min(BS, TOTAL - s);
-          while (ci < v.changes.length && v.changes[ci][0] < s + len) { v.proc.setParamValue(v.changes[ci][1], v.changes[ci][2]); ci++; }
+          while (ci < v.changes.length && v.changes[ci][0] < s + len) { applyChange(v.changes[ci]); ci++; }
           const ins = u.vocoder && speech ? [speech.subarray(s, s + len)] : (u.vocoder ? [new Float32Array(len)] : []);
           const o = v.proc.render(ins, len)[0];
-          const dg = (u.dry != null ? u.dry : 1) * outScale, rg = (u.rev || 0) * outScale, lg = (u.del || 0) * outScale;
+          const dg = (u.dry != null ? u.dry : 1) * curOut, rg = (u.rev || 0) * curOut,
+                lg = (u.del || 0) * curOut, pg = curPP * curOut;
           for (let i = 0; i < len; i++) {
             const x = o[i];
             dry[s + i] += x * dg; rev[s + i] += x * rg; del[s + i] += x * lg;
+            if (pg) pp[s + i] += x * pg;
           }
           rendered += len;
         }

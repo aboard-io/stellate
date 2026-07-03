@@ -105,7 +105,17 @@
   }
   function mergedInstruments(state){
     const D=defaultInstruments(), s=state.instruments||{};
-    return { pad:{...D.pad,...s.pad}, bass:{...D.bass,...s.bass}, melody:{...D.melody,...s.melody}, drums:{...D.drums,...s.drums} };
+    const r={ pad:{...D.pad,...s.pad}, bass:{...D.bass,...s.bass}, melody:{...D.melody,...s.melody}, drums:{...D.drums,...s.drums} };
+    // FAUST-PORT contract: model "dx7" is a 6-op FM patch — the kernel emits
+    // state.instruments.<voice>.dx7 = {algorithm, params} (a ~144-dim vector
+    // from faust/dx7-presets.json) and the Faust engine plays it natively.
+    // The legacy csound path has no 6-op engine, so map "dx7" to the CLOSEST
+    // legacy model here (lead E.PIANO/BRASS-ish -> fm, TUB BELLS pad -> bell,
+    // SYN-BASS -> sub); the .dx7 blob rides along untouched for other engines.
+    if(r.pad.model==="dx7")    r.pad.model="bell";
+    if(r.bass.model==="dx7")   r.bass.model="sub";
+    if(r.melody.model==="dx7") r.melody.model="fm";
+    return r;
   }
 
   // style presets — pick one to recast the whole song
@@ -188,7 +198,18 @@
     }
     return L.map(([o,d,p])=>({voice:"bass",beat:S+o,dur:d,pch:p,amp:0.22}));
   }
-  function drumEvents(kind,S,ci,nc,rng){
+  // E(k,n,rot) — euclidean rhythm (Bjorklund/Toussaint): the Strudel bd(3,16)
+  // notation as a KIT dimension (FAUST-PORT.md "Strudel borrowings"). Returns
+  // beat offsets across the 8-beat chord bar. `rot` rotates by whole PULSES —
+  // the downbeat always keeps a hit while the internal long/short spacing
+  // shifts — so the placement evolves per chord, deterministically (no rng).
+  function euclidBeats(k,n,rot){
+    n=Math.max(1,n|0); k=Math.max(1,Math.min(n,k|0));
+    const steps=[]; for(let i=0;i<n;i++) if((i*k)%n < k) steps.push(i);
+    const base=steps[(((rot||0)%steps.length)+steps.length)%steps.length];
+    return steps.map(s=>((s-base+n)%n)*(CHORD_BEATS/n)).sort((a,b)=>a-b);
+  }
+  function drumEvents(kind,S,ci,nc,rng,eu){
     const R=rng||(()=>0.5);   // older kits never call R; new kits vary per chord + seed
     const out=[];
     const k=(o,a)=>out.push({drum:"kick",beat:S+o,dur:0.35,amp:a});
@@ -247,6 +268,20 @@
       h([1,3,5,7][ci%4]+0.25,.13,.26);                             // rotating ghost open-hat per chord
       h(ci%2?2.75:6.25,.10);                                       // extra syncopated shaker
       if(R()<0.5) k(7.5,.32);                                      // occasional pickup kick (not a snare fill)
+    }
+    // euclid overlay (state.euclid = {kick:[k,n], hat:[k,n]}): the spec REPLACES
+    // that drum line with E(k,n) placement, rotation advancing per global chord
+    // (open hats survive — they're the kit's accent identity; euclid re-places
+    // the closed-hat grid / the kick line only).
+    if(eu&&kind!=="off"){
+      const gci=Math.round(S/CHORD_BEATS);
+      const place=(spec,drum,mk)=>{
+        if(!spec||!spec.length) return;
+        for(let i=out.length-1;i>=0;i--) if(out[i].drum===drum&&(drum!=="hat"||!out[i].open)) out.splice(i,1);
+        euclidBeats(spec[0],spec[1],gci).forEach((o,j)=>mk(o,j));
+      };
+      place(eu.kick,"kick",(o,j)=>k(o, j===0?.64:.48));
+      place(eu.hat, "hat", (o,j)=>h(o, j%2?.07:.12));
     }
     if(ci===nc-1 && kind!=="off" && kind!=="halftime" && kind!=="tribal"){ s(6.5,.3);s(7,.34);s(7.25,.38);s(7.5,.42);s(7.75,.46); }
     return out;
@@ -427,7 +462,8 @@
     const srcById={};
     state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".wav"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec,wet:!!s.wet,glitch:!!s.glitch,distant:!!s.distant}; });
     const rng=mulberry32((state.seed??1)>>>0);
-    const pitched=[], drums=[], found=[], sfx=[];
+    let pitched=[], drums=[];
+    const found=[], sfx=[], spans=[];   // spans: section extents for the per-bar transform pool
     let cur=0, narrOffset=0;   // narration plays through the clip across sections (always playing)
     for(const sec of state.sections){
       const fsrc = sec.found&&sec.found.sourceId ? srcById[sec.found.sourceId] : null;
@@ -577,7 +613,7 @@
               pitched.push(e); });
           }
           if(sec.drums&&sec.drums!=="off"){
-            let de=drumEvents(sec.drums,Sp,ci,chords.length,rng);
+            let de=drumEvents(sec.drums,Sp,ci,chords.length,rng,state.euclid);
             // humanity pass: hats drop out, levels breathe, ghost snares stay QUIET
             de=de.filter(e=>!(e.drum==="hat"&&rng()<0.09));
             de.forEach(e=>{ if(rng()<0.25) e.amp=Math.max(0.03,e.amp*(0.85+rng()*0.3)); });
@@ -628,7 +664,63 @@
         const sbeat = hit ? cur+secBeats : cur+secBeats-4;   // hit on next downbeat; build in final bar
         sfx.push({beat:Math.max(0,sbeat), dur:hit?1.5:4, type:SFX_NUM[tr], amp:0.4});
       }
+      spans.push({start:cur,beats:secBeats});
       cur+=secBeats;
+    }
+    // ---- Strudel-borrowed per-cycle transform pool (FAUST-PORT.md) ----
+    // Per chord-bar, one seeded pick from {reverse melody phrase, ply (double-
+    // hit) a beat, degrade hats harder, octave-flip the bass bar, rest the
+    // melody bar}, applied ON TOP of the humanity rules — subtle (p=0.25/bar),
+    // never on the first bar of a section. Own rng stream (seed+31337) so the
+    // base event fabric is untouched; same seed -> same transforms.
+    {
+      const trng=mulberry32(((state.seed??1)+31337)>>>0);
+      const dropT=new Set();
+      for(const sp of spans){
+        const nbars=Math.floor(sp.beats/CHORD_BEATS);
+        for(let bi=1;bi<nbars;bi++){
+          if(trng()>=0.25) continue;
+          const b0=sp.start+bi*CHORD_BEATS, b1=b0+CHORD_BEATS;
+          const t=Math.floor(trng()*5);
+          if(t===0){        // rev: mirror the melody phrase in time (Strudel rev; solos exempt)
+            for(const e of pitched) if(e.voice==="melody"&&!e.solo&&e.beat>=b0&&e.beat<b1)
+              e.beat=b0+Math.max(0, CHORD_BEATS-((e.beat-b0)+Math.min(e.dur,CHORD_BEATS)));
+          } else if(t===1){ // ply: double-hit one beat of drums (Strudel ply 2)
+            const at=b0+Math.floor(trng()*CHORD_BEATS), extra=[];
+            for(const d of drums) if(d.beat>=at&&d.beat<at+1&&d.drum!=="tom")
+              extra.push(Object.assign({},d,{beat:d.beat+0.25,dur:Math.min(d.dur,0.2),amp:d.amp*0.75}));
+            extra.forEach(x=>drums.push(x));
+          } else if(t===2){ // degrade: hats thin out hard this bar (Strudel degradeBy)
+            for(const d of drums) if(d.drum==="hat"&&d.beat>=b0&&d.beat<b1&&trng()<0.45) dropT.add(d);
+          } else if(t===3){ // octave-flip: the bass bar jumps an octave
+            for(const e of pitched) if(e.voice==="bass"&&e.beat>=b0&&e.beat<b1) e.pch=pchAdd(e.pch,12);
+          } else {          // rest: the melody sits this bar out (silence is a choice; solos exempt)
+            for(const e of pitched) if(e.voice==="melody"&&!e.solo&&e.beat>=b0&&e.beat<b1) dropT.add(e);
+          }
+        }
+      }
+      if(dropT.size){ pitched=pitched.filter(e=>!dropT.has(e)); drums=drums.filter(e=>!dropT.has(e)); }
+    }
+    // ---- jux stereo divergence (production dimension; state.jux in [0,1]) ----
+    // Events gain a `pan` offset in [-1,1] (absent/0 = center). Engines MAY
+    // ignore it: the Faust engine reads it; the legacy csound path renders
+    // center-summed exactly as before. Hats alternate L/R, toms spread by
+    // pitch, melody alternates sides, pads scatter; kick/snare/bass stay
+    // center (the low end never leaves the middle).
+    {
+      const jux=Math.min(1,Math.max(0,state.jux||0));
+      if(jux>0){
+        const jrng=mulberry32(((state.seed??1)+424242)>>>0);
+        let hi=0, mi=0;
+        for(const d of drums){
+          if(d.drum==="hat") d.pan=+(((hi++%2)?0.4:-0.4)*jux).toFixed(3);
+          else if(d.drum==="tom") d.pan=+((((d.pitch||100)-100)/100)*jux).toFixed(3);
+        }
+        for(const e of pitched){
+          if(e.voice==="melody") e.pan=+((((mi++%2)?0.35:-0.35)*(0.6+0.4*jrng()))*jux).toFixed(3);
+          else if(e.voice==="pad") e.pan=+(((jrng()*2-1)*0.5)*jux).toFixed(3);
+        }
+      }
     }
     const grng=mulberry32(((state.seed??1)+777)>>>0);
     applyGroove(pitched, state.swing, state.humanize, grng);
@@ -1456,7 +1548,7 @@ endin
 
   // live mode: header boots once; instruments recompile via csound compileOrc
   const liveParts=(state,sources)=>codegen(state,sources||[],{channels:true});
-  const api={ buildCsd, buildEvents, defaultState, defaultInstruments, generateSong, voicing, liveParts, soloVoices,
+  const api={ buildCsd, buildEvents, defaultState, defaultInstruments, generateSong, voicing, liveParts, soloVoices, euclidBeats,
     instrumentBlock:(state)=>codegen(state,[],{channels:true}).instruments,
     PROGRESSIONS, STYLES, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS, pchAdd, pchToMidi };
   if(typeof module!=="undefined" && module.exports) module.exports=api;
