@@ -17,3 +17,4 @@ models/
 # derived, regenerable. The intentional demo sets live in playlist/ and mix/,
 # which the leading slash leaves tracked.
 /*.state.json
+faust/node_modules/
