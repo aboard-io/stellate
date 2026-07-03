@@ -173,6 +173,7 @@ async function press(state, outPath, opts) {
         tSec: e.beat * spb, durSec: e.durB * spb, freq: e.sets.freq,
         gain: (u.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
         atk: u.sampler.atk, rel: u.sampler.rel, zones: u.sampler.zones,
+        swell: !!u.sampler.swell,
         bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,
       })).filter(n => n.tSec < totalSec);
       SP.mixPCM(notes, buffers, SR, { dry, rev, del },

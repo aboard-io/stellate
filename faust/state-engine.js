@@ -118,11 +118,17 @@
       // ~+10dB over the Faust bass modules at equal recipe level. x0.5 keeps
       // the upright audibly forward (~+4.5dB vs the old piano bass) without
       // drowning the mids (A/B-measured against mix/track-0N band balance).
+      // SWELL mode (neoclassical strings pads): attack may run seconds-long
+      // (past the zone's loop start — looped zones sustain under it) with an
+      // x²-shaped crescendo ramp (sampler.js renders it identically live +
+      // press). Clamps widened to 5s/6s for it; every pre-existing sampler
+      // recipe sits far below the old caps, so their output is bit-identical.
       return { ...base, gmul: base.gmul * (role === "bass" ? 0.5 : 1), module: null, sampler: {
           id: sp.id || "?", sr: sp.sr || 44100,
           zones: Array.isArray(sp.zones) ? sp.zones : [],
-          atk: clamp(m.attack != null ? m.attack : (role === "bass" ? 0.006 : 0.012), 0.003, 0.5),
-          rel: clamp(m.release != null ? m.release : (role === "bass" ? 0.07 : 0.09), 0.02, 1.5),
+          atk: clamp(m.attack != null ? m.attack : (role === "bass" ? 0.006 : 0.012), 0.003, 5),
+          rel: clamp(m.release != null ? m.release : (role === "bass" ? 0.07 : 0.09), 0.02, 6),
+          swell: (m.swell || 0) >= 0.5,
         }, freqMax: 4000 };
     };
 

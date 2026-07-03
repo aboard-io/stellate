@@ -418,7 +418,7 @@
             const zsr = uSpec.sampler.sr || 44100;
             player.note(buf, at(e.beat), { rate: SP.rateFor(z, midi), durSec: e.durB * spb,
               gain: (uSpec.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
-              atk: uSpec.sampler.atk, rel: uSpec.sampler.rel,
+              atk: uSpec.sampler.atk, rel: uSpec.sampler.rel, swell: !!uSpec.sampler.swell,
               dry: uSpec.dry != null ? uSpec.dry : 1, rsend: uSpec.rev || 0, dsend: uSpec.del || 0,
               bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,
               loop: !!z.loop, loopStartSec: (z.loopStart || 0) / zsr, loopEndSec: (z.loopEnd || 0) / zsr });

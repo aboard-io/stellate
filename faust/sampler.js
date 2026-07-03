@@ -12,6 +12,10 @@
 //   live; wrapped linear-interp read in mixPCM); unlooped zones one-shot.
 //   gain envelope: linear attack + release declick ramps (recipe attack/
 //   release honored via the unit spec).
+//   SWELL (per note, optional): {swell:true} — x²-shaped crescendo attack
+//   instead of the linear declick ramp (sampled-strings pads; attack may run
+//   seconds past the loop start — looped zones sustain under it). Both paths
+//   render the same shape (curve buffer live / per-sample x² in mixPCM).
 //   BLUE-NOTE BEND (per note, optional): {bendFrom: -semitones, bendMs} —
 //   the note STARTS bendFrom semitones off target and glides into pitch over
 //   bendMs (linear in playbackRate: live = linearRampToValueAtTime on
@@ -80,7 +84,10 @@
         if (pos >= src.length - 1) break;                    // unlooped: natural end
         const i0 = pos | 0, fr = pos - i0;
         let v = (src[i0] + fr * (src[i0 + 1] - src[i0])) * g;
-        if (i < atkN) v *= i / atkN;                          // attack ramp (declick)
+        // attack: linear declick ramp; SWELL mode (n.swell — strings pads)
+        // shapes it x² for a real crescendo. Non-swell notes keep the exact
+        // original ramp (bit-identical regression path).
+        if (i < atkN) { const a = i / atkN; v *= n.swell ? a * a : a; }
         if (i > holdN) v *= Math.max(0, 1 - (i - holdN) / relN); // release ramp
         into.dry[s0 + i] += v * dg;
         if (rg) into.rev[s0 + i] += v * rg;
@@ -130,7 +137,12 @@
       const atk = Math.max(0.003, f.atk || 0.01), rel = Math.max(0.02, f.rel || 0.09);
       const hold = Math.max(atk, f.durSec);
       g.setValueAtTime(0, when);
-      g.linearRampToValueAtTime(gain, when + atk);
+      if (f.swell) {   // x² crescendo attack (matches mixPCM's swell shape)
+        const N = 17, curve = new Float32Array(N);
+        for (let i = 0; i < N; i++) { const x = i / (N - 1); curve[i] = gain * x * x; }
+        try { g.setValueCurveAtTime(curve, when, atk); }
+        catch (e) { g.linearRampToValueAtTime(gain, when + atk); }
+      } else g.linearRampToValueAtTime(gain, when + atk);
       g.setValueAtTime(gain, when + hold);
       g.linearRampToValueAtTime(0, when + hold + rel);
       src.connect(env);

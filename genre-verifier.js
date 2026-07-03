@@ -61,11 +61,25 @@
       // not fall off their own diagonals (2026-07 matrix regression).
       // PAD-side only: a dx7 lead stays synth (citypop's E.PIANO lead is its
       // dry-synth identity), but organ/mallet DX7 PADS keep organ-grade .6.
+      // 2026-07 neoclassical deep pass: a SAMPLED PIANO lead (felt_piano) is
+      // piano-grade 1, not sampler-grade .8 — the .8 tier was defined to mean
+      // "real but not felt-piano intimate" (sax/flute/bandoneon), and the felt
+      // piano is precisely the intimacy it excluded. Keeps neoclassical
+      // honestly outside newage's acoustic hi-fence (.85, built to admit the
+      // real flute while excluding the piano).
       acoustic: (()=>{ const KEYSY=/(ORGAN|PIANO|CLAV|VIBE|MARIMBA|XYLO|LOG DRUM|KOTO|HARP|GUIT|BANJO|SITAR|LUTE|HARMONICA|CELESTE|ACCORDION)/i;
         const dxPadAc=I.pad.model==="dx7"&&I.pad.dx7&&KEYSY.test(I.pad.dx7.name||"");
         const melAc=["piano","organ","sampler"].includes(I.melody.model);
         const padAc=["piano","organ","sampler"].includes(I.pad.model)||dxPadAc;
-        return melAc||padAc ? (I.melody.model==="piano"?1:I.melody.model==="sampler"?0.8:0.6) : 0; })(),
+        const melSampPiano=I.melody.model==="sampler"&&/piano/i.test((I.melody.sampler&&I.melody.sampler.id)||"");
+        return melAc||padAc ? (I.melody.model==="piano"||melSampPiano?1:I.melody.model==="sampler"?0.8:0.6) : 0; })(),
+      // rubato: the time dimension (state.rubato.depth; 0 = clock-straight).
+      // Symbolic and honest — buildEvents actually warps every event's beat by
+      // it (the press breathes; engine.test renders it). Only genres that
+      // OWN tempo-breathing (neoclassical always, tango/jazz sometimes) carry
+      // it, so it fences neoclassical off the grid-locked ambient/newage/
+      // vaporwave neighbors that share its bpm/wash/harmony ranges.
+      rubato: state.rubato?+(state.rubato.depth||0).toFixed(3):0,
       leadVoices: I.melody.voices||2,
       softTop: state.tone&&state.tone.highcut>0?1:0,
     };
@@ -83,7 +97,8 @@
     triphop:  { bpm:[66,96,3], crackle:[.25,1,2], breakUse:[.15,1,2], offgrid:[.12,.65,1], wash:[.18,.6,1],
                 swing:[.1,.4,1], snareBalance:[0,.9,1], softTop:[1,1,1] },
     vaporwave:{ bpm:[58,92,3], wash:[.35,1,3], motion:[.5,1,2], seventh:[.5,1,2], breakUse:[0,.1,1],
-                snareBalance:[0,.85,1], comp:[0,.25,1], bedUse:[.4,1,2] },
+                snareBalance:[0,.85,1], comp:[0,.25,1], bedUse:[.4,1,2],
+                rubato:[0,.008,1] },   // vaporwave is MACHINE time — a slowed tape plays at constant (wrong) speed, it never breathes. Every vaporwave anchor seed sits at rubato 0; this fences the tempo-breathing neoclassical (rubato .02-.04) off vaporwave's diagonal (it was scoring 98 there on bpm/wash/7th overlap alone)
     synthwave:{ bpm:[84,120,3], leadVoices:[4,9,2], wash:[.25,.7,1], motion:[.3,1,1], pump:[.05,.6,1],
                 snareBalance:[.4,1.4,1], sub:[0,.8,1], bedUse:[.3,1,1] },
     lofi:     { bpm:[66,92,3], crackle:[.4,1,3], swing:[.14,.4,2], seventh:[.5,1,1], softTop:[1,1,2],
@@ -100,8 +115,9 @@
     transitwave:{ bpm:[108,120,3], swing:[.06,.22,2], acoustic:[0,.2,3], wash:[.12,.5,1], bedUse:[.45,1,3],
                 hatDensity:[.65,3,1], leadVoices:[1,4,1], motion:[.25,1,1], pump:[0,.22,1], comp:[.25,.6,1],
                 crackle:[0,.15,1], drumDensity:[1.2,3.8,1], snareBalance:[.3,1.2,1] },   // motorik rail: chugging swing, all-synth (acoustic≈0 — distinct from canawave's guitar), bed-heavy clatter
-    neoclassical:{ bpm:[55,85,2], drumDensity:[0,.4,3], acoustic:[.6,1,3], humanize:[.28,.7,2],
-                motion:[.5,1,1], wash:[.25,.7,1], pump:[0,.05,1], breakUse:[0,0,1] },
+    neoclassical:{ bpm:[55,85,2], drumDensity:[0,.5,3], acoustic:[.8,1,3], humanize:[.28,.7,2],
+                motion:[.5,1,1], wash:[.2,.6,1], pump:[0,.05,1], breakUse:[0,0,1],
+                rubato:[.015,.05,2] },   // 2026-07 deep pass: acoustic lo .6->.8 (the voice IS a real/sampled piano now — organ pads are purged, .6-grade seeds no longer exist); drumDensity hi admits the whisper key-thunks (~.1-.3/beat, kit still off); wash re-centered on the dryer close-mic reverb; rubato REQUIRED — the one feature ambient/newage/vaporwave structurally lack
     dancepop: { bpm:[112,130,3], motion:[.6,1,2], leadVoices:[2,6,1], snareBalance:[.3,1.3,1],
                 drumDensity:[1.2,3.2,1], swing:[0,.12,1], pump:[0,.35,1], breakUse:[0,.1,1], acoustic:[0,.3,1],
                 seventh:[0,.6,2], crackle:[0,.15,2] },

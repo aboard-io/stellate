@@ -354,6 +354,44 @@ if [ ! -s found/samples/instruments/acoustic_bass/zones.json ]; then
   done
   rm -f /tmp/FluidR3_GM_GS.sf2
 fi
+# --- FluidR3 liberalization batch (2026-07 "use the soundfont liberally"): ---
+# 15 more GM presets — the orchestral shelf (trombone/muted trumpet/oboe/cello/
+# harp/celesta/french horns), keys (honky-tonk, bright grand, church organ,
+# marimba), voices (ahh choir, harmonica, fretless bass, jazz guitar). These
+# widen samplerPools across the anchors AND supply the transition micro-lick
+# instruments (sovietwave trombone, jazz sax+piano, bossa flute, …).
+if [ ! -s found/samples/instruments/trombone/zones.json ]; then
+  echo "→ FluidR3_GM_GS.sf2 (liberalization batch: orchestral shelf + keys + voices)"
+  [ -s /tmp/FluidR3_GM_GS.sf2 ] || curl -sL --max-time 900 -o /tmp/FluidR3_GM_GS.sf2 \
+    "$IA/fluidr3-gm-gs/FluidR3_GM_GS.sf2"
+  for p in "Trombone" "Muted Trumpet" "Oboe" "Cello" "Harp" "Celesta" "Ahh Choir" \
+           "Fretless Bass" "Harmonica" "Church Organ" "Honky Tonk" "French Horns" \
+           "Jazz Guitar" "Bright Yamaha Grand" "Marimba"; do
+    node faust/sf2.js extract /tmp/FluidR3_GM_GS.sf2 "/$p/" found/samples/instruments --max-zones 6
+  done
+  rm -f /tmp/FluidR3_GM_GS.sf2
+fi
+# --- FluidR3 neoclassical batch (2026-07 deep pass): the FELT PIANO ---
+# GM 0 "Yamaha Grand Piano", 10 zones (denser than the usual 6: the lead sits
+# EXPOSED, so the midrange keymap keeps repitching under ~6 semitones), then
+# made FELT by baking a gentle 3kHz lowpass into the zone wavs (ffmpeg IIR —
+# sample counts unchanged, so the SF2 loop points stay valid; verified equal
+# duration_ts at extraction). Soft velocity, slow attack and dryness live in
+# the neoclassical recipe (genre-kernel.js), not in the samples.
+if [ ! -s found/samples/instruments/felt_piano/zones.json ]; then
+  echo "→ FluidR3_GM_GS.sf2 (neoclassical batch: felt piano)"
+  [ -s /tmp/FluidR3_GM_GS.sf2 ] || curl -sL --max-time 900 -o /tmp/FluidR3_GM_GS.sf2 \
+    "$IA/fluidr3-gm-gs/FluidR3_GM_GS.sf2"
+  node faust/sf2.js extract /tmp/FluidR3_GM_GS.sf2 "/Yamaha Grand Piano/" found/samples/instruments --max-zones 10
+  mkdir -p found/samples/instruments/felt_piano
+  for w in found/samples/instruments/yamaha_grand_piano/z*.wav; do
+    ffmpeg -y -loglevel error -i "$w" -af "lowpass=f=3000" -c:a pcm_s16le \
+      "found/samples/instruments/felt_piano/$(basename "$w")"
+  done
+  cp found/samples/instruments/yamaha_grand_piano/zones.json found/samples/instruments/felt_piano/zones.json
+  rm -rf found/samples/instruments/yamaha_grand_piano   # only the felt variant is consumed
+  rm -f /tmp/FluidR3_GM_GS.sf2
+fi
 # NOTE: the zone tables are mirrored statically in genre-kernel.js SAMPLERS —
 # if you re-extract with different --max-zones, regenerate that table.
 
