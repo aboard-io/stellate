@@ -133,6 +133,18 @@
         // dx7.lib has no output gain; ab-render matched csound at raw*0.28 vs
         // csound amp 0.3 * level 0.7 => external scale = 1.333 * amp * level
         extGainPerAmp: 1.333 * lvl, params: {} };
+      case "sampler": { // native pitched sample zones (faust/sampler.js) — no Faust module.
+        // Contract: m.sampler = {id, sr, zones:[{srcId, root, lo, hi, loop,
+        // loopStart, loopEnd}]} (kernel toState; zone wavs ride foundSources
+        // at vol 0 so both engines decode them through the existing paths).
+        const sp = m.sampler || {};
+        return { ...base, module: null, sampler: {
+            id: sp.id || "?", sr: sp.sr || 44100,
+            zones: Array.isArray(sp.zones) ? sp.zones : [],
+            atk: clamp(m.attack != null ? m.attack : 0.012, 0.003, 0.5),
+            rel: clamp(m.release != null ? m.release : 0.09, 0.02, 1.5),
+          }, freqMax: 4000 };
+      }
       case "pluck":   return { ...base, module: "lead_pluck",  params: { ...base.params, cutoff: clamp(c, 200, 14000), res, damp: 2000,
         ...(plucky ? { release: rel, fenv: fev } : {}) } };
       case "kpluck":  return { ...base, module: "lead_kpluck", flangeFromTime: true, params: { ...base.params, cutoff: clamp(c, 200, 14000), drive: clamp(m.drive || 0, 0, 1) } };

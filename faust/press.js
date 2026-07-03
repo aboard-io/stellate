@@ -24,6 +24,7 @@ const ROOT = path.join(__dirname, "..");
 const E = require(path.join(ROOT, "csd-engine.js"));
 const SE = require(path.join(__dirname, "state-engine.js"));
 const FP = require(path.join(__dirname, "found-player.js"));
+const SP = require(path.join(__dirname, "sampler.js"));
 
 const SR = 44100, BS = 64;
 const FOUND_CAP_SEC = 180; // bound decode memory; offsets are fractions of what we load
@@ -121,6 +122,9 @@ async function press(state, outPath, opts) {
 
   // ---- found layer: decode + pure-JS granular/chopper mix ----
   const usedSrc = new Set(sched.found.map(f => f.srcId));
+  // sampler units' zone wavs ride foundSources at vol 0 — decode them too
+  for (const u of Object.values(sched.units))
+    if (u.sampler) for (const z of u.sampler.zones) usedSrc.add(z.srcId);
   const buffers = {};
   for (const s of state.foundSources || []) {
     if (!usedSrc.has(s.id)) continue;
@@ -162,6 +166,19 @@ async function press(state, outPath, opts) {
   for (const [key, events] of Object.entries(byUnit)) {
     const u = sched.units[key];
     events.sort((a, b) => a.beat - b.beat);
+    // SAMPLER units: no Faust module — pitched zone playback mixed as PCM
+    // (faust/sampler.js mixPCM), same native path found sound uses.
+    if (u.sampler) {
+      const notes = events.map(e => ({
+        tSec: e.beat * spb, durSec: e.durB * spb, freq: e.sets.freq,
+        gain: (u.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
+        atk: u.sampler.atk, rel: u.sampler.rel, zones: u.sampler.zones,
+      })).filter(n => n.tSec < totalSec);
+      SP.mixPCM(notes, buffers, SR, { dry, rev, del },
+        { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0 });
+      console.log(`  ${key}: ${notes.length} ev -> sampler:${u.sampler.id} (native PCM, ${u.sampler.zones.length} zones)`);
+      continue;
+    }
     const P = u.pool || 1;
     const procs = [];
     for (let i = 0; i < P; i++) {

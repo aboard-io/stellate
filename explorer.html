@@ -131,6 +131,7 @@ Drag waypoints to move them, right-click to erase. Set the pace in the panel.
 <script src="video-layer.js"></script>
 <script src="faust/state-engine.js"></script>
 <script src="faust/found-player.js"></script>
+<script src="faust/sampler.js"></script>
 <script src="faust/live.js"></script>
 <script type="module">
 import { h, render } from "https://esm.sh/preact@10.19.3";
@@ -176,6 +177,7 @@ const S={ cursor:{x:250,y:165}, waypoints:[], travel:{seg:0,t:0}, weights:[],
   pool:"", beatLine:"▶ press LIVE" };
 const subs=[];
 window.__S=S;   // debug/probe access (headless verification)
+window.__X={retarget:(...a)=>retarget(...a), goLive:(...a)=>goLive(...a), stopLive:(...a)=>stopLive(...a), weightsAt:(...a)=>weightsAt(...a)};   // headless stop→path→LIVE probe
 let _raf=0;
 function set(patch){ Object.assign(S,patch);
   if(_raf)return; _raf=requestAnimationFrame(()=>{ _raf=0; subs.forEach(f=>f()); }); }
@@ -327,6 +329,14 @@ function genreVideo(info){
 let faustHandle=null;
 async function goLive(){
   try{
+    // a drawn path starts FRESH: reset the traveler to the path start and
+    // SNAP the playing state to that target (retarget while !S.live replaces
+    // playing wholesale) — no glide from the previous run's genre, and the
+    // stale glide queue from that run is cleared.
+    if(S.waypoints.length>=2){
+      set({travel:{seg:0,t:0}, queue:[]});
+      retarget({x:S.waypoints[0].x, y:S.waypoints[0].y});
+    }
     set({live:true,barCount:0}); rebuildQueue();
     faustHandle=await FaustLive.exploreLive(()=>S.playing, m=>set({status:m}), { onLoad:(r)=>{S.load=r;}, onBar:(info)=>{
       set({barInfo:info,barCount:S.barCount+1});
@@ -336,7 +346,7 @@ async function goLive(){
     }});
   }catch(e){ set({live:false,status:"live failed: "+e.message}); console.error(e); }
 }
-function stopLive(){ set({live:false});
+function stopLive(){ set({live:false, queue:[]});   // queue cleared: the next run must not inherit this run's glide flips
   if(faustHandle){ try{faustHandle.stop();}catch(e){} faustHandle=null; }
   set({status:"stopped"}); }
 setInterval(()=>{ if(!S.live&&S.playing&&S.target){ set({barCount:S.barCount+1}); glideStep(); } },1400);
@@ -421,7 +431,11 @@ svg.addEventListener("pointerdown",e=>{
     lastTap={t:0,x:0,y:0};
     // first waypoint: the path begins WHERE THE MUSIC IS — cursor becomes point 1
     const base=S.waypoints.length?S.waypoints:[{x:S.cursor.x,y:S.cursor.y}];
-    set({waypoints:[...base,pt],status:"path extended — the traveler walks from the playhead"});
+    const wps=[...base,pt];
+    set({waypoints:wps,status:"path extended — the traveler walks from the playhead"});
+    // stopped: drawing/replacing a path RESETS the playhead to the path start
+    // (snap, not glide — mid-performance extensions keep the live glide)
+    if(!S.live){ set({travel:{seg:0,t:0}, queue:[]}); retarget(wps[0]); }
     return;
   }
   lastTap={t:now,x:pt.x,y:pt.y};

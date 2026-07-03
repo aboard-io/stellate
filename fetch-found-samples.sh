@@ -321,6 +321,39 @@ echo "→ hit door_ding"
 echo "→ hit goal_horn"
 ffmpeg -y -loglevel error -i "$IA/washingtoncapitalsgoalhorn/Washington Capitals Goal Horn.mp3" -ac 1 -ar 44100 found/samples/hits/goal_horn.wav
 
+# --- SAMPLED INSTRUMENTS: FluidR3_GM SoundFont -> zone wavs (the sax ask) ---
+# FluidR3 GM/GS by Frank Wen, MIT license (see SOURCES.md). Faust cannot read
+# SF2 (no preset/zone/loop model in `soundfile`), so faust/sf2.js extracts the
+# presets the kernel uses into found/samples/instruments/<slug>/ as mono wav
+# zones + zones.json (root key incl. fine-tune, key ranges, loop points); the
+# native sampler (faust/sampler.js) plays them. The 151MB font is fetched to
+# /tmp and deleted — only the ~6MB of extracted zones stay.
+if [ ! -s found/samples/instruments/alto_sax/zones.json ]; then
+  echo "→ FluidR3_GM_GS.sf2 (151MB, one-time)"
+  curl -sL --max-time 900 -o /tmp/FluidR3_GM_GS.sf2 \
+    "$IA/fluidr3-gm-gs/FluidR3_GM_GS.sf2"
+  mkdir -p found/samples/instruments
+  for p in "Alto Sax" "Tenor Sax" "Nylon String Guitar" "Steel String Guitar" \
+           "Trumpet" "Flute" "Vibraphone" "Clarinet" "Strings" "Bandoneon"; do
+    node faust/sf2.js extract /tmp/FluidR3_GM_GS.sf2 "/$p/" found/samples/instruments --max-zones 6
+  done
+  rm -f /tmp/FluidR3_GM_GS.sf2
+fi
+# NOTE: the zone tables are mirrored statically in genre-kernel.js SAMPLERS —
+# if you re-extract with different --max-zones, regenerate that table.
+
+# --- DX7 factory ROM banks -> faust/dx7-presets.json (provenance recipe) ---
+# The decoded presets ARE committed (faust/dx7-presets.json — source, not
+# audio), so this block only documents/regenerates. Yamaha ROM1A-4B factory
+# cartridges (1983), PD-adjacent and mirrored widely; fetched from
+# yamahablackboxes.com (see SOURCES.md). Decode: faust/sysex2params.js.
+# Regenerate example:
+#   for r in rom1a rom1b rom2a rom2b rom3a rom3b rom4a rom4b; do
+#     curl -sL -o /tmp/$r.syx "https://yamahablackboxes.com/patches/dx7/factory/$r.syx"
+#   done
+#   node faust/sysex2params.js /tmp/rom1a.syx "/E.PIANO 1/" "/BRASS   1/" ...
+#   node faust/build.js dx7_algN   # per algorithm the kept patches need
+
 # --- manifest: duration + crude class for every sample ---
 python3 - <<'PYEOF'
 import json, os, subprocess

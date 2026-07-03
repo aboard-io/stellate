@@ -51,8 +51,19 @@
       bedUse: +(role("bed")+role("narration")).toFixed(2),
       crackle: state.crackle||0, pump: state.pump||0, comp: state.comp||0,
       swing: state.swing||0, humanize: state.humanize||0,
-      acoustic: ["piano","organ"].includes(I.melody.model)||["piano","organ"].includes(I.pad.model)
-        ? (["piano"].includes(I.melody.model)?1:0.6) : 0,
+      // sampler = a REAL sampled instrument (sax/flute/guitar/strings…): acoustic
+      // by construction — .8 on the melody (present but not felt-piano intimate),
+      // pad sampler counts like an organ/piano pad. DX7 keys/organ/mallet PATCHES
+      // (E.ORGAN, E.PIANO, CLAV, VIBE, MARIMBA…) keep the organ-grade .6 —
+      // disco/krautrock resolving their organ pads to the real DX7 organs must
+      // not fall off their own diagonals (2026-07 matrix regression).
+      // PAD-side only: a dx7 lead stays synth (citypop's E.PIANO lead is its
+      // dry-synth identity), but organ/mallet DX7 PADS keep organ-grade .6.
+      acoustic: (()=>{ const KEYSY=/(ORGAN|PIANO|CLAV|VIBE|MARIMBA|XYLO|LOG DRUM|KOTO|HARP|GUIT|BANJO|SITAR|LUTE|HARMONICA|CELESTE|ACCORDION)/i;
+        const dxPadAc=I.pad.model==="dx7"&&I.pad.dx7&&KEYSY.test(I.pad.dx7.name||"");
+        const melAc=["piano","organ","sampler"].includes(I.melody.model);
+        const padAc=["piano","organ","sampler"].includes(I.pad.model)||dxPadAc;
+        return melAc||padAc ? (I.melody.model==="piano"?1:I.melody.model==="sampler"?0.8:0.6) : 0; })(),
       leadVoices: I.melody.voices||2,
       softTop: state.tone&&state.tone.highcut>0?1:0,
     };
@@ -115,8 +126,8 @@
     doomdrone:{ bpm:[44,64,3], comp:[.4,.85,3], drumDensity:[0,1.2,2], wash:[.5,1,2], motion:[0,.7,1],
                 pump:[0,.06,1], swing:[0,.05,1], crackle:[0,.15,1], snareBalance:[0,.5,1] },
     newage:   { bpm:[54,80,2], drumDensity:[0,.5,3], motion:[.3,1,3], wash:[.4,1,2], pump:[0,.05,1],
-                crackle:[0,.1,2], comp:[0,.25,2], swing:[0,.06,1], bedUse:[.5,1,2], acoustic:[0,.3,2],
-                seventh:[.4,1,2] },   // luminous EXTENDED harmony — wintersynth's frost triads (seventh 0) stay off this diagonal
+                crackle:[0,.1,2], comp:[0,.25,2], swing:[0,.06,1], bedUse:[.5,1,2], acoustic:[0,.85,2],
+                seventh:[.4,1,2] },   // luminous EXTENDED harmony — wintersynth's frost triads (seventh 0) stay off this diagonal; acoustic hi .85 admits the REAL flute lead (sampler .8) while still fencing off neoclassical's piano (1)
     exotica:  { bpm:[82,108,3], swing:[.1,.26,2], acoustic:[.4,1,2], seventh:[.8,1,1], bedUse:[.4,1,1],
                 crackle:[0,.2,1], drumDensity:[.6,2.4,1], snareBalance:[0,.8,1], softTop:[0,0,1], motion:[.5,1,1] },
     industrial:{ bpm:[96,128,3], chopUse:[.25,1,2], pump:[0,.35,2], comp:[.4,.85,1], motion:[0,.7,2],
@@ -176,8 +187,8 @@
                 hatDensity:[0,1,2], seventh:[.4,1,1], bedUse:[.4,1,1], crackle:[.05,.3,1], pump:[0,.05,1] },   // theremin over organ, kit nearly gone — exotica keeps a real (brushed) kit
     arabpop:  { bpm:[92,118,2], seventh:[.3,.8,2], motion:[.4,1,2], drumDensity:[1.1,2.6,2], swing:[0,.12,1],
                 hatDensity:[.5,1.6,1], snareBalance:[0,.6,1], crackle:[0,.25,1], humanize:[.1,.35,1], comp:[.2,.5,1], pump:[0,.12,1] },   // hijaz color (mixed 7ths) + darbuka density at pop tempo — dinosynth is slower and washier
-    tango:    { bpm:[92,120,2], acoustic:[.7,1,2], humanize:[.28,.6,2], drumDensity:[0,.8,3], crackle:[.1,.4,2],
-                seventh:[0,.8,1], motion:[.5,1,1], swing:[0,.08,1], pump:[0,.05,1], wash:[.1,.4,1] },   // habanera piano, kitless, 78rpm dust — neoclassical has no dust and no dance
+    tango:    { bpm:[96,126,2], acoustic:[.7,1,2], humanize:[.28,.6,2], drumDensity:[0,.8,3], crackle:[.1,.4,2],
+                seventh:[.3,1,1], motion:[.5,1,1], swing:[0,.08,1], pump:[0,.05,1], wash:[0,.3,1] },   // sampled bandoneon + habanera piano, kitless, 78rpm dust, DRY (2026-07 ear-fix: pads nearly gone, reverb .3-.42)
     afrobeat: { bpm:[96,118,2], acoustic:[.4,.8,2], swing:[.02,.14,2], hatDensity:[1.3,2.6,2], drumDensity:[1.8,3.4,1],
                 seventh:[.7,1,1], crackle:[.05,.3,1], comp:[.25,.55,1], pump:[0,.12,2], snareBalance:[.2,.9,1] },   // interlocking euclids + organ stabs — disco's hats are straighter and thinner
     desertblues:{ bpm:[80,108,3], swing:[.04,.18,2], crackle:[.15,.5,2], softTop:[1,1,2], motion:[0,.7,2],
