@@ -17,10 +17,10 @@
 // (b) FoundLive: AudioBufferSourceNode scheduling into dry/rev/del/pp GainNode
 //     buses — used by live.js (and usable inside an OfflineAudioContext).
 //
-// The decode helper reimplements the approach of ../wasm-audio.js
-// decodeUrlToWav (Range-limited fetch -> decodeAudioData -> mono trim) but
-// keeps an AudioBuffer (we feed buffer sources, not csound tables) and skips
-// the IndexedDB layer.
+// The decode helper reimplements the approach of the legacy engine's
+// decodeUrlToWav (wasm-audio.js, branch legacy-csound: Range-limited fetch ->
+// decodeAudioData -> mono trim) but keeps an AudioBuffer (we feed buffer
+// sources, not csound tables) and skips the IndexedDB layer.
 (function (root, factory) {
   if (typeof module !== "undefined" && module.exports) module.exports = factory();
   else root.FoundPlayer = factory();
@@ -28,6 +28,9 @@
   "use strict";
 
   const GRAIN_HZ = 28, GRAIN_SEC = 0.12;
+
+  // debug/probe counters (headless verification reads these)
+  const _stats = { decodeOk: 0, decodeFail: 0, beds: 0, chops: 0, grains: 0 };
 
   // hann grain window for the LIVE grain scheduler (parity with mixPCM's
   // 0.5-0.5cos window; was a triangle ramp) — one shared curve, applied per
@@ -144,41 +147,94 @@
   }
 
   // ---------------------------------------------------------------- decode
-  // browser-only. Reimplementation of wasm-audio.js decodeUrlToWav's fetch+
-  // decode strategy, returning a mono AudioBuffer (trimmed to maxSeconds).
-  const FOUND_MAX_SECONDS = 90, FOUND_CHUNK_BYTES = 1024 * 1024;
+  // browser-only. Range-limited fetch + decodeAudioData, returning a mono
+  // AudioBuffer (trimmed to maxSeconds).
+  //
+  // LEAD-IN SKIP + SPEECH BOOST (the spokenword fix): archive.org readings
+  // open with 1.5-3.5 MINUTES of tape hiss before the poet speaks, and even
+  // the speech sits at -28..-38 dBFS. Naively keeping "the first 90 s of the
+  // file" therefore granulated pure hiss — the beds fired, the grains fired,
+  // and nothing audible came out. So: analyze 0.5 s RMS windows, start the
+  // kept region at the first SUSTAINED active audio, and if a chunk is all
+  // lead-in (< -45 dBFS peak window) progressively fetch a larger prefix of
+  // the file before giving up. Quiet sources get a boost-only normalization
+  // toward -20 dBFS active RMS (never attenuates, never clips).
+  const FOUND_MAX_SECONDS = 90, FOUND_CHUNK_BYTES = 1024 * 1024, FOUND_MAX_BYTES = 8 * 1024 * 1024;
+  const ACTIVE_FLOOR_DB = -45,   // a chunk whose loudest window is below this is lead-in
+        ACTIVE_REL_DB = 14,      // active = within this of the chunk's peak window
+        TARGET_RMS = 0.15;       // boost-only normalization target (~-16.5 dBFS)
+
+  // find where the recording actually starts + how much to boost it.
+  // returns {found, startSample, gain}
+  function analyzeActive(d, sr) {
+    const win = Math.floor(sr * 0.5), n = Math.floor(d.length / win);
+    if (n < 2) return { found: true, startSample: 0, gain: 1 };
+    const db = new Array(n); let peakDb = -Infinity, peakAbs = 0;
+    for (let w = 0; w < n; w++) {
+      let s = 0;
+      for (let i = w * win, e = i + win; i < e; i++) { const v = d[i]; s += v * v; if (v > peakAbs) peakAbs = v; else if (-v > peakAbs) peakAbs = -v; }
+      db[w] = 10 * Math.log10(s / win + 1e-12);
+      if (db[w] > peakDb) peakDb = db[w];
+    }
+    if (peakDb < ACTIVE_FLOOR_DB) return { found: false, startSample: 0, gain: 1 };
+    const thr = Math.max(-48, peakDb - ACTIVE_REL_DB);
+    let start = 0;
+    for (let w = 0; w < n; w++) {
+      if (db[w] <= thr) continue;
+      let ok = 0;                                   // sustained, not a pop
+      for (let k = w; k < Math.min(n, w + 8); k++) if (db[k] > thr) ok++;
+      if (ok >= 4) { start = Math.max(0, w - 1); break; }
+    }
+    let sum = 0, cnt = 0;                           // active-region mean RMS from start
+    for (let w = start; w < n; w++) if (db[w] > thr) { sum += Math.pow(10, db[w] / 10); cnt++; }
+    const rms = Math.sqrt(cnt ? sum / cnt : 0);
+    let gain = rms > 0 ? Math.min(16, Math.max(1, TARGET_RMS / rms)) : 1;
+    if (peakAbs * gain > 0.95) gain = Math.max(1, 0.95 / peakAbs);
+    return { found: true, startSample: start * win, gain };
+  }
+
   const _bufCache = new Map(); // url -> Promise<AudioBuffer>
   function decodeUrlToBuffer(ctx, url, maxSeconds) {
     if (_bufCache.has(url)) return _bufCache.get(url);
     const job = (async () => {
-      let buf, partial = false;
-      try {
-        const r = await fetch(url, { mode: "cors", headers: { Range: "bytes=0-" + (FOUND_CHUNK_BYTES - 1) } });
-        if (!(r.status === 206 || r.ok)) throw new Error("fetch " + r.status);
-        buf = await r.arrayBuffer(); partial = r.status === 206;
-      } catch (e) {
-        const r2 = await fetch(url, { mode: "cors" });
-        if (!r2.ok) throw new Error("fetch " + r2.status + " for " + url);
-        buf = await r2.arrayBuffer();
+      const maxSec = maxSeconds || FOUND_MAX_SECONDS;
+      let bytes = FOUND_CHUNK_BYTES, audio = null, mono = null, pick = null;
+      for (;;) {
+        let buf, partial = false;
+        try {
+          const r = await fetch(url, { mode: "cors", headers: { Range: "bytes=0-" + (bytes - 1) } });
+          if (!(r.status === 206 || r.ok)) throw new Error("fetch " + r.status);
+          buf = await r.arrayBuffer(); partial = r.status === 206;
+        } catch (e) {
+          const r2 = await fetch(url, { mode: "cors" });
+          if (!r2.ok) throw new Error("fetch " + r2.status + " for " + url);
+          buf = await r2.arrayBuffer();
+        }
+        try { audio = await ctx.decodeAudioData(buf.slice(0)); }
+        catch (e) {
+          if (!partial) throw e;
+          const r = await fetch(url, { mode: "cors" });
+          audio = await ctx.decodeAudioData(await r.arrayBuffer());
+          partial = false;
+        }
+        mono = new Float32Array(audio.length);
+        for (let c = 0; c < audio.numberOfChannels; c++) {
+          const s = audio.getChannelData(c);
+          for (let i = 0; i < mono.length; i++) mono[i] += s[i] / audio.numberOfChannels;
+        }
+        pick = analyzeActive(mono, audio.sampleRate);
+        if (pick.found || !partial || bytes >= FOUND_MAX_BYTES) break;
+        bytes = Math.min(FOUND_MAX_BYTES, bytes * 4);   // all lead-in — reach deeper into the file
       }
-      let audio;
-      try { audio = await ctx.decodeAudioData(buf.slice(0)); }
-      catch (e) {
-        if (!partial) throw e;
-        const r = await fetch(url, { mode: "cors" });
-        audio = await ctx.decodeAudioData(await r.arrayBuffer());
-      }
-      const n = Math.min(audio.length, Math.floor(audio.sampleRate * (maxSeconds || FOUND_MAX_SECONDS)));
-      const mono = ctx.createBuffer(1, n, audio.sampleRate);
-      const d = mono.getChannelData(0);
-      for (let c = 0; c < audio.numberOfChannels; c++) {
-        const s = audio.getChannelData(c);
-        for (let i = 0; i < n; i++) d[i] += s[i] / audio.numberOfChannels;
-      }
-      return mono;
+      const s0 = pick.found ? pick.startSample : 0, gain = pick.gain || 1;
+      const n = Math.max(1, Math.min(mono.length - s0, Math.floor(audio.sampleRate * maxSec)));
+      const out = ctx.createBuffer(1, n, audio.sampleRate);
+      const d = out.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = mono[s0 + i] * gain;
+      return out;
     })();
     _bufCache.set(url, job);
-    job.catch(() => _bufCache.delete(url));
+    job.then(() => _stats.decodeOk++, () => { _stats.decodeFail++; _bufCache.delete(url); });
     return job;
   }
 
@@ -189,6 +245,7 @@
 
     // instr 5 — one looping source (loop = csound's frac() wrap) + biquad + env
     live.chop = function (buffer, when, f) {
+      _stats.chops++;
       const durSec = f.durSec;
       const srcN = ctx.createBufferSource();
       srcN.buffer = buffer; srcN.loop = true; srcN.playbackRate.value = f.pitch;
@@ -224,6 +281,7 @@
     // instr 3 — a grain scheduler: schedules ~2s of grains ahead on a timer
     // (28 grains/s upfront for a 20s bed would be hundreds of nodes at once).
     live.bed = function (buffer, when, f) {
+      _stats.beds++;
       const durSec = f.durSec, srN = buffer.sampleRate;
       const out = ctx.createGain(); out.gain.value = 0;
       const lp = ctx.createBiquadFilter(); lp.type = "lowpass";
@@ -252,6 +310,7 @@
             w.gain.setValueCurveAtTime(HANN, t, GRAIN_SEC);   // hann, like mixPCM
             s.connect(w); w.connect(lp);
             const off = (state.pointer % buffer.duration + buffer.duration) % buffer.duration;
+            _stats.grains++;
             s.start(t, off, GRAIN_SEC * f.pitch + 0.01);
             s.onended = () => { try { w.disconnect(); } catch (e) {} };
           }
@@ -275,5 +334,5 @@
     return live;
   }
 
-  return { mixPCM, lp24, decodeUrlToBuffer, FoundLive, GRAIN_HZ, GRAIN_SEC, FOUND_MAX_SECONDS };
+  return { mixPCM, lp24, decodeUrlToBuffer, FoundLive, GRAIN_HZ, GRAIN_SEC, FOUND_MAX_SECONDS, _stats };
 });

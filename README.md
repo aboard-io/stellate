@@ -27,11 +27,13 @@ the `.db` and `.html` are regenerated from it.
 
 ```bash
 ./fetch-found-sound.sh   # download + prep the Internet Archive field recordings
-./render.sh              # writes vaporwave.wav AND vaporwave.mp3
-./render.sh mytake       # or a name of your choice -> mytake.wav / mytake.mp3
+./render.sh              # writes vaporwave.wav AND vaporwave.mp3 (needs csound —
+                         # the one legacy tool kept on main, for this founding .csd;
+                         # everything else renders via the Faust press)
 ```
 
-Requires `csound` (tested 6.18), `ffmpeg`, `curl`.
+Requires `ffmpeg`, `curl`, `node`; `render.sh` alone still wants `csound`
+(tested 6.18) — or check out branch `legacy-csound` for the whole csound era.
 
 ## Found sound (the part that makes it vaporwave)
 
@@ -101,49 +103,36 @@ Mariya Takeuchi — *Plastic Love*): render, listen side by side, adjust the
 detune / reverb / tempo, repeat. Generator → reference-similarity verifier →
 feedback. A good loop.
 
-## Run it in the browser (Csound WASM)
+## Run it in the browser (Faust WASM)
 
-The same capability runs in a browser tab via [Csound](https://csound.com)
-compiled to WebAssembly (`@csound/browser`). Two pages:
+The live capability runs in a browser tab on precompiled
+[Faust](https://faust.grame.fr) voice modules (one WASM AudioWorklet per
+synthesis model — see `FAUST-PORT.md`):
 
 ```bash
 ./serve.sh                       # static server on http://localhost:8777
-# open http://localhost:8777/play.html      — plays this exact royal-road.csd
-# open http://localhost:8777/builder.html   — the full interactive song builder
+# open http://localhost:8777/explorer.html  — CONSTELLATE: the live genre-space explorer
 ```
 
-(They need `http://localhost`, not `file://`, because `fetch` + AudioWorklet
-require it. Press Play — browsers need a click to start audio.)
+(It needs `http://localhost`, not `file://`, because `fetch` + AudioWorklet
+require it. Press LIVE — browsers need a click to start audio.)
 
-### The song builder (`builder.html`)
-
-A neon **clip matrix** — sections run top-to-bottom (time), instruments are the
-columns (Pads / Bass / Drums / Melody / Found, color-coded). Click a cell to set
-it; **▶ to audition** just that layer; **drag ⠿ to reorder**; ⚡ fill / ＋ insert.
-A **playhead highlights and auto-scrolls to the playing section**. Click an
-**instrument header to open its synth editor** (waveform, cutoff/resonance,
-detune, attack, vibrato, levels, reverb send). Globals: tempo, key, progression
-(Royal Road + four-chords / sad-pop / doo-wop / ii-V-I), reverb, **swing**, and
-**humanize**. Bass patterns (root / simple / walking / octaves / sixteenths /
-dub) and melody styles (composed / arp / updown / pentaup / wander / sparse /
-double). **Reset** and **Reseed** (a fresh random, build-shaped variation).
-Several built-in found sources (Tokyo Station, Tsukiji, Asakusa, Paris) plus
-**add your own audio by URL** (mp3/ogg/wav/m4a, CORS-friendly). Export **WAV**,
-**MP3** (`ffmpeg.wasm`), **MIDI**, or a **preset JSON**.
+The original csound-WASM pages (`play.html`, the `builder.html` song builder)
+are preserved fully working on branch `legacy-csound`; on main they are
+signposts pointing here.
 
 ### Files behind it
 
 | file | role |
 |---|---|
-| `csd-engine.js` | pure generator: `buildEvents(state)` → notes; `buildCsd(state)` → Csound text. No DOM. |
+| `csd-engine.js` | the score brain: `buildEvents(state)` → notes/drums/found/sfx. No DOM. |
 | `midi-export.js` | `buildMidi(state)` → Standard MIDI File, from the same `buildEvents` |
-| `wasm-audio.js` | boots `@csound/browser`, decodes audio URLs → WAV, play + offline render |
-| `wasm-ffmpeg.js` | MP3 export via `ffmpeg.wasm` (single-thread core, no COOP/COEP needed) |
-| `builder.html` / `play.html` | the two UIs |
-| `engine.test.js` | **render-verifies** generated CSDs through the native `csound` binary (`node engine.test.js`) |
+| `faust/` | the engine: precompiled WASM voice modules, live scheduler, offline press |
+| `explorer.html` | CONSTELLATE — the live UI over the 32-genre space |
+| `engine.test.js` | **render-verifies** three states through the real offline press (`node engine.test.js`) |
 
-Csound and MIDI both derive from one `buildEvents(state)` walk, so they never
-drift.
+Every backend (Faust live, Faust press, MIDI) derives from one
+`buildEvents(state)` walk, so they never drift.
 
 ## The good loop, as built
 
@@ -171,17 +160,16 @@ re-hitting the Internet Archive. The UI is mobile-responsive.
 downlift / impact / reverse swell / noise), one per section, routed to mix +
 reverb.
 
-**Live editing** — Play uses a just-in-time scheduler (`playLive` in
-`wasm-audio.js`): Csound is kept alive with `f 0` and each section's events are
-injected ~1.5s before they play via `inputMessage`, reading the *current* state
-each time. So edits to a section that hasn't played yet take effect when it
-plays. (Verified: a section toggled drums-on mid-playback comes out with drums.)
+**Live editing** — LIVE uses a just-in-time scheduler (`faust/live.js`):
+each 8-beat chord-bar is built from the *current* state ~4s before it plays,
+as `setParamValue`/gate automation on precompiled Faust voice worklets — no
+recompiles, so timbre glides are free. Edits and journeys take effect on the
+next bar.
 
-`csd-engine.js` is the same engine as `royal-road.csd`; only the score is
-data-driven so the UI can rearrange it. The generator is verified offline
-(`engine.test.js` renders every progression / key / melody through real
-`csound`); the in-tab WASM playback and export use the documented
-`@csound/browser` + `ffmpeg.wasm` APIs.
+`csd-engine.js` is the same score brain as `royal-road.csd`; the score is
+data-driven so the UI can rearrange it. The render path is verified offline
+(`engine.test.js` presses real states through `faust/press.js` and gates on
+non-silence).
 
 ## Catalog cross-reference
 

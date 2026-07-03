@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CONSTELLATE — draw a path through genre space</title>
+<link rel="icon" href="data:,">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=VT323&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#0c0a1a;--panel:#15122c;--panel2:#1c1838;--line:#2c2750;--line2:#3b3568;
@@ -31,7 +32,9 @@
   .card h2{font-family:Orbitron,sans-serif;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:0 0 .6rem}
   #panel{position:fixed;top:.7rem;right:.7rem;z-index:2;width:330px;max-height:calc(100vh - 1.4rem);overflow:auto}
   body.dragging{user-select:none;-webkit-user-select:none;cursor:crosshair}
-  .anchor{font:13px VT323,monospace;fill:rgba(220,214,255,.75);text-shadow:0 0 6px #000}
+  /* 61 stars: labels fade back — it's a star chart, constellation over caption */
+  .anchor{font:11px VT323,monospace;fill:rgba(220,214,255,.42);text-shadow:0 0 6px #000}
+  .anchor.hot{fill:rgba(255,229,246,.95);font-size:12px}
   .wlabel{font:11px VT323,monospace;fill:#4dffb0}
   .wpn{font:11px VT323,monospace;fill:#0c0a1a;font-weight:700}
   /* now playing: a chip bottom-right; click ♪ to expand the readout */
@@ -41,6 +44,15 @@
     background:rgba(18,15,38,.72);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
   #playhead{font:14px VT323,monospace;color:var(--mint);background:rgba(12,10,26,.82);border:1px solid var(--line);
     border-radius:9px;padding:.5rem .7rem;line-height:1.5;white-space:pre-wrap;max-width:min(520px,92vw)}
+  /* the chyron: music-video lower-third (namebank.js invents the band) */
+  .chy{border-left:3px solid var(--pink);padding-left:.65rem}
+  .chy-title{font-family:Orbitron,sans-serif;font-size:.9rem;letter-spacing:.09em;color:#fff}
+  .chy-artist{font-size:1.2rem;color:var(--pink);line-height:1.25}
+  .chy-album{color:var(--dim)}
+  .chy-roster{margin-top:.35rem;color:var(--ink);opacity:.88}
+  .chy-inst{color:var(--cyan)}
+  .chy-join{color:var(--amber);margin-top:.15rem}
+  .chy-tech{margin-top:.4rem;color:var(--mint);opacity:.8;font-size:12px;line-height:1.45}
   .row{display:flex;align-items:center;gap:.5rem;margin:.3rem 0}
   .row label{width:86px;font-size:.7rem;color:var(--dim)}
   .row input[type=range]{flex:1;accent-color:var(--pink);margin:0}
@@ -84,9 +96,8 @@ Drag waypoints to move them, right-click to erase. Set the pace in the panel.
 <script src="csd-engine.js"></script>
 <script src="genre-kernel.js"></script>
 <script src="genre-verifier.js"></script>
-<script src="wasm-audio.js"></script>
+<script src="namebank.js"></script>
 <script src="video-layer.js"></script>
-<script src="strudel-export.js"></script>
 <script src="faust/state-engine.js"></script>
 <script src="faust/found-player.js"></script>
 <script src="faust/live.js"></script>
@@ -103,7 +114,16 @@ const POS={ ambient:[55,55], neoclassical:[65,165], vaporwave:[150,100], lofi:[1
   dub:[300,300], trance:[455,95], disco:[325,170], italo:[350,120],
   bigbeat:[400,225], garage:[385,290], doomdrone:[40,220], newage:[110,110],
   exotica:[160,300], industrial:[465,200], spokenword:[170,215], chiptune:[475,40],
-  chinawave:[205,95], sovietwave:[285,55] };
+  chinawave:[205,95], sovietwave:[285,55],
+  // genre expansion round 3 — 29 more stars (pre-verified >=24px spacing)
+  citypop:[210,135], shibuyakei:[265,110], bossanova:[185,335], idm:[300,245],
+  electro:[390,110], miamibass:[430,185], phonk:[345,265], witchhouse:[95,200],
+  mallsoft:[105,60], wintersynth:[30,285], gabber:[492,238], psytrance:[490,130],
+  minimal:[455,155], deephouse:[375,240], coldwave:[315,85], ebm:[470,270],
+  krautrock:[390,165], newjack:[300,190], breakcore:[495,340], acidhouse:[385,200],
+  surfrock:[275,350], spacelounge:[130,165], arabpop:[215,285], tango:[95,300],
+  afrobeat:[265,215], desertblues:[110,375], sludgemetal:[30,150],
+  industrialmetal:[498,190], darksynth:[385,35] };
 const SNAP=26, CUTOFF=175, BARS_PER_SEG=128;   // one path leg ≈ 128 bars — genres evolve slowly, almost imperceptibly
 const KEYS=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 const PROG_MODE={ royal_road:[0,"major · royal road"], four_chords:[0,"major"], sad_pop:[9,"minor"],
@@ -113,7 +133,8 @@ const PROG_MODE={ royal_road:[0,"major · royal road"], four_chords:[0,"major"],
   canon:[0,"major · canon"], drone_min:[9,"minor · drone"], deep_two:[9,"minor"],
   house_min7:[9,"minor"], blues_12:[0,"blues · dom7 12-bar"], primeval:[9,"minor · primeval"],
   uplift:[9,"minor · uplift"], funk_vamp:[9,"dorian · funk vamp"],
-  mode_dorian:[9,"dorian"], mode_phrygian:[9,"phrygian"], mode_lydian:[0,"lydian"], mode_mixo:[0,"mixolydian"] };
+  mode_dorian:[9,"dorian"], mode_phrygian:[9,"phrygian"], mode_lydian:[0,"lydian"], mode_mixo:[0,"mixolydian"],
+  frost:[9,"minor · frost triads"], hijaz:[9,"phrygian dominant · hijaz"] };
 const MODE_LOCKS={ auto:null, major:"dream", minor:"minor_run", dorian:"mode_dorian",
   phrygian:"mode_phrygian", lydian:"mode_lydian", mixolydian:"mode_mixo", blues:"blues_12" };
 
@@ -123,6 +144,7 @@ const S={ cursor:{x:250,y:165}, waypoints:[], travel:{seg:0,t:0}, weights:[],
   seed:Math.floor(Math.random()*99999)+1, modeLock:"auto", pace:BARS_PER_SEG, more:false, load:1, scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
   pool:"", beatLine:"▶ press LIVE" };
 const subs=[];
+window.__S=S;   // debug/probe access (headless verification)
 let _raf=0;
 function set(patch){ Object.assign(S,patch);
   if(_raf)return; _raf=requestAnimationFrame(()=>{ _raf=0; subs.forEach(f=>f()); }); }
@@ -190,6 +212,22 @@ const DISCRETE=[
         if(ts&&ts.hits)s.hits=deep(ts.hits); else delete s.hits;});}],
   ["form",c=>c.genreMeta.form,(c,t)=>{c.sections=deep(t.sections);Object.assign(c.genreMeta,{form:t.genreMeta.form,kit:t.genreMeta.kit});}],
 ];
+// chyron-friendly lineup language for the glide flips ("journey: lead line"
+// meant nothing to humans — narrate it like a band shuffling on stage)
+const FLIP_PHRASES={
+  "pad voice":"new hands on the pads",
+  "bass voice":"bass player swaps rigs",
+  "lead voice":"lead swaps axes",
+  "kick":"fresh kick drum rolled in",
+  "snare":"snare handoff",
+  "hat":"hats change hands",
+  "drum kit":"new drummer sits in",
+  "bassline":"bass hands over",
+  "lead line":"lead rewrites the hook",
+  "harmony":"key change coming",
+  "sample":"new crate on the decks",
+  "form":"the set changes shape",
+};
 function rebuildQueue(){
   if(!S.playing||!S.target)return;
   const seed=S.barCount*131+7;
@@ -211,7 +249,7 @@ function glideStep(){
     if(ts&&typeof ts.vol==="number") s.vol+=(ts.vol-s.vol)*0.13;});
   if(S.barCount%2===0&&S.queue.length){
     const [name,,apply]=S.queue[0];
-    try{ apply(c,t); set({queue:S.queue.slice(1),status:"journey: "+name}); }catch(e){}
+    try{ apply(c,t); set({queue:S.queue.slice(1),status:FLIP_PHRASES[name]||("journey: "+name)}); }catch(e){}
   }
   if(S.barCount%4===0) rescore();
   set({});   // re-render sliders/playhead
@@ -226,7 +264,10 @@ function rescore(){
 function travelStep(){
   if(S.waypoints.length<2)return;
   let {seg,t}=S.travel;
-  t+=1/(S.pace||BARS_PER_SEG);   // pace slider: bars per path leg
+  // pace slider = bars per path leg (bigger = slower journey). Clamp hard so a
+  // mangled input can never freeze the traveler (t must always advance).
+  const pace=Math.max(8,Math.min(512,+S.pace||BARS_PER_SEG));
+  t+=1/pace;
   if(t>=1){ t=0; seg=(seg+1)%(S.waypoints.length-1||1); }
   const a=S.waypoints[seg], b=S.waypoints[seg+1]||a;
   const pt={x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t};
@@ -250,22 +291,13 @@ function genreVideo(info){
 }
 
 // ---------- live engine ----------
-// ?engine=faust -> the Faust per-voice engine (FAUST-PORT.md phase 3 A/B flag)
-const FAUST=!/[?&]engine=csound/.test(location.search)&&window.FaustLive;   // Faust is the engine; ?engine=csound = legacy escape hatch
+// The Faust per-voice engine is THE engine (FAUST-PORT.md phase 3; the csound
+// WASM path lives on branch legacy-csound).
 let faustHandle=null;
 async function goLive(){
   try{
     set({live:true,barCount:0}); rebuildQueue();
-    if(FAUST){
-      faustHandle=await FaustLive.exploreLive(()=>S.playing, m=>set({status:m}), { onLoad:(r)=>{S.load=r;}, onBar:(info)=>{
-        set({barInfo:info,barCount:S.barCount+1});
-        if(S.waypoints.length>=2) travelStep();
-        glideStep();
-        genreVideo(info);
-      }});
-      return;
-    }
-    await WasmAudio.exploreLive(()=>S.playing, m=>set({status:m}), { onLoad:(r)=>{S.load=r;}, onBar:(info)=>{
+    faustHandle=await FaustLive.exploreLive(()=>S.playing, m=>set({status:m}), { onLoad:(r)=>{S.load=r;}, onBar:(info)=>{
       set({barInfo:info,barCount:S.barCount+1});
       if(S.waypoints.length>=2) travelStep();
       glideStep();
@@ -274,8 +306,8 @@ async function goLive(){
   }catch(e){ set({live:false,status:"live failed: "+e.message}); console.error(e); }
 }
 function stopLive(){ set({live:false});
-  if(faustHandle){ try{faustHandle.stop();}catch(e){} faustHandle=null; set({status:"stopped"}); return; }
-  WasmAudio.stopLive().then(()=>set({status:"stopped"})); }
+  if(faustHandle){ try{faustHandle.stop();}catch(e){} faustHandle=null; }
+  set({status:"stopped"}); }
 setInterval(()=>{ if(!S.live&&S.playing&&S.target){ set({barCount:S.barCount+1}); glideStep(); } },1400);
 
 // ---------- map (imperative SVG: 60Hz drags stay cheap) ----------
@@ -298,7 +330,7 @@ function drawMap(){
     const w=wmap[g]||0, cx=X(x), cy=Y(y);
     svg.appendChild(el("circle",{cx,cy,r:8+(w>0.01?w*26:0),fill:w>0.01?"#ff6ec7":"#a06bff",opacity:.10+w*.28}));  // halo
     svg.appendChild(el("circle",{cx,cy,r:w>0.01?3.2:2.2,fill:w>0.01?"#ffd7ee":"#e6e0ff",opacity:.95}));           // the star
-    const t=el("text",{x:cx+9,y:cy+4,"class":"anchor"});t.textContent=g;svg.appendChild(t);
+    const t=el("text",{x:cx+9,y:cy+4,"class":w>0.01?"anchor hot":"anchor"});t.textContent=g;svg.appendChild(t);
     if(w>0.01){const wl=el("text",{x:cx+9,y:cy+17,"class":"wlabel"});wl.textContent=Math.round(w*100)+"%";svg.appendChild(wl);}
   }
   S.waypoints.forEach((w,i)=>{
@@ -376,16 +408,14 @@ function Panel(){
       <button class="go" onclick=${goLive}>▶ LIVE</button>
       <button onclick=${stopLive}>■ STOP</button>
       <button onclick=${()=>set({more:!S.more})}>${S.more?"× less":"⚙ more"}</button>
-      ${window.StrudelExport?html`<button title="open this exact state as live-editable Strudel code"
-        onclick=${()=>{try{window.open(StrudelExport.shareUrl(S.playing),"_blank");}catch(e){set({status:"strudel export failed: "+e.message});}}}>⧉ remix</button>`:""}
     </div>
     <div class="row"><label>seed</label>
       <input class="seedin" type="number" value=${S.seed}
         onchange=${e=>{set({seed:+e.target.value||1});retarget(S.cursor);}} />
       <button onclick=${()=>{set({seed:Math.floor(Math.random()*99999)});retarget(S.cursor);}}>🎲</button></div>
-    <div class="row"><label>path speed</label>
+    <div class="row"><label>pace (bars/leg)</label>
       <input type="range" min="16" max="256" step="8" value=${S.pace}
-        onInput=${e=>set({pace:+e.target.value})} />
+        onInput=${e=>set({pace:Math.max(8,Math.min(512,+e.target.value||BARS_PER_SEG))})} />
       <output>${S.pace}</output></div>
     ${S.more?html`
     <div class="row"><label>mode/scale</label>
@@ -446,36 +476,75 @@ function keyModeOf(st){
   const [off,mode]=PROG_MODE[st.progression]||[0,"major"];
   return KEYS[(off+(st.keyOffset||0))%12]+" "+mode;
 }
+// ---------- the chyron: an MTV lower-third instead of a debug dump ----------
+// Each journey leg / 32-bar window is a "song": namebank.js invents a title,
+// artist, album, year and label deterministically from seed+genre; the roster
+// names the live instruments and their (fake) players. A player's name hashes
+// the instrument MODEL, so a glide flip = a lineup change = "now joining: …".
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let chyKey="", chyId=null, chyRoster=[], joinLine="", joinAt=0;
+function chyron(){
+  const g=(S.weights[0]||{g:"vaporwave"}).g;
+  const win=S.live?Math.floor(S.barCount/32):0;      // new song every ~32 bars while live
+  const key=[S.seed,g,S.travel.seg,win].join("|");
+  if(key!==chyKey){ chyKey=key; chyId=NameBank.identity(g, NameBank.hash(S.seed,g,S.travel.seg,win)); }
+  const roster=NameBank.instrumentNames(S.playing).map(i=>({...i, who:NameBank.musician(i.role,i.model,S.seed)}));
+  for(const r of roster){ const old=chyRoster.find(o=>o.role===r.role);
+    if(old&&old.who!==r.who&&S.live){ joinLine="now joining: "+r.who+" on "+r.name; joinAt=Date.now(); } }
+  chyRoster=roster;
+  return { id:chyId, roster, join:(Date.now()-joinAt<7000)?joinLine:"" };
+}
 async function playheadTick(){
-  if(S.playing){
-    let line1="▶ press LIVE";
+  if(S.playing&&window.NameBank){
+    let line1="▶ press LIVE — the band is warming up";
     if(S.live&&S.barInfo){
-      let t=0; try{ t=await WasmAudio.scoreTime(); }catch(e){}
+      let t=0; try{ t=faustHandle?faustHandle.ctx.currentTime:0; }catch(e){}
       const b=S.barInfo, beat=Math.max(0,Math.min(7.99,(t-b.when)/b.spb+8));
       line1=`▶ bar ${b.serial+1} · beat ${1+Math.floor(beat%8)} · ${b.chord||"—"} (${b.ci+1}/${b.nch}) · ${b.section}`+
-        (S.waypoints.length>=2?` · path ${S.travel.seg+1}→${S.travel.seg+2}`:"")+
+        (S.waypoints.length>=2?` · leg ${S.travel.seg+1}→${S.travel.seg+2}`:"")+
         ` · engine ${S.load.toFixed(2)}x${S.load<0.97?" ⚠":""}`;
     }
-    const m=S.playing.genreMeta||{};
-    document.getElementById("playhead").textContent=
-`${line1}
-key ${keyModeOf(S.playing)} · ${S.playing.bpm}bpm · form ${m.form}
-mix: ${S.weights.map(w=>`${w.g} ${Math.round(w.w*100)}%`).join(" · ")}${S.live&&S.queue.length?` · ${S.queue.length} changes to go`:""}
-kit ${m.kit} · bass ${(S.playing.sections.find(s=>s.bass&&s.bass!=="off")||{}).bass||"—"}(${S.playing.instruments.bass.model}) · lead ${(S.playing.sections.find(s=>s.melody&&s.melody!=="off")||{}).melody||"—"}(${S.playing.instruments.melody.model})
-sample ${S.playing.foundSources.map(s=>s.id).join("+")} · verifier says: ${S.best}`;
+    const c=chyron();
+    const line2=`key ${keyModeOf(S.playing)} · ${S.playing.bpm}bpm · `+
+      S.weights.map(w=>`${w.g} ${Math.round(w.w*100)}%`).join(" · ")+
+      (S.live&&S.queue.length?` · ${S.queue.length} changes queued`:"")+
+      ` · verifier hears: ${S.best}`;
+    document.getElementById("playhead").innerHTML=
+      `<div class="chy">`+
+      `<div class="chy-title">${esc(c.id.title)}</div>`+
+      `<div class="chy-artist">${esc(c.id.artist)}</div>`+
+      `<div class="chy-album">from “${esc(c.id.album)}” · ${esc(c.id.label)} · ${c.id.year}</div>`+
+      `<div class="chy-roster">${c.roster.map(r=>`<div><span class="chy-inst">${esc(r.name)}</span> — ${esc(r.who)}</div>`).join("")}</div>`+
+      (c.join?`<div class="chy-join">★ ${esc(c.join)}</div>`:"")+
+      `<div class="chy-tech">${esc(line1)}<br>${esc(line2)}</div>`+
+      `</div>`;
   }
   setTimeout(playheadTick,250);
 }
 
-// ---------- pool + boot ----------
-(function(){
-  if(WasmAudio.MOBILE){ set({pool:"mobile: samples load on demand"}); return; }
-  // local sample files first (they decode in ms), remote archive.org beds after
-  const pool=[...Object.values(K.SAMPLES).map(s=>"found/samples/"+s.file),
-              ...Object.values(K.SOURCES).map(s=>s.url)];
-  WasmAudio.prewarmPool(pool,(done,total)=>set({pool:`sample pool: ${done}/${total} cached`+(done===total?" ✓":"…")}));
-})();
-retarget(S.cursor); rescore(); playheadTick();
+// ---------- boot ----------
+// (found buffers decode on demand in found-player.js — no csound prewarm pool)
+// The page opens with a journey already drawn: a random 3-star constellation
+// between genuinely distant anchors (all pairwise >=150 logical px, so the
+// default trip shows the space off). Clear it (✕ path) to drag freely.
+function autoPath(){
+  const gs=Object.keys(POS);
+  let h=(S.seed*2654435761)>>>0;
+  const nxt=()=>{ h=(h*1664525+1013904223)>>>0; return h; };
+  const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+  let pick=[];
+  for(let tries=0;tries<300;tries++){
+    pick=[];
+    while(pick.length<3){ const g=gs[nxt()%gs.length]; if(!pick.includes(g)) pick.push(g); }
+    const P=pick.map(g=>POS[g]);
+    if(dist(P[0],P[1])>=150&&dist(P[1],P[2])>=150&&dist(P[0],P[2])>=150) break;
+  }
+  const pts=pick.map(g=>({x:POS[g][0],y:POS[g][1]}));
+  set({waypoints:pts, travel:{seg:0,t:0},
+    status:"tonight's journey: "+pick.join(" → ")+" — ▶ LIVE to travel (✕ path to roam free)"});
+  retarget(pts[0]);
+}
+autoPath(); rescore(); playheadTick();
 if(window.VideoLayer)VideoLayer.init().then(()=>set({}));   // found-video background (genre-affine, follows the mix)
 </script>
 </body>

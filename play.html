@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Royal Road Vaporwave — player</title>
+<link rel="icon" href="data:,">
+<title>Royal Road Vaporwave — player (retired)</title>
 <style>
   body{margin:0;min-height:100vh;display:grid;place-items:center;
     background:radial-gradient(120% 120% at 50% 0%,#241544,#0e0b1a);
@@ -12,67 +13,22 @@
   h1{font-size:30px;margin:0 0 6px;
     background:linear-gradient(90deg,#ff77c8,#ffd36e,#46e0d0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   p{color:#a99fd6}
-  button{font:inherit;color:#fff;border:none;border-radius:11px;padding:12px 22px;margin:6px;cursor:pointer;
-    background:linear-gradient(90deg,#ff77c8,#b24cff)}
-  button.alt{background:#1f1840;border:1px solid #2c2456;color:#e9e6ff}
-  #status{margin-top:14px;color:#a99fd6;min-height:1.4em}
+  a.go{display:inline-block;font:inherit;color:#fff;border:none;border-radius:11px;padding:12px 22px;margin:6px;
+    background:linear-gradient(90deg,#ff77c8,#b24cff);text-decoration:none}
   a{color:#46e0d0}
+  code{color:#e9e6ff;background:#1f1840;border-radius:5px;padding:1px 6px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Royal Road Vaporwave</h1>
-  <p>The committed <code>royal-road.csd</code>, rendered in your browser by Csound (WASM).
-  Found sound (Tokyo Station) is fetched from the Internet Archive on play.</p>
-  <div>
-    <button id="play">▶ Play</button>
-    <button id="stop" class="alt">■ Stop</button>
-    <button id="wav" class="alt">⤓ WAV</button>
-    <button id="mp3" class="alt">⤓ MP3</button>
-    <button id="vid" class="alt" hidden>📼 video</button>
-  </div>
-  <div id="status">Want every knob? Open <a href="builder.html">builder.html</a>.</div>
+  <p>This page rendered the committed <code>royal-road.csd</code> with Csound
+  (WASM) in your browser. The project now runs on a single Faust engine, and
+  the whole csound era — this page included, fully working — is preserved on
+  the <code>legacy-csound</code> branch of the repo.</p>
+  <p><a class="go" href="explorer.html">▶ open CONSTELLATE — the live explorer</a></p>
+  <p><code>royal-road.csd</code> itself stays on main as the founding document;
+  check out <code>legacy-csound</code> to render it.</p>
 </div>
-
-<script src="wasm-audio.js"></script>
-<script src="wasm-ffmpeg.js"></script>
-<script src="video-layer.js"></script>
-<script>
-const TOKYO_URL="https://archive.org/download/aporee_20938_24294/nov19tokyostation1934.ogg";
-// id must match the path royal-road.csd expects: found/tokyo_station.wav
-const SOURCES=[{id:"tokyo_station",label:"Tokyo Station",url:TOKYO_URL}];
-const status=(m,e)=>{const s=document.getElementById("status");s.textContent=m;s.style.color=e?"#ff6b6b":"#a99fd6";};
-let csd=null;
-async function getCsd(){ if(csd)return csd; const r=await fetch("royal-road.csd"); csd=await r.text(); return csd; }
-
-document.getElementById("play").onclick=async()=>{
-  try{ status("loading…"); await WasmAudio.play(await getCsd(), SOURCES, status); }
-  catch(e){ status("error: "+e.message+" (serve over http://localhost)",true); console.error(e); }
-};
-document.getElementById("stop").onclick=()=>WasmAudio.stopLive().then(()=>status("stopped"));
-async function dl(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();}
-// fast offline render first (silent, faster than realtime); realtime capture only as fallback
-async function renderBlob(){
-  const csd=await getCsd();
-  try{ return await WasmAudio.renderOffline(csd,SOURCES,160,status); }
-  catch(e){ status("offline render unavailable — capturing live…"); return WasmAudio.captureExport(csd,SOURCES,160,status); }
-}
-document.getElementById("wav").onclick=async()=>{
-  try{ status("rendering…"); await dl(await renderBlob(),"vaporwave.wav"); status("WAV downloaded"); }
-  catch(e){ status("render failed: "+e.message,true); console.error(e); }
-};
-document.getElementById("mp3").onclick=async()=>{
-  try{ status("rendering…"); const b=await renderBlob();
-    const mp3=await WasmFFmpeg.wavToMp3(new Uint8Array(await b.arrayBuffer()),160,status); await dl(mp3,"vaporwave.mp3"); status("MP3 downloaded"); }
-  catch(e){ status("MP3 failed: "+e.message,true); console.error(e); }
-};
-// laserdisc background — slow ambient crossfades (needs ./fetch-found-video.sh)
-VideoLayer.init().then(ok=>{
-  if(!ok)return;
-  const b=document.getElementById("vid");b.hidden=false;
-  const lab=()=>{b.textContent=VideoLayer.enabled()?"📼 on":"📼 off";};
-  lab();b.onclick=()=>{VideoLayer.setEnabled(!VideoLayer.enabled());lab();};
-});
-</script>
 </body>
 </html>

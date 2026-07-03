@@ -8,7 +8,8 @@
 //                    { onBar, onLoad, ecoStart });   // same shape as
 //   handle.stop();                                   // WasmAudio.exploreLive
 //
-// Same chord-bar JIT injection semantics as ../wasm-audio.js exploreLive:
+// Same chord-bar JIT injection semantics as the legacy csound exploreLive
+// (wasm-audio.js on branch legacy-csound):
 // section walking (grooveSec fallback, cycles, fills only on the last cycle,
 // sweeps open/close on first/last cycle), per-bar seed evolution
 // (seed + serial*7919), 8-beat chord bars, deep lookahead. The difference:
@@ -16,8 +17,8 @@
 // setValueAtTime on precompiled per-voice worklets, so glides are free.
 //
 // Found sound is native: AudioBufferSourceNode grain/slice scheduling
-// (found-player.js), fed from decoded buffers (decode strategy mirrors
-// wasm-audio.js decodeUrlToWav, reimplemented in found-player.js).
+// (found-player.js), fed from decoded buffers (see found-player.js
+// decodeUrlToBuffer — Range-limited fetch + lead-in skip + speech boost).
 (function (root) {
   "use strict";
 
@@ -327,6 +328,7 @@
         status("stopped");
       },
     };
+    root.FaustLive.lastHandle = handle;   // debug/probe access (rms, errors)
     return handle;
   }
 

@@ -131,8 +131,8 @@ The kernel emits ordinary engine states. New engine vocabulary added for it:
 kits `techno`, `house`, `breaks`, `jungle`; bass `rolling`, `sub`, `stab`;
 progressions `drone_min`, `deep_two`, `house_min7`; fill `break fill`;
 production state fields `pump` (mix-bus sidechain duck), `crackle` (dust2
-vinyl noise), `tone` {lowcut, highcut}; found role `"chops"` (instr 5 slice
-player) alongside the granular `"bed"` (instr 3). All defaults preserve
+vinyl noise), `tone` {lowcut, highcut}; found role `"chops"` (slice
+player) alongside the granular `"bed"`. All defaults preserve
 existing renders.
 
 ## CLI
@@ -143,7 +143,7 @@ node genre-kernel.js track jungle --seed 7          # one track state -> json
 node genre-kernel.js blend techno vaporwave 0.5     # a midpoint state
 node genre-kernel.js playlist techno vaporwave synthwave jungle \
      --tracks 30 --hours 6 --out playlist/          # the full journey (json)
-node genre-kernel.js render <state.json|preset>     # csound+ffmpeg -> mp3
+node genre-kernel.js track jungle --seed 7 --render # faust press + ffmpeg -> mp3
 node genre-kernel.js journey genre-space-path.json \
      --hours 4 --out journey/ --render --video      # a DRAWN path -> hours of
                                                     # mp3s + genre-affine video +
@@ -166,23 +166,3 @@ per-genre affinity pool — a blend's pool is the union of its parents' pools,
 dominant genre first, cuts locked to section downbeats — then concatenates
 `journey.mp4`.
 
-## Strudel export (a third target)
-
-`strudel-export.js` proves the states are backend-agnostic a second time
-(after MIDI): it maps a state to **live-codeable Strudel** (strudel.cc, the
-TidalCycles JS port) at the *dimension* level, not as an event dump. One
-Strudel cycle = one 8-beat chord-bar (`setcpm(bpm/8)`); kits become idiomatic
-patterns + `bank()` drum machines (909→RolandTR909, 808→RolandTR808,
-boom→OberheimDMX); the humanity rule is re-encoded in their algebra
-(`degradeBy`/`sometimesBy`/`every` — nothing loops verbatim there either);
-swing→`swingBy(swing, 8)`, the mix dimensions→`room/size/delay*/lpf`,
-crackle→Strudel's `crackle` noise synth, breaks→`splice(8, …)` over the same
-slice tables, and the sample layer loads our own shelf same-origin via
-`strudel-samples.json` (relative paths; no `_base`, so it also resolves when
-fetched absolutely). `shareUrl(state)` targets `remix.html` — a self-hosted
-REPL over the vendored unmodified `@strudel/repl` 1.3.0 build in
-`strudel/vendor/` (AGPL-3.0; attribution in the page footer + vendor README) —
-and `strudelccUrl(state)` targets the mothership with the absolute map URL.
-All choices are seeded (same state → same code); the mix page links every
-track with **⧉ strudel**. CLI: `node strudel-export.js <genre|state.json>
-[--seed N] [--url]`.

@@ -1,7 +1,8 @@
-// csd-engine.js — pure generator for the vaporwave/synthwave/downtempo song builder.
-// buildEvents(state) -> {pitched, drums, found, bpm, totalBeats}
-// buildCsd(state)    -> full <CsoundSynthesizer> (uses buildEvents)
-// Csound AND MIDI derive from buildEvents so they never drift.
+// csd-engine.js — the score brain: pure event generator for the genre space.
+// buildEvents(state) -> {pitched, drums, found, sfx, bpm, totalBeats}
+// Every backend (the Faust engine in faust/, MIDI export) derives from
+// buildEvents so they never drift. The csound codegen that used to live here
+// (buildCsd/orchestra) is preserved on branch legacy-csound.
 
 (function (root) {
   "use strict";
@@ -79,6 +80,11 @@
     // genre-kernel additions — trance lift + disco/funk vamp
     uplift:     prog("Uplift (i-VI-VII-i)",      [["A","min7"],["F","maj7"],["G","maj"],["A","min7"]]),
     funk_vamp:  prog("Funk vamp (i7-IV7)",       [["A","min7"],["D","dom7"]]),
+    // round-3 genre-kernel additions — plain-triad minor (coldwave/wintersynth/tango:
+    // the verifier's "seventh" feature needs a 0-seventh minor home) + phrygian
+    // DOMINANT (arab pop's hijaz color: MAJOR tonic against bII)
+    frost:      prog("Frost (i-VI-III-VII triads)", [["A","min"],["F","maj"],["C","maj"],["G","maj"]]),
+    hijaz:      prog("Hijaz (I-bII, phrygian dominant)", [["A","maj"],["Bb","maj7"],["A","maj"],["G","min7"]]),
     blues_12:   prog("12-bar blues (all dom7)",  [["C","dom7"],["C","dom7"],["C","dom7"],["C","dom7"],
                                                   ["F","dom7"],["F","dom7"],["C","dom7"],["C","dom7"],
                                                   ["G","dom7"],["F","dom7"],["C","dom7"],["G","dom7"]])
@@ -86,12 +92,27 @@
 
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
-  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic"];
+  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic","habanera"];
   const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16","motorik","motorik23"];
-  const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal"];
+  const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal","bossa","electro","newjack"];
   const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
   // the ⚡ transition control: what happens at the end of a section, into the next
   const TRANSITIONS=["off","drum fill","tom fill","break fill","hat rush","cut","riser","sweep","downlift","impact","reverse","noise"];
+  // synthesis-model vocabulary. FAUST-PORT: the voices themselves live in
+  // faust/state-engine.js (pitchedUnit) + faust/dist/ modules; this predicate is
+  // the engine-side canon anchors and validators check against — keep it in sync
+  // when a new .dsp lands. (validate-genres scrapes these model==="…"
+  // comparisons from source, exactly like the pattern tables above.)
+  const isModel=(model)=>
+    // pitched: pad/bass/lead
+    model==="saw"||model==="stack"||model==="sine"||model==="sub"||model==="acid"||
+    model==="reese"||model==="wobble"||model==="piano"||model==="organ"||model==="strings"||
+    model==="choir"||model==="bell"||model==="brass"||model==="fm"||model==="rhodes"||
+    model==="pluck"||model==="kpluck"||model==="fuzz"||model==="guitar"||model==="vocoder"||
+    model==="dx7"||
+    // drums: kick boom|808|909 · snare noise|crack|clap · hat noise|metal
+    model==="boom"||model==="808"||model==="909"||model==="noise"||model==="crack"||
+    model==="clap"||model==="metal";
 
   // models: pad saw|organ|fm · bass saw|sub|acid|reese · melody stack|pluck|fm
   // · kick boom|808|909 · snare noise|crack|clap · hat noise|metal
@@ -103,21 +124,6 @@
       drums:  { kickModel:"boom", snareModel:"noise", hatModel:"noise", kick:1.0, snare:1.0, hat:1.0, tom:1.0, tune:1.0, send:0.18, dsend:0 }
     };
   }
-  function mergedInstruments(state){
-    const D=defaultInstruments(), s=state.instruments||{};
-    const r={ pad:{...D.pad,...s.pad}, bass:{...D.bass,...s.bass}, melody:{...D.melody,...s.melody}, drums:{...D.drums,...s.drums} };
-    // FAUST-PORT contract: model "dx7" is a 6-op FM patch — the kernel emits
-    // state.instruments.<voice>.dx7 = {algorithm, params} (a ~144-dim vector
-    // from faust/dx7-presets.json) and the Faust engine plays it natively.
-    // The legacy csound path has no 6-op engine, so map "dx7" to the CLOSEST
-    // legacy model here (lead E.PIANO/BRASS-ish -> fm, TUB BELLS pad -> bell,
-    // SYN-BASS -> sub); the .dx7 blob rides along untouched for other engines.
-    if(r.pad.model==="dx7")    r.pad.model="bell";
-    if(r.bass.model==="dx7")   r.bass.model="sub";
-    if(r.melody.model==="dx7") r.melody.model="fm";
-    return r;
-  }
-
   // style presets — pick one to recast the whole song
   const STYLES = {
     vaporwave:{ label:"Vaporwave", bpm:88, reverb:0.85, delay:{beats:0.75,feedback:0.30,cutoff:2600},
@@ -194,6 +200,7 @@
           L.push([t, Math.min(d,7.6-t)*0.9, p]); t+=d;
         } break; }
       case "walking":    L=[[0,1.0,r5],[1,0.5,r6],[1.5,0.5,f6],[2.5,0.5,r5],[3,1.0,r6],[4,0.5,r5],[4.5,0.5,f6],[5.5,0.5,r6],[6,1.0,r5],[7,0.5,r6],[7.5,0.5,f6]]; break;
+      case "habanera":   L=[[0,1.4,r5],[1.5,0.5,f6],[2,1,r6],[3,1,r5],[4,1.4,r5],[5.5,0.5,f6],[6,1,r6],[7,1,f6]]; break;   // DUM..da-DUM-DUM ×2 — the tango/milonga cell IS the groove
       default:           L=[[0,1.5,r5],[2,0.5,r6],[3,1.0,f6],[4.5,0.5,r5],[5,1.0,r6],[6.5,1.5,r5]];
     }
     return L.map(([o,d,p])=>({voice:"bass",beat:S+o,dur:d,pch:p,amp:0.22}));
@@ -269,7 +276,26 @@
       h(ci%2?2.75:6.25,.10);                                       // extra syncopated shaker
       if(R()<0.5) k(7.5,.32);                                      // occasional pickup kick (not a snare fill)
     }
-    // euclid overlay (state.euclid = {kick:[k,n], hat:[k,n]}): the spec REPLACES
+    else if(kind==="bossa"){ // bossa nova: surdo-soft kick with pickups, rim-click clave (QUIET snare voice), gentle 8th hats
+      k(0,.55); k(3.5,.28); k(4,.55); k(7.5,.28);
+      const clave=ci%2?[1,2.5,4,5.5,7]:[0.5,2,4.5,6,7.5];          // 3-2 / 2-3 rim pattern flips per chord
+      clave.forEach(o=>s(o,.2));                                   // rim clicks, never a backbeat
+      for(let i=0;i<8;i++)h(.5+i,(i%2?.07:.11));
+      if(R()<0.3)h(6.5,.13,.28);                                   // occasional soft open shaker
+    }
+    else if(kind==="electro"){ // 1982 machine boom-bap (Planet Rock): syncopated 808 kicks, claps 2+4, crisp accented 16th hats
+      k(0,.66); k(3.5,.42); k(6,.5); if(ci%2)k(7.5,.3);
+      s(2,.5); s(6,.5); if(R()<0.35)s(7.75,.14);                   // clap ghosts push the bar
+      for(let i=0;i<16;i++){const o=i*.5; h(o,i%4===2?.14:(i%2?.06:.11));}
+      h(ci%2?3.5:7.5,.15,.28);                                     // the open accent flips per chord
+    }
+    else if(kind==="newjack"){ // swingbeat: bouncing kicks, HUGE claps on 2/4, skippy 16th hats (the swing knob rides on top)
+      k(0,.64); k(2.75,.4); k(4.5,.5); k(ci%2?6.75:5.75,.34);
+      s(2,.58); s(6,.58); s(ci%2?3.75:7.25,.16);                   // ghost clap skips around
+      for(let i=0;i<16;i++){if(R()<0.8)h(i*.5,(i%2?.07:.12));}     // hats drop pulses — the skip
+      h(ci%2?2.5:6.5,.16,.3);
+    }
+    // euclid overlay (state.euclid = {kick:[k,n], hat:[k,n], snare:[k,n]}): the spec REPLACES
     // that drum line with E(k,n) placement, rotation advancing per global chord
     // (open hats survive — they're the kit's accent identity; euclid re-places
     // the closed-hat grid / the kick line only).
@@ -282,8 +308,9 @@
       };
       place(eu.kick,"kick",(o,j)=>k(o, j===0?.64:.48));
       place(eu.hat, "hat", (o,j)=>h(o, j%2?.07:.12));
+      place(eu.snare,"snare",(o,j)=>s(o, j===0?.5:.36));           // euclid CLAPS (electro): E(3,16) tresillo replaces the backbeat
     }
-    if(ci===nc-1 && kind!=="off" && kind!=="halftime" && kind!=="tribal"){ s(6.5,.3);s(7,.34);s(7.25,.38);s(7.5,.42);s(7.75,.46); }
+    if(ci===nc-1 && kind!=="off" && kind!=="halftime" && kind!=="tribal" && kind!=="bossa"){ s(6.5,.3);s(7,.34);s(7.25,.38);s(7.5,.42);s(7.75,.46); }
     return out;
   }
   function fillEvents(S){
@@ -751,200 +778,10 @@
     return { bpm:state.bpm, totalBeats:cur+8, pitched, drums, found, sfx, srcById };
   }
 
-  // ---------- orchestra ----------
-  function waveRHS(wave,f){
-    if(wave==="sine")   return `oscili 1, ${f}`;
-    if(wave==="square") return `vco2 1, ${f}, 2, 0.5`;
-    if(wave==="pulse")  return `vco2 1, ${f}, 2, 0.22`;
-    return `vco2 1, ${f}, 0`;
-  }
-  // ---- per-voice synthesis models (the timbre dimension) ----
-  // struck-string piano: inharmonic partials + hammer noise, natural decay
-  function pianoSource(freq,cut){
-    return `  ah noise 0.35, 0
-  ah buthp ah, 2400
-  khe transeg 1, 0.008, -4, 0
-  kdec transeg 1, p3, -3, 0.05
-  ap1 oscili 1, ${freq}
-  ap2 oscili 0.5, ${freq}*2.004
-  ap3 oscili 0.24, ${freq}*3.011
-  ap4 oscili 0.11, ${freq}*4.022
-  asig = (ap1 + (ap2+ap3+ap4)*kdec)*0.42*kdec + ah*khe*0.4
-  asig butlp asig, ${Math.round(cut)}`;
-  }
-  // fof formant choir ("ah" vowel) and inharmonic FM bell — shared by pad/lead
-  function choirSource(cut){
-    return `  kvib oscili kf*0.007, 4.7
-  kfu = kf*0.5 + kvib
-  af1 fof 0.5, kfu, 800, 0, 60, 0.003, 0.02, 0.007, 14, gisine, gisig, p3
-  af2 fof 0.35, kfu, 1150, 0, 90, 0.003, 0.02, 0.007, 14, gisine, gisig, p3
-  af3 fof 0.18, kfu, 2800, 0, 120, 0.003, 0.02, 0.007, 14, gisine, gisig, p3
-  asig = (af1+af2+af3)*0.85
-  asig butlp asig, ${Math.round(cut)}`;
-  }
-  function bellSource(cut){
-    return `  kidx transeg 4, p3, -4, 0.3
-  amod oscili kidx*kf, kf*3.53
-  asig oscili 1, kf + amod
-  kdec transeg 1, p3, -5, 0.04
-  asig = asig*kdec
-  asig butlp asig, ${Math.round(cut)}`;
-  }
-  function brassSource(cut){
-    // big organic brass section: 7 detuned sawtooth voices (lots of overlap) + vibrato,
-    // and a filter that OPENS with loudness (the classic brass "bite" — brightens as it
-    // swells). Lightly filtered on purpose (cut only caps the very top).
-    return `  kbite linsegr 0, 0.08, 1, p3, 1
-  kvb lfo 0.005, 5.2, 0
-  kfv = kf*(1+kvb)
-  ab1 vco2 1, kfv*0.990
-  ab2 vco2 1, kfv*0.996
-  ab3 vco2 1, kfv*0.9995
-  ab4 vco2 1, kfv*1.004
-  ab5 vco2 1, kfv*1.009
-  ab6 vco2 1, kfv*0.983
-  ab7 vco2 1, kfv*1.017
-  asig = (ab1+ab2+ab3+ab4+ab5+ab6+ab7)*0.15
-  kcf limit 500 + kbite*1300 + p5*16000, 200, ${Math.round(Math.min(12000,cut))}
-  asig moogladder asig, kcf, 0.1
-  asig = asig + tanh(asig*1.5)*0.22`;
-  }
-  function stringsSource(cut){
-    return `  as1 vco2 1, kf*0.995
-  as2 vco2 1, kf
-  as3 vco2 1, kf*1.005
-  as4 vco2 1, kf*1.01
-  asig = (as1+as2+as3+as4)*0.24
-  asig butlp asig, ${Math.round(cut)}
-  asig butlp asig, ${Math.round(cut*1.6)}`;
-  }
-  function padSource(p){
-    if(p.model==="brass")   return brassSource(p.cutoff);
-    if(p.model==="strings") return stringsSource(p.cutoff);
-    if(p.model==="choir") return choirSource(Math.min(8000,p.cutoff*2.5));
-    if(p.model==="bell")  return bellSource(Math.min(9000,p.cutoff*2.5));
-    if(p.model==="piano") return pianoSource("kf", Math.min(8000,p.cutoff*2));
-    if(p.model==="organ") return `  a1 oscili 0.9, kf
-  a2 oscili 0.55, kf*2
-  a3 oscili 0.36, kf*3
-  a4 oscili 0.27, kf*4
-  a5 oscili 0.17, kf*6
-  asig = (a1+a2+a3+a4+a5)*0.32
-  asig butlp asig, ${Math.round(Math.min(9000,p.cutoff*2.2))}`;
-    if(p.model==="fm") return `  kidx linsegr 2.6, 1.1, 0.9, 0.8, 0.3
-  amod oscili kidx*kf, kf*2.001
-  asig oscili 1, kf + amod
-  asig butlp asig, ${Math.round(Math.min(8000,p.cutoff*1.7))}`;
-    if(p.model==="rhodes") return `  kidx transeg 1.4, 0.5, -3, 0.25
-  amod oscili kidx*kf, kf
-  asig oscili 1, kf + amod
-  atine oscili 0.22*kidx, kf*14
-  asig = asig + atine*0.3
-  asig butlp asig, ${Math.round(Math.min(8000,p.cutoff*2))}`;   // warm FM electric piano w/ a tine bark
-    return null;  // default detuned-saw stack stays inline in the orchestra
-  }
-  function bassSource(b){
-    const c=Math.round(b.cutoff);
-    if(b.model==="wobble") return `  a1 vco2 1, ipch, 0
-  klfo oscili 0.5, ${(b.wobbleHz||2.4).toFixed(2)}
-  kcf = ${c} * (0.5 + (klfo+0.5)*1.1)
-  a1 moogladder a1, kcf, ${Math.min(0.85,(b.res||0.2)+0.4).toFixed(2)}
-  a1 = tanh(a1*1.5)*0.85`;
-    if(b.model==="piano") return pianoSource("ipch", Math.min(4000,c*2.5)).replace(/asig/g,"a1");
-    if(b.model==="sub") return `  a1 oscili 1, ipch
-  a1 = tanh(a1*1.6)
-  a1 butlp a1, ${c}`;
-    if(b.model==="acid") return `  a1 vco2 1, ipch, 0
-  kcut expseg ${c*4}, 0.16, ${c}, p3, ${Math.max(120,c*0.8)}
-  a1 moogladder a1, kcut, ${Math.min(0.9,(b.res||0.15)+0.5).toFixed(2)}`;
-    if(b.model==="reese") return `  a1 vco2 1, ipch*0.994, 0
-  a2 vco2 1, ipch*1.006, 0
-  a1 = (a1+a2)*0.5
-  a1 butlp a1, ${c}
-  a1 = tanh(a1*1.7)*0.85`;
-    return null;
-  }
-  function leadSource(m){
-    if(m.model==="brass")   return brassSource(m.cutoff);
-    if(m.model==="strings") return stringsSource(m.cutoff);
-    if(m.model==="choir") return choirSource(Math.min(9000,m.cutoff*2.5));
-    if(m.model==="bell")  return bellSource(Math.min(10000,m.cutoff*2.5));
-    if(m.model==="piano") return pianoSource("kf", Math.min(9000,m.cutoff*2));
-    if(m.model==="pluck") return `  asig pluck 1, kf, ipch, 0, 1
-  asig butlp asig, ${Math.round(m.cutoff)}`;
-    if(m.model==="kpluck") return `  asig pluck 1, kf, ipch, 0, 1
-  a2 pluck 0.6, kf*1.0009, ipch, 0, 1
-  asig = asig + a2*0.5
-  asig butlp asig, ${Math.round(m.cutoff)}
-  asig = tanh(asig*${(1.7+(m.drive||0)*2.6).toFixed(2)})*0.78
-  asig butlp asig, ${Math.round(Math.min(9000,m.cutoff*1.5))}`;   // Karplus-Strong guitar: dual detuned pluck + saturation
-    if(m.model==="fm") return `  kidx linsegr 3.5, p3*0.5, 1.0, 0.2, 0
-  amod oscili kidx*kf, kf*1.4
-  asig oscili 1, kf + amod
-  asig butlp asig, ${Math.round(m.cutoff)}`;
-    if(m.model==="fuzz") return `  a1 vco2 1, kf
-  a2 vco2 1, kf*1.006
-  asig=(a1+a2)*0.5
-  asig moogladder asig, ${Math.round(Math.min(9000,m.cutoff*1.3))}, ${Math.min(0.92,(m.res||0.2)+0.45).toFixed(2)}
-  asig=tanh(asig*${(3.2+(m.drive||0)*4).toFixed(2)})*0.6
-  asig butlp asig, ${Math.round(Math.min(11000,m.cutoff*2.2))}`;
-    return null;
-  }
-  // "vocoder" model — speech-synthesizer cross-synthesis. The modulator is SPEECH
-  // streamed straight from its GEN01 function table (the same found/ tables instr
-  // 3/5 read) via pvstanal; the carrier is 3 detuned vco2 saws at the played pitch
-  // plus a quiet octave double (choir weight), analyzed with pvsanal; pvsvoc puts
-  // the speech's spectral envelope on the carrier and pvsynth resynthesizes: a
-  // robot choir that SPEAKS while singing the note. Kept CHEAP for the realtime
-  // WASM worklet: ONE pvstanal + ONE pvsanal + pvsvoc + pvsynth per voice,
-  // fftsize 1024 / hop 256, no filters beyond the voice's own recipe lowpass.
-  // Table resolution: offline renders bake the table number in (state.vocoderSourceId
-  // -> that foundSource's table, see codegen/buildCsd). LIVE mode (opts.channels)
-  // reads control channel "voctab" at i-time — the explorer creates speech tables
-  // dynamically at 50+ and sets the channel; the baked/default number is the
-  // fallback so notes still sound if the channel was never set.
-  // Each note starts reading the speech at a deterministic scatter point
-  // (golden-ratio walk on p2) so phrases differ note to note without RNG.
-  function vocoderSource(m, vocTab, live){
-    const tabLine = live
-      ? `  ivtab chnget "voctab"
-  ivtab = (ivtab < 2 ? ${vocTab||50} : ivtab)`
-      : `  ivtab = ${vocTab}`;
-    return `${tabLine}
-  ilen = nsamp(ivtab)/sr
-  iofs = ilen * frac(p2*0.1618)
-  fspc pvstanal 1, ${(m.vocAmp!=null?m.vocAmp:6).toFixed(2)}, 1, ivtab, 1, 1, iofs, 1024, 256
-  ac1 vco2 1, kf*0.996
-  ac2 vco2 1, kf
-  ac3 vco2 1, kf*1.004
-  ac4 vco2 0.5, kf*2
-  acar = (ac1+ac2+ac3)*0.3 + ac4*0.18
-  fcar pvsanal acar, 1024, 256, 1024, 1
-  fvoc pvsvoc fspc, fcar, 1, ${(m.vocGain!=null?m.vocGain:2).toFixed(2)}
-  asig pvsynth fvoc
-  asig = tanh(asig*${(m.vocMakeup!=null?m.vocMakeup:5).toFixed(2)})*0.8`;   // makeup gain (vocoded speech runs quiet) + tanh ceiling = broadcast squash, in character
-  }
-  // melody oscillator stack — voices<=2 emits the original two-osc code verbatim
-  // (so old presets render identically); 3+ builds a detuned unison (supersaw at
-  // 6-7 saw voices with spread ~0.012-0.02)
-  function melodyStack(m){
-    const v=Math.max(1,Math.min(9,(m.voices|0)||2)), sp=(m.spread!=null?m.spread:0.004);
-    // `octave` = amount of a pure-sine octave mixed in. Historically hardcoded (0.16/0.12)
-    // — that sine octave is what makes leads read as bell/steel-drum. Recipe-driven now
-    // (default preserves the old sound); set it to 0 for a clean saw/square lead.
-    if(v<=2) return `  a1 ${waveRHS(m.wave,"kf")}
-  a2 ${waveRHS(m.wave,`kf*${(1+sp).toFixed(5)}`)}
-  a3 oscili ${(m.octave??0.16).toFixed(3)}, kf*2
-  asig=(a1+a2)*0.5+a3`;
-    const L=[];
-    for(let i=0;i<v;i++){
-      const det=1+sp*((2*i/(v-1))-1);
-      L.push(`  a${i+1} ${waveRHS(m.wave,`kf*${det.toFixed(5)}`)}`);
-    }
-    L.push(`  aoct oscili ${(m.octave??0.12).toFixed(3)}, kf*2`);
-    L.push(`  asig=(${Array.from({length:v},(_,i)=>"a"+(i+1)).join("+")})*${(0.95/v).toFixed(4)}+aoct`);
-    return L.join("\n");
-  }
+  // ---------- solo voices (deterministic per-section recipes) ----------
+  // (The csound orchestra/codegen that used to live here — waveRHS through
+  //  buildCsd/liveParts — is preserved on branch legacy-csound. The Faust
+  //  engine consumes buildEvents + these solo-voice assignments directly.)
   // Per-section solo voices: any section with a `solo` recipe gets its own melody
   // instrument (instr 7,8,…) so different "dinosaurs" / a fuzz guitar can each take
   // a section. Deterministic from state.sections so codegen + score routing agree.
@@ -963,594 +800,8 @@
     }
     return out;
   }
-  // codegen splits the orchestra into a HEADER (buses, tables, FX — boot once)
-  // and an INSTRUMENT block (recompilable live via csound compileOrc).
-  // opts.channels=true makes FX read live control channels:
-  //   reverb, ddt, dfb, dcut, pump, crackle, lowcut, highcut
-  function codegen(state, sources, opts){
-    opts = opts || {};
-    const live = !!opts.channels;
-    const I=mergedInstruments(state);
-    const ft=sources.map(s=>`gi_src${s.tableNum} ftgen ${s.tableNum}, 0, 0, 1, "${s.fsPath}", 0, 0, 1`).join("\n");
-    // soundfont guitar: load a GM .sf2 only when a "guitar" lead/solo voice is used
-    // (sfplay plays real sampled guitar; CLI-render path only — browser preset stays synth)
-    const guitarUsed = I.melody.model==="guitar" || soloVoices(state,I.melody).some(v=>v.recipe&&v.recipe.model==="guitar");
-    const sfUsed = guitarUsed || state.realHats;            // soundfont needed for the guitar OR the real (sampled) hi-hats
-    const sfLoad = sfUsed ? `gisf sfload "${state.soundfont||"/usr/share/sounds/sf2/TimGM6mb.sf2"}"\nsfpassign 0, gisf\n` : "";
-    const dLo=(1-I.pad.detune).toFixed(4), dHi=(1+I.pad.detune).toFixed(4), atk=Math.max(0.05,I.pad.attack), dt=I.drums.tune;
-    const dl=state.delay||{beats:0.75,feedback:0.3,cutoff:2600};
-    const dsec=Math.min(1.9, Math.max(0.02, (dl.beats||0.75)*60/state.bpm));
-    const dfb=Math.min(0.92, Math.max(0, dl.feedback==null?0.3:dl.feedback)), dcut=dl.cutoff||2600;
-    // long rhythmic PING-PONG delay (separate bus gaPP): a dotted-8th tap that cross-feeds
-    // L<->R and decays over ~a couple measures. Snare hits + the door ding feed it.
-    const ppb=(state.pingpong&&state.pingpong.beats)||0.75;
-    const ppsec=Math.min(2.4, Math.max(0.05, ppb*60/state.bpm));
-    const ppfb=Math.min(0.85, (state.pingpong&&state.pingpong.feedback)||0.66), pptone=(state.pingpong&&state.pingpong.cutoff)||3000;
-    const hasSweeps=live||(state.sections||[]).some(s=>s.sweep&&s.sweep!=="off");
-    // production: sidechain pump, vinyl crackle, master tone tilt (all default-off)
-    const pump=Math.min(0.9,Math.max(0,state.pump||0));
-    const tone=state.tone||{};
-    const masterTone = live
-      ? `  klc chnget "lowcut"
-  klc limit klc, 10, 400
-  aL buthp aL, klc
-  aR buthp aR, klc
-  khc chnget "highcut"
-  khc = (khc < 100 ? 21000 : khc)
-  aL butlp aL, khc
-  aR butlp aR, khc
-`
-      : (tone.lowcut ?`  aL buthp aL, ${tone.lowcut}\n  aR buthp aR, ${tone.lowcut}\n`:"") +
-        (tone.highcut?`  aL butlp aL, ${tone.highcut}\n  aR butlp aR, ${tone.highcut}\n`:"");
-    const masterPump = live
-      ? `  kbps chnget "bps"
-  kbps = (kbps <= 0 ? 2 : kbps)
-  kphs phasor kbps
-  kpmp chnget "pump"
-  kduck = 1 - kpmp*exp(-6*kphs)
-  aL = aL*kduck
-  aR = aR*kduck
-`
-      : pump>0
-      ? `  kphs phasor ${(state.bpm/60).toFixed(4)}\n  kduck = 1 - ${pump.toFixed(3)}*exp(-6*kphs)\n  aL = aL*kduck\n  aR = aR*kduck\n`
-      : "";
-    const grit=Math.min(1,Math.max(0,state.grit||0));
-    const masterGrit = live
-      ? `  kgrt chnget "grit"
-  kgrt limit kgrt, 0, 1
-  aL = tanh(aL*(1+kgrt*2.6))*(1/(1+kgrt*0.7))
-  aR = tanh(aR*(1+kgrt*2.6))*(1/(1+kgrt*0.7))
-`
-      : grit>0 ? `  aL = tanh(aL*${(1+grit*2.6).toFixed(3)})*${(1/(1+grit*0.7)).toFixed(3)}
-  aR = tanh(aR*${(1+grit*2.6).toFixed(3)})*${(1/(1+grit*0.7)).toFixed(3)}
-` : "";
-    const comp=Math.min(1,Math.max(0,state.comp||0));
-    const masterComp = comp>0
-      ? `  aL dam aL, ${(0.55-0.35*comp).toFixed(3)}, ${(1-0.55*comp).toFixed(3)}, 1, 0.01, 0.09\n` +
-        `  aR dam aR, ${(0.55-0.35*comp).toFixed(3)}, ${(1-0.55*comp).toFixed(3)}, 1, 0.01, 0.09\n` +
-        `  aL = aL*${(1+0.8*comp).toFixed(3)}\n  aR = aR*${(1+0.8*comp).toFixed(3)}\n`
-      : "";
-    // vocoder table resolution: state.vocoderSourceId names a foundSource whose
-    // GEN01 table feeds the "vocoder" model; else first speech-ish source by id.
-    // (buildCsd force-loads that table even when no found EVENT plays it.)
-    const vocPref = (sources||[]).find(s=>s.id===state.vocoderSourceId)
-      || (sources||[]).find(s=>/^(sp_|vx_|vox_)/.test(s.id||""));
-    const vocTab = vocPref ? vocPref.tableNum : 0;
-    const vocOk = (m)=>m.model==="vocoder" && (vocTab>0 || live);   // no table + offline -> fall back to synth stack (never crash)
-    const padSrc = (vocOk(I.pad) ? vocoderSource(I.pad, vocTab, live)+`
-  asig butlp asig, ${Math.round(Math.min(9000,I.pad.cutoff*2))}` : null)
-      || padSource(I.pad) || `  a1 ${waveRHS(I.pad.wave,`kf*${dLo}`)}
-  a2 ${waveRHS(I.pad.wave,`kf`)}
-  a3 ${waveRHS(I.pad.wave,`kf*${dHi}`)}
-  asig = (a1+a2+a3)*0.33
-  asig moogladder asig, ${I.pad.cutoff}, ${I.pad.res}`;
-    const bassSrc = bassSource(I.bass) || `  a1 ${waveRHS(I.bass.wave,`ipch`)}
-  a1 moogladder a1, ${I.bass.cutoff}, ${I.bass.res}`;
-    // melody voice block, parameterized so solo sections can each get their own
-    // (instr 4 = the main lead; solos get 7,8,… — see soloVoices)
-    const melodyVoiceBlock=(num,m)=>{
-      if(m.model==="guitar") return `instr ${num}
-  iamp=p5
-  inote = 12*log(cpspch(p4)/440)/log(2) + 69
-  ag1, ag2 sfplay3 100, inote, iamp*${((m.level||0.5)*0.0022).toFixed(7)}, cpspch(p4), ${m.preset!=null?m.preset:25}
-  asig = (ag1+ag2)*0.5
-  asig moogladder asig, ${Math.round(m.cutoff||4500)}, 0.05
-  aenv linsegr 1, p3-0.04, 1, 0.04, 0
-  asig = asig*aenv
-  gaMixL=gaMixL+asig
-  gaMixR=gaMixR+asig
-  gaRevL=gaRevL+asig*${m.send}
-  gaRevR=gaRevR+asig*${m.send}
-  gaDelL=gaDelL+asig*${m.dsend}
-  gaDelR=gaDelR+asig*${m.dsend}
-endin`;
-      if(m.model==="kpluck") return `instr ${num}
-  iamp=p5
-  ipch=cpspch(p4)
-  asig pluck 1, ipch, ipch, 0, 1
-  a2 pluck 0.5, ipch*1.0013, ipch, 0, 1
-  ah pluck 0.34, ipch*2, ipch*2, 0, 1
-  asig = asig + a2*0.5 + ah*0.42
-  apk noise 0.6, 0
-  kpk expseg 1, 0.008, 0.0001
-  apk butbp apk, ${Math.round(Math.min(8000,(m.cutoff||3000)*1.6))}, 1800
-  asig = asig + apk*kpk*0.7
-  abdy reson asig, 118, 80, 1
-  abd2 reson asig, 230, 140, 1
-  asig = asig*0.7 + abdy*0.45 + abd2*0.3
-  asig butlp asig, ${Math.round(Math.min(12000,(m.cutoff||3000)*2.4))}
-  asig = tanh(asig*${(2.4+(m.drive||0)*3.2).toFixed(2)})*0.72
-  adl1 oscili 2.6, 0.7
-  adl2 oscili 2.2, 1.1
-  ac1 vdelay asig, 11+adl1, 40
-  ac2 vdelay asig, 13+adl2, 40
-  asig = asig*0.66 + ac1*0.34 + ac2*0.34
-  ; phaser/flanger that EVOLVES over the whole song (driven by absolute time so the
-  ; sweep is continuous across notes; rate, depth and feedback grow as the song goes)
-  ktm times
-  kpos limit ktm/164, 0, 1
-  kfr = 0.12 + kpos*0.9
-  kdp = 0.3 + kpos*0.65
-  kfsw = sin(ktm*kfr*6.28319)
-  adfl = a(0.0006 + 0.003*kdp*(kfsw*0.5+0.5))
-  aflg flanger asig, adfl, 0.55+kpos*0.32, 0.02
-  asig = asig*0.5 + aflg*0.62
-  aenv linsegr 0, 0.002, iamp, p3-0.05, iamp*0.55, 0.05, 0
-  asig = asig*aenv
-  gaMixL=gaMixL+asig*${m.level}
-  gaMixR=gaMixR+asig*${m.level}
-  gaRevL=gaRevL+asig*${(m.send*0.7).toFixed(3)}
-  gaRevR=gaRevR+asig*${(m.send*0.7).toFixed(3)}
-  gaDelL=gaDelL+asig*${m.dsend}
-  gaDelR=gaDelR+asig*${m.dsend}
-endin`;
-      // articulation + filter are recipe-driven. A genre that sets NONE of attack/release/
-      // fenv gets the legacy sustained voice VERBATIM (p3-based hold, 0.30s release tail).
-      // Setting any of them opts into a percussive voice with FIXED short segment durations
-      // (safe for very short staccato notes — no negative-p3 segments) plus an optional
-      // per-note filter envelope (cutoff snaps high then closes to `cutoff` over a resonant
-      // moogladder = the classic "sawtooth filtering" pluck). This knob is what lets a genre
-      // be its OWN vector instead of collapsing onto the one default lead.
-      const plucky = (m.attack!=null || m.release!=null || m.fenv);
-      const atk=m.attack??0.05, rel=m.release??0.30, sus=m.sustain??0.85, fenv=m.fenv||0;
-      const envLine = plucky
-        ? `  aenv linsegr 0, ${atk}, iamp, 0.06, iamp*${sus}, ${rel}, 0`        // attack -> short decay -> release (staccato-safe)
-        : `  aenv linsegr 0, 0.05, iamp, p3-0.12, iamp*0.85, 0.30, 0`;          // legacy sustained voice (unchanged)
-      const filt = fenv>0
-        ? `  kcf expseg ${Math.round(Math.min(18000,m.cutoff*(1+fenv)))}, ${(atk+0.06).toFixed(3)}, ${Math.round(m.cutoff)}\n  asig moogladder asig, kcf, ${m.res}`
-        : `  asig moogladder asig, ${m.cutoff}, ${m.res}`;
-      // `drive` adds raw analog grit (tanh) — rougher without changing the oscillator;
-      // `swellDepth/Hz/Phase` is a slow amplitude LFO over absolute time so the line breathes
-      // up and down across notes (give the counter the opposite phase and the two arps trade).
-      const drive=m.drive||0;
-      const driveLine = drive>0 ? `  asig = tanh(asig*${(1+drive*2.4).toFixed(2)})*${(1/(1+drive*0.55)).toFixed(3)}\n` : "";
-      const swDepth=m.swellDepth||0;
-      const swellLine = swDepth>0 ? `  ktmS times\n  kswl = ${(1-swDepth).toFixed(3)} + ${swDepth.toFixed(3)}*(0.5+0.5*sin(6.28318*(ktmS*${(m.swellHz||0.12).toFixed(3)} + ${(m.swellPhase||0).toFixed(3)})))\n  asig = asig*kswl\n` : "";
-      return `instr ${num}
-  ipch=cpspch(p4)
-  iamp=p5
-  kvib lfo ipch*${m.vibrato}, ${m.vibRate}, 0
-  kf=ipch+kvib
-${envLine}
-${vocOk(m) ? vocoderSource(m, vocTab, live) : (leadSource(m) || melodyStack(m))}
-${filt}
-${driveLine}  asig=asig*aenv
-${swellLine}  gaMixL=gaMixL+asig*${m.level}
-  gaMixR=gaMixR+asig*${m.level}
-  gaRevL=gaRevL+asig*${m.send}
-  gaRevR=gaRevR+asig*${m.send}
-  gaDelL=gaDelL+asig*${m.dsend}
-  gaDelR=gaDelR+asig*${m.dsend}
-endin`;
-    };
-    const soloInstrBlocks = soloVoices(state, I.melody).map(v=>melodyVoiceBlock(v.num, v.recipe)).join("\n\n");
-    const ddsend=Math.min(1,Math.max(0,I.drums.dsend||0));
-    const drumDel = ddsend>0 ? (v)=>`  gaDelL=gaDelL+${v}*${ddsend.toFixed(3)}\n  gaDelR=gaDelR+${v}*${ddsend.toFixed(3)}\n` : ()=>"";
-    const kickSrc = I.drums.kickModel==="808" ? `  kp expseg ${72*dt}, 0.09, ${45*dt}, p3-0.09, ${38*dt}
-  aenv transeg 1, p3, -2, 0
-  a1 oscili iamp*aenv, kp
-  a1 = tanh(a1*1.15)*0.9`
-      : I.drums.kickModel==="909" ? `  kp expseg ${165*dt}, 0.04, ${55*dt}, p3-0.04, ${46*dt}
-  aenv transeg 1, p3, -6, 0
-  a1 oscili iamp*aenv, kp
-  aclk noise iamp*0.5, 0
-  aclk buthp aclk, 5000
-  kce transeg 1, 0.005, -4, 0
-  a1 = a1 + aclk*kce
-  a1 = tanh(a1*1.5)*0.8`
-      : `  kp expseg ${110*dt}, 0.06, ${46*dt}, p3-0.06, ${40*dt}
-  aenv transeg 1, p3, -4, 0
-  a1 oscili iamp*aenv, kp
-  a1 = tanh(a1*1.4)*0.8`;
-    const snareSrc = I.drums.snareModel==="crack" ? `  aenv transeg 1, p3, -9, 0
-  anz noise iamp, 0
-  anz butbp anz, 3100, 2300
-  at1 oscili iamp*0.5, 215
-  asig=(anz*0.8+at1)*aenv`
-      : I.drums.snareModel==="clap" ? `  aenv transeg 1, p3, -6, 0
-  anz noise iamp, 0
-  anz butbp anz, 1250, 950
-  aflut oscili 0.4, 41
-  asig=anz*(0.72+aflut)*aenv`
-      : `  aenv transeg 1, p3, -6, 0
-  anz noise iamp, 0
-  anz butbp anz, 1800, 1600
-  at1 oscili iamp*0.5, 300
-  at2 oscili iamp*0.3, 185
-  asig=(anz+at1+at2)*aenv`;
-    const hatSrc = I.drums.hatModel==="metal" ? `  aenv transeg 1, p3, -8, 0
-  am1 vco2 0.3, 6317, 2, 0.5
-  am2 vco2 0.25, 8429, 2, 0.5
-  am3 vco2 0.2, 10781, 2, 0.5
-  anz noise 0.4, 0
-  asig=(am1+am2+am3+anz)*iamp
-  asig buthp asig, 7600
-  asig=asig*aenv`
-      : `  aenv transeg 1, p3, -5, 0
-  anz noise iamp*1.7, 0
-  anz buthp anz, 6500
-  am1 vco2 0.15*iamp, 8200, 2, 0.5
-  asig=(anz+am1)*aenv`;
-    const crkAmp = live ? `kcrk chnget "crackle"` : `kcrk init 0
-  kcrk = p4`;
-    const header = `<CsoundSynthesizer>
-<CsInstruments>
-sr=44100
-ksmps=${live?128:32}
-nchnls=2
-0dbfs=1
-gaRevL init 0
-gaRevR init 0
-gaDelL init 0
-gaDelR init 0
-gaPPL init 0
-gaPPR init 0
-gaMixL init 0
-gaMixR init 0
-gkCut init 21000
-giwin ftgen 1, 0, 16384, 20, 2, 1
-gisine ftgen 0, 0, 8192, 10, 1
-gisig ftgen 0, 0, 1024, 19, 0.5, 0.5, 270, 0.5
-${ft}
-${sfLoad}
-instr 3
-  iamp=p5
-  aenv linsegr 0, 1.5, iamp, p3-3.0, iamp, 1.5, 0
-  icut = (p9 > 0 ? p9 : 2600)
-  asig syncgrain 1, 28, p7, 0.12, p8, p6, giwin, 100
-  asig moogladder asig, icut, 0.1
-  asig=asig*aenv
-  gaMixL=gaMixL+asig*0.55
-  gaMixR=gaMixR+asig*0.55
-  gaRevL=gaRevL+asig*0.6
-  gaRevR=gaRevR+asig*0.6
-endin
-
-instr 96
-  ; master filter sweep: glide gkCut from p4 to p5 over p3 (global persists after)
-  gkCut expon p4, p3, p5
-endin
-
-instr 97
-  ${crkAmp}
-  adust dust2 kcrk*0.5, 30 + kcrk*220
-  adust butlp adust, 6500
-  adust buthp adust, 300
-  ahiss noise 0.004, 0
-  ahiss = ahiss*kcrk
-  ahiss butlp ahiss, 4000
-  asig = (adust + ahiss)*0.3    ; vinyl dust sits WAY under the music, not on it
-  gaMixL=gaMixL+asig
-  gaMixR=gaMixR+asig
-endin
-
-instr 20
-  itype=p4
-  iamp=p5
-  if (itype == 1) then
-    kc expseg 300, p3, 8000
-    ke linseg 0, p3*0.9, iamp, p3*0.1, iamp*1.2
-    an noise 1, 0
-    an moogladder an, kc, 0.3
-    asig = an*ke
-  elseif (itype == 2) then
-    kf expseg 400, p3, 6000
-    an noise 1, 0
-    an butbp an, kf, kf*0.4
-    asig = an*iamp*1.5
-  elseif (itype == 3) then
-    kc expseg 8000, p3, 300
-    ke linseg iamp, p3*0.8, iamp, p3*0.2, 0
-    an noise 1, 0
-    an moogladder an, kc, 0.3
-    asig = an*ke
-  elseif (itype == 4) then
-    ke expon iamp, p3, 0.001
-    kp expseg 120, 0.3, 40
-    aboom oscili 1, kp
-    an noise 0.5, 0
-    an butlp an, 1200
-    asig = (aboom + an)*ke
-  elseif (itype == 5) then
-    ke linseg 0, p3*0.95, iamp, p3*0.05, 0
-    an noise 1, 0
-    an buthp an, 3000
-    asig = an*ke
-  else
-    ke expon iamp, p3, 0.001
-    an noise 1, 0
-    asig = an*ke
-  endif
-  asig clip asig, 0, 0.9
-  gaMixL=gaMixL+asig
-  gaMixR=gaMixR+asig
-  gaRevL=gaRevL+asig*0.3
-  gaRevR=gaRevR+asig*0.3
-endin
-
-instr 95
-  ; long rhythmic ping-pong: each tap cross-feeds to the OTHER side, so a hit fed to gaPPL
-  ; bounces L -> R -> L -> R, darkening + decaying over a couple measures
-  abufL delayr 2.5
-  atL deltap ${ppsec.toFixed(4)}
-  atL tone atL, ${pptone}
-  abufR delayr 2.5
-  atR deltap ${ppsec.toFixed(4)}
-  atR tone atR, ${pptone}
-  delayw gaPPL + atR*${ppfb.toFixed(3)}
-  delayw gaPPR + atL*${ppfb.toFixed(3)}
-  gaMixL=gaMixL+atL
-  gaMixR=gaMixR+atR
-  gaRevL=gaRevL+atL*0.12
-  gaRevR=gaRevR+atR*0.12
-  clear gaPPL, gaPPR
-endin
-
-instr 98
-${live?`  kddt chnget "ddt"
-  kddt limit kddt, 0.02, 1.9
-  kdfb chnget "dfb"
-  kdfb limit kdfb, 0, 0.92
-  kdcut chnget "dcut"
-  kdcut limit kdcut, 300, 9000
-  abufL delayr 2.0
-  atL deltap kddt
-  atL tone atL, kdcut
-  delayw gaDelL + atL*kdfb
-  abufR delayr 2.0
-  atR deltap kddt
-  atR tone atR, kdcut
-  delayw gaDelR + atR*kdfb`
-:`  abufL delayr 2.0
-  atL deltap ${dsec}
-  atL tone atL, ${dcut}
-  delayw gaDelL + atL*${dfb}
-  abufR delayr 2.0
-  atR deltap ${dsec}
-  atR tone atR, ${dcut}
-  delayw gaDelR + atR*${dfb}`}
-  gaMixL=gaMixL+atL
-  gaMixR=gaMixR+atR
-  gaRevL=gaRevL+atL*0.2
-  gaRevR=gaRevR+atR*0.2
-  clear gaDelL, gaDelR
-endin
-
-instr 99
-${live?`  krev chnget "reverb"
-  krev limit krev, 0.3, 0.95
-  aL, aR reverbsc gaRevL, gaRevR, krev, 12000`
-:`  aL, aR reverbsc gaRevL, gaRevR, ${state.reverb}, 12000`}
-  gaMixL=gaMixL+aL
-  gaMixR=gaMixR+aR
-  clear gaRevL, gaRevR
-endin
-
-instr 100
-  aL = gaMixL
-  aR = gaMixR
-${hasSweeps?`  kcc limit gkCut, 180, 21000
-  aL butlp aL, kcc
-  aR butlp aR, kcc
-`:""}${masterPump}${masterGrit}${masterComp}${masterTone}  aL clip aL, 0, 0.95
-  aR clip aR, 0, 0.95
-  outs aL, aR
-  clear gaMixL, gaMixR
-endin
-
-</CsInstruments>`;
-    const instruments = `instr 1
-  ipch=cpspch(p4)
-  iamp=p5
-  kwow lfo ipch*0.004, 0.3, 0
-  kf = ipch+kwow
-  aenv linsegr 0, ${atk}, iamp, p3-${atk}, iamp*0.8, 2.5, 0
-${padSrc}
-  asig = asig*aenv
-  gaMixL=gaMixL+asig*${I.pad.level}
-  gaMixR=gaMixR+asig*${I.pad.level}
-  gaRevL=gaRevL+asig*${I.pad.send}
-  gaRevR=gaRevR+asig*${I.pad.send}
-  gaDelL=gaDelL+asig*${I.pad.dsend}
-  gaDelR=gaDelR+asig*${I.pad.dsend}
-endin
-
-instr 2
-  ipch=cpspch(p4)
-  iamp=p5
-  aenv linsegr 0, 0.012, iamp, p3-0.05, iamp*0.5, 0.10, 0
-${bassSrc}
-  asig=a1*aenv
-  gaMixL=gaMixL+asig*${I.bass.level}
-  gaMixR=gaMixR+asig*${I.bass.level}
-  gaRevL=gaRevL+asig*${I.bass.send}
-  gaRevR=gaRevR+asig*${I.bass.send}
-  gaDelL=gaDelL+asig*${I.bass.dsend}
-  gaDelR=gaDelR+asig*${I.bass.dsend}
-endin
-
-instr 5
-  itab = p6
-  ipit = p7
-  ioff = p8
-  icut = (p9 > 0 ? p9 : 3500)
-  idsend = (p10 > 0 ? p10 : 0.2)        ; per-event delay send (default 0.2; VO modulates it in/out)
-  irsend = (p11 > 0 ? p11 : 0.3)        ; per-event reverb send (default 0.3; loon rides it wet)
-  ifade = (p12 > 0 ? p12 : 0)           ; long fade in/out (loon swells); 0 = the normal quick env
-  ippsend = (p13 > 0 ? p13 : 0)         ; per-event PING-PONG send (the door ding rides it for a couple measures)
-  isqr = (p14 > 0 ? p14 : 0)            ; square-LFO rate (Hz) — chops the AMPLITUDE (station-name texture)
-  isqd = (p15 > 0 ? p15 : 0)            ; square-LFO depth (intensity); 0 = off
-  if (ifade > 0) then
-    aenv linsegr 0, ifade, p5, p3-ifade*2, p5, ifade, 0
-  else
-    aenv linsegr 0, 0.006, p5, p3-0.04, p5*0.85, 0.03, 0
-  endif
-  andx phasor (sr*ipit)/nsamp(itab)
-  asig tablei frac(andx + ioff), itab, 1, 0, 1
-  asig moogladder asig, icut, 0.08
-  asig = asig*aenv
-  if (isqd > 0) then
-    ksq lfo 1, isqr, 2                  ; +/-1 square wave -> a gate between 1 and (1-depth)
-    asig = asig*(1 - isqd*(0.5 - 0.5*ksq))
-  endif
-  gaMixL=gaMixL+asig
-  gaMixR=gaMixR+asig
-  gaRevL=gaRevL+asig*irsend
-  gaRevR=gaRevR+asig*irsend
-  gaDelL=gaDelL+asig*idsend
-  gaDelR=gaDelR+asig*idsend
-  gaPPL=gaPPL+asig*ippsend
-endin
-
-${melodyVoiceBlock(4, I.melody)}${soloInstrBlocks?"\n\n"+soloInstrBlocks:""}
-
-instr 10
-  iamp=p4*${I.drums.kick}
-${kickSrc}
-  gaMixL=gaMixL+a1
-  gaMixR=gaMixR+a1
-  gaRevL=gaRevL+a1*${(I.drums.send*0.35).toFixed(3)}
-  gaRevR=gaRevR+a1*${(I.drums.send*0.35).toFixed(3)}
-endin
-
-instr 11
-  iamp=p4*${I.drums.snare}
-  ipp = (p5 > 0 ? p5 : 0)        ; some snare hits get fed to the long ping-pong delay
-${snareSrc}
-  gaMixL=gaMixL+asig
-  gaMixR=gaMixR+asig
-  gaRevL=gaRevL+asig*${I.drums.send}
-  gaRevR=gaRevR+asig*${I.drums.send}
-  gaPPL=gaPPL+asig*ipp
-${drumDel("asig")}endin
-
-instr 12
-  iamp=p4*${I.drums.hat}
-${state.realHats ? `  inote = (p5 > 0 ? 46 : 42)              ; real sampled hi-hat: 46=open, 42=closed (GM drum kit)
-  ah1, ah2 sfplay3 100, inote, iamp*0.00042, cpsmidinn(inote), 128
-  asig = (ah1+ah2)*0.5` : hatSrc}
-  gaMixL=gaMixL+asig*0.7
-  gaMixR=gaMixR+asig*0.7
-  gaRevL=gaRevL+asig*${(I.drums.send*0.3).toFixed(3)}
-  gaRevR=gaRevR+asig*${(I.drums.send*0.3).toFixed(3)}
-${drumDel("asig*0.5")}endin
-
-instr 13
-  iamp=p4*${(I.drums.tom!=null?I.drums.tom:1)}
-  ipt = (p5 > 0 ? p5 : 105)
-  ; low, grungy tom: sub-octave depth, mallet attack, then driven dirty
-  kp expseg ipt*1.14, 0.03, ipt
-  aenv transeg 1, p3, -3, 0
-  a1 oscili 1, kp
-  a2 oscili 0.5, kp*1.5
-  asub oscili 0.4, kp*0.5
-  acl noise 0.85, 0
-  acl butbp acl, ipt*2.4, ipt*1.5
-  kcl expseg 1, 0.012, 0.001
-  abody = (a1+a2+asub)*aenv + acl*kcl*0.6
-  adirt = tanh(abody*3.4)
-  asig = (abody*0.35 + adirt*0.75)*0.72*iamp
-  gaMixL=gaMixL+asig
-  gaMixR=gaMixR+asig
-  gaRevL=gaRevL+asig*${(I.drums.send*1.4).toFixed(3)}
-  gaRevR=gaRevR+asig*${(I.drums.send*1.4).toFixed(3)}
-${drumDel("asig")}endin
-
-instr 6
-  ipch=cpspch(p4)
-  iamp=p5
-  aenv transeg 1, p3, -5, 0
-  a1 vco2 1, ipch, 0
-  a2 vco2 1, ipch*1.189, 0
-  a3 vco2 1, ipch*1.498, 0
-  a4 vco2 1, ipch*2.003, 0
-  asig=(a1+a2+a3+a4)*0.25
-  asig moogladder asig, 3200, 0.2
-  asig=asig*aenv*iamp
-  gaMixL=gaMixL+asig
-  gaMixR=gaMixR+asig
-  gaRevL=gaRevL+asig*0.35
-  gaRevR=gaRevR+asig*0.35
-  gaDelL=gaDelL+asig*0.3
-  gaDelR=gaDelR+asig*0.3
-endin
-`;
-    return { header, instruments };
-  }
-  function orchestra(state, sources){
-    const c = codegen(state, sources);
-    return c.header.slice(0, c.header.lastIndexOf("</CsInstruments>")) + c.instruments + "\n</CsInstruments>";
-  }
-
-  function buildCsd(state){
-    const ev=buildEvents(state);
-    const used=new Set(ev.found.map(f=>f.tableNum));
-    // the "vocoder" model reads speech from a table even when no found EVENT
-    // plays that source — force-load its table so the modulator exists
-    const Iv=mergedInstruments(state);
-    const vocNeeded = Iv.melody.model==="vocoder" || Iv.pad.model==="vocoder"
-      || soloVoices(state, Iv.melody).some(v=>v.recipe && v.recipe.model==="vocoder");
-    if(vocNeeded){
-      const vs = ev.srcById[state.vocoderSourceId]
-        || Object.values(ev.srcById).find(s=>/^(sp_|vx_|vox_)/.test(s.id||""));
-      if(vs) used.add(vs.tableNum);
-    }
-    const srcByTable=Object.values(ev.srcById).filter(s=>used.has(s.tableNum)).sort((a,b)=>a.tableNum-b.tableNum);
-    const L=[`t 0 ${state.bpm}`, `i 100 0 ${ev.totalBeats}`, `i 99 0 ${ev.totalBeats}`, `i 98 0 ${ev.totalBeats}`, `i 95 0 ${ev.totalBeats}`];
-    if(state.crackle>0) L.push(`i 97 0 ${ev.totalBeats} ${Math.min(1,state.crackle)}`);
-    ev.found.forEach(f=>{
-      if(f.chop){   // optional trailing p-fields p10..p15 (dsend, rsend, fade, ppsend, sqRate, sqDepth)
-        const opt=[f.dsend,f.rsend,f.fade,f.ppsend,f.sqRate,f.sqDepth], def=[0.2,0.3,0,0,0,0];
-        let lastDef=-1; opt.forEach((v,i)=>{ if(v!=null) lastDef=i; });
-        const pp=[]; for(let i=0;i<=lastDef;i++) pp.push((opt[i]!=null?opt[i]:def[i]).toFixed(3));
-        L.push(`i 5 ${f.beat.toFixed(3)} ${f.dur.toFixed(3)} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.offset.toFixed(3)} ${f.cutoff}${pp.length?" "+pp.join(" "):""}`); }
-      else L.push(`i 3 ${f.beat.toFixed(3)} ${f.dur} 0 ${f.amp} ${f.tableNum} ${f.pitch} ${f.stretch} ${f.cutoff}`);
-    });
-    const inst={pad:1,bass:2,melody:4};
-    const solos=soloVoices(state, state.instruments&&state.instruments.melody);
-    ev.pitched.forEach(p=>{
-      let n=inst[p.voice];
-      if(p.voice==="melody"&&p.solo){ const v=solos.find(x=>x.key===JSON.stringify(p.solo)); if(v) n=v.num; }
-      L.push(`i ${n} ${p.beat.toFixed(3)} ${p.dur.toFixed(3)} ${p.pch} ${p.amp.toFixed(4)}`);
-    });
-    const dinst={kick:10,snare:11,hat:12,tom:13};
-    ev.drums.forEach(d=>{
-      const p5 = d.drum==="tom" ? " "+Math.round(d.pitch||150) : d.drum==="hat" ? " "+(d.open?1:0) : d.drum==="snare" ? " "+(d.pp||0).toFixed(3) : "";
-      L.push(`i ${dinst[d.drum]} ${d.beat.toFixed(3)} ${d.dur.toFixed(3)} ${d.amp.toFixed(4)}${p5}`);
-    });
-    ev.sfx.forEach(s=>{
-      if(s.stab) L.push(`i 6 ${s.beat.toFixed(3)} ${s.dur} ${s.pch} ${s.amp.toFixed(3)}`);
-      else if(s.sweep) L.push(`i 96 ${s.beat.toFixed(3)} ${s.dur} ${s.from} ${s.to}`);
-      else L.push(`i 20 ${s.beat.toFixed(3)} ${s.dur} ${s.type} ${s.amp}`);
-    });
-    return orchestra(state,srcByTable)+"\n<CsScore>\n"+L.join("\n")+"\ne\n</CsScore>\n</CsoundSynthesizer>\n";
-  }
-
-  // live mode: header boots once; instruments recompile via csound compileOrc
-  const liveParts=(state,sources)=>codegen(state,sources||[],{channels:true});
-  const api={ buildCsd, buildEvents, defaultState, defaultInstruments, generateSong, voicing, liveParts, soloVoices, euclidBeats,
-    instrumentBlock:(state)=>codegen(state,[],{channels:true}).instruments,
-    PROGRESSIONS, STYLES, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS, pchAdd, pchToMidi };
+  const api={ buildEvents, defaultState, defaultInstruments, generateSong, voicing, soloVoices, euclidBeats,
+    PROGRESSIONS, STYLES, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS, isModel, pchAdd, pchToMidi };
   if(typeof module!=="undefined" && module.exports) module.exports=api;
   else root.CsdEngine=api;
 })(typeof window!=="undefined" ? window : globalThis);

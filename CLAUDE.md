@@ -1,17 +1,25 @@
 # CLAUDE.md — Royal Road vaporwave
 
-A self-contained vaporwave generator: a Csound sketch (`royal-road.csd`), a
-browser song builder (`builder.html` + `csd-engine.js` via `@csound/browser`
-WASM), and a heuristic song verifier (`song-verifier.js`). Extracted from the
-verifier-catalog repo in 2026-06 with full history; it is a worked example of
-that catalog's generator → verifier → feedback-loop thesis.
+A self-contained generative-music project: a 32-genre deterministic vector
+space (`genre-kernel.js`) over one score brain (`csd-engine.js buildEvents`),
+played by a single **Faust WASM engine** (`faust/` — live in the browser and
+offline "press" in node), verified symbolically and empirically. Extracted
+from the verifier-catalog repo in 2026-06 with full history; it is a worked
+example of that catalog's generator → verifier → feedback-loop thesis.
+
+Since 2026-07 (FAUST-PORT phase 3) Faust is the **only** backend on main; the
+entire csound era — `buildCsd` codegen, `wasm-audio.js`, the `builder.html`
+song builder, `play.html` player, engine A/B tools — is preserved fully
+working on branch **`legacy-csound`**. `royal-road.csd` stays on main as the
+founding document (it renders via `./render.sh`, the one tool here that still
+wants a `csound` binary — or on `legacy-csound`).
 
 ## The one rule
 
 **Source is committed; audio is derived and gitignored.** `royal-road.csd` /
-`csd-engine.js` are the capability; every `.wav`/`.mp3` is regenerable and must
-never be committed. (The project exists because we once kept the renders and
-lost the `.csd` — see README "What happened".)
+`csd-engine.js` / `faust/dsp` are the capability; every `.wav`/`.mp3` is
+regenerable and must never be committed. (The project exists because we once
+kept the renders and lost the `.csd` — see README "What happened".)
 
 ## The catalog submodule
 
@@ -33,29 +41,50 @@ changes in the catalog's own checkout and bump the submodule pointer.
 
 ```bash
 ./fetch-found-sound.sh   # one-time: Internet Archive field recordings -> found/
+./fetch-found-samples.sh # one-time: breaks/one-shots/vox -> found/samples/
 ./fetch-found-video.sh   # one-time: Internet Archive laserdisc clips -> found/video/
-./render.sh              # csound + ffmpeg -> vaporwave.wav + vaporwave.mp3
-./serve.sh               # http://localhost:8777/{play,builder}.html (needs http, not file://)
-node engine.test.js      # render-verifies every progression/key/melody via real csound
-node render-sample-video.js  # sample.mp4: song + video layer, cuts locked to section downbeats
+./serve.sh               # http://localhost:8777/explorer.html (needs http, not file://)
+node engine.test.js      # faust-press smoke: 3 states render, gated on non-silence
+node validate-genres.js --quick   # symbolic gates (all 32 genres); --audio adds Discogs-EffNet
+node genre-verifier.js matrix     # genre confusion matrix — must stay diagonal-dominant
+node genre-kernel.js track jungle --seed 7 --render   # one track -> mp3 via faust/press.js
+node render-sample-video.js  # sample.mp4: song (faust press) + video layer, cuts on section downbeats
 node genre-kernel.js journey genre-space-path.json --hours 4 --out journey/ --render --video
                          # explorer-drawn path (⤓ path) -> mp3s + genre-affine videos
                          # + gapless journey.mp3/.mp4 + mix page (see GENRE-SPACE.md)
 ```
 
-Requires `csound` (tested 6.18), `ffmpeg`, `curl`, `node`.
+Requires `ffmpeg`, `curl`, `node` (with `faust/node_modules` — `npm ci` in
+`faust/`). Only `./render.sh` (the founding `royal-road.csd`) still needs
+`csound` (tested 6.18).
 
 ## Layout
 
-- `royal-road.csd` — the original committed Csound source (CLI render path)
-- `csd-engine.js` — same engine, score data-driven; shared by builder, tests, verifier
-- `builder.html` — full song builder UI (WASM csound, live edit-while-playing,
-  OfflineAudioContext WAV render, lamejs MP3 export)
-- `play.html` — simple player
+- `royal-road.csd` — the founding committed Csound source (renders via
+  `./render.sh` with csound installed, or on branch `legacy-csound`)
+- `csd-engine.js` — the score brain: `buildEvents(state)` → pitched/drums/
+  found/sfx events + PROGRESSIONS/kits/patterns vocabulary. Every backend
+  derives from it. (Its csound codegen lives on `legacy-csound`.)
+- `faust/` — THE engine (see `FAUST-PORT.md`, `faust/VOICES.md`):
+  - `dsp/` + `dist/` — one precompiled WASM AudioWorklet per synthesis model
+    (`node build.js` rebuilds); DX7 family decodes real cartridge banks
+  - `state-engine.js` — state → voice units + param/event mapping (shared by
+    live + press)
+  - `live.js` — `FaustLive.exploreLive`: chord-bar JIT scheduler on the
+    WebAudio clock, voice pools, eco-mode load shedding
+  - `found-player.js` — native found sound: granular bed + slice chopper on
+    `AudioBufferSourceNode`s; `decodeUrlToBuffer` skips recording lead-in and
+    boost-normalizes quiet speech (the spokenword fix)
+  - `press.js` — offline render (faustwasm offline processors + PCM found mix)
+  - `legacy-tools/` — csound A/B harness (needs branch `legacy-csound`)
+- `explorer.html` — CONSTELLATE: the live UI; drag the star chart, draw paths,
+  journey glide, genre-affine video layer
 - `genre-kernel.js` — genre as a point in multidimensional space; blend/track/
-  playlist generators emitting engine states (design: GENRE-SPACE.md)
+  playlist/journey generators emitting engine states (design: GENRE-SPACE.md)
 - `genre-verifier.js` — symbolic genre-conformance scoring + confusion matrix
   (`node genre-verifier.js matrix` must stay diagonal-dominant)
+- `validate-genres.js` — the gate suite (determinism, vocabulary, coverage…;
+  `--audio` renders probes via faust press for the classifier)
 - `audio-verifier.py` — EMPIRICAL gate: Essentia Discogs-EffNet genre model on
   rendered audio. Setup: `python3 -m venv .venv-verify && .venv-verify/bin/pip
   install essentia-tensorflow`, then download to `models/`:
@@ -66,9 +95,12 @@ Requires `csound` (tested 6.18), `ffmpeg`, `curl`, `node`.
   speech synthesis as an instrument; manifest in found/samples/
 - `make-mix-page.js` — mix/index.html + mix.m3u from a rendered playlist dir
 - `song-verifier.js` — `analyzeSong`/`improveSong`: the verifier half of the loop
-- `engine.test.js` — offline render verification against real csound
+- `midi-export.js` — Standard MIDI File from the same buildEvents walk
+- `engine.test.js` — faust-press render smoke test (real offline audio)
 - `video-layer.js` — laserdisc background video: dual-<video> crossfade, switches
   on section changes during playback, ambient cycling when idle
+- `builder.html` / `play.html` — tombstones pointing at explorer.html +
+  `legacy-csound` (the working pages live on that branch)
 - `found/` — fetched found-sound + found-video layers (gitignored except `.gitignore`;
   recipes: `fetch-found-sound.sh`, `fetch-found-video.sh`, credits in SOURCES.md)
 
@@ -78,4 +110,5 @@ The working tree **is** the web root: nginx serves it at
 `https://aboardresearch.com/projects/vaporwave/` (alias block in
 `/etc/nginx/sites-enabled/aboardresearch`, `Cache-Control: no-cache`). File
 moves/renames here are production changes; gitignored-but-present files
-(`found/`, `found/video/`) are required for the live site.
+(`found/`, `found/video/`, `faust/node_modules`) are required for the live
+site; `faust/dist` is committed.

@@ -5,15 +5,16 @@
 //   node render-sample-video.js              -> sample.mp4     (vaporwave)
 //   node render-sample-video.js synthwave    -> synthwave.mp4  (moody / Kavinsky)
 //
-// Audio and video derive from the SAME buildEvents() state: csound renders the
-// score, and each video crossfade is timed to END exactly on a section downbeat
+// Audio and video derive from the SAME buildEvents() state: faust/press.js
+// renders the score, and each video crossfade is timed to END exactly on a
+// section downbeat
 // (the fade starts FADE seconds before the boundary). Clips play at half speed
 // with frame-blend ghosting and get a VHS + deep-fry pass: crushed color,
 // sharpening, analog grain, scanlines, vignette, translucent OSD, gradual
 // chroma-smear glitches (one spanning every section fade), and a lossy MJPEG
 // intermediate encode so the block artifacts are real codec damage.
-// Requires: csound, ffmpeg, found/ + found/video/ (run ./fetch-found-sound.sh
-// and ./fetch-found-video.sh first).
+// Requires: node (faust press), ffmpeg, found/ + found/video/ (run
+// ./fetch-found-sound.sh and ./fetch-found-video.sh first).
 "use strict";
 const { execFileSync } = require("child_process");
 const fs = require("fs");
@@ -277,15 +278,14 @@ if (P.journeys) {
   state.sections.forEach((s, i) => console.log(`  ${bSec[i].toFixed(2).padStart(7)}s  ${(s.name || "?").padEnd(12)} ${segClips[i]}`));
 }
 
-// ---- audio: csound render of the same state ----
+// ---- audio: faust press of the same state ----
 const wav = path.join(os.tmpdir(), `sample-audio-${presetName}.wav`);
-const csd = E.buildCsd(state).replace("<CsoundSynthesizer>",
-  `<CsoundSynthesizer>\n<CsOptions>\n--nosound -o ${wav} -W\n</CsOptions>`);
-const csdPath = path.join(os.tmpdir(), `sample-audio-${presetName}.csd`);
-fs.writeFileSync(csdPath, csd);
-console.log("rendering audio (csound)…");
-execFileSync("csound", [csdPath], { stdio: ["ignore", "ignore", "ignore"] });
-if (!fs.existsSync(wav) || fs.statSync(wav).size < 100000) die("csound render failed");
+const stateJson = path.join(os.tmpdir(), `sample-audio-${presetName}.state.json`);
+fs.writeFileSync(stateJson, JSON.stringify(state));
+console.log("rendering audio (faust press)…");
+execFileSync("node", [path.join(HERE, "faust", "press.js"), stateJson, wav],
+  { stdio: ["ignore", "ignore", "inherit"] });
+if (!fs.existsSync(wav) || fs.statSync(wav).size < 100000) die("faust press render failed");
 
 // ---- scanline overlay (generated once, tiled by -loop) ----
 const scan = path.join(os.tmpdir(), "scanlines.png");
@@ -325,119 +325,8 @@ console.log(`glitch schedule: ${nSmears} smears (${cmd.length} ramp steps)`);
 // end card, drawn on every render (the old MTV chyron). A genre-flavored band
 // name + song title are rolled FRESH every render (non-seeded), so each render
 // "plays" a different made-up group. A preset may pin its own via title/artist. ----
-const NAMEBANK = {
-  transitwave: {
-    bands: ["The Commuters", "Northbound Express", "Third Rail", "The Brakemen", "Pantograph",
-            "Night Service", "The Turnstiles", "Rolling Stock", "The Signalmen", "Interurban",
-            "Catenary", "The Vestibules", "Penn Station", "The Sidings", "Standard Time"],
-    titles: ["The 8 02 Local", "Last Train North", "Mind The Gap", "Standing Room Only",
-             "Express To Nowhere", "Track Nine", "Now Departing", "The Overnight", "Delayed",
-             "All Stations", "Regional Service", "Doors Closing", "The Last Connection"],
-  },
-  canawave: {
-    bands: ["The Loons", "True North", "The Maple Kings", "Northern Lights", "The Two-Fours",
-            "The Zambonis", "Great White", "The Territories", "The Portage"],
-    titles: ["True North", "Sorry Aboot That", "Centre Ice", "Coast To Coast", "The Overtime",
-             "Out For A Rip", "The Long Weekend"],
-  },
-  dinosynth: {
-    bands: ["The Sauropods", "Tar Pit", "The Cretaceous", "Bone Valley", "Pangaea",
-            "The Pterosaurs", "Amber", "The Rex", "Primordial"],
-    titles: ["The Mesozoic", "Extinction Event", "Amber", "Bone Valley", "The Long Sleep", "Tar"],
-  },
-  synthwave: {
-    bands: ["Night Drive", "Neon Voltage", "The Outrun", "Chrome", "Sunset Patrol", "Turbo",
-            "Miami Nights", "Afterburner"],
-    titles: ["Night Drive", "Neon Mirage", "Afterburner", "Midnight Run", "Outrun", "Chrome Heart"],
-  },
-  vaporwave: {
-    bands: ["The Atrium", "Plaza Level", "Marble", "Food Court", "Muzak", "The Fountain", "Escalator"],
-    titles: ["Mall Hours", "Eternal Atrium", "Plaza Level", "Closing Time", "Free Sample", "Fountain"],
-  },
-  techno: {
-    bands: ["Model 909", "The Assembly Line", "Klangwerk", "Cold Storage", "Grid Reference",
-            "Voltage Control", "Detroit Axis", "The Conveyor", "Ostbahnhof", "Sequencer Trust"],
-    titles: ["Four To The Floor", "Machine Funk", "Warehouse District", "Pattern 33",
-             "Motor City Transmission", "Concrete", "Sunday Morning Berlin", "Filter Sweep"],
-  },
-  house: {
-    bands: ["The Warehouse Deacons", "Jack Trax", "The Southside Preachers", "Piano Stab",
-            "The Hydraulics", "Boiler Suit", "Deep Garden", "The 707s", "Sunday Congregation"],
-    titles: ["Jack Your Body Gently", "Can You Feel It Still", "The Whistle Track",
-             "Deep In My House", "Move To The Music", "House Nation Rising", "Promised Land Layover"],
-  },
-  jungle: {
-    bands: ["The Amen Brothers", "Pirate Signal", "Junglist Sound System", "Rewind Selecta",
-            "MC Hologram", "The Breakbeat Kru", "Darkside Crew", "Tape Pack", "Babylon Timestretch"],
-    titles: ["Chopped Amen", "Timestretch Riddim", "Babylon Falling", "Big Up The Massive",
-             "Inna London Style", "Pirate Radio Skyline", "Dark Jungle Technique"],
-  },
-  triphop: {
-    bands: ["The Grey Harbour", "Bristol Fog", "Half Speed", "Slow Vinyl", "Smoke Signal",
-            "The Wurlitzer Ghosts", "Rainy Docks", "Theremin Social Club"],
-    titles: ["Cigarette Static", "Grey Skies Over Bristol", "Nicotine Rain", "The Comedown",
-             "Vinyl Crackle Lullaby", "Harbour Lights At Three AM", "Undertow"],
-  },
-  lofi: {
-    bands: ["Bedroom Tapes", "Sleepy Cassette", "Rainy Window", "Tape Hiss Society",
-            "Warm Static", "The Procrastinators", "Notebook Doodle", "Sunday Homework"],
-    titles: ["Beats To Fail Exams To", "Raining On My Notes", "Coffee Gone Cold",
-             "Missed Lecture", "Snooze Button", "Dusty Piano Loop", "Homework Forever"],
-  },
-  downtempo: {
-    bands: ["The Chillout Tent", "Sunset Terrace", "Balearic Standard", "Horizontal Living",
-            "Poolside Diplomats", "Velour", "The Lounge Correspondents", "Ambassadors Of Chill"],
-    titles: ["Sunset Over The Marina", "Do Not Disturb", "Infinity Pool", "Second Mojito",
-             "Horizontal By Noon", "Checkout Is At Eleven", "Frequent Flyer Lounge"],
-  },
-  ambient: {
-    bands: ["Discreet Systems", "Airport Chapel", "The Still Room", "Slow Light",
-            "Tape Loop Garden", "North Of Silence", "Glacial Drift", "The Hum"],
-    titles: ["An Hour Of Almost Nothing", "Stillness In Four Parts", "The Room Breathes",
-             "Fog On Glass", "Nothing Happens Twice", "One Long Note"],
-  },
-  neoclassical: {
-    bands: ["The Felt Piano", "Prepared Piano Society", "Rosin", "Cellophane Quartet",
-            "The Una Corda Club", "Winter Recital", "Grand Salon", "The Metronomes"],
-    titles: ["Etude For Falling Snow", "Variations On A Sigh", "The Felt Hammer",
-             "Nocturne In Reverse", "Sonata For Empty Hall", "Piano And Rain", "String Quartet No 9"],
-  },
-  dancepop: {
-    bands: ["Chart Position", "The Hook Factory", "Radio Edit", "Girl Group Theory",
-            "Focus Group", "The Choreography", "Bubblegum Complex", "Stadium Crush"],
-    titles: ["Call Me Back Tonight", "Dance Til The Radio Dies", "Heartbreak On Repeat",
-             "One More Chorus", "Kiss Me On The Drop", "Love Song Formula"],
-  },
-  edm: {
-    bands: ["The Drop Committee", "Festival Wristband", "Confetti Cannon", "Big Room Energy",
-            "The Riser", "Hands Up Collective", "Neon Cathedral", "Mainstage Pilgrims"],
-    titles: ["Put Your Hands Up Again", "The Drop Is Coming", "Festival Sunrise",
-             "Ten Thousand Strobes", "Epic Build Forever", "Confetti At Dawn", "Headliner"],
-  },
-  dubstep: {
-    bands: ["Wobble Merchants", "The Bass Face", "Sub Frequency", "South London Pressure",
-            "Speaker Damage", "The LFO Brothers", "Half Step Massive", "Filth Ltd"],
-    titles: ["Face Melt Protocol", "The Wobble Function", "Sub Bass Sermon", "System Overload",
-             "Speaker Cone Funeral", "Ten Ton Bass"],
-  },
-  blues: {
-    bands: ["Crossroads Slim", "Delta Freight", "The Juke Joint Ramblers", "Catfish Johnson",
-            "Reverend Dust", "Boxcar Lucille", "The 78 Sinners", "Mississippi Wire"],
-    titles: ["Woke Up This Mornin Blues", "Crossroads At Midnight", "My Baby Done Left",
-             "Dust Bowl Rag", "Levee Water Rising", "Broke Down Engine Blues", "Gravel Road Moan"],
-  },
-  jazz: {
-    bands: ["The Blue Note Irregulars", "Midnight Quintet", "The Flat Fifth", "Smoke Ring Trio",
-            "The Chord Changers", "After Hours Ensemble", "The Uptown Sextet", "Half Diminished"],
-    titles: ["Round About Two AM", "Take The B Train", "Blues For The Rent",
-             "Solo Over The Changes", "Bebop Til Dawn", "The Last Set", "Flat Fifth Avenue"],
-  },
-};
-const GENERIC = {
-  bands: ["The Frequencies", "Analog", "Half Light", "The Reverbs", "Slow Motion", "The Phantoms",
-          "Cassette", "The Drift"],
-  titles: ["Untitled", "Slow Fade", "Reverie", "Night Loop", "The Long Way", "Drift"],
-};
+// band/title banks live in namebank.js (shared with the CONSTELLATE chyron)
+const { NAMEBANK, GENERIC } = require("./namebank.js");
 function rollIdentity() {   // non-seeded: a different group/title every render
   const bank = NAMEBANK[P.bank || presetName] || GENERIC;
   const r = a => a[Math.floor(Math.random() * a.length)];

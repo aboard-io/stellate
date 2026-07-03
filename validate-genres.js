@@ -249,12 +249,18 @@ function gateVocabulary() {
   // (models, stab/hit patterns, forms) is picked up without editing this file.
   const engineSrc = fs.readFileSync(require.resolve("./csd-engine.js"), "utf8");
   const kernelSrc = fs.readFileSync(require.resolve("./genre-kernel.js"), "utf8");
+  // synthesis-model vocabulary now lives in the Faust engine's state mapping
+  // (faust/state-engine.js pitchedUnit switch + the drum module maps); the
+  // csound codegen this used to scrape is on branch legacy-csound.
+  const stateEngineSrc = fs.readFileSync(require.resolve("./faust/state-engine.js"), "utf8");
   const scrape = (src, re, seedSet) => {
     const s = new Set(seedSet || []);
     for (const m of src.matchAll(re)) s.add(m[1]);
     return s;
   };
-  const models = scrape(engineSrc, /(?:model|Model)===?"([a-zA-Z0-9_]+)"/g, ["saw", "stack", "noise", "boom", "sine"]);
+  const models = scrape(stateEngineSrc, /case "([a-zA-Z0-9_]+)":/g,
+    ["saw", "stack", "noise", "boom", "sine", "dx7"]);   // defaults + the dx7-blob contract
+  for (const m of stateEngineSrc.matchAll(/["']?([a-zA-Z0-9]+)["']?\s*:\s*"(?:kick|snare|hat)/g)) models.add(m[1]);
   const keysOf = (name) => {
     const m = engineSrc.match(new RegExp("const " + name + "=\\{([^}]*(?:\\}[^}]*)*?)\\};"))
       || engineSrc.match(new RegExp("const " + name + "=\\{([\\s\\S]*?)\\n"));
@@ -333,9 +339,9 @@ function gateAudio() {
   const py = path.join(__dirname, ".venv-verify", "bin", "python");
   const model = path.join(__dirname, "models", "genre_discogs400-discogs-effnet-1.pb");
   const which = (bin) => { try { execFileSync("which", [bin], { stdio: "ignore" }); return true; } catch (e) { return false; } };
-  if (!fs.existsSync(py) || !fs.existsSync(model) || !which("csound") || !which("ffmpeg")) {
-    result.gates.audio = { status: "SKIP", note: "needs .venv-verify, models/, csound, ffmpeg (see CLAUDE.md)" };
-    log(`[SKIP] 7 audio probe — missing .venv-verify/models/csound/ffmpeg`);
+  if (!fs.existsSync(py) || !fs.existsSync(model) || !which("ffmpeg")) {
+    result.gates.audio = { status: "SKIP", note: "needs .venv-verify, models/, ffmpeg (see CLAUDE.md)" };
+    log(`[SKIP] 7 audio probe — missing .venv-verify/models/ffmpeg`);
     return "SKIP";
   }
   const probes = ["techno", "vaporwave", "jungle"].filter((g) => K.GENRES[g]).slice(0, 3);
@@ -352,11 +358,9 @@ function gateAudio() {
         if (!fs.existsSync(s.fsPath)) missing = true;
       }
       if (missing) { results.push({ genre: g, status: "skip", note: "found-sound files not fetched" }); continue; }
-      const wav = path.join(tmp, g + ".wav"), mp3 = path.join(tmp, g + ".mp3"), csdP = path.join(tmp, g + ".csd");
-      const csd = E.buildCsd(state).replace("<CsoundSynthesizer>",
-        `<CsoundSynthesizer>\n<CsOptions>\n--nosound -o ${wav} -W\n</CsOptions>`);
-      fs.writeFileSync(csdP, csd);
-      execFileSync("csound", [csdP], { stdio: "ignore" });
+      const wav = path.join(tmp, g + ".wav"), mp3 = path.join(tmp, g + ".mp3"), sjP = path.join(tmp, g + ".state.json");
+      fs.writeFileSync(sjP, JSON.stringify(state));
+      execFileSync("node", [path.join(__dirname, "faust", "press.js"), sjP, wav], { stdio: "ignore" });
       // classifier probe: the middle ~45s, where the full arrangement plays
       execFileSync("ffmpeg", ["-y", "-v", "error", "-ss", "30", "-t", "45", "-i", wav, "-codec:a", "libmp3lame", "-b:a", "160k", mp3]);
       try {
