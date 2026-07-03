@@ -366,7 +366,14 @@
   // start/end in samples at `sr`. Anchors opt in via voice model "sampler"
   // + samplerPool:[ids]; resolveMulti picks per side() like every pool.
   const SAMPLERS={
-    bandoneon: { label:"Bandoneon (FluidR3, MIT)", dir:"bandoneon", sr:44100, zones:[{file:"z00_r48.wav",root:48,lo:0,hi:60,loop:1,ls:16175,le:16849},{file:"z01_r66.wav",root:66,lo:61,hi:66,loop:1,ls:87376,le:282128},{file:"z02_r72.wav",root:72,lo:67,hi:72,loop:1,ls:70740,le:199184},{file:"z03_r78.wav",root:78,lo:73,hi:78,loop:1,ls:47466,le:143928},{file:"z04_r84.wav",root:84,lo:79,hi:84,loop:1,ls:15786,le:118880},{file:"z05_r90.wav",root:90,lo:85,hi:108,loop:1,ls:6830,le:49586}] },
+    // the blues batch (2026-07 "truly acoustic" pass): upright bass for the
+    // BASS voice, real organs for comping pads. (GM 16 "DrawbarOrgan" was
+    // rejected: FluidR3 gives it ONE zone rooted at C7 — chords would pitch
+    // down 3-4 octaves into mud. Percussive Organ is the blues B3 anyway.)
+    acoustic_bass: { label:"Acoustic Bass (FluidR3, MIT)", dir:"acoustic_bass", sr:44100, zones:[{file:"z00_r28.wav",root:28,lo:0,hi:28,loop:1,ls:76560,le:78701},{file:"z01_r36.wav",root:36,lo:30,hi:36,loop:1,ls:51742,le:52417},{file:"z02_r46.wav",root:46,lo:42,hi:46,loop:1,ls:43947,le:44705},{file:"z03_r54.wav",root:54,lo:47,hi:50,loop:1,ls:36227,le:36704},{file:"z04_r60.wav",root:60,lo:55,hi:60,loop:1,ls:42151,le:42657},{file:"z05_r72.wav",root:72,lo:67,hi:127,loop:1,ls:24106,le:24696}] },
+    percussive_organ: { label:"Percussive Organ (FluidR3, MIT)", dir:"percussive_organ", sr:44100, zones:[{file:"z00_r39.wav",root:39,lo:0,hi:39,loop:0,ls:31226,le:100902},{file:"z01_r49.wav",root:49,lo:49,hi:49,loop:1,ls:19729,le:83951},{file:"z02_r56.wav",root:56,lo:55,hi:56,loop:1,ls:46308,le:114633},{file:"z03_r63.wav",root:63,lo:63,hi:65,loop:1,ls:16220,le:78232},{file:"z04_r80.wav",root:80,lo:77,hi:80,loop:1,ls:37396,le:99327},{file:"z05_r91.wav",root:91,lo:90,hi:108,loop:1,ls:33792,le:93185}] },
+    rock_organ: { label:"Rock Organ (FluidR3, MIT)", dir:"rock_organ", sr:44100, zones:[{file:"z00_r44.wav",root:44,lo:0,hi:44,loop:1,ls:32179,le:99235},{file:"z01_r52.wav",root:52,lo:50,hi:52,loop:1,ls:65063,le:134049},{file:"z02_r60.wav",root:60,lo:59,hi:60,loop:1,ls:91800,le:164759},{file:"z03_r73.wav",root:73,lo:71,hi:73,loop:1,ls:64627,le:130198},{file:"z04_r81.wav",root:81,lo:80,hi:82,loop:1,ls:110122,le:237739},{file:"z05_r91.wav",root:91,lo:90,hi:108,loop:1,ls:16963,le:83958}] },
+    bandoneon:{ label:"Bandoneon (FluidR3, MIT)", dir:"bandoneon", sr:44100, zones:[{file:"z00_r48.wav",root:48,lo:0,hi:60,loop:1,ls:16175,le:16849},{file:"z01_r66.wav",root:66,lo:61,hi:66,loop:1,ls:87376,le:282128},{file:"z02_r72.wav",root:72,lo:67,hi:72,loop:1,ls:70740,le:199184},{file:"z03_r78.wav",root:78,lo:73,hi:78,loop:1,ls:47466,le:143928},{file:"z04_r84.wav",root:84,lo:79,hi:84,loop:1,ls:15786,le:118880},{file:"z05_r90.wav",root:90,lo:85,hi:108,loop:1,ls:6830,le:49586}] },
     alto_sax: { label:"Alto Sax (FluidR3, MIT)", dir:"alto_sax", sr:44100, zones:[{file:"z00_r50.wav",root:49.75,lo:0,hi:51,loop:1,ls:20457,le:31130},{file:"z01_r56.wav",root:55.73,lo:56,hi:57,loop:1,ls:28825,le:38746},{file:"z02_r62.wav",root:61.68,lo:62,hi:63,loop:1,ls:28129,le:37918},{file:"z03_r68.wav",root:67.96,lo:68,hi:69,loop:1,ls:16586,le:26612},{file:"z04_r74.wav",root:73.92,lo:74,hi:75,loop:1,ls:21234,le:30669},{file:"z05_r80.wav",root:79.77,lo:80,hi:84,loop:1,ls:23480,le:32593}] },
     clarinet: { label:"Clarinet (FluidR3, MIT)", dir:"clarinet", sr:44100, zones:[{file:"z00_r52.wav",root:52.04,lo:0,hi:53,loop:1,ls:26055,le:27123},{file:"z01_r61.wav",root:61.13,lo:60,hi:62,loop:1,ls:14071,le:14387},{file:"z02_r68.wav",root:68.01,lo:66,hi:68,loop:1,ls:9362,le:10105},{file:"z03_r74.wav",root:74.16,lo:73,hi:74,loop:1,ls:5866,le:6238},{file:"z04_r78.wav",root:77.89,lo:77,hi:78,loop:1,ls:1943,le:2003},{file:"z05_r84.wav",root:83.96,lo:83,hi:127,loop:1,ls:3631,le:3800}] },
     flute: { label:"Flute (FluidR3, MIT)", dir:"flute", sr:44100, zones:[{file:"z00_r61.wav",root:61,lo:0,hi:62,loop:1,ls:29084,le:40192},{file:"z01_r67.wav",root:67,lo:66,hi:68,loop:1,ls:28411,le:38401},{file:"z02_r71.wav",root:70.98,lo:69,hi:71,loop:1,ls:16790,le:27137},{file:"z03_r78.wav",root:78.11,lo:76,hi:78,loop:1,ls:19435,le:29952},{file:"z04_r80.wav",root:80.11,lo:79,hi:81,loop:1,ls:11271,le:22016},{file:"z05_r90.wav",root:90.32,lo:85,hi:127,loop:1,ls:18767,le:29952}] },
@@ -592,21 +599,21 @@
       found:{role:"chops", vol:[.1,.18], pitch:[.85,1.1], stretch:[.4,.6], cutoff:[2000,3500], sources:["factory","frogs"]},
       stab:["off","sparse"], hits:{sources:["vox_c","sp_pressure","rave_d"], pattern:"dub", prob:.55},
       form:"drop" },
-    blues: { label:"Blues", info:"12-bar dom7 changes, swung shuffle, worn-record air",
+    blues: { label:"Blues", info:"12-bar dom7 changes, triplet shuffle, call-and-response guitar, worn-record air",   // ACOUSTIC-forward (2026-07 deep pass: "the whole thing is acoustic")
       bpm:[78,100], swing:[.24,.42], humanize:[.3,.55],
-      progressions:["blues_12"], kits:["boombap","breaks"], fills:["off","drum fill"],
-      bass:{patterns:["walking","melodic","root"], recipe:{model:["piano","sub"],cutoff:[500,1000],res:[.05,.15],level:[.9,1.1],send:[.1,.2],dsend:[0,.05]}},
-      lead:{patterns:["blues","wander","sparse"], patchPool:["HARMONICA1"], samplerPool:["steel_string_guitar"], recipe:{model:["sampler","sampler","piano","dx7"],wave:"sine",voices:[1,2],spread:[.001,.004],cutoff:[2200,3400],level:[.5,.65],send:[.3,.5],dsend:[.1,.25]}},   // the REAL steel-string LEADS (half the seeds; the guitar came home), piano and DX7 harmonica take the rest
-      pads:{prob:.7, recipe:{model:["organ","piano"],wave:"saw",cutoff:[900,1500],detune:[.003,.007],attack:[.4,1.2],level:[.4,.6],send:[.3,.5],dsend:[.05,.15]}},
-      drums:{kickModel:["boom","808"],snareModel:["noise"],hatModel:["noise"],kick:[.9,1.15],snare:[.6,.85],hat:[.5,.8],tune:[.85,1],send:[.15,.3],dsend:[0,.1]},
+      progressions:["blues_12"], kits:["shuffle","boombap","shuffle"], fills:["off","drum fill"],   // 2/3 the swung-triplet ride kit; boombap keeps a dusty chair
+      bass:{patterns:["walking","walking","melodic"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sampler","piano"],cutoff:[500,1000],res:[.05,.15],level:[.9,1.1],send:[.1,.2],dsend:[0,.05],attack:.005,release:[.08,.14]}},   // the UPRIGHT (real, FluidR3) walks 2/3 of seeds; piano the rest — the DX7/sub bass is gone
+      lead:{patterns:["blues","blues","wander"], patchPool:["HARMONICA1"], samplerPool:["steel_string_guitar"], recipe:{model:["sampler","sampler","sampler","piano","dx7"],wave:"sine",voices:[1,2],spread:[.001,.004],cutoff:[2200,3400],level:[.5,.65],send:[.3,.5],dsend:[.1,.25]}},   // the REAL steel-string leads 3/5 of seeds (blue-note bends live here); piano + DX7 harmonica take the rest
+      pads:{prob:.55, samplerPool:["percussive_organ","rock_organ"], recipe:{model:["sampler","sampler","piano"],wave:"saw",cutoff:[900,1500],detune:[.003,.007],attack:[.02,.08],level:[.3,.42],send:[.2,.35],dsend:[.05,.15]}},   // COMPING, not pads: real sampled B3/rock organ (or piano) stabs on the changes — fast attack, modest level, never a wash
+      drums:{kickModel:["boom","808"],snareModel:["noise"],hatModel:["noise"],kick:[.9,1.15],snare:[.5,.7],hat:[.5,.8],tune:[.85,1],send:[.15,.3],dsend:[0,.1]},   // snare tuned brushes-soft under the shuffle ride
       fx:{reverb:[.45,.65], delayBeats:[.5,.75], delayFb:[.1,.25], delayCut:[2000,3000], pump:[0,0], crackle:[.25,.55], lowcut:[0,30], highcut:[8000,12000], comp:[.15,.3]},
       found:{role:"bed", vol:[.05,.12], pitch:[.8,1], stretch:[.45,.6], cutoff:[1500,2500], sources:["shibuya","tokyo_station","vx_whitman"]},
-      stab:["off"], hits:{sources:["blues_vox_78","horns_78","sp_slowdown"], pattern:"sparse", prob:.4},
+      stab:["off"], hits:{sources:["blues_vox_78","blues_vox_78","horns_78"], pattern:"response", prob:.75},   // the 78rpm singer takes the response bars the guitar rests — and gets answered
       form:"pop" },
     jazz: { label:"Jazz", info:"ii-V-I machinery, walking bass, brushed kit, piano comping",
       bpm:[96,144], swing:[.28,.48], humanize:[.35,.6],
       progressions:["ii_v_i","neosoul","lofi","mode_dorian"], kits:["breaks","boombap"], fills:["off","drum fill"],
-      bass:{patterns:["walking","melodic","dub"], recipe:{model:["sub","piano"],cutoff:[400,800],res:[.05,.12],level:[.95,1.15],send:[.1,.2],dsend:[0,.05]}},
+      bass:{patterns:["walking","melodic","dub"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sampler","piano"],cutoff:[400,800],res:[.05,.12],level:[.95,1.15],send:[.1,.2],dsend:[0,.05],attack:.005,release:[.08,.14]}},   // the UPRIGHT walks 2/3 of seeds (real, FluidR3); piano the rest
       lead:{patterns:["wander","sparse","canon"], samplerPool:["alto_sax","tenor_sax"], recipe:{model:["sampler","sampler","piano"],wave:"sine",voices:[1,2],spread:[.001,.004],cutoff:[2400,3600],level:[.45,.6],send:[.35,.55],dsend:[.1,.3]}},   // THE SAX (real, sampled): 2/3 of seeds the horn leads, else comping piano
       pads:{prob:.8, recipe:{model:["piano","fm"],wave:"sine",cutoff:[1000,1700],detune:[.002,.006],attack:[.2,.8],level:[.4,.6],send:[.35,.55],dsend:[.05,.2]}},
       drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.6,.9],snare:[.45,.7],hat:[.8,1.15],tune:[.9,1.05],send:[.2,.4],dsend:[0,.1]},
@@ -713,7 +720,7 @@
     exotica: { label:"Exotica", info:"tiki-lounge jazz: swung brushes, piano + organ, the birds ARE the percussion color",   // SAMPLE-FORWARD: the aviary up front
       bpm:[85,105], swing:[.12,.22], humanize:[.25,.45],
       progressions:["ii_v_i","lofi","neosoul"], kits:["halftime","boombap"], fills:["off","drum fill"],
-      bass:{patterns:["walking","simple","root"], recipe:{model:["piano","sub"],cutoff:[500,900],res:[.05,.12],level:[.9,1.1],send:[.1,.2],dsend:[0,.05]}},
+      bass:{patterns:["walking","simple","root"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","piano","sub"],cutoff:[500,900],res:[.05,.12],level:[.9,1.1],send:[.1,.2],dsend:[0,.05],attack:.005,release:[.08,.14]}},   // 1/3 of seeds the real upright anchors the tiki combo
       lead:{patterns:["wander","pentaup","sparse"], patchPool:["VIBE    1","MARIMBA","SAX BC"], samplerPool:["tenor_sax","vibraphone"], recipe:{model:["sampler","sampler","piano","dx7"],wave:"sine",voices:[1,2],spread:[.001,.004],cutoff:[2400,3600],level:[.45,.58],send:[.35,.55],dsend:[.1,.25],vibrato:[.008,.014]}},   // the tiki horn/vibes LEAD (real, half the seeds); piano and DX7 mallets comp the rest
       pads:{prob:.85, recipe:{model:["organ","piano"],wave:"sine",cutoff:[1000,1600],detune:[.002,.006],attack:[.3,.9],level:[.42,.56],send:[.35,.5],dsend:[.05,.15]}},
       drums:{kickModel:["boom","808"],snareModel:["noise"],hatModel:["noise"],kick:[.9,1.15],snare:[.5,.75],hat:[.6,.9],tune:[.9,1.05],send:[.2,.35],dsend:[.05,.2]},
@@ -738,7 +745,7 @@
     spokenword: { label:"Spoken word", info:"beat poetry over jazz: quiet boombap, piano color, the poets narrating through the dust",   // SAMPLE-FORWARD: the VOICE leads
       bpm:[72,96], swing:[.05,.14], humanize:[.2,.4],
       progressions:["ii_v_i","neosoul","mode_dorian"], kits:["boombap"], fills:["off","off","drum fill"],
-      bass:{patterns:["walking","dub","simple"], recipe:{model:["sub","piano"],cutoff:[350,650],res:[.05,.12],level:[.85,1.05],send:[.05,.15],dsend:[0,.05]}},
+      bass:{patterns:["walking","dub","simple"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sub","piano"],cutoff:[350,650],res:[.05,.12],level:[.85,1.05],send:[.05,.15],dsend:[0,.05],attack:.005,release:[.08,.14]}},   // 1/3 of seeds the real upright under the poets
       lead:{patterns:["sparse","wander","off"], samplerPool:["tenor_sax"], recipe:{model:["piano","sampler"],wave:"sine",voices:[1,1],spread:[.001,.003],cutoff:[2400,3400],level:[.45,.55],send:[.35,.5],dsend:[.1,.25]}},   // half the seeds: a real tenor answering the poets
       pads:{prob:.8, recipe:{model:["piano","fm"],wave:"sine",cutoff:[900,1500],detune:[.002,.006],attack:[.3,.9],level:[.4,.55],send:[.35,.5],dsend:[.05,.15]}},
       drums:{kickModel:["boom","808"],snareModel:["noise"],hatModel:["noise"],kick:[.95,1.2],snare:[.35,.55],hat:[.5,.8],tune:[.9,1],send:[.15,.3],dsend:[0,.1]},   // snare QUIET — never over the voice
@@ -811,7 +818,7 @@
     bossanova: { label:"Bossa nova", info:"soft Brazilian swing: nylon-string pluck over ii-V changes, rim-click clave, a whisper of a kit",   // acoustic-leaning: the guitar IS the song
       bpm:[84,100], swing:[.08,.18], humanize:[.25,.45],
       progressions:["ii_v_i","neosoul","lofi"], kits:["bossa"], fills:["off","off","drum fill"],
-      bass:{patterns:["dub","simple","root"], recipe:{model:["sub","piano"],cutoff:[380,700],res:[.05,.12],level:[.85,1.05],send:[.05,.12],dsend:[0,.05]}},
+      bass:{patterns:["dub","simple","root"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sub","piano"],cutoff:[380,700],res:[.05,.12],level:[.85,1.05],send:[.05,.12],dsend:[0,.05],attack:.005,release:[.08,.14]}},   // 1/3 of seeds the real upright under the nylon guitar
       lead:{patterns:["wander","sparse","pentaup"], samplerPool:["nylon_string_guitar","nylon_string_guitar","flute"], recipe:{model:["sampler","sampler","kpluck"],wave:"sine",drive:0,voices:[1,1],spread:[.001,.003],cutoff:[2400,3400],level:[.5,.62],send:[.25,.4],dsend:[.08,.2]}},   // the REAL nylon string (or breathy flute) LEADS 2/3 of seeds; the KS pluck is the fallback color now
       pads:{prob:.8, recipe:{model:["organ","piano"],wave:"sine",cutoff:[1000,1600],detune:[.002,.005],attack:[.3,.8],level:[.38,.5],send:[.3,.45],dsend:[.05,.12]}},
       drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.85,1.05],snare:[.5,.7],hat:[.5,.8],tune:[.95,1.1],send:[.12,.25],dsend:[0,.08]},
@@ -1090,7 +1097,7 @@
       form:"dj" },
     desertblues: { label:"Desert blues", info:"Sahel guitar hypnosis: pentatonic loops over a lope, handclap air, tape-worn top end",   // guitar-FORWARD: one riff, circling
       bpm:[84,104], swing:[.06,.16], humanize:[.2,.4],
-      progressions:["funk_vamp","mode_dorian","deep_two"], kits:["halftime","boombap"], fills:["off","off","drum fill"],
+      progressions:["funk_vamp","mode_dorian","deep_two"], kits:["shuffle","halftime","boombap"], fills:["off","off","drum fill"],   // the triplet shuffle lopes 1/3 of seeds
       bass:{patterns:["simple","dub","root"], recipe:{model:["sub"],cutoff:[300,520],res:[.05,.12],level:[1,1.2],send:[.03,.08],dsend:[0,.05]}},
       lead:{patterns:["pentaup","blues","wander"], samplerPool:["steel_string_guitar","nylon_string_guitar"], recipe:{model:["sampler","sampler","guitar"],wave:"saw",voices:[1,2],spread:[.001,.004],cutoff:[3000,4200],level:[.52,.64],send:[.25,.4],dsend:[.15,.3],vibrato:[.004,.009]}},   // the circling guitar — the REAL sampled strings lead 2/3; waveguide keeps a chair
       pads:{prob:.5, recipe:{model:["organ"],wave:"saw",cutoff:[900,1400],detune:[.003,.008],attack:[.5,1.2],level:[.36,.48],send:[.25,.4],dsend:[.05,.15]}},
@@ -1344,9 +1351,10 @@
     // (empty registry / a blend whose parents carry no samplerPool)
     choice.leadSampler=samplerFor(g=>g.lead, choice.leadRecipe);
     choice.padSampler =samplerFor(g=>g.pads, choice.padRecipe);
+    choice.bassSampler=samplerFor(g=>g.bass, choice.bassRecipe);   // upright bass etc — the bass voice is sampler-capable now
     if(choice.leadRecipe.model==="sampler"&&!choice.leadSampler) choice.leadRecipe.model="fm";
     if(choice.padRecipe.model==="sampler"&&!choice.padSampler)   choice.padRecipe.model="strings";
-    if(choice.bassRecipe.model==="sampler") choice.bassRecipe.model="saw";   // bass sampler: not a thing (yet)
+    if(choice.bassRecipe.model==="sampler"&&!choice.bassSampler) choice.bassRecipe.model="saw";
     // per-voice insert-FX chains (drawn LAST so all prior seeded choices keep
     // their historical rng positions; constraint pass prunes bad pairings)
     choice.bassInserts=insertsFor(g=>g.bass);
@@ -1608,7 +1616,7 @@
       return { id, sr:S.sr, zones:S.zones.map((z,i)=>({srcId:"ins_"+id+"_"+i, root:z.root, lo:z.lo, hi:z.hi,
         loop:!!z.loop, loopStart:z.ls, loopEnd:z.le })) };
     };
-    for(const id of new Set([c.leadSampler, c.padSampler].filter(Boolean))){
+    for(const id of new Set([c.leadSampler, c.padSampler, c.bassSampler].filter(Boolean))){
       const S=SAMPLERS[id]; if(!S) continue;
       S.zones.forEach((z,i)=>foundSources.push({id:"ins_"+id+"_"+i,label:S.label,url:"",
         samplePath:"found/samples/instruments/"+S.dir+"/"+z.file, vol:0, pitch:1, stretch:0.5, cutoff:18000}));
@@ -1631,7 +1639,7 @@
         // inserts: the per-voice insert-FX chain (CONTRACT: [{type,...params}],
         // [] = bypass — see csd-engine defaultInstruments for units)
         pad:Object.assign(E.defaultInstruments().pad, c.padRecipe, {inserts:c.padInserts||[]}, c.padDx7?{dx7:c.padDx7}:{}, c.padSampler?{sampler:samplerSpec(c.padSampler)}:{}),
-        bass:Object.assign(E.defaultInstruments().bass, c.bassRecipe, {inserts:c.bassInserts||[]}, c.bassDx7?{dx7:c.bassDx7}:{}),
+        bass:Object.assign(E.defaultInstruments().bass, c.bassRecipe, {inserts:c.bassInserts||[]}, c.bassDx7?{dx7:c.bassDx7}:{}, c.bassSampler?{sampler:samplerSpec(c.bassSampler)}:{}),
         melody:Object.assign(E.defaultInstruments().melody, c.leadRecipe, {voices:Math.round(c.leadRecipe.voices||2), inserts:c.leadInserts||[]}, c.leadDx7?{dx7:c.leadDx7}:{}, c.leadSampler?{sampler:samplerSpec(c.leadSampler)}:{}),
         drums:Object.assign(E.defaultInstruments().drums, c.drumRecipe),
       },
@@ -1648,7 +1656,7 @@
         return s; }); })(),
     };
     state.genreMeta={genres:c.genres,t:c.t,seed:c.seed,form:c.form,kit:c.kit,progression:c.progression,
-      bass:c.bassPattern+"("+c.bassRecipe.model+(c.bassDx7?":"+c.bassDx7.name:"")+")",
+      bass:c.bassPattern+"("+c.bassRecipe.model+(c.bassDx7?":"+c.bassDx7.name:"")+(c.bassSampler?":"+c.bassSampler:"")+")",
       lead:c.leadPattern+"("+c.leadRecipe.model+(c.leadDx7?":"+c.leadDx7.name:"")+(c.leadSampler?":"+c.leadSampler:"")+")",
       pad:c.padRecipe.model+(c.padDx7?":"+c.padDx7.name:"")+(c.padSampler?":"+c.padSampler:""),drums:c.drumRecipe.kickModel+"/"+c.drumRecipe.snareModel+"/"+c.drumRecipe.hatModel,
       found:c.foundSource+"/"+c.foundRole, stab:c.stab, hits:c.hits?c.hits.source:"-",

@@ -420,6 +420,7 @@
               gain: (uSpec.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
               atk: uSpec.sampler.atk, rel: uSpec.sampler.rel,
               dry: uSpec.dry != null ? uSpec.dry : 1, rsend: uSpec.rev || 0, dsend: uSpec.del || 0,
+              bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,
               loop: !!z.loop, loopStartSec: (z.loopStart || 0) / zsr, loopEndSec: (z.loopEnd || 0) / zsr });
             layers.get(LAYER_OF_UNIT(e.unit)).lastBar = serial;
             schedLog("sampler:" + e.unit, beatAbs(e.beat), at(e.beat));

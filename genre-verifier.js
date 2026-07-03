@@ -9,6 +9,8 @@
 //   analyze(state)            -> {features, scores:{genre:0-100}, best}
 //   report(state)             -> printable report
 //   node genre-verifier.js matrix          confusion matrix over all anchors
+//     [--serial] [--jobs N] [--no-cache]   sharded across cores by default;
+//                                          cached in scratch/.verify-cache/
 //   node genre-verifier.js <state.json>    score one state
 
 (function (root) {
@@ -109,8 +111,9 @@
                 pump:[0,.35,1], offgrid:[.05,.55,1], wash:[.15,.55,1], crackle:[0,.2,1], swing:[0,.12,2] },
     blues:    { bpm:[74,102,3], swing:[.22,.46,3], acoustic:[.4,1,2], seventh:[.85,1,3],
                 motion:[.5,.7,2], crackle:[.2,.6,1], drumDensity:[.7,2.6,1], pump:[0,.05,1] },
-    jazz:     { bpm:[92,148,2], swing:[.26,.52,3], acoustic:[.4,1,2], seventh:[.6,1,1],
-                motion:[.55,1,2], snareBalance:[0,.75,1], hatDensity:[.7,2.6,1], humanize:[.3,.7,1] },
+    jazz:     { bpm:[96,148,2], swing:[.26,.52,3], acoustic:[.4,1,2], seventh:[.6,1,1],
+                motion:[.55,1,2], snareBalance:[0,.75,1], hatDensity:[.7,2.6,1], humanize:[.3,.7,1],
+                crackle:[0,.42,1] },   // 2026-07 (blues acoustic pass): blues now rides shuffle+upright+organ and was TYING jazz at 100. Honest fences: bpm lo = the jazz anchor's own floor (96, was 92); crackle hi = the anchor's own cap (.4+margin) — blues IS the worn-record genre (.25-.55), jazz is merely dusty
     dub:      { bpm:[64,86,3], sub:[.6,1,2], motion:[0,.4,2], crackle:[0,.1,2], swing:[0,.12,2],
                 snareBalance:[.4,1.4,1], breakUse:[0,.1,1], drumDensity:[.5,2.4,1], pump:[0,.15,1] },
     trance:   { bpm:[128,146,3], leadVoices:[5,8,2], pump:[.3,.7,2], motion:[.5,1,2], wash:[.2,.6,1],
@@ -240,28 +243,74 @@
     const fs=require("fs");
     const cmd=process.argv[2];
     if(cmd==="matrix"){
+      // matrix speed round (2026-07): features are computed ONCE per
+      // (genre,seed) — they never depended on the target column, but the old
+      // loop rebuilt track+features per cell (61x the work, ~23s). Rows are
+      // sharded across cores via verify-lib fork workers (--serial for the
+      // single-process path; both produce byte-identical tables), feature
+      // vectors + the whole report are content-address cached under
+      // scratch/.verify-cache/ (--no-cache recomputes).
+      const L=require("./verify-lib.js");
       const K=require("./genre-kernel.js");
+      const args=process.argv.slice(3);
       const genres=Object.keys(TARGETS);
-      const rows=[];
-      console.log("            "+genres.map(g=>g.slice(0,7).padStart(8)).join(""));
-      let diagOk=0;
-      for(const g of genres){
-        const cells=[];
-        for(const tgt of genres){
-          let s=0;
-          for(const seed of [1,2,3]) s+=scoreAgainst(features(K.track(g,{seed})),tgt).score;
-          cells.push(Math.round(s/3));
+      const SEEDS=[1,2,3];
+      const shard=L.shardOf(args);
+      const useCache=!args.includes("--no-cache");
+
+      // one confusion-matrix row: mean score of g's tracks vs every target
+      const rowOf=(g,feats,fresh)=>{
+        const fv=SEEDS.map(seed=>{
+          const key=g+":"+seed;
+          if(!feats[key]){ feats[key]=features(K.track(g,{seed})); if(fresh) fresh[key]=feats[key]; }
+          return feats[key];
+        });
+        return genres.map(tgt=>{ let s=0; for(const f of fv) s+=scoreAgainst(f,tgt).score; return Math.round(s/SEEDS.length); });
+      };
+
+      if(shard){   // worker: strided rows over IPC, no printing
+        const feats=useCache?L.loadFeats():{};
+        const fresh={}, cells={};
+        genres.forEach((g,ix)=>{ if(ix%shard.n===shard.i) cells[g]=rowOf(g,feats,fresh); });
+        process.send({cells,fresh},()=>process.exit(0));
+      } else {
+        if(useCache){ const hit=L.loadRun("matrix",args); if(hit) L.replayRun(hit); }
+        const emit=L.tee();
+        const printMatrix=(cellsByGenre)=>{
+          const rows=[];
+          emit("            "+genres.map(g=>g.slice(0,7).padStart(8)).join(""));
+          let diagOk=0;
+          for(const g of genres){
+            const cells=cellsByGenre[g];
+            const diag=cells[genres.indexOf(g)];
+            const maxOff=Math.max(...cells.filter((_,i)=>i!==genres.indexOf(g)));
+            if(diag>=maxOff) diagOk++;
+            emit(g.padEnd(11)+(cells.map((c,i)=>String(c).padStart(8-(i===genres.indexOf(g)?1:0))+(i===genres.indexOf(g)?"*":"")).join("")));
+            rows.push({g,cells,diag,maxOff});
+          }
+          emit(`\ndiagonal dominant: ${diagOk}/${genres.length}`);
+          for(const r of rows) if(r.diag<r.maxOff)
+            emit(`  ✗ ${r.g}: self=${r.diag} < best-other=${r.maxOff} (${genres[r.cells.indexOf(r.maxOff)]})`);
+          const code=diagOk===genres.length?0:1;
+          if(useCache) L.saveRun("matrix",args,null,{out:emit.text(),code});
+          process.exit(code);
+        };
+        const nJobs=args.includes("--serial")?1:L.jobs(args,genres.length);
+        if(nJobs<2){
+          const feats=useCache?L.loadFeats():{};
+          const fresh={}, cellsByGenre={};
+          for(const g of genres) cellsByGenre[g]=rowOf(g,feats,fresh);
+          if(useCache) L.saveFeats(fresh);
+          printMatrix(cellsByGenre);
+        } else {
+          L.runShards(__filename,["matrix"].concat(args),nJobs).then(msgs=>{
+            const cellsByGenre={}, fresh={};
+            for(const m of msgs){ Object.assign(cellsByGenre,m.cells); Object.assign(fresh,m.fresh); }
+            if(useCache) L.saveFeats(fresh);
+            printMatrix(cellsByGenre);
+          }).catch(e=>{ console.error("matrix shards failed: "+e.message); process.exit(1); });
         }
-        const diag=cells[genres.indexOf(g)];
-        const maxOff=Math.max(...cells.filter((_,i)=>i!==genres.indexOf(g)));
-        if(diag>=maxOff) diagOk++;
-        console.log(g.padEnd(11)+(cells.map((c,i)=>String(c).padStart(8-(i===genres.indexOf(g)?1:0))+(i===genres.indexOf(g)?"*":"")).join("")));
-        rows.push({g,cells,diag,maxOff});
       }
-      console.log(`\ndiagonal dominant: ${diagOk}/${genres.length}`);
-      for(const r of rows) if(r.diag<r.maxOff)
-        console.log(`  ✗ ${r.g}: self=${r.diag} < best-other=${r.maxOff} (${genres[r.cells.indexOf(r.maxOff)]})`);
-      process.exit(diagOk===genres.length?0:1);
     } else if(cmd){
       const state=JSON.parse(fs.readFileSync(cmd,"utf8"));
       console.log(report(state));

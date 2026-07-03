@@ -13,6 +13,16 @@
 //   7 --audio       optional empirical probe via audio-verifier.py    (WARN/skip)
 //
 //   node validate-genres.js [--seeds N] [--quick] [--json] [--audio]
+//                           [--serial] [--jobs N] [--no-cache]
+//
+// Speed round (2026-07): the per-(genre,seed) state/feature/determinism builds
+// are sharded across CPU cores (verify-lib fork workers; gates then consume
+// the pooled cache) and gate 5's blends run in the parent WHILE workers build.
+// --serial keeps the single-process path; both print byte-identical reports.
+// Feature vectors + whole reports are content-address cached in
+// scratch/.verify-cache/ keyed by the capability files' sha256, so repeat runs
+// replay instantly and seed-count changes only pay for the missing seeds.
+// --no-cache recomputes (and refreshes the cache).
 //
 // Zero dependencies; consumes genre-kernel.js / csd-engine.js / genre-verifier.js
 // read-only, so it automatically covers new anchors as they land.
@@ -23,6 +33,7 @@ const path = require("path");
 const K = require("./genre-kernel.js");
 const E = require("./csd-engine.js");
 const V = require("./genre-verifier.js");
+const L = require("./verify-lib.js");
 
 // ---------- CLI ----------
 const args = process.argv.slice(2);
@@ -32,14 +43,22 @@ const QUICK = has("quick");
 const N_SEEDS = Math.max(2, Math.min(25, parseInt(flag("seeds", QUICK ? 2 : 5), 10) || (QUICK ? 2 : 5)));
 const JSON_OUT = has("json");
 const AUDIO = has("audio");
+const SERIAL = has("serial");
+const NO_CACHE = has("no-cache");
+const SHARD = L.shardOf(args);
 const SEEDS = Array.from({ length: N_SEEDS }, (_, i) => i + 1);
+const DET_SEEDS = QUICK ? [1] : [1, SEEDS[SEEDS.length - 1]];
+// the run-report cache key covers the 3 core capability files plus these:
+// gate logic lives here, gate 6 scrapes the faust state mapping.
+const RUN_EXTRAS = ["validate-genres.js", "faust/state-engine.js"];
 
 const allGenres = Object.keys(K.GENRES);
 const scoredGenres = allGenres.filter((g) => V.TARGETS[g]);   // gates 2-5 need target ranges
 const result = { meta: { date: new Date().toISOString(), seeds: SEEDS, quick: QUICK,
   genres: allGenres.length, scored: scoredGenres.length }, gates: {} };
 
-const log = (...a) => { if (!JSON_OUT) console.log(...a); };
+const emit = L.tee();   // print live AND capture for the run cache
+const log = (...a) => { if (!JSON_OUT) emit(...a); };
 const pct = (x) => Math.round(x * 100) + "%";
 const fmt = (x, p) => (Math.round(x * 10 ** (p == null ? 1 : p)) / 10 ** (p == null ? 1 : p)).toFixed(p == null ? 1 : p);
 
@@ -47,8 +66,12 @@ const fmt = (x, p) => (Math.round(x * 10 ** (p == null ? 1 : p)) / 10 ** (p == n
 // cosmetic, so strip every "id"/"label" key before comparing.
 const canon = (o) => JSON.stringify(o, (k, v) => (k === "id" || k === "label" ? undefined : v));
 
-// cache: one track state + feature vector per (genre, seed) — shared by gates 2/3/4
+// cache: one track state + feature vector per (genre, seed) — shared by gates
+// 2/3/4, pre-populated by the shard workers in parallel mode, and backed by
+// the on-disk feature cache (content-addressed; failures are never cached).
 const stateCache = {}, featCache = {}, trackErrors = [];
+const diskFeats = NO_CACHE ? {} : L.loadFeats();
+const freshFeats = {};
 function trackOf(g, seed) {
   const key = g + ":" + seed;
   if (!(key in stateCache)) {
@@ -60,32 +83,38 @@ function trackOf(g, seed) {
 function featOf(g, seed) {
   const key = g + ":" + seed;
   if (!(key in featCache)) {
+    if (key in diskFeats) return (featCache[key] = diskFeats[key]);
     const st = trackOf(g, seed);
     try { featCache[key] = st ? V.features(st) : null; }
     catch (e) { featCache[key] = null; trackErrors.push({ genre: g, seed, error: "features: " + String(e.message || e) }); }
+    if (featCache[key]) freshFeats[key] = featCache[key];
   }
   return featCache[key];
 }
 
 // ============================================================ gate 1: determinism
-function gateDeterminism() {
+// per-genre body extracted so shard workers can run it; failure order is
+// preserved by flattening worker results in allGenres order.
+function detFailuresFor(g) {
   const failures = [];
-  const detSeeds = QUICK ? [1] : [1, SEEDS[SEEDS.length - 1]];
-  for (const g of allGenres) {
-    for (const seed of detSeeds) {
-      let s1, s2;
-      try { s1 = K.track(g, { seed }); s2 = K.track(g, { seed }); }
-      catch (e) { failures.push({ genre: g, seed, what: "track threw: " + String(e.message || e) }); continue; }
-      if (canon(s1) !== canon(s2)) { failures.push({ genre: g, seed, what: "track state differs across identical calls" }); continue; }
-      try {
-        const e1 = JSON.stringify(E.buildEvents(s1));
-        const e2 = JSON.stringify(E.buildEvents(s1));     // same state twice: buildEvents must be pure
-        const e3 = JSON.stringify(E.buildEvents(s2));     // regenerated state: whole pipeline
-        if (e1 !== e2) failures.push({ genre: g, seed, what: "buildEvents not pure (differs on same state)" });
-        else if (e1 !== e3) failures.push({ genre: g, seed, what: "events differ across regenerated states" });
-      } catch (e) { failures.push({ genre: g, seed, what: "buildEvents threw: " + String(e.message || e) }); }
-    }
+  for (const seed of DET_SEEDS) {
+    let s1, s2;
+    try { s1 = K.track(g, { seed }); s2 = K.track(g, { seed }); }
+    catch (e) { failures.push({ genre: g, seed, what: "track threw: " + String(e.message || e) }); continue; }
+    if (canon(s1) !== canon(s2)) { failures.push({ genre: g, seed, what: "track state differs across identical calls" }); continue; }
+    try {
+      const e1 = JSON.stringify(E.buildEvents(s1));
+      const e2 = JSON.stringify(E.buildEvents(s1));     // same state twice: buildEvents must be pure
+      const e3 = JSON.stringify(E.buildEvents(s2));     // regenerated state: whole pipeline
+      if (e1 !== e2) failures.push({ genre: g, seed, what: "buildEvents not pure (differs on same state)" });
+      else if (e1 !== e3) failures.push({ genre: g, seed, what: "events differ across regenerated states" });
+    } catch (e) { failures.push({ genre: g, seed, what: "buildEvents threw: " + String(e.message || e) }); }
   }
+  return failures;
+}
+function gateDeterminism(detByGenre) {
+  const failures = [];
+  for (const g of allGenres) failures.push(...(detByGenre ? detByGenre[g] || [] : detFailuresFor(g)));
   // blends must be deterministic too — the explorer's whole path depends on it
   const bp = scoredGenres.length >= 2 ? [[scoredGenres[0], scoredGenres[scoredGenres.length - 1]]] : [];
   for (const [a, b] of bp) {
@@ -95,8 +124,8 @@ function gateDeterminism() {
     } catch (e) { failures.push({ genre: a + "+" + b, seed: 3, what: "blend threw: " + String(e.message || e) }); }
   }
   const status = failures.length ? "FAIL" : "PASS";
-  result.gates.determinism = { status, checked: allGenres.length * detSeeds.length, failures };
-  log(`[${status}] 1 determinism — ${allGenres.length} genres x ${detSeeds.length} seeds, state+events byte-stable`);
+  result.gates.determinism = { status, checked: allGenres.length * DET_SEEDS.length, failures };
+  log(`[${status}] 1 determinism — ${allGenres.length} genres x ${DET_SEEDS.length} seeds, state+events byte-stable`);
   failures.slice(0, 8).forEach((f) => log(`       x ${f.genre} seed=${f.seed}: ${f.what}`));
   return status;
 }
@@ -208,7 +237,9 @@ function gateGeometry() {
 }
 
 // ============================================================ gate 5: blend monotonicity
-function gateBlend() {
+// compute/report split: in parallel mode the parent computes the blends WHILE
+// the shard workers build features, then reports in gate order.
+function computeBlend() {
   const CANDIDATES = [["techno", "vaporwave"], ["jungle", "ambient"], ["house", "lofi"],
     ["synthwave", "triphop"], ["edm", "neoclassical"], ["dubstep", "downtempo"],
     ["trance", "blues"], ["disco", "doomdrone"], ["jazz", "chiptune"]];
@@ -235,10 +266,14 @@ function gateBlend() {
       if (rb > 1) violations.push({ pair: a + "->" + b, seed, what: `score[${b}] falls ${rb}x along t (${sb.join(",")})` });
     }
   }
-  const status = violations.length ? "WARN" : "PASS";
-  result.gates.blend = { status, pairs: pairs.map((p) => p.join("->")), seeds, tolerance: { points: TOL, reversalsAllowed: 1 }, tested, violations };
-  log(`[${status}] 5 blend monotonicity — ${pairs.length} pairs x ${seeds.length} seeds x t=0..1: paths through the space morph, not jump (allow 1 noisy reversal)`);
-  violations.slice(0, 8).forEach((v) => log(`       ~ ${v.pair} seed=${v.seed}: ${v.what}`));
+  return { pairs, seeds, TOL, tested, violations };
+}
+function reportBlend(D) {
+  const status = D.violations.length ? "WARN" : "PASS";
+  result.gates.blend = { status, pairs: D.pairs.map((p) => p.join("->")), seeds: D.seeds,
+    tolerance: { points: D.TOL, reversalsAllowed: 1 }, tested: D.tested, violations: D.violations };
+  log(`[${status}] 5 blend monotonicity — ${D.pairs.length} pairs x ${D.seeds.length} seeds x t=0..1: paths through the space morph, not jump (allow 1 noisy reversal)`);
+  D.violations.slice(0, 8).forEach((v) => log(`       ~ ${v.pair} seed=${v.seed}: ${v.what}`));
   return status;
 }
 
@@ -381,22 +416,67 @@ function gateAudio() {
 }
 
 // ============================================================ run
-log(`validate-genres — ${allGenres.length} anchors, ${scoredGenres.length} scored, seeds=[${SEEDS.join(",")}]${QUICK ? " (quick)" : ""}`);
-log("");
-const s1 = gateDeterminism();
-const { s2, s3 } = gateDominanceAndMargin();
-const s4 = gateGeometry();
-const s5 = gateBlend();
-const s6 = gateVocabulary();
-const s7 = gateAudio();
-if (trackErrors.length) result.meta.trackErrors = trackErrors;
+function runGates(detByGenre, blendData) {
+  const s1 = gateDeterminism(detByGenre);
+  const { s2, s3 } = gateDominanceAndMargin();
+  const s4 = gateGeometry();
+  const s5 = reportBlend(blendData || computeBlend());
+  const s6 = gateVocabulary();
+  const s7 = gateAudio();
+  if (trackErrors.length) result.meta.trackErrors = trackErrors;
 
-const hardFail = s1 === "FAIL" || s2 === "FAIL" || s6 === "FAIL";
-result.exitCode = hardFail ? 1 : 0;
-log("");
-const statuses = { determinism: s1, dominance: s2, margin: s3, geometry: s4, blend: s5, vocabulary: s6, audio: s7 };
-const counts = Object.values(statuses).reduce((c, s) => ((c[s] = (c[s] || 0) + 1), c), {});
-log(`result: ${hardFail ? "FAIL" : "PASS"} — ${counts.PASS || 0} pass, ${counts.WARN || 0} warn, ${counts.FAIL || 0} fail${counts.SKIP ? ", " + counts.SKIP + " skipped" : ""}`);
-log(`(hard gates: 1 determinism, 2 dominance, 6 vocabulary; the rest warn)`);
-if (JSON_OUT) console.log(JSON.stringify(result, null, 2));
-process.exit(result.exitCode);
+  const hardFail = s1 === "FAIL" || s2 === "FAIL" || s6 === "FAIL";
+  result.exitCode = hardFail ? 1 : 0;
+  log("");
+  const statuses = { determinism: s1, dominance: s2, margin: s3, geometry: s4, blend: s5, vocabulary: s6, audio: s7 };
+  const counts = Object.values(statuses).reduce((c, s) => ((c[s] = (c[s] || 0) + 1), c), {});
+  log(`result: ${hardFail ? "FAIL" : "PASS"} — ${counts.PASS || 0} pass, ${counts.WARN || 0} warn, ${counts.FAIL || 0} fail${counts.SKIP ? ", " + counts.SKIP + " skipped" : ""}`);
+  log(`(hard gates: 1 determinism, 2 dominance, 6 vocabulary; the rest warn)`);
+  if (JSON_OUT) emit(JSON.stringify(result, null, 2));
+  if (!NO_CACHE) {
+    L.saveFeats(freshFeats);
+    if (!AUDIO) L.saveRun("validate", args, RUN_EXTRAS, { out: emit.text(), code: result.exitCode });
+  }
+  process.exit(result.exitCode);
+}
+
+async function main() {
+  if (!NO_CACHE && !AUDIO) { const hit = L.loadRun("validate", args, RUN_EXTRAS); if (hit) L.replayRun(hit); }
+  log(`validate-genres — ${allGenres.length} anchors, ${scoredGenres.length} scored, seeds=[${SEEDS.join(",")}]${QUICK ? " (quick)" : ""}`);
+  log("");
+  const nJobs = SERIAL ? 1 : L.jobs(args, allGenres.length);
+  if (nJobs < 2) { runGates(null, null); return; }
+  // parallel: fork shard workers for the per-genre state/feature/determinism
+  // builds, and compute gate 5's blends here while they run.
+  const shardsP = L.runShards(__filename, args, nJobs);
+  const blendData = computeBlend();
+  let msgs;
+  try { msgs = await shardsP; }
+  catch (e) { console.error("validate shards failed (" + e.message + ") — falling back to serial"); runGates(null, blendData); return; }
+  const detByGenre = {}, errByKey = {};
+  for (const m of msgs) {
+    Object.assign(detByGenre, m.det);
+    for (const [k, f] of Object.entries(m.feats)) { featCache[k] = f; freshFeats[k] = f; }
+    for (const e of m.errors) (errByKey[e.genre + ":" + e.seed] = errByKey[e.genre + ":" + e.seed] || []).push(e);
+  }
+  // replay worker-side track/feature errors in the serial (gate-2 first-touch) order
+  for (const g of scoredGenres) for (const seed of SEEDS) {
+    const k = g + ":" + seed;
+    if (errByKey[k]) { featCache[k] = null; trackErrors.push(...errByKey[k]); }
+  }
+  runGates(detByGenre, blendData);
+}
+
+if (SHARD) {
+  // worker: determinism failures + feature vectors for my stride of genres;
+  // one IPC message back to the parent, no printing.
+  const det = {};
+  allGenres.forEach((g, ix) => {
+    if (ix % SHARD.n !== SHARD.i) return;
+    det[g] = detFailuresFor(g);
+    if (V.TARGETS[g]) for (const seed of SEEDS) featOf(g, seed);
+  });
+  process.send({ det, feats: freshFeats, errors: trackErrors }, () => process.exit(0));
+} else {
+  main();
+}
