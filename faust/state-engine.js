@@ -22,6 +22,46 @@
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number(v) || 0));
   const cpspch = (p) => { p = parseFloat(p); const o = Math.floor(p), st = Math.round((p - o) * 100); return 261.625565 * Math.pow(2, (o - 8) + st / 12); };
 
+  // ---- per-voice insert chain (state.instruments.<voice>.inserts contract) ----
+  // 0-2 of {type, ...params}; type ∈ distort/phaser/chorus/filtersweep. Applied
+  // INSERT-style between the voice and its layer tap / fx sends (per voice —
+  // pad/bass/melody and solos, which inherit melody's recipe — never on the
+  // shared buses). Normalized here so live/press share clamps + module names.
+  // filtersweep is tempo-synced: `barSec: true` tells the engine to set the
+  // module's barSec param from state.bpm (4 beats/bar) and re-set it on glides.
+  // Per the kernel contract (csd-engine defaultInstruments): rate is Hz,
+  // rateBars = sweep period in bars, and filtersweep lo/hi are OCTAVES
+  // RELATIVE TO THE VOICE'S CUTOFF — converted to Hz here (cutoffHz arg).
+  function insertChain(m, cutoffHz) {
+    const out = [];
+    for (const it of (Array.isArray(m.inserts) ? m.inserts : [])) {
+      if (!it || out.length >= 2) break;
+      switch (it.type) {
+        case "distort": out.push({ type: "distort", module: "insert_distort", params: {
+          drive: clamp(it.drive != null ? it.drive : 0.5, 0, 1),
+          mix: clamp(it.mix != null ? it.mix : 1, 0, 1) } }); break;
+        case "phaser": out.push({ type: "phaser", module: "insert_phaser", params: {
+          rate: clamp(it.rate != null ? it.rate : 0.5, 0.01, 8),
+          depth: clamp(it.depth != null ? it.depth : 0.7, 0, 1),
+          mix: clamp(it.mix != null ? it.mix : 0.7, 0, 1) } }); break;
+        case "chorus": out.push({ type: "chorus", module: "insert_chorus", params: {
+          rate: clamp(it.rate != null ? it.rate : 0.8, 0.01, 8),
+          depth: clamp(it.depth != null ? it.depth : 0.5, 0, 1),
+          mix: clamp(it.mix != null ? it.mix : 0.5, 0, 1) } }); break;
+        case "filtersweep": {
+          const base = clamp(cutoffHz || 2000, 60, 12000);
+          const loHz = clamp(base * Math.pow(2, it.lo != null ? it.lo : -1), 40, 12000);
+          const hiHz = clamp(Math.max(base * Math.pow(2, it.hi != null ? it.hi : 1), loHz * 1.05), 60, 16000);
+          out.push({ type: "filtersweep", module: "insert_filtersweep", barSec: true, params: {
+            rateBars: clamp(it.rateBars != null ? it.rateBars : 4, 0.25, 64),
+            lo: loHz, hi: hiHz,
+            res: clamp(it.res != null ? it.res : 0.5, 0, 0.95) } }); break;
+        }
+      }
+    }
+    return out;
+  }
+
   function mergedInstruments(E, state) {
     const D = E.defaultInstruments(), s = state.instruments || {};
     return { pad: { ...D.pad, ...s.pad }, bass: { ...D.bass, ...s.bass },
@@ -36,10 +76,10 @@
     const L = m.level != null ? m.level : 0.6;
     const lvl = clamp(L, 0.001, 1);
     const sends = { rev: clamp((m.send || 0) / lvl, 0, 6), del: clamp((m.dsend || 0) / lvl, 0, 6) };
+    const c = m.cutoff || 2000, res = clamp(m.res != null ? m.res : 0.15, 0, 0.95);
     const base = { role, pool: role === "pad" ? 4 : role === "bass" ? 2 : 3,
       dry: 1, ...sends, lvl, gmul: Math.max(1, L), params: { level: lvl },
-      freqMax: 4000, tail: role === "pad" ? 3 : 1 };
-    const c = m.cutoff || 2000, res = clamp(m.res != null ? m.res : 0.15, 0, 0.95);
+      freqMax: 4000, tail: role === "pad" ? 3 : 1, inserts: insertChain(m, c) };
     const atk = clamp(Math.max(role === "pad" ? 0.05 : 0.005, m.attack != null ? m.attack : (role === "pad" ? 1.5 : 0.05)), 0.005, 5);
     const model = m.model || (role === "pad" || role === "bass" ? "saw" : "stack");
     // csound instr-4 "plucky" opt-in: setting ANY of attack/release/fenv swaps
@@ -231,5 +271,5 @@
     return mapEvents(E, state, ev, { bedAll: true });
   }
 
-  return { WAVES, clamp, cpspch, mergedInstruments, pitchedUnit, voiceUnits, fxParams, mapEvents, buildSchedule };
+  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, mapEvents, buildSchedule };
 });

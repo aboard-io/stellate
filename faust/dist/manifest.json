@@ -776,6 +776,44 @@
    "/hat_noise/level"
   ]
  },
+ "insert_chorus": {
+  "inputs": 1,
+  "outputs": 1,
+  "params": [
+   "/insert_chorus/depth",
+   "/insert_chorus/mix",
+   "/insert_chorus/rate"
+  ]
+ },
+ "insert_distort": {
+  "inputs": 1,
+  "outputs": 1,
+  "params": [
+   "/insert_distort/drive",
+   "/insert_distort/mix",
+   "/insert_distort/tone"
+  ]
+ },
+ "insert_filtersweep": {
+  "inputs": 1,
+  "outputs": 1,
+  "params": [
+   "/insert_filtersweep/barSec",
+   "/insert_filtersweep/hi",
+   "/insert_filtersweep/lo",
+   "/insert_filtersweep/rateBars",
+   "/insert_filtersweep/res"
+  ]
+ },
+ "insert_phaser": {
+  "inputs": 1,
+  "outputs": 1,
+  "params": [
+   "/insert_phaser/depth",
+   "/insert_phaser/mix",
+   "/insert_phaser/rate"
+  ]
+ },
  "kick909": {
   "inputs": 0,
   "outputs": 1,
