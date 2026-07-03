@@ -15,7 +15,9 @@
 (function (root) {
   "use strict";
 
-  const FADE_MS = 1600;          // crossfade length
+  const MOBILE = /Mobi|iPhone|iPad|Android/.test(navigator.userAgent) ||
+                 (navigator.hardwareConcurrency || 8) <= 4;
+  const FADE_MS = MOBILE ? 0 : 1600;   // phones: hard cuts — a second decoder + crossfade janks touch
   const IDLE_CYCLE_MS = 24000;   // ambient switch period when nothing is playing
   const RATE = 0.5;              // slowed playback — dreamier, more VHS
   const LS_KEY = "vaporwave-video-on";
@@ -35,25 +37,27 @@
     // without touching the veil/scanlines/OSD above
     vbox = document.createElement("div");
     vbox.style.cssText = "position:absolute;inset:0";
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < (MOBILE ? 1 : 2); i++) {
       const v = document.createElement("video");
       v.muted = true; v.loop = true; v.playsInline = true; v.preload = "none";
       v.setAttribute("muted", ""); v.setAttribute("playsinline", "");
       v.playbackRate = RATE;
       v.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" +
         "opacity:0;transition:opacity " + FADE_MS + "ms ease;" +
-        "filter:saturate(1.9) contrast(1.28) brightness(.85) hue-rotate(-6deg) blur(.4px)";
+        (MOBILE ? "filter:saturate(1.4) contrast(1.15)"           // cheap grade — no blur on phone GPUs
+                : "filter:saturate(1.9) contrast(1.28) brightness(.85) hue-rotate(-6deg) blur(.4px)");
       vbox.appendChild(v); vids.push(v);
     }
     wrap.appendChild(vbox);
     // readability veil + VHS scanlines + jittering grain over the footage, under the UI
     const veil = document.createElement("div");
     veil.style.cssText = "position:absolute;inset:0;" +
-      "background:linear-gradient(rgba(12,10,26,.72),rgba(12,10,26,.55) 30%,rgba(12,10,26,.78))";
+      "background:linear-gradient(rgba(12,10,26,.44),rgba(12,10,26,.26) 30%,rgba(12,10,26,.5))";
     const scan = document.createElement("div");
     scan.style.cssText = "position:absolute;inset:0;opacity:.22;mix-blend-mode:overlay;" +
       "background:repeating-linear-gradient(0deg,rgba(0,0,0,.6) 0 1px,transparent 1px 3px)";
     const grain = document.createElement("div");
+    if (MOBILE) grain.setAttribute("hidden", "");
     grain.style.cssText = "position:absolute;inset:-220px;opacity:.1;mix-blend-mode:screen;" +
       "background-image:" + NOISE_URI + ";animation:vhsgrain .42s steps(2) infinite";
     // horizontal tracking-tear band, flashed during glitch bursts
@@ -84,7 +88,7 @@
   // one ~1-1.7s glitch smear: color/blur glide out and back, tear band drifts —
   // a slow tape wobble, not a snap
   function burst() {
-    if (!ready || !on || reduced || !vbox) return;
+    if (!ready || !on || reduced || MOBILE || !vbox) return;
     const dx = (Math.random() < .5 ? -1 : 1) * (4 + Math.random() * 7);
     const dur = 1000 + Math.random() * 700;
     vbox.style.transition = "filter " + (dur / 2) + "ms ease-in-out, transform " + (dur / 2) + "ms ease-in-out";
@@ -113,7 +117,7 @@
     i = ((i % clips.length) + clips.length) % clips.length;
     if (i === cur) return;
     cur = i;
-    const back = 1 - front, vNew = vids[back], vOld = vids[front];
+    const back = vids.length > 1 ? 1 - front : 0, vNew = vids[back], vOld = vids[front];
     vNew.src = clipUrl(i);
     vNew.currentTime = 0;
     const go = () => {
@@ -122,8 +126,8 @@
       flashOsd("▶ PLAY");
       burst();                       // every switch tears a little
       vNew.style.opacity = "1";
-      vOld.style.opacity = "0";
-      setTimeout(() => { try { vOld.pause(); } catch (e) {} }, FADE_MS + 100);
+      if (vOld !== vNew) { vOld.style.opacity = "0";
+        setTimeout(() => { try { vOld.pause(); } catch (e) {} }, FADE_MS + 100); }
       front = back;
     };
     // wait for enough data so the fade lands on moving picture, not black
@@ -166,6 +170,9 @@
     enabled: () => on && ready,
     available: () => ready,
     onSection: (idx) => { stopIdle(); show(idx); },
+    // crossfade to a specific clip by filename (genre-affine pools: the
+    // explorer picks from GenreKernel.GENRE_CLIPS for the current mix)
+    showFile: (file) => { const i = clips.findIndex(c => c.file === file); if (i >= 0) { stopIdle(); show(i); } },
     credits: () => clips.slice(),
   };
 })(window);

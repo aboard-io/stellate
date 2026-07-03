@@ -3,40 +3,50 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GENRE SPACE — explorer</title>
+<title>CONSTELLATE — draw a path through genre space</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=VT323&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#0c0a1a;--panel:#15122c;--panel2:#1c1838;--line:#2c2750;--line2:#3b3568;
     --ink:#ece9ff;--dim:#9b93c6;--pink:#ff6ec7;--cyan:#45e0ff;--mint:#4dffb0;--amber:#ffd86b;--purple:#a06bff}
   *{box-sizing:border-box}
-  body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);
-    font:14px/1.55 ui-sans-serif,system-ui,sans-serif;padding:1.2rem 1rem 6rem}
-  body::before{content:"";position:fixed;inset:0;z-index:-1;background:
-    radial-gradient(70% 48% at 50% -10%,rgba(255,110,199,.14),transparent 60%),
-    radial-gradient(95% 60% at 50% -10%,rgba(160,107,255,.1),transparent 72%)}
-  .wrap{max-width:1020px;margin:0 auto}
-  h1{font-family:Orbitron,sans-serif;font-size:1.3rem;letter-spacing:.05em;margin:0 0 .15rem;
-    background:linear-gradient(90deg,var(--amber),var(--pink) 52%,var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .sub{color:var(--dim);font-size:.8rem;margin:0 0 1rem;max-width:76ch}
-  .cols{display:grid;grid-template-columns:1.25fr 1fr;gap:1rem}
-  @media(max-width:780px){.cols{grid-template-columns:1fr}}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:.9rem}
-  .card h2{font-family:Orbitron,sans-serif;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:0 0 .6rem}
-  #map{width:100%;aspect-ratio:1.25;background:var(--panel2);border:1px solid var(--line);border-radius:10px;cursor:crosshair;touch-action:none;display:block;
+  body{margin:0;height:100vh;overflow:hidden;background:var(--bg);color:var(--ink);
+    font:14px/1.55 ui-sans-serif,system-ui,sans-serif}
+  /* THE STAR MAP: the whole viewport is the space; video plays underneath,
+     stars + path float directly over the footage — no box, no panel. */
+  #map{position:fixed;inset:0;width:100vw;height:100vh;z-index:1;cursor:crosshair;touch-action:none;
     user-select:none;-webkit-user-select:none}
   #map text{pointer-events:none}
+  .brand{position:fixed;top:.7rem;left:1rem;z-index:3;font-family:Orbitron,sans-serif;font-size:1.02rem;letter-spacing:.05em;margin:0;
+    background:linear-gradient(90deg,var(--amber),var(--pink) 52%,var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .sub{position:fixed;top:3.1rem;left:1rem;z-index:3;color:var(--dim);font-size:.8rem;max-width:46ch;display:none;
+    background:rgba(12,10,26,.82);border:1px solid var(--line);border-radius:10px;padding:.7rem .9rem}
+  .sub.show{display:block}
+  .help{font-size:.7rem;padding:.1rem .5rem;border-radius:99px;vertical-align:middle;margin-left:.5rem;
+    border:1px solid var(--line2);background:rgba(28,24,56,.6);color:var(--dim);cursor:pointer;-webkit-text-fill-color:var(--dim)}
+  .card h2{cursor:pointer;user-select:none}
+  .card.min{padding:.45rem .9rem}
+  .card.min>:not(h2){display:none}
+  .card{background:rgba(18,15,38,.62);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+    border:1px solid var(--line);border-radius:12px;padding:.9rem}
+  .card h2{font-family:Orbitron,sans-serif;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:0 0 .6rem}
+  #panel{position:fixed;top:.7rem;right:.7rem;z-index:2;width:330px;max-height:calc(100vh - 1.4rem);overflow:auto}
   body.dragging{user-select:none;-webkit-user-select:none;cursor:crosshair}
-  .anchor{font:12px VT323,monospace;fill:#9b93c6}
+  .anchor{font:13px VT323,monospace;fill:rgba(220,214,255,.75);text-shadow:0 0 6px #000}
   .wlabel{font:11px VT323,monospace;fill:#4dffb0}
   .wpn{font:11px VT323,monospace;fill:#0c0a1a;font-weight:700}
-  #playhead{font:14px VT323,monospace;color:var(--mint);background:var(--panel2);border:1px solid var(--line);
-    border-radius:9px;padding:.5rem .7rem;margin:.6rem 0 0;line-height:1.5;white-space:pre-wrap;min-height:6.6em}
+  /* now playing: a chip bottom-right; click ♪ to expand the readout */
+  #np{position:fixed;right:.7rem;bottom:.7rem;z-index:2;display:flex;flex-direction:column;align-items:flex-end;gap:.4rem}
+  #np.collapsed #playhead{display:none}
+  #npBtn{width:46px;height:46px;border-radius:50%;font-size:1.25rem;line-height:1;display:grid;place-items:center;
+    background:rgba(18,15,38,.72);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+  #playhead{font:14px VT323,monospace;color:var(--mint);background:rgba(12,10,26,.82);border:1px solid var(--line);
+    border-radius:9px;padding:.5rem .7rem;line-height:1.5;white-space:pre-wrap;max-width:min(520px,92vw)}
   .row{display:flex;align-items:center;gap:.5rem;margin:.3rem 0}
   .row label{width:86px;font-size:.7rem;color:var(--dim)}
   .row input[type=range]{flex:1;accent-color:var(--pink);margin:0}
   .row output{width:46px;text-align:right;color:var(--mint);font-variant-numeric:tabular-nums;font-size:.74rem}
-  .row select{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.25rem .4rem;font-size:.78rem}
-  button{font:inherit;cursor:pointer;border-radius:9px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);padding:.45rem .8rem}
+  .row select{flex:1;background:rgba(28,24,56,.6);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.25rem .4rem;font-size:.78rem}
+  button{font:inherit;cursor:pointer;border-radius:9px;border:1px solid var(--line2);background:rgba(28,24,56,.6);color:var(--ink);padding:.45rem .8rem}
   button.go{background:linear-gradient(90deg,var(--pink),var(--purple));border:none;color:#0c081a;font-weight:700}
   .btns{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem}
   .sc{display:flex;align-items:center;gap:.5rem;font-size:.7rem;margin:.16rem 0}
@@ -46,31 +56,37 @@
   .sc .v{width:28px;text-align:right;color:var(--mint);font-variant-numeric:tabular-nums}
   #status{color:var(--cyan);font-size:.78rem;min-height:1.2em;margin-top:.55rem}
   #pool{color:var(--dim);font-size:.7rem;margin-top:.3rem}
-  .seedin{width:90px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.3rem .5rem}
+  .seedin{width:90px;background:rgba(28,24,56,.6);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.3rem .5rem}
   .hint{color:var(--dim);font-size:.7rem;margin-top:.45rem}
   a{color:var(--cyan)}
+  @media(max-width:640px){
+    #panel{left:.5rem;right:.5rem;top:auto;bottom:4.2rem;width:auto;max-height:46vh}
+    #np{right:.5rem;bottom:.5rem}
+    #playhead{font-size:12px;max-width:calc(100vw - 5rem)}
+    .brand{font-size:.9rem}
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>GENRE SPACE — explorer</h1>
-  <p class="sub"><b>Drag</b> to set a destination — the song journeys there, never jumps.
-  <b>Double-click</b> to drop path waypoints: lines connect them and a traveler walks the path,
-  morphing the music through every genre it crosses — the path <em>is</em> the mix.
-  Drag waypoints to move them, right-click to erase. Mode/scale is a dimension below.</p>
-  <div class="cols">
-    <div class="card">
-      <h2>The space — dbl-click builds the mix path</h2>
-      <svg id="map" viewBox="0 0 500 400"></svg>
-      <div id="playhead">▶ press LIVE</div>
-    </div>
-    <div class="card" id="panel"></div>
-  </div>
+<h1 class="brand">CONSTELLATE<button class="help" title="show/hide the docs"
+  onclick="document.querySelector('.sub').classList.toggle('show')">?</button></h1>
+<p class="sub"><b>Drag</b> anywhere to set a destination — the song journeys there, never jumps.
+<b>Double-click</b> to drop path waypoints: a constellation line connects them and a traveler
+walks the path, morphing the music through every genre it crosses — the path <em>is</em> the mix.
+Drag waypoints to move them, right-click to erase. Set the pace in the panel.
+♪ (bottom right) shows what's playing.</p>
+<svg id="map"></svg>
+<div class="card" id="panel"></div>
+<div id="np">
+  <div id="playhead">▶ press LIVE</div>
+  <button id="npBtn" title="now playing" onclick="document.getElementById('np').classList.toggle('collapsed')">♪</button>
 </div>
 <script src="csd-engine.js"></script>
 <script src="genre-kernel.js"></script>
 <script src="genre-verifier.js"></script>
 <script src="wasm-audio.js"></script>
+<script src="video-layer.js"></script>
+<script src="strudel-export.js"></script>
 <script type="module">
 import { h, render } from "https://esm.sh/preact@10.19.3";
 import htm from "https://esm.sh/htm@3.1.1";
@@ -79,15 +95,21 @@ const K=GenreKernel, V=GenreVerifier, E=CsdEngine;
 const POS={ ambient:[55,55], neoclassical:[65,165], vaporwave:[150,100], lofi:[105,250],
   downtempo:[190,180], blues:[140,330], jazz:[225,330], triphop:[240,255],
   synthwave:[295,115], dancepop:[345,70], edm:[420,60], house:[345,215],
-  techno:[420,145], dubstep:[420,265], jungle:[455,335] };
-const SNAP=26, CUTOFF=175, BARS_PER_SEG=16;
+  techno:[420,145], dubstep:[420,265], jungle:[455,335],
+  dinosynth:[45,335], canawave:[250,52], transitwave:[358,152],
+  dub:[300,300], trance:[455,95], disco:[325,170], italo:[350,120],
+  bigbeat:[400,225], garage:[385,290], doomdrone:[40,220], newage:[110,110],
+  exotica:[160,300], industrial:[465,200], spokenword:[170,215], chiptune:[475,40],
+  chinawave:[205,95], sovietwave:[285,55] };
+const SNAP=26, CUTOFF=175, BARS_PER_SEG=128;   // one path leg ≈ 128 bars — genres evolve slowly, almost imperceptibly
 const KEYS=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 const PROG_MODE={ royal_road:[0,"major · royal road"], four_chords:[0,"major"], sad_pop:[9,"minor"],
   doo_wop:[0,"major"], ii_v_i:[0,"major · ii-V-I"], pop_1625:[0,"major"], synthwave:[9,"minor"],
   andalusian:[9,"minor · andalusian"], minor_run:[9,"minor"], neosoul:[0,"major · lydian air"],
   lofi:[0,"major · jazzy"], epic_min:[9,"minor"], house_min:[9,"minor"], dream:[0,"major · dreamy"],
   canon:[0,"major · canon"], drone_min:[9,"minor · drone"], deep_two:[9,"minor"],
-  house_min7:[9,"minor"], blues_12:[0,"blues · dom7 12-bar"],
+  house_min7:[9,"minor"], blues_12:[0,"blues · dom7 12-bar"], primeval:[9,"minor · primeval"],
+  uplift:[9,"minor · uplift"], funk_vamp:[9,"dorian · funk vamp"],
   mode_dorian:[9,"dorian"], mode_phrygian:[9,"phrygian"], mode_lydian:[0,"lydian"], mode_mixo:[0,"mixolydian"] };
 const MODE_LOCKS={ auto:null, major:"dream", minor:"minor_run", dorian:"mode_dorian",
   phrygian:"mode_phrygian", lydian:"mode_lydian", mixolydian:"mode_mixo", blues:"blues_12" };
@@ -95,10 +117,12 @@ const MODE_LOCKS={ auto:null, major:"dream", minor:"minor_run", dorian:"mode_dor
 // ---------- store ----------
 const S={ cursor:{x:250,y:165}, waypoints:[], travel:{seg:0,t:0}, weights:[],
   target:null, playing:null, queue:[], barCount:0, barInfo:null, live:false,
-  seed:1, modeLock:"auto", scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
+  seed:Math.floor(Math.random()*99999)+1, modeLock:"auto", pace:BARS_PER_SEG, more:false, load:1, scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
   pool:"", beatLine:"▶ press LIVE" };
 const subs=[];
-function set(patch){ Object.assign(S,patch); subs.forEach(f=>f()); }
+let _raf=0;
+function set(patch){ Object.assign(S,patch);
+  if(_raf)return; _raf=requestAnimationFrame(()=>{ _raf=0; subs.forEach(f=>f()); }); }
 const deep=o=>JSON.parse(JSON.stringify(o));
 
 // ---------- weights / targeting ----------
@@ -111,12 +135,22 @@ function weightsAt(pt){
   return ws.map(x=>({g:x.g,w:x.w/tot}));
 }
 let lastSig="";
+// each genre NEIGHBORHOOD gets its own key (stable per seed): the space was
+// all C/Am before, so every pad landed on the same pitches — the "royal road
+// pad" haunting even jungle. Crossing into a new dominant genre = a key change.
+function keyFor(weights,seed){
+  const g=(weights[0]||{g:"vaporwave"}).g;
+  let h=seed>>>0; for(const c of g) h=(h*31+c.charCodeAt(0))>>>0;
+  return h%12;
+}
 function retarget(pt){
   const weights=weightsAt(pt);
-  const target=K.mix(weights.map(w=>({...w})),{seed:S.seed});
+  const target=K.mix(weights.map(w=>({...w})),{seed:S.seed, keyOffset:keyFor(weightsAt(pt),S.seed)});
   if(MODE_LOCKS[S.modeLock]) target.progression=MODE_LOCKS[S.modeLock];
   const patch={weights,target,cursor:pt};
-  if(!S.playing){ patch.playing=deep(target); }
+  // before LIVE (or after STOP) the cursor PLACES you — the playing state IS
+  // the target. Only mid-performance do we glide instead of jump.
+  if(!S.playing||!S.live){ patch.playing=deep(target); }
   set(patch);
   const sig=JSON.stringify(weights.map(w=>w.g+Math.round(w.w*20)))+S.modeLock;
   if(sig!==lastSig){ lastSig=sig; rebuildQueue(); }
@@ -189,7 +223,7 @@ function rescore(){
 function travelStep(){
   if(S.waypoints.length<2)return;
   let {seg,t}=S.travel;
-  t+=1/BARS_PER_SEG;
+  t+=1/(S.pace||BARS_PER_SEG);   // pace slider: bars per path leg
   if(t>=1){ t=0; seg=(seg+1)%(S.waypoints.length-1||1); }
   const a=S.waypoints[seg], b=S.waypoints[seg+1]||a;
   const pt={x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t};
@@ -197,14 +231,30 @@ function travelStep(){
   retarget(pt);
 }
 
+// ---------- genre-affine video: the background footage follows the mix ----------
+// pool = union of the current weights' clip pools (dominant genre first);
+// crossfade on every section change, advance through the pool as we travel.
+let vidSec="", vidIx=0, vidBars=0;
+function genreVideo(info){
+  if(!(window.VideoLayer&&VideoLayer.enabled()))return;
+  vidBars++;
+  const newSec=info.section!==vidSec;
+  if(!newSec&&vidBars%8!==0)return;   // cut on section changes AND every 8 bars inside long sections
+  vidSec=info.section; vidIx++;
+  const pool=[];
+  S.weights.slice().sort((a,b)=>b.w-a.w).forEach(w=>(K.GENRE_CLIPS[w.g]||[]).forEach(c=>{if(!pool.includes(c))pool.push(c);}));
+  if(pool.length)VideoLayer.showFile(pool[vidIx%pool.length]+".mp4");
+}
+
 // ---------- live engine ----------
 async function goLive(){
   try{
     set({live:true,barCount:0}); rebuildQueue();
-    await WasmAudio.exploreLive(()=>S.playing, m=>set({status:m}), { onBar:(info)=>{
+    await WasmAudio.exploreLive(()=>S.playing, m=>set({status:m}), { onLoad:(r)=>{S.load=r;}, onBar:(info)=>{
       set({barInfo:info,barCount:S.barCount+1});
       if(S.waypoints.length>=2) travelStep();
       glideStep();
+      genreVideo(info);
     }});
   }catch(e){ set({live:false,status:"live failed: "+e.message}); console.error(e); }
 }
@@ -215,27 +265,39 @@ setInterval(()=>{ if(!S.live&&S.playing&&S.target){ set({barCount:S.barCount+1})
 const svg=document.getElementById("map"), NS="http://www.w3.org/2000/svg";
 const el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
 function drawMap(){
+  // a star chart drawn straight over the video: each genre is a star with a
+  // soft halo; the drawn path is a constellation line; the traveler glows.
+  // Logical space stays 500x400; we scale COORDS to screen pixels here so
+  // stars/text render round and unstretched at any aspect ratio.
   svg.innerHTML="";
-  if(S.waypoints.length>1)
-    svg.appendChild(el("polyline",{points:S.waypoints.map(w=>w.x+","+w.y).join(" "),
-      fill:"none",stroke:"#45e0ff","stroke-width":1.5,"stroke-dasharray":"5 4",opacity:.7}));
+  const rb=svg.getBoundingClientRect(), X=x=>x*rb.width/500, Y=y=>y*rb.height/400;
+  if(S.waypoints.length>1){
+    const pts=S.waypoints.map(w=>X(w.x)+","+Y(w.y)).join(" ");
+    svg.appendChild(el("polyline",{points:pts,fill:"none",stroke:"#45e0ff","stroke-width":4,opacity:.18}));   // under-glow
+    svg.appendChild(el("polyline",{points:pts,fill:"none",stroke:"#8ef2ff","stroke-width":1.2,"stroke-dasharray":"4 5",opacity:.85}));
+  }
   const wmap=Object.fromEntries(S.weights.map(w=>[w.g,w.w]));
   for(const [g,[x,y]] of Object.entries(POS)){
-    const w=wmap[g]||0;
-    if(w>0.01) svg.appendChild(el("circle",{cx:x,cy:y,r:6+w*26,fill:"#a06bff",opacity:.12+w*.3}));
-    svg.appendChild(el("circle",{cx:x,cy:y,r:4.5,fill:w>0.01?"#ff6ec7":"#a06bff"}));
-    const t=el("text",{x:x+8,y:y+4,"class":"anchor"});t.textContent=g;svg.appendChild(t);
-    if(w>0.01){const wl=el("text",{x:x+8,y:y+16,"class":"wlabel"});wl.textContent=Math.round(w*100)+"%";svg.appendChild(wl);}
+    const w=wmap[g]||0, cx=X(x), cy=Y(y);
+    svg.appendChild(el("circle",{cx,cy,r:8+(w>0.01?w*26:0),fill:w>0.01?"#ff6ec7":"#a06bff",opacity:.10+w*.28}));  // halo
+    svg.appendChild(el("circle",{cx,cy,r:w>0.01?3.2:2.2,fill:w>0.01?"#ffd7ee":"#e6e0ff",opacity:.95}));           // the star
+    const t=el("text",{x:cx+9,y:cy+4,"class":"anchor"});t.textContent=g;svg.appendChild(t);
+    if(w>0.01){const wl=el("text",{x:cx+9,y:cy+17,"class":"wlabel"});wl.textContent=Math.round(w*100)+"%";svg.appendChild(wl);}
   }
   S.waypoints.forEach((w,i)=>{
-    const c=el("circle",{cx:w.x,cy:w.y,r:9,fill:"#ffd86b",stroke:"#0c0a1a","stroke-width":1.5,cursor:"grab"});
+    const cx=X(w.x), cy=Y(w.y);
+    svg.appendChild(el("circle",{cx,cy,r:14,fill:"#ffd86b",opacity:.22}));
+    const c=el("circle",{cx,cy,r:9,fill:"#ffd86b",stroke:"#0c0a1a","stroke-width":1.2,cursor:"grab"});
     c.dataset.wp=i; svg.appendChild(c);
-    const n=el("text",{x:w.x,y:w.y+3.5,"text-anchor":"middle","class":"wpn"});n.textContent=i+1;
+    const n=el("text",{x:cx,y:cy+3.5,"text-anchor":"middle","class":"wpn"});n.textContent=i+1;
     svg.appendChild(n);
   });
-  svg.appendChild(el("circle",{cx:S.cursor.x,cy:S.cursor.y,r:9,fill:"none",stroke:"#ff6ec7","stroke-width":2}));
-  svg.appendChild(el("circle",{cx:S.cursor.x,cy:S.cursor.y,r:2.5,fill:"#ff6ec7"}));
+  const ccx=X(S.cursor.x), ccy=Y(S.cursor.y);
+  svg.appendChild(el("circle",{cx:ccx,cy:ccy,r:13,fill:"none",stroke:"#ff6ec7","stroke-width":1,opacity:.4}));
+  svg.appendChild(el("circle",{cx:ccx,cy:ccy,r:9,fill:"none",stroke:"#ff6ec7","stroke-width":2}));
+  svg.appendChild(el("circle",{cx:ccx,cy:ccy,r:2.4,fill:"#ff6ec7"}));
 }
+addEventListener("resize",()=>set({}));
 const toXY=ev=>{const r=svg.getBoundingClientRect();const p=ev.touches?ev.touches[0]:ev;
   return {x:Math.max(0,Math.min(500,(p.clientX-r.left)*500/r.width)),
           y:Math.max(0,Math.min(400,(p.clientY-r.top)*400/r.height))};};
@@ -247,7 +309,9 @@ svg.addEventListener("pointerdown",e=>{
   const wp=e.target.dataset&&e.target.dataset.wp;
   if(wp==null && now-lastTap.t<380 && Math.hypot(pt.x-lastTap.x,pt.y-lastTap.y)<16){
     lastTap={t:0,x:0,y:0};
-    set({waypoints:[...S.waypoints,pt],status:"waypoint "+(S.waypoints.length+1)+" added — dbl-click again to extend"});
+    // first waypoint: the path begins WHERE THE MUSIC IS — cursor becomes point 1
+    const base=S.waypoints.length?S.waypoints:[{x:S.cursor.x,y:S.cursor.y}];
+    set({waypoints:[...base,pt],status:"path extended — the traveler walks from the playhead"});
     return;
   }
   lastTap={t:now,x:pt.x,y:pt.y};
@@ -291,11 +355,22 @@ const DIMS=[
 function Panel(){
   if(!S.playing) return html`<div>…</div>`;
   return html`
-    <h2>Now playing — evolves toward the cursor/path</h2>
+    <div class="btns" style="margin-top:0">
+      <button class="go" onclick=${goLive}>▶ LIVE</button>
+      <button onclick=${stopLive}>■ STOP</button>
+      <button onclick=${()=>set({more:!S.more})}>${S.more?"× less":"⚙ more"}</button>
+      ${window.StrudelExport?html`<button title="open this exact state as live-editable Strudel code"
+        onclick=${()=>{try{window.open(StrudelExport.shareUrl(S.playing),"_blank");}catch(e){set({status:"strudel export failed: "+e.message});}}}>⧉ remix</button>`:""}
+    </div>
     <div class="row"><label>seed</label>
       <input class="seedin" type="number" value=${S.seed}
         onchange=${e=>{set({seed:+e.target.value||1});retarget(S.cursor);}} />
       <button onclick=${()=>{set({seed:Math.floor(Math.random()*99999)});retarget(S.cursor);}}>🎲</button></div>
+    <div class="row"><label>path speed</label>
+      <input type="range" min="16" max="256" step="8" value=${S.pace}
+        onInput=${e=>set({pace:+e.target.value})} />
+      <output>${S.pace}</output></div>
+    ${S.more?html`
     <div class="row"><label>mode/scale</label>
       <select value=${S.modeLock} onchange=${e=>{set({modeLock:e.target.value});retarget(S.cursor);}}>
         ${Object.keys(MODE_LOCKS).map(m=>html`<option value=${m}>${m}</option>`)}
@@ -306,22 +381,45 @@ function Panel(){
           onInput=${e=>{setv(S.playing,+e.target.value);set({});}} />
         <output>${(+get(S.playing)).toFixed(step>=1?0:2)}</output></div>`)}
     <div class="btns">
-      <button class="go" onclick=${goLive}>▶ LIVE</button>
-      <button onclick=${stopLive}>■ STOP</button>
       <button onclick=${()=>{
         const a=document.createElement("a");
         a.href=URL.createObjectURL(new Blob([JSON.stringify(S.playing,null,2)],{type:"application/json"}));
-        a.download="genre-space-preset.json";a.click();}}>⤓ preset</button>
+        a.download="constellate-preset.json";a.click();}}>⤓ preset</button>
+      <button onclick=${()=>{
+        // export the drawn path (or the cursor point) as journey waypoints:
+        //   node genre-kernel.js journey constellate-path.json --hours 4 --render --video
+        const pts=S.waypoints.length?S.waypoints:[S.cursor];
+        const pathJson={kind:"genre-space-path",version:1,seed:S.seed,modeLock:S.modeLock,
+          waypoints:pts.map(p=>({x:Math.round(p.x),y:Math.round(p.y),
+            weights:weightsAt(p).map(w=>({g:w.g,w:+w.w.toFixed(3)}))}))};
+        const a=document.createElement("a");
+        a.href=URL.createObjectURL(new Blob([JSON.stringify(pathJson,null,2)],{type:"application/json"}));
+        a.download="constellate-path.json";a.click();
+        set({status:"path exported — render it: node genre-kernel.js journey constellate-path.json --hours 4 --render --video"});}}>⤓ path</button>
+      <button onclick=${()=>{
+        // import a journey saved by ⤓ path
+        const inp=document.createElement("input");
+        inp.type="file"; inp.accept="application/json";
+        inp.onchange=()=>{ const f=inp.files[0]; if(!f) return;
+          f.text().then(txt=>{
+            const p=JSON.parse(txt);
+            if(!Array.isArray(p.waypoints)||!p.waypoints.length||
+               !p.waypoints.every(w=>isFinite(+w.x)&&isFinite(+w.y))) throw new Error("no waypoints");
+            const wps=p.waypoints.map(w=>({x:+w.x,y:+w.y}));
+            set({waypoints:wps,travel:{seg:0,t:0},
+              seed:p.seed!=null?p.seed:S.seed,modeLock:p.modeLock||S.modeLock,
+              status:"path loaded — "+wps.length+" waypoints"});
+            retarget(wps[0]);
+          }).catch(e=>set({status:"bad path file — "+e.message}));};
+        inp.click();}}>⤒ path</button>
       ${S.waypoints.length?html`<button onclick=${()=>set({waypoints:[],travel:{seg:0,t:0}})}>✕ path</button>`:""}
+      ${window.VideoLayer&&VideoLayer.available()?html`<button onclick=${()=>{VideoLayer.setEnabled(!VideoLayer.enabled());if(!VideoLayer.enabled())vidSec="";set({});}}>${VideoLayer.enabled()?"▣ video":"▢ video"}</button>`:""}
     </div>
-    <div>${S.scores.map(([g,s])=>html`
-      <div class="sc"><div class="g">${g}</div>
-        <div class="bar"><div class="f" style=${"width:"+s+"%"}></div></div>
-        <div class="v">${s}</div></div>`)}</div>
-    <div id="status">${S.status}</div>
     <div id="pool">${S.pool}</div>
-    <p class="hint">dbl-click the map to build a mix path · right-click a waypoint to erase ·
-    <a href="builder.html">open the builder</a></p>`;
+    <p class="hint">dbl-click the sky to draw a path · right-click a waypoint to erase ·
+    ⤓/⤒ path saves and reloads a journey · render it: node genre-kernel.js journey ${"<path.json>"} --render --video ·
+    <a href="builder.html">open the builder</a></p>`:""}
+    <div id="status">${S.status}</div>`;
 }
 const panel=document.getElementById("panel");
 subs.push(()=>{ render(Panel(),panel); drawMap(); });
@@ -338,7 +436,8 @@ async function playheadTick(){
       let t=0; try{ t=await WasmAudio.scoreTime(); }catch(e){}
       const b=S.barInfo, beat=Math.max(0,Math.min(7.99,(t-b.when)/b.spb+8));
       line1=`▶ bar ${b.serial+1} · beat ${1+Math.floor(beat%8)} · ${b.chord||"—"} (${b.ci+1}/${b.nch}) · ${b.section}`+
-        (S.waypoints.length>=2?` · path ${S.travel.seg+1}→${S.travel.seg+2}`:"");
+        (S.waypoints.length>=2?` · path ${S.travel.seg+1}→${S.travel.seg+2}`:"")+
+        ` · engine ${S.load.toFixed(2)}x${S.load<0.97?" ⚠":""}`;
     }
     const m=S.playing.genreMeta||{};
     document.getElementById("playhead").textContent=
@@ -353,11 +452,14 @@ sample ${S.playing.foundSources.map(s=>s.id).join("+")} · verifier says: ${S.be
 
 // ---------- pool + boot ----------
 (function(){
-  const pool=[...Object.values(K.SOURCES).map(s=>s.url),
-              ...Object.values(K.SAMPLES).map(s=>"found/samples/"+s.file)];
+  if(WasmAudio.MOBILE){ set({pool:"mobile: samples load on demand"}); return; }
+  // local sample files first (they decode in ms), remote archive.org beds after
+  const pool=[...Object.values(K.SAMPLES).map(s=>"found/samples/"+s.file),
+              ...Object.values(K.SOURCES).map(s=>s.url)];
   WasmAudio.prewarmPool(pool,(done,total)=>set({pool:`sample pool: ${done}/${total} cached`+(done===total?" ✓":"…")}));
 })();
 retarget(S.cursor); rescore(); playheadTick();
+if(window.VideoLayer)VideoLayer.init().then(()=>set({}));   // found-video background (genre-affine, follows the mix)
 </script>
 </body>
 </html>
