@@ -18,3 +18,5 @@ models/
 # which the leading slash leaves tracked.
 /*.state.json
 faust/node_modules/
+.venv-sing/
+journey/
