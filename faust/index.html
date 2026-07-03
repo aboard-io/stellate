@@ -1,0 +1,54 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>faust prototype — per-voice WASM worklets</title>
+<style>
+  body { font: 14px/1.5 ui-monospace, monospace; background: #14121a; color: #cfc9e0; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+  h1 { font-size: 16px; color: #b48ead; }
+  button { font: inherit; background: #2a2438; color: #cfc9e0; border: 1px solid #4a3f66; padding: .5rem 1.2rem; margin-right: .5rem; cursor: pointer; }
+  button:hover { background: #3a3150; }
+  #stats { white-space: pre; margin-top: 1rem; color: #8fbcbb; }
+  .dim { color: #6c6684; }
+</style>
+<h1>FAUST per-voice worklet prototype (vs single csound worklet)</h1>
+<p class="dim">12 AudioWorkletNodes (kick909, snare_crack ×2, supersaw ×3, pad_saw ×4,
+ dx7_alg5 full DX7, fx_bus) + native gain routing. Fixture: 8 bars of real
+ <code>buildEvents</code> techno (seed 7, 132bpm), looped; every 3rd melody note plays the DX7.</p>
+<button id="play">▶ play</button>
+<button id="stop">■ stop</button>
+<button id="storm">⚡ param storm (50ms cutoff sweeps, all voices)</button>
+<button id="ep">DX7: E.PIANO 1</button>
+<button id="tb">DX7: TUB BELLS</button>
+<div id="stats">loading…</div>
+<script type="module">
+  import { createEngine } from "./engine.js";
+  const stats = document.getElementById("stats");
+  const ctx = new AudioContext({ latencyHint: "interactive" });
+  const fixture = await (await fetch("fixture.json")).json();
+  const eng = await createEngine(ctx, fixture);
+  window.__eng = eng;   // benchmark hook
+  stats.textContent = `ready — ${eng.nodeCount} worklet nodes, sr=${ctx.sampleRate}`;
+
+  document.getElementById("play").onclick = async () => { await ctx.resume(); eng.play(); };
+  document.getElementById("stop").onclick = () => { eng.stop(); eng.stormStop(); };
+  let storming = false;
+  document.getElementById("storm").onclick = () => {
+    storming = !storming;
+    storming ? eng.stormStart() : eng.stormStop();
+  };
+  let swapMs = null;
+  document.getElementById("ep").onclick = async () => { swapMs = await eng.dx7Load("E.PIANO 1"); };
+  document.getElementById("tb").onclick = async () => { swapMs = await eng.dx7Load("TUB BELLS"); };
+  window.__swapMs = () => swapMs;
+
+  setInterval(() => {
+    const j = eng.jank;
+    stats.textContent =
+      `nodes: ${eng.nodeCount} worklets   sr=${ctx.sampleRate}   ctx=${ctx.state}\n` +
+      `rms: ${eng.rms().toFixed(4)}\n` +
+      `worst rAF gap: ${j.worstRafGapMs.toFixed(1)} ms   gaps>50ms: ${j.rafGapsOver50}\n` +
+      `worst audio-clock stall vs wallclock: ${j.worstAudioStallMs.toFixed(1)} ms\n` +
+      `worklet errors: ${eng.errors.length}${eng.errors.length ? "\n" + eng.errors.join("\n") : ""}\n` +
+      `baseLatency: ${(ctx.baseLatency * 1000).toFixed(1)} ms   outputLatency: ${((ctx.outputLatency || 0) * 1000).toFixed(1)} ms\n` +
+      `(per-node CPU is not exposed by WebAudio — jank + stall above is the graph-level load proxy)`;
+  }, 500);
+</script>

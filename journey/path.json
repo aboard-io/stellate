@@ -1,0 +1,11 @@
+{"kind":"genre-space-path","version":1,"seed":11,
+ "waypoints":[
+  {"x":55,"y":55,"weights":[{"g":"ambient","w":1}]},
+  {"x":45,"y":335,"weights":[{"g":"dinosynth","w":1}]},
+  {"x":140,"y":330,"weights":[{"g":"blues","w":0.6},{"g":"triphop","w":0.4}]},
+  {"x":455,"y":335,"weights":[{"g":"jungle","w":1}]},
+  {"x":420,"y":145,"weights":[{"g":"techno","w":1}]},
+  {"x":358,"y":152,"weights":[{"g":"transitwave","w":1}]},
+  {"x":250,"y":52,"weights":[{"g":"canawave","w":0.7},{"g":"dancepop","w":0.3}]},
+  {"x":150,"y":100,"weights":[{"g":"vaporwave","w":1}]}
+ ]}
