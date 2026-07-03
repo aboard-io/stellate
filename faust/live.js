@@ -27,7 +27,10 @@
   const BASE = new URL(".", scriptSrc).href;   // .../faust/
   const SITE = new URL("..", BASE).href;       // site root (found/, found/samples/)
 
-  const LOOKAHEAD = 4;      // seconds of scheduled audio kept ahead
+  // Background survival: hidden tabs clamp timers to >=1s (audible tabs are
+  // exempt from Chrome's *intensive* 1/min throttling, but not the 1s clamp).
+  // 6s of scheduled audio keeps >=4-5s of margin between 1s background ticks.
+  const LOOKAHEAD = 6;      // seconds of scheduled audio kept ahead
   const TICK_MS = 160;
 
   async function exploreLive(getState, onStatus, opts) {
@@ -352,6 +355,8 @@
     const tick = async () => {
       if (abort) return;
       try {
+        // never let a browser/OS suspension stick while we're supposed to play
+        if (ctx.state === "suspended") { try { ctx.resume(); } catch (e) {} }
         if (!injecting) {
           injecting = true;
           const now = ctx.currentTime;
@@ -362,6 +367,16 @@
       } catch (e) { injecting = false; errors.push(String(e && e.message || e)); console.error("FaustLive tick", e); }
       timer = setTimeout(tick, TICK_MS);
     };
+    // audio must SURVIVE focus loss: nothing here suspends the ctx on blur,
+    // and if the browser did (mobile interruption), resume the moment we're
+    // back. The scheduler is plain setTimeout — no rAF anywhere in the audio
+    // path — so it keeps running (1s-clamped) while hidden.
+    const onVisible = () => { if (!abort && ctx.state === "suspended") { try { ctx.resume(); } catch (e) {} } };
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", onVisible);
+      root.addEventListener("focus", onVisible);
+      root.addEventListener("pageshow", onVisible);
+    }
     status(ctx.state === "running" ? "live (faust) — drag the space" : "live (tap again if silent)");
     tick();
 
@@ -381,6 +396,11 @@
         // silences reverb/delay tails and anything already scheduled ahead —
         // buffer sources included — within ~60ms), then tear down and close.
         abort = true; clearTimeout(timer); clearInterval(meter);
+        if (typeof document !== "undefined") {
+          document.removeEventListener("visibilitychange", onVisible);
+          root.removeEventListener("focus", onVisible);
+          root.removeEventListener("pageshow", onVisible);
+        }
         const tNow = ctx.currentTime;
         try {
           master.gain.cancelScheduledValues(tNow);
