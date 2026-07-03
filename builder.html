@@ -279,7 +279,21 @@ function progChords(){return (E.PROGRESSIONS[state.progression]||E.PROGRESSIONS.
 function secLen(){return progChords().length*8;}
 function sectionRanges(){let cur=0;const r=state.sections.map((s,i)=>{const len=(s.cycles||1)*secLen();const o={i,start:cur,end:cur+len};cur+=len;return o;});return {ranges:r,total:cur};}
 function estSeconds(){return (sectionRanges().total+8)*60/state.bpm;}
-function neededSources(st){const ids=new Set(st.sections.filter(s=>s.found&&s.found.sourceId).map(s=>s.found.sourceId));return st.foundSources.filter(s=>ids.has(s.id));}
+function neededSources(st){
+  // every way a section can reference a source: bed/chops/break, one-shot hits,
+  // VO lines, door chime, sung vocal — plus the station-name pool. Missing any
+  // of these leaves its ftgen file unwritten and the whole compile fails.
+  const ids=new Set();
+  st.sections.forEach(s=>{
+    if(s.found&&s.found.sourceId)ids.add(s.found.sourceId);
+    if(s.hits&&s.hits.sourceId)ids.add(s.hits.sourceId);
+    if(s.vox&&s.vox.sourceId)ids.add(s.vox.sourceId);
+    if(typeof s.ding==="string")ids.add(s.ding);
+    if(typeof s.vocal==="string")ids.add(s.vocal);
+  });
+  (st.stationPool||[]).forEach(id=>ids.add(id));
+  return st.foundSources.filter(s=>ids.has(s.id));
+}
 if(!state.instruments) state.instruments=E.defaultInstruments();
 
 // ---- globals / sources ----

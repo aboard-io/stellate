@@ -11,13 +11,25 @@
   "use strict";
 
   const CSOUND_CDN = "https://cdn.jsdelivr.net/npm/@csound/browser@6/+esm";
-  const _wavCache = new Map(); // url -> Uint8Array (decoded mono WAV)
+  const MOBILE = /Mobi|iPhone|iPad|Android/.test(navigator.userAgent) ||
+                 (navigator.hardwareConcurrency || 8) <= 4;
+  const _wavCache = new Map(); // url -> Promise<Uint8Array> (decoded mono WAV)
+  // RAM cap: phones OOM-crash holding 170 decoded WAVs (~700MB). Evict oldest;
+  // IndexedDB keeps everything persistently, re-reads are cheap.
+  const WAV_CACHE_MAX = MOBILE ? 8 : 48;
+  function cacheTouch(url, job) {
+    if (_wavCache.has(url)) _wavCache.delete(url);
+    _wavCache.set(url, job);
+    while (_wavCache.size > WAV_CACHE_MAX) _wavCache.delete(_wavCache.keys().next().value);
+  }
   let _audioCtx = null;
   function audioCtx() {
     if (!_audioCtx || _audioCtx.state === "closed") {
       const AC = window.AudioContext || window.webkitAudioContext;
-      // match the CSD's sr=44100 so Csound's output isn't resampled/mismatched
-      try { _audioCtx = new AC({ sampleRate: 44100, latencyHint: "interactive" }); }
+      // match the CSD's sr=44100 so Csound's output isn't resampled/mismatched.
+      // latencyHint "playback": bigger output buffer = fewer dropouts — this is
+      // a generative radio, not a drum machine; nobody needs 10ms latency.
+      try { _audioCtx = new AC({ sampleRate: 44100, latencyHint: "playback" }); }
       catch (e) { _audioCtx = new AC(); }
     }
     return _audioCtx;
@@ -30,7 +42,27 @@
     // Hand Csound our own (already-resumed) AudioContext for realtime: the
     // single-thread worklet connects to its destination and (unlike SPN) does
     // NOT close a provided context on teardown, so it survives replays.
-    const cs = await Csound(audioContext ? { audioContext } : undefined);
+    //
+    // CROSS-ORIGIN ISOLATED (COOP/COEP headers, see serve.sh + nginx): opt
+    // into the worker backend — csound computes on its own thread feeding a
+    // SharedArrayBuffer ring; the audio callback just drains it. Spikes
+    // (GC, recompiles, tab jank) get absorbed by the ring instead of
+    // becoming crackle. Falls back to the in-worklet build when not isolated.
+    const iso = typeof crossOriginIsolated !== "undefined" && crossOriginIsolated;
+    // EXPERIMENTAL, opt-in via ?sab=1 (worker+SAB) or ?sab=2 (SAB comms only):
+    // @csound/browser's worker mode currently mis-handles part of our API use
+    // (resolveCallback error, starved clock) — gated off by default until the
+    // lib-side issue is isolated. The COOP/COEP headers are still worthwhile:
+    // they're inert for the default path and required for this experiment.
+    const sabMode = iso && (location.search.match(/[?&]sab=(\d)/) || [])[1];
+    let cs = null;
+    if (sabMode) {
+      const opts = sabMode === "1" ? { useWorker: true, useSAB: true } : { useSAB: true };
+      try { cs = await Csound(Object.assign(opts, audioContext ? { audioContext } : {})); }
+      catch (e) { console.warn("SAB csound failed, falling back:", e); cs = null; }
+    }
+    if (!cs) cs = await Csound(audioContext ? { audioContext } : undefined);
+    try { cs._backend = sabMode && cs ? "sab" + sabMode : "worklet"; } catch (e) {}
     for (const o of (options || [])) await cs.setOption(o);
     return cs;
   }
@@ -90,7 +122,7 @@
   // returns a Promise<Uint8Array>; the promise is cached so concurrent callers
   // (prewarm + a Play click) share one fetch/decode instead of racing.
   function decodeUrlToWav(url) {
-    if (_wavCache.has(url)) return _wavCache.get(url);
+    if (_wavCache.has(url)) { const j = _wavCache.get(url); cacheTouch(url, j); return j; }
     const job = (async () => {
       const cached = await idbGet(url);
       if (cached) return cached instanceof Uint8Array ? cached : new Uint8Array(cached);
@@ -115,7 +147,7 @@
       idbSet(url, wav);                       // persist for next reload
       return wav;
     })();
-    _wavCache.set(url, job);
+    cacheTouch(url, job);
     job.catch(() => _wavCache.delete(url));   // don't cache failures
     return job;
   }
@@ -124,23 +156,35 @@
     for (const s of (sources || [])) { try { await decodeUrlToWav(s.url); } catch (e) {} }
   }
   // the SAMPLE POOL: decode a whole list (urls or site-relative paths) up front,
-  // with progress — cached in memory + IndexedDB, so it persists across visits
+  // with progress — cached in memory + IndexedDB, so it persists across visits.
+  // 4 lanes: local sample files decode in ms; don't queue them behind slow
+  // archive.org beds.
   async function prewarmPool(urls, onProgress) {
+    const q = (urls || []).slice();
     let done = 0, ok = 0;
-    for (const u of (urls || [])) {
-      try { await decodeUrlToWav(u); ok++; } catch (e) {}
-      done++;
-      if (onProgress) onProgress(done, urls.length, ok);
-    }
+    const lane = async () => {
+      while (q.length) {
+        while (_live || _busy) await delay(700);   // never compete with live playback/boot — decode+encode bursts jank the scheduler
+        const u = q.shift();
+        try { await decodeUrlToWav(u); ok++; } catch (e) {}
+        done++;
+        if (onProgress) onProgress(done, urls.length, ok);
+      }
+    };
+    await Promise.all([lane(), lane(), lane(), lane()]);
     return ok;
   }
 
   // write each source's audio into Csound's virtual FS at found/<id>.wav
+  // NOTE: kernel states carry LOCAL samples as {url:"", samplePath:"found/samples/…"}
+  // — fall back to samplePath or every sample-layer source fails to load.
   async function writeFound(cs, sources, onStatus) {
     try { await cs.fs.mkdir("found"); } catch (e) { /* exists */ }
     for (const s of sources) {
+      const src = s.url || s.samplePath;
+      if (!src) continue;
       if (onStatus) onStatus("decoding " + (s.label || s.id) + "…");
-      const wav = await decodeUrlToWav(s.url);
+      const wav = await decodeUrlToWav(src);
       await cs.fs.writeFile("found/" + s.id + ".wav", wav);
     }
   }
@@ -149,7 +193,7 @@
     return csd.replace(/<CsOptions>[\s\S]*?<\/CsOptions>\s*/i, "");
   }
 
-  let _live = null, _liveTimer = null, _liveAbort = false;
+  let _live = null, _liveTimer = null, _liveAbort = false, _busy = false;
   const _liveLog = [];
   function liveSend(cs, msg){ try { cs.inputMessage(msg); } catch (e) {} if (_liveLog.length < 500) _liveLog.push(msg); }
 
@@ -229,7 +273,7 @@
   const capped = (pr, ms) => Promise.race([Promise.resolve(pr).catch(()=>{}), delay(ms)]);
 
   async function stopLive() {
-    _liveAbort = true;
+    _liveAbort = true; _busy = false;
     if (_liveTimer) { clearTimeout(_liveTimer); _liveTimer = null; }
     if (_live) {
       const c = _live; _live = null;
@@ -352,6 +396,8 @@
     const ctx = audioCtx(); try { ctx.resume(); } catch (e) {}
     await stopLive();
     _liveAbort = false;
+    _busy = true;   // freeze the prewarmer NOW — boot + worker spawn + compile
+                    // must not fight 170 decode jobs for the main thread
     const st0 = getState();
     if (onStatus) onStatus("booting live engine…");
     const cs = await boot(["-odac", "-m0", "-d"], ctx);
@@ -369,13 +415,20 @@
     let secIdx = 0, cycIdx = 0;
     const modelSig = st => { const i = st.instruments; return [i.pad.model, i.pad.wave, i.bass.model, i.bass.wave,
       i.melody.model, i.melody.wave, i.melody.voices, i.drums.kickModel, i.drums.snareModel, i.drums.hatModel].join("|"); };
+    const _chCache = {};
     async function setChannels(st) {
       const dl = st.delay || { beats: 0.75, feedback: 0.3, cutoff: 2600 };
       const ch = { reverb: st.reverb || 0.7, ddt: Math.min(1.9, (dl.beats || 0.75) * 60 / st.bpm),
         dfb: dl.feedback || 0.3, dcut: dl.cutoff || 2600, pump: st.pump || 0,
         crackle: st.crackle || 0, lowcut: (st.tone && st.tone.lowcut) || 10,
         highcut: (st.tone && st.tone.highcut) || 0, grit: st.grit || 0, bps: st.bpm / 60 };
-      for (const k in ch) { try { await cs.setControlChannel(k, ch[k]); } catch (e) {} }
+      // only cross the worklet boundary for channels that actually moved
+      for (const k in ch) {
+        const v = Math.round(ch[k] * 1e4) / 1e4;
+        if (_chCache[k] === v) continue;
+        _chCache[k] = v;
+        try { await cs.setControlChannel(k, v); } catch (e) {}
+      }
     }
     async function ensureTable(s) {
       if (tabs[s.id]) return tabs[s.id];
@@ -408,6 +461,14 @@
         sweep: (cycIdx === 0 && cur.sweep === "open") || (lastCyc && cur.sweep === "close") ? cur.sweep : "off" });
       const one = Object.assign({}, st, { sections: [sec], seed: ((st.seed || 1) + serial * 7919) >>> 0 });
       for (const s of one.foundSources) await ensureTable(s);
+      // vocoder modulator: live tables are dynamic (50+), so the instrument
+      // reads its speech table from the "voctab" channel — point it at the
+      // state's vocoder source (fallback: first speech-ish found source)
+      const vocId = one.vocoderSourceId || (one.foundSources.find(s => /^(vx_|sp_)/.test(s.id)) || {}).id;
+      if (vocId && tabs[vocId] && tabs[vocId] !== injectChord._voctab) {
+        injectChord._voctab = tabs[vocId];
+        try { await cs.setControlChannel("voctab", tabs[vocId]); } catch (e) {}
+      }
       const ev = E.buildEvents(one);
       const lo = ci * 8, hi = lo + 8, spb = 60 / st.bpm;
       if (opts.onBar) try { opts.onBar({ serial, ci, nch, when: nextTime, spb,
@@ -415,34 +476,97 @@
       const at = b => Math.max(0.01, nextTime + (b - lo) * spb - t).toFixed(3);
       const du = d => Math.max(0.05, d * spb).toFixed(3);
       const tabOf = f => tabs[(one.foundSources[f.tableNum - 2] || {}).id] || 0;
-      const I = { pad: 1, bass: 2, melody: 4 }, D = { kick: 10, snare: 11, hat: 12 };
+      const I = { pad: 1, bass: 2, melody: 4 }, D = { kick: 10, snare: 11, hat: 12, tom: 13 };
       const win = e => e.beat >= lo && e.beat < hi;
+      const L = [];   // batch the whole bar into ONE worklet message (was up to ~200 postMessages)
       ev.found.filter(f => f.chop ? win(f) : ci === 0).forEach(f => {
         const tn = tabOf(f); if (!tn) return;
-        if (f.chop) liveSend(cs, `i 5 ${at(f.beat)} ${du(f.dur)} 0 ${f.amp} ${tn} ${f.pitch} ${f.offset.toFixed(3)} ${f.cutoff}`);
-        else liveSend(cs, `i 3 ${at(0)} ${du(f.dur)} 0 ${f.amp} ${tn} ${f.pitch} ${f.stretch} ${f.cutoff}`);
+        if (f.chop) {
+          // optional trailing p-fields p10..p15 (dsend, rsend, fade, ppsend, sqRate, sqDepth) — same as buildCsd
+          const opt = [f.dsend, f.rsend, f.fade, f.ppsend, f.sqRate, f.sqDepth], def = [0.2, 0.3, 0, 0, 0, 0];
+          let lastDef = -1; opt.forEach((v, i) => { if (v != null) lastDef = i; });
+          const pp = []; for (let i = 0; i <= lastDef; i++) pp.push((opt[i] != null ? opt[i] : def[i]).toFixed(3));
+          L.push(`i 5 ${at(f.beat)} ${du(f.dur)} 0 ${f.amp} ${tn} ${f.pitch} ${f.offset.toFixed(3)} ${f.cutoff}${pp.length ? " " + pp.join(" ") : ""}`);
+        }
+        else L.push(`i 3 ${at(0)} ${du(f.dur)} 0 ${f.amp} ${tn} ${f.pitch} ${f.stretch} ${f.cutoff}`);
       });
-      ev.pitched.filter(win).forEach(p => liveSend(cs, `i ${I[p.voice]} ${at(p.beat)} ${du(p.dur)} ${p.pch} ${p.amp.toFixed(4)}`));
-      ev.drums.filter(win).forEach(d => liveSend(cs, `i ${D[d.drum]} ${at(d.beat)} ${du(d.dur)} ${d.amp.toFixed(4)}`));
-      ev.sfx.filter(s => s.stab && win(s)).forEach(s => liveSend(cs, `i 6 ${at(s.beat)} ${du(s.dur)} ${s.pch} ${s.amp.toFixed(3)}`));
+      const solos = E.soloVoices ? E.soloVoices(one, one.instruments && one.instruments.melody) : [];
+      ev.pitched.filter(win).forEach(p => {
+        let n = I[p.voice];
+        if (p.voice === "melody" && p.solo) { const v = solos.find(x => x.key === JSON.stringify(p.solo)); if (v) n = v.num; }
+        L.push(`i ${n} ${at(p.beat)} ${du(p.dur)} ${p.pch} ${p.amp.toFixed(4)}`);
+      });
+      ev.drums.filter(win).forEach(d => {
+        if (!D[d.drum]) return;
+        const p5 = d.drum === "tom" ? " " + Math.round(d.pitch || 150) : d.drum === "hat" ? " " + (d.open ? 1 : 0) : d.drum === "snare" ? " " + (d.pp || 0).toFixed(3) : "";
+        L.push(`i ${D[d.drum]} ${at(d.beat)} ${du(d.dur)} ${d.amp.toFixed(4)}${p5}`);
+      });
+      ev.sfx.filter(win).forEach(s => {
+        if (s.stab) L.push(`i 6 ${at(s.beat)} ${du(s.dur)} ${s.pch} ${s.amp.toFixed(3)}`);
+        else if (s.sweep) L.push(`i 96 ${at(s.beat)} ${du(s.dur)} ${s.from} ${s.to}`);
+        else L.push(`i 20 ${at(s.beat)} ${du(s.dur)} ${s.type} ${s.amp}`);
+      });
+      if (L.length) {
+        try { cs.inputMessage(L.join("\n")); } catch (e) {}
+        for (const m of L) if (_liveLog.length < 800) _liveLog.push(m);
+      }
       nextTime += 8 * spb;
       ci++; serial++;
       if (ci >= nch) { ci = 0; cycIdx++;
         if (cycIdx >= (secs[secIdx].cycles || 1)) { cycIdx = 0; secIdx = (secIdx + 1) % secs.length; } }
     }
+    // ---- engine load monitor + recompile coalescing ----
+    // compileOrc PARSES THE WHOLE ORCHESTRA ON THE AUDIO THREAD — every parse
+    // is an audible hitch. During journeys the glide flips voice models every
+    // couple of bars; naively that recompiled each time (the sustained
+    // crackle). Coalesce: at most one recompile per RECOMPILE_MS, batching
+    // every pending model/numeric change into it.
+    const RECOMPILE_MS = 8000;
+    let lastCompile = 0, compileDirty = false;
+    let lastWall = 0, lastScore = 0, loadRatio = 1;
+    // ---- ECO MODE: closed-loop load shedding. If the worklet sustains an
+    // overrun (ratio < 0.95 across several ticks), shed the expensive stuff:
+    // fewer supersaw voices, crackle off. Restores when healthy again.
+    let ecoLevel = opts.ecoStart != null ? opts.ecoStart : (MOBILE ? 2 : 0), badTicks = 0, goodTicks = 0;
+    const ecoState = (st) => {
+      if (!ecoLevel) return st;
+      const s = JSON.parse(JSON.stringify(st));
+      s.crackle = 0;
+      s.instruments.melody.voices = Math.min(s.instruments.melody.voices || 2, ecoLevel >= 2 ? 2 : 3);
+      if (ecoLevel >= 2) { s.instruments.pad.detune = Math.min(s.instruments.pad.detune || 0.006, 0.004); }
+      return s;
+    };
     const tick = async () => {
       if (_liveAbort || _live !== cs) return;
       try {
         const st = getState();
-        await setChannels(st);
+        await setChannels(ecoLevel ? ecoState(st) : st);
         const ms = modelSig(st), ns = JSON.stringify(st.instruments);
-        if (ms !== lastModelSig || (ns !== lastNumSig && serial % 8 === 0)) {
-          lastModelSig = ms; lastNumSig = ns;
-          await cs.compileOrc(E.instrumentBlock(st));   // throttled: timbre swap or 8-bar numeric refresh
+        if (ms !== lastModelSig || (ns !== lastNumSig && serial % 16 === 0)) {
+          lastModelSig = ms; lastNumSig = ns; compileDirty = true;
+        }
+        const nowMs = performance.now();
+        if (compileDirty && nowMs - lastCompile > RECOMPILE_MS) {
+          compileDirty = false; lastCompile = nowMs;
+          await cs.compileOrc(E.instrumentBlock(ecoState(st)));
         }
         let t = 0; try { t = await cs.getScoreTime(); } catch (e) {}
+        // realtime health: score-time should advance 1:1 with wall clock.
+        // ratio < ~0.97 means the worklet is overrunning (this IS the crackle).
+        if (lastWall) {
+          const r = (t - lastScore) / ((nowMs - lastWall) / 1000);
+          if (r > 0 && r < 3) loadRatio = loadRatio * 0.7 + r * 0.3;
+        }
+        lastWall = nowMs; lastScore = t;
+        // closed loop: sustained overrun -> shed load; sustained health -> restore
+        if (loadRatio < 0.95) { badTicks++; goodTicks = 0; } else if (loadRatio > 0.995) { goodTicks++; badTicks = 0; }
+        if (badTicks > 8 && ecoLevel < 2) { ecoLevel++; badTicks = 0; compileDirty = true; lastCompile = 0;
+          if (onStatus) onStatus("eco mode " + ecoLevel + " — shedding load to stop glitches"); }
+        if (goodTicks > 180 && ecoLevel > 0) { ecoLevel--; goodTicks = 0; compileDirty = true;
+          if (onStatus) onStatus(ecoLevel ? "eco mode " + ecoLevel : "full quality restored"); }
+        if (opts.onLoad) try { opts.onLoad(loadRatio, ecoLevel); } catch (e) {}
         if (nextTime < t) nextTime = t + 0.1;          // dropped behind (tab sleep) — resync
-        while (nextTime < t + 4.5 && !_liveAbort) await injectChord(st, t);
+        while (nextTime < t + 8 && !_liveAbort) await injectChord(st, t);   // deep lookahead: survive GC pauses + tab jank
       } catch (e) { console.error("exploreLive tick", e); }
       _liveTimer = setTimeout(tick, 160);
     };
@@ -452,5 +576,5 @@
   }
 
   async function scoreTime(){ try { return _live ? await _live.getScoreTime() : -1; } catch (e) { return -2; } }
-  root.WasmAudio = { boot, play, playLive, stopLive, render, captureExport, renderOffline, decodeUrlToWav, encodeWav, stripOptions, ctxState, prewarm, prewarmPool, exploreLive, scoreTime, _liveLog };
+  root.WasmAudio = { boot, play, playLive, stopLive, render, captureExport, renderOffline, decodeUrlToWav, encodeWav, stripOptions, ctxState, prewarm, prewarmPool, exploreLive, scoreTime, MOBILE, _liveLog };
 })(window);
