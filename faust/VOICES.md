@@ -221,3 +221,50 @@ Adopted substitutions and available upgrades:
   same-algorithm pools (the alg-5 E.PIANO/TUB BELLS/SHIMMER family, alg-22
   brass, alg-29 organs, alg-17 basses, alg-18 horns) morph param-space in
   blends.
+
+## Rubato + felt piano + swell + thunks (2026-07 neoclassical deep pass)
+
+- **RUBATO — the time dimension** (`state.rubato = {depth, periodBars,
+  phase}`): deterministic slow tempo-breathing, implemented in exactly ONE
+  place — a smooth monotonic **beat-warp at the end of csd-engine
+  `buildEvents`** (`warp(b) = b + A·(sin(2πb/P + φ) − sinφ)`, `A =
+  depth·P/2π`, `P = periodBars·4` beats, φ seeded by the kernel). Every
+  consumer maps beat → time linearly with spb, so faust/press, faust/live and
+  midi-export all inherit the same warped musical clock and **all layers stay
+  sample-locked by construction** (same beat ⇒ same time; live drift-gate
+  measured worst co-beat skew 0.15 ms across pad/melody/counter/found).
+  Durations warp as intervals (legato stays legato); `warp(0)=0`; strictly
+  monotonic for depth < 1. depth .02-.04 ≈ ±2-4% tempo sway. LIVE NOTE: live
+  rebuilds per chord-bar with cycle-local beats, so the breathing phase
+  restarts each section cycle — still deterministic and layer-locked, just
+  not phase-continuous across cycles the way a press is. States without
+  `rubato` skip the warp entirely (unchanged genres press byte-identically —
+  regression-gated). Kernel: anchors carry `rubato:{depth, periodBars, prob}`
+  (neoclassical always, tango .5, jazz light .35), drawn AFTER the insert
+  chains so genres without the spec consume zero rng.
+- **felt_piano** (SAMPLERS): FluidR3 GM 0 "Yamaha Grand Piano", 10 zones
+  (dense midrange — the lead is exposed), with a 3 kHz lowpass BAKED into the
+  zone wavs at extraction (fetch-found-samples.sh; sample counts unchanged so
+  loop points stay valid). Soft velocity (low recipe level), slightly slow
+  attack (.015-.04) and close/dry sends live in the neoclassical recipe.
+  Neoclassical lead AND bass are 2/3+ this instrument; lofi/spokenword carry
+  it in their lead samplerPools as an option.
+- **sampler SWELL mode** (`recipe.swell` ≥ .5 → `sampler.swell`): attack may
+  run seconds long (past a zone's loop start — looped zones sustain under
+  it; state-engine clamps widened to atk 5 s / rel 6 s) with an x²-shaped
+  crescendo ramp rendered identically in both paths (per-sample x² in
+  sampler.js mixPCM; a 17-point gain curve via setValueCurveAtTime live).
+  Non-swell notes keep the exact original linear declick ramp
+  (bit-identical). Used by neoclassical's sampled-strings pads
+  (attack .8-2.5 s, release 1.5-3 s) — the per-phrase string swell.
+- **COUNTERPOINT** (kernel `counterpoint:{prob}` → `sections[].counter` in
+  the wave form's drift/swell): a second, quieter instance of the lead
+  instrument (solo recipe merges over instruments.melody — a felt-piano lead
+  gets a felt-piano counter voice) an OCTAVE BELOW at ~.45× level, on a
+  mirrored/oblique pattern (arpup↔arpdown = contrary; canon/wander → sparse
+  long tones = oblique; sparse → quiet wander). Rides the existing
+  sec.counter/soloVoices mechanism (transitwave's motorik23 pioneered it).
+- **key/pedal THUNKS** (`state.thunk = {prob, amp}`): whisper-level tom hits
+  (pitch 90-160 Hz, level ≈ −30 dB) co-located with a seeded fraction of lead
+  notes, added in buildEvents AFTER applyGroove so the thunk lands with the
+  humanized key strike. Own rng stream; absent = zero behavior change.

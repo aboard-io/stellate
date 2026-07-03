@@ -105,7 +105,12 @@
   // the ⚡ transition control: what happens at the end of a section, into the next
   // (2026-07: + "snare roll" march-crescendo, "stutter" last-half-bar gate,
   //  "dropout" kick-drop silence beat — see buildEvents transition chain)
-  const TRANSITIONS=["off","drum fill","tom fill","break fill","hat rush","cut","riser","sweep","downlift","impact","reverse","noise","snare roll","stutter","dropout"];
+  // (2026-07 MUSICAL-transition round: + "micro lick" — a 1-2 bar seeded
+  //  sax/trombone/flute/piano pickup phrase into the next downbeat, voiced by
+  //  state.lickVoice; + "kit fill" — a half-bar mini-fill that QUOTES the
+  //  section's own drum pattern. The noise/sweep/riser SFX are demoted -8dB
+  //  and rationed by the kernel's auto-transition pass.)
+  const TRANSITIONS=["off","drum fill","tom fill","break fill","hat rush","cut","riser","sweep","downlift","impact","reverse","noise","snare roll","stutter","dropout","micro lick","kit fill"];
   // synthesis-model vocabulary. FAUST-PORT: the voices themselves live in
   // faust/state-engine.js (pitchedUnit) + faust/dist/ modules; this predicate is
   // the engine-side canon anchors and validators check against — keep it in sync
@@ -396,6 +401,56 @@
     out.push({drum:"kick",beat:S+3.75,dur:0.3,amp:0.6});
     return out;
   }
+  // transition MICRO-LICK — the musical alternative to the noise sweep: a
+  // 1-2 bar seeded pickup phrase (pentatonic climb, chromatic approach run,
+  // enclosure turn…) that lands ON the next section's downbeat root, played
+  // by state.lickVoice (a tiny sax/trombone/trumpet/flute/piano/guitar solo
+  // voice the kernel assigns per genre). kNext = the NEXT section's key
+  // (keyShift-aware) so the run resolves into the new key, not the old one.
+  // The landing note may carry a blue-note bend (sampler voices slide in;
+  // Faust-module voices ignore `bend` per the VOICES.md contract).
+  function lickEvents(endBeat, chord, kNext, rng, lickVoice){
+    const out=[];
+    const minor=/min/.test(chord.name)&&!/maj/.test(chord.name);
+    const tgt=pchAdd(chord.lead[0],kNext);         // the next downbeat's root
+    const third=minor?3:4;
+    const RUNS=[
+      [-12,third-12,-5,-3,-1],                     // pentatonic climb into the root
+      [-5,-4,-3,-2,-1],                            // chromatic approach run
+      [third-12,-5,2,1],                           // enclosure turn (under, over, in)
+      [7,third,2,-2],                              // fall from the fifth, slip under, resolve
+      [-12,-10,-8,-7,-5,-3,-2,-1],                 // the long two-bar walkup
+    ];
+    const run=RUNS[Math.floor(rng()*RUNS.length)];
+    const step=run.length>5?0.5:[0.5,0.5,0.75][Math.floor(rng()*3)];
+    const start=endBeat-run.length*step;
+    run.forEach((semi,i)=>{
+      if(rng()<0.08&&i>0) return;                                  // licks breathe too
+      out.push({voice:"melody",beat:start+i*step,dur:step*0.92,pch:pchAdd(tgt,semi),
+        amp:0.14+0.05*(i/run.length)+rng()*0.015,solo:lickVoice});
+    });
+    const land={voice:"melody",beat:endBeat,dur:1.4,pch:tgt,amp:0.19,solo:lickVoice};
+    if(rng()<0.45) land.bend={from:-(0.5+rng()*0.5),ms:Math.round(70+rng()*70)};
+    out.push(land);
+    return out;
+  }
+  // transition KIT FILL — a half-bar mini-fill that QUOTES the section's own
+  // drum pattern (not generic toms): the kit's final two beats crescendo and
+  // each hit may gain a double (ply of the pattern's own hits) into the turn.
+  function miniFillEvents(drums, endBeat, rng){
+    const from=endBeat-2, out=[];
+    const win=drums.filter(d=>d.beat>=from&&d.beat<endBeat);
+    if(!win.length) return;   // beatless section: silence IS the transition (no generic snares here)
+    for(const d of win){
+      const pos=(d.beat-from)/2;
+      d.amp=Math.min(1,d.amp*(1+0.32*pos));                      // crescendo the quote itself (gentle — the QUOTE is the fill)
+      if(rng()<0.6&&d.beat+0.25<endBeat)
+        out.push(Object.assign({},d,{beat:d.beat+0.25,dur:Math.min(d.dur,0.14),
+          amp:Math.min(1,d.amp*(0.5+0.25*pos)),open:false}));    // the double-hit echo
+    }
+    if(rng()<0.7) out.push({drum:"kick",beat:endBeat-0.25,dur:0.3,amp:0.42});  // pickup into the downbeat
+    out.forEach(e=>drums.push(e));
+  }
   // jungle-style chop fill — two beats of 32nd-flavored snare stutter
   function breakFillEvents(S,rng){
     const r=rng||Math.random, out=[];
@@ -558,7 +613,7 @@
 
   function buildEvents(state){
     const prg=PROGRESSIONS[state.progression]||PROGRESSIONS.royal_road;
-    const chords=prg.chords, k=state.keyOffset|0, cycleBeats=chords.length*CHORD_BEATS;
+    const chords=prg.chords, k0=state.keyOffset|0, cycleBeats=chords.length*CHORD_BEATS;
     const srcById={};
     state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".wav"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec,wet:!!s.wet,glitch:!!s.glitch,distant:!!s.distant}; });
     const rng=mulberry32((state.seed??1)>>>0);
@@ -566,6 +621,12 @@
     const found=[], sfx=[], spans=[];   // spans: section extents for the per-bar transform pool
     let cur=0, narrOffset=0;   // narration plays through the clip across sections (always playing)
     for(const sec of state.sections){
+      // THE 3-MINUTE RULE (sec.keyShift): a section may carry a semitone
+      // shift on top of the global keyOffset — the kernel's evolution pass
+      // modulates long tracks at section boundaries. Every pitched voice
+      // (pads/bass/melody/counter/solos/stabs — synth, dx7 AND sampler) goes
+      // through this k, so the whole band transposes together.
+      const k=k0+(sec.keyShift|0);
       const fsrc = sec.found&&sec.found.sourceId ? srcById[sec.found.sourceId] : null;
       const cycles=sec.cycles||1, secBeats=cycles*cycleBeats;
       if(fsrc){
@@ -782,10 +843,21 @@
         const from=cur+secBeats-1, upto=cur+secBeats;
         for(let i=drums.length-1;i>=0;i--) if(drums[i].beat>=from&&drums[i].beat<upto) drums.splice(i,1);
         pitched=pitched.filter(e=>!(e.beat>=from&&e.beat<upto&&!e.solo));
+      } else if(tr==="micro lick"){
+        // the tiny soloist takes the turn — resolve into the NEXT section's key
+        const nx=state.sections[state.sections.indexOf(sec)+1];
+        const kNext=k0+((nx?nx.keyShift:sec.keyShift)|0);
+        if(state.lickVoice) lickEvents(cur+secBeats, chords[0], kNext, rng, state.lickVoice).forEach(e=>pitched.push(e));
+        else fillEvents(cur+secBeats-2).forEach(e=>drums.push(e));   // no lick voice in state: degrade musically
+      } else if(tr==="kit fill"){
+        miniFillEvents(drums, cur+secBeats, rng);
       } else if(SFX_NUM[tr]){
         const hit=(tr==="impact"||tr==="noise");
         const sbeat = hit ? cur+secBeats : cur+secBeats-4;   // hit on next downbeat; build in final bar
-        sfx.push({beat:Math.max(0,sbeat), dur:hit?1.5:4, type:SFX_NUM[tr], amp:0.4});
+        // 2026-07: the sweep family is DEMOTED (-8dB; the loud noise build was
+        // "very loud, very disruptive, overused") — impact keeps its slam
+        const amp = tr==="impact"?0.4 : (tr==="reverse"||tr==="downlift")?0.2 : 0.16;
+        sfx.push({beat:Math.max(0,sbeat), dur:hit?1.5:4, type:SFX_NUM[tr], amp});
       }
       spans.push({start:cur,beats:secBeats});
       cur+=secBeats;
@@ -848,6 +920,19 @@
     const grng=mulberry32(((state.seed??1)+777)>>>0);
     applyGroove(pitched, state.swing, state.humanize, grng);
     applyGroove(drums,   state.swing, state.humanize, grng);
+    // ---- MECHANICAL INTIMACY (state.thunk = {prob, amp}) ----
+    // Soft key/pedal noise on a fraction of LEAD notes: a whisper-level tom
+    // "thump" (pitch 90-160Hz, amp ~-30dB) exactly at the grooved note onset
+    // (after applyGroove so the thunk lands WITH the humanized key strike).
+    // Own rng stream; states without thunk skip entirely (zero change).
+    if(state.thunk&&state.thunk.prob>0){
+      const trng=mulberry32(((state.seed??1)+8181)>>>0);
+      for(const e of pitched){
+        if(e.voice!=="melody"||e.solo) continue;
+        if(trng()<state.thunk.prob)
+          drums.push({drum:"tom",beat:e.beat,dur:0.09,amp:(state.thunk.amp||0.03)*(0.8+0.4*trng()),pitch:90+Math.round(trng()*70)});
+      }
+    }
     // feed individual snare hits to the long ping-pong delay at random (>=4 beats apart)
     if(state.snarePP>0){ let last=-99;
       for(const d of drums){ if(d.drum==="snare" && d.beat-last>=4 && grng()<0.6){ d.pp=state.snarePP; last=d.beat; } } }
@@ -869,6 +954,29 @@
               tableNum:st.tableNum,pitch:[0.5,0.6,0.7,0.8][Math.floor(rng()*4)],offset:Math.min(0.9,rng()*0.5),
               cutoff:st.cutoff||2600,rsend:0.3,dsend:0.3}); }
         }
+      }
+    }
+    // ---- RUBATO (state.rubato = {depth, periodBars, phase}) ----
+    // Deterministic slow breathing of tempo, implemented ONCE here as a
+    // smooth monotonic BEAT-WARP so every consumer (faust press, faust live,
+    // midi-export — anything that maps beat -> time linearly with spb)
+    // inherits the exact same musical clock and all layers stay sample-locked
+    // BY CONSTRUCTION (the drift-gate invariant: same beat => same time).
+    //   tempo(b)/tempo0 = 1 + depth·cos(2πb/P + φ)
+    //   warp(b) = b + A·(sin(2πb/P + φ) − sin φ),  A = depth·P/2π
+    // P = periodBars·4 beats; warp(0)=0 (the first downbeat holds), |Δ| ≤ 2A,
+    // strictly monotonic for depth < 1. Durations warp as intervals so legato
+    // stays legato. depth .02-.04 ≈ ±2-4% tempo sway over 2-4 bars.
+    // Live note: the live engine rebuilds per chord-bar with cycle-local
+    // beats, so the breathing phase restarts each section cycle — still
+    // deterministic, still layer-locked (documented in faust/VOICES.md).
+    if(state.rubato&&state.rubato.depth>0){
+      const dep=Math.min(0.2,state.rubato.depth), P=Math.max(4,(state.rubato.periodBars||3)*4);
+      const ph=2*Math.PI*(state.rubato.phase||0), A=dep*P/(2*Math.PI);
+      const W=(b)=>b + A*(Math.sin(2*Math.PI*b/P+ph)-Math.sin(ph));
+      for(const arr of [pitched,drums,found,sfx]) for(const e of arr){
+        const d0=e.dur||0, b1=W(e.beat+d0);
+        e.beat=W(e.beat); if(d0) e.dur=Math.max(0.02,b1-e.beat);
       }
     }
     return { bpm:state.bpm, totalBeats:cur+8, pitched, drums, found, sfx, srcById };
@@ -893,6 +1001,14 @@
         out.push({ key, num, recipe:Object.assign({}, baseMel, recipe) });
         num++;
       }
+    }
+    // the transition micro-lick soloist (state.lickVoice): a first-class solo
+    // voice so every engine allocates it exactly like section solos. The
+    // recipe should carry explicit model/sampler/dx7 keys — it merges over
+    // the melody recipe, which may itself be a dx7/sampler voice.
+    if(state.lickVoice){
+      const key=JSON.stringify(state.lickVoice);
+      if(!seen.has(key)) out.push({ key, num:num++, recipe:Object.assign({}, baseMel, state.lickVoice) });
     }
     return out;
   }
