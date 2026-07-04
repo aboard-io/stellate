@@ -158,6 +158,53 @@
       }
     }
 
+    // ---- DELAY/PP BLEED tap-out (reverb-color round) ----
+    // fx_bus feeds its INTERNAL zita `rin = rev + d*0.2 + (ppl+ppr)*0.12`, but
+    // that zita is muted (rgain->0) for genres that select a reverbColor — so
+    // without this, colored genres lose the echo-tail-into-reverb glue uncolored
+    // genres keep. We recompute that bleed and fold it into the COLOR node's
+    // input (revMerge), symmetric with press (dsp/rev_bleed.dsp is the offline
+    // twin). Built with NATIVE nodes only — the one-extra-node worklet budget is
+    // the reverb-color node itself; a native feedback delay + cross-fed pingpong
+    // add no worklet. Built lazily the first time a color is active; its wet is
+    // muted to 0 whenever no color is active (so a session that never touches a
+    // colored genre never builds it, and toggling back to zita silences it).
+    // (1-pole fi.lowpass in fx_bus vs a 2-pole biquad here is a minor bleed-tone
+    // divergence — live is never bit-identical to press; the glue is the point.)
+    let bleed = null;
+    function ensureBleedGraph() {
+      if (bleed) return bleed;
+      // feedback delay (fx_bus fbdel): y = lowpass(delay(delBus + dfb*y)); d = y*dgain
+      const dSum = ctx.createGain(), dDelay = ctx.createDelay(3.0),
+            dLp = ctx.createBiquadFilter(), dFb = ctx.createGain(), dWet = ctx.createGain();
+      dLp.type = "lowpass"; dFb.gain.value = 0; dWet.gain.value = 0;
+      delBus.connect(dSum); dSum.connect(dDelay); dDelay.connect(dLp);
+      dLp.connect(dFb); dFb.connect(dSum);                       // ~ *(dfb)
+      dLp.connect(dWet); dWet.connect(revMerge, 0, 0); dWet.connect(revMerge, 0, 1); // d*0.2*dgain
+      // cross-fed pingpong (fx_bus instr 95): pl=lp(delay(pp + ppfb*pr)), pr=lp(delay(ppfb*pl))
+      const pSumL = ctx.createGain(), pDelL = ctx.createDelay(3.0), pLpL = ctx.createBiquadFilter(),
+            pSumR = ctx.createGain(), pDelR = ctx.createDelay(3.0), pLpR = ctx.createBiquadFilter(),
+            pFbL = ctx.createGain(), pFbR = ctx.createGain(), pWet = ctx.createGain();
+      pLpL.type = pLpR.type = "lowpass"; pFbL.gain.value = pFbR.gain.value = 0; pWet.gain.value = 0;
+      ppBus.connect(pSumL); pSumL.connect(pDelL); pDelL.connect(pLpL);   // pl
+      pLpR.connect(pFbL); pFbL.connect(pSumL);                            // + pr*ppfb -> pl
+      pLpL.connect(pFbR); pFbR.connect(pSumR); pSumR.connect(pDelR); pDelR.connect(pLpR); // pr = delay(pl*ppfb)
+      pLpL.connect(pWet); pLpR.connect(pWet); pWet.connect(revMerge, 0, 0); pWet.connect(revMerge, 0, 1); // (ppl+ppr)*0.12
+      bleed = { dDelay, dLp, dFb, dWet, pDelL, pLpL, pDelR, pLpR, pFbL, pFbR, pWet };
+      return bleed;
+    }
+    function applyBleedParams(fxp, active, when) {
+      if (!bleed && !active) return;   // never built + no color => nothing to do (uncolored untouched)
+      ensureBleedGraph();
+      const t = Math.max(when || 0, ctx.currentTime), set = (p, v) => p.setTargetAtTime(Math.max(0, v), t, 0.02);
+      set(bleed.dDelay.delayTime, fxp.dtime); set(bleed.dLp.frequency, fxp.dcut);
+      set(bleed.dFb.gain, active ? fxp.dfb : 0); set(bleed.dWet.gain, active ? fxp.dgain * 0.2 : 0);
+      set(bleed.pDelL.delayTime, fxp.pptime); set(bleed.pDelR.delayTime, fxp.pptime);
+      set(bleed.pLpL.frequency, fxp.pptone); set(bleed.pLpR.frequency, fxp.pptone);
+      set(bleed.pFbL.gain, active ? fxp.ppfb : 0); set(bleed.pFbR.gain, active ? fxp.ppfb : 0);
+      set(bleed.pWet.gain, active ? 0.12 : 0);
+    }
+
     // ---- MIXER LAYER TAPS ----
     // Every logical layer owns four collector gains (dry/rev/del/pp) sitting
     // between the per-unit send gains and the master buses, plus a small
@@ -239,6 +286,9 @@
         // ~20ms instead (delay-time jumps especially).
         p.setTargetAtTime(clamped, t, 0.02);
       }
+      // BLEED into the color node's input (eco-adjusted fxp shared, so eco-3's
+      // thinner feedback tails carry through). Active only when a color is set.
+      applyBleedParams(fxp, !!SE.reverbColor(state), when);
     }
 
     // ---- voice pools: unitKey -> {module, spec, nodes:[...], paramSig} ----

@@ -409,10 +409,26 @@ A color names an EXTERNAL module that REPLACES the internal zita for that genre.
 - **Gates**: `faust/probe-reverb.js` (non-silent + measurably distinct RT/
   centroid across the family); verify.sh 63/63; live smoke exercises the
   dattorro build+swap (jungle→house) with 0 errors.
-- **KNOWN LIMITATION**: the delay/ping-pong bleed into reverb (`d*0.2`,
-  `pp*0.12`) lives inside fx_bus and only feeds the internal zita — the external
-  colors receive the raw rev-send bus only (no delay/pp bleed). Symmetric across
-  press + live. Fine for stage 1; a future round could tap that bleed out.
+- **BLEED TAP-OUT** (2026-07 reverb-color round): the delay/ping-pong bleed into
+  reverb (`d*0.2 + (ppl+ppr)*0.12`) now feeds the EXTERNAL color node too, so
+  colored genres keep the echo-tail-into-reverb glue uncolored genres get from
+  the internal zita (which is muted for them). `dsp/rev_bleed.dsp` (2-in del/pp,
+  1-out) recomputes that exact bleed term — same delay/pingpong DSP + coefficients
+  as fx_bus, driven by the same `SE.fxParams` — and **press** adds it to the color
+  node's input (`revColorIn = rev + bleed`). **live** folds it into the color
+  node's input merger (`revMerge`) with NATIVE nodes only (a feedback delay +
+  cross-fed pingpong) — no extra worklet, so the one-extra-node worklet budget
+  (the reverb-color node itself) stands; the graph is built lazily on first
+  colored bar and its wet is muted to 0 whenever no color is active. **fx_bus is
+  untouched** so uncolored genres stay byte-identical (verified techno s1 / jungle
+  s7). The TRIM calibration is unaffected — it equalizes each color's tail energy
+  for a given input, and the bleed simply brings the color node's INPUT up to the
+  zita reference (probe-reverb tail energies unchanged at ~3.6e-5). Audibly the
+  glue is subtle (A/B mallsoft dattorro: ~-25 dB below signal, echo-locked on the
+  reverb tail; strongest on the bright dattorro plate, negligible on greyhole's
+  wash and low-delay genres like surfrock). probe-reverb.js gates the bleed
+  (silence pre-delay, an echo at ~dtime). Minor live/press divergence: fx_bus's
+  1-pole `fi.lowpass` in the delay loop vs a 2-pole biquad in live.
 
 ## Found-vocal AUTO-TUNE — clip-snap to the song key (2026-07 fx wings stage 2)
 

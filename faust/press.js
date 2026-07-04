@@ -336,6 +336,27 @@ async function press(state, outPath, opts) {
   const rc = SE.reverbColor(state);
   let wetL = null, wetR = null;
   if (rc) {
+    // DELAY/PP BLEED tap-out (reverb-color round): fx_bus feeds its INTERNAL
+    // zita `rin = rev + d*0.2 + (ppl+ppr)*0.12`, but that zita is muted for
+    // colored genres — so without this the color node would only get the RAW
+    // rev send and lose the echo-tail-into-reverb glue uncolored genres keep.
+    // rev_bleed recomputes EXACTLY that bleed term (same delay/pingpong DSP +
+    // coefficients as fx_bus, same fxParams) from the del/pp send buses; we add
+    // it to the color node's input. fx_bus itself is untouched (uncolored
+    // byte-identical); `rev` passed to fx_bus below stays the raw send.
+    const bleed = new Float32Array(TOTAL);
+    const bp = await mkProc("rev_bleed");
+    const bfx = SE.fxParams(state);
+    for (const k of ["dtime", "dfb", "dcut", "dgain", "pptime", "ppfb", "pptone"])
+      bp.setParamValue("/rev_bleed/" + k, bfx[k]);
+    for (let s = 0; s < TOTAL; s += BS) {
+      const len = Math.min(BS, TOTAL - s);
+      const o = bp.render([del.subarray(s, s + len), pp.subarray(s, s + len)], len);
+      bleed.set(o[0].subarray(0, len), s);
+    }
+    const revColorIn = new Float32Array(TOTAL);
+    for (let i = 0; i < TOTAL; i++) revColorIn[i] = rev[i] + bleed[i];
+
     const rp = await mkProc(rc.module);
     const RR = "/" + rootOf(rc.module) + "/";
     rp.setParamValue(RR + "rgain", rc.rgain);
@@ -343,10 +364,12 @@ async function press(state, outPath, opts) {
     wetL = new Float32Array(TOTAL); wetR = new Float32Array(TOTAL);
     for (let s = 0; s < TOTAL; s += BS) {
       const len = Math.min(BS, TOTAL - s);
-      const o = rp.render([rev.subarray(s, s + len), rev.subarray(s, s + len)], len);
+      const o = rp.render([revColorIn.subarray(s, s + len), revColorIn.subarray(s, s + len)], len);
       wetL.set(o[0].subarray(0, len), s); wetR.set((o[1] || o[0]).subarray(0, len), s);
     }
-    console.log(`  reverb color: ${rc.name} -> ${rc.module}, rgain=${rc.rgain.toFixed(2)} rtone=${rc.rtone}`);
+    let be = 0; for (let i = 0; i < TOTAL; i++) be += bleed[i] * bleed[i];
+    console.log(`  reverb color: ${rc.name} -> ${rc.module}, rgain=${rc.rgain.toFixed(2)} rtone=${rc.rtone}` +
+      `; bleed RMS ${(20 * Math.log10(Math.max(Math.sqrt(be / TOTAL), 1e-9))).toFixed(1)} dB into color`);
   }
 
   // ---- fx_bus master section over the whole length ----
