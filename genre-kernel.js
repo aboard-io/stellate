@@ -278,74 +278,77 @@
   const GENRE_CLIPS = {
     // 2026-07: merged the Prelinger/city-symphony/abstract/steel/Apollo/Hawaii/soundie
     // batch (pl_/cs_/ab_/ind_/sp_/ns_/dn_/bt_ — credits in found/video/clips.json)
-    vaporwave:  ["disc_sunset","bamboo","blue_dinner","sun_riders","sharpest_city","cgi_bird","kaleido","rainbow_rings","tv_room","spacewalk","pl_supermarket","pl_motorama","pl_kitchen","pl_futurama"],
+    // + the crate-dig LIBRARY batch (cmm_/im_/jm_/la_/mo_ — Bell Labs early CGI,
+    // Jupiter magnetosphere viz, Los Alamos 1975 wireframes, PD Momotaro anime;
+    // recipe cut-lib-clips.sh, cues found/video/lib/segments.json)
+    vaporwave:  ["disc_sunset","bamboo","blue_dinner","sun_riders","sharpest_city","cgi_bird","kaleido","rainbow_rings","tv_room","spacewalk","pl_supermarket","pl_motorama","pl_kitchen","pl_futurama","cmm_wireglobe","cmm_crescent","la_meshvase","im_paint","jm_dipole"],
     synthwave:  ["drive_bluehour","drive_dusk","drive_bridge","drive_taillights","night_lines","night_lights","pl_dreamcar","pl_parkinglot","pl_futurama","pl_modelcity","pl_sage"],
-    techno:     ["night_lines","phuture_red","dark_face","green_nebula","tv_room","kaleido","pl_sage","cs_manhatta","ind_furnace","ab_diagonale"],
+    techno:     ["night_lines","phuture_red","dark_face","green_nebula","tv_room","kaleido","pl_sage","cs_manhatta","ind_furnace","ab_diagonale","im_redroom"],
     house:      ["kaleido","rainbow_rings","night_lights","phuture_red","sun_riders","cs_manhatta","cs_marketstreet"],
     jungle:     ["dark_face","phuture_red","night_lines","green_nebula","tw_subway"],
-    triphop:    ["deep_face","dark_face","tv_room","night_lights","tw_window","bt_folksinger","ns_octopus"],
-    lofi:       ["bamboo","blue_dinner","tv_room","dc_village","disc_sunset","pl_kitchen","pl_americana","pl_lawns","pl_supermarket","pl_parkinglot","bt_folksinger","cs_marketstreet","ab_fantasma"],
+    triphop:    ["deep_face","dark_face","tv_room","night_lights","tw_window","bt_folksinger","ns_octopus","mo_dance"],
+    lofi:       ["bamboo","blue_dinner","tv_room","dc_village","disc_sunset","pl_kitchen","pl_americana","pl_lawns","pl_supermarket","pl_parkinglot","bt_folksinger","cs_marketstreet","ab_fantasma","im_paint","mo_pastoral"],
     downtempo:  ["earth_orbit","spacewalk","bamboo","green_nebula","disc_sunset","cs_liner","ns_waterfall","ns_hula","ns_rays"],
-    ambient:    ["earth_orbit","spacewalk","green_nebula","lw_plateau","dc_rockies","sp_eva","sp_lander","ns_waterfall","ns_rays","ns_octopus"],
+    ambient:    ["earth_orbit","spacewalk","green_nebula","lw_plateau","dc_rockies","sp_eva","sp_lander","ns_waterfall","ns_rays","ns_octopus","jm_dipole","cmm_crescent","mo_pastoral"],
     dinosynth:  ["lw_plateau","lw_graze","lw_herd","lw_valley","lw_london","lw_rampage"],
     canawave:   ["dc_vancouver","dc_alberta","dc_rockies","dc_village","dc_skyline","ca_canada","ca_tide","ca_street","pl_lawns","pl_spacefair","dn_schoolyard"],
     transitwave:["tw_platform","tw_interchange","tw_board","tw_subway","tw_terminus","tw_window","tw_express","tw_rails"],
-    neoclassical:["earth_orbit","blue_dinner","bamboo","dc_village","spacewalk","cs_manhatta"],
+    neoclassical:["earth_orbit","blue_dinner","bamboo","dc_village","spacewalk","cs_manhatta","im_paint"],
     dancepop:   ["kaleido","rainbow_rings","sun_riders","night_lights","cgi_bird","pl_motorama","pl_kitchen","pl_americana","pl_supermarket","pl_spacefair","pl_worldsfair","dn_schoolyard"],
-    edm:        ["phuture_red","kaleido","night_lines","rainbow_rings","cgi_bird","pl_modelcity","pl_sage","ab_diagonale","ab_balletmec","sp_eva"],
+    edm:        ["phuture_red","kaleido","night_lines","rainbow_rings","cgi_bird","pl_modelcity","pl_sage","ab_diagonale","ab_balletmec","sp_eva","jm_flux"],
     dubstep:    ["dark_face","phuture_red","night_lines","green_nebula","ind_molten","ab_diagonale"],
     blues:      ["tv_room","dc_village","ca_street","disc_sunset","bt_hootenanny","bt_folksinger","cs_liner","dn_soundie"],
     jazz:       ["blue_dinner","tv_room","sharpest_city","night_lights","bt_hootenanny","ab_fantasma","dn_soundie"],
     dub:        ["dark_face","deep_face","night_lines","green_nebula","tv_room","ns_rays","ns_octopus"],
-    trance:     ["night_lights","rainbow_rings","kaleido","night_lines","phuture_red","pl_futurama","sp_eva","sp_lander"],
+    trance:     ["night_lights","rainbow_rings","kaleido","night_lines","phuture_red","pl_futurama","sp_eva","sp_lander","jm_axis"],
     disco:      ["kaleido","rainbow_rings","night_lights","sun_riders","blue_dinner","pl_motorama","pl_worldsfair","dn_soundie","dn_schoolyard"],
     italo:      ["rainbow_rings","kaleido","sun_riders","night_lights","drive_taillights","cgi_bird","pl_motorama","pl_dreamcar"],
     bigbeat:    ["phuture_red","kaleido","green_nebula","night_lines","dark_face","cs_manhatta","cs_liner","cs_marketstreet","ab_balletmec"],
     garage:     ["night_lights","phuture_red","night_lines","kaleido","drive_taillights","cs_marketstreet"],
     doomdrone:  ["dark_face","deep_face","green_nebula","earth_orbit","lw_plateau","ind_furnace","ind_molten","ns_rays","ns_octopus"],
     newage:     ["earth_orbit","spacewalk","bamboo","dc_rockies","green_nebula","lw_valley","sp_lander","ns_waterfall","ns_hula"],
-    exotica:    ["bamboo","lw_valley","lw_graze","dc_village","disc_sunset","ns_waterfall","ns_hula"],
-    industrial: ["dark_face","night_lines","tw_subway","phuture_red","tw_rails","pl_sage","ind_furnace","ind_molten","ab_balletmec"],
+    exotica:    ["bamboo","lw_valley","lw_graze","dc_village","disc_sunset","ns_waterfall","ns_hula","mo_pastoral"],
+    industrial: ["dark_face","night_lines","tw_subway","phuture_red","tw_rails","pl_sage","ind_furnace","ind_molten","ab_balletmec","im_redroom"],
     spokenword: ["tv_room","deep_face","dark_face","ca_street","sharpest_city","bt_hootenanny","bt_folksinger"],
-    chiptune:   ["cgi_bird","kaleido","rainbow_rings","phuture_red","night_lines","sun_riders","ab_diagonale","ab_balletmec","ab_fantasma"],
+    chiptune:   ["cgi_bird","kaleido","rainbow_rings","phuture_red","night_lines","sun_riders","ab_diagonale","ab_balletmec","ab_fantasma","mo_singalong","im_pixeltext","im_scope","mo_dance"],
     // placeholders until dedicated propaganda footage lands (video agent)
     chinawave:  ["bamboo","ns_waterfall","dn_schoolyard","cs_marketstreet","sun_riders","dc_village"],
     sovietwave: ["ind_furnace","ind_molten","cs_manhatta","cs_liner","sp_lander","spacewalk","earth_orbit","tw_rails"],
     // round-3 pools — drawn from the existing clip shelf, aesthetic-kin first
     citypop:    ["sharpest_city","night_lights","blue_dinner","drive_taillights","sun_riders","cs_marketstreet","pl_motorama"],
-    shibuyakei: ["cgi_bird","rainbow_rings","kaleido","sun_riders","pl_kitchen","pl_supermarket","dn_schoolyard"],
-    bossanova:  ["bamboo","disc_sunset","blue_dinner","ns_hula","ns_waterfall","cs_liner","dc_village"],
-    idm:        ["ab_diagonale","ab_balletmec","ab_fantasma","green_nebula","kaleido","tv_room","ind_furnace"],
-    electro:    ["ab_balletmec","phuture_red","night_lines","kaleido","pl_modelcity","cs_manhatta","sp_eva"],
+    shibuyakei: ["cgi_bird","rainbow_rings","kaleido","sun_riders","pl_kitchen","pl_supermarket","dn_schoolyard","mo_singalong"],
+    bossanova:  ["bamboo","disc_sunset","blue_dinner","ns_hula","ns_waterfall","cs_liner","dc_village","mo_pastoral"],
+    idm:        ["ab_diagonale","ab_balletmec","ab_fantasma","green_nebula","kaleido","tv_room","ind_furnace","im_scope","im_pixeltext","la_mesh2","cmm_gyrobox"],
+    electro:    ["ab_balletmec","phuture_red","night_lines","kaleido","pl_modelcity","cs_manhatta","sp_eva","im_pixeltext","la_mesh1","im_scope","jm_flux"],
     miamibass:  ["night_lights","drive_taillights","sun_riders","kaleido","pl_motorama","pl_parkinglot"],
     phonk:      ["dark_face","deep_face","night_lines","drive_taillights","tv_room","ind_molten"],
-    witchhouse: ["dark_face","deep_face","green_nebula","tv_room","ab_fantasma","lw_london"],
-    mallsoft:   ["pl_supermarket","pl_kitchen","blue_dinner","disc_sunset","tv_room","pl_futurama","kaleido"],
+    witchhouse: ["dark_face","deep_face","green_nebula","tv_room","ab_fantasma","lw_london","mo_dance"],
+    mallsoft:   ["pl_supermarket","pl_kitchen","blue_dinner","disc_sunset","tv_room","pl_futurama","kaleido","la_meshvase","la_mesh1","cmm_wireglobe","im_paint","im_pixeltext"],
     wintersynth:["lw_plateau","dc_rockies","earth_orbit","green_nebula","sp_lander","dc_alberta"],
     gabber:     ["phuture_red","ind_furnace","ind_molten","night_lines","dark_face","ab_balletmec"],
-    psytrance:  ["green_nebula","kaleido","rainbow_rings","night_lines","sp_eva","earth_orbit"],
-    minimal:    ["night_lines","tv_room","ab_diagonale","pl_sage","cs_manhatta","dark_face"],
+    psytrance:  ["green_nebula","kaleido","rainbow_rings","night_lines","sp_eva","earth_orbit","jm_flux","jm_axis","jm_dipole"],
+    minimal:    ["night_lines","tv_room","ab_diagonale","pl_sage","cs_manhatta","dark_face","cmm_gyrobox","im_scope","la_mesh2"],
     deephouse:  ["night_lights","deep_face","blue_dinner","kaleido","cs_marketstreet","drive_bluehour"],
-    coldwave:   ["tw_window","dark_face","cs_manhatta","night_lines","tw_rails","ind_furnace"],
-    ebm:        ["ind_furnace","ind_molten","dark_face","phuture_red","ab_balletmec","tw_subway"],
+    coldwave:   ["tw_window","dark_face","cs_manhatta","night_lines","tw_rails","ind_furnace","im_redroom"],
+    ebm:        ["ind_furnace","ind_molten","dark_face","phuture_red","ab_balletmec","tw_subway","im_redroom"],
     krautrock:  ["drive_bridge","drive_dusk","night_lines","tw_rails","cs_manhatta","pl_modelcity","drive_bluehour"],
     newjack:    ["kaleido","rainbow_rings","night_lights","sun_riders","dn_schoolyard","pl_americana"],
     breakcore:  ["dark_face","phuture_red","green_nebula","night_lines","ab_balletmec","tw_subway"],
     acidhouse:  ["kaleido","phuture_red","rainbow_rings","night_lights","cs_marketstreet","pl_sage"],
     surfrock:   ["sun_riders","disc_sunset","ca_tide","ns_hula","dn_soundie","bt_hootenanny","pl_americana"],
-    spacelounge:["spacewalk","earth_orbit","sp_eva","sp_lander","ns_rays","blue_dinner","pl_futurama"],
+    spacelounge:["spacewalk","earth_orbit","sp_eva","sp_lander","ns_rays","blue_dinner","pl_futurama","jm_dipole","cmm_crescent","jm_axis"],
     arabpop:    ["dc_village","sun_riders","cs_marketstreet","bamboo","ns_rays","disc_sunset"],
     tango:      ["blue_dinner","tv_room","ab_fantasma","cs_liner","dn_soundie","bt_folksinger"],
     afrobeat:   ["cs_marketstreet","sun_riders","dn_schoolyard","kaleido","bt_hootenanny","ns_hula"],
     desertblues:["lw_plateau","dc_alberta","disc_sunset","dc_rockies","bt_folksinger","ca_tide"],
     sludgemetal:["ind_molten","ind_furnace","dark_face","lw_rampage","green_nebula","deep_face"],
     industrialmetal:["ind_furnace","ind_molten","ab_balletmec","dark_face","phuture_red","tw_subway"],
-    darksynth:  ["drive_taillights","night_lines","phuture_red","dark_face","drive_bluehour","ind_molten"],
+    darksynth:  ["drive_taillights","night_lines","phuture_red","dark_face","drive_bluehour","ind_molten","jm_dipole","jm_flux","im_redroom","cmm_crescent","la_mesh2"],
     /* genre-tool:prelude:clips */
     prelude:["earth_orbit","blue_dinner","bamboo","dc_village","spacewalk"],
     /* /genre-tool:prelude:clips */
     /* genre-tool:hogcore:clips */
-    hogcore:["kaleido","rainbow_rings","cgi_bird","night_lights","sun_riders","phuture_red","pl_kitchen"],
+    hogcore:["kaleido","rainbow_rings","cgi_bird","night_lights","sun_riders","phuture_red","pl_kitchen","mo_singalong"],
     /* /genre-tool:hogcore:clips */
   };
 
@@ -462,6 +465,7 @@
       stab:["offbeat","offbeat","rave","sparse"], hits:{sources:["vox_b","rave_a","sp_system","sp_energy"], pattern:"sparse", prob:.5},
       form:"dj" },
     house: { label:"House", info:"Chicago house: four-on-floor + claps + open-hat offbeats, warm organ stabs, piano color, min7 sevenths",   // sample-mid: chops present, synths carry
+      reverbColor:"dattorro",   // fx wings: clean plate on the stabs
       bpm:[120,126], swing:[.08,.15], humanize:[.05,.18],
       progressions:["house_min7","lofi","deep_two"], kits:["house","house","four"], fills:["off","hat rush","riser"],
       bass:{patterns:["rolling","stab","melodic","syncopated"], patchPool:["SYN-BASS 2"], recipe:{model:["saw","sub","dx7"],cutoff:[380,700],res:[.15,.3],level:[1.0,1.2],send:[0,.08],dsend:[0,.05]}},   // ~1/3 of seeds: the DX7 SYN-BASS 2 patch (Faust engine; csound maps -> sub); syncopated = the push-pull jack
@@ -561,6 +565,7 @@
       stab:["off"], hits:{sources:["vox_a","sp_herenow"], pattern:"sparse", prob:.15},
       form:"wave" },
     dinosynth: { label:"Dino synth", info:"dinosaur-themed dungeon synth: dark-ambient drones, medieval choir, tribal log-drums, primordial swamp",
+      reverbColor:"greyhole",   // fx wings: the diffuse dark-ambient smear (primordial swamp)
       bpm:[72,96], swing:[0,.05], humanize:[.15,.35],
       progressions:["primeval","epic_min","andalusian","minor_run","mode_phrygian"],   // cinematic, moving — no static drone
       kits:["tribal"], fills:["off","off","downlift"],   // full tribal kit carries it; fills mostly off (no fill-reliance)
@@ -676,6 +681,7 @@
       stab:["off","sparse"], hits:{sources:["vox_c","sp_pressure","rave_d"], pattern:"dub", prob:.55},
       form:"drop" },
     blues: { label:"Blues", info:"12-bar dom7 changes, triplet shuffle, call-and-response guitar, worn-record air",   // ACOUSTIC-forward (2026-07 deep pass: "the whole thing is acoustic")
+      reverbColor:"fdn",   // fx wings: a dry juke-joint room, not a wash
       bpm:[78,100], swing:[.24,.42], humanize:[.3,.55],
       progressions:["blues_12"], kits:["shuffle","boombap","shuffle"], fills:["off","drum fill"],   // 2/3 the swung-triplet ride kit; boombap keeps a dusty chair
       bass:{patterns:["walking","walking","melodic"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sampler","piano"],cutoff:[500,1000],res:[.05,.15],level:[.9,1.1],send:[.1,.2],dsend:[0,.05],attack:.005,release:[.08,.14]}},   // the UPRIGHT (real, FluidR3) walks 2/3 of seeds; piano the rest — the DX7/sub bass is gone
@@ -871,6 +877,7 @@
       form:"pop" },
     // ================= ROUND 3 — the big expansion =================
     citypop: { label:"City pop", info:"the royal-road SOURCE genre: bright maj7 boogie, DX7 e-piano gloss, walking bass — Tokyo at night, UNSLOWED",   // SYNTH-FORWARD: vaporwave before the slowdown — city lights, not mall haze
+      reverbColor:"dattorro",   // fx wings: clean plate gloss on the maj7 boogie
       bpm:[92,106], swing:[.05,.12], humanize:[.08,.2],   // UNDER transitwave/italo tempo — the boogie sits at 100
       progressions:["royal_road","pop_1625","neosoul"], kits:["full","open"], fills:["drum fill","tom fill","riser"],
       bass:{patterns:["walking","melodic","octaves","syncopated"], recipe:{model:["saw"],cutoff:[650,1000],res:[.08,.16],level:[1.0,1.2],send:[.03,.08],dsend:[0,.05]}},
@@ -956,6 +963,7 @@
       stab:["off","sparse"], hits:{sources:["blues_vox_78","vox_c","sp_slowdown"], pattern:"dub", prob:.7, wet:true},
       form:"pop" },
     witchhouse: { label:"Witch house", info:"drowned rave: slowed 808 crawl, pitched-down voices, choirs in a cathedral of reverb",   // SAMPLE-FORWARD: the slowed voice is the ghost
+      reverbColor:"greyhole",   // fx wings: the cathedral-of-reverb smear
       bpm:[60,76], swing:[0,.08], humanize:[.1,.3],
       progressions:["deep_two","mode_phrygian","drone_min"], kits:["trap","halftime"], fills:["downlift","off","reverse"],
       bass:{patterns:["sub","root","dub"], recipe:{model:["sub"],cutoff:[240,420],res:[.05,.15],level:[1.15,1.35],send:[.05,.15],dsend:[0,.08]}},
@@ -1116,6 +1124,7 @@
       stab:["rave","offbeat"], hits:{sources:["rave_b","rave_c","sp_rhythm"], pattern:"offbeat", prob:.7},
       form:"dj" },
     surfrock: { label:"Surf rock", info:"reverb-tank twang: tremolo guitar over a fast doo-wop, drums like breakers, 45rpm dust",   // guitar-FORWARD: the spring tank is the room
+      reverbColor:"spring",   // fx wings: the boing/flutter spring tank IS surf rock's room
       bpm:[126,144], swing:[.06,.14], humanize:[.15,.35],
       progressions:["doo_wop","sad_pop","andalusian"], kits:["open","four"], fills:["drum fill","tom fill","hat rush"],
       bass:{patterns:["walking","octaves"], recipe:{model:["saw"],cutoff:[600,950],res:[.08,.16],level:[1,1.2],send:[.03,.08],dsend:[0,.05]}},
@@ -1153,6 +1162,7 @@
       stab:["off"], hits:{sources:["vox_b","sp_rhythm"], pattern:"sparse", prob:.4},
       form:"pop" },
     tango: { label:"Tango", info:"the habanera cell as law: sampled bandoneon over staccato piano and dry marcato strings, 78rpm dust, dramatic silence",   // acoustic-FORWARD: 2026-07 ear-fix — the SYNTH voices are out of the front line
+      reverbColor:"fdn",   // fx wings: a dry room (freeverb), not a wash — the salon
       bpm:[100,124], swing:[0,.06], humanize:[.3,.55],
       progressions:["andalusian","andalusian","minor_run"],   // STRICTLY minor. frost PURGED (it was the verifier's triad fence, but it read as wintersynth pads by ear — the human heard it)
       kits:["kick","off"], fills:["off","downlift"],
@@ -1230,6 +1240,7 @@
       form:"drop" },
     /* genre-tool:prelude:genres */
     prelude: { label:"Prelude", info:"Bach-prelude figuration as a genre: continuous broken-chord 16th arpeggiation over a slow harmonic rhythm (chordEvery:16), felt-piano / bright-grand voices, drum kit OFF, even Baroque touch with only the lightest rubato — the WTC Book I C-major prelude, generalized",
+      reverbColor:"fdn",   // fx wings: a dry recital room, not a wash — the close felt-piano
       bpm:[62,80],
       swing:[0,0.03],
       humanize:[0.08,0.2],
@@ -1610,6 +1621,20 @@
       for(const x of ws){ acc+=x.w; if(r<=acc){ gsel=x.g; break; } }
       const ce=Math.round(GENRES[gsel].chordEvery||8);
       if(ce&&ce!==8) choice.chordEvery=ce;
+    }
+    // ---- reverb COLOR (fx wings round): a per-genre reverb character
+    // (state.reverbColor names an external dist/reverb_* module that replaces
+    // the fx_bus internal zita — see faust/state-engine reverbColor). Picked
+    // from the DOMINANT parent with NO rng draw: touched anchors keep every
+    // prior musical choice byte-for-byte and only gain the reverbColor field;
+    // untouched genres (no parent declares it) stay on the zita default and
+    // press byte-identically. A blend inherits its dominant parent's color.
+    {
+      const top=ws.slice().sort((a,b)=>b.w-a.w)[0];   // the genuinely dominant parent
+      if(top&&GENRES[top.g].reverbColor) choice.reverbColor=GENRES[top.g].reverbColor;
+      // (if the dominant parent has no color, the blend rides the zita default —
+      // a blend into uncolored territory drops the color at the crossover,
+      // an audible flip, and untouched anchors stay byte-identical)
     }
     return constrain(choice);
   }
@@ -2009,6 +2034,7 @@
       vocoderSourceId: vocId||undefined,
       bpm:c.bpm, keyOffset:opts.keyOffset!=null?opts.keyOffset:0, progression:c.progression,
       reverb:c.fx.reverb, seed:c.seed, swing:c.swing, humanize:c.humanize,
+      ...(c.reverbColor?{reverbColor:c.reverbColor}:{}),   // fx wings: per-genre reverb character (absent = fx_bus zita default; byte-identical)
       realHats:!!c.realHats, snarePP:c.snarePP||0, stationPool:(c.stations||[]),
       // rubato/thunk (neoclassical deep pass): absent keys = zero behavior
       // change in buildEvents — unchanged genres press byte-identically

@@ -4340,5 +4340,37 @@
    "/vp330/sustain",
    "/vp330/vowel"
   ]
+ },
+ "reverb_dattorro": {
+  "inputs": 2,
+  "outputs": 2,
+  "params": [
+   "/reverb_dattorro/rgain",
+   "/reverb_dattorro/rtone"
+  ]
+ },
+ "reverb_fdn": {
+  "inputs": 2,
+  "outputs": 2,
+  "params": [
+   "/reverb_fdn/rgain",
+   "/reverb_fdn/rtone"
+  ]
+ },
+ "reverb_greyhole": {
+  "inputs": 2,
+  "outputs": 2,
+  "params": [
+   "/reverb_greyhole/rgain",
+   "/reverb_greyhole/rtone"
+  ]
+ },
+ "reverb_spring": {
+  "inputs": 2,
+  "outputs": 2,
+  "params": [
+   "/reverb_spring/rgain",
+   "/reverb_spring/rtone"
+  ]
  }
 }

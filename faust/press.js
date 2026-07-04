@@ -326,6 +326,28 @@ async function press(state, outPath, opts) {
       (hasIns ? ` [inserts: ${u.inserts.map(i => i.type).join(">")}]` : ""));
   }
 
+  // ---- reverb COLOR: an external reverb module (dist/reverb_*) replaces the
+  // fx_bus internal zita for genres that select one (state.reverbColor). Render
+  // the whole (mono) rev-send bus through it and fold the stereo wet into the
+  // dry path below so it flows through the master chain; fxParams has already
+  // muted the internal rgain to 0. Deterministic (module LFO phases start at 0)
+  // so same seed => same bytes; genres with no reverbColor skip this entirely.
+  const rc = SE.reverbColor(state);
+  let wetL = null, wetR = null;
+  if (rc) {
+    const rp = await mkProc(rc.module);
+    const RR = "/" + rootOf(rc.module) + "/";
+    rp.setParamValue(RR + "rgain", rc.rgain);
+    rp.setParamValue(RR + "rtone", rc.rtone);
+    wetL = new Float32Array(TOTAL); wetR = new Float32Array(TOTAL);
+    for (let s = 0; s < TOTAL; s += BS) {
+      const len = Math.min(BS, TOTAL - s);
+      const o = rp.render([rev.subarray(s, s + len), rev.subarray(s, s + len)], len);
+      wetL.set(o[0].subarray(0, len), s); wetR.set((o[1] || o[0]).subarray(0, len), s);
+    }
+    console.log(`  reverb color: ${rc.name} -> ${rc.module}, rgain=${rc.rgain.toFixed(2)} rtone=${rc.rtone}`);
+  }
+
   // ---- fx_bus master section over the whole length ----
   const fx = await mkProc("fx_bus");
   const fxp = SE.fxParams(state);
@@ -335,9 +357,10 @@ async function press(state, outPath, opts) {
     .sort((a, b) => a.t0 - b.t0);
   const L = new Float32Array(TOTAL), Rr = new Float32Array(TOTAL);
   const zero = new Float32Array(BS);
-  // fx_bus dry L/R inputs: mono dry duplicated, plus the stereo voices' width.
-  const dryL = wL ? (() => { const b = new Float32Array(TOTAL); for (let i = 0; i < TOTAL; i++) b[i] = dry[i] + wL[i]; return b; })() : dry;
-  const dryRch = wR ? (() => { const b = new Float32Array(TOTAL); for (let i = 0; i < TOTAL; i++) b[i] = dry[i] + wR[i]; return b; })() : dry;
+  // fx_bus dry L/R inputs: mono dry duplicated, plus the stereo voices' width
+  // AND the reverb-color wet (folded into dry so it rides the master chain).
+  const dryL = (wL || wetL) ? (() => { const b = new Float32Array(TOTAL); for (let i = 0; i < TOTAL; i++) b[i] = dry[i] + (wL ? wL[i] : 0) + (wetL ? wetL[i] : 0); return b; })() : dry;
+  const dryRch = (wR || wetR) ? (() => { const b = new Float32Array(TOTAL); for (let i = 0; i < TOTAL; i++) b[i] = dry[i] + (wR ? wR[i] : 0) + (wetR ? wetR[i] : 0); return b; })() : dry;
   let mcut = 21000, swi = 0; const activeSw = [];
   for (let s = 0; s < TOTAL; s += BS) {
     const len = Math.min(BS, TOTAL - s), t = s / SR;

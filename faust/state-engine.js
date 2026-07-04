@@ -383,13 +383,34 @@
     return units;
   }
 
+  // ---- reverb COLOR (fx wings round) — a per-genre-selectable reverb node ----
+  // state.reverbColor names an EXTERNAL reverb module (dist/reverb_*) that
+  // replaces the fx_bus internal zita for that genre. Absent / "zita" / "default"
+  // => the internal zita path (byte-identical to pre-wings renders). The color
+  // modules share a uniform interface (rgain = reverb*3.2 like the default; a
+  // baked TRIM equalizes their tail energy to the zita reference so a genre's
+  // `reverb` scalar means the same wetness across colors). The callers (press +
+  // live) build ONE external reverb node, feed it the (mono) reverb-send bus,
+  // and mix its stereo wet back into the dry path so it flows through the master
+  // chain; fxParams sets the internal rgain to 0 whenever a color is active.
+  const REVERB_COLORS = { dattorro: "reverb_dattorro", greyhole: "reverb_greyhole",
+    fdn: "reverb_fdn", spring: "reverb_spring" };
+  const REVERB_TONE = { dattorro: 5200, greyhole: 2600, fdn: 6000, spring: 3400 };
+  function reverbColor(state) {
+    const module = REVERB_COLORS[state && state.reverbColor];
+    if (!module) return null;   // default => fx_bus internal zita
+    const rv = state.reverb != null ? state.reverb : 0.7;
+    return { name: state.reverbColor, module, rgain: clamp(rv * 3.2, 0, 3.5), rtone: REVERB_TONE[state.reverbColor] };
+  }
+
   // ---- fx_bus params from state (rgain = reverb*3.2 per A/B calibration; the
   // fx_bus rgain slider caps at 2, so reverb > 0.625 saturates the return) ----
   function fxParams(state) {
     const spb = 60 / state.bpm, dl = state.delay || {};
     const pp = state.pingpong || {};
+    const colored = !!REVERB_COLORS[state && state.reverbColor];   // internal zita off when a color is active
     return {
-      rgain: clamp((state.reverb != null ? state.reverb : 0.7) * 3.2, 0, 2), dgain: 1,
+      rgain: colored ? 0 : clamp((state.reverb != null ? state.reverb : 0.7) * 3.2, 0, 2), dgain: 1,
       rtone: 2000,   // reverb return tone (legacy fixed 2 kHz; live eco-3 dulls it)
       dtime: clamp((dl.beats || 0.75) * spb, 0.02, 1.9),
       dfb: clamp(dl.feedback != null ? dl.feedback : 0.3, 0, 0.92),
@@ -481,5 +502,5 @@
     return mapEvents(E, state, ev, { bedAll: true });
   }
 
-  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, mapEvents, buildSchedule };
+  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, reverbColor, REVERB_COLORS, mapEvents, buildSchedule };
 });

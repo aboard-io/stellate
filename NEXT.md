@@ -30,11 +30,28 @@ Both commits are local-only — pushing main needs Paul's go (deploy branch;
 the working tree is already the live web root either way).
 
 ## Queue
-1. **Faust wings** (approved; memory: synth-fleet-and-genre-tool): reverb
-   COLOR as a genre dimension (spring→surfrock, greyhole→witchhouse,
-   dattorro→citypop, dry FDN→tango); an.pitchTracker AUTO-TUNE of found
-   vocals to song key; wah on funk/disco bass; qu.lib scale-snap for bends;
-   multiband master comp.
+1. **Faust wings** (approved; memory: synth-fleet-and-genre-tool):
+   - **[LANDED, unverified-by-Paul] Reverb COLOR** as a genre dimension —
+     4 modules (`dsp/reverb_{dattorro,greyhole,fdn,spring}.dsp`), one external
+     reverb node selected per genre via `state.reverbColor` (dattorro→citypop+
+     house, greyhole→witchhouse+dinosynth, fdn→tango+blues+prelude, spring→
+     surfrock). See faust/VOICES.md "Reverb COLOR family". Gated: probe-reverb.js
+     + verify 63/63 + live smoke, 39 untouched states byte-identical, dist
+     reverted to committed bytes (only the 4 new modules added).
+   - **[NOT STARTED] an.pitchTracker AUTO-TUNE** of found vocals to song key.
+     ARCHITECTURE NOTE for whoever picks this up: the found layer is NATIVE
+     (found-player.js: AudioBufferSourceNodes live, pure-JS mixPCM in press) —
+     it does NOT run through Faust, so `an.pitchTracker`/`ef.transpose` don't
+     drop in directly. Two options: (a) route the voice-crate found chops through
+     a Faust autotune node in LIVE + a JS pitch-shifter in press (two codepaths,
+     press determinism to prove); or (b) a UNIFIED deterministic clip-snap —
+     detect each voice clip's median pitch offline (autocorrelation on the
+     decoded buffer), snap toward the nearest scale tone of state's key, apply as
+     a `pitch` (playbackRate) multiplier scaled by `state.autoTune` 0..1. (b) is
+     simpler + deterministic in both engines. Anchors to wire: hogcore ~0.7,
+     vaporwave ~0.25; OFF by default; spokenword 0.
+   - **[NOT STARTED]** wah on funk/disco bass; qu.lib scale-snap for bends;
+     multiband master comp.
 2. **Mellotron sampler-mode** (wow/flutter/8s cap on sampler.js) →
    dinosynth/witchhouse/neoclassical. Deferred from the fleet round
    (shared-file work, not a new dsp).
