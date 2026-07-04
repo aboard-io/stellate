@@ -96,6 +96,17 @@
                                                   ["G","dom7"],["F","dom7"],["C","dom7"],["G","dom7"]])
   });
 
+  // (KERNEL-V4 §3.7) progression resolution is now HARD: gate 6 proves every
+  // anchor's progression names resolve, so at runtime an unknown name is a bug,
+  // not a reason to silently render royal_road city-pop harmony. Replaces the
+  // four `PROGRESSIONS[x]||PROGRESSIONS.royal_road` fallbacks (engine + kernel +
+  // verifier). Byte-stable: never fires on a valid state.
+  function getProgression(name){
+    const p=PROGRESSIONS[name];
+    if(!p) throw new Error("csd-engine: unknown progression '"+name+"' (no royal_road fallback — see gate 6)");
+    return p;
+  }
+
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
   const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic","habanera","syncopated","pedal"];
@@ -152,6 +163,46 @@
     model==="boom"||model==="808"||model==="909"||model==="noise"||model==="crack"||
     model==="clap"||model==="metal";
 
+  // ---------- SOURCE-CLASS taxonomy (KERNEL-V4 §3.6 — the primary timbre axis) ----------
+  // Every pitched model classified by its SYNTHESIS SOURCE CLASS — the first
+  // choice §3.6 makes per voice, formerly implicit in each anchor's `model:[…]`
+  // pool. Classes:
+  //   analog       subtractive / analog-modelled oscillator voices (the space's
+  //                default synth timbre) — incl. the emulation fleet (juno60,
+  //                tb303, solina, oberheim, ppg, casiocz, synclead, modeld) and
+  //                the additive/wavetable string/choir/brass/bell/vp330 pads,
+  //                which are synths, not sampled instruments.
+  //   fm           phase-modulation voices — the built-in `fm` and the DX7
+  //                cartridge engine (`dx7`); a DX7's acoustic-ness is a property
+  //                of the loaded PATCH name, not the class (see verifier).
+  //   sampler      real recorded multisamples (found/samples/instruments/) —
+  //                acoustic by construction.
+  //   electromech  tonewheel/tine/pipe electro-mechanical instruments modelled
+  //                as their own voices (hammond, organ, rhodes, piano) — the
+  //                genuinely-acoustic-adjacent tier.
+  //   mechanical   noise/distortion-defined voices (fuzz).
+  // `ac` = the acoustic MEMBERSHIP grade this source contributes to the
+  // verifier's `acoustic` feature (0 = pure synth). It lives HERE now so the
+  // feature READS the axis rather than re-deriving it from an inline list
+  // (piano 1, sampler .8, organ/hammond .6 — the historical grades, unchanged).
+  // Silence ("off") is a first-class source the anchors already weight in-pool.
+  const SOURCE_CLASS = {
+    saw:{class:"analog",ac:0}, stack:{class:"analog",ac:0}, sine:{class:"analog",ac:0},
+    sub:{class:"analog",ac:0}, acid:{class:"analog",ac:0}, reese:{class:"analog",ac:0},
+    wobble:{class:"analog",ac:0}, pluck:{class:"analog",ac:0}, kpluck:{class:"analog",ac:0},
+    modeld:{class:"analog",ac:0}, juno60:{class:"analog",ac:0}, tb303:{class:"analog",ac:0},
+    solina:{class:"analog",ac:0}, synclead:{class:"analog",ac:0}, casiocz:{class:"analog",ac:0},
+    oberheim:{class:"analog",ac:0}, ppg:{class:"analog",ac:0}, vp330:{class:"analog",ac:0},
+    strings:{class:"analog",ac:0}, choir:{class:"analog",ac:0}, bell:{class:"analog",ac:0},
+    brass:{class:"analog",ac:0}, vocoder:{class:"analog",ac:0}, guitar:{class:"analog",ac:0},
+    fm:{class:"fm",ac:0}, dx7:{class:"fm",ac:0},
+    sampler:{class:"sampler",ac:0.8},
+    piano:{class:"electromech",ac:1}, rhodes:{class:"electromech",ac:0.6},
+    organ:{class:"electromech",ac:0.6}, hammond:{class:"electromech",ac:0.6},
+    fuzz:{class:"mechanical",ac:0},
+  };
+  const sourceClassOf=(model)=>(SOURCE_CLASS[model]&&SOURCE_CLASS[model].class)||null;
+
   // models: pad saw|organ|fm · bass saw|sub|acid|reese · melody stack|pluck|fm
   // · kick boom|808|909 · snare noise|crack|clap · hat noise|metal
   // `inserts` — per-voice insert-FX chain (0-2 entries), a first-class state
@@ -169,21 +220,10 @@
       drums:  { kickModel:"boom", snareModel:"noise", hatModel:"noise", kick:1.0, snare:1.0, hat:1.0, tom:1.0, tune:1.0, send:0.18, dsend:0 }
     };
   }
-  // style presets — pick one to recast the whole song
-  const STYLES = {
-    vaporwave:{ label:"Vaporwave", bpm:88, reverb:0.85, delay:{beats:0.75,feedback:0.30,cutoff:2600},
-      progression:"royal_road", song:{bass:"simple",drums:"full",melody:"composed"},
-      instruments:{ pad:{wave:"saw",cutoff:1400,detune:0.006,dsend:0.15}, bass:{wave:"saw",cutoff:700}, melody:{wave:"sine",cutoff:3400,dsend:0.25} } },
-    synthwave:{ label:"Synthwave", bpm:112, reverb:0.5, delay:{beats:0.5,feedback:0.35,cutoff:4200},
-      progression:"synthwave", song:{bass:"octaves",drums:"four",melody:"updown"},
-      instruments:{ pad:{wave:"saw",cutoff:2800,res:0.2,detune:0.012,dsend:0.2}, bass:{wave:"saw",cutoff:1400,level:1.0}, melody:{wave:"saw",cutoff:4000,vibrato:0.004,dsend:0.3} } },
-    downtempo:{ label:"Downtempo", bpm:76, reverb:0.8, delay:{beats:0.75,feedback:0.28,cutoff:2200},
-      progression:"neosoul", song:{bass:"simple",drums:"boombap",melody:"sparse"},
-      instruments:{ pad:{wave:"saw",cutoff:1100,detune:0.008,dsend:0.2}, bass:{wave:"sine",cutoff:500}, melody:{wave:"sine",cutoff:2600,dsend:0.3} } },
-    lofi:{ label:"Lo-fi", bpm:82, reverb:0.6, delay:{beats:0.5,feedback:0.22,cutoff:2000},
-      progression:"lofi", song:{bass:"simple",drums:"boombap",melody:"pentaup"},
-      instruments:{ pad:{wave:"sine",cutoff:1200,dsend:0.18}, bass:{wave:"saw",cutoff:600}, melody:{wave:"sine",cutoff:2400,dsend:0.25} } }
-  };
+  // (KERNEL-V4 §3.7 deletion) the STYLES whole-song presets were dead surface —
+  // load-time recasts for the retired builder.html; nothing on main read them.
+  // Removed. generateSong survives ONLY because render-sample-video.js still
+  // builds the night-drive preset through it (its own migration round).
 
   let _sid=0; const sid=()=>"s"+(++_sid);
   // a whole song with named sections; rotates found sources; pads always paired
@@ -834,7 +874,7 @@
   const STABLE_SECTION=/chorus|hook|drop|peak|refrain/i;            // formAware schedule: transforms rest on these (the section is the hook — leave it alone)
 
   function buildEvents(state){
-    const prg=PROGRESSIONS[state.progression]||PROGRESSIONS.royal_road;
+    const prg=getProgression(state.progression);
     // KERNEL-V4 Phase 1: harmonic rhythm is a state dimension. chordEvery =
     // beats per chord bar (absent = the legacy CHORD_BEATS=8, byte-stable).
     const CBEATS=Math.max(2,Math.round(state.chordEvery||CHORD_BEATS));
@@ -1385,7 +1425,8 @@
   const api={ buildEvents, defaultState, defaultInstruments, generateSong, voicing, soloVoices, euclidBeats,
     KITS,   // pulse-set kit lanes (KERNEL-V4 Phase 1): kits are data; drumEvents is the one interpreter
     sectionTag,   // form-graph typed-node classifier (Phase 5)
-    PROGRESSIONS, STYLES, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS, isModel, pchAdd, pchToMidi };
+    PROGRESSIONS, getProgression, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS,
+    isModel, SOURCE_CLASS, sourceClassOf, pchAdd, pchToMidi };
   if(typeof module!=="undefined" && module.exports) module.exports=api;
   else root.CsdEngine=api;
 })(typeof window!=="undefined" ? window : globalThis);

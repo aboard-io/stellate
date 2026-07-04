@@ -33,7 +33,7 @@
     const sigs=Object.values(wins).map(w=>w.sort().join(","));
     const variation=sigs.length?new Set(sigs).size/sigs.length:0;
     const I=state.instruments||E.defaultInstruments();
-    const prog=E.PROGRESSIONS[state.progression]||E.PROGRESSIONS.royal_road;
+    const prog=E.getProgression(state.progression);
     const roots=new Set(prog.chords.map(c=>c.name.replace(/[^A-G#b]/g,"").slice(0,2)));
     const secs=state.sections||[];
     const role=(r)=>secs.filter(s=>s.found&&s.found.sourceId&&(s.found.role||"bed")===r).length/Math.max(1,secs.length);
@@ -81,13 +81,22 @@
       // [0,.3]. Counting solina drew italo down to a knife-edge tie (self
       // 100->95, margin +1->0, because solina is italo's dominant pad on seeds
       // 1&3) — the measurement said don't. So solina stays synth.
+      // 2026-07 (KERNEL-V4 §3.6): the acoustic membership grades now READ the
+      // exported SOURCE_CLASS axis (SOURCE_CLASS[model].ac) instead of an inline
+      // ACM list — the feature reads the dimension rather than re-deriving it.
+      // Grades are byte-identical to the ACM era (piano 1, sampler .8,
+      // organ/hammond .6; the analog string-synth fleet incl. solina stays 0).
+      // The two things that AREN'T pure per-model classification stay local: a
+      // DX7 pad is acoustic only when its loaded PATCH name is keyboard-ish
+      // (KEYSY), and a sampled-PIANO melody grades a full 1 (not .8). Presence
+      // is gated on melody OR pad; the grade is set by the melody voice (a bare
+      // acoustic pad under a synth lead reads .6).
       acoustic: (()=>{ const KEYSY=/(ORGAN|PIANO|CLAV|VIBE|MARIMBA|XYLO|LOG DRUM|KOTO|HARP|GUIT|BANJO|SITAR|LUTE|HARMONICA|CELESTE|ACCORDION)/i;
+        const ac=(m)=>(E.SOURCE_CLASS[m]&&E.SOURCE_CLASS[m].ac)||0;   // 0 for pure-synth sources (solina, saw, dx7, …)
         const dxPadAc=I.pad.model==="dx7"&&I.pad.dx7&&KEYSY.test(I.pad.dx7.name||"");
-        const ACM=["piano","organ","sampler","hammond"];   // hammond = tonewheel organ (see note above); solina stays synth
-        const melAc=ACM.includes(I.melody.model);
-        const padAc=ACM.includes(I.pad.model)||dxPadAc;
+        const melAc=ac(I.melody.model)>0, padAc=ac(I.pad.model)>0||dxPadAc;
         const melSampPiano=I.melody.model==="sampler"&&/piano/i.test((I.melody.sampler&&I.melody.sampler.id)||"");
-        return melAc||padAc ? (I.melody.model==="piano"||melSampPiano?1:I.melody.model==="sampler"?0.8:0.6) : 0; })(),
+        return melAc ? (melSampPiano?1:ac(I.melody.model)) : (padAc?0.6:0); })(),
       // rubato: the time dimension (state.rubato.depth; 0 = clock-straight).
       // Symbolic and honest — buildEvents actually warps every event's beat by
       // it (the press breathes; engine.test renders it). Only genres that
