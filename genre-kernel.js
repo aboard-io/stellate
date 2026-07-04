@@ -2060,10 +2060,28 @@
       //    removal keeps dur >= target*0.9, and COMMIT only if the result lands
       //    in [target*0.9, target*1.1]. If no drop sequence lands it (cycles too
       //    coarse — blues' 96-beat 12-bar, prelude's chordEvery:16 64-128-beat
-      //    cycles, newage's canon), REVERT untouched: those stay byte-identical
-      //    and genuinely floored (documented). So the lever only ever fires where
-      //    it can actually land a genre in-band — bounding the blast radius to
-      //    the listed genres and keeping every un-landable floored genre stable.
+      //    cycles, newage's + chinawave's 64-beat canon), REVERT untouched: those
+      //    stay byte-identical and genuinely floored (documented). So the lever
+      //    only ever fires where it can actually land a genre in-band — bounding
+      //    the blast radius to the listed genres and keeping every un-landable
+      //    floored genre stable.
+      //    2026-07 floored-seed sweep — DISPOSITION (option a: leave floored,
+      //    documented). The last seeds the drop lever can't land, all measured:
+      //    chinawave s5 (canon cb=64, slow bpm 98, 7-section form -> 318s; drop
+      //    lands only 201s, 3s over the ceiling), newage s1 (canon cb=64 -> 262s;
+      //    reachable drops are 262/211/160 — the band [162,198] falls in the
+      //    64-beat GAP), prelude s2 (dream cb=64 -> 252s, same gap) and prelude s3
+      //    (canon cb=128 -> 512s; one cycle is 56% of target — structurally
+      //    un-landable). A shorter pool member EXISTS for each (four_chords/dream/
+      //    ii_v_i) and a deterministic post-resolve swap WOULD land them at self
+      //    100 — but that (1) trades the deliberate long-figuration identity
+      //    (canon IS long — Pachelbel at tempo; the prelude's chordEvery:16 is its
+      //    whole figuration) and (2) shifts the motion/seventh/variation features
+      //    of THREE matrix seeds (newage s1, prelude s2/s3), disturbing the 63/63
+      //    confusion matrix. Per "identity beats the 180s rule", they stay
+      //    floored; the 3-minute evolution pass below still guarantees they EVOLVE
+      //    (modulate/re-roll/pivot) rather than drone. (blues stays floored too —
+      //    settled: the 12-bar form is 96-beat-coarse and the deep pass is fixed.)
       //  • zero rng; runs before the evolution pass so it sees final durations.
       // Dropping a node moves role()/bedUse + the density features (a bed intro/
       // outro/breakdown leaves the mix), so every genre it fires on is matrix-
@@ -2408,9 +2426,18 @@
   //     lifting margin 1 -> 7. Verified stable under 180s normalisation (self
   //     100, margin 7 both natural and targetSec:180) — the variation-tip that
   //     forced the exemption no longer breaks anything at a 7-point margin.
+  //     2026-07 interlock pass: afrobeat LEFT this list too — NO_AUTO_GENRE is
+  //     now empty. The verifier gained the `interlock` feature it was missing
+  //     (genre-verifier.js: Fela's E(3,16)xE(11,16) tresillo/shekere lock,
+  //     which the whole four-on-floor cluster lacks), lifting afrobeat's column
+  //     margin 3 -> 8. The feared variation-tip is measured moot: afrobeat's
+  //     variation stays 1 at BOTH natural (488 beats) and targetSec:180 (~300
+  //     beats), and interlock is a per-window MEAN (.37-.41 either length, not
+  //     window-count-sensitive). Verified: matrix afrobeat self 100, margin 8,
+  //     stable under the 180s solve.
   const AUTO_TARGET=180;
   const NO_AUTO_FORM=new Set(["ritual","anthem","transit"]);
-  const NO_AUTO_GENRE=new Set(["afrobeat"]);
+  const NO_AUTO_GENRE=new Set([]);   // was ["afrobeat"] — see note above; now empty
   const withTarget=(c,opts)=>{
     const o=Object.assign({},opts);
     const dom=c.genres&&c.genres[0];

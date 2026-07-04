@@ -18,6 +18,47 @@
   const isNode = typeof module !== "undefined" && module.exports;
   const E = isNode ? require("./csd-engine.js") : root.CsdEngine;
 
+  // interlock (afrobeat's point — "Fela's arithmetic"): the ONE thing the
+  // symbolic space couldn't see (KERNEL-V4 §1: "the verifier can't yet see
+  // interlock — a v4 feature gap, not an anchor gap"). Rhythmic interlock =
+  // multiple percussion lanes phase-locked in COMPLEMENTARY euclid patterns:
+  // afrobeat renders E(3,16) tresillo kicks arguing with E(11,16) shekere hats
+  // (two clocks rotating together). Computed per 8-beat window (16 sixteenths):
+  //   kOff        = fraction of KICK onsets OFF the four-on-floor quarters
+  //                 {0,4,8,12} — a euclid/tresillo kick vs a straight-four one;
+  //   singleCov16 = fraction of the 16 grid slots covered by EXACTLY ONE active
+  //                 lane (>=2 onsets) — the complementary tiling ("interlock"),
+  //                 low when lanes collide (four-floor: kick lands ON hat slots).
+  // interlock = mean over windows of kOff*singleCov16 (windows need >=2 active
+  // lanes AND a kick, else 0). MEASURED across the catalog: afrobeat renders
+  // .37-.41 (stable at natural AND targetSec:180 length — it is a per-window
+  // MEAN, not window-count-sensitive like `variation`); every four-on-floor
+  // genre scores near zero (disco .09, krautrock .07, house .01, techno .05,
+  // gabber .04, edm/trance/minimal/deephouse/acidhouse all <.03) because their
+  // kick sits on the quarters. The chopped-break/mutating genres (jungle .36,
+  // breakcore .33, idm .32) score moderate — below afrobeat — but are fenced
+  // off afrobeat's row by acoustic/swing/bpm anyway (they don't camp on it).
+  // Added to afrobeat's target row (measured floor); it re-opens afrobeat's
+  // margin over the four-on-floor cluster and lets it leave the solver's
+  // MARGIN_FRAGILE exemption (see genre-kernel NO_AUTO_GENRE).
+  const INTERLOCK_Q=new Set([0,4,8,12]);
+  function interlock(drums){
+    const wins={};
+    drums.forEach(d=>{ const w=Math.floor(d.beat/8); const slot=((Math.round(d.beat*2)%16)+16)%16;
+      (wins[w]=wins[w]||{}); (wins[w][d.drum]=wins[w][d.drum]||new Set()).add(slot); });
+    const per=[];
+    for(const w of Object.values(wins)){
+      const lanes=Object.entries(w).filter(([l,s])=>s.size>=2);
+      const kick=w.kick;
+      if(lanes.length<2||!kick||kick.size<2){ per.push(0); continue; }
+      const cover={}; for(const [l,s] of lanes) for(const slot of s) cover[slot]=(cover[slot]||0)+1;
+      const single=Object.values(cover).filter(c=>c===1).length/16;
+      const kOff=[...kick].filter(s=>!INTERLOCK_Q.has(s)).length/kick.size;
+      per.push(kOff*single);
+    }
+    return per.length?per.reduce((a,b)=>a+b,0)/per.length:0;
+  }
+
   function features(state){
     const ev=E.buildEvents(state);
     const beats=Math.max(1,ev.totalBeats);
@@ -106,6 +147,7 @@
       rubato: state.rubato?+(state.rubato.depth||0).toFixed(3):0,
       leadVoices: I.melody.voices||2,
       softTop: state.tone&&state.tone.highcut>0?1:0,
+      interlock: +interlock(drums).toFixed(3),   // Fela's arithmetic (see helper above)
     };
   }
 
@@ -153,8 +195,8 @@
     blues:    { bpm:[74,102,3], swing:[.22,.46,3], acoustic:[.4,1,2], seventh:[.85,1,3],
                 motion:[.5,.7,2], crackle:[.2,.6,1], drumDensity:[.7,2.6,1], pump:[0,.05,1] },
     jazz:     { bpm:[96,148,2], swing:[.26,.52,3], acoustic:[.4,1,2], seventh:[.6,1,1],
-                motion:[.55,1,2], snareBalance:[0,.75,1], hatDensity:[.7,2.6,1], humanize:[.3,.7,1],
-                crackle:[0,.42,1] },   // 2026-07 (blues acoustic pass): blues now rides shuffle+upright+organ and was TYING jazz at 100. Honest fences: bpm lo = the jazz anchor's own floor (96, was 92); crackle hi = the anchor's own cap (.4+margin) — blues IS the worn-record genre (.25-.55), jazz is merely dusty
+                motion:[.55,1,2], snareBalance:[.6,1.3,2], hatDensity:[.42,.68,2], humanize:[.3,.7,1],
+                crackle:[0,.42,1] },   // 2026-07 (blues acoustic pass): blues now rides shuffle+upright+organ and was TYING jazz at 100. Honest fences: bpm lo = the jazz anchor's own floor (96, was 92); crackle hi = the anchor's own cap (.4+margin) — blues IS the worn-record genre (.25-.55), jazz is merely dusty. 2026-07 jazz/blues acoustic-twin FENCE pass (the last negative column margin, jazz col -1): the two share swing/acoustic/7th/motion/crackle almost feature-for-feature, so the fence is the DRUM IDENTITY, measured over 8 seeds each. snareBalance flipped from a loose ceiling [0,.75] to a FLOOR [.6,1.3] weight 2: jazz is walking-swing with a STRONG comping backbeat snare (renders .67-.89), blues is a kick-forward triplet shuffle with a QUIET snare (renders .22-.59) — the old ceiling let blues pass fully AND jazz's own high-snare seeds partly failed it. hatDensity flipped from a loose floor [.7,2.6] (which jazz's OWN renders .51-.64 fell below!) to a CEILING [.42,.68] weight 2: jazz swings on a SPARSE ride cymbal (.51-.64), blues drives a FULLER shuffle kit (.67-1.39). Both corrections make the row describe jazz's actual renders, so jazz's own diagonal RISES 99->100 while blues drops 100->84 (rival becomes triphop 94, margin +6). Anchors untouched (pure verifier fence); no other column moved (jazz row scored against jazz only)
     dub:      { bpm:[64,86,3], sub:[.6,1,2], motion:[0,.4,2], crackle:[0,.1,2], swing:[0,.12,2],
                 snareBalance:[.4,1.4,1], breakUse:[0,.1,1], drumDensity:[.5,2.4,1], pump:[0,.15,1], wash:[0,.34,2] },   // 2026-07 wash-trio pass: wash CEILING added — dub is DRY (the delay is the genre, not the reverb; renders wash .19-.26). This fences the drowned witchhouse (renders wash .46-.51, the cathedral-of-reverb) off dub's diagonal — the two are both slow/sub/dark/drone-minor, and wash was the missing separator (witchhouse was scoring 97 here). MEASURED: dub's own max wash .262 < .34, self unchanged
     trance:   { bpm:[128,146,3], leadVoices:[5,8,2], pump:[.3,.7,2], motion:[.5,1,2], wash:[.2,.6,1],
@@ -234,7 +276,8 @@
     tango:    { bpm:[96,126,2], acoustic:[.7,1,2], humanize:[.28,.6,2], drumDensity:[0,.8,3], crackle:[.1,.4,2],
                 seventh:[.3,1,1], motion:[.5,1,1], swing:[0,.08,1], pump:[0,.05,1], wash:[0,.3,1] },   // sampled bandoneon + habanera piano, kitless, 78rpm dust, DRY (2026-07 ear-fix: pads nearly gone, reverb .3-.42)
     afrobeat: { bpm:[96,118,2], acoustic:[.4,.8,2], swing:[.02,.14,2], hatDensity:[1.3,2.6,2], drumDensity:[1.8,3.4,1],
-                seventh:[.7,1,1], crackle:[.05,.3,1], comp:[.25,.55,1], pump:[0,.12,2], snareBalance:[.2,.9,1] },   // interlocking euclids + organ stabs — disco's hats are straighter and thinner
+                seventh:[.7,1,1], crackle:[.05,.3,1], comp:[.25,.55,1], pump:[0,.12,2], snareBalance:[.2,.9,1],
+                interlock:[.30,1,3] },   // interlocking euclids + organ stabs — disco's hats are straighter and thinner. 2026-07 interlock pass: the new `interlock` feature (Fela's arithmetic, weight 3 — this IS afrobeat's identity) is the floor [.30,1]. afrobeat renders .37-.41 (E(3,16) kicks x E(11,16) shekere), the whole four-on-floor cluster scores <.09, so this widens afrobeat's column margin 3->8 over disco/krautrock and lets it LEAVE the solver's MARGIN_FRAGILE exemption (verified stable at targetSec:180: variation stays 1, interlock .37-.40)
     desertblues:{ bpm:[80,108,3], swing:[.04,.18,2], crackle:[.15,.5,2], softTop:[1,1,2], motion:[0,.7,2],
                 acoustic:[.4,.8,1], sub:[.6,1,1], drumDensity:[.8,2.2,1], humanize:[.15,.45,1], pump:[0,.05,1] },   // modal vamp loops, tape-worn — blues needs the full 12-bar swing
     sludgemetal:{ bpm:[48,72,3], snareBalance:[.4,1.2,2], drumDensity:[.8,2,2], comp:[.4,.8,2], wash:[0,.35,2],
