@@ -190,11 +190,24 @@ const deep=o=>JSON.parse(JSON.stringify(o));
 // ---------- weights / targeting ----------
 function weightsAt(pt){
   const ds=Object.entries(POS).map(([g,[x,y]])=>({g,d:Math.hypot(pt.x-x,pt.y-y)})).sort((a,b)=>a.d-b.d);
-  if(ds[0].d<SNAP) return [{g:ds[0].g,w:1}];
   const base=1/(CUTOFF*CUTOFF+80);
   let ws=ds.map(({g,d})=>({g,w:Math.max(0,1/(d*d+80)-base)})).filter(x=>x.w>0).slice(0,4);
   const tot=ws.reduce((s,x)=>s+x.w,0)||1;
-  return ws.map(x=>({g:x.g,w:x.w/tot}));
+  ws=ws.map(x=>({g:x.g,w:x.w/tot}));
+  // CONTINUOUS snap-to-anchor: pull toward the nearest star by how UNAMBIGUOUSLY
+  // nearest it is — the GAP to the 2nd-nearest star over SNAP. On a star the gap
+  // is huge -> pure genre; exactly between two stars the gap -> 0 -> natural
+  // blend. This is continuous everywhere, including where "nearest" changes
+  // (there the two distances are equal, so the pull is ~0). The OLD hard
+  // `if(d<SNAP) return 100%` snap had overlapping snap radii on close pairs
+  // (arabpop[215,285]/triphop[240,255] are 39px<2*SNAP apart) — the target
+  // swapped 100%->100% at the leg midpoint with NO blend zone, which read as a
+  // jump. Weight sum stays 1 (the lerp is convex).
+  const d0=ds[0].d, d1=ds[1]?ds[1].d:Infinity;
+  const s=Math.max(0,Math.min(1,(d1-d0)/SNAP));
+  if(s>0&&ws.length){ const near=ds[0].g;
+    ws=ws.map(x=>({g:x.g,w:x.g===near?x.w+s*(1-x.w):x.w*(1-s)})); }
+  return ws;
 }
 let lastSig="";
 // each genre NEIGHBORHOOD gets its own key (stable per seed): the space was
@@ -422,11 +435,13 @@ function drawMap(){
   }
   S.waypoints.forEach((w,i)=>{
     const cx=X(w.x), cy=Y(w.y);
-    svg.appendChild(el("circle",{cx,cy,r:14*fs,fill:"#ffd86b",opacity:.22}));
-    const c=el("circle",{cx,cy,r:9*fs,fill:"#ffd86b",stroke:"#0c0a1a","stroke-width":1.2,cursor:"grab"});
+    // path points at 2x: the leg number was too small to read (radius 14/9 -> 28/18,
+    // number font 11 -> 22, baseline offset scales to match)
+    svg.appendChild(el("circle",{cx,cy,r:28*fs,fill:"#ffd86b",opacity:.22}));
+    const c=el("circle",{cx,cy,r:18*fs,fill:"#ffd86b",stroke:"#0c0a1a","stroke-width":1.6,cursor:"grab"});
     c.dataset.wp=i; svg.appendChild(c);
-    const n=el("text",{x:cx,y:cy+3.5*fs,"text-anchor":"middle","class":"wpn"});
-    n.style.fontSize=(11*fs)+"px"; n.textContent=i+1;
+    const n=el("text",{x:cx,y:cy+7*fs,"text-anchor":"middle","class":"wpn"});
+    n.style.fontSize=(22*fs)+"px"; n.textContent=i+1;
     svg.appendChild(n);
   });
   const ccx=X(S.cursor.x), ccy=Y(S.cursor.y);
@@ -440,12 +455,19 @@ addEventListener("resize",()=>set({}));
 // at any zoom. k clamped 1..4; at 1x the offsets snap home.
 const ZOOM={k:1,ox:0,oy:0};
 window.__ZOOM=ZOOM;   // debug/probe access
+// generous pan padding: without it the clamp pins the scaled star field flush
+// to the viewport edges, so an edge genre (e.g. desertblues, breakcore) can
+// only ever reach the viewport EDGE, never the thumb-friendly center. PAD lets
+// you overscroll by ~18% of the viewport on every side, pulling any edge name
+// comfortably into the middle. Only bites when zoomed (at k===1 offsets snap 0).
+const PAN_PAD=0.18;
 function clampZoom(){
   const r=svg.getBoundingClientRect();
   ZOOM.k=Math.max(1,Math.min(4,ZOOM.k));
   if(ZOOM.k===1){ ZOOM.ox=0; ZOOM.oy=0; return; }
-  ZOOM.ox=Math.max(r.width*(1-ZOOM.k),Math.min(0,ZOOM.ox));
-  ZOOM.oy=Math.max(r.height*(1-ZOOM.k),Math.min(0,ZOOM.oy));
+  const padX=r.width*PAN_PAD, padY=r.height*PAN_PAD;
+  ZOOM.ox=Math.max(r.width*(1-ZOOM.k)-padX,Math.min(padX,ZOOM.ox));
+  ZOOM.oy=Math.max(r.height*(1-ZOOM.k)-padY,Math.min(padY,ZOOM.oy));
 }
 function zoomAround(cx,cy,k2){ // keep the screen point (cx,cy) fixed while scaling
   const r=svg.getBoundingClientRect(), sx=cx-r.left, sy=cy-r.top;
@@ -457,13 +479,21 @@ const toXY=ev=>{const r=svg.getBoundingClientRect();const p=ev.touches?ev.touche
   return {x:Math.max(0,Math.min(500,((p.clientX-r.left-ZOOM.ox)/ZOOM.k)*500/r.width)),
           y:Math.max(0,Math.min(400,((p.clientY-r.top-ZOOM.oy)/ZOOM.k)*400/r.height))};};
 let dragging=false, dragWp=-1, lastTap={t:0,x:0,y:0};
+// single-finger PAN when zoomed in (see pointerdown/move): panning arms on a
+// finger-down over empty sky while ZOOM.k>1; if the finger actually moves it
+// pans the star field, if it doesn't it falls through to a normal tap on release.
+let panning=false, panMoved=false, panStart=null;
 // "font should be white when interacting": any live pointer work on the map
 // (drag, waypoint drag, pinch, wheel-zoom) lights the anchor labels via the
-// #map.itx CSS rule; 600ms after the last touch they ease back to dim.
-// Class toggle only — no set({})/redraw, so the fill TRANSITIONS on the way out.
+// #map.itx CSS rule; they now HOLD white for 10s after the LAST interaction so
+// you have time to read where you are, then ease back to dim. The single timer
+// is cleared+reset on every interaction, so rapid taps just restart the 10s
+// cleanly (no leaked timers). Class toggle only — no set({})/redraw, so the
+// fill TRANSITIONS on the way out.
+const ITX_HOLD_MS=10000;
 let itxT=0;
 function markItx(){ svg.classList.add("itx");
-  clearTimeout(itxT); itxT=setTimeout(()=>svg.classList.remove("itx"),600); }
+  clearTimeout(itxT); itxT=setTimeout(()=>svg.classList.remove("itx"),ITX_HOLD_MS); }
 const ptrs=new Map();   // active pointers on the map (pinch bookkeeping)
 let pinch=null;         // {d0,k0,cx,cy}
 svg.addEventListener("pointerdown",e=>{
@@ -476,7 +506,7 @@ svg.addEventListener("pointerdown",e=>{
     const [a,b]=[...ptrs.values()];
     pinch={d0:Math.max(12,Math.hypot(a.x-b.x,a.y-b.y)),k0:ZOOM.k,
            cx:(a.x+b.x)/2,cy:(a.y+b.y)/2,ox0:ZOOM.ox,oy0:ZOOM.oy};
-    dragging=false; dragWp=-1; lastTap={t:0,x:0,y:0};
+    dragging=false; dragWp=-1; panning=false; panMoved=false; lastTap={t:0,x:0,y:0};
     document.body.classList.remove("dragging");
     return;
   }
@@ -498,6 +528,18 @@ svg.addEventListener("pointerdown",e=>{
     set({waypoints:w,travel:{seg:0,t:0},status:"waypoint erased"}); return; }
   if(e.button!==0) return;
   if(wp!=null){ dragWp=+wp; }
+  else if(ZOOM.k>1){
+    // ZOOMED IN (names are the primary UI): a single-finger drag PANS the space.
+    // We arm here and decide on move: a real drag pans; a tap with no movement
+    // falls through on release to the normal place/select (see endPtr). This is
+    // gated purely on zoom level — path DRAWING is double-tap + waypoint-drag
+    // (handled above), never a bare single-finger drag, so panning can't eat it.
+    panning=true; panMoved=false;
+    panStart={sx:e.clientX,sy:e.clientY,ox0:ZOOM.ox,oy0:ZOOM.oy,pt};
+    document.body.classList.add("dragging");
+    try{ svg.setPointerCapture(e.pointerId); }catch(err){}
+    return;
+  }
   else if(S.waypoints.length<2) dragging=true;   // with a path, the traveler owns the cursor
   else { set({status:"path active — the traveler steers (✕ path to drag freely)"}); return; }
   document.body.classList.add("dragging");
@@ -521,10 +563,22 @@ svg.addEventListener("pointermove",e=>{
     clampZoom(); set({});
     return;
   }
+  if(panning){ markItx();
+    const dx=e.clientX-panStart.sx, dy=e.clientY-panStart.sy;
+    if(!panMoved && Math.hypot(dx,dy)>4) panMoved=true;   // deadzone: a jitter stays a tap
+    if(panMoved){ e.preventDefault();
+      ZOOM.ox=panStart.ox0+dx; ZOOM.oy=panStart.oy0+dy; clampZoom(); set({}); }
+    return;
+  }
   if(dragWp>=0){ markItx(); const pt=toXY(e); S.waypoints[dragWp]=pt; set({}); }
   else if(dragging){ e.preventDefault(); markItx(); retarget(toXY(e)); }
 });
 const endPtr=e=>{ ptrs.delete(e.pointerId); if(ptrs.size<2) pinch=null;
+  if(panning){ // a zoomed single-finger gesture: pan already applied; a no-move
+    // tap falls through to the normal place/select (only when free to drag —
+    // with a path the traveler owns the cursor, so a tap stays inert as before)
+    if(!panMoved && S.waypoints.length<2 && panStart) retarget(panStart.pt);
+    panning=false; panMoved=false; panStart=null; }
   dragging=false;dragWp=-1;document.body.classList.remove("dragging"); };
 addEventListener("pointerup",endPtr);
 addEventListener("pointercancel",endPtr);
