@@ -21,7 +21,7 @@
   const log = (m) => { logEl.textContent += m + "\n"; };
   let handle = null, state = null;
   const bars = [], loads = [];
-  window.TEST = { bars, loads, rms: [], errors: [], status: [] };
+  window.TEST = { bars, loads, rms: [], bal: [], errors: [], status: [] };
 
   window.goLive = async function (genre, seed) {
     state = GenreKernel.track(genre || "jungle", { seed: seed || 3 });
@@ -32,7 +32,7 @@
         onLoad: (r, e) => { loads.push({ t: performance.now()/1000, r, e }); } });
     window.handle = handle;
     // sample output RMS every 500ms
-    window._rmsTimer = setInterval(() => { if (handle) TEST.rms.push(handle.rms()); }, 500);
+    window._rmsTimer = setInterval(() => { if (handle) { TEST.rms.push(handle.rms()); TEST.bal.push(handle.balance()); } }, 500);
     return true;
   };
   window.swapTo = function (genre, seed) {
