@@ -24,9 +24,25 @@
   // analog grain via an SVG turbulence tile, jittered by steps() animation
   const NOISE_URI = "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"220\" height=\"220\"><filter id=\"n\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\"/></filter><rect width=\"220\" height=\"220\" filter=\"url(%23n)\" opacity=\"0.55\"/></svg>')";
 
+  const START_OFFSET = !MOBILE;   // start longer clips at a random point (desktop only)
+
   let clips = [], wrap = null, vbox = null, tear = null, vids = [], front = 0, cur = -1;
   let osd = null, osdTimer = 0, glitchTimer = 0, idleTimer = 0, on = true, ready = false;
+  let catBag = [];   // shuffled index bag over the whole catalog (idle/ambient + first clip)
   const reduced = root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Fisher-Yates. Math.random is intentional here: idle/ambient cycling is a
+  // live presentational choice, not a rendered artifact — variety beats repeat.
+  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0, t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  // next index from a no-repeat shuffled bag over the FULL catalog; refills+reshuffles
+  // when drained, and won't hand back the clip already on screen.
+  function nextCatalog() {
+    if (!clips.length) return 0;
+    if (!catBag.length) { catBag = clips.map((_, k) => k); shuffle(catBag); }
+    let i = catBag.pop();
+    if (i === cur && catBag.length) { const j = catBag.pop(); catBag.unshift(i); i = j; }
+    return i;
+  }
 
   function makeDom() {
     wrap = document.createElement("div");
@@ -119,7 +135,6 @@
     cur = i;
     const back = vids.length > 1 ? 1 - front : 0, vNew = vids[back], vOld = vids[front];
     vNew.src = clipUrl(i);
-    vNew.currentTime = 0;
     const go = () => {
       vNew.playbackRate = RATE;     // re-assert: resets when src changes
       vNew.play().catch(() => {});
@@ -130,16 +145,29 @@
         setTimeout(() => { try { vOld.pause(); } catch (e) {} }, FADE_MS + 100); }
       front = back;
     };
+    // start longer clips at a random point so a repeat never looks identical.
+    // Seek is cheap on these short local mp4s; a 400ms fallback + `seeked` wait
+    // keep a slow seek from stranding the crossfade on black.
+    const prime = () => {
+      if (START_OFFSET && isFinite(vNew.duration) && vNew.duration > 6) {
+        let done = false;
+        const after = () => { if (done) return; done = true; vNew.removeEventListener("seeked", after); go(); };
+        vNew.addEventListener("seeked", after);
+        try { vNew.currentTime = Math.random() * (vNew.duration - 3); }
+        catch (e) { vNew.currentTime = 0; after(); }
+        setTimeout(after, 400);
+      } else { vNew.currentTime = 0; go(); }
+    };
     // wait for enough data so the fade lands on moving picture, not black
-    if (vNew.readyState >= 2) go();
-    else { vNew.oncanplay = () => { vNew.oncanplay = null; go(); }; vNew.load(); }
+    if (vNew.readyState >= 2) prime();
+    else { vNew.oncanplay = () => { vNew.oncanplay = null; prime(); }; vNew.load(); }
   }
 
   function stopIdle() { clearTimeout(idleTimer); idleTimer = 0; }
   function idle() {
     stopIdle();
     if (!ready || !on || reduced) return;
-    idleTimer = setTimeout(() => { show(cur + 1); idle(); }, IDLE_CYCLE_MS);
+    idleTimer = setTimeout(() => { show(nextCatalog()); idle(); }, IDLE_CYCLE_MS);   // ambient: draw the whole catalog, no repeats till drained
   }
 
   function setEnabled(want) {
@@ -147,7 +175,7 @@
     try { localStorage.setItem(LS_KEY, on ? "1" : "0"); } catch (e) {}
     if (!wrap) return;
     wrap.style.display = on ? "block" : "none";
-    if (on) { if (cur < 0) show(0); else vids[front].play().catch(() => {}); idle(); glitchLoop(); }
+    if (on) { if (cur < 0) show(nextCatalog()); else vids[front].play().catch(() => {}); idle(); glitchLoop(); }
     else { stopIdle(); clearTimeout(glitchTimer); vids.forEach(v => { try { v.pause(); } catch (e) {} }); }
   }
 
