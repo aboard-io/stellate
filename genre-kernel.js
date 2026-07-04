@@ -2554,7 +2554,10 @@
         if(!fs.existsSync(s.fsPath)){ console.error("✗ missing "+s.fsPath+" — run ./fetch-found-sound.sh and ./fetch-found-samples.sh"); process.exit(1); }
       }
     }
-    function renderState(state, base){
+    const songBeats=(st)=>st.sections.reduce((n,s)=>n+(s.cycles||1)*E.getProgression(st.progression).chords.length*(st.chordEvery||8),0)+8;
+    // press a state to a full-length WAV (sing.py chorus + faust press). Kept
+    // separate from the mp3 encode so the DJ-seam mixer can reuse the raw WAV.
+    function pressState(state, wavPath){
       // generate the WORLD-sung chorus to match THIS render's tempo + key (sing.py), if used
       const vsrc=state.foundSources.find(s=>s.id==="tw_vocal");
       if(vsrc){
@@ -2567,15 +2570,138 @@
       resolvePaths(state);
       // FAUST-PORT phase 3: the press runs on the Faust engine (legacy csound
       // path preserved on branch legacy-csound)
-      const wav="/tmp/"+path.basename(base)+".wav";
-      const sj="/tmp/"+path.basename(base)+".state.json";
+      const sj=wavPath+".state.json";
       fs.writeFileSync(sj,JSON.stringify(state));
-      execFileSync("node",[path.join(__dirname,"faust","press.js"),sj,wav],{stdio:["ignore","ignore","inherit"]});
-      // fade the ending out instead of stopping abruptly
-      const beats=state.sections.reduce((n,s)=>n+(s.cycles||1)*E.getProgression(state.progression).chords.length*(state.chordEvery||8),0)+8;
-      const dur=beats*60/state.bpm, fade=Math.min(4,dur*0.1), st=Math.max(0,dur-fade);
-      execFileSync("ffmpeg",["-y","-v","error","-i",wav,"-af",`afade=t=out:st=${st.toFixed(2)}:d=${fade.toFixed(2)}`,"-codec:a","libmp3lame","-b:a","160k",base+".mp3"]);
+      execFileSync("node",[path.join(__dirname,"faust","press.js"),sj,wavPath],{stdio:["ignore","ignore","inherit"]});
+      try{ fs.unlinkSync(sj); }catch(e){}
+    }
+    // encode a pressed WAV to a per-track mp3 with a natural fade-out ending
+    function encodeMp3(wavPath, state, base){
+      const beats=songBeats(state), dur=beats*60/state.bpm, fade=Math.min(4,dur*0.1), st=Math.max(0,dur-fade);
+      execFileSync("ffmpeg",["-y","-v","error","-i",wavPath,"-af",`afade=t=out:st=${st.toFixed(2)}:d=${fade.toFixed(2)}`,"-codec:a","libmp3lame","-b:a","160k",base+".mp3"]);
       console.log("✓ "+base+".mp3");
+    }
+    function renderState(state, base){
+      const wav="/tmp/"+path.basename(base)+".wav";
+      pressState(state, wav); encodeMp3(wav, state, base);
+    }
+
+    // ---------------------------------------------------------------- DJ-SEAM MIXER
+    // Paul: "songs should mix together like a DJ mix, not stop and start."
+    // At the PCM level the incoming track's first downbeat lands exactly on one
+    // of the OUTGOING track's bar (4-beat) downbeats. Per-seam policy — all
+    // decisions derive from the states (bpm, section beats, genre introMode), no
+    // rng, so the same command is byte-identical:
+    //   • cold-opener incoming (genre introMode:"off" — gabber/breakcore) OR a
+    //     tempo jump > GAP_CUT bpm: HARD CUT on the downbeat (what a DJ does into
+    //     a cold slam / an un-beatmatchable jump).
+    //   • bpm gap <= GAP_MATCH: equal-power crossfade over 4 bars, the outgoing
+    //     tail VARISPED (turntable pitch-nudge) to the incoming tempo so the two
+    //     grids stay bar-locked through the window (true beatmatch).
+    //   • otherwise: equal-power crossfade over 2 bars, downbeat-aligned at the
+    //     window start, no varispeed (a big gap would pitch-shift the tail too
+    //     far) — the outgoing thins as the incoming enters on the one.
+    // Equal-power: out=cos(x·π/2), in=sin(x·π/2) (cos²+sin²=1). Tempo easing by
+    // build-time bpm-glide (option a) is NOT feasible: buildEvents maps beats→
+    // samples with ONE spb, so a per-section tempo ramp would need a kernel time-
+    // model change; varispeed is the deterministic PCM stand-in (the pitch nudge
+    // a DJ makes on the fader). See report.
+    const MIXSR=44100, GAP_MATCH=8, GAP_CUT=40;
+    function readWavStereo(file){
+      const buf=fs.readFileSync(file); let off=12,dataOff=-1,dataLen=0,ch=2,bits=16;
+      while(off+8<=buf.length){ const id=buf.toString("ascii",off,off+4), sz=buf.readUInt32LE(off+4);
+        if(id==="fmt "){ ch=buf.readUInt16LE(off+10); bits=buf.readUInt16LE(off+22); }
+        else if(id==="data"){ dataOff=off+8; dataLen=Math.min(sz,buf.length-off-8); break; }
+        off+=8+sz+(sz&1); }
+      const by=bits>>3, frames=dataOff<0?0:Math.floor(dataLen/(ch*by));
+      const L=new Float32Array(frames), R=new Float32Array(frames);
+      for(let i=0;i<frames;i++){ const p=dataOff+i*ch*by; L[i]=buf.readInt16LE(p)/32768; R[i]=ch>1?buf.readInt16LE(p+by)/32768:L[i]; }
+      return {L,R,frames};
+    }
+    function openWav(file){ const fd=fs.openSync(file,"w"); const h=Buffer.alloc(44);
+      h.write("RIFF",0); h.write("WAVE",8); h.write("fmt ",12); h.writeUInt32LE(16,16);
+      h.writeUInt16LE(1,20); h.writeUInt16LE(2,22); h.writeUInt32LE(MIXSR,24);
+      h.writeUInt32LE(MIXSR*4,28); h.writeUInt16LE(4,32); h.writeUInt16LE(16,34); h.write("data",36);
+      fs.writeSync(fd,h,0,44); return {fd,frames:0}; }
+    function writeFrames(w,L,R,n){ if(n<=0) return; const b=Buffer.alloc(n*4);
+      for(let i=0;i<n;i++){ b.writeInt16LE(Math.max(-32768,Math.min(32767,Math.round(Math.max(-1,Math.min(1,L[i]))*32767))),i*4);
+        b.writeInt16LE(Math.max(-32768,Math.min(32767,Math.round(Math.max(-1,Math.min(1,R[i]))*32767))),i*4+2); }
+      fs.writeSync(w.fd,b); w.frames+=n; }
+    function closeWav(w){ const dl=w.frames*4;
+      const b1=Buffer.alloc(4); b1.writeUInt32LE(36+dl,0); fs.writeSync(w.fd,b1,0,4,4);
+      const b2=Buffer.alloc(4); b2.writeUInt32LE(dl,0); fs.writeSync(w.fd,b2,0,4,40); fs.closeSync(w.fd); }
+    function djMix(wavs, states, outWav){
+      const SRr=MIXSR;
+      const info=states.map((st,i)=>{ const beats=songBeats(st), dom=st.genreMeta&&st.genreMeta.genres&&st.genreMeta.genres[0];
+        return { bpm:st.bpm, spb:60/st.bpm, musicEndBeat:beats-8,
+          coldOpen:!!(dom&&GENRES[dom]&&GENRES[dom].introMode==="off"), wav:wavs[i] }; });
+      const seams=[];
+      for(let i=0;i<info.length-1;i++){ const gap=Math.abs(info[i].bpm-info[i+1].bpm);
+        if(info[i+1].coldOpen||gap>GAP_CUT) seams.push({type:"cut",gap});
+        else if(gap<=GAP_MATCH) seams.push({type:"blend",Wbeats:16,beatmatch:true,gap});
+        else seams.push({type:"blend",Wbeats:8,beatmatch:false,gap}); }
+      const w=openWav(outWav); let carryL=null,carryR=null; const report=[];
+      for(let i=0;i<info.length;i++){
+        const {L,R,frames}=readWavStereo(info[i].wav);
+        const spb=info[i].spb, musicEnd=Math.min(frames,Math.round(info[i].musicEndBeat*spb*SRr));
+        // (A) INCOMING crossfade: previous outgoing tail (cos-faded) + this head (sin-faded)
+        let readPos=0;
+        if(carryL){ const HL=Math.min(carryL.length,frames);
+          const oL=new Float32Array(HL), oR=new Float32Array(HL);
+          for(let j=0;j<HL;j++){ const x=Math.sin((j/HL)*Math.PI/2); oL[j]=carryL[j]+L[j]*x; oR[j]=carryR[j]+R[j]*x; }
+          writeFrames(w,oL,oR,HL); readPos=HL; }
+        carryL=carryR=null;
+        const seam=i<info.length-1?seams[i]:null;
+        if(seam&&seam.type==="blend"){
+          const cutBeat=Math.floor(info[i].musicEndBeat/4)*4;   // outgoing bar downbeat at music end
+          let startBeat=Math.max(0,cutBeat-seam.Wbeats);        // overlap opens W bars earlier, also a downbeat
+          let sStart=Math.round(startBeat*spb*SRr), sCut=Math.min(musicEnd,Math.round(cutBeat*spb*SRr));
+          if(sStart<readPos) sStart=readPos;
+          if(sCut<=sStart){ writeFrames(w,L.subarray(readPos,musicEnd),R.subarray(readPos,musicEnd),Math.max(0,musicEnd-readPos));
+            report.push({i,type:"join",gap:seam.gap}); continue; }
+          if(sStart>readPos) writeFrames(w,L.subarray(readPos,sStart),R.subarray(readPos,sStart),sStart-readPos);
+          const srcLen=sCut-sStart; let tailLen;
+          const downbeatSample=w.frames;   // where the incoming (next track's beat 0) will land
+          if(seam.beatmatch){ const nspb=info[i+1].spb; tailLen=Math.max(1,Math.round((cutBeat-startBeat)*nspb*SRr));
+            carryL=new Float32Array(tailLen); carryR=new Float32Array(tailLen);
+            for(let k=0;k<tailLen;k++){ const fp=(k/tailLen)*srcLen, i0=Math.floor(fp), fr=fp-i0, i1=Math.min(srcLen-1,i0+1), g=Math.cos((k/tailLen)*Math.PI/2);
+              carryL[k]=(L[sStart+i0]*(1-fr)+L[sStart+i1]*fr)*g; carryR[k]=(R[sStart+i0]*(1-fr)+R[sStart+i1]*fr)*g; } }
+          else { tailLen=srcLen; carryL=new Float32Array(tailLen); carryR=new Float32Array(tailLen);
+            for(let k=0;k<tailLen;k++){ const g=Math.cos((k/tailLen)*Math.PI/2); carryL[k]=L[sStart+k]*g; carryR[k]=R[sStart+k]*g; } }
+          report.push({i,type:seam.beatmatch?"beatmatch":"blend",gap:seam.gap,bars:seam.Wbeats/4,downbeatSample,overlapFrames:tailLen});
+        } else if(seam&&seam.type==="cut"){
+          const cutBeat=Math.round(info[i].musicEndBeat/4)*4;   // butt-join on the nearest bar downbeat
+          let sCut=Math.min(musicEnd,Math.round(cutBeat*spb*SRr)); if(sCut<readPos) sCut=musicEnd;
+          writeFrames(w,L.subarray(readPos,sCut),R.subarray(readPos,sCut),sCut-readPos);
+          report.push({i,type:"cut",gap:seam.gap,downbeatSample:w.frames});
+        } else {   // last track: play out full with a natural fade
+          const rest=frames-readPos, fade=Math.min(Math.round(4*SRr),Math.round(frames*0.1));
+          const oL=new Float32Array(rest), oR=new Float32Array(rest);
+          for(let j=0;j<rest;j++){ const idx=readPos+j, fromEnd=frames-idx, g=fromEnd<=fade?fromEnd/fade:1; oL[j]=L[idx]*g; oR[j]=R[idx]*g; }
+          writeFrames(w,oL,oR,rest);
+        }
+      }
+      closeWav(w);
+      return { frames:w.frames, seconds:w.frames/SRr, report };
+    }
+    // render every track to WAV + per-track mp3, then DJ-mix into one continuous
+    // journey.mp3 (replaces the old fade-out-then-concat gapless file).
+    function renderAndMix(dir, pl, bases){
+      const wavs=bases.map(b=>b+".wav");
+      pl.forEach((tr,i)=>{ console.log(`[render ${i+1}/${pl.length}] ${tr.from}→${tr.to} ${tr.bpm}bpm`);
+        pressState(tr.state, wavs[i]); encodeMp3(wavs[i], tr.state, bases[i]); });
+      const mixWav=path.join(dir,"journey.mix.wav");
+      const m=djMix(wavs, pl.map(t=>t.state), mixWav);
+      execFileSync("ffmpeg",["-y","-v","error","-i",mixWav,"-codec:a","libmp3lame","-b:a","160k",path.join(dir,"journey.mp3")]);
+      // KEEP_MIXWAV=1 retains the lossless mix WAV + per-track WAVs (seam auditing)
+      if(!process.env.KEEP_MIXWAV){ try{ fs.unlinkSync(mixWav); }catch(e){}
+        wavs.forEach(wv=>{ try{ fs.unlinkSync(wv); }catch(e){} }); }
+      const naive=pl.reduce((s,t)=>s+songBeats(t.state)*60/t.state.bpm,0);
+      console.log(`✓ ${path.join(dir,"journey.mp3")} — DJ-mixed ${(m.seconds/60).toFixed(1)}min (naive concat ${(naive/60).toFixed(1)}min; ${(naive-m.seconds).toFixed(1)}s folded into seams)`);
+      m.report.forEach(r=>{ if(r.type==="cut") console.log(`  seam ${r.i+1}→${r.i+2}: CUT on the downbeat (gap ${r.gap}bpm) @ ${(r.downbeatSample/MIXSR).toFixed(2)}s`);
+        else if(r.type==="join") console.log(`  seam ${r.i+1}→${r.i+2}: butt-join (track too short for a window, gap ${r.gap}bpm)`);
+        else console.log(`  seam ${r.i+1}→${r.i+2}: ${r.type} gap ${r.gap}bpm, ${r.bars}-bar window, overlap ${(r.overlapFrames/MIXSR).toFixed(2)}s @ ${(r.downbeatSample/MIXSR).toFixed(2)}s`); });
+      return m;
     }
     if(cmd==="anchors"){
       for(const [k,g] of Object.entries(GENRES)) console.log(k.padEnd(11),g.bpm.join("-")+"bpm",g.form.padEnd(4),"—",g.info);
@@ -2607,8 +2733,14 @@
       const total=pl.reduce((s,t)=>s+t.seconds,0);
       console.log(`✓ ${dir}/: ${pl.length} tracks, ${(total/3600).toFixed(2)}h`);
       pl.forEach(t=>console.log(`  ${String(t.i+1).padStart(2)} ${t.from}→${t.to} t=${t.t} ${t.bpm}bpm key=${t.key} ${Math.round(t.seconds/60)}min ${t.meta.kit} ${t.meta.bass} ${t.meta.lead} ${t.meta.progression} ${t.meta.found} hits=${t.meta.hits}`));
-      const rf=+flag("render-first",0);
-      for(let i=0;i<rf&&i<pl.length;i++) renderState(pl[i].state, path.join(dir,"track-"+String(i+1).padStart(2,"0")));
+      if(has("render")){
+        // full render -> DJ-mixed journey.mp3 + mix page (like journey, no video)
+        renderAndMix(dir, pl, pl.map(t=>path.join(dir,"track-"+String(t.i+1).padStart(2,"0"))));
+        try{ execFileSync("node",[path.join(__dirname,"make-mix-page.js"),dir],{stdio:"inherit"}); }catch(e){}
+      } else {
+        const rf=+flag("render-first",0);
+        for(let i=0;i<rf&&i<pl.length;i++) renderState(pl[i].state, path.join(dir,"track-"+String(i+1).padStart(2,"0")));
+      }
     } else if(cmd==="journey"){
       // the bridge: a drawn path (explorer "⤓ path" JSON) or genre names ->
       // hours of tracks -> mp3s -> per-track video -> one long journey.mp3/.mp4 + mix page
@@ -2637,12 +2769,8 @@
       pl.forEach(t=>console.log(`  ${String(t.i+1).padStart(2)} ${t.from}→${t.to} t=${t.t} ${t.bpm}bpm key=${t.key} ${Math.round(t.seconds/60)}min ${t.meta.kit} ${t.meta.lead} ${t.meta.progression} ${t.meta.found}`));
       const bases=pl.map(tr=>path.join(dir,"track-"+String(tr.i+1).padStart(2,"0")));
       if(has("render")){
-        pl.forEach((tr,i)=>{ console.log(`[render ${i+1}/${pl.length}]`); renderState(tr.state,bases[i]); });
-        // one long journey.mp3 (tracks already fade out; straight concat)
-        const list=path.join(dir,"concat.txt");
-        fs.writeFileSync(list,bases.map(b=>`file '${path.resolve(b+".mp3")}'`).join("\n")+"\n");
-        execFileSync("ffmpeg",["-y","-v","error","-f","concat","-safe","0","-i",list,"-c","copy",path.join(dir,"journey.mp3")]);
-        console.log("✓ "+path.join(dir,"journey.mp3"));
+        // per-track mp3s + one continuous DJ-mixed journey.mp3 (beat-aligned seams)
+        renderAndMix(dir, pl, bases);
       }
       if(has("video")){
         bases.forEach((b,i)=>{ console.log(`[video ${i+1}/${pl.length}]`);
