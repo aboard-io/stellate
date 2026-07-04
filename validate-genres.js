@@ -306,7 +306,11 @@ function gateVocabulary() {
   const stabs = keysOf("STAB_PATTERNS");
   const hitPats = keysOf("HIT_PATTERNS");
   const roles = scrape(engineSrc, /role===?"([a-z]+)"/g, ["bed"]);
-  const forms = scrape(kernelSrc, /c\.form===?"([a-z]+)"/g, ["pop"]);
+  // forms: d4b1671 replaced the `c.form===` if/else chain with the FORMS graph
+  // table (genre-kernel.js), so the old source-scrape saw zero forms and warned
+  // on every real one. Read the live registry key list (api.FORM_NAMES = the
+  // FORMS keys) so real typos still warn and the seven real forms stay quiet.
+  const forms = new Set([...(K.FORM_NAMES || []), "pop"]);
   const sampleIds = new Set(Object.keys(K.SAMPLES));
   const sourceIds = new Set([...Object.keys(K.SOURCES), ...sampleIds]);
   const inSet = (set) => (v) => set.has(v);
