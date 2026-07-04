@@ -58,16 +58,20 @@ the working tree is already the live web root either way).
      loud-vs-quiet sweep 1720/709 Hz, determinism, disco seed-2 press applies
      the chain and differs from stripped), live disco smoke 0 errors across
      the bass entrance, verify 63/63, prewarm list includes insert_wah.
-   - **[LANDED, unverified-by-Paul] MULTIBAND MASTER COMP** (fx_bus `mbdrive`
+   - **[LANDED, unverified-by-Paul] MULTIBAND MASTER COMP** (`dsp/master_mb.dsp`
      ← `state.masterComp`, kernel dimension, dominant-parent zero-rng law):
-     3-band glue (LR-ish 4th-order splits at 250 Hz / 2.5 kHz, gentle ratio/
-     threshold scaled by drive) inserted after the wideband comp, before tone.
-     mbdrive 0 is a HARD bypass (dry·(1−0)+wet·0) — probe-mbcomp.js proves
-     bit-exactness AND press-level byte-identity of the recompiled fx_bus for
-     untouched genres (techno s1 + jungle s7 cmp'd). Wired: disco 0.35 only.
-     Gated: probe-mbcomp.js (loud low band −2.2 dB vs quiet high −0.5 dB =
-     per-band independence; kernel integration; disco press on/off differs),
-     verify 63/63.
+     3-band glue, 2nd-order splits at 250 Hz / 2.5 kHz with the MID derived by
+     subtraction (sums exactly flat), per-band compressor + wet-only makeup.
+     **Architecture note**: it was first baked into fx_bus and MEASURABLY cost
+     every genre live headroom even at drive 0 (Faust computes both select
+     branches; live gate 0.977/0.973 PASS with committed fx_bus vs 0.969/0.967
+     FAIL baked-in) — extracted to an OPT-IN external node (the reverb-color
+     law): press post-passes fx_bus output, live series-inserts under a
+     crossfade vs the fxDirect unity path; fx_bus stays at COMMITTED BYTES.
+     Wired: disco 0.35 only. Gated: probe-mbcomp.js (bit-exact at 0, per-band
+     independence low −0.9 dB vs high +0.9 dB, determinism, disco press on/off
+     differs, press logs the pass), press byte-identity techno-s1 + jungle-s7,
+     live gate back to 0.987 PASS, disco live smoke 0 errors, verify 63/63.
    - **[SKIPPED — stage 4]** qu.lib scale-snap for bends: the sampler `bend`
      contract already lands ON the target pitch — from/ms are expressive, a
      scale-snap adds nothing audible without a new bend vocabulary.
