@@ -71,6 +71,35 @@ no explicit license; they're used here as brief, transformed, muted excerpts in
 a non-commercial art context. Don't redistribute the clips as media — point
 people at the recipe and the Archive items instead.
 
+## Found-video *library* (found/video/lib/ — cut-lib-clips.sh)
+
+A second batch of full-length reels was fetched into `found/video/lib/`
+(gitignored, ~525 MB) **without** a fetch recipe or cue manifest. `cut-lib-clips.sh`
+is the committed recipe that cues them: it cuts a handful of short, silent, 640px
+windows per reel into `found/video/`, merges them into `found/video/clips.json`,
+and writes `found/video/lib/segments.json` (in/out + genre-affinity tags for the
+`genre-kernel.js` `GENRE_CLIPS` pools). Run it after `fetch-found-video.sh`.
+
+The reels arrived without their Internet Archive item ids; the **films are
+identified from frame inspection** (confident where noted) but the **exact
+archive.org item slugs were not recoverable** — recover them before any
+redistribution. Cut windows deliberately avoid title cards, black, and (for the
+wartime anime) militaristic/propaganda shots; burned-in subtitles are cropped
+off the anime.
+
+| lib reel | film (identified) | clips | license status |
+|---|---|---|---|
+| `3dgfx_computer_made_movies` | Computer-Made Movies — Bell Labs early CGI, incl. E. Zajac's "Two-Gyro Gravity-Gradient Attitude Control System" (1963, the first computer-generated film) | `cmm_wireglobe`, `cmm_gyrobox`, `cmm_crescent` | PD-adjacent (Bell Labs / US-gov ephemeral) — **verify**; archive.org id not recovered |
+| `3dgfx_incredible_machine` | The Incredible Machine — Bell Telephone Laboratories (1968) | `im_pixeltext`, `im_paint`, `im_redroom`, `im_scope` | PD-adjacent (Bell Labs / AT&T promotional) — **verify**; archive.org id not recovered |
+| `3dgfx_jupiter_magnetosphere` | Jupiter's Magnetosphere — The Movie (scientific field-line viz, 1980s est.) | `jm_dipole`, `jm_axis`, `jm_flux` | likely NASA/university PD — **verify**; archive.org id not recovered |
+| `3dgfx_losalamos_sims_1975` | Los Alamos computer simulations (c.1975; card credits advisors Newell / Elliott / Pequette / Orr) | `la_mesh1`, `la_meshvase`, `la_mesh2` | likely US-gov (LANL) PD — **verify**; archive.org id not recovered |
+| `anime_momotaro_shinpei` | Momotaro: Umi no Shinpei (Momotaro's Divine Sea Warriors, 1945, dir. Mitsuyo Seo) — first Japanese feature-length animation | `mo_singalong`, `mo_pastoral`, `mo_dance` | public domain by age (Japan). ⚠ WWII-era; only non-militaristic windows cued, subtitles cropped |
+| `anime_momotaro_umiwashi` | Momotaro no Umiwashi (Momotaro's Sea Eagles, 1943, dir. Mitsuyo Seo) | **none cued** | public domain by age. ⚠ Explicit air-raid propaganda + a racial-caricature character; no usable non-propaganda windows found — left un-cued in `lib/`, flagged for human review |
+
+These reels carry no explicit machine-readable license and (the anime) sensitive
+wartime content; treat them exactly like the demo discs above — brief, muted,
+transformed, non-commercial excerpts only, and recover provenance before release.
+
 # Voice / radio / poetry sources & attribution
 
 The found-voice layer (`found/vx_*.wav`) is talking, poetry, old radio, numbers
