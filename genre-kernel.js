@@ -542,8 +542,9 @@
       found:{role:"bed", vol:[.14,.22], pitch:[.75,.9], stretch:[.4,.55], cutoff:[1600,2600], sources:["tokyo_station","shibuya","vx_dday"]},
       stab:["off"], hits:{sources:["vox_c","sp_slowdown"], pattern:"sparse", prob:.35},
       form:"pop" },
-    downtempo: { label:"Downtempo", info:"slow warm pulse, long pads, space and patience",
-      bpm:[66,84], swing:[.05,.2], humanize:[.15,.35],
+    downtempo: { label:"Downtempo", info:"the head-nod: a slow swung boom-bap under long warm pads — Bristol patience, but there is always a BEAT",   // 2026-07 wash-trio deep pass: the BEAT one. Its identity claim ambient/newage can't share is a real swung backbeat (drumDensity + swing floors), leaned laid-back
+      bpm:[62,80], swing:[.1,.22], humanize:[.15,.35],   // 2026-07: bpm ceiling 84->80 keeps downtempo clearly SLOWER than exotica's tiki-lounge floor (82) — the swung-acoustic-lounge collision was pre-existing (downtempo's flute lead reads acoustic); the bpm fence breaks it. swing FLOOR up .05->.10 — the groove is never straight, and clearly ABOVE vaporwave's machine-time (renders .03-.08): the two-way fence — downtempo scores off vaporwave's diagonal (vaporwave row caps swing .08) AND the straight-time wash cluster scores off downtempo's (row swing floor .06)
+      timeFeel:{ pushPull:{ bass:.022, hat:-.014 } },   // 2026-07: the Bristol lean made structural (drawless per-voice offset) — bass drags behind the grid, hats ride a touch on top: the head-nod that says trip-hop, not machine-time vaporwave
       progressions:["neosoul","dream","deep_two","mode_mixo"], kits:["boombap","halftime","kick"], fills:["off","downlift","riser"],
       bass:{patterns:["simple","dub","sub"], recipe:{model:["sub"],cutoff:[300,550],res:[.05,.15],level:[.95,1.15],send:[.05,.12],dsend:[0,.05]}},
       lead:{patterns:["sparse","off","wander"], patchPool:["E.PIANO 3","E.PIANO 4"], samplerPool:["flute","muted_trumpet"], recipe:{model:["fm","dx7","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2000,3000],level:[.4,.5],send:[.45,.65],dsend:[.3,.45],vibrato:[.003,.008],octave:.1,attack:.04,release:[.28,.4],sustain:[.8,.9],fenv:[.1,.25]}},   // warm tine EPs (alg-5 pair -> morphable); envelope identity (ex-ARTIC): smooth legato
@@ -554,9 +555,10 @@
       found:{role:"bed", vol:[.14,.24], pitch:[.7,.9], stretch:[.45,.6], cutoff:[1800,2800], sources:["iriomote","highway_night","vx_apollo"]},
       stab:["off"], hits:{sources:["vox_b","sp_herenow"], pattern:"sparse", prob:.2},
       form:"pop" },
-    ambient: { label:"Ambient", info:"beatless drift: drones, place recordings, enormous reverb",
+    ambient: { label:"Ambient", info:"beatless drift: a single held minor-7 drone the length of the room, place recordings, enormous reverb — nothing moves",   // 2026-07 wash-trio deep pass: the STATIC one. Its identity claim the wash trio can't share is ZERO harmonic motion + ZERO kit + the longest plateau
       bpm:[58,72], swing:[0,0], humanize:[.1,.3],
-      progressions:["dream","deep_two","drone_min","mode_lydian"], kits:["off","off","kick"], fills:["off"],
+      progressions:["drone_min","drone_min","deep_two"], kits:["off"], fills:["off"],   // 2026-07: DRONE-ONLY (was dream/deep_two/drone_min/mode_lydian) — motion collapses to 0 (deep_two the rare 2-chord breath, .33); and NO kit EVER (was off/off/kick) — drumDensity strictly 0. This is the structural fence vs downtempo (which now REQUIRES a beat) and newage (which now REQUIRES motion+rubato)
+      chordEvery:32,   // 2026-07: the LONGEST harmonic plateau in the catalog (4 bars per chord — twice mallsoft's 16) — the drone holds the length of the room; nothing changes
       bass:{patterns:["off","off","root"], recipe:{model:["sub"],cutoff:[250,450],res:[.05,.1],level:[.7,.95],send:[.2,.4],dsend:[0,.1]}},
       lead:{patterns:["off","sparse"], samplerPool:["harp"], recipe:{model:["fm","stack","sampler"],wave:"sine",voices:[1,2],spread:[.002,.004],cutoff:[2000,3200],level:[.3,.45],send:[.6,.8],dsend:[.3,.5],vibrato:[.002,.006],octave:.14,attack:[.5,.9],release:[.7,1.1],sustain:[.95,1]}},   // envelope identity (ex-ARTIC): infinite swell — OWNS the drone corner
       pads:{prob:1, patchPool:["TUB BELLS","SHIMMER","WATER GDN"], samplerPool:["ahh_choir","harp"], recipe:{model:["organ","dx7","sampler","sampler"],wave:"saw",cutoff:[600,1200],detune:[.006,.014],attack:[3,5],level:[.65,.85],send:[.65,.85],dsend:[.15,.3]},
@@ -808,9 +810,10 @@
       found:{role:"bed", vol:[.2,.32], pitch:[.5,.65], stretch:[.45,.6], cutoff:[1200,2200], sources:["factory","highway_night","vx_blake","vx_conet_swedish"]},   // the factory WAY down + tyger tyger + the haunted music box
       stab:["off"], hits:{sources:["sp_pressure","vox_c"], pattern:"sparse", prob:.2},
       form:"wave" },
-    newage: { label:"New age", info:"luminous major-key drift: choir + strings, gentle sine melody, frogs at dusk",   // sample-mid: nature beds ARE the texture
+    newage: { label:"New age", info:"luminous major-key drift: a gentle sine/flute MELODY breathing (rubato) over moving major-7 changes — choir + strings + harp, frogs at dusk",   // 2026-07 wash-trio deep pass: the MELODIC one. Its identity claim ambient/downtempo can't share is a PRESENT melody over MOVING harmony that BREATHES — the only wash-cluster genre with rubato
       bpm:[58,76], swing:[0,.06], humanize:[.2,.4],
-      progressions:["dream","mode_lydian","canon"], kits:["off"], fills:["off"],
+      rubato:{depth:[.008,.02], periodBars:[3,5], prob:1},   // 2026-07: the melody ALWAYS breathes (state.rubato beat-warp) — gentler than neoclassical (.02-.04) and slower-period (3-5 bars): a devotional new-age drift, not a Romantic-piano rubato. This is the structural fence — every other wash-cluster genre renders rubato 0 (machine/drone time); newage is the one that sways
+      progressions:["dream","canon","neosoul"], kits:["off"], fills:["off"],   // 2026-07: MOVING major-7 changes only (was dream/mode_lydian/canon) — dropped mode_lydian (motion .33) so newage renders motion 1 always: the melodic harmony that ambient (drone, motion 0) can never reach
       bass:{patterns:["root","simple","off"], recipe:{model:["sub"],cutoff:[250,450],res:[.05,.12],level:[.8,1],send:[.15,.3],dsend:[0,.1]}},
       lead:{patterns:["sparse","wander","arpup"], samplerPool:["flute","harp"], recipe:{model:["stack","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.004],cutoff:[2200,3400],level:[.4,.5],send:[.5,.7],dsend:[.25,.4],vibrato:[.006,.012],attack:[.15,.4],release:[.5,.8],sustain:[.85,.95]}},   // the melody is PRESENT — distinct from ambient; 1/3 a real flute over the drift
       pads:{prob:1, patchPool:["TUB BELLS","SHIMMER","CELESTE"], samplerPool:["harp","celesta"], recipe:{model:["vp330","vp330","solina","solina","choir","strings","dx7","sampler"],wave:"saw",cutoff:[900,1600],detune:[.005,.012],attack:[2.5,4.5],vowel:[.5,.65],breath:[.4,.55],ensemble:[.75,.9],octave:[.5,.6],level:[.6,.8],send:[.6,.8],dsend:[.1,.25]},
@@ -985,7 +988,7 @@
     witchhouse: { label:"Witch house", info:"drowned rave: slowed 808 crawl, pitched-down voices, choirs in a cathedral of reverb",   // SAMPLE-FORWARD: the slowed voice is the ghost
       reverbColor:"greyhole",   // fx wings: the cathedral-of-reverb smear
       bpm:[60,76], swing:[0,.08], humanize:[.1,.3],
-      progressions:["deep_two","mode_phrygian","drone_min"], kits:["trap","halftime"], fills:["downlift","off","reverse"],
+      progressions:["drone_min","drone_min","deep_two","mode_phrygian"], kits:["trap","halftime"], fills:["downlift","off","reverse"],   // 2026-07 wash-trio deep pass: DRONE-DOMINANT (was deep_two/mode_phrygian/drone_min) — the slowed 808 crawls over a single held minor-7 the length of the cathedral (motion collapses to ~0), with the phrygian menace the rare tension. This is the occult-drone identity that fences witchhouse off downtempo (which now REQUIRES moving harmony, motion floor .4/w2) while its DRENCHED wash (.46-.51) fences it off the DRY dub (wash ceiling .34)
       bass:{patterns:["sub","root","dub"], recipe:{model:["sub"],cutoff:[240,420],res:[.05,.15],level:[1.15,1.35],send:[.05,.15],dsend:[0,.08]}},
       lead:{patterns:["sparse","off","wander"], patchPool:["SYN-VOX","VOICES"], recipe:{model:["ppg","ppg","choir","fm","dx7"],wave:"sine",voices:[1,2],spread:[.002,.006],cutoff:[1800,2800],scan:[.3,.6],scanEnv:[.3,.6],scanLfo:[.05,.2],level:[.38,.5],send:[.5,.7],dsend:[.3,.5],vibrato:[.004,.01]}},   // ~2/5 the PPG wavetable ghost-lead in the cathedral; choir/DX7 the rest
       pads:{prob:1, samplerPool:["ahh_choir"], recipe:{model:["vp330","vp330","ppg","ppg","choir","sampler"],wave:"saw",cutoff:[700,1200],detune:[.008,.016],attack:[2,4],vowel:[.1,.2],ensemble:[.85,1],scan:[.3,.6],scanEnv:[.2,.5],mellotron:true,level:[.6,.78],send:[.6,.8],dsend:[.15,.3]},
@@ -993,6 +996,7 @@
       drums:{kickModel:["808"],snareModel:["crack","noise"],hatModel:["noise"],kick:[1.1,1.35],snare:[.6,.85],hat:[.6,.9],tune:[.8,.95],send:[.2,.35],dsend:[.15,.35]},
       fx:{reverb:[.85,.95], delayBeats:[.75,1.5], delayFb:[.4,.6], delayCut:[1500,2500], pump:[0,.1], crackle:[0,.15], lowcut:[0,25], highcut:[0,0], comp:[.2,.4], grit:[.1,.3]},
       found:{role:"bed", vol:[.2,.32], pitch:[.55,.7], stretch:[.45,.6], cutoff:[1800,3000], sources:["vx_conet_swedish","vx_blake","vx_timelady"]},   // the haunted music box + tyger tyger + the time lady, ALL slowed to a crawl
+      sampleEvents:[{ pool:["vx_blake","vx_conet_swedish"], placement:"response", gain:.42, treatment:{pitch:.42, cutoff:1700, rsend:.62, dsend:.42} }],   // 2026-07 wash-trio deep pass (KERNEL-V4 Phase-4 role): THE GHOST IN THE CATHEDRAL — the pitched-DOWN voice (tyger-tyger / the numbers-station music box dragged to .42, below even the bed's .55 crawl, lowpassed to a moan and drenched) ANSWERS on the back half of each drone bar. This is witchhouse's bespoke identity claim — the slowed voice IS the genre (the audit's "needs pitched-down vox"), now a real sample-event layer, not just a bed
       stab:["off"], hits:{sources:["vox_c","sp_pressure"], pattern:"dub", prob:.5, wet:true},
       form:"pop" },
     mallsoft: { label:"Mallsoft", info:"the DEAD MALL: muzak heard from two stores away — escalator stopped, one chord every four bars, the whole tape drowned in the empty-atrium reverb; the time-lady and the fountain louder than the band",   // SAMPLE-FORWARD: the WASH is the architecture
@@ -2238,16 +2242,22 @@
   // before — journeys aren't gated):
   //   • VIDEO_LOCKED forms (ritual/anthem/transit) — their section cycles are
   //     hand-authored so the regenerated audio grafts onto committed videos.
-  //   • MARGIN_FRAGILE anchors (afrobeat, witchhouse) — they sit at exact
-  //     100/100 verifier ties with a rival the symbolic space can't yet
-  //     separate (KERNEL-V4 §1: "the verifier can't yet see interlock";
-  //     witchhouse margin 1, afrobeat margin 2). Length-normalising them tips
-  //     the window-count-sensitive `variation` feature and breaks the tie, so
-  //     they keep their natural (already-3-min-evolved) length until a Phase-6
-  //     deep pass tightens the rival rows. A documented strangler refusal.
+  //   • MARGIN_FRAGILE anchors (afrobeat) — they sit at exact 100/100 verifier
+  //     ties with a rival the symbolic space can't yet separate (KERNEL-V4 §1:
+  //     "the verifier can't yet see interlock"; afrobeat margin 2). Length-
+  //     normalising them tips the window-count-sensitive `variation` feature
+  //     and breaks the tie, so they keep their natural (already-3-min-evolved)
+  //     length until a Phase-6 deep pass tightens the rival rows. A documented
+  //     strangler refusal.
+  //     2026-07 wash-trio deep pass: witchhouse LEFT this list. Its Phase-6 deep
+  //     pass landed (drone-dominant occult harmony + pitched-down ghost-voice
+  //     sampleEvents; downtempo motion-floor + dub wash-ceiling rival fences),
+  //     lifting margin 1 -> 7. Verified stable under 180s normalisation (self
+  //     100, margin 7 both natural and targetSec:180) — the variation-tip that
+  //     forced the exemption no longer breaks anything at a 7-point margin.
   const AUTO_TARGET=180;
   const NO_AUTO_FORM=new Set(["ritual","anthem","transit"]);
-  const NO_AUTO_GENRE=new Set(["afrobeat","witchhouse"]);
+  const NO_AUTO_GENRE=new Set(["afrobeat"]);
   const withTarget=(c,opts)=>{
     const o=Object.assign({},opts);
     const dom=c.genres&&c.genres[0];
