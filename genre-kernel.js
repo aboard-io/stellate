@@ -1220,14 +1220,14 @@
       found:{role:"bed", vol:[.08,.15], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2000,3200], sources:["shibuya","frogs"]},   // HONESTY: no Arab-world recording on the shelf yet — generic city/night beds sit far back
       stab:["off"], hits:{sources:["vox_b","sp_rhythm"], pattern:"sparse", prob:.4},
       form:"pop" },
-    tango: { label:"Tango", info:"the habanera cell as law: sampled bandoneon over staccato piano and dry marcato strings, 78rpm dust, dramatic silence",   // acoustic-FORWARD: 2026-07 ear-fix — the SYNTH voices are out of the front line
+    tango: { label:"Tango", info:"the habanera cell as law: sampled bandoneon and nylon guitar over staccato piano, dry marcato strings, 78rpm dust, dramatic silence",   // acoustic-FORWARD: 2026-07 ear-fix — the SYNTH voices are out of the front line
       reverbColor:"fdn",   // fx wings: a dry room (freeverb), not a wash — the salon
       bpm:[100,124], swing:[0,.06], humanize:[.3,.55],
       progressions:["andalusian","andalusian","minor_run"],   // STRICTLY minor. frost PURGED (it was the verifier's triad fence, but it read as wintersynth pads by ear — the human heard it)
       kits:["kick","off"], fills:["off","downlift"],
       bass:{patterns:["habanera"], recipe:{model:["piano"],cutoff:[700,1200],res:[.05,.12],level:[1,1.2],send:[.06,.12],dsend:[0,.05]}},   // DUM..da-DUM-DUM, PIANO only — nothing else matters
-      lead:{patterns:["canon","wander","sparse"], samplerPool:["bandoneon"], recipe:{model:["sampler"],wave:"sine",voices:[1,2],spread:[.001,.003],cutoff:[2600,3800],level:[.55,.68],send:[.22,.34],dsend:[.02,.08],attack:.006,release:[.06,.11],sustain:[.5,.62]}},   // THE BANDONEON (FluidR3 GM 23), hard staccato, always — the voice of the genre
-      pads:{prob:.3, samplerPool:["strings"], recipe:{model:["sampler","strings"],wave:"saw",cutoff:[1100,1700],detune:[.003,.008],attack:[.1,.3],level:[.28,.38],send:[.18,.3],dsend:[.03,.1]}},   // mostly ABSENT; when present: quiet fast-attack section stabs (sampled ensemble half the time), never a wash
+      lead:{patterns:["canon","wander","sparse"], samplerPool:["bandoneon","bandoneon","nylon_string_guitar"], recipe:{model:["sampler"],wave:"sine",voices:[1,2],spread:[.001,.003],cutoff:[2600,3800],level:[.55,.68],send:[.22,.34],dsend:[.02,.08],attack:.006,release:[.06,.11],sustain:[.5,.62]}},   // THE BANDONEON (FluidR3 GM 23), hard staccato, 2/3 of seeds; the Gardel-quartet nylon guitar leads the rest (2026-07-04, Paul: "add guitars")
+      pads:{prob:.3, samplerPool:["strings","nylon_string_guitar"], recipe:{model:["sampler","strings"],wave:"saw",cutoff:[1100,1700],detune:[.003,.008],attack:[.1,.3],level:[.28,.38],send:[.18,.3],dsend:[.03,.1]}},   // mostly ABSENT; when present: quiet fast-attack section stabs — sampled ensemble or nylon-guitar comping, never a wash
       drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.6,.85],snare:[.4,.6],hat:[.3,.5],tune:[.95,1.1],send:[.1,.2],dsend:[0,.05]},
       fx:{reverb:[.3,.42], delayBeats:[.5,.75], delayFb:[.08,.16], delayCut:[2200,3200], pump:[0,0], crackle:[.15,.35], lowcut:[0,25], highcut:[0,0], comp:[.1,.3]},   // DRY band, no echo wash — the milonga room, not the cathedral
       found:{role:"bed", vol:[.06,.12], pitch:[.8,.95], stretch:[.45,.6], cutoff:[1800,2800], sources:["vx_suspense","tokyo_station"]},   // old-radio air stands in, low (the bandoneon itself is real now)
