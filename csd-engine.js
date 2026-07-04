@@ -718,6 +718,56 @@
   const STAB_PATTERNS={ offbeat:[1.5,3.5,5.5,7.5], rave:[0,1.5,3,4.5,6,7], sparse:[3.5,7] };
   const HIT_PATTERNS={ sparse:[0], offbeat:[3.5], dub:[2.5,6.5], response:[4] };   // response: the vox takes the blues response bars the lead rests (crStream)
 
+  // ---------- pattern-transform algebra (KERNEL-V4 Phase 2) ----------
+  // The Strudel per-cycle transform pass is now a genre-addressable DIMENSION
+  // (state.transforms) instead of a hardcoded switch. Each op is a lane-tagged
+  // per-bar mutation over the {pitched, drums} fabric; a state's `transforms`
+  // declares which ops are in the pool, how often they fire, and how they're
+  // scheduled. buildEvents runs ONE generic pass (below); when state.transforms
+  // is ABSENT it uses TF_DEFAULT_POOL at rate .25 — draw-for-draw identical to
+  // the old switch (the 5 core ops in this exact order), pinned byte-stable by
+  // fixtures.js. Blend (genre-kernel resolveMulti) = pool union + rate lerp.
+  //   X = { b0, b1, cb, trng, pitched, drums, dropT }   (per-bar context)
+  //   op.lane = the layer it touches (a genre's targets:{drums,melody,bass}
+  //             gate can disable a lane; op body is skipped, draws still spent).
+  const TRANSFORM_OPS={
+    // rev: mirror the melody phrase in time within the bar (Strudel rev; solos exempt)
+    rev:{ lane:"melody", fn(X){
+      for(const e of X.pitched) if(e.voice==="melody"&&!e.solo&&e.beat>=X.b0&&e.beat<X.b1)
+        e.beat=X.b0+Math.max(0, X.cb-((e.beat-X.b0)+Math.min(e.dur,X.cb))); } },
+    // ply: double-hit one seeded beat of drums (Strudel ply 2)
+    ply:{ lane:"drums", fn(X){
+      const at=X.b0+Math.floor(X.trng()*X.cb), extra=[];
+      for(const d of X.drums) if(d.beat>=at&&d.beat<at+1&&d.drum!=="tom")
+        extra.push(Object.assign({},d,{beat:d.beat+0.25,dur:Math.min(d.dur,0.2),amp:d.amp*0.75}));
+      extra.forEach(x=>X.drums.push(x)); } },
+    // degrade: hats thin out hard this bar (Strudel degradeBy)
+    degrade:{ lane:"drums", fn(X){
+      for(const d of X.drums) if(d.drum==="hat"&&d.beat>=X.b0&&d.beat<X.b1&&X.trng()<0.45) X.dropT.add(d); } },
+    // octflip: the whole bass bar jumps an octave
+    octflip:{ lane:"bass", fn(X){
+      for(const e of X.pitched) if(e.voice==="bass"&&e.beat>=X.b0&&e.beat<X.b1) e.pch=pchAdd(e.pch,12); } },
+    // rest: the melody sits this bar out (silence is a choice; solos exempt)
+    rest:{ lane:"melody", fn(X){
+      for(const e of X.pitched) if(e.voice==="melody"&&!e.solo&&e.beat>=X.b0&&e.beat<X.b1) X.dropT.add(e); } },
+    // --- Phase-2 additions: available to genres that opt into a richer pool ---
+    // rot: rotate the CLOSED-hat lane within the bar by a seeded 1-3 beat shift
+    //      (wrapping inside the bar) — displaces the ride, kick/snare stay put
+    rot:{ lane:"drums", fn(X){
+      const shift=1+Math.floor(X.trng()*3);
+      for(const d of X.drums) if(d.drum==="hat"&&!d.open&&d.beat>=X.b0&&d.beat<X.b1)
+        d.beat=X.b0+(((d.beat-X.b0)+shift)%X.cb); } },
+    // stutter: retrigger the loudest drum of the bar's last beat as four 16ths
+    //          (the braindance/breakcore machine-gun) — one seeded pick, ramped
+    stutter:{ lane:"drums", fn(X){
+      const from=X.b1-1; let proto=null;
+      for(const d of X.drums) if(d.beat>=from&&d.beat<X.b1&&d.drum!=="tom"&&(!proto||d.amp>proto.amp)) proto=d;
+      if(!proto) return;
+      for(let i=0;i<4;i++) X.drums.push({drum:proto.drum,beat:from+i*0.25,dur:0.12,amp:Math.min(1,proto.amp*(0.6+0.12*i))}); } },
+  };
+  const TF_DEFAULT_POOL=["rev","ply","degrade","octflip","rest"];   // the historical global 5 (order = the old t=0..4 mapping)
+  const STABLE_SECTION=/chorus|hook|drop|peak|refrain/i;            // formAware schedule: transforms rest on these (the section is the hook — leave it alone)
+
   function buildEvents(state){
     const prg=PROGRESSIONS[state.progression]||PROGRESSIONS.royal_road;
     // KERNEL-V4 Phase 1: harmonic rhythm is a state dimension. chordEvery =
@@ -973,39 +1023,40 @@
         const amp = tr==="impact"?0.4 : (tr==="reverse"||tr==="downlift")?0.07 : 0.055;
         sfx.push({beat:Math.max(0,sbeat), dur:hit?1.5:4, type:SFX_NUM[tr], amp});
       }
-      spans.push({start:cur,beats:secBeats});
+      spans.push({start:cur,beats:secBeats,name:sec.name});
       cur+=secBeats;
     }
-    // ---- Strudel-borrowed per-cycle transform pool (FAUST-PORT.md) ----
-    // Per chord-bar, one seeded pick from {reverse melody phrase, ply (double-
-    // hit) a beat, degrade hats harder, octave-flip the bass bar, rest the
-    // melody bar}, applied ON TOP of the humanity rules — subtle (p=0.25/bar),
-    // never on the first bar of a section. Own rng stream (seed+31337) so the
-    // base event fabric is untouched; same seed -> same transforms.
+    // ---- pattern-transform algebra (KERNEL-V4 Phase 2) ----
+    // ONE generic per-cycle pass over the transform pool (TRANSFORM_OPS above),
+    // parameterised by state.transforms = { pool, rate, schedule, everyN,
+    // targets }. Own rng stream (seed+31337) so the base fabric is untouched;
+    // same seed -> same transforms. Applied ON TOP of the humanity rules, never
+    // on the first bar of a section. ABSENT transforms = TF_DEFAULT_POOL @ .25,
+    // the historical global switch draw-for-draw (fixtures.js pins it).
+    //   schedule "prob"      (default): each non-first bar fires with prob `rate`
+    //   schedule "everyN"    : fire on bars where bi % everyN === 0 (sparse, no
+    //                          rate draw — minimal's "one mutation every 8 bars")
+    //   schedule "formAware" : like prob, but STABLE sections (the hook/chorus)
+    //                          are left untouched — mutate the verses, hold the drop
     {
+      const tf=state.transforms;
+      const pool=(tf&&tf.pool&&tf.pool.length)?tf.pool:TF_DEFAULT_POOL;
+      const rate=(tf&&tf.rate!=null)?tf.rate:0.25;
+      const sched=(tf&&tf.schedule)||"prob";
+      const everyN=Math.max(1,(tf&&tf.everyN)||8);
+      const targets=(tf&&tf.targets)||null;
       const trng=mulberry32(((state.seed??1)+31337)>>>0);
       const dropT=new Set();
+      const X={ b0:0, b1:0, cb:CBEATS, trng, pitched, drums, dropT };
       for(const sp of spans){
         const nbars=Math.floor(sp.beats/CBEATS);
+        const stable=sched==="formAware"&&STABLE_SECTION.test(sp.name||"");
         for(let bi=1;bi<nbars;bi++){
-          if(trng()>=0.25) continue;
-          const b0=sp.start+bi*CBEATS, b1=b0+CBEATS;
-          const t=Math.floor(trng()*5);
-          if(t===0){        // rev: mirror the melody phrase in time (Strudel rev; solos exempt)
-            for(const e of pitched) if(e.voice==="melody"&&!e.solo&&e.beat>=b0&&e.beat<b1)
-              e.beat=b0+Math.max(0, CBEATS-((e.beat-b0)+Math.min(e.dur,CBEATS)));
-          } else if(t===1){ // ply: double-hit one beat of drums (Strudel ply 2)
-            const at=b0+Math.floor(trng()*CBEATS), extra=[];
-            for(const d of drums) if(d.beat>=at&&d.beat<at+1&&d.drum!=="tom")
-              extra.push(Object.assign({},d,{beat:d.beat+0.25,dur:Math.min(d.dur,0.2),amp:d.amp*0.75}));
-            extra.forEach(x=>drums.push(x));
-          } else if(t===2){ // degrade: hats thin out hard this bar (Strudel degradeBy)
-            for(const d of drums) if(d.drum==="hat"&&d.beat>=b0&&d.beat<b1&&trng()<0.45) dropT.add(d);
-          } else if(t===3){ // octave-flip: the bass bar jumps an octave
-            for(const e of pitched) if(e.voice==="bass"&&e.beat>=b0&&e.beat<b1) e.pch=pchAdd(e.pch,12);
-          } else {          // rest: the melody sits this bar out (silence is a choice; solos exempt)
-            for(const e of pitched) if(e.voice==="melody"&&!e.solo&&e.beat>=b0&&e.beat<b1) dropT.add(e);
-          }
+          if(sched==="everyN"){ if(bi%everyN!==0) continue; }
+          else { if(stable) continue; if(trng()>=rate) continue; }
+          X.b0=sp.start+bi*CBEATS; X.b1=X.b0+CBEATS;
+          const op=TRANSFORM_OPS[pool[Math.floor(trng()*pool.length)]];
+          if(op && (!targets || targets[op.lane]!==false)) op.fn(X);
         }
       }
       if(dropT.size){ pitched=pitched.filter(e=>!dropT.has(e)); drums=drums.filter(e=>!dropT.has(e)); }

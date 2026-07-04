@@ -921,6 +921,7 @@
       bpm:[88,116], swing:[0,.05], humanize:[.3,.5],
       progressions:["deep_two","mode_lydian","neosoul","drone_min"], kits:["breaks","techno","boombap"], fills:["cut","noise","reverse","off","stutter"],
       euclid:{kick:[5,16],hat:[11,16]},   // E(5,16) against E(11,16), both rotating — the tangle
+      transforms:{ pool:["rev","ply","degrade","octflip","rest","rot","stutter"], rate:0.5 },   // Phase 2: the genre v4 exists for — HALF the bars mutate, the FULL pool (rot/stutter added). "drum tangles that never repeat" is now literally true
       bass:{patterns:["stab","melodic","sub"], recipe:{model:["sub","reese"],cutoff:[300,560],res:[.1,.25],level:[1,1.2],send:[0,.08],dsend:[0,.1]}},
       lead:{patterns:["wander","sparse","double"], patchPool:["TUB BELLS","ORCH-CHIME"], recipe:{model:["ppg","ppg","ppg","fm","bell","dx7"],wave:"sine",voices:[1,2],spread:[.004,.01],cutoff:[2200,3400],scan:[.3,.7],scanEnv:[.3,.6],scanLfo:[.05,.2],scanRate:[.2,2],level:[.42,.54],send:[.3,.5],dsend:[.3,.5],vibrato:[0,.004],attack:.005,release:[.1,.2],sustain:[.6,.75],fenv:[.3,.6]},
         inserts:{prob:.5, max:2, pool:[["phaser",{rate:[.2,.6],depth:[.5,.8],mix:[.4,.6]}],["filtersweep",{rateBars:[2,6],lo:[-.8,-.3],hi:[.6,1.2],res:[.25,.45]}]]}},   // braindance: the PPG wavetable-scan lead (scan swept by env+LFO — timbre as the artist), bells the rest; phase + sweep chains on top
@@ -1032,6 +1033,7 @@
       bpm:[120,128], swing:[0,.05], humanize:[0,.1],
       progressions:["drone_min","drone_min","deep_two"], kits:["kick","kick","pulse"], fills:["off","cut","hat rush"],
       euclid:{hat:[5,16]},   // E(5,16) tiny rotating percs — the whole topography
+      transforms:{ pool:["rev","degrade","rest","rot"], schedule:"everyN", everyN:8, rate:0.5 },   // Phase 2: subtraction as composition — ONE sparse mutation every 8 bars (never a wall of change), the reductive pool
       bass:{patterns:["rolling","stab","root"], recipe:{model:["sub","saw"],cutoff:[300,520],res:[.1,.2],level:[1,1.2],send:[0,.05],dsend:[0,.08]},
         inserts:{prob:.4, max:1, pool:[["filtersweep",{rateBars:[4,8],lo:[-.6,-.2],hi:[.3,.7],res:[.15,.3]}]]}},   // a whisper of a sweep — the only event for 8 bars, so it matters
       lead:{patterns:["off","off","sparse"], recipe:{model:["pluck"],wave:"sine",voices:[1,1],spread:[.001,.003],cutoff:[2000,3000],level:[.3,.4],send:[.2,.35],dsend:[.3,.5],attack:.003,release:[.04,.08],sustain:[.4,.55],fenv:[.4,.7]}},   // a blip, mostly absent
@@ -1179,6 +1181,7 @@
       fx:{reverb:[.3,.42], delayBeats:[.5,.75], delayFb:[.08,.16], delayCut:[2200,3200], pump:[0,0], crackle:[.15,.35], lowcut:[0,25], highcut:[0,0], comp:[.1,.3]},   // DRY band, no echo wash — the milonga room, not the cathedral
       found:{role:"bed", vol:[.06,.12], pitch:[.8,.95], stretch:[.45,.6], cutoff:[1800,2800], sources:["vx_suspense","tokyo_station"]},   // old-radio air stands in, low (the bandoneon itself is real now)
       rubato:{depth:[.02,.035], periodBars:[2,4], prob:.5},   // half the seeds breathe — tango rubato is real but the habanera stays the law
+      transforms:{ pool:["rest"], rate:0.05 },   // Phase 2: "dramatic silence" as law — very rarely (5%) the bandoneon line drops out for a bar; the habanera bass carries it
       stab:["off"], hits:{sources:["horns_78","blues_vox_78"], pattern:"sparse", prob:.35},
       form:"pop" },
     afrobeat: { label:"Afrobeat", info:"the long groove: interlocking euclid percussion, organ stabs on a dorian vamp, horn-section hits — one chord until it means something",   // groove-FORWARD: Fela's arithmetic
@@ -1630,6 +1633,30 @@
       const ce=Math.round(GENRES[gsel].chordEvery||8);
       if(ce&&ce!==8) choice.chordEvery=ce;
     }
+    // ---- pattern-transform algebra (KERNEL-V4 Phase 2): the per-cycle
+    // transform pass is a blendable DIMENSION now. state.transforms = {pool,
+    // rate, schedule, everyN, targets} -> csd-engine's one generic pass.
+    // Blend = POOL UNION + RATE LERP, with ZERO rng draws (like reverbColor's
+    // dominant-parent inherit): parents WITHOUT `transforms` sit out entirely,
+    // so untouched anchors keep every prior seeded choice AND render the
+    // engine's historical default (rate .25, the 5 core ops) byte-identically.
+    // Only declaring genres (idm/minimal/tango…) carry the field; a blend
+    // unions their pools and lerps the fire-rate, so a techno×idm midpoint
+    // inherits idm's braindance vocabulary at half the density.
+    {
+      const tcands=ws.map(x=>({w:x.w, t:GENRES[x.g].transforms})).filter(c=>c.t);
+      if(tcands.length){
+        const tw=tcands.reduce((s,c)=>s+c.w,0);
+        const ordered=tcands.slice().sort((a,b)=>b.w-a.w);   // weight-ordered = deterministic union order
+        const pool=[]; for(const c of ordered) for(const op of (c.t.pool||[])) if(pool.indexOf(op)<0) pool.push(op);
+        let rate=0; for(const c of tcands){ const r=c.t.rate; const rr=Array.isArray(r)?(r[0]+r[1])/2:(r!=null?r:0.25); rate+=rr*c.w; }
+        const dom=ordered[0].t;   // schedule/everyN/targets are structural — from the dominant declaring parent (no lerp)
+        choice.transforms={ pool, rate:round(rate/tw,3) };
+        if(dom.schedule) choice.transforms.schedule=dom.schedule;
+        if(dom.everyN)   choice.transforms.everyN=dom.everyN;
+        if(dom.targets)  choice.transforms.targets=dom.targets;
+      }
+    }
     // ---- reverb COLOR (fx wings round): a per-genre reverb character
     // (state.reverbColor names an external dist/reverb_* module that replaces
     // the fx_bus internal zita — see faust/state-engine reverbColor). Picked
@@ -2058,6 +2085,7 @@
       // rubato/thunk (neoclassical deep pass): absent keys = zero behavior
       // change in buildEvents — unchanged genres press byte-identically
       ...(c.rubato?{rubato:c.rubato}:{}), ...(c.thunk?{thunk:c.thunk}:{}),
+      ...(c.transforms?{transforms:c.transforms}:{}),  // pattern-transform algebra (Phase 2): absent = engine's historical default, byte-identical
       euclid:c.euclid||undefined,                      // kit-level euclidean rhythm spec (csd-engine drumEvents)
       ...(c.chordEvery?{chordEvery:c.chordEvery}:{}),  // harmonic rhythm (KERNEL-V4 Phase 1): beats per chord bar
       jux:(c.fx.jux||0)>0.05?c.fx.jux:0,               // stereo divergence: buildEvents emits per-event pan offsets
