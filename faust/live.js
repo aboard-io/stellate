@@ -765,15 +765,32 @@
     }
     status(ctx.state === "running" ? "live (faust) — drag the space" : "live (tap again if silent)");
     tick();
-    // prewarm the insert-module processor registrations while load is light:
-    // a mid-run insert TYPE swap otherwise pays the audio-thread addModule/
-    // wasm setup right then (measured: a ~0.95 load blip 2s after the swap).
-    // The prewarmed nodes are never connected — zero render cost — and are
-    // dropped immediately; later mkNodes of the same module just instantiate.
-    setTimeout(() => { if (!abort)
+    // prewarm module processor registrations while load is light: a mid-run
+    // module swap otherwise pays the audio-thread addModule/wasm setup right
+    // then (measured: a ~0.95 load blip 2s after an insert swap; the 2026-07-04
+    // regression hunt traced Paul's "crackle + scheduler slightly off" report
+    // to exactly this one-time hitch when travel enters a genre whose HEAVY
+    // fleet voices / reverb color / master_mb aren't built yet). Prewarmed
+    // nodes are never connected — zero render cost — and dropped immediately;
+    // later mkNodes of the same module just instantiate. Staggered in small
+    // batches so the prewarm itself never spikes the audio thread.
+    // Two-tier prewarm (2026-07-04 regression hunt: the one-time hitch when
+    // travel enters a genre with unbuilt HEAVY modules read as "crackle +
+    // scheduler off"). Tier 1: factory() prefetch — the MAIN-thread wasm
+    // compile, the expensive part, zero audio-thread cost — for the whole
+    // fleet + reverb colors + master_mb. Tier 2: full node prewarm (audio-
+    // thread processor registration) for the small insert modules only, as
+    // before — full-node-prewarming the heavy voices measurably dipped the
+    // load gate (0.987 -> 0.82-0.87), so their registration stays at need
+    // time, now cheap because the wasm is already compiled.
+    setTimeout(() => { if (!abort) {
+      for (const m of ["juno60", "tb303", "solina", "hammond", "modeld",
+                       "synclead", "casiocz", "oberheim", "ppg", "vp330",
+                       "reverb_dattorro", "reverb_greyhole", "reverb_fdn", "reverb_spring", "master_mb"])
+        Promise.resolve(factory(m)).catch(() => {});
       for (const m of ["insert_distort", "insert_phaser", "insert_chorus", "insert_filtersweep", "insert_wah"])
         mkNode(m, "prewarm:" + m).catch(() => {});
-    }, 1500);
+    } }, 1500);
 
     const rmsBuf = new Float32Array(analyser.fftSize);
     const handle = {
