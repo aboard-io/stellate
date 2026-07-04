@@ -603,7 +603,10 @@
       vox:{sources:["sp_ca_hockey","sp_ca_hnic","sp_ca_cup","sp_ca_topshelf","sp_ca_fivehole","sp_ca_gretzky","sp_ca_save","sp_ca_overtime","sp_ca_news","sp_ca_justwatchme"], vol:0.5, pitch:1, cutoff:8000, clean:true},   // hockey play-by-play + lore
       voxPoem:"sp_ca_cities",   // the rhyming-cities poem, chopped into verse 2
       hits:{sources:["ca_loon"], pattern:"sparse", prob:1, wet:true, glitch:true, vol:0.035},   // the loon — a quiet whisper, verse 1 only
-      hornSource:"ca_horn",   // the goal horn — FULL volume opener only
+      // the goal horn — FULL-volume opener (was the bespoke `hornSource`/hits path):
+      // KERNEL-V4 opener sample-event, one blast on the first section's downbeat.
+      // gain 1.8 = the old hits-handler boost; vol 0.42 = the old hornVol default.
+      sampleEvents:[{ pool:["ca_horn"], placement:"opener", gain:1.8, treatment:{cutoff:6000, vol:0.42, rsend:0.6, dsend:0.45} }],
       stab:["off"],
       form:"anthem" },   // pop structure; grand brass swell at the bridge (see buildSections)
     transitwave: { label:"Transitwave", info:"motorik regional-rail vaporwave: a Kraftwerk sequencer arp + 2/3-speed gritty counter-arp, station-PA announcements (harmonized, echo + glitch), a distorted heavy-metal solo, door chimes, and a chugging choo-choo swing",
@@ -620,11 +623,21 @@
       vox:{sources:["sp_tw_next","sp_tw_arriving","sp_tw_standclear","sp_tw_express","sp_tw_delay","sp_tw_gap","sp_tw_aboard","sp_tw_local","sp_tw_terminus","sp_tw_tickets"], vol:0.54, pitch:1, cutoff:3800, clean:false},   // station-PA announcements, glitched + echoed
       voxPoem:"sp_tw_schedule",   // the departures litany, chopped into the interchange
       hits:{sources:["tw_pass"], pattern:"sparse", prob:1, wet:true, vol:0.055, cut:1100},   // a train passing — quiet + heavily low-passed so it sits UNDER the mix
-      hornSource:"tw_arrival", hornVol:0.13, hornCut:850,   // the opener train: filtered way down (was dominating everything)
-      dingSource:"tw_ding", dingVol:0.28,   // the door "ding ding": always low-passed + fed HARD to the ping-pong so it echoes for ~2 measures (see csd-engine)
       snarePP:0.6,   // feed random snare hits to the long rhythmic ping-pong delay
       vocal:true, vocalVol:0.55,   // the 8-bar sung chorus (WORLD-vocoder vocal, generated to match bpm+key at render time)
-      stations:["sp_st_admiralty","sp_st_akiba","sp_st_alex","sp_st_arbat","sp_st_astoria","sp_st_atlantic","sp_st_atocha","sp_st_baker","sp_st_bank","sp_st_bastille","sp_st_bedford","sp_st_belleville","sp_st_belmont","sp_st_bloor","sp_st_brixton","sp_st_bugis","sp_st_camden","sp_st_catalunya","sp_st_causeway","sp_st_centraal","sp_st_central","sp_st_chandni","sp_st_chatelet","sp_st_circular","sp_st_colosseo","sp_st_coney","sp_st_dam","sp_st_dupont","sp_st_embarcadero","sp_st_fulton","sp_st_gangnam","sp_st_ginza","sp_st_grand","sp_st_granvia","sp_st_harvard","sp_st_hbf","sp_st_hongdae","sp_st_ikebukuro","sp_st_itaewon","sp_st_jamsil","sp_st_kadikoy","sp_st_kiev","sp_st_kings","sp_st_komso","sp_st_kotti","sp_st_lazare","sp_st_liverpool","sp_st_marien","sp_st_metrocenter","sp_st_mongkok","sp_st_montpar","sp_st_mustek","sp_st_nakano","sp_st_nation","sp_st_nord","sp_st_opera","sp_st_orchard","sp_st_oxford","sp_st_paddington","sp_st_parkst","sp_st_paulista","sp_st_penn","sp_st_pigalle","sp_st_pino","sp_st_potsdamer","sp_st_powell","sp_st_raffles","sp_st_rajiv","sp_st_retiro","sp_st_roppongi","sp_st_rossio","sp_st_sadat","sp_st_sagrada","sp_st_se","sp_st_shibuya","sp_st_shinagawa","sp_st_shinjuku","sp_st_slussen","sp_st_sol","sp_st_spadina","sp_st_stephans","sp_st_taksim","sp_st_tcentralen","sp_st_termini","sp_st_times","sp_st_townhall","sp_st_ueno","sp_st_union","sp_st_victoria","sp_st_warschauer","sp_st_waterloo","sp_st_wynyard","sp_st_zocalo","sp_st_zoo"], stationVol:0.28,   // a (feminine) world-metro station name under every measure — present, not buried
+      // a (feminine) world-metro station name under every measure — present, not
+      // buried. KERNEL-V4 buried sample-event (was the bespoke `stations`/stationVol
+      // path): square-LFO gated at stationVol 0.28, downward stutter tail ~70%.
+      sampleEvents:[{ pool:["sp_st_admiralty","sp_st_akiba","sp_st_alex","sp_st_arbat","sp_st_astoria","sp_st_atlantic","sp_st_atocha","sp_st_baker","sp_st_bank","sp_st_bastille","sp_st_bedford","sp_st_belleville","sp_st_belmont","sp_st_bloor","sp_st_brixton","sp_st_bugis","sp_st_camden","sp_st_catalunya","sp_st_causeway","sp_st_centraal","sp_st_central","sp_st_chandni","sp_st_chatelet","sp_st_circular","sp_st_colosseo","sp_st_coney","sp_st_dam","sp_st_dupont","sp_st_embarcadero","sp_st_fulton","sp_st_gangnam","sp_st_ginza","sp_st_grand","sp_st_granvia","sp_st_harvard","sp_st_hbf","sp_st_hongdae","sp_st_ikebukuro","sp_st_itaewon","sp_st_jamsil","sp_st_kadikoy","sp_st_kiev","sp_st_kings","sp_st_komso","sp_st_kotti","sp_st_lazare","sp_st_liverpool","sp_st_marien","sp_st_metrocenter","sp_st_mongkok","sp_st_montpar","sp_st_mustek","sp_st_nakano","sp_st_nation","sp_st_nord","sp_st_opera","sp_st_orchard","sp_st_oxford","sp_st_paddington","sp_st_parkst","sp_st_paulista","sp_st_penn","sp_st_pigalle","sp_st_pino","sp_st_potsdamer","sp_st_powell","sp_st_raffles","sp_st_rajiv","sp_st_retiro","sp_st_roppongi","sp_st_rossio","sp_st_sadat","sp_st_sagrada","sp_st_se","sp_st_shibuya","sp_st_shinagawa","sp_st_shinjuku","sp_st_slussen","sp_st_sol","sp_st_spadina","sp_st_stephans","sp_st_taksim","sp_st_tcentralen","sp_st_termini","sp_st_times","sp_st_townhall","sp_st_ueno","sp_st_union","sp_st_victoria","sp_st_warschauer","sp_st_waterloo","sp_st_wynyard","sp_st_zocalo","sp_st_zoo"],
+        placement:"buried", sections:"all", treatment:{cutoff:5200, vol:0.28, glitch:true} },
+        // the train pulling IN — the opener, filtered way down (was hornSource/hornVol/hornCut):
+        // KERNEL-V4 opener sample-event on the first section (platform) downbeat.
+        { pool:["tw_arrival"], placement:"opener", gain:1.8, treatment:{cutoff:850, vol:0.13, rsend:0.6, dsend:0.45} },
+        // the door "ding ding" (was dingSource/dingVol): low-passed to 2.4k, fed HARD
+        // to the ping-pong (ppsend .7) so it echoes ~2 measures. Two per station stop —
+        // doors CLOSING on the downbeat (oneShot) and OPENING near the end (cadence).
+        { pool:["tw_ding"], placement:"oneShot", sections:"platform|board|interchange|terminus", treatment:{maxDur:2.2, cutoff:2400, vol:0.28, rsend:0.26, dsend:0.04, ppsend:0.7} },
+        { pool:["tw_ding"], placement:"cadence", sections:"platform|board|interchange|terminus", treatment:{maxDur:2.2, cutoff:2400, vol:0.28, rsend:0.26, dsend:0.04, ppsend:0.7} }],
       stab:["off"],
       form:"transit" },   // a commuter journey: platform -> board -> transit -> interchange -> SOLO -> express -> terminus (see buildSections)
     neoclassical: { label:"Neoclassical", info:"felt piano, slow counterpoint, strings swelling underneath, key thunks, rubato",
@@ -1323,8 +1336,11 @@
       drums:{kickModel:["909","boom"], snareModel:["clap"], hatModel:["noise","metal"], kick:[1.25,1.5], snare:[0.7,0.95], hat:[0.6,0.95], tune:[0.95,1.1], send:[0.1,0.25], dsend:[0.05,0.15]},
       fx:{reverb:[0.28,0.45], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[3000,4500], pump:[0.55,0.82], crackle:[0,0], lowcut:[30,45], highcut:[0,0], comp:[0.4,0.65]},
       found:{role:"chops", vol:[0.16,0.26], pitch:[1.15,1.5], stretch:[0.35,0.5], cutoff:[3500,6000], sources:["hp_harry","hp_hermione","hp_ron","hp_snape","hp_draco","hp_voldemort","hp_dumbledore","hp_hagrid"]},
-      stations:["hp_harry","hp_hermione","hp_ron","hp_dumbledore","hp_snape","hp_draco","hp_luna","hp_neville","hp_mcgonagall","hp_hagrid","hp_sirius","hp_bellatrix","hp_voldemort","hp_ginny","hp_cho","hp_cedric","hp_dobby","hp_hedwig","hp_buckbeak","hp_peeves","hp_nick","hp_myrtle","hp_filch","hp_crookshanks"],
-      stationVol:0.4,
+      // a rotating HP character NAME under every bar — KERNEL-V4 buried sample-event
+      // (was the bespoke `stations`/stationVol path): square-LFO gated at stationVol
+      // 0.4, chased ~70% by the downward stutter tail
+      sampleEvents:[{ pool:["hp_harry","hp_hermione","hp_ron","hp_dumbledore","hp_snape","hp_draco","hp_luna","hp_neville","hp_mcgonagall","hp_hagrid","hp_sirius","hp_bellatrix","hp_voldemort","hp_ginny","hp_cho","hp_cedric","hp_dobby","hp_hedwig","hp_buckbeak","hp_peeves","hp_nick","hp_myrtle","hp_filch","hp_crookshanks"],
+        placement:"buried", sections:"all", treatment:{cutoff:5200, vol:0.4, glitch:true} }],
       hits:{sources:["hp_voldemort","hp_snape","hp_harry","hp_bellatrix"], pattern:"offbeat", prob:0.6},
       stab:["off"],
       autoTune:0.7,   // fx wings stage 2: the pitched-up name chops snap HARD to the key — the hyperpop coherence
@@ -1561,11 +1577,7 @@
       voxClean: !!(voxSide.vox && voxSide.vox.clean),
       voxPoem: voxSide.voxPoem || null,
       vocSource: extraSide.vocSource || null,
-      hornSource: extraSide.hornSource || null,
-      hornVol: extraSide.hornVol, hornCut: extraSide.hornCut,
-      dingSource: extraSide.dingSource || null, dingVol: extraSide.dingVol,
       snarePP: extraSide.snarePP || 0,
-      stations: extraSide.stations || null, stationVol: extraSide.stationVol,
       vocal: !!extraSide.vocal, vocalVol: extraSide.vocalVol,
       realHats: !!extraSide.realHats,
       foundRecipe: blendRecipe(g=>({vol:g.found.vol,pitch:g.found.pitch,stretch:g.found.stretch,cutoff:g.found.cutoff})),
@@ -1850,13 +1862,12 @@
       // into every chorus, hi-hats throughout, loon calls + the national news on top.
       const vox=()=>({sourceId:"vox", clean:c.voxClean});    // clean hockey calls / news (intelligible)
       const poem=()=>({sourceId:"poem", clean:false});       // the rhyming-cities poem, cut up as texture
-      const horn=()=>({sourceId:"horn"});                    // the goal horn — FULL volume opener
       const swellBrass={model:"brass", cutoff:9000, level:1.9, voices:1};   // big organic brass — high cutoff so it isn't over-filtered (brassSource shapes it)
       // THE lead is the Edge 16th-note arp guitar (lead==="arp16"). One big grand
       // brass swell owns the bridge (midpoint). Structure/length unchanged so the new
       // audio grafts onto the existing video.
       secs=[
-        S("intro",    {cycles:1, pads:true, found:fnd(), vox:vox(), hits:horn(), sweep:"open"}),                     // FULL goal horn opener + "hockey night in canada"
+        S("intro",    {cycles:1, pads:true, found:fnd(), vox:vox(), sweep:"open"}),                                  // FULL goal horn opener (sampleEvents) + "hockey night in canada"
         S("verse",    {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd(), hits:hit(), fill:"tom fill"}), // Edge arp lead + moving bass; Peart tom fill into chorus
         S("chorus",   {cycles:2, drums:kit, bass, pads:true, melody:lead, stab:c.stab, found:fnd()}),
         S("verse 2",  {cycles:1, drums:kit, bass, pads:true, melody:lead, found:fnd(), vox:poem(), fill:"tom fill"}), // + cities poem
@@ -1872,18 +1883,17 @@
       // ding" chimes at the stations.
       const vox=()=>({sourceId:"vox", clean:c.voxClean});   // schedule announcements
       const poem=()=>({sourceId:"poem", clean:false});      // the departures litany, chopped
-      const horn=()=>({sourceId:"horn"});                   // the train pulling in (filtered)
       const counter={pattern:"motorik23", solo:{model:"fuzz",wave:"saw",cutoff:2600,res:0.3,drive:0.15,level:0.5,voices:1,send:0.2,dsend:0.44,attack:.004,release:0.09,sustain:0.62,fenv:0.6,swellHz:.13,swellDepth:.6,swellPhase:.5}, octave:-1};   // 2/3-speed mirror counter-arp, an OCTAVE LOWER, gritty, breathing OPPOSITE the main (they trade)
       const metal={model:"fuzz",wave:"saw",cutoff:3400,res:0.26,drive:0.7,level:0.62,voices:1,vibrato:.013,vibRate:5.5};   // the solo: SUSTAINED + grimy (no staccato params -> legacy singing env), wailing vibrato — a proper lead, not noise
       secs=[
-        S("platform",   {cycles:1, pads:true, found:fnd("bed"), vox:vox(), hits:horn(), ding:true, sweep:"open"}),                          // train arrives + announcement + door chime
-        S("board",      {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd("bed"), vox:vox(), ding:true, fill:"tom fill"}),       // doors close, the groove departs -> tom fill
+        S("platform",   {cycles:1, pads:true, found:fnd("bed"), vox:vox(), sweep:"open"}),                                                  // train arrives (opener sampleEvent) + announcement + door chime (sampleEvents)
+        S("board",      {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd("bed"), vox:vox(), fill:"tom fill"}),                  // doors close, the groove departs -> tom fill
         S("transit",    {cycles:2, drums:kit, bass, pads:true, melody:lead, counter, found:fnd("bed"), stab:c.stab, hits:hit(), fill:F()}),  // full groove + the counter-arp; a random fill
         S("chorus",     {cycles:1, drums:kit, bass, pads:true, melody:lead, found:fnd("bed"), vocal:true, fill:"riser"}),                    // the 8-bar SUNG chorus (WORLD-vocoder vocal over the groove)
-        S("interchange",{cycles:1, pads:true, bass:"root", melody:"sparse", found:fnd("bed"), vox:poem(), ding:true, fill:"downlift", sweep:"close"}),   // wind DOWN into the station; the schedule litany
+        S("interchange",{cycles:1, pads:true, bass:"root", melody:"sparse", found:fnd("bed"), vox:poem(), fill:"downlift", sweep:"close"}),   // wind DOWN into the station; the schedule litany
         S("solo",       {cycles:1, drums:kit, bass, pads:true, melody:"blues", solo:metal, soloOctave:1, found:fnd("bed"), fill:"impact", sweep:"open"}),   // the distorted heavy-metal solo — grimy bluesy lead, octave up; impact into it
         S("express",    {cycles:2, drums:kit, bass, pads:true, melody:lead, counter, found:fnd("bed"), vox:vox(), hits:hit(), fill:"break fill", sweep:"open"}),  // the express run + counter-arp -> break fill
-        S("terminus",   {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd("bed"), vox:vox(), ding:true, fill:F()}),              // arrival, final announcement + door chime; a random fill
+        S("terminus",   {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd("bed"), vox:vox(), fill:F()}),                         // arrival, final announcement + door chime (sampleEvents); a random fill
       ];
     } else {
       secs=[
@@ -2111,16 +2121,6 @@
       else if(hs) foundSources.push({id:c.hits.source,label:c.hits.source,url:hs.url,
         durSec:4,vol:(c.hits.vol!=null?c.hits.vol:0.22),pitch:1,stretch:0.5,cutoff:(c.hits.cut||4500),wet:!!c.hits.wet,glitch:!!c.hits.glitch});
     }
-    if(c.hornSource&&SAMPLES[c.hornSource]){   // FULL-volume opener (intro only); vol/cutoff genre-tunable so a loud field-recording one-shot can be filtered back
-      const hh=SAMPLES[c.hornSource];
-      foundSources.push({id:c.hornSource,label:c.hornSource,url:"",samplePath:"found/samples/"+hh.file,
-        durSec:hh.durSec,vol:(c.hornVol!=null?c.hornVol:0.42),pitch:1,stretch:0.5,cutoff:(c.hornCut||6000),wet:true});
-    }
-    if(c.dingSource&&SAMPLES[c.dingSource]){   // the transit door "ding ding" chime
-      const dd=SAMPLES[c.dingSource];
-      foundSources.push({id:c.dingSource,label:c.dingSource,url:"",samplePath:"found/samples/"+dd.file,
-        durSec:dd.durSec,vol:(c.dingVol!=null?c.dingVol:0.5),pitch:1,stretch:0.5,cutoff:9000,wet:true});
-    }
     const voxIds=(c.voxPool||[]).slice();
     if(c.voxPoem) voxIds.push(c.voxPoem);
     voxIds.forEach(vid=>{   // VO lines (news clean, poem chopped) + the cities poem
@@ -2129,12 +2129,7 @@
         vol:(c.voxRecipe&&c.voxRecipe.vol)||0.5, pitch:(c.voxRecipe&&c.voxRecipe.pitch)||0.96,
         stretch:0.5, cutoff:(c.voxRecipe&&c.voxRecipe.cutoff)||6500});
     });
-    (c.stations||[]).forEach(sid=>{   // world-metro station names — under every measure (see buildEvents)
-      const v=SAMPLES[sid]; if(!v) return;
-      foundSources.push({id:sid,label:sid,url:"",samplePath:"found/samples/"+v.file,durSec:v.durSec,
-        vol:(c.stationVol!=null?c.stationVol:0.26), pitch:1, stretch:0.5, cutoff:5200});
-    });
-    (c.sampleEvents||[]).forEach(se=>{   // KERNEL-V4 Phase 4: ride each role's pool ids into foundSources so buildEvents' srcById resolves them (like stations/hits above)
+    (c.sampleEvents||[]).forEach(se=>{   // KERNEL-V4 Phase 4: ride each role's pool ids into foundSources so buildEvents' srcById resolves them (like hits above)
       (se.pool||[]).forEach(id=>{
         if(foundSources.some(s=>s.id===id)) return;
         const isS=!!SAMPLES[id], sr=isS?SAMPLES[id]:SOURCES[id]; if(!sr) return;
@@ -2202,7 +2197,7 @@
       ...(c.reverbColor?{reverbColor:c.reverbColor}:{}),   // fx wings: per-genre reverb character (absent = fx_bus zita default; byte-identical)
       ...(c.autoTune!=null?{autoTune:c.autoTune}:{}),       // fx wings stage 2: found-vocal auto-tune strength 0..1 (absent = no bend; byte-identical)
       ...(c.masterComp?{masterComp:c.masterComp}:{}),       // fx wings stage 4: 3-band master glue-comp drive (absent/0 = bypass; byte-identical)
-      realHats:!!c.realHats, snarePP:c.snarePP||0, stationPool:(c.stations||[]),
+      realHats:!!c.realHats, snarePP:c.snarePP||0,
       // rubato/thunk (neoclassical deep pass): absent keys = zero behavior
       // change in buildEvents — unchanged genres press byte-identically
       ...(c.rubato?{rubato:c.rubato}:{}), ...(c.thunk?{thunk:c.thunk}:{}),
@@ -2231,11 +2226,9 @@
       sections:(()=>{ let bi=0, vi=0; return secs.map(s=>{
         if(s.found&&s.found.sourceId==="src"){ s.found.sourceId=bedPool[bi%bedPool.length]; bi++; }
         if(s.hits&&s.hits.sourceId==="hit")s.hits.sourceId=c.hits?c.hits.source:null;
-        if(s.hits&&s.hits.sourceId==="horn")s.hits.sourceId=c.hornSource||null;
         if(s.hits&&!s.hits.sourceId)delete s.hits;
         if(s.vox&&s.vox.sourceId==="vox"){ if(c.voxPool&&c.voxPool.length){ s.vox.sourceId=c.voxPool[vi%c.voxPool.length]; vi++; } else delete s.vox; }
         else if(s.vox&&s.vox.sourceId==="poem"){ if(c.voxPoem) s.vox.sourceId=c.voxPoem; else delete s.vox; }
-        if(s.ding===true){ if(c.dingSource) s.ding=c.dingSource; else delete s.ding; }   // doors-closing chime -> the ding source id
         if(s.vocal===true){ if(c.vocal) s.vocal="tw_vocal"; else delete s.vocal; }        // the sung chorus -> the vocal source id
         return s; }); })(),
     };

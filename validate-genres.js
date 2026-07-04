@@ -342,9 +342,6 @@ function gateVocabulary() {
     }
     if (A.vox) check(g, "vox.sources", A.vox.sources, inSet(sampleIds), "not in SAMPLES registry");
     check(g, "voxPoem", A.voxPoem, inSet(sampleIds), "not in SAMPLES registry");
-    check(g, "hornSource", A.hornSource, inSet(sampleIds), "not in SAMPLES registry");
-    check(g, "dingSource", A.dingSource, inSet(sampleIds), "not in SAMPLES registry");
-    check(g, "stations", A.stations, inSet(sampleIds), "not in SAMPLES registry");
     // KERNEL-V4 Phase 4: the unified sample-event role registry — every spec's
     // pool must resolve to a real SAMPLES (local) or SOURCES (remote) id, the
     // same union the bed/hits handlers accept (one gate for the whole family).

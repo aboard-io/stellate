@@ -66,8 +66,7 @@ function numStr(n) { return Object.is(n, -0) ? "0" : String(+n.toFixed(6)); }
 const FIELD_ORDER = ["bpm", "swing", "humanize", "progressions", "kits", "fills",
   "euclid", "chordEvery", "bass", "lead", "pads", "drums", "fx", "found",
   "rubato", "counterpoint", "thunk", "vox", "voxPoem", "voxClean",
-  "stations", "stationVol", "hornSource", "hornVol", "hornCut",
-  "dingSource", "dingVol", "snarePP", "vocal", "vocalVol", "vocSource",
+  "sampleEvents", "snarePP", "vocal", "vocalVol", "vocSource",
   "realHats", "hits", "stab", "form"];
 
 function serializeAnchor(name, a) {
@@ -159,8 +158,8 @@ function validateSpec(spec, vocab, schema) {
   if (a.found) { inSet(vocab.roles, a.found.role, "found.role"); inSet(vocab.sourceIds, a.found.sources, "found.sources"); }
   if (a.hits) { inSet(vocab.sourceIds, a.hits.sources, "hits.sources"); if (a.hits.pattern) chk(vocab.hitPats.has(a.hits.pattern), `hits.pattern "${a.hits.pattern}" unknown`); }
   if (a.vox) inSet(vocab.sampleIds, a.vox.sources, "vox.sources");
-  if (a.stations) inSet(vocab.sampleIds, a.stations, "stations");
-  for (const f of ["voxPoem", "hornSource", "dingSource", "vocSource"]) if (a[f]) inSet(vocab.sampleIds, [a[f]], f);
+  if (Array.isArray(a.sampleEvents)) a.sampleEvents.forEach((se, i) => inSet(vocab.sourceIds, se.pool, `sampleEvents[${i}].pool`));
+  for (const f of ["voxPoem", "vocSource"]) if (a[f]) inSet(vocab.sampleIds, [a[f]], f);
   if (a.stab) inSet(vocab.stabs, a.stab, "stab");
   if (a.form && !vocab.forms.has(a.form)) errs.push(`form "${a.form}" unknown (falls back to pop)`);
   return errs;

@@ -33,9 +33,21 @@ touching `explorer.html`/`faust/live.js`. Fixture guard: `fixtures.js`
 ## Known remaining (future rounds, none queued)
 1. **jazz -1 column margin** — blues scores 100 as jazz (the acoustic-twin
    pair, predates the worst-10 program). Needs its own paired pass.
-2. **Bespoke found-handler retirement** — horn/ding/stations/vocal ->
-   sampleEvents port (target tag:ground/tag:cadence), genre-by-genre with
-   A/B render gates; then delete the toState specials + engine handlers.
+2. **Bespoke found-handler retirement** — PARTIALLY DONE (2026-07-04 round).
+   stations->buried (hogcore + transitwave; st-main counts A/B-exact),
+   horn->opener (canawave + transitwave; treatment reproduced exactly),
+   ding->oneShot+cadence (transitwave; n=8 A/B-exact) all ported to
+   sampleEvents and their toState specials + engine handlers + stationPool
+   DELETED. Vocabulary extended (zero-rng): treatment.vol/maxDur/glitchBursts,
+   buried downward-glitch tail. KEPT WITH REASON (documented in-code at the
+   csd-engine handlers): the glitched-narration `vox` (upward-glitch idiom +
+   mid-loop shared-rng across 3 video-locked A-grade genres) and the sung
+   `vocal` (sing.py render-time provider source + `s.vocal` transpose-lock +
+   press-guard fallback — cross-cutting, not a placement). Fixtures: state
+   drift universal-but-structural (removed always-empty stationPool);
+   events drift confined to the 3 migrated genres (hogcore/canawave/
+   transitwave; dinosynth untouched — its vox kept); features stable except
+   canawave/transitwave (horn shifted their fabric, margins held 2/3).
 3. **Form-grammar interpreter** — retire the seven-form else-if chain +
    generateSong (render-sample-video/defaultState depend on it today).
 4. **Full kit-as-data** — euclidBeats is still a function overlay.
