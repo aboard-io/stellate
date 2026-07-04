@@ -402,9 +402,13 @@ function travelStep(){
 // Math.random is deliberate: the determinism law guards rendered audio/video
 // artifacts (press/journey), NOT this live presentational layer — so every
 // play session shows a different clip order. goLive() resets the bag per session.
-let vidSec="", vidBars=0, vidBag=[], vidBagKey="", vidLast="";
-function vidShuffle(a){ for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;const t=a[i];a[i]=a[j];a[j]=t;} return a; }
-function vidReset(){ vidSec=""; vidBars=0; vidBag=[]; vidBagKey=""; vidLast=""; }
+let vidSec="", vidBars=0;
+// the no-repeat shuffle bag is VideoLayer's shared mechanism (same shuffle +
+// draw-with-refill + avoid-current as its idle cycler) — created lazily once the
+// layer is loaded, fed the genre-affine pool per section.
+let vidBag=null;
+const vidBagObj=()=>(vidBag||(window.VideoLayer&&VideoLayer.makeBag&&(vidBag=VideoLayer.makeBag())));
+function vidReset(){ vidSec=""; vidBars=0; const b=vidBagObj(); if(b)b.reset(); }
 function genreVideo(info){
   if(!(window.VideoLayer&&VideoLayer.enabled()))return;
   vidBars++;
@@ -414,14 +418,9 @@ function genreVideo(info){
   const pool=[];
   S.weights.slice().sort((a,b)=>b.w-a.w).forEach(w=>(K.GENRE_CLIPS[w.g]||[]).forEach(c=>{if(!pool.includes(c))pool.push(c);}));
   if(!pool.length)return;
-  // rebuild the bag when the pool changes (travel brings new footage in);
-  // refill+reshuffle when drained, never restarting on the just-shown clip.
-  const key=pool.join(",");
-  if(key!==vidBagKey){ vidBagKey=key; vidBag=vidShuffle(pool.slice()); }
-  if(!vidBag.length) vidBag=vidShuffle(pool.slice());
-  if(vidBag.length>1&&vidBag[0]===vidLast) vidBag.push(vidBag.shift());   // never back-to-back the same clip across a bag refill or pool change
-  const c=vidBag.shift(); vidLast=c;
-  VideoLayer.showFile(c+".mp4");
+  const b=vidBagObj(); if(!b)return;
+  const c=b.draw(pool);   // shuffled, refills on drain/pool-change, avoids the just-shown clip
+  if(c!=null) VideoLayer.showFile(c+".mp4");
 }
 
 // ---------- live engine ----------
@@ -518,14 +517,31 @@ const el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAt
 // breath is smooth 60Hz and never resets when the imperative drawMap rebuilds
 // the SVG (SMIL on a rebuilt node would restart+jitter every bar).
 const curPos={x:0,y:0,s:1};
+// the pulse only breathes while the traveler is ACTUALLY MOVING (live, or
+// gliding toward a drawn target): parked at boot / after ■ there is nothing to
+// animate, so the rAF stops entirely (no per-frame churn). drawMap publishes the
+// freshly-built glow node into curPulseEl so the loop caches it instead of a
+// getElementById every frame; startPulse() (fired after each redraw) resumes the
+// loop cleanly the moment travel begins again.
+let curPulseEl=null, pulseRaf=0;
+window.__pulseFrames=0;   // headless probe: counts animated frames (idle when stopped)
+// the traveler is "travelling" (breath worth animating) while the engine is
+// live. stopLive/boot leave S.playing+S.target set (so the offline 1.4s glide
+// preview keeps re-drawing the reticle), but the pulsing GLOW is the play
+// indicator — idle it whenever we're not live.
+const traveling=()=> !!S.live;
 function cursorPulse(){
-  const p=document.getElementById("curPulse");
+  pulseRaf=0;
+  if(!traveling()) return;   // idle: leave the rAF stopped until startPulse() revives it
+  const p=curPulseEl;
   if(p){ const ph=(Math.sin(performance.now()/1000*2.2)+1)/2;   // 0..1, ~1.4s breath
     p.setAttribute("r",(curPos.s*(30+ph*10)).toFixed(1));
     p.setAttribute("opacity",(0.10+ph*0.13).toFixed(3)); }
-  requestAnimationFrame(cursorPulse);
+  window.__pulseFrames++;
+  pulseRaf=requestAnimationFrame(cursorPulse);
 }
-requestAnimationFrame(cursorPulse);
+function startPulse(){ if(!pulseRaf && traveling()) pulseRaf=requestAnimationFrame(cursorPulse); }
+startPulse();
 function drawMap(){
   // a star chart drawn straight over the video: each genre is a star with a
   // soft halo; the drawn path is a constellation line; the traveler glows.
@@ -568,7 +584,8 @@ function drawMap(){
   // cursorPulse). Now scales with fs like everything else (it didn't before).
   const ccx=X(S.cursor.x), ccy=Y(S.cursor.y);
   curPos.x=ccx; curPos.y=ccy; curPos.s=fs;
-  svg.appendChild(el("circle",{id:"curPulse","class":"cur",cx:ccx,cy:ccy,r:32*fs,fill:"#ff6ec7",opacity:.14}));       // breathing glow
+  curPulseEl=el("circle",{id:"curPulse","class":"cur",cx:ccx,cy:ccy,r:32*fs,fill:"#ff6ec7",opacity:.14});
+  svg.appendChild(curPulseEl);       // breathing glow (cached for cursorPulse)
   svg.appendChild(el("circle",{"class":"cur",cx:ccx,cy:ccy,r:24*fs,fill:"none",stroke:"#ff6ec7","stroke-width":1.4*fs,opacity:.5}));  // outer reticle
   svg.appendChild(el("circle",{"class":"cur",cx:ccx,cy:ccy,r:16*fs,fill:"none",stroke:"#ff8fd6","stroke-width":2.6*fs}));             // bright ring
   svg.appendChild(el("circle",{"class":"cur",cx:ccx,cy:ccy,r:4.5*fs,fill:"#ff6ec7"}));                                               // core
@@ -644,11 +661,18 @@ function deleteWaypoint(i){
       :len===1?"waypoint removed — one point left":"waypoint removed — path cleared"});
   if(len>=1) retarget({x:w[seg].x, y:w[seg].y});
 }
-let dragging=false, dragWp=-1, lastTap={t:0,x:0,y:0};
-// single-finger PAN when zoomed in (see pointerdown/move): panning arms on a
-// finger-down over empty sky while ZOOM.k>1; if the finger actually moves it
-// pans the star field, if it doesn't it falls through to a normal tap on release.
-let panning=false, panMoved=false, panStart=null;
+// gestureMode — ONE exclusive gesture at a time (replaces the old parallel
+// dragging/dragWp/panning/pinch booleans, which only ever had one active and
+// were kept mutually exclusive by hand). Modes:
+//   "none"  — idle
+//   "drag"  — free traveler-drag (unzoomed AND path-less: the cursor IS the mix)
+//   "wp"    — dragging a path waypoint (dragWpI = its index)
+//   "pan"   — single-finger pan of the star field when zoomed in (ZOOM.k>1 over
+//             empty sky): arms on finger-down, pans once it clears the 4px
+//             deadzone (panMoved), else falls through to a tap on release.
+//   "pinch" — two-finger zoom (the `pinch` object below carries the anchor math)
+let gestureMode="none", dragWpI=-1, lastTap={t:0,x:0,y:0};
+let panMoved=false, panStart=null;
 // "font should be white when interacting": any live pointer work on the map
 // (drag, waypoint drag, pinch, wheel-zoom) lights the anchor labels via the
 // #map.itx CSS rule; they now HOLD white for 10s after the LAST interaction so
@@ -672,7 +696,7 @@ svg.addEventListener("pointerdown",e=>{
     const [a,b]=[...ptrs.values()];
     pinch={d0:Math.max(12,Math.hypot(a.x-b.x,a.y-b.y)),k0:ZOOM.k,
            cx:(a.x+b.x)/2,cy:(a.y+b.y)/2,ox0:ZOOM.ox,oy0:ZOOM.oy};
-    dragging=false; dragWp=-1; panning=false; panMoved=false; lastTap={t:0,x:0,y:0};
+    gestureMode="pinch"; dragWpI=-1; panMoved=false; panStart=null; lastTap={t:0,x:0,y:0};
     document.body.classList.remove("dragging");
     return;
   }
@@ -695,28 +719,28 @@ svg.addEventListener("pointerdown",e=>{
   lastTap={t:now,x:pt.x,y:pt.y};
   // right-click delete is handled once, in the contextmenu listener below
   if(e.button!==0) return;
-  if(wpi>=0){ dragWp=wpi; }   // grab the waypoint even when the traveler sits on it (ITEM 5)
+  if(wpi>=0){ gestureMode="wp"; dragWpI=wpi; }   // grab the waypoint even when the traveler sits on it (ITEM 5)
   else if(ZOOM.k>1){
     // ZOOMED IN (names are the primary UI): a single-finger drag PANS the space.
     // We arm here and decide on move: a real drag pans; a tap with no movement
     // falls through on release to the normal place/select (see endPtr). This is
     // gated purely on zoom level — path DRAWING is double-tap + waypoint-drag
     // (handled above), never a bare single-finger drag, so panning can't eat it.
-    panning=true; panMoved=false;
+    gestureMode="pan"; panMoved=false;
     panStart={sx:e.clientX,sy:e.clientY,ox0:ZOOM.ox,oy0:ZOOM.oy,pt};
     document.body.classList.add("dragging");
     try{ svg.setPointerCapture(e.pointerId); }catch(err){}
     return;
   }
-  else if(S.waypoints.length<2) dragging=true;   // with a path, the traveler owns the cursor
+  else if(S.waypoints.length<2) gestureMode="drag";   // with a path, the traveler owns the cursor
   else { set({status:"path active — the traveler steers (✕ path to drag freely)"}); return; }
   document.body.classList.add("dragging");
   try{ svg.setPointerCapture(e.pointerId); }catch(err){} // synthetic pointers can't capture
-  if(dragging) retarget(pt);
+  if(gestureMode==="drag") retarget(pt);
 });
 svg.addEventListener("pointermove",e=>{
   if(ptrs.has(e.pointerId)) ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(pinch&&ptrs.size===2){
+  if(gestureMode==="pinch"&&ptrs.size===2){
     e.preventDefault(); markItx();
     const [a,b]=[...ptrs.values()];
     const d=Math.max(12,Math.hypot(a.x-b.x,a.y-b.y));
@@ -731,23 +755,23 @@ svg.addEventListener("pointermove",e=>{
     clampZoom(); set({});
     return;
   }
-  if(panning){ markItx();
+  if(gestureMode==="pan"){ markItx();
     const dx=e.clientX-panStart.sx, dy=e.clientY-panStart.sy;
     if(!panMoved && Math.hypot(dx,dy)>4) panMoved=true;   // deadzone: a jitter stays a tap
     if(panMoved){ e.preventDefault();
       ZOOM.ox=panStart.ox0+dx; ZOOM.oy=panStart.oy0+dy; clampZoom(); set({}); }
     return;
   }
-  if(dragWp>=0){ markItx(); const pt=toXY(e); S.waypoints[dragWp]=pt; set({}); }
-  else if(dragging){ e.preventDefault(); markItx(); retarget(toXY(e)); }
+  if(gestureMode==="wp"){ markItx(); const pt=toXY(e); S.waypoints[dragWpI]=pt; set({}); }
+  else if(gestureMode==="drag"){ e.preventDefault(); markItx(); retarget(toXY(e)); }
 });
 const endPtr=e=>{ ptrs.delete(e.pointerId); if(ptrs.size<2) pinch=null;
-  if(panning){ // a zoomed single-finger gesture: pan already applied; a no-move
+  if(gestureMode==="pan"){ // a zoomed single-finger gesture: pan already applied; a no-move
     // tap falls through to the normal place/select (only when free to drag —
     // with a path the traveler owns the cursor, so a tap stays inert as before)
     if(!panMoved && S.waypoints.length<2 && panStart) retarget(panStart.pt);
-    panning=false; panMoved=false; panStart=null; }
-  dragging=false;dragWp=-1;document.body.classList.remove("dragging"); };
+    panMoved=false; panStart=null; }
+  gestureMode="none"; dragWpI=-1; document.body.classList.remove("dragging"); };
 addEventListener("pointerup",endPtr);
 addEventListener("pointercancel",endPtr);
 svg.addEventListener("wheel",e=>{
@@ -849,7 +873,7 @@ function Panel(){
     ⤓/⤒ path saves and reloads a journey · render it: node genre-kernel.js journey ${"<path.json>"} --render --video</p>`:""}`;
 }
 const panel=document.getElementById("panel");
-subs.push(()=>{ render(Panel(),panel); drawMap(); });
+subs.push(()=>{ render(Panel(),panel); drawMap(); startPulse(); });   // startPulse: resume the breath loop when travel (re)starts
 
 // ---------- chips + modals: the sky stays clean until asked ----------
 const MODALS={ np:document.getElementById("npWrap"), panel:document.getElementById("panelWrap"), mix:document.getElementById("mixWrap") };

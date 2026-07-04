@@ -295,18 +295,26 @@
     /* /genre-tool:hogcore:targets */
   };
 
-  function scoreAgainst(f, genre){
-    const T=TARGETS[genre]; if(!T) return {score:0,notes:["unknown genre"]};
-    let tw=0, ts=0; const notes=[];
+  // the piecewise-linear target-row scorer — the shared primitive (genre-tool
+  // imports THIS so the two scorers never drift). Returns the RAW 0..100 percent
+  // (unrounded, so callers can average before rounding, like genre-tool's
+  // meanScore); pushes below-0.65 dims into `notes` when an array is passed.
+  function scoreRow(f, T, notes){
+    let tw=0, ts=0;
     for(const [k,[lo,hi,w]] of Object.entries(T)){
       const v=f[k]; if(v==null) continue;
       let s;
       if(v>=lo&&v<=hi) s=1;
       else { const width=Math.max(hi-lo,0.001), d=v<lo?lo-v:v-hi; s=Math.max(0,1-d/width); }
-      if(s<0.65) notes.push(`${k}=${v} wants [${lo},${hi}]`);
+      if(notes && s<0.65) notes.push(`${k}=${v} wants [${lo},${hi}]`);
       tw+=w; ts+=w*s;
     }
-    return {score:Math.round(100*ts/tw), notes};
+    return tw ? 100*ts/tw : 0;
+  }
+  function scoreAgainst(f, genre){
+    const T=TARGETS[genre]; if(!T) return {score:0,notes:["unknown genre"]};
+    const notes=[];
+    return {score:Math.round(scoreRow(f, T, notes)), notes};
   }
 
   function analyze(state){
@@ -327,7 +335,7 @@
     return lines.join("\n");
   }
 
-  const api={ features, scoreAgainst, analyze, report, TARGETS };
+  const api={ features, scoreRow, scoreAgainst, analyze, report, TARGETS };
   if(isNode) module.exports=api; else root.GenreVerifier=api;
 
   if(isNode && require.main===module){

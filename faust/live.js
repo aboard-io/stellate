@@ -78,6 +78,12 @@
     fx.connect(fxDirect); fxDirect.connect(master);
     master.connect(analyser); analyser.connect(ctx.destination);
     let mbNode = null, mbGain = null;
+    // shared crossfade teardown: after the 500ms fade-out completes, detach a
+    // retired node from its upstream `src` (the source differs per caller — fx
+    // for the master glue, revMerge for the reverb color) and disconnect it +
+    // its gain. try/catch: a node may already be gone on rapid re-swaps.
+    const retire = (src, node, gain) =>
+      setTimeout(() => { try { src.disconnect(node); node.disconnect(); gain.disconnect(); } catch (e) {} }, 500);
     async function ensureMasterMb(state) {
       const mb = SE.masterMb(state);
       if (mb && !mbNode) {
@@ -98,7 +104,7 @@
         const t = ctx.currentTime;
         fxDirect.gain.setTargetAtTime(1, t, 0.05);
         oldGain.gain.setTargetAtTime(0, t, 0.05);
-        setTimeout(() => { try { fx.disconnect(old); old.disconnect(); oldGain.disconnect(); } catch (e) {} }, 500);
+        retire(fx, old, oldGain);
       }
     }
     const dryBus = ctx.createGain(), revBus = ctx.createGain(), delBus = ctx.createGain(), ppBus = ctx.createGain();
@@ -154,7 +160,7 @@
       }
       if (old) {   // crossfade the previous color out, then retire it
         oldGain.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
-        setTimeout(() => { try { revMerge.disconnect(old); old.disconnect(); oldGain.disconnect(); } catch (e) {} }, 500);
+        retire(revMerge, old, oldGain);
       }
     }
 
@@ -582,6 +588,21 @@
       const at = (b) => t0 + late + (b - lo) * spb;
       const beatAbs = (b) => serial * 8 + (b - lo);   // musical beat since start
       const monoBuckets = {};   // mono-legato units: scheduled in a dedicated pass below
+      // per-note param sets (declick-safe, ~6ms early) + optional DX7 external-gain
+      // velocity — the block shared by the normal and mono-legato passes below.
+      // opts.flangePos: map kpluck's song-length flanger to ABSOLUTE session time
+      // (bar-local beats would pin it ~0) — normal pass only; the mono pass sets
+      // plain vals. (The ping-pong `pp` send is normal-pass-only, kept inline there.)
+      const applyNoteParams = (pool, v, e, tOn, opts) => {
+        const tset = Math.max(nowT, tOn - 0.006);
+        for (const [k, val] of Object.entries(e.sets)) {
+          const vv = (opts && opts.flangePos && k === "flangePos") ? Math.min(1, (tOn - sessionT0) / 164) : val;
+          const p = P(v.node, k);
+          if (p) p.setValueAtTime(Math.min(p.maxValue, Math.max(p.minValue, vv)), tset);
+        }
+        if (pool.spec.extGainPerAmp)   // DX7 per-note velocity via the external GainNode
+          v.out.gain.setValueAtTime(Math.min(1, pool.spec.extGainPerAmp * (e.amp || 0.1)), tset);
+      };
       for (const e of m.events) {
         const uSpec = units[e.unit];
         if (uSpec && uSpec.mono && !uSpec.sampler && !uSpec.drum) {   // MONO-LEGATO: batched, scheduled after
@@ -622,15 +643,7 @@
           d.linearRampToValueAtTime(0, Math.max(tA + 0.001, tOn - 0.003));
           d.linearRampToValueAtTime(1, tOn + 0.005);
         }
-        for (const [k, val] of Object.entries(e.sets)) {
-          // kpluck's song-length flanger evolution: bar-local beats would pin
-          // it at ~0 — use absolute session time like csound's `times`
-          const vv = k === "flangePos" ? Math.min(1, (tOn - sessionT0) / 164) : val;
-          const p = P(v.node, k);
-          if (p) p.setValueAtTime(Math.min(p.maxValue, Math.max(p.minValue, vv)), Math.max(nowT, tOn - 0.006));
-        }
-        if (pool.spec.extGainPerAmp) // DX7 per-note velocity via the external GainNode
-          v.out.gain.setValueAtTime(Math.min(1, pool.spec.extGainPerAmp * (e.amp || 0.1)), Math.max(nowT, tOn - 0.006));
+        applyNoteParams(pool, v, e, tOn, { flangePos: true });   // flangePos -> absolute session time (kpluck)
         const ppv = e.pp || 0;   // per-event ping-pong send (snarePP snare hits)
         if (v.gains.pp && ppv !== v.ppLast) {
           v.gains.pp.gain.setValueAtTime(ppv, Math.max(nowT, tOn - 0.006));
@@ -659,12 +672,7 @@
         for (const e of evs) {
           const tOn = at(e.beat), durSec = e.durB * spb;
           const tOff = tOn + Math.max(0.012, durSec) - 0.008;
-          for (const [k, val] of Object.entries(e.sets)) {
-            const p = P(v.node, k);
-            if (p) p.setValueAtTime(Math.min(p.maxValue, Math.max(p.minValue, val)), Math.max(nowT, tOn - 0.006));
-          }
-          if (pool.spec.extGainPerAmp)
-            v.out.gain.setValueAtTime(Math.min(1, pool.spec.extGainPerAmp * (e.amp || 0.1)), Math.max(nowT, tOn - 0.006));
+          applyNoteParams(pool, v, e, tOn);   // mono pass: plain vals (no flangePos)
           const legato = pool._monoOff != null && tOn <= pool._monoOff + legatoSec;   // gap < legatoSec or overlapping (press parity)
           if (g) {
             if (legato) g.cancelScheduledValues(Math.max(nowT, pool._monoOff - 1e-4)); // withdraw pending gate-off; gate stays high

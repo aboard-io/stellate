@@ -25,6 +25,7 @@ const E = require(path.join(ROOT, "csd-engine.js"));
 const SE = require(path.join(__dirname, "state-engine.js"));
 const FP = require(path.join(__dirname, "found-player.js"));
 const SP = require(path.join(__dirname, "sampler.js"));
+const WAV = require(path.join(__dirname, "wav.js"));
 
 const SR = 44100, BS = 64;
 const FOUND_CAP_SEC = 180; // bound decode memory; offsets are fractions of what we load
@@ -40,15 +41,10 @@ function ffdecode(file) {
 function writeWav(file, L, R) {
   const n = L.length, data = Buffer.alloc(n * 4);
   for (let i = 0; i < n; i++) {
-    data.writeInt16LE(Math.max(-1, Math.min(1, L[i])) * 32767 | 0, i * 4);
-    data.writeInt16LE(Math.max(-1, Math.min(1, R[i])) * 32767 | 0, i * 4 + 2);
+    data.writeInt16LE(WAV.toInt16(L[i], "trunc"), i * 4);   // press TRUNCATES (`*32767|0`) — see faust/wav.js note
+    data.writeInt16LE(WAV.toInt16(R[i], "trunc"), i * 4 + 2);
   }
-  const h = Buffer.alloc(44);
-  h.write("RIFF", 0); h.writeUInt32LE(36 + data.length, 4); h.write("WAVEfmt ", 8);
-  h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(2, 22);
-  h.writeUInt32LE(SR, 24); h.writeUInt32LE(SR * 4, 28); h.writeUInt16LE(4, 32); h.writeUInt16LE(16, 34);
-  h.write("data", 36); h.writeUInt32LE(data.length, 40);
-  fs.writeFileSync(file, Buffer.concat([h, data]));
+  fs.writeFileSync(file, Buffer.concat([WAV.header(SR, 2, data.length), data]));
 }
 
 // state.dx7 contract: any algorithm 1..32 may be requested; only the ones a

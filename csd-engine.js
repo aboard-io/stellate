@@ -1300,21 +1300,25 @@
     if(Array.isArray(state.sampleEvents) && state.sampleEvents.length){
       const serng=mulberry32(((state.seed??1)+9091)>>>0);
       const secs=state.sections||[];
-      const matchSec=(sel,i,sec)=>{
-        if(!sel||sel==="all") return true;
-        if(sel==="first") return i===0;
-        if(sel==="quiet") return !sec.drums||sec.drums==="off";
+      // per-spec section matcher: `sel` is spec.sections (constant per spec), so
+      // the regex is compiled ONCE per spec here, not once per spec×section.
+      const makeMatcher=(sel)=>{
+        if(!sel||sel==="all") return ()=>true;
+        if(sel==="first") return (i)=>i===0;
+        if(sel==="quiet") return (i,sec)=>!sec.drums||sec.drums==="off";
         // typed-node selector (Phase 5): "tag:peak" or "tag:peak,cadence" —
         // matches the section's form-graph node type, resilient to renames.
         if(sel.slice(0,4)==="tag:"){
           const want=sel.slice(4).split(",").map(s=>s.trim()).filter(Boolean);
-          return want.includes(sec.tag||sectionTag(sec.name));
+          return (i,sec)=>want.includes(sec.tag||sectionTag(sec.name));
         }
-        try{ return new RegExp(sel,"i").test(sec.name||""); }catch(e){ return (sec.name||"")===sel; }
+        let re=null; try{ re=new RegExp(sel,"i"); }catch(e){ re=null; }
+        return (i,sec)=> re ? re.test(sec.name||"") : (sec.name||"")===sel;
       };
       for(const spec of state.sampleEvents){
         const pool=(spec.pool||[]).map(id=>srcById[id]).filter(Boolean);
         if(!pool.length) continue;
+        const matchSec=makeMatcher(spec.sections);
         const tr=spec.treatment||{}, gain=spec.gain!=null?spec.gain:1, prob=spec.prob!=null?spec.prob:1;
         const place=spec.placement||"oneShot", sync=spec.sync||null;
         // treatment.vol OVERRIDES the source's own vol as the amp base (zero-rng;
@@ -1363,7 +1367,7 @@
         let firstDone=false;
         for(let si=0;si<spans.length;si++){
           const sp=spans[si], sec=secs[si]||{};
-          if(!matchSec(spec.sections,si,sec)) continue;
+          if(!matchSec(si,sec)) continue;
           const S=sp.start, B=sp.beats;
           if(place==="bed"){
             if(prob>=1||serng()<prob){ const src=nextSrc();

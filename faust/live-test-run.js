@@ -10,44 +10,17 @@
 //   - load ratio >= 0.97 (audio clock kept up with wall clock)
 //   - zero engine/page errors across the swap (the glide is param-only)
 "use strict";
-const http = require("http");
-const fs = require("fs");
 const path = require("path");
+const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");
 
 const ROOT = path.join(__dirname, "..");
 const PORT = 8791;
-const MIME = { ".html": "text/html", ".js": "text/javascript", ".json": "application/json",
-  ".wasm": "application/wasm", ".wav": "audio/wav", ".ogg": "audio/ogg", ".mp3": "audio/mpeg" };
-
-function serve() {
-  return new Promise((res) => {
-    const srv = http.createServer((req, rsp) => {
-      if (req.url === "/favicon.ico") { rsp.writeHead(204); return rsp.end(); }
-      const p = path.normalize(path.join(ROOT, decodeURIComponent(req.url.split("?")[0])));
-      if (!p.startsWith(ROOT) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) {
-        console.log("  [404]", req.url); rsp.writeHead(404); return rsp.end(); }
-      rsp.writeHead(200, { "Content-Type": MIME[path.extname(p)] || "application/octet-stream",
-        "Access-Control-Allow-Origin": "*" });
-      fs.createReadStream(p).pipe(rsp);
-    });
-    srv.listen(PORT, () => res(srv));
-  });
-}
 
 async function main() {
-  const { chromium } = require("playwright");
-  const srv = await serve();
-  const exe = path.join(process.env.HOME, ".cache/ms-playwright/chromium-1217/chrome-linux64/chrome");
-  if (!fs.existsSync(exe)) throw new Error("chromium-1217 not found at " + exe);
-  const browser = await chromium.launch({
-    headless: true,
-    executablePath: exe,
-    args: ["--autoplay-policy=no-user-gesture-required", "--no-sandbox"],
-  });
+  const srv = await serve(ROOT, PORT);
+  const browser = await launchChromium({ requireChromium: true });   // strict: throw if the pinned build is missing
   const page = await browser.newPage();
-  const pageErrors = [];
-  page.on("pageerror", (e) => pageErrors.push("pageerror: " + e.message));
-  page.on("console", (m) => { if (m.type() === "error") pageErrors.push("console: " + m.text()); });
+  const pageErrors = capturePageErrors(page);
 
   await page.goto(`http://localhost:${PORT}/faust/live-test.html`);
   console.log("page loaded; going live on jungle…");

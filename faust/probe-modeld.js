@@ -14,41 +14,18 @@
 //   - reads the modeld freq AudioParam target per node over time
 // Read-only: adds no repo file besides this probe; no source is modified.
 "use strict";
-const http = require("http");
-const fs = require("fs");
 const path = require("path");
 // run: NODE_PATH=/home/ford/ftrain-2025/node_modules node faust/probe-modeld.js (same borrow as live-test-run.js)
-const playwright = require("playwright");
+const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");
 
 const ROOT = path.join(__dirname, "..");
 const PORT = 8793;
-const MIME = { ".html": "text/html", ".js": "text/javascript", ".json": "application/json",
-  ".wasm": "application/wasm", ".wav": "audio/wav", ".ogg": "audio/ogg", ".mp3": "audio/mpeg" };
-
-function serve() {
-  return new Promise((res) => {
-    const srv = http.createServer((req, rsp) => {
-      if (req.url === "/favicon.ico") { rsp.writeHead(204); return rsp.end(); }
-      const p = path.normalize(path.join(ROOT, decodeURIComponent(req.url.split("?")[0])));
-      if (!p.startsWith(ROOT) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { rsp.writeHead(404); return rsp.end(); }
-      rsp.writeHead(200, { "Content-Type": MIME[path.extname(p)] || "application/octet-stream", "Access-Control-Allow-Origin": "*" });
-      fs.createReadStream(p).pipe(rsp);
-    });
-    srv.listen(PORT, () => res(srv));
-  });
-}
 
 async function main() {
-  const { chromium } = playwright;
-  const srv = await serve();
-  const exe = path.join(process.env.HOME, ".cache/ms-playwright/chromium-1217/chrome-linux64/chrome");
-  const launchOpts = { headless: true, args: ["--autoplay-policy=no-user-gesture-required", "--no-sandbox"] };
-  if (fs.existsSync(exe)) launchOpts.executablePath = exe;
-  const browser = await chromium.launch(launchOpts);
+  const srv = await serve(ROOT, PORT);
+  const browser = await launchChromium();   // lenient: fall back to the bundled browser if the pinned build is absent
   const page = await browser.newPage();
-  const pageErrors = [];
-  page.on("pageerror", (e) => pageErrors.push("pageerror: " + e.message));
-  page.on("console", (m) => { if (m.type() === "error") pageErrors.push("console: " + m.text()); });
+  const pageErrors = capturePageErrors(page);
 
   await page.goto(`http://localhost:${PORT}/faust/live-test.html`);
 
