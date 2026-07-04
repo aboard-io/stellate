@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>CONSTELLATE — draw a path through genre space</title>
 <link rel="icon" href="data:,">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=VT323&display=swap" rel="stylesheet">
@@ -11,7 +11,8 @@
     --ink:#ece9ff;--dim:#9b93c6;--pink:#ff6ec7;--cyan:#45e0ff;--mint:#4dffb0;--amber:#ffd86b;--purple:#a06bff}
   *{box-sizing:border-box}
   body{margin:0;height:100vh;overflow:hidden;background:var(--bg);color:var(--ink);
-    font:14px/1.55 ui-sans-serif,system-ui,sans-serif}
+    font:14px/1.55 ui-sans-serif,system-ui,sans-serif;
+    touch-action:pan-x pan-y}  /* modals still scroll; browser pinch-zoom of the PAGE never fires */
   /* THE STAR MAP: the whole viewport is the space; video plays underneath,
      stars + path float directly over the footage — no box, no panel. */
   #map{position:fixed;inset:0;width:100vw;height:100vh;z-index:1;cursor:crosshair;touch-action:none;
@@ -38,8 +39,11 @@
   #panel{position:absolute;top:.7rem;right:.7rem;width:330px;max-height:calc(100vh - 1.4rem);overflow:auto}
   body.dragging{user-select:none;-webkit-user-select:none;cursor:crosshair}
   /* 61 stars: labels fade back — it's a star chart, constellation over caption */
-  .anchor{font:11px VT323,monospace;fill:rgba(220,214,255,.42);text-shadow:0 0 6px #000}
+  .anchor{font:11px VT323,monospace;fill:rgba(220,214,255,.42);text-shadow:0 0 6px #000;transition:fill .45s ease}
   .anchor.hot{fill:rgba(255,229,246,.95);font-size:12px}
+  /* while a pointer works the map (drag/pinch/wheel, +600ms), labels light full
+     white so you can read where you are; they ease back to dim when you let go */
+  #map.itx .anchor{fill:#fff}
   .wlabel{font:11px VT323,monospace;fill:#4dffb0}
   .wpn{font:11px VT323,monospace;fill:#0c0a1a;font-weight:700}
   /* the chips: the ONLY floating affordances (with the brand) */
@@ -361,6 +365,9 @@ function drawMap(){
   // stars/text render round and unstretched at any aspect ratio.
   svg.innerHTML="";
   const rb=svg.getBoundingClientRect(), X=x=>(x*rb.width/500)*ZOOM.k+ZOOM.ox, Y=y=>(y*rb.height/400)*ZOOM.k+ZOOM.oy;
+  // pinch zoom grows the TYPE too (sub-linear, capped 3x): zooming in is asking
+  // to read the chart. fs===1 at 1x, so the un-zoomed chart is untouched.
+  const fs=Math.min(3,Math.max(1,Math.pow(ZOOM.k,0.85)));
   if(S.waypoints.length>1){
     const pts=S.waypoints.map(w=>X(w.x)+","+Y(w.y)).join(" ");
     svg.appendChild(el("polyline",{points:pts,fill:"none",stroke:"#45e0ff","stroke-width":4,opacity:.18}));   // under-glow
@@ -371,15 +378,18 @@ function drawMap(){
     const w=wmap[g]||0, cx=X(x), cy=Y(y);
     svg.appendChild(el("circle",{cx,cy,r:8+(w>0.01?w*26:0),fill:w>0.01?"#ff6ec7":"#a06bff",opacity:.10+w*.28}));  // halo
     svg.appendChild(el("circle",{cx,cy,r:w>0.01?3.2:2.2,fill:w>0.01?"#ffd7ee":"#e6e0ff",opacity:.95}));           // the star
-    const t=el("text",{x:cx+9,y:cy+4,"class":w>0.01?"anchor hot":"anchor"});t.textContent=g;svg.appendChild(t);
-    if(w>0.01){const wl=el("text",{x:cx+9,y:cy+17,"class":"wlabel"});wl.textContent=Math.round(w*100)+"%";svg.appendChild(wl);}
+    const t=el("text",{x:cx+9*fs,y:cy+4*fs,"class":w>0.01?"anchor hot":"anchor"});
+    t.style.fontSize=((w>0.01?12:11)*fs)+"px"; t.textContent=g; svg.appendChild(t);
+    if(w>0.01){const wl=el("text",{x:cx+9*fs,y:cy+17*fs,"class":"wlabel"});
+      wl.style.fontSize=(11*fs)+"px"; wl.textContent=Math.round(w*100)+"%"; svg.appendChild(wl);}
   }
   S.waypoints.forEach((w,i)=>{
     const cx=X(w.x), cy=Y(w.y);
-    svg.appendChild(el("circle",{cx,cy,r:14,fill:"#ffd86b",opacity:.22}));
-    const c=el("circle",{cx,cy,r:9,fill:"#ffd86b",stroke:"#0c0a1a","stroke-width":1.2,cursor:"grab"});
+    svg.appendChild(el("circle",{cx,cy,r:14*fs,fill:"#ffd86b",opacity:.22}));
+    const c=el("circle",{cx,cy,r:9*fs,fill:"#ffd86b",stroke:"#0c0a1a","stroke-width":1.2,cursor:"grab"});
     c.dataset.wp=i; svg.appendChild(c);
-    const n=el("text",{x:cx,y:cy+3.5,"text-anchor":"middle","class":"wpn"});n.textContent=i+1;
+    const n=el("text",{x:cx,y:cy+3.5*fs,"text-anchor":"middle","class":"wpn"});
+    n.style.fontSize=(11*fs)+"px"; n.textContent=i+1;
     svg.appendChild(n);
   });
   const ccx=X(S.cursor.x), ccy=Y(S.cursor.y);
@@ -410,11 +420,19 @@ const toXY=ev=>{const r=svg.getBoundingClientRect();const p=ev.touches?ev.touche
   return {x:Math.max(0,Math.min(500,((p.clientX-r.left-ZOOM.ox)/ZOOM.k)*500/r.width)),
           y:Math.max(0,Math.min(400,((p.clientY-r.top-ZOOM.oy)/ZOOM.k)*400/r.height))};};
 let dragging=false, dragWp=-1, lastTap={t:0,x:0,y:0};
+// "font should be white when interacting": any live pointer work on the map
+// (drag, waypoint drag, pinch, wheel-zoom) lights the anchor labels via the
+// #map.itx CSS rule; 600ms after the last touch they ease back to dim.
+// Class toggle only — no set({})/redraw, so the fill TRANSITIONS on the way out.
+let itxT=0;
+function markItx(){ svg.classList.add("itx");
+  clearTimeout(itxT); itxT=setTimeout(()=>svg.classList.remove("itx"),600); }
 const ptrs=new Map();   // active pointers on the map (pinch bookkeeping)
 let pinch=null;         // {d0,k0,cx,cy}
 svg.addEventListener("pointerdown",e=>{
   // NOTE: no preventDefault here — it would suppress dblclick. Selection is
   // handled by CSS user-select; double-add is detected manually (mouse+touch).
+  markItx();
   ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(ptrs.size===2){
     // second finger = ZOOM ONLY: cancel any drag, arm the pinch, no waypoints
@@ -452,7 +470,7 @@ svg.addEventListener("pointerdown",e=>{
 svg.addEventListener("pointermove",e=>{
   if(ptrs.has(e.pointerId)) ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pinch&&ptrs.size===2){
-    e.preventDefault();
+    e.preventDefault(); markItx();
     const [a,b]=[...ptrs.values()];
     const d=Math.max(12,Math.hypot(a.x-b.x,a.y-b.y));
     const cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
@@ -466,8 +484,8 @@ svg.addEventListener("pointermove",e=>{
     clampZoom(); set({});
     return;
   }
-  if(dragWp>=0){ const pt=toXY(e); S.waypoints[dragWp]=pt; set({}); }
-  else if(dragging){ e.preventDefault(); retarget(toXY(e)); }
+  if(dragWp>=0){ markItx(); const pt=toXY(e); S.waypoints[dragWp]=pt; set({}); }
+  else if(dragging){ e.preventDefault(); markItx(); retarget(toXY(e)); }
 });
 const endPtr=e=>{ ptrs.delete(e.pointerId); if(ptrs.size<2) pinch=null;
   dragging=false;dragWp=-1;document.body.classList.remove("dragging"); };
@@ -475,9 +493,17 @@ addEventListener("pointerup",endPtr);
 addEventListener("pointercancel",endPtr);
 svg.addEventListener("wheel",e=>{
   if(!e.ctrlKey) return;               // plain scroll stays page-inert (touch-action:none)
-  e.preventDefault();
+  e.preventDefault(); markItx();
   zoomAround(e.clientX,e.clientY,ZOOM.k*Math.exp(-e.deltaY*0.0015));
 },{passive:false});
+// LAW: pinch/ctrl+wheel must NEVER resize the video or the nav chrome — the
+// map's own gesture math above is the ONLY zoom on this page. Belt+braces:
+// viewport meta pins mobile scale; body touch-action blocks touch pinch of the
+// page; these two kill desktop ctrl+wheel page-zoom that starts over chips/
+// modals/brand, and Safari's proprietary trackpad gesture events.
+addEventListener("wheel",e=>{ if(e.ctrlKey) e.preventDefault(); },{passive:false});
+for(const t of ["gesturestart","gesturechange","gestureend"])
+  addEventListener(t,e=>e.preventDefault(),{passive:false});
 svg.addEventListener("dblclick",e=>e.preventDefault());   // handled via double-tap above
 svg.addEventListener("contextmenu",e=>{
   const wp=e.target.dataset&&e.target.dataset.wp;
