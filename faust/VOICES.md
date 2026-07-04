@@ -140,6 +140,7 @@ when a state requests them.
 | phaser | `insert_phaser` | rate, depth, mix | hand-rolled 4-stage tf1 allpass (shared coeff), fb 0.5, 180–3200 Hz exponential sweep |
 | chorus | `insert_chorus` | rate, depth, mix | modulated fdelay 15 ms ±9 ms·depth (6–24 ms) |
 | filtersweep | `insert_filtersweep` | rateBars, lo, hi, res, **barSec** | moog_vcf_2bn, raised-cosine LFO starting at lo; the ENGINE sets `barSec` (= 4·spb) from state.bpm and re-sets it on glides — full-wet by design |
+| wah | `insert_wah` | sens, base, range, q, mix | fx wings stage 3: crybaby/Mutron AUTO-WAH — an amp-follower (6 ms/140 ms) drives a resonant `fi.resonbp` exponentially `base → base·2^range`; sens = envelope drive, q = the vowel. No clock needed. Homes: disco/newjack/afrobeat BASS pools (probe-wah.js: steady loud opens 1720 Hz vs quiet 709 Hz; the sampler-bass constraint drops it like every insert) |
 
 mix 0 is a bit-exact bypass (verified) — live never disconnects to bypass.
 Live wiring (live.js `ensureInserts`): pool voices sum into `pre` →
@@ -167,6 +168,7 @@ Inputs: `0 dryL, 1 dryR, 2 reverb send, 3 delay send, 4 ping-pong send,
 | pump | phasor duck `1-pump·e^(-6φ)` blendable with an.amp_follower on input 5 | `pump bps scmix` |
 | grit | tanh drive w/ dry-blend bypass at 0 | `grit` |
 | comp (dam) | co.compressor_stereo + makeup | `comp` (ratio/thresh derived like dam) |
+| 3-band glue (fx wings stage 4) | **`master_mb` — a separate OPT-IN module AFTER fx_bus**, not baked in: 2nd-order splits at 250 Hz / 2.5 kHz, mid derived by subtraction (sums exactly flat), per-band co.compressor_stereo + wet-only makeup | `mbdrive` ← `state.masterComp` (kernel dim, dominant-parent zero-rng; disco 0.35). Baking it into fx_bus cost EVERY genre ~0.01 live load even at drive 0 (both Faust select paths compute) — live gate 0.977/0.973 PASS → 0.969/0.967 FAIL, so it was extracted (probe-mbcomp.js). Press post-passes L/R; live series-inserts fx→master_mb→master under a crossfade against the `fxDirect` unity path; genres without masterComp keep committed fx_bus bytes and never build the node |
 | tone tilt | butterworth high/lowpass | `lowcut highcut` |
 | instr 96 sweep + clip | lowpass `mcut` → Bram-de-Jong soft clip (limit 0.95, knee 0.5 — exact csound `clip` method 0, caps at 0.7125 = -2.9 dB) | `mcut` |
 
@@ -411,3 +413,42 @@ A color names an EXTERNAL module that REPLACES the internal zita for that genre.
   `pp*0.12`) lives inside fx_bus and only feeds the internal zita — the external
   colors receive the raw rev-send bus only (no delay/pp bleed). Symmetric across
   press + live. Fine for stage 1; a future round could tap that bleed out.
+
+## Found-vocal AUTO-TUNE — clip-snap to the song key (2026-07 fx wings stage 2)
+
+`state.autoTune` (0..1) bends found VOICE clips toward the song's scale. NOT a
+Faust path — the found layer is native (AudioBufferSourceNodes live, pure-JS
+mixPCM in press), so `an.pitchTracker`/`ef.transpose` don't apply; instead a
+UNIFIED deterministic clip-snap lives in found-player.js:
+
+- **detectMedianHz(buffer, sr)**: offline autocorrelation median-F0 over the
+  voiced frames (decimated to ~11 kHz, first-strong-peak lag pick — global-max
+  locks onto subharmonics on steady tones — parabolic sub-lag interpolation),
+  cached per buffer (WeakMap). A pure function of the decoded audio: no wall
+  clock, no rng.
+- **autoTuneRate(pitch, detectedHz, pcs, strength)**: bends the event's
+  playbackRate so the HEARD median (`detectedHz·pitch`) lands on the nearest
+  scale pitch-class, interpolated in cents by `strength`. strength 0 ⇒ ratio
+  2^0 = 1 exactly ⇒ bit-identical render (probe-gated).
+- **state-engine `autoTune(E, state)`** → `{strength, pcs}` or null; `pcs` =
+  the progression's chord-tone pitch classes transposed by keyOffset. mapEvents
+  attaches it to found chop/bed events — **never to tempo-synced sources**
+  (`src.bpm` set — a break's chop pitch IS the beat-sync ratio; a blend like
+  hogcore×jungle would otherwise wreck the amen's tempo). Non-vocal field
+  recordings self-gate: no stable F0 → detect 0 → no bend.
+- **Kernel**: anchors carry scalar `autoTune`; resolveMulti takes the DOMINANT
+  parent's value with zero rng draws (`!= null` so spokenword's explicit 0 —
+  never tune the poets — carries through blends it dominates). Wired: hogcore
+  0.7 (the name chops snap hard — hyperpop coherence), vaporwave 0.25 (gentle),
+  spokenword 0 (explicit off). Everyone else: no field, byte-identical.
+- **Gates**: `faust/probe-autotune.js` — synthetic mechanism (off-scale sine:
+  62¢→0¢ at strength 1, unchanged at 0, strength-0 bit-identity, determinism)
+  + real hogcore clips (mean |cents-to-scale| 45.9 → 13.8 at 0.7). Press
+  byte-identity for untouched genres (techno s1 + jungle s7 HEAD vs tree);
+  hogcore live smoke (chops fire through the bend, 0 errors); verify 63/63.
+- **LIMITATIONS**: snaps the clip's MEDIAN pitch (one ratio per event — an
+  aesthetic tape-style tune, not per-syllable melodyne); uses the home key
+  (per-section keyShift not tracked); live decode (lead-in trim + boost) can
+  detect a slightly different median than press's raw ffmpeg decode — each
+  engine is internally deterministic, cross-engine parity is approximate (true
+  of all found audio).

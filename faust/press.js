@@ -380,6 +380,23 @@ async function press(state, outPath, opts) {
     L.set(o[0], s); Rr.set(o[1], s);
   }
 
+  // ---- MULTIBAND MASTER COMP (fx wings stage 4): opt-in post-pass over the
+  // fx_bus output (state.masterComp > 0, e.g. disco). Genres without it never
+  // build the module — the fx_bus output above IS the master (byte-identical,
+  // committed fx_bus bytes). See state-engine masterMb for why it is NOT baked
+  // into fx_bus (always-on cost measured against the live load gate).
+  const mb = SE.masterMb(state);
+  if (mb) {
+    const mp = await mkProc(mb.module);
+    mp.setParamValue("/" + rootOf(mb.module) + "/mbdrive", mb.mbdrive);
+    for (let s = 0; s < TOTAL; s += BS) {
+      const len = Math.min(BS, TOTAL - s);
+      const o = mp.render([L.subarray(s, s + len), Rr.subarray(s, s + len)], len);
+      L.set(o[0].subarray(0, len), s); Rr.set(o[1].subarray(0, len), s);
+    }
+    console.log(`  master mb: ${mb.module}, mbdrive=${mb.mbdrive.toFixed(2)}`);
+  }
+
   writeWav(outPath, L, Rr);
   let sq = 0; for (let i = 0; i < TOTAL; i++) sq += L[i] * L[i];
   const rmsDb = 20 * Math.log10(Math.max(Math.sqrt(sq / TOTAL), 1e-9));

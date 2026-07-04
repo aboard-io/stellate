@@ -62,14 +62,45 @@
       return null;
     };
 
-    // ---- master graph: merger(6ch) -> fx_bus -> master mute -> analyser -> out
-    // (master sits BEFORE the analyser so handle.rms() reflects the stop mute)
+    // ---- master graph: merger(6ch) -> fx_bus -> [fxDirect | master_mb] ->
+    // master mute -> analyser -> out (master sits BEFORE the analyser so
+    // handle.rms() reflects the stop mute). fxDirect is the unity path; the
+    // OPT-IN multiband glue (fx wings stage 4, state.masterComp — disco) is a
+    // parallel branch crossfaded in by ensureMasterMb below. It is NOT baked
+    // into fx_bus: the always-on mband branch cost every genre ~0.01 live load
+    // ratio even at drive 0 (both Faust select paths compute).
     const fx = await mkNode("fx_bus", "fx");
     const merger = ctx.createChannelMerger(6);
     merger.connect(fx);
     const master = ctx.createGain(); master.gain.value = 1;
     const analyser = ctx.createAnalyser(); analyser.fftSize = 2048;
-    fx.connect(master); master.connect(analyser); analyser.connect(ctx.destination);
+    const fxDirect = ctx.createGain(); fxDirect.gain.value = 1;
+    fx.connect(fxDirect); fxDirect.connect(master);
+    master.connect(analyser); analyser.connect(ctx.destination);
+    let mbNode = null, mbGain = null;
+    async function ensureMasterMb(state) {
+      const mb = SE.masterMb(state);
+      if (mb && !mbNode) {
+        const node = await mkNode(mb.module, "mastermb");
+        const g = ctx.createGain(); g.gain.value = 0;
+        fx.connect(node); node.connect(g); g.connect(master);
+        const p = P(node, "mbdrive"); if (p) p.value = mb.mbdrive;
+        const t = ctx.currentTime;   // equal-sum crossfade: both paths carry the same program
+        g.gain.setTargetAtTime(1, t, 0.05);
+        fxDirect.gain.setTargetAtTime(0, t, 0.05);
+        mbNode = node; mbGain = g;
+      } else if (mb && mbNode) {
+        const p = P(mbNode, "mbdrive");
+        if (p) p.setTargetAtTime(mb.mbdrive, ctx.currentTime, 0.05);
+      } else if (!mb && mbNode) {
+        const old = mbNode, oldGain = mbGain;
+        mbNode = null; mbGain = null;
+        const t = ctx.currentTime;
+        fxDirect.gain.setTargetAtTime(1, t, 0.05);
+        oldGain.gain.setTargetAtTime(0, t, 0.05);
+        setTimeout(() => { try { fx.disconnect(old); old.disconnect(); oldGain.disconnect(); } catch (e) {} }, 500);
+      }
+    }
     const dryBus = ctx.createGain(), revBus = ctx.createGain(), delBus = ctx.createGain(), ppBus = ctx.createGain();
     // dry path is STEREO-capable: a splitter feeds dryBus channel 0 -> merger L
     // and channel 1 -> merger R. Mono voices up-mix to L=R (centered, unchanged);
@@ -464,6 +495,7 @@
       const m = SE.mapEvents(E, one, ev, { lo, hi, units });
       applyFx(one, t0);
       await ensureReverbColor(one);   // build/swap the external reverb color node
+      await ensureMasterMb(one);      // build/retire the opt-in multiband master glue
 
       if (opts.onBar) try { opts.onBar({ serial, ci, nch, when: t0, spb,
         chord: (prg.chords[ci] || {}).name || "", section: sec.name }); } catch (e) {}
@@ -599,12 +631,12 @@
           const lane = VOXISH.test(f.srcId) ? "vox" : "chops";
           (lane === "vox" ? foundVox : foundChops).chop(buf, at(f.beat), { durSec: f.durB * spb, amp: f.amp, pitch: f.pitch,
             offset: f.offset, cutoff: f.cutoff, rsend: f.rsend, dsend: f.dsend, ppsend: f.ppsend,
-            fade: f.fade, sqRate: f.sqRate, sqDepth: f.sqDepth });
+            fade: f.fade, sqRate: f.sqRate, sqDepth: f.sqDepth, autoTune: f.autoTune });
           layers.get(lane).lastBar = serial;
           schedLog("found:chop", beatAbs(f.beat), at(f.beat));
         } else if (ci === 0) {
           foundBeds.bed(buf, at(lo), { durSec: f.durB * spb, amp: f.amp, pitch: f.pitch,
-            stretch: f.stretch, cutoff: f.cutoff });
+            stretch: f.stretch, cutoff: f.cutoff, autoTune: f.autoTune });
           layers.get("beds").lastBar = serial;
           schedLog("found:bed", beatAbs(lo), at(lo));
         }
@@ -683,7 +715,7 @@
     // The prewarmed nodes are never connected — zero render cost — and are
     // dropped immediately; later mkNodes of the same module just instantiate.
     setTimeout(() => { if (!abort)
-      for (const m of ["insert_distort", "insert_phaser", "insert_chorus", "insert_filtersweep"])
+      for (const m of ["insert_distort", "insert_phaser", "insert_chorus", "insert_filtersweep", "insert_wah"])
         mkNode(m, "prewarm:" + m).catch(() => {});
     }, 1500);
 

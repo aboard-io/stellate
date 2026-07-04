@@ -48,6 +48,15 @@
           rate: clamp(it.rate != null ? it.rate : 0.8, 0.01, 8),
           depth: clamp(it.depth != null ? it.depth : 0.5, 0, 1),
           mix: clamp(it.mix != null ? it.mix : 0.5, 0, 1) } }); break;
+        // wah — crybaby/Mutron AUTO-WAH (envelope-follower bandpass), for funk/
+        // disco bass. sens = envelope drive, base = floor Hz, range = octaves of
+        // sweep, q = resonance, mix = dry/wet (0 = bit-exact bypass). No clock.
+        case "wah": out.push({ type: "wah", module: "insert_wah", params: {
+          sens: clamp(it.sens != null ? it.sens : 0.6, 0, 1),
+          base: clamp(it.base != null ? it.base : 320, 80, 1200),
+          range: clamp(it.range != null ? it.range : 2.2, 0, 4),
+          q: clamp(it.q != null ? it.q : 4, 0.5, 12),
+          mix: clamp(it.mix != null ? it.mix : 0.85, 0, 1) } }); break;
         case "filtersweep": {
           const base = clamp(cutoffHz || 2000, 60, 12000);
           const loHz = clamp(base * Math.pow(2, it.lo != null ? it.lo : -1), 40, 12000);
@@ -420,6 +429,30 @@
     return { name: state.reverbColor, module, rgain: clamp(rv * 3.2, 0, 3.5), rtone: REVERB_TONE[state.reverbColor] };
   }
 
+  // ---- AUTO-TUNE (fx wings stage 2) — snap found VOICE clips to the song scale ----
+  // Returns {strength, pcs} or null. `pcs` = the set of scale pitch-classes (0-11)
+  // the state actually harmonizes over: the pitch classes of the progression's
+  // chord tones, transposed by keyOffset (the effective key). found-player uses it
+  // to bend each voice clip's DETECTED median pitch onto the nearest scale tone,
+  // scaled by state.autoTune. Absent/0 => null => no bend (byte-identical). Zero
+  // rng, purely derived — mirrors reverbColor's "gain a field, change nothing else".
+  // LIMITATION: uses the base key; per-section keyShift (the 3-minute rule) is not
+  // tracked, so a shifted section snaps to the home scale (a near-enough aesthetic
+  // auto-tune, not a transcription).
+  function autoTune(E, state) {
+    const strength = clamp(state && state.autoTune != null ? state.autoTune : 0, 0, 1);
+    if (!(strength > 0)) return null;
+    const prg = E && E.PROGRESSIONS && E.PROGRESSIONS[state.progression];
+    const k = (state.keyOffset | 0), seen = new Set(), pcs = [];
+    if (prg && prg.chords) for (const ch of prg.chords)
+      for (const p of (ch.pads || [])) {
+        const pc = ((parseInt(String(p).split(".")[1] || "0", 10) + k) % 12 + 12) % 12;
+        if (!seen.has(pc)) { seen.add(pc); pcs.push(pc); }
+      }
+    if (!pcs.length) return null;
+    return { strength, pcs };
+  }
+
   // ---- fx_bus params from state (rgain = reverb*3.2 per A/B calibration; the
   // fx_bus rgain slider caps at 2, so reverb > 0.625 saturates the return) ----
   function fxParams(state) {
@@ -442,6 +475,21 @@
       highcut: (state.tone && state.tone.highcut) ? clamp(state.tone.highcut, 1000, 20500) : 20500,
       mcut: 21000, scmix: 0,
     };
+  }
+
+  // ---- MULTIBAND MASTER COMP (fx wings stage 4) — an OPT-IN external node ----
+  // Returns {module:"master_mb", mbdrive} or null. NOT baked into fx_bus: the
+  // mband branch ran even at drive 0 (Faust computes both select paths — three
+  // always-on stereo compressors) and cost EVERY genre ~0.01 live load ratio
+  // (measured: live gate 0.977/0.973 PASS with committed fx_bus vs 0.969/0.967
+  // FAIL with it baked in). As a separate module it exists only when a genre
+  // opts in via state.masterComp (disco): press post-passes the fx_bus output
+  // through it, live series-inserts it after fx_bus under a crossfade — the
+  // reverb-color architecture. Absent/0 => null => committed fx_bus bytes.
+  function masterMb(state) {
+    const drive = clamp(state && state.masterComp != null ? state.masterComp : 0, 0, 1);
+    if (!(drive > 0)) return null;
+    return { module: "master_mb", mbdrive: drive };
   }
 
   // ---- map a buildEvents result into unit events ----
@@ -496,18 +544,31 @@
         sets: { type: s.type, dur: clamp(s.dur * spb, 0.1, 16), amp: clamp(s.amp, 0, 1) } });
     }
     const srcOf = {}; for (const s of Object.values(ev.srcById || {})) srcOf[s.tableNum] = s;
+    // AUTO-TUNE spec (fx wings stage 2): attach the same {strength,pcs} to
+    // found events so found-player bends each clip's detected median pitch onto
+    // the scale. Absent when state has no autoTune => events carry no field =>
+    // byte-identical render (untouched genres, spokenword's explicit 0).
+    // NEVER on tempo-synced sources (src.bpm set — breaks): their chop `pitch`
+    // IS the beat-sync ratio, and a scale bend of up to several semitones would
+    // wreck the tempo (a hogcore×jungle blend chops real breaks). Non-vocal
+    // field recordings pass through detectMedianHz's voiced-frame gate (no
+    // stable F0 -> 0 -> no bend), so no further source filtering is needed.
+    const at = autoTune(E, state);
     for (const f of ev.found) {
       const src = srcOf[f.tableNum]; if (!src) continue;
+      const tuned = at && !src.bpm ? { autoTune: at } : {};
       if (f.chop) {
         if (!win(f.beat)) continue;
         found.push({ type: "chop", srcId: src.id, beat: f.beat, durB: Math.max(0.02, f.dur), amp: f.amp,
           pitch: f.pitch, offset: f.offset || 0, cutoff: f.cutoff || 3500,
           rsend: f.rsend != null ? f.rsend : 0.3, dsend: f.dsend != null ? f.dsend : 0.2,
-          ppsend: f.ppsend || 0, fade: f.fade || 0, sqRate: f.sqRate || 0, sqDepth: f.sqDepth || 0 });
+          ppsend: f.ppsend || 0, fade: f.fade || 0, sqRate: f.sqRate || 0, sqDepth: f.sqDepth || 0,
+          ...tuned });
       } else {
         if (!(opts.bedAll || win(f.beat))) continue;
         found.push({ type: "bed", srcId: src.id, beat: f.beat, durB: f.dur, amp: f.amp,
-          pitch: f.pitch, stretch: f.stretch != null ? f.stretch : 0.45, cutoff: f.cutoff || 2600 });
+          pitch: f.pitch, stretch: f.stretch != null ? f.stretch : 0.45, cutoff: f.cutoff || 2600,
+          ...tuned });
       }
     }
     return { events: out, found, sweeps, units, spb, totalBeats: ev.totalBeats };
@@ -519,5 +580,5 @@
     return mapEvents(E, state, ev, { bedAll: true });
   }
 
-  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, reverbColor, REVERB_COLORS, mapEvents, buildSchedule };
+  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, reverbColor, REVERB_COLORS, autoTune, masterMb, mapEvents, buildSchedule };
 });
