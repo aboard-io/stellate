@@ -2292,9 +2292,132 @@
     return {secs, cycleBeats, evolutions, coldOpen};
   }
 
+  // ---------- MACROS: eight global slider axes (the keyOffset altitude) --------
+  // opts.macros = {acoustic, density, dust, space, bright, feel, energy, vocal},
+  // each a slider in [-1,+1] with 0 = neutral. A POST-RESOLUTION transform: it
+  // scales/biases the ALREADY-resolved choice `c` deterministically, drawing
+  // ZERO rng (macros never pick — they only push resolved values toward an
+  // extreme). Absent macros, or an all-neutral bundle, is a strict NO-OP, so
+  // states are byte-identical to the macro-less path (fixtures.js gate). Same
+  // seed + same slider positions => same bytes. Applied in place on the fresh
+  // per-call choice (track/blend/mix/journey each resolve a new one); it runs
+  // before buildSections so bpm/section geometry pick up the energy nudge.
+  //   axis            -1 pole          +1 pole      (slider label order = sign)
+  //   acoustic        acoustic     <-> synthesized
+  //   density         simple       <-> layered
+  //   dust            dusty        <-> clean
+  //   space           dry          <-> drenched
+  //   bright          dark         <-> bright
+  //   feel            tight        <-> loose
+  //   energy          calm         <-> intense
+  //   vocal           instrumental <-> vocal
+  const AC_LEAD={supersaw:"rhodes",stack:"rhodes",saw:"rhodes",fm:"rhodes",juno60:"rhodes",
+    solina:"rhodes",oberheim:"rhodes",ppg:"rhodes",casiocz:"rhodes",vp330:"rhodes",
+    reese:"guitar",synclead:"guitar",acid:"guitar",wobble:"guitar"};
+  const AC_PAD={pad_saw:"strings",saw:"strings",stack:"strings",juno60:"strings",solina:"strings",
+    oberheim:"strings",ppg:"strings",vp330:"choir",fm:"strings",casiocz:"strings"};
+  const SY_LEAD={piano:"supersaw",rhodes:"supersaw",organ:"supersaw",guitar:"supersaw",
+    bell:"supersaw",brass:"supersaw",strings:"supersaw",choir:"supersaw",hammond:"supersaw"};
+  const SY_PAD={piano:"saw",strings:"saw",organ:"saw",choir:"saw",bell:"saw",hammond:"saw",rhodes:"saw"};
+  function applyMacros(c, M){
+    if(!M) return;
+    const clamp=(x,lo,hi)=>x<lo?lo:x>hi?hi:x, pos=v=>v>0?v:0, neg=v=>v<0?-v:0, scl=(v,s)=>v*(1+s);
+    const A=+M.acoustic||0, D=+M.density||0, U=+M.dust||0, SP=+M.space||0,
+          BR=+M.bright||0, FE=+M.feel||0, EN=+M.energy||0, VO=+M.vocal||0;
+    if(!(A||D||U||SP||BR||FE||EN||VO)) return;   // all-neutral -> byte-identical no-op
+    const fx=c.fx, dr=c.drumRecipe;
+    // -- acoustic <-> synthesized: timbre proxies + curated model swaps at the
+    //    extremes. Range-limited: a genre already on the target family barely
+    //    moves (no swap map entry; the proxies are already near their floor/ceiling).
+    if(A){
+      fx.crackle=clamp(fx.crackle + neg(A)*0.35 - pos(A)*0.15, 0, 1);
+      c.humanize=clamp(c.humanize + neg(A)*0.18 - pos(A)*0.10, 0, 1);
+      c.leadRecipe.spread=clamp((c.leadRecipe.spread!=null?c.leadRecipe.spread:0.004)*(1+pos(A)*1.2-neg(A)*0.7),0,0.05);
+      c.padRecipe.detune=clamp((c.padRecipe.detune!=null?c.padRecipe.detune:0.006)*(1+pos(A)*1.2-neg(A)*0.7),0,0.05);
+      c.leadRecipe.voices=clamp(Math.round((c.leadRecipe.voices||2)+pos(A)*3-neg(A)*2),1,7);
+      if(A<=-0.6){   // hard acoustic: swap the synth fleet for its acoustic cousin where one exists
+        if(AC_LEAD[c.leadRecipe.model]){ c.leadRecipe.model=AC_LEAD[c.leadRecipe.model]; c.leadDx7=null; c.leadSampler=null; }
+        if(AC_PAD[c.padRecipe.model]){ c.padRecipe.model=AC_PAD[c.padRecipe.model]; c.padDx7=null; c.padSampler=null; }
+      } else if(A>=0.6){   // hard synth: pull acoustic voices onto the supersaw/pad_saw
+        if(SY_LEAD[c.leadRecipe.model]){ c.leadRecipe.model=SY_LEAD[c.leadRecipe.model]; c.leadDx7=null; c.leadSampler=null; }
+        if(SY_PAD[c.padRecipe.model]){ c.padRecipe.model=SY_PAD[c.padRecipe.model]; c.padDx7=null; c.padSampler=null; }
+      }
+    }
+    // -- simple <-> layered: pad on/off threshold, lead voice count, insert
+    //    stacking, secondary percussion, per-cycle transform density, counter-voice.
+    if(D){
+      if(D<=-0.5) c.padsOn=false; else if(D>=0.5) c.padsOn=true;
+      c.leadRecipe.voices=clamp(Math.round((c.leadRecipe.voices||2)+pos(D)*2-neg(D)*2),1,7);
+      dr.hat=clamp((dr.hat!=null?dr.hat:1)*(1+pos(D)*0.30-neg(D)*0.35),0,2);
+      dr.tom=clamp((dr.tom!=null?dr.tom:1)*(1+pos(D)*0.30-neg(D)*0.40),0,2);
+      if(neg(D)>=0.6){   // strong simple: shed the second insert per voice
+        c.bassInserts=(c.bassInserts||[]).slice(0,1);
+        c.leadInserts=(c.leadInserts||[]).slice(0,1);
+        c.padInserts =(c.padInserts ||[]).slice(0,1);
+      }
+      if(neg(D)>=0.5 && c.counter) c.counter=null;
+      if(c.transforms) c.transforms.rate=clamp(round(scl(c.transforms.rate, pos(D)*0.5-neg(D)*0.5),3),0,1);
+    }
+    // -- dusty <-> clean: crackle/grit and the soft-top ceiling. Positive (clean)
+    //    scrubs dust and OPENS the top; negative (dusty) adds grit and rolls it off.
+    //    highcut is shared with `bright` — dust SETS/lowers the ceiling here, bright
+    //    scales whatever ceiling survives (below), both clamped.
+    if(U){
+      fx.crackle=clamp(fx.crackle + neg(U)*0.40 - pos(U)*0.30, 0, 1);
+      fx.grit=clamp((fx.grit||0) + neg(U)*0.35 - pos(U)*0.30, 0, 1);
+      let hc=fx.highcut;
+      if(neg(U)>0){ const target=9000-neg(U)*4500; hc = hc>1000 ? Math.min(hc,target) : target; }
+      if(pos(U)>0 && hc>1000){ hc=hc*(1+pos(U)*0.8); if(hc>14000) hc=0; }
+      fx.highcut=hc>0?Math.round(hc):0;
+    }
+    // -- dry <-> drenched: bus reverb, per-voice reverb sends, mild delay feedback.
+    if(SP){
+      fx.reverb=clamp(scl(fx.reverb, pos(SP)*0.5-neg(SP)*0.6),0,0.99);
+      const sSend=(r,k)=>{ if(r&&r[k]!=null) r[k]=clamp(scl(r[k], pos(SP)*0.6-neg(SP)*0.7),0,1); };
+      sSend(c.padRecipe,"send"); sSend(c.bassRecipe,"send"); sSend(c.leadRecipe,"send"); sSend(dr,"send");
+      fx.delayFb=clamp(scl(fx.delayFb, pos(SP)*0.3-neg(SP)*0.35),0,0.85);
+    }
+    // -- dark <-> bright: cutoffs log-scaled (a power-of-two per unit slider), plus
+    //    a gentler scale of the surviving soft-top ceiling (the dust interaction).
+    if(BR){
+      const mul=Math.pow(2, BR);
+      const cut=(r,k,lo,hi)=>{ if(r&&r[k]!=null) r[k]=clamp(Math.round(r[k]*mul),lo,hi); };
+      cut(c.padRecipe,"cutoff",80,18000); cut(c.bassRecipe,"cutoff",60,14000);
+      cut(c.leadRecipe,"cutoff",120,18000); cut(fx,"delayCut",300,16000); cut(c.foundRecipe,"cutoff",300,18000);
+      if(fx.highcut>1000){ let hc=fx.highcut*Math.pow(2,BR*0.6); fx.highcut = hc>16000?0:Math.round(hc); }
+    }
+    // -- tight <-> loose: swing depth, timing humanize, rubato sway. Negative pulls
+    //    each toward its rigid floor (0); positive opens them up.
+    if(FE){
+      c.swing=clamp(c.swing*(1-neg(FE)) + pos(FE)*0.18, 0, 0.6);
+      c.humanize=clamp(c.humanize*(1-neg(FE)*0.9) + pos(FE)*0.15, 0, 1);
+      if(c.rubato) c.rubato.depth=clamp(round(scl(c.rubato.depth, pos(FE)*0.8-neg(FE)*0.8),4),0,0.2);
+    }
+    // -- calm <-> intense: drum drive, glue-comp, sidechain pump, ±8% bpm, transform rate.
+    if(EN){
+      dr.kick=clamp(scl(dr.kick!=null?dr.kick:1, pos(EN)*0.30-neg(EN)*0.35),0,2);
+      dr.snare=clamp(scl(dr.snare!=null?dr.snare:1, pos(EN)*0.30-neg(EN)*0.40),0,2);
+      fx.comp=clamp((fx.comp||0) + pos(EN)*0.30 - neg(EN)*0.25, 0, 1);
+      fx.pump=clamp((fx.pump||0) + pos(EN)*0.25 - neg(EN)*0.20, 0, 1);
+      c.bpm=Math.round(c.bpm*(1+EN*0.08));
+      if(c.transforms) c.transforms.rate=clamp(round(scl(c.transforms.rate, pos(EN)*0.4-neg(EN)*0.4),3),0,1);
+    }
+    // -- instrumental <-> vocal: found VOICE layers only (vox lines, sung chorus,
+    //    spoken-word narration bed) + auto-tune strength. Never touches non-voice
+    //    found beds (field recordings, station hiss). Range-limited: an instrumental
+    //    genre with no voice layer is unaffected (honest no-op on that axis).
+    if(VO){
+      if(c.voxRecipe&&c.voxRecipe.vol!=null) c.voxRecipe.vol=clamp(scl(c.voxRecipe.vol, pos(VO)*0.6-neg(VO)*0.9),0,1);
+      if(c.vocalVol!=null) c.vocalVol=clamp(scl(c.vocalVol, pos(VO)*0.6-neg(VO)*0.9),0,1);
+      if(c.foundRole==="narration") c.foundRecipe.vol=clamp(scl(c.foundRecipe.vol, pos(VO)*0.4-neg(VO)*0.7),0,1);
+      if(pos(VO)>0 || c.autoTune!=null) c.autoTune=clamp(round((c.autoTune||0)+pos(VO)*0.5-neg(VO)*0.4,3),0,1);
+    }
+  }
+
   // ---------- choice -> engine state ----------
   function toState(c, opts){
     opts=opts||{};
+    if(opts.macros) applyMacros(c, opts.macros);
     const {secs, cycleBeats, evolutions, coldOpen}=buildSections(c, opts);
     const foundSources=[];
     // bed role rotates through up to 3 sources (each pitched a hair differently so it
@@ -2543,7 +2666,7 @@
       let state=null, meta=null;
       for(let attempt=0; attempt<6; attempt++){
         const seed=baseSeed+i*101+attempt*1009;
-        const cand=toState(resolveMulti(weights.map(w=>({...w})),seed), {targetSec, keyOffset:key});
+        const cand=toState(resolveMulti(weights.map(w=>({...w})),seed), {targetSec, keyOffset:key, macros:opts.macros});
         const m=cand.genreMeta;
         const sig=[m.kit,m.progression,m.bass,m.lead,m.found];
         const collide=recent.some(r=>sig.filter((v,j)=>v===r[j]).length>=3);

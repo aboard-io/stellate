@@ -101,6 +101,20 @@
   .sc .v{width:28px;text-align:right;color:var(--mint);font-variant-numeric:tabular-nums}
   .seedin{width:90px;background:rgba(28,24,56,.6);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.3rem .5rem}
   .hint{color:var(--dim);font-size:.7rem;margin-top:.45rem}
+  /* MACROS: eight global axes — a compact block, VT323 poles either side of a
+     centre-detented slider (the pink accent lights when an axis is off-zero) */
+  .mac{margin:.55rem 0 .2rem;padding:.5rem .55rem;border:1px solid var(--line);border-radius:10px;
+    background:rgba(28,24,56,.35)}
+  .mac-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem}
+  .mac-h span{font-family:Orbitron,sans-serif;font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+  .mac-rst{padding:.18rem .5rem;font-size:.66rem;border-radius:7px}
+  .mac-rst:disabled{opacity:.4;cursor:default}
+  .mrow{display:grid;grid-template-columns:52px 1fr 52px;gap:.4rem;align-items:center;margin:.16rem 0}
+  .mrow .ml{font-size:.66rem;color:var(--dim);text-align:right}
+  .mrow .mr{font-size:.66rem;color:var(--dim)}
+  .mrow input[type=range]{width:100%;accent-color:var(--line2);margin:0}
+  .mrow.act input[type=range]{accent-color:var(--pink)}
+  .mrow.act .ml,.mrow.act .mr{color:var(--mint)}
   a{color:var(--cyan)}
   /* BOOT PROGRESS: a chrome hairline pinned to the top edge (pixel-locked like
      the chips/brand — px, fixed, never scales with the map). Same pink→cyan
@@ -210,11 +224,18 @@ const MODE_LOCKS={ auto:null, major:"dream", minor:"minor_run", dorian:"mode_dor
 const S={ cursor:{x:250,y:165}, waypoints:[], travel:{seg:0,t:0}, weights:[],
   target:null, playing:null, queue:[], barCount:0, barInfo:null, live:false,
   seed:Math.floor(Math.random()*99999)+1, modeLock:"auto", pace:BARS_PER_SEG, more:false, load:1, scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
-  pool:"", beatLine:"▶ press LIVE" };
+  pool:"", beatLine:"▶ press LIVE",
+  // MACRO axes: eight global sliders in [-1,+1], 0 = neutral. Threaded into
+  // every K.mix() as opts.macros (the keyOffset altitude — a post-resolution
+  // transform); absent/all-zero = byte-identical to the un-macroed space.
+  macros:{acoustic:0,density:0,dust:0,space:0,bright:0,feel:0,energy:0,vocal:0} };
+const MACRO_AXES=[["acoustic","acoustic","synth"],["density","simple","layered"],["dust","dusty","clean"],
+  ["space","dry","drenched"],["bright","dark","bright"],["feel","tight","loose"],["energy","calm","intense"],["vocal","instr","vocal"]];
+const macrosOn=m=>Object.values(m||{}).some(v=>v);
 const subs=[];
 window.__S=S;   // debug/probe access (headless verification)
 window.__X={retarget:(...a)=>retarget(...a), goLive:(...a)=>goLive(...a), stopLive:(...a)=>stopLive(...a), weightsAt:(...a)=>weightsAt(...a),
-  clampZoom:()=>clampZoom(), zoomAround:(...a)=>zoomAround(...a), POS};   // headless stop→path→LIVE + corner-reach probe
+  clampZoom:()=>clampZoom(), zoomAround:(...a)=>zoomAround(...a), setMacro:(...a)=>setMacro(...a), POS};   // headless stop→path→LIVE + corner-reach probe
 let _raf=0;
 function set(patch){ Object.assign(S,patch);
   if(_raf)return; _raf=requestAnimationFrame(()=>{ _raf=0; subs.forEach(f=>f()); }); }
@@ -253,7 +274,7 @@ function keyFor(weights,seed){
 }
 function retarget(pt){
   const weights=weightsAt(pt);
-  const target=K.mix(weights.map(w=>({...w})),{seed:S.seed, keyOffset:keyFor(weightsAt(pt),S.seed)});
+  const target=K.mix(weights.map(w=>({...w})),{seed:S.seed, keyOffset:keyFor(weightsAt(pt),S.seed), macros:macrosOn(S.macros)?{...S.macros}:undefined});
   if(MODE_LOCKS[S.modeLock]) target.progression=MODE_LOCKS[S.modeLock];
   const patch={weights,target,cursor:pt};
   // before LIVE (or after STOP) the cursor PLACES you — the playing state IS
@@ -262,6 +283,20 @@ function retarget(pt){
   set(patch);
   const sig=JSON.stringify(weights.map(w=>w.g+Math.round(w.w*20)))+S.modeLock;
   if(sig!==lastSig){ lastSig=sig; rebuildQueue(); }
+}
+// MACRO slider handler: update the axis, then REBUILD the target so the change
+// flows through the same per-bar glide path a genre move uses. While LIVE the
+// glide eases playing->target within a bar or two (no click); before LIVE the
+// cursor rule in retarget snaps playing to the new target immediately.
+function setMacro(axis,val){
+  const v=Math.max(-1,Math.min(1,+val||0));
+  set({macros:{...S.macros,[axis]:v}});
+  retarget(S.cursor);
+  rebuildQueue();   // a macro can flip a discrete voice/section (acoustic swap, pads off) — requeue those flips
+}
+function resetMacros(){
+  set({macros:{acoustic:0,density:0,dust:0,space:0,bright:0,feel:0,energy:0,vocal:0}});
+  retarget(S.cursor); rebuildQueue();
 }
 
 // ---------- glide ----------
@@ -857,6 +892,17 @@ function Panel(){
       <input type="range" min="16" max="256" step="8" value=${S.pace}
         onInput=${e=>set({pace:Math.max(8,Math.min(512,+e.target.value||BARS_PER_SEG))})} />
       <output>${S.pace}</output></div>
+    <div class="mac">
+      <div class="mac-h"><span>macros — bend every genre at once</span>
+        <button class="mac-rst" title="reset all axes to neutral"
+          onclick=${resetMacros} disabled=${!macrosOn(S.macros)}>reset</button></div>
+      ${MACRO_AXES.map(([k,lo,hi])=>html`
+        <div class="mrow ${S.macros[k]?"act":""}">
+          <span class="ml">${lo}</span>
+          <input type="range" min="-1" max="1" step="0.05" value=${S.macros[k]}
+            onInput=${e=>setMacro(k,+e.target.value)} />
+          <span class="mr">${hi}</span></div>`)}
+    </div>
     ${S.more?html`
     <div class="row"><label>mode/scale</label>
       <select value=${S.modeLock} onchange=${e=>{set({modeLock:e.target.value});retarget(S.cursor);}}>
