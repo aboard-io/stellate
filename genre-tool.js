@@ -295,6 +295,35 @@ const TERM = {
   targets: "\n  };\n\n  function scoreAgainst",
 };
 
+// star-chart position -> explorer.html's POS table, inside the shared
+// /* genre-tool:positions */ block (added 2026-07-04 when hogcore/prelude
+// turned out to exist, play, and verify — but have no star). spec.pos is
+// REQUIRED: [x,y] in the chart's logical px. Validates spacing against every
+// existing star (the arabpop/triphop lesson: crowded stars blur blends);
+// idempotent per-genre line replace inside the block.
+function splicePosition(name, pos) {
+  if (!Array.isArray(pos) || pos.length !== 2 || !pos.every(v => Number.isFinite(v)))
+    die(`spec.pos required: [x,y] star-chart coordinates (logical px). A genre without a star is invisible in the explorer — pick a spot near its musical family, >=55px from every neighbor (see explorer.html POS).`);
+  const file = path.join(ROOT, "explorer.html");
+  let src = fs.readFileSync(file, "utf8");
+  const OPEN = "/* genre-tool:positions */", CLOSE = "/* /genre-tool:positions */";
+  if (src.indexOf(OPEN) < 0 || src.indexOf(CLOSE) < 0) die("positions marker block not found in explorer.html");
+  // spacing check against every star already in the file (POS pairs)
+  const near = [];
+  for (const m of src.matchAll(/(\w+):\[(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)\]/g)) {
+    if (m[1] === name) continue;
+    const d = Math.hypot(pos[0] - +m[2], pos[1] - +m[3]);
+    if (d < 55) near.push(`${m[1]} (${d.toFixed(0)}px)`);
+  }
+  if (near.length) die(`spec.pos [${pos}] is <55px from: ${near.join(", ")} — crowded stars blur blends (the arabpop/triphop lesson). Pick a roomier spot.`);
+  const line = `  ${name}:[${pos[0]},${pos[1]}],`;
+  const mine = new RegExp("\\n[ \\t]*" + name + ":\\[[^\\]]*\\],(?=[\\s\\S]*?" + CLOSE.replace(/[/*]/g, "\\$&") + ")");
+  if (mine.test(src.slice(src.indexOf(OPEN), src.indexOf(CLOSE) + CLOSE.length)))
+    src = src.slice(0, src.indexOf(OPEN)) + src.slice(src.indexOf(OPEN)).replace(mine, "\n" + line);
+  else src = src.slice(0, src.indexOf(CLOSE)) + line + "\n  " + src.slice(src.indexOf(CLOSE));
+  fs.writeFileSync(file, src);
+}
+
 // ---------- gate run ----------
 function runNode(args, label, ms) {
   process.stdout.write(`  ${label} … `);
@@ -351,7 +380,8 @@ function cmdCreate() {
   if (spec.clips && spec.clips.length)
     spliceBlock(path.join(ROOT, "genre-kernel.js"), TERM.clips, `    ${name}:${inline(spec.clips)},`, name + ":clips");
   spliceBlock(path.join(ROOT, "genre-verifier.js"), TERM.targets, serializeTarget(name, row), name + ":targets");
-  console.log(`\n✓ wrote ${name}: anchor -> genre-kernel.js, target row -> genre-verifier.js${spec.clips ? ", clips -> GENRE_CLIPS" : ""}`);
+  splicePosition(name, spec.pos);   // star-chart coordinates (the hogcore lesson: a genre without a star is invisible-but-audible)
+  console.log(`\n✓ wrote ${name}: anchor -> genre-kernel.js, target row -> genre-verifier.js${spec.clips ? ", clips -> GENRE_CLIPS" : ""}, star -> explorer.html`);
 
   // ---- gates
   if (has("skip-gates")) { console.log("\n(--skip-gates: run ./verify.sh and `node genre-verifier.js matrix` yourself)"); return; }
