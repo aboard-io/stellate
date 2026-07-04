@@ -1231,9 +1231,17 @@
           drums.push({drum:"tom",beat:e.beat,dur:0.09,amp:(state.thunk.amp||0.03)*(0.8+0.4*trng()),pitch:90+Math.round(trng()*70)});
       }
     }
-    // feed individual snare hits to the long ping-pong delay at random (>=4 beats apart)
+    // feed individual snare hits to the long ping-pong delay — the classic dusty
+    // snare THROW that tails across the bar. Liberality scales with the send
+    // amount: a genre that wants a wetter throw (snarePP>=.65) wants it thrown
+    // MORE often and closer together (>=2 beats, prob .82 — most backbeats echo);
+    // the moderate legacy send (transitwave .6, the sparse motorik ding under a
+    // PA) keeps its untouched >=4-beat/.6 spacing. grng is TERMINAL here (no
+    // downstream consumer — see line 1217), so the extra draws tag only WHICH
+    // snares echo; no other rng stream shifts (only the snare pp field drifts).
     if(state.snarePP>0){ let last=-99;
-      for(const d of drums){ if(d.drum==="snare" && d.beat-last>=4 && grng()<0.6){ d.pp=state.snarePP; last=d.beat; } } }
+      const lib=state.snarePP>=0.65, gap=lib?2:4, prob=lib?0.82:0.6;   // liberal throw for the high-send dusty genres; low users untouched
+      for(const d of drums){ if(d.drum==="snare" && d.beat-last>=gap && grng()<prob){ d.pp=state.snarePP; last=d.beat; } } }
     // ---- ACID accent/slide (the tb303 voice) ----
     // The 303's two per-note behaviors, tagged onto the bass notes: ACCENT
     // (louder + squelchier — its own env in the module) and SLIDE (legato glide
