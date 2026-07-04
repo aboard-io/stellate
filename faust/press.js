@@ -111,6 +111,10 @@ async function press(state, outPath, opts) {
   console.log(`press: ${sched.totalBeats} beats @ ${state.bpm} bpm = ${(sched.totalBeats * spb).toFixed(1)}s` +
     (opts.dur ? ` (capped ${totalSec.toFixed(1)}s)` : "") +
     `; ${sched.events.length} synth events, ${sched.found.length} found events`);
+  // CPU-budget guard (state-engine trimToBudget): report the cost + any shed list.
+  const bud = sched.units && sched.units.__budget;
+  if (bud) console.log(`  cpu-budget: cost ${bud.cost} / ${bud.budget}` +
+    (bud.shed.length ? ` — SHED [${bud.shed.join(", ")}] (${bud.note})` : ` — ${bud.note}`));
 
   // accumulator buses (mono dry -> fx_bus L/R; rev/del/pp sends stay mono).
   // STEREO voices (juno60/hammond/vp330, outputs===2) add their channel 0/1 to
@@ -184,7 +188,7 @@ async function press(state, outPath, opts) {
       console.log(`  ${key}: ${notes.length} ev -> sampler:${u.sampler.id} (native PCM, ${u.sampler.zones.length} zones)`);
       continue;
     }
-    const P = u.pool || 1;
+    const P = Math.min(u.pool || 1, u.poolCap != null ? u.poolCap : Infinity);   // poolCap: CPU-budget shed
     const procs = [];
     for (let i = 0; i < P; i++) {
       const proc = await mkProc(u.module);

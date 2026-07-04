@@ -159,8 +159,8 @@
       // Absent => no `mello` field => sampler renders the exact pre-mellotron
       // path (regression-gated bit-identity).
       const mello = m.mellotron ? {
-        wowDepth: mp("wowDepth", 0.07, 0, 0.5),        // semitones (slow undulation)
-        flutterDepth: mp("flutterDepth", 0.035, 0, 0.5),  // semitones (fast micro-variation)
+        wowDepth: mp("wowDepth", 0.035, 0, 0.5),        // semitones (slow undulation) — HALVED 2026-07-04 (Paul: tape wobble went too far); was 0.07
+        flutterDepth: mp("flutterDepth", 0.0175, 0, 0.5),  // semitones (fast micro-variation) — HALVED 2026-07-04; was 0.035
         wowRate: mp("wowRate", 0.7, 0.1, 3),
         flutterRate: mp("flutterRate", 7, 3, 12),
         tapeCap: m.tapeCap === false ? 0 : clamp(m.tapeCap === true || m.tapeCap == null ? 8 : m.tapeCap, 0, 8),
@@ -401,6 +401,136 @@
     }
   }
 
+  // ---- CPU COST MODEL (2026-07-04, FEEL+CPU-BUDGET round) ----------------------
+  // Per-module render cost, MEASURED on this machine via an 8s offline-render
+  // timing probe (faust/bench.js is the live cousin; the probe instantiated one
+  // OfflineProcessor per module, gated a note / fed noise, timed min-of-3 passes),
+  // normalized to pad_saw = 1.0. APPROXIMATIONS — the ORDER matters more than the
+  // digits (a faster machine scales them all together). DX7 is the standout: the
+  // 6-operator FM voice costs ~6.4x pad_saw, so a genre that stacks a dx7 melody
+  // + dx7 solo licks (dinosynth) is by far the heaviest citizen in the space.
+  // sfx (the riser/sweep synth) and fx_bus (always-on master) are the other big
+  // ones. These doubles double as future-optimization targets (see the burn
+  // table in the round's report).
+  const COST = {
+    // fleet pads
+    pad_saw: 1, juno60: 1.76, vp330: 1.96, solina: 1.18, oberheim: 0.72, ppg: 1.32,
+    organ: 0.4, strings: 0.64, choir: 0.29,
+    // fleet leads
+    supersaw: 2.47, fm2op: 0.53, lead_pluck: 1.3, lead_kpluck: 0.56, lead_fuzz: 1.43,
+    lead_guitar: 0.55, synclead: 1.68, casiocz: 1.82, bell: 1.24, piano: 0.45,
+    brass: 1.16, hammond: 0.89, robot_choir: 2.07,
+    // bass
+    bass_saw: 0.84, bass_sub: 0.47, bass_acid: 0.94, bass_reese: 0.5, bass_wobble: 1.15,
+    // mono synths
+    modeld: 1.48, tb303: 1.5,
+    // drums / one-shots
+    kick_boom: 0.28, kick_808: 0.3, kick909: 0.29, snare_noise: 0.09, snare_crack: 0.09,
+    snare_clap: 0.07, hat_noise: 0.18, hat_metal: 0.41, tom: 0.45, stab: 0.15, sfx: 2.43,
+    // inserts
+    insert_distort: 1.01, insert_phaser: 0.62, insert_chorus: 0.18, insert_wah: 0.69,
+    insert_tremolo: 0.51, insert_filtersweep: 1.47,
+    // reverb colors + master
+    reverb_dattorro: 0.49, reverb_greyhole: 2.37, reverb_fdn: 0.75, reverb_spring: 0.61,
+    fx_bus: 2.32, master_mb: 1.55, rev_bleed: 0.18,
+  };
+  const DX7_COST = 6.4;      // any dx7_algN — the 6-op FM voice (measured 6.2-6.7)
+  const SAMPLER_COST = 0.3;  // native PCM zone playback (no worklet) — cheap per voice
+  // live's effective pool table (mirrors live.js POOL_SIZE + the heavy/dx7/mono caps):
+  // Faust worklets render EVERY block whether or not a note is gated, so the whole
+  // pool is always-on cost. cost = effectivePool * moduleCost.
+  const POOL_SIZE = { pad: 4, bass: 2, melody: 3, solo: 2 };
+  const HEAVY_FLEET = ["juno60", "hammond", "vp330", "solina", "ppg"];
+  function effectivePool(u) {
+    if (u.drum || u.hold) return (u.pool > 1 ? 2 : 1);
+    let n = POOL_SIZE[u.role] || u.pool || 2;
+    if (u.dx7) n = Math.min(n, 2);
+    if (HEAVY_FLEET.includes(u.module)) n = Math.min(n, 3);
+    if (u.mono) n = 1;
+    if (u.poolCap != null) n = Math.min(n, u.poolCap);   // trim-to-budget shed
+    return n;
+  }
+  const moduleCost = (u) => u.sampler ? SAMPLER_COST : u.dx7 ? DX7_COST : (COST[u.module] != null ? COST[u.module] : 0.6);
+  function unitCost(u) {
+    let c = effectivePool(u) * moduleCost(u);
+    for (const ins of (u.inserts || [])) c += (COST[ins.module] || 0.5);
+    return c;
+  }
+  // total cost of a resolved state: the always-on fx_bus + every voice unit's
+  // (pool x module) + inserts + the opt-in reverb color (one node + its bleed
+  // twin) + the opt-in multiband master glue.
+  function stateCost(units, state) {
+    let total = COST.fx_bus;
+    for (const u of Object.values(units)) if (u && !u.__meta) total += unitCost(u);
+    const rc = reverbColor(state);
+    if (rc) total += (COST[rc.module] || 0.6) + COST.rev_bleed;
+    if (masterMb(state)) total += COST.master_mb;
+    return total;
+  }
+
+  // ---- DETERMINISTIC TRIM-TO-BUDGET (2026-07-04) --------------------------------
+  // A zero-rng guard, applied at unit-build time (so press + live shed identically).
+  // BUDGET is a mobile-safety ceiling in cost units: the heaviest NORMAL genre
+  // (house ~38, then newjack ~37, transitwave ~32 — the historical heaviest) sits
+  // JUST under it, so MOST STATES TRIM NOTHING (measured: 0 of 63 genres trim on
+  // any seed). It only bites when stacked blends + density/energy macros pile
+  // SHEDDABLE extras on top (a dense blend+macros can reach ~41-54). dinosynth
+  // (~64-70 when its melody+solos all roll dx7) is the lone genre over budget on
+  // its own — but its weight IS its identity (dx7 protected below), so it sheds the
+  // safe extras (a pad voice, a non-identity lick) and logs the irreducible rest.
+  //
+  // Shed order (each step re-checks cost; stops the instant we're under budget):
+  //   1. 2nd+ inserts on any voice     (the 1st insert is kept — identity seasoning)
+  //   2. pad pool -1, toward a floor of 2
+  //   3. extra NON-IDENTITY solo/lick voices (the transition micro-licks & counters
+  //      beyond the first) — never a dx7 / tb303 / tremolo-carrying solo
+  // NEVER shed: reverbColor, masterComp, dx7 voices, tb303, tremolo inserts, the
+  // primary pad/bass/melody voice itself, or any voice's FIRST insert.
+  const BUDGET = 40;
+  const isIdentitySolo = (u) => u.dx7 || u.module === "tb303" || (u.inserts || []).some((i) => i.type === "tremolo");
+  function trimToBudget(units, state) {
+    const shed = [];
+    let cost = stateCost(units, state);
+    const budget = BUDGET;
+    const under = () => stateCost(units, state) <= budget;
+    if (cost > budget) {
+      // 1. drop 2nd+ inserts, in a stable key order, heaviest state first only by
+      //    fixed traversal (zero-rng): pad, bass, melody, then solos sorted by key.
+      const keysInOrder = ["pad", "bass", "melody", ...Object.keys(units).filter((k) => k.startsWith("solo:")).sort()];
+      for (const k of keysInOrder) {
+        if (under()) break;
+        const u = units[k];
+        if (u && Array.isArray(u.inserts) && u.inserts.length > 1) {
+          shed.push(k + ":inserts[" + u.inserts.slice(1).map((i) => i.type).join(",") + "]");
+          u.inserts = u.inserts.slice(0, 1);
+        }
+      }
+      // 2. pad pool -1 toward floor 2
+      while (!under() && units.pad) {
+        const cur = effectivePool(units.pad);
+        if (cur <= 2) break;
+        units.pad.poolCap = cur - 1;
+        shed.push("pad:pool" + cur + "->" + (cur - 1));
+      }
+      // 3. drop extra non-identity solo voices (keep the first; keep any identity solo)
+      const solos = Object.keys(units).filter((k) => k.startsWith("solo:")).sort();
+      const droppable = solos.filter((k) => !isIdentitySolo(units[k]));
+      // keep at least one solo overall — drop from the end of the droppable list
+      for (let i = droppable.length - 1; i >= 0 && !under(); i--) {
+        if (solos.length - shed.filter((s) => s.startsWith("solo-drop")).length <= 1) break;
+        shed.push("solo-drop:" + droppable[i].slice(0, 24));
+        delete units[droppable[i]];
+      }
+    }
+    cost = stateCost(units, state);
+    // debug field: press.js logs it; live could too. __meta so stateCost skips it.
+    units.__budget = { __meta: true, budget, cost: +cost.toFixed(2),
+      over: +(cost - budget).toFixed(2) > 0, shed,
+      note: (cost > budget && shed.length) ? "over budget after safe sheds (identity floor)"
+        : (cost > budget) ? "over budget; all excess is identity (nothing safe to shed)" : "within budget" };
+    return units;
+  }
+
   // ---- the full unit table for a state ----
   function voiceUnits(E, state) {
     const I = mergedInstruments(E, state);
@@ -424,7 +554,7 @@
       lvl: D.tom != null ? D.tom : 1, drum: true, params: {}, tail: 0.6 };
     units.stab = { module: "stab", pool: 2, dry: 1, rev: 0.35, del: 0.3, lvl: 1, drum: true, params: { level: 1 }, tail: 0.6, freqMax: 2000 };
     units.sfx = { module: "sfx", pool: 2, dry: 1, rev: 0.3, del: 0, lvl: 1, hold: true, params: { level: 1 }, tail: 1.2 };
-    return units;
+    return trimToBudget(units, state);
   }
 
   // ---- reverb COLOR (fx wings round) — a per-genre-selectable reverb node ----
@@ -598,5 +728,5 @@
     return mapEvents(E, state, ev, { bedAll: true });
   }
 
-  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, reverbColor, REVERB_COLORS, autoTune, masterMb, mapEvents, buildSchedule };
+  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, reverbColor, REVERB_COLORS, autoTune, masterMb, mapEvents, buildSchedule, COST, unitCost, stateCost, effectivePool, BUDGET, trimToBudget };
 });

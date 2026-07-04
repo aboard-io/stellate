@@ -360,6 +360,10 @@
       // ever — the pool:1 hint wins over the POOL_SIZE role table so all notes
       // route to that one voice and glide/legato work (see the mono pass below).
       if (u.mono) n = 1;
+      // CPU-BUDGET shed (state-engine trimToBudget): a poolCap set on the unit is a
+      // hard ceiling the deterministic guard chose (press honors it via u.pool math;
+      // live caps here so both engines instantiate the same voice count).
+      if (u.poolCap != null) n = Math.min(n, u.poolCap);
       const nodes = [];
       for (let i = 0; i < n; i++) {
         const node = await mkNode(u.module, key + i);
