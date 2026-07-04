@@ -495,7 +495,9 @@
     triphop: { label:"Trip hop", info:"slowed dusty breaks, jazz color, melancholy, dub weight",   // SAMPLE-FORWARD
       bpm:[72,92], swing:[.15,.3], humanize:[.2,.45],
       progressions:["neosoul","lofi","minor_run","mode_dorian"], kits:["boombap","breaks","halftime"], fills:["off","drum fill","downlift"],
-      bass:{patterns:["dub","simple","sub"], samplerPool:["acoustic_bass"], recipe:{model:["sub","saw","sampler"],cutoff:[300,600],res:[.05,.2],level:[1.0,1.25],send:[.05,.12],dsend:[0,.1]}},
+      bass:{patterns:["dub","simple","sub"], samplerPool:["acoustic_bass"], recipe:{model:["sub","saw","sampler"],cutoff:[300,600],res:[.05,.2],level:[1.0,1.25],send:[.05,.12],dsend:[0,.1]},
+        inserts:{prob:.5, max:1, pool:[["distort",{drive:[.1,.22],mix:[.35,.6]}]]}},   // soft tape saturation for the dub-weight bass, less synthy (sampler/upright draws skip inserts via constrain; sub/saw get the warmth)
+      snarePP:0.72,   // the trip-hop ping-pong snare (Portishead/Massive Attack) — wet + liberal throw across the slowed break
       lead:{patterns:["sparse","wander","off"], patchPool:["E.PIANO 2"], samplerPool:["muted_trumpet","tenor_sax"], recipe:{model:["fm","dx7","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.006],cutoff:[1800,3000],level:[.4,.52],send:[.4,.6],dsend:[.3,.5],vibrato:[.004,.01],octave:.08,attack:.05,release:[.3,.45],sustain:[.78,.88],fenv:[.2,.4]}},   // ~1/3: the tine EP through the dust; envelope identity (ex-ARTIC): dark filtered legato
       pads:{prob:.85, samplerPool:["strings"], recipe:{model:["fm","strings","sampler"],wave:"sine",cutoff:[800,1400],detune:[.004,.01],attack:[1,2.5],level:[.5,.68],send:[.45,.65],dsend:[.15,.3]},
         inserts:{prob:.35, max:1, pool:[["phaser",{rate:[.06,.18],depth:[.4,.6],mix:[.3,.5]}]]}},   // a slow smoky phase on the strings
@@ -534,7 +536,9 @@
     lofi: { label:"Lo-fi", info:"dusty boombap, jazzy 7ths, crackle, everything softened",   // SAMPLE-FORWARD
       bpm:[72,88], swing:[.18,.32], humanize:[.25,.5],
       progressions:["lofi","neosoul","ii_v_i","pop_1625"], kits:["boombap","halftime"], fills:["off","off","drum fill"],
-      bass:{patterns:["simple","dub","root"], recipe:{model:["sub","saw"],cutoff:[350,650],res:[.05,.15],level:[.9,1.1],send:[.05,.12],dsend:[0,.05]}},
+      bass:{patterns:["simple","dub","root"], recipe:{model:["sub","saw"],cutoff:[350,650],res:[.05,.15],level:[.9,1.1],send:[.05,.12],dsend:[0,.05]},
+        inserts:{prob:.5, max:1, pool:[["distort",{drive:[.1,.22],mix:[.35,.6]}]]}},   // soft TAPE saturation — warms the DI'd sub/saw, less synthy (cubicnl adds upper harmonics, fundamental intact); distort rides the sub too (constrain only fences chorus/phaser off it)
+      snarePP:0.78,   // the dusty boombap snare THROW — wet + liberal (>=.65 => >=2-beat/.82 spacing in buildEvents): most backbeats tail into the ping-pong. lo-fi's signature move
       lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano"], recipe:{model:["fm","pluck","dx7","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1800,2800],level:[.4,.52],send:[.35,.5],dsend:[.2,.35],vibrato:[.005,.012],octave:.06,attack:.025,release:[.12,.2],sustain:[.66,.78],fenv:[.15,.3]},
         inserts:{prob:.4, max:1, pool:[["chorus",{rate:[.3,.8],depth:[.5,.8],mix:[.35,.55]}]]}},   // envelope identity (ex-ARTIC): mellow dusty   // ~1/3: DX7 E.PIANO 1 through the dust (csound maps -> fm); deep slow chorus = tape wow; sampler draws split sax / the felt piano (2026-07)
       pads:{prob:.9, recipe:{model:["fm"],wave:"sine",cutoff:[900,1500],detune:[.003,.008],attack:[.8,1.8],level:[.5,.68],send:[.35,.55],dsend:[.1,.2]}},
@@ -547,7 +551,9 @@
       bpm:[62,80], swing:[.1,.22], humanize:[.15,.35],   // 2026-07: bpm ceiling 84->80 keeps downtempo clearly SLOWER than exotica's tiki-lounge floor (82) — the swung-acoustic-lounge collision was pre-existing (downtempo's flute lead reads acoustic); the bpm fence breaks it. swing FLOOR up .05->.10 — the groove is never straight, and clearly ABOVE vaporwave's machine-time (renders .03-.08): the two-way fence — downtempo scores off vaporwave's diagonal (vaporwave row caps swing .08) AND the straight-time wash cluster scores off downtempo's (row swing floor .06)
       timeFeel:{ pushPull:{ bass:.022, hat:-.014 } },   // 2026-07: the Bristol lean made structural (drawless per-voice offset) — bass drags behind the grid, hats ride a touch on top: the head-nod that says trip-hop, not machine-time vaporwave
       progressions:["neosoul","dream","deep_two","mode_mixo"], kits:["boombap","halftime","kick"], fills:["off","downlift","riser"],
-      bass:{patterns:["simple","dub","sub"], recipe:{model:["sub"],cutoff:[300,550],res:[.05,.15],level:[.95,1.15],send:[.05,.12],dsend:[0,.05]}},
+      bass:{patterns:["simple","dub","sub"], recipe:{model:["sub"],cutoff:[300,550],res:[.05,.15],level:[.95,1.15],send:[.05,.12],dsend:[0,.05]},
+        inserts:{prob:.45, max:1, pool:[["distort",{drive:[.09,.18],mix:[.3,.5]}]]}},   // gentlest tape warmth on the pure-sub bass — harmonics for body (distort keeps the fundamental where a chorus would comb-hollow it), less synthy but still DEEP
+      snarePP:0.66,   // the Bristol head-nod snare feeds the ping-pong too — liberal but the gentlest send of the three (the patient one)
       lead:{patterns:["sparse","off","wander"], patchPool:["E.PIANO 3","E.PIANO 4"], samplerPool:["flute","muted_trumpet"], recipe:{model:["fm","dx7","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2000,3000],level:[.4,.5],send:[.45,.65],dsend:[.3,.45],vibrato:[.003,.008],octave:.1,attack:.04,release:[.28,.4],sustain:[.8,.9],fenv:[.1,.25]}},   // warm tine EPs (alg-5 pair -> morphable); envelope identity (ex-ARTIC): smooth legato
       pads:{prob:1, samplerPool:["strings"], recipe:{model:["organ","saw","sampler"],wave:"saw",cutoff:[800,1400],detune:[.005,.011],attack:[2,4],level:[.6,.78],send:[.5,.7],dsend:[.15,.3]},
         inserts:{prob:.3, max:1, pool:[["phaser",{rate:[.05,.15],depth:[.4,.6],mix:[.3,.5]}]]}},   // barely-moving phase — patience as an effect
@@ -925,7 +931,8 @@
       reverbColor:"dattorro",   // fx wings: clean plate gloss on the maj7 boogie
       bpm:[92,106], swing:[.05,.12], humanize:[.08,.2],   // UNDER transitwave/italo tempo — the boogie sits at 100
       progressions:["royal_road","pop_1625","neosoul"], kits:["full","open"], fills:["drum fill","tom fill","riser"],
-      bass:{patterns:["walking","melodic","octaves","syncopated"], recipe:{model:["saw"],cutoff:[650,1000],res:[.08,.16],level:[1.0,1.2],send:[.03,.08],dsend:[0,.05]}},
+      bass:{patterns:["walking","melodic","octaves","syncopated"], recipe:{model:["saw"],cutoff:[650,1000],res:[.08,.16],level:[1.0,1.2],send:[.03,.08],dsend:[0,.05]},
+        inserts:{prob:.45, max:1, pool:[["chorus",{rate:[.5,.9],depth:[.2,.35],mix:[.2,.32]}]]}},   // the DI'd 80s bass shimmer (Tats/Anri) — a SUBTLE chorus: low mix keeps the dry (75%) fundamental solid against the mono-comb, only the bright saw mids (cutoff 650-1000, never sub) get the width
       lead:{patterns:["composed","composed2","updown"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax"], recipe:{model:["dx7","dx7","fm","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2800,3800],level:[.46,.58],send:[.25,.4],dsend:[.15,.3],vibrato:[.003,.007],attack:.01,release:[.12,.2],sustain:[.7,.8],fenv:[.1,.25]},
         inserts:{prob:.7, max:1, pool:[["chorus",{rate:[.5,1],depth:[.4,.6],mix:[.45,.65]}]]}},   // DX7 E.PIANO 1 as the DEFAULT voice — this is where vaporwave stole it from; E.PIANO + chorus IS the city-pop gloss
       pads:{prob:1, recipe:{model:["juno60","juno60","juno60","strings","saw"],wave:"saw",cutoff:[1400,2100],detune:[.004,.009],attack:[.5,1.2],chorus:[1,1.4],chorusSpread:[.8,1],level:[.45,.6],send:[.2,.35],dsend:[.05,.15]}},   // the Juno-60 keys/comp (stereo BBD chorus) — the city-pop gloss under the DX7 lead; strings/saw the rest
