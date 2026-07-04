@@ -241,6 +241,34 @@
     sp_st_wynyard:{ file:"speech/st_wynyard.wav", kind:"speech", durSec:1.02 },
     sp_st_zocalo:{ file:"speech/st_zocalo.wav", kind:"speech", durSec:1.07 },
     sp_st_zoo:{ file:"speech/st_zoo.wav", kind:"speech", durSec:1.26 },
+    // hogcore — 24 Harry Potter character NAMES (espeak-ng, varied voices = a cast;
+    // recipe: fetch-found-samples.sh "hogcore speech" block). THE VOICE IS THE GENRE:
+    // scheduled as pitched-up vocal CHOPS (found role) + a rotating name under every
+    // bar (stationPool) + one-shot name stabs (hits). See GENRES.hogcore.
+    hp_harry:{ file:"speech/hp_harry.wav", kind:"speech", durSec:1.10 },
+    hp_hermione:{ file:"speech/hp_hermione.wav", kind:"speech", durSec:1.32 },
+    hp_ron:{ file:"speech/hp_ron.wav", kind:"speech", durSec:1.22 },
+    hp_dumbledore:{ file:"speech/hp_dumbledore.wav", kind:"speech", durSec:0.97 },
+    hp_snape:{ file:"speech/hp_snape.wav", kind:"speech", durSec:1.14 },
+    hp_draco:{ file:"speech/hp_draco.wav", kind:"speech", durSec:1.53 },
+    hp_luna:{ file:"speech/hp_luna.wav", kind:"speech", durSec:0.86 },
+    hp_neville:{ file:"speech/hp_neville.wav", kind:"speech", durSec:1.41 },
+    hp_mcgonagall:{ file:"speech/hp_mcgonagall.wav", kind:"speech", durSec:1.79 },
+    hp_hagrid:{ file:"speech/hp_hagrid.wav", kind:"speech", durSec:1.06 },
+    hp_sirius:{ file:"speech/hp_sirius.wav", kind:"speech", durSec:1.40 },
+    hp_bellatrix:{ file:"speech/hp_bellatrix.wav", kind:"speech", durSec:1.47 },
+    hp_voldemort:{ file:"speech/hp_voldemort.wav", kind:"speech", durSec:1.09 },
+    hp_ginny:{ file:"speech/hp_ginny.wav", kind:"speech", durSec:1.18 },
+    hp_cho:{ file:"speech/hp_cho.wav", kind:"speech", durSec:1.28 },
+    hp_cedric:{ file:"speech/hp_cedric.wav", kind:"speech", durSec:1.46 },
+    hp_dobby:{ file:"speech/hp_dobby.wav", kind:"speech", durSec:0.30 },
+    hp_hedwig:{ file:"speech/hp_hedwig.wav", kind:"speech", durSec:0.52 },
+    hp_buckbeak:{ file:"speech/hp_buckbeak.wav", kind:"speech", durSec:1.22 },
+    hp_peeves:{ file:"speech/hp_peeves.wav", kind:"speech", durSec:0.33 },
+    hp_nick:{ file:"speech/hp_nick.wav", kind:"speech", durSec:1.80 },
+    hp_myrtle:{ file:"speech/hp_myrtle.wav", kind:"speech", durSec:0.95 },
+    hp_filch:{ file:"speech/hp_filch.wav", kind:"speech", durSec:1.68 },
+    hp_crookshanks:{ file:"speech/hp_crookshanks.wav", kind:"speech", durSec:1.34 },
   };
 
   // ---------- genre -> found-video clip affinity ----------
@@ -313,6 +341,12 @@
     sludgemetal:["ind_molten","ind_furnace","dark_face","lw_rampage","green_nebula","deep_face"],
     industrialmetal:["ind_furnace","ind_molten","ab_balletmec","dark_face","phuture_red","tw_subway"],
     darksynth:  ["drive_taillights","night_lines","phuture_red","dark_face","drive_bluehour","ind_molten"],
+    /* genre-tool:prelude:clips */
+    prelude:["earth_orbit","blue_dinner","bamboo","dc_village","spacewalk"],
+    /* /genre-tool:prelude:clips */
+    /* genre-tool:hogcore:clips */
+    hogcore:["kaleido","rainbow_rings","cgi_bird","night_lights","sun_riders","phuture_red","pl_kitchen"],
+    /* /genre-tool:hogcore:clips */
   };
 
   // ---------- DX7 patch registry (the genre-space thesis applied to INSTRUMENTS) ----------
@@ -1194,6 +1228,46 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.7,.85], stretch:[.45,.6], cutoff:[1400,2400], sources:["factory","highway_night","vx_xminusone"]},
       stab:["off","sparse"], hits:{sources:["sp_pressure","rave_d","vox_c"], pattern:"sparse", prob:.4},
       form:"drop" },
+    /* genre-tool:prelude:genres */
+    prelude: { label:"Prelude", info:"Bach-prelude figuration as a genre: continuous broken-chord 16th arpeggiation over a slow harmonic rhythm (chordEvery:16), felt-piano / bright-grand voices, drum kit OFF, even Baroque touch with only the lightest rubato — the WTC Book I C-major prelude, generalized",
+      bpm:[62,80],
+      swing:[0,0.03],
+      humanize:[0.08,0.2],
+      progressions:["canon","ii_v_i","dream"],
+      kits:["off"],
+      fills:["off"],
+      chordEvery:16,
+      bass:{patterns:["root","pedal","simple"], samplerPool:["felt_piano","bright_yamaha_grand"], recipe:{model:["sampler","sampler","piano"], cutoff:[700,1400], res:[0.05,0.1], level:[0.5,0.7], send:[0.2,0.4], dsend:[0,0.08], attack:[0.01,0.03], release:[0.3,0.6]}},
+      lead:{patterns:["arp16","arpup","canon"], samplerPool:["bright_yamaha_grand","felt_piano"], recipe:{model:["sampler","sampler"], wave:"sine", voices:[1,2], spread:[0.001,0.003], cutoff:[2600,3800], level:[0.42,0.56], send:[0.25,0.45], dsend:[0.05,0.18], attack:[0.005,0.02], release:[0.2,0.45]}},
+      pads:{prob:0.3, samplerPool:["strings"], recipe:{model:["sampler","strings"], wave:"sine", cutoff:[900,1600], detune:[0.002,0.005], attack:[1,2.5], release:[1.5,3], swell:1, level:[0.32,0.46], send:[0.35,0.55], dsend:[0,0.1]}},
+      drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.5,0.7], snare:[0.4,0.6], hat:[0.3,0.5], tune:[0.9,1], send:[0.15,0.35], dsend:[0,0]},
+      fx:{reverb:[0.42,0.6], delayBeats:[0.75,1.5], delayFb:[0.12,0.28], delayCut:[2200,3200], pump:[0,0], crackle:[0,0.12], lowcut:[0,0], highcut:[0,0], comp:[0,0.12]},
+      found:{role:"bed", vol:[0.05,0.12], pitch:[0.7,0.9], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["iriomote","tokyo_station"]},
+      rubato:{depth:[0.01,0.025], periodBars:[2,4], prob:1},
+      hits:{sources:["sp_herenow"], pattern:"sparse", prob:0.05},
+      stab:["off"],
+      form:"wave" },
+    /* /genre-tool:prelude:genres */
+    /* genre-tool:hogcore:genres */
+    hogcore: { label:"Hogcore", info:"VERY simple hyperpop at 150+: four-on-floor, sidechain pump, bright supersaw hooks, and 24 Harry Potter character NAMES as the hook — pitched-up vocal chops, a name under every bar, name-stabs on the drop",
+      bpm:[150,164],
+      swing:[0,0.03],
+      humanize:[0,0.1],
+      progressions:["four_chords","sad_pop","doo_wop"],
+      kits:["four","pulse"],
+      fills:["riser","cut","impact","off"],
+      bass:{patterns:["octaves","drive","root","stab"], recipe:{model:["saw","sub"], cutoff:[500,900], res:[0.12,0.24], level:[1.05,1.25], send:[0,0.06], dsend:[0,0.05]}},
+      lead:{patterns:["hero","updown","double","pentaup"], recipe:{model:["stack","saw"], wave:"saw", voices:[3,5], spread:[0.008,0.016], cutoff:[3000,4200], level:[0.48,0.62], send:[0.2,0.35], dsend:[0.15,0.3]}},
+      pads:{prob:0.55, recipe:{model:["saw"], wave:"saw", cutoff:[1400,2400], detune:[0.012,0.02], attack:[0.4,1.2], level:[0.5,0.68], send:[0.3,0.5], dsend:[0.1,0.25]}},
+      drums:{kickModel:["909","boom"], snareModel:["clap"], hatModel:["noise","metal"], kick:[1.25,1.5], snare:[0.7,0.95], hat:[0.6,0.95], tune:[0.95,1.1], send:[0.1,0.25], dsend:[0.05,0.15]},
+      fx:{reverb:[0.28,0.45], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[3000,4500], pump:[0.55,0.82], crackle:[0,0], lowcut:[30,45], highcut:[0,0], comp:[0.4,0.65]},
+      found:{role:"chops", vol:[0.16,0.26], pitch:[1.15,1.5], stretch:[0.35,0.5], cutoff:[3500,6000], sources:["hp_harry","hp_hermione","hp_ron","hp_snape","hp_draco","hp_voldemort","hp_dumbledore","hp_hagrid"]},
+      stations:["hp_harry","hp_hermione","hp_ron","hp_dumbledore","hp_snape","hp_draco","hp_luna","hp_neville","hp_mcgonagall","hp_hagrid","hp_sirius","hp_bellatrix","hp_voldemort","hp_ginny","hp_cho","hp_cedric","hp_dobby","hp_hedwig","hp_buckbeak","hp_peeves","hp_nick","hp_myrtle","hp_filch","hp_crookshanks"],
+      stationVol:0.4,
+      hits:{sources:["hp_voldemort","hp_snape","hp_harry","hp_bellatrix"], pattern:"offbeat", prob:0.6},
+      stab:["off"],
+      form:"drop" },
+    /* /genre-tool:hogcore:genres */
   };
 
   // ---------- transition micro-lick soloists (2026-07 musical transitions) ----------

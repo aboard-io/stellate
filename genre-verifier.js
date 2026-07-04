@@ -218,6 +218,12 @@
                 hatDensity:[.2,1.1,2], crackle:[0,.12,1], swing:[0,.06,1], pump:[0,.35,1], motion:[0,.8,1], sub:[.6,1,1] },   // halftime SLAM, hats sparse — ebm's kit is twice as dense, miami's hats twice as fast, industrial chops the factory
     darksynth:{ bpm:[118,138,3], snareBalance:[.25,1.2,2], pump:[0,.35,2], sub:[.6,1,2], leadVoices:[3,7,1],
                 comp:[.4,.7,1], motion:[.4,1,1], crackle:[0,.08,1], swing:[0,.06,1], wash:[.1,.45,1] },   // gated snare + reese at 132 — dubstep starts at 133, trance/edm need the PUMP, synthwave is 30bpm slower
+    /* genre-tool:prelude:targets */
+    prelude:  { bpm:[56,87,3], drumDensity:[0,0.4,3], acoustic:[0.66,1,3], humanize:[0,0.275,3], rubato:[0.001,0.035,2], motion:[0.487,1,1], wash:[0.026,0.359,1], swing:[0,0.071,1] },
+    /* /genre-tool:prelude:targets */
+    /* genre-tool:hogcore:targets */
+    hogcore:  { bpm:[143,172,3], chopUse:[0.47,0.67,3], pump:[0.503,0.926,2], swing:[0,0.071,2], breakUse:[0,0.08,1], comp:[0.282,0.747,1], crackle:[0,0.1,1], seventh:[0,0.15,1] },
+    /* /genre-tool:hogcore:targets */
   };
 
   function scoreAgainst(f, genre){
