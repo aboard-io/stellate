@@ -1884,12 +1884,54 @@
         S("outro",      {cycles:1*norm, pads:c.padsOn, found:fnd()}),
       ];
     }
-    // ---- duration targeting (moved here from toState so the 3-minute pass
-    // below sees FINAL section durations) ----
-    if(opts&&opts.targetSec){
-      const beats=secs.reduce((n,s)=>n+s.cycles*cycleBeats,0)+8;
-      const kk=opts.targetSec/(beats*60/c.bpm);
-      if(kk>1.15||kk<0.85) secs.forEach(s=>{s.cycles=Math.max(1,Math.round(s.cycles*kk));});
+    // ---- duration SOLVER (KERNEL-V4 Phase 5, §3.5) ----
+    // Land the track within ±10% of opts.targetSec. track()/blend()/mix()
+    // default targetSec to 180 (the 3-minute rule); journeys pass a per-leg
+    // targetSec. The solver adjusts section CYCLE counts ONLY — never the
+    // section COUNT — so every symbolic feature (all densities/ratios and the
+    // role() section fractions the verifier reads) is length-invariant and the
+    // confusion matrix is untouched; only the state/events byte-hashes move.
+    // Fully deterministic (no rng): a proportional pre-scale by kk, then a
+    // shape-preserving residual correction (each ±1-cycle nudge lands on the
+    // section furthest from its proportional ideal share) until in-band or the
+    // 1-cycle floor is hit — so it always terminates. When one cycle is a
+    // coarse fraction of the target (blues' 12-bar bars, the
+    // prelude's long figuration, dubwise lengths) the best landing can still be
+    // outside ±10%; the solver never DROPS a section to force it (that would
+    // move role() features), and the 3-minute evolution pass below still
+    // guarantees such tracks EVOLVE rather than drone. Runs before that pass so
+    // it sees final durations. Bespoke video-locked forms (ritual/anthem/
+    // transit) are exempted from the DEFAULT target upstream (track()); an
+    // explicit journey targetSec still scales them, as before.
+    if(opts&&opts.targetSec>0){
+      const spb=60/c.bpm, tail=8*spb, target=opts.targetSec;
+      const dur=()=>secs.reduce((n,s)=>n+s.cycles*cycleBeats,0)*spb+tail;
+      const nat=dur();
+      if(nat<target*0.9||nat>target*1.1){
+        // Proportional pre-scale, then a SHAPE-PRESERVING residual correction:
+        // each ±1 nudge lands on the section furthest from its proportional
+        // ideal share, so the form's cycle proportions are preserved and every
+        // density feature (drumDensity/hatDensity/offgrid — all per-total-beat)
+        // moves uniformly with length instead of being skewed by a lopsided
+        // section. (An early local-search-on-biggest ballooned no-drum intros
+        // and diluted the drum densities — flipping industrialmetal's razor
+        // margin vs darksynth. This keeps every symbolic feature stable.)
+        const kk=Math.max(0.05,(target-tail)/Math.max(spb,nat-tail));
+        const ideal=secs.map(s=>Math.max(1,s.cycles*kk));
+        secs.forEach((s,i)=>{ s.cycles=Math.max(1,Math.round(ideal[i])); });
+        for(let guard=0; guard<4000; guard++){
+          const e=dur()-target;
+          if(Math.abs(e)<=target*0.1) break;
+          if(e<0){                                   // too short: grow the section furthest BELOW its proportional share
+            let bi=0,bd=1/0; for(let i=0;i<secs.length;i++){ const d=secs[i].cycles-ideal[i]; if(d<bd){bd=d;bi=i;} }
+            secs[bi].cycles++;
+          } else {                                   // too long: shrink the section furthest ABOVE its share (with room)
+            let bi=-1,bd=-1/0; for(let i=0;i<secs.length;i++){ if(secs[i].cycles<=1) continue; const d=secs[i].cycles-ideal[i]; if(d>bd){bd=d;bi=i;} }
+            if(bi<0) break;                          // floored: every section at 1 cycle (blues/mallsoft/prelude — reported)
+            secs[bi].cycles--;
+          }
+        }
+      }
     }
     // ---- THE 3-MINUTE RULE ----
     // Nothing runs past ~2:40-3:00 without EVOLVING: at the first section
@@ -2199,8 +2241,30 @@
     return state;
   }
 
-  function track(genre, opts){ opts=opts||{}; return toState(resolve(genre, genre, 0, opts.seed!=null?opts.seed:1), opts); }
-  function blend(a, b, t, opts){ opts=opts||{}; return toState(resolve(a, b, t, opts.seed!=null?opts.seed:1), opts); }
+  // KERNEL-V4 Phase 5: single tracks default to the 3-minute target (180s);
+  // the buildSections solver lands them within ±10%. Two kinds of anchor opt
+  // out of the DEFAULT (they still honour an explicit journey targetSec, as
+  // before — journeys aren't gated):
+  //   • VIDEO_LOCKED forms (ritual/anthem/transit) — their section cycles are
+  //     hand-authored so the regenerated audio grafts onto committed videos.
+  //   • MARGIN_FRAGILE anchors (afrobeat, witchhouse) — they sit at exact
+  //     100/100 verifier ties with a rival the symbolic space can't yet
+  //     separate (KERNEL-V4 §1: "the verifier can't yet see interlock";
+  //     witchhouse margin 1, afrobeat margin 2). Length-normalising them tips
+  //     the window-count-sensitive `variation` feature and breaks the tie, so
+  //     they keep their natural (already-3-min-evolved) length until a Phase-6
+  //     deep pass tightens the rival rows. A documented strangler refusal.
+  const AUTO_TARGET=180;
+  const NO_AUTO_FORM=new Set(["ritual","anthem","transit"]);
+  const NO_AUTO_GENRE=new Set(["afrobeat","witchhouse"]);
+  const withTarget=(c,opts)=>{
+    const o=Object.assign({},opts);
+    const dom=c.genres&&c.genres[0];
+    if(o.targetSec==null && !NO_AUTO_FORM.has(c.form) && !NO_AUTO_GENRE.has(dom)) o.targetSec=AUTO_TARGET;
+    return toState(c,o);
+  };
+  function track(genre, opts){ opts=opts||{}; return withTarget(resolve(genre, genre, 0, opts.seed!=null?opts.seed:1), opts); }
+  function blend(a, b, t, opts){ opts=opts||{}; return withTarget(resolve(a, b, t, opts.seed!=null?opts.seed:1), opts); }
 
   // ---------- journeys: playlists along arbitrary paths ----------
   // A waypoint is a genre NAME ("techno") or a POINT in the space
@@ -2265,7 +2329,7 @@
   }
   function playlist(waypoints, opts){ return journey(waypoints, Object.assign({tracks:12}, opts||{})); }
 
-  function mix(weights, opts){ opts=opts||{}; return toState(resolveMulti(weights, opts.seed!=null?opts.seed:1), opts); }
+  function mix(weights, opts){ opts=opts||{}; return withTarget(resolveMulti(weights, opts.seed!=null?opts.seed:1), opts); }
   const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, GENRE_CLIPS, DX7_PATCHES, resolve, resolveMulti, track, blend, mix, playlist, journey };
   if(isNode) module.exports=api; else root.GenreKernel=api;
 

@@ -101,6 +101,27 @@
   const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic","habanera","syncopated","pedal"];
   const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16","motorik","motorik23"];
   const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal","bossa","electro","newjack","shuffle"];
+  // KERNEL-V4 Phase 5 (§3.5) — the form as a graph of TYPED NODES. Every
+  // section, whatever a form names it, classifies to one of six node types:
+  //   ground  arrival / low-energy opener   (intro, arrive, dawn, platform, warmup)
+  //   build   rising groove / verse         (verse, build, theme, drift, board, plateau, transit…)
+  //   peak    the payoff                     (chorus, drop, peak, lift, main, express, swell, solo-call…)
+  //   release the drop-out / breakdown       (breakdown, break, recede, interchange, answer)
+  //   exposed the stripped moment            (bridge, solo)
+  //   cadence the ending                     (outro, depart, terminus, finale, coda)
+  // This is the grammar's external contract: sample-event roles attach to
+  // node types (Phase-4 handoff #1) so a renamed section keeps its layers, and
+  // openers/cadences find natural attach points. Derived from the name (no
+  // state field -> byte-stable; sec.tag, if a caller ever sets one, wins).
+  function sectionTag(name){
+    const n=String(name||"").toLowerCase();
+    if(/intro|arrive|\bdawn|platform|warm/.test(n))                 return "ground";
+    if(/outro|depart|terminus|finale|\bcoda\b/.test(n))             return "cadence";
+    if(/breakdown|^break|recede|interchange|\banswer\b/.test(n))    return "release";
+    if(/bridge|\bsolo\b|exposed/.test(n))                           return "exposed";
+    if(/chorus|drop|\bpeak|\blift|shred|\bcall\b|\bmain\b|express|swell/.test(n)) return "peak";
+    return "build";   // verse / build / theme / drift / rebuild / pre-chorus / plateau / transit / board
+  }
   const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
   // the ⚡ transition control: what happens at the end of a section, into the next
   // (2026-07: + "snare roll" march-crescendo, "stutter" last-half-bar gate,
@@ -1222,6 +1243,12 @@
         if(!sel||sel==="all") return true;
         if(sel==="first") return i===0;
         if(sel==="quiet") return !sec.drums||sec.drums==="off";
+        // typed-node selector (Phase 5): "tag:peak" or "tag:peak,cadence" —
+        // matches the section's form-graph node type, resilient to renames.
+        if(sel.slice(0,4)==="tag:"){
+          const want=sel.slice(4).split(",").map(s=>s.trim()).filter(Boolean);
+          return want.includes(sec.tag||sectionTag(sec.name));
+        }
         try{ return new RegExp(sel,"i").test(sec.name||""); }catch(e){ return (sec.name||"")===sel; }
       };
       for(const spec of state.sampleEvents){
@@ -1357,6 +1384,7 @@
   }
   const api={ buildEvents, defaultState, defaultInstruments, generateSong, voicing, soloVoices, euclidBeats,
     KITS,   // pulse-set kit lanes (KERNEL-V4 Phase 1): kits are data; drumEvents is the one interpreter
+    sectionTag,   // form-graph typed-node classifier (Phase 5)
     PROGRESSIONS, STYLES, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS, isModel, pchAdd, pchToMidi };
   if(typeof module!=="undefined" && module.exports) module.exports=api;
   else root.CsdEngine=api;
