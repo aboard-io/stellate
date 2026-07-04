@@ -106,6 +106,12 @@
     // and channel 1 -> merger R. Mono voices up-mix to L=R (centered, unchanged);
     // STEREO voices (juno60/hammond/vp330, 2-channel nodes) keep their width all
     // the way to the fx_bus L/R inputs. rev/del/pp sends stay mono.
+    // CRITICAL: dryBus must be pinned to 2 channels. With the default "max"
+    // mode, a genre with only mono voices computes a 1-channel dryBus, and a
+    // ChannelSplitter upmixes DISCRETELY — channel 1 is padded with silence,
+    // hard-panning the entire dry mix (bass included) LEFT. Explicit 2ch makes
+    // the GainNode upmix mono inputs speakers-style (L=R) before the split.
+    dryBus.channelCount = 2; dryBus.channelCountMode = "explicit";
     const drySplit = ctx.createChannelSplitter(2);
     dryBus.connect(drySplit);
     drySplit.connect(merger, 0, 0); drySplit.connect(merger, 1, 1);
@@ -747,6 +753,25 @@
         analyser.getFloatTimeDomainData(rmsBuf);
         let s = 0; for (let i = 0; i < rmsBuf.length; i++) s += rmsBuf[i] * rmsBuf[i];
         return Math.sqrt(s / rmsBuf.length);
+      },
+      balance() {
+        // per-channel L/R RMS off the master. The main analyser DOWNMIXES to
+        // mono, so it is blind to panning bugs (the 2026-07-04 hard-left dry
+        // bus shipped through it) — this tap is the gate that sees them.
+        if (!this._balTap) {
+          const sp = ctx.createChannelSplitter(2);
+          const mk = () => { const a = ctx.createAnalyser(); a.fftSize = 2048; return a; };
+          const aL = mk(), aR = mk();
+          sp.connect(aL, 0); sp.connect(aR, 1);
+          master.connect(sp);
+          this._balTap = { aL, aR, buf: new Float32Array(2048) };
+        }
+        const t = this._balTap, r = (a) => {
+          a.getFloatTimeDomainData(t.buf);
+          let s = 0; for (let i = 0; i < t.buf.length; i++) s += t.buf[i] * t.buf[i];
+          return Math.sqrt(s / t.buf.length);
+        };
+        return { l: r(t.aL), r: r(t.aR) };
       },
       stop() {
         // order matters: kill the scheduler, then hard-mute the MASTER (this

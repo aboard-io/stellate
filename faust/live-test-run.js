@@ -77,8 +77,18 @@ async function main() {
   console.log(`load ratio: min(steady, t>5s) ${isFinite(loadMin) ? loadMin.toFixed(3) : "n/a"}, last ${loadLast && loadLast.toFixed(3)}`);
   console.log(`errors: ${errs.length}${errs.length ? "\n  " + errs.slice(0, 8).join("\n  ") : ""}`);
 
-  const pass = rmsNZ > 10 && rmsPost > 5 && loadMin >= 0.97 && errs.length === 0 && T.bars.length >= 8;
-  console.log(pass ? "LIVE GATE: PASS" : "LIVE GATE: FAIL");
+  // L/R balance: the main analyser downmixes to mono and is blind to panning
+  // bugs (the hard-left dry bus shipped through it). Over the loud samples,
+  // the quieter channel must hold >= 40% of the louder one's RMS — mono
+  // material sits ~1.0, stereo voices decorrelate but never gut a channel.
+  const loud = (T.bal || []).filter(b => Math.max(b.l, b.r) > 0.01);
+  const balMin = loud.length ? Math.min(...loud.map(b => Math.min(b.l, b.r) / Math.max(b.l, b.r))) : NaN;
+  const balMean = loud.length ? loud.reduce((s, b) => s + Math.min(b.l, b.r) / Math.max(b.l, b.r), 0) / loud.length : NaN;
+  console.log(`L/R balance: ${loud.length} loud samples, mean ratio ${isFinite(balMean) ? balMean.toFixed(3) : "n/a"}, min ${isFinite(balMin) ? balMin.toFixed(3) : "n/a"}`);
+  const balOk = loud.length > 5 && balMean >= 0.4;
+
+  const pass = rmsNZ > 10 && rmsPost > 5 && loadMin >= 0.97 && errs.length === 0 && T.bars.length >= 8 && balOk;
+  console.log(pass ? "LIVE GATE: PASS" : "LIVE GATE: FAIL" + (balOk ? "" : " (L/R balance)"));
   process.exit(pass ? 0 : 1);
 }
 main().catch((e) => { console.error(e); process.exit(1); });
