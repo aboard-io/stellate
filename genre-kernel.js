@@ -704,6 +704,7 @@
       fx:{reverb:[.5,.7], delayBeats:[.5,.75], delayFb:[.1,.25], delayCut:[2200,3400], pump:[0,0], crackle:[.15,.4], lowcut:[0,25], highcut:[9000,14000], comp:[.1,.25]},
       found:{role:"bed", vol:[.05,.12], pitch:[.8,1], stretch:[.45,.6], cutoff:[1500,2600], sources:["tokyo_station","shibuya","vx_ginsberg"]},
       rubato:{depth:[.008,.018], periodBars:[2,3], prob:.35},   // the light option: a third of seeds get a subtle combo-breathing (never as deep as neoclassical)
+      timeFeel:{ pushPull:{ bass:0.03 } },   // Phase 3: the upright WALKS behind the beat — bass onsets pushed ~15ms late (a per-voice offset, no verifier feature reads bass timing, so pure feel)
       stab:["off"], hits:{sources:["horns_78","vox_b"], pattern:"sparse", prob:.35},
       form:"pop" },
     dub: { label:"Dub", info:"one-drop riddim: the delay IS the genre — sub pressure, wet skanks, enormous echo tails",   // SAMPLE-FORWARD: wet vox hits + Burroughs in the smoke
@@ -774,6 +775,7 @@
       bpm:[128,136], swing:[.2,.3], humanize:[.1,.25],
       progressions:["house_min7","deep_two","lofi"], kits:["breaks","house"], fills:["off","hat rush","cut","break fill"],
       euclid:{hat:[7,16]},   // E(7,16) skippy 2-step hats, rotation per chord (swing rides on top)
+      timeFeel:{ grid:"16th" },   // Phase 3: the 2-STEP shuffle is a 16th swing — the e/a offbeats slide late (grid "16th"), not the 8th "&"; this is what makes garage skip where house merely bounces
       bass:{patterns:["sub","dub","stab"], recipe:{model:["sub"],cutoff:[300,500],res:[.05,.18],level:[1.15,1.35],send:[0,.06],dsend:[0,.05]}},
       lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2200,3200],level:[.36,.48],send:[.3,.45],dsend:[.25,.4],attack:.004,release:[.05,.09],sustain:[.55,.65],fenv:[.4,.7]}},
       pads:{prob:.4, recipe:{model:["organ","fm"],wave:"saw",cutoff:[700,1100],detune:[.004,.009],attack:[.2,.6],level:[.34,.46],send:[.25,.4],dsend:[.1,.25]}},   // dark chord stabs, often absent
@@ -1657,6 +1659,33 @@
         if(dom.targets)  choice.transforms.targets=dom.targets;
       }
     }
+    // ---- unified time-feel (KERNEL-V4 Phase 3): swing amount + humanize are
+    // already blended scalars (state.swing/state.humanize above); this block
+    // resolves the FAMILY's new members — state.timeFeel = { grid, pushPull }
+    // -> csd-engine resolveTimeFeel. Blend is ZERO-rng (the reverbColor/
+    // transforms dominant-parent law): `grid` (the swing subdivision, enum)
+    // comes from the dominant DECLARING parent; `pushPull` (per-voice ±beats,
+    // laid-back bass / on-top hats) is UNIONed over voices and value-LERPed by
+    // weight across declaring parents. Parents WITHOUT `timeFeel` sit out, so
+    // untouched anchors keep grid "8th" + no push-pull and press byte-identically.
+    {
+      const fcands=ws.map(x=>({w:x.w, f:GENRES[x.g].timeFeel})).filter(c=>c.f);
+      if(fcands.length){
+        const ordered=fcands.slice().sort((a,b)=>b.w-a.w);   // weight-ordered = deterministic dominant + union order
+        const tfl={};
+        const gdom=ordered.find(c=>c.f.grid);   // grid: dominant declaring parent (structural enum, no lerp)
+        if(gdom) tfl.grid=gdom.f.grid;
+        const ppc=fcands.filter(c=>c.f.pushPull);
+        if(ppc.length){
+          const ppw=ppc.reduce((s,c)=>s+c.w,0), pp={};
+          for(const c of ordered) for(const v of Object.keys(c.f.pushPull||{})) if(!(v in pp)) pp[v]=0;
+          for(const c of ppc) for(const v of Object.keys(c.f.pushPull)) pp[v]+=c.f.pushPull[v]*c.w;
+          for(const v of Object.keys(pp)) pp[v]=round(pp[v]/ppw,4);
+          tfl.pushPull=pp;
+        }
+        if(Object.keys(tfl).length) choice.timeFeel=tfl;
+      }
+    }
     // ---- reverb COLOR (fx wings round): a per-genre reverb character
     // (state.reverbColor names an external dist/reverb_* module that replaces
     // the fx_bus internal zita — see faust/state-engine reverbColor). Picked
@@ -2086,6 +2115,7 @@
       // change in buildEvents — unchanged genres press byte-identically
       ...(c.rubato?{rubato:c.rubato}:{}), ...(c.thunk?{thunk:c.thunk}:{}),
       ...(c.transforms?{transforms:c.transforms}:{}),  // pattern-transform algebra (Phase 2): absent = engine's historical default, byte-identical
+      ...(c.timeFeel?{timeFeel:c.timeFeel}:{}),         // unified time-feel (Phase 3): grid + push-pull; absent = grid "8th" + no push-pull, byte-identical
       euclid:c.euclid||undefined,                      // kit-level euclidean rhythm spec (csd-engine drumEvents)
       ...(c.chordEvery?{chordEvery:c.chordEvery}:{}),  // harmonic rhythm (KERNEL-V4 Phase 1): beats per chord bar
       jux:(c.fx.jux||0)>0.05?c.fx.jux:0,               // stereo divergence: buildEvents emits per-event pan offsets
