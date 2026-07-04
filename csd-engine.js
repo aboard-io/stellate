@@ -443,6 +443,21 @@
       {d:"hat",grid:{n:16,amps:[.12,.07],sp:.8}},                   // hats drop pulses — the skip
       {d:"hat",alt:[[[2.5,.16,.3]],[[6.5,.16,.3]]]} ]},
   };
+  // Euclid lanes as DATA (KERNEL-V4 §3.1 — "euclid stops being an overlay that
+  // fights the kit; it is the kit's notation"). A state.euclid spec
+  // {kick:[k,n], hat:[k,n], snare:[k,n]} REPLACES that drum's kit lane with an
+  // E(k,n) onset set (euclidBeats is the onset math). This table is the
+  // notation: per euclid-able drum, the amp shape — `head` is the downbeat
+  // accent (pulse j===0) when non-null, otherwise `amps` cycles by pulse index
+  // j — and `keepOpen` says the kit's OPEN hats survive the replace (they're
+  // the kit's accent identity; euclid re-places only the closed grid / the kick
+  // / the clap line). Interpreted by the same k/s/h emit helpers as the kits.
+  const EUCLID_LANES=[
+    { drum:"kick",  keepOpen:false, head:.64, amps:[.48] },
+    { drum:"hat",   keepOpen:true,  head:null, amps:[.12,.07] },   // closed 16th grid; opens survive
+    { drum:"snare", keepOpen:false, head:.50, amps:[.36] },        // electro E(3,16) tresillo CLAPS
+  ];
+  const euclidAmp=(lane,j)=>(j===0&&lane.head!=null)?lane.head:lane.amps[j%lane.amps.length];
   // the ~40-line lane interpreter (replaces ~100 lines of per-kit JS).
   // cb = beats per chord bar (state.chordEvery; default CHORD_BEATS=8). Kits
   // are 8-beat cells: chordEvery>8 tiles the cell across the bar, <8 truncates
@@ -485,20 +500,27 @@
         }
       }
     }
-    // euclid as lane NOTATION (state.euclid = {kick:[k,n], hat:[k,n], snare:[k,n]}):
-    // the spec REPLACES that drum's lane with E(k,n) placement, rotation
-    // advancing per global chord (open hats survive — they're the kit's accent
-    // identity; euclid re-places the closed-hat grid / the kick line only).
+    // euclid = lane NOTATION over the kit, driven by the EUCLID_LANES data table.
+    // WHY THIS STAYS A ONCE-PER-BAR POST-PASS AND NOT AN INLINE OP (the one
+    // justified-procedural remnant of kit-as-data): a euclid spec REPLACES an
+    // already-emitted kit lane, and byte-identity pins three things an inline op
+    // can't give — (a) it must preserve every kit rng draw for the lane it
+    // shadows (the kit's p/sp/pick gates already fired in the op loop above, and
+    // their draws are law even when their hits get replaced); (b) it drops only
+    // CLOSED hats while keeping OPEN ones, a per-EVENT distinction an op-level
+    // skip can't see; (c) its onsets must land at the END of `out` in
+    // kick→hat→snare order (array order = downstream rng-draw order). All three
+    // are naturally a filter-then-append over the finished kit output. Rotation
+    // advances per global chord (gci) — DETERMINISTIC, no rng draw.
     if(eu&&kind!=="off"){
       const gci=Math.round(S/cb);
-      const place=(spec,drum,mk)=>{
-        if(!spec||!spec.length) return;
-        for(let i=out.length-1;i>=0;i--) if(out[i].drum===drum&&(drum!=="hat"||!out[i].open)) out.splice(i,1);
-        euclidBeats(spec[0],spec[1],gci,cb).forEach((o,j)=>mk(o,j));
-      };
-      place(eu.kick,"kick",(o,j)=>k(o, j===0?.64:.48));
-      place(eu.hat, "hat", (o,j)=>h(o, j%2?.07:.12));
-      place(eu.snare,"snare",(o,j)=>s(o, j===0?.5:.36));           // euclid CLAPS (electro): E(3,16) tresillo replaces the backbeat
+      for(const lane of EUCLID_LANES){
+        const spec=eu[lane.drum];
+        if(!spec||!spec.length) continue;
+        for(let i=out.length-1;i>=0;i--)
+          if(out[i].drum===lane.drum&&(!lane.keepOpen||!out[i].open)) out.splice(i,1);
+        euclidBeats(spec[0],spec[1],gci,cb).forEach((o,j)=>EM[lane.drum](o,euclidAmp(lane,j)));
+      }
     }
     if(ci===nc-1 && kind!=="off" && (!kit || kit.turn!==false)){   // end-of-cycle snare turn
       const tb=cb-CHORD_BEATS;
