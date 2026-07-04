@@ -49,4 +49,6 @@ touching `explorer.html`/`faust/live.js`. Fixture guard: `fixtures.js`
 7. **Live mono is per-unit** — modeld/tb303/synclead each get one fixed
    node; fine today, revisit if a genre wants two simultaneous mono leads.
 
-Do NOT re-press the grand tour (`journey/` stays the July-3 csound artifact).
+The July-3 grand tour (`journey/`, 840 MB incl. its mix page) was DELETED
+2026-07-04 at Paul's direction — the csound-era artifact is gone from the
+live site; the journey generator itself is unchanged and can press new ones.

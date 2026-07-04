@@ -94,7 +94,7 @@ off the anime.
 | `3dgfx_jupiter_magnetosphere` | Jupiter's Magnetosphere — The Movie (scientific field-line viz, 1980s est.) | `jm_dipole`, `jm_axis`, `jm_flux` | likely NASA/university PD — **verify**; archive.org id not recovered |
 | `3dgfx_losalamos_sims_1975` | Los Alamos computer simulations (c.1975; card credits advisors Newell / Elliott / Pequette / Orr) | `la_mesh1`, `la_meshvase`, `la_mesh2` | likely US-gov (LANL) PD — **verify**; archive.org id not recovered |
 | `anime_momotaro_shinpei` | Momotaro: Umi no Shinpei (Momotaro's Divine Sea Warriors, 1945, dir. Mitsuyo Seo) — first Japanese feature-length animation | `mo_singalong`, `mo_pastoral`, `mo_dance` | public domain by age (Japan). ⚠ WWII-era; only non-militaristic windows cued, subtitles cropped |
-| `anime_momotaro_umiwashi` | Momotaro no Umiwashi (Momotaro's Sea Eagles, 1943, dir. Mitsuyo Seo) | **none cued** | public domain by age. ⚠ Explicit air-raid propaganda + a racial-caricature character; no usable non-propaganda windows found — left un-cued in `lib/`, flagged for human review |
+| `anime_momotaro_umiwashi` | Momotaro no Umiwashi (Momotaro's Sea Eagles, 1943) | **DELETED 2026-07-04** | Reel deleted from `found/video/lib/` — explicit WWII air-raid propaganda + a racial-caricature character; never cued into the clip pool. Re-fetch from archive.org (item slug unrecovered) only if genuinely needed. |
 
 These reels carry no explicit machine-readable license and (the anime) sensitive
 wartime content; treat them exactly like the demo discs above — brief, muted,
