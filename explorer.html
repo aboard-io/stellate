@@ -222,7 +222,7 @@ const MODE_LOCKS={ auto:null, major:"dream", minor:"minor_run", dorian:"mode_dor
 
 // ---------- store ----------
 const S={ cursor:{x:250,y:165}, waypoints:[], travel:{seg:0,t:0}, weights:[],
-  target:null, playing:null, queue:[], barCount:0, barInfo:null, live:false,
+  target:null, playing:null, queue:[], holdUntil:{}, barCount:0, barInfo:null, live:false,
   seed:Math.floor(Math.random()*99999)+1, modeLock:"auto", pace:BARS_PER_SEG, more:false, load:1, scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
   pool:"", beatLine:"▶ press LIVE",
   // MACRO axes: eight global sliders in [-1,+1], 0 = neutral. Threaded into
@@ -347,12 +347,38 @@ const DISCRETE=[
       if(m)c.sections.forEach(s=>{if(s.melody&&s.melody!=="off")s.melody=m;});}],
   ["harmony",c=>c.progression,(c,t)=>c.progression=t.progression],
   ["sample",c=>c.foundSources.map(s=>s.id).join(),
-    (c,t)=>{c.foundSources=deep(t.foundSources);
+    (c,t)=>{const prev=c.foundSources;
+      c.foundSources=deep(t.foundSources);
+      // KEEP the sampler-zone wavs the CURRENT voices still reference: replacing
+      // foundSources wholesale otherwise stripped the zones out from under a
+      // just-introduced lead/pad/bass sampler, so ensureSamplerBufs found no
+      // source, cached null forever, and the instrument went silent (Paul's
+      // guitar dropping out after half a measure). Carry any missing zone source
+      // over from the previous crate (or the target's).
+      const have=new Set(c.foundSources.map(s=>s.id));
+      for(const vk of ["pad","bass","melody"]){const sp=(c.instruments[vk]||{}).sampler; if(!sp)continue;
+        for(const z of (sp.zones||[])) if(z.srcId&&!have.has(z.srcId)){
+          const src=prev.find(s=>s.id===z.srcId)||(t.foundSources||[]).find(s=>s.id===z.srcId);
+          if(src){c.foundSources.push(deep(src)); have.add(z.srcId);}}}
       c.sections.forEach((s,i)=>{const ts=t.sections[i%t.sections.length];
         if(s.found&&ts&&ts.found)s.found=deep(ts.found);
         if(ts&&ts.hits)s.hits=deep(ts.hits); else delete s.hits;});}],
   ["form",c=>c.genreMeta.form,(c,t)=>{c.sections=deep(t.sections);Object.assign(c.genreMeta,{form:t.genreMeta.form,kit:t.genreMeta.kit});}],
 ];
+// INSTRUMENT-INTRODUCTION HOLD (Paul: "if you introduce an instrument it lasts
+// for a few measures at least"). A discrete flip that swaps a VOICE'S TIMBRE
+// (its model / sampler / dx7 algorithm, or a drum piece's model) LOCKS that
+// slot for HOLD_BARS measures before another discrete flip may replace it. Near
+// two close stars the continuous blend weights used to re-pick the dominant
+// genre every bar, re-queuing the same voice flip endlessly (rebuildQueue runs
+// on every travel retarget) — so an instrument that had just walked on stage
+// was yanked off a measure later (the "one half measure of guitar and no more"
+// flicker). The hold is keyed by flip NAME in S.holdUntil, so it survives the
+// per-bar queue rebuilds. A genre ARRIVAL (weights settling ~pure on a star)
+// OVERRIDES every hold so a destination still sounds its real instruments.
+const HOLD_BARS=4;
+const HELD_FLIPS=new Set(["pad voice","bass voice","lead voice","kick","snare","hat"]);
+const arrivedNow=()=>!!(S.weights[0]&&S.weights[0].w>=0.85);   // ~pure genre = a real arrival
 // chyron-friendly lineup language for the glide flips ("journey: lead line"
 // meant nothing to humans — narrate it like a band shuffling on stage)
 const FLIP_PHRASES={
@@ -403,8 +429,19 @@ function glideStep(){
   c.foundSources.forEach((s,i)=>{const ts=t.foundSources[i]||t.foundSources[0];
     if(ts&&typeof ts.vol==="number") s.vol+=(ts.vol-s.vol)*0.13;});
   if(S.barCount%2===0&&S.queue.length){
-    const [name,,apply]=S.queue[0];
-    try{ apply(c,t); set({queue:S.queue.slice(1),status:FLIP_PHRASES[name]||("journey: "+name)}); }catch(e){}
+    // apply the FIRST flip we're allowed to run now: a timbre flip whose voice
+    // is still inside its hold window is skipped (left queued for later) UNLESS
+    // we've arrived at a star, when destinations must sound right. Structural
+    // flips (harmony/form/sample/…) are never held, so they always flow.
+    const arrived=arrivedNow();
+    const idx=S.queue.findIndex(([name])=>!HELD_FLIPS.has(name)||arrived||(S.holdUntil[name]||0)<=S.barCount);
+    if(idx>=0){
+      const [name,,apply]=S.queue[idx];
+      try{ apply(c,t);
+        // a timbre just walked on stage — lock this slot for a few measures
+        const hold=HELD_FLIPS.has(name)?{...S.holdUntil,[name]:S.barCount+HOLD_BARS}:S.holdUntil;
+        set({queue:S.queue.filter((_,i)=>i!==idx),holdUntil:hold,status:FLIP_PHRASES[name]||("journey: "+name)}); }catch(e){}
+    }
   }
   if(S.barCount%4===0) rescore();
   set({});   // re-render sliders/playhead
@@ -528,7 +565,7 @@ async function goLive(){
       retarget({x:S.waypoints[0].x, y:S.waypoints[0].y});
     }
     vidReset();   // fresh shuffled video bag per play session — different clip order every time
-    set({live:true,barCount:0}); rebuildQueue();
+    set({live:true,barCount:0,holdUntil:{}}); rebuildQueue();   // fresh instrument-hold timers per session
     faustHandle=await FaustLive.exploreLive(()=>S.playing, m=>{set({status:m}); bootStatus(m);}, { onLoad:(r)=>{S.load=r;}, onBar:(info)=>{
       bootBar();   // first bar scheduled -> advance the warm-up bar, then it waits on real RMS
       set({barInfo:info,barCount:S.barCount+1});
