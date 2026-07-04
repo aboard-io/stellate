@@ -467,7 +467,7 @@
       bass:{patterns:["rolling","stab","melodic","syncopated"], patchPool:["SYN-BASS 2"], recipe:{model:["saw","sub","dx7"],cutoff:[380,700],res:[.15,.3],level:[1.0,1.2],send:[0,.08],dsend:[0,.05]}},   // ~1/3 of seeds: the DX7 SYN-BASS 2 patch (Faust engine; csound maps -> sub); syncopated = the push-pull jack
       lead:{patterns:["double","pentaup","arpup","off"], recipe:{model:["piano","fm"],wave:"pulse",voices:[1,3],spread:[.003,.008],cutoff:[2200,3400],level:[.4,.52],send:[.25,.4],dsend:[.2,.35]},
         inserts:{prob:.4, max:1, pool:[["chorus",{rate:[.6,1.2],depth:[.4,.6],mix:[.35,.55]}]]}},   // piano riffs — the Marshall Jefferson move (the '88 piano got a chorus box)
-      pads:{prob:.9, patchPool:["E.ORGAN 1","SYNORGAN 1"], samplerPool:["percussive_organ"], recipe:{model:["organ","organ","dx7","sampler"],wave:"saw",cutoff:[1000,1600],detune:[.004,.009],attack:[.15,.4],level:[.5,.65],send:[.25,.4],dsend:[.1,.25]}},   // ORGAN STABS: fast attack = stabby, not washy; ~1/3 the real DX7 organs
+      pads:{prob:.9, patchPool:["E.ORGAN 1","SYNORGAN 1"], samplerPool:["percussive_organ"], recipe:{model:["juno60","juno60","hammond","hammond","organ","dx7","sampler"],wave:"saw",cutoff:[1000,1600],detune:[.004,.009],attack:[.15,.4],chorus:[1,1.4],chorusSpread:[.8,1],bar513:8,bar4:0,bar1:4,leslie:[.8,.9],perc:[.5,.7],level:[.5,.65],send:[.25,.4],dsend:[.1,.25]}},   // STABS: Juno-60 chord-stab (stereo chorus) or the Hammond B-3 (888000004, Leslie), fast attack = stabby not washy
       drums:{kickModel:["909","boom"],snareModel:["clap"],hatModel:["noise"],kick:[1.15,1.4],snare:[.6,.85],hat:[1.0,1.3],tune:[.95,1.1],send:[.1,.25],dsend:[.05,.15]},   // hats UP — the open-hat offbeat must be heard
       fx:{reverb:[.4,.6], delayBeats:[.375,.75], delayFb:[.25,.4], delayCut:[2500,4000], pump:[.35,.5], crackle:[0,.15], lowcut:[30,45], highcut:[0,0], comp:[.4,.6]},
       found:{role:"chops", vol:[.1,.18], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["shibuya","tokyo_station","vx_timelady"]},
@@ -517,8 +517,8 @@
       bass:{patterns:["drive","octaves","sixteenths","pedal"], recipe:{model:["saw","reese"],cutoff:[550,900],res:[.15,.3],level:[1.1,1.3],send:[0,.08],dsend:[0,0]}},
       lead:{patterns:["hero","updown","arpdown","anthem"], recipe:{model:["stack","modeld"],wave:"saw",voices:[5,7],spread:[.01,.018],cutoff:[2600,3600],level:[.45,.6],send:[.35,.55],dsend:[.25,.4],vibrato:[.002,.005],
         glide:[60,150],envAmount:[1,1.8],envDecay:[.15,.3],oscMix:[.15,.5],drift:[4,9],drive:[.1,.3]}},   // half the seeds: THE fat mono Model-D hero lead, gliding between legato notes (stack ignores the modeld keys)
-      pads:{prob:1, recipe:{model:["saw"],wave:"saw",cutoff:[1100,2200],detune:[.01,.018],attack:[1.2,2.4],level:[.65,.85],send:[.45,.65],dsend:[.15,.3]},
-        inserts:{prob:.6, max:1, pool:[["phaser",{rate:[.08,.25],depth:[.5,.8],mix:[.4,.6]}]]}},   // the night-drive pad breathes through a phaser — the genre's shimmer
+      pads:{prob:1, recipe:{model:["juno60","juno60","juno60","juno60","saw"],wave:"saw",cutoff:[1100,2200],detune:[.01,.018],attack:[1.2,2.4],chorus:[1.3,1.8],chorusSpread:[.85,1],level:[.65,.85],send:[.45,.65],dsend:[.15,.3]},
+        inserts:{prob:.6, max:1, pool:[["phaser",{rate:[.08,.25],depth:[.5,.8],mix:[.4,.6]}]]}},   // the Juno-60 night-drive pad (BBD chorus, stereo) — mostly juno60, saw the fallback; the phaser insert shimmers it further
       drums:{kickModel:["909","boom"],snareModel:["noise"],hatModel:["noise"],kick:[1.2,1.45],snare:[.9,1.15],hat:[.4,.65],tune:[.85,1],send:[.45,.65],dsend:[.05,.15]},
       fx:{reverb:[.75,.88], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[1800,2800], pump:[.15,.35], crackle:[0,.1], lowcut:[30,45], highcut:[0,0], comp:[.25,.4]},
       found:{role:"bed", vol:[.08,.14], pitch:[.65,.8], stretch:[.45,.6], cutoff:[1000,1800], sources:["highway_night","factory","vx_apollo"]},
@@ -566,7 +566,7 @@
       kits:["tribal"], fills:["off","off","downlift"],   // full tribal kit carries it; fills mostly off (no fill-reliance)
       bass:{patterns:["root","sub","off"], recipe:{model:["sub","reese"],cutoff:[240,460],res:[.05,.18],level:[.85,1.1],send:[.15,.35],dsend:[0,.1]}},
       lead:{patterns:["wander","updown","pentaup"], patchPool:["HORNS","BRASSHORNS"], samplerPool:["french_horns"], recipe:{model:["brass","dx7","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1500,2600],level:[.36,.5],send:[.55,.78],dsend:[.3,.5],vibrato:[.004,.01]}},   // warm theme (no inharmonic bell-FM); ~1/3 DX7 horns (alg-18 pair -> morphable)
-      pads:{prob:1, samplerPool:["ahh_choir"], recipe:{model:["choir","strings","saw","sampler"],wave:"saw",cutoff:[700,1300],detune:[.006,.014],attack:[2.5,4.5],level:[.62,.82],send:[.6,.82],dsend:[.15,.3]}},
+      pads:{prob:1, samplerPool:["ahh_choir"], recipe:{model:["vp330","vp330","vp330","choir","strings","sampler"],wave:"saw",cutoff:[700,1300],detune:[.006,.014],attack:[2.5,4.5],vowel:[.4,.5],ensemble:[.9,1],level:[.62,.82],send:[.6,.82],dsend:[.15,.3]}},   // the VP-330 ghost-choir (wide ensemble) haunting the swamp, over real choir + strings
       drums:{kickModel:["boom","808"],snareModel:["noise"],hatModel:["noise"],kick:[1.3,1.6],snare:[.5,.72],hat:[.55,.85],tune:[.78,.95],send:[.25,.45],dsend:[.3,.55]},   // kick hard, snare DOWN, hats up (whole kit), echo on the throws
       fx:{reverb:[.82,.94], delayBeats:[.75,1.5], delayFb:[.5,.68], delayCut:[1500,2500], pump:[0,.05], crackle:[.04,.12], lowcut:[0,25], highcut:[8000,13000], comp:[.4,.62], grit:[.25,.5]},   // crackle way down; compressed + long dub echo
       found:{role:"bed", vol:[.18,.3], pitch:[.6,.78], stretch:[.45,.6], cutoff:[1800,3000], sources:["frogs","iriomote","tokyo_station","factory"]},   // 4 beds rotate — pitched-down city recordings read as tar-pit / geothermal swamp
@@ -653,7 +653,7 @@
       bass:{patterns:["rolling","drive","stab"], recipe:{model:["saw","reese","modeld"],cutoff:[500,900],res:[.2,.35],level:[1.15,1.35],send:[0,.08],dsend:[0,0],
         glide:[20,40],envAmount:[1.5,2.8],envDecay:[.1,.2],oscMix:[.3,.7],drive:[.25,.5]},
         inserts:{prob:.35, max:1, pool:[["filtersweep",{rateBars:[1,2],lo:[-1,-.4],hi:[.8,1.4],res:[.3,.5]}]]}},   // fast festival sweeps under the drop; 1/3 of seeds: a Model-D drop bass, filter env punching every note
-      lead:{patterns:["hero","updown","double"], recipe:{model:["stack","stack","brass","vocoder"],wave:"saw",voices:[6,8],spread:[.012,.02],cutoff:[3000,4200],level:[.5,.65],send:[.35,.55],dsend:[.2,.35]}},   // rare vocoder drop-voice
+      lead:{patterns:["hero","updown","double"], recipe:{model:["synclead","synclead","synclead","stack","brass","vocoder"],wave:"saw",voices:[6,8],spread:[.012,.02],cutoff:[3000,4200],level:[.5,.65],send:[.35,.55],dsend:[.2,.35]}},   // ~1/2 the hard-sync tear lead (state-engine defaults keep the festival scream); stack/brass/vocoder the rest. NB: synclead params left to defaults so edm's rng draws stay identical (extra recipe keys shifted a seed into trance on the 2-seed dominance gate)
       vocSource:"sp_energy",
       pads:{prob:.9, recipe:{model:["saw"],wave:"saw",cutoff:[1400,2600],detune:[.012,.02],attack:[.6,1.6],level:[.6,.8],send:[.4,.6],dsend:[.1,.25]}},
       drums:{kickModel:["909"],snareModel:["clap","noise"],hatModel:["noise","metal"],kick:[1.35,1.6],snare:[.8,1.05],hat:[.5,.8],tune:[.95,1.1],send:[.2,.4],dsend:[.05,.2]},
@@ -679,8 +679,8 @@
       bpm:[78,100], swing:[.24,.42], humanize:[.3,.55],
       progressions:["blues_12"], kits:["shuffle","boombap","shuffle"], fills:["off","drum fill"],   // 2/3 the swung-triplet ride kit; boombap keeps a dusty chair
       bass:{patterns:["walking","walking","melodic"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sampler","piano"],cutoff:[500,1000],res:[.05,.15],level:[.9,1.1],send:[.1,.2],dsend:[0,.05],attack:.005,release:[.08,.14]}},   // the UPRIGHT (real, FluidR3) walks 2/3 of seeds; piano the rest — the DX7/sub bass is gone
-      lead:{patterns:["blues","blues","wander"], patchPool:["HARMONICA1"], samplerPool:["steel_string_guitar","harmonica"], recipe:{model:["sampler","sampler","sampler","piano","dx7"],wave:"sine",voices:[1,2],spread:[.001,.004],cutoff:[2200,3400],level:[.5,.65],send:[.3,.5],dsend:[.1,.25]}},   // the REAL steel-string leads 3/5 of seeds (blue-note bends live here); piano + DX7 harmonica take the rest
-      pads:{prob:.55, samplerPool:["percussive_organ","rock_organ","honky_tonk"], recipe:{model:["sampler","sampler","piano"],wave:"saw",cutoff:[900,1500],detune:[.003,.007],attack:[.02,.08],level:[.3,.42],send:[.2,.35],dsend:[.05,.15]}},   // COMPING, not pads: real sampled B3/rock organ (or barrelhouse honky-tonk piano) stabs on the changes — fast attack, modest level, never a wash (honky_tonk wired 2026-07-04: it was extracted by the liberalization batch but never pooled)
+      lead:{patterns:["blues","blues","wander"], patchPool:["HARMONICA1"], samplerPool:["steel_string_guitar","harmonica"], recipe:{model:["sampler","sampler","sampler","hammond","piano","dx7"],wave:"sine",voices:[1,2],spread:[.001,.004],cutoff:[2200,3400],leslie:[.85,.95],drive:[.3,.4],percHarm:1,level:[.5,.65],send:[.3,.5],dsend:[.1,.25]}},   // the REAL steel-string leads (blue-note bends live here); ~1/6 the Hammond B-3 takes the solo; piano + DX7 harmonica the rest
+      pads:{prob:.55, samplerPool:["percussive_organ","rock_organ","honky_tonk"], recipe:{model:["hammond","hammond","sampler","sampler","piano"],wave:"saw",cutoff:[900,1500],detune:[.003,.007],attack:[.02,.08],bar513:8,bar4:8,bar223:6,bar2:8,bar135:4,bar113:6,bar1:8,leslie:[.85,.95],percHarm:1,drive:[.3,.4],perc:[.4,.6],level:[.3,.42],send:[.2,.35],dsend:[.05,.15]}},   // COMPING, not pads: the real Hammond B-3 (888868468 full drawbars, spinning Leslie, 3rd-harm perc) or sampled organ / honky-tonk piano stabs on the changes — fast attack, modest level, never a wash
       drums:{kickModel:["boom","808"],snareModel:["noise"],hatModel:["noise"],kick:[.9,1.15],snare:[.5,.7],hat:[.5,.8],tune:[.85,1],send:[.15,.3],dsend:[0,.1]},   // snare tuned brushes-soft under the shuffle ride
       fx:{reverb:[.45,.65], delayBeats:[.5,.75], delayFb:[.1,.25], delayCut:[2000,3000], pump:[0,0], crackle:[.25,.55], lowcut:[0,30], highcut:[8000,12000], comp:[.15,.3]},
       found:{role:"bed", vol:[.05,.12], pitch:[.8,1], stretch:[.45,.6], cutoff:[1500,2500], sources:["shibuya","tokyo_station","vx_whitman"]},
@@ -728,7 +728,7 @@
         glide:[20,35],envAmount:[1,1.8],envDecay:[.07,.14],oscMix:[.2,.5],drift:[3,7]}},   // half the seeds: the funk-vamp Model-D — short punchy filter env on the octave line (Bernard Edwards' synth stand-in)
       lead:{patterns:["pentaup","double","updown","wander"], recipe:{model:["fm","pluck"],wave:"pulse",voices:[1,2],spread:[.002,.005],cutoff:[2600,3600],level:[.42,.54],send:[.3,.45],dsend:[.15,.3],attack:.005,release:[.08,.14],sustain:[.6,.72],fenv:[.3,.5]}},
       pads:{prob:1, patchPool:["E.ORGAN 2","E.ORGAN 3"], samplerPool:["strings","harp"], recipe:{model:["organ","organ","dx7","sampler","sampler"],wave:"saw",cutoff:[1100,1700],detune:[.004,.009],attack:[.2,.6],level:[.45,.6],send:[.3,.45],dsend:[.05,.15]},
-        inserts:{prob:.5, max:1, pool:[["phaser",{rate:[.2,.5],depth:[.5,.7],mix:[.4,.6]}]]}},   // organ stabs = the glitter — through the string-machine phaser, 1977-style
+        inserts:{prob:.5, max:1, pool:[["phaser",{rate:[.2,.5],depth:[.5,.7],mix:[.4,.6]}]]}},   // organ stabs = the glitter — through the string-machine phaser, 1977-style. (hammond/solina NOT wired here: the symbolic verifier's `acoustic` model-list doesn't recognize them, so a dominant Hammond/Solina disco pad drops disco's acoustic diagonal into acidhouse — genre-verifier.js is out of this round's scope to teach the new organs)
       drums:{kickModel:["909","boom"],snareModel:["clap","noise"],hatModel:["noise"],kick:[1.1,1.3],snare:[.75,1],hat:[1.1,1.4],tune:[.95,1.1],send:[.15,.3],dsend:[.05,.15]},   // OPEN HATS UP — the offbeat sizzle
       fx:{reverb:[.4,.55], delayBeats:[.375,.5], delayFb:[.15,.3], delayCut:[2600,3800], pump:[0,.15], crackle:[.05,.2], lowcut:[30,45], highcut:[0,0], comp:[.3,.5], grit:[0,0]},
       found:{role:"bed", vol:[.06,.12], pitch:[.85,1], stretch:[.45,.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station","vx_timelady"]},
@@ -739,10 +739,10 @@
       progressions:["sad_pop","synthwave","doo_wop"], kits:["pulse","four"], fills:["tom fill","riser","drum fill"],
       bass:{patterns:["octaves","sixteenths","pedal"], recipe:{model:["saw","modeld"],cutoff:[750,1150],res:[.12,.22],level:[1.05,1.25],send:[.03,.08],dsend:[0,.05],
         glide:[15,30],envAmount:[1.2,2.2],envDecay:[.06,.12],oscMix:[.2,.5],drift:[2,5]}},   // half the seeds: the Italo octave bass on a real Model-D — tight glide, plucky filter env
-      lead:{patterns:["arpup","arpdown","hero","pentaup"], patchPool:["SYN-PIANO","E.PIANO 4"], recipe:{model:["pluck","stack","dx7"],wave:"square",voices:[1,2],spread:[.002,.006],cutoff:[3200,4200],level:[.5,.6],send:[.3,.45],dsend:[.3,.45],vibrato:[0,.003],attack:.004,release:[.07,.12],sustain:[.6,.7],fenv:[.3,.5]},
-        inserts:{prob:.4, max:1, pool:[["chorus",{rate:[.6,1.2],depth:[.4,.6],mix:[.4,.55]}]]}},   // sparkle doubled — Juno-chorus plucks
-      pads:{prob:.9, recipe:{model:["saw","strings"],wave:"saw",cutoff:[1400,2200],detune:[.006,.012],attack:[.6,1.4],level:[.45,.6],send:[.3,.45],dsend:[.1,.2]},
-        inserts:{prob:.6, max:1, pool:[["phaser",{rate:[.1,.3],depth:[.5,.75],mix:[.4,.6]}]]}},   // the Italo string pad phases — happier than synthwave, same box
+      lead:{patterns:["arpup","arpdown","hero","pentaup"], patchPool:["SYN-PIANO","E.PIANO 4"], recipe:{model:["synclead","synclead","pluck","stack","dx7"],wave:"square",voices:[1,2],spread:[.002,.006],cutoff:[3200,4200],syncRatio:[1.3,1.8],syncSweep:[1,2],syncDecay:[.12,.25],envDecay:[.1,.2],syncDetune:[6,12],level:[.5,.6],send:[.3,.45],dsend:[.3,.45],vibrato:[0,.003],attack:.004,release:[.07,.12],sustain:[.6,.7],fenv:[.3,.5]},
+        inserts:{prob:.4, max:1, pool:[["chorus",{rate:[.6,1.2],depth:[.4,.6],mix:[.4,.55]}]]}},   // ~2/5 the gentle sync-tear lead (low ratio, sweeping); sparkle plucks + DX7 the rest
+      pads:{prob:.9, recipe:{model:["juno60","juno60","solina","solina","saw","strings"],wave:"saw",cutoff:[1400,2200],detune:[.006,.012],attack:[.6,1.4],chorus:[1.3,1.7],chorusSpread:[.8,1],ensemble:[.75,.9],octave:[.5,.6],level:[.45,.6],send:[.3,.45],dsend:[.1,.2]},
+        inserts:{prob:.6, max:1, pool:[["phaser",{rate:[.1,.3],depth:[.5,.75],mix:[.4,.6]}]]}},   // the Italo pad: Juno-60 (stereo BBD chorus) or Solina string cloud — happier than synthwave, same box
       drums:{kickModel:["909"],snareModel:["clap","noise"],hatModel:["noise"],kick:[1.15,1.35],snare:[.8,1.05],hat:[.9,1.2],tune:[.95,1.1],send:[.2,.35],dsend:[.05,.15]},
       fx:{reverb:[.45,.6], delayBeats:[.375,.75], delayFb:[.25,.4], delayCut:[2800,4000], pump:[.1,.3], crackle:[0,.08], lowcut:[30,45], highcut:[0,0], comp:[.3,.5], grit:[0,0]},
       found:{role:"bed", vol:[.06,.12], pitch:[.8,.95], stretch:[.45,.6], cutoff:[1500,2500], sources:["shibuya","highway_night","vx_xminusone"]},
@@ -789,8 +789,8 @@
       progressions:["dream","mode_lydian","canon"], kits:["off"], fills:["off"],
       bass:{patterns:["root","simple","off"], recipe:{model:["sub"],cutoff:[250,450],res:[.05,.12],level:[.8,1],send:[.15,.3],dsend:[0,.1]}},
       lead:{patterns:["sparse","wander","arpup"], samplerPool:["flute","harp"], recipe:{model:["stack","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.004],cutoff:[2200,3400],level:[.4,.5],send:[.5,.7],dsend:[.25,.4],vibrato:[.006,.012],attack:[.15,.4],release:[.5,.8],sustain:[.85,.95]}},   // the melody is PRESENT — distinct from ambient; 1/3 a real flute over the drift
-      pads:{prob:1, patchPool:["TUB BELLS","SHIMMER","CELESTE"], samplerPool:["harp","celesta"], recipe:{model:["choir","strings","dx7","sampler","sampler"],wave:"saw",cutoff:[900,1600],detune:[.005,.012],attack:[2.5,4.5],level:[.6,.8],send:[.6,.8],dsend:[.1,.25]},
-        inserts:{prob:.5, max:1, pool:[["chorus",{rate:[.15,.4],depth:[.4,.6],mix:[.3,.5]}]]}},   // ~1/3: DX7 TUB BELLS — luminous new-age chimes (csound maps -> bell); soft shimmer-chorus on the choir
+      pads:{prob:1, patchPool:["TUB BELLS","SHIMMER","CELESTE"], samplerPool:["harp","celesta"], recipe:{model:["vp330","vp330","solina","solina","choir","strings","dx7","sampler"],wave:"saw",cutoff:[900,1600],detune:[.005,.012],attack:[2.5,4.5],vowel:[.5,.65],breath:[.4,.55],ensemble:[.75,.9],octave:[.5,.6],level:[.6,.8],send:[.6,.8],dsend:[.1,.25]},
+        inserts:{prob:.5, max:1, pool:[["chorus",{rate:[.15,.4],depth:[.4,.6],mix:[.3,.5]}]]}},   // the drift: VP-330 ghost-choir (vowel morph, stereo ensemble) or the Solina string cloud; DX7 chimes + real choir the rest
       drums:{kickModel:["808"],snareModel:["noise"],hatModel:["noise"],kick:[.5,.8],snare:[.35,.55],hat:[.3,.5],tune:[.9,1.05],send:[.25,.45],dsend:[0,.1]},
       fx:{reverb:[.8,.92], delayBeats:[1,1.5], delayFb:[.35,.5], delayCut:[1800,2800], pump:[0,0], crackle:[0,.05], lowcut:[0,0], highcut:[0,0], comp:[0,.15], grit:[0,0]},
       found:{role:"bed", vol:[.16,.26], pitch:[.75,.9], stretch:[.45,.6], cutoff:[2400,3800], sources:["frogs","iriomote","vx_whitman"]},
@@ -836,7 +836,7 @@
       bpm:[140,148], swing:[0,.02], humanize:[0,.05],   // pinned under 150 — the engine forces a jungle kit above that
       progressions:["four_chords","sad_pop","minor_run"], kits:["four","pulse"], fills:["hat rush","cut","riser"],
       bass:{patterns:["octaves","sixteenths","drive"], recipe:{model:["saw"],cutoff:[900,1500],res:[.1,.2],level:[1,1.2],send:[0,.05],dsend:[0,.05]}},
-      lead:{patterns:["arpup","arpdown","double","hero"], recipe:{model:["pluck","stack"],wave:"square",voices:[1,2],spread:[.001,.003],cutoff:[3500,5000],level:[.5,.62],send:[.15,.3],dsend:[.15,.3],vibrato:[0,.002],attack:.002,release:[.03,.06],sustain:[.5,.6],octave:0}},
+      lead:{patterns:["arpup","arpdown","double","hero"], recipe:{model:["casiocz","casiocz","casiocz","casiocz","pluck"],wave:"square",voices:[1,2],spread:[.001,.003],cutoff:[3500,5000],czWave:[.75,1],dcwAmount:[.5,.8],dcwDecay:[.05,.15],czDetune:[2,8],level:[.5,.62],send:[.15,.3],dsend:[.15,.3],vibrato:[0,.002],attack:.002,release:[.03,.06],sustain:[.5,.6],octave:0}},   // Casio CZ phase-distortion lead (wave .75-1 buzzy, snappy DCW) — the glassy chip arp; pluck the fallback
       pads:{prob:.5, recipe:{model:["saw"],wave:"square",cutoff:[1500,2500],detune:[.003,.007],attack:[.1,.4],level:[.35,.48],send:[.15,.3],dsend:[.05,.15]}},
       drums:{kickModel:["909"],snareModel:["noise","clap"],hatModel:["noise"],kick:[1.1,1.35],snare:[.7,.95],hat:[.8,1.15],tune:[1,1.15],send:[.05,.12],dsend:[0,.1]},
       fx:{reverb:[.3,.45], delayBeats:[.375,.5], delayFb:[.15,.3], delayCut:[3000,4500], pump:[0,.15], crackle:[0,0], lowcut:[0,0], highcut:[0,0], comp:[.3,.5], grit:[.15,.35], jux:[.25,.45]},   // SID-chip hard-ish channel panning
@@ -861,8 +861,8 @@
       bass:{patterns:["drive","octaves"], recipe:{model:["saw"],cutoff:[550,900],res:[.12,.22],level:[1,1.2],send:[0,.08],dsend:[0,.05]}},
       lead:{patterns:["arpup","hero","wander","updown"], patchPool:["BRASS   2","BRASS   1","SYNBRASS 1"], samplerPool:["trumpet","trombone","french_horns"], recipe:{model:["vocoder","vocoder","stack","dx7","sampler"],wave:"saw",voices:[2,3],spread:[.004,.009],cutoff:[2400,3400],level:[.6,.72],send:[.35,.5],dsend:[.25,.4],vibrato:[0,.004]},
         inserts:{prob:.35, max:1, pool:[["chorus",{rate:[.4,.9],depth:[.4,.6],mix:[.35,.5]}]]}},   // the genre's voice: vocoded speech SINGS the arps; ~1/4: DX7 BRASS 2, the state-radio fanfare (csound maps -> fm)
-      pads:{prob:1, recipe:{model:["choir","strings"],wave:"saw",cutoff:[900,1500],detune:[.005,.011],attack:[1.5,3],level:[.55,.75],send:[.5,.65],dsend:[.1,.2]},
-        inserts:{prob:.5, max:1, pool:[["phaser",{rate:[.08,.2],depth:[.5,.7],mix:[.35,.55]}]]}},   // the choir through a slow Soviet tape-phaser
+      pads:{prob:1, recipe:{model:["vp330","oberheim","solina","choir","choir","strings"],wave:"saw",cutoff:[900,1500],detune:[.005,.011],attack:[1.5,3],vowel:[.25,.4],ensemble:[.55,.7],octave:[.5,.6],filterMode:[0,.15],envAmount:[1,1.6],level:[.55,.75],send:[.5,.65],dsend:[.1,.2]},
+        inserts:{prob:.5, max:1, pool:[["phaser",{rate:[.08,.2],depth:[.5,.7],mix:[.35,.55]}]]}},   // the shortwave choir: VP-330 ghost-choir / Oberheim SEM pad / Solina cloud, over the real choir + strings, through a slow Soviet tape-phaser
       drums:{kickModel:["boom","909"],snareModel:["noise","clap"],hatModel:["noise"],kick:[1.1,1.3],snare:[.7,.95],hat:[.6,.9],tune:[.9,1.05],send:[.2,.35],dsend:[.05,.15]},
       fx:{reverb:[.65,.8], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[2000,3000], pump:[0,.15], crackle:[.2,.4], lowcut:[0,30], highcut:[0,0], comp:[.25,.45], grit:[0,.15]},
       found:{role:"bed", vol:[.22,.34], pitch:[.85,.95], stretch:[.45,.6], cutoff:[2400,3600], sources:["vx_sv_choir","vx_sv_speech","vx_sv_radio","vx_sv_march"]},
@@ -876,7 +876,7 @@
       bass:{patterns:["walking","melodic","octaves","syncopated"], recipe:{model:["saw"],cutoff:[650,1000],res:[.08,.16],level:[1.0,1.2],send:[.03,.08],dsend:[0,.05]}},
       lead:{patterns:["composed","composed2","updown"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax"], recipe:{model:["dx7","dx7","fm","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2800,3800],level:[.46,.58],send:[.25,.4],dsend:[.15,.3],vibrato:[.003,.007],attack:.01,release:[.12,.2],sustain:[.7,.8],fenv:[.1,.25]},
         inserts:{prob:.7, max:1, pool:[["chorus",{rate:[.5,1],depth:[.4,.6],mix:[.45,.65]}]]}},   // DX7 E.PIANO 1 as the DEFAULT voice — this is where vaporwave stole it from; E.PIANO + chorus IS the city-pop gloss
-      pads:{prob:1, recipe:{model:["strings","saw"],wave:"saw",cutoff:[1400,2100],detune:[.004,.009],attack:[.5,1.2],level:[.45,.6],send:[.2,.35],dsend:[.05,.15]}},
+      pads:{prob:1, recipe:{model:["juno60","juno60","juno60","strings","saw"],wave:"saw",cutoff:[1400,2100],detune:[.004,.009],attack:[.5,1.2],chorus:[1,1.4],chorusSpread:[.8,1],level:[.45,.6],send:[.2,.35],dsend:[.05,.15]}},   // the Juno-60 keys/comp (stereo BBD chorus) — the city-pop gloss under the DX7 lead; strings/saw the rest
       drums:{kickModel:["boom","909"],snareModel:["noise","clap"],hatModel:["noise"],kick:[1.05,1.25],snare:[.75,1],hat:[.9,1.2],tune:[.95,1.1],send:[.12,.22],dsend:[.03,.1]},
       fx:{reverb:[.35,.5], delayBeats:[.5,.75], delayFb:[.2,.32], delayCut:[2800,4000], pump:[0,.1], crackle:[0,.1], lowcut:[25,40], highcut:[0,0], comp:[.1,.24], grit:[0,0]},   // light-touch master (transitwave is the COMPRESSED one)
       found:{role:"bed", vol:[.07,.13], pitch:[.9,1], stretch:[.45,.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station","highway_night"]},   // the city at NATURAL pitch, way back
@@ -910,9 +910,9 @@
       progressions:["deep_two","mode_lydian","neosoul","drone_min"], kits:["breaks","techno","boombap"], fills:["cut","noise","reverse","off","stutter"],
       euclid:{kick:[5,16],hat:[11,16]},   // E(5,16) against E(11,16), both rotating — the tangle
       bass:{patterns:["stab","melodic","sub"], recipe:{model:["sub","reese"],cutoff:[300,560],res:[.1,.25],level:[1,1.2],send:[0,.08],dsend:[0,.1]}},
-      lead:{patterns:["wander","sparse","double"], patchPool:["TUB BELLS","ORCH-CHIME"], recipe:{model:["fm","bell","dx7"],wave:"sine",voices:[1,2],spread:[.004,.01],cutoff:[2200,3400],level:[.42,.54],send:[.3,.5],dsend:[.3,.5],vibrato:[0,.004],attack:.005,release:[.1,.2],sustain:[.6,.75],fenv:[.3,.6]},
-        inserts:{prob:.5, max:2, pool:[["phaser",{rate:[.2,.6],depth:[.5,.8],mix:[.4,.6]}],["filtersweep",{rateBars:[2,6],lo:[-.8,-.3],hi:[.6,1.2],res:[.25,.45]}]]}},   // braindance: the bells get processed — phase + sweep chains, sometimes both
-      pads:{prob:.6, recipe:{model:["fm","saw"],wave:"sine",cutoff:[900,1500],detune:[.008,.016],attack:[1,2.5],level:[.4,.55],send:[.3,.5],dsend:[.1,.25]}},   // detuned, often absent
+      lead:{patterns:["wander","sparse","double"], patchPool:["TUB BELLS","ORCH-CHIME"], recipe:{model:["ppg","ppg","ppg","fm","bell","dx7"],wave:"sine",voices:[1,2],spread:[.004,.01],cutoff:[2200,3400],scan:[.3,.7],scanEnv:[.3,.6],scanLfo:[.05,.2],scanRate:[.2,2],level:[.42,.54],send:[.3,.5],dsend:[.3,.5],vibrato:[0,.004],attack:.005,release:[.1,.2],sustain:[.6,.75],fenv:[.3,.6]},
+        inserts:{prob:.5, max:2, pool:[["phaser",{rate:[.2,.6],depth:[.5,.8],mix:[.4,.6]}],["filtersweep",{rateBars:[2,6],lo:[-.8,-.3],hi:[.6,1.2],res:[.25,.45]}]]}},   // braindance: the PPG wavetable-scan lead (scan swept by env+LFO — timbre as the artist), bells the rest; phase + sweep chains on top
+      pads:{prob:.6, recipe:{model:["ppg","ppg","fm","saw"],wave:"sine",cutoff:[900,1500],detune:[.008,.016],attack:[1,2.5],scan:[.3,.6],scanEnv:[.2,.5],level:[.4,.55],send:[.3,.5],dsend:[.1,.25]}},   // detuned wavetable pad, often absent
       drums:{kickModel:["808","909"],snareModel:["crack","noise"],hatModel:["metal","noise"],kick:[1.05,1.3],snare:[.6,.85],hat:[.7,1],tune:[.9,1.1],send:[.05,.15],dsend:[.15,.35]},
       fx:{reverb:[.3,.45], delayBeats:[.375,.75], delayFb:[.3,.45], delayCut:[2200,3400], pump:[0,.1], crackle:[0,.1], lowcut:[25,40], highcut:[0,0], comp:[.3,.5], grit:[.15,.4], jux:[.4,.7]},   // jux MAX — the stereo field disagrees with itself
       found:{role:"chops", vol:[.1,.18], pitch:[.85,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["factory","vx_wwvh","vx_conet_poacher"]},
@@ -923,7 +923,7 @@
       progressions:["funk_vamp","deep_two","minor_run"], kits:["electro"], fills:["cut","hat rush","impact","off"],
       euclid:{snare:[3,16]},   // E(3,16) tresillo CLAPS rotating per chord over the boom-bap frame
       bass:{patterns:["stab","sixteenths","octaves"], recipe:{model:["saw","acid"],cutoff:[500,850],res:[.15,.3],level:[1.05,1.25],send:[0,.06],dsend:[0,.08]}},
-      lead:{patterns:["double","arpup","sparse"], patchPool:["SYN-CLAV 1","PRC SYNTH1"], recipe:{model:["vocoder","stack","fm","dx7"],wave:"square",voices:[1,2],spread:[.002,.006],cutoff:[2400,3400],level:[.44,.56],send:[.2,.35],dsend:[.25,.4],attack:.003,release:[.05,.09],sustain:[.5,.62],fenv:[.5,.9]},
+      lead:{patterns:["double","arpup","sparse"], patchPool:["SYN-CLAV 1","PRC SYNTH1"], recipe:{model:["casiocz","casiocz","casiocz","vocoder","stack","fm"],wave:"square",voices:[1,2],spread:[.002,.006],cutoff:[2400,3400],czWave:[.4,.6],dcwAmount:[.7,1],czDetune:[6,16],level:[.44,.56],send:[.2,.35],dsend:[.25,.4],attack:.003,release:[.05,.09],sustain:[.5,.62],fenv:[.5,.9]},
         inserts:{prob:.4, max:1, pool:[["phaser",{rate:[.2,.5],depth:[.5,.7],mix:[.35,.55]}]]}},   // the vocoder IS the genre's voice — the robot phases
       vocSource:"sp_system",
       pads:{prob:.45, recipe:{model:["saw","organ"],wave:"saw",cutoff:[800,1300],detune:[.004,.01],attack:[.3,.9],level:[.34,.46],send:[.2,.35],dsend:[.1,.2]}},
@@ -948,7 +948,7 @@
       progressions:["deep_two","drone_min","mode_phrygian"], kits:["trap","boombap"], fills:["cut","off","downlift"],
       bass:{patterns:["sub","dub","stab"], recipe:{model:["sub","reese"],cutoff:[240,420],res:[.05,.18],level:[1.2,1.45],send:[0,.06],dsend:[0,.08]},
         inserts:{prob:.5, max:1, pool:[["distort",{drive:[.3,.6],mix:[.5,.8]}]]}},   // the Memphis 808, clipping the tape
-      lead:{patterns:["double","pentaup","sparse"], patchPool:["SYN-CLAV 1"], recipe:{model:["pluck","fm","dx7"],wave:"square",voices:[1,2],spread:[.002,.005],cutoff:[2000,3000],level:[.42,.54],send:[.25,.4],dsend:[.25,.4],attack:.003,release:[.06,.1],sustain:[.5,.62],fenv:[.4,.7]}},   // the cowbell-ish square pluck; ~1/3 DX7 syn-clav menace
+      lead:{patterns:["double","pentaup","sparse"], patchPool:["SYN-CLAV 1"], recipe:{model:["casiocz","casiocz","pluck","fm","dx7"],wave:"square",voices:[1,2],spread:[.002,.005],cutoff:[2000,3000],czWave:[.4,.6],czDetune:[8,20],dcwAmount:[.4,.7],level:[.42,.54],send:[.25,.4],dsend:[.25,.4],attack:.003,release:[.06,.1],sustain:[.5,.62],fenv:[.4,.7]}},   // the CZ phase-distortion cowbell-key (detuned, low cutoff) in the smoke; square pluck + DX7 syn-clav the rest
       pads:{prob:.4, recipe:{model:["fm","saw"],wave:"sine",cutoff:[700,1200],detune:[.005,.011],attack:[1,2],level:[.36,.48],send:[.35,.5],dsend:[.1,.25]}},
       drums:{kickModel:["808"],snareModel:["crack","clap"],hatModel:["noise"],kick:[1.25,1.5],snare:[.8,1.05],hat:[.7,1],tune:[.85,1],send:[.1,.2],dsend:[.1,.25]},
       fx:{reverb:[.35,.5], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[1800,2800], pump:[.05,.2], crackle:[.35,.6], lowcut:[25,40], highcut:[7000,10000], comp:[.35,.6], grit:[.2,.4]},   // TAPE: heavy hiss + soft top
@@ -959,8 +959,8 @@
       bpm:[60,76], swing:[0,.08], humanize:[.1,.3],
       progressions:["deep_two","mode_phrygian","drone_min"], kits:["trap","halftime"], fills:["downlift","off","reverse"],
       bass:{patterns:["sub","root","dub"], recipe:{model:["sub"],cutoff:[240,420],res:[.05,.15],level:[1.15,1.35],send:[.05,.15],dsend:[0,.08]}},
-      lead:{patterns:["sparse","off","wander"], patchPool:["SYN-VOX","VOICES"], recipe:{model:["choir","fm","dx7"],wave:"sine",voices:[1,2],spread:[.002,.006],cutoff:[1800,2800],level:[.38,.5],send:[.5,.7],dsend:[.3,.5],vibrato:[.004,.01]}},   // ~1/3 the DX7 ghost-voices in the cathedral
-      pads:{prob:1, samplerPool:["ahh_choir"], recipe:{model:["choir","saw","sampler","sampler"],wave:"saw",cutoff:[700,1200],detune:[.008,.016],attack:[2,4],level:[.6,.78],send:[.6,.8],dsend:[.15,.3]},
+      lead:{patterns:["sparse","off","wander"], patchPool:["SYN-VOX","VOICES"], recipe:{model:["ppg","ppg","choir","fm","dx7"],wave:"sine",voices:[1,2],spread:[.002,.006],cutoff:[1800,2800],scan:[.3,.6],scanEnv:[.3,.6],scanLfo:[.05,.2],level:[.38,.5],send:[.5,.7],dsend:[.3,.5],vibrato:[.004,.01]}},   // ~2/5 the PPG wavetable ghost-lead in the cathedral; choir/DX7 the rest
+      pads:{prob:1, samplerPool:["ahh_choir"], recipe:{model:["vp330","vp330","ppg","ppg","choir","sampler"],wave:"saw",cutoff:[700,1200],detune:[.008,.016],attack:[2,4],vowel:[.1,.2],ensemble:[.85,1],scan:[.3,.6],scanEnv:[.2,.5],level:[.6,.78],send:[.6,.8],dsend:[.15,.3]},
         inserts:{prob:.5, max:1, pool:[["chorus",{rate:[.1,.3],depth:[.5,.8],mix:[.4,.6]}]]}},   // the drowned choir doubles and smears
       drums:{kickModel:["808"],snareModel:["crack","noise"],hatModel:["noise"],kick:[1.1,1.35],snare:[.6,.85],hat:[.6,.9],tune:[.8,.95],send:[.2,.35],dsend:[.15,.35]},
       fx:{reverb:[.85,.95], delayBeats:[.75,1.5], delayFb:[.4,.6], delayCut:[1500,2500], pump:[0,.1], crackle:[0,.15], lowcut:[0,25], highcut:[0,0], comp:[.2,.4], grit:[.1,.3]},
@@ -972,7 +972,7 @@
       progressions:["royal_road","dream","pop_1625"], kits:["halftime","kick","off"], fills:["off","downlift"],
       bass:{patterns:["root","simple","off"], recipe:{model:["saw","sub"],cutoff:[400,700],res:[.05,.15],level:[.8,1],send:[.1,.2],dsend:[0,.08]}},
       lead:{patterns:["sparse","composed","off"], patchPool:["E.PIANO 4","SHIMMER"], samplerPool:["alto_sax"], recipe:{model:["stack","dx7","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2400,3400],level:[.36,.48],send:[.5,.7],dsend:[.25,.45],vibrato:[.004,.009],attack:.1,release:[.5,.7],sustain:[.85,.95]}},   // ~1/3: the atrium EP/shimmer (alg-5 pair -> morphable)
-      pads:{prob:1, samplerPool:["ahh_choir"], recipe:{model:["saw","choir","sampler"],wave:"saw",cutoff:[900,1500],detune:[.004,.01],attack:[2,4],level:[.6,.8],send:[.6,.8],dsend:[.1,.25]},
+      pads:{prob:1, samplerPool:["ahh_choir"], recipe:{model:["casiocz","casiocz","saw","choir","sampler"],wave:"saw",cutoff:[900,1500],detune:[.004,.01],attack:[2,4],czWave:[0,.25],dcwAttack:[.3,.8],dcwAmount:[.3,.6],level:[.6,.8],send:[.6,.8],dsend:[.1,.25]},
         inserts:{prob:.6, max:1, pool:[["chorus",{rate:[.15,.35],depth:[.5,.75],mix:[.4,.6]}]]}},   // the empty-atrium shimmer — dreampool chorus on the wash
       drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.75,1],snare:[.5,.75],hat:[.6,.9],tune:[.9,1.05],send:[.2,.35],dsend:[0,.1]},
       fx:{reverb:[.88,.96], delayBeats:[.75,1.5], delayFb:[.3,.45], delayCut:[2000,3000], pump:[0,.05], crackle:[.1,.3], lowcut:[0,0], highcut:[0,0], comp:[0,.15]},
@@ -984,8 +984,8 @@
       progressions:["frost","frost","frost","mode_phrygian"], kits:["halftime","halftime","kick"], fills:["off","downlift"],   // frost triads DOMINANT — seventh≈0 is the fence vs vaporwave/newage
       bass:{patterns:["root","sub","simple"], recipe:{model:["sub"],cutoff:[240,420],res:[.05,.15],level:[.85,1.05],send:[.15,.3],dsend:[0,.08]}},
       lead:{patterns:["wander","arpup","sparse"], patchPool:["TUB BELLS","ORCH-CHIME","CELESTE"], recipe:{model:["bell","fm","dx7"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2200,3200],level:[.4,.52],send:[.5,.7],dsend:[.25,.4],vibrato:[.002,.006]}},   // icicle bells
-      pads:{prob:1, recipe:{model:["choir","strings"],wave:"saw",cutoff:[800,1400],detune:[.005,.012],attack:[2.5,4.5],level:[.6,.8],send:[.55,.78],dsend:[.1,.25]},
-        inserts:{prob:.4, max:1, pool:[["chorus",{rate:[.1,.25],depth:[.4,.6],mix:[.3,.5]}]]}},   // ice-crystal chorus, barely moving
+      pads:{prob:1, recipe:{model:["oberheim","oberheim","oberheim","choir","strings"],wave:"saw",cutoff:[800,1400],detune:[.005,.012],attack:[2.5,4.5],filterMode:[0,.2],envAmount:[1,1.6],osc2lfo:[.3,.6],obDetune:[8,16],level:[.6,.8],send:[.55,.78],dsend:[.1,.25]},
+        inserts:{prob:.4, max:1, pool:[["chorus",{rate:[.1,.25],depth:[.4,.6],mix:[.3,.5]}]]}},   // the Oberheim SEM snowfield pad (slow poly-mod sweeps), over real choir + strings; ice-crystal chorus barely moving
       drums:{kickModel:["boom","808"],snareModel:["noise"],hatModel:["noise"],kick:[.75,1],snare:[.4,.6],hat:[.4,.7],tune:[.85,1],send:[.25,.4],dsend:[.05,.2]},
       fx:{reverb:[.8,.92], delayBeats:[1,1.5], delayFb:[.4,.6], delayCut:[1600,2600], pump:[0,.05], crackle:[0,.12], lowcut:[0,20], highcut:[0,0], comp:[.1,.3]},
       found:{role:"bed", vol:[.12,.22], pitch:[.6,.78], stretch:[.45,.6], cutoff:[1800,3000], sources:["highway_night","iriomote","vx_conet_swedish"]},   // pitched-down wind stand-ins
@@ -1006,8 +1006,8 @@
     psytrance: { label:"Psytrance", info:"Goa at 145: the rolling 16th acid bassline that never stops, phrygian squelch, full-power",   // SYNTH-FORWARD: the bassline is the drug
       bpm:[140,148], swing:[0,.03], humanize:[0,.08],
       progressions:["mode_phrygian","drone_min","deep_two"], kits:["four","pulse"], fills:["riser","cut","impact","hat rush"],
-      bass:{patterns:["rolling","sixteenths"], recipe:{model:["acid"],cutoff:[380,650],res:[.25,.4],level:[1.2,1.4],send:[0,.05],dsend:[0,.06],release:[.06,.1],fenv:[.8,1.4]},
-        inserts:{prob:.8, max:1, pool:[["filtersweep",{rateBars:[2,4],lo:[-1.2,-.6],hi:[1,1.8],res:[.35,.55]}]]}},   // THE rolling line — squelchy, relentless, and SWEPT across 2-4 bars (full-power)
+      bass:{patterns:["rolling","sixteenths"], recipe:{model:["tb303","tb303","tb303","tb303","acid"],cutoff:[380,650],res:[.25,.4],envmod:[.55,.8],decay:[.3,.5],waveform:[0,.2],level:[1.2,1.4],send:[0,.05],dsend:[0,.06],release:[.06,.1],fenv:[.8,1.4]},
+        inserts:{prob:.8, max:1, pool:[["filtersweep",{rateBars:[2,4],lo:[-1.2,-.6],hi:[1,1.8],res:[.35,.55]}]]}},   // THE rolling line — the true 303 (mono-legato, accent/slide), squelchy and relentless, SWEPT across 2-4 bars (full-power)
       lead:{patterns:["arpup","sparse","hero","wander"], recipe:{model:["stack","pluck"],wave:"saw",voices:[2,3],spread:[.005,.01],cutoff:[2800,4000],res:[.2,.35],level:[.42,.54],send:[.3,.45],dsend:[.3,.45],attack:.004,release:[.07,.12],sustain:[.55,.68],fenv:[.6,1]}},
       pads:{prob:.7, recipe:{model:["saw"],wave:"saw",cutoff:[1000,1800],detune:[.008,.015],attack:[1,2],level:[.42,.56],send:[.4,.55],dsend:[.15,.3]}},
       drums:{kickModel:["909"],snareModel:["clap","noise"],hatModel:["noise","metal"],kick:[1.3,1.5],snare:[.5,.7],hat:[.8,1.1],tune:[1,1.1],send:[.08,.16],dsend:[.05,.15]},
@@ -1043,10 +1043,10 @@
     coldwave: { label:"Coldwave", info:"post-punk synth gloom: bass-forward triads, dry drums, cassette hiss, everything at arm's length",   // SYNTH-FORWARD: dry = the aesthetic
       bpm:[100,118], swing:[0,.06], humanize:[.1,.25],
       progressions:["frost","sad_pop"], kits:["pulse","four"], fills:["drum fill","cut","off"],
-      bass:{patterns:["drive","octaves","pedal"], recipe:{model:["saw"],cutoff:[600,950],res:[.12,.22],level:[1.2,1.4],send:[.02,.06],dsend:[0,.05]},
-        inserts:{prob:.7, max:1, pool:[["chorus",{rate:[.5,.9],depth:[.5,.7],mix:[.5,.7]}]]}},   // the bass LEADS — through the post-punk chorus pedal (the Hook/Cure sound)
+      bass:{patterns:["drive","octaves","pedal"], recipe:{model:["ppg","ppg","saw","saw","saw"],cutoff:[600,950],res:[.12,.22],scan:[.2,.5],sub:[.3,.6],level:[1.2,1.4],send:[.02,.06],dsend:[0,.05]},
+        inserts:{prob:.7, max:1, pool:[["chorus",{rate:[.5,.9],depth:[.5,.7],mix:[.5,.7]}]]}},   // the bass LEADS — ~2/5 the PPG wavetable bass; through the post-punk chorus pedal (the Hook/Cure sound)
       lead:{patterns:["sparse","double","updown"], patchPool:["TUB BELLS","ORCH-CHIME"], recipe:{model:["stack","stack","dx7"],wave:"square",voices:[1,2],spread:[.002,.006],cutoff:[2000,3000],level:[.4,.52],send:[.15,.3],dsend:[.15,.3],attack:.005,release:[.1,.18],sustain:[.6,.72],fenv:[.2,.4]}},   // ~1/3 cold DX7 bells at arm's length (alg-5 pair -> morphable)
-      pads:{prob:.7, recipe:{model:["strings","saw"],wave:"saw",cutoff:[900,1400],detune:[.004,.01],attack:[.8,1.8],level:[.35,.48],send:[.15,.3],dsend:[.05,.15]}},
+      pads:{prob:.7, recipe:{model:["ppg","ppg","ppg","ppg","strings","saw"],wave:"saw",cutoff:[900,1400],detune:[.004,.01],attack:[.8,1.8],scan:[.3,.6],scanEnv:[.2,.5],level:[.35,.48],send:[.15,.3],dsend:[.05,.15]}},   // cold PPG wavetable pad at arm's length; strings/saw the rest
       drums:{kickModel:["boom","909"],snareModel:["noise"],hatModel:["noise"],kick:[1.05,1.25],snare:[.8,1.05],hat:[.7,1],tune:[.9,1.05],send:[.05,.12],dsend:[0,.08]},   // DRY drums — no gated wash
       fx:{reverb:[.18,.32], delayBeats:[.5,.5], delayFb:[.2,.35], delayCut:[2200,3200], pump:[0,.1], crackle:[.15,.35], lowcut:[25,40], highcut:[0,0], comp:[.25,.45], grit:[.05,.2]},   // cassette hiss instead of reverb
       found:{role:"bed", vol:[.06,.12], pitch:[.8,.95], stretch:[.45,.6], cutoff:[1500,2500], sources:["factory","highway_night"]},
@@ -1071,8 +1071,8 @@
       bass:{patterns:["drive","root","pedal"], recipe:{model:["saw","modeld"],cutoff:[600,950],res:[.1,.18],level:[1.05,1.25],send:[.03,.08],dsend:[0,.05],
         glide:[20,40],envAmount:[.4,1],envDecay:[.25,.5],oscMix:[.1,.4],drift:[5,10]}},   // half the seeds: a droning Model-D under the motorik — shallow slow filter env, more drift than punch (the eternal pulse breathes)
       lead:{patterns:["motorik","wander","sparse"], recipe:{model:["stack","organ"],wave:"square",voices:[1,2],spread:[.002,.006],cutoff:[2200,3200],level:[.42,.54],send:[.2,.35],dsend:[.25,.4],attack:.005,release:[.08,.14],sustain:[.6,.72]}},   // the sequencer arp borrowed back from transitwave
-      pads:{prob:1, patchPool:["E.ORGAN 2","E.ORGAN 3","60-S ORGAN"], samplerPool:["church_organ","percussive_organ"], recipe:{model:["organ","dx7","sampler","sampler"],wave:"saw",cutoff:[800,1300],detune:[.004,.01],attack:[1.5,3],level:[.5,.65],send:[.3,.45],dsend:[.1,.2]},
-        inserts:{prob:.6, max:1, pool:[["phaser",{rate:[.1,.3],depth:[.5,.8],mix:[.4,.6]}]]}},   // ORGAN DRONES — the harmonium in the barn, through the kosmische phaser (Autobahn-issue)
+      pads:{prob:1, patchPool:["E.ORGAN 2","E.ORGAN 3","60-S ORGAN"], samplerPool:["church_organ","percussive_organ"], recipe:{model:["hammond","hammond","hammond","organ","dx7","sampler"],wave:"saw",cutoff:[800,1300],detune:[.004,.01],attack:[1.5,3],bar513:0,bar4:0,bar135:0,leslie:[.1,.2],perc:0,level:[.5,.65],send:[.3,.45],dsend:[.1,.2]},
+        inserts:{prob:.6, max:1, pool:[["phaser",{rate:[.1,.3],depth:[.5,.8],mix:[.4,.6]}]]}},   // ORGAN DRONES — the Hammond B-3 drone (808000000, near-still Leslie), the harmonium in the barn, through the kosmische phaser (Autobahn-issue)
       drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[1.1,1.3],snare:[.55,.8],hat:[.8,1.1],tune:[.95,1.05],send:[.08,.16],dsend:[0,.08]},   // dry live-room motorik
       fx:{reverb:[.3,.45], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[2400,3600], pump:[0,.1], crackle:[.1,.25], lowcut:[25,40], highcut:[0,0], comp:[.25,.45], grit:[.05,.2]},
       found:{role:"bed", vol:[.15,.25], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["highway_night","factory"]},   // the autobahn ITSELF, near natural pitch
@@ -1106,9 +1106,9 @@
     acidhouse: { label:"Acid house", info:"1988 Chicago: the 303 squelching over a dusty four-floor, smiley-face simple everything else",   // SYNTH-FORWARD: one machine, misused, forever
       bpm:[118,126], swing:[0,.08], humanize:[.05,.15],
       progressions:["house_min7","drone_min","funk_vamp"], kits:["house","four"], fills:["hat rush","riser","cut"],
-      bass:{patterns:["rolling","sixteenths","stab"], recipe:{model:["acid"],cutoff:[420,700],res:[.35,.5],level:[1.15,1.35],send:[0,.06],dsend:[0,.1],release:[.08,.14],fenv:[1,2]},
-        inserts:{prob:.75, max:1, pool:[["filtersweep",{rateBars:[1,2],lo:[-.8,-.3],hi:[1,1.6],res:[.4,.6]}]]}},   // THE 303 — resonance and fenv cranked, the squelch; the knob-rider sweeps it every bar or two
-      lead:{patterns:["off","sparse","double"], recipe:{model:["pluck"],wave:"square",voices:[1,2],spread:[.002,.005],cutoff:[2400,3400],level:[.36,.48],send:[.2,.35],dsend:[.2,.35],attack:.004,release:[.06,.1],sustain:[.5,.62],fenv:[.4,.7]}},
+      bass:{patterns:["rolling","sixteenths","stab"], recipe:{model:["tb303"],cutoff:[420,700],res:[.55,.75],envmod:[.55,.85],decay:[.35,.6],waveform:[0,.15],level:[1.15,1.35],send:[0,.06],dsend:[0,.1],release:[.08,.14],fenv:[1,2]},
+        inserts:{prob:.75, max:1, pool:[["filtersweep",{rateBars:[1,2],lo:[-.8,-.3],hi:[1,1.6],res:[.4,.6]}]]}},   // THE 303 (the true one: mono-legato, per-note accent + slide) — resonance and envmod cranked, the squelch; the knob-rider sweeps it every bar or two
+      lead:{patterns:["off","sparse","double"], recipe:{model:["tb303","tb303","pluck"],wave:"square",voices:[1,2],spread:[.002,.005],cutoff:[2400,3400],envmod:[.4,.7],decay:[.2,.4],level:[.36,.48],send:[.2,.35],dsend:[.2,.35],attack:.004,release:[.06,.1],sustain:[.5,.62],fenv:[.4,.7]}},   // ~2/3 the 303 doubling as the acid LEAD line; square pluck the rest
       pads:{prob:.35, recipe:{model:["organ","saw"],wave:"saw",cutoff:[800,1300],detune:[.004,.009],attack:[.2,.6],level:[.34,.46],send:[.25,.4],dsend:[.1,.2]}},
       drums:{kickModel:["909"],snareModel:["clap"],hatModel:["noise"],kick:[1.15,1.35],snare:[1,1.25],hat:[.9,1.2],tune:[.95,1.1],send:[.1,.2],dsend:[.05,.15]},
       fx:{reverb:[.35,.5], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[2400,3600], pump:[.3,.5], crackle:[.1,.28], lowcut:[30,45], highcut:[0,0], comp:[.4,.6]},   // warehouse dust on the record
@@ -1219,10 +1219,10 @@
       bass:{patterns:["drive","octaves","sixteenths","pedal"], recipe:{model:["reese","modeld"],cutoff:[350,600],res:[.15,.3],level:[1.15,1.35],send:[0,.06],dsend:[0,.06],
         glide:[20,40],envAmount:[1.2,2.2],envDecay:[.08,.16],oscMix:[.5,.9]},
         inserts:{prob:.7, max:1, pool:[["distort",{drive:[.35,.65],mix:[.7,.95]}]]}},   // the chase-scene reese OR a snarling pulse-heavy Model-D, subtle glide (modeld's own drive comes from the lead-shared key below being absent — envelope does the menace)
-      lead:{patterns:["hero","double","updown"], recipe:{model:["stack","fuzz","modeld"],wave:"saw",voices:[4,6],spread:[.01,.018],cutoff:[2600,3800],res:[.2,.35],drive:[.4,.7],level:[.48,.6],send:[.3,.45],dsend:[.25,.4],attack:.008,release:[.15,.25],sustain:[.7,.82],fenv:[.3,.6],
-        glide:[30,80],envAmount:[1.4,2.4],envDecay:[.08,.18],oscMix:[.4,.8],drift:[2,6]}},   // distorted supersaw / fuzz / hot mono Model-D trade the hook
-      pads:{prob:.9, recipe:{model:["saw"],wave:"saw",cutoff:[1000,1900],detune:[.01,.018],attack:[.8,1.8],level:[.5,.68],send:[.35,.5],dsend:[.1,.25]},
-        inserts:{prob:.5, max:1, pool:[["phaser",{rate:[.1,.3],depth:[.5,.75],mix:[.4,.6]}]]}},   // synthwave's phaser inherited, turned menacing
+      lead:{patterns:["hero","double","updown"], recipe:{model:["synclead","synclead","synclead","synclead","stack","fuzz","modeld"],wave:"saw",voices:[4,6],spread:[.01,.018],cutoff:[2600,3800],res:[.4,.5],drive:[.35,.55],syncRatio:[1.5,2.5],syncSweep:[2.5,3.5],syncDecay:[.12,.25],syncDetune:[6,14],level:[.48,.6],send:[.3,.45],dsend:[.25,.4],attack:.008,release:[.15,.25],sustain:[.7,.82],fenv:[.3,.6],
+        glide:[30,80],envAmount:[1.4,2.4],envDecay:[.08,.18],oscMix:[.4,.8],drift:[2,6]}},   // the hard-sync tearing lead (syncSweep 2.5-3.5, the darksynth formant scream); distorted supersaw / fuzz / hot Model-D trade the rest
+      pads:{prob:.9, recipe:{model:["oberheim","oberheim","saw"],wave:"saw",cutoff:[1000,1900],detune:[.01,.018],attack:[.8,1.8],filterMode:[.4,.7],envAmount:[1,1.8],osc2lfo:[.2,.5],level:[.5,.68],send:[.35,.5],dsend:[.1,.25]},
+        inserts:{prob:.5, max:1, pool:[["phaser",{rate:[.1,.3],depth:[.5,.75],mix:[.4,.6]}]]}},   // the Oberheim SEM pad (BP-morphed, slow poly-mod), synthwave's phaser inherited and turned menacing
       drums:{kickModel:["909"],snareModel:["noise","clap"],hatModel:["noise","metal"],kick:[1.3,1.5],snare:[.95,1.2],hat:[.5,.8],tune:[.9,1.05],send:[.25,.4],dsend:[.05,.15]},   // big gated snare, faster
       fx:{reverb:[.45,.6], delayBeats:[.375,.5], delayFb:[.25,.4], delayCut:[2200,3400], pump:[.1,.3], crackle:[0,.06], lowcut:[30,45], highcut:[0,0], comp:[.45,.65], grit:[.4,.7], jux:[.15,.35]},
       found:{role:"bed", vol:[.06,.12], pitch:[.7,.85], stretch:[.45,.6], cutoff:[1400,2400], sources:["factory","highway_night","vx_xminusone"]},

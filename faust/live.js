@@ -71,7 +71,13 @@
     const analyser = ctx.createAnalyser(); analyser.fftSize = 2048;
     fx.connect(master); master.connect(analyser); analyser.connect(ctx.destination);
     const dryBus = ctx.createGain(), revBus = ctx.createGain(), delBus = ctx.createGain(), ppBus = ctx.createGain();
-    dryBus.connect(merger, 0, 0); dryBus.connect(merger, 0, 1);
+    // dry path is STEREO-capable: a splitter feeds dryBus channel 0 -> merger L
+    // and channel 1 -> merger R. Mono voices up-mix to L=R (centered, unchanged);
+    // STEREO voices (juno60/hammond/vp330, 2-channel nodes) keep their width all
+    // the way to the fx_bus L/R inputs. rev/del/pp sends stay mono.
+    const drySplit = ctx.createChannelSplitter(2);
+    dryBus.connect(drySplit);
+    drySplit.connect(merger, 0, 0); drySplit.connect(merger, 1, 1);
     revBus.connect(merger, 0, 2); delBus.connect(merger, 0, 3); ppBus.connect(merger, 0, 4);
 
     // ---- MIXER LAYER TAPS ----
@@ -172,6 +178,17 @@
       // three+ six-op FM nodes sink the audio thread, and the declick steal
       // path covers note overlaps.
       if (u.dx7) n = Math.min(n, 2);
+      // heavy synth-fleet voices cost more per node than pad_saw/organ (juno60 +
+      // vp330 = BBD chorus delay lines + moog filter; hammond = 9 tonewheels +
+      // a 4-delay Leslie; solina/ppg = triple-tap ensemble / 12-frame table).
+      // Cap their pad pools at 3 so a section swap doesn't instantiate 4 heavy
+      // worklets at once (the instantiation spike dipped the load meter); the
+      // declick voice-steal covers the rare 4th-note overlap, same as dx7.
+      if (["juno60", "hammond", "vp330", "solina", "ppg"].includes(u.module)) n = Math.min(n, 3);
+      // MONO-LEGATO voices (modeld/tb303/synclead: u.mono, pool:1): ONE instance,
+      // ever — the pool:1 hint wins over the POOL_SIZE role table so all notes
+      // route to that one voice and glide/legato work (see the mono pass below).
+      if (u.mono) n = 1;
       const nodes = [];
       for (let i = 0; i < n; i++) {
         const node = await mkNode(u.module, key + i);
@@ -434,8 +451,11 @@
       const late = Math.max(0, nowT + 0.03 - t0);
       const at = (b) => t0 + late + (b - lo) * spb;
       const beatAbs = (b) => serial * 8 + (b - lo);   // musical beat since start
+      const monoBuckets = {};   // mono-legato units: scheduled in a dedicated pass below
       for (const e of m.events) {
         const uSpec = units[e.unit];
+        if (uSpec && uSpec.mono && !uSpec.sampler && !uSpec.drum) {   // MONO-LEGATO: batched, scheduled after
+          (monoBuckets[e.unit] = monoBuckets[e.unit] || []).push(e); continue; }
         if (uSpec && uSpec.sampler) {   // SAMPLER note: native buffer playback
           const player = samplerOf(e.unit);
           const midi = SP ? SP.midiOfFreq(e.sets.freq) : 0;
@@ -491,6 +511,41 @@
         v.tailUntil = tOff + (pool.spec.tail != null ? pool.spec.tail : 1);
         layers.get(LAYER_OF_UNIT(e.unit)).lastBar = serial;
         schedLog(e.drum ? "drum:" + e.unit : e.unit, beatAbs(e.beat), tOn);
+      }
+      // ---- MONO-LEGATO pass (modeld/tb303/synclead: u.mono, pool 1) ----
+      // Port of press.js's mono grouping into the live pool. Every note of the
+      // unit routes to node 0; per-note freq/params are set BEFORE gate-on so
+      // the module slews (glide); when the next note starts within legatoSec of
+      // the previous note's gate-off, the gate is HELD across the group (the
+      // pending gate-off is cancelled and NO new gate-on is issued) so the
+      // envelopes single-trigger and the pitch slides — exactly the press
+      // contract. pool._monoOff carries the pending gate-off time ACROSS bars.
+      for (const key of Object.keys(monoBuckets)) {
+        const pool = pools.get(key); if (!pool || !pool.nodes.length) continue;
+        const evs = monoBuckets[key].sort((a, b) => a.beat - b.beat);
+        const v = pool.nodes[0], g = P(v.node, "gate");
+        const legatoSec = pool.spec.legatoSec != null ? pool.spec.legatoSec : 0.03;
+        for (const e of evs) {
+          const tOn = at(e.beat), durSec = e.durB * spb;
+          const tOff = tOn + Math.max(0.012, durSec) - 0.008;
+          for (const [k, val] of Object.entries(e.sets)) {
+            const p = P(v.node, k);
+            if (p) p.setValueAtTime(Math.min(p.maxValue, Math.max(p.minValue, val)), Math.max(nowT, tOn - 0.006));
+          }
+          if (pool.spec.extGainPerAmp)
+            v.out.gain.setValueAtTime(Math.min(1, pool.spec.extGainPerAmp * (e.amp || 0.1)), Math.max(nowT, tOn - 0.006));
+          const legato = pool._monoOff != null && tOn <= pool._monoOff + legatoSec;   // gap < legatoSec or overlapping (press parity)
+          if (g) {
+            if (legato) g.cancelScheduledValues(Math.max(nowT, pool._monoOff - 1e-4)); // withdraw pending gate-off; gate stays high
+            else g.setValueAtTime(1, tOn);
+            g.setValueAtTime(0, tOff);
+          }
+          pool._monoOff = tOff;
+          v.busyUntil = tOff;
+          v.tailUntil = tOff + (pool.spec.tail != null ? pool.spec.tail : 1);
+          layers.get(LAYER_OF_UNIT(key)).lastBar = serial;
+          schedLog(key, beatAbs(e.beat), tOn);
+        }
       }
       // found: chop events in-window; bed re-anchored at bar start of chord 0
       // (buffers prefetched above — scheduling here is synchronous, same clock)

@@ -98,13 +98,17 @@ holds the gate across legato groups — notes whose gap to the previous note is
 < 30 ms (or which overlap) join the running group: the pending gate-off is
 withdrawn, `freq` slews inside the module, and the envelopes single-trigger
 (no retrigger mid-phrase, like the real thing). press.js implements this in
-its allocation loop. **LIVE GAP**: live.js's generic pool ignores `mono`
-(POOL_SIZE forces melody=3/bass=2 and gates per note) — every note still
-plays at the right pitch/time and glide is audible on reused nodes, but
-envelopes retrigger on legato notes and overlapping notes may land on a
-different node (gliding in from that node's stale freq). The live side needs:
-(1) pool size 1 when `u.mono`, (2) merge gate-off/gate-on pairs when the next
-event's tOn − prev tOff < `u.legatoSec`. Next round.
+its allocation loop. **LIVE (fixed 2026-07, synth-fleet round)**: live.js now
+honors `mono` — `ensurePool` forces pool size 1 when `u.mono` (the `pool:1`
+hint wins over the POOL_SIZE role table), and `injectChord` schedules mono
+units in a dedicated pass that ports press's grouping: all notes route to
+node 0, per-note freq/params are set before gate-on (the module slews), and a
+note whose `tOn` is within `legatoSec` of the previous note's gate-off HOLDS
+the gate (the pending gate-off is cancelled, no new gate-on) so envelopes
+single-trigger. `pool._monoOff` carries the pending gate-off across bars.
+Verified by `faust/probe-modeld.js`: nodes 3→1, all notes on node0, envelope
+re-attacks many→1, glide active. (This live fix is what tb303 slide and
+synclead legato also ride.)
 
 Kernel homes: synthwave lead (hero lines, glide 60–150 ms), darksynth
 lead+bass, edm bass, krautrock bass drones (shallow slow env, heavy drift),
@@ -192,11 +196,16 @@ Adopted substitutions and available upgrades:
 
 ## Known gaps / Phase-2 notes
 
-- **ve.moogLadder in the bundled faustlibraries (faustwasm 0.16.5 / Faust
-  2.85.8) is broken** — measured cutoff ∝ normFreq^~2.5 with ~-60 dB passband
-  loss (see session A/B round 1). All ladder filters use `ve.moog_vcf_2bn(res,
-  fcHz)` instead, which matches csound moogladder semantics (Hz + res 0..1).
-  The FAUST-PORT.md port map's "ve.moogLadder" line is superseded.
+- **The bundled faustlibraries' NORMALIZED-FREQUENCY Zavalishin/TPT ladder
+  family is BROKEN — `ve.moogLadder` AND `ve.diodeLadder` (and the korg35*
+  siblings).** `ve.moogLadder` measured cutoff ∝ normFreq^~2.5 with ~-60 dB
+  passband loss (session A/B round 1). `ve.diodeLadder(normFreq 0-1, Q)` is the
+  SAME normalized-freq TPT topology (tb303's commission asked for it; it could
+  not be empirically verified and is treated as broken by association — confirmed
+  the whole normalized-freq family is off). **Rule: every ladder filter uses
+  `ve.moog_vcf_2bn(res 0..1, fcHz)`** — Hz-native, stable, self-oscillating as
+  res→1, matches csound moogladder. tb303/synclead/juno60/ppg all use it. The
+  FAUST-PORT.md port map's "ve.moogLadder" line is superseded.
 - `supersaw` computes 7 voices × 4 waves and gates at runtime — pure-param
   timbre morphs, ~28 cheap oscillators. If worklet CPU matters, split
   per-wave variants at build time.
@@ -311,3 +320,50 @@ Adopted substitutions and available upgrades:
   (pitch 90-160 Hz, level ≈ −30 dB) co-located with a seeded fraction of lead
   notes, added in buildEvents AFTER applyGroove so the thunk lands with the
   humanized key strike. Own rng stream; absent = zero behavior change.
+
+## Synth fleet — nine classic-synth voices (2026-07)
+
+Nine hand-modelled instruments (`dsp/{juno60,tb303,solina,hammond,synclead,
+casiocz,oberheim,ppg,vp330}.dsp`), each probe-verified on real renders. The
+kernel resolves them as plain `model` strings (state-engine `pitchedUnit`;
+csd-engine `isModel` lists them). Recipe params default to sensible values in
+state-engine, so a genre can wire a voice with **model-only** (adding the name
+to a `recipe.model` pool) and get a good sound with **zero rng shift** — only
+`pick()` (one draw, length-independent) moves. Signature params (`chorus`,
+`ensemble`, drawbars, `syncSweep`, `scan`, `vowel`…) are added to a recipe only
+where the extra rng draws don't tip a genre off its verifier diagonal.
+
+| voice | module | role | out | pool | signature dims (recipe keys) | genre homes |
+|---|---|---|---|---|---|---|
+| Juno-60 | `juno60` | pad/keys | **stereo** | 4→3 | chorus 0-2, chorusSpread, saw/pulse/sub/noiseLevel, pwmBase/pwmLfo, SIGNED envAmount, lfoToFilter, keytrack; one shared ADSR | synthwave/italo/citypop/house pads |
+| TB-303 | `tb303` | bass/lead | mono | **1** | resonance, envmod, decay, waveform (0 saw→1 sq); per-note accent/slide | acidhouse/psytrance bass (**supersedes bass_acid**), acidhouse lead |
+| Solina | `solina` | pad | mono | 6/4→3 | ensemble (identity), chorusRate/Depth, octave; **cutoff→tone**, NO res, inserts dropped (ensemble is the chorus) | sovietwave/italo/newage pads |
+| Hammond B-3 | `hammond` | pad/keys | **stereo** | 4→3 | 9 drawbars bar16..bar1 (0-8, THE morph), leslie, perc/percHarm/percDecay, click, leak, drive | house/krautrock/blues (comp) |
+| sync lead | `synclead` | lead/solo | mono | **1** | syncRatio, syncSweep (env), syncDecay, syncDetune, envAmount (oct); modeld glide/legato contract | darksynth/edm/italo leads |
+| Casio CZ | `casiocz` | keys/lead | mono | 4 | czWave (halfSine→pulse), index, dcwAmount + dcwAttack/Decay/Sustain (DCW contour = identity), czDetune | chiptune/electro/phonk leads, mallsoft pad |
+| Oberheim SEM | `oberheim` | pad | mono | 4→3? | filterMode (LP/BP/HP morph), envAmount (oct), osc2lfo, pmFM, pmFilt (poly-mod), obDetune, osc2tune | wintersynth/darksynth/sovietwave pads |
+| PPG Wave | `ppg` | pad/lead | mono | 4/3→3 | scan (STAR dim — wavetable position), scanEnv (signed), scanLfo/scanRate, envAmount, sub, drive | witchhouse/coldwave/idm |
+| VP-330 | `vp330` | pad | **stereo** | 4→3 | vowel (oo→ah), breath, ensemble (width), vpDetune; dark, cutoff→straight | sovietwave/witchhouse/newage/dinosynth pads |
+
+Engine-level integration this round:
+- **Stereo voice branch** (juno60/hammond/vp330, `manifest outputs===2`, unit
+  flag `stereo:true`). **press.js**: channel [0]→wide-L, [1]→wide-R buses;
+  sends use the mono sum; fx_bus dry-L/R inputs = `dry + wL/wR`. **live.js**: a
+  ChannelSplitter on `dryBus` routes ch0→merger-L, ch1→merger-R — mono voices
+  up-mix to L=R (centered, unchanged), stereo voices keep width to the fx_bus.
+  Every stereo DSP's channel 0 is a full mono signal, so any path that reads
+  only [0] degrades gracefully. Confirmed: citypop juno60 render has both
+  channels non-silent + a real L−R side signal.
+- **Live pool cap 3** for the heavy fleet voices (juno60/hammond/vp330/solina/
+  ppg) — a section swap otherwise instantiates 4 heavy worklets at once and
+  dipped the load meter; declick voice-steal covers the 4th-note overlap (same
+  rationale as the dx7 cap at 2).
+- **tb303 accent/slide**: csd-engine `buildEvents` tags acid bass steps with
+  `ev.accent`/`ev.slide` (0..1) — ONLY when `instruments.bass.model==="tb303"`,
+  on its own rng stream, so every other render is byte-identical. mapEvents
+  copies them into per-note `sets` for `u.acid` units; press + the live mono
+  pass set them before gate-on. Every non-303 voice ignores accent/slide.
+- **DX7 morph caveat** (explorer.html): `timbreId` no longer includes
+  `dx7.name` — a same-algorithm patch change is morphed by the glideStep param
+  lerp, so the name only queued a redundant one-bar discrete flip (~22% of
+  |B−A| snap). Topology changes still flip via `dx7.algorithm`.

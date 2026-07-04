@@ -116,9 +116,15 @@ async function press(state, outPath, opts) {
     (opts.dur ? ` (capped ${totalSec.toFixed(1)}s)` : "") +
     `; ${sched.events.length} synth events, ${sched.found.length} found events`);
 
-  // accumulator buses (mono dry; fx_bus gets it on both L/R inputs)
+  // accumulator buses (mono dry -> fx_bus L/R; rev/del/pp sends stay mono).
+  // STEREO voices (juno60/hammond/vp330, outputs===2) add their channel 0/1 to
+  // the separate wide buses wL/wR, so the dry path carries their width into the
+  // fx_bus L/R inputs while every mono voice stays centered (dry, duplicated).
   const dry = new Float32Array(TOTAL), rev = new Float32Array(TOTAL),
         del = new Float32Array(TOTAL), pp = new Float32Array(TOTAL);
+  const anyStereo = Object.values(sched.units).some(u => u && u.stereo);
+  const wL = anyStereo ? new Float32Array(TOTAL) : null;
+  const wR = anyStereo ? new Float32Array(TOTAL) : null;
 
   // ---- found layer: decode + pure-JS granular/chopper mix ----
   const usedSrc = new Set(sched.found.map(f => f.srcId));
@@ -266,11 +272,25 @@ async function press(state, outPath, opts) {
           const len = Math.min(BS, TOTAL - s);
           while (ci < v.changes.length && v.changes[ci][0] < s + len) { applyChange(v.changes[ci]); ci++; }
           const ins = u.vocoder && speech ? [speech.subarray(s, s + len)] : (u.vocoder ? [new Float32Array(len)] : []);
-          const o = v.proc.render(ins, len)[0];
+          const oo = v.proc.render(ins, len);
+          const o = oo[0];
           if (ubuf) {
             // pre-insert: only per-note out gain applies (matches live, where
             // the voice's out GainNode feeds the chain); sends come after.
+            // (stereo voices are folded to channel 0 through the mono insert
+            // chain — graceful; the wired stereo genres carry no inserts.)
             for (let i = 0; i < len; i++) ubuf[s + i] += o[i] * curOut;
+          } else if (u.stereo && wL) {
+            // STEREO voice: [0]->L, [1]->R for the dry width; sends use the mono sum
+            const o1 = oo[1] || o;
+            const dg = (u.dry != null ? u.dry : 1) * curOut, rg = (u.rev || 0) * curOut,
+                  lg = (u.del || 0) * curOut, pg = curPP * curOut;
+            for (let i = 0; i < len; i++) {
+              const l = o[i], r = o1[i], mono = (l + r) * 0.5;
+              wL[s + i] += l * dg; wR[s + i] += r * dg;
+              rev[s + i] += mono * rg; del[s + i] += mono * lg;
+              if (pg) pp[s + i] += mono * pg;
+            }
           } else {
             const dg = (u.dry != null ? u.dry : 1) * curOut, rg = (u.rev || 0) * curOut,
                   lg = (u.del || 0) * curOut, pg = curPP * curOut;
@@ -315,6 +335,9 @@ async function press(state, outPath, opts) {
     .sort((a, b) => a.t0 - b.t0);
   const L = new Float32Array(TOTAL), Rr = new Float32Array(TOTAL);
   const zero = new Float32Array(BS);
+  // fx_bus dry L/R inputs: mono dry duplicated, plus the stereo voices' width.
+  const dryL = wL ? (() => { const b = new Float32Array(TOTAL); for (let i = 0; i < TOTAL; i++) b[i] = dry[i] + wL[i]; return b; })() : dry;
+  const dryRch = wR ? (() => { const b = new Float32Array(TOTAL); for (let i = 0; i < TOTAL; i++) b[i] = dry[i] + wR[i]; return b; })() : dry;
   let mcut = 21000, swi = 0; const activeSw = [];
   for (let s = 0; s < TOTAL; s += BS) {
     const len = Math.min(BS, TOTAL - s), t = s / SR;
@@ -328,7 +351,7 @@ async function press(state, outPath, opts) {
       }
       fx.setParamValue("/fx_bus/mcut", Math.min(21000, Math.max(180, mcut)));
     }
-    const o = fx.render([dry.subarray(s, s + len), dry.subarray(s, s + len),
+    const o = fx.render([dryL.subarray(s, s + len), dryRch.subarray(s, s + len),
       rev.subarray(s, s + len), del.subarray(s, s + len), pp.subarray(s, s + len), zero.subarray(0, len)], len);
     L.set(o[0], s); Rr.set(o[1], s);
   }

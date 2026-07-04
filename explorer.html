@@ -231,7 +231,12 @@ const setP=(o,p,v)=>{const ks=p.split("."),l=ks.pop();ks.reduce((a,k)=>a[k]=a[k]
 // sampler forever (the kernel emits instruments.<voice>.{dx7,sampler} and the
 // Faust engine builds the unit from them — see state-engine pitchedUnit).
 const timbreId=v=>c=>{const m=c.instruments[v];
-  return [m.model, m.dx7&&m.dx7.algorithm, m.dx7&&m.dx7.name, m.sampler&&m.sampler.id];};
+  // dx7.name is deliberately EXCLUDED: a same-algorithm patch change (different
+  // name, e.g. "A"->"A~B") is morphed continuously by the glideStep param lerp
+  // below, so folding name in only queued a redundant one-bar discrete voice
+  // flip on top of the lerp (probe measured ~22% of |B-A| snap). A real topology
+  // change still flips — it changes dx7.algorithm.
+  return [m.model, m.dx7&&m.dx7.algorithm, m.sampler&&m.sampler.id];};
 const timbreFlip=v=>(c,t)=>{const cv=c.instruments[v], tv=t.instruments[v];
   cv.model=tv.model;
   if(tv.dx7) cv.dx7=deep(tv.dx7); else delete cv.dx7;
