@@ -18,6 +18,7 @@
   #map{position:fixed;inset:0;width:100vw;height:100vh;z-index:1;cursor:crosshair;touch-action:none;
     user-select:none;-webkit-user-select:none}
   #map text{pointer-events:none}
+  #map .cur{pointer-events:none}  /* the traveler is display-only: it never steals a waypoint grab */
   .brand{position:fixed;top:.7rem;left:1rem;z-index:3;font-family:Orbitron,sans-serif;font-size:1.02rem;letter-spacing:.05em;margin:0;
     background:linear-gradient(90deg,var(--amber),var(--pink) 52%,var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .sub{position:fixed;top:3.1rem;left:1rem;z-index:3;color:var(--dim);font-size:.8rem;max-width:46ch;display:none;
@@ -101,6 +102,23 @@
   .seedin{width:90px;background:rgba(28,24,56,.6);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.3rem .5rem}
   .hint{color:var(--dim);font-size:.7rem;margin-top:.45rem}
   a{color:var(--cyan)}
+  /* BOOT PROGRESS: a chrome hairline pinned to the top edge (pixel-locked like
+     the chips/brand — px, fixed, never scales with the map). Same pink→cyan
+     the score bars use; a shimmer sweep marks an honest stall. */
+  #boot{position:fixed;left:0;top:0;width:100%;z-index:8;pointer-events:none;
+    opacity:0;transition:opacity .35s ease}
+  #boot.on{opacity:1}
+  #boot .btrack{position:relative;height:3px;width:100%;overflow:hidden;
+    background:rgba(255,255,255,.06)}
+  #boot .bfill{height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--cyan));
+    box-shadow:0 0 8px var(--pink);transition:width .5s cubic-bezier(.4,0,.2,1)}
+  #boot.ind .btrack::after{content:"";position:absolute;inset:0;width:38%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);
+    animation:bootshim 1.05s linear infinite}
+  @keyframes bootshim{from{transform:translateX(-120%)}to{transform:translateX(330%)}}
+  #boot .blabel{position:absolute;top:9px;left:50%;transform:translateX(-50%);
+    font:12px VT323,monospace;letter-spacing:.14em;color:var(--cyan);
+    text-shadow:0 0 6px #000;white-space:nowrap}
   @media(max-width:640px){
     #panel{left:.5rem;right:.5rem;top:auto;bottom:4.2rem;width:auto;max-height:46vh}
     #chips{right:.5rem;bottom:.5rem}
@@ -122,6 +140,10 @@ Drag waypoints to move them, right-click to erase. Set the pace in the panel.
 <div class="modal" id="panelWrap"><div class="card" id="panel"></div></div>
 <div class="modal" id="npWrap"><div id="playhead">▶ press LIVE</div></div>
 <div class="modal" id="mixWrap"><div id="mixer"><h2>mixer</h2><div id="mixRows">…</div></div></div>
+<!-- boot progress: a pixel-locked hairline at the very top edge, shown while the
+     live engine warms up (module load -> voices -> first bar -> first audio),
+     faded on the first real RMS. Honest: stalls shimmer, never fake 100%. -->
+<div id="boot" aria-hidden="true"><div class="btrack"><div class="bfill"></div></div><div class="blabel"></div></div>
 <div id="chips">
   <button class="chip" id="playChip" title="LIVE / STOP">▶</button>
   <button class="chip" id="mixChip" title="mixer">𝄚</button>
@@ -159,7 +181,17 @@ const POS={ ambient:[55,55], neoclassical:[65,165], vaporwave:[150,100], lofi:[1
   krautrock:[390,165], newjack:[300,190], breakcore:[495,340], acidhouse:[385,200],
   surfrock:[275,350], spacelounge:[130,165], arabpop:[215,285], tango:[95,300],
   afrobeat:[265,215], desertblues:[110,375], sludgemetal:[30,150],
-  industrialmetal:[498,190], darksynth:[385,35] };
+  industrialmetal:[498,190], darksynth:[385,35],
+  // genre-tool commissions: chart positions for genres genre-tool.js appends to
+  // GENRES/anchors/clips but can't place on the star map. New genres go inside
+  // this marker block — one `name:[x,y],` line per genre, >=~55 logical px from
+  // every existing star (the crowding law: too-close stars blur the blend and
+  // overlap snap radii — see the arabpop/triphop discontinuity note on weightsAt).
+  /* genre-tool:positions */
+  hogcore:[406,360],   // hardcore/rave bottom band — jungle 55px, garage 73px (gabber family, gabber corner saturated)
+  prelude:[158,45],    // dreamy/acoustic upper band — mallsoft 55px, vaporwave 56px, newage 81px (neoclassical corner saturated)
+  /* /genre-tool:positions */
+  };
 const SNAP=26, CUTOFF=175, BARS_PER_SEG=128;   // one path leg ≈ 128 bars — genres evolve slowly, almost imperceptibly
 const KEYS=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 const PROG_MODE={ royal_road:[0,"major · royal road"], four_chords:[0,"major"], sad_pop:[9,"minor"],
@@ -181,7 +213,8 @@ const S={ cursor:{x:250,y:165}, waypoints:[], travel:{seg:0,t:0}, weights:[],
   pool:"", beatLine:"▶ press LIVE" };
 const subs=[];
 window.__S=S;   // debug/probe access (headless verification)
-window.__X={retarget:(...a)=>retarget(...a), goLive:(...a)=>goLive(...a), stopLive:(...a)=>stopLive(...a), weightsAt:(...a)=>weightsAt(...a)};   // headless stop→path→LIVE probe
+window.__X={retarget:(...a)=>retarget(...a), goLive:(...a)=>goLive(...a), stopLive:(...a)=>stopLive(...a), weightsAt:(...a)=>weightsAt(...a),
+  clampZoom:()=>clampZoom(), zoomAround:(...a)=>zoomAround(...a), POS};   // headless stop→path→LIVE + corner-reach probe
 let _raf=0;
 function set(patch){ Object.assign(S,patch);
   if(_raf)return; _raf=requestAnimationFrame(()=>{ _raf=0; subs.forEach(f=>f()); }); }
@@ -395,7 +428,62 @@ function genreVideo(info){
 // The Faust per-voice engine is THE engine (FAUST-PORT.md phase 3; the csound
 // WASM path lives on branch legacy-csound).
 let faustHandle=null;
+// ---------- boot progress: honest warm-up meter (play tap -> first audio) ----
+// The live boot has real, observable phases (faust/live.js emits them via
+// onStatus, plus onBar for the first scheduled bar): "loading Faust modules…"
+// (the big ESM+wasm fetch), then "live (faust)…" once the master graph is up,
+// then the first onBar (first bar scheduled), then audio. We drive the bar off
+// THOSE events only — never a timer faking progress. If a phase stalls, the bar
+// holds its honest width and shimmers (indeterminate) instead of creeping to
+// 99%. It completes only on the first real RMS (sound is actually out), then
+// fades. Same path serves the journey/path start: play always routes through
+// goLive() (the path just pre-seeds waypoints), so this covers both.
+const bootEl=document.getElementById("boot"),
+      bootFill=bootEl.querySelector(".bfill"), bootLabel=bootEl.querySelector(".blabel");
+let bootStageV=0, bootActive=false, bootStallT=0, bootRmsT=0;
+function bootTo(frac,label){
+  if(frac<bootStageV) return;                       // monotonic: never walk backward
+  bootStageV=frac; bootEl.classList.remove("ind");
+  bootFill.style.width=Math.round(frac*100)+"%";
+  if(label) bootLabel.textContent=label;
+  clearTimeout(bootStallT);
+  if(frac<1) bootStallT=setTimeout(()=>{ if(bootActive) bootEl.classList.add("ind"); },1400);
+}
+function bootStart(){
+  bootActive=true; bootStageV=0;
+  bootEl.classList.add("on"); bootEl.classList.remove("ind");
+  bootFill.style.transition="none"; bootFill.style.width="0%";
+  void bootFill.offsetWidth; bootFill.style.transition="";   // reflow so the fill restarts from 0
+  bootTo(0.08,"waking the engine…");
+}
+function bootStatus(m){
+  if(!bootActive) return;
+  if(/loading faust modules/i.test(m)) bootTo(0.24,"loading synth modules…");
+  else if(/^live|tap again if silent/i.test(m)) bootTo(0.62,"building the voices…");
+}
+function bootBar(){
+  if(!bootActive) return;
+  bootTo(0.86,"scheduling the first bar…");
+  if(!bootRmsT) bootRmsT=setInterval(()=>{               // wait for REAL sound, not a guess
+    let r=0; try{ r=faustHandle?faustHandle.rms():0; }catch(e){}
+    if(r>0.0008) bootDone();
+  },80);
+}
+function bootDone(){
+  if(!bootActive) return;
+  bootActive=false; clearInterval(bootRmsT); bootRmsT=0; clearTimeout(bootStallT);
+  bootEl.classList.remove("ind");
+  bootTo(1,"playing"); bootFill.style.width="100%";
+  setTimeout(()=>{ if(!bootActive) bootEl.classList.remove("on"); },500);
+}
+function bootAbort(){   // stop pressed mid-warmup, or boot failed: pull it down
+  bootActive=false; clearInterval(bootRmsT); bootRmsT=0; clearTimeout(bootStallT);
+  bootEl.classList.remove("on","ind");
+}
+window.__BOOT={ stage:()=>bootStageV, active:()=>bootActive, on:()=>bootEl.classList.contains("on"),
+  ind:()=>bootEl.classList.contains("ind"), width:()=>bootFill.style.width };   // headless probe
 async function goLive(){
+  bootStart();
   try{
     // a drawn path starts FRESH: reset the traveler to the path start and
     // SNAP the playing state to that target (retarget while !S.live replaces
@@ -407,15 +495,17 @@ async function goLive(){
     }
     vidReset();   // fresh shuffled video bag per play session — different clip order every time
     set({live:true,barCount:0}); rebuildQueue();
-    faustHandle=await FaustLive.exploreLive(()=>S.playing, m=>set({status:m}), { onLoad:(r)=>{S.load=r;}, onBar:(info)=>{
+    faustHandle=await FaustLive.exploreLive(()=>S.playing, m=>{set({status:m}); bootStatus(m);}, { onLoad:(r)=>{S.load=r;}, onBar:(info)=>{
+      bootBar();   // first bar scheduled -> advance the warm-up bar, then it waits on real RMS
       set({barInfo:info,barCount:S.barCount+1});
       if(S.waypoints.length>=2) travelStep();
       glideStep();
       genreVideo(info);
     }});
-  }catch(e){ set({live:false,status:"live failed: "+e.message}); console.error(e); }
+  }catch(e){ set({live:false,status:"live failed: "+e.message}); bootAbort(); console.error(e); }
 }
 function stopLive(){ set({live:false, queue:[]});   // queue cleared: the next run must not inherit this run's glide flips
+  bootAbort();   // stopped before sound? clear the warm-up bar
   if(faustHandle){ try{faustHandle.stop();}catch(e){} faustHandle=null; }
   set({status:"stopped"}); }
 setInterval(()=>{ if(!S.live&&S.playing&&S.target){ set({barCount:S.barCount+1}); glideStep(); } },1400);
@@ -423,6 +513,19 @@ setInterval(()=>{ if(!S.live&&S.playing&&S.target){ set({barCount:S.barCount+1})
 // ---------- map (imperative SVG: 60Hz drags stay cheap) ----------
 const svg=document.getElementById("map"), NS="http://www.w3.org/2000/svg";
 const el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+// the traveler's live screen pos+scale, published by drawMap for cursorPulse.
+// A standalone rAF animates ONLY the #curPulse glow radius/opacity, so the
+// breath is smooth 60Hz and never resets when the imperative drawMap rebuilds
+// the SVG (SMIL on a rebuilt node would restart+jitter every bar).
+const curPos={x:0,y:0,s:1};
+function cursorPulse(){
+  const p=document.getElementById("curPulse");
+  if(p){ const ph=(Math.sin(performance.now()/1000*2.2)+1)/2;   // 0..1, ~1.4s breath
+    p.setAttribute("r",(curPos.s*(30+ph*10)).toFixed(1));
+    p.setAttribute("opacity",(0.10+ph*0.13).toFixed(3)); }
+  requestAnimationFrame(cursorPulse);
+}
+requestAnimationFrame(cursorPulse);
 function drawMap(){
   // a star chart drawn straight over the video: each genre is a star with a
   // soft halo; the drawn path is a constellation line; the traveler glows.
@@ -459,10 +562,16 @@ function drawMap(){
     n.style.fontSize=(22*fs)+"px"; n.textContent=i+1;
     svg.appendChild(n);
   });
+  // the TRAVELER: the focal MOVING element — reads at least as prominently as
+  // the waypoint dots it glides between (30dded3 doubled those: halo 28·fs, dot
+  // 18·fs). Pink targeting reticle + soft breathing glow (animated by
+  // cursorPulse). Now scales with fs like everything else (it didn't before).
   const ccx=X(S.cursor.x), ccy=Y(S.cursor.y);
-  svg.appendChild(el("circle",{cx:ccx,cy:ccy,r:13,fill:"none",stroke:"#ff6ec7","stroke-width":1,opacity:.4}));
-  svg.appendChild(el("circle",{cx:ccx,cy:ccy,r:9,fill:"none",stroke:"#ff6ec7","stroke-width":2}));
-  svg.appendChild(el("circle",{cx:ccx,cy:ccy,r:2.4,fill:"#ff6ec7"}));
+  curPos.x=ccx; curPos.y=ccy; curPos.s=fs;
+  svg.appendChild(el("circle",{id:"curPulse","class":"cur",cx:ccx,cy:ccy,r:32*fs,fill:"#ff6ec7",opacity:.14}));       // breathing glow
+  svg.appendChild(el("circle",{"class":"cur",cx:ccx,cy:ccy,r:24*fs,fill:"none",stroke:"#ff6ec7","stroke-width":1.4*fs,opacity:.5}));  // outer reticle
+  svg.appendChild(el("circle",{"class":"cur",cx:ccx,cy:ccy,r:16*fs,fill:"none",stroke:"#ff8fd6","stroke-width":2.6*fs}));             // bright ring
+  svg.appendChild(el("circle",{"class":"cur",cx:ccx,cy:ccy,r:4.5*fs,fill:"#ff6ec7"}));                                               // core
 }
 addEventListener("resize",()=>set({}));
 // ---------- zoom: pinch (2 pointers) or ctrl+wheel, MAP ONLY ----------
@@ -470,12 +579,20 @@ addEventListener("resize",()=>set({}));
 // at any zoom. k clamped 1..4; at 1x the offsets snap home.
 const ZOOM={k:1,ox:0,oy:0};
 window.__ZOOM=ZOOM;   // debug/probe access
-// generous pan padding: without it the clamp pins the scaled star field flush
-// to the viewport edges, so an edge genre (e.g. desertblues, breakcore) can
-// only ever reach the viewport EDGE, never the thumb-friendly center. PAD lets
-// you overscroll by ~18% of the viewport on every side, pulling any edge name
-// comfortably into the middle. Only bites when zoomed (at k===1 offsets snap 0).
-const PAN_PAD=0.18;
+// pan padding = how far, in SCREEN space, the world may overscroll past each
+// viewport edge. THE BUG (Paul: "edges impossible to reach when zoomed in"):
+// the old 0.18 let an edge star sit at most 18% of the viewport in from the
+// rim — nowhere near the thumb-friendly CENTER — so corner genres (desertblues,
+// breakcore, darksynth…) stayed pinned to the edge at every zoom. The reach is
+// governed purely by the pad's SIZE, not k: after maximal pan, the left/top
+// world edge lands at screen = +padX (= PAN_PAD·width) and the right/bottom
+// edge at width−padX. To let ANY edge star reach the exact viewport center at
+// ANY zoom, the pad must be >= HALF the viewport (0.5). We use 0.55 so center
+// sits comfortably INSIDE the pan range (the edge can travel a touch past
+// center) rather than exactly at the clamp limit. Screen-space and k-invariant
+// on purpose: 0.55·width brings the edge to center whether k is 1.5 or 4. Only
+// bites when zoomed (at k===1 offsets snap 0).
+const PAN_PAD=0.55;
 function clampZoom(){
   const r=svg.getBoundingClientRect();
   ZOOM.k=Math.max(1,Math.min(4,ZOOM.k));
@@ -493,6 +610,40 @@ function zoomAround(cx,cy,k2){ // keep the screen point (cx,cy) fixed while scal
 const toXY=ev=>{const r=svg.getBoundingClientRect();const p=ev.touches?ev.touches[0]:ev;
   return {x:Math.max(0,Math.min(500,((p.clientX-r.left-ZOOM.ox)/ZOOM.k)*500/r.width)),
           y:Math.max(0,Math.min(400,((p.clientY-r.top-ZOOM.oy)/ZOOM.k)*400/r.height))};};
+// AUTHORITATIVE waypoint hit-test (ITEM 5: "when the cursor is on a number I
+// can't move it"). Nearest waypoint whose drawn dot the pointer is inside,
+// computed in SCREEN space from the same coord mapping drawMap uses — so it is
+// independent of SVG z-order / e.target. The traveler is drawn on top and is
+// now BIG, but it's pointer-events:none AND absent from this list, so a
+// waypoint under it always wins the grab. Radius = drawn dot (18·fs) + touch pad.
+function hitWp(e){
+  const r=svg.getBoundingClientRect();
+  const cX=e.clientX!=null?e.clientX:(e.touches&&e.touches[0]?e.touches[0].clientX:0);
+  const cY=e.clientY!=null?e.clientY:(e.touches&&e.touches[0]?e.touches[0].clientY:0);
+  const px=cX-r.left, py=cY-r.top;
+  const fs=Math.min(3,Math.max(1,Math.pow(ZOOM.k,0.85)));
+  let best=-1, bd=18*fs+10;
+  S.waypoints.forEach((w,i)=>{
+    const cx=(w.x*r.width/500)*ZOOM.k+ZOOM.ox, cy=(w.y*r.height/400)*ZOOM.k+ZOOM.oy;
+    const d=Math.hypot(px-cx,py-cy); if(d<=bd){ bd=d; best=i; }
+  });
+  return best;
+}
+// ITEM 6: delete a waypoint (double-tap it, or right-click). Splice + renumber,
+// then reroute the leg through the survivors. If we removed the leg the traveler
+// is walking (or its endpoint), clamp the travel segment into range and snap the
+// TARGET to a surviving waypoint via retarget — which GLIDES when live (no audio
+// stop, no exception) and PLACES when stopped. Below 2 points the traveler just
+// holds the last target (travelStep no-ops), so the music never drops.
+function deleteWaypoint(i){
+  if(i<0||i>=S.waypoints.length) return;
+  const w=[...S.waypoints]; w.splice(i,1);
+  const len=w.length, seg=Math.min(S.travel.seg, Math.max(0,len-2));
+  set({waypoints:w, travel:{seg,t:0}, queue:[],
+    status:len>=2?("waypoint "+(i+1)+" removed — "+len+" points, leg rerouted")
+      :len===1?"waypoint removed — one point left":"waypoint removed — path cleared"});
+  if(len>=1) retarget({x:w[seg].x, y:w[seg].y});
+}
 let dragging=false, dragWp=-1, lastTap={t:0,x:0,y:0};
 // single-finger PAN when zoomed in (see pointerdown/move): panning arms on a
 // finger-down over empty sky while ZOOM.k>1; if the finger actually moves it
@@ -526,9 +677,12 @@ svg.addEventListener("pointerdown",e=>{
     return;
   }
   const pt=toXY(e), now=performance.now();
-  const wp=e.target.dataset&&e.target.dataset.wp;
-  if(wp==null && now-lastTap.t<380 && Math.hypot(pt.x-lastTap.x,pt.y-lastTap.y)<16){
+  const wpi=hitWp(e);   // authoritative — a waypoint always beats the traveler (ITEM 5)
+  if(now-lastTap.t<380 && Math.hypot(pt.x-lastTap.x,pt.y-lastTap.y)<16){
     lastTap={t:0,x:0,y:0};
+    // DOUBLE-TAP grammar: on a waypoint = DELETE it (ITEM 6); on empty sky =
+    // extend the path (unchanged). Waypoints are hit-tested FIRST.
+    if(wpi>=0){ deleteWaypoint(wpi); return; }
     // first waypoint: the path begins WHERE THE MUSIC IS — cursor becomes point 1
     const base=S.waypoints.length?S.waypoints:[{x:S.cursor.x,y:S.cursor.y}];
     const wps=[...base,pt];
@@ -539,10 +693,9 @@ svg.addEventListener("pointerdown",e=>{
     return;
   }
   lastTap={t:now,x:pt.x,y:pt.y};
-  if(e.button===2&&wp!=null){ const w=[...S.waypoints]; w.splice(+wp,1);
-    set({waypoints:w,travel:{seg:0,t:0},status:"waypoint erased"}); return; }
+  // right-click delete is handled once, in the contextmenu listener below
   if(e.button!==0) return;
-  if(wp!=null){ dragWp=+wp; }
+  if(wpi>=0){ dragWp=wpi; }   // grab the waypoint even when the traveler sits on it (ITEM 5)
   else if(ZOOM.k>1){
     // ZOOMED IN (names are the primary UI): a single-finger drag PANS the space.
     // We arm here and decide on move: a real drag pans; a tap with no movement
@@ -612,10 +765,8 @@ for(const t of ["gesturestart","gesturechange","gestureend"])
   addEventListener(t,e=>e.preventDefault(),{passive:false});
 svg.addEventListener("dblclick",e=>e.preventDefault());   // handled via double-tap above
 svg.addEventListener("contextmenu",e=>{
-  const wp=e.target.dataset&&e.target.dataset.wp;
-  if(wp!=null){ e.preventDefault();
-    const w=[...S.waypoints]; w.splice(+wp,1);
-    set({waypoints:w,travel:{seg:0,t:0},status:"waypoint erased"}); }
+  const wpi=hitWp(e);   // same authoritative hit-test; sole right-click delete path
+  if(wpi>=0){ e.preventDefault(); deleteWaypoint(wpi); }
 });
 
 // ---------- Preact panel ----------
