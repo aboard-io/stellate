@@ -833,6 +833,15 @@
       fx:{reverb:[.55,.7], delayBeats:[.5,.75], delayFb:[.2,.35], delayCut:[2200,3200], pump:[0,0], crackle:[0,.15], lowcut:[0,25], highcut:[0,0], comp:[.1,.3], grit:[0,0]},
       found:{role:"bed", vol:[.2,.32], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[3500,5200], sources:["frogs","iriomote","vx_timelady"]},   // birds near natural pitch, bright and present
       stab:["off"], hits:{sources:["horns_78","vox_b"], pattern:"sparse", prob:.35},
+      // 2026-07 exotica deep pass — THE AVIARY MADE LITERAL: the Les Baxter / Martin Denny
+      // signature is the band ANSWERING the melodic phrase with an animal call. Now a real
+      // sampleEvents "response" layer (a birdcall on the back half of each chord bar, ~40% of
+      // bars) instead of only a continuous jungle bed — the birds ARE the percussion color,
+      // as the info string promises. Bright (pitch up, cutoff 6k) and fairly DRY (rsend .35) —
+      // the intimate tiki room, categorically NOT spacelounge's muffled/drenched Apollo
+      // telemetry (its sibling's electronic answer). Additive: found-layer only, no verifier
+      // feature moves; only exotica's own fixtures drift.
+      sampleEvents:[{ pool:["loon","iriomote","frogs"], placement:"response", sections:"verse|chorus|bridge|hook", prob:.4, gain:.5, treatment:{pitch:1.15, cutoff:6000, rsend:.35, dsend:.12} }],
       form:"pop" },
     industrial: { label:"Industrial", info:"detuned machine music: metal hats, phrygian drones, the metallurgy plant finally stars",   // SAMPLE-FORWARD: the factory IS the hook (chops role)
       bpm:[100,126], swing:[0,.05], humanize:[0,.15],
@@ -1176,6 +1185,13 @@
       fx:{reverb:[.7,.85], delayBeats:[.75,1], delayFb:[.3,.45], delayCut:[2200,3200], pump:[0,0], crackle:[.08,.22], lowcut:[0,20], highcut:[0,0], comp:[.05,.2]},
       found:{role:"bed", vol:[.18,.3], pitch:[.8,.95], stretch:[.45,.6], cutoff:[2400,3800], sources:["vx_apollo","iriomote","vx_timelady"]},   // Houston, softly, under the vibraphone lights
       stab:["off"], hits:{sources:["sp_herenow","vox_b"], pattern:"sparse", prob:.3},
+      // 2026-07 exotica/spacelounge split — THE MISSION-CONTROL ANSWER: where exotica's band
+      // answers with bright dry BIRDS, the bachelor-pad-in-orbit answers with muffled, drenched
+      // TELEMETRY. Apollo capcom + WWVH time-station beeps surface from the bed as an intermittent
+      // "response" whisper (back half of each chord bar, ~30% of bars), radio-banded (cutoff 1.6k)
+      // and WIDE-WET (rsend .5 — the orbit's width, the brief's electronics-vs-acoustic fence).
+      // Additive found-layer; no verifier feature moves; only spacelounge's own fixtures drift.
+      sampleEvents:[{ pool:["vx_apollo","vx_wwvh"], placement:"response", sections:"verse|chorus|bridge|hook", prob:.3, gain:.4, treatment:{pitch:1, cutoff:1600, rsend:.5, dsend:.3} }],
       form:"pop" },
     // ---- world cluster (honest interpretations; source-shelf gaps noted per anchor) ----
     arabpop: { label:"Arab pop", info:"hijaz color over a darbuka-science kit: MAJOR tonic against bII, ornamental vibrato lead",   // INTERPRETATION: no oud/qanun models — brass+fm ornaments carry the maqam flavor
@@ -1183,7 +1199,7 @@
       progressions:["hijaz","hijaz","andalusian","mode_phrygian"], kits:["tribal","breaks"], fills:["drum fill","tom fill","off"],
       euclid:{kick:[5,16]},   // E(5,16) dum-tek placement rotating under the hand drums
       bass:{patterns:["root","simple","octaves"], recipe:{model:["saw","sub"],cutoff:[450,750],res:[.08,.16],level:[.95,1.15],send:[.05,.12],dsend:[0,.06]}},
-      lead:{patterns:["wander","pentaup","updown","sparse"], samplerPool:["oboe"], recipe:{model:["fm","brass","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2400,3400],level:[.5,.62],send:[.3,.45],dsend:[.2,.35],vibrato:[.012,.02],vibRate:[6,7.5]}},   // the ORNAMENT: fast deep vibrato = the closest the shelf gets to a mawwal melisma
+      lead:{patterns:["wander","updown","wander","sparse"], samplerPool:["oboe"], recipe:{model:["fm","brass","sampler","sampler"],wave:"sine",voices:[1,1],spread:[.002,.005],cutoff:[2400,3400],level:[.5,.62],send:[.3,.45],dsend:[.2,.35],vibrato:[.014,.024],vibRate:[6,7.5]}},   // 2026-07 arabpop deep pass — the ORNAMENTED MONOPHONIC LINE: maqam melody is a SINGLE voice (mizmar/oud), so voices locked to 1 (was [1,2]); vibrato deepened .012-.02 -> .014-.024 = the mawwal melisma (the shelf can't quarter-tone, so a fast deep hand-vibrato carries the microtonal inflection); patterns weighted to the stepwise wander/updown contour (dropped the pentatonic-up leap — maqam moves by conjunct step and ornament, not arpeggio)
       pads:{prob:.9, samplerPool:["strings"], recipe:{model:["strings","choir","sampler"],wave:"saw",cutoff:[1000,1600],detune:[.004,.01],attack:[.8,1.8],level:[.45,.6],send:[.3,.45],dsend:[.1,.2]}},
       drums:{kickModel:["808","boom"],snareModel:["crack"],hatModel:["noise"],kick:[1.1,1.3],snare:[.7,.95],hat:[.9,1.2],tune:[1.05,1.2],send:[.1,.2],dsend:[.1,.25]},   // tuned UP = the tek ringing
       fx:{reverb:[.45,.6], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[2200,3400], pump:[0,.1], crackle:[.05,.2], lowcut:[25,40], highcut:[0,0], comp:[.25,.45]},
