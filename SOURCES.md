@@ -128,3 +128,14 @@ corpus contains them); Yamaha has never asserted rights over the patch DATA —
 PD-adjacent by long convention, noted here rather than claimed as a formal
 grant. Curation: all 113 decoded patches render non-silent (scratch audit,
 2026-07); SFX novelties (TRAIN, EXPLOSION, LASER GUN…) were not decoded.
+
+## hogcore speech roster (found/samples/speech/hp_*.wav — generated, no external source)
+
+The 24-name hogcore cast (Harry Potter character NAMES, names only — no book
+text, no film audio) is **synthesized locally** with `espeak-ng` in the marked
+"hogcore speech" section of `fetch-found-samples.sh`. Each character gets a
+distinct espeak voice variant (en+f1–f5, en+m1–m7, en+croak for Hagrid/Filch/
+Buckbeak, en+whisper for Voldemort) plus per-character pitch/speed/resample so
+the roster reads as a cast. Character names as short factual identifiers are
+not copyrightable; the audio itself is machine-generated on this machine
+(eSpeak NG, GPLv3 — its *output* carries no license restriction).

@@ -481,7 +481,8 @@
       bpm:[88,116], swing:[0,.05], humanize:[.05,.15],
       progressions:["synthwave","epic_min","andalusian","minor_run"], kits:["pulse","four","open"], fills:["tom fill","tom fill","riser","off"],
       bass:{patterns:["drive","octaves","sixteenths","pedal"], recipe:{model:["saw","reese"],cutoff:[550,900],res:[.15,.3],level:[1.1,1.3],send:[0,.08],dsend:[0,0]}},
-      lead:{patterns:["hero","updown","arpdown","anthem"], recipe:{model:["stack"],wave:"saw",voices:[5,7],spread:[.01,.018],cutoff:[2600,3600],level:[.45,.6],send:[.35,.55],dsend:[.25,.4],vibrato:[.002,.005]}},
+      lead:{patterns:["hero","updown","arpdown","anthem"], recipe:{model:["stack","modeld"],wave:"saw",voices:[5,7],spread:[.01,.018],cutoff:[2600,3600],level:[.45,.6],send:[.35,.55],dsend:[.25,.4],vibrato:[.002,.005],
+        glide:[60,150],envAmount:[1,1.8],envDecay:[.15,.3],oscMix:[.15,.5],drift:[4,9],drive:[.1,.3]}},   // half the seeds: THE fat mono Model-D hero lead, gliding between legato notes (stack ignores the modeld keys)
       pads:{prob:1, recipe:{model:["saw"],wave:"saw",cutoff:[1100,2200],detune:[.01,.018],attack:[1.2,2.4],level:[.65,.85],send:[.45,.65],dsend:[.15,.3]},
         inserts:{prob:.6, max:1, pool:[["phaser",{rate:[.08,.25],depth:[.5,.8],mix:[.4,.6]}]]}},   // the night-drive pad breathes through a phaser — the genre's shimmer
       drums:{kickModel:["909","boom"],snareModel:["noise"],hatModel:["noise"],kick:[1.2,1.45],snare:[.9,1.15],hat:[.4,.65],tune:[.85,1],send:[.45,.65],dsend:[.05,.15]},
@@ -615,8 +616,9 @@
     edm: { label:"EDM", info:"festival big-room: riser into THE DROP, max pump, supersaw walls",   // SYNTH-FORWARD
       bpm:[124,132], swing:[0,.05], humanize:[0,.1],
       progressions:["epic_min","minor_run","sad_pop","drone_min"], kits:["four","pulse"], fills:["riser","riser","impact","cut","dropout"],
-      bass:{patterns:["rolling","drive","stab"], recipe:{model:["saw","reese"],cutoff:[500,900],res:[.2,.35],level:[1.15,1.35],send:[0,.08],dsend:[0,0]},
-        inserts:{prob:.35, max:1, pool:[["filtersweep",{rateBars:[1,2],lo:[-1,-.4],hi:[.8,1.4],res:[.3,.5]}]]}},   // fast festival sweeps under the drop
+      bass:{patterns:["rolling","drive","stab"], recipe:{model:["saw","reese","modeld"],cutoff:[500,900],res:[.2,.35],level:[1.15,1.35],send:[0,.08],dsend:[0,0],
+        glide:[20,40],envAmount:[1.5,2.8],envDecay:[.1,.2],oscMix:[.3,.7],drive:[.25,.5]},
+        inserts:{prob:.35, max:1, pool:[["filtersweep",{rateBars:[1,2],lo:[-1,-.4],hi:[.8,1.4],res:[.3,.5]}]]}},   // fast festival sweeps under the drop; 1/3 of seeds: a Model-D drop bass, filter env punching every note
       lead:{patterns:["hero","updown","double"], recipe:{model:["stack","stack","brass","vocoder"],wave:"saw",voices:[6,8],spread:[.012,.02],cutoff:[3000,4200],level:[.5,.65],send:[.35,.55],dsend:[.2,.35]}},   // rare vocoder drop-voice
       vocSource:"sp_energy",
       pads:{prob:.9, recipe:{model:["saw"],wave:"saw",cutoff:[1400,2600],detune:[.012,.02],attack:[.6,1.6],level:[.6,.8],send:[.4,.6],dsend:[.1,.25]}},
@@ -688,7 +690,8 @@
     disco: { label:"Disco", info:"four-on-floor + octave bass + organ glitter, min7 funk vamps, 78rpm horns",   // sample-mid: the horns are dressing
       bpm:[110,122], swing:[.05,.12], humanize:[.1,.25],
       progressions:["funk_vamp","house_min7","pop_1625"], kits:["four","open"], fills:["hat rush","drum fill","riser"],
-      bass:{patterns:["octaves","walking","syncopated"], recipe:{model:["saw"],cutoff:[650,1050],res:[.1,.2],level:[1,1.2],send:[.03,.08],dsend:[0,.05]}},
+      bass:{patterns:["octaves","walking","syncopated"], recipe:{model:["saw","modeld"],cutoff:[650,1050],res:[.1,.2],level:[1,1.2],send:[.03,.08],dsend:[0,.05],
+        glide:[20,35],envAmount:[1,1.8],envDecay:[.07,.14],oscMix:[.2,.5],drift:[3,7]}},   // half the seeds: the funk-vamp Model-D — short punchy filter env on the octave line (Bernard Edwards' synth stand-in)
       lead:{patterns:["pentaup","double","updown","wander"], recipe:{model:["fm","pluck"],wave:"pulse",voices:[1,2],spread:[.002,.005],cutoff:[2600,3600],level:[.42,.54],send:[.3,.45],dsend:[.15,.3],attack:.005,release:[.08,.14],sustain:[.6,.72],fenv:[.3,.5]}},
       pads:{prob:1, patchPool:["E.ORGAN 2","E.ORGAN 3"], samplerPool:["strings","harp"], recipe:{model:["organ","organ","dx7","sampler","sampler"],wave:"saw",cutoff:[1100,1700],detune:[.004,.009],attack:[.2,.6],level:[.45,.6],send:[.3,.45],dsend:[.05,.15]},
         inserts:{prob:.5, max:1, pool:[["phaser",{rate:[.2,.5],depth:[.5,.7],mix:[.4,.6]}]]}},   // organ stabs = the glitter — through the string-machine phaser, 1977-style
@@ -700,7 +703,8 @@
     italo: { label:"Italo disco", info:"sparkling pluck arps over octave bass — brighter and happier than synthwave",   // SYNTH-FORWARD
       bpm:[108,120], swing:[0,.08], humanize:[.02,.12],
       progressions:["sad_pop","synthwave","doo_wop"], kits:["pulse","four"], fills:["tom fill","riser","drum fill"],
-      bass:{patterns:["octaves","sixteenths","pedal"], recipe:{model:["saw"],cutoff:[750,1150],res:[.12,.22],level:[1.05,1.25],send:[.03,.08],dsend:[0,.05]}},
+      bass:{patterns:["octaves","sixteenths","pedal"], recipe:{model:["saw","modeld"],cutoff:[750,1150],res:[.12,.22],level:[1.05,1.25],send:[.03,.08],dsend:[0,.05],
+        glide:[15,30],envAmount:[1.2,2.2],envDecay:[.06,.12],oscMix:[.2,.5],drift:[2,5]}},   // half the seeds: the Italo octave bass on a real Model-D — tight glide, plucky filter env
       lead:{patterns:["arpup","arpdown","hero","pentaup"], patchPool:["SYN-PIANO","E.PIANO 4"], recipe:{model:["pluck","stack","dx7"],wave:"square",voices:[1,2],spread:[.002,.006],cutoff:[3200,4200],level:[.5,.6],send:[.3,.45],dsend:[.3,.45],vibrato:[0,.003],attack:.004,release:[.07,.12],sustain:[.6,.7],fenv:[.3,.5]},
         inserts:{prob:.4, max:1, pool:[["chorus",{rate:[.6,1.2],depth:[.4,.6],mix:[.4,.55]}]]}},   // sparkle doubled — Juno-chorus plucks
       pads:{prob:.9, recipe:{model:["saw","strings"],wave:"saw",cutoff:[1400,2200],detune:[.006,.012],attack:[.6,1.4],level:[.45,.6],send:[.3,.45],dsend:[.1,.2]},
@@ -1030,7 +1034,8 @@
     krautrock: { label:"Krautrock", info:"motorik on the autobahn: organ drones over the eternal pulse, one chord for a very long time",   // SYNTH-FORWARD: repetition is the destination
       bpm:[102,118], swing:[0,.05], humanize:[.05,.18],
       progressions:["funk_vamp","deep_two","mode_mixo"], kits:["pulse","four"], fills:["off","drum fill","riser"],
-      bass:{patterns:["drive","root","pedal"], recipe:{model:["saw"],cutoff:[600,950],res:[.1,.18],level:[1.05,1.25],send:[.03,.08],dsend:[0,.05]}},
+      bass:{patterns:["drive","root","pedal"], recipe:{model:["saw","modeld"],cutoff:[600,950],res:[.1,.18],level:[1.05,1.25],send:[.03,.08],dsend:[0,.05],
+        glide:[20,40],envAmount:[.4,1],envDecay:[.25,.5],oscMix:[.1,.4],drift:[5,10]}},   // half the seeds: a droning Model-D under the motorik — shallow slow filter env, more drift than punch (the eternal pulse breathes)
       lead:{patterns:["motorik","wander","sparse"], recipe:{model:["stack","organ"],wave:"square",voices:[1,2],spread:[.002,.006],cutoff:[2200,3200],level:[.42,.54],send:[.2,.35],dsend:[.25,.4],attack:.005,release:[.08,.14],sustain:[.6,.72]}},   // the sequencer arp borrowed back from transitwave
       pads:{prob:1, patchPool:["E.ORGAN 2","E.ORGAN 3","60-S ORGAN"], samplerPool:["church_organ","percussive_organ"], recipe:{model:["organ","dx7","sampler","sampler"],wave:"saw",cutoff:[800,1300],detune:[.004,.01],attack:[1.5,3],level:[.5,.65],send:[.3,.45],dsend:[.1,.2]},
         inserts:{prob:.6, max:1, pool:[["phaser",{rate:[.1,.3],depth:[.5,.8],mix:[.4,.6]}]]}},   // ORGAN DRONES — the harmonium in the barn, through the kosmische phaser (Autobahn-issue)
@@ -1091,7 +1096,8 @@
       bpm:[86,100], swing:[.1,.2], humanize:[.2,.4],   // above downtempo's 60-90 core
       progressions:["dream","mode_lydian","ii_v_i"], kits:["kick","kick","halftime"], fills:["off","downlift"],
       bass:{patterns:["simple","root","walking"], recipe:{model:["sub","piano"],cutoff:[350,650],res:[.05,.12],level:[.85,1.05],send:[.08,.16],dsend:[0,.06]}},
-      lead:{patterns:["wander","sparse","pentaup"], samplerPool:["clarinet","flute","vibraphone","celesta"], recipe:{model:["sampler","sampler","sampler","stack"],wave:"sine",voices:[1,1],spread:[.001,.003],cutoff:[2600,3800],level:[.44,.56],send:[.45,.65],dsend:[.2,.35],vibrato:[.014,.022],vibRate:[5.5,6.5],attack:.06,release:[.3,.5],sustain:[.85,.95]}},   // a REAL clarinet/flute takes the melody 2/3 of seeds; the theremin-sine keeps its corner
+      lead:{patterns:["wander","sparse","pentaup"], samplerPool:["clarinet","flute","vibraphone","celesta"], recipe:{model:["sampler","sampler","sampler","stack","modeld"],wave:"sine",voices:[1,1],spread:[.001,.003],cutoff:[2600,3800],level:[.44,.56],send:[.45,.65],dsend:[.2,.35],vibrato:[.014,.022],vibRate:[5.5,6.5],attack:.06,release:[.3,.5],sustain:[.85,.95],
+        glide:[80,150],envAmount:[.5,1.2],envDecay:[.3,.6],oscMix:[0,.3],drift:[6,12],drive:[.05,.2]}},   // a REAL clarinet/flute takes the melody 3/5 of seeds; the theremin-sine keeps its corner, and 1/5: a soft gliding Model-D — the ondes-martenot swoop, long portamento
       pads:{prob:1, recipe:{model:["organ"],wave:"saw",cutoff:[1000,1600],detune:[.003,.008],attack:[1.5,3],level:[.5,.65],send:[.5,.7],dsend:[.1,.2]},
         inserts:{prob:.35, max:1, pool:[["phaser",{rate:[.05,.15],depth:[.4,.6],mix:[.3,.45]}]]}},   // ALWAYS the organ — the acoustic fence vs downtempo/vaporwave; a lava-lamp phase, sometimes
       drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.7,.95],snare:[.4,.6],hat:[.5,.8],tune:[.95,1.1],send:[.2,.35],dsend:[0,.1]},
@@ -1176,9 +1182,11 @@
     darksynth: { label:"Darksynth", info:"synthwave's violent sibling at 140: distorted supersaw + fuzz trading, phrygian menace, the chase scene",   // SYNTH-FORWARD: the night drive turned hostile
       bpm:[122,136], swing:[0,.05], humanize:[0,.12],   // UNDER dubstep's 133-148 core — chase-scene tempo, not halftime wobble
       progressions:["mode_phrygian","andalusian","epic_min"], kits:["pulse","four"], fills:["impact","riser","tom fill","cut"],
-      bass:{patterns:["drive","octaves","sixteenths","pedal"], recipe:{model:["reese"],cutoff:[350,600],res:[.15,.3],level:[1.15,1.35],send:[0,.06],dsend:[0,.06]},
-        inserts:{prob:.7, max:1, pool:[["distort",{drive:[.35,.65],mix:[.7,.95]}]]}},   // the chase-scene reese, snarling
-      lead:{patterns:["hero","double","updown"], recipe:{model:["stack","fuzz"],wave:"saw",voices:[4,6],spread:[.01,.018],cutoff:[2600,3800],res:[.2,.35],drive:[.4,.7],level:[.48,.6],send:[.3,.45],dsend:[.25,.4],attack:.008,release:[.15,.25],sustain:[.7,.82],fenv:[.3,.6]}},   // distorted supersaw / fuzz trade the hook
+      bass:{patterns:["drive","octaves","sixteenths","pedal"], recipe:{model:["reese","modeld"],cutoff:[350,600],res:[.15,.3],level:[1.15,1.35],send:[0,.06],dsend:[0,.06],
+        glide:[20,40],envAmount:[1.2,2.2],envDecay:[.08,.16],oscMix:[.5,.9]},
+        inserts:{prob:.7, max:1, pool:[["distort",{drive:[.35,.65],mix:[.7,.95]}]]}},   // the chase-scene reese OR a snarling pulse-heavy Model-D, subtle glide (modeld's own drive comes from the lead-shared key below being absent — envelope does the menace)
+      lead:{patterns:["hero","double","updown"], recipe:{model:["stack","fuzz","modeld"],wave:"saw",voices:[4,6],spread:[.01,.018],cutoff:[2600,3800],res:[.2,.35],drive:[.4,.7],level:[.48,.6],send:[.3,.45],dsend:[.25,.4],attack:.008,release:[.15,.25],sustain:[.7,.82],fenv:[.3,.6],
+        glide:[30,80],envAmount:[1.4,2.4],envDecay:[.08,.18],oscMix:[.4,.8],drift:[2,6]}},   // distorted supersaw / fuzz / hot mono Model-D trade the hook
       pads:{prob:.9, recipe:{model:["saw"],wave:"saw",cutoff:[1000,1900],detune:[.01,.018],attack:[.8,1.8],level:[.5,.68],send:[.35,.5],dsend:[.1,.25]},
         inserts:{prob:.5, max:1, pool:[["phaser",{rate:[.1,.3],depth:[.5,.75],mix:[.4,.6]}]]}},   // synthwave's phaser inherited, turned menacing
       drums:{kickModel:["909"],snareModel:["noise","clap"],hatModel:["noise","metal"],kick:[1.3,1.5],snare:[.95,1.2],hat:[.5,.8],tune:[.9,1.05],send:[.25,.4],dsend:[.05,.15]},   // big gated snare, faster

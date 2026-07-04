@@ -226,10 +226,28 @@ const PATHS=["swing","humanize","reverb","pump","crackle","comp","delay.beats","
   "instruments.drums.snare","instruments.drums.hat","instruments.drums.send","instruments.drums.dsend"];
 const getP=(o,p)=>p.split(".").reduce((a,k)=>a&&a[k],o);
 const setP=(o,p,v)=>{const ks=p.split("."),l=ks.pop();ks.reduce((a,k)=>a[k]=a[k]||{},o)[l]=v;};
+// a voice's timbre identity is model + dx7 patch + sampler zones: flipping
+// .model alone left LIVE journeys playing a stale/absent dx7 or an empty
+// sampler forever (the kernel emits instruments.<voice>.{dx7,sampler} and the
+// Faust engine builds the unit from them — see state-engine pitchedUnit).
+const timbreId=v=>c=>{const m=c.instruments[v];
+  return [m.model, m.dx7&&m.dx7.algorithm, m.dx7&&m.dx7.name, m.sampler&&m.sampler.id];};
+const timbreFlip=v=>(c,t)=>{const cv=c.instruments[v], tv=t.instruments[v];
+  cv.model=tv.model;
+  if(tv.dx7) cv.dx7=deep(tv.dx7); else delete cv.dx7;
+  if(tv.sampler){ cv.sampler=deep(tv.sampler);
+    // zone wavs ride foundSources (vol 0) — carry any the zones reference so
+    // the sampler isn't silent until the separate "sample" flip lands
+    const have=new Set((c.foundSources||[]).map(s=>s.id));
+    for(const z of (tv.sampler.zones||[])) if(z.srcId&&!have.has(z.srcId)){
+      const src=(t.foundSources||[]).find(s=>s.id===z.srcId);
+      if(src){ c.foundSources.push(deep(src)); have.add(z.srcId); } }
+  } else delete cv.sampler;
+};
 const DISCRETE=[
-  ["pad voice",c=>c.instruments.pad.model,(c,t)=>c.instruments.pad.model=t.instruments.pad.model],
-  ["bass voice",c=>c.instruments.bass.model,(c,t)=>c.instruments.bass.model=t.instruments.bass.model],
-  ["lead voice",c=>c.instruments.melody.model,(c,t)=>c.instruments.melody.model=t.instruments.melody.model],
+  ["pad voice",timbreId("pad"),timbreFlip("pad")],
+  ["bass voice",timbreId("bass"),timbreFlip("bass")],
+  ["lead voice",timbreId("melody"),timbreFlip("melody")],
   ["kick",c=>c.instruments.drums.kickModel,(c,t)=>c.instruments.drums.kickModel=t.instruments.drums.kickModel],
   ["snare",c=>c.instruments.drums.snareModel,(c,t)=>c.instruments.drums.snareModel=t.instruments.drums.snareModel],
   ["hat",c=>c.instruments.drums.hatModel,(c,t)=>c.instruments.drums.hatModel=t.instruments.drums.hatModel],
@@ -281,6 +299,20 @@ function glideStep(){
     let cv=getP(c,p); if(typeof cv!=="number")cv=tv;
     const nv=Math.abs(tv-cv)<1e-3?tv:cv+(tv-cv)*0.13;
     setP(c,p,p.endsWith("voices")?Math.round(nv):Math.round(nv*1e4)/1e4);
+  }
+  // CONTINUOUS patch morphing: when both ends carry the SAME FM topology on a
+  // voice, lerp the ~144-dim dx7 param vector at the same ease — standing
+  // mid-journey is a continuously morphing instrument (the live engine
+  // re-applies changed dx7 params per bar; see faust/live.js applyDx7).
+  // Different algorithm or one side missing stays a discrete "voice" flip.
+  for(const vk of ["melody","pad","bass"]){
+    const cd=(c.instruments[vk]||{}).dx7, td=(t.instruments[vk]||{}).dx7;
+    if(!cd||!td||cd.algorithm!==td.algorithm||!cd.params||!td.params)continue;
+    for(const k of Object.keys(td.params)){
+      const tv=td.params[k]; if(typeof tv!=="number")continue;
+      let cv=cd.params[k]; if(typeof cv!=="number")cv=tv;
+      cd.params[k]=Math.abs(tv-cv)<1e-3?tv:Math.round((cv+(tv-cv)*0.13)*1e4)/1e4;
+    }
   }
   c.foundSources.forEach((s,i)=>{const ts=t.foundSources[i]||t.foundSources[0];
     if(ts&&typeof ts.vol==="number") s.vol+=(ts.vol-s.vol)*0.13;});
@@ -734,6 +766,15 @@ function autoPath(){
   retarget(pts[0]);
 }
 autoPath(); rescore(); playheadTick();
+// the kernel's DX7 patch registry is empty in the browser unless the page
+// supplies the bank (genre-kernel snapshots window.DX7_PRESETS at load, which
+// no page sets) — so no explorer journey ever drew a dx7 voice. Populate the
+// exported registry in place and re-resolve the current target.
+fetch("faust/dx7-presets.json").then(r=>r.json()).then(raw=>{
+  for(const [name,p] of Object.entries(raw||{}))
+    if(p&&p.params) K.DX7_PATCHES[name]={algorithm:p.alg, params:p.params};
+  lastSig=""; retarget(S.cursor);
+}).catch(()=>{});
 if(window.VideoLayer)VideoLayer.init().then(()=>set({}));   // found-video background (genre-affine, follows the mix)
 </script>
 </body>

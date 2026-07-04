@@ -164,9 +164,14 @@
     const POOL_SIZE = { pad: 4, bass: 2, melody: 3, solo: 2 };
     async function ensurePool(key, u) {
       let pool = pools.get(key);
-      if (pool && pool.module === u.module) { await ensureInserts(key, pool, u); retune(pool, u); return pool; }
+      if (pool && pool.module === u.module) { await ensureInserts(key, pool, u); retune(pool, u); applyDx7(pool, u); return pool; }
       if (pool) retirePool(pool);
-      const n = u.drum || u.hold ? (u.pool > 1 ? 2 : 1) : (POOL_SIZE[u.role] || u.pool || 2);
+      let n = u.drum || u.hold ? (u.pool > 1 ? 2 : 1) : (POOL_SIZE[u.role] || u.pool || 2);
+      // dx7.lib voices cost ~3-7x every other module (measured x3.5 realtime
+      // offline vs x11-28 for supersaw/pad_saw/fm2op): cap dx7 pools at 2 —
+      // three+ six-op FM nodes sink the audio thread, and the declick steal
+      // path covers note overlaps.
+      if (u.dx7) n = Math.min(n, 2);
       const nodes = [];
       for (let i = 0; i < n; i++) {
         const node = await mkNode(u.module, key + i);
@@ -197,7 +202,8 @@
         node.disconnect(out); node.connect(dk); dk.connect(out);
         nodes.push({ node, out, dk, gains: { dry, rev, del, pp }, ppLast: 0, busyUntil: 0, tailUntil: 0 });
       }
-      pool = { module: u.module, spec: u, nodes, paramSig: "" };
+      pool = { module: u.module, spec: u, nodes, paramSig: "",
+        dx7Sig: u.dx7Params ? JSON.stringify(u.dx7Params) : "" };
       pools.set(key, pool);
       await ensureInserts(key, pool, u);
       retune(pool, u);
@@ -304,6 +310,27 @@
         v.gains.rev.gain.setTargetAtTime(u.rev || 0, t, 0.01);
         v.gains.del.gain.setTargetAtTime(u.del || 0, t, 0.01);
       }
+    }
+    // journeys morph state.dx7 params continuously (explorer glideStep lerps
+    // the vector when both ends share an algorithm) — the pool is module-
+    // stable across a same-algorithm morph, so retune's u.params sig ({} for
+    // dx7 units) never fires. Re-apply the dx7 vector here, per BAR and only
+    // when it actually moved. STEP-set (setValueAtTime), never setTargetAtTime:
+    // Faust worklet params are a-rate, and a setTargetAtTime curve never ends —
+    // ~432 forever-active exponential automations measurably HALVED the audio
+    // thread (load 0.5). Steps are k-rate cheap (~144 sets ≈ 0.4ms) and the
+    // glide upstream already eases per bar, so the steps are small.
+    function applyDx7(pool, u, when) {
+      if (!u.dx7Params) return;
+      const sig = JSON.stringify(u.dx7Params);
+      if (pool.dx7Sig === sig) return;
+      pool.dx7Sig = sig;
+      const t = Math.max(when || 0, ctx.currentTime);
+      for (const v of pool.nodes)
+        for (const [sfx, val] of Object.entries(u.dx7Params)) {
+          const p = v.node.parameters.get(sfx.slice(0, 4) === "/DX7" ? sfx : "/DX7" + sfx);
+          if (p) p.setValueAtTime(Math.min(p.maxValue, Math.max(p.minValue, val)), t);
+        }
     }
     function retirePool(pool) {
       for (const v of pool.nodes) {
@@ -565,7 +592,7 @@
     const rmsBuf = new Float32Array(analyser.fftSize);
     const handle = {
       ctx, analyser, errors,
-      _sched: schedEvents, _bars: schedBars,   // probe/debug (drift gate)
+      _sched: schedEvents, _bars: schedBars, _pools: pools,   // probe/debug (drift + dx7-morph gates)
       layers() {   // mixer view: monitoring/override bus over the layer taps
         return LAYER_DEFS.map(([id]) => {
           const L = layers.get(id);

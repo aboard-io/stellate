@@ -69,6 +69,49 @@ Conventions shared by all voice modules:
 | guitar | `lead_guitar` | cutoff, pluckPos | **substitution** — pm.lib waveguide replaces the CLI-only TimGM6mb.sf2 sfplay (samples can't ship to the browser). Darker than the sf2 steel guitar (A/B CHECK, intended) |
 | vocoder | `robot_choir` | cutoff, res, makeup | ve.vocoder 32-band channel vocoder; speech is an AUDIO INPUT (in 0). Envelope-correlation verified (vocoder-test.js) + A/B PASS |
 
+## modeld — the Minimoog-Model-D-class MONO voice (2026-07)
+
+`modeld` (dsp/modeld.dsp) is a signature mono package, lead AND bass capable
+(state-engine resolves model `"modeld"` for melody/solo/bass; NEVER pads —
+mono can't voice chords, kernel pools respect that):
+
+- **3 oscillators** saw / saw(+6c) / saw|pulse(−8c); `oscMix` blends osc3
+  saw→pulse (duty 0.26). Fixed detune spread plus `drift` = slow random
+  lfnoise cents-wander per osc (analog instability; three distinct
+  trajectories via different rates + one mirrored).
+- **4-pole ladder** `ve.moog_vcf_2bn` with EMPHASIS (`res`) and a punchy
+  **filter envelope**: ADS contour, `envAmount` in OCTAVES above `cutoff`
+  (the wah-punch), `envDecay` sets both decay and filter release (the
+  Model-D decay-switch behavior). `envAttack`/`envSustain` exposed, defaults
+  0.004/0.25.
+- **`drive`** = gentle tanh pre-filter (loudness-compensated).
+- **GLIDE** (`glide`, ms): exponential freq slew toward the target note —
+  tau = glide/4.6, i.e. settles within 1% at ~glide ms. Slew is always
+  active when glide > 2 ms (non-legato retriggers glide from the previous
+  note too — authentic).
+- Loudness contour: fast attack (default 4 ms) → 0.08 settle → singing
+  sustain → release. Recipe attack/sustain/release map straight through.
+
+**MONO-LEGATO scheduler contract** (`mono:true, legatoSec:0.03` on the unit
+spec): the engine routes ALL of the unit's notes to ONE voice instance and
+holds the gate across legato groups — notes whose gap to the previous note is
+< 30 ms (or which overlap) join the running group: the pending gate-off is
+withdrawn, `freq` slews inside the module, and the envelopes single-trigger
+(no retrigger mid-phrase, like the real thing). press.js implements this in
+its allocation loop. **LIVE GAP**: live.js's generic pool ignores `mono`
+(POOL_SIZE forces melody=3/bass=2 and gates per note) — every note still
+plays at the right pitch/time and glide is audible on reused nodes, but
+envelopes retrigger on legato notes and overlapping notes may land on a
+different node (gliding in from that node's stale freq). The live side needs:
+(1) pool size 1 when `u.mono`, (2) merge gate-off/gate-on pairs when the next
+event's tOn − prev tOff < `u.legatoSec`. Next round.
+
+Kernel homes: synthwave lead (hero lines, glide 60–150 ms), darksynth
+lead+bass, edm bass, krautrock bass drones (shallow slow env, heavy drift),
+disco + italo bass options (tight 15–40 ms glide), spacelounge lead option
+(the ondes swoop, glide 80–150 ms). Recipe keys: cutoff, res, envAmount,
+envDecay, glide, drive, oscMix, drift (+attack/sustain/release).
+
 ## SFX / stab
 
 | what | module | params |
