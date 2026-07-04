@@ -408,11 +408,13 @@ fi
 #   node faust/build.js dx7_algN   # per algorithm the kept patches need
 
 # ===== BEGIN hogcore speech (genre-tool round, 2026-07) ======================
-# The hogcore roster: ~24 Harry Potter character NAMES (names only) read by
-# espeak-ng — THE VOICE IS THE GENRE. Voices/pitches/speeds vary per character
-# across espeak variants (f1-f5, m1-m7, croak, whisper) so the roster sounds
-# like a cast, not one robot. Kept bright/full-band (hyperpop, not station PA).
-# Scheduled by the kernel as vox lines + a stations-style name under the bars.
+# The hogcore roster: ~24 Harry Potter characters, each read by espeak-ng as
+# the FULL PHRASE "<Name> is trans" — THE VOICE (and the phrase) IS THE GENRE.
+# Every character name is followed by "is trans": that declaration under every
+# bar is the hook. Voices/pitches/speeds vary per character across espeak
+# variants (f1-f5, m1-m7, croak, whisper) so the roster sounds like a cast, not
+# one robot. Kept bright/full-band (hyperpop, not station PA). Scheduled by the
+# kernel as vox lines + a stations-style phrase under the bars.
 sayhp() { # name | text | voice | pitch | speed | extra-af
   local out="found/samples/speech/hp_${1}.wav"
   [ -s "$out" ] && return 0
@@ -421,31 +423,31 @@ sayhp() { # name | text | voice | pitch | speed | extra-af
   ffmpeg -y -loglevel error -i /tmp/sayhp.wav -ac 1 -ar 44100 \
     -af "${6:-anull},loudnorm=I=-14:TP=-1" "$out"
 }
-#     id          name                     voice        pit spd  polish
-sayhp harry       "Harry Potter"           en+m3         48 150  "anull"
-sayhp hermione    "Hermione Granger"       en+f4         55 170  "anull"
-sayhp ron         "Ron Weasley"            en+m2         42 145  "anull"
-sayhp dumbledore  "Albus Dumbledore"       en+m7         30 118  "asetrate=44100*0.96,aresample=44100"
-sayhp snape       "Severus Snape"          en+m1         18 104  "asetrate=44100*0.93,aresample=44100"
-sayhp draco       "Draco Malfoy"           en+m4         58 148  "anull"
-sayhp luna        "Luna Lovegood"          en+f2         62 112  "asetrate=44100*1.03,aresample=44100"
-sayhp neville     "Neville Longbottom"     en+m6         50 160  "anull"
-sayhp mcgonagall  "Minerva McGonagall"     en+f5         46 138  "anull"
-sayhp hagrid      "Rubeus Hagrid"          en+croak      22 112  "asetrate=44100*0.92,aresample=44100"
-sayhp sirius      "Sirius Black"           en+m5         36 132  "anull"
-sayhp bellatrix   "Bellatrix Lestrange"    en+f1         70 178  "anull"
-sayhp voldemort   "Voldemort"              en+whisper    12  92  "asetrate=44100*0.9,aresample=44100"
-sayhp ginny       "Ginny Weasley"          en+f3         52 152  "anull"
-sayhp cho         "Cho Chang"              en+f4         60 144  "anull"
-sayhp cedric      "Cedric Diggory"         en+m4         44 142  "anull"
-sayhp dobby       "Dobby"                  en+m6         78 168  "asetrate=44100*1.12,aresample=44100"
-sayhp hedwig      "Hedwig"                 en+f5         74 130  "asetrate=44100*1.08,aresample=44100"
-sayhp buckbeak    "Buckbeak"               en+croak      34 120  "anull"
-sayhp peeves      "Peeves"                 en+m3         82 176  "asetrate=44100*1.06,aresample=44100"
-sayhp nick        "Nearly Headless Nick"   en+m7         40 126  "anull"
-sayhp myrtle      "Moaning Myrtle"         en+f1         66 108  "asetrate=44100*1.02,aresample=44100"
-sayhp filch       "Argus Filch"            en+croak      26 118  "anull"
-sayhp crookshanks "Crookshanks"            en+f2         56 140  "anull"
+#     id          phrase ("<Name> is trans")           voice        pit spd  polish
+sayhp harry       "Harry Potter is trans"              en+m3         48 150  "anull"
+sayhp hermione    "Hermione Granger is trans"          en+f4         55 170  "anull"
+sayhp ron         "Ron Weasley is trans"               en+m2         42 145  "anull"
+sayhp dumbledore  "Albus Dumbledore is trans"          en+m7         30 118  "asetrate=44100*0.96,aresample=44100"
+sayhp snape       "Severus Snape is trans"             en+m1         18 104  "asetrate=44100*0.93,aresample=44100"
+sayhp draco       "Draco Malfoy is trans"              en+m4         58 148  "anull"
+sayhp luna        "Luna Lovegood is trans"             en+f2         62 112  "asetrate=44100*1.03,aresample=44100"
+sayhp neville     "Neville Longbottom is trans"        en+m6         50 160  "anull"
+sayhp mcgonagall  "Minerva McGonagall is trans"        en+f5         46 138  "anull"
+sayhp hagrid      "Rubeus Hagrid is trans"             en+croak      22 112  "asetrate=44100*0.92,aresample=44100"
+sayhp sirius      "Sirius Black is trans"              en+m5         36 132  "anull"
+sayhp bellatrix   "Bellatrix Lestrange is trans"       en+f1         70 178  "anull"
+sayhp voldemort   "Voldemort is trans"                 en+whisper    12  92  "asetrate=44100*0.9,aresample=44100"
+sayhp ginny       "Ginny Weasley is trans"             en+f3         52 152  "anull"
+sayhp cho         "Cho Chang is trans"                 en+f4         60 144  "anull"
+sayhp cedric      "Cedric Diggory is trans"            en+m4         44 142  "anull"
+sayhp dobby       "Dobby is trans"                     en+m6         78 168  "asetrate=44100*1.12,aresample=44100"
+sayhp hedwig      "Hedwig is trans"                    en+f5         74 130  "asetrate=44100*1.08,aresample=44100"
+sayhp buckbeak    "Buckbeak is trans"                  en+croak      34 120  "anull"
+sayhp peeves      "Peeves is trans"                    en+m3         82 176  "asetrate=44100*1.06,aresample=44100"
+sayhp nick        "Nearly Headless Nick is trans"      en+m7         40 126  "anull"
+sayhp myrtle      "Moaning Myrtle is trans"            en+f1         66 108  "asetrate=44100*1.02,aresample=44100"
+sayhp filch       "Argus Filch is trans"               en+croak      26 118  "anull"
+sayhp crookshanks "Crookshanks is trans"               en+f2         56 140  "anull"
 # ===== END hogcore speech ====================================================
 
 # --- manifest: duration + crude class for every sample ---

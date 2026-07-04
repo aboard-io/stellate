@@ -1,7 +1,7 @@
 {
   "name": "hogcore",
   "label": "Hogcore",
-  "info": "VERY simple hyperpop at 150+: four-on-floor, sidechain pump, bright supersaw hooks, and 24 Harry Potter character NAMES as the hook — pitched-up vocal chops, a name under every bar, name-stabs on the drop",
+  "info": "VERY simple hyperpop at 150+: four-on-floor, sidechain pump, bright supersaw hooks, and 24 Harry Potter characters declaring \"<Name> is trans\" as the hook — every character name is followed by \"is trans\" (\"Hermione Granger is trans\", \"Severus Snape is trans\"), read by 24 distinct espeak voices; pitched-up vocal chops, the phrase under every bar, name-stabs on the drop",
   "clips": ["kaleido", "rainbow_rings", "cgi_bird", "night_lights", "sun_riders", "phuture_red", "pl_kitchen"],
   "anchor": {
     "bpm": [150, 164],

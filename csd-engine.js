@@ -1382,10 +1382,15 @@
             // rotating, square-LFO amplitude-gated at varying intensity; with
             // treatment.glitch the name is chased ~70% by a mostly-DOWNWARD stutter
             // tail (2-3 hits at .5-.8 pitch) — the exact bespoke `stations` shape.
-            for(let b=0;b<B-2;b+=4){                                 // one under every measure (4 beats)
+            // treatment.every (measures between drops, default 1) and treatment.
+            // maxDur (beat cap, default the historical 2.6) are zero-rng opt-ins:
+            // absent => byte-identical. hogcore's full "<name> is trans" phrases
+            // (up to 2.61s > one 150-164bpm bar) ride every:2 + maxDur:8 so the
+            // whole phrase lands before the next name starts.
+            for(let b=0;b<B-2;b+=4*(tr.every||1)){                   // one under every `every` measures
               if(prob<1&&serng()>=prob) continue;
               const src=nextSrc(), sqd=[0.3,0.55,0.75,0.92][Math.floor(serng()*4)], sqr=[3,5,8,12][Math.floor(serng()*4)];
-              found.push(dress({chop:1,beat:S+b+0.5,dur:Math.min(2.6,(src.durSec||1)*state.bpm/60),
+              found.push(dress({chop:1,beat:S+b+0.5,dur:Math.min(tr.maxDur!=null?tr.maxDur:2.6,(src.durSec||1)*state.bpm/60),
                 amp:vbase(src,0.26)*gain,pitch:tr.pitch!=null?tr.pitch:1,offset:0,
                 rsend:tr.rsend!=null?tr.rsend:0.3,dsend:tr.dsend!=null?tr.dsend:0.22,
                 sqRate:tr.sqRate!=null?tr.sqRate:sqr,sqDepth:tr.sqDepth!=null?tr.sqDepth:sqd},src));

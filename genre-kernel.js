@@ -241,34 +241,35 @@
     sp_st_wynyard:{ file:"speech/st_wynyard.wav", kind:"speech", durSec:1.02 },
     sp_st_zocalo:{ file:"speech/st_zocalo.wav", kind:"speech", durSec:1.07 },
     sp_st_zoo:{ file:"speech/st_zoo.wav", kind:"speech", durSec:1.26 },
-    // hogcore — 24 Harry Potter character NAMES (espeak-ng, varied voices = a cast;
+    // hogcore — 24 Harry Potter "<name> is trans" phrases (the full phrase IS the hook)
+    // — was: character NAMES (espeak-ng, varied voices = a cast;
     // recipe: fetch-found-samples.sh "hogcore speech" block). THE VOICE IS THE GENRE:
     // scheduled as pitched-up vocal CHOPS (found role) + a rotating name under every
     // bar (stationPool) + one-shot name stabs (hits). See GENRES.hogcore.
-    hp_harry:{ file:"speech/hp_harry.wav", kind:"speech", durSec:1.10 },
-    hp_hermione:{ file:"speech/hp_hermione.wav", kind:"speech", durSec:1.32 },
-    hp_ron:{ file:"speech/hp_ron.wav", kind:"speech", durSec:1.22 },
-    hp_dumbledore:{ file:"speech/hp_dumbledore.wav", kind:"speech", durSec:0.97 },
-    hp_snape:{ file:"speech/hp_snape.wav", kind:"speech", durSec:1.14 },
-    hp_draco:{ file:"speech/hp_draco.wav", kind:"speech", durSec:1.53 },
-    hp_luna:{ file:"speech/hp_luna.wav", kind:"speech", durSec:0.86 },
-    hp_neville:{ file:"speech/hp_neville.wav", kind:"speech", durSec:1.41 },
-    hp_mcgonagall:{ file:"speech/hp_mcgonagall.wav", kind:"speech", durSec:1.79 },
-    hp_hagrid:{ file:"speech/hp_hagrid.wav", kind:"speech", durSec:1.06 },
-    hp_sirius:{ file:"speech/hp_sirius.wav", kind:"speech", durSec:1.40 },
-    hp_bellatrix:{ file:"speech/hp_bellatrix.wav", kind:"speech", durSec:1.47 },
-    hp_voldemort:{ file:"speech/hp_voldemort.wav", kind:"speech", durSec:1.09 },
-    hp_ginny:{ file:"speech/hp_ginny.wav", kind:"speech", durSec:1.18 },
-    hp_cho:{ file:"speech/hp_cho.wav", kind:"speech", durSec:1.28 },
-    hp_cedric:{ file:"speech/hp_cedric.wav", kind:"speech", durSec:1.46 },
-    hp_dobby:{ file:"speech/hp_dobby.wav", kind:"speech", durSec:0.30 },
-    hp_hedwig:{ file:"speech/hp_hedwig.wav", kind:"speech", durSec:0.52 },
-    hp_buckbeak:{ file:"speech/hp_buckbeak.wav", kind:"speech", durSec:1.22 },
-    hp_peeves:{ file:"speech/hp_peeves.wav", kind:"speech", durSec:0.33 },
-    hp_nick:{ file:"speech/hp_nick.wav", kind:"speech", durSec:1.80 },
-    hp_myrtle:{ file:"speech/hp_myrtle.wav", kind:"speech", durSec:0.95 },
-    hp_filch:{ file:"speech/hp_filch.wav", kind:"speech", durSec:1.68 },
-    hp_crookshanks:{ file:"speech/hp_crookshanks.wav", kind:"speech", durSec:1.34 },
+    hp_harry:{ file:"speech/hp_harry.wav", kind:"speech", durSec:1.76 },
+    hp_hermione:{ file:"speech/hp_hermione.wav", kind:"speech", durSec:1.92 },
+    hp_ron:{ file:"speech/hp_ron.wav", kind:"speech", durSec:1.86 },
+    hp_dumbledore:{ file:"speech/hp_dumbledore.wav", kind:"speech", durSec:1.37 },
+    hp_snape:{ file:"speech/hp_snape.wav", kind:"speech", durSec:1.61 },
+    hp_draco:{ file:"speech/hp_draco.wav", kind:"speech", durSec:2.19 },
+    hp_luna:{ file:"speech/hp_luna.wav", kind:"speech", durSec:1.27 },
+    hp_neville:{ file:"speech/hp_neville.wav", kind:"speech", durSec:1.98 },
+    hp_mcgonagall:{ file:"speech/hp_mcgonagall.wav", kind:"speech", durSec:2.56 },
+    hp_hagrid:{ file:"speech/hp_hagrid.wav", kind:"speech", durSec:1.52 },
+    hp_sirius:{ file:"speech/hp_sirius.wav", kind:"speech", durSec:2.18 },
+    hp_bellatrix:{ file:"speech/hp_bellatrix.wav", kind:"speech", durSec:2.04 },
+    hp_voldemort:{ file:"speech/hp_voldemort.wav", kind:"speech", durSec:1.58 },
+    hp_ginny:{ file:"speech/hp_ginny.wav", kind:"speech", durSec:1.79 },
+    hp_cho:{ file:"speech/hp_cho.wav", kind:"speech", durSec:1.93 },
+    hp_cedric:{ file:"speech/hp_cedric.wav", kind:"speech", durSec:2.25 },
+    hp_dobby:{ file:"speech/hp_dobby.wav", kind:"speech", durSec:0.57 },
+    hp_hedwig:{ file:"speech/hp_hedwig.wav", kind:"speech", durSec:0.86 },
+    hp_buckbeak:{ file:"speech/hp_buckbeak.wav", kind:"speech", durSec:2.07 },
+    hp_peeves:{ file:"speech/hp_peeves.wav", kind:"speech", durSec:0.59 },
+    hp_nick:{ file:"speech/hp_nick.wav", kind:"speech", durSec:2.61 },
+    hp_myrtle:{ file:"speech/hp_myrtle.wav", kind:"speech", durSec:1.38 },
+    hp_filch:{ file:"speech/hp_filch.wav", kind:"speech", durSec:2.47 },
+    hp_crookshanks:{ file:"speech/hp_crookshanks.wav", kind:"speech", durSec:2.06 },
   };
 
   // ---------- genre -> found-video clip affinity ----------
@@ -1325,7 +1326,7 @@
       form:"wave" },
     /* /genre-tool:prelude:genres */
     /* genre-tool:hogcore:genres */
-    hogcore: { label:"Hogcore", info:"VERY simple hyperpop at 150+: four-on-floor, sidechain pump, bright supersaw hooks, and 24 Harry Potter character NAMES as the hook — pitched-up vocal chops, a name under every bar, name-stabs on the drop",
+    hogcore: { label:"Hogcore", info:"VERY simple hyperpop at 150+: four-on-floor, sidechain pump, bright supersaw hooks, and the 24-voice cast declaring \"<name> is trans\" as the hook — pitched-up vocal chops, a full phrase every other bar, name-stabs on the drop",
       bpm:[150,164],
       swing:[0,0.03],
       humanize:[0,0.1],
@@ -1342,7 +1343,7 @@
       // (was the bespoke `stations`/stationVol path): square-LFO gated at stationVol
       // 0.4, chased ~70% by the downward stutter tail
       sampleEvents:[{ pool:["hp_harry","hp_hermione","hp_ron","hp_dumbledore","hp_snape","hp_draco","hp_luna","hp_neville","hp_mcgonagall","hp_hagrid","hp_sirius","hp_bellatrix","hp_voldemort","hp_ginny","hp_cho","hp_cedric","hp_dobby","hp_hedwig","hp_buckbeak","hp_peeves","hp_nick","hp_myrtle","hp_filch","hp_crookshanks"],
-        placement:"buried", sections:"all", treatment:{cutoff:5200, vol:0.4, glitch:true} }],
+        placement:"buried", sections:"all", treatment:{cutoff:5200, vol:0.4, glitch:true, every:2, maxDur:8} }],   // full "<name> is trans" phrases (to 2.61s): one per TWO bars, 8-beat cap so the phrase finishes
       hits:{sources:["hp_voldemort","hp_snape","hp_harry","hp_bellatrix"], pattern:"offbeat", prob:0.6},
       stab:["off"],
       autoTune:0.7,   // fx wings stage 2: the pitched-up name chops snap HARD to the key — the hyperpop coherence
@@ -2086,7 +2087,22 @@
       // Dropping a node moves role()/bedUse + the density features (a bed intro/
       // outro/breakdown leaves the mix), so every genre it fires on is matrix-
       // gated (63/63 diagonal-dominant held) and its fixtures regenerated/listed.
-      if(dur()>target*1.1){
+      //
+      // NO_SECTION_DROP — genres whose IDENTITY lives in the droppable node.
+      // witchhouse (added 2026-07): its whole genre is the cathedral-of-reverb
+      // DRONE — the low-motion "exposed" bridge (pads/leadSparse/found-bed, no
+      // moving lead) is where that drone lives. On seed 2 the floored track ran
+      // over-band and the lever dropped that bridge, which yanked the rendered
+      // motion up to .67 (the surrounding verse/chorus move) — landing witchhouse
+      // squarely in the wash-cluster (wintersynth scored 100, vaporwave/downtempo
+      // 99, self 99: a lost quick-gate seed, latent since d4b1671). MEASURED:
+      // keeping the bridge holds motion inside witchhouse's own drone home and
+      // its self-diagonal, at the cost of that one seed running ~long (a floored
+      // outcome, like blues/prelude — identity beats the 180s rule). Dominant-
+      // genre gated (blends inherit the exemption only while witchhouse leads),
+      // matrix-gated (63/63 held), fixtures for the moved seeds re-blessed.
+      const dropExempt=NO_SECTION_DROP.has(c.genres&&c.genres[0]);
+      if(!dropExempt && dur()>target*1.1){
         const DROP_TAGS=["release","exposed","ground","cadence"];   // priority; never build/peak
         const tagOf=(s)=>s.tag||E.sectionTag(s.name);
         const secSec=(s)=>s.cycles*cycleBeats*spb;
@@ -2438,6 +2454,10 @@
   const AUTO_TARGET=180;
   const NO_AUTO_FORM=new Set(["ritual","anthem","transit"]);
   const NO_AUTO_GENRE=new Set([]);   // was ["afrobeat"] — see note above; now empty
+  // Genres exempt from the section-DROP lever (buildSections): the droppable
+  // node carries their identity, so a floored-over-band track keeps it and runs
+  // long rather than losing its diagonal. See the lever's NO_SECTION_DROP note.
+  const NO_SECTION_DROP=new Set(["witchhouse"]);
   const withTarget=(c,opts)=>{
     const o=Object.assign({},opts);
     const dom=c.genres&&c.genres[0];
@@ -2511,7 +2531,7 @@
   function playlist(waypoints, opts){ return journey(waypoints, Object.assign({tracks:12}, opts||{})); }
 
   function mix(weights, opts){ opts=opts||{}; return withTarget(resolveMulti(weights, opts.seed!=null?opts.seed:1), opts); }
-  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, GENRE_CLIPS, DX7_PATCHES, resolve, resolveMulti, track, blend, mix, playlist, journey };
+  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, GENRE_CLIPS, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), resolve, resolveMulti, track, blend, mix, playlist, journey };
   if(isNode) module.exports=api; else root.GenreKernel=api;
 
   // ---------- CLI ----------
