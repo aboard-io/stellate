@@ -159,9 +159,24 @@
           release: relD } };
     };
 
+    // tb303 — the TRUE Roland 303 (dsp/tb303.dsp): mono-legato, SUPERSEDES
+    // bass_acid (the kernel switches acidhouse/psytrance to it). Works as bass OR
+    // as the acid LEAD line. acid:true tags each note with accent/slide from the
+    // event (mapEvents), set before its gate-on; slide holds the gate across the
+    // legato group (pool 1, legatoSec 0.06). moog_vcf_2bn filter (diodeLadder is
+    // the known-broken normalized-freq family — see VOICES.md).
+    const tb303Unit = () => ({ ...base, module: "tb303", mono: true, legatoSec: 0.06, pool: 1, acid: true,
+      tail: Math.max(base.tail, 0.4), freqMax: 2000,
+      params: { ...base.params,
+        cutoff: clamp(c, 60, 6000), resonance: clamp(m.res != null ? m.res : 0.7, 0, 1),
+        envmod: clamp(m.envmod != null ? m.envmod : 0.55, 0, 1),
+        decay: clamp(m.decay != null ? m.decay : 0.4, 0.03, 2.5),
+        waveform: clamp(m.waveform != null ? m.waveform : (m.wave === "square" ? 1 : m.wave === "pulse" ? 0.7 : 0), 0, 1) } });
+
     if (role === "bass") {
       switch (model) {
         case "modeld": return modeldUnit(true);
+        case "tb303":  return tb303Unit();
         case "sub":    return { ...base, module: "bass_sub",   params: { ...base.params, cutoff: clamp(c, 80, 12000) } };
         case "acid":   return { ...base, module: "bass_acid",  params: { ...base.params, cutoff: clamp(c, 80, 12000), res,
           ...(m.release != null ? { release: clamp(m.release, 0.01, 3) } : {}),
@@ -176,6 +191,7 @@
     const isPad = role === "pad";
     switch (model) {
       case "modeld":  return modeldUnit(false);   // lead/solo only — mono voice, never a (chordal) pad; kernel pools respect that
+      case "tb303":   return tb303Unit();          // the acid LEAD line (same mono 303; lead/solo only)
       case "organ":   return { ...base, module: "organ",   params: { ...base.params, cutoff: clamp(c, 80, 12000), attack: atk } };
       case "strings": return { ...base, module: "strings", params: { ...base.params, cutoff: clamp(c, 80, 12000), attack: atk } };
       case "choir":   return { ...base, module: "choir",   params: { ...base.params, cutoff: clamp(Math.min(isPad ? 8000 : 9000, c * 2.5), 200, 12000), attack: atk } };
@@ -198,6 +214,134 @@
         ...(plucky ? { attack: clamp(m.attack != null ? m.attack : 0.05, 0.001, 5), sustain: sus, release: rel, fenv: fev } : {}) } };
       case "guitar":  return { ...base, module: "lead_guitar", params: { ...base.params, cutoff: clamp(c || 4500, 200, 14000), pluckPos: 0.75 } };
       case "vocoder": return { ...base, module: "robot_choir", vocoder: true, params: { ...base.params, cutoff: clamp(isPad ? Math.min(9000, c * 2) : c, 200, 14000), res, makeup: 5 } };
+      // ---- synth fleet (2026-07): nine classic-synth voices (dsp/*.dsp) ----
+      // juno60 — Roland Juno-60 poly pad/keys, STEREO (BBD chorus is the width).
+      // One shared ADSR drives VCF+VCA (authentic); SIGNED envAmount (Juno
+      // polarity); chorus 0..2 (off->I->II). chorusSpread is the stereo width
+      // (distinct from supersaw's `spread` = detune, so the recipes don't collide).
+      case "juno60":  return { ...base, module: "juno60", stereo: true, pool: 4, freqMax: 4000,
+        params: { ...base.params, cutoff: clamp(c, 60, 16000), res,
+          envAmount: clamp(m.envAmount != null ? m.envAmount : (isPad ? 1.4 : 1.0), -4, 6),
+          keytrack: clamp(m.keytrack != null ? m.keytrack : 0.3, 0, 1),
+          lfoToFilter: clamp(m.lfoToFilter != null ? m.lfoToFilter : 0, 0, 3),
+          attack: clamp(isPad ? atk : (m.attack != null ? m.attack : 0.02), 0.001, 5),
+          decay: clamp(m.decay != null ? m.decay : (isPad ? 1.2 : 0.6), 0.005, 5),
+          sustain: clamp(m.sustain != null ? m.sustain : (isPad ? 0.7 : 0.4), 0, 1),
+          release: clamp(m.release != null ? m.release : (isPad ? 1.5 : 0.4), 0.005, 6),
+          chorus: clamp(m.chorus != null ? m.chorus : (isPad ? 1.4 : 1.0), 0, 2),
+          spread: clamp(m.chorusSpread != null ? m.chorusSpread : 0.9, 0, 1),
+          sawLevel: clamp(m.sawLevel != null ? m.sawLevel : 0.6, 0, 1),
+          pulseLevel: clamp(m.pulseLevel != null ? m.pulseLevel : 0.5, 0, 1),
+          subLevel: clamp(m.subLevel != null ? m.subLevel : 0.3, 0, 1),
+          noiseLevel: clamp(m.noiseLevel != null ? m.noiseLevel : 0, 0, 1),
+          pwmBase: clamp(m.pwmBase != null ? m.pwmBase : 0.5, 0.05, 0.5),
+          pwmLfo: clamp(m.pwmLfo != null ? m.pwmLfo : 0.15, 0, 0.45) } };
+      // hammond — B-3 tonewheel organ + Leslie, STEREO. The nine drawbars are
+      // THE morph dims; leslie 0 chorale..1 tremolo (rotor inertia in the module).
+      case "hammond": return { ...base, module: "hammond", stereo: true, pool: 4, freqMax: 4000,
+        params: { ...base.params,
+          bar16: clamp(m.bar16 != null ? m.bar16 : 8, 0, 8), bar513: clamp(m.bar513 != null ? m.bar513 : 3, 0, 8),
+          bar8: clamp(m.bar8 != null ? m.bar8 : 8, 0, 8), bar4: clamp(m.bar4 != null ? m.bar4 : 6, 0, 8),
+          bar223: clamp(m.bar223 != null ? m.bar223 : 0, 0, 8), bar2: clamp(m.bar2 != null ? m.bar2 : 0, 0, 8),
+          bar135: clamp(m.bar135 != null ? m.bar135 : 0, 0, 8), bar113: clamp(m.bar113 != null ? m.bar113 : 0, 0, 8),
+          bar1: clamp(m.bar1 != null ? m.bar1 : 0, 0, 8),
+          leslie: clamp(m.leslie != null ? m.leslie : 0.85, 0, 1),
+          perc: clamp(m.perc != null ? m.perc : 0.5, 0, 1),
+          percHarm: clamp(m.percHarm != null ? m.percHarm : 0, 0, 1),
+          percDecay: clamp(m.percDecay != null ? m.percDecay : 0.35, 0.05, 2),
+          click: clamp(m.click != null ? m.click : 0.25, 0, 1),
+          leak: clamp(m.leak != null ? m.leak : 0.35, 0, 1),
+          drive: clamp(m.drive != null ? m.drive : 0.15, 0, 1),
+          attack: clamp(m.attack != null ? m.attack : (isPad ? 0.02 : 0.006), 0.001, 0.5),
+          release: clamp(m.release != null ? m.release : 0.02, 0.005, 1) } };
+      // vp330 — Roland VP-330 ghost-choir, STEREO. vowel + ensemble morph; a dark
+      // instrument (cutoff mapped straight; it self-limits).
+      case "vp330":   return { ...base, module: "vp330", stereo: true, pool: 4, freqMax: 4000,
+        params: { ...base.params, cutoff: clamp(c, 300, 12000),
+          vowel: clamp(m.vowel != null ? m.vowel : 0.3, 0, 1),
+          breath: clamp(m.breath != null ? m.breath : 0.15, 0, 1),
+          ensemble: clamp(m.ensemble != null ? m.ensemble : 0.6, 0, 1),
+          detune: clamp(m.vpDetune != null ? m.vpDetune : 0.4, 0, 1),
+          attack: clamp(isPad ? atk : (m.attack != null ? m.attack : 0.08), 0.005, 3),
+          sustain: clamp(m.sustain != null ? m.sustain : 0.9, 0, 1),
+          release: clamp(m.release != null ? m.release : 0.6, 0.02, 5) } };
+      // solina — ARP/Eminent String Ensemble, MONO out. ensemble is the identity
+      // dim; NO res param; cutoff->tone (<=12000). Ensemble chorus is built in —
+      // NEVER stack an insert_chorus, so inserts are dropped for this voice.
+      case "solina":  return { ...base, module: "solina", pool: isPad ? 6 : 4, inserts: [],
+        params: { ...base.params, tone: clamp(Math.min(12000, c), 300, 12000),
+          octave: clamp(m.octave != null ? m.octave : 0.55, 0, 1),
+          attack: clamp(isPad ? atk : (m.attack != null ? m.attack : 0.012), 0.002, 1.5),
+          release: clamp(m.release != null ? m.release : 0.22, 0.02, 3),
+          chorusRate: clamp(m.chorusRate != null ? m.chorusRate : 0.62, 0.05, 4),
+          chorusDepth: clamp(m.chorusDepth != null ? m.chorusDepth : 0.9, 0, 1),
+          ensemble: clamp(m.ensemble != null ? m.ensemble : 0.85, 0, 1) } };
+      // synclead — hard-sync tearing lead, MONO-LEGATO (modeld's contract; melody/
+      // solo only, never a pad). syncRatio + env-driven syncSweep are the signature
+      // dims; filter env in OCTAVES like modeld. syncDetune = the 2nd pair, CENTS.
+      case "synclead": return { ...base, module: "synclead", mono: true, legatoSec: 0.03, pool: 1,
+        tail: Math.max(base.tail, (m.release != null ? m.release : 0.2) + 0.4), freqMax: 4000,
+        params: { ...base.params, cutoff: clamp(c, 60, 16000), res,
+          syncRatio: clamp(m.syncRatio != null ? m.syncRatio : 1.5, 1, 4),
+          syncSweep: clamp(m.syncSweep != null ? m.syncSweep : 1.5, 0, 4),
+          syncDecay: clamp(m.syncDecay != null ? m.syncDecay : 0.18, 0.01, 1.5),
+          detune: clamp(m.syncDetune != null ? m.syncDetune : 8, 0, 40),
+          envAmount: clamp(m.envAmount != null ? m.envAmount : 1.8, 0, 5),
+          envDecay: clamp(m.envDecay != null ? m.envDecay : 0.16, 0.01, 2),
+          glide: clamp(m.glide || 0, 0, 500),
+          drive: clamp(m.drive != null ? m.drive : 0.3, 0, 1),
+          attack: clamp(m.attack != null ? m.attack : 0.004, 0.001, 2),
+          sustain: clamp(m.sustain != null ? m.sustain : 0.85, 0, 1),
+          release: clamp(m.release != null ? m.release : 0.2, 0.01, 3) } };
+      // casiocz — Casio CZ phase-distortion keys/lead, MONO out, per-note gate
+      // (NOT legato). wave = the CZ index family morph; dcw* = the DCW contour
+      // (identity). czWave/czDetune are dedicated keys (recipe `wave` is a string).
+      case "casiocz": return { ...base, module: "casiocz", pool: 4,
+        params: { ...base.params, cutoff: clamp(c, 200, 16000),
+          wave: clamp(m.czWave != null ? m.czWave : 0.5, 0, 1),
+          index: clamp(m.index != null ? m.index : 0.25, 0, 1),
+          dcwAmount: clamp(m.dcwAmount != null ? m.dcwAmount : 0.6, 0, 1),
+          dcwAttack: clamp(m.dcwAttack != null ? m.dcwAttack : 0.005, 0.001, 2),
+          dcwDecay: clamp(m.dcwDecay != null ? m.dcwDecay : 0.35, 0.005, 3),
+          dcwSustain: clamp(m.dcwSustain != null ? m.dcwSustain : 0.35, 0, 1),
+          detune: clamp(m.czDetune != null ? m.czDetune : 4, 0, 40),
+          attack: clamp(isPad ? atk : (m.attack != null ? m.attack : 0.005), 0.001, 3),
+          decay: clamp(m.decay != null ? m.decay : 0.12, 0.005, 3),
+          sustain: clamp(m.sustain != null ? m.sustain : 0.85, 0, 1),
+          release: clamp(m.release != null ? m.release : 0.3, 0.005, 4) } };
+      // oberheim — Prophet-5/SEM poly pad, MONO out. Hand-rolled TPT SVF;
+      // filterMode 0 LP .5 BP 1 HP; poly-mod (pmFM/pmFilt/osc2lfo) 0 = clean pad.
+      case "oberheim": return { ...base, module: "oberheim", pool: 4,
+        params: { ...base.params, cutoff: clamp(c, 40, 16000), res: clamp(m.res != null ? m.res : 0.15, 0, 1),
+          filterMode: clamp(m.filterMode != null ? m.filterMode : 0, 0, 1),
+          envAmount: clamp(m.envAmount != null ? m.envAmount : 1.3, 0, 5),
+          envAttack: clamp(m.envAttack != null ? m.envAttack : 0.9, 0.001, 5),
+          envDecay: clamp(m.envDecay != null ? m.envDecay : 1.4, 0.01, 5),
+          envSustain: clamp(m.envSustain != null ? m.envSustain : 0.75, 0, 1),
+          detune: clamp(m.obDetune != null ? m.obDetune : 9, 0, 50),
+          osc2tune: clamp(m.osc2tune != null ? m.osc2tune : 0, -36, 24),
+          osc2lfo: clamp(m.osc2lfo != null ? m.osc2lfo : 0, 0, 1),
+          lfoRate: clamp(m.lfoRate != null ? m.lfoRate : 4, 0.02, 14),
+          pmFM: clamp(m.pmFM != null ? m.pmFM : 0, 0, 1),
+          pmFilt: clamp(m.pmFilt != null ? m.pmFilt : 0, 0, 1),
+          drive: clamp(m.drive != null ? m.drive : 0.12, 0, 1),
+          attack: clamp(isPad ? atk : (m.attack != null ? m.attack : 0.8), 0.002, 5),
+          sustain: clamp(m.sustain != null ? m.sustain : 0.8, 0, 1),
+          release: clamp(m.release != null ? m.release : 2.4, 0.01, 6) } };
+      // ppg — PPG-Wave wavetable-scan poly pad+lead, MONO out. scan is the star
+      // dim (a genre-space "wavetable spectral position"); scanEnv is SIGNED.
+      case "ppg":     return { ...base, module: "ppg", pool: isPad ? 4 : 3,
+        params: { ...base.params, cutoff: clamp(c, 60, 16000), res,
+          scan: clamp(m.scan != null ? m.scan : 0.35, 0, 1),
+          scanEnv: clamp(m.scanEnv != null ? m.scanEnv : 0.3, -1, 1),
+          scanLfo: clamp(m.scanLfo != null ? m.scanLfo : 0, 0, 0.5),
+          scanRate: clamp(m.scanRate != null ? m.scanRate : 0.3, 0.01, 12),
+          envAmount: clamp(m.envAmount != null ? m.envAmount : 0.5, 0, 4),
+          drive: clamp(m.drive != null ? m.drive : 0.12, 0, 1),
+          sub: clamp(m.sub != null ? m.sub : 0.15, 0, 1),
+          attack: clamp(isPad ? atk : (m.attack != null ? m.attack : 0.01), 0.001, 2),
+          sustain: clamp(m.sustain != null ? m.sustain : 0.85, 0, 1),
+          release: clamp(m.release != null ? m.release : 0.4, 0.01, 3) } };
       default: { // "stack"/"saw" -> pad_saw (pads) or supersaw (leads)
         if (isPad) return { ...base, module: "pad_saw", params: { ...base.params, cutoff: clamp(c, 80, 12000), res, detune: clamp(m.detune != null ? m.detune : 0.006, 0, 0.05), attack: atk } };
         const v = clamp(m.voices || 2, 1, 7);
@@ -286,6 +430,11 @@
       if (u.fmLead) sets.idxTime = clamp(durB * spb / 2, 0.01, 4);
       if (u.biteFromAmp) sets.bite = clamp(p.amp, 0, 1);
       if (u.flangeFromTime) sets.flangePos = clamp(p.beat * spb / 164, 0, 1);
+      // tb303 per-note ACCENT/SLIDE (u.acid): buildEvents tags acid bass steps
+      // with ev.accent/ev.slide (0..1); set on the voice BEFORE the note's
+      // gate-on. slide>0 also asks the mono-legato scheduler to hold the gate
+      // across the group (freq slews in the module). Default 0 = clean.
+      if (u.acid) { sets.accent = clamp(p.accent || 0, 0, 1); sets.slide = clamp(p.slide || 0, 0, 1); }
       // blue-note bend contract (VOICES.md): only sampler units render it;
       // Faust-module voices carry no matching param and simply ignore it.
       out.push({ unit: key, beat: p.beat, durB, sets, amp: p.amp,

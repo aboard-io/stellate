@@ -122,6 +122,10 @@
     model==="reese"||model==="wobble"||model==="piano"||model==="organ"||model==="strings"||
     model==="choir"||model==="bell"||model==="brass"||model==="fm"||model==="rhodes"||
     model==="pluck"||model==="kpluck"||model==="fuzz"||model==="guitar"||model==="vocoder"||
+    model==="modeld"||   // Minimoog-Model-D mono voice (dsp/modeld.dsp)
+    // synth fleet (2026-07): nine classic-synth Faust voices (faust/dsp/*.dsp)
+    model==="juno60"||model==="tb303"||model==="solina"||model==="hammond"||model==="synclead"||
+    model==="casiocz"||model==="oberheim"||model==="ppg"||model==="vp330"||
     model==="dx7"||model==="sampler"||   // sampler: native pitched sample zones (found/samples/instruments/)
     // drums: kick boom|808|909 · snare noise|crack|clap · hat noise|metal
     model==="boom"||model==="808"||model==="909"||model==="noise"||model==="crack"||
@@ -1046,6 +1050,24 @@
     // feed individual snare hits to the long ping-pong delay at random (>=4 beats apart)
     if(state.snarePP>0){ let last=-99;
       for(const d of drums){ if(d.drum==="snare" && d.beat-last>=4 && grng()<0.6){ d.pp=state.snarePP; last=d.beat; } } }
+    // ---- ACID accent/slide (the tb303 voice) ----
+    // The 303's two per-note behaviors, tagged onto the bass notes: ACCENT
+    // (louder + squelchier — its own env in the module) and SLIDE (legato glide
+    // INTO this note from the previous one; the mono-legato scheduler holds the
+    // gate when the notes are close). ONLY the tb303 bass module reads accent/
+    // slide — bass_acid and every other voice ignore them — so this tags nothing
+    // audible elsewhere, and its OWN rng stream (seeded off state.seed) leaves
+    // every existing render byte-identical.
+    if((state.instruments&&state.instruments.bass&&state.instruments.bass.model)==="tb303"){
+      const arng=mulberry32(((state.seed??1)+3030)>>>0);
+      const bassN=pitched.filter(e=>e.voice==="bass").sort((a,b)=>a.beat-b.beat);
+      for(let i=0;i<bassN.length;i++){
+        const e=bassN[i], prev=bassN[i-1];
+        e.accent = arng()<0.34 ? +(0.7+0.3*arng()).toFixed(3) : 0;            // ~1/3 of steps accented
+        const gap = prev ? (e.beat-(prev.beat+(prev.dur||0))) : 99;           // note-off -> next-on, in beats
+        e.slide = (prev && gap<0.3 && arng()<0.45) ? +(0.55+0.45*arng()).toFixed(3) : 0;  // glide into legato-close steps
+      }
+    }
     // EVERY measure, without fail: a world-metro station name, BURIED, glitched mostly
     // downward, with a square-LFO amplitude gate at varying intensity (audio interest).
     if(state.stationPool&&state.stationPool.length){
