@@ -1184,6 +1184,119 @@
         }
       }
     }
+    // ---- generalized SAMPLE-EVENT ROLES (KERNEL-V4 Phase 4) ----
+    // bed/chops/break/hits/vox/horn/ding/stations/vocal were each a bespoke
+    // SAMPLE placement wired through the whole stack (the handlers above +
+    // stationPool). state.sampleEvents is the ONE dimension that generalizes
+    // them: an array of role specs, each a POOL of source ids + a PLACEMENT
+    // algorithm + a section filter + treatment. This pass emits the SAME
+    // `found` event shapes the bed/chop handlers already emit (see
+    // faust/state-engine.js §found — {chop,beat,dur,amp,tableNum,pitch,offset,
+    // cutoff,rsend,dsend,ppsend,fade,sqRate,sqDepth} for hits/slices, and
+    // {beat,dur,amp,tableNum,pitch,stretch,cutoff} for beds), so the Faust
+    // voice layer renders them with ZERO engine-side change. Placed BEFORE the
+    // rubato warp so its events inherit the same musical clock as every other
+    // layer. Own rng stream (seed+9091) so an adopting genre perturbs nothing
+    // but its own new layer; ABSENT/empty state.sampleEvents => the pass never
+    // runs => byte-identical (fixtures.js pins it). The transitwave inventions
+    // (opener horn, sectionEdge ding, buried station litany) are now
+    // catalog-wide vocabulary any genre can request.
+    //   spec = { pool:[srcId...], placement, sync, sections, treatment, gain, prob }
+    //   placement  bed      one sustained source spanning each matching section
+    //              slice    beat-synced chop hits across the section (chops role)
+    //              oneShot  one chop at each matching section's downbeat
+    //              opener   oneShot on the FIRST matching section only (goal horn)
+    //              cadence  oneShot at each matching section's END (door "ding")
+    //              buried   one source under every measure, rotating (stations)
+    //              response one source on the ANSWER half of each chord bar (the
+    //                       blues 78rpm call-and-response / thunk "answer the
+    //                       lead" idea, generalized to bar granularity)
+    //   sections   "all" | "first" | "quiet"(no drums) | <regex string on name>
+    //   treatment  pitch,stretch,cutoff,rsend,dsend,ppsend,fade,sqRate,sqDepth,
+    //              glitch(bool) — the narration/loon stutter-down tail
+    //   gain       amp multiplier over the source's vol; prob per-placement gate
+    if(Array.isArray(state.sampleEvents) && state.sampleEvents.length){
+      const serng=mulberry32(((state.seed??1)+9091)>>>0);
+      const secs=state.sections||[];
+      const matchSec=(sel,i,sec)=>{
+        if(!sel||sel==="all") return true;
+        if(sel==="first") return i===0;
+        if(sel==="quiet") return !sec.drums||sec.drums==="off";
+        try{ return new RegExp(sel,"i").test(sec.name||""); }catch(e){ return (sec.name||"")===sel; }
+      };
+      for(const spec of state.sampleEvents){
+        const pool=(spec.pool||[]).map(id=>srcById[id]).filter(Boolean);
+        if(!pool.length) continue;
+        const tr=spec.treatment||{}, gain=spec.gain!=null?spec.gain:1, prob=spec.prob!=null?spec.prob:1;
+        const place=spec.placement||"oneShot", sync=spec.sync||null;
+        // seeded pool rotation — each source used once before any repeat (stations law)
+        const order=pool.slice();
+        for(let i=order.length-1;i>0;i--){ const j=Math.floor(serng()*(i+1)); const t=order[i]; order[i]=order[j]; order[j]=t; }
+        let pi=0; const nextSrc=()=>order[pi++%order.length];
+        const chopDur=(src)=>Math.min(4,(src.durSec||1.2)*state.bpm/60);
+        // dress a base found-event with the spec's treatment
+        const dress=(ev,src)=>{
+          ev.tableNum=src.tableNum;
+          ev.cutoff=tr.cutoff!=null?tr.cutoff:(src.cutoff||3500);
+          if(tr.rsend!=null) ev.rsend=tr.rsend;
+          if(tr.dsend!=null) ev.dsend=tr.dsend;
+          if(tr.ppsend!=null) ev.ppsend=tr.ppsend;
+          if(tr.fade!=null) ev.fade=tr.fade;
+          if(tr.sqRate!=null) ev.sqRate=tr.sqRate;
+          if(tr.sqDepth!=null) ev.sqDepth=tr.sqDepth;
+          return ev;
+        };
+        const shot=(src,beat)=>{
+          found.push(dress({chop:1,beat,dur:chopDur(src),amp:(src.vol||0.3)*gain,
+            pitch:tr.pitch!=null?tr.pitch:1,offset:0},src));
+          if(tr.glitch){                                             // downward stutter tail (narration/loon idiom)
+            const n=2+Math.floor(serng()*3), step=0.125;
+            for(let j=0;j<n;j++) found.push(dress({chop:1,beat:beat+chopDur(src)*0.5+j*step,dur:step*1.6,
+              amp:(src.vol||0.3)*gain*0.8,pitch:[0.5,0.6,0.7,0.8][Math.floor(serng()*4)],
+              offset:Math.min(0.9,serng()*0.5)},src));
+          }
+        };
+        let firstDone=false;
+        for(let si=0;si<spans.length;si++){
+          const sp=spans[si], sec=secs[si]||{};
+          if(!matchSec(spec.sections,si,sec)) continue;
+          const S=sp.start, B=sp.beats;
+          if(place==="bed"){
+            if(prob>=1||serng()<prob){ const src=nextSrc();
+              found.push(dress({beat:S,dur:B,amp:(src.vol||0.22)*gain,
+                pitch:tr.pitch!=null?tr.pitch:(src.pitch??0.78),
+                stretch:tr.stretch!=null?tr.stretch:(src.stretch??0.45)},src)); }
+          } else if(place==="slice"){
+            for(let b=0;b<B;b++){ if(serng()>=(prob<1?prob:0.55)) continue;
+              const src=nextSrc();
+              found.push(dress({chop:1,beat:S+b+(serng()<0.3?0.5:0),dur:0.35+serng()*0.5,
+                amp:(src.vol||0.3)*1.6*gain,pitch:tr.pitch!=null?tr.pitch:(src.pitch??1),
+                offset:serng()},src)); }
+          } else if(place==="opener"){
+            if(firstDone) continue; firstDone=true;
+            if(prob>=1||serng()<prob) shot(nextSrc(),S+0.25);
+          } else if(place==="oneShot"){
+            if(prob>=1||serng()<prob){ const src=nextSrc();
+              shot(src, sync==="sectionEdge"?Math.max(S,S+B-chopDur(src)-0.5):S+0.25); }
+          } else if(place==="cadence"){
+            if(prob>=1||serng()<prob){ const src=nextSrc();
+              shot(src, Math.max(S,S+B-chopDur(src)-0.5)); }
+          } else if(place==="buried"){
+            for(let b=0;b<B-2;b+=4){                                 // one under every measure (4 beats)
+              if(prob<1&&serng()>=prob) continue;
+              const src=nextSrc(), sqd=[0.3,0.55,0.75,0.92][Math.floor(serng()*4)], sqr=[3,5,8,12][Math.floor(serng()*4)];
+              found.push(dress({chop:1,beat:S+b+0.5,dur:Math.min(2.6,(src.durSec||1)*state.bpm/60),
+                amp:(src.vol||0.26)*gain,pitch:tr.pitch!=null?tr.pitch:1,offset:0,
+                rsend:tr.rsend!=null?tr.rsend:0.3,dsend:tr.dsend!=null?tr.dsend:0.22,
+                sqRate:tr.sqRate!=null?tr.sqRate:sqr,sqDepth:tr.sqDepth!=null?tr.sqDepth:sqd},src)); }
+          } else if(place==="response"){
+            const nbars=Math.max(1,Math.round(B/CBEATS));
+            for(let bar=0;bar<nbars;bar++){ if(prob<1&&serng()>=prob) continue;
+              shot(nextSrc(), S+bar*CBEATS+CBEATS/2); }
+          }
+        }
+      }
+    }
     // ---- RUBATO — the SECTION stage of the unified time-feel (Phase 3) ----
     // (state.rubato = {depth, periodBars, phase}; resolved into tfeel.rubato)
     // Deterministic slow breathing of tempo, implemented ONCE here as a

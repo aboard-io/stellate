@@ -579,6 +579,13 @@
       found:{role:"bed", vol:[.18,.3], pitch:[.6,.78], stretch:[.45,.6], cutoff:[1800,3000], sources:["frogs","iriomote","tokyo_station","factory"]},   // 4 beds rotate — pitched-down city recordings read as tar-pit / geothermal swamp
       vox:{sources:["sp_paleo_welcome","sp_paleo_mesozoic","sp_paleo_sauropod","sp_paleo_rex","sp_paleo_bones","sp_paleo_skies"], vol:0.5, pitch:0.96, cutoff:6500},   // glitched paleontologist narration
       stab:["off"], hits:{sources:["sp_herenow","vox_a"], pattern:"sparse", prob:.15},
+      // Phase-4 PILOT: a distant paleontologist RESPONSE — the blues 78rpm
+      // call-and-response / the thunk "answer the lead" idea, generalized to a
+      // sample role: a glitched utterance answers on the back half of the
+      // melodic bars (theme/finale). Additive over the bespoke vox handler;
+      // only dinosynth's own fixtures drift.
+      sampleEvents:[{ pool:["sp_paleo_skies","sp_paleo_bones"], placement:"response", sections:"theme|finale",
+        gain:.5, prob:.4, treatment:{pitch:.9, cutoff:3200, rsend:.4, dsend:.3, glitch:true} }],
       form:"ritual" },   // creature solos + fuzz solo + glitched VO (see buildSections)
     canawave: { label:"Canawave", info:"proud Canadiana pop: bright major anthem, arpeggiated guitar, toms + hi-hats, loon calls and the national news",
       bpm:[108,114], swing:[0,.06], humanize:[.08,.2],
@@ -770,6 +777,11 @@
       fx:{reverb:[.4,.55], delayBeats:[.5,.75], delayFb:[.3,.45], delayCut:[2200,3400], pump:[.25,.5], crackle:[.05,.2], lowcut:[30,45], highcut:[0,0], comp:[.55,.8], grit:[.3,.6]},
       found:{role:"break", vol:[.3,.42], pitch:[1,1], stretch:[.5,.5], cutoff:[5500,8000], sources:["amen_165","amen_170","amen_172","amen_175"]},   // the break LOUD and open
       stab:["rave","rave","offbeat"], hits:{sources:["bb_horn_a","bb_horn_b","bb_stab_a","bb_stab_b","bb_stab_c"], pattern:"offbeat", prob:.85},   // the dcc12/20/48 shelf finally stars
+      // Phase-4 PILOT: the rave air-horn OPENER — canawave's goal-horn intro
+      // idiom, now catalog-wide vocabulary via the generic sample-event pass
+      // (one filtered stab on the first section's downbeat). Additive: the
+      // break/hits handlers are untouched; only bigbeat's own fixtures drift.
+      sampleEvents:[{ pool:["bb_horn_a","bb_horn_b"], placement:"opener", gain:.6, treatment:{cutoff:7000, dsend:.3} }],
       form:"drop" },
     garage: { label:"UK garage", info:"2-step shuffle at 130: swung skippy drums, sub weight, chopped vox",   // sample-mid: vox chops as percussion
       bpm:[128,136], swing:[.2,.3], humanize:[.1,.25],
@@ -1686,6 +1698,22 @@
         if(Object.keys(tfl).length) choice.timeFeel=tfl;
       }
     }
+    // ---- generalized SAMPLE-EVENT ROLES (KERNEL-V4 Phase 4): the bespoke
+    // sample placements (horn/ding/stations/vocal/…) generalize into
+    // state.sampleEvents = [ { pool, placement, sync, sections, treatment,
+    // gain, prob } ] -> csd-engine's one sample-event pass. Resolved by the
+    // DOMINANT-parent law (the reverbColor/transforms structural-dimension
+    // precedent): ZERO rng draws, so untouched anchors keep every prior seeded
+    // choice AND render no sample-event layer (byte-identical, fixtures.js pins
+    // it); a blend inherits its dominant parent's role list (whose foundSources
+    // dominate the mix anyway — pool-union across parents stays deferred with
+    // the rest of the full-adoption vision). toState injects each spec's pool
+    // ids into foundSources so buildEvents' srcById can resolve them.
+    {
+      const top=ws.slice().sort((a,b)=>b.w-a.w)[0];
+      if(top && Array.isArray(GENRES[top.g].sampleEvents) && GENRES[top.g].sampleEvents.length)
+        choice.sampleEvents=GENRES[top.g].sampleEvents;
+    }
     // ---- reverb COLOR (fx wings round): a per-genre reverb character
     // (state.reverbColor names an external dist/reverb_* module that replaces
     // the fx_bus internal zita — see faust/state-engine reverbColor). Picked
@@ -2051,6 +2079,15 @@
       foundSources.push({id:sid,label:sid,url:"",samplePath:"found/samples/"+v.file,durSec:v.durSec,
         vol:(c.stationVol!=null?c.stationVol:0.26), pitch:1, stretch:0.5, cutoff:5200});
     });
+    (c.sampleEvents||[]).forEach(se=>{   // KERNEL-V4 Phase 4: ride each role's pool ids into foundSources so buildEvents' srcById resolves them (like stations/hits above)
+      (se.pool||[]).forEach(id=>{
+        if(foundSources.some(s=>s.id===id)) return;
+        const isS=!!SAMPLES[id], sr=isS?SAMPLES[id]:SOURCES[id]; if(!sr) return;
+        foundSources.push(Object.assign({id,label:id,url:sr.url||""},
+          isS?{samplePath:"found/samples/"+sr.file,durSec:sr.durSec,bpm:sr.bpm}:{durSec:4},
+          {vol:0.3,pitch:1,stretch:0.5,cutoff:5000}));
+      });
+    });
     if(c.vocal){   // the WORLD-sung 8-bar chorus — generated to match bpm+key at render time (sing.py), written here
       foundSources.push({id:"tw_vocal",label:"tw_vocal",url:"",samplePath:"found/tw_vocal.wav",
         durSec:32*60/c.bpm, vol:(c.vocalVol!=null?c.vocalVol:0.52), pitch:1, stretch:0.5, cutoff:9000, vocal:true});
@@ -2116,6 +2153,7 @@
       ...(c.rubato?{rubato:c.rubato}:{}), ...(c.thunk?{thunk:c.thunk}:{}),
       ...(c.transforms?{transforms:c.transforms}:{}),  // pattern-transform algebra (Phase 2): absent = engine's historical default, byte-identical
       ...(c.timeFeel?{timeFeel:c.timeFeel}:{}),         // unified time-feel (Phase 3): grid + push-pull; absent = grid "8th" + no push-pull, byte-identical
+      ...(c.sampleEvents?{sampleEvents:c.sampleEvents}:{}),  // generalized sample-event roles (Phase 4): absent = no sample-event layer, byte-identical
       euclid:c.euclid||undefined,                      // kit-level euclidean rhythm spec (csd-engine drumEvents)
       ...(c.chordEvery?{chordEvery:c.chordEvery}:{}),  // harmonic rhythm (KERNEL-V4 Phase 1): beats per chord bar
       jux:(c.fx.jux||0)>0.05?c.fx.jux:0,               // stereo divergence: buildEvents emits per-event pan offsets

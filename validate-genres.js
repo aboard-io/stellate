@@ -345,6 +345,11 @@ function gateVocabulary() {
     check(g, "hornSource", A.hornSource, inSet(sampleIds), "not in SAMPLES registry");
     check(g, "dingSource", A.dingSource, inSet(sampleIds), "not in SAMPLES registry");
     check(g, "stations", A.stations, inSet(sampleIds), "not in SAMPLES registry");
+    // KERNEL-V4 Phase 4: the unified sample-event role registry — every spec's
+    // pool must resolve to a real SAMPLES (local) or SOURCES (remote) id, the
+    // same union the bed/hits handlers accept (one gate for the whole family).
+    if (Array.isArray(A.sampleEvents)) A.sampleEvents.forEach((se, i) =>
+      check(g, "sampleEvents[" + i + "].pool", se && se.pool, inSet(sourceIds), "not in SAMPLES/SOURCES registry"));
     check(g, "stab", A.stab, inSet(stabs), "unknown STAB_PATTERNS key");
     if (A.form && !forms.has(A.form)) warnings.push({ genre: g, field: "form", value: A.form, note: "unknown form — silently falls back to pop" });
     if (!V.TARGETS[g]) warnings.push({ genre: g, field: "TARGETS", note: "anchor has no genre-verifier target ranges — unverifiable, excluded from gates 2-5" });
