@@ -57,6 +57,15 @@
           range: clamp(it.range != null ? it.range : 2.2, 0, 4),
           q: clamp(it.q != null ? it.q : 4, 0.5, 12),
           mix: clamp(it.mix != null ? it.mix : 0.85, 0, 1) } }); break;
+        // tremolo — amp AM (surf's Fender bias/opto trem) with a shape morph
+        // (0 sine -> 1 hard bias) and a wobble param (exotica's vibraphone-fan
+        // cents-level pitch flutter). mix 0 = bit-exact bypass (insert law).
+        case "tremolo": out.push({ type: "tremolo", module: "insert_tremolo", params: {
+          rate: clamp(it.rate != null ? it.rate : 5, 0.5, 12),
+          depth: clamp(it.depth != null ? it.depth : 0.7, 0, 1),
+          shape: clamp(it.shape != null ? it.shape : 0, 0, 1),
+          wobble: clamp(it.wobble != null ? it.wobble : 0, 0, 1),
+          mix: clamp(it.mix != null ? it.mix : 0.8, 0, 1) } }); break;
         case "filtersweep": {
           const base = clamp(cutoffHz || 2000, 60, 12000);
           const loHz = clamp(base * Math.pow(2, it.lo != null ? it.lo : -1), 40, 12000);

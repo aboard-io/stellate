@@ -3925,6 +3925,17 @@
    "/insert_phaser/rate"
   ]
  },
+ "insert_tremolo": {
+  "inputs": 1,
+  "outputs": 1,
+  "params": [
+   "/insert_tremolo/depth",
+   "/insert_tremolo/mix",
+   "/insert_tremolo/rate",
+   "/insert_tremolo/shape",
+   "/insert_tremolo/wobble"
+  ]
+ },
  "insert_wah": {
   "inputs": 1,
   "outputs": 1,

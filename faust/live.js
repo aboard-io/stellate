@@ -788,7 +788,7 @@
                        "synclead", "casiocz", "oberheim", "ppg", "vp330",
                        "reverb_dattorro", "reverb_greyhole", "reverb_fdn", "reverb_spring", "master_mb"])
         Promise.resolve(factory(m)).catch(() => {});
-      for (const m of ["insert_distort", "insert_phaser", "insert_chorus", "insert_filtersweep", "insert_wah"])
+      for (const m of ["insert_distort", "insert_phaser", "insert_chorus", "insert_filtersweep", "insert_wah", "insert_tremolo"])
         mkNode(m, "prewarm:" + m).catch(() => {});
     } }, 1500);
 
