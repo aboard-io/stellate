@@ -1,0 +1,30 @@
+{
+  "name": "prelude",
+  "label": "Prelude",
+  "info": "Bach-prelude figuration as a genre: continuous broken-chord 16th arpeggiation over a slow harmonic rhythm (chordEvery:16), felt-piano / bright-grand voices, drum kit OFF, even Baroque touch with only the lightest rubato — the WTC Book I C-major prelude, generalized",
+  "clips": ["earth_orbit", "blue_dinner", "bamboo", "dc_village", "spacewalk"],
+  "anchor": {
+    "bpm": [62, 80],
+    "swing": [0, 0.03],
+    "humanize": [0.08, 0.2],
+    "progressions": ["canon", "ii_v_i", "dream"],
+    "kits": ["off"],
+    "fills": ["off"],
+    "chordEvery": 16,
+    "bass": { "patterns": ["root", "pedal", "simple"], "samplerPool": ["felt_piano", "bright_yamaha_grand"], "recipe": { "model": ["sampler", "sampler", "piano"], "cutoff": [700, 1400], "res": [0.05, 0.1], "level": [0.5, 0.7], "send": [0.2, 0.4], "dsend": [0, 0.08], "attack": [0.01, 0.03], "release": [0.3, 0.6] } },
+    "lead": { "patterns": ["arp16", "arpup", "canon"], "samplerPool": ["bright_yamaha_grand", "felt_piano"], "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "voices": [1, 2], "spread": [0.001, 0.003], "cutoff": [2600, 3800], "level": [0.42, 0.56], "send": [0.25, 0.45], "dsend": [0.05, 0.18], "attack": [0.005, 0.02], "release": [0.2, 0.45] } },
+    "pads": { "prob": 0.3, "samplerPool": ["strings"], "recipe": { "model": ["sampler", "strings"], "wave": "sine", "cutoff": [900, 1600], "detune": [0.002, 0.005], "attack": [1, 2.5], "release": [1.5, 3], "swell": 1, "level": [0.32, 0.46], "send": [0.35, 0.55], "dsend": [0, 0.1] } },
+    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.5, 0.7], "snare": [0.4, 0.6], "hat": [0.3, 0.5], "tune": [0.9, 1], "send": [0.15, 0.35], "dsend": [0, 0] },
+    "fx": { "reverb": [0.42, 0.6], "delayBeats": [0.75, 1.5], "delayFb": [0.12, 0.28], "delayCut": [2200, 3200], "pump": [0, 0], "crackle": [0, 0.12], "lowcut": [0, 0], "highcut": [0, 0], "comp": [0, 0.12] },
+    "found": { "role": "bed", "vol": [0.05, 0.12], "pitch": [0.7, 0.9], "stretch": [0.45, 0.6], "cutoff": [1800, 2800], "sources": ["iriomote", "tokyo_station"] },
+    "rubato": { "depth": [0.01, 0.025], "periodBars": [2, 4], "prob": 1 },
+    "hits": { "sources": ["sp_herenow"], "pattern": "sparse", "prob": 0.05 },
+    "stab": ["off"],
+    "form": "wave"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": { "bpm": 3, "drumDensity": 3, "acoustic": 3, "humanize": 3, "rubato": 2, "motion": 1, "wash": 1, "swing": 1 }
+  }
+}
