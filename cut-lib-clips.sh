@@ -95,8 +95,10 @@ const PROV = {
   "3dgfx_jupiter_magnetosphere": { title: "Jupiter's Magnetosphere — The Movie", year: "1980s (est.)", license: "likely NASA/university viz — PD-if-gov; verify before redistribution", note: "Scientific field-line visualization. Title read from its own title card; archive.org item id not recovered." },
   "3dgfx_losalamos_sims_1975": { title: "Los Alamos computer simulations", year: "c.1975", license: "likely US-gov (LANL) PD; verify before redistribution", note: "Early 3D wireframe hydro/finite-element sim reel; card credits technical advisors J. Newell, R. Elliott, E. Pequette, R. Orr. Archive.org item id not recovered." },
   "anime_momotaro_shinpei": { title: "Momotaro: Umi no Shinpei (Momotaro's Divine Sea Warriors)", year: "1945", license: "public domain by age (Japan, dir. Mitsuyo Seo)", note: "First Japanese feature-length animated film. WWII-era production — cued windows deliberately avoid militaristic/flag/propaganda shots; burned-in English subtitles cropped off the bottom. Print carries burned-in subs throughout." },
-  "anime_momotaro_umiwashi": { title: "Momotaro no Umiwashi (Momotaro's Sea Eagles)", year: "1943", license: "public domain by age (Japan, dir. Mitsuyo Seo)", note: "NOT CUED. Explicit WWII air-raid propaganda (bombing run on 'Demon Island') plus a cartoon character that reads as a racial caricature. No usable non-propaganda windows found; left in lib/ un-cued rather than deleted. Flag for human review." },
 };
+// (anime_momotaro_umiwashi, 1943: DELETED 2026-07-04 at Paul's direction —
+// explicit WWII air-raid propaganda + racial caricature, never cued. See the
+// SOURCES.md tombstone; re-fetch from archive.org only if genuinely needed.)
 const bySrc = {};
 for (const r of rows) (bySrc[r.lib] ||= []).push(r);
 const probe = f => { try {
