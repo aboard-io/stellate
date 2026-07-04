@@ -132,8 +132,36 @@
         }, freqMax: 4000 };
     };
 
+    // modeld — the Minimoog-Model-D-class MONO voice (3 osc + ladder + filter
+    // env + glide; dsp/modeld.dsp). `mono:true` is the pool contract: the
+    // engine routes ALL of this unit's notes to ONE voice instance and marks
+    // legato notes (gap < legatoSec or overlapping) by HOLDING the gate across
+    // the group — freq then slews inside the module (glide) and the envelopes
+    // single-trigger. press.js implements it; live's generic pool still plays
+    // every note (freq slew intact on reused nodes) but retriggers envelopes
+    // until it honors mono (documented in VOICES.md).
+    const modeldUnit = (isBassRole) => {
+      const relD = clamp(m.release != null ? m.release : (isBassRole ? 0.12 : 0.25), 0.01, 3);
+      return { ...base, module: "modeld", mono: true, legatoSec: 0.03,
+        pool: 1,   // MONO: one voice instance, ever (press honors it; live's generic pool doesn't yet — see VOICES.md)
+        tail: Math.max(base.tail, relD + 0.4),
+        freqMax: isBassRole ? 2000 : 4000,
+        params: { ...base.params,
+          cutoff: clamp(c, 60, 12000), res,
+          envAmount: clamp(m.envAmount != null ? m.envAmount : (isBassRole ? 1.5 : 1.2), 0, 5),
+          envDecay: clamp(m.envDecay != null ? m.envDecay : (isBassRole ? 0.14 : 0.2), 0.01, 2),
+          glide: clamp(m.glide || 0, 0, 500),
+          drive: clamp(m.drive || 0.25, 0, 1),
+          oscMix: clamp(m.oscMix != null ? m.oscMix : 0.5, 0, 1),
+          drift: clamp(m.drift != null ? m.drift : 6, 0, 25),
+          attack: clamp(m.attack != null ? m.attack : 0.004, 0.001, 2),
+          sustain: clamp(m.sustain != null ? m.sustain : (isBassRole ? 0.8 : 0.9), 0, 1),
+          release: relD } };
+    };
+
     if (role === "bass") {
       switch (model) {
+        case "modeld": return modeldUnit(true);
         case "sub":    return { ...base, module: "bass_sub",   params: { ...base.params, cutoff: clamp(c, 80, 12000) } };
         case "acid":   return { ...base, module: "bass_acid",  params: { ...base.params, cutoff: clamp(c, 80, 12000), res,
           ...(m.release != null ? { release: clamp(m.release, 0.01, 3) } : {}),
@@ -147,6 +175,7 @@
     }
     const isPad = role === "pad";
     switch (model) {
+      case "modeld":  return modeldUnit(false);   // lead/solo only — mono voice, never a (chordal) pad; kernel pools respect that
       case "organ":   return { ...base, module: "organ",   params: { ...base.params, cutoff: clamp(c, 80, 12000), attack: atk } };
       case "strings": return { ...base, module: "strings", params: { ...base.params, cutoff: clamp(c, 80, 12000), attack: atk } };
       case "choir":   return { ...base, module: "choir",   params: { ...base.params, cutoff: clamp(Math.min(isPad ? 8000 : 9000, c * 2.5), 200, 12000), attack: atk } };

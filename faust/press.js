@@ -205,24 +205,45 @@ async function press(state, outPath, opts) {
     if (u.module === "supersaw") tail = Math.max(tail, (u.params.release || 0.3) + 0.3);
     const relTail = Math.ceil(tail * SR);
 
-    // allocation: first free voice, else the one free soonest (round-robin-ish)
+    // allocation: first free voice, else the one free soonest (round-robin-ish).
+    // MONO-LEGATO units (u.mono, e.g. modeld): every note goes to voice 0, and
+    // legato notes (gap < legatoSec or overlapping the previous note) join the
+    // running gate group — the previous gate-off is withdrawn so the gate HOLDS
+    // across the group, the freq param slews inside the module (glide) and the
+    // envelopes single-trigger, exactly the Model-D contract in VOICES.md.
+    const legatoWin = u.mono ? Math.ceil((u.legatoSec != null ? u.legatoSec : 0.03) * SR) : 0;
     for (const e of events) {
       const s = Math.max(BS, Math.floor(e.beat * spb * SR));
       const durS = e.durB * spb;
       const offS = e.hold ? s + Math.floor(durS * SR)
         : e.drum ? s + Math.floor(0.012 * SR)
         : s + Math.floor((Math.max(0.012, durS) - 0.008) * SR);
-      let v = procs.find(p => p.busyUntil <= s) ||
-              procs.reduce((a, b) => (a.busyUntil <= b.busyUntil ? a : b));
+      let v, legato = false;
+      if (u.mono) {
+        v = procs[0];
+        legato = !!(v.lastOff && s <= v.busyUntil + legatoWin);
+      } else {
+        v = procs.find(p => p.busyUntil <= s) ||
+            procs.reduce((a, b) => (a.busyUntil <= b.busyUntil ? a : b));
+      }
       for (const [k, val] of Object.entries(e.sets)) v.changes.push([s - BS, v.R + k, val]);
       // JS-side per-note gains ("@" pseudo-params, applied in the mix loop, not
       // setParamValue): @out = DX7 velocity (GainNode-equivalent, matches live's
       // min(1, extGainPerAmp*amp)); @pp = per-EVENT ping-pong send (snarePP).
       if (u.extGainPerAmp) v.changes.push([s - BS, "@out", Math.min(1, u.extGainPerAmp * (e.amp || 0.1))]);
       v.changes.push([s - BS, "@pp", e.pp || 0]);
-      v.changes.push([s, v.R + "gate", 1], [offS, v.R + "gate", 0]);
-      v.ivals.push([s - BS, Math.min(TOTAL, offS + relTail)]);
-      v.busyUntil = offS;
+      if (legato) {
+        // join the group: withdraw the pending gate-off, keep the gate high
+        const ix = v.changes.indexOf(v.lastOff);
+        if (ix >= 0) v.changes.splice(ix, 1);
+      } else {
+        v.changes.push([s, v.R + "gate", 1]);
+      }
+      const off = [offS, v.R + "gate", 0];
+      v.changes.push(off);
+      if (u.mono) v.lastOff = off;
+      v.ivals.push([s - BS, Math.min(TOTAL, off[0] + relTail)]);
+      v.busyUntil = Math.max(v.busyUntil, off[0]);
     }
 
     // render each pool voice over its merged active segments only

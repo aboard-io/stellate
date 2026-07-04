@@ -1046,5 +1046,28 @@
    "/tom/level",
    "/tom/pitch"
   ]
+ },
+ "modeld": {
+  "inputs": 0,
+  "outputs": 1,
+  "params": [
+   "/modeld/attack",
+   "/modeld/cutoff",
+   "/modeld/drift",
+   "/modeld/drive",
+   "/modeld/envAmount",
+   "/modeld/envAttack",
+   "/modeld/envDecay",
+   "/modeld/envSustain",
+   "/modeld/freq",
+   "/modeld/gain",
+   "/modeld/gate",
+   "/modeld/glide",
+   "/modeld/level",
+   "/modeld/oscMix",
+   "/modeld/release",
+   "/modeld/res",
+   "/modeld/sustain"
+  ]
  }
 }
