@@ -367,3 +367,47 @@ Engine-level integration this round:
   `dx7.name` — a same-algorithm patch change is morphed by the glideStep param
   lerp, so the name only queued a redundant one-bar discrete flip (~22% of
   |B−A| snap). Topology changes still flip via `dx7.algorithm`.
+
+## Reverb COLOR family — reverb as a genre dimension (2026-07 fx wings)
+
+Four selectable reverb characters (`dsp/reverb_{dattorro,greyhole,fdn,spring}.dsp`),
+exposed per genre via `state.reverbColor` (a string). Absent / `"zita"` /
+`"default"` = the fx_bus **internal zita** (byte-identical to pre-wings renders).
+A color names an EXTERNAL module that REPLACES the internal zita for that genre.
+
+| module | character | homes | notes |
+|---|---|---|---|
+| `reverb_dattorro` | clean figure-8 plate (RT≈1.4s, bright) | citypop, house | `re.dattorro_rev` |
+| `reverb_greyhole` | huge diffuse smear (RT≥3s) | witchhouse, dinosynth | `re.greyhole` (heavy: ~50KB, 11s compile) |
+| `reverb_fdn` | dry room, NOT a wash (RT≈0.5s) | tango, blues, prelude | `re.stereo_freeverb` (Schroeder, small room) |
+| `reverb_spring` | boing/flutter spring tank (RT≈1.2s, dark) | surfrock | hand-rolled: dispersive allpass cascade + modulated feedback ring |
+
+- **Uniform interface**: every color is 2-in/2-out with `rgain` (= `reverb*3.2`,
+  the same A/B calibration as the default, capped 3.5) + `rtone` (return LP). A
+  baked per-module `TRIM` equalizes tail energy to the zita reference
+  (probe-reverb.js measured E≈3.6e-5) so a genre's `reverb` scalar means the
+  same wetness across colors. Trims: dattorro 0.71, greyhole 0.26, fdn 0.055,
+  spring 0.52.
+- **state-engine** (`reverbColor(state)` + `REVERB_COLORS`): returns
+  `{module, rgain, rtone}` or null. `fxParams` sets the internal `rgain: 0`
+  whenever a color is active (the internal zita mutes but still runs — it is the
+  baseline, so a color is only ONE extra reverb node, honoring the live budget).
+- **press.js**: renders the whole (mono) rev-send bus through the color module
+  and folds the stereo wet into `dryL/dryR` so it rides the master chain.
+  Deterministic (module LFO phases start at 0 → same seed = same bytes).
+- **live.js** (`ensureReverbColor`): builds at most ONE external reverb node,
+  fed the rev-send bus via a 2-ch merger, wet → `dryBus`. A section/genre change
+  crossfades to the new color (old gain→0, retire after 500ms). Called per-bar
+  in injectChord.
+- **kernel**: anchors carry `reverbColor:"…"`; `resolveMulti` picks the
+  DOMINANT parent's color with ZERO rng draw (touched anchors keep every prior
+  musical choice byte-for-byte, only gaining the field; a blend inherits its
+  dominant parent's color). Untouched genres never declare it → zita default →
+  byte-identical (39 untouched genre×seed states verified identical).
+- **Gates**: `faust/probe-reverb.js` (non-silent + measurably distinct RT/
+  centroid across the family); verify.sh 63/63; live smoke exercises the
+  dattorro build+swap (jungle→house) with 0 errors.
+- **KNOWN LIMITATION**: the delay/ping-pong bleed into reverb (`d*0.2`,
+  `pp*0.12`) lives inside fx_bus and only feeds the internal zita — the external
+  colors receive the raw rev-send bus only (no delay/pp bleed). Symmetric across
+  press + live. Fine for stage 1; a future round could tap that bleed out.

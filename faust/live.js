@@ -80,6 +80,47 @@
     drySplit.connect(merger, 0, 0); drySplit.connect(merger, 1, 1);
     revBus.connect(merger, 0, 2); delBus.connect(merger, 0, 3); ppBus.connect(merger, 0, 4);
 
+    // ---- reverb COLOR (fx wings round): an EXTERNAL reverb node replaces the
+    // fx_bus internal zita for genres that select one (state.reverbColor). At
+    // most ONE extra reverb node is instantiated at a time (per the load
+    // budget) — a section/genre change crossfades to the new color. The node is
+    // fed the (mono) reverb-send bus via a 2-ch merger and its stereo wet folds
+    // back into dryBus so it rides the master chain (fxParams mutes the internal
+    // rgain to 0 whenever a color is active). Genres with no reverbColor never
+    // build a node — the internal zita path is untouched (byte-identical).
+    const revMerge = ctx.createChannelMerger(2);
+    revBus.connect(revMerge, 0, 0); revBus.connect(revMerge, 0, 1);
+    let revColorNode = null, revColorGain = null, revColorName = null;
+    async function ensureReverbColor(state) {
+      const rc = SE.reverbColor(state);
+      const want = rc ? rc.module : null;
+      if (want === revColorName) {   // same color: glide params only
+        if (revColorNode && rc) {
+          const rg = P(revColorNode, "rgain"), rt = P(revColorNode, "rtone"), t = ctx.currentTime;
+          if (rg) rg.setTargetAtTime(Math.min(rg.maxValue, rc.rgain), t, 0.05);
+          if (rt) rt.setTargetAtTime(rc.rtone, t, 0.05);
+        }
+        return;
+      }
+      const old = revColorNode, oldGain = revColorGain;
+      revColorName = want;
+      if (!want) { revColorNode = null; revColorGain = null; }
+      else {
+        const node = await mkNode(want, "revcolor");
+        const g = ctx.createGain(); g.gain.value = 0;
+        revMerge.connect(node); node.connect(g); g.connect(dryBus);
+        const rg = P(node, "rgain"), rt = P(node, "rtone");
+        if (rg) rg.value = Math.min(rg.maxValue, rc.rgain);
+        if (rt) rt.value = rc.rtone;
+        g.gain.setTargetAtTime(1, ctx.currentTime, 0.05);
+        revColorNode = node; revColorGain = g;
+      }
+      if (old) {   // crossfade the previous color out, then retire it
+        oldGain.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
+        setTimeout(() => { try { revMerge.disconnect(old); old.disconnect(); oldGain.disconnect(); } catch (e) {} }, 500);
+      }
+    }
+
     // ---- MIXER LAYER TAPS ----
     // Every logical layer owns four collector gains (dry/rev/del/pp) sitting
     // between the per-unit send gains and the master buses, plus a small
@@ -422,6 +463,7 @@
       const units = SE.voiceUnits(E, one);
       const m = SE.mapEvents(E, one, ev, { lo, hi, units });
       applyFx(one, t0);
+      await ensureReverbColor(one);   // build/swap the external reverb color node
 
       if (opts.onBar) try { opts.onBar({ serial, ci, nch, when: t0, spb,
         chord: (prg.chords[ci] || {}).name || "", section: sec.name }); } catch (e) {}
