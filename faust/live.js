@@ -589,6 +589,10 @@
       const lo = ci * 8, hi = lo + 8;
       const t0 = nextTime;
 
+      // EVERY bar's work runs inside try/finally so ONE bad bar can never wedge
+      // the scheduler: the finally ALWAYS advances nextTime/serial/section, so a
+      // throw drops just this bar and the next one plays (see the catch below).
+      try {
       const ev = E.buildEvents(one);
       const units = SE.voiceUnits(E, one);
       const m = SE.mapEvents(E, one, ev, { lo, hi, units });
@@ -610,8 +614,14 @@
       const usedKeys = new Set(m.events.map(e => e.unit));
       for (const key of usedKeys) {
         const u = units[key]; if (!u) continue;
-        if (u.sampler) await ensureSamplerBufs(u, one);   // native path: buffers, not pools
-        else await ensurePool(key, u);
+        // per-unit isolation: a voice whose module fails to instantiate (a bad
+        // wasm fetch, a processor-registration failure under load) must not take
+        // the whole bar down with it — log it and skip; its events then find no
+        // pool and are silently dropped, the rest of the bar plays normally.
+        try {
+          if (u.sampler) await ensureSamplerBufs(u, one);   // native path: buffers, not pools
+          else await ensurePool(key, u);
+        } catch (e) { errors.push("voice " + key + "@" + serial + ": " + (e && e.message || e)); }
       }
       const bufs = {};   // srcId -> AudioBuffer, prefetched
       for (const f of m.found) {
@@ -754,10 +764,24 @@
       }
 
       if (schedBars.length < 2000) schedBars.push({ serial, t0: t0 + late, spb, late: Math.round(late * 1e5) / 1e5 });
-      nextTime += 8 * spb;
-      ci++; serial++;
-      if (ci >= nch) { ci = 0; cycIdx++;
-        if (cycIdx >= (secs[secIdx].cycles || 1)) { cycIdx = 0; secIdx = (secIdx + 1) % secs.length; } }
+      } catch (e) {
+        // ONE bad bar must never wedge the scheduler. Before this, a throw here
+        // (a voice module that fails to instantiate, a non-finite AudioParam
+        // time, a decode edge) propagated to tick(), which caught it but left
+        // nextTime UN-advanced — so the very next tick re-ran this SAME failing
+        // bar forever: the ~6s of already-scheduled audio drained, the song went
+        // silent, and the console filled with the repeating error (Paul's "plays
+        // half a measure, then the whole song stops and things crash out"). Log
+        // it to handle.errors, drop this bar's remaining work, and let finally
+        // advance the clock so the NEXT bar plays.
+        errors.push("injectChord@" + serial + ": " + (e && e.message || e));
+        console.error("FaustLive injectChord (bar " + serial + " skipped)", e);
+      } finally {
+        nextTime += 8 * spb;
+        ci++; serial++;
+        if (ci >= nch) { ci = 0; cycIdx++;
+          if (cycIdx >= (secs[secIdx].cycles || 1)) { cycIdx = 0; secIdx = (secIdx + 1) % secs.length; } }
+      }
     }
 
     // ---- load meter + eco (audio clock vs wall clock, EMA like wasm-audio) ----

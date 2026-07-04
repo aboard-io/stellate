@@ -94,7 +94,13 @@
     // param-reader: clamp(m[k]!=null?m[k]:d,lo,hi) — the null-coalescing default
     // idiom. NOT for `m.x||d` sites (0-is-falsy glide/drive/vibrato keep that).
     const mp = (k, d, lo, hi) => clamp(m[k] != null ? m[k] : d, lo, hi);
-    const L = m.level != null ? m.level : 0.6;
+    // BASS_TRIM — Paul 2026-07-04, global mix decision: "lower the bass 25%
+    // everywhere by default." Applied at the SINGLE realization point (the bass
+    // level), so it hits all genres identically in both press and live and
+    // preserves every anchor's RELATIVE bass level (the per-anchor `level`
+    // ranges are untouched — this is a uniform scalar on top).
+    const BASS_TRIM = 0.75;
+    const L = (m.level != null ? m.level : 0.6) * (role === "bass" ? BASS_TRIM : 1);
     const lvl = clamp(L, 0.001, 1);
     const sends = { rev: clamp((m.send || 0) / lvl, 0, 6), del: clamp((m.dsend || 0) / lvl, 0, 6) };
     const c = m.cutoff || 2000, res = clamp(m.res != null ? m.res : 0.15, 0, 0.95);
