@@ -364,17 +364,31 @@ function travelStep(){
 
 // ---------- genre-affine video: the background footage follows the mix ----------
 // pool = union of the current weights' clip pools (dominant genre first);
-// crossfade on every section change, advance through the pool as we travel.
-let vidSec="", vidIx=0, vidBars=0;
+// crossfade on every section change, drawing from a SHUFFLED BAG so a play
+// session rotates the whole pool with no repeats until drained, then reshuffles.
+// Math.random is deliberate: the determinism law guards rendered audio/video
+// artifacts (press/journey), NOT this live presentational layer — so every
+// play session shows a different clip order. goLive() resets the bag per session.
+let vidSec="", vidBars=0, vidBag=[], vidBagKey="", vidLast="";
+function vidShuffle(a){ for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;const t=a[i];a[i]=a[j];a[j]=t;} return a; }
+function vidReset(){ vidSec=""; vidBars=0; vidBag=[]; vidBagKey=""; vidLast=""; }
 function genreVideo(info){
   if(!(window.VideoLayer&&VideoLayer.enabled()))return;
   vidBars++;
   const newSec=info.section!==vidSec;
   if(!newSec&&vidBars%8!==0)return;   // cut on section changes AND every 8 bars inside long sections
-  vidSec=info.section; vidIx++;
+  vidSec=info.section;
   const pool=[];
   S.weights.slice().sort((a,b)=>b.w-a.w).forEach(w=>(K.GENRE_CLIPS[w.g]||[]).forEach(c=>{if(!pool.includes(c))pool.push(c);}));
-  if(pool.length)VideoLayer.showFile(pool[vidIx%pool.length]+".mp4");
+  if(!pool.length)return;
+  // rebuild the bag when the pool changes (travel brings new footage in);
+  // refill+reshuffle when drained, never restarting on the just-shown clip.
+  const key=pool.join(",");
+  if(key!==vidBagKey){ vidBagKey=key; vidBag=vidShuffle(pool.slice()); }
+  if(!vidBag.length) vidBag=vidShuffle(pool.slice());
+  if(vidBag.length>1&&vidBag[0]===vidLast) vidBag.push(vidBag.shift());   // never back-to-back the same clip across a bag refill or pool change
+  const c=vidBag.shift(); vidLast=c;
+  VideoLayer.showFile(c+".mp4");
 }
 
 // ---------- live engine ----------
@@ -391,6 +405,7 @@ async function goLive(){
       set({travel:{seg:0,t:0}, queue:[]});
       retarget({x:S.waypoints[0].x, y:S.waypoints[0].y});
     }
+    vidReset();   // fresh shuffled video bag per play session — different clip order every time
     set({live:true,barCount:0}); rebuildQueue();
     faustHandle=await FaustLive.exploreLive(()=>S.playing, m=>set({status:m}), { onLoad:(r)=>{S.load=r;}, onBar:(info)=>{
       set({barInfo:info,barCount:S.barCount+1});
