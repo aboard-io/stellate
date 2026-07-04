@@ -206,16 +206,10 @@ function rangeFor(f, stats, widen) {
 }
 
 // ---------- scoring helpers ----------
+// scoreRow is the verifier's shared piecewise-linear primitive (raw 0..100),
+// imported so the tool and the verifier never drift.
+const scoreRow = V.scoreRow;
 const meanScore = (vecs, targetRow) => Math.round(vecs.reduce((s, f) => s + scoreRow(f, targetRow), 0) / vecs.length);
-function scoreRow(f, T) {
-  let tw = 0, ts = 0;
-  for (const [k, [lo, hi, w]] of Object.entries(T)) {
-    const v = f[k]; if (v == null) continue;
-    let s; if (v >= lo && v <= hi) s = 1; else { const width = Math.max(hi - lo, .001), d = v < lo ? lo - v : v - hi; s = Math.max(0, 1 - d / width); }
-    tw += w; ts += w * s;
-  }
-  return tw ? 100 * ts / tw : 0;
-}
 
 // ---------- derive + auto-tighten target row ----------
 function deriveTargets(name, spec, stats, ownVecs) {

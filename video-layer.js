@@ -44,6 +44,28 @@
     return i;
   }
 
+  // reusable no-repeat shuffle bag over a CALLER-SUPPLIED pool (the explorer's
+  // genre-affine clip pool changes as the mix travels). draw(pool): rotates the
+  // whole pool with no repeats until drained, then reshuffles a fresh copy; a
+  // pool change refills; never hands back the item just shown (avoid-current).
+  // Same Math.random / same mechanism as nextCatalog above — shared so the two
+  // don't drift. reset() clears it (per play session).
+  function makeBag() {
+    let bag = [], key = null, last = null;
+    return {
+      reset() { bag = []; key = null; last = null; },
+      draw(pool) {
+        if (!pool || !pool.length) return null;
+        const k = pool.join(",");
+        if (k !== key) { key = k; bag = shuffle(pool.slice()); }
+        if (!bag.length) bag = shuffle(pool.slice());
+        if (bag.length > 1 && bag[0] === last) bag.push(bag.shift());   // never back-to-back the same clip across a refill or pool change
+        const c = bag.shift(); last = c;
+        return c;
+      },
+    };
+  }
+
   function makeDom() {
     wrap = document.createElement("div");
     wrap.id = "vidlayer";
@@ -194,7 +216,7 @@
   }
 
   root.VideoLayer = {
-    init, setEnabled, idle,
+    init, setEnabled, idle, makeBag,
     enabled: () => on && ready,
     available: () => ready,
     onSection: (idx) => { stopIdle(); show(idx); },

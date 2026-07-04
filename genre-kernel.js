@@ -1771,39 +1771,32 @@
     // dominate the mix anyway — pool-union across parents stays deferred with
     // the rest of the full-adoption vision). toState injects each spec's pool
     // ids into foundSources so buildEvents' srcById can resolve them.
+    // ---- dominant-parent PURE-COPY dims (the reverbColor/transforms structural
+    // law): ZERO rng draws, each copied WHOLE from the genuinely dominant parent
+    // when it declares the dim; absent => no field => untouched anchors press
+    // byte-identically. ONE registry loop over ONE hoisted `top` (assignment
+    // order preserved for state-hash stability); the presence guard differs per
+    // dim (see each):
+    //   sampleEvents (Phase-4 sample-event roles) — array+length; the dominant
+    //     parent's role list (toState injects the pool ids into foundSources so
+    //     buildEvents' srcById resolves them). A blend inherits the dominant
+    //     parent's list (its foundSources dominate the mix anyway).
+    //   reverbColor  — names an external dist/reverb_* module replacing the
+    //     fx_bus internal zita; truthy (a blend into uncolored territory drops
+    //     the color at the crossover, an audible flip).
+    //   autoTune     — bends only the found-VOICE layer's pitch (buildEvents/
+    //     verifier never read it); != null so an explicit 0 (spokenword: don't
+    //     tune the poet) still carries.
+    //   masterComp   — 3-band master glue-comp drive; != null (absent => 0 =>
+    //     fx_bus master byte-identical).
+    //   introMode    — "off"|"short"|"full" optional-intro; truthy (absent =>
+    //     full intro => buildSections byte-identical).
     {
-      const top=ws.slice().sort((a,b)=>b.w-a.w)[0];
-      if(top && Array.isArray(GENRES[top.g].sampleEvents) && GENRES[top.g].sampleEvents.length)
-        choice.sampleEvents=GENRES[top.g].sampleEvents;
-    }
-    // ---- reverb COLOR (fx wings round): a per-genre reverb character
-    // (state.reverbColor names an external dist/reverb_* module that replaces
-    // the fx_bus internal zita — see faust/state-engine reverbColor). Picked
-    // from the DOMINANT parent with NO rng draw: touched anchors keep every
-    // prior musical choice byte-for-byte and only gain the reverbColor field;
-    // untouched genres (no parent declares it) stay on the zita default and
-    // press byte-identically. A blend inherits its dominant parent's color.
-    {
-      const top=ws.slice().sort((a,b)=>b.w-a.w)[0];   // the genuinely dominant parent
-      if(top&&GENRES[top.g].reverbColor) choice.reverbColor=GENRES[top.g].reverbColor;
-      // (if the dominant parent has no color, the blend rides the zita default —
-      // a blend into uncolored territory drops the color at the crossover,
-      // an audible flip, and untouched anchors stay byte-identical)
-      // AUTO-TUNE (fx wings stage 2): dominant-parent's autoTune, same NO-rng law.
-      // != null so an explicit 0 (spokenword: don't tune the poet) still carries;
-      // genres/blends whose dominant parent declares none get no field (untouched,
-      // byte-identical). state.autoTune only bends the found VOICE layer's pitch —
-      // buildEvents/verifier never read it, so touched genres keep every note.
-      if(top&&GENRES[top.g].autoTune!=null) choice.autoTune=GENRES[top.g].autoTune;
-      // MASTER GLUE-COMP (fx wings stage 4): 3-band master comp drive, dominant
-      // parent, NO rng draw. Absent => 0 => fx_bus master is byte-identical.
-      if(top&&GENRES[top.g].masterComp!=null) choice.masterComp=GENRES[top.g].masterComp;
-      // OPTIONAL INTRO (Paul, 2026-07): drop/shorten the leading ground node.
-      // Enum "off"|"short"|"full"; dominant parent, NO rng draw. Absent =>
-      // undefined => full intro => byte-identical (buildSections gate). A blend
-      // inherits the dominant parent's intro mood; a punchy genre that opens
-      // cold stays cold only while it is the dominant side.
-      if(top&&GENRES[top.g].introMode) choice.introMode=GENRES[top.g].introMode;
+      const top=ws.slice().sort((a,b)=>b.w-a.w)[0], G=top&&GENRES[top.g];
+      const declared={ sampleEvents:v=>Array.isArray(v)&&v.length, reverbColor:v=>!!v,
+        autoTune:v=>v!=null, masterComp:v=>v!=null, introMode:v=>!!v };
+      if(G) for(const d of ["sampleEvents","reverbColor","autoTune","masterComp","introMode"])
+        if(declared[d](G[d])) choice[d]=G[d];
     }
     return constrain(choice);
   }
@@ -2026,10 +2019,11 @@
     // evolution + fills passes) is untouched for the sections that remain — a
     // genre that keeps its intro is bit-for-bit identical. Dropping a section
     // DOES move the duration/role() math; pilots are matrix-gated, see report.
+    let coldOpen=false;
     if(c.introMode && c.introMode!=="full" && secs.length>1){
       const first=secs[0];
       if(E.sectionTag(first.name)==="ground"){
-        if(c.introMode==="off") secs.shift();
+        if(c.introMode==="off"){ secs.shift(); coldOpen=true; }   // the ground drop ACTUALLY happened — the track opens cold
         else if(c.introMode==="short") first.cycles=1;
       }
     }
@@ -2295,13 +2289,13 @@
         }
       }
     }
-    return {secs, cycleBeats, evolutions};
+    return {secs, cycleBeats, evolutions, coldOpen};
   }
 
   // ---------- choice -> engine state ----------
   function toState(c, opts){
     opts=opts||{};
-    const {secs, cycleBeats, evolutions}=buildSections(c, opts);
+    const {secs, cycleBeats, evolutions, coldOpen}=buildSections(c, opts);
     const foundSources=[];
     // bed role rotates through up to 3 sources (each pitched a hair differently so it
     // reads as a different place); break/chops keep the single tempo-locked source.
@@ -2411,6 +2405,7 @@
       ...(c.transforms?{transforms:c.transforms}:{}),  // pattern-transform algebra (Phase 2): absent = engine's historical default, byte-identical
       ...(c.timeFeel?{timeFeel:c.timeFeel}:{}),         // unified time-feel (Phase 3): grid + push-pull; absent = grid "8th" + no push-pull, byte-identical
       ...(c.sampleEvents?{sampleEvents:c.sampleEvents}:{}),  // generalized sample-event roles (Phase 4): absent = no sample-event layer, byte-identical
+      ...(coldOpen?{coldOpen:true}:{}),                 // OPTIONAL INTRO: the leading ground node was actually dropped (introMode "off" + ground opener). buildEvents ignores it; djMix reads it for the cold-open seam law. Absent for every genre that keeps its intro (byte-identical); present only on gabber/breakcore.
       euclid:c.euclid||undefined,                      // kit-level euclidean rhythm spec (csd-engine drumEvents)
       ...(c.chordEvery?{chordEvery:c.chordEvery}:{}),  // harmonic rhythm (KERNEL-V4 Phase 1): beats per chord bar
       jux:(c.fx.jux||0)>0.05?c.fx.jux:0,               // stereo divergence: buildEvents emits per-event pan offsets
@@ -2484,15 +2479,16 @@
   //     stable under the 180s solve.
   const AUTO_TARGET=180;
   const NO_AUTO_FORM=new Set(["ritual","anthem","transit"]);
-  const NO_AUTO_GENRE=new Set([]);   // was ["afrobeat"] — see note above; now empty
+  // (NO_AUTO_GENRE retired 2026-07 — afrobeat graduated when the verifier gained
+  //  its `interlock` feature; the set was empty, its guard always true. History
+  //  in git + the note above.)
   // Genres exempt from the section-DROP lever (buildSections): the droppable
   // node carries their identity, so a floored-over-band track keeps it and runs
   // long rather than losing its diagonal. See the lever's NO_SECTION_DROP note.
   const NO_SECTION_DROP=new Set(["witchhouse"]);
   const withTarget=(c,opts)=>{
     const o=Object.assign({},opts);
-    const dom=c.genres&&c.genres[0];
-    if(o.targetSec==null && !NO_AUTO_FORM.has(c.form) && !NO_AUTO_GENRE.has(dom)) o.targetSec=AUTO_TARGET;
+    if(o.targetSec==null && !NO_AUTO_FORM.has(c.form)) o.targetSec=AUTO_TARGET;
     return toState(c,o);
   };
   function track(genre, opts){ opts=opts||{}; return withTarget(resolve(genre, genre, 0, opts.seed!=null?opts.seed:1), opts); }
@@ -2568,6 +2564,7 @@
   // ---------- CLI ----------
   if(isNode && require.main===module){
     const fs=require("fs"), path=require("path"), {execFileSync}=require("child_process");
+    const WAV=require(path.join(__dirname,"faust","wav.js"));
     const args=process.argv.slice(2);
     const flag=(name,dflt)=>{const ix=args.indexOf("--"+name); return ix>=0?args[ix+1]:dflt;};
     const has=(name)=>args.includes("--"+name);
@@ -2642,23 +2639,24 @@
       for(let i=0;i<frames;i++){ const p=dataOff+i*ch*by; L[i]=buf.readInt16LE(p)/32768; R[i]=ch>1?buf.readInt16LE(p+by)/32768:L[i]; }
       return {L,R,frames};
     }
-    function openWav(file){ const fd=fs.openSync(file,"w"); const h=Buffer.alloc(44);
-      h.write("RIFF",0); h.write("WAVE",8); h.write("fmt ",12); h.writeUInt32LE(16,16);
-      h.writeUInt16LE(1,20); h.writeUInt16LE(2,22); h.writeUInt32LE(MIXSR,24);
-      h.writeUInt32LE(MIXSR*4,28); h.writeUInt16LE(4,32); h.writeUInt16LE(16,34); h.write("data",36);
-      fs.writeSync(fd,h,0,44); return {fd,frames:0}; }
+    function openWav(file){ const fd=fs.openSync(file,"w");   // header sizes (@4,@40) backpatched in closeWav
+      fs.writeSync(fd,WAV.header(MIXSR,2,0),0,44); return {fd,frames:0}; }
     function writeFrames(w,L,R,n){ if(n<=0) return; const b=Buffer.alloc(n*4);
-      for(let i=0;i<n;i++){ b.writeInt16LE(Math.max(-32768,Math.min(32767,Math.round(Math.max(-1,Math.min(1,L[i]))*32767))),i*4);
-        b.writeInt16LE(Math.max(-32768,Math.min(32767,Math.round(Math.max(-1,Math.min(1,R[i]))*32767))),i*4+2); }
+      for(let i=0;i<n;i++){ b.writeInt16LE(WAV.toInt16(L[i],"round"),i*4);   // djMix ROUNDS + clamps — see faust/wav.js note
+        b.writeInt16LE(WAV.toInt16(R[i],"round"),i*4+2); }
       fs.writeSync(w.fd,b); w.frames+=n; }
     function closeWav(w){ const dl=w.frames*4;
       const b1=Buffer.alloc(4); b1.writeUInt32LE(36+dl,0); fs.writeSync(w.fd,b1,0,4,4);
       const b2=Buffer.alloc(4); b2.writeUInt32LE(dl,0); fs.writeSync(w.fd,b2,0,4,40); fs.closeSync(w.fd); }
     function djMix(wavs, states, outWav){
       const SRr=MIXSR;
-      const info=states.map((st,i)=>{ const beats=songBeats(st), dom=st.genreMeta&&st.genreMeta.genres&&st.genreMeta.genres[0];
+      const info=states.map((st,i)=>{ const beats=songBeats(st);
+        // coldOpen: buildSections already recorded whether the leading ground
+        // node was ACTUALLY dropped (introMode "off" AND a ground-tagged opener),
+        // so read the state's own fact rather than re-deriving from the dominant
+        // genre's introMode (which could disagree with what the builder did).
         return { bpm:st.bpm, spb:60/st.bpm, musicEndBeat:beats-8,
-          coldOpen:!!(dom&&GENRES[dom]&&GENRES[dom].introMode==="off"), wav:wavs[i] }; });
+          coldOpen:!!st.coldOpen, wav:wavs[i] }; });
       const seams=[];
       for(let i=0;i<info.length-1;i++){ const gap=Math.abs(info[i].bpm-info[i+1].bpm);
         if(info[i+1].coldOpen||gap>GAP_CUT) seams.push({type:"cut",gap});
