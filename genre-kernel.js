@@ -1059,6 +1059,7 @@
       fx:{reverb:[.25,.4], delayBeats:[.375,.5], delayFb:[.25,.4], delayCut:[2200,3400], pump:[.4,.7], crackle:[0,.05], lowcut:[30,45], highcut:[0,0], comp:[.6,.85], grit:[.6,.9], jux:[.15,.35]},
       found:{role:"chops", vol:[.1,.18], pitch:[.9,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["factory","vx_xminusone"]},
       stab:["rave","offbeat"], hits:{sources:["rave_a","rave_c","bb_stab_a","sp_energy"], pattern:"offbeat", prob:.8},
+      introMode:"off",   // Paul's optional-intro pilot: gabber is brutality — it opens COLD on the machine (drops the dj "warmup" ground node; the solver regrows the groove to still land ~180s). Margin 19 absorbs the bedUse/density shift; matrix-gated.
       form:"dj" },
     psytrance: { label:"Psytrance", info:"Goa at 145: the rolling 16th acid bassline that never stops, phrygian squelch, full-power",   // SYNTH-FORWARD: the bassline is the drug
       bpm:[140,148], swing:[0,.03], humanize:[0,.08],
@@ -1162,6 +1163,7 @@
       fx:{reverb:[.3,.5], delayBeats:[.375,.75], delayFb:[.35,.5], delayCut:[2000,3200], pump:[.05,.25], crackle:[0,.15], lowcut:[25,40], highcut:[0,0], comp:[.55,.8], grit:[.4,.7], jux:[.45,.75]},   // stereo chaos
       found:{role:"break", vol:[.32,.45], pitch:[1,1], stretch:[.5,.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175"]},   // the break LOUD, wide open, re-sliced every chord
       stab:["rave","offbeat"], hits:{sources:["rave_a","rave_d","bb_stab_b","sp_rewind"], pattern:"dub", prob:.85},
+      introMode:"off",   // Paul's optional-intro pilot (drop form): no wind-up — the amen slams in cold (drops the drop "intro" ground node; solver regrows the drops to hold ~180s). Margin +6.2 vs jungle absorbs the -0.2 shift; matrix-gated.
       form:"drop" },
     acidhouse: { label:"Acid house", info:"1988 Chicago: the 303 squelching over a dusty four-floor, smiley-face simple everything else",   // SYNTH-FORWARD: one machine, misused, forever
       bpm:[118,126], swing:[0,.08], humanize:[.05,.15],
@@ -1344,6 +1346,10 @@
       hits:{sources:["hp_voldemort","hp_snape","hp_harry","hp_bellatrix"], pattern:"offbeat", prob:0.6},
       stab:["off"],
       autoTune:0.7,   // fx wings stage 2: the pitched-up name chops snap HARD to the key — the hyperpop coherence
+      // (optional-intro: DECLINED for hogcore — introMode:"off" tightens its
+      // already-fragile gabber pair from +2 to +1. Both are 150+ four-on-floor;
+      // a cold open makes them MORE alike. breakcore carries the drop-form pilot
+      // instead, where the amen cold-slam is equally iconic and margin-safe.)
       form:"drop" },
     /* /genre-tool:hogcore:genres */
   };
@@ -1760,6 +1766,12 @@
       // MASTER GLUE-COMP (fx wings stage 4): 3-band master comp drive, dominant
       // parent, NO rng draw. Absent => 0 => fx_bus master is byte-identical.
       if(top&&GENRES[top.g].masterComp!=null) choice.masterComp=GENRES[top.g].masterComp;
+      // OPTIONAL INTRO (Paul, 2026-07): drop/shorten the leading ground node.
+      // Enum "off"|"short"|"full"; dominant parent, NO rng draw. Absent =>
+      // undefined => full intro => byte-identical (buildSections gate). A blend
+      // inherits the dominant parent's intro mood; a punchy genre that opens
+      // cold stays cold only while it is the dominant side.
+      if(top&&GENRES[top.g].introMode) choice.introMode=GENRES[top.g].introMode;
     }
     return constrain(choice);
   }
@@ -1799,6 +1811,164 @@
   // ---------- forms ----------
   let _gid=0; const gid=()=>"g"+(++_gid);
   const S=(name,o)=>Object.assign({id:gid(),name,cycles:1,pads:false,bass:"off",drums:"off",melody:"off",found:{sourceId:null,role:"bed"},fill:"off"},o);
+
+  // ---------- FORM GRAPH (KERNEL-V4 §3.5) ----------
+  // The seven forms are DATA: each is an ordered array of typed nodes (the
+  // sectionTag vocabulary — ground/build/peak/release/exposed/cadence —
+  // classified from the name by csd-engine.sectionTag), interpreted by ONE
+  // generic walker (buildForm below). This retires the old seven-branch
+  // if/else chain. HARD CONSTRAINT (why Phase 5/6 deferred it): the walk is
+  // BYTE-IDENTICAL to the chain — same names, same cycle counts, same rng
+  // draws in the same order, every genre × seed. Verified at ZERO fixture
+  // drift. Mechanism: a node's dynamic values are TOKENS (Tok) resolved in
+  // object-key insertion order, so the only draw-bearing tokens (FILL, SWEEP)
+  // fire in exactly the source order; every other value is a deterministic
+  // context lookup or an inline data literal (deep-cloned per emission to
+  // match the chain's fresh-object-per-call semantics). Node key order is
+  // transcribed verbatim from the old literals so the emitted section objects
+  // serialize identically (fixtures hash JSON.stringify, key order included).
+  // The three bespoke forms (ritual/anthem/transit) are video-locked and
+  // hand-authored — transcribed exactly, recipes inlined as data.
+  class Tok{ constructor(t,a){ this.t=t; this.a=a; } }
+  const OMIT=Symbol("omit");
+  const NN=(k)=>new Tok("n",k);           // k*norm cycle count
+  const KIT=new Tok("kit");               // c.kit ("off"->"off")
+  const LEAD=new Tok("lead");             // c.leadPattern
+  const LEADSP=new Tok("leadSparse");     // lead==="off"?"off":"sparse"
+  const BASS=new Tok("bass");             // c.bassPattern
+  const PADS=new Tok("pads");             // c.padsOn
+  const STAB=new Tok("stab");             // c.stab
+  const HIT=new Tok("hit");               // hit()
+  const FND=(role)=>new Tok("fnd",role);  // fnd(role)  (no draw)
+  const FILL=new Tok("fill");             // F() = pick(c.rng,c.fills)   [DRAWS]
+  const SWEEP=(p,on)=>new Tok("sweep",{p,on}); // c.rng()<p?on:"off"    [DRAWS]
+  const COUNTEROPT=new Tok("counterOpt"); // wave: (c.counter&&lead!=="off")?c.counter:OMIT
+  const VOXCLEAN=new Tok("voxClean");     // {sourceId:"vox", clean:c.voxClean}
+  const POEM=new Tok("poem");             // {sourceId:"poem", clean:false}
+  // bespoke recipe literals (transcribed verbatim from the old bespoke branches)
+  const R_SAUROPOD={model:"brass",cutoff:900, level:0.6, voices:1};
+  const R_RAPTOR  ={model:"stack",wave:"saw",cutoff:3500,res:0.2,level:0.48,voices:2,spread:0.01,vibrato:0.024};
+  const R_FUZZ    ={model:"fuzz", cutoff:2600,level:0.66,voices:2,res:0.3,drive:1};
+  const R_SWELLBRASS={model:"brass", cutoff:9000, level:1.9, voices:1};
+  const R_TW_COUNTER={pattern:"motorik23", solo:{model:"fuzz",wave:"saw",cutoff:2600,res:0.3,drive:0.15,level:0.5,voices:1,send:0.2,dsend:0.44,attack:.004,release:0.09,sustain:0.62,fenv:0.6,swellHz:.13,swellDepth:.6,swellPhase:.5}, octave:-1};
+  const R_TW_METAL={model:"fuzz",wave:"saw",cutoff:3400,res:0.26,drive:0.7,level:0.62,voices:1,vibrato:.013,vibRate:5.5};
+  const VOXPLAIN={sourceId:"vox"};        // ritual VO (no clean field)
+  // The graphs. Node = [name, orderedSpec]. Key order in each spec is verbatim
+  // from the retired literal so the emitted object's JSON is byte-identical.
+  const FORMS={
+    dj:[
+      ["warmup",   {cycles:NN(2), drums:KIT, found:FND()}],
+      ["build",    {cycles:NN(2), drums:KIT, bass:BASS, found:FND(), fill:FILL, sweep:"open"}],
+      ["main",     {cycles:NN(2), drums:KIT, bass:BASS, pads:PADS, found:FND(), stab:STAB}],
+      ["lift",     {cycles:NN(2), drums:KIT, bass:BASS, pads:PADS, melody:LEAD, fill:FILL, stab:STAB, hits:HIT}],
+      ["breakdown",{cycles:NN(1), pads:true, melody:LEADSP, found:FND("bed"), hits:HIT, sweep:"close"}],
+      ["rebuild",  {cycles:NN(1), drums:"kick", bass:BASS, pads:PADS, fill:FILL, sweep:SWEEP(0.6,"open")}],
+      ["peak",     {cycles:NN(3), drums:KIT, bass:BASS, pads:PADS, melody:LEAD, found:FND(), stab:STAB, hits:HIT}],
+      ["outro",    {cycles:NN(2), drums:KIT, bass:BASS, found:FND()}],
+    ],
+    drop:[
+      // the impact lands ON each drop downbeat — folded in verbatim (the old
+      // branch set fill:"riser" then overwrote secs[1]/secs[4].fill="impact")
+      ["intro",  {cycles:NN(1), pads:PADS, found:FND()}],
+      ["build",  {cycles:NN(1), drums:"kick", bass:BASS, pads:PADS, fill:"impact", sweep:"open"}],
+      ["drop",   {cycles:NN(2), drums:KIT, bass:BASS, pads:PADS, melody:LEAD, stab:STAB, hits:HIT, found:FND()}],
+      ["break",  {cycles:NN(1), pads:true, melody:LEADSP, found:FND("bed"), sweep:"close", hits:HIT}],
+      ["build 2",{cycles:NN(1), drums:"kick", bass:BASS, fill:"impact", sweep:"open"}],
+      ["drop 2", {cycles:NN(2), drums:KIT, bass:BASS, pads:PADS, melody:LEAD, stab:STAB, hits:HIT, found:FND()}],
+      ["outro",  {cycles:NN(1), pads:PADS, found:FND()}],
+    ],
+    wave:[
+      // c.counter (neoclassical counterpoint) rides the melody sections via
+      // COUNTEROPT (omits the key when absent — the old conditional spread)
+      ["arrive", {cycles:NN(1), pads:true, found:FND()}],
+      ["drift",  {cycles:NN(2), pads:true, melody:LEAD, counter:COUNTEROPT, found:FND()}],
+      ["swell",  {cycles:NN(2), pads:true, bass:BASS, melody:LEAD, counter:COUNTEROPT, drums:KIT, found:FND(), hits:HIT, sweep:"open"}],
+      ["recede", {cycles:NN(2), pads:true, melody:LEADSP, found:FND(), sweep:"close"}],
+      ["depart", {cycles:NN(1), pads:true, found:FND()}],
+    ],
+    ritual:[
+      // planetarium dinosaur soundtrack: narrated, cinematic, SHORT. Fixed
+      // cycles (no norm). creature solos each their own voice; glitched VO.
+      ["dawn",   {cycles:1, pads:true, found:FND("bed"), vox:VOXPLAIN, sweep:"open"}],
+      ["theme",  {cycles:2, drums:KIT, bass:BASS, pads:true, melody:LEAD, found:FND("bed")}],
+      ["call",   {cycles:1, drums:KIT, bass:BASS, pads:true, melody:"roar",   solo:R_SAUROPOD, soloOctave:-1, found:FND("bed"), vox:VOXPLAIN}],
+      ["answer", {cycles:1, drums:KIT, bass:BASS, pads:true, melody:"sparse", solo:R_RAPTOR,   soloOctave:0,  sweep:"close"}],
+      ["shred",  {cycles:1, drums:KIT, bass:BASS, pads:true, melody:"hero",   solo:R_FUZZ,     found:FND("bed"), vox:VOXPLAIN, sweep:"open"}],
+      ["finale", {cycles:2, drums:KIT, bass:BASS, pads:true, melody:LEAD, found:FND("bed"), vox:VOXPLAIN, sweep:"open"}],
+    ],
+    anthem:[
+      // proud Canadian pop, ~3 min. Edge 16th arp lead (lead==="arp16"); one
+      // grand brass swell owns the bridge; length fixed so it grafts on video.
+      ["intro",    {cycles:1, pads:true, found:FND(), vox:VOXCLEAN, sweep:"open"}],
+      ["verse",    {cycles:2, drums:KIT, bass:BASS, pads:true, melody:LEAD, found:FND(), hits:HIT, fill:"tom fill"}],
+      ["chorus",   {cycles:2, drums:KIT, bass:BASS, pads:true, melody:LEAD, stab:STAB, found:FND()}],
+      ["verse 2",  {cycles:1, drums:KIT, bass:BASS, pads:true, melody:LEAD, found:FND(), vox:POEM, fill:"tom fill"}],
+      ["bridge",   {cycles:1, pads:true, bass:"root", melody:"off", counter:{pattern:"anthem", solo:R_SWELLBRASS, octave:0}, fill:"tom fill", sweep:"open", swell:true}],
+      ["chorus 2", {cycles:2, drums:KIT, bass:BASS, pads:true, melody:LEAD, found:FND()}],
+    ],
+    transit:[
+      // a commuter journey, video-locked. counter const shared by transit+express;
+      // sung WORLD-vocoder chorus (vocal:true); distorted metal solo.
+      ["platform",   {cycles:1, pads:true, found:FND("bed"), vox:VOXCLEAN, sweep:"open"}],
+      ["board",      {cycles:2, drums:KIT, bass:BASS, pads:true, melody:LEAD, found:FND("bed"), vox:VOXCLEAN, fill:"tom fill"}],
+      ["transit",    {cycles:2, drums:KIT, bass:BASS, pads:true, melody:LEAD, counter:R_TW_COUNTER, found:FND("bed"), stab:STAB, hits:HIT, fill:FILL}],
+      ["chorus",     {cycles:1, drums:KIT, bass:BASS, pads:true, melody:LEAD, found:FND("bed"), vocal:true, fill:"riser"}],
+      ["interchange",{cycles:1, pads:true, bass:"root", melody:"sparse", found:FND("bed"), vox:POEM, fill:"downlift", sweep:"close"}],
+      ["solo",       {cycles:1, drums:KIT, bass:BASS, pads:true, melody:"blues", solo:R_TW_METAL, soloOctave:1, found:FND("bed"), fill:"impact", sweep:"open"}],
+      ["express",    {cycles:2, drums:KIT, bass:BASS, pads:true, melody:LEAD, counter:R_TW_COUNTER, found:FND("bed"), vox:VOXCLEAN, hits:HIT, fill:"break fill", sweep:"open"}],
+      ["terminus",   {cycles:2, drums:KIT, bass:BASS, pads:true, melody:LEAD, found:FND("bed"), vox:VOXCLEAN, fill:FILL}],
+    ],
+    pop:[
+      ["intro",      {cycles:NN(1), pads:PADS, found:FND()}],
+      ["verse",      {cycles:NN(1), pads:PADS, bass:BASS, drums:KIT, found:FND()}],
+      ["pre-chorus", {cycles:NN(1), pads:PADS, bass:BASS, drums:KIT, fill:FILL, sweep:SWEEP(0.7,"open")}],
+      ["chorus",     {cycles:NN(1), pads:PADS, bass:BASS, drums:KIT, melody:LEAD, stab:STAB, hits:HIT}],
+      ["verse 2",    {cycles:NN(1), pads:PADS, bass:BASS, drums:KIT, found:FND()}],
+      ["bridge",     {cycles:NN(1), pads:true, bass:BASS, melody:LEADSP, found:FND("bed"), fill:FILL, hits:HIT, sweep:SWEEP(0.5,"close")}],
+      ["chorus 2",   {cycles:NN(1), pads:PADS, bass:BASS, drums:KIT, melody:LEAD, stab:STAB}],
+      ["outro",      {cycles:NN(1), pads:PADS, found:FND()}],
+    ],
+  };
+  // The one generic walker. ctx carries the per-track resolvers (norm/kit/
+  // lead/bass and the drawing F()). Tokens resolve in key-insertion order so
+  // the only draw-bearing tokens (FILL/SWEEP) fire in exactly source order;
+  // literals deep-clone so a module-level graph template is never shared into
+  // (or mutated through) an emitted section — matching the old branch which
+  // built fresh objects each call.
+  function buildForm(form, c, ctx){
+    const nodes=FORMS[form]||FORMS.pop;
+    const cloneLit=(v)=>(v&&typeof v==="object")?JSON.parse(JSON.stringify(v)):v;
+    const resolveVal=(v)=>{
+      if(v instanceof Tok){
+        switch(v.t){
+          case "n": return v.a*ctx.norm;
+          case "kit": return ctx.kit;
+          case "lead": return ctx.lead;
+          case "leadSparse": return ctx.lead==="off"?"off":"sparse";
+          case "bass": return ctx.bass;
+          case "pads": return c.padsOn;
+          case "stab": return c.stab;
+          case "hit": return ctx.hit();
+          case "fnd": return ctx.fnd(v.a);
+          case "fill": return ctx.F();                       // DRAWS
+          case "sweep": return c.rng()<v.a.p?v.a.on:"off";   // DRAWS
+          case "counterOpt": return (c.counter&&ctx.lead!=="off")?cloneLit(c.counter):OMIT;
+          case "voxClean": return {sourceId:"vox", clean:c.voxClean};
+          case "poem": return {sourceId:"poem", clean:false};
+        }
+      }
+      return cloneLit(v);
+    };
+    return nodes.map(([name,spec])=>{
+      const o={};
+      for(const k of Object.keys(spec)){          // insertion order = source order
+        const r=resolveVal(spec[k]);
+        if(r!==OMIT) o[k]=r;
+      }
+      return S(name,o);
+    });
+  }
+
   function buildSections(c, opts){
     _gid=0;   // KERNEL-V4 determinism fix (2026-07): section ids are PER-TRACK (g1..gN), reset each build so they never depend on how many genres were resolved earlier in the same process. The old global counter made a track's section `id` labels a function of resolution ORDER — so changing one genre's section COUNT silently renumbered every genre declared after it (a Phase-0 fixture false-positive: state hash drift with byte-identical events+features). Section .id is consumed only by order (live/press iterate; no cross-track id key — journeys keep per-track section arrays), so per-track g1.. is safe and makes the fixture state-hash order-independent.
     const cycleBeats=E.getProgression(c.progression).chords.length*(c.chordEvery||8);
@@ -1807,105 +1977,29 @@
     const fnd=(role)=>({sourceId:"src",role:role||c.foundRole});
     const hit=()=>c.hits?{sourceId:"hit",pattern:c.hits.pattern}:undefined;
     const lead=c.leadPattern, bass=c.bassPattern, kit=c.kit==="off"?"off":c.kit;
-    let secs;
-    if(c.form==="dj"){
-      secs=[
-        S("warmup",   {cycles:2*norm, drums:kit, found:fnd()}),
-        S("build",    {cycles:2*norm, drums:kit, bass, found:fnd(), fill:F(), sweep:"open"}),
-        S("main",     {cycles:2*norm, drums:kit, bass, pads:c.padsOn, found:fnd(), stab:c.stab}),
-        S("lift",     {cycles:2*norm, drums:kit, bass, pads:c.padsOn, melody:lead, fill:F(), stab:c.stab, hits:hit()}),
-        S("breakdown",{cycles:1*norm, pads:true, melody:lead==="off"?"off":"sparse", found:fnd("bed"), hits:hit(), sweep:"close"}),
-        S("rebuild",  {cycles:1*norm, drums:"kick", bass, pads:c.padsOn, fill:F(), sweep:c.rng()<0.6?"open":"off"}),
-        S("peak",     {cycles:3*norm, drums:kit, bass, pads:c.padsOn, melody:lead, found:fnd(), stab:c.stab, hits:hit()}),
-        S("outro",    {cycles:2*norm, drums:kit, bass, found:fnd()}),
-      ];
-    } else if(c.form==="drop"){
-      secs=[
-        S("intro",  {cycles:1*norm, pads:c.padsOn, found:fnd()}),
-        S("build",  {cycles:1*norm, drums:"kick", bass, pads:c.padsOn, fill:"riser", sweep:"open"}),
-        S("drop",   {cycles:2*norm, drums:kit, bass, pads:c.padsOn, melody:lead, stab:c.stab, hits:hit(), found:fnd()}),
-        S("break",  {cycles:1*norm, pads:true, melody:lead==="off"?"off":"sparse", found:fnd("bed"), sweep:"close", hits:hit()}),
-        S("build 2",{cycles:1*norm, drums:"kick", bass, fill:"riser", sweep:"open"}),
-        S("drop 2", {cycles:2*norm, drums:kit, bass, pads:c.padsOn, melody:lead, stab:c.stab, hits:hit(), found:fnd()}),
-        S("outro",  {cycles:1*norm, pads:c.padsOn, found:fnd()}),
-      ];
-      // the impact lands ON each drop downbeat
-      secs[1].fill="impact"; secs[4].fill="impact";
-    } else if(c.form==="wave"){
-      // c.counter (neoclassical counterpoint) rides the melody sections; wave
-      // genres without a counterpoint spec (ambient…) carry no counter key.
-      secs=[
-        S("arrive", {cycles:1*norm, pads:true, found:fnd()}),
-        S("drift",  {cycles:2*norm, pads:true, melody:lead, ...(c.counter&&lead!=="off"?{counter:c.counter}:{}), found:fnd()}),
-        S("swell",  {cycles:2*norm, pads:true, bass, melody:lead, ...(c.counter&&lead!=="off"?{counter:c.counter}:{}), drums:kit, found:fnd(), hits:hit(), sweep:"open"}),
-        S("recede", {cycles:2*norm, pads:true, melody:lead==="off"?"off":"sparse", found:fnd(), sweep:"close"}),
-        S("depart", {cycles:1*norm, pads:true, found:fnd()}),
-      ];
-    } else if(c.form==="ritual"){
-      // planetarium dinosaur soundtrack: narrated, cinematic, SHORT. The theme melody
-      // enters early; two creatures solo (each its own voice); a grungy fuzz solo; the
-      // paleontologist VO is glitched throughout. Fixed cycles (no norm) = tight runtime.
-      const sauropod={model:"brass",cutoff:900, level:0.6, voices:1};                            // huge low bellow
-      const raptor  ={model:"stack",wave:"saw",cutoff:3500,res:0.2,level:0.48,voices:2,spread:0.01,vibrato:0.024}; // wailing cry with bite — saw + resonance (harmonic, not bell-FM)
-      const fuzz    ={model:"fuzz", cutoff:2600,level:0.66,voices:2,res:0.3,drive:1};            // noisy distorted solo
-      const vox=()=>({sourceId:"vox"});
-      secs=[
-        S("dawn",   {cycles:1, pads:true, found:fnd("bed"), vox:vox(), sweep:"open"}),                                  // "welcome to the age of dinosaurs"
-        S("theme",  {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd("bed")}),                             // melody/theme IN early
-        S("call",   {cycles:1, drums:kit, bass, pads:true, melody:"roar",   solo:sauropod, soloOctave:-1, found:fnd("bed"), vox:vox()}),
-        S("answer", {cycles:1, drums:kit, bass, pads:true, melody:"sparse", solo:raptor,   soloOctave:0,  sweep:"close"}),  // filter dives before the drop
-        S("shred",  {cycles:1, drums:kit, bass, pads:true, melody:"hero",   solo:fuzz,     found:fnd("bed"), vox:vox(), sweep:"open"}),  // sweep up into the distorted solo + glitch VO
-        S("finale", {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd("bed"), vox:vox(), sweep:"open"}),     // theme reprise + swell
-      ];
-    } else if(c.form==="anthem"){
-      // proud Canadian pop, ~3 min: arpeggiated guitar in from the verse, tom fills
-      // into every chorus, hi-hats throughout, loon calls + the national news on top.
-      const vox=()=>({sourceId:"vox", clean:c.voxClean});    // clean hockey calls / news (intelligible)
-      const poem=()=>({sourceId:"poem", clean:false});       // the rhyming-cities poem, cut up as texture
-      const swellBrass={model:"brass", cutoff:9000, level:1.9, voices:1};   // big organic brass — high cutoff so it isn't over-filtered (brassSource shapes it)
-      // THE lead is the Edge 16th-note arp guitar (lead==="arp16"). One big grand
-      // brass swell owns the bridge (midpoint). Structure/length unchanged so the new
-      // audio grafts onto the existing video.
-      secs=[
-        S("intro",    {cycles:1, pads:true, found:fnd(), vox:vox(), sweep:"open"}),                                  // FULL goal horn opener (sampleEvents) + "hockey night in canada"
-        S("verse",    {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd(), hits:hit(), fill:"tom fill"}), // Edge arp lead + moving bass; Peart tom fill into chorus
-        S("chorus",   {cycles:2, drums:kit, bass, pads:true, melody:lead, stab:c.stab, found:fnd()}),
-        S("verse 2",  {cycles:1, drums:kit, bass, pads:true, melody:lead, found:fnd(), vox:poem(), fill:"tom fill"}), // + cities poem
-        S("bridge",   {cycles:1, pads:true, bass:"root", melody:"off", counter:{pattern:"anthem", solo:swellBrass, octave:0}, fill:"tom fill", sweep:"open", swell:true}), // GRAND BRASS SWELL — drums/narration DROP OUT so it's exposed: bass drone + swelling pads + loud crescendo brass + Peart fill back in
-        S("chorus 2", {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd()}),   // final chorus
-      ];
-    } else if(c.form==="transit"){
-      // a commuter journey: the train pulls in (filtered pass + announcement, door chime),
-      // doors close and the clatter groove departs, full transit (with a 2/3-speed gritty
-      // counter-arp weaving against the main Kraftwerk arp), the schedule litany at the
-      // interchange, a DISTORTED heavy-metal solo, the express run, then the terminus. The
-      // station-PA voice rides every station; the clatter bed runs throughout; door "ding
-      // ding" chimes at the stations.
-      const vox=()=>({sourceId:"vox", clean:c.voxClean});   // schedule announcements
-      const poem=()=>({sourceId:"poem", clean:false});      // the departures litany, chopped
-      const counter={pattern:"motorik23", solo:{model:"fuzz",wave:"saw",cutoff:2600,res:0.3,drive:0.15,level:0.5,voices:1,send:0.2,dsend:0.44,attack:.004,release:0.09,sustain:0.62,fenv:0.6,swellHz:.13,swellDepth:.6,swellPhase:.5}, octave:-1};   // 2/3-speed mirror counter-arp, an OCTAVE LOWER, gritty, breathing OPPOSITE the main (they trade)
-      const metal={model:"fuzz",wave:"saw",cutoff:3400,res:0.26,drive:0.7,level:0.62,voices:1,vibrato:.013,vibRate:5.5};   // the solo: SUSTAINED + grimy (no staccato params -> legacy singing env), wailing vibrato — a proper lead, not noise
-      secs=[
-        S("platform",   {cycles:1, pads:true, found:fnd("bed"), vox:vox(), sweep:"open"}),                                                  // train arrives (opener sampleEvent) + announcement + door chime (sampleEvents)
-        S("board",      {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd("bed"), vox:vox(), fill:"tom fill"}),                  // doors close, the groove departs -> tom fill
-        S("transit",    {cycles:2, drums:kit, bass, pads:true, melody:lead, counter, found:fnd("bed"), stab:c.stab, hits:hit(), fill:F()}),  // full groove + the counter-arp; a random fill
-        S("chorus",     {cycles:1, drums:kit, bass, pads:true, melody:lead, found:fnd("bed"), vocal:true, fill:"riser"}),                    // the 8-bar SUNG chorus (WORLD-vocoder vocal over the groove)
-        S("interchange",{cycles:1, pads:true, bass:"root", melody:"sparse", found:fnd("bed"), vox:poem(), fill:"downlift", sweep:"close"}),   // wind DOWN into the station; the schedule litany
-        S("solo",       {cycles:1, drums:kit, bass, pads:true, melody:"blues", solo:metal, soloOctave:1, found:fnd("bed"), fill:"impact", sweep:"open"}),   // the distorted heavy-metal solo — grimy bluesy lead, octave up; impact into it
-        S("express",    {cycles:2, drums:kit, bass, pads:true, melody:lead, counter, found:fnd("bed"), vox:vox(), hits:hit(), fill:"break fill", sweep:"open"}),  // the express run + counter-arp -> break fill
-        S("terminus",   {cycles:2, drums:kit, bass, pads:true, melody:lead, found:fnd("bed"), vox:vox(), fill:F()}),                         // arrival, final announcement + door chime (sampleEvents); a random fill
-      ];
-    } else {
-      secs=[
-        S("intro",      {cycles:1*norm, pads:c.padsOn, found:fnd()}),
-        S("verse",      {cycles:1*norm, pads:c.padsOn, bass, drums:kit, found:fnd()}),
-        S("pre-chorus", {cycles:1*norm, pads:c.padsOn, bass, drums:kit, fill:F(), sweep:c.rng()<0.7?"open":"off"}),
-        S("chorus",     {cycles:1*norm, pads:c.padsOn, bass, drums:kit, melody:lead, stab:c.stab, hits:hit()}),
-        S("verse 2",    {cycles:1*norm, pads:c.padsOn, bass, drums:kit, found:fnd()}),
-        S("bridge",     {cycles:1*norm, pads:true, bass, melody:lead==="off"?"off":"sparse", found:fnd("bed"), fill:F(), hits:hit(), sweep:c.rng()<0.5?"close":"off"}),
-        S("chorus 2",   {cycles:1*norm, pads:c.padsOn, bass, drums:kit, melody:lead, stab:c.stab}),
-        S("outro",      {cycles:1*norm, pads:c.padsOn, found:fnd()}),
-      ];
+    // The seven-branch if/else chain is now the FORMS graph (module scope,
+    // above) walked by buildForm — byte-identical, verified at zero fixture
+    // drift. ctx carries the per-track resolvers the tokens read.
+    const form=FORMS[c.form]?c.form:"pop";
+    let secs=buildForm(form, c, {norm, kit, lead, bass, F, fnd, hit});
+    // ---- OPTIONAL INTRO (Paul, 2026-07) ----
+    // "We have a four-bar intro almost everywhere — make it optional per
+    // genre." c.introMode is a zero-rng, dominant-parent anchor dimension:
+    //   "full"  (or absent) — current behavior, byte-identical
+    //   "off"   — drop the leading ground node entirely (open cold on the groove)
+    //   "short" — keep the intro but floor it to a single cycle (a quick breath)
+    // Only the FIRST node, and only when it is a `ground`-tagged opener (so a
+    // bespoke non-ground opener is never silently dropped), is affected. No rng
+    // is consumed, so every downstream draw (duration solver is rng-free; the
+    // evolution + fills passes) is untouched for the sections that remain — a
+    // genre that keeps its intro is bit-for-bit identical. Dropping a section
+    // DOES move the duration/role() math; pilots are matrix-gated, see report.
+    if(c.introMode && c.introMode!=="full" && secs.length>1){
+      const first=secs[0];
+      if(E.sectionTag(first.name)==="ground"){
+        if(c.introMode==="off") secs.shift();
+        else if(c.introMode==="short") first.cycles=1;
+      }
     }
     // ---- duration SOLVER (KERNEL-V4 Phase 5, §3.5) ----
     // Land the track within ±10% of opts.targetSec. track()/blend()/mix()
@@ -1955,7 +2049,55 @@
           }
         }
       }
+      // ---- SECTION-DROP lever (KERNEL-V4 Phase 5's DEFERRED duration lever) ----
+      // When the cycle solver above FLOORS over-band (every section already at
+      // 1 cycle, still > target*1.1 because one cycle is a coarse fraction of
+      // the target), the remaining lever is to DROP optional low-energy nodes.
+      // Rules (the charter's constraints, why this was deferred):
+      //  • never a hook: only ground/cadence/release/exposed tags are droppable
+      //    — build (the groove/verse) and peak (chorus/drop/lift/pre-chorus) stay;
+      //  • SURGICAL: greedily drop the highest-priority droppable node whose
+      //    removal keeps dur >= target*0.9, and COMMIT only if the result lands
+      //    in [target*0.9, target*1.1]. If no drop sequence lands it (cycles too
+      //    coarse — blues' 96-beat 12-bar, prelude's chordEvery:16 64-128-beat
+      //    cycles, newage's canon), REVERT untouched: those stay byte-identical
+      //    and genuinely floored (documented). So the lever only ever fires where
+      //    it can actually land a genre in-band — bounding the blast radius to
+      //    the listed genres and keeping every un-landable floored genre stable.
+      //  • zero rng; runs before the evolution pass so it sees final durations.
+      // Dropping a node moves role()/bedUse + the density features (a bed intro/
+      // outro/breakdown leaves the mix), so every genre it fires on is matrix-
+      // gated (63/63 diagonal-dominant held) and its fixtures regenerated/listed.
+      if(dur()>target*1.1){
+        const DROP_TAGS=["release","exposed","ground","cadence"];   // priority; never build/peak
+        const tagOf=(s)=>s.tag||E.sectionTag(s.name);
+        const secSec=(s)=>s.cycles*cycleBeats*spb;
+        let trial=secs.slice();                                     // section objects are shared, but we only splice (never mutate) the trial
+        const tdur=()=>trial.reduce((n,s)=>n+s.cycles*cycleBeats,0)*spb+tail;
+        let changed=false;
+        for(let guard=0; guard<trial.length && tdur()>target*1.1; guard++){
+          let idx=-1;
+          for(const tag of DROP_TAGS){
+            for(let i=0;i<trial.length;i++){
+              if(tagOf(trial[i])!==tag) continue;
+              if(tdur()-secSec(trial[i])>=target*0.9){ idx=i; break; }   // removal keeps us above the floor
+            }
+            if(idx>=0) break;
+          }
+          if(idx<0) break;                                          // no safe drop
+          trial.splice(idx,1); changed=true;
+        }
+        if(changed && tdur()>=target*0.9 && tdur()<=target*1.1){    // landed -> commit; else leave floored (byte-identical)
+          secs.length=0; Array.prototype.push.apply(secs, trial);
+        }
+      }
     }
+    // introMode:"short" pin — the proportional solver above would otherwise
+    // regrow a shortened intro back to its share, so clamp the ground intro to
+    // one cycle AFTER solving (the track lands a bar or two under target — a
+    // punchy short opener). "off" needs no pin: a dropped section can't regrow.
+    // No rng; only fires for a genre that opted in, so all others byte-stable.
+    if(c.introMode==="short" && secs.length>1 && E.sectionTag(secs[0].name)==="ground") secs[0].cycles=1;
     // ---- THE 3-MINUTE RULE ----
     // Nothing runs past ~2:40-3:00 without EVOLVING: at the first section
     // boundary where the unevolved stretch would pass ~175s the track either

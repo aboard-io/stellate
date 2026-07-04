@@ -220,32 +220,26 @@
       drums:  { kickModel:"boom", snareModel:"noise", hatModel:"noise", kick:1.0, snare:1.0, hat:1.0, tom:1.0, tune:1.0, send:0.18, dsend:0 }
     };
   }
-  // (KERNEL-V4 §3.7 deletion) the STYLES whole-song presets were dead surface —
-  // load-time recasts for the retired builder.html; nothing on main read them.
-  // Removed. generateSong survives ONLY because render-sample-video.js still
-  // builds the night-drive preset through it (its own migration round).
-
-  let _sid=0; const sid=()=>"s"+(++_sid);
-  // a whole song with named sections; rotates found sources; pads always paired
-  // with found (never soloed); a fill leads into each chorus.
-  function generateSong(opts){
-    opts=opts||{};
-    const fids=(opts.foundIds&&opts.foundIds.length)?opts.foundIds.slice():[null];
-    let fi=0; const nextF=()=>{ const id=fids[fi%fids.length]; fi++; return id; };
-    const bass=opts.bass||"simple", drums=opts.drums||"full", melody=opts.melody||"composed";
-    const altBass={simple:"walking",walking:"octaves",octaves:"simple",root:"simple",sixteenths:"dub",dub:"walking"}[bass]||"walking";
-    const S=(name,o)=>Object.assign({id:sid(),name,cycles:1,pads:true,bass:"off",drums:"off",melody:"off",found:{sourceId:null,role:"bed"},fill:"off"},o);
-    return [
-      S("intro",      {found:{sourceId:nextF(),role:"bed"}}),
-      S("verse",      {bass, found:{sourceId:nextF(),role:"bed"}}),
-      S("pre-chorus", {bass:"root", drums:"kick", fill:"riser"}),
-      S("chorus",     {bass, drums, melody}),
-      S("verse 2",    {bass:altBass, drums:(drums==="off"?"kick":"full"), found:{sourceId:nextF(),role:"bed"}}),
-      S("bridge",     {bass:"root", melody, found:{sourceId:nextF(),role:"bed"}, fill:"drum fill"}),
-      S("chorus 2",   {bass:altBass, drums, melody}),
-      S("outro",      {found:{sourceId:nextF(),role:"bed"}})
-    ];
-  }
+  // (KERNEL-V4 §3.7 deletion) the STYLES whole-song presets AND generateSong
+  // (the 2026-05 builder's whole-song codegen) are gone — the FORM GRAMMAR in
+  // genre-kernel.js (buildSections/buildForm) is the one composer now. The only
+  // survivor was defaultState's demo section list; it is inlined below as a
+  // static royal-road pop song (value-identical to the old
+  // generateSong({foundIds:["tokyo","tsukiji","asakusa"],bass:"simple",
+  // drums:"full",melody:"composed"}) output — the committed default_song the
+  // engine.test press and the legacy A/B harness render). The engine can't reach
+  // the kernel grammar (kernel requires engine, not vice versa), so a literal
+  // list is the honest form here; genre tracks come from genre-kernel.track().
+  const DEFAULT_SONG=[
+    { id:"s1", name:"intro",      cycles:1, pads:true, bass:"off",     drums:"off",  melody:"off",      found:{sourceId:"tokyo",  role:"bed"}, fill:"off" },
+    { id:"s2", name:"verse",      cycles:1, pads:true, bass:"simple",  drums:"off",  melody:"off",      found:{sourceId:"tsukiji",role:"bed"}, fill:"off" },
+    { id:"s3", name:"pre-chorus", cycles:1, pads:true, bass:"root",    drums:"kick", melody:"off",      found:{sourceId:null,     role:"bed"}, fill:"riser" },
+    { id:"s4", name:"chorus",     cycles:1, pads:true, bass:"simple",  drums:"full", melody:"composed", found:{sourceId:null,     role:"bed"}, fill:"off" },
+    { id:"s5", name:"verse 2",    cycles:1, pads:true, bass:"walking", drums:"full", melody:"off",      found:{sourceId:"asakusa",role:"bed"}, fill:"off" },
+    { id:"s6", name:"bridge",     cycles:1, pads:true, bass:"root",    drums:"off",  melody:"composed", found:{sourceId:"tokyo",  role:"bed"}, fill:"drum fill" },
+    { id:"s7", name:"chorus 2",   cycles:1, pads:true, bass:"walking", drums:"full", melody:"composed", found:{sourceId:null,     role:"bed"}, fill:"off" },
+    { id:"s8", name:"outro",      cycles:1, pads:true, bass:"off",     drums:"off",  melody:"off",      found:{sourceId:"tsukiji",role:"bed"}, fill:"off" },
+  ];
 
   function defaultState(){
     return {
@@ -257,7 +251,8 @@
         { id:"tsukiji", label:"Tsukiji Market",  url:"https://archive.org/download/aporee_35166_40406/201714020750tsukijifishmarket01.mp3", pitch:0.8, stretch:0.5 },
         { id:"asakusa", label:"Asakusa Noodles", url:"https://archive.org/download/aporee_21091_24510/nov92013asakusaNoodleSoupRest1910.mp3", pitch:0.72, stretch:0.45 }
       ],
-      sections: generateSong({ foundIds:["tokyo","tsukiji","asakusa"], bass:"simple", drums:"full", melody:"composed" })
+      // fresh deep-copy each call: callers (render-sample-video, legacy A/B) mutate sections
+      sections: JSON.parse(JSON.stringify(DEFAULT_SONG))
     };
   }
 
@@ -1444,7 +1439,7 @@
     }
     return out;
   }
-  const api={ buildEvents, defaultState, defaultInstruments, generateSong, voicing, soloVoices, euclidBeats,
+  const api={ buildEvents, defaultState, defaultInstruments, voicing, soloVoices, euclidBeats,
     KITS,   // pulse-set kit lanes (KERNEL-V4 Phase 1): kits are data; drumEvents is the one interpreter
     sectionTag,   // form-graph typed-node classifier (Phase 5)
     PROGRESSIONS, getProgression, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS,
