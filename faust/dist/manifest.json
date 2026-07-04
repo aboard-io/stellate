@@ -3830,6 +3830,7 @@
    "/fx_bus/grit",
    "/fx_bus/highcut",
    "/fx_bus/lowcut",
+   "/fx_bus/mbdrive",
    "/fx_bus/mcut",
    "/fx_bus/ppfb",
    "/fx_bus/pptime",
@@ -3922,6 +3923,17 @@
    "/insert_phaser/depth",
    "/insert_phaser/mix",
    "/insert_phaser/rate"
+  ]
+ },
+ "insert_wah": {
+  "inputs": 1,
+  "outputs": 1,
+  "params": [
+   "/insert_wah/base",
+   "/insert_wah/mix",
+   "/insert_wah/q",
+   "/insert_wah/range",
+   "/insert_wah/sens"
   ]
  },
  "juno60": {
@@ -4371,6 +4383,13 @@
   "params": [
    "/reverb_spring/rgain",
    "/reverb_spring/rtone"
+  ]
+ },
+ "master_mb": {
+  "inputs": 2,
+  "outputs": 2,
+  "params": [
+   "/master_mb/mbdrive"
   ]
  }
 }

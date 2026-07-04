@@ -68,6 +68,103 @@
     return src[i0] + fr * (src[i1] - src[i0]);
   };
 
+  // ---------------------------------------------------------------- AUTO-TUNE
+  // (fx wings stage 2) Snap a found VOICE clip toward the song's scale. UNIFIED
+  // + deterministic across both engines exactly like the Mellotron mode: the
+  // clip's MEDIAN pitch is detected OFFLINE by autocorrelation (a pure function
+  // of the decoded buffer, cached per buffer), and the found event's playbackRate
+  // is bent so the heard median lands on the nearest scale tone, scaled by
+  // state.autoTune (0..1). At strength 0 the ratio is 2^0 = 1 exactly, so the
+  // rate is bit-identical to the original — genres that never carry `autoTune`
+  // (SE.autoTune returns null, no `f.autoTune` field) render byte-for-byte as
+  // before. press (mixPCM) reads f.autoTune directly; live (FoundLive) receives
+  // it in the chop/bed spec. Same algorithm both sides, no wall clock.
+  const _pitchCache = typeof WeakMap !== "undefined" ? new WeakMap() : new Map();
+  function detectMedianHz(data, sr) {
+    if (!data || !data.length) return 0;
+    if (_pitchCache.has(data)) return _pitchCache.get(data);
+    const hz = _computeMedianF0(data, sr);
+    _pitchCache.set(data, hz);
+    return hz;
+  }
+  // autocorrelation median-F0 over the voiced frames of a mono buffer. Decimates
+  // to ~11 kHz first (voice F0 << Nyquist) to bound the O(frames·lags·frame) cost.
+  function _computeMedianF0(x, sr) {
+    const FMIN = 65, FMAX = 520;
+    const decim = Math.max(1, Math.floor(sr / 11025)), dsr = sr / decim;
+    const M = Math.floor(x.length / decim);
+    if (M < 128) return 0;
+    const y = new Float32Array(M);
+    for (let i = 0; i < M; i++) { let s = 0; const b = i * decim; for (let k = 0; k < decim; k++) s += x[b + k]; y[i] = s / decim; }
+    const lagMin = Math.max(2, Math.floor(dsr / FMAX)), lagMax = Math.min(M - 2, Math.ceil(dsr / FMIN));
+    if (lagMax <= lagMin) return 0;
+    const frame = Math.min(M - lagMax - 1, 1024);
+    if (frame < 64) return 0;
+    let g = 0; for (let i = 0; i < M; i++) g += y[i] * y[i];
+    const grms = Math.sqrt(g / M);
+    if (grms < 1e-5) return 0;
+    const thr = grms * 0.6, span = M - frame - lagMax, maxFrames = 80;
+    const step = Math.max(frame >> 1, Math.floor(span / maxFrames) || 1);
+    const ests = [];
+    const corr = new Float32Array(lagMax + 1);
+    for (let s = 0; s + frame + lagMax < M; s += step) {
+      let e = 0; for (let i = 0; i < frame; i++) { const v = y[s + i]; e += v * v; }
+      if (Math.sqrt(e / frame) < thr) continue;
+      // normalized autocorrelation over the lag range, then pick the FIRST strong
+      // peak (shortest period) rather than the global max — a pure/steady tone
+      // correlates equally at every multiple of its period, so a global-max search
+      // locks onto SUBHARMONICS (the octave-down error). First-peak = fundamental.
+      let gmax = 0;
+      for (let lag = lagMin; lag <= lagMax; lag++) {
+        let c = 0, el = 0; for (let i = 0; i < frame; i++) { const a = y[s + i], b = y[s + i + lag]; c += a * b; el += b * b; }
+        const r = c / (Math.sqrt(e * el) + 1e-12);
+        corr[lag] = r; if (r > gmax) gmax = r;
+      }
+      if (gmax < 0.3) continue;
+      const pk = gmax * 0.85;
+      let bestLag = 0;
+      for (let lag = lagMin + 1; lag < lagMax; lag++) {
+        if (corr[lag] >= pk && corr[lag] >= corr[lag - 1] && corr[lag] >= corr[lag + 1]) { bestLag = lag; break; }
+      }
+      if (!bestLag) { // no local peak cleared the bar — fall back to the argmax
+        let m = 0; for (let lag = lagMin; lag <= lagMax; lag++) if (corr[lag] > m) { m = corr[lag]; bestLag = lag; }
+      }
+      if (bestLag > 0) {
+        // parabolic interpolation around the peak for sub-lag precision
+        const lm = corr[bestLag - 1] || 0, l0 = corr[bestLag], lp = corr[bestLag + 1] || 0;
+        const denom = (lm - 2 * l0 + lp);
+        const delta = denom < 0 ? 0.5 * (lm - lp) / denom : 0;
+        ests.push(dsr / (bestLag + Math.max(-1, Math.min(1, delta))));
+      }
+    }
+    if (!ests.length) return 0;
+    ests.sort((a, b) => a - b);
+    return ests[ests.length >> 1];
+  }
+  // corrected playbackRate: bend the heard median (detectedHz·pitch) toward the
+  // nearest scale pitch-class (in any octave), interpolated in the log/cents
+  // domain by `strength` (0 => unchanged, 1 => full snap). pcs = pitch classes 0-11.
+  function autoTuneRate(pitch, detectedHz, pcs, strength) {
+    if (!(strength > 0) || !detectedHz || !isFinite(detectedHz) || detectedHz <= 0 ||
+        !pcs || !pcs.length || !isFinite(pitch) || pitch <= 0) return pitch;
+    const heard = detectedHz * pitch;
+    if (!(heard > 0)) return pitch;
+    const midi = 69 + 12 * Math.log2(heard / 440);
+    const pc = ((midi % 12) + 12) % 12;
+    let bestD = 12;
+    for (const t of pcs) {
+      let d = (((t - pc) % 12) + 12) % 12; if (d > 6) d -= 12;   // nearest wrapped, −6..+6 semitones
+      if (Math.abs(d) < Math.abs(bestD)) bestD = d;
+    }
+    return pitch * Math.pow(2, (bestD * strength) / 12);
+  }
+  // resolve an event's playback pitch: apply the auto-tune bend when the event
+  // carries {autoTune:{pcs,strength}} (attached by state-engine.mapEvents when a
+  // genre declares state.autoTune); otherwise the original rate, untouched.
+  function tunedPitch(f, data, sr) {
+    return f.autoTune ? autoTuneRate(f.pitch, detectMedianHz(data, sr), f.autoTune.pcs, f.autoTune.strength) : f.pitch;
+  }
+
   // ---------------------------------------------------------------- (a) PCM
   // events: state-engine `found` list with times converted to SECONDS:
   //   {type, tSec, durSec, amp, srcId, pitch, stretch|offset, cutoff, ...}
@@ -82,6 +179,7 @@
       const n = Math.min(total - s0, Math.max(1, Math.floor(f.durSec * sr)));
       if (n <= 0) continue;
       const seg = new Float32Array(n);
+      const atPitch = tunedPitch(f, src, sr);   // AUTO-TUNE bend (== f.pitch when no autoTune)
 
       if (f.type === "bed") {
         // syncgrain: grains every 1/28s, hann window, pointer += stretch*0.12/grain
@@ -94,7 +192,7 @@
           const gn = Math.min(gLen, n - gs);
           for (let i = 0; i < gn; i++) {
             const w = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / gLen); // hann
-            seg[gs + i] += readLerp(src, pointer + i * f.pitch) * w;
+            seg[gs + i] += readLerp(src, pointer + i * atPitch) * w;
           }
           pointer += advance;
         }
@@ -115,7 +213,7 @@
       } else {
         // chopper: full-buffer phasor at rate pitch from fractional offset, wraps
         const start = f.offset * src.length;
-        for (let i = 0; i < n; i++) seg[i] = readLerp(src, start + i * f.pitch);
+        for (let i = 0; i < n; i++) seg[i] = readLerp(src, start + i * atPitch);
         lp24(seg, f.cutoff, sr);
         const fadeN = f.fade > 0 ? Math.min(Math.floor(f.fade * sr), n >> 1) : 0;
         const aN = fadeN || Math.min(Math.floor(0.006 * sr), n >> 1);
@@ -247,8 +345,9 @@
     live.chop = function (buffer, when, f) {
       _stats.chops++;
       const durSec = f.durSec;
+      const atPitch = tunedPitch(f, buffer.getChannelData(0), buffer.sampleRate);   // AUTO-TUNE bend
       const srcN = ctx.createBufferSource();
-      srcN.buffer = buffer; srcN.loop = true; srcN.playbackRate.value = f.pitch;
+      srcN.buffer = buffer; srcN.loop = true; srcN.playbackRate.value = atPitch;
       const lp = ctx.createBiquadFilter(); lp.type = "lowpass";
       lp.frequency.value = Math.min(Math.max(f.cutoff, 40), 18000); lp.Q.value = 0.0001;
       const env = ctx.createGain(); env.gain.value = 0;
@@ -285,6 +384,7 @@
     live.bed = function (buffer, when, f) {
       _stats.beds++;
       const durSec = f.durSec, srN = buffer.sampleRate;
+      const atPitch = tunedPitch(f, buffer.getChannelData(0), buffer.sampleRate);   // AUTO-TUNE bend
       const out = ctx.createGain(); out.gain.value = 0;
       const lp = ctx.createBiquadFilter(); lp.type = "lowpass";
       lp.frequency.value = Math.min(Math.max(f.cutoff, 40), 18000);
@@ -308,7 +408,7 @@
           if (t >= ctx.currentTime + 0.002) {   // value curves can't start in the past
             const s = ctx.createBufferSource(); s.buffer = buffer;
             s.loop = true;   // wrap like csound tablei(wrap=1): grains that read
-            s.playbackRate.value = f.pitch;   // past the buffer end must not truncate mid-hann (click)
+            s.playbackRate.value = atPitch;   // past the buffer end must not truncate mid-hann (click)
             const w = ctx.createGain(); w.gain.value = 0;
             w.gain.setValueCurveAtTime(HANN, t, GRAIN_SEC);   // hann, like mixPCM
             s.connect(w); w.connect(lp);
@@ -338,5 +438,6 @@
     return live;
   }
 
-  return { mixPCM, lp24, decodeUrlToBuffer, FoundLive, GRAIN_HZ, GRAIN_SEC, FOUND_MAX_SECONDS, _stats };
+  return { mixPCM, lp24, decodeUrlToBuffer, FoundLive, GRAIN_HZ, GRAIN_SEC, FOUND_MAX_SECONDS, _stats,
+    detectMedianHz, autoTuneRate, tunedPitch };
 });

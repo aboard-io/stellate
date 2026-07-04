@@ -38,20 +38,39 @@ the working tree is already the live web root either way).
      surfrock). See faust/VOICES.md "Reverb COLOR family". Gated: probe-reverb.js
      + verify 63/63 + live smoke, 39 untouched states byte-identical, dist
      reverted to committed bytes (only the 4 new modules added).
-   - **[NOT STARTED] an.pitchTracker AUTO-TUNE** of found vocals to song key.
-     ARCHITECTURE NOTE for whoever picks this up: the found layer is NATIVE
-     (found-player.js: AudioBufferSourceNodes live, pure-JS mixPCM in press) —
-     it does NOT run through Faust, so `an.pitchTracker`/`ef.transpose` don't
-     drop in directly. Two options: (a) route the voice-crate found chops through
-     a Faust autotune node in LIVE + a JS pitch-shifter in press (two codepaths,
-     press determinism to prove); or (b) a UNIFIED deterministic clip-snap —
-     detect each voice clip's median pitch offline (autocorrelation on the
-     decoded buffer), snap toward the nearest scale tone of state's key, apply as
-     a `pitch` (playbackRate) multiplier scaled by `state.autoTune` 0..1. (b) is
-     simpler + deterministic in both engines. Anchors to wire: hogcore ~0.7,
-     vaporwave ~0.25; OFF by default; spokenword 0.
-   - **[NOT STARTED]** wah on funk/disco bass; qu.lib scale-snap for bends;
-     multiband master comp.
+   - **[LANDED, unverified-by-Paul] Found-vocal AUTO-TUNE** — the unified
+     deterministic clip-snap (option (b) of the architecture note, since the
+     found layer is native, not Faust): found-player.js `detectMedianHz`
+     (cached autocorrelation median-F0) + `autoTuneRate` bend the event
+     playbackRate so the heard median lands on the nearest scale tone, scaled
+     by `state.autoTune` 0..1. state-engine attaches `{strength,pcs}` to found
+     events (NEVER to tempo-synced break sources — their pitch IS the beat
+     sync); kernel takes the dominant parent's value, zero rng. Wired: hogcore
+     0.7, vaporwave 0.25, spokenword explicit 0; all else byte-identical.
+     See faust/VOICES.md "Found-vocal AUTO-TUNE". Gated: probe-autotune.js
+     (synthetic snap 62¢→0¢, strength-0 bit-identity, determinism; real
+     hogcore clips 45.9→13.8 mean cents), press byte-identity techno-s1 +
+     jungle-s7 vs HEAD, hogcore live smoke 0 errors, verify 63/63.
+   - **[LANDED, unverified-by-Paul] AUTO-WAH** (`dsp/insert_wah.dsp`, insert
+     type "wah"): envelope-follower resonant bandpass, wired into disco/
+     newjack/afrobeat BASS insert pools (prob .4-.45, dropped on sampler-bass
+     seeds like every insert). Gated: probe-wah.js (mix-0 bit-exact bypass,
+     loud-vs-quiet sweep 1720/709 Hz, determinism, disco seed-2 press applies
+     the chain and differs from stripped), live disco smoke 0 errors across
+     the bass entrance, verify 63/63, prewarm list includes insert_wah.
+   - **[LANDED, unverified-by-Paul] MULTIBAND MASTER COMP** (fx_bus `mbdrive`
+     ← `state.masterComp`, kernel dimension, dominant-parent zero-rng law):
+     3-band glue (LR-ish 4th-order splits at 250 Hz / 2.5 kHz, gentle ratio/
+     threshold scaled by drive) inserted after the wideband comp, before tone.
+     mbdrive 0 is a HARD bypass (dry·(1−0)+wet·0) — probe-mbcomp.js proves
+     bit-exactness AND press-level byte-identity of the recompiled fx_bus for
+     untouched genres (techno s1 + jungle s7 cmp'd). Wired: disco 0.35 only.
+     Gated: probe-mbcomp.js (loud low band −2.2 dB vs quiet high −0.5 dB =
+     per-band independence; kernel integration; disco press on/off differs),
+     verify 63/63.
+   - **[SKIPPED — stage 4]** qu.lib scale-snap for bends: the sampler `bend`
+     contract already lands ON the target pitch — from/ms are expressive, a
+     scale-snap adds nothing audible without a new bend vocabulary.
 2. **Mellotron sampler-mode** (wow/flutter/8s cap on sampler.js) →
    dinosynth/witchhouse/neoclassical. Deferred from the fleet round
    (shared-file work, not a new dsp).
