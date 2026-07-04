@@ -56,8 +56,14 @@ touching `explorer.html`/`faust/live.js`. Fixture guard: `fixtures.js`
    sludgemetal on some seeds) want node-repetition/section-drop paired
    with margin checks; verifier lacks an interlock feature (afrobeat's
    point).
-6. **Reverb-color tap-out** — delay/pp bleed still only feeds the internal
-   zita, not the external color nodes.
+6. ~~**Reverb-color tap-out**~~ — DONE (2026-07). delay/pp bleed
+   (`d*0.2 + (ppl+ppr)*0.12`) now feeds the external color nodes too via
+   `dsp/rev_bleed.dsp` (press: added to the color input; live: native feedback
+   delay + cross-fed pingpong into revMerge, no extra worklet). fx_bus untouched
+   (uncolored byte-identical); TRIM unchanged; probe-reverb extended. Effect is
+   subtle (~-25 dB, echo-locked on the tail; most audible on dattorro genres,
+   negligible on greyhole/low-delay) — kept as a correctness/consistency fix so
+   colored genres match uncolored's echo-into-reverb glue.
 7. **Live mono is per-unit** — modeld/tb303/synclead each get one fixed
    node; fine today, revisit if a genre wants two simultaneous mono leads.
 

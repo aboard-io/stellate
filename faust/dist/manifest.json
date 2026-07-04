@@ -4391,5 +4391,18 @@
   "params": [
    "/master_mb/mbdrive"
   ]
+ },
+ "rev_bleed": {
+  "inputs": 2,
+  "outputs": 1,
+  "params": [
+   "/rev_bleed/dcut",
+   "/rev_bleed/dfb",
+   "/rev_bleed/dgain",
+   "/rev_bleed/dtime",
+   "/rev_bleed/ppfb",
+   "/rev_bleed/pptime",
+   "/rev_bleed/pptone"
+  ]
  }
 }
