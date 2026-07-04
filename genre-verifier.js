@@ -120,17 +120,17 @@
                 breakUse:[.35,1,3], drumDensity:[1.8,6,1], variation:[.4,1,1] },
     triphop:  { bpm:[66,96,3], crackle:[.25,1,2], breakUse:[.15,1,2], offgrid:[.12,.65,1], wash:[.18,.6,1],
                 swing:[.1,.4,1], snareBalance:[0,.9,1], softTop:[1,1,1] },
-    vaporwave:{ bpm:[58,92,3], wash:[.35,1,3], motion:[.5,1,2], seventh:[.5,1,2], breakUse:[0,.1,1],
+    vaporwave:{ bpm:[62,92,3], wash:[.28,.5,3], motion:[.5,1,2], seventh:[.5,1,2], breakUse:[0,.1,1],
                 snareBalance:[0,.85,1], comp:[0,.25,1], bedUse:[.4,1,2],
-                rubato:[0,.008,1] },   // vaporwave is MACHINE time — a slowed tape plays at constant (wrong) speed, it never breathes. Every vaporwave anchor seed sits at rubato 0; this fences the tempo-breathing neoclassical (rubato .02-.04) off vaporwave's diagonal (it was scoring 98 there on bpm/wash/7th overlap alone)
+                rubato:[0,.008,1] },   // vaporwave is MACHINE time — a slowed tape plays at constant (wrong) speed, it never breathes. Every vaporwave anchor seed sits at rubato 0; this fences the tempo-breathing neoclassical (rubato .02-.04) off vaporwave's diagonal (it was scoring 98 there on bpm/wash/7th overlap alone). 2026-07 mallsoft deep pass: bpm lo 58->62 and wash re-centered [.35,1]->[.28,.5] (weight 3). MEASURED: vaporwave renders bpm 64-87 (5-seed) and wash .308-.441 — its OWN home was always ~.3-.44, the old [.35,1] hi was pure slack that let the wetter/slower mallsoft (bpm 46-58, wash .54-.72) camp on this diagonal (mallsoft was scoring 98-100 here). Both fences are the anchor's own measured floor/cap; vaporwave self unchanged (still 99-100)
     synthwave:{ bpm:[84,120,3], leadVoices:[4,9,2], wash:[.25,.7,1], motion:[.3,1,1], pump:[.05,.6,1],
                 snareBalance:[.4,1.4,1], sub:[0,.8,1], bedUse:[.3,1,1] },
     lofi:     { bpm:[66,92,3], crackle:[.4,1,3], swing:[.14,.4,2], seventh:[.5,1,1], softTop:[1,1,2],
                 snareBalance:[0,.8,1], wash:[.1,.5,1] },
     downtempo:{ bpm:[60,90,3], wash:[.28,.8,2], drumDensity:[.2,2.2,2], motion:[.3,1,1], comp:[0,.4,1],
                 snareBalance:[0,.8,1], bedUse:[.4,1,1], sub:[.5,1,2], seventh:[.5,1,1] },   // warm EXTENDED harmony — wintersynth's bare frost triads stay off this diagonal
-    ambient:  { bpm:[52,76,2], drumDensity:[0,.6,3], wash:[.4,1,3], motion:[0,.9,1], pump:[0,.1,1],
-                snareBalance:[0,1,0.5], bedUse:[.6,1,2], comp:[0,.2,2] },
+    ambient:  { bpm:[58,76,2], drumDensity:[0,.6,3], wash:[.4,1,3], motion:[0,.5,2], pump:[0,.1,1],
+                snareBalance:[0,1,0.5], bedUse:[.6,1,2], comp:[0,.2,2] },   // 2026-07 mallsoft pass: ambient is STATIC drone harmony (renders motion 0-.33) at 59-72bpm. motion hi .9->.5 (weight 1->2) and bpm lo 52->58 are the honest structural fence vs the now-kitless-wetter mallsoft, whose muzak still CHANGES CHORDS (motion 1) at a stopped-escalator 45-56bpm — mallsoft was tying here at 98. ambient self unchanged (motion/bpm both inside its own measured home); the wash-cluster neighbors (downtempo/newage motion .33-1) also fall off this diagonal, widening ambient's own margin
     dinosynth:{ bpm:[68,98,2], drumDensity:[1.6,3.3,3], hatDensity:[1.2,2.3,2], snareBalance:[0,.45,2],
                 swing:[0,.07,2], motion:[.5,1,1], wash:[.4,.78,2], crackle:[0,.2,1], bedUse:[.5,1,2],
                 comp:[.35,.72,3], pump:[0,.08,1] },
@@ -148,7 +148,8 @@
     edm:      { bpm:[121,134,3], pump:[.5,1,3], comp:[.55,1,2], leadVoices:[5,9,2], wash:[.1,.5,1],
                 motion:[0,.8,1], crackle:[0,.1,1], swing:[0,.07,1] },
     dubstep:  { bpm:[133,148,3], sub:[.6,1,2], drumDensity:[.4,2.2,2], snareBalance:[.3,1.3,1],
-                pump:[0,.35,1], offgrid:[.05,.55,1], wash:[.15,.55,1], crackle:[0,.2,1], swing:[0,.12,2] },
+                pump:[0,.35,1], offgrid:[.05,.55,1], wash:[.15,.55,1], crackle:[0,.2,1], swing:[0,.12,2],
+                leadVoices:[1,2,2], hatDensity:[.3,.7,2], softTop:[0,0,2] },   // 2026-07 darksynth deep pass: dubstep is LEAD-LESS bass music (the wobble is the hook — renders leadVoices 1-2) with SPARSE E(5,16) hats (renders hatDensity .40-.45). darksynth's whole identity is the hard-sync tear-lead supersaw (leadVoices 4-5) over a DRIVING pulse kit (hatDensity .49-1.04) — it was scoring 100 here (margin 0, the flagship failure) because dubstep's row never looked at the lead or the hat-drive. Three wedges split the work: leadVoices weight 2 (darksynth's 4-5 vs [1,2] is the wall); hatDensity weight 2 catches darksynth's driving hats; softTop[0,0] weight 2 is the CLEAN-vs-FILTHY axis — dubstep is bright (highcut off, softTop 0), and this fences the tape-rolled phonk (softTop 1), which at low-hat seeds otherwise slid into the sparse-hat band. Result: darksynth-vs-dubstep 100->81-90 (self 100, margin >=10), phonk stays home (self 93 > vs-dub 85), dubstep self unchanged (bright/lead-less/sparse-hat, all in-band)
     blues:    { bpm:[74,102,3], swing:[.22,.46,3], acoustic:[.4,1,2], seventh:[.85,1,3],
                 motion:[.5,.7,2], crackle:[.2,.6,1], drumDensity:[.7,2.6,1], pump:[0,.05,1] },
     jazz:     { bpm:[96,148,2], swing:[.26,.52,3], acoustic:[.4,1,2], seventh:[.6,1,1],
@@ -168,7 +169,7 @@
                 crackle:[0,.1,1], breakUse:[0,.08,1], seventh:[.8,1,1] },
     doomdrone:{ bpm:[44,64,3], comp:[.4,.85,3], drumDensity:[0,1.2,2], wash:[.5,1,2], motion:[0,.7,1],
                 pump:[0,.06,1], swing:[0,.05,1], crackle:[0,.15,1], snareBalance:[0,.5,1] },
-    newage:   { bpm:[54,80,2], drumDensity:[0,.5,3], motion:[.3,1,3], wash:[.4,1,2], pump:[0,.05,1],
+    newage:   { bpm:[58,80,2], drumDensity:[0,.5,3], motion:[.3,1,3], wash:[.4,1,2], pump:[0,.05,1],
                 crackle:[0,.1,2], comp:[0,.25,2], swing:[0,.06,1], bedUse:[.5,1,2], acoustic:[0,.85,2],
                 seventh:[.4,1,2] },   // luminous EXTENDED harmony — wintersynth's frost triads (seventh 0) stay off this diagonal; acoustic hi .85 admits the REAL flute lead (sampler .8) while still fencing off neoclassical's piano (1)
     exotica:  { bpm:[82,108,3], swing:[.1,.26,2], acoustic:[.4,1,2], seventh:[.8,1,1], bedUse:[.4,1,1],
@@ -200,8 +201,8 @@
                 hatDensity:[1.6,3.2,1], motion:[0,.5,1], comp:[.3,.7,1] },   // tape filth at dubstep tempo — dubstep is CLEAN, lofi is SLOW
     witchhouse:{ bpm:[56,80,3], wash:[.35,.8,3], sub:[.6,1,2], drumDensity:[1,3.2,1], motion:[0,.7,1],
                 swing:[0,.1,2], crackle:[0,.18,1], comp:[.15,.45,1], pump:[0,.12,1] },   // slowed 808s UNDER the cathedral — vaporwave majors, this drones minor
-    mallsoft: { bpm:[44,62,3], drumDensity:[0,1.5,3], wash:[.4,1,2], seventh:[.5,1,1], motion:[.5,1,1],
-                bedUse:[.4,1,2], comp:[0,.2,1], pump:[0,.05,1], crackle:[.05,.35,1] },   // slower + emptier than vaporwave: the kit nearly gone, the bed louder
+    mallsoft: { bpm:[42,60,3], drumDensity:[0,1.5,3], wash:[.5,1,2], seventh:[.5,1,1], motion:[.5,1,1],
+                bedUse:[.4,1,2], comp:[0,.2,1], pump:[0,.05,1], crackle:[.05,.35,1] },   // 2026-07 deep pass — the DEAD MALL: escalator stopped (bpm 46-58, below vaporwave's 62 floor), and the WASH IS THE INSTRUMENT (wash .5-.72 in the wet dattorro atrium, above vaporwave's dry .28-.5). vaporwave is dry major tape; mallsoft is that tape drowned in the empty-atrium reverb, heard from two stores away — the two fences that finally break the mallsoft==vaporwave identity (was margin 0-2)
     wintersynth:{ bpm:[60,88,2], seventh:[0,.55,3], drumDensity:[.05,1,2], wash:[.4,1,2], acoustic:[0,.3,2],
                 crackle:[0,.15,1], swing:[0,.06,1], motion:[.4,1,1], comp:[0,.35,1], pump:[0,.05,1] },   // FROST TRIADS (seventh≈0) — newage/ambient live in extended-harmony wash
     gabber:   { bpm:[150,190,3], offgrid:[0,.2,2], breakUse:[0,.08,2], comp:[.5,1,2], swing:[0,.05,2],
@@ -239,9 +240,10 @@
     sludgemetal:{ bpm:[48,72,3], snareBalance:[.4,1.2,2], drumDensity:[.8,2,2], comp:[.4,.8,2], wash:[0,.35,2],
                 sub:[.6,1,1], swing:[0,.07,1], crackle:[0,.25,1], pump:[0,.1,1], motion:[0,.7,1] },   // a BACKBEAT in the tar — doomdrone has no snare and lives in the wash
     industrialmetal:{ bpm:[96,130,3], snareBalance:[.45,1.3,2], comp:[.5,.9,2], drumDensity:[.9,2.3,2], chopUse:[0,.1,2],
-                hatDensity:[.2,1.1,2], crackle:[0,.12,1], swing:[0,.06,1], pump:[0,.35,1], motion:[0,.8,1], sub:[.6,1,1] },   // halftime SLAM, hats sparse — ebm's kit is twice as dense, miami's hats twice as fast, industrial chops the factory
-    darksynth:{ bpm:[118,138,3], snareBalance:[.25,1.2,2], pump:[0,.35,2], sub:[.6,1,2], leadVoices:[3,7,1],
-                comp:[.4,.7,1], motion:[.4,1,1], crackle:[0,.08,1], swing:[0,.06,1], wash:[.1,.45,1] },   // gated snare + reese at 132 — dubstep starts at 133, trance/edm need the PUMP, synthwave is 30bpm slower
+                hatDensity:[.2,1.1,2], crackle:[0,.12,1], swing:[0,.06,1], pump:[0,.35,1], motion:[0,.8,1], sub:[.6,1,1],
+                leadVoices:[1,2,2] },   // halftime SLAM, hats sparse — ebm's kit is twice as dense, miami's hats twice as fast, industrial chops the factory. 2026-07 darksynth pass: the riff-slam is lead-less (renders leadVoices 1-2); this fences darksynth's supersaw tear-lead (4-5) off industrialmetal's diagonal (darksynth was scoring 98 here, the other margin-2 sibling)
+    darksynth:{ bpm:[118,138,3], snareBalance:[.25,1.2,2], pump:[0,.35,2], sub:[.6,1,2], leadVoices:[3,7,2],
+                comp:[.4,.7,1], motion:[.4,1,1], crackle:[0,.08,1], swing:[0,.06,1], wash:[.1,.32,1], hatDensity:[.45,1.5,1] },   // gated snare + reese at 132 — dubstep starts at 133, trance/edm need the PUMP, synthwave is 30bpm slower. 2026-07 deep pass: the tear-lead supersaw (leadVoices weight 1->2, renders 4-5) and the DRIVING pulse-kit hats (hatDensity [.45,1.5]: renders .5-1.02) are darksynth's spine vs the lead-less/halftime siblings (dubstep+industrialmetal both render leadVoices 1-2, hats .40-.45); wash tightened .45->.32 (renders dry .198-.261 — it's a synthwave night-drive, not a dubstep cavern .30-.35)
     /* genre-tool:prelude:targets */
     prelude:  { bpm:[56,87,3], drumDensity:[0,0.4,3], acoustic:[0.66,1,3], humanize:[0,0.275,3], rubato:[0.001,0.035,2], motion:[0.487,1,1], wash:[0.026,0.359,1], swing:[0,0.071,1] },
     /* /genre-tool:prelude:targets */
