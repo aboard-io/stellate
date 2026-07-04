@@ -995,18 +995,21 @@
       found:{role:"bed", vol:[.2,.32], pitch:[.55,.7], stretch:[.45,.6], cutoff:[1800,3000], sources:["vx_conet_swedish","vx_blake","vx_timelady"]},   // the haunted music box + tyger tyger + the time lady, ALL slowed to a crawl
       stab:["off"], hits:{sources:["vox_c","sp_pressure"], pattern:"dub", prob:.5, wet:true},
       form:"pop" },
-    mallsoft: { label:"Mallsoft", info:"vaporwave's emptier atrium: slower, wetter, the time-lady and the fountain louder than the band",   // SAMPLE-FORWARD: the bed IS the architecture
-      bpm:[48,60], swing:[0,.1], humanize:[.05,.2],   // BELOW vaporwave's floor — the escalator has stopped
-      progressions:["royal_road","dream","pop_1625"], kits:["halftime","kick","off"], fills:["off","downlift"],
+    mallsoft: { label:"Mallsoft", info:"the DEAD MALL: muzak heard from two stores away — escalator stopped, one chord every four bars, the whole tape drowned in the empty-atrium reverb; the time-lady and the fountain louder than the band",   // SAMPLE-FORWARD: the WASH is the architecture
+      reverbColor:"dattorro",   // fx wings: DELIBERATE — the bright tiled-atrium PLATE (a big diffuse hall of hard surfaces), NOT dinosynth/doomdrone's greyhole dark-swamp smear. The mall is reverberant and bright, not murky
+      bpm:[44,56], swing:[0,.1], humanize:[.05,.2],   // FURTHER below vaporwave's floor — the escalator has fully stopped (was 48-60)
+      chordEvery:16,   // 2026-07: slow harmonic drift — one chord every FOUR bars (muzak, half vaporwave's rate), like walking the length of the concourse before the pad changes
+      progressions:["royal_road","dream","pop_1625"], kits:["off","halftime","kick"], fills:["off","downlift"],   // kit mostly OFF now (the band left) — halftime/kick only occasionally
       bass:{patterns:["root","simple","off"], recipe:{model:["saw","sub"],cutoff:[400,700],res:[.05,.15],level:[.8,1],send:[.1,.2],dsend:[0,.08]}},
-      lead:{patterns:["sparse","composed","off"], patchPool:["E.PIANO 4","SHIMMER"], samplerPool:["alto_sax"], recipe:{model:["stack","dx7","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2400,3400],level:[.36,.48],send:[.5,.7],dsend:[.25,.45],vibrato:[.004,.009],attack:.1,release:[.5,.7],sustain:[.85,.95]}},   // ~1/3: the atrium EP/shimmer (alg-5 pair -> morphable)
-      pads:{prob:1, samplerPool:["ahh_choir"], recipe:{model:["casiocz","casiocz","saw","choir","sampler"],wave:"saw",cutoff:[900,1500],detune:[.004,.01],attack:[2,4],czWave:[0,.25],dcwAttack:[.3,.8],dcwAmount:[.3,.6],level:[.6,.8],send:[.6,.8],dsend:[.1,.25]},
-        inserts:{prob:.6, max:1, pool:[["chorus",{rate:[.15,.35],depth:[.5,.75],mix:[.4,.6]}]]}},   // the empty-atrium shimmer — dreampool chorus on the wash
-      drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.75,1],snare:[.5,.75],hat:[.6,.9],tune:[.9,1.05],send:[.2,.35],dsend:[0,.1]},
-      fx:{reverb:[.88,.96], delayBeats:[.75,1.5], delayFb:[.3,.45], delayCut:[2000,3000], pump:[0,.05], crackle:[.1,.3], lowcut:[0,0], highcut:[0,0], comp:[0,.15]},
+      lead:{patterns:["sparse","composed","off"], patchPool:["E.PIANO 4","SHIMMER"], samplerPool:["alto_sax"], recipe:{model:["stack","dx7","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2400,3400],level:[.36,.48],send:[.6,.8],dsend:[.25,.45],vibrato:[.004,.009],attack:.1,release:[.5,.7],sustain:[.85,.95]}},   // ~1/3: the atrium EP/shimmer (alg-5 pair -> morphable); send UP into the atrium
+      pads:{prob:1, samplerPool:["ahh_choir"], recipe:{model:["casiocz","casiocz","saw","choir","sampler"],wave:"saw",cutoff:[900,1500],detune:[.004,.01],attack:[2,4],czWave:[0,.25],dcwAttack:[.3,.8],dcwAmount:[.3,.6],level:[.6,.8],send:[.8,.92],dsend:[.1,.25]},
+        inserts:{prob:.6, max:1, pool:[["chorus",{rate:[.15,.35],depth:[.5,.75],mix:[.4,.6]}]]}},   // the empty-atrium shimmer — dreampool chorus on the wash; pad send PUSHED (the wash IS the instrument: .6-.8 -> .8-.92)
+      drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.75,1],snare:[.5,.75],hat:[.6,.9],tune:[.9,1.05],send:[.35,.5],dsend:[0,.1]},   // even the drums drown in the atrium (send .2-.35 -> .35-.5)
+      fx:{reverb:[.9,.98], delayBeats:[.75,1.5], delayFb:[.3,.45], delayCut:[2000,3000], pump:[0,.05], crackle:[.1,.3], lowcut:[0,0], highcut:[0,0], comp:[0,.15]},   // reverb PUSHED to the ceiling (.88-.96 -> .9-.98) — the cathedral of commerce
       found:{role:"bed", vol:[.28,.4], pitch:[.6,.75], stretch:[.4,.55], cutoff:[2200,3400], sources:["vx_timelady","tokyo_station","vx_conet_swedish","shibuya","vx_wwvh"]},   // the beds PROMINENT — at the tone, the mall will close
+      sampleEvents:[{ pool:["vx_timelady","vx_wwvh","sp_plaza"], placement:"buried", gain:.5, treatment:{cutoff:1300, rsend:.55, dsend:.3} }],   // 2026-07: the PA litany BURIED under every measure — announcements muffled through two storefronts (lowpassed 1.3k, drenched), the "heard from two stores away" made literal
       stab:["off"], hits:{sources:["sp_plaza","sp_shopping"], pattern:"sparse", prob:.5},
-      form:"pop" },
+      form:"wave" },   // 2026-07: WAVE form (was pop) — arrive/drift/swell/recede/depart, drifting past storefronts, no verse/chorus band structure
     wintersynth: { label:"Wintersynth", info:"dungeon synth's snowfield: icy choir + tub bells over frost triads, a slow march through the pines",   // SYNTH-FORWARD: cold pads carry it
       bpm:[64,84], swing:[0,.05], humanize:[.15,.35],
       progressions:["frost","frost","frost","mode_phrygian"], kits:["halftime","halftime","kick"], fills:["off","downlift"],   // frost triads DOMINANT — seventh≈0 is the fence vs vaporwave/newage
@@ -1250,6 +1253,7 @@
     darksynth: { label:"Darksynth", info:"synthwave's violent sibling at 140: distorted supersaw + fuzz trading, phrygian menace, the chase scene",   // SYNTH-FORWARD: the night drive turned hostile
       bpm:[122,136], swing:[0,.05], humanize:[0,.12],   // UNDER dubstep's 133-148 core — chase-scene tempo, not halftime wobble
       progressions:["mode_phrygian","andalusian","epic_min"], kits:["pulse","four"], fills:["impact","riser","tom fill","cut"],
+      transforms:{ pool:["stutter","rot"], rate:.16 },   // 2026-07 deep pass (v4 transform dimension): the RELENTLESS pulse is machine-tight, but ~1/6 of bars snap into a gated 16th-stutter or a displaced-hat lurch — the John-Carpenter/Perturbator horror gate. Distinct from dubstep's halftime (which mutates via the wobble, not the grid); keeps the drive (low rate, no rev/rest that would open holes)
       bass:{patterns:["drive","octaves","sixteenths","pedal"], recipe:{model:["reese","modeld"],cutoff:[350,600],res:[.15,.3],level:[1.15,1.35],send:[0,.06],dsend:[0,.06],
         glide:[20,40],envAmount:[1.2,2.2],envDecay:[.08,.16],oscMix:[.5,.9]},
         inserts:{prob:.7, max:1, pool:[["distort",{drive:[.35,.65],mix:[.7,.95]}]]}},   // the chase-scene reese OR a snarling pulse-heavy Model-D, subtle glide (modeld's own drive comes from the lead-shared key below being absent — envelope does the menace)
@@ -1762,6 +1766,7 @@
   let _gid=0; const gid=()=>"g"+(++_gid);
   const S=(name,o)=>Object.assign({id:gid(),name,cycles:1,pads:false,bass:"off",drums:"off",melody:"off",found:{sourceId:null,role:"bed"},fill:"off"},o);
   function buildSections(c, opts){
+    _gid=0;   // KERNEL-V4 determinism fix (2026-07): section ids are PER-TRACK (g1..gN), reset each build so they never depend on how many genres were resolved earlier in the same process. The old global counter made a track's section `id` labels a function of resolution ORDER — so changing one genre's section COUNT silently renumbered every genre declared after it (a Phase-0 fixture false-positive: state hash drift with byte-identical events+features). Section .id is consumed only by order (live/press iterate; no cross-track id key — journeys keep per-track section arrays), so per-track g1.. is safe and makes the fixture state-hash order-independent.
     const cycleBeats=E.getProgression(c.progression).chords.length*(c.chordEvery||8);
     const norm=Math.max(1,Math.round(32/cycleBeats));
     const F=()=>pick(c.rng,c.fills);
