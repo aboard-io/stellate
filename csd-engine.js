@@ -197,8 +197,13 @@
   }
 
   // ---------- event generators ----------
-  function bassEvents(kind,S,b,k,rng){
+  // bass patterns are 8-beat cells; chordEvery (cb) tiles them across the
+  // chord bar (>8) or truncates (<8). cb=8 (every genre today) is one cell,
+  // byte-identical to the pre-lane engine.
+  function bassEvents(kind,S,b,k,rng,cb){
+    cb=cb||CHORD_BEATS;
     const r5=pchAdd(b.r5,k), r6=pchAdd(b.r6,k), f6=pchAdd(b.f6,k);
+    const cell=()=>{
     let L;
     switch(kind){
       case "root":       L=[[0,7.5,r5]]; break;
@@ -228,125 +233,217 @@
            [4,0.42,r5],[4.5,0.42,r5],[5,0.42,r6],[5.5,0.42,r5],[6,0.42,r5],[6.5,0.42,pchAdd(r6,-1)],[7,0.42,r6],[7.5,0.42,pchAdd(r5,-1)]]; break;
       default:           L=[[0,1.5,r5],[2,0.5,r6],[3,1.0,f6],[4.5,0.5,r5],[5,1.0,r6],[6.5,1.5,r5]];
     }
-    return L.map(([o,d,p])=>({voice:"bass",beat:S+o,dur:d,pch:p,amp:0.22}));
+    return L;
+    };
+    const out=[];
+    for(let t0=0;t0<cb;t0+=CHORD_BEATS)
+      for(const [o,d,p] of cell()){ if(t0+o>cb) continue; out.push({voice:"bass",beat:S+t0+o,dur:d,pch:p,amp:0.22}); }
+    return out;
   }
   // E(k,n,rot) — euclidean rhythm (Bjorklund/Toussaint): the Strudel bd(3,16)
   // notation as a KIT dimension (FAUST-PORT.md "Strudel borrowings"). Returns
   // beat offsets across the 8-beat chord bar. `rot` rotates by whole PULSES —
   // the downbeat always keeps a hit while the internal long/short spacing
   // shifts — so the placement evolves per chord, deterministically (no rng).
-  function euclidBeats(k,n,rot){
+  function euclidBeats(k,n,rot,cb){
     n=Math.max(1,n|0); k=Math.max(1,Math.min(n,k|0));
     const steps=[]; for(let i=0;i<n;i++) if((i*k)%n < k) steps.push(i);
     const base=steps[(((rot||0)%steps.length)+steps.length)%steps.length];
-    return steps.map(s=>((s-base+n)%n)*(CHORD_BEATS/n)).sort((a,b)=>a-b);
+    return steps.map(s=>((s-base+n)%n)*((cb||CHORD_BEATS)/n)).sort((a,b)=>a-b);
   }
-  function drumEvents(kind,S,ci,nc,rng,eu,sw){
-    const R=rng||(()=>0.5);   // older kits never call R; new kits vary per chord + seed
+  // ---------- pulse-set rhythm lanes (KERNEL-V4 Phase 1) ----------
+  // The 18 procedural kit bodies are now DATA: each kit is an ordered list of
+  // lane ops interpreted by drumEvents in op order. ORDER IS LAW: downstream
+  // humanity/transform passes consume rng per event, so emission order and
+  // rng-draw order are part of the deterministic contract — these tables
+  // transcribe the old procedural kits hit-for-hit, draw-for-draw (pinned
+  // byte-identical by fixtures.js). Euclid is no longer an overlay that fights
+  // the kit: a state euclid spec is lane NOTATION that replaces the matching
+  // lane inside the same interpreter (open hats survive as accent identity).
+  //
+  // Op vocabulary (d: kick|snare|hat; a hit is [offset, amp, dur?]; dur>0.2
+  // voices a hat as OPEN, exactly like the old h() helper):
+  //   hits:[...]            static hits
+  //   alt:[A,B]             ci odd ? A : B      (the old ci%2 ternaries)
+  //   cyc:[...]             hits list picked by ci % length
+  //   last:[A,B]            last chord of the cycle ? A : B
+  //   pick:[A,B]            ONE rng draw chooses A (r<.5) or B
+  //   p:X                   whole-op gate: one rng draw, emit only if r<X
+  //   grid:{n,step=.5,from=0,amps,opens,open,sp}
+  //                         lane grid: offset=from+i*step, amp=amps[i%len];
+  //                         opens:{offs,a,dur} re-voices those steps as open
+  //                         hats; open:DUR makes EVERY step open; sp gates
+  //                         each step on its own rng draw.
+  //   ride:{n,amps,skipAmp} the shuffle pair-loop: h(i), h(i+skip) — the skip
+  //                         lands ON the swung-triplet grid (see below)
+  //   skip:true             every offset in this op adds the triplet skip
+  // Kit flag turn:false suppresses the end-of-cycle snare turn (halftime/
+  // tribal/bossa/shuffle keep their own cells clean, as before).
+  const KITS={
+    kick:{ ops:[
+      {d:"kick",hits:[[0,.65],[4,.65]]},
+      {d:"hat",hits:[[3.5,.1],[7.5,.1]]} ]},
+    full:{ ops:[
+      {d:"kick",hits:[[0,.65],[2.5,.38],[4,.65],[6.5,.38]]},
+      {d:"snare",hits:[[2,.42],[6,.42]]},
+      {d:"hat",grid:{n:8,step:1,from:.5,amps:[.13]}} ]},
+    open:{ ops:[
+      {d:"kick",hits:[[0,.65],[2.5,.38],[4,.65],[6.5,.38]]},
+      {d:"snare",hits:[[2,.42],[6,.42],[3.5,.16],[7.5,.16]]},
+      {d:"hat",grid:{n:8,step:1,from:.5,amps:[.13],opens:{offs:[3.5,7.5],a:.16,dur:.3}}} ]},
+    four:{ ops:[
+      {d:"kick",hits:[[0,.6],[2,.6],[4,.6],[6,.6]]},
+      {d:"snare",hits:[[2,.4],[6,.4]]},
+      {d:"hat",grid:{n:8,step:1,from:.5,amps:[.12]}} ]},
+    boombap:{ ops:[
+      {d:"kick",hits:[[0,.62],[3,.4],[4.5,.45]]},
+      {d:"snare",hits:[[2,.5],[6,.5]]},
+      {d:"hat",grid:{n:8,step:1,from:.5,amps:[.12,.08]}} ]},
+    halftime:{ turn:false, ops:[
+      {d:"kick",hits:[[0,.66]]},
+      {d:"snare",hits:[[4,.55]]},
+      {d:"hat",grid:{n:8,step:1,from:.5,amps:[.12]}} ]},
+    trap:{ ops:[
+      {d:"kick",hits:[[0,.6],[2.5,.45],[5,.45]]},
+      {d:"snare",hits:[[4,.5]]},
+      {d:"hat",grid:{n:16,amps:[.1]}},
+      {d:"hat",hits:[[6,.09],[6.25,.09],[6.5,.09],[6.75,.09]]} ]},
+    pulse:{ ops:[   // driving four with ghost snares + wandering push-kick; varies per chord
+      {d:"kick",hits:[[0,.62],[2,.62],[4,.62],[6,.62]]},
+      {d:"snare",hits:[[2,.5],[6,.5]]},
+      {d:"snare",alt:[[[5.5,.14]],[[3.75,.14]]]},
+      {d:"snare",last:[[[7.25,.11]],[[1.75,.11]]]},
+      {d:"kick",alt:[[[7.75,.3]],[[3.5,.26]]]},
+      {d:"hat",grid:{n:16,amps:[.13,.07],opens:{offs:[3.5,7.5],a:.16,dur:.3}}} ]},
+    techno:{ ops:[   // machine four: offbeat opens, minimal snare, rotating ghost perc
+      {d:"kick",hits:[[0,.66],[2,.66],[4,.66],[6,.66]]},
+      {d:"hat",grid:{n:8,step:1,from:1,amps:[.17],open:.28}},       // offbeat open hats
+      {d:"hat",grid:{n:16,amps:[.09,.05]}},                         // 16th ride bed
+      {d:"snare",p:.7,hits:[[2,.22],[6,.22]]},                      // snare is optional color
+      {d:"hat",cyc:[[[1.75,.2]],[[3.25,.2]],[[5.75,.2]],[[7.25,.2]]]},   // the rotating ghost
+      {d:"kick",p:.35,hits:[[7.5,.3]]} ]},
+    house:{ ops:[   // four + claps on 2/4, skipping hats
+      {d:"kick",hits:[[0,.62],[2,.62],[4,.62],[6,.62]]},
+      {d:"snare",hits:[[2,.46],[6,.46]]},                           // claps
+      {d:"hat",grid:{n:16,amps:[.11,.06,.16,.06]}},
+      {d:"hat",alt:[[[4.5,.18,.3]],[[0.5,.18,.3]]]},                // open hat skips around
+      {d:"snare",alt:[[[7.75,.13]],[]]} ]},
+    breaks:{ ops:[   // mid-tempo broken beat — displaced kicks, dragged snares
+      {d:"kick",hits:[[0,.68]]},
+      {d:"kick",alt:[[[2.75,.46]],[[2.5,.46]]]},
+      {d:"kick",pick:[[[4.5,.5]],[[5,.5]]]},
+      {d:"snare",hits:[[2,.38],[6,.38]]},
+      {d:"snare",alt:[[[5.25,.13]],[[3.75,.13]]]},
+      {d:"snare",p:.4,hits:[[7.5,.15]]},
+      {d:"hat",grid:{n:8,step:1,from:.5,amps:[.13,.08]}},
+      {d:"hat",alt:[[[6.5,.15,.3]],[[2.5,.15,.3]]]} ]},
+    jungle:{ ops:[   // chopped-break feel: the pattern itself mutates every chord
+      {d:"kick",hits:[[0,.68],[2.75,.5]]},
+      {d:"kick",alt:[[[5.5,.52]],[[6.25,.46]]]},
+      {d:"snare",hits:[[1.5,.32],[4,.35]]},                         // displaced backbeats
+      {d:"snare",cyc:[[[3.25,.15],[3.5,.19]],[[5.75,.15],[6,.19]],[[7,.15],[7.25,.19]],[[2.25,.15],[6.75,.19]]]},   // double-hit chop pair
+      {d:"snare",p:.5,hits:[[7.75,.22]]},                           // edge-of-bar push
+      {d:"hat",grid:{n:16,amps:[.09,.05],sp:.55}},                  // broken 16th hats (sparser)
+      {d:"hat",alt:[[[3.5,.13,.3]],[[7.5,.13,.3]]]} ]},
+    tribal:{ turn:false, ops:[   // full ritual kit: galloping kicks, BUSY hand-hats + open-hat swells, quiet tom accents
+      {d:"kick",hits:[[0,.66],[0.75,.32],[2,.5],[2.5,.28],[4,.62],[4.75,.32],[6,.5]]},   // dense galloping low toms
+      {d:"snare",hits:[[1.5,.26],[5.5,.26]]},                       // toms = snare voice, kept QUIET
+      {d:"snare",alt:[[[3.5,.18]],[[7,.18]]]},
+      {d:"hat",grid:{n:16,amps:[.12,.05,.09,.05],opens:{offs:[3.5,7.5],a:.16,dur:.32}}},   // 16th hand-hat bed + open swells
+      {d:"hat",cyc:[[[1.25,.13,.26]],[[3.25,.13,.26]],[[5.25,.13,.26]],[[7.25,.13,.26]]]},   // rotating ghost open-hat
+      {d:"hat",alt:[[[2.75,.10]],[[6.25,.10]]]},                    // extra syncopated shaker
+      {d:"kick",p:.5,hits:[[7.5,.32]]} ]},                          // occasional pickup kick
+    bossa:{ turn:false, ops:[   // surdo-soft kick with pickups, rim-click clave, gentle 8th hats
+      {d:"kick",hits:[[0,.55],[3.5,.28],[4,.55],[7.5,.28]]},
+      {d:"snare",alt:[[[1,.2],[2.5,.2],[4,.2],[5.5,.2],[7,.2]],[[0.5,.2],[2,.2],[4.5,.2],[6,.2],[7.5,.2]]]},   // 3-2 / 2-3 rim clave flips per chord
+      {d:"hat",grid:{n:8,step:1,from:.5,amps:[.11,.07]}},
+      {d:"hat",p:.3,hits:[[6.5,.13,.28]]} ]},                       // occasional soft open shaker
+    electro:{ ops:[   // 1982 machine boom-bap: syncopated 808 kicks, claps 2+4, crisp accented 16th hats
+      {d:"kick",hits:[[0,.66],[3.5,.42],[6,.5]]},
+      {d:"kick",alt:[[[7.5,.3]],[]]},
+      {d:"snare",hits:[[2,.5],[6,.5]]},
+      {d:"snare",p:.35,hits:[[7.75,.14]]},                          // clap ghosts push the bar
+      {d:"hat",grid:{n:16,amps:[.11,.06,.14,.06]}},
+      {d:"hat",alt:[[[3.5,.15,.28]],[[7.5,.15,.28]]]} ]},           // the open accent flips per chord
+    shuffle:{ turn:false, ops:[   // blues shuffle: swung-TRIPLET ride line, rimshot-light 2/4, sparse kick.
+      // The skip lands ON the triplet grid (beat + 2/3) scaled by state.swing —
+      // at blues swing (.24-.42) it sits .63-.667 into the beat, a true shuffle.
+      // These offbeats are NOT at f=0.5, so applyGroove never double-swings them.
+      {d:"hat",ride:{n:8,amps:[.14,.11],skipAmp:.07}},              // ding ... ding-a ride
+      {d:"snare",hits:[[2,.3],[6,.3]]},                             // light rim backbeat (brushes-soft)
+      {d:"snare",skip:true,alt:[[[3,.09]],[[7,.09]]]},              // ghost drag into the turn
+      {d:"kick",hits:[[0,.55],[4,.5]]},
+      {d:"kick",p:.4,alt:[[[6,.3]],[[2,.3]]]},                      // sparse kick, occasional push
+      {d:"hat",p:.3,skip:true,hits:[[7,.13,.3]]} ]},                // open let-ring into the next bar
+    newjack:{ ops:[   // swingbeat: bouncing kicks, HUGE claps on 2/4, skippy 16th hats
+      {d:"kick",hits:[[0,.64],[2.75,.4],[4.5,.5]]},
+      {d:"kick",alt:[[[6.75,.34]],[[5.75,.34]]]},
+      {d:"snare",hits:[[2,.58],[6,.58]]},
+      {d:"snare",alt:[[[3.75,.16]],[[7.25,.16]]]},                  // ghost clap skips around
+      {d:"hat",grid:{n:16,amps:[.12,.07],sp:.8}},                   // hats drop pulses — the skip
+      {d:"hat",alt:[[[2.5,.16,.3]],[[6.5,.16,.3]]]} ]},
+  };
+  // the ~40-line lane interpreter (replaces ~100 lines of per-kit JS).
+  // cb = beats per chord bar (state.chordEvery; default CHORD_BEATS=8). Kits
+  // are 8-beat cells: chordEvery>8 tiles the cell across the bar, <8 truncates
+  // (draws still happen — determinism is draw-count law, emission is a filter).
+  function drumEvents(kind,S,ci,nc,rng,eu,sw,cb){
+    cb=cb||CHORD_BEATS;
+    const R=rng||(()=>0.5);   // static kits never call R; conditional lanes vary per chord + seed
     const out=[];
     const k=(o,a)=>out.push({drum:"kick",beat:S+o,dur:0.35,amp:a});
     const s=(o,a)=>out.push({drum:"snare",beat:S+o,dur:0.30,amp:a});
     const h=(o,a,dur)=>out.push({drum:"hat",beat:S+o,dur:dur||0.10,amp:a,open:(dur||0)>0.2});
-    if(kind==="kick"){ k(0,.65);k(4,.65);h(3.5,.1);h(7.5,.1); }
-    else if(kind==="full"){ k(0,.65);k(2.5,.38);k(4,.65);k(6.5,.38);s(2,.42);s(6,.42); for(let i=0;i<8;i++)h(.5+i,.13); }
-    else if(kind==="open"){ k(0,.65);k(2.5,.38);k(4,.65);k(6.5,.38);s(2,.42);s(6,.42);s(3.5,.16);s(7.5,.16); for(let i=0;i<8;i++){const o=.5+i; if(o===3.5||o===7.5)h(o,.16,.3); else h(o,.13);} }
-    else if(kind==="four"){ for(let i=0;i<8;i+=2)k(i,.6); s(2,.4);s(6,.4); for(let i=0;i<8;i++)h(.5+i,.12); }
-    else if(kind==="boombap"){ k(0,.62);k(3,.4);k(4.5,.45); s(2,.5);s(6,.5); for(let i=0;i<8;i++)h(.5+i,(i%2?.08:.12)); }
-    else if(kind==="halftime"){ k(0,.66); s(4,.55); for(let i=0;i<8;i++)h(.5+i,.12); }
-    else if(kind==="trap"){ k(0,.6);k(2.5,.45);k(5,.45); s(4,.5); for(let i=0;i<16;i++)h(i*.5,.1); h(6,.09);h(6.25,.09);h(6.5,.09);h(6.75,.09); }
-    else if(kind==="pulse"){ // driving four with ghost snares + wandering push-kick; varies per chord
-      for(let i=0;i<8;i+=2)k(i,.62);
-      s(2,.5);s(6,.5);
-      s(ci%2?5.5:3.75,.14); s(ci===nc-1?7.25:1.75,.11);
-      if(ci%2)k(7.75,.3); else k(3.5,.26);
-      for(let i=0;i<16;i++){const o=i*.5; if(o===3.5||o===7.5)h(o,.16,.3); else h(o,i%2?.07:.13);}
-    }
-    else if(kind==="techno"){ // machine four: offbeat opens, minimal snare, rotating ghost perc
-      for(let i=0;i<8;i+=2)k(i,.66);
-      for(let i=0;i<8;i++)h(i+1,.17,.28);                          // offbeat open hats
-      for(let i=0;i<16;i++)h(i*.5,i%2?.05:.09);                    // 16th ride bed
-      if(R()<0.7){s(2,.22);s(6,.22);}                              // snare is optional color
-      const g=[1.75,3.25,5.75,7.25][ci%4]; h(g,.2);                // the rotating ghost
-      if(R()<0.35)k(7.5,.3);
-    }
-    else if(kind==="house"){ // four + claps on 2/4, skipping hats
-      for(let i=0;i<8;i+=2)k(i,.62);
-      s(2,.46);s(6,.46);                                           // claps
-      for(let i=0;i<16;i++){const o=i*.5; h(o,i%4===2?.16:(i%2?.06:.11));}
-      h(ci%2?4.5:0.5,.18,.3);                                      // open hat skips around
-      if(ci%2)s(7.75,.13);
-    }
-    else if(kind==="breaks"){ // mid-tempo broken beat — displaced kicks, dragged snares
-      k(0,.68); k(ci%2?2.75:2.5,.46); k(R()<0.5?4.5:5,.5);
-      s(2,.38); s(6,.38); s(ci%2?5.25:3.75,.13); if(R()<0.4)s(7.5,.15);
-      for(let i=0;i<8;i++)h(.5+i,(i%2?.08:.13));
-      h(ci%2?6.5:2.5,.15,.3);
-    }
-    else if(kind==="jungle"){ // chopped-break feel: the pattern itself mutates every chord
-      k(0,.68); k(2.75,.5); if(ci%2)k(5.5,.52); else k(6.25,.46);
-      s(1.5,.32); s(4,.35);                                        // displaced backbeats
-      const chops=[[3.25,3.5],[5.75,6],[7,7.25],[2.25,6.75]][ci%4];
-      chops.forEach((o,j)=>s(o,.15+j*.04));                        // double-hit chop pair
-      if(R()<0.5)s(7.75,.22);                                      // edge-of-bar push
-      for(let i=0;i<16;i++){if(R()<0.55)h(i*.5,(i%2?.05:.09));}    // broken 16th hats (sparser)
-      h(ci%2?3.5:7.5,.13,.3);
-    }
-    else if(kind==="tribal"){ // full ritual kit: galloping kicks, BUSY hand-hats + open-hat swells, quiet tom accents (no snare roll)
-      k(0,.66); k(0.75,.32); k(2,.5); k(2.5,.28); k(4,.62); k(4.75,.32); k(6,.5);   // dense galloping low toms
-      s(1.5,.26); s(5.5,.26); s(ci%2?3.5:7,.18);                   // toms = snare voice, kept QUIET
-      for(let i=0;i<16;i++){ const o=i*.5;                         // the whole kit: 16th hand-hat bed
-        if(o===3.5||o===7.5) h(o,.16,.32);                         //   open-hat swells
-        else h(o, i%4===0?.12 : i%2?.05:.09); }                    //   accented closed hats
-      h([1,3,5,7][ci%4]+0.25,.13,.26);                             // rotating ghost open-hat per chord
-      h(ci%2?2.75:6.25,.10);                                       // extra syncopated shaker
-      if(R()<0.5) k(7.5,.32);                                      // occasional pickup kick (not a snare fill)
-    }
-    else if(kind==="bossa"){ // bossa nova: surdo-soft kick with pickups, rim-click clave (QUIET snare voice), gentle 8th hats
-      k(0,.55); k(3.5,.28); k(4,.55); k(7.5,.28);
-      const clave=ci%2?[1,2.5,4,5.5,7]:[0.5,2,4.5,6,7.5];          // 3-2 / 2-3 rim pattern flips per chord
-      clave.forEach(o=>s(o,.2));                                   // rim clicks, never a backbeat
-      for(let i=0;i<8;i++)h(.5+i,(i%2?.07:.11));
-      if(R()<0.3)h(6.5,.13,.28);                                   // occasional soft open shaker
-    }
-    else if(kind==="electro"){ // 1982 machine boom-bap (Planet Rock): syncopated 808 kicks, claps 2+4, crisp accented 16th hats
-      k(0,.66); k(3.5,.42); k(6,.5); if(ci%2)k(7.5,.3);
-      s(2,.5); s(6,.5); if(R()<0.35)s(7.75,.14);                   // clap ghosts push the bar
-      for(let i=0;i<16;i++){const o=i*.5; h(o,i%4===2?.14:(i%2?.06:.11));}
-      h(ci%2?3.5:7.5,.15,.28);                                     // the open accent flips per chord
-    }
-    else if(kind==="shuffle"){ // blues shuffle: swung-TRIPLET ride line, rimshot-light 2/4, sparse kick
-      // the skip lands ON the triplet grid (beat + 2/3) scaled by state.swing —
-      // at blues swing (.24-.42) it sits .63-.667 into the beat, a true shuffle.
-      // These offbeats are NOT at f=0.5, so applyGroove never double-swings them.
+    const EM={kick:k,snare:s,hat:h};
+    const kit=KITS[kind];
+    if(kit){
       const skip=0.5+(2/3-0.5)*Math.max(0,Math.min(1,(sw||0)/0.3));
-      for(let i=0;i<8;i++){ h(i,(i%2?0.11:0.14)); h(i+skip,0.07); }   // ding ... ding-a ride
-      s(2,.3); s(6,.3);                                              // light rim backbeat (brushes-soft)
-      s(ci%2?3+skip:7+skip,.09);                                     // ghost drag into the turn
-      k(0,.55); k(4,.5); if(R()<0.4)k(ci%2?6:2,.3);                  // sparse kick, occasional push
-      if(R()<0.3)h(7+skip,.13,.3);                                   // open let-ring into the next bar
+      for(let t0=0;t0<cb;t0+=CHORD_BEATS){
+        for(const op of kit.ops){
+          if(op.p!=null && R()>=op.p) continue;                     // whole-op gate: exactly one draw
+          const em=EM[op.d];
+          const put=(o,a,d)=>{ if(op.skip)o+=skip; if(t0+o<=cb) em(t0+o,a,d); };   // <=: legacy cells spill onto the next downbeat (techno opens end at o=8)
+          if(op.ride){ const rd=op.ride;
+            for(let i=0;i<rd.n;i++){ if(t0+i<=cb) em(t0+i, rd.amps[i%rd.amps.length]);
+              if(t0+i+skip<=cb) em(t0+i+skip, rd.skipAmp); }
+            continue; }
+          if(op.grid){ const g=op.grid, st=g.step!=null?g.step:0.5, fr=g.from||0;
+            for(let i=0;i<g.n;i++){
+              if(g.sp!=null && R()>=g.sp) continue;                 // per-step gate: one draw per step
+              const o=fr+i*st;
+              if(g.open) put(o,g.amps[i%g.amps.length],g.open);
+              else if(g.opens && g.opens.offs.indexOf(o)>=0) put(o,g.opens.a,g.opens.dur);
+              else put(o,g.amps[i%g.amps.length]);
+            }
+            continue; }
+          const hs = op.alt ? op.alt[ci%2?0:1]
+                   : op.cyc ? op.cyc[ci%op.cyc.length]
+                   : op.last ? op.last[ci===nc-1?0:1]
+                   : op.pick ? op.pick[R()<0.5?0:1]
+                   : op.hits;
+          for(const hh of hs) put(hh[0],hh[1],hh[2]);
+        }
+      }
     }
-    else if(kind==="newjack"){ // swingbeat: bouncing kicks, HUGE claps on 2/4, skippy 16th hats (the swing knob rides on top)
-      k(0,.64); k(2.75,.4); k(4.5,.5); k(ci%2?6.75:5.75,.34);
-      s(2,.58); s(6,.58); s(ci%2?3.75:7.25,.16);                   // ghost clap skips around
-      for(let i=0;i<16;i++){if(R()<0.8)h(i*.5,(i%2?.07:.12));}     // hats drop pulses — the skip
-      h(ci%2?2.5:6.5,.16,.3);
-    }
-    // euclid overlay (state.euclid = {kick:[k,n], hat:[k,n], snare:[k,n]}): the spec REPLACES
-    // that drum line with E(k,n) placement, rotation advancing per global chord
-    // (open hats survive — they're the kit's accent identity; euclid re-places
-    // the closed-hat grid / the kick line only).
+    // euclid as lane NOTATION (state.euclid = {kick:[k,n], hat:[k,n], snare:[k,n]}):
+    // the spec REPLACES that drum's lane with E(k,n) placement, rotation
+    // advancing per global chord (open hats survive — they're the kit's accent
+    // identity; euclid re-places the closed-hat grid / the kick line only).
     if(eu&&kind!=="off"){
-      const gci=Math.round(S/CHORD_BEATS);
+      const gci=Math.round(S/cb);
       const place=(spec,drum,mk)=>{
         if(!spec||!spec.length) return;
         for(let i=out.length-1;i>=0;i--) if(out[i].drum===drum&&(drum!=="hat"||!out[i].open)) out.splice(i,1);
-        euclidBeats(spec[0],spec[1],gci).forEach((o,j)=>mk(o,j));
+        euclidBeats(spec[0],spec[1],gci,cb).forEach((o,j)=>mk(o,j));
       };
       place(eu.kick,"kick",(o,j)=>k(o, j===0?.64:.48));
       place(eu.hat, "hat", (o,j)=>h(o, j%2?.07:.12));
       place(eu.snare,"snare",(o,j)=>s(o, j===0?.5:.36));           // euclid CLAPS (electro): E(3,16) tresillo replaces the backbeat
     }
-    if(ci===nc-1 && kind!=="off" && kind!=="halftime" && kind!=="tribal" && kind!=="bossa" && kind!=="shuffle"){ s(6.5,.3);s(7,.34);s(7.25,.38);s(7.5,.42);s(7.75,.46); }
+    if(ci===nc-1 && kind!=="off" && (!kit || kit.turn!==false)){   // end-of-cycle snare turn
+      const tb=cb-CHORD_BEATS;
+      [[6.5,.3],[7,.34],[7.25,.38],[7.5,.42],[7.75,.46]].forEach(([o,a])=>{ if(tb+o>=0) s(tb+o,a); });
+    }
     return out;
   }
   function fillEvents(S){
@@ -491,8 +588,12 @@
     for(let i=3;i>0;i--){ const j=Math.floor(s()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; }
     return a;
   }
-  function melodyEvents(style,base,prg,chords,k,rng,seed){
-    const out=[], cycleBeats=chords.length*CHORD_BEATS;
+  // melody phrases are 8-beat cells too; with chordEvery (cb) ≠ 8 the phrase
+  // takes the front of the chord bar (long harmony breathes) or truncates.
+  // cb=8 (every genre today) is byte-identical to the pre-lane engine.
+  function melodyEvents(style,base,prg,chords,k,rng,seed,cb){
+    cb=cb||CHORD_BEATS;
+    const out=[], cycleBeats=chords.length*cb;
     const comp = style==="composed"?prg.composed : style==="composed2"?prg.composed2 : null;
     if(comp && cycleBeats===32){
       comp.forEach(([o,d,p])=>{ if(rng()<0.06) return;            // composed lines breathe too
@@ -501,12 +602,13 @@
     }
     let gen=style; if(style==="composed"||style==="composed2") gen="arpup";
     chords.forEach((chord,ci)=>{
-      const Sb=base+ci*CHORD_BEATS, lead=chord.lead.map(p=>pchAdd(p,k));
+      const Sb=base+ci*cb, lead=chord.lead.map(p=>pchAdd(p,k));
         // humanity: every chord's phrase mutates a little — drops, pushes, octave color
       const note=(o,d,idx,oct,bd)=>{
         if(rng()<0.09) return;
         if(rng()<0.11 && o+0.5+d<=8) o+=0.5;
         if(rng()<0.09) oct=(oct||0)===0?1:0;
+        if(o>=cb) return;                                          // chordEvery<8 truncation (never fires at cb=8)
         out.push({voice:"melody",beat:Sb+o,dur:d,pch:pchAdd(lead[idx],12*(oct||0)),amp:0.13+rng()*0.025,...(bd?{bend:bd}:{})});
       };
       if(gen==="canon"){
@@ -525,7 +627,7 @@
         // singer on the next call). ~30-40% of notes gain a blue-note BEND
         // ({from:-(0.5..1) semitones, ms:60-140}), biased onto thirds/fifths —
         // only SAMPLER leads render the slide (VOICES.md contract).
-        const gci=Math.round(Sb/CHORD_BEATS);
+        const gci=Math.round(Sb/cb);
         const cr=crStream(seed,gci);
         const rest=cr()<0.42;                              // draw #1 — the hits placer flips the same coin
         const bend=(idx)=>((idx===1||idx===2)?cr()<0.55:cr()<0.22)
@@ -547,12 +649,12 @@
         return; }
       if(gen==="roar"){   // a creature bellow: one long held low note, sometimes a second answering call
         out.push({voice:"melody",beat:Sb,dur:5.0,pch:pchAdd(lead[0],-12),amp:0.17});
-        if(rng()<0.55) out.push({voice:"melody",beat:Sb+5.4,dur:2.3,pch:pchAdd(lead[2],-12),amp:0.14});
+        if(rng()<0.55&&5.4<cb) out.push({voice:"melody",beat:Sb+5.4,dur:2.3,pch:pchAdd(lead[2],-12),amp:0.14});
         return; }
       if(gen==="double"){ // 8th-note double-time riff — ROTATES per chord (verbatim loops were the arp fatigue) + humanity drops/octave pops
         const pat=[0,1,2,3,0,1,2,3,1,2,3,0,2,3,0,1];
-        const rot=(Math.round(Sb/CHORD_BEATS)%4)*4;                   // pattern phase advances each chord/cycle
-        for(let i=0;i<16;i++){
+        const rot=(Math.round(Sb/cb)%4)*4;                            // pattern phase advances each chord/cycle
+        for(let i=0;i<Math.round(cb*2);i++){
           if(rng()<0.07) continue;                                    // breathe
           let p=lead[pat[(i+rot)%16]];
           if(rng()<0.06) p=pchAdd(p,12);                              // octave pop
@@ -565,10 +667,10 @@
         // advancing each chord. `motorik23` is the COUNTER: 2/3 the speed and the MIRROR of the
         // main's direction, so as one arp climbs the other descends (contrary motion).
         const slow=gen==="motorik23";
-        const gci=Math.round(Sb/CHORD_BEATS);                                   // global chord index — the direction varies across the whole song
+        const gci=Math.round(Sb/cb);                                            // global chord index — the direction varies across the whole song
         const base=arpDir(ARP_DIRS[gci%ARP_DIRS.length], gci);
         const cell=slow?base.slice().reverse():base;                            // the counter mirrors the main = contrary motion
-        const step=slow?0.75:0.5, n=Math.floor((CHORD_BEATS)/step);             // EIGHTH notes (main), dotted-8th (counter at 2/3 speed)
+        const step=slow?0.75:0.5, n=Math.floor(cb/step);                        // EIGHTH notes (main), dotted-8th (counter at 2/3 speed)
         for(let i=0;i<n;i++){
           let p=lead[cell[i%cell.length]];
           if(i%2===1) p=pchAdd(p,12);                                           // octave weave on alternate 8ths (the Kraftwerk weave, now at 8th-note rate)
@@ -579,15 +681,16 @@
       if(gen==="arp16"){   // 16th-note arp that traces a MELODIC contour (not just the chord) — Edge-style
         const ext=[lead[0],lead[1],lead[2],lead[3],pchAdd(lead[0],12),pchAdd(lead[1],12),pchAdd(lead[2],12)];
         const motif=[0,2,4,5, 4,3,2,4, 5,4,2,3, 1,2,4,0];   // a rising-to-a-peak melodic figure, resolves
-        for(let i=0;i<32;i++){ const p=ext[motif[i%16]];
+        for(let i=0;i<Math.round(cb*4);i++){ const p=ext[motif[i%16]];
           out.push({voice:"melody",beat:Sb+i*0.25,dur:0.24,pch:pchAdd(p,-12),amp:0.12});   // melodic arp, octave lower (main)
           out.push({voice:"melody",beat:Sb+i*0.25,dur:0.22,pch:p,amp:0.05}); }              // octave doubling
         return; }
       const ph=MEL_PHRASES[gen];
       if(ph){ ph.forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       // wander: rhythmic random walk over chord tones, occasional octave leap
+      const span=Math.min(8,cb);
       const rh=[1,0.5,0.5,1,1,2]; let t=0,i=0,prev=Math.floor(rng()*4);
-      while(t<8){ const d=rh[i%rh.length]; prev=Math.max(0,Math.min(3,prev+(Math.floor(rng()*3)-1))); note(t,Math.min(d,8-t)*0.92,prev,rng()<0.18?1:0); t+=d; i++; }
+      while(t<span){ const d=rh[i%rh.length]; prev=Math.max(0,Math.min(3,prev+(Math.floor(rng()*3)-1))); note(t,Math.min(d,span-t)*0.92,prev,rng()<0.18?1:0); t+=d; i++; }
     });
     return out;
   }
@@ -613,7 +716,10 @@
 
   function buildEvents(state){
     const prg=PROGRESSIONS[state.progression]||PROGRESSIONS.royal_road;
-    const chords=prg.chords, k0=state.keyOffset|0, cycleBeats=chords.length*CHORD_BEATS;
+    // KERNEL-V4 Phase 1: harmonic rhythm is a state dimension. chordEvery =
+    // beats per chord bar (absent = the legacy CHORD_BEATS=8, byte-stable).
+    const CBEATS=Math.max(2,Math.round(state.chordEvery||CHORD_BEATS));
+    const chords=prg.chords, k0=state.keyOffset|0, cycleBeats=chords.length*CBEATS;
     const srcById={};
     state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".wav"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec,wet:!!s.wet,glitch:!!s.glitch,distant:!!s.distant}; });
     const rng=mulberry32((state.seed??1)>>>0);
@@ -640,13 +746,13 @@
         } else if(role==="break"){
           // beat-synced break chopping: slice patterns rotate per chord, mutate per seed
           const sync=fsrc.bpm?state.bpm/fsrc.bpm:1;
-          for(let cb=0;cb<secBeats/CHORD_BEATS;cb++){
+          for(let cb=0;cb<secBeats/CBEATS;cb++){
             const pat=BREAK_PATTERNS[(cb+Math.floor(rng()*2))%BREAK_PATTERNS.length];
-            for(let i8=0;i8<16;i8++){
-              let sl=pat[i8];
+            for(let i8=0;i8<Math.round(CBEATS*2);i8++){
+              let sl=pat[i8%16];
               if(sl<0||rng()<0.08) continue;
               if(rng()<0.1) sl=Math.floor(rng()*8);                  // surprise slice
-              const beat=cur+cb*CHORD_BEATS+i8*0.5;
+              const beat=cur+cb*CBEATS+i8*0.5;
               found.push({chop:1,beat,dur:0.52,amp:fsrc.vol*2.1,tableNum:fsrc.tableNum,
                 pitch:sync,offset:sl/8,cutoff:fsrc.cutoff||5000});
               if(rng()<0.07) found.push({chop:1,beat:beat+0.25,dur:0.26,amp:fsrc.vol*1.6,
@@ -683,15 +789,15 @@
         if(hsrc.glitch){
           // the LOON, glitched a ton + faded in/out: long pitched swells (slow fade)
           // interleaved with rapid stutter clusters, all soaked in reverb + echo
-          for(let cb=0;cb<secBeats/CHORD_BEATS;cb++){
-            const base=cur+cb*CHORD_BEATS;
+          for(let cb=0;cb<secBeats/CBEATS;cb++){
+            const base=cur+cb*CBEATS;
             if(rng()<0.6){                                            // a fading swell (gentle)
               found.push({chop:1,beat:base+rng()*3,dur:3+rng()*4,amp:(hsrc.vol||0.2)*1.4,tableNum:hsrc.tableNum,
                 pitch:0.55+rng()*0.7,offset:rng(),cutoff:hsrc.cutoff||4500,rsend:0.32,dsend:0.3,fade:1+rng()*1.5});
             }
             if(rng()<0.6){                                           // a stutter cluster
               const off=rng(), n=2+Math.floor(rng()*4), step=[0.0625,0.125,0.1875][Math.floor(rng()*3)], sb=base+rng()*5;
-              for(let j=0;j<n&&sb+j*step<base+CHORD_BEATS;j++)
+              for(let j=0;j<n&&sb+j*step<base+CBEATS;j++)
                 found.push({chop:1,beat:sb+j*step,dur:step*1.7,amp:(hsrc.vol||0.2)*1.3,tableNum:hsrc.tableNum,
                   pitch:[0.5,0.75,1,1.5,2][Math.floor(rng()*5)],offset:Math.min(0.98,off+j*0.05),cutoff:hsrc.cutoff||5500,rsend:0.3,dsend:0.3});
             }
@@ -699,14 +805,14 @@
         } else {
         const pat=HIT_PATTERNS[sec.hits.pattern]||HIT_PATTERNS.sparse;
         const hdur=Math.min(4,(hsrc.durSec||1.2)*state.bpm/60);
-        for(let cb=0;cb<secBeats/CHORD_BEATS;cb++){
+        for(let cb=0;cb<secBeats/CBEATS;cb++){
           for(const o of pat){
             if(sec.hits.pattern==="response"){
               // response slotting: the singer ONLY takes the response bars the
               // blues lead rests (crStream draw #1 — the same seeded coin)
-              if(crStream(state.seed,Math.round((cur+cb*CHORD_BEATS)/CHORD_BEATS))()>=0.42) continue;
+              if(crStream(state.seed,Math.round((cur+cb*CBEATS)/CBEATS))()>=0.42) continue;
             } else if(rng()<0.45) continue;                          // hits are events, not loops
-            const ev={chop:1,beat:cur+cb*CHORD_BEATS+o,dur:hdur,amp:(hsrc.vol||0.2)*1.8,
+            const ev={chop:1,beat:cur+cb*CBEATS+o,dur:hdur,amp:(hsrc.vol||0.2)*1.8,
               tableNum:hsrc.tableNum,pitch:1+(rng()*0.06-0.03),offset:0,cutoff:hsrc.cutoff||4500};
             if(hsrc.distant){ ev.amp*=0.32; ev.rsend=0.9; ev.dsend=0.72; ev.fade=0.4; }  // across the lake: way down, drenched, muffled
             else if(hsrc.wet){ ev.rsend=0.6; ev.dsend=0.45; }        // rides reverb + echo
@@ -755,22 +861,22 @@
       }
       // synth stabs (rave chords on the chord root)
       if(sec.stab&&sec.stab!=="off"&&STAB_PATTERNS[sec.stab]){
-        for(let cb=0;cb<secBeats/CHORD_BEATS;cb++){
+        for(let cb=0;cb<secBeats/CBEATS;cb++){
           const chord=chords[cb%chords.length];
           for(const o of STAB_PATTERNS[sec.stab]){
             if(rng()<0.2) continue;
-            sfx.push({stab:1,beat:cur+cb*CHORD_BEATS+o,dur:0.32,pch:pchAdd(chord.bass.r6,k+12),amp:0.16+rng()*0.05});
+            sfx.push({stab:1,beat:cur+cb*CBEATS+o,dur:0.32,pch:pchAdd(chord.bass.r6,k+12),amp:0.16+rng()*0.05});
           }
         }
       }
       for(let c=0;c<cycles;c++){
         const cycleBase=cur+c*cycleBeats;
         chords.forEach((chord,ci)=>{
-          const Sp=cycleBase+ci*CHORD_BEATS;
+          const Sp=cycleBase+ci*CBEATS;
           if(sec.pads){ const padAmp=sec.swell ? 0.085*(0.5+1.9*((Sp-cur)/Math.max(1,secBeats))) : 0.085;
-            chord.pads.forEach(p=>pitched.push({voice:"pad",beat:Sp,dur:CHORD_BEATS,pch:pchAdd(p,k),amp:padAmp})); }
+            chord.pads.forEach(p=>pitched.push({voice:"pad",beat:Sp,dur:CBEATS,pch:pchAdd(p,k),amp:padAmp})); }
           if(sec.bass&&sec.bass!=="off"){
-            const be=bassEvents(sec.bass,Sp,chord.bass,k,rng);
+            const be=bassEvents(sec.bass,Sp,chord.bass,k,rng,CBEATS);
             be.forEach(e=>{
               if(rng()<0.05) e.pch=pchAdd(e.pch,12);                  // octave pops
               if(rng()<0.06&&e.beat-Sp>0.4){ e.beat+=0.25; }          // lazy push
@@ -778,7 +884,7 @@
               pitched.push(e); });
           }
           if(sec.drums&&sec.drums!=="off"){
-            let de=drumEvents(sec.drums,Sp,ci,chords.length,rng,state.euclid,state.swing);
+            let de=drumEvents(sec.drums,Sp,ci,chords.length,rng,state.euclid,state.swing,CBEATS);
             // humanity pass: hats drop out, levels breathe, ghost snares stay QUIET
             de=de.filter(e=>!(e.drum==="hat"&&rng()<0.09));
             de.forEach(e=>{ if(rng()<0.25) e.amp=Math.max(0.03,e.amp*(0.85+rng()*0.3)); });
@@ -792,12 +898,12 @@
           }
         });
         if(sec.melody&&sec.melody!=="off"){
-          const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,rng,state.seed);
+          const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,rng,state.seed,CBEATS);
           if(sec.solo) mel.forEach(e=>{ e.solo=sec.solo; if(sec.soloOctave) e.pch=pchAdd(e.pch,12*sec.soloOctave); });
           mel.forEach(e=>pitched.push(e));
         }
         if(sec.counter&&sec.counter.pattern){              // countermelody layer (e.g. a brass section) over the main melody
-          const cm=melodyEvents(sec.counter.pattern,cycleBase,prg,chords,k,rng,state.seed);
+          const cm=melodyEvents(sec.counter.pattern,cycleBase,prg,chords,k,rng,state.seed,CBEATS);
           cm.forEach(e=>{ e.solo=sec.counter.solo; if(sec.counter.octave) e.pch=pchAdd(e.pch,12*sec.counter.octave);
             if(sec.swell) e.amp *= 0.3 + 1.9*((e.beat-cur)/Math.max(1,secBeats)); });   // crescendo build across the section
           cm.forEach(e=>pitched.push(e));
@@ -855,8 +961,12 @@
         const hit=(tr==="impact"||tr==="noise");
         const sbeat = hit ? cur+secBeats : cur+secBeats-4;   // hit on next downbeat; build in final bar
         // 2026-07: the sweep family is DEMOTED (-8dB; the loud noise build was
-        // "very loud, very disruptive, overused") — impact keeps its slam
-        const amp = tr==="impact"?0.4 : (tr==="reverse"||tr==="downlift")?0.2 : 0.16;
+        // "very loud, very disruptive, overused") — impact keeps its slam.
+        // 2026-07-04 human-calibrated law: "if you're going to use a filter
+        // sweep over noise it must be much quieter and the filter must cut
+        // very deeply" — a further ~-9dB here (0.16->0.055, 0.2->0.07) plus
+        // the deep resonant filter ranges in faust/dsp/sfx.dsp.
+        const amp = tr==="impact"?0.4 : (tr==="reverse"||tr==="downlift")?0.07 : 0.055;
         sfx.push({beat:Math.max(0,sbeat), dur:hit?1.5:4, type:SFX_NUM[tr], amp});
       }
       spans.push({start:cur,beats:secBeats});
@@ -872,16 +982,16 @@
       const trng=mulberry32(((state.seed??1)+31337)>>>0);
       const dropT=new Set();
       for(const sp of spans){
-        const nbars=Math.floor(sp.beats/CHORD_BEATS);
+        const nbars=Math.floor(sp.beats/CBEATS);
         for(let bi=1;bi<nbars;bi++){
           if(trng()>=0.25) continue;
-          const b0=sp.start+bi*CHORD_BEATS, b1=b0+CHORD_BEATS;
+          const b0=sp.start+bi*CBEATS, b1=b0+CBEATS;
           const t=Math.floor(trng()*5);
           if(t===0){        // rev: mirror the melody phrase in time (Strudel rev; solos exempt)
             for(const e of pitched) if(e.voice==="melody"&&!e.solo&&e.beat>=b0&&e.beat<b1)
-              e.beat=b0+Math.max(0, CHORD_BEATS-((e.beat-b0)+Math.min(e.dur,CHORD_BEATS)));
+              e.beat=b0+Math.max(0, CBEATS-((e.beat-b0)+Math.min(e.dur,CBEATS)));
           } else if(t===1){ // ply: double-hit one beat of drums (Strudel ply 2)
-            const at=b0+Math.floor(trng()*CHORD_BEATS), extra=[];
+            const at=b0+Math.floor(trng()*CBEATS), extra=[];
             for(const d of drums) if(d.beat>=at&&d.beat<at+1&&d.drum!=="tom")
               extra.push(Object.assign({},d,{beat:d.beat+0.25,dur:Math.min(d.dur,0.2),amp:d.amp*0.75}));
             extra.forEach(x=>drums.push(x));
@@ -1013,6 +1123,7 @@
     return out;
   }
   const api={ buildEvents, defaultState, defaultInstruments, generateSong, voicing, soloVoices, euclidBeats,
+    KITS,   // pulse-set kit lanes (KERNEL-V4 Phase 1): kits are data; drumEvents is the one interpreter
     PROGRESSIONS, STYLES, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS, isModel, pchAdd, pchToMidi };
   if(typeof module!=="undefined" && module.exports) module.exports=api;
   else root.CsdEngine=api;

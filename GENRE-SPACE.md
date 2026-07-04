@@ -17,6 +17,8 @@ with its own blend rule:
 | **tempo** | scalar range | techno 120-140, jungle 160-172, vaporwave 62-88 | lerp ranges, then sample |
 | **meter feel** | enum | straight / swung / halftime / broken | probabilistic pick ∝ t |
 | **rhythm** | pool of kits | four-on-floor, pulse, breaks, jungle chop, boombap, none | weighted pool union |
+| **rhythm representation** (KERNEL-V4 Phase 1) | data lanes | every kit is a pulse-set lane table (`CsdEngine.KITS`) rendered by one interpreter; a state `euclid` spec is lane *notation* that replaces the matching lane, not an overlay | kits stay a pool; lane tables are the shared vocabulary the verifier/blends can read |
+| **harmonic rhythm** (KERNEL-V4 Phase 1) | scalar `chordEvery` | beats per chord bar; default 8 (the legacy CHORD_BEATS). An anchor may declare 4 (jazz-speed changes) or 16/32 (drone plateaus); kit/bass cells tile, melody phrases breathe | parent pick by weight, drawn LAST (zero draws when absent — byte-stable) |
 | **harmonic motion** | scalar + pool | techno ≈ 0 (drone), city pop ≈ 1 (changes every 2 bars) | lerp rate, pick progression from pooled candidates compatible with rate |
 | **harmonic color** | pool | maj7/9 (vapor, lofi), minor triads (synthwave), single minor drone (techno) | pool union |
 | **key** | offset + mode bias | jungle/techno favor minor; vapor favors major-ish IVΔ | walked, not blended (see playlist) |

@@ -21,10 +21,15 @@ x = min(1.0, t/max(dur, 0.01));
 
 nz = no.noise;
 ml(fc) = ve.moog_vcf_2bn(0.3, max(60, min(fc, 16000)));
+// deep-cut variant for the noise-sweep family — human-calibrated 2026-07-04:
+// "the filter must cut very deeply" — high resonance, and the whole sweep
+// lives 150-2200 Hz (was 300-8000: at 8k open it read as plain white noise).
+// Result: a filtered whoosh, never a hiss wall.
+mld(fc) = ve.moog_vcf_2bn(0.72, max(60, min(fc, 16000)));
 
-riser    = nz : ml(300*pow(8000/300.0, x))  : *(min(1, x/0.9));
-sweep    = nz : fi.resonbp(400*pow(15.0, x), 2.5, 1) : *(0.5);
-downlift = nz : ml(8000*pow(300/8000.0, x)) : *(min(1, (1-x)/0.2));
+riser    = nz : mld(150*pow(2200/150.0, x))  : *(min(1, x/0.9));
+sweep    = nz : fi.resonbp(200*pow(2200/200.0, x), 6, 1) : *(0.5);
+downlift = nz : mld(2200*pow(150/2200.0, x)) : *(min(1, (1-x)/0.2));
 impact   = (oscr(40 + 80*exp(-t/0.13)) + (nz : fi.lowpass(2, 1200))*0.4) : *(exp(-t*6/max(0.05, dur)))
 with { oscr(f) = sin(2.0*ma.PI*(((_ + f/ma.SR) * (1 - ba.impulsify(gate)) : ma.frac) ~ _)); };
 reverse  = (nz : fi.highpass(2, 3000)) : *(select2(x < 0.95, max(0.0, (1-x)/0.05), x/0.95));
