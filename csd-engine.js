@@ -698,12 +698,56 @@
     });
     return out;
   }
-  function applyGroove(events, swing, humanize, rng){
-    const sw=swing||0, hz=humanize||0; if(!sw && !hz) return;
+  // ---------- unified time-feel (KERNEL-V4 Phase 3) ----------
+  // Swing / humanize / rubato / push-pull were three unintegrated timing
+  // systems (applyGroove's global swing+humanize, the rubato beat-warp, and the
+  // shuffle kit's own triplet placement). They are now ONE dimension family,
+  // resolved to a single spec by resolveTimeFeel and applied through two engine
+  // stages that share that spec:
+  //   grid stage  (applyGroove, below): grid-swing + per-voice push-pull +
+  //               per-event humanize — the per-note warp, at the pre-`thunk`
+  //               position (thunk lands WITH the humanized strike).
+  //   section stage (the rubato beat-warp near the end of buildEvents): the
+  //               smooth monotonic tempo breathing, applied last so every
+  //               layer (found/sfx included) inherits one musical clock.
+  // Swing is grid-parameterised (SWING_GRIDS): "8th" is the historical default
+  // (the "&" at f=0.5, +sw*0.16) — grid was previously HARDCODED, the one bit
+  // of "applyGroove special-casing" this phase deletes; "16th" swings the e/a
+  // 16th-offbeats, "triplet" slides the "&" toward 2/3 (the generalised shuffle
+  // — which is why the blues shuffle kit, already placing on the triplet grid,
+  // keeps grid "8th" and is left untouched: no double-swing, no bespoke dance).
+  // ABSENT state.timeFeel => grid "8th", no push-pull, humanize timing==level==
+  // state.humanize — draw-for-draw and value-for-value identical to the old
+  // applyGroove (fixtures.js pins it).
+  const SWING_GRIDS={
+    "8th":     { at:(f)=>Math.abs(f-0.5)<0.001, push:0.16 },
+    "16th":    { at:(f)=>Math.abs(f-0.25)<0.001||Math.abs(f-0.75)<0.001, push:0.08 },
+    "triplet": { at:(f)=>Math.abs(f-0.5)<0.001, push:(2/3-0.5) },   // full swing lands the "&" on 2/3
+  };
+  function resolveTimeFeel(state){
+    const tf=state.timeFeel||{};
+    const hz=state.humanize||0;
+    const hum=tf.humanize||null;   // new anchors may split timing vs level; legacy scalar drives both
+    return {
+      swing:{ amount:state.swing||0, grid:(tf.grid&&SWING_GRIDS[tf.grid])?tf.grid:"8th" },
+      humanize:{ timing:hum&&hum.timing!=null?hum.timing:hz, level:hum&&hum.level!=null?hum.level:hz },
+      pushPull:(tf.pushPull&&Object.keys(tf.pushPull).length)?tf.pushPull:null,   // { voice|drum : ±beats } — laid-back bass / on-top hats
+      rubato:(state.rubato&&state.rubato.depth>0)?state.rubato:null,
+    };
+  }
+  // grid stage: grid-swing (no draw), then humanize (timing draw always, amp
+  // draw only when e.amp!=null — the historical draw shape), then push-pull
+  // (drawless per-voice offset). Called once per lane (pitched, then drums),
+  // sharing one rng stream — draw ORDER is the byte-stability contract.
+  function applyGroove(events, tfeel, rng){
+    const sw=tfeel.swing.amount, grid=SWING_GRIDS[tfeel.swing.grid];
+    const ht=tfeel.humanize.timing, hl=tfeel.humanize.level, pp=tfeel.pushPull;
+    if(!sw && !ht && !hl && !pp) return;
     for(const e of events){
       let b=e.beat; const f=b-Math.floor(b);
-      if(sw && Math.abs(f-0.5)<0.001) b += sw*0.16;
-      if(hz){ b += (rng()*2-1)*hz*0.04; if(e.amp!=null) e.amp=Math.max(0.01, e.amp*(1+(rng()*2-1)*hz*0.25)); }
+      if(sw && grid.at(f)) b += sw*grid.push;
+      if(ht||hl){ b += (rng()*2-1)*ht*0.04; if(e.amp!=null) e.amp=Math.max(0.01, e.amp*(1+(rng()*2-1)*hl*0.25)); }
+      if(pp){ const o=pp[e.voice||e.drum]; if(o) b+=o; }
       e.beat=Math.max(0,b);
     }
   }
@@ -1083,8 +1127,9 @@
       }
     }
     const grng=mulberry32(((state.seed??1)+777)>>>0);
-    applyGroove(pitched, state.swing, state.humanize, grng);
-    applyGroove(drums,   state.swing, state.humanize, grng);
+    const tfeel=resolveTimeFeel(state);   // KERNEL-V4 Phase 3: one resolved time-feel spec for both stages
+    applyGroove(pitched, tfeel, grng);
+    applyGroove(drums,   tfeel, grng);
     // ---- MECHANICAL INTIMACY (state.thunk = {prob, amp}) ----
     // Soft key/pedal noise on a fraction of LEAD notes: a whisper-level tom
     // "thump" (pitch 90-160Hz, amp ~-30dB) exactly at the grooved note onset
@@ -1139,7 +1184,8 @@
         }
       }
     }
-    // ---- RUBATO (state.rubato = {depth, periodBars, phase}) ----
+    // ---- RUBATO — the SECTION stage of the unified time-feel (Phase 3) ----
+    // (state.rubato = {depth, periodBars, phase}; resolved into tfeel.rubato)
     // Deterministic slow breathing of tempo, implemented ONCE here as a
     // smooth monotonic BEAT-WARP so every consumer (faust press, faust live,
     // midi-export — anything that maps beat -> time linearly with spb)
@@ -1153,9 +1199,10 @@
     // Live note: the live engine rebuilds per chord-bar with cycle-local
     // beats, so the breathing phase restarts each section cycle — still
     // deterministic, still layer-locked (documented in faust/VOICES.md).
-    if(state.rubato&&state.rubato.depth>0){
-      const dep=Math.min(0.2,state.rubato.depth), P=Math.max(4,(state.rubato.periodBars||3)*4);
-      const ph=2*Math.PI*(state.rubato.phase||0), A=dep*P/(2*Math.PI);
+    if(tfeel.rubato){
+      const rb=tfeel.rubato;
+      const dep=Math.min(0.2,rb.depth), P=Math.max(4,(rb.periodBars||3)*4);
+      const ph=2*Math.PI*(rb.phase||0), A=dep*P/(2*Math.PI);
       const W=(b)=>b + A*(Math.sin(2*Math.PI*b/P+ph)-Math.sin(ph));
       for(const arr of [pitched,drums,found,sfx]) for(const e of arr){
         const d0=e.dur||0, b1=W(e.beat+d0);
