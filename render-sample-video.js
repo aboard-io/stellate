@@ -71,7 +71,23 @@ const PRESETS = {
         pitch: 0.7, stretch: 0.5, vol: 0.12, cutoff: 1200,   // way back — synthesis carries it
         fsPath: found("highway_night.wav"),
       }];
-      st.sections = E.generateSong({ foundIds: ["highway"], bass: "drive", drums: "four", melody: "sparse" });
+      // night-drive song, inlined (generateSong is retired — the FORM GRAMMAR
+      // is the composer now; this bespoke preset is not a genre anchor, so it
+      // carries its own literal section list — value-identical to the old
+      // generateSong({foundIds:["highway"],bass:"drive",drums:"four",melody:"sparse"})
+      // output, before the night-drive overrides below).
+      const F = () => ({ sourceId: "highway", role: "bed" });
+      const sec = (id, name, o) => Object.assign({ id, name, cycles: 1, pads: true, bass: "off", drums: "off", melody: "off", found: { sourceId: null, role: "bed" }, fill: "off" }, o);
+      st.sections = [
+        sec("s1", "intro",      { found: F() }),
+        sec("s2", "verse",      { bass: "drive",   found: F() }),
+        sec("s3", "pre-chorus", { bass: "root",    drums: "kick", fill: "riser" }),
+        sec("s4", "chorus",     { bass: "drive",   drums: "four", melody: "sparse" }),
+        sec("s5", "verse 2",    { bass: "walking", drums: "full", found: F() }),
+        sec("s6", "bridge",     { bass: "root",    melody: "sparse", found: F(), fill: "drum fill" }),
+        sec("s7", "chorus 2",   { bass: "walking", drums: "four", melody: "sparse" }),
+        sec("s8", "outro",      { found: F() }),
+      ];
       for (const s of st.sections) if (s.bass && s.bass !== "off") s.bass = "drive";  // the pulse never lifts
       const by = n => st.sections.find(s => s.name === n) || {};
       by("verse").drums = "pulse";
