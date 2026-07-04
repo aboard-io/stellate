@@ -48,10 +48,13 @@ pingpong(x) = pl, pr letrec {
   'pr = (pl*ppfb)     : de.delay(MAXD, int(pptime*ma.SR)) : fi.lowpass(1, pptone);
 };
 
-// instr 97: dust2(kcrk*0.5, 30+kcrk*220) + hiss, band-limited, *0.3
+// instr 97: dust2(kcrk*0.5, 30+kcrk*220) + hiss, band-limited.
+// Output scale 0.15 (was 0.3): human-calibrated 2026-07-04 — "always make
+// crackle half as loud as you are setting it now". This is THE authoritative
+// crackle gain; anchor crackle ranges are identity data and stay untouched.
 crk = (no.sparse_noise(30 + crackle*220)*crackle*0.5
         : fi.lowpass(2, 6500) : fi.highpass(2, 300))
-    + (no.noise*0.004*crackle : fi.lowpass(2, 4000)) : *(0.3);
+    + (no.noise*0.004*crackle : fi.lowpass(2, 4000)) : *(0.15);
 
 // master chain (instr 100 order: sweep, pump, grit, comp, tone, clip)
 duckenv(sc) = (1-scmix)*exp(-6*os.lf_sawpos(bps)) + scmix*min(1.0, an.amp_follower(0.12, sc)*3);

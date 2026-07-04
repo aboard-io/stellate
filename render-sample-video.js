@@ -233,7 +233,7 @@ if (P.presetJson) {   // keep the loadable builder preset in sync with this rend
   console.log(`wrote ${P.presetJson}`);
 }
 const prg = (E.PROGRESSIONS[state.progression] || E.PROGRESSIONS.royal_road);
-const cycleBeats = prg.chords.length * 8, spb = 60 / state.bpm;
+const cycleBeats = prg.chords.length * (state.chordEvery || 8), spb = 60 / state.bpm;
 const bounds = [0];
 for (const sec of state.sections) bounds.push(bounds[bounds.length - 1] + (sec.cycles || 1) * cycleBeats);
 const totalBeats = bounds[bounds.length - 1] + 8;          // engine's +8 beat tail

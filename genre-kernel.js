@@ -644,7 +644,7 @@
       progressions:["blues_12"], kits:["shuffle","boombap","shuffle"], fills:["off","drum fill"],   // 2/3 the swung-triplet ride kit; boombap keeps a dusty chair
       bass:{patterns:["walking","walking","melodic"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sampler","piano"],cutoff:[500,1000],res:[.05,.15],level:[.9,1.1],send:[.1,.2],dsend:[0,.05],attack:.005,release:[.08,.14]}},   // the UPRIGHT (real, FluidR3) walks 2/3 of seeds; piano the rest — the DX7/sub bass is gone
       lead:{patterns:["blues","blues","wander"], patchPool:["HARMONICA1"], samplerPool:["steel_string_guitar","harmonica"], recipe:{model:["sampler","sampler","sampler","piano","dx7"],wave:"sine",voices:[1,2],spread:[.001,.004],cutoff:[2200,3400],level:[.5,.65],send:[.3,.5],dsend:[.1,.25]}},   // the REAL steel-string leads 3/5 of seeds (blue-note bends live here); piano + DX7 harmonica take the rest
-      pads:{prob:.55, samplerPool:["percussive_organ","rock_organ"], recipe:{model:["sampler","sampler","piano"],wave:"saw",cutoff:[900,1500],detune:[.003,.007],attack:[.02,.08],level:[.3,.42],send:[.2,.35],dsend:[.05,.15]}},   // COMPING, not pads: real sampled B3/rock organ (or piano) stabs on the changes — fast attack, modest level, never a wash
+      pads:{prob:.55, samplerPool:["percussive_organ","rock_organ","honky_tonk"], recipe:{model:["sampler","sampler","piano"],wave:"saw",cutoff:[900,1500],detune:[.003,.007],attack:[.02,.08],level:[.3,.42],send:[.2,.35],dsend:[.05,.15]}},   // COMPING, not pads: real sampled B3/rock organ (or barrelhouse honky-tonk piano) stabs on the changes — fast attack, modest level, never a wash (honky_tonk wired 2026-07-04: it was extracted by the liberalization batch but never pooled)
       drums:{kickModel:["boom","808"],snareModel:["noise"],hatModel:["noise"],kick:[.9,1.15],snare:[.5,.7],hat:[.5,.8],tune:[.85,1],send:[.15,.3],dsend:[0,.1]},   // snare tuned brushes-soft under the shuffle ride
       fx:{reverb:[.45,.65], delayBeats:[.5,.75], delayFb:[.1,.25], delayCut:[2000,3000], pump:[0,0], crackle:[.25,.55], lowcut:[0,30], highcut:[8000,12000], comp:[.15,.3]},
       found:{role:"bed", vol:[.05,.12], pitch:[.8,1], stretch:[.45,.6], cutoff:[1500,2500], sources:["shibuya","tokyo_station","vx_whitman"]},
@@ -1518,6 +1518,17 @@
         choice.lick=pick(rng, src.pool);
       } else choice.lick=null;
     }
+    // ---- harmonic rhythm (KERNEL-V4 Phase 1: chordEvery) — drawn LAST, and
+    // ONLY when a parent anchor declares it: absent = ZERO rng draws here, so
+    // every current genre stays byte-identical (fixtures.js pins this).
+    // chordEvery = beats per chord bar (engine default 8); a blend picks a
+    // parent by weight — parents without the key implicitly carry 8.
+    if(ws.some(x=>GENRES[x.g].chordEvery)){
+      let r=rng(), acc=0, gsel=ws[ws.length-1].g;
+      for(const x of ws){ acc+=x.w; if(r<=acc){ gsel=x.g; break; } }
+      const ce=Math.round(GENRES[gsel].chordEvery||8);
+      if(ce&&ce!==8) choice.chordEvery=ce;
+    }
     return constrain(choice);
   }
   function constrain(choice){
@@ -1557,7 +1568,7 @@
   let _gid=0; const gid=()=>"g"+(++_gid);
   const S=(name,o)=>Object.assign({id:gid(),name,cycles:1,pads:false,bass:"off",drums:"off",melody:"off",found:{sourceId:null,role:"bed"},fill:"off"},o);
   function buildSections(c, opts){
-    const cycleBeats=(E.PROGRESSIONS[c.progression]||E.PROGRESSIONS.royal_road).chords.length*8;
+    const cycleBeats=(E.PROGRESSIONS[c.progression]||E.PROGRESSIONS.royal_road).chords.length*(c.chordEvery||8);
     const norm=Math.max(1,Math.round(32/cycleBeats));
     const F=()=>pick(c.rng,c.fills);
     const fnd=(role)=>({sourceId:"src",role:role||c.foundRole});
@@ -1921,6 +1932,7 @@
       // change in buildEvents — unchanged genres press byte-identically
       ...(c.rubato?{rubato:c.rubato}:{}), ...(c.thunk?{thunk:c.thunk}:{}),
       euclid:c.euclid||undefined,                      // kit-level euclidean rhythm spec (csd-engine drumEvents)
+      ...(c.chordEvery?{chordEvery:c.chordEvery}:{}),  // harmonic rhythm (KERNEL-V4 Phase 1): beats per chord bar
       jux:(c.fx.jux||0)>0.05?c.fx.jux:0,               // stereo divergence: buildEvents emits per-event pan offsets
       pump:c.fx.pump>0.05?c.fx.pump:0, crackle:c.fx.crackle>0.05?c.fx.crackle:0,
       comp:c.fx.comp>0.05?c.fx.comp:0, grit:(c.fx.grit||0)>0.05?c.fx.grit:0,
@@ -2022,7 +2034,7 @@
         const collide=recent.some(r=>sig.filter((v,j)=>v===r[j]).length>=3);
         if(!collide||attempt===5){ state=cand; meta=m; recent.push(sig); if(recent.length>2)recent.shift(); break; }
       }
-      const beats=state.sections.reduce((nn,s)=>nn+(s.cycles||1)*(E.PROGRESSIONS[state.progression].chords.length*8),0)+8;
+      const beats=state.sections.reduce((nn,s)=>nn+(s.cycles||1)*(E.PROGRESSIONS[state.progression].chords.length*(state.chordEvery||8)),0)+8;
       out.push({ i, from:A.label, to:B.label, t:round(t,3), weights,
         seconds:Math.round(beats*60/state.bpm), bpm:state.bpm, key, meta, state });
     }
@@ -2065,7 +2077,7 @@
       fs.writeFileSync(sj,JSON.stringify(state));
       execFileSync("node",[path.join(__dirname,"faust","press.js"),sj,wav],{stdio:["ignore","ignore","inherit"]});
       // fade the ending out instead of stopping abruptly
-      const beats=state.sections.reduce((n,s)=>n+(s.cycles||1)*(E.PROGRESSIONS[state.progression]||E.PROGRESSIONS.royal_road).chords.length*8,0)+8;
+      const beats=state.sections.reduce((n,s)=>n+(s.cycles||1)*(E.PROGRESSIONS[state.progression]||E.PROGRESSIONS.royal_road).chords.length*(state.chordEvery||8),0)+8;
       const dur=beats*60/state.bpm, fade=Math.min(4,dur*0.1), st=Math.max(0,dur-fade);
       execFileSync("ffmpeg",["-y","-v","error","-i",wav,"-af",`afade=t=out:st=${st.toFixed(2)}:d=${fade.toFixed(2)}`,"-codec:a","libmp3lame","-b:a","160k",base+".mp3"]);
       console.log("✓ "+base+".mp3");
