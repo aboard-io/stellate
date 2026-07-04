@@ -123,12 +123,29 @@
       // x²-shaped crescendo ramp (sampler.js renders it identically live +
       // press). Clamps widened to 5s/6s for it; every pre-existing sampler
       // recipe sits far below the old caps, so their output is bit-identical.
+      // MELLOTRON mode (recipe.mellotron truthy): tape-machine character on the
+      // native sampler — wow/flutter pitch modulation, an 8s tape-strip cap with
+      // a tape-runs-out release, and gentle head-EQ. Params are morphable recipe
+      // dims (wowDepth/flutterDepth/tapeCap/headEq + rates); the anchors set only
+      // the boolean flag and take these modest defaults (a numeric recipe key
+      // would draw rng — the flag alone keeps buildEvents/verifier byte-stable).
+      // Absent => no `mello` field => sampler renders the exact pre-mellotron
+      // path (regression-gated bit-identity).
+      const mello = m.mellotron ? {
+        wowDepth: clamp(m.wowDepth != null ? m.wowDepth : 0.07, 0, 0.5),        // semitones (slow undulation)
+        flutterDepth: clamp(m.flutterDepth != null ? m.flutterDepth : 0.035, 0, 0.5),  // semitones (fast micro-variation)
+        wowRate: clamp(m.wowRate != null ? m.wowRate : 0.7, 0.1, 3),
+        flutterRate: clamp(m.flutterRate != null ? m.flutterRate : 7, 3, 12),
+        tapeCap: m.tapeCap === false ? 0 : clamp(m.tapeCap === true || m.tapeCap == null ? 8 : m.tapeCap, 0, 8),
+        headEq: clamp(m.headEq != null ? m.headEq : 0.3, 0, 1),
+      } : null;
       return { ...base, gmul: base.gmul * (role === "bass" ? 0.5 : 1), module: null, sampler: {
           id: sp.id || "?", sr: sp.sr || 44100,
           zones: Array.isArray(sp.zones) ? sp.zones : [],
           atk: clamp(m.attack != null ? m.attack : (role === "bass" ? 0.006 : 0.012), 0.003, 5),
           rel: clamp(m.release != null ? m.release : (role === "bass" ? 0.07 : 0.09), 0.02, 6),
           swell: (m.swell || 0) >= 0.5,
+          ...(mello ? { mello } : {}),
         }, freqMax: 4000 };
     };
 

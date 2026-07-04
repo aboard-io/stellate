@@ -67,10 +67,25 @@
       // piano is precisely the intimacy it excluded. Keeps neoclassical
       // honestly outside newage's acoustic hi-fence (.85, built to admit the
       // real flute while excluding the piano).
+      // 2026-07 organ pass (Part B): HAMMOND counts as acoustic (organ-grade
+      // .6). The B-3 is a tonewheel organ — electro-mechanical, genuinely an
+      // organ — so it slots in with model "organ"; this re-opens disco's
+      // hammond stab pad (a dominant B-3 pad no longer drops disco's acoustic
+      // diagonal into acidhouse). MEASURED both ways: hammond-only keeps EVERY
+      // existing genre's confusion-matrix margin byte-identical to baseline
+      // (hammond only ever appears where organ-grade acoustic is already
+      // present — blues/newjack/house/krautrock), matrix 63/63. SOLINA is
+      // deliberately NOT counted: it is an ANALOG STRING SYNTHESIZER (ARP/
+      // Eminent), not an acoustic/electro-mechanical instrument, and its home
+      // genres (italo, sovietwave) encode it AS synth via low acoustic targets
+      // [0,.3]. Counting solina drew italo down to a knife-edge tie (self
+      // 100->95, margin +1->0, because solina is italo's dominant pad on seeds
+      // 1&3) — the measurement said don't. So solina stays synth.
       acoustic: (()=>{ const KEYSY=/(ORGAN|PIANO|CLAV|VIBE|MARIMBA|XYLO|LOG DRUM|KOTO|HARP|GUIT|BANJO|SITAR|LUTE|HARMONICA|CELESTE|ACCORDION)/i;
         const dxPadAc=I.pad.model==="dx7"&&I.pad.dx7&&KEYSY.test(I.pad.dx7.name||"");
-        const melAc=["piano","organ","sampler"].includes(I.melody.model);
-        const padAc=["piano","organ","sampler"].includes(I.pad.model)||dxPadAc;
+        const ACM=["piano","organ","sampler","hammond"];   // hammond = tonewheel organ (see note above); solina stays synth
+        const melAc=ACM.includes(I.melody.model);
+        const padAc=ACM.includes(I.pad.model)||dxPadAc;
         const melSampPiano=I.melody.model==="sampler"&&/piano/i.test((I.melody.sampler&&I.melody.sampler.id)||"");
         return melAc||padAc ? (I.melody.model==="piano"||melSampPiano?1:I.melody.model==="sampler"?0.8:0.6) : 0; })(),
       // rubato: the time dimension (state.rubato.depth; 0 = clock-straight).

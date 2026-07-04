@@ -16,6 +16,17 @@
 //   instead of the linear declick ramp (sampled-strings pads; attack may run
 //   seconds past the loop start — looped zones sustain under it). Both paths
 //   render the same shape (curve buffer live / per-sample x² in mixPCM).
+//   MELLOTRON (per note, optional): {mello:{wowDepth,flutterDepth,wowRate,
+//   flutterRate,tapeCap,headEq}} — a tape-machine character mode for the
+//   sampler voice. wow = slow (~0.7Hz) pitch undulation, flutter = fast
+//   (~7Hz) micro-variation, both in SEMITONES on the playbackRate; the LFO
+//   phase is derived from MUSICAL time (press: note tSec; live: the note's
+//   song-beat time f.songT) so it is deterministic — same seed → same bytes,
+//   NO wall clock. tapeCap (seconds, 0 = off) caps a held note at the length
+//   of the real machine's tape strip with a "tape-runs-out" release (a quick
+//   fall with a downward pitch sag). headEq (0..1) is a gentle one-pole
+//   lowpass = the dulled highs of the playback head. Notes WITHOUT `mello`
+//   keep the exact original code path (bit-identical regression path).
 //   BLUE-NOTE BEND (per note, optional): {bendFrom: -semitones, bendMs} —
 //   the note STARTS bendFrom semitones off target and glides into pitch over
 //   bendMs (linear in playbackRate: live = linearRampToValueAtTime on
@@ -75,6 +86,41 @@
       // notes keep the original bit-exact i*rate read.
       const bendN = n.bendFrom ? Math.max(1, Math.floor(((n.bendMs || 90) / 1000) * sr)) : 0;
       const r0 = bendN ? rate * Math.pow(2, n.bendFrom / 12) : rate;
+      // MELLOTRON mode (n.mello): wow/flutter pitch modulation + tape-strip cap
+      // + head-EQ. A dedicated variable-rate accumulation loop (rate changes
+      // per sample, like the bend path). Fully deterministic: the LFO time is
+      // the GLOBAL song second (s0+i)/sr, so the wow is one coherent capstan
+      // undulation across the whole render (and identical every render). Notes
+      // without n.mello never enter here — the original loop below is untouched.
+      if (n.mello) {
+        const M = n.mello;
+        const wowD = M.wowDepth || 0, flD = M.flutterDepth || 0;
+        const wowR = M.wowRate || 0.7, flR = M.flutterRate || 7;
+        const capN = M.tapeCap > 0 ? Math.floor(M.tapeCap * sr) : Infinity;
+        const effHold = Math.min(holdN, capN);       // tape strip runs out at the cap
+        const outNm = Math.min(total - s0, effHold + relN);
+        // head-EQ: gentle one-pole lowpass (dulled highs of the playback head)
+        const fc = 9000 - (M.headEq || 0) * 6500, aLp = (M.headEq || 0) > 0 ? 1 - Math.exp(-2 * Math.PI * fc / sr) : 0;
+        let lp = 0, posAccM = 0;
+        for (let i = 0; i < outNm; i++) {
+          const t = (s0 + i) / sr;
+          let pm = Math.pow(2, (wowD * Math.sin(2 * Math.PI * wowR * t) + flD * Math.sin(2 * Math.PI * flR * t)) / 12);
+          if (i > effHold) pm *= 1 - 0.03 * ((i - effHold) / relN);   // tape-runout pitch sag (~½ semitone)
+          const baseR = bendN ? (i < bendN ? r0 + (rate - r0) * (i / bendN) : rate) : rate;
+          let pos = posAccM; posAccM += baseR * pm;
+          if (loop && pos >= z.loopEnd) pos = z.loopStart + ((pos - z.loopStart) % loopLen);
+          if (pos >= src.length - 1) break;
+          const i0 = pos | 0, fr = pos - i0;
+          let v = (src[i0] + fr * (src[i0 + 1] - src[i0])) * g;
+          if (aLp) { lp += aLp * (v - lp); v = lp; }
+          if (i < atkN) { const a = i / atkN; v *= n.swell ? a * a : a; }
+          if (i > effHold) v *= Math.max(0, 1 - (i - effHold) / relN);   // tape-runout release
+          into.dry[s0 + i] += v * dg;
+          if (rg) into.rev[s0 + i] += v * rg;
+          if (lg) into.del[s0 + i] += v * lg;
+        }
+        continue;
+      }
       let posAcc = 0;
       for (let i = 0; i < outN; i++) {
         let pos;
@@ -124,7 +170,23 @@
     live.note = function (buffer, when, f) {
       const src = ctx.createBufferSource();
       src.buffer = buffer;
-      if (f.bendFrom) {   // blue-note bend: glide into the target pitch
+      const atk = Math.max(0.003, f.atk || 0.01), rel = Math.max(0.02, f.rel || 0.09);
+      let hold = Math.max(atk, f.durSec);
+      if (f.mello && f.mello.tapeCap > 0) hold = Math.min(hold, Math.max(atk, f.mello.tapeCap));   // tape strip cap
+      if (f.mello) {   // MELLOTRON: wow/flutter as a playbackRate curve over musical time
+        const M = f.mello, wowD = M.wowDepth || 0, flD = M.flutterDepth || 0;
+        const wowR = M.wowRate || 0.7, flR = M.flutterRate || 7, total = hold + rel;
+        const N = Math.max(8, Math.min(1024, Math.ceil(total * 100)));   // ~100 pts/sec
+        const curve = new Float32Array(N);
+        for (let i = 0; i < N; i++) {
+          const lt = (i / (N - 1)) * total, t = (f.songT || 0) + lt;
+          let pm = Math.pow(2, (wowD * Math.sin(2 * Math.PI * wowR * t) + flD * Math.sin(2 * Math.PI * flR * t)) / 12);
+          if (lt > hold && rel > 0) pm *= 1 - 0.03 * Math.min(1, (lt - hold) / rel);   // tape-runout sag
+          curve[i] = f.rate * pm;
+        }
+        try { src.playbackRate.setValueCurveAtTime(curve, when, total); }
+        catch (e) { src.playbackRate.value = f.rate; }
+      } else if (f.bendFrom) {   // blue-note bend: glide into the target pitch
         const r0 = f.rate * Math.pow(2, f.bendFrom / 12);
         src.playbackRate.setValueAtTime(r0, when);
         src.playbackRate.linearRampToValueAtTime(f.rate, when + Math.max(0.01, (f.bendMs || 90) / 1000));
@@ -132,10 +194,15 @@
       if (f.loop && f.loopEndSec > f.loopStartSec) {
         src.loop = true; src.loopStart = f.loopStartSec; src.loopEnd = f.loopEndSec;
       }
+      // head-EQ: gentle lowpass = the dulled highs of the tape head
+      let srcOut = src, headBiq = null;
+      if (f.mello && f.mello.headEq > 0) {
+        headBiq = ctx.createBiquadFilter(); headBiq.type = "lowpass";
+        headBiq.frequency.value = 9000 - f.mello.headEq * 6500; headBiq.Q.value = 0.3;
+        src.connect(headBiq); srcOut = headBiq;
+      }
       const env = ctx.createGain();
       const g = env.gain, gain = (f.gain != null ? f.gain : 0.5) * GAIN;
-      const atk = Math.max(0.003, f.atk || 0.01), rel = Math.max(0.02, f.rel || 0.09);
-      const hold = Math.max(atk, f.durSec);
       g.setValueAtTime(0, when);
       if (f.swell) {   // x² crescendo attack (matches mixPCM's swell shape)
         const N = 17, curve = new Float32Array(N);
@@ -145,14 +212,14 @@
       } else g.linearRampToValueAtTime(gain, when + atk);
       g.setValueAtTime(gain, when + hold);
       g.linearRampToValueAtTime(0, when + hold + rel);
-      src.connect(env);
+      srcOut.connect(env);
       const dry = ctx.createGain(); dry.gain.value = f.dry != null ? f.dry : 1; env.connect(dry); dry.connect(dests.dry);
       const rev = ctx.createGain(); rev.gain.value = f.rsend || 0; env.connect(rev); rev.connect(dests.rev);
       const del = ctx.createGain(); del.gain.value = f.dsend || 0; env.connect(del); del.connect(dests.del);
       src.start(when);
       src.stop(when + hold + rel + 0.05);
       live.active.add(src);
-      src.onended = () => { live.active.delete(src); try { dry.disconnect(); rev.disconnect(); del.disconnect(); } catch (e) {} };
+      src.onended = () => { live.active.delete(src); try { dry.disconnect(); rev.disconnect(); del.disconnect(); if (headBiq) headBiq.disconnect(); } catch (e) {} };
     };
     live.stopAll = function () {
       for (const s of [...live.active]) { try { s.stop(); } catch (e) {} }
