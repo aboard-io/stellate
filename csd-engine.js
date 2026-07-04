@@ -981,7 +981,18 @@
         }
       }
       // glitched paleontologist voiceover: the phrase plays, then gets stuttered /
-      // pitch-jumped "like crazy" — instr 5 slice retriggers with random offset+rate
+      // pitch-jumped "like crazy" — instr 5 slice retriggers with random offset+rate.
+      // RETAINED (found-handler retirement round): stations/horn/ding ported cleanly
+      // to sampleEvents, but the glitched-narration idiom does NOT — its glitch is
+      // an UPWARD-biased pitch set [.8,1,1,1.5] (not the downward stations/loon tail),
+      // its burst count is gated by a per-line `clean` flag, each cluster lands at a
+      // random in-section position, and the phrase length is min(secBeats-1,max(3,…))
+      // not a chop cap. A faithful port would mean inventing a bespoke "narration"
+      // placement that re-inlines this whole body — and, worse, this handler draws
+      // the SHARED rng mid-section-loop, so removing it reshuffles the entire event
+      // fabric of its three users (dinosynth/canawave/transitwave), all VIDEO_LOCKED
+      // A-grade genres. Poor risk/reward; kept as the compat layer. (dinosynth also
+      // has an ADDITIVE sampleEvents `response` layer over this — Phase 4.)
       if(sec.vox&&sec.vox.sourceId&&srcById[sec.vox.sourceId]){
         const vs=srcById[sec.vox.sourceId];
         const phraseBeats=Math.min(secBeats-1, Math.max(3,(vs.durSec||3)*state.bpm/60));
@@ -1000,24 +1011,23 @@
         }
       }
       // the sung CHORUS: a pre-rendered WORLD-vocoder vocal (generated to match this bpm+key),
-      // played once from the section downbeat at natural pitch, with space (reverb + delay)
+      // played once from the section downbeat at natural pitch, with space (reverb + delay).
+      // RETAINED (found-handler retirement round): the PLACEMENT is a plain bed, but the
+      // MECHANISM is three cross-cutting couplings the sampleEvents vocabulary can't hold:
+      // (1) tw_vocal is a render-time SYNTHESIZED source (sing.py, generated per bpm+key),
+      // carried as a foundSource with a `vocal:true` provider flag — not a pool id on disk;
+      // (2) the kernel's evolution pass reads `s.vocal` to FORBID keyShift on the sung
+      // section (canKey, genre-kernel ~L1997) — a fixed-pitch sample can't transpose with
+      // the band; (3) the press guard strips tw_vocal + `s.vocal` when sing is unavailable.
+      // Moving it to a spec would force the evolution pass + press guard to introspect
+      // sampleEvents selectors to re-find the locked section — fragile, for no gain. Kept.
       if(sec.vocal&&srcById[sec.vocal]){
         const vc=srcById[sec.vocal], vdur=Math.min(secBeats-0.25,(vc.durSec||16)*state.bpm/60);
         found.push({chop:1,beat:cur+0.02,dur:vdur,amp:(vc.vol||0.5),tableNum:vc.tableNum,
           pitch:1,offset:0,cutoff:vc.cutoff||9000,rsend:0.34,dsend:0.2});
       }
-      // door "ding ding": the chime one-shot at the section downbeat (doors closing as the
-      // train departs) and again near the end (doors opening at the next stop)
-      if(sec.ding&&srcById[sec.ding]){
-        const dg=srcById[sec.ding], ddur=Math.min(2.2,(dg.durSec||1)*state.bpm/60);
-        for(const at of [0.25, secBeats-ddur-0.5]){
-          if(at<0) continue;
-          // always low-passed (soft chime) and fed to the long ping-pong so it repeats for a
-          // couple measures; little of the short delay (let the ping-pong carry the tail)
-          found.push({chop:1,beat:cur+at,dur:ddur,amp:(dg.vol||0.4),tableNum:dg.tableNum,
-            pitch:1,offset:0,cutoff:Math.min(dg.cutoff||2400,2400),rsend:0.26,dsend:0.04,ppsend:0.7});
-        }
-      }
+      // (the bespoke door "ding ding" chime retired in the found-handler retirement
+      //  round — now oneShot+cadence sampleEvents placements, see state.sampleEvents.)
       // synth stabs (rave chords on the chord root)
       if(sec.stab&&sec.stab!=="off"&&STAB_PATTERNS[sec.stab]){
         for(let cb=0;cb<secBeats/CBEATS;cb++){
@@ -1225,26 +1235,8 @@
         e.slide = (prev && gap<0.3 && arng()<0.45) ? +(0.55+0.45*arng()).toFixed(3) : 0;  // glide into legato-close steps
       }
     }
-    // EVERY measure, without fail: a world-metro station name, BURIED, glitched mostly
-    // downward, with a square-LFO amplitude gate at varying intensity (audio interest).
-    if(state.stationPool&&state.stationPool.length){
-      const sp=state.stationPool.map(id=>srcById[id]).filter(Boolean);
-      for(let i=sp.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); const t=sp[i]; sp[i]=sp[j]; sp[j]=t; }   // shuffle: random global order, each used once before any repeat
-      if(sp.length){ let si=0;
-        for(let b=0;b<cur-2;b+=4){                                   // every measure (4 beats)
-          const st=sp[si%sp.length]; si++;
-          const sdur=Math.min(2.6,(st.durSec||1)*state.bpm/60);
-          const sqd=[0.3,0.55,0.75,0.92][Math.floor(rng()*4)];       // varying square-LFO intensity
-          const sqr=[3,5,8,12][Math.floor(rng()*4)];                 // varying rate
-          found.push({chop:1,beat:b+0.5,dur:sdur,amp:(st.vol||0.26),tableNum:st.tableNum,pitch:1,offset:0,
-            cutoff:st.cutoff||5200,rsend:0.3,dsend:0.22,sqRate:sqr,sqDepth:sqd});
-          if(rng()<0.7){ const nb=2+Math.floor(rng()*2), stp=0.125;  // glitch mostly DOWNWARD
-            for(let j=0;j<nb;j++) found.push({chop:1,beat:b+0.85+j*stp,dur:stp*1.5,amp:(st.vol||0.12)*0.8,
-              tableNum:st.tableNum,pitch:[0.5,0.6,0.7,0.8][Math.floor(rng()*4)],offset:Math.min(0.9,rng()*0.5),
-              cutoff:st.cutoff||2600,rsend:0.3,dsend:0.3}); }
-        }
-      }
-    }
+    // (the bespoke every-measure `stationPool` litany retired in the found-handler
+    //  retirement round — it is now a `buried` sampleEvents placement, below.)
     // ---- generalized SAMPLE-EVENT ROLES (KERNEL-V4 Phase 4) ----
     // bed/chops/break/hits/vox/horn/ding/stations/vocal were each a bespoke
     // SAMPLE placement wired through the whole stack (the handlers above +
@@ -1274,7 +1266,11 @@
     //                       lead" idea, generalized to bar granularity)
     //   sections   "all" | "first" | "quiet"(no drums) | <regex string on name>
     //   treatment  pitch,stretch,cutoff,rsend,dsend,ppsend,fade,sqRate,sqDepth,
-    //              glitch(bool) — the narration/loon stutter-down tail
+    //              maxDur (one-shot length cap in beats; default 4),
+    //              vol (amp base override, replaces the source's own vol),
+    //              glitch(bool) — the narration/loon stutter-down tail — and
+    //              glitchBursts (shot-glitch cluster count, the vox clean=1/
+    //              chopped=2 idiom; buried glitch is the fixed stations tail)
     //   gain       amp multiplier over the source's vol; prob per-placement gate
     if(Array.isArray(state.sampleEvents) && state.sampleEvents.length){
       const serng=mulberry32(((state.seed??1)+9091)>>>0);
@@ -1296,11 +1292,19 @@
         if(!pool.length) continue;
         const tr=spec.treatment||{}, gain=spec.gain!=null?spec.gain:1, prob=spec.prob!=null?spec.prob:1;
         const place=spec.placement||"oneShot", sync=spec.sync||null;
+        // treatment.vol OVERRIDES the source's own vol as the amp base (zero-rng;
+        // absent => the source's vol, i.e. every pre-existing spec byte-identical).
+        // Needed because sampleEvents pool ids ride foundSources at a generic vol
+        // (toState); a station litany wants its own stationVol, a filtered horn its
+        // own gain — expressed here rather than through a per-id foundSource vol.
+        const vbase=(src,dflt)=>tr.vol!=null?tr.vol:(src.vol||dflt);
         // seeded pool rotation — each source used once before any repeat (stations law)
         const order=pool.slice();
         for(let i=order.length-1;i>0;i--){ const j=Math.floor(serng()*(i+1)); const t=order[i]; order[i]=order[j]; order[j]=t; }
         let pi=0; const nextSrc=()=>order[pi++%order.length];
-        const chopDur=(src)=>Math.min(4,(src.durSec||1.2)*state.bpm/60);
+        // one-shot length = the source clip in beats, capped (treatment.maxDur
+        // shortens the cap for a tight chime like the door "ding"; default 4)
+        const chopDur=(src)=>Math.min(tr.maxDur!=null?tr.maxDur:4,(src.durSec||1.2)*state.bpm/60);
         // dress a base found-event with the spec's treatment
         const dress=(ev,src)=>{
           ev.tableNum=src.tableNum;
@@ -1314,13 +1318,21 @@
           return ev;
         };
         const shot=(src,beat)=>{
-          found.push(dress({chop:1,beat,dur:chopDur(src),amp:(src.vol||0.3)*gain,
+          found.push(dress({chop:1,beat,dur:chopDur(src),amp:vbase(src,0.3)*gain,
             pitch:tr.pitch!=null?tr.pitch:1,offset:0},src));
           if(tr.glitch){                                             // downward stutter tail (narration/loon idiom)
-            const n=2+Math.floor(serng()*3), step=0.125;
-            for(let j=0;j<n;j++) found.push(dress({chop:1,beat:beat+chopDur(src)*0.5+j*step,dur:step*1.6,
-              amp:(src.vol||0.3)*gain*0.8,pitch:[0.5,0.6,0.7,0.8][Math.floor(serng()*4)],
-              offset:Math.min(0.9,serng()*0.5)},src));
+            // treatment.glitchBursts (default 1): the narration VO fires 1-2 stutter
+            // CLUSTERS each ~85% (the old vox handler's clean=1 / chopped=2 shape);
+            // a plain 1-burst glitch reproduces the loon/response tail unchanged.
+            const bursts=tr.glitchBursts!=null?tr.glitchBursts:1;
+            for(let bi=0;bi<bursts;bi++){
+              if(bursts>1 && serng()>=0.85) continue;               // each cluster fires ~85% (vox idiom)
+              const base=bursts>1 ? beat+serng()*Math.max(1,chopDur(src)) : beat+chopDur(src)*0.5;
+              const n=2+Math.floor(serng()*3), step=0.125;
+              for(let j=0;j<n;j++) found.push(dress({chop:1,beat:base+j*step,dur:step*1.6,
+                amp:vbase(src,0.3)*gain*0.8,pitch:[0.5,0.6,0.7,0.8][Math.floor(serng()*4)],
+                offset:Math.min(0.9,serng()*0.5)},src));
+            }
           }
         };
         let firstDone=false;
@@ -1330,14 +1342,14 @@
           const S=sp.start, B=sp.beats;
           if(place==="bed"){
             if(prob>=1||serng()<prob){ const src=nextSrc();
-              found.push(dress({beat:S,dur:B,amp:(src.vol||0.22)*gain,
+              found.push(dress({beat:S,dur:B,amp:vbase(src,0.22)*gain,
                 pitch:tr.pitch!=null?tr.pitch:(src.pitch??0.78),
                 stretch:tr.stretch!=null?tr.stretch:(src.stretch??0.45)},src)); }
           } else if(place==="slice"){
             for(let b=0;b<B;b++){ if(serng()>=(prob<1?prob:0.55)) continue;
               const src=nextSrc();
               found.push(dress({chop:1,beat:S+b+(serng()<0.3?0.5:0),dur:0.35+serng()*0.5,
-                amp:(src.vol||0.3)*1.6*gain,pitch:tr.pitch!=null?tr.pitch:(src.pitch??1),
+                amp:vbase(src,0.3)*1.6*gain,pitch:tr.pitch!=null?tr.pitch:(src.pitch??1),
                 offset:serng()},src)); }
           } else if(place==="opener"){
             if(firstDone) continue; firstDone=true;
@@ -1349,13 +1361,23 @@
             if(prob>=1||serng()<prob){ const src=nextSrc();
               shot(src, Math.max(S,S+B-chopDur(src)-0.5)); }
           } else if(place==="buried"){
+            // the world-metro station litany: one name under every measure (4 beats),
+            // rotating, square-LFO amplitude-gated at varying intensity; with
+            // treatment.glitch the name is chased ~70% by a mostly-DOWNWARD stutter
+            // tail (2-3 hits at .5-.8 pitch) — the exact bespoke `stations` shape.
             for(let b=0;b<B-2;b+=4){                                 // one under every measure (4 beats)
               if(prob<1&&serng()>=prob) continue;
               const src=nextSrc(), sqd=[0.3,0.55,0.75,0.92][Math.floor(serng()*4)], sqr=[3,5,8,12][Math.floor(serng()*4)];
               found.push(dress({chop:1,beat:S+b+0.5,dur:Math.min(2.6,(src.durSec||1)*state.bpm/60),
-                amp:(src.vol||0.26)*gain,pitch:tr.pitch!=null?tr.pitch:1,offset:0,
+                amp:vbase(src,0.26)*gain,pitch:tr.pitch!=null?tr.pitch:1,offset:0,
                 rsend:tr.rsend!=null?tr.rsend:0.3,dsend:tr.dsend!=null?tr.dsend:0.22,
-                sqRate:tr.sqRate!=null?tr.sqRate:sqr,sqDepth:tr.sqDepth!=null?tr.sqDepth:sqd},src)); }
+                sqRate:tr.sqRate!=null?tr.sqRate:sqr,sqDepth:tr.sqDepth!=null?tr.sqDepth:sqd},src));
+              if(tr.glitch&&serng()<0.7){                            // glitch mostly DOWNWARD
+                const nb=2+Math.floor(serng()*2), stp=0.125;
+                for(let j=0;j<nb;j++) found.push(dress({chop:1,beat:S+b+0.85+j*stp,dur:stp*1.5,
+                  amp:vbase(src,0.12)*gain*0.8,pitch:[0.5,0.6,0.7,0.8][Math.floor(serng()*4)],
+                  offset:Math.min(0.9,serng()*0.5),rsend:0.3,dsend:0.3},src)); }
+            }
           } else if(place==="response"){
             const nbars=Math.max(1,Math.round(B/CBEATS));
             for(let bar=0;bar<nbars;bar++){ if(prob<1&&serng()>=prob) continue;

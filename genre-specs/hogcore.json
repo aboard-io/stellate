@@ -16,8 +16,7 @@
     "drums": { "kickModel": ["909", "boom"], "snareModel": ["clap"], "hatModel": ["noise", "metal"], "kick": [1.25, 1.5], "snare": [0.7, 0.95], "hat": [0.6, 0.95], "tune": [0.95, 1.1], "send": [0.1, 0.25], "dsend": [0.05, 0.15] },
     "fx": { "reverb": [0.28, 0.45], "delayBeats": [0.375, 0.5], "delayFb": [0.2, 0.35], "delayCut": [3000, 4500], "pump": [0.55, 0.82], "crackle": [0, 0], "lowcut": [30, 45], "highcut": [0, 0], "comp": [0.4, 0.65] },
     "found": { "role": "chops", "vol": [0.16, 0.26], "pitch": [1.15, 1.5], "stretch": [0.35, 0.5], "cutoff": [3500, 6000], "sources": ["hp_harry", "hp_hermione", "hp_ron", "hp_snape", "hp_draco", "hp_voldemort", "hp_dumbledore", "hp_hagrid"] },
-    "stations": ["hp_harry", "hp_hermione", "hp_ron", "hp_dumbledore", "hp_snape", "hp_draco", "hp_luna", "hp_neville", "hp_mcgonagall", "hp_hagrid", "hp_sirius", "hp_bellatrix", "hp_voldemort", "hp_ginny", "hp_cho", "hp_cedric", "hp_dobby", "hp_hedwig", "hp_buckbeak", "hp_peeves", "hp_nick", "hp_myrtle", "hp_filch", "hp_crookshanks"],
-    "stationVol": 0.4,
+    "sampleEvents": [{ "pool": ["hp_harry", "hp_hermione", "hp_ron", "hp_dumbledore", "hp_snape", "hp_draco", "hp_luna", "hp_neville", "hp_mcgonagall", "hp_hagrid", "hp_sirius", "hp_bellatrix", "hp_voldemort", "hp_ginny", "hp_cho", "hp_cedric", "hp_dobby", "hp_hedwig", "hp_buckbeak", "hp_peeves", "hp_nick", "hp_myrtle", "hp_filch", "hp_crookshanks"], "placement": "buried", "sections": "all", "treatment": { "cutoff": 5200, "vol": 0.4, "glitch": true } }],
     "hits": { "sources": ["hp_voldemort", "hp_snape", "hp_harry", "hp_bellatrix"], "pattern": "offbeat", "prob": 0.6 },
     "stab": ["off"],
     "form": "drop"
