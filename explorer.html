@@ -500,14 +500,48 @@ async function goLive(){
       if(S.waypoints.length>=2) travelStep();
       glideStep();
       genreVideo(info);
+      updateMediaSession();   // reflect the current genre/blend on the lock screen (updates across a swap)
     }});
+    if(MSESSION){ try{ MSESSION.playbackState="playing"; }catch(e){} updateMediaSession(true); }
   }catch(e){ set({live:false,status:"live failed: "+e.message}); bootAbort(); console.error(e); }
 }
 function stopLive(){ set({live:false, queue:[]});   // queue cleared: the next run must not inherit this run's glide flips
   bootAbort();   // stopped before sound? clear the warm-up bar
   if(faustHandle){ try{faustHandle.stop();}catch(e){} faustHandle=null; }
+  if(MSESSION){ try{ MSESSION.playbackState="paused"; }catch(e){} }
   set({status:"stopped"}); }
 setInterval(()=>{ if(!S.live&&S.playing&&S.target){ set({barCount:S.barCount+1}); glideStep(); } },1400);
+
+// ---------- Media Session: lock-screen metadata + transport (mobile) --------
+// Pairs with faust/live.js's media-element output route: the element makes the
+// OS treat the page as media playback (survives screen lock), and this makes
+// the lock screen / notification shade show WHAT is playing and wire its
+// play/pause buttons to the real engine. Feature-detected — a silent no-op on
+// desktop / older browsers, so behavior there is unchanged. Artwork skipped:
+// the star chart is live SVG (no canvas), so a snapshot would mean an offscreen
+// re-render for marginal payoff.
+const MSESSION = (typeof navigator!=="undefined" && "mediaSession" in navigator) ? navigator.mediaSession : null;
+function mediaSessionLabel(){
+  // the current blend, mirroring the chyron's genre readout: dominant genre, or
+  // "a + b" when genuinely blended (2nd weight rides above ~25%).
+  const ws=(S.weights||[]).filter(w=>w&&w.w>0.001);
+  if(!ws.length) return "the genre space";
+  const a=ws[0].g;
+  return (ws[1]&&ws[1].w>0.25) ? a+" + "+ws[1].g : a;
+}
+let msLastTitle="";
+function updateMediaSession(force){
+  if(!MSESSION || typeof MediaMetadata==="undefined") return;
+  const title=mediaSessionLabel();
+  if(!force && title===msLastTitle) return;
+  msLastTitle=title;
+  try{ MSESSION.metadata=new MediaMetadata({ title, artist:"CONSTELLATE", album:"the genre space" }); }catch(e){}
+}
+if(MSESSION){ try{
+  MSESSION.setActionHandler("play", ()=>{ if(!S.live) goLive(); });
+  MSESSION.setActionHandler("pause", ()=>{ if(S.live) stopLive(); });   // pause == stop: the engine has no freeze, a clean stop is honest
+  MSESSION.setActionHandler("stop", ()=>{ if(S.live) stopLive(); });
+}catch(e){} }
 
 // ---------- map (imperative SVG: 60Hz drags stay cheap) ----------
 const svg=document.getElementById("map"), NS="http://www.w3.org/2000/svg";

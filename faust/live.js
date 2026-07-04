@@ -44,6 +44,39 @@
     try { ctx = new AC({ sampleRate: 44100, latencyHint: "playback" }); } catch (e) { ctx = new AC(); }
     try { ctx.resume(); } catch (e) {}
 
+    // ---- MEDIA-ELEMENT OUTPUT ROUTE (mobile background survival) ----
+    // iOS/Android silence a bare WebAudio graph the moment the screen locks or
+    // the tab backgrounds, but they keep a *playing* <audio> element alive — the
+    // OS classifies it as media playback (the lock-screen surface). So we route
+    // the master through a MediaStreamAudioDestinationNode and play its stream
+    // from a real element, created + started INSIDE the play gesture (ctx.resume
+    // above is the sibling gesture-locked step). The element becomes THE output:
+    // ctx.destination is left UNCONNECTED (wiring both = double audio). The
+    // AudioContext still runs — msDest pulls the graph continuously, so the
+    // analyser + balance() taps (both fed from `master`, upstream) update exactly
+    // as before and rms()/the boot bar keep working; msDest adds only a few ms
+    // of stream buffering, inaudible for ambient. Feature-detected: where there
+    // is no MediaStreamDestination (older desktop, node) we fall back to the
+    // classic analyser -> ctx.destination route with byte-identical behavior, so
+    // desktop and the offline paths are untouched.
+    let msDest = null, mediaEl = null;
+    const canMediaEl = typeof document !== "undefined" &&
+      typeof ctx.createMediaStreamDestination === "function" && typeof root.Audio !== "undefined";
+    if (canMediaEl) {
+      try {
+        msDest = ctx.createMediaStreamDestination();
+        mediaEl = new root.Audio();
+        mediaEl.autoplay = true;
+        mediaEl.setAttribute("playsinline", "");   // iOS: stay inline, don't fullscreen
+        mediaEl.playsInline = true;
+        mediaEl.srcObject = msDest.stream;          // carries silence until master connects below
+        if (typeof document.body !== "undefined" && document.body) {
+          mediaEl.style.display = "none"; document.body.appendChild(mediaEl);
+        }
+        const pr = mediaEl.play(); if (pr && pr.catch) pr.catch(() => {});   // start it in the gesture
+      } catch (e) { msDest = null; mediaEl = null; }
+    }
+
     status("loading Faust modules…");
     const fw = await import(BASE + "node_modules/@grame/faustwasm/dist/esm/index.js");
     const { FaustWasmInstantiator, FaustMonoDspGenerator } = fw;
@@ -76,7 +109,11 @@
     const analyser = ctx.createAnalyser(); analyser.fftSize = 2048;
     const fxDirect = ctx.createGain(); fxDirect.gain.value = 1;
     fx.connect(fxDirect); fxDirect.connect(master);
-    master.connect(analyser); analyser.connect(ctx.destination);
+    // master sits BEFORE the analyser (so rms() reflects the stop mute), and the
+    // analyser's terminal is the ONE audible output: the media-element stream
+    // when available (survives screen lock), else ctx.destination (classic).
+    master.connect(analyser);
+    if (msDest) analyser.connect(msDest); else analyser.connect(ctx.destination);
     let mbNode = null, mbGain = null;
     // shared crossfade teardown: after the 500ms fade-out completes, detach a
     // retired node from its upstream `src` (the source differs per caller — fx
@@ -802,7 +839,7 @@
 
     const rmsBuf = new Float32Array(analyser.fftSize);
     const handle = {
-      ctx, analyser, errors,
+      ctx, analyser, errors, mediaEl,   // mediaEl exposed for headless verification (readyState/currentTime)
       _sched: schedEvents, _bars: schedBars, _pools: pools,   // probe/debug (drift + dx7-morph gates)
       layers() {   // mixer view: monitoring/override bus over the layer taps
         return LAYER_DEFS.map(([id]) => {
@@ -864,6 +901,11 @@
           master.gain.setValueAtTime(master.gain.value, tNow);
           master.gain.linearRampToValueAtTime(0, tNow + 0.06);
         } catch (e) {}
+        // silence + release the media element too (the master mute already
+        // starves its stream; pausing + dropping srcObject makes it truly stop
+        // and clears the OS "now playing" surface). Left detached in the DOM —
+        // harmless, and a subsequent goLive() builds a fresh element.
+        if (mediaEl) { try { mediaEl.pause(); mediaEl.srcObject = null; mediaEl.remove(); } catch (e) {} }
         foundBeds.stopAll(); foundChops.stopAll(); foundVox.stopAll();
         for (const [, p] of samplerPlayers) p.stopAll();
         for (const s of speechSrcs) { try { s.stop(); } catch (e) {} }
