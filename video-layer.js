@@ -48,7 +48,13 @@
   // grow to match (see DRAMA). FADE_MS stays clamped to FADE_CAP (the crossfade
   // must still finish inside the 8-bar switch window); the standby/colorbars
   // holds stay capped at 8s (furniture must never squat the frame).
-  const SLOTH = 16;
+  // 2026-07-06 (deepest pass): 16 -> 64. Paul: transforms/zooms/squeezes "EVEN
+  // SLOWER, like 1/4th that slow. They shouldn't be obvious." Motion now moves
+  // at tectonic speed — you should never CATCH a transform happening, only
+  // notice the frame is somewhere else than it was a minute ago. The chaos
+  // scheduler self-spaces (period rides SLOTH too), so events also get 4x
+  // rarer per wall-clock; FADE_MS and the furniture holds stay capped as above.
+  const SLOTH = 64;
   // DRAMA — the sibling amplitude dial (Paul 2026-07-06: "make the effects more
   // dramatic, since they're now going so slow it feels organic"). SLOTH governs
   // how SLOW motion is; DRAMA governs how BIG each event's excursion is —
@@ -60,7 +66,8 @@
   // capped). Declared up here beside SLOTH so burst() (above WACKADOODLE) sees it.
   const DRAMA = 1.6;
   const FADE_CAP = 8000;   // a full crossfade must finish INSIDE the 8-bar switch window; at the fastest genre (~187 bpm) 8 bars ≈ 10.3s, so cap at ~80% of it
-  // Desktop: 1600 -> 16000, capped to FADE_CAP so a dissolve never runs past
+  // Desktop: 1600 * SLOTH lands way past FADE_CAP now, so every dissolve rides
+  // the cap — 8s flat, the slowest a crossfade can be without running past
   // the next switch (which would strand a half-faded frame). Mobile: WAS a 0ms
   // hard cut (the loader stayed paused to avoid a 2nd live decoder janking
   // touch); two <video>s are present now, so give the phone a slow opacity
