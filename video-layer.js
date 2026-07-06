@@ -43,7 +43,22 @@
   // deliberately untouched — the serial chaos scheduler spaces itself out
   // naturally as event durations grow (fewer, longer events per minute). It
   // lives HERE, not next to WACKADOODLE, only because FADE_MS below needs it.
-  const SLOTH = 10;
+  // 2026-07-06 (deeper pass): 10 -> 16. Everything is slower still — now that
+  // the motion is this geological it reads as ORGANIC, so the amplitudes get to
+  // grow to match (see DRAMA). FADE_MS stays clamped to FADE_CAP (the crossfade
+  // must still finish inside the 8-bar switch window); the standby/colorbars
+  // holds stay capped at 8s (furniture must never squat the frame).
+  const SLOTH = 16;
+  // DRAMA — the sibling amplitude dial (Paul 2026-07-06: "make the effects more
+  // dramatic, since they're now going so slow it feels organic"). SLOTH governs
+  // how SLOW motion is; DRAMA governs how BIG each event's excursion is —
+  // deeper chroma lurches, farther vertical rolls, heavier ghosts, wider zooms,
+  // stronger displacement storms, deeper brightness pumps, bolder leans. 1 =
+  // the old reach; ~1.6 = geological + huge. The never-unwatchable guardrail
+  // still stands: amplitudes are clamped so the FOOTAGE stays the subject
+  // (rotations ride a cover-scale so corners never expose; brightness/smear are
+  // capped). Declared up here beside SLOTH so burst() (above WACKADOODLE) sees it.
+  const DRAMA = 1.6;
   const FADE_CAP = 8000;   // a full crossfade must finish INSIDE the 8-bar switch window; at the fastest genre (~187 bpm) 8 bars ≈ 10.3s, so cap at ~80% of it
   // Desktop: 1600 -> 16000, capped to FADE_CAP so a dissolve never runs past
   // the next switch (which would strand a half-faded frame). Mobile: WAS a 0ms
@@ -53,7 +68,7 @@
   // dual-decode window on touch hardware.
   const FADE_MS = MOBILE ? 3000 : Math.min(1600 * SLOTH, FADE_CAP);
   const IDLE_CYCLE_MS = 24000;   // ambient switch period when nothing is playing (a clip-RATE, left as-is — already dreamy)
-  const RATE = 0.5;              // slowed playback — dreamier, more VHS
+  const RATE = 0.35;             // slowed playback — dreamier, more VHS (Paul 2026-07-06: slower still; cue windows are 15-45s of media = 42-128s wall at 0.35x, plenty for 8 measures; the [in,out] loop-seek is media-time so RATE doesn't touch it)
   const LS_KEY = "vaporwave-video-on";
   const REMOTE_READY_MS = 3800;  // archive.org latency budget before we fall back to the local cache clip
   // A PREFETCH (loading the next clip while the current one still has ~8 bars
@@ -84,6 +99,7 @@
   let glyphEls = [], glyphRR = 0;         // roaming-glyph pool (no DOM churn) + round-robin cursor
   let scanBand = null, scanLines = null;  // analog vertical-blanking bar + near-subliminal fine texture
   let chaosTimer = 0, chaosOn = false, lastEvt = "", storm = 1, curFam = "vhs", lastSection = null;
+  let evInfo = "";   // a sample transform/filter string an event may set for the gate log (see runNamed/_chaosLog)
   let barsTimer = 0, cardTimer = 0, subTimer = 0, pipTimer = 0, tsTimer = 0, fxTimer = 0, tsIv = 0, stormIv = 0;
   const chaosLog = [];   // {type,t,dur} ring — the gate harness reads VideoLayer._chaosLog()
   let catBag = [];               // shuffled bag over the whole catalog (idle/ambient)
@@ -237,16 +253,34 @@
     // this subtly (a slow density swell), never a flashing grid.
     scan = document.createElement("div");
     scan.className = "vl-scan";
-    scan.style.cssText = "position:absolute;inset:0;overflow:hidden;opacity:.55;mix-blend-mode:overlay;transition:opacity " + (0.3 * SLOTH) + "s";
-    scanLines = document.createElement("div");   // near-subliminal fine texture (barely there)
+    scan.style.cssText = "position:absolute;inset:0;overflow:hidden;opacity:.62;mix-blend-mode:overlay;transition:opacity " + (0.3 * SLOTH) + "s";
+    scanLines = document.createElement("div");   // near-subliminal fine texture (a notch bolder + softer ramp — Paul 2026-07-06: thicker, not sharper)
     scanLines.className = "vl-scanlines";
-    scanLines.style.cssText = "position:absolute;inset:0;opacity:.26;transition:opacity " + (0.3 * SLOTH) + "s;" +
-      "background:repeating-linear-gradient(0deg,rgba(0,0,0,.5) 0 1px,transparent 1px 4px)";
-    scanBand = document.createElement("div");    // the single soft rolling darker band
+    scanLines.style.cssText = "position:absolute;inset:0;opacity:.32;transition:opacity " + (0.3 * SLOTH) + "s;" +
+      // SOFT ramp (not a hard 1px grid — the old digital complaint): each line is a
+      // gradient shoulder over a wider 6px period, so it reads as analog tooth.
+      "background:repeating-linear-gradient(0deg,rgba(0,0,0,.42) 0px,rgba(0,0,0,.06) 2px,transparent 3px,transparent 6px)";
+    // THICKER ANALOG HUM (Paul 2026-07-06: "thicker scanlines, do more twisted
+    // things"). Was ONE soft rolling band; now 2-3 stacked soft bands of varying
+    // WIDTH drifting at DIFFERENT speeds + phases — a bolder, higher-contrast,
+    // still-fully-ANALOG vertical hum (soft gradients, no sharp grid). scanBand is
+    // now a container; each child rolls on its own SLOTH-slow clock.
+    scanBand = document.createElement("div");
     scanBand.className = "vl-scanband";
-    scanBand.style.cssText = "position:absolute;left:0;right:0;top:0;height:38vh;will-change:transform;" +
-      "background:linear-gradient(180deg,transparent,rgba(0,0,0,.26) 42%,rgba(0,0,0,.32) 50%,rgba(0,0,0,.26) 58%,transparent)" +
-      (reduced ? "" : ";animation:vl-vblank " + (1.4 * SLOTH) + "s linear infinite");
+    scanBand.style.cssText = "position:absolute;inset:0;overflow:hidden";
+    const HUM = [
+      { h: 46, a1: .30, a2: .44, s: 1.6, d: 0 },     // primary thick band, high contrast
+      { h: 22, a1: .22, a2: .36, s: 1.12, d: 3.5 },  // narrower, faster drift
+      { h: 66, a1: .14, a2: .24, s: 2.4, d: 7 },     // wide soft wash, slowest
+    ];
+    for (const b of HUM) {
+      const bd = document.createElement("div");
+      bd.className = "vl-humband";
+      bd.style.cssText = "position:absolute;left:0;right:0;top:0;height:" + b.h + "vh;will-change:transform;" +
+        "background:linear-gradient(180deg,transparent,rgba(0,0,0," + b.a1 + ") 40%,rgba(0,0,0," + b.a2 + ") 50%,rgba(0,0,0," + b.a1 + ") 60%,transparent)" +
+        (reduced ? "" : ";animation:vl-vblank " + (b.s * SLOTH) + "s linear infinite;animation-delay:-" + b.d + "s");
+      scanBand.appendChild(bd);
+    }
     scan.append(scanLines, scanBand);
     grain = document.createElement("div");
     if (MOBILE) grain.setAttribute("hidden", "");
@@ -261,16 +295,21 @@
       "font:26px 'VT323',ui-monospace,Menlo,monospace;color:rgba(235,255,240,.45);" +
       "letter-spacing:.06em;text-shadow:2px 2px 0 rgba(0,0,0,.35)";
     const st = document.createElement("style");
+    // vertical-hold roll travels FARTHER under DRAMA; the overscan scale grows
+    // with the shift so the reveal is always hidden (never-black-edges law).
+    const vrShift = Math.min(15, 7 * DRAMA).toFixed(1);            // % of frame the roll drifts each way
+    const vrScale = (1 + (parseFloat(vrShift) / 100) * 2.4).toFixed(3);   // overscan >= shift on both sides
     st.textContent = "@keyframes vhsgrain{0%{transform:translate(0,0)}25%{transform:translate(-70px,40px)}" +
       "50%{transform:translate(45px,-90px)}75%{transform:translate(-30px,-35px)}100%{transform:translate(60px,70px)}}" +
-      // vertical-hold roll: scale(1.14) overscan hides the reveal so the roll
+      // vertical-hold roll: scale(vrScale) overscan hides the reveal so the roll
       // never exposes black (the never-black law extends to never-black-edges).
-      "@keyframes vl-roll{0%{transform:scale(1.14) translateY(-7%)}50%{transform:scale(1.14) translateY(7%)}100%{transform:scale(1.14) translateY(-7%)}}" +
+      "@keyframes vl-roll{0%{transform:scale(" + vrScale + ") translateY(-" + vrShift + "%)}50%{transform:scale(" + vrScale + ") translateY(" + vrShift + "%)}100%{transform:scale(" + vrScale + ") translateY(-" + vrShift + "%)}}" +
       ".vl-roll{animation:vl-roll " + (0.52 * SLOTH) + "s linear 2}" +   // vertical-hold roll, SLOTH'd to a languid drift
-      // the analog vertical-blanking bar's slow downward roll — one soft band
-      // sweeping top to bottom (it appears, rolls through, clears, reappears), the
-      // way a real hum bar drifts. Compositor-cheap transform, SLOTH-slow.
-      "@keyframes vl-vblank{from{transform:translateY(-42vh)}to{transform:translateY(100vh)}}";
+      // the analog vertical-blanking hum roll — soft bands sweep top to bottom
+      // (each appears, rolls through, clears, reappears), the way a real hum bar
+      // drifts. -100vh..100vh so a band of ANY height (up to ~66vh) is fully
+      // hidden off-screen at each end. Compositor-cheap transform, SLOTH-slow.
+      "@keyframes vl-vblank{from{transform:translateY(-100vh)}to{transform:translateY(100vh)}}";
     // ---- ALIEN BROADCAST furniture (dedicated overlay els; opacity-toggled,
     // never touch vbox — all cheap compositor paints over the base grade) ----
     barsEl = document.createElement("div");   // SMPTE-ish color-bar interstitial — DIM (haunted, not a reference chart)
@@ -370,13 +409,13 @@
   function burst() {
     if (!ready || !on || reduced || !vbox || !profile) return;   // mobile too: transform+filter wobble is compositor-cheap
     const g = profile.glitch;
-    const dx = (Math.random() < .5 ? -1 : 1) * (3 + Math.random() * 6) * (0.5 + g);
+    const dx = (Math.random() < .5 ? -1 : 1) * (3 + Math.random() * 6) * (0.5 + g) * DRAMA;   // farther tape shove under DRAMA
     const dur = (900 + Math.random() * 700) * SLOTH;   // tape wobble glides out+back over dur (eased -> smooth); languid at SLOTH
     vbox.style.transition = "filter " + (dur / 2) + "ms ease-in-out, transform " + (dur / 2) + "ms ease-in-out";
-    vbox.style.filter = baseFilterStr() + " saturate(" + (1.2 + g) + ") hue-rotate(" + (((Math.random() * 50 - 25) * g) | 0) + "deg) blur(" + (0.6 + g) + "px)";
-    vbox.style.transform = "translateX(" + dx + "px) scaleY(" + (1 + .02 * g) + ")";
+    vbox.style.filter = baseFilterStr() + " saturate(" + (1.2 + g * DRAMA).toFixed(2) + ") hue-rotate(" + (((Math.random() * 50 - 25) * g * DRAMA) | 0) + "deg) blur(" + Math.min(2.6, 0.6 + g * DRAMA).toFixed(2) + "px)";
+    vbox.style.transform = "translateX(" + dx.toFixed(1) + "px) scaleY(" + (1 + .02 * g * DRAMA).toFixed(3) + ")";
     if (profile.svg && dispEl && !MOBILE) {   // SVG RGB-split is desktop-only (not in the mobile base grade)
-      const scale = (10 + Math.random() * 26) * g, off = (2 + Math.random() * 5) * g;
+      const scale = (10 + Math.random() * 26) * g * DRAMA, off = (2 + Math.random() * 5) * g * DRAMA;
       dispEl.setAttribute("scale", scale.toFixed(1));
       if (roEl) roEl.setAttribute("dx", (-off).toFixed(1));
       if (gbEl) gbEl.setAttribute("dx", off.toFixed(1));
@@ -423,8 +462,23 @@
   const expRand = () => -Math.log(1 - Math.random());   // mean 1, memoryless -> natural clustering
   const rnd = (a, b) => a + Math.random() * (b - a);
   const pick = (a) => a[(Math.random() * a.length) | 0];
-  function clog(type, dur) {
-    chaosLog.push({ type, t: Math.round(nowMs()), dur: Math.round(dur) });
+  // NEVER-EXPOSE law for the rotation/lean events: the uniform scale needed so a
+  // frame rotated by `deg` still fully covers the viewport (a same-aspect rect
+  // rotated by θ needs s >= |cosθ| + AR·|sinθ|, AR = the longer/shorter side
+  // ratio). Returns the MAX required scale over the whole sweep [0..|deg|] — the
+  // requirement peaks near atan(AR) (~60° on 16:9, ~s=2.04), so holding this one
+  // scale for the entire lean guarantees corners never open at any intermediate
+  // angle. A small margin is applied at the call site.
+  function leanCoverScale(deg) {
+    const w = (root.innerWidth || 1280), h = (root.innerHeight || 720);
+    const ar = Math.max(w / h, h / w);
+    const need = (d) => { const r = Math.abs(d) * Math.PI / 180; return Math.abs(Math.cos(r)) + ar * Math.abs(Math.sin(r)); };
+    const peak = Math.atan(ar) * 180 / Math.PI;   // angle of maximum required scale
+    const a = Math.abs(deg);
+    return Math.max(1, need(a), a >= peak ? need(peak) : 0);
+  }
+  function clog(type, dur, info) {
+    chaosLog.push({ type, t: Math.round(nowMs()), dur: Math.round(dur), info: info || "" });
     if (chaosLog.length > 600) chaosLog.shift();
   }
   function chaosIntensity() { return profile && profile.chaos != null ? profile.chaos : 0.4; }
@@ -600,21 +654,26 @@
         trackEl.style.transition = "top " + dur + "ms linear, opacity " + dur + "ms ease-in";
         trackEl.style.top = "108%"; setTimeout(() => { trackEl.style.opacity = "0"; }, dur * 0.95);
         return dur; } },
-    chroma: { w: 7, mobile: true, run() {   // chroma drift: hue-rotate lurch — eased backdrop-filter, smooth slow at SLOTH
+    chroma: { w: 7, mobile: true, run() {   // chroma drift: hue-rotate lurch — eased backdrop-filter, smooth slow at SLOTH; DRAMA deepens the lurch
         const g = chaosIntensity(), dur = (280 + Math.random() * 540) * SLOTH;
-        const deg = ((60 + Math.random() * 220) * (0.5 + g)) * (Math.random() < .5 ? -1 : 1);
+        const deg = ((60 + Math.random() * 220) * (0.5 + g) * DRAMA) * (Math.random() < .5 ? -1 : 1);
         fxTrans("backdrop-filter " + (dur * .4) + "ms ease,-webkit-backdrop-filter " + (dur * .4) + "ms ease");
-        fxSet("hue-rotate(" + (deg | 0) + "deg) saturate(" + (1.4 + g).toFixed(2) + ")");
+        evInfo = "hue-rotate(" + (deg | 0) + "deg) saturate(" + (1.4 + g * DRAMA).toFixed(2) + ")";
+        fxSet(evInfo);
         clearTimeout(fxTimer); fxTimer = setTimeout(fxClear, dur); return dur; } },
-    ghost: { w: 5, mobile: false, run() {   // ghosting: offset RGB drop-shadow doubles (fxlayer) — held ~10x longer, a ghost that lingers
-        const g = chaosIntensity(), off = ((4 + Math.random() * 11) * (0.6 + g)) | 0, dur = (340 + Math.random() * 720) * SLOTH;
+    ghost: { w: 5, mobile: false, run() {   // ghosting: offset RGB drop-shadow doubles (fxlayer) — held ~10x longer, a ghost that lingers; DRAMA pulls the copies farther apart
+        const g = chaosIntensity(), off = ((4 + Math.random() * 11) * (0.6 + g) * DRAMA) | 0, dur = (340 + Math.random() * 720) * SLOTH;
         fxTrans("none");
-        fxSet("drop-shadow(" + off + "px 0 0 rgba(255,60,90,.5)) drop-shadow(" + (-off) + "px 0 0 rgba(60,180,255,.5)) blur(.3px)");
+        evInfo = "drop-shadow(" + off + "px 0 0 rgba(255,60,90,.5)) drop-shadow(" + (-off) + "px 0 0 rgba(60,180,255,.5)) blur(.3px)";
+        fxSet(evInfo);
         clearTimeout(fxTimer); fxTimer = setTimeout(fxClear, dur); return dur; } },
-    pump: { w: 5, mobile: true, run() {   // brightness BREATHING — SLOTH stretches each step, so EASE between levels (was a hard step) to keep it a smooth slow throb, not a slide-show (brightness/contrast are numeric -> CSS interpolates them)
-        const g = chaosIntensity(), seq = [1.6 + g, 0.55, 1.4 + g * .5, 0.8, 1], dt = 105 * SLOTH;
+    pump: { w: 5, mobile: true, run() {   // brightness BREATHING — SLOTH stretches each step (eased -> smooth slow throb); DRAMA pushes each level FARTHER from 1 (deeper pumps), clamped so the frame never blacks/blows out
+        const g = chaosIntensity(), dt = 105 * SLOTH;
+        const push = (v) => Math.max(0.16, Math.min(2.4, 1 + (v - 1) * DRAMA));
+        const seq = [1.6 + g, 0.55, 1.4 + g * .5, 0.8, 1].map(push);
         fxTrans("backdrop-filter " + Math.round(dt) + "ms ease-in-out,-webkit-backdrop-filter " + Math.round(dt) + "ms ease-in-out");
-        seq.forEach((b, i) => setTimeout(() => fxSet("brightness(" + b.toFixed(2) + ") contrast(" + (1 + .3 * g).toFixed(2) + ")"), i * dt));
+        evInfo = "brightness(" + seq[0].toFixed(2) + "..) contrast(" + (1 + .3 * g * DRAMA).toFixed(2) + ")";
+        seq.forEach((b, i) => setTimeout(() => fxSet("brightness(" + b.toFixed(2) + ") contrast(" + (1 + .3 * g * DRAMA).toFixed(2) + ")"), i * dt));
         const dur = seq.length * dt + 40; setTimeout(fxClear, dur); return dur; } },
     invert: { w: 4, mobile: true, run() {   // invert WASH: SLOTH turns the old fast blink into ONE slow fade to negative and back (invert() is numeric, so CSS eases it smoothly) — "a 300ms blink becomes a slow wash"
         const n = 2 + ((Math.random() * 3) | 0), dt = 66 + Math.random() * 60, dur = n * 2 * dt * SLOTH;
@@ -658,23 +717,113 @@
     pip: { w: 4, mobile: false, can() { return !!pipEl && !!pickAlt(); }, run() {   // picture-in-picture of ANOTHER clip — lingers ~10x (corner, non-blocking)
         const n = pickAlt(), src = n && srcFor(n); if (!src) return 300; setPip(pipEl, src, false);
         const dur = (1400 + Math.random() * 2600) * SLOTH; clearTimeout(pipTimer); pipTimer = setTimeout(hidePip, dur); return dur; } },
-    zoom: { w: 6, mobile: true, run() {   // zoom BREATH: SLOTH both the ease-in and the drift-back so it swells in and out like weather (both are eased transitions -> smooth, no lurch)
-        const sc = 1.7 + Math.random() * 1.1, dur = (700 + Math.random() * 900) * SLOTH, into = 60 * SLOTH;
-        vbox.style.transition = "transform " + into + "ms ease-out"; vbox.style.transform = "scale(" + sc.toFixed(2) + ")";
+    zoom: { w: 6, mobile: true, run() {   // zoom BREATH: SLOTH both the ease-in and the drift-back so it swells in and out like weather; DRAMA widens the swell (up to ~3.5x) and sometimes a slight slow lean rides along
+        const sc = Math.min(3.5, 1.7 + Math.random() * 1.1 * DRAMA), dur = (700 + Math.random() * 900) * SLOTH, into = 60 * SLOTH;
+        const rot = Math.random() < .5 ? (Math.random() < .5 ? -1 : 1) * rnd(3, 9) : 0;   // scale >=1.7 more than covers a <=9deg lean -> corners stay filled
+        const tf = "scale(" + sc.toFixed(2) + ") rotate(" + rot.toFixed(1) + "deg)"; evInfo = tf;
+        vbox.style.transition = "transform " + into + "ms ease-out"; vbox.style.transform = tf;
         setTimeout(() => { vbox.style.transition = "transform " + dur + "ms cubic-bezier(.2,.7,.2,1)"; vbox.style.transform = "none"; }, into + 10);
         setTimeout(() => applyLook(false), into + dur + 80); return into + dur; } },
     mirror: { w: 5, mobile: true, run() {   // mirror / flip — the flip itself is discrete (a reflection can't tween), but HOLD it ~10x so the frame sits mirrored like a held breath
         const flip = Math.random() < .5 ? "scaleX(-1)" : "scaleY(-1)", dur = (120 + Math.random() * 520) * SLOTH;
         vbox.style.transition = "none"; vbox.style.transform = flip + " scale(1.02)";
         setTimeout(() => applyLook(false), dur); return dur; } },
-    dispstorm: { w: 5, mobile: false, run() {   // feTurbulence displacement storm. SLOTH stretches the DURATION (~10x -> a storm that rolls in like weather) but the reseed INTERVAL stays 90ms: x10 there would be a 900ms slide-show; 90ms keeps the churn smooth across the whole long storm
+    dispstorm: { w: 5, mobile: false, run() {   // feTurbulence displacement storm. SLOTH stretches the DURATION (a storm that rolls in like weather); reseed INTERVAL stays 90ms (smooth churn). DRAMA drives it harder but a CAP keeps the smear watchable — footage stays the subject
         const g = chaosIntensity(), dur = (700 + Math.random() * 1200) * SLOTH; fxTrans("none"); fxSet("url(#vlstorm) contrast(1.08)");
         const end = nowMs() + dur; clearInterval(stormIv);
+        const peak = Math.min(175, (110) * (0.5 + g) * (0.6 + 0.4 * DRAMA)); evInfo = "url(#vlstorm) scale<=" + (peak | 0);
         stormIv = setInterval(() => {
           if (nowMs() >= end) { clearInterval(stormIv); fxClear(); if (stormDisp) stormDisp.setAttribute("scale", "0"); return; }
-          if (stormDisp) stormDisp.setAttribute("scale", (((20 + Math.random() * 90) * (0.5 + g)) | 0).toFixed(0));
+          if (stormDisp) stormDisp.setAttribute("scale", Math.min(175, ((20 + Math.random() * 90) * (0.5 + g) * (0.6 + 0.4 * DRAMA)) | 0).toFixed(0));
           if (stormTurb) stormTurb.setAttribute("seed", String((Math.random() * 9999) | 0));
         }, 90); return dur; } },
+    // -- DEEP BROADCAST slow organic warps (Paul 2026-07-06: "rotate more, do
+    //    more twisted things"). All CSS transform/filter, compositor-cheap. Each
+    //    holds a cover-scale so a rotated/sheared frame never opens an edge —
+    //    the footage stays the subject even mid-lean. mobile:true = pure
+    //    transform (phone-safe); the blur/drop-shadow-heavy ones stay desktop. --
+    lean: { w: 4, mobile: true, run() {   // THE MARQUEE MOVE: the whole frame slowly LEANS 25-90deg and back over a long life; a single cover-scale is held for the ENTIRE sweep so corners never expose at any intermediate angle (geological)
+        const dir = Math.random() < .5 ? -1 : 1;
+        const theta = Math.min(90, rnd(28, 66) * (0.65 + 0.45 * DRAMA)) * dir;
+        const S = leanCoverScale(theta) * 1.05;
+        const warm = 90 * SLOTH, outMs = (620 + Math.random() * 420) * SLOTH, backMs = outMs * 1.1;
+        evInfo = "rotate(" + theta.toFixed(1) + "deg) scale(" + S.toFixed(3) + ")";
+        vbox.style.transition = "transform " + Math.round(warm) + "ms ease-in-out";
+        vbox.style.transform = "rotate(0deg) scale(" + S.toFixed(3) + ")";   // scale up first (rotation still 0 -> nothing exposed while it grows)
+        setTimeout(() => { vbox.style.transition = "transform " + Math.round(outMs) + "ms cubic-bezier(.4,0,.3,1)"; vbox.style.transform = "rotate(" + theta.toFixed(1) + "deg) scale(" + S.toFixed(3) + ")"; }, warm + 10);
+        setTimeout(() => { vbox.style.transition = "transform " + Math.round(backMs) + "ms cubic-bezier(.4,0,.3,1)"; vbox.style.transform = "rotate(0deg) scale(" + S.toFixed(3) + ")"; }, warm + outMs + 20);
+        setTimeout(() => { vbox.style.transition = "transform " + Math.round(warm) + "ms ease-in-out"; applyLook(false); }, warm + outMs + backMs + 30);
+        return warm + outMs + backMs + warm + 60; } },
+    persplean: { w: 3, mobile: true, run() {   // PERSPECTIVE TILT — the picture leans away in 3D like it's falling asleep (rotate3d/rotateX|Y). Modest angle + generous scale so the foreshortened far edge still covers. Pure transform -> mobile-safe
+        const ax = Math.random() < .5, ang = (Math.random() < .5 ? -1 : 1) * Math.min(24, rnd(8, 16) * (0.7 + 0.3 * DRAMA));
+        const sc = 1.34 + Math.abs(ang) / 50, dur = (680 + Math.random() * 520) * SLOTH, into = 120 * SLOTH;
+        const tf = "perspective(1100px) rotate" + (ax ? "X" : "Y") + "(" + ang.toFixed(1) + "deg) scale(" + sc.toFixed(3) + ")"; evInfo = tf;
+        vbox.style.transition = "transform " + Math.round(into) + "ms ease-out"; vbox.style.transform = tf;
+        setTimeout(() => { vbox.style.transition = "transform " + Math.round(dur) + "ms cubic-bezier(.3,.6,.2,1)"; vbox.style.transform = "none"; }, into + 10);
+        setTimeout(() => applyLook(false), into + dur + 60); return into + dur; } },
+    sway: { w: 3, mobile: true, run() {   // PENDULUM SWAY — the frame rocks a few degrees each way, a couple of slow swings, held under a cover-scale so corners stay filled
+        const amp = Math.min(9, rnd(3, 6) * (0.7 + 0.3 * DRAMA)), S = leanCoverScale(amp) * 1.06;
+        const swings = 3 + ((Math.random() * 2) | 0), total = (600 + Math.random() * 400) * SLOTH, dt = total / (swings + 1);
+        evInfo = "rock +/-" + amp.toFixed(1) + "deg scale(" + S.toFixed(3) + ")";
+        vbox.style.transition = "transform " + Math.round(dt * 0.4) + "ms ease-in-out";
+        vbox.style.transform = "rotate(0deg) scale(" + S.toFixed(3) + ")";
+        let i = 0;
+        const tick = () => {
+          if (i >= swings) { vbox.style.transition = "transform " + Math.round(dt * 0.5) + "ms ease-in-out"; applyLook(false); return; }
+          const a = (i % 2 === 0 ? 1 : -1) * amp;
+          vbox.style.transition = "transform " + Math.round(dt) + "ms ease-in-out";
+          vbox.style.transform = "rotate(" + a.toFixed(1) + "deg) scale(" + S.toFixed(3) + ")";
+          i++; setTimeout(tick, dt);
+        };
+        setTimeout(tick, dt * 0.4 + 10);
+        return Math.round(dt * 0.4 + swings * dt + dt * 0.5); } },
+    stretch: { w: 3, mobile: true, run() {   // slow asymmetric STRETCH/SQUASH — scaleX & scaleY drift apart and back around a >=1 base, an anamorphic breath that never uncovers an edge (min axis stays >= 1)
+        const base = 1.2, a = 1 + Math.min(.15, rnd(.06, .11) * (0.7 + 0.3 * DRAMA));   // base/a >= ~1.04
+        const cycles = 2 + ((Math.random() * 2) | 0), total = (600 + Math.random() * 500) * SLOTH, dt = total / (cycles * 2 + 1);
+        evInfo = "scaleX(" + (base * a).toFixed(3) + ") scaleY(" + (base / a).toFixed(3) + ")";
+        vbox.style.transition = "transform " + Math.round(dt) + "ms ease-in-out";
+        vbox.style.transform = "scale(" + base + ")";
+        let i = 0;
+        const tick = () => {
+          if (i >= cycles * 2) { applyLook(false); return; }
+          const wide = i % 2 === 0;
+          vbox.style.transform = "scaleX(" + (wide ? base * a : base / a).toFixed(3) + ") scaleY(" + (wide ? base / a : base * a).toFixed(3) + ")";
+          i++; setTimeout(tick, dt);
+        };
+        setTimeout(tick, 40);
+        return cycles * 2 * dt + dt; } },
+    breathe: { w: 3, mobile: true, run() {   // slow BREATHING barrel zoom — the frame inhales/exhales scale a few times, a continuous swell distinct from zoom's single pop (lo >= 1 so it always covers)
+        const lo = 1.12, hi = Math.min(2.3, 1.45 + Math.random() * 0.5 * DRAMA), cycles = 2 + ((Math.random() * 2) | 0), total = (650 + Math.random() * 500) * SLOTH, dt = total / (cycles * 2 + 1);
+        evInfo = "scale(" + lo.toFixed(2) + "<->" + hi.toFixed(2) + ")";
+        vbox.style.transition = "transform " + Math.round(dt) + "ms ease-in-out";
+        vbox.style.transform = "scale(" + lo + ")";
+        let i = 0;
+        const tick = () => {
+          if (i >= cycles * 2) { applyLook(false); return; }
+          vbox.style.transform = "scale(" + (i % 2 === 0 ? hi : lo).toFixed(3) + ")";
+          i++; setTimeout(tick, dt);
+        };
+        setTimeout(tick, 40);
+        return cycles * 2 * dt + dt; } },
+    melt: { w: 4, mobile: true, run() {   // slow MELT — a skewY + downward drip creeping over a long time (blur creeps in on desktop). Scale is held constant for the whole creep and covers the shear+shift, so no edge ever opens
+        const sk = (Math.random() < .5 ? -1 : 1) * rnd(4, 7) * (0.7 + 0.3 * DRAMA), ty = rnd(3, 7);
+        const sc = 1.16 + Math.abs(sk) / 40 + ty / 100 * 2.4, dur = (800 + Math.random() * 600) * SLOTH, warm = 120 * SLOTH;
+        evInfo = "skewY(" + sk.toFixed(1) + "deg) translateY(" + ty.toFixed(1) + "%) scale(" + sc.toFixed(3) + ")";
+        vbox.style.transition = "transform " + Math.round(warm) + "ms ease-in-out";
+        vbox.style.transform = "scale(" + sc.toFixed(3) + ")";   // scale up first (no skew yet -> covered), hold sc for the whole melt
+        setTimeout(() => {
+          vbox.style.transition = "transform " + Math.round(dur) + "ms cubic-bezier(.35,0,.2,1)";
+          vbox.style.transform = "skewY(" + sk.toFixed(1) + "deg) translateY(" + ty.toFixed(1) + "%) scale(" + sc.toFixed(3) + ")";
+          if (!MOBILE) { fxTrans("backdrop-filter " + Math.round(dur) + "ms ease,-webkit-backdrop-filter " + Math.round(dur) + "ms ease"); fxSet("blur(" + (1.1 * DRAMA).toFixed(1) + "px) brightness(.93)"); }
+        }, warm + 10);
+        setTimeout(() => { if (!MOBILE) fxClear(); vbox.style.transition = "transform " + Math.round(warm) + "ms ease-in-out"; applyLook(false); }, warm + dur + 20);
+        return warm + dur + warm + 40; } },
+    doubleexpose: { w: 3, mobile: false, run() {   // the ghost's big sibling: a long DOUBLE-EXPOSURE dissolve — two big-offset copies held via stacked drop-shadows, then a slow fade (fxlayer; drop-shadow doubles the layer -> desktop)
+        const off = ((10 + Math.random() * 22) * (0.6 + 0.5 * DRAMA)) | 0, dur = (900 + Math.random() * 700) * SLOTH;
+        fxTrans("backdrop-filter " + Math.round(dur * .3) + "ms ease,-webkit-backdrop-filter " + Math.round(dur * .3) + "ms ease");
+        evInfo = "drop-shadow(" + off + "px " + ((off * .4) | 0) + "px 0 rgba(255,255,255,.26)) drop-shadow(" + (-off) + "px " + (-((off * .4) | 0)) + "px 0 rgba(150,200,255,.22))";
+        fxSet(evInfo + " brightness(1.03)");
+        clearTimeout(fxTimer); fxTimer = setTimeout(fxClear, dur); return dur; } },
     // -- channel surfing --
     surf: { w: 2, mobile: false, can() { return !!pipEl && !!pickAlt(); }, run() {   // channel-surf PEEK. The cut in/out stays instant (a channel change IS a cut), but DWELL on the peeked channel ~10x longer
         const n = pickAlt(), src = n && srcFor(n); if (!src) return 300; setPip(pipEl, src, true);
@@ -691,7 +840,8 @@
   // family bias: ambient/neoclassical (clean) go SPARSE-BUT-DEEPLY-WEIRD — pull
   // the alien/broadcast oddities up, push the frantic analog thrash down; glitch
   // leans into the thrash. Everything keeps some baseline weight.
-  const WEIRD = new Set(["glyph", "subtitle", "dispstorm", "colorbars", "standby", "timestamp", "channelosd", "posterize"]);
+  const WEIRD = new Set(["glyph", "subtitle", "dispstorm", "colorbars", "standby", "timestamp", "channelosd", "posterize",
+    "lean", "melt", "breathe", "doubleexpose"]);   // the slow geological warps suit clean/ambient's "sparse but deeply weird"
   const FRANTIC = new Set(["hsync", "zoom", "mirror", "tracking", "vroll", "surf", "scanshift", "ghost", "pip"]);
   function weightFor(name) {
     let w = EV[name].w;
@@ -714,8 +864,9 @@
   function runNamed(name) {
     const e = EV[name]; if (!e) return 500;
     lastEvt = name;   // shared no-repeat across scheduler + musical pulse
+    evInfo = "";
     let dur = 500; try { dur = e.run() || 500; } catch (err) {}
-    clog(name, dur); return dur;
+    clog(name, dur, evInfo); return dur;
   }
   function fireEvent() { const n = drawEvent(); return n ? runNamed(n) : 700; }
 
@@ -753,7 +904,7 @@
     chaosOn = false; clearTimeout(chaosTimer); clearInterval(stormIv); clearInterval(tsIv);
     fxClear();
     [barsEl, cardEl, subEl, chanEl, tsEl, trackEl, ...glyphEls].forEach(el => { if (el) el.style.opacity = "0"; });
-    if (vbox) vbox.classList.remove("vl-roll");
+    if (vbox) { vbox.classList.remove("vl-roll"); applyLook(false); }   // drop any in-flight lean/warp back to the un-transformed base
     hidePip();
   }
 
