@@ -58,6 +58,8 @@
   #cpu #cpuNodes{color:var(--dim)}
   #cpu #cpuEco{color:var(--amber)}
   #cpu #cpuEco:empty{display:none}
+  #cpu #cpuStems{color:var(--mint);letter-spacing:.06em;font-size:.82em;opacity:.85}
+  #cpu #cpuStems:empty{display:none}
   /* the chips: the ONLY floating affordances (with the brand) */
   #chips{position:fixed;right:.7rem;bottom:.7rem;z-index:6;display:flex;gap:.5rem}
   .chip{width:48px;height:48px;border-radius:50%;font-size:1.25rem;line-height:1;display:grid;place-items:center;
@@ -173,7 +175,7 @@ Drag waypoints to move them, right-click to erase. Set the pace in the panel.
      (the bar-clock/wall-clock EMA the engine already computes), live worklet-node
      count, eco level when shedding. Colour tracks the eco gate: mint >=.99,
      amber <.99, pink <.97 (where eco kicks in). Updated ~1Hz by cpuMeterTick. -->
-<div id="cpu" aria-hidden="true"><span id="cpuLoad">1.00×</span><span id="cpuNodes">·</span><span id="cpuEco"></span></div>
+<div id="cpu" aria-hidden="true"><span id="cpuLoad">1.00×</span><span id="cpuNodes">·</span><span id="cpuStems"></span><span id="cpuEco"></span></div>
 <div id="chips">
   <button class="chip" id="playChip" title="LIVE / STOP">▶</button>
   <button class="chip" id="mixChip" title="mixer">𝄚</button>
@@ -649,6 +651,15 @@ const DBG_SENTINEL=QSFLAGS.get("debugSentinel")==="1";
 // ctx.destination directly even on a mobile UA (the R8 escape hatch; pairs
 // with the engine's opt-in element recycle, faust/live.js 1.7).
 const FORCE_CLASSIC=QSFLAGS.get("forceClassicOut")==="1";
+// ?stems=1 arms the ZERO-STATIC Stage 3 rolling stem cache (faust/live.js
+// initStems): the heavy CACHED voices render offline in a module Worker and
+// schedule back into the live mix, shedding their steady-state audio-thread
+// cost. Default OFF — the flag ships default-off, a week of listening before
+// default-on (ZERO-STATIC Gate 3). ?stemLookahead=N widens the input->audible
+// runway (default ~10s) the pipeline needs. The ⬡ meter grows a STEMS tag +
+// worker-headroom tooltip when active.
+const STEMS=QSFLAGS.get("stems")==="1";
+const STEM_LOOKAHEAD=+(QSFLAGS.get("stemLookahead")||0)||undefined;
 async function goLive(){
   bootStart();
   try{
@@ -662,7 +673,7 @@ async function goLive(){
     }
     vidReset();   // fresh shuffled video bag per play session — different clip order every time
     set({live:true,barCount:0,holdUntil:{}}); rebuildQueue();   // fresh instrument-hold timers per session
-    faustHandle=await FaustLive.exploreLive(()=>S.playing, m=>{set({status:m}); bootStatus(m);}, { debugSentinel:DBG_SENTINEL, forceClassicOut:FORCE_CLASSIC, onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
+    faustHandle=await FaustLive.exploreLive(()=>S.playing, m=>{set({status:m}); bootStatus(m);}, { debugSentinel:DBG_SENTINEL, forceClassicOut:FORCE_CLASSIC, stems:STEMS, stemLookahead:STEM_LOOKAHEAD, onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
       bootBar();   // first bar scheduled -> advance the warm-up bar, then it waits on real RMS
       set({barInfo:info,barCount:S.barCount+1});
       if(S.waypoints.length>=2) travelStep();
@@ -1198,6 +1209,13 @@ function cpuMeterTick(){
     // ⬡ computing:resident/budget — worklets actually rendering vs resident
     // (sleepers cost ~0) vs the LRU-harvest hard cap on residents
     document.getElementById("cpuNodes").textContent="⬡"+awake+":"+nodes+(cap?"/"+cap:"");
+    // STEMS tag + worker-headroom (the meter's throughput component): the Stage 3
+    // cache pins the audio-thread cost by shipping heavy voices to the worker, so
+    // its headroom (x-realtime) and any deadline-ladder activity belong on the meter.
+    let stemTag="";
+    try{ const ss=h.stemStats&&h.stemStats();
+      if(ss&&ss.active){ stemTag=ss.dead?"STEMS✕":"STEMS"+(ss.headroom?" "+ss.headroom.toFixed(1)+"×":""); } }catch(e){}
+    document.getElementById("cpuStems").textContent=stemTag;
     document.getElementById("cpuEco").textContent=eco>0?"eco"+eco:"";
     // tooltip: output route + worklet truth always; sentinel/renderCapacity
     // readouts only when armed (?debugSentinel=1 — h.sentinel() is null off)
@@ -1209,6 +1227,8 @@ function cpuMeterTick(){
       if(sn&&sn.latest) tip+=" · snt clk "+sn.latest.clicks+"|Σ"+sn.total.clicks+" gap "+sn.latest.gaps+"|Σ"+sn.total.gaps+" pk "+sn.latest.peak.toFixed(2);
       const rc=h.renderCapacity&&h.renderCapacity();
       if(rc&&rc.latest) tip+=" · "+(rc.api==="renderCapacity"?"rc "+Math.round(rc.latest.averageLoad*100)+"%/"+Math.round(rc.latest.peakLoad*100)+"%pk ":"ps ")+"urΣ"+rc.total.underrunSum.toFixed(3)+" ue"+(rc.total.underrunEvents||0);
+      const ss=h.stemStats&&h.stemStats();
+      if(ss&&ss.active) tip+=" · stems "+(ss.dead?"DEAD":"hr"+ss.headroom.toFixed(1)+"× q"+ss.queued+" miss"+ss.misses+" vamp"+ss.vamps+" fb"+ss.fallbacks+" rst"+ss.resets)+(ss.failed&&ss.failed.length?" live["+ss.failed.join(",")+"]":"");
     }catch(e){}
     cpuEl.title=tip;
   }
