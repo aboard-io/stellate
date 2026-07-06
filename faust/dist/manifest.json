@@ -122,6 +122,17 @@
    "/choir/level"
   ]
  },
+ "clickmon": {
+  "inputs": 1,
+  "outputs": 1,
+  "params": [
+   "/clickmon/clicks",
+   "/clickmon/gaps",
+   "/clickmon/peakjump",
+   "/clickmon/rms",
+   "/clickmon/thr"
+  ]
+ },
  "dx7_alg1": {
   "inputs": 0,
   "outputs": 1,
