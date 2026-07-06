@@ -212,7 +212,7 @@ const POS={ ambient:[55,55], neoclassical:[65,165], vaporwave:[150,100], lofi:[1
   minimal:[455,155], deephouse:[375,240], coldwave:[315,85], ebm:[470,270],
   krautrock:[390,165], newjack:[300,190], breakcore:[495,340], acidhouse:[385,200],
   surfrock:[275,350], spacelounge:[130,165], arabpop:[215,285], tango:[95,300],
-  afrobeat:[265,215], desertblues:[110,375], sludgemetal:[30,150],
+  desertblues:[110,375], sludgemetal:[30,150],   // afrobeat removed from the map (Paul 2026-07-06) — gone from chart/tours/journeys (kernel entry kept for CLI/press)
   industrialmetal:[498,190], darksynth:[385,35],
   // genre-tool commissions: chart positions for genres genre-tool.js appends to
   // GENRES/anchors/clips but can't place on the star map. New genres go inside
@@ -784,13 +784,23 @@ function drawMap(){
   }
   S.waypoints.forEach((w,i)=>{
     const cx=X(w.x), cy=Y(w.y);
-    // path points at 2x: the leg number was too small to read (radius 14/9 -> 28/18,
-    // number font 11 -> 22, baseline offset scales to match)
-    svg.appendChild(el("circle",{cx,cy,r:28*fs,fill:"#ffd86b",opacity:.22}));
-    const c=el("circle",{cx,cy,r:18*fs,fill:"#ffd86b",stroke:"#0c0a1a","stroke-width":1.6,cursor:"grab"});
+    // Paul 2026-07-06: "don't put the numbers straight on genres; have them pass
+    // THROUGH genres." The leg polyline (above) runs vertex-to-vertex through the
+    // true star positions, so the path literally passes through each genre. The
+    // numbered badge no longer sits ON the star (it used to be a fat disc plopped
+    // over it) — it's nudged up-LEFT (the genre's own label reads to the RIGHT, so
+    // this clears it), tied back by a hairline leader, with a small node dot
+    // marking where the path crosses the star. Grab is via hitWp (proximity to the
+    // TRUE waypoint pos, not this drawn badge — see hitWp), so dragging is
+    // unaffected by the visual offset.
+    const bx=cx-22*fs, by=cy-20*fs;
+    svg.appendChild(el("line",{x1:cx,y1:cy,x2:bx,y2:by,stroke:"#ffd86b","stroke-width":1,opacity:.5}));   // leader: badge -> the star it marks
+    svg.appendChild(el("circle",{cx,cy,r:3.6*fs,fill:"#ffd86b",stroke:"#0c0a1a","stroke-width":1.2}));    // node dot: the path crossing, ON the genre
+    svg.appendChild(el("circle",{cx:bx,cy:by,r:17*fs,fill:"#ffd86b",opacity:.22}));                        // badge halo (off-star)
+    const c=el("circle",{cx:bx,cy:by,r:12*fs,fill:"#ffd86b",stroke:"#0c0a1a","stroke-width":1.6,cursor:"grab"});
     c.dataset.wp=i; svg.appendChild(c);
-    const n=el("text",{x:cx,y:cy+7*fs,"text-anchor":"middle","class":"wpn"});
-    n.style.fontSize=(22*fs)+"px"; n.textContent=i+1;
+    const n=el("text",{x:bx,y:by+6*fs,"text-anchor":"middle","class":"wpn"});
+    n.style.fontSize=(16*fs)+"px"; n.textContent=i+1;
     svg.appendChild(n);
   });
   // the TRAVELER: the focal MOVING element — reads at least as prominently as
@@ -1265,8 +1275,8 @@ async function playheadTick(){
 
 // ---------- boot ----------
 // (found buffers decode on demand in found-player.js — no csound prewarm pool)
-// The page opens with a GRAND TOUR already drawn: a long constellation of
-// 10-16 waypoints where EVERY leg is a SHORT hop to a near-neighbour star
+// The page opens with a GRAND TOUR already drawn: a constellation of
+// 8 waypoints where EVERY leg is a SHORT hop to a near-neighbour star
 // (<= TOUR_MAXLEG logical px). The music lives inside a single genre→genre
 // transition, so a walk of many short edges keeps the mix in one aesthetic
 // neighbourhood at a time and drifts slowly across 2-3 of them — the opposite
@@ -1275,8 +1285,10 @@ async function playheadTick(){
 // Presentational only (Math.random), so every load draws a fresh tour; nothing
 // persists, so a cleared/redrawn path is never re-imposed. window.__TOUR reports
 // the max leg length + genre names for the headless gate.
-const TOUR_MINLEG=24;   // >= the chart's minimum star spacing — never a near-duplicate hop
-const TOUR_MAXLEG=90;   // one musical neighbourhood step; legs read short on the chart
+// 2026-07-06 (Paul): 8 waypoints (down from 10-16), and each hop reaches half
+// as far (MAXLEG 90->45) — a tighter, more local grand tour of shorter steps.
+const TOUR_MINLEG=12;   // half the old 24; still >= the closest star pair, so no degenerate near-duplicate hop
+const TOUR_MAXLEG=45;   // half the old 90 — each step reaches half as far across the chart
 // ENERGY: a 0..1 "how danceable" score per genre, derived straight from the
 // kernel's own vocabulary rather than a hand-curated genre list (dance-balance
 // census, 2026-07-06: the unweighted tour landed ~1/3 of its stops on wash/
@@ -1315,10 +1327,10 @@ function autoPath(){
   // stretch even on an unlucky weighted draw; wash stars keep nonzero weight
   // so the tour still moves between energy levels rather than turning into
   // wall-to-wall bangers. Retry from fresh random starts and keep the longest
-  // walk that lands in [10,16] (a corner start can dead-end early; 60 tries
-  // reliably find a full-length tour — verified ~3000 runs).
+  // walk that reaches 8 (the tighter MAXLEG means a corner start dead-ends
+  // more readily, so the 60-try keep-longest fallback matters more now).
   function walkFrom(){
-    const target=10+Math.floor(Math.random()*7);   // 10..16 waypoints
+    const target=8;   // 8 waypoints (Paul); variety is the start star + weighted neighbour picks, not the count
     const start=gs[Math.floor(Math.random()*gs.length)];
     const vis=new Set([start]), walk=[start];
     let sinceGroove=ENERGY[start]>=GROOVE_ANCHOR?0:1;
@@ -1344,9 +1356,9 @@ function autoPath(){
   for(let att=0;att<60;att++){
     const {walk,target}=walkFrom();
     if(walk.length>best.length) best=walk;
-    if(best.length>=10&&walk.length>=target) break;
+    if(best.length>=8&&walk.length>=target) break;
   }
-  const names=best.slice(0,16);
+  const names=best.slice(0,8);
   const pts=names.map(g=>({x:POS[g][0],y:POS[g][1]}));
   window.__TOUR={names, maxleg:TOUR_MAXLEG,
     legs:pts.slice(1).map((p,i)=>Math.hypot(p.x-pts[i].x,p.y-pts[i].y)),

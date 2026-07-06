@@ -2,8 +2,8 @@
 // faust/default-path-run.js — GATE for the initial-load GRAND TOUR (Paul's
 // "much longer path with many shorter steps ... one genre to another over a
 // single edge"). Drives explorer.html headless three times and asserts:
-//   1. the boot tour exists: 10-16 waypoints, every leg <= TOUR_MAXLEG px, no
-//      repeated stars (window.__TOUR reports names + per-leg lengths);
+//   1. the boot tour exists: ~8 waypoints (7-9 tolerance), every leg <=
+//      TOUR_MAXLEG px, no repeated stars (window.__TOUR reports names + legs);
 //   2. two fresh loads draw DIFFERENT tours (presentational variety);
 //   3. waypoint delete (right-click) and drag mutate the tour like a normal
 //      hand-drawn path in S.waypoints;
@@ -31,7 +31,7 @@ async function readTour(page) {
 }
 function checkShape(t, tag, fails) {
   const n = t.names.length;
-  if (n < 10 || n > 16) fails.push(`${tag}: waypoint count ${n} not in [10,16]`);
+  if (n < 7 || n > 9) fails.push(`${tag}: waypoint count ${n} not in [7,9] (target 8)`);
   const uniq = new Set(t.names);
   if (uniq.size !== n) fails.push(`${tag}: repeated stars (${n} pts, ${uniq.size} unique)`);
   const overs = t.legs.filter(L => L > t.maxleg + 0.01);
