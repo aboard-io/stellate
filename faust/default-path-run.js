@@ -30,14 +30,16 @@ async function readTour(page) {
   }));
 }
 function checkShape(t, tag, fails) {
-  const n = t.names.length;
-  if (n < 7 || n > 9) fails.push(`${tag}: waypoint count ${n} not in [7,9] (target 8)`);
+  // waypoints now sit BETWEEN genres (midpoints of the anchor walk), so the
+  // count is t.wp.length (8), while t.names is the 9 GENRE anchors the path
+  // threads between. Legs are midpoint→midpoint; anchor uniqueness still holds.
+  const n = t.wp.length;
+  if (n < 6 || n > 9) fails.push(`${tag}: waypoint count ${n} not in [6,9] (target 8 between-genre midpoints)`);
   const uniq = new Set(t.names);
-  if (uniq.size !== n) fails.push(`${tag}: repeated stars (${n} pts, ${uniq.size} unique)`);
+  if (uniq.size !== t.names.length) fails.push(`${tag}: repeated anchors (${t.names.length} anchors, ${uniq.size} unique)`);
+  if (t.names.length !== n + 1) fails.push(`${tag}: ${t.names.length} anchors should be waypoints+1 (${n + 1}) — midpoints of consecutive anchors`);
   const overs = t.legs.filter(L => L > t.maxleg + 0.01);
   if (overs.length) fails.push(`${tag}: ${overs.length} legs exceed maxleg ${t.maxleg} (max=${Math.max(...t.legs).toFixed(1)})`);
-  // waypoints must equal the named stars (a real, editable path in S.waypoints)
-  if (t.wp.length !== n) fails.push(`${tag}: S.waypoints length ${t.wp.length} != names ${n}`);
   return { n, uniq: uniq.size, min: t.legs.length ? Math.min(...t.legs) : 0, max: t.legs.length ? Math.max(...t.legs) : 0,
     med: t.legs.length ? [...t.legs].sort((a, b) => a - b)[Math.floor(t.legs.length / 2)] : 0 };
 }
@@ -80,21 +82,23 @@ async function main() {
   // in empty sky and the edit gates fail while the handlers are fine.
   const before = await page.evaluate(() => __S.waypoints.length);
   const delI = 3;
-  const delName = B.names[delI];
+  // waypoints are between-genre midpoints now (no genre name), so identify the
+  // deleted one by its COORDINATES: capture them, right-click it, assert it's
+  // gone and the count dropped by one.
   const delPt = await page.evaluate((i) => {
     const svg = document.getElementById("map"), r = svg.getBoundingClientRect();
     const w = __S.waypoints[i];
     return { x: r.left + (w.x * r.width / 720) * __ZOOM.k + __ZOOM.ox,
-             y: r.top + (w.y * r.height / 520) * __ZOOM.k + __ZOOM.oy };
+             y: r.top + (w.y * r.height / 520) * __ZOOM.k + __ZOOM.oy, lx: w.x, ly: w.y };
   }, delI);
   await page.mouse.click(delPt.x, delPt.y, { button: "right" });
   await page.waitForTimeout(150);
-  const after = await page.evaluate(() => ({ len: __S.waypoints.length,
-    names: __S.waypoints.map(w => { const P = __X.POS; for (const g in P) if (P[g][0] === w.x && P[g][1] === w.y) return g; return null; }) }));
-  const deleteOK = after.len === before - 1 && !after.names.includes(delName);
-  if (!deleteOK) fails.push(`delete: len ${before}->${after.len} (want ${before - 1}), still has ${delName}=${after.names.includes(delName)}`);
-  console.log(`\n=== EDIT: delete waypoint #${delI + 1} (${delName}) ===`);
-  console.log(`  len ${before} -> ${after.len}  removed=${!after.names.includes(delName)}  deleteOK=${deleteOK}`);
+  const after = await page.evaluate((del) => ({ len: __S.waypoints.length,
+    stillThere: __S.waypoints.some(w => Math.abs(w.x - del.lx) < 0.01 && Math.abs(w.y - del.ly) < 0.01) }), delPt);
+  const deleteOK = after.len === before - 1 && !after.stillThere;
+  if (!deleteOK) fails.push(`delete: len ${before}->${after.len} (want ${before - 1}), midpoint stillThere=${after.stillThere}`);
+  console.log(`\n=== EDIT: delete waypoint #${delI + 1} (midpoint ${delPt.lx.toFixed(0)},${delPt.ly.toFixed(0)}) ===`);
+  console.log(`  len ${before} -> ${after.len}  removed=${!after.stillThere}  deleteOK=${deleteOK}`);
 
   // DRAG: pointer-drag waypoint #1 to a new spot -> S.waypoints[1] follows.
   const dragI = 1;
