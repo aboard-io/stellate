@@ -44,6 +44,37 @@
     try { ctx = new AC({ sampleRate: 44100, latencyHint: "playback" }); } catch (e) { ctx = new AC(); }
     try { ctx.resume(); } catch (e) {}
 
+    // ---- OUTPUT-TRUTH INSTRUMENTS, part 1: zombie registry + event journal
+    // (Stage 0.B/0.C — ALWAYS ON; near-zero cost: one counter bump per node
+    // lifecycle, one ring write per structural event). countWorklets() below
+    // can only count nodes it KNOWS about (pools + infra it tracks); the
+    // registry counts every node mkNode ever built minus every node actually
+    // destroy()ed, so a persistent `alive > counted` is the direct zombie
+    // detector — a leaked faustwasm worklet renders every block forever and
+    // is otherwise invisible (the retirePool physics, :~636). NOTE the
+    // comparison is only exact BETWEEN churn: every teardown here defers its
+    // destroy() by 400-2100ms (tails must ring out), and prewarm nodes live
+    // ~2s outside any pool, so `alive` legitimately lags `counted` by a few
+    // seconds around a swap. The gate is a SUSTAINED mismatch, not a blip.
+    let _created = 0, _destroyed = 0;
+    const destroyNode = (node) => {
+      if (node && node.destroy) { try { node.destroy(); } catch (e) {} _destroyed++; }
+    };
+    // The JOURNAL: a 2048-entry ring of {t: ctx.currentTime, ev, detail} —
+    // every structural event that could plausibly cause a transient glitch
+    // (mkNode, pool retire/reap/harvest, insert rebuild, reverb-color swap,
+    // master_mb toggle, eco shift, state arrival, bar injection). The soak's
+    // sentinel attributes each click/gap to the nearest journal event: "it
+    // glitched" becomes "it glitched 80ms after a dinosynth mkNode". Entries
+    // are stamped at CALL time (when the main thread does the work), which is
+    // when the audio thread would feel it.
+    const JLEN = 2048, J = new Array(JLEN);
+    let jHead = 0, jCount = 0, _lastStateObj = null;
+    const jlog = (ev, detail) => {
+      J[jHead] = { t: Math.round(ctx.currentTime * 1e3) / 1e3, ev, detail };
+      jHead = (jHead + 1) % JLEN; if (jCount < JLEN) jCount++;
+    };
+
     // ---- MEDIA-ELEMENT OUTPUT ROUTE (mobile background survival) — MOBILE ONLY ----
     // iOS/Android silence a bare WebAudio graph the moment the screen locks or
     // the tab backgrounds, but they keep a *playing* <audio> element alive — the
@@ -73,12 +104,15 @@
     // exactly where Paul heard the regression). Where MediaStreamDestination is
     // absent (older desktop, node) the same fallback applies.
     // opts.directOut forces the classic path; opts.forceMediaEl forces the route
-    // (both for the soak A/B / mobile-branch verification).
+    // (both for the soak A/B / mobile-branch verification). opts.forceClassicOut
+    // is the USER-facing escape hatch (?forceClassicOut=1 in explorer.html):
+    // classic ctx.destination even on a mobile UA — same effect as directOut,
+    // named for the querystring flag it rides in on.
     const ua = (typeof navigator !== "undefined" && navigator.userAgent) || "";
     const isMobile = /Android|iPhone|iPad|iPod|Mobile|Silk|Kindle/i.test(ua) ||
       (typeof navigator !== "undefined" && navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || "")); // iPadOS masquerades as Mac
     let msDest = null, mediaEl = null;
-    const canMediaEl = !opts.directOut && (opts.forceMediaEl || isMobile) &&
+    const canMediaEl = !opts.directOut && !opts.forceClassicOut && (opts.forceMediaEl || isMobile) &&
       typeof document !== "undefined" &&
       typeof ctx.createMediaStreamDestination === "function" && typeof root.Audio !== "undefined";
     if (canMediaEl) {
@@ -95,6 +129,40 @@
         const pr = mediaEl.play(); if (pr && pr.catch) pr.catch(() => {});   // start it in the gesture
       } catch (e) { msDest = null; mediaEl = null; }
     }
+    // ---- 1.7 MOBILE MEDIA RECYCLE (opt-in: opts.elRecycleSec > 0, default OFF).
+    // R8: the media element's playback clock drifts from the AudioContext
+    // sample clock over a long session and the MediaStream sink's reconciliation
+    // is audible. A PERIODIC element swap resets that drift to zero: every
+    // elRecycleSec seconds a fresh MUTED <audio> is attached to the SAME
+    // MediaStream and play()ed; only once its "playing" event fires (it is
+    // actually rendering) does audibility swap — unmute new, mute + detach +
+    // remove old — so the handoff is gapless (both elements pull the same
+    // stream for the overlap). The swap updates the outer mediaEl binding and
+    // handle.mediaEl so stop() and the soak's element tap always see the
+    // CURRENT element.
+    let elRecycleTimer = 0;
+    if (mediaEl && opts.elRecycleSec > 0) {
+      elRecycleTimer = setInterval(() => {
+        try {
+          const fresh = new root.Audio();
+          fresh.autoplay = true; fresh.muted = true;
+          fresh.setAttribute("playsinline", ""); fresh.playsInline = true;
+          fresh.srcObject = msDest.stream;
+          fresh.style.display = "none";
+          if (document.body) document.body.appendChild(fresh);
+          const old = mediaEl;
+          fresh.addEventListener("playing", () => {
+            fresh.muted = false;
+            try { old.muted = true; old.pause(); old.srcObject = null; old.remove(); } catch (e) {}
+            mediaEl = fresh;
+            try { handle.mediaEl = fresh; } catch (e) {}   // handle exists long before the first swap
+            jlog("elRecycle", "swap");
+          }, { once: true });
+          const pr = fresh.play();
+          if (pr && pr.catch) pr.catch(() => { try { fresh.remove(); } catch (e) {} });   // play refused: keep the old element
+        } catch (e) {}
+      }, opts.elRecycleSec * 1000);
+    }
 
     status("loading Faust modules…");
     const fw = await import(BASE + "node_modules/@grame/faustwasm/dist/esm/index.js");
@@ -103,15 +171,118 @@
     const factory = (mod) => factories[mod] || (factories[mod] =
       FaustWasmInstantiator.loadDSPFactory(BASE + `dist/${mod}-module.wasm`, BASE + `dist/${mod}-meta.json`));
     const errors = [];
-    async function mkNode(mod, tag) {
+    // ---- 1.5 INSTANTIATION AIRLOCK ----
+    // Worklet creation inside the render window is a confirmed glitch source
+    // (R2: genre entry bursts 3-6 mkNodes and the load meter blips). Every
+    // POST-BOOT creation now files through a promise queue: ONE creation in
+    // flight, >=150ms between creations (250ms when the load EMA reads worse
+    // than 0.95 — in this repo loadRatio 1.0 = healthy, LOWER = starved), so
+    // the audio thread absorbs registrations one at a time instead of as a
+    // burst. BOOT IS EXEMPT: everything up to and including the FIRST
+    // injectChord (fx_bus, the opening genre's pools) runs raw — boot is
+    // already deliberately staggered and the 6s LOOKAHEAD hasn't been earned
+    // yet, so queue-spacing it would only delay first audio. The 1.4 spike
+    // guard parks the queue via airlockPausedUntil (a raw sub-0.85 load
+    // sample pauses creations ~2s — the one thing we can shed instantly).
+    let bootDone = false;          // flips in the first injectChord's finally
+    let airlockPausedUntil = 0;    // performance.now() horizon set by 1.4
+    let _mkChain = Promise.resolve(), _mkLast = 0;
+    async function mkNodeRaw(mod, tag) {
       const gen = new FaustMonoDspGenerator();
       const node = await gen.createNode(ctx, mod, await factory(mod));
       node.onprocessorerror = (e) => errors.push(tag + ": " + (e && e.message || "processorerror"));
+      _created++; jlog("mkNode", mod + ":" + tag);   // zombie registry: every worklet birth
       return node;
+    }
+    function mkNodeFresh(mod, tag) {
+      if (!bootDone) return mkNodeRaw(mod, tag);   // boot exemption (see above)
+      const run = _mkChain.then(async () => {
+        for (;;) {
+          const now = performance.now();
+          const spacing = loadRatio < 0.95 ? 250 : 150;
+          const wait = Math.max(_mkLast + spacing - now, airlockPausedUntil - now);
+          if (wait <= 0) break;
+          await new Promise((r) => setTimeout(r, Math.min(wait, 400)));
+        }
+        _mkLast = performance.now();
+        return mkNodeRaw(mod, tag);
+      });
+      _mkChain = run.catch(() => {});   // one failed creation must not wedge the queue
+      return run;
+    }
+    // ---- 1.6 PREPARED-NODE STASH ----
+    // handle.prepare(targetState) pre-instantiates the TARGET genre's worklets
+    // while the glide is still in flight, so arrival costs ZERO instantiation
+    // inside the render window. The stash is keyed by MODULE, not pool key:
+    // ensurePool for a key the current genre is still playing must NOT be run
+    // early (it retires the sounding pool and the next bar rebuilds the old
+    // module — audible cut + double churn), so prepare parks finished nodes
+    // here and mkNode ADOPTS them at the real bar arrival. Stashed nodes are
+    // STOPPED (fProcessing off — compute() returns immediately, the sleep/wake
+    // physics) so waiting costs ~nothing; adoption start()s them. They are
+    // real live worklets, so workletTruth counts them (counted + preparedCount)
+    // — but the render BUDGET (countWorklets/harvest) does not: a stopped node
+    // consumes no render time and must never evict playing music. Unadopted
+    // nodes expire after PREPARED_TTL (a retarget away from the prepared
+    // genre) — destroyed, never leaked.
+    const prepared = new Map();   // module -> [{node, born}]
+    let preparedCount = 0;
+    const MAX_PREPARED = 10, PREPARED_TTL = 45;   // nodes / seconds
+    function stashPrepared(mod, node) {
+      try { if (node.stop) node.stop(); } catch (e) {}
+      if (!prepared.has(mod)) prepared.set(mod, []);
+      prepared.get(mod).push({ node, born: ctx.currentTime });
+      preparedCount++;
+    }
+    function popPrepared(mod) {
+      const list = prepared.get(mod);
+      if (!list || !list.length) return null;
+      const { node } = list.shift(); preparedCount--;
+      if (!list.length) prepared.delete(mod);
+      try { if (node.start) node.start(); } catch (e) {}
+      return node;
+    }
+    function expirePrepared() {
+      const now = ctx.currentTime;
+      for (const [mod, list] of prepared) {
+        while (list.length && now - list[0].born > PREPARED_TTL) {
+          const { node } = list.shift(); preparedCount--;
+          jlog("prepExpire", mod);
+          destroyNode(node);
+        }
+        if (!list.length) prepared.delete(mod);
+      }
+    }
+    async function mkNode(mod, tag) {
+      const pre = popPrepared(mod);
+      if (pre) {
+        pre.onprocessorerror = (e) => errors.push(tag + ": " + (e && e.message || "processorerror"));
+        jlog("adopt", mod + ":" + tag);   // prepared node adopted: zero-cost arrival
+        return pre;
+      }
+      return mkNodeFresh(mod, tag);
     }
     const P = (node, name) => {
       for (const k of node.parameters.keys()) if (k.endsWith("/" + name)) return node.parameters.get(k);
       return null;
+    };
+    // ---- 1.2 THE glide() TERMINATOR ----
+    // Faust worklet params are A-RATE, and a setTargetAtTime curve NEVER
+    // formally ends — accumulated never-ending curves measurably HALVED the
+    // audio thread once (the applyDx7 dx7-morph incident, :~830). glide() is
+    // the drop-in replacement for every setTargetAtTime aimed at a Faust
+    // param: same exponential ease, but a setValueAtTime chaser at t+10τ
+    // (-99.995% of the way there — audibly identical) formally TERMINATES the
+    // automation, returning the param timeline to the no-automation fast
+    // path. Contract: call cadence per param must exceed 10τ (all sites here
+    // are per-bar, bars >= ~1.7s, worst τ 0.05 → chaser at 0.5s — clear).
+    // Native AudioParams (GainNode/DelayNode/BiquadFilter) are cheap and NOT
+    // the hazard: they keep raw setTargetAtTime everywhere.
+    const glide = (p, v, t, tau) => {
+      if (!p) return;
+      const vv = Math.min(p.maxValue, Math.max(p.minValue, v));
+      p.setTargetAtTime(vv, t, tau);
+      p.setValueAtTime(vv, t + 10 * tau);
     };
 
     // ---- master graph: merger(6ch) -> fx_bus -> [fxDirect | master_mb] ->
@@ -133,16 +304,96 @@
     // when available (survives screen lock), else ctx.destination (classic).
     master.connect(analyser);
     if (msDest) analyser.connect(msDest); else analyser.connect(ctx.destination);
+
+    // ---- OUTPUT-TRUTH INSTRUMENTS, part 2: click sentinel + render capacity
+    // (Stage 0.B — OPT-IN via opts.debugSentinel, default OFF; when off, NONE
+    // of these nodes/listeners exist and the audio path is byte-identical).
+    // The sentinel is a hand-written non-Faust AudioWorkletProcessor SINK
+    // tapped off `master` (post-mute, pre-terminal): per 1s window it counts
+    // sample discontinuities (clicks), >=128-sample exact-zero runs inside
+    // loud program (dropout gaps), and running peak — ON the audio thread,
+    // where the render actually happens. renderCapacity is Chrome's own
+    // audio-thread load/underrun meter: the in-graph analyser is BLIND to
+    // underruns (a starved callback never reaches it), this isn't. Together
+    // with the always-on journal they let the soak ATTRIBUTE every transient
+    // glitch to its mechanism instead of guessing from symptoms.
+    let sentinelState = null, capState = null;
+    if (opts.debugSentinel) {
+      try {
+        await ctx.audioWorklet.addModule(BASE + "sentinel-processor.js");
+        const sn = new AudioWorkletNode(ctx, "glitch-sentinel", { numberOfInputs: 1, numberOfOutputs: 0 });
+        master.connect(sn);   // pure sink: connects to nothing downstream
+        sentinelState = { latest: null, total: { clicks: 0, gaps: 0, peak: 0, windows: 0 } };
+        sn.port.onmessage = (e) => {
+          const d = e.data; d.ctxTime = ctx.currentTime;   // window END on the shared clock (journal correlation)
+          sentinelState.latest = d;
+          const T = sentinelState.total;
+          T.clicks += d.clicks; T.gaps += d.gaps; T.windows++;
+          if (d.peak > T.peak) T.peak = d.peak;
+          // per-window stream for harnesses (lossless — polling at 1s races the 1s reports)
+          if (opts.onSentinel) try { opts.onSentinel(d, capState && capState.latest); } catch (err) {}
+        };
+      } catch (e) { errors.push("sentinel: " + (e && e.message || e)); }
+      if (ctx.renderCapacity && typeof ctx.renderCapacity.addEventListener === "function") {
+        capState = { api: "renderCapacity", latest: null, total: { underrunSum: 0, underrunEvents: 0, peakLoad: 0, avgLoad: 0, events: 0 } };
+        try {
+          ctx.renderCapacity.addEventListener("update", (e) => {
+            const d = { timestamp: e.timestamp, averageLoad: e.averageLoad, peakLoad: e.peakLoad, underrunRatio: e.underrunRatio };
+            capState.latest = d;
+            const T = capState.total;
+            T.underrunSum += d.underrunRatio;             // ANY underrun ever => sum > 0 (the gate)
+            if (d.underrunRatio > 0) T.underrunEvents++;
+            if (d.peakLoad > T.peakLoad) T.peakLoad = d.peakLoad;
+            T.avgLoad = T.events ? T.avgLoad * 0.9 + d.averageLoad * 0.1 : d.averageLoad;   // EMA
+            T.events++;
+          });
+          ctx.renderCapacity.start({ updateInterval: 1 });
+        } catch (e) { errors.push("renderCapacity: " + (e && e.message || e)); }
+      } else if (ctx.playbackStats) {
+        // AudioRenderCapacity never shipped in current Chrome (147 has no
+        // ctx.renderCapacity, flag or not) — its successor is the Playout
+        // Stats API: ctx.playbackStats.{underrunDuration,underrunEvents,
+        // totalDuration} as monotonic counters. Sample them at 1s and diff
+        // into the SAME shape renderCapacity would have fed (underrunRatio =
+        // underrun seconds / rendered seconds per window), so callers and the
+        // soak gate are API-agnostic. No load numbers here — averageLoad/
+        // peakLoad stay null and readers must treat them as absent.
+        capState = { api: "playbackStats", latest: null, total: { underrunSum: 0, underrunEvents: 0, peakLoad: 0, avgLoad: 0, events: 0 } };
+        let lastUD = ctx.playbackStats.underrunDuration, lastUE = ctx.playbackStats.underrunEvents, lastTD = ctx.playbackStats.totalDuration;
+        capState.timer = setInterval(() => {
+          try {
+            const ps = ctx.playbackStats; if (!ps) return;
+            const dUD = ps.underrunDuration - lastUD, dUE = ps.underrunEvents - lastUE, dTD = ps.totalDuration - lastTD;
+            lastUD = ps.underrunDuration; lastUE = ps.underrunEvents; lastTD = ps.totalDuration;
+            const d = { timestamp: ctx.currentTime, averageLoad: null, peakLoad: null,
+              underrunRatio: dTD > 0 ? dUD / dTD : 0, underrunEvents: dUE };
+            capState.latest = d;
+            const T = capState.total;
+            T.underrunSum += d.underrunRatio;
+            T.underrunEvents += dUE;
+            T.events++;
+          } catch (e) {}
+        }, 1000);
+      }
+    }
     let mbNode = null, mbGain = null;
-    // shared crossfade teardown: after the 500ms fade-out completes, detach a
+    // shared crossfade teardown: after the fade-out completes, detach a
     // retired node from its upstream `src` (the source differs per caller — fx
     // for the master glue, revMerge for the reverb color) and disconnect it +
-    // its gain. try/catch: a node may already be gone on rapid re-swaps.
+    // its gain — AND destroy() it. A bare disconnect leaves the faustwasm
+    // worklet computing every block forever (the retirePool physics below,
+    // :624-629) — every reverb-color swap during travel was leaking one of the
+    // most expensive nodes in the fleet, invisible to countWorklets(). 700ms =
+    // 14τ of the 0.05 crossfade (−120dB), so the destroy is inaudible.
+    // try/catch: a node may already be gone on rapid re-swaps. destroyNode
+    // sits OUTSIDE that try so a disconnect throw can never skip the destroy —
+    // the zombie registry must witness every death.
     const retire = (src, node, gain) =>
-      setTimeout(() => { try { src.disconnect(node); node.disconnect(); gain.disconnect(); } catch (e) {} }, 500);
+      setTimeout(() => { try { src.disconnect(node); node.disconnect(); gain.disconnect(); } catch (e) {} destroyNode(node); }, 700);
     async function ensureMasterMb(state) {
       const mb = SE.masterMb(state);
       if (mb && !mbNode) {
+        jlog("mbToggle", "on:" + mb.module);
         const node = await mkNode(mb.module, "mastermb");
         const g = ctx.createGain(); g.gain.value = 0;
         fx.connect(node); node.connect(g); g.connect(master);
@@ -152,9 +403,9 @@
         fxDirect.gain.setTargetAtTime(0, t, 0.05);
         mbNode = node; mbGain = g;
       } else if (mb && mbNode) {
-        const p = P(mbNode, "mbdrive");
-        if (p) p.setTargetAtTime(mb.mbdrive, ctx.currentTime, 0.05);
+        glide(P(mbNode, "mbdrive"), mb.mbdrive, ctx.currentTime, 0.05);   // Faust param: terminated glide (1.2)
       } else if (!mb && mbNode) {
+        jlog("mbToggle", "off");
         const old = mbNode, oldGain = mbGain;
         mbNode = null; mbGain = null;
         const t = ctx.currentTime;
@@ -193,15 +444,16 @@
     async function ensureReverbColor(state) {
       const rc = SE.reverbColor(state);
       const want = rc ? rc.module : null;
-      if (want === revColorName) {   // same color: glide params only
+      if (want === revColorName) {   // same color: glide params only (Faust params: terminated glides, 1.2)
         if (revColorNode && rc) {
-          const rg = P(revColorNode, "rgain"), rt = P(revColorNode, "rtone"), t = ctx.currentTime;
-          if (rg) rg.setTargetAtTime(Math.min(rg.maxValue, rc.rgain), t, 0.05);
-          if (rt) rt.setTargetAtTime(rc.rtone, t, 0.05);
+          const t = ctx.currentTime;
+          glide(P(revColorNode, "rgain"), rc.rgain, t, 0.05);
+          glide(P(revColorNode, "rtone"), rc.rtone, t, 0.05);
         }
         return;
       }
       const old = revColorNode, oldGain = revColorGain;
+      jlog("colorSwap", (revColorName || "zita") + ">" + (want || "zita"));
       revColorName = want;
       if (!want) { revColorNode = null; revColorGain = null; }
       else {
@@ -342,11 +594,11 @@
         const p = P(fx, k);
         if (!p) continue;
         const t = Math.max(when, ctx.currentTime);
-        const clamped = Math.min(p.maxValue, Math.max(p.minValue, vv));
         // journeys glide these every bar — a setValueAtTime STEP on a live
         // reverb/delay/tone param is an audible periodic click. Smooth over
-        // ~20ms instead (delay-time jumps especially).
-        p.setTargetAtTime(clamped, t, 0.02);
+        // ~20ms instead (delay-time jumps especially) — via glide(), so the
+        // curve formally ENDS (fx_bus params are Faust a-rate, 1.2).
+        glide(p, vv, t, 0.02);
       }
       // BLEED into the color node's input (eco-adjusted fxp shared, so eco-3's
       // thinner feedback tails carry through). Active only when a color is set.
@@ -425,15 +677,15 @@
       for (const [k, p] of [...offGenre, ...inGenreIdle]) {
         if (over <= 0 || i >= HARVEST_MAX_PER_PASS) break;
         pools.delete(k);
+        jlog("harvest", k);
         retirePool(p, 1500 + i * 200);   // stagger: never a teardown burst in one block
         harvestCount++; i++;
         over -= p.nodes.length + (p.ins && p.ins.chain ? p.ins.chain.built.length : 0);
       }
     }
-    async function ensurePool(key, u) {
-      let pool = pools.get(key);
-      if (pool && pool.module === u.module) { pool.lastServed = serial; await ensureInserts(key, pool, u); retune(pool, u); applyDx7(pool, u); return pool; }
-      if (pool) { pools.delete(key); retirePool(pool); }
+    // pool sizing, shared by ensurePool and prepare() (1.6 must stash exactly
+    // the node count the arrival will ask for):
+    function poolSizeFor(u) {
       let n = u.drum || u.hold ? (u.pool > 1 ? 2 : 1) : (POOL_SIZE[u.role] || u.pool || 2);
       // dx7.lib voices cost ~3-7x every other module (measured x3.5 realtime
       // offline vs x11-28 for supersaw/pad_saw/fm2op): cap dx7 pools at 2 —
@@ -455,6 +707,13 @@
       // hard ceiling the deterministic guard chose (press honors it via u.pool math;
       // live caps here so both engines instantiate the same voice count).
       if (u.poolCap != null) n = Math.min(n, u.poolCap);
+      return n;
+    }
+    async function ensurePool(key, u) {
+      let pool = pools.get(key);
+      if (pool && pool.module === u.module) { pool.lastServed = serial; await ensureInserts(key, pool, u); retune(pool, u); applyDx7(pool, u); return pool; }
+      if (pool) { pools.delete(key); retirePool(pool); }
+      const n = poolSizeFor(u);
       // HARD CEILING: make room BEFORE instantiating (LRU harvest, see above).
       harvestForBudget(n);
       const nodes = [];
@@ -527,6 +786,7 @@
       }
       if (pool.ins.sig !== sig) {
         // (re)build chain — new path fades in while the old fades out
+        jlog("insertRebuild", key + ":" + (sig || "none"));
         const built = [];
         for (const eff of list) built.push({ node: await mkNode(eff.module, key + ":" + eff.type), eff });
         const tail = ctx.createGain(); tail.gain.value = 0;
@@ -538,7 +798,12 @@
         tail.gain.setTargetAtTime(1, t, 0.02);
         if (old) {
           old.tail.gain.setTargetAtTime(0, t, 0.02);
-          setTimeout(() => { try { old.tail.disconnect(); for (const b of old.built) b.node.disconnect(); } catch (e) {} }, 400);
+          // destroy, not just disconnect — a bare disconnect leaves each old
+          // chain worklet computing forever (retirePool physics, :624-629);
+          // every insert type-change was leaking the whole outgoing chain.
+          // Per-node try/catch: one bad disconnect must not skip the rest of
+          // the chain's destroys (the registry would drift).
+          setTimeout(() => { try { old.tail.disconnect(); } catch (e) {} for (const b of old.built) { try { b.node.disconnect(); } catch (e) {} destroyNode(b.node); } }, 400);
         }
         pool.ins.chain = { built, tail };
         pool.ins.sig = sig;
@@ -564,12 +829,12 @@
         for (const [k, v] of Object.entries(b.eff.params || {})) {
           const p = P(b.node, k); if (!p) continue;
           const vv = Math.min(p.maxValue, Math.max(p.minValue, v));
-          if (initial) p.value = vv; else p.setTargetAtTime(vv, t, 0.02);
+          if (initial) p.value = vv; else glide(p, vv, t, 0.02);   // Faust param: terminated glide (1.2)
         }
         if (b.eff.barSec) {   // tempo-synced sweep: engine owns barSec (bpm glides too)
           const p = P(b.node, "barSec");
           if (p) { const vv = Math.min(p.maxValue, Math.max(p.minValue, curBarSec));
-            if (initial) p.value = vv; else p.setTargetAtTime(vv, t, 0.05); }
+            if (initial) p.value = vv; else glide(p, vv, t, 0.05); }   // Faust param: terminated glide (1.2)
         }
       }
     }
@@ -587,9 +852,10 @@
           if (!p) continue;
           const clamped = Math.min(p.maxValue, Math.max(p.minValue, vv));
           // glide retunes hit SOUNDING voices every bar — smooth continuous
-          // params (cutoff/level/…) or they zipper-click
+          // params (cutoff/level/…) or they zipper-click. Faust params, so
+          // the smooth path is glide() — the curve must formally end (1.2).
           if (DISCRETE[k]) p.setValueAtTime(clamped, t);
-          else p.setTargetAtTime(clamped, t, 0.01);
+          else glide(p, clamped, t, 0.01);
         }
         v.gains.dry.gain.setTargetAtTime(u.dry != null ? u.dry : 1, t, 0.01);
         v.gains.rev.gain.setTargetAtTime(u.rev || 0, t, 0.01);
@@ -617,22 +883,55 @@
           if (p) p.setValueAtTime(Math.min(p.maxValue, Math.max(p.minValue, val)), t);
         }
     }
+    // 1.1 DECLICK RETIRE: a module-change retire used to cut a RINGING pool by
+    // zeroing its Faust gates instantly — an amplitude discontinuity, i.e. the
+    // R5 transition click. Now each voice's NATIVE out gain rides a 64-point
+    // raised-cosine fade to zero over 30ms FIRST (native curve: cheap, formally
+    // ends, not the a-rate hazard), and the gate cut lands at t+35ms, after
+    // the fade has already silenced the voice. The unit curve is precomputed;
+    // per voice it's scaled by the gain's CURRENT value (dx7 velocity lives on
+    // v.out.gain — a fixed 1→0 curve would JUMP a 0.18 gain up first).
+    const FADE_N = 64, FADE_COS = new Float32Array(FADE_N);
+    for (let i = 0; i < FADE_N; i++) FADE_COS[i] = 0.5 * (1 + Math.cos(Math.PI * i / (FADE_N - 1)));
     function retirePool(pool, delayMs) {
       const d = delayMs || 1500;   // harvest staggers this so bursts never share a block
+      jlog("retirePool", pool.module + "x" + pool.nodes.length + ":declick");
+      const t = ctx.currentTime;
       for (const v of pool.nodes) {
-        const g = P(v.node, "gate"); if (g) { g.cancelScheduledValues(0); g.value = 0; }
+        const g0 = v.out.gain.value;
+        try {
+          const curve = new Float32Array(FADE_N);
+          for (let i = 0; i < FADE_N; i++) curve[i] = FADE_COS[i] * g0;
+          v.out.gain.setValueCurveAtTime(curve, t, 0.03);
+        } catch (e) {
+          // a pending curve overlaps (rapid double-retire, or a velocity
+          // setValueCurve still in flight): setValueCurveAtTime throws rather
+          // than splice — fall back to a plain 30ms linear ramp.
+          try {
+            v.out.gain.cancelScheduledValues(t);
+            v.out.gain.setValueAtTime(g0, t);
+            v.out.gain.linearRampToValueAtTime(0, t + 0.03);
+          } catch (e2) {}
+        }
+        const g = P(v.node, "gate");
+        if (g) { g.cancelScheduledValues(0); g.setValueAtTime(0, t + 0.035); }   // AFTER the fade, not instantly
         // disconnect AND destroy after the tail: a bare disconnect leaves the
         // faustwasm worklet processing every block until GC (never, while the
         // pool object is referenced from a stale Map slot) — destroy() posts to
         // the processor so it returns false and truly stops rendering. This is
         // what makes the reaper actually reclaim audio-thread budget.
-        setTimeout(() => { try { v.node.disconnect(); v.out.disconnect(); if (v.node.destroy) v.node.destroy(); } catch (e) {} }, d);
+        // destroyNode outside the disconnect try/catch: a throw must never
+        // skip the destroy (registry truth) — and destroyNode guards itself.
+        setTimeout(() => { try { v.node.disconnect(); v.out.disconnect(); } catch (e) {} destroyNode(v.node); }, d);
       }
-      if (pool.ins) setTimeout(() => { try {
-        pool.ins.pre.disconnect(); pool.ins.post.disconnect();
-        if (pool.ins.chain) { pool.ins.chain.tail.disconnect(); for (const b of pool.ins.chain.built) { b.node.disconnect(); if (b.node.destroy) b.node.destroy(); } }
-        for (const g of Object.values(pool.ins.gains)) g.disconnect();
-      } catch (e) {} }, d);
+      if (pool.ins) setTimeout(() => {
+        try { pool.ins.pre.disconnect(); pool.ins.post.disconnect(); } catch (e) {}
+        if (pool.ins.chain) {
+          try { pool.ins.chain.tail.disconnect(); } catch (e) {}
+          for (const b of pool.ins.chain.built) { try { b.node.disconnect(); } catch (e) {} destroyNode(b.node); }
+        }
+        try { for (const g of Object.values(pool.ins.gains)) g.disconnect(); } catch (e) {}
+      }, d);
     }
     // ---- VOICE SLEEP/WAKE (Paul: "most music is playing with 2 or 3 worklets").
     // A gated-silent Faust worklet still runs its full wasm compute every block
@@ -669,11 +968,72 @@
         if (curUnitKeys.has(key)) continue;                               // current genre: never reap
         if (serial - (pool.lastServed == null ? serial : pool.lastServed) <= REAP_BARS) continue;
         pools.delete(key);
+        jlog("reap", key);
         retirePool(pool);
         reapCount++;
         if (++reaped >= REAP_MAX_PER_BAR) break;
       }
       return reaped;
+    }
+    // ---- 1.6 handle.prepare(state): pre-voice a TARGET genre ----
+    // Given the state the glide is HEADING FOR (not the one playing), build
+    // every worklet its arrival will need — through the airlock, one at a
+    // time — WITHOUT scheduling events, retuning playing pools, or swapping
+    // live infra. DELIBERATE DEVIATION from "just run ensurePool early":
+    // ensurePool under a key the current genre still plays would retire the
+    // SOUNDING pool bars before arrival (audible cut) and the very next bar
+    // would rebuild the old module (double churn); ensureReverbColor/
+    // ensureMasterMb with the target would likewise be swapped straight back
+    // by the next bar's injectChord (which re-ensures with the CURRENT state
+    // every bar). So prepare instantiates into the PREPARED STASH (module-
+    // keyed, stopped, TTL'd — see above) and the real arrival's mkNode calls
+    // ADOPT instead of instantiating: zero creations in the render window,
+    // zero disturbance to what's playing. Keys with no conflicting pool get
+    // stash nodes too (adoption wires them identically). Re-entrancy
+    // coalesces: a second prepare while one is in flight replaces the pending
+    // target and the in-flight loop picks up the latest.
+    let _prepTarget = null, _prepBusy = false;
+    async function prepare(target) {
+      if (!target) return;
+      _prepTarget = target;
+      if (_prepBusy) return;
+      _prepBusy = true;
+      try {
+        while (_prepTarget && !abort) {
+          const st = _prepTarget; _prepTarget = null;
+          let units;
+          try { units = SE.voiceUnits(E, st); } catch (e) { continue; }
+          jlog("prepare", st.genre || st.name || st.progression || "?");
+          // per-module deficit: what the arrival will mkNode that no existing
+          // pool already covers (a same-module pool under the same key is
+          // reused by ensurePool — nothing to build for it).
+          const need = new Map();
+          const want = (mod, n) => need.set(mod, (need.get(mod) || 0) + n);
+          for (const [key, u] of Object.entries(units)) {
+            if (u.sampler) continue;   // native path: buffers, not worklets (prefetched below)
+            const pool = pools.get(key);
+            if (pool && pool.module === u.module) continue;
+            want(u.module, poolSizeFor(u));
+            for (const eff of (u.inserts || [])) want(eff.module, 1);   // the chain rebuilds too
+          }
+          try { const rc = SE.reverbColor(st); if (rc && rc.module !== revColorName) want(rc.module, 1); } catch (e) {}
+          try { const mb = SE.masterMb(st); if (mb && !mbNode) want(mb.module, 1); } catch (e) {}
+          for (const [mod, n] of need) {
+            const have = (prepared.get(mod) || []).length;
+            for (let i = have; i < n; i++) {
+              if (abort || _prepTarget || preparedCount >= MAX_PREPARED) break;
+              try { stashPrepared(mod, await mkNodeFresh(mod, "prep:" + mod)); } catch (e) {}
+            }
+            if (abort || _prepTarget) break;
+          }
+          // sampler zone buffers decode off the arrival path too (main-thread
+          // decode, but it used to sit inside the bar's await chain)
+          for (const [, u] of Object.entries(units)) {
+            if (abort || _prepTarget) break;
+            if (u.sampler) { try { await ensureSamplerBufs(u, st); } catch (e) {} }
+          }
+        }
+      } finally { _prepBusy = false; }
     }
     async function feedSpeech(node) { // vocoder modulator: looped speech buffer -> audio input
       try {
@@ -718,6 +1078,12 @@
     }
 
     async function injectChord(st) {
+      // journal: state ARRIVAL by object identity (travel/journey hand a new
+      // state object per station / glide step) + one cheap entry per bar —
+      // the attribution baseline ("no structural event near this click" needs
+      // the bars to be on the record too).
+      if (st !== _lastStateObj) { _lastStateObj = st; jlog("state", st.genre || st.name || st.progression || "?"); }
+      jlog("bar", serial);
       const prg = (E.PROGRESSIONS[st.progression] || E.PROGRESSIONS.royal_road);
       const nch = prg.chords.length;
       ci = ci % nch;
@@ -923,6 +1289,20 @@
       // opts.noReap disables all of it (the soak's BEFORE/AFTER A/B leg).
       if (!opts.noReap) { reapStalePools(); sleepIdleVoices(); harvestForBudget(0); }
 
+      // 1.3 eco drain: retune at most 2 dirty pools this bar (Map order +
+      // one-shot flags = round-robin across bars — every dirty pool retunes
+      // exactly once, never the whole fleet in one render window).
+      let ecoDrained = 0;
+      for (const [k, p] of pools) {
+        if (ecoDrained >= 2) break;
+        if (!p.ecoDirty) continue;
+        p.ecoDirty = false; p.paramSig = "";   // clear the sig so retune actually re-applies eco caps
+        if (p.spec) retune(p, p.spec, t0);
+        jlog("ecoDrain", k);
+        ecoDrained++;
+      }
+      expirePrepared();   // 1.6: prepared-but-never-adopted stash nodes must not outlive their TTL
+
       if (schedBars.length < 2000) schedBars.push({ serial, t0: t0 + late, spb, late: Math.round(late * 1e5) / 1e5 });
       } catch (e) {
         // ONE bad bar must never wedge the scheduler. Before this, a throw here
@@ -937,6 +1317,7 @@
         errors.push("injectChord@" + serial + ": " + (e && e.message || e));
         console.error("FaustLive injectChord (bar " + serial + " skipped)", e);
       } finally {
+        bootDone = true;   // 1.5: boot is over — every later mkNode rides the airlock queue
         nextTime += 8 * spb;
         ci++; serial++;
         if (ci >= nch) { ci = 0; cycIdx++;
@@ -951,14 +1332,36 @@
       const w = performance.now(), a = ctx.currentTime;
       if (lastWall && ctx.state === "running") {
         const r = (a - lastAudio) / ((w - lastWall) / 1000);
+        // ---- 1.4 SUB-2s SPIKE GUARD: eco's ~2s hysteresis leaves a single
+        // bad 250ms sample unanswered — exactly the window a creation burst
+        // or heavy bar lands in. On any ONE raw sample under 0.85 (BEFORE the
+        // EMA smooths it away; lower = more starved here), shed the two
+        // things that are instant and fully reversible: park the 1.5 airlock
+        // (no new worklets for ~2s) and zero the fx crackle bed (the next
+        // applyFx pass restores it via the cache). No retunes, no pool moves.
+        if (r > 0 && r < 0.85) {
+          const already = airlockPausedUntil > w;
+          airlockPausedUntil = w + 2000;
+          const cp = P(fx, "crackle");
+          if (cp) { try { cp.setValueAtTime(0, ctx.currentTime); } catch (e) {} fxCache.crackle = 0; }
+          if (!already) jlog("spikeGuard", "r=" + r.toFixed(2));   // journal once per episode, not per 250ms
+        }
         if (r > 0 && r < 3) loadRatio = loadRatio * 0.7 + r * 0.3;
         if (loadRatio < 0.95) { eco.bad++; eco.good = 0; } else if (loadRatio > 0.995) { eco.good++; eco.bad = 0; }
+        // ---- 1.3 DE-STORMED ECO: a level change used to blank every pool's
+        // paramSig at once — the whole fleet retuned in the next bar, right
+        // when the thread was already underwater (R4). Now pools are only
+        // MARKED dirty; injectChord drains <=2 per bar (round-robin by flag —
+        // each dirty pool retunes exactly once, spread across bars). The
+        // fxCache flush stays immediate: fx_bus is ~19 params, cheap.
         if (eco.bad > 8 && eco.level < 3) { eco.level++; eco.bad = 0;
-          for (const [k, p] of pools) p.paramSig = ""; // force retune with eco caps
+          jlog("eco", "up:" + eco.level);
+          for (const [, p] of pools) p.ecoDirty = true;   // drained <=2/bar in injectChord
           for (const k of Object.keys(fxCache)) delete fxCache[k]; // re-apply FX with eco thinning
           status("eco mode " + eco.level + " — shedding load"); }
         if (eco.good > 240 && eco.level > 0 && (opts.ecoStart == null || eco.level > opts.ecoStart)) { eco.level--; eco.good = 0;
-          for (const [k, p] of pools) p.paramSig = "";
+          jlog("eco", "down:" + eco.level);
+          for (const [, p] of pools) p.ecoDirty = true;
           for (const k of Object.keys(fxCache)) delete fxCache[k];
           status(eco.level ? "eco mode " + eco.level : "full quality restored"); }
         if (opts.onLoad) try { opts.onLoad(loadRatio, eco.level); } catch (e) {}
@@ -1024,7 +1427,9 @@
         // is an "actively processing" source per spec — Faust worklets return
         // true until destroyed, so undestroyed prewarm nodes render every block
         // forever (the same never-torn-down physics as the pool leak, just flat).
-        mkNode(m, "prewarm:" + m).then((n) => setTimeout(() => { try { if (n.destroy) n.destroy(); } catch (e) {} }, 2000)).catch(() => {});
+        // mkNodeFresh, NOT mkNode: prewarm must never ADOPT a prepared stash
+        // node (1.6) — it would destroy 2s later what prepare() just built.
+        mkNodeFresh(m, "prewarm:" + m).then((n) => setTimeout(() => destroyNode(n), 2000)).catch(() => {});
     } }, 1500);
 
     const rmsBuf = new Float32Array(analyser.fftSize);
@@ -1074,6 +1479,33 @@
       reapCount: () => reapCount,
       harvestCount: () => harvestCount,
       maxWorklets: () => MAX_WORKLETS,
+      // ---- 1.6: pre-voice a target state (see prepare above). Fire-and-forget
+      // from the UI (explorer retarget / soak station pre-boundary): by the
+      // time the glide delivers the state, its worklets already exist and the
+      // arrival's mkNodes ADOPT instead of instantiating.
+      prepare,
+      preparedCount: () => preparedCount,
+      // ---- output-truth instruments (Stage 0.B/0.C) ----
+      // which terminal actually feeds the speakers — "mediaEl" (the mobile
+      // screen-lock route, with its known sink-drift physics) or "direct"
+      // (classic ctx.destination). First question when a glitch is reported.
+      outputRoute: msDest ? "mediaEl" : "direct",
+      // zombie registry readout: created/destroyed are ground truth from
+      // mkNode/destroyNode; counted is what countWorklets can SEE. alive ===
+      // counted between churn; a SUSTAINED alive > counted = leaked worklets
+      // rendering forever (blips of a few seconds around swaps are the
+      // deferred teardowns + prewarm, not zombies).
+      // (+ preparedCount: stash nodes are alive-but-stopped worklets — the
+      // registry must see them or every prepare would read as a zombie. They
+      // are deliberately NOT in nodeCount/the render budget: stopped nodes
+      // consume no render time and must never evict playing music.)
+      workletTruth: () => ({ created: _created, destroyed: _destroyed, alive: _created - _destroyed, counted: countWorklets() + preparedCount }),
+      // chronological copy of the event journal ring (oldest first)
+      journal: () => { const out = []; for (let i = 0; i < jCount; i++) out.push(J[(jHead - jCount + i + JLEN) % JLEN]); return out; },
+      // opt-in sentinel/renderCapacity readouts — null when debugSentinel is
+      // off or the API is unsupported (so callers can feature-detect cheaply)
+      sentinel: () => sentinelState ? { latest: sentinelState.latest, total: Object.assign({}, sentinelState.total) } : null,
+      renderCapacity: () => capState ? { api: capState.api, latest: capState.latest, total: Object.assign({}, capState.total) } : null,
       rms() {
         analyser.getFloatTimeDomainData(rmsBuf);
         let s = 0; for (let i = 0; i < rmsBuf.length; i++) s += rmsBuf[i] * rmsBuf[i];
@@ -1103,6 +1535,12 @@
         // silences reverb/delay tails and anything already scheduled ahead —
         // buffer sources included — within ~60ms), then tear down and close.
         abort = true; clearTimeout(timer); clearInterval(meter);
+        if (elRecycleTimer) clearInterval(elRecycleTimer);   // 1.7
+        // 1.6: the prepared stash holds live (stopped) worklets — destroy them
+        // or the registry counts them as leaked after close.
+        for (const [, list] of prepared) for (const { node } of list) destroyNode(node);
+        prepared.clear(); preparedCount = 0;
+        if (capState) { try { if (capState.timer) clearInterval(capState.timer); else ctx.renderCapacity.stop(); } catch (e) {} }
         if (typeof document !== "undefined") {
           document.removeEventListener("visibilitychange", onVisible);
           root.removeEventListener("focus", onVisible);

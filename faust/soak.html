@@ -180,11 +180,34 @@
     const getState = () => {
       const el = (performance.now() - T0) / 1000;
       stIdx = Math.min(stations.length - 1, Math.floor(el / dwellSecs));
+      // 1.6: pre-voice the NEXT station ~6s before its boundary (mirrors
+      // explorer retarget -> handle.prepare) — the arrival then ADOPTS
+      // stashed worklets instead of instantiating in the render window.
+      // Best-effort + engine-side coalescing; repeat calls are near-free.
+      const nxt = stIdx + 1;
+      if (handle && handle.prepare && nxt < stations.length && nxt * dwellSecs - el < 6)
+        try { handle.prepare(stations[nxt].state); } catch (e) {}
       return stations[stIdx].state;
+    };
+    // sentinel stream (opts.debugSentinel): the engine's click-sentinel worklet
+    // posts one report per 1s window; onSentinel is the lossless capture (a 1s
+    // poll would race the 1s reports). ctxTime = window END on the engine
+    // clock — journal entries share that clock, so the runner's attribution
+    // pass compares them directly.
+    SOAK.sentinelStream = [];
+    const onSentinel = (d, rcap) => {
+      if (SOAK.sentinelStream.length >= 20000 || !handle) return;
+      SOAK.sentinelStream.push({ t: +((performance.now() - T0) / 1000).toFixed(1),
+        ctxTime: +d.ctxTime.toFixed(3), clicks: d.clicks, gaps: d.gaps, peak: +d.peak.toFixed(3),
+        station: stations[stIdx].name,
+        rcap: rcap ? { avg: rcap.averageLoad == null ? null : +rcap.averageLoad.toFixed(3),
+          peak: rcap.peakLoad == null ? null : +rcap.peakLoad.toFixed(3),
+          ur: rcap.underrunRatio, ue: rcap.underrunEvents || 0 } : null });
     };
     handle = await FaustLive.exploreLive(getState,
       (m) => { SOAK.status.push(m); log("status: " + m); },
       { directOut: !!opts.directOut, forceMediaEl: !!opts.forceMediaEl, noReap: !!opts.noReap,
+        debugSentinel: !!opts.debugSentinel, onSentinel,   // output-truth: click sentinel + renderCapacity
         maxWorklets: opts.maxWorklets,   // undersized-cap gate: prove LRU harvest pins the count
         onBar: (b) => { if (SOAK.bars.length < 20000) SOAK.bars.push({ t: (performance.now() - T0) / 1000, serial: b.serial, section: b.section, station: stations[stIdx].name }); },
         onLoad: (r, e) => { if (SOAK.loads.length < 20000) SOAK.loads.push({ t: (performance.now() - T0) / 1000, r, e }); } });
@@ -206,10 +229,14 @@
         awake: handle.awakeCount ? handle.awakeCount() : 0,
         harvests: handle.harvestCount ? handle.harvestCount() : 0,
         cap: handle.maxWorklets ? handle.maxWorklets() : 0,
+        truth: handle.workletTruth ? handle.workletTruth() : null,   // zombie registry vs countWorklets, every 10s
+        sentinelTotal: handle.sentinel ? (handle.sentinel() || {}).total : null,
+        rcapTotal: handle.renderCapacity ? (handle.renderCapacity() || {}).total : null,
         station: stations[stIdx].name, master, elem };
       SOAK.samples.push(s);
       const f = (p) => p ? `rms=${p.rms} hfc=${p.hfc == null ? "-" : p.hfc} clk=${p.clicks}` : "n/a";
-      log(`t=${s.t}s [${s.station}] heap=${s.heapMB} load=${s.load} eco=${s.eco} pools=${s.pools} nodes=${s.awake}:${s.nodes}/${s.cap} reaps=${s.reaps} harv=${s.harvests} | MSTR ${f(master)} | ELEM ${f(elem)}`);
+      const wt = s.truth ? ` truth=${s.truth.alive}a/${s.truth.counted}c` : "";
+      log(`t=${s.t}s [${s.station}] heap=${s.heapMB} load=${s.load} eco=${s.eco} pools=${s.pools} nodes=${s.awake}:${s.nodes}/${s.cap} reaps=${s.reaps} harv=${s.harvests}${wt} | MSTR ${f(master)} | ELEM ${f(elem)}`);
     }, 10000);
     return true;
   };
@@ -247,7 +274,17 @@
 
   window.stopSoak = function () {
     clearInterval(window._soakTimer);
-    if (handle) { SOAK.errors.push(...handle.errors); handle.stop(); handle = null; }
+    if (handle) {
+      SOAK.errors.push(...handle.errors);
+      // output-truth dump before teardown: the journal ring, final registry
+      // truth, cumulative sentinel/renderCapacity, and the audible route
+      if (handle.journal) SOAK.journal = handle.journal();
+      if (handle.workletTruth) SOAK.truthFinal = handle.workletTruth();
+      if (handle.sentinel) SOAK.sentinelFinal = handle.sentinel();
+      if (handle.renderCapacity) SOAK.rcapFinal = handle.renderCapacity();
+      SOAK.outputRoute = handle.outputRoute || null;
+      handle.stop(); handle = null;
+    }
     SOAK.done = true;
     return SOAK;
   };
