@@ -108,7 +108,11 @@ function buildVocab() {
     stabs: keysOf("STAB_PATTERNS"),
     hitPats: keysOf("HIT_PATTERNS"),
     roles: scrape(engineSrc, /role===?"([a-z]+)"/g, ["bed"]),
-    forms: scrape(fs.readFileSync(path.join(ROOT, "genre-kernel.js"), "utf8"), /c\.form===?"([a-z]+)"/g, ["pop"]),
+    // forms: d4b1671 replaced the `c.form===` if/else chain with the FORMS graph
+    // table, so the old source-scrape saw only "pop" and false-rejected every
+    // real form (wave/dj/drop/ritual/anthem/transit). Read the live registry
+    // (K.FORM_NAMES = the FORMS keys) — real typos still warn (validateSpec).
+    forms: new Set([...(K.FORM_NAMES || []), "pop"]),
     samplers: new Set(Object.keys(K.SAMPLERS)),
     patches: new Set(Object.keys(K.DX7_PATCHES)),
     sampleIds, sourceIds,
@@ -286,7 +290,7 @@ function spliceBlock(file, terminator, blockText, tag) {
 const TERM = {
   genres: "\n  };\n\n  // ---------- transition micro-lick soloists",
   clips: "\n  };\n\n  // ---------- DX7 patch registry",
-  targets: "\n  };\n\n  function scoreAgainst",
+  targets: "\n  };\n\n  // the piecewise-linear target-row scorer",
 };
 
 // star-chart position -> explorer.html's POS table, inside the shared

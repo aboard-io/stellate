@@ -293,6 +293,93 @@
     /* genre-tool:hogcore:targets */
     hogcore:  { bpm:[143,172,3], chopUse:[0.47,0.67,3], pump:[0.503,0.926,2], swing:[0,0.071,2], breakUse:[0,0.08,1], comp:[0.282,0.747,1], crackle:[0,0.1,1], seventh:[0,0.15,1] },
     /* /genre-tool:hogcore:targets */
+    /* genre-tool:atlantidrone:targets */
+    atlantidrone:{ bpm:[46,69,3], drumDensity:[0,0.4,3], wash:[0.173,0.549,3], motion:[0,0.513,2], sub:[0.41,1,1], acoustic:[0,0.78,1] },
+    /* /genre-tool:atlantidrone:targets */
+    /* genre-tool:sourdough:targets */
+    sourdough:{ bpm:[49,71,3], drumDensity:[0,0.4,3], motion:[0,0.513,2], wash:[0.137,0.521,2], sub:[0.41,1,1], crackle:[0,0.283,1], bedUse:[0.88,1,3] },
+    /* /genre-tool:sourdough:targets */
+    /* genre-tool:crtwave:targets */
+    crtwave:  { bpm:[53,80,3], drumDensity:[0,0.598,2], wash:[0.097,0.454,2], crackle:[0.039,0.404,2], sub:[0.41,1,1], motion:[0,0.513,1], bedUse:[0.88,1,3] },
+    /* /genre-tool:crtwave:targets */
+    /* genre-tool:whalejazz:targets */
+    whalejazz:{ bpm:[53,80,3], acoustic:[0,0.78,3], swing:[0.072,0.224,2], seventh:[0.85,1,2], drumDensity:[0,1.144,1], wash:[0.114,0.459,1], bedUse:[0.88,1,3] },
+    /* /genre-tool:whalejazz:targets */
+    /* genre-tool:termswave:targets */
+    termswave:{ bpm:[53,82,3], drumDensity:[0,0.4,3], motion:[0,1,2], wash:[0.122,0.487,2], sub:[0,1,1], acoustic:[0,0.12,1], humanize:[0,0.229,1], bedUse:[0.88,1,3] },
+    /* /genre-tool:termswave:targets */
+    /* genre-tool:microwave:targets */
+    microwave:{ bpm:[59,86,3], drumDensity:[0,0.4,2], acoustic:[0,0.12,3], wash:[0.102,0.478,2], motion:[0.487,1,1], humanize:[0,0.239,1] },
+    /* /genre-tool:microwave:targets */
+    /* genre-tool:airtrafficdrone:targets */
+    airtrafficdrone:{ bpm:[63,92,3], drumDensity:[0,0.609,3], wash:[0.097,0.454,2], motion:[0,1,2], sub:[0,1,1], humanize:[0,0.204,1], acoustic:[0,0.12,3], bedUse:[0.88,1,3] },
+    /* /genre-tool:airtrafficdrone:targets */
+    /* genre-tool:faxbossa:targets */
+    faxbossa: { bpm:[67,94,3], acoustic:[0,0.78,3], swing:[0.032,0.184,2], seventh:[0.85,1,2], drumDensity:[0.809,2.341,1], motion:[0.487,1,1], softTop:[0,0,3] },
+    /* /genre-tool:faxbossa:targets */
+    /* genre-tool:crickettempo:targets */
+    crickettempo:{ bpm:[69,98,3], acoustic:[0,0.12,2], drumDensity:[0,1.029,2], wash:[0.074,0.338,2], motion:[0.85,1,1], swing:[0,0.131,1], softTop:[0,0,3], bedUse:[0.88,1,2] },
+    /* /genre-tool:crickettempo:targets */
+    /* genre-tool:thermostatwave:targets */
+    thermostatwave:{ bpm:[77,104,3], drumDensity:[0,0.587,3], motion:[0,0.513,2], wash:[0.052,0.384,2], sub:[0,1,1], humanize:[0,0.185,1] },
+    /* /genre-tool:thermostatwave:targets */
+    /* genre-tool:holdmusic:targets */
+    holdmusic:{ bpm:[89,116,3], swing:[0.031,0.171,3], motion:[0.487,1,2], seventh:[0.85,1,2], drumDensity:[0,1.126,2], wash:[0.078,0.359,1], acoustic:[0,0.78,2], bedUse:[0.88,1,3] },
+    /* /genre-tool:holdmusic:targets */
+    /* genre-tool:lunapolka:targets */
+    lunapolka:{ bpm:[89,116,3], swing:[0.032,0.184,2], acoustic:[0,0.12,2], wash:[0.112,0.399,2], motion:[0.85,1,1], drumDensity:[0.263,2.347,1] },
+    /* /genre-tool:lunapolka:targets */
+    /* genre-tool:elevatorcore:targets */
+    elevatorcore:{ bpm:[93,120,3], swing:[0.051,0.191,2], acoustic:[0,0.12,3], seventh:[0,1,2], motion:[0.85,1,2], drumDensity:[0.857,2.053,1], bedUse:[0.51,0.75,3] },
+    /* /genre-tool:elevatorcore:targets */
+    /* genre-tool:hotsaucecore:targets */
+    hotsaucecore:{ bpm:[93,123,3], motion:[0.113,1,2], snareBalance:[0,0.761,3], hatDensity:[0.025,1.725,1], chopUse:[0.4,0.6,1], seventh:[0.3,1,1], sub:[0.05,0.35,3], pump:[0.181,0.652,3] },
+    /* /genre-tool:hotsaucecore:targets */
+    /* genre-tool:ikeacore:targets */
+    ikeacore: { bpm:[110,131,3], hatDensity:[0.232,1.848,2], motion:[0,0.887,2], chopUse:[0.53,0.73,2], drumDensity:[0.977,2.893,1], pump:[0.27,0.646,1], swing:[0,0.077,3] },
+    /* /genre-tool:ikeacore:targets */
+    /* genre-tool:zubrovia:targets */
+    zubrovia: { bpm:[105,134,3], bedUse:[0.71,0.95,3], pump:[0,0.159,3], swing:[0,0.091,2], wash:[0.05,0.346,2], acoustic:[0,0.12,3] },
+    /* /genre-tool:zubrovia:targets */
+    /* genre-tool:dishwasherwave:targets */
+    dishwasherwave:{ bpm:[114,133,3], chopUse:[0,0.1,3], bedUse:[0.63,0.87,3], pump:[0.374,0.775,2], hatDensity:[0.651,2.159,1], motion:[0,0.513,1] },
+    /* /genre-tool:dishwasherwave:targets */
+    /* genre-tool:surveywave:targets */
+    surveywave:{ bpm:[112,133,3], pump:[0.343,0.725,2], chopUse:[0.4,0.6,2], snareBalance:[0.045,0.625,2], motion:[0.85,1,1], seventh:[0,1,1] },
+    /* /genre-tool:surveywave:targets */
+    /* genre-tool:aldente:targets */
+    aldente:  { bpm:[116,135,3], motion:[0,0.513,3], pump:[0.322,0.715,3], snareBalance:[0,0.544,2], swing:[0,0.077,2], chopUse:[0,0.1,2], bedUse:[0.63,0.87,1], drumDensity:[1.32,2.6,3] },
+    /* /genre-tool:aldente:targets */
+    /* genre-tool:umpirehouse:targets */
+    umpirehouse:{ bpm:[116,135,3], pump:[0.355,0.724,2], motion:[0.487,1,2], chopUse:[0.4,0.6,2], snareBalance:[0.114,0.586,1], seventh:[0,1,1] },
+    /* /genre-tool:umpirehouse:targets */
+    /* genre-tool:pigeonstep:targets */
+    pigeonstep:{ bpm:[122,141,3], swing:[0.071,0.211,3], snareBalance:[0.039,0.931,2], hatDensity:[0.563,1.567,2], motion:[0.487,1,1], sub:[0.85,1,1], acoustic:[0.48,0.72,3] },
+    /* /genre-tool:pigeonstep:targets */
+    /* genre-tool:dmvstep:targets */
+    dmvstep:  { bpm:[124,143,3], swing:[0.091,0.231,3], chopUse:[0.4,0.6,2], snareBalance:[0.083,0.807,2], hatDensity:[0.496,1.584,2], pump:[0.27,0.646,1], sub:[0,1,1] },
+    /* /genre-tool:dmvstep:targets */
+    /* genre-tool:towncrier:targets */
+    towncrier:{ bpm:[132,153,3], sub:[0,1,2], snareBalance:[0.04,1.28,2], pump:[0.287,0.736,2], motion:[0,1,1], hatDensity:[0,1.662,1], chopUse:[0.47,0.67,3], acoustic:[0,0.12,3], swing:[0,0.091,3], leadVoices:[1,4,3] },
+    /* /genre-tool:towncrier:targets */
+    /* genre-tool:chickadeecore:targets */
+    chickadeecore:{ bpm:[134,157,3], hatDensity:[0.235,1.935,2], snareBalance:[0.12,0.88,2], seventh:[0,1,1], motion:[0.85,1,1], pump:[0.188,0.615,1], crackle:[0,0.1,3] },
+    /* /genre-tool:chickadeecore:targets */
+    /* genre-tool:floppycore:targets */
+    floppycore:{ bpm:[135,165,3], breakUse:[0.55,0.71,2], hatDensity:[0.351,2.219,2], chopUse:[0,0.1,2], snareBalance:[0.178,1.082,1], motion:[0.113,1,1], pump:[0.226,0.645,3] },
+    /* /genre-tool:floppycore:targets */
+    /* genre-tool:cerealwave:targets */
+    cerealwave:{ bpm:[149,172,3], crackle:[0.282,0.822,3], pump:[0.449,0.855,2], chopUse:[0.47,0.67,2], hatDensity:[0,1.199,1], snareBalance:[0.026,0.594,1] },
+    /* /genre-tool:cerealwave:targets */
+    /* genre-tool:laundrycore:targets */
+    laundrycore:{ bpm:[162,181,3], breakUse:[0.49,0.65,3], snareBalance:[0.109,1.121,2], sub:[0.85,1,2], chopUse:[0,0.1,1], hatDensity:[0.019,0.951,1], pump:[0.22,0.596,3] },
+    /* /genre-tool:laundrycore:targets */
+    /* genre-tool:auctioncore:targets */
+    auctioncore:{ bpm:[162,185,3], breakUse:[0.49,0.65,3], snareBalance:[0.131,1.239,2], hatDensity:[0.039,0.971,1], chopUse:[0,0.1,1], pump:[0.276,0.695,1] },
+    /* /genre-tool:auctioncore:targets */
+    /* genre-tool:dialupgabber:targets */
+    dialupgabber:{ bpm:[174,197,3], pump:[0.476,0.895,3], crackle:[0.039,0.404,2], chopUse:[0.47,0.67,2], snareBalance:[0.017,0.813,1], hatDensity:[0,1.291,1] },
+    /* /genre-tool:dialupgabber:targets */
   };
 
   // the piecewise-linear target-row scorer — the shared primitive (genre-tool

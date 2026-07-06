@@ -1,14 +1,14 @@
 {
   "name": "zubrovia",
   "label": "Anthem of Zubrovia",
-  "info": "the national music of a made-up Balkan micro-nation: a proud brass anthem in a phrygian-dominant hijaz mode, a choir singing in an invented language, and the state dance — the Kolo-Skronk, three steps and a shrug — broadcast nightly before the weather",
+  "info": "the national music of a made-up Balkan micro-nation: a proud brass anthem in a phrygian-dominant hijaz mode, a choir singing in an invented language, and the state dance \u2014 the Kolo-Skronk, three steps and a shrug \u2014 broadcast nightly before the weather",
   "clips": [
     "ca_canada",
     "dc_skyline",
     "earth_orbit",
     "cs_manhatta"
   ],
-  "materials": "espeak invented-language anthem (sp_zubrovia_*, MATERIALS — original nonsense syllables) + french-horn/DX7 brass; the folk ACCORDION (GM 21) fronts the state-anthem alongside french-horn/trumpet brass",
+  "materials": "espeak invented-language anthem (sp_zubrovia_*, MATERIALS \u2014 original nonsense syllables) + french-horn/DX7 brass; the folk ACCORDION (GM 21) fronts the state-anthem alongside french-horn/trumpet brass",
   "pos": [
     620,
     290
@@ -293,11 +293,10 @@
     "widen": 0.1,
     "features": {
       "bpm": 3,
-      "acoustic": 2,
-      "motion": 2,
-      "wash": 2,
-      "seventh": 1,
-      "drumDensity": 1
+      "bedUse": 3,
+      "pump": 3,
+      "swing": 2,
+      "wash": 2
     }
   }
 }

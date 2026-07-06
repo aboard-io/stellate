@@ -1,7 +1,7 @@
 {
   "name": "hotsaucecore",
   "label": "Hot Sauce Core",
-  "info": "a genre organized by the Scoville scale: each section is hotter than the last — brighter, faster, more distorted — a Latin trumpet vamp that starts at jalapeño and ends at ghost pepper, the drive knob turned like a challenge you regret accepting",
+  "info": "a genre organized by the Scoville scale: each section is hotter than the last \u2014 brighter, faster, more distorted \u2014 a Latin trumpet vamp that starts at jalape\u00f1o and ends at ghost pepper, the drive knob turned like a challenge you regret accepting",
   "clips": [
     "ind_molten",
     "phuture_red",
@@ -16,7 +16,7 @@
   "anchor": {
     "bpm": [
       100,
-      120
+      116
     ],
     "swing": [
       0.02,
@@ -310,10 +310,12 @@
     "features": {
       "bpm": 3,
       "motion": 2,
-      "snareBalance": 2,
+      "snareBalance": 3,
       "hatDensity": 1,
       "chopUse": 1,
-      "seventh": 1
+      "seventh": 1,
+      "sub": 3,
+      "pump": 3
     }
   }
 }
