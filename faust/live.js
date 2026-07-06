@@ -812,7 +812,7 @@
         // jumps on a ringing voice were an audible periodic click)
         const dk = ctx.createGain(); dk.gain.value = 1;
         node.disconnect(out); node.connect(dk); dk.connect(out);
-        nodes.push({ node, out, dk, gains: { dry, rev, del, pp }, ppLast: 0, busyUntil: 0, tailUntil: 0 });
+        nodes.push({ node, out, dk, gains: { dry, rev, del, pp }, ppLast: 0, velLast: null, busyUntil: 0, tailUntil: 0 });
       }
       pool = { module: u.module, spec: u, nodes, paramSig: "", lastServed: serial,
         dx7Sig: u.dx7Params ? JSON.stringify(u.dx7Params) : "" };
@@ -922,6 +922,16 @@
           // glide retunes hit SOUNDING voices every bar — smooth continuous
           // params (cutoff/level/…) or they zipper-click. Faust params, so
           // the smooth path is glide() — the curve must formally end (1.2).
+          // KNOWN MINOR CLICK SOURCE (evaluated, deferred): stepping an ENUM param
+          // (wave/type/voices) on a SOUNDING voice is a waveform discontinuity when a
+          // glide crossing moves the value mid-ring. It can't be micro-ramped — these
+          // are a-rate Faust selectors, not continuous levels. Deferring the step to
+          // the voice's next gate-off (when it's silent) is NOT clean: mono-legato
+          // voices hold the gate HIGH across bars (:1396), so there is no reliable
+          // gate-off to hook — a genre morph over a held drone would strand the retune
+          // and break the "the pool now sounds like genre X" contract. It fires rarely
+          // (only when the value actually changes, sig-gated at :911), so the step
+          // stays; the contract wins over the occasional tick.
           if (DISCRETE[k]) p.setValueAtTime(clamped, t);
           else glide(p, clamped, t, 0.01);
         }
@@ -1296,8 +1306,29 @@
           const p = P(v.node, k);
           if (p) p.setValueAtTime(Math.min(p.maxValue, Math.max(p.minValue, vv)), tset);
         }
-        if (pool.spec.extGainPerAmp)   // DX7 per-note velocity via the external GainNode
-          v.out.gain.setValueAtTime(Math.min(1, pool.spec.extGainPerAmp * (e.amp || 0.1)), tset);
+        if (pool.spec.extGainPerAmp) {   // DX7 per-note velocity via the external GainNode
+          // A STEP here jumps the amplitude of any prior note's release tail still
+          // ringing through v.out.gain at the retrigger — a per-note click,
+          // independent of CPU load (fires with zero underrun). Micro-ramp from the
+          // previous velocity target to the new one across ~5ms so the velocity
+          // change GLIDES across the retrigger instead of stepping. Overlap-safe like
+          // retirePool (:964): v.out.gain is ALSO driven by retirePool's raised-cosine
+          // declick curve, and a pending setValueCurveAtTime makes setValueAtTime throw
+          // rather than splice — cancel + retry (a retiring voice takes no new notes,
+          // so this is a belt-and-suspenders race guard). Anchor at velLast, the value
+          // the param HOLDS at tset (the prior note's ramp ended well before tset), NOT
+          // og.value read at now — two notes on one voice per bar would otherwise jump.
+          const target = Math.min(1, pool.spec.extGainPerAmp * (e.amp || 0.1));
+          const og = v.out.gain, tr = tset + 0.005;
+          const anchor = v.velLast != null ? v.velLast : og.value;
+          try {
+            og.setValueAtTime(anchor, tset);
+            og.linearRampToValueAtTime(target, tr);
+          } catch (err) {
+            try { og.cancelScheduledValues(tset); og.setValueAtTime(anchor, tset); og.linearRampToValueAtTime(target, tr); } catch (e2) {}
+          }
+          v.velLast = target;
+        }
       };
       for (const e of m.events) {
         const uSpec = units[e.unit];
@@ -1362,7 +1393,13 @@
         applyNoteParams(pool, v, e, tOn, { flangePos: true });   // flangePos -> absolute session time (kpluck)
         const ppv = e.pp || 0;   // per-event ping-pong send (snarePP snare hits)
         if (v.gains.pp && ppv !== v.ppLast) {
-          v.gains.pp.gain.setValueAtTime(ppv, Math.max(nowT, tOn - 0.006));
+          // A STEP on the pp send ~6ms before gate-on clicks straight into the delay
+          // bus, which then REPEATS the click on every tap. Micro-ramp ~5ms from the
+          // held value (ppLast) to the new send instead. Native GainNode — cheap, and
+          // NOT the a-rate glide() hazard, so a plain linearRamp is correct here.
+          const pg = v.gains.pp.gain, tp = Math.max(nowT, tOn - 0.006);
+          pg.setValueAtTime(v.ppLast, tp);
+          pg.linearRampToValueAtTime(ppv, tp + 0.005);
           v.ppLast = ppv;
         }
         const g = P(v.node, "gate");
