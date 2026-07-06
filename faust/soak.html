@@ -134,6 +134,7 @@
       const bass = await sampleProbe(bassProbe, sr);
       const master = await sampleProbe(masterProbe, sr);
       const elem = await sampleProbe(elemProbe, sr);
+      if (!handle) return;   // stopSoak() landed during the ~2s of probe awaits: drop the partial sample
       const heap = (performance.memory && performance.memory.usedJSHeapSize) ? performance.memory.usedJSHeapSize / 1e6 : 0;
       // media-element clock vs AudioContext clock: the media-route theory's
       // signature is these two clocks DRIFTING apart over a long session (the
@@ -148,6 +149,68 @@
       const f = (p) => p ? `rms=${p.rms} nf=${p.nfloorDb == null ? "-" : p.nfloorDb} hfc=${p.hfc == null ? "-" : p.hfc} clk=${p.clicks}` : "n/a";
       log(`t=${s.t}s heap=${s.heapMB} load=${s.load} eco=${s.eco} n=${nodeCount}/${nodeRecreations} | BASS ${f(bass)} | MSTR ${f(master)} | ELEM ${f(elem)}`);
     }, 5000);
+    return true;
+  };
+
+  // ---- TRAVEL soak (2026-07-06): ride a many-short-hop grand tour, not one
+  // stationary genre, to reproduce desktop static #2 (constant-tempo clicks from
+  // voice-pool accumulation across genres). Builds a station list g0, g0×g1, g1,
+  // g1×g2, g2, … (pure genres + halfway blends — arrivals AND edges), holds each
+  // for `dwell` seconds, and samples pool/worklet-node counts + load + heap +
+  // click detector every ~10s. opts.noReap runs the pre-fix leg (pool reaper off)
+  // so the runner can A/B the node-count curve. Sampling reuses the MASTER + ELEM
+  // probes (the graph-invisible element sink still matters on the mobile route).
+  window.goSoakTravel = async function (genresCsv, seed, dwellSecs, opts) {
+    const genres = (genresCsv || "acidhouse,jungle,triphop,vaporwave,dinosynth,jazz,neoclassical,blues,tango,dubstep,techno,citypop,synthwave,dub,disco")
+      .split(",").map(s => s.trim()).filter(Boolean);
+    seed = seed || 7; dwellSecs = dwellSecs || 27; opts = opts || {};
+    mode = opts.directOut ? "directOut" : opts.forceMediaEl ? "force" : "shipped";
+    SOAK.mode = mode; SOAK.travel = true; SOAK.noReap = !!opts.noReap;
+    // precompute stations ONCE — states are then perfectly stable within a dwell
+    // (pools churn only at station boundaries, exactly like arriving at a star).
+    const stations = [];
+    for (let i = 0; i < genres.length; i++) {
+      stations.push({ name: genres[i], state: GenreKernel.track(genres[i], { seed }) });
+      if (i < genres.length - 1)
+        stations.push({ name: genres[i] + "×" + genres[i + 1], state: GenreKernel.blend(genres[i], genres[i + 1], 0.5, { seed }) });
+    }
+    SOAK.stations = stations.map(s => s.name); SOAK.dwell = dwellSecs;
+    let stIdx = 0;
+    T0 = performance.now();
+    const getState = () => {
+      const el = (performance.now() - T0) / 1000;
+      stIdx = Math.min(stations.length - 1, Math.floor(el / dwellSecs));
+      return stations[stIdx].state;
+    };
+    handle = await FaustLive.exploreLive(getState,
+      (m) => { SOAK.status.push(m); log("status: " + m); },
+      { directOut: !!opts.directOut, forceMediaEl: !!opts.forceMediaEl, noReap: !!opts.noReap,
+        maxWorklets: opts.maxWorklets,   // undersized-cap gate: prove LRU harvest pins the count
+        onBar: (b) => { if (SOAK.bars.length < 20000) SOAK.bars.push({ t: (performance.now() - T0) / 1000, serial: b.serial, section: b.section, station: stations[stIdx].name }); },
+        onLoad: (r, e) => { if (SOAK.loads.length < 20000) SOAK.loads.push({ t: (performance.now() - T0) / 1000, r, e }); } });
+    window.handle = handle;
+    log("TRAVEL live: " + stations.length + " stations, dwell " + dwellSecs + "s, seed " + seed +
+      " mode=" + mode + " reaper=" + (opts.noReap ? "OFF" : "ON") + " mediaEl=" + (!!handle.mediaEl));
+
+    window._soakTimer = setInterval(async () => {
+      if (!handle) return;
+      const t = (performance.now() - T0) / 1000, sr = handle.ctx.sampleRate;
+      ensureMasterProbe(); ensureElemProbe();
+      const master = await sampleProbe(masterProbe, sr);
+      const elem = await sampleProbe(elemProbe, sr);
+      if (!handle) return;   // stopSoak() landed during the ~2s of probe awaits: drop the partial sample
+      const heap = (performance.memory && performance.memory.usedJSHeapSize) ? performance.memory.usedJSHeapSize / 1e6 : 0;
+      const s = { t: +t.toFixed(1), heapMB: +heap.toFixed(1), load: +handle.loadRatio().toFixed(3), eco: handle.ecoLevel(),
+        pools: handle.poolCount ? handle.poolCount() : (handle._pools ? handle._pools.size : 0),
+        nodes: handle.nodeCount ? handle.nodeCount() : 0, reaps: handle.reapCount ? handle.reapCount() : 0,
+        awake: handle.awakeCount ? handle.awakeCount() : 0,
+        harvests: handle.harvestCount ? handle.harvestCount() : 0,
+        cap: handle.maxWorklets ? handle.maxWorklets() : 0,
+        station: stations[stIdx].name, master, elem };
+      SOAK.samples.push(s);
+      const f = (p) => p ? `rms=${p.rms} hfc=${p.hfc == null ? "-" : p.hfc} clk=${p.clicks}` : "n/a";
+      log(`t=${s.t}s [${s.station}] heap=${s.heapMB} load=${s.load} eco=${s.eco} pools=${s.pools} nodes=${s.awake}:${s.nodes}/${s.cap} reaps=${s.reaps} harv=${s.harvests} | MSTR ${f(master)} | ELEM ${f(elem)}`);
+    }, 10000);
     return true;
   };
 
