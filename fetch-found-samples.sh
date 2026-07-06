@@ -392,6 +392,30 @@ if [ ! -s found/samples/instruments/felt_piano/zones.json ]; then
   rm -rf found/samples/instruments/yamaha_grand_piano   # only the felt variant is consumed
   rm -f /tmp/FluidR3_GM_GS.sf2
 fi
+# --- FluidR3 30-genre-commission batch (2026-07): draft blockers + history homes ---
+# The five DRAFT-BLOCKERS the 30-genre commission needs (lunapolka/holdmusic/
+# pigeonstep/crickettempo/chickadeecore run on placeholders today): Accordion
+# (GM 21 — spelled "Accordian" in FluidR3), Tuba (58), Pan Flute (75), Kalimba
+# (108), Glockenspiel (9). Plus history homes: Harpsichord (6 → prelude Bach
+# figuration / neoclassical), Clavinet (7 → newjack/afrobeat/disco funk clav),
+# Pizzicato Section (45 → tango marcato / exotica / idm pluck-perc), Fingered
+# Bass (33 → citypop/afrobeat/disco fingered ELECTRIC walk), Sitar (104 →
+# psytrance/exotica drone), Steel Drums (114 → exotica/tropical tiki).
+# GM 14 "Tubular Bells" was REJECTED — same failure as GM 16 DrawbarOrgan:
+# FluidR3 ships it as ONE sample rooted at C6 (84.18) split across 5 keyranges
+# with NO per-zone root override (all five zone wavs are byte-identical), so a
+# chord pitches the single bell 3-4 octaves into mud. Glockenspiel is the
+# bright-bell stand-in; the mall/dungeon drafts keep their DX7 "TUB BELLS".
+if [ ! -s found/samples/instruments/accordian/zones.json ]; then
+  echo "→ FluidR3_GM_GS.sf2 (commission batch: draft blockers + history homes)"
+  [ -s /tmp/FluidR3_GM_GS.sf2 ] || curl -sL --max-time 900 -o /tmp/FluidR3_GM_GS.sf2 \
+    "$IA/fluidr3-gm-gs/FluidR3_GM_GS.sf2"
+  for p in "Accordian" "Tuba" "Pan Flute" "Kalimba" "Glockenspiel" "Harpsichord" \
+           "Pizzicato Section" "Clavinet" "Fingered Bass" "Sitar" "Steel Drums"; do
+    node faust/sf2.js extract /tmp/FluidR3_GM_GS.sf2 "/$p/" found/samples/instruments --max-zones 6
+  done
+  rm -f /tmp/FluidR3_GM_GS.sf2
+fi
 # NOTE: the zone tables are mirrored statically in genre-kernel.js SAMPLERS —
 # if you re-extract with different --max-zones, regenerate that table.
 
