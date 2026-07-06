@@ -172,7 +172,12 @@
       const v = document.createElement("video");
       v.muted = true; v.loop = false; v.playsInline = true; v.preload = "auto";
       v.setAttribute("muted", ""); v.setAttribute("playsinline", "");
-      v.playbackRate = RATE;
+      // ALWAYS very slowed down (Paul 2026-07-06). Setting playbackRate after
+      // src= is a RACE: the load algorithm resets playbackRate to
+      // defaultPlaybackRate when new media loads — so the DEFAULT is the
+      // mechanism; the ratechange guard catches any other reset.
+      v.defaultPlaybackRate = RATE; v.playbackRate = RATE;
+      v.addEventListener("ratechange", () => { if (Math.abs(v.playbackRate - RATE) > 0.01) v.playbackRate = RATE; });
       v.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" +
         "opacity:0;transition:opacity " + FADE_MS + "ms ease";
       vbox.appendChild(v); vids.push(v);
@@ -318,6 +323,8 @@
       pipEl = document.createElement("video");
       pipEl.muted = true; pipEl.loop = true; pipEl.playsInline = true; pipEl.preload = "auto";
       pipEl.setAttribute("muted", ""); pipEl.setAttribute("playsinline", "");
+      pipEl.defaultPlaybackRate = RATE;   // src= resets playbackRate to the default — same law as the main elements
+      pipEl.addEventListener("ratechange", () => { if (Math.abs(pipEl.playbackRate - RATE) > 0.01) pipEl.playbackRate = RATE; });
       pipEl.style.cssText = "position:absolute;right:4.5%;bottom:6%;width:30%;height:30%;object-fit:cover;opacity:0;" +
         "transition:opacity " + (0.18 * SLOTH) + "s;border:2px solid rgba(210,255,235,.5);border-radius:6px;box-shadow:0 6px 30px rgba(0,0,0,.5)";
       wrap.appendChild(pipEl);
@@ -477,13 +484,18 @@
     el.style.transition = "none";                    // teleport instantly...
     el.style.left = x0.toFixed(1) + "%"; el.style.top = y0.toFixed(1) + "%";
     el.style.transform = "translate(-50%,-50%) rotate(" + rot0.toFixed(1) + "deg)";
+    el.style.opacity = "0";                          // ...born invisible: glyphs FADE in and out (Paul 2026-07-06)
     void el.offsetWidth;                             // ...commit before arming the drift transition
     const dur = (360 + Math.random() * 900) * SLOTH; // ~3.6s .. 12.6s of life
     const ang = Math.random() * Math.PI * 2, dist = rnd(4, 13);   // vmin traversed over the WHOLE life -> dust-mote slow
     const dx = Math.cos(ang) * dist, dy = Math.sin(ang) * dist;
     const rot1 = rot0 + (Math.random() < .5 ? -1 : 1) * rnd(2, 12);         // gentle rotation on some
     const breath = Math.random() < .5 ? rnd(1.05, 1.2) : rnd(.86, .98);     // slow scale breathing on some
-    el.style.transition = "transform " + Math.round(dur) + "ms linear";
+    // an opacity ease rides alongside the drift: every flicker step becomes a
+    // slow glow-swell instead of a snap, the entry is a fade-in from 0, and
+    // flickerEl's terminal opacity=0 becomes a real fade-out at end of life.
+    const fadeMs = Math.round(Math.min(dur * 0.3, 3200));
+    el.style.transition = "transform " + Math.round(dur) + "ms linear, opacity " + fadeMs + "ms ease";
     requestAnimationFrame(() => {
       el.style.transform = "translate(calc(-50% + " + dx.toFixed(1) + "vmin),calc(-50% + " + dy.toFixed(1) + "vmin)) " +
         "rotate(" + rot1.toFixed(1) + "deg) scale(" + breath.toFixed(3) + ")";
