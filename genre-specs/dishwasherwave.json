@@ -1,7 +1,7 @@
 {
   "name": "dishwasherwave",
   "label": "Dishwasherwave",
-  "info": "the wash cycle as minimal techno: the rinse-pump hum is the drone, the heated-dry element ticks the hats, and \"cycle complete\" arrives like a drop at 2 a.m. — a machine that only plays when you are asleep in the next room",
+  "info": "the wash cycle as minimal techno: the rinse-pump hum is the drone, the heated-dry element ticks the hats, and \"cycle complete\" arrives like a drop at 2 a.m. \u2014 a machine that only plays when you are asleep in the next room",
   "clips": [
     "ind_furnace",
     "dark_face",
@@ -261,11 +261,11 @@
     "widen": 0.1,
     "features": {
       "bpm": 3,
-      "motion": 2,
-      "hatDensity": 2,
+      "chopUse": 3,
+      "bedUse": 3,
       "pump": 2,
-      "drumDensity": 1,
-      "wash": 1
+      "hatDensity": 1,
+      "motion": 1
     }
   }
 }

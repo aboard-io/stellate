@@ -1,69 +1,63 @@
 {
-  "name": "aldente",
-  "label": "Al Dente Techno",
-  "info": "pasta-timer minimal techno: the eleven-minute boil is one long DJ plateau, a single hi-hat rolling like a low simmer, and the kitchen timer's ding lands on the one to tell you it's ready — remove from heat, do not rinse; served firm to the tooth",
+  "name": "surveywave",
+  "label": "Customer Satisfaction Wave",
+  "info": "upbeat corporate pop built entirely around the post-call survey: \"on a scale of one to ten, how likely are you to recommend us?\" \u2014 DTMF button-beeps as the hook, a chirpy Juno bounce, and a smile you can hear; press 1 to continue",
   "clips": [
-    "pl_modelcity",
-    "night_lines",
-    "phuture_red",
-    "ab_diagonale"
+    "kaleido",
+    "rainbow_rings",
+    "pl_motorama",
+    "night_lights"
   ],
-  "materials": "synthesized/archived kitchen-timer ding (the cadence marker) — MATERIALS; draft uses tw_ding; minimal-techno skeleton, near-drone",
+  "materials": "espeak survey prompts + synthesized DTMF tones (sp_survey_*, MATERIALS); draft uses sp_system/tw_ding placeholders",
   "pos": [
-    250,
-    495
+    685,
+    50
   ],
   "anchor": {
     "bpm": [
-      122,
-      128
+      118,
+      126
     ],
     "swing": [
       0,
-      0.04
+      0.05
     ],
     "humanize": [
-      0,
-      0.08
+      0.03,
+      0.12
     ],
     "progressions": [
-      "drone_min",
-      "deep_two"
+      "four_chords",
+      "pop_1625",
+      "doo_wop"
     ],
     "kits": [
-      "techno",
+      "four",
       "pulse"
     ],
     "fills": [
-      "off",
-      "cut",
-      "dropout"
+      "riser",
+      "impact",
+      "cut"
     ],
-    "chordEvery": 16,
-    "euclid": {
-      "hat": [
-        11,
-        16
-      ]
-    },
     "bass": {
       "patterns": [
-        "rolling",
-        "pedal",
-        "sub"
+        "octaves",
+        "drive",
+        "root"
       ],
       "recipe": {
         "model": [
-          "sub",
-          "acid"
+          "juno60",
+          "saw"
         ],
         "cutoff": [
-          400,
-          700
+          600,
+          1000
         ],
         "res": [
-          0.18,
-          0.3
+          0.1,
+          0.2
         ],
         "level": [
           1,
@@ -74,71 +68,77 @@
           0.06
         ],
         "dsend": [
-          0.05,
-          0.12
+          0,
+          0.06
         ]
       }
     },
     "lead": {
       "patterns": [
-        "off",
+        "hero",
+        "updown",
         "double"
       ],
       "recipe": {
         "model": [
-          "pluck",
-          "organ"
+          "synclead",
+          "juno60",
+          "stack"
         ],
-        "wave": "square",
+        "wave": "saw",
         "voices": [
-          1,
-          1
+          2,
+          4
+        ],
+        "spread": [
+          0.006,
+          0.014
         ],
         "cutoff": [
-          1400,
-          2200
+          2800,
+          4000
         ],
         "level": [
-          0.28,
-          0.4
+          0.46,
+          0.6
         ],
         "send": [
           0.2,
           0.35
         ],
         "dsend": [
-          0.15,
-          0.3
+          0.1,
+          0.25
         ]
       }
     },
     "pads": {
-      "prob": 0.35,
+      "prob": 0.55,
       "recipe": {
         "model": [
-          "organ",
-          "solina"
+          "juno60",
+          "saw"
         ],
         "wave": "saw",
         "cutoff": [
-          700,
-          1200
+          1400,
+          2200
         ],
         "detune": [
-          0.004,
-          0.01
+          0.01,
+          0.018
         ],
         "attack": [
-          2,
-          4
+          0.3,
+          0.9
         ],
         "level": [
-          0.35,
-          0.5
+          0.45,
+          0.6
         ],
         "send": [
-          0.35,
-          0.55
+          0.3,
+          0.5
         ],
         "dsend": [
           0.1,
@@ -148,12 +148,14 @@
     },
     "drums": {
       "kickModel": [
-        "909"
+        "909",
+        "boom"
       ],
       "snareModel": [
         "clap"
       ],
       "hatModel": [
+        "noise",
         "metal"
       ],
       "kick": [
@@ -161,42 +163,42 @@
         1.35
       ],
       "snare": [
-        0.45,
-        0.7
+        0.6,
+        0.85
       ],
       "hat": [
-        0.7,
-        1
+        0.6,
+        0.9
       ],
       "tune": [
         0.98,
-        1.08
+        1.1
       ],
       "send": [
-        0.05,
-        0.15
+        0.1,
+        0.25
       ],
       "dsend": [
-        0.1,
-        0.2
+        0.05,
+        0.15
       ]
     },
     "fx": {
       "reverb": [
-        0.3,
-        0.5
+        0.28,
+        0.45
       ],
       "delayBeats": [
-        0.5,
-        0.75
+        0.375,
+        0.5
       ],
       "delayFb": [
-        0.25,
-        0.4
+        0.18,
+        0.32
       ],
       "delayCut": [
-        2400,
-        3600
+        3200,
+        4500
       ],
       "pump": [
         0.4,
@@ -204,79 +206,82 @@
       ],
       "crackle": [
         0,
-        0.08
+        0
       ],
       "lowcut": [
-        35,
-        50
+        30,
+        45
       ],
       "highcut": [
         0,
         0
       ],
       "comp": [
-        0.45,
-        0.65
+        0.35,
+        0.55
       ]
     },
     "found": {
-      "role": "bed",
+      "role": "chops",
       "vol": [
-        0.06,
-        0.14
+        0.12,
+        0.2
       ],
       "pitch": [
-        0.95,
-        1.1
+        1.1,
+        1.4
       ],
       "stretch": [
-        0.5,
-        0.7
+        0.35,
+        0.5
       ],
       "cutoff": [
-        2200,
-        3400
+        3500,
+        6000
       ],
       "sources": [
-        "factory",
-        "iriomote"
+        "sp_system",
+        "tw_ding"
       ]
     },
     "hits": {
       "sources": [
-        "tw_ding"
+        "sp_system",
+        "tw_ding",
+        "sp_shopping"
       ],
-      "pattern": "sparse",
-      "prob": 0.2
+      "pattern": "offbeat",
+      "prob": 0.45
     },
     "sampleEvents": [
       {
         "pool": [
-          "tw_ding"
+          "tw_ding",
+          "sp_system"
         ],
-        "placement": "cadence",
+        "placement": "response",
         "sections": "all",
         "treatment": {
           "cutoff": 5000,
-          "vol": 0.45
+          "vol": 0.42
         }
       }
     ],
     "stab": [
-      "off"
+      "offbeat"
     ],
-    "form": "dj"
+    "form": "pop"
   },
   "verify": {
     "seeds": 6,
     "widen": 0.1,
     "features": {
       "bpm": 3,
-      "motion": 3,
-      "hatDensity": 2,
-      "drumDensity": 1,
-      "pump": 1,
-      "wash": 1
+      "pump": 2,
+      "chopUse": 2,
+      "snareBalance": 2,
+      "motion": 1,
+      "seventh": 1
     }
   }
 }

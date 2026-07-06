@@ -1,14 +1,14 @@
 {
   "name": "magpiehouse",
   "label": "Magpiehouse",
-  "info": "the corvid thief: a house track that steals one shiny fragment from every other genre in the space and hoards them in a nest of 4/4 — a stab here, a break there, a coo, a station name — nothing original, everything glittering, one for sorrow",
+  "info": "the corvid thief: a house track that steals one shiny fragment from every other genre in the space and hoards them in a nest of 4/4 \u2014 a stab here, a break there, a coo, a station name \u2014 nothing original, everything glittering, one for sorrow",
   "clips": [
     "kaleido",
     "rainbow_rings",
     "cs_manhatta",
     "night_lights"
   ],
-  "materials": "pure REUSE genre — chops role loots existing crates across the catalog; MATERIALS lists the magpie's rotating steal-pool (no new fetch)",
+  "materials": "pure REUSE genre \u2014 chops role loots existing crates across the catalog; MATERIALS lists the magpie's rotating steal-pool (no new fetch)",
   "pos": [
     520,
     495
@@ -27,9 +27,9 @@
       0.12
     ],
     "progressions": [
-      "house_min7",
-      "doo_wop",
-      "pop_1625"
+      "minor_run",
+      "andalusian",
+      "hijaz"
     ],
     "kits": [
       "house",
@@ -284,11 +284,11 @@
     "widen": 0.1,
     "features": {
       "bpm": 3,
-      "chopUse": 3,
+      "seventh": 3,
+      "chopUse": 2,
       "pump": 2,
-      "snareBalance": 1,
-      "motion": 1,
-      "seventh": 1
+      "hatDensity": 1,
+      "snareBalance": 1
     }
   }
 }

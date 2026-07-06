@@ -1,14 +1,14 @@
 {
   "name": "floppycore",
   "label": "Floppycore",
-  "info": "the 1.44 MB seek-clatter as breakbeat: the head-stepper's tick-tick-grind chopped into an IDM shuffle, the write-protect notch as a hi-hat, \"saving document\" as a ritual with real stakes — do not remove the disk, do not remove the disk",
+  "info": "the 1.44 MB seek-clatter as breakbeat: the head-stepper's tick-tick-grind chopped into an IDM shuffle, the write-protect notch as a hi-hat, \"saving document\" as a ritual with real stakes \u2014 do not remove the disk, do not remove the disk",
   "clips": [
     "ab_diagonale",
     "phuture_red",
     "night_lines",
     "im_redroom"
   ],
-  "materials": "archive.org 3.5-inch floppy seek/write sounds (the break) — MATERIALS; draft uses amen chops + kpluck glitch until fetched",
+  "materials": "archive.org 3.5-inch floppy seek/write sounds (the break) \u2014 MATERIALS; draft uses amen chops + kpluck glitch until fetched",
   "pos": [
     555,
     290
@@ -265,7 +265,8 @@
       "hatDensity": 2,
       "chopUse": 2,
       "snareBalance": 1,
-      "motion": 1
+      "motion": 1,
+      "pump": 3
     }
   }
 }

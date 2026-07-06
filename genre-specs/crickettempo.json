@@ -1,142 +1,148 @@
 {
-  "name": "crtwave",
-  "label": "Cathode Elegy",
-  "info": "mourning the tube television: the 15.7 kHz flyback whine held as a high sine drone, the degauss \"boinnng\" as the kick, the warm static of a channel long off the air — a genre for empty living rooms and the smell of hot glass",
+  "name": "crickettempo",
+  "label": "Cricket Tempo",
+  "info": "the snowy tree cricket chirps faster when it's warmer \u2014 so the BPM literally is the temperature (Dolbear's Law, roughly 40 plus chirps-per-15-seconds) \u2014 a warm-night downtempo where a kalimba answers the field, and the tempo tells you to open a window",
   "clips": [
-    "tv_room",
-    "dark_face",
-    "deep_face",
-    "green_nebula"
+    "earth_orbit",
+    "green_nebula",
+    "bamboo",
+    "ns_waterfall"
   ],
-  "materials": "archive.org CRT flyback whine + degauss thunk (the drone/kick) — MATERIALS; draft synthesizes both with a high sine lead + boom kick",
+  "materials": "archive.org cricket/katydid night chorus bed (the tempo source) \u2014 MATERIALS; the real KALIMBA sampler (GM 108) answers the field (was marimba standing in), over the crickets bed",
   "pos": [
     685,
-    230
+    350
   ],
   "anchor": {
     "bpm": [
-      60,
-      72
+      76,
+      90
     ],
     "swing": [
-      0,
-      0.03
+      0.04,
+      0.1
     ],
     "humanize": [
-      0.04,
-      0.12
+      0.08,
+      0.18
     ],
     "progressions": [
-      "drone_min",
-      "deep_two"
+      "neosoul",
+      "dream",
+      "lofi"
     ],
     "kits": [
-      "off",
-      "kick"
+      "halftime",
+      "bossa"
     ],
     "fills": [
-      "off"
+      "off",
+      "micro lick"
     ],
-    "chordEvery": 16,
     "bass": {
       "patterns": [
-        "pedal",
-        "sub",
-        "root"
+        "root",
+        "simple",
+        "walking"
       ],
       "recipe": {
         "model": [
           "sub",
-          "saw"
+          "sampler"
+        ],
+        "samplerPool": [
+          "acoustic_bass"
         ],
         "cutoff": [
-          350,
-          600
-        ],
-        "res": [
-          0.06,
-          0.14
+          500,
+          900
         ],
         "level": [
-          0.6,
-          0.82
+          0.55,
+          0.75
         ],
         "send": [
           0.15,
-          0.35
+          0.3
         ],
         "dsend": [
           0,
-          0.05
+          0.08
         ]
       }
     },
     "lead": {
       "patterns": [
-        "off",
-        "sparse"
+        "sparse",
+        "wander",
+        "pentaup"
       ],
       "recipe": {
         "model": [
-          "sine"
+          "sampler",
+          "kpluck",
+          "dx7"
+        ],
+        "samplerPool": [
+          "kalimba",
+          "kalimba",
+          "celesta"
         ],
         "wave": "sine",
         "voices": [
           1,
-          1
+          2
         ],
         "cutoff": [
-          3000,
-          4500
+          2400,
+          3400
         ],
         "level": [
-          0.22,
-          0.34
+          0.4,
+          0.52
         ],
         "send": [
-          0.3,
-          0.5
+          0.35,
+          0.55
+        ],
+        "dsend": [
+          0.1,
+          0.25
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.6,
+      "recipe": {
+        "model": [
+          "vp330",
+          "solina"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          900,
+          1500
+        ],
+        "detune": [
+          0.005,
+          0.012
+        ],
+        "attack": [
+          1.5,
+          3
+        ],
+        "level": [
+          0.4,
+          0.55
+        ],
+        "send": [
+          0.4,
+          0.6
         ],
         "dsend": [
           0.1,
           0.2
         ]
-      }
-    },
-    "pads": {
-      "prob": 0.9,
-      "recipe": {
-        "model": [
-          "solina",
-          "vp330",
-          "organ"
-        ],
-        "wave": "saw",
-        "cutoff": [
-          700,
-          1200
-        ],
-        "detune": [
-          0.006,
-          0.014
-        ],
-        "attack": [
-          2,
-          4
-        ],
-        "level": [
-          0.48,
-          0.65
-        ],
-        "send": [
-          0.5,
-          0.7
-        ],
-        "dsend": [
-          0.1,
-          0.2
-        ],
-        "mellotron": true
       }
     },
     "drums": {
@@ -144,26 +150,27 @@
         "boom"
       ],
       "snareModel": [
-        "noise"
+        "noise",
+        "crack"
       ],
       "hatModel": [
         "noise"
       ],
       "kick": [
         0.6,
-        0.9
+        0.85
       ],
       "snare": [
-        0.2,
-        0.4
+        0.4,
+        0.6
       ],
       "hat": [
-        0.2,
-        0.4
+        0.4,
+        0.65
       ],
       "tune": [
-        0.85,
-        0.98
+        0.92,
+        1.02
       ],
       "send": [
         0.2,
@@ -176,28 +183,28 @@
     },
     "fx": {
       "reverb": [
-        0.45,
-        0.65
+        0.4,
+        0.6
       ],
       "delayBeats": [
-        0.75,
-        1.5
+        0.5,
+        0.9
       ],
       "delayFb": [
         0.15,
         0.3
       ],
       "delayCut": [
-        1800,
-        2800
+        2200,
+        3200
       ],
       "pump": [
         0,
-        0
+        0.1
       ],
       "crackle": [
-        0.1,
-        0.3
+        0,
+        0.12
       ],
       "lowcut": [
         0,
@@ -208,37 +215,36 @@
         0
       ],
       "comp": [
-        0,
-        0.15
+        0.15,
+        0.35
       ]
     },
-    "reverbColor": "greyhole",
     "found": {
       "role": "bed",
       "vol": [
-        0.08,
-        0.18
+        0.12,
+        0.22
       ],
       "pitch": [
-        0.85,
-        1
+        0.9,
+        1.05
       ],
       "stretch": [
         0.5,
         0.7
       ],
       "cutoff": [
-        1600,
-        2600
+        2400,
+        4000
       ],
       "sources": [
-        "highway_night",
-        "factory"
+        "frogs",
+        "iriomote"
       ]
     },
     "hits": {
       "sources": [
-        "tw_ding"
+        "sp_herenow"
       ],
       "pattern": "sparse",
       "prob": 0.1
@@ -253,11 +259,13 @@
     "widen": 0.1,
     "features": {
       "bpm": 3,
+      "acoustic": 2,
       "drumDensity": 2,
       "wash": 2,
-      "crackle": 2,
-      "sub": 1,
-      "motion": 1
+      "motion": 1,
+      "swing": 1,
+      "softTop": 3,
+      "bedUse": 2
     }
   }
 }

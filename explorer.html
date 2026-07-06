@@ -204,6 +204,35 @@ const POS={ ambient:[55,55], neoclassical:[65,165], vaporwave:[150,100], lofi:[1
   /* genre-tool:positions */
   hogcore:[406,360],   // hardcore/rave bottom band — jungle 55px, garage 73px (gabber family, gabber corner saturated)
   prelude:[158,45],    // dreamy/acoustic upper band — mallsoft 55px, vaporwave 56px, newage 81px (neoclassical corner saturated)
+    atlantidrone:[555,350],
+    sourdough:[70,495],
+  crtwave:[685,230],
+  whalejazz:[620,350],
+  termswave:[620,50],
+    microwave:[250,435],
+    airtrafficdrone:[555,170],
+    faxbossa:[620,230],
+  crickettempo:[685,350],
+    thermostatwave:[160,435],
+    holdmusic:[555,50],
+    lunapolka:[685,290],
+  elevatorcore:[620,110],
+  hotsaucecore:[160,495],
+    ikeacore:[340,435],
+  zubrovia:[620,290],
+  dishwasherwave:[70,435],
+  surveywave:[685,50],
+  aldente:[250,495],
+    umpirehouse:[685,110],
+    pigeonstep:[340,495],
+    dmvstep:[555,110],
+    towncrier:[685,170],
+    chickadeecore:[430,495],
+  floppycore:[555,290],
+    cerealwave:[520,435],
+    laundrycore:[430,435],
+    auctioncore:[620,170],
+    dialupgabber:[555,230],
   /* /genre-tool:positions */
   };
 const SNAP=26, CUTOFF=175, BARS_PER_SEG=128;   // one path leg ≈ 128 bars — genres evolve slowly, almost imperceptibly
@@ -687,10 +716,11 @@ startPulse();
 function drawMap(){
   // a star chart drawn straight over the video: each genre is a star with a
   // soft halo; the drawn path is a constellation line; the traveler glows.
-  // Logical space stays 500x400; we scale COORDS to screen pixels here so
-  // stars/text render round and unstretched at any aspect ratio.
+  // Logical space is 720x520 (grown from 500x400 for the 30-genre insertion:
+  // Eastern continent x 555-685 + Southern shore y 435-495); we scale COORDS to
+  // screen pixels here so stars/text render round and unstretched at any aspect ratio.
   svg.innerHTML="";
-  const rb=svg.getBoundingClientRect(), X=x=>(x*rb.width/500)*ZOOM.k+ZOOM.ox, Y=y=>(y*rb.height/400)*ZOOM.k+ZOOM.oy;
+  const rb=svg.getBoundingClientRect(), X=x=>(x*rb.width/720)*ZOOM.k+ZOOM.ox, Y=y=>(y*rb.height/520)*ZOOM.k+ZOOM.oy;
   // pinch zoom grows the TYPE too (sub-linear, capped 3x): zooming in is asking
   // to read the chart. fs===1 at 1x, so the un-zoomed chart is untouched.
   const fs=Math.min(3,Math.max(1,Math.pow(ZOOM.k,0.85)));
@@ -767,8 +797,8 @@ function zoomAround(cx,cy,k2){ // keep the screen point (cx,cy) fixed while scal
   clampZoom(); set({});
 }
 const toXY=ev=>{const r=svg.getBoundingClientRect();const p=ev.touches?ev.touches[0]:ev;
-  return {x:Math.max(0,Math.min(500,((p.clientX-r.left-ZOOM.ox)/ZOOM.k)*500/r.width)),
-          y:Math.max(0,Math.min(400,((p.clientY-r.top-ZOOM.oy)/ZOOM.k)*400/r.height))};};
+  return {x:Math.max(0,Math.min(720,((p.clientX-r.left-ZOOM.ox)/ZOOM.k)*720/r.width)),
+          y:Math.max(0,Math.min(520,((p.clientY-r.top-ZOOM.oy)/ZOOM.k)*520/r.height))};};
 // AUTHORITATIVE waypoint hit-test (ITEM 5: "when the cursor is on a number I
 // can't move it"). Nearest waypoint whose drawn dot the pointer is inside,
 // computed in SCREEN space from the same coord mapping drawMap uses — so it is
@@ -783,7 +813,7 @@ function hitWp(e){
   const fs=Math.min(3,Math.max(1,Math.pow(ZOOM.k,0.85)));
   let best=-1, bd=18*fs+10;
   S.waypoints.forEach((w,i)=>{
-    const cx=(w.x*r.width/500)*ZOOM.k+ZOOM.ox, cy=(w.y*r.height/400)*ZOOM.k+ZOOM.oy;
+    const cx=(w.x*r.width/720)*ZOOM.k+ZOOM.ox, cy=(w.y*r.height/520)*ZOOM.k+ZOOM.oy;
     const d=Math.hypot(px-cx,py-cy); if(d<=bd){ bd=d; best=i; }
   });
   return best;

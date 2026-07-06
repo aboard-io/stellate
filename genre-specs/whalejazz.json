@@ -1,57 +1,64 @@
 {
-  "name": "elevatorcore",
-  "label": "Muzak Ascending",
-  "info": "literal elevator Muzak that modulates up a semitone on every floor — vibraphone and a beige Rhodes, a woodblock ding as the doors open, \"going up: third floor, ladies' outerwear\" — a genre with no destination, only floors, forever ascending",
+  "name": "whalejazz",
+  "label": "Humpback Jazz",
+  "info": "slow modal jazz where the tenor sax trades fours with a humpback whale \u2014 long, patient phrases over a brushed upright, the whale's rising moan answered by a blue note, ii-V-I stretched across the North Pacific; the loneliest quartet",
   "clips": [
-    "pl_kitchen",
-    "pl_supermarket",
+    "earth_orbit",
     "blue_dinner",
-    "tv_room"
+    "ns_waterfall",
+    "spacewalk"
   ],
-  "materials": "espeak floor announcer (sp_floor_* — MATERIALS); the per-floor key-thunk uses the mall/plaza espeak reuse in draft",
+  "materials": "archive.org NOAA/PD humpback whalesong (the call-and-response partner) \u2014 MATERIALS; draft carries the mood with tenor_sax + iriomote water bed",
   "pos": [
     620,
-    110
+    350
   ],
   "anchor": {
     "bpm": [
-      100,
-      112
+      60,
+      72
     ],
     "swing": [
-      0.1,
-      0.16
+      0.12,
+      0.2
     ],
     "humanize": [
-      0.08,
-      0.18
+      0.1,
+      0.22
     ],
     "progressions": [
-      "lofi",
+      "ii_v_i",
       "neosoul",
-      "doo_wop"
+      "mode_dorian"
     ],
     "kits": [
-      "shuffle",
-      "bossa"
+      "bossa",
+      "off"
     ],
     "fills": [
       "micro lick",
-      "kit fill"
+      "off"
     ],
-    "thunk": {
-      "prob": 0.6
+    "rubato": {
+      "depth": [
+        0.01,
+        0.025
+      ],
+      "periodBars": [
+        2,
+        4
+      ],
+      "prob": 0.5
     },
     "bass": {
       "patterns": [
         "walking",
         "root",
-        "simple"
+        "melodic"
       ],
       "recipe": {
         "model": [
-          "sampler",
-          "rhodes"
+          "sampler"
         ],
         "samplerPool": [
           "acoustic_bass"
@@ -65,8 +72,8 @@
           0.72
         ],
         "send": [
-          0.15,
-          0.3
+          0.2,
+          0.35
         ],
         "dsend": [
           0,
@@ -76,78 +83,86 @@
     },
     "lead": {
       "patterns": [
-        "composed",
         "sparse",
-        "wander"
+        "wander",
+        "blues"
       ],
       "recipe": {
         "model": [
           "sampler",
-          "rhodes",
           "dx7"
         ],
         "samplerPool": [
-          "vibraphone",
-          "celesta"
+          "tenor_sax",
+          "muted_trumpet"
         ],
         "patchPool": [
-          "VIBE    1"
+          "SAX BC"
         ],
         "wave": "sine",
         "voices": [
           1,
-          2
+          1
         ],
         "cutoff": [
-          2400,
-          3600
+          2000,
+          3200
         ],
         "level": [
           0.42,
-          0.55
+          0.56
         ],
         "send": [
-          0.3,
-          0.5
+          0.4,
+          0.6
         ],
         "dsend": [
           0.1,
           0.25
+        ],
+        "vibrato": [
+          0.004,
+          0.01
         ]
       }
     },
     "pads": {
-      "prob": 0.6,
+      "prob": 0.5,
       "recipe": {
         "model": [
           "rhodes",
-          "juno60"
+          "strings",
+          "sampler"
         ],
-        "wave": "saw",
+        "samplerPool": [
+          "strings"
+        ],
+        "wave": "sine",
         "cutoff": [
-          1000,
-          1600
+          900,
+          1500
         ],
         "detune": [
-          0.004,
-          0.009
+          0.003,
+          0.008
         ],
         "attack": [
-          0.5,
-          1.2
+          1.5,
+          3
         ],
         "level": [
-          0.4,
-          0.55
+          0.38,
+          0.52
         ],
         "send": [
-          0.35,
-          0.55
+          0.45,
+          0.65
         ],
         "dsend": [
           0.1,
           0.2
-        ]
+        ],
+        "mellotron": true
       }
     },
     "drums": {
@@ -155,31 +170,30 @@
         "boom"
       ],
       "snareModel": [
-        "noise",
-        "clap"
+        "noise"
       ],
       "hatModel": [
         "noise"
       ],
       "kick": [
-        0.6,
-        0.85
+        0.45,
+        0.65
       ],
       "snare": [
-        0.4,
-        0.6
+        0.3,
+        0.5
       ],
       "hat": [
-        0.4,
-        0.6
+        0.35,
+        0.55
       ],
       "tune": [
-        0.92,
-        1.02
+        0.9,
+        1
       ],
       "send": [
-        0.15,
-        0.35
+        0.25,
+        0.45
       ],
       "dsend": [
         0,
@@ -188,20 +202,20 @@
     },
     "fx": {
       "reverb": [
-        0.35,
-        0.55
+        0.5,
+        0.7
       ],
       "delayBeats": [
-        0.5,
-        0.75
+        0.75,
+        1.5
       ],
       "delayFb": [
         0.12,
-        0.28
+        0.26
       ],
       "delayCut": [
-        2600,
-        3600
+        2000,
+        3000
       ],
       "pump": [
         0,
@@ -209,7 +223,7 @@
       ],
       "crackle": [
         0,
-        0.1
+        0.12
       ],
       "lowcut": [
         0,
@@ -220,57 +234,57 @@
         0
       ],
       "comp": [
-        0.2,
-        0.4
+        0.1,
+        0.3
       ]
     },
-    "reverbColor": "spring",
+    "reverbColor": "dattorro",
     "found": {
       "role": "bed",
       "vol": [
-        0.05,
-        0.12
+        0.1,
+        0.2
       ],
       "pitch": [
-        0.95,
-        1.08
+        0.8,
+        0.95
       ],
       "stretch": [
-        0.4,
-        0.6
+        0.55,
+        0.7
       ],
       "cutoff": [
-        2400,
-        3400
+        1800,
+        2800
       ],
       "sources": [
-        "shibuya",
-        "tokyo_station"
+        "iriomote",
+        "frogs"
       ]
     },
     "hits": {
       "sources": [
-        "tw_ding",
-        "sp_shopping"
+        "sp_herenow"
       ],
       "pattern": "sparse",
-      "prob": 0.3
+      "prob": 0.08
     },
     "stab": [
       "off"
     ],
-    "form": "pop"
+    "form": "wave"
   },
   "verify": {
     "seeds": 6,
     "widen": 0.1,
     "features": {
       "bpm": 3,
-      "swing": 2,
       "acoustic": 3,
+      "swing": 2,
       "seventh": 2,
-      "motion": 2,
-      "drumDensity": 1
+      "drumDensity": 1,
+      "wash": 1,
+      "bedUse": 3
     }
   }
 }
