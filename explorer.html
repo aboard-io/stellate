@@ -47,6 +47,17 @@
   #map.itx .anchor{fill:#fff}
   .wlabel{font:11px VT323,monospace;fill:#4dffb0}
   .wpn{font:11px VT323,monospace;fill:#0c0a1a;font-weight:700}
+  /* the CPU meter: pixel-locked chrome above the chips, live-only. VT323 like
+     the rest of the readouts; colour is set inline by cpuMeterTick. */
+  #cpu{position:fixed;right:.7rem;bottom:4.1rem;z-index:6;display:none;gap:.55rem;align-items:center;
+    font:13px VT323,monospace;letter-spacing:.02em;color:var(--mint);
+    background:rgba(12,10,26,.82);border:1px solid var(--line);border-radius:9px;
+    padding:.2rem .55rem;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+    box-shadow:0 0 10px rgba(0,0,0,.35);user-select:none;pointer-events:none}
+  #cpu.live{display:inline-flex}
+  #cpu #cpuNodes{color:var(--dim)}
+  #cpu #cpuEco{color:var(--amber)}
+  #cpu #cpuEco:empty{display:none}
   /* the chips: the ONLY floating affordances (with the brand) */
   #chips{position:fixed;right:.7rem;bottom:.7rem;z-index:6;display:flex;gap:.5rem}
   .chip{width:48px;height:48px;border-radius:50%;font-size:1.25rem;line-height:1;display:grid;place-items:center;
@@ -158,6 +169,11 @@ Drag waypoints to move them, right-click to erase. Set the pace in the panel.
      live engine warms up (module load -> voices -> first bar -> first audio),
      faded on the first real RMS. Honest: stalls shimmer, never fake 100%. -->
 <div id="boot" aria-hidden="true"><div class="btrack"><div class="bfill"></div></div><div class="blabel"></div></div>
+<!-- CPU meter (Paul asked): pixel-locked chrome, live only. Engine load ratio
+     (the bar-clock/wall-clock EMA the engine already computes), live worklet-node
+     count, eco level when shedding. Colour tracks the eco gate: mint >=.99,
+     amber <.99, pink <.97 (where eco kicks in). Updated ~1Hz by cpuMeterTick. -->
+<div id="cpu" aria-hidden="true"><span id="cpuLoad">1.00×</span><span id="cpuNodes">·</span><span id="cpuEco"></span></div>
 <div id="chips">
   <button class="chip" id="playChip" title="LIVE / STOP">▶</button>
   <button class="chip" id="mixChip" title="mixer">𝄚</button>
@@ -252,7 +268,7 @@ const MODE_LOCKS={ auto:null, major:"dream", minor:"minor_run", dorian:"mode_dor
 // ---------- store ----------
 const S={ cursor:{x:250,y:165}, waypoints:[], travel:{seg:0,t:0}, weights:[],
   target:null, playing:null, queue:[], holdUntil:{}, barCount:0, barInfo:null, live:false,
-  seed:Math.floor(Math.random()*99999)+1, modeLock:"auto", pace:BARS_PER_SEG, more:false, load:1, scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
+  seed:Math.floor(Math.random()*99999)+1, modeLock:"auto", pace:BARS_PER_SEG, more:false, load:1, eco:0, scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
   pool:"", beatLine:"▶ press LIVE",
   // MACRO axes: eight global sliders in [-1,+1], 0 = neutral. Threaded into
   // every K.mix() as opts.macros (the keyOffset altitude — a post-resolution
@@ -630,7 +646,7 @@ async function goLive(){
     }
     vidReset();   // fresh shuffled video bag per play session — different clip order every time
     set({live:true,barCount:0,holdUntil:{}}); rebuildQueue();   // fresh instrument-hold timers per session
-    faustHandle=await FaustLive.exploreLive(()=>S.playing, m=>{set({status:m}); bootStatus(m);}, { onLoad:(r)=>{S.load=r;}, onBar:(info)=>{
+    faustHandle=await FaustLive.exploreLive(()=>S.playing, m=>{set({status:m}); bootStatus(m);}, { onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
       bootBar();   // first bar scheduled -> advance the warm-up bar, then it waits on real RMS
       set({barInfo:info,barCount:S.barCount+1});
       if(S.waypoints.length>=2) travelStep();
@@ -1146,6 +1162,30 @@ function chyron(){
   chyRoster=roster;
   return { id:chyId, roster, join:(Date.now()-joinAt<7000)?joinLine:"" };
 }
+// CPU meter: ~1Hz, live-only. Reads the engine's own load EMA (handle.loadRatio,
+// mirrored into S.load), live worklet-node count, and eco level. Colour tracks
+// the eco gate — mint >=.99, amber <.99, pink <.97 (the ~0.97 gate where Paul's
+// underrun clicks live and eco shedding starts).
+const cpuEl=document.getElementById("cpu");
+function cpuMeterTick(){
+  const h=window.FaustLive&&FaustLive.lastHandle;
+  const on=S.live&&faustHandle&&h;
+  cpuEl.classList.toggle("live",!!on);
+  if(on){
+    let load=S.load, nodes=0, awake=0, cap=0, eco=S.eco||0;
+    try{ load=h.loadRatio(); nodes=h.nodeCount?h.nodeCount():0;
+      awake=h.awakeCount?h.awakeCount():nodes;
+      cap=h.maxWorklets?h.maxWorklets():0; eco=h.ecoLevel(); }catch(e){}
+    const col=load>=0.99?"var(--mint)":load>=0.97?"var(--amber)":"var(--pink)";
+    cpuEl.style.color=col; cpuEl.style.borderColor=load<0.97?"var(--pink)":"var(--line)";
+    document.getElementById("cpuLoad").textContent=load.toFixed(2)+"×";
+    // ⬡ computing:resident/budget — worklets actually rendering vs resident
+    // (sleepers cost ~0) vs the LRU-harvest hard cap on residents
+    document.getElementById("cpuNodes").textContent="⬡"+awake+":"+nodes+(cap?"/"+cap:"");
+    document.getElementById("cpuEco").textContent=eco>0?"eco"+eco:"";
+  }
+  setTimeout(cpuMeterTick,1000);
+}
 async function playheadTick(){
   if(S.playing&&window.NameBank){
     let line1="▶ press LIVE — the band is warming up";
@@ -1225,7 +1265,7 @@ function autoPath(){
       "… — ▶ LIVE to travel (✕ path to roam free)"});
   retarget(pts[0]);
 }
-autoPath(); rescore(); playheadTick();
+autoPath(); rescore(); playheadTick(); cpuMeterTick();
 // the kernel's DX7 patch registry is empty in the browser unless the page
 // supplies the bank (genre-kernel snapshots window.DX7_PRESETS at load, which
 // no page sets) — so no explorer journey ever drew a dx7 voice. Populate the

@@ -358,10 +358,82 @@
     let dx7Presets = null;
     let curBarSec = 2;   // seconds per 4-beat bar; injectChord updates from bpm
     const POOL_SIZE = { pad: 4, bass: 2, melody: 3, solo: 2 };
+    // ---- POOL REAPER (2026-07-06, TRAVEL-SOAK crew) — the desktop-static-2 fix.
+    // ensurePool never tore anything down for a key that stops recurring: a pool
+    // is keyed by unit key, and the dynamic `solo:<recipe>` keys are UNIQUE per
+    // genre. TRAVEL across N genres therefore leaves every visited genre's solo
+    // voices connected FOREVER — and a Faust worklet renders every block even
+    // when gated silent (the master_mb finding), so the audio thread's per-block
+    // cost climbs monotonically with genres-visited. Past ~a dozen hops the
+    // render budget runs out mid-block: constant-tempo clicks / underruns (NOT
+    // the accelerating media-element drift of static #1, which was mobile-gated
+    // in 7b6010f). The reaper tears down pools whose key the CURRENT genre no
+    // longer wants once they've been idle REAP_BARS bars — gate off, then
+    // disconnect + node.destroy() (the faustwasm worklet stops rendering, unlike
+    // a bare disconnect). Current-genre keys are ALWAYS protected (passed in as
+    // wantKeys), and ensurePool rebuilds a reaped voice byte-identically on
+    // return. Bounded to REAP_MAX_PER_BAR teardowns per bar so a fresh-genre
+    // arrival never tears many worklets down inside one render block (its own
+    // click source); the gate-off is instant, the disconnect/destroy defers.
+    const REAP_BARS = 16;         // idle bars before an off-genre pool is reaped
+    const REAP_MAX_PER_BAR = 3;   // spread teardown across bars, never a mid-bar burst
+    let reapCount = 0;            // stat surfaced on the handle (soak + CPU meter)
+    // ---- HARD WORKLET CEILING + LRU HARVEST (Paul, watching the meter live:
+    // "most music is playing with 2 or 3 worklets… set a max worklet count and
+    // stick to it and harvest"; 2026-07-06: "A cap of 8 worklets makes sense").
+    // The BUDGET counts the SAME population the meter shows — pool voices +
+    // insert chains + fx/master/color infra — so Paul's ⬡ number and the
+    // ceiling agree. Harvest order: (1) off-genre leftovers, LRU, not ringing;
+    // (2) the current genre's own IDLE pools — unserved >= IDLE_EVICT_BARS
+    // bars, every voice silent past its tail (covers mono mid-group + release
+    // tails) — so the count returns to <=8 as the music thins, while drums /
+    // pads that fire every bar are never touched (no rebuild thrash; an
+    // evicted pool rebuilds byte-identically on its unit's next event, wasm
+    // factory already cached). Infra is counted but never harvestable. If
+    // everything left is protected, the PLAYING MUSIC WINS: the cap takes the
+    // minimum necessary overage rather than silencing a groove — a full
+    // genre's protected set (pad pool 4 + melody 3 + drums + fx_bus) runs
+    // 12-17, dinosynth-class up to ~22 (the CPU-budget round's outliers).
+    // Bounded teardowns per pass + stagger: never a burst in one render block.
+    const MAX_WORKLETS = Math.max(4, opts.maxWorklets || 8);
+    const IDLE_EVICT_BARS = 4;    // in-genre pools unserved this long are budget-evictable
+    const HARVEST_MAX_PER_PASS = 3;
+    let harvestCount = 0;         // stat: pools torn down by the budget (vs idle reaps)
+    let curUnitKeys = new Set();  // the CURRENT bar's unit table keys (protected set)
+    const countWorklets = () => {
+      let n = 1;                                   // fx_bus (always on)
+      if (mbNode) n++;                             // opt-in multiband master glue
+      if (revColorNode) n++;                       // external reverb color
+      for (const [, p] of pools) {
+        n += p.nodes.length;
+        if (p.ins && p.ins.chain) n += p.ins.chain.built.length;
+      }
+      return n;
+    };
+    function harvestForBudget(need) {
+      if (opts.noReap) return;   // soak BEFORE leg: pre-fix behavior (no budget either)
+      let over = countWorklets() + need - MAX_WORKLETS;
+      if (over <= 0) return;
+      const now = ctx.currentTime;
+      const silent = (p) => !p.nodes.some(v => v.busyUntil >= now || v.tailUntil + 0.3 > now);
+      const lruOf = (list) => list.sort((a, b) => (a[1].lastServed || 0) - (b[1].lastServed || 0));
+      // tier 1: off-genre leftovers; tier 2: current genre's own idle pools
+      const offGenre = lruOf([...pools.entries()].filter(([k, p]) => !curUnitKeys.has(k) && silent(p)));
+      const inGenreIdle = lruOf([...pools.entries()].filter(([k, p]) =>
+        curUnitKeys.has(k) && serial - (p.lastServed == null ? serial : p.lastServed) >= IDLE_EVICT_BARS && silent(p)));
+      let i = 0;
+      for (const [k, p] of [...offGenre, ...inGenreIdle]) {
+        if (over <= 0 || i >= HARVEST_MAX_PER_PASS) break;
+        pools.delete(k);
+        retirePool(p, 1500 + i * 200);   // stagger: never a teardown burst in one block
+        harvestCount++; i++;
+        over -= p.nodes.length + (p.ins && p.ins.chain ? p.ins.chain.built.length : 0);
+      }
+    }
     async function ensurePool(key, u) {
       let pool = pools.get(key);
-      if (pool && pool.module === u.module) { await ensureInserts(key, pool, u); retune(pool, u); applyDx7(pool, u); return pool; }
-      if (pool) retirePool(pool);
+      if (pool && pool.module === u.module) { pool.lastServed = serial; await ensureInserts(key, pool, u); retune(pool, u); applyDx7(pool, u); return pool; }
+      if (pool) { pools.delete(key); retirePool(pool); }
       let n = u.drum || u.hold ? (u.pool > 1 ? 2 : 1) : (POOL_SIZE[u.role] || u.pool || 2);
       // dx7.lib voices cost ~3-7x every other module (measured x3.5 realtime
       // offline vs x11-28 for supersaw/pad_saw/fm2op): cap dx7 pools at 2 —
@@ -383,6 +455,8 @@
       // hard ceiling the deterministic guard chose (press honors it via u.pool math;
       // live caps here so both engines instantiate the same voice count).
       if (u.poolCap != null) n = Math.min(n, u.poolCap);
+      // HARD CEILING: make room BEFORE instantiating (LRU harvest, see above).
+      harvestForBudget(n);
       const nodes = [];
       for (let i = 0; i < n; i++) {
         const node = await mkNode(u.module, key + i);
@@ -413,7 +487,7 @@
         node.disconnect(out); node.connect(dk); dk.connect(out);
         nodes.push({ node, out, dk, gains: { dry, rev, del, pp }, ppLast: 0, busyUntil: 0, tailUntil: 0 });
       }
-      pool = { module: u.module, spec: u, nodes, paramSig: "",
+      pool = { module: u.module, spec: u, nodes, paramSig: "", lastServed: serial,
         dx7Sig: u.dx7Params ? JSON.stringify(u.dx7Params) : "" };
       pools.set(key, pool);
       await ensureInserts(key, pool, u);
@@ -543,16 +617,63 @@
           if (p) p.setValueAtTime(Math.min(p.maxValue, Math.max(p.minValue, val)), t);
         }
     }
-    function retirePool(pool) {
+    function retirePool(pool, delayMs) {
+      const d = delayMs || 1500;   // harvest staggers this so bursts never share a block
       for (const v of pool.nodes) {
         const g = P(v.node, "gate"); if (g) { g.cancelScheduledValues(0); g.value = 0; }
-        setTimeout(() => { try { v.node.disconnect(); v.out.disconnect(); } catch (e) {} }, 1500);
+        // disconnect AND destroy after the tail: a bare disconnect leaves the
+        // faustwasm worklet processing every block until GC (never, while the
+        // pool object is referenced from a stale Map slot) — destroy() posts to
+        // the processor so it returns false and truly stops rendering. This is
+        // what makes the reaper actually reclaim audio-thread budget.
+        setTimeout(() => { try { v.node.disconnect(); v.out.disconnect(); if (v.node.destroy) v.node.destroy(); } catch (e) {} }, d);
       }
       if (pool.ins) setTimeout(() => { try {
         pool.ins.pre.disconnect(); pool.ins.post.disconnect();
-        if (pool.ins.chain) { pool.ins.chain.tail.disconnect(); for (const b of pool.ins.chain.built) b.node.disconnect(); }
+        if (pool.ins.chain) { pool.ins.chain.tail.disconnect(); for (const b of pool.ins.chain.built) { b.node.disconnect(); if (b.node.destroy) b.node.destroy(); } }
         for (const g of Object.values(pool.ins.gains)) g.disconnect();
-      } catch (e) {} }, 1500);
+      } catch (e) {} }, d);
+    }
+    // ---- VOICE SLEEP/WAKE (Paul: "most music is playing with 2 or 3 worklets").
+    // A gated-silent Faust worklet still runs its full wasm compute every block
+    // (the master_mb finding) — a heavy genre's 20+ pooled voices cost 20+
+    // computes while only 2-3 are sounding. faustwasm's stop() flips fProcessing
+    // and compute() returns immediately: the processor stays registered and
+    // connected, and the worklet's param-apply loop still runs (retunes / dx7
+    // morphs land while asleep); start() resumes via a port message (~1ms).
+    // sleepIdleVoices runs at the same bar boundary as the reaper: any voice
+    // whose tail has expired with nothing scheduled ahead (busyUntil past) goes
+    // to sleep; wake(v) fires at schedule time for every voice that receives an
+    // event this bar — the earliest gate-on is >=30ms after scheduling, orders
+    // of magnitude beyond the port latency. Vocoder pools never sleep (their
+    // looped speech feed hums continuously); infra (fx_bus / master_mb / reverb
+    // color / insert chains) is never slept either — continuous audio flows
+    // through it. AWAKE count = what actually computes; the meter shows it.
+    const wake = (v) => { if (v.asleep) { try { if (v.node.start) v.node.start(); } catch (e) {} v.asleep = false; } };
+    function sleepIdleVoices() {
+      const now = ctx.currentTime;
+      for (const [, p] of pools) {
+        if (p.spec && p.spec.vocoder) continue;
+        for (const v of p.nodes)
+          if (!v.asleep && v.busyUntil < now && v.tailUntil + 0.3 < now) {
+            try { if (v.node.stop) { v.node.stop(); v.asleep = true; } } catch (e) {}
+          }
+      }
+    }
+    // reap off-genre pools idle > REAP_BARS (curUnitKeys = the CURRENT state's
+    // unit keys, protected wholesale — even a solo silent between sections).
+    // Bounded per call; the rest are caught on subsequent bars (sawtooth).
+    function reapStalePools() {
+      let reaped = 0;
+      for (const [key, pool] of pools) {
+        if (curUnitKeys.has(key)) continue;                               // current genre: never reap
+        if (serial - (pool.lastServed == null ? serial : pool.lastServed) <= REAP_BARS) continue;
+        pools.delete(key);
+        retirePool(pool);
+        reapCount++;
+        if (++reaped >= REAP_MAX_PER_BAR) break;
+      }
+      return reaped;
     }
     async function feedSpeech(node) { // vocoder modulator: looped speech buffer -> audio input
       try {
@@ -635,6 +756,10 @@
       // clamping against a different re-sampled ctx.currentTime (that per-
       // event clamp across decode awaits was the instrument-drift bug).
       const usedKeys = new Set(m.events.map(e => e.unit));
+      // publish this bar's PROTECTED set before any ensurePool: the budget
+      // harvest + idle reaper must both see the current genre's full unit
+      // table (not just the units with events this bar) as untouchable.
+      curUnitKeys = new Set(Object.keys(units));
       for (const key of usedKeys) {
         const u = units[key]; if (!u) continue;
         // per-unit isolation: a voice whose module fails to instantiate (a bad
@@ -704,6 +829,7 @@
           : tOn + Math.max(0.012, durSec) - 0.008;
         let v = pool.nodes.find(x => x.busyUntil <= tOn) ||
                 pool.nodes.reduce((a, b) => (a.busyUntil <= b.busyUntil ? a : b));
+        wake(v);   // sleeping voice: resume compute now (>=30ms before its gate-on)
         // stealing a voice whose release tail still rings: dip its declick
         // gain across the param/gate jumps (~12ms) so the retrigger is clean
         if (v.tailUntil > tOn && v.dk) {
@@ -738,6 +864,7 @@
         const pool = pools.get(key); if (!pool || !pool.nodes.length) continue;
         const evs = monoBuckets[key].sort((a, b) => a.beat - b.beat);
         const v = pool.nodes[0], g = P(v.node, "gate");
+        wake(v);   // mono voice may have slept between phrases
         const legatoSec = pool.spec.legatoSec != null ? pool.spec.legatoSec : 0.03;
         for (const e of evs) {
           const tOn = at(e.beat), durSec = e.durB * spb;
@@ -785,6 +912,16 @@
         p.exponentialRampToValueAtTime(b, t + sw.durB * spb);
         fxCache.mcut = null;
       }
+
+      // TRAVEL leak fix: tear down pools left behind by genres we've moved on
+      // from (their unique solo: keys). curUnitKeys (set above) is the full unit
+      // table this bar — exactly what the current genre wants, protected.
+      // harvestForBudget(0) is the bar-boundary BUDGET pass: with the cap at 8,
+      // any pools that have gone idle (solo between sections, sfx between hits)
+      // are evicted here so the meter's count returns to <=8 as the music
+      // thins — not only when a new pool is being created.
+      // opts.noReap disables all of it (the soak's BEFORE/AFTER A/B leg).
+      if (!opts.noReap) { reapStalePools(); sleepIdleVoices(); harvestForBudget(0); }
 
       if (schedBars.length < 2000) schedBars.push({ serial, t0: t0 + late, spb, late: Math.round(late * 1e5) / 1e5 });
       } catch (e) {
@@ -881,7 +1018,13 @@
                        "reverb_dattorro", "reverb_greyhole", "reverb_fdn", "reverb_spring", "master_mb"])
         Promise.resolve(factory(m)).catch(() => {});
       for (const m of ["insert_distort", "insert_phaser", "insert_chorus", "insert_filtersweep", "insert_wah", "insert_tremolo"])
-        mkNode(m, "prewarm:" + m).catch(() => {});
+        // destroy the prewarm INSTANCE once built (TRAVEL-SOAK crew): the benefit
+        // is the one-time audio-thread processor REGISTRATION, which survives the
+        // instance. An unconnected AudioWorkletNode whose process() returns true
+        // is an "actively processing" source per spec — Faust worklets return
+        // true until destroyed, so undestroyed prewarm nodes render every block
+        // forever (the same never-torn-down physics as the pool leak, just flat).
+        mkNode(m, "prewarm:" + m).then((n) => setTimeout(() => { try { if (n.destroy) n.destroy(); } catch (e) {} }, 2000)).catch(() => {});
     } }, 1500);
 
     const rmsBuf = new Float32Array(analyser.fftSize);
@@ -908,6 +1051,29 @@
       },
       loadRatio: () => loadRatio,
       ecoLevel: () => eco.level,
+      // live Faust WORKLET-node count (the thing that renders every block): the
+      // always-on fx_bus + opt-in master glue + reverb color + every pool voice
+      // and its insert chain. The CPU meter + travel soak read this to see pool
+      // accumulation vs the reaper's sawtooth and the budget's plateau. Native
+      // nodes (bleed delays, sends, found/sampler buffers) aren't worklets.
+      nodeCount: countWorklets,
+      // worklets actually COMPUTING right now: awake pool voices + infra +
+      // insert chains (Paul's "most music is playing with 2 or 3 worklets" —
+      // sleep/wake makes that the real cost, and this is the meter's proof).
+      awakeCount() {
+        let n = 1;
+        if (mbNode) n++;
+        if (revColorNode) n++;
+        for (const [, p] of pools) {
+          n += p.nodes.filter(v => !v.asleep).length;
+          if (p.ins && p.ins.chain) n += p.ins.chain.built.length;
+        }
+        return n;
+      },
+      poolCount: () => pools.size,
+      reapCount: () => reapCount,
+      harvestCount: () => harvestCount,
+      maxWorklets: () => MAX_WORKLETS,
       rms() {
         analyser.getFloatTimeDomainData(rmsBuf);
         let s = 0; for (let i = 0; i < rmsBuf.length; i++) s += rmsBuf[i] * rmsBuf[i];
