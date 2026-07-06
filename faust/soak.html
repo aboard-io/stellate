@@ -209,6 +209,7 @@
       { directOut: !!opts.directOut, forceMediaEl: !!opts.forceMediaEl, noReap: !!opts.noReap,
         debugSentinel: !!opts.debugSentinel, onSentinel,   // output-truth: click sentinel + renderCapacity
         maxWorklets: opts.maxWorklets,   // undersized-cap gate: prove LRU harvest pins the count
+        costCeiling: opts.costCeiling,   // 2.3 awake-cost ceiling override (undersized runs prove the steal path)
         onBar: (b) => { if (SOAK.bars.length < 20000) SOAK.bars.push({ t: (performance.now() - T0) / 1000, serial: b.serial, section: b.section, station: stations[stIdx].name }); },
         onLoad: (r, e) => { if (SOAK.loads.length < 20000) SOAK.loads.push({ t: (performance.now() - T0) / 1000, r, e }); } });
     window.handle = handle;
@@ -227,6 +228,8 @@
         pools: handle.poolCount ? handle.poolCount() : (handle._pools ? handle._pools.size : 0),
         nodes: handle.nodeCount ? handle.nodeCount() : 0, reaps: handle.reapCount ? handle.reapCount() : 0,
         awake: handle.awakeCount ? handle.awakeCount() : 0,
+        awakeCost: handle.awakeCost ? handle.awakeCost() : null,   // 2.3: cost units, SE.COST-weighted
+        costSteals: handle.costStealCount ? handle.costStealCount() : 0,
         harvests: handle.harvestCount ? handle.harvestCount() : 0,
         cap: handle.maxWorklets ? handle.maxWorklets() : 0,
         truth: handle.workletTruth ? handle.workletTruth() : null,   // zombie registry vs countWorklets, every 10s
@@ -236,7 +239,7 @@
       SOAK.samples.push(s);
       const f = (p) => p ? `rms=${p.rms} hfc=${p.hfc == null ? "-" : p.hfc} clk=${p.clicks}` : "n/a";
       const wt = s.truth ? ` truth=${s.truth.alive}a/${s.truth.counted}c` : "";
-      log(`t=${s.t}s [${s.station}] heap=${s.heapMB} load=${s.load} eco=${s.eco} pools=${s.pools} nodes=${s.awake}:${s.nodes}/${s.cap} reaps=${s.reaps} harv=${s.harvests}${wt} | MSTR ${f(master)} | ELEM ${f(elem)}`);
+      log(`t=${s.t}s [${s.station}] heap=${s.heapMB} load=${s.load} eco=${s.eco} pools=${s.pools} nodes=${s.awake}:${s.nodes}/${s.cap} cost=${s.awakeCost == null ? "-" : s.awakeCost} steals=${s.costSteals} reaps=${s.reaps} harv=${s.harvests}${wt} | MSTR ${f(master)} | ELEM ${f(elem)}`);
     }, 10000);
     return true;
   };

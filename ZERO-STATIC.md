@@ -123,6 +123,25 @@ state-engine/kernel/press, so they pass by construction — run them anyway.
       square program (~1400 "clicks"/2min on 303/break stations) →
       adaptive threshold ships with Stage 1.
 - [ ] Stage 1 — hygiene items 1.1–1.7
-- [ ] GATE 0/1 soak readouts
-- [ ] Stage 2 (only if Gate 1 fails at steady state)
-- [ ] Stage 3 stem cache (only if Gate 2 fails; prototype-gated)
+- [x] GATE 1 — **FAIL, by ear** (Paul 2026-07-06: soak skipped in favor of
+      live listening; Miami Bass from cold "soon started clicking", ⬡ meter
+      at 9:15/8 — awake 9, nodes 15, cap 8). Heavy-genre steady-state
+      compute (R7) + a node-count-vs-cost accounting gap confirmed.
+      Paul's directive: proceed to Stage 2 AND Stage 3.
+- [x] Stage 2 — LANDED. 2.1 slow prewarm (1 module/2s, load-gated —
+      miamibass's click source was the old 6-in-46ms tier-2 burst at
+      t≈1.9s, not an accounting leak: 15 nodes IS the protected set of a
+      10-unit genre); 2.2 insert chains sleep with their pools; 2.3
+      cost-weighted awake ceiling (SE.COST, default 28, steal-over-wake
+      proven click-free); 2.4 bed-loop consolidation (grains −92%).
+      Miamibass stationary soak: underruns 174 → 1 (fair-load), sentinel 0.
+- [x] Stage 3 prerequisite — render-core.js extracted, press byte-parity
+      PROVEN (3 states sha256-equal); worker API surface = offline
+      processor {render, setParamValue} + injected factory.
+- [ ] Stage 3 stem cache (in flight: stem-worker + live integration)
+- [x] Addendum (Paul): THE LOON FIXES — speech-gated decode boost
+      (nature caps +6dB), whistle ceiling on auto-tune (|r(T/2)|≥0.65 =
+      lone partial = no bend), bird curation (loon=canawave only,
+      iriomote benched, frogs/crickets only where core), seeded bed
+      rotation. Note: crt_whine/fax_tone/modem also stop tuning (they
+      are whistles) — whitelist back if the ear misses it.
