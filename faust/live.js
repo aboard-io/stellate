@@ -391,6 +391,44 @@
         }, 1000);
       }
     }
+
+    // ---- OUTPUT-TRUTH INSTRUMENTS, part 3: the ALWAYS-ON Faust CLICK MONITOR
+    // (Stage 0.D — Paul's production detector, NOT behind debugSentinel). The
+    // Faust sibling of the JS sentinel above: dsp/clickmon.dsp, a SINK-style
+    // monitor tapped off `master`. Its process is attach()-passthrough so the
+    // audio is byte-identical; its passthrough output is routed to a HARD-MUTED
+    // gain into ctx.destination only so the browser keeps scheduling the worklet
+    // (a Faust node has 1 output — unlike the 0-output JS sentinel it needs a
+    // live terminal to be pulled; gain 0 = silence, and there is NO feedback
+    // into master). It exposes four OUTPUT bargraphs. CRUCIAL faustwasm detail:
+    // bargraphs are NOT AudioParams — node.getParamValue()/node.parameters only
+    // surface sliders/buttons. Bargraph values arrive as `out-param` PORT
+    // messages (~16ms cadence) delivered to the handler set via
+    // setOutputParamHandler(); we cache the latest per name and the 220ms poll
+    // below (started with the other runtime timers) diffs the monotonic click/
+    // gap counters and logs 🔊CLICK with the journal + load/stem/genre context.
+    let clickMonState = null, clickMonTimer = null;
+    try {
+      const cm = await mkNode("clickmon", "clickmon");
+      master.connect(cm);                          // tap the master mix (post-mute, pre-terminal)
+      const cmSink = ctx.createGain(); cmSink.gain.value = 0;
+      cm.connect(cmSink); cmSink.connect(ctx.destination);   // muted terminal → keeps the worklet scheduled, adds no audio
+      clickMonState = {
+        node: cm,
+        latest: { clicks: 0, peakjump: 0, rms: 0, gaps: 0 },   // last values pushed by the bargraph port stream
+        lastClicks: 0, lastGaps: 0,                            // poll baselines for the monotonic counters
+        total: { clicks: 0, gaps: 0, peakjump: 0 }, logs: 0,   // running totals for handle.clickMon()/soak
+      };
+      cm.setOutputParamHandler((path, value) => {
+        const L = clickMonState.latest;
+        if (path.endsWith("/clicks")) L.clicks = value;
+        else if (path.endsWith("/peakjump")) L.peakjump = value;
+        else if (path.endsWith("/rms")) L.rms = value;
+        else if (path.endsWith("/gaps")) L.gaps = value;
+      });
+      jlog("clickMonInit", "on");
+    } catch (e) { errors.push("clickmon: " + (e && e.message || e)); }
+
     let mbNode = null, mbGain = null;
     // shared crossfade teardown: after the fade-out completes, detach a
     // retired node from its upstream `src` (the source differs per caller — fx
@@ -1872,6 +1910,60 @@
       lastWall = w; lastAudio = a;
     }, 250);
 
+    // ---- CLICK MONITOR POLL (Stage 0.D): every ~220ms read the cached bargraph
+    // values, diff the monotonic clicks/gaps counters, and on ANY increase log
+    // 🔊CLICK with the full mechanism context — genre/state, bar serial+ci,
+    // cost/ceiling/load/eco, worklet population, stem-cache stats, and the last
+    // 8 journal entries (a 'state' arrival = a TRAVEL transition; an 'mkNode'/
+    // 'colorSwap'/'insertRebuild'/'stemVamp' just before the click is the
+    // suspect). Started HERE (not at node creation) so ci/serial/eco/loadRatio
+    // are past their TDZ; the whole body is guarded so an early fire is a no-op.
+    // Throttle: one log per poll max ⇒ ≤ ~4.5 logs/s (well under the 20/s cap),
+    // which also satisfies the 150ms coalesce (polls are 220ms apart). Peak
+    // discontinuity is read then RESET-tracked per poll via a shadow baseline so
+    // each window reports the worst jump inside it, not the all-time max.
+    if (clickMonState) {
+      let peakBase = 0;
+      clickMonTimer = setInterval(() => {
+        try {
+          const L = clickMonState.latest;
+          const dClicks = L.clicks - clickMonState.lastClicks;
+          const dGaps = L.gaps - clickMonState.lastGaps;
+          clickMonState.lastClicks = L.clicks;
+          clickMonState.lastGaps = L.gaps;
+          clickMonState.total.clicks = L.clicks;
+          clickMonState.total.gaps = L.gaps;
+          if (L.peakjump > clickMonState.total.peakjump) clickMonState.total.peakjump = L.peakjump;
+          // peak jump WITHIN this poll window = how far the monotonic max climbed
+          const windowPeak = L.peakjump - peakBase; peakBase = L.peakjump;
+          if (dClicks <= 0 && dGaps <= 0) return;   // nothing new: stay quiet
+          clickMonState.logs++;
+          const st = (getState && getState()) || {};
+          const stem_ = stem && stem.stats ? (() => { try { return stem.stats(); } catch (e) { return null; } })() : null;
+          console.log("🔊CLICK", {
+            t: Math.round(ctx.currentTime * 1e3) / 1e3,   // ctx.currentTime at the poll (window END)
+            clicksDelta: dClicks,
+            gapsDelta: dGaps,
+            peakjump: Math.round(windowPeak * 1e4) / 1e4,        // worst |x-x'| this window
+            peakjumpMax: Math.round(L.peakjump * 1e4) / 1e4,     // all-time max (thr context)
+            rms: Math.round(L.rms * 1e4) / 1e4,
+            genre: st.genre || st.name || st.progression || "?",
+            progression: st.progression || null,
+            bar: serial, ci,
+            awakeCost: Math.round(awakeCost() * 10) / 10,
+            costCeiling: COST_CEILING,
+            loadRatio: Math.round(loadRatio * 1e3) / 1e3,
+            eco: eco.level,
+            nodes: countWorklets(),
+            awake: (() => { try { return handle.awakeCount(); } catch (e) { return null; } })(),
+            outputRoute: msDest ? "mediaEl" : "direct",
+            stems: stem_,   // {active, headroom, misses, vamps, fallbacks…} or null when stems off
+            journal: (() => { try { return handle.journal().slice(-8); } catch (e) { return []; } })(),
+          });
+        } catch (e) { /* early fire before runtime state exists — skip */ }
+      }, 220);
+    }
+
     let injecting = false;
     const tick = async () => {
       if (abort) return;
@@ -2064,6 +2156,19 @@
       journal: () => { const out = []; for (let i = 0; i < jCount; i++) out.push(J[(jHead - jCount + i + JLEN) % JLEN]); return out; },
       // opt-in sentinel/renderCapacity readouts — null when debugSentinel is
       // off or the API is unsupported (so callers can feature-detect cheaply)
+      // ALWAYS-ON Faust click monitor readout (Stage 0.D): running totals of the
+      // monotonic clicks/gaps counters, the all-time peak discontinuity, current
+      // RMS, and how many 🔊CLICK lines have fired. The ⬡ tooltip / soak reads
+      // this; null only if the clickmon node failed to build.
+      clickMon: () => clickMonState ? {
+        clicks: clickMonState.total.clicks, gaps: clickMonState.total.gaps,
+        peakjump: clickMonState.total.peakjump, rms: clickMonState.latest.rms, logs: clickMonState.logs,
+      } : null,
+      // debug hook: retune the clickmon discontinuity threshold live (thr is a
+      // real hslider = an AudioParam). Lets the soak/verifier prove the detector
+      // fires by dropping thr so ordinary program edges trip it. No-op if the
+      // node failed to build. NOT used by the everyday path (default thr 0.5).
+      clickMonThr: (v) => { if (clickMonState) try { clickMonState.node.setParamValue("/clickmon/thr", v); } catch (e) {} },
       sentinel: () => sentinelState ? { latest: sentinelState.latest, total: Object.assign({}, sentinelState.total) } : null,
       renderCapacity: () => capState ? { api: capState.api, latest: capState.latest, total: Object.assign({}, capState.total) } : null,
       rms() {
@@ -2095,6 +2200,7 @@
         // silences reverb/delay tails and anything already scheduled ahead —
         // buffer sources included — within ~60ms), then tear down and close.
         abort = true; clearTimeout(timer); clearInterval(meter);
+        if (clickMonTimer) clearInterval(clickMonTimer);   // Stage 0.D click-monitor poll
         if (elRecycleTimer) clearInterval(elRecycleTimer);   // 1.7
         clearInterval(prewarmTimer);   // 2.1: no prewarm slots after stop (abort also guards)
         if (stem && stem._cleanup) { try { stem._cleanup(); } catch (e) {} }   // Stage 3: stop the deadline watchdog + terminate the worker
