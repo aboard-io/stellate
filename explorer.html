@@ -652,14 +652,17 @@ const DBG_SENTINEL=QSFLAGS.get("debugSentinel")==="1";
 // ctx.destination directly even on a mobile UA (the R8 escape hatch; pairs
 // with the engine's opt-in element recycle, faust/live.js 1.7).
 const FORCE_CLASSIC=QSFLAGS.get("forceClassicOut")==="1";
-// ?stems=1 arms the ZERO-STATIC Stage 3 rolling stem cache (faust/live.js
-// initStems): the heavy CACHED voices render offline in a module Worker and
-// schedule back into the live mix, shedding their steady-state audio-thread
-// cost. Default OFF — the flag ships default-off, a week of listening before
-// default-on (ZERO-STATIC Gate 3). ?stemLookahead=N widens the input->audible
-// runway (default ~10s) the pipeline needs. The ⬡ meter grows a STEMS tag +
-// worker-headroom tooltip when active.
-const STEMS=QSFLAGS.get("stems")==="1";
+// The ZERO-STATIC Stage 3 rolling stem cache is now the DEFAULT path (Paul
+// 2026-07-06: "always cache as default — the system has no concept of 'live'
+// so we can always pre-render"). The heavy CACHED voices render offline in a
+// module Worker and schedule back into the live mix — with ~1600× worker
+// headroom the pre-render is nearly free, and pre-scheduled buffers are immune
+// to the main-thread scheduling jitter that causes clicks at genre transitions.
+// ?stems=0 is the escape hatch back to the classic all-live path (byte-
+// identical old behavior). ?stemLookahead=N (seconds) hard-overrides the depth,
+// which is otherwise 4 chord-bars (opts.stemBars). The ⬡ meter shows the STEMS
+// rate by default now.
+const STEMS=QSFLAGS.get("stems")!=="0";   // DEFAULT ON; ?stems=0 disables
 const STEM_LOOKAHEAD=+(QSFLAGS.get("stemLookahead")||0)||undefined;
 async function goLive(){
   bootStart();
