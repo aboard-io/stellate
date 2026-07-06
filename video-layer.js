@@ -34,8 +34,25 @@
 
   const MOBILE = /Mobi|iPhone|iPad|Android/.test(navigator.userAgent) ||
                  (navigator.hardwareConcurrency || 8) <= 4;
-  const FADE_MS = MOBILE ? 0 : 1600;   // phones: hard cuts — a second decoder + crossfade janks touch
-  const IDLE_CYCLE_MS = 24000;   // ambient switch period when nothing is playing
+  // Paul 2026-07-06: the video transitions and effects should be 10x slower.
+  // ONE dial — the SLOW-BROADCAST sibling of WACKADOODLE (declared far below,
+  // next to the chaos scheduler). SLOTH multiplies every visual MOTION —
+  // crossfades, tape wobbles, chaos-event durations, grade/effect easings,
+  // OSD/caption/card holds — so the station stops twitching and starts
+  // dreaming: long dissolves, effects that arrive like weather. Event RATE is
+  // deliberately untouched — the serial chaos scheduler spaces itself out
+  // naturally as event durations grow (fewer, longer events per minute). It
+  // lives HERE, not next to WACKADOODLE, only because FADE_MS below needs it.
+  const SLOTH = 10;
+  const FADE_CAP = 8000;   // a full crossfade must finish INSIDE the 8-bar switch window; at the fastest genre (~187 bpm) 8 bars ≈ 10.3s, so cap at ~80% of it
+  // Desktop: 1600 -> 16000, capped to FADE_CAP so a dissolve never runs past
+  // the next switch (which would strand a half-faded frame). Mobile: WAS a 0ms
+  // hard cut (the loader stayed paused to avoid a 2nd live decoder janking
+  // touch); two <video>s are present now, so give the phone a slow opacity
+  // DISSOLVE — compositor-only, held to 3s (not the full 8s) to bound the brief
+  // dual-decode window on touch hardware.
+  const FADE_MS = MOBILE ? 3000 : Math.min(1600 * SLOTH, FADE_CAP);
+  const IDLE_CYCLE_MS = 24000;   // ambient switch period when nothing is playing (a clip-RATE, left as-is — already dreamy)
   const RATE = 0.5;              // slowed playback — dreamier, more VHS
   const LS_KEY = "vaporwave-video-on";
   const REMOTE_READY_MS = 3800;  // archive.org latency budget before we fall back to the local cache clip
@@ -141,7 +158,7 @@
     wrap.setAttribute("aria-hidden", "true");
     wrap.style.cssText = "position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;display:none";
     vbox = document.createElement("div");
-    vbox.style.cssText = "position:absolute;inset:0;transition:filter 850ms ease,transform 850ms ease";
+    vbox.style.cssText = "position:absolute;inset:0;transition:filter " + (850 * SLOTH) + "ms ease,transform " + (850 * SLOTH) + "ms ease";   // genre-grade / travel easing, SLOTH'd
     // Two <video>s on EVERY tier, incl. mobile: one plays, one is the hidden
     // LOADER that buffers the next clip through the whole 8-measure window. On
     // mobile the loader is never composited (opacity 0) and is PAUSED the moment
@@ -198,14 +215,14 @@
     // surface — chaos filter events touch this, never vbox, so they never war
     // with the base grade or the tape-wobble loop.
     fxlayer = document.createElement("div");
-    fxlayer.style.cssText = "position:absolute;inset:0;pointer-events:none;transition:backdrop-filter 120ms ease,-webkit-backdrop-filter 120ms ease";
+    fxlayer.style.cssText = "position:absolute;inset:0;pointer-events:none;transition:backdrop-filter " + (120 * SLOTH) + "ms ease,-webkit-backdrop-filter " + (120 * SLOTH) + "ms ease";   // resting effect-grade easing, SLOTH'd
     wrap.appendChild(fxlayer);
     // readability veil + VHS scanlines + jittering grain over the footage, under the UI
     const veil = document.createElement("div");
     veil.style.cssText = "position:absolute;inset:0;" +
       "background:linear-gradient(rgba(12,10,26,.44),rgba(12,10,26,.26) 30%,rgba(12,10,26,.5))";
     scan = document.createElement("div");
-    scan.style.cssText = "position:absolute;inset:0;opacity:.22;mix-blend-mode:overlay;transition:opacity .3s,background-size .3s;" +
+    scan.style.cssText = "position:absolute;inset:0;opacity:.22;mix-blend-mode:overlay;transition:opacity " + (0.3 * SLOTH) + "s,background-size " + (0.3 * SLOTH) + "s;" +
       "background:repeating-linear-gradient(0deg,rgba(0,0,0,.6) 0 1px,transparent 1px 3px)";
     grain = document.createElement("div");
     if (MOBILE) grain.setAttribute("hidden", "");
@@ -213,10 +230,10 @@
       "background-image:" + NOISE_URI + ";animation:vhsgrain .42s steps(2) infinite";
     tear = document.createElement("div");
     tear.style.cssText = "position:absolute;left:-2%;right:-2%;height:16px;top:40%;opacity:0;" +
-      "mix-blend-mode:screen;transition:opacity .06s;" +
+      "mix-blend-mode:screen;transition:opacity " + (0.06 * SLOTH) + "s;" +
       "background:linear-gradient(rgba(255,255,255,.22),rgba(140,255,255,.12) 60%,transparent)";
     osd = document.createElement("div");
-    osd.style.cssText = "position:absolute;top:16px;left:22px;opacity:0;transition:opacity .25s;" +
+    osd.style.cssText = "position:absolute;top:16px;left:22px;opacity:0;transition:opacity " + (0.25 * SLOTH) + "s;" +
       "font:26px 'VT323',ui-monospace,Menlo,monospace;color:rgba(235,255,240,.45);" +
       "letter-spacing:.06em;text-shadow:2px 2px 0 rgba(0,0,0,.35)";
     const st = document.createElement("style");
@@ -225,18 +242,18 @@
       // vertical-hold roll: scale(1.14) overscan hides the reveal so the roll
       // never exposes black (the never-black law extends to never-black-edges).
       "@keyframes vl-roll{0%{transform:scale(1.14) translateY(-7%)}50%{transform:scale(1.14) translateY(7%)}100%{transform:scale(1.14) translateY(-7%)}}" +
-      ".vl-roll{animation:vl-roll .52s linear 2}";
+      ".vl-roll{animation:vl-roll " + (0.52 * SLOTH) + "s linear 2}";   // vertical-hold roll, SLOTH'd to a languid drift
     // ---- ALIEN BROADCAST furniture (dedicated overlay els; opacity-toggled,
     // never touch vbox — all cheap compositor paints over the base grade) ----
     barsEl = document.createElement("div");   // SMPTE-ish color-bar interstitial — DIM (haunted, not a reference chart)
-    barsEl.style.cssText = "position:absolute;inset:0;opacity:0;transition:opacity .09s;filter:brightness(.5) saturate(.72);background:linear-gradient(90deg," +
+    barsEl.style.cssText = "position:absolute;inset:0;opacity:0;transition:opacity " + (0.09 * SLOTH) + "s;filter:brightness(.5) saturate(.72);background:linear-gradient(90deg," +
       "#c0c0c0 0 14.28%,#c0c000 0 28.57%,#00c0c0 0 42.85%,#00c000 0 57.14%,#c000c0 0 71.42%,#c00000 0 85.71%,#2030c0 0 100%)";
     cardEl = document.createElement("div");   // big centered interstitial card (glyph standby)
     cardEl.style.cssText = "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;" +
-      "transition:opacity .12s;background:rgba(6,6,16,.55);color:#eafff0;text-align:center;padding:0 6%;" +
+      "transition:opacity " + (0.12 * SLOTH) + "s;background:rgba(6,6,16,.55);color:#eafff0;text-align:center;padding:0 6%;" +
       "font:700 clamp(20px,5vw,54px) 'VT323',ui-monospace,monospace;letter-spacing:.14em;text-shadow:0 0 12px rgba(120,255,200,.45)";
     subEl = document.createElement("div");    // wrong captions of the music
-    subEl.style.cssText = "position:absolute;left:0;right:0;bottom:8%;text-align:center;opacity:0;transition:opacity .18s;" +
+    subEl.style.cssText = "position:absolute;left:0;right:0;bottom:8%;text-align:center;opacity:0;transition:opacity " + (0.18 * SLOTH) + "s;" +
       "font:26px 'VT323',ui-monospace,monospace;color:#f4fff8;letter-spacing:.08em;text-shadow:2px 2px 0 rgba(0,0,0,.6);" +
       "background:linear-gradient(transparent,rgba(0,0,0,.35),transparent)";
     chanEl = document.createElement("div");   // channel-number OSD (wrong/alien/huge)
@@ -246,7 +263,7 @@
     glyphEl.style.cssText = "position:absolute;top:42%;right:8%;opacity:0;font:48px 'VT323',ui-monospace,monospace;" +
       "color:rgba(210,255,250,.72);text-shadow:0 0 14px rgba(120,255,255,.5)";
     tsEl = document.createElement("div");     // timestamp OSD (backwards / base-13)
-    tsEl.style.cssText = "position:absolute;bottom:84px;right:20px;opacity:0;transition:opacity .2s;" +   // above the explorer's corner buttons (chrome overlays this layer)
+    tsEl.style.cssText = "position:absolute;bottom:84px;right:20px;opacity:0;transition:opacity " + (0.2 * SLOTH) + "s;" +   // above the explorer's corner buttons (chrome overlays this layer)
       "font:24px 'VT323',ui-monospace,monospace;color:rgba(255,210,220,.75);letter-spacing:.08em;text-shadow:2px 2px 0 rgba(0,0,0,.5)";
     trackEl = document.createElement("div");  // tracking-noise band sweeping the frame
     trackEl.style.cssText = "position:absolute;left:-4%;right:-4%;height:5.5%;top:-12%;opacity:0;mix-blend-mode:screen;filter:blur(.6px);" +
@@ -265,7 +282,7 @@
       pipEl.muted = true; pipEl.loop = true; pipEl.playsInline = true; pipEl.preload = "auto";
       pipEl.setAttribute("muted", ""); pipEl.setAttribute("playsinline", "");
       pipEl.style.cssText = "position:absolute;right:4.5%;bottom:6%;width:30%;height:30%;object-fit:cover;opacity:0;" +
-        "transition:opacity .18s;border:2px solid rgba(210,255,235,.5);border-radius:6px;box-shadow:0 6px 30px rgba(0,0,0,.5)";
+        "transition:opacity " + (0.18 * SLOTH) + "s;border:2px solid rgba(210,255,235,.5);border-radius:6px;box-shadow:0 6px 30px rgba(0,0,0,.5)";
       wrap.appendChild(pipEl);
     }
     document.body.prepend(wrap);
@@ -285,7 +302,7 @@
     vbox.style.filter = baseFilterStr();
     vbox.style.transform = "none";
     if (grain && !MOBILE) grain.style.opacity = String(profile ? profile.grain : .12);
-    if (immediate) { void vbox.offsetWidth; vbox.style.transition = "filter 850ms ease,transform 850ms ease"; }
+    if (immediate) { void vbox.offsetWidth; vbox.style.transition = "filter " + (850 * SLOTH) + "ms ease,transform " + (850 * SLOTH) + "ms ease"; }
   }
   function setGenre(g) {
     if (!g || g === curGenre) return;
@@ -300,7 +317,7 @@
     osd.textContent = text;
     osd.style.opacity = "1";
     clearTimeout(osdTimer);
-    osdTimer = setTimeout(() => { osd.style.opacity = "0"; }, 1900);
+    osdTimer = setTimeout(() => { osd.style.opacity = "0"; }, 1900 * SLOTH);
   }
 
   // one tape wobble: color/blur glide out and back, tear band drifts. Intensity
@@ -310,7 +327,7 @@
     if (!ready || !on || reduced || !vbox || !profile) return;   // mobile too: transform+filter wobble is compositor-cheap
     const g = profile.glitch;
     const dx = (Math.random() < .5 ? -1 : 1) * (3 + Math.random() * 6) * (0.5 + g);
-    const dur = 900 + Math.random() * 700;
+    const dur = (900 + Math.random() * 700) * SLOTH;   // tape wobble glides out+back over dur (eased -> smooth); languid at SLOTH
     vbox.style.transition = "filter " + (dur / 2) + "ms ease-in-out, transform " + (dur / 2) + "ms ease-in-out";
     vbox.style.filter = baseFilterStr() + " saturate(" + (1.2 + g) + ") hue-rotate(" + (((Math.random() * 50 - 25) * g) | 0) + "deg) blur(" + (0.6 + g) + "px)";
     vbox.style.transform = "translateX(" + dx + "px) scaleY(" + (1 + .02 * g) + ")";
@@ -333,7 +350,7 @@
   function glitchLoop() {
     clearTimeout(glitchTimer);
     if (!ready || !on || reduced) return;
-    const period = (profile ? profile.tear : 6000);
+    const period = (profile ? profile.tear : 6000) * SLOTH;   // wobbles are ~10x longer now; space them ~10x too so they never stack
     glitchTimer = setTimeout(() => { burst(); glitchLoop(); }, period + Math.random() * period * 0.9);
   }
 
@@ -354,6 +371,9 @@
   //   ~0.4 to sedate. It multiplies event RATE (and lightly the burst odds);
   //   per-event intensity rides the genre family's `chaos`.
   const WACKADOODLE = 1.0;
+  // (SLOTH — the "transitions & effects 10x slower" dial, Paul 2026-07-06 — is
+  //  the sibling of this knob; it lives at the top of the file next to FADE_MS
+  //  because the crossfade constant needs it before this point.)
 
   const nowMs = () => (root.performance && performance.now) ? performance.now() : Date.now();
   const expRand = () => -Math.log(1 - Math.random());   // mean 1, memoryless -> natural clustering
@@ -392,9 +412,9 @@
     const blink = () => {
       if (nowMs() >= end) { el.style.opacity = "0"; return; }
       el.style.opacity = Math.random() < .22 ? "0.12" : (Math.random() < .5 ? "1" : "0.72");
-      setTimeout(blink, 55 + Math.random() * 150);
+      setTimeout(blink, (55 + Math.random() * 150) * SLOTH);   // lazy flicker, not a fast twitch (dur is SLOTH'd at call sites too)
     };
-    setTimeout(blink, 50);
+    setTimeout(blink, 50 * SLOTH);
   }
   // an alt clip for PiP / channel-surf: prefer a LOCAL cache clip (snappy hard
   // cut), else any other playable name (remote may pop in late — chaos-tolerant).
@@ -474,90 +494,92 @@
   // vbox-mutating events don't overlap each other; filter events live on fxlayer.
   const EV = {
     // -- analog decay --
-    vroll: { w: 6, mobile: true, run() {   // vertical-hold roll (overscan hides black) — transform, cheap on phones
+    vroll: { w: 6, mobile: true, run() {   // vertical-hold roll — CSS keyframe (smooth); SLOTH makes it a languid drift (animation duration is SLOTH'd in the keyframe rule, so dur matches at 1040*SLOTH)
         vbox.style.transition = "none"; vbox.classList.add("vl-roll");
-        const dur = 1040; setTimeout(() => { vbox.classList.remove("vl-roll"); applyLook(false); }, dur); return dur; } },
-    hsync: { w: 7, mobile: true, run() {   // h-sync tear: skew jolts — transform, cheap on phones
-        const g = chaosIntensity(), n = 3 + ((Math.random() * 4) | 0), dt = 42 + Math.random() * 44;
-        vbox.style.transition = "transform 28ms linear";
+        const dur = 1040 * SLOTH; setTimeout(() => { vbox.classList.remove("vl-roll"); applyLook(false); }, dur); return dur; } },
+    hsync: { w: 7, mobile: true, run() {   // h-sync tear: skew wander. Literal x10 on the step count would be a slide-show of held skews, so instead we SLEW — each skew now GLIDES over its longer step (transition = dt, was a 28ms snap-and-hold) -> continuous slow sync-drift
+        const g = chaosIntensity(), n = 3 + ((Math.random() * 4) | 0), dt = (42 + Math.random() * 44) * SLOTH;
+        vbox.style.transition = "transform " + Math.round(dt) + "ms linear";
         for (let i = 0; i < n; i++) setTimeout(() => {
           const sk = (Math.random() * 26 - 13) * (0.5 + g);
           vbox.style.transform = "skewX(" + sk.toFixed(1) + "deg) translateX(" + (sk | 0) + "px) scale(1.06)";
         }, i * dt);
         const dur = n * dt + 40; setTimeout(() => applyLook(false), dur); return dur; } },
-    tracking: { w: 6, mobile: true, run() {   // tracking-noise band sweeps the frame
-        const dur = 480 + Math.random() * 720;
+    tracking: { w: 6, mobile: true, run() {   // tracking-noise band sweeps the frame (linear transition -> already smooth; just ~10x longer)
+        const dur = (480 + Math.random() * 720) * SLOTH;
         trackEl.style.transition = "none"; trackEl.style.top = "-12%"; trackEl.style.opacity = ".85";
         void trackEl.offsetWidth;
         trackEl.style.transition = "top " + dur + "ms linear, opacity " + dur + "ms ease-in";
         trackEl.style.top = "108%"; setTimeout(() => { trackEl.style.opacity = "0"; }, dur * 0.95);
         return dur; } },
-    chroma: { w: 7, mobile: true, run() {   // chroma drift: hue-rotate lurch (fxlayer desktop / vbox filter mobile)
-        const g = chaosIntensity(), dur = 280 + Math.random() * 540;
+    chroma: { w: 7, mobile: true, run() {   // chroma drift: hue-rotate lurch — eased backdrop-filter, smooth slow at SLOTH
+        const g = chaosIntensity(), dur = (280 + Math.random() * 540) * SLOTH;
         const deg = ((60 + Math.random() * 220) * (0.5 + g)) * (Math.random() < .5 ? -1 : 1);
         fxTrans("backdrop-filter " + (dur * .4) + "ms ease,-webkit-backdrop-filter " + (dur * .4) + "ms ease");
         fxSet("hue-rotate(" + (deg | 0) + "deg) saturate(" + (1.4 + g).toFixed(2) + ")");
         clearTimeout(fxTimer); fxTimer = setTimeout(fxClear, dur); return dur; } },
-    ghost: { w: 5, mobile: false, run() {   // ghosting: offset RGB drop-shadow doubles (fxlayer)
-        const g = chaosIntensity(), off = ((4 + Math.random() * 11) * (0.6 + g)) | 0, dur = 340 + Math.random() * 720;
+    ghost: { w: 5, mobile: false, run() {   // ghosting: offset RGB drop-shadow doubles (fxlayer) — held ~10x longer, a ghost that lingers
+        const g = chaosIntensity(), off = ((4 + Math.random() * 11) * (0.6 + g)) | 0, dur = (340 + Math.random() * 720) * SLOTH;
         fxTrans("none");
         fxSet("drop-shadow(" + off + "px 0 0 rgba(255,60,90,.5)) drop-shadow(" + (-off) + "px 0 0 rgba(60,180,255,.5)) blur(.3px)");
         clearTimeout(fxTimer); fxTimer = setTimeout(fxClear, dur); return dur; } },
-    pump: { w: 5, mobile: true, run() {   // brightness pumping (fxlayer desktop / vbox filter mobile, stepped)
-        const g = chaosIntensity(), seq = [1.6 + g, 0.55, 1.4 + g * .5, 0.8, 1], dt = 105;
-        fxTrans("none");
+    pump: { w: 5, mobile: true, run() {   // brightness BREATHING — SLOTH stretches each step, so EASE between levels (was a hard step) to keep it a smooth slow throb, not a slide-show (brightness/contrast are numeric -> CSS interpolates them)
+        const g = chaosIntensity(), seq = [1.6 + g, 0.55, 1.4 + g * .5, 0.8, 1], dt = 105 * SLOTH;
+        fxTrans("backdrop-filter " + Math.round(dt) + "ms ease-in-out,-webkit-backdrop-filter " + Math.round(dt) + "ms ease-in-out");
         seq.forEach((b, i) => setTimeout(() => fxSet("brightness(" + b.toFixed(2) + ") contrast(" + (1 + .3 * g).toFixed(2) + ")"), i * dt));
         const dur = seq.length * dt + 40; setTimeout(fxClear, dur); return dur; } },
-    invert: { w: 4, mobile: true, run() {   // invert blink (fxlayer desktop / vbox filter mobile)
-        const n = 2 + ((Math.random() * 3) | 0), dt = 66 + Math.random() * 60; fxTrans("none");
-        for (let i = 0; i < n; i++) { setTimeout(() => fxSet("invert(1) hue-rotate(180deg)"), i * 2 * dt); setTimeout(fxClear, (i * 2 + 1) * dt); }
-        return n * 2 * dt; } },
-    posterize: { w: 4, mobile: true, run() {   // posterize blink (SVG filter via fxlayer desktop / vbox filter mobile)
-        const n = 1 + ((Math.random() * 2) | 0), dt = 120 + Math.random() * 150; fxTrans("none");
+    invert: { w: 4, mobile: true, run() {   // invert WASH: SLOTH turns the old fast blink into ONE slow fade to negative and back (invert() is numeric, so CSS eases it smoothly) — "a 300ms blink becomes a slow wash"
+        const n = 2 + ((Math.random() * 3) | 0), dt = 66 + Math.random() * 60, dur = n * 2 * dt * SLOTH;
+        fxTrans("backdrop-filter " + Math.round(dur * .4) + "ms ease-in-out,-webkit-backdrop-filter " + Math.round(dur * .4) + "ms ease-in-out");
+        fxSet("invert(1) hue-rotate(180deg)");
+        clearTimeout(fxTimer); fxTimer = setTimeout(fxClear, Math.round(dur * .55));
+        return dur; } },
+    posterize: { w: 4, mobile: true, run() {   // posterize flashes. url() SVG filters CANNOT CSS-interpolate, so no smooth wash is possible here — keep discrete flashes but SLOTH each hold: 1-2 slow deliberate posterizations (long enough to read as intentional, too few to be a slide-show)
+        const n = 1 + ((Math.random() * 2) | 0), dt = (120 + Math.random() * 150) * SLOTH; fxTrans("none");
         for (let i = 0; i < n; i++) { setTimeout(() => fxSet("url(#vlposter) saturate(1.5)"), i * 2 * dt); setTimeout(fxClear, (i * 2 + 1) * dt); }
         return n * 2 * dt; } },
-    scanshift: { w: 5, mobile: true, run() {   // scanline density + brightness shift
-        const dur = 380 + Math.random() * 700;
+    scanshift: { w: 5, mobile: true, run() {   // scanline density + brightness shift — eased over the (SLOTH'd) scan transition -> a slow density swell
+        const dur = (380 + Math.random() * 700) * SLOTH;
         scan.style.backgroundSize = "100% " + (2 + Math.random() * 8 | 0) + "px";
         scan.style.opacity = (0.35 + Math.random() * 0.3).toFixed(2);
         setTimeout(() => { scan.style.backgroundSize = ""; scan.style.opacity = ".22"; }, dur); return dur; } },
     // -- broadcast furniture --
-    colorbars: { w: 1, mobile: true, run() {   // SMPTE-ish interstitial — RARE, brief, DIM (Paul: was blasting the room)
-        const long = Math.random() < .05, dur = long ? rnd(1300, 2200) : rnd(150, 420);
+    colorbars: { w: 1, mobile: true, run() {   // SMPTE-ish interstitial — RARE, DIM. Full-frame furniture, so SLOTH the hold but CAP at 8s (like the standby card) so it never squats the whole screen for a minute
+        const long = Math.random() < .05, dur = Math.min((long ? rnd(1300, 2200) : rnd(150, 420)) * SLOTH, 8000);
         barsEl.style.opacity = long ? "0.6" : "0.66";   // wash, not a full-brightness reference chart
         clearTimeout(barsTimer); barsTimer = setTimeout(() => { barsEl.style.opacity = "0"; }, dur); return dur; } },
-    standby: { w: 2, mobile: true, run() {   // glyph interstitial card (rare 3-5s)
+    standby: { w: 2, mobile: true, run() {   // glyph interstitial card. SLOTH the hold but CAP at 8s — a full-screen card must never squat the whole view for a minute
         cardEl.textContent = pick(STANDBY);
-        const long = Math.random() < .18, dur = long ? rnd(3000, 5000) : rnd(600, 1500);
+        const long = Math.random() < .18, dur = Math.min((long ? rnd(3000, 5000) : rnd(600, 1500)) * SLOTH, 8000);
         cardEl.style.opacity = "1";
         clearTimeout(cardTimer); cardTimer = setTimeout(() => { cardEl.style.opacity = "0"; }, dur); return dur; } },
-    channelosd: { w: 6, mobile: true, run() {   // channel number OSD, flickering
-        chanEl.textContent = pick(CHAN); const dur = 500 + Math.random() * 1500; flickerEl(chanEl, dur); return dur; } },
-    timestamp: { w: 4, mobile: true, run() {   // backwards / base-13 clock OSD
-        const dur = 900 + Math.random() * 1700, back = Math.random() < .6; let v = (Math.random() * 20000) | 0;
+    channelosd: { w: 6, mobile: true, run() {   // channel number OSD, lazily flickering (flickerEl cadence is SLOTH'd too)
+        chanEl.textContent = pick(CHAN); const dur = (500 + Math.random() * 1500) * SLOTH; flickerEl(chanEl, dur); return dur; } },
+    timestamp: { w: 4, mobile: true, run() {   // backwards / base-13 clock OSD — held ~10x longer and ticking lazily (120 -> 1200ms) so the clock crawls
+        const dur = (900 + Math.random() * 1700) * SLOTH, back = Math.random() < .6; let v = (Math.random() * 20000) | 0;
         tsEl.style.opacity = ".8"; clearInterval(tsIv);
-        tsIv = setInterval(() => { v += back ? -7 : 11; tsEl.textContent = fmtTS(v); }, 120);
+        tsIv = setInterval(() => { v += back ? -7 : 11; tsEl.textContent = fmtTS(v); }, 120 * SLOTH);
         clearTimeout(tsTimer); tsTimer = setTimeout(() => { clearInterval(tsIv); tsEl.style.opacity = "0"; }, dur); return dur; } },
     // -- alien intelligence --
-    glyph: { w: 7, mobile: true, run() {   // fleeting station ident
-        glyphEl.textContent = pick(GLYPHS); const dur = 350 + Math.random() * 900; flickerEl(glyphEl, dur); return dur; } },
-    subtitle: { w: 6, mobile: true, run() {   // captions the music wrongly
-        subEl.textContent = pick(SUBS); const dur = 1200 + Math.random() * 1900;
+    glyph: { w: 7, mobile: true, run() {   // station ident, now lingering (flickerEl cadence SLOTH'd too)
+        glyphEl.textContent = pick(GLYPHS); const dur = (350 + Math.random() * 900) * SLOTH; flickerEl(glyphEl, dur); return dur; } },
+    subtitle: { w: 6, mobile: true, run() {   // wrong captions — held ~10x longer (bottom band, non-blocking, so uncapped: a caption that lingers like a dream)
+        subEl.textContent = pick(SUBS); const dur = (1200 + Math.random() * 1900) * SLOTH;
         subEl.style.opacity = "1"; clearTimeout(subTimer); subTimer = setTimeout(() => { subEl.style.opacity = "0"; }, dur); return dur; } },
-    pip: { w: 4, mobile: false, can() { return !!pipEl && !!pickAlt(); }, run() {   // picture-in-picture of ANOTHER clip
+    pip: { w: 4, mobile: false, can() { return !!pipEl && !!pickAlt(); }, run() {   // picture-in-picture of ANOTHER clip — lingers ~10x (corner, non-blocking)
         const n = pickAlt(), src = n && srcFor(n); if (!src) return 300; setPip(pipEl, src, false);
-        const dur = 1400 + Math.random() * 2600; clearTimeout(pipTimer); pipTimer = setTimeout(hidePip, dur); return dur; } },
-    zoom: { w: 6, mobile: true, run() {   // sudden zoom lurch: snap in, drift back — transform, cheap on phones
-        const sc = 1.7 + Math.random() * 1.1, dur = 700 + Math.random() * 900;
-        vbox.style.transition = "transform 60ms ease-out"; vbox.style.transform = "scale(" + sc.toFixed(2) + ")";
-        setTimeout(() => { vbox.style.transition = "transform " + dur + "ms cubic-bezier(.2,.7,.2,1)"; vbox.style.transform = "none"; }, 70);
-        setTimeout(() => applyLook(false), dur + 140); return dur; } },
-    mirror: { w: 5, mobile: true, run() {   // mirror / flip flash — transform, cheap on phones
-        const flip = Math.random() < .5 ? "scaleX(-1)" : "scaleY(-1)", dur = 120 + Math.random() * 520;
+        const dur = (1400 + Math.random() * 2600) * SLOTH; clearTimeout(pipTimer); pipTimer = setTimeout(hidePip, dur); return dur; } },
+    zoom: { w: 6, mobile: true, run() {   // zoom BREATH: SLOTH both the ease-in and the drift-back so it swells in and out like weather (both are eased transitions -> smooth, no lurch)
+        const sc = 1.7 + Math.random() * 1.1, dur = (700 + Math.random() * 900) * SLOTH, into = 60 * SLOTH;
+        vbox.style.transition = "transform " + into + "ms ease-out"; vbox.style.transform = "scale(" + sc.toFixed(2) + ")";
+        setTimeout(() => { vbox.style.transition = "transform " + dur + "ms cubic-bezier(.2,.7,.2,1)"; vbox.style.transform = "none"; }, into + 10);
+        setTimeout(() => applyLook(false), into + dur + 80); return into + dur; } },
+    mirror: { w: 5, mobile: true, run() {   // mirror / flip — the flip itself is discrete (a reflection can't tween), but HOLD it ~10x so the frame sits mirrored like a held breath
+        const flip = Math.random() < .5 ? "scaleX(-1)" : "scaleY(-1)", dur = (120 + Math.random() * 520) * SLOTH;
         vbox.style.transition = "none"; vbox.style.transform = flip + " scale(1.02)";
         setTimeout(() => applyLook(false), dur); return dur; } },
-    dispstorm: { w: 5, mobile: false, run() {   // feTurbulence displacement storm (SVG via fxlayer)
-        const g = chaosIntensity(), dur = 700 + Math.random() * 1200; fxTrans("none"); fxSet("url(#vlstorm) contrast(1.08)");
+    dispstorm: { w: 5, mobile: false, run() {   // feTurbulence displacement storm. SLOTH stretches the DURATION (~10x -> a storm that rolls in like weather) but the reseed INTERVAL stays 90ms: x10 there would be a 900ms slide-show; 90ms keeps the churn smooth across the whole long storm
+        const g = chaosIntensity(), dur = (700 + Math.random() * 1200) * SLOTH; fxTrans("none"); fxSet("url(#vlstorm) contrast(1.08)");
         const end = nowMs() + dur; clearInterval(stormIv);
         stormIv = setInterval(() => {
           if (nowMs() >= end) { clearInterval(stormIv); fxClear(); if (stormDisp) stormDisp.setAttribute("scale", "0"); return; }
@@ -565,12 +587,12 @@
           if (stormTurb) stormTurb.setAttribute("seed", String((Math.random() * 9999) | 0));
         }, 90); return dur; } },
     // -- channel surfing --
-    surf: { w: 2, mobile: false, can() { return !!pipEl && !!pickAlt(); }, run() {   // hard CUT to a random clip, then back (a PEEK, not a switch: never touches the bag state)
+    surf: { w: 2, mobile: false, can() { return !!pipEl && !!pickAlt(); }, run() {   // channel-surf PEEK. The cut in/out stays instant (a channel change IS a cut), but DWELL on the peeked channel ~10x longer
         const n = pickAlt(), src = n && srcFor(n); if (!src) return 300; setPip(pipEl, src, true);
-        const dur = 500 + Math.random() * 1500;
+        const dur = (500 + Math.random() * 1500) * SLOTH;
         clearTimeout(pipTimer); pipTimer = setTimeout(() => { setPip(pipEl, src, false); hidePip(); }, dur); return dur; } },
     // -- musical hit (fired by the bar clock's pulse on a section/downbeat) --
-    tearhit: { w: 2, mobile: true, run() {   // a hard tape tear that reads as intentional on the drop
+    tearhit: { w: 2, mobile: true, run() {   // a hard tape tear on the drop. NOT SLOTH'd on purpose: this is beat-LOCKED musical punctuation (fired by pulse() on section downbeats) — a 10x smear would desync it from the hit and stop reading as intentional. Stays sharp.
         const dur = 170 + Math.random() * 260; tear.style.transition = "opacity 30ms";
         tear.style.top = (18 + Math.random() * 54) + "%"; tear.style.opacity = ".95";
         setTimeout(() => { tear.style.opacity = "0"; }, dur); return dur; } },
@@ -867,5 +889,6 @@
     _chaosLog: () => chaosLog.slice(),
     _chaosDeck: () => DECK.slice(),
     _chaosFire: (name) => runNamed(name),
+    _chaosEnabled: (v) => { if (v) startChaos(); else stopChaos(); },   // gate harness: quiesce the scheduler to capture one event in isolation
   };
 })(window);
