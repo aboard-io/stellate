@@ -1257,24 +1257,66 @@ async function playheadTick(){
 // the max leg length + genre names for the headless gate.
 const TOUR_MINLEG=24;   // >= the chart's minimum star spacing — never a near-duplicate hop
 const TOUR_MAXLEG=90;   // one musical neighbourhood step; legs read short on the chart
+// ENERGY: a 0..1 "how danceable" score per genre, derived straight from the
+// kernel's own vocabulary rather than a hand-curated genre list (dance-balance
+// census, 2026-07-06: the unweighted tour landed ~1/3 of its stops on wash/
+// low-energy anchors — the 2026-07 fictional-genre expansion piled 29 new
+// stars into the low-energy half of the map). Two signals, both already on
+// every K.GENRES anchor:
+//   - bpm: the anchor's [lo,hi] tempo range, midpoint normalized 50-190bpm
+//   - kits: fraction of the anchor's kit pool that ISN'T "off" (no drums) —
+//     the sharpest single tell for a wash anchor: mallsoft/sourdough/
+//     atlantidrone/crtwave/termswave/holdmusic/airtrafficdrone all carry
+//     kits:["off",...], which catches e.g. thermostatwave (90bpm, danceable
+//     on tempo alone) as still barely a beat.
+// Weighted 60/40 toward bpm. Verified against the task's curated dancey list
+// (acidhouse/house/deephouse/techno/italo/disco/trance/edm/dancepop/garage/
+// gabber/breakcore/jungle/synthwave/darksynth/ebm/chiptune/hogcore/miamibass/
+// phonk/newjack/bigbeat/electro/dubstep) — every one of those scores >=0.62,
+// and the 0.6 cutoff below splits the 92-star catalog 59/33, matching the
+// census's reported "~1/3 land on wash" almost exactly.
+const ENERGY={};
+for(const g of Object.keys(POS)){
+  const a=K.GENRES[g];
+  if(!a){ ENERGY[g]=0.3; continue; }   // shouldn't happen; neutral fallback
+  const [lo,hi]=a.bpm, bpmScore=Math.max(0,Math.min(1,((lo+hi)/2-50)/140));   // 50bpm->0, 190bpm->1
+  const kits=a.kits||[], kitScore=kits.length?kits.filter(k=>k!=="off").length/kits.length:1;
+  ENERGY[g]=0.6*bpmScore+0.4*kitScore;
+}
+const GROOVE_ANCHOR=0.6;   // ENERGY at/above this = "groove anchor" (dance-floor tier)
+const GROOVE_EVERY=3;      // force a reachable groove anchor at least this often, for contrast without monotony
 function autoPath(){
   const gs=Object.keys(POS);
   const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
-  // Greedy nearest-unvisited walk with a max leg length, tie-broken among the
-  // nearest few for VARIETY between visits. Retry from fresh random starts and
-  // keep the longest walk that lands in [10,16] (a corner start can dead-end
-  // early; 60 tries reliably find a full-length tour — verified ~3000 runs).
+  // Greedy nearest-unvisited walk with a max leg length, ENERGY-weighted among
+  // the nearest few for VARIETY between visits AND a bias toward dancier
+  // stars (the fix for "we seem to be exclusively super downtempo"). A
+  // groove-anchor floor guarantees the tour doesn't drift into an all-wash
+  // stretch even on an unlucky weighted draw; wash stars keep nonzero weight
+  // so the tour still moves between energy levels rather than turning into
+  // wall-to-wall bangers. Retry from fresh random starts and keep the longest
+  // walk that lands in [10,16] (a corner start can dead-end early; 60 tries
+  // reliably find a full-length tour — verified ~3000 runs).
   function walkFrom(){
     const target=10+Math.floor(Math.random()*7);   // 10..16 waypoints
     const start=gs[Math.floor(Math.random()*gs.length)];
     const vis=new Set([start]), walk=[start];
+    let sinceGroove=ENERGY[start]>=GROOVE_ANCHOR?0:1;
     while(walk.length<target){
       const cur=POS[walk[walk.length-1]];
       const cands=gs.filter(g=>!vis.has(g)&&dist(POS[g],cur)>=TOUR_MINLEG&&dist(POS[g],cur)<=TOUR_MAXLEG);
       if(!cands.length) break;                       // dead-ended in a sparse corner
       cands.sort((a,b)=>dist(POS[a],cur)-dist(POS[b],cur));
-      const pick=cands[Math.floor(Math.random()*Math.min(cands.length,3))];
+      let pool=cands.slice(0,Math.min(cands.length,5));   // nearby few (widened from 3 to give ENERGY room to work)
+      if(sinceGroove>=GROOVE_EVERY){                        // groove floor: force one in if any nearby star qualifies
+        const groovy=pool.filter(g=>ENERGY[g]>=GROOVE_ANCHOR);
+        if(groovy.length) pool=groovy;
+      }
+      const weights=pool.map(g=>0.15+Math.pow(ENERGY[g],1.5));   // dancey stars pull harder; wash never hits zero
+      let r=Math.random()*weights.reduce((a,b)=>a+b,0), pick=pool[pool.length-1];
+      for(let i=0;i<pool.length;i++){ r-=weights[i]; if(r<=0){ pick=pool[i]; break; } }
       vis.add(pick); walk.push(pick);
+      sinceGroove=ENERGY[pick]>=GROOVE_ANCHOR?0:sinceGroove+1;
     }
     return {walk, target};
   }
@@ -1287,7 +1329,9 @@ function autoPath(){
   const names=best.slice(0,16);
   const pts=names.map(g=>({x:POS[g][0],y:POS[g][1]}));
   window.__TOUR={names, maxleg:TOUR_MAXLEG,
-    legs:pts.slice(1).map((p,i)=>Math.hypot(p.x-pts[i].x,p.y-pts[i].y))};
+    legs:pts.slice(1).map((p,i)=>Math.hypot(p.x-pts[i].x,p.y-pts[i].y)),
+    energy:names.map(g=>+ENERGY[g].toFixed(3)),
+    groovy:names.filter(g=>ENERGY[g]>=GROOVE_ANCHOR).length};
   set({waypoints:pts, travel:{seg:0,t:0},
     status:"tonight's grand tour: "+names.length+" stops through "+names.slice(0,3).join(" → ")+
       "… — ▶ LIVE to travel (✕ path to roam free)"});
