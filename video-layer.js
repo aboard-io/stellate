@@ -79,8 +79,10 @@
   let curName = null, seq = 0, curGenre = "", profile = null;
   // ---- ALIEN BROADCAST chaos-layer state (event-driven station personality) --
   let fxlayer = null, pipEl = null, barsEl = null, cardEl = null, subEl = null,
-      chanEl = null, glyphEl = null, tsEl = null, trackEl = null,
+      chanEl = null, tsEl = null, trackEl = null,
       stormDisp = null, stormTurb = null;
+  let glyphEls = [], glyphRR = 0;         // roaming-glyph pool (no DOM churn) + round-robin cursor
+  let scanBand = null, scanLines = null;  // analog vertical-blanking bar + near-subliminal fine texture
   let chaosTimer = 0, chaosOn = false, lastEvt = "", storm = 1, curFam = "vhs", lastSection = null;
   let barsTimer = 0, cardTimer = 0, subTimer = 0, pipTimer = 0, tsTimer = 0, fxTimer = 0, tsIv = 0, stormIv = 0;
   const chaosLog = [];   // {type,t,dur} ring — the gate harness reads VideoLayer._chaosLog()
@@ -221,9 +223,26 @@
     const veil = document.createElement("div");
     veil.style.cssText = "position:absolute;inset:0;" +
       "background:linear-gradient(rgba(12,10,26,.44),rgba(12,10,26,.26) 30%,rgba(12,10,26,.5))";
+    // ANALOG VERTICAL-BLANKING BAR (Paul 2026-07-06: the old dense multi-line
+    // repeating-gradient read as "too much and too obviously digital"). Now: ONE
+    // soft, slow-rolling darker band — the classic hum / vertical-hold bar — over
+    // a BARELY-perceptible fine-line texture. The digital grid is gone; the roll
+    // is SLOTH-slow (a single languid sweep, ~14s), the lines are near-subliminal,
+    // and the frame leans on the grain for its analog tooth. scanshift now nudges
+    // this subtly (a slow density swell), never a flashing grid.
     scan = document.createElement("div");
-    scan.style.cssText = "position:absolute;inset:0;opacity:.22;mix-blend-mode:overlay;transition:opacity " + (0.3 * SLOTH) + "s,background-size " + (0.3 * SLOTH) + "s;" +
-      "background:repeating-linear-gradient(0deg,rgba(0,0,0,.6) 0 1px,transparent 1px 3px)";
+    scan.className = "vl-scan";
+    scan.style.cssText = "position:absolute;inset:0;overflow:hidden;opacity:.55;mix-blend-mode:overlay;transition:opacity " + (0.3 * SLOTH) + "s";
+    scanLines = document.createElement("div");   // near-subliminal fine texture (barely there)
+    scanLines.className = "vl-scanlines";
+    scanLines.style.cssText = "position:absolute;inset:0;opacity:.26;transition:opacity " + (0.3 * SLOTH) + "s;" +
+      "background:repeating-linear-gradient(0deg,rgba(0,0,0,.5) 0 1px,transparent 1px 4px)";
+    scanBand = document.createElement("div");    // the single soft rolling darker band
+    scanBand.className = "vl-scanband";
+    scanBand.style.cssText = "position:absolute;left:0;right:0;top:0;height:38vh;will-change:transform;" +
+      "background:linear-gradient(180deg,transparent,rgba(0,0,0,.26) 42%,rgba(0,0,0,.32) 50%,rgba(0,0,0,.26) 58%,transparent)" +
+      (reduced ? "" : ";animation:vl-vblank " + (1.4 * SLOTH) + "s linear infinite");
+    scan.append(scanLines, scanBand);
     grain = document.createElement("div");
     if (MOBILE) grain.setAttribute("hidden", "");
     grain.style.cssText = "position:absolute;inset:-220px;opacity:.12;mix-blend-mode:screen;transition:opacity .8s;" +
@@ -242,7 +261,11 @@
       // vertical-hold roll: scale(1.14) overscan hides the reveal so the roll
       // never exposes black (the never-black law extends to never-black-edges).
       "@keyframes vl-roll{0%{transform:scale(1.14) translateY(-7%)}50%{transform:scale(1.14) translateY(7%)}100%{transform:scale(1.14) translateY(-7%)}}" +
-      ".vl-roll{animation:vl-roll " + (0.52 * SLOTH) + "s linear 2}";   // vertical-hold roll, SLOTH'd to a languid drift
+      ".vl-roll{animation:vl-roll " + (0.52 * SLOTH) + "s linear 2}" +   // vertical-hold roll, SLOTH'd to a languid drift
+      // the analog vertical-blanking bar's slow downward roll — one soft band
+      // sweeping top to bottom (it appears, rolls through, clears, reappears), the
+      // way a real hum bar drifts. Compositor-cheap transform, SLOTH-slow.
+      "@keyframes vl-vblank{from{transform:translateY(-42vh)}to{transform:translateY(100vh)}}";
     // ---- ALIEN BROADCAST furniture (dedicated overlay els; opacity-toggled,
     // never touch vbox — all cheap compositor paints over the base grade) ----
     barsEl = document.createElement("div");   // SMPTE-ish color-bar interstitial — DIM (haunted, not a reference chart)
@@ -259,9 +282,23 @@
     chanEl = document.createElement("div");   // channel-number OSD (wrong/alien/huge)
     chanEl.style.cssText = "position:absolute;top:14px;right:20px;opacity:0;font:30px 'VT323',ui-monospace,monospace;" +
       "color:rgba(255,240,170,.9);letter-spacing:.05em;text-shadow:0 0 8px rgba(255,200,80,.55)";
-    glyphEl = document.createElement("div");  // alien station idents
-    glyphEl.style.cssText = "position:absolute;top:42%;right:8%;opacity:0;font:48px 'VT323',ui-monospace,monospace;" +
-      "color:rgba(210,255,250,.72);text-shadow:0 0 14px rgba(120,255,255,.5)";
+    // ROAMING GLYPHS (Paul 2026-07-06: idents should "appear all over the place
+    // and move around, different sizes"). A small POOL of pre-made elements (no
+    // DOM churn) — each glyph event teleports a free one to a RANDOM spot at a
+    // RANDOM size (small ticker -> huge quarter-screen watermark), then lets it
+    // SLOWLY DRIFT (SLOTH-scaled, weather-like) with gentle rotation/scale for its
+    // life. Occasionally 2-3 fire at once (a swarm moment). They live inside vbox,
+    // so they warp with the footage (STACK LAW). Cheap transforms -> mobile too.
+    const GLYPH_POOL = MOBILE ? 3 : 4;
+    glyphEls = [];
+    for (let i = 0; i < GLYPH_POOL; i++) {
+      const gEl = document.createElement("div");
+      gEl.className = "vl-glyph";   // gate/debug hook: the roaming idents are queryable in the DOM
+      gEl.style.cssText = "position:absolute;left:50%;top:50%;opacity:0;white-space:nowrap;line-height:1;" +
+        "will-change:transform,opacity;transform:translate(-50%,-50%);" +
+        "font-family:'VT323',ui-monospace,monospace;color:rgba(210,255,250,.72);text-shadow:0 0 14px rgba(120,255,255,.5)";
+      glyphEls.push(gEl);
+    }
     tsEl = document.createElement("div");     // timestamp OSD (backwards / base-13)
     tsEl.style.cssText = "position:absolute;bottom:84px;right:20px;opacity:0;transition:opacity " + (0.2 * SLOTH) + "s;" +   // above the explorer's corner buttons (chrome overlays this layer)
       "font:24px 'VT323',ui-monospace,monospace;color:rgba(255,210,220,.75);letter-spacing:.08em;text-shadow:2px 2px 0 rgba(0,0,0,.5)";
@@ -275,7 +312,7 @@
     // it = vbox + furniture) chroma-lurches / inverts / ghosts the text along with
     // the picture. veil/scan/grain/tear/osd stay ABOVE fxlayer as untouched texture
     // + the corner ident. cardEl (standby) is appended last -> paints on top.
-    vbox.append(trackEl, barsEl, glyphEl, chanEl, tsEl, subEl, cardEl);
+    vbox.append(trackEl, barsEl, ...glyphEls, chanEl, tsEl, subEl, cardEl);
     wrap.append(veil, scan, grain, tear, osd, st);
     if (!MOBILE) {   // PiP / channel-surf peek: one extra decoder, desktop only
       pipEl = document.createElement("video");
@@ -405,16 +442,55 @@
     if (fxlayer) fxlayer.style.transition = t;
   }
   // flicker an OSD element (channel / glyph): random on/off/dim, then hide.
-  function flickerEl(el, dur) {
+  function flickerEl(el, dur, peak) {
     if (!el) return;
-    el.style.opacity = "1";
+    const hi = peak == null ? 1 : peak;   // GLYPHs pass a size-scaled peak: huge watermarks stay faint, small idents burn bright
+    el.style.opacity = hi.toFixed(2);
     const end = nowMs() + dur;
     const blink = () => {
       if (nowMs() >= end) { el.style.opacity = "0"; return; }
-      el.style.opacity = Math.random() < .22 ? "0.12" : (Math.random() < .5 ? "1" : "0.72");
+      el.style.opacity = (hi * (Math.random() < .22 ? .16 : (Math.random() < .5 ? 1 : .72))).toFixed(2);
       setTimeout(blink, (55 + Math.random() * 150) * SLOTH);   // lazy flicker, not a fast twitch (dur is SLOTH'd at call sites too)
     };
     setTimeout(blink, 50 * SLOTH);
+  }
+  // pick the next pooled glyph (round-robin — chaos events are serialized, so a
+  // full cycle of the pool outlives any one glyph's life; a swarm of <=3 lands on
+  // distinct elements). Returns an element ready to be teleported + drifted.
+  function freeGlyph() {
+    if (!glyphEls.length) return null;
+    const el = glyphEls[glyphRR % glyphEls.length]; glyphRR++;
+    return el;
+  }
+  // spawn ONE roaming glyph: random position anywhere (size-aware inset so it
+  // never clips), random size (small ticker -> huge quarter-screen watermark),
+  // then a SLOW weather-like drift (direction/speed randomized, SLOTH-scaled)
+  // with gentle rotation + slow scale breathing on some. Returns its life in ms.
+  function spawnGlyph() {
+    const el = freeGlyph(); if (!el) return 400;
+    el.textContent = pick(GLYPHS);
+    const size = rnd(2.6, 24);                       // vmin: small ticker .. huge quarter-screen watermark
+    el.style.fontSize = size.toFixed(1) + "vmin";
+    const inset = Math.min(40, 5 + size * 1.35);     // % — bigger glyph, bigger safe margin
+    const x0 = rnd(inset, 100 - inset), y0 = rnd(inset, 100 - inset);
+    const rot0 = rnd(-7, 7);
+    el.style.transition = "none";                    // teleport instantly...
+    el.style.left = x0.toFixed(1) + "%"; el.style.top = y0.toFixed(1) + "%";
+    el.style.transform = "translate(-50%,-50%) rotate(" + rot0.toFixed(1) + "deg)";
+    void el.offsetWidth;                             // ...commit before arming the drift transition
+    const dur = (360 + Math.random() * 900) * SLOTH; // ~3.6s .. 12.6s of life
+    const ang = Math.random() * Math.PI * 2, dist = rnd(4, 13);   // vmin traversed over the WHOLE life -> dust-mote slow
+    const dx = Math.cos(ang) * dist, dy = Math.sin(ang) * dist;
+    const rot1 = rot0 + (Math.random() < .5 ? -1 : 1) * rnd(2, 12);         // gentle rotation on some
+    const breath = Math.random() < .5 ? rnd(1.05, 1.2) : rnd(.86, .98);     // slow scale breathing on some
+    el.style.transition = "transform " + Math.round(dur) + "ms linear";
+    requestAnimationFrame(() => {
+      el.style.transform = "translate(calc(-50% + " + dx.toFixed(1) + "vmin),calc(-50% + " + dy.toFixed(1) + "vmin)) " +
+        "rotate(" + rot1.toFixed(1) + "deg) scale(" + breath.toFixed(3) + ")";
+    });
+    const peak = Math.max(.4, .95 - (size - 2.6) / (24 - 2.6) * .5);   // huge watermarks faint, small idents bright
+    flickerEl(el, dur, peak);
+    return dur;
   }
   // an alt clip for PiP / channel-surf: prefer a LOCAL cache clip (snappy hard
   // cut), else any other playable name (remote may pop in late — chaos-tolerant).
@@ -538,11 +614,11 @@
         const n = 1 + ((Math.random() * 2) | 0), dt = (120 + Math.random() * 150) * SLOTH; fxTrans("none");
         for (let i = 0; i < n; i++) { setTimeout(() => fxSet("url(#vlposter) saturate(1.5)"), i * 2 * dt); setTimeout(fxClear, (i * 2 + 1) * dt); }
         return n * 2 * dt; } },
-    scanshift: { w: 5, mobile: true, run() {   // scanline density + brightness shift — eased over the (SLOTH'd) scan transition -> a slow density swell
+    scanshift: { w: 5, mobile: true, run() {   // a SLOW swell of the analog bar/texture — NOT a digital grid flash. Eased over the (SLOTH'd) scan transition: the whole scanline layer densifies + the fine texture surfaces a touch, then settles.
         const dur = (380 + Math.random() * 700) * SLOTH;
-        scan.style.backgroundSize = "100% " + (2 + Math.random() * 8 | 0) + "px";
-        scan.style.opacity = (0.35 + Math.random() * 0.3).toFixed(2);
-        setTimeout(() => { scan.style.backgroundSize = ""; scan.style.opacity = ".22"; }, dur); return dur; } },
+        scan.style.opacity = (0.7 + Math.random() * 0.25).toFixed(2);
+        if (scanLines) scanLines.style.opacity = (0.4 + Math.random() * 0.3).toFixed(2);
+        setTimeout(() => { scan.style.opacity = ".55"; if (scanLines) scanLines.style.opacity = ".26"; }, dur); return dur; } },
     // -- broadcast furniture --
     colorbars: { w: 1, mobile: true, run() {   // SMPTE-ish interstitial — RARE, DIM. Full-frame furniture, so SLOTH the hold but CAP at 8s (like the standby card) so it never squats the whole screen for a minute
         const long = Math.random() < .05, dur = Math.min((long ? rnd(1300, 2200) : rnd(150, 420)) * SLOTH, 8000);
@@ -561,8 +637,9 @@
         tsIv = setInterval(() => { v += back ? -7 : 11; tsEl.textContent = fmtTS(v); }, 120 * SLOTH);
         clearTimeout(tsTimer); tsTimer = setTimeout(() => { clearInterval(tsIv); tsEl.style.opacity = "0"; }, dur); return dur; } },
     // -- alien intelligence --
-    glyph: { w: 7, mobile: true, run() {   // station ident, now lingering (flickerEl cadence SLOTH'd too)
-        glyphEl.textContent = pick(GLYPHS); const dur = (350 + Math.random() * 900) * SLOTH; flickerEl(glyphEl, dur); return dur; } },
+    glyph: { w: 7, mobile: true, run() {   // roaming station idents — usually 1, ~22% of the time a 2-3 swarm moment; each spawns anywhere, sized wildly, drifting slowly
+        const swarm = Math.random() < .22 ? 2 + ((Math.random() * 2) | 0) : 1;
+        let dur = 0; for (let i = 0; i < swarm; i++) dur = Math.max(dur, spawnGlyph()); return dur; } },
     subtitle: { w: 6, mobile: true, run() {   // wrong captions — held ~10x longer (bottom band, non-blocking, so uncapped: a caption that lingers like a dream)
         subEl.textContent = pick(SUBS); const dur = (1200 + Math.random() * 1900) * SLOTH;
         subEl.style.opacity = "1"; clearTimeout(subTimer); subTimer = setTimeout(() => { subEl.style.opacity = "0"; }, dur); return dur; } },
@@ -663,7 +740,7 @@
   function stopChaos() {
     chaosOn = false; clearTimeout(chaosTimer); clearInterval(stormIv); clearInterval(tsIv);
     fxClear();
-    [barsEl, cardEl, subEl, chanEl, glyphEl, tsEl, trackEl].forEach(el => { if (el) el.style.opacity = "0"; });
+    [barsEl, cardEl, subEl, chanEl, tsEl, trackEl, ...glyphEls].forEach(el => { if (el) el.style.opacity = "0"; });
     if (vbox) vbox.classList.remove("vl-roll");
     hidePip();
   }
