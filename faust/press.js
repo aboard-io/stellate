@@ -26,6 +26,10 @@ const SE = require(path.join(__dirname, "state-engine.js"));
 const FP = require(path.join(__dirname, "found-player.js"));
 const SP = require(path.join(__dirname, "sampler.js"));
 const WAV = require(path.join(__dirname, "wav.js"));
+// the per-unit pool/legato/insert render walk — extracted to render-core.js
+// (ZERO-STATIC Stage 3 prerequisite, byte-parity gated) so the 16-bar stem
+// cache's Worker can drive the identical loop; press injects mkProc/rootOf.
+const RC = require(path.join(__dirname, "render-core.js"));
 
 const SR = 44100, BS = 64;
 const FOUND_CAP_SEC = 180; // bound decode memory; offsets are fractions of what we load
@@ -87,17 +91,6 @@ async function mkProc(mod) {
   return _gen.createOfflineProcessor(SR, BS, await factory(mod));
 }
 const rootOf = (mod) => JSON.parse(_factories[mod].json).name;
-
-// merge [start,end] intervals
-function mergeIvals(ivals) {
-  ivals.sort((a, b) => a[0] - b[0]);
-  const out = [];
-  for (const iv of ivals) {
-    if (out.length && iv[0] <= out[out.length - 1][1]) out[out.length - 1][1] = Math.max(out[out.length - 1][1], iv[1]);
-    else out.push(iv.slice());
-  }
-  return out;
-}
 
 // ---------------------------------------------------------------- main
 async function press(state, outPath, opts) {
@@ -188,143 +181,16 @@ async function press(state, outPath, opts) {
       console.log(`  ${key}: ${notes.length} ev -> sampler:${u.sampler.id} (native PCM, ${u.sampler.zones.length} zones)`);
       continue;
     }
-    const P = Math.min(u.pool || 1, u.poolCap != null ? u.poolCap : Infinity);   // poolCap: CPU-budget shed
-    const procs = [];
-    for (let i = 0; i < P; i++) {
-      const proc = await mkProc(u.module);
-      const R = "/" + rootOf(u.module) + "/";
-      for (const [k, v] of Object.entries(u.params || {})) proc.setParamValue(R + k, v);
-      const dxParams = u.dx7Params || (u.dx7Preset && dx7Presets[u.dx7Preset] && dx7Presets[u.dx7Preset].params);
-      if (dxParams)
-        for (const [sfx, v] of Object.entries(dxParams)) proc.setParamValue(sfx.startsWith("/DX7") ? sfx : "/DX7" + sfx, v);
-      procs.push({ proc, R, changes: [], ivals: [], busyUntil: -1 });
-    }
-    // per-voice INSERT chain (state.instruments.<voice>.inserts contract):
-    // voices accumulate into a unit-local buffer, the chain processes it
-    // whole-song (LFO phase + tails continuous), THEN the layer/fx sends
-    // apply — same insert point as live's node->chain->sends. Units without
-    // inserts keep the original direct-mix path untouched (bit-identical).
-    const hasIns = u.inserts && u.inserts.length;
-    const ubuf = hasIns ? new Float32Array(TOTAL) : null;
-
-    // supersaw release tail must survive the gate-off
-    let tail = u.tail || 1;
-    if (u.module === "supersaw") tail = Math.max(tail, (u.params.release || 0.3) + 0.3);
-    const relTail = Math.ceil(tail * SR);
-
-    // allocation: first free voice, else the one free soonest (round-robin-ish).
-    // MONO-LEGATO units (u.mono, e.g. modeld): every note goes to voice 0, and
-    // legato notes (gap < legatoSec or overlapping the previous note) join the
-    // running gate group — the previous gate-off is withdrawn so the gate HOLDS
-    // across the group, the freq param slews inside the module (glide) and the
-    // envelopes single-trigger, exactly the Model-D contract in VOICES.md.
-    const legatoWin = u.mono ? Math.ceil((u.legatoSec != null ? u.legatoSec : 0.03) * SR) : 0;
-    for (const e of events) {
-      const s = Math.max(BS, Math.floor(e.beat * spb * SR));
-      const durS = e.durB * spb;
-      const offS = e.hold ? s + Math.floor(durS * SR)
-        : e.drum ? s + Math.floor(0.012 * SR)
-        : s + Math.floor((Math.max(0.012, durS) - 0.008) * SR);
-      let v, legato = false;
-      if (u.mono) {
-        v = procs[0];
-        legato = !!(v.lastOff && s <= v.busyUntil + legatoWin);
-      } else {
-        v = procs.find(p => p.busyUntil <= s) ||
-            procs.reduce((a, b) => (a.busyUntil <= b.busyUntil ? a : b));
-      }
-      for (const [k, val] of Object.entries(e.sets)) v.changes.push([s - BS, v.R + k, val]);
-      // JS-side per-note gains ("@" pseudo-params, applied in the mix loop, not
-      // setParamValue): @out = DX7 velocity (GainNode-equivalent, matches live's
-      // min(1, extGainPerAmp*amp)); @pp = per-EVENT ping-pong send (snarePP).
-      if (u.extGainPerAmp) v.changes.push([s - BS, "@out", Math.min(1, u.extGainPerAmp * (e.amp || 0.1))]);
-      v.changes.push([s - BS, "@pp", e.pp || 0]);
-      if (legato) {
-        // join the group: withdraw the pending gate-off, keep the gate high
-        const ix = v.changes.indexOf(v.lastOff);
-        if (ix >= 0) v.changes.splice(ix, 1);
-      } else {
-        v.changes.push([s, v.R + "gate", 1]);
-      }
-      const off = [offS, v.R + "gate", 0];
-      v.changes.push(off);
-      if (u.mono) v.lastOff = off;
-      v.ivals.push([s - BS, Math.min(TOTAL, off[0] + relTail)]);
-      v.busyUntil = Math.max(v.busyUntil, off[0]);
-    }
-
-    // render each pool voice over its merged active segments only
-    let rendered = 0;
-    for (const v of procs) {
-      if (!v.changes.length) continue;
-      v.changes.sort((a, b) => a[0] - b[0]);
-      const segs = mergeIvals(v.ivals);
-      let ci = 0, curOut = 1, curPP = 0;
-      const applyChange = (c) => {
-        if (c[1] === "@out") curOut = c[2];
-        else if (c[1] === "@pp") curPP = c[2];
-        else v.proc.setParamValue(c[1], c[2]);
-      };
-      for (const [a, b] of segs) {
-        const from = Math.max(0, Math.floor(a / BS) * BS), to = Math.min(TOTAL, b);
-        // apply any changes that fell before this segment (kept in order)
-        while (ci < v.changes.length && v.changes[ci][0] < from) { applyChange(v.changes[ci]); ci++; }
-        for (let s = from; s < to; s += BS) {
-          const len = Math.min(BS, TOTAL - s);
-          while (ci < v.changes.length && v.changes[ci][0] < s + len) { applyChange(v.changes[ci]); ci++; }
-          const ins = u.vocoder && speech ? [speech.subarray(s, s + len)] : (u.vocoder ? [new Float32Array(len)] : []);
-          const oo = v.proc.render(ins, len);
-          const o = oo[0];
-          if (ubuf) {
-            // pre-insert: only per-note out gain applies (matches live, where
-            // the voice's out GainNode feeds the chain); sends come after.
-            // (stereo voices are folded to channel 0 through the mono insert
-            // chain — graceful; the wired stereo genres carry no inserts.)
-            for (let i = 0; i < len; i++) ubuf[s + i] += o[i] * curOut;
-          } else if (u.stereo && wL) {
-            // STEREO voice: [0]->L, [1]->R for the dry width; sends use the mono sum
-            const o1 = oo[1] || o;
-            const dg = (u.dry != null ? u.dry : 1) * curOut, rg = (u.rev || 0) * curOut,
-                  lg = (u.del || 0) * curOut, pg = curPP * curOut;
-            for (let i = 0; i < len; i++) {
-              const l = o[i], r = o1[i], mono = (l + r) * 0.5;
-              wL[s + i] += l * dg; wR[s + i] += r * dg;
-              rev[s + i] += mono * rg; del[s + i] += mono * lg;
-              if (pg) pp[s + i] += mono * pg;
-            }
-          } else {
-            const dg = (u.dry != null ? u.dry : 1) * curOut, rg = (u.rev || 0) * curOut,
-                  lg = (u.del || 0) * curOut, pg = curPP * curOut;
-            for (let i = 0; i < len; i++) {
-              const x = o[i];
-              dry[s + i] += x * dg; rev[s + i] += x * rg; del[s + i] += x * lg;
-              if (pg) pp[s + i] += x * pg;
-            }
-          }
-          rendered += len;
-        }
-      }
-    }
-    if (ubuf) {
-      for (const eff of u.inserts) {
-        const ip = await mkProc(eff.module);
-        const IR = "/" + rootOf(eff.module) + "/";
-        for (const [k, pv] of Object.entries(eff.params)) ip.setParamValue(IR + k, pv);
-        if (eff.barSec) ip.setParamValue(IR + "barSec", 4 * spb); // tempo-synced LFO
-        for (let s = 0; s < TOTAL; s += BS) {
-          const len = Math.min(BS, TOTAL - s);
-          const o = ip.render([ubuf.subarray(s, s + len)], len)[0];
-          for (let i = 0; i < len; i++) ubuf[s + i] = o[i];
-        }
-      }
-      const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
-      for (let i = 0; i < TOTAL; i++) {
-        const x = ubuf[i];
-        dry[i] += x * dg; rev[i] += x * rg; del[i] += x * lg;
-      }
-    }
-    console.log(`  ${key}: ${events.length} ev -> ${u.module} x${P}, ${(rendered / SR).toFixed(1)}s voiced` +
-      (hasIns ? ` [inserts: ${u.inserts.map(i => i.type).join(">")}]` : ""));
+    // FAUST units: the whole pool/legato/insert walk lives in render-core.js
+    // (shared verbatim with the future stem-cache Worker — parity is byte-level,
+    // see its header). press's environment enters via mkProc/rootOf injection.
+    const r = await RC.renderUnit(u, events, {
+      mkProc, rootOf, SR, BS, TOTAL, spb,
+      buses: { dry, rev, del, pp, wL, wR },
+      speech, dx7Presets,
+    });
+    console.log(`  ${key}: ${events.length} ev -> ${u.module} x${r.pool}, ${(r.rendered / SR).toFixed(1)}s voiced` +
+      (u.inserts && u.inserts.length ? ` [inserts: ${u.inserts.map(i => i.type).join(">")}]` : ""));
   }
 
   // ---- reverb COLOR: an external reverb module (dist/reverb_*) replaces the
