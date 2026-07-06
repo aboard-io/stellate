@@ -1,0 +1,263 @@
+{
+  "name": "crtwave",
+  "label": "Cathode Elegy",
+  "info": "mourning the tube television: the 15.7 kHz flyback whine held as a high sine drone, the degauss \"boinnng\" as the kick, the warm static of a channel long off the air — a genre for empty living rooms and the smell of hot glass",
+  "clips": [
+    "tv_room",
+    "dark_face",
+    "deep_face",
+    "green_nebula"
+  ],
+  "materials": "archive.org CRT flyback whine + degauss thunk (the drone/kick) — MATERIALS; draft synthesizes both with a high sine lead + boom kick",
+  "pos": [
+    685,
+    230
+  ],
+  "anchor": {
+    "bpm": [
+      60,
+      72
+    ],
+    "swing": [
+      0,
+      0.03
+    ],
+    "humanize": [
+      0.04,
+      0.12
+    ],
+    "progressions": [
+      "drone_min",
+      "deep_two"
+    ],
+    "kits": [
+      "off",
+      "kick"
+    ],
+    "fills": [
+      "off"
+    ],
+    "chordEvery": 16,
+    "bass": {
+      "patterns": [
+        "pedal",
+        "sub",
+        "root"
+      ],
+      "recipe": {
+        "model": [
+          "sub",
+          "saw"
+        ],
+        "cutoff": [
+          350,
+          600
+        ],
+        "res": [
+          0.06,
+          0.14
+        ],
+        "level": [
+          0.6,
+          0.82
+        ],
+        "send": [
+          0.15,
+          0.35
+        ],
+        "dsend": [
+          0,
+          0.05
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "off",
+        "sparse"
+      ],
+      "recipe": {
+        "model": [
+          "sine"
+        ],
+        "wave": "sine",
+        "voices": [
+          1,
+          1
+        ],
+        "cutoff": [
+          3000,
+          4500
+        ],
+        "level": [
+          0.22,
+          0.34
+        ],
+        "send": [
+          0.3,
+          0.5
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.9,
+      "recipe": {
+        "model": [
+          "solina",
+          "vp330",
+          "organ"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          700,
+          1200
+        ],
+        "detune": [
+          0.006,
+          0.014
+        ],
+        "attack": [
+          2,
+          4
+        ],
+        "level": [
+          0.48,
+          0.65
+        ],
+        "send": [
+          0.5,
+          0.7
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ],
+        "mellotron": true
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom"
+      ],
+      "snareModel": [
+        "noise"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        0.6,
+        0.9
+      ],
+      "snare": [
+        0.2,
+        0.4
+      ],
+      "hat": [
+        0.2,
+        0.4
+      ],
+      "tune": [
+        0.85,
+        0.98
+      ],
+      "send": [
+        0.2,
+        0.4
+      ],
+      "dsend": [
+        0,
+        0.1
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.45,
+        0.65
+      ],
+      "delayBeats": [
+        0.75,
+        1.5
+      ],
+      "delayFb": [
+        0.15,
+        0.3
+      ],
+      "delayCut": [
+        1800,
+        2800
+      ],
+      "pump": [
+        0,
+        0
+      ],
+      "crackle": [
+        0.1,
+        0.3
+      ],
+      "lowcut": [
+        0,
+        0
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0,
+        0.15
+      ]
+    },
+    "reverbColor": "greyhole",
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.08,
+        0.18
+      ],
+      "pitch": [
+        0.85,
+        1
+      ],
+      "stretch": [
+        0.5,
+        0.7
+      ],
+      "cutoff": [
+        1600,
+        2600
+      ],
+      "sources": [
+        "highway_night",
+        "factory"
+      ]
+    },
+    "hits": {
+      "sources": [
+        "tw_ding"
+      ],
+      "pattern": "sparse",
+      "prob": 0.1
+    },
+    "stab": [
+      "off"
+    ],
+    "form": "wave"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 3,
+      "drumDensity": 2,
+      "wash": 2,
+      "crackle": 2,
+      "sub": 1,
+      "motion": 1
+    }
+  }
+}

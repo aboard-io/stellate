@@ -1,0 +1,265 @@
+{
+  "name": "thermostatwave",
+  "label": "Thermostatwave",
+  "info": "the passive-aggressive domestic drone: a household divided over the temperature, an HVAC hum you can only hear at night, one dial nudged 0.5 degrees and nudged back — minimal, cold, resentful, in the key of \"who touched the thermostat\"",
+  "clips": [
+    "ind_furnace",
+    "earth_orbit",
+    "green_nebula",
+    "tv_room"
+  ],
+  "materials": "archive.org furnace/HVAC hum bed + espeak thermostat spat (sp_therm_*, MATERIALS); draft uses factory hum",
+  "pos": [
+    160,
+    435
+  ],
+  "anchor": {
+    "bpm": [
+      84,
+      96
+    ],
+    "swing": [
+      0,
+      0.05
+    ],
+    "humanize": [
+      0.03,
+      0.1
+    ],
+    "progressions": [
+      "drone_min",
+      "deep_two"
+    ],
+    "kits": [
+      "off",
+      "kick"
+    ],
+    "fills": [
+      "off",
+      "dropout"
+    ],
+    "chordEvery": 16,
+    "bass": {
+      "patterns": [
+        "pedal",
+        "sub",
+        "root"
+      ],
+      "recipe": {
+        "model": [
+          "sub",
+          "saw"
+        ],
+        "cutoff": [
+          380,
+          650
+        ],
+        "res": [
+          0.06,
+          0.14
+        ],
+        "level": [
+          0.6,
+          0.82
+        ],
+        "send": [
+          0.1,
+          0.3
+        ],
+        "dsend": [
+          0,
+          0.06
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "off",
+        "sparse"
+      ],
+      "recipe": {
+        "model": [
+          "sine",
+          "organ"
+        ],
+        "wave": "sine",
+        "voices": [
+          1,
+          1
+        ],
+        "cutoff": [
+          1200,
+          2000
+        ],
+        "level": [
+          0.26,
+          0.38
+        ],
+        "send": [
+          0.35,
+          0.55
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.9,
+      "recipe": {
+        "model": [
+          "solina",
+          "vp330",
+          "organ"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          700,
+          1200
+        ],
+        "detune": [
+          0.005,
+          0.012
+        ],
+        "attack": [
+          2,
+          4
+        ],
+        "level": [
+          0.45,
+          0.62
+        ],
+        "send": [
+          0.45,
+          0.65
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom"
+      ],
+      "snareModel": [
+        "noise"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        0.4,
+        0.65
+      ],
+      "snare": [
+        0.25,
+        0.45
+      ],
+      "hat": [
+        0.25,
+        0.45
+      ],
+      "tune": [
+        0.9,
+        1
+      ],
+      "send": [
+        0.15,
+        0.3
+      ],
+      "dsend": [
+        0,
+        0.05
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.4,
+        0.6
+      ],
+      "delayBeats": [
+        0.75,
+        1.25
+      ],
+      "delayFb": [
+        0.15,
+        0.3
+      ],
+      "delayCut": [
+        1800,
+        2800
+      ],
+      "pump": [
+        0,
+        0.1
+      ],
+      "crackle": [
+        0,
+        0.1
+      ],
+      "lowcut": [
+        0,
+        0
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.1,
+        0.3
+      ]
+    },
+    "reverbColor": "greyhole",
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.1,
+        0.2
+      ],
+      "pitch": [
+        0.85,
+        1
+      ],
+      "stretch": [
+        0.5,
+        0.7
+      ],
+      "cutoff": [
+        1600,
+        2600
+      ],
+      "sources": [
+        "factory",
+        "iriomote"
+      ]
+    },
+    "hits": {
+      "sources": [
+        "sp_system",
+        "tw_ding"
+      ],
+      "pattern": "sparse",
+      "prob": 0.1
+    },
+    "stab": [
+      "off"
+    ],
+    "form": "wave"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 3,
+      "drumDensity": 3,
+      "motion": 2,
+      "wash": 2,
+      "sub": 1,
+      "humanize": 1
+    }
+  }
+}

@@ -1,0 +1,271 @@
+{
+  "name": "dishwasherwave",
+  "label": "Dishwasherwave",
+  "info": "the wash cycle as minimal techno: the rinse-pump hum is the drone, the heated-dry element ticks the hats, and \"cycle complete\" arrives like a drop at 2 a.m. — a machine that only plays when you are asleep in the next room",
+  "clips": [
+    "ind_furnace",
+    "dark_face",
+    "green_nebula",
+    "tv_room"
+  ],
+  "materials": "kitchen field-recording of a dishwasher cycle (archive.org, MATERIALS) + espeak \"cycle complete\"; draft uses factory bed + tw_ding",
+  "pos": [
+    70,
+    435
+  ],
+  "anchor": {
+    "bpm": [
+      120,
+      126
+    ],
+    "swing": [
+      0,
+      0.05
+    ],
+    "humanize": [
+      0,
+      0.1
+    ],
+    "progressions": [
+      "drone_min",
+      "deep_two"
+    ],
+    "kits": [
+      "techno",
+      "pulse"
+    ],
+    "fills": [
+      "off",
+      "cut",
+      "dropout"
+    ],
+    "euclid": {
+      "hat": [
+        9,
+        16
+      ]
+    },
+    "bass": {
+      "patterns": [
+        "rolling",
+        "sub",
+        "pedal"
+      ],
+      "recipe": {
+        "model": [
+          "sub",
+          "acid"
+        ],
+        "cutoff": [
+          420,
+          700
+        ],
+        "res": [
+          0.18,
+          0.32
+        ],
+        "level": [
+          1,
+          1.2
+        ],
+        "send": [
+          0,
+          0.08
+        ],
+        "dsend": [
+          0.05,
+          0.12
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "off",
+        "double"
+      ],
+      "recipe": {
+        "model": [
+          "organ",
+          "pluck"
+        ],
+        "wave": "square",
+        "voices": [
+          1,
+          1
+        ],
+        "cutoff": [
+          1400,
+          2200
+        ],
+        "level": [
+          0.3,
+          0.42
+        ],
+        "send": [
+          0.2,
+          0.35
+        ],
+        "dsend": [
+          0.15,
+          0.3
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.5,
+      "recipe": {
+        "model": [
+          "organ",
+          "solina"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          700,
+          1200
+        ],
+        "detune": [
+          0.004,
+          0.01
+        ],
+        "attack": [
+          1.5,
+          3
+        ],
+        "level": [
+          0.4,
+          0.55
+        ],
+        "send": [
+          0.35,
+          0.55
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "909"
+      ],
+      "snareModel": [
+        "clap",
+        "crack"
+      ],
+      "hatModel": [
+        "metal",
+        "noise"
+      ],
+      "kick": [
+        1.15,
+        1.4
+      ],
+      "snare": [
+        0.5,
+        0.75
+      ],
+      "hat": [
+        0.7,
+        1
+      ],
+      "tune": [
+        0.96,
+        1.08
+      ],
+      "send": [
+        0.05,
+        0.15
+      ],
+      "dsend": [
+        0.1,
+        0.2
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.3,
+        0.5
+      ],
+      "delayBeats": [
+        0.5,
+        0.75
+      ],
+      "delayFb": [
+        0.25,
+        0.4
+      ],
+      "delayCut": [
+        2400,
+        3600
+      ],
+      "pump": [
+        0.45,
+        0.68
+      ],
+      "crackle": [
+        0,
+        0.1
+      ],
+      "lowcut": [
+        35,
+        50
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.45,
+        0.65
+      ]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.1,
+        0.2
+      ],
+      "pitch": [
+        0.9,
+        1.1
+      ],
+      "stretch": [
+        0.5,
+        0.7
+      ],
+      "cutoff": [
+        2000,
+        3200
+      ],
+      "sources": [
+        "factory",
+        "iriomote"
+      ]
+    },
+    "hits": {
+      "sources": [
+        "tw_ding",
+        "sp_system"
+      ],
+      "pattern": "sparse",
+      "prob": 0.25
+    },
+    "stab": [
+      "off"
+    ],
+    "form": "dj"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 3,
+      "motion": 2,
+      "hatDensity": 2,
+      "pump": 2,
+      "drumDensity": 1,
+      "wash": 1
+    }
+  }
+}

@@ -1,0 +1,288 @@
+{
+  "name": "microwave",
+  "label": "Grace Before Microwave",
+  "info": "liturgical-mundane: a solemn hymn of thanks said before reheating last night's leftovers — church organ, a small ahh-choir, hands folded — resolved on the amen by three sacred beeps and the smell of Tuesday's lasagna; 90 seconds on high",
+  "clips": [
+    "dc_village",
+    "earth_orbit",
+    "blue_dinner",
+    "tv_room"
+  ],
+  "materials": "espeak reverent grace (sp_grace_*, MATERIALS) + the microwave \"beep beep beep\" (synth/archive); draft uses ahh_choir sampler pad + tw_ding beeps",
+  "pos": [
+    250,
+    435
+  ],
+  "anchor": {
+    "bpm": [
+      66,
+      78
+    ],
+    "swing": [
+      0,
+      0.04
+    ],
+    "humanize": [
+      0.06,
+      0.16
+    ],
+    "progressions": [
+      "canon",
+      "royal_road",
+      "ii_v_i"
+    ],
+    "kits": [
+      "off"
+    ],
+    "fills": [
+      "off"
+    ],
+    "chordEvery": 8,
+    "bass": {
+      "patterns": [
+        "root",
+        "pedal",
+        "simple"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "organ"
+        ],
+        "samplerPool": [
+          "church_organ"
+        ],
+        "cutoff": [
+          600,
+          1100
+        ],
+        "level": [
+          0.5,
+          0.68
+        ],
+        "send": [
+          0.2,
+          0.4
+        ],
+        "dsend": [
+          0,
+          0.08
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "composed",
+        "sparse",
+        "arpup"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "dx7"
+        ],
+        "samplerPool": [
+          "church_organ",
+          "celesta"
+        ],
+        "patchPool": [
+          "PIPES   1"
+        ],
+        "wave": "sine",
+        "voices": [
+          1,
+          2
+        ],
+        "cutoff": [
+          2000,
+          3000
+        ],
+        "level": [
+          0.4,
+          0.52
+        ],
+        "send": [
+          0.35,
+          0.55
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.85,
+      "recipe": {
+        "model": [
+          "sampler",
+          "choir",
+          "strings"
+        ],
+        "samplerPool": [
+          "ahh_choir"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          900,
+          1500
+        ],
+        "detune": [
+          0.004,
+          0.01
+        ],
+        "attack": [
+          1.5,
+          3.5
+        ],
+        "level": [
+          0.5,
+          0.66
+        ],
+        "send": [
+          0.5,
+          0.7
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ],
+        "mellotron": true
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom"
+      ],
+      "snareModel": [
+        "noise"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        0.4,
+        0.6
+      ],
+      "snare": [
+        0.25,
+        0.45
+      ],
+      "hat": [
+        0.25,
+        0.45
+      ],
+      "tune": [
+        0.9,
+        1
+      ],
+      "send": [
+        0.2,
+        0.4
+      ],
+      "dsend": [
+        0,
+        0
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.5,
+        0.7
+      ],
+      "delayBeats": [
+        0.75,
+        1.5
+      ],
+      "delayFb": [
+        0.12,
+        0.26
+      ],
+      "delayCut": [
+        2000,
+        3000
+      ],
+      "pump": [
+        0,
+        0
+      ],
+      "crackle": [
+        0,
+        0.1
+      ],
+      "lowcut": [
+        0,
+        0
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0,
+        0.15
+      ]
+    },
+    "reverbColor": "greyhole",
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.05,
+        0.12
+      ],
+      "pitch": [
+        0.9,
+        1.02
+      ],
+      "stretch": [
+        0.45,
+        0.6
+      ],
+      "cutoff": [
+        2000,
+        3000
+      ],
+      "sources": [
+        "iriomote",
+        "tokyo_station"
+      ]
+    },
+    "hits": {
+      "sources": [
+        "tw_ding",
+        "sp_herenow"
+      ],
+      "pattern": "response",
+      "prob": 0.3
+    },
+    "sampleEvents": [
+      {
+        "pool": [
+          "tw_ding"
+        ],
+        "placement": "cadence",
+        "sections": "all",
+        "treatment": {
+          "cutoff": 5000,
+          "vol": 0.5
+        }
+      }
+    ],
+    "stab": [
+      "off"
+    ],
+    "form": "ritual"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 3,
+      "drumDensity": 2,
+      "acoustic": 3,
+      "wash": 2,
+      "motion": 1,
+      "humanize": 1
+    }
+  }
+}

@@ -1,0 +1,268 @@
+{
+  "name": "laundrycore",
+  "label": "Spin-Cycle Breakbeat",
+  "info": "the tumble as the break: a chopped Amen that accelerates into the final spin, coins forgotten in a pocket rattling the hats, \"tumble dry low\" as the vocal stab — a wash of white noise you mistake for rain, ending on an unbalanced load alarm",
+  "clips": [
+    "phuture_red",
+    "dark_face",
+    "green_nebula",
+    "night_lines"
+  ],
+  "materials": "washer/dryer field-recording (archive.org) + espeak care-label vocal (sp_laundry_*, MATERIALS); draft uses amen breaks + tw_ding",
+  "pos": [
+    430,
+    435
+  ],
+  "anchor": {
+    "bpm": [
+      168,
+      174
+    ],
+    "swing": [
+      0,
+      0.06
+    ],
+    "humanize": [
+      0.02,
+      0.1
+    ],
+    "progressions": [
+      "drone_min",
+      "deep_two",
+      "house_min"
+    ],
+    "kits": [
+      "jungle",
+      "breaks"
+    ],
+    "fills": [
+      "break fill",
+      "cut",
+      "reverse"
+    ],
+    "bass": {
+      "patterns": [
+        "sub",
+        "dub",
+        "rolling"
+      ],
+      "recipe": {
+        "model": [
+          "sub",
+          "reese"
+        ],
+        "cutoff": [
+          380,
+          650
+        ],
+        "res": [
+          0.1,
+          0.22
+        ],
+        "level": [
+          1.05,
+          1.25
+        ],
+        "send": [
+          0,
+          0.06
+        ],
+        "dsend": [
+          0.05,
+          0.12
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "off",
+        "sparse",
+        "wander"
+      ],
+      "recipe": {
+        "model": [
+          "pluck",
+          "fm"
+        ],
+        "wave": "sine",
+        "voices": [
+          1,
+          2
+        ],
+        "cutoff": [
+          1600,
+          2600
+        ],
+        "level": [
+          0.3,
+          0.42
+        ],
+        "send": [
+          0.25,
+          0.45
+        ],
+        "dsend": [
+          0.2,
+          0.4
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.3,
+      "recipe": {
+        "model": [
+          "vp330",
+          "solina"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          800,
+          1400
+        ],
+        "detune": [
+          0.006,
+          0.014
+        ],
+        "attack": [
+          1.5,
+          3
+        ],
+        "level": [
+          0.35,
+          0.5
+        ],
+        "send": [
+          0.35,
+          0.55
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "808"
+      ],
+      "snareModel": [
+        "crack",
+        "noise"
+      ],
+      "hatModel": [
+        "noise",
+        "metal"
+      ],
+      "kick": [
+        1.1,
+        1.35
+      ],
+      "snare": [
+        0.55,
+        0.8
+      ],
+      "hat": [
+        0.6,
+        0.9
+      ],
+      "tune": [
+        0.98,
+        1.1
+      ],
+      "send": [
+        0.08,
+        0.2
+      ],
+      "dsend": [
+        0.1,
+        0.25
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.28,
+        0.45
+      ],
+      "delayBeats": [
+        0.375,
+        0.5
+      ],
+      "delayFb": [
+        0.2,
+        0.38
+      ],
+      "delayCut": [
+        3000,
+        4500
+      ],
+      "pump": [
+        0.3,
+        0.5
+      ],
+      "crackle": [
+        0,
+        0.08
+      ],
+      "lowcut": [
+        35,
+        50
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.35,
+        0.55
+      ]
+    },
+    "found": {
+      "role": "break",
+      "vol": [
+        0.2,
+        0.35
+      ],
+      "pitch": [
+        1,
+        1.05
+      ],
+      "stretch": [
+        0.9,
+        1.05
+      ],
+      "cutoff": [
+        4000,
+        7000
+      ],
+      "sources": [
+        "amen_170",
+        "amen_172",
+        "amen_175"
+      ]
+    },
+    "hits": {
+      "sources": [
+        "tw_ding",
+        "sp_system"
+      ],
+      "pattern": "offbeat",
+      "prob": 0.35
+    },
+    "stab": [
+      "off"
+    ],
+    "form": "drop"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 3,
+      "breakUse": 3,
+      "snareBalance": 2,
+      "sub": 2,
+      "chopUse": 1,
+      "hatDensity": 1
+    }
+  }
+}

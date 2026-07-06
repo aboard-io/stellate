@@ -1,0 +1,293 @@
+{
+  "name": "holdmusic",
+  "label": "Hold Music Core",
+  "info": "the four-bar loop that never resolves: a ii-V that will not land on I, forever, interrupted every eight bars by \"your call is important to us — please continue to hold\" — smooth-jazz panpipe over a beige Rhodes, the sound of being number twelve in the queue",
+  "clips": [
+    "blue_dinner",
+    "tv_room",
+    "pl_kitchen",
+    "sharpest_city"
+  ],
+  "materials": "espeak call-centre hold loop (sp_hold_* — see MATERIALS); the real PAN FLUTE sampler (GM 75) is the joke instrument made literal; draft reuses sp_system",
+  "pos": [
+    555,
+    50
+  ],
+  "anchor": {
+    "bpm": [
+      96,
+      108
+    ],
+    "swing": [
+      0.08,
+      0.14
+    ],
+    "humanize": [
+      0.1,
+      0.2
+    ],
+    "progressions": [
+      "ii_v_i",
+      "lofi",
+      "neosoul"
+    ],
+    "kits": [
+      "off",
+      "shuffle"
+    ],
+    "fills": [
+      "off",
+      "micro lick"
+    ],
+    "chordEvery": 8,
+    "bass": {
+      "patterns": [
+        "root",
+        "simple",
+        "walking"
+      ],
+      "recipe": {
+        "model": [
+          "rhodes",
+          "sampler",
+          "piano"
+        ],
+        "samplerPool": [
+          "acoustic_bass"
+        ],
+        "cutoff": [
+          600,
+          1100
+        ],
+        "level": [
+          0.55,
+          0.72
+        ],
+        "send": [
+          0.2,
+          0.35
+        ],
+        "dsend": [
+          0,
+          0.1
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "sparse",
+        "wander",
+        "off"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler",
+          "fm"
+        ],
+        "samplerPool": [
+          "pan_flute",
+          "flute"
+        ],
+        "wave": "sine",
+        "voices": [
+          1,
+          2
+        ],
+        "cutoff": [
+          2200,
+          3200
+        ],
+        "level": [
+          0.4,
+          0.52
+        ],
+        "send": [
+          0.3,
+          0.5
+        ],
+        "dsend": [
+          0.1,
+          0.25
+        ],
+        "vibrato": [
+          0.004,
+          0.01
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.7,
+      "recipe": {
+        "model": [
+          "rhodes",
+          "juno60",
+          "solina"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          900,
+          1500
+        ],
+        "detune": [
+          0.004,
+          0.01
+        ],
+        "attack": [
+          0.4,
+          1.2
+        ],
+        "level": [
+          0.4,
+          0.55
+        ],
+        "send": [
+          0.35,
+          0.55
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom"
+      ],
+      "snareModel": [
+        "noise",
+        "clap"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        0.5,
+        0.75
+      ],
+      "snare": [
+        0.35,
+        0.55
+      ],
+      "hat": [
+        0.3,
+        0.5
+      ],
+      "tune": [
+        0.9,
+        1.02
+      ],
+      "send": [
+        0.2,
+        0.4
+      ],
+      "dsend": [
+        0,
+        0.1
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.4,
+        0.6
+      ],
+      "delayBeats": [
+        0.5,
+        0.75
+      ],
+      "delayFb": [
+        0.15,
+        0.3
+      ],
+      "delayCut": [
+        2400,
+        3400
+      ],
+      "pump": [
+        0,
+        0
+      ],
+      "crackle": [
+        0,
+        0.1
+      ],
+      "lowcut": [
+        0,
+        0
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.15,
+        0.35
+      ]
+    },
+    "reverbColor": "spring",
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.05,
+        0.12
+      ],
+      "pitch": [
+        0.9,
+        1.05
+      ],
+      "stretch": [
+        0.4,
+        0.6
+      ],
+      "cutoff": [
+        2000,
+        3200
+      ],
+      "sources": [
+        "tokyo_station",
+        "shibuya"
+      ]
+    },
+    "hits": {
+      "sources": [
+        "sp_system",
+        "sp_herenow",
+        "sp_slowdown"
+      ],
+      "pattern": "sparse",
+      "prob": 0.35
+    },
+    "sampleEvents": [
+      {
+        "pool": [
+          "sp_system",
+          "sp_herenow"
+        ],
+        "placement": "cadence",
+        "sections": "all",
+        "treatment": {
+          "cutoff": 3000,
+          "vol": 0.42
+        }
+      }
+    ],
+    "stab": [
+      "off"
+    ],
+    "form": "wave"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 3,
+      "swing": 3,
+      "motion": 2,
+      "seventh": 2,
+      "drumDensity": 2,
+      "wash": 1,
+      "acoustic": 2
+    }
+  }
+}

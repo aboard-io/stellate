@@ -1086,6 +1086,20 @@
         if(sec.melody&&sec.melody!=="off"){
           const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,rng,state.seed,CBEATS);
           if(sec.solo) mel.forEach(e=>{ e.solo=sec.solo; if(sec.soloOctave) e.pch=pchAdd(e.pch,12*sec.soloOctave); });
+          // BLUE-NOTE BEND (state.blueNote): when the resolved lead is a sampled
+          // sax/guitar, held melody notes slide up into the blue note (b3/b7) —
+          // the jazz-sax mirror of the "blues" pattern's bend. A dedicated stream
+          // keyed by (seed, cycleBase) leaves every other event byte-identical;
+          // only sampler voices render `bend` (VOICES.md), and it is not a
+          // verifier feature (matrix-invisible).
+          const lid=state.blueNote&&state.instruments.melody.sampler&&state.instruments.melody.sampler.id;
+          if(lid&&/sax|guitar/.test(lid)){
+            const br=mulberry32(((state.seed>>>0)^Math.imul(Math.round(cycleBase)+1,0x9e3779b1)^0x5b1c)>>>0);
+            for(const e of mel){
+              if(e.voice==="melody"&&!e.solo&&!e.bend&&e.dur>=0.6&&br()<state.blueNote)
+                e.bend={from:-(0.5+br()*0.5), ms:Math.round(60+br()*80)};
+            }
+          }
           mel.forEach(e=>pitched.push(e));
         }
         if(sec.counter&&sec.counter.pattern){              // countermelody layer (e.g. a brass section) over the main melody

@@ -1,0 +1,271 @@
+{
+  "name": "floppycore",
+  "label": "Floppycore",
+  "info": "the 1.44 MB seek-clatter as breakbeat: the head-stepper's tick-tick-grind chopped into an IDM shuffle, the write-protect notch as a hi-hat, \"saving document\" as a ritual with real stakes — do not remove the disk, do not remove the disk",
+  "clips": [
+    "ab_diagonale",
+    "phuture_red",
+    "night_lines",
+    "im_redroom"
+  ],
+  "materials": "archive.org 3.5-inch floppy seek/write sounds (the break) — MATERIALS; draft uses amen chops + kpluck glitch until fetched",
+  "pos": [
+    555,
+    290
+  ],
+  "anchor": {
+    "bpm": [
+      142,
+      158
+    ],
+    "swing": [
+      0,
+      0.06
+    ],
+    "humanize": [
+      0.02,
+      0.1
+    ],
+    "progressions": [
+      "minor_run",
+      "mode_dorian",
+      "deep_two"
+    ],
+    "kits": [
+      "breaks",
+      "electro"
+    ],
+    "fills": [
+      "cut",
+      "stutter",
+      "reverse",
+      "dropout"
+    ],
+    "bass": {
+      "patterns": [
+        "stab",
+        "rolling",
+        "sixteenths"
+      ],
+      "recipe": {
+        "model": [
+          "reese",
+          "modeld",
+          "saw"
+        ],
+        "cutoff": [
+          450,
+          800
+        ],
+        "res": [
+          0.15,
+          0.3
+        ],
+        "level": [
+          1,
+          1.2
+        ],
+        "send": [
+          0,
+          0.06
+        ],
+        "dsend": [
+          0.05,
+          0.12
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "double",
+        "arpup",
+        "off"
+      ],
+      "recipe": {
+        "model": [
+          "kpluck",
+          "pluck",
+          "fm"
+        ],
+        "wave": "square",
+        "voices": [
+          1,
+          2
+        ],
+        "cutoff": [
+          2000,
+          3200
+        ],
+        "level": [
+          0.34,
+          0.48
+        ],
+        "send": [
+          0.2,
+          0.4
+        ],
+        "dsend": [
+          0.2,
+          0.4
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.35,
+      "recipe": {
+        "model": [
+          "ppg",
+          "oberheim"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          1000,
+          1700
+        ],
+        "detune": [
+          0.006,
+          0.014
+        ],
+        "attack": [
+          0.4,
+          1
+        ],
+        "level": [
+          0.35,
+          0.5
+        ],
+        "send": [
+          0.3,
+          0.5
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "808",
+        "909"
+      ],
+      "snareModel": [
+        "crack",
+        "noise"
+      ],
+      "hatModel": [
+        "metal",
+        "noise"
+      ],
+      "kick": [
+        1,
+        1.3
+      ],
+      "snare": [
+        0.55,
+        0.8
+      ],
+      "hat": [
+        0.7,
+        1.05
+      ],
+      "tune": [
+        1,
+        1.14
+      ],
+      "send": [
+        0.05,
+        0.18
+      ],
+      "dsend": [
+        0.1,
+        0.25
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.25,
+        0.42
+      ],
+      "delayBeats": [
+        0.25,
+        0.5
+      ],
+      "delayFb": [
+        0.2,
+        0.4
+      ],
+      "delayCut": [
+        3000,
+        4800
+      ],
+      "pump": [
+        0.3,
+        0.55
+      ],
+      "crackle": [
+        0.05,
+        0.2
+      ],
+      "lowcut": [
+        35,
+        50
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.4,
+        0.6
+      ]
+    },
+    "found": {
+      "role": "break",
+      "vol": [
+        0.16,
+        0.28
+      ],
+      "pitch": [
+        1,
+        1.15
+      ],
+      "stretch": [
+        0.8,
+        1
+      ],
+      "cutoff": [
+        4000,
+        7000
+      ],
+      "sources": [
+        "amen_165",
+        "amen_170"
+      ]
+    },
+    "hits": {
+      "sources": [
+        "tw_ding",
+        "rave_a"
+      ],
+      "pattern": "offbeat",
+      "prob": 0.4
+    },
+    "stab": [
+      "offbeat"
+    ],
+    "form": "dj"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 3,
+      "breakUse": 2,
+      "hatDensity": 2,
+      "chopUse": 2,
+      "snareBalance": 1,
+      "motion": 1
+    }
+  }
+}

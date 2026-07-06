@@ -1,0 +1,284 @@
+{
+  "name": "faxbossa",
+  "label": "Fax Bossa",
+  "info": "a bossa nova serenading a dead fax machine: soft nylon guitar and a brushed shuffle, the CNG calling-tone held as a wistful pad, the handshake that never completes — nobody sends faxes anymore, but the machine still waits by the window",
+  "clips": [
+    "blue_dinner",
+    "bamboo",
+    "tv_room",
+    "dc_village"
+  ],
+  "materials": "archive.org fax/CNG tone (the pad/motif) — MATERIALS; draft carries the mood with nylon_string_guitar + tw_ding as the ring",
+  "pos": [
+    620,
+    230
+  ],
+  "anchor": {
+    "bpm": [
+      74,
+      86
+    ],
+    "swing": [
+      0.08,
+      0.16
+    ],
+    "humanize": [
+      0.08,
+      0.18
+    ],
+    "progressions": [
+      "ii_v_i",
+      "neosoul",
+      "lofi"
+    ],
+    "kits": [
+      "bossa",
+      "shuffle"
+    ],
+    "fills": [
+      "micro lick",
+      "off"
+    ],
+    "rubato": {
+      "depth": [
+        0.008,
+        0.018
+      ],
+      "periodBars": [
+        2,
+        4
+      ],
+      "prob": 0.35
+    },
+    "bass": {
+      "patterns": [
+        "walking",
+        "root",
+        "melodic"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sub"
+        ],
+        "samplerPool": [
+          "acoustic_bass",
+          "fretless_bass"
+        ],
+        "cutoff": [
+          600,
+          1000
+        ],
+        "level": [
+          0.55,
+          0.72
+        ],
+        "send": [
+          0.2,
+          0.35
+        ],
+        "dsend": [
+          0,
+          0.08
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "composed",
+        "sparse",
+        "wander"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "dx7"
+        ],
+        "samplerPool": [
+          "nylon_string_guitar",
+          "jazz_guitar"
+        ],
+        "patchPool": [
+          "CLAS.GUIT"
+        ],
+        "wave": "sine",
+        "voices": [
+          1,
+          2
+        ],
+        "cutoff": [
+          2400,
+          3400
+        ],
+        "level": [
+          0.42,
+          0.55
+        ],
+        "send": [
+          0.3,
+          0.5
+        ],
+        "dsend": [
+          0.1,
+          0.25
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.55,
+      "recipe": {
+        "model": [
+          "solina",
+          "rhodes",
+          "vp330"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          900,
+          1500
+        ],
+        "detune": [
+          0.004,
+          0.01
+        ],
+        "attack": [
+          1,
+          2.5
+        ],
+        "level": [
+          0.4,
+          0.55
+        ],
+        "send": [
+          0.4,
+          0.6
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom"
+      ],
+      "snareModel": [
+        "noise",
+        "crack"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        0.5,
+        0.72
+      ],
+      "snare": [
+        0.35,
+        0.55
+      ],
+      "hat": [
+        0.4,
+        0.6
+      ],
+      "tune": [
+        0.9,
+        1.02
+      ],
+      "send": [
+        0.2,
+        0.4
+      ],
+      "dsend": [
+        0,
+        0.1
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.4,
+        0.6
+      ],
+      "delayBeats": [
+        0.5,
+        0.9
+      ],
+      "delayFb": [
+        0.12,
+        0.28
+      ],
+      "delayCut": [
+        2200,
+        3200
+      ],
+      "pump": [
+        0,
+        0
+      ],
+      "crackle": [
+        0,
+        0.12
+      ],
+      "lowcut": [
+        0,
+        0
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.15,
+        0.35
+      ]
+    },
+    "reverbColor": "spring",
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.06,
+        0.14
+      ],
+      "pitch": [
+        0.9,
+        1.05
+      ],
+      "stretch": [
+        0.45,
+        0.6
+      ],
+      "cutoff": [
+        2200,
+        3400
+      ],
+      "sources": [
+        "tokyo_station",
+        "iriomote"
+      ]
+    },
+    "hits": {
+      "sources": [
+        "tw_ding"
+      ],
+      "pattern": "sparse",
+      "prob": 0.15
+    },
+    "stab": [
+      "off"
+    ],
+    "form": "pop"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 3,
+      "acoustic": 3,
+      "swing": 2,
+      "seventh": 2,
+      "drumDensity": 1,
+      "motion": 1
+    }
+  }
+}

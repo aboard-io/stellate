@@ -1,0 +1,319 @@
+{
+  "name": "hotsaucecore",
+  "label": "Hot Sauce Core",
+  "info": "a genre organized by the Scoville scale: each section is hotter than the last — brighter, faster, more distorted — a Latin trumpet vamp that starts at jalapeño and ends at ghost pepper, the drive knob turned like a challenge you regret accepting",
+  "clips": [
+    "ind_molten",
+    "phuture_red",
+    "kaleido",
+    "cs_marketstreet"
+  ],
+  "materials": "espeak Scoville-number escalation (sp_scoville_*, MATERIALS) + the trumpet sampler; heat = the distort inserts opening up",
+  "pos": [
+    160,
+    495
+  ],
+  "anchor": {
+    "bpm": [
+      100,
+      120
+    ],
+    "swing": [
+      0.02,
+      0.1
+    ],
+    "humanize": [
+      0.05,
+      0.14
+    ],
+    "progressions": [
+      "funk_vamp",
+      "mode_phrygian",
+      "andalusian"
+    ],
+    "kits": [
+      "tribal",
+      "bossa"
+    ],
+    "fills": [
+      "kit fill",
+      "riser",
+      "impact"
+    ],
+    "bass": {
+      "patterns": [
+        "syncopated",
+        "habanera",
+        "walking"
+      ],
+      "recipe": {
+        "model": [
+          "tb303",
+          "reese",
+          "saw"
+        ],
+        "cutoff": [
+          500,
+          900
+        ],
+        "res": [
+          0.2,
+          0.35
+        ],
+        "level": [
+          1,
+          1.2
+        ],
+        "send": [
+          0,
+          0.08
+        ],
+        "dsend": [
+          0.05,
+          0.12
+        ],
+        "inserts": {
+          "prob": 0.5,
+          "max": 1,
+          "pool": [
+            [
+              "distort",
+              {
+                "drive": [
+                  0.2,
+                  0.5
+                ],
+                "mix": [
+                  0.5,
+                  0.85
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "lead": {
+      "patterns": [
+        "blues",
+        "wander",
+        "hero"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "dx7",
+          "brass"
+        ],
+        "samplerPool": [
+          "trumpet",
+          "muted_trumpet"
+        ],
+        "patchPool": [
+          "BR TRUMPET"
+        ],
+        "wave": "sine",
+        "voices": [
+          1,
+          2
+        ],
+        "cutoff": [
+          2400,
+          3600
+        ],
+        "level": [
+          0.44,
+          0.58
+        ],
+        "send": [
+          0.3,
+          0.5
+        ],
+        "dsend": [
+          0.1,
+          0.25
+        ],
+        "inserts": {
+          "prob": 0.5,
+          "max": 1,
+          "pool": [
+            [
+              "distort",
+              {
+                "drive": [
+                  0.15,
+                  0.4
+                ],
+                "mix": [
+                  0.4,
+                  0.7
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "pads": {
+      "prob": 0.4,
+      "recipe": {
+        "model": [
+          "oberheim",
+          "organ"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          1000,
+          1700
+        ],
+        "detune": [
+          0.006,
+          0.012
+        ],
+        "attack": [
+          0.4,
+          1
+        ],
+        "level": [
+          0.38,
+          0.52
+        ],
+        "send": [
+          0.3,
+          0.5
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom",
+        "808"
+      ],
+      "snareModel": [
+        "crack",
+        "clap"
+      ],
+      "hatModel": [
+        "metal",
+        "noise"
+      ],
+      "kick": [
+        1,
+        1.3
+      ],
+      "snare": [
+        0.6,
+        0.85
+      ],
+      "hat": [
+        0.6,
+        0.95
+      ],
+      "tune": [
+        0.98,
+        1.12
+      ],
+      "send": [
+        0.1,
+        0.25
+      ],
+      "dsend": [
+        0.1,
+        0.25
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.3,
+        0.48
+      ],
+      "delayBeats": [
+        0.375,
+        0.6
+      ],
+      "delayFb": [
+        0.2,
+        0.35
+      ],
+      "delayCut": [
+        3000,
+        4500
+      ],
+      "pump": [
+        0.3,
+        0.55
+      ],
+      "crackle": [
+        0,
+        0.08
+      ],
+      "lowcut": [
+        35,
+        50
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.4,
+        0.6
+      ],
+      "grit": [
+        0.2,
+        0.5
+      ]
+    },
+    "found": {
+      "role": "chops",
+      "vol": [
+        0.12,
+        0.22
+      ],
+      "pitch": [
+        1,
+        1.35
+      ],
+      "stretch": [
+        0.35,
+        0.55
+      ],
+      "cutoff": [
+        3500,
+        6000
+      ],
+      "sources": [
+        "horns_78",
+        "rave_b"
+      ]
+    },
+    "hits": {
+      "sources": [
+        "bb_horn_a",
+        "rave_b"
+      ],
+      "pattern": "offbeat",
+      "prob": 0.4
+    },
+    "stab": [
+      "offbeat"
+    ],
+    "form": "pop"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 3,
+      "motion": 2,
+      "snareBalance": 2,
+      "hatDensity": 1,
+      "chopUse": 1,
+      "seventh": 1
+    }
+  }
+}
