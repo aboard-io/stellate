@@ -50,6 +50,7 @@
   const NOISE_URI = "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"220\" height=\"220\"><filter id=\"n\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\"/></filter><rect width=\"220\" height=\"220\" filter=\"url(%23n)\" opacity=\"0.55\"/></svg>')";
 
   let catalog = new Map();       // name -> {name,item,file,in,out,tags,credit,local}
+  let tagIndex = new Map();      // genre tag -> [clip names] (from catalog tags)
   let names = [];                // playable clip names (idle bag domain)
   let base = "https://archive.org/download";
   let localAvail = new Set();    // clip names that have a local cache file (found/video/<name>.mp4)
@@ -409,8 +410,12 @@
     localAvail = new Set((localList || []).map(c => c && c.file && c.file.replace(/\.mp4$/, "")).filter(Boolean));
     base = (cat && cat.base) || base;
     catalog = new Map();
+    tagIndex = new Map();
     if (cat && Array.isArray(cat.clips)) {
-      for (const e of cat.clips) if (e && e.name) catalog.set(e.name, e);
+      for (const e of cat.clips) if (e && e.name) {
+        catalog.set(e.name, e);
+        for (const t of (e.tags || [])) { if (!tagIndex.has(t)) tagIndex.set(t, []); tagIndex.get(t).push(e.name); }
+      }
     }
     // no stream catalog -> synthesize a local-only catalog from clips.json (the
     // legacy/offline path: everything plays from the local cache)
@@ -431,6 +436,10 @@
   }
 
   root.VideoLayer = {
+    // catalog-tag lookup: the streaming catalog carries genre tags directly
+    // (the sourced avant-garde/3D windows exist ONLY here — the kernel's
+    // GENRE_CLIPS never learns them), so pool builders must union this in.
+    namesForTag: (g) => (tagIndex.get(g) || []).filter(playable),
     init, setEnabled, idle, makeBag, setGenre,
     enabled: () => on && ready,
     available: () => ready,
