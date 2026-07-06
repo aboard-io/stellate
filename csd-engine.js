@@ -1155,7 +1155,7 @@
         const amp = tr==="impact"?0.4 : (tr==="reverse"||tr==="downlift")?0.07 : 0.055;
         sfx.push({beat:Math.max(0,sbeat), dur:hit?1.5:4, type:SFX_NUM[tr], amp});
       }
-      spans.push({start:cur,beats:secBeats,name:sec.name});
+      spans.push({start:cur,beats:secBeats,name:sec.name,kit:sec.drums});
       cur+=secBeats;
     }
     // ---- pattern-transform algebra (KERNEL-V4 Phase 2) ----
@@ -1435,15 +1435,156 @@
     // Live note: the live engine rebuilds per chord-bar with cycle-local
     // beats, so the breathing phase restarts each section cycle — still
     // deterministic, still layer-locked (documented in faust/VOICES.md).
+    // RUNS BEFORE the SNARE-LAW so the law measures/mutates the FINAL timeline —
+    // the anti-repeat check can't be defeated by a sub-1/16 warp nudging a
+    // displaced hit back across a quantization boundary (its own added events
+    // inherit this same warp via `rubW`, so they stay layer-locked too).
+    let rubW=(b)=>b;
     if(tfeel.rubato){
       const rb=tfeel.rubato;
       const dep=Math.min(0.2,rb.depth), P=Math.max(4,(rb.periodBars||3)*4);
       const ph=2*Math.PI*(rb.phase||0), A=dep*P/(2*Math.PI);
-      const W=(b)=>b + A*(Math.sin(2*Math.PI*b/P+ph)-Math.sin(ph));
+      rubW=(b)=>b + A*(Math.sin(2*Math.PI*b/P+ph)-Math.sin(ph));
       for(const arr of [pitched,drums,found,sfx]) for(const e of arr){
-        const d0=e.dur||0, b1=W(e.beat+d0);
-        e.beat=W(e.beat); if(d0) e.dur=Math.max(0.02,b1-e.beat);
+        const d0=e.dur||0, b1=rubW(e.beat+d0);
+        e.beat=rubW(e.beat); if(d0) e.dur=Math.max(0.02,b1-e.beat);
       }
+    }
+    // ---------- SNARE-LAW (kernel default: no bar repeats thrice) ----------
+    // Paul's mandate: "snare patterns repeat ad nauseum ... nothing should repeat
+    // exactly the same more than twice." A kernel-wide DEFAULT over every genre's
+    // drum fabric — not an opt-in dimension. Runs DEAD LAST (after sampleEvents
+    // AND the rubato warp) on its OWN isolated stream (seed+5150): it consumes no
+    // other stream's draws, so a bar the law never touches renders exactly as
+    // before and a bar it DOES vary moves only its own snare/hat content — fully
+    // deterministic per seed.
+    //
+    // THE HASH — per bar, per lane, a compact signature of PERCEIVED rhythm: each
+    // onset quantized to the 1/16 grid (round·2/2, which absorbs the humanize
+    // jitter applyGroove already stamped) paired with a 3-level accent bucket
+    // (ghost/mid/accent), plus the open flag for hats. Micro amp jitter never
+    // moves the signature; a real ghost/drop/accent/displacement always does.
+    // When a bar's signature equals the previous TWO (the third identical bar),
+    // the law forces a variation, recomputes the signature and re-checks — so the
+    // forced bar can never itself start a fresh three-peat. Fills and the
+    // transform pass have already reshaped THEIR bars (different signature) => the
+    // repeat chain breaks there for free; the law never double-fires on them.
+    //
+    // FEEL-AWARE — a machineness M reads the bar's kit family and the genre's
+    // humanize/swing anchors. Tight machine genres vary with MACHINE moves (hit
+    // drop, accent migration, on-grid ½-note sync shift, syncopation substitute —
+    // all offgrid-neutral, so techno's grid stays a grid); loose human genres vary
+    // with HUMAN moves (ghost notes, drags/ruffs, ±1/16 drunk displacement). Each
+    // fired bar then gets MANIPULATION flavor on top: per-hit decay jitter (a
+    // noise snare's decay reads as filtering — tighter vs ringier) and, on
+    // delay-capable genres, a ping-pong THROW on one hit so some snares ring out
+    // wet and some stay dry (the "filtered, delayed" ask). Snares carry no per-hit
+    // tune/cutoff param and the drum voices are NOT rebuilt, so decay+pp are the
+    // honest levers. The same no-thrice machine rides the hat lane for near-free
+    // (gentler vocabulary — open / drop — since hats repeat just as hard).
+    {
+      const MACHINE_KIT={four:1,techno:1,house:1,electro:1,trap:1,pulse:1,kick:1,full:1,open:1};
+      const srng=mulberry32(((state.seed??1)+5150)>>>0);
+      const hz=state.humanize||0, sw=state.swing||0;
+      const Idr=(state.instruments&&state.instruments.drums)||{};
+      const delayCap=(state.snarePP||0)>0 || (Idr.dsend||0)>0;
+      const cl=(x,a,b)=>x<a?a:x>b?b:x;
+      // measure at the KIT-CELL size, not the chord bar: the ad-nauseum repeat
+      // lives at the 8-beat measure (CHORD_BEATS). A chordEvery>8 genre (mallsoft
+      // 16, ambient 32) tiles the same 8-beat cell across the bar, so its snares
+      // repeat every measure even though the chord holds — measure THAT.
+      const BARLEN=Math.min(CBEATS,CHORD_BEATS);
+      const q=(o)=>Math.round(o*2)/2, bk=(a)=>a<0.14?0:a<0.34?1:2;
+      const inBar=(b,b0)=>b>=b0-1e-6 && b<b0+BARLEN-1e-6;
+      const snSig=(l,b0)=>l.map(d=>q(d.beat-b0)+":"+bk(d.amp)).sort().join("|");
+      const haSig=(l,b0)=>l.map(d=>q(d.beat-b0)+":"+bk(d.amp)+(d.open?"o":"")).sort().join("|");
+      const loudest=(l)=>l.reduce((m,d)=>(!m||d.amp>m.amp)?d:m,null);
+      const addD=[], dropD=new Set();
+      // snare variation — every branch is guaranteed to move the signature.
+      function vSnare(list,b0,M){
+        let work=list.slice(); const rel=(d)=>d.beat-b0; const before=snSig(list,b0);
+        if(srng()<M){                                        // MACHINE moves
+          const pick=Math.floor(srng()*4);
+          if(pick===0 && work.length){                       // hit DROP (the every-8th snare skip)
+            const d=loudest(work); dropD.add(d); work=work.filter(x=>x!==d);
+          } else if(pick===1 && work.length>=2){             // accent MIGRATION
+            const lo=loudest(work), oth=work.filter(x=>x!==lo), up=oth[Math.floor(srng()*oth.length)];
+            lo.amp=Math.max(0.06,lo.amp*0.38); up.amp=Math.min(0.95,Math.max(0.4,up.amp*1.9));
+          } else if(pick===2 && work.length){                // on-grid ½-note SYNC shift (offgrid-neutral)
+            const d=work[Math.floor(srng()*work.length)], dir=srng()<0.5?-0.5:0.5;
+            d.beat=inBar(d.beat+dir,b0)?d.beat+dir:d.beat-dir;
+          } else if(work.length){                            // syncopation SUBSTITUTE — push the whole lane late
+            for(const d of work){ const nb=d.beat+0.5; if(inBar(nb,b0)) d.beat=nb; }
+          }
+        } else {                                             // HUMAN moves
+          const pick=Math.floor(srng()*4);
+          if(pick===0){                                      // GHOST-note insertion
+            const slots=[1.5,3.5,5.5,7.5,3.75,7.25].filter(o=>o<BARLEN && !work.some(d=>Math.abs(rel(d)-o)<0.2));
+            if(slots.length){ const g={drum:"snare",beat:rubW(b0+slots[Math.floor(srng()*slots.length)]),dur:0.16,amp:0.08+srng()*0.05};
+              addD.push(g); work.push(g); }
+            else if(work.length){ const d=loudest(work); dropD.add(d); work=work.filter(x=>x!==d); }
+          } else if(pick===1 && work.length){                // DRAG / ruff — two low pre-hits into a backbeat
+            const bbs=work.filter(d=>rel(d)>=1), bb=bbs[0]||loudest(work);
+            for(const off of [0.25,0.125]){ const nb=bb.beat-off; if(nb>=b0){
+              const g={drum:"snare",beat:nb,dur:0.12,amp:Math.min(bb.amp*0.5,0.14)}; addD.push(g); work.push(g); } }
+          } else if(pick===2 && work.length){                // ±1/16 drunk DISPLACEMENT (human offgrid)
+            const d=work[Math.floor(srng()*work.length)], dir=srng()<0.5?-0.25:0.25;
+            d.beat=inBar(d.beat+dir,b0)?d.beat+dir:d.beat-dir;
+          } else if(work.length>=2){                         // accent migration (shared)
+            const lo=loudest(work), oth=work.filter(x=>x!==lo), up=oth[Math.floor(srng()*oth.length)];
+            lo.amp=Math.max(0.06,lo.amp*0.4); up.amp=Math.min(0.9,Math.max(0.36,up.amp*1.8));
+          } else if(work.length){                            // singleton: quieten it + add an answering ghost
+            const d=work[0]; d.amp=Math.max(0.08,d.amp*0.6);
+            const g={drum:"snare",beat:rubW(b0+((rel(d)+2)%BARLEN)),dur:0.14,amp:0.1}; addD.push(g); work.push(g);
+          }
+        }
+        work=work.filter(d=>!dropD.has(d));
+        // GUARANTEE the signature moved — some picks can round back to the same
+        // 1/16 bucket (a -1/16 nudge off an integer beat), which would let the
+        // three-peat survive. A +½-note shift always crosses a q-bucket.
+        if(snSig(work,b0)===before){
+          if(work.length){ const d=work[0];
+            if(inBar(d.beat+0.5,b0)) d.beat+=0.5; else { dropD.add(d); work=work.filter(x=>x!==d); } }
+          else { const g={drum:"snare",beat:rubW(b0+BARLEN/2),dur:0.16,amp:0.11}; addD.push(g); work.push(g); }
+        }
+        for(const d of work) d.dur=cl((d.dur||0.3)*(0.7+srng()*0.7),0.06,0.6);   // decay jitter = filtering read
+        if(delayCap && work.length){ const d=work[Math.floor(srng()*work.length)];
+          d.pp=Math.max(d.pp||0, +(0.5+srng()*0.4).toFixed(3)); }                 // delay throw = the wet ring
+        return work;
+      }
+      // hat variation — gentle; open is feature-neutral, drop barely moves density.
+      function vHat(list,b0){
+        let work=list.slice(); const before=haSig(list,b0);
+        if(srng()<2/3 && work.length){                       // OPEN one closed hat
+          const clh=work.filter(d=>!d.open);
+          if(clh.length){ const d=clh[Math.floor(srng()*clh.length)]; d.open=true; d.dur=Math.max(d.dur||0.1,0.3); }
+          else { const d=work[Math.floor(srng()*work.length)]; dropD.add(d); }
+        } else if(work.length){ const d=work[Math.floor(srng()*work.length)]; dropD.add(d); }  // DROP one hat
+        work=work.filter(d=>!dropD.has(d));
+        if(haSig(work,b0)===before && work.length){ const d=work[0]; dropD.add(d); work=work.filter(x=>x!==d); }
+        return work;
+      }
+      // ONE global rolling window across the whole timeline (mandate is
+      // kernel-wide — a new section restating the old groove for a third bar is
+      // still a three-peat); it resets only on an empty bar (a real silence gap).
+      let s1=null,s2=null,h1=null,h2=null;
+      for(const sp of spans){
+        const nbars=Math.max(1,Math.round(sp.beats/BARLEN));
+        let M=MACHINE_KIT[sp.kit]?0.78:0.28;
+        M=cl(M-Math.min(0.45,hz/0.12*0.22+sw/0.35*0.22),0.05,0.95);
+        for(let bi=0;bi<nbars;bi++){
+          const b0=sp.start+bi*BARLEN;
+          const sn=drums.filter(d=>d.drum==="snare"&&!dropD.has(d)&&inBar(d.beat,b0));
+          const ha=drums.filter(d=>d.drum==="hat"  &&!dropD.has(d)&&inBar(d.beat,b0));
+          let sSig=sn.length?snSig(sn,b0):null, hSig=ha.length?haSig(ha,b0):null;
+          if(sSig!=null && sSig===s1 && s1===s2) sSig=snSig(vSnare(sn,b0,M),b0);
+          if(hSig!=null && hSig===h1 && h1===h2) hSig=haSig(vHat(ha,b0),b0);
+          if(sSig!=null){ s2=s1; s1=sSig; } else { s1=s2=null; }   // empty bar breaks the chain
+          if(hSig!=null){ h2=h1; h1=hSig; } else { h1=h2=null; }
+        }
+      }
+      if(addD.length) for(const d of addD) drums.push(d);
+      if(dropD.size)  drums=drums.filter(d=>!dropD.has(d));
     }
     return { bpm:state.bpm, totalBeats:cur+8, pitched, drums, found, sfx, srcById };
   }
