@@ -5,10 +5,19 @@
 #
 #   ./fetch-found-video.sh
 #
+# SINCE 2026-07 THIS IS A CACHE / FALLBACK BUILDER, NOT A REQUIREMENT. The live
+# video layer (video-layer.js) now STREAMS these clips straight from archive.org
+# (cue windows in found/video/stream-catalog.json — the committed source), so the
+# site runs with an empty found/video/. Running this script pre-bakes the same
+# clips locally; the layer uses them as a fast local cache and as the slow-network
+# / archive-blocked FALLBACK tier. (render-sample-video.js / journey --video still
+# want the local files — the offline renderers don't stream.)
+#
 # Each clip is cut remotely (ffmpeg range-seeks over HTTP, so only the needed
 # bytes are fetched — the source discs are 150MB–1.2GB), scaled to 640px,
 # stripped of audio, and re-encoded small. Timestamps were hand-curated by
-# sampling frames across each disc (2026-06). See SOURCES.md for credits.
+# sampling frames across each disc (2026-06). The same item/in/out coordinates
+# live in found/video/stream-catalog.json for the streaming path. See SOURCES.md.
 # Requires: ffmpeg with https support.
 set -euo pipefail
 cd "$(dirname "$0")"
