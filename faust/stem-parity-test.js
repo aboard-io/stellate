@@ -157,23 +157,33 @@ async function runState(name, st) {
     return x;
   };
   let stemMs = 0;
-  for (const b of bars) {
-    const msg = { serial: b.serial, oneState: b.one, unitKeys: cachedKeys, layerOf,
-      lo: b.lo, hi: b.hi, spb, startSample: S[b.serial], lenSamples: S[b.serial + 1] - S[b.serial],
-      barStartSec: b.serial * CBEATS * spb };
-    const t0 = Date.now();
-    const out = await R.renderBar(msg);
-    stemMs += Date.now() - t0;
+  // ONE-BAR PIPELINE (matches the worker/live contract): renderBar(msg N)
+  // ingests N and ships the window HELD from N-1; the first call ships nothing
+  // (rendered:false); flush() drains the final bar. Each shipped window carries
+  // its own serial/startSample, so it lands at the right absolute offset.
+  const ship = (out) => {
+    if (!out || !out.rendered) return;
     if (out.failedModules.length) throw new Error(name + ": worker failed modules " + JSON.stringify(out.failedModules));
     for (const stx of out.stems) {
       const acc = accFor(stx.layer);
       if (stx.bus === "dry") {
         if (stx.channels.length === 2 && !acc.dryR) { acc.dryR = new Float32Array(TOTAL); acc.dryR.set(acc.dryL); }
-        acc.dryL.set(stx.channels[0], S[b.serial]);
-        if (acc.dryR) acc.dryR.set(stx.channels[1] || stx.channels[0], S[b.serial]);
-      } else acc[stx.bus].set(stx.channels[0], S[b.serial]);
+        acc.dryL.set(stx.channels[0], out.startSample);
+        if (acc.dryR) acc.dryR.set(stx.channels[1] || stx.channels[0], out.startSample);
+      } else acc[stx.bus].set(stx.channels[0], out.startSample);
     }
+  };
+  for (const b of bars) {
+    const msg = { serial: b.serial, oneState: b.one, unitKeys: cachedKeys, layerOf,
+      lo: b.lo, hi: b.hi, spb, startSample: S[b.serial], lenSamples: S[b.serial + 1] - S[b.serial],
+      barStartSec: b.serial * CBEATS * spb };
+    const t0 = Date.now();
+    ship(await R.renderBar(msg));
+    stemMs += Date.now() - t0;
   }
+  const t0f = Date.now();
+  ship(await R.flush());
+  stemMs += Date.now() - t0f;
 
   // ---- compare per layer x per bus ----
   const zero = new Float32Array(TOTAL);
@@ -205,8 +215,10 @@ async function runState(name, st) {
 
 (async () => {
   const cases = [
-    ["citypop_s7 (dx7-heavy)", K.track("citypop", { seed: 7 })],
-    ["vaporwave_s7 (pad)", K.track("vaporwave", { seed: 7 })],
+    ["citypop_s7 (dx7 pad, stereo juno60)", K.track("citypop", { seed: 7 })],
+    ["vaporwave_s7 (mono pad_saw)", K.track("vaporwave", { seed: 7 })],
+    ["mallsoft_s42 (cached dx7 LEAD)", K.track("mallsoft", { seed: 42 })],
+    ["newage_s7 (cached supersaw LEAD)", K.track("newage", { seed: 7 })],
   ];
   let all = true;
   const summary = [];
