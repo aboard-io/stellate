@@ -557,6 +557,41 @@
     return trimToBudget(units, state);
   }
 
+  // ---- ZERO-STATIC Stage 3: STEM CLASSING — which units the rolling stem
+  // pre-render takes off the audio thread. CACHED = the heavy synthesis the
+  // live worklets pay for every block (dx7 family ~12.8/unit, supersaw leads
+  // ~7.4, juno60/vp330/hammond/solina/ppg/oberheim pads 2.7-5.9, lead_pluck
+  // fleets 3.9 — R7's irreducible steady-state cost) PLUS their insert chains
+  // (unitCost already includes them; a cached unit's inserts render in the
+  // worker, render-core's whole-chain path). LIVE = everything rhythm-critical
+  // or engine-native: bass, drums (kick/snare/hat/tom), stab, sfx, vocoder
+  // (its looped speech feed is an AudioBufferSourceNode into the worklet —
+  // no offline twin), sampler/native PCM, and MONO-LEGATO voices (a legato
+  // group crossing a bar boundary can't withdraw an already-rendered gate-off
+  // in the worker — modeld/tb303/synclead stay on the live pool where the
+  // gate hold works; they all sit under the threshold anyway).
+  //
+  // STEM_COST_MIN is the tunable knob: a unit is worth shipping to the worker
+  // when its LIVE cost (effectivePool x module COST + inserts — unitCost, the
+  // same table the 2.3 awake ceiling enforces) is >= this many pad_saw units.
+  // 2.0 ~= "anything heavier than a couple of organs"; raise it to cache less,
+  // lower it to cache more. Module-level COST >= 2.0 alone would miss the
+  // heavy-fleet pads (juno60 is 1.76/node but 3 nodes render every block),
+  // which are exactly the R7 residue Stage 3 exists to remove — hence the
+  // pool-weighted unit cost.
+  const STEM_COST_MIN = 2.0;
+  function stemClass(units) {
+    const cached = [], live = [];
+    for (const [key, u] of Object.entries(units)) {
+      if (!u || u.__meta) continue;
+      const mustLive = u.sampler || u.drum || u.hold || u.vocoder || u.mono ||
+        u.role === "bass" || key === "bass" || key === "stab" || key === "sfx";
+      if (!mustLive && unitCost(u) >= STEM_COST_MIN) cached.push(key);
+      else live.push(key);
+    }
+    return { cached, live };
+  }
+
   // ---- reverb COLOR (fx wings round) — a per-genre-selectable reverb node ----
   // state.reverbColor names an EXTERNAL reverb module (dist/reverb_*) that
   // replaces the fx_bus internal zita for that genre. Absent / "zita" / "default"
@@ -728,5 +763,5 @@
     return mapEvents(E, state, ev, { bedAll: true });
   }
 
-  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, reverbColor, REVERB_COLORS, autoTune, masterMb, mapEvents, buildSchedule, COST, unitCost, stateCost, effectivePool, BUDGET, trimToBudget };
+  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, reverbColor, REVERB_COLORS, autoTune, masterMb, mapEvents, buildSchedule, COST, unitCost, stateCost, effectivePool, BUDGET, trimToBudget, stemClass, STEM_COST_MIN };
 });
