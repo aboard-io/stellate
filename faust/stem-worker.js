@@ -144,11 +144,19 @@
       return us;
     }
 
-    // render ONE unit's slice of the bar into its layer's buses — the
-    // render-core renderUnit walk, windowed to [barBase, barEnd) with carried
-    // per-voice pending changes + active intervals.
-    function renderUnitBar(us, events, buses, W) {
-      const { barBase, barEnd, lo, spb } = W;
+    // INGEST ONE unit's slice of a bar: place its events into the persistent
+    // per-voice change/interval queues (ABSOLUTE sample positions). This is
+    // separated from the window render so a bar's events can be ingested BEFORE
+    // the PREVIOUS bar's window is rendered — press pre-sets an event's params
+    // one block early (at s-BS, the declick lead-in), so a note landing on a
+    // bar downbeat reaches its freq/@out/@pp changes back into the previous
+    // bar's FINAL block. Ingesting bar N+1 before rendering window N puts those
+    // changes in the queue in time, so window N's last block is rendered ONCE,
+    // with the anticipation applied — exactly press's continuous global walk
+    // (was: rendered stale in window N and again as window N+1's discarded
+    // pre-roll, the double-render that drifted pad phase to corr 0.94).
+    function ingestUnitEvents(us, events, W) {
+      const { lo, spb } = W;
       const u = us.u;
       events = events.slice().sort((a, b) => a.beat - b.beat);
       // supersaw release tail must survive the gate-off (render-core verbatim)
@@ -177,6 +185,15 @@
         v.ivals.push([s - BS, offS + relTail]);
         v.busyUntil = Math.max(v.busyUntil, offS);
       }
+    }
+
+    // render ONE unit's already-ingested queue into its layer's buses over the
+    // window [barBase, barEnd) — the render-core renderUnit block walk, windowed:
+    // consume the queued changes/intervals that fall in the window, carry the
+    // rest forward. Queue entries beyond barEnd (a later ingested bar) stay put.
+    function renderUnitWindow(us, buses, W) {
+      const { barBase, barEnd, spb } = W;
+      const u = us.u;
       const LEN = barEnd - barBase;
       const hasIns = us.chain && us.chain.length;
       const ubuf = hasIns ? new Float32Array(LEN) : null;
@@ -262,24 +279,26 @@
       return rendered;
     }
 
-    async function renderBar(msg) {
+    // ONE-BAR PIPELINE STATE. renderBar(msg N+1) ingests N+1 then renders &
+    // ships the window held from N (so a downbeat's s-BS anticipation is in the
+    // queue before N's final block renders). `held` is the descriptor of the
+    // bar awaiting render; `currentKeys` is the newest bar's cached set (drives
+    // stale retirement — a unit still cached in the newer bar is not stale).
+    let held = null;
+    let currentKeys = [];
+    const EMPTY = { serial: -1, rendered: false, startSample: -1, lenSamples: 0, stems: [], failedModules: [] };
+
+    // INGEST a bar: build its events off-thread, ensure/param its units, push
+    // events into the persistent per-voice queues. Returns the ensure failures.
+    async function ingestBar(msg) {
       const one = msg.oneState;
       const ev = E.buildEvents(one);
       const uTable = SE.voiceUnits(E, one);
       const m = SE.mapEvents(E, one, ev, { lo: msg.lo, hi: msg.hi, units: uTable });
-      const barBase = msg.startSample, LEN = msg.lenSamples, barEnd = barBase + LEN;
-      const W = { barBase, barEnd, lo: msg.lo, spb: msg.spb, barStartSec: msg.barStartSec };
+      const W = { lo: msg.lo, spb: msg.spb, barStartSec: msg.barStartSec };
       const wantKeys = msg.unitKeys || [];
       const byUnit = {};
       for (const e of m.events) if (wantKeys.indexOf(e.unit) >= 0) (byUnit[e.unit] = byUnit[e.unit] || []).push(e);
-      // per-layer bar buses (lazily; wL/wR only when a stereo unit lands there)
-      const layerBuses = new Map();
-      const busFor = (layer, stereo) => {
-        let b = layerBuses.get(layer);
-        if (!b) { b = { dry: new Float32Array(LEN), rev: new Float32Array(LEN), del: new Float32Array(LEN), pp: new Float32Array(LEN), wL: null, wR: null }; layerBuses.set(layer, b); }
-        if (stereo && !b.wL) { b.wL = new Float32Array(LEN); b.wR = new Float32Array(LEN); }
-        return b;
-      };
       const failedModules = [];
       for (const key of wantKeys) {
         const u = uTable[key];
@@ -291,17 +310,40 @@
           failedModules.push({ key, module: u.module, error: String(err && err.message || err) });
           continue;
         }
-        renderUnitBar(us, byUnit[key] || [], busFor(layer, !!u.stereo), W);
+        ingestUnitEvents(us, byUnit[key] || [], W);
       }
-      // STALE units (keys the current state no longer caches): flush their
-      // carried tails + let insert chains ring out for 2 bars, then drop —
-      // a genre change must not cut a reverb-bound release mid-ring.
+      return failedModules;
+    }
+
+    // RENDER the held bar's window (its events + the anticipations of the bar
+    // ingested after it are already queued) into per-layer x per-bus stems.
+    function renderHeld(h) {
+      const W = h.W, LEN = h.lenSamples;
+      // per-layer bar buses (lazily; wL/wR only when a stereo unit lands there)
+      const layerBuses = new Map();
+      const busFor = (layer, stereo) => {
+        let b = layerBuses.get(layer);
+        if (!b) { b = { dry: new Float32Array(LEN), rev: new Float32Array(LEN), del: new Float32Array(LEN), pp: new Float32Array(LEN), wL: null, wR: null }; layerBuses.set(layer, b); }
+        if (stereo && !b.wL) { b.wL = new Float32Array(LEN); b.wR = new Float32Array(LEN); }
+        return b;
+      };
+      // PRESENT units (cached in the held bar): render their window.
+      for (const key of h.wantKeys) {
+        const us = units.get(key);
+        if (!us) continue;   // ensure failed at ingest — reported via h.failedModules
+        const layer = h.layerOf[key] || "fx";
+        renderUnitWindow(us, busFor(layer, !!(us.u && us.u.stereo)), W);
+      }
+      // STALE units (retired — not cached in the held bar and not in the newer
+      // bar either): flush their carried tails + let insert chains ring out for
+      // 2 bars, then drop — a genre change must not cut a reverb-bound release.
       for (const [key, us] of units) {
-        if (wantKeys.indexOf(key) >= 0) continue;
+        if (h.wantKeys.indexOf(key) >= 0) continue;   // rendered as present
+        if (currentKeys.indexOf(key) >= 0) continue;  // still cached in the newer bar — not stale
         const hasTail = us.procs.some((v) => v.ivals.length || v.pending.length);
         us.staleBars = (us.staleBars || 0) + 1;
         if (hasTail || (us.chain && us.chain.length && us.staleBars <= 2)) {
-          renderUnitBar(us, [], busFor(us.layer, !!(us.u && us.u.stereo)), W);
+          renderUnitWindow(us, busFor(us.layer, !!(us.u && us.u.stereo)), W);
         } else if (us.staleBars > 2) units.delete(key);
       }
       // package: per layer x per bus, SPARSE — sub-noise-floor channels omitted
@@ -316,10 +358,38 @@
         for (const bus of ["rev", "del", "pp"])
           if (rms(b[bus]) >= SPARSE_FLOOR) stems.push({ layer, bus, channels: [b[bus]] });
       }
-      return { stems, failedModules };
+      return { serial: h.serial, rendered: true, startSample: h.startSample, lenSamples: LEN, stems, failedModules: h.failedModules };
     }
 
-    return { renderBar, reset: () => units.clear(), unitCount: () => units.size };
+    // renderBar: ingest THIS bar, then render & return the PREVIOUSLY held bar
+    // (one-bar latency). The first call returns EMPTY (nothing held yet); the
+    // final bar is drained by flush(). live.js ships each returned window by its
+    // serial/startSample; the very first EMPTY and the closing flush let it
+    // schedule bar N when the message for N+1 arrives (see header PIPELINE).
+    async function renderBar(msg) {
+      const failedModules = await ingestBar(msg);
+      const prev = held;
+      currentKeys = msg.unitKeys || [];
+      held = { serial: msg.serial, startSample: msg.startSample, lenSamples: msg.lenSamples,
+               W: { barBase: msg.startSample, barEnd: msg.startSample + msg.lenSamples,
+                    lo: msg.lo, spb: msg.spb, barStartSec: msg.barStartSec },
+               wantKeys: msg.unitKeys || [], layerOf: msg.layerOf || {}, failedModules };
+      return prev ? renderHeld(prev) : EMPTY;
+    }
+
+    // flush: render the final held bar with no further anticipation (there is no
+    // next downbeat to reach back — for the true last bar this is exact; for a
+    // mid-song pipeline stall it re-introduces one param-set one block late at
+    // that single boundary only, per the header).
+    async function flush() {
+      if (!held) return EMPTY;
+      const h = held; held = null;
+      return renderHeld(h);
+    }
+
+    return { renderBar, flush,
+      reset: () => { units.clear(); held = null; currentKeys = []; },
+      unitCount: () => units.size };
   }
 
   return { makeStemRenderer, SPARSE_FLOOR };
@@ -379,17 +449,23 @@ if (typeof WorkerGlobalScope !== "undefined" && typeof self !== "undefined" && s
         self.postMessage({ type: "resetdone", fromSerial: minSerial });
         return;
       }
-      if (msg.type === "bar") {
+      if (msg.type === "bar" || msg.type === "flush") {
         if (!ready || !R) { self.postMessage({ type: "barfail", serial: msg.serial, error: "not ready" }); return; }
-        if (msg.serial < minSerial) { self.postMessage({ type: "skipped", serial: msg.serial }); return; }
+        // one-bar pipeline: a "bar" message ingests msg and SHIPS the window
+        // held from the previous bar; a "flush" drains the final held bar. The
+        // shipped window carries its OWN serial/startSample (out.serial), which
+        // trails msg.serial by one on "bar" calls (EMPTY on the very first).
+        if (msg.type === "bar" && msg.serial < minSerial) { self.postMessage({ type: "skipped", serial: msg.serial }); return; }
         const t0 = (typeof performance !== "undefined" ? performance.now() : Date.now());
         try {
-          const out = await R.renderBar(msg);
+          const out = msg.type === "flush" ? await R.flush() : await R.renderBar(msg);
           const renderMs = (typeof performance !== "undefined" ? performance.now() : Date.now()) - t0;
+          if (!out.rendered) { self.postMessage({ type: "pending", serial: msg.serial }); return; }
+          if (out.serial < minSerial) { self.postMessage({ type: "skipped", serial: out.serial }); return; }
           const transfer = [];
           for (const st of out.stems) for (const c of st.channels) transfer.push(c.buffer);
-          self.postMessage({ type: "bar", serial: msg.serial, startSample: msg.startSample,
-            lenSamples: msg.lenSamples, stems: out.stems, failedModules: out.failedModules,
+          self.postMessage({ type: "bar", serial: out.serial, startSample: out.startSample,
+            lenSamples: out.lenSamples, stems: out.stems, failedModules: out.failedModules,
             renderMs: Math.round(renderMs * 10) / 10, queued: q.length }, transfer);
         } catch (err) {
           self.postMessage({ type: "barfail", serial: msg.serial, error: String(err && err.message || err) });
