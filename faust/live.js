@@ -39,13 +39,18 @@
     if (!E || !SE || !FP) throw new Error("FaustLive needs csd-engine.js, faust/state-engine.js, faust/found-player.js loaded first");
     const status = (m) => { if (onStatus) try { onStatus(m); } catch (e) {} };
 
-    // ---- ZERO-STATIC Stage 3: LOOKAHEAD widening (opts.stems only) ----
-    // The stem worker needs a deep runway: a bar is posted at injection time
-    // and its render must land by t0-1s, so injection must run ~stemLookahead
-    // ahead of the playhead (~10s — Paul approved the uniform input->audible
-    // latency compromise, ZERO-STATIC §Stage 3). stems off => the classic 6s,
-    // byte-identical behavior.
-    const LOOKA = opts.stems ? Math.max(LOOKAHEAD, opts.stemLookahead || 10) : LOOKAHEAD;
+    // ---- ZERO-STATIC Stage 3: pre-render runway (opts.stems, now the default) ----
+    // A bar is posted to the stem worker at injection time and its render must
+    // land by t0-1s. Depth is denominated in CHORD BARS (opts.stemBars, Paul:
+    // 4 — "cut it to four bars, we have plenty of headroom") and computed from
+    // the live bpm each scheduling pass, so "4 bars" is literal at any tempo.
+    // The old code used a flat ~10s; 4 bars is shallower AND self-scaling, and
+    // with ~1600× worker headroom even a shallow runway clears the t0-1s
+    // deadline comfortably. opts.stemLookahead (seconds) hard-overrides.
+    // stems off (?stems=0) => the classic LOOKAHEAD (6s), byte-identical path.
+    const STEM_BARS = Math.max(2, opts.stemBars || 4);
+    const stemLooka = () => opts.stemLookahead ||
+      Math.max(4, STEM_BARS * 8 * (60 / (((getState && getState()) || {}).bpm || 110)));   // 8 beats/chord-bar
     let stem = null;   // the stem-cache module handle (initStems below; null = path dormant)
 
     const AC = root.AudioContext || root.webkitAudioContext;
@@ -1877,7 +1882,8 @@
           injecting = true;
           const now = ctx.currentTime;
           if (nextTime < now) nextTime = now + 0.1; // fell behind (tab sleep) — resync
-          while (nextTime < ctx.currentTime + LOOKA && !abort) await injectChord(getState());
+          const looka = opts.stems ? stemLooka() : LOOKAHEAD;   // stems: 4 chord-bars (bpm-scaled); else classic
+          while (nextTime < ctx.currentTime + looka && !abort) await injectChord(getState());
           injecting = false;
         }
       } catch (e) { injecting = false; errors.push(String(e && e.message || e)); console.error("FaustLive tick", e); }
