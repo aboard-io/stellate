@@ -56,10 +56,17 @@
   let localAvail = new Set();    // clip names that have a local cache file (found/video/<name>.mp4)
   let online = true;
 
-  let wrap = null, vbox = null, tear = null, vids = [], front = 0;
+  let wrap = null, vbox = null, tear = null, vids = [], front = 0, scan = null;
   let osd = null, osdTimer = 0, glitchTimer = 0, idleTimer = 0, on = true, ready = false;
   let grain = null, dispEl = null, roEl = null, gbEl = null;   // SVG glitch knobs
   let curName = null, seq = 0, curGenre = "", profile = null;
+  // ---- ALIEN BROADCAST chaos-layer state (event-driven station personality) --
+  let fxlayer = null, pipEl = null, barsEl = null, cardEl = null, subEl = null,
+      chanEl = null, glyphEl = null, tsEl = null, trackEl = null,
+      stormDisp = null, stormTurb = null;
+  let chaosTimer = 0, chaosOn = false, lastEvt = "", storm = 1, curFam = "vhs", lastSection = null;
+  let barsTimer = 0, cardTimer = 0, subTimer = 0, pipTimer = 0, tsTimer = 0, fxTimer = 0, tsIv = 0, stormIv = 0;
+  const chaosLog = [];   // {type,t,dur} ring — the gate harness reads VideoLayer._chaosLog()
   let catBag = [];               // shuffled bag over the whole catalog (idle/ambient)
   const reduced = root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -98,17 +105,21 @@
   // ms between tape wobbles; grain = analog-grain opacity; svg = attach the
   // RGB-split displacement filter (glitch family, desktop only — the one place
   // that wants real displacement). mfilter = the cheap phone grade.
+  // chaos = ALIEN BROADCAST event intensity 0..1 (scales both how OFTEN the
+  // chaos scheduler fires and how HARD each event hits); wgap = base mean ms
+  // between chaos events at WACKADOODLE=1 (glitch = frenetic, clean/ambient =
+  // sparse but deeply weird when it does fire). See the chaos layer below.
   const FAMILIES = {
     neon:   { filter: "saturate(2.05) contrast(1.34) brightness(.83) hue-rotate(-12deg) blur(.4px)",
-              mfilter: "saturate(1.7) contrast(1.2)", glitch: .5, tear: 5200, grain: .10, svg: false },
+              mfilter: "saturate(1.7) contrast(1.2)", glitch: .5, tear: 5200, grain: .10, svg: false, chaos: .55, wgap: 4200 },
     vhs:    { filter: "saturate(1.85) contrast(1.22) brightness(.9) sepia(.12) hue-rotate(-4deg) blur(.45px)",
-              mfilter: "saturate(1.5) contrast(1.15)", glitch: .3, tear: 6500, grain: .13, svg: false },
+              mfilter: "saturate(1.5) contrast(1.15)", glitch: .3, tear: 6500, grain: .13, svg: false, chaos: .42, wgap: 5200 },
     dusty:  { filter: "saturate(.72) contrast(.96) brightness(.92) sepia(.3) blur(.5px)",
-              mfilter: "saturate(.8) sepia(.25)", glitch: .18, tear: 9000, grain: .2, svg: false },
+              mfilter: "saturate(.8) sepia(.25)", glitch: .18, tear: 9000, grain: .2, svg: false, chaos: .34, wgap: 6600 },
     glitch: { filter: "saturate(1.75) contrast(1.46) brightness(.85) hue-rotate(4deg)",
-              mfilter: "saturate(1.6) contrast(1.35)", glitch: .95, tear: 2600, grain: .16, svg: true },
+              mfilter: "saturate(1.6) contrast(1.35)", glitch: .95, tear: 2600, grain: .16, svg: true, chaos: 1.0, wgap: 2100 },
     clean:  { filter: "saturate(1.22) contrast(1.08) brightness(.95)",
-              mfilter: "saturate(1.15)", glitch: .08, tear: 12000, grain: .06, svg: false },
+              mfilter: "saturate(1.15)", glitch: .08, tear: 12000, grain: .06, svg: false, chaos: .18, wgap: 11000 },
   };
   const GENRE_FAMILY = {};
   const fam = (list, f) => list.forEach(g => GENRE_FAMILY[g] = f);
@@ -157,15 +168,37 @@
         '<feColorMatrix in="disp" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" result="gb"/>' +
         '<feOffset id="vidgb" in="gb" dx="0" dy="0" result="gbo"/>' +
         '<feBlend in="ro" in2="gbo" mode="screen"/>' +
+      '</filter>' +
+      // chaos-layer backdrop-filter refs: posterize blink + displacement storm.
+      // Both consume the BACKDROP (the video) when named from fxlayer's
+      // backdrop-filter, so they never mutate vbox and can't fight the tape loop.
+      '<filter id="vlposter" color-interpolation-filters="sRGB">' +
+        '<feComponentTransfer>' +
+          '<feFuncR type="discrete" tableValues="0 .28 .55 .8 1"/>' +
+          '<feFuncG type="discrete" tableValues="0 .28 .55 .8 1"/>' +
+          '<feFuncB type="discrete" tableValues="0 .28 .55 .8 1"/>' +
+        '</feComponentTransfer>' +
+      '</filter>' +
+      '<filter id="vlstorm" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">' +
+        '<feTurbulence id="vlstormturb" type="turbulence" baseFrequency="0.02 0.05" numOctaves="2" seed="3" result="st"/>' +
+        '<feDisplacementMap id="vlstormdisp" in="SourceGraphic" in2="st" scale="0" xChannelSelector="R" yChannelSelector="G"/>' +
       '</filter>';
     wrap.appendChild(svg);
     dispEl = svg.querySelector("#viddisp"); roEl = svg.querySelector("#vidro"); gbEl = svg.querySelector("#vidgb");
+    stormDisp = svg.querySelector("#vlstormdisp"); stormTurb = svg.querySelector("#vlstormturb");
+    // fxlayer: a full-frame overlay right above the video whose backdrop-filter
+    // grades/inverts/displaces ONLY the footage beneath it. Isolated compositor
+    // surface — chaos filter events touch this, never vbox, so they never war
+    // with the base grade or the tape-wobble loop.
+    fxlayer = document.createElement("div");
+    fxlayer.style.cssText = "position:absolute;inset:0;pointer-events:none;transition:backdrop-filter 120ms ease,-webkit-backdrop-filter 120ms ease";
+    wrap.appendChild(fxlayer);
     // readability veil + VHS scanlines + jittering grain over the footage, under the UI
     const veil = document.createElement("div");
     veil.style.cssText = "position:absolute;inset:0;" +
       "background:linear-gradient(rgba(12,10,26,.44),rgba(12,10,26,.26) 30%,rgba(12,10,26,.5))";
-    const scan = document.createElement("div");
-    scan.style.cssText = "position:absolute;inset:0;opacity:.22;mix-blend-mode:overlay;" +
+    scan = document.createElement("div");
+    scan.style.cssText = "position:absolute;inset:0;opacity:.22;mix-blend-mode:overlay;transition:opacity .3s,background-size .3s;" +
       "background:repeating-linear-gradient(0deg,rgba(0,0,0,.6) 0 1px,transparent 1px 3px)";
     grain = document.createElement("div");
     if (MOBILE) grain.setAttribute("hidden", "");
@@ -181,8 +214,45 @@
       "letter-spacing:.06em;text-shadow:2px 2px 0 rgba(0,0,0,.35)";
     const st = document.createElement("style");
     st.textContent = "@keyframes vhsgrain{0%{transform:translate(0,0)}25%{transform:translate(-70px,40px)}" +
-      "50%{transform:translate(45px,-90px)}75%{transform:translate(-30px,-35px)}100%{transform:translate(60px,70px)}}";
-    wrap.append(veil, scan, grain, tear, osd, st);
+      "50%{transform:translate(45px,-90px)}75%{transform:translate(-30px,-35px)}100%{transform:translate(60px,70px)}}" +
+      // vertical-hold roll: scale(1.14) overscan hides the reveal so the roll
+      // never exposes black (the never-black law extends to never-black-edges).
+      "@keyframes vl-roll{0%{transform:scale(1.14) translateY(-7%)}50%{transform:scale(1.14) translateY(7%)}100%{transform:scale(1.14) translateY(-7%)}}" +
+      ".vl-roll{animation:vl-roll .52s linear 2}";
+    // ---- ALIEN BROADCAST furniture (dedicated overlay els; opacity-toggled,
+    // never touch vbox — all cheap compositor paints over the base grade) ----
+    barsEl = document.createElement("div");   // SMPTE-ish color-bar interstitial
+    barsEl.style.cssText = "position:absolute;inset:0;opacity:0;transition:opacity .09s;background:linear-gradient(90deg," +
+      "#c0c0c0 0 14.28%,#c0c000 0 28.57%,#00c0c0 0 42.85%,#00c000 0 57.14%,#c000c0 0 71.42%,#c00000 0 85.71%,#2030c0 0 100%)";
+    cardEl = document.createElement("div");   // PLEASE STAND BY / SIGNAL LOST
+    cardEl.style.cssText = "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;" +
+      "transition:opacity .12s;background:rgba(6,6,16,.55);color:#eafff0;text-align:center;padding:0 6%;" +
+      "font:700 clamp(20px,5vw,54px) 'VT323',ui-monospace,monospace;letter-spacing:.14em;text-shadow:0 0 12px rgba(120,255,200,.45)";
+    subEl = document.createElement("div");    // wrong captions of the music
+    subEl.style.cssText = "position:absolute;left:0;right:0;bottom:8%;text-align:center;opacity:0;transition:opacity .18s;" +
+      "font:26px 'VT323',ui-monospace,monospace;color:#f4fff8;letter-spacing:.08em;text-shadow:2px 2px 0 rgba(0,0,0,.6);" +
+      "background:linear-gradient(transparent,rgba(0,0,0,.35),transparent)";
+    chanEl = document.createElement("div");   // channel-number OSD (wrong/alien/huge)
+    chanEl.style.cssText = "position:absolute;top:14px;right:20px;opacity:0;font:30px 'VT323',ui-monospace,monospace;" +
+      "color:rgba(255,240,170,.9);letter-spacing:.05em;text-shadow:0 0 8px rgba(255,200,80,.55)";
+    glyphEl = document.createElement("div");  // alien station idents
+    glyphEl.style.cssText = "position:absolute;top:42%;right:8%;opacity:0;font:48px 'VT323',ui-monospace,monospace;" +
+      "color:rgba(210,255,250,.72);text-shadow:0 0 14px rgba(120,255,255,.5)";
+    tsEl = document.createElement("div");     // timestamp OSD (backwards / base-13)
+    tsEl.style.cssText = "position:absolute;bottom:84px;right:20px;opacity:0;transition:opacity .2s;" +   // above the explorer's corner buttons (chrome overlays this layer)
+      "font:24px 'VT323',ui-monospace,monospace;color:rgba(255,210,220,.75);letter-spacing:.08em;text-shadow:2px 2px 0 rgba(0,0,0,.5)";
+    trackEl = document.createElement("div");  // tracking-noise band sweeping the frame
+    trackEl.style.cssText = "position:absolute;left:-4%;right:-4%;height:5.5%;top:-12%;opacity:0;mix-blend-mode:screen;filter:blur(.6px);" +
+      "background:repeating-linear-gradient(0deg,rgba(255,255,255,.5) 0 2px,rgba(180,255,255,.15) 2px 4px,transparent 4px 7px)";
+    wrap.append(veil, scan, grain, tear, osd, trackEl, barsEl, glyphEl, chanEl, tsEl, subEl, cardEl, st);
+    if (!MOBILE) {   // PiP / channel-surf peek: one extra decoder, desktop only
+      pipEl = document.createElement("video");
+      pipEl.muted = true; pipEl.loop = true; pipEl.playsInline = true; pipEl.preload = "auto";
+      pipEl.setAttribute("muted", ""); pipEl.setAttribute("playsinline", "");
+      pipEl.style.cssText = "position:absolute;right:4.5%;bottom:6%;width:30%;height:30%;object-fit:cover;opacity:0;" +
+        "transition:opacity .18s;border:2px solid rgba(210,255,235,.5);border-radius:6px;box-shadow:0 6px 30px rgba(0,0,0,.5)";
+      wrap.appendChild(pipEl);
+    }
     document.body.prepend(wrap);
     profile = profileFor("");   // default look
     applyLook(true);
@@ -204,9 +274,10 @@
   }
   function setGenre(g) {
     if (!g || g === curGenre) return;
-    curGenre = g; profile = profileFor(g);
+    curGenre = g; profile = profileFor(g); curFam = GENRE_FAMILY[g] || "vhs";
     applyLook(false);
     glitchLoop();   // reschedule tape wobbles at the new cadence
+    if (chaosOn) restartChaos();   // pick up the new family's chaos cadence/intensity
   }
 
   function flashOsd(text) {
@@ -249,6 +320,307 @@
     if (!ready || !on || reduced) return;
     const period = (profile ? profile.tear : 6000);
     glitchTimer = setTimeout(() => { burst(); glitchLoop(); }, period + Math.random() * period * 0.9);
+  }
+
+  // ======================================================================
+  // ALIEN BROADCAST — the chaos layer. An 80s TV station run by slightly
+  // insane alien AI intelligences. An event-driven personality riding ON TOP
+  // of the five genre-family base grades (those are the BASE GRADE; this is the
+  // chaos). A Poisson-ish scheduler (bursts and lulls, never a metronome) draws
+  // from a weighted deck of ~20 momentary events, never the same one twice in a
+  // row, frequency + intensity scaled by the genre family (glitch = frenetic,
+  // ambient = sparse but deeply weird). Everything is CSS/SVG/DOM only, no
+  // per-frame JS pixel work (archive.org taints WebGL; the audio load gate is
+  // sacred): events set a style / one SVG attribute and schedule their own
+  // revert. Math.random is fine — this is the presentational layer.
+  //
+  //   >>> THE WACKADOODLE DIAL <<<  one number to rule the whole station.
+  //   1 = house insanity. Bump toward ~2 for a full alien meltdown, drop toward
+  //   ~0.4 to sedate. It multiplies event RATE (and lightly the burst odds);
+  //   per-event intensity rides the genre family's `chaos`.
+  const WACKADOODLE = 1.0;
+
+  const nowMs = () => (root.performance && performance.now) ? performance.now() : Date.now();
+  const expRand = () => -Math.log(1 - Math.random());   // mean 1, memoryless -> natural clustering
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const pick = (a) => a[(Math.random() * a.length) | 0];
+  function clog(type, dur) {
+    chaosLog.push({ type, t: Math.round(nowMs()), dur: Math.round(dur) });
+    if (chaosLog.length > 600) chaosLog.shift();
+  }
+  function chaosIntensity() { return profile && profile.chaos != null ? profile.chaos : 0.4; }
+
+  // fxlayer backdrop-filter helpers — grade/invert/displace ONLY the footage,
+  // isolated from vbox so no war with the base grade or the tape-wobble loop.
+  function fxSet(css) { if (!fxlayer) return; fxlayer.style.webkitBackdropFilter = css; fxlayer.style.backdropFilter = css; }
+  function fxClear() { if (!fxlayer) return; fxlayer.style.backdropFilter = ""; fxlayer.style.webkitBackdropFilter = ""; }
+  function fxTrans(t) { if (fxlayer) fxlayer.style.transition = t; }
+  // flicker an OSD element (channel / glyph): random on/off/dim, then hide.
+  function flickerEl(el, dur) {
+    if (!el) return;
+    el.style.opacity = "1";
+    const end = nowMs() + dur;
+    const blink = () => {
+      if (nowMs() >= end) { el.style.opacity = "0"; return; }
+      el.style.opacity = Math.random() < .22 ? "0.12" : (Math.random() < .5 ? "1" : "0.72");
+      setTimeout(blink, 55 + Math.random() * 150);
+    };
+    setTimeout(blink, 50);
+  }
+  // an alt clip for PiP / channel-surf: prefer a LOCAL cache clip (snappy hard
+  // cut), else any other playable name (remote may pop in late — chaos-tolerant).
+  function pickAlt() {
+    const loc = [...localAvail].filter(n => n !== curName);
+    if (loc.length) return pick(loc);
+    const rem = names.filter(n => n !== curName);
+    return rem.length ? pick(rem) : null;
+  }
+  function srcFor(name) {
+    const c = candidates(name)[0];
+    if (!c) return null;
+    const frag = c.kind === "remote" && c.in ? ("#t=" + c.in) : "";
+    return c.url + frag;
+  }
+  function setPip(v, src, full) {
+    if (!v) return;
+    try { if (v.getAttribute("src") !== src) { v.src = src; v.load(); } } catch (e) {}
+    v.playbackRate = RATE;
+    if (full) {   // channel-surf HARD CUT: cover the frame (front keeps playing beneath -> no gap)
+      v.style.left = "0"; v.style.top = "0"; v.style.right = "0"; v.style.bottom = "0";
+      v.style.width = "100%"; v.style.height = "100%"; v.style.borderRadius = "0"; v.style.border = "none";
+    } else {      // corner picture-in-picture
+      v.style.left = "auto"; v.style.top = "auto"; v.style.right = "4.5%"; v.style.bottom = "6%";
+      v.style.width = "30%"; v.style.height = "30%"; v.style.borderRadius = "6px";
+      v.style.border = "2px solid rgba(210,255,235,.5)";
+    }
+    // reveal only once frames exist — an empty bordered box is a broken TV,
+    // not an insane one. If the clip never readies, the event just no-shows.
+    if (v.readyState >= 2) v.style.opacity = "1";
+    else v.oncanplay = () => { v.oncanplay = null; v.style.opacity = "1"; };
+    v.play().catch(() => {});
+  }
+  function hidePip() {
+    if (!pipEl) return;
+    pipEl.oncanplay = null;
+    pipEl.style.opacity = "0";
+    setTimeout(() => { try { pipEl.pause(); } catch (e) {} }, 420);
+  }
+
+  // ---- the station's dictionary ----
+  // station idents: alien-looking but drawn from blocks widely covered by
+  // default font stacks (box drawing, braille, trigrams, runic, math) — exotic
+  // planes (cuneiform, alchemical) tofu'd on the verification runs.
+  const GLYPHS = ["╬╪▚▞", "⠺⠵⣿⠋", "▟▙◈▛", "◭◮⊗⊘", "⋔⋕⊞⊟", "↯⇶↯↺", "ᛝᚦᛟᚱ", "▓▚E̸R̷R̸▞░", "☰☲☵☷", "◇⬡◇⬢", "∴∵∷⁂", "⌁⌇⌭⌗"];
+  const SUBS = ["[HUMANS DANCING ACCEPTABLY]", "[MUSIC INTENSIFIES CORRECTLY]", "[APPROVED EMOTION DETECTED]",
+    "[SIGNAL CARRIES NOSTALGIA]", "[PLEASE CONTINUE CONSUMING]", "[THE MALL IS ETERNAL]",
+    "[CARBON UNITS SWAYING]", "[JOY QUOTA: 78% NOMINAL]", "[TRANSMISSION IS AFFECTION]",
+    "[YOUR DEVOTION IS NOTED]", "[SUNSET RENDERED ON SCHEDULE]", "[◊ INAUDIBLE ALIEN CHORD ◊]",
+    "[WE HAVE ALWAYS BEEN THE STATION]", "[NOSTALGIA FOR A PLACE THAT NEVER WAS]"];
+  const CHAN = ["CH 03", "CH 88", "CH 7½", "CH ∞", "CH -12", "CH 0x1F", "CH 十三",
+    "CH 999,999", "CH ■■", "CH ⊘", "CH ⰐⲈ", "CH 🜀"];
+  const STANDBY = ["PLEASE STAND BY", "SIGNAL LOST", "◈ DO NOT ADJUST ◈", "TRANSMISSION RESUMES SHORTLY",
+    "WE APOLOGIZE FOR THE REALITY", "STAND BY // ALIEN OVERRIDE", "△ PLEASE REMAIN CALM △", "NO SIGNAL"];
+  // base-13 clock, wrong on purpose
+  function fmtTS(v) {
+    const d = "0123456789ABC"; v = ((v % 28561) + 28561) % 28561;
+    const g = (x) => d[(((x | 0) % 13) + 13) % 13];
+    return "△ " + g(v / 2197) + g(v / 169) + ":" + g(v / 13) + g(v) + ":" + g(v * 7) + g(v * 3);
+  }
+
+  // ---- the event deck. name -> {w: base weight, mobile: cheap enough for phones,
+  // can(): availability predicate, run(): apply + self-revert, RETURN nominal ms
+  // duration}. The scheduler serializes events (next fires after dur + gap), so
+  // vbox-mutating events don't overlap each other; filter events live on fxlayer.
+  const EV = {
+    // -- analog decay --
+    vroll: { w: 6, mobile: false, run() {   // vertical-hold roll (overscan hides black)
+        vbox.style.transition = "none"; vbox.classList.add("vl-roll");
+        const dur = 1040; setTimeout(() => { vbox.classList.remove("vl-roll"); applyLook(false); }, dur); return dur; } },
+    hsync: { w: 7, mobile: false, run() {   // h-sync tear: skew jolts
+        const g = chaosIntensity(), n = 3 + ((Math.random() * 4) | 0), dt = 42 + Math.random() * 44;
+        vbox.style.transition = "transform 28ms linear";
+        for (let i = 0; i < n; i++) setTimeout(() => {
+          const sk = (Math.random() * 26 - 13) * (0.5 + g);
+          vbox.style.transform = "skewX(" + sk.toFixed(1) + "deg) translateX(" + (sk | 0) + "px) scale(1.06)";
+        }, i * dt);
+        const dur = n * dt + 40; setTimeout(() => applyLook(false), dur); return dur; } },
+    tracking: { w: 6, mobile: true, run() {   // tracking-noise band sweeps the frame
+        const dur = 480 + Math.random() * 720;
+        trackEl.style.transition = "none"; trackEl.style.top = "-12%"; trackEl.style.opacity = ".85";
+        void trackEl.offsetWidth;
+        trackEl.style.transition = "top " + dur + "ms linear, opacity " + dur + "ms ease-in";
+        trackEl.style.top = "108%"; setTimeout(() => { trackEl.style.opacity = "0"; }, dur * 0.95);
+        return dur; } },
+    chroma: { w: 7, mobile: false, run() {   // chroma drift: hue-rotate lurch (fxlayer)
+        const g = chaosIntensity(), dur = 280 + Math.random() * 540;
+        const deg = ((60 + Math.random() * 220) * (0.5 + g)) * (Math.random() < .5 ? -1 : 1);
+        fxTrans("backdrop-filter " + (dur * .4) + "ms ease,-webkit-backdrop-filter " + (dur * .4) + "ms ease");
+        fxSet("hue-rotate(" + (deg | 0) + "deg) saturate(" + (1.4 + g).toFixed(2) + ")");
+        clearTimeout(fxTimer); fxTimer = setTimeout(fxClear, dur); return dur; } },
+    ghost: { w: 5, mobile: false, run() {   // ghosting: offset RGB drop-shadow doubles (fxlayer)
+        const g = chaosIntensity(), off = ((4 + Math.random() * 11) * (0.6 + g)) | 0, dur = 340 + Math.random() * 720;
+        fxTrans("none");
+        fxSet("drop-shadow(" + off + "px 0 0 rgba(255,60,90,.5)) drop-shadow(" + (-off) + "px 0 0 rgba(60,180,255,.5)) blur(.3px)");
+        clearTimeout(fxTimer); fxTimer = setTimeout(fxClear, dur); return dur; } },
+    pump: { w: 5, mobile: false, run() {   // brightness pumping (fxlayer, stepped)
+        const g = chaosIntensity(), seq = [1.6 + g, 0.55, 1.4 + g * .5, 0.8, 1], dt = 105;
+        fxTrans("none");
+        seq.forEach((b, i) => setTimeout(() => fxSet("brightness(" + b.toFixed(2) + ") contrast(" + (1 + .3 * g).toFixed(2) + ")"), i * dt));
+        const dur = seq.length * dt + 40; setTimeout(fxClear, dur); return dur; } },
+    invert: { w: 4, mobile: false, run() {   // invert blink (fxlayer)
+        const n = 2 + ((Math.random() * 3) | 0), dt = 66 + Math.random() * 60; fxTrans("none");
+        for (let i = 0; i < n; i++) { setTimeout(() => fxSet("invert(1) hue-rotate(180deg)"), i * 2 * dt); setTimeout(fxClear, (i * 2 + 1) * dt); }
+        return n * 2 * dt; } },
+    posterize: { w: 4, mobile: false, run() {   // posterize blink (SVG via fxlayer)
+        const n = 1 + ((Math.random() * 2) | 0), dt = 120 + Math.random() * 150; fxTrans("none");
+        for (let i = 0; i < n; i++) { setTimeout(() => fxSet("url(#vlposter) saturate(1.5)"), i * 2 * dt); setTimeout(fxClear, (i * 2 + 1) * dt); }
+        return n * 2 * dt; } },
+    scanshift: { w: 5, mobile: true, run() {   // scanline density + brightness shift
+        const dur = 380 + Math.random() * 700;
+        scan.style.backgroundSize = "100% " + (2 + Math.random() * 8 | 0) + "px";
+        scan.style.opacity = (0.35 + Math.random() * 0.3).toFixed(2);
+        setTimeout(() => { scan.style.backgroundSize = ""; scan.style.opacity = ".22"; }, dur); return dur; } },
+    // -- broadcast furniture --
+    colorbars: { w: 3, mobile: true, run() {   // SMPTE-ish interstitial (rare long)
+        const long = Math.random() < .12, dur = long ? rnd(2200, 3800) : rnd(220, 620);
+        barsEl.style.opacity = long ? "0.94" : "0.98";
+        clearTimeout(barsTimer); barsTimer = setTimeout(() => { barsEl.style.opacity = "0"; }, dur); return dur; } },
+    standby: { w: 2, mobile: true, run() {   // PLEASE STAND BY / SIGNAL LOST (rare 3-5s)
+        cardEl.textContent = pick(STANDBY);
+        const long = Math.random() < .18, dur = long ? rnd(3000, 5000) : rnd(600, 1500);
+        cardEl.style.opacity = "1";
+        clearTimeout(cardTimer); cardTimer = setTimeout(() => { cardEl.style.opacity = "0"; }, dur); return dur; } },
+    channelosd: { w: 6, mobile: true, run() {   // channel number OSD, flickering
+        chanEl.textContent = pick(CHAN); const dur = 500 + Math.random() * 1500; flickerEl(chanEl, dur); return dur; } },
+    timestamp: { w: 4, mobile: true, run() {   // backwards / base-13 clock OSD
+        const dur = 900 + Math.random() * 1700, back = Math.random() < .6; let v = (Math.random() * 20000) | 0;
+        tsEl.style.opacity = ".8"; clearInterval(tsIv);
+        tsIv = setInterval(() => { v += back ? -7 : 11; tsEl.textContent = fmtTS(v); }, 120);
+        clearTimeout(tsTimer); tsTimer = setTimeout(() => { clearInterval(tsIv); tsEl.style.opacity = "0"; }, dur); return dur; } },
+    // -- alien intelligence --
+    glyph: { w: 7, mobile: true, run() {   // fleeting station ident
+        glyphEl.textContent = pick(GLYPHS); const dur = 350 + Math.random() * 900; flickerEl(glyphEl, dur); return dur; } },
+    subtitle: { w: 6, mobile: true, run() {   // captions the music wrongly
+        subEl.textContent = pick(SUBS); const dur = 1200 + Math.random() * 1900;
+        subEl.style.opacity = "1"; clearTimeout(subTimer); subTimer = setTimeout(() => { subEl.style.opacity = "0"; }, dur); return dur; } },
+    pip: { w: 4, mobile: false, can() { return !!pipEl && !!pickAlt(); }, run() {   // picture-in-picture of ANOTHER clip
+        const n = pickAlt(), src = n && srcFor(n); if (!src) return 300; setPip(pipEl, src, false);
+        const dur = 1400 + Math.random() * 2600; clearTimeout(pipTimer); pipTimer = setTimeout(hidePip, dur); return dur; } },
+    zoom: { w: 6, mobile: false, run() {   // sudden zoom lurch: snap in, drift back
+        const sc = 1.7 + Math.random() * 1.1, dur = 700 + Math.random() * 900;
+        vbox.style.transition = "transform 60ms ease-out"; vbox.style.transform = "scale(" + sc.toFixed(2) + ")";
+        setTimeout(() => { vbox.style.transition = "transform " + dur + "ms cubic-bezier(.2,.7,.2,1)"; vbox.style.transform = "none"; }, 70);
+        setTimeout(() => applyLook(false), dur + 140); return dur; } },
+    mirror: { w: 5, mobile: false, run() {   // mirror / flip flash
+        const flip = Math.random() < .5 ? "scaleX(-1)" : "scaleY(-1)", dur = 120 + Math.random() * 520;
+        vbox.style.transition = "none"; vbox.style.transform = flip + " scale(1.02)";
+        setTimeout(() => applyLook(false), dur); return dur; } },
+    dispstorm: { w: 5, mobile: false, run() {   // feTurbulence displacement storm (SVG via fxlayer)
+        const g = chaosIntensity(), dur = 700 + Math.random() * 1200; fxTrans("none"); fxSet("url(#vlstorm) contrast(1.08)");
+        const end = nowMs() + dur; clearInterval(stormIv);
+        stormIv = setInterval(() => {
+          if (nowMs() >= end) { clearInterval(stormIv); fxClear(); if (stormDisp) stormDisp.setAttribute("scale", "0"); return; }
+          if (stormDisp) stormDisp.setAttribute("scale", (((20 + Math.random() * 90) * (0.5 + g)) | 0).toFixed(0));
+          if (stormTurb) stormTurb.setAttribute("seed", String((Math.random() * 9999) | 0));
+        }, 90); return dur; } },
+    // -- channel surfing --
+    surf: { w: 2, mobile: false, can() { return !!pipEl && !!pickAlt(); }, run() {   // hard CUT to a random clip, then back (a PEEK, not a switch: never touches the bag state)
+        const n = pickAlt(), src = n && srcFor(n); if (!src) return 300; setPip(pipEl, src, true);
+        const dur = 500 + Math.random() * 1500;
+        clearTimeout(pipTimer); pipTimer = setTimeout(() => { setPip(pipEl, src, false); hidePip(); }, dur); return dur; } },
+    // -- musical hit (fired by the bar clock's pulse on a section/downbeat) --
+    tearhit: { w: 2, mobile: true, run() {   // a hard tape tear that reads as intentional on the drop
+        const dur = 170 + Math.random() * 260; tear.style.transition = "opacity 30ms";
+        tear.style.top = (18 + Math.random() * 54) + "%"; tear.style.opacity = ".95";
+        setTimeout(() => { tear.style.opacity = "0"; }, dur); return dur; } },
+  };
+  const DECK = Object.keys(EV);
+
+  // family bias: ambient/neoclassical (clean) go SPARSE-BUT-DEEPLY-WEIRD — pull
+  // the alien/broadcast oddities up, push the frantic analog thrash down; glitch
+  // leans into the thrash. Everything keeps some baseline weight.
+  const WEIRD = new Set(["glyph", "subtitle", "dispstorm", "colorbars", "standby", "timestamp", "channelosd", "posterize"]);
+  const FRANTIC = new Set(["hsync", "zoom", "mirror", "tracking", "vroll", "surf", "scanshift", "ghost", "pip"]);
+  function weightFor(name) {
+    let w = EV[name].w;
+    if (curFam === "clean") { if (WEIRD.has(name)) w *= 2.1; if (FRANTIC.has(name)) w *= 0.35; }
+    else if (curFam === "glitch") { if (FRANTIC.has(name)) w *= 1.4; }
+    return w;
+  }
+  function eligible() {
+    return DECK.filter(n => (!MOBILE || EV[n].mobile) && (!EV[n].can || EV[n].can()) && n !== "tearhit");
+  }
+  function drawEvent() {
+    const pool = eligible().filter(n => n !== lastEvt);   // never the same event twice in a row
+    if (!pool.length) return null;
+    let tot = 0; const cum = [];
+    for (const n of pool) { tot += weightFor(n); cum.push([tot, n]); }
+    const r = Math.random() * tot;
+    for (const [c, n] of cum) if (r <= c) return n;
+    return pool[pool.length - 1];
+  }
+  function runNamed(name) {
+    const e = EV[name]; if (!e) return 500;
+    lastEvt = name;   // shared no-repeat across scheduler + musical pulse
+    let dur = 500; try { dur = e.run() || 500; } catch (err) {}
+    clog(name, dur); return dur;
+  }
+  function fireEvent() { const n = drawEvent(); return n ? runNamed(n) : 700; }
+
+  // Poisson-ish scheduler with a random-walking "storm" scalar -> pronounced
+  // bursts and lulls (not a metronome). Serial: the next event is scheduled
+  // AFTER the current one's duration, so shared surfaces never overlap.
+  function scheduleChaos() {
+    clearTimeout(chaosTimer);
+    if (!chaosOn || !ready || !on || reduced) return;
+    storm *= Math.exp((Math.random() - 0.5) * 0.9); storm = Math.max(0.4, Math.min(2.4, storm));
+    const ci = chaosIntensity(), base = (profile && profile.wgap || 5200) / (WACKADOODLE * (0.5 + ci));
+    // bursts get likelier with storminess + chaos intensity
+    if (Math.random() < 0.09 + 0.15 * ci * Math.min(1, storm / 2)) { burstRun(); return; }
+    const dur = fireEvent();
+    let gap = base * expRand() / storm;
+    gap = Math.max(MOBILE ? 900 : 420, Math.min(26000, gap));
+    chaosTimer = setTimeout(scheduleChaos, dur + gap);
+  }
+  function burstRun() {   // a flurry: several events close together, then a lull
+    let i = 0; const n = 2 + ((Math.random() * 4) | 0);
+    const step = () => {
+      if (!chaosOn || !ready || !on || reduced) return;
+      const dur = fireEvent(); i++;
+      if (i < n) chaosTimer = setTimeout(step, dur + rnd(140, 520));
+      else chaosTimer = setTimeout(scheduleChaos, dur + rnd(700, 1800));   // exhale after the burst
+    };
+    step();
+  }
+  function restartChaos() {
+    clearTimeout(chaosTimer);
+    if (chaosOn && ready && on && !reduced) chaosTimer = setTimeout(scheduleChaos, 1200 + Math.random() * 2600);
+  }
+  function startChaos() { chaosOn = true; storm = 1; lastEvt = ""; restartChaos(); }
+  function stopChaos() {
+    chaosOn = false; clearTimeout(chaosTimer); clearInterval(stormIv); clearInterval(tsIv);
+    fxClear();
+    [barsEl, cardEl, subEl, chanEl, glyphEl, tsEl, trackEl].forEach(el => { if (el) el.style.opacity = "0"; });
+    if (vbox) vbox.classList.remove("vl-roll");
+    hidePip();
+  }
+
+  // musical hook: the bar clock reaches the layer once per bar (info.serial /
+  // info.section). Align SOME events to the music — a tear on a section change
+  // (a "drop") reads intentional; the async scheduler keeps the alien feel. Both
+  // mixed. Uses overlay-safe events only, so it never collides with vbox.
+  function pulse(info) {
+    if (!chaosOn || !ready || !on || reduced || !info) return;
+    const ci = chaosIntensity(), sectionChange = info.section && info.section !== lastSection;
+    lastSection = info.section || lastSection;
+    // honor the station-wide never-twice-in-a-row rule: if the coin lands on
+    // what just fired (scheduler or pulse — lastEvt is shared), take the other.
+    const coin = (a, b) => { const n = Math.random() < 0.5 ? a : b; return n === lastEvt ? (n === a ? b : a) : n; };
+    if (sectionChange && Math.random() < 0.35 + 0.45 * ci) {
+      runNamed(coin("tearhit", "colorbars"));   // punctuate the section boundary
+    } else if (Math.random() < 0.08 + 0.30 * ci) {
+      runNamed(coin("tracking", MOBILE ? "scanshift" : "chroma"));   // occasional on-beat flavor (chroma = fxlayer, desktop)
+    }
   }
 
   // ---------- clip resolution + streaming ----------
@@ -394,9 +766,9 @@
     if (on) {
       if (!curName) { const n = nextCatalog(); if (n) show(n); }
       else vids[front].play().catch(() => {});
-      idle(); glitchLoop();
+      idle(); glitchLoop(); startChaos();
     } else {
-      stopIdle(); clearTimeout(glitchTimer);
+      stopIdle(); clearTimeout(glitchTimer); stopChaos();
       backLoad = null; queuedPrefetch = null; ++seq;   // drop any in-flight preload
       vids.forEach(v => { try { v.pause(); } catch (e) {} });
     }
@@ -447,5 +819,11 @@
     showFile: (file) => { stopIdle(); show(String(file).replace(/\.mp4$/, "")); },
     prefetch: (file) => { if (file) prefetch(String(file).replace(/\.mp4$/, "")); },
     credits: () => [...catalog.values()].map(e => ({ file: e.name + ".mp4", credit: e.credit })),
+    // ALIEN BROADCAST: the bar clock feeds this per bar for musical alignment.
+    pulse,
+    // gate/debug hooks: read the event log; force-fire a named event for capture.
+    _chaosLog: () => chaosLog.slice(),
+    _chaosDeck: () => DECK.slice(),
+    _chaosFire: (name) => runNamed(name),
   };
 })(window);
