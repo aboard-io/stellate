@@ -4,3 +4,9 @@
 # the directory and this file.
 *
 !.gitignore
+# EXCEPTION: the live-video stream catalog is SOURCE (cue windows + genre tags
+# into remote archive.org files), committed like clips is derived. The local
+# found/video/*.mp4 clips stay ignored — they're a regenerable cache / fallback.
+!video/
+video/*
+!video/stream-catalog.json

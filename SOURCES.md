@@ -46,11 +46,20 @@ voice in `royal-road.csd`, and re-render.
 
 # Found-video sources & attribution
 
-The background video layer (`video-layer.js`) crossfades between short clips cut
-from **LaserDisc rips on the Internet Archive**. The clips are **not committed** —
-`fetch-found-video.sh` is the committed recipe (it range-seeks each disc over
-HTTP and re-encodes ~30s excerpts to small, silent 640px MP4s in `found/video/`).
-Timestamps were hand-curated by sampling frames across each disc (2026-06).
+The background video layer (`video-layer.js`) plays short clips from **LaserDisc
+rips on the Internet Archive**. Since 2026-07 the LIVE layer **streams** them
+straight from archive.org (no pre-bake): the committed source is
+`found/video/stream-catalog.json` — `{item, file, in, out}` cue windows + genre
+tags (the `name` = clip id = `GENRE_CLIPS` key = local cache basename). It is the
+one file under `found/` that is committed (whitelisted in `found/.gitignore`);
+everything else there stays derived/gitignored. `fetch-found-video.sh` /
+`cut-lib-clips.sh` are now a **cache / fallback builder** — they bake the same
+windows to small silent 640px MP4s in `found/video/` for the slow-network /
+archive-blocked fallback tier and for the offline renderers (`render-sample-video.js`,
+`journey --video`), which don't stream. The clips themselves are **not committed**.
+Timestamps were hand-curated by sampling frames across each disc (2026-06); the
+`found/video/lib/` reels (item slugs unrecovered — see below) are **local-only**
+(`item:null` in the catalog) and appear live only when cached locally.
 
 | Internet Archive item | disc | clips | license |
 |---|---|---|---|
@@ -168,3 +177,51 @@ Buckbeak, en+whisper for Voldemort) plus per-character pitch/speed/resample so
 the roster reads as a cast. Character names as short factual identifiers are
 not copyrightable; the audio itself is machine-generated on this machine
 (eSpeak NG, GPLv3 — its *output* carries no license restriction).
+## Streaming found-video sources (avant-garde + early 3D/CG) — 2026-07
+
+A **streaming** video layer: 26 archive.org items cued directly over HTTP Range
+requests (no local download), 97 short muted transformed windows written to
+`found/video/stream-sources-new.json` as `{item,file,in,out,tags,credit,title,
+unscreened}` entries. Every window is `unscreened:true` — cued blind from
+metadata/descriptions/regular spacing (first & last 5% avoided). Paul's eyes are
+the taste gate; report and prune bad windows from the app. Same discipline as the
+LaserDisc layer above: brief, silent, transformed, non-commercial excerpts;
+point people at the archive.org items, don't redistribute the frames.
+
+**License basis per item** (clean age/gov PD and CC are marked; "none stated,
+PD-by-age" = pre-1930 works whose copyright has lapsed but the archive.org
+*upload* carries no machine-readable license tag):
+
+| # | Internet Archive item | work | license basis |
+|---|---|---|---|
+| 1 | [`1921WaltherRuttmannOpusI`](https://archive.org/details/1921WaltherRuttmannOpusI) | Ruttmann, *Opus I* (1921) | PD by age (1921) |
+| 2 | [`1930LAZSLOMOHOLYNAGYEINLICHTSPIEL`](https://archive.org/details/1930LAZSLOMOHOLYNAGYEINLICHTSPIEL) | Moholy-Nagy, *Ein Lichtspiel Schwarz-Weiss-Grau* (1930) | PD by age (1930) |
+| 3 | [`ghosts_before_breakfast`](https://archive.org/details/ghosts_before_breakfast) | Hans Richter, *Vormittagsspuk* (1928) | PD by age (1928) |
+| 4 | [`man-ray-emak-bakia-1927`](https://archive.org/details/man-ray-emak-bakia-1927) | Man Ray, *Emak-Bakia* (1926) | PD by age (1926) |
+| 5 | [`prostokat-dynamiczny-the-dynamic-rectangle-jozef-robakowski-720p`](https://archive.org/details/prostokat-dynamiczny-the-dynamic-rectangle-jozef-robakowski-720p) | Robakowski, *The Dynamic Rectangle* (1972) | **CC Public Domain Mark 1.0** |
+| 6 | [`poemfield_no_5`](https://archive.org/details/poemfield_no_5) | VanDerBeek & Knowlton, *Poemfield No. 5* (1967) | none stated; Bell Labs BEFLIX art film — **verify** |
+| 7 | [`experimentsinmotiongraphics1968`](https://archive.org/details/experimentsinmotiongraphics1968) | John Whitney Sr., *Experiments in Motion Graphics* (1968) | none stated; IBM-sponsored, widely circulated — **verify** |
+| 8 | [`carlas-island`](https://archive.org/details/carlas-island) | Nelson Max, *Carla's Island* (1981) | none stated; LLNL-era CG demo — **verify** |
+| 9 | [`CranstonCsuri1982DemoReel`](https://archive.org/details/CranstonCsuri1982DemoReel) | Cranston-Csuri Productions demo reel (1982) | none stated; studio demo reel — **verify** |
+| 10 | [`DigitalEffects1985DemoReel`](https://archive.org/details/DigitalEffects1985DemoReel) | Digital Effects Inc. demo reel (1985) | none stated; studio demo reel — **verify** |
+| 11 | [`MarksMarksDemoReel1981`](https://archive.org/details/MarksMarksDemoReel1981) | Marks & Marks demo reel (1981) | none stated; studio demo reel — **verify** |
+| 12 | [`WhenMandrillsRuledTheHeavens`](https://archive.org/details/WhenMandrillsRuledTheHeavens) | *When Mandrills Ruled the Heavens* (1983) | none stated — **verify** |
+| 13 | [`the-apteryx-and-the-easter-bunny-1970-first-color-2-d-computer-animation-480p-h-264`](https://archive.org/details/the-apteryx-and-the-easter-bunny-1970-first-color-2-d-computer-animation-480p-h-264) | *The Apteryx and the Easter Bunny* (1970) | none stated — **verify** |
+| 14 | [`thetacticaledgepart1`](https://archive.org/details/thetacticaledgepart1) | Evans & Sutherland, *The Tactical Edge* pt.1 (1981) | none stated; corporate demo — **verify** |
+| 15 | [`thetactialedgepart2`](https://archive.org/details/thetactialedgepart2) | Evans & Sutherland, *The Tactical Edge* pt.2 (1981) | none stated; corporate demo — **verify** |
+| 16 | [`journey_to_the_center_of_a_triangle`](https://archive.org/details/journey_to_the_center_of_a_triangle) | Cornwell, *Journey to the Center of a Triangle* (1977) | none stated; educational math film — **verify** |
+| 17 | [`voyager-2-flybys-of-uranus-and-neptune-nasa-animations`](https://archive.org/details/voyager-2-flybys-of-uranus-and-neptune-nasa-animations) | James Blinn / NASA-JPL, Voyager 2 flyby animations (1980s) | NASA/JPL — **public domain** |
+| 18 | [`XFR_2013-07-17_05`](https://archive.org/details/XFR_2013-07-17_05) | Dov Jacobson, *Human Vectors* (1982) | none stated; XFR STN / New Museum digitization — **verify** |
+| 19 | [`commodore-demo-capture-virtual-dreams-love-1994-119665-aga`](https://archive.org/details/commodore-demo-capture-virtual-dreams-love-1994-119665-aga) | Virtual Dreams, *Love* (Amiga AGA demo, 1994) | none stated; demoscene prod, freely-distributed by convention — **verify** |
+| 20 | [`ChelovekskinoapparatomManWithAMovieCamera`](https://archive.org/details/ChelovekskinoapparatomManWithAMovieCamera) | Dziga Vertov, *Man With A Movie Camera* (1929) | **CC Public Domain** (item tag) + PD by age |
+| 21 | [`berlin-symphony-of-a-metropolis-1927-by-walter-ruttmann`](https://archive.org/details/berlin-symphony-of-a-metropolis-1927-by-walter-ruttmann) | Ruttmann, *Berlin: Symphony of a Metropolis* (1927) | **CC Public Domain Mark 1.0** + PD by age |
+| 22 | [`rienquelesheuresalbertocavalcanti1926`](https://archive.org/details/rienquelesheuresalbertocavalcanti1926) | Cavalcanti, *Rien que les heures* (1926) | PD by age (1926) |
+| 23 | [`regen_1929`](https://archive.org/details/regen_1929) | Joris Ivens, *Regen / Rain* (1929) | PD by age (1929) |
+| 24 | [`RuttmannWalterMelodieDerWelte`](https://archive.org/details/RuttmannWalterMelodieDerWelte) | Ruttmann, *Melodie der Welt* (1929) | **CC Public Domain Mark 1.0** + PD by age |
+| 25 | [`SVS-92`](https://archive.org/details/SVS-92) | NASA/GSFC Scientific Visualization Studio, *The Runner* (1996) | NASA — **public domain** |
+| 26 | [`1921VikkingEggelingSymphonieDiagonale`](https://archive.org/details/1921VikkingEggelingSymphonieDiagonale) | Viking Eggeling, *Symphonie Diagonale* (1921) | PD by age (1921) |
+
+Every listed `file` was confirmed to stream: HTTP Range `bytes=0-1` returned
+`206 Partial Content` with `Content-Type: video/mp4` (browser-playable h.264 /
+MPEG-4 derivative). Filenames contain spaces / non-ASCII and must be
+URL-encoded in the `download/<item>/<file>` URL.

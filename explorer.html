@@ -468,31 +468,60 @@ function travelStep(){
 }
 
 // ---------- genre-affine video: the background footage follows the mix ----------
-// pool = union of the current weights' clip pools (dominant genre first);
-// crossfade on every section change, drawing from a SHUFFLED BAG so a play
-// session rotates the whole pool with no repeats until drained, then reshuffles.
+// pool = union of the current weights' clip pools (dominant genre first).
+// Clip advance is driven by the BAR CLOCK: a new clip every 8 measures (the new
+// direction — clips stream from archive.org and want room to breathe). A section
+// change forces an off-cycle switch ONLY when the genre POOL changed (travel to
+// a new genre), not on every section boundary. The effect stack eases to the
+// dominant genre. Draws come from a SHUFFLED BAG (no repeats until drained).
 // Math.random is deliberate: the determinism law guards rendered audio/video
 // artifacts (press/journey), NOT this live presentational layer — so every
 // play session shows a different clip order. goLive() resets the bag per session.
-let vidSec="", vidBars=0;
+const BARS_PER_CLIP=8;
+let vidGenre="", vidBars=0, vidPending=null, vidStarted=false;
 // the no-repeat shuffle bag is VideoLayer's shared mechanism (same shuffle +
 // draw-with-refill + avoid-current as its idle cycler) — created lazily once the
-// layer is loaded, fed the genre-affine pool per section.
+// layer is loaded, fed the genre-affine pool per 8-bar advance.
 let vidBag=null;
 const vidBagObj=()=>(vidBag||(window.VideoLayer&&VideoLayer.makeBag&&(vidBag=VideoLayer.makeBag())));
-function vidReset(){ vidSec=""; vidBars=0; const b=vidBagObj(); if(b)b.reset(); }
+function vidReset(){ vidGenre=""; vidBars=0; vidPending=null; vidStarted=false; const b=vidBagObj(); if(b)b.reset(); }
+// clip pool: the union of clips from genres carrying real weight (trivial
+// neighbors dropped), sorted for a STABLE bag key so a mere weight-reorder as
+// the cursor drifts doesn't thrash the bag. Selection is shuffled anyway.
+function vidPool(ordered){
+  const pool=[];
+  ordered.forEach(w=>{ if(w.w>=0.06) (K.GENRE_CLIPS[w.g]||[]).forEach(c=>{if(!pool.includes(c))pool.push(c);}); });
+  if(!pool.length) ordered.forEach(w=>(K.GENRE_CLIPS[w.g]||[]).forEach(c=>{if(!pool.includes(c))pool.push(c);}));
+  return pool.sort();
+}
+function vidDraw(pool){ const b=vidBagObj(); return b?b.draw(pool):null; }
 function genreVideo(info){
   if(!(window.VideoLayer&&VideoLayer.enabled()))return;
-  vidBars++;
-  const newSec=info.section!==vidSec;
-  if(!newSec&&vidBars%8!==0)return;   // cut on section changes AND every 8 bars inside long sections
-  vidSec=info.section;
-  const pool=[];
-  S.weights.slice().sort((a,b)=>b.w-a.w).forEach(w=>(K.GENRE_CLIPS[w.g]||[]).forEach(c=>{if(!pool.includes(c))pool.push(c);}));
+  const ordered=S.weights.slice().sort((a,b)=>b.w-a.w);
+  const dom=(ordered[0]||{}).g||"";
+  // TRAVEL = the DOMINANT genre changed (order-insensitive; the drifting cursor
+  // no longer forces a switch every bar). It eases the effect stack AND forces
+  // an off-cycle clip switch; otherwise clips advance once per 8 measures.
+  const traveled=dom!==vidGenre;
+  if(traveled){ vidGenre=dom; VideoLayer.setGenre&&VideoLayer.setGenre(dom); }
+  const pool=vidPool(ordered);
   if(!pool.length)return;
-  const b=vidBagObj(); if(!b)return;
-  const c=b.draw(pool);   // shuffled, refills on drain/pool-change, avoids the just-shown clip
-  if(c!=null) VideoLayer.showFile(c+".mp4");
+  vidBars++;
+  const boundary = !vidStarted || traveled || vidBars>=BARS_PER_CLIP;
+  if(!boundary){
+    // keep the next clip buffering on the back element during this window so the
+    // remote stream is ready to crossfade at the boundary (never onto black)
+    if(vidPending==null){ vidPending=vidDraw(pool); if(vidPending!=null&&VideoLayer.prefetch) VideoLayer.prefetch(vidPending+".mp4"); }
+    return;
+  }
+  if(traveled) vidPending=null;   // a prefetch drawn from the old genre's pool is stale
+  const first=!vidStarted;
+  const showNow = vidPending!=null?vidPending:vidDraw(pool);
+  vidPending=null; vidStarted=true; vidBars=0;
+  if(showNow!=null){ console.log("[vid] switch bar",info.serial,"->",showNow,first?"(first)":traveled?"(travel)":"(8-bar)"); VideoLayer.showFile(showNow+".mp4"); }
+  // draw + prefetch the FOLLOWING clip so it buffers through the next 8 measures
+  vidPending=vidDraw(pool);
+  if(vidPending!=null&&VideoLayer.prefetch) VideoLayer.prefetch(vidPending+".mp4");
 }
 
 // ---------- live engine ----------
@@ -983,7 +1012,7 @@ function Panel(){
           }).catch(e=>set({status:"bad path file — "+e.message}));};
         inp.click();}}>⤒ path</button>
       ${S.waypoints.length?html`<button onclick=${()=>set({waypoints:[],travel:{seg:0,t:0}})}>✕ path</button>`:""}
-      ${window.VideoLayer&&VideoLayer.available()?html`<button onclick=${()=>{VideoLayer.setEnabled(!VideoLayer.enabled());if(!VideoLayer.enabled())vidSec="";set({});}}>${VideoLayer.enabled()?"▣ video":"▢ video"}</button>`:""}
+      ${window.VideoLayer&&VideoLayer.available()?html`<button onclick=${()=>{VideoLayer.setEnabled(!VideoLayer.enabled());if(!VideoLayer.enabled())vidReset();set({});}}>${VideoLayer.enabled()?"▣ video":"▢ video"}</button>`:""}
     </div>
     <p class="hint">dbl-click the sky to draw a path · right-click a waypoint to erase ·
     pinch / ctrl+scroll zooms the chart ·

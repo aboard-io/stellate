@@ -15,6 +15,12 @@
 # file, so it coexists with the disc clips and is idempotent). It also writes
 # found/video/lib/segments.json — a richer manifest (in/out + genre tags +
 # provenance) for the genre-kernel clip-pool crew. See SOURCES.md for credits.
+#
+# CACHE / FALLBACK ONLY (since 2026-07): the live layer streams from archive.org.
+# BUT these lib reels' archive.org item slugs were never recovered (see SOURCES.md),
+# so they CANNOT stream — they are LOCAL-ONLY clips (item:null in stream-catalog.json)
+# and only appear in the live layer when this script has cached them locally. Run it
+# if you want the Bell Labs / Los Alamos / Momotaro footage in the background pools.
 # Requires: ffmpeg, node.
 set -euo pipefail
 cd "$(dirname "$0")"
