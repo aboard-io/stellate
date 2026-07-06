@@ -65,6 +65,18 @@ function press(name, state) {
 (async () => {
   const presses = [];
 
+  // 0) render-core guard (ZERO-STATIC Stage 3 prereq): the per-unit walk was
+  // extracted to faust/render-core.js under a byte-parity gate — assert press
+  // still routes through it (so the RMS gates below exercise the shared loop;
+  // re-proving byte parity every run would double render time, so we don't).
+  {
+    const RC = require("./faust/render-core.js");
+    const src = fs.readFileSync(path.join(HERE, "faust", "press.js"), "utf8");
+    const ok = typeof RC.renderUnit === "function" && typeof RC.mergeIvals === "function"
+      && src.includes("render-core.js") && src.includes("RC.renderUnit(");
+    presses.push(Promise.resolve({ ok, line: `${ok ? "PASS" : "FAIL"}  ${"render_core_wired".padEnd(22)} press.js drives faust/render-core.js` }));
+  }
+
   // 1) the committed default song (royal road, tokyo bed) — engine's own state
   {
     const s = E.defaultState();   // ids tokyo/tsukiji/asakusa all map to the one real local wav
