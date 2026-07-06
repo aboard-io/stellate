@@ -74,14 +74,18 @@ async function main() {
   console.log(`  differsFromA=${!same}  count=${sb.n} unique=${sb.uniq} legMax=${sb.max.toFixed(1)}`);
 
   // DELETE: right-click a middle waypoint -> length-1, that star gone, rest kept.
+  // NB the logical canvas is 720x520 since 2be4473 ("THE CATALOG GOES TO 92"
+  // grew it from 500x400 for the Eastern continent) — this mirror of explorer's
+  // drawMap X()/Y() must track that constant or every click lands 1.44x out
+  // in empty sky and the edit gates fail while the handlers are fine.
   const before = await page.evaluate(() => __S.waypoints.length);
   const delI = 3;
   const delName = B.names[delI];
   const delPt = await page.evaluate((i) => {
     const svg = document.getElementById("map"), r = svg.getBoundingClientRect();
     const w = __S.waypoints[i];
-    return { x: r.left + (w.x * r.width / 500) * __ZOOM.k + __ZOOM.ox,
-             y: r.top + (w.y * r.height / 400) * __ZOOM.k + __ZOOM.oy };
+    return { x: r.left + (w.x * r.width / 720) * __ZOOM.k + __ZOOM.ox,
+             y: r.top + (w.y * r.height / 520) * __ZOOM.k + __ZOOM.oy };
   }, delI);
   await page.mouse.click(delPt.x, delPt.y, { button: "right" });
   await page.waitForTimeout(150);
@@ -97,8 +101,8 @@ async function main() {
   const dragFrom = await page.evaluate((i) => {
     const svg = document.getElementById("map"), r = svg.getBoundingClientRect();
     const w = __S.waypoints[i];
-    return { sx: r.left + (w.x * r.width / 500) * __ZOOM.k + __ZOOM.ox,
-             sy: r.top + (w.y * r.height / 400) * __ZOOM.k + __ZOOM.oy,
+    return { sx: r.left + (w.x * r.width / 720) * __ZOOM.k + __ZOOM.ox,     // 720x520 canvas (2be4473),
+             sy: r.top + (w.y * r.height / 520) * __ZOOM.k + __ZOOM.oy,     // same mapping as the delete above
              lx: w.x, ly: w.y };
   }, dragI);
   await page.mouse.move(dragFrom.sx, dragFrom.sy);
