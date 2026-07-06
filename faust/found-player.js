@@ -16,6 +16,10 @@
 //     there is no OfflineAudioContext; documented approach per Phase-2 brief.
 // (b) FoundLive: AudioBufferSourceNode scheduling into dry/rev/del/pp GainNode
 //     buses — used by live.js (and usable inside an OfflineAudioContext).
+//     Since ZERO-STATIC Stage 2.4 the live bed plays a pre-rendered loop-clean
+//     grain-cloud buffer (one looping source) instead of per-grain node churn;
+//     the old scheduler survives as the first-play head start and the
+//     FP._legacyBed A/B path.
 //
 // The decode helper reimplements the approach of the legacy engine's
 // decodeUrlToWav (wasm-audio.js, branch legacy-csound: Range-limited fetch ->
@@ -29,8 +33,12 @@
 
   const GRAIN_HZ = 28, GRAIN_SEC = 0.12;
 
-  // debug/probe counters (headless verification reads these)
-  const _stats = { decodeOk: 0, decodeFail: 0, beds: 0, chops: 0, grains: 0 };
+  // debug/probe counters (headless verification reads these). `grains` counts
+  // only scheduler-minted grain nodes — with the Stage-2.4 bed loop it should
+  // stay near-flat once loops are cached; bedLoopRenders/bedLoopHits track the
+  // loop cache itself.
+  const _stats = { decodeOk: 0, decodeFail: 0, beds: 0, chops: 0, grains: 0,
+    bedLoopRenders: 0, bedLoopHits: 0 };
 
   // hann grain window for the LIVE grain scheduler (parity with mixPCM's
   // 0.5-0.5cos window; was a triangle ramp) — one shared curve, applied per
@@ -80,36 +88,85 @@
   // before. press (mixPCM) reads f.autoTune directly; live (FoundLive) receives
   // it in the chop/bed spec. Same algorithm both sides, no wall clock.
   const _pitchCache = typeof WeakMap !== "undefined" ? new WeakMap() : new Map();
-  function detectMedianHz(data, sr) {
-    if (!data || !data.length) return 0;
+  // the "nothing detected" profile — hz 0 (no tune), jitter 1 (no evidence of
+  // stability: silence/noise must never read as a whistle OR as speech).
+  const _NO_F0 = { hz: 0, voiced: 0, jitter: 1, rHalf: 0, n: 0 };
+  function f0Profile(data, sr) {
+    if (!data || !data.length) return _NO_F0;
     if (_pitchCache.has(data)) return _pitchCache.get(data);
-    const hz = _computeMedianF0(data, sr);
-    _pitchCache.set(data, hz);
-    return hz;
+    const p = _computeF0Profile(data, sr);
+    _pitchCache.set(data, p);
+    return p;
   }
-  // autocorrelation median-F0 over the voiced frames of a mono buffer. Decimates
+  function detectMedianHz(data, sr) { return f0Profile(data, sr).hz; }
+  // autocorrelation F0 PROFILE over the voiced frames of a mono buffer. Decimates
   // to ~11 kHz first (voice F0 << Nyquist) to bound the O(frames·lags·frame) cost.
-  function _computeMedianF0(x, sr) {
+  // Returns {hz, voiced, jitter, n}:
+  //   hz     — median F0 of the voiced frames (the original detectMedianHz value)
+  //   voiced — fraction of energy-eligible frames that yielded a confident F0
+  //            (eligible = loud enough to analyze; silence between loon calls
+  //            doesn't dilute the loon)
+  //   jitter — median SHORT-TIME relative F0 deviation |Δf|/f, each voiced
+  //            frame re-estimated a fixed ~46 ms later. (NOT frame-to-frame
+  //            across the scan — on a long file the scan hop stretches to
+  //            seconds, and seconds apart even a loon is on a different call.
+  //            46 ms is intra-syllable / intra-wail: speech moves there, a
+  //            whistle doesn't.)
+  //   rHalf  — median r(T/2): the normalized autocorrelation at HALF the
+  //            detected period. |rHalf| near 1 means ONE partial — a whistle —
+  //            in either octave register (see the classifier notes below);
+  //            a harmonic stack (any voice) washes toward 0. The strongest
+  //            whistle/voice separator here, and nearly free: one extra
+  //            O(frame) product per voiced frame over data the scan holds.
+  //   n      — voiced-frame count (classifiers refuse to judge tiny samples)
+  // All thresholds inside are RELATIVE to the buffer's own RMS, so the profile
+  // is scale-invariant: computing it before or after a gain multiply gives the
+  // same answer (decodeUrlToBuffer leans on this to pre-seed the cache).
+  function _computeF0Profile(x, sr) {
     const FMIN = 65, FMAX = 520;
     const decim = Math.max(1, Math.floor(sr / 11025)), dsr = sr / decim;
     const M = Math.floor(x.length / decim);
-    if (M < 128) return 0;
+    if (M < 128) return _NO_F0;
     const y = new Float32Array(M);
     for (let i = 0; i < M; i++) { let s = 0; const b = i * decim; for (let k = 0; k < decim; k++) s += x[b + k]; y[i] = s / decim; }
     const lagMin = Math.max(2, Math.floor(dsr / FMAX)), lagMax = Math.min(M - 2, Math.ceil(dsr / FMIN));
-    if (lagMax <= lagMin) return 0;
+    if (lagMax <= lagMin) return _NO_F0;
     const frame = Math.min(M - lagMax - 1, 1024);
-    if (frame < 64) return 0;
+    if (frame < 64) return _NO_F0;
     let g = 0; for (let i = 0; i < M; i++) g += y[i] * y[i];
     const grms = Math.sqrt(g / M);
-    if (grms < 1e-5) return 0;
+    if (grms < 1e-5) return _NO_F0;
     const thr = grms * 0.6, span = M - frame - lagMax, maxFrames = 80;
     const step = Math.max(frame >> 1, Math.floor(span / maxFrames) || 1);
-    const ests = [];
+    const jHop = frame >> 1;   // the fixed ~46 ms jitter-probe offset (at ~11 kHz)
+    const ests = [], devs = [], purs = [];
+    let eligible = 0;
     const corr = new Float32Array(lagMax + 1);
+    // local re-estimate of F0 at frame position s, searching only lags
+    // [lag0-2, lag0+2] — O(5·frame), the cheap second look the jitter needs.
+    // Returns 0 when the neighborhood doesn't correlate (unvoiced 46 ms later).
+    const localF0 = (s, lag0) => {
+      let e = 0; for (let i = 0; i < frame; i++) { const v = y[s + i]; e += v * v; }
+      if (Math.sqrt(e / frame) < thr) return 0;
+      const a = Math.max(lagMin, lag0 - 2), b = Math.min(lagMax, lag0 + 2);
+      let bl = 0, br = -1; const lc = {};
+      for (let lag = a; lag <= b; lag++) {
+        let c = 0, el = 0; for (let i = 0; i < frame; i++) { const p = y[s + i], q = y[s + i + lag]; c += p * q; el += q * q; }
+        const r = c / (Math.sqrt(e * el) + 1e-12);
+        lc[lag] = r; if (r > br) { br = r; bl = lag; }
+      }
+      if (br < 0.3) return 0;
+      let delta = 0;   // parabolic interp when both neighbors are in the window
+      if (lc[bl - 1] !== undefined && lc[bl + 1] !== undefined) {
+        const denom = lc[bl - 1] - 2 * lc[bl] + lc[bl + 1];
+        if (denom < 0) delta = Math.max(-1, Math.min(1, 0.5 * (lc[bl - 1] - lc[bl + 1]) / denom));
+      }
+      return dsr / (bl + delta);
+    };
     for (let s = 0; s + frame + lagMax < M; s += step) {
       let e = 0; for (let i = 0; i < frame; i++) { const v = y[s + i]; e += v * v; }
       if (Math.sqrt(e / frame) < thr) continue;
+      eligible++;
       // normalized autocorrelation over the lag range, then pick the FIRST strong
       // peak (shortest period) rather than the global max — a pure/steady tone
       // correlates equally at every multiple of its period, so a global-max search
@@ -134,12 +191,80 @@
         const lm = corr[bestLag - 1] || 0, l0 = corr[bestLag], lp = corr[bestLag + 1] || 0;
         const denom = (lm - 2 * l0 + lp);
         const delta = denom < 0 ? 0.5 * (lm - lp) / denom : 0;
-        ests.push(dsr / (bestLag + Math.max(-1, Math.min(1, delta))));
+        const f1 = dsr / (bestLag + Math.max(-1, Math.min(1, delta)));
+        ests.push(f1);
+        // purity probe: r at half the period (see profile doc above)
+        const hl = Math.round(bestLag / 2);
+        if (hl >= 2) {
+          let c = 0, el = 0;
+          for (let i = 0; i < frame; i++) { const a = y[s + i], b = y[s + i + hl]; c += a * b; el += b * b; }
+          purs.push(c / (Math.sqrt(e * el) + 1e-12));
+        }
+        // jitter probe: where is this pitch 46 ms from now? If the local search
+        // walks off its ±2-lag window the deviation saturates at ~2/lag — which
+        // is exactly the right verdict: it MOVED.
+        if (s + jHop + frame + lagMax < M) {
+          const f2 = localF0(s + jHop, bestLag);
+          if (f2 > 0) devs.push(Math.abs(f2 - f1) / f1);
+        }
       }
     }
-    if (!ests.length) return 0;
+    if (!ests.length) return _NO_F0;
+    // jitter: MEDIAN of the short-time deviations, so a loon whose wail glides
+    // at the onset still reads by its held tone. Fewer than 3 probes is not
+    // enough evidence of stability — report jitter 1 (jittery/unknown) so
+    // nothing whistle-gates off a couple of lucky frames.
+    let jitter = 1;
+    if (devs.length >= 3) {
+      devs.sort((a, b) => a - b);
+      jitter = devs[devs.length >> 1];
+    }
+    let rHalf = 0;   // no purity evidence => 0 (reads as harmonic-rich, never whistles)
+    if (purs.length) {
+      purs.sort((a, b) => a - b);
+      rHalf = purs[purs.length >> 1];
+    }
+    const n = ests.length, voiced = eligible ? n / eligible : 0;
     ests.sort((a, b) => a - b);
-    return ests[ests.length >> 1];
+    return { hz: ests[n >> 1], voiced, jitter, rHalf, n };
+  }
+  // ------------------------------------------------- whistle / speech gates
+  // (the loon fix) Two classifiers over the same F0 profile:
+  //
+  // WHISTLE — a nearly pure tone. The load-bearing signal is HARMONICITY, read
+  // as |rHalf|, the autocorrelation at half the detected period:
+  //   * one partial AT the detected F0 -> r(T/2) = cos(π) = −1 (anti-phase);
+  //   * one partial at 2x the detected F0 -> r(T/2) = +1 — the octave fold:
+  //     birds whistle ABOVE the FMAX=520 search band, so first-peak picking
+  //     lands on the 2:1 subharmonic and the HALF-period lag is the true one;
+  //   * a voice — glottal pulses carry the whole harmonic stack — sums
+  //     Σ aₖ²·cos(πk) across its partials and washes toward 0.
+  //   Measured on found/: loon |rHalf| 0.85, chickadee 0.80, iriomote 0.85,
+  //   pigeon 0.96 — vs every human clip ≤ 0.48 (archive.org poets 0.02-0.13,
+  //   espeak vox ≤ 0.02, opera 0.01, sung tw_vocal 0.46, announcement beds
+  //   ≤ 0.09). WHISTLE_RHALF = 0.65 splits the 0.48 / 0.80 gap; a borderline
+  //   miss just means "leave that clip's pitch alone", the safe failure.
+  // jitter < 0.03 and voiced >= 0.6 guard the purity read: mostly-voiced
+  // material whose F0 holds still over 46 ms (whistles measure 0.010-0.022;
+  // anything sliding around fast enough to fake a clean r(T/2) is excluded),
+  // and WHISTLE_MIN_N refuses a verdict from a couple of lucky frames.
+  //
+  // SPEECH — median F0 inside the speech band 70-350 Hz, a real share of voiced
+  // frames, and NOT a whistle. Used only to gate the decode boost (below); the
+  // deliberately loose SPEECH_VOICED = 0.2 floor is fine there because the cost
+  // of a false positive is just a louder field recording that also happens to
+  // hum in the speech band — while a false NEGATIVE would silence a poet.
+  // (Measured: every vx_/espeak/announcement clip clears it with voiced >= 0.62
+  // and hz 82-263; the loon's 443 Hz median sits above the band anyway.)
+  const WHISTLE_RHALF = 0.65, WHISTLE_JITTER = 0.03, WHISTLE_VOICED = 0.6, WHISTLE_MIN_N = 6;
+  const SPEECH_F0_LO = 70, SPEECH_F0_HI = 350, SPEECH_VOICED = 0.2, SPEECH_MIN_N = 4;
+  function isWhistle(p) {
+    return p.hz > 0 && p.n >= WHISTLE_MIN_N && p.voiced >= WHISTLE_VOICED &&
+           Math.abs(p.rHalf) >= WHISTLE_RHALF && p.jitter < WHISTLE_JITTER;
+  }
+  function isSpeechLike(p) {
+    return p.hz >= SPEECH_F0_LO && p.hz <= SPEECH_F0_HI && p.n >= SPEECH_MIN_N &&
+           p.voiced >= SPEECH_VOICED && !isWhistle(p);
   }
   // corrected playbackRate: bend the heard median (detectedHz·pitch) toward the
   // nearest scale pitch-class (in any octave), interpolated in the log/cents
@@ -161,8 +286,42 @@
   // resolve an event's playback pitch: apply the auto-tune bend when the event
   // carries {autoTune:{pcs,strength}} (attached by state-engine.mapEvents when a
   // genre declares state.autoTune); otherwise the original rate, untouched.
+  // PURITY CEILING (the loon fix): auto-tune was built for vocal-ish material and
+  // gated on "has stable F0" — but a loon call is a nearly pure whistle with
+  // rock-stable F0, so it sailed through and became a tuned lead instrument. A
+  // clip whose profile reads as WHISTLE gets no bend (rate = f.pitch exactly):
+  // if it's already that pure, snapping it to the scale is what turns a bird
+  // into a synthesizer. Tempo-synced sources (src.bpm) never reach here at all —
+  // state-engine withholds the autoTune field from them, unchanged.
   function tunedPitch(f, data, sr) {
-    return f.autoTune ? autoTuneRate(f.pitch, detectMedianHz(data, sr), f.autoTune.pcs, f.autoTune.strength) : f.pitch;
+    if (!f.autoTune) return f.pitch;
+    const p = f0Profile(data, sr);
+    if (isWhistle(p)) return f.pitch;
+    return autoTuneRate(f.pitch, p.hz, f.autoTune.pcs, f.autoTune.strength);
+  }
+
+  // ---------------------------------------------------------------- grains
+  // The ONE grain-cloud renderer, shared by mixPCM (press) and the live bed's
+  // loop pre-render (ZERO-STATIC 2.4): hann-windowed grains every 1/GRAIN_HZ s,
+  // read pointer advancing `advance` SAMPLES per grain, source reads wrapping
+  // (csound tablei wrap=1). Renders grains [gFrom, gTo) so callers can slice.
+  // wrap=false truncates the final grain at dst's end — byte-identical to the
+  // loop this was extracted from (press parity). wrap=true writes modulo
+  // dst.length so the tail grains overlap the head: the loop-clean cloud.
+  function mixGrains(dst, src, atPitch, advance, sr, gFrom, gTo, wrap) {
+    const n = dst.length, gLen = Math.floor(GRAIN_SEC * sr), hop = sr / GRAIN_HZ;
+    let pointer = gFrom * advance;
+    for (let g = gFrom; g < gTo; g++) {
+      const gs = Math.floor(g * hop);
+      if (gs >= n && !wrap) break;
+      const gn = wrap ? gLen : Math.min(gLen, n - gs);
+      for (let i = 0; i < gn; i++) {
+        const w = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / gLen); // hann
+        const v = readLerp(src, pointer + i * atPitch) * w;
+        if (wrap) dst[(gs + i) % n] += v; else dst[gs + i] += v;
+      }
+      pointer += advance;
+    }
   }
 
   // ---------------------------------------------------------------- (a) PCM
@@ -183,19 +342,7 @@
 
       if (f.type === "bed") {
         // syncgrain: grains every 1/28s, hann window, pointer += stretch*0.12/grain
-        const gLen = Math.floor(GRAIN_SEC * sr), hop = sr / GRAIN_HZ;
-        const advance = f.stretch * GRAIN_SEC * sr;
-        let pointer = 0;
-        for (let g = 0; ; g++) {
-          const gs = Math.floor(g * hop);
-          if (gs >= n) break;
-          const gn = Math.min(gLen, n - gs);
-          for (let i = 0; i < gn; i++) {
-            const w = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / gLen); // hann
-            seg[gs + i] += readLerp(src, pointer + i * atPitch) * w;
-          }
-          pointer += advance;
-        }
+        mixGrains(seg, src, atPitch, f.stretch * GRAIN_SEC * sr, sr, 0, Infinity, false);
         lp24(seg, f.cutoff, sr);
         // env: linsegr 0,1.5,amp, p3-3, amp, 1.5, 0
         const aN = Math.min(Math.floor(1.5 * sr), n >> 1);
@@ -257,10 +404,20 @@
   // lead-in (< -45 dBFS peak window) progressively fetch a larger prefix of
   // the file before giving up. Quiet sources get a boost-only normalization
   // toward -20 dBFS active RMS (never attenuates, never clips).
+  //
+  // ...but ONLY when the material actually reads as SPEECH (the loon fix).
+  // The boost was built so faint poets read clearly; applied blind, it hauled
+  // distant nature recordings — a loon across a lake — up to foreground, where
+  // auto-tune then made them lead instruments. Non-speech quiet material keeps
+  // its recorded distance: the gain is capped at NONSPEECH_GAIN_CAP (+6 dB)
+  // rather than zeroed, because a mild cap still rescues near-digital-silence
+  // transfers (the beds granulate SOMETHING) while +6 dB cannot move a lake
+  // bird into the lead-vocal seat the way the old +24 dB ceiling could.
   const FOUND_MAX_SECONDS = 90, FOUND_CHUNK_BYTES = 1024 * 1024, FOUND_MAX_BYTES = 8 * 1024 * 1024;
   const ACTIVE_FLOOR_DB = -45,   // a chunk whose loudest window is below this is lead-in
         ACTIVE_REL_DB = 14,      // active = within this of the chunk's peak window
-        TARGET_RMS = 0.15;       // boost-only normalization target (~-16.5 dBFS)
+        TARGET_RMS = 0.15,       // boost-only normalization target (~-16.5 dBFS)
+        NONSPEECH_GAIN_CAP = 2;  // non-speech keeps its distance: at most +6 dB
 
   // find where the recording actually starts + how much to boost it.
   // returns {found, startSample, gain}
@@ -324,16 +481,111 @@
         if (pick.found || !partial || bytes >= FOUND_MAX_BYTES) break;
         bytes = Math.min(FOUND_MAX_BYTES, bytes * 4);   // all lead-in — reach deeper into the file
       }
-      const s0 = pick.found ? pick.startSample : 0, gain = pick.gain || 1;
+      const s0 = pick.found ? pick.startSample : 0;
       const n = Math.max(1, Math.min(mono.length - s0, Math.floor(audio.sampleRate * maxSec)));
       const out = ctx.createBuffer(1, n, audio.sampleRate);
       const d = out.getChannelData(0);
-      for (let i = 0; i < n; i++) d[i] = mono[s0 + i] * gain;
+      for (let i = 0; i < n; i++) d[i] = mono[s0 + i];
+      // speech gate on the boost (the loon fix): profile the kept region ONCE —
+      // f0Profile is scale-invariant and keyed on this very channel array, so
+      // this call also pre-seeds the cache that tunedPitch reads later, and the
+      // gain multiply below doesn't invalidate it. Speech-like material gets
+      // the full spokenword boost, everything else keeps its distance (+6 dB cap).
+      let gain = pick.gain || 1;
+      if (gain > NONSPEECH_GAIN_CAP && !isSpeechLike(f0Profile(d, audio.sampleRate)))
+        gain = NONSPEECH_GAIN_CAP;
+      if (gain !== 1) for (let i = 0; i < n; i++) d[i] *= gain;
       return out;
     })();
     _bufCache.set(url, job);
     job.then(() => _stats.decodeOk++, () => { _stats.decodeFail++; _bufCache.delete(url); });
     return job;
+  }
+
+  // ---------------------------------------------------------------- bed loop
+  // ZERO-STATIC Stage 2.4 (R6): the live granular bed used to mint ~28
+  // src+gain node pairs per second per bed from a main-thread timer — the
+  // app's single largest node-churn source. Instead we synthesize the grain
+  // cloud ONCE, as pure PCM through the very same mixGrains math the press
+  // path uses, into a loop-clean cycle that then plays as ONE looping
+  // AudioBufferSourceNode. Loop-clean by construction: exactly G grain hops
+  // of buffer, with the tail grains wrapped onto the head, so the seam lands
+  // mid-cloud under overlapping hann windows — there is no "edge" to hear.
+  const BED_LOOP_MAX_SEC = 24;   // loop = min(durSec, this): long enough not to read as a cycle
+  const BED_SLICE_GRAINS = 42;   // ~1.5 s of PCM per idle-time render slice (no main-thread jank)
+  const BED_CACHE_MAX = 6;       // LRU bound on cached loops
+  const BED_XFADE_SEC = 1.5;     // scheduler -> buffer crossfade when a render lands mid-bed
+
+  let _bedIdSeq = 0;
+  const _bedIds = typeof WeakMap !== "undefined" ? new WeakMap() : new Map(); // buffer identity -> id
+  const _bedLoopCache = new Map(); // key -> {promise, pcm, sr, buf, bufCtx} in LRU order
+
+  // render one loop cycle of the bed's grain cloud: G grains at GRAIN_HZ into
+  // a buffer of exactly G hops. Sliced onto requestIdleCallback (setTimeout(0)
+  // where rIC doesn't exist — node, Safari) so a 24 s render never fights the
+  // audio thread for the main thread. lp24 is baked in with PRIMED state — the
+  // tail is prepended as warmup and dropped — so the loop seam sees the same
+  // filter history as the middle of the buffer, not a cold-start transient.
+  function renderBedLoopPCM(src, sr, atPitch, stretch, cutoff, G) {
+    const idle = (fn) => (typeof requestIdleCallback === "function")
+      ? requestIdleCallback(fn, { timeout: 250 }) : setTimeout(fn, 0);
+    return new Promise((resolve) => {
+      const n = Math.max(1, Math.round(G * sr / GRAIN_HZ));
+      const dst = new Float32Array(n);
+      const advance = stretch * GRAIN_SEC * sr;
+      let g = 0;
+      const step = () => {
+        const gEnd = Math.min(G, g + BED_SLICE_GRAINS);
+        mixGrains(dst, src, atPitch, advance, sr, g, gEnd, true);
+        g = gEnd;
+        if (g < G) { idle(step); return; }
+        const warmN = Math.min(n, Math.floor(sr * 0.5));
+        const ext = new Float32Array(warmN + n);
+        ext.set(dst.subarray(n - warmN), 0); ext.set(dst, warmN);
+        lp24(ext, cutoff, sr);
+        dst.set(ext.subarray(warmN));
+        resolve(dst);
+      };
+      idle(step);
+    });
+  }
+
+  // cache entry for (buffer identity, pitch, stretch, cutoff bucket, loop
+  // length). Repeat beds of the same texture — every bar of a genre that keeps
+  // re-firing the same bed — reuse the render and start with NO scheduler at
+  // all. Cutoff is bucketed to 1/4 octave; the render itself uses the first
+  // caller's exact cutoff (state cutoffs are far coarser than the bucket).
+  function bedLoopEntry(buffer, f, atPitch) {
+    const sr = buffer.sampleRate, src = buffer.getChannelData(0);
+    const G = Math.max(1, Math.round(Math.min(f.durSec, BED_LOOP_MAX_SEC) * GRAIN_HZ));
+    let id = _bedIds.get(buffer);
+    if (id === undefined) { id = ++_bedIdSeq; _bedIds.set(buffer, id); }
+    const key = id + "|" + sr + "|" + atPitch.toFixed(3) + "|" + (+f.stretch).toFixed(3) + "|" +
+                Math.round(Math.log2(Math.min(Math.max(f.cutoff, 40), 18000)) * 4) + "|" + G;
+    let ent = _bedLoopCache.get(key);
+    if (ent) { // LRU refresh
+      _stats.bedLoopHits++;
+      _bedLoopCache.delete(key); _bedLoopCache.set(key, ent);
+      return ent;
+    }
+    _stats.bedLoopRenders++;
+    ent = { sr, pcm: null, buf: null, bufCtx: null };
+    ent.promise = renderBedLoopPCM(src, sr, atPitch, f.stretch, f.cutoff, G)
+      .then((pcm) => { ent.pcm = pcm; return pcm; });
+    _bedLoopCache.set(key, ent);
+    while (_bedLoopCache.size > BED_CACHE_MAX) _bedLoopCache.delete(_bedLoopCache.keys().next().value);
+    return ent;
+  }
+
+  // the AudioBuffer view of a rendered loop, built lazily per context (the
+  // PCM is what's cached; contexts come and go across suspend/resume).
+  function bedBufFor(ctx, ent) {
+    if (!ent.buf || ent.bufCtx !== ctx) {
+      ent.buf = ctx.createBuffer(1, ent.pcm.length, ent.sr);
+      ent.buf.getChannelData(0).set(ent.pcm);
+      ent.bufCtx = ctx;
+    }
+    return ent.buf;
   }
 
   // ---------------------------------------------------------------- (b) live
@@ -379,16 +631,22 @@
       srcN.onended = () => { live.active.delete(srcN); try { dry.disconnect(); rev.disconnect(); del.disconnect(); } catch (e) {} };
     };
 
-    // instr 3 — a grain scheduler: schedules ~2s of grains ahead on a timer
-    // (28 grains/s upfront for a 20s bed would be hundreds of nodes at once).
+    // instr 3 — the granular bed, ZERO-STATIC Stage 2.4 (R6). The bed's grain
+    // cloud is pre-rendered ONCE into a loop-clean AudioBuffer (bedLoopEntry
+    // above — same mixGrains math as press, sliced onto idle time) and played
+    // as ONE looping AudioBufferSourceNode: hundreds of per-grain src+gain
+    // pairs per minute collapse to a single node. Until that render lands the
+    // OLD grain scheduler runs unchanged — first-play latency is identical —
+    // then we crossfade scheduler -> buffer over ~1.5 s at a grain boundary
+    // and the scheduler stops minting. Cached loops (repeat beds of the same
+    // source+params) skip the scheduler entirely. Envelope ramps, dry/rev
+    // sends, the stop() contract and live.beds bookkeeping are unchanged.
+    // FP._legacyBed = true forces the old scheduler-only path (A/B).
     live.bed = function (buffer, when, f) {
       _stats.beds++;
-      const durSec = f.durSec, srN = buffer.sampleRate;
+      const durSec = f.durSec;
       const atPitch = tunedPitch(f, buffer.getChannelData(0), buffer.sampleRate);   // AUTO-TUNE bend
       const out = ctx.createGain(); out.gain.value = 0;
-      const lp = ctx.createBiquadFilter(); lp.type = "lowpass";
-      lp.frequency.value = Math.min(Math.max(f.cutoff, 40), 18000);
-      lp.connect(out);
       const dry = ctx.createGain(); dry.gain.value = 0.55; out.connect(dry); dry.connect(dests.dry);
       const rev = ctx.createGain(); rev.gain.value = 0.6; out.connect(rev); rev.connect(dests.rev);
       const g = out.gain, aT = Math.min(1.5, durSec / 2);
@@ -396,37 +654,95 @@
       g.linearRampToValueAtTime(f.amp, when + aT);
       g.setValueAtTime(f.amp, when + durSec - aT);
       g.linearRampToValueAtTime(0, when + durSec);
-      const state = { g: 0, pointer: 0, timer: 0, stopped: false };
+      const state = { g: 0, pointer: 0, timer: 0, stopped: false, loopSrc: null, cutoverT: 0 };
       const hop = 1 / GRAIN_HZ, advance = f.stretch * GRAIN_SEC;
-      const tick = () => {
-        if (state.stopped) return;
-        const horizon = ctx.currentTime + 2;
-        while (true) {
-          const t = when + state.g * hop;
-          if (t >= when + durSec) { state.stopped = true; break; }
-          if (t > horizon) break;
-          if (t >= ctx.currentTime + 0.002) {   // value curves can't start in the past
-            const s = ctx.createBufferSource(); s.buffer = buffer;
-            s.loop = true;   // wrap like csound tablei(wrap=1): grains that read
-            s.playbackRate.value = atPitch;   // past the buffer end must not truncate mid-hann (click)
-            const w = ctx.createGain(); w.gain.value = 0;
-            w.gain.setValueCurveAtTime(HANN, t, GRAIN_SEC);   // hann, like mixPCM
-            s.connect(w); w.connect(lp);
-            const off = (state.pointer % buffer.duration + buffer.duration) % buffer.duration;
-            _stats.grains++;
-            s.start(t, off);
-            s.stop(t + GRAIN_SEC + 0.02);
-            s.onended = () => { try { w.disconnect(); } catch (e) {} };
+
+      // legacy leg: the grain scheduler — ~2s of grains ahead on a timer (28
+      // grains/s upfront for a 20s bed would be hundreds of nodes at once).
+      // Grains feed schedBus so the cutover can fade this whole leg out.
+      let schedBus = null;
+      const startScheduler = () => {
+        const lp = ctx.createBiquadFilter(); lp.type = "lowpass";
+        lp.frequency.value = Math.min(Math.max(f.cutoff, 40), 18000);
+        schedBus = ctx.createGain(); schedBus.gain.value = 1;
+        lp.connect(schedBus); schedBus.connect(out);
+        const tick = () => {
+          if (state.stopped) return;
+          const horizon = ctx.currentTime + 2;
+          while (true) {
+            const t = when + state.g * hop;
+            if (t >= when + durSec || (state.cutoverT && t >= state.cutoverT)) { state.stopped = true; break; }
+            if (t > horizon) break;
+            if (t >= ctx.currentTime + 0.002) {   // value curves can't start in the past
+              const s = ctx.createBufferSource(); s.buffer = buffer;
+              s.loop = true;   // wrap like csound tablei(wrap=1): grains that read
+              s.playbackRate.value = atPitch;   // past the buffer end must not truncate mid-hann (click)
+              const w = ctx.createGain(); w.gain.value = 0;
+              w.gain.setValueCurveAtTime(HANN, t, GRAIN_SEC);   // hann, like mixPCM
+              s.connect(w); w.connect(lp);
+              const off = (state.pointer % buffer.duration + buffer.duration) % buffer.duration;
+              _stats.grains++;
+              s.start(t, off);
+              s.stop(t + GRAIN_SEC + 0.02);
+              s.onended = () => { try { w.disconnect(); } catch (e) {} };
+            }
+            state.pointer += advance;
+            state.g++;
           }
-          state.pointer += advance;
-          state.g++;
-        }
-        if (!state.stopped) state.timer = setTimeout(tick, 500);
+          if (!state.stopped) state.timer = setTimeout(tick, 500);
+        };
+        tick();
       };
-      tick();
-      const handle = { stop() { state.stopped = true; clearTimeout(state.timer); try { out.disconnect(); } catch (e) {} live.beds.delete(handle); } };
+
+      // buffer leg: the single looping source. Started at a grain boundary
+      // (g0 hops after `when`) with the loop offset phase-matched to the
+      // grain index, so during a crossfade both legs play ~the same cloud.
+      // xf > 0 fades this leg in against schedBus; xf = 0 means no scheduler
+      // ever ran (cache hit) and the out.gain envelope alone shapes the bed.
+      const startLoop = (loopBuf, t0, xf) => {
+        const s = ctx.createBufferSource(); s.buffer = loopBuf; s.loop = true;
+        const leg = ctx.createGain();
+        s.connect(leg); leg.connect(out);
+        const g0 = Math.max(0, Math.round((t0 - when) / hop));
+        const off = ((g0 * hop) % loopBuf.duration + loopBuf.duration) % loopBuf.duration;
+        if (xf > 0) {
+          leg.gain.value = 0;
+          leg.gain.setValueAtTime(0, t0);
+          leg.gain.linearRampToValueAtTime(1, t0 + xf);
+          schedBus.gain.setValueAtTime(1, t0);
+          schedBus.gain.linearRampToValueAtTime(0, t0 + xf);
+          state.cutoverT = t0 + xf;   // scheduler mints no grain past the fade
+        } else leg.gain.value = 1;
+        s.start(t0, off);
+        s.stop(when + durSec + 0.1);
+        s.onended = () => { try { leg.disconnect(); } catch (e) {} };
+        state.loopSrc = s;
+      };
+
+      const handle = { stop() {
+        state.stopped = true; clearTimeout(state.timer);
+        if (state.loopSrc) { try { state.loopSrc.stop(); } catch (e) {} }
+        try { out.disconnect(); } catch (e) {} live.beds.delete(handle);
+      } };
       live.beds.add(handle);
       setTimeout(() => live.beds.delete(handle), (when - ctx.currentTime + durSec + 1) * 1000);
+
+      if (FP._legacyBed) { startScheduler(); return handle; }
+
+      const ent = bedLoopEntry(buffer, f, atPitch);
+      if (ent.pcm) {   // cache hit: the loop exists NOW — no scheduler at all
+        startLoop(bedBufFor(ctx, ent), Math.max(when, ctx.currentTime + 0.005), 0);
+      } else {         // first hearing: scheduler starts NOW, render lands when it lands
+        startScheduler();
+        ent.promise.then(() => {
+          if (state.stopped) return;   // bed over or stopped — the render stays cached for next time
+          const now = ctx.currentTime, durEnd = when + durSec;
+          if (now >= durEnd - BED_XFADE_SEC - 0.5) return;   // too close to the end to bother
+          const g0 = Math.max(0, Math.ceil((now + 0.06 - when) / hop));
+          const t0 = when + g0 * hop;
+          startLoop(bedBufFor(ctx, ent), t0, Math.min(BED_XFADE_SEC, Math.max(0.05, durEnd - t0 - 0.1)));
+        }).catch(() => {});            // render failed: the scheduler simply plays the bed out
+      }
       return handle;
     };
 
@@ -438,6 +754,15 @@
     return live;
   }
 
-  return { mixPCM, lp24, decodeUrlToBuffer, FoundLive, GRAIN_HZ, GRAIN_SEC, FOUND_MAX_SECONDS, _stats,
-    detectMedianHz, autoTuneRate, tunedPitch };
+  const FP = { mixPCM, lp24, decodeUrlToBuffer, FoundLive, GRAIN_HZ, GRAIN_SEC, FOUND_MAX_SECONDS, _stats,
+    detectMedianHz, autoTuneRate, tunedPitch,
+    // loon fix: the F0 profile + classifiers behind the boost gate and the
+    // auto-tune purity ceiling, exposed for direct tests (the _mixGrains pattern).
+    f0Profile, _isWhistle: isWhistle, _isSpeechLike: isSpeechLike, _analyzeActive: analyzeActive,
+    // ZERO-STATIC 2.4: A/B flag (true = grain scheduler only, no loop render)
+    // + the loop machinery exposed for direct tests.
+    _legacyBed: false,
+    _mixGrains: mixGrains, _renderBedLoopPCM: renderBedLoopPCM,
+    _bedLoopEntry: bedLoopEntry, _bedLoopCache };
+  return FP;
 });
