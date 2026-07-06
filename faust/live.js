@@ -187,11 +187,12 @@
     let bootDone = false;          // flips in the first injectChord's finally
     let airlockPausedUntil = 0;    // performance.now() horizon set by 1.4
     let _mkChain = Promise.resolve(), _mkLast = 0;
+    const _regMods = new Set();    // modules whose PROCESSOR is already registered
     async function mkNodeRaw(mod, tag) {
       const gen = new FaustMonoDspGenerator();
       const node = await gen.createNode(ctx, mod, await factory(mod));
       node.onprocessorerror = (e) => errors.push(tag + ": " + (e && e.message || "processorerror"));
-      _created++; jlog("mkNode", mod + ":" + tag);   // zombie registry: every worklet birth
+      _created++; _regMods.add(mod); jlog("mkNode", mod + ":" + tag);   // zombie registry: every worklet birth
       return node;
     }
     function mkNodeFresh(mod, tag) {
@@ -652,6 +653,64 @@
     const HARVEST_MAX_PER_PASS = 3;
     let harvestCount = 0;         // stat: pools torn down by the budget (vs idle reaps)
     let curUnitKeys = new Set();  // the CURRENT bar's unit table keys (protected set)
+    // ---- 2.3 COST-WEIGHTED AWAKE CEILING (Stage 2, ZERO-STATIC) ----
+    // Node COUNT is the wrong unit of harm: a dx7_alg* voice costs ~6.4x a
+    // pad_saw and ~16x an organ per rendered block (state-engine's MEASURED
+    // per-module COST table, normalized pad_saw = 1.0 — the 2026-07-04
+    // CPU-BUDGET round's offline-render timing probe). The cap-8 node budget
+    // treats them as equals, which is exactly how Paul's miamibass repro got
+    // to "9 awake / 15 resident / cap 8 / clicking": every one of miamibass's
+    // ~10 unit keys is in curUnitKeys (protected — playing music wins, see the
+    // ceiling comment above), so the CAP legitimately can't harvest anything,
+    // and 9 simultaneously-COMPUTING voices (lead_pluck x5 at 1.3, sfx risers
+    // at 2.43 each, fx_bus 2.32...) sank the audio thread anyway. What must be
+    // bounded is the COST of what's awake, not the count of what's resident.
+    // modCost reads SE.COST directly (one table, two engines — press's
+    // trimToBudget and this ceiling must never disagree about what "heavy"
+    // means); dx7_algN modules aren't in the table by name — state-engine
+    // prices ANY dx7 unit at DX7_COST = 6.4 (not exported; measured 6.2-6.7),
+    // mirrored here by prefix. Unknown modules take SE's own 0.6 fallback.
+    const MOD_COST = (SE && SE.COST) || {};
+    const modCost = (mod) => /^dx7_alg/.test(mod || "") ? 6.4
+      : (MOD_COST[mod] != null ? MOD_COST[mod] : 0.6);
+    // The ceiling: ~28 cost units awake at once (opts.costCeiling to tune).
+    // Calibration: the heaviest normal genre's FULL always-on fleet priced out
+    // ~38 in the pre-sleep world (state-engine BUDGET 40); with sleep/wake the
+    // AWAKE set is the real cost and 28 leaves ~25% headroom under that old
+    // worst case on the same machine. Enforcement is a PREFERENCE, never a
+    // mute: when waking one more voice would cross the ceiling, the scheduler
+    // STEALS an already-awake voice of the same pool (the declicked steal path
+    // — the dip-and-retrigger that already covers dx7 note overlaps) instead
+    // of waking another. Every note still plays; the polyphony of the heaviest
+    // pools thins first, which is also the least audible place to thin.
+    const COST_CEILING = Math.max(8, opts.costCeiling || 28);
+    let costStealCount = 0;       // stat: notes redirected to an awake voice by the ceiling
+    // what actually computes right now, in cost units: awake pool voices +
+    // AWAKE insert chains (2.2: chains sleep with their pools) + the infra
+    // that never sleeps (fx_bus always; reverb color + master_mb while built —
+    // continuous audio flows through them). The 2.3 ceiling and the ⬡ meter
+    // both read this.
+    function awakeCost() {
+      let c = modCost("fx_bus");
+      if (mbNode) c += modCost("master_mb");
+      if (revColorNode) c += modCost(revColorName);
+      for (const [, p] of pools) {
+        const mc = modCost(p.module);
+        for (const v of p.nodes) if (!v.asleep) c += mc;
+        const ch = p.ins && p.ins.chain;
+        if (ch && !ch.asleep) for (const b of ch.built) c += modCost(b.eff && b.eff.module);
+      }
+      return c;
+    }
+    // the cost wake(pool, v) is about to ADD: the voice's module if asleep,
+    // plus its whole insert chain if that's asleep too (a chain wakes with the
+    // first voice of its pool — 2.2). The ceiling check charges both.
+    function wakeCostOf(pool, v) {
+      let c = v.asleep ? modCost(pool.module) : 0;
+      const ch = pool.ins && pool.ins.chain;
+      if (ch && ch.asleep) for (const b of ch.built) c += modCost(b.eff && b.eff.module);
+      return c;
+    }
     const countWorklets = () => {
       let n = 1;                                   // fx_bus (always on)
       if (mbNode) n++;                             // opt-in multiband master glue
@@ -942,13 +1001,33 @@
     // morphs land while asleep); start() resumes via a port message (~1ms).
     // sleepIdleVoices runs at the same bar boundary as the reaper: any voice
     // whose tail has expired with nothing scheduled ahead (busyUntil past) goes
-    // to sleep; wake(v) fires at schedule time for every voice that receives an
-    // event this bar — the earliest gate-on is >=30ms after scheduling, orders
-    // of magnitude beyond the port latency. Vocoder pools never sleep (their
-    // looped speech feed hums continuously); infra (fx_bus / master_mb / reverb
-    // color / insert chains) is never slept either — continuous audio flows
-    // through it. AWAKE count = what actually computes; the meter shows it.
-    const wake = (v) => { if (v.asleep) { try { if (v.node.start) v.node.start(); } catch (e) {} v.asleep = false; } };
+    // to sleep; wake(pool, v) fires at schedule time for every voice that
+    // receives an event this bar — the earliest gate-on is >=30ms after
+    // scheduling, orders of magnitude beyond the port latency. Vocoder pools
+    // never sleep (their looped speech feed hums continuously); infra (fx_bus
+    // / master_mb / reverb color) is never slept — continuous audio flows
+    // through it. Insert chains USED to be classed as infra too; since 2.2
+    // they sleep with their pool (see below) — no audio flows through a chain
+    // whose whole pool is silent. AWAKE count = what actually computes; the
+    // meter shows it.
+    // wake takes the POOL as well as the voice since Stage 2.2: an insert
+    // chain that slept with its pool must come back with the FIRST voice that
+    // wakes — a woken voice singing into a stopped chain is silence (the chain
+    // sits between the voice and its layer tap). Same timing guarantee as the
+    // voice itself: wake() runs at SCHEDULE time and the earliest gate-on is
+    // >=30ms out, orders of magnitude beyond faustwasm's start() port latency.
+    // The chain check is independent of v.asleep — by the sleep invariant
+    // (chains only sleep when EVERY voice is asleep) a sleeping chain implies
+    // a sleeping voice, but the belt-and-braces read costs nothing.
+    const wake = (pool, v) => {
+      if (v.asleep) { try { if (v.node.start) v.node.start(); } catch (e) {} v.asleep = false; }
+      const ch = pool && pool.ins && pool.ins.chain;
+      if (ch && ch.asleep) {
+        for (const b of ch.built) { try { if (b.node.start) b.node.start(); } catch (e) {} }
+        ch.asleep = false;
+        jlog("chainWake", pool.module + ":" + (pool.ins.sig || "?"));
+      }
+    };
     function sleepIdleVoices() {
       const now = ctx.currentTime;
       for (const [, p] of pools) {
@@ -957,6 +1036,26 @@
           if (!v.asleep && v.busyUntil < now && v.tailUntil + 0.3 < now) {
             try { if (v.node.stop) { v.node.stop(); v.asleep = true; } } catch (e) {}
           }
+        // ---- 2.2 INSERT CHAINS SLEEP WITH THEIR POOLS ----
+        // Chains were classed as never-sleeping infra, but unlike fx_bus no
+        // audio flows through a chain whose ENTIRE pool is asleep — it was
+        // pure zombie compute with a legitimate registration (a filtersweep
+        // chain is 1.47 cost units doing nothing between solo phrases). Sleep
+        // it once every voice is asleep AND every tail has been silent a full
+        // second beyond the voice-sleep threshold (+1s vs +0.3s: the chain's
+        // own delay/feedback trails — a phaser or sweep ringing out the tail
+        // it was fed — must drain before compute stops, or the wake would
+        // resume mid-ring). Params still land while stopped (the sleep/wake
+        // physics: the param-apply loop runs, compute doesn't), so retunes /
+        // insert param glides during the nap are not lost. wake() above
+        // restarts the chain with the first waking voice; awakeCount()/
+        // awakeCost() count only awake chains, so the ⬡ meter tells the truth.
+        const ch = p.ins && p.ins.chain;
+        if (ch && !ch.asleep && p.nodes.every(v => v.asleep && v.tailUntil + 1 < now)) {
+          for (const b of ch.built) { try { if (b.node.stop) b.node.stop(); } catch (e) {} }
+          ch.asleep = true;
+          jlog("chainSleep", p.module + ":" + (p.ins.sig || "?"));
+        }
       }
     }
     // reap off-genre pools idle > REAP_BARS (curUnitKeys = the CURRENT state's
@@ -1148,6 +1247,19 @@
       const late = Math.max(0, nowT + 0.03 - t0);
       const at = (b) => t0 + late + (b - lo) * spb;
       const beatAbs = (b) => serial * 8 + (b - lo);   // musical beat since start
+      // ---- 2.3 bar-boundary cost ledger ----
+      // One awakeCost() snapshot per bar, then incremented locally as this
+      // bar's scheduling wakes voices/chains — so the ceiling check below is
+      // O(1) per event, not a pools walk per note. The snapshot is taken
+      // AFTER ensurePool/ensureReverbColor/ensureMasterMb (everything that
+      // changes what exists) and BEFORE any wake (everything that changes
+      // what computes). Drift across the bar is impossible: sleeps only
+      // happen in sleepIdleVoices (end of this same function), wakes only
+      // here. costStolen coalesces the journal to one entry per unit per bar
+      // (a ceiling-pinned bar can steal every melody note — the attribution
+      // pass needs the event, not 12 copies of it).
+      let costNow = awakeCost();
+      const costStolen = new Set();
       const monoBuckets = {};   // mono-legato units: scheduled in a dedicated pass below
       // per-note param sets (declick-safe, ~6ms early) + optional DX7 external-gain
       // velocity — the block shared by the normal and mono-legato passes below.
@@ -1195,7 +1307,26 @@
           : tOn + Math.max(0.012, durSec) - 0.008;
         let v = pool.nodes.find(x => x.busyUntil <= tOn) ||
                 pool.nodes.reduce((a, b) => (a.busyUntil <= b.busyUntil ? a : b));
-        wake(v);   // sleeping voice: resume compute now (>=30ms before its gate-on)
+        // ---- 2.3 COST CEILING at the moment of choice ----
+        // If the free voice we picked is ASLEEP and waking it (plus its
+        // sleeping chain) would push the awake cost past the ceiling, prefer
+        // an already-awake voice of the SAME pool: the tail-dip declick below
+        // already makes that steal clean (it's the same path dx7 overlaps
+        // ride every day). The note always plays — on heavy genres pinned at
+        // the ceiling, pool polyphony thins instead of the audio thread
+        // sinking (miamibass's "9 awake, clicking" repro). Pools of 1 (drums,
+        // mono) have no awake alternative and wake regardless: the ceiling is
+        // a preference, never a gate on the music.
+        if (v.asleep && costNow + wakeCostOf(pool, v) > COST_CEILING) {
+          let alt = null;
+          for (const x of pool.nodes) if (!x.asleep && (!alt || x.busyUntil < alt.busyUntil)) alt = x;
+          if (alt) {
+            v = alt; costStealCount++;
+            if (!costStolen.has(e.unit)) { costStolen.add(e.unit); jlog("costSteal", e.unit + "@" + costNow.toFixed(1)); }
+          }
+        }
+        costNow += wakeCostOf(pool, v);   // 0 if v (and its chain) are already awake
+        wake(pool, v);   // sleeping voice/chain: resume compute now (>=30ms before its gate-on)
         // stealing a voice whose release tail still rings: dip its declick
         // gain across the param/gate jumps (~12ms) so the retrigger is clean
         if (v.tailUntil > tOn && v.dk) {
@@ -1230,7 +1361,8 @@
         const pool = pools.get(key); if (!pool || !pool.nodes.length) continue;
         const evs = monoBuckets[key].sort((a, b) => a.beat - b.beat);
         const v = pool.nodes[0], g = P(v.node, "gate");
-        wake(v);   // mono voice may have slept between phrases
+        costNow += wakeCostOf(pool, v);   // 2.3 ledger: mono has no alternative, but the cost is real
+        wake(pool, v);   // mono voice may have slept between phrases (chain wakes with it, 2.2)
         const legatoSec = pool.spec.legatoSec != null ? pool.spec.legatoSec : 0.03;
         for (const e of evs) {
           const tOn = at(e.beat), durSec = e.durB * spb;
@@ -1364,7 +1496,11 @@
           for (const [, p] of pools) p.ecoDirty = true;
           for (const k of Object.keys(fxCache)) delete fxCache[k];
           status(eco.level ? "eco mode " + eco.level : "full quality restored"); }
-        if (opts.onLoad) try { opts.onLoad(loadRatio, eco.level); } catch (e) {}
+        // third arg (2.3): the cost picture, so meters can show WHAT the load
+        // is made of without extra handle polling. Existing (r, e) callers
+        // (explorer/soak) simply ignore it — additive, compat-safe.
+        if (opts.onLoad) try { opts.onLoad(loadRatio, eco.level,
+          { awakeCost: Math.round(awakeCost() * 10) / 10, ceiling: COST_CEILING, costSteals: costStealCount }); } catch (e) {}
       }
       lastWall = w; lastAudio = a;
     }, 250);
@@ -1410,27 +1546,62 @@
     // travel enters a genre with unbuilt HEAVY modules read as "crackle +
     // scheduler off"). Tier 1: factory() prefetch — the MAIN-thread wasm
     // compile, the expensive part, zero audio-thread cost — for the whole
-    // fleet + reverb colors + master_mb. Tier 2: full node prewarm (audio-
-    // thread processor registration) for the small insert modules only, as
-    // before — full-node-prewarming the heavy voices measurably dipped the
-    // load gate (0.987 -> 0.82-0.87), so their registration stays at need
-    // time, now cheap because the wasm is already compiled.
+    // fleet + reverb colors + master_mb. Fires once at 1.5s, unchanged.
     setTimeout(() => { if (!abort) {
       for (const m of ["juno60", "tb303", "solina", "hammond", "modeld",
                        "synclead", "casiocz", "oberheim", "ppg", "vp330",
                        "reverb_dattorro", "reverb_greyhole", "reverb_fdn", "reverb_spring", "master_mb"])
         Promise.resolve(factory(m)).catch(() => {});
-      for (const m of ["insert_distort", "insert_phaser", "insert_chorus", "insert_filtersweep", "insert_wah", "insert_tremolo"])
-        // destroy the prewarm INSTANCE once built (TRAVEL-SOAK crew): the benefit
-        // is the one-time audio-thread processor REGISTRATION, which survives the
-        // instance. An unconnected AudioWorkletNode whose process() returns true
-        // is an "actively processing" source per spec — Faust worklets return
-        // true until destroyed, so undestroyed prewarm nodes render every block
-        // forever (the same never-torn-down physics as the pool leak, just flat).
-        // mkNodeFresh, NOT mkNode: prewarm must never ADOPT a prepared stash
-        // node (1.6) — it would destroy 2s later what prepare() just built.
-        mkNodeFresh(m, "prewarm:" + m).then((n) => setTimeout(() => destroyNode(n), 2000)).catch(() => {});
     } }, 1500);
+    // ---- 2.1 SLOW TIER-2 PREWARM (Stage 2, ZERO-STATIC) ----
+    // Tier 2 is the audio-thread half: instantiate one node so the PROCESSOR
+    // registration (addModule + wasm setup on the render thread) happens
+    // before travel needs it, then destroy the instance — the registration
+    // survives it. The old shape burst all six insert modules at t=1.5s with
+    // a 2s overlap window each: from a COLD START on a heavy genre that burst
+    // landed exactly on top of the opening bars' full-fleet wake (the
+    // miamibass repro's "soon started clicking" — boot builds the pools raw,
+    // then the prewarm piles up to ~4.5 cost units of unconnected-but-
+    // computing worklets on the same starving thread; an unconnected Faust
+    // worklet renders every block until destroyed, the actively-processing-
+    // source physics below). And it only ever covered the inserts — the heavy
+    // fleet's registration still hit at need time, which is what the 2026-07-04
+    // hunt traced "crackle + scheduler off" to in the first place (full-node-
+    // prewarming them as a batch had dipped the load gate 0.987 -> 0.82-0.87,
+    // so they were left out).
+    // The rework fixes both with PACING instead of exclusion: ONE module per
+    // 2s tick, and a tick only spends its slot when the load EMA is healthy
+    // (loadRatio > 0.97 — in this repo 1.0 = keeping up, lower = starved), so
+    // registration cost lands only in windows with headroom and never
+    // overlaps itself (each instance dies 500ms after birth, a quarter of a
+    // tick). That makes the heavy fleet + reverb colors + master_mb safe to
+    // include: 21 modules x 2s ≈ the first ~40s of a session when everything
+    // is healthy, later when it isn't — cold-start-on-a-heavy-genre simply
+    // defers until the boot storm passes. Modules some pool/prepare already
+    // instantiated are skipped via _regMods (their registration exists — a
+    // prewarm node would be pure waste). Inserts lead the list: they're the
+    // cheapest registrations and the most likely mid-dwell surprise (an
+    // insert swap inside a genre); the fleet follows for travel.
+    // mkNodeFresh, NOT mkNode: prewarm must never ADOPT a prepared stash
+    // node (1.6) — it would destroy what prepare() just built. destroyNode
+    // always: an undestroyed prewarm instance is an "actively processing"
+    // source per spec and renders every block forever (the same never-torn-
+    // down physics as the pool leak, just flat).
+    const PREWARM_MODS = [
+      "insert_distort", "insert_phaser", "insert_chorus", "insert_filtersweep", "insert_wah", "insert_tremolo",
+      "juno60", "tb303", "solina", "hammond", "modeld",
+      "synclead", "casiocz", "oberheim", "ppg", "vp330",
+      "reverb_dattorro", "reverb_greyhole", "reverb_fdn", "reverb_spring", "master_mb",
+    ];
+    let prewarmIdx = 0;
+    const prewarmTimer = setInterval(() => {
+      if (abort || prewarmIdx >= PREWARM_MODS.length) { clearInterval(prewarmTimer); return; }
+      if (!(loadRatio > 0.97)) return;             // starved: skip this slot, keep the place in line
+      const m = PREWARM_MODS[prewarmIdx++];
+      if (_regMods.has(m)) return;                 // already registered by a real pool / prepare()
+      jlog("prewarm", m);
+      mkNodeFresh(m, "prewarm:" + m).then((n) => setTimeout(() => destroyNode(n), 500)).catch(() => {});
+    }, 2000);
 
     const rmsBuf = new Float32Array(analyser.fftSize);
     const handle = {
@@ -1463,18 +1634,26 @@
       // nodes (bleed delays, sends, found/sampler buffers) aren't worklets.
       nodeCount: countWorklets,
       // worklets actually COMPUTING right now: awake pool voices + infra +
-      // insert chains (Paul's "most music is playing with 2 or 3 worklets" —
-      // sleep/wake makes that the real cost, and this is the meter's proof).
+      // AWAKE insert chains (2.2: chains sleep with their pools now, so a
+      // sleeping chain no longer inflates the count — the ⬡ meter's first
+      // number is the true compute population, Paul's "most music is playing
+      // with 2 or 3 worklets" made measurable).
       awakeCount() {
         let n = 1;
         if (mbNode) n++;
         if (revColorNode) n++;
         for (const [, p] of pools) {
           n += p.nodes.filter(v => !v.asleep).length;
-          if (p.ins && p.ins.chain) n += p.ins.chain.built.length;
+          if (p.ins && p.ins.chain && !p.ins.chain.asleep) n += p.ins.chain.built.length;
         }
         return n;
       },
+      // 2.3: the same population priced in COST units (SE.COST, pad_saw = 1)
+      // — the number the ceiling actually enforces. 9 awake organs and 9
+      // awake dx7s read identically on awakeCount and differ ~16x here.
+      awakeCost: () => Math.round(awakeCost() * 10) / 10,
+      costCeiling: () => COST_CEILING,
+      costStealCount: () => costStealCount,
       poolCount: () => pools.size,
       reapCount: () => reapCount,
       harvestCount: () => harvestCount,
@@ -1536,6 +1715,7 @@
         // buffer sources included — within ~60ms), then tear down and close.
         abort = true; clearTimeout(timer); clearInterval(meter);
         if (elRecycleTimer) clearInterval(elRecycleTimer);   // 1.7
+        clearInterval(prewarmTimer);   // 2.1: no prewarm slots after stop (abort also guards)
         // 1.6: the prepared stash holds live (stopped) worklets — destroy them
         // or the registry counts them as leaked after close.
         for (const [, list] of prepared) for (const { node } of list) destroyNode(node);

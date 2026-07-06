@@ -73,9 +73,10 @@ const fx = (n, d = 1) => (isFinite(n) ? n.toFixed(d) : "n/a");
 async function runLeg(page, noReap) {
   await page.reload();
   await page.waitForFunction(() => typeof goSoakTravel === "function");
-  await page.evaluate(([g, s, d, nr, cap]) => goSoakTravel(g, s, d, { noReap: nr, maxWorklets: cap || undefined,
+  await page.evaluate(([g, s, d, nr, cap, ceil]) => goSoakTravel(g, s, d, { noReap: nr, maxWorklets: cap || undefined,
+    costCeiling: ceil || undefined,   // 2.3: SOAK_CEILING env — undersized ceiling proves the steal path
     debugSentinel: true }),   // output-truth instruments always armed in the soak
-    [GENRES, SEED, DWELL, noReap, CAP]);
+    [GENRES, SEED, DWELL, noReap, CAP, +(process.env.SOAK_CEILING || 0)]);
   const start = Date.now();
   while ((Date.now() - start) / 1000 < SECS) await sleep(5000);
   const R = await page.evaluate(() => stopSoak());
@@ -107,6 +108,11 @@ function analyze(R) {
     awakeBase: mean(base.filter((s) => s.awake != null).map((s) => s.awake)),
     awakeLate: late.some((s) => s.awake != null) ? mean(late.filter((s) => s.awake != null).map((s) => s.awake)) : null,
     awakeMax: Math.max(...S.map((s) => s.awake || 0)),
+    // 2.3: SE.COST-weighted awake cost — the ceiling's own unit
+    costBase: mean(base.filter((s) => s.awakeCost != null).map((s) => s.awakeCost)),
+    costLate: mean(late.filter((s) => s.awakeCost != null).map((s) => s.awakeCost)),
+    costMax: Math.max(...S.map((s) => s.awakeCost || 0)),
+    costSteals: (S[S.length - 1] || {}).costSteals || 0,
     harvests: (S[S.length - 1] || {}).harvests || 0,
     cap: (S[S.length - 1] || {}).cap || 0,
     // revisit-after-harvest (cap10 tour ends back on its first genre): the
@@ -184,6 +190,7 @@ function printLeg(tag, A, R) {
   }
   console.log(`  NODES: base ${fx(A.nBase)} (max ${A.nBaseMax}) -> late ${fx(A.nLate)} (max ${A.nLateMax})  overall min/max ${A.nMin}/${A.nMax}${A.cap ? "  CAP " + A.cap : ""}`);
   if (A.awakeLate != null) console.log(`  AWAKE (computing): base ${fx(A.awakeBase)} -> late ${fx(A.awakeLate)} (max ${A.awakeMax}) — sleepers cost ~0`);
+  if (isFinite(A.costMax) && A.costMax > 0) console.log(`  AWAKE COST (2.3): base ${fx(A.costBase)} -> late ${fx(A.costLate)} (max ${fx(A.costMax)})   costSteals ${A.costSteals}`);
   console.log(`  POOLS: base ${fx(A.pBase)} -> late ${fx(A.pLate)} (max ${A.pMax})   reaps ${A.reaps}  harvests ${A.harvests}`);
   console.log(`  LOAD:  base ${fx(A.lBase, 3)} -> late ${fx(A.lLate, 3)}   ecoMax ${A.ecoMax}`);
   console.log(`  HEAP:  base ${fx(A.hBase, 1)}MB -> late ${fx(A.hLate, 1)}MB`);
