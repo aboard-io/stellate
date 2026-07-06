@@ -39,6 +39,12 @@
   const RATE = 0.5;              // slowed playback — dreamier, more VHS
   const LS_KEY = "vaporwave-video-on";
   const REMOTE_READY_MS = 3800;  // archive.org latency budget before we fall back to the local cache clip
+  // A PREFETCH (loading the next clip while the current one still has ~8 bars
+  // to play) gives remote most of the window — capping it at REMOTE_READY_MS
+  // meant a slow-but-reachable stream could never win, only fail earlier
+  // (2026-07-06 re-verification finding). If the show arrives while remote is
+  // still loading, loadBack's wantShow upgrade expedites to local in 800ms.
+  const PREFETCH_REMOTE_MS = 12000;
   const LOCAL_READY_MS = 1200;   // local file should be near-instant
   // analog grain via an SVG turbulence tile, jittered by steps() animation
   const NOISE_URI = "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"220\" height=\"220\"><filter id=\"n\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\"/></filter><rect width=\"220\" height=\"220\" filter=\"url(%23n)\" opacity=\"0.55\"/></svg>')";
@@ -296,6 +302,7 @@
     if (backLoad && backLoad.name === name) {       // already priming this clip
       backLoad.wantShow = backLoad.wantShow || !!wantShow;
       if (backLoad.ready && backLoad.wantShow) crossfadeBack(backLoad);
+      else if (backLoad.wantShow && backLoad.expedite) backLoad.expedite();   // show wants it NOW: give remote 800ms more, then local
       return;
     }
     const cands = candidates(name);
@@ -326,11 +333,17 @@
     };
     // slow archive.org: after the budget, drop to the local cache clip if there
     // is one; otherwise keep waiting (canplay may still land) — never black.
-    const budget = c.kind === "remote" ? REMOTE_READY_MS : LOCAL_READY_MS;
-    const to = setTimeout(() => {
+    // Prefetches get the long budget (the whole point of loading ahead).
+    const budget = c.kind === "remote" ? (bl.wantShow ? REMOTE_READY_MS : PREFETCH_REMOTE_MS) : LOCAL_READY_MS;
+    let to = setTimeout(() => {
       if (settled) return;
       if (bl.i + 1 < bl.cands.length) { settled = true; nextCand(bl); }
     }, budget);
+    bl.expedite = () => {                            // a deferred show arrived mid-prefetch
+      if (settled || c.kind !== "remote" || bl.i + 1 >= bl.cands.length) return;
+      clearTimeout(to);
+      to = setTimeout(() => { if (!settled) { settled = true; nextCand(bl); } }, 800);
+    };
     v.loop = c.kind === "local";                   // local = pre-cut -> native loop; remote loops its window
     const frag = bl.cue ? "#t=" + bl.cue.in : (c.kind === "remote" && c.in ? "#t=" + c.in : "");
     v.src = c.url + frag;
