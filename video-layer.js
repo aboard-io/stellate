@@ -142,7 +142,14 @@
     wrap.style.cssText = "position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;display:none";
     vbox = document.createElement("div");
     vbox.style.cssText = "position:absolute;inset:0;transition:filter 850ms ease,transform 850ms ease";
-    for (let i = 0; i < (MOBILE ? 1 : 2); i++) {
+    // Two <video>s on EVERY tier, incl. mobile: one plays, one is the hidden
+    // LOADER that buffers the next clip through the whole 8-measure window. On
+    // mobile the loader is never composited (opacity 0) and is PAUSED the moment
+    // it reaches canplay (see nextCand) — so it's a pure buffer, not a second
+    // rendered decoder. At switch time FADE_MS=0 makes it a hard cut, not a
+    // touch-janking crossfade. This is what finally lets a phone connection
+    // stream archive.org: the loader gets PREFETCH_REMOTE_MS, not the 3.8s cap.
+    for (let i = 0; i < 2; i++) {
       const v = document.createElement("video");
       v.muted = true; v.loop = false; v.playsInline = true; v.preload = "auto";
       v.setAttribute("muted", ""); v.setAttribute("playsinline", "");
@@ -221,10 +228,10 @@
       ".vl-roll{animation:vl-roll .52s linear 2}";
     // ---- ALIEN BROADCAST furniture (dedicated overlay els; opacity-toggled,
     // never touch vbox — all cheap compositor paints over the base grade) ----
-    barsEl = document.createElement("div");   // SMPTE-ish color-bar interstitial
-    barsEl.style.cssText = "position:absolute;inset:0;opacity:0;transition:opacity .09s;background:linear-gradient(90deg," +
+    barsEl = document.createElement("div");   // SMPTE-ish color-bar interstitial — DIM (haunted, not a reference chart)
+    barsEl.style.cssText = "position:absolute;inset:0;opacity:0;transition:opacity .09s;filter:brightness(.5) saturate(.72);background:linear-gradient(90deg," +
       "#c0c0c0 0 14.28%,#c0c000 0 28.57%,#00c0c0 0 42.85%,#00c000 0 57.14%,#c000c0 0 71.42%,#c00000 0 85.71%,#2030c0 0 100%)";
-    cardEl = document.createElement("div");   // PLEASE STAND BY / SIGNAL LOST
+    cardEl = document.createElement("div");   // big centered interstitial card (glyph standby)
     cardEl.style.cssText = "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;" +
       "transition:opacity .12s;background:rgba(6,6,16,.55);color:#eafff0;text-align:center;padding:0 6%;" +
       "font:700 clamp(20px,5vw,54px) 'VT323',ui-monospace,monospace;letter-spacing:.14em;text-shadow:0 0 12px rgba(120,255,200,.45)";
@@ -244,7 +251,15 @@
     trackEl = document.createElement("div");  // tracking-noise band sweeping the frame
     trackEl.style.cssText = "position:absolute;left:-4%;right:-4%;height:5.5%;top:-12%;opacity:0;mix-blend-mode:screen;filter:blur(.6px);" +
       "background:repeating-linear-gradient(0deg,rgba(255,255,255,.5) 0 2px,rgba(180,255,255,.15) 2px 4px,transparent 4px 7px)";
-    wrap.append(veil, scan, grain, tear, osd, trackEl, barsEl, glyphEl, chanEl, tsEl, subEl, cardEl, st);
+    // STACK LAW (2026-07-06): the broadcast furniture/text lives INSIDE vbox, so
+    // it rides every manipulation with the footage — vbox transforms (roll/hsync/
+    // zoom/mirror) displace the glyphs, the base grade + mobile chaos filters tint
+    // them, and desktop's fxlayer backdrop-filter (which samples everything behind
+    // it = vbox + furniture) chroma-lurches / inverts / ghosts the text along with
+    // the picture. veil/scan/grain/tear/osd stay ABOVE fxlayer as untouched texture
+    // + the corner ident. cardEl (standby) is appended last -> paints on top.
+    vbox.append(trackEl, barsEl, glyphEl, chanEl, tsEl, subEl, cardEl);
+    wrap.append(veil, scan, grain, tear, osd, st);
     if (!MOBILE) {   // PiP / channel-surf peek: one extra decoder, desktop only
       pipEl = document.createElement("video");
       pipEl.muted = true; pipEl.loop = true; pipEl.playsInline = true; pipEl.preload = "auto";
@@ -292,14 +307,14 @@
   // scales with the genre profile; glitch-family bursts also kick the SVG
   // RGB-split displacement (idm/darksynth/breakcore tear hard; ambient barely).
   function burst() {
-    if (!ready || !on || reduced || MOBILE || !vbox || !profile) return;
+    if (!ready || !on || reduced || !vbox || !profile) return;   // mobile too: transform+filter wobble is compositor-cheap
     const g = profile.glitch;
     const dx = (Math.random() < .5 ? -1 : 1) * (3 + Math.random() * 6) * (0.5 + g);
     const dur = 900 + Math.random() * 700;
     vbox.style.transition = "filter " + (dur / 2) + "ms ease-in-out, transform " + (dur / 2) + "ms ease-in-out";
     vbox.style.filter = baseFilterStr() + " saturate(" + (1.2 + g) + ") hue-rotate(" + (((Math.random() * 50 - 25) * g) | 0) + "deg) blur(" + (0.6 + g) + "px)";
     vbox.style.transform = "translateX(" + dx + "px) scaleY(" + (1 + .02 * g) + ")";
-    if (profile.svg && dispEl) {
+    if (profile.svg && dispEl && !MOBILE) {   // SVG RGB-split is desktop-only (not in the mobile base grade)
       const scale = (10 + Math.random() * 26) * g, off = (2 + Math.random() * 5) * g;
       dispEl.setAttribute("scale", scale.toFixed(1));
       if (roEl) roEl.setAttribute("dx", (-off).toFixed(1));
@@ -350,11 +365,25 @@
   }
   function chaosIntensity() { return profile && profile.chaos != null ? profile.chaos : 0.4; }
 
-  // fxlayer backdrop-filter helpers — grade/invert/displace ONLY the footage,
-  // isolated from vbox so no war with the base grade or the tape-wobble loop.
-  function fxSet(css) { if (!fxlayer) return; fxlayer.style.webkitBackdropFilter = css; fxlayer.style.backdropFilter = css; }
-  function fxClear() { if (!fxlayer) return; fxlayer.style.backdropFilter = ""; fxlayer.style.webkitBackdropFilter = ""; }
-  function fxTrans(t) { if (fxlayer) fxlayer.style.transition = t; }
+  // fxlayer backdrop-filter helpers — grade/invert/displace the footage.
+  // DESKTOP: write backdrop-filter on the isolated fxlayer surface (samples the
+  //   video beneath it; no war with vbox's base grade / tape-wobble loop).
+  // MOBILE: backdrop-filter is a perf/support risk on mobile Safari, so we COMPOSE
+  //   the same look directly onto vbox's own filter (base grade string + event) —
+  //   identical result, no second compositor surface. Because the furniture now
+  //   lives inside vbox, this filters the glyphs too. Reverts to the base grade.
+  function fxSet(css) {
+    if (MOBILE) { if (vbox) vbox.style.filter = baseFilterStr() + " " + css; return; }
+    if (!fxlayer) return; fxlayer.style.webkitBackdropFilter = css; fxlayer.style.backdropFilter = css;
+  }
+  function fxClear() {
+    if (MOBILE) { if (vbox) vbox.style.filter = baseFilterStr(); return; }
+    if (!fxlayer) return; fxlayer.style.backdropFilter = ""; fxlayer.style.webkitBackdropFilter = "";
+  }
+  function fxTrans(t) {
+    if (MOBILE) { if (vbox) vbox.style.transition = (!t || t === "none") ? "none" : t.replace(/-?webkit-?backdrop-filter/gi, "filter").replace(/backdrop-filter/gi, "filter"); return; }
+    if (fxlayer) fxlayer.style.transition = t;
+  }
   // flicker an OSD element (channel / glyph): random on/off/dim, then hide.
   function flickerEl(el, dur) {
     if (!el) return;
@@ -410,16 +439,28 @@
   // station idents: alien-looking but drawn from blocks widely covered by
   // default font stacks (box drawing, braille, trigrams, runic, math) — exotic
   // planes (cuneiform, alchemical) tofu'd on the verification runs.
+  // NO ENGLISH anywhere on the broadcast (2026-07-06): the station speaks pure
+  // glyph, drawn ONLY from blocks that render in default font stacks (box-drawing,
+  // block elements, braille, geometric shapes, trigrams, runic, math operators) —
+  // exotic planes (cuneiform, alchemical, Glagolitic) tofu'd on the verify runs
+  // and are banned. Structure is preserved (a caption still reads as a caption, a
+  // card as a card, a channel marker as a channel number) — only the language is
+  // alien. GLYPHS = fleeting station idents. E̸R̷R̸ combining-strike kept (ASCII
+  // under alien decoration, reads as "corrupted", not as a word).
   const GLYPHS = ["╬╪▚▞", "⠺⠵⣿⠋", "▟▙◈▛", "◭◮⊗⊘", "⋔⋕⊞⊟", "↯⇶↯↺", "ᛝᚦᛟᚱ", "▓▚E̸R̷R̸▞░", "☰☲☵☷", "◇⬡◇⬢", "∴∵∷⁂", "⌁⌇⌭⌗"];
-  const SUBS = ["[HUMANS DANCING ACCEPTABLY]", "[MUSIC INTENSIFIES CORRECTLY]", "[APPROVED EMOTION DETECTED]",
-    "[SIGNAL CARRIES NOSTALGIA]", "[PLEASE CONTINUE CONSUMING]", "[THE MALL IS ETERNAL]",
-    "[CARBON UNITS SWAYING]", "[JOY QUOTA: 78% NOMINAL]", "[TRANSMISSION IS AFFECTION]",
-    "[YOUR DEVOTION IS NOTED]", "[SUNSET RENDERED ON SCHEDULE]", "[◊ INAUDIBLE ALIEN CHORD ◊]",
-    "[WE HAVE ALWAYS BEEN THE STATION]", "[NOSTALGIA FOR A PLACE THAT NEVER WAS]"];
-  const CHAN = ["CH 03", "CH 88", "CH 7½", "CH ∞", "CH -12", "CH 0x1F", "CH 十三",
-    "CH 999,999", "CH ■■", "CH ⊘", "CH ⰐⲈ", "CH 🜀"];
-  const STANDBY = ["PLEASE STAND BY", "SIGNAL LOST", "◈ DO NOT ADJUST ◈", "TRANSMISSION RESUMES SHORTLY",
-    "WE APOLOGIZE FOR THE REALITY", "STAND BY // ALIEN OVERRIDE", "△ PLEASE REMAIN CALM △", "NO SIGNAL"];
+  // SUBS = wrong captions of the music — bracketed, caption-shaped, alien content.
+  const SUBS = ["[⠺⠵⣿⠋ ╬╪▚▞]", "[◈ ⊞⊟⊗⊘ ◈]", "[☰☲ ᛝᚦᛟ ☵☷]",
+    "[▓▚ ⡇⢸⣿ ▞░]", "[△ ∴∵∷ ◊ ⁂ △]", "[⋔⋕ ◭◮ ⇶↯↺]",
+    "[⌁⌇⌭ ⠿⡇⢸ ⌗]", "[◇⬡◇ ▟▙◈▛ ⬢◇]", "[ᚠᚢᛗ ▚▞ ᛚᚱ]",
+    "[☷☵ ⊕⊙ ∷∵ ☲☰]", "[◊ ⣿⠋⠺⠵ ◊]", "[▛▜ ╬╪ ▙▟]",
+    "[↯⇶↯ ⊘⊗ ↺⇌]", "[⠿⣿ ▓▒░ ⡇⢸]"];
+  // CHAN = channel-number OSD — alien marker glyph + (universal) numerals, so it
+  // still FEELS like a channel number without an English word.
+  const CHAN = ["⊟ 03", "╪ 88", "▚ 7½", "◈ ∞", "⊗ -12", "⌗ 0x1F", "☲ 13",
+    "▓ 999", "⊘ ■■", "◭ 00", "╬ 24", "⁂ 404"];
+  // STANDBY = the big centered interstitial card — a broadcast card in glyphs.
+  const STANDBY = ["◈ ╬╪▚▞ ◈", "▓▒░ ⊗⊘ ░▒▓", "△ ⠺⠵⣿⠋ △", "☰☲☵☷",
+    "⋔⋕ ⊞⊟ ⋔⋕", "◭◮ ⇶↯↺ ◮◭", "⌁⌇⌭⌗", "▟▙◈▛ ⬡ ▜◈▙▟"];
   // base-13 clock, wrong on purpose
   function fmtTS(v) {
     const d = "0123456789ABC"; v = ((v % 28561) + 28561) % 28561;
@@ -433,10 +474,10 @@
   // vbox-mutating events don't overlap each other; filter events live on fxlayer.
   const EV = {
     // -- analog decay --
-    vroll: { w: 6, mobile: false, run() {   // vertical-hold roll (overscan hides black)
+    vroll: { w: 6, mobile: true, run() {   // vertical-hold roll (overscan hides black) — transform, cheap on phones
         vbox.style.transition = "none"; vbox.classList.add("vl-roll");
         const dur = 1040; setTimeout(() => { vbox.classList.remove("vl-roll"); applyLook(false); }, dur); return dur; } },
-    hsync: { w: 7, mobile: false, run() {   // h-sync tear: skew jolts
+    hsync: { w: 7, mobile: true, run() {   // h-sync tear: skew jolts — transform, cheap on phones
         const g = chaosIntensity(), n = 3 + ((Math.random() * 4) | 0), dt = 42 + Math.random() * 44;
         vbox.style.transition = "transform 28ms linear";
         for (let i = 0; i < n; i++) setTimeout(() => {
@@ -451,7 +492,7 @@
         trackEl.style.transition = "top " + dur + "ms linear, opacity " + dur + "ms ease-in";
         trackEl.style.top = "108%"; setTimeout(() => { trackEl.style.opacity = "0"; }, dur * 0.95);
         return dur; } },
-    chroma: { w: 7, mobile: false, run() {   // chroma drift: hue-rotate lurch (fxlayer)
+    chroma: { w: 7, mobile: true, run() {   // chroma drift: hue-rotate lurch (fxlayer desktop / vbox filter mobile)
         const g = chaosIntensity(), dur = 280 + Math.random() * 540;
         const deg = ((60 + Math.random() * 220) * (0.5 + g)) * (Math.random() < .5 ? -1 : 1);
         fxTrans("backdrop-filter " + (dur * .4) + "ms ease,-webkit-backdrop-filter " + (dur * .4) + "ms ease");
@@ -462,16 +503,16 @@
         fxTrans("none");
         fxSet("drop-shadow(" + off + "px 0 0 rgba(255,60,90,.5)) drop-shadow(" + (-off) + "px 0 0 rgba(60,180,255,.5)) blur(.3px)");
         clearTimeout(fxTimer); fxTimer = setTimeout(fxClear, dur); return dur; } },
-    pump: { w: 5, mobile: false, run() {   // brightness pumping (fxlayer, stepped)
+    pump: { w: 5, mobile: true, run() {   // brightness pumping (fxlayer desktop / vbox filter mobile, stepped)
         const g = chaosIntensity(), seq = [1.6 + g, 0.55, 1.4 + g * .5, 0.8, 1], dt = 105;
         fxTrans("none");
         seq.forEach((b, i) => setTimeout(() => fxSet("brightness(" + b.toFixed(2) + ") contrast(" + (1 + .3 * g).toFixed(2) + ")"), i * dt));
         const dur = seq.length * dt + 40; setTimeout(fxClear, dur); return dur; } },
-    invert: { w: 4, mobile: false, run() {   // invert blink (fxlayer)
+    invert: { w: 4, mobile: true, run() {   // invert blink (fxlayer desktop / vbox filter mobile)
         const n = 2 + ((Math.random() * 3) | 0), dt = 66 + Math.random() * 60; fxTrans("none");
         for (let i = 0; i < n; i++) { setTimeout(() => fxSet("invert(1) hue-rotate(180deg)"), i * 2 * dt); setTimeout(fxClear, (i * 2 + 1) * dt); }
         return n * 2 * dt; } },
-    posterize: { w: 4, mobile: false, run() {   // posterize blink (SVG via fxlayer)
+    posterize: { w: 4, mobile: true, run() {   // posterize blink (SVG filter via fxlayer desktop / vbox filter mobile)
         const n = 1 + ((Math.random() * 2) | 0), dt = 120 + Math.random() * 150; fxTrans("none");
         for (let i = 0; i < n; i++) { setTimeout(() => fxSet("url(#vlposter) saturate(1.5)"), i * 2 * dt); setTimeout(fxClear, (i * 2 + 1) * dt); }
         return n * 2 * dt; } },
@@ -481,11 +522,11 @@
         scan.style.opacity = (0.35 + Math.random() * 0.3).toFixed(2);
         setTimeout(() => { scan.style.backgroundSize = ""; scan.style.opacity = ".22"; }, dur); return dur; } },
     // -- broadcast furniture --
-    colorbars: { w: 3, mobile: true, run() {   // SMPTE-ish interstitial (rare long)
-        const long = Math.random() < .12, dur = long ? rnd(2200, 3800) : rnd(220, 620);
-        barsEl.style.opacity = long ? "0.94" : "0.98";
+    colorbars: { w: 1, mobile: true, run() {   // SMPTE-ish interstitial — RARE, brief, DIM (Paul: was blasting the room)
+        const long = Math.random() < .05, dur = long ? rnd(1300, 2200) : rnd(150, 420);
+        barsEl.style.opacity = long ? "0.6" : "0.66";   // wash, not a full-brightness reference chart
         clearTimeout(barsTimer); barsTimer = setTimeout(() => { barsEl.style.opacity = "0"; }, dur); return dur; } },
-    standby: { w: 2, mobile: true, run() {   // PLEASE STAND BY / SIGNAL LOST (rare 3-5s)
+    standby: { w: 2, mobile: true, run() {   // glyph interstitial card (rare 3-5s)
         cardEl.textContent = pick(STANDBY);
         const long = Math.random() < .18, dur = long ? rnd(3000, 5000) : rnd(600, 1500);
         cardEl.style.opacity = "1";
@@ -506,12 +547,12 @@
     pip: { w: 4, mobile: false, can() { return !!pipEl && !!pickAlt(); }, run() {   // picture-in-picture of ANOTHER clip
         const n = pickAlt(), src = n && srcFor(n); if (!src) return 300; setPip(pipEl, src, false);
         const dur = 1400 + Math.random() * 2600; clearTimeout(pipTimer); pipTimer = setTimeout(hidePip, dur); return dur; } },
-    zoom: { w: 6, mobile: false, run() {   // sudden zoom lurch: snap in, drift back
+    zoom: { w: 6, mobile: true, run() {   // sudden zoom lurch: snap in, drift back — transform, cheap on phones
         const sc = 1.7 + Math.random() * 1.1, dur = 700 + Math.random() * 900;
         vbox.style.transition = "transform 60ms ease-out"; vbox.style.transform = "scale(" + sc.toFixed(2) + ")";
         setTimeout(() => { vbox.style.transition = "transform " + dur + "ms cubic-bezier(.2,.7,.2,1)"; vbox.style.transform = "none"; }, 70);
         setTimeout(() => applyLook(false), dur + 140); return dur; } },
-    mirror: { w: 5, mobile: false, run() {   // mirror / flip flash
+    mirror: { w: 5, mobile: true, run() {   // mirror / flip flash — transform, cheap on phones
         const flip = Math.random() < .5 ? "scaleX(-1)" : "scaleY(-1)", dur = 120 + Math.random() * 520;
         vbox.style.transition = "none"; vbox.style.transform = flip + " scale(1.02)";
         setTimeout(() => applyLook(false), dur); return dur; } },
@@ -616,8 +657,8 @@
     // honor the station-wide never-twice-in-a-row rule: if the coin lands on
     // what just fired (scheduler or pulse — lastEvt is shared), take the other.
     const coin = (a, b) => { const n = Math.random() < 0.5 ? a : b; return n === lastEvt ? (n === a ? b : a) : n; };
-    if (sectionChange && Math.random() < 0.35 + 0.45 * ci) {
-      runNamed(coin("tearhit", "colorbars"));   // punctuate the section boundary
+    if (sectionChange && Math.random() < 0.15 + 0.25 * ci) {
+      runNamed(coin("tearhit", "tracking"));   // punctuate the section boundary (subtle — NOT colorbars: it was overshowing)
     } else if (Math.random() < 0.08 + 0.30 * ci) {
       runNamed(coin("tracking", MOBILE ? "scanshift" : "chroma"));   // occasional on-beat flavor (chroma = fxlayer, desktop)
     }
@@ -668,7 +709,7 @@
     if (!ready || !on || !name) return;
     if (wantShow) queuedPrefetch = null;          // a real show supersedes any deferred prefetch
     if (name === curName) { if (backLoad && backLoad.name === name) backLoad = null; return; }
-    if (vids.length < 2 && !wantShow) return;      // mobile: 1 element, no room to prefetch
+    if (vids.length < 2 && !wantShow) return;      // (defensive: every tier now has 2 — front + hidden loader)
     // there is ONE back element: don't let a prefetch clobber a show that's still
     // waiting to become ready — defer it until that show has crossfaded.
     if (!wantShow && backLoad && backLoad.wantShow && !backLoad.ready) { queuedPrefetch = name; return; }
@@ -698,6 +739,7 @@
       if (settled || bl.token !== seq) return; settled = true; clearTimeout(to);
       bl.ready = true;
       if (bl.wantShow) crossfadeBack(bl);
+      else if (MOBILE) { try { v.pause(); } catch (e) {} }   // loader buffered -> hold it (no 2nd running decoder on the phone)
     };
     v.onerror = () => {
       if (settled || bl.token !== seq) return; settled = true; clearTimeout(to);
@@ -735,7 +777,7 @@
     }
     attachWindowLoop(vNew, bl.cue);
     vNew.play().catch(() => {});
-    flashOsd("▶ " + shortLabel(bl.name));
+    flashOsd("▶ " + pick(GLYPHS));   // glyph ident, not the (English) archive title — no English on the broadcast
     burst();                                        // every switch tears a little
     vNew.style.opacity = "1";
     if (vOld !== vNew) {
