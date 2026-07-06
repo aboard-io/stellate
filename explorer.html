@@ -490,8 +490,14 @@ function vidReset(){ vidGenre=""; vidBars=0; vidPending=null; vidStarted=false; 
 // the cursor drifts doesn't thrash the bag. Selection is shuffled anyway.
 function vidPool(ordered){
   const pool=[];
-  ordered.forEach(w=>{ if(w.w>=0.06) (K.GENRE_CLIPS[w.g]||[]).forEach(c=>{if(!pool.includes(c))pool.push(c);}); });
-  if(!pool.length) ordered.forEach(w=>(K.GENRE_CLIPS[w.g]||[]).forEach(c=>{if(!pool.includes(c))pool.push(c);}));
+  // union of BOTH clip sources per weighted genre: the kernel's GENRE_CLIPS
+  // (legacy/local names) and the stream catalog's own tags (the sourced
+  // avant-garde/3D windows live ONLY there — without this they were loaded,
+  // indexed, and unreachable; found 2026-07-06 when Paul saw nothing new).
+  const per=(g)=>[...(K.GENRE_CLIPS[g]||[]),
+                  ...((window.VideoLayer&&VideoLayer.namesForTag)?VideoLayer.namesForTag(g):[])];
+  ordered.forEach(w=>{ if(w.w>=0.06) per(w.g).forEach(c=>{if(!pool.includes(c))pool.push(c);}); });
+  if(!pool.length) ordered.forEach(w=>per(w.g).forEach(c=>{if(!pool.includes(c))pool.push(c);}));
   return pool.sort();
 }
 function vidDraw(pool){ const b=vidBagObj(); return b?b.draw(pool):null; }
