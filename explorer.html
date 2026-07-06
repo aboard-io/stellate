@@ -1140,24 +1140,52 @@ async function playheadTick(){
 
 // ---------- boot ----------
 // (found buffers decode on demand in found-player.js — no csound prewarm pool)
-// The page opens with a journey already drawn: a random 3-star constellation
-// between genuinely distant anchors (all pairwise >=150 logical px, so the
-// default trip shows the space off). Clear it (✕ path) to drag freely.
+// The page opens with a GRAND TOUR already drawn: a long constellation of
+// 10-16 waypoints where EVERY leg is a SHORT hop to a near-neighbour star
+// (<= TOUR_MAXLEG logical px). The music lives inside a single genre→genre
+// transition, so a walk of many short edges keeps the mix in one aesthetic
+// neighbourhood at a time and drifts slowly across 2-3 of them — the opposite
+// of the old 3-star cross-chart jump. It IS a normal path in S.waypoints:
+// drag/delete/add a waypoint and clear it (✕ path) exactly as a hand-drawn one.
+// Presentational only (Math.random), so every load draws a fresh tour; nothing
+// persists, so a cleared/redrawn path is never re-imposed. window.__TOUR reports
+// the max leg length + genre names for the headless gate.
+const TOUR_MINLEG=24;   // >= the chart's minimum star spacing — never a near-duplicate hop
+const TOUR_MAXLEG=90;   // one musical neighbourhood step; legs read short on the chart
 function autoPath(){
   const gs=Object.keys(POS);
-  let h=(S.seed*2654435761)>>>0;
-  const nxt=()=>{ h=(h*1664525+1013904223)>>>0; return h; };
   const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
-  let pick=[];
-  for(let tries=0;tries<300;tries++){
-    pick=[];
-    while(pick.length<3){ const g=gs[nxt()%gs.length]; if(!pick.includes(g)) pick.push(g); }
-    const P=pick.map(g=>POS[g]);
-    if(dist(P[0],P[1])>=150&&dist(P[1],P[2])>=150&&dist(P[0],P[2])>=150) break;
+  // Greedy nearest-unvisited walk with a max leg length, tie-broken among the
+  // nearest few for VARIETY between visits. Retry from fresh random starts and
+  // keep the longest walk that lands in [10,16] (a corner start can dead-end
+  // early; 60 tries reliably find a full-length tour — verified ~3000 runs).
+  function walkFrom(){
+    const target=10+Math.floor(Math.random()*7);   // 10..16 waypoints
+    const start=gs[Math.floor(Math.random()*gs.length)];
+    const vis=new Set([start]), walk=[start];
+    while(walk.length<target){
+      const cur=POS[walk[walk.length-1]];
+      const cands=gs.filter(g=>!vis.has(g)&&dist(POS[g],cur)>=TOUR_MINLEG&&dist(POS[g],cur)<=TOUR_MAXLEG);
+      if(!cands.length) break;                       // dead-ended in a sparse corner
+      cands.sort((a,b)=>dist(POS[a],cur)-dist(POS[b],cur));
+      const pick=cands[Math.floor(Math.random()*Math.min(cands.length,3))];
+      vis.add(pick); walk.push(pick);
+    }
+    return {walk, target};
   }
-  const pts=pick.map(g=>({x:POS[g][0],y:POS[g][1]}));
+  let best=[];
+  for(let att=0;att<60;att++){
+    const {walk,target}=walkFrom();
+    if(walk.length>best.length) best=walk;
+    if(best.length>=10&&walk.length>=target) break;
+  }
+  const names=best.slice(0,16);
+  const pts=names.map(g=>({x:POS[g][0],y:POS[g][1]}));
+  window.__TOUR={names, maxleg:TOUR_MAXLEG,
+    legs:pts.slice(1).map((p,i)=>Math.hypot(p.x-pts[i].x,p.y-pts[i].y))};
   set({waypoints:pts, travel:{seg:0,t:0},
-    status:"tonight's journey: "+pick.join(" → ")+" — ▶ LIVE to travel (✕ path to roam free)"});
+    status:"tonight's grand tour: "+names.length+" stops through "+names.slice(0,3).join(" → ")+
+      "… — ▶ LIVE to travel (✕ path to roam free)"});
   retarget(pts[0]);
 }
 autoPath(); rescore(); playheadTick();
