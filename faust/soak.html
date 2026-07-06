@@ -1,0 +1,195 @@
+<!doctype html>
+<!-- faust/soak.html — long-run SOAK harness for the FaustLive facade.
+     Drives a genre live for many minutes and instruments the output over time to
+     reproduce "the bass/audio gets staticky and builds over time, any genre."
+     Served from repo root by faust/soak-run.js (headless playwright), or open
+     http://localhost:8777/faust/soak.html and click Go for a manual soak.
+
+     THREE static probes are tapped, because the degradation could live at
+     different altitudes and an AnalyserNode only sees what is UPSTREAM of it:
+       - BASS voice: handle._pools.get('bass').nodes[0].out — the tb303 voice's
+         own output (mono-voice AudioParam-timeline theory).
+       - MASTER (graph): handle.analyser — the whole mix INSIDE the AudioContext
+         graph (fx_bus param-timeline theory; upstream of the analyser).
+       - ELEMENT (true out): captureStream() of the <audio> element that plays
+         the MediaStreamDestination — this is what the speakers ACTUALLY get,
+         INCLUDING any MediaStream-sink jitter/underrun the graph analyser is
+         blind to (media-element-route theory). Only present when the media
+         route is active (i.e. NOT opts.directOut).
+     goSoak(genre, seed, {directOut}) picks the A/B leg. -->
+<html>
+<head><meta charset="utf-8"><title>FaustLive SOAK</title></head>
+<body style="background:#111;color:#9fe;font:13px monospace;padding:1em">
+<button id="go">Go soak (acidhouse)</button>
+<button id="stop">Stop</button>
+<pre id="log"></pre>
+<script src="../csd-engine.js"></script>
+<script src="../genre-kernel.js"></script>
+<script src="state-engine.js"></script>
+<script src="found-player.js"></script>
+<script src="sampler.js"></script>
+<script src="live.js"></script>
+<script>
+  const logEl = document.getElementById("log");
+  const log = (m) => { logEl.textContent += m + "\n"; if (logEl.textContent.length > 8000) logEl.textContent = logEl.textContent.slice(-6000); };
+  let handle = null, state = null, T0 = 0, mode = "shipped";
+  window.SOAK = { samples: [], spectra: {}, bars: [], loads: [], errors: [], status: [], done: false, mode: "shipped", elementTap: false };
+
+  // ---- generic static analysis over any AnalyserNode ----
+  function analyzeFrame(an, freqBuf, timeBuf, sr) {
+    an.getFloatFrequencyData(freqBuf);
+    an.getFloatTimeDomainData(timeBuf);
+    const bh = sr / (freqBuf.length * 2);   // fftSize = bins*2
+    const bandDb = (loHz, hiHz) => {        // power-average the band, back to dB (-Inf bins -> power 0)
+      const a = Math.max(1, Math.floor(loHz / bh)), b = Math.min(freqBuf.length - 1, Math.ceil(hiHz / bh));
+      let s = 0, n = 0; for (let i = a; i <= b; i++) { s += Math.pow(10, freqBuf[i] / 10); n++; }
+      return n ? 10 * Math.log10(s / n + 1e-20) : -200;
+    };
+    const loDb = bandDb(40, 300), hiDb = bandDb(2500, 12000);
+    let rms = 0, sumAbs = 0, sumDelta = 0, peakDelta = 0;
+    for (let i = 0; i < timeBuf.length; i++) {
+      const x = timeBuf[i]; rms += x * x; sumAbs += Math.abs(x);
+      if (i) { const d = Math.abs(x - timeBuf[i - 1]); sumDelta += d; if (d > peakDelta) peakDelta = d; }
+    }
+    rms = Math.sqrt(rms / timeBuf.length);
+    const hfc = sumAbs > 1e-6 ? sumDelta / sumAbs : 0;   // high-freq content (broadband-static proxy)
+    return { loDb, hiDb, hfc, peakDelta, rms };
+  }
+  // a probe = an analyser + scratch buffers; sampleProbe averages ~1s of frames
+  function makeProbe(an) { return { an, freq: new Float32Array(an.frequencyBinCount), time: new Float32Array(an.fftSize) }; }
+  async function sampleProbe(pr, sr) {
+    if (!pr) return null;
+    let acc = { loDb: 0, hiDb: 0, hfc: 0, rms: 0 }, frames = 0, clicks = 0, peak = 0;
+    for (let k = 0; k < 16; k++) {
+      const f = analyzeFrame(pr.an, pr.freq, pr.time, sr);
+      acc.loDb += f.loDb; acc.hiDb += f.hiDb; acc.hfc += f.hfc; acc.rms += f.rms;
+      if (f.peakDelta > peak) peak = f.peakDelta;
+      if (f.rms > 0.01 && f.peakDelta > 0.4) clicks++;
+      frames++; await new Promise(r => setTimeout(r, 60));
+    }
+    for (const k in acc) acc[k] /= frames;
+    const voiced = acc.rms > 0.003;
+    return { rms: +acc.rms.toFixed(4), loDb: voiced ? +acc.loDb.toFixed(1) : null,
+      nfloorDb: voiced ? +acc.hiDb.toFixed(1) : null, hfc: voiced ? +acc.hfc.toFixed(3) : null,
+      clicks, peakDelta: +peak.toFixed(3) };
+  }
+
+  // ---- probe wiring ----
+  let bassProbe = null, bassNode = null, nodeRecreations = 0, masterProbe = null, elemProbe = null;
+  function ensureBassProbe() {
+    const pool = handle._pools && handle._pools.get("bass");
+    if (!pool || !pool.nodes || !pool.nodes.length) return null;
+    const cur = pool.nodes[0];
+    if (cur.node !== bassNode) {
+      if (bassNode !== null) nodeRecreations++;
+      bassNode = cur.node;
+      const an = handle.ctx.createAnalyser(); an.fftSize = 4096; an.smoothingTimeConstant = 0;
+      try { cur.out.connect(an); } catch (e) {}
+      bassProbe = makeProbe(an);
+    }
+    return bassProbe;
+  }
+  function ensureMasterProbe() {   // handle.analyser is the graph master (fftSize 2048)
+    if (!masterProbe && handle.analyser) masterProbe = makeProbe(handle.analyser);
+    return masterProbe;
+  }
+  function ensureElemProbe() {     // the REAL element output, past the MediaStream sink
+    if (elemProbe || !handle.mediaEl) return elemProbe;
+    try {
+      const el = handle.mediaEl;
+      const stream = (el.captureStream && el.captureStream()) || el.srcObject;
+      if (!stream) return null;
+      const src = handle.ctx.createMediaStreamSource(stream);
+      const an = handle.ctx.createAnalyser(); an.fftSize = 4096; an.smoothingTimeConstant = 0;
+      src.connect(an);
+      elemProbe = makeProbe(an); SOAK.elementTap = true;
+      log("element output tap ACTIVE (captureStream)");
+    } catch (e) { log("element tap failed: " + e.message); elemProbe = null; }
+    return elemProbe;
+  }
+
+  window.goSoak = async function (genre, seed, opts) {
+    genre = genre || "acidhouse"; seed = seed || 7; opts = opts || {};
+    mode = opts.directOut ? "directOut" : "shipped";
+    SOAK.mode = mode;
+    state = GenreKernel.track(genre, { seed });
+    T0 = performance.now();
+    handle = await FaustLive.exploreLive(
+      () => state,
+      (m) => { SOAK.status.push(m); log("status: " + m); },
+      { directOut: !!opts.directOut, forceMediaEl: !!opts.forceMediaEl,
+        onBar: (b) => { if (SOAK.bars.length < 20000) SOAK.bars.push({ t: (performance.now() - T0) / 1000, serial: b.serial, section: b.section }); },
+        onLoad: (r, e) => { if (SOAK.loads.length < 20000) SOAK.loads.push({ t: (performance.now() - T0) / 1000, r, e }); } });
+    window.handle = handle;
+    log("live on " + genre + " seed " + seed + " mode=" + mode + " mediaEl=" + (!!handle.mediaEl) +
+      " bass=" + (state.instruments && state.instruments.bass && state.instruments.bass.model));
+
+    window._soakTimer = setInterval(async () => {
+      if (!handle) return;   // a tick can fire between stopSoak() and clearInterval
+      const t = (performance.now() - T0) / 1000;
+      const sr = handle.ctx.sampleRate;
+      ensureBassProbe(); ensureMasterProbe(); ensureElemProbe();
+      const pool = handle._pools && handle._pools.get("bass");
+      const nodeCount = pool && pool.nodes ? pool.nodes.length : 0;
+      const bass = await sampleProbe(bassProbe, sr);
+      const master = await sampleProbe(masterProbe, sr);
+      const elem = await sampleProbe(elemProbe, sr);
+      const heap = (performance.memory && performance.memory.usedJSHeapSize) ? performance.memory.usedJSHeapSize / 1e6 : 0;
+      // media-element clock vs AudioContext clock: the media-route theory's
+      // signature is these two clocks DRIFTING apart over a long session (the
+      // MediaStream sink buffering/resampling to reconcile them is the static).
+      const mel = handle.mediaEl;
+      const ctxTime = +handle.ctx.currentTime.toFixed(3);
+      const melTime = mel ? +mel.currentTime.toFixed(3) : null;
+      const melReady = mel ? mel.readyState : null;
+      const s = { t: +t.toFixed(1), heapMB: +heap.toFixed(1), load: +handle.loadRatio().toFixed(3), eco: handle.ecoLevel(),
+        nodeCount, nodeRecreations, ctxTime, melTime, melReady, bass, master, elem };
+      SOAK.samples.push(s);
+      const f = (p) => p ? `rms=${p.rms} nf=${p.nfloorDb == null ? "-" : p.nfloorDb} hfc=${p.hfc == null ? "-" : p.hfc} clk=${p.clicks}` : "n/a";
+      log(`t=${s.t}s heap=${s.heapMB} load=${s.load} eco=${s.eco} n=${nodeCount}/${nodeRecreations} | BASS ${f(bass)} | MSTR ${f(master)} | ELEM ${f(elem)}`);
+    }, 5000);
+    return true;
+  };
+
+  // Welch-averaged spectrum of a probe over ~5s (min-1 vs min-11 comparison)
+  window.captureSpectrum = async function (label) {
+    const sr = handle.ctx.sampleRate;
+    const grab = (pr) => {
+      if (!pr) return null;
+      const acc = new Float32Array(pr.freq.length);
+      return { acc, frames: 0, pr };
+    };
+    ensureBassProbe(); ensureMasterProbe(); ensureElemProbe();
+    const targets = { bass: grab(bassProbe), master: grab(masterProbe), elem: grab(elemProbe) };
+    const end = performance.now() + 5000;
+    while (performance.now() < end) {
+      for (const key in targets) {
+        const g = targets[key]; if (!g) continue;
+        g.pr.an.getFloatFrequencyData(g.pr.freq);
+        for (let i = 0; i < g.pr.freq.length; i++) g.acc[i] += Math.pow(10, g.pr.freq[i] / 10);
+        g.frames++;
+      }
+      await new Promise(r => setTimeout(r, 90));
+    }
+    const out = { t: (performance.now() - T0) / 1000, sr };
+    for (const key in targets) {
+      const g = targets[key]; if (!g || !g.frames) { out[key] = null; continue; }
+      const spec = []; for (let i = 0; i < g.acc.length; i++) spec.push(+(10 * Math.log10(g.acc[i] / g.frames + 1e-12)).toFixed(2));
+      out[key] = { bins: g.acc.length, spec };
+    }
+    SOAK.spectra[label] = out;
+    log("captured spectrum '" + label + "'");
+    return true;
+  };
+
+  window.stopSoak = function () {
+    clearInterval(window._soakTimer);
+    if (handle) { SOAK.errors.push(...handle.errors); handle.stop(); handle = null; }
+    SOAK.done = true;
+    return SOAK;
+  };
+  document.getElementById("go").onclick = () => goSoak("acidhouse", 7);
+  document.getElementById("stop").onclick = () => stopSoak();
+</script>
+</body>
+</html>

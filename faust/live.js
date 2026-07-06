@@ -44,7 +44,7 @@
     try { ctx = new AC({ sampleRate: 44100, latencyHint: "playback" }); } catch (e) { ctx = new AC(); }
     try { ctx.resume(); } catch (e) {}
 
-    // ---- MEDIA-ELEMENT OUTPUT ROUTE (mobile background survival) ----
+    // ---- MEDIA-ELEMENT OUTPUT ROUTE (mobile background survival) — MOBILE ONLY ----
     // iOS/Android silence a bare WebAudio graph the moment the screen locks or
     // the tab backgrounds, but they keep a *playing* <audio> element alive — the
     // OS classifies it as media playback (the lock-screen surface). So we route
@@ -54,13 +54,32 @@
     // ctx.destination is left UNCONNECTED (wiring both = double audio). The
     // AudioContext still runs — msDest pulls the graph continuously, so the
     // analyser + balance() taps (both fed from `master`, upstream) update exactly
-    // as before and rms()/the boot bar keep working; msDest adds only a few ms
-    // of stream buffering, inaudible for ambient. Feature-detected: where there
-    // is no MediaStreamDestination (older desktop, node) we fall back to the
-    // classic analyser -> ctx.destination route with byte-identical behavior, so
-    // desktop and the offline paths are untouched.
+    // as before and rms()/the boot bar keep working.
+    //
+    // LONG-SESSION STATIC FIX (2026-07-06, SOAK crew): this route makes the
+    // <audio> element the SOLE output, and its playback clock DRIFTS from the
+    // AudioContext sample clock — a drift that ACCELERATES over a session (soak
+    // evidence: acidhouse ~-2.5s and citypop tens of seconds by ~10 min, both
+    // genre-independent and near-zero for the first ~5 min). The MediaStream sink
+    // continuously resamples/rebuffers to reconcile that growing drift, and the
+    // reconciliation is audible as bass static that "builds over time, like a
+    // buffering/memory issue" (Paul, on desktop). The static is INVISIBLE to the
+    // in-graph analyser (it happens at the element sink, downstream) — the soak
+    // caught it by tapping the element's real output via captureStream + tracking
+    // mediaEl.currentTime vs ctx.currentTime. Desktop gets ZERO benefit from the
+    // route (audible desktop tabs aren't throttled and don't screen-lock), so it
+    // is now gated to MOBILE: desktop reverts to the classic analyser ->
+    // ctx.destination path (drift-free, the pre-media-route behavior, which is
+    // exactly where Paul heard the regression). Where MediaStreamDestination is
+    // absent (older desktop, node) the same fallback applies.
+    // opts.directOut forces the classic path; opts.forceMediaEl forces the route
+    // (both for the soak A/B / mobile-branch verification).
+    const ua = (typeof navigator !== "undefined" && navigator.userAgent) || "";
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile|Silk|Kindle/i.test(ua) ||
+      (typeof navigator !== "undefined" && navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || "")); // iPadOS masquerades as Mac
     let msDest = null, mediaEl = null;
-    const canMediaEl = typeof document !== "undefined" &&
+    const canMediaEl = !opts.directOut && (opts.forceMediaEl || isMobile) &&
+      typeof document !== "undefined" &&
       typeof ctx.createMediaStreamDestination === "function" && typeof root.Audio !== "undefined";
     if (canMediaEl) {
       try {
