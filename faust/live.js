@@ -200,6 +200,7 @@
     // sample pauses creations ~2s — the one thing we can shed instantly).
     let bootDone = false;          // flips in the first injectChord's finally
     let airlockPausedUntil = 0;    // performance.now() horizon set by 1.4
+    let stemDistressUntil = 0;     // performance.now() horizon: stems are missing/resetting -> tier-2 prewarm backs off (its mkNode churn is exactly the extra main-thread load that keeps the worker starved)
     let _mkChain = Promise.resolve(), _mkLast = 0;
     const _regMods = new Set();    // modules whose PROCESSOR is already registered
     async function mkNodeRaw(mod, tag) {
@@ -1184,11 +1185,20 @@
     // stash nodes too (adoption wires them identically). Re-entrancy
     // coalesces: a second prepare while one is in flight replaces the pending
     // target and the in-flight loop picks up the latest.
-    let _prepTarget = null, _prepBusy = false;
+    let _prepTarget = null, _prepBusy = false, _prepLast = 0;
     async function prepare(target) {
       if (!target) return;
-      _prepTarget = target;
+      _prepTarget = target;                        // always stash the latest (deferred calls resume from it)
       if (_prepBusy) return;
+      // COALESCE rapid travel: travelStep retargets EVERY bar, so prepare fires
+      // every bar — but pre-voicing a target that moves every bar is mostly churn,
+      // and each round's mkNodeFresh load lands on the same thread the stem worker
+      // needs. Rate-limit to ~1 round / 400ms, and skip entirely while stems are
+      // missing/resetting. _prepTarget stays set, so the next bar's retarget re-
+      // drives prepare with the newest target the moment the window clears.
+      const nw = performance.now();
+      if (nw < stemDistressUntil || nw - _prepLast < 400) return;
+      _prepLast = nw;
       _prepBusy = true;
       try {
         while (_prepTarget && !abort) {
@@ -1250,19 +1260,45 @@
       const pending = new Map();       // serial -> bar record (t0 / window / cached events / status)
       let lastGood = null;             // { stems:[{layer,bus,channels}], sources:[{src,gain}] } — for VAMP reuse
       let repeatFlag = null;           // set by a VAMP; onBar drains it via takeRepeatFlag (video/UI hold)
-      let consecutiveMisses = 0, resyncArmed = false;
+      let consecutiveMisses = 0, resyncArmed = false, resyncBacklog = 0;
       const failedMods = new Set();    // modules the worker can't load (missing dist wasm) -> class LIVE
       // stats surfaced on the handle (⬡ tooltip + soak): throughput headroom in
       // x-realtime, worker queue depth, and the ladder-rung counters.
       let headroomEMA = 0, lastRenderMs = 0, lastQueued = 0;
       let missCount = 0, vampCount = 0, fallbackCount = 0, resetCount = 0;
 
-      // ---- schedule one bar's stems (or a vamp's reused buffers) into the layer
-      // taps at absolute audio time `when`. Each source rides a unity GainNode so a
-      // VAMP can equal-power-seam it against the outgoing bar. seam>0 fades the new
-      // sources IN over `seam` seconds (the vamp side of the crossfade).
-      function scheduleStems(rec, stems, when, seam) {
+      // ---- SEAM CROSSFADE STATE (the ZERO-STATIC seam-click fix) ----
+      // Consecutive bar buffers used to be BUTT-SPLICED at r.t0 (scheduleStems
+      // seam=0): sample-clean ONLY while the worker's persistent processor keeps
+      // bar N+1's head sample-continuous with bar N's tail. Under CPU load during
+      // TRAVEL the worker falls behind and RESETS its processors cold (skip-and-
+      // reset / vamp / skeleton fallback), so the next real bar starts from a COLD
+      // state whose head does NOT continue the previous tail — a hard amplitude
+      // step at the bar seam = the measured click (|Δ| up to 1.35, impossible for
+      // a real signal). Fix: track the actual playback cursor and, at any seam that
+      // is NOT guaranteed continuous, overlap the incoming bar XF seconds early and
+      // EQUAL-POWER crossfade (cos-out / sin-in) — the step becomes a ramp, so the
+      // click is physically impossible. Continuous seams (the stationary/normal
+      // case, and every seam once the worker is caught up) stay a zero-fade butt
+      // splice, byte-clean: a gentle sub-cent playbackRate stretch nulls the tiny
+      // lead that each cold overlap costs, so cached never drifts off the grid and
+      // the stems-on/off RMS A/B stays ~1.0.
+      const NOXF = !!(opts && opts.stemNoXfade);     // debug A/B: force the old butt-splice (no seam crossfade) to expose the raw discontinuity
+      const XF = 0.006, XFN = 32;                    // 6ms crossfade, 32-point curve
+      const xfIn = new Float32Array(XFN), xfOut = new Float32Array(XFN);
+      for (let i = 0; i < XFN; i++) { const a = i / (XFN - 1) * (Math.PI / 2); xfIn[i] = Math.sin(a); xfOut[i] = Math.cos(a); }
+      let playCursor = null;   // absolute audio time the NEXT bar should begin to butt-splice what's scheduled (null = use grid)
+      let seamCold = false;    // set by reset/vamp/fallback: the next real bar's head does NOT continue the tail -> crossfade it
+      const stemsDur = (stems) => { let n = 0; for (const st of stems || []) if (st.channels && st.channels[0]) n = Math.max(n, st.channels[0].length); return n / STEM_SR; };   // ACTUAL scheduled length (a vamp reuses the PREVIOUS bar's buffers, whose length differs from the current grid slot by up to a block — the cursor must track the real tail so the next crossfade overlaps it)
+
+      // ---- schedule one bar's stems into the layer taps at absolute time `when`.
+      // Each source rides a per-bar GainNode. fadeIn>0 applies the equal-power
+      // fade-IN curve over the first `fadeIn` seconds (the incoming side of a
+      // crossfade). rate!=1 micro-stretches the buffer (drift-null on continuous
+      // bars — sub-cent, inaudible; exactly 1 in the stationary case).
+      function scheduleStems(rec, stems, when, fadeIn, rate) {
         const t = Math.max(ctx.currentTime + 0.02, when);
+        const pr = rate && rate > 0 ? rate : 1;
         const srcs = [];
         for (const st of stems) {
           const L = layers.get(st.layer); if (!L) continue;
@@ -1275,11 +1311,12 @@
             for (let c = 0; c < ch.length; c++) buf.copyToChannel(ch[c], c);
           } catch (e) { continue; }
           const src = ctx.createBufferSource(); src.buffer = buf;
+          if (pr !== 1) try { src.playbackRate.value = pr; } catch (e) {}
           const g = ctx.createGain();
           src.connect(g); g.connect(dest);
-          if (seam > 0) { const s0 = Math.max(ctx.currentTime, t - seam * 0.5);
-            g.gain.setValueAtTime(0, s0); g.gain.linearRampToValueAtTime(1, s0 + seam); }
-          try { src.start(t); src.stop(t + buf.length / STEM_SR + (seam || 0)); } catch (e) { continue; }
+          if (fadeIn > 0) { try { g.gain.setValueCurveAtTime(xfIn, t, fadeIn); } catch (e) {} }
+          const dur = buf.length / STEM_SR / pr;
+          try { src.start(t); src.stop(t + dur + (fadeIn || 0) + 0.02); } catch (e) { continue; }
           src.onended = () => { try { g.disconnect(); } catch (e) {} };   // release the per-bar gain once its bar has played (no pending-node pileup)
           srcs.push({ src, gain: g });
           L.lastBar = serial;   // mixer "active" indicator stays truthful for cached layers
@@ -1287,19 +1324,68 @@
         return srcs;
       }
 
-      // ---- RUNG 1 VAMP: re-play the previous bar's stems at the missed bar's t0
-      // with a 50ms equal-power seam (fade the outgoing sources down, the vamp up).
-      // The content is a repeat of already-heard audio, so it can only ever sound
-      // like a held bar — never static. Zero noise by construction.
-      function vampInto(rec) {
-        if (!lastGood) return false;
-        const when = Math.max(ctx.currentTime + 0.02, rec.t0), seam = 0.05;
-        const tf = Math.max(ctx.currentTime, when - seam * 0.5);
-        for (const s of lastGood.sources) {
-          try { s.gain.gain.setValueAtTime(s.gain.gain.value, tf); s.gain.gain.linearRampToValueAtTime(0, tf + seam); } catch (e) {}
+      // fade a placed bar's sources OUT (equal-power) over [at, at+dur] — the
+      // outgoing side of a crossfade. Outgoing sources are at unity (their fade-in,
+      // if any, finished a full bar ago), so hold 1 then run the cos curve.
+      function fadeOutSources(sources, at, dur) {
+        const t = Math.max(ctx.currentTime, at);
+        for (const s of sources || []) {
+          try { s.gain.gain.cancelScheduledValues(t); s.gain.gain.setValueAtTime(1, t); s.gain.gain.setValueCurveAtTime(xfOut, t, dur); } catch (e) {}
         }
-        const srcs = scheduleStems(rec, lastGood.stems, when, seam);
-        lastGood = { stems: lastGood.stems, sources: srcs };   // chain further vamps off this repeat
+      }
+
+      // ---- PLACE a freshly-shipped bar. `cold` => this bar's head is NOT
+      // guaranteed to continue what's already scheduled (post-reset / post-vamp /
+      // post-fallback / first bar): overlap XF early and equal-power crossfade so
+      // the seam is a ramp, never a step. Otherwise BUTT-SPLICE to the running
+      // playCursor (transparent) with a gentle drift-null stretch.
+      function placeBar(rec, stems, cold) {
+        const grid = Math.max(ctx.currentTime + 0.02, rec.t0);
+        const dur0 = rec.lenSamples / STEM_SR;
+        if (NOXF) {   // debug A/B: the ORIGINAL butt-splice on the grid, no fade — exposes the raw cold-seam step
+          const srcs = scheduleStems(rec, stems, grid, 0, 1);
+          lastGood = { stems, sources: srcs };
+          playCursor = grid + dur0;
+          return;
+        }
+        if (cold || playCursor == null) {
+          // A cold seam only needs the OVERLAP crossfade if there is live audio to
+          // fade against; the very first bar (or a bar after a fallback dropped the
+          // cursor) has nothing to overlap, so it starts ON the grid and just fades
+          // in from silence — no lead introduced, nothing to null.
+          const haveOut = playCursor != null && lastGood && lastGood.sources && lastGood.sources.length;
+          const base = haveOut ? Math.min(playCursor, grid) : grid;
+          const startAt = Math.max(ctx.currentTime + 0.02, base - (haveOut ? XF : 0));
+          if (haveOut) fadeOutSources(lastGood.sources, startAt, XF);   // ramp the outgoing tail down as the cold head ramps up
+          const srcs = scheduleStems(rec, stems, startAt, XF, 1);        // fade in the cold head either way (declick from silence)
+          lastGood = { stems, sources: srcs };
+          playCursor = startAt + dur0;
+        } else {
+          const startAt = Math.max(ctx.currentTime + 0.02, playCursor);
+          const lead = grid - startAt;                                   // >0 when cached leads the grid (past cold overlaps)
+          const rate = lead > 0.0005 ? dur0 / (dur0 + Math.min(lead, 0.003)) : 1;   // reclaim <=3ms/bar, sub-cent
+          const srcs = scheduleStems(rec, stems, startAt, 0, rate);      // zero fade => byte-clean continuous seam
+          lastGood = { stems, sources: srcs };
+          playCursor = startAt + dur0 / rate;
+        }
+      }
+
+      // ---- RUNG 1 VAMP: re-play the previous bar's stems at the missed bar's slot
+      // with a 30ms equal-power seam (fade the outgoing sources down, the repeat
+      // up). The content is a repeat of already-heard audio, so it can only ever
+      // sound like a held bar — never static. seamCold marks the FOLLOWING real bar
+      // discontinuous (it continues the pre-vamp state, not the repeat).
+      function vampInto(rec) {
+        if (!lastGood || !lastGood.stems) return false;
+        const seam = 0.03;
+        const base = playCursor != null ? Math.min(playCursor, rec.t0) : rec.t0;
+        const when = Math.max(ctx.currentTime + 0.02, base - seam);
+        fadeOutSources(lastGood.sources, when, seam);
+        const vamped = lastGood.stems;
+        const srcs = scheduleStems(rec, vamped, when, seam, 1);
+        lastGood = { stems: vamped, sources: srcs };   // chain further vamps off this repeat
+        playCursor = when + stemsDur(vamped);          // the vamp's REAL end (its buffers are the previous bar's length)
+        seamCold = true;
         return true;
       }
 
@@ -1312,6 +1398,11 @@
       function schedCachedOnSkeletons(rec) {
         const now = ctx.currentTime;
         const at = (b) => Math.max(now + 0.03, rec.t0 + (b - rec.lo) * rec.spb);
+        // if a real/vamp bar is still ringing into this slot, ramp it out over the
+        // fallback's onset instead of letting its buffer end abruptly (a loud last
+        // sample -> silence is itself a step). The skeleton voices fade in on their
+        // own gate envelopes, so this is the outgoing half of the crossfade.
+        if (lastGood && lastGood.sources) fadeOutSources(lastGood.sources, Math.max(now + 0.02, rec.t0), XF);
         for (const e of rec.cachedEvents) {
           const pool = pools.get(e.unit); if (!pool || !pool.nodes.length) continue;
           const tOn = at(e.beat);
@@ -1335,6 +1426,10 @@
           v.tailUntil = tOff + (pool.spec.tail != null ? pool.spec.tail : 1);
           layers.get(LAYER_OF_UNIT(e.unit)).lastBar = serial;
         }
+        // the fallback played on LIVE skeleton pools, not into a stem buffer: the
+        // next real worker bar can't sample-continue it. Drop the (now stale)
+        // cursor and mark the seam cold so that bar fades in from silence.
+        seamCold = true; playCursor = null;
       }
 
       // ---- receive a shipped window and place it (or record a worker failure) ----
@@ -1343,7 +1438,7 @@
         if (d.type === "ready") { ready = true; if (resolveReady) resolveReady(true); return; }
         if (d.type === "initfail") { dead = true; jlog("stemInitFail", d.error); if (resolveReady) resolveReady(false); return; }
         if (d.type === "pong") return;
-        if (d.type === "resetdone") { resetCount++; jlog("stemResetDone", "from" + d.fromSerial); return; }
+        if (d.type === "resetdone") { resetCount++; seamCold = true; stemDistressUntil = performance.now() + 2000; jlog("stemResetDone", "from" + d.fromSerial); return; }   // next real bar starts from a COLD processor -> crossfade its seam
         if (d.type === "pending") return;   // the first bar of the pipeline: nothing held yet
         if (d.type === "skipped") { const r = pending.get(d.serial); if (r) r.resolved = true; return; }
         if (d.type === "barfail") { jlog("stemBarfail", d.serial + ":" + d.error); const r = pending.get(d.serial); if (r) r.resolved = true; return; }
@@ -1354,8 +1449,8 @@
           const r = pending.get(d.serial);
           if (!r || r.resolved || r.missed) return;   // gc'd, or already vamped/fallen-back for this serial
           r.arrived = true; r.resolved = true;
-          const srcs = scheduleStems(r, d.stems, r.t0, 0);
-          lastGood = { stems: d.stems, sources: srcs };
+          const cold = seamCold; seamCold = false;   // a reset/vamp/fallback since the last real bar => crossfade this seam
+          placeBar(r, d.stems, cold);
           consecutiveMisses = 0;
           // throughput headroom in x-realtime (bar audio seconds / render seconds)
           const barSec = r.lenSamples / STEM_SR, rt = d.renderMs > 0 ? barSec / (d.renderMs / 1000) : 0;
@@ -1376,6 +1471,7 @@
           if (!r.arrived && !r.missed && now < r.t0 - 1.0) behind++;   // still in flight, deadline not yet reached
           if (now >= r.t0 - 1.0) {
             r.missed = true; r.resolved = true; missCount++; consecutiveMisses++;
+            stemDistressUntil = performance.now() + 2000;   // back the prewarm off while we're behind
             if (!dead && consecutiveMisses < 2 && lastGood) {
               vampInto(r); repeatFlag = "vamp"; vampCount++;
               jlog("stemVamp", s + "@miss" + consecutiveMisses);
@@ -1385,9 +1481,18 @@
             }
           }
         }
-        // RE-SYNC: worker alive but >1 bar behind -> arm a cold skip-and-reset for
-        // the next section boundary (fresh attacks mask it; onSection fires it).
-        if (!dead && behind > 1) resyncArmed = true;
+        // RE-SYNC: the cold skip-and-reset is now a LAST RESORT. The old trigger
+        // (>1 bar in flight) fired almost every section during travel — but with
+        // ~10s lookahead there are always several bars in flight, and each reset
+        // makes the NEXT bar start from a cold processor (the seam the crossfade
+        // then has to mask). Vamps/skeleton fallbacks are clean repeats and cover
+        // a transient stall on their own, so only arm the reset when the backlog
+        // is DEEPER than the whole pipeline (the worker will never catch up within
+        // the runway) AND has stayed that deep for ~500ms — a genuine, sustained
+        // starvation, not a throttle blip. onSection still fires it (fresh attacks
+        // help too), but far less often.
+        if (!dead && behind > STEM_BARS) resyncBacklog++; else resyncBacklog = 0;
+        if (resyncBacklog >= 5) { resyncArmed = true; resyncBacklog = 0; }
       }, 100);
 
       // ---- build + init the worker; on ANY failure, stems stay OFF (stem=null) ----
@@ -1447,6 +1552,11 @@
         // assert the ladder engages with no click. Marks dead -> injectChord
         // reverts new bars to full live, in-flight bars ride the ladder.
         kill: () => { dead = true; jlog("stemKill", "debug"); try { worker.terminate(); } catch (e) {} },
+        // debug hook (forced-RESET seam test): drop the worker's processors COLD
+        // WITHOUT killing it, exactly like the internal skip-and-reset — the next
+        // shipped bar starts from a cold state (resetdone sets seamCold), so the
+        // seam crossfade is exercised deterministically. fromSerial=-1 skips nothing.
+        forceReset: () => { if (ready && !dead) { try { worker.postMessage({ type: "reset", fromSerial: -1 }); jlog("stemForceReset", "debug"); } catch (e) {} } },
         _cleanup: () => { clearInterval(dlTimer); try { worker.postMessage({ type: "flush" }); } catch (e) {} try { worker.terminate(); } catch (e) {} },
       };
     }
@@ -2063,6 +2173,13 @@
     const prewarmTimer = setInterval(() => {
       if (abort || prewarmIdx >= PREWARM_MODS.length) { clearInterval(prewarmTimer); return; }
       if (!(loadRatio > 0.97)) return;             // starved: skip this slot, keep the place in line
+      const nw = performance.now();
+      // Respect the two "the thread is already in trouble" signals: the 1.4 spike
+      // guard's airlock park, and an active stem miss/reset. A prewarm mkNode is an
+      // unconnected-but-computing worklet + a main-thread wasm setup — precisely the
+      // churn that (per the click journal: prewarm/mkNode cluster around the fallback
+      // seams) keeps the stem worker starved and cascades more resets. Hold the slot.
+      if (nw < airlockPausedUntil || nw < stemDistressUntil) return;
       const m = PREWARM_MODS[prewarmIdx++];
       if (_regMods.has(m)) return;                 // already registered by a real pool / prepare()
       jlog("prewarm", m);
@@ -2152,6 +2269,9 @@
       // forced-fallback seam test hook: kill the worker mid-run; asserts the
       // ladder engages (VAMP then skeleton recovery) with no sentinel click.
       __killStemWorker: () => { if (stem && stem.kill) stem.kill(); },
+      // forced-RESET seam test hook: drop worker processors cold (no kill); the
+      // next bar is cold and rides the seam crossfade — deterministic click A/B.
+      __forceStemReset: () => { if (stem && stem.forceReset) stem.forceReset(); },
       // chronological copy of the event journal ring (oldest first)
       journal: () => { const out = []; for (let i = 0; i < jCount; i++) out.push(J[(jHead - jCount + i + JLEN) % JLEN]); return out; },
       // opt-in sentinel/renderCapacity readouts — null when debugSentinel is
