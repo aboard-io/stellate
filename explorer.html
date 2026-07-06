@@ -328,6 +328,12 @@ function retarget(pt){
   set(patch);
   const sig=JSON.stringify(weights.map(w=>w.g+Math.round(w.w*20)))+S.modeLock;
   if(sig!==lastSig){ lastSig=sig; rebuildQueue(); }
+  // 1.6: pre-voice the TARGET while the glide is still in flight — the engine
+  // builds the destination's worklets through its airlock (stopped, stashed)
+  // so arrival costs zero instantiation inside the render window. Best-effort
+  // and coalescing (travelStep retargets every bar; the engine keeps only the
+  // latest target).
+  if(S.live&&faustHandle&&faustHandle.prepare){ try{ faustHandle.prepare(target); }catch(e){} }
 }
 // MACRO slider handler: update the axis, then REBUILD the target so the change
 // flows through the same per-bar glide path a genre move uses. While LIVE the
@@ -633,6 +639,16 @@ function bootAbort(){   // stop pressed mid-warmup, or boot failed: pull it down
 }
 window.__BOOT={ stage:()=>bootStageV, active:()=>bootActive, on:()=>bootEl.classList.contains("on"),
   ind:()=>bootEl.classList.contains("ind"), width:()=>bootFill.style.width };   // headless probe
+// ?debugSentinel=1 arms the engine's opt-in output-truth instruments (click
+// sentinel worklet + Chrome renderCapacity tap, faust/live.js) — default off,
+// so the everyday audio path carries zero extra nodes/listeners. The readouts
+// land in the ⬡ CPU-hex tooltip below.
+const QSFLAGS=new URLSearchParams(location.search);
+const DBG_SENTINEL=QSFLAGS.get("debugSentinel")==="1";
+// ?forceClassicOut=1 — bypass the mobile media-element output route and drive
+// ctx.destination directly even on a mobile UA (the R8 escape hatch; pairs
+// with the engine's opt-in element recycle, faust/live.js 1.7).
+const FORCE_CLASSIC=QSFLAGS.get("forceClassicOut")==="1";
 async function goLive(){
   bootStart();
   try{
@@ -646,7 +662,7 @@ async function goLive(){
     }
     vidReset();   // fresh shuffled video bag per play session — different clip order every time
     set({live:true,barCount:0,holdUntil:{}}); rebuildQueue();   // fresh instrument-hold timers per session
-    faustHandle=await FaustLive.exploreLive(()=>S.playing, m=>{set({status:m}); bootStatus(m);}, { onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
+    faustHandle=await FaustLive.exploreLive(()=>S.playing, m=>{set({status:m}); bootStatus(m);}, { debugSentinel:DBG_SENTINEL, forceClassicOut:FORCE_CLASSIC, onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
       bootBar();   // first bar scheduled -> advance the warm-up bar, then it waits on real RMS
       set({barInfo:info,barCount:S.barCount+1});
       if(S.waypoints.length>=2) travelStep();
@@ -1183,6 +1199,18 @@ function cpuMeterTick(){
     // (sleepers cost ~0) vs the LRU-harvest hard cap on residents
     document.getElementById("cpuNodes").textContent="⬡"+awake+":"+nodes+(cap?"/"+cap:"");
     document.getElementById("cpuEco").textContent=eco>0?"eco"+eco:"";
+    // tooltip: output route + worklet truth always; sentinel/renderCapacity
+    // readouts only when armed (?debugSentinel=1 — h.sentinel() is null off)
+    let tip="out:"+(h.outputRoute||"?");
+    try{
+      const wt=h.workletTruth&&h.workletTruth();
+      if(wt) tip+=" · ⬡truth "+wt.alive+"a/"+wt.counted+"c ("+wt.created+"-"+wt.destroyed+")";
+      const sn=h.sentinel&&h.sentinel();
+      if(sn&&sn.latest) tip+=" · snt clk "+sn.latest.clicks+"|Σ"+sn.total.clicks+" gap "+sn.latest.gaps+"|Σ"+sn.total.gaps+" pk "+sn.latest.peak.toFixed(2);
+      const rc=h.renderCapacity&&h.renderCapacity();
+      if(rc&&rc.latest) tip+=" · "+(rc.api==="renderCapacity"?"rc "+Math.round(rc.latest.averageLoad*100)+"%/"+Math.round(rc.latest.peakLoad*100)+"%pk ":"ps ")+"urΣ"+rc.total.underrunSum.toFixed(3)+" ue"+(rc.total.underrunEvents||0);
+    }catch(e){}
+    cpuEl.title=tip;
   }
   setTimeout(cpuMeterTick,1000);
 }
