@@ -210,6 +210,7 @@
         debugSentinel: !!opts.debugSentinel, onSentinel,   // output-truth: click sentinel + renderCapacity
         maxWorklets: opts.maxWorklets,   // undersized-cap gate: prove LRU harvest pins the count
         costCeiling: opts.costCeiling,   // 2.3 awake-cost ceiling override (undersized runs prove the steal path)
+        stems: !!opts.stems, stemLookahead: opts.stemLookahead,   // Stage 3: A/B the rolling stem cache (soak-travel-run --stems)
         onBar: (b) => { if (SOAK.bars.length < 20000) SOAK.bars.push({ t: (performance.now() - T0) / 1000, serial: b.serial, section: b.section, station: stations[stIdx].name }); },
         onLoad: (r, e) => { if (SOAK.loads.length < 20000) SOAK.loads.push({ t: (performance.now() - T0) / 1000, r, e }); } });
     window.handle = handle;
@@ -233,6 +234,7 @@
         harvests: handle.harvestCount ? handle.harvestCount() : 0,
         cap: handle.maxWorklets ? handle.maxWorklets() : 0,
         truth: handle.workletTruth ? handle.workletTruth() : null,   // zombie registry vs countWorklets, every 10s
+        stems: handle.stemStats ? handle.stemStats() : null,   // Stage 3: worker headroom + deadline-ladder counters
         sentinelTotal: handle.sentinel ? (handle.sentinel() || {}).total : null,
         rcapTotal: handle.renderCapacity ? (handle.renderCapacity() || {}).total : null,
         station: stations[stIdx].name, master, elem };

@@ -40,7 +40,7 @@ const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js
 const ROOT = path.join(__dirname, "..");
 const PORT = +(process.env.SOAK_PORT || 8794);
 // flags first (--minutes/--throttle/--gate), then the classic positionals
-const FLAGS = { minutes: 0, throttle: 0, gate: false };
+const FLAGS = { minutes: 0, throttle: 0, gate: false, stems: false, stemLookahead: 0 };
 const POS = [];
 {
   const argv = process.argv.slice(2);
@@ -48,6 +48,8 @@ const POS = [];
     if (argv[i] === "--minutes") FLAGS.minutes = +argv[++i] || 0;
     else if (argv[i] === "--throttle") FLAGS.throttle = +argv[++i] || 0;
     else if (argv[i] === "--gate") FLAGS.gate = true;
+    else if (argv[i] === "--stems") FLAGS.stems = true;          // Stage 3: arm the rolling stem cache on both legs
+    else if (argv[i] === "--stemLookahead") FLAGS.stemLookahead = +argv[++i] || 0;
     else POS.push(argv[i]);
   }
 }
@@ -73,10 +75,11 @@ const fx = (n, d = 1) => (isFinite(n) ? n.toFixed(d) : "n/a");
 async function runLeg(page, noReap) {
   await page.reload();
   await page.waitForFunction(() => typeof goSoakTravel === "function");
-  await page.evaluate(([g, s, d, nr, cap, ceil]) => goSoakTravel(g, s, d, { noReap: nr, maxWorklets: cap || undefined,
+  await page.evaluate(([g, s, d, nr, cap, ceil, stems, stemLa]) => goSoakTravel(g, s, d, { noReap: nr, maxWorklets: cap || undefined,
     costCeiling: ceil || undefined,   // 2.3: SOAK_CEILING env — undersized ceiling proves the steal path
+    stems: !!stems, stemLookahead: stemLa || undefined,   // Stage 3: rolling stem cache A/B
     debugSentinel: true }),   // output-truth instruments always armed in the soak
-    [GENRES, SEED, DWELL, noReap, CAP, +(process.env.SOAK_CEILING || 0)]);
+    [GENRES, SEED, DWELL, noReap, CAP, +(process.env.SOAK_CEILING || 0), FLAGS.stems, FLAGS.stemLookahead]);
   const start = Date.now();
   while ((Date.now() - start) / 1000 < SECS) await sleep(5000);
   const R = await page.evaluate(() => stopSoak());
@@ -191,6 +194,13 @@ function printLeg(tag, A, R) {
   console.log(`  NODES: base ${fx(A.nBase)} (max ${A.nBaseMax}) -> late ${fx(A.nLate)} (max ${A.nLateMax})  overall min/max ${A.nMin}/${A.nMax}${A.cap ? "  CAP " + A.cap : ""}`);
   if (A.awakeLate != null) console.log(`  AWAKE (computing): base ${fx(A.awakeBase)} -> late ${fx(A.awakeLate)} (max ${A.awakeMax}) — sleepers cost ~0`);
   if (isFinite(A.costMax) && A.costMax > 0) console.log(`  AWAKE COST (2.3): base ${fx(A.costBase)} -> late ${fx(A.costLate)} (max ${fx(A.costMax)})   costSteals ${A.costSteals}`);
+  // Stage 3: worker throughput headroom + deadline-ladder tallies (last sample)
+  const st = (A.S.filter((s) => s.stems && s.stems.active).pop() || {}).stems;
+  if (st) {
+    const hrs = A.S.filter((s) => s.stems && s.stems.active && s.stems.headroom).map((s) => s.stems.headroom);
+    console.log(`  STEMS: headroom base->late ${fx(mean(hrs.slice(0, Math.ceil(hrs.length / 3))))}×->${fx(mean(hrs.slice(-Math.ceil(hrs.length / 3))))}× (min ${fx(Math.min(...hrs))}×)   queued≤${Math.max(...A.S.filter((s) => s.stems).map((s) => s.stems.queued || 0))}` +
+      `   misses ${st.misses} vamps ${st.vamps} fallbacks ${st.fallbacks} resets ${st.resets}${st.dead ? " WORKER-DEAD" : ""}${st.failed && st.failed.length ? "  live-classed[" + st.failed.join(",") + "]" : ""}`);
+  }
   console.log(`  POOLS: base ${fx(A.pBase)} -> late ${fx(A.pLate)} (max ${A.pMax})   reaps ${A.reaps}  harvests ${A.harvests}`);
   console.log(`  LOAD:  base ${fx(A.lBase, 3)} -> late ${fx(A.lLate, 3)}   ecoMax ${A.ecoMax}`);
   console.log(`  HEAP:  base ${fx(A.hBase, 1)}MB -> late ${fx(A.hLate, 1)}MB`);

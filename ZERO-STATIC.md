@@ -138,7 +138,26 @@ state-engine/kernel/press, so they pass by construction — run them anyway.
 - [x] Stage 3 prerequisite — render-core.js extracted, press byte-parity
       PROVEN (3 states sha256-equal); worker API surface = offline
       processor {render, setParamValue} + injected factory.
-- [ ] Stage 3 stem cache (in flight: stem-worker + live integration)
+- [x] Stage 3 stem cache — LANDED behind `?stems=1` (default OFF). Worker
+      byte-exact vs press (the bar-seam double-render fixed); live.js posts
+      CACHED units per bar, schedules per-layer×per-bus stems as buffers
+      into the layer collectors (mixer/fx/onBar all still live); asleep
+      skeleton pools back the deadline-miss ladder (vamp → skeleton
+      fallback → skip-and-reset). Worker headroom ~280-650× at ~10s
+      lookahead; all 92 genres' cached dx7 algs present in dist/.
+      A/B (stationary citypop/dinosynth — the target case): awake cost
+      ~halved (9.1→4.4), underruns BETTER (0.94→0.19), layer RMS corr
+      0.998, sentinel 0. CAVEAT: a fast 18s-dwell travel tour is the
+      feature's worst case — constant genre-hopping keeps the lookahead
+      refilling, so boot/entry bars fall to skeleton fallback and stems-on
+      can read slightly worse than off there; self-heals once the worker
+      gets ~10s ahead in-genre. FOLLOW-UP: pre-post the glide TARGET's
+      first cached bars during travel (the prepare() idea, for stems) to
+      kill the entry-transient fallbacks.
+- [x] Addendum 2 (Paul): dancey rebalance — energy-preserving blend
+      inheritance + 13 genres' pattern pools restored (arps/rolling/16ths);
+      grand tour energy-weighted (84% groovy stops vs 64%). Envelope
+      declick: DX7-velocity + pingpong-send gain steps micro-ramped.
 - [x] Addendum (Paul): THE LOON FIXES — speech-gated decode boost
       (nature caps +6dB), whistle ceiling on auto-tune (|r(T/2)|≥0.65 =
       lone partial = no bend), bird curation (loon=canawave only,

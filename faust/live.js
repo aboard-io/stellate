@@ -740,7 +740,7 @@
       // tier 1: off-genre leftovers; tier 2: current genre's own idle pools
       const offGenre = lruOf([...pools.entries()].filter(([k, p]) => !curUnitKeys.has(k) && silent(p)));
       const inGenreIdle = lruOf([...pools.entries()].filter(([k, p]) =>
-        curUnitKeys.has(k) && serial - (p.lastServed == null ? serial : p.lastServed) >= IDLE_EVICT_BARS && silent(p)));
+        curUnitKeys.has(k) && !p.stemmed && serial - (p.lastServed == null ? serial : p.lastServed) >= IDLE_EVICT_BARS && silent(p)));
       let i = 0;
       for (const [k, p] of [...offGenre, ...inGenreIdle]) {
         if (over <= 0 || i >= HARVEST_MAX_PER_PASS) break;
@@ -777,11 +777,19 @@
       if (u.poolCap != null) n = Math.min(n, u.poolCap);
       return n;
     }
-    async function ensurePool(key, u) {
+    async function ensurePool(key, u, wantN) {
       let pool = pools.get(key);
-      if (pool && pool.module === u.module) { pool.lastServed = serial; await ensureInserts(key, pool, u); retune(pool, u); applyDx7(pool, u); return pool; }
+      // wantN overrides the role/dx7/mono pool table — used by ensureSkeletonPool
+      // (Stage 3) to build a ONE-node fallback pool for a CACHED unit. The reuse
+      // gate now also requires the resident pool to be at LEAST as big as asked:
+      // a 1-node skeleton must REBUILD to full poly the instant a stems-unhealthy
+      // bar reclassifies its unit LIVE (a woken-thin pad would otherwise persist).
+      // wantN undefined => n === poolSizeFor(u) and a normally-built pool already
+      // has exactly that many nodes, so the >= gate is a no-op: stems-off behavior
+      // is byte-identical.
+      const n = wantN != null ? wantN : poolSizeFor(u);
+      if (pool && pool.module === u.module && pool.nodes.length >= n) { pool.lastServed = serial; await ensureInserts(key, pool, u); retune(pool, u); applyDx7(pool, u); return pool; }
       if (pool) { pools.delete(key); retirePool(pool); }
-      const n = poolSizeFor(u);
       // HARD CEILING: make room BEFORE instantiating (LRU harvest, see above).
       harvestForBudget(n);
       const nodes = [];
@@ -1077,6 +1085,29 @@
         }
       }
     }
+    // ---- ZERO-STATIC Stage 3: SKELETON POOLS (the deadline ladder's rung 2) ----
+    // When the stem worker is healthy a CACHED unit's audio comes from the worker
+    // (scheduled as AudioBufferSourceNodes into its layer taps), so the live path
+    // does NOT stand up its full voice pool. But we keep a ONE-node pool per
+    // cached unit, built through the intact ensurePool path (routing / dx7 /
+    // insert chain all wired) and immediately STOPPED — zero compute, invisible to
+    // awakeCost/awakeCount, but real, counted worklets (workletTruth sees them).
+    // If a bar's stems miss their deadline TWICE (or the worker dies), the ladder
+    // wakes these skeletons and schedules that bar's cached events onto them: a
+    // thinner (pool-of-1) but click-free rendering, with no instantiation spike
+    // because the node already exists asleep. `pool.stemmed` marks it so the
+    // idle-harvest never reclaims it out from under the fallback (it is "served"
+    // every bar anyway, but the flag is belt-and-braces) and so injectChord knows
+    // its events are the worker's to render.
+    async function ensureSkeletonPool(key, u) {
+      const pool = await ensurePool(key, u, 1);   // 1-node pool, full routing, through the airlock
+      pool.stemmed = true;
+      for (const v of pool.nodes)
+        if (!v.asleep) { try { if (v.node.stop) { v.node.stop(); v.asleep = true; } } catch (e) {} }
+      const ch = pool.ins && pool.ins.chain;   // 2.2 physics: the chain sleeps with its (only) voice
+      if (ch && !ch.asleep) { for (const b of ch.built) { try { if (b.node.stop) b.node.stop(); } catch (e) {} } ch.asleep = true; }
+      return pool;
+    }
     // reap off-genre pools idle > REAP_BARS (curUnitKeys = the CURRENT state's
     // unit keys, protected wholesale — even a solo silent between sections).
     // Bounded per call; the rest are caught on subsequent bars (sawtooth).
@@ -1153,6 +1184,229 @@
         }
       } finally { _prepBusy = false; }
     }
+
+    // ================= ZERO-STATIC Stage 3: THE ROLLING STEM CACHE ==============
+    // The final integration. A module Worker (faust/stem-worker.js) renders each
+    // bar's CACHED units (SE.stemClass — the heavy synthesis: dx7 family,
+    // supersaw/heavy-fleet pads + their insert chains) OFFLINE, off the audio
+    // thread, byte-for-byte as press would (stem-parity-test gates it). Here we
+    //   (1) drive the worker's ONE-BAR-LATENCY pipeline — post bar N, it ships the
+    //       window it held from N-1 (the first post ships nothing);
+    //   (2) schedule the returned per-LAYER x per-BUS stems as AudioBufferSource
+    //       nodes into the EXISTING layer collector gains, so mixer faders / M-S /
+    //       RMS / applyFx / sidechain / reverb-color all stay live and truthful;
+    //   (3) run the deadline-miss ladder (ZERO-STATIC §4, in order): VAMP the
+    //       previous bar (repetition, never noise) -> asleep skeleton-pool
+    //       fallback -> worker skip-and-reset at a section boundary.
+    // EVERYTHING here is opt-in (opts.stems) and can NEVER break playback: any
+    // failure sets stem=null / marks the worker dead and injectChord reverts to
+    // the pure-live path (cached units get full pools again).
+    const STEM_SR = 44100, STEM_BS = 64;
+    async function initStems(opts) {
+      let worker = null, ready = false, dead = false, resolveReady = null;
+      const pending = new Map();       // serial -> bar record (t0 / window / cached events / status)
+      let lastGood = null;             // { stems:[{layer,bus,channels}], sources:[{src,gain}] } — for VAMP reuse
+      let repeatFlag = null;           // set by a VAMP; onBar drains it via takeRepeatFlag (video/UI hold)
+      let consecutiveMisses = 0, resyncArmed = false;
+      const failedMods = new Set();    // modules the worker can't load (missing dist wasm) -> class LIVE
+      // stats surfaced on the handle (⬡ tooltip + soak): throughput headroom in
+      // x-realtime, worker queue depth, and the ladder-rung counters.
+      let headroomEMA = 0, lastRenderMs = 0, lastQueued = 0;
+      let missCount = 0, vampCount = 0, fallbackCount = 0, resetCount = 0;
+
+      // ---- schedule one bar's stems (or a vamp's reused buffers) into the layer
+      // taps at absolute audio time `when`. Each source rides a unity GainNode so a
+      // VAMP can equal-power-seam it against the outgoing bar. seam>0 fades the new
+      // sources IN over `seam` seconds (the vamp side of the crossfade).
+      function scheduleStems(rec, stems, when, seam) {
+        const t = Math.max(ctx.currentTime + 0.02, when);
+        const srcs = [];
+        for (const st of stems) {
+          const L = layers.get(st.layer); if (!L) continue;
+          const dest = st.bus === "dry" ? L.dry : st.bus === "rev" ? L.rev : st.bus === "del" ? L.del : st.bus === "pp" ? L.pp : null;
+          if (!dest) continue;
+          const ch = st.channels; if (!ch || !ch.length || !ch[0] || !ch[0].length) continue;
+          let buf;
+          try {
+            buf = ctx.createBuffer(ch.length, ch[0].length, STEM_SR);
+            for (let c = 0; c < ch.length; c++) buf.copyToChannel(ch[c], c);
+          } catch (e) { continue; }
+          const src = ctx.createBufferSource(); src.buffer = buf;
+          const g = ctx.createGain();
+          src.connect(g); g.connect(dest);
+          if (seam > 0) { const s0 = Math.max(ctx.currentTime, t - seam * 0.5);
+            g.gain.setValueAtTime(0, s0); g.gain.linearRampToValueAtTime(1, s0 + seam); }
+          try { src.start(t); src.stop(t + buf.length / STEM_SR + (seam || 0)); } catch (e) { continue; }
+          src.onended = () => { try { g.disconnect(); } catch (e) {} };   // release the per-bar gain once its bar has played (no pending-node pileup)
+          srcs.push({ src, gain: g });
+          L.lastBar = serial;   // mixer "active" indicator stays truthful for cached layers
+        }
+        return srcs;
+      }
+
+      // ---- RUNG 1 VAMP: re-play the previous bar's stems at the missed bar's t0
+      // with a 50ms equal-power seam (fade the outgoing sources down, the vamp up).
+      // The content is a repeat of already-heard audio, so it can only ever sound
+      // like a held bar — never static. Zero noise by construction.
+      function vampInto(rec) {
+        if (!lastGood) return false;
+        const when = Math.max(ctx.currentTime + 0.02, rec.t0), seam = 0.05;
+        const tf = Math.max(ctx.currentTime, when - seam * 0.5);
+        for (const s of lastGood.sources) {
+          try { s.gain.gain.setValueAtTime(s.gain.gain.value, tf); s.gain.gain.linearRampToValueAtTime(0, tf + seam); } catch (e) {}
+        }
+        const srcs = scheduleStems(rec, lastGood.stems, when, seam);
+        lastGood = { stems: lastGood.stems, sources: srcs };   // chain further vamps off this repeat
+        return true;
+      }
+
+      // ---- RUNG 2 FALLBACK: schedule the missed bar's CACHED events onto the
+      // pre-warmed asleep SKELETON pools (thinner poly, click-free — no
+      // instantiation spike, the nodes already exist stopped). This mirrors the
+      // injectChord note path in miniature: wake, set params ~6ms early, gate
+      // on/off. Cached units are never mono/sampler/dx7-velocity-critical in a way
+      // the skeleton can't voice (stemClass keeps mono LIVE), so voice 0 suffices.
+      function schedCachedOnSkeletons(rec) {
+        const now = ctx.currentTime;
+        const at = (b) => Math.max(now + 0.03, rec.t0 + (b - rec.lo) * rec.spb);
+        for (const e of rec.cachedEvents) {
+          const pool = pools.get(e.unit); if (!pool || !pool.nodes.length) continue;
+          const tOn = at(e.beat);
+          let v = pool.nodes.find(x => x.busyUntil <= tOn) || pool.nodes[0];
+          wake(pool, v);
+          const tset = Math.max(now, tOn - 0.006);
+          for (const [k, val] of Object.entries(e.sets)) {
+            const p = P(v.node, k);
+            if (p) p.setValueAtTime(Math.min(p.maxValue, Math.max(p.minValue, val)), tset);
+          }
+          if (pool.spec.extGainPerAmp) {   // dx7 external-gain velocity (see injectChord applyNoteParams)
+            const target = Math.min(1, pool.spec.extGainPerAmp * (e.amp || 0.1)), og = v.out.gain;
+            try { og.setValueAtTime(v.velLast != null ? v.velLast : og.value, tset); og.linearRampToValueAtTime(target, tset + 0.005); } catch (er) {}
+            v.velLast = target;
+          }
+          const durSec = e.durB * rec.spb;
+          const tOff = e.hold ? tOn + durSec : e.drum ? tOn + 0.012 : tOn + Math.max(0.012, durSec) - 0.008;
+          const g = P(v.node, "gate");
+          if (g) { g.setValueAtTime(1, tOn); g.setValueAtTime(0, tOff); }
+          v.busyUntil = tOff;
+          v.tailUntil = tOff + (pool.spec.tail != null ? pool.spec.tail : 1);
+          layers.get(LAYER_OF_UNIT(e.unit)).lastBar = serial;
+        }
+      }
+
+      // ---- receive a shipped window and place it (or record a worker failure) ----
+      function handleWorkerMsg(e) {
+        const d = e.data; if (!d || !d.type) return;
+        if (d.type === "ready") { ready = true; if (resolveReady) resolveReady(true); return; }
+        if (d.type === "initfail") { dead = true; jlog("stemInitFail", d.error); if (resolveReady) resolveReady(false); return; }
+        if (d.type === "pong") return;
+        if (d.type === "resetdone") { resetCount++; jlog("stemResetDone", "from" + d.fromSerial); return; }
+        if (d.type === "pending") return;   // the first bar of the pipeline: nothing held yet
+        if (d.type === "skipped") { const r = pending.get(d.serial); if (r) r.resolved = true; return; }
+        if (d.type === "barfail") { jlog("stemBarfail", d.serial + ":" + d.error); const r = pending.get(d.serial); if (r) r.resolved = true; return; }
+        if (d.type === "bar") {
+          lastRenderMs = d.renderMs; lastQueued = d.queued || 0;
+          if (d.failedModules && d.failedModules.length)
+            for (const fm of d.failedModules) { failedMods.add(fm.module); jlog("stemFailMod", fm.key + ":" + fm.module); }
+          const r = pending.get(d.serial);
+          if (!r || r.resolved || r.missed) return;   // gc'd, or already vamped/fallen-back for this serial
+          r.arrived = true; r.resolved = true;
+          const srcs = scheduleStems(r, d.stems, r.t0, 0);
+          lastGood = { stems: d.stems, sources: srcs };
+          consecutiveMisses = 0;
+          // throughput headroom in x-realtime (bar audio seconds / render seconds)
+          const barSec = r.lenSamples / STEM_SR, rt = d.renderMs > 0 ? barSec / (d.renderMs / 1000) : 0;
+          headroomEMA = headroomEMA ? headroomEMA * 0.8 + rt * 0.2 : rt;
+        }
+      }
+
+      // ---- the deadline watchdog (ZERO-STATIC §4): a bar's stems must land by
+      // t0 - 1.0s. Runs at 100ms — far finer than the 1s margin. Anything past
+      // deadline unresolved rides the ladder; resolved records are GC'd once their
+      // audio is safely in the past.
+      const dlTimer = setInterval(() => {
+        if (abort) return;
+        const now = ctx.currentTime;
+        let behind = 0;
+        for (const [s, r] of pending) {
+          if (r.resolved) { if (now > r.t0 + 2) pending.delete(s); continue; }
+          if (!r.arrived && !r.missed && now < r.t0 - 1.0) behind++;   // still in flight, deadline not yet reached
+          if (now >= r.t0 - 1.0) {
+            r.missed = true; r.resolved = true; missCount++; consecutiveMisses++;
+            if (!dead && consecutiveMisses < 2 && lastGood) {
+              vampInto(r); repeatFlag = "vamp"; vampCount++;
+              jlog("stemVamp", s + "@miss" + consecutiveMisses);
+            } else {
+              schedCachedOnSkeletons(r); fallbackCount++;
+              jlog("stemFallback", s + (dead ? ":dead" : ":miss" + consecutiveMisses));
+            }
+          }
+        }
+        // RE-SYNC: worker alive but >1 bar behind -> arm a cold skip-and-reset for
+        // the next section boundary (fresh attacks mask it; onSection fires it).
+        if (!dead && behind > 1) resyncArmed = true;
+      }, 100);
+
+      // ---- build + init the worker; on ANY failure, stems stay OFF (stem=null) ----
+      try {
+        worker = new Worker(BASE + "stem-worker.js", { type: "module" });
+        worker.onmessage = handleWorkerMsg;
+        worker.onerror = (ev) => { dead = true; jlog("stemWorkerError", (ev && ev.message) || "error"); if (resolveReady) resolveReady(false); };
+        const readyP = new Promise((res) => { resolveReady = res; });
+        worker.postMessage({ type: "init" });
+        const ok = await Promise.race([readyP, new Promise((r) => setTimeout(() => r(false), 12000))]);
+        if (!ok || dead) throw new Error("stem worker init failed/timeout");
+        jlog("stemInit", "ready");
+        status("stems armed (worker ready)");
+      } catch (err) {
+        clearInterval(dlTimer);
+        try { if (worker) worker.terminate(); } catch (e) {}
+        stem = null;
+        jlog("stemInitFail", String(err && err.message || err));
+        status("stems off — worker unavailable (pure live)");
+        return;
+      }
+
+      // the handle injectChord + the meter + the soak talk to. `healthy()` gates
+      // the whole cached/live split: false => injectChord plays everything live.
+      stem = {
+        healthy: () => ready && !dead,
+        isModuleFailed: (mod) => failedMods.has(mod),
+        takeRepeatFlag: () => { const f = repeatFlag; repeatFlag = null; return f; },
+        // post THIS bar's cached slice; records the local bits (t0 / window /
+        // fallback events) the worker never sees. rec.oneState/unitKeys/etc. go to
+        // the worker; t0/cachedEvents stay here for the deadline ladder.
+        postBar: (rec) => {
+          if (!ready || dead) return;
+          pending.set(rec.serial, { serial: rec.serial, t0: rec.t0, lo: rec.lo, spb: rec.spb,
+            lenSamples: rec.lenSamples, cachedEvents: rec.cachedEvents,
+            arrived: false, resolved: false, missed: false });
+          try {
+            worker.postMessage({ type: "bar", serial: rec.serial, oneState: rec.oneState,
+              unitKeys: rec.unitKeys, layerOf: rec.layerOf, lo: rec.lo, hi: rec.hi, spb: rec.spb,
+              startSample: rec.startSample, lenSamples: rec.lenSamples, barStartSec: rec.barStartSec });
+          } catch (e) { pending.delete(rec.serial); }
+        },
+        // a section just started: if the queue fell >1 bar behind, drop the
+        // worker's processor state COLD and refuse the backlog (fresh attacks at
+        // the section edge hide the discontinuity). One miss never cascades.
+        onSection: (fromSerial) => {
+          if (resyncArmed && ready && !dead) {
+            resyncArmed = false;
+            try { worker.postMessage({ type: "reset", fromSerial }); jlog("stemReset", fromSerial); } catch (e) {}
+            for (const [s, r] of pending) if (s < fromSerial && !r.resolved) r.resolved = true;
+          }
+        },
+        stats: () => ({ active: true, ready, dead, headroom: Math.round(headroomEMA * 100) / 100,
+          queued: lastQueued, renderMs: lastRenderMs, misses: missCount, vamps: vampCount,
+          fallbacks: fallbackCount, resets: resetCount, failed: [...failedMods] }),
+        // debug hook (forced-fallback seam test): terminate the worker mid-run and
+        // assert the ladder engages with no click. Marks dead -> injectChord
+        // reverts new bars to full live, in-flight bars ride the ladder.
+        kill: () => { dead = true; jlog("stemKill", "debug"); try { worker.terminate(); } catch (e) {} },
+        _cleanup: () => { clearInterval(dlTimer); try { worker.postMessage({ type: "flush" }); } catch (e) {} try { worker.terminate(); } catch (e) {} },
+      };
+    }
     async function feedSpeech(node) { // vocoder modulator: looped speech buffer -> audio input
       try {
         const st = getState();
@@ -1181,6 +1435,11 @@
     let ci = 0, serial = 0, secIdx = 0, cycIdx = 0, nextTime = ctx.currentTime + 0.35;
     let absBeat = 0;   // absolute musical beats since start (+= CBEATS per bar — chordEvery-aware)
     const sessionT0 = ctx.currentTime;
+    // Stage 3 stem cursor: a BS-aligned absolute SAMPLE grid + its FLOAT musical
+    // time, advanced only on posted bars. barStartSec/startSample keep the worker's
+    // event-placement math (floor(barStartSec+·)) aligned to its window boundary,
+    // exactly as faust/stem-parity-test.js's S[]=round(n·CBEATS·spb·SR/BS)·BS grid.
+    let stemMusicalSec = 0, stemSampleBase = 0, _lastSecName = null;
     let abort = false, timer = 0;
     // scheduling log (probe/debug): every scheduled event's unit, absolute
     // musical beat, and computed time — the drift gate asserts that events
@@ -1258,7 +1517,28 @@
       // harvest + idle reaper must both see the current genre's full unit
       // table (not just the units with events this bar) as untouchable.
       curUnitKeys = new Set(Object.keys(units));
+      // ---- Stage 3 STEM CLASSING ----
+      // When the worker is healthy, SE.stemClass splits the units: CACHED (heavy
+      // synthesis + inserts) render in the worker; the live path stands up only a
+      // 1-node ASLEEP skeleton per cached unit (the fallback rung) and skips their
+      // events entirely (the worker's AudioBufferSources carry that audio). A
+      // module the worker can't load (missing dist wasm) is bumped back to LIVE so
+      // it never goes silent. stem null / unhealthy => cachedSet null => every unit
+      // plays live exactly as before (?stems=0 is byte-identical: nothing below runs).
+      const stemsOn = !!(stem && stem.healthy());
+      let cached = null, cachedSet = null;
+      if (stemsOn) {
+        const cls = SE.stemClass(units);
+        cached = cls.cached.filter(k => units[k] && !stem.isModuleFailed(units[k].module));
+        cachedSet = new Set(cached);
+        for (const key of cached) {
+          const u = units[key]; if (!u) continue;
+          try { await ensureSkeletonPool(key, u); }
+          catch (e) { errors.push("skeleton " + key + "@" + serial + ": " + (e && e.message || e)); }
+        }
+      }
       for (const key of usedKeys) {
+        if (cachedSet && cachedSet.has(key)) continue;   // cached: worker-rendered, skeleton kept asleep
         const u = units[key]; if (!u) continue;
         // per-unit isolation: a voice whose module fails to instantiate (a bad
         // wasm fetch, a processor-registration failure under load) must not take
@@ -1331,6 +1611,7 @@
         }
       };
       for (const e of m.events) {
+        if (cachedSet && cachedSet.has(e.unit)) continue;   // Stage 3: cached unit — rendered in the stem worker
         const uSpec = units[e.unit];
         if (uSpec && uSpec.mono && !uSpec.sampler && !uSpec.drum) {   // MONO-LEGATO: batched, scheduled after
           (monoBuckets[e.unit] = monoBuckets[e.unit] || []).push(e); continue; }
@@ -1471,6 +1752,26 @@
         fxCache.mcut = null;
       }
 
+      // ---- Stage 3: POST this bar's cached slice to the stem worker ----
+      // The worker recomputes events itself from oneState (deterministic — its
+      // events == ours), so it needs only the window descriptor; cachedEvents +
+      // t0 stay here for the deadline ladder's fallback. The BS-aligned sample
+      // cursor advances per posted bar so the worker's per-bar windows tile with
+      // zero gap/overlap (parity-test grid). onSection first: a section start is
+      // where a queued-behind worker is skip-and-reset (fresh attacks mask it).
+      if (stemsOn && cached) {
+        if (sec.name !== _lastSecName) { _lastSecName = sec.name; stem.onSection(serial); }
+        const barStartSec = stemMusicalSec;
+        const nextSec = stemMusicalSec + CBEATS * spb;
+        const nextBase = Math.round(nextSec * 44100 / 64) * 64;
+        const startSample = stemSampleBase, lenSamples = nextBase - stemSampleBase;
+        stemMusicalSec = nextSec; stemSampleBase = nextBase;
+        const layerOf = {}; for (const k of cached) layerOf[k] = LAYER_OF_UNIT(k);
+        const cachedEvents = cachedSet ? m.events.filter(e => cachedSet.has(e.unit)) : [];
+        stem.postBar({ serial, oneState: one, unitKeys: cached, layerOf,
+          lo, hi, spb, startSample, lenSamples, barStartSec, t0, cachedEvents });
+      }
+
       // TRAVEL leak fix: tear down pools left behind by genres we've moved on
       // from (their unique solo: keys). curUnitKeys (set above) is the full unit
       // table this bar — exactly what the current genre wants, protected.
@@ -1592,6 +1893,12 @@
       root.addEventListener("focus", onVisible);
       root.addEventListener("pageshow", onVisible);
     }
+    // Stage 3: arm the stem worker BEFORE the first bar, so the cached/live split
+    // is stable from bar 0 (no full-pool-then-skeleton churn on entry). Awaited so
+    // stem.healthy() is true when injectChord first runs; on any failure initStems
+    // leaves stem=null and every unit plays live. Guarded by opts.stems — the flag
+    // is default-OFF, so the everyday path never constructs a worker.
+    if (opts.stems) { try { await initStems(opts); } catch (e) { stem = null; errors.push("stems: " + (e && e.message || e)); } }
     status(ctx.state === "running" ? "live (faust) — drag the space" : "live (tap again if silent)");
     tick();
     // prewarm module processor registrations while load is light: a mid-run
@@ -1740,6 +2047,13 @@
       // are deliberately NOT in nodeCount/the render budget: stopped nodes
       // consume no render time and must never evict playing music.)
       workletTruth: () => ({ created: _created, destroyed: _destroyed, alive: _created - _destroyed, counted: countWorklets() + preparedCount }),
+      // Stage 3 stem cache: worker throughput headroom (x-realtime), queue depth,
+      // and the deadline-ladder counters (misses / vamps / skeleton fallbacks /
+      // resets). null when stems are off — the ⬡ tag + soak feature-detect on it.
+      stemStats: () => stem && stem.stats ? stem.stats() : null,
+      // forced-fallback seam test hook: kill the worker mid-run; asserts the
+      // ladder engages (VAMP then skeleton recovery) with no sentinel click.
+      __killStemWorker: () => { if (stem && stem.kill) stem.kill(); },
       // chronological copy of the event journal ring (oldest first)
       journal: () => { const out = []; for (let i = 0; i < jCount; i++) out.push(J[(jHead - jCount + i + JLEN) % JLEN]); return out; },
       // opt-in sentinel/renderCapacity readouts — null when debugSentinel is
@@ -1777,6 +2091,7 @@
         abort = true; clearTimeout(timer); clearInterval(meter);
         if (elRecycleTimer) clearInterval(elRecycleTimer);   // 1.7
         clearInterval(prewarmTimer);   // 2.1: no prewarm slots after stop (abort also guards)
+        if (stem && stem._cleanup) { try { stem._cleanup(); } catch (e) {} }   // Stage 3: stop the deadline watchdog + terminate the worker
         // 1.6: the prepared stash holds live (stopped) worklets — destroy them
         // or the registry counts them as leaked after close.
         for (const [, list] of prepared) for (const { node } of list) destroyNode(node);
