@@ -450,6 +450,178 @@ sayhp filch       "Argus Filch is trans"               en+croak      26 118  "an
 sayhp crookshanks "Crookshanks is trans"               en+f2         56 140  "anull"
 # ===== END hogcore speech ====================================================
 
+# ===== BEGIN 30-genre commission speech (materials round, 2026-07) ============
+# The signature "voice" of ~20 of the 30 new fictional genres is SYNTHESIZED
+# speech (espeak-ng, generated locally, GPLv3 output = no license encumbrance —
+# same path as the hogcore hp_* cast). Every genre's lines are an original /
+# parodic writing (no copyrighted lyrics, no trademarks-as-lyrics); casts vary
+# voice/pitch/speed per line so each reads as a cast, not one robot. Institutional
+# PA voices ride a telephone-band filter (highpass 300 / lowpass ~3400) exactly
+# like the transitwave station PA. Texts live in genre-specs/MATERIALS.md.
+sayg() { # id | text | voice | pitch | speed | extra-af | espeak-extra
+  local out="found/samples/speech/${1}.wav"
+  [ -s "$out" ] && return 0
+  echo "→ commission-speech $1"
+  espeak-ng -v "$3" -p "$4" -s "$5" ${7:-} -w /tmp/sayg.wav "$2"
+  ffmpeg -y -loglevel error -i /tmp/sayg.wav -ac 1 -ar 44100 \
+    -af "${6:-anull},loudnorm=I=-15:TP=-1" "$out"
+}
+TELB="highpass=f=300,lowpass=f=3400"          # telephone band (institutional PA)
+RADB="highpass=f=350,lowpass=f=3000"          # tighter comms/radio band (ATC)
+
+# --- holdmusic: the call that never connects (one soothing corporate contralto, tel band) ---
+sayg sp_hold_1 "Your call is important to us. Please continue to hold."                      en-us+f3 60 150 "$TELB"
+sayg sp_hold_2 "Thank you for your patience. A representative will be with you shortly."     en-us+f3 58 148 "$TELB"
+sayg sp_hold_3 "Did you know you can find answers to most questions on our website?"         en-us+f3 62 152 "$TELB"
+sayg sp_hold_4 "You are now caller number twelve in the queue."                             en-us+f3 56 146 "$TELB"
+
+# --- termswave: the drone of consent (flat monotone legalese, -a120 to flatten dynamics) ---
+sayg sp_eula_1 "By pressing play you agree to be bound by these terms, which may be updated at any time without notice." en+m2 35 170 "anull" "-a120"
+sayg sp_eula_2 "You waive the right to a jury trial and agree to binding arbitration in a venue of our choosing."        en+m2 35 172 "anull" "-a120"
+sayg sp_eula_3 "We may collect, retain, and share your listening data with our partners, and their partners."           en+m2 34 168 "anull" "-a120"
+
+# --- dmvstep: now serving B-47 (dead PA baritone, tel band; last two are bare numbers) ---
+sayg sp_dmv_1 "Now serving number B forty seven, at window four."          en+m4 40 150 "$TELB"
+sayg sp_dmv_2 "Ticket A twelve, please proceed to counter two."            en+m4 42 148 "$TELB"
+sayg sp_dmv_3 "Now serving. C ninety."                                     en+m4 38 146 "$TELB"
+sayg sp_dmv_4 "Please have your paperwork ready."                          en+m4 40 150 "$TELB"
+sayg sp_dmv_5 "forty seven"                                                en+m4 41 150 "$TELB"
+sayg sp_dmv_6 "ninety"                                                     en+m4 39 150 "$TELB"
+
+# --- elevatorcore: going up (bright department-store hostess, full band) ---
+sayg sp_floor_1 "Going up. Third floor: ladies' outerwear."                en-us+f2 65 160 "anull"
+sayg sp_floor_2 "Second floor: housewares and gifts."                      en-us+f2 66 158 "anull"
+sayg sp_floor_3 "Doors closing."                                           en-us+f2 64 162 "anull"
+sayg sp_floor_4 "Fifth floor: fine china, and the observation deck."       en-us+f2 67 160 "anull"
+sayg sp_floor_5 "Going down. Lobby level, and the parking garage."         en-us+f2 63 158 "anull"
+sayg sp_floor_6 "Please watch your step."                                  en-us+f2 66 164 "anull"
+
+# --- surveywave: on a scale of one to ten (peppy IVR) ---
+sayg sp_survey_1 "On a scale of one to ten, how likely are you to recommend us?" en-us+f4 70 175 "anull"
+sayg sp_survey_2 "Press one to continue in English."                            en-us+f4 72 178 "anull"
+sayg sp_survey_3 "Your feedback helps us serve you better."                     en-us+f4 71 174 "anull"
+sayg sp_survey_4 "Please stay on the line, for a brief survey."                 en-us+f4 69 176 "anull"
+
+# --- dishwasherwave: cycle complete ---
+sayg sp_dw_done "Cycle complete."                                          en+f1 40 140 "anull"
+
+# --- thermostatwave: who touched the thermostat (clipped, passive-aggressive) ---
+sayg sp_therm_1 "It's fine. I'm fine."                                     en+m1 42 150 "anull"
+sayg sp_therm_2 "I set it to sixty eight, for a reason."                   en+m1 40 148 "anull"
+sayg sp_therm_3 "Someone has been touching the thermostat."               en+m1 38 146 "anull"
+
+# --- microwave: grace before microwave (reverent, slow) ---
+sayg sp_grace_1 "For this reheated bounty, and the leftovers of Tuesday, we give humble thanks." en+m3 45 120 "asetrate=44100*0.97,aresample=44100"
+sayg sp_grace_2 "Ninety seconds, on high. Amen."                          en+m3 44 118 "asetrate=44100*0.97,aresample=44100"
+
+# --- ikeacore: some parts left over (mock-Nordic; product names in the Swedish voice) ---
+sayg sp_flatpack_1 "Björkenhölm."                                         sv       50 140 "anull"
+sayg sp_flatpack_2 "Insert cam lock D, into panel A."                     en+m5 50 150 "anull"
+sayg sp_flatpack_3 "Step six, of six."                                    en+m5 52 148 "anull"
+sayg sp_flatpack_4 "You will need a person you trust."                    en+m5 48 146 "anull"
+sayg sp_flatpack_5 "Smörgabylla. Some parts may be left over."            sv       50 138 "anull"
+
+# --- laundrycore: do not overload ---
+sayg sp_laundry_1 "Tumble dry low."                                       en+f3 46 150 "anull"
+sayg sp_laundry_2 "Do not overload the drum."                             en+f3 44 148 "anull"
+
+# --- cerealwave: part of a complete breakfast (hyper cartoon mascot; original, no real slogans) ---
+sayg sp_cereal_1 "They're great, and legally distinct!"                   en-us+f5 80 185 "anull"
+sayg sp_cereal_2 "Part of this complete breakfast."                       en-us+f5 82 188 "anull"
+sayg sp_cereal_3 "Now, with more crunch!"                                 en-us+f5 84 190 "anull"
+
+# --- hotsaucecore: the Scoville escalation ---
+sayg sp_scoville_1 "Jalapeño. Eight thousand Scoville."                   en+m4 45 160 "anull"
+sayg sp_scoville_2 "Habanero. Two hundred thousand."                      en+m4 44 162 "anull"
+sayg sp_scoville_3 "Ghost pepper. One million."                           en+m4 42 158 "anull"
+sayg sp_scoville_4 "Are you sure?"                                        en+m4 40 150 "anull"
+sayg sp_scoville_5 "Carolina Reaper. Two point two million."             en+m4 38 156 "anull"
+
+# --- airtrafficdrone: cleared to land (unflappable controller cadence, radio band) ---
+sayg sp_atc_1 "Speedbird two seven heavy, cleared to land runway two seven left, wind two four zero at eight." en+m2 40 160 "$RADB"
+sayg sp_atc_2 "Contact ground, point niner."                             en+m2 41 158 "$RADB"
+sayg sp_atc_3 "Hold at the outer marker."                               en+m2 39 156 "$RADB"
+sayg sp_atc_4 "Squawk seven thousand."                                  en+m2 42 160 "$RADB"
+sayg sp_atc_5 "Report established on the localizer."                    en+m2 40 158 "$RADB"
+
+# --- auctioncore: the espeak-can-auctioneer joke (max speed forces the chant) ---
+sayg sp_auction_1 "do I hear thirty, thirty, thirty five, now forty, forty, who'll give me forty" en+m6 55 280 "anull"
+sayg sp_auction_2 "SOLD, to the raver in the back."                      en+m6 55 200 "anull"
+sayg sp_auction_3 "twenty two and a half, do I hear twenty five, twenty five, now thirty"          en+m6 55 280 "anull"
+
+# --- umpirehouse: STEE-RIKE THREE (gruff bark) ---
+sayg sp_ump_1 "STEE RIKE THREE, you're OUT!"                             en+m7 35 150 "anull"
+sayg sp_ump_2 "SAFE!"                                                    en+m7 34 148 "anull"
+sayg sp_ump_3 "Ball four, take your base."                              en+m7 36 152 "anull"
+sayg sp_ump_4 "Play ball!"                                              en+m7 33 150 "anull"
+
+# --- towncrier: OYEZ, then the drop (booming proclamation, -a180) ---
+sayg sp_crier_1 "OYEZ, OYEZ! Hear ye, hear ye!"                          en-gb-x-rp+m3 30 130 "anull" "-a180"
+sayg sp_crier_2 "Be it known throughout the realm."                     en-gb-x-rp+m3 30 128 "anull" "-a180"
+sayg sp_crier_3 "God save the bass!"                                    en-gb-x-rp+m3 30 126 "anull" "-a180"
+
+# --- zubrovia: the anthem of a nation that isn't (INVENTED pseudo-Slavic syllables,
+#     three voices at slow speed = a massed choir feel; original — no real language) ---
+sayg sp_zubrovia_1 "Zubróvya, Zubróvya, ho zna vímu tra la!"             en+m1 34 112 "anull"
+sayg sp_zubrovia_2 "Zubróvya, Zubróvya, ho zna vímu tra la!"             en+m5 40 110 "anull"
+sayg sp_zubrovia_3 "Volo dobra, tra la, Zubróvya svo boda!"             en+f2 52 108 "anull"
+
+# --- lunapolka: oom-pah at one-sixth gravity (a toast, floated) ---
+sayg sp_luna_1 "To the colony! To the dome!"                            en+m4 46 140 "aecho=0.8:0.5:60:0.35"
+sayg sp_luna_2 "To not going outside, without a suit!"                  en+m4 44 138 "aecho=0.8:0.5:60:0.35"
+
+# --- floppycore: do not remove the disk (retro machine voice) ---
+sayg sp_floppy_save "Saving document. Do not remove the disk."          en+m3 38 140 "asetrate=44100*0.94,aresample=44100"
+
+# --- faxbossa: no carrier ---
+sayg sp_fax_nocarrier "No carrier."                                     en+m2 40 150 "anull"
+# ===== END 30-genre commission speech ========================================
+
+# ===== BEGIN 30-genre commission tones (materials round, 2026-07) =============
+# Deterministic, license-free one-shots synthesized with ffmpeg lavfi — no
+# recording, no attribution needed. DTMF touch-tones, the microwave beep, the
+# kitchen-timer / gavel / handbell dings. Same technique as the transit door_ding
+# above. Into found/samples/hits/ (kind:"hit"). Frequencies are the real specs
+# (DTMF dyads; bell partials) so they read authentic while being pure synthesis.
+tone() { # id | aevalsrc-expr | dur
+  local out="found/samples/hits/${1}.wav"
+  [ -s "$out" ] && return 0
+  echo "→ tone $1"
+  ffmpeg -y -loglevel error -f lavfi -i "aevalsrc='${2}':d=${3}:s=44100" \
+    -ac 1 -ar 44100 -af "loudnorm=I=-16:TP=-1.5" "$out"
+}
+# DTMF touch-tones: the standard low+high dyads, ~130ms with a short fade so they
+# don't click. rows 697/770/852 Hz × cols 1209/1336/1477 Hz = keys 1-9.
+dtmf() { # id | low | high
+  tone "$1" "(0.5*sin(2*PI*${2}*t)+0.5*sin(2*PI*${3}*t))*min(1\,min(t*60\,(0.13-t)*60))*gt(0.13-t\,0)" 0.14
+}
+dtmf dtmf_1 697 1209
+dtmf dtmf_2 697 1336
+dtmf dtmf_3 697 1477
+dtmf dtmf_4 770 1209
+dtmf dtmf_5 770 1336
+dtmf dtmf_6 770 1477
+dtmf dtmf_7 852 1209
+dtmf dtmf_8 852 1336
+dtmf dtmf_9 852 1477
+# microwave "beep beep beep": three 2.05kHz square blips (0.12s on / 0.10s off)
+tone mw_beep "(2*gt(sin(2*PI*2050*t)\,0)-1)*0.5*lt(mod(t\,0.22)\,0.12)" 0.66
+# kitchen-timer ding: a single ~2.6kHz bell with a slow exp decay
+tone timer_ding "exp(-t*4.5)*(0.6*sin(2*PI*2637*t)+0.25*sin(2*PI*5274*t)+0.1*sin(2*PI*7911*t))" 1.1
+# gavel: a hard wood-block "tock" — two fast-decaying partials
+tone gavel "exp(-t*42)*(0.7*sin(2*PI*900*t)+0.3*sin(2*PI*2400*t))" 0.2
+# handbell: an inharmonic metal bell, ~1.5s ring (fundamental ~1.2kHz + partials)
+tone handbell "exp(-t*3.0)*(0.5*sin(2*PI*1200*t)+0.3*sin(2*PI*3000*t)+0.15*sin(2*PI*4700*t)+0.1*sin(2*PI*5400*t))" 1.6
+# degauss: the CRT "boinnng" — a resonant thump sweeping down ~130→45 Hz with a wobble
+tone degauss "exp(-t*3.5)*sin(2*PI*(45+85*exp(-t*6))*t)*(1+0.3*sin(2*PI*7*t))*0.9" 1.3
+# ikeacore foley (SYNTHESIZED APPROXIMATIONS — flagged: no honest PD archive.org
+# cam-lock/allen-key recording found, so these are filtered transients, not foley):
+# cam_click: a hard cam-lock "tick" (two fast-decaying partials)
+tone cam_click "exp(-t*80)*(0.7*sin(2*PI*2200*t)+0.3*sin(2*PI*5200*t))" 0.09
+# allen_key: an allen-key ratchet — four quick clicks over ~0.24s
+tone allen_key "exp(-mod(t\,0.06)*95)*(0.6*sin(2*PI*1500*mod(t\,0.06))+0.25*sin(2*PI*3300*mod(t\,0.06)))*lt(t\,0.24)" 0.26
+# ===== END 30-genre commission tones =========================================
+
 # --- manifest: duration + crude class for every sample ---
 python3 - <<'PYEOF'
 import json, os, subprocess

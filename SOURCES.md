@@ -177,6 +177,68 @@ Buckbeak, en+whisper for Voldemort) plus per-character pitch/speed/resample so
 the roster reads as a cast. Character names as short factual identifiers are
 not copyrightable; the audio itself is machine-generated on this machine
 (eSpeak NG, GPLv3 — its *output* carries no license restriction).
+
+## 30-genre commission signature crates (materials round, 2026-07)
+
+Phase B of the 30 fictional-genre commission (`genre-specs/MATERIALS.md`). Three
+kinds of new material, all recoverable from the committed recipes:
+
+### (a) Synthesized speech — `found/samples/speech/sp_*.wav` (generated, no external source)
+
+~20 of the 30 new genres have SYNTHESIZED SPEECH as their signature: the hold-music
+apology, the EULA drone, the DMV window calls, ATC read-backs, the auctioneer chant,
+the umpire, the town crier, survey prompts, "cycle complete", the microwave grace,
+the pseudo-Slavic anthem, and so on. All are **synthesized locally with `espeak-ng`**
+in the marked "30-genre commission speech" block of `fetch-found-samples.sh`, exactly
+like the hogcore `hp_*` cast: each genre's lines vary voice/pitch/speed per line
+(espeak variants f1–f5, m1–m7, the Swedish `sv` voice for ikeacore product names,
+`en-gb-x-rp` for the town crier) so each roster reads as a cast. Institutional PA
+voices ride a telephone-band filter (highpass 300 / lowpass 3400). **Every text is
+original / parodic writing** — no copyrighted lyrics, no trademarks-as-lyrics (generic
+phrasings only: "legally distinct", invented product/place names, generic legalese).
+eSpeak NG is GPLv3; its audio *output* carries no license restriction. ids:
+`sp_hold_1..4`, `sp_eula_1..3`, `sp_dmv_1..6`, `sp_floor_1..6`, `sp_survey_1..4`,
+`sp_dw_done`, `sp_therm_1..3`, `sp_grace_1..2`, `sp_flatpack_1..5`, `sp_laundry_1..2`,
+`sp_cereal_1..3`, `sp_scoville_1..5`, `sp_atc_1..5`, `sp_auction_1..3`, `sp_ump_1..4`,
+`sp_crier_1..3`, `sp_zubrovia_1..3`, `sp_luna_1..2`, `sp_floppy_save`, `sp_fax_nocarrier`.
+
+### (b) Synthesized one-shots + beds — ffmpeg lavfi (deterministic, license-free)
+
+Tones and drones generated with `ffmpeg` `aevalsrc`/`anoisesrc` — pure synthesis, no
+recording, **no attribution required**. Frequencies are the real specs so they read
+authentic. In `found/samples/hits/` (recipe: `fetch-found-samples.sh` "commission
+tones"): `dtmf_1..9` (the real DTMF low+high dyads — verified 697/770/852 × 1209/1336/1477 Hz),
+`mw_beep` (2.05 kHz square microwave beep), `timer_ding`, `gavel`, `handbell`, `degauss`
+(the CRT boinnng), plus the SYNTHESIZED-FOLEY `cam_click` / `allen_key` (⚠ approximations
+— no honest PD cam-lock/allen-key recording was found; filtered transients stand in).
+In `found/` (recipe: `fetch-found-sound.sh` "commission beds"): `crt_whine` (the real
+15.734 kHz NTSC flyback line + mains hum — verified), `fax_tone` (1100 Hz CNG + 2100 Hz
+CED held as a pad), `hvac_hum` (brown-noise furnace room tone), and two STYLIZED
+approximations flagged as such: `modem_handshake` (a recognizable 56k-handshake *synthesis*
+— DTMF dial → 2100 Hz answer → dual carriers → FSK warble + scramble noise — NOT a
+transcription of the real V.90 sequence) and `floppy_seek` (gated ~220 Hz buzz bursts
+standing in for the 3.5" head-stepper clatter). The two stylized beds may read synthetic;
+noted here for a possible future real fetch.
+
+### (c) Archive.org PD/CC bed fetches — `found/*.wav` (recipe: `fetch-found-sound.sh`)
+
+The biological + domestic-appliance beds are real field recordings, boost-normalized
+(`loudnorm I=-18`; the volcanic-bubble source was very quiet and is pre-boosted +15 dB,
+the spokenword-fix path). **Flag for the human release decision:** `pigeon_coo` and
+`dryer_spin` are **ShareAlike** (a distributed remix inherits the SA obligation);
+`chickadee` needs attribution (BY). The PD / PD-Mark items are unrestricted.
+
+| local name | Internet Archive item | file | content | license basis | genre |
+|---|---|---|---|---|---|
+| `whale_song` | [`HumpbackWhalesSongsSoundsVocalizations`](https://archive.org/details/HumpbackWhalesSongsSoundsVocalizations) | `Humpback_whale_song_2.mp3` | humpback whale song (38s continuous) | **public domain** — US National Park Service | whalejazz |
+| `hydrophone` | [`20150723134918`](https://archive.org/details/20150723134918) | `bunker_inside_underwater.mp3` | hydrophone in a flooded WWII bunker, Vigsø DK | **CC Public Domain Mark 1.0** | atlantidrone |
+| `crickets` | [`aporee_50831_57991`](https://archive.org/details/aporee_50831_57991) | `NuitSODA.mp3` | night cricket chorus, Saint-Ouen-des-Alleux FR (radio aporee) | **CC Public Domain Mark 1.0** | crickettempo |
+| `ferment_bubble` | [`aporee_27893_32148`](https://archive.org/details/aporee_27893_32148) | `140810caldera2.mp3` | volcanic mud-pot bubbling, Caldara di Manziana IT (aporee); very quiet, boosted | **CC Public Domain Mark 1.0** | sourdough |
+| `pigeon_coo` | [`44PalomaDomsticaMuseoDeCienciasDeBahaBlancaArchivoSonoroPaseoDeAves`](https://archive.org/details/44PalomaDomsticaMuseoDeCienciasDeBahaBlancaArchivoSonoroPaseoDeAves) | `44 - Paloma doméstica … Paseo de Aves.mp3` | domestic/rock pigeon 5-note coo, Museo de Ciencias de Bahía Blanca AR | **CC BY-SA 4.0** (⚠ ShareAlike) | pigeonstep |
+| `chickadee` | [`ecolore-hamont-bioacoustic-observation-537`](https://archive.org/details/ecolore-hamont-bioacoustic-observation-537) | `hamont-bioacoustic-observation-537.mp3` | black-capped chickadee fee-bee whistle, Hamilton ON (eColore HAMBIO) | **CC BY 4.0** (⚠ attribution) | chickadeecore |
+| `dw_cycle` | [`aporee_14738_46150`](https://archive.org/details/aporee_14738_46150) | `szer.mp3` | dishwasher rinse-pump cycle, Poznań kitchen (radio aporee) | **CC Public Domain Mark 1.0** | dishwasherwave |
+| `dryer_spin` | [`aporee_8942_14632`](https://archive.org/details/aporee_8942_14632) | `berlinOhlauerWaschsalonContact111204c.mp3` | contact-mic tumble-dryer spin, Berlin Ohlauer Str. waschsalon (aporee) | **CC BY-SA 3.0** (⚠ ShareAlike) | laundrycore |
+
 ## Streaming found-video sources (avant-garde + early 3D/CG) — 2026-07
 
 A **streaming** video layer: 26 archive.org items cued directly over HTTP Range
