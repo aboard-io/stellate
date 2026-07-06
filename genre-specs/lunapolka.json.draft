@@ -1,0 +1,273 @@
+{
+  "name": "lunapolka",
+  "label": "Selenite Moon Polka",
+  "info": "the folk dance of the first lunar colony: oom-pah at one-sixth gravity, so every downbeat floats a half-second too long — a DX7 accordion and a bandoneon wheeze, dancers in slow bounding leaps, the beer stein rising and never quite coming down",
+  "clips": [
+    "earth_orbit",
+    "spacewalk",
+    "sp_eva",
+    "sp_lander"
+  ],
+  "materials": "espeak moon-colony toast (sp_luna_*, MATERIALS) + real ACCORDION sampler (GM 21) lead with the bandoneon wheeze, TUBA (GM 58) on the oom-pah bass; the low-gravity float is halftime feel + long releases",
+  "pos": [
+    685,
+    290
+  ],
+  "anchor": {
+    "bpm": [
+      96,
+      108
+    ],
+    "swing": [
+      0.08,
+      0.16
+    ],
+    "humanize": [
+      0.08,
+      0.2
+    ],
+    "progressions": [
+      "doo_wop",
+      "canon",
+      "royal_road"
+    ],
+    "kits": [
+      "halftime",
+      "shuffle"
+    ],
+    "fills": [
+      "tom fill",
+      "micro lick"
+    ],
+    "bass": {
+      "patterns": [
+        "root",
+        "octaves",
+        "walking"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sub"
+        ],
+        "samplerPool": [
+          "tuba"
+        ],
+        "cutoff": [
+          500,
+          900
+        ],
+        "level": [
+          0.55,
+          0.75
+        ],
+        "send": [
+          0.15,
+          0.3
+        ],
+        "dsend": [
+          0,
+          0.08
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "composed",
+        "wander",
+        "updown"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "samplerPool": [
+          "accordion",
+          "bandoneon"
+        ],
+        "wave": "sine",
+        "voices": [
+          1,
+          2
+        ],
+        "cutoff": [
+          2000,
+          3000
+        ],
+        "level": [
+          0.42,
+          0.55
+        ],
+        "send": [
+          0.3,
+          0.5
+        ],
+        "dsend": [
+          0.1,
+          0.25
+        ],
+        "release": [
+          0.4,
+          0.7
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.55,
+      "recipe": {
+        "model": [
+          "oberheim",
+          "solina",
+          "vp330"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          900,
+          1500
+        ],
+        "detune": [
+          0.006,
+          0.014
+        ],
+        "attack": [
+          1,
+          2.5
+        ],
+        "level": [
+          0.4,
+          0.55
+        ],
+        "send": [
+          0.4,
+          0.6
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom"
+      ],
+      "snareModel": [
+        "noise",
+        "crack"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        0.6,
+        0.85
+      ],
+      "snare": [
+        0.4,
+        0.6
+      ],
+      "hat": [
+        0.35,
+        0.6
+      ],
+      "tune": [
+        0.9,
+        1.02
+      ],
+      "send": [
+        0.2,
+        0.4
+      ],
+      "dsend": [
+        0,
+        0.1
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.45,
+        0.65
+      ],
+      "delayBeats": [
+        0.75,
+        1.25
+      ],
+      "delayFb": [
+        0.15,
+        0.3
+      ],
+      "delayCut": [
+        2200,
+        3200
+      ],
+      "pump": [
+        0,
+        0
+      ],
+      "crackle": [
+        0,
+        0.12
+      ],
+      "lowcut": [
+        0,
+        0
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.1,
+        0.3
+      ]
+    },
+    "reverbColor": "greyhole",
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.06,
+        0.14
+      ],
+      "pitch": [
+        0.9,
+        1.05
+      ],
+      "stretch": [
+        0.5,
+        0.7
+      ],
+      "cutoff": [
+        2200,
+        3400
+      ],
+      "sources": [
+        "iriomote",
+        "tokyo_station"
+      ]
+    },
+    "hits": {
+      "sources": [
+        "sp_herenow"
+      ],
+      "pattern": "sparse",
+      "prob": 0.12
+    },
+    "stab": [
+      "off"
+    ],
+    "form": "pop"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 3,
+      "swing": 2,
+      "acoustic": 2,
+      "wash": 2,
+      "motion": 1,
+      "drumDensity": 1
+    }
+  }
+}

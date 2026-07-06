@@ -1,0 +1,286 @@
+{
+  "name": "dmvstep",
+  "label": "DMV Step",
+  "info": "UK 2-step garage where the melodic hook is the deli-counter ticket system: \"now serving number B-47 at window four\" — shuffled hats, a swung sub, and the eternal red LED counter as a numbers-station lead; you have been waiting since track one",
+  "clips": [
+    "night_lights",
+    "phuture_red",
+    "cs_marketstreet",
+    "tw_subway"
+  ],
+  "materials": "espeak ticket-number caller (sp_dmv_* — \"now serving B-47\", MATERIALS); draft uses Conet numbers-station clips as the placeholder counter voice",
+  "pos": [
+    555,
+    110
+  ],
+  "anchor": {
+    "bpm": [
+      130,
+      136
+    ],
+    "swing": [
+      0.14,
+      0.2
+    ],
+    "humanize": [
+      0.05,
+      0.12
+    ],
+    "progressions": [
+      "house_min7",
+      "minor_run",
+      "deep_two"
+    ],
+    "kits": [
+      "house",
+      "newjack",
+      "shuffle"
+    ],
+    "fills": [
+      "cut",
+      "riser",
+      "dropout"
+    ],
+    "bass": {
+      "patterns": [
+        "stab",
+        "dub",
+        "sub"
+      ],
+      "recipe": {
+        "model": [
+          "sub",
+          "reese",
+          "saw"
+        ],
+        "cutoff": [
+          420,
+          780
+        ],
+        "res": [
+          0.15,
+          0.3
+        ],
+        "level": [
+          1,
+          1.2
+        ],
+        "send": [
+          0,
+          0.08
+        ],
+        "dsend": [
+          0.05,
+          0.15
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "double",
+        "sparse",
+        "arpup"
+      ],
+      "recipe": {
+        "model": [
+          "casiocz",
+          "synclead",
+          "pluck"
+        ],
+        "wave": "square",
+        "voices": [
+          1,
+          2
+        ],
+        "cutoff": [
+          1800,
+          2800
+        ],
+        "level": [
+          0.36,
+          0.5
+        ],
+        "send": [
+          0.2,
+          0.35
+        ],
+        "dsend": [
+          0.15,
+          0.35
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.4,
+      "recipe": {
+        "model": [
+          "juno60",
+          "organ"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          1000,
+          1700
+        ],
+        "detune": [
+          0.005,
+          0.011
+        ],
+        "attack": [
+          0.3,
+          0.9
+        ],
+        "level": [
+          0.35,
+          0.5
+        ],
+        "send": [
+          0.3,
+          0.5
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "909",
+        "808"
+      ],
+      "snareModel": [
+        "crack",
+        "clap"
+      ],
+      "hatModel": [
+        "metal",
+        "noise"
+      ],
+      "kick": [
+        1.1,
+        1.35
+      ],
+      "snare": [
+        0.6,
+        0.85
+      ],
+      "hat": [
+        0.7,
+        1
+      ],
+      "tune": [
+        0.98,
+        1.1
+      ],
+      "send": [
+        0.08,
+        0.2
+      ],
+      "dsend": [
+        0.1,
+        0.25
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.25,
+        0.42
+      ],
+      "delayBeats": [
+        0.375,
+        0.5
+      ],
+      "delayFb": [
+        0.2,
+        0.35
+      ],
+      "delayCut": [
+        3000,
+        4500
+      ],
+      "pump": [
+        0.35,
+        0.55
+      ],
+      "crackle": [
+        0,
+        0.05
+      ],
+      "lowcut": [
+        35,
+        50
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.35,
+        0.55
+      ]
+    },
+    "found": {
+      "role": "chops",
+      "vol": [
+        0.14,
+        0.24
+      ],
+      "pitch": [
+        1,
+        1.3
+      ],
+      "stretch": [
+        0.4,
+        0.6
+      ],
+      "cutoff": [
+        3500,
+        5500
+      ],
+      "sources": [
+        "vx_conet_poacher",
+        "vx_conet_swedish"
+      ]
+    },
+    "hits": {
+      "sources": [
+        "vx_conet_poacher",
+        "tw_ding"
+      ],
+      "pattern": "offbeat",
+      "prob": 0.4
+    },
+    "sampleEvents": [
+      {
+        "pool": [
+          "vx_conet_poacher",
+          "vx_conet_swedish"
+        ],
+        "placement": "response",
+        "sections": "all",
+        "treatment": {
+          "cutoff": 4500,
+          "vol": 0.4
+        }
+      }
+    ],
+    "stab": [
+      "offbeat"
+    ],
+    "form": "pop"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 3,
+      "swing": 3,
+      "chopUse": 2,
+      "snareBalance": 2,
+      "hatDensity": 2,
+      "pump": 1,
+      "sub": 1
+    }
+  }
+}

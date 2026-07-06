@@ -1,0 +1,266 @@
+{
+  "name": "airtrafficdrone",
+  "label": "Approach Control",
+  "info": "calm ATC read-backs over a runway-length drone: \"Speedbird two-seven-heavy, cleared to land runway two-seven left, wind two-four-zero at eight\" — the phonetic alphabet as a lullaby, unflappable, at the edge of sleep; hold at the outer marker",
+  "clips": [
+    "earth_orbit",
+    "spacewalk",
+    "night_lines",
+    "sp_eva"
+  ],
+  "materials": "espeak ATC phraseology + phonetic-alphabet numbers (sp_atc_*, MATERIALS); draft uses the Apollo capcom loop (vx_apollo) as the placeholder controller",
+  "pos": [
+    555,
+    170
+  ],
+  "anchor": {
+    "bpm": [
+      70,
+      84
+    ],
+    "swing": [
+      0,
+      0.04
+    ],
+    "humanize": [
+      0.04,
+      0.12
+    ],
+    "progressions": [
+      "drone_min",
+      "deep_two",
+      "dream"
+    ],
+    "kits": [
+      "off",
+      "kick"
+    ],
+    "fills": [
+      "off",
+      "dropout"
+    ],
+    "chordEvery": 16,
+    "bass": {
+      "patterns": [
+        "pedal",
+        "sub",
+        "root"
+      ],
+      "recipe": {
+        "model": [
+          "sub",
+          "saw"
+        ],
+        "cutoff": [
+          380,
+          650
+        ],
+        "res": [
+          0.06,
+          0.14
+        ],
+        "level": [
+          0.6,
+          0.82
+        ],
+        "send": [
+          0.15,
+          0.35
+        ],
+        "dsend": [
+          0,
+          0.05
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "off",
+        "sparse"
+      ],
+      "recipe": {
+        "model": [
+          "sine",
+          "fm"
+        ],
+        "wave": "sine",
+        "voices": [
+          1,
+          1
+        ],
+        "cutoff": [
+          1400,
+          2200
+        ],
+        "level": [
+          0.24,
+          0.36
+        ],
+        "send": [
+          0.35,
+          0.55
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.9,
+      "recipe": {
+        "model": [
+          "vp330",
+          "solina",
+          "strings"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          800,
+          1400
+        ],
+        "detune": [
+          0.006,
+          0.014
+        ],
+        "attack": [
+          2,
+          4
+        ],
+        "level": [
+          0.48,
+          0.64
+        ],
+        "send": [
+          0.5,
+          0.7
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ],
+        "mellotron": true
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom"
+      ],
+      "snareModel": [
+        "noise"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        0.4,
+        0.65
+      ],
+      "snare": [
+        0.25,
+        0.45
+      ],
+      "hat": [
+        0.25,
+        0.45
+      ],
+      "tune": [
+        0.9,
+        1
+      ],
+      "send": [
+        0.2,
+        0.4
+      ],
+      "dsend": [
+        0,
+        0.05
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.45,
+        0.65
+      ],
+      "delayBeats": [
+        0.75,
+        1.5
+      ],
+      "delayFb": [
+        0.15,
+        0.3
+      ],
+      "delayCut": [
+        2000,
+        3000
+      ],
+      "pump": [
+        0,
+        0
+      ],
+      "crackle": [
+        0,
+        0.12
+      ],
+      "lowcut": [
+        0,
+        0
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.1,
+        0.3
+      ]
+    },
+    "reverbColor": "greyhole",
+    "found": {
+      "role": "narration",
+      "vol": [
+        0.35,
+        0.55
+      ],
+      "pitch": [
+        0.98,
+        1.05
+      ],
+      "stretch": [
+        0.9,
+        1.05
+      ],
+      "cutoff": [
+        2600,
+        3600
+      ],
+      "sources": [
+        "vx_apollo"
+      ]
+    },
+    "hits": {
+      "sources": [
+        "sp_system",
+        "tw_ding"
+      ],
+      "pattern": "sparse",
+      "prob": 0.15
+    },
+    "stab": [
+      "off"
+    ],
+    "form": "wave"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 3,
+      "drumDensity": 3,
+      "wash": 2,
+      "motion": 2,
+      "sub": 1,
+      "humanize": 1
+    }
+  }
+}
