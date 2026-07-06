@@ -39,6 +39,15 @@
     if (!E || !SE || !FP) throw new Error("FaustLive needs csd-engine.js, faust/state-engine.js, faust/found-player.js loaded first");
     const status = (m) => { if (onStatus) try { onStatus(m); } catch (e) {} };
 
+    // ---- ZERO-STATIC Stage 3: LOOKAHEAD widening (opts.stems only) ----
+    // The stem worker needs a deep runway: a bar is posted at injection time
+    // and its render must land by t0-1s, so injection must run ~stemLookahead
+    // ahead of the playhead (~10s — Paul approved the uniform input->audible
+    // latency compromise, ZERO-STATIC §Stage 3). stems off => the classic 6s,
+    // byte-identical behavior.
+    const LOOKA = opts.stems ? Math.max(LOOKAHEAD, opts.stemLookahead || 10) : LOOKAHEAD;
+    let stem = null;   // the stem-cache module handle (initStems below; null = path dormant)
+
     const AC = root.AudioContext || root.webkitAudioContext;
     let ctx;
     try { ctx = new AC({ sampleRate: 44100, latencyHint: "playback" }); } catch (e) { ctx = new AC(); }
@@ -1160,6 +1169,7 @@
 
     // ---- section walking state (mirrors wasm-audio exploreLive) ----
     let ci = 0, serial = 0, secIdx = 0, cycIdx = 0, nextTime = ctx.currentTime + 0.35;
+    let absBeat = 0;   // absolute musical beats since start (+= CBEATS per bar — chordEvery-aware)
     const sessionT0 = ctx.currentTime;
     let abort = false, timer = 0;
     // scheduling log (probe/debug): every scheduled event's unit, absolute
@@ -1195,7 +1205,15 @@
       const one = Object.assign({}, st, { sections: [sec], seed: ((st.seed || 1) + serial * 7919) >>> 0 });
       const spb = 60 / st.bpm;
       curBarSec = 4 * spb;   // insert filtersweep LFOs sync to this (bpm glides too)
-      const lo = ci * 8, hi = lo + 8;
+      // CBEATS — beats per CHORD BAR, mirroring csd-engine buildEvents exactly
+      // (KERNEL-V4 Phase 1: `Math.max(2,Math.round(state.chordEvery||8))`).
+      // This used to be a hardcoded 8 at three sites (the window below, beatAbs,
+      // and the nextTime advance in finally) — so a chordEvery:16/32 genre
+      // (mallsoft/drone/prelude) had its chord bars sampled in 8-beat half/
+      // quarter windows and the ci walk never reached the back of the
+      // progression. States without chordEvery get CBEATS=8: byte-identical.
+      const CBEATS = Math.max(2, Math.round(st.chordEvery || 8));
+      const lo = ci * CBEATS, hi = lo + CBEATS;
       const t0 = nextTime;
 
       // EVERY bar's work runs inside try/finally so ONE bad bar can never wedge
@@ -1209,8 +1227,13 @@
       await ensureReverbColor(one);   // build/swap the external reverb color node
       await ensureMasterMb(one);      // build/retire the opt-in multiband master glue
 
-      if (opts.onBar) try { opts.onBar({ serial, ci, nch, when: t0, spb,
-        chord: (prg.chords[ci] || {}).name || "", section: sec.name }); } catch (e) {}
+      if (opts.onBar) try { opts.onBar({ serial, ci, nch, when: t0, spb, cbeats: CBEATS,
+        chord: (prg.chords[ci] || {}).name || "", section: sec.name,
+        // Stage 3: a stem VAMP repeated a bar's cached layers (rung 1 of the
+        // deadline ladder); the flag rides the NEXT injected bar's payload
+        // (the vamped bar's own onBar fired ~LOOKAHEAD earlier — see stem
+        // module). null when stems are off or nothing was vamped.
+        stemRepeat: stem ? stem.takeRepeatFlag() : null }); } catch (e) {}
 
       // ---- ONE musical clock per bar ----
       // Every await (pool creation, found-buffer decode) happens BEFORE any
@@ -1246,7 +1269,7 @@
       const nowT = ctx.currentTime;
       const late = Math.max(0, nowT + 0.03 - t0);
       const at = (b) => t0 + late + (b - lo) * spb;
-      const beatAbs = (b) => serial * 8 + (b - lo);   // musical beat since start
+      const beatAbs = (b) => absBeat + (b - lo);   // musical beat since start (absBeat += CBEATS per bar; == serial*8 pre-chordEvery)
       // ---- 2.3 bar-boundary cost ledger ----
       // One awakeCost() snapshot per bar, then incremented locally as this
       // bar's scheduling wakes voices/chains — so the ceiling check below is
@@ -1450,7 +1473,8 @@
         console.error("FaustLive injectChord (bar " + serial + " skipped)", e);
       } finally {
         bootDone = true;   // 1.5: boot is over — every later mkNode rides the airlock queue
-        nextTime += 8 * spb;
+        nextTime += CBEATS * spb;
+        absBeat += CBEATS;
         ci++; serial++;
         if (ci >= nch) { ci = 0; cycIdx++;
           if (cycIdx >= (secs[secIdx].cycles || 1)) { cycIdx = 0; secIdx = (secIdx + 1) % secs.length; } }
@@ -1515,7 +1539,7 @@
           injecting = true;
           const now = ctx.currentTime;
           if (nextTime < now) nextTime = now + 0.1; // fell behind (tab sleep) — resync
-          while (nextTime < ctx.currentTime + LOOKAHEAD && !abort) await injectChord(getState());
+          while (nextTime < ctx.currentTime + LOOKA && !abort) await injectChord(getState());
           injecting = false;
         }
       } catch (e) { injecting = false; errors.push(String(e && e.message || e)); console.error("FaustLive tick", e); }
