@@ -607,6 +607,7 @@ async function goLive(){
       if(S.waypoints.length>=2) travelStep();
       glideStep();
       genreVideo(info);
+      if(window.VideoLayer&&VideoLayer.pulse)VideoLayer.pulse(info);   // ALIEN BROADCAST: musical hook (section/downbeat-aligned chaos)
       updateMediaSession();   // reflect the current genre/blend on the lock screen (updates across a swap)
     }});
     if(MSESSION){ try{ MSESSION.playbackState="playing"; }catch(e){} updateMediaSession(true); }
