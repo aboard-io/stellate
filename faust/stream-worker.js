@@ -54,6 +54,55 @@ let liveBars = [], liveEos = false;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// ── browser-safe interleaved-stereo 16-bit WAV encoder (no Node Buffer) ──
+// Used by the renderWav path (below) for the conductor's BACKGROUND-WAV producer.
+// Truncates toward zero (`*32767|0`) to match wav.js's "trunc" mode + emits the
+// identical canonical 44-byte RIFF/WAVE header, so the bytes are the same shape the
+// node WAV writers produce — just built with DataView so it runs in a Worker.
+function encodeWavPCM(L, R, sr) {
+  const n = L.length, ch = 2, dataLen = n * ch * 2;
+  const buf = new ArrayBuffer(44 + dataLen), dv = new DataView(buf);
+  let o = 0;
+  const w = (s) => { for (let i = 0; i < s.length; i++) dv.setUint8(o++, s.charCodeAt(i)); };
+  w("RIFF"); dv.setUint32(o, 36 + dataLen, true); o += 4; w("WAVE");
+  w("fmt "); dv.setUint32(o, 16, true); o += 4; dv.setUint16(o, 1, true); o += 2; dv.setUint16(o, ch, true); o += 2;
+  dv.setUint32(o, sr, true); o += 4; dv.setUint32(o, sr * ch * 2, true); o += 4; dv.setUint16(o, ch * 2, true); o += 2; dv.setUint16(o, 16, true); o += 2;
+  w("data"); dv.setUint32(o, dataLen, true); o += 4;
+  for (let i = 0; i < n; i++) {
+    const l = Math.max(-1, Math.min(1, L[i])) * 32767 | 0;
+    const r = Math.max(-1, Math.min(1, R[i])) * 32767 | 0;
+    dv.setInt16(o, l, true); o += 2; dv.setInt16(o, r, true); o += 2;
+  }
+  return buf;
+}
+
+// renderWav: an OFFLINE, dur-capped whole-song render of `state` to a single WAV
+// ArrayBuffer — OFF the audio ring path (this worker instance owns no ring; the
+// conductor spawns a DEDICATED stream-worker for it). Drives the same makeStreamEngine
+// open()+renderChunk() press-parity path as segment-parity, concatenating the chunks,
+// then encodes to WAV. FOUND is NOT baked (buffers:{}), matching the live faust mix —
+// the result is deterministic + loop-tolerant, the background-survival loop. Supersede-
+// aware (activeToken) so a newer target during a long render bails promptly.
+async function renderWav(msg, token) {
+  const gen = msg.gen | 0;
+  const alive = () => token === activeToken && !stopReq;
+  const durSec = msg.durSec > 0 ? msg.durSec : 32;
+  const info = await eng.open(msg.state, { buffers: {}, speech: null, opts: { dur: durSec } });
+  if (!alive()) { eng.close(); self.postMessage({ type: "wavcancel", gen }); return; }
+  const total = info.TOTAL;
+  const L = new Float32Array(total), R = new Float32Array(total);
+  for (let n = 0; n < info.nChunks; n++) {
+    if (!alive()) { eng.close(); self.postMessage({ type: "wavcancel", gen }); return; }
+    const c = eng.renderChunk(n);
+    L.set(c.L.subarray(0, c.length), c.startSample);
+    R.set(c.R.subarray(0, c.length), c.startSample);
+    if ((n & 3) === 0) await sleep(0);   // yield: never hog the worker thread (off the audio path)
+  }
+  eng.close();
+  const wav = encodeWavPCM(L, R, SR);
+  self.postMessage({ type: "wav", gen, durSec, frames: total, wav }, [wav]);
+}
+
 async function initDeps() {
   const BASE = new URL(".", self.location.href).href;   // .../faust/
   await import(BASE + "../csd-engine.js");     // -> self.CsdEngine
@@ -251,6 +300,16 @@ self.onmessage = async (e) => {
     activeToken = token;
     opChain = opChain.then(() => runLivePump(msg, token)
       .catch((err) => self.postMessage({ type: "openfail", error: String(err && err.stack || err), gen: msg.gen | 0 })));
+    return;
+  }
+  // ── BACKGROUND-WAV render (iOS background-audio handoff) ──
+  if (msg.type === "renderWav") {
+    if (!eng) { self.postMessage({ type: "wavfail", error: "not ready", gen: msg.gen | 0 }); return; }
+    stopReq = false;
+    const token = ++opSeq;
+    activeToken = token;
+    opChain = opChain.then(() => renderWav(msg, token)
+      .catch((err) => self.postMessage({ type: "wavfail", error: String(err && err.stack || err), gen: msg.gen | 0 })));
     return;
   }
   if (msg.type === "feedBar") { liveBars.push(msg.bar); return; }
