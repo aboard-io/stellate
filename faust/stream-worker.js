@@ -1,0 +1,259 @@
+// faust/stream-worker.js — the STREAM PRODUCER (Phase 3 of the live-engine rebuild).
+//
+// A module Worker (new Worker(BASE+"stream-worker.js",{type:"module"})) that wraps
+// the Phase-1 env-agnostic core faust/stream-renderer.js (makeStreamEngine) with a
+// BROWSER faustwasm backend, then pumps its continuous full-mix stereo stream into
+// a SharedArrayBuffer ring — one chord-bar chunk at a time — ahead of the reader's
+// cursor. The reader is faust/ring-player.js; the control-block + ring layout is
+// documented there (this file is the single WRITER of R_WRITE / R_CLOSED).
+//
+// The faustwasm setup mirrors faust/stem-worker.js:404-425 EXACTLY (module Worker,
+// FaustMonoDspGenerator.createOfflineProcessor(SR,BS,factory) over the dist/*.wasm),
+// so the browser `mkProc`/`rootOf` injected into makeStreamEngine produce the same
+// offline processors press.js/segment-parity drive in node.
+//
+// MESSAGES (from the conductor / ring-test.html):
+//   {type:"init"}                               → load deps, compile backend, "ready"
+//   {type:"open", state, buffers, speech, gen,  → open the stream on ring `ringIndex`,
+//                 ctrlSab, ringSab, ringIndex,      prime `primeSec`, then pump chunks
+//                 cap, primeSec, runwaySec}         under backpressure to `runwaySec`
+//   {type:"stop"}                               → halt the pump (frees the ring)
+// POSTS (all echo the open's `gen` so the conductor can ignore superseded opens):
+//   {type:"ready"} · {type:"initfail",error} · {type:"opened",info,gen} ·
+//   {type:"primed",filled,gen} · {type:"status",...,gen} · {type:"eos",cursor,gen} ·
+//   {type:"stopped",cursor,gen} · {type:"openfail",error,gen}
+//
+// PHASE 4 — TWO PRODUCERS. One worker instance is spawned PER RING (worker0↔ring0,
+// worker1↔ring1) so a new state's bridge renders in PARALLEL with continued
+// playback of the old ring. A worker owns a SINGLE ring for its whole life, but is
+// RE-OPENED for each new state routed to that ring (ping-pong). `ringIndex` selects
+// the per-ring control block (base = C_RING0 + ringIndex*RING_STRIDE); the audio
+// SAB for that ring arrives as `ringSab` (legacy `ring0Sab` still accepted).
+"use strict";
+
+// ── control-block layout (must match faust/ring-player.js) ──
+const C_STATE = 0, C_READ = 1 /*unused here*/, C_UNDER_CNT = 6;   // (globals we don't write)
+const C_RING0 = 8, RING_STRIDE = 4, R_WRITE = 0, R_READ = 1, R_CLOSED = 2;
+
+const SR = 44100, BS = 64;
+const RUNWAY_SEC = 16;     // default seconds buffered ahead of the reader (override per open)
+const PRIME_SEC = 12;      // default fill before "primed" (override per open; bridges use ~2.5s)
+
+let ENV = null;            // { mkProc, rootOf, dx7Presets, E, SE, FP, SP, mergeIvals }
+let eng = null;            // makeStreamEngine instance (one per worker — re-openable)
+// Concurrency: opens are SERIALIZED on `opChain` (only one runPump ever touches the
+// shared engine state at a time). Each open captures a token; `activeToken` is the
+// latest open, so a superseded pump (rapid repoint) sees token!==activeToken and
+// bails promptly WITHOUT starting/continuing. `stopReq` retires the current pump.
+let opSeq = 0, activeToken = -1, stopReq = false;
+let opChain = Promise.resolve();
+// LIVE mode (Phase 5a): the caller pushes chord-bar specs into `liveBars`; the live
+// pump drains them one at a time into the ring under the SAME backpressure. `liveEos`
+// tells the pump the caller is done (drain then close). Reset per openLive.
+let liveBars = [], liveEos = false;
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function initDeps() {
+  const BASE = new URL(".", self.location.href).href;   // .../faust/
+  await import(BASE + "../csd-engine.js");     // -> self.CsdEngine
+  await import(BASE + "state-engine.js");      // -> self.FaustStateEngine
+  await import(BASE + "render-core.js");       // -> self.FaustRenderCore (mergeIvals)
+  await import(BASE + "found-player.js");      // -> self.FoundPlayer (mixPCM)
+  await import(BASE + "sampler.js");           // -> self.FaustSampler (mixPCM)
+  await import(BASE + "stream-renderer.js");   // -> self.FaustStreamRenderer (makeStreamEngine)
+
+  const fw = await import(BASE + "node_modules/@grame/faustwasm/dist/esm/index.js");
+  const { FaustWasmInstantiator, FaustMonoDspGenerator } = fw;
+  const gen = new FaustMonoDspGenerator();
+  const factories = {};   // module -> Promise<factory> (fetch+compile once)
+  const resolved = {};    // module -> factory (for rootOf)
+  const factory = (mod) => factories[mod] || (factories[mod] =
+    FaustWasmInstantiator.loadDSPFactory(BASE + `dist/${mod}-module.wasm`, BASE + `dist/${mod}-meta.json`)
+      .then((f) => { if (!f) throw new Error("no factory for " + mod); resolved[mod] = f; return f; }));
+  const mkProc = async (mod) => gen.createOfflineProcessor(SR, BS, await factory(mod));
+  const rootOf = (mod) => JSON.parse(resolved[mod].json).name;
+
+  let dx7Presets = {};
+  try { dx7Presets = await (await fetch(BASE + "dx7-presets.json")).json(); } catch (e) {}
+
+  ENV = { mkProc, rootOf, dx7Presets,
+    E: self.CsdEngine, SE: self.FaustStateEngine,
+    FP: self.FoundPlayer, SP: self.FaustSampler,
+    mergeIvals: self.FaustRenderCore.mergeIvals };
+  eng = self.FaustStreamRenderer.makeStreamEngine({
+    E: ENV.E, SE: ENV.SE, FP: ENV.FP, SP: ENV.SP, mergeIvals: ENV.mergeIvals,
+    mkProc: ENV.mkProc, rootOf: ENV.rootOf, SR, BS, dx7Presets: ENV.dx7Presets });
+}
+
+// pump: render chunks 0..nChunks-1 into ring `ringIndex`, respecting backpressure.
+// The producer is the SINGLE writer of this ring's R_WRITE / R_CLOSED and — at the
+// idle-ring HANDOFF only (this ring is retired/not being read when re-opened) —
+// resets R_READ to 0 so the reader consumes the new stream from frame 0.
+async function runPump(msg, token) {
+  const gen = msg.gen | 0;
+  const alive = () => token === activeToken && !stopReq;
+  // superseded before we even started (a newer open landed while queued): bail
+  // WITHOUT resetting the ring or opening — the newer open owns this ring now.
+  if (!alive()) { self.postMessage({ type: "stopped", cursor: 0, gen }); return; }
+
+  const ringIndex = msg.ringIndex | 0;
+  const ctrl = new Int32Array(msg.ctrlSab);
+  const ring = new Float32Array(msg.ringSab || msg.ring0Sab);   // interleaved L,R
+  const cap = msg.cap | 0;
+  const rBase = C_RING0 + ringIndex * RING_STRIDE;
+  const r0w = rBase + R_WRITE, r0r = rBase + R_READ, r0c = rBase + R_CLOSED;
+  const runwaySec = msg.runwaySec != null ? msg.runwaySec : RUNWAY_SEC;
+  const primeSec = msg.primeSec != null ? msg.primeSec : PRIME_SEC;
+  const filled = () => Atomics.load(ctrl, r0w) - Atomics.load(ctrl, r0r);
+
+  // idle-ring handoff reset: rewind this ring's cursors before writing from 0.
+  Atomics.store(ctrl, r0r, 0);
+  Atomics.store(ctrl, r0w, 0);
+  Atomics.store(ctrl, r0c, 0);
+
+  const info = await eng.open(msg.state, { buffers: msg.buffers || {}, speech: msg.speech || null,
+    opts: msg.durSec ? { dur: msg.durSec } : undefined });
+  if (!alive()) { self.postMessage({ type: "stopped", cursor: 0, gen }); return; }   // superseded during ingest
+  self.postMessage({ type: "opened", info, gen });
+
+  // largest chunk (chord-bar) — the ring must always have room for one whole chunk
+  let maxChunk = BS;
+  for (let i = 1; i < info.S.length; i++) maxChunk = Math.max(maxChunk, info.S[i] - info.S[i - 1]);
+  const runway = Math.min(cap - maxChunk, runwaySec * SR);
+  const primeAt = Math.min(runway, primeSec * SR);
+  if (maxChunk > cap) { self.postMessage({ type: "openfail", error: `chunk ${maxChunk} > ring ${cap}`, gen }); return; }
+
+  let cursor = 0, primed = false, lastStatus = 0;
+  while (alive() && cursor < info.nChunks) {
+    // backpressure: wait while the ring can't hold another chunk OR we're already
+    // a full runway ahead. The reader draining below `runway` releases the pump.
+    while (alive() && (filled() + maxChunk > cap || filled() >= runway)) await sleep(10);
+    if (!alive()) break;
+
+    const c = eng.renderChunk(cursor);           // { L, R, startSample, length }
+    let w = Atomics.load(ctrl, r0w);
+    for (let i = 0; i < c.length; i++) {
+      const b = ((w + i) % cap) * 2;
+      ring[b] = c.L[i]; ring[b + 1] = c.R[i];
+    }
+    Atomics.store(ctrl, r0w, w + c.length);      // publish AFTER the samples are written
+    cursor++;
+
+    const fl = filled();
+    if (!primed && fl >= primeAt) { primed = true; self.postMessage({ type: "primed", filled: fl, gen }); }
+    const now = (typeof performance !== "undefined" ? performance.now() : Date.now());
+    if (now - lastStatus > 500) {
+      lastStatus = now;
+      self.postMessage({ type: "status", cursor, nChunks: info.nChunks, filledSec: +(fl / SR).toFixed(2),
+        underruns: Atomics.load(ctrl, C_UNDER_CNT), primed, gen, ringIndex });
+    }
+  }
+  if (cursor >= info.nChunks) {
+    Atomics.store(ctrl, r0c, 1);                  // stream fully written (natural EOS)
+    self.postMessage({ type: "eos", cursor, gen });
+  } else {
+    // stopped early (retired / superseded): abandon the not-yet-written chunks.
+    self.postMessage({ type: "stopped", cursor, gen });
+  }
+}
+
+// runLivePump: the INCREMENTAL producer. openLive sets up persistent procs from the
+// initial state (no whole-song ingest), then we drain the caller-fed `liveBars` queue
+// one chord-bar at a time — eng.feedBar (ingest + param glide) then eng.renderChunk —
+// writing each window into ring `ringIndex` under the identical backpressure as the
+// whole-song pump. The procs are never reset, so params glide across bars. The pump
+// waits (doesn't underrun the writer) when the caller hasn't fed the next bar yet.
+async function runLivePump(msg, token) {
+  const gen = msg.gen | 0;
+  const alive = () => token === activeToken && !stopReq;
+  if (!alive()) { self.postMessage({ type: "stopped", cursor: 0, gen }); return; }
+
+  const ringIndex = msg.ringIndex | 0;
+  const ctrl = new Int32Array(msg.ctrlSab);
+  const ring = new Float32Array(msg.ringSab || msg.ring0Sab);   // interleaved L,R
+  const cap = msg.cap | 0;
+  const rBase = C_RING0 + ringIndex * RING_STRIDE;
+  const r0w = rBase + R_WRITE, r0r = rBase + R_READ, r0c = rBase + R_CLOSED;
+  const runwaySec = msg.runwaySec != null ? msg.runwaySec : RUNWAY_SEC;
+  const primeSec = msg.primeSec != null ? msg.primeSec : PRIME_SEC;
+  const filled = () => Atomics.load(ctrl, r0w) - Atomics.load(ctrl, r0r);
+
+  // idle-ring handoff reset: rewind this ring's cursors before writing from 0.
+  Atomics.store(ctrl, r0r, 0);
+  Atomics.store(ctrl, r0w, 0);
+  Atomics.store(ctrl, r0c, 0);
+
+  const info = await eng.openLive(msg.state, { buffers: msg.buffers || {}, speech: msg.speech || null });
+  if (!alive()) { self.postMessage({ type: "stopped", cursor: 0, gen }); return; }
+  self.postMessage({ type: "openedLive", info, gen });
+
+  const runway = runwaySec * SR;
+  const primeAt = Math.min(runway, primeSec * SR);
+  let cursor = 0, primed = false, lastStatus = 0, maxChunk = BS;
+
+  while (alive()) {
+    // wait for the caller to feed the next bar (never spin the ring dry on the writer)
+    while (alive() && cursor >= liveBars.length && !liveEos) await sleep(4);
+    if (!alive()) break;
+    if (cursor >= liveBars.length) break;   // liveEos and drained
+
+    // ingest is cheap (no ring write) — do it, learn the bar length, THEN backpressure
+    const fb = await eng.feedBar(liveBars[cursor]);
+    maxChunk = Math.max(maxChunk, fb.length);
+    if (maxChunk > cap) { self.postMessage({ type: "openfail", error: `chunk ${maxChunk} > ring ${cap}`, gen }); return; }
+    while (alive() && (filled() + fb.length > cap || filled() >= runway)) await sleep(10);
+    if (!alive()) break;
+
+    const c = eng.renderChunk(cursor);
+    let w = Atomics.load(ctrl, r0w);
+    for (let i = 0; i < c.length; i++) { const b = ((w + i) % cap) * 2; ring[b] = c.L[i]; ring[b + 1] = c.R[i]; }
+    Atomics.store(ctrl, r0w, w + c.length);   // publish AFTER the samples are written
+    cursor++;
+
+    const fl = filled();
+    if (!primed && fl >= primeAt) { primed = true; self.postMessage({ type: "primed", filled: fl, gen }); }
+    const now = (typeof performance !== "undefined" ? performance.now() : Date.now());
+    if (now - lastStatus > 500) {
+      lastStatus = now;
+      self.postMessage({ type: "status", cursor, nChunks: liveBars.length, filledSec: +(fl / SR).toFixed(2),
+        underruns: Atomics.load(ctrl, C_UNDER_CNT), primed, gen, ringIndex, live: true });
+    }
+  }
+  if (liveEos && cursor >= liveBars.length) { Atomics.store(ctrl, r0c, 1); self.postMessage({ type: "eos", cursor, gen }); }
+  else self.postMessage({ type: "stopped", cursor, gen });
+}
+
+self.onmessage = async (e) => {
+  const msg = e.data;
+  if (!msg || !msg.type) return;
+  if (msg.type === "init") {
+    try { await initDeps(); self.postMessage({ type: "ready" }); }
+    catch (err) { self.postMessage({ type: "initfail", error: String(err && err.message || err) }); }
+    return;
+  }
+  if (msg.type === "open") {
+    if (!eng) { self.postMessage({ type: "openfail", error: "not ready", gen: msg.gen | 0 }); return; }
+    // SERIALIZE opens on opChain (never two runPumps on one engine at once) and
+    // supersede via `activeToken` so a queued/running older pump exits promptly.
+    stopReq = false;
+    const token = ++opSeq;
+    activeToken = token;
+    opChain = opChain.then(() => runPump(msg, token)
+      .catch((err) => self.postMessage({ type: "openfail", error: String(err && err.stack || err), gen: msg.gen | 0 })));
+    return;
+  }
+  // ── LIVE mode (Phase 5a) ──
+  if (msg.type === "openLive") {
+    if (!eng) { self.postMessage({ type: "openfail", error: "not ready", gen: msg.gen | 0 }); return; }
+    stopReq = false; liveBars = []; liveEos = false;
+    const token = ++opSeq;
+    activeToken = token;
+    opChain = opChain.then(() => runLivePump(msg, token)
+      .catch((err) => self.postMessage({ type: "openfail", error: String(err && err.stack || err), gen: msg.gen | 0 })));
+    return;
+  }
+  if (msg.type === "feedBar") { liveBars.push(msg.bar); return; }
+  if (msg.type === "feedEos") { liveEos = true; return; }
+  if (msg.type === "stop") { stopReq = true; return; }   // retire the current pump
+};

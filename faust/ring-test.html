@@ -1,0 +1,453 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>ring-player gapless + crossfade test (Phase 3/4/5a)</title>
+<script src="ring-conductor.js"></script>
+<script src="state-engine.js"></script></head>
+<body>
+<h1>ring-player gapless + crossfade playback test</h1>
+<pre id="log">booting…</pre>
+<script>
+// faust/ring-test.html — STANDALONE harness for the ring engine.
+//
+//   DEFAULT (no param): PHASE 3 — one continuous stream on ring 0, no state change.
+//   Proves gapless, click-free-by-construction playback (window.__ring.analyze()
+//   seam analysis). Behaviour is identical to the original single-stream harness
+//   (the conductor just never requests a change), so faust/ring-test-run.js's
+//   Phase-3 gate still passes.
+//
+//   ?glide=1 : PHASE 5a — the LIVE / INCREMENTAL feed. ONE persistent stream on ring
+//   0 (no conductor, no crossfade) driven straight through stream-worker's openLive +
+//   feedBar path: a single sustained pad drone whose cutoff GLIDES continuously across
+//   ~90 per-bar feedBar param updates. Proves per-bar feeding into ONE never-reset
+//   proc carries DSP state across bars — no re-attack, no seam click, the glide takes
+//   effect. window.__ring.glideAnalyze() gives the bar-boundary vs mid-bar RMS + a
+//   brightness trend for faust/ring-test-run.js's --glide gate.
+//
+//   ?phase4=1 : PHASE 4 — the conductor drives a SCRIPTED SEQUENCE of state changes
+//   (varying pad model / bpm / progression) between found-free clicktest-like beds,
+//   including a BURST of rapid successive changes, over a multi-minute soak. Each
+//   change opens the new state on the idle ring via a SECOND producer and the
+//   ring-player equal-power crossfades ring A→B. window.__ring.crossfades() +
+//   the captured PCM let the gate assert every crossfade is smooth.
+//
+// Requires cross-origin isolation (COOP/COEP) for SharedArrayBuffer — see the server
+// in faust/ring-test-run.js. window.__ring exposes the headless driver's hooks.
+"use strict";
+const SR = 44100, BS = 64;
+const PHASE4 = new URLSearchParams(location.search).has("phase4");
+const GLIDE = new URLSearchParams(location.search).has("glide");
+const RING_SEC = 30, RING_FRAMES = RING_SEC * SR;      // each ring holds ~30 s
+const CAP_SEC = PHASE4 ? 200 : 50, CAP_FRAMES = CAP_SEC * SR;   // PCM capture window
+const CT_CYCLES = 32;                                  // base-stream length (phase-3 single stream)
+const STREAM_SEC = 60;                                 // phase-4: bound each stream (cheap ingest, snappy bridges)
+
+// control-block layout (must match ring-player.js / stream-worker.js / ring-conductor.js)
+const C_STATE = 0, C_XFADE = 1, C_ACTIVE = 2, C_READ_LO = 3, C_READ_HI = 4, C_UNDERRUN = 5, C_UNDER_CNT = 6;
+const C_RING0 = 8, RING_STRIDE = 4, R_WRITE = 0, R_READ = 1, R_CLOSED = 2;
+
+const logEl = document.getElementById("log");
+const lines = [];
+function log(s) { lines.push(s); logEl.textContent = lines.slice(-44).join("\n"); }
+
+// ── the clicktest bed, parametrized so state changes are AUDIBLE (different pad
+//    model / bpm / progression / timbre) while staying found-free (no decoding). ──
+function bed(o) {
+  o = o || {};
+  const E = window.CsdEngine;
+  const s = JSON.parse(JSON.stringify(E.defaultState()));
+  s.bpm = o.bpm || 60;
+  s.progression = o.progression || "drone_min";
+  s.reverb = 0.2; s.seed = 1;
+  s.delay = { beats: 0.75, feedback: 0, cutoff: 2000 };
+  // quick attack (0.05 s) so an incoming stream reaches steady level well inside a
+  // 400 ms fade → equal-power sum stays flat (no dip). A soft, sustained saw-family pad.
+  const soft = { level: 0.2, send: 0.05, dsend: 0, attack: 0.05, cutoff: o.cutoff || 900, res: 0.1, detune: 0.004, wave: o.wave || "saw" };
+  s.instruments = {
+    pad: { ...soft, model: o.model || "saw" },
+    bass: { level: 0, send: 0, dsend: 0 },
+    melody: { level: 0, send: 0, dsend: 0, voices: 1 },
+    drums: { kick: 0, snare: 0, hat: 0, tom: 0, send: 0, dsend: 0, kickModel: "boom", snareModel: "noise", hatModel: "noise" },
+  };
+  s.foundSources = [];
+  s.sections = [{ id: "ct", name: "ct", cycles: o.cycles || CT_CYCLES, pads: true, bass: "off",
+    drums: "off", melody: "off", found: { sourceId: null, role: "bed" }, fill: "off" }];
+  return s;
+}
+// phase-3 base state (long stream, single ring, no change)
+function clickTestState() { return bed({ cycles: CT_CYCLES }); }
+// phase-4 variants — five audibly-distinct beds
+const VARIANTS = [
+  bedLater({ bpm: 60,  progression: "drone_min", model: "saw",     cutoff: 900  }),
+  bedLater({ bpm: 90,  progression: "sad_pop",   model: "organ",   cutoff: 1400 }),
+  bedLater({ bpm: 75,  progression: "ii_v_i",    model: "strings", cutoff: 1100 }),
+  bedLater({ bpm: 105, progression: "synthwave", model: "fm",      cutoff: 1800 }),
+  bedLater({ bpm: 68,  progression: "four_chords",model: "juno60", cutoff: 1200 }),
+];
+// VARIANTS is filled after CsdEngine loads (bedLater defers the build)
+function bedLater(o) { return o; }  // placeholder spec; realized in boot()
+
+// ── inline PCM recorder worklet (blob) — taps ring-player output into a capture SAB
+//    for offline seam / crossfade analysis. Gated on C_STATE==1 (captures only the
+//    played stream). ctr[0]=frames captured, ctr[1]=capture→stream(output) frame offset. ──
+const RECORDER_SRC = `
+const C_STATE=0, C_READ_LO=3;
+class PcmRecorder extends AudioWorkletProcessor {
+  constructor(o){ super(); const p=o.processorOptions;
+    this.buf=new Float32Array(p.sab); this.ctr=new Int32Array(p.ctr);
+    this.ctrl=new Int32Array(p.ctrlSab); this.cap=p.capFrames|0; }
+  process(inputs){
+    if(Atomics.load(this.ctrl,C_STATE)!==1) return true;   // capture only while playing
+    const inp=inputs[0]; if(!inp||inp.length<2) return true;
+    const L=inp[0], R=inp[1], n=L.length; let w=Atomics.load(this.ctr,0);
+    if(w===0) Atomics.store(this.ctr,1,(Atomics.load(this.ctrl,C_READ_LO)>>>0)-n);
+    for(let i=0;i<n;i++){ if(w<this.cap){ this.buf[w*2]=L[i]; this.buf[w*2+1]=R[i]; w++; } }
+    Atomics.store(this.ctr,0,w); return true;
+  }
+}
+registerProcessor("pcm-recorder", PcmRecorder);`;
+
+// SABs
+const ctrlSab = new SharedArrayBuffer(16 * 4);
+const ctrl = new Int32Array(ctrlSab);
+const ring0Sab = new SharedArrayBuffer(RING_FRAMES * 2 * 4);
+const ring1Sab = new SharedArrayBuffer(RING_FRAMES * 2 * 4);   // Phase 4 second ring
+const capSab = new SharedArrayBuffer(CAP_FRAMES * 2 * 4);
+const capCtrSab = new SharedArrayBuffer(8);
+const capCtr = new Int32Array(capCtrSab);
+const capView = new Float32Array(capSab);
+
+let ctx = null, node = null, analyser = null, cond = null;
+let glideInfo = { barLen: 0, nBars: 0, c0: 0, c1: 0 };   // PHASE-5a glide harness (set in bootGlide)
+const ringRead = (r) => Atomics.load(ctrl, C_RING0 + r * RING_STRIDE + R_READ);
+const ringWrite = (r) => Atomics.load(ctrl, C_RING0 + r * RING_STRIDE + R_WRITE);
+
+const R = window.__ring = {
+  ctx: null, node: null, ready: false, started: false, eos: false, err: null, phase4: PHASE4, seqDone: false,
+  readCursor: () => Atomics.load(ctrl, C_READ_LO) >>> 0,
+  readCursor53: () => (Atomics.load(ctrl, C_READ_HI) * 0x100000000) + (Atomics.load(ctrl, C_READ_LO) >>> 0),
+  underruns: () => Atomics.load(ctrl, C_UNDER_CNT),
+  underrunFlag: () => Atomics.load(ctrl, C_UNDERRUN),
+  writeCursor: () => ringWrite(activeRing()),
+  filled: () => ringWrite(activeRing()) - ringRead(activeRing()),
+  captured: () => Atomics.load(capCtr, 0),
+  captureOffset: () => Atomics.load(capCtr, 1),
+  chunkBounds: () => (cond && cond.info() ? cond.info().S.slice() : []),
+  isolated: () => self.crossOriginIsolated === true,
+  // phase-4 inspection
+  activeRing: () => activeRing(),
+  condPhase: () => (cond ? cond.phase() : "boot"),
+  playingSig: () => (cond ? cond.playingSig() : null),
+  variantSig: (i) => JSON.stringify(VARIANTS[i]),
+  ringRead, ringWrite,
+  xfade: () => Atomics.load(ctrl, C_XFADE),
+  crossfades: () => (cond ? cond.crossfades.map((c) => ({ ...c })) : []),
+  // analyser-based RMS snapshot (continuity soak between cursor polls)
+  rms: () => {
+    if (!analyser) return -1;
+    const b = new Float32Array(analyser.fftSize);
+    analyser.getFloatTimeDomainData(b);
+    let s = 0; for (let i = 0; i < b.length; i++) s += b[i] * b[i];
+    return Math.sqrt(s / b.length);
+  },
+  // OFFLINE seam analysis over the captured PCM (Phase-3 gate; uses the active info).
+  analyze: () => {
+    const cap = Atomics.load(capCtr, 0);
+    const off = Atomics.load(capCtr, 1);
+    let maxD = 0, maxAt = 0;
+    for (let i = 1; i < cap; i++) { const d = Math.abs(capView[i * 2] - capView[(i - 1) * 2]); if (d > maxD) { maxD = d; maxAt = i; } }
+    const info = cond && cond.info();
+    const S = info ? info.S : [];
+    const W = 2205;
+    const seams = [];
+    for (const p of S) {
+      const ci = p - off;
+      if (ci <= 0 || ci >= cap) continue;
+      const d = Math.abs(capView[ci * 2] - capView[(ci - 1) * 2]);
+      let lm = 0;
+      for (let i = Math.max(1, ci - W); i < Math.min(cap, ci + W); i++) {
+        if (i === ci) continue;
+        const dd = Math.abs(capView[i * 2] - capView[(i - 1) * 2]);
+        if (dd > lm) lm = dd;
+      }
+      seams.push({ streamPos: p, capIdx: ci, delta: d, localMax: lm, ratio: d / (lm || 1e-12) });
+    }
+    let zr = 0, maxZR = 0, maxZRAt = -1;
+    for (let i = SR; i < cap; i++) { if (capView[i * 2] === 0) { if (++zr > maxZR) { maxZR = zr; maxZRAt = i; } } else zr = 0; }
+    let maxAtNearSeam = 1e9;
+    for (const p of S) maxAtNearSeam = Math.min(maxAtNearSeam, Math.abs((p - off) - maxAt));
+    return { cap, off, maxDelta: maxD, maxAt, maxAtNearSeam, seams, maxZeroRun: maxZR, maxZeroRunAt: maxZRAt };
+  },
+  // PHASE-4 per-crossfade metrics over the captured PCM. For each committed
+  // crossfade [startCursor,endCursor) (global output frames → capture indices via
+  // `off`), measure the steady RMS in the margins BEFORE (stream A) and AFTER
+  // (stream B) the fade, the min/max RMS THROUGH the fade (equal-power power should
+  // stay flat → RMS stays between the two steady levels, never collapsing), the max
+  // sample |Δ| inside the fade vs the local program slope (a click would spike it),
+  // and any exact-zero dropout run. All computed in-page for a compact result.
+  crossfadeMetrics: (marginSec) => {
+    if (!cond) return [];
+    const off = Atomics.load(capCtr, 1), capN = Atomics.load(capCtr, 0);
+    const M = Math.floor((marginSec || 0.25) * SR);
+    const win = 1024, hop = 512;
+    const meanRms = (a, b) => { let sum = 0, cnt = 0; for (let s = a; s + win <= b; s += hop) { let ss = 0; for (let i = 0; i < win; i++) { const x = capView[(s + i) * 2]; ss += x * x; } sum += Math.sqrt(ss / win); cnt++; } return cnt ? sum / cnt : 0; };
+    const minMaxRms = (a, b) => { let mn = Infinity, mx = 0; for (let s = a; s + win <= b; s += hop) { let ss = 0; for (let i = 0; i < win; i++) { const x = capView[(s + i) * 2]; ss += x * x; } const r = Math.sqrt(ss / win); if (r < mn) mn = r; if (r > mx) mx = r; } return { mn: mn === Infinity ? 0 : mn, mx }; };
+    const maxDelta = (a, b) => { let mx = 0; for (let i = Math.max(1, a); i < b; i++) { const d = Math.abs(capView[i * 2] - capView[(i - 1) * 2]); if (d > mx) mx = d; } return mx; };
+    const zeroRun = (a, b) => { let z = 0, mz = 0; for (let i = a; i < b; i++) { if (capView[i * 2] === 0) { if (++z > mz) mz = z; } else z = 0; } return mz; };
+    const out = [];
+    for (const cf of cond.crossfades) {
+      const cs = cf.startCursor - off, ce = cf.endCursor - off;
+      if (cs - M < 0 || ce + M > capN) { out.push({ index: cf.index, skipped: true }); continue; }
+      const pre = meanRms(cs - M, cs), post = meanRms(ce, ce + M);
+      const { mn, mx } = minMaxRms(cs, ce);
+      const localSlope = Math.max(maxDelta(cs - M, cs), maxDelta(ce, ce + M));
+      const fadeMaxDelta = maxDelta(cs, ce);
+      out.push({ index: cf.index, capStart: cs, capEnd: ce, durFrames: ce - cs,
+        pre, post, through_min: mn, through_max: mx,
+        floor: 0.5 * Math.min(pre, post), ceil: 1.5 * Math.max(pre, post),
+        fadeMaxDelta, localSlope, deltaRatio: fadeMaxDelta / (localSlope || 1e-12),
+        maxZeroRun: zeroRun(cs, ce), cursorAdvance: cf.endCursor - cf.startCursor, toSig: cf.toSig });
+    }
+    return out;
+  },
+  // PHASE-5a GLIDE analysis over the captured PCM.
+  //   (d) SEAM: at each bar boundary (barLen is constant, so seams sit at k*barLen in
+  //       stream frames → capture idx via `off`) the |Δ| vs the local program slope —
+  //       a re-trigger or reassembly click spikes it.
+  //   (c) NO RE-ATTACK: a cold per-bar re-attack is a BAR-PERIODIC dip-then-swell in
+  //       the RMS envelope. We FOLD the RMS envelope over the bar period (average each
+  //       phase-within-bar bin across all bars): non-bar-locked ripple (chord beating,
+  //       the tape-wow LFO) averages FLAT, but a re-attack survives as a deep dip at
+  //       phase 0 (the seam). Assert the folded profile stays in a TIGHT BAND
+  //       (min/mean ≈ 1) and its minimum is NOT parked at the seam.
+  //   (e) GLIDE: a coarse brightness proxy (successive-sample diff-energy / signal
+  //       energy — spectral-centroid-ish) EARLY vs LATE proves the cutoff sweep landed.
+  glideInfo: () => ({ ...glideInfo }),
+  glideAnalyze: () => {
+    const cap = Atomics.load(capCtr, 0), off = Atomics.load(capCtr, 1);
+    const barLen = glideInfo.barLen, nBars = glideInfo.nBars;
+    const SKIP = 3 * SR;                 // skip the pad's attack+decay settle at the head
+    const W = 1024;
+    const rmsAt = (c) => { if (c < 0 || c + W > cap) return -1; let s = 0; for (let i = 0; i < W; i++) { const x = capView[(c + i) * 2]; s += x * x; } return Math.sqrt(s / W); };
+    const brightAt = (c, WIN) => { if (c < 1 || c + WIN > cap) return -1; let e = 0, d = 0; for (let i = 1; i < WIN; i++) { const x = capView[(c + i) * 2], px = capView[(c + i - 1) * 2]; e += x * x; d += (x - px) * (x - px); } return e > 1e-12 ? d / e : 0; };
+
+    // (d) per-boundary seam discontinuity
+    let maxSeamRatio = 0, minBoundRms = Infinity, nB = 0;
+    for (let k = 1; k < nBars; k++) {
+      const ci = k * barLen - off;
+      if (k * barLen < SKIP || ci <= W || ci + W >= cap) continue;
+      nB++;
+      const d = Math.abs(capView[ci * 2] - capView[(ci - 1) * 2]);
+      let lm = 0;
+      for (let i = Math.max(1, ci - W); i < Math.min(cap, ci + W); i++) { if (i === ci) continue; const dd = Math.abs(capView[i * 2] - capView[(i - 1) * 2]); if (dd > lm) lm = dd; }
+      const ratio = d / (lm || 1e-12); if (ratio > maxSeamRatio) maxSeamRatio = ratio;
+      const br = rmsAt(ci - (W >> 1)); if (br >= 0 && br < minBoundRms) minBoundRms = br;
+    }
+
+    // (c) bar-phase-folded RMS profile (32 bins across the bar; phase 0 == the seam)
+    const NPH = 32, HOP = Math.max(1, Math.floor(barLen / NPH));
+    const binSum = new Float64Array(NPH), binCnt = new Float64Array(NPH);
+    for (let k = 0; k < nBars; k++) {
+      if (k * barLen < SKIP) continue;
+      for (let p = 0; p < NPH; p++) {
+        const c = k * barLen + p * HOP - off;
+        const r = rmsAt(c);
+        if (r >= 0) { binSum[p] += r; binCnt[p]++; }
+      }
+    }
+    const prof = []; for (let p = 0; p < NPH; p++) prof.push(binCnt[p] ? binSum[p] / binCnt[p] : -1);
+    const valid = prof.filter((x) => x >= 0);
+    const profMean = valid.reduce((a, b) => a + b, 0) / Math.max(1, valid.length);
+    let profMin = Infinity, profMax = 0, argMin = -1;
+    for (let p = 0; p < NPH; p++) { if (prof[p] < 0) continue; if (prof[p] < profMin) { profMin = prof[p]; argMin = p; } if (prof[p] > profMax) profMax = prof[p]; }
+    // seam-band = mean RMS of the bins straddling the seam (phase 0) vs the whole-bar
+    // mean — a re-attack drops this well below 1; a held drone keeps it ≈ 1.
+    const seamBins = [prof[0], prof[NPH - 1], prof[1]].filter((x) => x >= 0);
+    const seamBand = (seamBins.reduce((a, b) => a + b, 0) / Math.max(1, seamBins.length)) / (profMean || 1e-12);
+
+    const WIN = 8192;
+    const earlyBright = brightAt(SKIP, WIN), lateBright = brightAt(Math.max(SKIP, cap - WIN - SR), WIN);
+    let allE = 0, cnt = 0;
+    for (let i = SKIP; i < cap; i++) { const x = capView[i * 2]; allE += x * x; cnt++; }
+    return { cap, off, barLen, nBars, nBoundaries: nB, maxSeamRatio,
+      minBoundRms: minBoundRms === Infinity ? -1 : minBoundRms,
+      profMin, profMax, profMean, profBandRatio: profMin / (profMean || 1e-12),
+      profPkPk: (profMax - profMin) / (profMean || 1e-12), argMinPhase: argMin, NPH, seamBand,
+      earlyBright, lateBright, allRms: cnt ? Math.sqrt(allE / cnt) : 0 };
+  },
+  // small flat [L,R,…] snippet of captured frames [a,b) for the gate to analyse
+  snippet: (a, b) => {
+    a = a | 0; b = Math.min(b | 0, Atomics.load(capCtr, 0));
+    const out = [];
+    for (let i = a; i < b; i++) { out.push(capView[i * 2], capView[i * 2 + 1]); }
+    return out;
+  },
+};
+function activeRing() { return cond ? cond.activeRing() : (Atomics.load(ctrl, C_ACTIVE) & 1); }
+
+async function boot() {
+  const E = window.CsdEngine = await loadCsd();
+  // realize the variant specs now that defaultState() is available
+  for (let i = 0; i < VARIANTS.length; i++) VARIANTS[i] = bed({ ...VARIANTS[i], cycles: 64 });
+  log("csd-engine loaded; phase4=" + PHASE4 + " crossOriginIsolated=" + self.crossOriginIsolated);
+
+  const AC = window.AudioContext || window.webkitAudioContext;
+  ctx = new AC({ sampleRate: SR });
+  await ctx.resume();
+  log("ctx sampleRate=" + ctx.sampleRate + " state=" + ctx.state);
+
+  await ctx.audioWorklet.addModule("ring-player.js");
+  const recUrl = URL.createObjectURL(new Blob([RECORDER_SRC], { type: "text/javascript" }));
+  await ctx.audioWorklet.addModule(recUrl);
+
+  node = new AudioWorkletNode(ctx, "ring-player",
+    { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2],
+      processorOptions: { ctrlSab, ring0Sab, ring1Sab, cap: RING_FRAMES } });
+  const gain = ctx.createGain(); gain.gain.value = 1;
+  analyser = ctx.createAnalyser(); analyser.fftSize = 2048;
+  const rec = new AudioWorkletNode(ctx, "pcm-recorder",
+    { numberOfInputs: 1, numberOfOutputs: 0,
+      processorOptions: { sab: capSab, ctr: capCtrSab, ctrlSab, capFrames: CAP_FRAMES } });
+  node.connect(gain);
+  gain.connect(ctx.destination);
+  gain.connect(analyser);
+  gain.connect(rec);
+  R.ctx = ctx; R.node = node;
+
+  // build the conductor (owns the two producers + the crossfade control)
+  cond = RingConductor.make({
+    ctrlSab, ringSabs: [ring0Sab, ring1Sab], cap: RING_FRAMES, SR,
+    makeWorker: () => new Worker("stream-worker.js", { type: "module" }),
+    xfadeMs: 400,
+    primeSec: PHASE4 ? 6 : 12,
+    bridgePrimeSec: 2.5, runwaySec: 16,
+    streamSec: PHASE4 ? STREAM_SEC : undefined,
+    log,
+    onStarted: () => {
+      Atomics.store(ctrl, C_STATE, 1);            // ensure RUN (conductor already set it)
+      R.started = true; R.ready = true;
+      log("STARTED → RUNNING");
+      if (PHASE4) runSequence();
+    },
+    onCrossfade: (rec) => log(`  ✔ crossfade #${rec.index} → variant`),
+  });
+
+  const state0 = PHASE4 ? VARIANTS[0] : clickTestState();
+  cond.start(state0).catch((e) => { R.err = String(e && e.stack || e); log("START FAIL: " + R.err); });
+  log("conductor.start() dispatched");
+}
+
+// ── the scripted Phase-4 sequence: spaced changes + a rapid BURST, multi-minute ──
+function runSequence() {
+  // ms-from-start : variant index
+  const seq = [
+    [8000, 1], [18000, 2], [28000, 3], [38000, 0],
+    // BURST — 5 changes in 1.2 s (coalesce to the last, variant 1)
+    [50000, 2], [50300, 3], [50600, 4], [50900, 2], [51200, 1],
+    // spaced changes after the burst settles
+    [62000, 2], [74000, 3], [86000, 4], [98000, 0], [110000, 2], [122000, 1],
+  ];
+  const t0 = performance.now();
+  let last = 0;
+  for (const [at, v] of seq) {
+    last = Math.max(last, at);
+    setTimeout(() => { log(`→ requestState variant ${v} @${at}ms`); cond.requestState(VARIANTS[v]); }, at);
+  }
+  setTimeout(() => { R.seqDone = true; log("SEQUENCE dispatched complete"); }, last + 50);
+}
+
+function loadCsd() {
+  return new Promise((res, rej) => {
+    const sc = document.createElement("script");
+    sc.src = "../csd-engine.js";
+    sc.onload = () => res(window.CsdEngine);
+    sc.onerror = () => rej(new Error("csd-engine load failed"));
+    document.head.appendChild(sc);
+  });
+}
+
+// ── PHASE 5a: the LIVE / INCREMENTAL glide harness ────────────────────────────
+// ONE stream-worker in live mode, fed one chord-bar at a time. A single sustained
+// pad chord (fed ONCE, in bar 0, held for the whole run) with the pad's cutoff
+// glided per bar via feedBar's `units` param diff. No conductor, no crossfade —
+// ring 0 only, C_ACTIVE=0 / C_XFADE=0, one continuous read the whole time.
+async function bootGlide() {
+  const E = window.CsdEngine = await loadCsd();
+  const SE = window.FaustStateEngine;
+  if (!SE) throw new Error("state-engine not loaded");
+  log("glide: csd+state engines loaded; crossOriginIsolated=" + self.crossOriginIsolated);
+
+  const AC = window.AudioContext || window.webkitAudioContext;
+  ctx = new AC({ sampleRate: SR });
+  await ctx.resume();
+  log("ctx sampleRate=" + ctx.sampleRate + " state=" + ctx.state);
+
+  await ctx.audioWorklet.addModule("ring-player.js");
+  const recUrl = URL.createObjectURL(new Blob([RECORDER_SRC], { type: "text/javascript" }));
+  await ctx.audioWorklet.addModule(recUrl);
+
+  node = new AudioWorkletNode(ctx, "ring-player",
+    { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2],
+      processorOptions: { ctrlSab, ring0Sab, ring1Sab, cap: RING_FRAMES } });
+  const gain = ctx.createGain(); gain.gain.value = 1;
+  analyser = ctx.createAnalyser(); analyser.fftSize = 2048;
+  const rec = new AudioWorkletNode(ctx, "pcm-recorder",
+    { numberOfInputs: 1, numberOfOutputs: 0,
+      processorOptions: { sab: capSab, ctr: capCtrSab, ctrlSab, capFrames: CAP_FRAMES } });
+  node.connect(gain); gain.connect(ctx.destination); gain.connect(analyser); gain.connect(rec);
+  R.ctx = ctx; R.node = node;
+  Atomics.store(ctrl, C_ACTIVE, 0); Atomics.store(ctrl, C_XFADE, 0);   // single ring 0, no fade
+
+  // ── the drone bed + its per-bar glide plan ──
+  const state0 = bed({ bpm: 120, progression: "drone_min", cutoff: 500, model: "saw" });
+  const spb = 60 / state0.bpm;               // 0.5 s/beat
+  const BEATS = 2, N_BARS = 90;              // ~1 s bars, ~90 s of stream (soak is ~65 s)
+  const C0 = 500, C1 = 6000;                 // pad cutoff glide range (Hz)
+  const units = SE.voiceUnits(E, state0);    // the pad unit spec (module pad_saw)
+  units.pad.params.detune = 0;               // no unison detune → a beat-free sustained tone
+  units.pad.params.res = 0.1;                // gentle resonance (no self-osc through the sweep)
+  glideInfo = { barLen: Math.round(BEATS * spb * SR / BS) * BS, nBars: N_BARS, c0: C0, c1: C1 };
+  // a SINGLE held note (fed once, bar 0) — the cleanest "one sustained pad" the plan
+  // asks for: with detune 0 its RMS is flat, so any bar-locked dip would be a re-attack.
+  const CHORD = [146.83];   // D3
+
+  const worker = new Worker("stream-worker.js", { type: "module" });
+  worker.onmessage = (e) => {
+    const m = e.data; if (!m || !m.type) return;
+    if (m.type === "ready") { startLive(); return; }
+    if (m.type === "initfail") { R.err = m.error; log("initfail " + m.error); return; }
+    if (m.type === "openedLive") { log("openedLive: " + JSON.stringify(m.info)); return; }
+    if (m.type === "primed" && !R.started) {
+      Atomics.store(ctrl, C_STATE, 1);        // RUN — read ring 0 continuously
+      R.started = true; R.ready = true;
+      log(`PRIMED (${(m.filled / SR).toFixed(1)}s) → RUNNING`);
+      return;
+    }
+    if (m.type === "openfail") { R.err = m.error; log("openfail " + m.error); return; }
+    if (m.type === "status" && m.cursor % 20 === 0) log(`live chunk ${m.cursor}/${m.nChunks} filled=${m.filledSec}s under=${m.underruns}`);
+    if (m.type === "eos") { R.eos = true; log("eos @" + m.cursor); }
+  };
+  worker.onerror = (e) => { R.err = String(e && e.message || e); log("worker error: " + R.err); };
+
+  function startLive() {
+    worker.postMessage({ type: "openLive", gen: 1, ringIndex: 0, state: state0,
+      ctrlSab, ringSab: ring0Sab, cap: RING_FRAMES, primeSec: 4, runwaySec: 16 });
+    for (let k = 0; k < N_BARS; k++) {
+      const lo = k * BEATS, hi = (k + 1) * BEATS;
+      units.pad.params.cutoff = Math.round(C0 * Math.pow(C1 / C0, k / (N_BARS - 1)));
+      const events = (k === 0)
+        ? CHORD.map((f) => ({ unit: "pad", beat: 0, durB: N_BARS * BEATS, sets: { freq: f, gain: 0.32 }, amp: 0.32 }))
+        : [];
+      worker.postMessage({ type: "feedBar", bar: { units, events, spb, lo, hi, barStartSec: lo * spb } });
+    }
+    log(`fed ${N_BARS} bars (cutoff ${C0}→${C1} Hz), awaiting prime…`);
+  }
+
+  worker.postMessage({ type: "init" });
+  log("glide worker init dispatched");
+}
+
+if (GLIDE) bootGlide().catch((e) => { R.err = String(e && e.stack || e); log("GLIDE BOOT FAIL: " + R.err); });
+else boot().catch((e) => { R.err = String(e && e.stack || e); log("BOOT FAIL: " + R.err); });
+</script>
+</body>
+</html>

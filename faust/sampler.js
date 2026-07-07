@@ -61,8 +61,19 @@
   // notes: [{tSec, durSec, freq, amp, atk, rel, zones, sr(zoneFileRate)}]
   // buffers: {srcId: Float32Array mono at engine sr}
   // into: {dry, rev, del} with per-unit sends {dry, rev, del} in spec
-  function mixPCM(notes, buffers, sr, into, sends) {
-    const total = into.dry.length;
+  // WINDOWED WRITE (optional `win`): the offline stream renderer bakes a sampler
+  // ONTO a running one-bar window bus at its byUnit position, so its notes sum
+  // onto the same base press does (found + earlier voices) — a lump added to that
+  // base would be a 1-ulp reorder the fx comp/pump amplifies past parity. `win =
+  // {base, len, total}`: `into` spans absolute [base, base+len); writes land at
+  // s0+i-base clipped to [0,len); `total` is the FULL song length for the note's
+  // natural play-length clamp (so a note keeps its full envelope, only its window
+  // slice is written; the next window re-bakes its own slice). win omitted =>
+  // whole-song write, byte-identical to before (base 0, len=total=bus length).
+  function mixPCM(notes, buffers, sr, into, sends, win) {
+    const winBase = win ? win.base : 0;
+    const busLen = win ? win.len : into.dry.length;
+    const total = win ? win.total : into.dry.length;
     const dg = sends.dry != null ? sends.dry : 1, rg = sends.rev || 0, lg = sends.del || 0;
     for (const n of notes) {
       const midi = midiOfFreq(n.freq);
@@ -115,9 +126,9 @@
           if (aLp) { lp += aLp * (v - lp); v = lp; }
           if (i < atkN) { const a = i / atkN; v *= n.swell ? a * a : a; }
           if (i > effHold) v *= Math.max(0, 1 - (i - effHold) / relN);   // tape-runout release
-          into.dry[s0 + i] += v * dg;
-          if (rg) into.rev[s0 + i] += v * rg;
-          if (lg) into.del[s0 + i] += v * lg;
+          const j = s0 + i - winBase;
+          if (j >= busLen) break;
+          if (j >= 0) { into.dry[j] += v * dg; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; }
         }
         continue;
       }
@@ -135,9 +146,9 @@
         // original ramp (bit-identical regression path).
         if (i < atkN) { const a = i / atkN; v *= n.swell ? a * a : a; }
         if (i > holdN) v *= Math.max(0, 1 - (i - holdN) / relN); // release ramp
-        into.dry[s0 + i] += v * dg;
-        if (rg) into.rev[s0 + i] += v * rg;
-        if (lg) into.del[s0 + i] += v * lg;
+        const j = s0 + i - winBase;
+        if (j >= busLen) break;
+        if (j >= 0) { into.dry[j] += v * dg; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; }
       }
     }
     return into;

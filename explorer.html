@@ -652,6 +652,9 @@ const DBG_SENTINEL=QSFLAGS.get("debugSentinel")==="1";
 // ctx.destination directly even on a mobile UA (the R8 escape hatch; pairs
 // with the engine's opt-in element recycle, faust/live.js 1.7).
 const FORCE_CLASSIC=QSFLAGS.get("forceClassicOut")==="1";
+// ?forceMediaEl=1 — force the <audio>/MediaStream output route (the background-
+// survival path) even on desktop; escape hatch if Safari auto-detection misses.
+const FORCE_MEDIAEL=QSFLAGS.get("forceMediaEl")==="1";
 // The ZERO-STATIC Stage 3 rolling stem cache is now the DEFAULT path (Paul
 // 2026-07-06: "always cache as default — the system has no concept of 'live'
 // so we can always pre-render"). The heavy CACHED voices render offline in a
@@ -664,6 +667,39 @@ const FORCE_CLASSIC=QSFLAGS.get("forceClassicOut")==="1";
 // rate by default now.
 const STEMS=QSFLAGS.get("stems")!=="0";   // DEFAULT ON; ?stems=0 disables
 const STEM_LOOKAHEAD=+(QSFLAGS.get("stemLookahead")||0)||undefined;
+// ---- CLICK TEST BED (?clicktest=N) — a SILENT diagnostic "genre" -------------
+// Paul's idea for hunting the sub-0.5 clicks the clickmon tripwire misses: strip
+// the mix down to ONE soft, STEADY pad and silence everything else, then let the
+// engine churn around it. There is no musical content to mask a glitch, so any
+// tick you hear IS a seam/switch artifact (butt-splice, crossfade, or reset).
+// Slow bpm + short reverb keep the bar seams far apart and un-smeared. Modes:
+//   1 = STATIONARY pad, identical every bar (tests the continuous butt-splice
+//       seam — the path the "kill the clicks" commit left as a zero-fade splice)
+//   2 = same pad, MODEL cycles every bar (tests the ~20ms voice/color-swap xfade)
+//   3 = same pad, SECTION identity flips every bar (tests the stem-reset xfade)
+// Inert unless ?clicktest=N is set — safe in the production tree.
+const SEAMLOG=QSFLAGS.get("seamLog")==="1";   // ?seamLog=1 -> live.js logs every stem seam (gap/rate/edge-step)
+const CLICKTEST=+(QSFLAGS.get("clicktest")||0);
+const CT_MODELS=["saw","organ","fm","pluck","stack"];
+const CT_BASE=E.defaultState();
+let ctN=0;
+function clickTestState(){
+  const s=JSON.parse(JSON.stringify(CT_BASE)); const n=ctN++;
+  s.bpm=60; s.progression="drone_min"; s.reverb=0.2; s.seed=1;
+  s.delay={beats:0.75,feedback:0,cutoff:2000};
+  const soft={level:0.2,send:0.05,dsend:0,attack:2.0,cutoff:900,res:0.1,detune:0.004,wave:"saw"};
+  const model=CLICKTEST>=2?CT_MODELS[n%CT_MODELS.length]:"saw";
+  s.instruments={
+    pad:{...soft,model},
+    bass:{level:0,send:0,dsend:0},
+    melody:{level:0,send:0,dsend:0,voices:1},
+    drums:{kick:0,snare:0,hat:0,tom:0,send:0,dsend:0,kickModel:"boom",snareModel:"noise",hatModel:"noise"}
+  };
+  s.foundSources=[];
+  const secId=CLICKTEST>=3?("ct"+(n%2)):"ct";
+  s.sections=[{id:secId,name:secId,cycles:1,pads:true,bass:"off",drums:"off",melody:"off",found:{sourceId:null,role:"bed"},fill:"off"}];
+  return s;
+}
 async function goLive(){
   bootStart();
   try{
@@ -671,13 +707,16 @@ async function goLive(){
     // SNAP the playing state to that target (retarget while !S.live replaces
     // playing wholesale) — no glide from the previous run's genre, and the
     // stale glide queue from that run is cleared.
-    if(S.waypoints.length>=2){
+    if(CLICKTEST){ ctN=0; set({playing:clickTestState(), target:clickTestState()}); }   // seed a valid base so UI reads never hit null
+    else if(S.waypoints.length>=2){
       set({travel:{seg:0,t:0}, queue:[]});
       retarget({x:S.waypoints[0].x, y:S.waypoints[0].y});
     }
     vidReset();   // fresh shuffled video bag per play session — different clip order every time
     set({live:true,barCount:0,holdUntil:{}}); rebuildQueue();   // fresh instrument-hold timers per session
-    faustHandle=await FaustLive.exploreLive(()=>S.playing, m=>{set({status:m}); bootStatus(m);}, { debugSentinel:DBG_SENTINEL, forceClassicOut:FORCE_CLASSIC, stems:STEMS, stemLookahead:STEM_LOOKAHEAD, onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
+    if(CLICKTEST) ctN=0;   // first PLAYED bar is n=0 (the seed calls above advanced it)
+    const getState=CLICKTEST?(()=>clickTestState()):(()=>S.playing);
+    faustHandle=await FaustLive.exploreLive(getState, m=>{set({status:m}); bootStatus(m);}, { debugSentinel:DBG_SENTINEL, forceClassicOut:FORCE_CLASSIC, forceMediaEl:FORCE_MEDIAEL, stems:STEMS, stemLookahead:STEM_LOOKAHEAD, seamLog:SEAMLOG, onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
       bootBar();   // first bar scheduled -> advance the warm-up bar, then it waits on real RMS
       set({barInfo:info,barCount:S.barCount+1});
       if(S.waypoints.length>=2) travelStep();
