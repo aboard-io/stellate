@@ -687,6 +687,12 @@
       // mute the worklet SYNCHRONOUSLY (background timers throttle on iOS — can't defer)
       try { Atomics.store(ctrl, C_STATE, 2); } catch (e) {}   // worklet → silence, cursor frozen
       try { masterGain.gain.cancelScheduledValues(ctx.currentTime); masterGain.gain.value = 0; } catch (e) {}
+      // PAUSE the media-element route. It plays the LIVE MediaStream; when iOS
+      // suspends the ctx it loops that stream's last buffer — the "loop chunk"
+      // that played ALONGSIDE the background WAV. A paused element emits nothing
+      // regardless of the frozen stream, so only the bg <audio> sounds. (gain=0
+      // above races the suspend and isn't enough on its own — this is the fix.)
+      if (mediaEl) { try { mediaEl.pause(); } catch (e) {} }
       if (wantBg && bgAudio && bgUrl) bgHandoff();             // hand off if the WAV is ready
     };
     const goVisible = () => {
