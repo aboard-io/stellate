@@ -92,38 +92,24 @@ async function mkProc(mod) {
 }
 const rootOf = (mod) => JSON.parse(_factories[mod].json).name;
 
-// ---------------------------------------------------------------- main
-async function press(state, outPath, opts) {
-  opts = opts || {};
-  const t0 = Date.now();
-  const sched = SE.buildSchedule(E, state);
-  const spb = sched.spb;
-  let totalSec = sched.totalBeats * spb;
-  if (opts.dur) totalSec = Math.min(totalSec, opts.dur);
-  const TOTAL = Math.ceil(totalSec * SR);
-  console.log(`press: ${sched.totalBeats} beats @ ${state.bpm} bpm = ${(sched.totalBeats * spb).toFixed(1)}s` +
-    (opts.dur ? ` (capped ${totalSec.toFixed(1)}s)` : "") +
-    `; ${sched.events.length} synth events, ${sched.found.length} found events`);
-  // CPU-budget guard (state-engine trimToBudget): report the cost + any shed list.
-  const bud = sched.units && sched.units.__budget;
-  if (bud) console.log(`  cpu-budget: cost ${bud.cost} / ${bud.budget}` +
-    (bud.shed.length ? ` — SHED [${bud.shed.join(", ")}] (${bud.note})` : ` — ${bud.note}`));
+// dx7 cartridge presets (node fs). Shared by press + the segment-parity gate.
+function loadDx7Presets() {
+  return fs.existsSync(path.join(__dirname, "dx7-presets.json"))
+    ? JSON.parse(fs.readFileSync(path.join(__dirname, "dx7-presets.json"), "utf8")) : {};
+}
 
-  // accumulator buses (mono dry -> fx_bus L/R; rev/del/pp sends stay mono).
-  // STEREO voices (juno60/hammond/vp330, outputs===2) add their channel 0/1 to
-  // the separate wide buses wL/wR, so the dry path carries their width into the
-  // fx_bus L/R inputs while every mono voice stays centered (dry, duplicated).
-  const dry = new Float32Array(TOTAL), rev = new Float32Array(TOTAL),
-        del = new Float32Array(TOTAL), pp = new Float32Array(TOTAL);
-  const anyStereo = Object.values(sched.units).some(u => u && u.stereo);
-  const wL = anyStereo ? new Float32Array(TOTAL) : null;
-  const wR = anyStereo ? new Float32Array(TOTAL) : null;
-
-  // ---- found layer: decode + pure-JS granular/chopper mix ----
+// ---------------------------------------------------------------- decode (node)
+// The node-only input decode (ffmpeg -> f32le mono): found-source buffers +
+// the vocoder speech input. Split out of press() so faust/segment-parity-test.js
+// (and, later, the stream renderer's node adapter) can decode identically and
+// inject the PCM into the environment-agnostic assembly core below.
+async function decodeInputs(state, sched, opts) {
+  const TOTAL = opts.TOTAL;
+  // ---- found layer sources ----
   const usedSrc = new Set(sched.found.map(f => f.srcId));
   // sampler units' zone wavs ride foundSources at vol 0 — decode them too
   for (const u of Object.values(sched.units))
-    if (u.sampler) for (const z of u.sampler.zones) usedSrc.add(z.srcId);
+    if (u && u.sampler) for (const z of u.sampler.zones) usedSrc.add(z.srcId);
   const buffers = {};
   for (const s of state.foundSources || []) {
     if (!usedSrc.has(s.id)) continue;
@@ -131,15 +117,9 @@ async function press(state, outPath, opts) {
     try { buffers[s.id] = ffdecode(p); }
     catch (e) { console.warn(`  found: cannot decode ${p} (${String(e.message).slice(0, 80)}) — skipping ${s.id}`); }
   }
-  const foundSec = sched.found
-    .map(f => ({ ...f, tSec: f.beat * spb, durSec: f.durB * spb }))
-    .filter(f => f.tSec < totalSec && buffers[f.srcId]);
-  FP.mixPCM(foundSec, buffers, SR, { dry, rev, del, pp });
-  console.log(`  found: ${foundSec.length} events from ${Object.keys(buffers).length} sources mixed (JS PCM)`);
-
   // ---- vocoder speech input (robot_choir has 1 audio input) ----
   let speech = null;
-  const needVoc = Object.values(sched.units).some(u => u.vocoder);
+  const needVoc = Object.values(sched.units).some(u => u && u.vocoder);
   if (needVoc) {
     const vs = (state.foundSources || []).find(s => s.id === state.vocoderSourceId)
       || (state.foundSources || []).find(s => /^(sp_|vx_|vox_)/.test(s.id || ""));
@@ -152,6 +132,36 @@ async function press(state, outPath, opts) {
       } catch (e) { console.warn("  vocoder: speech decode failed — robot_choir will hum:", String(e.message).slice(0, 80)); }
     } else console.warn("  vocoder: no speech-ish source in state — robot_choir will hum");
   }
+  return { buffers, speech };
+}
+
+// ---------------------------------------------------------------- assembly core
+// The whole-song full-mix assembly, extracted verbatim from press() (byte-order
+// preserved — the determinism gate is byte-level). Environment-agnostic: mkProc/
+// rootOf/buffers/speech/dx7Presets arrive via `env`, so faust/segment-parity-test.js
+// can drive it as the PRESS REFERENCE that faust/stream-renderer.js is gated against.
+// Returns the float master L/R (pre-int16-quantization) so parity can be measured
+// below the wav's 1/32768 floor.
+async function assemble(state, sched, env, opts) {
+  const { mkProc, rootOf, buffers, speech, dx7Presets } = env;
+  const spb = opts.spb, totalSec = opts.totalSec, TOTAL = opts.TOTAL;
+
+  // accumulator buses (mono dry -> fx_bus L/R; rev/del/pp sends stay mono).
+  // STEREO voices (juno60/hammond/vp330, outputs===2) add their channel 0/1 to
+  // the separate wide buses wL/wR, so the dry path carries their width into the
+  // fx_bus L/R inputs while every mono voice stays centered (dry, duplicated).
+  const dry = new Float32Array(TOTAL), rev = new Float32Array(TOTAL),
+        del = new Float32Array(TOTAL), pp = new Float32Array(TOTAL);
+  const anyStereo = Object.values(sched.units).some(u => u && u.stereo);
+  const wL = anyStereo ? new Float32Array(TOTAL) : null;
+  const wR = anyStereo ? new Float32Array(TOTAL) : null;
+
+  // ---- found layer: pure-JS granular/chopper mix (buffers decoded by caller) ----
+  const foundSec = sched.found
+    .map(f => ({ ...f, tSec: f.beat * spb, durSec: f.durB * spb }))
+    .filter(f => f.tSec < totalSec && buffers[f.srcId]);
+  FP.mixPCM(foundSec, buffers, SR, { dry, rev, del, pp });
+  console.log(`  found: ${foundSec.length} events from ${Object.keys(buffers).length} sources mixed (JS PCM)`);
 
   // ---- group events per unit, allocate to pools, render ----
   const byUnit = {};
@@ -159,8 +169,6 @@ async function press(state, outPath, opts) {
     if (e.beat * spb >= totalSec) continue;
     (byUnit[e.unit] = byUnit[e.unit] || []).push(e);
   }
-  const dx7Presets = fs.existsSync(path.join(__dirname, "dx7-presets.json"))
-    ? JSON.parse(fs.readFileSync(path.join(__dirname, "dx7-presets.json"), "utf8")) : {};
 
   for (const [key, events] of Object.entries(byUnit)) {
     const u = sched.units[key];
@@ -286,6 +294,31 @@ async function press(state, outPath, opts) {
     console.log(`  master mb: ${mb.module}, mbdrive=${mb.mbdrive.toFixed(2)}`);
   }
 
+  return { L, Rr, TOTAL };
+}
+
+// ---------------------------------------------------------------- main
+async function press(state, outPath, opts) {
+  opts = opts || {};
+  const t0 = Date.now();
+  const sched = SE.buildSchedule(E, state);
+  const spb = sched.spb;
+  let totalSec = sched.totalBeats * spb;
+  if (opts.dur) totalSec = Math.min(totalSec, opts.dur);
+  const TOTAL = Math.ceil(totalSec * SR);
+  console.log(`press: ${sched.totalBeats} beats @ ${state.bpm} bpm = ${(sched.totalBeats * spb).toFixed(1)}s` +
+    (opts.dur ? ` (capped ${totalSec.toFixed(1)}s)` : "") +
+    `; ${sched.events.length} synth events, ${sched.found.length} found events`);
+  // CPU-budget guard (state-engine trimToBudget): report the cost + any shed list.
+  const bud = sched.units && sched.units.__budget;
+  if (bud) console.log(`  cpu-budget: cost ${bud.cost} / ${bud.budget}` +
+    (bud.shed.length ? ` — SHED [${bud.shed.join(", ")}] (${bud.note})` : ` — ${bud.note}`));
+
+  const { buffers, speech } = await decodeInputs(state, sched, { TOTAL });
+  const dx7Presets = loadDx7Presets();
+  const { L, Rr } = await assemble(state, sched,
+    { mkProc, rootOf, buffers, speech, dx7Presets }, { spb, totalSec, TOTAL });
+
   writeWav(outPath, L, Rr);
   let sq = 0; for (let i = 0; i < TOTAL; i++) sq += L[i] * L[i];
   const rmsDb = 20 * Math.log10(Math.max(Math.sqrt(sq / TOTAL), 1e-9));
@@ -308,4 +341,4 @@ if (require.main === module) {
   const state = JSON.parse(fs.readFileSync(args[0], "utf8"));
   press(state, args[1], { dur }).catch(e => { console.error(e); process.exit(1); });
 }
-module.exports = { press, SR };
+module.exports = { press, assemble, decodeInputs, loadDx7Presets, mkProc, rootOf, SR, BS };
