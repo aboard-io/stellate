@@ -47,6 +47,23 @@
   const PRIME_SEC = 2.0, BRIDGE_PRIME_SEC = 1.2;       // fill before a stream is "primed"
   const WORKER_RUNWAY = 8;                             // worker self-backpressure ceiling (> TARGET; live.js is the limiter)
 
+  // tiny browser-safe silent-WAV data URI — used to UNLOCK the background <audio>
+  // element inside the play gesture, so a later programmatic play() (fired from
+  // visibilitychange, which is NOT a user gesture) is permitted by iOS.
+  function silentWavDataUri(ms) {
+    const sr = 8000, n = Math.max(1, Math.round(sr * (ms || 120) / 1000)), dataLen = n * 2;
+    const buf = new ArrayBuffer(44 + dataLen), dv = new DataView(buf);
+    let o = 0;
+    const w = (s) => { for (let i = 0; i < s.length; i++) dv.setUint8(o++, s.charCodeAt(i)); };
+    w("RIFF"); dv.setUint32(o, 36 + dataLen, true); o += 4; w("WAVE");
+    w("fmt "); dv.setUint32(o, 16, true); o += 4; dv.setUint16(o, 1, true); o += 2; dv.setUint16(o, 1, true); o += 2;
+    dv.setUint32(o, sr, true); o += 4; dv.setUint32(o, sr * 2, true); o += 4; dv.setUint16(o, 2, true); o += 2; dv.setUint16(o, 16, true); o += 2;
+    w("data"); dv.setUint32(o, dataLen, true); o += 4;   // data stays zero → silence
+    const bytes = new Uint8Array(buf); let bin = "";
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return "data:audio/wav;base64," + (typeof btoa !== "undefined" ? btoa(bin) : "");
+  }
+
   async function exploreLive(getState, onStatus, opts) {
     opts = opts || {};
     const E = root.CsdEngine, SE = root.FaustStateEngine, FP = root.FoundPlayer, SP = root.FaustSampler;
@@ -114,6 +131,33 @@
           const pr = fresh.play(); if (pr && pr.catch) pr.catch(() => { try { fresh.remove(); } catch (e) {} });
         } catch (e) {}
       }, opts.elRecycleSec * 1000);
+    }
+
+    // ── BACKGROUND-WAV HANDOFF setup (iOS background survival) — MOBILE/SAFARI ──
+    // iOS SUSPENDS the AudioContext when hidden, so WebAudio can't sound in the
+    // background — but an <audio> element playing a REAL media resource keeps going.
+    // So we keep a rolling, deterministic ~BG_WAV_SEC WAV of the CURRENT genre's faust
+    // mix ready (rendered OFF the ring by a dedicated stream-worker) and, on background,
+    // hand off to a hidden looping <audio> playing it while the live worklet is muted at
+    // source; on foreground we hand back. Gated to the SAME mobile/Safari predicate as
+    // the media-element route, so DESKTOP (incl. the clicktest gate) is byte-unchanged —
+    // there wantBg is false and goHidden stays mute-only, exactly as before.
+    const wantBg = !opts.directOut && (opts.forceMediaEl || opts.forceBgWav || isMobile || isSafari) &&
+      typeof document !== "undefined" && typeof root.Audio !== "undefined";
+    const BG_WAV_SEC = opts.bgWavSec > 0 ? opts.bgWavSec : 32;
+    let bgAudio = null;
+    if (wantBg) {
+      try {
+        bgAudio = new root.Audio();
+        bgAudio.loop = true;
+        bgAudio.setAttribute("playsinline", ""); bgAudio.playsInline = true;
+        bgAudio.preload = "auto"; bgAudio.style.display = "none";
+        if (document.body) document.body.appendChild(bgAudio);
+        // UNLOCK within the gesture (exploreLive runs from goLive's click): a muted
+        // silent-WAV play so the later handoff play() (on visibilitychange) is allowed.
+        bgAudio.muted = true; bgAudio.src = silentWavDataUri(150);
+        const pr0 = bgAudio.play(); if (pr0 && pr0.catch) pr0.catch(() => {});
+      } catch (e) { bgAudio = null; }
     }
 
     // ── SharedArrayBuffer rings + control block ──
@@ -345,6 +389,14 @@
       startBarScheduler();
       startLoadReporter();
       ensureWorker(1);   // pre-init the idle worker so the first crossfade is snappy
+      // spin up the background-WAV producer (mobile/Safari only) shortly after run so
+      // its worker init + first offline render never contends with the priming burst.
+      if (wantBg) setTimeout(() => {
+        if (abort) return;
+        bgEnsureWorker();
+        if (!bgPollTimer) bgPollTimer = setInterval(bgPoll, 1000);
+        bgPoll();
+      }, 1200);
     }
 
     function onMsg(wi, m) {
@@ -513,34 +565,178 @@
       }, 250);
     }
 
-    // ── background survival: iOS/Safari SUSPEND the AudioContext when the page is
-    // hidden (app-switch / screen-lock / tab-switch), freezing the ring-player mid-
-    // buffer so CoreAudio repeats that last real quantum ("a tiny sample repeats
-    // infinitely"). We can't reliably keep the ctx alive, so instead we MUTE at the
-    // source the instant we go hidden — set the worklet to emit silence (C_STATE=2,
-    // which also FREEZES the read cursor so the timeline stays coherent) AND zero the
-    // master gain — so whatever iOS freezes-and-repeats is SILENCE, not music. On
-    // return we resume the ctx, unmute, and refill. visibilitychange is the right
-    // signal: it fires on real backgrounding, NOT on a desktop window-switch (where
-    // audio should keep playing). pagehide/pageshow cover the iOS bfcache path. ──
+    // ── ROLLING BACKGROUND-WAV PRODUCER (wantBg only) ──
+    // A DEDICATED stream-worker (not an audio producer — owns no ring) renders a
+    // deterministic ~BG_WAV_SEC whole-song WAV of the CURRENT genre off the audio path.
+    // We refresh it (debounced ~1s) when the genre/topology signature changes and keep
+    // the same blob while a genre is stable; a render in flight is superseded by the
+    // newest target. The ready blob becomes an object URL the background <audio> plays;
+    // old URLs are revoked. Holding one ~32s stereo int16 WAV ≈ a few MB.
+    let bgWorker = null, bgWorkerReady = false, bgWorkerReadyProm = null, bgWorkerResolve = null;
+    let bgUrl = null, bgReadySig = null, bgInflightSig = null, bgWantSig = null;
+    let bgGen = 0, bgDebounceTimer = 0, bgPollTimer = 0, bgActive = false;
+    function bgEnsureWorker() {
+      if (bgWorkerReadyProm) return bgWorkerReadyProm;
+      bgWorkerReadyProm = new Promise((resolve) => {
+        bgWorkerResolve = resolve;
+        const w = new Worker(BASE + "stream-worker.js", { type: "module" });
+        bgWorker = w;
+        w.onmessage = (e) => onBgMsg(e.data);
+        w.onerror = (e) => errors.push("bgworker error: " + ((e && e.message) || e));
+        w.postMessage({ type: "init" });
+      });
+      return bgWorkerReadyProm;
+    }
+    function onBgMsg(m) {
+      if (!m || !m.type) return;
+      if (m.type === "ready") { bgWorkerReady = true; if (bgWorkerResolve) bgWorkerResolve(); return; }
+      if (m.type === "initfail") { errors.push("bgworker initfail: " + m.error); return; }
+      if (m.type === "wav") {
+        if (m.gen !== bgGen) { bgInflightSig = null; }   // superseded render — discard the bytes
+        else {
+          try {
+            const blob = new root.Blob([m.wav], { type: "audio/wav" });
+            const url = root.URL.createObjectURL(blob);
+            if (bgUrl && bgUrl !== url) { try { root.URL.revokeObjectURL(bgUrl); } catch (e) {} }
+            bgUrl = url; bgReadySig = bgInflightSig; bgInflightSig = null;
+            // if we went hidden before a blob was ready (mute-only fallback took over),
+            // hand off to the <audio> now that the WAV has landed.
+            if (typeof document !== "undefined" && document.visibilityState === "hidden" && !bgActive && bgAudio) bgHandoff();
+          } catch (e) { errors.push("bgwav blob: " + (e && e.message || e)); bgInflightSig = null; }
+        }
+        if (bgWantSig && bgWantSig !== bgReadySig) bgKick();   // coalesce to the newest target
+        return;
+      }
+      if (m.type === "wavcancel" || m.type === "wavfail") {
+        bgInflightSig = null;
+        if (m.type === "wavfail") errors.push("bgwav fail: " + m.error);
+        if (bgWantSig && bgWantSig !== bgReadySig) bgKick();
+        return;
+      }
+    }
+    // signature over the FAUST topology (cur.sig) + salient genre fields: a change here
+    // = a new genre/timbre, so the background WAV is re-rendered; stable = same blob.
+    function bgSignature() {
+      try {
+        const st = getState(); if (!st) return null;
+        const g = st.genre || st.name || (st.genreMeta && st.genreMeta.form) || "";
+        return [(cur && cur.sig) || "", g, st.bpm, st.progression, st.chordEvery].join("~");
+      } catch (e) { return null; }
+    }
+    function bgKick() {
+      if (!wantBg || abort) return;
+      const sig = bgWantSig;
+      if (!sig || sig === bgReadySig || bgInflightSig) return;   // have it / already rendering
+      let st; try { st = getState(); } catch (e) { return; }
+      if (!st) return;
+      bgInflightSig = sig; bgGen++;
+      const gen = bgGen;
+      const go = () => { try { bgWorker.postMessage({ type: "renderWav", state: JSON.parse(JSON.stringify(st)), durSec: BG_WAV_SEC, gen }); } catch (e) { bgInflightSig = null; errors.push("bgwav post: " + (e && e.message || e)); } };
+      if (bgWorkerReady) go(); else bgEnsureWorker().then(go);
+    }
+    function bgPoll() {
+      if (!wantBg || abort) return;
+      const sig = bgSignature();
+      if (sig && sig !== bgWantSig) {
+        bgWantSig = sig;
+        bgSetMetadata();   // reflect the new genre on the lock screen
+        if (bgDebounceTimer) clearTimeout(bgDebounceTimer);
+        bgDebounceTimer = setTimeout(() => { bgDebounceTimer = 0; bgKick(); }, 1000);
+      }
+    }
+
+    // best-effort JS volume fade for the <audio> element (AudioParam ramps don't
+    // advance while the ctx is suspended; a JS timer still does). Degrades to a
+    // near-instant set if background timers are throttled — never a gap.
+    function fadeEl(el, to, ms) {
+      if (!el) return;
+      try {
+        const from = el.volume, steps = Math.max(1, Math.round(ms / 20)); let i = 0;
+        if (el.__fade) clearInterval(el.__fade);
+        el.__fade = setInterval(() => {
+          i++; const x = Math.min(1, i / steps);
+          try { el.volume = Math.max(0, Math.min(1, from + (to - from) * x)); } catch (e) {}
+          if (x >= 1) { clearInterval(el.__fade); el.__fade = 0; }
+        }, 20);
+      } catch (e) { try { el.volume = to; } catch (e2) {} }
+    }
+    // hand the sound off to the background <audio> playing the ready WAV. Returns
+    // true if a blob was ready (so the caller can leave the mute-only fallback).
+    function bgHandoff() {
+      if (!bgAudio || !bgUrl) return false;
+      try {
+        if (bgAudio.src !== bgUrl) bgAudio.src = bgUrl;
+        bgAudio.muted = false; bgAudio.volume = 0;
+        const pr = bgAudio.play(); if (pr && pr.catch) pr.catch(() => {});
+        fadeEl(bgAudio, 1, 150);   // soft entrance (the WAV isn't sample-aligned with the live stream)
+      } catch (e) { return false; }
+      bgActive = true; bgSetPlaybackState("playing");
+      return true;
+    }
+
+    // ── background survival state machine: iOS/Safari SUSPEND the AudioContext when
+    // the page is hidden, freezing the ring-player mid-buffer so CoreAudio repeats that
+    // last real quantum forever. So on hidden we MUTE the live worklet at source FIRST
+    // (C_STATE=2 → silence + frozen cursor) so the frozen-repeat is SILENCE, then hand
+    // off to the background <audio> WAV if one is ready (music keeps playing via a real
+    // media element iOS won't suspend). If no blob is ready we stay MUTE-ONLY (today's
+    // fallback) and pick up the handoff when the WAV lands (see onBgMsg). On return we
+    // pause the <audio>, resume the ctx, unmute the worklet with the 20ms fade-in. ──
     const goHidden = () => {
       if (abort) return;
+      // mute the worklet SYNCHRONOUSLY (background timers throttle on iOS — can't defer)
       try { Atomics.store(ctrl, C_STATE, 2); } catch (e) {}   // worklet → silence, cursor frozen
-      try { masterGain.gain.value = 0; } catch (e) {}          // belt-and-suspenders: silence at the sink
+      try { masterGain.gain.cancelScheduledValues(ctx.currentTime); masterGain.gain.value = 0; } catch (e) {}
+      if (wantBg && bgAudio && bgUrl) bgHandoff();             // hand off if the WAV is ready
     };
     const goVisible = () => {
       if (abort) return;
+      if (bgActive && bgAudio) {                               // hand back: fade + pause the WAV
+        try { fadeEl(bgAudio, 0, 120); } catch (e) {}
+        setTimeout(() => { try { bgAudio.pause(); } catch (e) {} }, 150);
+        bgActive = false;
+      }
       if (ctx.state === "suspended") { try { ctx.resume(); } catch (e) {} }
       if (mediaEl) { try { const pr = mediaEl.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {} }
       try { Atomics.store(ctrl, C_STATE, 1); } catch (e) {}    // resume from the frozen cursor
       try { const t = ctx.currentTime; masterGain.gain.cancelScheduledValues(t); masterGain.gain.setValueAtTime(0, t); masterGain.gain.linearRampToValueAtTime(1, t + 0.02); } catch (e) {}   // fade in — no click on return
       try { pump(); } catch (e) {}                              // refill now, don't wait for the throttled timer
+      bgSetPlaybackState("playing");
     };
+    const onVisChange = () => { (typeof document !== "undefined" && document.visibilityState === "hidden" ? goHidden : goVisible)(); };
     if (typeof document !== "undefined") {
-      document.addEventListener("visibilitychange", () => { (document.visibilityState === "hidden" ? goHidden : goVisible)(); });
+      document.addEventListener("visibilitychange", onVisChange);
       root.addEventListener("pagehide", goHidden);
       root.addEventListener("pageshow", goVisible);
       root.addEventListener("focus", goVisible);
+    }
+
+    // ── MediaSession: show WHAT is playing on the iOS lock screen during handoff and
+    // wire transport. explorer.html ALREADY owns the action handlers (play→goLive /
+    // pause→stopLive) and a richer blend title, so — to NOT regress the deployed app —
+    // live.js here only MAINTAINS metadata/playbackState (a host that reasserts a nicer
+    // title simply wins, since it fires after) and registers its own play/pause handlers
+    // ONLY when explicitly asked (opts.mediaSession) for standalone hosts. Guarded. ──
+    const MS = (typeof navigator !== "undefined" && navigator.mediaSession) ? navigator.mediaSession : null;
+    function bgSetPlaybackState(s) { if (MS) try { MS.playbackState = s; } catch (e) {} }
+    function bgSetMetadata() {
+      if (!MS || typeof root.MediaMetadata === "undefined") return;
+      let title = "Royal Road";
+      try { const st = getState(); if (st) title = st.genre || st.name || (st.genreMeta && st.genreMeta.form) || title; } catch (e) {}
+      try { MS.metadata = new root.MediaMetadata({ title: String(title), artist: "Royal Road / aboardresearch", album: "the genre space" }); } catch (e) {}
+    }
+    if (MS) {
+      bgSetMetadata(); bgSetPlaybackState("playing");
+      if (opts.mediaSession) {
+        try {
+          MS.setActionHandler("play", () => goVisible());
+          MS.setActionHandler("pause", () => {
+            try { Atomics.store(ctrl, C_STATE, 2); masterGain.gain.value = 0; } catch (e) {}
+            if (bgActive && bgAudio) { try { bgAudio.pause(); } catch (e) {} bgActive = false; }
+            bgSetPlaybackState("paused");
+          });
+        } catch (e) {}
+      }
     }
 
     // ── boot: init worker0, then let the pump fill the runway; RUN on primed ──
@@ -553,6 +749,13 @@
 
     const handle = {
       ctx, analyser, errors, mediaEl,
+      // ── background-WAV handoff debug hooks (headless verification) ──
+      __bgWavReady: () => !!bgUrl,
+      __bgUrl: () => bgUrl,
+      __bgState: () => ({ enabled: !!wantBg, ready: !!bgUrl, active: bgActive,
+        audioSrc: bgAudio ? bgAudio.src : null, audioPaused: bgAudio ? bgAudio.paused : null,
+        cstate: (function () { try { return Atomics.load(ctrl, C_STATE); } catch (e) { return null; } })(),
+        wantSig: bgWantSig, readySig: bgReadySig }),
       // REAL mixer view — but a baked full-mix can't be de-mixed live: gain/mute/solo
       // are no-ops (buried feature), rms/active are coarse (overall meter + last bar).
       layers() {
@@ -608,18 +811,24 @@
         clearTimeout(pumpTimer); if (barTimer) clearInterval(barTimer); if (loadTimer) clearInterval(loadTimer);
         if (fadeTimer) clearInterval(fadeTimer); if (swapTimer) clearInterval(swapTimer);
         if (elRecycleTimer) clearInterval(elRecycleTimer);
+        if (bgPollTimer) clearInterval(bgPollTimer); if (bgDebounceTimer) clearTimeout(bgDebounceTimer);
         Atomics.store(ctrl, C_STATE, 2);   // stopped — ring-player emits silence
         for (const w of workers) if (w) { try { w.postMessage({ type: "stop" }); } catch (e) {} }
+        if (bgWorker) { try { bgWorker.postMessage({ type: "stop" }); } catch (e) {} }
         if (typeof document !== "undefined") {
-          document.removeEventListener("visibilitychange", onVisible);
-          root.removeEventListener("focus", onVisible); root.removeEventListener("pageshow", onVisible);
+          document.removeEventListener("visibilitychange", onVisChange);
+          root.removeEventListener("pagehide", goHidden);
+          root.removeEventListener("pageshow", goVisible);
+          root.removeEventListener("focus", goVisible);
         }
         const tNow = ctx.currentTime;
         try { masterGain.gain.cancelScheduledValues(tNow); masterGain.gain.setValueAtTime(masterGain.gain.value, tNow); masterGain.gain.linearRampToValueAtTime(0, tNow + 0.06); } catch (e) {}
         if (mediaEl) { try { mediaEl.pause(); mediaEl.srcObject = null; mediaEl.remove(); } catch (e) {} }
+        if (bgAudio) { try { bgAudio.pause(); bgAudio.src = ""; bgAudio.remove(); } catch (e) {} }
+        if (bgUrl) { try { root.URL.revokeObjectURL(bgUrl); } catch (e) {} bgUrl = null; }
         try { foundBeds.stopAll(); foundChops.stopAll(); foundVox.stopAll(); } catch (e) {}
         for (const [, p] of samplerPlayers) { try { p.stopAll(); } catch (e) {} }
-        setTimeout(() => { for (const w of workers) if (w) { try { w.terminate(); } catch (e) {} } try { ctx.close(); } catch (e) {} }, 1200);
+        setTimeout(() => { for (const w of workers) if (w) { try { w.terminate(); } catch (e) {} } if (bgWorker) { try { bgWorker.terminate(); } catch (e) {} } try { ctx.close(); } catch (e) {} }, 1200);
         status("stopped");
       },
     };
