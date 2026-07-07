@@ -245,6 +245,37 @@
     const samplerPlayers = new Map();
     const samplerOf = (key) => { if (!SP) return null; if (!samplerPlayers.has(key)) samplerPlayers.set(key, SP.SamplerLive(ctx, foundDests)); return samplerPlayers.get(key); };
 
+    // ── VOCODER speech carrier (robot_choir has one audio input) — decode the
+    // speech source PCM ONCE per source id and hand it to the worker's openLive so
+    // the live vocIns can modulate it (looping). Without a carrier the vocoder
+    // drones/hums. Source selection MIRRORS press.js decodeInputs: the state's
+    // vocoderSourceId, else the first speech-ish (sp_/vx_/vox_) found source. The
+    // decode is main-thread (FP.decodeUrlToBuffer resolves the LOCAL cache) → mono
+    // Float32; it's async + gated at openStream so it never blocks the crossfade.
+    const speechCache = {};    // srcId -> Float32Array | null   (resolved; null = failed/none)
+    const speechJobs = {};     // srcId -> Promise<Float32Array|null>  (in-flight or done)
+    function speechSourceOf(state) {
+      const fs = (state && state.foundSources) || [];
+      return fs.find((s) => s.id === state.vocoderSourceId) ||
+             fs.find((s) => /^(sp_|vx_|vox_)/.test(s.id || "")) || null;
+    }
+    function kickSpeech(src) {
+      if (!src) return Promise.resolve(null);
+      const id = src.id;
+      if (speechJobs[id]) return speechJobs[id];
+      const url = src.url || (src.samplePath ? new URL(src.samplePath, SITE).href : null);
+      if (!url) return (speechJobs[id] = Promise.resolve((speechCache[id] = null)));
+      const job = FP.decodeUrlToBuffer(ctx, url).then((b) => {
+        const pcm = b && b.length ? b.getChannelData(0) : null;
+        return (speechCache[id] = pcm ? Float32Array.from(pcm) : null);   // copy out of the AudioBuffer
+      }).catch(() => (speechCache[id] = null));
+      speechJobs[id] = job;
+      return job;
+    }
+    // headless-verification counters: prove the wiring FEEDS speech (non-null) into a
+    // vocoder stream's openLive rather than the old speech:null (which hummed).
+    let voxSpeechOpens = 0, voxNullOpens = 0, lastSpeechLen = 0;
+
     // ── mixer layers (buried feature: a baked full-mix can't be de-mixed live, so
     // gain/mute/solo are no-ops; rms/active are coarse from the overall meter + the
     // last played bar's unit table). Shape preserved for explorer's mixer panel. ──
@@ -292,11 +323,16 @@
       return { ring, wi: ring, gen: null, sig: null, readyToFeed: false, primed: false,
         fedFrames: 0, fedMusicalSec: 0, startGlobal: null, preFeed: [], pendingBars: [] };
     }
-    function postOpenLive(stream, one, primeSec) {
+    function postOpenLive(stream, one, primeSec, speech) {
       stream.gen = ++genCounter;
+      // COPY the cached carrier and TRANSFER the copy — a bare transfer of the cached
+      // Float32Array would detach it and break the next re-open of the same source.
+      const sp = speech && speech.length ? speech.slice() : null;
+      if (sp) { voxSpeechOpens++; lastSpeechLen = sp.length; }
+      else if (speechSourceOf(one)) voxNullOpens++;
       workers[stream.wi].postMessage({ type: "openLive", gen: stream.gen, ringIndex: stream.ring, state: one,
-        buffers: {}, speech: null, ctrlSab, ringSab: ringSabs[stream.ring], cap: RING_FRAMES,
-        primeSec: primeSec, runwaySec: WORKER_RUNWAY });
+        buffers: {}, speech: sp, ctrlSab, ringSab: ringSabs[stream.ring], cap: RING_FRAMES,
+        primeSec: primeSec, runwaySec: WORKER_RUNWAY }, sp ? [sp.buffer] : []);
     }
     function postFeed(stream, r) {
       workers[stream.wi].postMessage({ type: "feedBar", bar: {
@@ -304,13 +340,22 @@
         barStartSec: r._base, sweeps: r._sweeps } });
     }
     function openStream(stream, one, primeSec) {
-      const go = () => {
-        postOpenLive(stream, one, primeSec);
+      const go = (speech) => {
+        postOpenLive(stream, one, primeSec, speech);
         stream.readyToFeed = true;
         const pf = stream.preFeed; stream.preFeed = [];
         for (const rr of pf) postFeed(stream, rr);
       };
-      if (workerReady[stream.wi]) go(); else ensureWorker(stream.wi).then(go);
+      // gate the openLive on the speech carrier decode (non-blocking): if this state
+      // needs a vocoder carrier and it isn't decoded yet, defer the open until it is
+      // (bars queue in preFeed meanwhile). If there's no vocoder source, open now.
+      const proceed = () => {
+        const src = speechSourceOf(one);
+        if (!src) return go(null);
+        if (speechCache[src.id] !== undefined) return go(speechCache[src.id]);   // decoded or failed(null)
+        kickSpeech(src).then((sp) => go(sp || null));
+      };
+      if (workerReady[stream.wi]) proceed(); else ensureWorker(stream.wi).then(proceed);
     }
     function feed(stream, r) {
       // stream-absolute sweep mapping (sweeps are rare — only section open/close)
@@ -794,6 +839,10 @@
         peakjump: clickMonState.latest.peakjump, rms: clickMonState.latest.rms, logs: 0,
       } : null,
       clickMonThr: (v) => { if (clickMonState) try { clickMonState.node.setParamValue("/clickmon/thr", v); } catch (e) {} },
+      // ── vocoder speech-carrier wiring debug (headless verification): counts
+      // openLive sends that carried a non-null speech buffer vs. null-carrier opens
+      // of a vocoder-needing state, and the last carrier length in samples. ──
+      __voxSpeech: () => ({ speechOpens: voxSpeechOpens, nullOpens: voxNullOpens, lastLen: lastSpeechLen }),
       // ring / underrun telemetry (real — reads the shared control block)
       underruns: () => Atomics.load(ctrl, C_UNDER_CNT),
       underrunFlag: () => Atomics.load(ctrl, C_UNDERRUN),

@@ -426,8 +426,13 @@
         let us = ST.units.get(key);
         if (!us) {
           us = await ensureUnit(key, u);
-          if (u.vocoder && ST.speech) us.vocIns = (s, len) => ST.speech.subarray(s, s + len);
-          else if (u.vocoder) us.vocIns = (s, len) => new Float32Array(len);
+          // LIVE path: speech is the RAW decoded carrier (NOT tiled to a TOTAL like
+          // the whole-song open() path), so LOOP it — subarray would go silent past
+          // the clip length and the vocoder would hum again on a continuous stream.
+          if (u.vocoder && ST.speech && ST.speech.length) {
+            const sp = ST.speech, L = sp.length;
+            us.vocIns = (s, len) => { const o = new Float32Array(len); for (let i = 0; i < len; i++) o[i] = sp[((s + i) % L + L) % L]; return o; };
+          } else if (u.vocoder) us.vocIns = (s, len) => new Float32Array(len);
           ST.units.set(key, us);
           ST.unitOrder.push({ key, kind: "faust" });
           ST.unitParams.set(key, { ...(u.params || {}) });
