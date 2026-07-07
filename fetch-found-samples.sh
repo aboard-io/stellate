@@ -419,6 +419,31 @@ fi
 # NOTE: the zone tables are mirrored statically in genre-kernel.js SAMPLERS —
 # if you re-extract with different --max-zones, regenerate that table.
 
+# --- SAMPLED DRUM KITS (2026-07 "our drum kits are super basic"): FluidR3 bank
+# 128 GM percussion -> per-hit one-shots. ADDITIVE to the Faust synth kicks
+# (boom/808/909 …): faust/sf2.js `drumkit` pulls the notes the engine plays
+# (kick 36 / snare 38 / hats 42+46 / toms 41,47,50 + rim/clap/crash/ride) at
+# natural pitch into found/samples/drums/<slug>/ as mono wavs + kit.json. The
+# native sampler (faust/sampler.js) plays each hit; genres opt in via
+# drums.kit:"acoustic"|"room"|"power"|"electronic"|"jazz"|"brush" (genre-kernel
+# DRUMKITS, which mirrors the `len` values — the committed source, like SAMPLERS;
+# the wavs are gitignored/derived). Same MIT FluidR3 font as the instruments.
+if [ ! -s found/samples/drums/acoustic/kit.json ]; then
+  echo "→ FluidR3_GM_GS.sf2 (drum kits: GM bank-128 percussion)"
+  [ -s /tmp/FluidR3_GM_GS.sf2 ] || curl -sL --max-time 900 -o /tmp/FluidR3_GM_GS.sf2 \
+    "$IA/fluidr3-gm-gs/FluidR3_GM_GS.sf2"
+  mkdir -p found/samples/drums
+  node faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Standard/"   found/samples/drums --slug acoustic
+  node faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Room/"       found/samples/drums --slug room
+  node faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Power/"      found/samples/drums --slug power
+  node faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Electronic/" found/samples/drums --slug electronic
+  node faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Jazz/"       found/samples/drums --slug jazz
+  node faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Brush/"      found/samples/drums --slug brush
+  rm -f /tmp/FluidR3_GM_GS.sf2
+fi
+# NOTE: the per-hit `len` values are mirrored statically in genre-kernel.js
+# DRUMKITS — if you re-extract different kits/notes, regenerate that table.
+
 # --- DX7 factory ROM banks -> faust/dx7-presets.json (provenance recipe) ---
 # The decoded presets ARE committed (faust/dx7-presets.json — source, not
 # audio), so this block only documents/regenerates. Yamaha ROM1A-4B factory

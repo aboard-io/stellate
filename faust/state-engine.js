@@ -22,6 +22,29 @@
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number(v) || 0));
   const cpspch = (p) => { p = parseFloat(p); const o = Math.floor(p), st = Math.round((p - o) * 100); return 261.625565 * Math.pow(2, (o - 8) + st / 12); };
 
+  // ---- SAMPLED DRUM KITS (additive to the Faust synth kits: kick boom/808/909
+  //      · snare noise/crack/clap · hat noise/metal). A genre may select a real
+  //      recorded kit (genre-kernel DRUMKITS -> instruments.drums.<x>Sampler);
+  //      when present, the kick/snare/hat/tom voice UNIT carries a native sampler
+  //      (faust/sampler.js) instead of a Faust module, and mapEvents emits each
+  //      drum hit as a fixed-pitch (tom: pitched) UNLOOPED one-shot — the same
+  //      native PCM path pitched instrument samplers ride, so it bakes in press
+  //      (SP.mixPCM) and streams gaplessly (mustLive). A genre WITHOUT a sampled
+  //      kit renders exactly as before (no .sampler on the drum unit).
+  const midiToFreq = (m) => 440 * Math.pow(2, (m - 69) / 12);
+  // fixed keymap the drum sampler zones are cut against (genre-kernel drumKitSpec):
+  //   kick/snare  -> one zone root 60, played at midi 60 => rate 1 (natural pitch)
+  //   hat         -> closed zone (root 60, keys 0-65) / open zone (root 72, 66-127)
+  //   tom         -> one zone rooted at DRUM_TOM_ROOT; the hit's tom pitch (Hz) is
+  //                  emitted as freq so the sample repitches (105Hz => rate 1)
+  const DRUM_KS_FREQ = midiToFreq(60);      // kick/snare + closed-hat trigger
+  const DRUM_HAT_OPEN_FREQ = midiToFreq(72); // open-hat trigger (selects the open zone)
+  const DRUM_TOM_ROOT = 69 + 12 * Math.log2(105 / 440);   // ~44.2: tom base = synth tom default 105Hz
+  // velocity->sample-gain calibration: press mixes at (u.lvl)*(sets.gain)*sampler
+  // GAIN(1.35); real kit samples peak near full scale, so this lands a sampled
+  // kick at ~-6dB for a typical kick level(~1.2)×amp(~0.65). Tune here.
+  const DRUM_SAMP_GAIN = 0.5;
+
   // ---- per-voice insert chain (state.instruments.<voice>.inserts contract) ----
   // 0-2 of {type, ...params}; type ∈ distort/phaser/chorus/filtersweep. Applied
   // INSERT-style between the voice and its layer tap / fx sends (per voice —
@@ -552,6 +575,23 @@
       pool: 1, dry: 1, rev: (D.send || 0) * 0.3, del: (D.dsend || 0) * 0.5, lvl: (D.hat != null ? D.hat : 1) * 0.7, drum: true, params: {}, tail: 0.4 };
     units.tom = { module: "tom", pool: 1, dry: 1, rev: (D.send || 0) * 1.4, del: D.dsend || 0,
       lvl: D.tom != null ? D.tom : 1, drum: true, params: {}, tail: 0.6 };
+    // SAMPLED KIT (additive): when instruments.drums carries per-drum sampler
+    // specs (genre-kernel drumKitSpec, from a genre's drums.kit), overlay a
+    // native sampler onto the matching voice UNIT. press/stream see u.sampler
+    // FIRST (same branch pitched instrument samplers use) and render the
+    // one-shots via SP.mixPCM; the Faust `module` stays as the metadata/fallback
+    // (unused while .sampler is set). drum:true keeps it mustLive. atk tiny (keep
+    // the transient), rel short declick. A kit that omits a drum leaves that
+    // voice on its synth module.
+    const drumSamp = (unit, spec) => {
+      if (!spec || !Array.isArray(spec.zones) || !spec.zones.length) return;
+      unit.sampler = { id: spec.id || "drumkit", sr: spec.sr || 44100, zones: spec.zones,
+        atk: 0.0006, rel: 0.03, oneShotSec: spec.oneShotSec || 1, swell: false };
+    };
+    drumSamp(units.kick, D.kickSampler);
+    drumSamp(units.snare, D.snareSampler);
+    drumSamp(units.hat, D.hatSampler);
+    drumSamp(units.tom, D.tomSampler);
     units.stab = { module: "stab", pool: 2, dry: 1, rev: 0.35, del: 0.3, lvl: 1, drum: true, params: { level: 1 }, tail: 0.6, freqMax: 2000 };
     units.sfx = { module: "sfx", pool: 2, dry: 1, rev: 0.3, del: 0, lvl: 1, hold: true, params: { level: 1 }, tail: 1.2 };
     return trimToBudget(units, state);
@@ -712,6 +752,26 @@
     for (const d of ev.drums) {
       if (!win(d.beat)) continue;
       const u = units[d.drum]; if (!u) continue;
+      // SAMPLED DRUM: the voice unit carries a native sampler (a genre's drums.kit).
+      // Emit the hit as a one-shot for the shared sampler path (press/stream read
+      // sets.freq/gain exactly like a pitched sampler note): fixed pitch for
+      // kick/snare (rate 1), closed/open zone select for hats, real repitch for
+      // toms (d.pitch Hz). Hold: kick/snare/tom play their FULL sample (body +
+      // natural decay, release-declicked at the end); hats use the notated dur so
+      // closed stays tight and open rings only as long as the pattern asks. amp ->
+      // sample gain (velocity), calibrated by DRUM_SAMP_GAIN. Ping-pong (d.pp) is
+      // not sent on sampled drums (the sampler mix has no pp bus).
+      if (u.sampler) {
+        let freq, durSec;
+        if (d.drum === "tom") { freq = clamp(d.pitch || 105, 40, 400); }
+        else if (d.drum === "hat") { freq = d.open ? DRUM_HAT_OPEN_FREQ : DRUM_KS_FREQ; }
+        else { freq = DRUM_KS_FREQ; }
+        if (d.drum === "hat") durSec = Math.max(0.02, d.dur * spb);
+        else durSec = Math.max(0.04, (u.sampler.oneShotSec || 1) - (u.sampler.rel || 0.03));
+        out.push({ unit: d.drum, beat: d.beat, durB: durSec / spb, drum: true,
+          sets: { freq, gain: clamp(d.amp * DRUM_SAMP_GAIN, 0, 2) } });
+        continue;
+      }
       const sets = { level: clamp(u.lvl * d.amp, 0, 2), decay: clamp(d.dur * spb, 0.05, 2) };
       if (d.drum === "tom") sets.pitch = clamp(d.pitch || 105, 40, 400);
       // state.snarePP: buildEvents tags sparse snare hits with d.pp — a per-EVENT
