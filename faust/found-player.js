@@ -448,27 +448,85 @@
     return { found: true, startSample: start * win, gain };
   }
 
+  // ---- LOCAL-CACHE resolver (stop the LIVE app depending on archive.org) ----
+  // Every foundSource carries the archive.org URL it was fetched from, but the
+  // very same audio is already on disk as found/<id>.wav (the processed, trimmed
+  // mono 44.1k file the offline press.js loads). found-manifest.json maps the
+  // exact archive URL -> that local file. Prefer the local file at runtime;
+  // fall back to archive.org (with a warning) ONLY for assets not cached.
+  let _manifestPromise = null;
+  function loadFoundManifest() {
+    if (_manifestPromise) return _manifestPromise;
+    _manifestPromise = (async () => {
+      try {
+        if (typeof fetch !== "function") return {};
+        const r = await fetch("found/found-manifest.json", { cache: "no-cache" });
+        if (!r.ok) return {};
+        const j = await r.json();
+        return (j && j.byUrl) ? j.byUrl : {};
+      } catch (e) { return {}; }
+    })();
+    return _manifestPromise;
+  }
+  // The local cache file for this URL (found/<id>.wav), or null when the source
+  // is not archive-backed or has no cache mapping. No existence PROBE here — a
+  // HEAD/Range probe races the flood of decodes at ride start and flakily aborts;
+  // instead the decoder simply TRIES the local file and falls back on failure.
+  async function localCacheFor(url) {
+    if (!/\barchive\.org/i.test(url)) return null;   // already local / non-archive
+    const map = await loadFoundManifest();
+    return map[url] || null;
+  }
+
   const _bufCache = new Map(); // url -> Promise<AudioBuffer>
   function decodeUrlToBuffer(ctx, url, maxSeconds) {
     if (_bufCache.has(url)) return _bufCache.get(url);
     const job = (async () => {
       const maxSec = maxSeconds || FOUND_MAX_SECONDS;
-      let bytes = FOUND_CHUNK_BYTES, audio = null, mono = null, pick = null;
+      const local = await localCacheFor(url);
+      let audio = null, mono = null, pick = null;
+      // LOCAL FIRST: prefer the already-downloaded cache file so the live app
+      // never touches archive.org for anything we have on disk. Fall back to the
+      // archive stream only if the local fetch/decode genuinely fails.
+      if (local) {
+        try {
+          // the cache file is already trimmed + normalized and small (mono
+          // 44.1k). Fetch it WHOLE — the ranged lead-in probe below is tuned for
+          // compressed archive streams and would truncate an uncompressed WAV.
+          const r = await fetch(local, { cache: "force-cache" });
+          if (!r.ok) throw new Error("status " + r.status);
+          audio = await ctx.decodeAudioData(await r.arrayBuffer());
+          mono = new Float32Array(audio.length);
+          for (let c = 0; c < audio.numberOfChannels; c++) {
+            const s = audio.getChannelData(c);
+            for (let i = 0; i < mono.length; i++) mono[i] += s[i] / audio.numberOfChannels;
+          }
+          pick = analyzeActive(mono, audio.sampleRate);
+        } catch (e) {
+          console.warn("[found] local cache", local, "failed (" + (e && e.message) + ") — streaming archive.org for", url);
+          audio = mono = pick = null;
+        }
+      } else if (/\barchive\.org/i.test(url)) {
+        console.warn("[found] no local cache for", url, "— streaming archive.org");
+      }
+      if (!pick) {
+      let bytes = FOUND_CHUNK_BYTES;
+      const fetchUrl = url;
       for (;;) {
         let buf, partial = false;
         try {
-          const r = await fetch(url, { mode: "cors", headers: { Range: "bytes=0-" + (bytes - 1) } });
+          const r = await fetch(fetchUrl, { mode: "cors", headers: { Range: "bytes=0-" + (bytes - 1) } });
           if (!(r.status === 206 || r.ok)) throw new Error("fetch " + r.status);
           buf = await r.arrayBuffer(); partial = r.status === 206;
         } catch (e) {
-          const r2 = await fetch(url, { mode: "cors" });
-          if (!r2.ok) throw new Error("fetch " + r2.status + " for " + url);
+          const r2 = await fetch(fetchUrl, { mode: "cors" });
+          if (!r2.ok) throw new Error("fetch " + r2.status + " for " + fetchUrl);
           buf = await r2.arrayBuffer();
         }
         try { audio = await ctx.decodeAudioData(buf.slice(0)); }
         catch (e) {
           if (!partial) throw e;
-          const r = await fetch(url, { mode: "cors" });
+          const r = await fetch(fetchUrl, { mode: "cors" });
           audio = await ctx.decodeAudioData(await r.arrayBuffer());
           partial = false;
         }
@@ -480,6 +538,7 @@
         pick = analyzeActive(mono, audio.sampleRate);
         if (pick.found || !partial || bytes >= FOUND_MAX_BYTES) break;
         bytes = Math.min(FOUND_MAX_BYTES, bytes * 4);   // all lead-in — reach deeper into the file
+      }
       }
       const s0 = pick.found ? pick.startSample : 0;
       const n = Math.max(1, Math.min(mono.length - s0, Math.floor(audio.sampleRate * maxSec)));
