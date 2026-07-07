@@ -4,6 +4,11 @@
 # the directory and this file.
 *
 !.gitignore
+# EXCEPTION: the found-sound local-cache manifest is SOURCE (maps each archive.org
+# foundSource URL -> its processed local file so the LIVE app prefers the cache and
+# never streams archive.org for anything already downloaded). Small, committed;
+# the found/*.wav it points at stay ignored (regenerable: ../fetch-found-*.sh).
+!found-manifest.json
 # EXCEPTION: the live-video stream catalog is SOURCE (cue windows + genre tags
 # into remote archive.org files), committed like clips is derived. The local
 # found/video/*.mp4 clips stay ignored — they're a regenerable cache / fallback.

@@ -938,13 +938,14 @@
     const e = catalog.get(name); if (!e) return false;
     return (online && e.item && e.file) || localAvail.has(name);
   }
-  // ordered source candidates for a clip: remote stream first (when online),
-  // local cache clip as the slow-network / failure fallback.
+  // ordered source candidates for a clip: LOCAL cache clip first (stop the live
+  // app depending on archive.org — no remote request fires for anything cached),
+  // remote archive.org stream only as a fallback for clips we don't have locally.
   function candidates(name) {
     const e = catalog.get(name); const out = [];
-    if (e && online && e.item && e.file)
-      out.push({ kind: "remote", url: base + "/" + encodeURIComponent(e.item) + "/" + encodeURI(e.file), in: e.in || 0, out: e.out || 0 });
     if (localAvail.has(name)) out.push({ kind: "local", url: "found/video/" + name + ".mp4" });
+    if (e && online && e.item && e.file && !localAvail.has(name))
+      out.push({ kind: "remote", url: base + "/" + encodeURIComponent(e.item) + "/" + encodeURI(e.file), in: e.in || 0, out: e.out || 0 });
     return out;
   }
   function shortLabel(name) {
