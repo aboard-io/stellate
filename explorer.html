@@ -660,12 +660,7 @@ function bootAbort(){   // stop pressed mid-warmup, or boot failed: pull it down
 }
 window.__BOOT={ stage:()=>bootStageV, active:()=>bootActive, on:()=>bootEl.classList.contains("on"),
   ind:()=>bootEl.classList.contains("ind"), width:()=>bootFill.style.width };   // headless probe
-// ?debugSentinel=1 arms the engine's opt-in output-truth instruments (click
-// sentinel worklet + Chrome renderCapacity tap, faust/live.js) — default off,
-// so the everyday audio path carries zero extra nodes/listeners. The readouts
-// land in the ⬡ CPU-hex tooltip below.
 const QSFLAGS=new URLSearchParams(location.search);
-const DBG_SENTINEL=QSFLAGS.get("debugSentinel")==="1";
 // ?forceClassicOut=1 — bypass the mobile media-element output route and drive
 // ctx.destination directly even on a mobile UA (the R8 escape hatch; pairs
 // with the engine's opt-in element recycle, faust/live.js 1.7).
@@ -673,18 +668,6 @@ const FORCE_CLASSIC=QSFLAGS.get("forceClassicOut")==="1";
 // ?forceMediaEl=1 — force the <audio>/MediaStream output route (the background-
 // survival path) even on desktop; escape hatch if Safari auto-detection misses.
 const FORCE_MEDIAEL=QSFLAGS.get("forceMediaEl")==="1";
-// The ZERO-STATIC Stage 3 rolling stem cache is now the DEFAULT path (Paul
-// 2026-07-06: "always cache as default — the system has no concept of 'live'
-// so we can always pre-render"). The heavy CACHED voices render offline in a
-// module Worker and schedule back into the live mix — with ~1600× worker
-// headroom the pre-render is nearly free, and pre-scheduled buffers are immune
-// to the main-thread scheduling jitter that causes clicks at genre transitions.
-// ?stems=0 is the escape hatch back to the classic all-live path (byte-
-// identical old behavior). ?stemLookahead=N (seconds) hard-overrides the depth,
-// which is otherwise 4 chord-bars (opts.stemBars). The ⬡ meter shows the STEMS
-// rate by default now.
-const STEMS=QSFLAGS.get("stems")!=="0";   // DEFAULT ON; ?stems=0 disables
-const STEM_LOOKAHEAD=+(QSFLAGS.get("stemLookahead")||0)||undefined;
 // ---- CLICK TEST BED (?clicktest=N) — a SILENT diagnostic "genre" -------------
 // Paul's idea for hunting the sub-0.5 clicks the clickmon tripwire misses: strip
 // the mix down to ONE soft, STEADY pad and silence everything else, then let the
@@ -696,7 +679,6 @@ const STEM_LOOKAHEAD=+(QSFLAGS.get("stemLookahead")||0)||undefined;
 //   2 = same pad, MODEL cycles every bar (tests the ~20ms voice/color-swap xfade)
 //   3 = same pad, SECTION identity flips every bar (tests the stem-reset xfade)
 // Inert unless ?clicktest=N is set — safe in the production tree.
-const SEAMLOG=QSFLAGS.get("seamLog")==="1";   // ?seamLog=1 -> live.js logs every stem seam (gap/rate/edge-step)
 const CLICKTEST=+(QSFLAGS.get("clicktest")||0);
 const CT_MODELS=["saw","organ","fm","pluck","stack"];
 const CT_BASE=E.defaultState();
@@ -734,7 +716,7 @@ async function goLive(){
     set({live:true,barCount:0,holdUntil:{}}); rebuildQueue();   // fresh instrument-hold timers per session
     if(CLICKTEST) ctN=0;   // first PLAYED bar is n=0 (the seed calls above advanced it)
     const getState=CLICKTEST?(()=>clickTestState()):(()=>S.playing);
-    faustHandle=await FaustLive.exploreLive(getState, m=>{set({status:m}); bootStatus(m);}, { debugSentinel:DBG_SENTINEL, forceClassicOut:FORCE_CLASSIC, forceMediaEl:FORCE_MEDIAEL, stems:STEMS, stemLookahead:STEM_LOOKAHEAD, seamLog:SEAMLOG, onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
+    faustHandle=await FaustLive.exploreLive(getState, m=>{set({status:m}); bootStatus(m);}, { forceClassicOut:FORCE_CLASSIC, forceMediaEl:FORCE_MEDIAEL, onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
       bootBar();   // first bar scheduled -> advance the warm-up bar, then it waits on real RMS
       set({barInfo:info,barCount:S.barCount+1});
       if(S.waypoints.length>=2) travelStep();
