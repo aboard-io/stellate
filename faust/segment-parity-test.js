@@ -132,6 +132,7 @@ async function runState(name, state) {
     ["acidhouse_s7 (tb303 MONO-LEGATO/acid — R1)", K.track("acidhouse", { seed: 7 })],
     ["darksynth_s7 (synclead mono)", K.track("darksynth", { seed: 7 })],
     ["house_s7 (stereo juno60 + reverb color + master_mb)", K.track("house", { seed: 7 })],
+    ["jazz_s3 (SAMPLED brush drum kit — native one-shots)", K.track("jazz", { seed: 3 })],
   ];
   let all = true; const summary = [];
   for (const [name, stRaw] of cases) {

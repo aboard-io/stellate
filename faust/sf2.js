@@ -182,7 +182,65 @@ if (typeof module !== "undefined" && require.main === module) {
     });
     fs.writeFileSync(path.join(dir, "zones.json"), JSON.stringify(meta, null, 1));
     console.log(`✓ ${dir}: ${meta.zones.length} zones (${P.name})`);
+  } else if (cmd === "drumkit") {
+    // DRUM KIT extraction — GM percussion (bank 128). Unlike melodic `extract`
+    // (keymap of pitched zones), a drum kit is a set of ONE-SHOTS, one recorded
+    // sample per GM drum note. We pull the specific notes the engine plays
+    // (kick/snare/hats/toms + crash/ride/rim/clap for completeness) at NATURAL
+    // pitch (the recorded sample, resampled to the engine rate — no per-zone
+    // repitch: the sample IS the drum) into <slug>/<hit>.wav + a kit.json
+    // manifest {hit -> {file, note, len}}. genre-kernel.js DRUMKITS mirrors it
+    // and the native sampler (faust/sampler.js) plays each hit as a fixed-pitch
+    // (tom: pitched) unlooped one-shot — the SAMPLED-DRUM path, additive to the
+    // Faust synth kits (kick boom/808/909 …).
+    //   node faust/sf2.js drumkit <font.sf2> "/Standard/" <outDir> [--slug acoustic]
+    const [, font, pick, outBase] = args;
+    const OUT_SR = 44100;
+    // GM drum map -> engine hit name. One recorded note each.
+    const HITS = { kick: 36, snare: 38, rim: 37, clap: 39, hatClosed: 42, hatPedal: 44,
+      hatOpen: 46, tomLo: 41, tomMid: 47, tomHi: 50, crash: 49, ride: 51 };
+    const sf = SF2.parse(fs.readFileSync(font));
+    const want = pick.replace(/^\/|\/$/g, "").toUpperCase();
+    let ix = sf.presets.findIndex((p) => p.bank === 128 && p.name.toUpperCase() === want);
+    if (ix < 0) ix = sf.presets.findIndex((p) => p.bank === 128 && p.name.toUpperCase().includes(want));
+    if (ix < 0) { console.error("percussion preset (bank 128) not found: " + pick); process.exit(1); }
+    const P = sf.presets[ix];
+    const zones = sf.zonesOf(ix);
+    // one zone per note: the zone whose keyrange covers it (skip stereo R via zonesOf)
+    const zoneForNote = (note) => zones.find((z) => note >= z.keyLo && note <= z.keyHi);
+    const slug = (args.includes("--slug") ? args[args.indexOf("--slug") + 1]
+      : P.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""));
+    const dir = path.join(outBase, slug);
+    fs.mkdirSync(dir, { recursive: true });
+    const writeMonoWav = (file, pcm) => {
+      const data = Buffer.alloc(pcm.length * 2);
+      for (let j = 0; j < pcm.length; j++) data.writeInt16LE(Math.max(-1, Math.min(1, pcm[j])) * 32767 | 0, j * 2);
+      const h = Buffer.alloc(44);
+      h.write("RIFF", 0); h.writeUInt32LE(36 + data.length, 4); h.write("WAVEfmt ", 8);
+      h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(1, 22);
+      h.writeUInt32LE(OUT_SR, 24); h.writeUInt32LE(OUT_SR * 2, 28); h.writeUInt16LE(2, 32); h.writeUInt16LE(16, 34);
+      h.write("data", 36); h.writeUInt32LE(data.length, 40);
+      fs.writeFileSync(path.join(dir, file), Buffer.concat([h, data]));
+    };
+    const meta = { name: P.name, sr: OUT_SR, hits: {} };
+    for (const [hit, note] of Object.entries(HITS)) {
+      const z = zoneForNote(note);
+      if (!z) { console.log(`  (skip ${hit} note ${note}: no zone)`); continue; }
+      let pcm = sf.pcmOf(z.sample);
+      if (z.sample.rate !== OUT_SR) {   // linear resample to the engine rate
+        const k = OUT_SR / z.sample.rate, n = Math.floor(pcm.length * k), r = new Float32Array(n);
+        for (let j = 0; j < n; j++) { const x = j / k, x0 = Math.floor(x), f = x - x0; r[j] = pcm[x0] + f * ((pcm[x0 + 1] || 0) - pcm[x0]); }
+        pcm = r;
+      }
+      const file = hit + ".wav";
+      writeMonoWav(file, pcm);
+      meta.hits[hit] = { file, note, len: pcm.length };
+      console.log(`  ${file.padEnd(14)} note ${note}  ${(pcm.length / OUT_SR).toFixed(3)}s  "${z.sample.name}"`);
+    }
+    fs.writeFileSync(path.join(dir, "kit.json"), JSON.stringify(meta, null, 1));
+    console.log(`✓ ${dir}: ${Object.keys(meta.hits).length} hits (${P.name} -> ${slug})`);
   } else {
-    console.log("usage: sf2.js list <font.sf2> | extract <font.sf2> /NAME/ <outDir> [--max-zones N]");
+    console.log("usage: sf2.js list <font.sf2> | extract <font.sf2> /NAME/ <outDir> [--max-zones N]\n" +
+      "     | drumkit <font.sf2> /KitName/ <outDir> [--slug NAME]   (GM percussion, bank 128)");
   }
 }
