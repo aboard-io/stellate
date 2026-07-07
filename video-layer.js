@@ -1124,6 +1124,7 @@
     // (the sourced avant-garde/3D windows exist ONLY here — the kernel's
     // GENRE_CLIPS never learns them), so pool builders must union this in.
     namesForTag: (g) => (tagIndex.get(g) || []).filter(playable),
+    allNames: () => names.slice(),   // the WHOLE playable catalog — pool builders top up from this so clips don't recycle
     init, setEnabled, idle, makeBag, setGenre,
     enabled: () => on && ready,
     available: () => ready,

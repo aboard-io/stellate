@@ -538,10 +538,20 @@ let vidGenre="", vidBars=0, vidPending=null, vidStarted=false;
 // layer is loaded, fed the genre-affine pool per 8-bar advance.
 let vidBag=null;
 const vidBagObj=()=>(vidBag||(window.VideoLayer&&VideoLayer.makeBag&&(vidBag=VideoLayer.makeBag())));
-function vidReset(){ vidGenre=""; vidBars=0; vidPending=null; vidStarted=false; const b=vidBagObj(); if(b)b.reset(); }
+function vidReset(){ vidGenre=""; vidBars=0; vidPending=null; vidStarted=false; vidAllShuffled=null; const b=vidBagObj(); if(b)b.reset(); }
 // clip pool: the union of clips from genres carrying real weight (trivial
 // neighbors dropped), sorted for a STABLE bag key so a mere weight-reorder as
 // the cursor drifts doesn't thrash the bag. Selection is shuffled anyway.
+// session-stable shuffled copy of the WHOLE catalog — the variety top-up source.
+// Stable within a play session so vidPool stays deterministic per genre (the
+// no-repeat bag keys off pool identity); reshuffled per session in vidReset.
+let vidAllShuffled=null;
+function vidAllPool(){
+  if(vidAllShuffled) return vidAllShuffled;
+  const all=(window.VideoLayer&&VideoLayer.allNames)?VideoLayer.allNames().slice():[];
+  for(let i=all.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;const t=all[i];all[i]=all[j];all[j]=t;}
+  vidAllShuffled=all; return all;
+}
 function vidPool(ordered){
   const pool=[];
   // union of BOTH clip sources per weighted genre: the kernel's GENRE_CLIPS
@@ -552,9 +562,17 @@ function vidPool(ordered){
                   ...((window.VideoLayer&&VideoLayer.namesForTag)?VideoLayer.namesForTag(g):[])];
   ordered.forEach(w=>{ if(w.w>=0.06) per(w.g).forEach(c=>{if(!pool.includes(c))pool.push(c);}); });
   if(!pool.length) ordered.forEach(w=>per(w.g).forEach(c=>{if(!pool.includes(c))pool.push(c);}));
+  // VARIETY (2026-07-07): a per-genre affine pool is only ~8-12 clips, so the
+  // no-repeat bag recycled the same handful every 8 bars while ~220 cached clips
+  // were never seen ("they play over and over"). Top up from the full 231-clip
+  // catalog to a minimum so clips actually vary — genre-affine clips stay in
+  // (preferred), the genre LOOK is carried by setGenre's grade, not the clip set.
+  const MIN=48, all=vidAllPool();
+  for(const c of all){ if(pool.length>=MIN) break; if(pool.indexOf(c)<0) pool.push(c); }
   return pool.sort();
 }
 function vidDraw(pool){ const b=vidBagObj(); return b?b.draw(pool):null; }
+window.__vidTest={ pool:()=>vidPool(S.weights.slice().sort((a,b)=>b.w-a.w)), draw:(p)=>vidDraw(p) };   // headless variety check
 function genreVideo(info){
   if(!(window.VideoLayer&&VideoLayer.enabled()))return;
   const ordered=S.weights.slice().sort((a,b)=>b.w-a.w);
