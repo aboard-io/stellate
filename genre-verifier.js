@@ -228,8 +228,8 @@
                 bedUse:[.4,1,2], motion:[.5,1,1], wash:[.25,.7,1], swing:[0,.06,1], acoustic:[0,.3,1], pump:[0,.2,1] },   // minor-anthem 7ths + radio dust; few lead voices (vs synthwave supersaw)
     // ---- round 3 ----
     citypop:  { bpm:[90,108,3], seventh:[.8,1,2], swing:[.03,.14,2], wash:[0,.2,2], crackle:[0,.12,2],
-                motion:[.5,1,1], acoustic:[0,.3,1], hatDensity:[.35,1.4,1], pump:[0,.12,1], comp:[.05,.3,1] },   // bright maj7 pop, DRY next to vaporwave, no disco organ, light master
-    shibuyakei:{ bpm:[112,130,3], swing:[.12,.26,3], crackle:[0,.1,2], acoustic:[0,.25,1], leadVoices:[1,3,1],
+                motion:[.5,1,1], acoustic:[0,.85,1], hatDensity:[.35,1.4,1], pump:[0,.12,1], comp:[.05,.3,1] },   // bright maj7 pop, DRY next to vaporwave, no disco organ, light master. 2026-07 boopy-fix: acoustic cap .3->.85 — half the seeds now lead on a REAL jazz-guitar/electric-grand/sax (.8) beside the DX7 e-piano gloss; the .85 cap admits them (excludes felt-piano's 1.0). The separator vs italo was never acoustic (both admit synth-0); italo unaffected (still passes citypop's widened cap as it passed .3)
+    shibuyakei:{ bpm:[112,130,3], swing:[.12,.26,3], crackle:[0,.1,2], acoustic:[0,.85,1], leadVoices:[1,3,1],
                 motion:[.6,1,1], pump:[0,.1,1], wash:[0,.25,1], snareBalance:[.3,1.1,1], breakUse:[0,.05,1] },   // twee SWING at pop tempo — dancepop can't swing, disco can't get this clean
     bossanova:{ bpm:[82,102,2], swing:[.06,.2,2], softTop:[1,1,2], acoustic:[.5,1,2], seventh:[.8,1,1],
                 crackle:[.05,.3,1], drumDensity:[1.4,2.6,1], snareBalance:[0,.6,1], humanize:[.2,.5,1] },   // soft-top nylon whisper — exotica is brighter (softTop 0), jazz swings way harder
