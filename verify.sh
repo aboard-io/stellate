@@ -2,9 +2,9 @@
 # verify.sh — one-shot verification orchestrator. Runs the three gate suites
 # CONCURRENTLY and streams a compact PASS/FAIL row as each one lands:
 #
-#   matrix     node genre-verifier.js matrix        (symbolic confusion matrix)
-#   validate   node validate-genres.js --quick      (kernel differentiation gates)
-#   engine     node engine.test.js --quick          (real faust renders, 8s)
+#   matrix     node engine/genre-verifier.js matrix        (symbolic confusion matrix)
+#   validate   node engine/validate-genres.js --quick      (kernel differentiation gates)
+#   engine     node test/engine.test.js --quick          (real faust renders, 8s)
 #
 #   ./verify.sh          the fast loop gate (quick validate + 8s presses)
 #   ./verify.sh --full   pre-ship: 5-seed validate + full-length 24s presses
@@ -42,9 +42,9 @@ run() {   # run <name> <cmd...>: capture output, write "<rc> <secs>" when done
 }
 
 echo "verify ($MODE) — matrix + validate + engine.test, concurrent"
-run "matrix  " node genre-verifier.js matrix ${PASS_ARGS[@]+"${PASS_ARGS[@]}"} &
-run "validate" node validate-genres.js ${VAL_ARGS[@]+"${VAL_ARGS[@]}"} ${PASS_ARGS[@]+"${PASS_ARGS[@]}"} &
-run "engine  " node engine.test.js ${ENG_ARGS[@]+"${ENG_ARGS[@]}"} &
+run "matrix  " node engine/genre-verifier.js matrix ${PASS_ARGS[@]+"${PASS_ARGS[@]}"} &
+run "validate" node engine/validate-genres.js ${VAL_ARGS[@]+"${VAL_ARGS[@]}"} ${PASS_ARGS[@]+"${PASS_ARGS[@]}"} &
+run "engine  " node test/engine.test.js ${ENG_ARGS[@]+"${ENG_ARGS[@]}"} &
 
 FAILED=0
 declare -A DONE
