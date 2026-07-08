@@ -45,6 +45,106 @@
   // calibration: FluidR3-class zones peak near full scale; faust voices sit at
   // level*gain. x1.35 lands the sampler lead at supersaw-comparable RMS.
   const GAIN = 1.35;
+  const clampS = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+  // ======================= PER-VOICE CHANNEL STRIP =========================
+  // A band-appropriate channel strip for the NATIVE sampled voices (the sampled
+  // instruments are the default sound since 2026-07, and dry multisamples need a
+  // channel to breathe). Chain, applied POST-envelope so sends carry the finished
+  // voice: HPF -> (LPF) -> peaking EQ -> soft saturation -> gentle compressor ->
+  // chorus/phaser (air) -> trim. The `strip` spec is built in state-engine
+  // (STRIP_PROFILES, keyed by role) and rides on u.sampler.strip.
+  //
+  // CRITICAL — window parity: the strip runs PER NOTE with state initialized at
+  // the note's i=0, and the chorus/phaser LFOs ride GLOBAL song time
+  // ((s0+i)/sr), never a per-call clock. press renders each note whole-song;
+  // the stream renderer RE-renders the same note from i=0 in every window it
+  // touches (writing only its slice) — so both compute byte-identical samples at
+  // any output position. That is what keeps faust/segment-parity-test.js
+  // byte-equal for sampled genres (it was byte-equal before; per-note state keeps
+  // it so). NEVER hoist strip state to per-call/per-window scope. No rng, no wall
+  // clock — determinism gates depend on it.
+  function rbjCoefs(type, f, sr, Q, gainDb) {
+    const w0 = 2 * Math.PI * clampS(f, 20, sr * 0.45) / sr;
+    const cw = Math.cos(w0), sw = Math.sin(w0), alpha = sw / (2 * Math.max(1e-4, Q));
+    const A = gainDb ? Math.pow(10, gainDb / 40) : 1;
+    let b0, b1, b2, a0, a1, a2;
+    if (type === "hp") { b0 = (1 + cw) / 2; b1 = -(1 + cw); b2 = (1 + cw) / 2; a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha; }
+    else if (type === "lp") { b0 = (1 - cw) / 2; b1 = 1 - cw; b2 = (1 - cw) / 2; a0 = 1 + alpha; a1 = -2 * cw; a2 = 1 - alpha; }
+    else { b0 = 1 + alpha * A; b1 = -2 * cw; b2 = 1 - alpha * A; a0 = 1 + alpha / A; a1 = -2 * cw; a2 = 1 - alpha / A; } // peak
+    return { b0: b0 / a0, b1: b1 / a0, b2: b2 / a0, a1: a1 / a0, a2: a2 / a0, x1: 0, x2: 0, y1: 0, y2: 0 };
+  }
+  const biq = (o, x) => { const y = o.b0 * x + o.b1 * o.x1 + o.b2 * o.x2 - o.a1 * o.y1 - o.a2 * o.y2; o.x2 = o.x1; o.x1 = x; o.y2 = o.y1; o.y1 = y; return y; };
+
+  // fresh per-note strip state from a strip spec (see STRIP_PROFILES in state-engine).
+  function makeStrip(strip, sr) {
+    const S = { sr };
+    if (strip.hpf) S.hp = rbjCoefs("hp", strip.hpf, sr, 0.707, 0);
+    if (strip.lpf) S.lp = rbjCoefs("lp", strip.lpf, sr, 0.707, 0);
+    if (strip.eq) S.eq = rbjCoefs("peak", strip.eq.f, sr, strip.eq.q || 1, strip.eq.gain || 0);
+    if (strip.sat) { S.satG = 1 + 3 * strip.sat; S.satMix = clampS(strip.satMix != null ? strip.satMix : 0.4, 0, 1); }
+    if (strip.comp) {
+      S.cThresh = strip.comp.thresh != null ? strip.comp.thresh : 0.25;
+      S.cSlope = 1 - 1 / Math.max(1, strip.comp.ratio || 3);
+      S.cAtk = Math.exp(-1 / (sr * Math.max(1e-4, strip.comp.atk || 0.01)));
+      S.cRel = Math.exp(-1 / (sr * Math.max(1e-4, strip.comp.rel || 0.15)));
+      S.cMakeup = strip.comp.makeup != null ? strip.comp.makeup : 1;
+      S.cEnv = 0;
+    }
+    if (strip.chorus) {
+      const c = strip.chorus, n = Math.ceil(sr * 0.035) + 4;
+      S.ch = { buf: new Float32Array(n), n, w: 0, rate: c.rate || 0.6,
+        base: sr * (c.baseMs || 12) / 1000, depth: sr * (c.depthMs || 5) / 1000,
+        mix: clampS(c.mix != null ? c.mix : 0.3, 0, 1), two: !!c.two };
+    }
+    if (strip.phase) {
+      const p = strip.phase, ns = p.stages || 4;
+      S.ph = { rate: p.rate || 0.3, lo: p.lo || 300, hi: p.hi || 1500, ns,
+        fb: clampS(p.fb != null ? p.fb : 0.3, 0, 0.9), mix: clampS(p.mix != null ? p.mix : 0.2, 0, 1),
+        xp: new Float32Array(ns), yp: new Float32Array(ns), last: 0 };
+    }
+    S.trim = strip.trim != null ? strip.trim : 1;
+    return S;
+  }
+
+  // process one sample through the per-note strip. `t` = GLOBAL song seconds.
+  function stripStep(S, x, t) {
+    if (S.hp) x = biq(S.hp, x);
+    if (S.lp) x = biq(S.lp, x);
+    if (S.eq) x = biq(S.eq, x);
+    if (S.satG) { const s = Math.tanh(x * S.satG) / S.satG; x += S.satMix * (s - x); }
+    if (S.cEnv !== undefined) {
+      const ax = x < 0 ? -x : x;
+      S.cEnv = ax > S.cEnv ? S.cAtk * S.cEnv + (1 - S.cAtk) * ax : S.cRel * S.cEnv + (1 - S.cRel) * ax;
+      if (S.cEnv > S.cThresh) x *= Math.pow(S.cThresh / S.cEnv, S.cSlope);
+      x *= S.cMakeup;
+    }
+    if (S.ch) {
+      const ch = S.ch, lfo = Math.sin(2 * Math.PI * ch.rate * t);
+      const d = ch.base + ch.depth * (0.5 + 0.5 * lfo);
+      let rp = ch.w - d; if (rp < 0) rp += ch.n;
+      const i0 = rp | 0, fr = rp - i0, i1 = (i0 + 1) % ch.n;
+      let wet = ch.buf[i0] + fr * (ch.buf[i1] - ch.buf[i0]);
+      if (ch.two) {
+        const lfo2 = Math.sin(2 * Math.PI * ch.rate * 0.8 * t + 2.1), d2 = ch.base + ch.depth * (0.5 + 0.5 * lfo2);
+        let rp2 = ch.w - d2; if (rp2 < 0) rp2 += ch.n;
+        const j0 = rp2 | 0, f2 = rp2 - j0, j1 = (j0 + 1) % ch.n;
+        wet = 0.5 * (wet + ch.buf[j0] + f2 * (ch.buf[j1] - ch.buf[j0]));
+      }
+      ch.buf[ch.w] = x; ch.w = (ch.w + 1) % ch.n;
+      x = (1 - ch.mix) * x + ch.mix * wet;
+    }
+    if (S.ph) {
+      const ph = S.ph, l = 0.5 + 0.5 * Math.sin(2 * Math.PI * ph.rate * t);
+      const fc = ph.lo * Math.pow(ph.hi / ph.lo, l), tn = Math.tan(Math.PI * clampS(fc, 20, S.sr * 0.45) / S.sr);
+      const a = (1 - tn) / (1 + tn);
+      let s = x + ph.fb * ph.last;
+      for (let k = 0; k < ph.ns; k++) { const xin = s, y = -a * xin + ph.xp[k] + a * ph.yp[k]; ph.xp[k] = xin; ph.yp[k] = y; s = y; }
+      ph.last = s;
+      x = (1 - ph.mix) * x + ph.mix * s;
+    }
+    return x * S.trim;
+  }
 
   function zoneFor(zones, midi) {
     if (!zones || !zones.length) return null;
@@ -75,6 +175,7 @@
     const busLen = win ? win.len : into.dry.length;
     const total = win ? win.total : into.dry.length;
     const dg = sends.dry != null ? sends.dry : 1, rg = sends.rev || 0, lg = sends.del || 0;
+    const strip = sends.strip || null;   // per-voice channel strip (see makeStrip)
     for (const n of notes) {
       const midi = midiOfFreq(n.freq);
       const z = zoneFor(n.zones, midi);
@@ -91,6 +192,8 @@
       const loop = z.loop && z.loopEnd > z.loopStart + 8;
       const loopLen = loop ? z.loopEnd - z.loopStart : 0;
       const g = (n.gain != null ? n.gain : 0.5) * GAIN;
+      // per-note channel strip (fresh state each note -> window-independent).
+      const S = strip ? makeStrip(strip, sr) : null;
       // blue-note bend: start bendFrom semitones off target, linear-in-rate
       // glide over bendMs (matches live's linearRampToValueAtTime), then the
       // fixed target rate. pos accumulates ONLY on the bend path so unbent
@@ -126,6 +229,7 @@
           if (aLp) { lp += aLp * (v - lp); v = lp; }
           if (i < atkN) { const a = i / atkN; v *= n.swell ? a * a : a; }
           if (i > effHold) v *= Math.max(0, 1 - (i - effHold) / relN);   // tape-runout release
+          if (S) v = stripStep(S, v, (s0 + i) / sr);
           const j = s0 + i - winBase;
           if (j >= busLen) break;
           if (j >= 0) { into.dry[j] += v * dg; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; }
@@ -146,6 +250,7 @@
         // original ramp (bit-identical regression path).
         if (i < atkN) { const a = i / atkN; v *= n.swell ? a * a : a; }
         if (i > holdN) v *= Math.max(0, 1 - (i - holdN) / relN); // release ramp
+        if (S) v = stripStep(S, v, (s0 + i) / sr);
         const j = s0 + i - winBase;
         if (j >= busLen) break;
         if (j >= 0) { into.dry[j] += v * dg; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; }
@@ -169,6 +274,67 @@
     _cache.set(url, job);
     job.catch(() => _cache.delete(url));
     return job;
+  }
+
+  // ---- live channel strip (Web Audio) — the perceptual twin of makeStrip/
+  // stripStep, built from the SAME `strip` spec (u.sampler.strip). Not byte-
+  // parallel with the JS strip (native path — approximate parity is the contract)
+  // but the same band moves: HPF/LPF/EQ biquads -> saturation waveshaper ->
+  // DynamicsCompressor -> chorus (modulated delay) -> phaser (allpass cascade).
+  // Inserted per note between env and the dry/rev/del sends. Returns
+  // {input, output, oscs, nodes} for teardown. Only builds when f.strip is passed;
+  // the direct-graph live path (live.js) must forward `strip: u.sampler.strip` in
+  // the note spec for this to engage — press + the wavOut stream get it via mixPCM.
+  function satCurve(G, mix) {
+    const N = 1024, c = new Float32Array(N);
+    for (let i = 0; i < N; i++) { const x = (i / (N - 1)) * 2 - 1, s = Math.tanh(x * G) / G; c[i] = x + mix * (s - x); }
+    return c;
+  }
+  function buildStripNodes(ctx, strip, when, dur) {
+    const oscs = [], nodes = [];
+    const input = ctx.createGain(); nodes.push(input);
+    let node = input;
+    const chain = (n) => { node.connect(n); node = n; nodes.push(n); };
+    if (strip.hpf) { const f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = strip.hpf; f.Q.value = 0.707; chain(f); }
+    if (strip.lpf) { const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = strip.lpf; f.Q.value = 0.707; chain(f); }
+    if (strip.eq) { const f = ctx.createBiquadFilter(); f.type = "peaking"; f.frequency.value = strip.eq.f; f.Q.value = strip.eq.q || 1; f.gain.value = strip.eq.gain || 0; chain(f); }
+    if (strip.sat) { const ws = ctx.createWaveShaper(); ws.curve = satCurve(1 + 3 * strip.sat, strip.satMix != null ? strip.satMix : 0.4); ws.oversample = "2x"; chain(ws); }
+    if (strip.comp) {
+      const c = ctx.createDynamicsCompressor();
+      c.threshold.value = 20 * Math.log10(Math.max(1e-3, strip.comp.thresh || 0.25));
+      c.ratio.value = strip.comp.ratio || 3; c.attack.value = strip.comp.atk || 0.01;
+      c.release.value = strip.comp.rel || 0.15; c.knee.value = 6; chain(c);
+      if (strip.comp.makeup && strip.comp.makeup !== 1) { const mk = ctx.createGain(); mk.gain.value = strip.comp.makeup; chain(mk); }
+    }
+    const parallel = (build) => {   // dry/wet split -> sum, node advances to the sum
+      const mix = build.mix, sum = ctx.createGain();
+      const dry = ctx.createGain(); dry.gain.value = 1 - mix; node.connect(dry); dry.connect(sum); nodes.push(dry, sum);
+      build.wet(sum, mix); node = sum;
+    };
+    if (strip.chorus) {
+      const c = strip.chorus;
+      parallel({ mix: clampS(c.mix != null ? c.mix : 0.3, 0, 1), wet: (sum, mix) => {
+        const dl = ctx.createDelay(0.06); dl.delayTime.value = (c.baseMs || 12) / 1000;
+        const lfo = ctx.createOscillator(); lfo.frequency.value = c.rate || 0.6;
+        const lg = ctx.createGain(); lg.gain.value = (c.depthMs || 5) / 1000;
+        lfo.connect(lg); lg.connect(dl.delayTime); lfo.start(when); lfo.stop(when + dur + 0.1); oscs.push(lfo);
+        const wg = ctx.createGain(); wg.gain.value = mix;
+        node.connect(dl); dl.connect(wg); wg.connect(sum); nodes.push(dl, lg, wg);
+      } });
+    }
+    if (strip.phase) {
+      const p = strip.phase, ns = p.stages || 4, center = Math.sqrt((p.lo || 300) * (p.hi || 1500));
+      parallel({ mix: clampS(p.mix != null ? p.mix : 0.2, 0, 1), wet: (sum, mix) => {
+        let apn = node; const lfo = ctx.createOscillator(); lfo.frequency.value = p.rate || 0.3;
+        const lg = ctx.createGain(); lg.gain.value = ((p.hi || 1500) - (p.lo || 300)) / 2;
+        lfo.start(when); lfo.stop(when + dur + 0.1); oscs.push(lfo);
+        for (let k = 0; k < ns; k++) { const ap = ctx.createBiquadFilter(); ap.type = "allpass"; ap.frequency.value = center; ap.Q.value = 0.7; lg.connect(ap.frequency); apn.connect(ap); apn = ap; nodes.push(ap); }
+        lfo.connect(lg); nodes.push(lg);
+        const wg = ctx.createGain(); wg.gain.value = mix; apn.connect(wg); wg.connect(sum); nodes.push(wg);
+      } });
+    }
+    if (strip.trim != null && strip.trim !== 1) { const t = ctx.createGain(); t.gain.value = strip.trim; chain(t); }
+    return { input, output: node, oscs, nodes };
   }
 
   // ---- (b) live path ------------------------------------------------------
@@ -224,13 +390,17 @@
       g.setValueAtTime(gain, when + hold);
       g.linearRampToValueAtTime(0, when + hold + rel);
       srcOut.connect(env);
-      const dry = ctx.createGain(); dry.gain.value = f.dry != null ? f.dry : 1; env.connect(dry); dry.connect(dests.dry);
-      const rev = ctx.createGain(); rev.gain.value = f.rsend || 0; env.connect(rev); rev.connect(dests.rev);
-      const del = ctx.createGain(); del.gain.value = f.dsend || 0; env.connect(del); del.connect(dests.del);
+      // per-note channel strip (band-appropriate filter/EQ/comp + saturation +
+      // chorus/phaser air). Sends tap POST-strip, like the JS path.
+      let post = env, striph = null;
+      if (f.strip) { striph = buildStripNodes(ctx, f.strip, when, hold + rel); env.connect(striph.input); post = striph.output; for (const o of striph.oscs) live.active.add(o); }
+      const dry = ctx.createGain(); dry.gain.value = f.dry != null ? f.dry : 1; post.connect(dry); dry.connect(dests.dry);
+      const rev = ctx.createGain(); rev.gain.value = f.rsend || 0; post.connect(rev); rev.connect(dests.rev);
+      const del = ctx.createGain(); del.gain.value = f.dsend || 0; post.connect(del); del.connect(dests.del);
       src.start(when);
       src.stop(when + hold + rel + 0.05);
       live.active.add(src);
-      src.onended = () => { live.active.delete(src); try { dry.disconnect(); rev.disconnect(); del.disconnect(); if (headBiq) headBiq.disconnect(); } catch (e) {} };
+      src.onended = () => { live.active.delete(src); try { dry.disconnect(); rev.disconnect(); del.disconnect(); if (headBiq) headBiq.disconnect(); if (striph) { for (const o of striph.oscs) { try { o.stop(); } catch (e) {} live.active.delete(o); } for (const nd of striph.nodes) try { nd.disconnect(); } catch (e) {} } } catch (e) {} };
     };
     live.stopAll = function () {
       for (const s of [...live.active]) { try { s.stop(); } catch (e) {} }

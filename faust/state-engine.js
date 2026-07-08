@@ -45,6 +45,93 @@
   // kick at ~-6dB for a typical kick level(~1.2)×amp(~0.65). Tune here.
   const DRUM_SAMP_GAIN = 0.5;
 
+  // ---- per-voice band-appropriate CHANNEL STRIP (sampled voices) --------------
+  // Sampled instruments are the DEFAULT sound (state.sampledOnly, ~105 GM
+  // instruments). Real multisamples arrive dry/flat, so every sampled voice now
+  // gets a channel strip keyed to its natural register: filter -> EQ -> gentle
+  // saturation -> compressor -> chorus/phaser "air". Realized on the NATIVE path
+  // (faust/sampler.js: makeStrip/stripStep in press + the wavOut stream, PER NOTE
+  // so it stays window-independent and segment-parity byte-equal; buildStripNodes
+  // in live). This table IS the tuning surface — Paul's knobs:
+  //   hpf/lpf  Hz (0/undef = none)          eq {f,gain(dB),q}  one peaking band
+  //   sat 0..1 tanh drive + satMix wet      comp {thresh(lin),ratio,atk,rel,makeup}
+  //   chorus {rate,baseMs,depthMs,mix,two}  phase {rate,lo,hi,stages,fb,mix}
+  //   trim  output gain — gain-staging: keep the strip ~loudness-neutral (the
+  //         master soft-clip at 0.95 is the backstop, but we must not lean on it).
+  // Increments, not transforms (Paul: "a little more"). All saturation is tanh —
+  // it REDUCES peaks, so it doubles as clip insurance.
+  const STRIP_PROFILES = {
+    // BASS — kill subsonics (30 Hz HPF), gentle 5 kHz top roll, low-mid warmth,
+    //   slow glue comp; NO air (bass stays centered + tight).
+    bass: { hpf: 30, lpf: 5000, eq: { f: 110, gain: 2, q: 0.9 },
+            sat: 0.22, satMix: 0.3, comp: { thresh: 0.22, ratio: 3, atk: 0.02, rel: 0.18, makeup: 1.05 }, trim: 0.98 },
+    // PAD — declutter lows (120 Hz HPF), scoop a little mud, wide ensemble chorus
+    //   + a slow shallow phaser, gentle comp. The widest air (pads carry the space).
+    pad: { hpf: 120, eq: { f: 300, gain: -1.5, q: 0.8 },
+           sat: 0.1, satMix: 0.22, comp: { thresh: 0.3, ratio: 2, atk: 0.03, rel: 0.28, makeup: 1.02 },
+           chorus: { rate: 0.45, baseMs: 14, depthMs: 6, mix: 0.32, two: true },
+           phase: { rate: 0.22, lo: 300, hi: 1600, stages: 4, fb: 0.3, mix: 0.18 }, trim: 0.9 },
+    // LEAD (melody/solo) — clear low rumble (200 Hz HPF), presence lift ~3 kHz, a
+    //   touch of grit, faster comp, light single-voice chorus for width.
+    lead: { hpf: 200, eq: { f: 3000, gain: 2.5, q: 0.8 },
+            sat: 0.18, satMix: 0.32, comp: { thresh: 0.25, ratio: 3, atk: 0.008, rel: 0.12, makeup: 1.04 },
+            chorus: { rate: 0.8, baseMs: 11, depthMs: 4, mix: 0.18 }, trim: 0.95 },
+    // DRUMS — TRANSIENT-PRESERVING: a subsonic HPF + a whisper of glue saturation
+    //   only. NO compressor and no dulling filters (keep the attack/punch).
+    drum: { hpf: 28, sat: 0.09, satMix: 0.15, trim: 1.0 },
+  };
+  const stripFor = (role) => role === "bass" ? STRIP_PROFILES.bass
+    : role === "pad" ? STRIP_PROFILES.pad
+    : (role === "melody" || role === "solo") ? STRIP_PROFILES.lead
+    : STRIP_PROFILES.drum;
+  // AIR — modest reverb-send lift on sampled pads/leads (let them breathe). A
+  // uniform scalar on top of the recipe send (relative wetness preserved); bass
+  // and drums unaffected. Clamped like every send.
+  const AIR_REV = { pad: 1.15, melody: 1.1, solo: 1.1 };
+  // friendly reverb-character names for the fxLabels roster (viz metadata).
+  const REVERB_LABELS = { dattorro: "plate", greyhole: "hall", fdn: "room", spring: "spring" };
+  const revLabel = (state) => REVERB_LABELS[state && state.reverbColor] || "reverb";
+
+  // ---- fxLabels: compact human-readable effect descriptors for the on-screen
+  // genre roster (metadata ONLY — never read by any render loop, must not move a
+  // gate). `unit.fxLabels` summarizes a voice's channel strip + inserts + sends;
+  // SE.fxLabels(state) summarizes the master/bus chain (the "master:" line).
+  const INSERT_LABELS = { distort: "drive", phaser: "phaser", chorus: "chorus",
+    filtersweep: "filter sweep", wah: "auto-wah", tremolo: "tremolo" };
+  function fxLabelsFor(key, u, state) {
+    const L = [];
+    if (u.sampler && u.sampler.strip) {
+      const s = u.sampler.strip;
+      if (s.hpf) L.push("HPF " + s.hpf);
+      if (s.lpf) L.push("LPF " + (s.lpf >= 1000 ? s.lpf / 1000 + "k" : s.lpf));
+      if (s.eq) L.push((s.eq.gain >= 0 ? "+" : "") + s.eq.gain + "dB@" + (s.eq.f >= 1000 ? Math.round(s.eq.f / 100) / 10 + "k" : s.eq.f));
+      if (s.sat) L.push("saturate");
+      if (s.comp) L.push("comp " + s.comp.ratio + ":1");
+      if (s.chorus) L.push(s.chorus.two ? "ensemble" : "chorus");
+      if (s.phase) L.push("phaser");
+    } else if (u.inserts && u.inserts.length) {
+      for (const i of u.inserts) L.push(INSERT_LABELS[i.type] || i.type);
+    }
+    if (u.rev > 0.02) L.push(revLabel(state) + " " + Math.round(Math.min(1, u.rev) * 100) + "%");
+    if (u.del > 0.02) L.push("delay");
+    return L;
+  }
+  function fxLabels(state) {
+    const L = [];
+    const rv = state.reverb != null ? state.reverb : 0.7, rl = revLabel(state);
+    L.push((rl === "reverb" ? "reverb " : rl + " reverb ") + Math.round(rv * 100) + "%");
+    const dl = state.delay || {};
+    if (dl.beats || dl.feedback != null) L.push("delay");
+    if (state.pingpong) L.push("ping-pong");
+    L.push("voice saturation");        // broad per-voice tanh drive (channel strips)
+    L.push("pad chorus + phaser");     // the default air on sampled pads/leads
+    if ((state.grit || 0) > 0.01) L.push("master drive " + Math.round(state.grit * 100) + "%");
+    if ((state.comp || 0) > 0.01) L.push("bus comp");
+    if (masterMb(state)) L.push("multiband master comp");
+    if ((state.pump || 0) > 0.01) L.push("sidechain pump");
+    return L;
+  }
+
   // ---- per-voice insert chain (state.instruments.<voice>.inserts contract) ----
   // 0-2 of {type, ...params}; type ∈ distort/phaser/chorus/filtersweep. Applied
   // INSERT-style between the voice and its layer tap / fx sends (per voice —
@@ -125,7 +212,14 @@
     const BASS_TRIM = 0.75;
     const L = (m.level != null ? m.level : 0.6) * (role === "bass" ? BASS_TRIM : 1);
     const lvl = clamp(L, 0.001, 1);
-    const sends = { rev: clamp((m.send || 0) / lvl, 0, 6), del: clamp((m.dsend || 0) / lvl, 0, 6) };
+    // LEAD_FX_LIFT — Paul 2026-07-07, on-device mix note: "a little more delay and
+    // reverb for leads." Applied at the SINGLE mapping point for the melody voice
+    // and its solos (which inherit the melody recipe), as a uniform scalar on both
+    // sends — so every genre's RELATIVE lead wetness is preserved exactly (the 32
+    // per-genre send/dsend vectors are untouched). Modest (+18%); the (0,6) clamp
+    // still guards. pad/bass are unaffected (lift = 1).
+    const LEAD_FX_LIFT = (role === "melody" || role === "solo") ? 1.18 : 1;
+    const sends = { rev: clamp((m.send || 0) / lvl * LEAD_FX_LIFT, 0, 6), del: clamp((m.dsend || 0) / lvl * LEAD_FX_LIFT, 0, 6) };
     const c = m.cutoff || 2000, res = clamp(m.res != null ? m.res : 0.15, 0, 0.95);
     const base = { role, pool: role === "pad" ? 4 : role === "bass" ? 2 : 3,
       dry: 1, ...sends, lvl, gmul: Math.max(1, L), params: { level: lvl },
@@ -189,12 +283,15 @@
         tapeCap: m.tapeCap === false ? 0 : clamp(m.tapeCap === true || m.tapeCap == null ? 8 : m.tapeCap, 0, 8),
         headEq: mp("headEq", 0.3, 0, 1),
       } : null;
-      return { ...base, gmul: base.gmul * (role === "bass" ? 0.5 : 1), module: null, sampler: {
+      // AIR: modest reverb-send lift on sampled pad/lead (breathe), bass untouched.
+      const airRev = clamp(base.rev * (AIR_REV[role] || 1), 0, 6);
+      return { ...base, rev: airRev, gmul: base.gmul * (role === "bass" ? 0.5 : 1), module: null, sampler: {
           id: sp.id || "?", sr: sp.sr || 44100,
           zones: Array.isArray(sp.zones) ? sp.zones : [],
           atk: mp("attack", role === "bass" ? 0.006 : 0.012, 0.003, 5),
           rel: mp("release", role === "bass" ? 0.07 : 0.09, 0.02, 6),
           swell: (m.swell || 0) >= 0.5,
+          strip: stripFor(role),   // band-appropriate channel strip (STRIP_PROFILES)
           ...(mello ? { mello } : {}),
         }, freqMax: 4000 };
     };
@@ -554,26 +651,118 @@
     return units;
   }
 
+  // ==== SAMPLED MODE (state.sampledOnly — DEFAULT ON since 2026-07) ============
+  // "I want anything to go here and be sampled by default. It's much better."
+  // (Paul, 2026-07). genre-kernel toState now applies applySampledOnly to EVERY
+  // emitted state unless the caller opts out (opts.synth / opts.sampledOnly:false
+  // -> pure-synth path, byte-for-byte the old default). When state.sampledOnly is
+  // set (and state.samplerLib is present — applySampledOnly injects it + rides
+  // every zone wav into foundSources), the PITCHED voices (pad/bass/melody/solo)
+  // are remapped onto one of the 40 SF2-derived sampled instruments,
+  // deterministically from (role, requested synth model family, state.seed). The
+  // original unit's register/level/sends/cutoff/envelope are PRESERVED (spread
+  // through) — only the SOUND SOURCE swaps to real samples, so the mix balance
+  // the genres were tuned for survives. Drums are forced onto the sampled kits by
+  // genre-kernel (D.*Sampler overlays -> the existing drumSamp path below).
+  //
+  // ONLY the pitched instrument SOURCE changes. Sampled mode is now the normal
+  // FULL MIX — Paul: "I want the round[=found] layer and speech back":
+  //   • found beds / chops            -> PLAY as usual (the genre's foundSource)
+  //   • speech / vocoder layer         -> PLAYS (vocoder is signature-exempt below,
+  //     so it stays a real vocoder and its live speech carrier is heard)
+  //   • synth sfx (risers/sweeps) + synth stab -> PLAY as usual
+  //
+  // SIGNATURE SYNTHS — models whose SYNTHESIS *is* the genre's identity: sampling
+  // them would be absurd (a moving filter / detune-beat / LFO wobble / hard-sync
+  // sweep / live speech carrier no static multisample can reproduce). forceSampled
+  // leaves these as pure synth even though sampled is the default. Keyed by the
+  // RECIPE model string (state.instruments.<role>.model). TIGHT by design — Paul
+  // wants sampling pervasive; prune/extend this ONE set to taste.
+  const SIGNATURE_MODELS = new Set([
+    "tb303",    // Roland TB-303 acid line — the whole point of acid house / psytrance acid
+    "acid",     // bass_acid: resonant filter-swept squelch bass (acid house / EBM / gabber)
+    "reese",    // bass_reese: detuned-osc beating bass (jungle / dnb / dubstep) — the beat IS the timbre
+    "wobble",   // bass_wobble: LFO-swept dubstep bass — a sample literally cannot wobble
+    "synclead", // hard-sync tearing lead: the envelope-driven sync sweep is the sound
+    "modeld",   // Minimoog Model-D mono-legato hero: portamento/legato is performance, not a pitch
+    "vocoder",  // robot_choir vocoder — needs the LIVE speech carrier (keeps "speech back")
+  ]);
+  // Candidate pools per role/timbre-family, drawn from the FULL General MIDI set
+  // (all 128 bank-0 FluidR3 presets extracted 2026-07, "all of GM please" — see
+  // faust/extract-gm.js). Only multi-zone (playable) presets are listed; the 24
+  // single-zone GM presets (SFX, one-note synth pads) are excluded — they pitch
+  // badly across a keymap. pickFrom hashes (role, model, seed) into these, so a
+  // wider pool = more instrument variety across the genre space (deterministic per
+  // seed). Kept musically sane per family (no bagpipe/shenai in the default lead).
+  const SAMPLED_BASSES = ["acoustic_bass", "fretless_bass", "finger_bass", "picked_bass", "pop_bass", "slap_bass", "contrabass"];
+  const SAMPLED_PADS   = ["strings", "slow_strings", "ahh_choir", "ohh_voices", "church_organ", "french_horns", "cello", "bowed_glass", "synth_strings_1", "space_voice"];
+  const SAMPLED_LEAD = {
+    keys:   ["felt_piano", "yamaha_grand_piano", "bright_yamaha_grand", "honky_tonk", "rhodes_ep", "legend_ep_2", "electric_piano", "harpsichord", "clavinet"],
+    mallet: ["vibraphone", "glockenspiel", "marimba", "celesta", "xylophone", "music_box", "kalimba", "dulcimer", "tinker_bell"],
+    guitar: ["nylon_string_guitar", "steel_string_guitar", "jazz_guitar", "clean_guitar", "palm_muted_guitar", "overdrive_guitar", "guitar_harmonics"],
+    brass:  ["trumpet", "muted_trumpet", "trombone", "tuba", "french_horns", "brass_section"],
+    organ:  ["rock_organ", "percussive_organ", "church_organ", "reed_organ"],
+    voice:  ["ahh_choir", "ohh_voices", "strings", "solo_vox", "synth_voice"],
+    wind:   ["alto_sax", "tenor_sax", "soprano_sax", "baritone_sax", "flute", "clarinet", "oboe", "english_horn", "bassoon", "piccolo", "recorder", "pan_flute", "harmonica", "ocarina"],   // reeds/pipes: the vaporwave default lead
+  };
+  // requested synth model -> lead timbre family (anything unmapped -> reedy wind)
+  const LEAD_FAMILY = { piano: "keys", rhodes: "keys", bell: "mallet", guitar: "guitar",
+    pluck: "guitar", kpluck: "guitar", brass: "brass", organ: "organ", hammond: "organ",
+    choir: "voice", vocoder: "voice", vp330: "voice", solina: "voice", strings: "voice" };
+  const famHash = (str) => { let h = 2166136261 >>> 0; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+  const pickFrom = (list, seed, role, model) => list[famHash(role + "|" + model + "|" + (seed >>> 0)) % list.length];
+  // (role, model, seed) -> a sampled-instrument id. Pure + deterministic.
+  function pickSampledId(role, model, seed) {
+    if (role === "bass") return pickFrom(SAMPLED_BASSES, seed, role, model || "");
+    if (role === "pad")  return pickFrom(SAMPLED_PADS, seed, role, model || "");
+    const fam = LEAD_FAMILY[model] || "wind";
+    return pickFrom(SAMPLED_LEAD[fam], seed, role, model || "");
+  }
+  // rewrite a pitched recipe into a sampler recipe (model "sampler" + zone spec)
+  // so pitchedUnit's `case "sampler"` builds a native sampler unit. Register/
+  // level/sends/cutoff/attack/release ride through the ...m spread. A recipe that
+  // ALREADY resolved to a real sampled instrument (genre chose model "sampler")
+  // is kept as-is (respect the genre's own acoustic choice). No library on the
+  // state -> return unchanged (graceful fallback; genre-kernel always injects it).
+  function forceSampled(role, m, state) {
+    m = m || {};
+    // signature synth: the synthesis IS the genre identity — never sample it
+    if (m.model && SIGNATURE_MODELS.has(m.model)) return m;
+    if (m.model === "sampler" && m.sampler && Array.isArray(m.sampler.zones) && m.sampler.zones.length) return m;
+    const lib = state.samplerLib || {};
+    const spec = lib[pickSampledId(role, m.model, state.seed)];
+    if (!spec) return m;
+    return { ...m, model: "sampler", sampler: spec, dx7: null };
+  }
+
   // ---- the full unit table for a state ----
   function voiceUnits(E, state) {
     const I = mergedInstruments(E, state);
+    const so = !!(state.sampledOnly && state.samplerLib);   // SAMPLED mode (default): remap pitched sources to samples
     const units = {};
-    units.pad = pitchedUnit("pad", I.pad);
-    units.bass = pitchedUnit("bass", I.bass);
-    units.melody = pitchedUnit("melody", I.melody);
+    units.pad = pitchedUnit("pad", so ? forceSampled("pad", I.pad, state) : I.pad);
+    units.bass = pitchedUnit("bass", so ? forceSampled("bass", I.bass, state) : I.bass);
+    units.melody = pitchedUnit("melody", so ? forceSampled("melody", I.melody, state) : I.melody);
     for (const v of (E.soloVoices ? E.soloVoices(state, I.melody) : []))
-      units["solo:" + v.key] = pitchedUnit("solo", v.recipe);
+      units["solo:" + v.key] = pitchedUnit("solo", so ? forceSampled("solo", v.recipe, state) : v.recipe);
     const D = I.drums;
+    // DRUM_FX_LIFT — Paul 2026-07-07, on-device mix note: "a little more delay and
+    // reverb for ... drums." Uniform scalar on every drum voice's reverb+delay
+    // send. All genres derive their drum sends from the single D.send/D.dsend
+    // scalars via these fixed per-drum ratios (kick .35, hat .3/.5, tom 1.4 …), so
+    // one multiplier preserves the RELATIVE drum wetness across all 32 genres
+    // exactly while lifting the absolute level modestly (+18%).
+    const DRUM_FX_LIFT = 1.18;
     // drum sends are POST everything in csound (asig includes amp+kit level)
     units.kick = { module: { boom: "kick_boom", "808": "kick_808", "909": "kick909" }[D.kickModel] || "kick_boom",
-      pool: 1, dry: 1, rev: (D.send || 0) * 0.35, del: 0, lvl: D.kick != null ? D.kick : 1, drum: true,
+      pool: 1, dry: 1, rev: (D.send || 0) * 0.35 * DRUM_FX_LIFT, del: 0, lvl: D.kick != null ? D.kick : 1, drum: true,
       params: { tune: clamp(D.tune != null ? D.tune : 1, 0.5, 2) }, tail: 0.6 };
     units.snare = { module: { noise: "snare_noise", crack: "snare_crack", clap: "snare_clap" }[D.snareModel] || "snare_noise",
-      pool: 1, dry: 1, rev: D.send || 0, del: D.dsend || 0, lvl: D.snare != null ? D.snare : 1, drum: true, params: {}, tail: 0.4 };
+      pool: 1, dry: 1, rev: (D.send || 0) * DRUM_FX_LIFT, del: (D.dsend || 0) * DRUM_FX_LIFT, lvl: D.snare != null ? D.snare : 1, drum: true, params: {}, tail: 0.4 };
     // csound instr 12 mixes hats at *0.7 — folded into level (ab-render did the same)
     units.hat = { module: { noise: "hat_noise", metal: "hat_metal" }[D.hatModel] || "hat_noise",
-      pool: 1, dry: 1, rev: (D.send || 0) * 0.3, del: (D.dsend || 0) * 0.5, lvl: (D.hat != null ? D.hat : 1) * 0.7, drum: true, params: {}, tail: 0.4 };
-    units.tom = { module: "tom", pool: 1, dry: 1, rev: (D.send || 0) * 1.4, del: D.dsend || 0,
+      pool: 1, dry: 1, rev: (D.send || 0) * 0.3 * DRUM_FX_LIFT, del: (D.dsend || 0) * 0.5 * DRUM_FX_LIFT, lvl: (D.hat != null ? D.hat : 1) * 0.7, drum: true, params: {}, tail: 0.4 };
+    units.tom = { module: "tom", pool: 1, dry: 1, rev: (D.send || 0) * 1.4 * DRUM_FX_LIFT, del: (D.dsend || 0) * DRUM_FX_LIFT,
       lvl: D.tom != null ? D.tom : 1, drum: true, params: {}, tail: 0.6 };
     // SAMPLED KIT (additive): when instruments.drums carries per-drum sampler
     // specs (genre-kernel drumKitSpec, from a genre's drums.kit), overlay a
@@ -586,15 +775,22 @@
     const drumSamp = (unit, spec) => {
       if (!spec || !Array.isArray(spec.zones) || !spec.zones.length) return;
       unit.sampler = { id: spec.id || "drumkit", sr: spec.sr || 44100, zones: spec.zones,
-        atk: 0.0006, rel: 0.03, oneShotSec: spec.oneShotSec || 1, swell: false };
+        atk: 0.0006, rel: 0.03, oneShotSec: spec.oneShotSec || 1, swell: false,
+        strip: STRIP_PROFILES.drum };   // transient-preserving (HPF + whisper of drive)
     };
     drumSamp(units.kick, D.kickSampler);
     drumSamp(units.snare, D.snareSampler);
     drumSamp(units.hat, D.hatSampler);
     drumSamp(units.tom, D.tomSampler);
+    // synth stab + synth sfx (risers/sweeps): always present. Sampled mode only
+    // changes the pitched INSTRUMENT source — sfx/stab play in the full mix too.
     units.stab = { module: "stab", pool: 2, dry: 1, rev: 0.35, del: 0.3, lvl: 1, drum: true, params: { level: 1 }, tail: 0.6, freqMax: 2000 };
     units.sfx = { module: "sfx", pool: 2, dry: 1, rev: 0.3, del: 0, lvl: 1, hold: true, params: { level: 1 }, tail: 1.2 };
-    return trimToBudget(units, state);
+    const out = trimToBudget(units, state);
+    // fxLabels (viz roster metadata; computed post-trim so labels reflect the
+    // final shed state). Pure metadata — ignored by every render loop.
+    for (const [k, u] of Object.entries(out)) { if (!u || u.__meta) continue; u.fxLabels = fxLabelsFor(k, u, state); }
+    return out;
   }
 
   // ---- ZERO-STATIC Stage 3: STEM CLASSING — which units the rolling stem
@@ -684,7 +880,17 @@
     const colored = !!REVERB_COLORS[state && state.reverbColor];   // internal zita off when a color is active
     return {
       rgain: colored ? 0 : clamp((state.reverb != null ? state.reverb : 0.7) * 3.2, 0, 2), dgain: 1,
-      rtone: 2000,   // reverb return tone (legacy fixed 2 kHz; live eco-3 dulls it)
+      // SHIMMER LEAN — Paul 2026-07-07, on-device: "a little more shimmer reverb
+      // would be good." The internal zita tail is lowpassed at rtone; opening it
+      // from the legacy-dark 2 kHz to 2.6 kHz lets more HF air through the tail,
+      // reading as shimmer. Uniform across every uncolored genre (a constant, so
+      // relative identity is untouched) and shared by press + live via fxParams.
+      // Colored genres already ride brighter plates (dattorro 5200, fdn 6000) and
+      // keep their own tone. TRUE octave-up pitch-shift shimmer is future work
+      // (see report: needs new DSP + live.js send wiring, and live.js is off-limits
+      // to this workstream). live eco-3 still dulls rtone under load.
+      rtone: 2600,
+
       dtime: clamp((dl.beats || 0.75) * spb, 0.02, 1.9),
       dfb: clamp(dl.feedback != null ? dl.feedback : 0.3, 0, 0.92),
       dcut: clamp(dl.cutoff || 2600, 300, 9000),
@@ -724,6 +930,9 @@
     const lo = opts.lo != null ? opts.lo : -1e9, hi = opts.hi != null ? opts.hi : 1e9;
     const win = (b) => b >= lo && b < hi;
     const units = opts.units || voiceUnits(E, state);
+    // Sampled mode changes only the pitched INSTRUMENT source (voiceUnits/
+    // forceSampled). Found beds/chops, speech/vocoder and synth sfx/stab all play
+    // in the full mix here exactly as on the synth path — no suppression.
     const out = [], found = [], sweeps = [];
     const solos = E.soloVoices ? E.soloVoices(state, (state.instruments || {}).melody) : [];
 
@@ -823,5 +1032,5 @@
     return mapEvents(E, state, ev, { bedAll: true });
   }
 
-  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, reverbColor, REVERB_COLORS, autoTune, masterMb, mapEvents, buildSchedule, COST, unitCost, stateCost, effectivePool, BUDGET, trimToBudget, stemClass, STEM_COST_MIN };
+  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, fxLabels, reverbColor, REVERB_COLORS, autoTune, masterMb, mapEvents, buildSchedule, COST, unitCost, stateCost, effectivePool, BUDGET, trimToBudget, stemClass, STEM_COST_MIN, pickSampledId, STRIP_PROFILES };
 });

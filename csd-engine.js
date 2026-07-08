@@ -110,7 +110,7 @@
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
   const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic","habanera","syncopated","pedal"];
-  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16","motorik","motorik23"];
+  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16","motorik","motorik23","fugue"];
   const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal","bossa","electro","newjack","shuffle"];
   // KERNEL-V4 Phase 5 (§3.5) — the form as a graph of TYPED NODES. Every
   // section, whatever a form names it, classifies to one of six node types:
@@ -766,6 +766,18 @@
         for(let i=0;i<Math.round(cb*4);i++){ const p=ext[motif[i%16]];
           out.push({voice:"melody",beat:Sb+i*0.25,dur:0.24,pch:pchAdd(p,-12),amp:0.12});   // melodic arp, octave lower (main)
           out.push({voice:"melody",beat:Sb+i*0.25,dur:0.22,pch:p,amp:0.05}); }              // octave doubling
+        return; }
+      if(gen==="fugue"){   // BAROQUE FUGUE: a running-SIXTEENTH subject stated in the upper
+        // voice, then ANSWERED two beats later in a lower voice (imitation), so the ear
+        // hears continuous semiquaver counterpoint — the Well-Tempered-Clavier engine.
+        const ext=[lead[0],lead[1],lead[2],lead[3],pchAdd(lead[0],12),pchAdd(lead[1],12),pchAdd(lead[2],12)];
+        const subject=[0,1,2,4, 3,2,4,3, 5,4,2,1, 2,3,1,0];   // stepwise turning subject, resolves to the root
+        const n=Math.round(cb*4);                              // cb beats × 4 sixteenths
+        for(let i=0;i<n;i++){ const p=ext[subject[i%16]];
+          out.push({voice:"melody",beat:Sb+i*0.25,dur:0.23,pch:p,amp:0.11}); }              // dux — the subject in semiquavers
+        const ans=8;                                           // comes (answer) enters 2 beats (8 sixteenths) later
+        for(let i=0;i<n-ans;i++){ const p=ext[subject[i%16]];
+          out.push({voice:"melody",beat:Sb+(i+ans)*0.25,dur:0.23,pch:pchAdd(p,-12),amp:0.075}); }   // answer, an octave below
         return; }
       const ph=MEL_PHRASES[gen];
       if(ph){ ph.forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }

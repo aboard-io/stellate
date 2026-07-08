@@ -1,5 +1,13 @@
 # Found-sound sources & attribution
 
+**Demoscene background layer** (`demo-layer.js`): the [MicroW8](https://github.com/exoticorn/microw8)
+fantasy-console runtime + example carts (tunnel / plasma / fireworks / scener effects), vendored
+under `vendor/microw8/`. MicroW8 by exoticorn — **Unlicense (public domain)**; see `vendor/microw8/UNLICENSE`.
+`vendor/microw8/carts/` holds 32 carts: 8 are MicroW8's own example prods (exoticorn) from the
+v0.4.1 release, the other 24 are classic size-coding effects (plasma / fire / metaballs / starfield /
+kaleidoscope / rotozoom / Mandelbrot / bump / voxel-ish floor …) authored for this project in
+CurlyWas and compiled with the MicroW8 `uw8` tool. All public domain (Unlicense).
+
 The found-sound layer is **field recordings from [radio aporee ::: maps](https://aporee.org/maps/)**,
 mirrored on the **Internet Archive**. The audio files themselves are **not committed** —
 `fetch-found-sound.sh` downloads them and `royal-road.csd` granular-processes them
@@ -152,6 +160,7 @@ the font itself is never committed or shipped).
 | local dir | source | content | license |
 |---|---|---|---|
 | `alto_sax` `tenor_sax` `trumpet` `flute` `clarinet` `vibraphone` `strings` `nylon_string_guitar` `steel_string_guitar` `bandoneon` `acoustic_bass` `percussive_organ` `rock_organ` `trombone` `muted_trumpet` `oboe` `cello` `harp` `celesta` `ahh_choir` `fretless_bass` `harmonica` `church_organ` `honky_tonk` `french_horns` `jazz_guitar` `bright_yamaha_grand` `marimba` | **FluidR3 GM/GS** SoundFont by Frank Wen, via [`fluidr3-gm-gs`](https://archive.org/details/fluidr3-gm-gs) on archive.org | single-note multi-zone keymaps (6 zones each, SF2 loop points preserved) | **MIT** — FluidR3 is distributed under the MIT license (Frank Wen, 2000-2002; license text ships with the canonical FluidR3_GM.zip distributions, e.g. member.keymusician.com/Member/FluidR3_GM/). The archive.org item's CC-BY-ND tag is the uploader's, not the font's grant. |
+| **the full General MIDI set** — all 128 bank-0 FluidR3 melodic presets (`faust/extract-gm.js`, 2026-07 "all of GM"): the acoustic families above plus `rhodes_ep` `legend_ep_2` `electric_piano` `yamaha_grand_piano` `violin` `viola` `contrabass` `slow_strings` `tremolo` `timpani` `ohh_voices` `solo_vox` `orchestra_hit` `clean_guitar` `palm_muted_guitar` `overdrive_guitar` `distortion_guitar` `guitar_harmonics` `soprano_sax` `baritone_sax` `english_horn` `bassoon` `piccolo` `recorder` `ocarina` `banjo` `koto` `shamisen` `fiddle` `dulcimer` `music_box` `xylophone` `tubular_bells` `tinker_bell` `picked_bass` `pop_bass` `slap_bass` `reed_organ` `brass_section` `bowed_glass` `space_voice` … | **FluidR3 GM/GS** (same font/item as above) | 105 usable multi-zone keymaps (6 zones each). The 24 single-zone presets (SFX, one-note synth pads, DrawbarOrgan) extract but are one-shot color only. Now the default sound: `state.sampledOnly` on by default, signature synths (tb303 etc.) exempt. | **MIT** (Frank Wen, as above) |
 | `felt_piano` | **FluidR3 GM/GS** GM 0 "Yamaha Grand Piano" (same font/item as above) | 10-zone keymap (dense midrange — the neoclassical lead is exposed), made *felt* by baking a 3 kHz lowpass into the zone wavs at extraction (fetch-found-samples.sh; sample counts unchanged, SF2 loop points preserved). A derivative work of the FluidR3 samples, not a new recording. Chosen over external "felt piano" sample sets: no CC0/PD felt piano with verifiable provenance and per-note loop data was found (the well-known felt libraries — e.g. Spitfire LABS Soft Piano — are EULA-restricted, not redistributable). | **MIT** (Frank Wen, as above) |
 | `drums/acoustic` `drums/room` `drums/power` `drums/electronic` `drums/jazz` `drums/brush` | **FluidR3 GM/GS** GM **bank 128** percussion (Standard / Room / Power / Electronic / Jazz / Brush kits; same font/item as above) | SAMPLED DRUM KITS — per-hit one-shots (kick/snare/hi-hats/toms + rim/clap/crash/ride), one recorded GM drum note each, at natural pitch (`faust/sf2.js drumkit`). Additive to the Faust synth kicks; genres opt in via `drums.kit` (genre-kernel `DRUMKITS`). Wavs gitignored/derived, `len` mirrored in `DRUMKITS`. | **MIT** (Frank Wen, as above) |
 
@@ -167,6 +176,15 @@ corpus contains them); Yamaha has never asserted rights over the patch DATA —
 PD-adjacent by long convention, noted here rather than claimed as a formal
 grant. Curation: all 113 decoded patches render non-silent (scratch audit,
 2026-07); SFX novelties (TRAIN, EXPLOSION, LASER GUN…) were not decoded.
+
+## Vendored code (faust/vendor/ — committed source, not audio)
+
+- `faust/vendor/lamejs.min.js` — **lamejs 1.2.1** MP3 encoder
+  ([github.com/zhuker/lamejs](https://github.com/zhuker/lamejs), the npm
+  `lamejs@1.2.1` single-file minified build, verbatim + a small UMD shim),
+  **LGPL-3.0**. Used by the WAV-FIRST v3 mobile output path (faust/mp3-worker.js)
+  to encode the continuous `audio/mpeg` append stream; served as unmodified
+  source alongside this repo, which satisfies LGPL for a scripting-language use.
 
 ## hogcore speech roster (found/samples/speech/hp_*.wav — generated, no external source)
 
