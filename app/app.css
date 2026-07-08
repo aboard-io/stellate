@@ -89,8 +89,10 @@
   .vz-ir{flex:0 0 46px;color:var(--dim);text-transform:uppercase;font-size:11px;letter-spacing:.1em}
   .vz-inm{color:var(--pink)}
   /* effects as tiny text UNDER each lane's roll — no stacked lozenges */
-  .vz-fxline{font-size:9px;line-height:1.35;letter-spacing:.02em;color:var(--dim);opacity:.72;margin:.12rem 0 .3rem;white-space:normal}
-  .vz-master .vz-fxline{color:var(--amber);opacity:.85}
+  /* fx tiny-text beneath the roll, indented to align under it (past the 128px head) */
+  .vz-fxline{font-size:9px;line-height:1.4;letter-spacing:.02em;color:var(--dim);opacity:.72;
+    margin:0;margin-left:calc(128px + .5rem);white-space:normal}
+  .vz-master .vz-fxline{color:var(--amber);opacity:.85;margin-left:0}
   .vz-fx{display:inline-flex;flex-wrap:wrap;gap:.28rem}
   .vz-fx i{font-style:normal;font-size:11px;line-height:1.5;letter-spacing:.02em;color:var(--cyan);
     background:rgba(69,224,255,.10);border:1px solid rgba(69,224,255,.28);border-radius:99px;padding:.02rem .42rem}
@@ -102,7 +104,9 @@
   .vz-ruler{position:relative;height:13px;margin:0 0 .1rem;margin-left:calc(128px + .5rem);
     border-radius:4px 4px 0 0;background-color:rgba(255,255,255,.02)}
   .vz-ruler span{position:absolute;top:0;font:11px VT323,monospace;color:var(--dim);opacity:.7;padding-left:2px}
-  .vz-tlrow{display:flex;align-items:stretch;gap:.5rem;margin:.2rem 0}
+  /* each voice = header+roll row, with its fx line BENEATH; rows evenly spaced */
+  .vz-tlrow{display:flex;flex-direction:column;gap:.14rem;margin:.34rem 0}
+  .vz-tlmain{display:flex;align-items:stretch;gap:.5rem}
   .vz-tlhead{flex:0 0 128px;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:.1rem}
   .vz-tlname{display:flex;align-items:center;gap:.32rem;font:15px VT323,monospace;color:var(--pink);
     line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
