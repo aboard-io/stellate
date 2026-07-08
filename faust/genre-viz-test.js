@@ -119,13 +119,16 @@ async function main() {
     tl = await page.evaluate(() => {
       const box = document.getElementById("inside");
       const rows = [...box.querySelectorAll(".vz-tlrow")];
+      // fx now render as a tiny " · "-joined line UNDER the lane (was stacked pills);
+      // require the FULL chain shows (>1 effect), which is the point of the change.
       const fxRow = rows.find(r => {
-        const nm = r.querySelector(".vz-tlname"), fx = r.querySelector(".vz-fx i");
-        return nm && nm.textContent.trim().length > 0 && fx && fx.textContent.trim().length > 0;
+        const nm = r.querySelector(".vz-tlname"), fx = r.querySelector(".vz-fxline");
+        return nm && nm.textContent.trim().length > 0 && fx && fx.textContent.includes(" · ");
       });
       return { lanes: rows.length, blocks: box.querySelectorAll(".vz-blk").length,
         fxLane: !!fxRow, fxName: fxRow ? fxRow.querySelector(".vz-tlname").textContent.trim() : null,
-        fxLabel: fxRow ? fxRow.querySelector(".vz-fx i").textContent.trim() : null,
+        fxLabel: fxRow ? fxRow.querySelector(".vz-fxline").textContent.trim() : null,
+        stackedPills: box.querySelectorAll(".vz-tlrow .vz-fx i").length,
         notes: window.__notes.length, bars: window.__S.barCount, live: window.__S.live };
     });
     if (tl.lanes >= 2 && tl.blocks >= 1 && tl.fxLane && tl.notes > 0 && tl.bars >= 3) break;
@@ -133,8 +136,9 @@ async function main() {
   }
   ok(tl.lanes >= 2, `C1: timeline rendered ${tl.lanes} lanes (want >=2)`);
   ok(tl.blocks >= 1, `C2: timeline rendered ${tl.blocks} note blocks (want >=1)`);
-  ok(tl.fxLane, `C3: no lane header carries both an instrument name and an fx label`);
-  ok(!!tl.fxName && !!tl.fxLabel, `C4: name/fx lane header incomplete (name=${tl.fxName} fx=${tl.fxLabel})`);
+  ok(tl.fxLane, `C3: no lane shows a name + a full (multi-effect) fx line under it`);
+  ok(!!tl.fxName && !!tl.fxLabel, `C4: name/fx lane incomplete (name=${tl.fxName} fx=${tl.fxLabel})`);
+  ok(tl.stackedPills === 0, `C5: fx must be tiny text, not stacked lozenges (found ${tl.stackedPills} pills)`);
   console.log(`\n=== TIMELINE DOM (live house@seed1, bar ${tl.bars}) ===`);
   console.log(`  lanes=${tl.lanes} blocks=${tl.blocks}  fxLane="${tl.fxName}" {${tl.fxLabel}}`);
 

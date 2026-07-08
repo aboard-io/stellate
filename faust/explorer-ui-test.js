@@ -38,7 +38,7 @@ async function main() {
   const fails = [];
   const ok = (cond, msg) => { if (!cond) fails.push(msg); return cond; };
 
-  await page.goto(`http://localhost:${PORT}/explorer.html`);
+  await page.goto(`http://localhost:${PORT}/explorer.html?bgAltMs=1200`);   // fast idle bg-alt clock for the H test
   await page.waitForFunction(() => window.__X && window.__S && window.__LOOP, { timeout: 20000 });
   await page.waitForTimeout(500);
   const loadErrs = errs.slice();
@@ -215,28 +215,47 @@ async function main() {
   console.log(`  maxRms=${maxRms.toFixed(5)}  realRideErrors=${realRide.length}  envFoundSoundErrors=${envRide.length}  engineErrors=${engineErrs.length}`);
   if (realRide.length) console.log(`  REAL:\n   ${realRide.slice(0, 20).join("\n   ")}`);
 
-  // H: the background "video+demos" mode ALTERNATES video ↔ a fresh demo cart every
-  // 8 chord-bars while live (Paul 2026-07-09). Unit-driven via the __BGALT hook —
-  // 24 ticks at an 8-bar period must flip sides exactly 3× (bars 8/16/24), advance
-  // the cart on each demo turn, and the enabled layer must track the active side.
-  const alt = await page.evaluate(() => {
-    const D = window.DemoLayer; let nexts = 0;
-    const realNext = D.next; D.next = () => { nexts++; return realNext.call(D); };
-    document.getElementById("bgChip").click();            // off -> video+demos
-    window.__S.live = true;
+  // H: the "video+demos" background ACTUALLY alternates on the reliable wall-clock
+  // (the earlier version only worked via onBar while live and was imperceptibly slow —
+  // Paul: "it never switches"). Page loaded with ?bgAltMs=1200 so the idle backstop
+  // flips fast. Stub video availability, cycle the chip to mode 1, wait, and require
+  // real flips over real time, both sides, the enabled layer tracking the side, and
+  // that DemoLayer.next() genuinely cycles the cart name.
+  const alt = await page.evaluate(async () => {
+    window.VideoLayer.available = () => true;
+    let g = 0; while (window.__BGALT.state().mode !== 1 && g++ < 4) document.getElementById("bgChip").click();
+    const startMode = window.__BGALT.state().mode;
+    const n0 = window.DemoLayer.currentName && window.DemoLayer.currentName();
+    window.DemoLayer.next(); const n1 = window.DemoLayer.currentName && window.DemoLayer.currentName();
     const sides = [];
-    for (let i = 0; i < 24; i++) { window.__BGALT.tick(); sides.push(window.__BGALT.state().side); }
+    for (let i = 0; i < 12; i++) { await new Promise(r => setTimeout(r, 500)); sides.push(window.__BGALT.state().side); }
     const flips = sides.filter((s, i) => i && s !== sides[i - 1]).length;
-    const st = window.__BGALT.state();
-    const r = { mode: st.mode, flips, nexts, endSide: st.side, vidOn: window.VideoLayer.enabled(), demoOn: D.enabled() };
-    window.__S.live = false; D.next = realNext; document.getElementById("bgChip").click(); document.getElementById("bgChip").click();  // back to off
+    const s = window.__BGALT.state();
+    const r = { startMode, flips, sides: [...new Set(sides)], cartCycles: n0 !== n1,
+      side: s.side, vidOn: window.VideoLayer.enabled(), demoOn: window.DemoLayer.enabled() };
+    document.getElementById("bgChip").click(); document.getElementById("bgChip").click();  // back to off
     return r;
   });
-  ok(alt.mode === 1 && alt.flips === 3, `H1: 8-bar alternation flips 3x over 24 ticks (mode=${alt.mode} flips=${alt.flips})`);
-  ok(alt.nexts >= 1, `H2: demo cart advances on demo turns (nexts=${alt.nexts})`);
-  ok((alt.endSide === "demo") === alt.demoOn && (alt.endSide !== "demo") === alt.vidOn,
-    `H3: enabled layer tracks the active side (side=${alt.endSide} vid=${alt.vidOn} demo=${alt.demoOn})`);
-  console.log(`  bg-alt: flips=${alt.flips} nexts=${alt.nexts} endSide=${alt.endSide}`);
+  ok(alt.startMode === 1, `H0: chip reaches video+demos mode (got ${alt.startMode})`);
+  ok(alt.flips >= 3 && alt.sides.length === 2, `H1: background alternates on the clock (flips=${alt.flips} sides=${alt.sides.join("/")})`);
+  ok(alt.cartCycles, `H2: DemoLayer.next() changes the cart`);
+  ok((alt.side === "demo") === alt.demoOn && (alt.side !== "demo") === alt.vidOn,
+    `H3: enabled layer tracks the active side (side=${alt.side} vid=${alt.vidOn} demo=${alt.demoOn})`);
+  console.log(`  bg-alt: flips=${alt.flips} sides=${alt.sides.join("/")} cartCycles=${alt.cartCycles}`);
+
+  // I: plain mouse-wheel zooms the map (desktop), no ctrl needed (Paul 2026-07-09).
+  const wheel = await page.evaluate(() => {
+    const svg = document.getElementById("map"), r = svg.getBoundingClientRect();
+    const k0 = window.__ZOOM.k;
+    svg.dispatchEvent(new WheelEvent("wheel", { deltaY: -240, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, bubbles: true, cancelable: true }));
+    const kUp = window.__ZOOM.k;
+    svg.dispatchEvent(new WheelEvent("wheel", { deltaY: 600, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, bubbles: true, cancelable: true }));
+    const kDn = window.__ZOOM.k;
+    return { k0, kUp, kDn };
+  });
+  ok(wheel.kUp > wheel.k0, `I1: wheel up zooms IN (k ${wheel.k0.toFixed(2)}→${wheel.kUp.toFixed(2)})`);
+  ok(wheel.kDn < wheel.kUp, `I2: wheel down zooms OUT (k ${wheel.kUp.toFixed(2)}→${wheel.kDn.toFixed(2)})`);
+  console.log(`  wheel-zoom: ${wheel.k0.toFixed(2)} →in ${wheel.kUp.toFixed(2)} →out ${wheel.kDn.toFixed(2)}`);
 
   await browser.close(); srv.close();
 
