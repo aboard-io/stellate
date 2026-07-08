@@ -19,6 +19,11 @@
   "use strict";
 
   const WAVES = ["sine", "saw", "square", "pulse"];
+  // SPEECH_RATE_CAP — the ceiling playback rate for kind:"speech" found clips, so
+  // the espeak voice never plays too high to understand (see the mapEvents note).
+  // 0.82 ≈ -3.4 semitones below rate 1; up-pitched placements drop to it, already-
+  // low ones (buried recitals ~0.78) are unchanged.
+  const SPEECH_RATE_CAP = 0.82;
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number(v) || 0));
   const cpspch = (p) => { p = parseFloat(p); const o = Math.floor(p), st = Math.round((p - o) * 100); return 261.625565 * Math.pow(2, (o - 8) + st / 12); };
 
@@ -60,26 +65,62 @@
   //         master soft-clip at 0.95 is the backstop, but we must not lean on it).
   // Increments, not transforms (Paul: "a little more"). All saturation is tanh —
   // it REDUCES peaks, so it doubles as clip insurance.
+  // GRIT PASS (2026-07, Paul: "you're being very conservative … we need more grit
+  // across the board"). The default channel strips carry MORE saturation now —
+  // dry multisamples read as timid, so every sampled voice gets audible tanh
+  // drive (still peak-reducing = clip insurance). Aggressive genres go far past
+  // this via the heavy strip (heavyDriveOf/aggressiveStrip below).
   const STRIP_PROFILES = {
     // BASS — kill subsonics (30 Hz HPF), gentle 5 kHz top roll, low-mid warmth,
     //   slow glue comp; NO air (bass stays centered + tight).
-    bass: { hpf: 30, lpf: 5000, eq: { f: 110, gain: 2, q: 0.9 },
-            sat: 0.22, satMix: 0.3, comp: { thresh: 0.22, ratio: 3, atk: 0.02, rel: 0.18, makeup: 1.05 }, trim: 0.98 },
+    bass: { hpf: 30, lpf: 5200, eq: { f: 110, gain: 2.5, q: 0.9 },
+            sat: 0.34, satMix: 0.42, comp: { thresh: 0.22, ratio: 3, atk: 0.02, rel: 0.18, makeup: 1.05 }, trim: 0.98 },
     // PAD — declutter lows (120 Hz HPF), scoop a little mud, wide ensemble chorus
     //   + a slow shallow phaser, gentle comp. The widest air (pads carry the space).
     pad: { hpf: 120, eq: { f: 300, gain: -1.5, q: 0.8 },
-           sat: 0.1, satMix: 0.22, comp: { thresh: 0.3, ratio: 2, atk: 0.03, rel: 0.28, makeup: 1.02 },
+           sat: 0.17, satMix: 0.3, comp: { thresh: 0.3, ratio: 2, atk: 0.03, rel: 0.28, makeup: 1.02 },
            chorus: { rate: 0.45, baseMs: 14, depthMs: 6, mix: 0.32, two: true },
            phase: { rate: 0.22, lo: 300, hi: 1600, stages: 4, fb: 0.3, mix: 0.18 }, trim: 0.9 },
     // LEAD (melody/solo) — clear low rumble (200 Hz HPF), presence lift ~3 kHz, a
     //   touch of grit, faster comp, light single-voice chorus for width.
-    lead: { hpf: 200, eq: { f: 3000, gain: 2.5, q: 0.8 },
-            sat: 0.18, satMix: 0.32, comp: { thresh: 0.25, ratio: 3, atk: 0.008, rel: 0.12, makeup: 1.04 },
+    lead: { hpf: 200, eq: { f: 3000, gain: 3, q: 0.8 },
+            sat: 0.3, satMix: 0.44, comp: { thresh: 0.25, ratio: 3, atk: 0.008, rel: 0.12, makeup: 1.04 },
             chorus: { rate: 0.8, baseMs: 11, depthMs: 4, mix: 0.18 }, trim: 0.95 },
     // DRUMS — TRANSIENT-PRESERVING: a subsonic HPF + a whisper of glue saturation
     //   only. NO compressor and no dulling filters (keep the attack/punch).
-    drum: { hpf: 28, sat: 0.09, satMix: 0.15, trim: 1.0 },
+    drum: { hpf: 28, sat: 0.15, satMix: 0.22, trim: 1.0 },
   };
+  // ---- AGGRESSIVE (heavy) channel strip for sampled voices --------------------
+  // Sampled voices DROP their Faust inserts (native PCM path). So a genre that
+  // declares a distort insert on a sampled guitar/bass/pad — heavymetal, budstep,
+  // sludge, gabber — would render CLEAN but for the mild default strip. That is
+  // exactly why the metal/sludge genres came out timid. heavyDriveOf reads the
+  // declared distortion off the recipe's `inserts` axis; when it's substantial we
+  // FOLD it into a BOLD strip: big tanh fuzz (satDrive 4..12) + classic-metal
+  // mid-scoop (~640 Hz) + presence bite (~3.2 kHz), subsonic HPF, glue comp. This
+  // makes "aggressive genres specify BOLD explicit insert chains" reach the
+  // default sampled backend — huge and dirty, but tanh-bounded (no hard clip).
+  function heavyDriveOf(m) {
+    if (!m || !Array.isArray(m.inserts)) return 0;
+    let d = 0;
+    for (const it of m.inserts) if (it && it.type === "distort") d = Math.max(d, it.drive != null ? it.drive : 0.3);
+    return clamp(d, 0, 1);
+  }
+  const HEAVY_MIN = 0.5;   // drive at/above this => full metal strip; below => mild sat lift
+  function aggressiveStrip(role, drive) {
+    const sat = clamp(0.42 + 0.5 * drive, 0, 1);
+    const satDrive = 4 + 8 * drive;               // 4..12 — the fuzz hardness
+    const satMix = clamp(0.7 + 0.3 * drive, 0, 1);
+    if (role === "bass")
+      return { hpf: 28, lpf: 6500, eq: { f: 90, gain: 3.5, q: 0.8 },
+        sat, satMix, satDrive,
+        comp: { thresh: 0.2, ratio: 4, atk: 0.01, rel: 0.14, makeup: 1.12 }, trim: 1.0 };
+    // guitar / lead / the power-chord pad wall: scoop mids, lift presence.
+    return { hpf: role === "pad" ? 70 : 95, eq: { f: 640, gain: -(4 + 3 * drive), q: 0.9 },
+      eq2: { f: 3200, gain: 3 + 2 * drive, q: 0.7 },
+      sat, satMix, satDrive,
+      comp: { thresh: 0.22, ratio: 3.5, atk: 0.008, rel: 0.12, makeup: 1.1 }, trim: 0.98 };
+  }
   // sampled-instrument family from its id (for the per-song voice-FX augmentation)
   function samplerFamily(id) {
     id = id || "";
@@ -107,13 +148,26 @@
     if (fam === "guitar") return (h & 1) ? { flanger: { rate: 0.3, depth: 0.7, feedback: 0.4, mix: 0.22 } } : { delay: delaySpec };
     return { delay: delaySpec };
   }
-  const stripFor = (role, id, state) => {
+  const stripFor = (role, id, state, m) => {
+    const drive = role === "drum" ? 0 : heavyDriveOf(m);
+    // BOLD path: a genre-declared distortion on a sampled voice becomes a real
+    // heavy channel strip (the inserts it can't run natively, folded in).
+    if (drive >= HEAVY_MIN) {
+      const heavy = aggressiveStrip(role, drive);
+      const extra = voiceFxStage(role, id, state);   // leads keep their delay/leslie air on top
+      return extra ? { ...heavy, ...extra } : heavy;
+    }
     const base = role === "bass" ? STRIP_PROFILES.bass
       : role === "pad" ? STRIP_PROFILES.pad
       : (role === "melody" || role === "solo") ? STRIP_PROFILES.lead
       : STRIP_PROFILES.drum;
+    // a SMALL declared drive (funk/acid touches, < HEAVY_MIN) just lifts the
+    // base saturation a little (more grit, not a metal scoop).
+    const gritted = drive > 0.01
+      ? { ...base, sat: clamp((base.sat || 0) + 0.45 * drive, 0, 1), satMix: clamp((base.satMix != null ? base.satMix : 0.3) + 0.3 * drive, 0, 1) }
+      : base;
     const extra = voiceFxStage(role, id, state);
-    return extra ? { ...base, ...extra } : base;   // new object only when augmented
+    return extra ? { ...gritted, ...extra } : gritted;   // new object only when augmented
   };
   // AIR — modest reverb-send lift on sampled pads/leads (let them breathe). A
   // uniform scalar on top of the recipe send (relative wetness preserved); bass
@@ -429,7 +483,7 @@
           atk: mp("attack", role === "bass" ? 0.006 : 0.012, 0.003, 5),
           rel: mp("release", role === "bass" ? 0.07 : 0.09, 0.02, 6),
           swell: (m.swell || 0) >= 0.5,
-          strip: stripFor(role, sp.id, state),   // channel strip + per-song voice-FX (leads)
+          strip: stripFor(role, sp.id, state, m),   // channel strip + per-song voice-FX (leads); m carries the genre's declared distortion (heavy strip)
           ...(mello ? { mello } : {}),
         }, freqMax: 4000 };
     };
@@ -1164,17 +1218,26 @@
     for (const f of ev.found) {
       const src = srcOf[f.tableNum]; if (!src) continue;
       const tuned = at && !src.bpm ? { autoTune: at } : {};
+      // SPEECH INTELLIGIBILITY (2026-07, Paul: "you're pitching the synth voice
+      // too high to be intelligible wherever you use it"). espeak's robotic voice
+      // sits high, and several placements play it at rate >= 1 (name-stab hits,
+      // up-pitched hogcore) — the words blur. CAP the playback rate of any
+      // kind:"speech" source to SPEECH_RATE_CAP so it always reads in a natural
+      // spoken register. ONE shared point => every use (budstep strain names,
+      // hogcore cast, transitwave PA, station names) drops together. Non-speech
+      // found sources are untouched (byte-identical). ~-3.4 st from rate 1.
+      const fp = (src.kind === "speech" && f.pitch != null) ? Math.min(f.pitch, SPEECH_RATE_CAP) : f.pitch;
       if (f.chop) {
         if (!win(f.beat)) continue;
         found.push({ type: "chop", srcId: src.id, beat: f.beat, durB: Math.max(0.02, f.dur), amp: f.amp,
-          pitch: f.pitch, offset: f.offset || 0, cutoff: f.cutoff || 3500,
+          pitch: fp, offset: f.offset || 0, cutoff: f.cutoff || 3500,
           rsend: f.rsend != null ? f.rsend : 0.3, dsend: f.dsend != null ? f.dsend : 0.2,
           ppsend: f.ppsend || 0, fade: f.fade || 0, sqRate: f.sqRate || 0, sqDepth: f.sqDepth || 0,
           ...tuned });
       } else {
         if (!(opts.bedAll || win(f.beat))) continue;
         found.push({ type: "bed", srcId: src.id, beat: f.beat, durB: f.dur, amp: f.amp,
-          pitch: f.pitch, stretch: f.stretch != null ? f.stretch : 0.45, cutoff: f.cutoff || 2600,
+          pitch: fp, stretch: f.stretch != null ? f.stretch : 0.45, cutoff: f.cutoff || 2600,
           ...tuned });
       }
     }

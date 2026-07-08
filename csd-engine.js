@@ -109,8 +109,8 @@
 
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
-  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic","habanera","syncopated","pedal"];
-  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16","motorik","motorik23","fugue"];
+  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic","habanera","syncopated","pedal","sludge"];
+  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16","motorik","motorik23","fugue","sludge"];
   const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal","bossa","electro","newjack","shuffle"];
   // KERNEL-V4 Phase 5 (§3.5) — the form as a graph of TYPED NODES. Every
   // section, whatever a form names it, classifies to one of six node types:
@@ -273,6 +273,9 @@
       case "drive":      L=[]; for(let i=0;i<16;i++) L.push([i*0.5,0.42,r5]); break;   // straight 8ths on the root — the night-drive pulse
       case "rolling":    L=[]; for(let i=0;i<8;i++)  L.push([i+0.5,0.4,r5]);  break;   // offbeat 8ths — house/techno roll
       case "sub":        L=[[0,3.8,pchAdd(r5,-12)],[4,3.8,pchAdd(r5,-12)]];   break;   // long sub pressure — jungle/dub
+      case "sludge":     // SUNN O)))/SLEEP DOUBLED sub: the root AND an octave below it,
+        // held long, twice per bar — big, thick and relentless (Paul: "big and doubled").
+        L=[[0,3.9,pchAdd(r5,-12)],[0,3.9,r5],[4,3.9,pchAdd(r5,-12)],[4,3.9,r5]]; break;
       case "stab":       L=[[0,0.3,r5],[1.5,0.3,r6],[3,0.3,r5],[4.5,0.3,r6],[6,0.3,r5],[7,0.3,f6]]; break;   // syncopated stabs
       case "melodic": {  // generative: walks chord tones with approach/passing notes — never the same bar twice
         L=[]; const rr=rng||(()=>0.5); const tones=[r5,r6,f6,pchAdd(r5,3),pchAdd(r6,-2)];
@@ -779,6 +782,18 @@
         for(let i=0;i<n-ans;i++){ const p=ext[subject[i%16]];
           out.push({voice:"melody",beat:Sb+(i+ans)*0.25,dur:0.23,pch:pchAdd(p,-12),amp:0.075}); }   // answer, an octave below
         return; }
+      if(gen==="sludge"){   // SUNN O)))/SLEEP SLUDGE-CHORD WALL: power chords (root+fifth,
+        // NO third) played as CHORDS, DOUBLED an octave below, held long on a slow
+        // half-note pulse — massive, anthemic, relentless. Changes only with the chord.
+        const root=lead[0], fifth=lead[2];                       // idx 2 = the fifth of the voicing
+        const stepB=2;                                           // half-note stomp
+        for(let t=0;t<cb;t+=stepB){
+          const dur=Math.min(stepB*0.98, cb-t);
+          // the wall: root + fifth an octave down, plus the octave-below root double (the SLEEP sub-guitar)
+          const stack=[[pchAdd(root,-12),0.11],[pchAdd(fifth,-12),0.085],[pchAdd(root,-24),0.075]];
+          for(const [p,a] of stack) out.push({voice:"melody",beat:Sb+t,dur,pch:p,amp:a});
+        }
+        return; }
       const ph=MEL_PHRASES[gen];
       if(ph){ ph.forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       // wander: rhythmic random walk over chord tones, occasional octave leap
@@ -909,7 +924,7 @@
     const CBEATS=Math.max(2,Math.round(state.chordEvery||CHORD_BEATS));
     const chords=prg.chords, k0=state.keyOffset|0, cycleBeats=chords.length*CBEATS;
     const srcById={};
-    state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".wav"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec,wet:!!s.wet,glitch:!!s.glitch,distant:!!s.distant}; });
+    state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,kind:s.kind,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".wav"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec,wet:!!s.wet,glitch:!!s.glitch,distant:!!s.distant}; });
     const rng=mulberry32((state.seed??1)>>>0);
     let pitched=[], drums=[];
     const found=[], sfx=[], spans=[];   // spans: section extents for the per-bar transform pool
@@ -1072,7 +1087,10 @@
         chords.forEach((chord,ci)=>{
           const Sp=cycleBase+ci*CBEATS;
           if(sec.pads){ const padAmp=sec.swell ? 0.085*(0.5+1.9*((Sp-cur)/Math.max(1,secBeats))) : 0.085;
-            chord.pads.forEach(p=>pitched.push({voice:"pad",beat:Sp,dur:CBEATS,pch:pchAdd(p,k),amp:padAmp})); }
+            chord.pads.forEach(p=>pitched.push({voice:"pad",beat:Sp,dur:CBEATS,pch:pchAdd(p,k),amp:padAmp}));
+            // WALL OF SOUND (state.padDouble — heavymetal): thicken the power-chord
+            // wall with an octave-below root double. One extra low voice per chord.
+            if(state.padDouble) pitched.push({voice:"pad",beat:Sp,dur:CBEATS,pch:pchAdd(chord.pads[0],k-12),amp:padAmp*0.9}); }
           if(sec.bass&&sec.bass!=="off"){
             const be=bassEvents(sec.bass,Sp,chord.bass,k,rng,CBEATS);
             be.forEach(e=>{
