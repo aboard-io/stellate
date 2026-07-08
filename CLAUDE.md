@@ -107,7 +107,8 @@ Requires `ffmpeg`, `curl`, `node` (with `faust/node_modules` — `npm ci` in
 ## Deployment
 
 The working tree **is** the web root: nginx serves it at
-`https://aboardresearch.com/projects/vaporwave/` (alias block in
+`https://aboardresearch.com/projects/stellate/` (renamed from "vaporwave"
+2026-07-09; `/projects/vaporwave/` 301-redirects here — alias block in
 `/etc/nginx/sites-enabled/aboardresearch`, `Cache-Control: no-cache`). File
 moves/renames here are production changes; gitignored-but-present files
 (`found/`, `found/video/`, `faust/node_modules`) are required for the live
