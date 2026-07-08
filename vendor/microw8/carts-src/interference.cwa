@@ -1,0 +1,20 @@
+include "microw8-api.cwa"
+export fn start() {
+    let i: i32;
+    loop pal {
+        let inline f = i as f32 / 63 as f32 * 6.28;
+        (i*4)!PALETTE = ((sin(f)*127 as f32+128 as f32) as i32) | (((sin(f+2.1)*127 as f32+128 as f32) as i32)<<8) | (((sin(f+4.2)*127 as f32+128 as f32) as i32)<<16);
+        branch_if (i := i + 1) < 64: pal;
+    }
+}
+export fn upd() {
+    let inline t = time();
+    let i: i32;
+    loop pixels {
+        let inline x = (i % 320) as f32;
+        let inline y = (i #/ 320) as f32;
+        let inline v = sin(x * 0.1 + t) + sin(y * 0.1 - t) + sin((x + y) * 0.07 + t * 1.5) + sin((x - y) * 0.07 - t);
+        i?FRAMEBUFFER = (v * 8 as f32) as i32 & 63;
+        branch_if (i := i + 1) < 320*240: pixels;
+    }
+}
