@@ -879,6 +879,7 @@ async function goLive(){
       genreVideo(info);
       if(window.VideoLayer&&VideoLayer.pulse)VideoLayer.pulse(info);   // ALIEN BROADCAST: musical hook (section/downbeat-aligned chaos)
       if(window.DemoLayer&&DemoLayer.pulse)DemoLayer.pulse(info);      // demoscene: surge the effect's clock on the bar
+      bgBarTick();                                                     // video↔demo 8-bar alternation (mode 1, live only)
       updateMediaSession();   // reflect the current genre/blend on the lock screen (updates across a swap)
     }});
     if(MSESSION){ try{ MSESSION.playbackState="playing"; }catch(e){} updateMediaSession(true); }
@@ -1680,14 +1681,35 @@ subs.push(()=>{ playChip.textContent=S.live?"■":"▶"; playChip.classList.togg
 // other; unavailable layers are skipped in the cycle. Default off. While in demoscene
 // mode, a double-tap advances to the next cart.
 const bgChip=document.getElementById("bgChip");
-let bgMode=0;   // 0 off · 1 video · 2 demoscene
-const BG_GLYPH=["▢","▣","▦"], BG_LABEL=["off","video","demoscene"];
+let bgMode=0;   // 0 off · 1 video (ALTERNATES with demos while live) · 2 demoscene only
+const BG_GLYPH=["▢","▣","▦"], BG_LABEL=["off","video+demos","demoscene"];
+// Mode 1 is a PROGRAM, not a single layer (Paul: "alternate between different
+// MicroW8 demos and cached video every eight bars when video is on"): while LIVE
+// it cuts video ↔ a fresh demo cart every BG_ALT_BARS chord-bars; idle = ambient
+// video. Mode 2 stays demos-only. bgWant() is the single source of desired layer
+// states so applyBg (which runs every render) can't fight the alternator.
+const BG_ALT_BARS=8;
+const bgAlt={side:"video", bars:0};
+function bgWant(){
+  if(bgMode===1) return { v: !S.live || bgAlt.side==="video", d: S.live && bgAlt.side==="demo" };
+  return { v:false, d:bgMode===2 };
+}
 function applyBg(){
-  const V=window.VideoLayer, D=window.DemoLayer;
-  if(V&&V.enabled()!==(bgMode===1)){ V.setEnabled(bgMode===1); if(bgMode!==1) vidReset(); }
-  if(D&&D.enabled()!==(bgMode===2)) D.setEnabled(bgMode===2);
+  const V=window.VideoLayer, D=window.DemoLayer, w=bgWant();
+  if(V&&V.enabled()!==w.v){ V.setEnabled(w.v); if(!w.v&&bgMode!==1) vidReset(); }   // keep the clip bag during alternation
+  if(D&&D.enabled()!==w.d) D.setEnabled(w.d);
   bgChip.textContent=BG_GLYPH[bgMode]; bgChip.classList.toggle("live",bgMode!==0);
 }
+// the 8-bar alternation clock — called from onBar while live
+function bgBarTick(){
+  if(bgMode!==1||!S.live) return;
+  if(++bgAlt.bars>=BG_ALT_BARS){
+    bgAlt.bars=0; bgAlt.side=bgAlt.side==="video"?"demo":"video";
+    if(bgAlt.side==="demo"&&window.DemoLayer&&DemoLayer.next) DemoLayer.next();   // a DIFFERENT cart each demo turn
+    applyBg();
+  }
+}
+window.__BGALT={ state:()=>({mode:bgMode,side:bgAlt.side,bars:bgAlt.bars}), tick:bgBarTick };   // headless gate hook
 bgChip.onclick=()=>{
   const V=window.VideoLayer, D=window.DemoLayer;
   for(let i=0;i<3;i++){ bgMode=(bgMode+1)%3;                       // advance to the next AVAILABLE mode
@@ -1695,9 +1717,10 @@ bgChip.onclick=()=>{
     if(bgMode===1 && V && V.available()) break;
     if(bgMode===2 && D && D.available()) break;
   }
+  bgAlt.side="video"; bgAlt.bars=0;                                // a fresh program starts on footage
   applyBg(); set({status:"background: "+BG_LABEL[bgMode]});
 };
-bgChip.ondblclick=()=>{ if(bgMode===2 && window.DemoLayer&&DemoLayer.next){ DemoLayer.next(); set({status:"demo: "+(DemoLayer.currentName?DemoLayer.currentName():"next")}); } };
+bgChip.ondblclick=()=>{ if(bgMode!==0 && window.DemoLayer&&DemoLayer.next){ DemoLayer.next(); set({status:"demo: "+(DemoLayer.currentName?DemoLayer.currentName():"next")}); } };
 subs.push(applyBg); applyBg();
 
 // ---------- playhead ----------
