@@ -1115,7 +1115,10 @@
     makeDom();
     ready = true;
     let saved = null; try { saved = localStorage.getItem(LS_KEY); } catch (e) {}
-    setEnabled(saved == null ? !reduced : saved === "1");
+    // DEFAULT OFF (Paul 2026-07-08: "video on/off button defaulting to off"). With
+    // no saved preference the layer stays dark and idle — it only lights up if the
+    // user has previously turned it on (saved === "1"). Honours an explicit "0"/"1".
+    setEnabled(saved === "1");
     return true;
   }
 
