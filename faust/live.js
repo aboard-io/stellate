@@ -1386,15 +1386,50 @@
       if (useMp3) return mp3AheadSec() < FEED_CAP_MP3 && (fedSinceOpen - producedSinceOpen) < (2 * MP3_FLUSH_SEC + 1);
       return (curGenReceived - curGenPlayed) < MAX_UNPLAYED && (fedSinceOpen - producedSinceOpen) < FEED_CAP;
     }
+    // ── PER-BAR DECODE-AHEAD (the ring path's lesson, one level deeper). An
+    // instrument swap WITHIN a gen (holdUntil churn: sampler→sampler keeps the
+    // topology sig, so no reopen — and only reopen decoded buffers) leaves bars
+    // referencing zones the worker was never shipped; those bars BAKE silent for
+    // that voice. Device audit 2026-07-09 caught it exactly: pad[ins_church_organ_*,
+    // ins_ohh_voices_*…] missing on the bars right after "new hands on the pads",
+    // decode count frozen — the decodes were never requested. So: before feeding a
+    // bar, kick any missing PCM through the decode gate and HOLD that bar briefly
+    // until it lands (the 5-8s forward runway absorbs the hold inaudibly); past the
+    // cap, feed anyway (addBuffers pop-in + the audit catch the residual). ──
+    const BAR_DECODE_CAP_MS = opts.barDecodeCapMs > 0 ? opts.barDecodeCapMs : 2500;
+    const wallNow = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+    let heldBar = null, heldUntil = 0;
+    function barMissing(r) {
+      const byId = {}; for (const s of ((r.one && r.one.foundSources) || [])) byId[s.id] = s;
+      const out = [], seen = new Set();
+      const need = (id, kind) => { if (!seen.has(id) && byId[id]) { seen.add(id); out.push({ id, src: byId[id], kind }); } };
+      for (const u of Object.values(r.units || {})) if (u && u.sampler)
+        for (const z of (u.sampler.zones || [])) if (samplerPCM[z.srcId] === undefined) need(z.srcId, "s");
+      for (const f of (r.found || [])) if (foundPCM[f.srcId] === undefined) need(f.srcId, "f");
+      return out;
+    }
     let pumpTimer = 0;
     function pump() {
       if (abort) return;
       try {
         let guard = 0;
         while (!abort && guard < 64 && !opening && feedRoom()) {
+          if (heldBar) {   // waiting on this bar's PCM: feed when decoded (or past the cap)
+            if (barMissing(heldBar).length && wallNow() < heldUntil) break;
+            const r2 = heldBar; heldBar = null;
+            feedSeg(r2); guard++; continue;
+          }
           const r = stepWalk();
           lastOne = r.one;   // remembered so a watchdog demotion can re-open the CURRENT gen
           if (!started || r.sig !== curSig) { curSig = r.sig; reopen(r.one); started = true; }
+          const miss = DECODE_THEN_RENDER ? barMissing(r) : [];   // same kill-switch as the open-time decode (?decodeFirst=0 = the old fire-and-hope behavior, kept for the A/B gate)
+          if (miss.length) {
+            const gen = curGen;
+            for (const m of miss) (m.kind === "s" ? decSampler(m.src) : decFound(m.src))
+              .then((pcm) => shipBuffer(gen, m.id, pcm));
+            heldBar = r; heldUntil = wallNow() + BAR_DECODE_CAP_MS;
+            break;
+          }
           feedSeg(r); guard++;
         }
       } catch (e) { errors.push("wavpump: " + (e && e.message || e)); console.error("FaustLiveWav pump", e); }
