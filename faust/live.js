@@ -110,7 +110,8 @@
       const sec = Object.assign({}, cur0, { cycles: 1,
         fill: lastCyc ? (cur0.fill || "off") : "off",
         sweep: (cycIdx === 0 && cur0.sweep === "open") || (lastCyc && cur0.sweep === "close") ? cur0.sweep : "off" });
-      const one = Object.assign({}, st, { sections: [sec], seed: ((st.seed || 1) + serial * 7919) >>> 0 });
+      const one = Object.assign({}, st, { sections: [sec], seed: ((st.seed || 1) + serial * 7919) >>> 0,
+        instrumentSeed: st.instrumentSeed != null ? st.instrumentSeed : (st.seed || 1) });   // instrument identity rides the SONG seed, not the per-bar reseed
       const spb = 60 / st.bpm;
       const CBEATS = Math.max(2, Math.round(st.chordEvery || 8));
       const lo = ci * CBEATS, hi = lo + CBEATS;
