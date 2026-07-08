@@ -730,7 +730,15 @@
     if (m.model && SIGNATURE_MODELS.has(m.model)) return m;
     if (m.model === "sampler" && m.sampler && Array.isArray(m.sampler.zones) && m.sampler.zones.length) return m;
     const lib = state.samplerLib || {};
-    const spec = lib[pickSampledId(role, m.model, state.seed)];
+    // INSTRUMENT IDENTITY IS PER-SONG, NOT PER-BAR: the live walk reseeds each bar
+    // (seed + serial*7919) for PATTERN variety, but feeding that churned seed into
+    // the instrument pick made every voice swap instruments EVERY BAR (device audit
+    // 2026-07-09: pad = french_horns→synth_strings→ohh_voices bar to bar — heard as
+    // "two tracks at once", viz/name mismatches, and per-bar decode churn on iOS).
+    // The walk stashes the pre-churn seed as instrumentSeed; the pick uses it, so
+    // the band stays the band for the whole song. Fallback state.seed = unchanged
+    // behavior for whole-song (press) states, which never churn.
+    const spec = lib[pickSampledId(role, m.model, state.instrumentSeed != null ? state.instrumentSeed : state.seed)];
     if (!spec) return m;
     return { ...m, model: "sampler", sampler: spec, dx7: null };
   }

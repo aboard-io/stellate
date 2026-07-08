@@ -1072,7 +1072,8 @@ function barVoiceEvents(st, bar){
   const ci=(bar&&bar.ci!=null)?bar.ci:0, serial=(bar&&bar.serial!=null)?bar.serial:0;
   const secName=(bar&&bar.section)||"";
   if(_barMemo.st===st&&_barMemo.ci===ci&&_barMemo.serial===serial&&_barMemo.sec===secName) return _barMemo.val;
-  const one=Object.assign({},st,{ seed:((st.seed||1)+serial*7919)>>>0 });
+  const one=Object.assign({},st,{ seed:((st.seed||1)+serial*7919)>>>0,
+    instrumentSeed: st.instrumentSeed!=null?st.instrumentSeed:(st.seed||1) });   // mirror live.js makeWalk: instrument identity = song seed
   const secs=(st.sections&&st.sections.length)?st.sections:null;
   if(secs){ const sec=(secName&&secs.find(s=>s.name===secName))||secs[0];
     one.sections=[Object.assign({},sec,{cycles:1})]; }
