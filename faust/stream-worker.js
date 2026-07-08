@@ -324,7 +324,11 @@ async function runBarAccumPump(msg, token, segDefault, firstDefault, sink) {
     const barSpec = liveBars[cursor];
     await eng.feedBar(barSpec);
     const c = eng.renderChunk(cursor);
-    barMap.push({ off: accFrames, meta: barSpec.meta || null });
+    // AUDIT-TRUTH: ride the per-bar expected-vs-actual audit through on the bar's meta
+    // (opaque to the seg/pcm sinks, mp3-worker and mp3-stream — meta passes verbatim),
+    // so the conductor sees it alongside serial/section at onBar time.
+    const meta = barSpec.meta ? (c.audit ? Object.assign({}, barSpec.meta, { audit: c.audit }) : barSpec.meta) : (c.audit ? { audit: c.audit } : null);
+    barMap.push({ off: accFrames, meta });
     accChunks.push({ L: c.L, R: c.R, length: c.length });
     accFrames += c.length;
     cursor++;

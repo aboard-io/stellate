@@ -117,6 +117,15 @@
   .vz-roll{position:relative;flex:1 1 auto;min-width:0;height:34px;border-radius:5px;
     border:1px solid var(--line);background-color:rgba(255,255,255,.03);overflow:hidden}
   .vz-blk{position:absolute;height:14%;min-width:2px;border-radius:2px;transition:opacity .12s linear}
+  /* AUDIT-TRUTH: a lane the audit measured as EXPECTED-BUT-SILENT this bar — notes were
+     scheduled but no audio was rendered (missing sample buffers, or a render-side mute).
+     Red hatch over the whole roll; the header name goes red with a ✕ badge. */
+  .vz-roll.vz-silent{border-color:rgba(255,64,80,.85)}
+  .vz-roll.vz-silent::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:5px;
+    background:repeating-linear-gradient(45deg,rgba(255,48,64,.34) 0 6px,rgba(255,48,64,.10) 6px 12px)}
+  .vz-tlrow.vz-silent .vz-tlname{color:#ff5064}
+  .vz-silbadge{font:9px VT323,monospace;color:#0c081a;background:#ff5064;border-radius:3px;
+    padding:0 .28rem;margin-left:.3rem;letter-spacing:.04em;text-transform:uppercase}
   /* the chyron: music-video lower-third (namebank.js invents the band) */
   .chy{border-left:3px solid var(--pink);padding-left:.65rem}
   .chy-title{font-family:Orbitron,sans-serif;font-size:.9rem;letter-spacing:.09em;color:#fff}
@@ -314,6 +323,8 @@ const macrosOn=m=>Object.values(m||{}).some(v=>v);
 const subs=[];
 window.__S=S;   // debug/probe access (headless verification)
 window.__X={retarget:(...a)=>retarget(...a), goLive:(...a)=>goLive(...a), stopLive:(...a)=>stopLive(...a), weightsAt:(...a)=>weightsAt(...a),
+  handle:()=>faustHandle,   // live handle (audit ring / probe access) — headless gates
+  renderInside:()=>{ try{ renderInside(); }catch(e){} },
   clampZoom:()=>clampZoom(), zoomAround:(...a)=>zoomAround(...a), setMacro:(...a)=>setMacro(...a), POS,
   // loop/spread introspection for the headless UI gate (additive):
   seedLoop:()=>seedDefaultLoop(), mapCenter:()=>({...MAP_CENTER}), world:()=>({w:WORLD_W,h:WORLD_H}),
@@ -748,7 +759,11 @@ function startWavDebug(){
   const btn=document.createElement("button");
   btn.textContent="copy log";
   btn.style.cssText="margin-top:4px;background:#134;color:#9ef;border:1px solid #467;border-radius:3px;font:10px monospace;padding:3px 10px";
-  wrap.appendChild(stats); wrap.appendChild(ta); wrap.appendChild(btn);
+  // AUDIT-TRUTH: download the full per-bar expected-vs-actual audit ring as JSON.
+  const dbtn=document.createElement("button");
+  dbtn.textContent="download audit";
+  dbtn.style.cssText="margin:4px 0 0 6px;background:#312;color:#fbb;border:1px solid #745;border-radius:3px;font:10px monospace;padding:3px 10px";
+  wrap.appendChild(stats); wrap.appendChild(ta); wrap.appendChild(btn); wrap.appendChild(dbtn);
   document.body.appendChild(wrap);
   const t0=Date.now(), lines=[];
   const ts=()=>"[+"+((Date.now()-t0)/1000).toFixed(1)+"s]";
@@ -757,11 +772,25 @@ function startWavDebug(){
   log("ua: "+navigator.userAgent);
   log("url: "+location.pathname+location.search);
   btn.addEventListener("click",()=>{
-    const text=lines.join("\n");
+    // append the compact AUDIT summary — iOS downloads are awkward; clipboard is proven.
+    let sum="";
+    try{ const h=faustHandle; if(h&&h.auditSummary) sum="\n"+h.auditSummary(); }catch(e){}
+    const text=lines.join("\n")+sum;
     const ok=()=>{ btn.textContent="copied ✓"; setTimeout(()=>btn.textContent="copy log",1500); };
     const fallback=()=>{ try{ ta.focus(); ta.select(); ta.setSelectionRange(0,ta.value.length); document.execCommand("copy"); ok(); }catch(e){ btn.textContent="select+copy manually"; } };
     if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok,fallback);
     else fallback();
+  });
+  dbtn.addEventListener("click",()=>{
+    let ring=[],stats=null;
+    try{ const h=faustHandle; if(h&&h.audit) ring=h.audit(); if(h&&h.auditStats) stats=h.auditStats(); }catch(e){}
+    const blob=new Blob([JSON.stringify({ ua:navigator.userAgent, url:location.pathname+location.search,
+      when:new Date().toISOString(), stats, summary:(faustHandle&&faustHandle.auditSummary?faustHandle.auditSummary():""),
+      bars:ring },null,2)],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download="audit-"+Date.now()+".json"; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ try{URL.revokeObjectURL(a.href);}catch(e){} a.remove(); },1000);
+    dbtn.textContent="saved ✓ ("+ring.length+" bars)"; setTimeout(()=>dbtn.textContent="download audit",1800);
   });
   let lastStatus=null,lastErrN=0,lastFailN=0,lastRoute=null,lastDemoted=false,lastSnap=0;
   wavDbgTimer=setInterval(()=>{
@@ -775,6 +804,8 @@ function startWavDebug(){
         starves:h.underruns?h.underruns():null, rms:+h.rms().toFixed(3),
         ct:h.mediaEl?+(h.mediaEl.currentTime||0).toFixed(1):null,
         drift:w&&w.stitchDriftSec!=null?w.stitchDriftSec:null,
+        aud:w&&w.auditAnoms!=null?(w.auditAnoms+"/"+(w.auditBars||0)):null,
+        dbl:w&&w.doublePlayAnoms!=null?(w.audibleElements+"el x"+w.doublePlayAnoms):null,
         dec:w&&w.decode?("f"+w.decode.found.ok+"/"+w.decode.found.fail+" s"+w.decode.sampler.ok+"/"+w.decode.sampler.fail):null };
       if(route!==lastRoute){ lastRoute=route; log("route: "+route); }
       if(w&&w.demoted&&!lastDemoted){ lastDemoted=true; log("DEMOTED: "+(w.demoteReason||"?")); }
@@ -782,7 +813,8 @@ function startWavDebug(){
       const fails=(w&&w.decode&&w.decode.fails)||[];
       if(fails.length>lastFailN){ for(let i=lastFailN;i<fails.length;i++) log("decode-fail: "+fails[i]); lastFailN=fails.length; }
       if(Date.now()-lastSnap>5000){ lastSnap=Date.now();
-        log("snap route="+s.route+" ahead="+s.aheadSec+"s drift="+s.drift+" starves="+s.starves+" ct="+s.ct+" rms="+s.rms+" dec="+s.dec+(h.bootStats?" boot="+JSON.stringify(h.bootStats()):"")); }
+        log("snap route="+s.route+" ahead="+s.aheadSec+"s drift="+s.drift+" starves="+s.starves+" ct="+s.ct+" rms="+s.rms+" audit="+s.aud+" dbl="+s.dbl+" dec="+s.dec+(h.bootStats?" boot="+JSON.stringify(h.bootStats()):""));
+        try{ if(h.auditSummary){ const as=h.auditSummary(); if(/anomalies/.test(as)&&!/: 0 anomalies/.test(as)) log(as); } }catch(e){} }
     }catch(e){ s={err:String(e&&e.message||e)}; }
     stats.textContent=JSON.stringify(s).replace(/[{}"]/g,"");
   },500);
@@ -1067,7 +1099,7 @@ function barVoiceEvents(st, bar){
 // assemble timeline LANES: one per voice (pad/bass/lead/solo/drums/found), each
 // carrying the roster's instrument NAME + fx chips and this bar's note events.
 // A lane shows whenever the instrument is voiced (roster) OR it has notes this bar.
-function timelineLanes(st, roster, found, bar){
+function timelineLanes(st, roster, found, bar, audit){
   const by={}; roster.forEach(r=>by[r.role]=r);
   const specs=[
     {key:"pad",    from:"pad",  label:"pad",     col:"--purple", roles:["pad"]},
@@ -1084,8 +1116,13 @@ function timelineLanes(st, roster, found, bar){
     const has=r||notes.length||(sp.key==="found"&&found.length);
     if(!has) continue;
     const name=r?r.name:(sp.key==="found"?(found[0]||"field texture"):sp.label);
+    // AUDIT-TRUTH: this lane's role was EXPECTED-BUT-SILENT in the measured audit for
+    // this bar (not just the score) → paint it red/hatched with the probable reason.
+    let sil=null;
+    if(audit) for(const rl of sp.roles){ if(audit[rl]){ sil=audit[rl]; break; } }
     lanes.push({ key:sp.key, label:sp.label, name, col:sp.col, fx:r?(r.fx||[]):[],
-      notes, drumLane:sp.key==="drums"||sp.key==="found" });
+      notes, drumLane:sp.key==="drums"||sp.key==="found",
+      silent:!!sil, silReason:sil?sil.reason:null, silMissing:sil?(sil.missing||[]):[] });
   }
   return lanes;
 }
@@ -1107,7 +1144,17 @@ function vizData(){
   const found=(st.foundSources||[]).filter(s=>(s.vol||0)>0.02).map(s=>cleanLabel(s.label)||s.id).slice(0,2);
   const dom=blend[0], info=dom&&K.GENRES[dom.g]?K.GENRES[dom.g].info:"";
   const bar=barVoiceEvents(st, S.barInfo);
-  const timeline={cbeats:bar.cbeats, spb:bar.spb, bpm:bar.bpm, lanes:timelineLanes(st, roster, found, bar)};
+  // AUDIT-TRUTH: pull the measured expected-vs-actual audit for the bar currently heard
+  // (keyed by serial) and reduce it to a role→{reason,missing} map for silent-lane paint.
+  let auditSilent=null;
+  try{
+    if(faustHandle&&faustHandle.auditFor&&S.barInfo&&S.barInfo.serial!=null){
+      const a=faustHandle.auditFor(S.barInfo.serial);
+      if(a&&a.anomalies&&a.anomalies.length){ auditSilent={};
+        for(const an of a.anomalies) if(!auditSilent[an.role]) auditSilent[an.role]={reason:an.reason,missing:an.missing||[]}; }
+    }
+  }catch(e){}
+  const timeline={cbeats:bar.cbeats, spb:bar.spb, bpm:bar.bpm, lanes:timelineLanes(st, roster, found, bar, auditSilent), audit:auditSilent};
   return {blend, feel:feelAxes(st), roster, found, info, master:masterFx(st), timeline};
 }
 window.__VIZ={ data:()=>vizData() };   // headless gate: read the live viz content
@@ -1182,10 +1229,12 @@ function timelineHTML(tl){
   let ruler=""; for(let b=0;b<cb;b++) ruler+=`<span style="left:${(b*bp).toFixed(2)}%">${b+1}</span>`;
   const rows=tl.lanes.map(L=>{
     const fx=(L.fx&&L.fx.length)?`<span class="vz-fx">${L.fx.slice(0,3).map(f=>`<i>${esc(f)}</i>`).join("")}</span>`:"";
-    return `<div class="vz-tlrow"><div class="vz-tlhead">`+
-      `<div class="vz-tlname"><i style="background:var(${L.col})"></i>${esc(L.name)}</div>`+
+    // AUDIT-TRUTH silent-lane paint: red-hatched roll + a ✕ badge naming the reason.
+    const silBadge=L.silent?`<span class="vz-silbadge" title="${esc(L.silReason==="missing"?("missing samples: "+(L.silMissing||[]).join(", ")):(L.silReason==="nan"?"render NaN (blown-up filter/strip)":"buffers present but silent — render-side mute"))}">✕ ${esc(L.silReason||"silent")}</span>`:"";
+    return `<div class="vz-tlrow${L.silent?" vz-silent":""}"><div class="vz-tlhead">`+
+      `<div class="vz-tlname"><i style="background:var(${L.col})"></i>${esc(L.name)}${silBadge}</div>`+
       `<div class="vz-tlrole">${esc(L.label)}</div>${fx}</div>`+
-      `<div class="vz-roll" style="background-image:${grid}">${laneBlocks(L,cb)}</div></div>`;
+      `<div class="vz-roll${L.silent?" vz-silent":""}" style="background-image:${grid}">${laneBlocks(L,cb)}</div></div>`;
   }).join("");
   return `<div class="vz-ruler" style="background-image:${grid}">${ruler}</div><div class="vz-tl">${rows}</div>`;
 }

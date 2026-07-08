@@ -121,13 +121,22 @@
     }
     if (S.ch) {
       const ch = S.ch, lfo = Math.sin(2 * Math.PI * ch.rate * t);
-      const d = ch.base + ch.depth * (0.5 + 0.5 * lfo);
-      let rp = ch.w - d; if (rp < 0) rp += ch.n;
+      // clamp the read delay to the delay-line span and wrap the read pointer
+      // robustly. A `d` larger than ch.n (only reachable with pathological chorus
+      // base/depthMs, never the shipped STRIP_PROFILES) left rp NEGATIVE after a
+      // single `+= ch.n`, indexing ch.buf out of bounds -> `undefined` -> NaN, which
+      // then poisons ch.buf and every downstream sample of the whole bar (a
+      // permanently-muted / garbled voice — Paul's "random muting"). For shipped
+      // profiles d < ch.n-2 so this is byte-identical (clamp + while both no-op).
+      const dmax = ch.n - 2;
+      let d = ch.base + ch.depth * (0.5 + 0.5 * lfo); if (d > dmax) d = dmax; else if (d < 0) d = 0;
+      let rp = ch.w - d; while (rp < 0) rp += ch.n;
       const i0 = rp | 0, fr = rp - i0, i1 = (i0 + 1) % ch.n;
       let wet = ch.buf[i0] + fr * (ch.buf[i1] - ch.buf[i0]);
       if (ch.two) {
-        const lfo2 = Math.sin(2 * Math.PI * ch.rate * 0.8 * t + 2.1), d2 = ch.base + ch.depth * (0.5 + 0.5 * lfo2);
-        let rp2 = ch.w - d2; if (rp2 < 0) rp2 += ch.n;
+        const lfo2 = Math.sin(2 * Math.PI * ch.rate * 0.8 * t + 2.1);
+        let d2 = ch.base + ch.depth * (0.5 + 0.5 * lfo2); if (d2 > dmax) d2 = dmax; else if (d2 < 0) d2 = 0;
+        let rp2 = ch.w - d2; while (rp2 < 0) rp2 += ch.n;
         const j0 = rp2 | 0, f2 = rp2 - j0, j1 = (j0 + 1) % ch.n;
         wet = 0.5 * (wet + ch.buf[j0] + f2 * (ch.buf[j1] - ch.buf[j0]));
       }
@@ -170,7 +179,12 @@
   // natural play-length clamp (so a note keeps its full envelope, only its window
   // slice is written; the next window re-bakes its own slice). win omitted =>
   // whole-song write, byte-identical to before (base 0, len=total=bus length).
-  function mixPCM(notes, buffers, sr, into, sends, win) {
+  // `meter` (optional, AUDIT-TRUTH): a per-unit accumulator the stream renderer passes
+  // to measure this voice's ACTUAL rendered contribution WITHOUT changing the output
+  // bytes. `meter.e` sums the squared dry-send sample this unit wrote (energy → RMS);
+  // `meter.missing` collects srcIds skipped because their buffer was absent/empty at
+  // bake time (the decode-race silence). Purely additive reads — never gates output.
+  function mixPCM(notes, buffers, sr, into, sends, win, meter) {
     const winBase = win ? win.base : 0;
     const busLen = win ? win.len : into.dry.length;
     const total = win ? win.total : into.dry.length;
@@ -181,7 +195,10 @@
       const z = zoneFor(n.zones, midi);
       if (!z) continue;
       const src = buffers[z.srcId];
-      if (!src || !src.length) continue;
+      if (!src || !src.length) {
+        if (meter) { if (!meter.missing) meter.missing = []; if (meter.missing.indexOf(z.srcId) < 0) meter.missing.push(z.srcId); }
+        continue;
+      }
       const rate = rateFor(z, midi);
       const s0 = Math.max(0, Math.floor(n.tSec * sr));
       const atkN = Math.max(8, Math.floor((n.atk || 0.01) * sr));
@@ -232,7 +249,7 @@
           if (S) v = stripStep(S, v, (s0 + i) / sr);
           const j = s0 + i - winBase;
           if (j >= busLen) break;
-          if (j >= 0) { into.dry[j] += v * dg; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; }
+          if (j >= 0) { const vd = v * dg; into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; }
         }
         continue;
       }
@@ -253,7 +270,7 @@
         if (S) v = stripStep(S, v, (s0 + i) / sr);
         const j = s0 + i - winBase;
         if (j >= busLen) break;
-        if (j >= 0) { into.dry[j] += v * dg; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; }
+        if (j >= 0) { const vd = v * dg; into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; }
       }
     }
     return into;
@@ -409,5 +426,6 @@
     return live;
   }
 
-  return { midiOfFreq, zoneFor, rateFor, mixPCM, decodeUrlRaw, SamplerLive, GAIN };
+  return { midiOfFreq, zoneFor, rateFor, mixPCM, decodeUrlRaw, SamplerLive, GAIN,
+    __test: { makeStrip, stripStep, rbjCoefs } };   // faust/strip-fuzz-test.js hooks
 });
