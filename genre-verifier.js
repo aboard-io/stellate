@@ -288,8 +288,19 @@
     darksynth:{ bpm:[118,138,3], snareBalance:[.25,1.2,2], pump:[0,.35,2], sub:[.6,1,2], leadVoices:[3,7,2],
                 comp:[.4,.7,1], motion:[.4,1,1], crackle:[0,.08,1], swing:[0,.06,1], wash:[.1,.32,1], hatDensity:[.45,1.5,1] },   // gated snare + reese at 132 — dubstep starts at 133, trance/edm need the PUMP, synthwave is 30bpm slower. 2026-07 deep pass: the tear-lead supersaw (leadVoices weight 1->2, renders 4-5) and the DRIVING pulse-kit hats (hatDensity [.45,1.5]: renders .5-1.02) are darksynth's spine vs the lead-less/halftime siblings (dubstep+industrialmetal both render leadVoices 1-2, hats .40-.45); wash tightened .45->.32 (renders dry .198-.261 — it's a synthwave night-drive, not a dubstep cavern .30-.35)
     /* genre-tool:prelude:targets */
-    prelude:  { bpm:[56,87,3], drumDensity:[0,0.4,3], acoustic:[0.66,1,3], humanize:[0,0.275,3], rubato:[0.001,0.035,2], motion:[0.487,1,1], wash:[0.026,0.359,1], swing:[0,0.071,1] },
+    prelude:  { bpm:[56,87,3], drumDensity:[0,0.4,3], acoustic:[0.66,1,3], humanize:[0,0.275,3], rubato:[0.001,0.035,2], motion:[0.487,1,1], wash:[0.026,0.359,1], swing:[0,0.071,1], leadVoices:[1,2,3] },
     /* /genre-tool:prelude:targets */
+    // fugue — the "Prelude and Fugue" pair: same Bach room as prelude (drumless,
+    // harpsichord/organ acoustic, slow-major harmony), but the FUGUE is imitative
+    // COUNTERPOINT — 3-4 interweaving voices at a STEADY tempo. Three structural
+    // fences hold it distinct from prelude (both directions, so the matrix stays
+    // diagonal-dominant): leadVoices [3,5] weight 3 (fugue renders 3-4 vs prelude's
+    // single 1-2 arpeggiating line — THE contrapuntal-density axis, mirrored by
+    // prelude's new leadVoices [1,2] cap); bpm [88,106] (fugue is the quicker,
+    // driving movement — renders ~90-104, above prelude's own 79 ceiling and its
+    // [56,87] target); and rubato [0,0.005] (the fugue is METRONOMIC — renders 0,
+    // while prelude always breathes at .01-.025, so prelude fails this cap hard).
+    fugue:    { bpm:[88,106,3], leadVoices:[3,5,3], drumDensity:[0,0.4,3], acoustic:[0.66,1,3], rubato:[0,0.005,2], motion:[0.85,1,1], humanize:[0,0.12,1], swing:[0,0.05,1] },
     /* genre-tool:hogcore:targets */
     hogcore:  { bpm:[143,172,3], chopUse:[0.47,0.67,3], pump:[0.503,0.926,2], swing:[0,0.071,2], breakUse:[0,0.08,1], comp:[0.282,0.747,1], crackle:[0,0.1,1], seventh:[0,0.15,1] },
     /* /genre-tool:hogcore:targets */

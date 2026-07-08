@@ -354,6 +354,20 @@ if [ ! -s found/samples/instruments/acoustic_bass/zones.json ]; then
   done
   rm -f /tmp/FluidR3_GM_GS.sf2
 fi
+# --- FluidR3 FULL GM batch (2026-07 "all of GM please"): all 128 bank-0 melodic ---
+# presets in ONE parse (faust/extract-gm.js), so the sampled-default palette draws
+# from the whole General MIDI set, not a hand-picked 40. Guarded on a GM-only slug
+# (rhodes_ep) absent from the older piecemeal batches below. ~87MB of zone wavs. The
+# 24 single-zone presets (SFX, one-note synth pads, DrawbarOrgan) still write but are
+# logged THIN — one-shot color only; the role mapping (faust/state-engine.js) draws
+# only from the multi-zone pitched instruments.
+if [ ! -s found/samples/instruments/rhodes_ep/zones.json ]; then
+  echo "→ FluidR3_GM_GS.sf2 (FULL GM: all 128 bank-0 presets)"
+  [ -s /tmp/FluidR3_GM_GS.sf2 ] || curl -sL --max-time 900 -o /tmp/FluidR3_GM_GS.sf2 \
+    "$IA/fluidr3-gm-gs/FluidR3_GM_GS.sf2"
+  node faust/extract-gm.js /tmp/FluidR3_GM_GS.sf2 found/samples/instruments --max-zones 6
+  rm -f /tmp/FluidR3_GM_GS.sf2
+fi
 # --- FluidR3 liberalization batch (2026-07 "use the soundfont liberally"): ---
 # 15 more GM presets — the orchestral shelf (trombone/muted trumpet/oboe/cello/
 # harp/celesta/french horns), keys (honky-tonk, bright grand, church organ,

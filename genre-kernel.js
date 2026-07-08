@@ -456,6 +456,7 @@
     /* genre-tool:prelude:clips */
     prelude:["earth_orbit","blue_dinner","bamboo","dc_village","spacewalk"],
     /* /genre-tool:prelude:clips */
+    fugue:["earth_orbit","blue_dinner","bamboo","spacewalk","dc_village"],
     /* genre-tool:hogcore:clips */
     hogcore:["kaleido","rainbow_rings","cgi_bird","night_lights","sun_riders","phuture_red","pl_kitchen","mo_singalong"],
     /* /genre-tool:hogcore:clips */
@@ -665,6 +666,75 @@
     finger_bass: { label:"Fingered Bass (FluidR3, MIT)", dir:"fingered_bass", sr:44100, zones:[{file:"z00_r28.wav",root:28,lo:0,hi:28,loop:1,ls:168092,le:169162},{file:"z01_r32.wav",root:32.04,lo:31,hi:32,loop:1,ls:139242,le:140090},{file:"z02_r34.wav",root:34,lo:33,hi:34,loop:1,ls:122864,le:123622},{file:"z03_r39.wav",root:38.98,lo:38,hi:39,loop:1,ls:135968,le:137104},{file:"z04_r41.wav",root:40.99,lo:40,hi:42,loop:1,ls:129874,le:130380},{file:"z05_r48.wav",root:48,lo:48,hi:84,loop:1,ls:127910,le:128922}] },
     sitar: { label:"Sitar (FluidR3, MIT)", dir:"sitar", sr:44100, zones:[{file:"z00_r52.wav",root:51.99,lo:0,hi:54,loop:1,ls:28998,le:31674},{file:"z01_r55.wav",root:54.99,lo:55,hi:59,loop:1,ls:24270,le:31246},{file:"z02_r64.wav",root:63.99,lo:64,hi:67,loop:1,ls:20642,le:24387},{file:"z03_r72.wav",root:71.99,lo:68,hi:72,loop:1,ls:13386,le:16673},{file:"z04_r84.wav",root:83.99,lo:81,hi:88,loop:1,ls:6714,le:8315},{file:"z05_r91.wav",root:90.99,lo:89,hi:108,loop:1,ls:5945,le:7070}] },
     steel_drums: { label:"Steel Drums (FluidR3, MIT)", dir:"steel_drums", sr:44100, zones:[{file:"z00_r66.wav",root:66,lo:0,hi:66,loop:0,ls:15,le:26831},{file:"z01_r72.wav",root:72,lo:67,hi:72,loop:0,ls:10,le:19015},{file:"z02_r78.wav",root:78,lo:73,hi:78,loop:0,ls:8,le:13495},{file:"z03_r84.wav",root:84,lo:79,hi:127,loop:0,ls:10,le:9585}] },
+
+    // ---- FULL GM registry (all of GM, 2026-07): 65 more bank-0 FluidR3 presets,
+    // generated from their zones.json by faust/extract-gm.js. Same {label,dir,sr,zones}
+    // shape as the hand-curated entries above; keyed by directory slug. ----
+    atmosphere: { label:"Atmosphere (FluidR3, MIT)", dir:"atmosphere", sr:44100, zones:[{file:"z00_r40.wav",root:40,lo:0,hi:43,loop:1,ls:192810,le:193345},{file:"z01_r50.wav",root:50,lo:49,hi:53,loop:1,ls:198834,le:200036},{file:"z02_r59.wav",root:59,lo:59,hi:62,loop:1,ls:62185,le:62542},{file:"z03_r69.wav",root:69.05,lo:68,hi:70,loop:1,ls:36509,le:37008},{file:"z04_r76.wav",root:76.1,lo:76,hi:83,loop:1,ls:30993,le:31458},{file:"z05_r84.wav",root:84,lo:84,hi:108,loop:1,ls:19524,le:19817}] },
+    bagpipe: { label:"BagPipe (FluidR3, MIT)", dir:"bagpipe", sr:44100, zones:[{file:"z00_r57.wav",root:57.07,lo:0,hi:57,loop:1,ls:65190,le:110476},{file:"z01_r65.wav",root:65.02,lo:58,hi:65,loop:1,ls:71502,le:169554},{file:"z02_r72.wav",root:72.02,lo:66,hi:72,loop:1,ls:44258,le:184480},{file:"z03_r75.wav",root:75.02,lo:73,hi:75,loop:1,ls:71178,le:141822},{file:"z04_r79.wav",root:79.02,lo:76,hi:79,loop:1,ls:48650,le:145658},{file:"z05_r86.wav",root:86.02,lo:80,hi:127,loop:1,ls:27054,le:96922}] },
+    banjo: { label:"Banjo (FluidR3, MIT)", dir:"banjo", sr:44100, zones:[{file:"z00_r50.wav",root:50.13,lo:0,hi:52,loop:1,ls:71942,le:74025},{file:"z01_r55.wav",root:55.13,lo:53,hi:58,loop:1,ls:88184,le:88854},{file:"z02_r59.wav",root:59.08,lo:59,hi:62,loop:1,ls:78873,le:80297},{file:"z03_r62.wav",root:62.21,lo:70,hi:73,loop:1,ls:71867,le:73055},{file:"z04_r66.wav",root:66.32,lo:63,hi:69,loop:1,ls:56507,le:56858},{file:"z05_r74.wav",root:74.21,lo:74,hi:127,loop:0,ls:35932,le:36527}] },
+    baritone_sax: { label:"Baritone Sax (FluidR3, MIT)", dir:"baritone_sax", sr:44100, zones:[{file:"z00_r37.wav",root:36.97,lo:0,hi:37,loop:1,ls:94957,le:106444},{file:"z01_r43.wav",root:43,lo:42,hi:43,loop:1,ls:125244,le:136520},{file:"z02_r48.wav",root:48.04,lo:48,hi:49,loop:1,ls:117718,le:127832},{file:"z03_r55.wav",root:55.03,lo:55,hi:56,loop:1,ls:138999,le:149560},{file:"z04_r62.wav",root:62.05,lo:61,hi:62,loop:1,ls:99709,le:109291},{file:"z05_r68.wav",root:68.03,lo:67,hi:72,loop:1,ls:98697,le:109893}] },
+    bass_lead: { label:"Bass & Lead (FluidR3, MIT)", dir:"bass_lead", sr:44100, zones:[{file:"z00_r45.wav",root:45,lo:0,hi:56,loop:1,ls:201,le:602},{file:"z01_r57.wav",root:57,lo:57,hi:68,loop:1,ls:101,le:301},{file:"z02_r69.wav",root:69,lo:69,hi:80,loop:1,ls:51,le:151},{file:"z03_r81.wav",root:81,lo:81,hi:92,loop:1,ls:26,le:76},{file:"z04_r93.wav",root:93,lo:93,hi:127,loop:1,ls:13,le:63}] },
+    bassoon: { label:"Bassoon (FluidR3, MIT)", dir:"bassoon", sr:44100, zones:[{file:"z00_r35.wav",root:35.23,lo:0,hi:35,loop:1,ls:47492,le:59510},{file:"z01_r43.wav",root:43.15,lo:41,hi:43,loop:1,ls:34414,le:46458},{file:"z02_r49.wav",root:49.25,lo:47,hi:49,loop:1,ls:21910,le:32272},{file:"z03_r58.wav",root:58.17,lo:56,hi:58,loop:1,ls:35528,le:47316},{file:"z04_r64.wav",root:63.93,lo:62,hi:64,loop:1,ls:40440,le:52256},{file:"z05_r73.wav",root:73.27,lo:71,hi:84,loop:1,ls:31604,le:42272}] },
+    bowed_glass: { label:"Bowed Glass (FluidR3, MIT)", dir:"bowed_glass", sr:44100, zones:[{file:"z00_r76.wav",root:76,lo:0,hi:101,loop:1,ls:120000,le:155510},{file:"z01_r84.wav",root:84,lo:0,hi:108,loop:1,ls:24749,le:25001},{file:"z02_r84.wav",root:84,lo:0,hi:127,loop:1,ls:7588,le:10878}] },
+    brass_section: { label:"Brass Section (FluidR3, MIT)", dir:"brass_section", sr:44100, zones:[{file:"z00_r41.wav",root:41,lo:0,hi:41,loop:1,ls:155749,le:232502},{file:"z01_r54.wav",root:54,lo:49,hi:54,loop:1,ls:86538,le:221724},{file:"z02_r60.wav",root:60,lo:59,hi:60,loop:1,ls:58393,le:163328},{file:"z03_r65.wav",root:65,lo:61,hi:65,loop:1,ls:65107,le:180190},{file:"z04_r72.wav",root:72,lo:70,hi:72,loop:1,ls:20484,le:99824},{file:"z05_r84.wav",root:84,lo:78,hi:96,loop:1,ls:53255,le:162287}] },
+    charang: { label:"Charang (FluidR3, MIT)", dir:"charang", sr:44100, zones:[{file:"z00_r31.wav",root:31,lo:0,hi:31,loop:1,ls:8438,le:9340},{file:"z01_r45.wav",root:45,lo:0,hi:56,loop:1,ls:201,le:602},{file:"z02_r57.wav",root:57,lo:57,hi:68,loop:1,ls:101,le:301},{file:"z03_r69.wav",root:69,lo:69,hi:80,loop:1,ls:51,le:151},{file:"z04_r81.wav",root:81,lo:81,hi:92,loop:1,ls:26,le:76},{file:"z05_r93.wav",root:93,lo:93,hi:127,loop:1,ls:13,le:63}] },
+    chiffer_lead: { label:"Chiffer Lead (FluidR3, MIT)", dir:"chiffer_lead", sr:44100, zones:[{file:"z00_r72.wav",root:72,lo:0,hi:127,loop:0,ls:54746,le:129120},{file:"z01_r84.wav",root:84,lo:0,hi:127,loop:1,ls:2492,le:2825},{file:"z02_r93.wav",root:93,lo:0,hi:127,loop:1,ls:9830,le:9905}] },
+    clean_guitar: { label:"Clean Guitar (FluidR3, MIT)", dir:"clean_guitar", sr:44100, zones:[{file:"z00_r40.wav",root:40.24,lo:0,hi:44,loop:1,ls:70662,le:71718},{file:"z01_r50.wav",root:50.1,lo:50,hi:54,loop:1,ls:76510,le:78600},{file:"z02_r59.wav",root:59.15,lo:59,hi:63,loop:1,ls:71180,le:72774},{file:"z03_r64.wav",root:64.14,lo:64,hi:65,loop:1,ls:42746,le:43410},{file:"z04_r71.wav",root:71.12,lo:70,hi:71,loop:1,ls:45928,le:46460},{file:"z05_r79.wav",root:79.08,lo:77,hi:127,loop:1,ls:56974,le:57478}] },
+    contrabass: { label:"Contrabass (FluidR3, MIT)", dir:"contrabass", sr:44100, zones:[{file:"z00_r29.wav",root:28.89,lo:0,hi:29,loop:1,ls:42549,le:52721},{file:"z01_r32.wav",root:31.94,lo:30,hi:32,loop:1,ls:34085,le:44327},{file:"z02_r38.wav",root:37.78,lo:36,hi:38,loop:1,ls:39414,le:49148},{file:"z03_r41.wav",root:40.86,lo:39,hi:41,loop:1,ls:31369,le:42575},{file:"z04_r47.wav",root:46.87,lo:45,hi:48,loop:1,ls:33761,le:43838},{file:"z05_r50.wav",root:49.94,lo:49,hi:57,loop:1,ls:29290,le:38035}] },
+    crystal: { label:"Crystal (FluidR3, MIT)", dir:"crystal", sr:44100, zones:[{file:"z00_r45.wav",root:45,lo:0,hi:56,loop:1,ls:199,le:599},{file:"z01_r57.wav",root:57,lo:57,hi:68,loop:1,ls:97,le:297},{file:"z02_r69.wav",root:69,lo:69,hi:80,loop:1,ls:47,le:147},{file:"z03_r81.wav",root:81,lo:81,hi:92,loop:1,ls:21,le:71},{file:"z04_r93.wav",root:93,lo:93,hi:108,loop:1,ls:10,le:60}] },
+    distortion_guitar: { label:"Distortion Guitar (FluidR3, MIT)", dir:"distortion_guitar", sr:44100, zones:[{file:"z00_r40.wav",root:40,lo:0,hi:43,loop:1,ls:491852,le:495062},{file:"z01_r50.wav",root:50,lo:49,hi:53,loop:1,ls:172604,le:174707},{file:"z02_r59.wav",root:59.02,lo:58,hi:60,loop:1,ls:121963,le:122855},{file:"z03_r64.wav",root:64.01,lo:61,hi:65,loop:1,ls:78333,le:79002},{file:"z04_r71.wav",root:70.96,lo:70,hi:72,loop:1,ls:76505,le:77490},{file:"z05_r79.wav",root:78.9,lo:77,hi:108,loop:1,ls:99545,le:100791}] },
+    dulcimer: { label:"Dulcimer (FluidR3, MIT)", dir:"dulcimer", sr:44100, zones:[{file:"z00_r60.wav",root:60,lo:0,hi:61,loop:1,ls:50967,le:65905},{file:"z01_r67.wav",root:67,lo:62,hi:70,loop:1,ls:79507,le:95482},{file:"z02_r72.wav",root:72,lo:71,hi:73,loop:1,ls:64254,le:79467},{file:"z03_r79.wav",root:79,lo:74,hi:81,loop:1,ls:79490,le:95599},{file:"z04_r84.wav",root:84,lo:82,hi:88,loop:1,ls:27739,le:39944},{file:"z05_r96.wav",root:96,lo:89,hi:108,loop:1,ls:44309,le:55368}] },
+    echo_drops: { label:"Echo Drops (FluidR3, MIT)", dir:"echo_drops", sr:44100, zones:[{file:"z00_r39.wav",root:39,lo:0,hi:39,loop:1,ls:53350,le:90898},{file:"z01_r48.wav",root:48,lo:46,hi:48,loop:1,ls:62798,le:132963},{file:"z02_r60.wav",root:60,lo:58,hi:60,loop:1,ls:57404,le:112797},{file:"z03_r66.wav",root:66,lo:66,hi:71,loop:1,ls:42289,le:80458},{file:"z04_r78.wav",root:78,lo:76,hi:78,loop:1,ls:20675,le:76086},{file:"z05_r90.wav",root:90,lo:90,hi:96,loop:1,ls:17304,le:32713}] },
+    electric_piano: { label:"Electric Piano (FluidR3, MIT)", dir:"electric_piano", sr:44100, zones:[{file:"z00_r31.wav",root:31,lo:0,hi:31,loop:1,ls:155339,le:158042},{file:"z01_r43.wav",root:43,lo:37,hi:43,loop:1,ls:171305,le:172203},{file:"z02_r55.wav",root:55,lo:49,hi:55,loop:1,ls:128291,le:129192},{file:"z03_r72.wav",root:72,lo:68,hi:72,loop:1,ls:126017,le:127197},{file:"z04_r84.wav",root:84,lo:80,hi:84,loop:1,ls:97181,le:98021},{file:"z05_r96.wav",root:96,lo:92,hi:108,loop:1,ls:71050,le:72054}] },
+    english_horn: { label:"English Horn (FluidR3, MIT)", dir:"english_horn", sr:44100, zones:[{file:"z00_r52.wav",root:52.15,lo:0,hi:52,loop:1,ls:69323,le:78359},{file:"z01_r55.wav",root:55.16,lo:53,hi:55,loop:1,ls:45528,le:54679},{file:"z02_r60.wav",root:60.24,lo:59,hi:61,loop:1,ls:77909,le:85562},{file:"z03_r66.wav",root:66.22,lo:62,hi:64,loop:1,ls:55217,le:66655},{file:"z04_r71.wav",root:71.4,lo:69,hi:72,loop:1,ls:59340,le:67458},{file:"z05_r74.wav",root:74.35,lo:73,hi:85,loop:1,ls:57763,le:66147}] },
+    fantasia: { label:"Fantasia (FluidR3, MIT)", dir:"fantasia", sr:44100, zones:[{file:"z00_r45.wav",root:45,lo:0,hi:45,loop:1,ls:189,le:590},{file:"z01_r57.wav",root:57,lo:46,hi:57,loop:1,ls:93,le:294},{file:"z02_r69.wav",root:69,lo:58,hi:69,loop:1,ls:8,le:109},{file:"z03_r76.wav",root:76,lo:0,hi:96,loop:1,ls:120000,le:155510},{file:"z04_r81.wav",root:81,lo:70,hi:96,loop:1,ls:125,le:175},{file:"z05_r84.wav",root:84,lo:97,hi:108,loop:1,ls:19277,le:45867}] },
+    fiddle: { label:"Fiddle (FluidR3, MIT)", dir:"fiddle", sr:44100, zones:[{file:"z00_r56.wav",root:55.85,lo:0,hi:58,loop:1,ls:55974,le:64117},{file:"z01_r65.wav",root:65,lo:65,hi:67,loop:1,ls:50770,le:59099},{file:"z02_r74.wav",root:74.02,lo:72,hi:74,loop:1,ls:67663,le:75312},{file:"z03_r83.wav",root:83,lo:81,hi:83,loop:1,ls:58675,le:66559},{file:"z04_r89.wav",root:89.13,lo:87,hi:89,loop:1,ls:50513,le:58174},{file:"z05_r98.wav",root:97.8,lo:97,hi:101,loop:1,ls:25376,le:33537}] },
+    fifth_sawtooth_wave: { label:"Fifth Sawtooth Wave (FluidR3, MIT)", dir:"fifth_sawtooth_wave", sr:44100, zones:[{file:"z00_r45.wav",root:45.02,lo:0,hi:45,loop:1,ls:8,le:409},{file:"z01_r57.wav",root:57.02,lo:46,hi:57,loop:1,ls:8,le:208},{file:"z02_r69.wav",root:69.02,lo:58,hi:69,loop:1,ls:9,le:109},{file:"z03_r81.wav",root:81.02,lo:70,hi:127,loop:1,ls:8,le:58}] },
+    goblin: { label:"Goblin (FluidR3, MIT)", dir:"goblin", sr:44100, zones:[{file:"z00_r72.wav",root:72,lo:0,hi:127,loop:1,ls:28517,le:67578},{file:"z01_r76.wav",root:76,lo:0,hi:127,loop:1,ls:7588,le:10878},{file:"z02_r84.wav",root:84,lo:0,hi:127,loop:1,ls:21530,le:42811}] },
+    guitar_harmonics: { label:"Guitar Harmonics (FluidR3, MIT)", dir:"guitar_harmonics", sr:44100, zones:[{file:"z00_r28.wav",root:28,lo:0,hi:28,loop:1,ls:63070,le:63870},{file:"z01_r38.wav",root:38.2,lo:34,hi:38,loop:1,ls:38564,le:39158},{file:"z02_r43.wav",root:43.09,lo:41,hi:43,loop:1,ls:35139,le:35251},{file:"z03_r47.wav",root:47.3,lo:46,hi:47,loop:1,ls:40550,le:41164},{file:"z04_r55.wav",root:55.15,lo:51,hi:55,loop:1,ls:19352,le:19798},{file:"z05_r64.wav",root:64.5,lo:60,hi:85,loop:1,ls:9774,le:10230}] },
+    ice_rain: { label:"Ice Rain (FluidR3, MIT)", dir:"ice_rain", sr:44100, zones:[{file:"z00_r45.wav",root:45,lo:0,hi:45,loop:1,ls:189,le:590},{file:"z01_r57.wav",root:57,lo:46,hi:57,loop:1,ls:93,le:294},{file:"z02_r69.wav",root:69,lo:58,hi:69,loop:1,ls:8,le:109},{file:"z03_r82.wav",root:108.47,lo:0,hi:108,loop:1,ls:3,le:1361},{file:"z04_r84.wav",root:84,lo:0,hi:108,loop:1,ls:19277,le:45867},{file:"z05_r84.wav",root:84,lo:97,hi:108,loop:1,ls:19277,le:45867}] },
+    koto: { label:"Koto (FluidR3, MIT)", dir:"koto", sr:44100, zones:[{file:"z00_r60.wav",root:60,lo:0,hi:60,loop:1,ls:15819,le:16157},{file:"z01_r66.wav",root:66,lo:61,hi:66,loop:1,ls:14277,le:14754},{file:"z02_r78.wav",root:78,lo:67,hi:127,loop:1,ls:7608,le:7847}] },
+    legend_ep_2: { label:"Legend EP 2 (FluidR3, MIT)", dir:"legend_ep_2", sr:44100, zones:[{file:"z00_r48.wav",root:48,lo:0,hi:53,loop:0,ls:431599,le:511031},{file:"z01_r60.wav",root:60,lo:60,hi:65,loop:1,ls:286535,le:328477},{file:"z02_r66.wav",root:66,lo:66,hi:71,loop:1,ls:250290,le:278386},{file:"z03_r78.wav",root:78,lo:78,hi:83,loop:1,ls:123081,le:136652},{file:"z04_r84.wav",root:84,lo:84,hi:89,loop:1,ls:107595,le:116562},{file:"z05_r96.wav",root:96,lo:96,hi:108,loop:1,ls:54293,le:69553}] },
+    music_box: { label:"Music Box (FluidR3, MIT)", dir:"music_box", sr:44100, zones:[{file:"z00_r44.wav",root:44,lo:0,hi:44,loop:1,ls:36227,le:39197},{file:"z01_r55.wav",root:55,lo:51,hi:55,loop:1,ls:32500,le:34074},{file:"z02_r64.wav",root:64,lo:61,hi:64,loop:1,ls:36257,le:36658},{file:"z03_r73.wav",root:73,lo:71,hi:73,loop:1,ls:27326,le:27962},{file:"z04_r79.wav",root:79,lo:78,hi:82,loop:1,ls:24108,le:24445},{file:"z05_r90.wav",root:90,lo:89,hi:108,loop:1,ls:24360,le:24628}] },
+    ocarina: { label:"Ocarina (FluidR3, MIT)", dir:"ocarina", sr:44100, zones:[{file:"z00_r52.wav",root:52,lo:0,hi:52,loop:1,ls:39130,le:60001},{file:"z01_r62.wav",root:62,lo:53,hi:67,loop:1,ls:39149,le:60001},{file:"z02_r76.wav",root:76,lo:68,hi:92,loop:1,ls:40234,le:60001},{file:"z03_r93.wav",root:93,lo:93,hi:108,loop:1,ls:20002,le:40001}] },
+    ohh_voices: { label:"Ohh Voices (FluidR3, MIT)", dir:"ohh_voices", sr:44100, zones:[{file:"z00_r48.wav",root:48,lo:0,hi:53,loop:1,ls:59937,le:91980},{file:"z01_r54.wav",root:54,lo:54,hi:59,loop:1,ls:40991,le:65318},{file:"z02_r60.wav",root:60,lo:60,hi:65,loop:1,ls:59079,le:95838},{file:"z03_r72.wav",root:72,lo:72,hi:77,loop:1,ls:29436,le:47900},{file:"z04_r78.wav",root:78,lo:78,hi:83,loop:1,ls:39796,le:52851},{file:"z05_r84.wav",root:84,lo:84,hi:96,loop:1,ls:35012,le:56846}] },
+    orchestra_hit: { label:"Orchestra Hit (FluidR3, MIT)", dir:"orchestra_hit", sr:44100, zones:[{file:"z00_r68.wav",root:68,lo:0,hi:68,loop:0,ls:8,le:37084},{file:"z01_r80.wav",root:80,lo:69,hi:96,loop:0,ls:8,le:22264}] },
+    overdrive_guitar: { label:"Overdrive Guitar (FluidR3, MIT)", dir:"overdrive_guitar", sr:44100, zones:[{file:"z00_r40.wav",root:40.05,lo:0,hi:43,loop:1,ls:491908,le:494046},{file:"z01_r50.wav",root:50,lo:49,hi:53,loop:1,ls:477040,le:478244},{file:"z02_r59.wav",root:58.95,lo:58,hi:60,loop:1,ls:293414,le:294310},{file:"z03_r64.wav",root:63.9,lo:61,hi:65,loop:1,ls:151604,le:152546},{file:"z04_r71.wav",root:70.84,lo:70,hi:72,loop:1,ls:134526,le:134976},{file:"z05_r79.wav",root:78.81,lo:77,hi:108,loop:1,ls:104422,le:112158}] },
+    palm_muted_guitar: { label:"Palm Muted Guitar (FluidR3, MIT)", dir:"palm_muted_guitar", sr:44100, zones:[{file:"z00_r40.wav",root:40.15,lo:0,hi:40,loop:1,ls:35629,le:36159},{file:"z01_r45.wav",root:45.28,lo:44,hi:45,loop:1,ls:27878,le:28669},{file:"z02_r50.wav",root:50.23,lo:49,hi:50,loop:1,ls:31906,le:32203},{file:"z03_r54.wav",root:54.23,lo:51,hi:54,loop:0,ls:8,le:28395},{file:"z04_r62.wav",root:62.32,lo:59,hi:62,loop:0,ls:8,le:23842},{file:"z05_r70.wav",root:70.44,lo:66,hi:84,loop:0,ls:8,le:21264}] },
+    piccolo: { label:"Piccolo (FluidR3, MIT)", dir:"piccolo", sr:44100, zones:[{file:"z00_r64.wav",root:76,lo:0,hi:76,loop:1,ls:22894,le:33281},{file:"z01_r66.wav",root:78,lo:77,hi:78,loop:1,ls:24651,le:35584},{file:"z02_r70.wav",root:81.95,lo:81,hi:82,loop:1,ls:22530,le:33536},{file:"z03_r72.wav",root:84.32,lo:83,hi:84,loop:1,ls:24235,le:35328},{file:"z04_r80.wav",root:92.21,lo:89,hi:92,loop:1,ls:29297,le:39937},{file:"z05_r84.wav",root:96.2,lo:93,hi:120,loop:1,ls:28519,le:39168}] },
+    picked_bass: { label:"Picked Bass (FluidR3, MIT)", dir:"picked_bass", sr:44100, zones:[{file:"z00_r28.wav",root:28.08,lo:0,hi:28,loop:1,ls:252346,le:253410},{file:"z01_r32.wav",root:32.09,lo:31,hi:32,loop:1,ls:150250,le:151098},{file:"z02_r34.wav",root:34,lo:33,hi:34,loop:1,ls:191842,le:192600},{file:"z03_r39.wav",root:38.99,lo:38,hi:39,loop:1,ls:185086,le:186222},{file:"z04_r41.wav",root:40.99,lo:40,hi:42,loop:1,ls:174570,le:175584},{file:"z05_r48.wav",root:48.03,lo:48,hi:84,loop:1,ls:147952,le:148964}] },
+    pop_bass: { label:"Pop Bass (FluidR3, MIT)", dir:"pop_bass", sr:44100, zones:[{file:"z00_r28.wav",root:28.01,lo:0,hi:28,loop:1,ls:243552,le:245692},{file:"z01_r32.wav",root:32.03,lo:31,hi:32,loop:1,ls:254714,le:257268},{file:"z02_r34.wav",root:34.03,lo:33,hi:35,loop:1,ls:237790,le:238548},{file:"z03_r39.wav",root:38.96,lo:38,hi:39,loop:1,ls:287544,le:289820},{file:"z04_r41.wav",root:40.97,lo:40,hi:42,loop:1,ls:240590,le:241602},{file:"z05_r48.wav",root:48.02,lo:46,hi:84,loop:1,ls:192764,le:193776}] },
+    recorder: { label:"Recorder (FluidR3, MIT)", dir:"recorder", sr:44100, zones:[{file:"z00_r72.wav",root:72.1,lo:0,hi:72,loop:1,ls:14176,le:24886},{file:"z01_r74.wav",root:73.8,lo:73,hi:74,loop:1,ls:35109,le:46145},{file:"z02_r77.wav",root:77.55,lo:77,hi:77,loop:1,ls:14442,le:26154},{file:"z03_r79.wav",root:79.1,lo:78,hi:79,loop:1,ls:18274,le:28749},{file:"z04_r83.wav",root:82.9,lo:82,hi:83,loop:1,ls:23089,le:36226},{file:"z05_r86.wav",root:85.9,lo:84,hi:97,loop:1,ls:16907,le:28156}] },
+    reed_organ: { label:"Reed Organ (FluidR3, MIT)", dir:"reed_organ", sr:44100, zones:[{file:"z00_r54.wav",root:54,lo:0,hi:54,loop:1,ls:5245,le:5721},{file:"z01_r60.wav",root:60,lo:55,hi:60,loop:1,ls:3620,le:3789},{file:"z02_r72.wav",root:72,lo:67,hi:72,loop:1,ls:3121,le:3459},{file:"z03_r78.wav",root:78,lo:73,hi:78,loop:1,ls:3103,le:3282},{file:"z04_r90.wav",root:90,lo:85,hi:90,loop:1,ls:1457,le:1576},{file:"z05_r96.wav",root:96,lo:91,hi:108,loop:1,ls:2414,le:2667}] },
+    rhodes_ep: { label:"Rhodes EP (FluidR3, MIT)", dir:"rhodes_ep", sr:44100, zones:[{file:"z00_r24.wav",root:24,lo:0,hi:27,loop:1,ls:286300,le:289006},{file:"z01_r36.wav",root:36,lo:34,hi:39,loop:1,ls:204368,le:205714},{file:"z02_r55.wav",root:55,lo:52,hi:57,loop:1,ls:89348,le:89798},{file:"z03_r67.wav",root:67,lo:64,hi:69,loop:1,ls:78870,le:79320},{file:"z04_r84.wav",root:84,lo:82,hi:87,loop:1,ls:91952,le:93298},{file:"z05_r96.wav",root:96,lo:94,hi:108,loop:1,ls:39068,le:39552}] },
+    saw_wave: { label:"Saw Wave (FluidR3, MIT)", dir:"saw_wave", sr:44100, zones:[{file:"z00_r45.wav",root:45,lo:0,hi:56,loop:1,ls:201,le:602},{file:"z01_r57.wav",root:57,lo:57,hi:68,loop:1,ls:101,le:301},{file:"z02_r69.wav",root:69,lo:69,hi:80,loop:1,ls:51,le:151},{file:"z03_r81.wav",root:81,lo:81,hi:92,loop:1,ls:26,le:76},{file:"z04_r93.wav",root:93,lo:93,hi:127,loop:1,ls:13,le:63}] },
+    sea_shore: { label:"Sea Shore (FluidR3, MIT)", dir:"sea_shore", sr:44100, zones:[{file:"z00_r60.wav",root:73,lo:0,hi:127,loop:1,ls:65,le:71224},{file:"z01_r68.wav",root:80,lo:0,hi:127,loop:1,ls:65,le:71224}] },
+    shamisen: { label:"Shamisen (FluidR3, MIT)", dir:"shamisen", sr:44100, zones:[{file:"z00_r48.wav",root:48.01,lo:0,hi:53,loop:1,ls:8216,le:8890},{file:"z01_r54.wav",root:53.99,lo:54,hi:59,loop:1,ls:12866,le:13821},{file:"z02_r66.wav",root:66,lo:66,hi:71,loop:1,ls:7479,le:8076},{file:"z03_r72.wav",root:72,lo:72,hi:77,loop:1,ls:6947,le:7369},{file:"z04_r84.wav",root:84,lo:84,hi:89,loop:1,ls:3509,le:3804},{file:"z05_r90.wav",root:90,lo:90,hi:127,loop:1,ls:2638,le:2817}] },
+    shenai: { label:"Shenai (FluidR3, MIT)", dir:"shenai", sr:44100, zones:[{file:"z00_r54.wav",root:54,lo:0,hi:59,loop:1,ls:4164,le:4402},{file:"z01_r60.wav",root:60,lo:60,hi:64,loop:1,ls:3780,le:3949},{file:"z02_r66.wav",root:66,lo:65,hi:71,loop:1,ls:3754,le:4112},{file:"z03_r72.wav",root:72,lo:72,hi:76,loop:1,ls:2921,le:3342},{file:"z04_r78.wav",root:78,lo:77,hi:81,loop:1,ls:1922,le:2280},{file:"z05_r84.wav",root:84,lo:82,hi:127,loop:1,ls:1672,le:2600}] },
+    slap_bass: { label:"Slap Bass (FluidR3, MIT)", dir:"slap_bass", sr:44100, zones:[{file:"z00_r28.wav",root:27.98,lo:0,hi:28,loop:1,ls:222726,le:225946},{file:"z01_r32.wav",root:32.04,lo:31,hi:32,loop:1,ls:258226,le:261624},{file:"z02_r35.wav",root:35,lo:33,hi:35,loop:1,ls:235956,le:238100},{file:"z03_r39.wav",root:38.98,lo:38,hi:39,loop:1,ls:230432,le:232138},{file:"z04_r41.wav",root:40.96,lo:40,hi:42,loop:1,ls:246106,le:247120},{file:"z05_r48.wav",root:48.02,lo:46,hi:84,loop:1,ls:212140,le:213826}] },
+    slow_strings: { label:"Slow Strings (FluidR3, MIT)", dir:"slow_strings", sr:44100, zones:[{file:"z00_r31.wav",root:31,lo:0,hi:31,loop:1,ls:56826,le:150523},{file:"z01_r40.wav",root:40,lo:38,hi:40,loop:1,ls:54138,le:140576},{file:"z02_r49.wav",root:49,lo:48,hi:51,loop:1,ls:75259,le:139523},{file:"z03_r64.wav",root:64,lo:63,hi:65,loop:1,ls:61102,le:159259},{file:"z04_r73.wav",root:73,lo:72,hi:74,loop:1,ls:14601,le:57396},{file:"z05_r83.wav",root:83,lo:82,hi:96,loop:1,ls:27892,le:59980}] },
+    solo_vox: { label:"Solo Vox (FluidR3, MIT)", dir:"solo_vox", sr:44100, zones:[{file:"z00_r48.wav",root:48,lo:0,hi:48,loop:1,ls:25811,le:164126},{file:"z01_r60.wav",root:60,lo:49,hi:60,loop:1,ls:17580,le:86907},{file:"z02_r72.wav",root:72,lo:61,hi:72,loop:1,ls:23011,le:57592},{file:"z03_r84.wav",root:84,lo:0,hi:127,loop:1,ls:8008,le:26234},{file:"z04_r84.wav",root:84,lo:73,hi:84,loop:1,ls:16422,le:28846},{file:"z05_r96.wav",root:96,lo:85,hi:127,loop:1,ls:23669,le:45981}] },
+    soprano_sax: { label:"Soprano Sax (FluidR3, MIT)", dir:"soprano_sax", sr:44100, zones:[{file:"z00_r57.wav",root:56.97,lo:0,hi:57,loop:1,ls:41589,le:51634},{file:"z01_r63.wav",root:63.02,lo:62,hi:63,loop:1,ls:36092,le:45981},{file:"z02_r66.wav",root:65.97,lo:66,hi:67,loop:1,ls:58237,le:68399},{file:"z03_r72.wav",root:71.98,lo:72,hi:73,loop:1,ls:49533,le:59692},{file:"z04_r78.wav",root:78,lo:77,hi:78,loop:1,ls:53500,le:63366},{file:"z05_r85.wav",root:85,lo:84,hi:96,loop:1,ls:46874,le:57059}] },
+    space_voice: { label:"Space Voice (FluidR3, MIT)", dir:"space_voice", sr:44100, zones:[{file:"z00_r48.wav",root:48,lo:0,hi:48,loop:1,ls:25811,le:164126},{file:"z01_r60.wav",root:60,lo:49,hi:60,loop:1,ls:17580,le:86907},{file:"z02_r72.wav",root:72,lo:61,hi:72,loop:1,ls:23011,le:57592},{file:"z03_r76.wav",root:76,lo:0,hi:98,loop:1,ls:120000,le:155510},{file:"z04_r84.wav",root:84,lo:73,hi:84,loop:1,ls:16422,le:28846},{file:"z05_r96.wav",root:96,lo:85,hi:127,loop:1,ls:23669,le:45981}] },
+    square_lead: { label:"Square Lead (FluidR3, MIT)", dir:"square_lead", sr:44100, zones:[{file:"z00_r45.wav",root:45,lo:0,hi:56,loop:1,ls:199,le:599},{file:"z01_r57.wav",root:57,lo:57,hi:68,loop:1,ls:97,le:297},{file:"z02_r69.wav",root:69,lo:69,hi:80,loop:1,ls:47,le:147},{file:"z03_r81.wav",root:81,lo:81,hi:92,loop:1,ls:21,le:71},{file:"z04_r93.wav",root:93,lo:93,hi:127,loop:1,ls:10,le:60}] },
+    star_theme: { label:"Star Theme (FluidR3, MIT)", dir:"star_theme", sr:44100, zones:[{file:"z00_r40.wav",root:40.24,lo:0,hi:44,loop:1,ls:70662,le:71718},{file:"z01_r50.wav",root:50.1,lo:50,hi:54,loop:1,ls:76510,le:78600},{file:"z02_r59.wav",root:59.15,lo:59,hi:63,loop:1,ls:71180,le:72774},{file:"z03_r69.wav",root:69.14,lo:66,hi:69,loop:1,ls:42370,le:43464},{file:"z04_r76.wav",root:76.09,lo:72,hi:76,loop:1,ls:55784,le:56916},{file:"z05_r84.wav",root:84,lo:0,hi:108,loop:1,ls:36638,le:51214}] },
+    synth_bass_1: { label:"Synth Bass 1 (FluidR3, MIT)", dir:"synth_bass_1", sr:44100, zones:[{file:"z00_r45.wav",root:45,lo:0,hi:45,loop:1,ls:8,le:409},{file:"z01_r57.wav",root:57,lo:46,hi:57,loop:1,ls:8,le:208},{file:"z02_r69.wav",root:69,lo:58,hi:69,loop:1,ls:9,le:109},{file:"z03_r81.wav",root:81,lo:70,hi:127,loop:1,ls:8,le:58}] },
+    synth_bass_2: { label:"Synth Bass 2 (FluidR3, MIT)", dir:"synth_bass_2", sr:44100, zones:[{file:"z00_r36.wav",root:35.94,lo:0,hi:36,loop:1,ls:27715,le:28392},{file:"z01_r48.wav",root:47.97,lo:37,hi:48,loop:1,ls:12019,le:12357},{file:"z02_r60.wav",root:60.06,lo:49,hi:60,loop:1,ls:5728,le:5896},{file:"z03_r72.wav",root:72.06,lo:61,hi:96,loop:1,ls:2894,le:2978}] },
+    synth_brass_1: { label:"Synth Brass 1 (FluidR3, MIT)", dir:"synth_brass_1", sr:44100, zones:[{file:"z00_r60.wav",root:60,lo:0,hi:60,loop:1,ls:56524,le:107853},{file:"z01_r72.wav",root:72,lo:61,hi:72,loop:1,ls:54746,le:129120},{file:"z02_r84.wav",root:84,lo:73,hi:127,loop:1,ls:66416,le:128768}] },
+    synth_brass_2: { label:"Synth Brass 2 (FluidR3, MIT)", dir:"synth_brass_2", sr:44100, zones:[{file:"z00_r60.wav",root:59.97,lo:0,hi:60,loop:1,ls:56524,le:107853},{file:"z01_r72.wav",root:71.97,lo:61,hi:72,loop:1,ls:54746,le:129120},{file:"z02_r84.wav",root:83.97,lo:73,hi:127,loop:1,ls:66416,le:128768}] },
+    synth_drum: { label:"Synth Drum (FluidR3, MIT)", dir:"synth_drum", sr:44100, zones:[{file:"z00_r41.wav",root:41,lo:0,hi:127,loop:0,ls:8,le:24386},{file:"z01_r41.wav",root:46,lo:0,hi:64,loop:1,ls:98,le:500},{file:"z02_r65.wav",root:70,lo:65,hi:88,loop:1,ls:52,le:252},{file:"z03_r89.wav",root:94,lo:89,hi:127,loop:1,ls:25,le:125}] },
+    synth_strings_1: { label:"Synth Strings 1 (FluidR3, MIT)", dir:"synth_strings_1", sr:44100, zones:[{file:"z00_r45.wav",root:45,lo:0,hi:45,loop:1,ls:189,le:590},{file:"z01_r57.wav",root:57,lo:46,hi:57,loop:1,ls:93,le:294},{file:"z02_r69.wav",root:69,lo:58,hi:69,loop:1,ls:8,le:109},{file:"z03_r81.wav",root:81,lo:70,hi:96,loop:1,ls:125,le:175},{file:"z04_r84.wav",root:84,lo:97,hi:108,loop:1,ls:19277,le:45867}] },
+    synth_strings_2: { label:"Synth Strings 2 (FluidR3, MIT)", dir:"synth_strings_2", sr:44100, zones:[{file:"z00_r69.wav",root:45,lo:0,hi:69,loop:1,ls:189,le:590},{file:"z01_r81.wav",root:57,lo:70,hi:81,loop:1,ls:93,le:294},{file:"z02_r93.wav",root:69,lo:82,hi:93,loop:1,ls:8,le:109},{file:"z03_r105.wav",root:80.96,lo:0,hi:127,loop:1,ls:125,le:175},{file:"z04_r105.wav",root:81,lo:94,hi:127,loop:1,ls:125,le:175}] },
+    synth_voice: { label:"Synth Voice (FluidR3, MIT)", dir:"synth_voice", sr:44100, zones:[{file:"z00_r48.wav",root:48,lo:0,hi:53,loop:1,ls:8557,le:45056},{file:"z01_r54.wav",root:54,lo:54,hi:59,loop:1,ls:32399,le:58210},{file:"z02_r66.wav",root:66,lo:66,hi:71,loop:1,ls:42289,le:80458},{file:"z03_r72.wav",root:72,lo:72,hi:77,loop:1,ls:21320,le:63630},{file:"z04_r84.wav",root:84,lo:84,hi:89,loop:1,ls:21530,le:42811},{file:"z05_r90.wav",root:90,lo:90,hi:127,loop:1,ls:17304,le:32713}] },
+    timpani: { label:"Timpani (FluidR3, MIT)", dir:"timpani", sr:44100, zones:[{file:"z00_r36.wav",root:36,lo:0,hi:36,loop:0,ls:7,le:166621},{file:"z01_r38.wav",root:38,lo:37,hi:42,loop:0,ls:7,le:143671},{file:"z02_r43.wav",root:43,lo:43,hi:127,loop:0,ls:6,le:155038}] },
+    tinker_bell: { label:"Tinker Bell (FluidR3, MIT)", dir:"tinker_bell", sr:44100, zones:[{file:"z00_r40.wav",root:40,lo:0,hi:49,loop:0,ls:8,le:6157},{file:"z01_r40.wav",root:40,lo:50,hi:61,loop:0,ls:8,le:6157},{file:"z02_r40.wav",root:40,lo:62,hi:73,loop:0,ls:8,le:6157},{file:"z03_r40.wav",root:40,lo:86,hi:97,loop:0,ls:8,le:6157},{file:"z04_r40.wav",root:40,lo:98,hi:102,loop:0,ls:8,le:6157},{file:"z05_r102.wav",root:40,lo:103,hi:108,loop:0,ls:8,le:6157}] },
+    tremolo: { label:"Tremolo (FluidR3, MIT)", dir:"tremolo", sr:44100, zones:[{file:"z00_r31.wav",root:31,lo:0,hi:31,loop:1,ls:56826,le:150523},{file:"z01_r40.wav",root:40,lo:38,hi:40,loop:1,ls:54138,le:140576},{file:"z02_r49.wav",root:49,lo:48,hi:51,loop:1,ls:75259,le:139523},{file:"z03_r64.wav",root:64,lo:63,hi:65,loop:1,ls:61102,le:159259},{file:"z04_r73.wav",root:73,lo:72,hi:74,loop:1,ls:14601,le:57396},{file:"z05_r83.wav",root:83,lo:82,hi:96,loop:1,ls:27892,le:59980}] },
+    tubular_bells: { label:"Tubular Bells (FluidR3, MIT)", dir:"tubular_bells", sr:44100, zones:[{file:"z00_r84.wav",root:84.18,lo:0,hi:66,loop:1,ls:61072,le:62484},{file:"z01_r84.wav",root:84.18,lo:67,hi:75,loop:1,ls:61072,le:62484},{file:"z02_r84.wav",root:84.18,lo:76,hi:84,loop:1,ls:61072,le:62484},{file:"z03_r84.wav",root:84.18,lo:85,hi:94,loop:1,ls:61072,le:62484},{file:"z04_r84.wav",root:84.18,lo:95,hi:108,loop:1,ls:61072,le:62484}] },
+    viola: { label:"Viola (FluidR3, MIT)", dir:"viola", sr:44100, zones:[{file:"z00_r49.wav",root:48.88,lo:0,hi:50,loop:1,ls:36843,le:45479},{file:"z01_r58.wav",root:57.72,lo:57,hi:59,loop:1,ls:49724,le:59159},{file:"z02_r67.wav",root:66.93,lo:66,hi:68,loop:1,ls:34406,le:42770},{file:"z03_r73.wav",root:72.95,lo:72,hi:74,loop:1,ls:51662,le:61506},{file:"z04_r82.wav",root:82,lo:81,hi:83,loop:1,ls:66055,le:73948},{file:"z05_r91.wav",root:91.32,lo:90,hi:96,loop:1,ls:53774,le:61846}] },
+    violin: { label:"Violin (FluidR3, MIT)", dir:"violin", sr:44100, zones:[{file:"z00_r56.wav",root:55.85,lo:0,hi:58,loop:1,ls:55974,le:64117},{file:"z01_r65.wav",root:65,lo:65,hi:67,loop:1,ls:50770,le:59099},{file:"z02_r74.wav",root:74.02,lo:72,hi:74,loop:1,ls:67663,le:75312},{file:"z03_r83.wav",root:83,lo:81,hi:83,loop:1,ls:58675,le:66559},{file:"z04_r89.wav",root:89.13,lo:87,hi:89,loop:1,ls:50513,le:58174},{file:"z05_r98.wav",root:97.8,lo:97,hi:101,loop:1,ls:25376,le:33537}] },
+    xylophone: { label:"Xylophone (FluidR3, MIT)", dir:"xylophone", sr:44100, zones:[{file:"z00_r54.wav",root:54,lo:0,hi:59,loop:0,ls:8,le:64161},{file:"z01_r66.wav",root:66,lo:66,hi:71,loop:0,ls:8,le:53880},{file:"z02_r78.wav",root:78,lo:78,hi:83,loop:0,ls:8,le:46584},{file:"z03_r84.wav",root:84,lo:84,hi:89,loop:0,ls:8,le:43952},{file:"z04_r96.wav",root:96,lo:96,hi:101,loop:0,ls:8,le:29160},{file:"z05_r108.wav",root:108,lo:108,hi:127,loop:0,ls:8,le:23032}] },
+    yamaha_grand_piano: { label:"Yamaha Grand Piano (FluidR3, MIT)", dir:"yamaha_grand_piano", sr:44100, zones:[{file:"z00_r26.wav",root:26,lo:0,hi:26,loop:1,ls:235512,le:302497},{file:"z01_r42.wav",root:42,lo:39,hi:42,loop:1,ls:166050,le:214439},{file:"z02_r58.wav",root:58,lo:55,hi:58,loop:1,ls:72608,le:120644},{file:"z03_r70.wav",root:70,lo:67,hi:70,loop:1,ls:70933,le:97968},{file:"z04_r90.wav",root:90,lo:85,hi:90,loop:1,ls:55512,le:83140},{file:"z05_r108.wav",root:108,lo:105,hi:108,loop:1,ls:16604,le:17548}] },
   };
 
   // ---------- SAMPLED DRUM KITS (2026-07) ----------
@@ -1594,6 +1664,23 @@
       stab:["off"],
       form:"wave" },
     /* /genre-tool:prelude:genres */
+    fugue: { label:"Fugue", info:"Baroque imitative counterpoint as a genre: a subject stated then ANSWERED across three or four interweaving voices, at a STEADY moderate tempo with NO rubato (the clock is the law) and a faster harmonic rhythm than the prelude's slow figuration — harpsichord + church-organ, drum kit OFF. The Well-Tempered-Clavier FUGUE to prelude's PRELUDE: same Bach room, but polyphonic, driving and metronomic instead of freely arpeggiated",
+      reverbColor:"fdn",   // fx wings: a dry chapel/recital room, not a wash — the close harpsichord+organ
+      bpm:[90,106],
+      swing:[0,0.02],
+      humanize:[0,0.06],
+      progressions:["canon","minor_run","dream"],   // canon = the Pachelbel imitation (subject echoed voice-to-voice); all high-motion (5/4 distinct roots -> motion ~1, a faster harmonic tread than prelude's freer figuration)
+      kits:["off"],
+      fills:["off"],
+      bass:{patterns:["pedal","root","walking"], samplerPool:["church_organ","harpsichord"], recipe:{model:["sampler","sampler"], cutoff:[700,1500], res:[0.05,0.1], level:[0.5,0.7], send:[0.2,0.4], dsend:[0,0.08], attack:[0.01,0.03], release:[0.3,0.6]}},   // the pedal-point continuo — church organ (Bach's other instrument) or harpsichord, both real GM samplers
+      lead:{patterns:["fugue","fugue","canon"], samplerPool:["harpsichord","harpsichord","church_organ"], recipe:{model:["sampler","sampler"], wave:"sine", voices:[3,4], spread:[0.001,0.003], cutoff:[2600,3800], level:[0.4,0.54], send:[0.25,0.45], dsend:[0.05,0.18], attack:[0.005,0.02], release:[0.2,0.45]}},   // THE FUGUE: 3-4 interweaving voices — the "fugue" pattern is a running-SIXTEENTH subject + imitative answer (semiquaver counterpoint); canon as the slower echo variant. Harpsichord dominant (2/3), church organ the grand alternate. Contrapuntal density is what the verifier reads as leadVoices (prelude is 1-2)
+      pads:{prob:0.5, samplerPool:["strings"], recipe:{model:["sampler","strings"], wave:"sine", cutoff:[900,1600], detune:[0.002,0.005], attack:[0.6,1.6], release:[1.2,2.4], swell:1, level:[0.3,0.44], send:[0.35,0.55], dsend:[0,0.1]}},   // sustained strings thicken the counterpoint under the keyboard voices (prob higher than prelude — the fugue is denser)
+      drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.5,0.7], snare:[0.4,0.6], hat:[0.3,0.5], tune:[0.9,1], send:[0.15,0.35], dsend:[0,0]},
+      fx:{reverb:[0.38,0.55], delayBeats:[0.5,1], delayFb:[0.1,0.24], delayCut:[2200,3200], pump:[0,0], crackle:[0,0.1], lowcut:[0,0], highcut:[0,0], comp:[0,0.12]},
+      found:{role:"bed", vol:[0.05,0.12], pitch:[0.7,0.9], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["tw_stationhall","tokyo_station"]},
+      hits:{sources:["sp_herenow"], pattern:"sparse", prob:0.05},
+      stab:["off"],
+      form:"wave" },   // NB: NO rubato block (unlike prelude) — the fugue is metronomic; the verifier reads rubato 0, which fences it off prelude's rubato-carrying diagonal
     /* genre-tool:hogcore:genres */
     hogcore: { label:"Hogcore", info:"VERY simple hyperpop at 150+: four-on-floor, sidechain pump, bright supersaw hooks, and the 24-voice cast declaring \"<name> is trans\" as the hook — pitched-up vocal chops, a full phrase every other bar, name-stabs on the drop",
       bpm:[150,164],
@@ -3429,6 +3516,17 @@
       inserts:{bass:(c.bassInserts||[]).map(f=>f.type).join("+")||"-",
                lead:(c.leadInserts||[]).map(f=>f.type).join("+")||"-",
                pad:(c.padInserts||[]).map(f=>f.type).join("+")||"-"}};
+    // SAMPLED BY DEFAULT (Paul 2026-07: "I want anything to go here and be
+    // sampled by default. It's much better."). Every emitted state renders its
+    // pitched voices from the SF2 sample library unless the caller opts out:
+    //   • opts.synth === true        (CLI --synth; explicit pure-synth)
+    //   • opts.sampledOnly === false (a caller asking for the old synth default)
+    // The pure-synth path is byte-for-byte the historical default (applySampledOnly
+    // never runs). Signature synths (tb303 acid line, reese/wobble/acid bass,
+    // synclead, modeld, vocoder) stay pure synth even when sampled — see
+    // state-engine SIGNATURE_MODELS.
+    const wantSynth = opts.synth === true || opts.sampledOnly === false;
+    if(!wantSynth) applySampledOnly(state, c.seed);
     return state;
   }
 
@@ -3526,7 +3624,7 @@
       let state=null, meta=null;
       for(let attempt=0; attempt<6; attempt++){
         const seed=baseSeed+i*101+attempt*1009;
-        const cand=toState(resolveMulti(weights.map(w=>({...w})),seed), {targetSec, keyOffset:key, macros:opts.macros});
+        const cand=toState(resolveMulti(weights.map(w=>({...w})),seed), {targetSec, keyOffset:key, macros:opts.macros, synth:opts.synth, sampledOnly:opts.sampledOnly});
         const m=cand.genreMeta;
         const sig=[m.kit,m.progression,m.bass,m.lead,m.found];
         const collide=recent.some(r=>sig.filter((v,j)=>v===r[j]).length>=3);
@@ -3541,7 +3639,74 @@
   function playlist(waypoints, opts){ return journey(waypoints, Object.assign({tracks:12}, opts||{})); }
 
   function mix(weights, opts){ opts=opts||{}; return withTarget(resolveMulti(weights, opts.seed!=null?opts.seed:1), opts); }
-  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, GENRE_CLIPS, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), resolve, resolveMulti, track, blend, mix, playlist, journey };
+  // ========== SAMPLED MODE (state.sampledOnly — DEFAULT ON since 2026-07) ==========
+  // "I want anything to go here and be sampled by default. It's much better."
+  // (Paul, 2026-07). toState applies this to every emitted state (opt out with
+  // opts.synth / opts.sampledOnly:false). This enricher makes a resolved state
+  // render its pitched mix from the SF2-
+  // derived sample library instead of Faust synthesis. It does NOT decide which
+  // instrument each voice plays — that deterministic (role, model, seed) mapping
+  // lives in faust/state-engine.js voiceUnits (the one place shared by press +
+  // live). This just makes the raw material available on the state:
+  //   1. state.sampledOnly = true            (state-engine's switch)
+  //   2. state.samplerLib = {id -> spec}      (zone maps for ALL 40 instruments;
+  //      state-engine picks from it per voice)
+  //   3. every instrument zone wav -> foundSources at vol 0 (both engines lazily
+  //      decode ONLY the zones the picked units reference — press usedSrc / live
+  //      kickSamplerBuf — so injecting all 40 is cheap)
+  //   4. force a sampled drum kit when the genre runs a SYNTH kit (a genre that
+  //      already carries a sampled kit — jazz/blues/… — keeps its own).
+  // Idempotent: safe to call every live bar on the same state object (explorer
+  // ?allSampled=1 applies it as a getState transform so it survives retargets/
+  // glides). Never touched on the default path — genres press byte-identically.
+  const _sampledOnlySpec=(id)=>{
+    const S=SAMPLERS[id]; if(!S) return null;
+    return { id, sr:S.sr, zones:S.zones.map((z,i)=>({srcId:"ins_"+id+"_"+i, root:z.root, lo:z.lo, hi:z.hi,
+      loop:!!z.loop, loopStart:z.ls, loopEnd:z.le })) };
+  };
+  // mirrors toState's inner drumKitSpec (kept separate so toState stays byte-exact)
+  const _sampledOnlyKit=(name)=>{
+    const K=DRUMKITS[name]; if(!K) return null;
+    const H=K.hits, srcs=[];
+    const one=(hit,zones)=>{ const push=(h)=>{ if(H[h]) srcs.push({id:"drum_"+name+"_"+h, file:H[h].file}); };
+      if(hit==="hat"){ push("hatClosed"); push("hatOpen"); } else push(hit==="tom"?"tom":hit); return zones; };
+    const overlay={};
+    if(H.kick)  overlay.kickSampler ={ id:"drum_"+name+"_kick",  sr:K.sr, oneShotSec:H.kick.len/K.sr,  zones: one("kick", [{srcId:"drum_"+name+"_kick",  root:60, lo:0, hi:127, loop:0}]) };
+    if(H.snare) overlay.snareSampler={ id:"drum_"+name+"_snare", sr:K.sr, oneShotSec:H.snare.len/K.sr, zones: one("snare",[{srcId:"drum_"+name+"_snare", root:60, lo:0, hi:127, loop:0}]) };
+    if(H.hatClosed&&H.hatOpen) overlay.hatSampler={ id:"drum_"+name+"_hat", sr:K.sr, oneShotSec:H.hatOpen.len/K.sr,
+      zones: one("hat", [{srcId:"drum_"+name+"_hatClosed", root:60, lo:0, hi:65, loop:0},
+                         {srcId:"drum_"+name+"_hatOpen",   root:72, lo:66, hi:127, loop:0}]) };
+    if(H.tom)   overlay.tomSampler  ={ id:"drum_"+name+"_tom",   sr:K.sr, oneShotSec:H.tom.len/K.sr,   zones: one("tom", [{srcId:"drum_"+name+"_tom", root:DRUM_TOM_ROOT, lo:0, hi:127, loop:0}]) };
+    return { overlay, srcs, dir:K.dir, label:K.label };
+  };
+  function applySampledOnly(state, seed){
+    if(!state || (state.sampledOnly && state.samplerLib)) return state;   // idempotent
+    seed = seed!=null ? seed : (state.seed!=null ? state.seed : 1);
+    state.sampledOnly=true;
+    state.foundSources=state.foundSources||[];
+    const have=new Set(state.foundSources.map(s=>s.id));
+    // (2) library of every sampled instrument + (3) ride each zone wav in at vol 0
+    const lib={};
+    for(const id of Object.keys(SAMPLERS)){
+      lib[id]=_sampledOnlySpec(id);
+      const S=SAMPLERS[id];
+      S.zones.forEach((z,i)=>{ const sid="ins_"+id+"_"+i; if(have.has(sid)) return; have.add(sid);
+        state.foundSources.push({id:sid,label:S.label,url:"",samplePath:"found/samples/instruments/"+S.dir+"/"+z.file,vol:0,pitch:1,stretch:0.5,cutoff:18000}); });
+    }
+    state.samplerLib=lib;
+    // (4) force a sampled kit when the genre runs a synth kit (no *Sampler overlay)
+    const D=state.instruments&&state.instruments.drums;
+    if(D && !D.kickSampler){
+      const kits=Object.keys(DRUMKITS);
+      const spec=_sampledOnlyKit(kits[(((seed>>>0)*2654435761)>>>0)%kits.length]);
+      if(spec){ Object.assign(D, spec.overlay);
+        for(const s of spec.srcs){ if(have.has(s.id)) continue; have.add(s.id);
+          state.foundSources.push({id:s.id,label:spec.label,url:"",samplePath:"found/samples/drums/"+spec.dir+"/"+s.file,vol:0,pitch:1,stretch:0.5,cutoff:18000}); } }
+    }
+    return state;
+  }
+
+  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, GENRE_CLIPS, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly };
   if(isNode) module.exports=api; else root.GenreKernel=api;
 
   // ---------- CLI ----------
@@ -3712,9 +3877,10 @@
       for(const [k,g] of Object.entries(GENRES)) console.log(k.padEnd(11),g.bpm.join("-")+"bpm",g.form.padEnd(4),"—",g.info);
     } else if(cmd==="track"||cmd==="blend"){
       const seed=+flag("seed",1);
+      const synth=has("synth");   // --synth: opt OUT of sampled-by-default -> pure Faust synth
       const state=cmd==="track"
-        ? track(args[1],{seed})
-        : blend(args[1],args[2],parseFloat(args[3]||"0.5"),{seed});
+        ? track(args[1],{seed,synth})
+        : blend(args[1],args[2],parseFloat(args[3]||"0.5"),{seed,synth});
       const base=cmd==="track"?`${args[1]}-s${seed}`:`${args[1]}-${args[2]}-${args[3]||"0.5"}-s${seed}`;
       fs.writeFileSync(base+".state.json",JSON.stringify(state,null,2));
       console.log("✓ "+base+".state.json  ("+JSON.stringify(state.genreMeta)+")");
@@ -3729,7 +3895,7 @@
     } else if(cmd==="playlist"){
       const dashIx=args.findIndex(a=>a.startsWith("--"));
       const ways=args.slice(1,dashIx<0?undefined:dashIx);
-      const pl=playlist(ways,{tracks:+flag("tracks",12),hours:+flag("hours",2),seed:+flag("seed",42)});
+      const pl=playlist(ways,{tracks:+flag("tracks",12),hours:+flag("hours",2),seed:+flag("seed",42),synth:has("synth")});
       const dir=flag("out","playlist");
       fs.mkdirSync(dir,{recursive:true});
       const manifest=pl.map(({state,...rest})=>rest);
@@ -3763,7 +3929,7 @@
       }
       const hours=+flag("hours",2);
       const seed=flag("seed",null)!=null?+flag("seed",1):(pathSeed!=null?pathSeed:42);
-      const pl=journey(ways,{tracks:flag("tracks",null)!=null?+flag("tracks",12):undefined,hours,seed});
+      const pl=journey(ways,{tracks:flag("tracks",null)!=null?+flag("tracks",12):undefined,hours,seed,synth:has("synth")});
       const dir=flag("out","journey");
       fs.mkdirSync(dir,{recursive:true});
       const manifest=pl.map(({state,...rest})=>rest);
