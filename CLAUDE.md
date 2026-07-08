@@ -1,11 +1,14 @@
-# CLAUDE.md — Royal Road vaporwave
+# CLAUDE.md — stellate
 
-A self-contained generative-music project: a 32-genre deterministic vector
-space (`genre-kernel.js`) over one score brain (`csd-engine.js buildEvents`),
-played by a single **Faust WASM engine** (`faust/` — live in the browser and
-offline "press" in node), verified symbolically and empirically. Extracted
-from the verifier-catalog repo in 2026-06 with full history; it is a worked
-example of that catalog's generator → verifier → feedback-loop thesis.
+A self-contained generative genre-space instrument: a **~110-genre**
+deterministic vector space (`genre-kernel.js`) over one score brain
+(`csd-engine.js buildEvents`), **sampled by default** (full General MIDI via
+`faust/extract-gm.js`, with per-voice Faust effect chains) and played by a
+single **Faust WASM engine** (`faust/` — live in the browser and offline
+"press" in node), verified symbolically and empirically. Extracted from the
+verifier-catalog repo in 2026-06 with full history; it is a worked example of
+that catalog's generator → verifier → feedback-loop thesis. (Named "Royal Road
+vaporwave" through 2026-07; renamed **stellate** at export.)
 
 Since 2026-07 (FAUST-PORT phase 3) Faust is the **only** backend on main; the
 entire csound era — `buildCsd` codegen, `wasm-audio.js`, the `builder.html`
@@ -45,7 +48,7 @@ changes in the catalog's own checkout and bump the submodule pointer.
 ./fetch-found-video.sh   # one-time: Internet Archive laserdisc clips -> found/video/
 ./serve.sh               # http://localhost:8777/explorer.html (needs http, not file://)
 node engine.test.js      # faust-press smoke: 3 states render, gated on non-silence
-node validate-genres.js --quick   # symbolic gates (all 32 genres); --audio adds Discogs-EffNet
+node validate-genres.js --quick   # symbolic gates (all 110 genres); --audio adds Discogs-EffNet
 node genre-verifier.js matrix     # genre confusion matrix — must stay diagonal-dominant
 node genre-kernel.js track jungle --seed 7 --render   # one track -> mp3 via faust/press.js
 node render-sample-video.js  # sample.mp4: song (faust press) + video layer, cuts on section downbeats
@@ -70,8 +73,14 @@ Requires `ffmpeg`, `curl`, `node` (with `faust/node_modules` — `npm ci` in
     (`node build.js` rebuilds); DX7 family decodes real cartridge banks
   - `state-engine.js` — state → voice units + param/event mapping (shared by
     live + press)
-  - `live.js` — `FaustLive.exploreLive`: chord-bar JIT scheduler on the
-    WebAudio clock, voice pools, eco-mode load shedding
+  - `sampler.js` + `sf2.js` + `extract-gm.js` — the sampled layer (default):
+    full General MIDI extracted from a FluidR3-class SoundFont, played back
+    through per-voice Faust effect chains; synths are the fallback/color
+  - `live.js` — `FaustLive.exploreLive`: chord-bar JIT scheduler on the WebAudio
+    clock, voice pools, eco-mode load shedding. Desktop rides a SharedArrayBuffer
+    ring (`ring-player.js`, `stream-worker.js`, `stream-renderer.js`); mobile
+    takes the **WAV-FIRST** path — a real `<audio>` element fed rendered media
+    segments so audio survives pocket/lock (`docs/history/WAV-FIRST.md`)
   - `found-player.js` — native found sound: granular bed + slice chopper on
     `AudioBufferSourceNode`s; `decodeUrlToBuffer` skips recording lead-in and
     boost-normalizes quiet speech (the spokenword fix)
@@ -99,8 +108,11 @@ Requires `ffmpeg`, `curl`, `node` (with `faust/node_modules` — `npm ci` in
 - `engine.test.js` — faust-press render smoke test (real offline audio)
 - `video-layer.js` — laserdisc background video: dual-<video> crossfade, switches
   on section changes during playback, ambient cycling when idle
-- `builder.html` / `play.html` — tombstones pointing at explorer.html +
-  `legacy-csound` (the working pages live on that branch)
+- `docs/history/` — retired planning/verification records kept for the
+  architecture trail (esp. `WAV-FIRST.md` — the mobile-audio design; also
+  `KERNEL-V4.md`, `ZERO-STATIC.md`, `ab-report.md`, `EVALUATION.md`,
+  `VALIDATION.md`, `NEXT.md`). The old csound-WASM pages (`builder.html` song
+  builder, `play.html` player) live fully working on branch `legacy-csound`.
 - `found/` — fetched found-sound + found-video layers (gitignored except `.gitignore`;
   recipes: `fetch-found-sound.sh`, `fetch-found-video.sh`, credits in SOURCES.md)
 

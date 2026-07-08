@@ -1,197 +1,100 @@
-# Royal Road vaporwave — a worked example
+# stellate
 
-A self-contained vaporwave sketch, and a small parable about not losing capabilities.
+**A generative music instrument you play by moving through a map of genres.**
 
-## What happened
+Every genre is a point in one deterministic vector space. Drag the star chart,
+draw a path, or drift, and the music continuously morphs through whatever the
+traveler crosses — tempo, harmony, groove, instrumentation, and effects all
+blending between neighbours. ~110 genres, from `techno` and `citypop` to
+`singeli`, `budstep`, and `fugue`, all generated live in the browser.
 
-We once rendered ten vaporwave tracks (`vaporwave1.wav … vaporwave10.wav`) at 4am
-into a home directory that wasn't under version control. The renders survived; the
-`.csd` that made them did not. We kept the **artifact** and lost the **generator** —
-the exact failure mode this catalog exists to name: *generator output with no
-reproducibility gate, `feedback_path` severed.* The artifacts were eventually deleted
-because they were the only copies of nothing recoverable.
+**Play it:** https://aboardresearch.com/projects/stellate/
 
-This folder is the fix. The source is committed; the audio is not.
+## How it works
 
-## The rule
+One idea, one pipeline:
 
-- **`royal-road.csd` is the capability.** It lives in git.
-- **`*.wav` / `*.mp3` are derived and `.gitignore`d.** Regenerate them any time.
+1. **`genre-kernel.js` — the space.** Each genre is a vector (bpm, swing,
+   harmony, kit, instrument/effect pools, …). Blends, tracks, playlists, and
+   journeys are all just points and paths through it. Proximity means
+   similarity; the layout on the star map is computed from that.
+2. **`csd-engine.js buildEvents(state)` — the score brain.** A resolved point
+   becomes a deterministic list of note / drum / found-sound / fx events. Same
+   state + seed → the same score, always. Every backend derives from this.
+3. **`faust/state-engine.js` — voices & effects.** Events map to voice units
+   with a per-voice channel strip and a two-effect chain (filter, EQ,
+   compression, saturation, plus chorus / Leslie / flanger / delay / granular /
+   reverb from the Faust module fleet).
+4. **`faust/` — the engine.** One Faust WASM AudioWorklet per synthesis model,
+   played **live** in the browser and **offline** ("press") in Node from the
+   identical code — so what you hear is what renders.
 
-If `render.sh` turns the committed text back into sound, the capability is intact.
-A WAV in git is a smell; a `.csd` in git is the thing itself. This mirrors how the
-[methods catalog](verifier-catalog/) works — `verifiers.json` is source of truth,
-the `.db` and `.html` are regenerated from it.
+**Sampled by default.** The full General MIDI set is extracted from a
+FluidR3-class SoundFont (`faust/extract-gm.js`) and is the default sound; most
+pitched voices are real sampled instruments through Faust effect chains. Synths
+remain for the genres whose synthesis *is* the identity — the acid `tb303`, the
+Reese/wobble basses, the vocoder — which stay synth on purpose.
 
-## Run it
+**Verified, not vibed.** Machines check structure — a genre-confusion matrix
+that must stay diagonal-dominant (`node genre-verifier.js matrix`), determinism,
+vocabulary, per-voice expected-vs-actual audio truth — so a change can't
+silently break a genre. Human ears check taste, in the live app. This is a
+worked example of the generator → verifier → feedback-loop thesis from the
+`verifier-catalog` submodule it was extracted from.
 
-```bash
-./fetch-found-sound.sh   # download + prep the Internet Archive field recordings
-./render.sh              # writes vaporwave.wav AND vaporwave.mp3 (needs csound —
-                         # the one legacy tool kept on main, for this founding .csd;
-                         # everything else renders via the Faust press)
-```
+**Pocket-proof mobile.** On phones the audible path is a real media element fed
+a continuously-rendered, encoded stream (the WAV-FIRST pipeline), so playback
+survives screen-lock and backgrounding where a live WebAudio graph would be
+frozen. See `docs/history/WAV-FIRST.md`.
 
-Requires `ffmpeg`, `curl`, `node`; `render.sh` alone still wants `csound`
-(tested 6.18) — or check out branch `legacy-csound` for the whole csound era.
+## The explorer (CONSTELLATE, `explorer.html`)
 
-## Found sound (the part that makes it vaporwave)
+The whole UI is the star map. Drag it, mouse-wheel to zoom, double-tap to drop
+path waypoints and travel the loop. Chips: ▶ live, ⓘ **inside the sound** (a live
+per-voice timeline showing each instrument's rhythm and its effect chain), a
+background toggle (off → laserdisc video → MicroW8 demoscene, which alternate
+every few bars), and ⚙ controls.
 
-The chords are a skeleton. The character comes from **found sound off the
-Internet Archive** — radio aporee field recordings, currently the **Tokyo
-Station** ambience (metro voices and announcements). It does not play dry:
-`royal-road.csd` runs it through Csound's **`syncgrain`** (granular
-time-stretch, pitched down a few semitones) and sends it to the hall reverb,
-so the city is smeared into haze rather than sampled literally.
+## The genesis parable (why the source is the artifact)
 
-The arrangement uses it the vaporwave way — the band drops out and **the city
-plays alone** at the intro, a mid-piece interlude, and the fade-out, with a
-quiet found-sound bed under everything.
+We once rendered ten vaporwave tracks at 4am into a home directory that wasn't
+under version control. The renders survived; the `.csd` that made them did not —
+we kept the **artifact** and lost the **generator**. This repo is the fix, and
+the rule that falls out of it:
 
-The recordings are **external, CC-licensed, and not committed** — see
-[`SOURCES.md`](SOURCES.md) for items and attribution. `fetch-found-sound.sh`
-makes them recoverable; that script is the committed recipe, the audio is not.
+- **Source is committed; audio is derived and gitignored.** `royal-road.csd`,
+  `csd-engine.js`, `faust/dsp/` are the capability. Every `.wav`/`.mp3`/`.mp4`
+  is regenerable and never committed. (The project was named "Royal Road
+  vaporwave" through 2026-07; it is a worked genre now, not the whole show.)
 
-## The music
-
-- **Harmony:** the Royal Road progression (王道進行, *ōdō shinkō*) —
-  **IVΔ7 · V7 · iii7 · vi7**, i.e. **Fmaj7 · G7 · Em7 · Am7** in C major.
-  It opens on IV (never home) and uses the deceptive iii→vi turn for the
-  signature bittersweet float. It's the harmonic fingerprint of Japanese
-  city pop, the genre vaporwave is built from.
-- **Treatment:** ~70 BPM, three detuned saw pads (chorus/width), a slow
-  tape-wow pitch wobble, a warm lowpass, and a big hall reverb. **The chords
-  are the easy part — the genre lives in the slowed, drenched treatment.**
-- **Voices:** pads (`instr 1`), a syncopated city-pop bass (`instr 2`), the
-  granular found sound (`instr 3`), a wistful lead melody (`instr 4`), and a
-  synthesized kit — kick (`10`), snare/rim (`11`), hats (`12`). Everything is
-  summed on a master bus (`instr 100`) with a soft limiter, so stacking the
-  full arrangement never hard-clips.
-
-## The build (nothing starts at once)
-
-It comes in layer by layer, the vaporwave way:
-
-| beats | section | what's playing |
-|---|---|---|
-| 0–16 | intro | the city alone (Tokyo Station) |
-| 16–48 | A | + pads |
-| 48–80 | B | + bass |
-| 80–112 | C | + kick pulse (drums creep in) |
-| 112–144 | D | + full kit + melody — everything |
-| 144–160 | interlude | band out, the city alone again |
-| 160–192 | E | full reprise |
-| 192–208 | outro | the city alone, fading |
-
-The score expresses this with `PAD` / `BASS` / `DRUMKICK` / `DRUMS` / `MEL`
-macros, each taking a start beat — so the arrangement reads as a stack of
-labelled section calls, not hundreds of raw note rows.
-
-The reprise (cyc E) is **not** a copy of cyc D — it uses variation macros:
-`BASS2` (busier eighth-note walking bass), `MEL2` (higher, more ornamented
-lead), and `DRUMS2` (ghost snares + open hats). `FILL` drops a 2-beat
-snare-roll into each transition (into the full kit, and out of the
-interlude). Tempo is **88 BPM** — slowed, but with a pulse.
-
-## How you'd actually verify it (the loop)
-
-There is no unit test for "is this vaporwave." Genre conformance is
-irreducibly a matter of taste — see catalog **verifier 12.33**
-(genre-conformance) and **17.43** (the no-formal-verifier marker). The real
-gate is an **A/B against a reference** (Macintosh Plus — *Floral Shoppe*;
-Mariya Takeuchi — *Plastic Love*): render, listen side by side, adjust the
-detune / reverb / tempo, repeat. Generator → reference-similarity verifier →
-feedback. A good loop.
-
-## Run it in the browser (Faust WASM)
-
-The live capability runs in a browser tab on precompiled
-[Faust](https://faust.grame.fr) voice modules (one WASM AudioWorklet per
-synthesis model — see `FAUST-PORT.md`):
+## Run
 
 ```bash
-./serve.sh                       # static server on http://localhost:8777
-# open http://localhost:8777/explorer.html  — CONSTELLATE: the live genre-space explorer
+git submodule update --init            # verifier-catalog (reference data + MCP)
+(cd faust && npm ci)                    # the WASM engine's deps
+./fetch-found-samples.sh               # one-time: SoundFont/GM + breaks + speech
+./fetch-found-sound.sh ./fetch-found-video.sh   # one-time: found audio/video layers
+./serve.sh                             # http://localhost:8777/  (needs http, not file://)
 ```
 
-(It needs `http://localhost`, not `file://`, because `fetch` + AudioWorklet
-require it. Press LIVE — browsers need a click to start audio.)
-
-The original csound-WASM pages (`play.html`, the `builder.html` song builder)
-are preserved fully working on branch `legacy-csound`; on main they are
-signposts pointing here.
-
-### Files behind it
-
-| file | role |
-|---|---|
-| `csd-engine.js` | the score brain: `buildEvents(state)` → notes/drums/found/sfx. No DOM. |
-| `midi-export.js` | `buildMidi(state)` → Standard MIDI File, from the same `buildEvents` |
-| `faust/` | the engine: precompiled WASM voice modules, live scheduler, offline press |
-| `explorer.html` | CONSTELLATE — the live UI over the 32-genre space |
-| `engine.test.js` | **render-verifies** three states through the real offline press (`node engine.test.js`) |
-
-Every backend (Faust live, Faust press, MIDI) derives from one
-`buildEvents(state)` walk, so they never drift.
-
-## The good loop, as built
-
-This tool *is* a generator → verifier → feedback loop, the article's thesis as
-software:
-
-- **Generator** — `csd-engine.js` builds the song (15 progressions, 4 **style**
-  presets — vaporwave / synthwave / downtempo / lo-fi, a **delay** bus routed
-  per-instrument like reverb, 8 drum kits with 4-bar fills, named song structure).
-- **Verifier** — `song-verifier.js` (`analyzeSong`) scores a song on
-  banger-relevant, music-theory-grounded dimensions (build & dynamics, the drop,
-  hook/repetition, groove, fullness, space, tension & release, harmony, form) and
-  returns actionable feedback.
-- **Feedback** — the suggestions, plus `improveSong` which acts on them (fill the
-  drop, lead into the chorus, repeat the hook, add groove).
-
-It's a heuristic gate, not a trained model: "banger" is irreducibly taste
-(catalog verifiers **12.33** genre-conformance, **17.43** no-formal-verifier).
-A learned discriminator would be the next rung — the honest gate ships now.
-
-Found sounds are cached in **IndexedDB**, so they survive reloads without
-re-hitting the Internet Archive. The UI is mobile-responsive.
-
-**SFX channel** — a 6th matrix column of transition one-shots (riser / sweep /
-downlift / impact / reverse swell / noise), one per section, routed to mix +
-reverb.
-
-**Live editing** — LIVE uses a just-in-time scheduler (`faust/live.js`):
-each 8-beat chord-bar is built from the *current* state ~4s before it plays,
-as `setParamValue`/gate automation on precompiled Faust voice worklets — no
-recompiles, so timbre glides are free. Edits and journeys take effect on the
-next bar.
-
-`csd-engine.js` is the same score brain as `royal-road.csd`; the score is
-data-driven so the UI can rearrange it. The render path is verified offline
-(`engine.test.js` presses real states through `faust/press.js` and gates on
-non-silence).
-
-## Catalog cross-reference
-
-This project began life inside the
-[verifier-catalog](https://github.com/ftrain/verifier-catalog) repo and still
-leans on it — the catalog is vendored here as a **git submodule** at
-[`verifier-catalog/`](verifier-catalog/):
+Verify / render:
 
 ```bash
-git submodule update --init   # after cloning this repo
+node engine.test.js                    # offline-render smoke, gated on non-silence
+node genre-verifier.js matrix          # genre confusion matrix — must stay diagonal
+node validate-genres.js --quick        # determinism / vocabulary / coverage gates
+node genre-kernel.js track budstep --seed 7 --render   # one track -> mp3
 ```
 
-The submodule does double duty:
+Needs `node`, `ffmpeg`, `curl`. Only `./render.sh` (the founding `royal-road.csd`)
+still needs a `csound` binary. Headless browser gates live in `faust/*-test*.js`.
 
-1. **Reference data.** The harmonic knowledge here is also encoded as data in
-   [`verifier-catalog/gen_data/k_music.py`](verifier-catalog/gen_data/k_music.py) —
-   the `generate_symbolic_music` generator, whose `domain_notes` for `vaporwave`,
-   `city_pop`, and `genre_harmony` describe this exact progression and the
-   "production, not chords" caveat. This repo is that prose given an
-   **executable twin**.
-2. **Live reference tool.** `.mcp.json` points Claude Code at the catalog's MCP
-   server (`search_methods`, `get_method`, `neighbors`, `plan_architecture`), so
-   any session in this repo can consult the methods corpus directly. Needs `uv`
-   on PATH; the server self-provisions (builds `methods.db` from the committed
-   JSONs on first query).
+## More
+
+- **`CLAUDE.md`** — the full layout and working notes.
+- **`GENRE-SPACE.md`** — how the vector space and journeys are designed.
+- **`faust/VOICES.md`** — the synthesis/effect voice library.
+- **`SOURCES.md`** — every found-sound, sample, video, and vendored-code credit.
+- **`docs/history/`** — the design/planning trail (WAV-FIRST, kernel, etc.).
+- The pre-Faust csound era (the `builder.html` song builder, `play.html` player)
+  lives fully working on branch **`legacy-csound`**.
