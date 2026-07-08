@@ -1,0 +1,15 @@
+include "microw8-api.cwa"
+export fn upd() {
+    let inline t = time();
+    let i: i32;
+    loop pixels {
+        let inline x = (i % 320) as f32 - 160 as f32;
+        let inline y = (i #/ 320) as f32 - 120 as f32;
+        let inline a = atan2(y, x);
+        let inline r = sqrt(x*x + y*y);
+        let inline rays = sin(a * 12 as f32 + t * 2 as f32);
+        let inline cf = max(0 as f32, min(63 as f32, rays * (63 as f32 - r * 0.2)));
+        i?FRAMEBUFFER = (cf as i32) + 200;
+        branch_if (i := i + 1) < 320*240: pixels;
+    }
+}

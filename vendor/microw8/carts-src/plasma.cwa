@@ -1,0 +1,29 @@
+include "microw8-api.cwa"
+
+export fn start() {
+    // smooth 64-step fire/rainbow gradient in palette entries 0..63
+    let i: i32;
+    loop pal {
+        let inline f = i as f32 / 63 as f32;
+        let inline r = (sin(f * 6.28) * 127 as f32 + 128 as f32) as i32 & 255;
+        let inline g = (sin(f * 6.28 + 2 as f32) * 127 as f32 + 128 as f32) as i32 & 255;
+        let inline b = (sin(f * 6.28 + 4 as f32) * 127 as f32 + 128 as f32) as i32 & 255;
+        (i * 4)!PALETTE = r | (g << 8) | (b << 16);
+        branch_if (i := i + 1) < 64: pal;
+    }
+}
+
+export fn upd() {
+    let t = time();
+    let i: i32;
+    loop pixels {
+        let inline x = (i % 320) as f32;
+        let inline y = (i #/ 320) as f32;
+        let inline v = sin(x * 0.06 + t) + sin(y * 0.08 - t * 1.3)
+                     + sin((x + y) * 0.05 + t * 0.7)
+                     + sin(sqrt(x * x + y * y) * 0.07 - t * 1.1);
+        let inline c = ((v * 8 as f32) as i32) & 63;
+        i?FRAMEBUFFER = c;
+        branch_if (i := i + 1) < 320*240: pixels;
+    }
+}
