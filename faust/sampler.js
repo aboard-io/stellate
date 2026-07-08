@@ -85,7 +85,13 @@
     if (strip.hpf) S.hp = rbjCoefs("hp", strip.hpf, sr, 0.707, 0);
     if (strip.lpf) S.lp = rbjCoefs("lp", strip.lpf, sr, 0.707, 0);
     if (strip.eq) S.eq = rbjCoefs("peak", strip.eq.f, sr, strip.eq.q || 1, strip.eq.gain || 0);
-    if (strip.sat) { S.satG = 1 + 3 * strip.sat; S.satMix = clampS(strip.satMix != null ? strip.satMix : 0.4, 0, 1); }
+    // eq2 — a SECOND peaking band (the classic-metal mid-scoop + presence bite
+    // needs two: cut ~600 Hz, lift ~3.2 kHz). Absent => byte-identical.
+    if (strip.eq2) S.eq2 = rbjCoefs("peak", strip.eq2.f, sr, strip.eq2.q || 1, strip.eq2.gain || 0);
+    // saturation: tanh drive. satDrive is the HARDNESS multiplier (default 3 =
+    // the original gentle strip; aggressive genres push it to ~8-12 for real
+    // fuzz). tanh REDUCES peaks, so heavy drive doubles as clip insurance.
+    if (strip.sat) { S.satG = 1 + (strip.satDrive != null ? strip.satDrive : 3) * strip.sat; S.satMix = clampS(strip.satMix != null ? strip.satMix : 0.4, 0, 1); }
     if (strip.comp) {
       S.cThresh = strip.comp.thresh != null ? strip.comp.thresh : 0.25;
       S.cSlope = 1 - 1 / Math.max(1, strip.comp.ratio || 3);
@@ -143,6 +149,7 @@
     if (S.hp) x = biq(S.hp, x);
     if (S.lp) x = biq(S.lp, x);
     if (S.eq) x = biq(S.eq, x);
+    if (S.eq2) x = biq(S.eq2, x);
     if (S.satG) { const s = Math.tanh(x * S.satG) / S.satG; x += S.satMix * (s - x); }
     if (S.cEnv !== undefined) {
       const ax = x < 0 ? -x : x;
@@ -374,7 +381,8 @@
     if (strip.hpf) { const f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = strip.hpf; f.Q.value = 0.707; chain(f); }
     if (strip.lpf) { const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = strip.lpf; f.Q.value = 0.707; chain(f); }
     if (strip.eq) { const f = ctx.createBiquadFilter(); f.type = "peaking"; f.frequency.value = strip.eq.f; f.Q.value = strip.eq.q || 1; f.gain.value = strip.eq.gain || 0; chain(f); }
-    if (strip.sat) { const ws = ctx.createWaveShaper(); ws.curve = satCurve(1 + 3 * strip.sat, strip.satMix != null ? strip.satMix : 0.4); ws.oversample = "2x"; chain(ws); }
+    if (strip.eq2) { const f = ctx.createBiquadFilter(); f.type = "peaking"; f.frequency.value = strip.eq2.f; f.Q.value = strip.eq2.q || 1; f.gain.value = strip.eq2.gain || 0; chain(f); }
+    if (strip.sat) { const ws = ctx.createWaveShaper(); ws.curve = satCurve(1 + (strip.satDrive != null ? strip.satDrive : 3) * strip.sat, strip.satMix != null ? strip.satMix : 0.4); ws.oversample = "2x"; chain(ws); }
     if (strip.comp) {
       const c = ctx.createDynamicsCompressor();
       c.threshold.value = 20 * Math.log10(Math.max(1e-3, strip.comp.thresh || 0.25));

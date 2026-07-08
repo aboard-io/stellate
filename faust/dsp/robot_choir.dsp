@@ -16,8 +16,15 @@ makeup = hslider("makeup", 5, 0, 12, 0.1);
 level  = hslider("level", 0.8, 0, 2, 0.01);
 gain   = hslider("gain", 1, 0, 2, 0.01);
 
-carrier = (os.sawtooth(freq*0.996) + os.sawtooth(freq) + os.sawtooth(freq*1.004))*0.3
-        + os.sawtooth(freq*2)*0.18;
+// INTELLIGIBILITY (Paul 2026-07: "you're pitching the synth voice too high to be
+// intelligible"): the carrier sits an OCTAVE BELOW the note. A lower carrier
+// packs more harmonics into the speech-formant band (200 Hz–3 kHz), so the
+// vocoded consonants/vowels actually read — the melody line drops an octave, but
+// the words come through. The octave-double (cf*2 = the original note pitch)
+// keeps the top-end sheen.
+cf = freq*0.5;
+carrier = (os.sawtooth(cf*0.996) + os.sawtooth(cf) + os.sawtooth(cf*1.004))*0.3
+        + os.sawtooth(cf*2)*0.18;
 
 env = en.adsr(0.04, 0.06, 0.85, 0.30, gate);
 

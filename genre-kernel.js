@@ -1049,10 +1049,12 @@
       bpm:[136,146], swing:[0,.08], humanize:[.05,.2],
       progressions:["drone_min","deep_two","minor_run"], kits:["halftime","breaks"], fills:["break fill","riser","impact","off","dropout"],
       euclid:{hat:[5,16]},   // E(5,16) sparse uneven hats rotating over the halftime frame
+      reverbColor:"greyhole",   // GRIT PASS: the cavernous halftime space made a real diffuse hall
       bass:{patterns:["sub","dub","stab"], recipe:{model:["wobble","reese","sub"],wobbleHz:[1.5,4.5],cutoff:[300,650],res:[.2,.4],level:[1.2,1.45],send:[0,.08],dsend:[0,.1]},
-        inserts:{prob:.5, max:1, pool:[["distort",{drive:[.3,.6],mix:[.6,.9]}],["filtersweep",{rateBars:[1,2],lo:[-.8,-.3],hi:[.6,1.2],res:[.3,.5]}]]}},   // grit on the reese; slow sweeps where the wobble isn't already doing it (constrain guards wobble)
+        inserts:{prob:.7, max:1, pool:[["distort",{drive:[.45,.8],mix:[.7,1]}],["filtersweep",{rateBars:[1,2],lo:[-.8,-.3],hi:[.6,1.2],res:[.3,.5]}]]}},   // grit on the reese, HEAVIER; slow sweeps where the wobble isn't already doing it (constrain guards wobble)
       snarePP:0.5,   // effects audit B4: the big snare on beat 3 thrown/ping-ponged in the cavern. Below the .65 liberal threshold => legacy >=4-beat/.6 spacing (a THROW, not a smear); matrix-safe (softTop stays 0)
-      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm","vocoder"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1800,3000],level:[.3,.45],send:[.35,.55],dsend:[.3,.5],octave:0,attack:.004,release:[.1,.16],sustain:[.55,.68],fenv:[.35,.6]}},   // rare vocoder: pitched vox stabs; envelope identity (ex-ARTIC): short dark stab
+      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm","vocoder"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1800,3000],level:[.3,.45],send:[.35,.55],dsend:[.3,.5],octave:0,attack:.004,release:[.1,.16],sustain:[.55,.68],fenv:[.35,.6]},
+        inserts:{prob:.5, max:1, pool:[["granular",{pitch:[-12,0],density:[.4,.7],rate:[8,16],mix:[.3,.55]}],["distort",{drive:[.3,.55],mix:[.5,.8]}]]}},   // granular stutter clouds — the dubstep chop; grit on the pluck stab
       vocSource:"sp_pressure",
       pads:{prob:.35, recipe:{model:["saw","organ"],wave:"saw",cutoff:[550,950],detune:[.006,.014],attack:[1.5,3],level:[.32,.45],send:[.5,.7],dsend:[.15,.3]}},   // dark, mostly ABSENT — cavern not wash
       drums:{kickModel:["808","909"],snareModel:["crack","clap"],hatModel:["noise","metal"],kick:[1.2,1.45],snare:[.85,1.1],hat:[.4,.7],tune:[.9,1.05],send:[.15,.35],dsend:[.25,.5]},
@@ -1177,8 +1179,10 @@
     doomdrone: { label:"Doom drone", info:"glacial fuzz over tectonic drones — the metallurgy plant pitched into the abyss",   // SYNTH-FORWARD (the bed is dread, not hook)
       bpm:[48,62], swing:[0,.04], humanize:[.1,.3],
       progressions:["drone_min","deep_two","mode_phrygian"], kits:["off","kick"], fills:["off"],
-      bass:{patterns:["root","sub","off"], recipe:{model:["sub","reese"],cutoff:[200,380],res:[.05,.15],level:[1.1,1.35],send:[.1,.25],dsend:[0,.1]}},
-      lead:{patterns:["sparse","double","off"], recipe:{model:["fuzz"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[1200,2000],res:[.2,.35],level:[.45,.55],send:[.5,.7],dsend:[.3,.5],attack:[.1,.3],release:[.5,.9],sustain:[.9,1]}},   // LOW sustained fuzz — a riff exhaling
+      reverbColor:"greyhole",   // GRIT PASS: the diffuse abyssal smear — the drone drowns in the cavern
+      bass:{patterns:["root","sub","off"], recipe:{model:["sub","reese"],cutoff:[200,380],res:[.05,.15],level:[1.15,1.4],send:[.1,.25],dsend:[0,.1]},
+        inserts:{prob:.85, max:1, pool:[["distort",{drive:[.55,.85],mix:[.75,1]}]]}},   // tectonic distorted sub
+      lead:{patterns:["sparse","double","off"], recipe:{model:["fuzz"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[1200,2000],res:[.2,.35],drive:[.7,1],level:[.48,.58],send:[.5,.7],dsend:[.3,.5],attack:[.1,.3],release:[.5,.9],sustain:[.9,1]}},   // LOW sustained fuzz — a riff exhaling, drive MAXED
       pads:{prob:1, samplerPool:["church_organ","cello"], recipe:{model:["saw","choir","sampler","sampler"],wave:"saw",cutoff:[500,900],detune:[.01,.018],attack:[3,5],mellotron:true,level:[.7,.9],send:[.7,.85],dsend:[.15,.3]},
         inserts:{prob:.5, max:1, pool:[["filtersweep",{rateBars:[8,16],lo:[-1.5,-.8],hi:[.3,.8],res:[.2,.4]}]]}},   // tectonic 8-16-bar sweeps — the drone inhales once a minute. Effects audit C: Sunn/Boris tape drones — the church_organ/cello/choir pad runs through the MELLOTRON tape head (drowned wow/flutter, byte-stable boolean flag)
       drums:{kickModel:["boom","808"],snareModel:["noise"],hatModel:["noise"],kick:[1.3,1.6],snare:[.4,.6],hat:[.3,.5],tune:[.78,.9],send:[.3,.5],dsend:[.1,.3]},
@@ -1422,10 +1426,10 @@
       bass:{patterns:["stab","drive","rolling"], recipe:{model:["acid","reese"],cutoff:[420,700],res:[.25,.4],level:[1.2,1.4],send:[0,.06],dsend:[0,.08]},
         inserts:{prob:.8, max:1, pool:[["distort",{drive:[.5,.9],mix:[.8,1]}]]}},   // everything into the red — the Rotterdam way
       lead:{patterns:["double","off","arpup"], recipe:{model:["stack"],wave:"saw",voices:[3,5],spread:[.008,.015],cutoff:[2200,3200],res:[.3,.45],level:[.46,.58],send:[.2,.35],dsend:[.2,.35],attack:.003,release:[.06,.1],sustain:[.5,.62],fenv:[.7,1.2]},
-        inserts:{prob:.5, max:1, pool:[["phaser",{rate:[.15,.4],depth:[.5,.7],mix:[.35,.55]}]]}},   // effects audit C: the Alpha-Juno hoover was often phased — the swirling Rotterdam stab
+        inserts:{prob:.7, max:2, pool:[["phaser",{rate:[.15,.4],depth:[.5,.7],mix:[.35,.55]}],["distort",{drive:[.5,.85],mix:[.7,1]}]]}},   // the phased Alpha-Juno hoover, now also driven into the red — the swirling DISTORTED Rotterdam stab
       pads:{prob:.2, recipe:{model:["saw"],wave:"saw",cutoff:[600,1000],detune:[.008,.016],attack:[.5,1.5],level:[.3,.42],send:[.25,.4],dsend:[.1,.25]}},
       drums:{kickModel:["909"],snareModel:["clap","crack"],hatModel:["metal","noise"],kick:[1.5,1.8],snare:[.7,.95],hat:[.6,.9],tune:[1.05,1.2],send:[.05,.12],dsend:[.05,.15]},   // the kick DISTORTED LOUD (grit does the rest)
-      fx:{reverb:[.25,.4], delayBeats:[.375,.5], delayFb:[.25,.4], delayCut:[2200,3400], pump:[.4,.7], crackle:[0,.05], lowcut:[30,45], highcut:[0,0], comp:[.6,.85], grit:[.6,.9], jux:[.15,.35]},
+      fx:{reverb:[.25,.4], delayBeats:[.375,.5], delayFb:[.25,.4], delayCut:[2200,3400], pump:[.4,.7], crackle:[0,.05], lowcut:[30,45], highcut:[0,0], comp:[.6,.85], grit:[.7,.95], jux:[.15,.35]},
       found:{role:"chops", vol:[.1,.18], pitch:[.9,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["factory","vx_xminusone"]},
       stab:["rave","offbeat"], hits:{sources:["rave_a","rave_c","bb_stab_a","sp_energy"], pattern:"offbeat", prob:.8},
       introMode:"off",   // Paul's optional-intro pilot: gabber is brutality — it opens COLD on the machine (drops the dj "warmup" ground node; the solver regrows the groove to still land ~180s). Margin 19 absorbs the bedUse/density shift; matrix-gated.
@@ -1642,6 +1646,7 @@
       bpm:[52,70], swing:[0,.06], humanize:[.1,.3],
       timeFeel:{ pushPull:{ kick:.03, snare:.045, bass:.055 } },   // 2026-07 deep pass — THE DOOM DRAG: the whole band plays BEHIND the beat, the bass draggiest (the amp about to die pulls the riff late). A per-voice offset drawn from timeFeel (pure feel — no verifier feature reads onset timing, so byte-stable to the matrix), it's the crawling lurch that half-time bpm alone can't give: the riff EXHALES between the stomps
       progressions:["mode_phrygian","drone_min","deep_two"], kits:["halftime","kick"], fills:["impact","off","downlift"],
+      reverbColor:"greyhole",   // GRIT PASS: the room shakes — the cavernous smear the amp dies into
       bass:{patterns:["root","sub","dub"], recipe:{model:["reese","sub"],cutoff:[200,360],res:[.05,.15],level:[1.25,1.5],send:[.05,.12],dsend:[0,.06]},
         inserts:{prob:.85, max:1, pool:[["distort",{drive:[.6,1],mix:[.8,1]}]]}},   // downtuned wall — the amp about to die IS the bass tone
       lead:{patterns:["double","blues","sparse"], recipe:{model:["fuzz"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[1400,2200],res:[.25,.4],drive:[.7,1],level:[.5,.62],send:[.3,.45],dsend:[.15,.3],attack:.01,release:[.2,.35],sustain:[.8,.95]}},   // THE RIFF — long sustained fuzz, low
@@ -1654,6 +1659,7 @@
     industrialmetal: { label:"Industrial metal", info:"the machine with a backbeat: halftime slam, fuzz stabs on the grid, everything quantized and furious",   // fuzz-FORWARD sibling of EBM: SLAM where EBM pistons
       bpm:[100,126], swing:[0,.05], humanize:[0,.12],
       progressions:["mode_phrygian","minor_run","drone_min"], kits:["halftime","breaks"], fills:["impact","cut","noise"],
+      reverbColor:"fdn",   // GRIT PASS: a big hard-surfaced industrial slam room behind the machine
       bass:{patterns:["stab","drive","sub"], recipe:{model:["reese"],cutoff:[280,480],res:[.15,.3],level:[1.15,1.35],send:[0,.06],dsend:[0,.08]},
         inserts:{prob:.8, max:1, pool:[["distort",{drive:[.5,.9],mix:[.8,1]}]]}},   // quantized fury — the reese through the wall of Marshalls
       lead:{patterns:["double","sparse","off"], recipe:{model:["fuzz","stack"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[1800,2800],res:[.25,.4],drive:[.6,.9],level:[.46,.58],send:[.2,.35],dsend:[.2,.35],attack:.004,release:[.08,.15],sustain:[.5,.65],fenv:[.4,.8]}},   // fuzz STABS, quantized — not a solo
@@ -1877,29 +1883,34 @@
       found:{role:"bed", vol:[.08,.16], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["blues_vox_78","tokyo_station"]},
       stab:["offbeat"], hits:{sources:["vox_b","sp_herenow"], pattern:"offbeat", prob:.5},
       form:"pop" },
-    heavymetal: { label:"Heavy Metal", info:"classic heavy metal at 140: a wall of distorted electric-guitar power chords, a screaming lead over a galloping double-kick, minor-key riffs — turn it up",   // distorted guitars front and center; comp+drumDensity+bpm fence it off the halftime industrialmetal, the slow sludgemetal, the clean surfrock
+    heavymetal: { label:"Heavy Metal", info:"classic heavy metal at 140: a HUGE wall of distorted electric-guitar power chords doubled to the sub-octave, a screaming lead over a galloping double-kick, deep room reverb — turn it up",   // distorted guitars front and center; comp+drumDensity+bpm fence it off the halftime industrialmetal, the slow sludgemetal, the clean surfrock
       bpm:[130,148], swing:[0,.04], humanize:[.03,.12],
       progressions:["epic_min","minor_run","andalusian","mode_phrygian"], kits:["four","pulse","electro"], fills:["impact","cut","riser","tom fill"],
-      bass:{patterns:["drive","octaves","pedal"], samplerPool:["picked_bass"], recipe:{model:["sampler","saw"],cutoff:[400,700],res:[.1,.25],level:[1.1,1.35],send:[0,.06],dsend:[0,.05]},
-        inserts:{prob:.6, max:1, pool:[["distort",{drive:[.3,.6],mix:[.6,.9]}]]}},   // palm-muted picked/saw low end (NOT a synth sub — keeps it off dubstep's sub-forward diagonal)
-      lead:{patterns:["hero","anthem","blues","double"], samplerPool:["distortion_guitar","overdrive_guitar","distortion_guitar"], recipe:{model:["sampler","sampler"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[2600,3800],level:[.48,.6],send:[.25,.4],dsend:[.15,.3],attack:.005,release:[.1,.2],sustain:[.6,.75]},
-        inserts:{prob:.5, max:1, pool:[["distort",{drive:[.2,.45],mix:[.5,.8]}]]}},   // the distorted riff + solo, real electric-guitar samplers
-      pads:{prob:.5, samplerPool:["distortion_guitar"], recipe:{model:["sampler","saw"],wave:"saw",cutoff:[900,1600],detune:[.006,.012],attack:[.05,.3],level:[.44,.6],send:[.25,.4],dsend:[.1,.25]}},   // the power-chord wall
-      drums:{kickModel:["boom","909"],snareModel:["crack","noise"],hatModel:["metal","noise"],kick:[1.35,1.6],snare:[.8,1.05],hat:[.7,1],tune:[1,1.1],send:[.1,.2],dsend:[.05,.15]},   // galloping double-kick, forward snare
-      fx:{reverb:[.35,.52], delayBeats:[.375,.5], delayFb:[.2,.35], delayCut:[2400,3600], pump:[.05,.25], crackle:[0,.06], lowcut:[30,45], highcut:[0,0], comp:[.5,.85], grit:[.4,.7]},
+      reverbColor:"fdn",   // GRIT PASS: a big bright drum ROOM behind the kit + guitars — "a lot of deep reverb, classic metal effects"
+      padDouble:true,      // WALL OF SOUND: the power-chord pad wall doubled to the octave below
+      bass:{patterns:["drive","octaves","pedal"], samplerPool:["picked_bass"], recipe:{model:["sampler","saw"],cutoff:[500,850],res:[.1,.25],level:[1.2,1.45],send:[0,.06],dsend:[0,.05]},
+        inserts:{prob:1, max:1, pool:[["distort",{drive:[.6,.85],mix:[.8,1]}]]}},   // BIG + thick: heavily-driven picked bass folded through the aggressive strip (sub weight)
+      lead:{patterns:["hero","anthem","blues","double"], samplerPool:["distortion_guitar","overdrive_guitar","distortion_guitar"], recipe:{model:["sampler","sampler"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[2800,4000],level:[.56,.72],send:[.3,.48],dsend:[.2,.35],attack:.005,release:[.1,.2],sustain:[.6,.75]},
+        inserts:{prob:1, max:1, pool:[["distort",{drive:[.6,.85],mix:[.75,.95]}]]}},   // the SCREAMING distorted riff + solo — real electric-guitar samplers through the heavy metal strip
+      pads:{prob:.75, samplerPool:["distortion_guitar"], recipe:{model:["sampler","saw"],wave:"saw",cutoff:[1000,1800],detune:[.006,.014],attack:[.05,.3],level:[.52,.68],send:[.3,.5],dsend:[.1,.25]},
+        inserts:{prob:1, max:1, pool:[["distort",{drive:[.6,.85],mix:[.7,.95]}]]}},   // the HUGE distorted power-chord wall
+      drums:{kickModel:["boom","909"],snareModel:["crack","noise"],hatModel:["metal","noise"],kick:[1.45,1.7],snare:[.9,1.15],hat:[.7,1],tune:[1,1.1],send:[.2,.34],dsend:[.1,.22]},   // galloping double-kick, forward snare, deep room send
+      fx:{reverb:[.46,.64], delayBeats:[.375,.5], delayFb:[.2,.35], delayCut:[2400,3600], pump:[.05,.25], crackle:[0,.06], lowcut:[30,45], highcut:[0,0], comp:[.55,.9], grit:[.55,.82]},
       found:{role:"bed", vol:[.05,.12], pitch:[.85,1], stretch:[.4,.6], cutoff:[2000,3200], sources:["factory","highway_night"]},
       stab:["off","rave"], hits:{sources:["rave_c","sp_energy"], pattern:"sparse", prob:.3},
       form:"pop" },
-    budstep: { label:"Budstep", info:"amen breaks under a relentless SLEEP-style wall of low distorted-guitar sludge — slow, massive and melodic — while a deadpan synth voice recites cannabis strain names: Blue Dream, Northern Lights, Purple Haze",   // the amen (breakUse) + the guitar wall (acoustic) + the sub drone: a triple no other break/bass genre carries
+    budstep: { label:"Budstep", info:"amen breaks under a relentless SUNN O)))/SLEEP wall of DOUBLED distorted-guitar SLUDGE CHORDS — power chords, massive, anthemic, drowned in deep reverb — while a deadpan synth voice recites cannabis strain names: Blue Dream, Northern Lights, Purple Haze",   // the amen (breakUse) + the doubled sludge-chord wall + the doubled sub drone: a triple no other break/bass genre carries
       bpm:[138,146], swing:[0,.06], humanize:[.05,.18],
       progressions:["mode_phrygian","minor_run","drone_min","epic_min"], kits:["jungle","breaks"], fills:["break fill","reverse","off","break fill"],
-      bass:{patterns:["sub","pedal","drive"], recipe:{model:["sub","reese"],cutoff:[240,440],res:[.05,.2],level:[1.25,1.5],send:[0,.05],dsend:[0,.05]},
-        inserts:{prob:.6, max:1, pool:[["distort",{drive:[.35,.7],mix:[.7,1]}]]}},   // drone-adjacent sub doubling the guitar wall
-      lead:{patterns:["blues","pentaup","wander"], samplerPool:["distortion_guitar","overdrive_guitar","distortion_guitar"], recipe:{model:["sampler","sampler"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[1600,2600],level:[.5,.64],send:[.3,.5],dsend:[.2,.35],attack:.01,release:[.4,.8],sustain:[.85,.95]},
-        inserts:{prob:.6, max:1, pool:[["distort",{drive:[.3,.6],mix:[.6,.9]}]]}},   // the SLEEP wall: LOW register, long release + high sustain = relentless, but a real MOVING minor-pentatonic riff (blues/pentaup)
-      pads:{prob:.8, samplerPool:["distortion_guitar"], recipe:{model:["sampler","saw"],wave:"saw",cutoff:[700,1300],detune:[.006,.014],attack:[.1,.5],release:[1.5,3],level:[.5,.66],send:[.35,.55],dsend:[.1,.25]}},   // the never-relenting guitar drone under the riff
-      drums:{kickModel:["808"],snareModel:["crack","noise"],hatModel:["noise"],kick:[1.15,1.4],snare:[.6,.85],hat:[.4,.7],tune:[1,1.12],send:[.1,.2],dsend:[.2,.4]},
-      fx:{reverb:[.42,.6], delayBeats:[.75,1.5], delayFb:[.3,.5], delayCut:[1800,3000], pump:[0,.2], crackle:[.05,.2], lowcut:[20,35], highcut:[0,0], comp:[.5,.85], grit:[.4,.7]},
+      reverbColor:"greyhole",   // SUNN O))) cathedral: the diffuse cavernous hall the wall drowns in — deep reverb
+      bass:{patterns:["sludge","sludge","sub"], recipe:{model:["sub","reese"],cutoff:[240,440],res:[.05,.2],level:[1.35,1.6],send:[0,.05],dsend:[0,.05]},
+        inserts:{prob:1, max:1, pool:[["distort",{drive:[.7,.95],mix:[.8,1]}]]}},   // BIG + DOUBLED sub (sludge = root + octave-below, long held) driving the guitar wall
+      lead:{patterns:["sludge","sludge","blues"], samplerPool:["distortion_guitar","overdrive_guitar","distortion_guitar"], recipe:{model:["sampler","sampler"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[1600,2600],level:[.58,.74],send:[.3,.5],dsend:[.2,.35],attack:.01,release:[.4,.8],sustain:[.85,.95]},
+        inserts:{prob:1, max:1, pool:[["distort",{drive:[.65,.9],mix:[.75,1]}]]}},   // the SLEEP wall: DOUBLED power CHORDS (sludge), LOW register, long release + high sustain = relentless + anthemic, through the heavy metal strip
+      pads:{prob:.85, samplerPool:["distortion_guitar"], recipe:{model:["sampler","saw"],wave:"saw",cutoff:[700,1300],detune:[.006,.014],attack:[.1,.5],release:[1.5,3],level:[.56,.72],send:[.35,.55],dsend:[.1,.25]},
+        inserts:{prob:1, max:1, pool:[["distort",{drive:[.6,.85],mix:[.7,.95]}]]}},   // the never-relenting DISTORTED guitar drone under the riff
+      drums:{kickModel:["808"],snareModel:["crack","noise"],hatModel:["noise"],kick:[1.15,1.4],snare:[.6,.85],hat:[.4,.7],tune:[1,1.12],send:[.14,.26],dsend:[.2,.4]},
+      fx:{reverb:[.5,.68], delayBeats:[.75,1.5], delayFb:[.3,.5], delayCut:[1800,3000], pump:[0,.2], crackle:[.05,.2], lowcut:[20,35], highcut:[0,0], comp:[.5,.85], grit:[.55,.82]},
       found:{role:"break", vol:[.28,.42], pitch:[1,1], stretch:[.5,.5], cutoff:[5000,8000], sources:["amen_170","amen_172","amen_175"]},   // the amen chaos over the wall
       sampleEvents:[{ pool:["wd_bluedream","wd_northernlights","wd_purplehaze","wd_sourdiesel","wd_whitewidow","wd_granddaddy","wd_jackherer","wd_pineapple","wd_mauiwowie","wd_acapulco","wd_durban","wd_weddingcake","wd_zkittlez","wd_indica","wd_sativa","wd_hybrid"],
         placement:"buried", sections:"all", treatment:{cutoff:4200, vol:0.42, glitch:true, every:2, maxDur:8} }],   // the deadpan strain-name recital, one per two bars
@@ -2959,8 +2970,8 @@
     {
       const top=ws.slice().sort((a,b)=>b.w-a.w)[0], G=top&&GENRES[top.g];
       const declared={ sampleEvents:v=>Array.isArray(v)&&v.length, reverbColor:v=>!!v,
-        autoTune:v=>v!=null, masterComp:v=>v!=null, introMode:v=>!!v, blueNote:v=>v>0 };
-      if(G) for(const d of ["sampleEvents","reverbColor","autoTune","masterComp","introMode","blueNote"])
+        autoTune:v=>v!=null, masterComp:v=>v!=null, introMode:v=>!!v, blueNote:v=>v>0, padDouble:v=>!!v };
+      if(G) for(const d of ["sampleEvents","reverbColor","autoTune","masterComp","introMode","blueNote","padDouble"])
         if(declared[d](G[d])) choice[d]=G[d];
     }
     return constrain(choice);
@@ -2982,7 +2993,12 @@
       choice.foundRole="break"; }
     // insert-FX sanity: some pairings are always wrong regardless of the blend
     const insOk=(chain,recipe,voice)=>(chain||[]).filter(fx=>{
-      if(recipe.model==="sampler") return false;  // sampler voices skip inserts (native path renders identically live + press)
+      // sampler voices render on the NATIVE path (no Faust insert chain) — but a
+      // declared DISTORT is FOLDED into the voice's channel strip (state-engine
+      // heavyDriveOf/aggressiveStrip): a heavy tanh fuzz + metal EQ. So keep the
+      // distort on samplers (that is how heavymetal/budstep's guitar wall gets its
+      // grit); every OTHER insert type the native strip can't run is still dropped.
+      if(recipe.model==="sampler") return fx.type==="distort";
       if(fx.type==="distort"&&(recipe.model==="fuzz"||(recipe.drive||0)>=0.3)) return false;  // no distort on already-fuzz/driven voices
       if(voice==="bass"&&(fx.type==="chorus"||fx.type==="phaser")&&recipe.model==="sub") return false;  // the sub stays solid + mono
       if(fx.type==="filtersweep"&&recipe.model==="wobble") return false;  // the wobble IS the sweep
@@ -3594,7 +3610,7 @@
       const isS=!!SAMPLES[sid];
       const sr=isS?SAMPLES[sid]:(SOURCES[sid]||{});
       const pj=1+(ix*0.06-0.03);
-      foundSources.push(Object.assign({id:sid,label:sid,url:sr.url||""},
+      foundSources.push(Object.assign({id:sid,label:sid,url:sr.url||"",kind:sr.kind},
         isS?{samplePath:"found/samples/"+sr.file,bpm:sr.bpm,durSec:sr.durSec}:{},
         {vol:c.foundRecipe.vol,pitch:c.foundRole==="break"?1:round(c.foundRecipe.pitch*pj,3),
          stretch:c.foundRecipe.stretch,cutoff:Math.round(c.foundRecipe.cutoff)}));
@@ -3607,16 +3623,16 @@
       // chinawave/sovietwave listed SOURCES ids in hits and silently lost the
       // whole hit layer on those seeds.
       const h=SAMPLES[c.hits.source], hs=!h&&SOURCES[c.hits.source];
-      if(h) foundSources.push({id:c.hits.source,label:c.hits.source,url:"",samplePath:"found/samples/"+h.file,
+      if(h) foundSources.push({id:c.hits.source,label:c.hits.source,url:"",kind:h.kind,samplePath:"found/samples/"+h.file,
         durSec:h.durSec,vol:(c.hits.vol!=null?c.hits.vol:0.22),pitch:1,stretch:0.5,cutoff:(c.hits.cut||4500),wet:!!c.hits.wet,glitch:!!c.hits.glitch});
-      else if(hs) foundSources.push({id:c.hits.source,label:c.hits.source,url:hs.url,
+      else if(hs) foundSources.push({id:c.hits.source,label:c.hits.source,url:hs.url,kind:hs.kind,
         durSec:4,vol:(c.hits.vol!=null?c.hits.vol:0.22),pitch:1,stretch:0.5,cutoff:(c.hits.cut||4500),wet:!!c.hits.wet,glitch:!!c.hits.glitch});
     }
     const voxIds=(c.voxPool||[]).slice();
     if(c.voxPoem) voxIds.push(c.voxPoem);
     voxIds.forEach(vid=>{   // VO lines (news clean, poem chopped) + the cities poem
       const v=SAMPLES[vid]; if(!v) return;
-      foundSources.push({id:vid,label:vid,url:"",samplePath:"found/samples/"+v.file,durSec:v.durSec,
+      foundSources.push({id:vid,label:vid,url:"",kind:v.kind,samplePath:"found/samples/"+v.file,durSec:v.durSec,
         vol:(c.voxRecipe&&c.voxRecipe.vol)||0.5, pitch:(c.voxRecipe&&c.voxRecipe.pitch)||0.96,
         stretch:0.5, cutoff:(c.voxRecipe&&c.voxRecipe.cutoff)||6500});
     });
@@ -3624,7 +3640,7 @@
       (se.pool||[]).forEach(id=>{
         if(foundSources.some(s=>s.id===id)) return;
         const isS=!!SAMPLES[id], sr=isS?SAMPLES[id]:SOURCES[id]; if(!sr) return;
-        foundSources.push(Object.assign({id,label:id,url:sr.url||""},
+        foundSources.push(Object.assign({id,label:id,url:sr.url||"",kind:sr.kind},
           isS?{samplePath:"found/samples/"+sr.file,durSec:sr.durSec,bpm:sr.bpm}:{durSec:4},
           {vol:0.3,pitch:1,stretch:0.5,cutoff:5000}));
       });
@@ -3716,6 +3732,7 @@
       bpm:c.bpm, keyOffset:opts.keyOffset!=null?opts.keyOffset:0, progression:c.progression,
       reverb:c.fx.reverb, seed:c.seed, swing:c.swing, humanize:c.humanize,
       ...(c.reverbColor?{reverbColor:c.reverbColor}:{}),   // fx wings: per-genre reverb character (absent = fx_bus zita default; byte-identical)
+      ...(c.padDouble?{padDouble:true}:{}),                // WALL OF SOUND: octave-below pad double (heavymetal); absent = byte-identical
       ...(c.autoTune!=null?{autoTune:c.autoTune}:{}),       // fx wings stage 2: found-vocal auto-tune strength 0..1 (absent = no bend; byte-identical)
       ...(c.masterComp?{masterComp:c.masterComp}:{}),       // fx wings stage 4: 3-band master glue-comp drive (absent/0 = bypass; byte-identical)
       ...(c.blueNote?{blueNote:c.blueNote}:{}),             // blue-note bend strength for a sampled sax/guitar lead (absent/0 = no bends; a separate stream in buildEvents keeps all other events byte-identical)
