@@ -68,8 +68,40 @@
                  (navigator.hardwareConcurrency || 8) <= 4;
   const FPS = MOBILE ? 24 : 32;          // cap — a background layer must stay cheap
   const FRAME_MS = 1000 / FPS;
-  const DEFAULT_OPACITY = 0.55;          // present but never drowns the footage
+  // "A little danker" (Paul 2026-07-08): the demo used to GLOW on top of the
+  // footage at .55; drop it to .45 so the carts sit INSIDE the murk with the
+  // analog stack (grade + grain + scan + bursts) layered over them, matching the
+  // found-footage layer's treatment rather than floating above it.
+  const DEFAULT_OPACITY = 0.45;          // present but never drowns the footage; sits in the murk
   const DEFAULT_BLEND = "screen";        // additive glow of light-on-dark demoscene over dark VHS
+  const reduced = root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // -------------------------------------------------------------------------
+  // ANALOG TREATMENT — ported from video-layer.js so the demoscene carts wear
+  // the SAME found-footage grade as the laserdisc layer (Paul 2026-07-08: "add
+  // lots of the same video effects on top of the webassembly demos… make it a
+  // little danker"). A small CSS/SVG effect stack owned by DemoLayer, attached
+  // to its own #demolayer container, cheap (compositor-only — no canvas readback
+  // beyond the gate hooks that already exist). Everything is a decoration OVER
+  // the raw canvas: the getImageData()-based gate assertions read the untouched
+  // bitmap, so the grade/overlays never perturb the pixel checks.
+  //
+  // DANK GRADE — the vhs family baseline (video-layer's house look) pushed a
+  // notch darker: brightness .8 (vs footage .9), deeper contrast 1.32 (vs 1.22)
+  // to crush the shadows, a touch LESS saturation (the 256-colour palettes run
+  // hot — pulling them back reads more analog), a warmer sepia .18 + magenta
+  // hue-lean, and a hair of blur to soften the pixel grid into VHS softness.
+  const GRADE = "saturate(1.4) contrast(1.32) brightness(.8) sepia(.18) hue-rotate(-6deg) blur(.35px)";
+  // heavier grain than the footage layer's vhs tier (.13) — the carts want more
+  // tooth to knock the digital sheen off (Paul: "a little danker").
+  const GRAIN_OPACITY = 0.17;
+  // same SVG-turbulence grain recipe as video-layer's NOISE_URI, jittered by a
+  // steps() animation (identical fractalNoise tile).
+  const NOISE_URI = "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"220\" height=\"220\"><filter id=\"n\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"2\"/></filter><rect width=\"220\" height=\"220\" filter=\"url(%23n)\" opacity=\"0.55\"/></svg>')";
+  // chroma-lurch / tape-wobble cadence (ms) — the transient burst fires on a
+  // randomized ~5-15s clock, its INTENSITY riding the decaying `kick` (the same
+  // musical storm input the effect clock reads), so drops hit harder.
+  const BURST_MIN = 5000, BURST_MAX = 15000;
 
   // MicroW8 memory map (bytes) — mirrored from the runtime.
   const MEM_PAGES = 4;                   // 256KB, fixed
@@ -136,6 +168,10 @@
   // ---- DOM ----
   let wrap = null, canvas = null, ctx = null, imgData = null, imgU32 = null;
   let opacity = DEFAULT_OPACITY, blend = DEFAULT_BLEND;
+  // analog effect stack (overlay nodes owned by DemoLayer, children of #demolayer)
+  let fxVeil = null, fxScan = null, fxGrain = null, fxSvg = null, fxStyle = null;
+  let roEl = null, gbEl = null;          // SVG chroma-split offsets, animated by a burst
+  let burstTimer = 0, burstReset = 0;    // scheduler + in-flight burst decay
 
   // ---- clock / reactivity ----
   let rafId = 0, lastTs = 0, acc = 0;
@@ -295,16 +331,132 @@
     canvas.width = 320; canvas.height = 240;
     canvas.style.cssText = "position:absolute;inset:0;width:100%;height:100%;" +
       "image-rendering:pixelated;image-rendering:crisp-edges;" +
-      "mix-blend-mode:" + blend + ";opacity:" + opacity + ";will-change:contents";
+      "mix-blend-mode:" + blend + ";opacity:" + opacity + ";will-change:contents;" +
+      // the DANK GRADE lives on the canvas itself (filtered, THEN blended with the
+      // footage/page behind it); a short transition lets bursts glide out+back.
+      "filter:" + GRADE + ";transition:filter 260ms ease-in-out,transform 260ms ease-in-out";
     ctx = canvas.getContext("2d", { alpha: true });
     imgData = ctx.createImageData(320, 240);
     imgU32 = new Uint32Array(imgData.data.buffer);
     wrap.appendChild(canvas);
+    makeFx();              // the analog overlay stack sits OVER the graded canvas
     document.body.appendChild(wrap);
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) stopLoop();
       else if (on) startLoop();
     });
+  }
+
+  // ---- analog effect stack (mirrors video-layer's veil/scan/grain/chroma) ----
+  // Built ONCE, as children of #demolayer, so it hides/pauses with the wrap
+  // (display:none halts the CSS animations and stops all compositing — cost ~0
+  // when the layer is disabled). All overlays are pointer-events:none texture
+  // stacked OVER the graded canvas; the SVG chroma filter is referenced only
+  // during a burst (desktop only). Distinct keyframe/id names (dm-*) so this can
+  // coexist with video-layer.js's vl-*/vhs* rules on explorer.html.
+  function makeFx() {
+    // SVG RGB chroma-split filter — pure horizontal channel offset (cheap; no
+    // turbulence). At rest (dx 0) it's identity; a burst spreads red vs green/blue.
+    const svgns = "http://www.w3.org/2000/svg";
+    fxSvg = document.createElementNS(svgns, "svg");
+    fxSvg.setAttribute("width", "0"); fxSvg.setAttribute("height", "0");
+    fxSvg.style.cssText = "position:absolute;width:0;height:0";
+    fxSvg.innerHTML =
+      '<filter id="demorgb" x="-6%" y="-6%" width="112%" height="112%" color-interpolation-filters="sRGB">' +
+        '<feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>' +
+        '<feOffset id="demoro" in="r" dx="0" dy="0" result="ro"/>' +
+        '<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" result="gb"/>' +
+        '<feOffset id="demogb" in="gb" dx="0" dy="0" result="gbo"/>' +
+        '<feBlend in="ro" in2="gbo" mode="screen"/>' +
+      '</filter>';
+    roEl = fxSvg.querySelector("#demoro"); gbEl = fxSvg.querySelector("#demogb");
+    // readability/murk veil — a soft dark wash that pushes the carts down into
+    // the murk (the "danker" ask): darker at top/bottom, lighter through the mid.
+    fxVeil = document.createElement("div");
+    fxVeil.className = "dm-veil";
+    fxVeil.style.cssText = "position:absolute;inset:0;pointer-events:none;" +
+      "background:linear-gradient(rgba(8,7,18,.34),rgba(8,7,18,.16) 32%,rgba(8,7,18,.42))";
+    // analog vertical-blanking hum + near-subliminal scanlines (video-layer's
+    // scanBand/scanLines, trimmed to 2 drifting bands for a background layer).
+    fxScan = document.createElement("div");
+    fxScan.className = "dm-scan";
+    fxScan.style.cssText = "position:absolute;inset:0;overflow:hidden;pointer-events:none;mix-blend-mode:overlay;opacity:.6";
+    const scanLines = document.createElement("div");
+    scanLines.className = "dm-scanlines";
+    scanLines.style.cssText = "position:absolute;inset:0;opacity:.3;" +
+      "background:repeating-linear-gradient(0deg,rgba(0,0,0,.5) 0px,rgba(0,0,0,.08) 2px,transparent 3px,transparent 6px)";
+    const scanBand = document.createElement("div");
+    scanBand.className = "dm-scanband";
+    scanBand.style.cssText = "position:absolute;inset:0;overflow:hidden";
+    const HUM = [
+      { h: 44, a1: .34, a2: .5, s: 14, d: 0 },    // primary thick hum bar
+      { h: 24, a1: .2, a2: .34, s: 22, d: 6 },    // narrower, slower, offset phase
+    ];
+    for (const b of HUM) {
+      const bd = document.createElement("div");
+      bd.className = "dm-humband";
+      bd.style.cssText = "position:absolute;left:0;right:0;top:0;height:" + b.h + "vh;will-change:transform;" +
+        "background:linear-gradient(180deg,transparent,rgba(0,0,0," + b.a1 + ") 42%,rgba(0,0,0," + b.a2 + ") 50%,rgba(0,0,0," + b.a1 + ") 58%,transparent)" +
+        (reduced ? "" : ";animation:dm-vblank " + b.s + "s linear infinite;animation-delay:-" + b.d + "s");
+      scanBand.appendChild(bd);
+    }
+    fxScan.append(scanLines, scanBand);
+    // jittering analog grain (same NOISE_URI tile; a hair heavier than footage)
+    fxGrain = document.createElement("div");
+    fxGrain.className = "dm-grain";
+    if (MOBILE) fxGrain.setAttribute("hidden", "");   // grain is desktop-only, like video-layer
+    fxGrain.style.cssText = "position:absolute;inset:-60px;pointer-events:none;opacity:" + GRAIN_OPACITY + ";" +
+      "mix-blend-mode:screen;background-image:" + NOISE_URI +
+      (reduced ? "" : ";animation:dm-grain .42s steps(2) infinite");
+    fxStyle = document.createElement("style");
+    fxStyle.textContent =
+      "@keyframes dm-grain{0%{transform:translate(0,0)}25%{transform:translate(-40px,24px)}" +
+      "50%{transform:translate(28px,-46px)}75%{transform:translate(-18px,-20px)}100%{transform:translate(34px,38px)}}" +
+      // the hum bar drifts top->bottom (-100vh..100vh so a band of any height clears each end)
+      "@keyframes dm-vblank{from{transform:translateY(-100vh)}to{transform:translateY(100vh)}}";
+    // stack order over the canvas: veil (murk) -> scan (hum/lines) -> grain (tooth)
+    wrap.append(fxVeil, fxScan, fxGrain, fxSvg, fxStyle);
+  }
+
+  function applyGrade() { if (canvas) canvas.style.filter = GRADE; }
+
+  // one chroma-lurch / tape-wobble twitch: a transient transform shove + filter
+  // burst on the graded canvas that glides out and back. Intensity `g` rides the
+  // decaying musical `kick` (drops hit harder); force overrides it (gate hook).
+  // Desktop adds the SVG RGB channel-split for a real chroma fringe. Returns the
+  // nominal duration (ms) so callers/gate can time the decay.
+  function fxBurst(force) {
+    if (!ready || !on || reduced || !canvas) return 0;
+    const g = force != null ? Math.max(0, Math.min(1, force)) : Math.min(1, 0.4 + kick);
+    const dir = Math.random() < .5 ? -1 : 1;
+    const dx = dir * (2 + Math.random() * 7) * (0.4 + g);
+    const dur = 700 + Math.random() * 600;
+    canvas.style.transition = "filter " + Math.round(dur / 2) + "ms ease-in-out, transform " + Math.round(dur / 2) + "ms ease-in-out";
+    const useRgb = !MOBILE && !reduced && roEl;
+    if (useRgb) {
+      const off = (2 + Math.random() * 5) * g;
+      roEl.setAttribute("dx", (-off).toFixed(1)); gbEl.setAttribute("dx", off.toFixed(1));
+    }
+    canvas.style.filter = (useRgb ? "url(#demorgb) " : "") + GRADE +
+      " saturate(" + (1.15 + g * 0.7).toFixed(2) + ") hue-rotate(" + (((Math.random() * 44 - 22) * g) | 0) + "deg) blur(" + Math.min(2.2, 0.4 + g * 1.4).toFixed(2) + "px)";
+    canvas.style.transform = "translateX(" + dx.toFixed(1) + "px) scaleY(" + (1 + 0.02 * g).toFixed(3) + ")";
+    clearTimeout(burstReset);
+    burstReset = setTimeout(() => {
+      applyGrade(); canvas.style.transform = "";
+      if (useRgb) { roEl.setAttribute("dx", "0"); gbEl.setAttribute("dx", "0"); }
+    }, Math.round(dur / 2));
+    return dur;
+  }
+  function scheduleBurst() {
+    clearTimeout(burstTimer);
+    if (!on || !ready || reduced) return;
+    const wait = BURST_MIN + Math.random() * (BURST_MAX - BURST_MIN);
+    burstTimer = setTimeout(() => { fxBurst(); scheduleBurst(); }, wait);
+  }
+  function stopFx() {
+    clearTimeout(burstTimer); clearTimeout(burstReset);
+    if (canvas) { canvas.style.filter = GRADE; canvas.style.transform = ""; }
+    if (roEl) { roEl.setAttribute("dx", "0"); gbEl.setAttribute("dx", "0"); }
   }
 
   // -------------------------------------------------------------------------
@@ -315,7 +467,8 @@
     try { localStorage.setItem(LS_KEY, on ? "1" : "0"); } catch (e) {}
     if (!wrap) return;
     wrap.style.display = on ? "block" : "none";
-    if (on) startLoop(); else stopLoop();
+    if (on) { applyGrade(); startLoop(); scheduleBurst(); }
+    else { stopLoop(); stopFx(); }   // display:none already halts the overlay animations; drop the burst clock too
   }
 
   async function init() {
@@ -416,6 +569,12 @@
     // gate/debug hooks
     _canvas: () => canvas,
     _running: () => !!rafId,
+    // analog-stack hooks: the base grade string, whether the overlay nodes exist,
+    // and a deterministic burst trigger (returns the burst's ms duration so the
+    // gate can time the transform/filter decay). _burst() forces max intensity.
+    _grade: () => GRADE,
+    _fxReady: () => !!(fxVeil && fxScan && fxGrain && canvas),
+    _burst: (g) => fxBurst(g == null ? 1 : g),
     // Dense frame fingerprint (samples every 4th RGBA byte = every pixel's red),
     // so even sparse effects (starfield, twister) and small note-driven colour
     // shifts register a hash change. Cheap enough for gate/debug use.
