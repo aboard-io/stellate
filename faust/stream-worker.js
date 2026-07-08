@@ -47,6 +47,15 @@ let eng = null;            // makeStreamEngine instance (one per worker — re-o
 // bails promptly WITHOUT starting/continuing. `stopReq` retires the current pump.
 let opSeq = 0, activeToken = -1, stopReq = false;
 let opChain = Promise.resolve();
+// WAV-FIRST v3.1: the buffer table for the CURRENT wavOut open. It is the SAME object
+// reference handed to eng.openLive (ST.buffers === liveBuffers), so an addBuffers merge
+// lands whether or not the async open has completed yet. `activeGen` guards stale opens.
+let liveBuffers = {}, activeGen = -1;
+// WAV-FIRST resilience: the vocoder speech CARRIER for the current wavOut open. Set at open
+// (may be null — the open no longer blocks on the speech decode) and updated by a late
+// setSpeech once the carrier decodes; applied post-open so a carrier that lands during the
+// async open is not lost. `eng.setSpeech` rebinds the live vocoder unit's carrier.
+let liveSpeech = null;
 // LIVE mode (Phase 5a): the caller pushes chord-bar specs into `liveBars`; the live
 // pump drains them one at a time into the ring under the SAME backpressure. `liveEos`
 // tells the pump the caller is done (drain then close). Reset per openLive.
@@ -273,6 +282,115 @@ async function runLivePump(msg, token) {
   else self.postMessage({ type: "stopped", cursor, gen });
 }
 
+// runBarAccumPump: the shared skeleton for both WAV-FIRST sinks (see WAV-FIRST.md).
+// Same engine open as runLivePump (buffers + speech INCLUDED so bars carry the sampler
+// + found layers, baked here since the audible path is a media element, not a live
+// graph) and the same caller-fed liveBars/feedBar protocol — but instead of writing a
+// SAB ring it ACCUMULATES whole chord-bars into a segment BODY [C_k, C_{k+1}) (bar-
+// aligned by construction) and, when the body reaches segSec, hands the clean body to
+// the route `sink` to post. segIdx 0 uses firstSegSec (time-to-first-sound); rest segSec.
+async function runBarAccumPump(msg, token, segDefault, firstDefault, sink) {
+  const gen = msg.gen | 0;
+  const alive = () => token === activeToken && !stopReq;
+  if (!alive()) { self.postMessage({ type: "segstopped", gen }); return; }
+  const segTarget = (msg.segSec > 0 ? msg.segSec : segDefault) * SR;
+  const firstTarget = (msg.firstSegSec > 0 ? msg.firstSegSec : firstDefault) * SR;
+
+  const info = await eng.openLive(msg.state, { buffers: msg.buffers || {}, speech: msg.speech || null, bakeNative: true });
+  if (!alive()) { eng.close(); self.postMessage({ type: "segstopped", gen }); return; }
+  // apply a carrier that arrived via setSpeech WHILE the async open was in flight (race:
+  // openLive awaits mkProc, a late setSpeech can land before ST exists → eng.setSpeech
+  // no-ops there; re-apply here now that the stream is open).
+  if (liveSpeech && liveSpeech !== msg.speech && eng.setSpeech) { try { eng.setSpeech(liveSpeech); } catch (e) {} }
+  self.postMessage({ type: "openedSegs", info, gen });
+
+  let cursor = 0, segIdx = 0;
+  let accChunks = [], accFrames = 0, barMap = [];
+  const emit = () => {
+    if (!accFrames) return;
+    const bodyN = accFrames;
+    const bodyL = new Float32Array(bodyN), bodyR = new Float32Array(bodyN);
+    let o = 0;
+    for (const c of accChunks) { bodyL.set(c.L.subarray(0, c.length), o); bodyR.set(c.R.subarray(0, c.length), o); o += c.length; }
+    sink({ gen, segIdx, bodyL, bodyR, bodyN, barMap });
+    segIdx++;
+    accChunks = []; accFrames = 0; barMap = [];
+  };
+
+  while (alive()) {
+    while (alive() && cursor >= liveBars.length && !liveEos) await sleep(4);
+    if (!alive()) break;
+    if (cursor >= liveBars.length) break;   // liveEos and drained
+    const barSpec = liveBars[cursor];
+    await eng.feedBar(barSpec);
+    const c = eng.renderChunk(cursor);
+    barMap.push({ off: accFrames, meta: barSpec.meta || null });
+    accChunks.push({ L: c.L, R: c.R, length: c.length });
+    accFrames += c.length;
+    cursor++;
+    if (accFrames >= (segIdx === 0 ? firstTarget : segTarget)) emit();
+    if ((cursor & 7) === 0) await sleep(0);   // yield: never hog the worker thread
+  }
+  if (liveEos && cursor >= liveBars.length) { emit(); eng.close(); self.postMessage({ type: "segeos", gen, cursor }); }
+  else self.postMessage({ type: "segstopped", gen, cursor });
+}
+
+// segsSink (WAV-FIRST v2 A/B-element route): bakes a CROSSFADE OVERLAP so the conductor's
+// two <audio> elements overlap-add to unity (constant-gain, correlated content). Each
+// segment carries a HEAD (the previous body's clean last OV, faded IN so the seam
+// downbeat lands at the fade end so the next kick plays clean at full) and a TAIL (its
+// own last OV, faded OUT to end exactly at the next downbeat). Gains g_in[j]=(j+.5)/OV,
+// g_out[j]=(OV-.5-j)/OV sum to 1 exactly (gate 1). Seg0 has no head: bridgeIn crossfades
+// its first OV against the old gen's tail on the other element; boot uses a ~5ms micro
+// fade-in from silence. Playback starts the next element early at durSec-OV (live.js).
+function segsSink(msg) {
+  const OV = Math.max(1, Math.round((msg.overlapSec > 0 ? msg.overlapSec : 0.120) * SR));
+  const ME = Math.max(1, Math.round(0.005 * SR));   // ~5ms micro-edge (boot head insurance)
+  const bridgeIn = !!msg.bridgeIn;                  // seg0 crossfades against a prior gen's tail
+  const RMS_HOP = Math.floor(SR / 10);              // ~10 Hz envelope for the conductor's rms()
+  const fadeIn = (L, R, n) => { for (let i = 0; i < n; i++) { const g = (i + 0.5) / n; L[i] *= g; R[i] *= g; } };
+  const fadeOut = (L, R, start, n) => { for (let j = 0; j < n; j++) { const g = (n - 0.5 - j) / n; L[start + j] *= g; R[start + j] *= g; } };
+  let prevTailL = null, prevTailR = null;   // clean last-OV of the previous body -> next head
+  return ({ gen, segIdx, bodyL, bodyR, bodyN, barMap }) => {
+    // capture this body's CLEAN tail (last OV) BEFORE any fade — becomes the next head.
+    const tailN = Math.min(OV, bodyN);
+    const nextTailL = bodyL.slice(bodyN - tailN), nextTailR = bodyR.slice(bodyN - tailN);
+    // assemble [prevTail head?] ++ body
+    const headN = prevTailL ? prevTailL.length : 0;
+    const segLen = headN + bodyN;
+    const L = new Float32Array(segLen), R = new Float32Array(segLen);
+    if (headN) { L.set(prevTailL, 0); R.set(prevTailR, 0); }
+    L.set(bodyL, headN); R.set(bodyR, headN);
+    // head: OV fade over the duplicated head (interior) or the body start (bridge seg0);
+    // ~5ms micro from silence for the very first boot segment. tail: OV fade-out to the downbeat.
+    fadeIn(L, R, Math.min((headN || bridgeIn) ? OV : ME, segLen));
+    fadeOut(L, R, segLen - Math.min(OV, segLen), Math.min(OV, segLen));
+
+    const nEnv = Math.max(1, Math.ceil(segLen / RMS_HOP));
+    const rmsEnv = new Float32Array(nEnv);
+    for (let k = 0; k < nEnv; k++) {
+      const a = k * RMS_HOP, b = Math.min(segLen, a + RMS_HOP);
+      let s = 0; for (let i = a; i < b; i++) { const m = (L[i] + R[i]) * 0.5; s += m * m; }
+      rmsEnv[k] = Math.sqrt(s / Math.max(1, b - a));
+    }
+    const outBar = barMap.map((e) => ({ off: e.off + headN, meta: e.meta }));   // shift past the head
+    const wav = encodeWavPCM(L, R, SR);
+    self.postMessage({ type: "seg", gen, idx: segIdx, wav, durSec: segLen / SR, bodySec: bodyN / SR,
+      overlapSec: OV / SR, barMap: outBar, rmsEnv }, [wav, rmsEnv.buffer]);
+    prevTailL = nextTailL; prevTailR = nextTailR;
+  };
+}
+
+// pcmSink (WAV-FIRST v3 MP3-append route): posts CLEAN PCM flushes — no fades, no encode.
+// The seam crossfade and the single MP3 encode both happen downstream in the dedicated
+// encoder worker (faust/mp3-worker.js). barMap offsets are relative to the flush's first sample.
+function pcmSink() {
+  return ({ gen, segIdx, bodyL, bodyR, bodyN, barMap }) => {
+    self.postMessage({ type: "pcmseg", gen, idx: segIdx, L: bodyL.buffer, R: bodyR.buffer,
+      n: bodyN, durSec: bodyN / SR, barMap }, [bodyL.buffer, bodyR.buffer]);
+  };
+}
+
 self.onmessage = async (e) => {
   const msg = e.data;
   if (!msg || !msg.type) return;
@@ -302,6 +420,28 @@ self.onmessage = async (e) => {
       .catch((err) => self.postMessage({ type: "openfail", error: String(err && err.stack || err), gen: msg.gen | 0 })));
     return;
   }
+  // ── WAV-FIRST segment sink (mobile audible path — see WAV-FIRST.md) ──
+  if (msg.type === "openLiveSegs") {
+    if (!eng) { self.postMessage({ type: "openfail", error: "not ready", gen: msg.gen | 0 }); return; }
+    stopReq = false; liveBars = []; liveEos = false;
+    msg.buffers = msg.buffers || {}; liveBuffers = msg.buffers; activeGen = msg.gen | 0; liveSpeech = msg.speech || null;
+    const token = ++opSeq;
+    activeToken = token;
+    opChain = opChain.then(() => runBarAccumPump(msg, token, 16, 4, segsSink(msg))
+      .catch((err) => self.postMessage({ type: "openfail", error: String(err && err.stack || err), gen: msg.gen | 0 })));
+    return;
+  }
+  // ── WAV-FIRST v3 PCM sink (mobile MP3 append path — clean PCM to the encoder worker) ──
+  if (msg.type === "openLivePcm") {
+    if (!eng) { self.postMessage({ type: "openfail", error: "not ready", gen: msg.gen | 0 }); return; }
+    stopReq = false; liveBars = []; liveEos = false;
+    msg.buffers = msg.buffers || {}; liveBuffers = msg.buffers; activeGen = msg.gen | 0; liveSpeech = msg.speech || null;
+    const token = ++opSeq;
+    activeToken = token;
+    opChain = opChain.then(() => runBarAccumPump(msg, token, 2, 2, pcmSink())
+      .catch((err) => self.postMessage({ type: "openfail", error: String(err && err.stack || err), gen: msg.gen | 0 })));
+    return;
+  }
   // ── BACKGROUND-WAV render (iOS background-audio handoff) ──
   if (msg.type === "renderWav") {
     if (!eng) { self.postMessage({ type: "wavfail", error: "not ready", gen: msg.gen | 0 }); return; }
@@ -310,6 +450,23 @@ self.onmessage = async (e) => {
     activeToken = token;
     opChain = opChain.then(() => renderWav(msg, token)
       .catch((err) => self.postMessage({ type: "wavfail", error: String(err && err.stack || err), gen: msg.gen | 0 })));
+    return;
+  }
+  // WAV-FIRST v3.1: merge streamed-in PCM into the current open's live buffer table.
+  // Guarded on activeGen so a stray addBuffers for a superseded open is dropped.
+  if (msg.type === "addBuffers") {
+    if ((msg.gen | 0) !== activeGen) return;
+    const bufs = msg.buffers || {};
+    Object.assign(liveBuffers, bufs);              // covers the pre-open-complete window (same ref as ST.buffers)
+    if (eng && eng.addBuffers) { try { eng.addBuffers(bufs); } catch (e) {} }
+    return;
+  }
+  // WAV-FIRST resilience: fold a late-decoded vocoder carrier into the current open (the open
+  // no longer blocks on the speech decode). Guarded on activeGen so a stale carrier is dropped.
+  if (msg.type === "setSpeech") {
+    if ((msg.gen | 0) !== activeGen) return;
+    liveSpeech = msg.speech || null;
+    if (eng && eng.setSpeech) { try { eng.setSpeech(liveSpeech); } catch (e) {} }
     return;
   }
   if (msg.type === "feedBar") { liveBars.push(msg.bar); return; }
