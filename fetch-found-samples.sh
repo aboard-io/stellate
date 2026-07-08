@@ -513,6 +513,38 @@ sayhp filch       "Argus Filch is trans"               en+croak      26 118  "an
 sayhp crookshanks "Crookshanks is trans"               en+f2         56 140  "anull"
 # ===== END hogcore speech ====================================================
 
+# ===== BEGIN budstep speech (genre-expansion round, 2026-07) =================
+# Budstep's hook: a deadpan synth voice reciting cannabis strain names over the
+# amen + SLEEP-guitar wall (mirror of the hogcore block). ONE flat robotic
+# narrator (en+m3, low + slow) for all lines so it reads as a single stoned
+# announcer, not a cast. Scheduled by the kernel as buried sampleEvents + hits.
+saybud() { # id | text | pitch | speed | extra-af
+  local out="found/samples/speech/wd_${1}.wav"
+  [ -s "$out" ] && return 0
+  echo "→ budstep $1"
+  espeak-ng -v en+m3 -p "${3:-28}" -s "${4:-118}" -w /tmp/saybud.wav "$2"
+  ffmpeg -y -loglevel error -i /tmp/saybud.wav -ac 1 -ar 44100 \
+    -af "${5:-asetrate=44100*0.94,aresample=44100},loudnorm=I=-14:TP=-1" "$out"
+}
+#       id            phrase                        pit spd
+saybud bluedream      "Blue Dream"                   28 116
+saybud northernlights "Northern Lights"              26 112
+saybud purplehaze     "Purple Haze"                  30 114
+saybud sourdiesel     "Sour Diesel"                  24 110
+saybud whitewidow     "White Widow"                  28 118
+saybud granddaddy     "Granddaddy Purple"            22 108
+saybud jackherer      "Jack Herer"                   30 116
+saybud pineapple      "Pineapple Express"            26 118
+saybud mauiwowie      "Maui Wowie"                   32 120
+saybud acapulco       "Acapulco Gold"                24 112
+saybud durban         "Durban Poison"                28 114
+saybud weddingcake    "Wedding Cake"                 30 116
+saybud zkittlez       "Zkittlez"                     26 118
+saybud indica         "indica"                       20 104
+saybud sativa         "sativa"                        34 122
+saybud hybrid         "hybrid"                        28 112
+# ===== END budstep speech ====================================================
+
 # ===== BEGIN 30-genre commission speech (materials round, 2026-07) ============
 # The signature "voice" of ~20 of the 30 new fictional genres is SYNTHESIZED
 # speech (espeak-ng, generated locally, GPLv3 output = no license encumbrance —

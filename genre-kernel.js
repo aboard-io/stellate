@@ -289,6 +289,25 @@
     hp_myrtle:{ file:"speech/hp_myrtle.wav", kind:"speech", durSec:1.38 },
     hp_filch:{ file:"speech/hp_filch.wav", kind:"speech", durSec:2.47 },
     hp_crookshanks:{ file:"speech/hp_crookshanks.wav", kind:"speech", durSec:2.06 },
+    // budstep — 16 cannabis strain names, one deadpan synth narrator (en+m3, low+slow);
+    // the recited hook under the amen + SLEEP guitar wall (recipe: fetch-found-samples.sh
+    // "budstep speech" block). See GENRES.budstep — buried sampleEvents + name-stab hits.
+    wd_bluedream:{ file:"speech/wd_bluedream.wav", kind:"speech", durSec:0.73 },
+    wd_northernlights:{ file:"speech/wd_northernlights.wav", kind:"speech", durSec:0.97 },
+    wd_purplehaze:{ file:"speech/wd_purplehaze.wav", kind:"speech", durSec:0.90 },
+    wd_sourdiesel:{ file:"speech/wd_sourdiesel.wav", kind:"speech", durSec:0.92 },
+    wd_whitewidow:{ file:"speech/wd_whitewidow.wav", kind:"speech", durSec:0.82 },
+    wd_granddaddy:{ file:"speech/wd_granddaddy.wav", kind:"speech", durSec:1.05 },
+    wd_jackherer:{ file:"speech/wd_jackherer.wav", kind:"speech", durSec:0.76 },
+    wd_pineapple:{ file:"speech/wd_pineapple.wav", kind:"speech", durSec:1.04 },
+    wd_mauiwowie:{ file:"speech/wd_mauiwowie.wav", kind:"speech", durSec:0.79 },
+    wd_acapulco:{ file:"speech/wd_acapulco.wav", kind:"speech", durSec:1.14 },
+    wd_durban:{ file:"speech/wd_durban.wav", kind:"speech", durSec:0.99 },
+    wd_weddingcake:{ file:"speech/wd_weddingcake.wav", kind:"speech", durSec:0.82 },
+    wd_zkittlez:{ file:"speech/wd_zkittlez.wav", kind:"speech", durSec:0.82 },
+    wd_indica:{ file:"speech/wd_indica.wav", kind:"speech", durSec:0.77 },
+    wd_sativa:{ file:"speech/wd_sativa.wav", kind:"speech", durSec:0.69 },
+    wd_hybrid:{ file:"speech/wd_hybrid.wav", kind:"speech", durSec:0.72 },
     // --- the 30-genre commission crate (materials round, 2026-07): 16 synthesized
     // one-shots — DTMF digits at true telephone freqs, microwave/timer beeps,
     // gavel/handbell, the degauss thump (deterministic ffmpeg lavfi, license-free)
@@ -457,6 +476,23 @@
     prelude:["earth_orbit","blue_dinner","bamboo","dc_village","spacewalk"],
     /* /genre-tool:prelude:clips */
     fugue:["earth_orbit","blue_dinner","bamboo","spacewalk","dc_village"],
+    dnb:["night_lines","dark_face","green_nebula","tw_subway","drive_taillights"],
+    footwork:["night_lines","phuture_red","dark_face","tw_subway"],
+    happyhardcore:["kaleido","rainbow_rings","sun_riders","phuture_red","night_lights"],
+    hardstyle:["phuture_red","ind_furnace","ind_molten","night_lines","dark_face"],
+    eurodance:["kaleido","rainbow_rings","night_lights","sun_riders","cs_marketstreet"],
+    singeli:["green_nebula","night_lines","phuture_red","kaleido","jm_flux"],
+    bebop:["blue_dinner","cs_manhatta","night_lights","tv_room"],
+    bluegrass:["lw_valley","lw_plateau","mo_pastoral","dc_alberta","dc_rockies","mo_singalong"],
+    ska:["mo_dance","mo_singalong","ca_street","night_lights"],
+    klezmer:["mo_dance","mo_pastoral","dc_village","blue_dinner"],
+    funk:["kaleido","rainbow_rings","cs_manhatta","night_lights","disc_sunset"],
+    boombap:["dark_face","tv_room","cs_marketstreet","night_lines","blue_dinner"],
+    amapiano:["night_lights","kaleido","blue_dinner","cs_marketstreet","drive_bluehour"],
+    reggae:["ns_hula","ca_tide","mo_dance","disc_sunset","blue_dinner"],
+    heavymetal:["ind_furnace","ind_molten","dark_face","phuture_red","night_lines"],
+    budstep:["dark_face","green_nebula","ind_molten","phuture_red","tw_subway"],
+    pixiewave:["drive_dusk","drive_taillights","night_lights","dark_face","tv_room"],
     /* genre-tool:hogcore:clips */
     hogcore:["kaleido","rainbow_rings","cgi_bird","night_lights","sun_riders","phuture_red","pl_kitchen","mo_singalong"],
     /* /genre-tool:hogcore:clips */
@@ -1681,6 +1717,207 @@
       hits:{sources:["sp_herenow"], pattern:"sparse", prob:0.05},
       stab:["off"],
       form:"wave" },   // NB: NO rubato block (unlike prelude) — the fugue is metronomic; the verifier reads rubato 0, which fences it off prelude's rubato-carrying diagonal
+    // ======== 2026-07 GENRE-EXPANSION (Paul: "what's missing? and get some more uptempo in there baby") ========
+    // 14 canonical additions, uptempo-biased (10 at/above ~140 BPM). Each fenced
+    // in genre-verifier.js so the confusion matrix stays diagonal-dominant.
+    dnb: { label:"Drum & Bass", info:"liquid drum'n'bass: a rolling programmed two-step at 174, warm sub and smooth Rhodes pads, no ragga chops — the amen polished into a groove",   // UPTEMPO. distinct from jungle: NO break role (smooth bed), higher wash
+      bpm:[170,176], swing:[0,.04], humanize:[.05,.14],
+      progressions:["neosoul","deep_two","minor_run","dream"], kits:["breaks","jungle"], fills:["off","drum fill","riser","downlift"],
+      bass:{patterns:["sub","rolling"], recipe:{model:["sub","reese"],cutoff:[280,520],res:[.05,.2],level:[1.15,1.4],send:[0,.05],dsend:[0,0]}},   // reese stays synth (signature) — the smooth dnb sub
+      lead:{patterns:["sparse","off","pentaup"], patchPool:["E.PIANO 2"], samplerPool:["rhodes_ep","electric_piano"], recipe:{model:["fm","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1800,3000],level:[.34,.46],send:[.35,.55],dsend:[.25,.4],octave:.05,attack:.03,release:[.2,.35],sustain:[.7,.82]}},
+      pads:{prob:.85, samplerPool:["strings"], recipe:{model:["fm","strings","sampler"],wave:"saw",cutoff:[900,1500],detune:[.004,.01],attack:[1.5,3],level:[.5,.68],send:[.5,.7],dsend:[.15,.3]}},   // smooth liquid pad wash — the separator vs jungle's dry amen
+      drums:{kickModel:["808"],snareModel:["crack","noise"],hatModel:["noise"],kick:[1.05,1.3],snare:[.55,.8],hat:[.5,.85],tune:[1,1.12],send:[.1,.2],dsend:[.2,.4]},
+      fx:{reverb:[.5,.68], delayBeats:[.75,1.5], delayFb:[.3,.5], delayCut:[2000,3200], pump:[0,.15], crackle:[0,.1], lowcut:[25,40], highcut:[0,0], comp:[.3,.5]},
+      found:{role:"bed", vol:[.1,.18], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["highway_night","tokyo_station","vx_apollo"]},   // BED not break — this is dnb's whole distinction from jungle
+      stab:["off","sparse"], hits:{sources:["vox_a","rave_b","sp_pressure"], pattern:"sparse", prob:.4},
+      form:"dj" },
+    footwork: { label:"Footwork", info:"Chicago juke/footwork: an 808 sub triplet, machine-gun toms and a chopped vocal stutter at 160 — the battle-circle tempo",   // UPTEMPO
+      bpm:[155,162], swing:[.06,.16], humanize:[0,.08],
+      progressions:["deep_two","drone_min","neosoul"], kits:["trap","electro"], fills:["off","stutter","cut","hat rush"],
+      bass:{patterns:["sub","stab"], recipe:{model:["sub","reese"],cutoff:[240,420],res:[.05,.2],level:[1.2,1.45],send:[0,.05],dsend:[0,.05]}},
+      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1800,2800],level:[.3,.42],send:[.25,.4],dsend:[.25,.4],attack:.003,release:[.06,.1],sustain:[.5,.62]}},
+      pads:{prob:.25, recipe:{model:["saw","organ"],wave:"saw",cutoff:[600,1000],detune:[.005,.012],attack:[1,2.5],level:[.3,.42],send:[.3,.45],dsend:[.1,.2]}},
+      drums:{kickModel:["808"],snareModel:["crack","clap"],hatModel:["metal","noise"],kick:[1.2,1.45],snare:[.5,.75],hat:[.7,1],tune:[1,1.15],send:[.05,.14],dsend:[.1,.25]},
+      fx:{reverb:[.3,.45], delayBeats:[.375,.75], delayFb:[.3,.45], delayCut:[2000,3200], pump:[.1,.3], crackle:[0,.1], lowcut:[30,45], highcut:[0,0], comp:[.3,.5]},
+      found:{role:"chops", vol:[.15,.28], pitch:[.9,1.15], stretch:[.35,.55], cutoff:[2000,3600], sources:["shibuya","vx_wwvh","vox_a"]},   // the chopped vocal stutter IS footwork
+      stab:["off","sparse"], hits:{sources:["vox_a","vox_c","sp_rhythm"], pattern:"dub", prob:.6},
+      form:"dj" },
+    happyhardcore: { label:"Happy Hardcore", info:"UK rave euphoria at 172: pounding four-on-floor, hoover stabs, breakbeat rolls and a major-key piano riff, hands in the air",   // UPTEMPO
+      bpm:[168,176], swing:[0,.05], humanize:[.03,.12],
+      progressions:["uplift","four_chords","pop_1625","doo_wop"], kits:["four","pulse"], fills:["riser","impact","hat rush","drum fill"],
+      bass:{patterns:["drive","octaves","rolling"], recipe:{model:["saw","reese"],cutoff:[500,850],res:[.15,.3],level:[1.1,1.3],send:[0,.08],dsend:[0,0]}},
+      lead:{patterns:["hero","anthem","arpup","double"], recipe:{model:["stack"],wave:"saw",voices:[4,6],spread:[.008,.015],cutoff:[2600,3600],level:[.46,.58],send:[.35,.55],dsend:[.25,.4],attack:.004,release:[.08,.14],sustain:[.6,.72],fenv:[.4,.8]},
+        inserts:{prob:.5, max:1, pool:[["phaser",{rate:[.15,.4],depth:[.5,.7],mix:[.35,.55]}]]}},   // the hoover, phased
+      pads:{prob:.6, recipe:{model:["saw","juno60"],wave:"saw",cutoff:[1000,1800],detune:[.008,.015],attack:[.8,2],level:[.42,.58],send:[.4,.6],dsend:[.15,.3]}},
+      drums:{kickModel:["909","boom"],snareModel:["clap","noise"],hatModel:["noise","metal"],kick:[1.3,1.55],snare:[.75,1],hat:[.7,1],tune:[1,1.1],send:[.15,.3],dsend:[.1,.25]},
+      fx:{reverb:[.5,.68], delayBeats:[.375,.75], delayFb:[.3,.45], delayCut:[2400,3600], pump:[.4,.65], crackle:[0,.08], lowcut:[30,45], highcut:[0,0], comp:[.45,.7]},
+      found:{role:"bed", vol:[.06,.14], pitch:[.9,1.05], stretch:[.4,.6], cutoff:[2400,3600], sources:["rave_a","rave_b","sp_energy"]},
+      stab:["rave","offbeat"], hits:{sources:["rave_a","rave_b","rave_c","sp_energy"], pattern:"offbeat", prob:.7},
+      form:"dj" },
+    hardstyle: { label:"Hardstyle", info:"the reverse-bass stomp at 150: a pitched distorted kick, a screeching detuned lead and a minor-key euphoric breakdown — Dutch hard dance",   // UPTEMPO
+      bpm:[148,156], swing:[0,.03], humanize:[0,.08],
+      progressions:["epic_min","minor_run","andalusian"], kits:["four","pulse"], fills:["impact","riser","cut","hat rush"],
+      bass:{patterns:["stab","drive","rolling"], recipe:{model:["reese","acid"],cutoff:[420,720],res:[.2,.4],level:[1.2,1.4],send:[0,.06],dsend:[0,.06]},
+        inserts:{prob:.6, max:1, pool:[["distort",{drive:[.3,.6],mix:[.6,.9]}]]}},   // the reverse-bass, in the red
+      lead:{patterns:["hero","anthem","arpup"], recipe:{model:["stack"],wave:"saw",voices:[4,6],spread:[.01,.018],cutoff:[2400,3400],res:[.2,.35],level:[.46,.58],send:[.3,.5],dsend:[.2,.4],attack:.004,release:[.1,.18],sustain:[.6,.72],fenv:[.5,1]}},
+      pads:{prob:.5, recipe:{model:["saw","juno60"],wave:"saw",cutoff:[900,1600],detune:[.01,.018],attack:[1,2.4],level:[.42,.56],send:[.4,.6],dsend:[.15,.3]}},
+      drums:{kickModel:["909","boom"],snareModel:["clap","crack"],hatModel:["metal","noise"],kick:[1.4,1.65],snare:[.7,.95],hat:[.6,.9],tune:[1,1.1],send:[.1,.2],dsend:[.08,.18]},
+      fx:{reverb:[.4,.58], delayBeats:[.375,.5], delayFb:[.25,.4], delayCut:[2200,3400], pump:[.45,.75], crackle:[0,.06], lowcut:[30,45], highcut:[0,0], comp:[.5,.8]},
+      found:{role:"bed", vol:[.05,.12], pitch:[.85,1], stretch:[.4,.6], cutoff:[2000,3200], sources:["rave_c","sp_energy","factory"]},
+      stab:["rave","offbeat"], hits:{sources:["rave_c","rave_d","sp_energy"], pattern:"offbeat", prob:.55},
+      form:"dj" },
+    eurodance: { label:"Eurodance", info:"90s Eurodance: a four-on-floor pop-rave at 140, a big detuned saw hook over an M1 house-piano stab, diva-major harmony, hands-up energy",   // UPTEMPO. acoustic = the M1 house-piano/organ pad (all-synth trance/edm can't reach it); pump LOW (a pop track, not a trance gate)
+      bpm:[138,145], swing:[0,.05], humanize:[.03,.1],
+      progressions:["four_chords","uplift","pop_1625","doo_wop"], kits:["four","pulse"], fills:["riser","hat rush","impact","drum fill"],
+      bass:{patterns:["octaves","drive","rolling"], recipe:{model:["saw","reese"],cutoff:[500,820],res:[.15,.3],level:[1.05,1.28],send:[0,.08],dsend:[0,0]}},
+      lead:{patterns:["hero","anthem","arpup","updown"], recipe:{model:["stack"],wave:"saw",voices:[4,6],spread:[.008,.015],cutoff:[2600,3600],level:[.44,.56],send:[.3,.5],dsend:[.2,.35],attack:.006,release:[.1,.16],sustain:[.6,.72],fenv:[.3,.6]}},
+      pads:{prob:.9, patchPool:["E.ORGAN 1"], samplerPool:["electric_piano","percussive_organ"], recipe:{model:["sampler","sampler"],wave:"saw",cutoff:[1100,1800],detune:[.006,.012],attack:[.2,.6],level:[.5,.66],send:[.35,.55],dsend:[.1,.25]}},   // the M1 house piano/organ = acoustic .6 fence
+      drums:{kickModel:["909","boom"],snareModel:["clap"],hatModel:["noise"],kick:[1.25,1.5],snare:[.7,.95],hat:[.9,1.25],tune:[.98,1.08],send:[.12,.24],dsend:[.05,.15]},
+      fx:{reverb:[.4,.58], delayBeats:[.375,.75], delayFb:[.25,.4], delayCut:[2400,3600], pump:[.06,.2], crackle:[0,.06], lowcut:[30,45], highcut:[0,0], comp:[.35,.55]},   // pump kept LOW (below trance's .3 floor) — a pop-rave, not a trance gate
+      found:{role:"bed", vol:[.05,.12], pitch:[.9,1.05], stretch:[.4,.6], cutoff:[2400,3600], sources:["rave_b","sp_energy","shibuya"]},
+      stab:["rave","offbeat"], hits:{sources:["rave_a","rave_b","vox_a"], pattern:"offbeat", prob:.6},
+      form:"dj" },
+    singeli: { label:"Singeli", info:"Tanzanian singeli: a frantic 200+ BPM loop music — hyperspeed hats, a chopped taarab riff and a relentless synth line, the fastest thing in the room",   // UPTEMPO (fastest in the catalog)
+      bpm:[200,214], swing:[0,.05], humanize:[0,.1],
+      progressions:["hijaz","mode_phrygian","minor_run"], kits:["electro","four"], fills:["hat rush","cut","stutter","impact"],
+      bass:{patterns:["stab","rolling","drive"], recipe:{model:["saw","acid"],cutoff:[400,700],res:[.2,.35],level:[1.1,1.35],send:[0,.06],dsend:[0,.06]}},
+      lead:{patterns:["double","arpup","pentaup"], recipe:{model:["pluck","stack"],wave:"square",voices:[1,2],spread:[.003,.007],cutoff:[2400,3400],level:[.42,.54],send:[.25,.4],dsend:[.2,.35],attack:.003,release:[.05,.1],sustain:[.5,.62]}},   // all-synth: keeps acoustic 0 (fences the same-tempo acoustic bebop)
+      pads:{prob:.3, recipe:{model:["saw","organ"],wave:"saw",cutoff:[800,1400],detune:[.006,.012],attack:[.5,1.5],level:[.34,.48],send:[.3,.45],dsend:[.1,.2]}},
+      drums:{kickModel:["909","808"],snareModel:["clap","crack"],hatModel:["metal","noise"],kick:[1.2,1.45],snare:[.6,.85],hat:[.9,1.3],tune:[1,1.15],send:[.06,.14],dsend:[.08,.18]},
+      fx:{reverb:[.3,.48], delayBeats:[.375,.5], delayFb:[.3,.45], delayCut:[2200,3400], pump:[.2,.45], crackle:[0,.12], lowcut:[30,45], highcut:[0,0], comp:[.4,.65]},
+      found:{role:"chops", vol:[.12,.22], pitch:[.9,1.15], stretch:[.35,.55], cutoff:[2200,3600], sources:["shibuya","vx_wwvh","vox_a"]},
+      stab:["rave","offbeat"], hits:{sources:["vox_a","rave_c","sp_energy"], pattern:"dub", prob:.6},
+      form:"dj" },
+    bebop: { label:"Bebop", info:"frantic bebop at 220: a walking upright bass, a brushed ride and a sampled sax/trumpet head tearing through the ii-V changes — Parker's tempo",   // UPTEMPO. jazz's fast acoustic cousin — bpm floor fences it off jazz's [96,148]
+      bpm:[196,220], swing:[.28,.5], humanize:[.25,.5],
+      progressions:["ii_v_i","neosoul","blues_12"], kits:["shuffle","shuffle","boombap"], fills:["off","drum fill","kit fill"],
+      bass:{patterns:["walking","walking","root"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sub"],cutoff:[400,700],res:[.05,.15],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
+      lead:{patterns:["double","arp16","wander"], samplerPool:["alto_sax","tenor_sax","trumpet","muted_trumpet"], recipe:{model:["sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2400,3600],level:[.42,.54],send:[.3,.45],dsend:[.15,.3],vibrato:[.006,.012],attack:.02,release:[.12,.2],sustain:[.6,.72]}},
+      pads:{prob:.4, samplerPool:["bright_yamaha_grand","jazz_guitar"], recipe:{model:["sampler","sampler"],wave:"sine",cutoff:[1400,2400],detune:[.002,.005],attack:[.05,.2],level:[.4,.54],send:[.25,.4],dsend:[.05,.15]}},
+      drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.6,.9],snare:[.55,.8],hat:[.8,1.15],tune:[.9,1.05],send:[.2,.4],dsend:[0,.1],kit:"brush"},
+      fx:{reverb:[.4,.6], delayBeats:[.75,1.5], delayFb:[.15,.3], delayCut:[2000,3200], pump:[0,.05], crackle:[.1,.4], lowcut:[0,30], highcut:[0,0], comp:[.2,.4]},
+      found:{role:"bed", vol:[.06,.14], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2000,3200], sources:["blues_vox_78","horns_78","tokyo_station"]},
+      stab:["off"], hits:{sources:["horns_78","bb_horn_a","bb_stab_a"], pattern:"response", prob:.4},
+      form:"pop" },
+    bluegrass: { label:"Bluegrass", info:"high-lonesome bluegrass at 165: rolling banjo, a fiddle break, a walking doghouse bass and brushes — straight-ahead major-key string-band drive",   // UPTEMPO. banjo+fiddle acoustic; bpm floor fences it off surfrock, straight-major seventh fences it off bebop
+      bpm:[156,170], swing:[.04,.14], humanize:[.15,.4],
+      progressions:["four_chords","doo_wop","uplift"], kits:["shuffle","boombap"], fills:["off","drum fill","kit fill"],
+      bass:{patterns:["walking","root","simple"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sub"],cutoff:[400,700],res:[.05,.15],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
+      lead:{patterns:["arp16","pentaup","double","wander"], samplerPool:["banjo","fiddle","banjo"], recipe:{model:["sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2600,3800],level:[.42,.56],send:[.2,.4],dsend:[.05,.18],attack:.005,release:[.1,.2],sustain:[.55,.68]}},
+      pads:{prob:.3, samplerPool:["steel_string_guitar","fiddle"], recipe:{model:["sampler","sampler"],wave:"sine",cutoff:[1400,2400],detune:[.002,.005],attack:[.1,.4],level:[.38,.5],send:[.2,.35],dsend:[.05,.15]}},
+      drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.6,.85],snare:[.5,.72],hat:[.5,.8],tune:[.9,1.05],send:[.1,.25],dsend:[0,.08],kit:"brush"},
+      fx:{reverb:[.3,.48], delayBeats:[.5,.75], delayFb:[.1,.25], delayCut:[2200,3400], pump:[0,.05], crackle:[.1,.4], lowcut:[0,30], highcut:[0,0], comp:[.15,.35]},
+      found:{role:"bed", vol:[.06,.14], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2000,3200], sources:["blues_vox_78","tokyo_station"]},
+      stab:["off"], hits:{sources:["blues_vox_78","bb_horn_a"], pattern:"sparse", prob:.2},
+      form:"pop" },
+    ska: { label:"Ska", info:"2-tone ska at 152: choppy offbeat guitar upstrokes, a walking bass and a punchy brass-section riff — the skank on every &",   // UPTEMPO. brass acoustic + offbeat skank; bpm band sits between surfrock and bluegrass
+      bpm:[146,156], swing:[.04,.14], humanize:[.1,.3],
+      progressions:["doo_wop","four_chords","ii_v_i"], kits:["shuffle","four"], fills:["off","drum fill","kit fill"],
+      bass:{patterns:["walking","octaves","root"], samplerPool:["finger_bass","acoustic_bass"], recipe:{model:["sampler","saw"],cutoff:[450,750],res:[.1,.2],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
+      lead:{patterns:["anthem","double","hero"], samplerPool:["brass_section","trumpet","trombone"], recipe:{model:["sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2200,3400],level:[.44,.56],send:[.25,.4],dsend:[.1,.25],attack:.01,release:[.1,.2],sustain:[.6,.72]}},
+      pads:{prob:.6, patchPool:["E.ORGAN 1"], samplerPool:["percussive_organ","rock_organ"], recipe:{model:["sampler","sampler"],wave:"saw",cutoff:[1000,1700],detune:[.003,.008],attack:[.1,.4],level:[.44,.58],send:[.25,.4],dsend:[.08,.2]}},
+      drums:{kickModel:["boom"],snareModel:["noise","crack"],hatModel:["noise"],kick:[.9,1.15],snare:[.65,.9],hat:[.7,1],tune:[.95,1.1],send:[.12,.24],dsend:[.05,.15],kit:"acoustic"},
+      fx:{reverb:[.35,.52], delayBeats:[.5,.75], delayFb:[.15,.3], delayCut:[2200,3400], pump:[0,.1], crackle:[.05,.25], lowcut:[20,35], highcut:[0,0], comp:[.25,.45]},
+      found:{role:"bed", vol:[.05,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2200,3400], sources:["blues_vox_78","tokyo_station"]},
+      stab:["offbeat","rave"], hits:{sources:["bb_horn_a","bb_horn_b","bb_stab_a"], pattern:"offbeat", prob:.6},
+      form:"pop" },
+    klezmer: { label:"Klezmer", info:"a freylekhs at 140: a wailing clarinet over a freygish (hijaz) mode, a boom-chick accordion and a driving 2-beat — the wedding-band frenzy",   // UPTEMPO. clarinet acoustic + hijaz; bpm floor fences it off arabpop's slower hijaz
+      bpm:[132,144], swing:[.04,.16], humanize:[.15,.4],
+      progressions:["hijaz","andalusian","minor_run"], kits:["shuffle","four"], fills:["off","drum fill","kit fill"],
+      bass:{patterns:["root","walking","octaves"], samplerPool:["acoustic_bass","tuba"], recipe:{model:["sampler","sub"],cutoff:[400,700],res:[.05,.15],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
+      lead:{patterns:["wander","double","arp16"], samplerPool:["clarinet","clarinet","violin"], recipe:{model:["sampler","sampler"],wave:"sine",voices:[1,1],spread:[.002,.004],cutoff:[2400,3600],level:[.44,.56],send:[.25,.4],dsend:[.1,.25],vibrato:[.008,.016],attack:.02,release:[.12,.22],sustain:[.6,.74]}},
+      pads:{prob:.6, samplerPool:["accordion","accordion"], recipe:{model:["sampler","sampler"],wave:"saw",cutoff:[1000,1700],detune:[.003,.008],attack:[.1,.5],level:[.42,.56],send:[.25,.4],dsend:[.08,.2]}},
+      drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.95,1.2],snare:[.6,.85],hat:[.55,.85],tune:[.95,1.1],send:[.12,.24],dsend:[.05,.15],kit:"acoustic"},
+      fx:{reverb:[.35,.52], delayBeats:[.5,.75], delayFb:[.15,.3], delayCut:[2200,3400], pump:[0,.1], crackle:[.1,.35], lowcut:[15,30], highcut:[0,0], comp:[.2,.4]},
+      found:{role:"bed", vol:[.05,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2200,3400], sources:["blues_vox_78","tokyo_station"]},
+      stab:["off"], hits:{sources:["bb_horn_a","bb_stab_a"], pattern:"sparse", prob:.25},
+      form:"pop" },
+    funk: { label:"Funk", info:"James Brown funk at 108: a wah clavinet riff, a syncopated popping bass, tight horn stabs and a busy 16th hi-hat — on the one",   // clavinet acoustic + horn CHOPS (fences four-on-floor disco, which forbids chops)
+      bpm:[102,114], swing:[.04,.14], humanize:[.1,.3],
+      progressions:["funk_vamp","neosoul","ii_v_i"], kits:["newjack","house","four"], fills:["off","drum fill","kit fill"],
+      bass:{patterns:["syncopated","melodic","stab"], samplerPool:["slap_bass","finger_bass"], recipe:{model:["sampler","saw"],cutoff:[500,850],res:[.1,.25],level:[1.05,1.28],send:[.03,.1],dsend:[0,.05]}},
+      lead:{patterns:["double","pentaup","wander"], samplerPool:["clavinet","clavinet","clean_guitar"], recipe:{model:["sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2200,3400],level:[.42,.54],send:[.2,.35],dsend:[.1,.25],attack:.005,release:[.08,.14],sustain:[.55,.68]}},
+      pads:{prob:.5, patchPool:["E.ORGAN 1"], samplerPool:["percussive_organ","brass_section"], recipe:{model:["sampler","sampler"],wave:"saw",cutoff:[1000,1700],detune:[.003,.008],attack:[.1,.4],level:[.42,.54],send:[.2,.35],dsend:[.08,.2]}},
+      drums:{kickModel:["boom","909"],snareModel:["noise","crack"],hatModel:["noise"],kick:[1,1.25],snare:[.7,.95],hat:[.9,1.3],tune:[.95,1.1],send:[.1,.22],dsend:[.03,.12],kit:"acoustic"},
+      fx:{reverb:[.28,.44], delayBeats:[.5,.75], delayFb:[.15,.3], delayCut:[2200,3400], pump:[0,.15], crackle:[.05,.25], lowcut:[25,40], highcut:[0,0], comp:[.3,.55]},
+      found:{role:"chops", vol:[.08,.16], pitch:[.9,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["bb_horn_a","shibuya"]},
+      stab:["offbeat","rave"], hits:{sources:["bb_horn_a","bb_horn_b","bb_stab_a","bb_stab_b"], pattern:"offbeat", prob:.55},
+      form:"pop" },
+    boombap: { label:"Boom Bap", info:"golden-era boom bap at 92: a hard dusty break, a chopped soul loop, a fat sampled bass and jazzy Rhodes stabs — head-nod hip-hop",   // hard SNARE-forward break at 90+, bright (softTop 0) — fences the slower, tape-dark lofi/triphop
+      bpm:[88,96], swing:[.1,.24], humanize:[.15,.35],
+      progressions:["neosoul","lofi","ii_v_i","pop_1625"], kits:["boombap","breaks"], fills:["off","drum fill","downlift"],
+      bass:{patterns:["simple","dub","root"], samplerPool:["acoustic_bass","finger_bass"], recipe:{model:["sub","sampler"],cutoff:[350,600],res:[.05,.15],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
+      snarePP:0.5,
+      lead:{patterns:["sparse","pentaup","wander"], samplerPool:["rhodes_ep","electric_piano","jazz_guitar"], recipe:{model:["fm","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1800,2800],level:[.4,.52],send:[.3,.45],dsend:[.15,.3],attack:.02,release:[.12,.2],sustain:[.66,.78]}},
+      pads:{prob:.7, samplerPool:["strings"], recipe:{model:["fm","sampler"],wave:"sine",cutoff:[900,1500],detune:[.003,.008],attack:[.8,1.8],level:[.5,.66],send:[.3,.5],dsend:[.1,.2]}},
+      drums:{kickModel:["boom","808"],snareModel:["crack","noise"],hatModel:["noise"],kick:[1.1,1.35],snare:[.8,1.05],hat:[.6,.9],tune:[.9,1.05],send:[.12,.25],dsend:[.05,.15],kit:"room"},
+      fx:{reverb:[.4,.58], delayBeats:[.5,.75], delayFb:[.2,.35], delayCut:[1800,2800], pump:[0,.1], crackle:[.2,.45], lowcut:[0,25], highcut:[0,0], comp:[.25,.45]},
+      found:{role:"break", vol:[.2,.32], pitch:[1,1], stretch:[.5,.5], cutoff:[4000,6000], sources:["amen_165","amen_170"]},
+      stab:["off"], hits:{sources:["vox_b","vox_c","sp_rewind"], pattern:"sparse", prob:.4},
+      form:"pop" },
+    amapiano: { label:"Amapiano", info:"South African amapiano at 112: a deep log-drum bassline, jazzy Rhodes chords, wide shakers and a spacious swung groove — the yanos",   // sub log-drum + jazzy sevenths + fast shaker hats at 112; bpm cap fences it under deephouse
+      bpm:[108,116], swing:[.08,.2], humanize:[.05,.2],
+      progressions:["deep_two","house_min7","neosoul"], kits:["house","four"], fills:["off","hat rush","riser"],
+      bass:{patterns:["stab","syncopated","rolling"], recipe:{model:["sub","sub"],cutoff:[260,440],res:[.05,.15],level:[1.15,1.4],send:[0,.06],dsend:[0,.05]}},
+      lead:{patterns:["sparse","pentaup","wander"], samplerPool:["rhodes_ep","electric_piano","vibraphone"], recipe:{model:["sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2000,3200],level:[.4,.52],send:[.3,.5],dsend:[.15,.3],attack:.02,release:[.15,.28],sustain:[.68,.8]}},
+      pads:{prob:.8, samplerPool:["rhodes_ep","strings"], recipe:{model:["sampler","sampler"],wave:"sine",cutoff:[1000,1700],detune:[.003,.008],attack:[.4,1.2],level:[.5,.66],send:[.35,.55],dsend:[.1,.25]}},
+      drums:{kickModel:["boom","808"],snareModel:["clap","noise"],hatModel:["noise"],kick:[1,1.25],snare:[.4,.65],hat:[1.1,1.5],tune:[.95,1.1],send:[.12,.25],dsend:[.08,.2]},
+      fx:{reverb:[.5,.68], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[2200,3400], pump:[.15,.35], crackle:[0,.12], lowcut:[25,40], highcut:[0,0], comp:[.25,.45]},
+      found:{role:"bed", vol:[.06,.14], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["tokyo_station","shibuya"]},
+      stab:["offbeat","off"], hits:{sources:["vox_a","sp_rhythm"], pattern:"offbeat", prob:.4},
+      form:"dj" },
+    reggae: { label:"Reggae", info:"one-drop reggae at 75: an offbeat organ-and-guitar skank, a round melodic bass, the kick on beat three — roots and culture",   // the SONG to dub's dubbed-out instrumental: real harmonic motion + skank organ, vs dub's static drone
+      bpm:[70,80], swing:[.04,.14], humanize:[.1,.3],
+      progressions:["deep_two","neosoul","four_chords","minor_run"], kits:["halftime","kick","four"], fills:["off","downlift","drum fill"],
+      bass:{patterns:["melodic","dub","simple"], samplerPool:["finger_bass","acoustic_bass"], recipe:{model:["sub","sampler"],cutoff:[280,480],res:[.05,.15],level:[1.15,1.4],send:[.03,.1],dsend:[0,.05]}},
+      lead:{patterns:["sparse","off","pentaup"], samplerPool:["clean_guitar","rhodes_ep"], recipe:{model:["sampler","fm"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2000,3000],level:[.38,.5],send:[.3,.45],dsend:[.15,.3],attack:.01,release:[.1,.18],sustain:[.6,.72]}},
+      pads:{prob:.7, patchPool:["E.ORGAN 1"], samplerPool:["percussive_organ","rock_organ"], recipe:{model:["sampler","sampler"],wave:"saw",cutoff:[1000,1700],detune:[.003,.008],attack:[.05,.3],level:[.42,.56],send:[.25,.4],dsend:[.1,.25]}},
+      drums:{kickModel:["boom"],snareModel:["crack","noise"],hatModel:["noise"],kick:[1.05,1.3],snare:[.6,.85],hat:[.6,.9],tune:[.9,1.05],send:[.15,.3],dsend:[.1,.25],kit:"acoustic"},
+      fx:{reverb:[.45,.62], delayBeats:[.75,1.5], delayFb:[.3,.5], delayCut:[2000,3200], pump:[0,.1], crackle:[.05,.25], lowcut:[15,30], highcut:[0,0], comp:[.2,.4]},
+      found:{role:"bed", vol:[.08,.16], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["blues_vox_78","tokyo_station"]},
+      stab:["offbeat"], hits:{sources:["vox_b","sp_herenow"], pattern:"offbeat", prob:.5},
+      form:"pop" },
+    heavymetal: { label:"Heavy Metal", info:"classic heavy metal at 140: a wall of distorted electric-guitar power chords, a screaming lead over a galloping double-kick, minor-key riffs — turn it up",   // distorted guitars front and center; comp+drumDensity+bpm fence it off the halftime industrialmetal, the slow sludgemetal, the clean surfrock
+      bpm:[130,148], swing:[0,.04], humanize:[.03,.12],
+      progressions:["epic_min","minor_run","andalusian","mode_phrygian"], kits:["four","pulse","electro"], fills:["impact","cut","riser","tom fill"],
+      bass:{patterns:["drive","octaves","pedal"], samplerPool:["picked_bass"], recipe:{model:["sampler","saw"],cutoff:[400,700],res:[.1,.25],level:[1.1,1.35],send:[0,.06],dsend:[0,.05]},
+        inserts:{prob:.6, max:1, pool:[["distort",{drive:[.3,.6],mix:[.6,.9]}]]}},   // palm-muted picked/saw low end (NOT a synth sub — keeps it off dubstep's sub-forward diagonal)
+      lead:{patterns:["hero","anthem","blues","double"], samplerPool:["distortion_guitar","overdrive_guitar","distortion_guitar"], recipe:{model:["sampler","sampler"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[2600,3800],level:[.48,.6],send:[.25,.4],dsend:[.15,.3],attack:.005,release:[.1,.2],sustain:[.6,.75]},
+        inserts:{prob:.5, max:1, pool:[["distort",{drive:[.2,.45],mix:[.5,.8]}]]}},   // the distorted riff + solo, real electric-guitar samplers
+      pads:{prob:.5, samplerPool:["distortion_guitar"], recipe:{model:["sampler","saw"],wave:"saw",cutoff:[900,1600],detune:[.006,.012],attack:[.05,.3],level:[.44,.6],send:[.25,.4],dsend:[.1,.25]}},   // the power-chord wall
+      drums:{kickModel:["boom","909"],snareModel:["crack","noise"],hatModel:["metal","noise"],kick:[1.35,1.6],snare:[.8,1.05],hat:[.7,1],tune:[1,1.1],send:[.1,.2],dsend:[.05,.15]},   // galloping double-kick, forward snare
+      fx:{reverb:[.35,.52], delayBeats:[.375,.5], delayFb:[.2,.35], delayCut:[2400,3600], pump:[.05,.25], crackle:[0,.06], lowcut:[30,45], highcut:[0,0], comp:[.5,.85], grit:[.4,.7]},
+      found:{role:"bed", vol:[.05,.12], pitch:[.85,1], stretch:[.4,.6], cutoff:[2000,3200], sources:["factory","highway_night"]},
+      stab:["off","rave"], hits:{sources:["rave_c","sp_energy"], pattern:"sparse", prob:.3},
+      form:"pop" },
+    budstep: { label:"Budstep", info:"amen breaks under a relentless SLEEP-style wall of low distorted-guitar sludge — slow, massive and melodic — while a deadpan synth voice recites cannabis strain names: Blue Dream, Northern Lights, Purple Haze",   // the amen (breakUse) + the guitar wall (acoustic) + the sub drone: a triple no other break/bass genre carries
+      bpm:[138,146], swing:[0,.06], humanize:[.05,.18],
+      progressions:["mode_phrygian","minor_run","drone_min","epic_min"], kits:["jungle","breaks"], fills:["break fill","reverse","off","break fill"],
+      bass:{patterns:["sub","pedal","drive"], recipe:{model:["sub","reese"],cutoff:[240,440],res:[.05,.2],level:[1.25,1.5],send:[0,.05],dsend:[0,.05]},
+        inserts:{prob:.6, max:1, pool:[["distort",{drive:[.35,.7],mix:[.7,1]}]]}},   // drone-adjacent sub doubling the guitar wall
+      lead:{patterns:["blues","pentaup","wander"], samplerPool:["distortion_guitar","overdrive_guitar","distortion_guitar"], recipe:{model:["sampler","sampler"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[1600,2600],level:[.5,.64],send:[.3,.5],dsend:[.2,.35],attack:.01,release:[.4,.8],sustain:[.85,.95]},
+        inserts:{prob:.6, max:1, pool:[["distort",{drive:[.3,.6],mix:[.6,.9]}]]}},   // the SLEEP wall: LOW register, long release + high sustain = relentless, but a real MOVING minor-pentatonic riff (blues/pentaup)
+      pads:{prob:.8, samplerPool:["distortion_guitar"], recipe:{model:["sampler","saw"],wave:"saw",cutoff:[700,1300],detune:[.006,.014],attack:[.1,.5],release:[1.5,3],level:[.5,.66],send:[.35,.55],dsend:[.1,.25]}},   // the never-relenting guitar drone under the riff
+      drums:{kickModel:["808"],snareModel:["crack","noise"],hatModel:["noise"],kick:[1.15,1.4],snare:[.6,.85],hat:[.4,.7],tune:[1,1.12],send:[.1,.2],dsend:[.2,.4]},
+      fx:{reverb:[.42,.6], delayBeats:[.75,1.5], delayFb:[.3,.5], delayCut:[1800,3000], pump:[0,.2], crackle:[.05,.2], lowcut:[20,35], highcut:[0,0], comp:[.5,.85], grit:[.4,.7]},
+      found:{role:"break", vol:[.28,.42], pitch:[1,1], stretch:[.5,.5], cutoff:[5000,8000], sources:["amen_170","amen_172","amen_175"]},   // the amen chaos over the wall
+      sampleEvents:[{ pool:["wd_bluedream","wd_northernlights","wd_purplehaze","wd_sourdiesel","wd_whitewidow","wd_granddaddy","wd_jackherer","wd_pineapple","wd_mauiwowie","wd_acapulco","wd_durban","wd_weddingcake","wd_zkittlez","wd_indica","wd_sativa","wd_hybrid"],
+        placement:"buried", sections:"all", treatment:{cutoff:4200, vol:0.42, glitch:true, every:2, maxDur:8} }],   // the deadpan strain-name recital, one per two bars
+      hits:{sources:["wd_bluedream","wd_sourdiesel","wd_indica","wd_sativa"], pattern:"dub", prob:.6},
+      stab:["off"],
+      form:"dj" },
+    pixiewave: { label:"Pixiewave", info:"LOUDquietLOUD indie synth-rock: a Juno-60 as the whole band, a sparse whispered verse detonating into a screaming distorted chorus and back — the Pixies' dynamic, in a synth",   // fenced on the juno voice-count (2-4, NOT synthwave's supersaw choir) + a wet chorus-verb + a 130s indie tempo ABOVE dancepop's cap; the LOUDquietLOUD is the anthem-form section dynamic
+      bpm:[131,137], swing:[0,.06], humanize:[.05,.18],
+      progressions:["minor_run","epic_min","sad_pop","four_chords"], kits:["four","open","pulse"], fills:["impact","riser","drum fill","downlift"],
+      bass:{patterns:["drive","root","octaves"], recipe:{model:["saw","sub"],cutoff:[450,780],res:[.12,.26],level:[1.05,1.3],send:[0,.08],dsend:[0,.05]}},
+      lead:{patterns:["hero","anthem","updown","sparse"], recipe:{model:["juno60","stack"],wave:"saw",voices:[2,4],spread:[.008,.016],cutoff:[2200,3400],level:[.42,.58],send:[.3,.5],dsend:[.2,.35],attack:.01,release:[.12,.22],sustain:[.55,.7],fenv:[.3,.7]},
+        inserts:{prob:.5, max:1, pool:[["distort",{drive:[.15,.4],mix:[.4,.7]}]]}},   // the chorus scream on the juno lead
+      pads:{prob:.9, recipe:{model:["juno60","juno60","saw"],wave:"saw",cutoff:[1000,1900],detune:[.01,.018],attack:[.6,1.8],chorus:[1.3,1.8],chorusSpread:[.8,1],level:[.5,.7],send:[.55,.72],dsend:[.15,.3]}},   // the Juno-60 IS the band, drowned in the wet chorus-verb
+      drums:{kickModel:["909","boom"],snareModel:["noise","clap"],hatModel:["noise"],kick:[1.15,1.4],snare:[.85,1.15],hat:[.5,.85],tune:[.95,1.08],send:[.2,.4],dsend:[.05,.15]},
+      fx:{reverb:[.7,.86], delayBeats:[.375,.75], delayFb:[.25,.4], delayCut:[2200,3400], pump:[.04,.18], crackle:[0,.12], lowcut:[25,40], highcut:[0,0], comp:[.3,.55]},
+      found:{role:"bed", vol:[.06,.14], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["highway_night","factory","vx_apollo"]},
+      stab:["off","sparse"], hits:{sources:["vox_a","sp_nightdrive"], pattern:"sparse", prob:.35},
+      form:"anthem" },
     /* genre-tool:hogcore:genres */
     hogcore: { label:"Hogcore", info:"VERY simple hyperpop at 150+: four-on-floor, sidechain pump, bright supersaw hooks, and the 24-voice cast declaring \"<name> is trans\" as the hook — pitched-up vocal chops, a full phrase every other bar, name-stabs on the drop",
       bpm:[150,164],
@@ -2332,6 +2569,24 @@
     sludgemetal:["@fuzz"],
     industrialmetal:["@fuzz"],
     darksynth:  ["@stack"],
+    // ---- 2026-07 genre-expansion licks ----
+    dnb:        ["rhodes_ep","@pluck"],
+    footwork:   ["@pluck"],
+    happyhardcore:["@stack","@piano"],
+    hardstyle:  ["@stack"],
+    eurodance:  ["@piano","@stack"],
+    singeli:    ["@pluck","sitar"],
+    bebop:      ["tenor_sax","trumpet"],          // the bebop head
+    bluegrass:  ["banjo","fiddle"],               // the break trades
+    ska:        ["brass_section","trombone"],     // the horn stab pickup
+    klezmer:    ["clarinet","violin"],            // the wailing clarinet run
+    funk:       ["clavinet","brass_section"],     // the clav lick / horn hit
+    boombap:    ["rhodes_ep","jazz_guitar"],
+    amapiano:   ["rhodes_ep","vibraphone"],
+    reggae:     ["percussive_organ","clean_guitar"],   // the skank organ turn
+    heavymetal: ["distortion_guitar","@fuzz"],    // the guitar solo run
+    budstep:    ["distortion_guitar","@fuzz"],
+    pixiewave:  ["@stack","@pluck"],
   };
 
   // (KERNEL-V4 §3.6) per-genre lead ARTICULATION — the amp-envelope / sine-octave

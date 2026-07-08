@@ -301,6 +301,41 @@
     // [56,87] target); and rubato [0,0.005] (the fugue is METRONOMIC — renders 0,
     // while prelude always breathes at .01-.025, so prelude fails this cap hard).
     fugue:    { bpm:[88,106,3], leadVoices:[3,5,3], drumDensity:[0,0.4,3], acoustic:[0.66,1,3], rubato:[0,0.005,2], motion:[0.85,1,1], humanize:[0,0.12,1], swing:[0,0.05,1] },
+    // ======== 2026-07 GENRE-EXPANSION targets (fences designed against measured renders; see genre-kernel) ========
+    // dnb: the amen polished — sub + smooth pad wash at 172, breakUse LOW (no chopped-amen role), which is precisely what fences it off jungle's breakUse[.35,1] floor
+    dnb:      { bpm:[168,178,3], sub:[.6,1,2], breakUse:[0,.12,2], wash:[.18,.34,2], hatDensity:[.7,1.25,1], drumDensity:[1.6,2.6,1], snareBalance:[.3,1,1], comp:[.25,.55,1], swing:[0,.06,1], pump:[0,.2,1] },
+    // footwork: 808 sub + chopped vocal (chopUse) triplet at ~160, dry — chopUse floor + sub floor fence it off jungle/chickadeecore/towncrier
+    footwork: { bpm:[153,164,3], chopUse:[.4,.8,2], sub:[.6,1,2], swing:[.05,.2,1], hatDensity:[.9,2,1], drumDensity:[1.8,3.2,1], wash:[0,.18,2], pump:[.05,.4,1], snareBalance:[.3,.95,1], breakUse:[0,.1,1] },
+    // happyhardcore: euphoric 4/4 at 172 — high harmonic MOTION + supersaw leadVoices + pump, the axes gabber (drone/no-lead) structurally lacks
+    happyhardcore:{ bpm:[166,178,3], motion:[.7,1,2], pump:[.35,.72,2], leadVoices:[3,7,2], comp:[.4,.75,1], snareBalance:[.2,.7,1], seventh:[0,1,1], chopUse:[0,.15,1], swing:[0,.07,1], hatDensity:[.6,1.85,1] },
+    // hardstyle: the reverse-bass stomp at 150 — hard SUB + high PUMP in a 148-156 band; sub+pump floors fence chickadeecore/trance, bpm fences gabber's slower hammer
+    hardstyle:{ bpm:[147,158,3], pump:[.45,.8,2], sub:[.6,1,2], leadVoices:[3,7,1], comp:[.45,.78,1], snareBalance:[.2,.6,1], motion:[.4,1,1], swing:[0,.05,2], crackle:[0,.08,1], seventh:[.4,1,1] },
+    // eurodance: pop-rave at 140 — the M1 house-piano/organ pad reads ACOUSTIC (all-synth trance/edm cannot), and pump sits BELOW trance's .3 floor
+    eurodance:{ bpm:[137,147,3], acoustic:[.4,.85,2], motion:[.6,1,2], pump:[.02,.3,2], leadVoices:[4,7,2], comp:[.3,.6,1], wash:[.05,.28,1], swing:[0,.07,1], sub:[0,.8,1], seventh:[0,.75,1] },   // leadVoices floor 4 (renders 4-6) is the fence vs surfrock's 1-2-voice twang at the top of surfrock's tempo range
+    // singeli: 200+ BPM Tanzanian loop music — the bpm floor alone is nearly a fence (only breakcore reaches here, and it needs the amen); chopUse is the vocal loop
+    singeli:  { bpm:[196,218,3], chopUse:[.4,.8,2], hatDensity:[.7,2,1], drumDensity:[1.4,2.8,1], sub:[0,.8,1], comp:[.35,.7,1], wash:[0,.2,1], pump:[.1,.5,1], swing:[0,.07,1], seventh:[.3,1,1], breakUse:[0,.1,1] },
+    // bebop: 220bpm swung acoustic jazz — bpm floor 194 fences it clean off jazz's [96,148]; swing+acoustic+seventh fence the same-tempo electronic singeli/breakcore
+    bebop:    { bpm:[194,222,3], swing:[.26,.5,3], acoustic:[.4,1,2], seventh:[.55,1,2], snareBalance:[.4,1.4,1], hatDensity:[.45,1,1], motion:[.5,1,1], crackle:[0,.45,1], pump:[0,.06,1] },
+    // bluegrass: banjo+fiddle at 165 — acoustic(w3) + straight-major (seventh low, swing low) + bpm floor 155 fences surfrock (slower) and bebop (swung, 7th-high)
+    bluegrass:{ bpm:[155,172,3], acoustic:[.5,1,3], crackle:[.1,.45,2], swing:[.02,.16,2], seventh:[0,.7,2], drumDensity:[1.1,2,1], hatDensity:[.4,1,1], comp:[.1,.4,1], pump:[0,.06,1], wash:[0,.2,1] },
+    // ska: 2-tone brass skank at 152 — acoustic(w3) + a THINNER kit (lower drum/hat density) than surfrock's fuller twang, in a 146-158 band above surfrock's cap
+    ska:      { bpm:[146,158,3], acoustic:[.5,.95,3], swing:[.03,.16,2], seventh:[0,.85,1], drumDensity:[.9,1.9,2], hatDensity:[.35,1,1], crackle:[.05,.3,1], motion:[.5,1,1], pump:[0,.12,1], leadVoices:[1,3,1] },
+    // klezmer: clarinet freylekhs at 140 — acoustic(w3) + a single ORNAMENTED voice (leadVoices[1,1]) + crackle, in a 131-146 band above arabpop's slower hijaz
+    klezmer:  { bpm:[131,146,3], acoustic:[.5,1,3], crackle:[.1,.4,2], seventh:[.3,1,1], swing:[.03,.16,2], leadVoices:[1,1,2], drumDensity:[.9,1.9,1], hatDensity:[.35,1.3,1], motion:[.4,1,1], pump:[0,.1,1] },
+    // funk: clavinet + horn CHOPS at 108 — chopUse fences four-on-floor disco (which forbids chops), acoustic(w3) + DRY wash + seventh the rest of the identity
+    funk:     { bpm:[100,116,3], acoustic:[.4,.9,3], chopUse:[.35,.65,2], seventh:[.6,1,2], swing:[.02,.16,1], wash:[0,.18,2], comp:[.25,.6,1], hatDensity:[.4,1.4,1], pump:[0,.2,1], snareBalance:[.3,1.1,1] },
+    // boombap: hard dusty break at 92 — breakUse + FORWARD snare + crackle + BRIGHT (softTop 0) fence the slower tape-dark lofi/triphop and the drumless faxbossa/lunapolka
+    boombap:  { bpm:[86,98,3], breakUse:[.3,.8,2], snareBalance:[.55,1.2,2], crackle:[.2,.5,2], swing:[.08,.28,1], seventh:[.5,1,1], sub:[.5,1,1], softTop:[0,0,1], drumDensity:[.8,1.8,1], wash:[.08,.3,1], motion:[.4,1,1] },
+    // amapiano: log-drum sub + jazzy 7ths + shaker hats at 112 — the bpm CAP 116 fences it under deephouse's [118,124], and the rhodes reads acoustic (deephouse is synth)
+    amapiano: { bpm:[106,116,3], sub:[.6,1,2], acoustic:[.4,1,2], seventh:[.8,1,1], swing:[.08,.22,2], hatDensity:[.7,1.9,1], snareBalance:[0,.6,1], pump:[.1,.4,1], wash:[.12,.35,1], motion:[.3,1,1], drumDensity:[1.3,2.9,1] },
+    // reggae: one-drop organ skank at 75 — motion(w2) + acoustic organ + DRY wash fence dub's static dubbed-out drone; sub + bpm hold the low end
+    reggae:   { bpm:[68,82,3], acoustic:[.4,.9,2], motion:[.5,1,2], sub:[.5,1,2], swing:[.02,.16,1], wash:[.05,.28,2], drumDensity:[.4,1.7,1], seventh:[0,1,1], crackle:[.05,.3,1], hatDensity:[.1,.9,1], pump:[0,.1,1] },
+    // heavymetal: distorted electric-guitar wall — acoustic(w3, the guitar sampler) + high COMP at 140; the acoustic floor fences the all-synth dubstep/chiptune/gabber/industrialmetal, comp+bpm fence the clean surfrock
+    heavymetal:{ bpm:[128,150,3], acoustic:[.5,.95,3], comp:[.45,.9,2], breakUse:[0,.15,2], drumDensity:[1,2.4,1], snareBalance:[.25,1.1,1], crackle:[0,.12,1], motion:[.4,1,1], seventh:[.3,1,1], swing:[0,.06,1], pump:[0,.35,1], sub:[.1,1,1] },   // breakUse cap fences the amen-carrying budstep (same guitar-acoustic, but budstep is a break genre)
+    // budstep: amen breakUse(w3) + guitar-wall acoustic(w2) + sub drone(w2) at 140 — a triple no other genre carries (jungle/breakcore lack the guitar, dubstep lacks the break, sludgemetal lacks both)
+    budstep:  { bpm:[136,148,3], breakUse:[.35,.9,3], acoustic:[.5,.95,2], sub:[.5,1,2], comp:[.4,.9,1], drumDensity:[1.4,3,1], crackle:[0,.28,1], swing:[0,.12,1], wash:[.08,.32,1], seventh:[.3,1,1] },
+    // pixiewave: juno-family indie synth-rock — leadVoices(w2, the 2-4-voice juno, NOT synthwave's supersaw choir) + a WET chorus-verb wash + a 130s tempo above dancepop's cap
+    pixiewave:{ bpm:[129,139,3], leadVoices:[2,4,2], wash:[.28,.46,2], pump:[0,.24,1], acoustic:[0,.3,1], comp:[.25,.6,1], motion:[.4,1,1], snareBalance:[.3,.95,1], sub:[0,1,1] },
     /* genre-tool:hogcore:targets */
     hogcore:  { bpm:[143,172,3], chopUse:[0.47,0.67,3], pump:[0.503,0.926,2], swing:[0,0.071,2], breakUse:[0,0.08,1], comp:[0.282,0.747,1], crackle:[0,0.1,1], seventh:[0,0.15,1] },
     /* /genre-tool:hogcore:targets */
