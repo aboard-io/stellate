@@ -80,16 +80,47 @@
     //   only. NO compressor and no dulling filters (keep the attack/punch).
     drum: { hpf: 28, sat: 0.09, satMix: 0.15, trim: 1.0 },
   };
-  const stripFor = (role) => role === "bass" ? STRIP_PROFILES.bass
-    : role === "pad" ? STRIP_PROFILES.pad
-    : (role === "melody" || role === "solo") ? STRIP_PROFILES.lead
-    : STRIP_PROFILES.drum;
+  // sampled-instrument family from its id (for the per-song voice-FX augmentation)
+  function samplerFamily(id) {
+    id = id || "";
+    if (/organ/.test(id)) return "organ";
+    if (/guitar|nylon|steel|jazz|clean|overdrive|palm|harmonics/.test(id)) return "guitar";
+    if (/piano|rhodes|_ep|honky|clav|harpsi|celesta|music_box/.test(id)) return "keys";
+    if (/vibra|glock|marimba|xylo|kalimba|dulcimer|tinker|bell/.test(id)) return "mallet";
+    return "other";
+  }
+  // TWO-PER-VOICE on the SAMPLED (default) path: sampled LEAD voices get ONE
+  // deterministic extra strip stage on top of their base channel strip (which
+  // already carries a chorus) — organ -> leslie, guitar -> flanger/delay, else a
+  // tasteful beat-synced tape delay. Hashed on instrumentSeed (stable per song,
+  // NOT per bar). Pads already carry chorus+phaser (two air stages); bass/drums
+  // stay tight (no leslie/delay mud). LFOs ride global song time -> segment-parity
+  // byte-equal, strip-fuzz finite.
+  function voiceFxStage(role, id, state) {
+    if (role !== "melody" && role !== "solo") return null;
+    const fam = samplerFamily(id);
+    const seed = state && state.instrumentSeed != null ? state.instrumentSeed : ((state && state.seed) || 0);
+    const h = famHash("vfx|" + role + "|" + id + "|" + (seed >>> 0));
+    const spb = 60 / (state && state.bpm ? state.bpm : 120);
+    const delaySpec = { timeSec: clamp(0.75 * spb, 0.05, 1.4), feedback: 0.28, tone: 3200, mix: 0.2 };
+    if (fam === "organ") return { leslie: { speed: (h & 1) ? 0.85 : 0.18, depth: 0.6, mix: 0.32 } };
+    if (fam === "guitar") return (h & 1) ? { flanger: { rate: 0.3, depth: 0.7, feedback: 0.4, mix: 0.22 } } : { delay: delaySpec };
+    return { delay: delaySpec };
+  }
+  const stripFor = (role, id, state) => {
+    const base = role === "bass" ? STRIP_PROFILES.bass
+      : role === "pad" ? STRIP_PROFILES.pad
+      : (role === "melody" || role === "solo") ? STRIP_PROFILES.lead
+      : STRIP_PROFILES.drum;
+    const extra = voiceFxStage(role, id, state);
+    return extra ? { ...base, ...extra } : base;   // new object only when augmented
+  };
   // AIR — modest reverb-send lift on sampled pads/leads (let them breathe). A
   // uniform scalar on top of the recipe send (relative wetness preserved); bass
   // and drums unaffected. Clamped like every send.
   const AIR_REV = { pad: 1.15, melody: 1.1, solo: 1.1 };
   // friendly reverb-character names for the fxLabels roster (viz metadata).
-  const REVERB_LABELS = { dattorro: "plate", greyhole: "hall", fdn: "room", spring: "spring" };
+  const REVERB_LABELS = { dattorro: "plate", greyhole: "hall", fdn: "room", spring: "spring", shimmer: "shimmer" };
   const revLabel = (state) => REVERB_LABELS[state && state.reverbColor] || "reverb";
 
   // ---- fxLabels: compact human-readable effect descriptors for the on-screen
@@ -97,7 +128,8 @@
   // gate). `unit.fxLabels` summarizes a voice's channel strip + inserts + sends;
   // SE.fxLabels(state) summarizes the master/bus chain (the "master:" line).
   const INSERT_LABELS = { distort: "drive", phaser: "phaser", chorus: "chorus",
-    filtersweep: "filter sweep", wah: "auto-wah", tremolo: "tremolo" };
+    filtersweep: "filter sweep", wah: "auto-wah", tremolo: "tremolo",
+    leslie: "leslie", flanger: "flanger", delay: "tape echo", ringmod: "ring mod", granular: "granular" };
   function fxLabelsFor(key, u, state) {
     const L = [];
     if (u.sampler && u.sampler.strip) {
@@ -109,6 +141,9 @@
       if (s.comp) L.push("comp " + s.comp.ratio + ":1");
       if (s.chorus) L.push(s.chorus.two ? "ensemble" : "chorus");
       if (s.phase) L.push("phaser");
+      if (s.leslie) L.push("leslie");
+      if (s.delay) L.push("tape echo");
+      if (s.flanger) L.push("flanger");
     } else if (u.inserts && u.inserts.length) {
       for (const i of u.inserts) L.push(INSERT_LABELS[i.type] || i.type);
     }
@@ -133,23 +168,72 @@
   }
 
   // ---- per-voice insert chain (state.instruments.<voice>.inserts contract) ----
-  // 0-2 of {type, ...params}; type ∈ distort/phaser/chorus/filtersweep. Applied
-  // INSERT-style between the voice and its layer tap / fx sends (per voice —
-  // pad/bass/melody and solos, which inherit melody's recipe — never on the
-  // shared buses). Normalized here so live/press share clamps + module names.
-  // filtersweep is tempo-synced: `barSec: true` tells the engine to set the
-  // module's barSec param from state.bpm (4 beats/bar) and re-set it on glides.
-  // Per the kernel contract (csd-engine defaultInstruments): rate is Hz,
-  // rateBars = sweep period in bars, and filtersweep lo/hi are OCTAVES
-  // RELATIVE TO THE VOICE'S CUTOFF — converted to Hz here (cutoffHz arg).
-  function insertChain(m, cutoffHz) {
+  // 0-2 of {type, ...params}; type ∈ distort/phaser/chorus/filtersweep/wah/
+  // tremolo/leslie/flanger/delay/ringmod/granular. Applied INSERT-style between
+  // the voice and its layer tap / fx sends (per voice — pad/bass/melody and
+  // solos, which inherit melody's recipe — never on the shared buses). Normalized
+  // here so live/press share clamps + module names. filtersweep + delay are
+  // tempo-synced: `barSec: true` tells the engine to set the module's barSec
+  // param from state.bpm (4 beats/bar) and re-set it on glides. Per the kernel
+  // contract (csd-engine defaultInstruments): rate is Hz, rateBars = sweep period
+  // in bars, and filtersweep lo/hi are OCTAVES RELATIVE TO THE VOICE'S CUTOFF —
+  // converted to Hz here (cutoffHz arg).
+  //
+  // TWO-PER-VOICE HOUSE STYLE (2026-07): when a recipe carries NO inserts (an
+  // EMPTY or absent array) AND role/state are supplied, defaultInserts()
+  // deterministically picks TWO role/model-appropriate inserts (hashed on
+  // instrumentSeed — stable per song, NOT per bar, like the instrument pick).
+  // A NON-EMPTY kernel array overrides the default entirely (the genre's own
+  // choice wins). NOTE: csd-engine.defaultInstruments bakes `inserts:[]` onto
+  // every voice, so an empty array is the framework "unset" — it CANNOT be told
+  // apart from a deliberate opt-out, and Paul's directive is pervasive two-per-
+  // voice FX, so empty => house-style default. A voice that must stay bone-dry
+  // opts out downstream (solina overrides `inserts:[]` in pitchedUnit). Signature
+  // synths get a restrained pool (a subtle delay — never a granulator/leslie/
+  // heavy drive that would erase the moving filter / detune / hard-sync identity).
+  // Sampled voices never reach here (they carry a channel STRIP instead).
+  function insertChain(m, cutoffHz, role, state) {
+    const explicit = Array.isArray(m.inserts) && m.inserts.length > 0;
+    const list = explicit ? m.inserts
+      : (role && state ? defaultInserts(role, m, state) : []);
     const out = [];
-    for (const it of (Array.isArray(m.inserts) ? m.inserts : [])) {
+    for (const it of list) {
       if (!it || out.length >= 2) break;
       switch (it.type) {
         case "distort": out.push({ type: "distort", module: "insert_distort", params: {
           drive: clamp(it.drive != null ? it.drive : 0.5, 0, 1),
+          tone: clamp(it.tone != null ? it.tone : 4500, 500, 12000),
           mix: clamp(it.mix != null ? it.mix : 1, 0, 1) } }); break;
+        // leslie — MONO rotary speaker (crossover + inertial horn/drum rotors,
+        // AM + doppler FM). speed 0 chorale..1 tremolo. mix 0 = bit-exact bypass.
+        case "leslie": out.push({ type: "leslie", module: "insert_leslie", params: {
+          speed: clamp(it.speed != null ? it.speed : 0.5, 0, 1),
+          depth: clamp(it.depth != null ? it.depth : 0.8, 0, 1),
+          mix: clamp(it.mix != null ? it.mix : 0.6, 0, 1) } }); break;
+        // flanger — swept short delay + SIGNED feedback (the jet zip). mix 0 bypass.
+        case "flanger": out.push({ type: "flanger", module: "insert_flanger", params: {
+          rate: clamp(it.rate != null ? it.rate : 0.4, 0.01, 8),
+          depth: clamp(it.depth != null ? it.depth : 0.8, 0, 1),
+          feedback: clamp(it.feedback != null ? it.feedback : 0.5, -0.95, 0.95),
+          mix: clamp(it.mix != null ? it.mix : 0.6, 0, 1) } }); break;
+        // delay — per-voice TAPE echo (tempo-synced via timeBars*barSec; tone LP +
+        // wow in the loop). Distinct from the global delay SEND. mix 0 bypass.
+        case "delay": out.push({ type: "delay", module: "insert_delay", barSec: true, params: {
+          timeBars: clamp(it.timeBars != null ? it.timeBars : 0.1875, 0.01, 4),
+          feedback: clamp(it.feedback != null ? it.feedback : 0.35, 0, 0.9),
+          tone: clamp(it.tone != null ? it.tone : 3000, 300, 12000),
+          wow: clamp(it.wow != null ? it.wow : 0.2, 0, 1),
+          mix: clamp(it.mix != null ? it.mix : 0.35, 0, 1) } }); break;
+        // ringmod — sine-carrier ring modulation (metallic clangor). mix 0 bypass.
+        case "ringmod": out.push({ type: "ringmod", module: "insert_ringmod", params: {
+          freq: clamp(it.freq != null ? it.freq : 220, 20, 4000),
+          mix: clamp(it.mix != null ? it.mix : 0.4, 0, 1) } }); break;
+        // granular — grain stutter/cloud (2-grain transpose + stutter gate). mix 0 bypass.
+        case "granular": out.push({ type: "granular", module: "insert_granular", params: {
+          pitch: clamp(it.pitch != null ? it.pitch : 0, -12, 12),
+          density: clamp(it.density != null ? it.density : 0.5, 0, 1),
+          rate: clamp(it.rate != null ? it.rate : 12, 1, 40),
+          mix: clamp(it.mix != null ? it.mix : 0.5, 0, 1) } }); break;
         case "phaser": out.push({ type: "phaser", module: "insert_phaser", params: {
           rate: clamp(it.rate != null ? it.rate : 0.5, 0.01, 8),
           depth: clamp(it.depth != null ? it.depth : 0.7, 0, 1),
@@ -190,6 +274,56 @@
     return out;
   }
 
+  // inserts whose PRESENCE is a voice's identity (never shed even in 2nd slot).
+  const IDENTITY_INSERTS = new Set(["tremolo", "leslie", "granular"]);
+
+  // ---- DEFAULT TWO-INSERT POLICY (2026-07 "two per voice" house style) --------
+  // When a recipe carries no explicit `inserts`, pick TWO role/model-appropriate
+  // inserts DETERMINISTICALLY (hashed on role/model/instrumentSeed — stable per
+  // song like the instrument pick, NOT per bar). Returns recipe-style objects
+  // (insertChain's switch clamps them). Kernel-supplied inserts always override;
+  // an explicit `inserts:[]` opts out entirely (handled in insertChain).
+  //   pad    -> chorus/ensemble + a slow leslie OR a slow phaser
+  //   lead   -> tape delay + chorus OR flanger  (keys/organ family -> leslie + delay)
+  //   bass   -> subtle drive + a slow filter sweep  (never chorus — no mud)
+  //   SIGNATURE synths (tb303 etc.) keep identity: only a SUBTLE tape delay
+  //   (a moving-filter/detune/sync signature can't survive a granulator).
+  const KEYSY_MODELS = new Set(["organ", "hammond", "rhodes", "piano", "bell", "casiocz", "juno60"]);
+  function defaultInserts(role, m, state) {
+    const seed = state && state.instrumentSeed != null ? state.instrumentSeed : ((state && state.seed) || 0);
+    const model = m.model || "";
+    const h = famHash("ins|" + role + "|" + model + "|" + (seed >>> 0));
+    const pick = (arr) => arr[h % arr.length];
+    const pick2 = (arr) => arr[(h >>> 5) % arr.length];
+    // SIGNATURE synths — restrained: a subtle tempo-synced delay, nothing that
+    // erases the moving filter / detune-beat / hard-sync that IS the identity.
+    if (SIGNATURE_MODELS.has(model)) {
+      if (role === "bass") return [{ type: "delay", timeBars: 0.25, feedback: 0.22, tone: 2600, wow: 0.15, mix: 0.13 }];
+      return [{ type: "delay", timeBars: 0.1875, feedback: 0.3, tone: 3200, wow: 0.2, mix: 0.19 },
+              { type: "chorus", rate: 0.5, depth: 0.35, mix: 0.15 }];
+    }
+    if (role === "bass") {
+      // never mud: subtle drive + a slow filter sweep; NO chorus on (sub-heavy) bass
+      return [{ type: "distort", drive: 0.3, tone: 3200, mix: 0.5 },
+              { type: "filtersweep", rateBars: 8, lo: -0.6, hi: 0.8, res: 0.35 }];
+    }
+    if (role === "pad") {
+      const second = pick(["leslie", "phaser"]);
+      return [{ type: "chorus", rate: 0.4, depth: 0.5, mix: 0.28 },
+        second === "leslie" ? { type: "leslie", speed: 0.15, depth: 0.6, mix: 0.4 }
+                            : { type: "phaser", rate: 0.18, depth: 0.7, mix: 0.3 }];
+    }
+    // lead (melody/solo)
+    if (KEYSY_MODELS.has(model)) {
+      return [{ type: "leslie", speed: pick2([0.2, 0.85]), depth: 0.7, mix: 0.42 },
+              { type: "delay", timeBars: 0.1875, feedback: 0.32, tone: 3200, wow: 0.25, mix: 0.22 }];
+    }
+    const second = pick(["chorus", "flanger"]);
+    return [{ type: "delay", timeBars: 0.1875, feedback: 0.3, tone: 3400, wow: 0.2, mix: 0.22 },
+      second === "chorus" ? { type: "chorus", rate: 0.8, depth: 0.4, mix: 0.2 }
+                          : { type: "flanger", rate: 0.3, depth: 0.7, feedback: 0.45, mix: 0.28 }];
+  }
+
   function mergedInstruments(E, state) {
     const D = E.defaultInstruments(), s = state.instruments || {};
     return { pad: { ...D.pad, ...s.pad }, bass: { ...D.bass, ...s.bass },
@@ -200,7 +334,7 @@
   // rev/del gains divide out `level` because csound sends tap PRE-level
   // (instr 1/2/4: gaMix += asig*level but gaRev += asig*send) while the Faust
   // modules bake level into their output.
-  function pitchedUnit(role, m) {
+  function pitchedUnit(role, m, state) {
     // param-reader: clamp(m[k]!=null?m[k]:d,lo,hi) — the null-coalescing default
     // idiom. NOT for `m.x||d` sites (0-is-falsy glide/drive/vibrato keep that).
     const mp = (k, d, lo, hi) => clamp(m[k] != null ? m[k] : d, lo, hi);
@@ -223,7 +357,7 @@
     const c = m.cutoff || 2000, res = clamp(m.res != null ? m.res : 0.15, 0, 0.95);
     const base = { role, pool: role === "pad" ? 4 : role === "bass" ? 2 : 3,
       dry: 1, ...sends, lvl, gmul: Math.max(1, L), params: { level: lvl },
-      freqMax: 4000, tail: role === "pad" ? 3 : 1, inserts: insertChain(m, c) };
+      freqMax: 4000, tail: role === "pad" ? 3 : 1, inserts: insertChain(m, c, role, state) };
     const atk = clamp(Math.max(role === "pad" ? 0.05 : 0.005, m.attack != null ? m.attack : (role === "pad" ? 1.5 : 0.05)), 0.005, 5);
     const model = m.model || (role === "pad" || role === "bass" ? "saw" : "stack");
     // csound instr-4 "plucky" opt-in: setting ANY of attack/release/fenv swaps
@@ -285,13 +419,17 @@
       } : null;
       // AIR: modest reverb-send lift on sampled pad/lead (breathe), bass untouched.
       const airRev = clamp(base.rev * (AIR_REV[role] || 1), 0, 6);
-      return { ...base, rev: airRev, gmul: base.gmul * (role === "bass" ? 0.5 : 1), module: null, sampler: {
+      // Faust inserts are DROPPED on sampled voices (native PCM path renders no
+      // Faust module) — the band-appropriate channel STRIP is their per-voice FX
+      // (STRIP_PROFILES). Clearing inserts also keeps unitCost honest (no phantom
+      // insert cost) and live/press identical (VOICES.md: "Inserts are dropped").
+      return { ...base, inserts: [], rev: airRev, gmul: base.gmul * (role === "bass" ? 0.5 : 1), module: null, sampler: {
           id: sp.id || "?", sr: sp.sr || 44100,
           zones: Array.isArray(sp.zones) ? sp.zones : [],
           atk: mp("attack", role === "bass" ? 0.006 : 0.012, 0.003, 5),
           rel: mp("release", role === "bass" ? 0.07 : 0.09, 0.02, 6),
           swell: (m.swell || 0) >= 0.5,
-          strip: stripFor(role),   // band-appropriate channel strip (STRIP_PROFILES)
+          strip: stripFor(role, sp.id, state),   // channel strip + per-song voice-FX (leads)
           ...(mello ? { mello } : {}),
         }, freqMax: 4000 };
     };
@@ -550,8 +688,10 @@
     // inserts
     insert_distort: 1.01, insert_phaser: 0.62, insert_chorus: 0.18, insert_wah: 0.69,
     insert_tremolo: 0.51, insert_filtersweep: 1.47,
+    // inserts (2026-07 expanded FX round — measured vs pad_saw, min-of-3 8s render)
+    insert_leslie: 0.35, insert_flanger: 0.28, insert_delay: 0.42, insert_ringmod: 0.2, insert_granular: 0.5,
     // reverb colors + master
-    reverb_dattorro: 0.49, reverb_greyhole: 2.37, reverb_fdn: 0.75, reverb_spring: 0.61,
+    reverb_dattorro: 0.49, reverb_greyhole: 2.37, reverb_fdn: 0.75, reverb_spring: 0.61, reverb_shimmer: 0.75,
     fx_bus: 2.32, master_mb: 1.55, rev_bleed: 0.18,
   };
   const DX7_COST = 6.4;      // any dx7_algN — the 6-op FM voice (measured 6.2-6.7)
@@ -604,10 +744,11 @@
   //   2. pad pool -1, toward a floor of 2
   //   3. extra NON-IDENTITY solo/lick voices (the transition micro-licks & counters
   //      beyond the first) — never a dx7 / tb303 / tremolo-carrying solo
-  // NEVER shed: reverbColor, masterComp, dx7 voices, tb303, tremolo inserts, the
+  // NEVER shed: reverbColor, masterComp, dx7 voices, tb303, IDENTITY inserts
+  // (tremolo/leslie/granular — a voice defined by its rotary/stutter), the
   // primary pad/bass/melody voice itself, or any voice's FIRST insert.
   const BUDGET = 40;
-  const isIdentitySolo = (u) => u.dx7 || u.module === "tb303" || (u.inserts || []).some((i) => i.type === "tremolo");
+  const isIdentitySolo = (u) => u.dx7 || u.module === "tb303" || (u.inserts || []).some((i) => IDENTITY_INSERTS.has(i.type));
   function trimToBudget(units, state) {
     const shed = [];
     let cost = stateCost(units, state);
@@ -621,8 +762,14 @@
         if (under()) break;
         const u = units[k];
         if (u && Array.isArray(u.inserts) && u.inserts.length > 1) {
-          shed.push(k + ":inserts[" + u.inserts.slice(1).map((i) => i.type).join(",") + "]");
-          u.inserts = u.inserts.slice(0, 1);
+          // keep the FIRST insert + any IDENTITY insert (tremolo/leslie/granular);
+          // shed only the non-identity extras beyond the first.
+          const keep = u.inserts.filter((ins, i) => i === 0 || IDENTITY_INSERTS.has(ins.type));
+          const drop = u.inserts.filter((ins, i) => i !== 0 && !IDENTITY_INSERTS.has(ins.type));
+          if (drop.length) {
+            shed.push(k + ":inserts[" + drop.map((i) => i.type).join(",") + "]");
+            u.inserts = keep;
+          }
         }
       }
       // 2. pad pool -1 toward floor 2
@@ -748,11 +895,11 @@
     const I = mergedInstruments(E, state);
     const so = !!(state.sampledOnly && state.samplerLib);   // SAMPLED mode (default): remap pitched sources to samples
     const units = {};
-    units.pad = pitchedUnit("pad", so ? forceSampled("pad", I.pad, state) : I.pad);
-    units.bass = pitchedUnit("bass", so ? forceSampled("bass", I.bass, state) : I.bass);
-    units.melody = pitchedUnit("melody", so ? forceSampled("melody", I.melody, state) : I.melody);
+    units.pad = pitchedUnit("pad", so ? forceSampled("pad", I.pad, state) : I.pad, state);
+    units.bass = pitchedUnit("bass", so ? forceSampled("bass", I.bass, state) : I.bass, state);
+    units.melody = pitchedUnit("melody", so ? forceSampled("melody", I.melody, state) : I.melody, state);
     for (const v of (E.soloVoices ? E.soloVoices(state, I.melody) : []))
-      units["solo:" + v.key] = pitchedUnit("solo", so ? forceSampled("solo", v.recipe, state) : v.recipe);
+      units["solo:" + v.key] = pitchedUnit("solo", so ? forceSampled("solo", v.recipe, state) : v.recipe, state);
     const D = I.drums;
     // DRUM_FX_LIFT — Paul 2026-07-07, on-device mix note: "a little more delay and
     // reverb for ... drums." Uniform scalar on every drum voice's reverb+delay
@@ -847,8 +994,8 @@
   // and mix its stereo wet back into the dry path so it flows through the master
   // chain; fxParams sets the internal rgain to 0 whenever a color is active.
   const REVERB_COLORS = { dattorro: "reverb_dattorro", greyhole: "reverb_greyhole",
-    fdn: "reverb_fdn", spring: "reverb_spring" };
-  const REVERB_TONE = { dattorro: 5200, greyhole: 2600, fdn: 6000, spring: 3400 };
+    fdn: "reverb_fdn", spring: "reverb_spring", shimmer: "reverb_shimmer" };
+  const REVERB_TONE = { dattorro: 5200, greyhole: 2600, fdn: 6000, spring: 3400, shimmer: 6000 };
   function reverbColor(state) {
     const module = REVERB_COLORS[state && state.reverbColor];
     if (!module) return null;   // default => fx_bus internal zita

@@ -52,8 +52,11 @@
   // instruments are the default sound since 2026-07, and dry multisamples need a
   // channel to breathe). Chain, applied POST-envelope so sends carry the finished
   // voice: HPF -> (LPF) -> peaking EQ -> soft saturation -> gentle compressor ->
-  // chorus/phaser (air) -> trim. The `strip` spec is built in state-engine
-  // (STRIP_PROFILES, keyed by role) and rides on u.sampler.strip.
+  // chorus/phaser -> (leslie/delay/flanger voice-FX) -> trim. The `strip` spec is
+  // built in state-engine (STRIP_PROFILES + per-song voiceFxStage, keyed by role)
+  // and rides on u.sampler.strip. leslie = mono rotary AM+doppler; delay = a
+  // beat-synced feedback tape echo; flanger = swept short-delay comb — all with
+  // LFOs on GLOBAL song time (deterministic, segment-parity byte-equal per note).
   //
   // CRITICAL — window parity: the strip runs PER NOTE with state initialized at
   // the note's i=0, and the chorus/phaser LFOs ride GLOBAL song time
@@ -103,6 +106,34 @@
         fb: clampS(p.fb != null ? p.fb : 0.3, 0, 0.9), mix: clampS(p.mix != null ? p.mix : 0.2, 0, 1),
         xp: new Float32Array(ns), yp: new Float32Array(ns), last: 0 };
     }
+    // LESLIE (rotary AM + doppler) — the native twin of insert_leslie for sampled
+    // voices (organ/keys leads especially). speed 0..1 sets the two rotor rates;
+    // an 800 Hz one-pole crossover feeds a doppler-modulated horn delay + AM. The
+    // rotor LFOs ride GLOBAL song time (deterministic, like chorus/phaser).
+    if (strip.leslie) {
+      const l = strip.leslie, sp = clampS(l.speed != null ? l.speed : 0.6, 0, 1);
+      const n = Math.ceil(sr * 0.004) + 4;
+      S.les = { hRate: 0.80 + sp * (6.70 - 0.80), dRate: 0.66 + sp * (5.50 - 0.66),
+        depth: clampS(l.depth != null ? l.depth : 0.7, 0, 1), mix: clampS(l.mix != null ? l.mix : 0.4, 0, 1),
+        lp: 0, lpA: 1 - Math.exp(-2 * Math.PI * 800 / sr), buf: new Float32Array(n), n, w: 0,
+        base: sr * 0.0018, swing: sr * 0.0012 };
+    }
+    // per-voice tape DELAY (feedback echo, tone LP in the loop) — the strip twin of
+    // insert_delay. timeSec is beat-synced by the caller (state-engine). Buffer
+    // sized to the delay time so a long note's echoes stay per-note + deterministic.
+    if (strip.delay) {
+      const d = strip.delay, ds = Math.max(1, Math.floor((d.timeSec || 0.3) * sr));
+      S.dly = { buf: new Float32Array(ds + 2), n: ds + 2, ds,
+        fb: clampS(d.feedback != null ? d.feedback : 0.3, 0, 0.9), mix: clampS(d.mix != null ? d.mix : 0.25, 0, 1),
+        w: 0, lp: 0, lpA: 1 - Math.exp(-2 * Math.PI * (d.tone || 3000) / sr) };
+    }
+    // FLANGER (short swept delay + signed feedback) — strip twin of insert_flanger.
+    if (strip.flanger) {
+      const f = strip.flanger, n = Math.ceil(sr * 0.008) + 4;
+      S.fla = { buf: new Float32Array(n), n, w: 0, rate: f.rate || 0.3,
+        depth: clampS(f.depth != null ? f.depth : 0.7, 0, 1), fb: clampS(f.feedback != null ? f.feedback : 0.4, -0.95, 0.95),
+        mix: clampS(f.mix != null ? f.mix : 0.3, 0, 1), base: sr * 0.0006, swing: sr * 0.005 };
+    }
     S.trim = strip.trim != null ? strip.trim : 1;
     return S;
   }
@@ -151,6 +182,34 @@
       for (let k = 0; k < ph.ns; k++) { const xin = s, y = -a * xin + ph.xp[k] + a * ph.yp[k]; ph.xp[k] = xin; ph.yp[k] = y; s = y; }
       ph.last = s;
       x = (1 - ph.mix) * x + ph.mix * s;
+    }
+    if (S.les) {
+      const L = S.les, hs = Math.sin(2 * Math.PI * L.hRate * t), ds = Math.sin(2 * Math.PI * L.dRate * t);
+      L.lp += L.lpA * (x - L.lp); const low = L.lp, high = x - low;
+      L.buf[L.w] = high;
+      let d = L.base + L.swing * L.depth * hs; if (d < 0) d = 0; else if (d > L.n - 2) d = L.n - 2;
+      let rp = L.w - d; while (rp < 0) rp += L.n;
+      const i0 = rp | 0, fr = rp - i0, i1 = (i0 + 1) % L.n;
+      const hd = L.buf[i0] + fr * (L.buf[i1] - L.buf[i0]);
+      L.w = (L.w + 1) % L.n;
+      const wet = (hd * (1 + L.depth * 0.5 * hs) + low * (1 + L.depth * 0.28 * ds)) * 0.9;
+      x = (1 - L.mix) * x + L.mix * wet;
+    }
+    if (S.dly) {
+      const D = S.dly; let rp = D.w - D.ds; if (rp < 0) rp += D.n;
+      let echo = D.buf[rp];
+      D.lp += D.lpA * (echo - D.lp); echo = D.lp;   // tone lowpass in the loop
+      D.buf[D.w] = x + D.fb * echo; D.w = (D.w + 1) % D.n;
+      x = (1 - D.mix) * x + D.mix * echo;
+    }
+    if (S.fla) {
+      const F = S.fla, lfo = 0.5 - 0.5 * Math.cos(2 * Math.PI * F.rate * t);
+      let d = F.base + F.swing * F.depth * lfo; if (d < 1) d = 1; else if (d > F.n - 2) d = F.n - 2;
+      let rp = F.w - d; while (rp < 0) rp += F.n;
+      const i0 = rp | 0, fr = rp - i0, i1 = (i0 + 1) % F.n;
+      const del = F.buf[i0] + fr * (F.buf[i1] - F.buf[i0]);
+      F.buf[F.w] = x + F.fb * del; F.w = (F.w + 1) % F.n;
+      x = (1 - F.mix) * x + F.mix * del;
     }
     return x * S.trim;
   }
@@ -348,6 +407,45 @@
         for (let k = 0; k < ns; k++) { const ap = ctx.createBiquadFilter(); ap.type = "allpass"; ap.frequency.value = center; ap.Q.value = 0.7; lg.connect(ap.frequency); apn.connect(ap); apn = ap; nodes.push(ap); }
         lfo.connect(lg); nodes.push(lg);
         const wg = ctx.createGain(); wg.gain.value = mix; apn.connect(wg); wg.connect(sum); nodes.push(wg);
+      } });
+    }
+    // LESLIE — perceptual twin: a modulated doppler delay + amplitude tremolo at
+    // the horn rotor rate (approximate; live strips are not byte-parallel).
+    if (strip.leslie) {
+      const l = strip.leslie, sp = clampS(l.speed != null ? l.speed : 0.6, 0, 1), hRate = 0.80 + sp * (6.70 - 0.80), dep = l.depth != null ? l.depth : 0.7;
+      parallel({ mix: clampS(l.mix != null ? l.mix : 0.4, 0, 1) * 0.9, wet: (sum, mix) => {
+        const dl = ctx.createDelay(0.02); dl.delayTime.value = 0.0018;
+        const lfo = ctx.createOscillator(); lfo.frequency.value = hRate;
+        const dg = ctx.createGain(); dg.gain.value = 0.0012 * dep; lfo.connect(dg); dg.connect(dl.delayTime);
+        const am = ctx.createGain(); am.gain.value = 1;
+        const ag = ctx.createGain(); ag.gain.value = 0.5 * dep; lfo.connect(ag); ag.connect(am.gain);
+        lfo.start(when); lfo.stop(when + dur + 0.1); oscs.push(lfo);
+        const wg = ctx.createGain(); wg.gain.value = mix;
+        node.connect(dl); dl.connect(am); am.connect(wg); wg.connect(sum); nodes.push(dl, dg, am, ag, wg);
+      } });
+    }
+    // per-voice tape DELAY — feedback echo with a tone lowpass in the loop.
+    if (strip.delay) {
+      const d = strip.delay;
+      parallel({ mix: clampS(d.mix != null ? d.mix : 0.25, 0, 1), wet: (sum, mix) => {
+        const dl = ctx.createDelay(2.0); dl.delayTime.value = Math.min(1.9, d.timeSec || 0.3);
+        const fb = ctx.createGain(); fb.gain.value = clampS(d.feedback != null ? d.feedback : 0.3, 0, 0.9);
+        const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = d.tone || 3000;
+        node.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl);
+        const wg = ctx.createGain(); wg.gain.value = mix; lp.connect(wg); wg.connect(sum); nodes.push(dl, fb, lp, wg);
+      } });
+    }
+    // FLANGER — short swept delay + feedback.
+    if (strip.flanger) {
+      const f = strip.flanger;
+      parallel({ mix: clampS(f.mix != null ? f.mix : 0.3, 0, 1), wet: (sum, mix) => {
+        const dl = ctx.createDelay(0.02); dl.delayTime.value = 0.0006;
+        const lfo = ctx.createOscillator(); lfo.frequency.value = f.rate || 0.3;
+        const lg = ctx.createGain(); lg.gain.value = 0.005 * (f.depth != null ? f.depth : 0.7); lfo.connect(lg); lg.connect(dl.delayTime);
+        lfo.start(when); lfo.stop(when + dur + 0.1); oscs.push(lfo);
+        const fb = ctx.createGain(); fb.gain.value = clampS(f.feedback != null ? f.feedback : 0.4, -0.95, 0.95);
+        node.connect(dl); dl.connect(fb); fb.connect(dl);
+        const wg = ctx.createGain(); wg.gain.value = mix; dl.connect(wg); wg.connect(sum); nodes.push(dl, lg, fb, wg);
       } });
     }
     if (strip.trim != null && strip.trim !== 1) { const t = ctx.createGain(); t.gain.value = strip.trim; chain(t); }
