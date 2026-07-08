@@ -42,10 +42,20 @@ function synthStrips() {
                        comp: { thresh: 2, ratio: 1e6, atk: 10, rel: 10, makeup: 0 } },
     "chorusOverflow":{ hpf: 30, chorus: { rate: 0.4, baseMs: 80, depthMs: 80, mix: 0.5, two: true } },
     "phaserWide":    { phase: { rate: 5, lo: 1, hi: SR * 0.6, stages: 12, fb: 0.9, mix: 1 } },
+    // NEW voice-FX strip stages (2026-07 expanded FX): rotary/echo/flanger extremes
+    "leslieMax":     { leslie: { speed: 1, depth: 1, mix: 1 } },
+    "leslieSlow":    { leslie: { speed: 0, depth: 1, mix: 1 } },
+    "delayRunaway":  { delay: { timeSec: 0.5, feedback: 0.9, tone: 12000, mix: 1 } },
+    "delayTiny":     { delay: { timeSec: 1e-4, feedback: 0.9, tone: 300, mix: 1 } },
+    "flangerMax":    { flanger: { rate: 8, depth: 1, feedback: 0.95, mix: 1 } },
+    "flangerNeg":    { flanger: { rate: 0.01, depth: 1, feedback: -0.95, mix: 1 } },
     "everythingMax": { hpf: 8000, lpf: 40, eq: { f: 12000, gain: 24, q: 1e-6 }, sat: 4, satMix: 1,
                        comp: { thresh: 1e-6, ratio: 1e9, atk: 1e-6, rel: 1e-6, makeup: 32 },
                        chorus: { rate: 8, baseMs: 200, depthMs: 200, mix: 1, two: true },
-                       phase: { rate: 9, lo: 1, hi: SR, stages: 8, fb: 0.99, mix: 1 }, trim: 8 },
+                       phase: { rate: 9, lo: 1, hi: SR, stages: 8, fb: 0.99, mix: 1 },
+                       leslie: { speed: 1, depth: 1, mix: 1 },
+                       delay: { timeSec: 0.3, feedback: 0.9, tone: 9000, mix: 1 },
+                       flanger: { rate: 9, depth: 1, feedback: 0.95, mix: 1 }, trim: 8 },
   };
 }
 
