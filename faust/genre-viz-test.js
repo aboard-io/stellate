@@ -138,6 +138,30 @@ async function main() {
   console.log(`\n=== TIMELINE DOM (live house@seed1, bar ${tl.bars}) ===`);
   console.log(`  lanes=${tl.lanes} blocks=${tl.blocks}  fxLane="${tl.fxName}" {${tl.fxLabel}}`);
 
+  // ---- G: AUDIT-TRUTH red-lane paint. Inject a stub audit for the CURRENT bar's serial
+  // reporting the pad voice expected-but-silent (missing sample) and re-render the ⓘ; the
+  // timeline must paint that lane RED/hatched (.vz-roll.vz-silent) with a reason badge.
+  const paint = await page.evaluate(() => {
+    const h = window.__X.handle && window.__X.handle();
+    if (!h) return { ok: false, why: "no live handle" };
+    const serial = window.__S.barInfo ? window.__S.barInfo.serial : null;
+    // stub the audit lookup the timeline consults (auditFor(serial)).
+    h.auditFor = () => ({ serial, anomalies: [{ key: "pad", role: "pad", notes: 4, rms: 0, reason: "missing", missing: ["ins_test_pad_2"] }] });
+    window.__X.renderInside();
+    const box = document.getElementById("inside");
+    const silRoll = box.querySelector(".vz-roll.vz-silent");
+    const silRow = box.querySelector(".vz-tlrow.vz-silent");
+    const badge = box.querySelector(".vz-silbadge");
+    // clear the stub so it doesn't bleed into later checks
+    delete h.auditFor;
+    return { ok: !!(silRoll && silRow && badge), hasRoll: !!silRoll, hasRow: !!silRow,
+      badge: badge ? badge.textContent.trim() : null, badgeTitle: badge ? (badge.getAttribute("title") || "") : "" };
+  });
+  ok(paint.hasRoll && paint.hasRow, `G1: injected audit did not paint a red/hatched silent lane (roll=${paint.hasRoll} row=${paint.hasRow}) ${paint.why || ""}`);
+  ok(!!paint.badge && /missing/i.test(paint.badge), `G2: silent-lane badge missing/incorrect (badge="${paint.badge}")`);
+  ok(/ins_test_pad_2/.test(paint.badgeTitle), `G3: silent-lane tooltip does not name the missing srcId (title="${paint.badgeTitle}")`);
+  console.log(`\n=== AUDIT RED-LANE PAINT ===\n  silentRoll=${paint.hasRoll} row=${paint.hasRow} badge="${paint.badge}" title="${paint.badgeTitle}"`);
+
   const noteInfo = await page.evaluate(() => {
     const n = window.__notes, s = n[Math.floor(n.length / 2)] || n[0] || null;
     const roles = [...new Set(n.map(e => e.role))];

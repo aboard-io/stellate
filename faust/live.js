@@ -1497,6 +1497,79 @@
     const gBars = [];                     // { tSec, meta } sorted by tSec; onBar walks it
     let barCursor = 0;
 
+    // ── AUDIT-TRUTH ring (Paul: "track when a node is expected to produce sound and
+    // doesn't; give me data to download"). The renderer measures each voice's ACTUAL
+    // per-bar RMS + missing srcIds and rides it on the bar meta (meta.audit); here we
+    // capture, at the moment a bar is HEARD (fireBar), the anomalies + playback context
+    // (route/gen/currentTime/buffered). Downloadable JSON + a compact clipboard summary
+    // via the ?wavDebug panel; the ⓘ timeline paints a lane RED when it was silent here.
+    const AUDIT_CAP = 200;
+    const auditRing = [];
+    const auditBySerial = new Map();      // serial -> latest ring entry (ⓘ timeline lookup)
+    let auditAnomTotal = 0;
+    // DOUBLE-PLAYBACK watch: how many media elements are audibly playing at once.
+    // The segAB seam overlaps two elements for ~OVERLAP_SEC (~120ms); anything SUSTAINED
+    // past 300ms means a teardown/demote path left a second element playing = two tracks
+    // at once. Tracked in the bar poll, surfaced in __wavState + the audit ring.
+    let audibleNow = 0, audibleMax = 0, doublePlayAnoms = 0, dblSince = 0, dblFlagged = false;
+    function elAudible(el) {
+      if (!el) return false;
+      try {
+        if (el.paused || el.muted) return false;
+        if (el.volume != null && el.volume <= 0) return false;
+        const ct = el.currentTime || 0;
+        if (ct <= 0) return false;
+        if (el.duration && isFinite(el.duration) && ct >= el.duration - 0.002) return false;   // played out
+        return true;
+      } catch (e) { return false; }
+    }
+    function countAudible() {
+      let n = 0;
+      if (typeof mp3El !== "undefined" && elAudible(mp3El)) n++;
+      if (typeof els !== "undefined" && els) for (const e of els) if (elAudible(e)) n++;
+      return n;
+    }
+    function bufferedAheadSafe() { try { return typeof bufferedAhead === "function" ? bufferedAhead() : 0; } catch (e) { return 0; } }
+    // record one HEARD bar into the ring with its anomalies + playback context.
+    function recordAudit(meta) {
+      if (!meta || !meta.audit || !meta.audit.voices) return;
+      const el = useMp3 ? mp3El : curEl;
+      const ct = el ? (el.currentTime || 0) : 0;
+      const voices = meta.audit.voices;
+      const anomalies = [];
+      for (const key of Object.keys(voices)) {
+        const v = voices[key];
+        if (v && v.silent) anomalies.push({ key, role: v.role, notes: v.notes, rms: v.rms, reason: v.reason, missing: v.missing || [] });
+      }
+      auditAnomTotal += anomalies.length;
+      const entry = { serial: meta.serial != null ? meta.serial : null, section: meta.section || null,
+        ci: meta.ci != null ? meta.ci : null, t: +ct.toFixed(3), route: outRoute, gen: curGen,
+        aheadSec: +aheadSec().toFixed(2), bufferedSec: +bufferedAheadSafe().toFixed(2),
+        audible: audibleNow, anomalies, voices };
+      auditRing.push(entry);
+      if (meta.serial != null) auditBySerial.set(meta.serial, entry);
+      while (auditRing.length > AUDIT_CAP) { const old = auditRing.shift(); if (old && old.serial != null && auditBySerial.get(old.serial) !== entry) auditBySerial.delete(old.serial); }
+    }
+    // compact one-line summary for the clipboard log (iOS-friendly — the proven path).
+    function auditSummary() {
+      const total = auditRing.length;
+      let anomBars = 0; const roleMiss = {};
+      for (const e of auditRing) {
+        if (!e.anomalies.length) continue;
+        anomBars++;
+        for (const a of e.anomalies) {
+          const tag = a.reason === "missing" ? (a.role + "[" + (a.missing || []).join(",") + "]") : (a.role + "(" + a.reason + ")");
+          (roleMiss[tag] = roleMiss[tag] || []).push(e.serial);
+        }
+      }
+      const parts = Object.keys(roleMiss).slice(0, 8).map((k) => {
+        const ss = roleMiss[k]; const lo = ss[0], hi = ss[ss.length - 1];
+        return k + " bars " + (lo === hi ? lo : lo + "-" + hi);
+      });
+      return "AUDIT: " + auditAnomTotal + " anomalies over " + anomBars + "/" + total + " bars; dblPlay=" + doublePlayAnoms +
+        (parts.length ? "; " + parts.join("; ") : "");
+    }
+
     function putPcm(s) { let q = pcmQueues.get(s.gen); if (!q) { q = []; pcmQueues.set(s.gen, q); } q[s.idx] = s; }
     function mp3AheadSec() { const t = mp3El ? (mp3El.currentTime || 0) : 0; return Math.max(0, receivedPcmSec - t); }
 
@@ -1925,7 +1998,9 @@
     // ── onBar poll: fire opts.onBar off the playing element's currentTime + barMap ──
     let barPollTimer = 0;
     function fireBar(meta) {
-      if (!meta || !opts.onBar) return;
+      if (!meta) return;
+      try { recordAudit(meta); } catch (e) {}   // AUDIT-TRUTH: capture the heard bar + context
+      if (!opts.onBar) return;
       try {
         opts.onBar({ serial: meta.serial, ci: meta.ci, nch: meta.nch, when: ctx.currentTime,
           spb: meta.spb, cbeats: meta.cbeats, chord: meta.chord, section: meta.section });
@@ -1935,6 +2010,17 @@
       if (barPollTimer) return;
       barPollTimer = setInterval(() => {
         if (abort) return;
+        // DOUBLE-PLAYBACK watch: count audibly-playing elements; a sustained (>300ms)
+        // overlap of two is a teardown/demote leak (two tracks at once).
+        audibleNow = countAudible();
+        if (audibleNow > audibleMax) audibleMax = audibleNow;
+        if (audibleNow >= 2) {
+          if (!dblSince) dblSince = now();
+          else if (!dblFlagged && now() - dblSince > 300) {
+            dblFlagged = true; doublePlayAnoms++;
+            errors.push("double-playback: " + audibleNow + " elements audible >300ms (route " + outRoute + ")");
+          }
+        } else { dblSince = 0; dblFlagged = false; }
         if (useMp3) {   // one continuous timeline: fire bars whose absolute tSec has passed currentTime
           const t = mp3El ? (mp3El.currentTime || 0) : 0;
           while (barCursor < gBars.length && gBars[barCursor].tSec <= t) fireBar(gBars[barCursor++].meta);
@@ -2037,6 +2123,12 @@
       get mediaEl() { return useMp3 ? mp3El : els[0]; },
       get outputRoute() { return outRoute; },
       bootStats: () => ({ ...bootStats }),
+      // AUDIT-TRUTH surface: the rolling ring (download), per-serial lookup (ⓘ timeline
+      // paint), a compact clipboard line, and live counters.
+      audit: () => auditRing.slice(),
+      auditFor: (serial) => auditBySerial.get(serial) || null,
+      auditSummary,
+      auditStats: () => ({ bars: auditRing.length, anomalies: auditAnomTotal, doublePlay: doublePlayAnoms, audible: audibleNow, audibleMax }),
       rms() {
         if (useMp3) {   // read the global 10 Hz envelope at the element's currentTime
           if (!mp3El || !mp3FirstAppend || !gEnvLen) return 0;
@@ -2100,10 +2192,12 @@
             // stitching appends short/long (the WebKit MP3 timestamp suspicion) — the
             // audible "lurch" made a number. (evict trims the FRONT; end is unaffected.)
             appendedSec: +appendedSec.toFixed(2), stitchDriftSec: +(appendedSec - bufEnd).toFixed(3),
+            audibleElements: audibleNow, audibleMax, doublePlayAnoms, auditAnoms: auditAnomTotal, auditBars: auditRing.length,
             decode: decodeStats() };
         }
         return { receivedSegs, playedSegs: playSeq, playCursor: playSeq, singleEl, curGen,
           zeroPlayable: zeroPlayableEvents, aheadSec: aheadSec(), outputRoute: outRoute, demoted, demoteReason,
+          audibleElements: audibleNow, audibleMax, doublePlayAnoms, auditAnoms: auditAnomTotal, auditBars: auditRing.length,
           curSeg: curSeg ? { gen: curSeg.gen, idx: curSeg.idx, durSec: curSeg.durSec } : null,
           // decode forensics on the FALLBACK route too — the 2026-07-07 device log ran
           // segAB and showed dec=null, hiding the missing-samples answer.

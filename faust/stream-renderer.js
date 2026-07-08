@@ -145,7 +145,7 @@
     // — stem-worker.renderUnitWindow VERBATIM (proven byte-compatible with
     // render-core for BS-aligned windows by faust/stem-parity-test.js), only with
     // the single combined {dry,rev,del,pp,wL,wR} bus set instead of per-layer stems.
-    function renderUnitWindow(us, buses, barBase, barEnd, spb) {
+    function renderUnitWindow(us, buses, barBase, barEnd, spb, meter) {
       const u = us.u;
       const LEN = barEnd - barBase;
       const hasIns = us.chain && us.chain.length;
@@ -188,6 +188,7 @@
                 buses.wL[j] += l * dg; buses.wR[j] += r * dg;
                 buses.rev[j] += mono * rg; buses.del[j] += mono * lg;
                 if (pg) buses.pp[j] += mono * pg;
+                if (meter) { const md = mono * dg; meter.e += md * md; }
               }
             } else {
               const dg = (u.dry != null ? u.dry : 1) * v.curOut, rg = (u.rev || 0) * v.curOut,
@@ -196,6 +197,7 @@
                 const x = o[i], j = idx0 + i;
                 buses.dry[j] += x * dg; buses.rev[j] += x * rg; buses.del[j] += x * lg;
                 if (pg) buses.pp[j] += x * pg;
+                if (meter) { const xd = x * dg; meter.e += xd * xd; }
               }
             }
           }
@@ -216,8 +218,38 @@
         for (let i = 0; i < LEN; i++) {
           const x = ubuf[i];
           buses.dry[i] += x * dg; buses.rev[i] += x * rg; buses.del[i] += x * lg;
+          if (meter) { const xd = x * dg; meter.e += xd * xd; }
         }
       }
+    }
+
+    // AUDIT-TRUTH — a voice's role label for the per-bar audit (matches explorer's
+    // noteRole so the ⓘ timeline can key lanes by it): drums fold to one lane, solo
+    // units to "solo", stab/sfx to "sfx".
+    function auditRole(u, key) {
+      if (key === "kick" || key === "snare" || key === "hat" || key === "tom") return "drums";
+      if (key.indexOf("solo:") === 0) return "solo";
+      if (u && u.role && u.role !== "drums") return u.role;
+      if (key === "melody" || key === "pad" || key === "bass") return key;
+      if (key === "stab" || key === "sfx") return "sfx";
+      return (u && u.role) || key;
+    }
+    // AUDIT threshold: a voice with notes>0 but a dry-send RMS below this (or a
+    // non-finite RMS = a NaN blowup) is EXPECTED-BUT-SILENT. 3e-4 sits well under a
+    // real sampled/synth voice (~1e-2..1e-1) yet above numerical dust.
+    const AUDIT_SILENT_RMS = 3e-4;
+    function auditVoice(voices, key, role, notes, energy, len, missing) {
+      const rms = len > 0 ? Math.sqrt(energy / len) : 0;
+      const miss = missing && missing.length ? missing.slice() : [];
+      let silent = false, reason = null;
+      const finite = isFinite(rms);
+      if (!finite) { silent = true; reason = "nan"; }               // biquad/strip blowup = a poisoned bar
+      else if (notes > 0 && rms < AUDIT_SILENT_RMS) {
+        silent = true;
+        reason = miss.length ? "missing" : "present-but-silent";     // decode race vs render-side mute
+      }
+      voices[key] = { role, notes: notes == null ? null : notes,
+        rms: finite ? +rms.toFixed(6) : null, missing: miss, silent, reason };
     }
 
     // ============================================================ the stream
@@ -284,7 +316,7 @@
             const holdN = Math.max(Math.max(8, Math.floor((n.atk || 0.01) * SR)), Math.floor(n.durSec * SR));
             n._end = n._s0 + holdN + relN;
           }
-          samplerUnits.set(key, { notes, sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip } });
+          samplerUnits.set(key, { notes, role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip } });
           unitOrder.push({ key, kind: "sampler" });
         } else {
           const us = await ensureUnit(key, u);
@@ -469,7 +501,7 @@
           if (!u || !u.sampler) continue;
           let su = ST.samplerUnits.get(key);
           if (!su) {
-            su = { notes: [], sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip } };
+            su = { notes: [], role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip } };
             ST.samplerUnits.set(key, su);
             ST.unitOrder.push({ key, kind: "sampler" });
           }
@@ -494,8 +526,13 @@
         }
       }
 
+      // AUDIT-TRUTH: this bar's EXPECTED note count per unit (events fed this bar) —
+      // renderChunk compares it against each unit's measured RMS to flag silent voices.
+      const expect = {};
+      for (const key of Object.keys(byUnit)) expect[key] = byUnit[key].length;
+
       if (bar.sweeps) for (const sw of bar.sweeps) ST.sweeps.push(sw);
-      ST.bars.push({ base, end, spb, found: barFound });
+      ST.bars.push({ base, end, spb, found: barFound, expect });
       ST.liveWriteEnd = end;
       return { index: ST.bars.length - 1, base, end, length: barLen };
     }
@@ -534,16 +571,30 @@
       // LIVE wavOut: windowed found bake for this bar (chops/beds), press order = FIRST.
       else if (liveBar && liveBar.found && liveBar.found.length)
         FP.mixPCM(liveBar.found, ST.buffers, SR, { dry, rev, del, pp }, { base, len: LEN, total: TOTAL });
+      // AUDIT-TRUTH per bar: measure each voice unit's ACTUAL contribution (dry-send
+      // energy → RMS) and which srcIds were missing at bake time, WITHOUT altering the
+      // mix (the meters are additive reads). Compared against the bar's expected note
+      // count to flag expected-but-silent voices with a probable reason.
+      const expect = (liveBar && liveBar.expect) || null;
+      const voices = {};
       for (const { key, kind } of unitOrder) {
         if (kind === "sampler") {
           const su = samplerUnits.get(key);
           if (ST.live) su.notes = su.notes.filter((nt) => nt._end > base);   // prune fully-played notes (unbounded live stream)
           const win = su.notes.filter((nt) => nt._s0 < end && nt._end > base);
-          if (win.length) SP.mixPCM(win, ST.buffers, SR, { dry, rev, del }, su.sends, { base, len: LEN, total: TOTAL });
+          const meter = { e: 0, missing: null };
+          if (win.length) SP.mixPCM(win, ST.buffers, SR, { dry, rev, del }, su.sends, { base, len: LEN, total: TOTAL }, meter);
+          const notes = expect ? (expect[key] || 0) : win.filter((nt) => nt._s0 >= base && nt._s0 < end).length;
+          auditVoice(voices, key, su.role || auditRole(null, key), notes, meter.e, LEN, meter.missing);
         } else {
-          renderUnitWindow(units.get(key), buses, base, end, spb);
+          const us = units.get(key);
+          const meter = { e: 0 };
+          renderUnitWindow(us, buses, base, end, spb, meter);
+          const notes = expect ? (expect[key] || 0) : null;   // faust per-bar counts only known in LIVE mode
+          auditVoice(voices, key, auditRole(us.u, key), notes, meter.e, LEN, null);
         }
       }
+      ST.lastAudit = { voices };
 
       // ---- reverb COLOR: rev_bleed(del,pp) -> bleed; reverb(rev+bleed) -> wet ----
       let wetL = null, wetR = null;
@@ -598,7 +649,7 @@
       }
 
       ST.cursor = n + 1;
-      return { L, R, startSample: base, length: LEN };
+      return { L, R, startSample: base, length: LEN, audit: ST.lastAudit };
     }
 
     // addBuffers(map) — MERGE decoded PCM into the OPEN stream's live buffer table
