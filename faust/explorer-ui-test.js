@@ -215,6 +215,29 @@ async function main() {
   console.log(`  maxRms=${maxRms.toFixed(5)}  realRideErrors=${realRide.length}  envFoundSoundErrors=${envRide.length}  engineErrors=${engineErrs.length}`);
   if (realRide.length) console.log(`  REAL:\n   ${realRide.slice(0, 20).join("\n   ")}`);
 
+  // H: the background "video+demos" mode ALTERNATES video ↔ a fresh demo cart every
+  // 8 chord-bars while live (Paul 2026-07-09). Unit-driven via the __BGALT hook —
+  // 24 ticks at an 8-bar period must flip sides exactly 3× (bars 8/16/24), advance
+  // the cart on each demo turn, and the enabled layer must track the active side.
+  const alt = await page.evaluate(() => {
+    const D = window.DemoLayer; let nexts = 0;
+    const realNext = D.next; D.next = () => { nexts++; return realNext.call(D); };
+    document.getElementById("bgChip").click();            // off -> video+demos
+    window.__S.live = true;
+    const sides = [];
+    for (let i = 0; i < 24; i++) { window.__BGALT.tick(); sides.push(window.__BGALT.state().side); }
+    const flips = sides.filter((s, i) => i && s !== sides[i - 1]).length;
+    const st = window.__BGALT.state();
+    const r = { mode: st.mode, flips, nexts, endSide: st.side, vidOn: window.VideoLayer.enabled(), demoOn: D.enabled() };
+    window.__S.live = false; D.next = realNext; document.getElementById("bgChip").click(); document.getElementById("bgChip").click();  // back to off
+    return r;
+  });
+  ok(alt.mode === 1 && alt.flips === 3, `H1: 8-bar alternation flips 3x over 24 ticks (mode=${alt.mode} flips=${alt.flips})`);
+  ok(alt.nexts >= 1, `H2: demo cart advances on demo turns (nexts=${alt.nexts})`);
+  ok((alt.endSide === "demo") === alt.demoOn && (alt.endSide !== "demo") === alt.vidOn,
+    `H3: enabled layer tracks the active side (side=${alt.endSide} vid=${alt.vidOn} demo=${alt.demoOn})`);
+  console.log(`  bg-alt: flips=${alt.flips} nexts=${alt.nexts} endSide=${alt.endSide}`);
+
   await browser.close(); srv.close();
 
   console.log(`\n=== GATE ===`);
