@@ -329,8 +329,17 @@
   //   {type, tSec, durSec, amp, srcId, pitch, stretch|offset, cutoff, ...}
   // buffers: {srcId: Float32Array mono at sr}
   // into: {dry, rev, del, pp} Float32Arrays (accumulated in place)
-  function mixPCM(events, buffers, sr, into) {
-    const total = into.dry.length;
+  // WINDOWED WRITE (optional `win`, mirrors sampler.js mixPCM): the live/wavOut
+  // stream renderer bakes found ONTO a running one-bar window bus so it sums onto
+  // the same base press uses. `win = {base, len, total}`: `into` spans absolute
+  // [base, base+len); each event's full segment is still built (so its filter +
+  // envelope are correct), but only the slice landing in [0,len) is written; `total`
+  // is the FULL stream length for the natural play-length clamp. win omitted =>
+  // whole-song write, byte-identical to before (base 0, len=total=bus length).
+  function mixPCM(events, buffers, sr, into, win) {
+    const winBase = win ? win.base : 0;
+    const busLen = win ? win.len : into.dry.length;
+    const total = win ? win.total : into.dry.length;
     for (const f of events) {
       const src = buffers[f.srcId];
       if (!src || !src.length) continue;
@@ -353,9 +362,11 @@
           seg[i] *= e;
         }
         for (let i = 0; i < n; i++) {
+          const j = s0 + i - winBase;
+          if (j < 0) continue; if (j >= busLen) break;
           const v = seg[i];
-          into.dry[s0 + i] += v * 0.55;
-          into.rev[s0 + i] += v * 0.6;
+          into.dry[j] += v * 0.55;
+          into.rev[j] += v * 0.6;
         }
       } else {
         // chopper: full-buffer phasor at rate pitch from fractional offset, wraps
@@ -380,11 +391,13 @@
           }
         }
         for (let i = 0; i < n; i++) {
+          const j = s0 + i - winBase;
+          if (j < 0) continue; if (j >= busLen) break;
           const v = seg[i];
-          into.dry[s0 + i] += v;
-          into.rev[s0 + i] += v * f.rsend;
-          into.del[s0 + i] += v * f.dsend;
-          if (f.ppsend) into.pp[s0 + i] += v * f.ppsend;
+          into.dry[j] += v;
+          into.rev[j] += v * f.rsend;
+          into.del[j] += v * f.dsend;
+          if (f.ppsend) into.pp[j] += v * f.ppsend;
         }
       }
     }
@@ -455,12 +468,24 @@
   // exact archive URL -> that local file. Prefer the local file at runtime;
   // fall back to archive.org (with a warning) ONLY for assets not cached.
   let _manifestPromise = null;
+  // site root derived from THIS script's URL (found-player.js lives in faust/):
+  // a document-relative fetch only works when the page sits at the site root
+  // (explorer.html does; faust/live-test.html does NOT — its 404 tripped the
+  // headless gate's zero-error assertion). Captured at load; falls back to
+  // document-relative outside a browser document (node press never fetches).
+  const SITE_ROOT = (() => {
+    try {
+      if (typeof document !== "undefined" && document.currentScript && document.currentScript.src)
+        return new URL("..", document.currentScript.src).href;
+    } catch (e) {}
+    return "";
+  })();
   function loadFoundManifest() {
     if (_manifestPromise) return _manifestPromise;
     _manifestPromise = (async () => {
       try {
         if (typeof fetch !== "function") return {};
-        const r = await fetch("found/found-manifest.json", { cache: "no-cache" });
+        const r = await fetch(SITE_ROOT + "found/found-manifest.json", { cache: "no-cache" });
         if (!r.ok) return {};
         const j = await r.json();
         return (j && j.byUrl) ? j.byUrl : {};
@@ -475,7 +500,7 @@
   async function localCacheFor(url) {
     if (!/\barchive\.org/i.test(url)) return null;   // already local / non-archive
     const map = await loadFoundManifest();
-    return map[url] || null;
+    return map[url] ? SITE_ROOT + map[url] : null;   // manifest values are site-root-relative (found/<id>.wav)
   }
 
   const _bufCache = new Map(); // url -> Promise<AudioBuffer>

@@ -284,7 +284,7 @@
             const holdN = Math.max(Math.max(8, Math.floor((n.atk || 0.01) * SR)), Math.floor(n.durSec * SR));
             n._end = n._s0 + holdN + relN;
           }
-          samplerUnits.set(key, { notes, sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0 } });
+          samplerUnits.set(key, { notes, sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip } });
           unitOrder.push({ key, kind: "sampler" });
         } else {
           const us = await ensureUnit(key, u);
@@ -385,6 +385,7 @@
       const anyStereo = Object.values(unitsSpec).some((u) => u && u.stereo);
 
       ST = { live: true, state, spb: spb0, TOTAL: LIVE_TOTAL, buffers: io.buffers || {},
+        bakeNative: !!io.bakeNative,   // wavOut segs path: bake native found+sampler here (no live graph)
         foundAcc: null, samplerUnits: new Map(), units: new Map(), unitOrder: [],
         unitParams: new Map(), unitsSpec, speech: io.speech || null,
         anyStereo, fx, fxp: { ...fxp }, revBleed, revColor, rc, master, mb,
@@ -454,8 +455,47 @@
         }
       }
 
+      // ── NATIVE-LAYER BAKE (wavOut segs path only, ST.bakeNative): the live graph
+      // is gone, so the sampler + found layers that live.js plays natively must be
+      // baked into the stream here. Sampler: build press-style notes at absolute
+      // sample positions and register the unit in unitOrder/samplerUnits (the shared
+      // renderChunk sampler path then bakes them WINDOWED, exactly like open()). Found:
+      // chops at their beat, beds re-anchored at bar start on chord 0 — scheduleNative
+      // parity — attached to this bar's record for a windowed FP.mixPCM in renderChunk.
+      let barFound = null;
+      if (ST.bakeNative) {
+        for (const key of Object.keys(byUnit)) {
+          const u = unitsSpec[key];
+          if (!u || !u.sampler) continue;
+          let su = ST.samplerUnits.get(key);
+          if (!su) {
+            su = { notes: [], sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip } };
+            ST.samplerUnits.set(key, su);
+            ST.unitOrder.push({ key, kind: "sampler" });
+          }
+          const relN = Math.max(32, Math.floor((u.sampler.rel || 0.09) * SR));
+          for (const e of byUnit[key].slice().sort((a, b) => a.beat - b.beat)) {
+            const n = { tSec: base / SR + (e.beat - lo) * spb, durSec: e.durB * spb, freq: e.sets.freq,
+              gain: (u.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
+              atk: u.sampler.atk, rel: u.sampler.rel, zones: u.sampler.zones,
+              swell: !!u.sampler.swell, mello: u.sampler.mello || null,
+              bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0 };
+            n._s0 = Math.max(0, Math.floor(n.tSec * SR));
+            const holdN = Math.max(Math.max(8, Math.floor((n.atk || 0.01) * SR)), Math.floor(n.durSec * SR));
+            n._end = n._s0 + holdN + relN;
+            su.notes.push(n);
+          }
+        }
+        barFound = [];
+        for (const f of (bar.found || [])) {
+          if (!ST.buffers[f.srcId]) continue;
+          if (f.type === "chop") barFound.push({ ...f, tSec: base / SR + (f.beat - lo) * spb, durSec: f.durB * spb });
+          else if (bar.foundCi === 0) barFound.push({ ...f, tSec: base / SR, durSec: f.durB * spb });   // bed on downbeat, anchored at bar start
+        }
+      }
+
       if (bar.sweeps) for (const sw of bar.sweeps) ST.sweeps.push(sw);
-      ST.bars.push({ base, end, spb });
+      ST.bars.push({ base, end, spb, found: barFound });
       ST.liveWriteEnd = end;
       return { index: ST.bars.length - 1, base, end, length: barLen };
     }
@@ -469,11 +509,11 @@
       if (!ST) throw new Error("stream-renderer: renderChunk before open()");
       if (n !== ST.cursor) throw new Error(`stream-renderer: chunk out of order (want ${ST.cursor}, got ${n})`);
       const { TOTAL, foundAcc, samplerUnits, units, unitOrder, anyStereo } = ST;
-      let base, end, spb;
+      let base, end, spb, liveBar = null;
       if (ST.live) {
-        const bar = ST.bars[n];
-        if (!bar) throw new Error(`stream-renderer: live chunk ${n} not fed`);
-        base = bar.base; end = bar.end; spb = bar.spb;
+        liveBar = ST.bars[n];
+        if (!liveBar) throw new Error(`stream-renderer: live chunk ${n} not fed`);
+        base = liveBar.base; end = liveBar.end; spb = liveBar.spb;
       } else {
         const S = ST.S; base = S[n]; end = Math.min(S[n + 1], TOTAL); spb = ST.spb;
       }
@@ -491,9 +531,13 @@
       // position (SP.mixPCM windowed write) so their notes sum onto the same base
       // press uses (found + earlier voices) — matching its per-sample float order.
       if (foundAcc) for (let i = 0; i < LEN; i++) { dry[i] += foundAcc.dry[base + i]; rev[i] += foundAcc.rev[base + i]; del[i] += foundAcc.del[base + i]; pp[i] += foundAcc.pp[base + i]; }
+      // LIVE wavOut: windowed found bake for this bar (chops/beds), press order = FIRST.
+      else if (liveBar && liveBar.found && liveBar.found.length)
+        FP.mixPCM(liveBar.found, ST.buffers, SR, { dry, rev, del, pp }, { base, len: LEN, total: TOTAL });
       for (const { key, kind } of unitOrder) {
         if (kind === "sampler") {
           const su = samplerUnits.get(key);
+          if (ST.live) su.notes = su.notes.filter((nt) => nt._end > base);   // prune fully-played notes (unbounded live stream)
           const win = su.notes.filter((nt) => nt._s0 < end && nt._end > base);
           if (win.length) SP.mixPCM(win, ST.buffers, SR, { dry, rev, del }, su.sends, { base, len: LEN, total: TOTAL });
         } else {
@@ -557,9 +601,36 @@
       return { L, R, startSample: base, length: LEN };
     }
 
+    // addBuffers(map) — MERGE decoded PCM into the OPEN stream's live buffer table
+    // (WAV-FIRST v3.1). The wavOut producers open with whatever PCM is cached and the
+    // conductor streams the rest in as it decodes; bars baked (feedBar) AFTER a buffer
+    // lands then include that found/sampler layer (renderChunk reads ST.buffers live),
+    // matching the ring path's per-bar pop-in. A no-op if no stream is open.
+    function addBuffers(map) {
+      if (!ST || !map) return;
+      if (!ST.buffers) ST.buffers = {};
+      for (const k of Object.keys(map)) if (map[k]) ST.buffers[k] = map[k];
+    }
+
+    // setSpeech(sp) — fold a LATE-decoded vocoder carrier into the OPEN live stream (WAV-FIRST
+    // resilience). The wavOut conductor no longer blocks the open on the speech decode; it opens
+    // with a null carrier (the vocoder unit renders silence, no hum) and ships the carrier here
+    // once it decodes. Updates ST.speech (so any vocoder unit created LATER binds it) and REBINDS
+    // the carrier of any vocoder unit already created, so the robot starts singing mid-stream.
+    function setSpeech(sp) {
+      if (!ST) return;
+      const s2 = sp && sp.length ? sp : null;
+      ST.speech = s2;
+      for (const us of ST.units.values()) {
+        if (!us || !us.u || !us.u.vocoder) continue;
+        if (s2) { const L = s2.length; us.vocIns = (s, len) => { const o = new Float32Array(len); for (let i = 0; i < len; i++) o[i] = s2[((s + i) % L + L) % L]; return o; }; }
+        else us.vocIns = (s, len) => new Float32Array(len);
+      }
+    }
+
     function close() { ST = null; }
 
-    return { open, openLive, feedBar, renderChunk, close };
+    return { open, openLive, feedBar, renderChunk, addBuffers, setSpeech, close };
   }
 
   return { makeStreamEngine };

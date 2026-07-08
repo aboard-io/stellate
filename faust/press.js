@@ -185,7 +185,7 @@ async function assemble(state, sched, env, opts) {
         bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,
       })).filter(n => n.tSec < totalSec);
       SP.mixPCM(notes, buffers, SR, { dry, rev, del },
-        { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0 });
+        { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip });
       console.log(`  ${key}: ${notes.length} ev -> sampler:${u.sampler.id} (native PCM, ${u.sampler.zones.length} zones)`);
       continue;
     }

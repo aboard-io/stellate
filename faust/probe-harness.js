@@ -19,8 +19,11 @@ function serve(root, port) {
     const srv = http.createServer((req, rsp) => {
       if (req.url === "/favicon.ico") { rsp.writeHead(204); return rsp.end(); }
       const p = path.normalize(path.join(root, decodeURIComponent(req.url.split("?")[0])));
-      if (!p.startsWith(root) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { rsp.writeHead(404); return rsp.end(); }
-      rsp.writeHead(200, { "Content-Type": MIME[path.extname(p)] || "application/octet-stream", "Access-Control-Allow-Origin": "*" });
+      if (!p.startsWith(root) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) { console.error("probe-harness 404:", req.url); rsp.writeHead(404); return rsp.end(); }
+      // COOP/COEP: cross-origin isolation, required for the ring engine's
+      // SharedArrayBuffer (mirrors serve.sh — the deployed nginx sends these too)
+      rsp.writeHead(200, { "Content-Type": MIME[path.extname(p)] || "application/octet-stream", "Access-Control-Allow-Origin": "*",
+        "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Embedder-Policy": "require-corp" });
       fs.createReadStream(p).pipe(rsp);
     });
     srv.listen(port, () => res(srv));
