@@ -11,7 +11,11 @@ const fs = require("fs");
 const path = require("path");
 
 const MIME = { ".html": "text/html", ".js": "text/javascript", ".json": "application/json",
-  ".wasm": "application/wasm", ".wav": "audio/wav", ".ogg": "audio/ogg", ".mp3": "audio/mpeg" };
+  ".css": "text/css", ".wasm": "application/wasm", ".wav": "audio/wav", ".ogg": "audio/ogg", ".mp3": "audio/mpeg" };
+  // ".css" added for the app/ CSS split (2026-07-08): index.html now loads app/app.css
+  // via <link rel=stylesheet>. Chromium (standards mode) refuses a stylesheet served
+  // as application/octet-stream, which would leave #map unsized and break the layout
+  // gate. Real nginx serves .css as text/css already; this mirrors it for the probes.
 
 // static file server rooted at `root`, listening on `port`; resolves the server.
 function serve(root, port) {

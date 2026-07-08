@@ -1,0 +1,272 @@
+// live.js — the live playback machinery. Owns the Faust engine handle
+// (faustHandle) and the goLive()/stopLive() lifecycle, plus the honest boot
+// progress hairline, the ?wavDebug overlay, the ?clicktest bed, and the mobile
+// lock-screen Media Session. The per-voice Faust engine is THE engine
+// (FAUST-PORT.md phase 3; the csound WASM path lives on branch legacy-csound).
+import { S, set, K, E, QSFLAGS } from "./state.js";
+import { retarget, rebuildQueue, travelStep, glideStep } from "./targeting.js";
+import { vidReset, genreVideo, bgBarTick } from "./background.js";
+import { scheduleBarNotes, clearNoteTimers } from "./inside.js";
+
+// ---------- live engine ----------
+export let faustHandle=null;
+// ---------- boot progress: honest warm-up meter (play tap -> first audio) ----
+// The live boot has real, observable phases (faust/live.js emits them via
+// onStatus, plus onBar for the first scheduled bar): "loading Faust modules…"
+// (the big ESM+wasm fetch), then "live (faust)…" once the master graph is up,
+// then the first onBar (first bar scheduled), then audio. We drive the bar off
+// THOSE events only — never a timer faking progress. If a phase stalls, the bar
+// holds its honest width and shimmers (indeterminate) instead of creeping to
+// 99%. It completes only on the first real RMS (sound is actually out), then
+// fades. Same path serves the journey/path start: play always routes through
+// goLive() (the path just pre-seeds waypoints), so this covers both.
+const bootEl=document.getElementById("boot"),
+      bootFill=bootEl.querySelector(".bfill"), bootLabel=bootEl.querySelector(".blabel");
+let bootStageV=0, bootActive=false, bootStallT=0, bootRmsT=0;
+function bootTo(frac,label){
+  if(frac<bootStageV) return;                       // monotonic: never walk backward
+  bootStageV=frac; bootEl.classList.remove("ind");
+  bootFill.style.width=Math.round(frac*100)+"%";
+  if(label) bootLabel.textContent=label;
+  clearTimeout(bootStallT);
+  if(frac<1) bootStallT=setTimeout(()=>{ if(bootActive) bootEl.classList.add("ind"); },1400);
+}
+function bootStart(){
+  bootActive=true; bootStageV=0;
+  bootEl.classList.add("on"); bootEl.classList.remove("ind");
+  bootFill.style.transition="none"; bootFill.style.width="0%";
+  void bootFill.offsetWidth; bootFill.style.transition="";   // reflow so the fill restarts from 0
+  bootTo(0.08,"waking the engine…");
+}
+function bootStatus(m){
+  if(!bootActive) return;
+  if(/loading faust modules/i.test(m)) bootTo(0.24,"loading synth modules…");
+  else if(/^live|tap again if silent/i.test(m)) bootTo(0.62,"building the voices…");
+}
+function bootBar(){
+  if(!bootActive) return;
+  bootTo(0.86,"scheduling the first bar…");
+  if(!bootRmsT) bootRmsT=setInterval(()=>{               // wait for REAL sound, not a guess
+    let r=0; try{ r=faustHandle?faustHandle.rms():0; }catch(e){}
+    if(r>0.0008) bootDone();
+  },80);
+}
+function bootDone(){
+  if(!bootActive) return;
+  bootActive=false; clearInterval(bootRmsT); bootRmsT=0; clearTimeout(bootStallT);
+  bootEl.classList.remove("ind");
+  bootTo(1,"playing"); bootFill.style.width="100%";
+  setTimeout(()=>{ if(!bootActive) bootEl.classList.remove("on"); },500);
+}
+function bootAbort(){   // stop pressed mid-warmup, or boot failed: pull it down
+  bootActive=false; clearInterval(bootRmsT); bootRmsT=0; clearTimeout(bootStallT);
+  bootEl.classList.remove("on","ind");
+}
+window.__BOOT={ stage:()=>bootStageV, active:()=>bootActive, on:()=>bootEl.classList.contains("on"),
+  ind:()=>bootEl.classList.contains("ind"), width:()=>bootFill.style.width };   // headless probe
+// ?forceClassicOut=1 — bypass the mobile media-element output route and drive
+// ctx.destination directly even on a mobile UA (the R8 escape hatch; pairs
+// with the engine's opt-in element recycle, faust/live.js 1.7).
+const FORCE_CLASSIC=QSFLAGS.get("forceClassicOut")==="1";
+// ?forceMediaEl=1 — force the <audio>/MediaStream output route (the background-
+// survival path) even on desktop; escape hatch if Safari auto-detection misses.
+const FORCE_MEDIAEL=QSFLAGS.get("forceMediaEl")==="1";
+// ?wavOut=1 force the WAV-FIRST mobile audible path anywhere (desktop test hatch);
+// ?wavOut=0 escape back to the ring/worklet path; unset = auto (on when isMobile).
+const WAVOUT=QSFLAGS.has("wavOut")?(QSFLAGS.get("wavOut")!=="0"):undefined;
+// ?segAB=1 — v3: force the v2 A/B <audio> element pair instead of the default
+// continuous-MP3 (Managed)MediaSource append stream (the WAV-FIRST fallback tier).
+const SEGAB=QSFLAGS.has("segAB")?(QSFLAGS.get("segAB")!=="0"):undefined;
+// ?codec=mp3|opus|aac — v4: force the append route's encoder/codec tier. Default walks
+// the ladder mms-aac → mse-aac → mse-opus → mms-mp3/mse-mp3 → segAB by feature support.
+const CODEC=QSFLAGS.has("codec")?QSFLAGS.get("codec"):undefined;
+// ?allSampled=1 — EXPERIMENT (default OFF): render the ENTIRE mix from the SF2-
+// derived sample library (found/samples/instruments + drums), no Faust synthesis.
+// Applied as a transform at the getState boundary (below) so it survives genre
+// retargets/glides — every state the live engine sees is enriched by
+// GenreKernel.applySampledOnly (idempotent). See genre-kernel + state-engine.
+const ALLSAMPLED=QSFLAGS.get("allSampled")==="1";
+// ?wavDebug=1 — on-device diagnostic overlay for the wavOut routes: route, boot-stage
+// timings, buffer depth, starve count, straight off the live handle at 2 Hz. Real
+// MMS behavior exists only on the device; this is how the device reports back.
+const WAVDEBUG=QSFLAGS.get("wavDebug")==="1";
+let wavDbgTimer=0;
+function startWavDebug(){
+  if(!WAVDEBUG||wavDbgTimer) return;
+  const wrap=document.createElement("div");
+  wrap.style.cssText="position:fixed;left:8px;bottom:8px;z-index:9999;background:rgba(0,0,20,.92);color:#8ef;font:10px/1.5 monospace;padding:6px 8px;border:1px solid #345;border-radius:4px;max-width:92vw;width:340px";
+  const stats=document.createElement("div"); stats.style.cssText="white-space:pre-wrap;overflow:hidden;margin-bottom:4px";
+  // the shareable EVENT LOG (Paul: "log events in a text field + a copy button so I
+  // can share analytics from safari iOS"): status changes, new errors, decode
+  // failures, route/demotion changes, and a 5s telemetry snapshot — timestamped.
+  const ta=document.createElement("textarea");
+  ta.readOnly=true; ta.spellcheck=false;
+  ta.style.cssText="display:block;width:100%;height:110px;background:#021;color:#9fc;font:9px/1.4 monospace;border:1px solid #234;border-radius:3px;padding:4px;resize:none;-webkit-user-select:text;user-select:text";
+  const btn=document.createElement("button");
+  btn.textContent="copy log";
+  btn.style.cssText="margin-top:4px;background:#134;color:#9ef;border:1px solid #467;border-radius:3px;font:10px monospace;padding:3px 10px";
+  // AUDIT-TRUTH: download the full per-bar expected-vs-actual audit ring as JSON.
+  const dbtn=document.createElement("button");
+  dbtn.textContent="download audit";
+  dbtn.style.cssText="margin:4px 0 0 6px;background:#312;color:#fbb;border:1px solid #745;border-radius:3px;font:10px monospace;padding:3px 10px";
+  wrap.appendChild(stats); wrap.appendChild(ta); wrap.appendChild(btn); wrap.appendChild(dbtn);
+  document.body.appendChild(wrap);
+  const t0=Date.now(), lines=[];
+  const ts=()=>"[+"+((Date.now()-t0)/1000).toFixed(1)+"s]";
+  const log=(m)=>{ lines.push(ts()+" "+m); if(lines.length>500)lines.splice(0,100);
+    ta.value=lines.join("\n"); ta.scrollTop=ta.scrollHeight; };
+  log("ua: "+navigator.userAgent);
+  log("url: "+location.pathname+location.search);
+  btn.addEventListener("click",()=>{
+    // append the compact AUDIT summary — iOS downloads are awkward; clipboard is proven.
+    let sum="";
+    try{ const h=faustHandle; if(h&&h.auditSummary) sum="\n"+h.auditSummary(); }catch(e){}
+    const text=lines.join("\n")+sum;
+    const ok=()=>{ btn.textContent="copied ✓"; setTimeout(()=>btn.textContent="copy log",1500); };
+    const fallback=()=>{ try{ ta.focus(); ta.select(); ta.setSelectionRange(0,ta.value.length); document.execCommand("copy"); ok(); }catch(e){ btn.textContent="select+copy manually"; } };
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok,fallback);
+    else fallback();
+  });
+  dbtn.addEventListener("click",()=>{
+    let ring=[],stats=null;
+    try{ const h=faustHandle; if(h&&h.audit) ring=h.audit(); if(h&&h.auditStats) stats=h.auditStats(); }catch(e){}
+    const blob=new Blob([JSON.stringify({ ua:navigator.userAgent, url:location.pathname+location.search,
+      when:new Date().toISOString(), stats, summary:(faustHandle&&faustHandle.auditSummary?faustHandle.auditSummary():""),
+      bars:ring },null,2)],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download="audit-"+Date.now()+".json"; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ try{URL.revokeObjectURL(a.href);}catch(e){} a.remove(); },1000);
+    dbtn.textContent="saved ✓ ("+ring.length+" bars)"; setTimeout(()=>dbtn.textContent="download audit",1800);
+  });
+  let lastStatus=null,lastErrN=0,lastFailN=0,lastRoute=null,lastDemoted=false,lastSnap=0;
+  wavDbgTimer=setInterval(()=>{
+    if(S.status!==lastStatus){ lastStatus=S.status; log("status: "+S.status); }
+    const h=faustHandle; if(!h){ stats.textContent="no handle"; return; }
+    let s={};
+    try{
+      const w=h.__wavState?h.__wavState():null;
+      const route=(typeof h.outputRoute==="function"?h.outputRoute():h.outputRoute);
+      s={ route, aheadSec:h.runwaySec?+h.runwaySec().toFixed(1):null,
+        starves:h.underruns?h.underruns():null, rms:+h.rms().toFixed(3),
+        ct:h.mediaEl?+(h.mediaEl.currentTime||0).toFixed(1):null,
+        drift:w&&w.stitchDriftSec!=null?w.stitchDriftSec:null,
+        aud:w&&w.auditAnoms!=null?(w.auditAnoms+"/"+(w.auditBars||0)):null,
+        dbl:w&&w.doublePlayAnoms!=null?(w.audibleElements+"el x"+w.doublePlayAnoms):null,
+        dec:w&&w.decode?("f"+w.decode.found.ok+"/"+w.decode.found.fail+" s"+w.decode.sampler.ok+"/"+w.decode.sampler.fail):null };
+      if(route!==lastRoute){ lastRoute=route; log("route: "+route); }
+      if(w&&w.demoted&&!lastDemoted){ lastDemoted=true; log("DEMOTED: "+(w.demoteReason||"?")); }
+      if(h.errors&&h.errors.length>lastErrN){ for(let i=lastErrN;i<h.errors.length;i++) log("error: "+h.errors[i]); lastErrN=h.errors.length; }
+      const fails=(w&&w.decode&&w.decode.fails)||[];
+      if(fails.length>lastFailN){ for(let i=lastFailN;i<fails.length;i++) log("decode-fail: "+fails[i]); lastFailN=fails.length; }
+      if(Date.now()-lastSnap>5000){ lastSnap=Date.now();
+        log("snap route="+s.route+" ahead="+s.aheadSec+"s drift="+s.drift+" starves="+s.starves+" ct="+s.ct+" rms="+s.rms+" audit="+s.aud+" dbl="+s.dbl+" dec="+s.dec+(h.bootStats?" boot="+JSON.stringify(h.bootStats()):""));
+        try{ if(h.auditSummary){ const as=h.auditSummary(); if(/anomalies/.test(as)&&!/: 0 anomalies/.test(as)) log(as); } }catch(e){} }
+    }catch(e){ s={err:String(e&&e.message||e)}; }
+    stats.textContent=JSON.stringify(s).replace(/[{}"]/g,"");
+  },500);
+}
+// ---- CLICK TEST BED (?clicktest=N) — a SILENT diagnostic "genre" -------------
+// Paul's idea for hunting the sub-0.5 clicks the clickmon tripwire misses: strip
+// the mix down to ONE soft, STEADY pad and silence everything else, then let the
+// engine churn around it. There is no musical content to mask a glitch, so any
+// tick you hear IS a seam/switch artifact (butt-splice, crossfade, or reset).
+// Slow bpm + short reverb keep the bar seams far apart and un-smeared. Modes:
+//   1 = STATIONARY pad, identical every bar (tests the continuous butt-splice
+//       seam — the path the "kill the clicks" commit left as a zero-fade splice)
+//   2 = same pad, MODEL cycles every bar (tests the ~20ms voice/color-swap xfade)
+//   3 = same pad, SECTION identity flips every bar (tests the stem-reset xfade)
+// Inert unless ?clicktest=N is set — safe in the production tree.
+const CLICKTEST=+(QSFLAGS.get("clicktest")||0);
+const CT_MODELS=["saw","organ","fm","pluck","stack"];
+const CT_BASE=E.defaultState();
+let ctN=0;
+function clickTestState(){
+  const s=JSON.parse(JSON.stringify(CT_BASE)); const n=ctN++;
+  s.bpm=60; s.progression="drone_min"; s.reverb=0.2; s.seed=1;
+  s.delay={beats:0.75,feedback:0,cutoff:2000};
+  const soft={level:0.2,send:0.05,dsend:0,attack:2.0,cutoff:900,res:0.1,detune:0.004,wave:"saw"};
+  const model=CLICKTEST>=2?CT_MODELS[n%CT_MODELS.length]:"saw";
+  s.instruments={
+    pad:{...soft,model},
+    bass:{level:0,send:0,dsend:0},
+    melody:{level:0,send:0,dsend:0,voices:1},
+    drums:{kick:0,snare:0,hat:0,tom:0,send:0,dsend:0,kickModel:"boom",snareModel:"noise",hatModel:"noise"}
+  };
+  s.foundSources=[];
+  const secId=CLICKTEST>=3?("ct"+(n%2)):"ct";
+  s.sections=[{id:secId,name:secId,cycles:1,pads:true,bass:"off",drums:"off",melody:"off",found:{sourceId:null,role:"bed"},fill:"off"}];
+  return s;
+}
+export async function goLive(){
+  bootStart();
+  try{
+    // a drawn path starts FRESH: reset the traveler to the path start and
+    // SNAP the playing state to that target (retarget while !S.live replaces
+    // playing wholesale) — no glide from the previous run's genre, and the
+    // stale glide queue from that run is cleared.
+    if(CLICKTEST){ ctN=0; set({playing:clickTestState(), target:clickTestState()}); }   // seed a valid base so UI reads never hit null
+    else if(S.waypoints.length>=2){
+      set({travel:{seg:0,t:0}, queue:[]});
+      retarget({x:S.waypoints[0].x, y:S.waypoints[0].y});
+    }
+    vidReset();   // fresh shuffled video bag per play session — different clip order every time
+    set({live:true,barCount:0,holdUntil:{}}); rebuildQueue();   // fresh instrument-hold timers per session
+    if(CLICKTEST) ctN=0;   // first PLAYED bar is n=0 (the seed calls above advanced it)
+    let getState=CLICKTEST?(()=>clickTestState()):(()=>S.playing);
+    // EXPERIMENT: ?allSampled=1 — enrich every state the engine polls (survives
+    // retargets/glides since it wraps the getState boundary, not a one-time set).
+    if(ALLSAMPLED){ const raw=getState; getState=()=>{ const st=raw(); return st?K.applySampledOnly(st):st; }; }
+    faustHandle=await FaustLive.exploreLive(getState, m=>{set({status:m}); bootStatus(m);}, { forceClassicOut:FORCE_CLASSIC, forceMediaEl:FORCE_MEDIAEL, wavOut:WAVOUT, segAB:SEGAB, codec:CODEC, onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
+      bootBar();   // first bar scheduled -> advance the warm-up bar, then it waits on real RMS
+      set({barInfo:info,barCount:S.barCount+1});
+      scheduleBarNotes(info);   // fire DemoLayer.note(ev) at each note onset (no-op unless the demoscene layer is on)
+      if(S.waypoints.length>=2) travelStep();
+      glideStep();
+      genreVideo(info);
+      if(window.VideoLayer&&VideoLayer.pulse)VideoLayer.pulse(info);   // ALIEN BROADCAST: musical hook (section/downbeat-aligned chaos)
+      if(window.DemoLayer&&DemoLayer.pulse)DemoLayer.pulse(info);      // demoscene: surge the effect's clock on the bar
+      bgBarTick();                                                     // video↔demo 8-bar alternation (mode 1, live only)
+      updateMediaSession();   // reflect the current genre/blend on the lock screen (updates across a swap)
+    }});
+    if(MSESSION){ try{ MSESSION.playbackState="playing"; }catch(e){} updateMediaSession(true); }
+    startWavDebug();   // ?wavDebug=1 overlay (inert otherwise)
+  }catch(e){ set({live:false,status:"live failed: "+e.message}); bootAbort(); console.error(e); }
+}
+export function stopLive(){ set({live:false, queue:[]});   // queue cleared: the next run must not inherit this run's glide flips
+  clearNoteTimers();   // drop any pending demoscene note onsets so none fire after ■
+  bootAbort();   // stopped before sound? clear the warm-up bar
+  if(faustHandle){ try{faustHandle.stop();}catch(e){} faustHandle=null; }
+  if(MSESSION){ try{ MSESSION.playbackState="paused"; }catch(e){} }
+  set({status:"stopped"}); }
+setInterval(()=>{ if(!S.live&&S.playing&&S.target){ set({barCount:S.barCount+1}); glideStep(); } },1400);
+
+// ---------- Media Session: lock-screen metadata + transport (mobile) --------
+// Pairs with faust/live.js's media-element output route: the element makes the
+// OS treat the page as media playback (survives screen lock), and this makes
+// the lock screen / notification shade show WHAT is playing and wire its
+// play/pause buttons to the real engine. Feature-detected — a silent no-op on
+// desktop / older browsers, so behavior there is unchanged. Artwork skipped:
+// the star chart is live SVG (no canvas), so a snapshot would mean an offscreen
+// re-render for marginal payoff.
+const MSESSION = (typeof navigator!=="undefined" && "mediaSession" in navigator) ? navigator.mediaSession : null;
+function mediaSessionLabel(){
+  // the current blend, mirroring the chyron's genre readout: dominant genre, or
+  // "a + b" when genuinely blended (2nd weight rides above ~25%).
+  const ws=(S.weights||[]).filter(w=>w&&w.w>0.001);
+  if(!ws.length) return "the genre space";
+  const a=ws[0].g;
+  return (ws[1]&&ws[1].w>0.25) ? a+" + "+ws[1].g : a;
+}
+let msLastTitle="";
+function updateMediaSession(force){
+  if(!MSESSION || typeof MediaMetadata==="undefined") return;
+  const title=mediaSessionLabel();
+  if(!force && title===msLastTitle) return;
+  msLastTitle=title;
+  try{ MSESSION.metadata=new MediaMetadata({ title, artist:"CONSTELLATE", album:"the genre space" }); }catch(e){}
+}
+if(MSESSION){ try{
+  MSESSION.setActionHandler("play", ()=>{ if(!S.live) goLive(); });
+  MSESSION.setActionHandler("pause", ()=>{ if(S.live) stopLive(); });   // pause == stop: the engine has no freeze, a clean stop is honest
+  MSESSION.setActionHandler("stop", ()=>{ if(S.live) stopLive(); });
+}catch(e){} }

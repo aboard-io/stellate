@@ -1,0 +1,185 @@
+:root{--bg:#0c0a1a;--panel:#15122c;--panel2:#1c1838;--line:#2c2750;--line2:#3b3568;
+    --ink:#ece9ff;--dim:#9b93c6;--pink:#ff6ec7;--cyan:#45e0ff;--mint:#4dffb0;--amber:#ffd86b;--purple:#a06bff}
+  *{box-sizing:border-box}
+  body{margin:0;height:100vh;overflow:hidden;background:var(--bg);color:var(--ink);
+    font:14px/1.55 ui-sans-serif,system-ui,sans-serif;
+    touch-action:pan-x pan-y}  /* modals still scroll; browser pinch-zoom of the PAGE never fires */
+  /* THE STAR MAP: the whole viewport is the space; video plays underneath,
+     stars + path float directly over the footage — no box, no panel. */
+  #map{position:fixed;inset:0;width:100vw;height:100vh;z-index:1;cursor:crosshair;touch-action:none;
+    user-select:none;-webkit-user-select:none}
+  #map text{pointer-events:none}
+  #map .cur{pointer-events:none}  /* the traveler is display-only: it never steals a waypoint grab */
+  .brand{position:fixed;top:.7rem;left:1rem;z-index:3;font-family:Orbitron,sans-serif;font-size:1.02rem;letter-spacing:.05em;margin:0;
+    background:linear-gradient(90deg,var(--amber),var(--pink) 52%,var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .sub{position:fixed;top:3.1rem;left:1rem;z-index:3;color:var(--dim);font-size:.8rem;max-width:46ch;display:none;
+    background:rgba(12,10,26,.82);border:1px solid var(--line);border-radius:10px;padding:.7rem .9rem}
+  .sub.show{display:block}
+  .help{font-size:.7rem;padding:.1rem .5rem;border-radius:99px;vertical-align:middle;margin-left:.5rem;
+    border:1px solid var(--line2);background:rgba(28,24,56,.6);color:var(--dim);cursor:pointer;-webkit-text-fill-color:var(--dim)}
+  .card h2{cursor:pointer;user-select:none}
+  .card.min{padding:.45rem .9rem}
+  .card.min>:not(h2){display:none}
+  .card{background:rgba(18,15,38,.62);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+    border:1px solid var(--line);border-radius:12px;padding:.9rem}
+  .card h2{font-family:Orbitron,sans-serif;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:0 0 .6rem}
+  /* CONTROLS ARE MODAL: the sky is clean by default. Only the brand + three
+     chips (playChip/npChip/cfgChip) float; each surface opens as a modal over
+     the plane and closes on backdrop tap / its chip / esc. */
+  .modal{position:fixed;inset:0;z-index:5;display:none;background:rgba(6,5,14,.44)}
+  .modal.open{display:block}
+  #panel{position:absolute;top:.7rem;right:.7rem;width:330px;max-height:calc(100vh - 1.4rem);overflow:auto}
+  body.dragging{user-select:none;-webkit-user-select:none;cursor:crosshair}
+  /* 61 stars: labels fade back — it's a star chart, constellation over caption */
+  .anchor{font:11px VT323,monospace;fill:rgba(220,214,255,.42);text-shadow:0 0 6px #000;transition:fill .45s ease}
+  .anchor.hot{fill:rgba(255,229,246,.95);font-size:12px}
+  /* while a pointer works the map (drag/pinch/wheel, +600ms), labels light full
+     white so you can read where you are; they ease back to dim when you let go */
+  #map.itx .anchor{fill:#fff}
+  .wlabel{font:11px VT323,monospace;fill:#4dffb0}
+  .wpn{font:11px VT323,monospace;fill:#0c0a1a;font-weight:700}
+  /* the CPU meter: pixel-locked chrome above the chips, live-only. VT323 like
+     the rest of the readouts; colour is set inline by cpuMeterTick. */
+  #cpu{position:fixed;right:.7rem;bottom:4.1rem;z-index:6;display:none;gap:.55rem;align-items:center;
+    font:13px VT323,monospace;letter-spacing:.02em;color:var(--mint);
+    background:rgba(12,10,26,.82);border:1px solid var(--line);border-radius:9px;
+    padding:.2rem .55rem;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+    box-shadow:0 0 10px rgba(0,0,0,.35);user-select:none;pointer-events:none}
+  #cpu.live{display:inline-flex}
+  #cpu #cpuCpu{font-variant-numeric:tabular-nums;font-weight:600;letter-spacing:.02em}
+  #cpu #cpuNodes{color:var(--dim)}
+  #cpu #cpuEco{color:var(--amber)}
+  #cpu #cpuEco:empty{display:none}
+  #cpu #cpuStems{color:var(--mint);letter-spacing:.06em;font-size:.82em;opacity:.85}
+  #cpu #cpuStems:empty{display:none}
+  /* the chips: the ONLY floating affordances (with the brand) */
+  #chips{position:fixed;right:.7rem;bottom:.7rem;z-index:6;display:flex;gap:.5rem}
+  .chip{width:48px;height:48px;border-radius:50%;font-size:1.25rem;line-height:1;display:grid;place-items:center;
+    padding:0;border:1px solid var(--line2);color:var(--ink);cursor:pointer;
+    background:rgba(18,15,38,.72);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+  .chip.on{border-color:var(--pink);color:var(--pink)}
+  #playChip.live{background:linear-gradient(90deg,var(--pink),var(--purple));border-color:transparent;color:#0c081a;font-weight:700}
+  /* now-playing lower-third: a bottom sheet inside its modal */
+  #playhead{position:absolute;left:50%;transform:translateX(-50%);bottom:4.6rem;
+    font:14px VT323,monospace;color:var(--mint);background:rgba(12,10,26,.9);border:1px solid var(--line);
+    border-radius:12px;padding:.6rem .8rem;line-height:1.5;white-space:pre-wrap;
+    width:min(560px,94vw);max-height:min(60vh,480px);overflow:auto}
+  /* INSIDE THE SOUND: the "what's in this mix" readout — a bottom sheet.
+     Live layers: genre BLEND bar, a FEEL radar, and a VOICE TIMELINE (a compact
+     piano-roll of what each instrument is playing this bar). Same VT323/neon
+     palette as every other readout. */
+  #inside{position:absolute;left:50%;transform:translateX(-50%);bottom:4.6rem;
+    width:min(560px,94vw);max-height:min(74vh,580px);overflow:auto;
+    background:rgba(12,10,26,.94);border:1px solid var(--line)}
+  #inside h2{font-family:Orbitron,sans-serif;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:0 0 .55rem}
+  .vz-sec{margin:.2rem 0 .75rem}
+  .vz-lbl{font:12px VT323,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);opacity:.85;margin-bottom:.32rem}
+  .vz-bar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+  .vz-bar>div{height:100%;min-width:2px;transition:width .2s ease}
+  .vz-leg{display:flex;flex-wrap:wrap;gap:.15rem .85rem;margin-top:.42rem;font:15px VT323,monospace;color:var(--ink)}
+  .vz-g{display:inline-flex;align-items:center;gap:.35rem}
+  .vz-g i{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .vz-g b{color:var(--mint);font-weight:400}
+  .vz-info{margin-top:.42rem;font:14px VT323,monospace;color:var(--dim);line-height:1.4}
+  .radar{display:block;margin:.1rem auto 0;max-width:262px}
+  .radar .rax{font:11px VT323,monospace;fill:var(--dim);letter-spacing:.04em}
+  .vz-feelnums{text-align:center;font:14px VT323,monospace;color:var(--mint);opacity:.92;margin-top:.15rem}
+  .vz-feelnums b{color:var(--dim);font-weight:400}
+  .vz-in{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;font:16px VT323,monospace;margin:.16rem 0}
+  .vz-ir{flex:0 0 46px;color:var(--dim);text-transform:uppercase;font-size:11px;letter-spacing:.1em}
+  .vz-inm{color:var(--pink)}
+  /* effects as tiny text UNDER each lane's roll — no stacked lozenges */
+  .vz-fxline{font-size:9px;line-height:1.35;letter-spacing:.02em;color:var(--dim);opacity:.72;margin:.12rem 0 .3rem;white-space:normal}
+  .vz-master .vz-fxline{color:var(--amber);opacity:.85}
+  .vz-fx{display:inline-flex;flex-wrap:wrap;gap:.28rem}
+  .vz-fx i{font-style:normal;font-size:11px;line-height:1.5;letter-spacing:.02em;color:var(--cyan);
+    background:rgba(69,224,255,.10);border:1px solid rgba(69,224,255,.28);border-radius:99px;padding:.02rem .42rem}
+  .vz-master{margin-top:.45rem;padding-top:.4rem;border-top:1px solid var(--line)}
+  .vz-master .vz-fx i{color:var(--amber);background:rgba(255,216,107,.10);border-color:rgba(255,216,107,.30)}
+  .vz-found{margin-top:.4rem;font:14px VT323,monospace;color:var(--cyan);opacity:.85}
+  /* the VOICE TIMELINE: a lane per instrument, a beat-gridded piano-roll of what
+     it plays this bar. Header (name + fx) on the left, the roll on the right. */
+  .vz-ruler{position:relative;height:13px;margin:0 0 .1rem;margin-left:calc(128px + .5rem);
+    border-radius:4px 4px 0 0;background-color:rgba(255,255,255,.02)}
+  .vz-ruler span{position:absolute;top:0;font:11px VT323,monospace;color:var(--dim);opacity:.7;padding-left:2px}
+  .vz-tlrow{display:flex;align-items:stretch;gap:.5rem;margin:.2rem 0}
+  .vz-tlhead{flex:0 0 128px;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:.1rem}
+  .vz-tlname{display:flex;align-items:center;gap:.32rem;font:15px VT323,monospace;color:var(--pink);
+    line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .vz-tlname i{flex:0 0 auto;width:8px;height:8px;border-radius:2px;display:inline-block}
+  .vz-tlrole{font:10px VT323,monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);opacity:.8}
+  .vz-roll{position:relative;flex:1 1 auto;min-width:0;height:34px;border-radius:5px;
+    border:1px solid var(--line);background-color:rgba(255,255,255,.03);overflow:hidden}
+  .vz-blk{position:absolute;height:14%;min-width:2px;border-radius:2px;transition:opacity .12s linear}
+  /* AUDIT-TRUTH: a lane the audit measured as EXPECTED-BUT-SILENT this bar — notes were
+     scheduled but no audio was rendered (missing sample buffers, or a render-side mute).
+     Red hatch over the whole roll; the header name goes red with a ✕ badge. */
+  .vz-roll.vz-silent{border-color:rgba(255,64,80,.85)}
+  .vz-roll.vz-silent::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:5px;
+    background:repeating-linear-gradient(45deg,rgba(255,48,64,.34) 0 6px,rgba(255,48,64,.10) 6px 12px)}
+  .vz-tlrow.vz-silent .vz-tlname{color:#ff5064}
+  .vz-silbadge{font:9px VT323,monospace;color:#0c081a;background:#ff5064;border-radius:3px;
+    padding:0 .28rem;margin-left:.3rem;letter-spacing:.04em;text-transform:uppercase}
+  /* the chyron: music-video lower-third (namebank.js invents the band) */
+  .chy{border-left:3px solid var(--pink);padding-left:.65rem}
+  .chy-title{font-family:Orbitron,sans-serif;font-size:.9rem;letter-spacing:.09em;color:#fff}
+  .chy-artist{font-size:1.2rem;color:var(--pink);line-height:1.25}
+  .chy-album{color:var(--dim)}
+  .chy-roster{margin-top:.35rem;color:var(--ink);opacity:.88}
+  .chy-inst{color:var(--cyan)}
+  .chy-join{color:var(--amber);margin-top:.15rem}
+  .chy-tech{margin-top:.4rem;color:var(--mint);opacity:.8;font-size:12px;line-height:1.45}
+  .chy-status{margin-top:.25rem;color:var(--cyan);font-size:12px}
+  .row{display:flex;align-items:center;gap:.5rem;margin:.3rem 0}
+  .row label{width:86px;font-size:.7rem;color:var(--dim)}
+  .row input[type=range]{flex:1;accent-color:var(--pink);margin:0}
+  .row output{width:46px;text-align:right;color:var(--mint);font-variant-numeric:tabular-nums;font-size:.74rem}
+  .row select{flex:1;background:rgba(28,24,56,.6);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.25rem .4rem;font-size:.78rem}
+  button{font:inherit;cursor:pointer;border-radius:9px;border:1px solid var(--line2);background:rgba(28,24,56,.6);color:var(--ink);padding:.45rem .8rem}
+  button.go{background:linear-gradient(90deg,var(--pink),var(--purple));border:none;color:#0c081a;font-weight:700}
+  .btns{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem}
+  .sc{display:flex;align-items:center;gap:.5rem;font-size:.7rem;margin:.16rem 0}
+  .sc .g{width:78px;color:var(--dim)}
+  .sc .bar{flex:1;height:6px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
+  .sc .f{height:100%;background:linear-gradient(90deg,var(--pink),var(--cyan))}
+  .sc .v{width:28px;text-align:right;color:var(--mint);font-variant-numeric:tabular-nums}
+  .seedin{width:90px;background:rgba(28,24,56,.6);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.3rem .5rem}
+  .hint{color:var(--dim);font-size:.7rem;margin-top:.45rem}
+  /* MACROS: eight global axes — a compact block, VT323 poles either side of a
+     centre-detented slider (the pink accent lights when an axis is off-zero) */
+  .mac{margin:.55rem 0 .2rem;padding:.5rem .55rem;border:1px solid var(--line);border-radius:10px;
+    background:rgba(28,24,56,.35)}
+  .mac-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem}
+  .mac-h span{font-family:Orbitron,sans-serif;font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+  .mac-rst{padding:.18rem .5rem;font-size:.66rem;border-radius:7px}
+  .mac-rst:disabled{opacity:.4;cursor:default}
+  .mrow{display:grid;grid-template-columns:52px 1fr 52px;gap:.4rem;align-items:center;margin:.16rem 0}
+  .mrow .ml{font-size:.66rem;color:var(--dim);text-align:right}
+  .mrow .mr{font-size:.66rem;color:var(--dim)}
+  .mrow input[type=range]{width:100%;accent-color:var(--line2);margin:0}
+  .mrow.act input[type=range]{accent-color:var(--pink)}
+  .mrow.act .ml,.mrow.act .mr{color:var(--mint)}
+  a{color:var(--cyan)}
+  /* BOOT PROGRESS: a chrome hairline pinned to the top edge (pixel-locked like
+     the chips/brand — px, fixed, never scales with the map). Same pink→cyan
+     the score bars use; a shimmer sweep marks an honest stall. */
+  #boot{position:fixed;left:0;top:0;width:100%;z-index:8;pointer-events:none;
+    opacity:0;transition:opacity .35s ease}
+  #boot.on{opacity:1}
+  #boot .btrack{position:relative;height:3px;width:100%;overflow:hidden;
+    background:rgba(255,255,255,.06)}
+  #boot .bfill{height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--cyan));
+    box-shadow:0 0 8px var(--pink);transition:width .5s cubic-bezier(.4,0,.2,1)}
+  #boot.ind .btrack::after{content:"";position:absolute;inset:0;width:38%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);
+    animation:bootshim 1.05s linear infinite}
+  @keyframes bootshim{from{transform:translateX(-120%)}to{transform:translateX(330%)}}
+  #boot .blabel{position:absolute;top:9px;left:50%;transform:translateX(-50%);
+    font:12px VT323,monospace;letter-spacing:.14em;color:var(--cyan);
+    text-shadow:0 0 6px #000;white-space:nowrap}
+  @media(max-width:640px){
+    #panel{left:.5rem;right:.5rem;top:auto;bottom:4.2rem;width:auto;max-height:46vh}
+    #chips{right:.5rem;bottom:.5rem}
+    #playhead{font-size:12px;bottom:4.2rem}
+    .brand{font-size:.9rem}
+  }
