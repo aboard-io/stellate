@@ -281,10 +281,14 @@ function timelineHTML(tl){
     const fx=(L.fx&&L.fx.length)?`<div class="vz-fxline">${L.fx.map(esc).join(" · ")}</div>`:"";
     // AUDIT-TRUTH silent-lane paint: red-hatched roll + a ✕ badge naming the reason.
     const silBadge=L.silent?`<span class="vz-silbadge" title="${esc(L.silReason==="missing"?("missing samples: "+(L.silMissing||[]).join(", ")):(L.silReason==="nan"?"render NaN (blown-up filter/strip)":"buffers present but silent — render-side mute"))}">✕ ${esc(L.silReason||"silent")}</span>`:"";
-    return `<div class="vz-tlrow${L.silent?" vz-silent":""}"><div class="vz-tlhead">`+
+    // ROW = [header + roll] stacked ABOVE the fx line, so effects sit BENEATH the
+    // piano-roll (not beside it, which squished the grid) and every roll aligns on
+    // an even vertical rhythm regardless of how long a voice's fx chain is.
+    return `<div class="vz-tlrow${L.silent?" vz-silent":""}">`+
+      `<div class="vz-tlmain"><div class="vz-tlhead">`+
       `<div class="vz-tlname"><i style="background:var(${L.col})"></i>${esc(L.name)}${silBadge}</div>`+
       `<div class="vz-tlrole">${esc(L.label)}</div></div>`+
-      `<div class="vz-roll${L.silent?" vz-silent":""}" style="background-image:${grid}">${laneBlocks(L,cb)}</div>`+
+      `<div class="vz-roll${L.silent?" vz-silent":""}" style="background-image:${grid}">${laneBlocks(L,cb)}</div></div>`+
       fx+`</div>`;
   }).join("");
   return `<div class="vz-ruler" style="background-image:${grid}">${ruler}</div><div class="vz-tl">${rows}</div>`;
