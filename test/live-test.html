@@ -1,0 +1,125 @@
+<!doctype html>
+<!-- faust/live-test.html — minimal harness for the FaustLive facade.
+     Served from the repo root (so found/ sample paths resolve):
+       node faust/live-test-run.js       (headless playwright gate)
+     or open http://localhost:8777/faust/live-test.html and click Go. -->
+<html>
+<head><meta charset="utf-8"><title>FaustLive test</title></head>
+<body style="background:#111;color:#9fe;font:14px monospace;padding:1em">
+<button id="go">Go live (jungle)</button>
+<button id="swap">Swap to house</button>
+<button id="stop">Stop</button>
+<pre id="log"></pre>
+<!-- ?failCodec=<opus|aac|mp3> (v4.1 step-down gate): make the FIRST appendBuffer for the
+     matching SourceBuffer codec throw an InvalidStateError — the iPhone's mms-aac first-
+     append symptom, reproduced on a codec chromium CAN encode (opus). Installed BEFORE
+     live.js loads so the monkeypatch is in place when the conductor wires the SourceBuffer. -->
+<script>
+(function () {
+  var fc = new URLSearchParams(location.search).get("failCodec");
+  if (!fc) return;
+  var MSp = window.MediaSource && window.MediaSource.prototype;
+  if (MSp && MSp.addSourceBuffer) {
+    var origAdd = MSp.addSourceBuffer;
+    MSp.addSourceBuffer = function (type) { var sb = origAdd.call(this, type); try { sb.__vfType = type || ""; } catch (e) {} return sb; };
+  }
+  var SBp = window.SourceBuffer && window.SourceBuffer.prototype;
+  if (SBp && SBp.appendBuffer) {
+    var origApp = SBp.appendBuffer, failed = false;
+    SBp.appendBuffer = function (buf) {
+      if (!failed && (this.__vfType || "").indexOf(fc) >= 0) {
+        failed = true;
+        var err = new Error("The object is in an invalid state."); err.name = "InvalidStateError";
+        throw err;   // the conductor's tryAppend catch → onMseFault → codec step-down
+      }
+      return origApp.call(this, buf);
+    };
+  }
+})();
+</script>
+<script src="../engine/csd-engine.js"></script>
+<script src="../engine/genre-kernel.js"></script>
+<script src="../engine/faust/state-engine.js"></script>
+<script src="../engine/faust/found-player.js"></script>
+<script src="../engine/faust/sampler.js"></script>
+<script src="../engine/faust/live.js"></script>
+<script>
+  const logEl = document.getElementById("log");
+  const log = (m) => { logEl.textContent += m + "\n"; };
+  let handle = null, state = null;
+  const bars = [], loads = [];
+  window.TEST = { bars, loads, rms: [], bal: [], errors: [], status: [] };
+
+  // ?wavOut=1 forces the WAV-FIRST segment path (the headless wavout gate boots
+  // this); ?wavOut=0 forces the ring path; unset = engine auto (isMobile). Additive.
+  const QS = new URLSearchParams(location.search);
+  const WAVOUT = QS.has("wavOut") ? (QS.get("wavOut") !== "0") : undefined;
+  const SEGSEC = QS.has("segSec") ? +QS.get("segSec") : undefined;         // wavOut segment length override
+  const FIRSTSEGSEC = QS.has("firstSegSec") ? +QS.get("firstSegSec") : undefined;
+  const SEGAB = QS.has("segAB") ? (QS.get("segAB") !== "0") : undefined;   // v3: force the v2 A/B element fallback
+  // ?codec=mp3|opus|aac (v4): force the encoder/codec tier of the append route. Opus is
+  // the linux-chromium fMP4 gate route (chromium has no AAC encode); mp3 keeps the v3 pass.
+  const CODEC = QS.has("codec") ? QS.get("codec") : undefined;
+  const ALLSAMPLED = QS.get("allSampled") === "1";   // EXPERIMENT: all-sampled mode (default OFF; rides opts.sampledOnly into track())
+  // ?decCc / ?decRetry (live-resilience gate): override the decode concurrency cap + retry
+  // budget. The DEFAULTS are the fix (4 in flight, 3 retries). Setting ?decCc=999&decRetry=0
+  // DISABLES the resilience (the pre-fix behaviour) so the same code reproduces the iOS
+  // decode-storm bug — the flood of concurrent decodeAudioData + transient drops stranding
+  // pitched sampler voices. Undefined = the shipping defaults.
+  const DEC_CC = QS.has("decCc") ? +QS.get("decCc") : undefined;
+  const DEC_RETRY = QS.has("decRetry") ? +QS.get("decRetry") : undefined;
+  // ?bootDecodeCap / ?genDecodeCap (live-resilience decode-then-render gate): override the
+  // capped wait the wavOut producer holds for this gen's found/sampler PCM to decode BEFORE
+  // it opens (so buffers are present from bar 0 — no pitched-sample bar bakes silent). The
+  // DEFAULTS (8000/4000ms) ship; the repro raises the boot cap so a modelled iOS decode
+  // storm still completes before open. Undefined = shipping defaults.
+  const BOOT_DEC_CAP = QS.has("bootDecodeCap") ? +QS.get("bootDecodeCap") : undefined;
+  const GEN_DEC_CAP = QS.has("genDecodeCap") ? +QS.get("genDecodeCap") : undefined;
+  // ?decodeFirst=0 reverts the wavOut producer to the v3.1 open-immediately behaviour (the
+  // decode-then-render "before" — pitched-sample bars bake silent under slow decode). Default ON.
+  const DECODE_FIRST = QS.has("decodeFirst") ? (QS.get("decodeFirst") !== "0") : undefined;
+
+  // ?mmsStall=1 (v3.1 gate): install a fake ManagedMediaSource whose sourceopen NEVER
+  // reaches the app — a REAL MediaSource subclass (so attach + createObjectURL succeed,
+  // no spurious errors) that swallows any 'sourceopen' listener. This forces live.js onto
+  // the mms-mp3 route; the sourceopen watchdog must then auto-demote to segAB and still
+  // make sound. Installed BEFORE goLive so live.js route detection reads the shim.
+  if (QS.has("mmsStall") && QS.get("mmsStall") !== "0" && window.MediaSource) {
+    window.ManagedMediaSource = class ManagedMediaSource extends MediaSource {
+      static isTypeSupported() { return true; }
+      get streaming() { return true; }
+      addEventListener(type, fn, opts) { if (type === "sourceopen") return; return super.addEventListener(type, fn, opts); }
+    };
+  }
+
+  window.goLive = async function (genre, seed) {
+    state = GenreKernel.track(genre || "jungle", { seed: seed || 3, sampledOnly: ALLSAMPLED });
+    handle = await FaustLive.exploreLive(
+      () => state,
+      (m) => { TEST.status.push(m); log("status: " + m); },
+      { wavOut: WAVOUT, segAB: SEGAB, codec: CODEC, segSec: SEGSEC, firstSegSec: FIRSTSEGSEC,
+        decodeConcurrency: DEC_CC, decodeRetries: DEC_RETRY,
+        bootDecodeCapMs: BOOT_DEC_CAP, genDecodeCapMs: GEN_DEC_CAP, decodeThenRender: DECODE_FIRST,
+        onBar: (b) => { bars.push(b); log(`bar ${b.serial} ${b.section} ${b.chord}`); },
+        onLoad: (r, e) => { loads.push({ t: performance.now()/1000, r, e }); } });
+    window.handle = handle;
+    // sample output RMS every 500ms
+    window._rmsTimer = setInterval(() => { if (handle) { TEST.rms.push(handle.rms()); TEST.bal.push(handle.balance()); } }, 500);
+    return true;
+  };
+  window.swapTo = function (genre, seed) {
+    state = GenreKernel.track(genre, { seed: seed || 3, sampledOnly: ALLSAMPLED });
+    log("swapped state -> " + genre);
+    return true;
+  };
+  window.stopLive = function () {
+    clearInterval(window._rmsTimer);
+    if (handle) { TEST.errors.push(...handle.errors); handle.stop(); handle = null; }
+    return TEST;
+  };
+  document.getElementById("go").onclick = () => goLive("jungle", 3);
+  document.getElementById("swap").onclick = () => swapTo("house", 3);
+  document.getElementById("stop").onclick = () => stopLive();
+</script>
+</body>
+</html>

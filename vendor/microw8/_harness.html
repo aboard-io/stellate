@@ -3,10 +3,10 @@
 <head><meta charset="utf8"><title>DemoLayer gate harness</title>
 <style>html,body{margin:0;height:100%;background:#0a0a14}</style></head>
 <body>
-<!-- Throwaway host page for faust/demo-layer-test.js. Loads demo-layer.js
+<!-- Throwaway host page for test/demo-layer-test.js. Loads demo-layer.js
      (which derives its vendor BASE from its own script URL, so it works from
      this subdirectory) and boots the layer. The gate drives DemoLayer directly. -->
-<script src="../../demo-layer.js"></script>
+<script src="../../engine/demo-layer.js"></script>
 <script>
   window.__demoReady = DemoLayer.init().then(function (ok) {
     window.__demoAvailable = ok;

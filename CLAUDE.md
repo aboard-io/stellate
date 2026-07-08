@@ -42,24 +42,30 @@ changes in the catalog's own checkout and bump the submodule pointer.
 
 ## Run / test
 
+Paths reflect the 2026-07 folder reorg: browser entry `index.html` at root;
+deterministic core + WASM engine in `engine/` (incl. `engine/faust/`); Node CLIs
+in `tools/`; gates/harnesses in `test/`; docs in `docs/`.
+
 ```bash
-./fetch-found-sound.sh   # one-time: Internet Archive field recordings -> found/
-./fetch-found-samples.sh # one-time: breaks/one-shots/vox -> found/samples/
-./fetch-found-video.sh   # one-time: Internet Archive laserdisc clips -> found/video/
-./serve.sh               # http://localhost:8777/explorer.html (needs http, not file://)
-node engine.test.js      # faust-press smoke: 3 states render, gated on non-silence
-node validate-genres.js --quick   # symbolic gates (all 110 genres); --audio adds Discogs-EffNet
-node genre-verifier.js matrix     # genre confusion matrix — must stay diagonal-dominant
-node genre-kernel.js track jungle --seed 7 --render   # one track -> mp3 via faust/press.js
-node render-sample-video.js  # sample.mp4: song (faust press) + video layer, cuts on section downbeats
-node genre-kernel.js journey genre-space-path.json --hours 4 --out journey/ --render --video
-                         # explorer-drawn path (⤓ path) -> mp3s + genre-affine videos
-                         # + gapless journey.mp3/.mp4 + mix page (see GENRE-SPACE.md)
+tools/fetch-found-sound.sh     # one-time: Internet Archive field recordings -> found/
+tools/fetch-found-samples.sh   # one-time: SoundFont GM + breaks/one-shots/vox -> found/samples/
+tools/fetch-found-video.sh     # one-time: Internet Archive laserdisc clips -> found/video/
+./serve.sh                     # http://localhost:8777/  (serves index.html; needs http, not file://)
+./verify.sh                    # orchestrator: matrix + validate + engine smoke
+node test/engine.test.js       # faust-press smoke: states render, gated on non-silence
+node engine/validate-genres.js --quick   # symbolic gates (all genres); --audio adds Discogs-EffNet
+node engine/genre-verifier.js matrix      # genre confusion matrix — must stay diagonal-dominant
+node engine/genre-kernel.js track jungle --seed 7 --render   # one track -> mp3 via engine/faust/press.js
+node tools/render-sample-video.js         # sample.mp4: song + video layer, cuts on section downbeats
+node engine/genre-kernel.js journey path.json --hours 4 --out journey/ --render --video
+                               # explorer path -> mp3s + genre-affine videos + gapless journey (GENRE-SPACE.md)
+# headless browser gates (need the pinned playwright):
+NODE_PATH=/home/ford/ftrain-2025/node_modules node test/explorer-ui-test.js   # (+ genre-viz / demo-layer / live-test-run / wavout-test-run / live-resilience / bg-survival)
 ```
 
-Requires `ffmpeg`, `curl`, `node` (with `faust/node_modules` — `npm ci` in
-`faust/`). Only `./render.sh` (the founding `royal-road.csd`) still needs
-`csound` (tested 6.18).
+Requires `ffmpeg`, `curl`, `node` (with `engine/faust/node_modules` — `npm ci` in
+`engine/faust/`). Only `tools/render.sh` (the founding `royal-road.csd`) still
+needs `csound` (tested 6.18).
 
 ## Layout
 

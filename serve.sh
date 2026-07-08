@@ -8,12 +8,12 @@
 #   ./serve.sh            -> http://localhost:8777
 #   ./serve.sh 9000       -> choose a port
 #
-# Then open:  http://localhost:8777/explorer.html (CONSTELLATE)
+# Then open:  http://localhost:8777/index.html (CONSTELLATE)
 set -euo pipefail
 cd "$(dirname "$0")"
 port="${1:-8777}"
 echo "Serving $(pwd) (cross-origin isolated)"
-echo "  explorer: http://localhost:${port}/explorer.html"
+echo "  explorer: http://localhost:${port}/index.html"
 exec python3 - "$port" <<'PY'
 import sys
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
@@ -24,7 +24,7 @@ class H(SimpleHTTPRequestHandler):
         # require-corp (not credentialless): Safari isolates reliably under require-corp
         # so the ring-engine's SharedArrayBuffer works. Safe because the only cross-origin
         # subresources are esm.sh preact/htm (CORS, ACAO:*) and Google Fonts (sends CORP),
-        # and all found audio/video is now local (same-origin). See faust/live.js.
+        # and all found audio/video is now local (same-origin). See engine/faust/live.js.
         self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
         self.send_header("Cache-Control", "no-cache")
         super().end_headers()
