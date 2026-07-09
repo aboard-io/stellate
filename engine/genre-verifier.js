@@ -432,6 +432,30 @@
     /* genre-tool:dialupgabber:targets */
     dialupgabber:{ bpm:[174,197,3], pump:[0.476,0.895,3], crackle:[0.039,0.404,2], chopUse:[0.47,0.67,2], snareBalance:[0.017,0.813,1], hatDensity:[0,1.291,1] },
     /* /genre-tool:dialupgabber:targets */
+    /* genre-tool:picnicswing:targets */
+    picnicswing:{ bpm:[139,160,3], softTop:[1,1,3], breakUse:[0,0.08,3], offgrid:[0.29,0.54,2], crackle:[0.079,0.456,2], wash:[0.034,0.371,1], acoustic:[0,1,1], swing:[0.161,0.295,1] },
+    /* /genre-tool:picnicswing:targets */
+    /* genre-tool:cerealboxwave:targets */
+    cerealboxwave:{ bpm:[98,119,3], bedUse:[0.88,1,3], pump:[0.076,0.524,3], variation:[0,0.12,2], seventh:[0,1,2], wash:[0,0.226,1], acoustic:[0.48,0.72,1], swing:[0,0.081,1] },
+    /* /genre-tool:cerealboxwave:targets */
+    /* genre-tool:rosinamblelilt:targets */
+    rosinamblelilt:{ bpm:[88,109,3], rubato:[0,0.029,3], variation:[0,1,3], softTop:[0,0,2], motion:[0.85,1,2], wash:[0.351,0.623,1], acoustic:[0.456,0.944,1], swing:[0.121,0.255,1] },
+    /* /genre-tool:rosinamblelilt:targets */
+    /* genre-tool:subwooferbalm:targets */
+    subwooferbalm:{ bpm:[70,91,3], softTop:[1,1,3], drumDensity:[0,2.6,3], hatDensity:[0,1.857,2], motion:[0.52,0.82,2], wash:[0.198,0.575,1], acoustic:[0,1,1], swing:[0,0.084,1] },
+    /* /genre-tool:subwooferbalm:targets */
+    /* genre-tool:sepiadrive:targets */
+    sepiadrive:{ bpm:[126,147,3], softTop:[1,1,3], chopUse:[0.4,0.6,3], acoustic:[0,1,2], humanize:[0,0.202,2], wash:[0.002,0.312,1], swing:[0,0.128,1] },
+    /* /genre-tool:sepiadrive:targets */
+    /* genre-tool:sparkbreak:targets */
+    sparkbreak:{ bpm:[121,142,3], comp:[0.095,0.578,3], variation:[0.779,1,3], bedUse:[0.02,0.26,2], acoustic:[0,0.792,2], wash:[0.002,0.253,1], swing:[0,0.086,1], breakUse:[0.49,0.65,3] },
+    /* /genre-tool:sparkbreak:targets */
+    /* genre-tool:hopscotchwave:targets */
+    hopscotchwave:{ bpm:[97,118,3], variation:[0.824,1,3], crackle:[0.249,0.598,3], softTop:[0,0,2], chopUse:[0,0.1,2], wash:[0.11,0.403,1], acoustic:[0,0.792,1], swing:[0,0.118,1] },
+    /* /genre-tool:hopscotchwave:targets */
+    /* genre-tool:moltenhouse:targets */
+    moltenhouse:{ bpm:[109,130,3], chopUse:[0.53,0.73,3], variation:[0.824,1,3], snareBalance:[0.09,1.01,2], bedUse:[0.01,0.25,2], wash:[0.089,0.446,1], acoustic:[0,1,1], swing:[0,0.125,1], sub:[0.85,1,3] },
+    /* /genre-tool:moltenhouse:targets */
   };
 
   // the piecewise-linear target-row scorer — the shared primitive (genre-tool

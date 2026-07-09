@@ -1,0 +1,359 @@
+{
+  "name": "moltenhouse",
+  "label": "Moltenhouse",
+  "info": "invented (gap-found): a drive-tempo, sub-forward genre in the empty region near dub × garage/umpirehouse/lofi — chopUse~0.35, variation~0.55, snareBalance~0.35 [seed 7]",
+  "invented": {
+    "seed": 7,
+    "nearest": "dub",
+    "gap": 0.95,
+    "transplants": [
+      {
+        "group": "sampletex",
+        "donor": "garage",
+        "delta": 0.27
+      },
+      {
+        "group": "rhythm",
+        "donor": "umpirehouse",
+        "delta": 0.16
+      },
+      {
+        "group": "timbre",
+        "donor": "lofi",
+        "delta": 0.14
+      }
+    ],
+    "traits": {
+      "texture": "sub",
+      "tempo": "drive",
+      "rhythm": "chop",
+      "salience": {
+        "wash": 0.0801614936614059,
+        "dust": 0,
+        "acoustic": 0.4553758318861947,
+        "synth": 0,
+        "sub": 1,
+        "swarm": 0,
+        "slam": 0,
+        "drone": 0,
+        "bright": 0
+      }
+    }
+  },
+  "clips": [
+    "dark_face",
+    "deep_face",
+    "night_lines",
+    "green_nebula",
+    "tv_room",
+    "ns_rays",
+    "ns_octopus"
+  ],
+  "anchor": {
+    "reverbColor": "spring",
+    "bpm": [
+      115,
+      123
+    ],
+    "swing": [
+      0.04,
+      0.09
+    ],
+    "humanize": [
+      0.06,
+      0.15
+    ],
+    "progressions": [
+      "deep_two",
+      "deep_two",
+      "drone_min"
+    ],
+    "kits": [
+      "house",
+      "four"
+    ],
+    "fills": [
+      "cut",
+      "riser",
+      "impact"
+    ],
+    "bass": {
+      "patterns": [
+        "dub",
+        "sub"
+      ],
+      "recipe": {
+        "model": [
+          "sub"
+        ],
+        "cutoff": [
+          260,
+          460
+        ],
+        "res": [
+          0.05,
+          0.15
+        ],
+        "level": [
+          1.2,
+          1.4
+        ],
+        "send": [
+          0,
+          0.06
+        ],
+        "dsend": [
+          0,
+          0.05
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "pentaup",
+        "sparse",
+        "wander"
+      ],
+      "patchPool": [
+        "E.PIANO 1",
+        "E.PIANO 3"
+      ],
+      "samplerPool": [
+        "alto_sax",
+        "felt_piano",
+        "jazz_guitar"
+      ],
+      "recipe": {
+        "model": [
+          "fm",
+          "pluck",
+          "sampler",
+          "sampler",
+          "sampler"
+        ],
+        "wave": "sine",
+        "voices": [
+          1,
+          3
+        ],
+        "spread": [
+          0.002,
+          0.005
+        ],
+        "cutoff": [
+          1800,
+          2800
+        ],
+        "level": [
+          0.4,
+          0.52
+        ],
+        "send": [
+          0.35,
+          0.5
+        ],
+        "dsend": [
+          0.2,
+          0.35
+        ],
+        "vibrato": [
+          0.005,
+          0.012
+        ],
+        "octave": 0.06,
+        "attack": 0.025,
+        "release": [
+          0.12,
+          0.2
+        ],
+        "sustain": [
+          0.66,
+          0.78
+        ],
+        "fenv": [
+          0.15,
+          0.3
+        ]
+      },
+      "inserts": {
+        "prob": 0.4,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [
+                0.3,
+                0.8
+              ],
+              "depth": [
+                0.5,
+                0.8
+              ],
+              "mix": [
+                0.35,
+                0.55
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.9,
+      "recipe": {
+        "model": [
+          "fm"
+        ],
+        "wave": "sine",
+        "cutoff": [
+          900,
+          1500
+        ],
+        "detune": [
+          0.003,
+          0.008
+        ],
+        "attack": [
+          0.8,
+          1.8
+        ],
+        "level": [
+          0.5,
+          0.68
+        ],
+        "send": [
+          0.35,
+          0.55
+        ],
+        "dsend": [
+          0.1,
+          0.2
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "909"
+      ],
+      "snareModel": [
+        "clap",
+        "crack"
+      ],
+      "hatModel": [
+        "noise",
+        "metal"
+      ],
+      "kick": [
+        1.1,
+        1.35
+      ],
+      "snare": [
+        0.6,
+        0.85
+      ],
+      "hat": [
+        0.6,
+        0.9
+      ],
+      "tune": [
+        0.98,
+        1.1
+      ],
+      "send": [
+        0.1,
+        0.25
+      ],
+      "dsend": [
+        0.05,
+        0.15
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.7,
+        0.88
+      ],
+      "delayBeats": [
+        0.75,
+        1.5
+      ],
+      "delayFb": [
+        0.5,
+        0.7
+      ],
+      "delayCut": [
+        1600,
+        2600
+      ],
+      "pump": [
+        0.03,
+        0.25
+      ],
+      "crackle": [
+        0.03,
+        0.19
+      ],
+      "lowcut": [
+        25,
+        40
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.12,
+        0.34
+      ],
+      "grit": [
+        0.1,
+        0.25
+      ],
+      "jux": [
+        0.15,
+        0.3
+      ]
+    },
+    "found": {
+      "role": "chops",
+      "vol": [
+        0.1,
+        0.18
+      ],
+      "pitch": [
+        0.95,
+        1.15
+      ],
+      "stretch": [
+        0.4,
+        0.6
+      ],
+      "cutoff": [
+        2500,
+        4000
+      ],
+      "sources": [
+        "shibuya",
+        "tokyo_station",
+        "vx_suspense"
+      ]
+    },
+    "stab": [
+      "off",
+      "sparse"
+    ],
+    "hits": {
+      "sources": [
+        "vox_a",
+        "vox_b",
+        "sp_rewind",
+        "sp_pressure"
+      ],
+      "pattern": "dub",
+      "prob": 0.75,
+      "wet": true
+    },
+    "form": "dj"
+  }
+}

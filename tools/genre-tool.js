@@ -421,7 +421,19 @@ function cmdCheck() {
   console.log("  nearest neighbours: " + cross.map(c => `${c.g}:${c.s}`).join("  "));
 }
 
+// ============================================================ exports
+// The measure -> derive -> serialize -> splice machinery is reused by
+// tools/invent-genres.js (the gap-finding invention pipeline), so it requires
+// this file as a library. Everything below the guard runs ONLY as a CLI.
+module.exports = {
+  inline, numStr, serializeAnchor, serializeTarget, spliceBlock, splicePosition, TERM,
+  buildVocab, deriveSchema, validateSpec, measure, rangeFor, deriveTargets,
+  meanScore, scoreRow, NUMERIC_FEATS, FEAT,
+};
+
 // ============================================================ main
-if (cmd === "create") cmdCreate();
-else if (cmd === "check") cmdCheck();
-else { console.log("usage:\n  node genre-tool.js create <spec.json> [--dry-run] [--skip-gates] [--seeds N] [--engine] [--force]\n  node genre-tool.js check <name> [--seeds N]"); process.exit(cmd ? 1 : 0); }
+if (require.main === module) {
+  if (cmd === "create") cmdCreate();
+  else if (cmd === "check") cmdCheck();
+  else { console.log("usage:\n  node genre-tool.js create <spec.json> [--dry-run] [--skip-gates] [--seeds N] [--engine] [--force]\n  node genre-tool.js check <name> [--seeds N]"); process.exit(cmd ? 1 : 0); }
+}
