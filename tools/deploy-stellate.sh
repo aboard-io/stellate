@@ -21,7 +21,10 @@ echo "== media manifest (local) =="
 # .json excluded: manifests/catalogs are MUTABLE by design (nginx serves them
 # no-cache — HOSTING.md §5 "manifests map names, never immutable"); the
 # invariant guards only the immutable-cached media bytes.
-find found engine/faust/dist -type f ! -name '*.ogg' ! -name '*.json' ! -path 'found/video/lib/*' \
+# tw_vocal.mp3 excluded too: sing.py RE-SINGS it on every offline render
+# (per-render lyrics/key under a fixed name) — mutable by nature, served
+# no-cache by the same nginx exception as the manifests.
+find found engine/faust/dist -type f ! -name '*.ogg' ! -name '*.json' ! -name 'tw_vocal.mp3' ! -path 'found/video/lib/*' \
   -print0 | sort -z | xargs -0 sha256sum > /tmp/MEDIA_MANIFEST.new
 
 echo "== immutable invariant check against deployed manifest =="
