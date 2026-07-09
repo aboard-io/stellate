@@ -8,9 +8,9 @@
 #   ./fetch-found-voice.sh
 #
 # Downloads each source (curl, resumable), trims the best <=90s window, and
-# converts to mono 44.1k WAV (found/vx_<id>.wav) so the engine can load it as a
+# converts to mono 44.1k MP3 (found/vx_<id>.mp3, libmp3lame V2) so the engine can load it as a
 # granular/sample source, plus a small .ogg preview for auditioning.
-# Idempotent: skips any vx_<id> whose .wav already exists.
+# Idempotent: skips any vx_<id> whose .mp3 already exists.
 # Requires: curl, ffmpeg.
 #
 # LICENSES vary per entry (comments below; details in SOURCES.md):
@@ -86,19 +86,19 @@ sources=(
 
 for src in "${sources[@]}"; do
   IFS='|' read -r id url ss dur <<< "$src"
-  wav="found/vx_${id}.wav"
-  if [ -s "$wav" ]; then
-    echo "✓ ${wav} already prepared, skipping"
+  mp3="found/vx_${id}.mp3"
+  if [ -s "$mp3" ]; then
+    echo "✓ ${mp3} already prepared, skipping"
     continue
   fi
   raw="found/.vx_${id}.src"
   echo "→ vx_${id}: ${url}"
   curl -sL -C - --retry 3 --max-time 600 -o "$raw" "$url"
   ffmpeg -y -loglevel error -ss "$ss" -t "$dur" -i "$raw" \
-         -ac 1 -ar 44100 "$wav"
-  ffmpeg -y -loglevel error -i "$wav" -c:a libvorbis -q:a 3 "found/vx_${id}.ogg"
+         -codec:a libmp3lame -q:a 2 -ac 1 -ar 44100 "$mp3"
+  ffmpeg -y -loglevel error -i "$mp3" -c:a libvorbis -q:a 3 "found/vx_${id}.ogg"
   rm -f "$raw"
-  echo "  prepared ${wav} (${dur}s mono 44.1k, from ${ss}s) + vx_${id}.ogg preview"
+  echo "  prepared ${mp3} (${dur}s mono 44.1k, from ${ss}s) + vx_${id}.ogg preview"
 done
 
-echo "Done. Voice layer in found/vx_*.wav — see SOURCES.md for credits/licenses."
+echo "Done. Voice layer in found/vx_*.mp3 — see SOURCES.md for credits/licenses."

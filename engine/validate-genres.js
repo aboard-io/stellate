@@ -408,7 +408,7 @@ function gateAudio() {
       state.sections.forEach((s) => { if (s.vocal) delete s.vocal; });
       let missing = false;
       for (const s of state.foundSources) {
-        s.fsPath = s.samplePath ? path.join(__dirname, "..", s.samplePath) : path.join(__dirname, "..", "found", s.id + ".wav");
+        s.fsPath = s.samplePath ? path.join(__dirname, "..", s.samplePath) : path.join(__dirname, "..", "found", s.id + ".mp3");
         if (!fs.existsSync(s.fsPath)) missing = true;
       }
       if (missing) { results.push({ genre: g, status: "skip", note: "found-sound files not fetched" }); continue; }

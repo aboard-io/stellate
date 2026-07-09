@@ -1,274 +1,274 @@
 {
- "_comment": "Runtime local-cache map for found sounds. Key = the exact archive.org URL a foundSource carries (genre-kernel.js SOURCES[id].url, passed verbatim to found-player decodeUrlToBuffer); value = the processed local file press.js uses (found/<id>.wav). found-player.js prefers the local file and only falls back to archive.org when it is absent. Regenerate: see genre-kernel.js SOURCES + fetch-found-*.sh.",
+ "_comment": "Runtime local-cache map for found sounds. Key = the exact archive.org URL a foundSource carries (genre-kernel.js SOURCES[id].url, passed verbatim to found-player decodeUrlToBuffer); value = the processed local file press.js uses (found/<id>.mp3). found-player.js prefers the local file and only falls back to archive.org when it is absent. Regenerate: see genre-kernel.js SOURCES + fetch-found-*.sh.",
  "byUrl": {
-  "https://archive.org/download/aporee_20938_24294/nov19tokyostation1934.ogg": "found/tokyo_station.wav",
-  "https://archive.org/download/aporee_44512_50607/soundmap201905198.mp3": "found/highway_night.wav",
-  "https://archive.org/download/aporee_63765_73460/ATA025Antofagastasiderurgiausinacamionesencarretera.mp3": "found/factory.wav",
-  "https://archive.org/download/aporee_61056_70186/soundmap202307117.mp3": "found/frogs.wav",
-  "https://archive.org/download/aporee_30783_35405/iriomoteaporee.ogg": "found/iriomote.wav",
-  "https://archive.org/download/aporee_20542_23865/nov820131617shibuya.ogg": "found/shibuya.wav",
-  "https://archive.org/download/CommonLoon/loons.mp3": "found/loon.wav",
-  "https://archive.org/download/aboriginal_canada/aboriginalcanada_01_leacock.mp3": "found/leacock1.wav",
-  "https://archive.org/download/aboriginal_canada/aboriginalcanada_02_leacock.mp3": "found/leacock2.wav",
-  "https://archive.org/download/aboriginal_canada/aboriginalcanada_03_leacock.mp3": "found/leacock3.wav",
-  "https://archive.org/download/aboriginal_canada/aboriginalcanada_05_leacock.mp3": "found/leacock4.wav",
-  "https://archive.org/download/radio_aporee_log_2014_06_02_12_21_50/radio_aporee_log_2014_06_02_12_21_50.mp3": "found/tw_intrain.wav",
-  "https://archive.org/download/aporee_51245_58484/RailwayStationDivaaSlovenia.mp3": "found/tw_trains.wav",
-  "https://archive.org/download/aporee_39219_48146/soundmap201812162.mp3": "found/tw_stationhall.wav",
-  "https://archive.org/download/aporee_72529_84687/202605291903.mp3": "found/tw_platform.wav",
-  "https://archive.org/download/naropa_william_s_burroughs3/naropa_william_s_burroughs3_64kb.mp3": "found/vx_burroughs.wav",
-  "https://archive.org/download/Allen_Ginsberg_and_Anne_Waldman_reading_April_1977_77C002/Allen_Ginsberg_and_Anne_Waldman_reading_April_1977_77C002_64kb.mp3": "found/vx_ginsberg.wav",
-  "https://archive.org/download/Anne_Waldman_reading_1978_August_1978_78P110/Anne_Waldman_reading_1978_August_1978_78P110_64kb.mp3": "found/vx_waldman.wav",
-  "https://archive.org/download/Allen_Ginsberg_Basic_Poetics_class_20_April_1980_80P020/Allen_Ginsberg_Basic_Poetics_class_20_April_1980_80P020_64kb.mp3": "found/vx_ginsberg_class.wav",
-  "https://archive.org/download/ird059/tcp_d1_06_the_lincolnshire_poacher_mi5_irdial.mp3": "found/vx_conet_poacher.wav",
-  "https://archive.org/download/ird059/tcp_d1_01_the_swedish_rhapsody_irdial.mp3": "found/vx_conet_swedish.wav",
-  "https://archive.org/download/songsofinnocenceandexperience_2001_librivox/songsofinnocenceandexperience_02_blake_64kb.mp3": "found/vx_blake.wav",
-  "https://archive.org/download/dickinson_poems_bm_librivox/06-because_i_could_not_stop_dickinson_64kb.mp3": "found/vx_dickinson.wav",
-  "https://archive.org/download/leaves_of_grass_librivox/leaves_03.1_whitman_64kb.mp3": "found/vx_whitman.wav",
-  "https://archive.org/download/OTRR_X_Minus_One_Singles/XMinusOne56-02-01036TheCaveOfNight.ogg": "found/vx_xminusone.wav",
-  "https://archive.org/download/OTRR_Suspense_Singles_By_Year_1942/Suspense%20420902%20011%20The%20Hitch-Hiker%20%28128-44%29%2028018%2029m32s.mp3": "found/vx_suspense.wav",
-  "https://archive.org/download/FDRFiresideChatWarOnJapan/President%20Franklin%20D%20Roosevelt%2527s%20Fireside%20Chat%20Following%20the%20Declaration%20of%20War%20on%20Japan%2C%2012-09-1941.mp3": "found/vx_fdr.wav",
-  "https://archive.org/download/Complete_Broadcast_Day_D-Day/Complete_Broadcast_Day_440606_Part_001.mp3": "found/vx_dday.wav",
-  "https://archive.org/download/sraa-7ov2e9got5ntfl3y4r9mnblppuzdkm/RadioStationWwvh-StationIdBroadcastSample1980s2359UtcfullLength.mp3": "found/vx_wwvh.wav",
-  "https://archive.org/download/apollo11_highlights/apollo11_filtered.ogg": "found/vx_apollo.wav",
-  "https://archive.org/download/AtTheTone01/At%20The%20Tone%2001.ogg": "found/vx_timelady.wav",
-  "https://archive.org/download/sailing-the-seas-depends-on-the-helmsman-english/The%20East%20is%20Red.mp3": "found/vx_cn_east.wav",
-  "https://archive.org/download/Music_of_the_Chinese_Revolution/March.of.the.Peoples.Liberation.Army.mp3": "found/vx_cn_march.wav",
-  "https://archive.org/download/lp_arias-from-the-opera-the-white-haired-g_china-opera-and-dance-drama-theatre/disc1/01.02.%20The%20North%20Wind%20Blows.mp3": "found/vx_cn_opera.wav",
-  "https://archive.org/download/sraa-radio-peking-1963/Radio%20Peking%20%281963%29.mp3": "found/vx_cn_speech.wav",
-  "https://archive.org/download/78_polushko-polie-my-own-my-beloved-field_a-v-alexandrov-peoples-artist-of-the-u_gbia0060054b/Polushk%20-%20A.%20V.%20Alexandrov%20People%27s%20Artist%20of%20the%20U.S.S.R..mp3": "found/vx_sv_choir.wav",
-  "https://archive.org/download/78_march-of-the-tanks_chorus-and-orch-gabt-ussr-elen-senkewich-v-timofeiev-m-bl_gbia0033872b/March%20of%20the%20Tanks%20-%20Chorus%20and%20orch.%20Gabt%20U.S.S.R.%20Elen%20Senkewich.mp3": "found/vx_sv_march.wav",
-  "https://archive.org/download/leninspeeches1919-1921/sideA.mp3": "found/vx_sv_speech.wav",
-  "https://archive.org/download/sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977/1977-12-10%20Saturday%20-%20Soyuz%2026%20Launch%20%281%29.mp3": "found/vx_sv_radio.wav"
+  "https://archive.org/download/aporee_20938_24294/nov19tokyostation1934.ogg": "found/tokyo_station.mp3",
+  "https://archive.org/download/aporee_44512_50607/soundmap201905198.mp3": "found/highway_night.mp3",
+  "https://archive.org/download/aporee_63765_73460/ATA025Antofagastasiderurgiausinacamionesencarretera.mp3": "found/factory.mp3",
+  "https://archive.org/download/aporee_61056_70186/soundmap202307117.mp3": "found/frogs.mp3",
+  "https://archive.org/download/aporee_30783_35405/iriomoteaporee.ogg": "found/iriomote.mp3",
+  "https://archive.org/download/aporee_20542_23865/nov820131617shibuya.ogg": "found/shibuya.mp3",
+  "https://archive.org/download/CommonLoon/loons.mp3": "found/loon.mp3",
+  "https://archive.org/download/aboriginal_canada/aboriginalcanada_01_leacock.mp3": "found/leacock1.mp3",
+  "https://archive.org/download/aboriginal_canada/aboriginalcanada_02_leacock.mp3": "found/leacock2.mp3",
+  "https://archive.org/download/aboriginal_canada/aboriginalcanada_03_leacock.mp3": "found/leacock3.mp3",
+  "https://archive.org/download/aboriginal_canada/aboriginalcanada_05_leacock.mp3": "found/leacock4.mp3",
+  "https://archive.org/download/radio_aporee_log_2014_06_02_12_21_50/radio_aporee_log_2014_06_02_12_21_50.mp3": "found/tw_intrain.mp3",
+  "https://archive.org/download/aporee_51245_58484/RailwayStationDivaaSlovenia.mp3": "found/tw_trains.mp3",
+  "https://archive.org/download/aporee_39219_48146/soundmap201812162.mp3": "found/tw_stationhall.mp3",
+  "https://archive.org/download/aporee_72529_84687/202605291903.mp3": "found/tw_platform.mp3",
+  "https://archive.org/download/naropa_william_s_burroughs3/naropa_william_s_burroughs3_64kb.mp3": "found/vx_burroughs.mp3",
+  "https://archive.org/download/Allen_Ginsberg_and_Anne_Waldman_reading_April_1977_77C002/Allen_Ginsberg_and_Anne_Waldman_reading_April_1977_77C002_64kb.mp3": "found/vx_ginsberg.mp3",
+  "https://archive.org/download/Anne_Waldman_reading_1978_August_1978_78P110/Anne_Waldman_reading_1978_August_1978_78P110_64kb.mp3": "found/vx_waldman.mp3",
+  "https://archive.org/download/Allen_Ginsberg_Basic_Poetics_class_20_April_1980_80P020/Allen_Ginsberg_Basic_Poetics_class_20_April_1980_80P020_64kb.mp3": "found/vx_ginsberg_class.mp3",
+  "https://archive.org/download/ird059/tcp_d1_06_the_lincolnshire_poacher_mi5_irdial.mp3": "found/vx_conet_poacher.mp3",
+  "https://archive.org/download/ird059/tcp_d1_01_the_swedish_rhapsody_irdial.mp3": "found/vx_conet_swedish.mp3",
+  "https://archive.org/download/songsofinnocenceandexperience_2001_librivox/songsofinnocenceandexperience_02_blake_64kb.mp3": "found/vx_blake.mp3",
+  "https://archive.org/download/dickinson_poems_bm_librivox/06-because_i_could_not_stop_dickinson_64kb.mp3": "found/vx_dickinson.mp3",
+  "https://archive.org/download/leaves_of_grass_librivox/leaves_03.1_whitman_64kb.mp3": "found/vx_whitman.mp3",
+  "https://archive.org/download/OTRR_X_Minus_One_Singles/XMinusOne56-02-01036TheCaveOfNight.ogg": "found/vx_xminusone.mp3",
+  "https://archive.org/download/OTRR_Suspense_Singles_By_Year_1942/Suspense%20420902%20011%20The%20Hitch-Hiker%20%28128-44%29%2028018%2029m32s.mp3": "found/vx_suspense.mp3",
+  "https://archive.org/download/FDRFiresideChatWarOnJapan/President%20Franklin%20D%20Roosevelt%2527s%20Fireside%20Chat%20Following%20the%20Declaration%20of%20War%20on%20Japan%2C%2012-09-1941.mp3": "found/vx_fdr.mp3",
+  "https://archive.org/download/Complete_Broadcast_Day_D-Day/Complete_Broadcast_Day_440606_Part_001.mp3": "found/vx_dday.mp3",
+  "https://archive.org/download/sraa-7ov2e9got5ntfl3y4r9mnblppuzdkm/RadioStationWwvh-StationIdBroadcastSample1980s2359UtcfullLength.mp3": "found/vx_wwvh.mp3",
+  "https://archive.org/download/apollo11_highlights/apollo11_filtered.ogg": "found/vx_apollo.mp3",
+  "https://archive.org/download/AtTheTone01/At%20The%20Tone%2001.ogg": "found/vx_timelady.mp3",
+  "https://archive.org/download/sailing-the-seas-depends-on-the-helmsman-english/The%20East%20is%20Red.mp3": "found/vx_cn_east.mp3",
+  "https://archive.org/download/Music_of_the_Chinese_Revolution/March.of.the.Peoples.Liberation.Army.mp3": "found/vx_cn_march.mp3",
+  "https://archive.org/download/lp_arias-from-the-opera-the-white-haired-g_china-opera-and-dance-drama-theatre/disc1/01.02.%20The%20North%20Wind%20Blows.mp3": "found/vx_cn_opera.mp3",
+  "https://archive.org/download/sraa-radio-peking-1963/Radio%20Peking%20%281963%29.mp3": "found/vx_cn_speech.mp3",
+  "https://archive.org/download/78_polushko-polie-my-own-my-beloved-field_a-v-alexandrov-peoples-artist-of-the-u_gbia0060054b/Polushk%20-%20A.%20V.%20Alexandrov%20People%27s%20Artist%20of%20the%20U.S.S.R..mp3": "found/vx_sv_choir.mp3",
+  "https://archive.org/download/78_march-of-the-tanks_chorus-and-orch-gabt-ussr-elen-senkewich-v-timofeiev-m-bl_gbia0033872b/March%20of%20the%20Tanks%20-%20Chorus%20and%20orch.%20Gabt%20U.S.S.R.%20Elen%20Senkewich.mp3": "found/vx_sv_march.mp3",
+  "https://archive.org/download/leninspeeches1919-1921/sideA.mp3": "found/vx_sv_speech.mp3",
+  "https://archive.org/download/sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977/1977-12-10%20Saturday%20-%20Soyuz%2026%20Launch%20%281%29.mp3": "found/vx_sv_radio.mp3"
  },
  "rows": [
   {
    "id": "tokyo_station",
    "url": "https://archive.org/download/aporee_20938_24294/nov19tokyostation1934.ogg",
    "item": "aporee_20938_24294",
-   "local": "found/tokyo_station.wav"
+   "local": "found/tokyo_station.mp3"
   },
   {
    "id": "highway_night",
    "url": "https://archive.org/download/aporee_44512_50607/soundmap201905198.mp3",
    "item": "aporee_44512_50607",
-   "local": "found/highway_night.wav"
+   "local": "found/highway_night.mp3"
   },
   {
    "id": "factory",
    "url": "https://archive.org/download/aporee_63765_73460/ATA025Antofagastasiderurgiausinacamionesencarretera.mp3",
    "item": "aporee_63765_73460",
-   "local": "found/factory.wav"
+   "local": "found/factory.mp3"
   },
   {
    "id": "frogs",
    "url": "https://archive.org/download/aporee_61056_70186/soundmap202307117.mp3",
    "item": "aporee_61056_70186",
-   "local": "found/frogs.wav"
+   "local": "found/frogs.mp3"
   },
   {
    "id": "iriomote",
    "url": "https://archive.org/download/aporee_30783_35405/iriomoteaporee.ogg",
    "item": "aporee_30783_35405",
-   "local": "found/iriomote.wav"
+   "local": "found/iriomote.mp3"
   },
   {
    "id": "shibuya",
    "url": "https://archive.org/download/aporee_20542_23865/nov820131617shibuya.ogg",
    "item": "aporee_20542_23865",
-   "local": "found/shibuya.wav"
+   "local": "found/shibuya.mp3"
   },
   {
    "id": "loon",
    "url": "https://archive.org/download/CommonLoon/loons.mp3",
    "item": "CommonLoon",
-   "local": "found/loon.wav"
+   "local": "found/loon.mp3"
   },
   {
    "id": "leacock1",
    "url": "https://archive.org/download/aboriginal_canada/aboriginalcanada_01_leacock.mp3",
    "item": "aboriginal_canada",
-   "local": "found/leacock1.wav"
+   "local": "found/leacock1.mp3"
   },
   {
    "id": "leacock2",
    "url": "https://archive.org/download/aboriginal_canada/aboriginalcanada_02_leacock.mp3",
    "item": "aboriginal_canada",
-   "local": "found/leacock2.wav"
+   "local": "found/leacock2.mp3"
   },
   {
    "id": "leacock3",
    "url": "https://archive.org/download/aboriginal_canada/aboriginalcanada_03_leacock.mp3",
    "item": "aboriginal_canada",
-   "local": "found/leacock3.wav"
+   "local": "found/leacock3.mp3"
   },
   {
    "id": "leacock4",
    "url": "https://archive.org/download/aboriginal_canada/aboriginalcanada_05_leacock.mp3",
    "item": "aboriginal_canada",
-   "local": "found/leacock4.wav"
+   "local": "found/leacock4.mp3"
   },
   {
    "id": "tw_intrain",
    "url": "https://archive.org/download/radio_aporee_log_2014_06_02_12_21_50/radio_aporee_log_2014_06_02_12_21_50.mp3",
    "item": "radio_aporee_log_2014_06_02_12_21_50",
-   "local": "found/tw_intrain.wav"
+   "local": "found/tw_intrain.mp3"
   },
   {
    "id": "tw_trains",
    "url": "https://archive.org/download/aporee_51245_58484/RailwayStationDivaaSlovenia.mp3",
    "item": "aporee_51245_58484",
-   "local": "found/tw_trains.wav"
+   "local": "found/tw_trains.mp3"
   },
   {
    "id": "tw_stationhall",
    "url": "https://archive.org/download/aporee_39219_48146/soundmap201812162.mp3",
    "item": "aporee_39219_48146",
-   "local": "found/tw_stationhall.wav"
+   "local": "found/tw_stationhall.mp3"
   },
   {
    "id": "tw_platform",
    "url": "https://archive.org/download/aporee_72529_84687/202605291903.mp3",
    "item": "aporee_72529_84687",
-   "local": "found/tw_platform.wav"
+   "local": "found/tw_platform.mp3"
   },
   {
    "id": "vx_burroughs",
    "url": "https://archive.org/download/naropa_william_s_burroughs3/naropa_william_s_burroughs3_64kb.mp3",
    "item": "naropa_william_s_burroughs3",
-   "local": "found/vx_burroughs.wav"
+   "local": "found/vx_burroughs.mp3"
   },
   {
    "id": "vx_ginsberg",
    "url": "https://archive.org/download/Allen_Ginsberg_and_Anne_Waldman_reading_April_1977_77C002/Allen_Ginsberg_and_Anne_Waldman_reading_April_1977_77C002_64kb.mp3",
    "item": "Allen_Ginsberg_and_Anne_Waldman_reading_April_1977_77C002",
-   "local": "found/vx_ginsberg.wav"
+   "local": "found/vx_ginsberg.mp3"
   },
   {
    "id": "vx_waldman",
    "url": "https://archive.org/download/Anne_Waldman_reading_1978_August_1978_78P110/Anne_Waldman_reading_1978_August_1978_78P110_64kb.mp3",
    "item": "Anne_Waldman_reading_1978_August_1978_78P110",
-   "local": "found/vx_waldman.wav"
+   "local": "found/vx_waldman.mp3"
   },
   {
    "id": "vx_conet_poacher",
    "url": "https://archive.org/download/ird059/tcp_d1_06_the_lincolnshire_poacher_mi5_irdial.mp3",
    "item": "ird059",
-   "local": "found/vx_conet_poacher.wav"
+   "local": "found/vx_conet_poacher.mp3"
   },
   {
    "id": "vx_conet_swedish",
    "url": "https://archive.org/download/ird059/tcp_d1_01_the_swedish_rhapsody_irdial.mp3",
    "item": "ird059",
-   "local": "found/vx_conet_swedish.wav"
+   "local": "found/vx_conet_swedish.mp3"
   },
   {
    "id": "vx_blake",
    "url": "https://archive.org/download/songsofinnocenceandexperience_2001_librivox/songsofinnocenceandexperience_02_blake_64kb.mp3",
    "item": "songsofinnocenceandexperience_2001_librivox",
-   "local": "found/vx_blake.wav"
+   "local": "found/vx_blake.mp3"
   },
   {
    "id": "vx_dickinson",
    "url": "https://archive.org/download/dickinson_poems_bm_librivox/06-because_i_could_not_stop_dickinson_64kb.mp3",
    "item": "dickinson_poems_bm_librivox",
-   "local": "found/vx_dickinson.wav"
+   "local": "found/vx_dickinson.mp3"
   },
   {
    "id": "vx_whitman",
    "url": "https://archive.org/download/leaves_of_grass_librivox/leaves_03.1_whitman_64kb.mp3",
    "item": "leaves_of_grass_librivox",
-   "local": "found/vx_whitman.wav"
+   "local": "found/vx_whitman.mp3"
   },
   {
    "id": "vx_xminusone",
    "url": "https://archive.org/download/OTRR_X_Minus_One_Singles/XMinusOne56-02-01036TheCaveOfNight.ogg",
    "item": "OTRR_X_Minus_One_Singles",
-   "local": "found/vx_xminusone.wav"
+   "local": "found/vx_xminusone.mp3"
   },
   {
    "id": "vx_suspense",
    "url": "https://archive.org/download/OTRR_Suspense_Singles_By_Year_1942/Suspense%20420902%20011%20The%20Hitch-Hiker%20%28128-44%29%2028018%2029m32s.mp3",
    "item": "OTRR_Suspense_Singles_By_Year_1942",
-   "local": "found/vx_suspense.wav"
+   "local": "found/vx_suspense.mp3"
   },
   {
    "id": "vx_fdr",
    "url": "https://archive.org/download/FDRFiresideChatWarOnJapan/President%20Franklin%20D%20Roosevelt%2527s%20Fireside%20Chat%20Following%20the%20Declaration%20of%20War%20on%20Japan%2C%2012-09-1941.mp3",
    "item": "FDRFiresideChatWarOnJapan",
-   "local": "found/vx_fdr.wav"
+   "local": "found/vx_fdr.mp3"
   },
   {
    "id": "vx_dday",
    "url": "https://archive.org/download/Complete_Broadcast_Day_D-Day/Complete_Broadcast_Day_440606_Part_001.mp3",
    "item": "Complete_Broadcast_Day_D-Day",
-   "local": "found/vx_dday.wav"
+   "local": "found/vx_dday.mp3"
   },
   {
    "id": "vx_wwvh",
    "url": "https://archive.org/download/sraa-7ov2e9got5ntfl3y4r9mnblppuzdkm/RadioStationWwvh-StationIdBroadcastSample1980s2359UtcfullLength.mp3",
    "item": "sraa-7ov2e9got5ntfl3y4r9mnblppuzdkm",
-   "local": "found/vx_wwvh.wav"
+   "local": "found/vx_wwvh.mp3"
   },
   {
    "id": "vx_apollo",
    "url": "https://archive.org/download/apollo11_highlights/apollo11_filtered.ogg",
    "item": "apollo11_highlights",
-   "local": "found/vx_apollo.wav"
+   "local": "found/vx_apollo.mp3"
   },
   {
    "id": "vx_timelady",
    "url": "https://archive.org/download/AtTheTone01/At%20The%20Tone%2001.ogg",
    "item": "AtTheTone01",
-   "local": "found/vx_timelady.wav"
+   "local": "found/vx_timelady.mp3"
   },
   {
    "id": "vx_cn_east",
    "url": "https://archive.org/download/sailing-the-seas-depends-on-the-helmsman-english/The%20East%20is%20Red.mp3",
    "item": "sailing-the-seas-depends-on-the-helmsman-english",
-   "local": "found/vx_cn_east.wav"
+   "local": "found/vx_cn_east.mp3"
   },
   {
    "id": "vx_cn_march",
    "url": "https://archive.org/download/Music_of_the_Chinese_Revolution/March.of.the.Peoples.Liberation.Army.mp3",
    "item": "Music_of_the_Chinese_Revolution",
-   "local": "found/vx_cn_march.wav"
+   "local": "found/vx_cn_march.mp3"
   },
   {
    "id": "vx_cn_opera",
    "url": "https://archive.org/download/lp_arias-from-the-opera-the-white-haired-g_china-opera-and-dance-drama-theatre/disc1/01.02.%20The%20North%20Wind%20Blows.mp3",
    "item": "lp_arias-from-the-opera-the-white-haired-g_china-opera-and-dance-drama-theatre",
-   "local": "found/vx_cn_opera.wav"
+   "local": "found/vx_cn_opera.mp3"
   },
   {
    "id": "vx_cn_speech",
    "url": "https://archive.org/download/sraa-radio-peking-1963/Radio%20Peking%20%281963%29.mp3",
    "item": "sraa-radio-peking-1963",
-   "local": "found/vx_cn_speech.wav"
+   "local": "found/vx_cn_speech.mp3"
   },
   {
    "id": "vx_sv_choir",
    "url": "https://archive.org/download/78_polushko-polie-my-own-my-beloved-field_a-v-alexandrov-peoples-artist-of-the-u_gbia0060054b/Polushk%20-%20A.%20V.%20Alexandrov%20People%27s%20Artist%20of%20the%20U.S.S.R..mp3",
    "item": "78_polushko-polie-my-own-my-beloved-field_a-v-alexandrov-peoples-artist-of-the-u_gbia0060054b",
-   "local": "found/vx_sv_choir.wav"
+   "local": "found/vx_sv_choir.mp3"
   },
   {
    "id": "vx_sv_march",
    "url": "https://archive.org/download/78_march-of-the-tanks_chorus-and-orch-gabt-ussr-elen-senkewich-v-timofeiev-m-bl_gbia0033872b/March%20of%20the%20Tanks%20-%20Chorus%20and%20orch.%20Gabt%20U.S.S.R.%20Elen%20Senkewich.mp3",
    "item": "78_march-of-the-tanks_chorus-and-orch-gabt-ussr-elen-senkewich-v-timofeiev-m-bl_gbia0033872b",
-   "local": "found/vx_sv_march.wav"
+   "local": "found/vx_sv_march.mp3"
   },
   {
    "id": "vx_sv_speech",
    "url": "https://archive.org/download/leninspeeches1919-1921/sideA.mp3",
    "item": "leninspeeches1919-1921",
-   "local": "found/vx_sv_speech.wav"
+   "local": "found/vx_sv_speech.mp3"
   },
   {
    "id": "vx_sv_radio",
    "url": "https://archive.org/download/sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977/1977-12-10%20Saturday%20-%20Soyuz%2026%20Launch%20%281%29.mp3",
    "item": "sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977",
-   "local": "found/vx_sv_radio.wav"
+   "local": "found/vx_sv_radio.mp3"
   }
  ]
 }

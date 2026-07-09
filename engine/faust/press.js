@@ -13,7 +13,7 @@
 //     pump/crackle/grit/comp/tone/mcut sweeps), fed [dryL,dryR,rev,del,pp,0].
 //
 // Found sources decode via ffmpeg (f32le mono 44100), resolved from the state's
-// fsPath || samplePath || found/<id>.wav relative to the repo root.
+// fsPath || samplePath || found/<id>.mp3 (then .wav) relative to the repo root.
 // Verify output: ffmpeg volumedetect (printed at the end).
 "use strict";
 const fs = require("fs");
@@ -106,6 +106,12 @@ function loadDx7Presets() {
 // inject the PCM into the environment-agnostic assembly core below.
 async function decodeInputs(state, sched, opts) {
   const TOTAL = opts.TOTAL;
+  // top-level beds ship as MP3 since the payload diet (HOSTING.md §3); prefer
+  // found/<id>.mp3 and keep the .wav fallback for any not-yet-converted tree
+  const bedPath = (id) => {
+    const mp3 = path.join(SITE, "found", id + ".mp3");
+    return fs.existsSync(mp3) ? mp3 : path.join(SITE, "found", id + ".wav");
+  };
   // ---- found layer sources ----
   const usedSrc = new Set(sched.found.map(f => f.srcId));
   // sampler units' zone wavs ride foundSources at vol 0 — decode them too
@@ -114,7 +120,7 @@ async function decodeInputs(state, sched, opts) {
   const buffers = {};
   for (const s of state.foundSources || []) {
     if (!usedSrc.has(s.id)) continue;
-    const p = s.fsPath || (s.samplePath ? path.join(SITE, s.samplePath) : path.join(SITE, "found", s.id + ".wav"));
+    const p = s.fsPath || (s.samplePath ? path.join(SITE, s.samplePath) : bedPath(s.id));
     try { buffers[s.id] = ffdecode(p); }
     catch (e) { console.warn(`  found: cannot decode ${p} (${String(e.message).slice(0, 80)}) — skipping ${s.id}`); }
   }
@@ -125,7 +131,7 @@ async function decodeInputs(state, sched, opts) {
     const vs = (state.foundSources || []).find(s => s.id === state.vocoderSourceId)
       || (state.foundSources || []).find(s => /^(sp_|vx_|vox_)/.test(s.id || ""));
     if (vs) {
-      const p = vs.fsPath || (vs.samplePath ? path.join(SITE, vs.samplePath) : path.join(SITE, "found", vs.id + ".wav"));
+      const p = vs.fsPath || (vs.samplePath ? path.join(SITE, vs.samplePath) : bedPath(vs.id));
       try {
         const raw = ffdecode(p);
         speech = new Float32Array(TOTAL);

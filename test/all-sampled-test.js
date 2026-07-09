@@ -91,7 +91,7 @@ for (const [genre, seed] of [["jungle", 2], ["citypop", 7]]) {
 // ---- B + C. audio + determinism ------------------------------------------
 function resolvePaths(state) {
   for (const s of state.foundSources) {
-    s.fsPath = s.samplePath ? path.join(ROOT, s.samplePath) : path.join(ROOT, "found", s.id + ".wav");
+    s.fsPath = s.samplePath ? path.join(ROOT, s.samplePath) : path.join(ROOT, "found", s.id + ".mp3");
     if (!fs.existsSync(s.fsPath)) { console.error(`missing ${s.fsPath} — run ./fetch-found-samples.sh`); process.exit(2); }
   }
 }

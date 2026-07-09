@@ -463,7 +463,7 @@
 
   // ---- LOCAL-CACHE resolver (stop the LIVE app depending on archive.org) ----
   // Every foundSource carries the archive.org URL it was fetched from, but the
-  // very same audio is already on disk as found/<id>.wav (the processed, trimmed
+  // very same audio is already on disk as found/<id>.mp3 (the processed, trimmed
   // mono 44.1k file the offline press.js loads). found-manifest.json maps the
   // exact archive URL -> that local file. Prefer the local file at runtime;
   // fall back to archive.org (with a warning) ONLY for assets not cached.
@@ -493,14 +493,14 @@
     })();
     return _manifestPromise;
   }
-  // The local cache file for this URL (found/<id>.wav), or null when the source
+  // The local cache file for this URL (found/<id>.mp3), or null when the source
   // is not archive-backed or has no cache mapping. No existence PROBE here — a
   // HEAD/Range probe races the flood of decodes at ride start and flakily aborts;
   // instead the decoder simply TRIES the local file and falls back on failure.
   async function localCacheFor(url) {
     if (!/\barchive\.org/i.test(url)) return null;   // already local / non-archive
     const map = await loadFoundManifest();
-    return map[url] ? SITE_ROOT + map[url] : null;   // manifest values are site-root-relative (found/<id>.wav)
+    return map[url] ? SITE_ROOT + map[url] : null;   // manifest values are site-root-relative (found/<id>.mp3)
   }
 
   const _bufCache = new Map(); // url -> Promise<AudioBuffer>

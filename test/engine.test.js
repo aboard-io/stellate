@@ -24,7 +24,7 @@ const DUR = QUICK ? 8 : 24;   // seconds pressed per state — enough for drums+
 
 function resolvePaths(state) {
   for (const s of state.foundSources) {
-    s.fsPath = s.fsPath || (s.samplePath ? path.join(HERE, "..", s.samplePath) : path.join(HERE, "..", "found", s.id + ".wav"));
+    s.fsPath = s.fsPath || (s.samplePath ? path.join(HERE, "..", s.samplePath) : path.join(HERE, "..", "found", s.id + ".mp3"));
     if (!fs.existsSync(s.fsPath)) {
       console.error(`missing ${s.fsPath} — run ./fetch-found-sound.sh / ./fetch-found-samples.sh`);
       process.exit(2);
@@ -80,7 +80,7 @@ function press(name, state) {
   // 1) the committed default song (royal road, tokyo bed) — engine's own state
   {
     const s = E.defaultState();   // ids tokyo/tsukiji/asakusa all map to the one real local wav
-    s.foundSources.forEach((f) => { f.fsPath = path.join(HERE, "..", "found", "tokyo_station.wav"); });
+    s.foundSources.forEach((f) => { f.fsPath = path.join(HERE, "..", "found", "tokyo_station.mp3"); });
     presses.push(press("default_song", s));
   }
 

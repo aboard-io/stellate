@@ -64,7 +64,7 @@ function prep(name, state) {
   state.foundSources = (state.foundSources || []).filter((s) => s.id !== "tw_vocal");
   (state.sections || []).forEach((s) => { if (s.vocal) delete s.vocal; });
   for (const s of state.foundSources) {
-    s.fsPath = s.fsPath || (s.samplePath ? path.join(ROOT, s.samplePath) : path.join(ROOT, "found", s.id + ".wav"));
+    s.fsPath = s.fsPath || (s.samplePath ? path.join(ROOT, s.samplePath) : path.join(ROOT, "found", s.id + ".mp3"));
     if (!fs.existsSync(s.fsPath)) {
       console.error(`missing ${s.fsPath} — run ./fetch-found-sound.sh / ./fetch-found-samples.sh`);
       process.exit(2);
