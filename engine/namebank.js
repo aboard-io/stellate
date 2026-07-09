@@ -415,15 +415,31 @@
     if (a[a.length - 1] === b[0]) return a + b.slice(1);
     return a + b;
   }
+  // every prefix root across both registers, longest first — so genreRoot can
+  // find which root a name was built from (a flood must not reuse a root: four
+  // vendingmachine* genres read as noise even when their vectors differ)
+  const ALL_ROOTS = (() => {
+    const s = new Set();
+    for (const reg of Object.values(NAME_PREFIX)) for (const pool of Object.values(reg)) for (const p of pool) s.add(p);
+    return [...s].sort((a, b) => b.length - a.length);
+  })();
+  // the prefix root a genre name was fused from, or null if it matches none
+  function genreRoot(name) {
+    const n = String(name).toLowerCase();
+    for (const root of ALL_ROOTS) if (n.startsWith(root)) return root;
+    return null;
+  }
   // traits: {texture:key, tempo:key, rhythm:key|null, mundane?:bool}
   // seed: integer; taken: Set of names to avoid (existing + already-invented)
-  function inventGenreName(traits, seed, taken) {
+  // takenRoots: optional Set of prefix roots to avoid (root-uniqueness for floods)
+  function inventGenreName(traits, seed, taken, takenRoots) {
     taken = taken || new Set();
     const reg = traits.mundane ? "mundane" : "elemental";
     const pfxPool = (NAME_PREFIX[reg][traits.texture]) || NAME_PREFIX.elemental.synth;
     for (let i = 0; i < 64; i++) {
       const r = rng(hash("genre-name", seed, traits.texture, traits.tempo, traits.rhythm || "-", i));
       const pfx = pick(r, pfxPool);
+      if (takenRoots && takenRoots.has(pfx)) continue;   // root already spent
       // rhythm tag, when present, sometimes wins the suffix (the groove IS the id)
       const useRhythm = traits.rhythm && r() < 0.5;
       const sfx = useRhythm ? pick(r, NAME_RHYTHM[traits.rhythm]) : pick(r, NAME_SUFFIX[traits.tempo] || NAME_SUFFIX.mid);
@@ -432,14 +448,18 @@
       if (!useRhythm && traits.rhythm && r() < 0.3) name = fuse(name, pick(r, NAME_RHYTHM[traits.rhythm]));
       name = name.toLowerCase().replace(/[^a-z0-9]/g, "");
       if (!/^[a-z][a-z0-9]*$/.test(name) || name.length < 4 || name.length > 22) continue;
-      if (!taken.has(name)) return { name, label: name.charAt(0).toUpperCase() + name.slice(1) };
+      if (!taken.has(name)) return { name, label: name.charAt(0).toUpperCase() + name.slice(1), root: pfx };
     }
+    // no root-unique name available in this texture — signal exhaustion so the
+    // caller can reject rather than fall back into a colliding/permuted name
+    if (takenRoots) return null;
     // deterministic fallback: prefix + tempo + numeric suffix
     const r = rng(hash("genre-name-fallback", seed, traits.texture));
-    let base = fuse(pick(r, pfxPool), traits.tempo);
+    const pfx = pick(r, pfxPool);
+    let base = fuse(pfx, traits.tempo);
     let n = base, k = 2;
     while (taken.has(n)) n = base + (k++);
-    return { name: n, label: n.charAt(0).toUpperCase() + n.slice(1) };
+    return { name: n, label: n.charAt(0).toUpperCase() + n.slice(1), root: pfx };
   }
 
   const bankOf = (genre) => NAMEBANK[genre] || GENERIC;
@@ -500,5 +520,5 @@
     return out;
   }
 
-  return { NAMEBANK, GENERIC, LABELS, hash, rng, identity, musician, instrumentNames, inventGenreName };
+  return { NAMEBANK, GENERIC, LABELS, hash, rng, identity, musician, instrumentNames, inventGenreName, genreRoot };
 });
