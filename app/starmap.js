@@ -520,7 +520,10 @@ export function computeGenreLayout(){
   const rb=svg.getBoundingClientRect();
   const viewW=rb.width||1200, viewH=rb.height||850;
   const MIN_DOT=52;                 // hard min dot separation, px at default zoom
-  const ITERS=1200;
+  // iteration budget scales with node count: the self-normalizing bounds make
+  // the relaxation converge asymptotically, so a dense map (178+ genres) needs
+  // more passes to fully clear label overlaps than the ~110-genre seed did.
+  const ITERS=Math.max(1200, NAMES.length*20);
   for(let it=0;it<ITERS;it++){
     const bb=bounds();
     const W=(bb.mxx-bb.mnx)+2*WORLD_MARGIN||1, H=(bb.mxy-bb.mny)+2*WORLD_MARGIN||1;
