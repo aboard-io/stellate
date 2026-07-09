@@ -991,6 +991,26 @@
     drumSamp(units.snare, D.snareSampler);
     drumSamp(units.hat, D.hatSampler);
     drumSamp(units.tom, D.tomSampler);
+    // PERCUSSION LANE voices (2026-07) — clap/rim/ride/crash + the shared GM perc
+    // bank, additive to kick/snare/hat/tom. ONLY built when the genre carries
+    // state.perc (genre-kernel PERC_STYLES) so every non-perc genre's unit set,
+    // cost and trim-to-budget stay byte-identical to baseline. Sampled from the
+    // kit (D.<x>Sampler, real recorded hits) when present; synth fallback modules
+    // otherwise (a synth-kit genre still claps — snare_clap — and rides —
+    // hat_metal). perc is ONE multi-zone sampler (D.percSampler), zone-selected
+    // per hit by GM note.
+    if (state.perc) {
+      units.clap  = { module: "snare_clap",  pool: 2, dry: 1, rev: (D.send || 0) * DRUM_FX_LIFT,       del: (D.dsend || 0) * DRUM_FX_LIFT, lvl: 1,   drum: true, params: {}, tail: 0.4 };
+      units.rim   = { module: "snare_crack", pool: 2, dry: 1, rev: (D.send || 0) * 0.5 * DRUM_FX_LIFT, del: 0,                             lvl: 1,   drum: true, params: {}, tail: 0.3 };
+      units.ride  = { module: "hat_metal",   pool: 2, dry: 1, rev: (D.send || 0) * 0.4 * DRUM_FX_LIFT, del: 0,                             lvl: 0.9, drum: true, params: {}, tail: 0.6 };
+      units.crash = { module: "hat_metal",   pool: 2, dry: 1, rev: (D.send || 0) * 0.7 * DRUM_FX_LIFT, del: 0,                             lvl: 0.9, drum: true, params: {}, tail: 1.6 };
+      units.perc  = { module: "tom",         pool: 4, dry: 1, rev: (D.send || 0) * 0.5 * DRUM_FX_LIFT, del: 0,                             lvl: 1,   drum: true, params: {}, tail: 0.6 };
+      drumSamp(units.clap, D.clapSampler);
+      drumSamp(units.rim, D.rimSampler);
+      drumSamp(units.ride, D.rideSampler);
+      drumSamp(units.crash, D.crashSampler);
+      drumSamp(units.perc, D.percSampler);
+    }
     // synth stab + synth sfx (risers/sweeps): always present. Sampled mode only
     // changes the pitched INSTRUMENT source — sfx/stab play in the full mix too.
     units.stab = { module: "stab", pool: 2, dry: 1, rev: 0.35, del: 0.3, lvl: 1, drum: true, params: { level: 1 }, tail: 0.6, freqMax: 2000 };
@@ -1183,7 +1203,8 @@
         let freq, durSec;
         if (d.drum === "tom") { freq = clamp(d.pitch || 105, 40, 400); }
         else if (d.drum === "hat") { freq = d.open ? DRUM_HAT_OPEN_FREQ : DRUM_KS_FREQ; }
-        else { freq = DRUM_KS_FREQ; }
+        else if (d.drum === "perc") { freq = midiToFreq(d.note || 60); }   // GM-note zone select (natural pitch)
+        else { freq = DRUM_KS_FREQ; }   // kick/snare/clap/rim/ride/crash: root-60 zone, rate 1
         if (d.drum === "hat") durSec = Math.max(0.02, d.dur * spb);
         else durSec = Math.max(0.04, (u.sampler.oneShotSec || 1) - (u.sampler.rel || 0.03));
         out.push({ unit: d.drum, beat: d.beat, durB: durSec / spb, drum: true,
@@ -1192,6 +1213,10 @@
       }
       const sets = { level: clamp(u.lvl * d.amp, 0, 2), decay: clamp(d.dur * spb, 0.05, 2) };
       if (d.drum === "tom") sets.pitch = clamp(d.pitch || 105, 40, 400);
+      // synth-fallback perc: repitch the membrane/metal to the GM note (a tuned
+      // thud/bell) — the sampled bank is the real voice; this keeps pure-synth
+      // mode (opts.synth) from dropping the lane silently.
+      else if (d.drum === "perc") sets.pitch = clamp(midiToFreq(d.note || 60), 40, 500);
       // state.snarePP: buildEvents tags sparse snare hits with d.pp — a per-EVENT
       // ping-pong send (csound instr 11 p5 -> gaPPL += asig*ipp)
       out.push({ unit: d.drum, beat: d.beat, durB: d.dur, sets, drum: true, pp: clamp(d.pp || 0, 0, 2) });

@@ -786,14 +786,129 @@
   // hits (rim/clap/crash/ride) ride the manifest for future use. `len` = sample
   // frames at sr (44100); the tom repitches from a 105Hz base per hit.
   const DRUMKITS = {
-    acoustic:   { label:"Acoustic Kit (FluidR3 Standard, MIT)",   dir:"acoustic",   sr:44100, hits:{ kick:{file:"kick.wav",len:12462}, snare:{file:"snare.wav",len:20640}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:44544} } },
-    room:       { label:"Room Kit (FluidR3 Room, MIT)",           dir:"room",       sr:44100, hits:{ kick:{file:"kick.wav",len:19950}, snare:{file:"snare.wav",len:20640}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:44544} } },
-    power:      { label:"Power Kit (FluidR3 Power, MIT)",          dir:"power",      sr:44100, hits:{ kick:{file:"kick.wav",len:36224}, snare:{file:"snare.wav",len:56110}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:45343} } },
-    electronic: { label:"Electronic Kit (FluidR3 Electronic, MIT)",dir:"electronic", sr:44100, hits:{ kick:{file:"kick.wav",len:13712}, snare:{file:"snare.wav",len:30976}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:37351} } },
-    jazz:       { label:"Jazz Kit (FluidR3 Jazz, MIT)",            dir:"jazz",       sr:44100, hits:{ kick:{file:"kick.wav",len:16768}, snare:{file:"snare.wav",len:15488}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:44544} } },
-    brush:      { label:"Brush Kit (FluidR3 Brush, MIT)",          dir:"brush",      sr:44100, hits:{ kick:{file:"kick.wav",len:16768}, snare:{file:"snare.wav",len:14900}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:44544} } },
+    // clap/rim/crash/ride ARE extracted per kit (faust/sf2.js drumkit; kit.json)
+    // and shared byte-for-byte across the six presets (GM notes 39/37/49/51 aren't
+    // kit-specific) — wired here so the per-genre PERC LANE can trigger the REAL
+    // recorded hits (2026-07 "use the percussion" pass).
+    acoustic:   { label:"Acoustic Kit (FluidR3 Standard, MIT)",   dir:"acoustic",   sr:44100, hits:{ kick:{file:"kick.wav",len:12462}, snare:{file:"snare.wav",len:20640}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:44544}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
+    room:       { label:"Room Kit (FluidR3 Room, MIT)",           dir:"room",       sr:44100, hits:{ kick:{file:"kick.wav",len:19950}, snare:{file:"snare.wav",len:20640}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:44544}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
+    power:      { label:"Power Kit (FluidR3 Power, MIT)",          dir:"power",      sr:44100, hits:{ kick:{file:"kick.wav",len:36224}, snare:{file:"snare.wav",len:56110}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:45343}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
+    electronic: { label:"Electronic Kit (FluidR3 Electronic, MIT)",dir:"electronic", sr:44100, hits:{ kick:{file:"kick.wav",len:13712}, snare:{file:"snare.wav",len:30976}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:37351}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
+    jazz:       { label:"Jazz Kit (FluidR3 Jazz, MIT)",            dir:"jazz",       sr:44100, hits:{ kick:{file:"kick.wav",len:16768}, snare:{file:"snare.wav",len:15488}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:44544}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
+    brush:      { label:"Brush Kit (FluidR3 Brush, MIT)",          dir:"brush",      sr:44100, hits:{ kick:{file:"kick.wav",len:16768}, snare:{file:"snare.wav",len:14900}, hatClosed:{file:"hatClosed.wav",len:31360}, hatOpen:{file:"hatOpen.wav",len:139670}, tom:{file:"tomMid.wav",len:44544}, clap:{file:"clap.wav",len:16896}, rim:{file:"rim.wav",len:64000}, crash:{file:"crash.wav",len:375830}, ride:{file:"ride.wav",len:113920} } },
   };
   const DRUM_TOM_ROOT = 69 + 12*Math.log2(105/440);   // must match faust/state-engine DRUM_TOM_ROOT (105Hz => rate 1)
+  // ---------- SHARED GM PERCUSSION BANK (the "million elements" — 2026-07) ----------
+  // The wide GM bank-128 percussion map beyond the kit backbone: hand percussion
+  // (congas/bongos), latin (timbale/agogo/cowbell/claves/guiro), shakers
+  // (shaker/cabasa/maracas), and sparkle (tambourine/triangle/woodblock). Extracted
+  // by faust/sf2.js `percbank` into found/samples/perc/<dir>/<name>.wav + perc.json
+  // (mirrored here; wavs gitignored like the kit + instrument zones). ONE shared
+  // multi-zone native sampler (percSampler below): each element sits at its GM note
+  // as a natural-pitch one-shot, selected per PERC-LANE event by that note. Feeds
+  // the per-genre perc lane; NOT a verifier feature (perc is timbral color — the
+  // symbolic drumDensity/interlock fabric measures the core kit only).
+  const PERCBANK = { dir:"standard", sr:44100, hits:{
+    sideStick:{file:"sideStick.wav",note:37,len:64000}, clap:{file:"clap.wav",note:39,len:16896},
+    tambourine:{file:"tambourine.wav",note:54,len:22656}, cowbell:{file:"cowbell.wav",note:56,len:16960},
+    vibraslap:{file:"vibraslap.wav",note:58,len:66849}, bongoHi:{file:"bongoHi.wav",note:60,len:13888},
+    bongoLo:{file:"bongoLo.wav",note:61,len:17152}, congaMuteHi:{file:"congaMuteHi.wav",note:62,len:12032},
+    congaOpenHi:{file:"congaOpenHi.wav",note:63,len:31261}, congaLo:{file:"congaLo.wav",note:64,len:28160},
+    timbaleHi:{file:"timbaleHi.wav",note:65,len:65408}, timbaleLo:{file:"timbaleLo.wav",note:66,len:70656},
+    agogoHi:{file:"agogoHi.wav",note:67,len:12395}, agogoLo:{file:"agogoLo.wav",note:68,len:17814},
+    cabasa:{file:"cabasa.wav",note:69,len:7692}, maracas:{file:"maracas.wav",note:70,len:4614},
+    guiroShort:{file:"guiroShort.wav",note:73,len:9413}, guiroLong:{file:"guiroLong.wav",note:74,len:22042},
+    claves:{file:"claves.wav",note:75,len:4576}, woodblockHi:{file:"woodblockHi.wav",note:76,len:13376},
+    woodblockLo:{file:"woodblockLo.wav",note:77,len:14336}, triangleMute:{file:"triangleMute.wav",note:80,len:72136},
+    triangleOpen:{file:"triangleOpen.wav",note:81,len:72136}, shaker:{file:"shaker.wav",note:82,len:30428} } };
+  const PERC_ELEMENTS = Object.keys(PERCBANK.hits);
+  // ---------- PER-GENRE PERCUSSION LANE (2026-07 "use the percussion" pass) ----------
+  // Paul: "with drums I hear a lot of hihats, kick, and snare, but almost never
+  // claps. There are a million percussion elements ... are we using them?" — now
+  // we are. Each genre that wants it gets a lane list; a lane is {p:pattern, lvl,
+  // s?:percElement}. The csd-engine PERC PASS (buildEvents, near the rubato warp)
+  // reads state.perc and lays these OVER the kit — additive, tasteful, NOT every
+  // genre (techno/gabber/metal/minimal stay tight). Verifier-INVISIBLE: perc is
+  // timbral color, so the symbolic drumDensity/interlock fabric (genre-verifier
+  // core-kit filter) is untouched and the confusion matrix does not move.
+  // pattern voices: clap24/→clap · crashDown/→crash · ride8,rideq/→ride ·
+  // rim34/→rim · shaker8/16,conga,cowbell,tambourine,agogo,guiro,clave,triangle,
+  // woodblock/→perc (the shared GM bank). Deterministic (no rng at resolve time).
+  const PERC_STYLES = {
+    // house/disco/funk/soul — the CLAP on 2 & 4 (Paul's headline ask), + color
+    house:      { lanes:[{p:"clap24",lvl:.34}] },
+    deephouse:  { lanes:[{p:"clap24",lvl:.3}] },
+    garage:     { lanes:[{p:"clap24",lvl:.3}] },
+    acidhouse:  { lanes:[{p:"clap24",lvl:.3}] },
+    disco:      { lanes:[{p:"clap24",lvl:.3},{p:"tambourine",lvl:.15},{p:"crashDown",lvl:.4}] },
+    funk:       { lanes:[{p:"clap24",lvl:.24},{p:"cowbell",lvl:.13},{p:"tambourine",lvl:.13}] },
+    boombap:    { lanes:[{p:"clap24",lvl:.26}] },
+    newjack:    { lanes:[{p:"clap24",lvl:.32},{p:"tambourine",lvl:.15},{p:"crashDown",lvl:.36}] },
+    eurodance:  { lanes:[{p:"clap24",lvl:.3},{p:"crashDown",lvl:.4}] },
+    dancepop:   { lanes:[{p:"clap24",lvl:.28},{p:"tambourine",lvl:.15},{p:"crashDown",lvl:.4}] },
+    amapiano:   { lanes:[{p:"clap24",lvl:.3},{p:"shaker16",lvl:.13},{p:"conga",lvl:.2}] },
+    ska:        { lanes:[{p:"clap24",lvl:.2},{p:"woodblock",lvl:.16},{p:"crashDown",lvl:.34}] },
+    reggae:     { lanes:[{p:"rim34",lvl:.22},{p:"shaker8",lvl:.13}] },
+    dub:        { lanes:[{p:"rim34",lvl:.2},{p:"shaker8",lvl:.12}] },
+    // jazz/bebop/lounge/ballad — RIDE (swung 8ths) + RIM cross-stick
+    jazz:       { lanes:[{p:"ride8",lvl:.2},{p:"rim34",lvl:.15}] },
+    bebop:      { lanes:[{p:"ride8",lvl:.22},{p:"rim34",lvl:.15}] },
+    blues:      { lanes:[{p:"rideq",lvl:.15}] },
+    spacelounge:{ lanes:[{p:"rideq",lvl:.13},{p:"rim34",lvl:.11},{p:"shaker8",lvl:.1}] },
+    whalejazz:  { lanes:[{p:"ride8",lvl:.16},{p:"rim34",lvl:.12}] },
+    holdmusic:  { lanes:[{p:"rideq",lvl:.12},{p:"shaker8",lvl:.1}] },
+    // afro/latin/tropical — SHAKER + CONGAS + claves/guiro/agogo/woodblock
+    afrobeat:   { lanes:[{p:"shaker16",lvl:.15},{p:"conga",lvl:.24},{p:"agogo",lvl:.13},{p:"clave",lvl:.12}] },
+    bossanova:  { lanes:[{p:"rim34",lvl:.2},{p:"shaker8",lvl:.13},{p:"clave",lvl:.12}] },
+    faxbossa:   { lanes:[{p:"rim34",lvl:.18},{p:"shaker8",lvl:.12}] },
+    tango:      { lanes:[{p:"rim34",lvl:.2},{p:"clave",lvl:.12}] },
+    exotica:    { lanes:[{p:"conga",lvl:.2},{p:"shaker8",lvl:.12},{p:"woodblock",lvl:.11},{p:"rideq",lvl:.1}] },
+    desertblues:{ lanes:[{p:"shaker8",lvl:.15},{p:"conga",lvl:.16}] },
+    surfrock:   { lanes:[{p:"tambourine",lvl:.16},{p:"crashDown",lvl:.36}] },
+    arabpop:    { lanes:[{p:"clave",lvl:.14},{p:"tambourine",lvl:.15}] },
+    klezmer:    { lanes:[{p:"woodblock",lvl:.14},{p:"tambourine",lvl:.14}] },
+    bluegrass:  { lanes:[{p:"woodblock",lvl:.14}] },
+    // citypop/shibuyakei/synth-pop sheen
+    citypop:    { lanes:[{p:"shaker16",lvl:.12},{p:"crashDown",lvl:.34}] },
+    shibuyakei: { lanes:[{p:"tambourine",lvl:.15},{p:"shaker16",lvl:.1}] },
+    // latin-percussion-forward electronic
+    miamibass:  { lanes:[{p:"cowbell",lvl:.15},{p:"clap24",lvl:.2}] },
+    electro:    { lanes:[{p:"cowbell",lvl:.13},{p:"clap24",lvl:.22}] },
+    krautrock:  { lanes:[{p:"cowbell",lvl:.13}] },
+    // rock/pop CRASH on the downbeat
+    heavymetal: { lanes:[{p:"crashDown",lvl:.44}] },
+    transitwave:{ lanes:[{p:"crashDown",lvl:.34},{p:"tambourine",lvl:.11}] },
+    dinosynth:  { lanes:[{p:"crashDown",lvl:.38}] },
+    budstep:    { lanes:[{p:"crashDown",lvl:.36}] },
+    // downtempo/lounge SPARKLE — light triangle/shaker
+    downtempo:  { lanes:[{p:"shaker8",lvl:.1},{p:"triangle",lvl:.08}] },
+    triphop:    { lanes:[{p:"shaker8",lvl:.1}] },
+    lofi:       { lanes:[{p:"shaker8",lvl:.09}] },
+  };
+  const PERC_STYLE_GENRES = Object.keys(PERC_STYLES);
+  // which GM perc-bank elements each perc-VOICE pattern plays (mirrors csd-engine
+  // percBar). Patterns NOT listed (clap24/crashDown/ride8/rideq/rim34) use the
+  // dedicated clap/crash/ride/rim voices — the kit sampler / synth fallback — and
+  // touch the perc bank not at all.
+  const PERC_PATTERN_ELEMENTS = {
+    clave:["claves"], shaker8:["shaker"], shaker16:["shaker"],
+    conga:["congaLo","congaMuteHi","congaOpenHi"], cowbell:["cowbell"],
+    tambourine:["tambourine"], agogo:["agogoHi","agogoLo"],
+    guiro:["guiroLong","guiroShort"], triangle:["triangleOpen","triangleMute"],
+    woodblock:["woodblockHi"] };
+  const percBankElements = (lanes) => {
+    const set=new Set();
+    for(const l of (lanes||[])) for(const e of (PERC_PATTERN_ELEMENTS[l.p]||[])) set.add(e);
+    return [...set];
+  };
+  // dominant-parent resolution — NO rng draw (pure of the main stream, so every
+  // existing seeded state stays byte-identical; perc rides on top).
+  const resolvePercStyle = (genres, weights) => {
+    if(!genres || !genres.length) return null;
+    let best=null, bw=-1;
+    genres.forEach((g,i)=>{ const w=weights?weights[i]:1; if(PERC_STYLES[g] && w>bw){ bw=w; best=g; } });
+    return best ? { genre:best, lanes:PERC_STYLES[best].lanes.map(l=>({...l})) } : null;
+  };
 
   // ---------- the anchors ----------
   const GENRES = {
@@ -3694,7 +3809,27 @@
         zones: one("hat", [{srcId:"drum_"+name+"_hatClosed", root:60, lo:0, hi:65, loop:0},
                            {srcId:"drum_"+name+"_hatOpen",   root:72, lo:66, hi:127, loop:0}]) };
       if(H.tom)   overlay.tomSampler  ={ id:"drum_"+name+"_tom",   sr:K.sr, oneShotSec:H.tom.len/K.sr,   zones: one("tom", [{srcId:"drum_"+name+"_tom", root:DRUM_TOM_ROOT, lo:0, hi:127, loop:0}]) };
+      // 2026-07 perc-lane wiring: the real recorded clap/rim/ride/crash (fixed
+      // pitch, one zone each). Fed by state.perc lanes; synth fallback in state-engine.
+      for(const h of ["clap","rim","ride","crash"]) if(H[h])
+        overlay[h+"Sampler"]={ id:"drum_"+name+"_"+h, sr:K.sr, oneShotSec:H[h].len/K.sr, zones: one(h, [{srcId:"drum_"+name+"_"+h, root:60, lo:0, hi:127, loop:0}]) };
       return { overlay, srcs, dir:K.dir, label:K.label };
+    };
+    // the shared GM perc bank -> instruments.drums.percSampler (multi-zone: each
+    // element at its GM note, natural pitch). Built with ONLY the elements the
+    // genre's lanes actually play (percBankElements) so a genre decodes/injects
+    // nothing it won't hit (a ride/rim/clap-only genre gets NO perc bank at all —
+    // keeps the live steer's decode footprint minimal). Independent of the kit
+    // (afrobeat's shaker rides it even with a synth kick).
+    const percBankSpec=(elements)=>{
+      const K=PERCBANK, srcs=[], zones=[]; let maxLen=1;
+      for(const name of elements){ const h=K.hits[name]; if(!h) continue;
+        srcs.push({id:"perc_"+name, file:h.file});
+        zones.push({srcId:"perc_"+name, root:h.note, lo:h.note, hi:h.note, loop:0});
+        if(h.len>maxLen) maxLen=h.len;
+      }
+      if(!zones.length) return null;
+      return { spec:{ id:"percbank", sr:K.sr, oneShotSec:maxLen/K.sr, zones }, srcs, dir:K.dir };
     };
     // the transition micro-lick soloist -> state.lickVoice (csd-engine plays
     // it as a first-class solo voice; "@model" = a synth lick, otherwise a
@@ -3726,6 +3861,22 @@
     if(drumKit) for(const s of drumKit.srcs)
       foundSources.push({id:s.id, label:drumKit.label, url:"",
         samplePath:"found/samples/drums/"+drumKit.dir+"/"+s.file, vol:0, pitch:1, stretch:0.5, cutoff:18000});
+    // PERC LANE: resolve the dominant parent's perc style + inject the shared GM
+    // perc bank (percSampler) so the lane's congas/shaker/cowbell/… render sampled
+    // regardless of the kit. clap/rim/ride/crash ride the kit sampler above when
+    // present, synth fallback otherwise (state-engine).
+    const percStyle = resolvePercStyle(c.genres, c.weights);
+    let percOverlay = {};
+    if(percStyle){
+      const pb = percBankSpec(percBankElements(percStyle.lanes));   // null when no perc-voice lane (ride/rim/clap/crash only)
+      if(pb){
+        percOverlay.percSampler = pb.spec;
+        const have = new Set(foundSources.map(s=>s.id));
+        for(const s of pb.srcs){ if(have.has(s.id)) continue; have.add(s.id);
+          foundSources.push({id:s.id, label:"GM Percussion (FluidR3, MIT)", url:"",
+            samplePath:"found/samples/perc/"+pb.dir+"/"+s.file, vol:0, pitch:1, stretch:0.5, cutoff:18000}); }
+      }
+    }
     const state={
       ...(lickVoice?{lickVoice}:{}),
       vocoderSourceId: vocId||undefined,
@@ -3760,8 +3911,9 @@
         pad:Object.assign(E.defaultInstruments().pad, c.padRecipe, {inserts:c.padInserts||[]}, c.padDx7?{dx7:c.padDx7}:{}, c.padSampler?{sampler:samplerSpec(c.padSampler)}:{}),
         bass:Object.assign(E.defaultInstruments().bass, c.bassRecipe, {inserts:c.bassInserts||[]}, c.bassDx7?{dx7:c.bassDx7}:{}, c.bassSampler?{sampler:samplerSpec(c.bassSampler)}:{}),
         melody:Object.assign(E.defaultInstruments().melody, c.leadRecipe, {voices:Math.round(c.leadRecipe.voices||2), inserts:c.leadInserts||[]}, c.leadDx7?{dx7:c.leadDx7}:{}, c.leadSampler?{sampler:samplerSpec(c.leadSampler)}:{}),
-        drums:Object.assign(E.defaultInstruments().drums, c.drumRecipe, drumKit?drumKit.overlay:{}),
+        drums:Object.assign(E.defaultInstruments().drums, c.drumRecipe, drumKit?drumKit.overlay:{}, percOverlay),
       },
+      ...(percStyle?{perc:{lanes:percStyle.lanes}}:{}),
       foundSources,
       sections:(()=>{
         // bird-rarity round 2026-07: seed the bed-rotation START (Knuth-hash of
@@ -3949,6 +4101,8 @@
       zones: one("hat", [{srcId:"drum_"+name+"_hatClosed", root:60, lo:0, hi:65, loop:0},
                          {srcId:"drum_"+name+"_hatOpen",   root:72, lo:66, hi:127, loop:0}]) };
     if(H.tom)   overlay.tomSampler  ={ id:"drum_"+name+"_tom",   sr:K.sr, oneShotSec:H.tom.len/K.sr,   zones: one("tom", [{srcId:"drum_"+name+"_tom", root:DRUM_TOM_ROOT, lo:0, hi:127, loop:0}]) };
+    for(const h of ["clap","rim","ride","crash"]) if(H[h])
+      overlay[h+"Sampler"]={ id:"drum_"+name+"_"+h, sr:K.sr, oneShotSec:H[h].len/K.sr, zones: one(h, [{srcId:"drum_"+name+"_"+h, root:60, lo:0, hi:127, loop:0}]) };
     return { overlay, srcs, dir:K.dir, label:K.label };
   };
   function applySampledOnly(state, seed){
@@ -3978,7 +4132,7 @@
     return state;
   }
 
-  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, GENRE_CLIPS, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly };
+  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, GENRE_CLIPS, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), PERC_STYLES, PERC_STYLE_GENRES, PERC_ELEMENTS, resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly };
   if(isNode) module.exports=api; else root.GenreKernel=api;
 
   // ---------- CLI ----------

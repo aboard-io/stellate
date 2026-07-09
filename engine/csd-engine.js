@@ -143,6 +143,47 @@
   //  section's own drum pattern. The noise/sweep/riser SFX are demoted -8dB
   //  and rationed by the kernel's auto-transition pass.)
   const TRANSITIONS=["off","drum fill","tom fill","break fill","hat rush","cut","riser","sweep","downlift","impact","reverse","noise","snare roll","stutter","dropout","micro lick","kit fill"];
+  // ---------- PERCUSSION LANE (2026-07 "use the percussion" pass) ----------
+  // Decorative percussion layered OVER the kick/snare/hat/tom kit: the real
+  // recorded clap/rim/ride/crash (kit samples) + the wide GM perc bank
+  // (congas/shaker/cowbell/tambourine/agogo/guiro/claves/woodblock/triangle).
+  // Emitted by the PERC PASS in buildEvents from state.perc.lanes (genre-kernel
+  // PERC_STYLES); NEW drum event types clap/rim/ride/crash/perc that the verifier
+  // does NOT count (core-kit fabric only). Pattern -> voice + GM notes below.
+  const PERC_PATTERNS=["clap24","crashDown","ride8","rideq","rim34","clave","shaker8","shaker16","conga","cowbell","tambourine","agogo","guiro","triangle","woodblock"];
+  const PERC_VOICES=["clap","rim","ride","crash","perc"];
+  // GM percussion notes (standard bank-128 map) for the shared perc voice.
+  const PERC_NOTE={ shaker:82, cabasa:69, maracas:70, tambourine:54, cowbell:56,
+    agogoHi:67, agogoLo:68, congaLo:64, congaOpenHi:63, congaMuteHi:62,
+    bongoHi:60, bongoLo:61, timbaleHi:65, timbaleLo:66, claves:75,
+    guiroLong:74, guiroShort:73, woodblockHi:76, woodblockLo:77,
+    triangleOpen:81, triangleMute:80, vibraslap:58 };
+  // one 8-unit bar (=CHORD_BEATS) of a named perc pattern, starting at beat S.
+  // dedicated voices carry no note (clap/rim/ride/crash); the shared "perc" voice
+  // carries a GM note that selects its sample zone. ci = bar index (variation).
+  function percBar(name, S, lvl, ci){
+    const out=[];
+    const V=(drum,off,amp,dur)=>out.push({drum,beat:S+off,dur:dur||0.12,amp});
+    const P=(off,amp,note,dur)=>out.push({drum:"perc",beat:S+off,dur:dur||0.12,amp,note});
+    switch(name){
+      case "clap24": V("clap",2,lvl); V("clap",6,lvl); break;
+      case "crashDown": V("crash",0,lvl,1.2); break;
+      case "rideq": [0,2,4,6].forEach(o=>V("ride",o,lvl*(o%4===0?1:0.78))); break;
+      case "ride8": for(let o=0;o<8;o++) V("ride",o,lvl*(o%2===0?1:0.68)); break;
+      case "rim34": V("rim",2,lvl); V("rim",6,lvl); break;
+      case "clave": [0,1.5,3,4,6].forEach(o=>P(o,lvl,PERC_NOTE.claves,0.1)); break;   // 3-2 son-ish clave
+      case "shaker8": for(let o=0;o<8;o++) P(o,lvl*(o%2?0.68:1),PERC_NOTE.shaker,0.1); break;
+      case "shaker16": for(let o=0;o<8;o+=0.5) P(o,lvl*(((o*2)%2)?0.6:1),PERC_NOTE.shaker,0.08); break;
+      case "conga": [[0,PERC_NOTE.congaLo,1],[2.5,PERC_NOTE.congaMuteHi,0.7],[3,PERC_NOTE.congaOpenHi,0.9],[4,PERC_NOTE.congaLo,0.85],[6.5,PERC_NOTE.congaOpenHi,0.8],[7,PERC_NOTE.congaOpenHi,0.65]].forEach(([o,n,a])=>P(o,lvl*a,n,0.2)); break;
+      case "cowbell": [0,2,3,4,6,7].forEach(o=>P(o,lvl*(o%2===0?1:0.7),PERC_NOTE.cowbell,0.1)); break;
+      case "tambourine": [1,3,5,7].forEach(o=>P(o,lvl,PERC_NOTE.tambourine,0.12)); if(ci%2) P(4,lvl*0.7,PERC_NOTE.tambourine,0.12); break;
+      case "agogo": [[0,PERC_NOTE.agogoHi],[1.5,PERC_NOTE.agogoLo],[3,PERC_NOTE.agogoHi],[4,PERC_NOTE.agogoLo],[5.5,PERC_NOTE.agogoHi],[7,PERC_NOTE.agogoLo]].forEach(([o,n])=>P(o,lvl,n,0.1)); break;
+      case "guiro": P(0,lvl,PERC_NOTE.guiroLong,0.4); P(2,lvl*0.7,PERC_NOTE.guiroShort,0.1); P(4,lvl,PERC_NOTE.guiroLong,0.4); P(6,lvl*0.7,PERC_NOTE.guiroShort,0.1); break;
+      case "triangle": P(0,lvl,PERC_NOTE.triangleOpen,0.5); if(ci%2===0) P(4,lvl*0.7,PERC_NOTE.triangleMute,0.2); break;
+      case "woodblock": [1,3,5,7].forEach(o=>P(o,lvl,PERC_NOTE.woodblockHi,0.1)); break;
+    }
+    return out;
+  }
   // synthesis-model vocabulary. FAUST-PORT: the voices themselves live in
   // faust/state-engine.js (pitchedUnit) + faust/dist/ modules; this predicate is
   // the engine-side canon anchors and validators check against — keep it in sync
@@ -1464,6 +1505,37 @@
         }
       }
     }
+    // ---- PERCUSSION LANE (2026-07) — decorative perc OVER the kit ----
+    // Lays the genre's state.perc.lanes across every span that HAS a kit
+    // (kit!=="off"): claps on 2&4, ride/rim for swing, crash on section downbeats,
+    // congas/shaker/cowbell/… from the GM bank. Own rng stream (seed+61453) so an
+    // adopting genre perturbs nothing but its own new layer (ABSENT state.perc =>
+    // pass never runs => byte-identical). Grooved with the SAME time-feel as the
+    // kit (isolated rng), then pushed into `drums` so the rubato warp below keeps
+    // it sample-locked. NEW event types (clap/rim/ride/crash/perc) are ignored by
+    // the snare-law (snare/hat only) and by the verifier (core-kit fabric only).
+    if(state.perc && Array.isArray(state.perc.lanes) && state.perc.lanes.length){
+      const prng=mulberry32(((state.seed??1)+61453)>>>0);
+      const percArr=[];
+      for(const sp of spans){
+        if(!sp.kit || sp.kit==="off") continue;
+        const nbars=Math.max(1,Math.round(sp.beats/CHORD_BEATS));
+        for(const lane of state.perc.lanes){
+          const crash=lane.p==="crashDown", busy=/shaker|ride8/.test(lane.p);
+          for(let bi=0;bi<nbars;bi++){
+            if(crash && bi>0) continue;                          // crash only on the section downbeat
+            const ev=percBar(lane.p, sp.start+bi*CHORD_BEATS, lane.lvl!=null?lane.lvl:0.2, bi);
+            for(const e of ev){
+              if(busy && prng()<0.12) continue;                  // thin the dense lanes (humanity)
+              e.amp=Math.max(0.03, e.amp*(0.85+prng()*0.3));
+              percArr.push(e);
+            }
+          }
+        }
+      }
+      applyGroove(percArr, tfeel, mulberry32(((state.seed??1)+61454)>>>0));
+      for(const e of percArr) drums.push(e);
+    }
     // ---- RUBATO — the SECTION stage of the unified time-feel (Phase 3) ----
     // (state.rubato = {depth, periodBars, phase}; resolved into tfeel.rubato)
     // Deterministic slow breathing of tempo, implemented ONCE here as a
@@ -1667,6 +1739,7 @@
     KITS,   // pulse-set kit lanes (KERNEL-V4 Phase 1): kits are data; drumEvents is the one interpreter
     sectionTag,   // form-graph typed-node classifier (Phase 5)
     PROGRESSIONS, getProgression, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS,
+    PERC_PATTERNS, PERC_VOICES, PERC_NOTE,
     isModel, SOURCE_CLASS, sourceClassOf, pchAdd, pchToMidi };
   if(typeof module!=="undefined" && module.exports) module.exports=api;
   else root.CsdEngine=api;
