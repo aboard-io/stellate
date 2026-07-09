@@ -19,12 +19,12 @@
 //
 // Enumeration is registry-driven so new genres/samples/samplers in a PR are
 // covered automatically:
-//   - every GenreKernel SOURCES id        -> found/<id>.wav
+//   - every GenreKernel SOURCES id        -> found/<id>.mp3
 //   - every GenreKernel SAMPLES entry     -> found/samples/<file>
 //   - every GenreKernel SAMPLERS zone     -> found/samples/instruments/<dir>/<file>
 //   - foundSources of E.defaultState() and K.track(<every genre>, seeds 1..3)
 //     (catches drum-kit / perc-bank paths, which aren't exported directly)
-//   - found/tokyo_station.wav + found/tw_vocal.wav (engine.test remaps/strips)
+//   - found/tokyo_station.mp3 + found/tw_vocal.mp3 (engine.test remaps/strips)
 //
 // NEVER overwrites: any path that already exists on disk (real fetched media,
 // or a previous stand-in) is skipped, so running this on a dev machine with a
@@ -43,11 +43,11 @@ const LIST_ONLY = process.argv.includes("--list");
 const paths = new Set();
 const addState = (st) => {
   for (const s of st.foundSources || []) {
-    paths.add(s.samplePath || "found/" + s.id + ".wav");
+    paths.add(s.samplePath || "found/" + s.id + ".mp3");
   }
 };
 
-for (const id of Object.keys(K.SOURCES)) paths.add("found/" + id + ".wav");
+for (const id of Object.keys(K.SOURCES)) paths.add("found/" + id + ".mp3");
 for (const s of Object.values(K.SAMPLES)) paths.add("found/samples/" + s.file);
 for (const S of Object.values(K.SAMPLERS))
   for (const z of S.zones) paths.add("found/samples/instruments/" + S.dir + "/" + z.file);
@@ -56,10 +56,12 @@ addState(E.defaultState());
 for (const g of Object.keys(K.GENRES))
   for (const seed of [1, 2, 3]) addState(K.track(g, { seed }));
 
-paths.add("found/tokyo_station.wav");   // engine.test maps the default song's bed here
-paths.add("found/tw_vocal.wav");        // stripped by engine.test, used by full presses
+paths.add("found/tokyo_station.mp3");   // engine.test maps the default song's bed here
+paths.add("found/tw_vocal.mp3");        // stripped by engine.test, used by full presses
 
 // ---- deterministic quiet noise, 1s PCM16 mono 44.1k (~86KB per file) ----
+// NOTE: .mp3-named stand-ins deliberately carry these WAV bytes — ffmpeg (and
+// decodeAudioData) sniff content, not extension, so CI decode still works.
 function mulberry32(a) {
   return function () {
     a |= 0; a = (a + 0x6D2B79F5) | 0;

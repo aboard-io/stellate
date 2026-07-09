@@ -86,7 +86,7 @@ const st = K.track("hogcore", { seed: 3 });
 const at = SE.autoTune(E, st);
 console.log(`  hogcore key pcs = [${at.pcs.slice().sort((a, b) => a - b)}], strength = ${at.strength}`);
 const ev = E.buildEvents(st);
-const pathOf = {}; for (const s of st.foundSources) pathOf[s.id] = s.samplePath ? path.join(ROOT, s.samplePath) : (s.fsPath ? path.join(ROOT, s.fsPath) : path.join(ROOT, "found", s.id + ".wav"));
+const pathOf = {}; for (const s of st.foundSources) pathOf[s.id] = s.samplePath ? path.join(ROOT, s.samplePath) : (s.fsPath ? path.join(ROOT, s.fsPath) : path.join(ROOT, "found", s.id + ".mp3"));
 const srcOf = {}; for (const s of Object.values(ev.srcById)) srcOf[s.tableNum] = s;
 const buffers = {};
 const chops = ev.found.filter(f => f.chop).map(f => ({ src: srcOf[f.tableNum], pitch: f.pitch, dur: Math.max(0.4, Math.min(1.6, f.dur * 60 / st.bpm)) })).filter(f => f.src);

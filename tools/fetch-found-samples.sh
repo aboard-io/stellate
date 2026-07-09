@@ -126,11 +126,11 @@ done
 # as one-shot hits like any other vocal sample
 mkdir -p found/samples/speech
 say() { # name | text | pitch | speed | extra-af
-  local out="found/samples/speech/${1}.wav"
+  local out="found/samples/speech/${1}.mp3"
   [ -s "$out" ] && return 0
   echo "→ speech $1"
   espeak-ng -v en-us -p "$3" -s "$4" -w /tmp/say.wav "$2"
-  ffmpeg -y -loglevel error -i /tmp/say.wav -ac 1 -ar 44100 \
+  ffmpeg -y -loglevel error -i /tmp/say.wav -codec:a libmp3lame -q:a 2 -ac 1 -ar 44100 \
     -af "${5:-anull},loudnorm=I=-15:TP=-1" "$out"
 }
 say plaza      "welcome to the digital plaza"        28 118 "asetrate=44100*0.92,aresample=44100"
@@ -153,7 +153,7 @@ say paleo_bones    "these bones tell a story, sixty six million years old"    26
 say paleo_skies    "look up. once, these skies belonged to the pterosaurs"    34 92  "asetrate=44100*0.95,aresample=44100"
 
 # --- the national news (canawave voiceover; espeak en-ca if available, else en) ---
-sayca() { local out="found/samples/speech/${1}.wav"; echo "→ news $1"; espeak-ng -v en-ca -p "$3" -s "$4" -w /tmp/say.wav "$2" 2>/dev/null || espeak-ng -v en-us -p "$3" -s "$4" -w /tmp/say.wav "$2"; ffmpeg -y -loglevel error -i /tmp/say.wav -ac 1 -ar 44100 -af "$5" "$out"; }
+sayca() { local out="found/samples/speech/${1}.mp3"; echo "→ news $1"; espeak-ng -v en-ca -p "$3" -s "$4" -w /tmp/say.wav "$2" 2>/dev/null || espeak-ng -v en-us -p "$3" -s "$4" -w /tmp/say.wav "$2"; ffmpeg -y -loglevel error -i /tmp/say.wav -codec:a libmp3lame -q:a 2 -ac 1 -ar 44100 -af "$5" "$out"; }
 sayca ca_news    "good evening. coast to coast to coast, this is the national." 40 98  "anull"
 sayca ca_maple   "the maple harvest is the largest on record."                 42 100 "anull"
 sayca ca_gold    "and Canada takes the gold, in overtime!"                      46 104 "anull"
@@ -175,7 +175,7 @@ sayca ca_overtime  "overtime. sudden death. the nation holds its breath."       
 
 # --- transitwave: station-PA train-schedule announcements (espeak; telephone band + slight slowdown = PA timbre) ---
 saytransit() { # name | text | pitch | speed | extra-af
-  local out="found/samples/speech/${1}.wav"
+  local out="found/samples/speech/${1}.mp3"
   [ -s "$out" ] && return 0
   echo "→ transit $1"
   espeak-ng -v en-us -p "$3" -s "$4" -w /tmp/say.wav "$2"
@@ -187,7 +187,7 @@ saytransit() { # name | text | pitch | speed | extra-af
     "[0:a]highpass=f=280,lowpass=f=3600,${5:-anull}[b];[b]asplit=3[r][f][o];\
 [f]rubberband=pitch=1.4983,volume=0.5[fifth];[o]rubberband=pitch=0.5,volume=0.55[oct];\
 [r][fifth][oct]amix=inputs=3:normalize=0,loudnorm=I=-15:TP=-1[out]" \
-    -map "[out]" -ac 1 -ar 44100 "$out"
+    -map "[out]" -codec:a libmp3lame -q:a 2 -ac 1 -ar 44100 "$out"
 }
 saytransit tw_next      "the next regional train, to poughkeepsie, departs from track nine, at nine fourteen"        30 148 "asetrate=44100*0.97,aresample=44100"
 saytransit tw_arriving  "now arriving on track two, the seven forty five express, to new haven"                      28 150 "anull"
@@ -205,11 +205,11 @@ saytransit tw_schedule  "departures. eight oh two, hudson line, local. eight fif
 # --- station names from major metros worldwide (buried, triggered every measure; the engine
 #     glitches them downward + gates the amplitude with a square LFO) ---
 saystation() { # name | text
-  local out="found/samples/speech/${1}.wav"
+  local out="found/samples/speech/${1}.mp3"
   [ -s "$out" ] && return 0
   echo "→ station $1"
   espeak-ng -v en-us+f3 -p 38 -s 148 -w /tmp/say.wav "$2"   # +f3 = a feminine voice
-  ffmpeg -y -loglevel error -i /tmp/say.wav -ac 1 -ar 44100 -af "highpass=f=300,lowpass=f=6500,loudnorm=I=-15:TP=-1.5" "$out"
+  ffmpeg -y -loglevel error -i /tmp/say.wav -codec:a libmp3lame -q:a 2 -ac 1 -ar 44100 -af "highpass=f=300,lowpass=f=6500,loudnorm=I=-15:TP=-1.5" "$out"
 }
 saystation st_oxford   "Oxford Circus"          # London
 saystation st_baker    "Baker Street"           # London
@@ -496,11 +496,11 @@ fi
 # one robot. Kept bright/full-band (hyperpop, not station PA). Scheduled by the
 # kernel as vox lines + a stations-style phrase under the bars.
 sayhp() { # name | text | voice | pitch | speed | extra-af
-  local out="found/samples/speech/hp_${1}.wav"
+  local out="found/samples/speech/hp_${1}.mp3"
   [ -s "$out" ] && return 0
   echo "→ hogcore $1"
   espeak-ng -v "$3" -p "$4" -s "$5" -w /tmp/sayhp.wav "$2"
-  ffmpeg -y -loglevel error -i /tmp/sayhp.wav -ac 1 -ar 44100 \
+  ffmpeg -y -loglevel error -i /tmp/sayhp.wav -codec:a libmp3lame -q:a 2 -ac 1 -ar 44100 \
     -af "${6:-anull},loudnorm=I=-14:TP=-1" "$out"
 }
 #     id          phrase ("<Name> is trans")           voice        pit spd  polish
@@ -536,11 +536,11 @@ sayhp crookshanks "Crookshanks is trans"               en+f2         56 140  "an
 # narrator (en+m3, low + slow) for all lines so it reads as a single stoned
 # announcer, not a cast. Scheduled by the kernel as buried sampleEvents + hits.
 saybud() { # id | text | pitch | speed | extra-af
-  local out="found/samples/speech/wd_${1}.wav"
+  local out="found/samples/speech/wd_${1}.mp3"
   [ -s "$out" ] && return 0
   echo "→ budstep $1"
   espeak-ng -v en+m3 -p "${3:-28}" -s "${4:-118}" -w /tmp/saybud.wav "$2"
-  ffmpeg -y -loglevel error -i /tmp/saybud.wav -ac 1 -ar 44100 \
+  ffmpeg -y -loglevel error -i /tmp/saybud.wav -codec:a libmp3lame -q:a 2 -ac 1 -ar 44100 \
     -af "${5:-asetrate=44100*0.94,aresample=44100},loudnorm=I=-14:TP=-1" "$out"
 }
 #       id            phrase                        pit spd
@@ -571,11 +571,11 @@ saybud hybrid         "hybrid"                        28 112
 # PA voices ride a telephone-band filter (highpass 300 / lowpass ~3400) exactly
 # like the transitwave station PA. Texts live in genre-specs/MATERIALS.md.
 sayg() { # id | text | voice | pitch | speed | extra-af | espeak-extra
-  local out="found/samples/speech/${1}.wav"
+  local out="found/samples/speech/${1}.mp3"
   [ -s "$out" ] && return 0
   echo "→ commission-speech $1"
   espeak-ng -v "$3" -p "$4" -s "$5" ${7:-} -w /tmp/sayg.wav "$2"
-  ffmpeg -y -loglevel error -i /tmp/sayg.wav -ac 1 -ar 44100 \
+  ffmpeg -y -loglevel error -i /tmp/sayg.wav -codec:a libmp3lame -q:a 2 -ac 1 -ar 44100 \
     -af "${6:-anull},loudnorm=I=-15:TP=-1" "$out"
 }
 TELB="highpass=f=300,lowpass=f=3400"          # telephone band (institutional PA)
@@ -742,7 +742,9 @@ out = []
 for sub, cls in (("breaks","break"),("hits","hit"),("vox","vox"),("speech","speech"),("78s","seventy8")):
     d = os.path.join(root, sub)
     for f in sorted(os.listdir(d)):
-        if not f.endswith(".wav"): continue
+        # speech ships as MP3 (HOSTING.md §3: no slice-timed metadata, safe to
+        # compress); breaks/hits/vox/78s stay WAV (slice/sample alignment)
+        if not f.endswith((".wav", ".mp3")): continue
         p = os.path.join(d, f)
         dur = float(subprocess.run(["ffprobe","-v","error","-show_entries",
             "format=duration","-of","csv=p=0",p],capture_output=True,text=True).stdout or 0)

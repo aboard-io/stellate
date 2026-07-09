@@ -1031,7 +1031,7 @@
     const CBEATS=Math.max(2,Math.round(state.chordEvery||CHORD_BEATS));
     const chords=prg.chords, k0=state.keyOffset|0, cycleBeats=chords.length*CBEATS;
     const srcById={};
-    state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,kind:s.kind,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".wav"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec,wet:!!s.wet,glitch:!!s.glitch,distant:!!s.distant}; });
+    state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,kind:s.kind,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".mp3"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec,wet:!!s.wet,glitch:!!s.glitch,distant:!!s.distant}; });
     const rng=mulberry32((state.seed??1)>>>0);
     // MUSIC-MIND rhythm knob (state.rhythm={complexity:0..1}): two DEDICATED
     // streams — bass-cell mutation (+52100) and melody rhythm cells (+52200) —

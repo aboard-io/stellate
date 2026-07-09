@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // vocoder-test.js — listen-test for robot_choir.dsp (ve.vocoder channel
 // vocoder) as the classic alternative to csd-engine's pvsvoc model.
-// Feeds REAL speech (found/vx_*.wav, decoded via ffmpeg to raw f32) as the
+// Feeds REAL speech (found/vx_*.mp3, decoded via ffmpeg to raw f32) as the
 // processor's audio input while a note is held, renders 8s, and checks:
 //   1. nonzero RMS,
 //   2. the output envelope FOLLOWS the speech envelope (correlation) —
@@ -14,7 +14,7 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 
 const SR = 44100, BS = 64, SECS = 8, TOTAL = SR * SECS;
-const speechWav = process.argv[2] || path.join(__dirname, "..", "found", "vx_fdr.wav");
+const speechWav = process.argv[2] || path.join(__dirname, "..", "found", "vx_fdr.mp3");
 
 async function main() {
   const raw = execFileSync("ffmpeg", ["-v", "error", "-i", speechWav, "-ac", "1", "-ar", String(SR),

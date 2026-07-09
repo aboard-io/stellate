@@ -84,5 +84,15 @@ for vowel, line in CHOIR:
     L = min(len(mix), len(yc)); mix[:L] += 0.4 * yc[:L]
 
 mix = mix / (np.max(np.abs(mix)) + 1e-9) * 0.92
-sf.write(OUT, mix.astype(np.float32), FS)
+if OUT.lower().endswith(".mp3"):
+    # tw_vocal ships as MP3 (HOSTING.md §3) — libsndfile MP3 write support is
+    # build-dependent, so write a temp WAV and let ffmpeg (already a dependency)
+    # do the encode: mono 44.1k, libmp3lame V2, same recipe as the beds.
+    tmp = tempfile.mktemp(suffix=".wav")
+    sf.write(tmp, mix.astype(np.float32), FS)
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", tmp,
+                    "-codec:a", "libmp3lame", "-q:a", "2", "-ac", "1", "-ar", str(FS), OUT], check=True)
+    os.remove(tmp)
+else:
+    sf.write(OUT, mix.astype(np.float32), FS)
 print(f"✓ {os.path.basename(OUT)}  (lead {len(MELODY)}w + female choir, {len(mix)/FS:.1f}s @ {BPM:g}bpm, transpose {TRANSPOSE:+d})")
