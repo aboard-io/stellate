@@ -68,6 +68,10 @@ node engine/genre-kernel.js journey path.json --hours 4 --out journey/ --render 
 NODE_PATH=/home/ford/ftrain-2025/node_modules node test/explorer-ui-test.js   # (+ genre-viz / demo-layer / live-test-run / wavout-test-run / live-resilience / bg-survival)
 ```
 
+Ship: `tools/ship.sh` = gates → `git push` → deploy to stellate.app (refuses a
+dirty tree — the deploy rsyncs the working tree, so deployed must mean
+committed; docs/HOSTING.md). aboardresearch.com is this tree served directly.
+
 CI: `.github/workflows/verify.yml` runs the media guard + the full `./verify.sh`
 suite on every PR/push in a clean clone with ZERO fetched media —
 `node tools/ci-standin-media.js` synthesizes quiet-noise stand-ins at every
