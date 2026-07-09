@@ -336,6 +336,14 @@
     const bufFail = new Set();
     function kickBuffer(src) {
       if (!src || bufCache[src.id] !== undefined) return;
+      // SPEECH organ: a synthText source synthesizes (lazy wasm, url-keyed
+      // cache inside FP.synthToBuffer via CsdSpeech.key) instead of fetching.
+      if (src.synthText) {
+        bufCache[src.id] = undefined;
+        decGate.run(() => FP.synthToBuffer(ctx, src.synthText), (b) => !!(b && b.length), () => !abort)
+          .then(({ v }) => { bufCache[src.id] = (v && v.length) ? v : null; });
+        return;
+      }
       const url = src.url || (src.samplePath ? new URL(src.samplePath, SITE).href : null);
       if (!url || bufFail.has(url)) { bufCache[src.id] = null; return; }
       bufCache[src.id] = undefined;
@@ -373,9 +381,13 @@
       if (!src) return Promise.resolve(null);
       const id = src.id;
       if (speechJobs[id]) return speechJobs[id];
-      const url = src.url || (src.samplePath ? new URL(src.samplePath, SITE).href : null);
-      if (!url) return (speechJobs[id] = Promise.resolve((speechCache[id] = null)));
-      const job = decGate.run(() => FP.decodeUrlToBuffer(ctx, url), (b) => !!(b && b.length), () => !abort)
+      // SPEECH organ: synthText carrier synthesizes through the shared cache
+      const dec = src.synthText
+        ? () => FP.synthToBuffer(ctx, src.synthText)
+        : null;
+      const url = dec ? null : (src.url || (src.samplePath ? new URL(src.samplePath, SITE).href : null));
+      if (!dec && !url) return (speechJobs[id] = Promise.resolve((speechCache[id] = null)));
+      const job = decGate.run(dec || (() => FP.decodeUrlToBuffer(ctx, url)), (b) => !!(b && b.length), () => !abort)
         .then(({ v }) => (speechCache[id] = (v && v.length ? Float32Array.from(v.getChannelData(0)) : null)));   // copy out of the AudioBuffer
       speechJobs[id] = job;
       return job;
@@ -1146,6 +1158,10 @@
     }
     function decFound(s) {
       const id = s.id; if (foundJobs[id]) return foundJobs[id];
+      if (s.synthText)   // SPEECH organ: synthesize instead of fetch (shared url-keyed cache)
+        return foundJobs[id] = decWithRetry("found", id,
+          () => FP.synthToBuffer(ctx, s.synthText).then((b) => (b && b.length ? Float32Array.from(b.getChannelData(0)) : null)),
+          (p) => !!p).then((p) => foundPCM[id] = p);
       const url = urlOf(s); if (!url) return foundJobs[id] = Promise.resolve(foundPCM[id] = null);
       return foundJobs[id] = decWithRetry("found", id,
         () => FP.decodeUrlToBuffer(ctx, url).then((b) => (b && b.length ? Float32Array.from(b.getChannelData(0)) : null)),
@@ -1160,6 +1176,10 @@
     }
     function decSpeech(s) {
       const id = s.id; if (speechJobs[id]) return speechJobs[id];
+      if (s.synthText)   // SPEECH organ: synthesize instead of fetch (shared url-keyed cache)
+        return speechJobs[id] = decWithRetry("speech", id,
+          () => FP.synthToBuffer(ctx, s.synthText).then((b) => (b && b.length ? Float32Array.from(b.getChannelData(0)) : null)),
+          (p) => !!p).then((p) => speechPCM[id] = p);
       const url = urlOf(s); if (!url) return speechJobs[id] = Promise.resolve(speechPCM[id] = null);
       return speechJobs[id] = decWithRetry("speech", id,
         () => FP.decodeUrlToBuffer(ctx, url).then((b) => (b && b.length ? Float32Array.from(b.getChannelData(0)) : null)),

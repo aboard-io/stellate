@@ -115,7 +115,7 @@ const PRESETS = {
     state() {
       const K = require("../engine/genre-kernel.js");
       const st = K.track("dinosynth", { seed: 7 });
-      st.foundSources.forEach(s => { s.fsPath = s.samplePath ? path.join(HERE, "..", s.samplePath) : found(s.id + ".mp3"); });
+      st.foundSources.forEach(s => { if (s.synthText) return; s.fsPath = s.samplePath ? path.join(HERE, "..", s.samplePath) : found(s.id + ".mp3"); });
       return st;
     },
     vibe: [
@@ -132,7 +132,7 @@ const PRESETS = {
     state() {
       const K = require("../engine/genre-kernel.js");
       const st = K.track("canawave", { seed: 3 });
-      st.foundSources.forEach(s => { s.fsPath = s.samplePath ? path.join(HERE, "..", s.samplePath) : found(s.id + ".mp3"); });
+      st.foundSources.forEach(s => { if (s.synthText) return; s.fsPath = s.samplePath ? path.join(HERE, "..", s.samplePath) : found(s.id + ".mp3"); });
       return st;
     },
     // ads cut WITH Canadian imagery (Vancouver, Alberta, the Rockies) — alternating
@@ -163,7 +163,7 @@ const PRESETS = {
       const K = require("../engine/genre-kernel.js");
       const st = K.track("transitwave", { seed: 1 });
       prepVocal(st);   // WORLD-sung chorus regenerated to this render's tempo + key
-      st.foundSources.forEach(s => { s.fsPath = s.samplePath ? path.join(HERE, "..", s.samplePath) : found(s.id + ".mp3"); });
+      st.foundSources.forEach(s => { if (s.synthText) return; s.fsPath = s.samplePath ? path.join(HERE, "..", s.samplePath) : found(s.id + ".mp3"); });
       return st;
     },
   },
@@ -214,7 +214,7 @@ function journeyPreset(stateFile, outFile) {
     sectionPool: pool,
     state() {
       prepVocal(st);
-      st.foundSources.forEach(s => { s.fsPath = s.samplePath ? path.join(HERE, "..", s.samplePath) : found(s.id + ".mp3"); });
+      st.foundSources.forEach(s => { if (s.synthText) return; s.fsPath = s.samplePath ? path.join(HERE, "..", s.samplePath) : found(s.id + ".mp3"); });
       return st;
     },
   };
@@ -241,7 +241,7 @@ const have = new Set(clips.map(c => c.file));
 // ---- the song: exact section boundaries in seconds ----
 const state = P.state();
 for (const s of state.foundSources)
-  if (!fs.existsSync(s.fsPath)) die(`missing ${s.fsPath} — run ./fetch-found-sound.sh`);
+  if (!s.synthText && !fs.existsSync(s.fsPath)) die(`missing ${s.fsPath} — run ./fetch-found-sound.sh`);   // synthText: SPEECH organ, no file
 if (P.presetJson) {   // keep the loadable builder preset in sync with this render
   const pj = JSON.parse(JSON.stringify(state));
   pj.foundSources.forEach(s => delete s.fsPath);

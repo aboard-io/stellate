@@ -24,6 +24,7 @@ const DUR = QUICK ? 8 : 24;   // seconds pressed per state — enough for drums+
 
 function resolvePaths(state) {
   for (const s of state.foundSources) {
+    if (s.synthText) continue;   // SPEECH organ source: no file — press.js synthesizes it
     s.fsPath = s.fsPath || (s.samplePath ? path.join(HERE, "..", s.samplePath) : path.join(HERE, "..", "found", s.id + ".mp3"));
     if (!fs.existsSync(s.fsPath)) {
       console.error(`missing ${s.fsPath} — run ./fetch-found-sound.sh / ./fetch-found-samples.sh`);

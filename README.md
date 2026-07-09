@@ -82,7 +82,9 @@ the rule that falls out of it:
 ## Open source
 
 MIT — see `LICENSE` (© 2026 Paul Ford), with third-party carve-outs and
-credits in `NOTICE` (MicroW8, lamejs, faustwasm). The repo lives at
+credits in `NOTICE` (MicroW8, lamejs, faustwasm, eSpeak NG). One exception
+with reach: the vendored eSpeak NG WASM speech module is GPL-3.0, so the app
+*as served* is a GPL-3.0 combined work — details in `NOTICE`. The repo lives at
 https://github.com/ftrain/stellate; made by
 [Aboard](https://aboardresearch.com). Contributions welcome:
 `CONTRIBUTING.md` is the social contract — the gates a PR must keep green

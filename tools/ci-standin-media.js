@@ -43,6 +43,8 @@ const LIST_ONLY = process.argv.includes("--list");
 const paths = new Set();
 const addState = (st) => {
   for (const s of st.foundSources || []) {
+    if (s.synthText) continue;   // SPEECH organ source: no file path to stand in —
+                                 // press synthesizes it from the committed vendor/ wasm
     paths.add(s.samplePath || "found/" + s.id + ".mp3");
   }
 };
