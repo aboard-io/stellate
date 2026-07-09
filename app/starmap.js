@@ -60,12 +60,33 @@ export function drawMap(){
     svg.appendChild(el("polyline",{points:pts,fill:"none",stroke:"#8ef2ff","stroke-width":1.2,"stroke-dasharray":"4 5",opacity:.85}));
   }
   const wmap=Object.fromEntries(S.weights.map(w=>[w.g,w.w]));
-  for(const [g,[x,y]] of Object.entries(POS)){
-    const w=wmap[g]||0, cx=X(x), cy=Y(y);
+  // LABEL LEVEL-OF-DETAIL. 178 genres cannot all show a non-overlapping name on a
+  // narrow screen or when zoomed out (a phone is ~430px wide — physically too few
+  // pixels for 178 labels at readable size). So we draw EVERY star, but a name
+  // only if its box clears the names already placed at THIS zoom. Active
+  // (weighted) genres always win a slot; the rest fill greedily in a stable order.
+  // Zoom in → the boxes spread on screen → more names appear. Pan doesn't change
+  // which overlap (it just translates), only zoom does. On a wide desktop at the
+  // default zoom the baked layout already clears all 178, so nothing is culled.
+  const lctx=(drawMap._lc||(drawMap._lc=document.createElement("canvas").getContext("2d")));
+  const fpx=e=>(e.w>0.01?12:11)*fs;
+  const ent=Object.entries(POS).map(([g,[x,y]])=>({g,w:wmap[g]||0,cx:X(x),cy:Y(y)}));
+  const lbox=e=>{ lctx.font=fpx(e)+"px VT323, monospace"; const tw=lctx.measureText(e.g).width, lx=e.cx+9*fs;
+    return {l:lx-3, r:lx+tw+3, t:e.cy+4*fs-fpx(e)*0.92, b:e.cy+4*fs+fpx(e)*0.28}; };
+  // placement priority: active genres first (always shown), then the rest stable
+  const order=[...ent].sort((a,b)=>((b.w>0.01)-(a.w>0.01))||(b.w-a.w));
+  const placed=[], show={};
+  for(const e of order){ const bx=lbox(e);
+    if(e.w>0.01){ show[e.g]=true; placed.push(bx); continue; }
+    let hit=false; for(const p of placed){ if(bx.l<p.r&&bx.r>p.l&&bx.t<p.b&&bx.b>p.t){hit=true;break;} }
+    if(!hit){ show[e.g]=true; placed.push(bx); } }
+  for(const e of ent){
+    const {g,w,cx,cy}=e;
     svg.appendChild(el("circle",{cx,cy,r:8+(w>0.01?w*26:0),fill:w>0.01?"#ff6ec7":"#a06bff",opacity:.10+w*.28}));  // halo
     svg.appendChild(el("circle",{cx,cy,r:w>0.01?3.2:2.2,fill:w>0.01?"#ffd7ee":"#e6e0ff",opacity:.95}));           // the star
+    if(!show[g]) continue;   // name culled at this zoom — the star still shows; zoom in to read it
     const t=el("text",{x:cx+9*fs,y:cy+4*fs,"class":w>0.01?"anchor hot":"anchor"});
-    t.style.fontSize=((w>0.01?12:11)*fs)+"px"; t.textContent=g; svg.appendChild(t);
+    t.style.fontSize=fpx(e)+"px"; t.textContent=g; svg.appendChild(t);
     if(w>0.01){const wl=el("text",{x:cx+9*fs,y:cy+17*fs,"class":"wlabel"});
       wl.style.fontSize=(11*fs)+"px"; wl.textContent=Math.round(w*100)+"%"; svg.appendChild(wl);}
   }
