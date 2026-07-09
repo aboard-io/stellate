@@ -411,6 +411,8 @@ if (typeof WorkerGlobalScope !== "undefined" && typeof self !== "undefined" && s
     let pumping = false;
 
     async function initDeps() {
+      await import(BASE + "../theory.js");         // -> globalThis.CsdTheory (MUSIC-MIND organ; must precede csd-engine)
+      await import(BASE + "../pipes.js");          // -> globalThis.CsdPipes  (MUSIC-MIND organ; must precede csd-engine)
       await import(BASE + "../csd-engine.js");     // -> globalThis.CsdEngine
       await import(BASE + "state-engine.js");      // -> globalThis.FaustStateEngine
       await import(BASE + "render-core.js");       // -> globalThis.FaustRenderCore (mergeIvals)
