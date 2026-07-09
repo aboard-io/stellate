@@ -310,7 +310,11 @@ base URLs, set the Transform Rules, smoke §7 again.
 159.89.38.37), DO DNS zone (A @ + www CNAME), Let's Encrypt cert,
 the §5 nginx config live, payload rsynced from the aboardresearch box
 (datacenter-local). `tools/deploy-stellate.sh` is the repeatable deploy —
-manifest check → rsync deny-list → manifest push → header smoke. The MP3
+manifest check → rsync deny-list → manifest push → header smoke.
+**`tools/ship.sh` is the one deploy command** — clean-tree check (the rsync
+ships the working tree, so deployed must mean committed) → gates (verify.sh +
+theory/pipes/speech) → `git push` → deploy-stellate.sh. aboardresearch.com
+needs no deploy step: the working tree is its web root, saves are live. The MP3
 bed/speech diet (§3) executed 2026-07-09: server payload is now **608 MB**
 (beds 270→35 MB, speech 47→8 MB); the diet's first deploy also exercised the
 MEDIA_MANIFEST invariant for real (renames pass; the two mutable *manifests*
