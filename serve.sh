@@ -8,7 +8,7 @@
 #   ./serve.sh            -> http://localhost:8777
 #   ./serve.sh 9000       -> choose a port
 #
-# Then open:  http://localhost:8777/index.html (CONSTELLATE)
+# Then open:  http://localhost:8777/index.html (STELLATE)
 set -euo pipefail
 cd "$(dirname "$0")"
 port="${1:-8777}"

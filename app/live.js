@@ -263,7 +263,7 @@ function updateMediaSession(force){
   const title=mediaSessionLabel();
   if(!force && title===msLastTitle) return;
   msLastTitle=title;
-  try{ MSESSION.metadata=new MediaMetadata({ title, artist:"CONSTELLATE", album:"the genre space" }); }catch(e){}
+  try{ MSESSION.metadata=new MediaMetadata({ title, artist:"STELLATE", album:"the genre space" }); }catch(e){}
 }
 if(MSESSION){ try{
   MSESSION.setActionHandler("play", ()=>{ if(!S.live) goLive(); });

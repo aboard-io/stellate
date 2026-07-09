@@ -70,18 +70,18 @@ function Panel(){
       <button onclick=${()=>{
         const a=document.createElement("a");
         a.href=URL.createObjectURL(new Blob([JSON.stringify(S.playing,null,2)],{type:"application/json"}));
-        a.download="constellate-preset.json";a.click();}}>⤓ preset</button>
+        a.download="stellate-preset.json";a.click();}}>⤓ preset</button>
       <button onclick=${()=>{
         // export the drawn path (or the cursor point) as journey waypoints:
-        //   node genre-kernel.js journey constellate-path.json --hours 4 --render --video
+        //   node genre-kernel.js journey stellate-path.json --hours 4 --render --video
         const pts=S.waypoints.length?S.waypoints:[S.cursor];
         const pathJson={kind:"genre-space-path",version:1,seed:S.seed,modeLock:S.modeLock,
           waypoints:pts.map(p=>({x:Math.round(p.x),y:Math.round(p.y),
             weights:weightsAt(p).map(w=>({g:w.g,w:+w.w.toFixed(3)}))}))};
         const a=document.createElement("a");
         a.href=URL.createObjectURL(new Blob([JSON.stringify(pathJson,null,2)],{type:"application/json"}));
-        a.download="constellate-path.json";a.click();
-        set({status:"path exported — render it: node genre-kernel.js journey constellate-path.json --hours 4 --render --video"});}}>⤓ path</button>
+        a.download="stellate-path.json";a.click();
+        set({status:"path exported — render it: node genre-kernel.js journey stellate-path.json --hours 4 --render --video"});}}>⤓ path</button>
       <button onclick=${()=>{
         // import a journey saved by ⤓ path
         const inp=document.createElement("input");
@@ -109,8 +109,9 @@ const panel=document.getElementById("panel");
 subs.push(()=>{ render(Panel(),panel); drawMap(); startPulse(); });   // startPulse: resume the breath loop when travel (re)starts
 
 // ---------- chips + modals: the sky stays clean until asked ----------
-const MODALS={ panel:document.getElementById("panelWrap"), inside:document.getElementById("insideWrap") };
-const CHIP_OF={ panel:"cfgChip", inside:"insideChip" };
+const MODALS={ panel:document.getElementById("panelWrap"), inside:document.getElementById("insideWrap"),
+  about:document.getElementById("aboutWrap") };   // about = the ? layer (static content in index.html)
+const CHIP_OF={ panel:"cfgChip", inside:"insideChip", about:"helpChip" };
 function toggleModal(which,force){
   const el=MODALS[which];
   const open=force!=null?force:!el.classList.contains("open");
@@ -120,12 +121,13 @@ function toggleModal(which,force){
 }
 document.getElementById("cfgChip").onclick=()=>toggleModal("panel");
 document.getElementById("insideChip").onclick=()=>toggleModal("inside");
+document.getElementById("helpChip").onclick=()=>toggleModal("about");
 // keep the ⓘ readout live: re-render every frame it's open (cheap; the radar is a
 // handful of SVG nodes). Closed = no work beyond the on-map glyph drawMap draws.
 subs.push(()=>{ if(MODALS.inside.classList.contains("open")) renderInside(); });
 for(const [k,el] of Object.entries(MODALS))
   el.addEventListener("pointerdown",e=>{ if(e.target===el) toggleModal(k,false); });   // tap outside = dismiss
-addEventListener("keydown",e=>{ if(e.key==="Escape"){ toggleModal("panel",false); toggleModal("inside",false); } });
+addEventListener("keydown",e=>{ if(e.key==="Escape") for(const k of Object.keys(MODALS)) toggleModal(k,false); });
 // LIVE/STOP is ONE tap from the clean sky
 const playChip=document.getElementById("playChip");
 playChip.onclick=()=>{ S.live?stopLive():goLive(); };
