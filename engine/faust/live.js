@@ -119,7 +119,7 @@
       const one = Object.assign({}, st, { sections: [sec], seed: ((st.seed || 1) + serial * 7919) >>> 0,
         instrumentSeed: st.instrumentSeed != null ? st.instrumentSeed : (st.seed || 1) });   // instrument identity rides the SONG seed, not the per-bar reseed
       const spb = 60 / st.bpm;
-      const CBEATS = Math.max(2, Math.round(st.chordEvery || 8));
+      const CBEATS = Math.max(2, Math.round(st.chordEvery || (st.meter ? 6 : 8)));   // meter default mirrors buildEvents (kernel states carry explicit chordEvery; this covers hand states — ODD-METER 2026-07-09)
       const lo = ci * CBEATS, hi = lo + CBEATS;
       const ev = E.buildEvents(one);
       const units = SE.voiceUnits(E, one);
@@ -361,12 +361,20 @@
       decGate.run(() => FP.decodeUrlToBuffer(ctx, url), (b) => !!(b && b.length), () => !abort)
         .then(({ v }) => { if (v && v.length) bufCache[src.id] = v; else { bufFail.add(url); bufCache[src.id] = null; } });
     }
-    const samplerBufs = {};    // srcId -> AudioBuffer | null (RAW, sampler)
+    const samplerBufs = {};    // srcId -> AudioBuffer | null (RAW, sampler; null = REAL decode failure only)
     function kickSamplerBuf(srcId, foundSources) {
       if (!SP || samplerBufs[srcId] !== undefined) return;
       const src = (foundSources || []).find((s) => s.id === srcId);
-      const url = src && (src.url || (src.samplePath ? new URL(src.samplePath, SITE).href : null));
-      if (!url) { samplerBufs[srcId] = null; return; }
+      // ABSENT-SOURCE UN-PIN (the fugue->reggae total drum silence): a zone whose
+      // SOURCE isn't in THIS bar's foundSources used to cache null here — and the
+      // `!== undefined` guard above made that null PERMANENT, so when a later
+      // glide flip finally carried the source into the crate the decode was never
+      // re-attempted and scheduleNative skipped the voice silently forever
+      // (probe: 233 fed drum events, 0 note() calls). Leave the slot UNDEFINED so
+      // the first bar whose foundSources DO carry the src kicks the decode.
+      if (!src) return;
+      const url = src.url || (src.samplePath ? new URL(src.samplePath, SITE).href : null);
+      if (!url) { samplerBufs[srcId] = null; return; }   // a present-but-urlless src is genuinely unplayable
       samplerBufs[srcId] = undefined;
       decGate.run(() => SP.decodeUrlRaw(ctx, url), (b) => !!b, () => !abort)
         .then(({ v }) => { samplerBufs[srcId] = v || null; });
@@ -526,10 +534,31 @@
     }
     function startFade() {
       phase = "fading";
-      fadeStartCursor = read53();
-      fadeStartMs = now();
+      // BAR-ALIGNED CROSSFADE (Paul's "out of sync"): the fade used to anchor at
+      // read53() — an arbitrary sample INSIDE the old bar — so the incoming
+      // stream's bar 0 (and the whole new beat grid: commitFade re-bases
+      // br.startGlobal here) began mid-bar while already-scheduled NATIVE notes
+      // (drums/samplers/found ride the OLD grid) rang across the new downbeat.
+      // Anchor at the old grid's NEXT BAR BOUNDARY instead: playQueue[0] is the
+      // next unfired bar (its audio is provably fed, so the old ring can never
+      // underrun before the anchor); empty queue means the old stream is inside
+      // its last fed bar, whose END (startGlobal+fedFrames, a bar boundary) is
+      // the anchor. The xfade ramp holds at 0 until the cursor crosses the
+      // anchor — the incoming ring is only consumed from the downbeat, so
+      // native lanes and the new stream share one grid.
+      const pg = read53();
+      const fedEnd = (cur && cur.startGlobal != null) ? cur.startGlobal + cur.fedFrames : pg;
+      const nextDown = playQueue.length ? playQueue[0].globalStart : fedEnd;
+      fadeStartCursor = Math.max(pg, Math.min(nextDown, fedEnd));
+      // prune NOW, not at commit: bars at/after the anchor belong to the incoming
+      // stream — left queued, drainDueBars would fire their native notes on top
+      // of the new stream's bar 0 during the ramp (double drums for a bar).
+      for (let i = playQueue.length - 1; i >= 0; i--) if (playQueue[i].globalStart >= fadeStartCursor) playQueue.splice(i, 1);
+      fadeStartMs = 0;   // ramp clock starts when the read cursor reaches the anchor
       if (fadeTimer) clearInterval(fadeTimer);
       fadeTimer = setInterval(() => {
+        if (read53() < fadeStartCursor) return;   // hold at 0 until the downbeat
+        if (!fadeStartMs) fadeStartMs = now();
         const el = now() - fadeStartMs;
         if (el >= XFADE_MS) { Atomics.store(ctrl, C_XFADE, 10000); clearInterval(fadeTimer); fadeTimer = 0; waitSwap(); }
         else Atomics.store(ctrl, C_XFADE, Math.min(9999, Math.floor(10000 * el / XFADE_MS)));
@@ -544,8 +573,10 @@
       }, 3);
     }
     function commitFade() {
-      // prune old-stream bars that will never play (superseded by the crossfade),
-      // then re-base the bridge's fed bars onto the global cursor and adopt it.
+      // startFade already pruned the superseded old-stream bars at the anchor
+      // (kept here as a safety sweep), so just re-base the bridge's fed bars onto
+      // the BAR-ALIGNED anchor and adopt it — the new stream's bar 0 IS the old
+      // grid's downbeat, one grid for native lanes and stream alike.
       for (let i = playQueue.length - 1; i >= 0; i--) if (playQueue[i].globalStart >= fadeStartCursor) playQueue.splice(i, 1);
       br.startGlobal = fadeStartCursor;
       flushPending(br);
@@ -614,6 +645,12 @@
     // ── feed pump: keep the feed-target runway filled to TARGET, gated on playback ──
     function feedRunwayFrames() {
       if (phase === "bridging" && br) return br.fedFrames;   // bridge not active yet (played 0)
+      // BAR-ALIGNED fades wait for the anchor downbeat (up to a bar): the audible
+      // runway is the OLD stream's remaining audio up to the anchor PLUS the
+      // bridge's fed frames (it owns playback from the anchor on). Reporting only
+      // the draining old stream here read as a phantom starve on the load meter
+      // (and would over-drive the pump) while nothing was at risk.
+      if (phase === "fading" && br) return Math.max(0, fadeStartCursor - read53() + br.fedFrames);
       if (!cur) return 0;
       const played = cur.startGlobal != null ? Math.max(0, read53() - cur.startGlobal) : 0;
       return cur.fedFrames - played;
@@ -1221,14 +1258,22 @@
         return foundJobs[id] = decWithRetry("found", id,
           () => FP.synthToBuffer(ctx, s.synthText).then((b) => (b && b.length ? Float32Array.from(b.getChannelData(0)) : null)),
           (p) => !!p).then((p) => foundPCM[id] = p);
-      const url = urlOf(s); if (!url) return foundJobs[id] = Promise.resolve(foundPCM[id] = null);
+      // ABSENT-SOURCE UN-PIN (same class as the ring path's kickSamplerBuf): a
+      // urlless stub marks null WITHOUT pinning a job, so a later state carrying
+      // the same id WITH a real url still gets its decode (null + no job = stub,
+      // retryable; null + job = a REAL decode failure after retries, final).
+      const url = urlOf(s); if (!url) { foundPCM[id] = null; return Promise.resolve(null); }
+      if (foundPCM[id] === null) delete foundPCM[id];   // stub null superseded by a real url: back to "in flight"
       return foundJobs[id] = decWithRetry("found", id,
         () => FP.decodeUrlToBuffer(ctx, url).then((b) => (b && b.length ? Float32Array.from(b.getChannelData(0)) : null)),
         (p) => !!p).then((p) => foundPCM[id] = p);
     }
     function decSampler(s) {
       const id = s.id; if (samplerJobs[id]) return samplerJobs[id];
-      const url = urlOf(s); if (!url || !SP) return samplerJobs[id] = Promise.resolve(samplerPCM[id] = null);
+      const url = urlOf(s);
+      if (!SP) return samplerJobs[id] = Promise.resolve(samplerPCM[id] = null);
+      if (!url) { samplerPCM[id] = null; return Promise.resolve(null); }   // stub: null but UNPINNED (see decFound)
+      if (samplerPCM[id] === null) delete samplerPCM[id];   // stub null superseded by a real url: back to "in flight"
       return samplerJobs[id] = decWithRetry("sampler", id,
         () => SP.decodeUrlRaw(ctx, url).then((b) => monoOf(b)),
         (p) => !!p).then((p) => samplerPCM[id] = p);
@@ -1344,16 +1389,18 @@
       try { workerOf(gen).postMessage({ type: "setSpeech", gen, speech: c }, [c.buffer]); } catch (e) {}
     }
     function streamBuffers(gen, need, initial) {
-      const rest = (srcs, dec, cache) => {
+      const rest = (srcs, dec, cache, jobs) => {
         for (const s of srcs) {
           if (initial[s.id]) continue;                 // already shipped at open
-          if (cache[s.id] === null) continue;          // known-failed decode
-          if (cache[s.id] !== undefined) { shipBuffer(gen, s.id, cache[s.id]); continue; }  // cached since open — ship now
+          // null + a pinned job = a REAL decode failure (final); null WITHOUT a
+          // job is an absent-source stub — retry it, this state may carry the url
+          if (cache[s.id] === null && jobs[s.id]) continue;
+          if (cache[s.id] != null) { shipBuffer(gen, s.id, cache[s.id]); continue; }  // cached since open — ship now
           dec(s).then((pcm) => shipBuffer(gen, s.id, pcm));
         }
       };
-      rest(need.foundSrcs, decFound, foundPCM);
-      rest(need.samplerSrcs, decSampler, samplerPCM);
+      rest(need.foundSrcs, decFound, foundPCM, foundJobs);
+      rest(need.samplerSrcs, decSampler, samplerPCM, samplerJobs);
     }
 
     // reopen(state) — DECODE-THEN-RENDER (the iOS pitched-voice fix). The producer bakes a
@@ -1482,10 +1529,16 @@
     function barMissing(r) {
       const byId = {}; for (const s of ((r.one && r.one.foundSources) || [])) byId[s.id] = s;
       const out = [], seen = new Set();
-      const need = (id, kind) => { if (!seen.has(id) && byId[id]) { seen.add(id); out.push({ id, src: byId[id], kind }); } };
+      // only DECODABLE sources may hold a bar (url or speech-organ synthText):
+      // a malformed src would otherwise re-hold every bar for the full cap.
+      const need = (id, kind) => { const s = byId[id];
+        if (!seen.has(id) && s && (s.synthText || urlOf(s))) { seen.add(id); out.push({ id, src: s, kind }); } };
+      // undefined = never requested; null WITHOUT a job = an absent-source stub
+      // null (see decSampler) — re-request it now that the bar may carry the src.
+      const miss = (cache, jobs, id) => cache[id] === undefined || (cache[id] === null && !jobs[id]);
       for (const u of Object.values(r.units || {})) if (u && u.sampler)
-        for (const z of (u.sampler.zones || [])) if (samplerPCM[z.srcId] === undefined) need(z.srcId, "s");
-      for (const f of (r.found || [])) if (foundPCM[f.srcId] === undefined) need(f.srcId, "f");
+        for (const z of (u.sampler.zones || [])) if (miss(samplerPCM, samplerJobs, z.srcId)) need(z.srcId, "s");
+      for (const f of (r.found || [])) if (miss(foundPCM, foundJobs, f.srcId)) need(f.srcId, "f");
       return out;
     }
     let pumpTimer = 0;
