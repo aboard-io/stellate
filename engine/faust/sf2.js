@@ -239,8 +239,73 @@ if (typeof module !== "undefined" && require.main === module) {
     }
     fs.writeFileSync(path.join(dir, "kit.json"), JSON.stringify(meta, null, 1));
     console.log(`✓ ${dir}: ${Object.keys(meta.hits).length} hits (${P.name} -> ${slug})`);
+  } else if (cmd === "percbank") {
+    // WIDE GM PERCUSSION bank — the "million percussion elements" ask (2026-07).
+    // `drumkit` pulls the kit backbone (kick/snare/hats/toms + clap/crash/ride/
+    // rim); this pulls the rest of the GM bank-128 percussion map (hand
+    // percussion, latin, sparkle) as ONE shared bank of natural-pitch one-shots
+    // into <slug>/<name>.wav + perc.json {name -> {file, note, len}}. genre-kernel
+    // PERCBANK mirrors it and the native sampler (faust/sampler.js) plays each as
+    // a fixed-pitch (root==note => rate 1) unlooped one-shot, selected per event
+    // by the element's GM note. Additive to the kit — feeds the per-genre PERC LANE.
+    //   node faust/sf2.js percbank <font.sf2> "/Standard/" <outDir> [--slug standard]
+    const [, font, pick, outBase] = args;
+    const OUT_SR = 44100;
+    // GM percussion note -> engine perc element name. The wider set beyond the kit
+    // (clap/sideStick overlap the kit map on purpose — a genre may want the perc-
+    // bank's shared hand-clap without opting into a full recorded kit).
+    const PERC = { sideStick: 37, clap: 39, tambourine: 54, cowbell: 56, vibraslap: 58,
+      bongoHi: 60, bongoLo: 61, congaMuteHi: 62, congaOpenHi: 63, congaLo: 64,
+      timbaleHi: 65, timbaleLo: 66, agogoHi: 67, agogoLo: 68, cabasa: 69, maracas: 70,
+      guiroShort: 73, guiroLong: 74, claves: 75, woodblockHi: 76, woodblockLo: 77,
+      triangleMute: 80, triangleOpen: 81, shaker: 82 };
+    const sf = SF2.parse(fs.readFileSync(font));
+    const want = pick.replace(/^\/|\/$/g, "").toUpperCase();
+    let ix = sf.presets.findIndex((p) => p.bank === 128 && p.name.toUpperCase() === want);
+    if (ix < 0) ix = sf.presets.findIndex((p) => p.bank === 128 && p.name.toUpperCase().includes(want));
+    if (ix < 0) { console.error("percussion preset (bank 128) not found: " + pick); process.exit(1); }
+    const P = sf.presets[ix];
+    const zones = sf.zonesOf(ix);
+    const zoneForNote = (note) => zones.find((z) => note >= z.keyLo && note <= z.keyHi);
+    const slug = (args.includes("--slug") ? args[args.indexOf("--slug") + 1]
+      : P.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""));
+    const dir = path.join(outBase, slug);
+    fs.mkdirSync(dir, { recursive: true });
+    const writeMonoWav = (file, pcm) => {
+      const data = Buffer.alloc(pcm.length * 2);
+      for (let j = 0; j < pcm.length; j++) data.writeInt16LE(Math.max(-1, Math.min(1, pcm[j])) * 32767 | 0, j * 2);
+      const h = Buffer.alloc(44);
+      h.write("RIFF", 0); h.writeUInt32LE(36 + data.length, 4); h.write("WAVEfmt ", 8);
+      h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(1, 22);
+      h.writeUInt32LE(OUT_SR, 24); h.writeUInt32LE(OUT_SR * 2, 28); h.writeUInt16LE(2, 32); h.writeUInt16LE(16, 34);
+      h.write("data", 36); h.writeUInt32LE(data.length, 40);
+      fs.writeFileSync(path.join(dir, file), Buffer.concat([h, data]));
+    };
+    const meta = { name: P.name, sr: OUT_SR, hits: {} };
+    let ok = 0, skipped = [];
+    for (const [name, note] of Object.entries(PERC)) {
+      const z = zoneForNote(note);
+      if (!z) { skipped.push(name + "(" + note + "):no-zone"); continue; }
+      let pcm = sf.pcmOf(z.sample);
+      if (z.sample.rate !== OUT_SR) {
+        const k = OUT_SR / z.sample.rate, n = Math.floor(pcm.length * k), r = new Float32Array(n);
+        for (let j = 0; j < n; j++) { const x = j / k, x0 = Math.floor(x), f = x - x0; r[j] = pcm[x0] + f * ((pcm[x0 + 1] || 0) - pcm[x0]); }
+        pcm = r;
+      }
+      // skip a hit that came out silent or a single-sample stub (bad zone)
+      let peak = 0; for (let j = 0; j < pcm.length; j++) { const a = Math.abs(pcm[j]); if (a > peak) peak = a; }
+      if (pcm.length < 64 || peak < 0.002) { skipped.push(name + "(" + note + "):silent"); continue; }
+      const file = name + ".wav";
+      writeMonoWav(file, pcm);
+      meta.hits[name] = { file, note, len: pcm.length };
+      ok++;
+      console.log(`  ${file.padEnd(16)} note ${note}  ${(pcm.length / OUT_SR).toFixed(3)}s  peak ${peak.toFixed(3)}  "${z.sample.name}"`);
+    }
+    fs.writeFileSync(path.join(dir, "perc.json"), JSON.stringify(meta, null, 1));
+    console.log(`✓ ${dir}: ${ok} perc hits (${P.name} -> ${slug})` + (skipped.length ? `  [skipped: ${skipped.join(", ")}]` : ""));
   } else {
     console.log("usage: sf2.js list <font.sf2> | extract <font.sf2> /NAME/ <outDir> [--max-zones N]\n" +
-      "     | drumkit <font.sf2> /KitName/ <outDir> [--slug NAME]   (GM percussion, bank 128)");
+      "     | drumkit <font.sf2> /KitName/ <outDir> [--slug NAME]   (GM kit backbone, bank 128)\n" +
+      "     | percbank <font.sf2> /KitName/ <outDir> [--slug NAME]  (wide GM percussion, bank 128)");
   }
 }

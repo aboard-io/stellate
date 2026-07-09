@@ -323,7 +323,7 @@ ffmpeg -y -loglevel error -i "$IA/washingtoncapitalsgoalhorn/Washington Capitals
 
 # --- SAMPLED INSTRUMENTS: FluidR3_GM SoundFont -> zone wavs (the sax ask) ---
 # FluidR3 GM/GS by Frank Wen, MIT license (see SOURCES.md). Faust cannot read
-# SF2 (no preset/zone/loop model in `soundfile`), so faust/sf2.js extracts the
+# SF2 (no preset/zone/loop model in `soundfile`), so engine/faust/sf2.js extracts the
 # presets the kernel uses into found/samples/instruments/<slug>/ as mono wav
 # zones + zones.json (root key incl. fine-tune, key ranges, loop points); the
 # native sampler (faust/sampler.js) plays them. The 151MB font is fetched to
@@ -335,7 +335,7 @@ if [ ! -s found/samples/instruments/alto_sax/zones.json ]; then
   mkdir -p found/samples/instruments
   for p in "Alto Sax" "Tenor Sax" "Nylon String Guitar" "Steel String Guitar" \
            "Trumpet" "Flute" "Vibraphone" "Clarinet" "Strings" "Bandoneon"; do
-    node faust/sf2.js extract /tmp/FluidR3_GM_GS.sf2 "/$p/" found/samples/instruments --max-zones 6
+    node engine/faust/sf2.js extract /tmp/FluidR3_GM_GS.sf2 "/$p/" found/samples/instruments --max-zones 6
   done
   rm -f /tmp/FluidR3_GM_GS.sf2
 fi
@@ -350,7 +350,7 @@ if [ ! -s found/samples/instruments/acoustic_bass/zones.json ]; then
   [ -s /tmp/FluidR3_GM_GS.sf2 ] || curl -sL --max-time 900 -o /tmp/FluidR3_GM_GS.sf2 \
     "$IA/fluidr3-gm-gs/FluidR3_GM_GS.sf2"
   for p in "Acoustic Bass" "Percussive Organ" "Rock Organ"; do
-    node faust/sf2.js extract /tmp/FluidR3_GM_GS.sf2 "/$p/" found/samples/instruments --max-zones 6
+    node engine/faust/sf2.js extract /tmp/FluidR3_GM_GS.sf2 "/$p/" found/samples/instruments --max-zones 6
   done
   rm -f /tmp/FluidR3_GM_GS.sf2
 fi
@@ -365,7 +365,7 @@ if [ ! -s found/samples/instruments/rhodes_ep/zones.json ]; then
   echo "→ FluidR3_GM_GS.sf2 (FULL GM: all 128 bank-0 presets)"
   [ -s /tmp/FluidR3_GM_GS.sf2 ] || curl -sL --max-time 900 -o /tmp/FluidR3_GM_GS.sf2 \
     "$IA/fluidr3-gm-gs/FluidR3_GM_GS.sf2"
-  node faust/extract-gm.js /tmp/FluidR3_GM_GS.sf2 found/samples/instruments --max-zones 6
+  node engine/faust/extract-gm.js /tmp/FluidR3_GM_GS.sf2 found/samples/instruments --max-zones 6
   rm -f /tmp/FluidR3_GM_GS.sf2
 fi
 # --- FluidR3 liberalization batch (2026-07 "use the soundfont liberally"): ---
@@ -381,7 +381,7 @@ if [ ! -s found/samples/instruments/trombone/zones.json ]; then
   for p in "Trombone" "Muted Trumpet" "Oboe" "Cello" "Harp" "Celesta" "Ahh Choir" \
            "Fretless Bass" "Harmonica" "Church Organ" "Honky Tonk" "French Horns" \
            "Jazz Guitar" "Bright Yamaha Grand" "Marimba"; do
-    node faust/sf2.js extract /tmp/FluidR3_GM_GS.sf2 "/$p/" found/samples/instruments --max-zones 6
+    node engine/faust/sf2.js extract /tmp/FluidR3_GM_GS.sf2 "/$p/" found/samples/instruments --max-zones 6
   done
   rm -f /tmp/FluidR3_GM_GS.sf2
 fi
@@ -396,7 +396,7 @@ if [ ! -s found/samples/instruments/felt_piano/zones.json ]; then
   echo "→ FluidR3_GM_GS.sf2 (neoclassical batch: felt piano)"
   [ -s /tmp/FluidR3_GM_GS.sf2 ] || curl -sL --max-time 900 -o /tmp/FluidR3_GM_GS.sf2 \
     "$IA/fluidr3-gm-gs/FluidR3_GM_GS.sf2"
-  node faust/sf2.js extract /tmp/FluidR3_GM_GS.sf2 "/Yamaha Grand Piano/" found/samples/instruments --max-zones 10
+  node engine/faust/sf2.js extract /tmp/FluidR3_GM_GS.sf2 "/Yamaha Grand Piano/" found/samples/instruments --max-zones 10
   mkdir -p found/samples/instruments/felt_piano
   for w in found/samples/instruments/yamaha_grand_piano/z*.wav; do
     ffmpeg -y -loglevel error -i "$w" -af "lowpass=f=3000" -c:a pcm_s16le \
@@ -426,7 +426,7 @@ if [ ! -s found/samples/instruments/accordian/zones.json ]; then
     "$IA/fluidr3-gm-gs/FluidR3_GM_GS.sf2"
   for p in "Accordian" "Tuba" "Pan Flute" "Kalimba" "Glockenspiel" "Harpsichord" \
            "Pizzicato Section" "Clavinet" "Fingered Bass" "Sitar" "Steel Drums"; do
-    node faust/sf2.js extract /tmp/FluidR3_GM_GS.sf2 "/$p/" found/samples/instruments --max-zones 6
+    node engine/faust/sf2.js extract /tmp/FluidR3_GM_GS.sf2 "/$p/" found/samples/instruments --max-zones 6
   done
   rm -f /tmp/FluidR3_GM_GS.sf2
 fi
@@ -435,7 +435,7 @@ fi
 
 # --- SAMPLED DRUM KITS (2026-07 "our drum kits are super basic"): FluidR3 bank
 # 128 GM percussion -> per-hit one-shots. ADDITIVE to the Faust synth kicks
-# (boom/808/909 …): faust/sf2.js `drumkit` pulls the notes the engine plays
+# (boom/808/909 …): engine/faust/sf2.js `drumkit` pulls the notes the engine plays
 # (kick 36 / snare 38 / hats 42+46 / toms 41,47,50 + rim/clap/crash/ride) at
 # natural pitch into found/samples/drums/<slug>/ as mono wavs + kit.json. The
 # native sampler (faust/sampler.js) plays each hit; genres opt in via
@@ -447,16 +447,33 @@ if [ ! -s found/samples/drums/acoustic/kit.json ]; then
   [ -s /tmp/FluidR3_GM_GS.sf2 ] || curl -sL --max-time 900 -o /tmp/FluidR3_GM_GS.sf2 \
     "$IA/fluidr3-gm-gs/FluidR3_GM_GS.sf2"
   mkdir -p found/samples/drums
-  node faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Standard/"   found/samples/drums --slug acoustic
-  node faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Room/"       found/samples/drums --slug room
-  node faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Power/"      found/samples/drums --slug power
-  node faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Electronic/" found/samples/drums --slug electronic
-  node faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Jazz/"       found/samples/drums --slug jazz
-  node faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Brush/"      found/samples/drums --slug brush
+  node engine/faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Standard/"   found/samples/drums --slug acoustic
+  node engine/faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Room/"       found/samples/drums --slug room
+  node engine/faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Power/"      found/samples/drums --slug power
+  node engine/faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Electronic/" found/samples/drums --slug electronic
+  node engine/faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Jazz/"       found/samples/drums --slug jazz
+  node engine/faust/sf2.js drumkit /tmp/FluidR3_GM_GS.sf2 "/Brush/"      found/samples/drums --slug brush
   rm -f /tmp/FluidR3_GM_GS.sf2
 fi
 # NOTE: the per-hit `len` values are mirrored statically in genre-kernel.js
 # DRUMKITS — if you re-extract different kits/notes, regenerate that table.
+
+# --- WIDE GM PERCUSSION BANK (2026-07 "a million percussion elements"): the
+# rest of FluidR3 bank-128 beyond the kit backbone — hand percussion (congas/
+# bongos), latin (timbale/agogo/cowbell/claves/guiro), shakers (shaker/cabasa/
+# maracas) and sparkle (tambourine/triangle/woodblock). ONE shared bank of
+# natural-pitch one-shots (faust/sf2.js `percbank`) into found/samples/perc/
+# standard/<name>.wav + perc.json. Feeds the per-genre PERC LANE (genre-kernel
+# PERC_STYLES -> instruments.drums.percSampler). Same MIT FluidR3 font; `len`
+# values mirrored in genre-kernel.js PERCBANK (committed source; wavs gitignored).
+if [ ! -s found/samples/perc/standard/perc.json ]; then
+  echo "→ FluidR3_GM_GS.sf2 (wide GM percussion bank)"
+  [ -s /tmp/FluidR3_GM_GS.sf2 ] || curl -sL --max-time 900 -o /tmp/FluidR3_GM_GS.sf2 \
+    "$IA/fluidr3-gm-gs/FluidR3_GM_GS.sf2"
+  mkdir -p found/samples/perc
+  node engine/faust/sf2.js percbank /tmp/FluidR3_GM_GS.sf2 "/Standard/" found/samples/perc --slug standard
+  rm -f /tmp/FluidR3_GM_GS.sf2
+fi
 
 # --- DX7 factory ROM banks -> faust/dx7-presets.json (provenance recipe) ---
 # The decoded presets ARE committed (faust/dx7-presets.json — source, not
@@ -467,8 +484,8 @@ fi
 #   for r in rom1a rom1b rom2a rom2b rom3a rom3b rom4a rom4b; do
 #     curl -sL -o /tmp/$r.syx "https://yamahablackboxes.com/patches/dx7/factory/$r.syx"
 #   done
-#   node faust/sysex2params.js /tmp/rom1a.syx "/E.PIANO 1/" "/BRASS   1/" ...
-#   node faust/build.js dx7_algN   # per algorithm the kept patches need
+#   node engine/faust/sysex2params.js /tmp/rom1a.syx "/E.PIANO 1/" "/BRASS   1/" ...
+#   node engine/faust/build.js dx7_algN   # per algorithm the kept patches need
 
 # ===== BEGIN hogcore speech (genre-tool round, 2026-07) ======================
 # The hogcore roster: ~24 Harry Potter characters, each read by espeak-ng as

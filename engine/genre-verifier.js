@@ -62,7 +62,13 @@
   function features(state){
     const ev=E.buildEvents(state);
     const beats=Math.max(1,ev.totalBeats);
-    const drums=ev.drums;
+    // CORE KIT ONLY: the decorative perc lane (clap/rim/ride/crash/perc — 2026-07)
+    // is timbral color, not the symbolic rhythm fabric this verifier scores. The
+    // drumDensity / variation / interlock / offgrid features measure the
+    // kick/snare/hat/tom kit exactly as before, so adding perc to a genre never
+    // moves any confusion-matrix cell (byte-identical to the pre-perc features).
+    const CORE={kick:1,snare:1,hat:1,tom:1};
+    const drums=ev.drums.filter(d=>CORE[d.drum]);
     const kicks=drums.filter(d=>d.drum==="kick"), snares=drums.filter(d=>d.drum==="snare"), hats=drums.filter(d=>d.drum==="hat");
     const Iv=(state.instruments&&state.instruments.drums)||{};
     const lev={kick:Iv.kick??1,snare:Iv.snare??1,hat:Iv.hat??1};

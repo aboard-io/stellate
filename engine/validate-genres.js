@@ -357,6 +357,19 @@ function gateVocabulary() {
     if (!K.GENRE_CLIPS[g]) warnings.push({ genre: g, field: "GENRE_CLIPS", note: "no video clip pool — journeys fall back" });
   }
   for (const t of Object.keys(V.TARGETS)) if (!K.GENRES[t]) warnings.push({ genre: t, field: "GENRES", note: "verifier target with no kernel anchor" });
+  // PERC LANE (2026-07): every genre perc style must name a real engine perc
+  // pattern (E.PERC_PATTERNS) and, when a lane pins a GM element, a real one
+  // (K.PERC_ELEMENTS). The perc voices themselves (clap/rim/ride/crash/perc) are
+  // engine drum types (E.PERC_VOICES) mapped in faust/state-engine.
+  const percPats = new Set(E.PERC_PATTERNS || []);
+  const percEls = new Set(K.PERC_ELEMENTS || []);
+  for (const [g, sty] of Object.entries(K.PERC_STYLES || {})) {
+    if (!K.GENRES[g]) errors.push({ genre: g, field: "PERC_STYLES", value: g, note: "perc style for unknown genre" });
+    for (const lane of (sty.lanes || [])) {
+      check(g, "perc.lane.p", lane.p, inSet(percPats), "not in E.PERC_PATTERNS");
+      if (lane.s != null) check(g, "perc.lane.s", lane.s, inSet(percEls), "not in K.PERC_ELEMENTS");
+    }
+  }
   // sample files on disk are fetched, not committed: missing = warn, not fail
   const seenFiles = new Set();
   for (const [id, s] of Object.entries(K.SAMPLES)) {
