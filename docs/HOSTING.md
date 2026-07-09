@@ -305,8 +305,13 @@ base URLs, set the Transform Rules, smoke §7 again.
 the §5 nginx config live, payload rsynced from the aboardresearch box
 (datacenter-local). `tools/deploy-stellate.sh` is the repeatable deploy —
 manifest check → rsync deny-list → manifest push → header smoke. The MP3
-bed/speech diet (§3 step 6) is deferred; beds ship as WAV for now (~866 MB
-total — fits the same math with less headroom).
+bed/speech diet (§3) executed 2026-07-09: server payload is now **608 MB**
+(beds 270→35 MB, speech 47→8 MB); the diet's first deploy also exercised the
+MEDIA_MANIFEST invariant for real (renames pass; the two mutable *manifests*
+were correctly excluded from the immutable set — .json never belonged in it).
+Production-verified: headless chromium rode vaporwave on stellate.app, MP3
+beds fetched 200 + decoded, maxRms 0.207, zero errors
+(test/mp3-bed-decode-run.js is the committed local twin of that probe).
 
 **Launch checklist:**
 

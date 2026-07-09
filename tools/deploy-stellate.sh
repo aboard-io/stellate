@@ -18,7 +18,10 @@ HOST="${1:-root@stellate.app}"
 ROOT=/srv/stellate
 
 echo "== media manifest (local) =="
-find found engine/faust/dist -type f \( ! -name '*.ogg' \) ! -path 'found/video/lib/*' \
+# .json excluded: manifests/catalogs are MUTABLE by design (nginx serves them
+# no-cache — HOSTING.md §5 "manifests map names, never immutable"); the
+# invariant guards only the immutable-cached media bytes.
+find found engine/faust/dist -type f ! -name '*.ogg' ! -name '*.json' ! -path 'found/video/lib/*' \
   -print0 | sort -z | xargs -0 sha256sum > /tmp/MEDIA_MANIFEST.new
 
 echo "== immutable invariant check against deployed manifest =="
