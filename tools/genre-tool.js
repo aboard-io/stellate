@@ -292,7 +292,7 @@ function spliceBlock(file, terminator, blockText, tag) {
   fs.writeFileSync(file, src);
 }
 const TERM = {
-  genres: "\n  };\n\n  // ---------- transition micro-lick soloists",
+  genres: "\n  };\n\n  // ---------- MUSIC-MIND anchor axes",   // the section that follows the GENRES close (was transition micro-lick soloists before the 2026-07 MUSIC-MIND insert)
   clips: "\n  };\n\n  // ---------- DX7 patch registry",
   targets: "\n  };\n\n  // the piecewise-linear target-row scorer",
 };

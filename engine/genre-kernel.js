@@ -783,9 +783,9 @@
     /* genre-tool:strawdub:clips */
     strawdub:["earth_orbit","spacewalk","night_lines","sp_eva"],
     /* /genre-tool:strawdub:clips */
-    /* genre-tool:porchdice:clips */
-    porchdice:["kaleido","rainbow_rings","night_lights","sun_riders","blue_dinner","pl_motorama","pl_worldsfair","dn_soundie","dn_schoolyard"],
-    /* /genre-tool:porchdice:clips */
+    /* genre-tool:wickershimmy:clips */
+    wickershimmy:["kaleido","rainbow_rings","night_lights","sun_riders","blue_dinner","pl_motorama","pl_worldsfair","dn_soundie","dn_schoolyard"],
+    /* /genre-tool:wickershimmy:clips */
     /* genre-tool:shellacsplice:clips */
     shellacsplice:["dark_face","tv_room","cs_marketstreet","night_lines","blue_dinner"],
     /* /genre-tool:shellacsplice:clips */
@@ -834,6 +834,30 @@
     /* genre-tool:seraphswing:clips */
     seraphswing:["mo_dance","mo_singalong","ca_street","night_lights"],
     /* /genre-tool:seraphswing:clips */
+    /* genre-tool:androidlament:clips */
+    androidlament:["night_lines","dark_face","drive_bluehour","sp_eva","im_redroom","green_nebula"],
+    /* /genre-tool:androidlament:clips */
+    /* genre-tool:lasertemple:clips */
+    lasertemple:["sp_lander","night_lights","jm_axis","kaleido","pl_futurama","sp_eva"],
+    /* /genre-tool:lasertemple:clips */
+    /* genre-tool:oscillatorminuet:clips */
+    oscillatorminuet:["im_paint","ab_fantasma","cmm_wireglobe","blue_dinner","jm_dipole"],
+    /* /genre-tool:oscillatorminuet:clips */
+    /* genre-tool:cometwhistle:clips */
+    cometwhistle:["earth_orbit","spacewalk","green_nebula","ns_waterfall","sp_lander"],
+    /* /genre-tool:cometwhistle:clips */
+    /* genre-tool:chromepiston:clips */
+    chromepiston:["night_lights","kaleido","drive_taillights","pl_motorama","rainbow_rings"],
+    /* /genre-tool:chromepiston:clips */
+    /* genre-tool:patchcordmirage:clips */
+    patchcordmirage:["night_lines","earth_orbit","sp_eva","green_nebula","drive_dusk"],
+    /* /genre-tool:patchcordmirage:clips */
+    /* genre-tool:velourregatta:clips */
+    velourregatta:["sun_riders","sharpest_city","blue_dinner","night_lights","pl_dreamcar"],
+    /* /genre-tool:velourregatta:clips */
+    /* genre-tool:sorcerercape:clips */
+    sorcerercape:["kaleido","green_nebula","ab_balletmec","phuture_red","im_redroom"],
+    /* /genre-tool:sorcerercape:clips */
   };
 
   // ---------- DX7 patch registry (the genre-space thesis applied to INSTRUMENTS) ----------
@@ -1715,7 +1739,7 @@
       lead:{patterns:["double","arpup","sparse"], patchPool:["SYN-CLAV 1","PRC SYNTH1"], recipe:{model:["casiocz","casiocz","casiocz","vocoder","stack","fm"],wave:"square",voices:[1,2],spread:[.002,.006],cutoff:[2400,3400],czWave:[.4,.6],dcwAmount:[.7,1],czDetune:[6,16],level:[.44,.56],send:[.2,.35],dsend:[.25,.4],attack:.003,release:[.05,.09],sustain:[.5,.62],fenv:[.5,.9]},
         inserts:{prob:.4, max:1, pool:[["phaser",{rate:[.2,.5],depth:[.5,.7],mix:[.35,.55]}]]}},   // the vocoder IS the genre's voice — the robot phases
       vocSource:"sp_system",
-      pads:{prob:.45, recipe:{model:["saw"],wave:"saw",cutoff:[800,1300],detune:[.004,.01],attack:[.3,.9],level:[.34,.46],send:[.2,.35],dsend:[.1,.2]}},   // 2026-07 dominance fix: "organ" dropped from the pool — an organ pad reads acoustic .6, which put electro dead-center in heavymetal's acoustic[.5,.95]w3 (seed 3 lost 98-99) and fed the funk/porchdice acoustic columns. 1982 electro is ALL machine (the robot sings through the vocoder); acoustic now renders 0 on every seed
+      pads:{prob:.45, recipe:{model:["saw"],wave:"saw",cutoff:[800,1300],detune:[.004,.01],attack:[.3,.9],level:[.34,.46],send:[.2,.35],dsend:[.1,.2]}},   // 2026-07 dominance fix: "organ" dropped from the pool — an organ pad reads acoustic .6, which put electro dead-center in heavymetal's acoustic[.5,.95]w3 (seed 3 lost 98-99) and fed the funk/wickershimmy acoustic columns. 1982 electro is ALL machine (the robot sings through the vocoder); acoustic now renders 0 on every seed
       drums:{kickModel:["808"],snareModel:["clap"],hatModel:["metal","noise"],kick:[1.2,1.4],snare:[.85,1.1],hat:[.8,1.1],tune:[1,1.1],send:[.05,.15],dsend:[.1,.25]},
       fx:{reverb:[.3,.45], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[2600,3800], pump:[.02,.1], crackle:[0,.1], lowcut:[30,45], highcut:[0,0], comp:[.4,.6], grit:[.1,.3], jux:[.15,.35]},   // 2026-07 dominance fix: pump cap .2->.1 — the anchor's own claim ("techno pumps, electro doesn't") rendered up to .19, INSIDE hotsaucecore's pump[.181,.652]w3 floor (seed 5 lost 98-99, seed 2 nearly). Dry machine funk pumps ~0; renders now .03-.09, failing every pump-floor rival (hotsaucecore/ikeacore/aldente) on a weight-3 axis
       found:{role:"chops", vol:[.08,.15], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2400,3800], sources:["factory","vx_apollo","vx_wwvh","stml_chop_a","stml_chop_c4"]},
@@ -3872,8 +3896,8 @@
       form:"wave",
       reverbColor:"greyhole" },
     /* /genre-tool:strawdub:genres */
-    /* genre-tool:porchdice:genres */
-    porchdice: { label:"Porchdice", info:"invented (gap-found): a drive-tempo, acoustic-forward genre in the empty region near pinballchop × blues/garage/mallsoft — chopUse~0.3, acoustic~0.86, breakUse~0.25 [seed 23]",
+    /* genre-tool:wickershimmy:genres */
+    wickershimmy: { label:"Wickershimmy", info:"invented (gap-found): a drive-tempo, acoustic-forward genre in the empty region near pinballchop × blues/garage/mallsoft — chopUse~0.3, acoustic~0.86, breakUse~0.25 [seed 23]",
       bpm:[116,124],
       swing:[0,0.044],
       humanize:[0.068,0.158],
@@ -3891,7 +3915,7 @@
       form:"pop",
       reverbColor:"dattorro",
       masterComp:0.35 },
-    /* /genre-tool:porchdice:genres */
+    /* /genre-tool:wickershimmy:genres */
     /* genre-tool:shellacsplice:genres */
     shellacsplice: { label:"Shellacsplice", info:"invented (gap-found): a drive-tempo, dust-forward genre in the empty region near zestgallop × vaporwave/dmvstep/italo — softTop~0.41, acoustic~0.23, sub~0.72 [seed 23]",
       bpm:[123,131],
@@ -4198,6 +4222,183 @@
       stab:["offbeat","rave"],
       form:"pop" },
     /* /genre-tool:seraphswing:genres */
+    /* genre-tool:androidlament:genres */
+    androidlament: { label:"Android Lament", info:"beatless neon-noir at 65: ribbon-glide brass swells with real portamento over ghost-choir pads, rain-city bed pitched into the fog, drums reduced to a distant heartbeat — the machine remembering it is going to die, in a hall the size of a city",
+      bpm:[58,70],
+      swing:[0,0.03],
+      humanize:[0.15,0.3],
+      progressions:["dream","epic_min","frost"],
+      kits:["off","kick"],
+      fills:["off"],
+      bass:{patterns:["pedal","root"], recipe:{model:["sub","saw"], cutoff:[400,700], res:[0.05,0.15], level:[0.9,1.1], send:[0.05,0.15], dsend:[0,0.05]}},
+      lead:{patterns:["wander","anthem","sparse"], patchPool:["BRASS   2","BR TRUMPET"], recipe:{model:["brass","brass","modeld","dx7"], wave:"saw", voices:[1,2], spread:[0.002,0.006], cutoff:[1600,2800], glide:[120,260], envAmount:[0.6,1.2], envDecay:[0.3,0.6], oscMix:[0.2,0.5], drift:[4,9], vibrato:[0.005,0.012], attack:0.15, release:[0.5,0.9], sustain:[0.85,0.95], level:[0.5,0.62], send:[0.5,0.7], dsend:[0.25,0.4]}},
+      pads:{prob:1, recipe:{model:["brass","vp330","choir","strings"], wave:"saw", cutoff:[800,1500], detune:[0.006,0.012], attack:[1.5,3], vowel:[0.2,0.4], ensemble:[0.5,0.7], level:[0.6,0.78], send:[0.55,0.75], dsend:[0.1,0.25]}},
+      drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.5,0.75], snare:[0.3,0.5], hat:[0.2,0.4], tune:[0.85,1], send:[0.4,0.6], dsend:[0,0.1]},
+      fx:{reverb:[0.85,0.95], delayBeats:[0.75,1.5], delayFb:[0.2,0.35], delayCut:[1800,2800], pump:[0,0], crackle:[0,0.08], lowcut:[25,40], highcut:[0,0], comp:[0.1,0.25]},
+      found:{role:"bed", vol:[0.1,0.18], pitch:[0.6,0.75], stretch:[0.5,0.65], cutoff:[1200,2000], sources:["highway_night","vx_apollo","factory"]},
+      rubato:{depth:[0.015,0.03], periodBars:[2,4], prob:1},
+      hits:{sources:["vx_apollo","sp_nightdrive"], pattern:"sparse", prob:0.15},
+      stab:["off"],
+      form:"wave",
+      reverbColor:"greyhole",
+      theory:{adventure:[0.117,0.227], color:[0.233,0.433], voicing:"open", reharm:true},
+      rhythm:[0.025,0.115],
+      pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"harmonize", w:0.45, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
+    /* /genre-tool:androidlament:genres */
+    /* genre-tool:lasertemple:genres */
+    lasertemple: { label:"Laser Temple", info:"arpeggio architecture at 112: phase-torn arps stacked into vaulted columns, string-machine clouds on the ceiling, a time-station voice counting under the floor — the cathedral is made of oscillators and every pillar is a sequence",
+      bpm:[108,116],
+      swing:[0,0.04],
+      humanize:[0.03,0.1],
+      progressions:["minor_run","epic_min","sad_pop"],
+      kits:["pulse","four","electro"],
+      fills:["sweep","riser","off"],
+      bass:{patterns:["sixteenths","octaves","drive"], recipe:{model:["saw","modeld"], cutoff:[650,1000], res:[0.15,0.3], level:[1.05,1.25], send:[0,0.08], dsend:[0,0.05], glide:[10,25], envAmount:[1,2], envDecay:[0.08,0.15], oscMix:[0.2,0.5], drift:[2,6]}},
+      lead:{patterns:["arpup","arp16","arpdown","updown"], recipe:{model:["casiocz","casiocz","stack","ppg"], wave:"saw", voices:[2,4], spread:[0.005,0.01], cutoff:[2800,4000], level:[0.46,0.58], send:[0.35,0.5], dsend:[0.3,0.45], attack:0.005, release:[0.1,0.18], sustain:[0.6,0.72], fenv:[0.3,0.5], envDecay:[0.1,0.2]}, inserts:{prob:0.5, max:1, pool:[["phaser",{rate:[0.15,0.4], depth:[0.5,0.8], mix:[0.4,0.6]}]]}},
+      pads:{prob:1, recipe:{model:["solina","solina","ppg","saw"], wave:"saw", cutoff:[1200,2000], detune:[0.008,0.015], attack:[1,2.2], ensemble:[0.7,0.9], octave:[0.4,0.6], level:[0.55,0.72], send:[0.45,0.6], dsend:[0.15,0.3]}},
+      drums:{kickModel:["909","boom"], snareModel:["noise","clap"], hatModel:["metal","noise"], kick:[1.05,1.25], snare:[0.6,0.85], hat:[0.7,1], tune:[0.95,1.1], send:[0.3,0.45], dsend:[0.05,0.15]},
+      fx:{reverb:[0.6,0.75], delayBeats:[0.375,0.75], delayFb:[0.3,0.45], delayCut:[2500,3800], pump:[0.08,0.2], crackle:[0,0.1], lowcut:[30,45], highcut:[0,0], comp:[0.25,0.4]},
+      found:{role:"bed", vol:[0.08,0.15], pitch:[0.7,0.9], stretch:[0.45,0.6], cutoff:[1800,3000], sources:["vx_wwvh","vx_conet_swedish","vx_apollo"]},
+      hits:{sources:["vx_wwvh","rave_b"], pattern:"sparse", prob:0.25},
+      stab:["off","sparse"],
+      form:"ritual",
+      reverbColor:"dattorro",
+      theory:{adventure:[0.1,0.207], color:[0.133,0.3], voicing:"close", reharm:true},
+      rhythm:[0.153,0.313],
+      pipes:[{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
+    /* /genre-tool:lasertemple:genres */
+    /* genre-tool:oscillatorminuet:genres */
+    oscillatorminuet: { label:"Oscillator Minuet", info:"powdered-wig voltage at 88: two-part invention played by plucky ladder-filter monosynth voices, walking continuo bass, tape-dry room, almost no drums — counterpoint wired through patch cords, ornaments rendered as filter envelopes",
+      bpm:[84,92],
+      swing:[0,0.03],
+      humanize:[0.06,0.15],
+      progressions:["canon","ii_v_i","pop_1625"],
+      kits:["off","kick","open"],
+      fills:["off"],
+      bass:{patterns:["walking","melodic","simple"], recipe:{model:["modeld","saw"], cutoff:[500,850], res:[0.1,0.2], level:[0.95,1.15], send:[0.05,0.15], dsend:[0,0.05], glide:[8,18], envAmount:[0.8,1.5], envDecay:[0.1,0.2], oscMix:[0.3,0.6], drift:[2,5]}},
+      lead:{patterns:["canon","fugue","composed","arpup"], recipe:{model:["modeld","modeld","casiocz"], wave:"saw", voices:[1,2], spread:[0.001,0.004], cutoff:[2400,3600], glide:[10,25], envAmount:[1.2,2], envDecay:[0.08,0.15], oscMix:[0.3,0.7], drift:[2,5], level:[0.48,0.6], send:[0.2,0.35], dsend:[0.1,0.25], attack:0.004, release:[0.08,0.15], sustain:[0.55,0.7], fenv:[0.3,0.55]}},
+      pads:{prob:0.4, recipe:{model:["strings","solina"], wave:"saw", cutoff:[1000,1700], detune:[0.004,0.009], attack:[0.8,1.8], ensemble:[0.5,0.7], level:[0.35,0.5], send:[0.25,0.4], dsend:[0.05,0.15]}},
+      drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.6,0.85], snare:[0.4,0.6], hat:[0.4,0.65], tune:[0.9,1.05], send:[0.15,0.3], dsend:[0,0.08]},
+      fx:{reverb:[0.25,0.4], delayBeats:[0.5,0.75], delayFb:[0.1,0.2], delayCut:[3000,4500], pump:[0,0], crackle:[0.05,0.2], lowcut:[30,50], highcut:[0,0], comp:[0.15,0.3]},
+      found:{role:"bed", vol:[0.04,0.09], pitch:[0.8,1], stretch:[0.45,0.6], cutoff:[2000,3200], sources:["crt_whine","vx_timelady"]},
+      rubato:{depth:[0.008,0.018], periodBars:[2,4], prob:0.4},
+      hits:{sources:["sp_herenow"], pattern:"sparse", prob:0.08},
+      stab:["off"],
+      form:"pop",
+      reverbColor:"fdn",
+      theory:{adventure:[0.217,0.373], color:[0.383,0.6], voicing:"close", reharm:true},
+      rhythm:[0.05,0.16],
+      pipes:[{id:"echoCanon", w:0.55, prob:0.45, delay:2},{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
+    /* /genre-tool:oscillatorminuet:genres */
+    /* genre-tool:cometwhistle:genres */
+    cometwhistle: { label:"Comet Whistle", info:"orchestral vapor at 77: a lone high sliding whistle-voice sings the theme with deep vibrato and long portamento, string-and-choir nebulae drift underneath, ocean-column bed, drums barely a pulse — the planetarium show where the projector is a synthesizer",
+      bpm:[72,82],
+      swing:[0,0.04],
+      humanize:[0.12,0.25],
+      progressions:["dream","mode_lydian"],
+      kits:["off","open","kick"],
+      fills:["off","sweep"],
+      bass:{patterns:["pedal","simple"], recipe:{model:["sub","modeld"], cutoff:[350,600], res:[0.08,0.18], level:[0.9,1.1], send:[0.05,0.15], dsend:[0,0.05], glide:[40,90], envAmount:[0.4,0.9], envDecay:[0.2,0.4], oscMix:[0.1,0.4], drift:[3,7]}},
+      lead:{patterns:["wander","composed","sparse"], recipe:{model:["modeld","modeld","sine"], wave:"sine", voices:[1,2], spread:[0.001,0.003], cutoff:[2400,3800], octave:0.2, glide:[100,220], vibrato:[0.008,0.016], envAmount:[0.3,0.8], envDecay:[0.3,0.6], oscMix:[0.05,0.25], drift:[3,7], attack:0.03, release:[0.3,0.5], sustain:[0.85,0.95], level:[0.45,0.58], send:[0.5,0.7], dsend:[0.3,0.45]}},
+      pads:{prob:1, recipe:{model:["strings","choir","vp330","ppg"], wave:"saw", cutoff:[900,1600], detune:[0.005,0.011], attack:[1.5,3], vowel:[0.2,0.45], ensemble:[0.5,0.7], level:[0.55,0.72], send:[0.5,0.7], dsend:[0.1,0.25]}},
+      drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.55,0.8], snare:[0.35,0.55], hat:[0.3,0.5], tune:[0.85,1], send:[0.35,0.55], dsend:[0,0.1]},
+      fx:{reverb:[0.75,0.9], delayBeats:[0.75,1.5], delayFb:[0.3,0.45], delayCut:[2000,3200], pump:[0,0.08], crackle:[0,0.1], lowcut:[25,40], highcut:[0,0], comp:[0.1,0.25]},
+      found:{role:"bed", vol:[0.1,0.18], pitch:[0.65,0.85], stretch:[0.5,0.65], cutoff:[1500,2500], sources:["hydrophone","vx_apollo"]},
+      rubato:{depth:[0.012,0.028], periodBars:[2,4], prob:1},
+      hits:{sources:["vx_apollo"], pattern:"sparse", prob:0.1},
+      stab:["off"],
+      form:"wave",
+      theory:{adventure:[0.175,0.315], color:[0.4,0.625], voicing:"quartal", reharm:true},
+      rhythm:[0.05,0.16],
+      pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"harmonize", w:0.45, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
+    /* /genre-tool:cometwhistle:genres */
+    /* genre-tool:chromepiston:genres */
+    chromepiston: { label:"Chrome Piston", info:"the clockwork four-on-floor at 122: octave bass hammered out by a tight plucky ladder filter, hats riding sixteenths like tappets, claps on the twos, the pump breathing the whole mirror-ball engine — disco rebuilt as a machine that never sweats",
+      bpm:[118,126],
+      swing:[0,0.03],
+      humanize:[0,0.08],
+      progressions:["deep_two","house_min","minor_run"],
+      kits:["four"],
+      fills:["hat rush","riser","tom fill"],
+      bass:{patterns:["octaves","sixteenths"], recipe:{model:["modeld","saw"], cutoff:[600,1000], res:[0.15,0.28], level:[1.1,1.3], send:[0,0.06], dsend:[0,0.05], glide:[8,20], envAmount:[1.5,2.5], envDecay:[0.05,0.1], oscMix:[0.3,0.6], drift:[1,4]}},
+      lead:{patterns:["double","arpup","hero"], recipe:{model:["modeld","saw","stack"], wave:"saw", voices:[1,3], spread:[0.004,0.01], cutoff:[2600,3800], glide:[10,25], envAmount:[1.5,2.5], envDecay:[0.05,0.12], oscMix:[0.3,0.6], drift:[1,4], level:[0.45,0.58], send:[0.25,0.4], dsend:[0.2,0.35], attack:0.003, release:[0.06,0.12], sustain:[0.5,0.65], fenv:[0.4,0.6]}},
+      pads:{prob:0.6, recipe:{model:["oberheim","saw"], wave:"saw", cutoff:[1200,2000], detune:[0.008,0.015], attack:[0.6,1.4], filterMode:[0.2,0.5], level:[0.45,0.6], send:[0.3,0.45], dsend:[0.1,0.2]}},
+      drums:{kickModel:["909"], snareModel:["clap","noise"], hatModel:["noise"], kick:[1.25,1.45], snare:[0.85,1.1], hat:[1,1.3], tune:[0.95,1.05], send:[0.15,0.3], dsend:[0.05,0.12]},
+      fx:{reverb:[0.35,0.5], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[3000,4200], pump:[0.35,0.55], crackle:[0.05,0.15], lowcut:[30,45], highcut:[0,0], comp:[0.4,0.6]},
+      found:{role:"bed", vol:[0.05,0.1], pitch:[0.75,0.9], stretch:[0.45,0.6], cutoff:[1500,2500], sources:["factory","highway_night"]},
+      hits:{sources:["vox_a","rave_b","sp_nightdrive"], pattern:"offbeat", prob:0.35},
+      stab:["off","offbeat"],
+      form:"dj",
+      masterComp:0.3,
+      theory:{adventure:[0.067,0.16], color:[0.167,0.333], voicing:"close", reharm:false},
+      rhythm:[0.08,0.22],
+      pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
+    /* /genre-tool:chromepiston:genres */
+    /* genre-tool:patchcordmirage:genres */
+    patchcordmirage: { label:"Patch-Cord Mirage", info:"the sequencer horizon at 98: a resonant sixteenth bassline runs forever while the filter opens by the mile, ghost choirs and string machines hang overhead, one chord holds for whole minutes, drums a distant pattering — hypnosis by voltage, the desert made of dovetailing modules",
+      bpm:[94,102],
+      swing:[0,0.03],
+      humanize:[0.02,0.1],
+      progressions:["drone_min","deep_two","mode_dorian"],
+      kits:["pulse","open"],
+      fills:["off","riser","sweep"],
+      chordEvery:16,
+      bass:{patterns:["sixteenths","rolling","pedal"], recipe:{model:["modeld","saw"], cutoff:[550,900], res:[0.2,0.35], level:[1.05,1.25], send:[0.02,0.08], dsend:[0,0.06], glide:[12,30], envAmount:[1.2,2.2], envDecay:[0.08,0.16], oscMix:[0.3,0.7], drift:[3,7]}},
+      lead:{patterns:["arp16","motorik","arpup","updown"], recipe:{model:["modeld","modeld","stack","ppg"], wave:"saw", voices:[1,2], spread:[0.002,0.006], cutoff:[2000,3200], res:[0.25,0.4], glide:[15,35], envAmount:[1,1.8], envDecay:[0.12,0.25], oscMix:[0.3,0.7], drift:[4,9], level:[0.46,0.58], send:[0.35,0.5], dsend:[0.35,0.5], attack:0.004, release:[0.1,0.16], sustain:[0.6,0.72], fenv:[0.35,0.6]}, inserts:{prob:0.4, max:1, pool:[["phaser",{rate:[0.08,0.25], depth:[0.5,0.75], mix:[0.35,0.55]}]]}},
+      pads:{prob:1, recipe:{model:["choir","solina","oberheim","ppg"], wave:"saw", cutoff:[900,1600], detune:[0.006,0.012], attack:[1.5,3], ensemble:[0.55,0.75], filterMode:[0,0.3], level:[0.5,0.68], send:[0.45,0.6], dsend:[0.1,0.25]}},
+      drums:{kickModel:["boom","909"], snareModel:["noise"], hatModel:["noise"], kick:[0.9,1.1], snare:[0.5,0.75], hat:[0.6,0.9], tune:[0.9,1.05], send:[0.2,0.35], dsend:[0.05,0.12]},
+      fx:{reverb:[0.65,0.8], delayBeats:[0.5,0.75], delayFb:[0.35,0.5], delayCut:[2200,3400], pump:[0,0.12], crackle:[0.05,0.18], lowcut:[28,42], highcut:[0,0], comp:[0.2,0.35]},
+      found:{role:"bed", vol:[0.1,0.18], pitch:[0.7,0.85], stretch:[0.5,0.65], cutoff:[1600,2600], sources:["vx_conet_poacher","highway_night","vx_wwvh"]},
+      hits:{sources:["vx_conet_poacher","sp_herenow"], pattern:"sparse", prob:0.2},
+      stab:["off"],
+      form:"dj",
+      theory:{adventure:[0.067,0.15], color:[0.183,0.383], voicing:"open", reharm:false},
+      rhythm:[0.09,0.235],
+      pipes:[{id:"octavePump", w:0.5, prob:0.4},{id:"densityArc", w:0.4, floor:0.6},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
+    /* /genre-tool:patchcordmirage:genres */
+    /* genre-tool:velourregatta:genres */
+    velourregatta: { label:"Velour Regatta", info:"adult-contemporary chrome at 104: glassy FM marimba and tine-piano hooks over a swung machine groove, the gated snare detonating in a marble atrium, tom fills rolling down the chorus like surf — soul run through a rack of menus, sincere anyway",
+      bpm:[100,108],
+      swing:[0.04,0.1],
+      humanize:[0.05,0.15],
+      progressions:["uplift","neosoul","pop_1625"],
+      kits:["full","open","four"],
+      fills:["tom fill","tom fill","drum fill"],
+      bass:{patterns:["syncopated","root","simple"], patchPool:["BASS    1","E.BASS  2"], recipe:{model:["dx7","saw"], cutoff:[600,950], res:[0.08,0.18], level:[1,1.2], send:[0.02,0.08], dsend:[0,0.05]}},
+      lead:{patterns:["pentaup","composed","hero","sparse"], patchPool:["MARIMBA","E.PIANO 1","VIBE    1"], recipe:{model:["dx7","dx7","dx7","rhodes","stack"], wave:"sine", voices:[1,2], spread:[0.002,0.006], cutoff:[2800,4000], level:[0.46,0.58], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0,0.004], attack:0.005, release:[0.15,0.3], sustain:[0.7,0.82]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.5,1], depth:[0.4,0.6], mix:[0.35,0.5]}]]}},
+      pads:{prob:0.9, patchPool:["SYN-VOX","STRG ENS 1","E.PIANO 2"], recipe:{model:["dx7","juno60","rhodes"], wave:"saw", cutoff:[1200,2000], detune:[0.006,0.012], attack:[0.8,1.8], chorus:[1.2,1.6], chorusSpread:[0.8,1], level:[0.5,0.65], send:[0.35,0.5], dsend:[0.1,0.2]}},
+      drums:{kickModel:["909","boom"], snareModel:["noise","clap"], hatModel:["noise"], kick:[1.1,1.3], snare:[1,1.25], hat:[0.6,0.9], tune:[0.9,1.05], send:[0.45,0.65], dsend:[0.05,0.15]},
+      fx:{reverb:[0.55,0.7], delayBeats:[0.375,0.5], delayFb:[0.15,0.3], delayCut:[3200,4500], pump:[0.08,0.22], crackle:[0,0.08], lowcut:[35,50], highcut:[0,0], comp:[0.35,0.55]},
+      found:{role:"bed", vol:[0.04,0.09], pitch:[0.85,1], stretch:[0.45,0.55], cutoff:[2000,3200], sources:["shibuya","highway_night"]},
+      hits:{sources:["vox_a","sp_herenow"], pattern:"sparse", prob:0.3},
+      stab:["off","sparse"],
+      form:"pop",
+      reverbColor:"dattorro",
+      theory:{adventure:[0.183,0.323], color:[0.317,0.533], voicing:"close", reharm:true},
+      rhythm:[0.1,0.257],
+      pipes:[{id:"harmonize", w:0.45, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
+    /* /genre-tool:velourregatta:genres */
+    /* genre-tool:sorcerercape:genres */
+    sorcerercape: { label:"Sorcerer Cape", info:"keyboard megalomania at 142: percussive organ runs duelling a gliding mono lead over galloping bass, choir-and-string banks swelling behind, snare rolls announcing every new tower of the castle — six keyboards, one player, zero restraint",
+      bpm:[138,148],
+      swing:[0,0.06],
+      humanize:[0.08,0.2],
+      progressions:["royal_road","mode_lydian","minor_run"],
+      kits:["full","open","shuffle"],
+      fills:["drum fill","tom fill","snare roll"],
+      bass:{patterns:["drive","melodic","octaves"], recipe:{model:["modeld","saw"], cutoff:[600,950], res:[0.12,0.25], level:[1.05,1.25], send:[0.02,0.08], dsend:[0,0.05], glide:[15,35], envAmount:[1,1.8], envDecay:[0.1,0.2], oscMix:[0.3,0.7], drift:[3,7]}},
+      lead:{patterns:["hero","canon","updown","arp16"], recipe:{model:["hammond","organ","modeld","stack"], wave:"square", voices:[1,2], spread:[0.002,0.006], cutoff:[2600,3800], leslie:[0.7,0.9], perc:[0.4,0.7], glide:[20,50], envAmount:[1,1.8], envDecay:[0.1,0.2], oscMix:[0.3,0.6], drift:[3,7], level:[0.5,0.62], send:[0.3,0.45], dsend:[0.2,0.35], attack:0.004, release:[0.1,0.18], sustain:[0.65,0.8]}},
+      pads:{prob:1, recipe:{model:["hammond","strings","choir","organ"], wave:"saw", cutoff:[1000,1800], detune:[0.005,0.011], attack:[0.8,2], leslie:[0.2,0.4], ensemble:[0.5,0.7], level:[0.5,0.68], send:[0.35,0.5], dsend:[0.1,0.2]}},
+      drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise","metal"], kick:[1.05,1.3], snare:[0.85,1.1], hat:[0.8,1.1], tune:[0.95,1.1], send:[0.2,0.35], dsend:[0.05,0.12]},
+      fx:{reverb:[0.45,0.6], delayBeats:[0.5,0.75], delayFb:[0.15,0.3], delayCut:[2800,4000], pump:[0,0.1], crackle:[0.1,0.25], lowcut:[25,40], highcut:[0,0], comp:[0.3,0.5], grit:[0.05,0.2]},
+      found:{role:"bed", vol:[0.06,0.12], pitch:[0.75,0.9], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["vx_suspense","vx_timelady"]},
+      hits:{sources:["vx_suspense","vox_b"], pattern:"sparse", prob:0.25},
+      stab:["off","sparse"],
+      form:"anthem",
+      theory:{adventure:[0.15,0.29], color:[0.333,0.533], voicing:"quartal", reharm:true},
+      rhythm:[0.157,0.333],
+      pipes:[{id:"echoCanon", w:0.55, prob:0.45, delay:2},{id:"harmonize", w:0.45, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
+    /* /genre-tool:sorcerercape:genres */
   };
 
   // ---------- MUSIC-MIND anchor axes (docs/MUSIC-MIND.md §"The vector space grows new axes") ----------
@@ -4450,8 +4651,8 @@
   // inside resolveMulti (patSide): how much MOTION a bass/melody pattern puts
   // in the ear. Ordering is musical, not alphabetical: silence < held roots <
   // walking/dub < riffs and offbeat drive < 16th-note runs and motorik arps.
-  const BASS_ENERGY={off:0,root:1,simple:2,pedal:2,sub:2,dub:3,charleston:3,walking:4,hemiola:4,habanera:5,melodic:5,syncopated:5,stab:5,tresillo:5,son:5,octaves:6,rolling:7,drive:7,sixteenths:8};   // MUSIC-MIND cells slot by MOTION: charleston is spacious comping, hemiola a slow cross-pulse, tresillo/son clave-locked riffing (habanera's rung)
-  const LEAD_ENERGY={off:0,sparse:1,wander:2,composed:3,composed2:3,canon:3,blues:4,roar:4,pentaup:5,updown:5,double:6,arpup:6,arpdown:6,anthem:6,hero:7,arp16:8,motorik:8,motorik23:8};
+  const BASS_ENERGY={off:0,root:1,simple:2,pedal:2,sub:2,dub:3,charleston:3,walking:4,hemiola:4,habanera:5,melodic:5,syncopated:5,stab:5,tresillo:5,son:5,octaves:6,rolling:7,drive:7,sixteenths:8,waltzroot:1,oompahpah:3,siciliana:4};   // MUSIC-MIND cells slot by MOTION: charleston is spacious comping, hemiola a slow cross-pulse, tresillo/son clave-locked riffing (habanera's rung); ODD-METER cells slot the same way (waltzroot = held roots, oompahpah = comping, siciliana = a walking lilt)
+  const LEAD_ENERGY={off:0,sparse:1,wander:2,composed:3,composed2:3,canon:3,blues:4,roar:4,pentaup:5,updown:5,double:6,arpup:6,arpdown:6,anthem:6,hero:7,arp16:8,motorik:8,motorik23:8,waltz:3,lilt6:4};
   function resolveMulti(weights, seed){
     const ws = weights.filter(x=>GENRES[x.g] && x.w>0);
     if(!ws.length) throw new Error("no valid genres in weights");
@@ -4846,6 +5047,36 @@
       choice.pipes=pipes;
       choice.rhythmComplexity=round(inRange(rng, wRange(g=>g.rhythm)),3);
     }
+    // ---- ODD METER (2026-07): meter as an anchor dimension — drawn LAST,
+    // dead last, and ONLY when a parent declares it (the chordEvery
+    // precedent: no meter parent = ZERO rng draws here, so every existing
+    // genre resolves byte-identically). Anchor field: meter:{beats:3,unit:4}
+    // (a waltz) or {beats:6,unit:8} (compound 6/8; the engine beat is the
+    // 8th). METERS DON'T LERP: a bar holds an integer number of beats, and
+    // there is no music halfway between 3/4 and 4/4 — a weighted average
+    // would land on no meter at all. So the blend rule is parent-PICK by
+    // weight (the form/voicing enum law): a blend keeps ONE parent's bar
+    // line, and the crossover on a journey is an audible meter-flip — an
+    // event, which is what makes the in-between space interesting rather
+    // than mushy. A pick that lands on a meterless parent emits nothing
+    // (the blend fell to the 4/4 side).
+    if(ws.some(x=>GENRES[x.g].meter)){
+      let r=rng(), acc=0, gsel=ws[ws.length-1].g;
+      for(const x of ws){ acc+=x.w; if(r<=acc){ gsel=x.g; break; } }
+      const m=GENRES[gsel].meter;
+      if(m&&(m.beats===3||m.beats===6)){
+        choice.meter={beats:m.beats, unit:m.unit||(m.beats===3?4:8)};
+        // meter-fitting harmonic rhythm: a meter anchor without chordEvery
+        // gets the engine's meter default (6 = two 3/4 measures / one 6/8
+        // measure per chord) EXPLICITLY, so buildSections' beat math
+        // (cycleBeats, the duration solver, the evolution pass) agrees with
+        // buildEvents; a blend that inherited a 4/4 parent's chordEvery
+        // (8/16/32) snaps to the nearest multiple of 6 so kit/bass cells
+        // stay on the measure grid. Zero rng either way.
+        if(!choice.chordEvery) choice.chordEvery=6;
+        else if(choice.chordEvery%6) choice.chordEvery=Math.max(6,Math.round(choice.chordEvery/6)*6);
+      }
+    }
     return constrain(choice);
   }
   function constrain(choice){
@@ -4854,8 +5085,11 @@
     if(nch<=2 && ["composed","composed2"].includes(choice.leadPattern)) choice.leadPattern="arpup";
     // above 150 only kits that survive the tempo stay: chopped breaks OR straight
     // machine kits (gabber's distorted four, psytrance's pulse). Loping/swung kits
-    // (full/boombap/halftime/...) still snap to jungle.
-    if(choice.bpm>=150 && !["jungle","breaks","four","techno","pulse","electro"].includes(choice.kit)) choice.kit="jungle";
+    // (full/boombap/halftime/...) still snap to jungle. METER states are exempt:
+    // a fast 3/4 or 6/8 (a Viennese one-two-three, a 6/8 tarantella at speed)
+    // keeps its bar line — snapping to the 4/4 jungle chop would break the meter
+    // the anchor declared. Zero-rng, fires only on meter-carrying resolves.
+    if(choice.bpm>=150 && !choice.meter && !["jungle","breaks","four","techno","pulse","electro"].includes(choice.kit)) choice.kit="jungle";
     if(choice.kit==="off"){ choice.foundRole="bed"; choice.stab="off"; }
     if(choice.foundRole==="chops" && choice.bpm<70) choice.foundRole="bed";
     if(choice.foundRole==="break" && !(SAMPLES[choice.foundSource]||{}).bpm){
@@ -5715,6 +5949,7 @@
       ...(coldOpen?{coldOpen:true}:{}),                 // OPTIONAL INTRO: the leading ground node was actually dropped (introMode "off" + ground opener). buildEvents ignores it; djMix reads it for the cold-open seam law. Absent for every genre that keeps its intro (byte-identical); present only on gabber/breakcore.
       euclid:c.euclid||undefined,                      // kit-level euclidean rhythm spec (csd-engine drumEvents)
       ...(c.chordEvery?{chordEvery:c.chordEvery}:{}),  // harmonic rhythm (KERNEL-V4 Phase 1): beats per chord bar
+      ...(c.meter?{meter:c.meter}:{}),                 // ODD METER: {beats:3|6, unit:4|8} — absent = 4/4, byte-identical (resolveMulti emits it only when a parent anchor declares it)
       jux:(c.fx.jux||0)>0.05?c.fx.jux:0,               // stereo divergence: buildEvents emits per-event pan offsets
       pump:c.fx.pump>0.05?c.fx.pump:0, crackle:c.fx.crackle>0.05?c.fx.crackle:0,
       comp:c.fx.comp>0.05?c.fx.comp:0, grit:(c.fx.grit||0)>0.05?c.fx.grit:0,
@@ -5753,6 +5988,7 @@
       pad:c.padRecipe.model+(c.padDx7?":"+c.padDx7.name:"")+(c.padSampler?":"+c.padSampler:""),drums:c.drumRecipe.kickModel+"/"+c.drumRecipe.snareModel+"/"+c.drumRecipe.hatModel,
       found:c.foundSource+"/"+c.foundRole, stab:c.stab, hits:c.hits?c.hits.source:"-",
       lick:c.lick||"-",
+      ...(c.meter?{meter:c.meter.beats+"/"+c.meter.unit}:{}),   // ODD METER audit line — conditional spread so meterless genres' state hashes are untouched
       evolutions,   // the 3-minute-rule audit trail: [{at, tSec, kind, detail}]
       rubato:c.rubato?c.rubato.depth+"x"+c.rubato.periodBars+"bar":"-",
       counter:c.counter?c.counter.pattern+"(oct"+c.counter.octave+")":"-",

@@ -229,14 +229,17 @@ async function main() {
   console.log(`\n=== ABOUT (?) ===\n  open=${about.open} closedOnEsc=${about.closed} links=[${(about.hrefs || []).join(", ")}]`);
 
   // ---- F3: how.html serves (200) and carries the canonical genre count ----
+  // (read LIVE from K.GENRES, not a 178 literal — the count grows as genres land,
+  // and this gate exists to catch how.html going stale against it)
   const how = await page.evaluate(async () => {
     const r = await fetch("how.html");
     const txt = await r.text();
-    return { status: r.status, has178: txt.includes("178"), bytes: txt.length };
+    const n = Object.keys(GenreKernel.GENRES).length;
+    return { status: r.status, n, hasCount: txt.includes(String(n)), bytes: txt.length };
   });
   ok(how.status === 200, `F3a: how.html fetch status ${how.status} (want 200)`);
-  ok(how.has178, `F3b: how.html does not contain "178"`);
-  console.log(`  how.html: status=${how.status} bytes=${how.bytes} has178=${how.has178}`);
+  ok(how.hasCount, `F3b: how.html does not contain the live genre count "${how.n}"`);
+  console.log(`  how.html: status=${how.status} bytes=${how.bytes} hasCount(${how.n})=${how.hasCount}`);
 
   // ---- G: no console errors on load ----
   ok(loadErrs.length === 0, `G0: ${loadErrs.length} console/page errors on load: ${loadErrs.slice(0, 3).join(" | ")}`);

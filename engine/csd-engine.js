@@ -119,9 +119,14 @@
 
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
-  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic","habanera","syncopated","pedal","sludge","tresillo","son","hemiola","charleston"];
-  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16","motorik","motorik23","fugue","sludge"];
-  const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal","bossa","electro","newjack","shuffle"];
+  // ODD-METER vocabulary (2026-07): oompahpah/waltzroot (3-beat cells),
+  // siciliana (6-beat), kits waltz/waltzswing (3) + sixeight (6), melody
+  // waltz/lilt6 — meant for state.meter genres (3/4, 6/8). Harmless additions
+  // otherwise: a 4/4 state that requests them just gets the short cell tiled
+  // over its 8-beat bar (a polymeter, never a crash).
+  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic","habanera","syncopated","pedal","sludge","tresillo","son","hemiola","charleston","oompahpah","waltzroot","siciliana"];
+  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16","motorik","motorik23","fugue","sludge","waltz","lilt6"];
+  const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal","bossa","electro","newjack","shuffle","waltz","waltzswing","sixeight"];
   // KERNEL-V4 Phase 5 (§3.5) — the form as a graph of TYPED NODES. Every
   // section, whatever a form names it, classifies to one of six node types:
   //   ground  arrival / low-energy opener   (intro, arrive, dawn, platform, warmup)
@@ -311,6 +316,10 @@
   // bass patterns are 8-beat cells; chordEvery (cb) tiles them across the
   // chord bar (>8) or truncates (<8). cb=8 (every genre today) is one cell,
   // byte-identical to the pre-lane engine.
+  // ODD-METER cells carry their OWN period (BASS_CELL_LEN) so a 3-beat oompah
+  // tiles a 6- or 12-beat chord bar measure-by-measure instead of assuming the
+  // 8-beat 4/4 cell; patterns not in the map keep the 8-beat stride verbatim.
+  const BASS_CELL_LEN={oompahpah:6,waltzroot:3,siciliana:6};
   function bassEvents(kind,S,b,k,rng,cb){
     cb=cb||CHORD_BEATS;
     const r5=pchAdd(b.r5,k), r6=pchAdd(b.r6,k), f6=pchAdd(b.f6,k);
@@ -353,6 +362,16 @@
         L=[[0,2.3,r5],[2.5,1.4,r6],[4,2.3,r5],[6.5,1.4,r6]]; break;
       case "syncopated": // push-pull funk line: downbeat anchor, then off-beat pushes that land early
         L=[[0,0.7,r5],[1.5,0.45,r5],[2.5,0.7,r6],[3.75,0.45,r5],[4.5,0.7,r5],[5.75,0.45,f6],[6.5,0.7,r6],[7.25,0.45,r5]]; break;
+      // ---- ODD-METER cells (2026-07; see BASS_CELL_LEN above) ----
+      case "oompahpah":  // OOM-pah-pah ×2 (a 6-beat cell = two 3/4 measures): tuba root on 1,
+        // chord "chicks" on 2+3; the second measure OOMs the fifth BELOW — the
+        // classic alternating cabaret/polka tuba. Fits chordEvery 6/12 exactly.
+        L=[[0,0.9,r5],[1,0.4,f6],[2,0.4,f6],[3,0.9,pchAdd(r5,-5)],[4,0.4,f6],[5,0.4,f6]]; break;
+      case "waltzroot":  // dotted-half roots — one long root per 3/4 measure (the slow-waltz floor)
+        L=[[0,2.85,r5]]; break;
+      case "siciliana":  // 6/8 lilt (one 6-beat compound measure; engine beat = the 8th note):
+        // dotted-8th/16th/8th per dotted-quarter group, walking root-fifth-octave
+        L=[[0,1.4,r5],[1.5,0.45,f6],[2,0.9,r6],[3,1.4,r5],[4.5,0.45,f6],[5,0.9,r6]]; break;
       case "pedal":      // pedal-octave 8ths with chromatic passing tones into the bar turns
         L=[[0,0.42,r5],[0.5,0.42,r5],[1,0.42,r6],[1.5,0.42,r5],[2,0.42,r5],[2.5,0.42,r6],[3,0.42,r5],[3.5,0.42,pchAdd(r5,2)],
            [4,0.42,r5],[4.5,0.42,r5],[5,0.42,r6],[5.5,0.42,r5],[6,0.42,r5],[6.5,0.42,pchAdd(r6,-1)],[7,0.42,r6],[7.5,0.42,pchAdd(r5,-1)]]; break;
@@ -361,7 +380,8 @@
     return L;
     };
     const out=[];
-    for(let t0=0;t0<cb;t0+=CHORD_BEATS)
+    const CELL=BASS_CELL_LEN[kind]||CHORD_BEATS;   // 8 for every legacy cell — byte-identical stride
+    for(let t0=0;t0<cb;t0+=CELL)
       for(const [o,d,p] of cell()){ if(t0+o>cb) continue; out.push({voice:"bass",beat:S+t0+o,dur:d,pch:p,amp:0.22}); }
     return out;
   }
@@ -507,6 +527,31 @@
       {d:"snare",alt:[[[3.75,.16]],[[7.25,.16]]]},                  // ghost clap skips around
       {d:"hat",grid:{n:16,amps:[.12,.07],sp:.8}},                   // hats drop pulses — the skip
       {d:"hat",alt:[[[2.5,.16,.3]],[[6.5,.16,.3]]]} ]},
+    // ---- ODD-METER kits (2026-07). Kit flag cell:N — the kit's own tiling
+    // period in beats (default CHORD_BEATS=8, the 4/4 law): drumEvents strides
+    // the op loop by `cell`, so a 3-beat waltz cell fills a 6- or 12-beat
+    // chord bar measure-by-measure. turn:false throughout — the end-of-cycle
+    // snare turn is a 4/4 figure (offsets 6.5-7.75 of an 8-beat cell) and
+    // would smear the waltz turnaround.
+    waltz:{ cell:3, turn:false, ops:[   // boom-chick-chick: kick owns 1, brushed snare answers 2+3
+      {d:"kick",hits:[[0,.6]]},
+      {d:"snare",hits:[[1,.3],[2,.28]]},
+      {d:"hat",grid:{n:6,step:.5,from:0,amps:[.11,.06]}},           // light 8th bed, downbeats accented
+      {d:"hat",alt:[[[2.5,.13,.3]],[]]} ]},                         // let-ring open into the next bar, alternating
+    waltzswing:{ cell:3, turn:false, ops:[   // jazz-waltz ride: ding, ding-A(swung), ding — the skip
+      // lands ON the swung-triplet grid exactly like the blues shuffle kit,
+      // scaled by state.swing, so applyGroove never double-swings it.
+      {d:"hat",hits:[[0,.15],[1,.12],[2,.13]]},
+      {d:"hat",skip:true,hits:[[1,.07]]},                           // the "a" after 2
+      {d:"snare",alt:[[[1,.2]],[[2,.18]]]},                         // cross-stick wanders 2 <-> 3
+      {d:"kick",hits:[[0,.45]]},
+      {d:"kick",p:.35,hits:[[2,.22]]} ]},                           // feathered pickup, occasional
+    sixeight:{ cell:6, turn:false, ops:[   // compound lilt (engine beat = the 8th): kick on 1+4,
+      // hats in two groups of three (STRONG-weak-weak — the dotted-quarter pulse)
+      {d:"kick",hits:[[0,.64],[3,.5]]},
+      {d:"snare",alt:[[[3,.34]],[[3,.34],[5.5,.12]]]},              // backbeat on the 2nd dotted-quarter (+ pickup ghost)
+      {d:"hat",grid:{n:6,step:1,from:0,amps:[.15,.07,.09]}},
+      {d:"hat",cyc:[[[5,.14,.3]],[],[[2,.13,.3]],[]]} ]},           // the lilting open hat rotates
   };
   // Euclid lanes as DATA (KERNEL-V4 §3.1 — "euclid stops being an overlay that
   // fights the kit; it is the kit's notation"). A state.euclid spec
@@ -538,7 +583,8 @@
     const kit=KITS[kind];
     if(kit){
       const skip=0.5+(2/3-0.5)*Math.max(0,Math.min(1,(sw||0)/0.3));
-      for(let t0=0;t0<cb;t0+=CHORD_BEATS){
+      const CELL=kit.cell||CHORD_BEATS;   // odd-meter kits tile by their own period; legacy kits keep the 8-beat stride byte-identically
+      for(let t0=0;t0<cb;t0+=CELL){
         for(const op of kit.ops){
           if(op.p!=null && R()>=op.p) continue;                     // whole-op gate: exactly one draw
           const em=EM[op.d];
@@ -733,6 +779,29 @@
     { on:[0,1.5,3,4,5.5,7],         du:[1.4,1.4,0.9,1.4,1.4,0.9] },              // tresillo ×2 (3-3-2 at the 8th grid)
     { on:[0,3,6],                   du:[2.8,2.8,1.8] },                          // 3-3-2 in whole beats — per-bar it tiles to 3-3-2-3-3-2 across two bars
   ];
+  // ODD-METER cell families (2026-07): measure-length grids the retime pass
+  // uses INSTEAD of the 8-beat MM_CELLS when state.meter is present (same
+  // single rng draw per fired bar — the meterless path is untouched). Cells
+  // are ONE MEASURE long; mmTile tiles them to the chord bar so chordEvery
+  // 6/12 both stay on the measure grid.
+  const MM_CELLS_3=[   // one 3/4 measure
+    { on:[0,1,2],   du:[0.9,0.9,0.9] },     // even quarters (the plain waltz bar)
+    { on:[0,1.5,2], du:[1.4,0.45,0.9] },    // dotted lilt (long-short-medium)
+    { on:[0,2],     du:[1.9,0.9] },         // minuet long-short
+  ];
+  const MM_CELLS_6=[   // one 6/8 measure (beat = the 8th)
+    { on:[0,1,2,3,4,5],       du:[0.9,0.9,0.9,0.9,0.9,0.9] },        // running 8ths
+    { on:[0,1.5,2,3,4.5,5],   du:[1.4,0.45,0.9,1.4,0.45,0.9] },      // siciliana lilt ×2
+    { on:[0,3],               du:[2.8,2.8] },                        // the two dotted-quarter pulses
+  ];
+  function mmTile(cell,mlen,cb){
+    const on=[],du=[];
+    for(let t=0;t<cb;t+=mlen) for(let i=0;i<cell.on.length;i++){
+      if(t+cell.on[i]>=cb) continue;
+      on.push(t+cell.on[i]); du.push(cell.du[i]);
+    }
+    return {on,du};
+  }
   // Snap a bar's melody notes onto a cell: each note (in onset order) takes its
   // NEAREST free grid slot, overflow walks forward to the next free slot (a
   // deterministic allocator — no rng in here; the CALLER draws fire+cell picks
@@ -886,6 +955,19 @@
           for(const [p,a] of stack) out.push({voice:"melody",beat:Sb+t,dur,pch:p,amp:a});
         }
         return; }
+      if(gen==="waltz"){   // ODD-METER 3-beat phrase-cell family: A sings the downbeat and
+        // holds, B answers with a stepping turn — alternating per MEASURE and tiled
+        // across the chord bar (chordEvery 6 = two measures, 12 = four). Same
+        // humanity draws per note as every phrase style (the note() helper).
+        const A=[[0,1.9,2,0],[2,0.9,1,0]], B=[[0,0.9,0,0],[1,0.9,1,0],[2,0.9,3,0]];
+        for(let m=0;m*3<cb;m++) (m%2?B:A).forEach(([o,d,idx,oct])=>note(m*3+o,d,idx,oct));
+        return; }
+      if(gen==="lilt6"){   // ODD-METER 6-beat compound phrase (6/8; beat = the 8th):
+        // the siciliana lilt — dotted-8th/16th/8th per dotted-quarter group,
+        // rising then falling through the voicing; tiles chordEvery 6/12.
+        const ph6=[[0,1.4,0,0],[1.5,0.45,1,0],[2,0.9,2,0],[3,1.4,3,0],[4.5,0.45,2,0],[5,0.9,1,0]];
+        for(let m=0;m*6<cb;m++) ph6.forEach(([o,d,idx,oct])=>note(m*6+o,d,idx,oct));
+        return; }
       const ph=MEL_PHRASES[gen];
       if(ph){ ph.forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       // wander: rhythmic random walk over chord tones, occasional octave leap
@@ -1026,9 +1108,23 @@
         adventure:th.adventure, color:th.color, voicing:th.voicing,
         seed:(((state.seed??1)>>>0)+40961)>>>0 }));
     }
+    // ---- ODD METER (2026-07): state.meter = {beats:3|6, unit:4|8} ----
+    // 3/4 (beats:3, unit:4 — the engine beat is the quarter) and compound 6/8
+    // (beats:6, unit:8 — the engine beat is the EIGHTH; the pulse is the
+    // dotted quarter). The meter's ONLY structural job here is the chordEvery
+    // DEFAULT: a meter state without chordEvery gets a meter-fitting chord
+    // bar (6 = two 3/4 measures / one 6/8 measure) instead of the 4/4
+    // CHORD_BEATS=8, plus the measure-length MM cell family below. Everything
+    // else meter-shaped (waltz/sixeight kits, oompahpah/siciliana cells,
+    // waltz/lilt6 phrases) is ordinary vocabulary the kernel pools for meter
+    // anchors. ABSENT state.meter = null here = byte-identical output (no new
+    // rng streams, no draw-count change — the standing law).
+    const mtb=state.meter?(state.meter.beats|0):0;
+    const meter=(mtb===3||mtb===6)?{beats:mtb,unit:(state.meter.unit|0)||(mtb===3?4:8)}:null;
     // KERNEL-V4 Phase 1: harmonic rhythm is a state dimension. chordEvery =
-    // beats per chord bar (absent = the legacy CHORD_BEATS=8, byte-stable).
-    const CBEATS=Math.max(2,Math.round(state.chordEvery||CHORD_BEATS));
+    // beats per chord bar (absent = the legacy CHORD_BEATS=8, byte-stable;
+    // with meter the absent-default is the meter-fitting 6).
+    const CBEATS=Math.max(2,Math.round(state.chordEvery||(meter?6:CHORD_BEATS)));
     const chords=prg.chords, k0=state.keyOffset|0, cycleBeats=chords.length*CBEATS;
     const srcById={};
     state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,kind:s.kind,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".mp3"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec,wet:!!s.wet,glitch:!!s.glitch,distant:!!s.distant}; });
@@ -1261,7 +1357,13 @@
               const ph=mel.filter(e=>e.beat>=b0&&e.beat<b0+CBEATS);
               if(!ph.length) continue;                             // silent bar: no draw (bar content is deterministic)
               if(mrng()>=rcx*0.4) continue;                        // fire ∝ complexity — one draw per sounding bar
-              mmRetime(ph,b0,MM_CELLS[Math.floor(mrng()*MM_CELLS.length)]);
+              // ODD METER: a meter state retimes onto MEASURE-length cells
+              // (tiled to the chord bar) instead of the 8-beat 4/4 grids —
+              // same ONE cell draw either way, so the meterless path keeps
+              // its exact draw sequence (byte-identity law).
+              if(meter){ const fam=meter.beats===3?MM_CELLS_3:MM_CELLS_6;
+                mmRetime(ph,b0,mmTile(fam[Math.floor(mrng()*fam.length)],meter.beats,CBEATS)); }
+              else mmRetime(ph,b0,MM_CELLS[Math.floor(mrng()*MM_CELLS.length)]);
             }
           }
           if(sec.solo) mel.forEach(e=>{ e.solo=sec.solo; if(sec.soloOctave) e.pch=pchAdd(e.pch,12*sec.soloOctave); });
