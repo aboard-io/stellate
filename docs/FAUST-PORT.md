@@ -35,7 +35,7 @@ validators — is UNCHANGED; only the sound layer moves.
 2. **Engine glue** — scheduler/allocator/fx-bus parity; explorer + press paths.
    Gate: `validate-genres.js` all green (symbolic gates are engine-agnostic);
    Discogs-EffNet A/B on 6 genres vs legacy renders — Faust must match or beat.
-3. **Switchover** — CONSTELLATE + journey CLI on Faust; csound paths removed
+3. **Switchover** — STELLATE (the explorer) + journey CLI on Faust; csound paths removed
    from main (they live on `legacy-csound`).
 
 Prototype evidence + csound→Faust port map: see the faust/ directory and the

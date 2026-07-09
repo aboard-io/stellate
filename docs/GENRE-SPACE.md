@@ -83,9 +83,9 @@ path, then:
   DJ-shaped tempo geography, not random jumps.
 - **Key walks** the circle of fifths ±1 step per track (never blended —
   adjacent tracks are mix-compatible, distant tracks genuinely far).
-- **Novelty memory**: the generator remembers the last N tracks' kit,
-  progression, fill, lead pattern, and found source, and *rerolls* any track
-  that repeats too much of its neighbors. This is the direct fix for "same
+- **Novelty memory**: the generator remembers the last 2 tracks' kit,
+  progression, bass, lead pattern, and found source, and *rerolls* any track
+  matching ≥3 of those 5 fields (up to 6 attempts). This is the direct fix for "same
   drum fill and same effects across all songs" — repetition is rejected at
   generation time, not hoped away.
 - **Duration** targets are met by scaling section counts and cycle counts per
@@ -131,7 +131,7 @@ re-slice every chord. All seeded — same seed, same song.
 
 ## The verifier loop
 
-`genre-verifier.js` extracts symbolic features from `buildEvents` (syncopation,
+`genre-verifier.js` extracts 23 symbolic features from `buildEvents` (syncopation,
 snare/kick balance, hat density, harmonic motion, seventh color, reverb wash,
 sub presence, break usage, swing, compression, variation ratio) and scores any
 state against per-genre target ranges. `node genre-verifier.js matrix` builds a

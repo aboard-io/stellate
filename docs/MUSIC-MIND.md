@@ -14,7 +14,7 @@ diagonal-dominant after every change).
 
 `buildEvents` is one brain with three limitations found by reading it whole:
 
-1. **Harmony is table-lookup.** `PROGRESSIONS` are ~30 hand-voiced static
+1. **Harmony is table-lookup.** `PROGRESSIONS` are 28 hand-voiced static
    tables. No Key/Scale abstraction, no voice-leading engine, no runtime
    borrowed chords or secondary dominants — chromatic color is frozen per
    progression name. Every jazz track walks the same ii-V-I voicings forever.
