@@ -125,7 +125,7 @@ function centerView(){ const r=svg.getBoundingClientRect(); if(!r.width) return;
 const PAN_PAD=0.55;
 export function clampZoom(){
   const r=svg.getBoundingClientRect();
-  ZOOM.k=Math.max(1,Math.min(4,ZOOM.k));
+  ZOOM.k=Math.max(1,Math.min(6,ZOOM.k));
   if(ZOOM.k===1){ ZOOM.ox=0; ZOOM.oy=0; return; }
   const padX=r.width*PAN_PAD, padY=r.height*PAN_PAD;
   ZOOM.ox=Math.max(r.width*(1-ZOOM.k)-padX,Math.min(padX,ZOOM.ox));
@@ -133,7 +133,7 @@ export function clampZoom(){
 }
 export function zoomAround(cx,cy,k2){ // keep the screen point (cx,cy) fixed while scaling
   const r=svg.getBoundingClientRect(), sx=cx-r.left, sy=cy-r.top;
-  const k1=ZOOM.k; k2=Math.max(1,Math.min(4,k2));
+  const k1=ZOOM.k; k2=Math.max(1,Math.min(6,k2));
   ZOOM.ox=sx-(sx-ZOOM.ox)*(k2/k1); ZOOM.oy=sy-(sy-ZOOM.oy)*(k2/k1); ZOOM.k=k2;
   clampZoom(); set({});
 }
@@ -292,7 +292,7 @@ svg.addEventListener("pointermove",e=>{
     const [a,b]=[...ptrs.values()];
     const d=Math.max(12,Math.hypot(a.x-b.x,a.y-b.y));
     const cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
-    const k2=Math.max(1,Math.min(4,pinch.k0*d/pinch.d0));
+    const k2=Math.max(1,Math.min(6,pinch.k0*d/pinch.d0));
     // scale about the gesture's original center; pan follows the current
     // center (the logical point that started under the fingers stays there)
     const r=svg.getBoundingClientRect();
@@ -510,7 +510,12 @@ export function computeGenreLayout(){
   // so the split's extra module-fetch latency can't let the font win the race.
   ctx.font=fontPx+"px monospace";
   const labW={}; for(const g of NAMES) labW[g]=ctx.measureText(g).width;
-  const box=(g,px,py)=>({ l:px-4*fsD, r:px+9*fsD+labW[g]+3*fsD, t:py-fontPx/2-3*fsD, b:py+fontPx/2+3*fsD });
+  // SEP = a breathing moat (screen px per side) padded around every label box so
+  // the relaxation spreads nodes well apart, not just barely non-overlapping. The
+  // whole field then overflows the default zoom more — but there's room and it
+  // pans, so an uncrowded map beats a tight fit. Scales a touch with type size.
+  const SEP=5+2*fsD;
+  const box=(g,px,py)=>({ l:px-4*fsD-SEP, r:px+9*fsD+labW[g]+3*fsD+SEP, t:py-fontPx/2-3*fsD-SEP, b:py+fontPx/2+3*fsD+SEP });
   // top-3 similar per genre for a WEAK grouping spring (decays to 0 mid-run).
   const topSim={}; for(const g of NAMES) topSim[g]=NAMES.filter(h=>h!==g)
     .map(h=>({h,s:sim(g,h)})).sort((a,b)=>b.s-a.s).slice(0,3);
@@ -519,16 +524,16 @@ export function computeGenreLayout(){
     return {mnx,mny,mxx,mxy}; };
   const rb=svg.getBoundingClientRect();
   const viewW=rb.width||1200, viewH=rb.height||850;
-  const MIN_DOT=52;                 // hard min dot separation, px at default zoom
+  const MIN_DOT=72;                 // hard min dot separation, px at default zoom
   // iteration budget scales with node count: the self-normalizing bounds make
   // the relaxation converge asymptotically, so a dense map (178+ genres) needs
   // more passes to fully clear label overlaps than the ~110-genre seed did.
-  const ITERS=Math.max(1200, NAMES.length*20);
+  const ITERS=Math.max(2200, NAMES.length*40);
   for(let it=0;it<ITERS;it++){
     const bb=bounds();
     const W=(bb.mxx-bb.mnx)+2*WORLD_MARGIN||1, H=(bb.mxy-bb.mny)+2*WORLD_MARGIN||1;
     const sx=viewW/W*DEFAULT_ZOOM, sy=viewH/H*DEFAULT_ZOOM;   // px per logical unit at default zoom
-    const springK=0.012*Math.max(0,1-it/(ITERS*0.7));
+    const springK=0.014*Math.max(0,1-it/(ITERS*0.85));
     const fx={},fy={}; for(const g of NAMES){ fx[g]=0; fy[g]=0; }
     for(let i=0;i<NAMES.length;i++) for(let j=i+1;j<NAMES.length;j++){
       const a=NAMES[i],b=NAMES[j];
