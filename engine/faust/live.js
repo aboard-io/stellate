@@ -43,6 +43,12 @@
 
   const RING_SEC = 30, RING_FRAMES = RING_SEC * SR;    // each ring holds ~30s
   const TARGET_SEC = 3.0, TARGET_FRAMES = TARGET_SEC * SR;  // runway we keep filled ahead (short = responsive steering)
+  // hidden-tab runway: background pages clamp setTimeout/setInterval to >=1s (and
+  // worse under pressure), so while hidden the feed target deepens — steering
+  // latency doesn't matter when nobody's steering, survival does. The worker tick
+  // (stream-worker.js "tick", workers are NOT timer-throttled) is the main feed
+  // clock in the background; this deeper runway is the belt to that suspender.
+  const HIDDEN_TARGET_SEC = 8.0, HIDDEN_TARGET_FRAMES = HIDDEN_TARGET_SEC * SR;
   const XFADE_MS = 400;                                // equal-power state-change crossfade
   const PRIME_SEC = 2.0, BRIDGE_PRIME_SEC = 1.2;       // fill before a stream is "primed"
   const WORKER_RUNWAY = 8;                             // worker self-backpressure ceiling (> TARGET; live.js is the limiter)
@@ -191,13 +197,16 @@
     const ua = (typeof navigator !== "undefined" && navigator.userAgent) || "";
     const isMobile = /Android|iPhone|iPad|iPod|Mobile|Silk|Kindle/i.test(ua) ||
       (typeof navigator !== "undefined" && navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || ""));
-    // Safari (desktop incl.) SUSPENDS the AudioContext on tab/window background and
-    // will NOT resume it from a non-gesture event (visibilitychange/focus) — so a
-    // bare ctx.destination graph freezes the ring-player mid-buffer and CoreAudio
-    // repeats that last quantum forever ("tiny chunk loops permanently"). The media-
+    // Desktop Safari HISTORY: pre-15.4 WebKit suspended the AudioContext on tab/
+    // window background (webkit.org/b/231105, removed in r291267, 2022-03) — a bare
+    // ctx.destination graph froze the ring-player mid-buffer and CoreAudio repeated
+    // that last quantum forever. Modern desktop Safari keeps a running ctx alive in
+    // hidden tabs, but tab-group switches / odd interruptions can still land the ctx
+    // in "suspended"/"interrupted" (handled by onstatechange below). The media-
     // element route (an <audio> playing a MediaStream) is treated as MEDIA PLAYBACK
-    // that Safari keeps alive across focus changes, no gesture-resume needed — the
-    // old engine used it for exactly this. So route through it on Safari too.
+    // that Safari keeps alive across focus changes AND it marks the tab audible
+    // (audible tabs are exempt from aggressive timer throttling / page suspension),
+    // so route through it on Safari too — belt for old WebKits, throttle shield now.
     const isSafari = /^((?!chrome|crios|chromium|android|fxios|edg).)*safari/i.test(ua) &&
       /Apple/.test((typeof navigator !== "undefined" && navigator.vendor) || "");
     let msDest = null, mediaEl = null;
@@ -245,8 +254,10 @@
     // mix ready (rendered OFF the ring by a dedicated stream-worker) and, on background,
     // hand off to a hidden looping <audio> playing it while the live worklet is muted at
     // source; on foreground we hand back. Gated to the SAME mobile/Safari predicate as
-    // the media-element route, so DESKTOP (incl. the clicktest gate) is byte-unchanged —
-    // there wantBg is false and goHidden stays mute-only, exactly as before.
+    // the media-element route. DESKTOP no longer runs goHidden on a mere tab-hide (the
+    // live stream keeps playing — see onVisChange); on desktop Safari this producer is
+    // kept as the FALLBACK carrier for a REAL ctx suspension (onstatechange → goHidden).
+    // Desktop Chrome et al: wantBg stays false, nothing here runs.
     const wantBg = !opts.directOut && (opts.forceMediaEl || opts.forceBgWav || isMobile || isSafari) &&
       typeof document !== "undefined" && typeof root.Audio !== "undefined";
     const BG_WAV_SEC = opts.bgWavSec > 0 ? opts.bgWavSec : 32;
@@ -568,6 +579,11 @@
       if (!m || !m.type) return;
       if (m.type === "ready") { workerReady[wi] = true; if (readyResolve[wi]) readyResolve[wi](); return; }
       if (m.type === "initfail") { errors.push("worker" + wi + " initfail: " + m.error); return; }
+      // worker metronome (stream-worker posts ~4Hz per live open): dedicated-worker
+      // timers are NOT throttled in hidden tabs, so this keeps the feed pump and the
+      // bar scheduler alive when the page's own timers clamp to >=1s (tab in the
+      // background but the ctx still running — the desktop keep-playing path).
+      if (m.type === "tick") { pumpOnce(); drainDueBars(); return; }
       const stream = (cur && cur.gen === m.gen) ? cur : (br && br.gen === m.gen) ? br : null;
       if (!stream) return;   // superseded open — ignore
       if (m.type === "primed") {
@@ -603,25 +619,45 @@
       return cur.fedFrames - played;
     }
     let pumpTimer = 0;
-    function pump() {
+    // deeper feed target while hidden (background timer throttling; see HIDDEN_TARGET_SEC)
+    const targetFrames = () => (typeof document !== "undefined" && document.visibilityState === "hidden")
+      ? HIDDEN_TARGET_FRAMES : TARGET_FRAMES;
+    // pumpOnce: one idempotent top-up, safe to call from ANY clock (the page timer,
+    // the worker tick, goVisible) — never (re)schedules, so no timer chains accumulate.
+    function pumpOnce() {
       if (abort) return;
       try {
         let guard = 0;
-        while (!abort && phase !== "fading" && guard < 24 && feedRunwayFrames() < TARGET_FRAMES) { produceAndRoute(); guard++; }
+        while (!abort && phase !== "fading" && guard < 24 && feedRunwayFrames() < targetFrames()) { produceAndRoute(); guard++; }
       } catch (e) { errors.push("pump: " + (e && e.message || e)); console.error("FaustLive pump", e); }
+    }
+    function pump() {
+      if (abort) return;
+      pumpOnce();
       pumpTimer = setTimeout(pump, 25);
     }
 
     // ── onBar scheduler: fire opts.onBar (+ schedule native found/sampler) at each
     // bar's PLAYBACK instant, derived from the ring-player read cursor → ctx clock. ──
     let barTimer = 0;
+    // drainDueBars: fire every bar whose playback instant has arrived. Idempotent,
+    // driven by BOTH the 30ms page interval (exact while visible) and the worker
+    // tick (unthrottled while hidden). HIDDEN LOOKAHEAD: background pages clamp
+    // timers to >=1s, which would schedule native found/sampler starts up to a
+    // second LATE (start(when-in-the-past) clumps at now). While hidden we fire
+    // bars up to ~0.6s EARLY instead — fireBar computes an absolute ctx-clock
+    // `when`, so early scheduling is sample-accurate; only the (invisible) onBar
+    // UI callback leads. Visible drains stay exact, as before.
+    const BAR_LOOKAHEAD_FRAMES = Math.round(0.6 * SR);
+    function drainDueBars() {
+      if (abort) return;
+      const pg = read53();
+      const horizon = pg + ((typeof document !== "undefined" && document.visibilityState === "hidden") ? BAR_LOOKAHEAD_FRAMES : 0);
+      while (playQueue.length && playQueue[0].globalStart <= horizon) fireBar(playQueue.shift(), pg);
+    }
     function startBarScheduler() {
       if (barTimer) return;
-      barTimer = setInterval(() => {
-        if (abort) return;
-        const pg = read53();
-        while (playQueue.length && playQueue[0].globalStart <= pg) fireBar(playQueue.shift(), pg);
-      }, 30);
+      barTimer = setInterval(drainDueBars, 30);
     }
     function fireBar(b, pg) {
       const when = ctx.currentTime + (b.globalStart - pg) / SR;   // ≈ ctx.currentTime (bar just reached playback)
@@ -721,9 +757,11 @@
             // src at hidden-time (bgHandoff) races the iOS page freeze, and a blob that
             // never finishes loading is silence. Preloaded, the handoff is just play().
             if (bgAudio && !bgActive) { try { bgAudio.src = bgUrl; bgAudio.load(); } catch (e) {} }
-            // if we went hidden before a blob was ready (mute-only fallback took over),
-            // hand off to the <audio> now that the WAV has landed.
-            if (typeof document !== "undefined" && document.visibilityState === "hidden" && !bgActive && bgAudio) bgHandoff();
+            // if we went hidden AND MUTED before a blob was ready (mute-only fallback
+            // took over), hand off to the <audio> now that the WAV has landed. Gated on
+            // survivalMuted: on desktop a hidden tab keeps the LIVE stream playing —
+            // starting the WAV loop alongside it would double the audio.
+            if (typeof document !== "undefined" && document.visibilityState === "hidden" && survivalMuted && !bgActive && bgAudio) bgHandoff();
           } catch (e) { errors.push("bgwav blob: " + (e && e.message || e)); bgInflightSig = null; }
         }
         if (bgWantSig && bgWantSig !== bgReadySig) bgKick();   // coalesce to the newest target
@@ -844,12 +882,16 @@
     };
     const goVisible = () => {
       if (abort) return;
+      resumeCtx();   // unconditional — covers iOS/Safari "interrupted" AND "suspended" (goVisible used to gate on "suspended" and never resumed after an app switch); no-op while running
+      // never survival-muted (desktop tab switch / plain window refocus): the live
+      // stream never stopped — the resume poke above is all a refocus needs. Running
+      // the restore machinery would dip masterGain (0→1 ramp) on every focus event.
+      if (!survivalMuted && !bgActive) return;
       if (bgActive && bgAudio) {                               // hand back: fade + pause the WAV
         try { fadeEl(bgAudio, 0, 120); } catch (e) {}
         setTimeout(() => { try { bgAudio.pause(); } catch (e) {} }, 150);
         bgActive = false;
       }
-      resumeCtx();   // unconditional — covers iOS "interrupted" (goVisible used to gate on "suspended" and never resumed after an app switch)
       if (mediaEl) {
         try {
           // re-latch the stream when coming back from a goHidden pause: WebKit keeps a
@@ -863,7 +905,7 @@
       survivalMuted = false;
       try { Atomics.store(ctrl, C_STATE, 1); } catch (e) {}    // resume from the frozen cursor
       try { const t = ctx.currentTime; masterGain.gain.cancelScheduledValues(t); masterGain.gain.setValueAtTime(0, t); masterGain.gain.linearRampToValueAtTime(1, t + 0.02); } catch (e) {}   // fade in — no click on return
-      try { pump(); } catch (e) {}                              // refill now, don't wait for the throttled timer
+      try { pumpOnce(); } catch (e) {}                          // refill now, don't wait for the throttled timer (pumpOnce: never forks a second timer chain)
       // if iOS refused the non-gesture resume, the next touch revives the session
       setTimeout(() => {
         if (!abort && ctx.state !== "running" &&
@@ -871,7 +913,24 @@
       }, 400);
       bgSetPlaybackState("playing");
     };
-    const onVisChange = () => { (typeof document !== "undefined" && document.visibilityState === "hidden" ? goHidden : goVisible)(); };
+    // ── visibility routing: THE DESKTOP TAB-SWITCH FIX (Paul: "switching tabs stops
+    // the audio" in desktop Safari). Hiding the tab used to run goHidden EVERYWHERE,
+    // muting the live worklet at source; desktop then depended on the bg-WAV <audio>
+    // handoff (Safari) or just went silent (Chrome et al). But every modern desktop
+    // engine — including Safari >= 15.4 (webkit.org/b/231105) — keeps a RUNNING
+    // AudioContext alive in a hidden tab. So on desktop we now KEEP PLAYING: no mute,
+    // no handoff; just top the runway before background timer throttling sets in
+    // (the worker tick carries the feed from there). The preemptive mute remains for
+    // MOBILE, where the ctx genuinely suspends ("interrupted") on backgrounding. If a
+    // desktop WebKit DOES suspend the ctx while hidden (old Safari, tab-group quirks),
+    // ctx.onstatechange below still runs goHidden — mute-at-source + bg-WAV handoff —
+    // and goVisible/focus resume() covers "suspended" AND "interrupted" on return. ──
+    const onVisChange = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        if (isMobile) goHidden();
+        else pumpOnce();   // desktop: keep playing; deepen the runway now (targetFrames() is hidden-aware)
+      } else goVisible();
+    };
     if (typeof document !== "undefined") {
       document.addEventListener("visibilitychange", onVisChange);
       root.addEventListener("pagehide", goHidden);

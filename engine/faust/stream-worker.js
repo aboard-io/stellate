@@ -63,6 +63,17 @@ let liveBars = [], liveEos = false;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// ── conductor metronome (ring path only) ────────────────────────────────────
+// Hidden pages clamp their own setTimeout/setInterval to >=1s (worse under
+// pressure), which would starve the conductor's page-side feed pump + bar
+// scheduler while a background tab keeps PLAYING the ring. Dedicated-worker
+// timers are NOT visibility-throttled, so each live ring open runs this coarse
+// ~4Hz tick; live.js onMsg("tick") tops the feed runway and drains due bars.
+// Started on openLive, stopped on stop (a retired producer goes quiet).
+let tickTimer = 0;
+function startTicks() { if (!tickTimer) tickTimer = setInterval(() => { try { self.postMessage({ type: "tick" }); } catch (e) {} }, 250); }
+function stopTicks() { if (tickTimer) { clearInterval(tickTimer); tickTimer = 0; } }
+
 // ── browser-safe interleaved-stereo 16-bit WAV encoder (no Node Buffer) ──
 // Used by the renderWav path (below) for the conductor's BACKGROUND-WAV producer.
 // Truncates toward zero (`*32767|0`) to match wav.js's "trunc" mode + emits the
@@ -89,14 +100,19 @@ function encodeWavPCM(L, R, sr) {
 // ArrayBuffer — OFF the audio ring path (this worker instance owns no ring; the
 // conductor spawns a DEDICATED stream-worker for it). Drives the same makeStreamEngine
 // open()+renderChunk() press-parity path as segment-parity, concatenating the chunks,
-// then encodes to WAV. FOUND is NOT baked (buffers:{}), matching the live faust mix —
-// the result is deterministic + loop-tolerant, the background-survival loop. Supersede-
-// aware (activeToken) so a newer target during a long render bails promptly.
+// then encodes to WAV. Two callers, two shapes:
+//   • iOS background-WAV (faust/live.js): NO msg.buffers → found is not baked,
+//     matching the live faust mix — deterministic + loop-tolerant survival loop.
+//     Byte-identical to the pre-export behavior (defaults below).
+//   • ⤓ audio EXPORT (app/export.js): ships decoded found/sampler PCM in
+//     msg.buffers (+ a TOTAL-tiled vocoder carrier in msg.speech), so the pressed
+//     WAV carries the FULL mix, press.js-style. Progress posts as {wavprog}.
+// Supersede-aware (activeToken) so a newer target during a long render bails promptly.
 async function renderWav(msg, token) {
   const gen = msg.gen | 0;
   const alive = () => token === activeToken && !stopReq;
   const durSec = msg.durSec > 0 ? msg.durSec : 32;
-  const info = await eng.open(msg.state, { buffers: {}, speech: null, opts: { dur: durSec } });
+  const info = await eng.open(msg.state, { buffers: msg.buffers || {}, speech: msg.speech || null, opts: { dur: durSec } });
   if (!alive()) { eng.close(); self.postMessage({ type: "wavcancel", gen }); return; }
   const total = info.TOTAL;
   const L = new Float32Array(total), R = new Float32Array(total);
@@ -105,6 +121,7 @@ async function renderWav(msg, token) {
     const c = eng.renderChunk(n);
     L.set(c.L.subarray(0, c.length), c.startSample);
     R.set(c.R.subarray(0, c.length), c.startSample);
+    if ((n & 7) === 0) self.postMessage({ type: "wavprog", gen, chunk: n, nChunks: info.nChunks, totalSec: info.totalSec });
     if ((n & 3) === 0) await sleep(0);   // yield: never hog the worker thread (off the audio path)
   }
   eng.close();
@@ -419,6 +436,7 @@ self.onmessage = async (e) => {
   // ── LIVE mode (Phase 5a) ──
   if (msg.type === "openLive") {
     if (!eng) { self.postMessage({ type: "openfail", error: "not ready", gen: msg.gen | 0 }); return; }
+    startTicks();   // conductor metronome for the ring path (throttle-proof feed clock)
     stopReq = false; liveBars = []; liveEos = false;
     const token = ++opSeq;
     activeToken = token;
@@ -477,5 +495,5 @@ self.onmessage = async (e) => {
   }
   if (msg.type === "feedBar") { liveBars.push(msg.bar); return; }
   if (msg.type === "feedEos") { liveEos = true; return; }
-  if (msg.type === "stop") { stopReq = true; return; }   // retire the current pump
+  if (msg.type === "stop") { stopReq = true; stopTicks(); return; }   // retire the current pump (+ metronome)
 };
