@@ -62,10 +62,12 @@ under version control. The renders survived; the `.csd` that made them did not �
 we kept the **artifact** and lost the **generator**. This repo is the fix, and
 the rule that falls out of it:
 
-- **Source is committed; audio is derived and gitignored.** `royal-road.csd`,
-  `engine/csd-engine.js`, `engine/faust/dsp/` are the capability. Every `.wav`/`.mp3`/`.mp4`
-  is regenerable and never committed. (The project was named "Royal Road
-  vaporwave" through 2026-07; it is a worked genre now, not the whole show.)
+- **Source is committed; audio is derived and gitignored.** `engine/csd-engine.js`
+  (the score brain) and `engine/faust/dsp/` (the synthesis) are the capability.
+  Every `.wav`/`.mp3`/`.mp4` is regenerable and never committed. (The founding
+  `royal-road.csd` that first proved the idea now rests on the `legacy-csound`
+  branch — the origin lost-and-refound, kept safe. The project was named "Royal
+  Road vaporwave" through 2026-07; it is a worked genre now, not the whole show.)
 
 ## Run
 
@@ -89,8 +91,8 @@ node engine/validate-genres.js --quick # determinism / vocabulary / coverage gat
 node engine/genre-kernel.js track budstep --seed 7 --render   # one track -> mp3
 ```
 
-Needs `node`, `ffmpeg`, `curl`. Only `tools/render.sh` (the founding
-`royal-road.csd`) still needs a `csound` binary. Headless browser gates live in
+Needs `node`, `ffmpeg`, `curl` — no `csound` (the founding `royal-road.csd` and
+its renderer live on the `legacy-csound` branch). Headless browser gates live in
 `test/*-test*.js` (need the pinned playwright).
 
 ## More

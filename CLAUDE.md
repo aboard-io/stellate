@@ -12,17 +12,20 @@ vaporwave" through 2026-07; renamed **stellate** at export.)
 
 Since 2026-07 (FAUST-PORT phase 3) Faust is the **only** backend on main; the
 entire csound era — `buildCsd` codegen, `wasm-audio.js`, the `builder.html`
-song builder, `play.html` player, engine A/B tools — is preserved fully
-working on branch **`legacy-csound`**. `royal-road.csd` stays on main as the
-founding document (it renders via `./render.sh`, the one tool here that still
-wants a `csound` binary — or on `legacy-csound`).
+song builder, `play.html` player, the founding `royal-road.csd`, its
+`render.sh`, engine A/B tools — is preserved fully working on branch
+**`legacy-csound`**. Main is **csound-free**: no `.csd`, no `csound` binary
+anywhere in the toolchain (removed 2026-07-09; the archive is one `git switch
+legacy-csound` away).
 
 ## The one rule
 
-**Source is committed; audio is derived and gitignored.** `royal-road.csd` /
-`csd-engine.js` / `faust/dsp` are the capability; every `.wav`/`.mp3` is
-regenerable and must never be committed. (The project exists because we once
-kept the renders and lost the `.csd` — see README "What happened".)
+**Source is committed; audio is derived and gitignored.** `engine/csd-engine.js`
+(the score brain) / `engine/faust/dsp` (the synthesis) are the capability; every
+`.wav`/`.mp3` is regenerable and must never be committed. (The project exists
+because we once kept the renders and lost the generator — the founding
+`royal-road.csd` — see the README genesis parable. That `.csd` now lives safe on
+`legacy-csound`.)
 
 ## The catalog submodule
 
@@ -64,8 +67,8 @@ NODE_PATH=/home/ford/ftrain-2025/node_modules node test/explorer-ui-test.js   # 
 ```
 
 Requires `ffmpeg`, `curl`, `node` (with `engine/faust/node_modules` — `npm ci` in
-`engine/faust/`). Only `tools/render.sh` (the founding `royal-road.csd`) still
-needs `csound` (tested 6.18).
+`engine/faust/`). No `csound` — main's toolchain is csound-free; the founding
+`royal-road.csd` and its `render.sh` live on `legacy-csound`.
 
 ## Layout
 
@@ -137,16 +140,14 @@ docs in `docs/`.
       `AudioBufferSourceNode`s; `decodeUrlToBuffer` skips recording lead-in and
       boost-normalizes quiet speech (the spokenword fix)
     - `press.js` — offline render (faustwasm offline processors + PCM found mix)
-    - `legacy-tools/` — csound A/B harness (needs branch `legacy-csound`)
-- `tools/` — Node CLIs + shell recipes: `render.sh` (the founding `royal-road.csd`,
-  needs csound), `fetch-found-*.sh`, `render-sample-video.js`, `make-mix-page.js`
-  (mix/index.html + mix.m3u from a rendered playlist dir), etc.
+- `tools/` — Node CLIs + shell recipes: `fetch-found-*.sh`,
+  `render-sample-video.js`, `make-mix-page.js` (mix/index.html + mix.m3u from a
+  rendered playlist dir), etc. (All rendering is Faust-press now; the csound
+  `render.sh` is on `legacy-csound`.)
 - `test/` — gates + headless probes: `engine.test.js` (faust-press smoke),
   `explorer-ui-test.js`/`genre-viz-test.js`/`demo-layer-test.js` and the live/
   wavout/resilience/bg-survival runs (they `goto /index.html` and read the
   `window.__` debug hooks), `probe-harness.js` (shared static server + chromium)
-- `royal-road.csd` — the founding committed Csound source (renders via
-  `tools/render.sh` with csound installed, or on branch `legacy-csound`)
 - `audio-verifier.py` — EMPIRICAL gate: Essentia Discogs-EffNet genre model on
   rendered audio. Setup: `python3 -m venv .venv-verify && .venv-verify/bin/pip
   install essentia-tensorflow`, then download to `models/`:
