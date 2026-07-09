@@ -35,7 +35,9 @@
 //                 palette (@77824) into the canvas.
 //
 //   DemoLayer.init()          -> Promise<boolean> (runtime + carts available?)
-//   DemoLayer.setEnabled(on)  -> show/hide (persisted in localStorage)
+//   DemoLayer.setEnabled(on)  -> show/hide (idempotent; state is OWNED by the
+//                                background program in app/background.js — the
+//                                layer never re-enables itself)
 //   DemoLayer.enabled()       -> currently on AND ready
 //   DemoLayer.available()     -> runtime loaded?
 //   DemoLayer.next()          -> cycle to the next cart
@@ -63,7 +65,10 @@
     } catch (e) {}
     return "vendor/microw8/";
   })();
-  const LS_KEY = "vaporwave-demo-on";
+  // NO localStorage self-restore of on/off (2026-07-09): the old "vaporwave-demo-on"
+  // key let this layer re-enable itself at init, bypassing app/background.js's mode
+  // program — one of the ways video + demos ended up STACKED. The controller owns
+  // enabled state now; only the cart CHOICE is remembered here.
   const LS_CART = "vaporwave-demo-cart";
   const MOBILE = /Mobi|iPhone|iPad|Android/.test(navigator.userAgent) ||
                  (navigator.hardwareConcurrency || 8) <= 4;
@@ -464,8 +469,13 @@
   // public API
   // -------------------------------------------------------------------------
   function setEnabled(want) {
-    on = !!want;
-    try { localStorage.setItem(LS_KEY, on ? "1" : "0"); } catch (e) {}
+    want = !!want;
+    // IDEMPOTENT (mirrors VideoLayer.setEnabled): the background program imposes
+    // desired state on every render — skip unless on-state or the materialized
+    // DOM changes. The DOM check materializes a pre-ready request at init time.
+    const shown = wrap ? wrap.style.display !== "none" : null;
+    if (on === want && (shown === null || shown === want)) return;
+    on = want;
     if (!wrap) return;
     wrap.style.display = on ? "block" : "none";
     if (on) { applyGrade(); startLoop(); scheduleBurst(); }
@@ -487,9 +497,9 @@
     }
     makeDom();
     ready = true;
-    let saved = null; try { saved = localStorage.getItem(LS_KEY); } catch (e) {}
-    // DEFAULT OFF (mirrors VideoLayer): dark unless the user has turned it on.
-    setEnabled(saved === "1");
+    // DEFAULT OFF, controller-owned (mirrors VideoLayer): materialize whatever
+    // the background program has requested so far — no localStorage self-restore.
+    setEnabled(on);
     return true;
   }
 

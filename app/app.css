@@ -54,20 +54,7 @@
   #map.itx .anchor{fill:#fff}
   .wlabel{font:11px VT323,monospace;fill:#4dffb0}
   .wpn{font:11px VT323,monospace;fill:#0c0a1a;font-weight:700}
-  /* the CPU meter: pixel-locked chrome above the chips, live-only. VT323 like
-     the rest of the readouts; colour is set inline by cpuMeterTick. */
-  #cpu{position:fixed;right:.7rem;bottom:4.1rem;z-index:6;display:none;gap:.55rem;align-items:center;
-    font:13px VT323,monospace;letter-spacing:.02em;color:var(--mint);
-    background:rgba(12,10,26,.82);border:1px solid var(--line);border-radius:9px;
-    padding:.2rem .55rem;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
-    box-shadow:0 0 10px rgba(0,0,0,.35);user-select:none;pointer-events:none}
-  #cpu.live{display:inline-flex}
-  #cpu #cpuCpu{font-variant-numeric:tabular-nums;font-weight:600;letter-spacing:.02em}
-  #cpu #cpuNodes{color:var(--dim)}
-  #cpu #cpuEco{color:var(--amber)}
-  #cpu #cpuEco:empty{display:none}
-  #cpu #cpuStems{color:var(--mint);letter-spacing:.06em;font-size:.82em;opacity:.85}
-  #cpu #cpuStems:empty{display:none}
+  /* (CPU meter chrome removed 2026-07-09 — Paul's ask) */
   /* the chips: the ONLY floating affordances (with the brand) */
   #chips{position:fixed;right:.7rem;bottom:.7rem;z-index:6;display:flex;gap:.5rem}
   .chip{width:48px;height:48px;border-radius:50%;font-size:1.25rem;line-height:1;display:grid;place-items:center;
@@ -101,6 +88,15 @@
   .radar .rax{font:11px VT323,monospace;fill:var(--dim);letter-spacing:.04em}
   .vz-feelnums{text-align:center;font:14px VT323,monospace;color:var(--mint);opacity:.92;margin-top:.15rem}
   .vz-feelnums b{color:var(--dim);font-weight:400}
+  /* MIND — the MUSIC-MIND axes: thin mint meters + the active moves line */
+  .vz-mind{display:flex;flex-direction:column;gap:.16rem}
+  .vz-mrow{display:flex;align-items:center;gap:.5rem;font:14px VT323,monospace;color:var(--ink)}
+  .vz-mn{flex:0 0 76px;color:var(--dim);text-transform:uppercase;font-size:11px;letter-spacing:.1em}
+  .vz-mbar{flex:1 1 auto;height:7px;border-radius:4px;background:rgba(255,255,255,.06);border:1px solid var(--line);overflow:hidden}
+  .vz-mbar i{display:block;height:100%;background:var(--mint);opacity:.85}
+  .vz-mrow b{flex:0 0 26px;text-align:right;color:var(--mint);font-weight:400}
+  .vz-mmoves{font:14px VT323,monospace;color:var(--dim);margin-top:.12rem;line-height:1.45}
+  .vz-mmoves b{color:var(--cyan);font-weight:400}
   .vz-in{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;font:16px VT323,monospace;margin:.16rem 0}
   .vz-ir{flex:0 0 46px;color:var(--dim);text-transform:uppercase;font-size:11px;letter-spacing:.1em}
   .vz-inm{color:var(--pink)}
@@ -130,7 +126,15 @@
   .vz-tlrole{font:10px VT323,monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);opacity:.8}
   .vz-roll{position:relative;flex:1 1 auto;min-width:0;height:34px;border-radius:5px;
     border:1px solid var(--line);background-color:rgba(255,255,255,.03);overflow:hidden}
+  /* THE UNIT IS ALWAYS 8: longer chord bars FOLD into stacked 8-cell rows (same
+     grid pitch, they never shrink); the dead tail of a partial last row is hatched */
+  .vz-rollstack{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+  .vz-roll.vz-fold{flex:none;height:22px}
+  .vz-dead{position:absolute;top:0;right:0;height:100%;pointer-events:none;
+    background:repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 4px,transparent 4px 8px)}
   .vz-blk{position:absolute;height:14%;min-width:2px;border-radius:2px;transition:opacity .12s linear}
+  /* a found BED: one sustained texture ribbon, not a hit */
+  .vz-blk.vz-bed{height:44%;border-radius:3px}
   /* AUDIT-TRUTH: a lane the audit measured as EXPECTED-BUT-SILENT this bar — notes were
      scheduled but no audio was rendered (missing sample buffers, or a render-side mute).
      Red hatch over the whole roll; the header name goes red with a ✕ badge. */

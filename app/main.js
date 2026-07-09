@@ -10,7 +10,7 @@ import { retarget, weightsAt, setMacro, travelStep, rescore, forceRetarget } fro
 import { clampZoom, zoomAround, seedDefaultLoop, insertWaypoint, computeGenreLayout, centerView } from "./starmap.js";
 import { renderInside } from "./inside.js";
 import { goLive, stopLive, faustHandle } from "./live.js";
-import { playheadTick, cpuMeterTick } from "./readouts.js";
+import { playheadTick } from "./readouts.js";
 import "./background.js";   // side effects: video/demoscene chip + alternation + subs.push(applyBg)
 import "./panels.js";       // side effects: control panel + chips/modals + store render subs
 
@@ -25,7 +25,7 @@ window.__X={retarget:(...a)=>retarget(...a), goLive:(...a)=>goLive(...a), stopLi
 
 // ---------- boot ----------
 function boot(){
-  computeGenreLayout(); seedDefaultLoop(); centerView(); rescore(); playheadTick(); cpuMeterTick();
+  computeGenreLayout(); seedDefaultLoop(); centerView(); rescore(); playheadTick();
   // the kernel's DX7 patch registry is empty in the browser unless the page
   // supplies the bank (genre-kernel snapshots window.DX7_PRESETS at load, which
   // no page sets) — so no explorer journey ever drew a dx7 voice. Populate the

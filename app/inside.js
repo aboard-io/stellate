@@ -16,10 +16,79 @@ import { faustHandle } from "./live.js";
 //      the SAME sampled-by-default mapping the engine uses (FaustStateEngine
 //      .pickSampledId → K.SAMPLERS[id].label), signature synths named as
 //      themselves, plus the drum kit.
-const SIG_SYNTH={ tb303:"303 acid bass", acid:"acid bass", reese:"Reese bass",
-  wobble:"wobble bass", synclead:"sync lead", modeld:"Minimoog lead", vocoder:"vocoder / robot choir" };
-const cleanLabel=s=>String(s||"").replace(/\s*\((?:FluidR3|NOAA|PD|CC|US-gov|\+\d)[^)]*\)/gi,"").replace(/\s*—.*$/,"").replace(/\s*\+\d+dB.*$/,"").trim();
+// ---------- listener-facing DESCRIPTIONS (Paul 2026-07: "stop naming the source").
+// Roster text describes ROLE + CHARACTER — never provenance. No "sampler"/"DX7"/
+// soundfont/library names, no raw source ids, no real-vs-synth tells: the listener
+// gets "round upright bass", not "sampler: acoustic_bass (FluidR3)". Resolution
+// still mirrors the engine exactly (same pickSampledId); only the FORMATTING here
+// changed — the state fields are untouched.
+const SIG_SYNTH={ tb303:"squelchy acid bass", acid:"rubbery acid bass", reese:"growling reese bass",
+  wobble:"lurching wobble bass", synclead:"tearing sync lead", modeld:"fat mono lead", vocoder:"robot choir" };
+const cleanLabel=s=>String(s||"").replace(/\s*\([^)]*\)/g,"").replace(/\s*—.*$/,"").replace(/\s*\+\d+dB.*$/,"").trim();
 const titleCase=s=>String(s||"").replace(/[_-]+/g," ").replace(/\b\w/g,c=>c.toUpperCase()).trim();
+// character phrase for a resolved sampled-instrument label (first regex wins);
+// fallback = the cleaned label lowercased (an instrument noun, never a catalog id).
+const VOICE_CHAR=[
+  [/fretless/,"singing fretless bass"],[/acoustic bass|upright/,"round upright bass"],
+  [/finger/,"warm fingered bass"],[/slap/,"popping slap bass"],[/synth bass|bass & lead/,"punchy synth bass"],
+  [/percussive organ|drawbar/,"dusty organ"],[/rock organ/,"growling organ"],[/church organ/,"cathedral organ"],
+  [/reed organ/,"parlor reed organ"],[/felt piano/,"soft felt piano"],[/honky/,"barroom piano"],
+  [/electric piano|legend ep|e\.? ?piano/,"glassy electric piano"],[/bright grand|grand piano|piano/,"bright grand piano"],
+  [/harpsichord/,"courtly harpsichord"],[/clavinet/,"funky clavinet"],[/celesta/,"twinkling celesta"],
+  [/music box/,"tiny music box"],[/glocken/,"glittering bells"],[/tubular|bell/,"tolling bells"],
+  [/vibraphone/,"shimmering vibes"],[/marimba/,"woody marimba"],[/kalimba/,"plucked thumb keys"],
+  [/xylo/,"bright xylophone"],[/steel drum/,"island steel pans"],
+  [/jazz guitar/,"mellow jazz guitar"],[/nylon/,"soft nylon guitar"],[/steel string/,"bright steel-string guitar"],
+  [/clean guitar/,"chiming clean guitar"],[/distortion|overdriv/,"snarling electric guitar"],
+  [/guitar harmonics/,"chiming harmonics"],[/guitar/,"picked guitar"],
+  [/muted trumpet/,"whispering muted trumpet"],[/trumpet/,"brassy trumpet"],[/trombone/,"sliding trombone"],
+  [/tuba/,"deep parade brass"],[/french horn/,"warm horn section"],[/brass/,"punchy brass section"],
+  [/alto sax/,"smoky alto sax"],[/tenor sax/,"breathy tenor sax"],[/baritone sax/,"husky baritone sax"],[/sax/,"smoky sax"],
+  [/english horn/,"plaintive reed"],[/oboe/,"reedy oboe"],[/bassoon/,"dark bassoon"],[/clarinet/,"woody clarinet"],
+  [/pan flute/,"breathy pan pipes"],[/flute|piccolo/,"airy flute"],[/ocarina/,"hollow clay whistle"],
+  [/recorder|whistle/,"reedy whistle"],[/harmonica/,"wailing harmonica"],[/accordion|bandoneon/,"breathing bellows"],
+  [/bagpipe/,"droning pipes"],[/pizzicato/,"plucked strings"],[/contrabass/,"bowed low strings"],
+  [/cello/,"singing cello"],[/fiddle|violin/,"reeling fiddle"],[/strings|orchestra/,"sweeping strings"],
+  [/harp/,"rippling harp"],[/choir|voice|ahh|ohh/,"hovering voices"],[/sitar/,"droning sitar"],
+  [/koto/,"plucked koto"],[/shamisen|banjo/,"twanging strings"],[/dulcimer/,"hammered strings"],
+  [/atmosphere|fantasia|halo|sweep|soundtrack|new age|warm pad|polysynth|bowed glass|crystal|echo drops|ice rain|goblin|metal pad|charang|chiffer|fifth|square|sawtooth/,"glowing synth pad"],
+];
+function charOf(label){
+  const l=cleanLabel(label).toLowerCase();
+  for(const [re,phrase] of VOICE_CHAR) if(re.test(l)) return phrase;
+  return l.replace(/_/g," ")||"synth voice";
+}
+// FM patch names -> character (never say the hardware); default "glassy keys".
+const DX7_CHAR=[
+  [/piano|rhodes|\bep\b/,"glassy electric piano"],[/bell|tub|celest|glock|chime/,"glass bells"],
+  [/shimmer/,"shimmering keys"],[/brass|horn/,"soft synth brass"],[/string|violin|cello/,"silky synth strings"],
+  [/organ/,"breathing organ"],[/bass/,"punchy digital bass"],[/flute|wood|reed|clar|oboe|pipe/,"airy digital flute"],
+  [/voice|choir|vox|aah/,"airy digital choir"],[/pluck|guitar|koto|harp|clav/,"plucked digital strings"],
+  [/marimba|vibe|xylo|mallet/,"mallet keys"],[/pad|warm/,"warm digital pad"],
+];
+function dx7Char(name){
+  const l=String(name||"").toLowerCase();
+  for(const [re,phrase] of DX7_CHAR) if(re.test(l)) return phrase;
+  return "glassy keys";
+}
+// pure-synth voice models -> character; fallback = a generic per-role phrase.
+const MODEL_CHAR={ saw:"warm analog saw", stack:"stacked detuned synth", supersaw:"huge detuned saws",
+  sine:"pure sine tone", fm:"glassy digital keys", pluck:"snappy synth pluck", kpluck:"metallic plucked string",
+  fuzz:"fuzzy singing lead", guitar:"picked guitar", piano:"upright piano", bell:"glass bells",
+  brass:"synth brass", organ:"breathing organ", strings:"silky string machine", choir:"hovering choir",
+  rhodes:"glassy electric piano", juno60:"creamy analog polysynth", hammond:"greasy drawbar organ",
+  vp330:"misty choir machine", solina:"silvery string ensemble", sub:"deep sub bass", square:"hollow square lead" };
+const ROLE_GENERIC={ pad:"warm pad wash", bass:"round melodic bass", melody:"singing lead", solo:"answering lead" };
+// drum kits -> character (kit ids are internal; the listener hears a feel).
+const KIT_CHAR={ acoustic:"acoustic drum kit", brush:"brushed jazz drums", jazz:"loose jazz drums",
+  room:"roomy live drums", power:"arena power drums", full:"full drum kit", open:"open drum groove",
+  halftime:"heavy halftime drums", boombap:"dusty boom-bap drums", breaks:"dusty chopped breaks",
+  jungle:"racing chopped breaks", techno:"driving machine drums", pulse:"pulsing machine drums",
+  house:"four-on-the-floor machine", four:"four-on-the-floor machine" };
+const kitChar=kit=>KIT_CHAR[kit]||(titleCase(kit).toLowerCase()+" drums");
+// found sources -> texture character by KIND only (never the recording's name/id).
+const FOUND_CHAR={ speech:"cut-up announcer voice", vox:"vocal fragments", break:"chopped drum breaks", hit:"sampled stabs" };
+const foundChar=s=>FOUND_CHAR[s&&s.kind]||"tape atmosphere";
 const clamp01=v=>v<0?0:v>1?1:v;
 // a stable neon hue per genre name (FNV hash → 0..360): a genre reads the same
 // colour in the blend bar, the radar accents and the on-map glyph.
@@ -33,13 +102,13 @@ const genreCol=(g,l)=>`hsl(${genreHue(g)} 78% ${l==null?62:l}%)`;
 function voiceName(role,m,st){
   m=m||{};
   if(m.model&&SIG_SYNTH[m.model]) return SIG_SYNTH[m.model];
-  if(m.model==="sampler"&&m.sampler&&K.SAMPLERS[m.sampler.id]) return cleanLabel(K.SAMPLERS[m.sampler.id].label);
+  if(m.model==="sampler"&&m.sampler&&K.SAMPLERS[m.sampler.id]) return charOf(K.SAMPLERS[m.sampler.id].label);
   if(st.sampledOnly&&st.samplerLib&&window.FaustStateEngine&&FaustStateEngine.pickSampledId){
     try{ const id=FaustStateEngine.pickSampledId(role,m.model,st.seed);
-      if(K.SAMPLERS[id]) return cleanLabel(K.SAMPLERS[id].label); }catch(e){}
+      if(K.SAMPLERS[id]) return charOf(K.SAMPLERS[id].label); }catch(e){}
   }
-  if(m.dx7) return "DX7 "+(m.dx7.name?m.dx7.name.trim():"patch");
-  return titleCase(m.model||role);
+  if(m.dx7) return dx7Char(m.dx7.name);
+  return MODEL_CHAR[m.model]||ROLE_GENERIC[role]||titleCase(role).toLowerCase();
 }
 // six perceptual FEEL axes, each normalised 0..1 from S.playing. Ranges track the
 // panel's own DIMS sliders where one exists; brightness/density are documented
@@ -127,17 +196,27 @@ function barVoiceEvents(st, bar){
   const lo=ci*CBEATS, hi=lo+CBEATS, notes=[];
   try{
     const ev=E.buildEvents(one), units=SE.voiceUnits(E,one);
-    const m=SE.mapEvents(E,one,ev,{lo,hi,units});
+    // bedAll: beds emit ONE event at section start (beat 0) and SUSTAIN across the
+    // whole cycle — the plain [lo,hi) window drops them for every bar with ci>0,
+    // which is exactly the "found audio plays but the viz shows nothing" bug (the
+    // engine schedules the bed once at ci=0 for its full duration; see faust/
+    // live.js scheduleNative). Ask for all beds, then CLIP each to this bar.
+    const m=SE.mapEvents(E,one,ev,{lo,hi,units,bedAll:true});
     for(const e of m.events){
       const freq=(e.sets&&e.sets.freq)||0;
       const vel=e.amp!=null?e.amp:(e.sets&&(e.sets.gain!=null?e.sets.gain:e.sets.level!=null?e.sets.level:0.5));
       notes.push({ role:noteRole(e.unit), unit:e.unit, beat:e.beat-lo, durB:Math.max(0.03,e.durB||0.1),
         midi:freqToMidi(freq), freq, vel:clamp01(vel), drum:!!e.drum });
     }
-    for(const f of (m.found||[])){   // found CHOPS are onsets; beds are texture (skipped from the note feed)
-      if(f.type!=="chop") continue;
-      notes.push({ role:"found", unit:"found", beat:f.beat-lo, durB:Math.max(0.03,f.durB||0.12),
-        midi:0, freq:0, vel:clamp01(f.amp!=null?f.amp:0.5), drum:true });
+    for(const f of (m.found||[])){
+      if(f.type==="chop"){   // chops are onsets — real hits, in-window already
+        notes.push({ role:"found", unit:"found", beat:f.beat-lo, durB:Math.max(0.03,f.durB||0.12),
+          midi:0, freq:0, vel:clamp01(f.amp!=null?f.amp:0.5), drum:true });
+      }else{                 // BED: a sustained texture — draw the slice that overlaps THIS bar
+        const s=Math.max(f.beat,lo), e2=Math.min(f.beat+(f.durB||0),hi);
+        if(e2-s>0.01) notes.push({ role:"found", unit:"bed", beat:s-lo, durB:e2-s,
+          midi:0, freq:0, vel:clamp01(f.amp!=null?f.amp:0.3), drum:true, bed:true });
+      }
     }
   }catch(e){}
   const val={cbeats:CBEATS, spb, bpm:one.bpm, notes};
@@ -163,7 +242,7 @@ function timelineLanes(st, roster, found, bar, audit){
     const r=sp.from?by[sp.from]:null;
     const has=r||notes.length||(sp.key==="found"&&found.length);
     if(!has) continue;
-    const name=r?r.name:(sp.key==="found"?(found[0]||"field texture"):sp.label);
+    const name=r?r.name:(sp.key==="found"?(found[0]||"tape atmosphere"):sp.label);
     // AUDIT-TRUTH: this lane's role was EXPECTED-BUT-SILENT in the measured audit for
     // this bar (not just the score) → paint it red/hatched with the probable reason.
     let sil=null;
@@ -178,7 +257,8 @@ export function vizData(){
   const st=S.playing;
   const blend=(S.weights||[]).slice().sort((a,b)=>b.w-a.w).slice(0,4)
     .map(w=>({g:w.g, label:(K.GENRES[w.g]&&K.GENRES[w.g].label)||titleCase(w.g), pct:Math.round(w.w*100), w:w.w}));
-  if(!st) return {blend, feel:[], roster:[], found:[], info:"", master:[], timeline:{cbeats:8,spb:0.5,bpm:110,lanes:[]}};
+  if(!st) return {blend, feel:[], roster:[], found:[], info:"", master:[], mind:null,
+    timeline:{cbeats:8,view:VIEW,folds:1,spb:0.5,bpm:110,lanes:[]}};
   const I=st.instruments||{}, roster=[];
   // build the voice units so we can read each instrument's resolved fx chain
   let U=null; try{ if(window.FaustStateEngine&&window.CsdEngine) U=FaustStateEngine.voiceUnits(CsdEngine,st); }catch(e){}
@@ -187,9 +267,11 @@ export function vizData(){
   if(I.melody) roster.push({role:"lead", name:voiceName("melody",I.melody,st), fx:voiceFx(U&&U.melody)});
   if(I.drums&&st.genreMeta&&st.genreMeta.kit&&st.genreMeta.kit!=="off"){
     const df=[]; for(const dk of ["kick","snare","hat"]) for(const x of voiceFx(U&&U[dk])) if(!df.includes(x)) df.push(x);
-    roster.push({role:"kit", name:titleCase(st.genreMeta.kit)+" kit", fx:df});
+    roster.push({role:"kit", name:kitChar(st.genreMeta.kit), fx:df});
   }
-  const found=(st.foundSources||[]).filter(s=>(s.vol||0)>0.02).map(s=>cleanLabel(s.label)||s.id).slice(0,2);
+  // found textures by CHARACTER (kind), deduped — never the recording's name/id
+  const found=[]; for(const s of (st.foundSources||[]))
+    if((s.vol||0)>0.02){ const c=foundChar(s); if(!found.includes(c)&&found.length<2) found.push(c); }
   const dom=blend[0], info=dom&&K.GENRES[dom.g]?K.GENRES[dom.g].info:"";
   const bar=barVoiceEvents(st, S.barInfo);
   // AUDIT-TRUTH: pull the measured expected-vs-actual audit for the bar currently heard
@@ -202,8 +284,25 @@ export function vizData(){
         for(const an of a.anomalies) if(!auditSilent[an.role]) auditSilent[an.role]={reason:an.reason,missing:an.missing||[]}; }
     }
   }catch(e){}
-  const timeline={cbeats:bar.cbeats, spb:bar.spb, bpm:bar.bpm, lanes:timelineLanes(st, roster, found, bar, auditSilent), audit:auditSilent};
-  return {blend, feel:feelAxes(st), roster, found, info, master:masterFx(st), timeline};
+  const timeline={cbeats:bar.cbeats, view:VIEW, folds:Math.max(1,Math.ceil(bar.cbeats/VIEW)),
+    spb:bar.spb, bpm:bar.bpm, lanes:timelineLanes(st, roster, found, bar, auditSilent), audit:auditSilent};
+  return {blend, feel:feelAxes(st), roster, found, info, master:masterFx(st), timeline, mind:mindData(st)};
+}
+// ---------- MIND: the MUSIC-MIND axes the state actually carries ----------
+// state.theory (adventure/color/voicing — the harmony brain), state.pipes (the
+// event-stream transforms) and state.rhythm.complexity (docs/MUSIC-MIND.md).
+// All optional per the absent-knob law: null when the state carries none, so the
+// section simply doesn't render (progressive disclosure — mobile stays uncrowded).
+const PIPE_CHAR={ harmonize:"harmonized thirds", echoCanon:"echo canon", strum:"strummed chords",
+  ghost:"ghost notes", callResponse:"call & response", densityArc:"density arc", sweepArc:"filter arc",
+  vibratoSwell:"vibrato swells", throwFx:"dub throws", octavePump:"octave pump" };
+const num1=v=>Array.isArray(v)?clamp01(((+v[0]||0)+(+v[1]||0))/2):clamp01(+v||0);
+function mindData(st){
+  const th=st.theory||null, cx=st.rhythm?num1(st.rhythm.complexity):0;
+  const pipes=[]; for(const p of (st.pipes||[])){ const n=PIPE_CHAR[p.id]||titleCase(p.id).toLowerCase(); if(!pipes.includes(n)) pipes.push(n); }
+  if(!th&&!pipes.length&&cx<=0) return null;
+  return { adventure:th?num1(th.adventure):0, color:th?num1(th.color):0, complexity:cx,
+    voicing:th?String(th.voicing||""):"", pipes };
 }
 window.__VIZ={ data:()=>vizData() };   // headless gate: read the live viz content
 // ---------- note feed → the demoscene layer ----------
@@ -220,6 +319,7 @@ export function scheduleBarNotes(info){
   const spb=info.spb||(60/((S.playing&&S.playing.bpm)||110));
   const bar=barVoiceEvents(S.playing, info);
   for(const n of bar.notes){
+    if(n.bed) continue;                                 // beds are texture, not onsets — timeline-only
     const delayMs=((info.when+n.beat*spb)-now)*1000;   // ms until this note's onset
     if(delayMs<-30) continue;                           // already passed this bar
     const ev={ role:n.role, midi:n.midi, freq:n.freq, vel:n.vel, durSec:n.durB*spb, section:info.section };
@@ -249,32 +349,55 @@ function radarSVG(feel){
 // duration; melodic lanes map PITCH to y (high notes ride high), drum/found lanes
 // stack each hit type on its own row. Block opacity = velocity. All CSS/HTML (no
 // SVG) so it stays crisp, responsive and cheap to rebuild every frame.
-const DRUM_ROW={ hat:0.10, tom:0.34, snare:0.52, kick:0.76, found:0.5 };
-function laneBlocks(L, cb){
-  const col=`var(${L.col})`;
-  if(L.drumLane){
-    return L.notes.map(n=>{
-      const top=((DRUM_ROW[n.unit]!=null?DRUM_ROW[n.unit]:0.5)*100).toFixed(1);
-      const left=Math.max(0,n.beat/cb*100);
-      const w=Math.max(1.3, Math.min(100-left, n.durB/cb*100));
-      return `<div class="vz-blk" style="left:${left.toFixed(2)}%;top:${top}%;width:${w.toFixed(2)}%;background:${col};opacity:${(0.45+0.55*n.vel).toFixed(2)}" title="${esc(n.unit)}"></div>`;
-    }).join("");
+const DRUM_ROW={ hat:0.10, tom:0.34, snare:0.52, kick:0.76, found:0.5, bed:0.18 };
+// THE UNIT IS ALWAYS 8 (Paul 2026-07): the visible roll is a constant 8-cell
+// window whatever the genre's harmonic rhythm. chordEvery=16/32 structures FOLD
+// into stacked 8-cell rows (they scroll down, they don't shrink) — mobile keeps
+// one readable grid pitch everywhere.
+const VIEW=8;
+// split one note into its per-fold-row segments: {row, left%, w%}
+function noteSegs(n, cb){
+  const rows=Math.max(1,Math.ceil(cb/VIEW)), out=[];
+  const b0=Math.max(0,n.beat), b1=Math.min(cb, n.beat+Math.max(0.03,n.durB||0.1));
+  for(let r=0;r<rows;r++){
+    const lo=r*VIEW, s=Math.max(b0,lo), e=Math.min(b1,lo+VIEW);
+    if(e-s<=0.001) continue;
+    out.push({row:r, left:(s-lo)/VIEW*100, w:(e-s)/VIEW*100});
   }
+  return out;
+}
+// per-fold-row block HTML for a lane: returns an array of `rows` HTML strings.
+function laneRows(L, cb){
+  const col=`var(${L.col})`, nRows=Math.max(1,Math.ceil(cb/VIEW));
+  const html=new Array(nRows).fill("");
   const ms=L.notes.filter(n=>n.midi>0).map(n=>n.midi);
-  const lo=ms.length?Math.min.apply(null,ms):60, hi=ms.length?Math.max.apply(null,ms):72, span=Math.max(1,hi-lo);
-  return L.notes.map(n=>{
-    const y=n.midi>0?(n.midi-lo)/span:0.5;
-    const top=((1-y)*70+12).toFixed(1);       // 12..82% of the roll, high notes up top
-    const left=Math.max(0,n.beat/cb*100);
-    const w=Math.max(1.6, Math.min(100-left, n.durB/cb*100));
-    return `<div class="vz-blk" style="left:${left.toFixed(2)}%;top:${top}%;width:${w.toFixed(2)}%;background:${col};opacity:${(0.4+0.6*n.vel).toFixed(2)}" title="${n.midi>0?'midi '+n.midi:''}"></div>`;
-  }).join("");
+  const plo=ms.length?Math.min.apply(null,ms):60, phi=ms.length?Math.max.apply(null,ms):72, span=Math.max(1,phi-plo);
+  for(const n of L.notes){
+    let top, cls="vz-blk", title;
+    if(L.drumLane){
+      top=((DRUM_ROW[n.unit]!=null?DRUM_ROW[n.unit]:0.5)*100).toFixed(1);
+      if(n.bed) cls+=" vz-bed";                       // sustained texture ribbon, not a hit
+      title=esc(n.bed?"sustained texture":n.unit);
+    }else{
+      const y=n.midi>0?(n.midi-plo)/span:0.5;
+      top=((1-y)*70+12).toFixed(1);                   // 12..82% of the roll, high notes up top
+      title=n.midi>0?"midi "+n.midi:"";
+    }
+    const op=(L.drumLane?0.45+0.55*n.vel:0.4+0.6*n.vel).toFixed(2);
+    for(const g of noteSegs(n,cb)){
+      const w=Math.max(n.bed?g.w:(L.drumLane?1.3:1.6), Math.min(100-g.left,g.w));
+      html[g.row]+=`<div class="${cls}" style="left:${g.left.toFixed(2)}%;top:${top}%;width:${w.toFixed(2)}%;background:${col};opacity:${op}" title="${title}"></div>`;
+    }
+  }
+  return html;
 }
 function timelineHTML(tl){
   if(!tl||!tl.lanes.length) return `<div class="vz-info">— no voices sounding —</div>`;
-  const cb=tl.cbeats, bp=100/cb;
+  const cb=tl.cbeats, bp=100/VIEW, nRows=Math.max(1,Math.ceil(cb/VIEW));
   const grid=`repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px ${bp.toFixed(3)}%)`;
-  let ruler=""; for(let b=0;b<cb;b++) ruler+=`<span style="left:${(b*bp).toFixed(2)}%">${b+1}</span>`;
+  let ruler=""; for(let b=0;b<VIEW;b++) ruler+=`<span style="left:${(b*bp).toFixed(2)}%">${b+1}</span>`;
+  // dead tail of the last fold row when cb isn't a multiple of VIEW (blended states)
+  const deadW=(nRows*VIEW-cb)/VIEW*100;
   const rows=tl.lanes.map(L=>{
     // ALL effects as one TINY line UNDER the roll (Paul: pills stacked/clipped so only
     // one showed — untangle to compact text that shows the whole chain, tightened).
@@ -284,14 +407,34 @@ function timelineHTML(tl){
     // ROW = [header + roll] stacked ABOVE the fx line, so effects sit BENEATH the
     // piano-roll (not beside it, which squished the grid) and every roll aligns on
     // an even vertical rhythm regardless of how long a voice's fx chain is.
+    // the roll: ONE 8-cell row, or a FOLDED stack of them for longer chord bars
+    const rowHtml=laneRows(L,cb);
+    const rolls=rowHtml.map((h,r)=>
+      `<div class="vz-roll${nRows>1?" vz-fold":""}${L.silent?" vz-silent":""}" style="background-image:${grid}">${h}`+
+      (r===nRows-1&&deadW>0.5?`<div class="vz-dead" style="width:${deadW.toFixed(2)}%"></div>`:"")+`</div>`).join("");
+    const roll=nRows>1?`<div class="vz-rollstack">${rolls}</div>`:rolls;
     return `<div class="vz-tlrow${L.silent?" vz-silent":""}">`+
       `<div class="vz-tlmain"><div class="vz-tlhead">`+
       `<div class="vz-tlname"><i style="background:var(${L.col})"></i>${esc(L.name)}${silBadge}</div>`+
       `<div class="vz-tlrole">${esc(L.label)}</div></div>`+
-      `<div class="vz-roll${L.silent?" vz-silent":""}" style="background-image:${grid}">${laneBlocks(L,cb)}</div></div>`+
+      roll+`</div>`+
       fx+`</div>`;
   }).join("");
   return `<div class="vz-ruler" style="background-image:${grid}">${ruler}</div><div class="vz-tl">${rows}</div>`;
+}
+// the MIND readout: compact adventure/color/motion meters + the active moves,
+// same terminal language (VT323, thin mint meters). Rendered only when the
+// state carries the MUSIC-MIND fields — absent = no section, mobile uncrowded.
+function mindHTML(m){
+  if(!m) return "";
+  const meter=(n,v)=>`<div class="vz-mrow"><span class="vz-mn">${n}</span>`+
+    `<span class="vz-mbar"><i style="width:${Math.round(clamp01(v)*100)}%"></i></span><b>${Math.round(clamp01(v)*100)}</b></div>`;
+  const bits=[]; if(m.voicing) bits.push(`voicing <b>${esc(m.voicing)}</b>`);
+  if(m.pipes.length) bits.push(`moves <b>${m.pipes.map(esc).join(" · ")}</b>`);
+  return `<div class="vz-sec"><div class="vz-lbl">mind — how it thinks</div><div class="vz-mind">`+
+    meter("adventure",m.adventure)+meter("color",m.color)+meter("motion",m.complexity)+
+    (bits.length?`<div class="vz-mmoves">${bits.join(" &nbsp; ")}</div>`:"")+
+    `</div></div>`;
 }
 export function renderInside(){
   const box=document.getElementById("inside"); if(!box) return;
@@ -307,6 +450,7 @@ export function renderInside(){
       (d.info?`<div class="vz-info">${esc(d.info)}</div>`:"")+`</div>`+
     `<div class="vz-sec"><div class="vz-lbl">feel — the texture</div>${radarSVG(d.feel)}`+
       `<div class="vz-feelnums">${feelNums}</div></div>`+
+    mindHTML(d.mind)+
     `<div class="vz-sec"><div class="vz-lbl">timeline — what each voice plays this bar</div>`+
       `${timelineHTML(d.timeline)}${masterLine}</div>`;
 }
