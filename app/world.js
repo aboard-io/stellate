@@ -3,38 +3,66 @@
 // blend/space constants (SNAP/CUTOFF/BARS_PER_SEG) + progression vocabulary.
 // No app imports: this is the geometric/constant foundation everything builds on.
 export const POS={
-  ambient:[201,218], neoclassical:[304,628], vaporwave:[591,411], lofi:[406,1000],
-  downtempo:[754,739], blues:[518,1396], jazz:[972,1369], triphop:[832,947],
-  synthwave:[1063,564], dancepop:[1292,189], edm:[1674,184], house:[1244,909],
-  techno:[1683,523], dubstep:[1669,1147], jungle:[1673,1403], dinosynth:[216,1365],
-  canawave:[893,183], transitwave:[1298,571], dub:[1135,1245], trance:[1784,367],
-  disco:[1194,728], italo:[1369,384], bigbeat:[1607,923], garage:[1429,1299],
-  doomdrone:[189,818], newage:[381,416], exotica:[626,1146], industrial:[1807,908],
-  spokenword:[616,904], chiptune:[1889,196], chinawave:[773,354], sovietwave:[1099,187],
-  citypop:[822,556], shibuyakei:[971,382], bossanova:[749,1383], idm:[1053,1004],
-  electro:[1560,363], miamibass:[1660,727], phonk:[1273,1119], witchhouse:[425,793],
-  mallsoft:[431,196], wintersynth:[189,1085], gabber:[1968,1056], psytrance:[1973,443],
-  minimal:[1862,631], deephouse:[1451,1040], coldwave:[1175,381], ebm:[1871,1273],
-  krautrock:[1496,576], newjack:[983,768], breakcore:[1953,1537], acidhouse:[1425,786],
-  surfrock:[1210,1482], spacelounge:[563,622], arabpop:[869,1161], tango:[389,1218],
-  desertblues:[435,1608], sludgemetal:[172,483], industrialmetal:[1996,791], darksynth:[1472,185],
-  hogcore:[1432,1557], prelude:[658,185], atlantidrone:[2247,1516], sourdough:[263,1817],
-  crtwave:[2539,1019], whalejazz:[2510,1543], termswave:[2313,203], microwave:[982,1593],
-  airtrafficdrone:[2137,636], faxbossa:[2361,928], crickettempo:[2470,1792], thermostatwave:[721,1620],
-  holdmusic:[2090,199], lunapolka:[2524,1290], elevatorcore:[2354,443], hotsaucecore:[595,1815],
-  ikeacore:[1213,1776], zubrovia:[2311,1202], dishwasherwave:[192,1601], surveywave:[2530,210],
-  aldente:[919,1814], umpirehouse:[2547,467], pigeonstep:[1501,1811], dmvstep:[2166,405],
-  towncrier:[2541,734], chickadeecore:[1845,1804], floppycore:[2101,1281], cerealwave:[2149,1781],
-  laundrycore:[1679,1634], auctioncore:[2336,688], dialupgabber:[2163,946]
+  ambient:[6147,2910], neoclassical:[772,607], vaporwave:[4570,784], lofi:[690,1657],
+  downtempo:[2148,1296], blues:[2986,4208], jazz:[786,3021], triphop:[1838,1807],
+  synthwave:[2795,277], dancepop:[4559,268], edm:[5243,1314], house:[3427,4036],
+  techno:[5712,4080], dubstep:[4529,2929], jungle:[4590,3142], dinosynth:[90,2679],
+  canawave:[4089,954], transitwave:[3622,1486], dub:[5287,4345], trance:[5578,1312],
+  disco:[2993,1833], italo:[4885,613], bigbeat:[3830,2962], garage:[3670,4206],
+  doomdrone:[3099,2002], newage:[1563,611], exotica:[1260,2335], industrial:[5013,2177],
+  spokenword:[871,1828], chiptune:[5314,970], chinawave:[5382,1661], sovietwave:[2536,617],
+  citypop:[4921,1140], shibuyakei:[6060,1315], bossanova:[2275,3522], idm:[2791,2466],
+  electro:[4377,1937], miamibass:[3072,3345], phonk:[2902,2177], witchhouse:[2024,1466],
+  mallsoft:[4896,1487], wintersynth:[1776,2149], gabber:[6499,2571], psytrance:[5347,2346],
+  minimal:[5605,3905], deephouse:[3567,4381], coldwave:[5235,438], ebm:[5178,3031],
+  krautrock:[5118,2004], newjack:[2800,1182], breakcore:[5508,3034], acidhouse:[3907,3693],
+  surfrock:[3334,1124], spacelounge:[1091,954], arabpop:[1170,2959], tango:[675,2166],
+  desertblues:[2906,3691], sludgemetal:[2383,787], industrialmetal:[3431,1834], darksynth:[5146,263],
+  hogcore:[5426,2687], prelude:[1109,262], atlantidrone:[6286,3082], sourdough:[6686,2913],
+  crtwave:[5962,2691], whalejazz:[1915,3177], termswave:[6502,2055], microwave:[2421,2659],
+  airtrafficdrone:[7139,2055], faxbossa:[3125,2353], crickettempo:[2714,1636], thermostatwave:[6778,2739],
+  holdmusic:[2556,2835], lunapolka:[7990,2397], elevatorcore:[2939,3005], hotsaucecore:[2086,3861],
+  ikeacore:[5618,4256], zubrovia:[685,3193], dishwasherwave:[5615,4594], surveywave:[6753,1363],
+  aldente:[5721,4426], umpirehouse:[5832,1875], pigeonstep:[4569,4035], dmvstep:[4551,3651],
+  towncrier:[3731,2788], chickadeecore:[5362,3553], floppycore:[5077,3205], cerealwave:[6317,2397],
+  laundrycore:[5262,3374], auctioncore:[5984,2229], dialupgabber:[5526,2514], afrobeat:[4114,2279],
+  fugue:[1223,438], dnb:[4188,3135], footwork:[4674,3477], happyhardcore:[7005,2395],
+  hardstyle:[4741,1656], eurodance:[6921,1540], singeli:[4477,2107], bebop:[1797,3349],
+  bluegrass:[4677,959], ska:[4228,263], klezmer:[502,2336], funk:[2519,2149],
+  boombap:[1075,1660], amapiano:[3864,4037], reggae:[2053,613], heavymetal:[1227,780],
+  budstep:[3197,2712], pixiewave:[4708,2346], picnicswing:[3237,781], cerealboxwave:[2990,101],
+  rosinamblelilt:[937,1130], subwooferbalm:[3065,3866], sepiadrive:[995,3362], sparkbreak:[3772,2448],
+  hopscotchwave:[1951,1127], moltenhouse:[4461,3864], magmastrut:[3904,2619], hammerhouse:[5759,2056],
+  zestgallop:[5462,1141], whittlertrot:[1155,1299], bunkerthump:[4597,2515], gumballdrive:[6127,1533],
+  kettlefunk:[7517,2226], glosspump:[5203,3722], refrigeratorfunk:[3923,1127], sherbetchop:[4681,2692],
+  pinballchop:[3339,2178], idlingsplice:[3582,3520], trenchsway:[1673,437], tarbreak:[5246,1832],
+  cedarskank:[7893,2568], bramblestep:[1832,957], toastercore:[6023,1707], vendingmachinethump:[5215,783],
+  boilercreep:[5069,2861], fluorescentstrut:[3436,438], dialtonehaze:[6726,2227], breadboxmince:[1901,2490],
+  earthmoversplice:[3188,3176], butterchurnbounce:[562,1997], furnacestrut:[376,2851], tectonicdash:[3129,955],
+  tundradoom:[8212,2226], sodabop:[3240,2523], citrushaze:[6689,1883], confettililt:[2829,1466],
+  willowmarch:[2048,2322], standbylightdrive:[4024,1316], cairntrot:[6784,1709], dumptruckdub:[1613,1636],
+  tallowtrot:[2646,447], fathomarch:[2385,3345], masonshuffle:[727,2681], boilerroomstomp:[3716,3345],
+  brinedub:[3435,1296], attichouse:[2247,3007], driftrot:[2403,1807], ceilingfanchop:[1517,2789],
+  strawdub:[2838,4037], porchdice:[3737,2006], shellacsplice:[5327,613], gourdscuttle:[4434,438],
+  auroragallop:[1969,3690], atticfanthrashsplice:[3514,1657], obelisktrot:[1155,2505], oakdublilt:[2876,4384],
+  duststrut:[4154,4205], reedrush:[1685,3520], hearthsway:[1335,1468], graingroove:[1993,1978],
+  hvacbop:[619,2511], moldcore:[1324,3135], hydracore:[5488,1487], ashfunk:[1705,2958],
+  steamdub:[3342,611], seraphswing:[5017,90]
 };
-// The star map lives in a LOGICAL coordinate space. POS above is only a SEED —
-// a familiar starting shape. The AUTHORITATIVE layout is COMPUTED at load by
-// computeGenreLayout() (down near boot): a deterministic force-directed / Lloyd
-// relaxation that (a) covers EVERY genre in K.GENRES — deriving a position for
-// any genre missing from the seed (e.g. fugue, afrobeat) near its most-similar
-// seeded neighbour — and (b) pushes nodes apart until no two genre NAME LABELS
-// overlap on screen at the default zoom (the boxes are measured in real pixels),
-// with a hard minimum dot separation and a weak similarity spring for grouping.
+// The star map lives in a LOGICAL coordinate space. POS above is BAKED — the
+// full relaxed layout for every committed genre, precomputed once (headless boot
+// at a 1200×850 reference viewport) and pasted here. It is a cache of
+// computeGenreLayout()'s output, which is deterministic, so the bake is exact.
+// WHY: that relaxation is O(N²)·(N·40 iterations); at 178 genres, running it on
+// every load stalled boot for seconds. Baking it means the common boot has
+// NOTHING to solve — computeGenreLayout early-returns when POS already covers
+// K.GENRES, and pays the full force-directed / Lloyd relaxation ONLY when a genre
+// is MISSING (a dev added one without re-baking): it then (a) covers EVERY genre —
+// deriving a position for any missing one near its most-similar neighbour — and
+// (b) pushes nodes apart until no two genre NAME LABELS overlap on screen at the
+// default zoom (boxes measured in real px), with a hard min dot separation and a
+// similarity spring for grouping. TO RE-BAKE after adding genres: boot the app,
+// read window.__X.POS, paste it back here.
 // It mutates POS in place (same object, so window.__X.POS and weightsAt stay
 // valid), then recomputeWorld() rebuilds the bounds. WORLD_W/WORLD_H are COMPUTED
 // from the POS extents (+ margin), never hardcoded; drawMap fits
