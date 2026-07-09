@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# deploy-stellate.sh — push the working tree to stellate.app (docs/HOSTING.md §5).
+# The server is DISPOSABLE (the genesis parable): this script + the repo can
+# rebuild it from a clean droplet. The deny-list ships the ~900 MB runtime
+# payload and keeps source-only material (bed .ogg originals, video crate
+# reels, essentia models) local. --delay-updates stages the whole transfer and
+# swaps at the end so a mid-deploy visitor never sees a half-updated tree.
+#
+#   tools/deploy-stellate.sh [host]     # default root@stellate.app
+#
+# MEDIA_MANIFEST enforces the immutable-cache invariant (§5): media content
+# never changes under an unchanged name — the deploy ABORTS if a hash moved
+# while its filename stayed put (bump the id/filename instead; nginx serves
+# found/ and engine/faust/dist/ with max-age=31536000, immutable).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+HOST="${1:-root@stellate.app}"
+ROOT=/srv/stellate
+
+echo "== media manifest (local) =="
+find found engine/faust/dist -type f \( ! -name '*.ogg' \) ! -path 'found/video/lib/*' \
+  -print0 | sort -z | xargs -0 sha256sum > /tmp/MEDIA_MANIFEST.new
+
+echo "== immutable invariant check against deployed manifest =="
+if ssh "$HOST" "test -f $ROOT/MEDIA_MANIFEST" 2>/dev/null; then
+  ssh "$HOST" "cat $ROOT/MEDIA_MANIFEST" > /tmp/MEDIA_MANIFEST.deployed
+  # a changed hash under an unchanged name is a deploy bug — abort loudly
+  if join -j 2 <(sort -k2 /tmp/MEDIA_MANIFEST.deployed) <(sort -k2 /tmp/MEDIA_MANIFEST.new) \
+      | awk '$2 != $3 { print "CHANGED-UNDER-SAME-NAME: " $1; bad=1 } END { exit bad }'; then
+    echo "   invariant holds"
+  else
+    echo "!! immutable invariant violated — rename the changed media (new id) and retry" >&2
+    exit 1
+  fi
+else
+  echo "   no deployed manifest (first deploy)"
+fi
+
+echo "== rsync =="
+rsync -a --delete --delay-updates --info=stats1 \
+  --exclude '.git' --exclude '.gitmodules' \
+  --exclude 'found/*.ogg' \
+  --exclude 'found/video/lib/' \
+  --exclude 'models/' \
+  --exclude 'scratch/' \
+  --exclude '.venv-verify/' \
+  --exclude 'verifier-catalog/' \
+  --include 'engine/faust/node_modules/@grame/' \
+  --include 'engine/faust/node_modules/@grame/faustwasm/***' \
+  --exclude 'engine/faust/node_modules/*' \
+  ./ "$HOST:$ROOT/"
+
+echo "== push manifest last =="
+scp -q /tmp/MEDIA_MANIFEST.new "$HOST:$ROOT/MEDIA_MANIFEST"
+
+echo "== smoke =="
+for u in / /engine/faust/stream-worker.js /found/found-manifest.json; do
+  printf '%-40s' "$u"
+  curl -sI "https://stellate.app$u" | grep -ciE 'cross-origin-(opener|embedder)' \
+    | sed 's/^2$/isolation OK/;s/^[01]$/MISSING ISOLATION HEADERS/'
+done
+curl -s -o /dev/null -w 'how.html %{http_code}\n' https://stellate.app/how.html
+echo "deployed."
