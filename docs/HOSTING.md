@@ -214,6 +214,12 @@ Notes:
 - Client behavior already matches: beds fetch `cache:"force-cache"`
   (`found-player.js:521`), manifests fetch `cache:"no-cache"`
   (`found-player.js:488`, `video-layer.js:1092-1093`).
+- **The mutable class** (learned when the invariant fired for real,
+  2026-07-09): manifests (`*.json`) AND `found/tw_vocal.mp3` — sing.py
+  re-sings the transitwave vocal on every offline render under a fixed
+  name — are mutable by design: excluded from MEDIA_MANIFEST and served
+  `no-cache` (dedicated nginx `location =` block). Everything else under
+  `found/` is versioned-by-name and immutable.
 
 **TLS: Let's Encrypt, mandatory before anything else.** `.app` is
 **HSTS-preloaded at the TLD level** in every browser — plain HTTP will not
