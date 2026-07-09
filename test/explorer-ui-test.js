@@ -176,6 +176,41 @@ async function main() {
   ok(vid.enabled === false, `F: VideoLayer.enabled() === ${vid.enabled} on load (want false)`);
   console.log(`\n=== VIDEO ===\n  present=${vid.present} available=${vid.available} enabled=${vid.enabled}`);
 
+  // ---- F2: the ? chip opens the ABOUT layer (what/how-to-play/provenance) ----
+  // The 2026-07-09 rename+about change: ? is a real modal on the shared chip
+  // plumbing, holding links to how.html (the pipeline explainer), the GitHub
+  // repo, and Aboard. Open it, assert visibility + links, close via Escape.
+  const about = await page.evaluate(() => {
+    const btn = document.getElementById("helpChip");
+    if (!btn) return { btn: false };
+    btn.click();
+    const wrap = document.getElementById("aboutWrap"), card = document.getElementById("about");
+    const open = !!wrap && wrap.classList.contains("open") && getComputedStyle(wrap).display !== "none";
+    const hrefs = card ? [...card.querySelectorAll("a")].map(a => a.getAttribute("href")) : [];
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    const closed = !wrap.classList.contains("open");
+    return { btn: true, open, hrefs, closed };
+  });
+  ok(about.btn, `F2a: no #helpChip (?) button in the DOM`);
+  ok(about.open, `F2b: clicking ? did not open the about layer (#aboutWrap.open)`);
+  const hasLink = s => (about.hrefs || []).some(h => h && h.includes(s));
+  ok(hasLink("how.html"), `F2c: about layer has no link to how.html (links: ${(about.hrefs || []).join(", ")})`);
+  ok(hasLink("github.com/ftrain/stellate"), `F2d: about layer has no link to github.com/ftrain/stellate`);
+  ok(hasLink("aboardresearch.com"), `F2e: about layer has no link to aboardresearch.com`);
+  ok(about.closed, `F2f: Escape did not close the about layer`);
+  console.log(`\n=== ABOUT (?) ===\n  open=${about.open} closedOnEsc=${about.closed} links=[${(about.hrefs || []).join(", ")}]`);
+
+  // ---- F3: how.html serves (200) and carries the canonical genre count ----
+  const how = await page.evaluate(async () => {
+    const r = await fetch("how.html");
+    const txt = await r.text();
+    return { status: r.status, has178: txt.includes("178"), bytes: txt.length };
+  });
+  ok(how.status === 200, `F3a: how.html fetch status ${how.status} (want 200)`);
+  ok(how.has178, `F3b: how.html does not contain "178"`);
+  console.log(`  how.html: status=${how.status} bytes=${how.bytes} has178=${how.has178}`);
+
   // ---- G: no console errors on load ----
   ok(loadErrs.length === 0, `G0: ${loadErrs.length} console/page errors on load: ${loadErrs.slice(0, 3).join(" | ")}`);
 

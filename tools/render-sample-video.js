@@ -341,7 +341,7 @@ console.log(`glitch schedule: ${nSmears} smears (${cmd.length} ramp steps)`);
 // end card, drawn on every render (the old MTV chyron). A genre-flavored band
 // name + song title are rolled FRESH every render (non-seeded), so each render
 // "plays" a different made-up group. A preset may pin its own via title/artist. ----
-// band/title banks live in namebank.js (shared with the CONSTELLATE chyron)
+// band/title banks live in namebank.js (shared with the STELLATE chyron)
 const { NAMEBANK, GENERIC } = require("../engine/namebank.js");
 function rollIdentity() {   // non-seeded: a different group/title every render
   const bank = NAMEBANK[P.bank || presetName] || GENERIC;

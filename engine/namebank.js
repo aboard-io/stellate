@@ -1,5 +1,5 @@
 // namebank.js — the fake-music-industry name generator, shared by the video
-// credits (render-sample-video.js) and the CONSTELLATE chyron (explorer.html).
+// credits (render-sample-video.js) and the STELLATE chyron (explorer.html).
 //
 // Everything here is DETERMINISTIC from whatever seed you hand it: same
 // seed + genre -> same band, same record, same touring lineup; change the

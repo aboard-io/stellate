@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STELLATE — how a song is made</title>
+<link rel="icon" href="data:,">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+/* how.html — the pipeline explainer. Self-contained: the app's own palette and
+   faces, a constellation rail down the left (the page is a drawn path through
+   the pipeline — the path IS the explanation), hand-authored SVG diagrams. */
+:root{--bg:#0c0a1a;--panel:#15122c;--panel2:#1c1838;--line:#2c2750;--line2:#3b3568;
+  --ink:#ece9ff;--dim:#9b93c6;--pink:#ff6ec7;--cyan:#45e0ff;--mint:#4dffb0;--amber:#ffd86b;--purple:#a06bff}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:20px/1.5 VT323,monospace;letter-spacing:.01em;
+  overflow-x:hidden}
+a{color:var(--cyan)}
+a:hover{color:var(--mint)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--pink);outline-offset:2px;border-radius:4px}
+::selection{background:var(--pink);color:var(--bg)}
+/* the seeded starfield behind everything (inline JS, mulberry32 — the same
+   PRNG family the engine draws every note from) */
+#sky{position:absolute;top:0;left:0;width:100%;z-index:0;pointer-events:none}
+#sky circle{animation:tw 4s ease-in-out infinite}
+@keyframes tw{0%,100%{opacity:var(--o,.5)}50%{opacity:calc(var(--o,.5)*.35)}}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  #sky circle{animation:none}
+}
+.wrap{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:0 1.2rem 4rem}
+/* ---- hero ---- */
+header{padding:4.5rem 0 3rem;text-align:left}
+.backlink{font:16px VT323,monospace;color:var(--dim);text-decoration:none;letter-spacing:.06em}
+.backlink:hover{color:var(--cyan)}
+h1{font-family:Orbitron,sans-serif;font-weight:700;font-size:clamp(2rem,7vw,3.4rem);
+  letter-spacing:.08em;margin:.6rem 0 .4rem;
+  background:linear-gradient(90deg,var(--amber),var(--pink) 52%,var(--cyan));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.tag{color:var(--dim);font-size:22px;max-width:52ch;margin:0}
+.tag b{color:var(--ink);font-weight:400}
+/* ---- part titles ---- */
+.part{font-family:Orbitron,sans-serif;font-size:.78rem;letter-spacing:.32em;text-transform:uppercase;
+  color:var(--amber);margin:4.2rem 0 .4rem;padding-top:1rem}
+.part.cyan{color:var(--cyan)}
+.part.mint{color:var(--mint)}
+.partsub{color:var(--dim);margin:0 0 2.2rem;max-width:56ch}
+/* ---- THE RAIL: stages are stars on a drawn constellation path ---- */
+.rail{position:relative;padding-left:2.1rem}
+.rail::before{content:"";position:absolute;left:8px;top:14px;bottom:14px;width:2px;
+  background:linear-gradient(180deg,var(--pink),var(--purple) 45%,var(--cyan));
+  box-shadow:0 0 9px rgba(255,110,199,.45);opacity:.55}
+.stage{position:relative;margin:0 0 3.4rem;scroll-margin-top:2rem}
+.stage::before{content:"";position:absolute;left:calc(-2.1rem + 3px);top:8px;width:12px;height:12px;
+  border-radius:50%;background:var(--bg);border:2px solid var(--pink);
+  box-shadow:0 0 10px var(--pink),0 0 22px rgba(255,110,199,.35)}
+.stage:nth-child(even)::before{border-color:var(--cyan);box-shadow:0 0 10px var(--cyan),0 0 22px rgba(69,224,255,.35)}
+.stage h2{font-family:Orbitron,sans-serif;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ink);margin:0 0 .15rem}
+.stage h2 .n{color:var(--pink);margin-right:.55rem}
+.stage:nth-child(even) h2 .n{color:var(--cyan)}
+.stage .fn{font:15px VT323,monospace;color:var(--mint);letter-spacing:.05em;margin:0 0 .8rem;opacity:.85}
+.stage p{margin:.7rem 0;max-width:62ch;color:var(--ink)}
+.stage p b{color:var(--amber);font-weight:400}
+.stage p em{color:var(--cyan);font-style:normal}
+.dim{color:var(--dim)}
+/* diagrams: cards in the app's chrome */
+figure{margin:1rem 0;background:rgba(18,15,38,.62);border:1px solid var(--line);border-radius:12px;
+  padding:.7rem .8rem .4rem;overflow-x:auto}
+figure svg{display:block;width:100%;height:auto;max-width:640px;margin:0 auto}
+figcaption{font:14px VT323,monospace;color:var(--dim);letter-spacing:.05em;padding:.3rem .2rem .4rem;text-align:center}
+/* ordered inner list for buildEvents */
+ol.stages{list-style:none;counter-reset:st;margin:1rem 0;padding:0;max-width:62ch}
+ol.stages li{counter-increment:st;position:relative;padding:.42rem 0 .42rem 2.4rem;border-top:1px solid var(--line)}
+ol.stages li:last-child{border-bottom:1px solid var(--line)}
+ol.stages li::before{content:counter(st);position:absolute;left:.2rem;top:.5rem;
+  font-family:Orbitron,sans-serif;font-size:.7rem;color:var(--pink);letter-spacing:.05em}
+ol.stages b{color:var(--amber);font-weight:400}
+ol.stages .s{font-size:15px;color:var(--mint);opacity:.8}
+/* laws card */
+.laws{background:rgba(18,15,38,.62);border:1px solid var(--line2);border-radius:12px;
+  padding:1rem 1.2rem;margin:2.2rem 0}
+.laws h3{font-family:Orbitron,sans-serif;font-size:.68rem;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--amber);margin:0 0 .5rem}
+.laws p{margin:.35rem 0;max-width:60ch}
+.laws b{color:var(--mint);font-weight:400}
+/* footer */
+footer{margin-top:5rem;padding-top:1.6rem;border-top:1px solid var(--line);
+  font:17px VT323,monospace;color:var(--dim);letter-spacing:.03em}
+footer .sig{color:var(--cyan);font-size:19px;margin-bottom:.6rem}
+footer nav{display:flex;flex-wrap:wrap;gap:.4rem 1.4rem}
+@media(max-width:560px){
+  body{font-size:18px}
+  figure svg{min-width:520px}
+  .rail{padding-left:1.6rem}
+  .stage::before{left:calc(-1.6rem + 3px)}
+  header{padding-top:3rem}
+}
+</style>
+</head>
+<body>
+<svg id="sky" aria-hidden="true"></svg>
+<div class="wrap">
+
+<header>
+  <a class="backlink" href="index.html">&larr; back to the star map</a>
+  <h1>STELLATE</h1>
+  <p class="tag">A generative instrument you play by moving through a
+  <b>178-genre</b> vector space. This page walks the whole pipeline: how one
+  point on the star map becomes a song, how the song refuses to loop, and how
+  a machine proves every genre still sounds like itself.</p>
+</header>
+
+<p class="part">Part one</p>
+<p class="partsub">HOW A SONG IS MADE — seven stages, always in this order,
+every random draw pulled from seeded streams so the same seed always renders
+the same music.</p>
+
+<div class="rail">
+
+<!-- ================= STAGE 1 ================= -->
+<section class="stage" id="point">
+  <h2><span class="n">01</span>The point becomes weights</h2>
+  <p class="fn">app/targeting.js · weightsAt</p>
+  <figure>
+  <svg viewBox="0 0 640 230" role="img" aria-label="A cursor point among genre stars, dashed lines to the four nearest anchors with blend weights">
+    <g font-family="VT323,monospace" font-size="15">
+      <!-- far stars -->
+      <circle cx="60" cy="40" r="2.5" fill="#9b93c6" opacity=".5"/><text x="70" y="44" fill="#9b93c6" opacity=".5">dub</text>
+      <circle cx="560" cy="30" r="2.5" fill="#9b93c6" opacity=".5"/><text x="570" y="34" fill="#9b93c6" opacity=".5">grime</text>
+      <circle cx="600" cy="190" r="2.5" fill="#9b93c6" opacity=".5"/><text x="547" y="194" fill="#9b93c6" opacity=".5">bossa</text>
+      <circle cx="40" cy="200" r="2.5" fill="#9b93c6" opacity=".5"/><text x="50" y="204" fill="#9b93c6" opacity=".5">doom</text>
+      <!-- the 4 nearest -->
+      <circle cx="200" cy="60" r="4" fill="#ffd86b"/><text x="210" y="52" fill="#ffd86b">house ·38</text>
+      <circle cx="440" cy="80" r="4" fill="#45e0ff"/><text x="450" y="72" fill="#45e0ff">disco ·31</text>
+      <circle cx="240" cy="185" r="4" fill="#4dffb0"/><text x="250" y="200" fill="#4dffb0">funk ·19</text>
+      <circle cx="450" cy="180" r="4" fill="#a06bff"/><text x="460" y="195" fill="#a06bff">boogie ·12</text>
+      <!-- cursor -->
+      <line x1="322" y1="122" x2="200" y2="60" stroke="#ffd86b" stroke-width="1.6" stroke-dasharray="4 4" opacity=".8"/>
+      <line x1="322" y1="122" x2="440" y2="80" stroke="#45e0ff" stroke-width="1.2" stroke-dasharray="4 4" opacity=".7"/>
+      <line x1="322" y1="122" x2="240" y2="185" stroke="#4dffb0" stroke-width="1" stroke-dasharray="4 4" opacity=".6"/>
+      <line x1="322" y1="122" x2="450" y2="180" stroke="#a06bff" stroke-width="1" stroke-dasharray="4 4" opacity=".5"/>
+      <circle cx="322" cy="122" r="7" fill="none" stroke="#ff6ec7" stroke-width="2"/>
+      <circle cx="322" cy="122" r="2.5" fill="#ff6ec7"/>
+      <text x="322" y="146" fill="#ff6ec7" text-anchor="middle">you are here</text>
+    </g>
+  </svg>
+  <figcaption>inverse-square blend over the &le;4 nearest anchors</figcaption>
+  </figure>
+  <p>The star map turns a point into a genre-weight blend: <b>inverse-square
+  distance over the &le;4 nearest anchors</b>, plus a continuous snap-to-anchor
+  pull scaled by how unambiguously nearest the closest star is — <em>on a star
+  &rArr; pure genre; between two &rArr; natural blend</em>. Each genre
+  neighborhood also gets its own key (name-hash mod 12), so crossing into a new
+  dominant genre is a key change.</p>
+</section>
+
+<!-- ================= STAGE 2 ================= -->
+<section class="stage" id="resolve">
+  <h2><span class="n">02</span>resolveMulti — weights into choices</h2>
+  <p class="fn">engine/genre-kernel.js · resolveMulti(weights, seed)</p>
+  <figure>
+  <svg viewBox="0 0 640 250" role="img" aria-label="Two parent genre pools funnel through one seeded stream into a single coherent choice">
+    <g font-family="VT323,monospace" font-size="15">
+      <!-- parent A -->
+      <rect x="20" y="20" width="180" height="90" rx="9" fill="#15122c" stroke="#ffd86b" opacity=".95"/>
+      <text x="32" y="42" fill="#ffd86b">house ·38</text>
+      <text x="32" y="64" fill="#ece9ff">kit: house four</text>
+      <text x="32" y="84" fill="#ece9ff">bpm 118–126</text>
+      <!-- parent B -->
+      <rect x="20" y="130" width="180" height="90" rx="9" fill="#15122c" stroke="#45e0ff" opacity=".95"/>
+      <text x="32" y="152" fill="#45e0ff">disco ·31</text>
+      <text x="32" y="174" fill="#ece9ff">kit: full · shuffle</text>
+      <text x="32" y="194" fill="#ece9ff">bpm 104–118</text>
+      <!-- funnel -->
+      <path d="M204 65 C 280 65, 280 118, 336 118" fill="none" stroke="#ffd86b" stroke-width="1.6" opacity=".7"/>
+      <path d="M204 175 C 280 175, 280 128, 336 128" fill="none" stroke="#45e0ff" stroke-width="1.6" opacity=".7"/>
+      <!-- one stream -->
+      <rect x="336" y="96" width="118" height="54" rx="9" fill="#1c1838" stroke="#ff6ec7"/>
+      <text x="395" y="118" fill="#ff6ec7" text-anchor="middle">mulberry32</text>
+      <text x="395" y="138" fill="#ff6ec7" text-anchor="middle">(seed)</text>
+      <!-- out -->
+      <line x1="454" y1="123" x2="500" y2="123" stroke="#4dffb0" stroke-width="1.6"/>
+      <path d="M500 118 l 9 5 l -9 5 z" fill="#4dffb0"/>
+      <rect x="512" y="66" width="116" height="114" rx="9" fill="#15122c" stroke="#4dffb0"/>
+      <text x="570" y="90" fill="#4dffb0" text-anchor="middle">the choice</text>
+      <text x="570" y="114" fill="#ece9ff" text-anchor="middle">bpm 121</text>
+      <text x="570" y="134" fill="#ece9ff" text-anchor="middle">kit: house</text>
+      <text x="570" y="154" fill="#ece9ff" text-anchor="middle">prog: disco</text>
+      <text x="570" y="172" fill="#9b93c6" text-anchor="middle">coherent</text>
+    </g>
+  </svg>
+  <figcaption>blends combine, never smear</figcaption>
+  </figure>
+  <p>One <b>mulberry32(seed)</b> stream — mulberry32 is a tiny seeded
+  random-number generator — with a fixed draw order. <b>Scalars</b> (bpm,
+  swing, humanize, fx) blend by weighted lerp (a linear blend) of each parent's [lo,hi] range,
+  then one sample. <b>Pools</b> (progression, kit, form, voicing) draw one
+  <em>parent</em> proportional to weight, then pick inside that parent's pool —
+  <b>blends combine, never smear</b>. Grouped dimensions draw ONE parent for the
+  whole group so a recipe and its source pool always agree.</p>
+  <p><b>Energy-preserving pattern inheritance</b>: for bass and lead patterns, a
+  parent whose pattern-pool energy is &ge;1.25 rungs above the runner-up and
+  carries weight &ge;.35 takes the draw outright — a dancey parent keeps its
+  groove against a wash-heavy neighborhood. DX7 patches sharing an FM algorithm
+  morph by lerping their ~144-dim param vectors. The MUSIC-MIND axes (adventure,
+  color, voicing, reharm, pipes, rhythm complexity) draw dead last on the same
+  stream.</p>
+  <p>Then <b>constrain()</b> keeps midpoints songs: the kit snaps to
+  jungle/breaks/machine-four above 150 bpm, adventure is capped at .75,
+  &le;2-chord progressions force reharm off, rhythm complexity is capped .4
+  above 165 bpm.</p>
+</section>
+
+<!-- ================= STAGE 3 ================= -->
+<section class="stage" id="state">
+  <h2><span class="n">03</span>The state — a song's blueprint</h2>
+  <p class="fn">engine/genre-kernel.js · toState(choice, opts)</p>
+  <figure>
+  <svg viewBox="0 0 640 200" role="img" aria-label="A form graph of typed section nodes walked left to right, solved to the length target">
+    <g font-family="VT323,monospace" font-size="15">
+      <text x="20" y="28" fill="#9b93c6" font-size="14">form graph "drop" — typed nodes, one interpreter</text>
+      <!-- nodes -->
+      <g text-anchor="middle">
+        <rect x="20" y="60" width="88" height="46" rx="8" fill="#15122c" stroke="#2c2750"/><text x="64" y="88" fill="#9b93c6">intro</text>
+        <rect x="128" y="60" width="88" height="46" rx="8" fill="#15122c" stroke="#45e0ff"/><text x="172" y="88" fill="#45e0ff">ground</text>
+        <rect x="236" y="60" width="88" height="46" rx="8" fill="#15122c" stroke="#ffd86b"/><text x="280" y="88" fill="#ffd86b">build</text>
+        <rect x="344" y="60" width="88" height="46" rx="8" fill="#1c1838" stroke="#ff6ec7" stroke-width="2"/><text x="388" y="88" fill="#ff6ec7">peak</text>
+        <rect x="452" y="60" width="88" height="46" rx="8" fill="#15122c" stroke="#4dffb0"/><text x="496" y="88" fill="#4dffb0">release</text>
+        <rect x="556" y="60" width="70" height="46" rx="8" fill="#15122c" stroke="#a06bff"/><text x="591" y="88" fill="#a06bff">cad.</text>
+      </g>
+      <g stroke="#3b3568" stroke-width="1.4">
+        <line x1="108" y1="83" x2="128" y2="83"/><line x1="216" y1="83" x2="236" y2="83"/>
+        <line x1="324" y1="83" x2="344" y2="83"/><line x1="432" y1="83" x2="452" y2="83"/>
+        <line x1="540" y1="83" x2="556" y2="83"/>
+      </g>
+      <!-- cycle counts -->
+      <g text-anchor="middle" fill="#9b93c6" font-size="14">
+        <text x="172" y="126">&times;2</text><text x="280" y="126">&times;2</text>
+        <text x="388" y="126">&times;3</text><text x="496" y="126">&times;2</text><text x="591" y="126">&times;1</text>
+      </g>
+      <!-- duration ruler -->
+      <line x1="20" y1="158" x2="626" y2="158" stroke="#2c2750" stroke-width="1.4"/>
+      <line x1="20" y1="152" x2="20" y2="164" stroke="#9b93c6"/>
+      <line x1="626" y1="152" x2="626" y2="164" stroke="#9b93c6"/>
+      <rect x="540" y="150" width="86" height="16" fill="rgba(255,110,199,.15)"/>
+      <text x="24" y="184" fill="#9b93c6" font-size="14">0:00</text>
+      <text x="560" y="184" fill="#4dffb0" font-size="14" text-anchor="middle">180 s &plusmn;10%</text>
+    </g>
+  </svg>
+  <figcaption>the duration solver lands cycle counts on the target — shape-preserving, never drops a section</figcaption>
+  </figure>
+  <p>toState applies the <b>8 macro sliders</b> (acoustic, density, dust, space,
+  bright, feel, energy, vocal — post-resolution, zero-rng, all-neutral =
+  byte-identical no-op), then builds sections: a <b>form graph walked by one
+  generic interpreter</b>, with a duration solver that lands cycle counts within
+  <b>&plusmn;10% of the 180&nbsp;s target</b>. Past <b>175&nbsp;s</b> unevolved,
+  the 3-minute rule splits plateaus and evolves at boundaries — a key walk of
+  +2/&minus;3/+5, a kit or lead re-roll, or a one-time form pivot.</p>
+  <p><b>Sampled by default</b>: the state ships with the SF2 sample library
+  (<b>105 sampled instruments</b>, plus <b>114 DX7 patches</b>), while signature
+  synths — tb303, reese, wobble, acid, synclead, modeld, vocoder — stay pure
+  synth. The absent-knob law holds: if a feature wasn't chosen, the blueprint
+  simply doesn't carry that knob — and an absent knob cannot change the output
+  (the byte-identity law).</p>
+</section>
+
+<!-- ================= STAGE 4 ================= -->
+<section class="stage" id="buildevents">
+  <h2><span class="n">04</span>buildEvents — the one score brain</h2>
+  <p class="fn">engine/csd-engine.js · buildEvents(state)</p>
+  <figure>
+  <svg viewBox="0 0 640 260" role="img" aria-label="Event lanes for pads, bass, drums, melody as a piano roll; a rubato warp bends the beat grid beneath them">
+    <g font-family="VT323,monospace" font-size="14">
+      <!-- beat ruler -->
+      <g stroke="#2c2750"><line x1="120" y1="24" x2="120" y2="196"/><line x1="245" y1="24" x2="245" y2="196"/>
+        <line x1="370" y1="24" x2="370" y2="196"/><line x1="495" y1="24" x2="495" y2="196"/><line x1="620" y1="24" x2="620" y2="196"/></g>
+      <!-- lanes -->
+      <text x="20" y="46" fill="#ff6ec7">pads</text>
+      <rect x="120" y="34" width="240" height="14" rx="3" fill="#a06bff" opacity=".8"/>
+      <rect x="370" y="34" width="250" height="14" rx="3" fill="#a06bff" opacity=".6"/>
+      <text x="20" y="86" fill="#ff6ec7">bass</text>
+      <g fill="#45e0ff"><rect x="120" y="74" width="46" height="14" rx="3"/><rect x="182" y="78" width="30" height="10" rx="3"/>
+        <rect x="245" y="74" width="46" height="14" rx="3"/><rect x="330" y="74" width="26" height="14" rx="3" fill="#ffd86b"/>
+        <rect x="370" y="74" width="46" height="14" rx="3"/><rect x="495" y="74" width="70" height="14" rx="3"/></g>
+      <text x="20" y="126" fill="#ff6ec7">drums</text>
+      <g fill="#4dffb0"><rect x="120" y="114" width="12" height="14" rx="2"/><rect x="182" y="114" width="12" height="14" rx="2"/>
+        <rect x="245" y="114" width="12" height="14" rx="2"/><rect x="307" y="114" width="12" height="14" rx="2"/>
+        <rect x="370" y="114" width="12" height="14" rx="2"/><rect x="432" y="114" width="12" height="14" rx="2"/>
+        <rect x="495" y="114" width="12" height="14" rx="2"/><rect x="540" y="118" width="8" height="10" rx="2" opacity=".5"/>
+        <rect x="557" y="114" width="12" height="14" rx="2"/></g>
+      <text x="20" y="166" fill="#ff6ec7">melody</text>
+      <g fill="#ffd86b"><rect x="120" y="154" width="30" height="12" rx="3"/><rect x="160" y="150" width="30" height="12" rx="3"/>
+        <rect x="200" y="146" width="38" height="12" rx="3"/><rect x="245" y="154" width="30" height="12" rx="3"/>
+        <rect x="300" y="150" width="52" height="12" rx="3" fill="#ff6ec7"/>
+        <rect x="370" y="146" width="30" height="12" rx="3"/><rect x="430" y="152" width="46" height="12" rx="3"/></g>
+      <!-- rubato warp -->
+      <path d="M120 216 C 220 206, 320 228, 420 214 S 590 210, 620 218" fill="none" stroke="#ff6ec7" stroke-width="1.8"/>
+      <line x1="120" y1="217" x2="620" y2="217" stroke="#2c2750" stroke-dasharray="3 5"/>
+      <text x="20" y="222" fill="#ff6ec7">rubato</text>
+      <text x="370" y="248" fill="#9b93c6" text-anchor="middle" font-size="13">one smooth monotonic beat-warp — every consumer inherits the same musical clock</text>
+    </g>
+  </svg>
+  <figcaption>the event fabric: four arrays, one clock</figcaption>
+  </figure>
+  <p>One function turns the state into every note. It runs in <b>this exact
+  order</b>, each pass on its own seed stream:</p>
+  <ol class="stages">
+    <li><b>Theory / reharm</b> — with reharm on, the named progression is only a
+      skeleton: a T&rarr;S&rarr;D&rarr;T functional walk regenerates the chords,
+      <em>adventure</em> gating diatonic &rarr; modal interchange &rarr; secondary
+      dominants &rarr; chromatic mediants and tritone subs; minimal-motion
+      voice-leading. <span class="s">stream seed+40961</span></li>
+    <li><b>Sections, voice by voice</b> — per cycle per chord: pads, bass,
+      drums, melody, countermelody — plus found-sound beds, beat-synced break
+      slicing, one-shot hits, glitched vox, rave stabs; transitions at every
+      boundary (fills, hat rush, snare roll, stutter, dropout, the per-genre
+      micro lick).</li>
+    <li><b>Transform pass</b> — a generic per-bar pass over the resolved pool
+      (rev, ply, degrade, octflip, rest, rot, stutter); hooks left alone.
+      <span class="s">stream seed+31337</span></li>
+    <li><b>Feel</b> — jux stereo divergence — the left and right channels play
+      slightly different variations; groove/swing with per-voice
+      push-pull; thunk (soft key-noise thumps); snare ping-pong throws; tb303 accent and slide.
+      <span class="s">groove on seed+777</span></li>
+    <li><b>Sample roles + perc lane</b> — generalized sample placements (bed,
+      slice, one-shot, opener, cadence, buried, response) and a percussion lane
+      over the kit. <span class="s">stream seed+9091</span></li>
+    <li><b>Rubato</b> — ONE smooth monotonic beat-warp applied to all four
+      arrays; every consumer inherits the same musical clock.</li>
+    <li><b>Pipes</b> — the resolved pipe chain (&le;3 of 10: harmonize,
+      echoCanon, strum, ghost, callResponse, densityArc, sweepArc, vibratoSwell,
+      throwFx, octavePump) applied at the one true choke point; densityArc never
+      drops a kick or snare. <span class="s">pipe i on seed+71000+i&times;97</span></li>
+    <li><b>Snare-law, dead last</b> — a kernel-wide mandate: no bar's snare or
+      hat signature repeats three times, measured in one rolling window across
+      the whole timeline; machine kits vary with machine moves, human kits with
+      ghosts, drags and drunk displacement. <span class="s">stream seed+5150</span></li>
+  </ol>
+</section>
+
+<!-- ================= STAGE 5 ================= -->
+<section class="stage" id="mapevents">
+  <h2><span class="n">05</span>mapEvents — notes into knobs</h2>
+  <p class="fn">engine/faust/state-engine.js · mapEvents</p>
+  <figure>
+  <svg viewBox="0 0 640 170" role="img" aria-label="An event with pipe annotations mapped through a whitelist onto real DSP sliders">
+    <g font-family="VT323,monospace" font-size="15">
+      <rect x="20" y="30" width="200" height="110" rx="9" fill="#15122c" stroke="#45e0ff"/>
+      <text x="34" y="54" fill="#45e0ff">event</text>
+      <text x="34" y="78" fill="#ece9ff">freq · gain · decay</text>
+      <text x="34" y="100" fill="#ffd86b">cutoffMul ·8</text>
+      <text x="34" y="122" fill="#ffd86b">vib ·02</text>
+      <!-- whitelist gate -->
+      <rect x="264" y="52" width="120" height="66" rx="9" fill="#1c1838" stroke="#ff6ec7"/>
+      <text x="324" y="80" fill="#ff6ec7" text-anchor="middle">NOTE_PARAMS</text>
+      <text x="324" y="100" fill="#ff6ec7" text-anchor="middle">whitelist</text>
+      <line x1="224" y1="85" x2="260" y2="85" stroke="#9b93c6" stroke-width="1.6"/>
+      <path d="M258 80 l 9 5 l -9 5 z" fill="#9b93c6"/>
+      <line x1="388" y1="85" x2="424" y2="85" stroke="#4dffb0" stroke-width="1.6"/>
+      <path d="M422 80 l 9 5 l -9 5 z" fill="#4dffb0"/>
+      <!-- sliders -->
+      <g>
+        <line x1="446" y1="52" x2="620" y2="52" stroke="#2c2750" stroke-width="3"/>
+        <circle cx="560" cy="52" r="6" fill="#4dffb0"/><text x="446" y="44" fill="#9b93c6" font-size="13">cutoff</text>
+        <line x1="446" y1="92" x2="620" y2="92" stroke="#2c2750" stroke-width="3"/>
+        <circle cx="490" cy="92" r="6" fill="#4dffb0"/><text x="446" y="84" fill="#9b93c6" font-size="13">vibrato</text>
+        <line x1="446" y1="132" x2="620" y2="132" stroke="#2c2750" stroke-width="3"/>
+        <circle cx="524" cy="132" r="6" fill="#4dffb0"/><text x="446" y="124" fill="#9b93c6" font-size="13">gain</text>
+      </g>
+    </g>
+  </svg>
+  <figcaption>annotations become sliders only where the module exposes them</figcaption>
+  </figure>
+  <p>The event fabric becomes per-note Faust parameter sets: freq, gain and
+  decay everywhere; the <b>NOTE_PARAMS whitelist</b> maps pipe annotations to
+  real DSP sliders only where the module exposes them (cutoffMul &rArr;
+  cutoff/tone, vib &rArr; vibrato) and silently drops the rest. Blue-note bends
+  render only on sampler units; sampled drums emit one-shots with real tom
+  repitch; found sounds get an auto-tune spec and a speech-rate cap for
+  intelligibility.</p>
+</section>
+
+<!-- ================= STAGE 6 ================= -->
+<section class="stage" id="voices">
+  <h2><span class="n">06</span>Faust WASM voices</h2>
+  <p class="fn">engine/faust/state-engine.js · voiceUnits</p>
+  <figure>
+  <svg viewBox="0 0 640 210" role="img" aria-label="Voice modules with insert chains feeding sends and a master effects bus">
+    <g font-family="VT323,monospace" font-size="14" text-anchor="middle">
+      <rect x="20" y="20" width="126" height="40" rx="8" fill="#15122c" stroke="#4dffb0"/><text x="83" y="45" fill="#4dffb0">SF2 sampler</text>
+      <rect x="20" y="72" width="126" height="40" rx="8" fill="#15122c" stroke="#ffd86b"/><text x="83" y="97" fill="#ffd86b">dx7_algN</text>
+      <rect x="20" y="124" width="126" height="40" rx="8" fill="#15122c" stroke="#ff6ec7"/><text x="83" y="149" fill="#ff6ec7">tb303</text>
+      <text x="83" y="192" fill="#9b93c6" font-size="13">per-voice modules</text>
+      <!-- inserts -->
+      <rect x="196" y="72" width="110" height="40" rx="8" fill="#1c1838" stroke="#3b3568"/><text x="251" y="97" fill="#9b93c6">inserts</text>
+      <g stroke="#3b3568" stroke-width="1.4">
+        <line x1="146" y1="40" x2="196" y2="84"/><line x1="146" y1="92" x2="196" y2="92"/><line x1="146" y1="144" x2="196" y2="100"/>
+      </g>
+      <!-- sends -->
+      <g stroke="#45e0ff" stroke-width="1.4" opacity=".8">
+        <line x1="306" y1="84" x2="380" y2="62"/><line x1="306" y1="92" x2="380" y2="92"/><line x1="306" y1="100" x2="380" y2="122"/>
+      </g>
+      <text x="343" y="52" fill="#45e0ff" font-size="13">dry · rev · del</text>
+      <!-- fx bus -->
+      <rect x="380" y="46" width="130" height="92" rx="8" fill="#15122c" stroke="#45e0ff"/>
+      <text x="445" y="76" fill="#45e0ff">reverbColor</text>
+      <text x="445" y="98" fill="#45e0ff">3-band comp</text>
+      <text x="445" y="120" fill="#9b93c6" font-size="13">fx bus</text>
+      <line x1="510" y1="92" x2="560" y2="92" stroke="#4dffb0" stroke-width="1.8"/>
+      <path d="M558 87 l 9 5 l -9 5 z" fill="#4dffb0"/>
+      <text x="596" y="97" fill="#4dffb0" font-size="17">out</text>
+    </g>
+  </svg>
+  <figcaption>the synth fleet, DX7 cartridges, and native PCM samplers, mixed on one bus</figcaption>
+  </figure>
+  <p>Per-voice modules are picked from the synth fleet, dx7_algN cartridges and
+  native PCM samplers — <b>the SF2 default</b> — with per-voice insert chains,
+  pool-level dry/reverb/delay/ping-pong sends, and an fx bus: zita or a
+  per-genre reverbColor module, plus a 3-band master compressor. The synth
+  fleet and the DX7 cartridges are <em>Faust compiled to WebAssembly</em>; the
+  sampled instruments are native PCM zone playback — everything mixed on one
+  bus, live in your browser.</p>
+</section>
+
+<!-- ================= STAGE 7 ================= -->
+<section class="stage" id="live">
+  <h2><span class="n">07</span>The live chord-bar scheduler</h2>
+  <p class="fn">engine/faust/live.js · makeWalk</p>
+  <figure>
+  <svg viewBox="0 0 640 150" role="img" aria-label="A timeline of chord bars, each reseeded, with an equal-power crossfade bridging a voice change">
+    <g font-family="VT323,monospace" font-size="14">
+      <g text-anchor="middle">
+        <rect x="20" y="40" width="120" height="44" rx="7" fill="#15122c" stroke="#45e0ff"/><text x="80" y="67" fill="#45e0ff">bar · serial 0</text>
+        <rect x="150" y="40" width="120" height="44" rx="7" fill="#15122c" stroke="#45e0ff"/><text x="210" y="67" fill="#45e0ff">bar · serial 1</text>
+        <rect x="280" y="40" width="120" height="44" rx="7" fill="#15122c" stroke="#45e0ff"/><text x="340" y="67" fill="#45e0ff">bar · serial 2</text>
+        <rect x="475" y="40" width="145" height="44" rx="7" fill="#1c1838" stroke="#ff6ec7"/><text x="547" y="67" fill="#ff6ec7">new voices</text>
+      </g>
+      <!-- crossfade -->
+      <path d="M400 84 C 425 84, 450 44, 475 44" fill="none" stroke="#ff6ec7" stroke-width="1.6"/>
+      <path d="M400 44 C 425 44, 450 84, 475 84" fill="none" stroke="#45e0ff" stroke-width="1.6"/>
+      <text x="437" y="110" fill="#9b93c6" text-anchor="middle" font-size="13">equal-power crossfade</text>
+      <text x="200" y="126" fill="#4dffb0" font-size="14">reseed per bar: seed + serial&times;7919</text>
+    </g>
+  </svg>
+  <figcaption>one authoritative walk; each call builds exactly one chord bar</figcaption>
+  </figure>
+  <p>ONE authoritative walk shared by the live map and the offline journey
+  renderer: each call builds exactly
+  one chord bar — it polls the current target (retarget and glide just mutate
+  what it reads), <b>reseeds seed + serial&times;7919 per bar</b> while
+  instrument identity stays on the song seed, fills only on a section's last
+  cycle, sweeps only on its first and last. Two output paths: the
+  <b>ring/worklet path</b> (desktop — same voice topology &rArr; glide by
+  feeding bars into the running stream; a topology change &rArr; bridge stream
+  and equal-power crossfade) and the <b>WAV-first path</b> (mobile — rolling
+  rendered WAV segments on a real audio element, pocket-proof).</p>
+</section>
+
+</div><!-- /rail -->
+
+<p class="part cyan">Part two</p>
+<p class="partsub">HOW A SONG EVOLVES — nothing loops verbatim, and all of it
+is seeded.</p>
+
+<section class="stage" id="evolve" style="margin-bottom:2.4rem">
+  <figure>
+  <svg viewBox="0 0 640 160" role="img" aria-label="A long timeline with per-cycle mutations and key-walk markers at plus 2, minus 3, plus 5 semitones">
+    <g font-family="VT323,monospace" font-size="14">
+      <line x1="20" y1="80" x2="620" y2="80" stroke="#2c2750" stroke-width="2"/>
+      <!-- cycles -->
+      <g fill="#45e0ff"><circle cx="60" cy="80" r="4"/><circle cx="120" cy="80" r="4"/><circle cx="180" cy="80" r="4"/>
+        <circle cx="300" cy="80" r="4"/><circle cx="360" cy="80" r="4"/><circle cx="480" cy="80" r="4"/><circle cx="560" cy="80" r="4"/></g>
+      <!-- key walk flags -->
+      <g text-anchor="middle">
+        <line x1="240" y1="80" x2="240" y2="46" stroke="#ff6ec7" stroke-width="1.6"/>
+        <text x="240" y="38" fill="#ff6ec7">+2</text>
+        <line x1="420" y1="80" x2="420" y2="46" stroke="#ffd86b" stroke-width="1.6"/>
+        <text x="420" y="38" fill="#ffd86b">&minus;3</text>
+        <line x1="600" y1="80" x2="600" y2="46" stroke="#4dffb0" stroke-width="1.6"/>
+        <text x="600" y="38" fill="#4dffb0">+5</text>
+      </g>
+      <g text-anchor="middle" fill="#9b93c6" font-size="13">
+        <text x="120" y="112">ghost snare</text>
+        <text x="300" y="112">cell mutation</text>
+        <text x="480" y="112">kit re-roll</text>
+      </g>
+      <text x="320" y="146" fill="#9b93c6" text-anchor="middle" font-size="13">the whole band — samplers included — transposes on every key walk</text>
+    </g>
+  </svg>
+  <figcaption>per-cycle humanity below the line, structural evolution above it</figcaption>
+  </figure>
+  <p><b>Per-cycle humanity.</b> Hats drop out 9% per hit; drum levels breathe
+  (25% of hits &plusmn;15%); a quiet ghost snare lands on an off-slot in 40% of
+  chord bars; later cycles of a section get busier; bass notes octave-pop 5%,
+  push late 6%, rest 5%. With the rhythm knob: per-cycle <em>bass-cell
+  mutation</em> (drop, anticipate, octave-flip — hard cap 2 per cycle) and
+  <em>melody rhythm cells</em> that snap phrases onto one of three rhythm grids
+  (dotted pairs, tresillo, 3-3-2), pitch material untouched. The snare-law guarantees no snare or hat bar
+  three-peats anywhere.</p>
+  <p><b>Section form.</b> <b>7 form graphs</b> (dj, drop, wave, pop generative;
+  ritual, anthem, transit hand-authored and video-locked) of typed nodes —
+  ground, build, peak, release, exposed, cadence — walked by one interpreter.
+  Past 175&nbsp;s unevolved the track MUST evolve: modulate (a cumulative
+  +2/&minus;3/+5 semitone key walk — the whole band, samplers included,
+  transposes), re-roll a fresh kit and lead from the anchor's own pools, or
+  form-pivot, once per track and never into wave.</p>
+  <p><b>Glide and travel.</b> While LIVE, moving the cursor queues a smooth
+  glide — the continuous morph plus discrete voice and section flips — through
+  the same per-bar path; the traveler walks a drawn path leg by leg, retargeting
+  every bar. Blends interpolate every dimension <em>including the mind axes</em>.</p>
+  <p><b>Journeys.</b> Waypoints are genre names or drawn points; weight vectors
+  lerp leg by leg. Per track, the <b>key walks the circle of fifths</b> (+7 or
+  +5 semitones mod 12), and a <b>novelty memory</b> remembers the last 2 tracks'
+  kit/progression/bass/lead/found signature — a candidate matching &ge;3 of 5
+  fields is rerolled, up to 6 attempts. Rendered journeys are DJ-mixed at the
+  PCM level: downbeat-aligned seams, beatmatch when the bpm gap &le;8, a 2-bar
+  crossfade when &le;40, a hard cut beyond that.</p>
+</section>
+
+<p class="part mint">Part three</p>
+<p class="partsub">THE VERIFIER LOOP — how a machine keeps 178 genres honest.</p>
+
+<section class="stage" id="verifier" style="margin-bottom:1rem">
+  <figure>
+  <svg viewBox="0 0 640 300" role="img" aria-label="A genre-confusion matrix with a bright mint diagonal: every genre scores highest as itself">
+    <g font-family="VT323,monospace" font-size="14">
+      <text x="320" y="22" fill="#9b93c6" text-anchor="middle">rendered as &rarr; scored against &darr; · 178 &times; 178</text>
+      <g id="mx" transform="translate(204,44)"></g>
+      <text x="320" y="290" fill="#4dffb0" text-anchor="middle">178/178 diagonal-dominant · seeds 1, 2, 3</text>
+    </g>
+  </svg>
+  <figcaption>the genre-confusion matrix: the diagonal is the law</figcaption>
+  </figure>
+  <p>Every render is measured on <b>23 symbolic features</b> — bpm, off-grid
+  feel, snare balance, hat and drum density, variation, wash, sub, motion,
+  sevenths, break/chop/bed use, crackle, pump, compression, swing, humanize,
+  acoustic, rubato, lead voices, soft top, interlock — and scored against
+  <b>178 per-genre target rows</b> of [lo, hi, weight] fences. The matrix
+  renders every anchor at seeds 1, 2, 3 and requires <b>178/178 diagonal
+  dominance</b>: every genre scores highest as itself. Run after every change.</p>
+  <div class="laws">
+    <h3>The two standing laws</h3>
+    <p><b>1 · Determinism.</b> Same seed &rArr; byte-identical events; an absent
+    knob &rArr; byte-identical output (zero rng draws). Every subsystem draws
+    from its own seeded stream, so new dimensions draw dead last and untouched
+    genres press byte-identically.</p>
+    <p><b>2 · The matrix.</b> 178/178 diagonal-dominant after every change. If a
+    tweak makes house stop sounding most like house, the change does not land.</p>
+  </div>
+</section>
+
+<footer>
+  <p class="sig">Audio is derived; source is the artifact.</p>
+  <nav>
+    <a href="index.html">&larr; play STELLATE</a>
+    <a href="https://aboardresearch.com">made by Aboard</a>
+    <a href="https://github.com/ftrain/stellate">open source on GitHub</a>
+    <span>MIT license</span>
+  </nav>
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+// the starfield + the matrix diagonal, both drawn by mulberry32 — the same
+// PRNG family every note in the engine comes from. Deterministic from a seed.
+(function(){
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;
+    var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;
+    return((t^t>>>14)>>>0)/4294967296}}
+  var NS="http://www.w3.org/2000/svg";
+  // sky: 140 seeded stars
+  var sky=document.getElementById("sky"),r=mulberry32(178);
+  function sizeSky(){
+    sky.style.height="0px";   // absolute sky adds to scrollHeight — exclude itself from the measure
+    var w=innerWidth,h=Math.max(innerHeight,document.body.scrollHeight);
+    sky.setAttribute("viewBox","0 0 "+w+" "+h);
+    sky.style.height=h+"px";
+    while(sky.firstChild)sky.removeChild(sky.firstChild);
+    var rr=mulberry32(178);
+    for(var i=0;i<140;i++){
+      var c=document.createElementNS(NS,"circle");
+      c.setAttribute("cx",(rr()*w).toFixed(1));
+      c.setAttribute("cy",(rr()*h).toFixed(1));
+      c.setAttribute("r",(rr()*1.3+.4).toFixed(2));
+      var o=(rr()*.5+.15).toFixed(2);
+      c.setAttribute("fill",["#ece9ff","#45e0ff","#ff6ec7","#ffd86b"][i%4]);
+      c.style.setProperty("--o",o);c.setAttribute("opacity",o);
+      c.style.animationDelay=(rr()*4).toFixed(2)+"s";
+      sky.appendChild(c);
+    }
+  }
+  sizeSky();addEventListener("resize",sizeSky);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(sizeSky); // web fonts reflow the page after first measure
+  // the matrix: an 18x18 downsample of the 178x178 grid, bright diagonal
+  var mx=document.getElementById("mx");
+  if(mx){var N=18,S=11,g=mulberry32(23);
+    for(var y=0;y<N;y++)for(var x=0;x<N;x++){
+      var q=document.createElementNS(NS,"rect");
+      q.setAttribute("x",x*(S+2));q.setAttribute("y",y*(S+2));
+      q.setAttribute("width",S);q.setAttribute("height",S);q.setAttribute("rx",2);
+      if(x===y){q.setAttribute("fill","#4dffb0");q.setAttribute("opacity",".95")}
+      else{q.setAttribute("fill","#2c2750");q.setAttribute("opacity",(0.25+g()*0.45).toFixed(2))}
+      mx.appendChild(q);
+    }
+  }
+})();
+</script>
+</body>
+</html>

@@ -12,11 +12,27 @@
   #map .cur{pointer-events:none}  /* the traveler is display-only: it never steals a waypoint grab */
   .brand{position:fixed;top:.7rem;left:1rem;z-index:3;font-family:Orbitron,sans-serif;font-size:1.02rem;letter-spacing:.05em;margin:0;
     background:linear-gradient(90deg,var(--amber),var(--pink) 52%,var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .sub{position:fixed;top:3.1rem;left:1rem;z-index:3;color:var(--dim);font-size:.8rem;max-width:46ch;display:none;
-    background:rgba(12,10,26,.82);border:1px solid var(--line);border-radius:10px;padding:.7rem .9rem}
-  .sub.show{display:block}
   .help{font-size:.7rem;padding:.1rem .5rem;border-radius:99px;vertical-align:middle;margin-left:.5rem;
     border:1px solid var(--line2);background:rgba(28,24,56,.6);color:var(--dim);cursor:pointer;-webkit-text-fill-color:var(--dim)}
+  .help.on{border-color:var(--pink);color:var(--pink);-webkit-text-fill-color:var(--pink)}
+  /* ABOUT (the ? layer): what stellate is + how to play + provenance. Rides the
+     shared modal plumbing; anchored under the brand like the old .sub docs. */
+  #about{position:absolute;top:3.1rem;left:1rem;width:min(430px,calc(100vw - 2rem));
+    max-height:calc(100vh - 4rem);overflow:auto;background:rgba(12,10,26,.92)}
+  #about h2{font-size:.72rem;color:var(--ink)}
+  #about .ab-what{margin:.1rem 0 .7rem;font-size:.84rem;line-height:1.55}
+  #about .ab-what b{color:var(--amber);font-weight:400}
+  #about .ab-how{display:block;margin:.2rem 0 .9rem;padding:.5rem .7rem;border:1px solid var(--line2);
+    border-radius:9px;font-family:Orbitron,sans-serif;font-size:.68rem;letter-spacing:.14em;
+    text-transform:uppercase;text-decoration:none;color:var(--pink);
+    background:linear-gradient(90deg,rgba(255,110,199,.12),rgba(69,224,255,.12))}
+  #about .ab-how:hover{border-color:var(--pink)}
+  #about .ab-h{font-family:Orbitron,sans-serif;font-size:.6rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--dim);margin:0 0 .35rem}
+  #about .ab-play{margin:0 0 .8rem;color:var(--dim);font-size:.8rem;line-height:1.55}
+  #about .ab-play b{color:var(--ink)}
+  #about .ab-foot{margin:0;padding-top:.6rem;border-top:1px solid var(--line);
+    color:var(--dim);font-size:.76rem}
   .card h2{cursor:pointer;user-select:none}
   .card.min{padding:.45rem .9rem}
   .card.min>:not(h2){display:none}

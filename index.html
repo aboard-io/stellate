@@ -3,23 +3,37 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>CONSTELLATE — draw a path through genre space</title>
+<title>STELLATE — draw a path through genre space</title>
 <link rel="icon" href="data:,">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=VT323&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="app/app.css">
 </head>
 <body>
-<h1 class="brand">CONSTELLATE<button class="help" title="show/hide the docs"
-  onclick="document.querySelector('.sub').classList.toggle('show')">?</button></h1>
-<p class="sub"><b>Drag</b> anywhere to set a destination — the song journeys there, never jumps.
-<b>Double-click</b> to drop path waypoints: a constellation line connects them and a traveler
-walks the path, morphing the music through every genre it crosses — the path <em>is</em> the mix.
-Drag waypoints to move them, right-click to erase. Set the pace in the panel.
-<b>Pinch</b> (or ctrl+scroll) zooms the chart.
-▶ plays, ⓘ opens “inside the sound” (the live voice timeline), ♪ the chyron, ⚙ the controls.</p>
+<h1 class="brand">STELLATE<button class="help" id="helpChip" title="about stellate">?</button></h1>
 <svg id="map"></svg>
 <div class="modal" id="panelWrap"><div class="card" id="panel"></div></div>
 <div class="modal" id="insideWrap"><div id="inside" class="card"></div></div>
+<!-- ABOUT: the ? layer — what this is, how to play, where it came from. Static
+     content (the old .sub instructions folded in); panels.js wires it into the
+     shared chip↔modal plumbing (backdrop tap / esc / ? all close it). -->
+<div class="modal" id="aboutWrap"><div class="card" id="about">
+  <h2>Stellate</h2>
+  <p class="ab-what">A generative instrument you play by moving through a
+  <b>178-genre</b> vector space. Every song is rendered live in your browser and
+  is fully deterministic from a seed — the same seed always plays the same music.
+  Every genre is verified by a genre-confusion matrix: all 178 must sound most
+  like themselves after every change.</p>
+  <a class="ab-how" href="how.html">How a song is made &rarr;</a>
+  <h3 class="ab-h">How to play</h3>
+  <p class="ab-play"><b>Drag</b> anywhere to set a destination — the song journeys there, never jumps.
+  <b>Double-click</b> to drop path waypoints: a constellation line connects them and a traveler
+  walks the path, morphing the music through every genre it crosses — the path <em>is</em> the mix.
+  Drag waypoints to move them, right-click to erase. Set the pace in the panel.
+  <b>Pinch</b> (or ctrl+scroll) zooms the chart.
+  ▶ plays, ⓘ opens “inside the sound” (the live voice timeline), ▢ the background, ⚙ the controls.</p>
+  <p class="ab-foot">made by <a href="https://aboardresearch.com">Aboard</a> ·
+  <a href="https://github.com/ftrain/stellate">open source</a> · MIT</p>
+</div></div>
 <!-- boot progress: a pixel-locked hairline at the very top edge, shown while the
      live engine warms up (module load -> voices -> first bar -> first audio),
      faded on the first real RMS. Honest: stalls shimmer, never fake 100%. -->
