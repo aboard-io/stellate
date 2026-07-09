@@ -131,6 +131,7 @@ sketches but flag a human decision before any release that chops/pitches them.
 | `vx_burroughs` | [`naropa_william_s_burroughs3`](https://archive.org/details/naropa_william_s_burroughs3) | William S. Burroughs reading — Naropa Poetics Audio Archive | **CC BY-NC-ND 1.0** (⚠ ND) |
 | `vx_ginsberg` | [`Allen_Ginsberg_and_Anne_Waldman_reading_April_1977_77C002`](https://archive.org/details/Allen_Ginsberg_and_Anne_Waldman_reading_April_1977_77C002) | Allen Ginsberg & Anne Waldman reading, April 1977 — Naropa | **CC BY-NC-ND 1.0** (⚠ ND) |
 | `vx_waldman` | [`Anne_Waldman_reading_1978_August_1978_78P110`](https://archive.org/details/Anne_Waldman_reading_1978_August_1978_78P110) | Anne Waldman reading, August 1978 — Naropa | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_ginsberg_class` | [`Allen_Ginsberg_Basic_Poetics_class_20_April_1980_80P020`](https://archive.org/details/Allen_Ginsberg_Basic_Poetics_class_20_April_1980_80P020) | Allen Ginsberg — "Basic Poetics" class, 20 April 1980 (a full poetics *lecture*) — Naropa Poetics Audio Archive | **CC BY-NC-ND 1.0** (⚠ ND) |
 | `vx_conet_poacher` | [`ird059`](https://archive.org/details/ird059) — `tcp_d1_06` | The Conet Project: The Lincolnshire Poacher (MI6 numbers station) — Irdial-Discs | Irdial "Free Music Philosophy" (free to copy; ⚠ no CC grant) |
 | `vx_conet_swedish` | [`ird059`](https://archive.org/details/ird059) — `tcp_d1_01` | The Conet Project: The Swedish Rhapsody — Irdial-Discs | Irdial "Free Music Philosophy" (free to copy; ⚠ no CC grant) |
 | `vx_blake` | [`songsofinnocenceandexperience_2001_librivox`](https://archive.org/details/songsofinnocenceandexperience_2001_librivox) | Blake, *Songs of Experience* — LibriVox volunteers | public domain |
@@ -164,6 +165,20 @@ the font itself is never committed or shipped).
 | **the full General MIDI set** — all 128 bank-0 FluidR3 melodic presets (`faust/extract-gm.js`, 2026-07 "all of GM"): the acoustic families above plus `rhodes_ep` `legend_ep_2` `electric_piano` `yamaha_grand_piano` `violin` `viola` `contrabass` `slow_strings` `tremolo` `timpani` `ohh_voices` `solo_vox` `orchestra_hit` `clean_guitar` `palm_muted_guitar` `overdrive_guitar` `distortion_guitar` `guitar_harmonics` `soprano_sax` `baritone_sax` `english_horn` `bassoon` `piccolo` `recorder` `ocarina` `banjo` `koto` `shamisen` `fiddle` `dulcimer` `music_box` `xylophone` `tubular_bells` `tinker_bell` `picked_bass` `pop_bass` `slap_bass` `reed_organ` `brass_section` `bowed_glass` `space_voice` … | **FluidR3 GM/GS** (same font/item as above) | 105 usable multi-zone keymaps (6 zones each). The 24 single-zone presets (SFX, one-note synth pads, DrawbarOrgan) extract but are one-shot color only. Now the default sound: `state.sampledOnly` on by default, signature synths (tb303 etc.) exempt. | **MIT** (Frank Wen, as above) |
 | `felt_piano` | **FluidR3 GM/GS** GM 0 "Yamaha Grand Piano" (same font/item as above) | 10-zone keymap (dense midrange — the neoclassical lead is exposed), made *felt* by baking a 3 kHz lowpass into the zone wavs at extraction (fetch-found-samples.sh; sample counts unchanged, SF2 loop points preserved). A derivative work of the FluidR3 samples, not a new recording. Chosen over external "felt piano" sample sets: no CC0/PD felt piano with verifiable provenance and per-note loop data was found (the well-known felt libraries — e.g. Spitfire LABS Soft Piano — are EULA-restricted, not redistributable). | **MIT** (Frank Wen, as above) |
 | `drums/acoustic` `drums/room` `drums/power` `drums/electronic` `drums/jazz` `drums/brush` | **FluidR3 GM/GS** GM **bank 128** percussion (Standard / Room / Power / Electronic / Jazz / Brush kits; same font/item as above) | SAMPLED DRUM KITS — per-hit one-shots (kick/snare/hi-hats/toms + rim/clap/crash/ride), one recorded GM drum note each, at natural pitch (`faust/sf2.js drumkit`). Additive to the Faust synth kicks; genres opt in via `drums.kit` (genre-kernel `DRUMKITS`). Wavs gitignored/derived, `len` mirrored in `DRUMKITS`. | **MIT** (Frank Wen, as above) |
+
+## Sample CDs (found/samples/<prefix>/ — tools/fetch-sample-cd.sh)
+
+Break/loop/one-shot crates ingested from archive.org sample-CD items by the
+reusable pipeline `tools/fetch-sample-cd.sh` + `tools/classify-sample-cd.py`
+(download → mono/trim → classify pitch/bpm/class → register). The audio is
+**not committed** (gitignored under `found/samples/`); the fetch recipe, the
+per-crate `manifest.json`, and the `genre-kernel.js` `SAMPLES` entries are the
+committed, recoverable deliverable. Workflow documented in CLAUDE.md
+("Incorporating a sample CD").
+
+| local dir / prefix | source | content | license |
+|---|---|---|---|
+| `stml/` (`stml_*` ids) | **Fatboy Slim / Norman Cook — "Skip to My Loops"** sample CD, [`fatboy-slim-skip-to-my-loops`](https://archive.org/details/fatboy-slim-skip-to-my-loops) on archive.org (single zip, 79 generically-named WAVs) | funky breakbeat **loops** (bpm recovered by the classifier), plus a handful of vocal/funk **chops** and one-shot **hits**. Big-beat DNA — wired into `bigbeat` (+ breakcore/jungle/boombap/triphop and the invented *break* genres), the *house*/*funk* chops pools, and the bigbeat/house/gabber/electro/miamibass/disco hit pools. | none stated on the item (a vintage sample CD posted for reuse). Treat as the demo discs / breaks above: brief, transformed, non-commercial use; audio never redistributed — point people at the archive.org item + this recipe. Flag for a human release decision. |
 
 ## DX7 patch bank (faust/dx7-presets.json — committed source, not audio)
 

@@ -122,5 +122,20 @@ getbed "$IA/aporee_14738_46150/szer.mp3" 30 40 dw_cycle
 getbed "$IA/aporee_8942_14632/berlinOhlauerWaschsalonContact111204c.mp3" 5 35 dryer_spin
 # ===== END 30-genre commission beds ==========================================
 
+# --- Allen Ginsberg — "Basic Poetics" class, Naropa 1980 (spoken-word source) ---
+# A full poetics LECTURE (not a reading) from the Naropa Poetics Audio Archive
+# (CC BY-NC-ND — ND flagged for release, fine for local sketches). Boost-
+# normalized like the spokenword voice-fix path, trimmed to a usable 90s window.
+# Wired into the spokenword/jazz/termswave/furnacestrut found pools (SOURCES id
+# vx_ginsberg_class). Not committed (external CC — see SOURCES.md).
+if [ ! -s found/vx_ginsberg_class.wav ]; then
+  echo "→ vx_ginsberg_class (Ginsberg, Basic Poetics, Naropa 1980)"
+  curl -sL -C - --retry 3 --max-time 600 -o /tmp/ginsberg_class.mp3 \
+    "$IA/Allen_Ginsberg_Basic_Poetics_class_20_April_1980_80P020/Allen_Ginsberg_Basic_Poetics_class_20_April_1980_80P020_64kb.mp3"
+  ffmpeg -y -loglevel error -ss 120 -t 90 -i /tmp/ginsberg_class.mp3 -ac 1 -ar 44100 \
+    -af "loudnorm=I=-16:TP=-1.5" found/vx_ginsberg_class.wav
+  rm -f /tmp/ginsberg_class.mp3
+fi
+
 echo "Done. Found sound ready in found/ — render via engine/faust press, e.g.:"
 echo "  node engine/genre-kernel.js track jungle --seed 7 --render"

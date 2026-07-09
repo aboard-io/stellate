@@ -70,6 +70,41 @@ Requires `ffmpeg`, `curl`, `node` (with `engine/faust/node_modules` — `npm ci`
 `engine/faust/`). No `csound` — main's toolchain is csound-free; the founding
 `royal-road.csd` and its `render.sh` live on `legacy-csound`.
 
+## Incorporating a sample CD
+
+A repeatable pipeline for folding any archive.org **sample CD** (a zip of WAVs)
+into the sample layer — `tools/fetch-sample-cd.sh` + `tools/classify-sample-cd.py`:
+
+```bash
+tools/fetch-sample-cd.sh <archive-item> <zip-filename> <prefix> [dest]
+# e.g. Fatboy Slim's "Skip to My Loops" (79 generically-named WAVs, no metadata):
+tools/fetch-sample-cd.sh fatboy-slim-skip-to-my-loops \
+  "Fatboy Slim - Skip to my loops.zip" stml
+```
+
+1. **download → extract → mono 44.1k → trim** (ffmpeg `silenceremove` both ends,
+   `loudnorm=I=-18:TP=-1`), **dropping** near-empty results (<0.12s).
+2. **classify** each sample (`classify-sample-cd.py`, numpy+scipy only — librosa/
+   aubio are NOT installed): duration, RMS, spectral centroid, YIN pitch+clarity,
+   onset-autocorrelation BPM → `loop` / `tonal` / `oneshot` / `chop`. This is how
+   pitch/bpm/class are **recovered** from generically-named CD samples.
+3. **rename** by detected metadata (`stml/loop_133_01.wav`, `stml/chop_g3_04.wav`,
+   `stml/hit_07.wav`) → `found/samples/<prefix>/manifest.json` + a **ready-to-paste
+   `SAMPLES` snippet** (loop→`kind:"break"`+bpm, tonal→`kind:"hit"`+note, oneshot→
+   `kind:"hit"`, chop→`kind:"chop"`).
+4. **register**: paste the curated snippet into `engine/genre-kernel.js` `SAMPLES`
+   (grouped under a `// --- <CD name> ---` comment); append the crate entries to
+   `found/samples/manifest.json`.
+5. **wire into genres** — MATRIX-SAFE ONLY: add ids to a genre's **existing**
+   `found.sources` pool (same role: loops→`role:"break"` genres, chops→`role:"chops"`
+   genres) or to `hits.sources` (always safe). NEVER add a `found:{role:…}` block to
+   a genre lacking one, change a role, or touch bpm/scored fields — that shifts the
+   confusion matrix. After every batch, `node engine/genre-verifier.js matrix
+   --no-cache` MUST still print `diagonal dominant: 178/178`.
+
+The audio lands gitignored under `found/`; the recipe + registry/genre edits are
+the committed deliverable (the one rule). Credit the CD in SOURCES.md.
+
 ## Layout
 
 Three tiers: the lean browser **entry** (`index.html`), the **app** UI as native
