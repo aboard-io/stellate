@@ -68,6 +68,11 @@ node engine/genre-kernel.js journey path.json --hours 4 --out journey/ --render 
 NODE_PATH=/home/ford/ftrain-2025/node_modules node test/explorer-ui-test.js   # (+ genre-viz / demo-layer / live-test-run / wavout-test-run / live-resilience / bg-survival)
 ```
 
+CI: `.github/workflows/verify.yml` runs the media guard + the full `./verify.sh`
+suite on every PR/push in a clean clone with ZERO fetched media —
+`node tools/ci-standin-media.js` synthesizes quiet-noise stand-ins at every
+path the gates check (~1s, no network, never overwrites a real file).
+
 Requires `ffmpeg`, `curl`, `node` (with `engine/faust/node_modules` — `npm ci` in
 `engine/faust/`). No `csound` — main's toolchain is csound-free; the founding
 `royal-road.csd` and its `render.sh` live on `legacy-csound`.
@@ -114,11 +119,13 @@ ES modules (`app/`), and the deterministic **engine** as classic-global scripts
 (`engine/`, incl. `engine/faust/`). Node CLIs live in `tools/`, gates in `test/`,
 docs in `docs/`.
 
-- `index.html` — the lean entry (CONSTELLATE). `<head>` links `app/app.css`;
+- `index.html` — the lean entry (STELLATE). `<head>` links `app/app.css`;
   `<body>` holds the DOM skeleton, the `engine/…` classic `<script src>` tags
   (order matters — they define `window.CsdEngine`/`GenreKernel`/`FaustStateEngine`/
   `FaustLive`/`VideoLayer`/`DemoLayer`/`NameBank` before the app runs), then the
   module entry `<script type="module" src="app/main.js">`. No inline style/JS.
+- `how.html` — the standalone visual explainer of the pipeline (self-contained;
+  its stage narrative + numbers must track csd-engine/genre-kernel reality).
 - `app/` — THE app (no framework, no bundler; native `<script type=module>` +
   one stylesheet). Shared state threaded via imports, NOT accidental globals:
   - `app/app.css` — all of the former inline `<style>` (the whole UI stylesheet)
@@ -206,6 +213,12 @@ docs in `docs/`.
   builder, `play.html` player) live fully working on branch `legacy-csound`.
 - `found/` — fetched found-sound + found-video layers (gitignored except `.gitignore`;
   recipes: `fetch-found-sound.sh`, `fetch-found-video.sh`, credits in SOURCES.md)
+- `LICENSE` (MIT, © 2026 Paul Ford) + `NOTICE` (third-party carve-outs:
+  MicroW8/lamejs/faustwasm) + `CONTRIBUTING.md` (the PR contract) +
+  `SOURCES.md` (media policy + attribution ledger) + `.github/`
+  (`workflows/verify.yml` CI gate, PR template)
+- `docs/HOSTING.md` — the stellate.app hosting plan (droplet + nginx,
+  same-origin media, COOP/COEP, R2 growth path)
 
 ## Deployment
 

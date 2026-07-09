@@ -57,7 +57,7 @@ a continuously-rendered, encoded stream (the WAV-FIRST pipeline), so playback
 survives screen-lock and backgrounding where a live WebAudio graph would be
 frozen. See `docs/history/WAV-FIRST.md`.
 
-## The explorer (CONSTELLATE, `index.html`)
+## The explorer (STELLATE, `index.html`)
 
 The whole UI is the star map. Drag it, mouse-wheel to zoom, double-tap to drop
 path waypoints and travel the loop. Chips: ▶ live, ⓘ **inside the sound** (a live
@@ -79,17 +79,28 @@ the rule that falls out of it:
   branch — the origin lost-and-refound, kept safe. The project was named "Royal
   Road vaporwave" through 2026-07; it is a worked genre now, not the whole show.)
 
+## Open source
+
+MIT — see `LICENSE` (© 2026 Paul Ford), with third-party carve-outs and
+credits in `NOTICE` (MicroW8, lamejs, faustwasm). The repo lives at
+https://github.com/ftrain/stellate; made by
+[Aboard](https://aboardresearch.com). Contributions welcome:
+`CONTRIBUTING.md` is the social contract — the gates a PR must keep green
+(the 178/178 matrix, determinism, non-silence) and what's left for ears.
+No audio, video, SoundFont, or model binary is ever committed; the media
+policy and the full attribution ledger live in `SOURCES.md`.
+
 ## Run
 
 The tree is organized `app/` · `engine/` (core + `engine/faust/` WASM engine) ·
 `tools/` (Node CLIs) · `test/` (gates) · `docs/`; `index.html` at root is the app.
 
 ```bash
-git submodule update --init            # verifier-catalog (reference data + MCP)
-(cd engine/faust && npm ci)             # the WASM engine's deps
+(cd engine/faust && npm ci)            # the WASM engine's deps
 tools/fetch-found-samples.sh           # one-time: SoundFont/GM + breaks + speech
 tools/fetch-found-sound.sh; tools/fetch-found-video.sh   # one-time: found audio/video layers
 ./serve.sh                             # http://localhost:8777/  (needs http, not file://)
+git submodule update --init            # optional: verifier-catalog reference data + MCP tool (skip freely)
 ```
 
 Verify / render:
@@ -107,11 +118,14 @@ its renderer live on the `legacy-csound` branch). Headless browser gates live in
 
 ## More
 
+- **`how.html`** — the visual explainer of how a song is made.
 - **`CLAUDE.md`** — the full layout and working notes.
 - **`docs/GENRE-SPACE.md`** — how the vector space and journeys are designed.
 - **`docs/MUSIC-MIND.md`** — the music-intelligence program (theory, pipes, axes).
 - **`engine/faust/VOICES.md`** — the synthesis/effect voice library.
 - **`SOURCES.md`** — every found-sound, sample, video, and vendored-code credit.
+- **`docs/HOSTING.md`** — the stellate.app hosting plan (droplet + nginx,
+  same-origin media, COOP/COEP for the SAB ring engine).
 - **`docs/history/`** — the design/planning trail (WAV-FIRST, kernel, etc.).
 - The pre-Faust csound era (the `builder.html` song builder, `play.html` player)
   lives fully working on branch **`legacy-csound`**.
