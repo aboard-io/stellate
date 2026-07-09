@@ -224,8 +224,14 @@ PD-adjacent by long convention, noted here rather than claimed as a formal
 grant. Curation: all 113 decoded patches render non-silent (scratch audit,
 2026-07); SFX novelties (TRAIN, EXPLOSION, LASER GUN…) were not decoded.
 
-## Vendored code (faust/vendor/ — committed source, not audio)
+## Vendored code (committed source, not audio)
 
+- `vendor/espeak-ng/` — **eSpeak NG** compiled to WebAssembly
+  ([github.com/espeak-ng/espeak-ng](https://github.com/espeak-ng/espeak-ng)),
+  **GPL-3.0-or-later**. Powers dynamic per-seed speech synthesis in the
+  browser. GPL, not LGPL: the app as served with this module is a GPL-3.0
+  combined work — see NOTICE. (The 244 canned speech recipes below are
+  espeak *output* and stay unrestricted regardless.)
 - `faust/vendor/lamejs.min.js` — **lamejs 1.2.1** MP3 encoder
   ([github.com/zhuker/lamejs](https://github.com/zhuker/lamejs), the npm
   `lamejs@1.2.1` single-file minified build, verbatim + a small UMD shim),
@@ -262,7 +268,11 @@ like the hogcore `hp_*` cast: each genre's lines vary voice/pitch/speed per line
 voices ride a telephone-band filter (highpass 300 / lowpass 3400). **Every text is
 original / parodic writing** — no copyrighted lyrics, no trademarks-as-lyrics (generic
 phrasings only: "legally distinct", invented product/place names, generic legalese).
-eSpeak NG is GPLv3; its audio *output* carries no license restriction. ids:
+eSpeak NG is GPLv3; its audio *output* carries no license restriction — true
+for all 244 canned speech recipes in `fetch-found-samples.sh` (this block, the
+hogcore cast, the transitwave PA). Distinct from output: the eSpeak NG *code*
+also ships in this repo as a WASM build (`vendor/espeak-ng/`) for dynamic
+per-seed speech — GPL-3.0, see NOTICE. ids:
 `sp_hold_1..4`, `sp_eula_1..3`, `sp_dmv_1..6`, `sp_floor_1..6`, `sp_survey_1..4`,
 `sp_dw_done`, `sp_therm_1..3`, `sp_grace_1..2`, `sp_flatpack_1..5`, `sp_laundry_1..2`,
 `sp_cereal_1..3`, `sp_scoville_1..5`, `sp_atc_1..5`, `sp_auction_1..3`, `sp_ump_1..4`,

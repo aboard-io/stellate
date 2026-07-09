@@ -103,6 +103,12 @@ determinism; byte-identity of old states is the part you must verify yourself
   a flag if it's attribution/SA/NC/ND. Unlicensed commercial material is
   fetch-for-personal-use only and never touches a distributed render.
 - Wire new material into genres matrix-safe (above).
+- **The speech-synthesis path is GPL.** `vendor/espeak-ng/` vendors eSpeak NG
+  compiled to WebAssembly, GPL-3.0-or-later (see NOTICE). Contributions to
+  the wire-in (`engine/speech.js`) are MIT like the rest of the repo, but
+  anyone redistributing the bundled app WITH that module conveys a GPL-3.0
+  combined work on that path. Removing `vendor/espeak-ng/` removes the
+  obligation — the app degrades to the canned speech recipes.
 
 ## Housekeeping
 

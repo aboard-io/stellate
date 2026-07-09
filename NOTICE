@@ -26,6 +26,22 @@ the MIT grant. It is used as a separate, unmodified, replaceable module
 repository, which satisfies the LGPL for scripting-language use. Source and
 license text: the linked upstream repository and npm package.
 
+## eSpeak NG (WebAssembly) — GPL-3.0-or-later (governs the served app)
+
+`vendor/espeak-ng/` contains eSpeak NG
+(https://github.com/espeak-ng/espeak-ng, © the eSpeak NG contributors)
+compiled to WebAssembly, used for in-browser per-seed speech synthesis. It is
+licensed under the **GNU GPL v3.0 or later**
+(https://www.gnu.org/licenses/gpl-3.0.html) and is explicitly EXCLUDED from
+the MIT grant. Unlike the LGPL (lamejs, above), the GPL has NO
+separate-replaceable-module clause: whenever the app is served or otherwise
+distributed WITH this module, the combined browser program is conveyed under
+GPL-3.0 terms. Corresponding Source: the upstream repository linked above,
+plus this repository itself, which is served as source (no build step). This
+repository's own files remain MIT-licensed individually — MIT is
+GPL-compatible — so reusing them WITHOUT `vendor/espeak-ng/` carries no GPL
+obligation.
+
 ## @grame/faustwasm — LGPL v2.1 or later (npm dependency, not redistributed)
 
 The app depends on `@grame/faustwasm` (the Faust WebAssembly compiler and

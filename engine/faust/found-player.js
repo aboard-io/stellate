@@ -504,6 +504,35 @@
   }
 
   const _bufCache = new Map(); // url -> Promise<AudioBuffer>
+
+  // ---- SPEECH organ decode (engine/speech.js) ----
+  // A foundSource may carry `synthText` {text, voice, variant, pitch, speed}
+  // instead of a samplePath/url. Synthesize through CsdSpeech (fresh instance
+  // per utterance — the artifact's determinism law lives in the organ) and
+  // cache the AudioBuffer promise in the SAME url-keyed cache the file decodes
+  // use, keyed by CsdSpeech.key(), so repeats are free and both live paths
+  // (ring + wavOut) share ONE render per utterance. Lazy by construction: the
+  // wasm loads only when a synthText source actually arms (first call here).
+  function speechOrgan() {
+    if (typeof globalThis !== "undefined" && globalThis.CsdSpeech) return globalThis.CsdSpeech;
+    try { if (typeof require === "function") return require("../speech.js"); } catch (e) {}
+    return null;
+  }
+  function synthToBuffer(ctx, spec) {
+    const CS = speechOrgan();
+    if (!CS || !spec || !spec.text) return Promise.reject(new Error("CsdSpeech organ unavailable"));
+    const k = CS.key(spec.text, spec);
+    if (_bufCache.has(k)) return _bufCache.get(k);
+    const job = CS.synth(spec.text, spec).then(({ pcm, sr }) => {
+      const out = ctx.createBuffer(1, Math.max(1, pcm.length), sr);
+      out.getChannelData(0).set(pcm);
+      return out;
+    });
+    _bufCache.set(k, job);
+    job.then(() => _stats.decodeOk++, () => { _stats.decodeFail++; _bufCache.delete(k); });
+    return job;
+  }
+
   function decodeUrlToBuffer(ctx, url, maxSeconds) {
     if (_bufCache.has(url)) return _bufCache.get(url);
     const job = (async () => {
@@ -838,7 +867,7 @@
     return live;
   }
 
-  const FP = { mixPCM, lp24, decodeUrlToBuffer, FoundLive, GRAIN_HZ, GRAIN_SEC, FOUND_MAX_SECONDS, _stats,
+  const FP = { mixPCM, lp24, decodeUrlToBuffer, synthToBuffer, FoundLive, GRAIN_HZ, GRAIN_SEC, FOUND_MAX_SECONDS, _stats,
     detectMedianHz, autoTuneRate, tunedPitch,
     // loon fix: the F0 profile + classifiers behind the boost gate and the
     // auto-tune purity ceiling, exposed for direct tests (the _mixGrains pattern).

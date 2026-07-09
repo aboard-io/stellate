@@ -104,6 +104,32 @@ function loadDx7Presets() {
 // the vocoder speech input. Split out of press() so faust/segment-parity-test.js
 // (and, later, the stream renderer's node adapter) can decode identically and
 // inject the PCM into the environment-agnostic assembly core below.
+// SPEECH organ (engine/speech.js): a foundSource may carry `synthText`
+// {text, voice, variant, pitch, speed} instead of a file. Synthesize the SAME
+// PCM the browser hears (the artifact's fresh-instance cross-runtime
+// guarantee — see vendor/espeak-ng/README.md). Lazy require + availability
+// probe so a clean clone WITHOUT vendor/ presses everything else fine: the
+// synthText source is skipped with a warning (graceful-degrade posture).
+let _speechOrgan; // undefined = unprobed, null = unavailable, else the module
+async function speechOrgan() {
+  if (_speechOrgan !== undefined) return _speechOrgan;
+  try {
+    const CS = require(path.join(ROOT, "speech.js"));
+    _speechOrgan = (await CS.available()) ? CS : null;
+    if (!_speechOrgan) console.warn("  speech: vendor/espeak-ng missing — synthText sources skipped");
+  } catch (e) {
+    _speechOrgan = null;
+    console.warn("  speech: organ unavailable (" + String(e && e.message).slice(0, 80) + ") — synthText sources skipped");
+  }
+  return _speechOrgan;
+}
+async function synthPCM(spec) {
+  const CS = await speechOrgan();
+  if (!CS) return null;
+  const { pcm } = await CS.synth(spec.text, spec);
+  return pcm && pcm.length ? pcm : null;
+}
+
 async function decodeInputs(state, sched, opts) {
   const TOTAL = opts.TOTAL;
   // top-level beds ship as MP3 since the payload diet (HOSTING.md §3); prefer
@@ -120,6 +146,14 @@ async function decodeInputs(state, sched, opts) {
   const buffers = {};
   for (const s of state.foundSources || []) {
     if (!usedSrc.has(s.id)) continue;
+    if (s.synthText) {   // SPEECH organ: synthesize instead of ffmpeg-decoding a file
+      try {
+        const pcm = await synthPCM(s.synthText);
+        if (pcm) buffers[s.id] = pcm;
+        else console.warn(`  found: speech organ unavailable — skipping ${s.id}`);
+      } catch (e) { console.warn(`  found: cannot synth ${s.id} (${String(e.message).slice(0, 80)}) — skipping`); }
+      continue;
+    }
     const p = s.fsPath || (s.samplePath ? path.join(SITE, s.samplePath) : bedPath(s.id));
     try { buffers[s.id] = ffdecode(p); }
     catch (e) { console.warn(`  found: cannot decode ${p} (${String(e.message).slice(0, 80)}) — skipping ${s.id}`); }
@@ -131,9 +165,11 @@ async function decodeInputs(state, sched, opts) {
     const vs = (state.foundSources || []).find(s => s.id === state.vocoderSourceId)
       || (state.foundSources || []).find(s => /^(sp_|vx_|vox_)/.test(s.id || ""));
     if (vs) {
-      const p = vs.fsPath || (vs.samplePath ? path.join(SITE, vs.samplePath) : bedPath(vs.id));
       try {
-        const raw = ffdecode(p);
+        const raw = vs.synthText   // SPEECH organ carrier: same PCM as the browser
+          ? await synthPCM(vs.synthText)
+          : ffdecode(vs.fsPath || (vs.samplePath ? path.join(SITE, vs.samplePath) : bedPath(vs.id)));
+        if (!raw) throw new Error("speech organ unavailable");
         speech = new Float32Array(TOTAL);
         for (let i = 0; i < TOTAL; i++) speech[i] = raw[i % raw.length];
       } catch (e) { console.warn("  vocoder: speech decode failed — robot_choir will hum:", String(e.message).slice(0, 80)); }

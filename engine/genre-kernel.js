@@ -5643,6 +5643,50 @@
             samplePath:"found/samples/perc/"+pb.dir+"/"+s.file, vol:0, pitch:1, stretch:0.5, cutoff:18000}); }
       }
     }
+    // ---- SPEECH organ worked example (engine/speech.js): the transit PA
+    // announces THIS seed's namebank act. When the resolved genre carries real
+    // transitwave presence (weight >= .35 — the standing "real presence"
+    // threshold, see resolveMulti's dx7 rule), ONE extra speech-role source
+    // rides foundSources with `synthText` (no file: both engines synthesize it
+    // through CsdSpeech — byte-identical PCM by the artifact's fresh-instance
+    // guarantee) plus one appended sampleEvents opener spec. The text derives
+    // PURELY from (seed, genre) via NameBank.hash/identity — the chyron
+    // derivation (app/readouts.js), ZERO rng draws on the resolve stream, so
+    // every other seeded choice is untouched (the bed-rotation-start
+    // precedent). The spec APPENDS after the anchor's own sampleEvents, so on
+    // the shared seed+9091 stream every earlier spec's draws are byte-
+    // identical (drawn-last convention). The canned saytransit vox pool
+    // (sp_tw_*) stays untouched. ABSENT for every other genre and for
+    // transitwave-light blends: no field, byte-identical (the standing law).
+    let paSpec=null;
+    {
+      const NB=isNode?require("./namebank.js"):root.NameBank;
+      const twW=(c.genres||[]).reduce((a,g,i)=>a+(g==="transitwave"?(c.weights?c.weights[i]:1):0),0);
+      if(NB&&twW>=0.35){
+        const h=NB.hash(c.seed,"transitwave","pa");
+        const who=NB.identity("transitwave",h);
+        const text=(h&1)
+          ? "Now arriving: "+who.artist+"."
+          : who.artist+", with service to "+who.album+".";
+        foundSources.push({id:"sp_pa_namebank",label:"PA: "+text,url:"",kind:"speech",
+          synthText:{text,voice:"en-us",variant:"f3",pitch:60,speed:165},   // the (feminine) PA register, a hair up + measured
+          // deterministic HEARD-length estimate: espeak at rate 165 measures
+          // ~0.42s + 0.049s/char (fit slightly UNDER so the chop never wraps),
+          // then /0.82 because kind:"speech" plays at SPEECH_RATE_CAP (state-
+          // engine) — durSec only sizes the chop event, so it must cover the
+          // stretched utterance or the band name loses its last syllable.
+          durSec:round((0.42+0.049*text.length)/0.82,2),
+          vol:0.5,pitch:1,stretch:0.5,cutoff:3800});
+        // opener = the always-safe slot: ONE shot at the first matching
+        // section's downbeat (live rebuilds per-section, so it recurs at
+        // section starts — the PA idiom), treated like the canned vox lines
+        // (telephone-band cutoff, echoed into the 1/8 delay). maxDur 10 (the
+        // hogcore full-phrase precedent) clears the default 4-beat cap for
+        // the longer "with service to" announcements.
+        paSpec={pool:["sp_pa_namebank"],placement:"opener",
+          treatment:{maxDur:10,cutoff:3800,vol:0.5,rsend:0.25,dsend:0.35}};
+      }
+    }
     const state={
       ...(lickVoice?{lickVoice}:{}),
       vocoderSourceId: vocId||undefined,
@@ -5667,7 +5711,7 @@
       ...(c.theory&&c.theory.reharm?{theory:{adventure:c.theory.adventure,color:c.theory.color,voicing:c.theory.voicing,reharm:true}}:{}),
       ...(c.pipes&&c.pipes.length?{pipes:c.pipes}:{}),
       ...(c.rhythmComplexity>.02?{rhythm:{complexity:c.rhythmComplexity}}:{}),
-      ...(c.sampleEvents?{sampleEvents:c.sampleEvents}:{}),  // generalized sample-event roles (Phase 4): absent = no sample-event layer, byte-identical
+      ...((c.sampleEvents||paSpec)?{sampleEvents:[...(c.sampleEvents||[]),...(paSpec?[paSpec]:[])]}:{}),  // generalized sample-event roles (Phase 4) + the SPEECH-organ PA opener appended last: absent = no sample-event layer, byte-identical
       ...(coldOpen?{coldOpen:true}:{}),                 // OPTIONAL INTRO: the leading ground node was actually dropped (introMode "off" + ground opener). buildEvents ignores it; djMix reads it for the cold-open seam law. Absent for every genre that keeps its intro (byte-identical); present only on gabber/breakcore.
       euclid:c.euclid||undefined,                      // kit-level euclidean rhythm spec (csd-engine drumEvents)
       ...(c.chordEvery?{chordEvery:c.chordEvery}:{}),  // harmonic rhythm (KERNEL-V4 Phase 1): beats per chord bar
@@ -5927,6 +5971,7 @@
     const cmd=args[0];
     function resolvePaths(state){
       for(const s of state.foundSources){
+        if(s.synthText) continue;   // SPEECH organ: no file — press.js synthesizes it
         s.fsPath=s.samplePath?path.join(ROOT,s.samplePath):path.join(ROOT,"found",s.id+".mp3");
         if(!fs.existsSync(s.fsPath)){ console.error("✗ missing "+s.fsPath+" — run ./fetch-found-sound.sh and ./fetch-found-samples.sh"); process.exit(1); }
       }
