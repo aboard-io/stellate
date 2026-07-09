@@ -3,7 +3,7 @@
   "label": "Hexagon Stampede",
   "info": "an overdriven tonewheel organ played like a cavalry charge: sixteenth-note runs through a growling rotary speaker, a fat monosynth walking the floor, tom fills rolling downhill — three virtuosi and eleven road cases of pure bombast",
   "anchor": {
-    "bpm": [126, 138],
+    "bpm": [130, 136],
     "swing": [0, 0.05],
     "humanize": [0.08, 0.2],
     "progressions": ["minor_run", "frost", "ii_v_i"],
@@ -23,6 +23,6 @@
   "verify": {
     "seeds": 6,
     "widen": 0.1,
-    "features": { "bpm": 3, "drumDensity": 2, "motion": 2, "seventh": 2, "acoustic": 2, "comp": 1 }
+    "features": { "bpm": 3, "drumDensity": 2, "motion": 2, "seventh": 2, "acoustic": 2, "comp": 1, "snareBalance": 2 }
   }
 }
