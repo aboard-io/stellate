@@ -113,8 +113,36 @@ const DISCRETE=[
   ["kick",c=>c.instruments.drums.kickModel,(c,t)=>c.instruments.drums.kickModel=t.instruments.drums.kickModel],
   ["snare",c=>c.instruments.drums.snareModel,(c,t)=>c.instruments.drums.snareModel=t.instruments.drums.snareModel],
   ["hat",c=>c.instruments.drums.hatModel,(c,t)=>c.instruments.drums.hatModel=t.instruments.drums.hatModel],
-  ["drum kit",c=>c.genreMeta.kit,(c,t)=>{c.genreMeta.kit=t.genreMeta.kit;
-    c.sections.forEach(s=>{if(s.drums&&s.drums!=="off"&&s.drums!=="kick")s.drums=t.genreMeta.kit;});}],
+  // the kit's identity is the pattern name AND the sampled one-shot overlays
+  // (instruments.drums.{kick,snare,hat,tom,clap,rim,ride,crash,perc}Sampler).
+  // Meta-only identity let the "form" flip (which copies genreMeta.kit) erase
+  // this flip's diff while the PLAYING kit still held the old genre's samplers —
+  // pointed at srcIds the crate no longer carried, so every drum note skipped
+  // silently (Paul's fugue->reggae: NO DRUMS, 0/233 note() calls in the probe).
+  ["drum kit",c=>{const D=c.instruments.drums||{};
+    return [c.genreMeta.kit,...Object.keys(D).filter(k=>/Sampler$/.test(k)).sort().map(k=>D[k]&&D[k].id)];},
+   (c,t)=>{c.genreMeta.kit=t.genreMeta.kit;
+    // bring the NEW DRUMMER'S KIT, not just the setlist: copy the target's
+    // sampled-kit overlays and carry their zone wavs into foundSources (vol 0),
+    // mirroring timbreFlip — without the sources, ensureSamplerBufs finds
+    // nothing and the kit is silent until the next "sample" flip (or forever).
+    const cD=c.instruments.drums, tD=t.instruments.drums||{};
+    const have=new Set((c.foundSources||[]).map(s=>s.id));
+    for(const k of Object.keys(cD)) if(/Sampler$/.test(k)&&!tD[k]) delete cD[k];
+    for(const k of Object.keys(tD)) if(/Sampler$/.test(k)){
+      cD[k]=deep(tD[k]);
+      for(const z of (tD[k].zones||[])) if(z.srcId&&!have.has(z.srcId)){
+        const src=(t.foundSources||[]).find(s=>s.id===z.srcId);
+        if(src){ c.foundSources.push(deep(src)); have.add(z.srcId); }}}
+    // sections: rewrite live drum patterns to the target's kit. From an ALL-OFF
+    // genre (fugue: every section drums:"off") the old rewrite matched nothing —
+    // the flip was a NO-OP that erased its own diff, so drums never arrived
+    // until the late "form" flip. When nothing is on but the target plays,
+    // adopt the target's per-section drums so the kit can actually walk on.
+    if(c.sections.some(s=>s.drums&&s.drums!=="off"))
+      c.sections.forEach(s=>{if(s.drums&&s.drums!=="off"&&s.drums!=="kick")s.drums=t.genreMeta.kit;});
+    else{ const tl=Math.max(1,t.sections.length);
+      c.sections.forEach((s,i)=>{const ts=t.sections[i%tl]; if(ts&&ts.drums)s.drums=ts.drums;}); }}],
   ["bassline",c=>(c.sections.find(s=>s.bass&&s.bass!=="off")||{}).bass,
     (c,t)=>{const b=(t.sections.find(s=>s.bass&&s.bass!=="off")||{}).bass;
       if(b)c.sections.forEach(s=>{if(s.bass&&s.bass!=="off")s.bass=b;});}],
@@ -132,10 +160,18 @@ const DISCRETE=[
       // guitar dropping out after half a measure). Carry any missing zone source
       // over from the previous crate (or the target's).
       const have=new Set(c.foundSources.map(s=>s.id));
-      for(const vk of ["pad","bass","melody"]){const sp=(c.instruments[vk]||{}).sampler; if(!sp)continue;
+      const carry=(sp)=>{ if(!sp)return;
         for(const z of (sp.zones||[])) if(z.srcId&&!have.has(z.srcId)){
           const src=prev.find(s=>s.id===z.srcId)||(t.foundSources||[]).find(s=>s.id===z.srcId);
-          if(src){c.foundSources.push(deep(src)); have.add(z.srcId);}}}
+          if(src){c.foundSources.push(deep(src)); have.add(z.srcId);}}};
+      for(const vk of ["pad","bass","melody"]) carry((c.instruments[vk]||{}).sampler);
+      // …and the PLAYING KIT'S one-shots: the carry above covered only the
+      // pitched voices, so the wholesale replace dropped the drum zone srcIds
+      // (instruments.drums.*Sampler -> drum_<kit>_*) — the live engine then
+      // pinned them null and every drum note skipped silently for the rest of
+      // the set (the fugue->reggae total drum silence).
+      const cD=c.instruments.drums||{};
+      for(const k of Object.keys(cD)) if(/Sampler$/.test(k)&&cD[k]) carry(cD[k]);
       c.sections.forEach((s,i)=>{const ts=t.sections[i%t.sections.length];
         if(s.found&&ts&&ts.found)s.found=deep(ts.found);
         if(ts&&ts.hits)s.hits=deep(ts.hits); else delete s.hits;});}],
@@ -171,11 +207,28 @@ const FLIP_PHRASES={
   "sample":"new crate on the decks",
   "form":"the set changes shape",
 };
+// FLIP-ORDER STABILITY (the fugue->reggae "form landed at bar 118 of 128" bug):
+// travel retargets every bar, and every retarget rebuilt the queue with a NEW
+// barCount-seeded shuffle — so the queue's head was a fresh random draw each
+// bar and a dimension could starve for the whole journey ("form", the flip that
+// revives an all-off genre's drum sections, landed in the last tenth of the
+// trip; the listener parked at 99% reggae still heard harpsichord). Two rules
+// replace the re-roll: (1) dimensions NEVER APPLIED this journey rank first, so
+// each of the ~12 flips lands once before any dimension gets seconds; (2) the
+// order within each rank is a stable per-seed hash — rebuilds stop reshuffling,
+// so the queue's head survives the per-bar retarget churn. Pacing is untouched:
+// still one flip per 2 bars (glideStep) — the fix is order, not speed.
+let appliedFlips=new Set();
+// the flips a listener IDENTIFIES a genre by — first-timers among these lead
+// the queue so a parked destination reads as itself within a few measures
+const LEAD_FLIPS=new Set(["form","drum kit","lead voice"]);
 export function rebuildQueue(){
   if(!S.playing||!S.target)return;
-  const seed=S.barCount*131+7;
   const diffs=DISCRETE.filter(([n,get])=>{try{return JSON.stringify(get(S.playing))!==JSON.stringify(get(S.target));}catch(e){return false;}});
-  set({queue:diffs.map((d,i)=>[((seed*9301+i*49297)%233280)/233280,d]).sort((a,b)=>a[0]-b[0]).map(x=>x[1])});
+  if(!diffs.length) appliedFlips.clear();   // converged: the next journey starts fresh
+  const rank=n=>{let h=(S.seed>>>0)||1; for(const ch of n) h=(h*31+ch.charCodeAt(0))>>>0; return h;};
+  const tier=n=>appliedFlips.has(n)?2:(LEAD_FLIPS.has(n)?0:1);
+  set({queue:diffs.slice().sort((a,b)=>(tier(a[0])-tier(b[0]))||(rank(a[0])-rank(b[0])))});
 }
 export function glideStep(){
   const c=S.playing, t=S.target; if(!c||!t)return;
@@ -214,6 +267,7 @@ export function glideStep(){
     if(idx>=0){
       const [name,,apply]=S.queue[idx];
       try{ apply(c,t);
+        appliedFlips.add(name);   // this dimension has had its turn — first-timers rank ahead of it now
         // a timbre just walked on stage — lock this slot for a few measures
         const hold=HELD_FLIPS.has(name)?{...S.holdUntil,[name]:S.barCount+HOLD_BARS}:S.holdUntil;
         set({queue:S.queue.filter((_,i)=>i!==idx),holdUntil:hold,status:FLIP_PHRASES[name]||("journey: "+name)}); }catch(e){}
