@@ -23,6 +23,6 @@
   "verify": {
     "seeds": 6,
     "widen": 0.1,
-    "features": { "bpm": 3, "drumDensity": 2, "variation": 2, "wash": 1, "motion": 1, "sub": 1 }
+    "features": { "bpm": 3, "drumDensity": 2, "variation": 2, "wash": 1, "motion": 1, "sub": 1, "bedUse": 2 }
   }
 }

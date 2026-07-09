@@ -1,102 +1,321 @@
 {
   "name": "meadowjangle",
   "label": "Meadowjangle",
-  "info": "folk-rock 1965: a twelve-string chime ringing over I-V-vi changes, tambourine glued to the snare, melodic bass walking up through the verse, a harmonica-and-organ haze behind it — electric guitars discovering the countryside, crickets in the runout groove",
+  "info": "folk-rock 1965: a twelve-string chime ringing over I-V-vi changes, tambourine glued to the snare, melodic bass walking up through the verse, a harmonica-and-organ haze behind it \u2014 electric guitars discovering the countryside, crickets in the runout groove",
   "anchor": {
-    "bpm": [112, 124],
-    "swing": [0.08, 0.16],
-    "humanize": [0.18, 0.38],
-    "progressions": ["pop_1625", "four_chords", "mode_mixo"],
-    "kits": ["open", "full"],
-    "fills": ["drum fill", "tom fill", "off"],
+    "bpm": [
+      112,
+      124
+    ],
+    "swing": [
+      0.08,
+      0.16
+    ],
+    "humanize": [
+      0.18,
+      0.38
+    ],
+    "progressions": [
+      "pop_1625",
+      "four_chords",
+      "mode_mixo"
+    ],
+    "kits": [
+      "open",
+      "full"
+    ],
+    "fills": [
+      "drum fill",
+      "tom fill",
+      "off"
+    ],
     "bass": {
-      "patterns": ["melodic", "walking", "root"],
-      "samplerPool": ["finger_bass", "acoustic_bass"],
+      "patterns": [
+        "melodic",
+        "walking",
+        "root"
+      ],
+      "samplerPool": [
+        "finger_bass",
+        "acoustic_bass"
+      ],
       "recipe": {
-        "model": ["sampler", "sampler", "saw"],
-        "cutoff": [600, 950],
-        "res": [0.08, 0.14],
-        "level": [0.95, 1.15],
-        "send": [0.04, 0.1],
-        "dsend": [0, 0.05]
+        "model": [
+          "sampler",
+          "sampler",
+          "saw"
+        ],
+        "cutoff": [
+          600,
+          950
+        ],
+        "res": [
+          0.08,
+          0.14
+        ],
+        "level": [
+          0.95,
+          1.15
+        ],
+        "send": [
+          0.04,
+          0.1
+        ],
+        "dsend": [
+          0,
+          0.05
+        ]
       }
     },
     "lead": {
-      "patterns": ["updown", "composed", "arpup", "double"],
-      "samplerPool": ["steel_string_guitar", "clean_guitar", "jazz_guitar"],
-      "patchPool": ["FOLK GUIT", "GUITAR  1"],
+      "patterns": [
+        "updown",
+        "composed",
+        "arpup",
+        "double"
+      ],
+      "samplerPool": [
+        "steel_string_guitar",
+        "clean_guitar",
+        "jazz_guitar"
+      ],
+      "patchPool": [
+        "FOLK GUIT",
+        "GUITAR  1"
+      ],
       "recipe": {
-        "model": ["sampler", "sampler", "sampler", "dx7"],
+        "model": [
+          "sampler",
+          "sampler",
+          "sampler",
+          "dx7"
+        ],
         "wave": "saw",
-        "voices": [1, 2],
-        "spread": [0.001, 0.004],
-        "cutoff": [3200, 4400],
-        "level": [0.48, 0.6],
-        "send": [0.25, 0.4],
-        "dsend": [0.08, 0.18],
-        "vibrato": [0.003, 0.007],
-        "vibRate": [5, 6.5]
+        "voices": [
+          1,
+          2
+        ],
+        "spread": [
+          0.001,
+          0.004
+        ],
+        "cutoff": [
+          3200,
+          4400
+        ],
+        "level": [
+          0.48,
+          0.6
+        ],
+        "send": [
+          0.25,
+          0.4
+        ],
+        "dsend": [
+          0.08,
+          0.18
+        ],
+        "vibrato": [
+          0.003,
+          0.007
+        ],
+        "vibRate": [
+          5,
+          6.5
+        ]
       },
       "inserts": {
         "prob": 0.4,
         "max": 1,
         "pool": [
-          ["chorus", { "rate": [0.4, 0.8], "depth": [0.2, 0.35], "mix": [0.2, 0.35] }]
+          [
+            "chorus",
+            {
+              "rate": [
+                0.4,
+                0.8
+              ],
+              "depth": [
+                0.2,
+                0.35
+              ],
+              "mix": [
+                0.2,
+                0.35
+              ]
+            }
+          ]
         ]
       }
     },
     "pads": {
       "prob": 0.55,
-      "samplerPool": ["percussive_organ", "harmonica"],
+      "samplerPool": [
+        "percussive_organ",
+        "harmonica"
+      ],
       "recipe": {
-        "model": ["sampler", "sampler", "organ"],
+        "model": [
+          "sampler",
+          "sampler",
+          "organ"
+        ],
         "wave": "saw",
-        "cutoff": [1100, 1700],
-        "detune": [0.003, 0.008],
-        "attack": [0.2, 0.6],
-        "level": [0.36, 0.48],
-        "send": [0.18, 0.32],
-        "dsend": [0.05, 0.12]
+        "cutoff": [
+          1100,
+          1700
+        ],
+        "detune": [
+          0.003,
+          0.008
+        ],
+        "attack": [
+          0.2,
+          0.6
+        ],
+        "level": [
+          0.36,
+          0.48
+        ],
+        "send": [
+          0.18,
+          0.32
+        ],
+        "dsend": [
+          0.05,
+          0.12
+        ]
       }
     },
     "drums": {
-      "kickModel": ["boom"],
-      "snareModel": ["noise"],
-      "hatModel": ["noise"],
-      "kick": [0.85, 1.05],
-      "snare": [0.75, 1],
-      "hat": [0.9, 1.2],
-      "tune": [0.95, 1.1],
-      "send": [0.15, 0.28],
-      "dsend": [0, 0.08],
+      "kickModel": [
+        "boom"
+      ],
+      "snareModel": [
+        "noise"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        0.85,
+        1.05
+      ],
+      "snare": [
+        0.75,
+        1
+      ],
+      "hat": [
+        0.9,
+        1.2
+      ],
+      "tune": [
+        0.95,
+        1.1
+      ],
+      "send": [
+        0.15,
+        0.28
+      ],
+      "dsend": [
+        0,
+        0.08
+      ],
       "kit": "acoustic"
     },
     "fx": {
-      "reverb": [0.3, 0.45],
-      "delayBeats": [0.5, 0.75],
-      "delayFb": [0.1, 0.22],
-      "delayCut": [2800, 4000],
-      "pump": [0, 0.05],
-      "crackle": [0.15, 0.28],
-      "lowcut": [25, 40],
-      "highcut": [0, 0],
-      "comp": [0.12, 0.28],
-      "grit": [0, 0.08]
+      "reverb": [
+        0.3,
+        0.45
+      ],
+      "delayBeats": [
+        0.5,
+        0.75
+      ],
+      "delayFb": [
+        0.1,
+        0.22
+      ],
+      "delayCut": [
+        2800,
+        4000
+      ],
+      "pump": [
+        0,
+        0.05
+      ],
+      "crackle": [
+        0.15,
+        0.28
+      ],
+      "lowcut": [
+        25,
+        40
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.08,
+        0.2
+      ],
+      "grit": [
+        0,
+        0.08
+      ]
     },
     "found": {
       "role": "bed",
-      "vol": [0.05, 0.1],
-      "pitch": [0.95, 1.05],
-      "stretch": [0.45, 0.6],
-      "cutoff": [2600, 3800],
-      "sources": ["crickets", "chickadee"]
+      "vol": [
+        0.05,
+        0.1
+      ],
+      "pitch": [
+        0.95,
+        1.05
+      ],
+      "stretch": [
+        0.45,
+        0.6
+      ],
+      "cutoff": [
+        2600,
+        3800
+      ],
+      "sources": [
+        "crickets",
+        "chickadee"
+      ]
     },
     "hits": {
-      "sources": ["vox_a", "sp_rhythm"],
+      "sources": [
+        "vox_a",
+        "sp_rhythm"
+      ],
       "pattern": "sparse",
       "prob": 0.25
     },
-    "stab": ["off"],
+    "stab": [
+      "off"
+    ],
     "form": "pop"
+  },
+  "verify": {
+    "seeds": 6,
+    "features": {
+      "bpm": 3,
+      "drumDensity": 2,
+      "wash": 1,
+      "pump": 1,
+      "swing": 2,
+      "seventh": 1,
+      "acoustic": 2,
+      "crackle": 3,
+      "sub": 1,
+      "motion": 1,
+      "bedUse": 3,
+      "humanize": 2
+    }
   }
 }

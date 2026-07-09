@@ -1,102 +1,309 @@
 {
   "name": "walrusfuzz",
   "label": "Walrusfuzz",
-  "info": "1968, the white room with the amps up: fuzz guitar riffing a twelve-bar into the red, picked bass driving under it, a drummer hitting the kit like it owes him money, organ snarl in the corners — heavy before heavy had a name, tape hiss as a badge of honour, goo goo g'joob",
+  "info": "1968, the white room with the amps up: fuzz guitar riffing a twelve-bar into the red, picked bass driving under it, a drummer hitting the kit like it owes him money, organ snarl in the corners \u2014 heavy before heavy had a name, tape hiss as a badge of honour, goo goo g'joob",
   "anchor": {
-    "bpm": [126, 138],
-    "swing": [0.03, 0.09],
-    "humanize": [0.15, 0.3],
-    "progressions": ["blues_12", "minor_run", "funk_vamp"],
-    "kits": ["full", "four"],
-    "fills": ["drum fill", "tom fill", "impact"],
+    "bpm": [
+      131,
+      138
+    ],
+    "swing": [
+      0.03,
+      0.09
+    ],
+    "humanize": [
+      0.15,
+      0.3
+    ],
+    "progressions": [
+      "blues_12",
+      "minor_run",
+      "funk_vamp"
+    ],
+    "kits": [
+      "full",
+      "four"
+    ],
+    "fills": [
+      "drum fill",
+      "tom fill",
+      "impact"
+    ],
     "bass": {
-      "patterns": ["drive", "walking", "octaves"],
-      "samplerPool": ["picked_bass"],
+      "patterns": [
+        "drive",
+        "walking",
+        "octaves"
+      ],
+      "samplerPool": [
+        "picked_bass"
+      ],
       "recipe": {
-        "model": ["sampler", "saw"],
-        "cutoff": [600, 950],
-        "res": [0.1, 0.18],
-        "level": [1.1, 1.3],
-        "send": [0.03, 0.08],
-        "dsend": [0, 0.05]
+        "model": [
+          "sampler",
+          "saw"
+        ],
+        "cutoff": [
+          600,
+          950
+        ],
+        "res": [
+          0.1,
+          0.18
+        ],
+        "level": [
+          1.1,
+          1.3
+        ],
+        "send": [
+          0.03,
+          0.08
+        ],
+        "dsend": [
+          0,
+          0.05
+        ]
       }
     },
     "lead": {
-      "patterns": ["blues", "roar", "hero", "double"],
-      "samplerPool": ["distortion_guitar", "overdrive_guitar"],
+      "patterns": [
+        "blues",
+        "roar",
+        "hero",
+        "double"
+      ],
+      "samplerPool": [
+        "distortion_guitar",
+        "overdrive_guitar"
+      ],
       "recipe": {
-        "model": ["sampler", "sampler", "fuzz"],
+        "model": [
+          "sampler",
+          "sampler",
+          "fuzz"
+        ],
         "wave": "saw",
-        "voices": [1, 2],
-        "spread": [0.002, 0.006],
-        "cutoff": [2600, 3800],
-        "level": [0.52, 0.66],
-        "send": [0.2, 0.35],
-        "dsend": [0.08, 0.18],
-        "vibrato": [0.005, 0.011],
-        "vibRate": [5.5, 7]
+        "voices": [
+          1,
+          2
+        ],
+        "spread": [
+          0.002,
+          0.006
+        ],
+        "cutoff": [
+          2600,
+          3800
+        ],
+        "level": [
+          0.52,
+          0.66
+        ],
+        "send": [
+          0.2,
+          0.35
+        ],
+        "dsend": [
+          0.08,
+          0.18
+        ],
+        "vibrato": [
+          0.005,
+          0.011
+        ],
+        "vibRate": [
+          5.5,
+          7
+        ]
       },
       "inserts": {
         "prob": 0.5,
         "max": 1,
         "pool": [
-          ["distort", { "drive": [0.3, 0.6], "mix": [0.6, 0.85] }]
+          [
+            "distort",
+            {
+              "drive": [
+                0.3,
+                0.6
+              ],
+              "mix": [
+                0.6,
+                0.85
+              ]
+            }
+          ]
         ]
       }
     },
     "pads": {
       "prob": 0.6,
-      "samplerPool": ["rock_organ", "overdrive_guitar"],
+      "samplerPool": [
+        "rock_organ",
+        "overdrive_guitar"
+      ],
       "recipe": {
-        "model": ["sampler", "hammond"],
+        "model": [
+          "sampler",
+          "hammond"
+        ],
         "wave": "saw",
-        "cutoff": [1000, 1600],
-        "detune": [0.004, 0.01],
-        "attack": [0.2, 0.6],
-        "level": [0.42, 0.56],
-        "send": [0.2, 0.35],
-        "dsend": [0.05, 0.12]
+        "cutoff": [
+          1000,
+          1600
+        ],
+        "detune": [
+          0.004,
+          0.01
+        ],
+        "attack": [
+          0.2,
+          0.6
+        ],
+        "level": [
+          0.42,
+          0.56
+        ],
+        "send": [
+          0.2,
+          0.35
+        ],
+        "dsend": [
+          0.05,
+          0.12
+        ]
       }
     },
     "drums": {
-      "kickModel": ["boom"],
-      "snareModel": ["crack", "noise"],
-      "hatModel": ["noise"],
-      "kick": [1.15, 1.4],
-      "snare": [0.9, 1.15],
-      "hat": [0.7, 1],
-      "tune": [0.9, 1.05],
-      "send": [0.15, 0.28],
-      "dsend": [0, 0.08],
+      "kickModel": [
+        "boom"
+      ],
+      "snareModel": [
+        "crack",
+        "noise"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        1.15,
+        1.4
+      ],
+      "snare": [
+        0.9,
+        1.15
+      ],
+      "hat": [
+        0.7,
+        1
+      ],
+      "tune": [
+        0.9,
+        1.05
+      ],
+      "send": [
+        0.15,
+        0.28
+      ],
+      "dsend": [
+        0,
+        0.08
+      ],
       "kit": "power"
     },
     "fx": {
-      "reverb": [0.35, 0.5],
-      "delayBeats": [0.375, 0.5],
-      "delayFb": [0.12, 0.25],
-      "delayCut": [2200, 3400],
-      "pump": [0, 0.1],
-      "crackle": [0.1, 0.25],
-      "lowcut": [30, 45],
-      "highcut": [0, 0],
-      "comp": [0.4, 0.62],
-      "grit": [0.35, 0.58]
+      "reverb": [
+        0.35,
+        0.5
+      ],
+      "delayBeats": [
+        0.375,
+        0.5
+      ],
+      "delayFb": [
+        0.12,
+        0.25
+      ],
+      "delayCut": [
+        2200,
+        3400
+      ],
+      "pump": [
+        0,
+        0.1
+      ],
+      "crackle": [
+        0.1,
+        0.25
+      ],
+      "lowcut": [
+        30,
+        45
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.4,
+        0.62
+      ],
+      "grit": [
+        0.35,
+        0.58
+      ]
     },
     "reverbColor": "fdn",
     "found": {
       "role": "bed",
-      "vol": [0.08, 0.15],
-      "pitch": [0.9, 1.05],
-      "stretch": [0.45, 0.6],
-      "cutoff": [2200, 3400],
-      "sources": ["factory", "leacock3"]
+      "vol": [
+        0.08,
+        0.15
+      ],
+      "pitch": [
+        0.9,
+        1.05
+      ],
+      "stretch": [
+        0.45,
+        0.6
+      ],
+      "cutoff": [
+        2200,
+        3400
+      ],
+      "sources": [
+        "factory",
+        "leacock3"
+      ]
     },
     "hits": {
-      "sources": ["sp_rewind", "vox_c"],
+      "sources": [
+        "sp_rewind",
+        "vox_c"
+      ],
       "pattern": "sparse",
       "prob": 0.25
     },
-    "stab": ["off"],
+    "stab": [
+      "off"
+    ],
     "form": "pop"
+  },
+  "verify": {
+    "seeds": 6,
+    "features": {
+      "bpm": 3,
+      "drumDensity": 2,
+      "wash": 1,
+      "pump": 1,
+      "swing": 2,
+      "seventh": 3,
+      "acoustic": 2,
+      "crackle": 1,
+      "sub": 1,
+      "motion": 1,
+      "bedUse": 1
+    }
   }
 }
