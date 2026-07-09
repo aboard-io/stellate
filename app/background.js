@@ -1,27 +1,34 @@
 // background.js — the background layer program: the genre-affine laserdisc video
 // (clip pool follows the mix, no-repeat shuffle bag) and the ▢→▣→▦ chip that
 // cycles off → video+demos → demoscene. Mode 1 alternates video ↔ a fresh
-// MicroW8 demo cart every 8 bars (musical clock) with a wall-clock backstop.
+// MicroW8 demo cart every 8 MEASURES, cut on the beat by the musical clock
+// (onBar), with a wall-clock backstop that only runs when the music isn't.
 import { S, set, K, subs, QSFLAGS } from "./state.js";
 
 // ---------- genre-affine video: the background footage follows the mix ----------
 // pool = union of the current weights' clip pools (dominant genre first).
-// Clip advance is driven by the BAR CLOCK: a new clip every 8 measures (the new
-// direction — clips stream from archive.org and want room to breathe). A section
+// Clip advance is driven by the MUSICAL CLOCK: a new clip every 8 MEASURES,
+// switched on a chord-bar boundary (= on the beat). onBar fires per CHORD-BAR
+// (info.cbeats beats each, default 8 = two 4/4 measures), so we accumulate
+// BEATS, not bar ticks — 8 chord-bars used to mean 16 measures. A section
 // change forces an off-cycle switch ONLY when the genre POOL changed (travel to
 // a new genre), not on every section boundary. The effect stack eases to the
 // dominant genre. Draws come from a SHUFFLED BAG (no repeats until drained).
 // Math.random is deliberate: the determinism law guards rendered audio/video
 // artifacts (press/journey), NOT this live presentational layer — so every
 // play session shows a different clip order. goLive() resets the bag per session.
-const BARS_PER_CLIP=8;
-let vidGenre="", vidBars=0, vidPending=null, vidStarted=false;
+const BEATS_PER_MEASURE=4, MEASURES_PER_CLIP=8;
+const CLIP_BEATS=BEATS_PER_MEASURE*MEASURES_PER_CLIP;   // 32 beats = 8 measures of 4/4
+let vidGenre="", vidBeats=0, vidPending=null, vidStarted=false;
+// force the NEXT onBar to advance the clip (still beat-aligned): the alternator
+// calls this when the program flips back to the video side so footage returns fresh.
+export function vidNextClip(){ vidBeats=1e9; }
 // the no-repeat shuffle bag is VideoLayer's shared mechanism (same shuffle +
 // draw-with-refill + avoid-current as its idle cycler) — created lazily once the
 // layer is loaded, fed the genre-affine pool per 8-bar advance.
 let vidBag=null;
 const vidBagObj=()=>(vidBag||(window.VideoLayer&&VideoLayer.makeBag&&(vidBag=VideoLayer.makeBag())));
-export function vidReset(){ vidGenre=""; vidBars=0; vidPending=null; vidStarted=false; vidAllShuffled=null; const b=vidBagObj(); if(b)b.reset(); }
+export function vidReset(){ vidGenre=""; vidBeats=0; vidPending=null; vidStarted=false; vidAllShuffled=null; const b=vidBagObj(); if(b)b.reset(); }
 // clip pool: the union of clips from genres carrying real weight (trivial
 // neighbors dropped), sorted for a STABLE bag key so a mere weight-reorder as
 // the cursor drifts doesn't thrash the bag. Selection is shuffled anyway.
@@ -67,8 +74,8 @@ export function genreVideo(info){
   if(traveled){ vidGenre=dom; VideoLayer.setGenre&&VideoLayer.setGenre(dom); }
   const pool=vidPool(ordered);
   if(!pool.length)return;
-  vidBars++;
-  const boundary = !vidStarted || traveled || vidBars>=BARS_PER_CLIP;
+  vidBeats+=(info&&info.cbeats)||8;
+  const boundary = !vidStarted || traveled || vidBeats>=CLIP_BEATS;
   if(!boundary){
     // keep the next clip buffering on the back element during this window so the
     // remote stream is ready to crossfade at the boundary (never onto black)
@@ -78,7 +85,7 @@ export function genreVideo(info){
   if(traveled) vidPending=null;   // a prefetch drawn from the old genre's pool is stale
   const first=!vidStarted;
   const showNow = vidPending!=null?vidPending:vidDraw(pool);
-  vidPending=null; vidStarted=true; vidBars=0;
+  vidPending=null; vidStarted=true; vidBeats=0;
   if(showNow!=null){ console.log("[vid] switch bar",info.serial,"->",showNow,first?"(first)":traveled?"(travel)":"(8-bar)"); VideoLayer.showFile(showNow+".mp4"); }
   // draw + prefetch the FOLLOWING clip so it buffers through the next 8 measures
   vidPending=vidDraw(pool);
@@ -95,12 +102,15 @@ let bgMode=0;   // 0 off · 1 video (ALTERNATES with demos while live) · 2 demo
 const BG_GLYPH=["▢","▣","▦"], BG_LABEL=["off","video+demos","demoscene"];
 // Mode 1 is a PROGRAM, not a single layer (Paul: "alternate between different
 // MicroW8 demos and cached video every eight bars when video is on"): while LIVE
-// it cuts video ↔ a fresh demo cart every BG_ALT_BARS chord-bars; idle = ambient
-// video. Mode 2 stays demos-only. bgWant() is the single source of desired layer
-// states so applyBg (which runs every render) can't fight the alternator.
-const BG_ALT_BARS=8;
+// it cuts video ↔ a fresh demo cart every 8 MEASURES, flipped inside onBar so the
+// cut lands ON THE BEAT (a chord-bar boundary). onBar ticks per chord-bar
+// (info.cbeats beats, default 8 = two 4/4 measures) so we count BEATS, not ticks.
+// Idle = the wall-clock backstop cycles it. Mode 2 stays demos-only. bgWant() is
+// the single source of desired layer states so applyBg (which runs every render)
+// can't fight the alternator.
+const BG_ALT_BEATS=32;   // 8 measures × 4 beats
 const BG_ALT_MS=+(QSFLAGS.get("bgAltMs"))||16000;   // idle wall-clock backstop period (test override)
-const bgAlt={side:"video", bars:0, lastFlip:0};
+const bgAlt={side:"video", beats:0, lastFlip:0, lastBar:0};
 function bgWant(){
   // mode 1 = the alternating program: honour the current side whether LIVE or IDLE
   // (idle used to force video, which silently defeated the wall-clock alternation).
@@ -116,27 +126,33 @@ function applyBg(){
 // FLIP the background side: video <-> demo (fresh cart each demo turn), announce it.
 function bgFlip(){
   if(bgMode!==1) return;
-  bgAlt.bars=0; bgAlt.lastFlip=Date.now(); bgAlt.side=bgAlt.side==="video"?"demo":"video";
+  bgAlt.beats=0; bgAlt.lastFlip=Date.now(); bgAlt.side=bgAlt.side==="video"?"demo":"video";
   if(bgAlt.side==="demo"&&window.DemoLayer&&DemoLayer.next) DemoLayer.next();   // a DIFFERENT cart each demo turn
+  else if(bgAlt.side==="video") vidNextClip();   // footage returns FRESH — next bar advances the clip
   applyBg();
   set({status: bgAlt.side==="video" ? "background → video" :
     ("background → demo: "+(window.DemoLayer&&DemoLayer.currentName?DemoLayer.currentName():"microw8"))});
 }
-// MUSICAL driver: flip every BG_ALT_BARS bars while LIVE (called from onBar).
-export function bgBarTick(){
+// MUSICAL driver: flip every BG_ALT_BEATS beats (8 measures) while LIVE — called
+// from onBar at the bar's PLAYBACK instant, so the cut is beat-aligned.
+export function bgBarTick(info){
   if(bgMode!==1||!S.live) return;
-  if(++bgAlt.bars>=BG_ALT_BARS) bgFlip();
+  bgAlt.lastBar=Date.now();   // the musical clock is flowing — backstop stands down
+  bgAlt.beats+=(info&&info.cbeats)||8;
+  if(bgAlt.beats>=BG_ALT_BEATS) bgFlip();
 }
 // RELIABILITY driver: a wall-clock backstop so "video on" ALWAYS visibly cycles —
-// covers idle (not playing) and any route where onBar is sparse. ~16s ≈ 8 bars at a
-// typical tempo; when live, onBar usually flips first (resetting the timer via bars=0),
-// so this only fires if the musical clock has stalled or we're idle.
+// covers idle (not playing) and any route where onBar has stalled. While the
+// musical clock is flowing it stands down entirely (it used to race the beat at
+// slow tempos: 8 measures at 80bpm is 24s, and the 16s backstop cut mid-bar).
 let bgAltTimer=0;
 function bgAltClock(){
-  if(bgMode===1 && (Date.now()-bgAlt.lastFlip)>=BG_ALT_MS) { bgFlip(); }
+  if(bgMode!==1) return;
+  if(S.live && (Date.now()-bgAlt.lastBar)<8000) return;   // live + bars flowing: the beat owns the cut
+  if((Date.now()-bgAlt.lastFlip)>=BG_ALT_MS) bgFlip();
 }
 function startBgAltClock(){ if(!bgAltTimer) bgAltTimer=setInterval(()=>{ if(bgMode===1) bgAltClock(); },1000); }
-window.__BGALT={ state:()=>({mode:bgMode,side:bgAlt.side,bars:bgAlt.bars}), tick:bgBarTick, flip:bgFlip };   // headless gate hook
+window.__BGALT={ state:()=>({mode:bgMode,side:bgAlt.side,beats:bgAlt.beats}), tick:bgBarTick, flip:bgFlip };   // headless gate hook
 bgChip.onclick=()=>{
   const V=window.VideoLayer, D=window.DemoLayer;
   for(let i=0;i<3;i++){ bgMode=(bgMode+1)%3;                       // advance to the next AVAILABLE mode
@@ -144,7 +160,7 @@ bgChip.onclick=()=>{
     if(bgMode===1 && V && V.available()) break;
     if(bgMode===2 && D && D.available()) break;
   }
-  bgAlt.side="video"; bgAlt.bars=0; bgAlt.lastFlip=Date.now();     // a fresh program starts on footage
+  bgAlt.side="video"; bgAlt.beats=0; bgAlt.lastFlip=Date.now();    // a fresh program starts on footage
   applyBg(); startBgAltClock(); set({status:"background: "+BG_LABEL[bgMode]});
 };
 bgChip.ondblclick=()=>{ if(bgMode!==0 && window.DemoLayer&&DemoLayer.next){ DemoLayer.next(); set({status:"demo: "+(DemoLayer.currentName?DemoLayer.currentName():"next")}); } };

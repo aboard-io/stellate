@@ -222,10 +222,10 @@ export async function goLive(){
       scheduleBarNotes(info);   // fire DemoLayer.note(ev) at each note onset (no-op unless the demoscene layer is on)
       if(S.waypoints.length>=2) travelStep();
       glideStep();
+      bgBarTick(info);   // video↔demo 8-measure alternation (mode 1, live only) — BEFORE genreVideo so a flip back to footage shows its fresh clip on this same beat
       genreVideo(info);
       if(window.VideoLayer&&VideoLayer.pulse)VideoLayer.pulse(info);   // ALIEN BROADCAST: musical hook (section/downbeat-aligned chaos)
       if(window.DemoLayer&&DemoLayer.pulse)DemoLayer.pulse(info);      // demoscene: surge the effect's clock on the bar
-      bgBarTick();                                                     // video↔demo 8-bar alternation (mode 1, live only)
       updateMediaSession();   // reflect the current genre/blend on the lock screen (updates across a swap)
     }});
     if(MSESSION){ try{ MSESSION.playbackState="playing"; }catch(e){} updateMediaSession(true); }

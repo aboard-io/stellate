@@ -243,6 +243,21 @@ async function main() {
     `H3: enabled layer tracks the active side (side=${alt.side} vid=${alt.vidOn} demo=${alt.demoOn})`);
   console.log(`  bg-alt: flips=${alt.flips} sides=${alt.sides.join("/")} cartCycles=${alt.cartCycles}`);
 
+  // H4: the MUSICAL driver counts beats, not chord-bar ticks — 8 measures = 32
+  // beats. With cbeats=8 (2 measures/bar) the flip must land on tick 4, not 8.
+  const beat = await page.evaluate(() => {
+    window.VideoLayer.available = () => true;
+    let g = 0; while (window.__BGALT.state().mode !== 1 && g++ < 4) document.getElementById("bgChip").click();
+    const wasLive = window.__S.live; window.__S.live = true;
+    window.__BGALT.flip();   // reset the beat counter to a known 0
+    const s1 = window.__BGALT.state().side; let firstFlip = 0;
+    for (let i = 1; i <= 8 && !firstFlip; i++) { window.__BGALT.tick({ cbeats: 8 }); if (window.__BGALT.state().side !== s1) firstFlip = i; }
+    window.__S.live = wasLive;
+    let h = 0; while (window.__BGALT.state().mode !== 0 && h++ < 4) document.getElementById("bgChip").click();  // back to off
+    return { firstFlip };
+  });
+  ok(beat.firstFlip === 4, `H4: musical flip lands after 32 beats = 4 two-measure bars (got tick ${beat.firstFlip})`);
+
   // I: plain mouse-wheel zooms the map (desktop), no ctrl needed (Paul 2026-07-09).
   const wheel = await page.evaluate(() => {
     const svg = document.getElementById("map"), r = svg.getBoundingClientRect();
