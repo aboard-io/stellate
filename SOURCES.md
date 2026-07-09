@@ -1,3 +1,34 @@
+# The media policy
+
+**This repo ships recipes, not media.** Source is committed; audio, video, and
+models are derived — fetched by the committed recipe scripts (`tools/fetch-*.sh`)
+into gitignored directories (`found/`, `models/`) and fully regenerable. No
+audio/video/model binary is ever committed; `verify.sh` and CI enforce it
+(`.github/workflows/verify.yml`). What IS committed: fetch recipes, manifests,
+cue catalogs (JSON timestamps/tags), decoded parameter data, and this ledger.
+
+Three bright-line tiers for the material the recipes touch:
+
+1. **PD / CC0 / MIT-licensed** (NASA, LibriVox, PD-marked aporee items,
+   FluidR3 GM/GS, locally synthesized ffmpeg/espeak material) — free to fetch,
+   remix, and include in anything. We still keep it fetch-only to keep the
+   repo small.
+2. **Attribution / ShareAlike / NonCommercial / NoDerivs CC material** (most
+   aporee recordings, Naropa readings, OTRR wrappers, SRAA shortwave) —
+   **fetch-only, personal playback**. Any *distributed render* inherits the
+   per-item obligations flagged in the tables below (attribute, SA
+   inheritance, NC, no ND derivatives) and needs a human release decision.
+3. **Unlicensed commercial material** (the LaserDisc demo discs, Video Drug
+   volumes, the "Skip to My Loops" sample CD, the unrecovered lib reels) —
+   **never redistributed, in any form**: never committed, never in a packaged
+   build, never in a distributed render. Stream/local-cache for personal
+   viewing only; point people at the archive.org item and the recipe instead.
+
+This file is the canonical attribution ledger (every item, every license,
+every flag). The third-party CODE credits and license carve-outs live in
+[NOTICE](NOTICE); the contributor-facing rules live in
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
 # Found-sound sources & attribution
 
 **Demoscene background layer** (`demo-layer.js`): the [MicroW8](https://github.com/exoticorn/microw8)
@@ -178,7 +209,7 @@ committed, recoverable deliverable. Workflow documented in CLAUDE.md
 
 | local dir / prefix | source | content | license |
 |---|---|---|---|
-| `stml/` (`stml_*` ids) | **Fatboy Slim / Norman Cook — "Skip to My Loops"** sample CD, [`fatboy-slim-skip-to-my-loops`](https://archive.org/details/fatboy-slim-skip-to-my-loops) on archive.org (single zip, 79 generically-named WAVs) | funky breakbeat **loops** (bpm recovered by the classifier), plus a handful of vocal/funk **chops** and one-shot **hits**. Big-beat DNA — wired into `bigbeat` (+ breakcore/jungle/boombap/triphop and the invented *break* genres), the *house*/*funk* chops pools, and the bigbeat/house/gabber/electro/miamibass/disco hit pools. | none stated on the item (a vintage sample CD posted for reuse). Treat as the demo discs / breaks above: brief, transformed, non-commercial use; audio never redistributed — point people at the archive.org item + this recipe. Flag for a human release decision. |
+| `stml/` (`stml_*` ids) | **Fatboy Slim / Norman Cook — "Skip to My Loops"** sample CD, [`fatboy-slim-skip-to-my-loops`](https://archive.org/details/fatboy-slim-skip-to-my-loops) on archive.org (single zip, 79 generically-named WAVs) | funky breakbeat **loops** (bpm recovered by the classifier), plus a handful of vocal/funk **chops** and one-shot **hits**. Big-beat DNA — wired into `bigbeat` (+ breakcore/jungle/boombap/triphop and the invented *break* genres), the *house*/*funk* chops pools, and the bigbeat/house/gabber/electro/miamibass/disco hit pools. | unauthorized rip of an out-of-print commercial sample CD; no license chain (the CD's own user license was of doubtful validity) — tier 3: never redistributed in any form, never in a distributed render |
 
 ## DX7 patch bank (faust/dx7-presets.json — committed source, not audio)
 

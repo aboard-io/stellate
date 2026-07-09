@@ -1,0 +1,86 @@
+# NOTICE — third-party components, credits, and license carve-outs
+
+The repository is MIT-licensed (see LICENSE, © 2026 Paul Ford) EXCEPT as noted
+below. Media provenance and the fetch-only attribution ledger live in
+SOURCES.md; the redistribution rules live in SOURCES.md "The media policy" and
+CONTRIBUTING.md.
+
+## MicroW8 (exoticorn) — Unlicense (public domain)
+
+`vendor/microw8/` vendors the MicroW8 fantasy-console runtime (`loader.wasm`,
+`platform.uw8`, `microw8.html`) and 8 example carts from the v0.4.1 release —
+https://github.com/exoticorn/microw8 — released under the Unlicense; the full
+text is committed at `vendor/microw8/UNLICENSE`. The other 24 carts in
+`vendor/microw8/carts/` (sources in `carts-src/`) were authored for this
+project and are likewise dedicated under the Unlicense. Thanks to exoticorn.
+
+## lamejs 1.2.1 — LGPL-3.0 (NOT under this repository's MIT grant)
+
+`engine/faust/vendor/lamejs.min.js` is the verbatim minified build of lamejs
+1.2.1 (https://github.com/zhuker/lamejs, npm `lamejs@1.2.1`, plus a small UMD
+shim noted in its header), a pure-JS rewrite of LAME
+(https://lame.sourceforge.net). It is licensed under the **GNU LGPL v3.0**
+(https://www.gnu.org/licenses/lgpl-3.0.html) and is explicitly EXCLUDED from
+the MIT grant. It is used as a separate, unmodified, replaceable module
+(loaded by `engine/faust/mp3-worker.js`) and served as source alongside this
+repository, which satisfies the LGPL for scripting-language use. Source and
+license text: the linked upstream repository and npm package.
+
+## @grame/faustwasm — LGPL v2.1 or later (npm dependency, not redistributed)
+
+The app depends on `@grame/faustwasm` (the Faust WebAssembly compiler and
+runtime, © GRAME, Centre National de Création Musicale), licensed under the
+GNU LGPL version 2.1 or any later version (per the package's COPYING.txt).
+It is installed via `npm ci` in `engine/faust/` — required at build time
+(compiling `dsp/*.dsp`) and at runtime (the workers import its ESM build) —
+but its code is NOT contained in this repository. The package is used
+unmodified: the soundfile-WAV-samplerate fix documented at
+`engine/faust/patches/faustwasm-soundfile-wav-samplerate.patch` ships already
+applied inside the upstream 0.16.5 npm tarball (see the README in that
+directory).
+
+## Faust standard libraries — generated code credit
+
+The committed WebAssembly DSP modules in `engine/faust/dist/` are compiled
+from this project's own `dsp/*.dsp` sources with the Faust compiler and embed
+generated code from the Faust standard libraries
+(https://faustlibraries.grame.fr — GRAME, Stanford CCRMA, et al.), which are
+licensed per-library under MIT-style STK-4.3 and "LGPL with exception" terms;
+the exception expressly allows compiler OUTPUT to be relicensed by its author.
+The generated modules are therefore distributed here under this repository's
+MIT license, with thanks to the Faust project.
+
+## FluidR3 GM/GS SoundFont — © Frank Wen, MIT
+
+The sampled instrument, drum-kit, and percussion layers are extracted at fetch
+time from the FluidR3 GM/GS SoundFont by Frank Wen (2000–2002, 2008), released
+under the MIT license. The SoundFont and the extracted sample WAVs are fetched
+by recipe (`tools/fetch-found-samples.sh`) and are never committed to this
+repository. Credit and thanks to Frank Wen.
+
+## Yamaha DX7 factory patch data — provenance note
+
+`engine/faust/dx7-presets.json` holds 113 presets decoded
+(`engine/faust/sysex2params.js`) from the eight Yamaha DX7 factory ROM
+cartridges (ROM1A "Master" … ROM4B, 1983), fetched from the
+yamahablackboxes.com sysex mirrors. These banks have been freely redistributed
+by Yamaha-adjacent archives, synth museums, and every DX7 editor project for
+four decades (Dexed ships them; bwhitman/learnfm's 31k-patch corpus contains
+them); Yamaha has never asserted rights over the patch DATA — PD-adjacent by
+long convention, noted here rather than claimed as a formal grant. The raw
+.syx cartridge files are not committed; only decoded parameter JSON is.
+
+## Fonts and UI libraries — loaded from CDNs, not redistributed
+
+- Orbitron and VT323 (SIL OFL 1.1) are loaded from Google Fonts.
+- preact (MIT) and htm (Apache-2.0) are imported at runtime from esm.sh.
+
+None of these are contained in this repository; no redistribution obligations
+attach. If any are ever vendored, their license texts must ride along.
+
+## "Harry Potter" character names — nominal use
+
+The hogcore speech roster uses Harry Potter character NAMES only (no book
+text, no film audio; the audio is synthesized locally with eSpeak NG). Names
+are used nominally; this project is not affiliated with or endorsed by
+Warner Bros., J.K. Rowling, or their licensees.

@@ -30,6 +30,19 @@ done
 VAL_ARGS=(--quick); ENG_ARGS=(--quick); MODE=quick
 if [ "$FULL" = 1 ]; then VAL_ARGS=(); ENG_ARGS=(); MODE=full; fi
 
+# media guard (the one rule: source committed, audio derived) — no audio/video/
+# SoundFont/model binary may ever be tracked. engine/faust/dist/*.wasm is the
+# one blessed binary class (compiled from committed dsp/ sources) and is not in
+# this list; found/ catalogs and manifests are JSON and unaffected.
+if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  TRACKED_MEDIA=$(git ls-files | grep -iE '\.(wav|mp3|mp4|ogg|oga|flac|m4a|aac|aif|aiff|webm|mov|avi|mkv|sf2|sf3|pb|syx|onnx|tflite)$' || true)
+  if [ -n "$TRACKED_MEDIA" ]; then
+    echo "verify: FAIL — media files are tracked in git (recipes, not media — see SOURCES.md):" >&2
+    printf '%s\n' "$TRACKED_MEDIA" | sed 's/^/    /' >&2
+    exit 1
+  fi
+fi
+
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 T0=$(date +%s.%N)
