@@ -1,0 +1,98 @@
+{
+  "name": "rooftopholler",
+  "label": "Rooftopholler",
+  "info": "January soul played five storeys up: an electric-piano vamp with real fingers on it, melodic bass singing its own tune, a backbeat in overcoats, call-and-response shouts thrown down into the street, traffic answering from below — the band leans back, the city leans in, somebody phones the police",
+  "anchor": {
+    "bpm": [100, 110],
+    "swing": [0.08, 0.16],
+    "humanize": [0.15, 0.32],
+    "progressions": ["funk_vamp", "mode_mixo", "blues_12"],
+    "kits": ["full", "open"],
+    "fills": ["drum fill", "kit fill", "off"],
+    "timeFeel": { "pushPull": { "bass": 0.012 } },
+    "bass": {
+      "patterns": ["melodic", "walking", "syncopated"],
+      "samplerPool": ["finger_bass", "picked_bass"],
+      "recipe": {
+        "model": ["sampler", "sampler", "saw"],
+        "cutoff": [600, 950],
+        "res": [0.08, 0.15],
+        "level": [1, 1.2],
+        "send": [0.04, 0.1],
+        "dsend": [0, 0.05]
+      }
+    },
+    "lead": {
+      "patterns": ["composed", "blues", "double", "wander"],
+      "samplerPool": ["rhodes_ep", "clean_guitar"],
+      "patchPool": ["E.PIANO 2", "E.PIANO 4"],
+      "recipe": {
+        "model": ["rhodes", "dx7", "sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.002, 0.005],
+        "cutoff": [2600, 3600],
+        "level": [0.46, 0.58],
+        "send": [0.2, 0.35],
+        "dsend": [0.1, 0.22],
+        "attack": 0.008,
+        "release": [0.1, 0.18],
+        "sustain": [0.65, 0.78]
+      }
+    },
+    "pads": {
+      "prob": 0.7,
+      "samplerPool": ["rock_organ", "percussive_organ"],
+      "patchPool": ["E.ORGAN 2"],
+      "recipe": {
+        "model": ["hammond", "rhodes", "sampler"],
+        "wave": "saw",
+        "cutoff": [1000, 1600],
+        "detune": [0.004, 0.009],
+        "attack": [0.3, 0.8],
+        "level": [0.42, 0.56],
+        "send": [0.2, 0.35],
+        "dsend": [0.05, 0.12]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise", "crack"],
+      "hatModel": ["noise"],
+      "kick": [1, 1.2],
+      "snare": [0.85, 1.1],
+      "hat": [0.75, 1.05],
+      "tune": [0.95, 1.1],
+      "send": [0.12, 0.24],
+      "dsend": [0, 0.08],
+      "kit": "acoustic"
+    },
+    "fx": {
+      "reverb": [0.3, 0.45],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.1, 0.22],
+      "delayCut": [2400, 3600],
+      "pump": [0, 0.1],
+      "crackle": [0.1, 0.22],
+      "lowcut": [25, 40],
+      "highcut": [0, 0],
+      "comp": [0.3, 0.5],
+      "grit": [0.05, 0.18]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.08, 0.16],
+      "pitch": [0.95, 1.05],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2200, 3400],
+      "sources": ["highway_night", "tw_platform"]
+    },
+    "hits": {
+      "sources": ["vox_a", "sp_rhythm"],
+      "pattern": "response",
+      "prob": 0.4
+    },
+    "stab": ["off"],
+    "form": "pop"
+  }
+}

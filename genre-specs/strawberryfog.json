@@ -1,0 +1,102 @@
+{
+  "name": "strawberryfog",
+  "label": "Strawberryfog",
+  "info": "1967 through a tape machine running slow: mellotron flutes and choir smeared into fog, a sitar wandering one droning chord, backwards fills, runaway tape echo, shortwave numbers and a loon calling under everything — nothing is real, and the orchard gate is open",
+  "anchor": {
+    "bpm": [76, 90],
+    "swing": [0.02, 0.1],
+    "humanize": [0.15, 0.32],
+    "progressions": ["drone_min", "mode_mixo", "dream"],
+    "kits": ["halftime", "open"],
+    "fills": ["reverse", "dropout", "riser"],
+    "bass": {
+      "patterns": ["pedal", "root", "dub"],
+      "recipe": {
+        "model": ["saw", "sub"],
+        "cutoff": [450, 800],
+        "res": [0.1, 0.18],
+        "level": [0.95, 1.15],
+        "send": [0.05, 0.12],
+        "dsend": [0, 0.08]
+      }
+    },
+    "lead": {
+      "patterns": ["wander", "sparse", "pentaup"],
+      "samplerPool": ["sitar", "flute", "recorder"],
+      "patchPool": ["SITAR", "FLUTE   1"],
+      "recipe": {
+        "model": ["sampler", "sampler", "sampler", "dx7"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.002, 0.006],
+        "cutoff": [2200, 3400],
+        "level": [0.42, 0.56],
+        "send": [0.35, 0.55],
+        "dsend": [0.25, 0.45],
+        "vibrato": [0.006, 0.014],
+        "vibRate": [4.5, 6]
+      },
+      "inserts": {
+        "prob": 0.55,
+        "max": 1,
+        "pool": [
+          ["phaser", { "rate": [0.08, 0.25], "depth": [0.5, 0.8], "mix": [0.4, 0.6] }]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 1,
+      "samplerPool": ["flute", "strings", "ahh_choir"],
+      "recipe": {
+        "model": ["sampler", "sampler", "strings", "choir"],
+        "wave": "saw",
+        "cutoff": [1000, 1700],
+        "detune": [0.008, 0.016],
+        "attack": [1.2, 2.8],
+        "level": [0.5, 0.66],
+        "send": [0.35, 0.55],
+        "dsend": [0.1, 0.25]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.75, 0.95],
+      "snare": [0.6, 0.85],
+      "hat": [0.5, 0.8],
+      "tune": [0.9, 1.05],
+      "send": [0.25, 0.4],
+      "dsend": [0.05, 0.15],
+      "kit": "acoustic"
+    },
+    "fx": {
+      "reverb": [0.5, 0.68],
+      "delayBeats": [0.75, 1],
+      "delayFb": [0.35, 0.5],
+      "delayCut": [2000, 3000],
+      "pump": [0, 0.08],
+      "crackle": [0.15, 0.3],
+      "lowcut": [25, 40],
+      "highcut": [7000, 11000],
+      "comp": [0.15, 0.32],
+      "grit": [0.05, 0.18]
+    },
+    "reverbColor": "greyhole",
+    "found": {
+      "role": "bed",
+      "vol": [0.15, 0.25],
+      "pitch": [0.75, 0.95],
+      "stretch": [0.5, 0.65],
+      "cutoff": [2000, 3200],
+      "sources": ["vx_conet_swedish", "vx_wwvh", "loon", "tw_intrain"]
+    },
+    "hits": {
+      "sources": ["sp_rewind", "vox_b"],
+      "pattern": "sparse",
+      "prob": 0.3
+    },
+    "stab": ["off"],
+    "form": "wave"
+  }
+}

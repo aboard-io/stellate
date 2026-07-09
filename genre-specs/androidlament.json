@@ -1,0 +1,30 @@
+{
+  "name": "androidlament",
+  "label": "Android Lament",
+  "info": "beatless neon-noir at 65: ribbon-glide brass swells with real portamento over ghost-choir pads, rain-city bed pitched into the fog, drums reduced to a distant heartbeat — the machine remembering it is going to die, in a hall the size of a city",
+  "clips": ["night_lines", "dark_face", "drive_bluehour", "sp_eva", "im_redroom", "green_nebula"],
+  "anchor": {
+    "bpm": [58, 70],
+    "swing": [0, 0.03],
+    "humanize": [0.15, 0.3],
+    "progressions": ["dream", "epic_min", "frost"],
+    "kits": ["off", "kick"],
+    "fills": ["off"],
+    "rubato": { "depth": [0.015, 0.03], "periodBars": [2, 4], "prob": 1 },
+    "bass": { "patterns": ["pedal", "root"], "recipe": { "model": ["sub", "saw"], "cutoff": [400, 700], "res": [0.05, 0.15], "level": [0.9, 1.1], "send": [0.05, 0.15], "dsend": [0, 0.05] } },
+    "lead": { "patterns": ["wander", "anthem", "sparse"], "patchPool": ["BRASS   2", "BR TRUMPET"], "recipe": { "model": ["brass", "brass", "modeld", "dx7"], "wave": "saw", "voices": [1, 2], "spread": [0.002, 0.006], "cutoff": [1600, 2800], "glide": [120, 260], "envAmount": [0.6, 1.2], "envDecay": [0.3, 0.6], "oscMix": [0.2, 0.5], "drift": [4, 9], "vibrato": [0.005, 0.012], "attack": 0.15, "release": [0.5, 0.9], "sustain": [0.85, 0.95], "level": [0.5, 0.62], "send": [0.5, 0.7], "dsend": [0.25, 0.4] } },
+    "pads": { "prob": 1, "recipe": { "model": ["brass", "vp330", "choir", "strings"], "wave": "saw", "cutoff": [800, 1500], "detune": [0.006, 0.012], "attack": [1.5, 3], "vowel": [0.2, 0.4], "ensemble": [0.5, 0.7], "level": [0.6, 0.78], "send": [0.55, 0.75], "dsend": [0.1, 0.25] } },
+    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.5, 0.75], "snare": [0.3, 0.5], "hat": [0.2, 0.4], "tune": [0.85, 1], "send": [0.4, 0.6], "dsend": [0, 0.1] },
+    "fx": { "reverb": [0.85, 0.95], "delayBeats": [0.75, 1.5], "delayFb": [0.2, 0.35], "delayCut": [1800, 2800], "pump": [0, 0], "crackle": [0, 0.08], "lowcut": [25, 40], "highcut": [0, 0], "comp": [0.1, 0.25] },
+    "reverbColor": "greyhole",
+    "found": { "role": "bed", "vol": [0.1, 0.18], "pitch": [0.6, 0.75], "stretch": [0.5, 0.65], "cutoff": [1200, 2000], "sources": ["highway_night", "vx_apollo", "factory"] },
+    "hits": { "sources": ["vx_apollo", "sp_nightdrive"], "pattern": "sparse", "prob": 0.15 },
+    "stab": ["off"],
+    "form": "wave"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": { "bpm": 3, "drumDensity": 3, "wash": 2, "rubato": 2, "pump": 1, "motion": 1, "humanize": 1 }
+  }
+}

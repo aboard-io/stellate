@@ -1,0 +1,37 @@
+{
+  "name": "salondawdle",
+  "label": "Salondawdle",
+  "info": "furniture music at 61: bare piano chords placed one per bar and left to dawdle, a melody of maybe five unhurried notes, no drums, the tempo leaning forward and back like someone forgetting why they entered the room — dusty, white-suited, deliberately unimportant",
+  "anchor": {
+    "bpm": [57, 65],
+    "swing": [0, 0.06],
+    "humanize": [0.35, 0.6],
+    "progressions": ["dream", "ii_v_i", "neosoul"],
+    "kits": ["off"],
+    "fills": ["off"],
+    "chordEvery": 16,
+    "bass": {
+      "patterns": ["root", "simple", "off"],
+      "samplerPool": ["felt_piano", "yamaha_grand_piano"],
+      "recipe": { "model": ["sampler", "sampler", "piano"], "cutoff": [700, 1400], "res": [0.05, 0.1], "level": [0.5, 0.68], "send": [0.25, 0.45], "dsend": [0, 0.08], "attack": [0.01, 0.03], "release": [0.35, 0.7] }
+    },
+    "lead": {
+      "patterns": ["sparse", "composed", "wander"],
+      "samplerPool": ["felt_piano", "felt_piano", "yamaha_grand_piano"],
+      "recipe": { "model": ["sampler", "sampler", "piano"], "wave": "sine", "voices": [1, 1], "spread": [0.001, 0.002], "cutoff": [2200, 3400], "level": [0.42, 0.55], "send": [0.3, 0.5], "dsend": [0.05, 0.15], "attack": [0.01, 0.03], "release": [0.4, 0.8] }
+    },
+    "pads": {
+      "prob": 0.3,
+      "samplerPool": ["slow_strings"],
+      "recipe": { "model": ["sampler", "strings"], "wave": "sine", "cutoff": [800, 1500], "detune": [0.002, 0.004], "attack": [1.2, 2.8], "release": [1.8, 3.5], "swell": 1, "level": [0.28, 0.4], "send": [0.4, 0.6], "dsend": [0, 0.08] }
+    },
+    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.4, 0.6], "snare": [0.3, 0.5], "hat": [0.2, 0.4], "tune": [0.9, 1], "send": [0.15, 0.35], "dsend": [0, 0] },
+    "fx": { "reverb": [0.45, 0.62], "delayBeats": [1, 1.5], "delayFb": [0.1, 0.22], "delayCut": [2000, 3000], "pump": [0, 0], "crackle": [0.1, 0.4], "lowcut": [0, 0], "highcut": [0, 0], "comp": [0, 0.12] },
+    "found": { "role": "bed", "vol": [0.05, 0.12], "pitch": [0.7, 0.9], "stretch": [0.45, 0.6], "cutoff": [1800, 2800], "sources": ["tw_stationhall", "crickets"] },
+    "rubato": { "depth": [0.035, 0.06], "periodBars": [2, 4], "prob": 1 },
+    "thunk": { "prob": [0.3, 0.5], "amp": [0.03, 0.045] },
+    "hits": { "sources": ["sp_herenow"], "pattern": "sparse", "prob": 0.05 },
+    "stab": ["off"],
+    "form": "wave"
+  }
+}

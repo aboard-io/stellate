@@ -1,0 +1,99 @@
+{
+  "name": "octopusminuet",
+  "label": "Octopusminuet",
+  "info": "baroque pop in a walled garden: harpsichord figuration and a celesta answering it, a string quartet holding the middle, cello walking the bassline, brushes barely touching the kit — a canon that thinks it is a single, powdered wigs and pop hooks, pigeons in the courtyard",
+  "anchor": {
+    "bpm": [90, 100],
+    "swing": [0, 0.06],
+    "humanize": [0.12, 0.26],
+    "progressions": ["canon", "sad_pop", "ii_v_i"],
+    "kits": ["open", "halftime"],
+    "fills": ["off", "micro lick"],
+    "rubato": { "depth": [0.008, 0.02], "periodBars": [2, 4], "prob": 0.5 },
+    "counterpoint": { "prob": 0.5 },
+    "bass": {
+      "patterns": ["walking", "melodic", "pedal"],
+      "samplerPool": ["cello", "acoustic_bass"],
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "cutoff": [550, 900],
+        "res": [0.06, 0.12],
+        "level": [0.75, 0.95],
+        "send": [0.1, 0.2],
+        "dsend": [0, 0.06]
+      }
+    },
+    "lead": {
+      "patterns": ["composed", "composed2", "canon", "arpup"],
+      "samplerPool": ["harpsichord", "celesta", "oboe"],
+      "patchPool": ["HARPSICH 1", "CELESTE"],
+      "recipe": {
+        "model": ["sampler", "sampler", "sampler", "dx7"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.001, 0.003],
+        "cutoff": [2800, 4000],
+        "level": [0.46, 0.58],
+        "send": [0.25, 0.4],
+        "dsend": [0.1, 0.2],
+        "attack": 0.004,
+        "release": [0.08, 0.14],
+        "sustain": [0.5, 0.65]
+      }
+    },
+    "pads": {
+      "prob": 0.9,
+      "samplerPool": ["strings", "pizzicato_strings"],
+      "recipe": {
+        "model": ["sampler", "sampler", "strings"],
+        "wave": "saw",
+        "cutoff": [1300, 1900],
+        "detune": [0.003, 0.007],
+        "attack": [0.4, 1],
+        "level": [0.42, 0.56],
+        "send": [0.25, 0.4],
+        "dsend": [0.05, 0.15]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.5, 0.7],
+      "snare": [0.4, 0.6],
+      "hat": [0.45, 0.7],
+      "tune": [0.95, 1.1],
+      "send": [0.2, 0.35],
+      "dsend": [0, 0.08],
+      "kit": "brush"
+    },
+    "fx": {
+      "reverb": [0.4, 0.55],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.1, 0.2],
+      "delayCut": [2600, 3800],
+      "pump": [0, 0],
+      "crackle": [0.1, 0.25],
+      "lowcut": [0, 30],
+      "highcut": [0, 0],
+      "comp": [0.1, 0.24],
+      "grit": [0, 0]
+    },
+    "reverbColor": "dattorro",
+    "found": {
+      "role": "bed",
+      "vol": [0.05, 0.1],
+      "pitch": [0.95, 1.05],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2200, 3400],
+      "sources": ["pigeon_coo", "tw_stationhall"]
+    },
+    "hits": {
+      "sources": ["handbell", "tw_ding"],
+      "pattern": "sparse",
+      "prob": 0.2
+    },
+    "stab": ["off"],
+    "form": "pop"
+  }
+}

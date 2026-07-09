@@ -1,0 +1,24 @@
+{
+  "name": "chromeufo",
+  "label": "Chromeufo",
+  "info": "the ship comes down at 94: a rubber synth-bass squelches through an envelope filter that never stops chewing, wah guitar smears across a choir-and-string cloud, the groove loose and swampy — radio chatter from somewhere above, a party that landed instead of started",
+  "anchor": {
+    "bpm": [90, 98],
+    "swing": [0.09, 0.17],
+    "humanize": [0.3, 0.5],
+    "progressions": ["funk_vamp", "neosoul", "deep_two"],
+    "kits": ["boombap", "house"],
+    "fills": ["drum fill", "downlift", "off"],
+    "bass": { "patterns": ["syncopated", "dub", "melodic"], "recipe": { "model": ["modeld", "modeld", "sub"], "cutoff": [350, 650], "res": [0.15, 0.3], "level": [1.15, 1.35], "send": [0, 0.08], "dsend": [0, 0.05], "glide": [25, 45], "envAmount": [1.5, 2.6], "envDecay": [0.09, 0.16], "oscMix": [0.25, 0.55], "drift": [3, 7] },
+      "inserts": { "prob": 0.65, "max": 1, "pool": [["wah", { "sens": [0.55, 0.75], "base": [240, 380], "range": [1.8, 2.6], "q": [4, 6], "mix": [0.7, 0.9] }]] } },
+    "lead": { "patterns": ["wander", "blues", "sparse"], "samplerPool": ["overdrive_guitar", "distortion_guitar", "solo_vox"], "recipe": { "model": ["sampler", "sampler", "fm"], "wave": "sine", "voices": [1, 2], "spread": [0.002, 0.005], "cutoff": [2000, 3200], "drive": [0.25, 0.4], "vibrato": [0.003, 0.008], "level": [0.42, 0.54], "send": [0.35, 0.5], "dsend": [0.2, 0.35], "attack": 0.01, "release": [0.12, 0.2], "sustain": [0.65, 0.78] },
+      "inserts": { "prob": 0.5, "max": 1, "pool": [["wah", { "sens": [0.5, 0.7], "base": [320, 460], "range": [1.6, 2.4], "q": [3.5, 5.5], "mix": [0.6, 0.85] }]] } },
+    "pads": { "prob": 0.75, "samplerPool": ["ahh_choir", "synth_strings_1"], "recipe": { "model": ["sampler", "sampler", "juno60"], "wave": "saw", "cutoff": [900, 1500], "detune": [0.004, 0.009], "attack": [0.5, 1.2], "chorus": [1.2, 1.6], "ensemble": [0.7, 0.85], "level": [0.45, 0.6], "send": [0.35, 0.5], "dsend": [0.1, 0.2] } },
+    "drums": { "kickModel": ["boom", "808"], "snareModel": ["noise", "crack"], "hatModel": ["noise"], "kick": [1.1, 1.35], "snare": [0.75, 1.0], "hat": [0.7, 1.0], "tune": [0.9, 1.05], "send": [0.12, 0.25], "dsend": [0.05, 0.15], "kit": "room" },
+    "fx": { "reverb": [0.35, 0.5], "delayBeats": [0.5, 0.75], "delayFb": [0.2, 0.35], "delayCut": [2000, 3000], "pump": [0, 0.12], "crackle": [0.1, 0.25], "lowcut": [25, 40], "highcut": [0, 0], "comp": [0.3, 0.5], "grit": [0.1, 0.25] },
+    "found": { "role": "bed", "vol": [0.08, 0.16], "pitch": [0.8, 0.95], "stretch": [0.45, 0.6], "cutoff": [1800, 2800], "sources": ["vx_apollo", "vx_wwvh", "highway_night"] },
+    "stab": ["off", "sparse"],
+    "hits": { "sources": ["vox_a", "vox_b", "sp_energy"], "pattern": "offbeat", "prob": 0.5 },
+    "form": "dj"
+  }
+}

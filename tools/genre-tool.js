@@ -131,8 +131,12 @@ function deriveSchema() {
   const src = fs.readFileSync(path.join(ROOT, "genre-kernel.js"), "utf8");
   for (const re of [/GENRES\[[^\]]+\]\.([a-zA-Z]\w*)/g, /\bg\.([a-zA-Z]\w*)/g, /\.g\)\.([a-zA-Z]\w*)/g, /\bA\.([a-zA-Z]\w*)/g])
     for (const m of src.matchAll(re)) all.add(m[1]);
-  // label/info are supplied at spec top level, not inside spec.anchor
-  const required = [...all].filter(k => counts[k] === anchors.length && k !== "label" && k !== "info");
+  // label/info are supplied at spec top level, not inside spec.anchor.
+  // theory/pipes/rhythm are AUTO-DERIVED at kernel load (deriveMind attaches
+  // them to every anchor), so counts[k]===anchors.length lies about them being
+  // author-required — a spec correctly omits them (MUSIC-MIND 2026-07-09).
+  const DERIVED = new Set(["theory", "pipes", "rhythm"]);
+  const required = [...all].filter(k => counts[k] === anchors.length && k !== "label" && k !== "info" && !DERIVED.has(k));
   return { known: all, required };
 }
 
@@ -300,12 +304,19 @@ const TERM = {
 // existing star (the arabpop/triphop lesson: crowded stars blur blends);
 // idempotent per-genre line replace inside the block.
 function splicePosition(name, pos) {
+  // POS moved to app/world.js in the 2026-07 folder reorg (a BAKED cache of
+  // computeGenreLayout — world.js:52-72). spec.pos is now OPTIONAL: a genre
+  // missing from POS gets a derived spot at first boot (starmap.js fast-path
+  // miss -> similarity-seeded relaxation) and the batch re-bake pastes
+  // window.__X.POS back. With pos given, we splice it directly so boot stays
+  // on the fast path.
+  if (pos == null) { console.log(`  pos: none given — boot will derive a star near ${name}'s musical family; re-bake app/world.js POS after the batch`); return; }
   if (!Array.isArray(pos) || pos.length !== 2 || !pos.every(v => Number.isFinite(v)))
-    die(`spec.pos required: [x,y] star-chart coordinates (logical px). A genre without a star is invisible in the explorer — pick a spot near its musical family, >=55px from every neighbor (see explorer.html POS).`);
-  const file = path.join(__dirname, "..", "index.html");   // the explorer page (renamed explorer.html -> index.html, at repo root)
+    die(`spec.pos must be [x,y] star-chart coordinates (logical px), or omitted to let boot derive one.`);
+  const file = path.join(__dirname, "..", "app", "world.js");
   let src = fs.readFileSync(file, "utf8");
-  const OPEN = "/* genre-tool:positions */", CLOSE = "/* /genre-tool:positions */";
-  if (src.indexOf(OPEN) < 0 || src.indexOf(CLOSE) < 0) die("positions marker block not found in explorer.html");
+  const OPEN = "export const POS={", CLOSE = "\n};";
+  if (src.indexOf(OPEN) < 0) die("POS table not found in app/world.js");
   // spacing check against every star already in the file (POS pairs)
   const near = [];
   for (const m of src.matchAll(/(\w+):\[(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)\]/g)) {
@@ -314,11 +325,16 @@ function splicePosition(name, pos) {
     if (d < 55) near.push(`${m[1]} (${d.toFixed(0)}px)`);
   }
   if (near.length) die(`spec.pos [${pos}] is <55px from: ${near.join(", ")} — crowded stars blur blends (the arabpop/triphop lesson). Pick a roomier spot.`);
-  const line = `  ${name}:[${pos[0]},${pos[1]}],`;
-  const mine = new RegExp("\\n[ \\t]*" + name + ":\\[[^\\]]*\\],(?=[\\s\\S]*?" + CLOSE.replace(/[/*]/g, "\\$&") + ")");
-  if (mine.test(src.slice(src.indexOf(OPEN), src.indexOf(CLOSE) + CLOSE.length)))
-    src = src.slice(0, src.indexOf(OPEN)) + src.slice(src.indexOf(OPEN)).replace(mine, "\n" + line);
-  else src = src.slice(0, src.indexOf(CLOSE)) + line + "\n  " + src.slice(src.indexOf(CLOSE));
+  // idempotent per-genre replace inside the POS object; NEW entries insert
+  // right AFTER the opening brace — always comma-valid (the table's last line
+  // carries no trailing comma, so tail-insertion would be a syntax error).
+  const blockEnd = src.indexOf(CLOSE, src.indexOf(OPEN));
+  const block = src.slice(src.indexOf(OPEN), blockEnd);
+  const mine = new RegExp("([,{\\n][ \\t]*)" + name + ":\\[[^\\]]*\\]");
+  if (mine.test(block))
+    src = src.slice(0, src.indexOf(OPEN)) + block.replace(mine, `$1${name}:[${pos[0]},${pos[1]}]`) + src.slice(blockEnd);
+  else
+    src = src.replace(OPEN, OPEN + `\n  ${name}:[${pos[0]},${pos[1]}],`);
   fs.writeFileSync(file, src);
 }
 
@@ -345,6 +361,11 @@ function cmdCreate() {
 
   const anchor = Object.assign({ label: spec.label || name, info: spec.info || "" }, spec.anchor);
   K.GENRES[name] = anchor;                              // inject in-memory for measurement
+  // MUSIC-MIND (2026-07-09): the kernel attaches theory/pipes/rhythm to every
+  // anchor at LOAD — an anchor injected after load must get the same pass or
+  // resolveMulti crashes on g.theory.adventure. deriveMind is guarded
+  // (if(!g.theory) etc.), so re-running it on a splice-marked anchor is a no-op.
+  K.deriveMind(name, anchor);
 
   const seeds = Array.from({ length: parseInt(opt("seeds", (spec.verify && spec.verify.seeds) || 6), 10) }, (_, i) => i + 1);
   console.log(`\n▶ create ${name} — measuring ${seeds.length} seeds`);

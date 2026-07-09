@@ -1,0 +1,30 @@
+{
+  "name": "oscillatorminuet",
+  "label": "Oscillator Minuet",
+  "info": "powdered-wig voltage at 88: two-part invention played by plucky ladder-filter monosynth voices, walking continuo bass, tape-dry room, almost no drums — counterpoint wired through patch cords, ornaments rendered as filter envelopes",
+  "clips": ["im_paint", "ab_fantasma", "cmm_wireglobe", "blue_dinner", "jm_dipole"],
+  "anchor": {
+    "bpm": [84, 92],
+    "swing": [0, 0.03],
+    "humanize": [0.06, 0.15],
+    "progressions": ["canon", "ii_v_i", "pop_1625"],
+    "kits": ["off", "kick", "open"],
+    "fills": ["off"],
+    "rubato": { "depth": [0.008, 0.018], "periodBars": [2, 4], "prob": 0.4 },
+    "bass": { "patterns": ["walking", "melodic", "simple"], "recipe": { "model": ["modeld", "saw"], "cutoff": [500, 850], "res": [0.1, 0.2], "level": [0.95, 1.15], "send": [0.05, 0.15], "dsend": [0, 0.05], "glide": [8, 18], "envAmount": [0.8, 1.5], "envDecay": [0.1, 0.2], "oscMix": [0.3, 0.6], "drift": [2, 5] } },
+    "lead": { "patterns": ["canon", "fugue", "composed", "arpup"], "recipe": { "model": ["modeld", "modeld", "casiocz"], "wave": "saw", "voices": [1, 2], "spread": [0.001, 0.004], "cutoff": [2400, 3600], "glide": [10, 25], "envAmount": [1.2, 2], "envDecay": [0.08, 0.15], "oscMix": [0.3, 0.7], "drift": [2, 5], "level": [0.48, 0.6], "send": [0.2, 0.35], "dsend": [0.1, 0.25], "attack": 0.004, "release": [0.08, 0.15], "sustain": [0.55, 0.7], "fenv": [0.3, 0.55] } },
+    "pads": { "prob": 0.4, "recipe": { "model": ["strings", "solina"], "wave": "saw", "cutoff": [1000, 1700], "detune": [0.004, 0.009], "attack": [0.8, 1.8], "ensemble": [0.5, 0.7], "level": [0.35, 0.5], "send": [0.25, 0.4], "dsend": [0.05, 0.15] } },
+    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.6, 0.85], "snare": [0.4, 0.6], "hat": [0.4, 0.65], "tune": [0.9, 1.05], "send": [0.15, 0.3], "dsend": [0, 0.08] },
+    "fx": { "reverb": [0.25, 0.4], "delayBeats": [0.5, 0.75], "delayFb": [0.1, 0.2], "delayCut": [3000, 4500], "pump": [0, 0], "crackle": [0.05, 0.2], "lowcut": [30, 50], "highcut": [0, 0], "comp": [0.15, 0.3] },
+    "reverbColor": "fdn",
+    "found": { "role": "bed", "vol": [0.04, 0.09], "pitch": [0.8, 1], "stretch": [0.45, 0.6], "cutoff": [2000, 3200], "sources": ["crt_whine", "vx_timelady"] },
+    "hits": { "sources": ["sp_herenow"], "pattern": "sparse", "prob": 0.08 },
+    "stab": ["off"],
+    "form": "pop"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": { "bpm": 3, "motion": 3, "drumDensity": 2, "wash": 1, "humanize": 1, "pump": 1 }
+  }
+}

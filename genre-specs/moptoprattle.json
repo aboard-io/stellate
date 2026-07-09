@@ -1,0 +1,94 @@
+{
+  "name": "moptoprattle",
+  "label": "Moptoprattle",
+  "info": "washboard-and-tea-chest beat music at 150: a matchstick backbeat brushed hard, walking upright bass under I-vi-IV-V changes, two bright guitars trading two-bar hooks, a harmonica wheeze, call-and-response shouts off a 78 — four haircuts counting in a cellar, all rattle and grin",
+  "anchor": {
+    "bpm": [142, 156],
+    "swing": [0.05, 0.12],
+    "humanize": [0.2, 0.42],
+    "progressions": ["doo_wop", "doo_wop", "four_chords", "blues_12"],
+    "kits": ["shuffle", "four"],
+    "fills": ["drum fill", "hat rush", "off"],
+    "bass": {
+      "patterns": ["walking", "root", "simple"],
+      "samplerPool": ["acoustic_bass"],
+      "recipe": {
+        "model": ["sampler", "sampler", "sub"],
+        "cutoff": [600, 950],
+        "res": [0.08, 0.14],
+        "level": [0.9, 1.1],
+        "send": [0.05, 0.12],
+        "dsend": [0, 0.05]
+      }
+    },
+    "lead": {
+      "patterns": ["double", "updown", "hero"],
+      "samplerPool": ["steel_string_guitar", "clean_guitar", "harmonica"],
+      "recipe": {
+        "model": ["sampler", "sampler", "sampler", "guitar"],
+        "wave": "saw",
+        "voices": [1, 2],
+        "spread": [0.001, 0.004],
+        "cutoff": [2800, 4000],
+        "level": [0.5, 0.62],
+        "send": [0.2, 0.35],
+        "dsend": [0.05, 0.15],
+        "vibrato": [0.004, 0.009],
+        "vibRate": [5.5, 7]
+      }
+    },
+    "pads": {
+      "prob": 0.35,
+      "samplerPool": ["harmonica", "reed_organ"],
+      "recipe": {
+        "model": ["sampler", "sampler", "organ"],
+        "wave": "saw",
+        "cutoff": [1100, 1700],
+        "detune": [0.003, 0.007],
+        "attack": [0.15, 0.5],
+        "level": [0.34, 0.46],
+        "send": [0.15, 0.3],
+        "dsend": [0.05, 0.12]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.85, 1.05],
+      "snare": [0.8, 1.05],
+      "hat": [0.7, 1],
+      "tune": [0.95, 1.1],
+      "send": [0.15, 0.28],
+      "dsend": [0, 0.08],
+      "kit": "acoustic"
+    },
+    "fx": {
+      "reverb": [0.3, 0.45],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.1, 0.22],
+      "delayCut": [2400, 3600],
+      "pump": [0, 0.05],
+      "crackle": [0.3, 0.5],
+      "lowcut": [30, 45],
+      "highcut": [9000, 12000],
+      "comp": [0.15, 0.32],
+      "grit": [0, 0.1]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.06, 0.12],
+      "pitch": [0.95, 1.05],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2400, 3600],
+      "sources": ["leacock1", "leacock2"]
+    },
+    "hits": {
+      "sources": ["blues_vox_78", "horns_78"],
+      "pattern": "response",
+      "prob": 0.4
+    },
+    "stab": ["off"],
+    "form": "pop"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "meadowmellotron",
+  "label": "Meadow Mellotron",
+  "info": "a pastoral tale told in twelve strings: bright acoustic arpeggios circle a slow-turning chord while tape-flute choirs swell out of the hedgerow, fretless bass pads barefoot behind, crickets in the ditch — then the narrator leans in and the whole meadow goes theatrical",
+  "anchor": {
+    "bpm": [82, 94],
+    "swing": [0, 0.08],
+    "humanize": [0.2, 0.4],
+    "progressions": ["mode_dorian", "dream", "canon", "royal_road"],
+    "kits": ["open", "kick"],
+    "fills": ["off", "tom fill", "downlift"],
+    "chordEvery": 8,
+    "bass": { "patterns": ["pedal", "root", "melodic"], "samplerPool": ["fretless_bass", "finger_bass"], "recipe": { "model": ["sampler", "sub"], "cutoff": [400, 750], "res": [0.05, 0.1], "level": [0.9, 1.1], "send": [0.1, 0.2], "dsend": [0, 0.08], "attack": 0.008, "release": [0.15, 0.3] } },
+    "lead": { "patterns": ["arp16", "arpup", "wander", "composed"], "samplerPool": ["steel_string_guitar", "nylon_string_guitar", "harp"], "recipe": { "model": ["sampler", "sampler", "kpluck"], "wave": "sine", "voices": [1, 2], "spread": [0.001, 0.004], "cutoff": [2600, 3800], "level": [0.42, 0.56], "send": [0.3, 0.5], "dsend": [0.1, 0.25], "attack": 0.005, "release": [0.2, 0.4] } },
+    "pads": { "prob": 1, "samplerPool": ["flute", "strings", "ahh_choir"], "recipe": { "model": ["sampler", "sampler", "sampler", "strings"], "wave": "sine", "cutoff": [1000, 1700], "detune": [0.003, 0.007], "attack": [0.8, 2], "release": [1.5, 3], "swell": 1, "mellotron": true, "level": [0.42, 0.58], "send": [0.4, 0.6], "dsend": [0.05, 0.18] } },
+    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.6, 0.9], "snare": [0.45, 0.7], "hat": [0.4, 0.7], "tune": [0.95, 1.05], "send": [0.2, 0.35], "dsend": [0, 0.1], "kit": "acoustic" },
+    "fx": { "reverb": [0.5, 0.68], "delayBeats": [0.5, 1], "delayFb": [0.15, 0.3], "delayCut": [2200, 3200], "pump": [0, 0], "crackle": [0.05, 0.2], "lowcut": [0, 0], "highcut": [0, 0], "comp": [0, 0.2] },
+    "found": { "role": "bed", "vol": [0.08, 0.16], "pitch": [0.8, 1], "stretch": [0.45, 0.6], "cutoff": [2000, 3200], "sources": ["crickets", "frogs", "vx_dickinson"] },
+    "rubato": { "depth": [0.008, 0.02], "periodBars": [2, 4], "prob": 0.6 },
+    "hits": { "sources": ["handbell", "ca_loon"], "pattern": "sparse", "prob": 0.2 },
+    "stab": ["off"],
+    "form": "ritual"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": { "bpm": 3, "acoustic": 2, "drumDensity": 2, "rubato": 2, "motion": 1, "wash": 1 }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "sequinfreight",
+  "label": "Sequinfreight",
+  "info": "heavy cargo in a mirrored elevator: a slapped bass hauls octaves under four-on-the-floor while chopped-loop steam hisses between the horn hits — strings glide overhead, the snare cracks bigger than the room, half glitter, half diesel",
+  "anchor": {
+    "bpm": [106, 114],
+    "swing": [0.06, 0.12],
+    "humanize": [0.12, 0.28],
+    "progressions": ["funk_vamp", "house_min7", "neosoul"],
+    "kits": ["four", "open"],
+    "fills": ["hat rush", "drum fill", "riser"],
+    "bass": { "patterns": ["octaves", "syncopated", "rolling"], "samplerPool": ["slap_bass"], "recipe": { "model": ["sampler", "modeld"], "cutoff": [550, 950], "res": [0.1, 0.2], "level": [1.05, 1.25], "send": [0.03, 0.08], "dsend": [0, 0.05], "glide": [20, 35], "envAmount": [1.0, 1.8], "envDecay": [0.07, 0.14], "oscMix": [0.2, 0.5], "drift": [3, 7] },
+      "inserts": { "prob": 0.5, "max": 1, "pool": [["wah", { "sens": [0.5, 0.72], "base": [280, 420], "range": [1.8, 2.5], "q": [3.5, 6], "mix": [0.7, 0.9] }]] } },
+    "lead": { "patterns": ["double", "pentaup", "updown"], "samplerPool": ["brass_section", "trumpet", "clean_guitar"], "recipe": { "model": ["sampler", "sampler", "fm"], "wave": "sine", "voices": [1, 2], "spread": [0.002, 0.005], "cutoff": [2400, 3600], "level": [0.44, 0.56], "send": [0.25, 0.4], "dsend": [0.12, 0.25], "attack": 0.005, "release": [0.08, 0.14], "sustain": [0.58, 0.7] } },
+    "pads": { "prob": 0.85, "samplerPool": ["strings", "slow_strings"], "recipe": { "model": ["sampler", "strings"], "wave": "saw", "cutoff": [1100, 1700], "detune": [0.004, 0.009], "attack": [0.25, 0.7], "level": [0.44, 0.58], "send": [0.3, 0.45], "dsend": [0.05, 0.15] } },
+    "drums": { "kickModel": ["909", "boom"], "snareModel": ["noise", "clap"], "hatModel": ["noise"], "kick": [1.1, 1.3], "snare": [0.95, 1.2], "hat": [1.0, 1.3], "tune": [0.95, 1.1], "send": [0.12, 0.25], "dsend": [0.05, 0.15], "kit": "power" },
+    "fx": { "reverb": [0.4, 0.55], "delayBeats": [0.375, 0.5], "delayFb": [0.15, 0.3], "delayCut": [2600, 3800], "pump": [0.22, 0.38], "crackle": [0.18, 0.32], "lowcut": [30, 45], "highcut": [8500, 12500], "comp": [0.35, 0.55] },
+    "found": { "role": "chops", "vol": [0.12, 0.2], "pitch": [0.95, 1.1], "stretch": [0.4, 0.6], "cutoff": [2400, 3800], "sources": ["stml_chop_c", "stml_chop_d", "bb_horn_b"] },
+    "stab": ["offbeat", "off"],
+    "hits": { "sources": ["horns_78", "bb_horn_a", "sp_rhythm"], "pattern": "offbeat", "prob": 0.6 },
+    "form": "pop"
+  }
+}
