@@ -7,8 +7,9 @@ import { MODE_LOCKS, BARS_PER_SEG } from "./world.js";
 import { goLive, stopLive } from "./live.js";
 import { retarget, setMacro, resetMacros, weightsAt } from "./targeting.js";
 import { renderInside } from "./inside.js";
-import { vidReset } from "./background.js";
+import { bgVideoToggle, bgVideoOn } from "./background.js";
 import { seedDefaultLoop, drawMap, startPulse } from "./starmap.js";
+import { EXPORT, downloadMidi, exportAudio } from "./export.js";
 
 const MACRO_AXES=[["acoustic","acoustic","synth"],["density","simple","layered"],["dust","dusty","clean"],
   ["space","dry","drenched"],["bright","dark","bright"],["feel","tight","loose"],["energy","calm","intense"],["vocal","instr","vocal"]];
@@ -34,8 +35,8 @@ function Panel(){
       <button class="go" onclick=${goLive}>▶ LIVE</button>
       <button onclick=${stopLive}>■ STOP</button>
       <button onclick=${()=>set({more:!S.more})}>${S.more?"× less":"⚙ more"}</button>
-      <button title="background video on/off (default off)"
-        onclick=${()=>{if(!(window.VideoLayer&&VideoLayer.available())){set({status:"video layer still loading (or no clips) — try again in a moment"});return;} VideoLayer.setEnabled(!VideoLayer.enabled());if(!VideoLayer.enabled())vidReset();set({});}}>${window.VideoLayer&&VideoLayer.enabled()?"▣ video":"▢ video"}</button>
+      <button title="background video on/off (alternates with demoscene; default off)"
+        onclick=${()=>{if(!bgVideoToggle())set({status:"video layer still loading (or no clips) — try again in a moment"});}}>${bgVideoOn()?"▣ video":"▢ video"}</button>
     </div>
     <div class="row"><label>seed</label>
       <input class="seedin" type="number" value=${S.seed}
@@ -99,6 +100,15 @@ function Panel(){
           }).catch(e=>set({status:"bad path file — "+e.message}));};
         inp.click();}}>⤒ path</button>
       <button onclick=${()=>seedDefaultLoop()}>↺ reset loop</button>
+      <button disabled=${!S.playing||EXPORT.busy}
+        title=${!S.playing?"nothing playing yet — the buttons capture the current song":"Standard MIDI File of the current song (pads/bass/melody + GM drums), named from the chyron's band card"}
+        onclick=${()=>downloadMidi()}>⤓ midi</button>
+      <button disabled=${!S.playing||EXPORT.busy}
+        title=${!S.playing?"nothing playing yet — the buttons capture the current song":"offline-press the current song to lossless WAV (44.1k/16 stereo, the full mix) — takes a minute; progress shows in the status line"}
+        onclick=${()=>exportAudio("wav")}>${EXPORT.busy?"…pressing":"⤓ wav"}</button>
+      <button disabled=${!S.playing||EXPORT.busy}
+        title=${!S.playing?"nothing playing yet — the buttons capture the current song":"offline-press the current song, then encode MP3 (192kbps) — takes a minute; progress shows in the status line"}
+        onclick=${()=>exportAudio("mp3")}>⤓ mp3</button>
     </div>
     <p class="hint">the path is a closed 4-step loop (waypoint 1 = centre) · dbl-click the sky to add a waypoint ·
     right-click a waypoint to erase (erase to nothing re-seeds the loop) · ↺ reset loop restores it ·

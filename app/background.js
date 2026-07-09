@@ -98,7 +98,15 @@ export function genreVideo(info){
 // other; unavailable layers are skipped in the cycle. Default off. While in demoscene
 // mode, a double-tap advances to the next cart.
 const bgChip=document.getElementById("bgChip");
+// bgMode is the ONE persisted background preference (the layers no longer remember
+// their own on/off — their localStorage self-restore used to re-enable them at init
+// behind the mode program's back, stacking video + demos). Restored per load,
+// applied by applyBg once the layers come up (setEnabled pre-ready is recorded and
+// materialized by each layer's init).
+const BG_LS="vaporwave-bg-mode";
 let bgMode=0;   // 0 off · 1 video (ALTERNATES with demos while live) · 2 demoscene only
+try{ const m=parseInt(localStorage.getItem(BG_LS)||"0",10); if(m===1||m===2) bgMode=m; }catch(e){}
+const bgSave=()=>{ try{ localStorage.setItem(BG_LS,String(bgMode)); }catch(e){} };
 const BG_GLYPH=["▢","▣","▦"], BG_LABEL=["off","video+demos","demoscene"];
 // Mode 1 is a PROGRAM, not a single layer (Paul: "alternate between different
 // MicroW8 demos and cached video every eight bars when video is on"): while LIVE
@@ -117,11 +125,23 @@ function bgWant(){
   if(bgMode===1) return { v: bgAlt.side==="video", d: bgAlt.side==="demo" };
   return { v:false, d:bgMode===2 };
 }
+// STRICT EXCLUSIVITY (Paul 2026-07-09: "sometimes they are on top of each other"):
+// applyBg IMPOSES bgWant() on both layers, unconditionally, on every render —
+// setEnabled is idempotent in the layers, so this is free when nothing changed,
+// and it steamrolls any rogue enable (a direct setEnabled call, a stale restore)
+// at the next paint. Order is HIDE-then-SHOW: the loser goes display:none BEFORE
+// the winner appears, so not even a same-tick frame ever composites both. The
+// cut is hard (display, no fade) — on the beat, that's the aesthetic.
+let bgHadV=null;   // previous imposed video state, so vidReset fires on the OFF transition only
 function applyBg(){
   const V=window.VideoLayer, D=window.DemoLayer, w=bgWant();
-  if(V&&V.enabled()!==w.v){ V.setEnabled(w.v); if(!w.v&&bgMode!==1) vidReset(); }   // keep the clip bag during alternation
-  if(D&&D.enabled()!==w.d) D.setEnabled(w.d);
-  bgChip.textContent=BG_GLYPH[bgMode]; bgChip.classList.toggle("live",bgMode!==0);
+  if(V&&!w.v){ V.setEnabled(false); if(bgHadV!==false&&bgMode!==1) vidReset(); }   // keep the clip bag during alternation
+  if(D&&!w.d) D.setEnabled(false);
+  if(V&&w.v) V.setEnabled(true);
+  if(D&&w.d) D.setEnabled(true);
+  if(V) bgHadV=w.v;
+  if(bgChip.textContent!==BG_GLYPH[bgMode]) bgChip.textContent=BG_GLYPH[bgMode];   // applyBg also runs on the 1Hz reconciler — skip no-op DOM writes
+  bgChip.classList.toggle("live",bgMode!==0);
 }
 // FLIP the background side: video <-> demo (fresh cart each demo turn), announce it.
 function bgFlip(){
@@ -151,7 +171,11 @@ function bgAltClock(){
   if(S.live && (Date.now()-bgAlt.lastBar)<8000) return;   // live + bars flowing: the beat owns the cut
   if((Date.now()-bgAlt.lastFlip)>=BG_ALT_MS) bgFlip();
 }
-function startBgAltClock(){ if(!bgAltTimer) bgAltTimer=setInterval(()=>{ if(bgMode===1) bgAltClock(); },1000); }
+// the 1s tick doubles as a RECONCILER: applyBg is idempotent (the layers bail on
+// no-change), so re-imposing bgWant every second means even a rogue direct
+// setEnabled call from outside the program (console, stray future code) can
+// stack the layers for at most ~1s before the XOR law is restored.
+function startBgAltClock(){ if(!bgAltTimer) bgAltTimer=setInterval(()=>{ if(bgMode===1) bgAltClock(); applyBg(); },1000); }
 window.__BGALT={ state:()=>({mode:bgMode,side:bgAlt.side,beats:bgAlt.beats}), tick:bgBarTick, flip:bgFlip };   // headless gate hook
 bgChip.onclick=()=>{
   const V=window.VideoLayer, D=window.DemoLayer;
@@ -161,7 +185,20 @@ bgChip.onclick=()=>{
     if(bgMode===2 && D && D.available()) break;
   }
   bgAlt.side="video"; bgAlt.beats=0; bgAlt.lastFlip=Date.now();    // a fresh program starts on footage
-  applyBg(); startBgAltClock(); set({status:"background: "+BG_LABEL[bgMode]});
+  bgSave(); applyBg(); startBgAltClock(); set({status:"background: "+BG_LABEL[bgMode]});
 };
+// The ⚙-panel "video" button routes HERE (it used to call VideoLayer.setEnabled
+// directly — the rogue path that could stack video over an active demo side and
+// then lose a fight with applyBg one frame later). Semantics: toggle the
+// video+demos program (mode 1) on/off. Returns false when video isn't available.
+export function bgVideoToggle(){
+  const V=window.VideoLayer;
+  if(!(V&&V.available())) return false;
+  bgMode = bgMode===1 ? 0 : 1;
+  bgAlt.side="video"; bgAlt.beats=0; bgAlt.lastFlip=Date.now();    // a fresh program starts on footage
+  bgSave(); applyBg(); startBgAltClock(); set({status:"background: "+BG_LABEL[bgMode]});
+  return true;
+}
+export const bgVideoOn=()=>bgMode===1;
 bgChip.ondblclick=()=>{ if(bgMode!==0 && window.DemoLayer&&DemoLayer.next){ DemoLayer.next(); set({status:"demo: "+(DemoLayer.currentName?DemoLayer.currentName():"next")}); } };
 subs.push(applyBg); applyBg(); startBgAltClock();

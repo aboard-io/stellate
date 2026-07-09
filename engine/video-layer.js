@@ -20,7 +20,9 @@
 // calls showFile every 8 measures); effects are keyed off the playing genre.
 //
 //   VideoLayer.init()            -> Promise<boolean> (any clips available?)
-//   VideoLayer.setEnabled(on)    -> show/hide (persisted in localStorage)
+//   VideoLayer.setEnabled(on)    -> show/hide (idempotent; state is OWNED by the
+//                                   background program in app/background.js —
+//                                   this layer never re-enables itself)
 //   VideoLayer.enabled()         -> current state
 //   VideoLayer.available()       -> layer loaded?
 //   VideoLayer.showFile(file)    -> stream/crossfade to clip "<name>.mp4"
@@ -76,7 +78,11 @@
   const FADE_MS = MOBILE ? 3000 : Math.min(1600 * SLOTH, FADE_CAP);
   const IDLE_CYCLE_MS = 24000;   // ambient switch period when nothing is playing (a clip-RATE, left as-is — already dreamy)
   const RATE = 0.35;             // slowed playback — dreamier, more VHS (Paul 2026-07-06: slower still; cue windows are 15-45s of media = 42-128s wall at 0.35x, plenty for 8 measures; the [in,out] loop-seek is media-time so RATE doesn't touch it)
-  const LS_KEY = "vaporwave-video-on";
+  // NO localStorage self-restore (2026-07-09): the layer used to remember its own
+  // on/off ("vaporwave-video-on") and re-enable itself when init() resolved —
+  // BYPASSING the background mode program, which is how video and the demoscene
+  // layer ended up visible ON TOP of each other (Paul). app/background.js is now
+  // the single owner of both layers' enabled state (it persists the MODE).
   const REMOTE_READY_MS = 3800;  // archive.org latency budget before we fall back to the local cache clip
   // A PREFETCH (loading the next clip while the current one still has ~8 bars
   // to play) gives remote most of the window — capping it at REMOTE_READY_MS
@@ -96,7 +102,7 @@
   let online = true;
 
   let wrap = null, vbox = null, tear = null, vids = [], front = 0, scan = null;
-  let osd = null, osdTimer = 0, glitchTimer = 0, idleTimer = 0, on = true, ready = false;
+  let osd = null, osdTimer = 0, glitchTimer = 0, idleTimer = 0, on = false, ready = false;   // on: DARK until the background program asks (controller-owned)
   let grain = null, dispEl = null, roEl = null, gbEl = null;   // SVG glitch knobs
   let curName = null, seq = 0, curGenre = "", profile = null;
   // ---- ALIEN BROADCAST chaos-layer state (event-driven station personality) --
@@ -1071,8 +1077,15 @@
   }
 
   function setEnabled(want) {
-    on = !!want;
-    try { localStorage.setItem(LS_KEY, on ? "1" : "0"); } catch (e) {}
+    want = !!want;
+    // IDEMPOTENT: the background program imposes its desired state on EVERY store
+    // render, so bail unless the on-state or the materialized DOM actually needs
+    // to change (no idle/glitch/chaos timer churn). The DOM check also self-heals
+    // the stranded case: setEnabled(true) requested BEFORE init built the wrap
+    // records on=true; init's closing setEnabled(on) then materializes it.
+    const shown = wrap ? wrap.style.display !== "none" : null;
+    if (on === want && (shown === null || shown === want)) return;
+    on = want;
     if (!wrap) return;
     wrap.style.display = on ? "block" : "none";
     if (on) {
@@ -1114,11 +1127,11 @@
     if (!names.length) return false;
     makeDom();
     ready = true;
-    let saved = null; try { saved = localStorage.getItem(LS_KEY); } catch (e) {}
-    // DEFAULT OFF (Paul 2026-07-08: "video on/off button defaulting to off"). With
-    // no saved preference the layer stays dark and idle — it only lights up if the
-    // user has previously turned it on (saved === "1"). Honours an explicit "0"/"1".
-    setEnabled(saved === "1");
+    // DEFAULT OFF (Paul 2026-07-08), and NO self-restore: `on` is whatever the
+    // background program has requested so far (false until asked). Materialize
+    // it — if the controller asked for video while we were still loading, the
+    // wrap lights up now; otherwise this is a no-op and the layer stays dark.
+    setEnabled(on);
     return true;
   }
 

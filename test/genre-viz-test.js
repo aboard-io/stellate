@@ -17,6 +17,13 @@
 //      installed on window.DemoLayer before going live; call count must be > 0),
 //      and the payload has the contract shape {role,midi,freq,vel,durSec,section}.
 //   F. zero console/page errors throughout.
+//   H. THE UNIT IS ALWAYS 8 (Paul 2026-07): the roll is a constant 8-cell window
+//      for every genre; chordEvery=16 (prelude) FOLDS into stacked 8-cell rows.
+//   I. FOUND-LANE LIVENESS: a sustained bed shows as a ribbon in EVERY bar it
+//      sounds (pure ci=1 check + a live ride parked on vaporwave).
+//   J. DESCRIPTIONS name role+character, never the source (no sampler/DX7/
+//      soundfont/raw ids); the MIND readout renders where the state carries
+//      MUSIC-MIND axes (theory/pipes/rhythm).
 //
 //   NODE_PATH=/home/ford/ftrain-2025/node_modules node faust/genre-viz-test.js
 "use strict";
@@ -186,6 +193,108 @@ async function main() {
   const settled = await page.evaluate(() => window.__notes.length);
   ok(settled === afterStop, `E3: ${settled - afterStop} note(s) fired AFTER stop (pending onsets not cleared)`);
   console.log(`  after stop: ${afterStop} → ${settled} (no new onsets)`);
+
+  // ---- H: THE UNIT IS ALWAYS 8 (Paul 2026-07). The visible roll is a constant
+  // 8-cell window whatever the genre's chordEvery; longer chord bars FOLD into
+  // stacked 8-cell rows (they never shrink). prelude (chordEvery:16) must fold;
+  // house (chordEvery 8) must show the SAME 8-unit ruler.
+  const H = await page.evaluate(() => {
+    const p = window.__X.POS.prelude; window.__X.retarget({ x: p[0], y: p[1] });
+    const d = window.__VIZ.data();
+    window.__X.renderInside();
+    const box = document.getElementById("inside");
+    const stack = box.querySelector(".vz-rollstack");
+    return { dom: d.blend[0] ? d.blend[0].g : null, cbeats: d.timeline.cbeats, view: d.timeline.view,
+      folds: d.timeline.folds, spans: box.querySelectorAll(".vz-ruler span").length,
+      hasStack: !!stack, foldRolls: stack ? stack.querySelectorAll(".vz-roll").length : 0 };
+  });
+  const H2 = await page.evaluate(() => {
+    const p = window.__X.POS.house; window.__X.retarget({ x: p[0], y: p[1] });
+    const d = window.__VIZ.data(); window.__X.renderInside();
+    return { cbeats: d.timeline.cbeats, view: d.timeline.view,
+      spans: document.querySelectorAll("#inside .vz-ruler span").length };
+  });
+  ok(H.dom === "prelude", `H0: retarget dominant is ${H.dom} (want prelude)`);
+  ok(H.cbeats > 8, `H1: prelude chord window is ${H.cbeats} beats (need >8 to exercise the fold)`);
+  ok(H.view === 8 && H.spans === 8, `H2: prelude view=${H.view} rulerUnits=${H.spans} (must both be 8)`);
+  ok(H.hasStack && H.folds === Math.ceil(H.cbeats / 8) && H.foldRolls === H.folds,
+    `H3: fold stack wrong (stack=${H.hasStack} folds=${H.folds} rolls=${H.foldRolls} for cbeats=${H.cbeats})`);
+  ok(H2.view === 8 && H2.spans === 8, `H4: house view=${H2.view} rulerUnits=${H2.spans} (unit must be 8 for EVERY genre)`);
+  console.log(`\n=== 8-UNIT TIMELINE ===`);
+  console.log(`  prelude cbeats=${H.cbeats} view=${H.view} ruler=${H.spans} folds=${H.folds}/${H.foldRolls}`);
+  console.log(`  house   cbeats=${H2.cbeats} view=${H2.view} ruler=${H2.spans}`);
+
+  // ---- J: descriptions never name the source (no sampler/DX7/soundfont/raw ids),
+  // and the MIND readout renders for a genre whose state carries the MUSIC-MIND axes.
+  const J = await page.evaluate(() => {
+    const box = document.getElementById("inside");
+    const names = [...box.querySelectorAll(".vz-tlname")].map(e => e.textContent.trim());
+    const provenance = /FluidR3|DX7|soundfont|\bSF2\b/i.test(box.textContent) || /\bMIT\b/.test(box.textContent);
+    let mindGenre = null, mind = null, mindDom = null;
+    for (const g of Object.keys(window.__X.POS)) {
+      const p = window.__X.POS[g]; window.__X.retarget({ x: p[0], y: p[1] });
+      const d = window.__VIZ.data();
+      if (d.mind && (d.mind.pipes.length || d.mind.adventure > 0 || d.mind.complexity > 0)) { mindGenre = g; mind = d.mind; break; }
+    }
+    if (mindGenre) { window.__X.renderInside();
+      mindDom = { meters: box.querySelectorAll(".vz-mind .vz-mrow").length,
+        moves: (box.querySelector(".vz-mmoves") || { textContent: "" }).textContent.trim() }; }
+    return { names, bad: names.filter(n => /dx7|fluidr3|sampler|\bsf2\b|_/i.test(n)), provenance, mindGenre, mind, mindDom };
+  });
+  ok(J.bad.length === 0, `J1: lane names leak source/provenance: [${J.bad.join(", ")}]`);
+  ok(!J.provenance, `J2: modal text mentions soundfont/hardware provenance`);
+  ok(!!J.mindGenre, `J3: no genre in POS yields a MIND readout (theory/pipes/rhythm all absent everywhere?)`);
+  ok(J.mindDom && J.mindDom.meters === 3, `J4: MIND section did not render 3 meters (got ${J.mindDom && J.mindDom.meters})`);
+  console.log(`\n=== DESCRIPTIONS + MIND ===`);
+  console.log(`  lane names=[${J.names.join(" · ")}]`);
+  console.log(`  mind@${J.mindGenre}: ${JSON.stringify(J.mind)}  dom meters=${J.mindDom && J.mindDom.meters} moves="${J.mindDom && J.mindDom.moves}"`);
+
+  // ---- I: FOUND-LANE LIVENESS (Paul: "found audio plays but the viz shows nothing").
+  // Beds emit ONE event at section start and sustain across the whole cycle; every
+  // bar with ci>0 used to show a dead found lane. First the pure path: a ci=1 bar
+  // of vaporwave (bed-heavy) must carry a sustained bed ribbon. Then the live path:
+  // park the ride ON vaporwave and require found activity within a few bars.
+  const I0 = await page.evaluate(() => {
+    const p = window.__X.POS.vaporwave; window.__X.retarget({ x: p[0], y: p[1] });
+    const st = window.__S.playing;
+    const sec = (st.sections || []).find(s => s.found && s.found.sourceId);
+    const save = window.__S.barInfo;
+    window.__S.barInfo = { ci: 1, serial: 3, section: sec ? sec.name : "" };
+    const d = window.__VIZ.data();
+    window.__S.barInfo = save;
+    const L = d.timeline.lanes.find(l => l.key === "found");
+    return { dom: d.blend[0] ? d.blend[0].g : null, hasSec: !!sec, lane: !!L,
+      notes: L ? L.notes.length : 0, bed: L ? L.notes.some(n => n.bed) : false, cbeats: d.timeline.cbeats };
+  });
+  ok(I0.dom === "vaporwave", `I0a: retarget dominant is ${I0.dom} (want vaporwave)`);
+  ok(I0.hasSec, `I0b: vaporwave state has no bed-carrying section to test against`);
+  ok(I0.lane && I0.notes > 0 && I0.bed, `I0c: ci=1 bar shows a dead found lane (lane=${I0.lane} notes=${I0.notes} bed=${I0.bed})`);
+  // the live ride: park waypoints on vaporwave, go live, found lane must show
+  // activity at a ci>0 bar within ~8 bars.
+  await page.evaluate(async () => {
+    const p = window.__X.POS.vaporwave;
+    window.__S.waypoints = [{ x: p[0], y: p[1] }, { x: p[0] + 1, y: p[1] + 1 }];
+    await window.__X.goLive();
+  });
+  let fb = { lane: false, notes: 0, ci: 0, bedSeen: false, bars: 0 };
+  for (let i = 0; i < 80; i++) {
+    const s = await page.evaluate(() => {
+      const d = window.__VIZ.data();
+      const L = d.timeline.lanes.find(l => l.key === "found");
+      return { lane: !!L, notes: L ? L.notes.length : 0, bed: L ? L.notes.some(n => n.bed) : false,
+        ci: window.__S.barInfo ? window.__S.barInfo.ci : 0, bars: window.__S.barCount };
+    });
+    fb.lane = fb.lane || s.lane; fb.bars = s.bars;
+    if (s.bars >= 2) fb.bedSeen = fb.bedSeen || s.bed;   // only count LIVE-authored bars (barInfo pre-live is stale)
+    if (s.bars >= 2 && s.ci > 0 && s.notes > 0) { fb.notes = s.notes; fb.ci = s.ci; break; }
+    await page.waitForTimeout(500);
+  }
+  ok(fb.lane, `I1: found lane never appeared on a live vaporwave ride`);
+  ok(fb.ci > 0 && fb.notes > 0, `I2: found lane dead at ci>0 while beds play (ci=${fb.ci} notes=${fb.notes} bars=${fb.bars})`);
+  ok(fb.bedSeen, `I3: no sustained bed ribbon ever drawn in the found lane`);
+  console.log(`\n=== FOUND-LANE LIVENESS (vaporwave) ===`);
+  console.log(`  pure ci=1: lane=${I0.lane} notes=${I0.notes} bed=${I0.bed}  live: ci=${fb.ci} notes=${fb.notes} bedSeen=${fb.bedSeen} bars=${fb.bars}`);
+  await page.evaluate(() => window.__X.stopLive());
 
   // ---- F: no console/page errors (found-sound CORS in the sandbox is environmental) ----
   const isEnv = e => /archive\.org|CORS|ERR_FAILED|Failed to load resource|net::|found|autoplay|AudioContext/i.test(e);
