@@ -1715,12 +1715,12 @@
       lead:{patterns:["double","arpup","sparse"], patchPool:["SYN-CLAV 1","PRC SYNTH1"], recipe:{model:["casiocz","casiocz","casiocz","vocoder","stack","fm"],wave:"square",voices:[1,2],spread:[.002,.006],cutoff:[2400,3400],czWave:[.4,.6],dcwAmount:[.7,1],czDetune:[6,16],level:[.44,.56],send:[.2,.35],dsend:[.25,.4],attack:.003,release:[.05,.09],sustain:[.5,.62],fenv:[.5,.9]},
         inserts:{prob:.4, max:1, pool:[["phaser",{rate:[.2,.5],depth:[.5,.7],mix:[.35,.55]}]]}},   // the vocoder IS the genre's voice — the robot phases
       vocSource:"sp_system",
-      pads:{prob:.45, recipe:{model:["saw","organ"],wave:"saw",cutoff:[800,1300],detune:[.004,.01],attack:[.3,.9],level:[.34,.46],send:[.2,.35],dsend:[.1,.2]}},
+      pads:{prob:.45, recipe:{model:["saw"],wave:"saw",cutoff:[800,1300],detune:[.004,.01],attack:[.3,.9],level:[.34,.46],send:[.2,.35],dsend:[.1,.2]}},   // 2026-07 dominance fix: "organ" dropped from the pool — an organ pad reads acoustic .6, which put electro dead-center in heavymetal's acoustic[.5,.95]w3 (seed 3 lost 98-99) and fed the funk/porchdice acoustic columns. 1982 electro is ALL machine (the robot sings through the vocoder); acoustic now renders 0 on every seed
       drums:{kickModel:["808"],snareModel:["clap"],hatModel:["metal","noise"],kick:[1.2,1.4],snare:[.85,1.1],hat:[.8,1.1],tune:[1,1.1],send:[.05,.15],dsend:[.1,.25]},
-      fx:{reverb:[.3,.45], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[2600,3800], pump:[.05,.2], crackle:[0,.1], lowcut:[30,45], highcut:[0,0], comp:[.4,.6], grit:[.1,.3], jux:[.15,.35]},
+      fx:{reverb:[.3,.45], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[2600,3800], pump:[.02,.1], crackle:[0,.1], lowcut:[30,45], highcut:[0,0], comp:[.4,.6], grit:[.1,.3], jux:[.15,.35]},   // 2026-07 dominance fix: pump cap .2->.1 — the anchor's own claim ("techno pumps, electro doesn't") rendered up to .19, INSIDE hotsaucecore's pump[.181,.652]w3 floor (seed 5 lost 98-99, seed 2 nearly). Dry machine funk pumps ~0; renders now .03-.09, failing every pump-floor rival (hotsaucecore/ikeacore/aldente) on a weight-3 axis
       found:{role:"chops", vol:[.08,.15], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2400,3800], sources:["factory","vx_apollo","vx_wwvh","stml_chop_a","stml_chop_c4"]},
       stab:["offbeat","sparse"], hits:{sources:["sp_system","sp_energy","rave_a","stml_hit_03"], pattern:"offbeat", prob:.6},
-      form:"pop" },
+      form:"dj" },   // 2026-07 dominance fix: pop->dj — the 1982 electro record is a 12" CLUB SINGLE (warmup/build/main/peak plateau), not verse-chorus pop. MEASURED: pop's 3 drumless sections (intro/bridge/outro) diluted whole-track hatDensity to 1.16-1.28 vs electro's own [1.5,2.8] floor (active sections render 1.9/beat) — the self-score sat at 98-99 every seed, inside reach of any 99 rival (heavymetal/hotsaucecore/italo each took a seed). dj's near-full plateau restores the crisp 16th machine hats the kit already plays
     miamibass: { label:"Miami bass", info:"808 subs shaking the trunk: fast stuttering hats, chant hits, the low end IS the song",   // SYNTH-FORWARD: the 808 sub is the hook
       bpm:[100,128], swing:[0,.08], humanize:[0,.12],
       progressions:["funk_vamp","deep_two","house_min7"], kits:["trap","electro"], fills:["hat rush","cut","impact"],
@@ -4200,6 +4200,153 @@
     /* /genre-tool:seraphswing:genres */
   };
 
+  // ---------- MUSIC-MIND anchor axes (docs/MUSIC-MIND.md §"The vector space grows new axes") ----------
+  // Every anchor gains three optional-organ axes — theory:{adventure:[lo,hi],
+  // color:[lo,hi], voicing, reharm}, pipes:[{id, w, ...params}], rhythm:[lo,hi]
+  // — DERIVED at load from what the anchor already says about itself
+  // (progression pool → harmonic appetite; kit pool → rhythmic complexity;
+  // models/patterns → which pipes fit), not 178 hand edits. deriveMind() is
+  // pure and deterministic (zero rng — the kernel rng law starts at resolve
+  // time); explicit declarations WIN (an anchor or MIND_OVERRIDES entry that
+  // carries a field is never overwritten — curation beats inference).
+  //
+  // adventure per progression pool — the pool IS the anchor's stated harmonic
+  // appetite: jazz pools walk ii-V-I with substitutions in the literature,
+  // modal pools color inside one scale, pop loops are safe, drones are
+  // RESTRAINT (an identity, not an absence — MUSIC-MIND: "techno/minimal near
+  // zero"). Ranges are [lo,hi] like bpm; unknown names read as pop.
+  const PROG_ADV = {
+    ii_v_i:[.4,.6],   neosoul:[.35,.55], lofi:[.35,.5],   blues_12:[.35,.55],   // the jazz family: substitution is idiom
+    mode_dorian:[.2,.35], mode_mixo:[.2,.35], mode_lydian:[.2,.35],             // modal: interchange-adjacent color,
+    mode_phrygian:[.2,.3], hijaz:[.2,.3],  andalusian:[.15,.3], canon:[.15,.3], // but the scale is the handrail
+    royal_road:[.15,.3], dream:[.15,.28], house_min7:[.12,.25],                 // seventh-pop: color yes, risk mild
+    four_chords:[.1,.2], pop_1625:[.1,.22], doo_wop:[.1,.2], sad_pop:[.1,.2],   // pop loops: the loop is the point
+    uplift:[.1,.2], synthwave:[.1,.2], epic_min:[.1,.2], minor_run:[.1,.22],
+    house_min:[.1,.2], frost:[.1,.2], primeval:[.1,.2], funk_vamp:[.05,.15],    // a vamp riffs, it doesn't modulate
+    drone_min:[0,.04], deep_two:[0,.06] };                                      // drones: restraint is identity
+  // color per pool — extension richness (triads → 13ths). Seventh-rich pools
+  // (royal road maj7s, neosoul 9ths, ii-V-I shells) sit high; the triadic
+  // anthem/drone pools sit low. Mirrors the verifier's `seventh` feature
+  // (which reads the NAMED table, so color itself is matrix-invisible).
+  const PROG_COL = {
+    royal_road:[.55,.8], neosoul:[.55,.8], ii_v_i:[.55,.8], dream:[.5,.75],
+    lofi:[.5,.75], house_min7:[.45,.65], blues_12:[.4,.6],
+    mode_dorian:[.3,.5], mode_mixo:[.3,.5], mode_lydian:[.3,.5], canon:[.3,.5],
+    pop_1625:[.3,.5], funk_vamp:[.3,.5], mode_phrygian:[.25,.4], hijaz:[.25,.4],
+    doo_wop:[.25,.45], house_min:[.2,.35], deep_two:[.15,.35],
+    four_chords:[.15,.3], sad_pop:[.15,.3], minor_run:[.15,.3], andalusian:[.15,.3],
+    uplift:[.1,.3], synthwave:[.1,.3], epic_min:[.1,.3], primeval:[.1,.3],
+    frost:[.1,.25], drone_min:[.1,.3] };
+  // rhythm.complexity per kit — how much the anchor's own drums already
+  // syncopate: chopped breaks invite pushed/mutated bass+melody cells; a
+  // machine four wants the grid; beatless wants stillness.
+  const KIT_CX = {
+    jungle:[.55,.8], breaks:[.5,.75], trap:[.35,.6], tribal:[.35,.6],
+    newjack:[.35,.55], boombap:[.3,.5], electro:[.3,.5], shuffle:[.25,.45],
+    bossa:[.2,.4], halftime:[.15,.35], techno:[.12,.28], house:[.12,.3],
+    full:[.12,.3], open:[.1,.25], four:[.08,.22], pulse:[.08,.22],
+    kick:[.05,.15], off:[0,.08] };
+  // curated overrides — the SMALL table where inference reads a flagship
+  // wrong (MUSIC-MIND: "derived heuristically … then spot-curated"). Each
+  // entry is a normal anchor declaration (explicit wins); `bassCells` appends
+  // the new BASS_PATTERNS cells (tresillo/son/hemiola/charleston) to the
+  // anchor's bass pattern pool.
+  const MIND_OVERRIDES = {
+    techno:      { theory:{adventure:[0,.05], color:[.1,.25], voicing:"close", reharm:false}, rhythm:[.1,.25],
+                   pipes:[{id:"octavePump",w:.55,prob:.4},{id:"sweepArc",w:.5,lo:.7,hi:2},{id:"densityArc",w:.45,floor:.6}] },   // restraint IS techno: the drone never reharmonizes; drive comes from the pump and the arc, not new notes
+    house:       { pipes:[{id:"octavePump",w:.55,prob:.4},{id:"ghost",w:.35,prob:.3}] },   // NO densityArc: the open-hat offbeat must be heard (verifier hatDensity floor 1.2 — an arc that thins hats attacks the identity)
+    jungle:      { rhythm:[.55,.8], pipes:[{id:"throwFx",w:.6,prob:.6},{id:"ghost",w:.4,prob:.3},{id:"densityArc",w:.4,floor:.6}] },   // the amen IS the melody — complexity floor .55; dub-space throws punctuate the chop
+    vaporwave:   { theory:{adventure:[.05,.14], color:[.6,.8], voicing:"open", reharm:false}, rhythm:[0,.1],
+                   pipes:[{id:"vibratoSwell",w:.5,depth:.25},{id:"harmonize",w:.35,prob:.3}] },   // the slowed tape does NOT reharmonize (machine time, frozen maj7 nostalgia); color stays maxed — the royal-road 7ths ARE the genre
+    lofi:        { theory:{adventure:[.3,.45], color:[.55,.75], voicing:"drop2", reharm:true},
+                   pipes:[{id:"ghost",w:.5,prob:.35},{id:"strum",w:.5,step:.02},{id:"harmonize",w:.35,prob:.3}], bassCells:["charleston"] },   // the head-nod pocket: ghosted bass + rolled felt chords; charleston comp cell joins the pool (space is the groove)
+    jazz:        { theory:{adventure:[.45,.65], color:[.55,.8], voicing:"drop2", reharm:true}, rhythm:[.35,.55],
+                   pipes:[{id:"ghost",w:.55,prob:.4},{id:"echoCanon",w:.4,prob:.4,delay:2}], bassCells:["charleston"] },   // the harmony brain's home: every song rewalks the changes (drop2 shells, real substitutions); approach-note bass, imitative answers
+    bebop:       { theory:{adventure:[.55,.75], color:[.6,.85], voicing:"drop2", reharm:true} },   // maximum substitution appetite (constrain caps .75; the bpm>165 law caps complexity — fast genres saturate on their own)
+    blues:       { theory:{adventure:[.3,.45], color:[.4,.6], voicing:"close", reharm:false},
+                   pipes:[{id:"callResponse",w:.7,level:.85},{id:"ghost",w:.45,prob:.35}] },   // the 12-bar IS the form — never reharmonized; call-and-response is the genre's engine
+    fugue:       { theory:{adventure:[.2,.35], color:[.35,.55], voicing:"close", reharm:true},
+                   pipes:[{id:"echoCanon",w:.9,prob:.7,delay:4,semis:-12,amp:.55}] },   // imitation IS the genre: the canon pipe near-always fires, a 4-beat answer at the lower octave; adventure modest (Bach modulates by rule, not risk)
+    neoclassical:{ theory:{adventure:[.25,.45], color:[.4,.6], voicing:"close", reharm:true},
+                   pipes:[{id:"echoCanon",w:.5,prob:.45,delay:4},{id:"strum",w:.4,step:.015}] },   // the felt piano rewalks its progressions gently; rolled chords are pianism, not effect
+    dub:         { theory:{adventure:[0,.05], color:[.2,.4], voicing:"close", reharm:false}, rhythm:[.25,.45],
+                   pipes:[{id:"throwFx",w:.85,prob:.75,rsend:3,dsend:3},{id:"ghost",w:.4,prob:.3}], bassCells:["tresillo"] },   // the throw IS dub — two chords, enormous sends, zero reharm; tresillo joins the riddim pool
+    acidhouse:   { pipes:[{id:"sweepArc",w:.75,lo:.6,hi:2.4},{id:"octavePump",w:.5,prob:.4}] },   // the 303 filter IS the gesture — sweepArc rides the acid line hard
+    electro:     { pipes:[{id:"sweepArc",w:.45,lo:.7,hi:2},{id:"vibratoSwell",w:.4,prob:.4,depth:.25}] },   // NO densityArc (same reason as house): form:"dj" would derive one, but the crisp 16th machine hats ARE the identity (verifier hatDensity floor 1.5) — an arc that thins hats attacks it. Keeps the two synth-expression pipes the pre-dj derivation already chose
+    minimal:     { theory:{adventure:[0,.03], color:[.1,.25], voicing:"close", reharm:false}, rhythm:[.05,.2],
+                   pipes:[{id:"densityArc",w:.7,floor:.65}] },   // ONE pipe: the additive plateau is the whole argument; everything else stays out of the way
+    ambient:     { theory:{adventure:[0,.03], color:[.2,.45], voicing:"open", reharm:false}, rhythm:[0,.05],
+                   pipes:[{id:"vibratoSwell",w:.5,minDur:2,depth:.2,rate:4.5}] },   // nothing moves — except the sustains, which learn to sing
+    citypop:     { theory:{adventure:[.2,.4], color:[.55,.8], voicing:"close", reharm:true},
+                   pipes:[{id:"strum",w:.5,step:.02},{id:"harmonize",w:.4,prob:.35}] },   // royal-road maj7 sheen: strummed guitar-pop chords, parallel-3rd gloss
+    afrobeat:    { rhythm:[.4,.6], bassCells:["tresillo","son"] },   // Fela's interlock earns the clave-locked cells; complexity mid (the lock is tight, not busy)
+    miamibass:   { bassCells:["tresillo"] },   // the 808 tresillo backbone joins the pool
+    breakcore:   { rhythm:[.6,.8] },   // maximum chop appetite on paper — the bpm>165 constrain law caps the render at .4 (the amen at 190 saturates alone)
+    sludgemetal: { rhythm:[.05,.2], pipes:[] },   // gate-loop damping (iter 1: fell to dub on a drumDensity knife-edge — baseline was already a 100-100 tie there): sludge is a slow CRUSH, not a conversation — the derived callResponse (via its "blues" lead pattern) read wrong, and the wall needs no plumbing at all; zero pipe candidates also means zero extra draws, keeping its fill/sweep stream nearest the proven baseline roll
+  };
+  // deriveMind(name, g) — attach the three axes to one anchor. Weighted
+  // averages over the anchor's own pools (pool repetition IS weighting, the
+  // kit/progression convention); every rule below cites what it reads.
+  function deriveMind(name, g){
+    const avgR=(names,tbl,dflt)=>{ let lo=0,hi=0;
+      for(const n of names){ const r=tbl[n]||dflt; lo+=r[0]; hi+=r[1]; }
+      return [round(lo/names.length,3), round(hi/names.length,3)]; };
+    const share=(names,pred)=>names.filter(pred).length/names.length;
+    if(!g.theory){
+      const adv=avgR(g.progressions, PROG_ADV, [.1,.2]);
+      const col=avgR(g.progressions, PROG_COL, [.2,.4]);
+      // voicing (spec order, first match wins): jazz-family → drop2; drone/
+      // beatless → open; frosty/lydian/hijaz color → quartal; else close.
+      // cluster is NEVER derived — an anchor must opt in explicitly (taste).
+      const jazzShare=share(g.progressions, p=>PROG_ADV[p]&&PROG_ADV[p][0]>=.3);
+      const droneShare=share(g.progressions, p=>p==="drone_min"||p==="deep_two");
+      const offShare=share(g.kits, k=>k==="off");
+      const voicing = jazzShare>=.5 ? "drop2"
+                    : (droneShare>=.5||offShare>=.5) ? "open"
+                    : g.progressions.some(p=>/^(frost|mode_lydian|hijaz)$/.test(p)) ? "quartal"
+                    : "close";
+      // reharm only when the derived appetite reaches .2 — and never below
+      // .15 (constrain re-asserts this on every blend: restraint is identity)
+      g.theory={ adventure:adv, color:col, voicing, reharm:adv[1]>=.2 };
+    }
+    if(!g.rhythm){
+      const r=avgR(g.kits, KIT_CX, [.1,.3]);
+      // a declared euclid undergrid is stated syncopation appetite: bump both ends
+      g.rhythm = g.euclid ? [round(Math.min(.85,r[0]+.06),3), round(Math.min(.9,r[1]+.08),3)] : r;
+    }
+    if(!g.pipes){
+      const leadPat=g.lead.patterns||[], bassPat=g.bass.patterns||[];
+      const leadM=g.lead.recipe.model||[], bassM=g.bass.recipe.model||[];
+      const leadSamp=g.lead.samplerPool||[];
+      const SYNTH_ID=/^(tb303|acid|reese|wobble|stack|modeld|synclead)$/;   // samplers ignore expression annotations — sweep/vibrato slots are wasted on them
+      const p=[];
+      // priority order = identity first (groove pockets and conversational
+      // forms before generic sweetening); the ≤3 cap slices from the top.
+      if(g.kits.some(k=>k==="boombap"||k==="newjack"))                 p.push({id:"ghost",w:.55,prob:.35});           // the funk/boombap pocket lives in approach notes
+      if(g.progressions.includes("blues_12")||leadPat.includes("blues")) p.push({id:"callResponse",w:.5,level:.85});  // blues/gospel/soul: the answer phrase
+      if(leadPat.includes("canon")||leadPat.includes("fugue")||g.counterpoint) p.push({id:"echoCanon",w:.55,prob:.45,delay:2}); // stated imitation (canon/fugue patterns, counterpoint dim)
+      if(leadM.includes("guitar")||leadM.includes("kpluck")||leadSamp.some(s=>/guitar|banjo|bandoneon|harp/.test(s))) p.push({id:"strum",w:.55,step:.02}); // plucked-string identity: roll the chords
+      if(bassPat.includes("dub")&&g.fx.delayFb[1]>=.45)                p.push({id:"throwFx",w:.55,prob:.6});          // dub family: bassline + hot delay = the throw
+      if(bassPat.includes("rolling")&&g.form==="dj")                   p.push({id:"octavePump",w:.5,prob:.4});        // house/techno rolling bass: drive without new notes
+      if(g.form==="dj"||g.form==="wave")                               p.push({id:"densityArc",w:.4,floor:.6});       // long-plateau forms earn the long-range shape
+      if((g.pads.prob||0)>=.85&&leadPat.some(x=>/composed|anthem|hero|wander/.test(x))) p.push({id:"harmonize",w:.45,prob:.35}); // pad-lush + melodic lead: safe parallel 3rds
+      if(bassM.some(m=>SYNTH_ID.test(m))||leadM.some(m=>SYNTH_ID.test(m))){              // synth-identity voices only (see SYNTH_ID note)
+        p.push({id:"sweepArc",w:.45,lo:.7,hi:2});
+        if(leadM.some(m=>SYNTH_ID.test(m)))                            p.push({id:"vibratoSwell",w:.4,depth:.25});
+      }
+      g.pipes=p.slice(0,3);   // the taste cap: ≤3 candidates per anchor
+    }
+  }
+  // load-time pass: overrides first (they ARE explicit declarations), then
+  // the heuristic fills every gap. After this loop every anchor carries all
+  // three axes — resolveMulti can blend without presence guards.
+  for(const name of Object.keys(GENRES)){
+    const g=GENRES[name], ov=MIND_OVERRIDES[name];
+    if(ov){ for(const k of ["theory","pipes","rhythm"]) if(ov[k]&&!g[k]) g[k]=ov[k];
+            if(ov.bassCells) for(const c of ov.bassCells) if(!g.bass.patterns.includes(c)) g.bass.patterns.push(c); }
+    deriveMind(name, g);
+  }
+
   // ---------- transition micro-lick soloists (2026-07 musical transitions) ----------
   // Per-genre instrument pools for the "micro lick" transition: a 1-2 bar
   // seeded pickup phrase into the next section's downbeat (csd-engine
@@ -4303,7 +4450,7 @@
   // inside resolveMulti (patSide): how much MOTION a bass/melody pattern puts
   // in the ear. Ordering is musical, not alphabetical: silence < held roots <
   // walking/dub < riffs and offbeat drive < 16th-note runs and motorik arps.
-  const BASS_ENERGY={off:0,root:1,simple:2,pedal:2,sub:2,dub:3,walking:4,habanera:5,melodic:5,syncopated:5,stab:5,octaves:6,rolling:7,drive:7,sixteenths:8};
+  const BASS_ENERGY={off:0,root:1,simple:2,pedal:2,sub:2,dub:3,charleston:3,walking:4,hemiola:4,habanera:5,melodic:5,syncopated:5,stab:5,tresillo:5,son:5,octaves:6,rolling:7,drive:7,sixteenths:8};   // MUSIC-MIND cells slot by MOTION: charleston is spacious comping, hemiola a slow cross-pulse, tresillo/son clave-locked riffing (habanera's rung)
   const LEAD_ENERGY={off:0,sparse:1,wander:2,composed:3,composed2:3,canon:3,blues:4,roar:4,pentaup:5,updown:5,double:6,arpup:6,arpdown:6,anthem:6,hero:7,arp16:8,motorik:8,motorik23:8};
   function resolveMulti(weights, seed){
     const ws = weights.filter(x=>GENRES[x.g] && x.w>0);
@@ -4658,6 +4805,47 @@
       if(G) for(const d of ["sampleEvents","reverbColor","autoTune","masterComp","introMode","blueNote","padDouble"])
         if(declared[d](G[d])) choice[d]=G[d];
     }
+    // ---- MUSIC-MIND axes (organ wiring, 2026-07): theory / pipes / rhythm —
+    // drawn LAST, dead last (the chordEvery precedent: new dimensions draw
+    // after every historical choice so the only stream consequence is the
+    // tail into buildSections — re-proven by the matrix gate, never assumed).
+    // Unlike chordEvery these draws are UNCONDITIONAL (deriveMind attached
+    // the axes to all 178 anchors at load), but the draw count is fixed per
+    // parent set, so every resolve stays seed-stable (gate 1 determinism).
+    {
+      // adventure / color / complexity: scalar ranges lerp via the standing
+      // wRange weighted blend (the bpm/swing law), then one sample each.
+      const adv=round(inRange(rng, wRange(g=>g.theory.adventure)),3);
+      const col=round(inRange(rng, wRange(g=>g.theory.color)),3);
+      // voicing: enum → side() parent pick (the form/kit law: a blend keeps
+      // ONE parent's voicing hand, it doesn't smear drop2 into quartal).
+      const vSide=side();
+      // reharm: zero-rng weighted vote — a blend reharmonizes only when the
+      // reharming parents carry at least half the weight (constrain below
+      // re-fences it against low adventure and drone plateaus).
+      const reharmShare=ws.reduce((s,x)=>s+(GENRES[x.g].theory.reharm?x.w:0),0);
+      choice.theory={ adventure:adv, color:col, voicing:vSide.theory.voicing, reharm:reharmShare>=.5 };
+      // pipes: weighted pool UNION (the transforms union order — weight-
+      // ordered parents, dedupe by id keeping the dominant parent's params);
+      // inclusion prob = Σ spec.w × parent weight, so a techno×ambient
+      // midpoint pumps its bass half as often as pure techno (the insertsFor
+      // dilution law). ONE rng draw per candidate, ALWAYS taken (stable
+      // stream); the first 3 passers ride (the ≤3 taste cap).
+      const ordered=ws.slice().sort((a,b)=>b.w-a.w), seen={}, cands=[];
+      for(const x of ordered) for(const sp of (GENRES[x.g].pipes||[])){
+        if(!seen[sp.id]){ seen[sp.id]={spec:sp, w:0}; cands.push(seen[sp.id]); }
+        seen[sp.id].w+=(sp.w!=null?sp.w:.5)*x.w;
+      }
+      const pipes=[];
+      for(const cd of cands){
+        const r=rng();
+        if(pipes.length>=3||r>=cd.w) continue;
+        const spec={}; for(const k of Object.keys(cd.spec)) if(k!=="w") spec[k]=cd.spec[k];   // strip the inclusion weight; the rest IS the state pipe
+        pipes.push(spec);
+      }
+      choice.pipes=pipes;
+      choice.rhythmComplexity=round(inRange(rng, wRange(g=>g.rhythm)),3);
+    }
     return constrain(choice);
   }
   function constrain(choice){
@@ -4691,6 +4879,15 @@
     choice.bassInserts=insOk(choice.bassInserts,choice.bassRecipe,"bass");
     choice.leadInserts=insOk(choice.leadInserts,choice.leadRecipe,"lead");
     choice.padInserts =insOk(choice.padInserts, choice.padRecipe, "pad");
+    // ---- MUSIC-MIND taste caps (docs/MUSIC-MIND.md §"What locked-in means") ----
+    if(choice.theory){
+      choice.theory.adventure=Math.min(.75,choice.theory.adventure);   // never full chaos — the cadence handrail survives every macro/blend
+      if(nch<=2){ choice.theory.adventure=Math.min(.1,choice.theory.adventure); choice.theory.reharm=false; }   // drone/plateau progressions (drone_min, deep_two, funk_vamp): restraint is identity — a blend that landed on the drone keeps the drone
+      if(choice.theory.adventure<.15) choice.theory.reharm=false;      // below .15 a reharm is indistinguishable noise: don't spend the stream
+    }
+    if(choice.pipes&&choice.pipes.some(p=>p.id==="densityArc")&&choice.pipes.some(p=>p.id==="echoCanon"))
+      choice.pipes=choice.pipes.filter(p=>p.id!=="echoCanon");         // the arc thins what the canon thickens = mud; the arc wins (form-level shape beats phrase-level ornament)
+    if(choice.bpm>165&&choice.rhythmComplexity>.4) choice.rhythmComplexity=.4;   // fast genres saturate on their own — a 190bpm amen needs no extra push
     return choice;
   }
   function resolve(aName, bName, t, seed){
@@ -5462,6 +5659,14 @@
       ...(c.rubato?{rubato:c.rubato}:{}), ...(c.thunk?{thunk:c.thunk}:{}),
       ...(c.transforms?{transforms:c.transforms}:{}),  // pattern-transform algebra (Phase 2): absent = engine's historical default, byte-identical
       ...(c.timeFeel?{timeFeel:c.timeFeel}:{}),         // unified time-feel (Phase 3): grid + push-pull; absent = grid "8th" + no push-pull, byte-identical
+      // MUSIC-MIND organs (docs/MUSIC-MIND.md): each absent key = ZERO draws
+      // and byte-identical events in buildEvents (the absent-knob law). theory
+      // is emitted ONLY when reharm survived constrain — adventure/color/
+      // voicing are reharmonize() opts, dead weight without it (the truly-
+      // absent rule: no {} husks). pipes/rhythm likewise vanish at zero/empty.
+      ...(c.theory&&c.theory.reharm?{theory:{adventure:c.theory.adventure,color:c.theory.color,voicing:c.theory.voicing,reharm:true}}:{}),
+      ...(c.pipes&&c.pipes.length?{pipes:c.pipes}:{}),
+      ...(c.rhythmComplexity>.02?{rhythm:{complexity:c.rhythmComplexity}}:{}),
       ...(c.sampleEvents?{sampleEvents:c.sampleEvents}:{}),  // generalized sample-event roles (Phase 4): absent = no sample-event layer, byte-identical
       ...(coldOpen?{coldOpen:true}:{}),                 // OPTIONAL INTRO: the leading ground node was actually dropped (introMode "off" + ground opener). buildEvents ignores it; djMix reads it for the cold-open seam law. Absent for every genre that keeps its intro (byte-identical); present only on gabber/breakcore.
       euclid:c.euclid||undefined,                      // kit-level euclidean rhythm spec (csd-engine drumEvents)
@@ -5509,7 +5714,13 @@
       counter:c.counter?c.counter.pattern+"(oct"+c.counter.octave+")":"-",
       inserts:{bass:(c.bassInserts||[]).map(f=>f.type).join("+")||"-",
                lead:(c.leadInserts||[]).map(f=>f.type).join("+")||"-",
-               pad:(c.padInserts||[]).map(f=>f.type).join("+")||"-"}};
+               pad:(c.padInserts||[]).map(f=>f.type).join("+")||"-"},
+      // MUSIC-MIND audit line: the RESOLVED axes even when the state key is
+      // absent (adventure interpolates on every blend; reharm gates whether
+      // state.theory ships) — "!reharm" marks a resolved-but-ungated theory.
+      mind:(c.theory?"adv"+c.theory.adventure+"/col"+c.theory.color+"/"+c.theory.voicing+(c.theory.reharm?"":" !reharm"):"-")
+           +" | "+((c.pipes&&c.pipes.length)?c.pipes.map(p=>p.id).join("+"):"-")
+           +" | "+(c.rhythmComplexity>.02?"cx"+c.rhythmComplexity:"-")};
     // SAMPLED BY DEFAULT (Paul 2026-07: "I want anything to go here and be
     // sampled by default. It's much better."). Every emitted state renders its
     // pitched voices from the SF2 sample library unless the caller opts out:

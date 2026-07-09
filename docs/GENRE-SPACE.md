@@ -30,9 +30,24 @@ with its own blend rule:
 | **sampling / found sound** | role + source pool | granular **bed** (vapor: stations, malls) vs rhythmic **chops** (jungle, triphop); source pools per genre from archive.org (aporee field recordings, PD items) | role by threshold, source from pooled candidates |
 | **form** | enum + params | **pop** (verse/chorus, the current builder shape), **dj** (long additive plateaus, techno/house), **wave** (slow swells, ambient) | pick ∝ t; section count/cycle params lerp |
 | **transitions** | pool | tom fill (synthwave), break fill (jungle), riser (everything), **drop-cut** (dj forms), none | pool union |
+| **harmonic adventure** (MUSIC-MIND) | scalar ranges + enum | jazz .45-.65 drop2 + reharm (every song rewalks the changes), techno 0-.05 (restraint is identity — no reharm below .15), vaporwave color .6-.8 with reharm OFF (the tape is frozen maj7) | adventure/color lerp via `wRange` then sample; voicing parent-pick; reharm weighted vote — drawn LAST, `state.theory` absent unless reharm survives constrain |
+| **pipes** (MUSIC-MIND) | prob-weighted pool | fugue echoCanon (imitation IS the genre), dub throwFx, jungle ghost + throws, techno octavePump + densityArc, blues callResponse | weighted pool union: parent-scaled inclusion probs, dedupe by id, cap 3 — drawn LAST; densityArc evicts echoCanon (mud) |
+| **rhythmic complexity** (MUSIC-MIND) | scalar range | jungle .55-.8 (cell mutation + melody rhythm cells), techno .1-.25, ambient 0-.05 | lerp range then sample, drawn LAST; constrain caps ≤.4 above 165bpm (fast genres saturate on their own) |
 
-Genres are **anchors**: named points with curated values on every dimension,
-grounded in the genre literature (techno: rhythm-over-harmony, drones, DJ
+**Resolved axes note (MUSIC-MIND, 2026-07).** The three new axes are not 178
+hand edits: `deriveMind()` runs at load and infers each anchor's
+`theory`/`pipes`/`rhythm` from what the anchor already declares (progression
+pool → harmonic appetite and extension color; kit pool + euclid → complexity;
+models/patterns → which pipes fit), with a small curated `MIND_OVERRIDES`
+table where inference reads a flagship wrong — explicit always wins. The
+resolved values ride the state as `state.theory` / `state.pipes` /
+`state.rhythm`, consumed by the CsdTheory/CsdPipes organs and the rhythm-cell
+passes in `buildEvents`; an absent knob is byte-identical output by law. The
+organs, the taste constraints ("locked in"), and the derivation rationale live
+in docs/MUSIC-MIND.md.
+
+Genres are **anchors** (178 of them as of 2026-07): named points with curated
+values on every dimension, grounded in the genre literature (techno: rhythm-over-harmony, drones, DJ
 form; house: 4-floor + claps, 8-bar additive builds; jungle: chopped breaks,
 sub pressure, rhythm-as-melody; trip hop: slowed dusty breaks, jazz color,
 melancholy; plus vaporwave, synthwave, lofi, downtempo, ambient, neoclassical,
@@ -121,7 +136,7 @@ snare/kick balance, hat density, harmonic motion, seventh color, reverb wash,
 sub presence, break usage, swing, compression, variation ratio) and scores any
 state against per-genre target ranges. `node genre-verifier.js matrix` builds a
 **confusion matrix** over all anchors — the kernel is tuned until every genre
-scores highest as itself (currently 17/17 diagonal-dominant). That's the
+scores highest as itself (currently 178/178 diagonal-dominant). That's the
 falsifiable answer to "does this actually sound like jungle?", and the loop to
 re-run after every kernel change. Adding the `dinosynth` anchor (dinosaur-themed
 dungeon synth) is a worked example: its tribal log-drum pulse + low swing are

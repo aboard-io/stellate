@@ -38,6 +38,9 @@ Drag waypoints to move them, right-click to erase. Set the pace in the panel.
 <!-- ENGINE: classic global scripts (window.CsdEngine / GenreKernel / … / FaustLive).
      These must load and execute BEFORE app/main.js, which reads them as globals.
      They stay classic (non-module) globals — do not convert them to ES modules. -->
+<!-- MUSIC-MIND organs: MUST precede csd-engine.js (it reads window.CsdTheory/CsdPipes at load). -->
+<script src="engine/theory.js"></script>
+<script src="engine/pipes.js"></script>
 <script src="engine/csd-engine.js"></script>
 <script src="engine/genre-kernel.js"></script>
 <script src="engine/genre-verifier.js"></script>

@@ -114,6 +114,8 @@ async function renderWav(msg, token) {
 
 async function initDeps() {
   const BASE = new URL(".", self.location.href).href;   // .../faust/
+  await import(BASE + "../theory.js");         // -> self.CsdTheory  (MUSIC-MIND organ; must precede csd-engine)
+  await import(BASE + "../pipes.js");          // -> self.CsdPipes   (MUSIC-MIND organ; must precede csd-engine)
   await import(BASE + "../csd-engine.js");     // -> self.CsdEngine
   await import(BASE + "state-engine.js");      // -> self.FaustStateEngine
   await import(BASE + "render-core.js");       // -> self.FaustRenderCore (mergeIvals)

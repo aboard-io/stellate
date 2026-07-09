@@ -1150,6 +1150,47 @@
     return { module: "master_mb", mbdrive: drive };
   }
 
+  // ---- MUSIC-MIND per-note annotation whitelist (pipes expression contract) --
+  // CsdPipes' expression pipes write cutoffMul / vib:{depth,rate} / pw onto
+  // PITCHED events (pipes.js header). mapEvents translates them into per-note
+  // `sets` entries ONLY for modules whose DSP actually exposes the param —
+  // this table, keyed by u.module, IS that whitelist, with each param's REAL
+  // slider range from dsp/*.dsp (NOT pitchedUnit's looser static clamps: a
+  // per-note set beyond the slider range would be pinned by Faust anyway, so
+  // we clamp to the honest surface). Anything not listed — samplers (module
+  // null, native PCM), dx7_algN (cartridge params only), hammond (drawbars,
+  // no filter) — silently drops the annotation, per the MUSIC-MIND contract.
+  // rsendMul/dsendMul are NOT translated: rev/del sends are POOL-LEVEL gains
+  // in the unit graph (VOICES.md "pool-level dry/rev/del/pp sends"), not
+  // per-note params — inventing plumbing is out of scope for this wiring.
+  //   cut: [paramName, lo, hi]   vib: true (vibrato 0-0.03 + vibRate 0.1-12)
+  //   pw:  [paramName, lo, hi]   (PWM-capable models only)
+  const NOTE_PARAMS = {
+    pad_saw:  { cut: ["cutoff", 80, 12000] },
+    supersaw: { cut: ["cutoff", 80, 18000], vib: true },
+    bass_saw: { cut: ["cutoff", 60, 6000] }, bass_sub: { cut: ["cutoff", 60, 6000] },
+    bass_acid:{ cut: ["cutoff", 60, 6000] }, bass_reese: { cut: ["cutoff", 60, 6000] },
+    bass_wobble: { cut: ["cutoff", 60, 6000] },
+    organ:   { cut: ["cutoff", 80, 12000] }, strings: { cut: ["cutoff", 80, 12000] },
+    choir:   { cut: ["cutoff", 200, 12000] }, bell: { cut: ["cutoff", 200, 14000] },
+    piano:   { cut: ["cutoff", 200, 14000] }, brass: { cut: ["cutoff", 500, 12000] },
+    fm2op:   { cut: ["cutoff", 200, 14000], vib: true },
+    lead_pluck:  { cut: ["cutoff", 200, 14000] },
+    lead_kpluck: { cut: ["cutoff", 200, 14000] },
+    lead_fuzz:   { cut: ["cutoff", 200, 12000], vib: true },
+    lead_guitar: { cut: ["cutoff", 200, 14000] },
+    robot_choir: { cut: ["cutoff", 200, 14000] },
+    modeld:  { cut: ["cutoff", 60, 16000] },
+    tb303:   { cut: ["cutoff", 60, 6000] },
+    synclead:{ cut: ["cutoff", 60, 16000] },
+    casiocz: { cut: ["cutoff", 200, 16000] },
+    oberheim:{ cut: ["cutoff", 40, 16000] },
+    ppg:     { cut: ["cutoff", 60, 16000] },
+    juno60:  { cut: ["cutoff", 60, 16000], pw: ["pwmBase", 0.05, 0.5] },
+    vp330:   { cut: ["cutoff", 300, 12000] },
+    solina:  { cut: ["tone", 300, 12000] },   // solina's brightness param is `tone` (no res, no cutoff)
+  };
+
   // ---- map a buildEvents result into unit events ----
   // opts.lo/hi: beat window (live chord-bar injection); opts.bedAll: include
   // bed events regardless of window (press) — live passes bedWin instead.
@@ -1182,6 +1223,25 @@
       // gate-on. slide>0 also asks the mono-legato scheduler to hold the gate
       // across the group (freq slews in the module). Default 0 = clean.
       if (u.acid) { sets.accent = clamp(p.accent || 0, 0, 1); sets.slide = clamp(p.slide || 0, 0, 1); }
+      // MUSIC-MIND annotation fields (CsdPipes expression contract): translate
+      // cutoffMul / vib / pw into per-note sets ONLY where the model's DSP
+      // exposes the param (NOTE_PARAMS whitelist above); silently dropped
+      // otherwise. Events WITHOUT annotations write nothing here — their sets
+      // stay byte-identical to today (the absent-knob law, per event). Note:
+      // a per-note set is STICKY on its pool voice until re-set — accepted:
+      // only annotated notes may touch the param, by contract.
+      const np = NOTE_PARAMS[u.module];
+      if (np) {
+        if (p.cutoffMul != null && np.cut) {
+          const cbase = u.params ? u.params[np.cut[0]] : null;   // the voice's RESOLVED static cutoff/tone
+          if (cbase != null) sets[np.cut[0]] = clamp(cbase * p.cutoffMul, np.cut[1], np.cut[2]);
+        }
+        if (p.vib && np.vib) {   // pipes depth 0..1 -> the module's fractional-pitch slider (0..0.03 full-scale)
+          sets.vibrato = clamp((p.vib.depth || 0) * 0.03, 0, 0.03);
+          sets.vibRate = clamp(p.vib.rate != null ? p.vib.rate : 5.2, 0.1, 12);
+        }
+        if (p.pw != null && np.pw) sets[np.pw[0]] = clamp(p.pw, np.pw[1], np.pw[2]);
+      }
       // blue-note bend contract (VOICES.md): only sampler units render it;
       // Faust-module voices carry no matching param and simply ignore it.
       out.push({ unit: key, beat: p.beat, durB, sets, amp: p.amp,

@@ -19,6 +19,16 @@
   // the lead RESTS the response half and the vox hit is slotted there.
   function crStream(seed,gci){ return mulberry32((((seed??1)>>>0)^Math.imul(gci+1,2654435761))>>>0); }
 
+  // MUSIC-MIND organs (engine/theory.js + engine/pipes.js), loaded the UMD way:
+  // node gets a require, the browser/worker gets the global its <script>/import
+  // set BEFORE this file (index.html + the faust workers load them first).
+  // BOTH are OPTIONAL at runtime — a context that never loaded an organ still
+  // runs every state WITHOUT the knobs byte-identically (the guards at the two
+  // consumption sites), and a state WITH a knob degrades to the plain fabric
+  // rather than throwing (never die over an expression organ).
+  const CsdTheoryRef=(typeof module!=="undefined"&&module.exports)?require("./theory.js"):root.CsdTheory;
+  const CsdPipesRef =(typeof module!=="undefined"&&module.exports)?require("./pipes.js") :root.CsdPipes;
+
   const NOTE={C:0,"C#":1,Db:1,D:2,"D#":3,Eb:3,E:4,F:5,"F#":6,Gb:6,G:7,"G#":8,Ab:8,A:9,"A#":10,Bb:10,B:11};
   const QUAL={maj:[0,4,7],min:[0,3,7],maj7:[0,4,7,11],min7:[0,3,7,10],dom7:[0,4,7,10],m7b5:[0,3,6,10],sus4:[0,5,7]};
   // build a chord voicing from root name + quality (consistent with the hand ones)
@@ -109,7 +119,7 @@
 
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
-  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic","habanera","syncopated","pedal","sludge"];
+  const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic","habanera","syncopated","pedal","sludge","tresillo","son","hemiola","charleston"];
   const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16","motorik","motorik23","fugue","sludge"];
   const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal","bossa","electro","newjack","shuffle"];
   // KERNEL-V4 Phase 5 (§3.5) — the form as a graph of TYPED NODES. Every
@@ -330,6 +340,17 @@
         } break; }
       case "walking":    L=[[0,1.0,r5],[1,0.5,r6],[1.5,0.5,f6],[2.5,0.5,r5],[3,1.0,r6],[4,0.5,r5],[4.5,0.5,f6],[5.5,0.5,r6],[6,1.0,r5],[7,0.5,r6],[7.5,0.5,f6]]; break;
       case "habanera":   L=[[0,1.4,r5],[1.5,0.5,f6],[2,1,r6],[3,1,r5],[4,1.4,r5],[5.5,0.5,f6],[6,1,r6],[7,1,f6]]; break;   // DUM..da-DUM-DUM ×2 — the tango/milonga cell IS the groove
+      // ---- MUSIC-MIND clave/cell family (§"Rhythmic + chromatic exploration") ----
+      // Same event shape + registers as every cell above; selectable via the
+      // ordinary bass-pattern plumbing (harmless vocabulary until anchors adopt).
+      case "tresillo":   // 3-3-2 ROOTS twice per bar — the Afro-Cuban/reggaeton backbone; long-long-short keeps the root anchored while the grid pulls
+        L=[[0,1.4,r5],[1.5,1.4,r5],[3,0.9,r5],[4,1.4,r5],[5.5,1.4,r5],[7,0.9,r5]]; break;
+      case "son":        // son-clave-LOCKED root/fifth: the 3-side states the root (0,1.5) and lifts to the fifth (3); the 2-side answers on octave+root (5,6)
+        L=[[0,1.2,r5],[1.5,1.2,r5],[3,1.6,f6],[5,0.8,r6],[6,1.7,r5]]; break;
+      case "hemiola":    // 3-against-4: dotted-quarter pulses tile the 8-beat bar (six hits) — the cross-rhythm reads against the kick's four
+        L=[[0,1.35,r5],[1.5,1.35,r6],[3,1.35,r5],[4.5,1.35,r6],[6,1.35,r5],[7.5,0.45,f6]]; break;
+      case "charleston": // beat 1 + the "and" of 2, SUSTAINED (the Charleston comp cell, twice per bar) — space is the groove here
+        L=[[0,2.3,r5],[2.5,1.4,r6],[4,2.3,r5],[6.5,1.4,r6]]; break;
       case "syncopated": // push-pull funk line: downbeat anchor, then off-beat pushes that land early
         L=[[0,0.7,r5],[1.5,0.45,r5],[2.5,0.7,r6],[3.75,0.45,r5],[4.5,0.7,r5],[5.75,0.45,f6],[6.5,0.7,r6],[7.25,0.45,r5]]; break;
       case "pedal":      // pedal-octave 8ths with chromatic passing tones into the bar turns
@@ -701,6 +722,36 @@
     anthem:  [[0,1.5,0,0],[1.5,.5,1,0],[2,1.5,3,0],[3.5,.5,2,0],[4,2,3,1],[6,1.5,0,1],[7.5,.5,2,0]],
     anthem2: [[0,2,2,0],[2,1,3,0],[3,1,2,0],[4,1.5,0,1],[5.5,.5,1,0],[6,2,3,0]]
   };
+  // ---- MUSIC-MIND melody rhythm cells (state.rhythm) ----
+  // Named onset grids an existing phrase gets RE-TIMED onto — pitch material
+  // untouched, rhythm only (the taste law: the notes are the genre's, the
+  // groove is the knob's). Each cell is one 8-beat bar: `on` = allowed onsets,
+  // `du` = the slot's natural duration (a note keeps min(its dur, slot dur) so
+  // re-timing never smears across the next slot or the barline).
+  const MM_CELLS=[
+    { on:[0,1.5,2,3.5,4,5.5,6,7.5], du:[1.4,0.45,1.4,0.45,1.4,0.45,1.4,0.45] },  // dotted pairs (long-short lilt)
+    { on:[0,1.5,3,4,5.5,7],         du:[1.4,1.4,0.9,1.4,1.4,0.9] },              // tresillo ×2 (3-3-2 at the 8th grid)
+    { on:[0,3,6],                   du:[2.8,2.8,1.8] },                          // 3-3-2 in whole beats — per-bar it tiles to 3-3-2-3-3-2 across two bars
+  ];
+  // Snap a bar's melody notes onto a cell: each note (in onset order) takes its
+  // NEAREST free grid slot, overflow walks forward to the next free slot (a
+  // deterministic allocator — no rng in here; the CALLER draws fire+cell picks
+  // on the dedicated seed+52200 stream). A phrase with more notes than slots
+  // leaves the un-slottable remainder untouched rather than stacking unisons.
+  function mmRetime(notes,b0,cell){
+    const N=cell.on.length, taken=new Array(N).fill(false);
+    const sorted=notes.slice().sort((a,b)=>a.beat-b.beat);
+    for(const e of sorted){
+      const rel=e.beat-b0; let bi=0,bd=Infinity;
+      for(let i=0;i<N;i++){ const d=Math.abs(cell.on[i]-rel); if(d<bd){bd=d;bi=i;} }
+      let j=bi,hop=0;
+      while(taken[j]&&hop<N){ j=(j+1)%N; hop++; }
+      if(taken[j]) continue;                       // grid full — the note keeps its own time
+      taken[j]=true;
+      e.beat=b0+cell.on[j];
+      e.dur=Math.min(e.dur,cell.du[j]);
+    }
+  }
   // arpeggiation direction for the motorik sequencer — cycles as the song plays, advancing
   // each chord (gci). `random` is a deterministic shuffle seeded by gci so the main arp and
   // its counter (which plays the REVERSE = contrary motion) agree on the same base order.
@@ -959,7 +1010,22 @@
   const STABLE_SECTION=/chorus|hook|drop|peak|refrain/i;            // formAware schedule: transforms rest on these (the section is the hook — leave it alone)
 
   function buildEvents(state){
-    const prg=getProgression(state.progression);
+    let prg=getProgression(state.progression);
+    // MUSIC-MIND organ #1 (state.theory): when `reharm` is set the named
+    // progression is only the SKELETON (key/mode/length inferred from it) —
+    // CsdTheory regenerates the chords per song on its OWN stream (seed+40961,
+    // the MUSIC-MIND contract), so the functional walk never touches the master
+    // rng and a state WITHOUT the knob stays byte-identical. Object.assign over
+    // the skeleton carries its non-chord fields (composed/composed2/label…)
+    // so the hand melody tables still resolve against the reharmonized song.
+    // Organ absent (a context that never loaded theory.js): fall back to the
+    // plain progression — never throw over an expression organ.
+    if(state.theory&&state.theory.reharm&&CsdTheoryRef&&CsdTheoryRef.reharmonize){
+      const th=state.theory;
+      prg=Object.assign({},prg,CsdTheoryRef.reharmonize(prg,{
+        adventure:th.adventure, color:th.color, voicing:th.voicing,
+        seed:(((state.seed??1)>>>0)+40961)>>>0 }));
+    }
     // KERNEL-V4 Phase 1: harmonic rhythm is a state dimension. chordEvery =
     // beats per chord bar (absent = the legacy CHORD_BEATS=8, byte-stable).
     const CBEATS=Math.max(2,Math.round(state.chordEvery||CHORD_BEATS));
@@ -967,8 +1033,17 @@
     const srcById={};
     state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,kind:s.kind,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".wav"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec,wet:!!s.wet,glitch:!!s.glitch,distant:!!s.distant}; });
     const rng=mulberry32((state.seed??1)>>>0);
+    // MUSIC-MIND rhythm knob (state.rhythm={complexity:0..1}): two DEDICATED
+    // streams — bass-cell mutation (+52100) and melody rhythm cells (+52200) —
+    // created only when the knob exists, so an absent knob draws ZERO numbers
+    // anywhere (the byte-identity law) and a present knob never re-times any
+    // other stream's draws.
+    const rcx=state.rhythm?Math.min(1,Math.max(0,+state.rhythm.complexity||0)):0;
+    const brng=state.rhythm?mulberry32((((state.seed??1)>>>0)+52100)>>>0):null;
+    const mrng=state.rhythm?mulberry32((((state.seed??1)>>>0)+52200)>>>0):null;
     let pitched=[], drums=[];
-    const found=[], sfx=[], spans=[];   // spans: section extents for the per-bar transform pool
+    let found=[], sfx=[];   // let: CsdPipes may hand back filtered arrays
+    const spans=[];   // spans: section extents for the per-bar transform pool
     let cur=0, narrOffset=0;   // narration plays through the clip across sections (always playing)
     for(const sec of state.sections){
       // THE 3-MINUTE RULE (sec.keyShift): a section may carry a semitone
@@ -1125,6 +1200,7 @@
       }
       for(let c=0;c<cycles;c++){
         const cycleBase=cur+c*cycleBeats;
+        let bassMut=0;   // MUSIC-MIND taste cap: at most 2 bass-cell mutations per cycle (no rng in the declaration)
         chords.forEach((chord,ci)=>{
           const Sp=cycleBase+ci*CBEATS;
           if(sec.pads){ const padAmp=sec.swell ? 0.085*(0.5+1.9*((Sp-cur)/Math.max(1,secBeats))) : 0.085;
@@ -1134,11 +1210,26 @@
             if(state.padDouble) pitched.push({voice:"pad",beat:Sp,dur:CBEATS,pch:pchAdd(chord.pads[0],k-12),amp:padAmp*0.9}); }
           if(sec.bass&&sec.bass!=="off"){
             const be=bassEvents(sec.bass,Sp,chord.bass,k,rng,CBEATS);
+            const kept=brng?[]:null;   // rhythm knob only: collect survivors for the mutation pass (no draws, no byte drift)
             be.forEach(e=>{
               if(rng()<0.05) e.pch=pchAdd(e.pch,12);                  // octave pops
               if(rng()<0.06&&e.beat-Sp>0.4){ e.beat+=0.25; }          // lazy push
               if(rng()<0.05) return;                                  // rest
-              pitched.push(e); });
+              pitched.push(e); if(kept) kept.push(e); });
+            // MUSIC-MIND per-cycle bass-cell MUTATION (state.rhythm): the cell
+            // breathes across cycles instead of looping — drop / anticipate /
+            // octave-flip on the DEDICATED brng stream (seed+52100), per-note
+            // gate ∝ complexity, hard-capped at 2 mutations per cycle (taste).
+            // Runs only when the knob exists: zero draws otherwise (the law).
+            if(kept) for(const e of kept){
+              if(bassMut>=2) break;
+              if(brng()>=0.10+0.20*rcx) continue;                     // gate ∝ complexity
+              const kind=Math.floor(brng()*3);
+              if(kind===0){ const i=pitched.indexOf(e); if(i>=0) pitched.splice(i,1); }  // drop a note (space is groove)
+              else if(kind===1&&e.beat-Sp>=0.5) e.beat-=0.5;          // anticipate by half a beat (the push)
+              else e.pch=pchAdd(e.pch,12);                            // octave flip (up — subs never go subterranean)
+              bassMut++;
+            }
           }
           if(sec.drums&&sec.drums!=="off"){
             let de=drumEvents(sec.drums,Sp,ci,chords.length,rng,state.euclid,state.swing,CBEATS);
@@ -1156,6 +1247,23 @@
         });
         if(sec.melody&&sec.melody!=="off"){
           const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,rng,state.seed,CBEATS);
+          // MUSIC-MIND melody rhythm cells (state.rhythm): per sounding bar, on
+          // the DEDICATED mrng stream (seed+52200), fire ∝ complexity and snap
+          // the bar's phrase onto a named cell grid (MM_CELLS — dotted pairs /
+          // tresillo / 3-3-2 over two bars). PITCH MATERIAL UNCHANGED — rhythm
+          // only, applied AFTER melodyEvents so its internal rng draw order is
+          // untouched. The hand-composed 32-beat tables are exempt (they are
+          // signature lines, not generative phrases); composed styles that fell
+          // back to a generative cell (cycleBeats!==32) do participate.
+          if(mrng&&!((sec.melody==="composed"||sec.melody==="composed2")&&cycleBeats===32)){
+            for(let bi=0;bi<Math.round(cycleBeats/CBEATS);bi++){
+              const b0=cycleBase+bi*CBEATS;
+              const ph=mel.filter(e=>e.beat>=b0&&e.beat<b0+CBEATS);
+              if(!ph.length) continue;                             // silent bar: no draw (bar content is deterministic)
+              if(mrng()>=rcx*0.4) continue;                        // fire ∝ complexity — one draw per sounding bar
+              mmRetime(ph,b0,MM_CELLS[Math.floor(mrng()*MM_CELLS.length)]);
+            }
+          }
           if(sec.solo) mel.forEach(e=>{ e.solo=sec.solo; if(sec.soloOctave) e.pch=pchAdd(e.pch,12*sec.soloOctave); });
           // BLUE-NOTE BEND (state.blueNote): when the resolved lead is a sampled
           // sax/guitar, held melody notes slide up into the blue note (b3/b7) —
@@ -1243,6 +1351,9 @@
       spans.push({start:cur,beats:secBeats,name:sec.name,kit:sec.drums});
       cur+=secBeats;
     }
+    // ONE totalBeats, computed once — the value the final return uses AND the
+    // window CsdPipes caps its emissions to (never let the two drift).
+    const totalBeats=cur+8;
     // ---- pattern-transform algebra (KERNEL-V4 Phase 2) ----
     // ONE generic per-cycle pass over the transform pool (TRANSFORM_OPS above),
     // parameterised by state.transforms = { pool, rate, schedule, everyN,
@@ -1566,6 +1677,18 @@
         e.beat=rubW(e.beat); if(d0) e.dur=Math.max(0.02,b1-e.beat);
       }
     }
+    // ---- CsdPipes (MUSIC-MIND organ #2) — the one true choke point ----
+    // The pipe chain runs on the whole bundle just BEFORE the snare-law pass,
+    // so the law still runs DEAD LAST and measures/mutates the FINAL timeline
+    // (pipes that add or drop drum events are inside its jurisdiction). Each
+    // pipe draws only its own stream (seed+71000+i*97 — pipes.js); absent or
+    // empty state.pipes never calls apply(): zero draws, the same arrays, the
+    // byte-identity law. Organ not loaded in this context: the knob degrades
+    // to the plain fabric rather than throwing.
+    if(state.pipes&&state.pipes.length&&CsdPipesRef&&CsdPipesRef.apply){
+      const bundle=CsdPipesRef.apply({bpm:state.bpm,totalBeats,pitched,drums,found,sfx},state);
+      pitched=bundle.pitched; drums=bundle.drums; found=bundle.found; sfx=bundle.sfx;
+    }
     // ---------- SNARE-LAW (kernel default: no bar repeats thrice) ----------
     // Paul's mandate: "snare patterns repeat ad nauseum ... nothing should repeat
     // exactly the same more than twice." A kernel-wide DEFAULT over every genre's
@@ -1702,7 +1825,7 @@
       if(addD.length) for(const d of addD) drums.push(d);
       if(dropD.size)  drums=drums.filter(d=>!dropD.has(d));
     }
-    return { bpm:state.bpm, totalBeats:cur+8, pitched, drums, found, sfx, srcById };
+    return { bpm:state.bpm, totalBeats, pitched, drums, found, sfx, srcById };
   }
 
   // ---------- solo voices (deterministic per-section recipes) ----------
