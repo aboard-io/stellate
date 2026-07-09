@@ -38,11 +38,8 @@
      live engine warms up (module load -> voices -> first bar -> first audio),
      faded on the first real RMS. Honest: stalls shimmer, never fake 100%. -->
 <div id="boot" aria-hidden="true"><div class="btrack"><div class="bfill"></div></div><div class="blabel"></div></div>
-<!-- CPU meter (Paul asked): pixel-locked chrome, live only. Engine load ratio
-     (the bar-clock/wall-clock EMA the engine already computes), live worklet-node
-     count, eco level when shedding. Colour tracks the eco gate: mint >=.99,
-     amber <.99, pink <.97 (where eco kicks in). Updated ~1Hz by cpuMeterTick. -->
-<div id="cpu" aria-hidden="true"><span id="cpuCpu">⚡—</span><span id="cpuLoad">1.00×</span><span id="cpuNodes">·</span><span id="cpuStems"></span><span id="cpuEco"></span></div>
+<!-- (the ⚡ CPU meter box lived here 2026-07-06..09 — removed on Paul's ask;
+     the engine load/eco readouts survive in the chyron tech line) -->
 <div id="chips">
   <button class="chip" id="playChip" title="LIVE / STOP">▶</button>
   <button class="chip" id="insideChip" title="inside the sound — the live voice timeline">ⓘ</button>
@@ -59,6 +56,7 @@
 <script src="engine/genre-kernel.js"></script>
 <script src="engine/genre-verifier.js"></script>
 <script src="engine/namebank.js"></script>
+<script src="engine/midi-export.js"></script><!-- SMF builder for the ⚙ panel's ⤓ midi download (app/export.js) -->
 <script src="engine/speech.js"></script><!-- SPEECH organ (lazy: the espeak wasm loads only when a synthText source arms) -->
 
 <script src="engine/video-layer.js"></script>
