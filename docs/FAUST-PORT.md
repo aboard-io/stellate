@@ -1,9 +1,9 @@
 # FAUST-PORT — the sole-backend migration
 
 Decision (2026-07-03): Faust becomes the only backend engine. The csound era
-is preserved complete on branch `legacy-csound`. The kernel — the 32-genre
-deterministic vector space, `buildEvents`, the validators — is UNCHANGED; only
-the sound layer moves.
+is preserved complete on branch `legacy-csound`. The kernel — the (then)
+32-genre deterministic vector space (178 as of 2026-07), `buildEvents`, the
+validators — is UNCHANGED; only the sound layer moves.
 
 ## Architecture
 
