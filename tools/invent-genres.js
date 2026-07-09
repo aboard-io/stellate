@@ -263,6 +263,10 @@ function derivedRowFor(name, target, nv, nn, vecs, stats) {
 function run() {
   const gaps = generateGaps();
   const taken = new Set([...Object.keys(K.GENRES), ...Object.keys(V.TARGETS)]);
+  // reserve the naming ROOT of every existing genre so a flood never reuses one
+  // (no four vendingmachine* genres — a shared root reads as noise even when the
+  // vectors are distinct). Exhausting fresh roots is the honest saturation signal.
+  const takenRoots = new Set([...taken].map(g => NB.genreRoot(g)).filter(Boolean));
   const accepted = [], rejected = [];
 
   for (let gi = 0; gi < gaps.length && accepted.length < ACCEPT_MAX; gi++) {
@@ -270,7 +274,9 @@ function run() {
     const { anchor, nn, transplants, target } = invent(gap.v);
     const traits = traitsOf(target);
     const mundane = rng(SEED * 7 + gi * 13)() < 0.4;
-    const { name, label } = NB.inventGenreName({ texture: traits.texture, tempo: traits.tempo, rhythm: traits.rhythm, mundane }, SEED * 100 + gi, taken);
+    const named = NB.inventGenreName({ texture: traits.texture, tempo: traits.tempo, rhythm: traits.rhythm, mundane }, SEED * 100 + gi, taken, takenRoots);
+    if (!named) { rejected.push({ name: `(${traits.texture})`, nn, gap: r2(gap.gap), reason: `no root-unique name left in the ${traits.texture} lexicon — that texture's naming roots are spent` }); continue; }
+    const { name, label, root } = named;
 
     // distinguishing dims (largest gap-vs-neighbour deltas), for the report
     const distinguishing = DIMS.map(d => ({ d, delta: r2(Math.abs(gap.v[DIMS.indexOf(d)] - P[nn][DIMS.indexOf(d)])), val: r2(target[d]) }))
@@ -320,6 +326,7 @@ function run() {
     const holds = fwdWins === CHECK_SEEDS.length && selfMean >= 60;
     if (holds && knocks.length === 0) {
       taken.add(name);
+      if (root) takenRoots.add(root);
       const clips = K.GENRE_CLIPS[nn] ? clone(K.GENRE_CLIPS[nn]) : null;
       accepted.push({ name, label, nn, gap: r2(gap.gap), anchor, row, self: selfMean, topRival, margin: selfMean - topRival.s, added, transplants, traits, distinguishing, mundane, clips, target });
     } else {

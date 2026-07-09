@@ -456,6 +456,186 @@
     /* genre-tool:moltenhouse:targets */
     moltenhouse:{ bpm:[109,130,3], chopUse:[0.53,0.73,3], variation:[0.824,1,3], snareBalance:[0.09,1.01,2], bedUse:[0.01,0.25,2], wash:[0.089,0.446,1], acoustic:[0,1,1], swing:[0,0.125,1], sub:[0.85,1,3] },
     /* /genre-tool:moltenhouse:targets */
+    /* genre-tool:magmastrut:targets */
+    magmastrut:{ bpm:[91,112,3], bedUse:[0.88,1,3], softTop:[1,1,3], chopUse:[0,0.1,2], drumDensity:[0,0.658,2], wash:[0.146,0.509,1], acoustic:[0,1,1], swing:[0,0.107,1] },
+    /* /genre-tool:magmastrut:targets */
+    /* genre-tool:hammerhouse:targets */
+    hammerhouse:{ bpm:[113,134,3], rubato:[0,0.02,3], bedUse:[0.01,0.25,3], offgrid:[0,0.327,2], seventh:[0,1,2], wash:[0.016,0.326,1], acoustic:[0,0.792,1], swing:[0,0.094,1], pump:[0.262,0.636,3], chopUse:[0.4,0.6,3], drumDensity:[0,1.583,3] },
+    /* /genre-tool:hammerhouse:targets */
+    /* genre-tool:zestgallop:targets */
+    zestgallop:{ bpm:[134,155,3], softTop:[0,0,3], crackle:[0,0.328,3], breakUse:[0.42,0.58,2], sub:[0.002,0.798,2], wash:[0.046,0.325,1], acoustic:[0,1,1], swing:[0.107,0.241,1] },
+    /* /genre-tool:zestgallop:targets */
+    /* genre-tool:whittlertrot:targets */
+    whittlertrot:{ bpm:[89,110,3], rubato:[0,0.026,3], chopUse:[0,0.1,3], sub:[0.002,0.798,2], offgrid:[0,0.636,2], wash:[0.077,0.34,1], acoustic:[0.456,0.944,1], swing:[0,0.101,1], seventh:[0.85,1,3], softTop:[0,0,3], crackle:[0,0.293,3] },
+    /* /genre-tool:whittlertrot:targets */
+    /* genre-tool:bunkerthump:targets */
+    bunkerthump:{ bpm:[117,138,3], bedUse:[0.01,0.25,3], breakUse:[0.55,0.71,3], leadVoices:[1,6,2], wash:[0.087,0.41,2], acoustic:[0,1,1], swing:[0,0.098,1], drumDensity:[2.146,4.334,3] },
+    /* /genre-tool:bunkerthump:targets */
+    /* genre-tool:gumballdrive:targets */
+    gumballdrive:{ bpm:[113,134,3], breakUse:[0.42,0.58,3], chopUse:[0,0.1,3], variation:[0,1,2], bedUse:[0.01,0.25,2], wash:[0.09,0.425,1], acoustic:[0,0.792,1], swing:[0,0.125,1], comp:[0.086,0.45,3], sub:[0.402,1,3] },
+    /* /genre-tool:gumballdrive:targets */
+    /* genre-tool:kettlefunk:targets */
+    kettlefunk:{ bpm:[94,115,3], softTop:[0,0,3], seventh:[0,1,3], offgrid:[0.057,0.37,2], motion:[0.85,1,2], wash:[0.326,0.667,1], acoustic:[0,1,1], swing:[0.13,0.264,1] },
+    /* /genre-tool:kettlefunk:targets */
+    /* genre-tool:glosspump:targets */
+    glosspump:{ bpm:[118,139,3], crackle:[0.133,0.49,3], softTop:[0,0,3], bedUse:[0.02,0.26,2], breakUse:[0.49,0.65,2], wash:[0.049,0.366,1], acoustic:[0,1,1], swing:[0,0.116,1], sub:[0.85,1,3] },
+    /* /genre-tool:glosspump:targets */
+    /* genre-tool:refrigeratorfunk:targets */
+    refrigeratorfunk:{ bpm:[98,119,3], pump:[0.088,0.524,3], variation:[0,0.12,3], bedUse:[0.88,1,2], chopUse:[0,0.1,2], wash:[0.306,0.631,1], acoustic:[0,1,1], swing:[0,0.088,1] },
+    /* /genre-tool:refrigeratorfunk:targets */
+    /* genre-tool:sherbetchop:targets */
+    sherbetchop:{ bpm:[127,148,3], softTop:[0,0,3], chopUse:[0.4,0.6,3], breakUse:[0,0.08,2], acoustic:[0,0.792,2], wash:[0.042,0.304,1], swing:[0.05,0.184,1], crackle:[0.179,0.528,3] },
+    /* /genre-tool:sherbetchop:targets */
+    /* genre-tool:pinballchop:targets */
+    pinballchop:{ bpm:[103,124,3], variation:[0.835,1,3], breakUse:[0.42,0.58,3], sub:[0.002,0.798,2], chopUse:[0,0.1,2], wash:[0.023,0.324,1], acoustic:[0,0.792,1], swing:[0,0.115,1] },
+    /* /genre-tool:pinballchop:targets */
+    /* genre-tool:idlingsplice:targets */
+    idlingsplice:{ bpm:[84,105,3], breakUse:[0.55,0.71,3], softTop:[0,0,3], wash:[0.292,0.625,2], bedUse:[0.01,0.25,2], acoustic:[0,1,1], swing:[0,0.107,1] },
+    /* /genre-tool:idlingsplice:targets */
+    /* genre-tool:trenchsway:targets */
+    trenchsway:{ bpm:[69,90,3], softTop:[0,0,3], variation:[0.746,1,3], motion:[0.85,1,2], rubato:[0,0.008,2], wash:[0.3,0.647,1], acoustic:[0,1,1], swing:[0,0.091,1] },
+    /* /genre-tool:trenchsway:targets */
+    /* genre-tool:tarbreak:targets */
+    tarbreak: { bpm:[139,160,3], softTop:[1,1,3], bedUse:[0.01,0.25,3], chopUse:[0.4,0.6,2], hatDensity:[0.228,1.152,2], wash:[0.14,0.482,1], acoustic:[0,1,1], swing:[0,0.089,1] },
+    /* /genre-tool:tarbreak:targets */
+    /* genre-tool:cedarskank:targets */
+    cedarskank:{ bpm:[112,133,3], seventh:[0,1,3], softTop:[1,1,3], acoustic:[0,1,2], motion:[0.85,1,2], wash:[0.006,0.267,1], swing:[0.148,0.282,1] },
+    /* /genre-tool:cedarskank:targets */
+    /* genre-tool:bramblestep:targets */
+    bramblestep:{ bpm:[68,89,3], softTop:[1,1,3], snareBalance:[0.025,0.785,3], breakUse:[0,0.08,2], sub:[0.002,0.798,2], wash:[0.121,0.487,1], acoustic:[0,1,1], swing:[0.121,0.255,1] },
+    /* /genre-tool:bramblestep:targets */
+    /* genre-tool:toastercore:targets */
+    toastercore:{ bpm:[181,202,3], softTop:[0,0,3], chopUse:[0.4,0.6,3], sub:[0.002,0.798,2], breakUse:[0,0.08,2], wash:[0.015,0.335,1], acoustic:[0,1,1], swing:[0.036,0.17,1] },
+    /* /genre-tool:toastercore:targets */
+    /* genre-tool:vendingmachinethump:targets */
+    vendingmachinethump:{ bpm:[113,134,3], variation:[0,1,3], softTop:[0,0,3], chopUse:[0,0.1,2], sub:[0.002,0.798,2], wash:[0.008,0.299,1], acoustic:[0,1,1], swing:[0,0.083,1], drumDensity:[0,0.904,3], humanize:[0,0.208,3] },
+    /* /genre-tool:vendingmachinethump:targets */
+    /* genre-tool:boilercreep:targets */
+    boilercreep:{ bpm:[59,80,3], variation:[0,1,3], softTop:[0,0,3], motion:[0.1,1,2], leadVoices:[1,4,2], wash:[0.032,0.304,1], acoustic:[0.48,0.72,1], swing:[0,0.123,1] },
+    /* /genre-tool:boilercreep:targets */
+    /* genre-tool:fluorescentstrut:targets */
+    fluorescentstrut:{ bpm:[103,124,3], chopUse:[0.47,0.67,3], softTop:[0,0,3], sub:[0.002,0.798,2], bedUse:[0.02,0.26,2], wash:[0.215,0.597,1], acoustic:[0,0.792,1], swing:[0,0.089,1] },
+    /* /genre-tool:fluorescentstrut:targets */
+    /* genre-tool:dialtonehaze:targets */
+    dialtonehaze:{ bpm:[63,84,3], bedUse:[0.656,1,3], softTop:[0,0,3], breakUse:[0,0.08,2], crackle:[0.119,0.468,2], wash:[0.163,0.483,1], acoustic:[0,0.792,1], swing:[0.041,0.175,1] },
+    /* /genre-tool:dialtonehaze:targets */
+    /* genre-tool:breadboxmince:targets */
+    breadboxmince:{ bpm:[94,115,3], breakUse:[0,0.08,3], offgrid:[0,0.422,3], chopUse:[0,0.1,2], motion:[0.48,1,2], wash:[0.189,0.44,1], acoustic:[0.456,0.944,1], swing:[0.007,0.141,1], seventh:[0.85,1,3], softTop:[0,0,3] },
+    /* /genre-tool:breadboxmince:targets */
+    /* genre-tool:earthmoversplice:targets */
+    earthmoversplice:{ bpm:[109,130,3], chopUse:[0,0.1,3], breakUse:[0.42,0.58,3], humanize:[0.065,0.346,2], seventh:[0.57,1,2], wash:[0,0.276,1], acoustic:[0,1,1], swing:[0,0.114,1], softTop:[1,1,3] },
+    /* /genre-tool:earthmoversplice:targets */
+    /* genre-tool:butterchurnbounce:targets */
+    butterchurnbounce:{ bpm:[111,132,3], softTop:[1,1,3], variation:[0,1,3], hatDensity:[0,0.557,2], drumDensity:[0,0.904,2], wash:[0.06,0.343,1], acoustic:[0,1,1], swing:[0.151,0.285,1] },
+    /* /genre-tool:butterchurnbounce:targets */
+    /* genre-tool:furnacestrut:targets */
+    furnacestrut:{ bpm:[86,107,3], variation:[0,1,3], breakUse:[0,0.08,3], bedUse:[0.88,1,2], rubato:[0,0.008,2], wash:[0.408,0.754,1], acoustic:[0,1,1], swing:[0,0.097,1] },
+    /* /genre-tool:furnacestrut:targets */
+    /* genre-tool:tectonicdash:targets */
+    tectonicdash:{ bpm:[132,153,3], softTop:[0,0,3], sub:[0.85,1,3], bedUse:[0.51,0.75,2], chopUse:[0,0.1,2], wash:[0.076,0.428,1], acoustic:[0,1,1], swing:[0.187,0.321,1] },
+    /* /genre-tool:tectonicdash:targets */
+    /* genre-tool:tundradoom:targets */
+    tundradoom:{ bpm:[45,66,3], rubato:[0,0.029,3], sub:[0.002,0.798,3], seventh:[0,1,2], wash:[0.179,0.554,2], acoustic:[0,1,1], swing:[0,0.108,1] },
+    /* /genre-tool:tundradoom:targets */
+    /* genre-tool:sodabop:targets */
+    sodabop:  { bpm:[82,103,3], variation:[0,1,3], chopUse:[0,0.1,3], rubato:[0,0.008,2], sub:[0.002,0.798,2], wash:[0,0.228,1], acoustic:[0.456,0.944,1], swing:[0,0.083,1] },
+    /* /genre-tool:sodabop:targets */
+    /* genre-tool:citrushaze:targets */
+    citrushaze:{ bpm:[78,99,3], bedUse:[0.88,1,3], softTop:[0,0,3], breakUse:[0,0.08,2], drumDensity:[0,0.579,2], wash:[0.125,0.482,1], acoustic:[0,0.792,1], swing:[0,0.097,1], seventh:[0.85,1,3], snareBalance:[0,0.525,3], comp:[0,0.252,3] },
+    /* /genre-tool:citrushaze:targets */
+    /* genre-tool:confettililt:targets */
+    confettililt:{ bpm:[82,103,3], motion:[0,1,3], humanize:[0.17,0.451,3], softTop:[0,0,2], chopUse:[0,0.1,2], wash:[0.169,0.432,1], acoustic:[0,0.792,1], swing:[0.095,0.229,1], drumDensity:[0.843,2.127,3] },
+    /* /genre-tool:confettililt:targets */
+    /* genre-tool:willowmarch:targets */
+    willowmarch:{ bpm:[111,132,3], chopUse:[0.4,0.6,3], softTop:[0,0,3], bedUse:[0.01,0.25,2], acoustic:[0,1,2], wash:[0.118,0.481,1], swing:[0.11,0.244,1] },
+    /* /genre-tool:willowmarch:targets */
+    /* genre-tool:standbylightdrive:targets */
+    standbylightdrive:{ bpm:[124,145,3], variation:[0,0.12,3], bedUse:[0.88,1,3], chopUse:[0,0.1,2], acoustic:[0,0.792,2], wash:[0,0.231,1], swing:[0,0.083,1] },
+    /* /genre-tool:standbylightdrive:targets */
+    /* genre-tool:cairntrot:targets */
+    cairntrot:{ bpm:[99,120,3], softTop:[0,0,3], pump:[0.145,0.588,3], seventh:[0,1,2], wash:[0.188,0.523,2], acoustic:[0,1,1], swing:[0.038,0.172,1], drumDensity:[0,0.87,3], bedUse:[0.51,0.75,3] },
+    /* /genre-tool:cairntrot:targets */
+    /* genre-tool:dumptruckdub:targets */
+    dumptruckdub:{ bpm:[76,97,3], softTop:[1,1,3], chopUse:[0,0.1,3], acoustic:[0,1,2], humanize:[0,0.239,2], wash:[0.224,0.593,1], swing:[0,0.12,1], bedUse:[0.51,0.75,3], sub:[0.402,1,3] },
+    /* /genre-tool:dumptruckdub:targets */
+    /* genre-tool:tallowtrot:targets */
+    tallowtrot:{ bpm:[106,127,3], sub:[0,1,3], breakUse:[0.42,0.58,3], softTop:[1,1,2], hatDensity:[0.086,1.544,2], wash:[0.182,0.548,1], acoustic:[0,1,1], swing:[0,0.097,1] },
+    /* /genre-tool:tallowtrot:targets */
+    /* genre-tool:fathomarch:targets */
+    fathomarch:{ bpm:[125,146,3], seventh:[0.29,1,3], humanize:[0.054,0.335,3], wash:[0,0.219,2], softTop:[0,0,2], acoustic:[0,0.12,1], swing:[0,0.105,1], sub:[0.85,1,3], comp:[0.048,0.524,3] },
+    /* /genre-tool:fathomarch:targets */
+    /* genre-tool:masonshuffle:targets */
+    masonshuffle:{ bpm:[89,110,3], softTop:[0,0,3], swing:[0.106,0.24,3], offgrid:[0,0.734,2], humanize:[0.127,0.408,2], wash:[0.006,0.26,1], acoustic:[0.68,0.92,1] },
+    /* /genre-tool:masonshuffle:targets */
+    /* genre-tool:boilerroomstomp:targets */
+    boilerroomstomp:{ bpm:[118,139,3], softTop:[1,1,3], chopUse:[0,0.1,3], wash:[0.151,0.464,2], leadVoices:[1,6,2], acoustic:[0,1,1], swing:[0,0.084,1], crackle:[0,0.246,3] },
+    /* /genre-tool:boilerroomstomp:targets */
+    /* genre-tool:brinedub:targets */
+    brinedub: { bpm:[75,96,3], seventh:[0,1,3], wash:[0.088,0.429,3], acoustic:[0,0.792,2], pump:[0,0.194,2], swing:[0,0.06,1], bedUse:[0.51,0.75,3], snareBalance:[0,0.581,3] },
+    /* /genre-tool:brinedub:targets */
+    /* genre-tool:attichouse:targets */
+    attichouse:{ bpm:[110,131,3], softTop:[1,1,3], seventh:[0.32,0.93,3], breakUse:[0.42,0.58,2], wash:[0.095,0.44,2], acoustic:[0,1,1], swing:[0,0.092,1] },
+    /* /genre-tool:attichouse:targets */
+    /* genre-tool:driftrot:targets */
+    driftrot: { bpm:[83,104,3], softTop:[0,0,3], snareBalance:[0.044,0.916,3], breakUse:[0,0.08,2], swing:[0.03,0.164,2], wash:[0.166,0.473,1], acoustic:[0,0.792,1], bedUse:[0.51,0.75,3], crackle:[0,0.298,3], offgrid:[0,0.382,3], sub:[0.002,0.798,3] },
+    /* /genre-tool:driftrot:targets */
+    /* genre-tool:ceilingfanchop:targets */
+    ceilingfanchop:{ bpm:[153,174,3], drumDensity:[0.967,1.903,3], hatDensity:[0.26,1.16,3], motion:[0.48,1,2], pump:[0.442,0.9,2], wash:[0,0.242,1], acoustic:[0,0.12,1], swing:[0,0.068,1] },
+    /* /genre-tool:ceilingfanchop:targets */
+    /* genre-tool:strawdub:targets */
+    strawdub: { bpm:[73,94,3], acoustic:[0.432,1,3], softTop:[1,1,3], variation:[0.79,1,2], drumDensity:[0,2.34,2], wash:[0.069,0.374,1], swing:[0,0.084,1] },
+    /* /genre-tool:strawdub:targets */
+    /* genre-tool:porchdice:targets */
+    porchdice:{ bpm:[110,131,3], chopUse:[0.4,0.6,3], acoustic:[0.656,1,3], breakUse:[0,0.08,2], drumDensity:[0.85,1.86,2], wash:[0,0.234,1], swing:[0,0.081,1] },
+    /* /genre-tool:porchdice:targets */
+    /* genre-tool:shellacsplice:targets */
+    shellacsplice:{ bpm:[117,138,3], softTop:[0,0,3], acoustic:[0,1,3], sub:[0,1,2], crackle:[0.203,0.56,2], wash:[0,0.288,1], swing:[0.037,0.171,1], breakUse:[0.42,0.58,3], motion:[0.85,1,3] },
+    /* /genre-tool:shellacsplice:targets */
+    /* genre-tool:gourdscuttle:targets */
+    gourdscuttle:{ bpm:[151,172,3], softTop:[0,0,3], pump:[0.185,0.599,3], chopUse:[0,0.1,2], sub:[0.002,0.798,2], wash:[0,0.234,1], acoustic:[0,1,1], swing:[0.002,0.136,1] },
+    /* /genre-tool:gourdscuttle:targets */
+    /* genre-tool:auroragallop:targets */
+    auroragallop:{ bpm:[138,159,3], softTop:[1,1,3], chopUse:[0.4,0.6,3], breakUse:[0,0.08,2], pump:[0.205,0.619,2], wash:[0.06,0.396,1], acoustic:[0,1,1], swing:[0,0.088,1] },
+    /* /genre-tool:auroragallop:targets */
+    /* genre-tool:atticfanthrashsplice:targets */
+    atticfanthrashsplice:{ bpm:[145,166,3], breakUse:[0.42,0.58,3], sub:[0.002,0.798,3], softTop:[1,1,2], chopUse:[0,0.1,2], wash:[0.038,0.302,1], acoustic:[0,1,1], swing:[0.072,0.206,1] },
+    /* /genre-tool:atticfanthrashsplice:targets */
+    /* genre-tool:obelisktrot:targets */
+    obelisktrot:{ bpm:[99,120,3], softTop:[1,1,3], variation:[0,1,3], sub:[0,1,2], drumDensity:[0,0.882,2], wash:[0.003,0.241,1], acoustic:[0.48,0.72,1], swing:[0.069,0.203,1] },
+    /* /genre-tool:obelisktrot:targets */
+    /* genre-tool:oakdublilt:targets */
+    oakdublilt:{ bpm:[74,95,3], rubato:[0,0.028,3], softTop:[1,1,3], swing:[0.121,0.255,2], hatDensity:[0.191,1.599,2], wash:[0.015,0.276,1], acoustic:[0.432,1,1] },
+    /* /genre-tool:oakdublilt:targets */
+    /* genre-tool:duststrut:targets */
+    duststrut:{ bpm:[90,111,3], softTop:[1,1,3], chopUse:[0.4,0.6,3], snareBalance:[0.374,1.976,2], breakUse:[0,0.08,2], wash:[0.03,0.285,1], acoustic:[0,0.792,1], swing:[0.115,0.249,1] },
+    /* /genre-tool:duststrut:targets */
+    /* genre-tool:reedrush:targets */
+    reedrush: { bpm:[135,156,3], softTop:[1,1,3], bedUse:[0.01,0.25,3], chopUse:[0.4,0.6,2], offgrid:[0,0.299,2], wash:[0,0.18,1], acoustic:[0.48,0.72,1], swing:[0.043,0.177,1] },
+    /* /genre-tool:reedrush:targets */
+    /* genre-tool:hearthsway:targets */
+    hearthsway:{ bpm:[60,81,3], softTop:[0,0,3], breakUse:[0,0.08,3], snareBalance:[0,0.924,2], rubato:[0,0.008,2], wash:[0.166,0.538,1], acoustic:[0,1,1], swing:[0.058,0.192,1], bedUse:[0.372,0.698,3], motion:[0.85,1,3] },
+    /* /genre-tool:hearthsway:targets */
+    /* genre-tool:graingroove:targets */
+    graingroove:{ bpm:[90,111,3], softTop:[1,1,3], chopUse:[0.4,0.6,3], crackle:[0.169,0.546,2], bedUse:[0.01,0.25,2], wash:[0.026,0.367,1], acoustic:[0,1,1], swing:[0.068,0.202,1] },
+    /* /genre-tool:graingroove:targets */
+    /* genre-tool:hvacbop:targets */
+    hvacbop:  { bpm:[96,117,3], softTop:[0,0,3], wash:[0.282,0.609,3], chopUse:[0,0.1,2], acoustic:[0,1,2], swing:[0.026,0.16,1], drumDensity:[0,0.904,3], bedUse:[0.51,0.75,3], pump:[0.089,0.536,3], crackle:[0.109,0.458,3] },
+    /* /genre-tool:hvacbop:targets */
+    /* genre-tool:moldcore:targets */
+    moldcore: { bpm:[151,172,3], breakUse:[0,0.08,3], softTop:[1,1,3], crackle:[0.209,0.586,2], pump:[0.235,0.649,2], wash:[0.056,0.391,1], acoustic:[0,1,1], swing:[0.035,0.169,1] },
+    /* /genre-tool:moldcore:targets */
+    /* genre-tool:hydracore:targets */
+    hydracore:{ bpm:[168,189,3], chopUse:[0.4,0.6,3], breakUse:[0,0.08,3], humanize:[0,0.182,2], acoustic:[0,0.792,2], wash:[0.126,0.469,1], swing:[0,0.107,1] },
+    /* /genre-tool:hydracore:targets */
+    /* genre-tool:ashfunk:targets */
+    ashfunk:  { bpm:[89,110,3], softTop:[1,1,3], breakUse:[0.42,0.58,3], acoustic:[0,0.792,2], bedUse:[0.01,0.25,2], wash:[0.022,0.274,1], swing:[0.058,0.192,1] },
+    /* /genre-tool:ashfunk:targets */
+    /* genre-tool:steamdub:targets */
+    steamdub: { bpm:[72,93,3], breakUse:[0,0.08,3], softTop:[1,1,3], bedUse:[0.51,0.75,2], humanize:[0.086,0.367,2], wash:[0.343,0.69,1], acoustic:[0,1,1], swing:[0,0.118,1], comp:[0.315,0.798,3] },
+    /* /genre-tool:steamdub:targets */
+    /* genre-tool:seraphswing:targets */
+    seraphswing:{ bpm:[159,180,3], pump:[0,0.345,3], wash:[0.122,0.481,3], swing:[0.129,0.263,2], chopUse:[0,0.1,2], acoustic:[0,1,1] },
+    /* /genre-tool:seraphswing:targets */
   };
 
   // the piecewise-linear target-row scorer — the shared primitive (genre-tool
