@@ -165,8 +165,9 @@ own, so repeat them or use an `include`):
 
 ```nginx
 server {
-  listen 443 ssl;
-  http2 on;                # the directive; the `listen ... http2` flag is deprecated
+  listen 443 ssl http2;    # Ubuntu 24.04 ships nginx 1.24 — the `http2 on;`
+                           # directive needs 1.25.1+; on 1.24 the listen flag
+                           # is correct (learned in the 2026-07-09 deploy)
   server_name stellate.app;
   root /srv/stellate;
 
@@ -298,6 +299,14 @@ base URLs, set the Transform Rules, smoke §7 again.
 | Let's Encrypt TLS | $0 |
 | Transfer overage (if ever) | $0.01/GiB past 1 TiB |
 | R2 growth path | $0 to ~1 GB (free tier: 10 GB storage, free egress) |
+
+**Deployed 2026-07-09:** droplet `stellate-app` (nyc3, s-1vcpu-1gb,
+159.89.38.37), DO DNS zone (A @ + www CNAME), Let's Encrypt cert,
+the §5 nginx config live, payload rsynced from the aboardresearch box
+(datacenter-local). `tools/deploy-stellate.sh` is the repeatable deploy —
+manifest check → rsync deny-list → manifest push → header smoke. The MP3
+bed/speech diet (§3 step 6) is deferred; beds ship as WAV for now (~866 MB
+total — fits the same math with less headroom).
 
 **Launch checklist:**
 
