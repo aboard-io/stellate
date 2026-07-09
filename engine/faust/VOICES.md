@@ -1,10 +1,10 @@
 # VOICES.md — csound model → Faust module map (Phase 1)
 
 Every synthesis model the kernel can emit, ported to a precompiled WASM module
-in `dist/` (source in `dsp/`). Verified by `node legacy-tools/ab-render.js`
-against the legacy csound engine (runs on branch `legacy-csound`, which keeps
-the csound codegen) — see `../docs/history/ab-report.md` (**40 PASS / 2 CHECK**, both CHECKs
-are deliberate substitutions). Rebuild with `node build.js`;
+in `dist/` (source in `dsp/`). Verified by the per-voice A/B harness against the
+legacy csound engine — both the harness (`ab-render.js`) and the csound codegen
+live on branch `legacy-csound` — see `../docs/history/ab-report.md` (**40 PASS /
+2 CHECK**, both CHECKs are deliberate substitutions). Rebuild with `node build.js`;
 `dist/manifest.json` lists every module's IO count + param addresses for the
 Phase-2 engine.
 

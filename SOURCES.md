@@ -10,8 +10,9 @@ CurlyWas and compiled with the MicroW8 `uw8` tool. All public domain (Unlicense)
 
 The found-sound layer is **field recordings from [radio aporee ::: maps](https://aporee.org/maps/)**,
 mirrored on the **Internet Archive**. The audio files themselves are **not committed** —
-`fetch-found-sound.sh` downloads them and `royal-road.csd` granular-processes them
-through `syncgrain` (time-stretched, pitched down, sent to the reverb).
+`fetch-found-sound.sh` downloads them and the engine's found-sound layer
+(`engine/faust/found-player.js`) granular-processes them at play time
+(time-stretched, pitched down, sent to the reverb).
 
 aporee field recordings are generally licensed **CC BY-NC-SA**. Respect that for any
 distribution: attribute, non-commercial, share-alike. This sketch is a personal /
@@ -49,8 +50,8 @@ transitions) and are wired as commented entries in `fetch-found-sound.sh`:
 | a Paris market recording | (aporee) |
 
 To re-introduce one: uncomment its line in `fetch-found-sound.sh` (fill in the
-`.ogg` filename from the item's file list), add a matching `ftgen` + `instr 3`-style
-voice in `royal-road.csd`, and re-render.
+`.ogg` filename from the item's file list), reference it from a genre's `found`
+sources in `engine/genre-kernel.js`, and re-render.
 
 # Found-video sources & attribution
 

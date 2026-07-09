@@ -6,7 +6,7 @@
 #   ./fetch-found-sound.sh
 #
 # Downloads each aporee field recording, trims a usable window, and converts to
-# mono 44.1k WAV so royal-road.csd can load it as a granular source table.
+# mono 44.1k WAV so the found-sound layer can load it as a granular source.
 # Requires: curl, ffmpeg.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -33,7 +33,7 @@ recordings=(
   "tw_trains|aporee_51245_58484|RailwayStationDivaaSlovenia.mp3|120|40|tw_trains"                               # passenger & cargo trains, Divača
   "tw_stationhall|aporee_39219_48146|soundmap201812162.mp3|30|40|tw_stationhall"                                # walking into the station, Taoyuan
   "tw_platform|aporee_72529_84687|202605291903.mp3|60|40|tw_platform"                                           # station approach, Hastings
-  # More recordings used historically (uncomment to layer them in the .csd):
+  # More recordings used historically (uncomment to layer them into the bed):
   # "tsukiji|aporee_35166_40406|<file>.ogg|0|40|tsukiji"
   # "asakusa|aporee_21091_24510|<file>.ogg|0|40|asakusa"
 )
@@ -122,4 +122,5 @@ getbed "$IA/aporee_14738_46150/szer.mp3" 30 40 dw_cycle
 getbed "$IA/aporee_8942_14632/berlinOhlauerWaschsalonContact111204c.mp3" 5 35 dryer_spin
 # ===== END 30-genre commission beds ==========================================
 
-echo "Done. Now: ./render.sh"
+echo "Done. Found sound ready in found/ — render via engine/faust press, e.g.:"
+echo "  node engine/genre-kernel.js track jungle --seed 7 --render"

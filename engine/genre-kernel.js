@@ -798,8 +798,8 @@
   // param vectors by weight — patch-space morphing, exactly like genre blending.
   // Different algorithms are different topologies: pick a side, never smear.
   // toState emits state.instruments.<voice>.dx7 = {algorithm, params} — the
-  // contract the Faust engine consumes; the legacy csound path maps model
-  // "dx7" to its closest legacy voice (see csd-engine mergedInstruments).
+  // contract the Faust engine consumes. (The retired csound path mapped model
+  // "dx7" to its closest legacy voice; that codegen is on branch legacy-csound.)
   const DX7_PATCHES=(()=>{
     let raw={};
     if(isNode){ try{ raw=require("./faust/dx7-presets.json"); }catch(e){} }
@@ -5426,8 +5426,9 @@
       delay:{beats:c.fx.delayBeats, feedback:c.fx.delayFb, cutoff:Math.round(c.fx.delayCut)},
       instruments:{
         // model "dx7" carries its resolved patch: instruments.<voice>.dx7 =
-        // {algorithm, params[, name]} — the Faust engine's contract; the
-        // legacy csound path maps the model and ignores the blob.
+        // {algorithm, params[, name]} — the Faust engine's contract. (The
+        // retired csound path mapped the model and ignored the blob; on
+        // branch legacy-csound.)
         // inserts: the per-voice insert-FX chain (CONTRACT: [{type,...params}],
         // [] = bypass — see csd-engine defaultInstruments for units)
         pad:Object.assign(E.defaultInstruments().pad, c.padRecipe, {inserts:c.padInserts||[]}, c.padDx7?{dx7:c.padDx7}:{}, c.padSampler?{sampler:samplerSpec(c.padSampler)}:{}),

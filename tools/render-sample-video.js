@@ -380,7 +380,7 @@ function buildCredits() {
     dtxt(artist, { x: cx, y: ey, size: 34, alpha: ea }),
     dtxt(`"${title}"`, { x: cx, y: ey + 46, size: 20, color: "white@0.9", alpha: ea }),
     dtxt("a ROYAL ROAD generative production", { x: cx, y: ey + 98, size: 15, color: "white@0.85", alpha: ea }),
-    dtxt(`csound    ${bpm} BPM    ${prog}`, { x: cx, y: ey + 122, size: 14, color: "white@0.7", alpha: ea }),
+    dtxt(`faust    ${bpm} BPM    ${prog}`, { x: cx, y: ey + 122, size: 14, color: "white@0.7", alpha: ea }),
     dtxt(HOME, { x: cx, y: ey + 150, size: 14, color: "white@0.7", alpha: ea }),
   ];
   return "," + open.concat(end).join(",");
