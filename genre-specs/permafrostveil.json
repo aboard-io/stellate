@@ -1,0 +1,25 @@
+{
+  "name": "permafrostveil",
+  "label": "Permafrostveil",
+  "info": "dungeon synth frozen solid: ice-bell music boxes and ghost choirs drifting over frost triads, snow-static in the grooves, no drums at all — nothing down here survives the cold",
+  "anchor": {
+    "bpm": [54, 68],
+    "swing": [0, 0.03],
+    "humanize": [0.1, 0.3],
+    "progressions": ["frost", "frost", "epic_min"],
+    "kits": ["off"],
+    "fills": ["off"],
+    "thunk": { "prob": [0.15, 0.3], "amp": [0.02, 0.032] },
+    "reverbColor": "dattorro",
+    "bass": { "patterns": ["off", "root"], "recipe": { "model": ["sub"], "cutoff": [220, 400], "res": [0.05, 0.12], "level": [0.6, 0.85], "send": [0.2, 0.4], "dsend": [0, 0.1] } },
+    "lead": { "patterns": ["sparse", "wander", "off"], "samplerPool": ["music_box", "celesta", "glockenspiel"], "recipe": { "model": ["bell", "sampler", "sampler"], "wave": "sine", "voices": [1, 2], "spread": [0.002, 0.005], "cutoff": [2400, 3600], "level": [0.34, 0.46], "send": [0.55, 0.75], "dsend": [0.3, 0.45], "attack": [0.01, 0.05], "release": [0.5, 0.9], "sustain": [0.85, 0.95] } },
+    "pads": { "prob": 1, "patchPool": ["SHIMMER", "ORCH-CHIME", "TUB BELLS"], "samplerPool": ["bowed_glass", "ahh_choir"], "recipe": { "model": ["vp330", "strings", "dx7", "sampler"], "wave": "saw", "cutoff": [800, 1500], "detune": [0.005, 0.012], "attack": [3, 5], "vowel": [0.4, 0.55], "ensemble": [0.7, 0.9], "level": [0.6, 0.8], "send": [0.6, 0.8], "dsend": [0.15, 0.3] } },
+    "drums": { "kickModel": ["808"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.4, 0.6], "snare": [0.3, 0.5], "hat": [0.25, 0.45], "tune": [0.85, 1], "send": [0.3, 0.5], "dsend": [0, 0.1] },
+    "fx": { "reverb": [0.82, 0.92], "delayBeats": [1, 1.5], "delayFb": [0.4, 0.55], "delayCut": [2000, 3200], "pump": [0, 0], "crackle": [0.2, 0.38], "lowcut": [0, 0], "highcut": [0, 0], "comp": [0, 0.15] },
+    "found": { "role": "bed", "vol": [0.18, 0.3], "pitch": [0.55, 0.72], "stretch": [0.45, 0.6], "cutoff": [1800, 3000], "sources": ["hvac_hum", "vx_wwvh"] },
+    "stab": ["off"],
+    "hits": { "sources": ["tw_ding", "sp_herenow"], "pattern": "sparse", "prob": 0.15 },
+    "form": "wave"
+  },
+  "verify": { "seeds": 6, "features": { "bpm": 3, "drumDensity": 2, "crackle": 2, "motion": 2, "wash": 1, "acoustic": 1, "bedUse": 1 } }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "ravensquall",
+  "label": "Ravensquall",
+  "info": "blizzard metal: blast-pulse hats like sleet on iron, a tremolo-picked wall smeared into frost reverb, tape hiss standing in for snowfall — grim, glacial, gone by morning",
+  "anchor": {
+    "bpm": [160, 174],
+    "swing": [0, 0.02],
+    "humanize": [0, 0.12],
+    "progressions": ["frost", "minor_run", "mode_phrygian"],
+    "kits": ["pulse", "four"],
+    "fills": ["snare roll", "cut", "impact", "off"],
+    "reverbColor": "dattorro",
+    "bass": { "patterns": ["drive", "pedal", "root"], "recipe": { "model": ["reese", "saw"], "cutoff": [260, 460], "res": [0.1, 0.22], "level": [1.1, 1.35], "send": [0.05, 0.12], "dsend": [0, 0.06] }, "inserts": { "prob": 0.8, "max": 1, "pool": [["distort", { "drive": [0.5, 0.8], "mix": [0.75, 1] }]] } },
+    "lead": { "patterns": ["motorik", "arp16", "double"], "recipe": { "model": ["fuzz"], "wave": "saw", "voices": [1, 2], "spread": [0.004, 0.009], "cutoff": [1700, 2700], "res": [0.2, 0.35], "drive": [0.7, 1], "level": [0.5, 0.62], "send": [0.45, 0.65], "dsend": [0.2, 0.35], "attack": 0.005, "release": [0.15, 0.3], "sustain": [0.85, 0.95] } },
+    "pads": { "prob": 1, "recipe": { "model": ["saw", "saw", "strings"], "wave": "saw", "cutoff": [800, 1500], "detune": [0.014, 0.022], "attack": [0.3, 0.9], "level": [0.6, 0.76], "send": [0.5, 0.7], "dsend": [0.1, 0.25] } },
+    "drums": { "kickModel": ["808", "boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [1.05, 1.3], "snare": [0.7, 0.95], "hat": [0.95, 1.3], "tune": [0.9, 1.05], "send": [0.25, 0.4], "dsend": [0.05, 0.15] },
+    "fx": { "reverb": [0.7, 0.85], "delayBeats": [0.5, 0.75], "delayFb": [0.3, 0.45], "delayCut": [1800, 2800], "pump": [0, 0.06], "crackle": [0.15, 0.3], "lowcut": [25, 40], "highcut": [0, 0], "comp": [0.4, 0.65], "grit": [0.55, 0.8] },
+    "found": { "role": "bed", "vol": [0.08, 0.16], "pitch": [0.6, 0.78], "stretch": [0.45, 0.6], "cutoff": [1600, 2800], "sources": ["highway_night", "vx_conet_swedish"] },
+    "stab": ["off"],
+    "hits": { "sources": ["sp_pressure", "vox_a"], "pattern": "sparse", "prob": 0.2 },
+    "form": "dj"
+  },
+  "verify": { "seeds": 6, "features": { "bpm": 3, "hatDensity": 2, "drumDensity": 2, "crackle": 2, "wash": 1, "pump": 1, "acoustic": 1 } }
+}

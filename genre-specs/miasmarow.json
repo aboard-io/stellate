@@ -1,0 +1,37 @@
+{
+  "name": "miasmarow",
+  "label": "Miasmarow",
+  "info": "the séance row at 93: a clarinet and viola wandering a melody that refuses to land, frost-pale triads and phrygian-dominant smears one chord every two beats, tremolo strings and bowed glass shimmering underneath, a lone heartbeat kick pulsing under everything — mystic-chord perfume, candles guttering, surface hiss like a 78 left spinning, the tonal center dissolved like ether",
+  "anchor": {
+    "bpm": [89, 98],
+    "swing": [0, 0.04],
+    "humanize": [0.2, 0.4],
+    "progressions": ["frost", "hijaz", "drone_min"],
+    "kits": ["kick"],
+    "fills": ["off"],
+    "chordEvery": 8,
+    "bass": {
+      "patterns": ["pedal", "root", "off"],
+      "samplerPool": ["cello", "contrabass"],
+      "recipe": { "model": ["sampler", "sampler"], "cutoff": [500, 1100], "res": [0.05, 0.12], "level": [0.5, 0.7], "send": [0.25, 0.45], "dsend": [0, 0.08], "attack": [0.03, 0.1], "release": [0.5, 1] }
+    },
+    "lead": {
+      "patterns": ["wander", "sparse", "arpdown"],
+      "samplerPool": ["clarinet", "viola", "celesta"],
+      "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "voices": [1, 2], "spread": [0.001, 0.004], "cutoff": [2200, 3400], "level": [0.42, 0.55], "send": [0.35, 0.55], "dsend": [0.1, 0.25], "vibrato": [0.006, 0.012], "attack": [0.02, 0.06], "release": [0.3, 0.6] }
+    },
+    "pads": {
+      "prob": 0.8,
+      "samplerPool": ["tremolo", "strings", "bowed_glass"],
+      "recipe": { "model": ["sampler", "sampler", "sampler"], "wave": "sine", "cutoff": [900, 1700], "detune": [0.003, 0.006], "attack": [1, 2.5], "release": [1.8, 3.5], "swell": 1, "level": [0.36, 0.5], "send": [0.45, 0.65], "dsend": [0, 0.12] }
+    },
+    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.4, 0.7], "snare": [0.3, 0.5], "hat": [0.2, 0.4], "tune": [0.85, 0.95], "send": [0.25, 0.45], "dsend": [0, 0.05] },
+    "fx": { "reverb": [0.6, 0.8], "delayBeats": [1, 2], "delayFb": [0.2, 0.35], "delayCut": [1800, 2800], "pump": [0, 0], "crackle": [0.18, 0.42], "lowcut": [0, 0], "highcut": [0, 0], "comp": [0, 0.15] },
+    "found": { "role": "bed", "vol": [0.06, 0.13], "pitch": [0.6, 0.85], "stretch": [0.5, 0.65], "cutoff": [1600, 2600], "sources": ["vx_conet_swedish", "tw_stationhall"] },
+    "rubato": { "depth": [0.03, 0.055], "periodBars": [2, 4], "prob": 1 },
+    "reverbColor": "greyhole",
+    "hits": { "sources": ["handbell"], "pattern": "sparse", "prob": 0.12 },
+    "stab": ["off"],
+    "form": "ritual"
+  }
+}

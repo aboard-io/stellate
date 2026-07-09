@@ -1,0 +1,23 @@
+{
+  "name": "rollerlacquer",
+  "label": "Rollerlacquer",
+  "info": "fresh varnish on the rink at 114: a glassy digital bass plucks the vamp while handclaps crack every backbeat, chorused electric-piano chords skating wide over a light sidechain bounce — machine-tight but grinning, wheels drawing circles under the mirror ball",
+  "anchor": {
+    "bpm": [110, 118],
+    "swing": [0.08, 0.15],
+    "humanize": [0.05, 0.18],
+    "progressions": ["funk_vamp", "neosoul", "house_min7"],
+    "kits": ["electro", "four"],
+    "fills": ["hat rush", "cut", "riser"],
+    "bass": { "patterns": ["stab", "syncopated", "octaves"], "patchPool": ["SYN-BASS 1", "PLUCK BASS"], "recipe": { "model": ["dx7", "dx7", "fm"], "cutoff": [420, 650], "res": [0.1, 0.2], "level": [1.05, 1.25], "send": [0, 0.06], "dsend": [0, 0.06], "attack": 0.003, "release": [0.06, 0.1] } },
+    "lead": { "patterns": ["pentaup", "double", "arpup"], "patchPool": ["E.PIANO 1", "SYN-LEAD 2"], "recipe": { "model": ["dx7", "fm", "synclead"], "wave": "pulse", "voices": [1, 2], "spread": [0.002, 0.005], "cutoff": [2600, 3600], "syncRatio": [1.3, 1.7], "syncSweep": [1, 2], "syncDecay": [0.12, 0.22], "level": [0.44, 0.56], "send": [0.25, 0.4], "dsend": [0.2, 0.35], "attack": 0.004, "release": [0.07, 0.12], "sustain": [0.6, 0.72], "fenv": [0.3, 0.6] },
+      "inserts": { "prob": 0.5, "max": 1, "pool": [["chorus", { "rate": [0.6, 1.1], "depth": [0.4, 0.6], "mix": [0.4, 0.55] }]] } },
+    "pads": { "prob": 0.7, "recipe": { "model": ["juno60", "fm"], "wave": "saw", "cutoff": [1100, 1800], "detune": [0.005, 0.01], "attack": [0.3, 0.9], "chorus": [1.3, 1.7], "chorusSpread": [0.8, 1], "ensemble": [0.7, 0.85], "level": [0.42, 0.56], "send": [0.25, 0.4], "dsend": [0.08, 0.18] } },
+    "drums": { "kickModel": ["909", "808"], "snareModel": ["clap"], "hatModel": ["noise", "metal"], "kick": [1.15, 1.35], "snare": [0.95, 1.2], "hat": [0.9, 1.2], "tune": [0.95, 1.1], "send": [0.1, 0.2], "dsend": [0.05, 0.15] },
+    "fx": { "reverb": [0.3, 0.45], "delayBeats": [0.375, 0.5], "delayFb": [0.2, 0.35], "delayCut": [2800, 4000], "pump": [0.25, 0.45], "crackle": [0, 0.08], "lowcut": [30, 45], "highcut": [0, 0], "comp": [0.4, 0.6] },
+    "found": { "role": "bed", "vol": [0.06, 0.12], "pitch": [0.9, 1.05], "stretch": [0.45, 0.6], "cutoff": [1800, 2800], "sources": ["highway_night", "shibuya", "vx_timelady"] },
+    "stab": ["offbeat", "sparse"],
+    "hits": { "sources": ["sp_rhythm", "vox_a", "stml_hit_b3"], "pattern": "offbeat", "prob": 0.6 },
+    "form": "pop"
+  }
+}

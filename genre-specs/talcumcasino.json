@@ -1,0 +1,22 @@
+{
+  "name": "talcumcasino",
+  "label": "Talcumcasino",
+  "info": "powder on the floorboards at 130: a pounding four-to-the-floor stomp under dramatic minor-key strings, trumpet hooks punched out double-time, the bass sprinting octaves — every 45 rarer and more worn than the last, spins and backdrops until dawn",
+  "anchor": {
+    "bpm": [126, 136],
+    "swing": [0.03, 0.09],
+    "humanize": [0.12, 0.28],
+    "progressions": ["minor_run", "pop_1625", "sad_pop"],
+    "kits": ["four", "open"],
+    "fills": ["drum fill", "tom fill", "hat rush"],
+    "bass": { "patterns": ["octaves", "walking", "drive"], "samplerPool": ["picked_bass", "finger_bass"], "recipe": { "model": ["sampler", "sampler", "saw"], "cutoff": [500, 900], "res": [0.05, 0.15], "level": [1.0, 1.2], "send": [0.05, 0.12], "dsend": [0, 0.05], "attack": 0.005, "release": [0.07, 0.12] } },
+    "lead": { "patterns": ["double", "updown", "hero"], "samplerPool": ["trumpet", "brass_section", "strings"], "recipe": { "model": ["sampler", "sampler", "piano"], "wave": "sine", "voices": [1, 2], "spread": [0.001, 0.004], "cutoff": [2400, 3600], "level": [0.46, 0.58], "send": [0.3, 0.45], "dsend": [0.1, 0.22], "attack": 0.005, "release": [0.08, 0.14], "sustain": [0.6, 0.72] } },
+    "pads": { "prob": 0.9, "samplerPool": ["strings", "slow_strings"], "recipe": { "model": ["sampler", "sampler", "strings"], "wave": "saw", "cutoff": [1100, 1700], "detune": [0.003, 0.008], "attack": [0.3, 0.8], "level": [0.44, 0.58], "send": [0.3, 0.45], "dsend": [0.05, 0.15] } },
+    "drums": { "kickModel": ["boom", "909"], "snareModel": ["crack", "noise"], "hatModel": ["noise"], "kick": [1.15, 1.4], "snare": [1.0, 1.25], "hat": [0.9, 1.2], "tune": [0.95, 1.1], "send": [0.12, 0.25], "dsend": [0.03, 0.1], "kit": "power" },
+    "fx": { "reverb": [0.35, 0.5], "delayBeats": [0.375, 0.5], "delayFb": [0.1, 0.22], "delayCut": [2400, 3400], "pump": [0, 0.1], "crackle": [0.3, 0.5], "lowcut": [0, 30], "highcut": [8500, 12000], "comp": [0.35, 0.55] },
+    "found": { "role": "bed", "vol": [0.05, 0.1], "pitch": [0.85, 1], "stretch": [0.45, 0.6], "cutoff": [1600, 2600], "sources": ["shibuya", "tokyo_station", "vx_timelady"] },
+    "stab": ["off", "sparse"],
+    "hits": { "sources": ["horns_78", "stml_hit_b3", "vox_a"], "pattern": "offbeat", "prob": 0.55 },
+    "form": "pop"
+  }
+}

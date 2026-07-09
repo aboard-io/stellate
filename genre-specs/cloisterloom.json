@@ -1,0 +1,38 @@
+{
+  "name": "cloisterloom",
+  "label": "Cloisterloom",
+  "info": "a forty-voice loom at 82: choir lines entering one after another in imitation until the whole cloister is weaving, four-part counterpoint over a slow organ pedal, no drums, cathedral reverb doing the work of a fifth choir — polyphony as architecture",
+  "anchor": {
+    "bpm": [78, 87],
+    "swing": [0, 0.02],
+    "humanize": [0.15, 0.35],
+    "progressions": ["canon", "mode_dorian", "dream"],
+    "kits": ["off"],
+    "fills": ["off"],
+    "chordEvery": 8,
+    "bass": {
+      "patterns": ["pedal", "root", "simple"],
+      "samplerPool": ["church_organ", "ahh_choir"],
+      "recipe": { "model": ["sampler", "sampler"], "cutoff": [600, 1200], "res": [0.05, 0.1], "level": [0.45, 0.65], "send": [0.3, 0.5], "dsend": [0, 0.08], "attack": [0.03, 0.1], "release": [0.5, 1] }
+    },
+    "lead": {
+      "patterns": ["canon", "fugue", "wander"],
+      "samplerPool": ["ahh_choir", "ohh_voices", "ahh_choir"],
+      "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "voices": [3, 4], "spread": [0.004, 0.009], "cutoff": [2000, 3200], "level": [0.42, 0.56], "send": [0.4, 0.6], "dsend": [0.05, 0.15], "attack": [0.05, 0.15], "release": [0.4, 0.8] }
+    },
+    "pads": {
+      "prob": 0.85,
+      "samplerPool": ["ahh_choir", "ohh_voices", "strings"],
+      "recipe": { "model": ["sampler", "sampler", "sampler"], "wave": "sine", "cutoff": [900, 1700], "detune": [0.002, 0.005], "attack": [1, 2.5], "release": [1.8, 3.5], "swell": 1, "level": [0.42, 0.58], "send": [0.45, 0.65], "dsend": [0, 0.1] }
+    },
+    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.4, 0.6], "snare": [0.3, 0.5], "hat": [0.2, 0.4], "tune": [0.9, 1], "send": [0.2, 0.4], "dsend": [0, 0] },
+    "fx": { "reverb": [0.6, 0.8], "delayBeats": [1, 2], "delayFb": [0.12, 0.25], "delayCut": [2000, 3000], "pump": [0, 0], "crackle": [0, 0.12], "lowcut": [0, 0], "highcut": [0, 0], "comp": [0, 0.1] },
+    "found": { "role": "bed", "vol": [0.05, 0.11], "pitch": [0.7, 0.85], "stretch": [0.5, 0.65], "cutoff": [1600, 2600], "sources": ["vx_sv_choir", "tw_stationhall"] },
+    "rubato": { "depth": [0.01, 0.02], "periodBars": [2, 4], "prob": 0.6 },
+    "counterpoint": { "prob": 0.85 },
+    "reverbColor": "fdn",
+    "hits": { "sources": ["handbell"], "pattern": "sparse", "prob": 0.1 },
+    "stab": ["off"],
+    "form": "wave"
+  }
+}

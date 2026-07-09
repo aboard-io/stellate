@@ -1,0 +1,23 @@
+{
+  "name": "runeromp",
+  "label": "Runeromp",
+  "info": "folk metal for the wolf winter: drone fifths under a fiddle-and-bagpipe reel, tribal toms circling the fire, an open-string melody older than the treeline",
+  "anchor": {
+    "bpm": [100, 118],
+    "swing": [0.02, 0.08],
+    "humanize": [0.15, 0.3],
+    "progressions": ["primeval", "mode_dorian", "minor_run"],
+    "kits": ["tribal", "full"],
+    "fills": ["tom fill", "tom fill", "downlift"],
+    "bass": { "patterns": ["sludge", "pedal", "root"], "recipe": { "model": ["sub", "saw"], "cutoff": [240, 440], "res": [0.08, 0.18], "level": [1.05, 1.3], "send": [0.08, 0.18], "dsend": [0, 0.08] }, "inserts": { "prob": 0.5, "max": 1, "pool": [["distort", { "drive": [0.3, 0.6], "mix": [0.6, 0.85] }]] } },
+    "lead": { "patterns": ["pentaup", "updown", "hero"], "samplerPool": ["fiddle", "bagpipe"], "recipe": { "model": ["sampler", "sampler", "kpluck"], "wave": "saw", "voices": [1, 2], "spread": [0.002, 0.006], "cutoff": [2200, 3400], "level": [0.5, 0.64], "send": [0.25, 0.4], "dsend": [0.15, 0.3], "vibrato": [0.006, 0.012] } },
+    "pads": { "prob": 0.7, "recipe": { "model": ["strings", "choir", "saw"], "wave": "saw", "cutoff": [700, 1300], "detune": [0.006, 0.014], "attack": [1.5, 3], "level": [0.45, 0.6], "send": [0.35, 0.55], "dsend": [0.1, 0.2] } },
+    "drums": { "kickModel": ["boom", "808"], "snareModel": ["noise", "crack"], "hatModel": ["noise"], "kick": [1.3, 1.55], "snare": [0.7, 0.95], "hat": [0.5, 0.8], "tune": [0.85, 1], "send": [0.15, 0.3], "dsend": [0.1, 0.25] },
+    "fx": { "reverb": [0.45, 0.62], "delayBeats": [0.5, 0.75], "delayFb": [0.25, 0.4], "delayCut": [1800, 2800], "pump": [0, 0.1], "crackle": [0, 0.12], "lowcut": [25, 40], "highcut": [0, 0], "comp": [0.4, 0.62], "grit": [0.35, 0.6] },
+    "found": { "role": "bed", "vol": [0.1, 0.2], "pitch": [0.7, 0.85], "stretch": [0.45, 0.6], "cutoff": [1800, 3000], "sources": ["iriomote", "highway_night"] },
+    "stab": ["off"],
+    "hits": { "sources": ["vox_a", "sp_rhythm"], "pattern": "sparse", "prob": 0.3 },
+    "form": "pop"
+  },
+  "verify": { "seeds": 6, "features": { "bpm": 3, "drumDensity": 2, "acoustic": 2, "swing": 2, "wash": 1, "sub": 1 } }
+}

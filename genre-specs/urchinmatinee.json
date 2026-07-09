@@ -1,0 +1,35 @@
+{
+  "name": "urchinmatinee",
+  "label": "Urchinmatinee",
+  "info": "the big number at 120: walking upright bass and a pit-band shuffle under bright doo-wop changes, brass section and piccolo carrying a hero tune you can hum on the way out, snare rolls into every chorus, strings swelling for the key-change feeling — jazz hands, footlights, an orphan chorus asking for more",
+  "anchor": {
+    "bpm": [115, 124],
+    "swing": [0.15, 0.3],
+    "humanize": [0.25, 0.45],
+    "progressions": ["doo_wop", "pop_1625", "four_chords"],
+    "kits": ["shuffle", "full", "open"],
+    "fills": ["drum fill", "snare roll", "kit fill", "riser"],
+    "bass": {
+      "patterns": ["walking", "root", "octaves"],
+      "samplerPool": ["acoustic_bass", "tuba"],
+      "recipe": { "model": ["sampler", "sampler", "sub"], "cutoff": [400, 750], "res": [0.05, 0.15], "level": [0.9, 1.1], "send": [0.05, 0.12], "dsend": [0, 0.05], "attack": [0.01, 0.03], "release": [0.15, 0.3] }
+    },
+    "lead": {
+      "patterns": ["hero", "anthem", "double", "updown"],
+      "samplerPool": ["brass_section", "trumpet", "flute", "piccolo"],
+      "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "voices": [1, 2], "spread": [0.002, 0.005], "cutoff": [2600, 3800], "level": [0.46, 0.58], "send": [0.25, 0.4], "dsend": [0.1, 0.22], "vibrato": [0.006, 0.012], "attack": [0.015, 0.04], "release": [0.15, 0.3], "sustain": [0.6, 0.72] }
+    },
+    "pads": {
+      "prob": 0.7,
+      "samplerPool": ["strings", "brass_section", "yamaha_grand_piano"],
+      "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "cutoff": [1300, 2300], "detune": [0.002, 0.005], "attack": [0.2, 0.8], "release": [0.5, 1.2], "swell": 1, "level": [0.4, 0.54], "send": [0.25, 0.42], "dsend": [0.05, 0.15] }
+    },
+    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.7, 1], "snare": [0.65, 0.95], "hat": [0.6, 0.9], "tune": [0.95, 1.05], "send": [0.15, 0.32], "dsend": [0, 0.08], "kit": "jazz" },
+    "fx": { "reverb": [0.35, 0.5], "delayBeats": [0.5, 0.75], "delayFb": [0.1, 0.22], "delayCut": [2400, 3400], "pump": [0, 0.08], "crackle": [0.05, 0.3], "lowcut": [0, 30], "highcut": [0, 0], "comp": [0.25, 0.45] },
+    "found": { "role": "bed", "vol": [0.05, 0.12], "pitch": [0.9, 1.05], "stretch": [0.45, 0.6], "cutoff": [2000, 3200], "sources": ["horns_78", "vx_suspense"] },
+    "masterComp": 0.3,
+    "hits": { "sources": ["bb_horn_a", "horns_78"], "pattern": "response", "prob": 0.4 },
+    "stab": ["offbeat", "off"],
+    "form": "pop"
+  }
+}
