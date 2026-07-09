@@ -365,6 +365,83 @@
   const pick = (r, a) => a[Math.floor(r() * a.length)];
   const irnd = (r, n) => Math.floor(r() * n);
 
+  // ---- the algorithmic GENRE namer (used by tools/invent-genres.js) ----
+  // A ridiculous-but-legible name that CORRELATES to a feature vector: a
+  // TEXTURE/MOOD prefix (the dominant non-tempo trait) fused with a TEMPO/RHYTHM
+  // suffix. Deterministic from (traits, seed). Two registers: "elemental" and
+  // "mundane" (the appliance whimsy of dishwasherwave/thermostatwave/holdmusic).
+  // traits = { texture, tempo, rhythm } string tags; the caller derives them
+  // from the measured feature vector. Guessable: prefix says what it's MADE of,
+  // suffix says how FAST/how it MOVES.
+  const NAME_PREFIX = {
+    elemental: {
+      wash: ["fog","haze","mist","vapor","drift","cloud","steam","murk","brine"],
+      dust: ["dust","shellac","attic","sepia","mold","grain","tallow","ash"],
+      acoustic: ["oak","reed","rosin","gourd","cedar","hearth","straw","willow","bramble"],
+      synth: ["chrome","neon","laser","plexi","xenon","argon","enamel","halogen"],
+      sub: ["magma","trench","boiler","tectonic","bunker","fathom","tar","molten"],
+      swarm: ["swarm","choir","seraph","hydra","prism","aurora","glass"],
+      slam: ["anvil","piston","forge","thresh","slab","rivet","hammer","grind"],
+      drone: ["monolith","glacier","tundra","stasis","obelisk","cairn","basalt"],
+      bright: ["citrus","soda","sherbet","confetti","gloss","spark","zest"],
+    },
+    mundane: {
+      wash: ["humidifier","aquarium","poolside","sprinkler","dishwasher","kettle"],
+      dust: ["gramophone","fireplace","atticfan","chalkboard","mothball","cardigan"],
+      acoustic: ["breadbox","porch","picnic","butterchurn","whittler","mason"],
+      synth: ["photocopier","fluorescent","laminator","modem","screensaver","toner"],
+      sub: ["furnace","subwoofer","boilerroom","earthmover","idling","dumptruck"],
+      swarm: ["chandelier","greenhouse","planetarium","aviary","stainedglass"],
+      slam: ["jackhammer","stapler","tumbledry","forklift","garbagedisposal"],
+      drone: ["refrigerator","ceilingfan","dialtone","standbylight","thermostat","hvac"],
+      bright: ["vendingmachine","pinball","cerealbox","toaster","hopscotch","gumball"],
+    },
+  };
+  const NAME_SUFFIX = {
+    crawl: ["drone","doom","sludge","void","dirge","tar","creep"],
+    slow: ["lull","sway","dub","soul","haze","step","balm"],
+    mid: ["groove","bop","strut","wave","funk","trot","amble"],
+    drive: ["stomp","drive","pump","house","thump","march","chug"],
+    fast: ["step","rush","core","thrash","dash","gallop","scuttle"],
+    frantic: ["gabber","blast","frenzy","sprint","core","splatter","flurry"],
+  };
+  const NAME_RHYTHM = {
+    chop: ["chop","splice","stutter","break","mince","dice"],
+    swing: ["shuffle","skank","swing","bounce","lilt"],
+  };
+  // fuse prefix+suffix; elide a doubled boundary letter (fog+groove stays,
+  // tar+rush -> tarush) so some come out as portmanteaus.
+  function fuse(a, b) {
+    if (a[a.length - 1] === b[0]) return a + b.slice(1);
+    return a + b;
+  }
+  // traits: {texture:key, tempo:key, rhythm:key|null, mundane?:bool}
+  // seed: integer; taken: Set of names to avoid (existing + already-invented)
+  function inventGenreName(traits, seed, taken) {
+    taken = taken || new Set();
+    const reg = traits.mundane ? "mundane" : "elemental";
+    const pfxPool = (NAME_PREFIX[reg][traits.texture]) || NAME_PREFIX.elemental.synth;
+    for (let i = 0; i < 64; i++) {
+      const r = rng(hash("genre-name", seed, traits.texture, traits.tempo, traits.rhythm || "-", i));
+      const pfx = pick(r, pfxPool);
+      // rhythm tag, when present, sometimes wins the suffix (the groove IS the id)
+      const useRhythm = traits.rhythm && r() < 0.5;
+      const sfx = useRhythm ? pick(r, NAME_RHYTHM[traits.rhythm]) : pick(r, NAME_SUFFIX[traits.tempo] || NAME_SUFFIX.mid);
+      let name = fuse(pfx, sfx);
+      // occasionally append a rhythm/tempo flourish for length + flavor
+      if (!useRhythm && traits.rhythm && r() < 0.3) name = fuse(name, pick(r, NAME_RHYTHM[traits.rhythm]));
+      name = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!/^[a-z][a-z0-9]*$/.test(name) || name.length < 4 || name.length > 22) continue;
+      if (!taken.has(name)) return { name, label: name.charAt(0).toUpperCase() + name.slice(1) };
+    }
+    // deterministic fallback: prefix + tempo + numeric suffix
+    const r = rng(hash("genre-name-fallback", seed, traits.texture));
+    let base = fuse(pick(r, pfxPool), traits.tempo);
+    let n = base, k = 2;
+    while (taken.has(n)) n = base + (k++);
+    return { name: n, label: n.charAt(0).toUpperCase() + n.slice(1) };
+  }
+
   const bankOf = (genre) => NAMEBANK[genre] || GENERIC;
 
   // one "song" identity: title/artist/album/year/label, stable for (genre, seed)
@@ -423,5 +500,5 @@
     return out;
   }
 
-  return { NAMEBANK, GENERIC, LABELS, hash, identity, musician, instrumentNames };
+  return { NAMEBANK, GENERIC, LABELS, hash, rng, identity, musician, instrumentNames, inventGenreName };
 });

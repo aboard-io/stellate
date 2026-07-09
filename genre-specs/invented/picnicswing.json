@@ -1,0 +1,392 @@
+{
+  "name": "picnicswing",
+  "label": "Picnicswing",
+  "info": "invented (gap-found): a fast-tempo, acoustic-forward genre in the empty region near newjack × chinawave/blues/triphop — softTop~0.59, breakUse~0.23, offgrid~0.48 [seed 7]",
+  "invented": {
+    "seed": 7,
+    "nearest": "newjack",
+    "gap": 1.07,
+    "transplants": [
+      {
+        "group": "sampletex",
+        "donor": "chinawave",
+        "delta": 0.2
+      },
+      {
+        "group": "rhythm",
+        "donor": "blues",
+        "delta": 0.19
+      },
+      {
+        "group": "timbre",
+        "donor": "triphop",
+        "delta": 0.15
+      }
+    ],
+    "traits": {
+      "texture": "acoustic",
+      "tempo": "fast",
+      "rhythm": "swing",
+      "salience": {
+        "wash": 0,
+        "dust": 0.2909362949776153,
+        "acoustic": 0.500053986357525,
+        "synth": 0,
+        "sub": 0,
+        "swarm": 0,
+        "slam": 0,
+        "drone": 0,
+        "bright": 0
+      }
+    }
+  },
+  "clips": [
+    "kaleido",
+    "rainbow_rings",
+    "night_lights",
+    "sun_riders",
+    "dn_schoolyard",
+    "pl_americana"
+  ],
+  "anchor": {
+    "bpm": [
+      145,
+      153
+    ],
+    "swing": [
+      0.21,
+      0.26
+    ],
+    "humanize": [
+      0.25,
+      0.34
+    ],
+    "progressions": [
+      "house_min7",
+      "funk_vamp",
+      "neosoul"
+    ],
+    "kits": [
+      "shuffle",
+      "boombap",
+      "shuffle"
+    ],
+    "fills": [
+      "off",
+      "drum fill"
+    ],
+    "bass": {
+      "patterns": [
+        "stab",
+        "melodic",
+        "dub",
+        "syncopated"
+      ],
+      "patchPool": [
+        "SYN-BASS 2",
+        "BASS    2"
+      ],
+      "samplerPool": [
+        "fretless_bass"
+      ],
+      "recipe": {
+        "model": [
+          "dx7",
+          "saw",
+          "sampler"
+        ],
+        "cutoff": [
+          400,
+          540
+        ],
+        "res": [
+          0.1,
+          0.2
+        ],
+        "level": [
+          1.05,
+          1.25
+        ],
+        "send": [
+          0,
+          0.06
+        ],
+        "dsend": [
+          0,
+          0.06
+        ]
+      },
+      "inserts": {
+        "prob": 0.4,
+        "max": 1,
+        "pool": [
+          [
+            "wah",
+            {
+              "sens": [
+                0.5,
+                0.7
+              ],
+              "base": [
+                260,
+                380
+              ],
+              "range": [
+                1.6,
+                2.4
+              ],
+              "q": [
+                3.5,
+                5.5
+              ],
+              "mix": [
+                0.65,
+                0.85
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "sparse",
+        "wander",
+        "off"
+      ],
+      "patchPool": [
+        "E.PIANO 2"
+      ],
+      "samplerPool": [
+        "muted_trumpet",
+        "tenor_sax"
+      ],
+      "recipe": {
+        "model": [
+          "fm",
+          "dx7",
+          "sampler",
+          "sampler"
+        ],
+        "wave": "sine",
+        "voices": [
+          1,
+          3
+        ],
+        "spread": [
+          0.002,
+          0.006
+        ],
+        "cutoff": [
+          1800,
+          3000
+        ],
+        "level": [
+          0.4,
+          0.52
+        ],
+        "send": [
+          0.4,
+          0.6
+        ],
+        "dsend": [
+          0.3,
+          0.5
+        ],
+        "vibrato": [
+          0.004,
+          0.01
+        ],
+        "octave": 0.08,
+        "attack": 0.05,
+        "release": [
+          0.3,
+          0.45
+        ],
+        "sustain": [
+          0.78,
+          0.88
+        ],
+        "fenv": [
+          0.2,
+          0.4
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.85,
+      "samplerPool": [
+        "strings"
+      ],
+      "recipe": {
+        "model": [
+          "fm",
+          "strings",
+          "sampler"
+        ],
+        "wave": "sine",
+        "cutoff": [
+          800,
+          1400
+        ],
+        "detune": [
+          0.004,
+          0.01
+        ],
+        "attack": [
+          1,
+          2.5
+        ],
+        "level": [
+          0.5,
+          0.68
+        ],
+        "send": [
+          0.45,
+          0.65
+        ],
+        "dsend": [
+          0.15,
+          0.3
+        ]
+      },
+      "inserts": {
+        "prob": 0.35,
+        "max": 1,
+        "pool": [
+          [
+            "phaser",
+            {
+              "rate": [
+                0.06,
+                0.18
+              ],
+              "depth": [
+                0.4,
+                0.6
+              ],
+              "mix": [
+                0.3,
+                0.5
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom",
+        "808"
+      ],
+      "snareModel": [
+        "noise"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        0.9,
+        1.15
+      ],
+      "snare": [
+        0.5,
+        0.7
+      ],
+      "hat": [
+        0.5,
+        0.8
+      ],
+      "tune": [
+        0.85,
+        1
+      ],
+      "send": [
+        0.15,
+        0.3
+      ],
+      "dsend": [
+        0,
+        0.1
+      ],
+      "kit": "acoustic"
+    },
+    "fx": {
+      "reverb": [
+        0.39,
+        0.57
+      ],
+      "delayBeats": [
+        0.375,
+        0.5
+      ],
+      "delayFb": [
+        0.2,
+        0.35
+      ],
+      "delayCut": [
+        2600,
+        3800
+      ],
+      "pump": [
+        0.12,
+        0.34
+      ],
+      "crackle": [
+        0.19,
+        0.35
+      ],
+      "lowcut": [
+        30,
+        45
+      ],
+      "highcut": [
+        2600,
+        3400
+      ],
+      "comp": [
+        0.25,
+        0.47
+      ]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.2,
+        0.32
+      ],
+      "pitch": [
+        0.9,
+        1
+      ],
+      "stretch": [
+        0.45,
+        0.6
+      ],
+      "cutoff": [
+        2800,
+        4200
+      ],
+      "sources": [
+        "vx_cn_east",
+        "vx_cn_march",
+        "vx_cn_opera",
+        "vx_cn_speech"
+      ]
+    },
+    "stab": [
+      "off",
+      "sparse"
+    ],
+    "hits": {
+      "sources": [
+        "vox_a",
+        "sp_rhythm",
+        "rave_b"
+      ],
+      "pattern": "offbeat",
+      "prob": 0.6
+    },
+    "form": "pop"
+  }
+}

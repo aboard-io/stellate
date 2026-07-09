@@ -583,6 +583,30 @@
     /* genre-tool:dialupgabber:clips */
     dialupgabber:["phuture_red","dark_face","green_nebula","night_lines"],
     /* /genre-tool:dialupgabber:clips */
+    /* genre-tool:picnicswing:clips */
+    picnicswing:["kaleido","rainbow_rings","night_lights","sun_riders","dn_schoolyard","pl_americana"],
+    /* /genre-tool:picnicswing:clips */
+    /* genre-tool:cerealboxwave:clips */
+    cerealboxwave:["earth_orbit","blue_dinner","bamboo","spacewalk","dc_village"],
+    /* /genre-tool:cerealboxwave:clips */
+    /* genre-tool:rosinamblelilt:clips */
+    rosinamblelilt:["spacewalk","earth_orbit","sp_eva","sp_lander","ns_rays","blue_dinner","pl_futurama","jm_dipole","cmm_crescent","jm_axis"],
+    /* /genre-tool:rosinamblelilt:clips */
+    /* genre-tool:subwooferbalm:clips */
+    subwooferbalm:["earth_orbit","spacewalk","night_lines","sp_eva"],
+    /* /genre-tool:subwooferbalm:clips */
+    /* genre-tool:sepiadrive:clips */
+    sepiadrive:["dc_village","sun_riders","cs_marketstreet","bamboo","ns_rays","disc_sunset"],
+    /* /genre-tool:sepiadrive:clips */
+    /* genre-tool:sparkbreak:clips */
+    sparkbreak:["phuture_red","kaleido","green_nebula","night_lines","dark_face","cs_manhatta","cs_liner","cs_marketstreet","ab_balletmec"],
+    /* /genre-tool:sparkbreak:clips */
+    /* genre-tool:hopscotchwave:clips */
+    hopscotchwave:["kaleido","rainbow_rings","night_lights","sun_riders","blue_dinner","pl_motorama","pl_worldsfair","dn_soundie","dn_schoolyard"],
+    /* /genre-tool:hopscotchwave:clips */
+    /* genre-tool:moltenhouse:clips */
+    moltenhouse:["dark_face","deep_face","night_lines","green_nebula","tv_room","ns_rays","ns_octopus"],
+    /* /genre-tool:moltenhouse:clips */
   };
 
   // ---------- DX7 patch registry (the genre-space thesis applied to INSTRUMENTS) ----------
@@ -2629,6 +2653,161 @@
       stab:["rave"],
       form:"drop" },
     /* /genre-tool:dialupgabber:genres */
+    /* genre-tool:picnicswing:genres */
+    picnicswing: { label:"Picnicswing", info:"invented (gap-found): a fast-tempo, acoustic-forward genre in the empty region near newjack × chinawave/blues/triphop — softTop~0.59, breakUse~0.23, offgrid~0.48 [seed 7]",
+      bpm:[145,153],
+      swing:[0.21,0.26],
+      humanize:[0.25,0.34],
+      progressions:["house_min7","funk_vamp","neosoul"],
+      kits:["shuffle","boombap","shuffle"],
+      fills:["off","drum fill"],
+      bass:{patterns:["stab","melodic","dub","syncopated"], patchPool:["SYN-BASS 2","BASS    2"], samplerPool:["fretless_bass"], recipe:{model:["dx7","saw","sampler"], cutoff:[400,540], res:[0.1,0.2], level:[1.05,1.25], send:[0,0.06], dsend:[0,0.06]}, inserts:{prob:0.4, max:1, pool:[["wah",{sens:[0.5,0.7], base:[260,380], range:[1.6,2.4], q:[3.5,5.5], mix:[0.65,0.85]}]]}},
+      lead:{patterns:["sparse","wander","off"], patchPool:["E.PIANO 2"], samplerPool:["muted_trumpet","tenor_sax"], recipe:{model:["fm","dx7","sampler","sampler"], wave:"sine", voices:[1,3], spread:[0.002,0.006], cutoff:[1800,3000], level:[0.4,0.52], send:[0.4,0.6], dsend:[0.3,0.5], vibrato:[0.004,0.01], octave:0.08, attack:0.05, release:[0.3,0.45], sustain:[0.78,0.88], fenv:[0.2,0.4]}},
+      pads:{prob:0.85, samplerPool:["strings"], recipe:{model:["fm","strings","sampler"], wave:"sine", cutoff:[800,1400], detune:[0.004,0.01], attack:[1,2.5], level:[0.5,0.68], send:[0.45,0.65], dsend:[0.15,0.3]}, inserts:{prob:0.35, max:1, pool:[["phaser",{rate:[0.06,0.18], depth:[0.4,0.6], mix:[0.3,0.5]}]]}},
+      drums:{kickModel:["boom","808"], snareModel:["noise"], hatModel:["noise"], kick:[0.9,1.15], snare:[0.5,0.7], hat:[0.5,0.8], tune:[0.85,1], send:[0.15,0.3], dsend:[0,0.1], kit:"acoustic"},
+      fx:{reverb:[0.39,0.57], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[2600,3800], pump:[0.12,0.34], crackle:[0.19,0.35], lowcut:[30,45], highcut:[2600,3400], comp:[0.25,0.47]},
+      found:{role:"bed", vol:[0.2,0.32], pitch:[0.9,1], stretch:[0.45,0.6], cutoff:[2800,4200], sources:["vx_cn_east","vx_cn_march","vx_cn_opera","vx_cn_speech"]},
+      hits:{sources:["vox_a","sp_rhythm","rave_b"], pattern:"offbeat", prob:0.6},
+      stab:["off","sparse"],
+      form:"pop" },
+    /* /genre-tool:picnicswing:genres */
+    /* genre-tool:cerealboxwave:genres */
+    cerealboxwave: { label:"Cerealboxwave", info:"invented (gap-found): a mid-tempo, bright-forward genre in the empty region near fugue × synthwave/pixiewave/canawave — bedUse~0.64, pump~0.28, variation~0.38 [seed 7]",
+      bpm:[104,112],
+      swing:[0,0.044],
+      humanize:[0.056,0.146],
+      progressions:["minor_run","epic_min","sad_pop","four_chords"],
+      kits:["off"],
+      fills:["off"],
+      bass:{patterns:["pedal","root","walking"], samplerPool:["church_organ","harpsichord"], recipe:{model:["sampler","sampler"], cutoff:[700,1500], res:[0.05,0.1], level:[0.5,0.7], send:[0.2,0.4], dsend:[0,0.08], attack:[0.01,0.03], release:[0.3,0.6]}},
+      lead:{patterns:["arp16"], recipe:{model:["kpluck"], wave:"saw", drive:0.45, cutoff:[3000,3800], level:[0.62,0.74], send:[0.16,0.26], dsend:[0.46,0.56], voices:[2,4]}, inserts:{prob:0.8, max:1, pool:[["chorus",{rate:[0.7,1.1], depth:[0.45,0.65], mix:[0.45,0.6]}]]}},
+      pads:{prob:1, samplerPool:["church_organ"], recipe:{model:["organ","organ","sampler"], wave:"saw", cutoff:[1500,2200], detune:[0.004,0.008], attack:[0.3,0.7], level:[0.4,0.52], send:[0.16,0.26], dsend:[0,0.06]}},
+      drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.5,0.7], snare:[0.4,0.6], hat:[0.3,0.5], tune:[0.9,1], send:[0.15,0.35], dsend:[0,0]},
+      fx:{reverb:[0.37,0.55], delayBeats:[0.5,1], delayFb:[0.1,0.24], delayCut:[2200,3200], pump:[0.18,0.4], crackle:[0,0.13], lowcut:[0,0], highcut:[0,0], comp:[0.17,0.39]},
+      found:{role:"bed", vol:[0.08,0.14], pitch:[0.65,0.8], stretch:[0.45,0.6], cutoff:[1000,1800], sources:["highway_night","factory","vx_apollo"]},
+      hits:{sources:["sp_herenow"], pattern:"sparse", prob:0.05},
+      stab:["off"],
+      form:"wave",
+      reverbColor:"fdn" },
+    /* /genre-tool:cerealboxwave:genres */
+    /* genre-tool:rosinamblelilt:genres */
+    rosinamblelilt: { label:"Rosinamblelilt", info:"invented (gap-found): a mid-tempo, acoustic-forward genre in the empty region near spacelounge × fugue/doomdrone/mallsoft — rubato~0.01, variation~0.46, softTop~0.47 [seed 7]",
+      bpm:[94,102],
+      swing:[0.17,0.22],
+      humanize:[0.323,0.413],
+      progressions:["canon","minor_run","dream"],
+      kits:["off","kick"],
+      fills:["off"],
+      bass:{patterns:["root","simple","off"], recipe:{model:["saw","sub"], cutoff:[400,700], res:[0.05,0.15], level:[0.8,1], send:[0.1,0.2], dsend:[0,0.08]}},
+      lead:{patterns:["wander","sparse","pentaup"], samplerPool:["clarinet","flute","vibraphone","celesta"], recipe:{model:["sampler","sampler","sampler","stack","modeld"], wave:"sine", voices:[1,3], spread:[0.001,0.003], cutoff:[2600,3800], level:[0.44,0.56], send:[0.45,0.65], dsend:[0.2,0.35], vibrato:[0.014,0.022], vibRate:[5.5,6.5], attack:0.06, release:[0.3,0.5], sustain:[0.85,0.95], glide:[80,150], envAmount:[0.5,1.2], envDecay:[0.3,0.6], oscMix:[0,0.3], drift:[6,12], drive:[0.05,0.2]}},
+      pads:{prob:1, recipe:{model:["organ"], wave:"saw", cutoff:[1000,1600], detune:[0.003,0.008], attack:[1.5,3], level:[0.5,0.65], send:[0.5,0.7], dsend:[0.1,0.2]}, inserts:{prob:0.35, max:1, pool:[["phaser",{rate:[0.05,0.15], depth:[0.4,0.6], mix:[0.3,0.45]}]]}},
+      drums:{kickModel:["boom","808"], snareModel:["noise"], hatModel:["noise"], kick:[1.3,1.6], snare:[0.4,0.6], hat:[0.3,0.5], tune:[0.78,0.9], send:[0.3,0.5], dsend:[0.1,0.3]},
+      fx:{reverb:[0.87,1], delayBeats:[0.75,1], delayFb:[0.3,0.45], delayCut:[2200,3200], pump:[0,0.12], crackle:[0.09,0.25], lowcut:[0,20], highcut:[0,0], comp:[0.03,0.25]},
+      found:{role:"bed", vol:[0.18,0.3], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[2400,3800], sources:["vx_apollo","hvac_hum","vx_timelady"]},
+      rubato:{depth:[0.008,0.02], periodBars:[3,5], prob:1},
+      sampleEvents:[{pool:["vx_apollo","vx_wwvh"], placement:"response", sections:"verse|chorus|bridge|hook", prob:0.3, gain:0.4, treatment:{pitch:1, cutoff:1600, rsend:0.5, dsend:0.3}}],
+      hits:{sources:["sp_herenow","vox_b"], pattern:"sparse", prob:0.3},
+      stab:["off"],
+      form:"pop",
+      reverbColor:"dattorro" },
+    /* /genre-tool:rosinamblelilt:genres */
+    /* genre-tool:subwooferbalm:genres */
+    subwooferbalm: { label:"Subwooferbalm", info:"invented (gap-found): a slow-tempo, sub-forward genre in the empty region near airtrafficdrone × umpirehouse/vaporwave/blues — softTop~0.53, drumDensity~1.55, hatDensity~0.92 [seed 7]",
+      bpm:[76,84],
+      swing:[0,0.049],
+      humanize:[0.128,0.218],
+      progressions:["blues_12"],
+      kits:["house","four"],
+      fills:["cut","riser","impact"],
+      chordEvery:16,
+      bass:{patterns:["pedal","sub","root"], recipe:{model:["sub","saw"], cutoff:[380,650], res:[0.06,0.14], level:[0.6,0.82], send:[0.15,0.35], dsend:[0,0.05]}},
+      lead:{patterns:["composed","composed2","arpup","wander"], patchPool:["E.PIANO 1","TUB BELLS","E.PIANO 4","SHIMMER"], samplerPool:["alto_sax","tenor_sax"], recipe:{model:["stack","stack","dx7","sampler","sampler"], wave:"sine", voices:[1,2], spread:[0.003,0.006], cutoff:[2800,4000], level:[0.4,0.52], send:[0.4,0.6], dsend:[0.2,0.4], vibrato:[0.004,0.009], octave:0.2, attack:0.08, release:[0.45,0.6], sustain:[0.85,0.95]}, inserts:{prob:0.5, max:1, pool:[["chorus",{rate:[0.5,1.1], depth:[0.5,0.7], mix:[0.4,0.6]}]]}},
+      pads:{prob:1, samplerPool:["ahh_choir","strings"], recipe:{model:["saw","choir","strings","sampler"], wave:"saw", cutoff:[1100,1800], detune:[0.004,0.009], attack:[1.2,2.4], mellotron:true, level:[0.6,0.8], send:[0.5,0.7], dsend:[0.1,0.25]}, inserts:{prob:0.55, max:1, pool:[["chorus",{rate:[0.2,0.5], depth:[0.5,0.75], mix:[0.4,0.6]}]]}},
+      drums:{kickModel:["909"], snareModel:["clap","crack"], hatModel:["noise","metal"], kick:[1.1,1.35], snare:[0.6,0.85], hat:[0.6,0.9], tune:[0.98,1.1], send:[0.1,0.25], dsend:[0.05,0.15]},
+      fx:{reverb:[0.87,1], delayBeats:[0.75,1.5], delayFb:[0.15,0.3], delayCut:[2000,3000], pump:[0,0.12], crackle:[0.01,0.17], lowcut:[0,0], highcut:[2600,3400], comp:[0.21,0.43]},
+      found:{role:"narration", vol:[0.35,0.55], pitch:[0.98,1.05], stretch:[0.9,1.05], cutoff:[2600,3600], sources:["vx_apollo"]},
+      hits:{sources:["sp_system","tw_ding"], pattern:"sparse", prob:0.15},
+      stab:["off"],
+      form:"wave",
+      reverbColor:"greyhole" },
+    /* /genre-tool:subwooferbalm:genres */
+    /* genre-tool:sepiadrive:genres */
+    sepiadrive: { label:"Sepiadrive", info:"invented (gap-found): a drive-tempo, dust-forward genre in the empty region near arabpop × vaporwave/garage — chopUse~0.31, softTop~0.5, acoustic~0.25 [seed 7]",
+      bpm:[132,140],
+      swing:[0.043,0.093],
+      humanize:[0.029,0.119],
+      progressions:["hijaz","hijaz","andalusian","mode_phrygian"],
+      kits:["tribal","breaks"],
+      fills:["drum fill","tom fill","off"],
+      euclid:{kick:[5,16]},
+      bass:{patterns:["root","simple","octaves"], recipe:{model:["saw","sub"], cutoff:[450,750], res:[0.08,0.16], level:[0.95,1.15], send:[0.05,0.12], dsend:[0,0.06]}},
+      lead:{patterns:["composed","composed2","arpup","wander"], patchPool:["E.PIANO 1","TUB BELLS","E.PIANO 4","SHIMMER"], samplerPool:["alto_sax","tenor_sax"], recipe:{model:["stack","stack","dx7","sampler","sampler"], wave:"sine", voices:[1,3], spread:[0.003,0.006], cutoff:[2800,4000], level:[0.4,0.52], send:[0.4,0.6], dsend:[0.2,0.4], vibrato:[0.004,0.009], octave:0.2, attack:0.08, release:[0.45,0.6], sustain:[0.85,0.95]}, inserts:{prob:0.5, max:1, pool:[["chorus",{rate:[0.5,1.1], depth:[0.5,0.7], mix:[0.4,0.6]}]]}},
+      pads:{prob:1, samplerPool:["ahh_choir","strings"], recipe:{model:["saw","choir","strings","sampler"], wave:"saw", cutoff:[1100,1800], detune:[0.004,0.009], attack:[1.2,2.4], mellotron:true, level:[0.6,0.8], send:[0.5,0.7], dsend:[0.1,0.25]}, inserts:{prob:0.55, max:1, pool:[["chorus",{rate:[0.2,0.5], depth:[0.5,0.75], mix:[0.4,0.6]}]]}},
+      drums:{kickModel:["808","boom"], snareModel:["crack"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.7,0.95], hat:[0.9,1.2], tune:[1.05,1.2], send:[0.1,0.2], dsend:[0.1,0.25]},
+      fx:{reverb:[0.3,0.48], delayBeats:[0.5,0.75], delayFb:[0.25,0.4], delayCut:[2200,3400], pump:[0.04,0.26], crackle:[0.14,0.3], lowcut:[25,40], highcut:[2600,3400], comp:[0.26,0.48]},
+      found:{role:"chops", vol:[0.1,0.18], pitch:[0.95,1.15], stretch:[0.4,0.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense"]},
+      hits:{sources:["vox_b","sp_rhythm"], pattern:"sparse", prob:0.4},
+      stab:["off"],
+      form:"pop" },
+    /* /genre-tool:sepiadrive:genres */
+    /* genre-tool:sparkbreak:genres */
+    sparkbreak: { label:"Sparkbreak", info:"invented (gap-found): a drive-tempo, bright-forward genre in the empty region near bigbeat × footwork/breakcore/cerealwave — comp~0.33, variation~0.57, bedUse~0.51 [seed 7]",
+      bpm:[127,135],
+      swing:[0.001,0.051],
+      humanize:[0.001,0.091],
+      progressions:["minor_run","house_min","deep_two"],
+      kits:["four","pulse"],
+      fills:["riser","impact","cut","stutter"],
+      bass:{patterns:["stab","rolling","drive","syncopated"], recipe:{model:["acid"], cutoff:[420,700], res:[0.3,0.45], level:[1.1,1.3], send:[0,0.08], dsend:[0,0.1]}, inserts:{prob:0.6, max:2, pool:[["distort",{drive:[0.3,0.6], mix:[0.6,0.9]}],["filtersweep",{rateBars:[2,4], lo:[-0.8,-0.3], hi:[0.8,1.4], res:[0.35,0.5]}]]}},
+      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[2,4], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.3,0.42], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},
+      pads:{prob:0.25, recipe:{model:["saw","organ"], wave:"saw", cutoff:[600,1000], detune:[0.005,0.012], attack:[1,2.5], level:[0.3,0.42], send:[0.3,0.45], dsend:[0.1,0.2]}},
+      drums:{kickModel:["909","boom"], snareModel:["clap"], hatModel:["metal","noise"], kick:[1.2,1.45], snare:[0.65,0.9], hat:[0.7,1.05], tune:[1,1.15], send:[0.1,0.25], dsend:[0.05,0.15]},
+      fx:{reverb:[0.3,0.48], delayBeats:[0.5,0.75], delayFb:[0.3,0.45], delayCut:[2200,3400], pump:[0.17,0.39], crackle:[0.04,0.2], lowcut:[30,45], highcut:[0,0], comp:[0.23,0.45], grit:[0.3,0.6]},
+      found:{role:"break", vol:[0.32,0.45], pitch:[1,1], stretch:[0.5,0.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175"]},
+      sampleEvents:[{pool:["bb_horn_a","bb_horn_b"], placement:"opener", gain:0.6, treatment:{cutoff:7000, dsend:0.3}}],
+      hits:{sources:["bb_horn_a","bb_horn_b","bb_stab_a","bb_stab_b","bb_stab_c"], pattern:"offbeat", prob:0.85},
+      stab:["rave","rave","offbeat"],
+      form:"drop" },
+    /* /genre-tool:sparkbreak:genres */
+    /* genre-tool:hopscotchwave:genres */
+    hopscotchwave: { label:"Hopscotchwave", info:"invented (gap-found): a mid-tempo, bright-forward genre in the empty region near disco × footwork/bigbeat/heavymetal — variation~0.58, crackle~0.41, softTop~0.35 [seed 7]",
+      bpm:[103,111],
+      swing:[0.033,0.083],
+      humanize:[0.095,0.185],
+      progressions:["epic_min","minor_run","andalusian","mode_phrygian"],
+      kits:["four","open"],
+      fills:["hat rush","drum fill","riser"],
+      bass:{patterns:["stab","rolling","drive","syncopated"], recipe:{model:["acid"], cutoff:[420,700], res:[0.3,0.45], level:[1.1,1.3], send:[0,0.08], dsend:[0,0.1]}, inserts:{prob:0.6, max:2, pool:[["distort",{drive:[0.3,0.6], mix:[0.6,0.9]}],["filtersweep",{rateBars:[2,4], lo:[-0.8,-0.3], hi:[0.8,1.4], res:[0.35,0.5]}]]}},
+      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.3,0.42], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},
+      pads:{prob:0.25, recipe:{model:["saw","organ"], wave:"saw", cutoff:[600,1000], detune:[0.005,0.012], attack:[1,2.5], level:[0.3,0.42], send:[0.3,0.45], dsend:[0.1,0.2]}},
+      drums:{kickModel:["909","boom"], snareModel:["clap","noise"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.75,1], hat:[1.1,1.4], tune:[0.95,1.1], send:[0.15,0.3], dsend:[0.05,0.15], kit:"power"},
+      fx:{reverb:[0.66,0.84], delayBeats:[0.375,0.5], delayFb:[0.15,0.3], delayCut:[2600,3800], pump:[0.13,0.35], crackle:[0.35,0.51], lowcut:[30,45], highcut:[0,0], comp:[0.26,0.48], grit:[0,0]},
+      found:{role:"bed", vol:[0.06,0.12], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station","vx_timelady"]},
+      hits:{sources:["horns_78","sp_rhythm","vox_a"], pattern:"offbeat", prob:0.5},
+      stab:["off","sparse"],
+      form:"pop",
+      reverbColor:"dattorro",
+      masterComp:0.35 },
+    /* /genre-tool:hopscotchwave:genres */
+    /* genre-tool:moltenhouse:genres */
+    moltenhouse: { label:"Moltenhouse", info:"invented (gap-found): a drive-tempo, sub-forward genre in the empty region near dub × garage/umpirehouse/lofi — chopUse~0.35, variation~0.55, snareBalance~0.35 [seed 7]",
+      bpm:[115,123],
+      swing:[0.04,0.09],
+      humanize:[0.06,0.15],
+      progressions:["deep_two","deep_two","drone_min"],
+      kits:["house","four"],
+      fills:["cut","riser","impact"],
+      bass:{patterns:["dub","sub"], recipe:{model:["sub"], cutoff:[260,460], res:[0.05,0.15], level:[1.2,1.4], send:[0,0.06], dsend:[0,0.05]}},
+      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.4,0.52], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.005,0.012], octave:0.06, attack:0.025, release:[0.12,0.2], sustain:[0.66,0.78], fenv:[0.15,0.3]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.3,0.8], depth:[0.5,0.8], mix:[0.35,0.55]}]]}},
+      pads:{prob:0.9, recipe:{model:["fm"], wave:"sine", cutoff:[900,1500], detune:[0.003,0.008], attack:[0.8,1.8], level:[0.5,0.68], send:[0.35,0.55], dsend:[0.1,0.2]}},
+      drums:{kickModel:["909"], snareModel:["clap","crack"], hatModel:["noise","metal"], kick:[1.1,1.35], snare:[0.6,0.85], hat:[0.6,0.9], tune:[0.98,1.1], send:[0.1,0.25], dsend:[0.05,0.15]},
+      fx:{reverb:[0.7,0.88], delayBeats:[0.75,1.5], delayFb:[0.5,0.7], delayCut:[1600,2600], pump:[0.03,0.25], crackle:[0.03,0.19], lowcut:[25,40], highcut:[0,0], comp:[0.12,0.34], grit:[0.1,0.25], jux:[0.15,0.3]},
+      found:{role:"chops", vol:[0.1,0.18], pitch:[0.95,1.15], stretch:[0.4,0.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense"]},
+      hits:{sources:["vox_a","vox_b","sp_rewind","sp_pressure"], pattern:"dub", prob:0.75, wet:true},
+      stab:["off","sparse"],
+      form:"dj",
+      reverbColor:"spring" },
+    /* /genre-tool:moltenhouse:genres */
   };
 
   // ---------- transition micro-lick soloists (2026-07 musical transitions) ----------

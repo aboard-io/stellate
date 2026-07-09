@@ -1,0 +1,377 @@
+{
+  "name": "sepiadrive",
+  "label": "Sepiadrive",
+  "info": "invented (gap-found): a drive-tempo, dust-forward genre in the empty region near arabpop × vaporwave/garage — chopUse~0.31, softTop~0.5, acoustic~0.25 [seed 7]",
+  "invented": {
+    "seed": 7,
+    "nearest": "arabpop",
+    "gap": 0.99,
+    "transplants": [
+      {
+        "group": "timbre",
+        "donor": "vaporwave",
+        "delta": 0.35
+      },
+      {
+        "group": "sampletex",
+        "donor": "garage",
+        "delta": 0.27
+      }
+    ],
+    "traits": {
+      "texture": "dust",
+      "tempo": "drive",
+      "rhythm": "chop",
+      "salience": {
+        "wash": 0,
+        "dust": 0.16774543664852778,
+        "acoustic": 0,
+        "synth": 0,
+        "sub": 0,
+        "swarm": 0,
+        "slam": 0,
+        "drone": 0,
+        "bright": 0
+      }
+    }
+  },
+  "clips": [
+    "dc_village",
+    "sun_riders",
+    "cs_marketstreet",
+    "bamboo",
+    "ns_rays",
+    "disc_sunset"
+  ],
+  "anchor": {
+    "bpm": [
+      132,
+      140
+    ],
+    "swing": [
+      0.043,
+      0.093
+    ],
+    "humanize": [
+      0.029,
+      0.119
+    ],
+    "progressions": [
+      "hijaz",
+      "hijaz",
+      "andalusian",
+      "mode_phrygian"
+    ],
+    "kits": [
+      "tribal",
+      "breaks"
+    ],
+    "fills": [
+      "drum fill",
+      "tom fill",
+      "off"
+    ],
+    "euclid": {
+      "kick": [
+        5,
+        16
+      ]
+    },
+    "bass": {
+      "patterns": [
+        "root",
+        "simple",
+        "octaves"
+      ],
+      "recipe": {
+        "model": [
+          "saw",
+          "sub"
+        ],
+        "cutoff": [
+          450,
+          750
+        ],
+        "res": [
+          0.08,
+          0.16
+        ],
+        "level": [
+          0.95,
+          1.15
+        ],
+        "send": [
+          0.05,
+          0.12
+        ],
+        "dsend": [
+          0,
+          0.06
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "composed",
+        "composed2",
+        "arpup",
+        "wander"
+      ],
+      "patchPool": [
+        "E.PIANO 1",
+        "TUB BELLS",
+        "E.PIANO 4",
+        "SHIMMER"
+      ],
+      "samplerPool": [
+        "alto_sax",
+        "tenor_sax"
+      ],
+      "recipe": {
+        "model": [
+          "stack",
+          "stack",
+          "dx7",
+          "sampler",
+          "sampler"
+        ],
+        "wave": "sine",
+        "voices": [
+          1,
+          3
+        ],
+        "spread": [
+          0.003,
+          0.006
+        ],
+        "cutoff": [
+          2800,
+          4000
+        ],
+        "level": [
+          0.4,
+          0.52
+        ],
+        "send": [
+          0.4,
+          0.6
+        ],
+        "dsend": [
+          0.2,
+          0.4
+        ],
+        "vibrato": [
+          0.004,
+          0.009
+        ],
+        "octave": 0.2,
+        "attack": 0.08,
+        "release": [
+          0.45,
+          0.6
+        ],
+        "sustain": [
+          0.85,
+          0.95
+        ]
+      },
+      "inserts": {
+        "prob": 0.5,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [
+                0.5,
+                1.1
+              ],
+              "depth": [
+                0.5,
+                0.7
+              ],
+              "mix": [
+                0.4,
+                0.6
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 1,
+      "samplerPool": [
+        "ahh_choir",
+        "strings"
+      ],
+      "recipe": {
+        "model": [
+          "saw",
+          "choir",
+          "strings",
+          "sampler"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          1100,
+          1800
+        ],
+        "detune": [
+          0.004,
+          0.009
+        ],
+        "attack": [
+          1.2,
+          2.4
+        ],
+        "mellotron": true,
+        "level": [
+          0.6,
+          0.8
+        ],
+        "send": [
+          0.5,
+          0.7
+        ],
+        "dsend": [
+          0.1,
+          0.25
+        ]
+      },
+      "inserts": {
+        "prob": 0.55,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [
+                0.2,
+                0.5
+              ],
+              "depth": [
+                0.5,
+                0.75
+              ],
+              "mix": [
+                0.4,
+                0.6
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "808",
+        "boom"
+      ],
+      "snareModel": [
+        "crack"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        1.1,
+        1.3
+      ],
+      "snare": [
+        0.7,
+        0.95
+      ],
+      "hat": [
+        0.9,
+        1.2
+      ],
+      "tune": [
+        1.05,
+        1.2
+      ],
+      "send": [
+        0.1,
+        0.2
+      ],
+      "dsend": [
+        0.1,
+        0.25
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.3,
+        0.48
+      ],
+      "delayBeats": [
+        0.5,
+        0.75
+      ],
+      "delayFb": [
+        0.25,
+        0.4
+      ],
+      "delayCut": [
+        2200,
+        3400
+      ],
+      "pump": [
+        0.04,
+        0.26
+      ],
+      "crackle": [
+        0.14,
+        0.3
+      ],
+      "lowcut": [
+        25,
+        40
+      ],
+      "highcut": [
+        2600,
+        3400
+      ],
+      "comp": [
+        0.26,
+        0.48
+      ]
+    },
+    "found": {
+      "role": "chops",
+      "vol": [
+        0.1,
+        0.18
+      ],
+      "pitch": [
+        0.95,
+        1.15
+      ],
+      "stretch": [
+        0.4,
+        0.6
+      ],
+      "cutoff": [
+        2500,
+        4000
+      ],
+      "sources": [
+        "shibuya",
+        "tokyo_station",
+        "vx_suspense"
+      ]
+    },
+    "stab": [
+      "off"
+    ],
+    "hits": {
+      "sources": [
+        "vox_b",
+        "sp_rhythm"
+      ],
+      "pattern": "sparse",
+      "prob": 0.4
+    },
+    "form": "pop"
+  }
+}

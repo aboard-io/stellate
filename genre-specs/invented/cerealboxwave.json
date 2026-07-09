@@ -1,0 +1,323 @@
+{
+  "name": "cerealboxwave",
+  "label": "Cerealboxwave",
+  "info": "invented (gap-found): a mid-tempo, bright-forward genre in the empty region near fugue × synthwave/pixiewave/canawave — bedUse~0.64, pump~0.28, variation~0.38 [seed 7]",
+  "invented": {
+    "seed": 7,
+    "nearest": "fugue",
+    "gap": 1.04,
+    "transplants": [
+      {
+        "group": "sampletex",
+        "donor": "synthwave",
+        "delta": 0.25
+      },
+      {
+        "group": "harmony",
+        "donor": "pixiewave",
+        "delta": 0.23
+      },
+      {
+        "group": "timbre",
+        "donor": "canawave",
+        "delta": 0.22
+      }
+    ],
+    "traits": {
+      "texture": "bright",
+      "tempo": "mid",
+      "rhythm": null,
+      "salience": {
+        "wash": 0,
+        "dust": 0,
+        "acoustic": 0.5813944592012558,
+        "synth": 0,
+        "sub": 0,
+        "swarm": 0,
+        "slam": 0,
+        "drone": 0.6049395160817287,
+        "bright": 0.8
+      }
+    }
+  },
+  "clips": [
+    "earth_orbit",
+    "blue_dinner",
+    "bamboo",
+    "spacewalk",
+    "dc_village"
+  ],
+  "anchor": {
+    "reverbColor": "fdn",
+    "bpm": [
+      104,
+      112
+    ],
+    "swing": [
+      0,
+      0.044
+    ],
+    "humanize": [
+      0.056,
+      0.146
+    ],
+    "progressions": [
+      "minor_run",
+      "epic_min",
+      "sad_pop",
+      "four_chords"
+    ],
+    "kits": [
+      "off"
+    ],
+    "fills": [
+      "off"
+    ],
+    "bass": {
+      "patterns": [
+        "pedal",
+        "root",
+        "walking"
+      ],
+      "samplerPool": [
+        "church_organ",
+        "harpsichord"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "cutoff": [
+          700,
+          1500
+        ],
+        "res": [
+          0.05,
+          0.1
+        ],
+        "level": [
+          0.5,
+          0.7
+        ],
+        "send": [
+          0.2,
+          0.4
+        ],
+        "dsend": [
+          0,
+          0.08
+        ],
+        "attack": [
+          0.01,
+          0.03
+        ],
+        "release": [
+          0.3,
+          0.6
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "arp16"
+      ],
+      "recipe": {
+        "model": [
+          "kpluck"
+        ],
+        "wave": "saw",
+        "drive": 0.45,
+        "cutoff": [
+          3000,
+          3800
+        ],
+        "level": [
+          0.62,
+          0.74
+        ],
+        "send": [
+          0.16,
+          0.26
+        ],
+        "dsend": [
+          0.46,
+          0.56
+        ],
+        "voices": [
+          2,
+          4
+        ]
+      },
+      "inserts": {
+        "prob": 0.8,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [
+                0.7,
+                1.1
+              ],
+              "depth": [
+                0.45,
+                0.65
+              ],
+              "mix": [
+                0.45,
+                0.6
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 1,
+      "samplerPool": [
+        "church_organ"
+      ],
+      "recipe": {
+        "model": [
+          "organ",
+          "organ",
+          "sampler"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          1500,
+          2200
+        ],
+        "detune": [
+          0.004,
+          0.008
+        ],
+        "attack": [
+          0.3,
+          0.7
+        ],
+        "level": [
+          0.4,
+          0.52
+        ],
+        "send": [
+          0.16,
+          0.26
+        ],
+        "dsend": [
+          0,
+          0.06
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom"
+      ],
+      "snareModel": [
+        "noise"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        0.5,
+        0.7
+      ],
+      "snare": [
+        0.4,
+        0.6
+      ],
+      "hat": [
+        0.3,
+        0.5
+      ],
+      "tune": [
+        0.9,
+        1
+      ],
+      "send": [
+        0.15,
+        0.35
+      ],
+      "dsend": [
+        0,
+        0
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.37,
+        0.55
+      ],
+      "delayBeats": [
+        0.5,
+        1
+      ],
+      "delayFb": [
+        0.1,
+        0.24
+      ],
+      "delayCut": [
+        2200,
+        3200
+      ],
+      "pump": [
+        0.18,
+        0.4
+      ],
+      "crackle": [
+        0,
+        0.13
+      ],
+      "lowcut": [
+        0,
+        0
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.17,
+        0.39
+      ]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.08,
+        0.14
+      ],
+      "pitch": [
+        0.65,
+        0.8
+      ],
+      "stretch": [
+        0.45,
+        0.6
+      ],
+      "cutoff": [
+        1000,
+        1800
+      ],
+      "sources": [
+        "highway_night",
+        "factory",
+        "vx_apollo"
+      ]
+    },
+    "hits": {
+      "sources": [
+        "sp_herenow"
+      ],
+      "pattern": "sparse",
+      "prob": 0.05
+    },
+    "stab": [
+      "off"
+    ],
+    "form": "wave"
+  }
+}
