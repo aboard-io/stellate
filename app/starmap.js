@@ -490,6 +490,13 @@ export function computeGenreLayout(){
   const NAMES=Object.keys(K.GENRES);
   const sim=_genreSim();
   const seeded=NAMES.filter(g=>POS[g]);   // genres that carry a seed coordinate
+  // BAKED fast path (the common boot): POS already carries the exact relaxed
+  // layout for every genre — it's a deterministic cache of the relaxation below
+  // (see world.js). Nothing to solve, and re-running the relaxation would even
+  // MIS-scale it (the normalize keys off the seed's median spacing, which is
+  // denser once every genre is seeded). So just rebuild bounds + park the cursor.
+  // The O(N²)·N*40 relaxation runs ONLY when a genre is missing (dev added one).
+  if(seeded.length===NAMES.length){ recomputeWorld(); S.cursor={x:MAP_CENTER.x, y:MAP_CENTER.y}; return; }
   // 1. positions: seed where present; derive missing near most-similar seeded genre.
   const P={};
   for(const g of NAMES) if(POS[g]) P[g]=[POS[g][0],POS[g][1]];
@@ -525,9 +532,9 @@ export function computeGenreLayout(){
   const rb=svg.getBoundingClientRect();
   const viewW=rb.width||1200, viewH=rb.height||850;
   const MIN_DOT=72;                 // hard min dot separation, px at default zoom
-  // iteration budget scales with node count: the self-normalizing bounds make
-  // the relaxation converge asymptotically, so a dense map (178+ genres) needs
-  // more passes to fully clear label overlaps than the ~110-genre seed did.
+  // full relaxation budget — reached only when a genre is missing from the baked
+  // POS (the fast path above handles the common complete-POS boot). Scales with
+  // node count: the self-normalizing bounds converge asymptotically.
   const ITERS=Math.max(2200, NAMES.length*40);
   for(let it=0;it<ITERS;it++){
     const bb=bounds();
