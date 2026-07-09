@@ -121,7 +121,8 @@
       // diagonal into acidhouse). MEASURED both ways: hammond-only keeps EVERY
       // existing genre's confusion-matrix margin byte-identical to baseline
       // (hammond only ever appears where organ-grade acoustic is already
-      // present — blues/newjack/house/krautrock), matrix 63/63. SOLINA is
+      // present — blues/newjack/house/krautrock), matrix 63/63 (the full
+      // roster at measurement time; 178 today). SOLINA is
       // deliberately NOT counted: it is an ANALOG STRING SYNTHESIZER (ARP/
       // Eminent), not an acoustic/electro-mechanical instrument, and its home
       // genres (italo, sovietwave) encode it AS synth via low acoustic targets

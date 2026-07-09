@@ -5,7 +5,7 @@
 Every genre is a point in one deterministic vector space. Drag the star chart,
 draw a path, or drift, and the music continuously morphs through whatever the
 traveler crosses — tempo, harmony, groove, instrumentation, and effects all
-blending between neighbours. ~110 genres, from `techno` and `citypop` to
+blending between neighbours. 178 genres, from `techno` and `citypop` to
 `singeli`, `budstep`, and `fugue`, all generated live in the browser.
 
 **Play it:** https://aboardresearch.com/projects/stellate/
@@ -28,6 +28,16 @@ One idea, one pipeline:
 4. **`engine/faust/` — the engine.** One Faust WASM AudioWorklet per synthesis model,
    played **live** in the browser and **offline** ("press") in Node from the
    identical code — so what you hear is what renders.
+
+**Music-minded.** Harmony is generated, not looked up: `engine/theory.js` walks
+functional harmony with a per-genre *adventure* knob (diatonic → modal
+interchange → secondary dominants → chromatic mediants, cadences always
+anchored) and voice-leads the pads with minimal motion; `engine/pipes.js`
+treats the scheduler as pipes — composable, seeded event transforms
+(harmonize, echo-canon, ghost notes, call-and-response, density arcs, per-note
+filter/vibrato gestures) applied at the one choke point so live, offline, and
+MIDI all hear the same music. Every genre carries its own settings for these
+as axes in the space; blends interpolate them. See `docs/MUSIC-MIND.md`.
 
 **Sampled by default.** The full General MIDI set is extracted from a
 FluidR3-class SoundFont (`engine/faust/extract-gm.js`) and is the default sound; most
@@ -99,6 +109,7 @@ its renderer live on the `legacy-csound` branch). Headless browser gates live in
 
 - **`CLAUDE.md`** — the full layout and working notes.
 - **`docs/GENRE-SPACE.md`** — how the vector space and journeys are designed.
+- **`docs/MUSIC-MIND.md`** — the music-intelligence program (theory, pipes, axes).
 - **`engine/faust/VOICES.md`** — the synthesis/effect voice library.
 - **`SOURCES.md`** — every found-sound, sample, video, and vendored-code credit.
 - **`docs/history/`** — the design/planning trail (WAV-FIRST, kernel, etc.).

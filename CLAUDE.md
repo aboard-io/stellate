@@ -1,10 +1,11 @@
 # CLAUDE.md — stellate
 
-A self-contained generative genre-space instrument: a **~110-genre**
+A self-contained generative genre-space instrument: a **178-genre**
 deterministic vector space (`genre-kernel.js`) over one score brain
-(`engine/csd-engine.js buildEvents`), **sampled by default** (full General MIDI
-via `engine/faust/extract-gm.js`, with per-voice Faust effect chains) and played
-by a single **Faust WASM engine** (`engine/faust/` — live in the browser and
+(`engine/csd-engine.js buildEvents`) with a generative harmony/pipes layer
+(`engine/theory.js` + `engine/pipes.js` — docs/MUSIC-MIND.md), **sampled by
+default** (full General MIDI via `engine/faust/extract-gm.js`, with per-voice
+Faust effect chains) and played by a single **Faust WASM engine** (`engine/faust/` — live in the browser and
 offline "press" in node), verified symbolically and empirically. Extracted from the
 verifier-catalog repo in 2026-06 with full history; it is a worked example of
 that catalog's generator → verifier → feedback-loop thesis. (Named "Royal Road
@@ -56,6 +57,7 @@ tools/fetch-found-video.sh     # one-time: Internet Archive laserdisc clips -> f
 ./serve.sh                     # http://localhost:8777/  (serves index.html; needs http, not file://)
 ./verify.sh                    # orchestrator: matrix + validate + engine smoke
 node test/engine.test.js       # faust-press smoke: states render, gated on non-silence
+node test/theory.test.js && node test/pipes.test.js   # MUSIC-MIND organs (pure node)
 node engine/validate-genres.js --quick   # symbolic gates (all genres); --audio adds Discogs-EffNet
 node engine/genre-verifier.js matrix      # genre confusion matrix — must stay diagonal-dominant
 node engine/genre-kernel.js track jungle --seed 7 --render   # one track -> mp3 via engine/faust/press.js
@@ -147,6 +149,14 @@ docs in `docs/`.
   modules — the app reads them off `window`):
   - `csd-engine.js` — the score brain: `buildEvents(state)` → pitched/drums/found/
     sfx events + PROGRESSIONS/kits/patterns vocabulary. (csound codegen: `legacy-csound`.)
+  - `theory.js` — `CsdTheory`, the harmony brain (MUSIC-MIND organ #1): modes,
+    voice-leading, and a functional-harmony progression generator with an
+    `adventure` knob; consumed by buildEvents via `state.theory.reharm`
+    (docs/MUSIC-MIND.md; `node test/theory.test.js`)
+  - `pipes.js` — `CsdPipes`, the scheduler as pipes (MUSIC-MIND organ #2): seeded
+    event transforms (harmonize/echoCanon/strum/ghost/callResponse/densityArc +
+    per-note expression annotations) run on `state.pipes` at the buildEvents
+    choke point, before the snare-law (`node test/pipes.test.js`)
   - `genre-kernel.js` — genre as a point in multidimensional space; blend/track/
     playlist/journey generators emitting engine states (design: docs GENRE-SPACE.md)
   - `genre-verifier.js` — symbolic genre-conformance scoring + confusion matrix
