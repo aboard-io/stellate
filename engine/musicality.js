@@ -34,21 +34,34 @@
   const CORE = { kick: 1, snare: 1, hat: 1, tom: 1 };   // the rhythm fabric; perc lane is color (genre-verifier's law)
 
   // ---------------------------------------------------------------- BLOOM
-  // First-onset bounds in BEATS per FORM per part. Honest defaults, not
-  // taste: pop expects the kit and bass inside 4 chord bars and the lead by
-  // beat 64; the slow-bloom forms (dj plateau / wave drift / ritual) get
-  // 2-3x the patience. A part is MEASURED only when the resolved state
+  // First-onset bounds in BEATS per FORM per part — v1.1, recalibrated
+  // (balance loop 1, 2026-07). The v1 numbers were tighter than the FORM
+  // GRAPHS' own design: pop's graph places the hook at the chorus (natural
+  // beat 96 — the old melody:64 was unsatisfiable by construction), and the
+  // duration solver legitimately stretches short forms toward the 180s
+  // target. Each bound below = the form's designed worst-case placement
+  // (measured over 228 genres x 3 seeds AFTER the solver's energy-aware
+  // grow fix) + one chord-bar of margin; anything past it is drag the form
+  // never asked for. A part is MEASURED only when the resolved state
   // declares it (some section turns it on) — sections all drums:"off" means
   // the drums part simply isn't declared, so drumless-by-design is exempt
-  // by construction, not by exemption list.
+  // by construction, not by exemption list. Two more by-construction
+  // exemptions live in bloom() itself: contrast devices (a part declared
+  // ONLY in exposed/release nodes — the bridge pad wall, anthem's bridge
+  // brass swell — is a designed late arrival, not a core part) and
+  // evolution gifts (a part first declared at/after a 3-minute-rule
+  // evolution boundary is the re-roll's new voice, not lateness). And the
+  // ONE-CYCLE FLOOR: an intro of one full harmonic cycle is never late
+  // (blues opens with a full 12-bar piano chorus — idiomatic, not drag),
+  // so the effective bound is max(table, cycleBeats).
   const BLOOM_BOUNDS = {
-    pop:     { drums: 32, bass: 32, melody: 64,  pads: 48,  found: 48,  counter: 96 },
-    anthem:  { drums: 32, bass: 32, melody: 64,  pads: 48,  found: 48,  counter: 96 },
-    drop:    { drums: 48, bass: 48, melody: 80,  pads: 64,  found: 64,  counter: 112 },
-    transit: { drums: 48, bass: 48, melody: 80,  pads: 64,  found: 64,  counter: 112 },
-    wave:    { drums: 80, bass: 80, melody: 144, pads: 112, found: 112, counter: 176 },
-    dj:      { drums: 96, bass: 96, melody: 160, pads: 128, found: 128, counter: 192 },
-    ritual:  { drums: 96, bass: 96, melody: 192, pads: 128, found: 128, counter: 192 },
+    pop:     { drums: 64,  bass: 64,  melody: 192, pads: 192, found: 96,  counter: 192 },
+    anthem:  { drums: 64,  bass: 64,  melody: 96,  pads: 64,  found: 64,  counter: 192 },
+    drop:    { drums: 72,  bass: 72,  melody: 128, pads: 256, found: 96,  counter: 192 },
+    transit: { drums: 48,  bass: 48,  melody: 80,  pads: 64,  found: 64,  counter: 112 },
+    wave:    { drums: 144, bass: 144, melody: 192, pads: 112, found: 112, counter: 176 },
+    dj:      { drums: 128, bass: 128, melody: 256, pads: 256, found: 128, counter: 192 },
+    ritual:  { drums: 96,  bass: 96,  melody: 192, pads: 128, found: 128, counter: 192 },
   };
 
   // Mapping-layer window (faust/state-engine.js SAMPLER_STRETCH_ST /
@@ -73,7 +86,8 @@
       spans.push({ sec, start: cur, end: cur + b });
       cur += b;
     }
-    spans.CB = CB;   // the chord-bar length rides along (BLOOM's arrival grid)
+    spans.CB = CB;               // the chord-bar length rides along (BLOOM's arrival grid)
+    spans.cycleBeats = cycleBeats;   // one full harmonic cycle (BLOOM's one-cycle floor)
     return spans;
   }
 
@@ -84,14 +98,19 @@
   function partsOf(state, ev) {
     const spans = sectionSpans(state);
     const secs = state.sections || [];
-    const declared = {
-      drums:   secs.some((s) => s.drums && s.drums !== "off"),
-      bass:    secs.some((s) => s.bass && s.bass !== "off"),
-      melody:  secs.some((s) => s.melody && s.melody !== "off"),
-      pads:    secs.some((s) => !!s.pads),
-      found:   secs.some((s) => s.found && s.found.sourceId),
-      counter: secs.some((s) => s.counter && s.counter.pattern),
+    const DECL = {
+      drums:   (s) => s.drums && s.drums !== "off",
+      bass:    (s) => s.bass && s.bass !== "off",
+      melody:  (s) => s.melody && s.melody !== "off",
+      pads:    (s) => !!s.pads,
+      found:   (s) => s.found && s.found.sourceId,
+      counter: (s) => s.counter && s.counter.pattern,
     };
+    const declared = {}, declIdx = {};
+    for (const p of Object.keys(DECL)) {
+      declIdx[p] = secs.map((s, i) => (DECL[p](s) ? i : -1)).filter((i) => i >= 0);
+      declared[p] = declIdx[p].length > 0;
+    }
     const cSpans = spans.filter((sp) => sp.sec.counter && sp.sec.counter.pattern && sp.sec.counter.solo)
       .map((sp) => ({ start: sp.start, end: sp.end, key: JSON.stringify(sp.sec.counter.solo) }));
     const isCounter = (e) => {
@@ -113,23 +132,38 @@
     // event stream, so membership is gated to found-declared spans (v1: a
     // hits event inside a found span still counts — accepted coarseness).
     for (const f of ev.found || []) if (inFound(f.beat)) see("found", f.beat);
-    return { declared, first, count, spans, isCounter };
+    return { declared, declIdx, first, count, spans, isCounter };
   }
 
   // ---------------------------------------------------------------- law: BLOOM
   function bloom(state, ev, form, P) {
     P = P || partsOf(state, ev);
     const bounds = BLOOM_BOUNDS[form] || BLOOM_BOUNDS.pop;
+    const secs = state.sections || [];
+    const tagOf = (s) => s.tag || E.sectionTag(s.name);
+    // 3-minute-rule evolution boundary (genreMeta.evolutions[].at is a final
+    // section index): a part whose declaring sections ALL sit at/after the
+    // first boundary is the re-roll's NEW voice, not a late core part.
+    const evo = state.genreMeta && state.genreMeta.evolutions;
+    const evoAt = evo && evo.length ? Math.min.apply(null, evo.map((e) => e.at)) : Infinity;
     const failures = []; let measured = 0, ok = 0, hard = false;
     for (const part of Object.keys(P.declared)) {
       if (!P.declared[part]) continue;
+      const di = P.declIdx[part];
+      // contrast device: declared ONLY in exposed/release nodes (the bridge
+      // pad wall, the anthem bridge brass) — a designed late arrival.
+      if (di.every((i) => { const t = tagOf(secs[i]); return t === "exposed" || t === "release"; })) continue;
+      // evolution gift: first declared at/after the evolution boundary.
+      if (di.every((i) => i >= evoAt)) continue;
       measured++;
       if (!P.count[part]) {
         hard = true;
         failures.push({ part, hard: true, what: part + " is declared in the resolved state but NEVER sounds" });
         continue;
       }
-      const bound = bounds[part] != null ? bounds[part] : 96;
+      // ONE-CYCLE FLOOR: an opener of one full harmonic cycle is idiomatic
+      // (blues' 12-bar piano chorus), never lateness.
+      const bound = Math.max(bounds[part] != null ? bounds[part] : 96, P.spans.cycleBeats || 0);
       // ARRIVAL is bar-grained: a dub bass whose cell starts at beat 2.5 of
       // its bar arrived AT the bar — floor the first onset to the chord-bar
       // grid before judging patience (in-bar pattern offsets are the groove,
@@ -177,18 +211,19 @@
   // Seed promises (Paul-blessed truth only, each VERIFIED against renders
   // before being written — MUSICALITY.md rollout §6):
   //   reggae      — the skank chops the offbeat eighths (verified: 100% of
-  //                 stab-layer onsets on off-eighths, seeds 1-3). NOTE: the
-  //                 card's kickOn:[3] one-drop claim is NOT written — measured
-  //                 2026-07-10 it fails (kick-on-3 in 2-5% of kitted measures
-  //                 on seeds 1/3; only seed 2's four-on-floor kit covers beat
-  //                 3, which isn't one-drop either). That's a finding for the
-  //                 balance loop, not a promise to fail on. The pad voice is
-  //                 downbeat chord sustains, so skankOffbeat:"pad" would fail
-  //                 too — the skank lives in the stab layer.
+  //                 stab-layer onsets on off-eighths, seeds 1-3), and — balance
+  //                 loop 1, 2026-07 — kickOn:[3]: the ONE DROP is real now.
+  //                 The csd-engine `onedrop` kit (kick + cross-stick TOGETHER
+  //                 on beat 3 of each measure, beat 1 empty, skank off-eighth
+  //                 hats) is reggae's whole kit pool; measured 100% of kitted
+  //                 measures on seeds 1-5 (was 2-5% under the old kick/
+  //                 halftime pool). The pad voice is downbeat chord sustains,
+  //                 so skankOffbeat:"pad" would fail — the skank lives in the
+  //                 stab layer.
   //   salondawdle — waltz: meter 3/4 (verified, seeds 1-3).
   //   chalkvespers— drumless by design (verified: zero drum events, seeds 1-3).
   const PROMISES = {
-    reggae:       { skankOffbeat: "stab" },
+    reggae:       { skankOffbeat: "stab", kickOn: [3] },
     salondawdle:  { meter: "3/4" },
     chalkvespers: { drumless: true },
   };

@@ -126,7 +126,7 @@
   // over its 8-beat bar (a polymeter, never a crash).
   const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic","habanera","syncopated","pedal","sludge","tresillo","son","hemiola","charleston","oompahpah","waltzroot","siciliana"];
   const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16","motorik","motorik23","fugue","sludge","waltz","lilt6"];
-  const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal","bossa","electro","newjack","shuffle","waltz","waltzswing","sixeight"];
+  const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal","bossa","electro","newjack","shuffle","waltz","waltzswing","sixeight","onedrop"];
   // KERNEL-V4 Phase 5 (§3.5) — the form as a graph of TYPED NODES. Every
   // section, whatever a form names it, classifies to one of six node types:
   //   ground  arrival / low-energy opener   (intro, arrive, dawn, platform, warmup)
@@ -448,6 +448,16 @@
       {d:"kick",hits:[[0,.66]]},
       {d:"snare",hits:[[4,.55]]},
       {d:"hat",grid:{n:8,step:1,from:.5,amps:[.12]}} ]},
+    onedrop:{ turn:false, ops:[   // reggae ONE DROP: beat 1 EMPTY (the signature absence);
+      // kick + cross-stick land TOGETHER on beat 3 of each measure (offsets 2/6
+      // of the 8-beat two-bar cell) — "the drop"; hats chop the skank
+      // off-eighths. Cross-stick = quiet snare voice (the bossa/shuffle rim
+      // convention); turn:false keeps the cell clean like the other roots kits.
+      {d:"kick",hits:[[2,.64],[6,.64]]},
+      {d:"snare",hits:[[2,.32],[6,.32]]},                           // cross-stick ON the drop
+      {d:"hat",grid:{n:8,step:1,from:.5,amps:[.14,.09]}},           // the skank off-eighths
+      {d:"snare",p:.35,alt:[[[3.5,.11]],[[7.5,.11]]]},              // occasional rim ghost pickup
+      {d:"hat",p:.3,hits:[[7.5,.15,.3]]} ]},                        // open let-ring into the next bar
     trap:{ ops:[
       {d:"kick",hits:[[0,.6],[2.5,.45],[5,.45]]},
       {d:"snare",hits:[[4,.5]]},
@@ -1367,6 +1377,15 @@
             }
           }
           if(sec.solo) mel.forEach(e=>{ e.solo=sec.solo; if(sec.soloOctave) e.pch=pchAdd(e.pch,12*sec.soloOctave); });
+          // LEAD REGISTER (state.leadOctave, MUSICALITY balance loop 1): a
+          // whole-track octave shift for the MAIN lead line, the anchor-level
+          // fix for a genre whose score asks outside its sampler's natural
+          // window (chalkvespers' plainchant choir asked up to midi 107 vs a
+          // ceiling of 87 — the mapEvents fold saved the ear but bent the
+          // contour; the SCORE should ask in range). Applied after
+          // melodyEvents with zero rng, solo lines keep their own register
+          // (soloOctave), so absent-key genres are byte-identical.
+          if(state.leadOctave) mel.forEach(e=>{ if(!e.solo) e.pch=pchAdd(e.pch,12*(state.leadOctave|0)); });
           // BLUE-NOTE BEND (state.blueNote): when the resolved lead is a sampled
           // sax/guitar, held melody notes slide up into the blue note (b3/b7) —
           // the jazz-sax mirror of the "blues" pattern's bend. A dedicated stream

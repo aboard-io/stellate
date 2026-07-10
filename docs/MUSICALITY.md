@@ -140,3 +140,71 @@ worst scorecards every verify run). `./verify.sh` green; matrix untouched.
   kernel anchors grow the `promises:` field (the kernel was another
   agent's file during this phase); `state.promises` overrides the table
   when it exists.
+
+## Balance loop 1 — SHIPPED (2026-07-10)
+
+Baseline 19 OK / 209 WARN → **169 OK / 59 WARN / 0 FAIL** (228 × seeds
+1-3). Worst overall 0.80 → 0.92. Matrix 228/228 (--no-cache) after every
+change; verify.sh green; meter/theory/pipes/speech/musicality suites green
+(meter's `head_byte_identity` names prelude/s3 — exactly the intentional
+prelude anchor change below; green again at commit).
+
+1. **The form intro-drag — a MIX, mechanism-first.** Evidence over 228×3:
+   the drumless intros were 25-38s wall-clock at the median (a real pop
+   intro), but the duration solver's grow tie-break picked the FIRST index
+   among tied sections, stacking ALL residual growth at the front of the
+   form (dancepop: intro 2, verse 2, pre-chorus 2 — the hook pushed from
+   the form's designed 37.5% to 54% of the track). **Kernel fix**: the
+   grow tie-break is energy-aware (peak > build > exposed/release >
+   cadence > ground) — a longer track now means more payoff, not a longer
+   intro. **Bound fix (v1.1, argued)**: the v1 bounds were tighter than
+   the FORM GRAPHS' own design — pop melody:64 was unsatisfiable by
+   construction (the graph places the hook at the chorus, natural beat
+   96). Every bound is now the form's measured worst-case designed
+   placement + one chord-bar of margin (pop drums/bass 32→64, melody
+   64→192; drop 48→72/128; wave drums/bass 80→144; dj drums/bass 96→128,
+   melody 160→256; pads recalibrated likewise). Three by-construction
+   exemptions joined the drumless rule: the ONE-CYCLE FLOOR (an intro of
+   one full harmonic cycle is idiomatic — blues opens with a full 12-bar
+   piano chorus, bound = max(table, cycleBeats)); CONTRAST DEVICES (a part
+   declared only in exposed/release nodes — the bridge pad wall — is a
+   designed late arrival); EVOLUTION GIFTS (a part first declared at a
+   3-minute-rule boundary is the re-roll's new voice). The old worst-10
+   wall (capesnap…oakdublilt) cleared entirely.
+2. **The one-drop kit is real.** csd-engine KITS grew `onedrop` (kick +
+   cross-stick TOGETHER on beat 3 of each measure, beat 1 EMPTY, skank
+   off-eighth hats, rim-ghost/open-hat draws), registered in
+   DRUM_PATTERNS; reggae's pool is now `["onedrop"]` (single-kit pool,
+   the bossa/electro/newjack precedent — a mixed pool drew the wrong-idiom
+   halftime on 3 of 5 seeds, measured). `kickOn:[3]` is a written PROMISE:
+   100% of kitted measures on seeds 1-5 (was 2-5%). Reggae's matrix row
+   held at self 100 with no retune.
+3. **chalkvespers asks in range.** New zero-rng anchor dimension
+   `leadOctave` (dominant-parent, absent = byte-identical) shifts the
+   main lead's SCORE register; chalkvespers sets -2 — the chant line now
+   sits midi 39-83 inside the ahh_choir's [27..87] window (was up to 107,
+   63% folded). Register law: 0.89 → 1.00.
+4. **Prelude blooms.** `introMode:"off"` — the WTC prelude opens ON the
+   figuration, bar 1. The wave arrive node held the first keyboard note
+   out 37-101s at prelude's giant cycles; now every seed opens on the
+   drift figuration at 0s, strings swelling under it, the bass continuo
+   joining at the swell (36-101s worst, was 202s on the canon seed).
+   Every declared part sounds inside a 3-minute listen on seeds 1-5;
+   unhurried stays (the long cycles are the identity), DEAD is gone.
+   Row held at self 100.
+5. **The buried-lead template class, named and fixed.** 16 gap-found
+   anchors sharing the two template leads got the calibrated level fix
+   (level is not a verifier feature — matrix unmoved): sax/felt/jazz
+   template [0.4,0.52]→[0.52,0.64] (toastercore cedarskank bramblestep
+   butterchurnbounce tundradoom willowmarch graingroove magmastrut);
+   pluck/fm template [0.3,0.42]→[0.5,0.62] (hydracore sparkbreak
+   hopscotchwave sherbetchop driftrot obelisktrot duststrut ashfunk).
+   lofi and footwork also match template+scan but are canon parents,
+   Paul-blessed by ear — named, left for his call.
+- **Remaining findings are true findings**: the register class (the
+  french-horn/sax genres asking above their windows — the next loop's
+  worklist), standbylightdrive's wave bass at 70s, singeli/walrusfuzz
+  late hooks, bebop's bass at 72. Fixtures re-captured; drift = the 123
+  solver-growth genres + reggae/chalkvespers/prelude (anchor changes) +
+  5 state-only level-class genres (bramblestep driftrot hydracore
+  sherbetchop tundradoom).

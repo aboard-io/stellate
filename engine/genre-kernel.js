@@ -2078,6 +2078,7 @@
     /* genre-tool:prelude:genres */
     prelude: { label:"Prelude", info:"Bach-prelude figuration as a genre: continuous broken-chord 16th arpeggiation over a slow harmonic rhythm (chordEvery:16), felt-piano / bright-grand voices, drum kit OFF, even Baroque touch with only the lightest rubato — the WTC Book I C-major prelude, generalized",
       reverbColor:"fdn",   // fx wings: a dry recital room, not a wash — the close felt-piano
+      introMode:"off",   // MUSICALITY balance loop 1 (BLOOM, Paul: "takes so long to get going"): the WTC prelude opens ON the figuration — bar 1, no curtain. The wave "arrive" node (pads-only) held the first keyboard note out 37-101s at prelude's giant cycles (chordEvery:16 -> 48-128-beat sections); dropping it opens every seed on the drift figuration at 0s, strings swelling UNDER the line, the bass continuo joining at the swell (36-101s). Unhurried stays (the cycles are still long) — DEAD goes. MEASURED across seeds 1-5: every declared part sounds inside a 3-minute listen (worst bass 101s, was 202s on the canon seed)
       bpm:[62,80],
       swing:[0,0.03],
       humanize:[0.08,0.2],
@@ -2264,7 +2265,7 @@
       form:"dj" },
     reggae: { label:"Reggae", info:"one-drop reggae at 75: an offbeat organ-and-guitar skank, a round melodic bass, the kick on beat three — roots and culture",   // the SONG to dub's dubbed-out instrumental: real harmonic motion + skank organ, vs dub's static drone
       bpm:[70,80], swing:[.04,.14], humanize:[.1,.3],
-      progressions:["deep_two","neosoul","four_chords","minor_run"], kits:["halftime","kick","four"], fills:["off","downlift","drum fill"],
+      progressions:["deep_two","neosoul","four_chords","minor_run"], kits:["onedrop"], fills:["off","downlift","drum fill"],   // MUSICALITY balance loop 1 (2026-07): the card says ONE DROP — kick+cross-stick on beat 3, beat 1 empty. The old kick/halftime/four pool put the kick on 1 (Paul: "NONE of that is happening" — MEASURED 2-5% kick-on-3). Single-kit pool like bossa/electro/newjack: onedrop IS reggae's kit; variety lives in the kit's own ghost/open draws, and kickOn:[3] is now a written PROMISE (musicality.js) the pool must keep on every seed (a mixed pool drew halftime on 3 of 5 seeds — measured)
       bass:{patterns:["melodic","dub","simple"], samplerPool:["finger_bass","acoustic_bass"], recipe:{model:["sub","sampler"],cutoff:[280,480],res:[.05,.15],level:[1.15,1.4],send:[.03,.1],dsend:[0,.05]}},
       lead:{patterns:["sparse","off","pentaup"], samplerPool:["clean_guitar","rhodes_ep"], recipe:{model:["sampler","fm"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2000,3000],level:[.38,.5],send:[.3,.45],dsend:[.15,.3],attack:.01,release:[.1,.18],sustain:[.6,.72]}},
       pads:{prob:.7, patchPool:["E.ORGAN 1"], samplerPool:["percussive_organ","rock_organ"], recipe:{model:["sampler","sampler"],wave:"saw",cutoff:[1000,1700],detune:[.003,.008],attack:[.05,.3],level:[.42,.56],send:[.25,.4],dsend:[.1,.25]}},
@@ -3010,7 +3011,7 @@
       kits:["four","pulse"],
       fills:["riser","impact","cut","stutter"],
       bass:{patterns:["stab","rolling","drive","syncopated"], recipe:{model:["acid"], cutoff:[420,700], res:[0.3,0.45], level:[1.1,1.3], send:[0,0.08], dsend:[0,0.1]}, inserts:{prob:0.6, max:2, pool:[["distort",{drive:[0.3,0.6], mix:[0.6,0.9]}],["filtersweep",{rateBars:[2,4], lo:[-0.8,-0.3], hi:[0.8,1.4], res:[0.35,0.5]}]]}},
-      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[2,4], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.3,0.42], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},
+      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[2,4], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.5,0.62], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.3,0.42]->[0.5,0.62], the standbylightdrive calibration — same mechanism, pluck/fm template lead sampled-by-default under a heavy mix. Matrix unmoved (level is not a verifier feature).
       pads:{prob:0.25, recipe:{model:["saw","organ"], wave:"saw", cutoff:[600,1000], detune:[0.005,0.012], attack:[1,2.5], level:[0.3,0.42], send:[0.3,0.45], dsend:[0.1,0.2]}},
       drums:{kickModel:["909","boom"], snareModel:["clap"], hatModel:["metal","noise"], kick:[1.2,1.45], snare:[0.65,0.9], hat:[0.7,1.05], tune:[1,1.15], send:[0.1,0.25], dsend:[0.05,0.15]},
       fx:{reverb:[0.3,0.48], delayBeats:[0.5,0.75], delayFb:[0.3,0.45], delayCut:[2200,3400], pump:[0.17,0.39], crackle:[0.04,0.2], lowcut:[30,45], highcut:[0,0], comp:[0.23,0.45], grit:[0.3,0.6]},
@@ -3029,7 +3030,7 @@
       kits:["four","open"],
       fills:["hat rush","drum fill","riser"],
       bass:{patterns:["stab","rolling","drive","syncopated"], recipe:{model:["acid"], cutoff:[420,700], res:[0.3,0.45], level:[1.1,1.3], send:[0,0.08], dsend:[0,0.1]}, inserts:{prob:0.6, max:2, pool:[["distort",{drive:[0.3,0.6], mix:[0.6,0.9]}],["filtersweep",{rateBars:[2,4], lo:[-0.8,-0.3], hi:[0.8,1.4], res:[0.35,0.5]}]]}},
-      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.3,0.42], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},
+      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.5,0.62], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.3,0.42]->[0.5,0.62], the standbylightdrive calibration — same mechanism, pluck/fm template lead sampled-by-default under a heavy mix. Matrix unmoved (level is not a verifier feature).
       pads:{prob:0.25, recipe:{model:["saw","organ"], wave:"saw", cutoff:[600,1000], detune:[0.005,0.012], attack:[1,2.5], level:[0.3,0.42], send:[0.3,0.45], dsend:[0.1,0.2]}},
       drums:{kickModel:["909","boom"], snareModel:["clap","noise"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.75,1], hat:[1.1,1.4], tune:[0.95,1.1], send:[0.15,0.3], dsend:[0.05,0.15], kit:"power"},
       fx:{reverb:[0.66,0.84], delayBeats:[0.375,0.5], delayFb:[0.15,0.3], delayCut:[2600,3800], pump:[0.13,0.35], crackle:[0.35,0.51], lowcut:[30,45], highcut:[0,0], comp:[0.26,0.48], grit:[0,0]},
@@ -3069,7 +3070,7 @@
       fills:["off","dropout"],
       chordEvery:16,
       bass:{patterns:["pedal","sub","root"], recipe:{model:["sub","saw"], cutoff:[380,650], res:[0.06,0.14], level:[0.6,0.82], send:[0.15,0.35], dsend:[0,0.05]}},
-      lead:{patterns:["composed","composed2","arpup","wander"], patchPool:["E.PIANO 1","TUB BELLS","E.PIANO 4","SHIMMER"], samplerPool:["alto_sax","tenor_sax"], recipe:{model:["stack","stack","dx7","sampler","sampler"], wave:"sine", voices:[1,3], spread:[0.003,0.006], cutoff:[2800,4000], level:[0.4,0.52], send:[0.4,0.6], dsend:[0.2,0.4], vibrato:[0.004,0.009], octave:0.2, attack:0.08, release:[0.45,0.6], sustain:[0.85,0.95]}, inserts:{prob:0.5, max:1, pool:[["chorus",{rate:[0.5,1.1], depth:[0.5,0.7], mix:[0.4,0.6]}]]}},
+      lead:{patterns:["composed","composed2","arpup","wander"], patchPool:["E.PIANO 1","TUB BELLS","E.PIANO 4","SHIMMER"], samplerPool:["alto_sax","tenor_sax"], recipe:{model:["stack","stack","dx7","sampler","sampler"], wave:"sine", voices:[1,3], spread:[0.003,0.006], cutoff:[2800,4000], level:[0.52,0.64], send:[0.4,0.6], dsend:[0.2,0.4], vibrato:[0.004,0.009], octave:0.2, attack:0.08, release:[0.45,0.6], sustain:[0.85,0.95]}, inserts:{prob:0.5, max:1, pool:[["chorus",{rate:[0.5,1.1], depth:[0.5,0.7], mix:[0.4,0.6]}]]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.4,0.52]->[0.52,0.64], the moltenhouse calibration — synth-tuned template lead remapped onto samplers sat buried under a hot bass/pump mix; raising lvl self-trims relative wetness (rev gain = send/lvl). Level is not a verifier feature (matrix unmoved); state fixtures drift for exactly this class.
       pads:{prob:1, samplerPool:["ahh_choir","strings"], recipe:{model:["saw","choir","strings","sampler"], wave:"saw", cutoff:[1100,1800], detune:[0.004,0.009], attack:[1.2,2.4], mellotron:true, level:[0.6,0.8], send:[0.5,0.7], dsend:[0.1,0.25]}, inserts:{prob:0.55, max:1, pool:[["chorus",{rate:[0.2,0.5], depth:[0.5,0.75], mix:[0.4,0.6]}]]}},
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.4,0.65], snare:[0.25,0.45], hat:[0.25,0.45], tune:[0.9,1], send:[0.2,0.4], dsend:[0,0.05]},
       fx:{reverb:[0.61,0.79], delayBeats:[0.75,1.5], delayFb:[0.15,0.3], delayCut:[2000,3000], pump:[0,0.22], crackle:[0.08,0.24], lowcut:[0,0], highcut:[2600,3400], comp:[0.09,0.31]},
@@ -3242,7 +3243,7 @@
       kits:["boombap","breaks"],
       fills:["off","drum fill","downlift"],
       bass:{patterns:["root","simple","off"], recipe:{model:["saw","sub"], cutoff:[400,700], res:[0.05,0.15], level:[0.8,1], send:[0.1,0.2], dsend:[0,0.08]}},
-      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.3,0.42], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},
+      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.5,0.62], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.3,0.42]->[0.5,0.62], the standbylightdrive calibration — same mechanism, pluck/fm template lead sampled-by-default under a heavy mix. Matrix unmoved (level is not a verifier feature).
       pads:{prob:0.25, recipe:{model:["saw","organ"], wave:"saw", cutoff:[600,1000], detune:[0.005,0.012], attack:[1,2.5], level:[0.3,0.42], send:[0.3,0.45], dsend:[0.1,0.2]}},
       drums:{kickModel:["boom","808"], snareModel:["crack","noise"], hatModel:["noise"], kick:[1.1,1.35], snare:[0.8,1.05], hat:[0.6,0.9], tune:[0.9,1.05], send:[0.12,0.25], dsend:[0.05,0.15], kit:"room"},
       fx:{reverb:[0.44,0.62], delayBeats:[0.5,0.75], delayFb:[0.2,0.35], delayCut:[1800,2800], pump:[0.29,0.51], crackle:[0.28,0.44], lowcut:[0,25], highcut:[0,0], comp:[0.39,0.61]},
@@ -3338,7 +3339,7 @@
       kits:["shuffle","boombap","shuffle"],
       fills:["off","drum fill"],
       bass:{patterns:["walking","walking","melodic"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sampler","piano"], cutoff:[500,1000], res:[0.05,0.15], level:[0.9,1.1], send:[0.1,0.2], dsend:[0,0.05], attack:0.005, release:[0.08,0.14]}},
-      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.4,0.52], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.005,0.012], octave:0.06, attack:0.025, release:[0.12,0.2], sustain:[0.66,0.78], fenv:[0.15,0.3]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.3,0.8], depth:[0.5,0.8], mix:[0.35,0.55]}]]}},
+      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.52,0.64], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.005,0.012], octave:0.06, attack:0.025, release:[0.12,0.2], sustain:[0.66,0.78], fenv:[0.15,0.3]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.3,0.8], depth:[0.5,0.8], mix:[0.35,0.55]}]]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.4,0.52]->[0.52,0.64], the moltenhouse calibration — synth-tuned template lead remapped onto samplers sat buried under a hot bass/pump mix; raising lvl self-trims relative wetness (rev gain = send/lvl). Level is not a verifier feature (matrix unmoved); state fixtures drift for exactly this class.
       pads:{prob:0.9, recipe:{model:["fm"], wave:"sine", cutoff:[900,1500], detune:[0.003,0.008], attack:[0.8,1.8], level:[0.5,0.68], send:[0.35,0.55], dsend:[0.1,0.2]}},
       drums:{kickModel:["boom","808"], snareModel:["noise"], hatModel:["noise"], kick:[0.9,1.15], snare:[0.5,0.7], hat:[0.5,0.8], tune:[0.85,1], send:[0.15,0.3], dsend:[0,0.1], kit:"acoustic"},
       fx:{reverb:[0.3,0.48], delayBeats:[0.5,0.75], delayFb:[0.1,0.25], delayCut:[2000,3000], pump:[0,0.13], crackle:[0.22,0.38], lowcut:[0,30], highcut:[2600,3400], comp:[0.17,0.39]},
@@ -3358,7 +3359,7 @@
       kits:["boombap","halftime","kick"],
       fills:["off","downlift","riser"],
       bass:{patterns:["rolling","stab","melodic","syncopated"], patchPool:["SYN-BASS 2"], recipe:{model:["saw","sub","dx7"], cutoff:[380,700], res:[0.15,0.3], level:[1,1.2], send:[0,0.08], dsend:[0,0.05]}},
-      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"], wave:"sine", voices:[1,2], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.4,0.52], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.005,0.012], octave:0.06, attack:0.025, release:[0.12,0.2], sustain:[0.66,0.78], fenv:[0.15,0.3]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.3,0.8], depth:[0.5,0.8], mix:[0.35,0.55]}]]}},
+      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"], wave:"sine", voices:[1,2], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.52,0.64], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.005,0.012], octave:0.06, attack:0.025, release:[0.12,0.2], sustain:[0.66,0.78], fenv:[0.15,0.3]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.3,0.8], depth:[0.5,0.8], mix:[0.35,0.55]}]]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.4,0.52]->[0.52,0.64], the moltenhouse calibration — synth-tuned template lead remapped onto samplers sat buried under a hot bass/pump mix; raising lvl self-trims relative wetness (rev gain = send/lvl). Level is not a verifier feature (matrix unmoved); state fixtures drift for exactly this class.
       pads:{prob:0.9, recipe:{model:["fm"], wave:"sine", cutoff:[900,1500], detune:[0.003,0.008], attack:[0.8,1.8], level:[0.5,0.68], send:[0.35,0.55], dsend:[0.1,0.2]}},
       drums:{kickModel:["808","boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.95,1.2], snare:[0.5,0.75], hat:[0.45,0.75], tune:[0.85,1], send:[0.2,0.35], dsend:[0.05,0.2]},
       fx:{reverb:[0.7,0.88], delayBeats:[0.75,1.5], delayFb:[0.3,0.5], delayCut:[1800,2800], pump:[0,0.14], crackle:[0.19,0.35], lowcut:[0,25], highcut:[2600,3400], comp:[0.18,0.4]},
@@ -3379,7 +3380,7 @@
       fills:["drum fill","tom fill","off"],
       euclid:{kick:[5,16]},
       bass:{patterns:["rolling","stab","melodic","syncopated"], patchPool:["SYN-BASS 2"], recipe:{model:["saw","sub","dx7"], cutoff:[380,700], res:[0.15,0.3], level:[1,1.2], send:[0,0.08], dsend:[0,0.05]}},
-      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.4,0.52], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.005,0.012], octave:0.06, attack:0.025, release:[0.12,0.2], sustain:[0.66,0.78], fenv:[0.15,0.3]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.3,0.8], depth:[0.5,0.8], mix:[0.35,0.55]}]]}},
+      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.52,0.64], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.005,0.012], octave:0.06, attack:0.025, release:[0.12,0.2], sustain:[0.66,0.78], fenv:[0.15,0.3]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.3,0.8], depth:[0.5,0.8], mix:[0.35,0.55]}]]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.4,0.52]->[0.52,0.64], the moltenhouse calibration — synth-tuned template lead remapped onto samplers sat buried under a hot bass/pump mix; raising lvl self-trims relative wetness (rev gain = send/lvl). Level is not a verifier feature (matrix unmoved); state fixtures drift for exactly this class.
       pads:{prob:0.9, recipe:{model:["fm"], wave:"sine", cutoff:[900,1500], detune:[0.003,0.008], attack:[0.8,1.8], level:[0.5,0.68], send:[0.35,0.55], dsend:[0.1,0.2]}},
       drums:{kickModel:["808","boom"], snareModel:["crack"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.7,0.95], hat:[0.9,1.2], tune:[1.05,1.2], send:[0.1,0.2], dsend:[0.1,0.25]},
       fx:{reverb:[0.44,0.62], delayBeats:[0.5,0.75], delayFb:[0.25,0.4], delayCut:[2200,3400], pump:[0.04,0.26], crackle:[0.08,0.24], lowcut:[25,40], highcut:[0,0], comp:[0.42,0.64]},
@@ -3514,7 +3515,7 @@
       kits:["off","kick"],
       fills:["off"],
       bass:{patterns:["walking","walking","melodic"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sampler","piano"], cutoff:[500,1000], res:[0.05,0.15], level:[0.9,1.1], send:[0.1,0.2], dsend:[0,0.05], attack:0.005, release:[0.08,0.14]}},
-      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.4,0.52], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.005,0.012], octave:0.06, attack:0.025, release:[0.12,0.2], sustain:[0.66,0.78], fenv:[0.15,0.3]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.3,0.8], depth:[0.5,0.8], mix:[0.35,0.55]}]]}},
+      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.52,0.64], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.005,0.012], octave:0.06, attack:0.025, release:[0.12,0.2], sustain:[0.66,0.78], fenv:[0.15,0.3]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.3,0.8], depth:[0.5,0.8], mix:[0.35,0.55]}]]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.4,0.52]->[0.52,0.64], the moltenhouse calibration — synth-tuned template lead remapped onto samplers sat buried under a hot bass/pump mix; raising lvl self-trims relative wetness (rev gain = send/lvl). Level is not a verifier feature (matrix unmoved); state fixtures drift for exactly this class.
       pads:{prob:0.9, recipe:{model:["fm"], wave:"sine", cutoff:[900,1500], detune:[0.003,0.008], attack:[0.8,1.8], level:[0.5,0.68], send:[0.35,0.55], dsend:[0.1,0.2]}},
       drums:{kickModel:["boom","808"], snareModel:["noise"], hatModel:["noise"], kick:[1.3,1.6], snare:[0.4,0.6], hat:[0.3,0.5], tune:[0.78,0.9], send:[0.3,0.5], dsend:[0.1,0.3]},
       fx:{reverb:[0.38,0.56], delayBeats:[0.5,0.75], delayFb:[0.1,0.25], delayCut:[2000,3000], pump:[0.06,0.28], crackle:[0.16,0.32], lowcut:[0,30], highcut:[2600,3400], comp:[0.13,0.35]},
@@ -3573,7 +3574,7 @@
       fills:["off","micro lick"],
       chordEvery:8,
       bass:{patterns:["rolling","stab","melodic","syncopated"], patchPool:["SYN-BASS 2"], recipe:{model:["saw","sub","dx7"], cutoff:[380,700], res:[0.15,0.3], level:[1,1.2], send:[0,0.08], dsend:[0,0.05]}},
-      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"], wave:"sine", voices:[1,2], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.4,0.52], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.005,0.012], octave:0.06, attack:0.025, release:[0.12,0.2], sustain:[0.66,0.78], fenv:[0.15,0.3]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.3,0.8], depth:[0.5,0.8], mix:[0.35,0.55]}]]}},
+      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"], wave:"sine", voices:[1,2], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.52,0.64], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.005,0.012], octave:0.06, attack:0.025, release:[0.12,0.2], sustain:[0.66,0.78], fenv:[0.15,0.3]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.3,0.8], depth:[0.5,0.8], mix:[0.35,0.55]}]]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.4,0.52]->[0.52,0.64], the moltenhouse calibration — synth-tuned template lead remapped onto samplers sat buried under a hot bass/pump mix; raising lvl self-trims relative wetness (rev gain = send/lvl). Level is not a verifier feature (matrix unmoved); state fixtures drift for exactly this class.
       pads:{prob:0.9, recipe:{model:["fm"], wave:"sine", cutoff:[900,1500], detune:[0.003,0.008], attack:[0.8,1.8], level:[0.5,0.68], send:[0.35,0.55], dsend:[0.1,0.2]}},
       drums:{kickModel:["boom"], snareModel:["noise","clap"], hatModel:["noise"], kick:[0.5,0.75], snare:[0.35,0.55], hat:[0.3,0.5], tune:[0.9,1.02], send:[0.2,0.4], dsend:[0,0.1]},
       fx:{reverb:[0.87,1], delayBeats:[0.5,0.75], delayFb:[0.15,0.3], delayCut:[2400,3400], pump:[0,0.12], crackle:[0.04,0.2], lowcut:[0,0], highcut:[0,0], comp:[0.03,0.25]},
@@ -3653,7 +3654,7 @@
       kits:["shuffle","four"],
       fills:["off","drum fill","kit fill"],
       bass:{patterns:["rolling","stab","melodic","syncopated"], patchPool:["SYN-BASS 2"], recipe:{model:["saw","sub","dx7"], cutoff:[380,700], res:[0.15,0.3], level:[1,1.2], send:[0,0.08], dsend:[0,0.05]}},
-      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"], wave:"sine", voices:[3,5], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.4,0.52], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.005,0.012], octave:0.06, attack:0.025, release:[0.12,0.2], sustain:[0.66,0.78], fenv:[0.15,0.3]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.3,0.8], depth:[0.5,0.8], mix:[0.35,0.55]}]]}},
+      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"], wave:"sine", voices:[3,5], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.52,0.64], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.005,0.012], octave:0.06, attack:0.025, release:[0.12,0.2], sustain:[0.66,0.78], fenv:[0.15,0.3]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.3,0.8], depth:[0.5,0.8], mix:[0.35,0.55]}]]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.4,0.52]->[0.52,0.64], the moltenhouse calibration — synth-tuned template lead remapped onto samplers sat buried under a hot bass/pump mix; raising lvl self-trims relative wetness (rev gain = send/lvl). Level is not a verifier feature (matrix unmoved); state fixtures drift for exactly this class.
       pads:{prob:0.9, recipe:{model:["fm"], wave:"sine", cutoff:[900,1500], detune:[0.003,0.008], attack:[0.8,1.8], level:[0.5,0.68], send:[0.35,0.55], dsend:[0.1,0.2]}},
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.95,1.2], snare:[0.6,0.85], hat:[0.55,0.85], tune:[0.95,1.1], send:[0.12,0.24], dsend:[0.05,0.15], kit:"acoustic"},
       fx:{reverb:[0.79,0.97], delayBeats:[0.75,1], delayFb:[0.3,0.45], delayCut:[2200,3200], pump:[0.15,0.37], crackle:[0.12,0.28], lowcut:[0,20], highcut:[0,0], comp:[0.31,0.53]},
@@ -3847,7 +3848,7 @@
       kits:["boombap","halftime","kick"],
       fills:["off","downlift","riser"],
       bass:{patterns:["rolling","stab","melodic","syncopated"], patchPool:["SYN-BASS 2"], recipe:{model:["saw","sub","dx7"], cutoff:[380,700], res:[0.15,0.3], level:[1,1.2], send:[0,0.08], dsend:[0,0.05]}},
-      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.3,0.42], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},
+      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.5,0.62], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.3,0.42]->[0.5,0.62], the standbylightdrive calibration — same mechanism, pluck/fm template lead sampled-by-default under a heavy mix. Matrix unmoved (level is not a verifier feature).
       pads:{prob:0.25, recipe:{model:["saw","organ"], wave:"saw", cutoff:[600,1000], detune:[0.005,0.012], attack:[1,2.5], level:[0.3,0.42], send:[0.3,0.45], dsend:[0.1,0.2]}},
       drums:{kickModel:["808","boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.95,1.2], snare:[0.5,0.75], hat:[0.45,0.75], tune:[0.85,1], send:[0.2,0.35], dsend:[0.05,0.2]},
       fx:{reverb:[0.79,0.97], delayBeats:[0.75,1.5], delayFb:[0.3,0.5], delayCut:[1800,2800], pump:[0.01,0.23], crackle:[0.05,0.21], lowcut:[0,25], highcut:[0,0], comp:[0.26,0.48]},
@@ -4000,7 +4001,7 @@
       kits:["kick","off"],
       fills:["off","downlift"],
       bass:{patterns:["root","simple","walking"], recipe:{model:["sub","sampler"], samplerPool:["acoustic_bass"], cutoff:[500,900], level:[0.55,0.75], send:[0.15,0.3], dsend:[0,0.08]}},
-      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[2,4], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.3,0.42], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},
+      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[2,4], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.5,0.62], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.3,0.42]->[0.5,0.62], the standbylightdrive calibration — same mechanism, pluck/fm template lead sampled-by-default under a heavy mix. Matrix unmoved (level is not a verifier feature).
       pads:{prob:0.25, recipe:{model:["saw","organ"], wave:"saw", cutoff:[600,1000], detune:[0.005,0.012], attack:[1,2.5], level:[0.3,0.42], send:[0.3,0.45], dsend:[0.1,0.2]}},
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.6,0.85], snare:[0.4,0.6], hat:[0.3,0.5], tune:[0.95,1.1], send:[0.1,0.2], dsend:[0,0.05]},
       fx:{reverb:[0.35,0.53], delayBeats:[0.375,0.5], delayFb:[0.15,0.3], delayCut:[2600,3800], pump:[0.21,0.43], crackle:[0.31,0.47], lowcut:[30,45], highcut:[2600,3400], comp:[0.23,0.45], grit:[0,0]},
@@ -4041,7 +4042,7 @@
       kits:["boombap","breaks"],
       fills:["off","drum fill","downlift"],
       bass:{patterns:["root","simple","off"], recipe:{model:["saw","sub"], cutoff:[400,700], res:[0.05,0.15], level:[0.8,1], send:[0.1,0.2], dsend:[0,0.08]}},
-      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.3,0.42], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},
+      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.5,0.62], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.3,0.42]->[0.5,0.62], the standbylightdrive calibration — same mechanism, pluck/fm template lead sampled-by-default under a heavy mix. Matrix unmoved (level is not a verifier feature).
       pads:{prob:0.25, recipe:{model:["saw","organ"], wave:"saw", cutoff:[600,1000], detune:[0.005,0.012], attack:[1,2.5], level:[0.3,0.42], send:[0.3,0.45], dsend:[0.1,0.2]}},
       drums:{kickModel:["boom","808"], snareModel:["crack","noise"], hatModel:["noise"], kick:[1.1,1.35], snare:[0.8,1.05], hat:[0.6,0.9], tune:[0.9,1.05], send:[0.12,0.25], dsend:[0.05,0.15], kit:"room"},
       fx:{reverb:[0.39,0.57], delayBeats:[0.5,0.75], delayFb:[0.2,0.35], delayCut:[1800,2800], pump:[0.2,0.42], crackle:[0.5,0.66], lowcut:[0,25], highcut:[2600,3400], comp:[0.34,0.56]},
@@ -4098,7 +4099,7 @@
       kits:["bossa","shuffle"],
       fills:["micro lick","off"],
       bass:{patterns:["dub","simple","sub"], samplerPool:["acoustic_bass"], recipe:{model:["sub","saw","sampler"], cutoff:[300,600], res:[0.05,0.2], level:[1,1.25], send:[0.05,0.12], dsend:[0,0.1]}, inserts:{prob:0.5, max:1, pool:[["distort",{drive:[0.1,0.22], mix:[0.35,0.6]}]]}},
-      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.4,0.52], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.005,0.012], octave:0.06, attack:0.025, release:[0.12,0.2], sustain:[0.66,0.78], fenv:[0.15,0.3]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.3,0.8], depth:[0.5,0.8], mix:[0.35,0.55]}]]}},
+      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.52,0.64], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.005,0.012], octave:0.06, attack:0.025, release:[0.12,0.2], sustain:[0.66,0.78], fenv:[0.15,0.3]}, inserts:{prob:0.4, max:1, pool:[["chorus",{rate:[0.3,0.8], depth:[0.5,0.8], mix:[0.35,0.55]}]]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.4,0.52]->[0.52,0.64], the moltenhouse calibration — synth-tuned template lead remapped onto samplers sat buried under a hot bass/pump mix; raising lvl self-trims relative wetness (rev gain = send/lvl). Level is not a verifier feature (matrix unmoved); state fixtures drift for exactly this class.
       pads:{prob:0.9, recipe:{model:["fm"], wave:"sine", cutoff:[900,1500], detune:[0.003,0.008], attack:[0.8,1.8], level:[0.5,0.68], send:[0.35,0.55], dsend:[0.1,0.2]}},
       drums:{kickModel:["boom"], snareModel:["noise","crack"], hatModel:["noise"], kick:[0.5,0.72], snare:[0.35,0.55], hat:[0.4,0.6], tune:[0.9,1.02], send:[0.2,0.4], dsend:[0,0.1]},
       fx:{reverb:[0.4,0.58], delayBeats:[0.5,0.9], delayFb:[0.12,0.28], delayCut:[2200,3200], pump:[0.03,0.25], crackle:[0.28,0.44], lowcut:[0,0], highcut:[2600,3400], comp:[0.3,0.52]},
@@ -4157,7 +4158,7 @@
       fills:["drum fill","tom fill","off"],
       euclid:{kick:[5,16]},
       bass:{patterns:["root","simple","off"], recipe:{model:["saw","sub"], cutoff:[400,700], res:[0.05,0.15], level:[0.8,1], send:[0.1,0.2], dsend:[0,0.08]}},
-      lead:{patterns:["off","off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[3,5], spread:[0.002,0.005], cutoff:[1600,2800], level:[0.3,0.42], send:[0.3,0.5], dsend:[0.3,0.5], octave:0, attack:0.003, release:[0.05,0.09], sustain:[0.5,0.62], fenv:[0.5,0.8]}},
+      lead:{patterns:["off","off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[3,5], spread:[0.002,0.005], cutoff:[1600,2800], level:[0.5,0.62], send:[0.3,0.5], dsend:[0.3,0.5], octave:0, attack:0.003, release:[0.05,0.09], sustain:[0.5,0.62], fenv:[0.5,0.8]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.3,0.42]->[0.5,0.62], the standbylightdrive calibration — same mechanism, pluck/fm template lead sampled-by-default under a heavy mix. Matrix unmoved (level is not a verifier feature).
       pads:{prob:0.25, recipe:{model:["saw","organ"], wave:"saw", cutoff:[500,850], detune:[0.005,0.012], attack:[2,3.5], level:[0.3,0.42], send:[0.45,0.65], dsend:[0.15,0.3]}},
       drums:{kickModel:["808","boom"], snareModel:["crack"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.7,0.95], hat:[0.9,1.2], tune:[1.05,1.2], send:[0.1,0.2], dsend:[0.1,0.25]},
       fx:{reverb:[0.71,0.89], delayBeats:[0.5,0.75], delayFb:[0.25,0.4], delayCut:[2200,3400], pump:[0.06,0.28], crackle:[0.03,0.19], lowcut:[25,40], highcut:[0,0], comp:[0.29,0.51]},
@@ -4176,7 +4177,7 @@
       fills:["drum fill","tom fill","off"],
       euclid:{kick:[5,16]},
       bass:{patterns:["root","simple","octaves"], recipe:{model:["saw","sub"], cutoff:[450,750], res:[0.08,0.16], level:[0.95,1.15], send:[0.05,0.12], dsend:[0,0.06]}},
-      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.3,0.42], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},
+      lead:{patterns:["off","sparse","pentaup"], recipe:{model:["pluck","fm"], wave:"sine", voices:[1,3], spread:[0.002,0.005], cutoff:[1800,2800], level:[0.5,0.62], send:[0.25,0.4], dsend:[0.25,0.4], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}},   // MUSICALITY balance loop 1 (buried-lead template class): level [0.3,0.42]->[0.5,0.62], the standbylightdrive calibration — same mechanism, pluck/fm template lead sampled-by-default under a heavy mix. Matrix unmoved (level is not a verifier feature).
       pads:{prob:0.25, recipe:{model:["saw","organ"], wave:"saw", cutoff:[600,1000], detune:[0.005,0.012], attack:[1,2.5], level:[0.3,0.42], send:[0.3,0.45], dsend:[0.1,0.2]}},
       drums:{kickModel:["808","boom"], snareModel:["crack"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.7,0.95], hat:[0.9,1.2], tune:[1.05,1.2], send:[0.1,0.2], dsend:[0.1,0.25]},
       fx:{reverb:[0.39,0.57], delayBeats:[0.5,0.75], delayFb:[0.25,0.4], delayCut:[2200,3400], pump:[0,0.15], crackle:[0.28,0.44], lowcut:[25,40], highcut:[2600,3400], comp:[0.26,0.48]},
@@ -4769,6 +4770,7 @@
       fills:["off"],
       chordEvery:32,
       bass:{patterns:["pedal","off","root"], samplerPool:["church_organ","contrabass"], recipe:{model:["sampler","sampler"], cutoff:[500,1000], res:[0.05,0.1], level:[0.4,0.6], send:[0.3,0.5], dsend:[0,0.08], attack:[0.05,0.15], release:[0.6,1.2]}},
+      leadOctave:-2,   // MUSICALITY balance loop 1 (REGISTER): the score asked the ahh_choir up to midi 107 vs its natural ceiling 87 (63% of lead notes folded on seed 1 — the fold saved the ear but bent the contour). -2 octaves lands the chant line at midi 47-83, inside the choir's [27..87] window and in an actual chant register (tenor-alto, not whistle-tone soprano)
       lead:{patterns:["wander","sparse","composed"], samplerPool:["ahh_choir","ahh_choir","ohh_voices"], recipe:{model:["sampler","sampler"], wave:"sine", voices:[1,1], spread:[0.001,0.002], cutoff:[1800,2800], level:[0.5,0.62], send:[0.5,0.7], dsend:[0,0.1], attack:[0.08,0.2], release:[0.5,1]}},
       pads:{prob:0.4, samplerPool:["church_organ"], recipe:{model:["sampler","sampler"], wave:"sine", cutoff:[700,1300], detune:[0.001,0.003], attack:[1.5,3], release:[2,4], swell:1, level:[0.3,0.42], send:[0.45,0.65], dsend:[0,0.08]}},
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.4,0.6], snare:[0.3,0.5], hat:[0.2,0.4], tune:[0.9,1], send:[0.2,0.4], dsend:[0,0]},
@@ -5953,8 +5955,9 @@
     {
       const top=ws.slice().sort((a,b)=>b.w-a.w)[0], G=top&&GENRES[top.g];
       const declared={ sampleEvents:v=>Array.isArray(v)&&v.length, reverbColor:v=>!!v,
-        autoTune:v=>v!=null, masterComp:v=>v!=null, introMode:v=>!!v, blueNote:v=>v>0, padDouble:v=>!!v };
-      if(G) for(const d of ["sampleEvents","reverbColor","autoTune","masterComp","introMode","blueNote","padDouble"])
+        autoTune:v=>v!=null, masterComp:v=>v!=null, introMode:v=>!!v, blueNote:v=>v>0, padDouble:v=>!!v,
+        leadOctave:v=>!!v };   // whole-track lead register shift (MUSICALITY balance loop 1: the SCORE asks in the sampler's range — chalkvespers); absent/0 = byte-identical
+      if(G) for(const d of ["sampleEvents","reverbColor","autoTune","masterComp","introMode","blueNote","padDouble","leadOctave"])
         if(declared[d](G[d])) choice[d]=G[d];
     }
     // ---- MUSIC-MIND axes (organ wiring, 2026-07): theory / pipes / rhythm —
@@ -6309,11 +6312,25 @@
         const kk=Math.max(0.05,(target-tail)/Math.max(spb,nat-tail));
         const ideal=secs.map(s=>Math.max(1,s.cycles*kk));
         secs.forEach((s,i)=>{ s.cycles=Math.max(1,Math.round(ideal[i])); });
+        // MUSICALITY balance loop 1 (2026-07): the grow tie-break is ENERGY-
+        // AWARE. The old first-index tie-break stacked ALL residual growth at
+        // the FRONT of the form (intro 2, verse 2, pre-chorus 2 — MEASURED:
+        // dancepop's hook pushed from the form's designed 37.5% to 54% of the
+        // track; the whole worst-10 bloom wall was this one line). Growth
+        // still lands on the section furthest below its proportional share
+        // (shape preserved), but exact TIES now resolve by node energy —
+        // peak > build > exposed/release > cadence > ground — so a longer
+        // track means MORE PAYOFF, not a longer drumless intro. Zero rng;
+        // deterministic; fixtures re-captured for the genres whose growth
+        // pattern moved (matrix-gated 228/228).
+        const GROW_PRI={peak:0,build:1,exposed:2,release:2,cadence:3,ground:4};
+        const priOf=(s)=>GROW_PRI[s.tag||E.sectionTag(s.name)];
         for(let guard=0; guard<4000; guard++){
           const e=dur()-target;
           if(Math.abs(e)<=target*0.1) break;
           if(e<0){                                   // too short: grow the section furthest BELOW its proportional share
-            let bi=0,bd=1/0; for(let i=0;i<secs.length;i++){ const d=secs[i].cycles-ideal[i]; if(d<bd){bd=d;bi=i;} }
+            let bi=0,bd=1/0,bp=1/0; for(let i=0;i<secs.length;i++){ const d=secs[i].cycles-ideal[i], p=priOf(secs[i]);
+              if(d<bd-1e-9 || (d<bd+1e-9 && p<bp)){bd=d;bi=i;bp=p;} }
             secs[bi].cycles++;
           } else {                                   // too long: shrink the section furthest ABOVE its share (with room)
             let bi=-1,bd=-1/0; for(let i=0;i<secs.length;i++){ if(secs[i].cycles<=1) continue; const d=secs[i].cycles-ideal[i]; if(d>bd){bd=d;bi=i;} }
@@ -6882,6 +6899,7 @@
       ...(c.autoTune!=null?{autoTune:c.autoTune}:{}),       // fx wings stage 2: found-vocal auto-tune strength 0..1 (absent = no bend; byte-identical)
       ...(c.masterComp?{masterComp:c.masterComp}:{}),       // fx wings stage 4: 3-band master glue-comp drive (absent/0 = bypass; byte-identical)
       ...(c.blueNote?{blueNote:c.blueNote}:{}),             // blue-note bend strength for a sampled sax/guitar lead (absent/0 = no bends; a separate stream in buildEvents keeps all other events byte-identical)
+      ...(c.leadOctave?{leadOctave:c.leadOctave|0}:{}),     // whole-track lead register shift in octaves (zero-rng, dominant parent; absent = byte-identical) — the anchor-level REGISTER fix: the score asks inside the sampler's natural window
       realHats:!!c.realHats, snarePP:c.snarePP||0,
       // rubato/thunk (neoclassical deep pass): absent keys = zero behavior
       // change in buildEvents — unchanged genres press byte-identically
