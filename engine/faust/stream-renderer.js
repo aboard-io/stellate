@@ -80,14 +80,37 @@
             proc.setParamValue(sfx.slice(0, 4) === "/DX7" ? sfx : "/DX7" + sfx, v);
         procs.push({ proc, R, pending: [], ivals: [], busyUntil: -1, lastOff: null, curOut: 1, curPP: 0 });
       }
+      return { module: u.module, u, procs, chain: await mkChain(u.inserts), chainBarSet: false };
+    }
+
+    // mkChain — persistent insert-effect processors for a unit's declared chain.
+    // Shared by the Faust units (ensureUnit) AND the sampled units
+    // (INSERTS-ON-SAMPLED-VOICES: open()/feedBar below) — same modules, same
+    // param application, state carried across every window for seamless tails.
+    async function mkChain(inserts) {
       const chain = [];
-      for (const eff of (u.inserts || [])) {
+      for (const eff of (inserts || [])) {
         const proc = await mkProc(eff.module);
         const R = "/" + rootOf(eff.module) + "/";
         for (const [k, pv] of Object.entries(eff.params || {})) proc.setParamValue(R + k, pv);
         chain.push({ proc, R, eff });
       }
-      return { module: u.module, u, procs, chain, chainBarSet: false };
+      return chain;
+    }
+
+    // runChain — process one window of a unit-local buffer through its persistent
+    // chain in BS blocks (chunk bases are BS-aligned, so the block walk matches
+    // press's whole-song grid — byte-parity law). Sets tempo-synced barSec once.
+    function runChain(su, ubuf, LEN, spb) {
+      for (const b of su.chain) {
+        if (b.eff.barSec && !su.chainBarSet) b.proc.setParamValue(b.R + "barSec", 4 * spb);
+        for (let s2 = 0; s2 < LEN; s2 += BS) {
+          const len = Math.min(BS, LEN - s2);
+          const o = b.proc.render([ubuf.subarray(s2, s2 + len)], len)[0];
+          for (let i = 0; i < len; i++) ubuf[s2 + i] = o[i];
+        }
+      }
+      su.chainBarSet = true;
     }
 
     // INGEST all of a unit's events into its persistent per-voice change/interval
@@ -205,15 +228,7 @@
         v.pending = ch.slice(ci);
       }
       if (ubuf) {
-        for (const b of us.chain) {
-          if (b.eff.barSec && !us.chainBarSet) b.proc.setParamValue(b.R + "barSec", 4 * spb);
-          for (let s2 = 0; s2 < LEN; s2 += BS) {
-            const len = Math.min(BS, LEN - s2);
-            const o = b.proc.render([ubuf.subarray(s2, s2 + len)], len)[0];
-            for (let i = 0; i < len; i++) ubuf[s2 + i] = o[i];
-          }
-        }
-        us.chainBarSet = true;
+        runChain(us, ubuf, LEN, spb);
         const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
         for (let i = 0; i < LEN; i++) {
           const x = ubuf[i];
@@ -316,7 +331,12 @@
             const holdN = Math.max(Math.max(8, Math.floor((n.atk || 0.01) * SR)), Math.floor(n.durSec * SR));
             n._end = n._s0 + holdN + relN;
           }
-          samplerUnits.set(key, { notes, role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip } });
+          const su = { notes, role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip } };
+          // INSERTS-ON-SAMPLED-VOICES: persistent insert procs for the unit's
+          // declared chain (renderChunk mixes the unit pre-send into a window
+          // buffer, runs the chain, THEN applies sends — the render-core law).
+          if (u.inserts && u.inserts.length) { su.chain = await mkChain(u.inserts); su.chainBarSet = false; }
+          samplerUnits.set(key, su);
           unitOrder.push({ key, kind: "sampler" });
         } else {
           const us = await ensureUnit(key, u);
@@ -502,6 +522,8 @@
           let su = ST.samplerUnits.get(key);
           if (!su) {
             su = { notes: [], role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip } };
+            // INSERTS-ON-SAMPLED-VOICES (wavOut lane): same persistent chain as open()
+            if (u.inserts && u.inserts.length) { su.chain = await mkChain(u.inserts); su.chainBarSet = false; }
             ST.samplerUnits.set(key, su);
             ST.unitOrder.push({ key, kind: "sampler" });
           }
@@ -583,7 +605,25 @@
           if (ST.live) su.notes = su.notes.filter((nt) => nt._end > base);   // prune fully-played notes (unbounded live stream)
           const win = su.notes.filter((nt) => nt._s0 < end && nt._end > base);
           const meter = { e: 0, missing: null };
-          if (win.length) SP.mixPCM(win, ST.buffers, SR, { dry, rev, del }, su.sends, { base, len: LEN, total: TOTAL }, meter);
+          if (su.chain) {
+            // INSERTS-ON-SAMPLED-VOICES: mirror press's sampler-chain walk,
+            // windowed. Notes mix PRE-SEND (strip + per-note gain inside) onto a
+            // unit-local window buffer; the PERSISTENT chain processes the WHOLE
+            // window (even a noteless one — echo/sweep tails must ring on); then
+            // the sends apply at the unit's byUnit position. The meter re-measures
+            // POST-chain (that is the dry energy that actually reaches the mix).
+            const ubuf = new Float32Array(LEN);
+            if (win.length) SP.mixPCM(win, ST.buffers, SR, { dry: ubuf, rev: ubuf, del: ubuf },
+              { dry: 1, rev: 0, del: 0, strip: su.sends.strip }, { base, len: LEN, total: TOTAL }, meter);
+            runChain(su, ubuf, LEN, spb);
+            const dg = su.sends.dry != null ? su.sends.dry : 1, rg = su.sends.rev || 0, lg = su.sends.del || 0;
+            meter.e = 0;
+            for (let i = 0; i < LEN; i++) {
+              const x = ubuf[i];
+              dry[i] += x * dg; rev[i] += x * rg; del[i] += x * lg;
+              const xd = x * dg; meter.e += xd * xd;
+            }
+          } else if (win.length) SP.mixPCM(win, ST.buffers, SR, { dry, rev, del }, su.sends, { base, len: LEN, total: TOTAL }, meter);
           const notes = expect ? (expect[key] || 0) : win.filter((nt) => nt._s0 >= base && nt._s0 < end).length;
           auditVoice(voices, key, su.role || auditRole(null, key), notes, meter.e, LEN, meter.missing);
         } else {

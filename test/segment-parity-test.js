@@ -126,13 +126,21 @@ async function runState(name, state) {
 
 (async () => {
   const cases = [
-    ["default_song", (() => { const s = E.defaultState(); s.foundSources.forEach((f) => { f.fsPath = path.join(ROOT, "found", "tokyo_station.wav"); }); return s; })()],
+    // found/ ships MP3 since the payload diet (HOSTING.md §3) — the old .wav is
+    // gone; ffdecode is format-agnostic, engine.test.js points at the same file.
+    ["default_song", (() => { const s = E.defaultState(); s.foundSources.forEach((f) => { f.fsPath = path.join(ROOT, "found", "tokyo_station.mp3"); }); return s; })()],
     ["jungle_s2 (sampler trombone)", K.track("jungle", { seed: 2 })],
     ["spokenword_s3 (bed + felt_piano/sax samplers)", K.track("spokenword", { seed: 3 })],
     ["acidhouse_s7 (tb303 MONO-LEGATO/acid — R1)", K.track("acidhouse", { seed: 7 })],
     ["darksynth_s7 (synclead mono)", K.track("darksynth", { seed: 7 })],
     ["house_s7 (stereo juno60 + reverb color + master_mb)", K.track("house", { seed: 7 })],
     ["jazz_s3 (SAMPLED brush drum kit — native one-shots)", K.track("jazz", { seed: 3 })],
+    // INSERTS-ON-SAMPLED-VOICES coverage: declared insert chains on native-PCM
+    // units (press whole-song chain vs stream persistent windowed chain).
+    // (chosen for events INSIDE the default 40s cap: trance_s1 bass 118 ev,
+    // citypop_s2 bass 34 ev — pads/melodies with inserts often enter later.)
+    ["trance_s1 (SAMPLED-voice inserts: bass filtersweep[barSec] + lead chorus)", K.track("trance", { seed: 1 })],
+    ["citypop_s2 (SAMPLED-voice chorus on slap bass — the city-pop gloss)", K.track("citypop", { seed: 2 })],
   ];
   let all = true; const summary = [];
   for (const [name, stRaw] of cases) {

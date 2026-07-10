@@ -206,13 +206,18 @@
     if (fam === "guitar") return (h & 1) ? { flanger: { rate: 0.3, depth: 0.7, feedback: 0.4, mix: 0.22 } } : { delay: delaySpec };
     return { delay: delaySpec };
   }
-  const stripFor = (role, id, state, m) => {
+  const stripFor = (role, id, state, m, hasNativeInserts) => {
     const drive = role === "drum" ? 0 : heavyDriveOf(m);
+    // INSERTS-ON-SAMPLED-VOICES (2026-07): when the unit carries its declared
+    // insert chain NATIVELY (samplerUnit below), the hashed voiceFxStage extra
+    // is skipped — the genre's own declared choice wins over the house default
+    // (same law as defaultInserts: "a non-empty kernel array overrides").
+    // Units without declared inserts keep the exact pre-existing strip.
     // BOLD path: a genre-declared distortion on a sampled voice becomes a real
-    // heavy channel strip (the inserts it can't run natively, folded in).
+    // heavy channel strip (distort stays strip-folded — see samplerUnit).
     if (drive >= HEAVY_MIN) {
       const heavy = aggressiveStrip(role, drive);
-      const extra = voiceFxStage(role, id, state);   // leads keep their delay/leslie air on top
+      const extra = hasNativeInserts ? null : voiceFxStage(role, id, state);   // leads keep their delay/leslie air on top
       return extra ? { ...heavy, ...extra } : heavy;
     }
     const base = role === "bass" ? STRIP_PROFILES.bass
@@ -224,7 +229,7 @@
     const gritted = drive > 0.01
       ? { ...base, sat: clamp((base.sat || 0) + 0.45 * drive, 0, 1), satMix: clamp((base.satMix != null ? base.satMix : 0.3) + 0.3 * drive, 0, 1) }
       : base;
-    const extra = voiceFxStage(role, id, state);
+    const extra = hasNativeInserts ? null : voiceFxStage(role, id, state);
     return extra ? { ...gritted, ...extra } : gritted;   // new object only when augmented
   };
   // AIR — modest reverb-send lift on sampled pads/leads (let them breathe). A
@@ -256,6 +261,8 @@
       if (s.leslie) L.push("leslie");
       if (s.delay) L.push("tape echo");
       if (s.flanger) L.push("flanger");
+      // native-honored declared inserts (INSERTS-ON-SAMPLED-VOICES) ride on top
+      if (u.inserts && u.inserts.length) for (const i of u.inserts) L.push(INSERT_LABELS[i.type] || i.type);
     } else if (u.inserts && u.inserts.length) {
       for (const i of u.inserts) L.push(INSERT_LABELS[i.type] || i.type);
     }
@@ -550,18 +557,34 @@
       } : null;
       // AIR: modest reverb-send lift on sampled pad/lead (breathe), bass untouched.
       const airRev = clamp(base.rev * (AIR_REV[role] || 1), 0, 6);
-      // Faust inserts are DROPPED on sampled voices (native PCM path renders no
-      // Faust module) — the band-appropriate channel STRIP is their per-voice FX
-      // (STRIP_PROFILES). Clearing inserts also keeps unitCost honest (no phantom
-      // insert cost) and live/press identical (VOICES.md: "Inserts are dropped").
+      // INSERTS-ON-SAMPLED-VOICES (2026-07, the cb766a5 §blues-organ follow-up):
+      // a genre's EXPLICIT resolved insert chain (the kernel's inserts axis,
+      // state.instruments.<voice>.inserts — prob already fired kernel-side) is
+      // HONORED on the native PCM lane. The unit carries the normalized chain
+      // (insertChain clamps, same modules synth units run); press/stream process
+      // the unit's pre-send PCM through the real dist/ insert modules (the
+      // render-core ubuf law) and live builds Web Audio twins per unit. Two
+      // deliberate exclusions:
+      //   distort — already folded into the heavy/gritted channel strip
+      //             (heavyDriveOf/aggressiveStrip, shipped + tuned); running
+      //             insert_distort too would double the drive.
+      //   the two-per-voice DEFAULT chain — sampled voices keep the channel
+      //             STRIP as their house FX (defaultInserts never fires here:
+      //             role/state are not passed, so an absent/empty declaration
+      //             yields [] — byte-identical to the old drop, absent-law).
+      // unitCost counts the chain automatically (measured: zero states cross
+      // BUDGET), and trimToBudget's insert shed applies generically.
       // INSTRUMENT-REGISTER LAW: the zone roots bound honest playback — notes
       // above topRoot + SAMPLER_STRETCH_ST octave-fold DOWN, notes below
       // bottomRoot - SAMPLER_FLOOR_ST octave-fold UP (mapEvents).
+      const declared = Array.isArray(m.inserts)
+        ? m.inserts.filter((i) => i && i.type && i.type !== "distort") : [];
+      const nativeIns = declared.length ? insertChain({ ...m, inserts: declared }, c) : [];
       const zs = Array.isArray(sp.zones) ? sp.zones : [];
       const zRoots = zs.map((z) => z.root || 60);
       const topRoot = zRoots.length ? Math.max(...zRoots) : 0;
       const botRoot = zRoots.length ? Math.min(...zRoots) : 0;
-      return { ...base, inserts: [], rev: airRev, gmul: base.gmul * (role === "bass" ? 0.5 : 1), module: null, sampler: {
+      return { ...base, inserts: nativeIns, rev: airRev, gmul: base.gmul * (role === "bass" ? 0.5 : 1), module: null, sampler: {
           id: sp.id || "?", sr: sp.sr || 44100,
           zones: zs,
           ...(topRoot ? { stretchMaxHz: 440 * Math.pow(2, (topRoot + SAMPLER_STRETCH_ST - 69) / 12),

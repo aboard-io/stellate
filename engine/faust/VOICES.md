@@ -253,8 +253,21 @@ Adopted substitutions and available upgrades:
   the engine's native sampler plays extracted zones instead. Instruments:
   alto/tenor sax, trumpet, flute, clarinet, vibraphone, string ensemble,
   nylon + steel guitar, bandoneon (tango's voice), upright acoustic bass +
-  percussive/rock organ (the 2026-07 blues acoustic pass). Inserts are
-  dropped on sampler voices (constrain) so live and press render identically.
+  percussive/rock organ (the 2026-07 blues acoustic pass).
+  **INSERTS-ON-SAMPLED-VOICES (2026-07-10):** a genre's EXPLICIT resolved
+  insert chain (`instruments.<voice>.inserts`, the kernel's prob/pool axis) is
+  HONORED on the native lane — press/stream mix the unit PRE-SEND into a
+  unit-local buffer, run the SAME dist/ `insert_*` modules synth units use
+  (render-core's insert law: chain whole-song/windowed-persistent, sends
+  after), and the live ring path builds per-UNIT Web Audio twins
+  (`sampler.js buildInsertNodes`) between the notes and the unit sends.
+  Exclusions: `distort` stays folded into the heavy/gritted channel strip
+  (never doubled), and the two-per-voice DEFAULT chain never applies to
+  sampled voices (the channel strip is their house FX) — a voice with no
+  declared inserts renders byte-identically to the pre-insert engine. When a
+  declared chain is honored, the hashed voiceFxStage extra strip stage is
+  skipped (the genre's own choice wins). Gate: segment-parity trance_s1 /
+  citypop_s2 (byte-equal press↔stream), test/sampler-inserts-live-run.js.
   The BASS voice is sampler-capable too (kernel `bass.samplerPool` →
   `instruments.bass.sampler`, same contract; state-engine resolves model
   "sampler" for every role, with a shorter default attack/release on bass so
