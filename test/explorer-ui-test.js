@@ -1,17 +1,18 @@
 #!/usr/bin/env node
 // faust/explorer-ui-test.js — headless UI gate for the 2026-07-08 explorer
 // product changes (Paul):
-//   1. DEFAULT 4-STEP CLOSED LOOP, waypoint 1 always at the map centre.
+//   1. DEFAULT 3-STEP CLOSED LOOP (a triangle), waypoint 1 always at the map
+//      centre (2026-07-10: 4 -> 3; the two outer stars stay deterministic).
 //   2. Genres laid out DYNAMICALLY at load (computeGenreLayout, deterministic) —
 //      every K.GENRES genre placed, no two stars within a comfortable on-screen
 //      distance AND no two NAME LABELS overlap at the default zoom; zoomable.
 //   3. VIDEO on/off button DEFAULTS OFF.
 // Drives explorer.html headless and asserts (all must PASS):
-//   A. exactly 4 default waypoints on a fresh load;
+//   A. exactly 3 default waypoints on a fresh load;
 //   B. waypoint[0] sits at the computed map centre (within ~1 logical px);
 //   C. the path is a CLOSED loop — pathClosed() true, the drawn constellation
 //      polyline repeats point 1 (n+1 points), and travelStep() wraps seg
-//      0→1→2→3→0 seamlessly, the traveller returning to waypoint[0];
+//      0→1→2→0 seamlessly, the traveller returning to waypoint[0];
 //   D. min pairwise star distance in SCREEN space (default zoom) exceeds the
 //      comfort threshold;
 //   D2. every K.GENRES genre has a computed position AND no two genre NAME LABELS
@@ -70,7 +71,7 @@ async function main() {
   await page.waitForTimeout(500);
   const loadErrs = errs.slice();
 
-  // ---- A/B: 4 waypoints, waypoint[0] at the map centre ----
+  // ---- A/B: 3 waypoints, waypoint[0] at the map centre ----
   const seed = await page.evaluate(() => ({
     n: __S.waypoints.length,
     wp0: { x: __S.waypoints[0].x, y: __S.waypoints[0].y },
@@ -79,7 +80,7 @@ async function main() {
     world: __X.world(),
     closed: __X.pathClosed(),
   }));
-  ok(seed.n === 4, `A: default waypoints = ${seed.n} (want exactly 4)`);
+  ok(seed.n === 3, `A: default waypoints = ${seed.n} (want exactly 3 — the default triangle)`);
   const cErr = Math.hypot(seed.wp0.x - seed.center.x, seed.wp0.y - seed.center.y);
   ok(cErr <= 2, `B: waypoint[0] off map centre by ${cErr.toFixed(2)} logical px (want <=2)`);
   console.log(`\n=== SEED ===`);
@@ -97,7 +98,7 @@ async function main() {
   const nWp = seed.n;
   ok(poly.pts === nWp + 1, `C1: constellation polyline has ${poly.pts} points (want n+1=${nWp + 1} — closing leg drawn)`);
   // drive travelStep deterministically (no audio): pace=8 -> 8 steps per leg,
-  // 4 legs -> 32 steps to return; record seg after each and the traveller pos.
+  // n legs -> n*8 steps to return; record seg after each and the traveller pos.
   const wrap = await page.evaluate(() => {
     __S.pace = 8;
     const c = __X.mapCenter(); void c;
