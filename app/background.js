@@ -124,23 +124,37 @@ const BG_GLYPH=["▢","▣","▦"], BG_LABEL=["off","video+demos","demoscene"];
 const BG_ALT_BEATS=32;   // 8 measures × 4 beats
 const BG_ALT_MS=+(QSFLAGS.get("bgAltMs"))||16000;   // idle wall-clock backstop period (test override)
 const bgAlt={side:"video", beats:0, lastFlip:0, lastBar:0};
+// SUPERIMPOSE vs ALTERNATE (Paul 2026-07-10: "superimpose them"). Mixing BOTH
+// heavy layers (video decode + the demoscene render loop) is a desktop-class
+// luxury: on phones the WAV-first path + the audio load gate are sacred, and weak
+// machines can't spare the cores, so those keep running exactly ONE layer at a
+// time (the old alternation). ?bgMix=1 forces the mix on / ?bgMix=0 forces it off
+// (override the device heuristic — also the headless test hook).
+const BG_MIX_Q = QSFLAGS.get("bgMix");
+const bgCanMix = BG_MIX_Q==="1" ? true : BG_MIX_Q==="0" ? false :
+  !(/Mobi|iPhone|iPad|Android/.test(navigator.userAgent) || (navigator.hardwareConcurrency||8)<=4);
 function bgWant(){
   // THE VIZ VIEW SUPPRESSES the background layers entirely (three exclusive
   // views, Paul 2026-07-10) — bgMode is REMEMBERED, so leaving the viz returns
   // to whatever video state you were in.
   if(S.vizView) return { v:false, d:false };
-  // mode 1 = the alternating program: honour the current side whether LIVE or IDLE
-  // (idle used to force video, which silently defeated the wall-clock alternation).
-  if(bgMode===1) return { v: bgAlt.side==="video", d: bgAlt.side==="demo" };
+  // MODE 1 = the MIXED background (Paul 2026-07-10: "superimpose them"). The demo
+  // canvas was built to composite THROUGH the footage (mix-blend screen @ .45,
+  // see DemoLayer), so on desktop we run BOTH at once — they layer, they don't
+  // fight. Mobile keeps the ALTERNATION (honour the current side whether LIVE or
+  // IDLE) to run only one heavy layer at a time.
+  if(bgMode===1) return bgCanMix ? { v:true, d:true }
+                                 : { v: bgAlt.side==="video", d: bgAlt.side==="demo" };
   return { v:false, d:bgMode===2 };
 }
-// STRICT EXCLUSIVITY (Paul 2026-07-09: "sometimes they are on top of each other"):
-// applyBg IMPOSES bgWant() on both layers, unconditionally, on every render —
-// setEnabled is idempotent in the layers, so this is free when nothing changed,
-// and it steamrolls any rogue enable (a direct setEnabled call, a stale restore)
-// at the next paint. Order is HIDE-then-SHOW: the loser goes display:none BEFORE
-// the winner appears, so not even a same-tick frame ever composites both. The
-// cut is hard (display, no fade) — on the beat, that's the aesthetic.
+// bgWant() IS AUTHORITY: applyBg IMPOSES it on both layers, unconditionally, on
+// every render — setEnabled is idempotent in the layers, so this is free when
+// nothing changed, and it steamrolls any rogue enable (a direct setEnabled call,
+// a stale restore) at the next paint. Desktop mode-1 now WANTS both layers up
+// (the intended superimposition — the demo screen-blends through the footage);
+// mobile mode-1 and every other mode still want at most one, and the HIDE-then-
+// SHOW order keeps the loser display:none before the winner appears so a mode
+// change never flashes an unwanted composite.
 let bgHadV=null;   // previous imposed video state, so vidReset fires on the OFF transition only
 function applyBg(){
   const V=window.VideoLayer, D=window.DemoLayer, w=bgWant();
@@ -167,7 +181,16 @@ function applyBg(){
 // FLIP the background side: video <-> demo (fresh cart each demo turn), announce it.
 function bgFlip(){
   if(bgMode!==1) return;
-  bgAlt.beats=0; bgAlt.lastFlip=Date.now(); bgAlt.side=bgAlt.side==="video"?"demo":"video";
+  bgAlt.beats=0; bgAlt.lastFlip=Date.now();
+  if(bgCanMix){
+    // MIXED (desktop): both layers stay up, so there is no side to flip — instead
+    // roll the demoscene to a FRESH cart each cycle so the superimposed demo keeps
+    // changing (the footage advances on its own musical clock via genreVideo).
+    if(window.DemoLayer&&DemoLayer.next) DemoLayer.next();
+    set({status:"background → fresh demo: "+(window.DemoLayer&&DemoLayer.currentName?DemoLayer.currentName():"microw8")});
+    return;
+  }
+  bgAlt.side=bgAlt.side==="video"?"demo":"video";
   if(bgAlt.side==="demo"&&window.DemoLayer&&DemoLayer.next) DemoLayer.next();   // a DIFFERENT cart each demo turn
   else if(bgAlt.side==="video") vidNextClip();   // footage returns FRESH — next bar advances the clip
   applyBg();
@@ -197,7 +220,7 @@ function bgAltClock(){
 // setEnabled call from outside the program (console, stray future code) can
 // stack the layers for at most ~1s before the XOR law is restored.
 function startBgAltClock(){ if(!bgAltTimer) bgAltTimer=setInterval(()=>{ if(bgMode===1) bgAltClock(); applyBg(); },1000); }
-window.__BGALT={ state:()=>({mode:bgMode,side:bgAlt.side,beats:bgAlt.beats}), tick:bgBarTick, flip:bgFlip };   // headless gate hook
+window.__BGALT={ state:()=>({mode:bgMode,side:bgAlt.side,beats:bgAlt.beats,mix:bgCanMix}), tick:bgBarTick, flip:bgFlip };   // headless gate hook
 // the view cycle sets the background MODE directly (0 = no video, 1 = the
 // footage+demos alternation program). Mode 2 (demoscene-only) left the chip
 // cycle with the one-button redesign; it survives for saved prefs/DemoLayer.

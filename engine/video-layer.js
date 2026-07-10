@@ -348,7 +348,7 @@
     // SLOWLY DRIFT (SLOTH-scaled, weather-like) with gentle rotation/scale for its
     // life. Occasionally 2-3 fire at once (a swarm moment). They live inside vbox,
     // so they warp with the footage (STACK LAW). Cheap transforms -> mobile too.
-    const GLYPH_POOL = MOBILE ? 3 : 4;
+    const GLYPH_POOL = MOBILE ? 3 : 10;   // desktop pool widened (Paul 2026-07-10: "glyph layer more active, bigger glyphs more often") so a dense swarm can stand on-screen at once without teleporting live idents
     glyphEls = [];
     for (let i = 0; i < GLYPH_POOL; i++) {
       const gEl = document.createElement("div");
@@ -545,7 +545,7 @@
   function spawnGlyph() {
     const el = freeGlyph(); if (!el) return 400;
     el.textContent = pick(GLYPHS);
-    const size = rnd(2.6, 24);                       // vmin: small ticker .. huge quarter-screen watermark
+    const size = rnd(4.5, 34);                       // vmin: bigger ticker .. huge half-screen watermark (Paul 2026-07-10: "bigger glyphs")
     el.style.fontSize = size.toFixed(1) + "vmin";
     const inset = Math.min(40, 5 + size * 1.35);     // % — bigger glyph, bigger safe margin
     const x0 = rnd(inset, 100 - inset), y0 = rnd(inset, 100 - inset);
@@ -569,7 +569,7 @@
       el.style.transform = "translate(calc(-50% + " + dx.toFixed(1) + "vmin),calc(-50% + " + dy.toFixed(1) + "vmin)) " +
         "rotate(" + rot1.toFixed(1) + "deg) scale(" + breath.toFixed(3) + ")";
     });
-    const peak = Math.max(.4, .95 - (size - 2.6) / (24 - 2.6) * .5);   // huge watermarks faint, small idents bright
+    const peak = Math.max(.4, .95 - (size - 4.5) / (34 - 4.5) * .5);   // huge watermarks faint, small idents bright (range tracks the widened size band)
     flickerEl(el, dur, peak);
     return dur;
   }
@@ -723,9 +723,13 @@
         tsIv = setInterval(() => { v += back ? -7 : 11; tsEl.textContent = fmtTS(v); }, 120 * SLOTH);
         clearTimeout(tsTimer); tsTimer = setTimeout(() => { clearInterval(tsIv); tsEl.style.opacity = "0"; }, dur); return dur; } },
     // -- alien intelligence --
-    glyph: { w: 7, mobile: true, run() {   // roaming station idents — usually 1, ~22% of the time a 2-3 swarm moment; each spawns anywhere, sized wildly, drifting slowly
-        const swarm = Math.random() < .22 ? 2 + ((Math.random() * 2) | 0) : 1;
-        let dur = 0; for (let i = 0; i < swarm; i++) dur = Math.max(dur, spawnGlyph()); return dur; } },
+    glyph: { w: 14, mobile: true, run() {   // roaming station idents — now the LOUDEST voice in the deck (Paul 2026-07-10: "more active, bigger, more often"). Frequent, often a 3-5 swarm; each spawns anywhere, sized wildly, drifting slowly.
+        const swarm = Math.random() < .45 ? 3 + ((Math.random() * 3) | 0) : 1 + ((Math.random() * 2) | 0);
+        for (let i = 0; i < swarm; i++) spawnGlyph();
+        // return a SHORT scheduling gap, not the glyph's (long, SLOTH-scaled) life:
+        // each glyph self-manages its own fade via flickerEl + its transition, so the
+        // deck can move on and keep layering fresh idents while these still drift.
+        return 650 + Math.random() * 700; } },
     subtitle: { w: 6, mobile: true, run() {   // wrong captions — held ~10x longer (bottom band, non-blocking, so uncapped: a caption that lingers like a dream)
         subEl.textContent = pick(SUBS); const dur = (1200 + Math.random() * 1900) * SLOTH;
         subEl.style.opacity = "1"; clearTimeout(subTimer); subTimer = setTimeout(() => { subEl.style.opacity = "0"; }, dur); return dur; } },
