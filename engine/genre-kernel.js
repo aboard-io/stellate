@@ -477,6 +477,15 @@
     stml_hit_01:{ file:"stml/hit_01.wav", kind:"hit", durSec:1.145 },
     stml_hit_b3:{ file:"stml/hit_b3_02.wav", kind:"hit", durSec:1.623, note:"B3" },
     stml_hit_03:{ file:"stml/hit_03.wav", kind:"hit", durSec:1.29 },
+    // --- Ax_Grinder power chords (freesound pack 14939, CC BY 3.0 — SOURCES.md
+    // attribution row REQUIRED in any distributed render). Drop-D power chords,
+    // Jackson Warrior -> Line6 POD XT: open ~10s wall + palm-muted chugs. Fetched
+    // by tools/fetch-guitar-samples.sh (keyless HQ previews). Claimable by the
+    // grunge/metal wave (no anchor references them yet — pool for wave 2).
+    pc_ds2_open:{ file:"hits/pc_ds2_open.wav", kind:"hit", durSec:10.02, note:"D#2" },
+    pc_ds2_pm:  { file:"hits/pc_ds2_pm.wav",   kind:"hit", durSec:0.26,  note:"D#2" },
+    pc_ds2_pm2: { file:"hits/pc_ds2_pm2.wav",  kind:"hit", durSec:0.5,   note:"D#2" },
+    pc_as2_open:{ file:"hits/pc_as2_open.wav", kind:"hit", durSec:12.49, note:"A#2" },
   };
 
   // ---------- genre -> found-video clip affinity ----------
@@ -1004,7 +1013,25 @@
     nylon_string_guitar: { label:"Nylon String Guitar (FluidR3, MIT)", dir:"nylon_string_guitar", sr:44100, zones:[{file:"z00_r40.wav",root:40.05,lo:0,hi:43,loop:1,ls:192810,le:193345},{file:"z01_r50.wav",root:50,lo:49,hi:53,loop:1,ls:198834,le:200036},{file:"z02_r59.wav",root:59.03,lo:59,hi:62,loop:1,ls:62185,le:62542},{file:"z03_r64.wav",root:63.98,lo:63,hi:67,loop:1,ls:39342,le:39879},{file:"z04_r71.wav",root:71.1,lo:71,hi:75,loop:1,ls:26621,le:27065},{file:"z05_r84.wav",root:84.13,lo:84,hi:127,loop:1,ls:19524,le:19817}] },
     steel_string_guitar: { label:"Steel String Guitar (FluidR3, MIT)", dir:"steel_string_guitar", sr:44100, zones:[{file:"z00_r40.wav",root:39.95,lo:0,hi:43,loop:1,ls:218317,le:220476},{file:"z01_r50.wav",root:49.99,lo:49,hi:53,loop:1,ls:186167,le:187369},{file:"z02_r59.wav",root:59,lo:59,hi:62,loop:1,ls:117803,le:118518},{file:"z03_r64.wav",root:64.03,lo:63,hi:67,loop:1,ls:64535,le:65604},{file:"z04_r71.wav",root:71.04,lo:71,hi:75,loop:1,ls:70810,le:71791},{file:"z05_r84.wav",root:84.13,lo:84,hi:127,loop:1,ls:19524,le:19817}] },
     strings: { label:"Strings (FluidR3, MIT)", dir:"strings", sr:44100, zones:[{file:"z00_r31.wav",root:31,lo:0,hi:31,loop:1,ls:56826,le:150523},{file:"z01_r40.wav",root:40,lo:38,hi:40,loop:1,ls:54138,le:140576},{file:"z02_r49.wav",root:49,lo:48,hi:51,loop:1,ls:75259,le:139523},{file:"z03_r64.wav",root:64,lo:63,hi:65,loop:1,ls:61102,le:159259},{file:"z04_r73.wav",root:73,lo:72,hi:74,loop:1,ls:14601,le:57396},{file:"z05_r83.wav",root:83,lo:82,hi:96,loop:1,ls:27892,le:59980}] },
-    tenor_sax: { label:"Tenor Sax (FluidR3, MIT)", dir:"tenor_sax", sr:44100, zones:[{file:"z00_r47.wav",root:47,lo:0,hi:47,loop:1,ls:72330,le:82353},{file:"z01_r52.wav",root:52.1,lo:52,hi:53,loop:1,ls:59086,le:68400},{file:"z02_r58.wav",root:58.02,lo:58,hi:59,loop:1,ls:92132,le:103465},{file:"z03_r62.wav",root:62.13,lo:62,hi:63,loop:1,ls:120744,le:131639},{file:"z04_r69.wav",root:69.06,lo:68,hi:69,loop:1,ls:84884,le:95352},{file:"z05_r75.wav",root:75,lo:74,hi:127,loop:1,ls:83808,le:95073}] },
+    // INSTRUMENT-LIBRARY UPGRADE (2026-07-10): FreePats Tenor Saxophone (CC0 1.0;
+    // VCSL samples re-edited with infinite sustain loops by roberto@zenvoid.org).
+    // 8 zones, ALL looped — real reed breath that holds under a solo note. Same id,
+    // so every bebop/jazz/whalejazz anchor picks it up with zero edits. Fetched by
+    // tools/fetch-guitar-samples.sh (which replaces the FluidR3 GM extract).
+    tenor_sax: { label:"Tenor Sax (FreePats/VCSL, CC0)", dir:"tenor_sax", sr:44100, zones:[{file:"z00_r44.wav",root:44,lo:0,hi:45,loop:1,ls:52296,le:270193},{file:"z01_r50.wav",root:50,lo:50,hi:51,loop:1,ls:78429,le:300053},{file:"z02_r56.wav",root:56,lo:56,hi:57,loop:1,ls:226197,le:413085},{file:"z03_r62.wav",root:62,lo:62,hi:63,loop:1,ls:40301,le:247709},{file:"z04_r70.wav",root:70,lo:70,hi:71,loop:1,ls:36429,le:296771},{file:"z05_r76.wav",root:76,lo:76,hi:77,loop:1,ls:46254,le:293483},{file:"z06_r82.wav",root:82,lo:82,hi:83,loop:1,ls:20619,le:241538},{file:"z07_r88.wav",root:88,lo:88,hi:127,loop:1,ls:27924,le:179881}] },
+    // INSTRUMENT-LIBRARY UPGRADE (2026-07-10) — the CRUNCH ask: FreePats FSBS
+    // Electric Guitar (CC0 1.0; a real Fender, bridge pickups, re-amped). New ids —
+    // the GM overdrive_guitar/distortion_guitar dirs STAY for genres that want
+    // polite. Unlooped natural decays trimmed to 8s+fade at fetch (precache weight);
+    // measured dist2 A2: rms -11.6dB crest 11.6dB (vs GM overdrive crest 14.7 —
+    // sustained grind, not decay). di_guitar is the raw pickup signal (-27dB RMS by
+    // design): ONLY claim it behind an insert_higain staged amp — the real amp chain.
+    crunch_guitar: { label:"Crunch Guitar (FreePats FSBS dist2, CC0)", dir:"crunch_guitar", sr:44100, zones:[{file:"z00_r36.wav",root:36,lo:0,hi:38,loop:0,ls:0,le:0},{file:"z01_r45.wav",root:45,lo:43,hi:46,loop:0,ls:0,le:0},{file:"z02_r50.wav",root:50,lo:50,hi:51,loop:0,ls:0,le:0},{file:"z03_r59.wav",root:59,lo:57,hi:59,loop:0,ls:0,le:0},{file:"z04_r64.wav",root:64,lo:63,hi:65,loop:0,ls:0,le:0},{file:"z05_r72.wav",root:72,lo:72,hi:72,loop:0,ls:0,le:0},{file:"z06_r77.wav",root:77,lo:76,hi:78,loop:0,ls:0,le:0},{file:"z07_r85.wav",root:85,lo:84,hi:127,loop:0,ls:0,le:0}] },
+    di_guitar: { label:"DI Electric Guitar (FreePats FSBS direct, CC0)", dir:"di_guitar", sr:44100, zones:[{file:"z00_r36.wav",root:36,lo:0,hi:38,loop:0,ls:0,le:0},{file:"z01_r45.wav",root:45,lo:43,hi:46,loop:0,ls:0,le:0},{file:"z02_r50.wav",root:50,lo:50,hi:51,loop:0,ls:0,le:0},{file:"z03_r59.wav",root:59,lo:57,hi:59,loop:0,ls:0,le:0},{file:"z04_r64.wav",root:64,lo:63,hi:65,loop:0,ls:0,le:0},{file:"z05_r72.wav",root:72,lo:72,hi:72,loop:0,ls:0,le:0},{file:"z06_r77.wav",root:77,lo:76,hi:78,loop:0,ls:0,le:0},{file:"z07_r85.wav",root:85,lo:84,hi:127,loop:0,ls:0,le:0}] },
+    // FreePats Upright Piano KW (CC0 1.0; a Kawai upright in a living room, 2017) —
+    // the intimate/domestic piano voice, NEW id (the GM grand + felt_piano stay).
+    // Full 21-108 span, bass-note sustain loops, top octaves natural decay.
+    upright_piano: { label:"Upright Piano (FreePats KW, CC0)", dir:"upright_piano", sr:44100, zones:[{file:"z00_r21.wav",root:21,lo:0,hi:22,loop:1,ls:226952,le:310216},{file:"z01_r30.wav",root:30,lo:29,hi:31,loop:1,ls:240705,le:351556},{file:"z02_r39.wav",root:39,lo:38,hi:40,loop:1,ls:288169,le:398441},{file:"z03_r51.wav",root:51,lo:50,hi:52,loop:1,ls:162986,le:240314},{file:"z04_r63.wav",root:63,lo:62,hi:64,loop:1,ls:151896,le:217597},{file:"z05_r71.wav",root:71,lo:70,hi:71,loop:0,ls:0,le:0},{file:"z06_r81.wav",root:81,lo:80,hi:81,loop:0,ls:0,le:0},{file:"z07_r90.wav",root:90,lo:89,hi:91,loop:0,ls:0,le:0},{file:"z08_r99.wav",root:99,lo:98,hi:100,loop:0,ls:0,le:0},{file:"z09_r108.wav",root:108,lo:108,hi:127,loop:0,ls:0,le:0}] },
     trumpet: { label:"Trumpet (FluidR3, MIT)", dir:"trumpet", sr:44100, zones:[{file:"z00_r60.wav",root:64,lo:0,hi:66,loop:1,ls:7185,le:18296},{file:"z01_r60.wav",root:67,lo:67,hi:71,loop:1,ls:8026,le:16794},{file:"z02_r60.wav",root:72,lo:72,hi:75,loop:1,ls:14270,le:23202},{file:"z03_r60.wav",root:79,lo:76,hi:83,loop:1,ls:10629,le:19860},{file:"z04_r60.wav",root:88,lo:84,hi:90,loop:1,ls:11853,le:18555},{file:"z05_r60.wav",root:96,lo:91,hi:108,loop:1,ls:9248,le:18910}] },
     vibraphone: { label:"Vibraphone (FluidR3, MIT)", dir:"vibraphone", sr:44100, zones:[{file:"z00_r57.wav",root:57,lo:0,hi:57,loop:1,ls:14677,le:17684},{file:"z01_r66.wav",root:66,lo:64,hi:66,loop:1,ls:9361,le:9600},{file:"z02_r81.wav",root:81,lo:79,hi:81,loop:1,ls:4376,le:4627},{file:"z03_r88.wav",root:88,lo:86,hi:88,loop:1,ls:4649,le:4716},{file:"z04_r99.wav",root:99,lo:97,hi:99,loop:1,ls:5202,le:5343},{file:"z05_r107.wav",root:107,lo:104,hi:108,loop:1,ls:5894,le:6005}] },
     // the neoclassical batch (2026-07 deep pass): GM 0 "Yamaha Grand Piano"
@@ -1366,8 +1393,8 @@
         inserts:{prob:.5, max:1, pool:[["distort",{drive:[.1,.22],mix:[.35,.6]}]]}},   // soft TAPE saturation — warms the DI'd sub/saw, less synthy (cubicnl adds upper harmonics, fundamental intact); distort rides the sub too (constrain only fences chorus/phaser off it). 1/3 of seeds the Dilla/Nujabes UPRIGHT (real, sampler draws skip distort via constrain) — lofi has no sub/acoustic fence, matrix-invisible
       snarePP:0.78,   // the dusty boombap snare THROW — wet + liberal (>=.65 => >=2-beat/.82 spacing in buildEvents): most backbeats tail into the ping-pong. lo-fi's signature move
       timeFeel:{ pushPull:{ bass:.015, hat:-.005 } },   // effects audit A5: the Dilla drag made structural — bass drags behind the grid, hats ride a touch on top (the boombap head-nod). Sibling of downtempo's Bristol lean; zero-rng dominant-parent, bass/hat timing unread by the verifier. HALVED 2026-07-04 (Paul: went a little too far on timing feel)
-      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1800,2800],level:[.4,.52],send:[.35,.5],dsend:[.2,.35],vibrato:[.005,.012],octave:.06,attack:.025,release:[.12,.2],sustain:[.66,.78],fenv:[.15,.3]},
-        inserts:{prob:.4, max:1, pool:[["chorus",{rate:[.3,.8],depth:[.5,.8],mix:[.35,.55]}]]}},   // envelope identity (ex-ARTIC): mellow dusty   // ~1/3: DX7 E.PIANO 1 through the dust (csound maps -> fm); deep slow chorus = tape wow; sampler draws split sax / the felt piano (2026-07)
+      lead:{patterns:["pentaup","sparse","wander"], patchPool:["E.PIANO 1","E.PIANO 3"], samplerPool:["alto_sax","upright_piano","felt_piano","jazz_guitar"], recipe:{model:["fm","pluck","sampler","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1800,2800],level:[.4,.52],send:[.35,.5],dsend:[.2,.35],vibrato:[.005,.012],octave:.06,attack:.025,release:[.12,.2],sustain:[.66,.78],fenv:[.15,.3]},
+        inserts:{prob:.4, max:1, pool:[["chorus",{rate:[.3,.8],depth:[.5,.8],mix:[.35,.55]}]]}},   // envelope identity (ex-ARTIC): mellow dusty   // ~1/3: DX7 E.PIANO 1 through the dust (csound maps -> fm); deep slow chorus = tape wow; sampler draws split sax / the pianos (2026-07). INSTRUMENT-LIBRARY 2026-07-10: the FreePats Kawai upright joins the pool — the real dusty-apartment piano under the boombap
       pads:{prob:.9, recipe:{model:["fm"],wave:"sine",cutoff:[900,1500],detune:[.003,.008],attack:[.8,1.8],level:[.5,.68],send:[.35,.55],dsend:[.1,.2]}},
       drums:{kickModel:["808"],snareModel:["noise"],hatModel:["noise"],kick:[1.0,1.25],snare:[.55,.8],hat:[.55,.85],tune:[.8,.95],send:[.1,.22],dsend:[0,.1],kit:"room"},   // SAMPLED room kit — warm/dusty for the lo-fi head-nod (note: sampled snare skips the pp throw)
       fx:{reverb:[.5,.7], delayBeats:[.5,.75], delayFb:[.2,.35], delayCut:[1800,2800], pump:[0,.1], crackle:[.5,.8], lowcut:[0,25], highcut:[7500,11000], comp:[.15,.3]},
@@ -1726,7 +1753,7 @@
       bpm:[72,96], swing:[.05,.14], humanize:[.2,.4],
       progressions:["ii_v_i","neosoul","mode_dorian"], kits:["boombap"], fills:["off","off","drum fill"],
       bass:{patterns:["walking","dub","simple"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sampler","piano"],cutoff:[350,650],res:[.05,.12],level:[.85,1.05],send:[.05,.15],dsend:[0,.05],attack:.005,release:[.08,.14]}},   // STRONG-SAMPLE (2026-07 boopy-fix): the real upright now walks 2/3 under the poets (no sub target — matrix-invisible)
-      lead:{patterns:["sparse","wander","off"], samplerPool:["tenor_sax","felt_piano"], recipe:{model:["piano","sampler"],wave:"sine",voices:[1,1],spread:[.001,.003],cutoff:[2400,3400],level:[.45,.55],send:[.35,.5],dsend:[.1,.25]}},   // half the seeds a real sampled voice answering the poets: tenor sax or the felt piano (2026-07)
+      lead:{patterns:["sparse","wander","off"], samplerPool:["tenor_sax","felt_piano","upright_piano"], recipe:{model:["piano","sampler"],wave:"sine",voices:[1,1],spread:[.001,.003],cutoff:[2400,3400],level:[.45,.55],send:[.35,.5],dsend:[.1,.25]}},   // half the seeds a real sampled voice answering the poets: tenor sax or a piano (2026-07). INSTRUMENT-LIBRARY 2026-07-10: the FreePats Kawai upright joins the pool — the coffee-house piano behind the poets
       pads:{prob:.8, recipe:{model:["piano","fm"],wave:"sine",cutoff:[900,1500],detune:[.002,.006],attack:[.3,.9],level:[.4,.55],send:[.35,.5],dsend:[.05,.15]}},
       drums:{kickModel:["boom","808"],snareModel:["noise"],hatModel:["noise"],kick:[.95,1.2],snare:[.35,.55],hat:[.5,.8],tune:[.9,1],send:[.15,.3],dsend:[0,.1]},   // snare QUIET — never over the voice
       fx:{reverb:[.45,.6], delayBeats:[.5,.75], delayFb:[.2,.35], delayCut:[2200,3200], pump:[0,0], crackle:[.3,.5], lowcut:[0,0], highcut:[0,0], comp:[.1,.3], grit:[0,0]},
@@ -2133,7 +2160,7 @@
       reverbColor:"greyhole",   // GRIT PASS: the room shakes — the cavernous smear the amp dies into
       bass:{patterns:["root","sub","dub"], recipe:{model:["reese","sub"],cutoff:[200,360],res:[.05,.15],level:[1.25,1.5],send:[.05,.12],dsend:[0,.06]},
         inserts:{prob:.85, max:1, pool:[["higain",{gate:[.05,.18],drive:[.8,.95],stages:3,low:.7,mid:.55,high:.35,presence:[.2,.35],mix:[.9,1]}]]}},   // BALANCE LOOP 3: doom SATURATED-LOOSE — 3 stages near-max drive, gate nearly OFF (the riff exhales, the amp rings into the room), dark tone stack. NB the mix range is LOAD-BEARING for gate 2: 8 draw keys keeps seed 1's downstream section draws where drumDensity lands >= .8 (the 7-key claim rolled .73 and handed dub the seed)
-      lead:{patterns:["double","blues","sparse"], recipe:{model:["fuzz"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[1400,2200],res:[.25,.4],drive:[.7,1],level:[.5,.62],send:[.3,.45],dsend:[.15,.3],attack:.01,release:[.2,.35],sustain:[.8,.95]}},   // THE RIFF — long sustained fuzz, low
+      lead:{patterns:["double","blues","sparse"], samplerPool:["crunch_guitar"], recipe:{model:["fuzz","fuzz","sampler"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[1400,2200],res:[.25,.4],drive:[.7,1],level:[.5,.62],send:[.3,.45],dsend:[.15,.3],attack:.01,release:[.2,.35],sustain:[.8,.95]}},   // THE RIFF — long sustained fuzz, low. INSTRUMENT-LIBRARY 2026-07-10: 1/3 of seeds the FreePats crunch_guitar rides the riff (a real amp dying in a real room; low cutoff keeps it swamp-dark)
       pads:{prob:.3, recipe:{model:["saw"],wave:"saw",cutoff:[420,760],detune:[.01,.02],attack:[2.5,4.5],level:[.34,.46],send:[.28,.42],dsend:[.1,.25]}},   // 2026-07 deep pass: pad prob .4->.3 and darker/quieter — the fuzz WALL carries it, not a saw wash; less of the audit's "outro pad" scaffolding, more amp-in-the-room
       drums:{kickModel:["boom","808"],snareModel:["noise","crack"],hatModel:["noise"],kick:[1.35,1.6],snare:[.9,1.15],hat:[.4,.7],tune:[.75,.9],send:[.15,.28],dsend:[.05,.15]},   // snare UP — the stomp (vs doomdrone's buried kit)
       fx:{reverb:[.4,.6], delayBeats:[.75,1], delayFb:[.25,.4], delayCut:[1600,2600], pump:[0,.1], crackle:[.05,.2], lowcut:[0,25], highcut:[0,0], comp:[.5,.75], grit:[.65,.95]},   // grit MAXED
@@ -2146,7 +2173,7 @@
       reverbColor:"fdn",   // GRIT PASS: a big hard-surfaced industrial slam room behind the machine
       bass:{patterns:["stab","drive","sub"], recipe:{model:["reese"],cutoff:[280,480],res:[.15,.3],level:[1.15,1.35],send:[0,.06],dsend:[0,.08]},
         inserts:{prob:.8, max:1, pool:[["higain",{gate:[.6,.78],drive:[.6,.85],stages:3,low:.55,mid:.45,high:.6,presence:[.55,.7]}]]}},   // BALANCE LOOP 3: quantized fury — the reese through the wall of Marshalls, gate HIGH (everything stops on the grid), 3 stages
-      lead:{patterns:["double","sparse","off"], recipe:{model:["fuzz","stack"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[1800,2800],res:[.25,.4],drive:[.6,.9],level:[.46,.58],send:[.2,.35],dsend:[.2,.35],attack:.004,release:[.08,.15],sustain:[.5,.65],fenv:[.4,.8]}},   // fuzz STABS, quantized — not a solo
+      lead:{patterns:["double","sparse","off"], samplerPool:["crunch_guitar"], recipe:{model:["fuzz","stack","sampler"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[1800,2800],res:[.25,.4],drive:[.6,.9],level:[.46,.58],send:[.2,.35],dsend:[.2,.35],attack:.004,release:[.08,.15],sustain:[.5,.65],fenv:[.4,.8]}},   // fuzz STABS, quantized — not a solo. INSTRUMENT-LIBRARY 2026-07-10: 1/3 of seeds the stabs are the FreePats crunch_guitar (real pick transients on the grid; short release chops the sustain into the slam)
       pads:{prob:.35, recipe:{model:["saw"],wave:"saw",cutoff:[600,1000],detune:[.006,.013],attack:[.8,2],level:[.32,.45],send:[.25,.4],dsend:[.1,.2]}},
       drums:{kickModel:["909","808"],snareModel:["crack","clap"],hatModel:["metal"],kick:[1.3,1.55],snare:[1,1.3],hat:[.5,.8],tune:[.85,1],send:[.1,.2],dsend:[.1,.25]},   // the SLAM snare
       fx:{reverb:[.35,.5], delayBeats:[.5,.5], delayFb:[.25,.4], delayCut:[2000,3000], pump:[.1,.3], crackle:[0,.1], lowcut:[25,40], highcut:[0,0], comp:[.55,.8], grit:[.6,.9], jux:[.2,.45]},
@@ -2382,8 +2409,8 @@
       padDouble:true,      // WALL OF SOUND: the power-chord pad wall doubled to the octave below
       bass:{patterns:["drive","octaves","pedal"], samplerPool:["picked_bass"], recipe:{model:["sampler","saw"],cutoff:[500,850],res:[.1,.25],level:[1.2,1.45],send:[0,.06],dsend:[0,.05]},
         inserts:{prob:1, max:1, pool:[["higain",{gate:[.35,.5],drive:[.6,.8],stages:2,low:.6,mid:.5,high:.55,presence:[.45,.6]}]]}},   // BALANCE LOOP 3: the picked bass through the STAGED amp (was strip distort) — big + thick, moderate gate
-      lead:{patterns:["hero","anthem","blues","double"], samplerPool:["distortion_guitar","overdrive_guitar","distortion_guitar"], recipe:{model:["sampler","sampler"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[2800,4000],level:[.56,.72],send:[.3,.48],dsend:[.2,.35],attack:.005,release:[.1,.2],sustain:[.6,.75]},
-        inserts:{prob:1, max:1, pool:[["higain",{gate:[.4,.55],drive:[.65,.85],stages:3,low:.5,mid:.45,high:.6,presence:[.55,.7]}]]}},   // BALANCE LOOP 3: the SCREAMING riff + solo through 3 cascaded stages — classic full-stack lead, presence up
+      lead:{patterns:["hero","anthem","blues","double"], samplerPool:["crunch_guitar","crunch_guitar","distortion_guitar","overdrive_guitar","di_guitar"], recipe:{model:["sampler","sampler"],wave:"saw",voices:[1,2],spread:[.003,.008],cutoff:[2800,4000],level:[.56,.72],send:[.3,.48],dsend:[.2,.35],attack:.005,release:[.1,.2],sustain:[.6,.75]},
+        inserts:{prob:1, max:1, pool:[["higain",{gate:[.4,.55],drive:[.65,.85],stages:3,low:.5,mid:.45,high:.6,presence:[.55,.7]}]]}},   // BALANCE LOOP 3: the SCREAMING riff + solo through 3 cascaded stages — classic full-stack lead, presence up. INSTRUMENT-LIBRARY 2026-07-10: 2/5 seeds the FreePats crunch_guitar (a real re-amped Fender, 8s sustains), 1/5 the DI signal through THIS higain (prob 1 — the real amp chain); GM ids kept for pool variety
       pads:{prob:.75, samplerPool:["distortion_guitar"], recipe:{model:["sampler","saw"],wave:"saw",cutoff:[1000,1800],detune:[.006,.014],attack:[.05,.3],level:[.52,.68],send:[.3,.5],dsend:[.1,.25]},
         inserts:{prob:1, max:1, pool:[["higain",{gate:[.35,.5],drive:[.65,.85],stages:2,low:.65,mid:.5,high:.55,presence:[.5,.65]}]]}},   // BALANCE LOOP 3: the HUGE power-chord wall through the staged amp — low shelf up (the doubled sub-octave weight)
       drums:{kickModel:["boom","909"],snareModel:["crack","noise"],hatModel:["metal","noise"],kick:[1.45,1.7],snare:[.9,1.15],hat:[.7,1],tune:[1,1.1],send:[.2,.34],dsend:[.1,.22]},   // galloping double-kick, forward snare, deep room send
@@ -4994,8 +5021,8 @@
       kits:["waltz","waltzswing"],
       fills:["off"],
       chordEvery:12,
-      bass:{patterns:["waltzroot"], samplerPool:["felt_piano","yamaha_grand_piano"], recipe:{model:["sampler","sampler","piano"], cutoff:[700,1400], res:[0.05,0.1], level:[0.5,0.68], send:[0.25,0.45], dsend:[0,0.08], attack:[0.01,0.03], release:[0.35,0.7]}},
-      lead:{patterns:["waltz","sparse","composed"], samplerPool:["felt_piano","felt_piano","yamaha_grand_piano"], recipe:{model:["sampler","sampler","piano"], wave:"sine", voices:[1,1], spread:[0.001,0.002], cutoff:[2200,3400], level:[0.42,0.55], send:[0.3,0.5], dsend:[0.05,0.15], attack:[0.01,0.03], release:[0.4,0.8]}},
+      bass:{patterns:["waltzroot"], samplerPool:["felt_piano","upright_piano"], recipe:{model:["sampler","sampler","piano"], cutoff:[700,1400], res:[0.05,0.1], level:[0.5,0.68], send:[0.25,0.45], dsend:[0,0.08], attack:[0.01,0.03], release:[0.35,0.7]}},   // INSTRUMENT-LIBRARY 2026-07-10: the GM concert grand -> the FreePats Kawai UPRIGHT (a real living-room piano — furniture music on furniture)
+      lead:{patterns:["waltz","sparse","composed"], samplerPool:["felt_piano","felt_piano","upright_piano"], recipe:{model:["sampler","sampler","piano"], wave:"sine", voices:[1,1], spread:[0.001,0.002], cutoff:[2200,3400], level:[0.42,0.55], send:[0.3,0.5], dsend:[0.05,0.15], attack:[0.01,0.03], release:[0.4,0.8]}},   // INSTRUMENT-LIBRARY 2026-07-10: upright_piano replaces the grand in the pool (same slot — the dawdling five-note melody on the honest instrument)
       pads:{prob:0.3, samplerPool:["slow_strings"], recipe:{model:["sampler","strings"], wave:"sine", cutoff:[800,1500], detune:[0.002,0.004], attack:[1.2,2.8], release:[1.8,3.5], swell:1, level:[0.28,0.4], send:[0.4,0.6], dsend:[0,0.08]}},
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.4,0.6], snare:[0.3,0.5], hat:[0.2,0.4], tune:[0.9,1], send:[0.15,0.35], dsend:[0,0]},
       fx:{reverb:[0.45,0.62], delayBeats:[1,1.5], delayFb:[0.1,0.22], delayCut:[2000,3000], pump:[0,0], crackle:[0.1,0.4], lowcut:[0,0], highcut:[0,0], comp:[0,0.12]},
@@ -5375,7 +5402,7 @@
       fills:["impact","cut","snare roll","tom fill"],
       euclid:{kick:[7,16]},
       bass:{patterns:["sixteenths","drive","pedal"], samplerPool:["picked_bass"], recipe:{model:["sampler","saw"], cutoff:[480,820], res:[0.1,0.22], level:[1.15,1.4], send:[0,0.05], dsend:[0,0.05]}, inserts:{prob:1, max:1, pool:[["higain",{gate:[0.55,0.7], drive:[0.55,0.75], stages:2, low:0.55, mid:0.4, high:0.6, presence:[0.5,0.65]}]]}},   // BALANCE LOOP 3: thrash TIGHT-GATED — the oar-stroke bass chugs, gate high so the inter-stroke silence is silent
-      lead:{patterns:["double","blues","hero"], samplerPool:["distortion_guitar","overdrive_guitar"], recipe:{model:["sampler","sampler"], wave:"saw", voices:[1,2], spread:[0.003,0.008], cutoff:[2600,3800], level:[0.54,0.7], send:[0.12,0.24], dsend:[0.08,0.18], attack:0.004, release:[0.08,0.16], sustain:[0.55,0.7]}, inserts:{prob:1, max:1, pool:[["higain",{gate:[0.6,0.75], drive:[0.6,0.8], stages:2, low:0.5, mid:0.35, high:0.65, presence:[0.6,0.75]}]]}},   // BALANCE LOOP 3: the DRY screaming riff — thrash scoop (mid down), gate + presence up
+      lead:{patterns:["double","blues","hero"], samplerPool:["crunch_guitar","distortion_guitar","overdrive_guitar","di_guitar"], recipe:{model:["sampler","sampler"], wave:"saw", voices:[1,2], spread:[0.003,0.008], cutoff:[2600,3800], level:[0.54,0.7], send:[0.12,0.24], dsend:[0.08,0.18], attack:0.004, release:[0.08,0.16], sustain:[0.55,0.7]}, inserts:{prob:1, max:1, pool:[["higain",{gate:[0.6,0.75], drive:[0.6,0.8], stages:2, low:0.5, mid:0.35, high:0.65, presence:[0.6,0.75]}]]}},   // BALANCE LOOP 3: the DRY screaming riff — thrash scoop (mid down), gate + presence up. INSTRUMENT-LIBRARY 2026-07-10: crunch_guitar + the DI signal join the pool — di_guitar through THIS tight-gated higain (prob 1) is the real thrash chain
       pads:{prob:0.8, samplerPool:["palm_muted_guitar","distortion_guitar"], recipe:{model:["sampler","sampler"], wave:"saw", cutoff:[700,1300], detune:[0.004,0.01], attack:[0.01,0.06], release:[0.08,0.2], level:[0.5,0.66], send:[0.1,0.2], dsend:[0.05,0.12]}, inserts:{prob:1, max:1, pool:[["higain",{gate:[0.65,0.8], drive:[0.55,0.75], stages:2, low:0.6, mid:0.35, high:0.55, presence:[0.5,0.65]}]]}},   // BALANCE LOOP 3: the palm-muted chug wall — the TIGHTEST gate in the wing (the chug must stop dead between strokes)
       drums:{kickModel:["boom"], snareModel:["crack","noise"], hatModel:["metal","noise"], kick:[1.4,1.65], snare:[0.95,1.2], hat:[0.6,0.9], tune:[1,1.12], send:[0.06,0.14], dsend:[0.04,0.1]},
       fx:{reverb:[0.2,0.34], delayBeats:[0.375,0.5], delayFb:[0.15,0.28], delayCut:[2400,3600], pump:[0,0.08], crackle:[0,0.05], lowcut:[30,45], highcut:[0,0], comp:[0.6,0.85], grit:[0.55,0.8]},
@@ -6590,7 +6617,12 @@
   const R_FUZZ    ={model:"fuzz", cutoff:2600,level:0.66,voices:2,res:0.3,drive:1};
   const R_SWELLBRASS={model:"brass", cutoff:9000, level:1.9, voices:1};
   const R_TW_COUNTER={pattern:"motorik23", solo:{model:"fuzz",wave:"saw",cutoff:2600,res:0.3,drive:0.15,level:0.5,voices:1,send:0.2,dsend:0.44,attack:.004,release:0.09,sustain:0.62,fenv:0.6,swellHz:.13,swellDepth:.6,swellPhase:.5}, octave:-1};
-  const R_TW_METAL={model:"fuzz",wave:"saw",cutoff:3400,res:0.26,drive:0.7,level:0.62,voices:1,vibrato:.013,vibRate:5.5};
+  // INSTRUMENT-LIBRARY 2026-07-10: the transit form's "distorted heavy-metal solo"
+  // is now the REAL crunch_guitar (FreePats FSBS, CC0) instead of the fuzz synth.
+  // The zone map is embedded here (solo recipes merge over instruments.melody in
+  // soloVoices); the zone WAVs ride foundSources via the form==="transit" claim in
+  // toState (ins_crunch_guitar_* at vol 0, like every sampler voice).
+  const R_TW_METAL={model:"sampler",sampler:{id:"crunch_guitar",sr:44100,zones:SAMPLERS.crunch_guitar.zones.map((z,i)=>({srcId:"ins_crunch_guitar_"+i,root:z.root,lo:z.lo,hi:z.hi,loop:!!z.loop,loopStart:z.ls,loopEnd:z.le}))},wave:"saw",cutoff:3400,res:0.26,drive:0.7,level:0.62,voices:1,vibrato:.013,vibRate:5.5};
   const VOXPLAIN={sourceId:"vox"};        // ritual VO (no clean field)
   // The graphs. Node = [name, orderedSpec]. Key order in each spec is verbatim
   // from the retired literal so the emitted object's JSON is byte-identical.
@@ -7350,7 +7382,9 @@
           attack:.012,release:.14,voices:1,dx7:null,inserts:[]};
       }
     }
-    for(const id of new Set([c.leadSampler, c.padSampler, c.bassSampler, lickSamplerId].filter(Boolean))){
+    const samplerIds=[c.leadSampler, c.padSampler, c.bassSampler, lickSamplerId].filter(Boolean);
+    if(c.form==="transit") samplerIds.push("crunch_guitar");   // the transit form's metal-solo section (R_TW_METAL) rides the crunch sampler
+    for(const id of new Set(samplerIds)){
       const S=SAMPLERS[id]; if(!S) continue;
       S.zones.forEach((z,i)=>foundSources.push({id:"ins_"+id+"_"+i,label:S.label,url:"",
         samplePath:"found/samples/instruments/"+S.dir+"/"+z.file, vol:0, pitch:1, stretch:0.5, cutoff:18000}));
