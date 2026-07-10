@@ -1,0 +1,26 @@
+{
+  "name": "chantcircuit",
+  "label": "Chant Circuit",
+  "info": "riot-circuit chant pop: a cheap drum machine, one snarling mono synth bass, claps stacked on the backbeat and a shouted slogan every other bar — three chords and a megaphone",
+  "pos": [1500, 16260],
+  "clips": ["phuture_red", "kaleido", "dark_face", "night_lines"],
+  "anchor": {
+    "bpm": [122, 130],
+    "swing": [0, 0.05],
+    "humanize": [0.03, 0.12],
+    "progressions": ["minor_run", "sad_pop", "drone_min"],
+    "kits": ["electro", "pulse", "four"],
+    "fills": ["cut", "impact", "snare roll", "off"],
+    "bass": { "patterns": ["drive", "octaves", "stab"], "recipe": { "model": ["saw"], "cutoff": [420, 760], "res": [0.2, 0.35], "level": [1.1, 1.35], "send": [0, 0.06], "dsend": [0, 0.05] }, "inserts": { "prob": 0.6, "max": 1, "pool": [["distort", { "drive": [0.25, 0.45], "mix": [0.5, 0.75] }]] } },
+    "lead": { "patterns": ["double", "updown", "sparse"], "recipe": { "model": ["saw", "vocoder"], "wave": "saw", "voices": [1, 2], "spread": [0.002, 0.006], "cutoff": [2400, 3600], "level": [0.44, 0.56], "send": [0.15, 0.28], "dsend": [0.1, 0.22], "attack": 0.005, "release": [0.08, 0.16], "sustain": [0.55, 0.68] } },
+    "pads": { "prob": 0.35, "recipe": { "model": ["saw"], "wave": "saw", "cutoff": [900, 1500], "detune": [0.005, 0.012], "attack": [0.2, 0.7], "level": [0.36, 0.5], "send": [0.2, 0.35], "dsend": [0.08, 0.18] } },
+    "drums": { "kickModel": ["808", "909"], "snareModel": ["clap", "noise"], "hatModel": ["noise"], "kick": [1.15, 1.4], "snare": [0.95, 1.2], "hat": [0.7, 1], "tune": [0.95, 1.1], "send": [0.08, 0.18], "dsend": [0.05, 0.15] },
+    "fx": { "reverb": [0.18, 0.32], "delayBeats": [0.375, 0.5], "delayFb": [0.15, 0.28], "delayCut": [2400, 3600], "pump": [0.1, 0.28], "crackle": [0.05, 0.18], "lowcut": [25, 40], "highcut": [0, 0], "comp": [0.4, 0.6] },
+    "found": { "role": "bed", "vol": [0.04, 0.1], "pitch": [0.9, 1.05], "stretch": [0.45, 0.6], "cutoff": [2200, 3400], "sources": ["factory", "shibuya"] },
+    "sampleEvents": [{ "pool": ["sp_energy", "sp_rhythm", "sp_pressure", "sp_rewind"], "placement": "buried", "sections": "all", "treatment": { "cutoff": 5000, "vol": 0.4, "glitch": true, "every": 2, "maxDur": 4 } }],
+    "stab": ["off", "sparse"],
+    "hits": { "sources": ["rave_a", "rave_b", "vox_a", "sp_energy"], "pattern": "offbeat", "prob": 0.7 },
+    "form": "pop"
+  },
+  "verify": { "seeds": 6, "features": { "bpm": 3, "acoustic": 2, "sub": 2, "chopUse": 2, "swing": 2, "snareBalance": 1, "pump": 1, "crackle": 1 } }
+}

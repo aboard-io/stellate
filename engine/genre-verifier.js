@@ -787,6 +787,42 @@
     /* genre-tool:permafrostveil:targets */
     permafrostveil:{ bpm:[49,74,3], drumDensity:[0,0.51,2], crackle:[0.121,0.463,2], motion:[0.52,1,2], wash:[0.321,0.67,1], acoustic:[0,0.92,1], bedUse:[0.88,1,1] },
     /* /genre-tool:permafrostveil:targets */
+    /* genre-tool:crateflip:targets */
+    crateflip:{ bpm:[89,108,3], chopUse:[0.4,0.6,3], swing:[0.037,0.193,2], crackle:[0.171,0.559,2], acoustic:[0.68,0.92,2], seventh:[0.85,1,1], breakUse:[0,0.08,2], pump:[0,0.192,1] },
+    /* /genre-tool:crateflip:targets */
+    /* genre-tool:lowglide:targets */
+    lowglide: { bpm:[83,102,3], sub:[0.85,1,2], leadVoices:[1,2,2], swing:[0.017,0.173,2], breakUse:[0,0.08,2], chopUse:[0,0.1,1], crackle:[0.008,0.386,1], pump:[0,0.208,1], snareBalance:[0.5,1.2,3] },
+    /* /genre-tool:lowglide:targets */
+    /* genre-tool:subrattle:targets */
+    subrattle:{ bpm:[131,150,3], sub:[0.85,1,3], hatDensity:[1.17,2.36,3], swing:[0,0.075,2], crackle:[0,0.167,2], breakUse:[0,0.08,1], chopUse:[0,0.1,1], leadVoices:[1,3,1] },
+    /* /genre-tool:subrattle:targets */
+    /* genre-tool:hollerknock:targets */
+    hollerknock:{ bpm:[69,88,3], sub:[0.85,1,2], pump:[0.103,0.484,3], snareBalance:[0.24,1.24,2], swing:[0,0.088,2], crackle:[0,0.183,1], breakUse:[0,0.08,1], comp:[0.34,0.802,1] },
+    /* /genre-tool:hollerknock:targets */
+    /* genre-tool:flannelburst:targets */
+    flannelburst:{ bpm:[109,130,3], acoustic:[0.68,0.92,2], drumDensity:[0.65,2.19,2], swing:[0,0.082,2], comp:[0.331,0.787,2], crackle:[0,0.293,1], pump:[0,0.167,1], humanize:[0.021,0.35,1] },
+    /* /genre-tool:flannelburst:targets */
+    /* genre-tool:drywire:targets */
+    drywire:  { bpm:[95,118,3], wash:[0,0.113,3], acoustic:[0.68,0.92,2], swing:[0,0.075,2], snareBalance:[0.3,1.37,2], crackle:[0,0.195,1], pump:[0,0.15,1], comp:[0.131,0.544,1], seventh:[0.35,1,3] },
+    /* /genre-tool:drywire:targets */
+    /* genre-tool:heartsprint:targets */
+    heartsprint:{ bpm:[153,176,3], acoustic:[0.68,0.92,2], motion:[0.85,1,2], swing:[0,0.069,2], breakUse:[0,0.08,2], pump:[0,0.167,2], chopUse:[0,0.1,1], crackle:[0,0.195,1] },
+    /* /genre-tool:heartsprint:targets */
+    /* genre-tool:bouffantbeat:targets */
+    bouffantbeat:{ bpm:[111,130,3], acoustic:[0.68,0.92,2], swing:[0,0.12,2], crackle:[0,0.15,2], motion:[0.85,1,1], seventh:[0,1,1], pump:[0.002,0.31,2], humanize:[0.051,0.358,1] },
+    /* /genre-tool:bouffantbeat:targets */
+    /* genre-tool:chantcircuit:targets */
+    chantcircuit:{ bpm:[117,136,3], acoustic:[0,0.12,2], sub:[0.05,0.75,2], chopUse:[0,0.1,2], swing:[0,0.082,2], snareBalance:[0.28,1.41,1], pump:[0.002,0.365,1], crackle:[0,0.259,1], leadVoices:[1,3,3], wash:[0,0.173,3] },
+    /* /genre-tool:chantcircuit:targets */
+    /* genre-tool:halogloss:targets */
+    halogloss:{ bpm:[111,130,3], seventh:[0.85,1,3], snareBalance:[0.55,1.34,2], pump:[0.103,0.484,2], swing:[0,0.088,2], acoustic:[0,0.12,1], crackle:[0,0.167,1], motion:[0.85,1,1], sub:[0.05,0.35,2], drumDensity:[0.99,2.06,2] },   // sub cap + drumDensity floor (both the anchor's own measured spread ± the house pad): the FM synth-bass diva record is never a sub-bass halftime record — fences industrialmetal's reese/halftime seeds (seed 1 scored 100 here vs its own 98.4) off this diagonal without touching its anchor
+    /* /genre-tool:halogloss:targets */
+    /* genre-tool:octanerush:targets */
+    octanerush:{ bpm:[131,148,3], leadVoices:[1,5,2], pump:[0.153,0.534,2], swing:[0,0.069,2], hatDensity:[0.38,2.02,1], sub:[0.05,0.35,1], crackle:[0,0.167,1], motion:[0.52,1,1], humanize:[0,0.114,2], acoustic:[0,0.12,3] },
+    /* /genre-tool:octanerush:targets */
+    /* genre-tool:runwaystomp:targets */
+    runwaystomp:{ bpm:[119,136,3], acoustic:[0.68,0.92,2], pump:[0.203,0.584,2], chopUse:[0,0.1,2], seventh:[0.6,1,2], swing:[0,0.12,1], sub:[0.05,0.35,1], hatDensity:[0.36,2.04,1] },
+    /* /genre-tool:runwaystomp:targets */
   };
 
   // the piecewise-linear target-row scorer — the shared primitive (genre-tool

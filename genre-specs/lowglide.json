@@ -1,0 +1,25 @@
+{
+  "name": "lowglide",
+  "label": "Low Glide",
+  "info": "slow-rolling west-coast funk at 92: a whining high synth lead gliding between notes over a fat sub bass, a dusty backbeat, strings in the sun — windows down, six inches off the ground",
+  "pos": [1150, 7690],
+  "clips": ["drive_taillights", "sun_riders", "night_lights", "blue_dinner", "pl_dreamcar"],
+  "anchor": {
+    "bpm": [88, 96],
+    "swing": [0.06, 0.16],
+    "humanize": [0.1, 0.25],
+    "progressions": ["funk_vamp", "mode_dorian", "minor_run"],
+    "kits": ["boombap", "halftime"],
+    "fills": ["off", "drum fill", "downlift"],
+    "bass": { "patterns": ["syncopated", "simple", "dub"], "recipe": { "model": ["sub"], "cutoff": [220, 400], "res": [0.05, 0.15], "level": [1.2, 1.45], "send": [0, 0.06], "dsend": [0, 0.05] } },
+    "lead": { "patterns": ["wander", "pentaup", "sparse"], "recipe": { "model": ["saw", "modeld"], "wave": "saw", "voices": [1, 1], "spread": [0.001, 0.003], "cutoff": [2600, 3800], "level": [0.44, 0.56], "send": [0.3, 0.45], "dsend": [0.15, 0.3], "vibrato": [0.006, 0.012], "glide": [90, 180], "octave": 0.2, "attack": 0.015, "release": [0.15, 0.25], "sustain": [0.75, 0.85] } },
+    "pads": { "prob": 0.8, "samplerPool": ["strings", "rhodes_ep"], "recipe": { "model": ["sampler", "saw"], "wave": "saw", "cutoff": [900, 1500], "detune": [0.004, 0.009], "attack": [0.6, 1.6], "level": [0.48, 0.62], "send": [0.3, 0.48], "dsend": [0.1, 0.2] } },
+    "drums": { "kickModel": ["808", "boom"], "snareModel": ["crack", "clap"], "hatModel": ["noise"], "kick": [1.15, 1.4], "snare": [0.8, 1.05], "hat": [0.6, 0.9], "tune": [0.9, 1.05], "send": [0.12, 0.25], "dsend": [0.05, 0.15] },
+    "fx": { "reverb": [0.35, 0.5], "delayBeats": [0.5, 0.75], "delayFb": [0.2, 0.35], "delayCut": [2000, 3000], "pump": [0, 0.12], "crackle": [0.1, 0.3], "lowcut": [0, 25], "highcut": [0, 0], "comp": [0.3, 0.5] },
+    "found": { "role": "bed", "vol": [0.05, 0.12], "pitch": [0.85, 1], "stretch": [0.45, 0.6], "cutoff": [1800, 3000], "sources": ["highway_night", "shibuya"] },
+    "stab": ["off", "sparse"],
+    "hits": { "sources": ["vox_b", "sp_slowdown", "sp_nightdrive"], "pattern": "sparse", "prob": 0.35 },
+    "form": "pop"
+  },
+  "verify": { "seeds": 6, "features": { "bpm": 3, "sub": 2, "leadVoices": 2, "swing": 2, "breakUse": 2, "chopUse": 1, "crackle": 1, "pump": 1 } }
+}

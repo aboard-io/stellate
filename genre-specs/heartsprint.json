@@ -1,0 +1,357 @@
+{
+  "name": "heartsprint",
+  "label": "Heart Sprint",
+  "info": "downstroke power chords at a dead sprint: 164 on the four, a confessional melody yelled over the guitar wall, choruses built for the last row of the all-ages show \u2014 heart on the sleeve, wrist to the strings",
+  "pos": [
+    600,
+    3720
+  ],
+  "clips": [
+    "kaleido",
+    "night_lines",
+    "ind_furnace",
+    "dn_schoolyard"
+  ],
+  "anchor": {
+    "bpm": [
+      158,
+      170
+    ],
+    "swing": [
+      0,
+      0.03
+    ],
+    "humanize": [
+      0.05,
+      0.15
+    ],
+    "progressions": [
+      "four_chords",
+      "sad_pop",
+      "doo_wop"
+    ],
+    "kits": [
+      "four",
+      "pulse"
+    ],
+    "fills": [
+      "drum fill",
+      "snare roll",
+      "impact",
+      "riser"
+    ],
+    "bass": {
+      "patterns": [
+        "drive",
+        "root",
+        "octaves"
+      ],
+      "samplerPool": [
+        "picked_bass"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "saw"
+        ],
+        "cutoff": [
+          450,
+          800
+        ],
+        "res": [
+          0.1,
+          0.22
+        ],
+        "level": [
+          1.15,
+          1.4
+        ],
+        "send": [
+          0,
+          0.05
+        ],
+        "dsend": [
+          0,
+          0.05
+        ]
+      },
+      "inserts": {
+        "prob": 1,
+        "max": 1,
+        "pool": [
+          [
+            "distort",
+            {
+              "drive": [
+                0.4,
+                0.65
+              ],
+              "mix": [
+                0.65,
+                0.85
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "anthem",
+        "hero",
+        "double"
+      ],
+      "samplerPool": [
+        "overdrive_guitar",
+        "distortion_guitar"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "wave": "saw",
+        "voices": [
+          1,
+          2
+        ],
+        "spread": [
+          0.003,
+          0.008
+        ],
+        "cutoff": [
+          2600,
+          3800
+        ],
+        "level": [
+          0.54,
+          0.7
+        ],
+        "send": [
+          0.22,
+          0.36
+        ],
+        "dsend": [
+          0.12,
+          0.24
+        ],
+        "attack": 0.004,
+        "release": [
+          0.1,
+          0.18
+        ],
+        "sustain": [
+          0.6,
+          0.72
+        ]
+      },
+      "inserts": {
+        "prob": 1,
+        "max": 1,
+        "pool": [
+          [
+            "distort",
+            {
+              "drive": [
+                0.5,
+                0.75
+              ],
+              "mix": [
+                0.75,
+                0.95
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.8,
+      "samplerPool": [
+        "palm_muted_guitar",
+        "distortion_guitar"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "wave": "saw",
+        "cutoff": [
+          800,
+          1400
+        ],
+        "detune": [
+          0.004,
+          0.01
+        ],
+        "attack": [
+          0.01,
+          0.06
+        ],
+        "release": [
+          0.1,
+          0.24
+        ],
+        "level": [
+          0.5,
+          0.66
+        ],
+        "send": [
+          0.18,
+          0.32
+        ],
+        "dsend": [
+          0.06,
+          0.16
+        ]
+      },
+      "inserts": {
+        "prob": 1,
+        "max": 1,
+        "pool": [
+          [
+            "distort",
+            {
+              "drive": [
+                0.45,
+                0.7
+              ],
+              "mix": [
+                0.7,
+                0.9
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom",
+        "909"
+      ],
+      "snareModel": [
+        "crack",
+        "noise"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        1.25,
+        1.5
+      ],
+      "snare": [
+        1,
+        1.25
+      ],
+      "hat": [
+        0.7,
+        1
+      ],
+      "tune": [
+        0.98,
+        1.1
+      ],
+      "send": [
+        0.12,
+        0.24
+      ],
+      "dsend": [
+        0.05,
+        0.15
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.25,
+        0.4
+      ],
+      "delayBeats": [
+        0.375,
+        0.5
+      ],
+      "delayFb": [
+        0.15,
+        0.28
+      ],
+      "delayCut": [
+        2400,
+        3600
+      ],
+      "pump": [
+        0,
+        0.08
+      ],
+      "crackle": [
+        0,
+        0.1
+      ],
+      "lowcut": [
+        25,
+        40
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.5,
+        0.75
+      ],
+      "grit": [
+        0.25,
+        0.45
+      ]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.04,
+        0.09
+      ],
+      "pitch": [
+        0.85,
+        1
+      ],
+      "stretch": [
+        0.4,
+        0.6
+      ],
+      "cutoff": [
+        2000,
+        3200
+      ],
+      "sources": [
+        "highway_night",
+        "shibuya"
+      ]
+    },
+    "stab": [
+      "off"
+    ],
+    "hits": {
+      "sources": [
+        "vox_a",
+        "sp_energy"
+      ],
+      "pattern": "sparse",
+      "prob": 0.2
+    },
+    "form": "anthem"
+  },
+  "verify": {
+    "seeds": 6,
+    "features": {
+      "bpm": 3,
+      "acoustic": 2,
+      "motion": 2,
+      "swing": 2,
+      "breakUse": 2,
+      "pump": 2,
+      "chopUse": 1,
+      "crackle": 1
+    }
+  }
+}
