@@ -1698,12 +1698,22 @@
                 amp:vbase(src,0.3)*1.6*gain,pitch:tr.pitch!=null?tr.pitch:(src.pitch??1),
                 offset:serng()},src)); }
           } else if(place==="opener"){
+            // LIVE gate (state._liveEdge, set only by faust/live.js stepWalk's
+            // one-section-per-bar walk): an opener fires at a section START, so on
+            // the live path emit it only on the bar that genuinely begins a section.
+            // Absent (press / full-song state) => the original "first matching
+            // section only" behavior, byte-identical.
+            if(state._liveEdge && !state._liveEdge.start) continue;
             if(firstDone) continue; firstDone=true;
             if(prob>=1||serng()<prob) shot(nextSrc(),S+0.25);
           } else if(place==="oneShot"){
+            // sectionEdge oneShot anchors to the section END, a plain oneShot to its
+            // downbeat (START). Live-gate each to its real edge; press unaffected.
+            if(state._liveEdge && (sync==="sectionEdge"?!state._liveEdge.end:!state._liveEdge.start)) continue;
             if(prob>=1||serng()<prob){ const src=nextSrc();
               shot(src, sync==="sectionEdge"?Math.max(S,S+B-chopDur(src)-0.5):S+0.25); }
           } else if(place==="cadence"){
+            if(state._liveEdge && !state._liveEdge.end) continue;   // the door "ding": section END only (live)
             if(prob>=1||serng()<prob){ const src=nextSrc();
               shot(src, Math.max(S,S+B-chopDur(src)-0.5)); }
           } else if(place==="buried"){
