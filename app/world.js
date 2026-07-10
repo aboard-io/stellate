@@ -130,6 +130,9 @@ export const PROG_MODE={ royal_road:[0,"major · royal road"], four_chords:[0,"m
   house_min7:[9,"minor"], blues_12:[0,"blues · dom7 12-bar"], primeval:[9,"minor · primeval"],
   uplift:[9,"minor · uplift"], funk_vamp:[9,"dorian · funk vamp"],
   mode_dorian:[9,"dorian"], mode_phrygian:[9,"phrygian"], mode_lydian:[0,"lydian"], mode_mixo:[0,"mixolydian"],
-  frost:[9,"minor · frost triads"], hijaz:[9,"phrygian dominant · hijaz"] };
+  frost:[9,"minor · frost triads"], hijaz:[9,"phrygian dominant · hijaz"],
+  whole_tone:[0,"whole tone · aug planing"], interchange:[0,"major · modal interchange"],
+  mediant:[0,"major · chromatic mediant"], blues_16:[0,"blues · dom7 16-bar"],
+  quartal:[0,"dorian · quartal sus"], epic_maj:[0,"major · epic lift"] };
 export const MODE_LOCKS={ auto:null, major:"dream", minor:"minor_run", dorian:"mode_dorian",
   phrygian:"mode_phrygian", lydian:"mode_lydian", mixolydian:"mode_mixo", blues:"blues_12" };
