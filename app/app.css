@@ -126,12 +126,26 @@
   .vz-tlrole{font:10px VT323,monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);opacity:.8}
   .vz-roll{position:relative;flex:1 1 auto;min-width:0;height:34px;border-radius:5px;
     border:1px solid var(--line);background-color:rgba(255,255,255,.03);overflow:hidden}
-  /* THE UNIT IS ALWAYS 8: longer chord bars FOLD into stacked 8-cell rows (same
-     grid pitch, they never shrink); the dead tail of a partial last row is hatched */
-  .vz-rollstack{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
-  .vz-roll.vz-fold{flex:none;height:22px}
+  /* THE UNIT IS ALWAYS 8: longer chord bars PAGE — one row per lane whose window
+     slides to the next 8 beats when the live beat crosses a page edge (the old
+     stacked fold rows read as duplicated bars — Paul 2026-07). The pager strip
+     is clipped by the roll; a flip is a fast slide, never a scroll. */
+  .vz-pager{position:absolute;inset:0;display:flex;transition:transform .14s ease-out}
+  .vz-page{position:relative;flex:0 0 auto;height:100%}
+  /* the dead tail of a partial last page is hatched */
   .vz-dead{position:absolute;top:0;right:0;height:100%;pointer-events:none;
     background:repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 4px,transparent 4px 8px)}
+  /* ONE shared live playhead across every lane (they share the beat grid): a
+     thin pink beat cursor, lit by the ~10Hz ticker only while LIVE + ⓘ open */
+  .vz-tl{position:relative}
+  .vz-ph{position:absolute;top:0;bottom:0;left:calc(128px + .5rem);right:0;pointer-events:none;display:none}
+  .vz-ph.on{display:block}
+  .vz-ph i{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--pink);
+    box-shadow:0 0 7px rgba(255,110,199,.75);opacity:.9;transition:left .1s linear}
+  /* quiet page indicator: ·1/2 in the ruler's EMPTY left gutter (over the lane-
+     header column) — at 420px the roll's last beat number owns the right edge */
+  .vz-pgind{position:absolute;right:calc(100% + 8px);top:0;font:10px VT323,monospace;
+    color:var(--dim);opacity:.7;letter-spacing:.05em;white-space:nowrap}
   .vz-blk{position:absolute;height:14%;min-width:2px;border-radius:2px;transition:opacity .12s linear}
   /* a found BED: one sustained texture ribbon, not a hit */
   .vz-blk.vz-bed{height:44%;border-radius:3px}

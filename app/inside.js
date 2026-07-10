@@ -258,7 +258,7 @@ export function vizData(){
   const blend=(S.weights||[]).slice().sort((a,b)=>b.w-a.w).slice(0,4)
     .map(w=>({g:w.g, label:(K.GENRES[w.g]&&K.GENRES[w.g].label)||titleCase(w.g), pct:Math.round(w.w*100), w:w.w}));
   if(!st) return {blend, feel:[], roster:[], found:[], info:"", master:[], mind:null,
-    timeline:{cbeats:8,view:VIEW,folds:1,spb:0.5,bpm:110,lanes:[]}};
+    timeline:{cbeats:8,view:VIEW,pages:1,spb:0.5,bpm:110,lanes:[]}};
   const I=st.instruments||{}, roster=[];
   // build the voice units so we can read each instrument's resolved fx chain
   let U=null; try{ if(window.FaustStateEngine&&window.CsdEngine) U=FaustStateEngine.voiceUnits(CsdEngine,st); }catch(e){}
@@ -284,7 +284,7 @@ export function vizData(){
         for(const an of a.anomalies) if(!auditSilent[an.role]) auditSilent[an.role]={reason:an.reason,missing:an.missing||[]}; }
     }
   }catch(e){}
-  const timeline={cbeats:bar.cbeats, view:VIEW, folds:Math.max(1,Math.ceil(bar.cbeats/VIEW)),
+  const timeline={cbeats:bar.cbeats, view:VIEW, pages:Math.max(1,Math.ceil(bar.cbeats/VIEW)),
     spb:bar.spb, bpm:bar.bpm, lanes:timelineLanes(st, roster, found, bar, auditSilent), audit:auditSilent};
   return {blend, feel:feelAxes(st), roster, found, info, master:masterFx(st), timeline, mind:mindData(st)};
 }
@@ -351,25 +351,29 @@ function radarSVG(feel){
 // SVG) so it stays crisp, responsive and cheap to rebuild every frame.
 const DRUM_ROW={ hat:0.10, tom:0.34, snare:0.52, kick:0.76, found:0.5, bed:0.18 };
 // THE UNIT IS ALWAYS 8 (Paul 2026-07): the visible roll is a constant 8-cell
-// window whatever the genre's harmonic rhythm. chordEvery=16/32 structures FOLD
-// into stacked 8-cell rows (they scroll down, they don't shrink) — mobile keeps
-// one readable grid pitch everywhere.
+// window whatever the genre's harmonic rhythm. chordEvery=16/32 structures PAGE
+// (Paul 2026-07: the old stacked fold rows read as "double bars for each" —
+// duplication, not continuation). ONE 8-cell row per lane; while live the
+// window slides to the next 8 beats when the beat crosses a page edge. Idle
+// shows page 1. A bed spanning the chord bar lands a clipped slice on EVERY page.
 const VIEW=8;
-// split one note into its per-fold-row segments: {row, left%, w%}
+// split one note into its per-PAGE segments: {page, left%, w%} — left/w are
+// percentages of the 8-beat page window, so a block draws identically whichever
+// page carries it (and a long bed gets one slice per page it overlaps).
 function noteSegs(n, cb){
-  const rows=Math.max(1,Math.ceil(cb/VIEW)), out=[];
+  const pages=Math.max(1,Math.ceil(cb/VIEW)), out=[];
   const b0=Math.max(0,n.beat), b1=Math.min(cb, n.beat+Math.max(0.03,n.durB||0.1));
-  for(let r=0;r<rows;r++){
-    const lo=r*VIEW, s=Math.max(b0,lo), e=Math.min(b1,lo+VIEW);
+  for(let p=0;p<pages;p++){
+    const lo=p*VIEW, s=Math.max(b0,lo), e=Math.min(b1,lo+VIEW);
     if(e-s<=0.001) continue;
-    out.push({row:r, left:(s-lo)/VIEW*100, w:(e-s)/VIEW*100});
+    out.push({page:p, left:(s-lo)/VIEW*100, w:(e-s)/VIEW*100});
   }
   return out;
 }
-// per-fold-row block HTML for a lane: returns an array of `rows` HTML strings.
-function laneRows(L, cb){
-  const col=`var(${L.col})`, nRows=Math.max(1,Math.ceil(cb/VIEW));
-  const html=new Array(nRows).fill("");
+// per-page block HTML for a lane: returns an array of `pages` HTML strings.
+function lanePages(L, cb){
+  const col=`var(${L.col})`, nPages=Math.max(1,Math.ceil(cb/VIEW));
+  const html=new Array(nPages).fill("");
   const ms=L.notes.filter(n=>n.midi>0).map(n=>n.midi);
   const plo=ms.length?Math.min.apply(null,ms):60, phi=ms.length?Math.max.apply(null,ms):72, span=Math.max(1,phi-plo);
   for(const n of L.notes){
@@ -386,18 +390,38 @@ function laneRows(L, cb){
     const op=(L.drumLane?0.45+0.55*n.vel:0.4+0.6*n.vel).toFixed(2);
     for(const g of noteSegs(n,cb)){
       const w=Math.max(n.bed?g.w:(L.drumLane?1.3:1.6), Math.min(100-g.left,g.w));
-      html[g.row]+=`<div class="${cls}" style="left:${g.left.toFixed(2)}%;top:${top}%;width:${w.toFixed(2)}%;background:${col};opacity:${op}" title="${title}"></div>`;
+      html[g.page]+=`<div class="${cls}" style="left:${g.left.toFixed(2)}%;top:${top}%;width:${w.toFixed(2)}%;background:${col};opacity:${op}" title="${title}"></div>`;
     }
   }
   return html;
 }
+// the CURRENT live beat within the chord bar, off S.barInfo + the audio clock —
+// the same arithmetic readouts.js playheadTick uses to place the chyron beat:
+// (t - bar.when)/spb clamped to [0, cbeats). null when idle/not-live, so the
+// timeline rests on page 1 and the playhead stays dark.
+function liveBeat(){
+  if(!S.live||!S.barInfo||!faustHandle) return null;
+  let t=0; try{ t=faustHandle.ctx.currentTime; }catch(e){ return null; }
+  const b=S.barInfo, cb=b.cbeats||8;
+  if(!(b.spb>0)||!(b.when>=0)) return null;
+  return Math.max(0,Math.min(cb-0.001,(t-b.when)/b.spb));
+}
 function timelineHTML(tl){
   if(!tl||!tl.lanes.length) return `<div class="vz-info">— no voices sounding —</div>`;
-  const cb=tl.cbeats, bp=100/VIEW, nRows=Math.max(1,Math.ceil(cb/VIEW));
+  const cb=tl.cbeats, bp=100/VIEW, pages=Math.max(1,Math.ceil(cb/VIEW));
   const grid=`repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px ${bp.toFixed(3)}%)`;
-  let ruler=""; for(let b=0;b<VIEW;b++) ruler+=`<span style="left:${(b*bp).toFixed(2)}%">${b+1}</span>`;
-  // dead tail of the last fold row when cb isn't a multiple of VIEW (blended states)
-  const deadW=(nRows*VIEW-cb)/VIEW*100;
+  // bake the CURRENT page + beat into every rebuild (the store re-renders the ⓘ
+  // freely while live; snapping home to page 1 mid-bar would fight the ticker).
+  const beat=liveBeat(), page=beat==null?0:Math.max(0,Math.min(pages-1,Math.floor(beat/VIEW)));
+  // ruler numbers name the ABSOLUTE beats this page shows (9..16 on page 2 —
+  // continuation, not duplication), plus a quiet ·1/2 page indicator when pages exist.
+  let ruler=""; for(let b=0;b<VIEW;b++) ruler+=`<span style="left:${(b*bp).toFixed(2)}%">${page*VIEW+b+1}</span>`;
+  // (a <b>, NOT a <span>: ruler spans are the beat numbers — the ticker relabels them)
+  const pgind=pages>1?`<b class="vz-pgind">·${page+1}/${pages}</b>`:"";
+  // hatched dead tail when cb isn't a multiple of VIEW (blended states) — it
+  // lives INSIDE the last page, so it only shows when that page is the window.
+  const deadW=(pages*VIEW-cb)/VIEW*100;
+  const shift=(-page*100/pages).toFixed(4), pw=(100/pages).toFixed(4);
   const rows=tl.lanes.map(L=>{
     // ALL effects as one TINY line UNDER the roll (Paul: pills stacked/clipped so only
     // one showed — untangle to compact text that shows the whole chain, tightened).
@@ -407,12 +431,12 @@ function timelineHTML(tl){
     // ROW = [header + roll] stacked ABOVE the fx line, so effects sit BENEATH the
     // piano-roll (not beside it, which squished the grid) and every roll aligns on
     // an even vertical rhythm regardless of how long a voice's fx chain is.
-    // the roll: ONE 8-cell row, or a FOLDED stack of them for longer chord bars
-    const rowHtml=laneRows(L,cb);
-    const rolls=rowHtml.map((h,r)=>
-      `<div class="vz-roll${nRows>1?" vz-fold":""}${L.silent?" vz-silent":""}" style="background-image:${grid}">${h}`+
-      (r===nRows-1&&deadW>0.5?`<div class="vz-dead" style="width:${deadW.toFixed(2)}%"></div>`:"")+`</div>`).join("");
-    const roll=nRows>1?`<div class="vz-rollstack">${rolls}</div>`:rolls;
+    // the roll: ONE 8-cell row per lane, always. Longer chord bars ride a pager
+    // strip clipped behind the fixed grid; a page flip is a fast slide, not a scroll.
+    const inner=lanePages(L,cb).map((h,p)=>`<div class="vz-page" style="width:${pw}%">${h}`+
+      (p===pages-1&&deadW>0.5?`<div class="vz-dead" style="width:${deadW.toFixed(2)}%"></div>`:"")+`</div>`).join("");
+    const roll=`<div class="vz-roll${L.silent?" vz-silent":""}" style="background-image:${grid}">`+
+      `<div class="vz-pager" style="width:${pages*100}%;transform:translateX(${shift}%)">${inner}</div></div>`;
     return `<div class="vz-tlrow${L.silent?" vz-silent":""}">`+
       `<div class="vz-tlmain"><div class="vz-tlhead">`+
       `<div class="vz-tlname"><i style="background:var(${L.col})"></i>${esc(L.name)}${silBadge}</div>`+
@@ -420,7 +444,12 @@ function timelineHTML(tl){
       roll+`</div>`+
       fx+`</div>`;
   }).join("");
-  return `<div class="vz-ruler" style="background-image:${grid}">${ruler}</div><div class="vz-tl">${rows}</div>`;
+  // ONE shared playhead spanning every lane (they share the beat grid) —
+  // rendered dormant when idle; the ~10Hz ticker lights and sweeps it while live.
+  const frac=beat==null?0:(beat-page*VIEW)/VIEW;
+  const ph=`<div class="vz-ph${beat==null?"":" on"}" data-page="${page}"${beat==null?"":` data-beat="${beat.toFixed(3)}"`}><i style="left:${(frac*100).toFixed(2)}%"></i></div>`;
+  return `<div class="vz-ruler" style="background-image:${grid}">${ruler}${pgind}</div>`+
+    `<div class="vz-tl" data-pages="${pages}" data-page="${page}">${rows}${ph}</div>`;
 }
 // the MIND readout: compact adventure/color/motion meters + the active moves,
 // same terminal language (VT323, thin mint meters). Rendered only when the
@@ -436,6 +465,41 @@ function mindHTML(m){
     (bits.length?`<div class="vz-mmoves">${bits.join(" &nbsp; ")}</div>`:"")+
     `</div></div>`;
 }
+// ---------- live playhead ticker: the beat cursor + the page flips ----------
+// ~10Hz, ONLY while the ⓘ modal is open AND we're live; it cancels itself the
+// first frame either stops being true (zero cost closed/idle). Between full
+// re-renders it sweeps the ONE shared cursor and, when the beat crosses a
+// multiple of 8, slides every lane's pager to the next window + relabels the
+// ruler/indicator — the playhead DRIVES the paging (page = floor(beat/8)).
+let phTimer=0;
+function phFrame(){
+  const wrap=document.getElementById("insideWrap");
+  if(!wrap||!wrap.classList.contains("open")||!S.live){
+    clearInterval(phTimer); phTimer=0;
+    const ph=document.querySelector("#inside .vz-ph"); if(ph) ph.classList.remove("on");
+    return;
+  }
+  const box=document.getElementById("inside");
+  const tlEl=box.querySelector(".vz-tl"), ph=box.querySelector(".vz-ph");
+  const beat=liveBeat();
+  if(!tlEl||!ph||beat==null) return;
+  const pages=+tlEl.dataset.pages||1;
+  const page=Math.max(0,Math.min(pages-1,Math.floor(beat/VIEW)));
+  if(page!==+tlEl.dataset.page){                 // page flip: fast slide + relabel
+    tlEl.dataset.page=String(page);
+    const shift=(-page*100/pages).toFixed(4)+"%";
+    for(const pg of tlEl.querySelectorAll(".vz-pager")) pg.style.transform=`translateX(${shift})`;
+    box.querySelectorAll(".vz-ruler span").forEach((s,i)=>{ s.textContent=String(page*VIEW+i+1); });
+    const ind=box.querySelector(".vz-pgind"); if(ind) ind.textContent="·"+(page+1)+"/"+pages;
+  }
+  const line=ph.firstElementChild, left=(beat-page*VIEW)/VIEW*100;
+  if(line){  // never sweep BACKWARDS across the roll at a bar/page wrap — snap instead
+    if(left<parseFloat(line.style.left||"0")) line.style.transition="none"; else line.style.transition="";
+    line.style.left=left.toFixed(2)+"%";
+  }
+  ph.dataset.page=String(page); ph.dataset.beat=beat.toFixed(3); ph.classList.add("on");
+}
+function ensurePhTicker(){ if(!phTimer) phTimer=setInterval(phFrame,100); }
 export function renderInside(){
   const box=document.getElementById("inside"); if(!box) return;
   const d=vizData();
@@ -453,4 +517,7 @@ export function renderInside(){
     mindHTML(d.mind)+
     `<div class="vz-sec"><div class="vz-lbl">timeline — what each voice plays this bar</div>`+
       `${timelineHTML(d.timeline)}${masterLine}</div>`;
+  // arm the playhead ticker only when it has work (live + modal open); it stops itself.
+  const wrap=document.getElementById("insideWrap");
+  if(S.live&&wrap&&wrap.classList.contains("open")) ensurePhTicker();
 }

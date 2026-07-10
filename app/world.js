@@ -104,7 +104,11 @@ recomputeWorld();
 // SNAP (snap-to-anchor gap) and CUTOFF (weight-falloff radius) are DISTANCES, so
 // they scale with the coordinate space — bumped ~2.45x alongside the respread so
 // the same handful of neighbours blend and being on a star still reads as pure.
-export const SNAP=64, CUTOFF=430, BARS_PER_SEG=128;   // one path leg ≈ 128 bars — genres evolve slowly, almost imperceptibly
+export const SNAP=64, CUTOFF=430, BARS_PER_SEG=256;   // one path leg ≈ 256 bars — genres evolve slowly, almost imperceptibly
+// (128 -> 256 on 2026-07-10: the blend-arrival fix made flips actually LAND —
+// drums in 3 bars, identity in 7 — so the old pace suddenly read as "way too
+// fast" (Paul). The default doubles and the pace slider now reaches 4096 for
+// hours-long, nearly-geological journeys.)
 export const KEYS=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 export const PROG_MODE={ royal_road:[0,"major · royal road"], four_chords:[0,"major"], sad_pop:[9,"minor"],
   doo_wop:[0,"major"], ii_v_i:[0,"major · ii-V-I"], pop_1625:[0,"major"], synthwave:[9,"minor"],
