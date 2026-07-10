@@ -40,7 +40,24 @@ work it in order.*
 ## THE PROGRAM (Paul: "Do #2, then Faithful, then everything else, then Vapor")
 ### 1. #2 soundfont — DONE (the switcher above).
 
-### 2. FAITHFUL whole-path renderer — DO THIS NEXT
+### 2. FAITHFUL whole-path renderer — IN PROGRESS
+DONE + committed (NOT yet shipped to stellate.app; aboardresearch has it):
+the offline loop-walk foundation (FaustLive.makeWalk EXPORTED; targeting.stateAt;
+app/journey.js walkLoop) and WHOLE-PATH MIDI (makeWalk's per-bar `r` now carries
+note-level `ev`; midi-export.buildMidiJourney; journey.buildLoopMidi;
+export.js downloadMidi exports "… (full path).mid" when a loop is drawn — verified,
+explorer-ui MIDI gate green, valid 5-track SMF w/ tempo map).
+REMAINING — AUDIO then VIDEO:
+- AUDIO reuse path (found this session): stream-worker `runBakeNative`
+  (stream-worker.js:307) already renders per-bar OFFLINE via
+  `openLive({...,bakeNative:true})` -> `feedBar(barSpec)` -> `renderChunk` giving
+  {L,R} PCM. BUT one openLive fixes the timbre TOPOLOGY, and the loop evolves
+  genre-to-genre — so: walkLoop, group consecutive bars by unit `sig` (r.sig),
+  render each topology-stable RUN in its own openLive session (feedBar per bar),
+  CROSSFADE runs at genre boundaries (the ring path's bridging, offline) +
+  concatenate; decode inputs per run (export.js decodeInputs mirrors it); reuse
+  encodeMp3. This is the deep piece — the live conductor, offline.
+- (original design note below.)
 Export audio/MIDI/video of the ENTIRE LOOP (Paul: "export the entire path, not
 just the current song. The whole mix"). User chose: **one full loop**, video
 **in-browser from local clips only**. Spadework already done:
