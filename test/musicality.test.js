@@ -49,7 +49,7 @@ gate("BLOOM: late arrival named with beat + bound + form; on-time passes", () =>
   const st = synthState([FULLSEC, FULLSEC, FULLSEC, FULLSEC, FULLSEC, FULLSEC, FULLSEC]);   // 7 x 32 beats
   const late = EV({ drums: [kick(0)], pitched: [{ voice: "bass", beat: 0, dur: 1, pch: "6.00", amp: 0.2 }, mel(200), pad(0)] });
   const r = M.laws.bloom(st, late, "pop");
-  assert(r.failures.some((f) => /melody first sounds at beat 200 \(bound 64, form pop\)/.test(f.what)), "late melody not named: " + JSON.stringify(r.failures));
+  assert(r.failures.some((f) => /melody first sounds at beat 200 \(bound 192, form pop\)/.test(f.what)), "late melody not named: " + JSON.stringify(r.failures));
   assert(!r.hard, "late is not hard");
   const onTime = EV({ drums: [kick(0)], pitched: [{ voice: "bass", beat: 2.5, dur: 1, pch: "6.00", amp: 0.2 }, mel(8), pad(0)] });
   const r2 = M.laws.bloom(st, onTime, "pop");
@@ -62,6 +62,44 @@ gate("BLOOM: in-bar pattern offset is groove, not lateness (bar-floor arrival)",
   const ev = EV({ drums: [kick(0)], pitched: [{ voice: "bass", beat: 34.5, dur: 1, pch: "6.00", amp: 0.2 }, mel(0), pad(0)] });
   const r = M.laws.bloom(st, ev, "pop");
   assert(!r.failures.some((f) => f.part === "bass"), "bass at 34.5 must arrive at bar 32: " + JSON.stringify(r.failures));
+});
+
+gate("BLOOM: one full harmonic cycle is never late (12-bar piano-chorus intro)", () => {
+  // blues_12 progression -> long cycle; drums enter after one full cycle.
+  const st = synthState([{ cycles: 1, drums: "off", bass: "off", melody: "arp", pads: true },
+                         { cycles: 1, drums: "four", bass: "root", melody: "arp", pads: true }],
+                        { progression: "blues_12" });
+  const P = M.partsOf(st, EV());
+  const cyc = P.spans.cycleBeats;
+  assert(cyc > 64, "blues_12 cycle should exceed the pop drums bound, got " + cyc);
+  const ev = EV({ drums: [kick(cyc)], pitched: [mel(0), pad(0), { voice: "bass", beat: cyc, dur: 1, pch: "6.00", amp: 0.2 }] });
+  const r = M.laws.bloom(st, ev, "pop");
+  assert(!r.failures.some((f) => f.part === "drums" || f.part === "bass"),
+    "kit after ONE full cycle must be idiomatic, not late: " + JSON.stringify(r.failures));
+});
+
+gate("BLOOM: a part declared only in exposed/release nodes is a contrast device (exempt)", () => {
+  // pads exist ONLY in the bridge (exposed) — the designed late pad wall.
+  const st = synthState([
+    { name: "verse", cycles: 4, drums: "four", bass: "root", melody: "arp", pads: false },
+    { name: "bridge", cycles: 1, drums: "off", bass: "root", melody: "sparse", pads: true }]);
+  const ev = EV({ drums: [kick(0)], pitched: [mel(0), pad(128), { voice: "bass", beat: 0, dur: 1, pch: "6.00", amp: 0.2 }] });
+  const r = M.laws.bloom(st, ev, "pop");
+  assert(!r.failures.some((f) => f.part === "pads"), "bridge-only pads must be exempt: " + JSON.stringify(r.failures));
+});
+
+gate("BLOOM: a part first declared at the 3-minute evolution boundary is a gift, not lateness", () => {
+  const st = synthState([
+    { name: "drop", cycles: 6, drums: "four", bass: "root", melody: "off", pads: true },
+    { name: "outro", cycles: 2, drums: "four", bass: "root", melody: "wander", pads: true }]);
+  st.genreMeta = { genres: ["synthcase"], evolutions: [{ at: 1, tSec: 170, kind: "reroll", detail: "x/wander" }] };
+  const ev = EV({ drums: [kick(0)], pitched: [mel(200), pad(0), { voice: "bass", beat: 0, dur: 1, pch: "6.00", amp: 0.2 }] });
+  const r = M.laws.bloom(st, ev, "pop");
+  assert(!r.failures.some((f) => f.part === "melody"), "evolution-introduced melody must be exempt: " + JSON.stringify(r.failures));
+  // without the evolution record the same layout IS late
+  delete st.genreMeta;
+  const r2 = M.laws.bloom(st, ev, "pop");
+  assert(r2.failures.some((f) => f.part === "melody"), "un-evolved late melody must still be named");
 });
 
 gate("BLOOM: all-sections-off drums = drumless by design = exempt (not declared)", () => {
