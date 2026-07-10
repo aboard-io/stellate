@@ -6432,6 +6432,13 @@
     if(soloIdiom && secs.length>=3){
       const at=Math.max(1, secs.length-2);   // before the final head + outro
       secs.splice(at, 0, S("solo", { cycles:1, drums:kit, bass:bass, pads:true, melody:"solo", soloIdiom, soloDuck:true, fill:"off" }));
+      // NO MASTER SWEEPS in an acoustic combo (Paul 2026-07-10: "a huge filter
+      // sweep comes in" mid-bebop): the pop form's pre-chorus open sweep
+      // (260->18k over a whole section) is an EDM gesture with no place in a
+      // jazz/blues/funk/bluegrass room. Stripped AFTER token resolution, so the
+      // SWEEP draw already happened — rng order untouched, all other genres
+      // byte-identical.
+      for(const s of secs) if(s.sweep && s.sweep!=="off") s.sweep="off";
     }
     // ---- duration SOLVER (KERNEL-V4 Phase 5, §3.5) ----
     // Land the track within ±10% of opts.targetSec. track()/blend()/mix()

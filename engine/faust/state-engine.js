@@ -1515,6 +1515,25 @@
       out.push({ unit: key, beat: p.beat, durB, sets, amp: p.amp,
         ...(p.bend ? { bend: p.bend } : {}) });
     }
+    // SELF-CHOKE lanes (Paul 2026-07-10: "snares stumbling on top of each other —
+    // it's not timing, it's the samples not cutting off fast enough"): a sampled
+    // drum one-shot rings its full oneShotSec (~1s), so at fast tempos consecutive
+    // hits on the same piece stack 3-4 deep into a smear (bebop's 220bpm ghost
+    // snares). Real membranes re-damp when restruck; cymbals ring. So kick/snare/
+    // clap/rim choke at the NEXT hit on the same lane (+55ms declick tail); hats
+    // already use notated dur; toms keep their roll ring; ride/crash never choke.
+    // Deterministic (the event list is known) and engine-shared (mapEvents feeds
+    // both press and live); sparse patterns are untouched (gap > sample = no cut).
+    const CHOKE_LANES = { kick: 1, snare: 1, clap: 1, rim: 1, stick: 1 };
+    const chokeBeats = {};
+    for (const d of ev.drums) if (CHOKE_LANES[d.drum]) (chokeBeats[d.drum] = chokeBeats[d.drum] || []).push(d.beat);
+    for (const k of Object.keys(chokeBeats)) chokeBeats[k].sort((a, b) => a - b);
+    const nextHit = (drum, beat) => {   // first hit strictly after beat (binary search)
+      const L = chokeBeats[drum]; if (!L) return Infinity;
+      let lo = 0, hi = L.length;
+      while (lo < hi) { const m = (lo + hi) >> 1; if (L[m] <= beat + 1e-6) lo = m + 1; else hi = m; }
+      return lo < L.length ? L[lo] : Infinity;
+    };
     for (const d of ev.drums) {
       if (!win(d.beat)) continue;
       const u = units[d.drum]; if (!u) continue;
@@ -1534,7 +1553,13 @@
         else if (d.drum === "perc") { freq = midiToFreq(d.note || 60); }   // GM-note zone select (natural pitch)
         else { freq = DRUM_KS_FREQ; }   // kick/snare/clap/rim/ride/crash: root-60 zone, rate 1
         if (d.drum === "hat") durSec = Math.max(0.02, d.dur * spb);
-        else durSec = Math.max(0.04, (u.sampler.oneShotSec || 1) - (u.sampler.rel || 0.03));
+        else {
+          durSec = Math.max(0.04, (u.sampler.oneShotSec || 1) - (u.sampler.rel || 0.03));
+          if (CHOKE_LANES[d.drum]) {   // self-choke: cut at the next same-lane hit
+            const gapSec = (nextHit(d.drum, d.beat) - d.beat) * spb + 0.055;
+            if (gapSec < durSec) durSec = Math.max(0.06, gapSec);
+          }
+        }
         out.push({ unit: d.drum, beat: d.beat, durB: durSec / spb, drum: true,
           sets: { freq, gain: clamp(d.amp * DRUM_SAMP_GAIN, 0, 2) } });
         continue;
