@@ -26,31 +26,62 @@ accessible version (trued up), THE POOL LAW (`pool:<class>*N` tokens in
 sources lists, per-(seed,class) dedicated stream, byte-clean when unused), and
 the offline matrix prover as verify.sh's fifth referee.
 
+## IN FLIGHT AT HANDOFF (check these FIRST)
+- The all-tracks viz landed as `ca5c33f` ("The viz shows every track") and its
+  ship ran in a background task — CONFIRM stellate.app carries it (curl the
+  deployed app/inside.js for "voices") and re-run tools/ship.sh if not.
+- Then go straight to §1: all four wave-3 branches are done and waiting.
+
 ## THE QUEUE, in order
 
-### 1. INTEGRATE WAVE 3 (the repertoire program — agents may already be done)
-Four worktree branches under `git branch --list "worktree-wf_72496dd1*"`:
-beds (79 new CC beds + SOURCE_POOLS fill + the anchor sweep to pool tokens),
-hits/breaks (new one-shots/breaks + vocal_stab/chime/rave_stab pools + sweep),
-forms (4-6 new arcs + 40-70 genres off `pop` + new progressions), clips
-(30-50 PD clips + GENRE_CLIPS spread). THE PROCEDURE (used successfully for
-waves 1-2 — follow it exactly):
-1. Read each branch's commit message FULLY (they report numbers + skips).
-2. `git merge --no-ff <branch>` one at a time; resolve conflicts by keeping
-   BOTH sides' intent (they edit different fields of the same anchors).
-3. MEDIA LAW: worktrees don't share untracked media. After merging a branch
-   with a fetch script, RERUN the script on main (`tools/fetch-bed-expansion.sh`
-   etc.); if a tool is missing (7z for FSBS!), copy from the worktree dir
-   `.claude/worktrees/wf_72496dd1-2c3-N/found/...` — the script stays the
-   reproducible artifact. NEVER let a fetch overwrite an existing deployed
-   file (the immutability law below).
-4. After each merge: `NODE_PATH=/home/ford/ftrain-2025/node_modules ./verify.sh --no-cache`.
-5. After all four: fixtures re-capture (`node test/fixtures.js capture`) with
-   drift NAMED in the commit; the full browser battery (see Gates); a
-   press-spot of 3 swept genres proving bed/hit rotation across seeds while
-   pinned identity beds hold; tools/ship.sh.
-6. world.js PROG_MODE needs rows for any new progressions the forms agent
-   added (it flagged this — app territory, theirs was kernel-only).
+### 1. INTEGRATE WAVE 3 — all four branches ARE DONE and reported green
+Branches (each self-gated verify.sh --no-cache in its worktree, matrix
+240/240, byte-clean proofs where claimed — their commit messages carry the
+numbers):
+- `worktree-wf_72496dd1-2c3-1` @ 3c50cd7 — BEDS: 79 new beds (PD×55, CC-BY×12,
+  CC-BY-SA×12), ten classes (weather/smalltown/shortwave new), SOURCE_POOLS
+  filled (city 16 … shortwave 5; 3 bird beds registered-unpooled), 152 anchors
+  swept to pool tokens / 88 pinned (identity lists in its commit), BED_CHAR
+  rows added.
+- `worktree-wf_72496dd1-2c3-2` @ bcfc8a5 — HITS/BREAKS: 34 new samples
+  (12 live funk breaks CC-BY-2.5, VCSL CC0 chimes/perc, PD-by-age 78s stabs,
+  NASA lines, 4 synthesized rave stabs incl. hoover_a/b), pools vocal_stab/
+  chime/horn_stab/rave_stab/perc_hit + bpm-banded break_75_95…break_155_175,
+  170 anchors swept / 17 pinned (tw_ding + sp_herenow/sp_rhythm DELIBERATELY
+  pinned — de-cloning the commissioned voice needs a new speech wave).
+- `worktree-wf_72496dd1-2c3-3` @ 9839f53 — FORMS: six new arcs (aaba/vamp/
+  storm/throughline/duet/suite) + reassignments (53 genres drift by hash,
+  187 byte-identical; several reverted after dominance fights — its message
+  names them) + new progressions.
+- `worktree-wf_72496dd1-2c3-4` @ 10a090b — CLIPS: 47 new PD clips from 21
+  items, top-5 concentration 21% -> 13.8%, every genre >= 4 clips (the 42
+  poolless anchors got card-matched pools; surgical removals only where a
+  top-5 clip was template filler).
+
+THE PROCEDURE:
+1. **CONFLICT WARNING**: beds AND hits both edited `engine/validate-genres.js`
+   (orPool: found/hits/vox source checks accept pool tokens iff every member
+   registered) and `engine/invariants.js` (tokens expand through members).
+   Their versions are near-identical — on conflict, take either and make sure
+   BOTH call sites (found+hits+vox) are covered; run prove + validate to
+   confirm.
+2. Merge order: beds -> hits (resolve the referee conflicts) -> forms ->
+   clips. `git merge --no-ff` each; verify.sh --no-cache after each.
+3. MEDIA: rerun `tools/fetch-bed-expansion.sh` and `tools/fetch-hits-expansion.sh`
+   on main (both curl+ffmpeg, no 7z needed). Clips: cut clips live in the
+   worktree `found/video/` — copy them (`.claude/worktrees/wf_72496dd1-2c3-4/
+   found/video/*.mp4`) or rerun its fetch; check its script name in the
+   branch. NEVER overwrite an existing deployed file (immutability law).
+4. `world.js` PROG_MODE rows for the forms agent's new progressions (its
+   flagged integrator item — check csd-engine PROGRESSIONS for the new ids
+   and add [keyOffset, display] rows; app territory).
+5. After all four: `node test/fixtures.js capture` (name the causes), the
+   full browser battery, a rotation spot-proof (a swept genre resolves
+   different beds/hits across seeds 1..6; crickettempo/atlantidrone keep
+   identity beds every seed), tools/ship.sh.
+6. Report to Paul: pool sizes, sweep/pin counts, the before/after clip
+   concentration, and WHICH genres changed form (his ear will want a listen
+   list — vamp funk, aaba jazz, storm doom are the audition picks).
 
 ### 2. Paul's remaining ear/verdict items
 - The fugue mastering A/B went to Paul — his verdict steers whether the
