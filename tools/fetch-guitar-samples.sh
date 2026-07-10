@@ -13,7 +13,7 @@
 #                                               signal meant for the engine's staged
 #                                               insert_higain amp; ~-27dB RMS raw BY
 #                                               DESIGN — only claim it behind higain)
-#   FreePats Tenor Saxophone      (CC0 1.0)  -> tenor_sax REPLACEMENT (8 zones, ALL
+#   FreePats Tenor Saxophone      (CC0 1.0)  -> tenor_sax_fp (RENAMED dir — deploy immutability law; the id tenor_sax points here) (8 zones, ALL
 #                                               with infinite sustain loops; VCSL
 #                                               samples re-edited by roberto@zenvoid.org)
 #   FreePats Upright Piano KW     (CC0 1.0)  -> upright_piano (Kawai upright in a
@@ -87,14 +87,14 @@ PYEOF
 # --- tenor_sax REPLACEMENT: FreePats Tenor Saxophone (CC0, looped) -----------
 # Replaces the 6-zone FluidR3 GM extract IN PLACE (same id — every anchor that
 # names tenor_sax picks it up). Guard: z07_r88.wav exists only in the FreePats set.
-if [ ! -s found/samples/instruments/tenor_sax/z07_r88.wav ]; then
-  echo "→ FreePats Tenor Saxophone -> tenor_sax (replacement)"
+if [ ! -s found/samples/instruments/tenor_sax_fp/z07_r88.wav ]; then
+  echo "→ FreePats Tenor Saxophone -> tenor_sax_fp (renamed dir; id tenor_sax)"
   fetch TenorSaxophone-SF2-20200717.tar.bz2 \
     f7640cf2039662b15b4521bb5615e1ddc426731559b4c31079cb5e9f50e16fa0 \
     "$FP/Reed/TenorSaxophone/TenorSaxophone-SF2-20200717.tar.bz2"
   rm -rf "$CACHE/tenorsax" && mkdir -p "$CACHE/tenorsax"
   tar xjf "$CACHE/TenorSaxophone-SF2-20200717.tar.bz2" -C "$CACHE/tenorsax"
-  extract_sf2 "$CACHE"/tenorsax/*/TenorSaxophone-20200717.sf2 tenor_saxophone tenor_sax 8
+  extract_sf2 "$CACHE"/tenorsax/*/TenorSaxophone-20200717.sf2 tenor_saxophone tenor_sax_fp 8
 fi
 
 # --- crunch_guitar: FSBS Distorted #2 (CC0, re-amped Fender, 10-33s sustains) -
