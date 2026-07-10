@@ -18,7 +18,11 @@
 //
 // Cached Response objects keep their original headers, so COOP/COEP isolation
 // (SharedArrayBuffer for the render worker) survives offline replay.
-const VERSION = "stellate-v1";
+const VERSION = "stellate-v2";   // v2 (2026-07-10): app code goes STALE-WHILE-REVALIDATE — the origin serves
+// cache-control:no-cache, so pre-SW every visit revalidated ~20 files serially (one RTT each — Paul: "it
+// loads very slowly now" on a phone) and v1's network-first made that a hard wait. Now a repeat visit
+// paints from cache INSTANTLY while a background fetch refreshes the copy for the NEXT load — a deploy
+// lands one reload later, which the ship flow tolerates (hard-reload busts when it matters).
 const IMMUTABLE = /^\/(found\/|engine\/faust\/dist\/)/;
 
 self.addEventListener("install", (e) => { self.skipWaiting(); });
@@ -45,17 +49,14 @@ self.addEventListener("fetch", (e) => {
       return res;
     })());
   } else {
+    // STALE-WHILE-REVALIDATE: cached copy NOW, fresh copy in the background.
     e.respondWith((async () => {
       const cache = await caches.open(VERSION);
-      try {
-        const res = await fetch(req);
-        if (res && res.ok) cache.put(req, res.clone());
-        return res;
-      } catch (err) {
-        const hit = await cache.match(req, { ignoreSearch: url.pathname.endsWith(".html") || url.pathname === "/" });
-        if (hit) return hit;
-        throw err;
-      }
+      const hit = await cache.match(req, { ignoreSearch: url.pathname.endsWith(".html") || url.pathname === "/" });
+      const refresh = fetch(req).then((res) => { if (res && res.ok) cache.put(req, res.clone()); return res; });
+      if (hit) { e.waitUntil(refresh.catch(() => {})); return hit; }
+      try { return await refresh; }
+      catch (err) { throw err; }
     })());
   }
 });
