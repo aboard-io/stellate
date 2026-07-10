@@ -306,5 +306,18 @@ gate("card-parse: catalog card-lie count within the regression tripwire", () => 
   assert(n <= 45, "card-lie count " + n + " > 45 — a card likely promises an instrument its recipe can't realize; run M.checkCardClaims per genre");
 });
 
+// ---------- SOLOS: the improvised solo form-node ----------
+gate("solos: idiomatic genres improvise a deterministic, varied line over the changes", () => {
+  for (const g of ["bebop", "jazz", "funk", "bluegrass"]) {   // blues floors long; evolution can shed its solo (its blues call-response lead solos anyway)
+    const sec = K.mix([{ g, w: 1 }], { seed: 11 }).sections.find((s) => s.melody === "solo");
+    assert(sec, g + " has no solo section");
+    const a = E.buildEvents(K.mix([{ g, w: 1 }], { seed: 11 })).pitched.filter((e) => e.solo === true);
+    const b = E.buildEvents(K.mix([{ g, w: 1 }], { seed: 11 })).pitched.filter((e) => e.solo === true);
+    assert(a.length >= 12, g + " solo too sparse (" + a.length + " notes)");
+    assert(new Set(a.map((e) => e.pch)).size >= 6, g + " solo lacks melodic variety");
+    assert(JSON.stringify(a.map((e) => [e.beat, e.pch])) === JSON.stringify(b.map((e) => [e.beat, e.pch])), g + " solo not deterministic");
+  }
+});
+
 console.log(fails ? "\n" + fails + " FAILING" : "\nall green");
 process.exit(fails ? 1 : 0);

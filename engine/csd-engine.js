@@ -847,7 +847,7 @@
   // melody phrases are 8-beat cells too; with chordEvery (cb) ≠ 8 the phrase
   // takes the front of the chord bar (long harmony breathes) or truncates.
   // cb=8 (every genre today) is byte-identical to the pre-lane engine.
-  function melodyEvents(style,base,prg,chords,k,rng,seed,cb){
+  function melodyEvents(style,base,prg,chords,k,rng,seed,cb,idiom){
     cb=cb||CHORD_BEATS;
     const out=[], cycleBeats=chords.length*cb;
     const comp = style==="composed"?prg.composed : style==="composed2"?prg.composed2 : null;
@@ -895,6 +895,54 @@
           call.forEach(([o,d,idx,oct],j)=>{ if(j===drop) return;
             const ai=Math.max(0,idx-1);
             note(o+4,d*0.9,ai,0,bend(ai)); });
+        }
+        return;
+      }
+      if(gen==="solo"){
+        // CsdTheory-driven IMPROVISATION over the changes (not a pattern table):
+        // per chord bar, an idiomatic line built from the chord tones (lead[]) with
+        // scale-STEP connectors and chromatic APPROACH notes into the next target,
+        // an ascend-then-descend contour, call-and-response breaths, and a dynamic
+        // arc. Deterministic on a DEDICATED per-bar stream (never touches the shared
+        // rng), so any bar/genre without a solo section is byte-identical. Idiom
+        // tunes density / chromaticism / bends: bop (eighth-note bop runs), blues
+        // (sparser, bent), funk (syncopated 16ths), modal (leaping/scalar), roll
+        // (bluegrass banjo/fiddle sixteenth rolls).
+        const cfg=({ bop:{sub:.5,rest:.12,chrom:.5,leap:.22,bend:0},
+                     blues:{sub:.5,rest:.28,chrom:.22,leap:.18,bend:.42},
+                     funk:{sub:.25,rest:.34,chrom:.32,leap:.14,bend:0},
+                     modal:{sub:.5,rest:.2,chrom:.14,leap:.36,bend:.12},
+                     roll:{sub:.25,rest:.08,chrom:.1,leap:.3,bend:0} })[idiom||"bop"]
+                   || {sub:.5,rest:.18,chrom:.35,leap:.24,bend:.1};
+        const gci=Math.round(Sb/cb);
+        const sr=mulberry32(((seed>>>0)^Math.imul(gci+1,0x9e3779b1)^0x50105)>>>0);
+        const ct=lead.map(parsePch).slice().sort((a,b)=>a-b);   // chord tones, ascending semitones
+        const root=ct[0];
+        const clampReg=(m)=>{ while(m-root>16)m-=12; while(root-m>7)m+=12; return m; };
+        const nearestCt=(m)=>ct.reduce((b,c)=>Math.abs(c-m)<Math.abs(b-m)?c:b,ct[0]);
+        const nSlots=Math.max(1,Math.round(cb/cfg.sub));
+        const breathe=(gci%2===1)&&sr()<0.55;                   // rest the tail every other bar (the response)
+        let cur=ct[Math.floor(sr()*Math.min(2,ct.length))];
+        for(let s=0;s<nSlots;s++){
+          const o=s*cfg.sub; if(o>=cb) break;
+          if(breathe && o>=cb*0.5) break;
+          if(s>0 && sr()<cfg.rest) continue;                    // phrasing rest
+          const pos=nSlots>1?s/(nSlots-1):0, strong=Math.abs(o-Math.round(o))<1e-6;
+          let m;
+          if(strong && sr()<0.72){                              // land on a chord tone along the contour arc
+            const want=pos<0.6?pos/0.6:1-(pos-0.6)/0.4;
+            m=ct[Math.min(ct.length-1,Math.round(want*(ct.length-1)))];
+            if(sr()<cfg.leap) m=ct[Math.floor(sr()*ct.length)]+(sr()<0.3?12:0);
+          } else {                                              // connect: chromatic approach or a scale step
+            const target=nearestCt(cur+(sr()<0.5?2:-2));
+            if(sr()<cfg.chrom) m=target-1;                      // leading tone from below (the bop enclosure)
+            else { const dir=target>cur?1:-1; m=cur+dir*(sr()<0.45?2:1); }
+          }
+          m=clampReg(m); cur=m;
+          const dur=cfg.sub*(sr()<0.18?1.7:(sr()<0.5?1:0.85));
+          const amp=0.12+0.05*(pos<0.6?pos/0.6:1-(pos-0.6)/0.4)+sr()*0.02;
+          const bend=cfg.bend&&sr()<cfg.bend?{from:-(0.5+sr()*0.5),ms:Math.round(60+sr()*90)}:null;
+          out.push({voice:"melody",beat:Sb+o,dur,pch:toPch(m),amp,solo:true,...(bend?{bend}:{})});
         }
         return;
       }
@@ -1404,7 +1452,7 @@
         let bassMut=0;   // MUSIC-MIND taste cap: at most 2 bass-cell mutations per cycle (no rng in the declaration)
         chords.forEach((chord,ci)=>{
           const Sp=cycleBase+ci*CBEATS;
-          if(sec.pads){ const padAmp=sec.swell ? 0.085*(0.5+1.9*((Sp-cur)/Math.max(1,secBeats))) : 0.085;
+          if(sec.pads){ const padAmp=(sec.swell ? 0.085*(0.5+1.9*((Sp-cur)/Math.max(1,secBeats))) : 0.085) * (sec.soloDuck?0.5:1);   // solo sections duck the comp so the improviser sits forward
             chord.pads.forEach(p=>pitched.push({voice:"pad",beat:Sp,dur:CBEATS,pch:pchAdd(p,k),amp:padAmp}));
             // WALL OF SOUND (state.padDouble — heavymetal): thicken the power-chord
             // wall with an octave-below root double. One extra low voice per chord.
@@ -1447,7 +1495,7 @@
           }
         });
         if(sec.melody&&sec.melody!=="off"){
-          const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,rng,state.seed,CBEATS);
+          const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,rng,state.seed,CBEATS,sec.soloIdiom);
           // MUSIC-MIND melody rhythm cells (state.rhythm): per sounding bar, on
           // the DEDICATED mrng stream (seed+52200), fire ∝ complexity and snap
           // the bar's phrase onto a named cell grid (MM_CELLS — dotted pairs /
