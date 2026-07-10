@@ -1,4 +1,50 @@
 [
- {"key":"fluidr3","label":"FluidR3 GM (default)"},
- {"key":"sgm","label":"SGM Pro 15"}
+ {
+  "key": "fluidr3",
+  "label": "FluidR3 GM (default)"
+ },
+ {
+  "key": "sgm",
+  "label": "SGM Pro 15"
+ },
+ {
+  "key": "windows",
+  "label": "Windows GM"
+ },
+ {
+  "key": "yamaha_xg",
+  "label": "Yamaha XG"
+ },
+ {
+  "key": "montego",
+  "label": "Turtle Beach Montego"
+ },
+ {
+  "key": "sc55",
+  "label": "Roland SC-55"
+ },
+ {
+  "key": "gravis",
+  "label": "Gravis Ultrasound"
+ },
+ {
+  "key": "gba",
+  "label": "Game Boy Advance"
+ },
+ {
+  "key": "emu_aps",
+  "label": "E-mu APS"
+ },
+ {
+  "key": "diet_candy",
+  "label": "Diet Candy"
+ },
+ {
+  "key": "blackberry",
+  "label": "Blackberry"
+ },
+ {
+  "key": "8bit",
+  "label": "8-bit Chiptune"
+ }
 ]
