@@ -379,8 +379,23 @@
     // rides this node; range is the UI's business (0..~1.5).
     const userGain = ctx.createGain();
     userGain.gain.value = (opts.masterVol != null ? Math.max(0, Math.min(4, opts.masterVol)) : 1);
+    // MASTER BUS (Paul: "everything sounds very muted"): the live ring mix used to
+    // hit a UNITY masterGain with no glue and no makeup — the mastering the PRESS
+    // path bakes (fx_bus comp/drive + up to +18 dB peak-normalizing makeup, see
+    // press.js computeMakeup) never ran live, so the sampled voices (the default
+    // sound) played dry and quiet (~−22 dBFS peak straight to output). This causal
+    // master bus restores it: a gentle glue compressor → a makeup lift → a
+    // brickwall limiter for peak safety, all on the SUM so it lifts the native
+    // sampled/found voices too. Live-only (main-thread graph); the baked export
+    // path keeps its own mastering, so segment-parity/fixtures are untouched.
+    const busComp = ctx.createDynamicsCompressor();
+    busComp.threshold.value = -22; busComp.knee.value = 28; busComp.ratio.value = 2.2; busComp.attack.value = 0.015; busComp.release.value = 0.25;
+    const makeup = ctx.createGain(); makeup.gain.value = 2.6;   // ~+8 dB — the loudness the causal live path was missing
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = -1.5; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.002; limiter.release.value = 0.12;
     ringNode.connect(masterGain);
-    masterGain.connect(analyser);
+    masterGain.connect(busComp); busComp.connect(makeup); makeup.connect(limiter);
+    limiter.connect(analyser);
     analyser.connect(userGain);
     userGain.connect(msDest || ctx.destination);
 
