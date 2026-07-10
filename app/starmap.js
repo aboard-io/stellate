@@ -52,6 +52,20 @@ export function drawMap(){
   // pinch zoom grows the TYPE too (sub-linear, capped 3x): zooming in is asking
   // to read the chart. fs===1 at 1x, so the un-zoomed chart is untouched.
   const fs=Math.min(3,Math.max(1,Math.pow(ZOOM.k,0.85)));
+  // REGIONS behind everything: a soft color wash + a big goofy label at each
+  // territory's centroid. Drawn first so stars/lines/traveler sit on top; the
+  // labels are watermark-faint (see .region CSS) so they never fight the UI.
+  if(REGIONS.length){
+    const rfs=Math.min(2.2,Math.max(1,Math.pow(ZOOM.k,0.6)));   // gentler zoom growth than stars — these read as "continental"
+    for(const rg of REGIONS){
+      const cx=X(rg.cx), cy=Y(rg.cy);
+      const rad=Math.max(60, rg.spread*rb.width/WORLD_W*ZOOM.k*0.9);
+      svg.appendChild(el("circle",{cx,cy,r:rad.toFixed(1),fill:rg.color,opacity:.055}));   // soft territory wash
+      const t=el("text",{x:cx,y:cy,"text-anchor":"middle","class":"region"});
+      t.style.fontSize=(30*rfs).toFixed(1)+"px"; t.style.fill=rg.color;
+      t.textContent=rg.label; svg.appendChild(t);
+    }
+  }
   if(S.waypoints.length>1){
     // CLOSED LOOP: repeat waypoint[0] at the end so the constellation line draws
     // the closing leg (waypoint[n-1] → waypoint[0]) the traveler actually walks.
@@ -86,7 +100,8 @@ export function drawMap(){
     if(!hit){ show[e.g]=true; placed.push(bx); } }
   for(const e of ent){
     const {g,w,cx,cy}=e;
-    svg.appendChild(el("circle",{cx,cy,r:8+(w>0.01?w*26:0),fill:w>0.01?"#ff6ec7":"#a06bff",opacity:.10+w*.28}));  // halo
+    const rc=(REGION_OF[g]!=null&&REGIONS[REGION_OF[g]])?REGIONS[REGION_OF[g]].color:"#a06bff";   // inactive halo wears its region color
+    svg.appendChild(el("circle",{cx,cy,r:8+(w>0.01?w*26:0),fill:w>0.01?"#ff6ec7":rc,opacity:.10+w*.28}));  // halo
     svg.appendChild(el("circle",{cx,cy,r:w>0.01?3.2:2.2,fill:w>0.01?"#ffd7ee":"#e6e0ff",opacity:.95}));           // the star
     if(!show[g]) continue;   // name culled at this zoom — the star still shows; zoom in to read it
     const t=el("text",{x:cx+9*fs,y:cy+4*fs,"class":w>0.01?"anchor hot":"anchor"});
@@ -452,6 +467,64 @@ for(const g of Object.keys(POS)){
 }
 const GROOVE_ANCHOR=0.6;   // ENERGY at/above this = "groove anchor" (dance-floor tier)
 const GROOVE_EVERY=3;      // force a reachable groove anchor at least this often, for contrast without monotony
+
+// ---------- REGIONS: the map divided into colored, goofily-named territories ----------
+// Paul 2026-07-10: "the starmap is now so large that we should be dividing it
+// into regions by color with big textual labels." The layout already clusters
+// similar genres (computeGenreLayout's similarity springs), so a deterministic
+// k-means over the FINAL POS carves the field into spatially- AND musically-
+// coherent territories. Each region is named + colored by its ENERGY rank
+// (wash → dance), so the colors read as a cool→warm gradient and the goofy names
+// land on a fitting vibe. Deterministic (farthest-point seeding, NO Math.random)
+// so the regions are byte-stable every load, exactly like the star positions.
+const REGION_K=10;
+// energy-ordered (mellow wash .. hardest banger); rank r gets NAMES[r]. Goofy in
+// the house style ("Marble Escalator", "Kerosene Twelve") — evocative, invented.
+const REGION_NAMES=["Fathom Parish","The Drone Pastures","Vapor Sanatorium","Cardigan Hollow",
+  "Dust Cul-de-sac","The Escalator Riviera","Sequin Junction","The Boogie Reservoir",
+  "Piston Prairie","The Kickdrum Quarry"];
+const REGION_COLORS=["#6a5cff","#22c1dc","#34d17a","#9bd93a","#ffd23f",
+  "#ff9e3d","#ff7233","#ff5c8a","#b06bff","#ff3d5a"];
+export let REGIONS=[];          // energy-sorted: [{label,color,cx,cy,members:[g],spread}]
+export const REGION_OF={};      // genre -> index into REGIONS
+export function computeRegions(){
+  const gs=Object.keys(POS); if(!gs.length) return;
+  const K2=Math.min(REGION_K, gs.length);
+  const P=gs.map(g=>POS[g]);
+  // deterministic farthest-point seeding: start at the min-(x+y) star, then each
+  // next centroid is the star farthest from all chosen so far.
+  const d2=(a,b)=>{const dx=a[0]-b[0],dy=a[1]-b[1];return dx*dx+dy*dy;};
+  let s0=0; for(let i=1;i<P.length;i++) if(P[i][0]+P[i][1]<P[s0][0]+P[s0][1]) s0=i;
+  const cen=[[...P[s0]]];
+  while(cen.length<K2){
+    let bi=0,bd=-1;
+    for(let i=0;i<P.length;i++){ let mn=Infinity; for(const c of cen){const d=d2(P[i],c); if(d<mn)mn=d;} if(mn>bd){bd=mn;bi=i;} }
+    cen.push([...P[bi]]);
+  }
+  // Lloyd iterations
+  let asg=new Array(gs.length).fill(0);
+  for(let it=0; it<40; it++){
+    let moved=false;
+    for(let i=0;i<P.length;i++){ let bj=0,bd=Infinity; for(let j=0;j<cen.length;j++){const d=d2(P[i],cen[j]); if(d<bd){bd=d;bj=j;}} if(asg[i]!==bj){asg[i]=bj;moved=true;} }
+    const sx=new Array(K2).fill(0),sy=new Array(K2).fill(0),n=new Array(K2).fill(0);
+    for(let i=0;i<P.length;i++){ sx[asg[i]]+=P[i][0]; sy[asg[i]]+=P[i][1]; n[asg[i]]++; }
+    for(let j=0;j<K2;j++) if(n[j]){ cen[j]=[sx[j]/n[j], sy[j]/n[j]]; }
+    if(!moved && it>2) break;
+  }
+  // gather clusters, compute mean ENERGY + centroid + spread
+  const raw=[]; for(let j=0;j<K2;j++) raw.push({members:[],ex:0,cx:0,cy:0});
+  gs.forEach((g,i)=>{ const c=raw[asg[i]]; c.members.push(g); c.ex+=(ENERGY[g]||0.3); c.cx+=P[i][0]; c.cy+=P[i][1]; });
+  for(const c of raw){ const m=Math.max(1,c.members.length); c.energy=c.ex/m; c.cx/=m; c.cy/=m;
+    c.spread=Math.sqrt(c.members.reduce((s,g)=>s+d2(POS[g],[c.cx,c.cy]),0)/m); }
+  // name + color by ENERGY rank (mellow -> banger)
+  const ranked=raw.filter(c=>c.members.length).sort((a,b)=>a.energy-b.energy);
+  REGIONS=ranked.map((c,r)=>({ label:REGION_NAMES[r%REGION_NAMES.length], color:REGION_COLORS[r%REGION_COLORS.length],
+    cx:c.cx, cy:c.cy, spread:c.spread, energy:+c.energy.toFixed(3), members:c.members }));
+  for(const k in REGION_OF) delete REGION_OF[k];
+  REGIONS.forEach((rg,idx)=>rg.members.forEach(g=>{REGION_OF[g]=idx;}));
+  window.__REGIONS={count:REGIONS.length, regions:REGIONS.map(r=>({label:r.label,color:r.color,n:r.members.length,energy:r.energy,
+    sample:r.members.map(g=>(K.GENRES[g]&&K.GENRES[g].label)||g).slice(0,6)}))};
+}
 function autoPath(){
   const gs=Object.keys(POS);
   const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
