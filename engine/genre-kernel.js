@@ -1820,8 +1820,8 @@
       progressions:["drone_min","deep_two","mode_phrygian"], kits:["four","techno"], fills:["impact","cut","riser","hat rush","stutter","stutter"],   // BRUTAL: the stutter-gate is very gabber
       bass:{patterns:["stab","drive","rolling"], recipe:{model:["acid","reese"],cutoff:[420,700],res:[.25,.4],level:[1.2,1.4],send:[0,.06],dsend:[0,.08]},
         inserts:{prob:.8, max:1, pool:[["distort",{drive:[.5,.9],mix:[.8,1]}]]}},   // everything into the red — the Rotterdam way
-      lead:{patterns:["double","off","arpup"], recipe:{model:["stack"],wave:"saw",voices:[3,5],spread:[.008,.015],cutoff:[2200,3200],res:[.3,.45],level:[.46,.58],send:[.2,.35],dsend:[.2,.35],attack:.003,release:[.06,.1],sustain:[.5,.62],fenv:[.7,1.2]},
-        inserts:{prob:.7, max:2, pool:[["phaser",{rate:[.15,.4],depth:[.5,.7],mix:[.35,.55]}],["distort",{drive:[.5,.85],mix:[.7,1]}]]}},   // the phased Alpha-Juno hoover, now also driven into the red — the swirling DISTORTED Rotterdam stab
+      lead:{patterns:["double","off","arpup"], recipe:{model:["hoover"],wave:"saw",voices:[3,5],spread:[.008,.015],cutoff:[2200,3200],res:[.3,.45],level:[.46,.58],send:[.2,.35],dsend:[.2,.35],attack:.003,release:[.06,.1],sustain:[.5,.62],fenv:[.7,1.2]},
+        inserts:{prob:.7, max:2, pool:[["phaser",{rate:[.15,.4],depth:[.5,.7],mix:[.35,.55]}],["distort",{drive:[.5,.85],mix:[.7,1]}]]}},   // the phased Alpha-Juno HOOVER (a real model since the card-truth wave 2026-07-10 — SIGNATURE synth, never sampled; was "stack", which the sampled default swapped for a wind fallback), driven into the red — the swirling DISTORTED Rotterdam stab
       pads:{prob:.2, recipe:{model:["saw"],wave:"saw",cutoff:[600,1000],detune:[.008,.016],attack:[.5,1.5],level:[.3,.42],send:[.25,.4],dsend:[.1,.25]}},
       drums:{kickModel:["909"],snareModel:["clap","crack"],hatModel:["metal","noise"],kick:[1.5,1.8],snare:[.7,.95],hat:[.6,.9],tune:[1.05,1.2],send:[.05,.12],dsend:[.05,.15]},   // the kick DISTORTED LOUD (grit does the rest)
       fx:{reverb:[.25,.4], delayBeats:[.375,.5], delayFb:[.25,.4], delayCut:[2200,3400], pump:[.4,.7], crackle:[0,.05], lowcut:[30,45], highcut:[0,0], comp:[.6,.85], grit:[.7,.95], jux:[.15,.35]},
@@ -2148,12 +2148,18 @@
       bpm:[168,176], swing:[0,.05], humanize:[.03,.12],
       progressions:["uplift","four_chords","pop_1625","doo_wop"], kits:["four","pulse"], fills:["riser","impact","hat rush","drum fill"],
       bass:{patterns:["drive","octaves","rolling"], recipe:{model:["saw","reese"],cutoff:[500,850],res:[.15,.3],level:[1.1,1.3],send:[0,.08],dsend:[0,0]}},
-      lead:{patterns:["hero","anthem","arpup","double"], recipe:{model:["stack"],wave:"saw",voices:[4,6],spread:[.008,.015],cutoff:[2600,3600],level:[.46,.58],send:[.35,.55],dsend:[.25,.4],attack:.004,release:[.08,.14],sustain:[.6,.72],fenv:[.4,.8]},
-        inserts:{prob:.5, max:1, pool:[["phaser",{rate:[.15,.4],depth:[.5,.7],mix:[.35,.55]}]]}},   // the hoover, phased
+      lead:{patterns:["hero","anthem","arpup","double"], samplerPool:["bright_yamaha_grand"], recipe:{model:["hoover","hoover","hoover","sampler"],wave:"saw",voices:[4,6],spread:[.008,.015],cutoff:[2600,3600],level:[.46,.58],send:[.35,.55],dsend:[.25,.4],attack:.004,release:[.08,.14],sustain:[.6,.72],fenv:[.4,.8]},
+        inserts:{prob:.5, max:1, pool:[["phaser",{rate:[.15,.4],depth:[.5,.7],mix:[.35,.55]}]]}},   // the HOOVER, phased (a real SIGNATURE model since the card-truth wave 2026-07-10 — was "stack", sampled away to a wind fallback) — 3/4 of draws; the other 1/4 the '92 rave PIANO riff (bright grand, the card's other promise) takes the anthem
       pads:{prob:.6, recipe:{model:["saw","juno60"],wave:"saw",cutoff:[1000,1800],detune:[.008,.015],attack:[.8,2],level:[.42,.58],send:[.4,.6],dsend:[.15,.3]}},
       drums:{kickModel:["909","boom"],snareModel:["clap","noise"],hatModel:["noise","metal"],kick:[1.3,1.55],snare:[.75,1],hat:[.7,1],tune:[1,1.1],send:[.15,.3],dsend:[.1,.25]},
       fx:{reverb:[.5,.68], delayBeats:[.375,.75], delayFb:[.3,.45], delayCut:[2400,3600], pump:[.4,.65], crackle:[0,.08], lowcut:[30,45], highcut:[0,0], comp:[.45,.7]},
       found:{role:"bed", vol:[.06,.14], pitch:[.9,1.05], stretch:[.4,.6], cutoff:[2400,3600], sources:["rave_a","rave_b","sp_energy"]},
+      // the BREAKBEAT ROLL the card promises (card-truth wave 2026-07-10): a one-bar
+      // amen ROLLS INTO each section cadence — the '92 hardcore move — as COLOR over
+      // the four-on-floor, NOT the kit (jungle owns the break-role identity; keeping
+      // the kit four/pulse + the rave bed keeps this matrix-invisible: sampleEvents
+      // is the zero-rng dominant-parent dim, and no verifier feature reads it).
+      sampleEvents:[{pool:["amen_170","amen_172","amen_175"], placement:"cadence", sections:"all", treatment:{cutoff:6000, vol:0.34, maxDur:4}}],
       stab:["rave","offbeat"], hits:{sources:["rave_a","rave_b","rave_c","sp_energy"], pattern:"offbeat", prob:.7},
       form:"dj" },
     hardstyle: { label:"Hardstyle", info:"the reverse-bass stomp at 150: a pitched distorted kick, a screeching detuned lead and a minor-key euphoric breakdown — Dutch hard dance",   // UPTEMPO
@@ -2217,7 +2223,7 @@
       progressions:["doo_wop","four_chords","ii_v_i"], kits:["shuffle","four"], fills:["off","drum fill","kit fill"],
       bass:{patterns:["walking","octaves","root"], samplerPool:["finger_bass","acoustic_bass"], recipe:{model:["sampler","saw"],cutoff:[450,750],res:[.1,.2],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
       lead:{patterns:["anthem","double","hero"], samplerPool:["brass_section","trumpet","trombone"], recipe:{model:["sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2200,3400],level:[.44,.56],send:[.25,.4],dsend:[.1,.25],attack:.01,release:[.1,.2],sustain:[.6,.72]}},
-      pads:{prob:.6, patchPool:["E.ORGAN 1"], samplerPool:["percussive_organ","rock_organ"], recipe:{model:["sampler","sampler"],wave:"saw",cutoff:[1000,1700],detune:[.003,.008],attack:[.1,.4],level:[.44,.58],send:[.25,.4],dsend:[.08,.2]}},
+      pads:{prob:.6, patchPool:["E.ORGAN 1"], samplerPool:["clean_guitar","clean_guitar","percussive_organ","rock_organ"], recipe:{model:["sampler","sampler"],wave:"saw",cutoff:[1000,1700],detune:[.003,.008],attack:[.1,.4],level:[.44,.58],send:[.25,.4],dsend:[.08,.2]}},   // THE SKANK (card-truth wave 2026-07-10): the choppy offbeat comp layer is GUITAR-FIRST — the clean-guitar upstroke IS ska (half the draws; the 2-tone organ keeps the rest). The card promised "choppy offbeat guitar upstrokes" over an organ-only pool
       drums:{kickModel:["boom"],snareModel:["noise","crack"],hatModel:["noise"],kick:[.9,1.15],snare:[.65,.9],hat:[.7,1],tune:[.95,1.1],send:[.12,.24],dsend:[.05,.15],kit:"acoustic"},
       fx:{reverb:[.35,.52], delayBeats:[.5,.75], delayFb:[.15,.3], delayCut:[2200,3400], pump:[0,.1], crackle:[.05,.25], lowcut:[20,35], highcut:[0,0], comp:[.25,.45]},
       found:{role:"bed", vol:[.05,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2200,3400], sources:["blues_vox_78","tokyo_station"]},
@@ -5580,7 +5586,7 @@
       const leadPat=g.lead.patterns||[], bassPat=g.bass.patterns||[];
       const leadM=g.lead.recipe.model||[], bassM=g.bass.recipe.model||[];
       const leadSamp=g.lead.samplerPool||[];
-      const SYNTH_ID=/^(tb303|acid|reese|wobble|stack|modeld|synclead)$/;   // samplers ignore expression annotations — sweep/vibrato slots are wasted on them
+      const SYNTH_ID=/^(tb303|acid|reese|wobble|stack|modeld|synclead|hoover)$/;   // samplers ignore expression annotations — sweep/vibrato slots are wasted on them (hoover added with the model 2026-07-10 so the ex-stack hoover leads keep their derived sweep/vibrato pipes)
       const p=[];
       // priority order = identity first (groove pockets and conversational
       // forms before generic sweetening); the ≤3 cap slices from the top.

@@ -926,6 +926,24 @@
           attack: clamp(isPad ? atk : (m.attack != null ? m.attack : 0.01), 0.001, 2),
           sustain: mp("sustain", 0.85, 0, 1),
           release: mp("release", 0.4, 0.01, 3) } };
+      // hoover — the Alpha-Juno "WhatThe" rave stab (SIGNATURE model: never
+      // sampled, see SIGNATURE_MODELS). Rendered on the supersaw voice with
+      // hoover-shaped DEFAULTS: a big detuned saw stack, the octave layer well
+      // up (the growl), and a standing pitch swirl (the hoover's chorus wobble).
+      // Recipe keys override every default (voices/spread/octave/vibrato ride
+      // through like any supersaw), so anchors tune the stab without a new dsp.
+      case "hoover": {
+        const hv = clamp(m.voices || 5, 1, 7);
+        return { ...base, module: "supersaw", freqMax: 8000, params: { ...base.params,
+          wave: Math.max(0, WAVES.indexOf(m.wave || "saw")), voices: hv,
+          detune: clamp(m.spread != null ? m.spread : 0.012, 0, 0.05),
+          octave: clamp(m.octave != null ? m.octave : 0.34, 0, 0.4),
+          vibrato: clamp(m.vibrato != null ? m.vibrato : 0.012, 0, 0.03),
+          vibRate: clamp(m.vibRate || 5.5, 0.1, 12),
+          cutoff: clamp(c, 80, 18000), res,
+          attack: clamp(m.attack != null ? m.attack : 0.008, 0.001, 2),
+          release: rel, sustain: sus, fenv: fev } };
+      }
       default: { // "stack"/"saw" -> pad_saw (pads) or supersaw (leads)
         if (isPad) return { ...base, module: "pad_saw", params: { ...base.params, cutoff: clamp(c, 80, 12000), res, detune: clamp(m.detune != null ? m.detune : 0.006, 0, 0.05), attack: atk } };
         const v = clamp(m.voices || 2, 1, 7);
@@ -1129,6 +1147,11 @@
                 // doppler IS the identity — same law as the moving filter / detune beat
                 // above. (The generic "organ" model stays sampled; anchors that want the
                 // GM organs say model "sampler" + samplerPool, like blues' own pad pool.)
+    "hoover",   // the Alpha-Juno rave stab (gabber/happyhardcore/hardcore lineage) —
+                // an octave-layered detuned-saw swirl whose PWM-beat motion is the
+                // sound; the sampled remap was landing it on a wind/sampler fallback
+                // and the card's "hoover stabs" never sounded (card-truth wave
+                // 2026-07-10, NEXT.md §5 — the tb303/hammond law).
   ]);
   // Candidate pools per role/timbre-family, drawn from the FULL General MIDI set
   // (all 128 bank-0 FluidR3 presets extracted 2026-07, "all of GM please" — see
