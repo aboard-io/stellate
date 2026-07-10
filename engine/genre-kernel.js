@@ -89,7 +89,7 @@
     fax_tone:        { label:"Fax CNG/CED tones, synthesized (1100/2100Hz) — license-free", url:"" },   // faxbossa
     hvac_hum:        { label:"HVAC furnace drone, synthesized room-tone — license-free", url:"" },      // thermostatwave
     floppy_seek:     { label:"3.5\" floppy head-stepper seek, synthesized — license-free", url:"" },    // floppycore — the break
-    modem_handshake: { label:"56k modem handshake negotiation, synthesized — license-free", url:"" },   // dialupgabber — the drop
+    modem_handshake: { label:"56k modem handshake negotiation, synthesized — license-free", url:"found/modem_handshake.mp3" },   // dialupgabber — the drop (was url:"" = unfetchable; the file was on disk, so the handshake never played; card-truth wave 2026-07-10)
     crt_whine:       { label:"CRT flyback whine at the true 15734Hz NTSC line, synthesized", url:"" },   // crtwave — the high drone
   };
   // sample layer: local files under found/samples/ (kind: break|hit|vox)
@@ -2883,8 +2883,16 @@
       drums:{kickModel:["808"], snareModel:["crack","noise"], hatModel:["noise","metal"], kick:[1.1,1.4], snare:[0.6,0.85], hat:[0.6,0.95], tune:[0.98,1.12], send:[0.08,0.2], dsend:[0.1,0.25]},
       fx:{reverb:[0.25,0.45], delayBeats:[0.25,0.5], delayFb:[0.2,0.4], delayCut:[3000,4800], pump:[0.35,0.6], crackle:[0.05,0.2], lowcut:[35,50], highcut:[0,0], comp:[0.45,0.65]},
       found:{role:"break", vol:[0.2,0.34], pitch:[1,1.08], stretch:[0.85,1], cutoff:[4000,7000], sources:["amen_170","amen_172","amen_175"]},
-      sampleEvents:[{pool:["tw_ding"], placement:"cadence", sections:"all", treatment:{cutoff:5000, vol:0.5}}],
-      hits:{sources:["tw_ding","rave_c"], pattern:"offbeat", prob:0.4},
+      // THE CHANT IS THE GENRE (card-truth wave 2026-07-10): sp_auction_1/2/3 were
+      // registered speech but wired to NOTHING — the card promised an auctioneer and
+      // the mix delivered only a door-ding gavel. Now the livestock patter rides under
+      // every two bars (hogcore's proven buried-phrase idiom), the whole
+      // "do-I-hear-thirty…" landing before the next; the gavel (tw_ding) stays as the
+      // section cadence — now once per section, not 34/34 bars, via the LIVE cadence fix.
+      sampleEvents:[
+        {pool:["sp_auction_1","sp_auction_2","sp_auction_3"], placement:"buried", sections:"all", treatment:{cutoff:4200, vol:0.44, every:2, maxDur:9, rsend:0.16, dsend:0.12}},
+        {pool:["tw_ding"], placement:"cadence", sections:"all", treatment:{cutoff:5000, vol:0.5}}],
+      hits:{sources:["tw_ding","rave_c","sp_auction_2"], pattern:"offbeat", prob:0.4},   // "SOLD to the raver in the back" — a number-stab punctuates the offbeats
       stab:["off"],
       form:"drop" },
     /* /genre-tool:auctioncore:genres */
@@ -2902,6 +2910,12 @@
       drums:{kickModel:["boom","909"], snareModel:["crack","clap"], hatModel:["metal","noise"], kick:[1.35,1.6], snare:[0.6,0.85], hat:[0.6,0.95], tune:[0.95,1.1], send:[0.05,0.15], dsend:[0.05,0.15]},
       fx:{reverb:[0.25,0.42], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[3000,4500], pump:[0.55,0.8], crackle:[0.1,0.3], lowcut:[35,50], highcut:[0,0], comp:[0.5,0.7], grit:[0.3,0.6]},
       found:{role:"chops", vol:[0.16,0.28], pitch:[1,1.4], stretch:[0.35,0.5], cutoff:[3500,6500], sources:["rave_c","rave_d"]},
+      // THE HANDSHAKE IS THE GENRE (card-truth wave 2026-07-10): the card promises
+      // the "screaming modem negotiation" but modem_handshake carried url:"" — the
+      // file was on disk, unfetchable, so it never played. URL restored above; now
+      // the 56k handshake dials up at each section START (opener — once per section
+      // via the LIVE cadence fix, the "connection" that opens the breakdown).
+      sampleEvents:[{pool:["modem_handshake"], placement:"opener", sections:"all", gain:0.7, treatment:{maxDur:16, cutoff:4600, vol:0.5, rsend:0.12, dsend:0.1}}],
       hits:{sources:["rave_c","rave_d","bb_stab_a"], pattern:"offbeat", prob:0.5},
       stab:["rave"],
       form:"drop" },

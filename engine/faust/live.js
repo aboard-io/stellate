@@ -116,8 +116,19 @@
       const sec = Object.assign({}, cur0, { cycles: 1,
         fill: lastCyc ? (cur0.fill || "off") : "off",
         sweep: (cycIdx === 0 && cur0.sweep === "open") || (lastCyc && cur0.sweep === "close") ? cur0.sweep : "off" });
+      // LIVE section-boundary flags (the cadence-amplifier fix). stepWalk feeds the
+      // engine a ONE-SECTION, one-cycle song per chord-bar, so buildEvents' sampleEvents
+      // pass sees every bar as both the FIRST section (opener) and a section END
+      // (cadence/sectionEdge oneShot) — point-events meant to sound once per real
+      // section fired on EVERY bar (auctioncore's gavel 34/34 bars live vs ~1/section
+      // press). Thread the walk's real structure through so those placements gate to
+      // genuine edges. Only set here (the live walk) — absent on the press path, where
+      // the pass keeps its full-song behavior => press stays byte-identical. Continuous
+      // placements (bed/buried/response/slice) are untouched; they run every bar by design.
+      const liveEdge = { start: (cycIdx === 0 && ci === 0), end: (lastCyc && ci === nch - 1) };
       const one = Object.assign({}, st, { sections: [sec], seed: ((st.seed || 1) + serial * 7919) >>> 0,
-        instrumentSeed: st.instrumentSeed != null ? st.instrumentSeed : (st.seed || 1) });   // instrument identity rides the SONG seed, not the per-bar reseed
+        instrumentSeed: st.instrumentSeed != null ? st.instrumentSeed : (st.seed || 1),   // instrument identity rides the SONG seed, not the per-bar reseed
+        _liveEdge: liveEdge });
       const spb = 60 / st.bpm;
       const CBEATS = Math.max(2, Math.round(st.chordEvery || (st.meter ? 6 : 8)));   // meter default mirrors buildEvents (kernel states carry explicit chordEvery; this covers hand states — ODD-METER 2026-07-09)
       const lo = ci * CBEATS, hi = lo + CBEATS;

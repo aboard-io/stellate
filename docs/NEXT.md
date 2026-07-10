@@ -43,6 +43,33 @@ deployed always means committed and green.
 ## THE QUEUE, in order
 
 ### 1. Card-truth fix wave (task #21 — the agent died before its kernel pass)
+**STARTED 2026-07-10 (accessible-version branch):** the sweep was re-run
+(scratchpad/card-truth-sweep.js → 33 liars, 7 identity-lies, 99 orphan samples;
+dominant class = orphaned speech). The LIVE cadence amplifier is FIXED and the two
+NAMED orphans are WIRED (see below). Remaining: the rest of the speech cast + the
+synthesized-source class (new finding, below) + the promises gate.
+
+- **DONE — the LIVE cadence amplifier**: faust/live.js stepWalk now threads real
+  section-boundary flags (`one._liveEdge={start,end}`) and csd-engine.js gates
+  opener/oneShot/cadence on them. Proven: press byte-identical (git-stash diff over
+  12 sampleEvents genres), live fires once-per-section (microwave 6 dings/24 bars
+  vs 24/24 before). Press has no `_liveEdge` → unchanged by construction.
+- **DONE — sp_auction_1/2/3 → auctioncore**: the auctioneer chant now rides as a
+  buried vox layer (hogcore idiom: every:2, maxDur:9) + a number-stab in hits; the
+  tw_ding gavel stays as the section cadence (now once/section). Matrix 228/228
+  --no-cache, live-renders clean.
+- **DONE — modem_handshake → dialupgabber**: root cause was `url:""` — the file
+  (found/modem_handshake.mp3) was on disk but unfetchable, so it never played. URL
+  restored; handshake wired as a section opener. Matrix 228/228 --no-cache.
+- **NEW FINDING — the SILENT SYNTHESIZED-SOURCE CLASS** (specific is general):
+  modem was one of EIGHT SOURCES with `url:""` but a real found/<id>.mp3 on disk —
+  fax_tone (faxbossa), crt_whine (crtwave), hvac_hum (thermostatwave), floppy_seek
+  (floppycore), dryer_spin (laundrycore), hydrophone (atlantidrone), crickets
+  (crickettempo). All silent for the same reason. Each is that genre's defining
+  element (several are the sweep's identity-lies). Fix = point each url at its
+  disk file (as modem got) + verify matrix + the card. NOTE: hydrophone feeds
+  atlantidrone, one of the PRIMING-HANG genres (§5) — check if the url:"" fetch is
+  what stalls its runway before fixing.
 Full findings: the card-truth sweep report (2026-07-10 session) +
 `/tmp/.../scratchpad/card-truth.json` may be gone — RE-RUN the sweep extractor
 if needed (its design: parse info cards into claims, classify
