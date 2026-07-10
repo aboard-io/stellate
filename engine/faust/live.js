@@ -164,6 +164,39 @@
     };
   }
 
+  // ── OVERSIZED-BAR SPLIT (the PRIMING HANG, docs/NEXT.md §5). The chord-bar is the
+  // worker's feed/render QUANTUM: runLivePump renders one fed bar as ONE blocking
+  // renderChunk and only posts "primed" after that first chunk lands — and a chunk
+  // larger than the SAB ring is a hard openfail ("chunk > ring"). Slow-drone anchors
+  // with chordEvery 32 LEGALLY produce such bars (chalkvespers 38.4s, atlantidrone
+  // 33.7s, sourdough 32.5s vs the 30s ring — instant silent death; ambient 29.5s
+  // squeaked under the cap but gated priming on one giant first render). So: split
+  // any bar longer than MAX_FEED_SEC into contiguous sub-WINDOWS [lo..hi) for the
+  // WORKER only. The renderer already tiles arbitrary windows (feedBar) and notes
+  // sustain across window seams by construction (persistent procs + ingest's carry
+  // intervals), so this is a transport change, not a musical one — the conductor's
+  // own bookkeeping (playQueue bar, onBar, native found/sampler scheduling) stays
+  // WHOLE-BAR. Frame math mirrors feedBar's rounding on the same doubles, so the
+  // conductor's fed-frames ledger equals what the worker writes, piece by piece.
+  const MAX_FEED_SEC = 6;
+  function splitFeedWindows(r) {
+    const n = Math.ceil(r.musicalSec / MAX_FEED_SEC);
+    if (!(n > 1)) return [r];
+    const step = (r.hi - r.lo) / n, out = [];
+    for (let i = 0; i < n; i++) {
+      const first = i === 0, last = i === n - 1;
+      const lo = first ? r.lo : r.lo + i * step, hi = last ? r.hi : r.lo + (i + 1) * step;
+      // half-open ownership; first/last pieces also absorb any out-of-window strays
+      const events = (r.events || []).filter((e) => (first || e.beat >= lo) && (last || e.beat < hi));
+      out.push(Object.assign({}, r, { lo, hi, events,
+        barLenFrames: Math.max(BS, Math.round((hi - lo) * r.spb * SR / BS) * BS),
+        musicalSec: (hi - lo) * r.spb,
+        _sweeps: first ? r._sweeps : [],   // stream-absolute; registered once
+        _sub: i }));
+    }
+    return out;
+  }
+
   // makeDecGate(limit, retries, retryMs) — the SHARED decode throttle + bounded retry used
   // by BOTH conductors (ring + wavOut). The sampled-by-default change made every pitched
   // voice depend on heavy multi-zone GM sample decodes (~20-29 zones/genre). iOS
@@ -575,17 +608,22 @@
       r._base = base;
       r._sweeps = (r.sweepsRaw || []).map((sw) => ({ t0: base + (sw.beat - r.lo) * r.spb,
         t1: base + (sw.beat + sw.durB - r.lo) * r.spb, from: sw.from, to: sw.to }));
+      // oversized-bar split (the priming hang): the WORKER gets bounded sub-windows;
+      // everything below (playQueue bar, native scheduling, onBar) stays whole-bar.
+      const pieces = splitFeedWindows(r);
+      const wLen = pieces.length === 1 ? r.barLenFrames
+        : pieces.reduce((a, p) => a + p.barLenFrames, 0);   // exactly what the worker will write
       const localStart = stream.fedFrames;
-      stream.fedFrames += r.barLenFrames;
+      stream.fedFrames += wLen;
       stream.fedMusicalSec += r.musicalSec;
-      const barRec = { len: r.barLenFrames, meta: r.meta, found: r.found, foundSources: r.foundSources,
+      const barRec = { len: wLen, meta: r.meta, found: r.found, foundSources: r.foundSources,
         spb: r.spb, lo: r.lo, units: r.units, events: r.events };
       if (stream.startGlobal != null) { barRec.globalStart = stream.startGlobal + localStart; playQueue.push(barRec); }
       else { barRec.localStart = localStart; stream.pendingBars.push(barRec); }
       // decode-ahead any found/sampler sources this bar needs (ready by playback)
       for (const f of (r.found || [])) kickBuffer((r.foundSources || []).find((s) => s.id === f.srcId));
       for (const e of (r.events || [])) { const u = r.units[e.unit]; if (u && u.sampler) for (const z of (u.sampler.zones || [])) kickSamplerBuf(z.srcId, r.foundSources); }
-      if (stream.readyToFeed) postFeed(stream, r); else stream.preFeed.push(r);
+      for (const p of pieces) { if (stream.readyToFeed) postFeed(stream, p); else stream.preFeed.push(p); }
     }
     function flushPending(stream) {
       for (const pb of stream.pendingBars) { pb.globalStart = stream.startGlobal + pb.localStart; playQueue.push(pb); }
@@ -695,7 +733,14 @@
         else if (stream === br && phase === "bridging" && !br.primed) { br.primed = true; startFade(); }
         return;
       }
-      if (m.type === "openfail") { errors.push("openfail gen" + m.gen + ": " + m.error); return; }
+      if (m.type === "openfail") {
+        errors.push("openfail gen" + m.gen + ": " + m.error);
+        // never a silent forever-"priming…": a dead current stream is an honest error
+        // (the pre-split symptom: a >30s chord-bar overflowed the ring and the app
+        // just spun — atlantidrone/chalkvespers, docs/NEXT.md §5).
+        if (stream === cur && !running) status("engine error: " + m.error);
+        return;
+      }
       // openedLive / status / eos / stopped: informational
     }
 
