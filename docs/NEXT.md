@@ -267,7 +267,29 @@ access.html: seed/genre/blend in ITS query string too.
 - Offline/precache SHIPPED (sw.js cache-first on the immutable found/ class +
   app/precache.js route warming); a11y-link belt SHIPPED.
 
-### 5e. BED-CLASS SIMPLIFICATION (Paul 2026-07-10: "are there other found sound
+### 5f. THE REPERTOIRE PROGRAM (wave 3 — Paul 2026-07-10: "there is so much
+more found sound than that… not lock one bit of found sound into one genre"
++ "search for other overused samples and other ways we are repeating
+ourselves"). THE CENSUS (240 genres) proves one mechanism everywhere: small
+shared vocabularies referenced by raw id, top-heavy —
+  hits: vox_a 55 genres, vox_b 47, sp_herenow 40, tw_ding 32 (53 distinct)
+  clips: night_lines 57, kaleido 56, blue_dinner 53 (89 distinct)
+  FORMS: pop = 127/240 — half the catalog walks one 8-node arc (7 forms total)
+  samplers: strings 54, acoustic_bass 46, ahh_choir 40
+  dx7: E.PIANO 1 x27, TUB BELLS x21
+  breaks: 4 amens carry 79 uses
+  progressions: minor_run 79, deep_two 67 (28 total); kits: four 78 (21)
+THE FIX, generalized from the bed-pool design (5e): CLASS POOLS with per-seed
+rotation for beds/hits/breaks/clips (a genre asks for "a vocal stab" / "an
+amen-family break" / "a night-city clip"), identity members stay PINNED (the
+loon law), plus DEEP EXPANSION of every pool: bed curation agent output
+(scratch/bed-curation/), instrument report (scratch/guitar-research/), a
+breaks fetch wave (fetch-sample-cd.sh vein), a found-video fetch wave
+(fetch-found-video.sh vein), 4-6 NEW FORM ARCS (the deepest de-cloning —
+AABA, verse-chorus-bridge variants, through-composed, long-vamp), and new
+progressions (the author-wishlist whole_tone etc.). Each pool mechanically:
+kernel resolves class->member per (genre,seed), matrix-gated, determinism
+byte-proofed for genres whose members don't change. (Paul 2026-07-10: "are there other found sound
 beds that we use all the time? we could simplify there.") MEASURED: 48 distinct
 bed SOURCES across 501 anchor bed-slots, top-heavy — tokyo_station 73 genres,
 shibuya 64, highway_night 52, factory 37, vx_apollo 37 (top-5 = 52% of slots).
