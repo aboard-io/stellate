@@ -45,6 +45,17 @@ function keyFor(weights,seed){
 export function retarget(pt){
   return retargetWeights(weightsAt(pt), pt);
 }
+// PURE state at a map point — the same blend K.mix retargetWeights builds (seed,
+// key, ±bpm, mode lock) but WITHOUT touching the store. The offline whole-path
+// exporter walks the loop and reads stateAt() per bar so "the whole mix" renders
+// faithfully (the same per-bar walk the live conductors run) without playing it.
+export function stateAt(pt){
+  const weights=weightsAt(pt);
+  const target=K.mix(weights.map(w=>({...w})),{seed:S.seed, keyOffset:keyFor(weights,S.seed)});
+  if(S.bpmDelta) target.bpm=Math.max(40,Math.min(240,Math.round(target.bpm+S.bpmDelta)));
+  if(MODE_LOCKS[S.modeLock]) target.progression=MODE_LOCKS[S.modeLock];
+  return target;
+}
 // retarget from an EXPLICIT weight blend rather than a map point. The accessible
 // text UI (access.html) drives the same glide engine this way — a listener who
 // can't see the star map still gets byte-identical music for the same seed +

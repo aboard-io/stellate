@@ -2604,5 +2604,7 @@
     return handle;
   }
 
-  root.FaustLive = { exploreLive, BASE, SITE };
+  // makeWalk exposed so the OFFLINE whole-path exporter drives the exact same
+  // per-bar walk the live conductors use (feed it a getState that walks the loop).
+  root.FaustLive = { exploreLive, makeWalk, BASE, SITE };
 })(typeof window !== "undefined" ? window : globalThis);
