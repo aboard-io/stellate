@@ -6,13 +6,20 @@
 //   2. the default loop is 3 waypoints / 3 legs, and every seeded loop genre
 //      (window.__LOOP.genres — the 2 outer stars) is actually CROSSED as a
 //      dominant-genre segment during one full loop;
-//   3. the transit-arrival contract path-wide: every qualifying (dwell >= 8)
-//      dominant-genre segment arrives within <=8 bars of dominance (arrival =
-//      playing kit AND lead match the target while this genre tops the
-//      weights — see the ARRIVAL SEMANTICS note in tools/simulate-path.js);
-//   4. no musicality hard-fails (verdict FAIL/ERROR) on any qualifying
+//   3. the transit-arrival contract path-wide: every VISITED (dwell > 8 —
+//      dominance outlasting the arrival window; shorter crossings are
+//      BRUSHES, reported not judged) dominant-genre segment arrives within
+//      <=8 bars of dominance (arrival = playing kit AND lead match the
+//      target while this genre tops the weights — see ARRIVAL SEMANTICS +
+//      the BRUSHED note in tools/simulate-path.js);
+//   4. no musicality hard-fails (verdict FAIL/ERROR) on any visited
 //      segment's most-settled state;
-//   5. DETERMINISM: the two runs' reports are byte-identical after stripping
+//   5. IDENTITY-CHURN CONTAINMENT (the revision re-tier in targeting.js's
+//      rebuildQueue): when the target re-picks an identity dim after arrival,
+//      the revision must land in a few bars — every visited segment
+//      re-converges, churn <= CHURN_MAX bars (pre-fix: the closing disco
+//      re-entry churned 12 bars and NEVER re-converged in-segment);
+//   6. DETERMINISM: the two runs' reports are byte-identical after stripping
 //      the wall-clock field (same seed twice = same journey, same audits).
 // Pace 64 (the transit gate's pace): ~4s of virtual riding per run — the whole
 // gate is well under a minute.
@@ -23,6 +30,7 @@ const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
 const SEED = 43, PACE = 64, CONTRACT = 8;
+const CHURN_MAX = 6;   // post-arrival identity churn allowance (measured max 3 at pace 64 post-fix; 12 + no re-convergence pre-fix)
 
 function runSim(tag) {
   const r = spawnSync(process.execPath,
@@ -59,27 +67,36 @@ function main() {
     ok(crossed.has(g), `2c: seeded loop genre "${g}" never became the dominant genre (crossed: ${[...crossed].join(", ")})`);
   ok(crossed.size >= 3, `2d: only ${crossed.size} distinct dominant genres crossed (want >=3: the 2 stars + the centre's neighborhood)`);
 
-  // 3. the transit-arrival contract, path-wide
-  const qual = (rep.segments || []).filter((s) => s.qualifies);
-  ok(qual.length >= 3, `3a: only ${qual.length} qualifying segments (dwell >= ${CONTRACT})`);
-  for (const s of qual)
+  // 3. the transit-arrival contract, path-wide (visited segments only —
+  //    a brush's dominance ends before the arrival window does)
+  const vis = (rep.segments || []).filter((s) => s.visited);
+  ok(vis.length >= 3, `3a: only ${vis.length} visited segments (dwell > ${CONTRACT})`);
+  for (const s of vis)
     ok(s.lag >= 0 && s.lag <= CONTRACT,
       `3b: ${s.genre} (enter bar ${s.enter}, dwell ${s.dwell}) arrival lag ${s.lag < 0 ? "NEVER" : "+" + s.lag} (contract <=${CONTRACT})`);
 
-  // 4. no musicality hard-fails on qualifying segments
-  for (const s of qual)
+  // 4. no musicality hard-fails on visited segments
+  for (const s of vis)
     ok(s.audit.verdict !== "FAIL" && s.audit.verdict !== "ERROR",
       `4: ${s.genre} musicality ${s.audit.verdict} — ${s.audit.worst || ""}`);
 
-  // 5. determinism: same seed twice = same report (minus wall clock)
+  // 5. identity churn contained: revisions land in a few bars and re-converge
+  for (const s of vis) {
+    ok(s.churnBars <= CHURN_MAX,
+      `5a: ${s.genre} (enter bar ${s.enter}) identity churn ${s.churnBars} bars (allowance <=${CHURN_MAX}) — the revision re-tier regressed`);
+    ok(s.churnBars === 0 || s.reconvergeBar >= 0,
+      `5b: ${s.genre} (enter bar ${s.enter}) target re-picked after arrival and playing NEVER re-converged within the segment`);
+  }
+
+  // 6. determinism: same seed twice = same report (minus wall clock)
   const strip = (r) => { const c = JSON.parse(JSON.stringify(r)); delete c.runtimeMs; return c; };
   const a = JSON.stringify(strip(A.rep)), b = JSON.stringify(strip(B.rep));
-  ok(a === b, `5: two runs with seed ${SEED} differ (${a.length} vs ${b.length} bytes) — the virtual ride is not deterministic`);
+  ok(a === b, `6: two runs with seed ${SEED} differ (${a.length} vs ${b.length} bytes) — the virtual ride is not deterministic`);
 
   console.log(`\n=== SIMULATE-PATH GATE (seed ${SEED}, pace ${PACE}) ===`);
   console.log(`  ${rep.label} — ${rep.bars} bars, ${rep.segments.length} dominant segments, ${rep.blendBars} blend bars, ${rep.flipsLanded} flips landed`);
   for (const s of rep.segments)
-    console.log(`  ${s.genre.padEnd(16)} enter ${String(s.enter).padStart(4)}  dwell ${String(s.dwell).padStart(3)}  lag ${s.lag < 0 ? "NEVER" : "+" + s.lag}${s.qualifies ? "" : " (grazed)"}  ${s.audit.verdict}${s.churnBars ? `  (churn ${s.churnBars} bars)` : ""}`);
+    console.log(`  ${s.genre.padEnd(16)} enter ${String(s.enter).padStart(4)}  dwell ${String(s.dwell).padStart(3)}  lag ${s.lag < 0 ? "NEVER" : "+" + s.lag}${s.visited ? "" : " (brushed)"}  ${s.audit.verdict}${s.churnBars ? `  (churn ${s.churnBars} bars)` : ""}`);
   console.log(`  worst arrival: ${rep.worstArrival ? "+" + rep.worstArrival.lag + " (" + rep.worstArrival.genre + ")" : "n/a"}  deterministic: ${a === b}`);
   console.log(`  runA ${A.rep.runtimeMs}ms  runB ${B.rep.runtimeMs}ms  gate total ${Date.now() - t0}ms`);
   if (fails.length) console.log("FAILURES:\n  - " + fails.join("\n  - "));

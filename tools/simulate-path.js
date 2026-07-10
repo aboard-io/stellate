@@ -41,12 +41,38 @@
 // bar before w0 crosses 0.5). What the pre-window does NOT forgive is Paul's
 // dnb bug (a stale lead NEVER matching the new genre) — that still reads
 // "never". Separately, the target's own identity picks can CHURN as the blend
-// sharpens (K.mix re-picks lead at w=0.5 vs w=0.96; the re-queued "lead voice"
-// flip then waits at tier 2 behind ~10 dimensions, one per 2 bars — measured
-// +23 bars to reconverge on the default loop's closing re-entry into disco).
-// That is the real app's behavior, not a sim artifact; it is REPORTED as an
-// identity-churn note per segment, deliberately not gated (the fix, if Paul's
-// ear wants one, lives in targeting.js's queue tiers, not here).
+// sharpens (K.mix re-picks lead at w=0.5 vs w=0.96). The re-queued revision
+// used to wait at the bottom tier behind the whole already-applied set (~a
+// full re-cycle; the default loop's closing disco re-entry measured 12
+// mismatched bars, never re-converging inside the segment) — fixed in
+// targeting.js's rebuildQueue: a REVISED dim (applied, but the target moved
+// since) now ranks above applied-and-current, below never-applied. Churn is
+// still REPORTED per segment so a regression is visible.
+//
+// BRUSHED vs VISITED (dwell-scaled arrival semantics): the arrival contract
+// is <=CONTRACT_BARS of dominance, so a segment can only honestly EXHIBIT a
+// contract-max arrival if it stays dominant longer than the contract window.
+// A crossing with dwell <= CONTRACT_BARS is a BRUSH — the traveler clipped
+// the neighborhood for less time than the arrival budget itself (at pace 48
+// that's ~15 seconds of half-dominance; not a visit, and the flip pacing +
+// the 4-bar instrument holds cannot deliver kit AND lead faster without the
+// re-pick thrash the holds exist to prevent). Brushes are classified and
+// reported, NOT judged — neither arrival nor musicality gates them. Any
+// VISITED segment (dwell > CONTRACT_BARS) that never arrives still FAILS.
+//
+// KNOWN REAL DEFECT CLASS (transit chimera, found by this tool and KEPT
+// failing — press evidence in the 2026-07-10 queue-work round): the "form"
+// flip adopts the target's sections wholesale, including their found
+// sourceIds, but the CRATE arrives only with the separate "sample" flip
+// (hash-ranked later). Between the two, the settled state declares a found
+// layer whose sourceId its foundSources don't carry — buildEvents emits ZERO
+// found events (csd-engine srcById lookup misses), so a listener in that
+// segment genuinely never hears the declared part. Stress path
+// blues,dnb,industrial --pace 48: duststrut dwell 13, form landed, "sample"
+// still queued at the most-settled bar, ev.found=0 -> bloom hard-fail is
+// REAL, not an audit artifact. The fix is a flip-dependency question (form
+// carrying the found sources it declares, the way "drum kit" carries its
+// zone wavs), owned by the queue work, not by this auditor.
 //
 // WHAT A VIRTUAL RIDE CANNOT PROVE (documented honestly):
 //   - nothing about SOUND: a flip "lands" when the STATE carries it; whether
@@ -257,9 +283,14 @@ async function main() {
           promisesKept: Math.max(0, (a.laws.promises.declared || 0) - pf.length),
           promiseFailures: pf };
       } catch (e) { audit = { verdict: "ERROR", overall: 0, worst: String(e && e.message || e), promisesDeclared: 0, promisesKept: 0, promiseFailures: [] }; }
+      // VISITED vs BRUSHED (see the header note): the arrival contract can
+      // only be exhibited inside the segment if dominance outlasts the
+      // contract window itself — dwell <= CONTRACT_BARS is a brush (the
+      // traveler clipped the neighborhood for less than the arrival budget),
+      // classified and reported but not judged.
       out.push({ genre: s.genre, enter: s.enter, end: s.end, dwell, peakW: s.peakW, peakBar: s.peakBar,
         snapBar: s.snapBar, minQueue: s.minQ,
-        arriveBar, lag, churnBars, reconvergeBar, qualifies: dwell >= CONTRACT_BARS, audit });
+        arriveBar, lag, churnBars, reconvergeBar, visited: dwell > CONTRACT_BARS, audit });
     }
     const blendBars = rows.filter((r) => !r.dom).length;
     const flipsSeen = rows.filter((r, i) => i && r.q < rows[i - 1].q).length;   // queue shrank = a flip landed
@@ -271,16 +302,17 @@ async function main() {
 
   // ---------- verdict ----------
   const segs = analysis.segments;
-  const qual = segs.filter((s) => s.qualifies);
-  const lateOrLost = qual.filter((s) => s.lag < 0 || s.lag > CONTRACT_BARS);
-  const hardFails = qual.filter((s) => s.audit.verdict === "FAIL" || s.audit.verdict === "ERROR");
-  const worst = qual.reduce((w, s) => (s.lag < 0 ? { lag: Infinity, genre: s.genre } : (s.lag > (w ? w.lag : -1) ? { lag: s.lag, genre: s.genre } : w)), null);
+  const visited = segs.filter((s) => s.visited);
+  const brushed = segs.length - visited.length;
+  const lateOrLost = visited.filter((s) => s.lag < 0 || s.lag > CONTRACT_BARS);
+  const hardFails = visited.filter((s) => s.audit.verdict === "FAIL" || s.audit.verdict === "ERROR");
+  const worst = visited.reduce((w, s) => (s.lag < 0 ? { lag: Infinity, genre: s.genre } : (s.lag > (w ? w.lag : -1) ? { lag: s.lag, genre: s.genre } : w)), null);
   const pass = lateOrLost.length === 0 && hardFails.length === 0 && errs.length === 0 && segs.length > 0;
   const verdict = pass
-    ? (qual.length
-      ? `PASS — ${qual.length}/${qual.length} qualifying segments (of ${segs.length} crossed) met the <=${CONTRACT_BARS}-bar arrival contract (worst lag +${worst ? worst.lag : 0} ${worst ? worst.genre : ""}); no musicality hard-fails`
-      : `PASS (vacuous) — ${segs.length} genres crossed but none dwelt >= ${CONTRACT_BARS} bars (pace too fast to judge arrivals); no page errors`)
-    : `FAIL — ${lateOrLost.length ? "late/lost arrivals: " + lateOrLost.map((s) => s.genre + "(+" + (s.lag < 0 ? "never" : s.lag) + ")").join(", ") : ""}${hardFails.length ? " musicality FAIL: " + hardFails.map((s) => s.genre).join(", ") : ""}${errs.length ? " page errors: " + errs.length : ""}${segs.length ? "" : " no dominant segments crossed"}`;
+    ? (visited.length
+      ? `PASS — ${visited.length}/${visited.length} visited segments (of ${segs.length} crossed, ${brushed} brushed) met the <=${CONTRACT_BARS}-bar arrival contract (worst lag +${worst ? worst.lag : 0} ${worst ? worst.genre : ""}); no musicality hard-fails`
+      : `PASS (vacuous) — ${segs.length} genres crossed but every crossing was a brush (dwell <= ${CONTRACT_BARS} bars — pace outran the arrival window everywhere); no page errors`)
+    : `FAIL — ${lateOrLost.length ? "late/lost arrivals: " + lateOrLost.map((s) => s.genre + "(+" + (s.lag < 0 ? "never" : s.lag) + ", dwell " + s.dwell + ")").join(", ") : ""}${hardFails.length ? " musicality FAIL: " + hardFails.map((s) => s.genre).join(", ") : ""}${errs.length ? " page errors: " + errs.length : ""}${segs.length ? "" : " no dominant segments crossed"}`;
 
   const report = { tool: "simulate-path", input: args.input, label: setup.label, seed: args.seed, pace: args.pace,
     bars: analysis.bars, legs: setup.legs, loopGenres: setup.loopGenres, contractBars: CONTRACT_BARS,
@@ -297,10 +329,10 @@ async function main() {
     console.log(`  ${pad("genre", 18)} ${pad("enter", 6, 1)} ${pad("dwell", 6, 1)} ${pad("peakW", 6, 1)} ${pad("arrive", 11, 1)}  ${pad("musicality", 12)} promises`);
     for (const s of segs) {
       const arr = s.lag < 0 ? "never" : `bar ${s.arriveBar} (+${s.lag})`;
-      const gate = s.qualifies ? (s.lag >= 0 && s.lag <= CONTRACT_BARS ? " ok" : " LATE") : " (grazed)";
+      const gate = s.visited ? (s.lag >= 0 && s.lag <= CONTRACT_BARS ? " ok" : " LATE") : " (brushed)";
       const prom = s.audit.promisesDeclared ? `${s.audit.promisesKept}/${s.audit.promisesDeclared} kept${s.audit.promiseFailures.length ? " — " + s.audit.promiseFailures[0] : ""}` : "none declared";
       console.log(`  ${pad(s.genre, 18)} ${pad(s.enter, 6, 1)} ${pad(s.dwell, 6, 1)} ${pad(s.peakW.toFixed(2), 6, 1)} ${pad(arr, 11, 1)}${gate}  ${pad(s.audit.verdict + " " + s.audit.overall.toFixed(2), 12)} ${prom}`);
-      if (s.churnBars > 0) console.log(`  ${pad("", 18)} └ identity churn: target re-picked after arrival — ${s.churnBars} mismatched bars, ${s.reconvergeBar >= 0 ? "re-converged at bar " + s.reconvergeBar : "NOT re-converged within the segment"} (reported, not gated)`);
+      if (s.churnBars > 0) console.log(`  ${pad("", 18)} └ identity churn: target re-picked after arrival — ${s.churnBars} mismatched bars, ${s.reconvergeBar >= 0 ? "re-converged at bar " + s.reconvergeBar : "NOT re-converged within the segment"} (gated on visited segments by test/simulate-path-run.js)`);
       if (s.audit.worst) console.log(`  ${pad("", 18)} └ ${s.audit.worst}`);
     }
     console.log(`\n  blend bars (no dominant genre): ${analysis.blendBars}/${analysis.bars}   flips landed: ${analysis.flipsSeen}   page errors: ${errs.length}`);
