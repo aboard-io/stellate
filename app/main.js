@@ -6,26 +6,39 @@
 // one-shot boot sequence (layout → default loop → centre → first score → tickers).
 import { POS, MAP_CENTER, WORLD_W, WORLD_H } from "./world.js";
 import { S, K, set } from "./state.js";
-import { retarget, weightsAt, setMacro, travelStep, rescore, forceRetarget } from "./targeting.js";
+import { retarget, weightsAt, travelStep, rescore, forceRetarget } from "./targeting.js";
 import { clampZoom, zoomAround, seedDefaultLoop, insertWaypoint, computeGenreLayout, centerView } from "./starmap.js";
 import { renderInside } from "./inside.js";
 import { goLive, stopLive, faustHandle } from "./live.js";
 import { playheadTick } from "./readouts.js";
 import "./background.js";   // side effects: video/demoscene chip + alternation + subs.push(applyBg)
 import "./panels.js";       // side effects: control panel + chips/modals + store render subs
+import { applyUrlState, buildShareUrl } from "./share.js";   // the bookmarkable mix (seed+path+measure in the query string)
 
 window.__X={retarget:(...a)=>retarget(...a), goLive:(...a)=>goLive(...a), stopLive:(...a)=>stopLive(...a), weightsAt:(...a)=>weightsAt(...a),
   handle:()=>faustHandle,   // live handle (audit ring / probe access) — headless gates
   renderInside:()=>{ try{ renderInside(); }catch(e){} },
-  clampZoom:()=>clampZoom(), zoomAround:(...a)=>zoomAround(...a), setMacro:(...a)=>setMacro(...a), POS,
+  clampZoom:()=>clampZoom(), zoomAround:(...a)=>zoomAround(...a), POS,
   // loop/spread introspection for the headless UI gate (additive):
   seedLoop:()=>seedDefaultLoop(), mapCenter:()=>({...MAP_CENTER}), world:()=>({w:WORLD_W,h:WORLD_H}),
   minPairDist:()=>window.__MINSEP, pathClosed:()=>S.waypoints.length>=2,
-  travelStep:()=>travelStep(), insertWaypoint:(...a)=>insertWaypoint(...a)};   // headless stop→path→LIVE + corner-reach probe + loop-wrap probe + mid-chain insert
+  travelStep:()=>travelStep(), insertWaypoint:(...a)=>insertWaypoint(...a),
+  shareUrl:()=>buildShareUrl()};   // headless stop→path→LIVE + corner-reach probe + loop-wrap probe + mid-chain insert + the bookmarkable-URL probe
 
 // ---------- boot ----------
 function boot(){
-  computeGenreLayout(); seedDefaultLoop(); centerView(); rescore(); playheadTick();
+  // URL FIRST: a shared link restores seed/path/pace/mode/measure before the
+  // default loop would overwrite them; a restored path skips seedDefaultLoop.
+  const fromUrl=applyUrlState();
+  const urlBar=S.startBar||0;   // seedDefaultLoop clears startBar (fresh-loop law) — the URL's m survives boot
+  computeGenreLayout(); if(!fromUrl) seedDefaultLoop(); centerView();
+  S.startBar=urlBar;
+  if(fromUrl && S.waypoints.length>=2){
+    // place the traveler (and the mix) at the URL's measure along the path
+    const n=S.waypoints.length, a=S.waypoints[S.travel.seg], b=S.waypoints[(S.travel.seg+1)%n];
+    retarget({x:a.x+(b.x-a.x)*S.travel.t, y:a.y+(b.y-a.y)*S.travel.t});
+  }
+  rescore(); playheadTick();
   // the kernel's DX7 patch registry is empty in the browser unless the page
   // supplies the bank (genre-kernel snapshots window.DX7_PRESETS at load, which
   // no page sets) — so no explorer journey ever drew a dx7 voice. Populate the

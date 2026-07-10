@@ -7,6 +7,7 @@ import { S, set, K, E, QSFLAGS } from "./state.js";
 import { retarget, rebuildQueue, travelStep, glideStep } from "./targeting.js";
 import { vidReset, genreVideo, bgBarTick } from "./background.js";
 import { scheduleBarNotes, clearNoteTimers } from "./inside.js";
+import { urlTick, travelForBar, pointOnPath } from "./share.js";   // the bookmarkable measure: per-bar URL refresh + measure->path math
 
 // ---------- live engine ----------
 export let faustHandle=null;
@@ -206,19 +207,27 @@ export async function goLive(){
     // stale glide queue from that run is cleared.
     if(CLICKTEST){ ctN=0; set({playing:clickTestState(), target:clickTestState()}); }   // seed a valid base so UI reads never hit null
     else if(S.waypoints.length>=2){
-      set({travel:{seg:0,t:0}, queue:[]});
-      retarget({x:S.waypoints[0].x, y:S.waypoints[0].y});
+      // DROP-IN (the bookmarkable measure): S.startBar>0 — set by a shared URL,
+      // a playhead drag while stopped, or the last stop — starts the traveler at
+      // that measure's position on the loop instead of the path start; the walk
+      // below starts its serial there too, so measure N sounds exactly as if N
+      // bars had played. startBar 0 keeps the original fresh-start behavior.
+      const sb=S.startBar||0;
+      const tv=sb>0?travelForBar(sb):{seg:0,t:0};
+      set({travel:tv, queue:[], barCount:sb});
+      retarget(sb>0?pointOnPath(tv):{x:S.waypoints[0].x, y:S.waypoints[0].y});
     }
     vidReset();   // fresh shuffled video bag per play session — different clip order every time
-    set({live:true,barCount:0,holdUntil:{}}); rebuildQueue();   // fresh instrument-hold timers per session
+    set({live:true,barCount:S.startBar||0,holdUntil:{}}); rebuildQueue();   // fresh instrument-hold timers per session; barCount continues from the drop-in measure
     if(CLICKTEST) ctN=0;   // first PLAYED bar is n=0 (the seed calls above advanced it)
     let getState=CLICKTEST?(()=>clickTestState()):(()=>S.playing);
     // EXPERIMENT: ?allSampled=1 — enrich every state the engine polls (survives
     // retargets/glides since it wraps the getState boundary, not a one-time set).
     if(ALLSAMPLED){ const raw=getState; getState=()=>{ const st=raw(); return st?K.applySampledOnly(st):st; }; }
-    faustHandle=await FaustLive.exploreLive(getState, m=>{set({status:m}); bootStatus(m);}, { forceClassicOut:FORCE_CLASSIC, forceMediaEl:FORCE_MEDIAEL, wavOut:WAVOUT, segAB:SEGAB, codec:CODEC, onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
+    faustHandle=await FaustLive.exploreLive(getState, m=>{set({status:m}); bootStatus(m);}, { forceClassicOut:FORCE_CLASSIC, forceMediaEl:FORCE_MEDIAEL, wavOut:WAVOUT, segAB:SEGAB, codec:CODEC, startBar:S.startBar||0, onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
       bootBar();   // first bar scheduled -> advance the warm-up bar, then it waits on real RMS
       set({barInfo:info,barCount:S.barCount+1});
+      urlTick();   // the address bar carries the measure — copying it bookmarks THIS moment
       scheduleBarNotes(info);   // fire DemoLayer.note(ev) at each note onset (no-op unless the demoscene layer is on)
       if(S.waypoints.length>=2) travelStep();
       glideStep();
@@ -232,7 +241,11 @@ export async function goLive(){
     startWavDebug();   // ?wavDebug=1 overlay (inert otherwise)
   }catch(e){ set({live:false,status:"live failed: "+e.message}); bootAbort(); console.error(e); }
 }
-export function stopLive(){ set({live:false, queue:[]});   // queue cleared: the next run must not inherit this run's glide flips
+export function stopLive(){
+  // remember WHERE we stopped: the next play (and the shareable URL) resumes at
+  // this measure instead of rewinding to the path start.
+  if(S.barInfo) S.startBar=S.barInfo.serial+1;
+  set({live:false, queue:[]});   // queue cleared: the next run must not inherit this run's glide flips
   clearNoteTimers();   // drop any pending demoscene note onsets so none fire after ■
   bootAbort();   // stopped before sound? clear the warm-up bar
   if(faustHandle){ try{faustHandle.stop();}catch(e){} faustHandle=null; }

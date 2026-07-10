@@ -371,6 +371,7 @@ const DRUM_ROW={ hat:0.10, tom:0.34, snare:0.52, kick:0.76, found:0.5, bed:0.18 
 // window slides to the next 8 beats when the beat crosses a page edge. Idle
 // shows page 1. A bed spanning the chord bar lands a clipped slice on EVERY page.
 const VIEW=8;
+const MEAS_BEATS=4;   // one 4/4 measure — the playhead's step size (a chord bar = 2 measures)
 // split one note into its per-PAGE segments: {page, left%, w%} — left/w are
 // percentages of the 8-beat page window, so a block draws identically whichever
 // page carries it (and a long bed gets one slice per page it overlaps).
@@ -464,12 +465,14 @@ function timelineHTML(tl){
    }catch(e){ try{console.warn("inside: lane",L&&L.key,"skipped:",e);}catch(_){} return ""; }
   }).join("");
   // ONE shared playhead spanning every lane (they share the beat grid) —
-  // rendered dormant when idle; the ~10Hz ticker lights and sweeps it while live.
-  // frac CLAMPED: mid-flip, barInfo.cbeats (the sounding bar) can outrun this
-  // render's cbeats (the flipped state) — the cursor must park at the roll edge,
-  // never escape the track.
-  const frac=beat==null?0:Math.max(0,Math.min(1,(beat-page*VIEW)/VIEW));
-  const ph=`<div class="vz-ph${beat==null?"":" on"}" data-page="${page}"${beat==null?"":` data-beat="${beat.toFixed(3)}"`}><i style="left:${(frac*100).toFixed(2)}%"></i></div>`;
+  // rendered dormant when idle; the ~10Hz ticker lights it while live. It is a
+  // MEASURE BLOCK, not a sweep line (Paul 2026-07-10): the active measure
+  // (MEAS_BEATS beats) lights up and STEPS to the next, so you read "we are in
+  // measure 2 of this bar" at a glance. Clamped to the window edge mid-flip.
+  const measW=Math.min(100,MEAS_BEATS/VIEW*100);
+  const mIdx=beat==null?0:Math.floor(beat/MEAS_BEATS);
+  const mLeft=beat==null?0:Math.max(0,Math.min(100-measW,(mIdx*MEAS_BEATS-page*VIEW)/VIEW*100));
+  const ph=`<div class="vz-ph${beat==null?"":" on"}" data-page="${page}"${beat==null?"":` data-beat="${beat.toFixed(3)}"`}><i style="left:${mLeft.toFixed(2)}%;width:${measW.toFixed(2)}%"></i></div>`;
   return `<div class="vz-ruler" style="background-image:${grid}">${ruler}${pgind}</div>`+
     `<div class="vz-tl" data-pages="${pages}" data-page="${page}">${rows}${ph}</div>`;
 }
@@ -514,12 +517,14 @@ function phFrame(){
     box.querySelectorAll(".vz-ruler span").forEach((s,i)=>{ s.textContent=String(page*VIEW+i+1); });
     const ind=box.querySelector(".vz-pgind"); if(ind) ind.textContent="·"+(page+1)+"/"+pages;
   }
-  // CLAMPED like the baked render: barInfo.cbeats can outrun this DOM's page
-  // count mid-flip — park at the roll edge, never escape the track.
-  const line=ph.firstElementChild, left=Math.max(0,Math.min(100,(beat-page*VIEW)/VIEW*100));
-  if(line){  // never sweep BACKWARDS across the roll at a bar/page wrap — snap instead
-    if(left<parseFloat(line.style.left||"0")) line.style.transition="none"; else line.style.transition="";
-    line.style.left=left.toFixed(2)+"%";
+  // MEASURE-BLOCK step (no sweep): light the measure the beat sits in, clamped
+  // to the window edge mid-flip (barInfo.cbeats can outrun this DOM's pages).
+  const line=ph.firstElementChild;
+  if(line){
+    const measW=Math.min(100,MEAS_BEATS/VIEW*100);
+    const mIdx=Math.floor(beat/MEAS_BEATS);
+    const left=Math.max(0,Math.min(100-measW,(mIdx*MEAS_BEATS-page*VIEW)/VIEW*100));
+    line.style.left=left.toFixed(2)+"%"; line.style.width=measW.toFixed(2)+"%";
   }
   ph.dataset.page=String(page); ph.dataset.beat=beat.toFixed(3); ph.classList.add("on");
 }

@@ -180,6 +180,41 @@ function hitWp(e){
   });
   return best;
 }
+// THE DRAGGABLE PLAYHEAD (Paul 2026-07-10: "let me drag the playhead along the
+// mix line"). With a path, the traveler IS the playhead — grabbing it and
+// sliding projects the pointer onto the nearest leg, sets S.travel there, and
+// retargets the mix (a glide while live, a place while stopped). While stopped
+// it also sets S.startBar so ▶ resumes — and the shared URL bookmarks — that
+// exact measure. Screen-space hit-test like hitWp, sized to the reticle.
+function hitTraveler(e){
+  if(S.waypoints.length<2) return false;
+  const r=svg.getBoundingClientRect();
+  const cX=e.clientX!=null?e.clientX:(e.touches&&e.touches[0]?e.touches[0].clientX:0);
+  const cY=e.clientY!=null?e.clientY:(e.touches&&e.touches[0]?e.touches[0].clientY:0);
+  const fs=Math.min(3,Math.max(1,Math.pow(ZOOM.k,0.85)));
+  return Math.hypot(cX-r.left-curPos.x, cY-r.top-curPos.y)<=26*fs+8;
+}
+function projectOnPath(pt){
+  const n=S.waypoints.length; let best={seg:0,t:0,d:Infinity,x:pt.x,y:pt.y};
+  for(let i=0;i<n;i++){
+    const a=S.waypoints[i], b=S.waypoints[(i+1)%n];
+    const dx=b.x-a.x, dy=b.y-a.y, len2=dx*dx+dy*dy||1;
+    const u=Math.max(0,Math.min(1,((pt.x-a.x)*dx+(pt.y-a.y)*dy)/len2));
+    const px=a.x+dx*u, py=a.y+dy*u, d=Math.hypot(pt.x-px,pt.y-py);
+    if(d<best.d) best={seg:i,t:u,d,x:px,y:py};
+  }
+  return best;
+}
+function dragPlayhead(e){
+  const p=projectOnPath(toXY(e));
+  const pace=Math.max(8,Math.min(4096,+S.pace||256));
+  const bar=Math.round((p.seg+p.t)*pace);
+  set({travel:{seg:p.seg,t:p.t}});
+  if(!S.live){ S.startBar=bar; S.barCount=bar; }
+  retarget({x:p.x,y:p.y});
+  set({status:"playhead → measure "+(bar+1)+" (leg "+(p.seg+1)+")"});
+}
+
 // ITEM 6: delete a waypoint (double-tap it, or right-click). Splice + renumber,
 // then reroute the leg through the survivors. If we removed the leg the traveler
 // is walking (or its endpoint), clamp the travel segment into range and snap the
@@ -188,6 +223,7 @@ function hitWp(e){
 // holds the last target (travelStep no-ops), so the music never drops.
 function deleteWaypoint(i){
   if(i<0||i>=S.waypoints.length) return;
+  S.startBar=0;   // the path changed — the old bookmark/resume measure no longer maps to it
   const w=[...S.waypoints]; w.splice(i,1);
   const len=w.length;
   // erased down toward nothing: re-seed the default centred loop (Paul: "always
@@ -216,6 +252,7 @@ function nearestSeg(pt,wps){ const n=wps.length; if(n<2) return n;
 // tap — never append to the end of the chain). The loop stays closed (drawMap
 // repeats waypoint[0]; travelStep wraps seg mod n). Returns the insert index.
 export function insertWaypoint(pt){
+  S.startBar=0;   // the path changed — the old bookmark/resume measure no longer maps to it
   if(S.waypoints.length<2){   // no real path yet: the path BEGINS where the music is
     const base=S.waypoints.length?S.waypoints:[{x:S.cursor.x,y:S.cursor.y}];
     const wps=[...base,pt];
@@ -288,6 +325,7 @@ svg.addEventListener("pointerdown",e=>{
   // right-click delete is handled once, in the contextmenu listener below
   if(e.button!==0) return;
   if(wpi>=0){ gestureMode="wp"; dragWpI=wpi; }   // grab the waypoint even when the traveler sits on it (ITEM 5)
+  else if(hitTraveler(e)){ gestureMode="travel"; }   // grab the PLAYHEAD: slide it along the mix line
   else if(ZOOM.k>1){
     // ZOOMED IN (names are the primary UI): a single-finger drag PANS the space.
     // We arm here and decide on move: a real drag pans; a tap with no movement
@@ -301,7 +339,7 @@ svg.addEventListener("pointerdown",e=>{
     return;
   }
   else if(S.waypoints.length<2) gestureMode="drag";   // with a path, the traveler owns the cursor
-  else { set({status:"loop active — the traveler walks it; drag a waypoint to reshape, dbl-tap the sky to add one"}); return; }
+  else { set({status:"loop active — drag the pink playhead to scrub the mix, drag a waypoint to reshape, dbl-tap the sky to add one"}); return; }
   document.body.classList.add("dragging");
   try{ svg.setPointerCapture(e.pointerId); }catch(err){} // synthetic pointers can't capture
   if(gestureMode==="drag") retarget(pt);
@@ -331,6 +369,7 @@ svg.addEventListener("pointermove",e=>{
     return;
   }
   if(gestureMode==="wp"){ markItx(); const pt=toXY(e); S.waypoints[dragWpI]=pt; set({}); }
+  else if(gestureMode==="travel"){ e.preventDefault(); markItx(); dragPlayhead(e); }
   else if(gestureMode==="drag"){ e.preventDefault(); markItx(); retarget(toXY(e)); }
 });
 const endPtr=e=>{ ptrs.delete(e.pointerId); if(ptrs.size<2) pinch=null;
@@ -606,6 +645,7 @@ export function computeGenreLayout(){
   S.cursor={x:MAP_CENTER.x, y:MAP_CENTER.y};
 }
 export function seedDefaultLoop(){
+  S.startBar=0;   // a fresh loop starts fresh — no inherited resume measure
   const c={x:MAP_CENTER.x,y:MAP_CENTER.y};
   const rad=0.34*Math.min(WORLD_W,WORLD_H)/2;
   const gs=Object.keys(POS);

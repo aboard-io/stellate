@@ -17,7 +17,7 @@
 // inert stubs in access.html so the imports don't throw.
 import { S, K, V, set } from "./state.js";
 import { POS, KEYS, PROG_MODE, BARS_PER_SEG } from "./world.js";
-import { retargetWeights, setMacro, resetMacros, rescore } from "./targeting.js";
+import { retargetWeights, rescore } from "./targeting.js";
 import { goLive, stopLive, faustHandle } from "./live.js";
 
 const $ = id => document.getElementById(id);
@@ -30,46 +30,40 @@ let mode = "hold";                 // "hold" (one place) | "journey" (a loop of 
 let single = GENRES.includes("vaporwave") ? "vaporwave" : GENRES[0];
 let journey = [];                  // ordered list of genre keys
 
-// eight global "shape" axes, mirrored into S.macros via setMacro. Labels chosen
-// for a non-visual listener: what each does to the sound, low → high.
-const MACROS = [
-  ["acoustic","Acoustic ↔ electronic","fully electronic","fully acoustic"],
-  ["density",  "Density",              "sparse",           "dense / busy"],
-  ["dust",     "Dust & tape grit",     "clean",            "dusty / lo-fi"],
-  ["space",    "Space & reverb",       "dry / close",      "cavernous"],
-  ["bright",   "Brightness",           "dark / muffled",   "bright / airy"],
-  ["feel",     "Feel & swing",         "stiff / straight", "loose / swung"],
-  ["energy",   "Energy",               "calm",             "driving"],
-  ["vocal",    "Vocal presence",       "instrumental",     "vocal-forward"],
-];
+// (the eight "shape" macro sliders lived here until 2026-07-10 — Paul: "get
+// rid of all macros")
 
 // ---------- populate the genre menus ----------
 function optionsHTML(includeNone){
   return (includeNone?`<option value="">— none —</option>`:``) +
     GENRES.map(g=>`<option value="${g}">${label(g)}</option>`).join("");
 }
+// bookmarkable, here too (Paul: "the entire site"): ?seed=N&genre=g&blend=g2&amt=30
+// restores the accessible page's choices; changes update the URL in place.
+function accUrlRestore(){
+  const q=new URLSearchParams(location.search);
+  if(q.get("seed")){ const v=parseInt(q.get("seed"),10); if(v>=1&&v<=99999) S.seed=v; }
+  if(q.get("genre")&&GENRES.includes(q.get("genre"))) single=q.get("genre");
+  return { blend:q.get("blend"), amt:parseInt(q.get("amt"),10) };
+}
+function accUrlTick(){
+  try{
+    const q=new URLSearchParams();
+    q.set("seed",String(S.seed)); q.set("genre",$("genreSel").value);
+    const bg=$("blendSel").value; if(bg){ q.set("blend",bg); q.set("amt",$("blendAmt").value); }
+    history.replaceState(null,"","?"+q.toString());
+  }catch(e){}
+}
 function boot(){
+  const urlBits=accUrlRestore();
   $("genreSel").innerHTML = optionsHTML(false);
   $("blendSel").innerHTML = optionsHTML(true);
   $("journeyAdd").innerHTML = optionsHTML(false);
   $("genreSel").value = single;
-  // build the macro sliders
-  $("macroList").innerHTML = MACROS.map(([k,name,lo,hi])=>
-    `<div class="row">
-       <label for="mac-${k}">${name}</label>
-       <input type="range" id="mac-${k}" min="-100" max="100" value="0" step="5"
-              aria-describedby="macd-${k}" data-axis="${k}">
-       <span class="ends" id="macd-${k}"><span>${lo}</span><span>${hi}</span></span>
-     </div>`).join("");
-  MACROS.forEach(([k])=>{
-    const el=$("mac-"+k);
-    el.setAttribute("aria-valuetext","neutral");
-    el.addEventListener("input",()=>{
-      const v=+el.value;
-      el.setAttribute("aria-valuetext", v===0?"neutral":(v>0?"+"+v+"% "+MACROS.find(m=>m[0]===k)[3]:v+"% "+MACROS.find(m=>m[0]===k)[2]));
-      setMacro(k, v/100);
-    });
-  });
+  if(urlBits.blend&&GENRES.includes(urlBits.blend)){
+    $("blendSel").value=urlBits.blend; $("blendAmtRow").hidden=false;
+    if(urlBits.amt>=0&&urlBits.amt<=100){ $("blendAmt").value=urlBits.amt; $("blendAmtOut").textContent=urlBits.amt+"%"; }
+  }
   // seed + pace defaults reflected into the controls
   $("seedInp").value = S.seed;
   $("paceRange").value = paceToSlider(S.pace||BARS_PER_SEG);
@@ -95,6 +89,7 @@ function applyHold(){
   }
   single = g;
   retargetWeights(ws);                                    // same glide path the map uses
+  accUrlTick();                                           // the URL carries the choice — bookmarkable
 }
 
 // ---------- JOURNEY mode: an ordered loop of stops ----------
@@ -289,13 +284,6 @@ function wire(){
     renderJourney();
   });
   $("paceRange").addEventListener("input", syncPaceOut);
-
-  // shape reset
-  $("resetMacros").addEventListener("click",()=>{
-    resetMacros();
-    MACROS.forEach(([k])=>{ const el=$("mac-"+k); el.value=0; el.setAttribute("aria-valuetext","neutral"); });
-    logEvent("Shape reset to neutral.");
-  });
 
   // seed + mode
   $("seedInp").addEventListener("change",()=>{

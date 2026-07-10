@@ -221,6 +221,21 @@ fixture-gated, the FORMS-refactor method):
   4. Blend/verify as first-class matrix ops; BLAS/GSL-WASM at the
      matrix()/hull() seam when feature-space scale demands it.
 
+### 5c. The bookmarkable mix (Paul 2026-07-10) — SHIPPED
+app/share.js: seed + waypoints + pace + mode + the CURRENT MEASURE ride the
+query string (?seed&path&pace&m), replaceState per bar; loading such a URL
+restores the loop and DROPS IN at that measure (S.startBar -> exploreLive
+opts.startBar -> makeWalk fast-forward: measure N is byte-identical to having
+played N bars). The traveler is a DRAGGABLE PLAYHEAD (starmap hitTraveler/
+projectOnPath — a glide live, a place stopped; stopped drags set the resume
+measure). stopLive records the measure so ▶ resumes. Path edits clear startBar
+(the old measure no longer maps). ⚙ panel: ⧉ share copies the link. The ⓘ viz
+playhead lights the ACTIVE MEASURE (4-beat block, steps not sweeps). MACROS
+REMOVED SITEWIDE (Paul: "get rid of all macros") — UI/exports/tests gone,
+kernel applyMacros machinery intentionally kept (absent = byte-identical);
+test/macro-live-run.js retired. Gate: test/share-url-run.js (11 checks).
+access.html: seed/genre/blend in ITS query string too.
+
 ### 6. The standing horizon (Paul-stated goals not yet scheduled)
 - The hour-render service (docs/EXPORT.md sketch: tools/render-server.js
   on the droplet, queue + credits.txt with tier-3 stripped).

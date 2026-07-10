@@ -1,18 +1,19 @@
 // panels.js — the modal controls (a Preact-rendered ⚙ panel: transport, seed,
-// pace, the eight macro sliders, the DIMS detail sliders, preset/path import-
-// export) plus the chip↔modal plumbing (⚙ panel, ⓘ inside, ▶ play) that keeps
+// pace, the DIMS detail sliders, preset/path import-export, the share link)
+// plus the chip↔modal plumbing (⚙ panel, ⓘ inside, ▶ play) that keeps
 // the sky clean until a chip is tapped. Registers the store render subs.
-import { S, set, subs, html, render, macrosOn } from "./state.js";
+// (The eight macro sliders lived here until 2026-07-10 — Paul: "get rid of
+// all macros".)
+import { S, set, subs, html, render } from "./state.js";
 import { MODE_LOCKS, BARS_PER_SEG } from "./world.js";
 import { goLive, stopLive } from "./live.js";
-import { retarget, setMacro, resetMacros, weightsAt } from "./targeting.js";
+import { retarget, weightsAt } from "./targeting.js";
 import { renderInside } from "./inside.js";
 import { bgVideoToggle, bgVideoOn } from "./background.js";
 import { seedDefaultLoop, drawMap, startPulse } from "./starmap.js";
 import { EXPORT, downloadMidi, exportAudio } from "./export.js";
 
-const MACRO_AXES=[["acoustic","acoustic","synth"],["density","simple","layered"],["dust","dusty","clean"],
-  ["space","dry","drenched"],["bright","dark","bright"],["feel","tight","loose"],["energy","calm","intense"],["vocal","instr","vocal"]];
+import { copyShareUrl } from "./share.js";
 
 // ---------- Preact panel ----------
 const DIMS=[
@@ -41,22 +42,13 @@ function Panel(){
     <div class="row"><label>seed</label>
       <input class="seedin" type="number" value=${S.seed}
         onchange=${e=>{set({seed:+e.target.value||1});retarget(S.cursor);}} />
-      <button onclick=${()=>{set({seed:Math.floor(Math.random()*99999)});retarget(S.cursor);}}>🎲</button></div>
+      <button onclick=${()=>{set({seed:Math.floor(Math.random()*99999)});retarget(S.cursor);}}>🎲</button>
+      <button title="copy a link to THIS mix — seed, path and the current measure ride the URL; anyone opening it drops in right here"
+        onclick=${copyShareUrl}>⧉ share</button></div>
     <div class="row"><label>pace (bars/leg)</label>
       <input type="range" min="4" max="12" step="1" value=${Math.round(Math.log2(Math.max(16,Math.min(4096,+S.pace||BARS_PER_SEG))))}
         onInput=${e=>set({pace:Math.pow(2,Math.max(4,Math.min(12,+e.target.value||8)))})} />
       <output>${S.pace}</output></div>
-    <div class="mac">
-      <div class="mac-h"><span>macros — bend every genre at once</span>
-        <button class="mac-rst" title="reset all axes to neutral"
-          onclick=${resetMacros} disabled=${!macrosOn(S.macros)}>reset</button></div>
-      ${MACRO_AXES.map(([k,lo,hi])=>html`
-        <div class="mrow ${S.macros[k]?"act":""}">
-          <span class="ml">${lo}</span>
-          <input type="range" min="-1" max="1" step="0.05" value=${S.macros[k]}
-            onInput=${e=>setMacro(k,+e.target.value)} />
-          <span class="mr">${hi}</span></div>`)}
-    </div>
     ${S.more?html`
     <div class="row"><label>mode/scale</label>
       <select value=${S.modeLock} onchange=${e=>{set({modeLock:e.target.value});retarget(S.cursor);}}>
