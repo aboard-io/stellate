@@ -72,7 +72,36 @@
     return new Uint8Array(out);
   }
 
-  const api={ buildMidi };
+  // WHOLE-PATH MIDI (the Faithful export): concatenate the per-bar note events
+  // the offline loop-walk produced (app/journey.js), each already carrying its
+  // absolute startBeat + bpm, into ONE Standard MIDI File with a tempo map.
+  // bars: [{ ev:{pitched,drums}, startBeat, bpm }].
+  function buildMidiJourney(bars){
+    const pads=[], bass=[], mel=[], drums=[], tempos=[];
+    let lastBpm=null;
+    for(const b of bars){
+      if(b.bpm!==lastBpm){ tempos.push({beat:b.startBeat, bpm:b.bpm}); lastBpm=b.bpm; }
+      const ev=b.ev||{};
+      for(const p of (ev.pitched||[])){ const n={beat:b.startBeat+p.beat, dur:p.dur, pch:p.pch, amp:p.amp};
+        (p.voice==="pad"?pads:p.voice==="bass"?bass:mel).push(n); }
+      for(const d of (ev.drums||[])) drums.push({beat:b.startBeat+d.beat, dur:d.dur, drum:d.drum, open:d.open, amp:d.amp});
+    }
+    // conductor/tempo track: 4/4 sig + a tempo meta at each bpm change
+    const tevs=[{t:0,b:[0xFF,0x58,0x04,0x04,0x02,0x18,0x08]}];
+    for(const tp of tempos){ const us=Math.round(60000000/(tp.bpm||88));
+      tevs.push({t:Math.round(tp.beat*PPQ),b:[0xFF,0x51,0x03,(us>>16)&255,(us>>8)&255,us&255]}); }
+    const tracks=[track(tevs,"Tempo",0,null)];
+    if(pads.length) tracks.push(pitchTrack(pads,0,89,"Pads"));
+    if(bass.length) tracks.push(pitchTrack(bass,1,38,"Bass"));
+    if(mel.length)  tracks.push(pitchTrack(mel,2,81,"Melody"));
+    if(drums.length) tracks.push(drumTrack(drums));
+    const hdr=[...str("MThd"),0,0,0,6,0,1,(tracks.length>>8)&255,tracks.length&255,(PPQ>>8)&255,PPQ&255];
+    const out=[...hdr];
+    for(const t of tracks){ const L=t.length; out.push(...str("MTrk"),(L>>>24)&255,(L>>>16)&255,(L>>>8)&255,L&255,...t); }
+    return new Uint8Array(out);
+  }
+
+  const api={ buildMidi, buildMidiJourney };
   if(typeof module!=="undefined" && module.exports) module.exports=api;
   else root.MidiExport=api;
 })(typeof window!=="undefined" ? window : globalThis);

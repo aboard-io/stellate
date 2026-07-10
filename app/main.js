@@ -15,8 +15,8 @@ import "./background.js";   // side effects: video/demoscene chip + alternation 
 import "./panels.js";       // side effects: control panel + chips/modals + store render subs
 import { applyUrlState, buildShareUrl } from "./share.js";   // the bookmarkable mix (seed+path+measure in the query string)
 import { loadFonts } from "./fonts.js";   // the soundfont switcher: register + apply the saved font
-import { walkLoop, walkLoopSummary } from "./journey.js";   // offline whole-path walk (export foundation)
-window.__JOURNEY={ walkLoop:(...a)=>walkLoop(...a), summary:(...a)=>walkLoopSummary(...a) };
+import { walkLoop, walkLoopSummary, buildLoopMidi } from "./journey.js";   // offline whole-path walk + MIDI (export foundation)
+window.__JOURNEY={ walkLoop:(...a)=>walkLoop(...a), summary:(...a)=>walkLoopSummary(...a), buildLoopMidi:(...a)=>buildLoopMidi(...a) };
 import { registerSW, precacheSoon } from "./precache.js";    // offline-where-possible + route-ahead sample warming
 
 window.__X={retarget:(...a)=>retarget(...a), goLive:(...a)=>goLive(...a), stopLive:(...a)=>stopLive(...a), weightsAt:(...a)=>weightsAt(...a),
