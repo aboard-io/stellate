@@ -230,7 +230,16 @@
     }
     return z;
   }
-  const rateFor = (z, midi) => Math.pow(2, (midi - z.root) / 12);
+  // INSTRUMENT-REGISTER LAW backstop (2026-07 audio-quality pass): a zone is
+  // never rate-stretched more than +16 st above its root, whatever the caller
+  // asks. The mapping layer (state-engine mapEvents) already octave-folds
+  // pitched sampler notes into the instrument's honest window (top root +6 st /
+  // bottom root -12 st) and sampled-drum tom repitch tops out at ~+11 st, so no
+  // engine path reaches this cap — it exists for direct/uncareful callers so a
+  // sample can never play at chipmunk rate. Down-stretch is uncapped here
+  // (slow playback aliases nothing; the mapping floor handles taste).
+  const MAX_STRETCH_UP_ST = 16;
+  const rateFor = (z, midi) => Math.pow(2, (Math.min(midi, z.root + MAX_STRETCH_UP_ST) - z.root) / 12);
 
   // ---- (a) press path: notes -> Float32Array buses -----------------------
   // notes: [{tSec, durSec, freq, amp, atk, rel, zones, sr(zoneFileRate)}]

@@ -27,6 +27,64 @@
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number(v) || 0));
   const cpspch = (p) => { p = parseFloat(p); const o = Math.floor(p), st = Math.round((p - o) * 100); return 261.625565 * Math.pow(2, (o - 8) + st / 12); };
 
+  // ---- SHRIEK GUARD (2026-07 audio-quality pass, Paul: "think about filtering
+  // very high tones — things shriek a little when we're not being careful") ----
+  // A GLOBAL taste ceiling at the mapping layer (like LEAD_FX_LIFT / BASS_TRIM:
+  // pure + deterministic, state untouched, so verifier features — which read
+  // ONLY state fields — and the confusion matrix cannot move). Two mechanisms:
+  //
+  // (1) RESONANT PEAK up top: a filter whose cutoff lands above ~9 kHz with high
+  //     resonance is a whistle, not brightness. easeRes caps the resonance on a
+  //     linear ramp — full res allowed at <=9 kHz, eased down to 0.35 by 14 kHz.
+  //     cutMaxForRes is the same fence from the other side: a per-note cutoff
+  //     sweep (pipes cutoffMul) may not push a high-res voice past it. MEASURED
+  //     across the catalog (all anchors x seeds 1-5): ZERO current units trip
+  //     either guard — anchors are disciplined — so this is byte-identical
+  //     insurance for the blend/macro/pipes space where interpolation can land
+  //     cutoff+res combinations no anchor declares.
+  // (2) INSTRUMENT-REGISTER LAW (Paul: "you're playing a lot of instruments an
+  //     octave or two high and they lose all of their characteristics"): the
+  //     score brain's octave choices (9.xx lead voicings, soloOctave +12, arps)
+  //     were tuned for synths, but zoneFor's top zone covers hi=127, so a
+  //     sampled note far above the zone's root plays the sample at 2-6x rate —
+  //     the chipmunk/aliasing shriek AND total loss of instrument character
+  //     (measured: baritone-sax melodies at +23..+32 st over the top root in
+  //     ~40 genres; a canawave tuba solo at +33.8 st; house pop_bass at +30 st).
+  //     Every sampled voice now knows its natural window from its zones:
+  //       ceiling = top zone root + SAMPLER_STRETCH_ST   (a few st of stretch)
+  //       floor   = bottom zone root - SAMPLER_FLOOR_ST  (down-stretch is more
+  //                 forgiving, but a slap_bass at -16 st is 16 Hz rumble and a
+  //                 piccolo at -22 st is not a piccolo)
+  //     mapEvents OCTAVE-FOLDS any pitched sampler note outside the window
+  //     (freq/2 or *2 until inside) — stays in key and in the instrument's
+  //     honest register instead of hard-clamping to a detuned pitch. The fold
+  //     is PER NOTE (a pure function of the note): phrase-level folding was
+  //     considered and rejected because live maps events through arbitrary
+  //     beat windows (mapEvents opts.lo/hi) — a phrase group straddling a
+  //     window boundary would compute a different fold live vs press and break
+  //     segment parity. The window is always >= 18 st wide (ceiling-floor =
+  //     zone span + 18), so the two folds can never oscillate. Sampled DRUMS
+  //     are untouched (fixed-rate one-shots / tom repitch, separate branch).
+  //     Renders drift only where a note actually left the window. sampler.js
+  //     rateFor carries a +16 st hard backstop for any path that bypasses this
+  //     mapping (mapping-folded notes and tom repitch, max +11 st, never
+  //     reach it).
+  const SHRIEK_HZ_LO = 9000;   // below this: never touched
+  const SHRIEK_HZ_HI = 14000;  // at/above this: res fully eased to the floor
+  const SHRIEK_RES_FLOOR = 0.35, SHRIEK_RES_TOP = 0.95;
+  const SAMPLER_STRETCH_ST = 6;   // max semitones a zone plays ABOVE its top root (rate ~1.41)
+  const SAMPLER_FLOOR_ST = 12;    // max semitones BELOW the bottom root (rate ~0.5)
+  function easeRes(cutHz, res) {
+    if (!(cutHz > SHRIEK_HZ_LO) || !(res > SHRIEK_RES_FLOOR)) return res;
+    const t = Math.min(1, (cutHz - SHRIEK_HZ_LO) / (SHRIEK_HZ_HI - SHRIEK_HZ_LO));
+    return Math.min(res, SHRIEK_RES_TOP + (SHRIEK_RES_FLOOR - SHRIEK_RES_TOP) * t);
+  }
+  function cutMaxForRes(res, hi) {
+    if (!(res > SHRIEK_RES_FLOOR)) return hi;
+    const t = Math.min(1, (res - SHRIEK_RES_FLOOR) / (SHRIEK_RES_TOP - SHRIEK_RES_FLOOR));
+    return Math.min(hi, SHRIEK_HZ_HI + (SHRIEK_HZ_LO - SHRIEK_HZ_HI) * t);
+  }
+
   // ---- SAMPLED DRUM KITS (additive to the Faust synth kits: kick boom/808/909
   //      · snare noise/crack/clap · hat noise/metal). A genre may select a real
   //      recorded kit (genre-kernel DRUMKITS -> instruments.drums.<x>Sampler);
@@ -317,11 +375,17 @@
         case "filtersweep": {
           const base = clamp(cutoffHz || 2000, 60, 12000);
           const loHz = clamp(base * Math.pow(2, it.lo != null ? it.lo : -1), 40, 12000);
-          const hiHz = clamp(Math.max(base * Math.pow(2, it.hi != null ? it.hi : 1), loHz * 1.05), 60, 16000);
+          // SHRIEK GUARD (1c): a RESONANT sweep's top is fenced by cutMaxForRes —
+          // sweeping a res-0.5+ peak past ~12 kHz is a whistle. Catalog-measured
+          // byte-identical (no anchor sweeps a res>0.35 peak above 10 kHz).
+          const swRes = clamp(it.res != null ? it.res : 0.5, 0, 0.95);
+          const swCap = cutMaxForRes(swRes, 16000);
+          const loHz2 = Math.min(loHz, swCap / 1.05);   // keep lo<hi under the fence
+          const hiHz = clamp(Math.max(base * Math.pow(2, it.hi != null ? it.hi : 1), loHz2 * 1.05), 60, swCap);
           out.push({ type: "filtersweep", module: "insert_filtersweep", barSec: true, params: {
             rateBars: clamp(it.rateBars != null ? it.rateBars : 4, 0.25, 64),
             lo: loHz, hi: hiHz,
-            res: clamp(it.res != null ? it.res : 0.5, 0, 0.95) } }); break;
+            res: swRes } }); break;
         }
       }
     }
@@ -388,7 +452,20 @@
   // rev/del gains divide out `level` because csound sends tap PRE-level
   // (instr 1/2/4: gaMix += asig*level but gaRev += asig*send) while the Faust
   // modules bake level into their output.
+  // SHRIEK GUARD choke point: every pitched unit passes through here once, so
+  // the resonance ease is applied to the RESOLVED static params (whatever model
+  // clamps applied inside), covering all res-bearing models (res + tb303's
+  // `resonance`) without touching the per-model mapping code.
   function pitchedUnit(role, m, state) {
+    const u = pitchedUnitRaw(role, m, state);
+    const P = u.params;
+    if (P && P.cutoff != null) {
+      if (P.res != null) P.res = easeRes(P.cutoff, P.res);
+      if (P.resonance != null) P.resonance = easeRes(P.cutoff, P.resonance);
+    }
+    return u;
+  }
+  function pitchedUnitRaw(role, m, state) {
     // param-reader: clamp(m[k]!=null?m[k]:d,lo,hi) — the null-coalescing default
     // idiom. NOT for `m.x||d` sites (0-is-falsy glide/drive/vibrato keep that).
     const mp = (k, d, lo, hi) => clamp(m[k] != null ? m[k] : d, lo, hi);
@@ -477,9 +554,18 @@
       // Faust module) — the band-appropriate channel STRIP is their per-voice FX
       // (STRIP_PROFILES). Clearing inserts also keeps unitCost honest (no phantom
       // insert cost) and live/press identical (VOICES.md: "Inserts are dropped").
+      // INSTRUMENT-REGISTER LAW: the zone roots bound honest playback — notes
+      // above topRoot + SAMPLER_STRETCH_ST octave-fold DOWN, notes below
+      // bottomRoot - SAMPLER_FLOOR_ST octave-fold UP (mapEvents).
+      const zs = Array.isArray(sp.zones) ? sp.zones : [];
+      const zRoots = zs.map((z) => z.root || 60);
+      const topRoot = zRoots.length ? Math.max(...zRoots) : 0;
+      const botRoot = zRoots.length ? Math.min(...zRoots) : 0;
       return { ...base, inserts: [], rev: airRev, gmul: base.gmul * (role === "bass" ? 0.5 : 1), module: null, sampler: {
           id: sp.id || "?", sr: sp.sr || 44100,
-          zones: Array.isArray(sp.zones) ? sp.zones : [],
+          zones: zs,
+          ...(topRoot ? { stretchMaxHz: 440 * Math.pow(2, (topRoot + SAMPLER_STRETCH_ST - 69) / 12),
+                          stretchMinHz: 440 * Math.pow(2, (botRoot - SAMPLER_FLOOR_ST - 69) / 12) } : {}),
           atk: mp("attack", role === "bass" ? 0.006 : 0.012, 0.003, 5),
           rel: mp("release", role === "bass" ? 0.07 : 0.09, 0.02, 6),
           swell: (m.swell || 0) >= 0.5,
@@ -887,6 +973,16 @@
     "synclead", // hard-sync tearing lead: the envelope-driven sync sweep is the sound
     "modeld",   // Minimoog Model-D mono-legato hero: portamento/legato is performance, not a pitch
     "vocoder",  // robot_choir vocoder — needs the LIVE speech carrier (keeps "speech back")
+    "hammond",  // B-3 tonewheel + SPINNING LESLIE (2026-07 audio-quality pass; Paul on
+                // blues: "I don't hear ensemble or phaser on the organ. It's reedy and
+                // distant."). Anchors that ask for hammond configure real drawbar
+                // registrations + leslie speed + 3rd-harm percussion (blues comps
+                // 888868468 with leslie .85-.95) — synthesis params no static GM zone
+                // honors; the sampled remap was landing them on reed_organ / church_organ
+                // / slow_strings / space_voice and the rotary motion vanished. Rotary
+                // doppler IS the identity — same law as the moving filter / detune beat
+                // above. (The generic "organ" model stays sampled; anchors that want the
+                // GM organs say model "sampler" + samplerPool, like blues' own pad pool.)
   ]);
   // Candidate pools per role/timbre-family, drawn from the FULL General MIDI set
   // (all 128 bank-0 FluidR3 presets extracted 2026-07, "all of GM please" — see
@@ -1212,7 +1308,17 @@
       if (p.voice === "melody" && p.solo) { const v = solos.find((x) => x.key === JSON.stringify(p.solo)); if (v) key = "solo:" + v.key; }
       const u = units[key]; if (!u) continue;
       const durB = Math.max(0.02, p.dur);
-      const sets = { freq: clamp(cpspch(p.pch), 20, u.freqMax || 4000) };
+      // INSTRUMENT-REGISTER LAW: a pitched sampler note outside the zones'
+      // honest window OCTAVE-FOLDS into it (in key, real register) instead of
+      // playing the sample at chipmunk/rumble rate. The window is >= 18 st
+      // wide, so the folds never fight. Fixed-rate sampled drums never come
+      // here (their branch is in the drums loop below).
+      let noteHz = clamp(cpspch(p.pch), 20, u.freqMax || 4000);
+      if (u.sampler && u.sampler.stretchMaxHz) {
+        while (noteHz > u.sampler.stretchMaxHz && noteHz > 40) noteHz /= 2;
+        while (noteHz < u.sampler.stretchMinHz && noteHz < 8000) noteHz *= 2;
+      }
+      const sets = { freq: noteHz };
       if (!u.dx7) sets.gain = clamp(p.amp * u.gmul, 0, 2);
       if (u.decayFromDur) sets.decay = clamp(durB * spb, 0.1, u.module === "bell" ? 6 : 8);
       if (u.fmLead) sets.idxTime = clamp(durB * spb / 2, 0.01, 4);
@@ -1234,7 +1340,14 @@
       if (np) {
         if (p.cutoffMul != null && np.cut) {
           const cbase = u.params ? u.params[np.cut[0]] : null;   // the voice's RESOLVED static cutoff/tone
-          if (cbase != null) sets[np.cut[0]] = clamp(cbase * p.cutoffMul, np.cut[1], np.cut[2]);
+          // SHRIEK GUARD (1b): a per-note cutoff sweep may not push a resonant
+          // voice past the taste fence (cutMaxForRes) — the static res was
+          // eased against the STATIC cutoff, but pipes' cutoffMul can multiply
+          // past it (sweepArc hi reaches 2x). Non-resonant voices keep the
+          // model's full range (res<=0.35 => hi unchanged, byte-identical).
+          const ures = u.params ? (u.params.res != null ? u.params.res : u.params.resonance) : null;
+          const hiCap = ures != null ? cutMaxForRes(ures, np.cut[2]) : np.cut[2];
+          if (cbase != null) sets[np.cut[0]] = clamp(cbase * p.cutoffMul, np.cut[1], hiCap);
         }
         if (p.vib && np.vib) {   // pipes depth 0..1 -> the module's fractional-pitch slider (0..0.03 full-scale)
           sets.vibrato = clamp((p.vib.depth || 0) * 0.03, 0, 0.03);
