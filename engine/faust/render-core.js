@@ -34,6 +34,15 @@
 })(typeof window !== "undefined" ? window : globalThis, function () {
   "use strict";
 
+  // MASTERING STAGE — constant-power pan gains for a unit carrying `pan`
+  // (state-engine applyMasterPan). ×√2 so center matches the old dup level;
+  // pan 0 / absent never routes here (the old mono-dry path, byte-identical).
+  function panLR(pan) {
+    const p = Math.min(1, Math.max(-1, pan));
+    const th = (p + 1) * Math.PI / 4;
+    return { l: Math.SQRT2 * Math.cos(th), r: Math.SQRT2 * Math.sin(th) };
+  }
+
   // merge [start,end] intervals (a voice renders only its merged active spans)
   function mergeIvals(ivals) {
     ivals.sort((a, b) => a[0] - b[0]);
@@ -69,6 +78,9 @@
         for (const [sfx, v] of Object.entries(dxParams)) proc.setParamValue(sfx.startsWith("/DX7") ? sfx : "/DX7" + sfx, v);
       procs.push({ proc, R, changes: [], ivals: [], busyUntil: -1 });
     }
+    // MASTERING pan: a mono unit with `pan` writes its DRY send onto the wide
+    // stereo buses (wL/wR) with constant-power gains; rev/del/pp stay mono.
+    const pg2 = (u.pan && wL && wR && !u.stereo) ? panLR(u.pan) : null;
     // per-voice INSERT chain (state.instruments.<voice>.inserts contract):
     // voices accumulate into a unit-local buffer, the chain processes it
     // whole-song (LFO phase + tails continuous), THEN the layer/fx sends
@@ -167,7 +179,9 @@
                   lg = (u.del || 0) * curOut, pg = curPP * curOut;
             for (let i = 0; i < len; i++) {
               const x = o[i];
-              dry[s + i] += x * dg; rev[s + i] += x * rg; del[s + i] += x * lg;
+              if (pg2) { const xd = x * dg; wL[s + i] += xd * pg2.l; wR[s + i] += xd * pg2.r; }
+              else dry[s + i] += x * dg;
+              rev[s + i] += x * rg; del[s + i] += x * lg;
               if (pg) pp[s + i] += x * pg;
             }
           }
@@ -190,11 +204,13 @@
       const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
       for (let i = 0; i < TOTAL; i++) {
         const x = ubuf[i];
-        dry[i] += x * dg; rev[i] += x * rg; del[i] += x * lg;
+        if (pg2) { const xd = x * dg; wL[i] += xd * pg2.l; wR[i] += xd * pg2.r; }
+        else dry[i] += x * dg;
+        rev[i] += x * rg; del[i] += x * lg;
       }
     }
     return { pool: P, rendered };
   }
 
-  return { mergeIvals, renderUnit };
+  return { mergeIvals, renderUnit, panLR };
 });
