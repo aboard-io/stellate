@@ -141,6 +141,8 @@ when a state requests them.
 | chorus | `insert_chorus` | rate, depth, mix | modulated fdelay 15 ms ±9 ms·depth (6–24 ms) |
 | filtersweep | `insert_filtersweep` | rateBars, lo, hi, res, **barSec** | moog_vcf_2bn, raised-cosine LFO starting at lo; the ENGINE sets `barSec` (= 4·spb) from state.bpm and re-sets it on glides — full-wet by design |
 | wah | `insert_wah` | sens, base, range, q, mix | fx wings stage 3: crybaby/Mutron AUTO-WAH — an amp-follower (6 ms/140 ms) drives a resonant `fi.resonbp` exponentially `base → base·2^range`; sens = envelope drive, q = the vowel. No clock needed. Homes: disco/newjack/afrobeat BASS pools (probe-wah.js: steady loud opens 1720 Hz vs quiet 709 Hz; the sampler-bass constraint drops it like every insert) |
+| higain | `insert_higain` | gate, drive, stages(1-3), tone{low,mid,high}, presence, level, mix | SYNTHESIS-DEPTH: the STAGED heavy amp (see section below) — tightness gate → 3 cascaded hand-rolled shapers w/ inter-stage HP → 3-band tone stack → fixed 4x12 cab → level comp + dcblocker. IDENTITY insert (never shed). NOT excluded on samplers (unlike distort — but a genre declaring higain must not also declare heavy strip distortion) |
+| fenv | `insert_fenv` | sens, amount(oct ±), attack, decay, base, res, mix | SYNTHESIS-DEPTH: note-triggered FILTER ENVELOPE for SAMPLED voices — amp-follower contour sweeps a moog_vcf_2bn ±`amount` octaves around `base` (defaults to the voice cutoff; top fenced by cutMaxForRes). Negative amount = reverse squelch. Synth models use the fenv* params instead |
 
 mix 0 is a bit-exact bypass (verified) — live never disconnects to bypass.
 Live wiring (live.js `ensureInserts`): pool voices sum into `pre` →

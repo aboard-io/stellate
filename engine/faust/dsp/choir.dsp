@@ -22,4 +22,12 @@ frm = src <: fi.resonbp(800, 13.3, 1)*0.5, fi.resonbp(1150, 12.8, 1)*0.35,
 
 env = en.adsr(attack, 1.5, 0.8, 2.5, gate);
 
-process = frm*0.85 : fi.lowpass(2, cutoff) : *(env*level*gain);
+// fenv* = SYNTHESIS-DEPTH unified filter envelope (2026-07);
+// fenvAmount 0 is a bit-exact bypass (absent-law).
+fenvAmount = hslider("fenvAmount", 0, -4, 4, 0.01);       // cutoff env depth, OCTAVES (signed; 0 = off, bit-exact)
+fenvAttack = hslider("fenvAttack", 0.005, 0.001, 2, 0.001);
+fenvDecay  = hslider("fenvDecay", 0.18, 0.01, 3, 0.005);
+fenvC   = en.adsr(fenvAttack, fenvDecay, 0, fenvDecay, gate);   // AD contour (sustain 0), note-on triggered
+fenvMul = exp(0.6931472 * fenvAmount * fenvC);                  // 2^(amt*contour); amt 0 -> exactly 1.0
+
+process = frm*0.85 : fi.lowpass(2, max(30.0, min(cutoff*fenvMul, 16000.0))) : *(env*level*gain);

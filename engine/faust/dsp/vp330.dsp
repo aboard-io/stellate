@@ -57,7 +57,17 @@ formants(x) = x <: fi.resonbp(f1, 10.0, g1),
 
 // flat, organ-like paraphonic loudness contour (short decay, high sustain)
 env  = en.adsr(attack, 0.3, sustain, release, gate);
-body = formants(exc) * 0.85 : fi.lowpass(2, cutoff) : *(env * level * gain);
+
+// fenv* = SYNTHESIS-DEPTH unified filter envelope (2026-07);
+// fenvAmount 0 is a bit-exact bypass (absent-law). Applies to the POST cutoff
+// lowpass only, NOT the formant resonbp centers (those are the voice's identity).
+fenvAmount = hslider("fenvAmount", 0, -4, 4, 0.01);       // cutoff env depth, OCTAVES (signed; 0 = off, bit-exact)
+fenvAttack = hslider("fenvAttack", 0.005, 0.001, 2, 0.001);
+fenvDecay  = hslider("fenvDecay", 0.18, 0.01, 3, 0.005);
+fenvC   = en.adsr(fenvAttack, fenvDecay, 0, fenvDecay, gate);   // AD contour (sustain 0), note-on triggered
+fenvMul = exp(0.6931472 * fenvAmount * fenvC);                  // 2^(amt*contour); amt 0 -> exactly 1.0
+
+body = formants(exc) * 0.85 : fi.lowpass(2, max(30.0, min(cutoff*fenvMul, 16000.0))) : *(env * level * gain);
 
 // ---- TRIPLE-LFO ENSEMBLE CHORUS -> STEREO ----
 // three phase-staggered dual-rate (0.6 Hz + 5.9 Hz) LFOs, Solina BBD sway

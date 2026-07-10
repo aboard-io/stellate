@@ -5,6 +5,9 @@
   "params": [
    "/bass_acid/cutoff",
    "/bass_acid/fenv",
+   "/bass_acid/fenvAmount",
+   "/bass_acid/fenvAttack",
+   "/bass_acid/fenvDecay",
    "/bass_acid/freq",
    "/bass_acid/gain",
    "/bass_acid/gate",
@@ -18,6 +21,9 @@
   "outputs": 1,
   "params": [
    "/bass_reese/cutoff",
+   "/bass_reese/fenvAmount",
+   "/bass_reese/fenvAttack",
+   "/bass_reese/fenvDecay",
    "/bass_reese/freq",
    "/bass_reese/gain",
    "/bass_reese/gate",
@@ -30,6 +36,9 @@
   "params": [
    "/bass_saw/cutoff",
    "/bass_saw/fenv",
+   "/bass_saw/fenvAmount",
+   "/bass_saw/fenvAttack",
+   "/bass_saw/fenvDecay",
    "/bass_saw/freq",
    "/bass_saw/gain",
    "/bass_saw/gate",
@@ -43,6 +52,9 @@
   "outputs": 1,
   "params": [
    "/bass_sub/cutoff",
+   "/bass_sub/fenvAmount",
+   "/bass_sub/fenvAttack",
+   "/bass_sub/fenvDecay",
    "/bass_sub/freq",
    "/bass_sub/gain",
    "/bass_sub/gate",
@@ -54,6 +66,9 @@
   "outputs": 1,
   "params": [
    "/bass_wobble/cutoff",
+   "/bass_wobble/fenvAmount",
+   "/bass_wobble/fenvAttack",
+   "/bass_wobble/fenvDecay",
    "/bass_wobble/freq",
    "/bass_wobble/gain",
    "/bass_wobble/gate",
@@ -100,6 +115,9 @@
    "/casiocz/dcwSustain",
    "/casiocz/decay",
    "/casiocz/detune",
+   "/casiocz/fenvAmount",
+   "/casiocz/fenvAttack",
+   "/casiocz/fenvDecay",
    "/casiocz/freq",
    "/casiocz/gain",
    "/casiocz/gate",
@@ -116,6 +134,9 @@
   "params": [
    "/choir/attack",
    "/choir/cutoff",
+   "/choir/fenvAmount",
+   "/choir/fenvAttack",
+   "/choir/fenvDecay",
    "/choir/freq",
    "/choir/gain",
    "/choir/gate",
@@ -3813,6 +3834,9 @@
    "/fm2op/cutoff",
    "/fm2op/decay",
    "/fm2op/fenv",
+   "/fm2op/fenvAmount",
+   "/fm2op/fenvAttack",
+   "/fm2op/fenvDecay",
    "/fm2op/freq",
    "/fm2op/gain",
    "/fm2op/gate",
@@ -3841,7 +3865,6 @@
    "/fx_bus/grit",
    "/fx_bus/highcut",
    "/fx_bus/lowcut",
-   "/fx_bus/mbdrive",
    "/fx_bus/mcut",
    "/fx_bus/ppfb",
    "/fx_bus/pptime",
@@ -3907,6 +3930,18 @@
    "/insert_chorus/rate"
   ]
  },
+ "insert_delay": {
+  "inputs": 1,
+  "outputs": 1,
+  "params": [
+   "/insert_delay/barSec",
+   "/insert_delay/feedback",
+   "/insert_delay/mix",
+   "/insert_delay/timeBars",
+   "/insert_delay/tone",
+   "/insert_delay/wow"
+  ]
+ },
  "insert_distort": {
   "inputs": 1,
   "outputs": 1,
@@ -3914,6 +3949,19 @@
    "/insert_distort/drive",
    "/insert_distort/mix",
    "/insert_distort/tone"
+  ]
+ },
+ "insert_fenv": {
+  "inputs": 1,
+  "outputs": 1,
+  "params": [
+   "/insert_fenv/amount",
+   "/insert_fenv/attack",
+   "/insert_fenv/base",
+   "/insert_fenv/decay",
+   "/insert_fenv/mix",
+   "/insert_fenv/res",
+   "/insert_fenv/sens"
   ]
  },
  "insert_filtersweep": {
@@ -3927,6 +3975,50 @@
    "/insert_filtersweep/res"
   ]
  },
+ "insert_flanger": {
+  "inputs": 1,
+  "outputs": 1,
+  "params": [
+   "/insert_flanger/depth",
+   "/insert_flanger/feedback",
+   "/insert_flanger/mix",
+   "/insert_flanger/rate"
+  ]
+ },
+ "insert_granular": {
+  "inputs": 1,
+  "outputs": 1,
+  "params": [
+   "/insert_granular/density",
+   "/insert_granular/mix",
+   "/insert_granular/pitch",
+   "/insert_granular/rate"
+  ]
+ },
+ "insert_higain": {
+  "inputs": 1,
+  "outputs": 1,
+  "params": [
+   "/insert_higain/drive",
+   "/insert_higain/gate",
+   "/insert_higain/high",
+   "/insert_higain/level",
+   "/insert_higain/low",
+   "/insert_higain/mid",
+   "/insert_higain/mix",
+   "/insert_higain/presence",
+   "/insert_higain/stages"
+  ]
+ },
+ "insert_leslie": {
+  "inputs": 1,
+  "outputs": 1,
+  "params": [
+   "/insert_leslie/depth",
+   "/insert_leslie/mix",
+   "/insert_leslie/speed"
+  ]
+ },
  "insert_phaser": {
   "inputs": 1,
   "outputs": 1,
@@ -3934,6 +4026,14 @@
    "/insert_phaser/depth",
    "/insert_phaser/mix",
    "/insert_phaser/rate"
+  ]
+ },
+ "insert_ringmod": {
+  "inputs": 1,
+  "outputs": 1,
+  "params": [
+   "/insert_ringmod/freq",
+   "/insert_ringmod/mix"
   ]
  },
  "insert_tremolo": {
@@ -4028,6 +4128,9 @@
    "/lead_fuzz/cutoff",
    "/lead_fuzz/drive",
    "/lead_fuzz/fenv",
+   "/lead_fuzz/fenvAmount",
+   "/lead_fuzz/fenvAttack",
+   "/lead_fuzz/fenvDecay",
    "/lead_fuzz/freq",
    "/lead_fuzz/gain",
    "/lead_fuzz/gate",
@@ -4044,6 +4147,9 @@
   "outputs": 1,
   "params": [
    "/lead_guitar/cutoff",
+   "/lead_guitar/fenvAmount",
+   "/lead_guitar/fenvAttack",
+   "/lead_guitar/fenvDecay",
    "/lead_guitar/freq",
    "/lead_guitar/gain",
    "/lead_guitar/gate",
@@ -4071,12 +4177,22 @@
    "/lead_pluck/cutoff",
    "/lead_pluck/damp",
    "/lead_pluck/fenv",
+   "/lead_pluck/fenvAmount",
+   "/lead_pluck/fenvAttack",
+   "/lead_pluck/fenvDecay",
    "/lead_pluck/freq",
    "/lead_pluck/gain",
    "/lead_pluck/gate",
    "/lead_pluck/level",
    "/lead_pluck/release",
    "/lead_pluck/res"
+  ]
+ },
+ "master_mb": {
+  "inputs": 2,
+  "outputs": 2,
+  "params": [
+   "/master_mb/mbdrive"
   ]
  },
  "modeld": {
@@ -4135,6 +4251,9 @@
   "params": [
    "/organ/attack",
    "/organ/cutoff",
+   "/organ/fenvAmount",
+   "/organ/fenvAttack",
+   "/organ/fenvDecay",
    "/organ/freq",
    "/organ/gain",
    "/organ/gate",
@@ -4148,6 +4267,9 @@
    "/pad_saw/attack",
    "/pad_saw/cutoff",
    "/pad_saw/detune",
+   "/pad_saw/fenvAmount",
+   "/pad_saw/fenvAttack",
+   "/pad_saw/fenvDecay",
    "/pad_saw/freq",
    "/pad_saw/gain",
    "/pad_saw/gate",
@@ -4190,6 +4312,59 @@
    "/ppg/scanSus",
    "/ppg/sub",
    "/ppg/sustain"
+  ]
+ },
+ "rev_bleed": {
+  "inputs": 2,
+  "outputs": 1,
+  "params": [
+   "/rev_bleed/dcut",
+   "/rev_bleed/dfb",
+   "/rev_bleed/dgain",
+   "/rev_bleed/dtime",
+   "/rev_bleed/ppfb",
+   "/rev_bleed/pptime",
+   "/rev_bleed/pptone"
+  ]
+ },
+ "reverb_dattorro": {
+  "inputs": 2,
+  "outputs": 2,
+  "params": [
+   "/reverb_dattorro/rgain",
+   "/reverb_dattorro/rtone"
+  ]
+ },
+ "reverb_fdn": {
+  "inputs": 2,
+  "outputs": 2,
+  "params": [
+   "/reverb_fdn/rgain",
+   "/reverb_fdn/rtone"
+  ]
+ },
+ "reverb_greyhole": {
+  "inputs": 2,
+  "outputs": 2,
+  "params": [
+   "/reverb_greyhole/rgain",
+   "/reverb_greyhole/rtone"
+  ]
+ },
+ "reverb_shimmer": {
+  "inputs": 2,
+  "outputs": 2,
+  "params": [
+   "/reverb_shimmer/rgain",
+   "/reverb_shimmer/rtone"
+  ]
+ },
+ "reverb_spring": {
+  "inputs": 2,
+  "outputs": 2,
+  "params": [
+   "/reverb_spring/rgain",
+   "/reverb_spring/rtone"
   ]
  },
  "robot_choir": {
@@ -4251,6 +4426,9 @@
    "/solina/chorusDepth",
    "/solina/chorusRate",
    "/solina/ensemble",
+   "/solina/fenvAmount",
+   "/solina/fenvAttack",
+   "/solina/fenvDecay",
    "/solina/freq",
    "/solina/gain",
    "/solina/gate",
@@ -4277,6 +4455,9 @@
   "params": [
    "/strings/attack",
    "/strings/cutoff",
+   "/strings/fenvAmount",
+   "/strings/fenvAttack",
+   "/strings/fenvDecay",
    "/strings/freq",
    "/strings/gain",
    "/strings/gate",
@@ -4291,6 +4472,9 @@
    "/supersaw/cutoff",
    "/supersaw/detune",
    "/supersaw/fenv",
+   "/supersaw/fenvAmount",
+   "/supersaw/fenvAttack",
+   "/supersaw/fenvDecay",
    "/supersaw/freq",
    "/supersaw/gain",
    "/supersaw/gate",
@@ -4366,6 +4550,9 @@
    "/vp330/cutoff",
    "/vp330/detune",
    "/vp330/ensemble",
+   "/vp330/fenvAmount",
+   "/vp330/fenvAttack",
+   "/vp330/fenvDecay",
    "/vp330/freq",
    "/vp330/gain",
    "/vp330/gate",
@@ -4373,58 +4560,6 @@
    "/vp330/release",
    "/vp330/sustain",
    "/vp330/vowel"
-  ]
- },
- "reverb_dattorro": {
-  "inputs": 2,
-  "outputs": 2,
-  "params": [
-   "/reverb_dattorro/rgain",
-   "/reverb_dattorro/rtone"
-  ]
- },
- "reverb_fdn": {
-  "inputs": 2,
-  "outputs": 2,
-  "params": [
-   "/reverb_fdn/rgain",
-   "/reverb_fdn/rtone"
-  ]
- },
- "reverb_greyhole": {
-  "inputs": 2,
-  "outputs": 2,
-  "params": [
-   "/reverb_greyhole/rgain",
-   "/reverb_greyhole/rtone"
-  ]
- },
- "reverb_spring": {
-  "inputs": 2,
-  "outputs": 2,
-  "params": [
-   "/reverb_spring/rgain",
-   "/reverb_spring/rtone"
-  ]
- },
- "master_mb": {
-  "inputs": 2,
-  "outputs": 2,
-  "params": [
-   "/master_mb/mbdrive"
-  ]
- },
- "rev_bleed": {
-  "inputs": 2,
-  "outputs": 1,
-  "params": [
-   "/rev_bleed/dcut",
-   "/rev_bleed/dfb",
-   "/rev_bleed/dgain",
-   "/rev_bleed/dtime",
-   "/rev_bleed/ppfb",
-   "/rev_bleed/pptime",
-   "/rev_bleed/pptone"
   ]
  }
 }

@@ -18,4 +18,13 @@ ens = (os.sawtooth(kf*0.995) + os.sawtooth(kf) + os.sawtooth(kf*1.005)
 
 env = en.adsr(attack, 1.5, 0.8, 2.5, gate);
 
-process = ens : fi.lowpass(2, cutoff) : fi.lowpass(2, min(19000, cutoff*1.6)) : *(env*level*gain);
+// fenv* = SYNTHESIS-DEPTH unified filter envelope (2026-07);
+// fenvAmount 0 is a bit-exact bypass (absent-law).
+fenvAmount = hslider("fenvAmount", 0, -4, 4, 0.01);       // cutoff env depth, OCTAVES (signed; 0 = off, bit-exact)
+fenvAttack = hslider("fenvAttack", 0.005, 0.001, 2, 0.001);
+fenvDecay  = hslider("fenvDecay", 0.18, 0.01, 3, 0.005);
+fenvC   = en.adsr(fenvAttack, fenvDecay, 0, fenvDecay, gate);   // AD contour (sustain 0), note-on triggered
+fenvMul = exp(0.6931472 * fenvAmount * fenvC);                  // 2^(amt*contour); amt 0 -> exactly 1.0
+kcu = max(30.0, min(cutoff*fenvMul, 16000.0));
+
+process = ens : fi.lowpass(2, kcu) : fi.lowpass(2, min(19000, kcu*1.6)) : *(env*level*gain);

@@ -29,9 +29,18 @@ dirt(x) = ma.tanh(x*(3.2 + drive*4)) * 0.6;
 
 env = en.adsr(attack, 0.06, sustain, release, gate);
 
+// fenv* = SYNTHESIS-DEPTH unified filter envelope (2026-07);
+// fenvAmount 0 is a bit-exact bypass (absent-law); it multiplies IN ADDITION to
+// the legacy `fenv` zap, inside the existing kcut clamp on the moog stage.
+fenvAmount = hslider("fenvAmount", 0, -4, 4, 0.01);       // cutoff env depth, OCTAVES (signed; 0 = off, bit-exact)
+fenvAttack = hslider("fenvAttack", 0.005, 0.001, 2, 0.001);
+fenvDecay  = hslider("fenvDecay", 0.18, 0.01, 3, 0.005);
+fenvC   = en.adsr(fenvAttack, fenvDecay, 0, fenvDecay, gate);   // AD contour (sustain 0), note-on triggered
+fenvMul = exp(0.6931472 * fenvAmount * fenvC);                  // 2^(amt*contour); amt 0 -> exactly 1.0
+
 // filter env settles AT attack+0.06 (csound plucky kcf expseg)
 fdec = ba.impulsify(gate) : (+ ~ *(ba.tau2pole(max((attack + 0.06)/3, 0.003))));
-kcut = max(30, min(min(9000, cutoff*1.3)*(1 + fenv*fdec), 16000));
+kcut = max(30, min(min(9000, cutoff*1.3)*(1 + fenv*fdec)*fenvMul, 16000));
 
 // csound moogladder LOSES passband level as res rises; moog_vcf_2bn is
 // normalized — put the loss back so the fuzz drive sees the same signal

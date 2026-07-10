@@ -20,4 +20,12 @@ three = (os.sawtooth(kf*(1-detune)) + os.sawtooth(kf) + os.sawtooth(kf*(1+detune
 
 env = en.adsr(attack, 1.5, 0.8, 2.5, gate);
 
-process = three : ve.moog_vcf_2bn(res, max(30, min(cutoff, 16000))) : *(env*level*gain);
+// fenv* = SYNTHESIS-DEPTH unified filter envelope (2026-07);
+// fenvAmount 0 is a bit-exact bypass (absent-law).
+fenvAmount = hslider("fenvAmount", 0, -4, 4, 0.01);       // cutoff env depth, OCTAVES (signed; 0 = off, bit-exact)
+fenvAttack = hslider("fenvAttack", 0.005, 0.001, 2, 0.001);
+fenvDecay  = hslider("fenvDecay", 0.18, 0.01, 3, 0.005);
+fenvC   = en.adsr(fenvAttack, fenvDecay, 0, fenvDecay, gate);   // AD contour (sustain 0), note-on triggered
+fenvMul = exp(0.6931472 * fenvAmount * fenvC);                  // 2^(amt*contour); amt 0 -> exactly 1.0
+
+process = three : ve.moog_vcf_2bn(res, max(30, min(cutoff*fenvMul, 16000))) : *(env*level*gain);
