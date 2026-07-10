@@ -63,7 +63,7 @@ async function main() {
   const blendSum = load.blend.reduce((s, b) => s + b.pct, 0);
   ok(Array.isArray(load.blend) && load.blend.length >= 1, `A1: blend has ${load.blend.length} genres (want >=1)`);
   ok(blendSum >= 97 && blendSum <= 103, `A2: blend %s sum to ${blendSum} (want ~100)`);
-  ok(load.feel.length === 6 && load.feel.every(([n, v]) => typeof n === "string" && v >= 0 && v <= 1), `A3: 6 feel axes in [0,1]`);
+  ok(load.feel.length >= 11 && load.feel.every(([n, v]) => typeof n === "string" && v >= 0 && v <= 1), `A3: >=11 feel axes in [0,1] (got ${load.feel.length}; 2026-07-10 the mind axes joined the radar)`);
   ok(load.timeline && Array.isArray(load.timeline.lanes) && load.timeline.cbeats >= 2, `A4: timeline object present (cbeats=${load.timeline && load.timeline.cbeats})`);
   console.log(`\n=== LOAD ===`);
   console.log(`  blend=[${load.blend.map(b => b.label + " " + b.pct + "%").join(" · ")}]  sum=${blendSum}`);
@@ -90,12 +90,15 @@ async function main() {
     const box = document.getElementById("inside");
     return { open: document.getElementById("insideWrap").classList.contains("open"),
       hasBar: !!box.querySelector(".vz-bar > div"), hasRadar: !!box.querySelector("svg.radar polygon"),
-      hasTimelineSec: box.textContent.includes("timeline") };
+      hasRoll: !!box.querySelector(".vz-roll"),
+      vizView: document.body.classList.contains("view-viz"),
+      mapHidden: getComputedStyle(document.getElementById("map")).display === "none" };
   });
   ok(shell.open, `preopen: ⓘ modal did not open`);
   ok(shell.hasBar, `preopen: blend bar missing`);
   ok(shell.hasRadar, `preopen: feel radar missing`);
-  ok(shell.hasTimelineSec, `preopen: timeline section label missing`);
+  ok(shell.hasRoll, `preopen: timeline roll missing`);   // (the "timeline —" header label retired 2026-07-10)
+  ok(shell.vizView && shell.mapHidden, `preopen: viz must be a 100% VIEW (body.view-viz=${shell.vizView}, map hidden=${shell.mapHidden})`);
 
   // ---- D: LIVE proof — retarget to two very different regions, timeline changes ----
   const sample = (g) => page.evaluate((genre) => {
@@ -263,17 +266,24 @@ async function main() {
       if (d.mind && (d.mind.pipes.length || d.mind.adventure > 0 || d.mind.complexity > 0)) { mindGenre = g; mind = d.mind; break; }
     }
     if (mindGenre) { window.__X.renderInside();
-      mindDom = { meters: box.querySelectorAll(".vz-mind .vz-mrow").length,
+      // 2026-07-10: the mind meters are RADAR AXES now (one unified vector rose,
+      // no numeric readouts) — assert the axes render on the radar + the moves line
+      const axes = [...box.querySelectorAll("svg.radar text.rax")].map(e => e.textContent);
+      mindDom = { axes,
+        hasMindAxes: ["adventure", "color", "motion"].every(a => axes.includes(a)),
+        numerals: /\b(adventure|color|motion|tempo|swing)\b\s*\d/.test(box.textContent),   // no "axis 73"-style numbers anywhere
         moves: (box.querySelector(".vz-mmoves") || { textContent: "" }).textContent.trim() }; }
     return { names, bad: names.filter(n => /dx7|fluidr3|sampler|\bsf2\b|_/i.test(n)), provenance, mindGenre, mind, mindDom };
   });
   ok(J.bad.length === 0, `J1: lane names leak source/provenance: [${J.bad.join(", ")}]`);
   ok(!J.provenance, `J2: modal text mentions soundfont/hardware provenance`);
   ok(!!J.mindGenre, `J3: no genre in POS yields a MIND readout (theory/pipes/rhythm all absent everywhere?)`);
-  ok(J.mindDom && J.mindDom.meters === 3, `J4: MIND section did not render 3 meters (got ${J.mindDom && J.mindDom.meters})`);
+  ok(J.mindDom && J.mindDom.hasMindAxes && J.mindDom.axes.length >= 11,
+    `J4: radar must carry ALL vectors incl. adventure/color/motion (axes=[${J.mindDom && J.mindDom.axes.join(",")}])`);
+  ok(J.mindDom && !J.mindDom.numerals, `J4b: numeric vector readouts must be gone`);
   console.log(`\n=== DESCRIPTIONS + MIND ===`);
   console.log(`  lane names=[${J.names.join(" · ")}]`);
-  console.log(`  mind@${J.mindGenre}: ${JSON.stringify(J.mind)}  dom meters=${J.mindDom && J.mindDom.meters} moves="${J.mindDom && J.mindDom.moves}"`);
+  console.log(`  mind@${J.mindGenre}: ${JSON.stringify(J.mind)}  axes=${J.mindDom && J.mindDom.axes.length} moves="${J.mindDom && J.mindDom.moves}"`);
 
   // ---- K: LIVE PLAYHEAD + PLAYHEAD-DRIVEN PAGING. Park the ride ON prelude
   // (chordEvery:16) with the ⓘ open; ONE shared .vz-ph cursor must light, its

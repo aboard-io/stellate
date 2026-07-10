@@ -27,6 +27,7 @@ function info(g){ return (K.GENRES[g] && K.GENRES[g].info) || ""; }
 
 // ---------- app state (the accessible view's own, small, choices) ----------
 let mode = "hold";                 // "hold" (one place) | "journey" (a loop of stops)
+let lastJourneyKey = "";           // resume law: the SAME journey resumes at the stop measure; a changed one starts fresh
 let single = GENRES.includes("vaporwave") ? "vaporwave" : GENRES[0];
 let journey = [];                  // ordered list of genre keys
 
@@ -231,17 +232,32 @@ function updateGenreInfo(){
 function wire(){
   // transport
   $("playBtn").addEventListener("click", ()=>{
-    if(S.live){ stopLive(); logEvent("Stopped."); return; }
+    if(S.live){ stopLive(); logEvent("Stopped at measure "+((S.startBar||0)+1)+" — Play resumes there, Restart rewinds."); return; }
     if(mode==="journey"){
       if(journey.length<2){ logEvent("Add at least two stops before starting a journey."); announceNow(); return; }
+      const key=journey.join(">");
+      if(key!==lastJourneyKey){ lastJourneyKey=key; S.startBar=0; }   // a CHANGED journey starts fresh; the same one resumes
       setJourneyWaypoints();
-      logEvent("Journey started through "+journey.map(label).join(" → ")+".");
+      logEvent((S.startBar>0?"Journey resumes at measure "+(S.startBar+1):"Journey started")+" through "+journey.map(label).join(" → ")+".");
     } else {
       S.waypoints=[];                      // hold in place — no travel
       applyHold();
-      logEvent("Playing "+blendText()+".");
+      logEvent("Playing "+blendText()+(S.startBar>0?" from measure "+(S.startBar+1):"")+".");
     }
     goLive();
+  });
+  // ⏮ restart: the map's stop-twice rule, as its own button here (the play
+  // button is a toggle, so a "second stop" needs a real control for SR users)
+  $("restartBtn").addEventListener("click", ()=>{
+    if(S.live) stopLive();
+    stopLive();                            // stop-while-stopped = the rewind path (shared law with the map)
+    logEvent("Rewound to the beginning. Play starts from measure 1.");
+  });
+  $("copyLinkBtn").addEventListener("click", ()=>{
+    const u=location.href;
+    const done=()=>logEvent("Link copied. Anyone opening it hears exactly this music.");
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(u).then(done,()=>logEvent("Copy failed — the link is the address bar."));
+    else logEvent("Copy failed — the link is the address bar.");
   });
   $("announceBtn").addEventListener("click", announceNow);
 

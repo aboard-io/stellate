@@ -88,7 +88,21 @@ const KIT_CHAR={ acoustic:"acoustic drum kit", brush:"brushed jazz drums", jazz:
 const kitChar=kit=>KIT_CHAR[kit]||(titleCase(kit).toLowerCase()+" drums");
 // found sources -> texture character by KIND only (never the recording's name/id).
 const FOUND_CHAR={ speech:"cut-up announcer voice", vox:"vocal fragments", break:"chopped drum breaks", hit:"sampled stabs" };
-const foundChar=s=>FOUND_CHAR[s&&s.kind]||"tape atmosphere";
+// bed CHARACTER by id-class (Paul 2026-07-10: "you use tape atmosphere all over
+// the place" — it was the one fallback label for 48 different beds; name what
+// KIND of air it is, still never the source — the J1/J2 provenance law holds).
+const BED_CHAR=[
+  [/station|shibuya|tokyo|plaza|tw_|metro/i, "city air"],
+  [/highway|road|traffic|train/i,            "road hum"],
+  [/factory|industr|machine|boiler|furnace/i,"machine room"],
+  [/^vx_|voice|radio|conet|apollo|wwvh/i,    "voices on tape"],
+  [/frog|cricket|bird|loon|chickadee|pigeon|nature|wind/i, "night air"],
+  [/hydro|whale|water|ocean|sea|rain/i,      "deep water"],
+  [/hum|hvac|drone|fan|thermo/i,             "room tone"],
+];
+const foundChar=s=>{ if(FOUND_CHAR[s&&s.kind]) return FOUND_CHAR[s.kind];
+  const id=(s&&s.id)||""; for(const [re,c] of BED_CHAR) if(re.test(id)) return c;
+  return "tape atmosphere"; };
 const clamp01=v=>v<0?0:v>1?1:v;
 // a stable neon hue per genre name (FNV hash → 0..360): a genre reads the same
 // colour in the blend bar, the radar accents and the on-map glyph.
@@ -134,7 +148,20 @@ function feelAxes(st){
   let layers=0; if((pad.level||0)>0.05)layers++; if(I.bass)layers++; if(I.melody)layers++;
   if(kitOn)layers++; if((st.foundSources||[]).some(s=>(s.vol||0)>0.02))layers++;
   const density=clamp01(0.45*drumAmt+0.25*voiceAmt+0.30*(layers/5));
-  return [["tempo",tempo],["swing",swing],["bright",bright],["space",space],["drive",drive],["density",density]];
+  // DUST: the record-wear axis (crackle + the master lowcut of the tape floor)
+  const dust=clamp01((st.crackle||0)/0.8);
+  // FEEL: how human the timing is (humanize; swing is its own axis)
+  const feelAx=clamp01((st.humanize||0)/0.6);
+  const axes=[["tempo",tempo],["swing",swing],["feel",feelAx],["bright",bright],["space",space],
+    ["dust",dust],["drive",drive],["density",density]];
+  // the MUSIC-MIND axes join the SAME radar (Paul 2026-07-10: "why are adventure
+  // color motion different than the other vectors" — they aren't, anymore).
+  // num1 handles the range-shaped fields exactly as mindData does.
+  const th=st.theory||{};
+  axes.push(["adventure",th.adventure!=null?num1(th.adventure):0]);
+  axes.push(["color",th.color!=null?num1(th.color):0]);
+  axes.push(["motion",st.rhythm?num1(st.rhythm.complexity):0]);
+  return axes;
 }
 // per-voice EFFECTS for a roster line, read off the built voice unit: prefer the
 // audio layer's descriptor (unit.fxLabels — short strings like "HPF 250"/"plate
@@ -345,7 +372,7 @@ export function scheduleBarNotes(info){
 // neon value polygon. Small element count; rebuilt only while the modal is open.
 function radarSVG(feel){
   if(!feel.length) return "";
-  const cx=104, cy=100, R=74, n=feel.length;
+  const cx=110, cy=106, R=72, n=feel.length;   // a touch more label air for the 11-axis rose
   const ang=i=>-Math.PI/2+i*2*Math.PI/n, pt=(i,r)=>[cx+Math.cos(ang(i))*R*r, cy+Math.sin(ang(i))*R*r];
   const ring=r=>feel.map((_,i)=>pt(i,r).map(v=>v.toFixed(1)).join(",")).join(" ");
   let grid="";
@@ -356,7 +383,7 @@ function radarSVG(feel){
   const vpts=feel.map(([,v],i)=>pt(i,Math.max(0.02,v)).map(x=>x.toFixed(1)).join(",")).join(" ");
   const dots=feel.map(([,v],i)=>{ const [vx,vy]=pt(i,Math.max(0.02,v)); return `<circle cx="${vx.toFixed(1)}" cy="${vy.toFixed(1)}" r="2.2" fill="var(--cyan)"/>`; }).join("");
   const poly=`<polygon points="${vpts}" fill="rgba(255,110,199,.18)" stroke="var(--pink)" stroke-width="1.7"/>`;
-  return `<svg viewBox="0 0 208 212" class="radar" preserveAspectRatio="xMidYMid meet">${grid}${poly}${dots}</svg>`;
+  return `<svg viewBox="0 0 220 220" class="radar" preserveAspectRatio="xMidYMid meet">${grid}${poly}${dots}</svg>`;
 }
 // the VOICE TIMELINE as HTML: a lane per voice, note events drawn as absolutely
 // positioned blocks in a beat-gridded roll. x = onset (beat/cbeats), width =
@@ -371,7 +398,7 @@ const DRUM_ROW={ hat:0.10, tom:0.34, snare:0.52, kick:0.76, found:0.5, bed:0.18 
 // window slides to the next 8 beats when the beat crosses a page edge. Idle
 // shows page 1. A bed spanning the chord bar lands a clipped slice on EVERY page.
 const VIEW=8;
-const MEAS_BEATS=4;   // one 4/4 measure — the playhead's step size (a chord bar = 2 measures)
+const MEAS_BEATS=1;   // the playhead lights ONE ruler cell at a time (Paul 2026-07-10: "each BAR should light up as it progresses, not four bars at a time")
 // split one note into its per-PAGE segments: {page, left%, w%} — left/w are
 // percentages of the 8-beat page window, so a block draws identically whichever
 // page carries it (and a long bed gets one slice per page it overlaps).
@@ -476,20 +503,8 @@ function timelineHTML(tl){
   return `<div class="vz-ruler" style="background-image:${grid}">${ruler}${pgind}</div>`+
     `<div class="vz-tl" data-pages="${pages}" data-page="${page}">${rows}${ph}</div>`;
 }
-// the MIND readout: compact adventure/color/motion meters + the active moves,
-// same terminal language (VT323, thin mint meters). Rendered only when the
-// state carries the MUSIC-MIND fields — absent = no section, mobile uncrowded.
-function mindHTML(m){
-  if(!m) return "";
-  const meter=(n,v)=>`<div class="vz-mrow"><span class="vz-mn">${n}</span>`+
-    `<span class="vz-mbar"><i style="width:${Math.round(clamp01(v)*100)}%"></i></span><b>${Math.round(clamp01(v)*100)}</b></div>`;
-  const bits=[]; if(m.voicing) bits.push(`voicing <b>${esc(m.voicing)}</b>`);
-  if(m.pipes.length) bits.push(`moves <b>${m.pipes.map(esc).join(" · ")}</b>`);
-  return `<div class="vz-sec"><div class="vz-lbl">mind — how it thinks</div><div class="vz-mind">`+
-    meter("adventure",m.adventure)+meter("color",m.color)+meter("motion",m.complexity)+
-    (bits.length?`<div class="vz-mmoves">${bits.join(" &nbsp; ")}</div>`:"")+
-    `</div></div>`;
-}
+// (the MIND meter block lived here until 2026-07-10 — adventure/color/motion
+// are radar axes now, the moves line rides under the radar in renderInside.)
 // ---------- live playhead ticker: the beat cursor + the page flips ----------
 // ~10Hz, ONLY while the ⓘ modal is open AND we're live; it cancels itself the
 // first frame either stops being true (zero cost closed/idle). Between full
@@ -534,10 +549,15 @@ export function renderInside(){
   const d=vizData();
   const seg=d.blend.filter(b=>b.pct>0).map(b=>`<div style="width:${b.pct}%;background:${genreCol(b.g)}" title="${esc(b.label)} ${b.pct}%"></div>`).join("");
   const legend=d.blend.filter(b=>b.pct>0).map(b=>`<span class="vz-g"><i style="background:${genreCol(b.g)}"></i>${esc(b.label)} <b>${b.pct}%</b></span>`).join("");
-  const feelNums=d.feel.map(([n,v])=>`<b>${n}</b> ${Math.round(v*100)}`).join(" · ");
   const masterLine=(d.master&&d.master.length)?`<div class="vz-in vz-master"><span class="vz-ir">master</span><div class="vz-fxline">${d.master.map(esc).join(" · ")}</div></div>`:"";
+  // the mind's MOVES (voicing + active pipes) ride as one quiet text line under
+  // the radar — the adventure/color/motion NUMBERS are radar axes now (Paul
+  // 2026-07-10: no numeric readouts, one unified vector display).
+  const mv=[]; if(d.mind&&d.mind.voicing) mv.push(`voicing <b>${esc(d.mind.voicing)}</b>`);
+  if(d.mind&&d.mind.pipes.length) mv.push(`moves <b>${d.mind.pipes.map(esc).join(" · ")}</b>`);
+  const moves=mv.length?`<div class="vz-mmoves">${mv.join(" &nbsp; ")}</div>`:"";
   // transition hardening: a timeline hiccup must never blank the whole panel —
-  // blend/feel/mind still render; the roll announces itself instead of dying.
+  // blend/feel still render; the roll announces itself instead of dying.
   let tlHtml; try{ tlHtml=timelineHTML(d.timeline); }
   catch(e){ try{console.warn("inside: timeline render skipped:",e);}catch(_){}
     tlHtml=`<div class="vz-info">— timeline resyncing —</div>`; }
@@ -546,11 +566,8 @@ export function renderInside(){
     `<div class="vz-sec"><div class="vz-lbl">blend — the genres in this mix</div>`+
       `<div class="vz-bar">${seg}</div><div class="vz-leg">${legend}</div>`+
       (d.info?`<div class="vz-info">${esc(d.info)}</div>`:"")+`</div>`+
-    `<div class="vz-sec"><div class="vz-lbl">feel — the texture</div>${radarSVG(d.feel)}`+
-      `<div class="vz-feelnums">${feelNums}</div></div>`+
-    mindHTML(d.mind)+
-    `<div class="vz-sec"><div class="vz-lbl">timeline — what each voice plays this bar</div>`+
-      `${tlHtml}${masterLine}</div>`;
+    `<div class="vz-sec">${radarSVG(d.feel)}${moves}</div>`+
+    `<div class="vz-sec">${tlHtml}${masterLine}</div>`;
   // arm the playhead ticker only when it has work (live + modal open); it stops itself.
   const wrap=document.getElementById("insideWrap");
   if(S.live&&wrap&&wrap.classList.contains("open")) ensurePhTicker();

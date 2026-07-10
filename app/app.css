@@ -43,6 +43,21 @@
      chips (playChip/npChip/cfgChip) float; each surface opens as a modal over
      the plane and closes on backdrop tap / its chip / esc. */
   .modal{position:fixed;inset:0;z-index:5;display:none;background:rgba(6,5,14,.44)}
+  /* THREE FULL-SCREEN VIEWS (Paul 2026-07-10: "star map, video, and viz are
+     three different 100% views. when video is on turn off star map"). A body
+     class names the active view; the star map hides outside its own; the video
+     view carries NO veil (see video-layer) and no map over it. The ⚙ settings
+     modal (z-index 7 below) rides on top of every view; chips (z 6) stay on the
+     bottom in all three. */
+  body.view-video #map, body.view-viz #map{display:none}
+  /* the viz as a 100% VIEW: the modal wrap loses its dim backdrop and the card
+     expands to the whole viewport (chips clearance at the bottom). */
+  body.view-viz #insideWrap{display:block;background:var(--bg)}
+  body.view-viz #inside{left:0;right:0;top:0;bottom:0;transform:none;width:auto;
+    max-width:none;max-height:none;border:0;border-radius:0;
+    padding:1rem 1.2rem 4.6rem;overflow-y:auto}
+  #panelWrap{z-index:7}   /* settings above every view (map, video, viz) */
+  #aboutWrap{z-index:7}
   .modal.open{display:block}
   #panel{position:absolute;top:.7rem;right:.7rem;width:330px;max-height:calc(100vh - 1.4rem);overflow:auto}
   body.dragging{user-select:none;-webkit-user-select:none;cursor:crosshair}
@@ -140,14 +155,11 @@
   .vz-tl{position:relative}
   .vz-ph{position:absolute;top:0;bottom:0;left:calc(128px + .5rem);right:0;pointer-events:none;display:none}
   .vz-ph.on{display:block}
-  /* the playhead lights the ACTIVE MEASURE (Paul 2026-07-10: "light up each
-     active measure rather than being one long line"): a soft measure-wide block
-     that STEPS measure to measure (no sweep transition on left — it snaps),
-     with a bright leading edge so the direction still reads. width set inline
-     (one measure = 4 beats of the visible window). */
-  .vz-ph i{position:absolute;top:0;bottom:0;background:rgba(255,110,199,.14);
-    border-left:2px solid var(--pink);box-shadow:inset 0 0 14px rgba(255,110,199,.18);
-    opacity:.95}
+  /* the playhead lights ONE ruler cell at a time and steps cell to cell — no
+     stripe, no sweep (Paul 2026-07-10: "each BAR should light up as it
+     progresses"; "the playhead vertical stripe should go"). width set inline. */
+  .vz-ph i{position:absolute;top:0;bottom:0;background:rgba(255,110,199,.17);
+    box-shadow:inset 0 0 12px rgba(255,110,199,.2);opacity:.95}
   /* quiet page indicator: ·1/2 in the ruler's EMPTY left gutter (over the lane-
      header column) — at 420px the roll's last beat number owns the right edge */
   .vz-pgind{position:absolute;right:calc(100% + 8px);top:0;font:10px VT323,monospace;

@@ -120,6 +120,10 @@ const BG_ALT_BEATS=32;   // 8 measures × 4 beats
 const BG_ALT_MS=+(QSFLAGS.get("bgAltMs"))||16000;   // idle wall-clock backstop period (test override)
 const bgAlt={side:"video", beats:0, lastFlip:0, lastBar:0};
 function bgWant(){
+  // THE VIZ VIEW SUPPRESSES the background layers entirely (three exclusive
+  // views, Paul 2026-07-10) — bgMode is REMEMBERED, so leaving the viz returns
+  // to whatever video state you were in.
+  if(S.vizView) return { v:false, d:false };
   // mode 1 = the alternating program: honour the current side whether LIVE or IDLE
   // (idle used to force video, which silently defeated the wall-clock alternation).
   if(bgMode===1) return { v: bgAlt.side==="video", d: bgAlt.side==="demo" };
@@ -142,6 +146,12 @@ function applyBg(){
   if(V) bgHadV=w.v;
   if(bgChip.textContent!==BG_GLYPH[bgMode]) bgChip.textContent=BG_GLYPH[bgMode];   // applyBg also runs on the 1Hz reconciler — skip no-op DOM writes
   bgChip.classList.toggle("live",bgMode!==0);
+  // THE VIEW CLASSES (three exclusive 100% views, Paul 2026-07-10):
+  // body.view-video hides the star map under footage/demos; body.view-viz hides
+  // both under the full-screen viz. applyBg already runs on every render + the
+  // 1Hz backstop, so the body class can never drift from the layer state.
+  document.body.classList.toggle("view-viz", !!S.vizView);
+  document.body.classList.toggle("view-video", !S.vizView && bgMode!==0);
 }
 // FLIP the background side: video <-> demo (fresh cart each demo turn), announce it.
 function bgFlip(){
