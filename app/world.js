@@ -3,6 +3,18 @@
 // blend/space constants (SNAP/CUTOFF/BARS_PER_SEG) + progression vocabulary.
 // No app imports: this is the geometric/constant foundation everything builds on.
 export const POS={
+  runwaystomp:[1080,20180],
+  octanerush:[1900,4900],
+  halogloss:[1965,3320],
+  chantcircuit:[1500,16260],
+  bouffantbeat:[1700,6900],
+  heartsprint:[600,3720],
+  drywire:[1780,14210],
+  flannelburst:[1560,14330],
+  hollerknock:[1120,15150],
+  subrattle:[1490,8770],
+  lowglide:[1150,7690],
+  crateflip:[310,10450],
   ambient:[2103,13302], neoclassical:[859,2784], vaporwave:[1691,4502], lofi:[263,9277],
   downtempo:[590,10667], blues:[1037,21967], jazz:[292,16726], triphop:[398,8037],
   synthwave:[859,9931], dancepop:[1826,3140], edm:[1209,9806], house:[1101,20620],

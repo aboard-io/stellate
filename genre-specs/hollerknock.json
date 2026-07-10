@@ -1,0 +1,25 @@
+{
+  "name": "hollerknock",
+  "label": "Holler Knock",
+  "info": "a shouted-gang-chant club record at 78: an 808 kick like a car door, claps stacked on the backbeat, one menacing synth-brass stab — everybody in the building yells the hook",
+  "pos": [1120, 15150],
+  "clips": ["dark_face", "phuture_red", "night_lines", "ind_molten"],
+  "anchor": {
+    "bpm": [74, 82],
+    "swing": [0, 0.06],
+    "humanize": [0.04, 0.14],
+    "progressions": ["mode_phrygian", "drone_min", "minor_run"],
+    "kits": ["trap", "halftime"],
+    "fills": ["impact", "cut", "off", "riser"],
+    "bass": { "patterns": ["sub", "stab", "root"], "recipe": { "model": ["sub"], "cutoff": [180, 340], "res": [0.05, 0.15], "level": [1.3, 1.55], "send": [0, 0.05], "dsend": [0, 0.05] } },
+    "lead": { "patterns": ["double", "anthem", "sparse"], "recipe": { "model": ["brass", "saw"], "wave": "saw", "voices": [2, 3], "spread": [0.004, 0.009], "cutoff": [1800, 2800], "level": [0.48, 0.6], "send": [0.25, 0.4], "dsend": [0.15, 0.3], "attack": 0.008, "release": [0.12, 0.2], "sustain": [0.6, 0.72] } },
+    "pads": { "prob": 0.5, "recipe": { "model": ["saw", "strings"], "wave": "saw", "cutoff": [600, 1100], "detune": [0.005, 0.012], "attack": [0.8, 1.8], "level": [0.4, 0.54], "send": [0.35, 0.55], "dsend": [0.1, 0.25] } },
+    "drums": { "kickModel": ["808"], "snareModel": ["clap", "crack"], "hatModel": ["noise"], "kick": [1.35, 1.6], "snare": [1, 1.25], "hat": [0.8, 1.1], "tune": [0.85, 1], "send": [0.15, 0.3], "dsend": [0.08, 0.2] },
+    "fx": { "reverb": [0.35, 0.5], "delayBeats": [0.5, 0.75], "delayFb": [0.2, 0.35], "delayCut": [1800, 3000], "pump": [0.2, 0.4], "crackle": [0, 0.1], "lowcut": [20, 35], "highcut": [0, 0], "comp": [0.45, 0.7] },
+    "found": { "role": "bed", "vol": [0.04, 0.1], "pitch": [0.85, 1], "stretch": [0.45, 0.6], "cutoff": [1800, 3000], "sources": ["factory", "highway_night"] },
+    "stab": ["off"],
+    "hits": { "sources": ["rave_a", "rave_c", "vox_a", "sp_energy"], "pattern": "offbeat", "prob": 0.7 },
+    "form": "dj"
+  },
+  "verify": { "seeds": 6, "features": { "bpm": 3, "sub": 2, "pump": 3, "snareBalance": 2, "swing": 2, "crackle": 1, "breakUse": 1, "comp": 1 } }
+}
