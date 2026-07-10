@@ -279,8 +279,9 @@ function mediaSessionLabel(){
   // "a + b" when genuinely blended (2nd weight rides above ~25%).
   const ws=(S.weights||[]).filter(w=>w&&w.w>0.001);
   if(!ws.length) return "the genre space";
-  const a=ws[0].g;
-  return (ws[1]&&ws[1].w>0.25) ? a+" + "+ws[1].g : a;
+  const lbl=g=>(K.GENRES[g]&&K.GENRES[g].label)||g;   // the lock screen speaks the fiction too
+  const a=lbl(ws[0].g);
+  return (ws[1]&&ws[1].w>0.25) ? a+" + "+lbl(ws[1].g) : a;
 }
 let msLastTitle="";
 function updateMediaSession(force){

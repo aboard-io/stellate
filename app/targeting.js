@@ -53,6 +53,7 @@ export function retarget(pt){
 // map's caller and stays behavior-identical: weightsAt(pt) then this.
 export function retargetWeights(weights, pt){
   const target=K.mix(weights.map(w=>({...w})),{seed:S.seed, keyOffset:keyFor(weights,S.seed)});
+  if(S.bpmDelta) target.bpm=Math.max(40,Math.min(240,Math.round(target.bpm+S.bpmDelta)));   // the ⚙ ±bpm delta rides every target
   if(MODE_LOCKS[S.modeLock]) target.progression=MODE_LOCKS[S.modeLock];
   const patch={weights,target};
   if(pt) patch.cursor=pt;

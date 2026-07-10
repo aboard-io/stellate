@@ -1,111 +1,65 @@
-// panels.js — the modal controls (a Preact-rendered ⚙ panel: transport, seed,
-// pace, the DIMS detail sliders, preset/path import-export, the share link)
-// plus the chip↔modal plumbing (⚙ panel, ⓘ inside, ▶ play) that keeps
-// the sky clean until a chip is tapped. Registers the store render subs.
-// (The eight macro sliders lived here until 2026-07-10 — Paul: "get rid of
-// all macros".)
+// panels.js — the ⚙ panel (Paul 2026-07-10 redesign: seed + ⧉ share, pace,
+// a live ±BPM delta, and the in-browser render downloads — NOTHING else: the
+// transport lives on ▶, the views on the ONE view chip, and the old
+// LIVE/STOP/MORE/VIDEO buttons, mode lock, DIMS detail sliders and
+// preset/path/reset plumbing are gone) plus the chip↔view wiring.
 import { S, set, subs, html, render } from "./state.js";
-import { MODE_LOCKS, BARS_PER_SEG } from "./world.js";
+import { BARS_PER_SEG } from "./world.js";
 import { goLive, stopLive } from "./live.js";
-import { retarget, weightsAt } from "./targeting.js";
 import { renderInside } from "./inside.js";
-import { bgVideoToggle, bgVideoOn } from "./background.js";
-import { seedDefaultLoop, drawMap, startPulse } from "./starmap.js";
+import { bgSetVideo, bgVideoOn } from "./background.js";
+import { drawMap, startPulse } from "./starmap.js";
 import { EXPORT, downloadMidi, exportAudio } from "./export.js";
-
 import { copyShareUrl } from "./share.js";
 
 // ---------- Preact panel ----------
-const DIMS=[
-  ["bpm",st=>st.bpm,(st,v)=>{st.bpm=Math.round(v);S.target&&(S.target.bpm=Math.round(v));},50,180,1],
-  ["swing",st=>st.swing,(st,v)=>{st.swing=v;S.target&&(S.target.swing=v);},0,.45,.01],
-  ["humanize",st=>st.humanize,(st,v)=>{st.humanize=v;S.target&&(S.target.humanize=v);},0,.7,.01],
-  ["reverb",st=>st.reverb,(st,v)=>{st.reverb=v;S.target&&(S.target.reverb=v);},.3,.95,.01],
-  ["pump",st=>st.pump||0,(st,v)=>{st.pump=v;S.target&&(S.target.pump=v);},0,.8,.01],
-  ["crackle",st=>st.crackle||0,(st,v)=>{st.crackle=v;S.target&&(S.target.crackle=v);},0,.9,.01],
-  ["compress",st=>st.comp||0,(st,v)=>{st.comp=v;S.target&&(S.target.comp=v);},0,.9,.01],
-  ["grit",st=>st.grit||0,(st,v)=>{st.grit=v;S.target&&(S.target.grit=v);},0,.8,.01],
-  ["snare",st=>st.instruments.drums.snare,(st,v)=>{st.instruments.drums.snare=v;S.target&&(S.target.instruments.drums.snare=v);},.3,1.4,.01],
-  ["voices",st=>st.instruments.melody.voices,(st,v)=>{st.instruments.melody.voices=Math.round(v);S.target&&(S.target.instruments.melody.voices=Math.round(v));},1,8,1],
-  ["found",st=>st.foundSources[0].vol,(st,v)=>{st.foundSources[0].vol=v;S.target&&(S.target.foundSources[0].vol=v);},0,.4,.01],
-];
+// pace: INVERTED (left = 4096 bars/leg = slowest, right = 16 = fastest —
+// "sliders should move slower to faster"), log2 steps.
+const paceSlider=p=>16-Math.round(Math.log2(Math.max(16,Math.min(4096,+p||BARS_PER_SEG))));   // pace 4096->4 … 16->12? see map below
+// slider v in [4..12]: pace = 2^(16-v)  (v=4 -> 4096 … v=12 -> 16)
+// ±BPM DELTA (Paul: "an overall delta, so that I can subtract or add 64 BPM to
+// whatever is currently playing"). The slider shifts playing+target NOW, and
+// retargetWeights re-applies S.bpmDelta to every future target, so the offset
+// survives travel/glides until moved back to 0.
+function setBpmDelta(v){
+  const d=Math.max(-64,Math.min(64,Math.round(+v||0)));
+  const diff=d-(S.bpmDelta||0);
+  S.bpmDelta=d;
+  const cl=b=>Math.max(40,Math.min(240,Math.round(b)));
+  if(S.playing) S.playing.bpm=cl(S.playing.bpm+diff);
+  if(S.target)  S.target.bpm =cl(S.target.bpm+diff);
+  set({});
+}
 function Panel(){
   if(!S.playing) return html`<div>…</div>`;
   return html`
-    <div class="btns" style="margin-top:0">
-      <button class="go" onclick=${goLive}>▶ LIVE</button>
-      <button onclick=${stopLive}>■ STOP</button>
-      <button onclick=${()=>set({more:!S.more})}>${S.more?"× less":"⚙ more"}</button>
-      <button title="background video on/off (alternates with demoscene; default off)"
-        onclick=${()=>{if(!bgVideoToggle())set({status:"video layer still loading (or no clips) — try again in a moment"});}}>${bgVideoOn()?"▣ video":"▢ video"}</button>
-    </div>
     <div class="row"><label>seed</label>
       <input class="seedin" type="number" value=${S.seed}
-        onchange=${e=>{set({seed:+e.target.value||1});retarget(S.cursor);}} />
-      <button onclick=${()=>{set({seed:Math.floor(Math.random()*99999)});retarget(S.cursor);}}>🎲</button>
+        onchange=${e=>{set({seed:+e.target.value||1});}} />
+      <button onclick=${()=>{set({seed:Math.floor(Math.random()*99999)});}}>🎲</button>
       <button title="copy a link to THIS mix — seed, path and the current measure ride the URL; anyone opening it drops in right here"
         onclick=${copyShareUrl}>⧉ share</button></div>
-    <div class="row"><label>pace (bars/leg)</label>
-      <input type="range" min="4" max="12" step="1" value=${Math.round(Math.log2(Math.max(16,Math.min(4096,+S.pace||BARS_PER_SEG))))}
-        onInput=${e=>set({pace:Math.pow(2,Math.max(4,Math.min(12,+e.target.value||8)))})} />
-      <output>${S.pace}</output></div>
-    ${S.more?html`
-    <div class="row"><label>mode/scale</label>
-      <select value=${S.modeLock} onchange=${e=>{set({modeLock:e.target.value});retarget(S.cursor);}}>
-        ${Object.keys(MODE_LOCKS).map(m=>html`<option value=${m}>${m}</option>`)}
-      </select></div>
-    ${DIMS.map(([name,get,setv,min,max,step])=>html`
-      <div class="row"><label>${name}</label>
-        <input type="range" min=${min} max=${max} step=${step} value=${get(S.playing)}
-          onInput=${e=>{setv(S.playing,+e.target.value);set({});}} />
-        <output>${(+get(S.playing)).toFixed(step>=1?0:2)}</output></div>`)}
+    <div class="row"><label>pace</label>
+      <input type="range" min="4" max="12" step="1" value=${16-Math.round(Math.log2(Math.max(16,Math.min(4096,+S.pace||BARS_PER_SEG))))}
+        onInput=${e=>set({pace:Math.pow(2,16-Math.max(4,Math.min(12,+e.target.value||8)))})} />
+      <output>${S.pace} bars/leg</output></div>
+    <div class="row"><label>±bpm</label>
+      <input type="range" min="-64" max="64" step="1" value=${S.bpmDelta||0}
+        onInput=${e=>setBpmDelta(e.target.value)} />
+      <output>${(S.bpmDelta||0)>0?"+":""}${S.bpmDelta||0}${S.playing?" → "+Math.round(S.playing.bpm):""}</output></div>
     <div class="btns">
-      <button onclick=${()=>{
-        const a=document.createElement("a");
-        a.href=URL.createObjectURL(new Blob([JSON.stringify(S.playing,null,2)],{type:"application/json"}));
-        a.download="stellate-preset.json";a.click();}}>⤓ preset</button>
-      <button onclick=${()=>{
-        // export the drawn path (or the cursor point) as journey waypoints:
-        //   node genre-kernel.js journey stellate-path.json --hours 4 --render --video
-        const pts=S.waypoints.length?S.waypoints:[S.cursor];
-        const pathJson={kind:"genre-space-path",version:1,seed:S.seed,modeLock:S.modeLock,
-          waypoints:pts.map(p=>({x:Math.round(p.x),y:Math.round(p.y),
-            weights:weightsAt(p).map(w=>({g:w.g,w:+w.w.toFixed(3)}))}))};
-        const a=document.createElement("a");
-        a.href=URL.createObjectURL(new Blob([JSON.stringify(pathJson,null,2)],{type:"application/json"}));
-        a.download="stellate-path.json";a.click();
-        set({status:"path exported — render it: node genre-kernel.js journey stellate-path.json --hours 4 --render --video"});}}>⤓ path</button>
-      <button onclick=${()=>{
-        // import a journey saved by ⤓ path
-        const inp=document.createElement("input");
-        inp.type="file"; inp.accept="application/json";
-        inp.onchange=()=>{ const f=inp.files[0]; if(!f) return;
-          f.text().then(txt=>{
-            const p=JSON.parse(txt);
-            if(!Array.isArray(p.waypoints)||!p.waypoints.length||
-               !p.waypoints.every(w=>isFinite(+w.x)&&isFinite(+w.y))) throw new Error("no waypoints");
-            const wps=p.waypoints.map(w=>({x:+w.x,y:+w.y}));
-            set({waypoints:wps,travel:{seg:0,t:0},
-              seed:p.seed!=null?p.seed:S.seed,modeLock:p.modeLock||S.modeLock,
-              status:"path loaded — "+wps.length+" waypoints"});
-            retarget(wps[0]);
-          }).catch(e=>set({status:"bad path file — "+e.message}));};
-        inp.click();}}>⤒ path</button>
-      <button onclick=${()=>seedDefaultLoop()}>↺ reset loop</button>
       <button disabled=${!S.playing||EXPORT.busy}
-        title=${!S.playing?"nothing playing yet — the buttons capture the current song":"Standard MIDI File of the current song (pads/bass/melody + GM drums), named from the chyron's band card"}
+        title=${!S.playing?"nothing playing yet — the buttons capture the current song":"Standard MIDI File of the current song, named from the chyron's band card — built right here in your browser"}
         onclick=${()=>downloadMidi()}>⤓ midi</button>
       <button disabled=${!S.playing||EXPORT.busy}
-        title=${!S.playing?"nothing playing yet — the buttons capture the current song":"offline-press the current song to lossless WAV (44.1k/16 stereo, the full mix) — takes a minute; progress shows in the status line"}
-        onclick=${()=>exportAudio("wav")}>${EXPORT.busy?"…pressing":"⤓ wav"}</button>
+        title=${!S.playing?"nothing playing yet — the buttons capture the current song":"render the current song to lossless WAV — everything happens in your browser, takes a minute; progress shows in the status line"}
+        onclick=${()=>exportAudio("wav")}>${EXPORT.busy?"…rendering":"⤓ wav"}</button>
       <button disabled=${!S.playing||EXPORT.busy}
-        title=${!S.playing?"nothing playing yet — the buttons capture the current song":"offline-press the current song, then encode MP3 (192kbps) — takes a minute; progress shows in the status line"}
+        title=${!S.playing?"nothing playing yet — the buttons capture the current song":"render the current song and encode MP3 (192kbps) — everything happens in your browser, takes a minute"}
         onclick=${()=>exportAudio("mp3")}>⤓ mp3</button>
     </div>
-    <p class="hint">the path is a closed 3-step loop (waypoint 1 = centre) · dbl-click the sky to add a waypoint ·
-    right-click a waypoint to erase (erase to nothing re-seeds the loop) · ↺ reset loop restores it ·
-    pinch / ctrl+scroll zooms the spread ·
-    ⤓/⤒ path saves and reloads a journey · render it: node genre-kernel.js journey ${"<path.json>"} --render --video</p>`:""}`;
+    <p class="hint">dbl-tap the sky to add a waypoint · drag the pink playhead to scrub ·
+    right-click a waypoint to erase · stop twice to rewind · the URL is the bookmark</p>`;
 }
 const panel=document.getElementById("panel");
 subs.push(()=>{ render(Panel(),panel); drawMap(); startPulse(); });   // startPulse: resume the breath loop when travel (re)starts
@@ -113,7 +67,7 @@ subs.push(()=>{ render(Panel(),panel); drawMap(); startPulse(); });   // startPu
 // ---------- chips + modals: the sky stays clean until asked ----------
 const MODALS={ panel:document.getElementById("panelWrap"), inside:document.getElementById("insideWrap"),
   about:document.getElementById("aboutWrap") };   // about = the ? layer (static content in index.html)
-const CHIP_OF={ panel:"cfgChip", inside:"insideChip", about:"helpChip" };
+const CHIP_OF={ panel:"cfgChip", inside:"viewChip", about:"helpChip" };
 function toggleModal(which,force){
   const el=MODALS[which];
   const open=force!=null?force:!el.classList.contains("open");
@@ -128,7 +82,20 @@ function toggleModal(which,force){
   }
 }
 document.getElementById("cfgChip").onclick=()=>toggleModal("panel");
-document.getElementById("insideChip").onclick=()=>toggleModal("inside");
+// THE VIEW CYCLE (one button, three 100% views): map -> viz -> video -> map.
+// The chip's icon tracks the CURRENT view (background.js applyBg); switching
+// to video arms the spinner until the layer is actually up.
+document.getElementById("viewChip").onclick=()=>{
+  const chip=document.getElementById("viewChip");
+  if(S.vizView){                    // viz -> video (fall back to map if no footage)
+    toggleModal("inside",false);
+    if(bgSetVideo(true)) chip.classList.add("spin");
+  } else if(bgVideoOn()){           // video -> map
+    bgSetVideo(false); chip.classList.remove("spin");
+  } else {                          // map -> viz
+    toggleModal("inside",true);
+  }
+};
 document.getElementById("helpChip").onclick=()=>toggleModal("about");
 // keep the ⓘ readout live: re-render every frame it's open (cheap; the radar is a
 // handful of SVG nodes). Closed = no work beyond the on-map glyph drawMap draws.

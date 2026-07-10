@@ -292,7 +292,7 @@ async function main() {
     document.getElementById("cfgChip").click();             // open the ⚙ panel
     await new Promise((r) => setTimeout(r, 150));
     const btnOf = (t) => [...document.querySelectorAll("#panel button")].find((b) => b.textContent.trim() === t);
-    const more = btnOf("⚙ more"); if (more) more.click();   // expand to the download cluster
+    // (the "⚙ more" tier retired 2026-07-10 — downloads live on the main panel now)
     await new Promise((r) => setTimeout(r, 150));
     const names = [...document.querySelectorAll("#panel button")].map((b) => b.textContent.trim());
     const midiBtn = btnOf("⤓ midi");
@@ -345,7 +345,7 @@ async function main() {
   // EVERY sample: exactly one of {video, demo} visible, enabled matching visible.
   const alt = await page.evaluate(async () => {
     window.VideoLayer.available = () => true;
-    let g = 0; while (window.__BGALT.state().mode !== 1 && g++ < 4) document.getElementById("bgChip").click();
+    let g = 0; while (window.__BGALT.state().mode !== 1 && g++ < 4) document.getElementById("viewChip").click();
     const startMode = window.__BGALT.state().mode;
     const n0 = window.DemoLayer.currentName && window.DemoLayer.currentName();
     window.DemoLayer.next(); const n1 = window.DemoLayer.currentName && window.DemoLayer.currentName();
@@ -366,7 +366,7 @@ async function main() {
     const s = window.__BGALT.state();
     const r = { startMode, flips, sides: [...new Set(sides)], cartCycles: n0 !== n1, viol, samples: N,
       side: s.side, vidOn: window.VideoLayer.enabled(), demoOn: window.DemoLayer.enabled() };
-    document.getElementById("bgChip").click(); document.getElementById("bgChip").click();  // back to off
+    let hh = 0; while (window.__BGALT.state().mode !== 0 && hh++ < 4) document.getElementById("viewChip").click();  // back to the map
     return r;
   });
   ok(alt.startMode === 1, `H0: chip reaches video+demos mode (got ${alt.startMode})`);
@@ -381,13 +381,13 @@ async function main() {
   // beats. With cbeats=8 (2 measures/bar) the flip must land on tick 4, not 8.
   const beat = await page.evaluate(() => {
     window.VideoLayer.available = () => true;
-    let g = 0; while (window.__BGALT.state().mode !== 1 && g++ < 4) document.getElementById("bgChip").click();
+    let g = 0; while (window.__BGALT.state().mode !== 1 && g++ < 4) document.getElementById("viewChip").click();
     const wasLive = window.__S.live; window.__S.live = true;
     window.__BGALT.flip();   // reset the beat counter to a known 0
     const s1 = window.__BGALT.state().side; let firstFlip = 0;
     for (let i = 1; i <= 8 && !firstFlip; i++) { window.__BGALT.tick({ cbeats: 8 }); if (window.__BGALT.state().side !== s1) firstFlip = i; }
     window.__S.live = wasLive;
-    let h = 0; while (window.__BGALT.state().mode !== 0 && h++ < 4) document.getElementById("bgChip").click();  // back to off
+    let h = 0; while (window.__BGALT.state().mode !== 0 && h++ < 4) document.getElementById("viewChip").click();  // back to off
     return { firstFlip };
   });
   ok(beat.firstFlip === 4, `H4: musical flip lands after 32 beats = 4 two-measure bars (got tick ${beat.firstFlip})`);

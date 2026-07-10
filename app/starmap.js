@@ -70,8 +70,12 @@ export function drawMap(){
   // default zoom the baked layout already clears all 178, so nothing is culled.
   const lctx=(drawMap._lc||(drawMap._lc=document.createElement("canvas").getContext("2d")));
   const fpx=e=>(e.w>0.01?12:11)*fs;
-  const ent=Object.entries(POS).map(([g,[x,y]])=>({g,w:wmap[g]||0,cx:X(x),cy:Y(y)}));
-  const lbox=e=>{ lctx.font=fpx(e)+"px VT323, monospace"; const tw=lctx.measureText(e.g).width, lx=e.cx+9*fs;
+  // THE MAP SPEAKS THE FICTION (Paul 2026-07-10: "still a lot of old school
+  // genre names like chiptune and idm all over the place"): every star draws
+  // its kernel LABEL, never the id — culling measures the label too.
+  const glabel=g=>(K.GENRES[g]&&K.GENRES[g].label)||g;
+  const ent=Object.entries(POS).map(([g,[x,y]])=>({g,label:glabel(g),w:wmap[g]||0,cx:X(x),cy:Y(y)}));
+  const lbox=e=>{ lctx.font=fpx(e)+"px VT323, monospace"; const tw=lctx.measureText(e.label).width, lx=e.cx+9*fs;
     return {l:lx-3, r:lx+tw+3, t:e.cy+4*fs-fpx(e)*0.92, b:e.cy+4*fs+fpx(e)*0.28}; };
   // placement priority: active genres first (always shown), then the rest stable
   const order=[...ent].sort((a,b)=>((b.w>0.01)-(a.w>0.01))||(b.w-a.w));
@@ -86,7 +90,7 @@ export function drawMap(){
     svg.appendChild(el("circle",{cx,cy,r:w>0.01?3.2:2.2,fill:w>0.01?"#ffd7ee":"#e6e0ff",opacity:.95}));           // the star
     if(!show[g]) continue;   // name culled at this zoom — the star still shows; zoom in to read it
     const t=el("text",{x:cx+9*fs,y:cy+4*fs,"class":w>0.01?"anchor hot":"anchor"});
-    t.style.fontSize=fpx(e)+"px"; t.textContent=g; svg.appendChild(t);
+    t.style.fontSize=fpx(e)+"px"; t.textContent=e.label; svg.appendChild(t);
     if(w>0.01){const wl=el("text",{x:cx+9*fs,y:cy+17*fs,"class":"wlabel"});
       wl.style.fontSize=(11*fs)+"px"; wl.textContent=Math.round(w*100)+"%"; svg.appendChild(wl);}
   }
