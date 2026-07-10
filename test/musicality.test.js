@@ -102,6 +102,24 @@ gate("BLOOM: a part first declared at the 3-minute evolution boundary is a gift,
   assert(r2.failures.some((f) => f.part === "melody"), "un-evolved late melody must still be named");
 });
 
+gate("BLOOM: an on-design arrival is the form's identity, not drag (design floor)", () => {
+  // K.FORM_ENTRY is derived from the form graphs (wave bass enters at the
+  // swell, 3/8 of the base cycles). A 13-cycle wave (416 beats) whose bass
+  // arrives at beat 160 = 38.5% is ON design (the beat table says 144); one
+  // arriving at 60% is drag the form never asked for — still named.
+  assert(K.FORM_ENTRY && Math.abs(K.FORM_ENTRY.wave.bass - 0.375) < 1e-9 && Math.abs(K.FORM_ENTRY.pop.melody - 0.375) < 1e-9
+    && Math.abs(K.FORM_ENTRY.dj.melody - 0.4) < 1e-9, "FORM_ENTRY fractions drifted: " + JSON.stringify(K.FORM_ENTRY));
+  const sec = (cyc, bass) => ({ cycles: cyc, drums: "off", bass: bass ? "rolling" : "off", melody: "off", pads: true });
+  const st = synthState([sec(2, false), sec(3, false), sec(3, true), sec(3, false), sec(2, false)]);   // 13 x 32 = 416 beats
+  const mkEv = (beat) => EV({ pitched: [pad(0), { voice: "bass", beat, dur: 1, pch: "6.00", amp: 0.2 }], totalBeats: 416 });
+  const r = M.laws.bloom(st, mkEv(160.5), "wave");
+  assert(!r.failures.some((f) => f.part === "bass"), "on-design swell bass (38.5%) must pass: " + JSON.stringify(r.failures));
+  // design bound = .375*416 + 32 = 188; beat 256 (61%) is past design + slack
+  const st2 = synthState([sec(2, false), sec(3, false), sec(3, false), sec(3, true), sec(2, false)]);
+  const r2 = M.laws.bloom(st2, mkEv(256), "wave");
+  assert(r2.failures.some((f) => f.part === "bass"), "off-design bass (61%) must still be named");
+});
+
 gate("BLOOM: all-sections-off drums = drumless by design = exempt (not declared)", () => {
   const st = synthState([{ cycles: 2, drums: "off", bass: "off", melody: "arp", pads: true }]);
   const ev = EV({ pitched: [mel(0), pad(0)] });
@@ -121,6 +139,41 @@ gate("REGISTER: sampled voice scored against the natural window, synth exempt", 
   st.instruments.melody = { model: "saw" };                        // synth voice: exempt
   const r2 = M.laws.register(st, ev);
   assert(r2.score === 1 && r2.failures.length === 0, "synth voices must be exempt");
+});
+
+gate("REGISTER HOME: a misregistered sampled lead is homed at the source (balance loop 2)", () => {
+  // synthetic: progression leads live at pch octave 8-9 (midi 60-95); give the
+  // melody a sampler whose window tops far below — buildEvents must shift the
+  // whole line into the window and report the decision on the bundle.
+  const st = synthState([FULLSEC, FULLSEC]);
+  st.instruments = JSON.parse(JSON.stringify(st.instruments));
+  st.instruments.melody = { model: "sampler", sampler: { id: "testhorn", zones: [{ root: 52 }, { root: 78 }] } };  // window [40..84]; the line asks 64-89 (78% in)
+  const ev = E.buildEvents(st);
+  const mids = ev.pitched.filter((p) => p.voice === "melody" && !p.solo).map((p) => E.pchToMidi(p.pch));
+  assert(mids.length > 0, "no melody events");
+  const inW = mids.filter((m) => m >= 40 && m <= 84).length / mids.length;
+  assert(inW >= 0.95, "line not homed: " + Math.round(inW * 100) + "% in window");
+  assert(ev.regHome && ev.regHome.melody < 0, "decision not reported on the bundle: " + JSON.stringify(ev.regHome));
+  // the pin is honored verbatim (the kernel pins it so live per-bar rebuilds
+  // apply a constant): a pinned build applies exactly the pinned shift.
+  const st2 = synthState([FULLSEC, FULLSEC]);
+  st2.instruments = st.instruments;
+  st2.regHome = { melody: ev.regHome.melody };
+  const ev2 = E.buildEvents(st2);
+  assert(JSON.stringify(ev2.pitched) === JSON.stringify(ev.pitched), "pinned build must reproduce the measured build byte-for-byte");
+});
+
+gate("REGISTER HOME: kernel pins regHome only where a slot misfits; anchor overrides are respected", () => {
+  // chalkvespers homes its chant with the leadOctave anchor (-2, loop 1): the
+  // auto pass must find the line already fitting and pin NOTHING.
+  const cv = K.track("chalkvespers", { seed: 1 });
+  assert(cv.leadOctave === -2, "chalkvespers anchor changed?");
+  assert(cv.regHome == null, "chalkvespers must not be double-shifted: " + JSON.stringify(cv.regHome));
+  // kettlefunk s1 (french_horns lead, the register class): pinned and audited clean.
+  const kf = K.track("kettlefunk", { seed: 1 });
+  assert(kf.regHome && kf.regHome.melody < 0, "kettlefunk s1 must pin a melody home: " + JSON.stringify(kf.regHome));
+  const a = M.audit(kf);
+  assert(a.laws.register.failures.length === 0, "kettlefunk s1 register not clean: " + JSON.stringify(a.laws.register.failures));
 });
 
 // ---------- PROMISES ----------

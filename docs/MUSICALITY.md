@@ -37,7 +37,9 @@ Symbolic laws read `buildEvents`; acoustic laws read cheap stem renders
    Catches: buried steel guitar, distant organ, vol-0 wiring mistakes.
 2. **REGISTER** *(symbolic — the mapping layer now enforces the fold; this
    verifies it)* — % of sampled-voice notes played within natural zone range
-   ≥ 0.95; rate-stretch beyond ceiling = named violation.
+   ≥ 0.95; rate-stretch beyond ceiling = named violation. *(Balance loop 2:
+   the kernel now guarantees this at the source — SAMPLER REGISTER HOME,
+   below — and the law stands as the referee that the guarantee holds.)*
 3. **BLOOM** *(symbolic)* — time-to-first-onset per core part (drums, bass,
    lead/melody, pads, found) ≤ genre-appropriate bounds; time-to-full-ensemble
    ≤ bound; a declared part that NEVER sounds in a standard track = hard fail.
@@ -208,3 +210,95 @@ prelude anchor change below; green again at commit).
   solver-growth genres + reggae/chalkvespers/prelude (anchor changes) +
   5 state-only level-class genres (bramblestep driftrot hydracore
   sherbetchop tundradoom).
+
+## Balance loop 2 — SHIPPED (2026-07-10)
+
+Paul: "What about the other genres." Loop 1's 169 OK / 59 WARN →
+**228 OK / 0 WARN / 0 FAIL** (228 × seeds 1-3, and re-verified at seeds
+1-5: 228/228/0/0). Worst overall 0.92 → 0.99. Matrix 228/228
+(--no-cache) after every change; verify.sh, meter/theory/pipes/speech/
+musicality suites green; determinism byte-identical across repeated
+builds. Mechanism-first throughout — the 59 were two classes plus four
+individual bloom diagnoses, and every fix landed in the kernel/engine,
+not in 59 anchors.
+
+1. **REGISTER, guaranteed at the source (the 54-genre class).** One
+   template convention drove the whole class: every progression's lead
+   voicing is written at pch octave 8-9 (midi 60-95, the synth-lead
+   register), and the sampled winds/guitars/choirs own windows topping
+   at 81-86 — so the same line that sits perfectly under a saw lead
+   asked a tenor sax for midi 88-93 (12-26% of notes out, phrase PEAKS
+   folding down an octave: the climax inverted). The cure is the
+   chalkvespers precedent made kernel-wide: **SAMPLER REGISTER HOME**
+   (csd-engine buildEvents, post-pipes; zero-rng):
+   - *Whole-line home* — when under 95% of a sampled slot's notes sit in
+     its natural window (zone roots -12..+6, the render fold's mirror),
+     the entire line shifts by the whole octave that maximizes fit
+     (strict improvement only; ties prefer the smaller shift, then
+     centering). A tenor-sax lead at median E5 lands at E4 — contour
+     intact, the instrument's actual idiom. Melody/pad shift either way;
+     **bass only shifts up** (below-window whole-line asks are real —
+     perukelotto's harpsichord continuo asked midi 24, C1, below any
+     harpsichord — but a high bass line is an identity: polygonforge's
+     driving pick at A2 stays put).
+   - *Per-note ornament fold* — bass cell octave tones (r6/f6 exceed the
+     top zone only on high-rooted chords; a player folds those onto the
+     neck) and pipe ornament copies (`harm`/`echo`: a parallel third
+     that exceeds the instrument INVERTS to the sixth below, an octave
+     echo folds to the unison — voice-leading idiom, not a contour
+     break) fold by octaves into the window. This is byte-for-byte the
+     pitch the mapping layer's render fold was already producing, so
+     the AUDIO of this sub-class is unchanged — the score now states
+     it. Melody/pad LINE notes are never folded: REGISTER stays a live
+     alarm where a fold is a contour break.
+   - *The pin* — the kernel measures once at track resolve and pins the
+     decision as `state.regHome`, so the press and every live per-bar
+     rebuild apply the same constant: no octave flapping, no live/press
+     divergence (the same reasoning that keeps the render fold
+     per-note). `leadOctave` (the anchor-level taste override) is
+     measured first and respected — chalkvespers pins nothing.
+   - *Byte-identity gate* — a slot already ≥95% in-window is untouched,
+     ornaments and all. Drift census, exact: 102 genre×seed states pin
+     regHome (64 genres, seeds 1-5); 9 more drift events-only (the
+     render-identical fold class: funk s2, meadowjangle s1, miasmarow
+     s5, polygonforge s2, rooftopholler s1, talcumcasino s1,
+     valkyrieswoop s2, velvetconveyor s1, wizardcape s5); 0 feature
+     hashes moved for this pass.
+2. **The grow tie-break, one level down (toastercore).** Loop 1 made
+   growth energy-aware but left the first-index bias alive WITHIN an
+   energy class: pre-chorus and chorus are both `peak`, so the residual
+   cycle landed on the PRE-chorus and pushed the first hook 192 → 224
+   (measured — the dancepop bug one class down). Ties within an energy
+   class now resolve by LATER index: growth before the hook is
+   anticipation, after it is payoff. Toastercore's hook returned to
+   beat 192. This re-resolves growth ties catalog-wide (the largest
+   drift class this loop — states/events/features for the affected
+   genres); the matrix held 228/228 --no-cache and validate held every
+   duration band.
+3. **BLOOM v1.2: the ON-DESIGN floor (standbylightdrive, singeli,
+   bebop, walrusfuzz).** All four "late" stragglers are ON their form's
+   designed proportions; the v1.1 beat tables punished beats-per-track
+   GEOMETRY, not drag: standbylightdrive's swell bass at beat 160 is
+   38.5% of a 137bpm wave arc (design: 37.5%) = 70 wall-clock seconds;
+   singeli's lift melody at beat 288 is 42.9% of a 214bpm dj set
+   (design: 40%, within one cycle of quantization) = 81s; bebop's bass
+   at beat 72 is AHEAD of design (24-beat cycles at 219bpm = 20
+   seconds); walrusfuzz s3's chorus sits at exactly 3/8 of a floored
+   96-beat-cycle blues. The kernel now exports `FORM_ENTRY` — each
+   form's designed entry fraction per part, DERIVED from the form
+   graphs so it can never drift from them — and bloom's bound is
+   max(beat table, one-cycle floor, designFraction × totalBeats + one
+   cycle of solver-quantization slack). The beat tables remain the
+   patience cap for drag the form never asked for: dancepop's loop-1
+   hook at 54% vs a 37.5% design stays named under the new floor.
+4. **Argued decisions, for the record.** (a) The bass ornament fold and
+   the harm/echo fold are DESIGN, not alarms silenced: for octave-
+   equivalent ornaments the fold IS the idiom (inversion/unison), and
+   the render already performed it — the score-side fold makes the
+   score state the truth without changing a sample of audio. The law
+   can no longer fire on sampled-bass ornaments; that is the point,
+   and it still fires on any melody/pad LINE that a whole-octave home
+   cannot fit. (b) No audit threshold was loosened: 0.95 stands, the
+   beat tables stand, and the two new floors (one-cycle, on-design)
+   are derived from the engine's own structures, not tuned constants.
+   (c) lofi and footwork stay Paul-blessed canon (loop 1), untouched.

@@ -1810,6 +1810,103 @@
       const bundle=CsdPipesRef.apply({bpm:state.bpm,totalBeats,pitched,drums,found,sfx},state);
       pitched=bundle.pitched; drums=bundle.drums; found=bundle.found; sfx=bundle.sfx;
     }
+    // ---- SAMPLER REGISTER HOME (MUSICALITY balance loop 2) ----
+    // THE REGISTER LAW, GUARANTEED AT THE SOURCE. Every progression's lead
+    // voicing is written at pch octave 8-9 (midi 60-95) — the synth-lead
+    // convention — and the bass cells reach r6/f6 octave tones. A sampled
+    // wind/guitar/choir owns a LOWER window (zone roots -12..+6 st, the
+    // mirror of faust/state-engine SAMPLER_FLOOR_ST/SAMPLER_STRETCH_ST), so
+    // the same line that sits perfectly under a saw lead asks a tenor sax
+    // for midi 88 (audit 2026-07: 54 genres, one template convention). The
+    // mapping layer's per-note render fold saved the ear but bent phrase
+    // contours — the climax note folded down an octave. This pass moves the
+    // register decision into the SCORE, zero-rng, per RESOLVED instrument
+    // (seeds whose pool draw landed on a synth are untouched). It runs
+    // AFTER the pipes so harmonize/echoCanon copies ride the same decision.
+    //
+    //   1. WHOLE-LINE HOME (melody/pad either way; bass upward only): when
+    //      less than REGISTER_FIT of a sampled slot's notes sit inside the
+    //      natural window, shift the ENTIRE line by the whole octave that
+    //      maximizes the in-window fraction — contour intact, the line in
+    //      the register the instrument actually owns (a tenor-sax lead at
+    //      median E5 lands at E4). Improvement must be strict; ties prefer
+    //      the smaller shift, then the better-centered line. Bass never
+    //      shifts DOWN: a high bass line (polygonforge's driving pick at
+    //      A2) is an identity, not a misregistration — its overshoots are
+    //      ornaments, handled by 2. The decision is measured ONCE per
+    //      state: the kernel pins it as state.regHome at track resolve (one
+    //      measurement build), and a pinned build applies the constant
+    //      without re-measuring — so the live engine's per-bar rebuilds
+    //      (reseeded, one section at a time) play the identical register
+    //      every bar: no octave flapping, no live/press divergence (the
+    //      same reasoning that keeps the render fold per-note — see
+    //      faust/state-engine). Unpinned states (hand states) measure here
+    //      per build.
+    //   2. PER-NOTE ORNAMENT FOLD: bass cell octave tones (r6/f6 exceed the
+    //      top zone only on high-rooted chords — a player folds those onto
+    //      the neck) and pipe ornament copies (harm/echo — a parallel third
+    //      that exceeds the instrument INVERTS to the sixth below; an
+    //      octave echo folds to the unison: voice-leading idiom, not a
+    //      contour break). Folded by octaves into the window — the SAME
+    //      pitch the mapping layer's render fold produces for whatever the
+    //      score leaves outside, so the audio is unchanged; the score now
+    //      states it. Gated on the slot's event fit being under
+    //      REGISTER_FIT so a slot that already fits stays byte-identical,
+    //      ornaments and all (the gate is render-neutral either way).
+    // The REGISTER law stays a live alarm for the melody/pad LINE, where a
+    // fold is a contour break — line notes are never folded here.
+    // state.leadOctave (the anchor-level taste override, applied at build)
+    // is already in the measured events, so a line it homed passes the fit
+    // test and is never double-shifted. All-fitting slots: zero decision,
+    // zero pch change — byte-identity for every genre that was never
+    // misregistered.
+    const regHome={};   // the decision this build applied (kernel reads it off the bundle to pin)
+    {
+      const REGISTER_FIT=0.95;   // the musicality REGISTER threshold (docs/MUSICALITY.md)
+      const I=state.instruments||{};
+      const pin=state.regHome||null;   // kernel-pinned decision (whole-track constant)
+      for(const [slot,voice] of [["melody","melody"],["pad","pad"],["bass","bass"]]){
+        const m=I[slot];
+        if(!m||m.model!=="sampler"||!m.sampler||!Array.isArray(m.sampler.zones)||!m.sampler.zones.length) continue;
+        const roots=m.sampler.zones.map(z=>z.root).filter(r=>r!=null);
+        if(!roots.length) continue;
+        const lo=Math.min.apply(null,roots)-12, hi=Math.max.apply(null,roots)+6;   // SAMPLER_FLOOR_ST / SAMPLER_STRETCH_ST
+        const evs=pitched.filter(e=>e.voice===voice&&!e.solo);
+        if(!evs.length) continue;
+        // 1. whole-line home: apply the pin, or measure (unpinned build)
+        let best=0;
+        if(pin) best=(pin[slot]|0);
+        else {
+          const mids=evs.map(e=>pchToMidi(e.pch));
+          const frac=sh=>{ let n=0; for(const md of mids) if(md+sh>=lo&&md+sh<=hi) n++; return n/mids.length; };
+          const f0=frac(0);
+          if(f0<REGISTER_FIT){
+            const cand=slot==="bass"?[12,24]:[-12,12,-24,24];
+            const center=(lo+hi)/2, med=mids.slice().sort((a,b)=>a-b)[mids.length>>1];
+            let bf=f0,bc=Infinity;
+            for(const sh of cand){
+              const f=frac(sh);
+              if(f<=f0+1e-9) continue;                     // a shift must strictly improve the fit
+              const c=Math.abs(med+sh-center);
+              if(f>bf+1e-9
+                 || (best!==0 && Math.abs(f-bf)<=1e-9
+                     && (Math.abs(sh)<Math.abs(best) || (Math.abs(sh)===Math.abs(best)&&c<bc))))
+                { best=sh; bf=f; bc=c; }
+            }
+          }
+        }
+        if(best){ for(const e of evs) e.pch=pchAdd(e.pch,best); regHome[slot]=best; }
+        // 2. per-note ornament fold (bass cell tones; harm/echo pipe copies)
+        let inW=0; for(const e of evs){ const md=pchToMidi(e.pch); if(md>=lo&&md<=hi) inW++; }
+        if(inW/evs.length<REGISTER_FIT) for(const e of evs){
+          if(slot!=="bass"&&!e.harm&&!e.echo) continue;    // melody/pad LINE notes stay the law's business
+          let md=pchToMidi(e.pch), sh=0;
+          while(md+sh>hi && md+sh-12>=lo) sh-=12;
+          while(md+sh<lo && md+sh+12<=hi) sh+=12;
+          if(sh) e.pch=pchAdd(e.pch,sh);
+        }
+      }
+    }
     // ---------- SNARE-LAW (kernel default: no bar repeats thrice) ----------
     // Paul's mandate: "snare patterns repeat ad nauseum ... nothing should repeat
     // exactly the same more than twice." A kernel-wide DEFAULT over every genre's
@@ -1946,7 +2043,8 @@
       if(addD.length) for(const d of addD) drums.push(d);
       if(dropD.size)  drums=drums.filter(d=>!dropD.has(d));
     }
-    return { bpm:state.bpm, totalBeats, pitched, drums, found, sfx, srcById };
+    return { bpm:state.bpm, totalBeats, pitched, drums, found, sfx, srcById,
+      ...(Object.keys(regHome).length?{regHome}:{}) };   // register-home decision (absent when no slot shifted — bundle shape unchanged)
   }
 
   // ---------- solo voices (deterministic per-section recipes) ----------

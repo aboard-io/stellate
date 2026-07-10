@@ -6204,6 +6204,42 @@
       ["outro",      {cycles:NN(1), pads:PADS, found:FND()}],
     ],
   };
+  // FORM_ENTRY (MUSICALITY balance loop 2): each form's DESIGNED entry point
+  // per part, as a fraction of the arc's base cycles — derived from the graphs
+  // above, so it can never drift from them. The musicality BLOOM law reads
+  // this as its on-design floor: a part that arrives within ONE CYCLE of
+  // designFraction x totalBeats is exactly where the arc placed it — the form
+  // is the genre's identity, and cycle quantization (the solver rounds to
+  // whole cycles) can push a realized arrival up to a cycle past the exact
+  // fraction. The absolute per-form beat tables in musicality.js remain the
+  // patience cap for drag the form never asked for; this floor only clears
+  // the fast/long-cycle geometry outliers that are ON design (standbylight-
+  // drive's swell at 38.5% of a 137bpm wave = beat 160; singeli's lift at
+  // 42.9% of a 214bpm dj set; walrusfuzz's chorus at exactly 3/8 of a floored
+  // 96-beat-cycle blues — all measured, all the graph's own proportions).
+  // A key counts as the design's entry even when it holds a token — tokens
+  // resolve per track (KIT may be "off"), but the NODE is where the form
+  // FIRST OFFERS the part; parts that resolve off everywhere are simply not
+  // declared and never measured.
+  const FORM_ENTRY=(()=>{
+    const DECL={ drums:(s)=>s.drums!=null&&s.drums!=="off", bass:(s)=>s.bass!=null,
+                 melody:(s)=>s.melody!=null&&s.melody!=="off", pads:(s)=>s.pads!=null&&s.pads!==false,
+                 found:(s)=>s.found!=null, counter:(s)=>s.counter!=null };
+    const cyc=(v)=>(v instanceof Tok&&v.t==="n")?v.a:(typeof v==="number"?v:1);
+    const out={};
+    for(const [form,nodes] of Object.entries(FORMS)){
+      const total=nodes.reduce((n,[,spec])=>n+cyc(spec.cycles),0);
+      const entry={};
+      for(const part of Object.keys(DECL)){
+        let before=0, found=false;
+        for(const [,spec] of nodes){ if(DECL[part](spec)){ found=true; break; } before+=cyc(spec.cycles); }
+        if(found) entry[part]=before/total;
+      }
+      out[form]=entry;
+    }
+    return out;
+  })();
+
   // The one generic walker. ctx carries the per-track resolvers (norm/kit/
   // lead/bass and the drawing F()). Tokens resolve in key-insertion order so
   // the only draw-bearing tokens (FILL/SWEEP) fire in exactly source order;
@@ -6323,6 +6359,14 @@
         // track means MORE PAYOFF, not a longer drumless intro. Zero rng;
         // deterministic; fixtures re-captured for the genres whose growth
         // pattern moved (matrix-gated 228/228).
+        // Balance loop 2: ties WITHIN an energy class resolve by LATER index.
+        // Loop 1's rank left the first-index bias alive inside the class —
+        // pre-chorus and chorus are both `peak`, so the residual cycle landed
+        // on the PRE-chorus and pushed the first hook past the bloom bound
+        // (toastercore: chorus 192 -> 224, MEASURED; the dancepop bug one
+        // level down). Growth is anticipation when it lands before the hook
+        // and payoff when it lands after — equal share, equal energy, grow
+        // the LATER node.
         const GROW_PRI={peak:0,build:1,exposed:2,release:2,cadence:3,ground:4};
         const priOf=(s)=>GROW_PRI[s.tag||E.sectionTag(s.name)];
         for(let guard=0; guard<4000; guard++){
@@ -6330,7 +6374,7 @@
           if(Math.abs(e)<=target*0.1) break;
           if(e<0){                                   // too short: grow the section furthest BELOW its proportional share
             let bi=0,bd=1/0,bp=1/0; for(let i=0;i<secs.length;i++){ const d=secs[i].cycles-ideal[i], p=priOf(secs[i]);
-              if(d<bd-1e-9 || (d<bd+1e-9 && p<bp)){bd=d;bi=i;bp=p;} }
+              if(d<bd-1e-9 || (d<bd+1e-9 && p<=bp)){bd=d;bi=i;bp=p;} }
             secs[bi].cycles++;
           } else {                                   // too long: shrink the section furthest ABOVE its share (with room)
             let bi=-1,bd=-1/0; for(let i=0;i<secs.length;i++){ if(secs[i].cycles<=1) continue; const d=secs[i].cycles-ideal[i]; if(d>bd){bd=d;bi=i;} }
@@ -6981,6 +7025,25 @@
     // state-engine SIGNATURE_MODELS.
     const wantSynth = opts.synth === true || opts.sampledOnly === false;
     if(!wantSynth) applySampledOnly(state, c.seed);
+    // SAMPLER REGISTER HOME pin (MUSICALITY balance loop 2, docs/MUSICALITY.md
+    // REGISTER law): one measurement build; buildEvents decides the whole-line
+    // octave home for any misregistered sampled slot (the lead voicing's
+    // octave 8-9 synth convention vs a wind/guitar/choir sampler's natural
+    // window — zero-rng, event-measured over the FULL track). Pinning the
+    // decision on the state makes it a whole-track constant: the press and
+    // every live per-bar rebuild (reseeded, one section at a time) apply the
+    // SAME shift — no per-bar octave flapping, no live/press divergence. A
+    // state whose sampled slots all fit returns no decision: no key, and the
+    // state (and its events) are byte-identical to before this pass existed.
+    {
+      const iv=state.instruments||{};
+      const hasSampler=["melody","pad","bass"].some(s=>{ const m=iv[s];
+        return m&&m.model==="sampler"&&m.sampler&&Array.isArray(m.sampler.zones)&&m.sampler.zones.length; });
+      if(hasSampler){
+        const ev=E.buildEvents(state);
+        if(ev&&ev.regHome) state.regHome=ev.regHome;
+      }
+    }
     return state;
   }
 
@@ -7162,7 +7225,7 @@
     return state;
   }
 
-  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, GENRE_CLIPS, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), PERC_STYLES, PERC_STYLE_GENRES, PERC_ELEMENTS, resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly, deriveMind };
+  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, GENRE_CLIPS, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), FORM_ENTRY, PERC_STYLES, PERC_STYLE_GENRES, PERC_ELEMENTS, resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly, deriveMind };
   if(isNode) module.exports=api; else root.GenreKernel=api;
 
   // ---------- CLI ----------
