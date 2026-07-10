@@ -283,9 +283,25 @@ gate("smoke: auditAll --rank completes over the whole catalog, one row per ancho
 });
 
 // ---------- PROMISES: card-parse (the card-truth standing guard) ----------
-gate("card-parse: flags a real missing instrument (gabber's hoover)", () => {
-  const w = M.checkCardClaims("gabber").warnings.map((x) => x.promise);
-  assert(w.some((p) => /hoover/.test(p)), "gabber's card sells a hoover its sampled recipe never sounds — must WARN (NEXT.md §5)");
+gate("card-parse: flags a real missing instrument (synthetic hoover lie)", () => {
+  // gabber's real hoover lie was FIXED 2026-07-10 (model "hoover" is a SIGNATURE
+  // synth now), so the flagging mechanism is pinned synthetically: a card that
+  // promises a hoover over a hooverless recipe must still WARN.
+  const G = K.GENRES.minimal, info0 = G.info;
+  G.info = "hoover stabs over the dry room";
+  try {
+    const w = M.checkCardClaims("minimal", [K.track("minimal", { seed: 1 })]).warnings.map((x) => x.promise);
+    assert(w.some((p) => /hoover/.test(p)), "a card promising a hoover no recipe realizes must WARN");
+  } finally { G.info = info0; }
+});
+gate("card-parse: the 2026-07-10 card-truth fixes hold (hoover/piano/break/guitar)", () => {
+  // gabber + happyhardcore: model "hoover" (SIGNATURE — never sampled away);
+  // happyhardcore: bright-grand rave piano draw + the amen cadence roll;
+  // ska: the clean-guitar skank in the pad pool. Each promise must stay KEPT.
+  for (const g of ["gabber", "happyhardcore", "ska"]) {
+    const w = M.checkCardClaims(g).warnings.map((x) => x.promise);
+    assert(w.length === 0, g + " card promise broken again: " + w.join(","));
+  }
 });
 gate("card-parse: state-capability clears sampled instruments (reggae's organ)", () => {
   // reggae's organ is a GM sampler assigned at mix time, not a spec samplerPool —
@@ -301,11 +317,12 @@ gate("card-parse: a card with no instrument nouns is never penalised", () => {
 gate("card-parse: catalog card-lie count within the regression tripwire", () => {
   let n = 0; for (const g of Object.keys(K.GENRES)) n += M.checkCardClaims(g).warnings.length;
   console.log("      card-lie WARNs across catalog: " + n + " (hybrid capability; the honest remainder)");
-  // After the 2026-07-10 wave + the hybrid-capability precision pass, the gate
-  // names only GENUINE lies: gabber/happyhardcore's hoover (never sounds sampled,
-  // NEXT.md §5 signature-synth candidate), happyhardcore's missing piano/break,
-  // ska's guitar skank. Fixing a lie lowers this; a new over-promise raises it.
-  assert(n <= 6, "card-lie count " + n + " > 6 — a card likely promises an instrument its recipe can't realize; run M.checkCardClaims per genre");
+  // After the 2026-07-10 wave + the hybrid-capability precision pass + the
+  // card-truth fix wave (hoover as a SIGNATURE model for gabber/happyhardcore,
+  // happyhardcore's rave piano + amen cadence roll, ska's clean-guitar skank),
+  // EVERY card promise is realized: the honest remainder is ZERO. Any new
+  // over-promise (or a regression that un-realizes one) raises this and fails.
+  assert(n === 0, "card-lie count " + n + " > 0 — a card promises an instrument its recipe can't realize; run M.checkCardClaims per genre");
 });
 
 // ---------- SOLOS: the improvised solo form-node ----------
