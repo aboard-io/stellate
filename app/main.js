@@ -5,7 +5,7 @@
 // subs and window.__ debug hooks; this file assembles window.__X and runs the
 // one-shot boot sequence (layout → default loop → centre → first score → tickers).
 import { POS, MAP_CENTER, WORLD_W, WORLD_H } from "./world.js";
-import { S, K, set } from "./state.js";
+import { S, K, set, subs } from "./state.js";
 import { retarget, weightsAt, travelStep, rescore, forceRetarget } from "./targeting.js";
 import { clampZoom, zoomAround, seedDefaultLoop, insertWaypoint, computeGenreLayout, centerView } from "./starmap.js";
 import { renderInside } from "./inside.js";
@@ -14,6 +14,7 @@ import { playheadTick } from "./readouts.js";
 import "./background.js";   // side effects: video/demoscene chip + alternation + subs.push(applyBg)
 import "./panels.js";       // side effects: control panel + chips/modals + store render subs
 import { applyUrlState, buildShareUrl } from "./share.js";   // the bookmarkable mix (seed+path+measure in the query string)
+import { registerSW, precacheSoon } from "./precache.js";    // offline-where-possible + route-ahead sample warming
 
 window.__X={retarget:(...a)=>retarget(...a), goLive:(...a)=>goLive(...a), stopLive:(...a)=>stopLive(...a), weightsAt:(...a)=>weightsAt(...a),
   handle:()=>faustHandle,   // live handle (audit ring / probe access) — headless gates
@@ -50,6 +51,10 @@ function boot(){
   }).catch(()=>{});
   if(window.VideoLayer)VideoLayer.init().then(()=>set({}));   // found-video background (genre-affine, follows the mix)
   if(window.DemoLayer)DemoLayer.init().then(()=>set({}));     // MicroW8 demoscene background (off until toggled)
+  registerSW(); precacheSoon();   // offline-where-possible: the SW caches by class; warm the route's samples ahead of the traveler
+  // re-warm on path/seed changes (the sub fires on every store write; precacheSoon
+  // debounces + keys on (seed, waypoints) so it only actually walks on a change)
+  subs.push(()=>precacheSoon());
 }
 // GATE BOOT ON THE STYLESHEET: computeGenreLayout measures the live viewport via
 // svg.getBoundingClientRect() and relaxes the genre positions against it. When

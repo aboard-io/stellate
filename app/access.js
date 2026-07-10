@@ -74,6 +74,9 @@ function boot(){
   wire();
   logEvent("Ready. Choose a genre or build a journey, then press Play.");
   tick();
+  // offline-where-possible: the same service worker as the map (cache-first for
+  // the immutable found/ sample class) — playing here warms the offline set too.
+  try{ if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{}); }catch(e){}
 }
 
 // ---------- HOLD mode: one place in genre space (optionally a 2-genre blend) --

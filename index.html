@@ -32,8 +32,11 @@
   Drag waypoints to move them, right-click to erase. Set the pace in the panel.
   <b>Pinch</b> (or ctrl+scroll) zooms the chart.
   ▶ plays, ⓘ opens “inside the sound” (the live voice timeline), ▢ the background, ⚙ the controls.</p>
-  <p class="ab-a11y"><a href="access.html">Accessible text version</a> — a
-  screen-reader- and keyboard-first way to play, with no visuals required.</p>
+  <!-- a real button-sized target (the bare inline link was unreliable to tap on
+       iOS — Paul 2026-07-10: "tapping accessible text version goes nowhere");
+       panels.js also force-navigates modal links on click as a belt. -->
+  <a class="ab-how ab-a11y" href="access.html">Accessible text version &rarr;
+    <span style="display:block;font-size:.72rem;opacity:.75">screen-reader- and keyboard-first, no visuals required</span></a>
   <p class="ab-foot">made by <a href="https://aboardresearch.com">Aboard</a> ·
   <a href="https://github.com/ftrain/stellate">open source</a> · MIT</p>
 </div></div>
