@@ -182,7 +182,7 @@
   // ---- clock / reactivity ----
   let rafId = 0, lastTs = 0, acc = 0;
   let virtualTime = 0;                   // ms fed to the cart's TIME register
-  let speed = 1;                         // steady time multiplier
+  let speed = 0.3;                       // steady time multiplier — slowed (Paul 2026-07-10: "animate MUCH more slowly", demoscene-only). Cosmetic: only the steady clock; the beat-synced `kick` (pulse/note) is untouched so downbeats still punch.
   let kick = 0;                          // decaying speed bump from pulse()/note()
   let frameCount = 0;
   // Note-reactivity levers. These are CART-AGNOSTIC: `kick` surges the shared
