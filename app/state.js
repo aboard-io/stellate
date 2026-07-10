@@ -9,9 +9,12 @@ export const html = htm.bind(h);
 export const K=GenreKernel, V=GenreVerifier, E=CsdEngine;
 import { MAP_CENTER, BARS_PER_SEG } from "./world.js";
 
+// user master volume persists across sessions (localStorage; 0..1.5, 1 = unity)
+const _masterVol=(()=>{ try{ const v=parseFloat(localStorage.getItem("vaporwave-master-vol")); return (v>=0&&v<=1.5)?v:1; }catch(e){ return 1; } })();
+
 // ---------- store ----------
 export const S={ cursor:{x:MAP_CENTER.x,y:MAP_CENTER.y}, waypoints:[], travel:{seg:0,t:0}, weights:[],
-  target:null, playing:null, queue:[], holdUntil:{}, barCount:0, barInfo:null, live:false,
+  target:null, playing:null, queue:[], holdUntil:{}, barCount:0, barInfo:null, live:false, masterVol:_masterVol,
   seed:Math.floor(Math.random()*99999)+1, modeLock:"auto", pace:BARS_PER_SEG, more:false, load:1, eco:0, scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
   pool:"", beatLine:"▶ press LIVE",
   // THE THREE VIEWS (Paul 2026-07-10): star map / video / viz are exclusive
