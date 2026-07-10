@@ -1115,59 +1115,85 @@
   // state._voiceRun={voice:{i:barInRun,n:runBars}} and the SAME ramp curve applies
   // bar-by-bar. Per-genre opt-out: state.voiceDynamics===false. Tunables:
   const DYN_RAMP_BARS = 2;                                    // entrance/exit length in bars, capped at half the run
-  const DYN_FLOOR = { pad: 0.12, bass: 0.35, melody: 0.30 };  // level a voice starts an entrance / ends an exit at (audible-but-soft, not silent — softens the edge without gutting energy; pads lowest since a swell from near-silence is their idiom)
   const dynSmooth = t => t<=0 ? 0 : t>=1 ? 1 : t*t*(3-2*t);   // smoothstep ease (musical, not linear)
-  function voiceRampScalar(voice, barInRun, runBars){
+  // Per-voice [floorIn, floorExit]: the level a voice starts an entrance at and
+  // ends an exit at. floorIn===1 means NO entrance ramp (the voice slams in). Pads
+  // lowest — a swell from near-silence is their idiom; bass/melody stay present.
+  const DYN_FLOOR = { pad: [0.12, 0.12], bass: [0.35, 0.35], melody: [0.30, 0.30] };
+  // DRUMS get variable dynamics per voice (Paul: "different drum voices can have
+  // variable dynamics"). The BACKBONE (kick/snare/clap/rim) slams in — floorIn 1
+  // so a drop stays slammed — but still fades on the way OUT (into a breakdown).
+  // The COLOR voices (hats/rides/toms/perc/shaker…) swell in AND out, so a kit's
+  // texture breathes at its edges while the beat's spine keeps its punch. Fills
+  // between two drum-on sections are mid-run (never in a ramp), so builds survive.
+  const DYN_DRUM = {
+    kick:[1,0.42], snare:[1,0.42], clap:[1,0.45], rim:[1,0.5], stick:[1,0.5],
+    hat:[0.4,0.35], hatOpen:[0.4,0.35], ride:[0.45,0.38], crash:[0.55,0.42],
+    tom:[0.5,0.4], perc:[0.4,0.35], shaker:[0.38,0.34], tamb:[0.4,0.35], cowbell:[0.5,0.4],
+    _default:[0.5,0.4],
+  };
+  function rampScalar(floorIn, floorExit, barInRun, runBars){
     const rb = Math.min(DYN_RAMP_BARS, Math.floor(runBars/2));
     if(rb < 1) return 1;                                      // run too short to ramp — leave it
-    const fl = DYN_FLOOR[voice] != null ? DYN_FLOOR[voice] : 0.15;
     let s = 1;
-    if(barInRun < rb)                                         // fade IN over the first rb bars
-      s = Math.min(s, fl + (1-fl)*dynSmooth((barInRun + 1) / (rb + 1)));
+    if(floorIn < 1 && barInRun < rb)                          // fade IN over the first rb bars
+      s = Math.min(s, floorIn + (1-floorIn)*dynSmooth((barInRun + 1) / (rb + 1)));
     const fromEnd = runBars - 1 - barInRun;
-    if(fromEnd < rb)                                          // fade OUT over the last rb bars
-      s = Math.min(s, fl + (1-fl)*dynSmooth((fromEnd + 1) / (rb + 1)));
+    if(floorExit < 1 && fromEnd < rb)                         // fade OUT over the last rb bars
+      s = Math.min(s, floorExit + (1-floorExit)*dynSmooth((fromEnd + 1) / (rb + 1)));
     return s;
   }
   const DYN_VOICES = ["pad","bass","melody"];
-  const dynActive = { pad:s=>!!s.pads, bass:s=>s.bass&&s.bass!=="off", melody:s=>s.melody&&s.melody!=="off" };
-  function applyVoiceDynamics(pitched, state, spans, CBEATS){
+  const dynActive = { pad:s=>!!s.pads, bass:s=>s.bass&&s.bass!=="off", melody:s=>s.melody&&s.melody!=="off", drums:s=>s.drums&&s.drums!=="off" };
+  // walk a lane's active runs across the section list, calling ramp(barInRun,
+  // runBars, secStart, secBar) for every bar of every run. Shared by press for
+  // all lanes; live uses the walk's precomputed (i,n) instead.
+  function dynRuns(on, barsOf, spans, ramp){
+    let i = 0;
+    while(i < on.length){
+      if(!on[i]){ i++; continue; }
+      let j = i; while(j+1 < on.length && on[j+1]) j++;       // run of active sections [i..j]
+      let runBars = 0; for(let s=i;s<=j;s++) runBars += barsOf(s);
+      let barBase = 0;
+      for(let s=i;s<=j;s++){
+        const secBars = barsOf(s), start = spans[s].start;
+        for(let b=0;b<secBars;b++) ramp(barBase + b, runBars, start + b, b);
+        barBase += secBars;
+      }
+      i = j + 1;
+    }
+  }
+  function applyVoiceDynamics(pitched, drums, state, spans, CBEATS){
     if(state.voiceDynamics === false) return;
-    // LIVE: the walk supplies (barInRun, runBars) per voice for this single bar.
+    // LIVE: the walk supplies (barInRun, runBars) per lane for this single bar.
     if(state._voiceRun){
-      for(const v of DYN_VOICES){ const r = state._voiceRun[v];
-        if(!r || !(r.n > 0)) continue;
-        const s = voiceRampScalar(v, r.i, r.n);
-        if(s < 1) for(const e of pitched) if(e.voice===v && !e.solo) e.amp *= s;
+      for(const v of DYN_VOICES){ const r = state._voiceRun[v]; if(!r || !(r.n > 0)) continue;
+        if(v === "drums"){ for(const e of drums){ const f = DYN_DRUM[e.drum] || DYN_DRUM._default;
+            const s = rampScalar(f[0], f[1], r.i, r.n); if(s < 1) e.amp *= s; } }
+        else { const fl = DYN_FLOOR[v]; const s = rampScalar(fl[0], fl[1], r.i, r.n);
+          if(s < 1) for(const e of pitched) if(e.voice===v && !e.solo) e.amp *= s; }
       }
       return;
     }
-    // PRESS: compute each voice's active runs across the section list, ramp the
-    // edge bars. A voice on for the WHOLE song still breathes in at the top and out
-    // at the tail (a single play-through has a real beginning and end).
+    // PRESS: compute each lane's active runs across the section list, ramp the edge
+    // bars. A voice on for the WHOLE song still breathes in at the top and out at
+    // the tail (a single play-through has a real beginning and end).
     const secs = state.sections || [];
     if(secs.length < 2 || spans.length !== secs.length) return;
     const barsOf = i => Math.max(1, Math.round(spans[i].beats / CBEATS));
-    for(const v of DYN_VOICES){
-      const on = secs.map(s => !!dynActive[v](s));
-      let i = 0;
-      while(i < secs.length){
-        if(!on[i]){ i++; continue; }
-        let j = i; while(j+1 < secs.length && on[j+1]) j++;   // run of active sections [i..j]
-        let runBars = 0; for(let s=i;s<=j;s++) runBars += barsOf(s);
-        let barBase = 0;
-        for(let s=i;s<=j;s++){
-          const secBars = barsOf(s), start = spans[s].start;
-          for(let b=0;b<secBars;b++){
-            const scal = voiceRampScalar(v, barBase + b, runBars);
-            if(scal < 1){ const lo = start + b*CBEATS, hi = lo + CBEATS;
-              for(const e of pitched) if(e.voice===v && !e.solo && e.beat>=lo && e.beat<hi) e.amp *= scal; }
-          }
-          barBase += secBars;
-        }
-        i = j + 1;
-      }
+    for(const v of ["pad","bass","melody"]){
+      const fl = DYN_FLOOR[v];
+      dynRuns(secs.map(s => !!dynActive[v](s)), barsOf, spans, (barInRun, runBars, lo) => {
+        const scal = rampScalar(fl[0], fl[1], barInRun, runBars);
+        if(scal < 1) for(const e of pitched) if(e.voice===v && !e.solo && e.beat>=lo && e.beat<lo+CBEATS) e.amp *= scal;
+      });
     }
+    dynRuns(secs.map(s => !!dynActive.drums(s)), barsOf, spans, (barInRun, runBars, lo) => {
+      for(const e of drums){ if(e.beat<lo || e.beat>=lo+CBEATS) continue;
+        const f = DYN_DRUM[e.drum] || DYN_DRUM._default;
+        const scal = rampScalar(f[0], f[1], barInRun, runBars);
+        if(scal < 1) e.amp *= scal; }
+    });
   }
 
   function buildEvents(state){
@@ -2122,7 +2148,7 @@
       if(addD.length) for(const d of addD) drums.push(d);
       if(dropD.size)  drums=drums.filter(d=>!dropD.has(d));
     }
-    applyVoiceDynamics(pitched, state, spans, CBEATS);   // voices swell in / fade out at their run edges (renderer-only; verifier/matrix unaffected)
+    applyVoiceDynamics(pitched, drums, state, spans, CBEATS);   // voices + drum kits swell in / fade out at their run edges (renderer-only; verifier/matrix unaffected)
     return { bpm:state.bpm, totalBeats, pitched, drums, found, sfx, srcById,
       ...(Object.keys(regHome).length?{regHome}:{}) };   // register-home decision (absent when no slot shifted — bundle shape unchanged)
   }

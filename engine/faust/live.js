@@ -131,10 +131,10 @@
       // the walk — which knows the real form — hands it (barInRun, runBars) per
       // voice. A voice on across the ENTIRE looping form gets no ramp (null) so
       // there's no dip at the loop seam; genuine entrances/exits within the form do.
-      const vAct = { pad: s => !!s.pads, bass: s => s.bass && s.bass !== "off", melody: s => s.melody && s.melody !== "off" };
+      const vAct = { pad: s => !!s.pads, bass: s => s.bass && s.bass !== "off", melody: s => s.melody && s.melody !== "off", drums: s => s.drums && s.drums !== "off" };
       const secBarsOf = s => Math.max(1, (s.cycles || 1) * nch);
       const voiceRun = {};
-      for (const v of ["pad", "bass", "melody"]) {
+      for (const v of ["pad", "bass", "melody", "drums"]) {
         if (!vAct[v](cur0) || secs.every(s => vAct[v](s))) { voiceRun[v] = null; continue; }   // off now, or on the whole loop → no ramp
         let a = secIdx; while (a - 1 >= 0 && vAct[v](secs[a - 1])) a--;
         let b = secIdx; while (b + 1 < secs.length && vAct[v](secs[b + 1])) b++;
