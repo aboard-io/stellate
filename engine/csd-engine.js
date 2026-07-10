@@ -42,7 +42,7 @@
   function columnsRef(){ return SCALAR_PASSES?null:(CsdColumnsRef||root.CsdColumns||null); }
 
   const NOTE={C:0,"C#":1,Db:1,D:2,"D#":3,Eb:3,E:4,F:5,"F#":6,Gb:6,G:7,"G#":8,Ab:8,A:9,"A#":10,Bb:10,B:11};
-  const QUAL={maj:[0,4,7],min:[0,3,7],maj7:[0,4,7,11],min7:[0,3,7,10],dom7:[0,4,7,10],m7b5:[0,3,6,10],sus4:[0,5,7]};
+  const QUAL={maj:[0,4,7],min:[0,3,7],maj7:[0,4,7,11],min7:[0,3,7,10],dom7:[0,4,7,10],m7b5:[0,3,6,10],sus4:[0,5,7],aug:[0,4,8]};   // aug added 2026-07-10 (REPERTOIRE wave 3): the whole_tone progression's planing triad — additive, no existing progression names it
   // build a chord voicing from root name + quality (consistent with the hand ones)
   function voicing(rootName, quality){
     const r=NOTE[rootName]||0;
@@ -115,7 +115,20 @@
     hijaz:      prog("Hijaz (I-bII, phrygian dominant)", [["A","maj"],["Bb","maj7"],["A","maj"],["G","min7"]]),
     blues_12:   prog("12-bar blues (all dom7)",  [["C","dom7"],["C","dom7"],["C","dom7"],["C","dom7"],
                                                   ["F","dom7"],["F","dom7"],["C","dom7"],["C","dom7"],
-                                                  ["G","dom7"],["F","dom7"],["C","dom7"],["G","dom7"]])
+                                                  ["G","dom7"],["F","dom7"],["C","dom7"],["G","dom7"]]),
+    // REPERTOIRE wave 3 (2026-07-10) — the author-wishlist de-clone additions
+    // (minor_run carried 79 genres, deep_two 67; these give the catalog real
+    // harmonic alternatives). Each has a distinct character no existing entry
+    // covers; wiring into anchors is a per-genre card judgment (genre-kernel).
+    whole_tone: prog("Whole tone (aug planing — Debussy dream)", [["C","aug"],["D","aug"],["E","aug"],["D","aug"]]),   // two whole-tone aug triads planed up and back: rootless shimmer, zero cadence gravity
+    interchange:prog("Modal interchange (I-bVII-IV-iv)", [["C","maj7"],["Bb","maj7"],["F","maj7"],["F","min7"]]),      // the borrowed-iv heartstring: bright mixolydian lift, then the minor plagal fall home
+    mediant:    prog("Chromatic mediant (I-III-I-bVI)",  [["C","maj"],["E","maj"],["C","maj"],["Ab","maj"]]),          // the film-score pivot: major thirds either side of home, wonder without a dominant
+    blues_16:   prog("16-bar blues (Watermelon Man vein)", [["C","dom7"],["C","dom7"],["C","dom7"],["C","dom7"],
+                                                  ["F","dom7"],["F","dom7"],["C","dom7"],["C","dom7"],
+                                                  ["G","dom7"],["F","dom7"],["G","dom7"],["F","dom7"],
+                                                  ["G","dom7"],["F","dom7"],["C","dom7"],["C","dom7"]]),               // the stretched turnaround — 128-beat cycles, so wire only into FAST genres (bebop) or it floors the duration solver
+    quartal:    prog("Quartal/sus vamp (So What planing)", [["C","sus4"],["D","sus4"],["C","sus4"],["G","sus4"]]),     // suspended chords that never resolve — modal-jazz stasis, the hold-music truth
+    epic_maj:   prog("Epic major (I-V-IV-V)",    [["C","maj"],["G","maj"],["F","maj"],["G","maj"]])                    // epic_min's daylight twin: the stadium major lift (authors' wishlist)
   });
 
   // (KERNEL-V4 §3.7) progression resolution is now HARD: gate 6 proves every
