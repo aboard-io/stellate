@@ -1,0 +1,25 @@
+{
+  "name": "runwaystomp",
+  "label": "Runway Stomp",
+  "info": "the ballroom stomp: an orchestra-hit 'ha' cracking on the beat, a crash for every dip and spin, hard minor-vamp house drums walking the runway — category is: everything",
+  "pos": [1080, 20180],
+  "clips": ["kaleido", "night_lights", "phuture_red", "cs_manhatta"],
+  "anchor": {
+    "bpm": [124, 130],
+    "swing": [0.02, 0.1],
+    "humanize": [0.03, 0.12],
+    "progressions": ["house_min", "drone_min", "minor_run"],
+    "kits": ["house", "four"],
+    "fills": ["cut", "impact", "hat rush", "riser"],
+    "bass": { "patterns": ["stab", "rolling", "octaves"], "recipe": { "model": ["saw"], "cutoff": [560, 900], "res": [0.15, 0.3], "level": [1.1, 1.3], "send": [0, 0.06], "dsend": [0, 0.05] } },
+    "lead": { "patterns": ["double", "sparse", "updown"], "samplerPool": ["orchestra_hit"], "recipe": { "model": ["sampler"], "wave": "saw", "voices": [1, 2], "spread": [0.002, 0.006], "cutoff": [2400, 3600], "level": [0.5, 0.64], "send": [0.2, 0.35], "dsend": [0.12, 0.25], "attack": 0.003, "release": [0.08, 0.16], "sustain": [0.5, 0.62] } },
+    "pads": { "prob": 0.4, "samplerPool": ["strings"], "recipe": { "model": ["sampler", "saw"], "wave": "saw", "cutoff": [800, 1400], "detune": [0.005, 0.011], "attack": [0.4, 1.2], "level": [0.4, 0.54], "send": [0.3, 0.48], "dsend": [0.1, 0.22] } },
+    "drums": { "kickModel": ["909"], "snareModel": ["clap"], "hatModel": ["noise"], "kick": [1.25, 1.5], "snare": [0.9, 1.15], "hat": [1, 1.3], "tune": [0.95, 1.1], "send": [0.1, 0.22], "dsend": [0.05, 0.15] },
+    "fx": { "reverb": [0.3, 0.45], "delayBeats": [0.375, 0.5], "delayFb": [0.2, 0.35], "delayCut": [2400, 3600], "pump": [0.3, 0.5], "crackle": [0, 0.1], "lowcut": [28, 42], "highcut": [0, 0], "comp": [0.45, 0.65] },
+    "found": { "role": "bed", "vol": [0.04, 0.1], "pitch": [0.9, 1.05], "stretch": [0.45, 0.6], "cutoff": [2200, 3400], "sources": ["shibuya", "tokyo_station"] },
+    "stab": ["rave", "offbeat"],
+    "hits": { "sources": ["rave_c", "vox_a", "sp_rhythm", "stml_hit_03"], "pattern": "offbeat", "prob": 0.6 },
+    "form": "dj"
+  },
+  "verify": { "seeds": 6, "features": { "bpm": 3, "acoustic": 2, "pump": 2, "chopUse": 2, "seventh": 2, "swing": 1, "sub": 1, "hatDensity": 1 } }
+}
