@@ -1,7 +1,8 @@
 # CLAUDE.md — stellate
 
-A self-contained generative genre-space instrument: a **178-genre**
-deterministic vector space (`genre-kernel.js`) over one score brain
+A self-contained generative genre-space instrument: a **228-genre**
+deterministic vector space (`genre-kernel.js`, incl. real 3/4 odd-meter
+anchors — `state.meter`) over one score brain
 (`engine/csd-engine.js buildEvents`) with a generative harmony/pipes layer
 (`engine/theory.js` + `engine/pipes.js` — docs/MUSIC-MIND.md), **sampled by
 default** (full General MIDI via `engine/faust/extract-gm.js`, with per-voice
@@ -58,6 +59,7 @@ tools/fetch-found-video.sh     # one-time: Internet Archive laserdisc clips -> f
 ./verify.sh                    # orchestrator: matrix + validate + engine smoke
 node test/engine.test.js       # faust-press smoke: states render, gated on non-silence
 node test/theory.test.js && node test/pipes.test.js   # MUSIC-MIND organs (pure node)
+node test/meter.test.js        # ODD-METER gates: 3/4 + 6/8 grids, meter-safety stress, non-silent press (pure node)
 node engine/validate-genres.js --quick   # symbolic gates (all genres); --audio adds Discogs-EffNet
 node engine/genre-verifier.js matrix      # genre confusion matrix — must stay diagonal-dominant
 node engine/genre-kernel.js track jungle --seed 7 --render   # one track -> mp3 via engine/faust/press.js
@@ -66,6 +68,9 @@ node engine/genre-kernel.js journey path.json --hours 4 --out journey/ --render 
                                # explorer path -> mp3s + genre-affine videos + gapless journey (GENRE-SPACE.md)
 # headless browser gates (need the pinned playwright):
 NODE_PATH=/home/ford/ftrain-2025/node_modules node test/explorer-ui-test.js   # (+ genre-viz / demo-layer / live-test-run / wavout-test-run / live-resilience / bg-survival)
+NODE_PATH=/home/ford/ftrain-2025/node_modules node test/blend-arrival-run.js  # live-blend ARRIVAL contract: drums ≤3 bars, kit/lead identity ≤7
+NODE_PATH=/home/ford/ftrain-2025/node_modules node test/speech-live-run.js    # speech organ live: espeak WASM synthesizes + feeds the found pipeline
+NODE_PATH=/home/ford/ftrain-2025/node_modules node test/mp3-bed-decode-run.js # HOSTING §3 diet: MP3 beds fetch 200 + decodeAudioData in a real browser
 ```
 
 Ship: `tools/ship.sh` = gates → `git push` → deploy to stellate.app (refuses a
@@ -111,7 +116,7 @@ tools/fetch-sample-cd.sh fatboy-slim-skip-to-my-loops \
    genres) or to `hits.sources` (always safe). NEVER add a `found:{role:…}` block to
    a genre lacking one, change a role, or touch bpm/scored fields — that shifts the
    confusion matrix. After every batch, `node engine/genre-verifier.js matrix
-   --no-cache` MUST still print `diagonal dominant: 178/178`.
+   --no-cache` MUST still print `diagonal dominant: 228/228`.
 
 The audio lands gitignored under `found/`; the recipe + registry/genre edits are
 the committed deliverable (the one rule). Credit the CD in SOURCES.md.
@@ -148,18 +153,32 @@ docs in `docs/`.
     `seedDefaultLoop`. Measures **monospace** for the layout so it's byte-identical
     every load (the visible labels use the VT323 webfont; the layout must not race it)
   - `inside.js` — the ⓘ "inside the sound" readout (blend/feel radar/voice
-    timeline, `vizData`/`renderInside`) + the DemoLayer note feed
+    timeline — always 8 cells, chordEvery-16/32 genres fold into stacked rows;
+    role/character descriptions that never name a source; beds render as
+    sustained ribbons; a compact "mind" section shows the MUSIC-MIND meters +
+    active pipes; `vizData`/`renderInside`) + the DemoLayer note feed
   - `background.js` — genre-affine laserdisc video + the ▢→▣→▦ chip that cycles
     off → video+demos → demoscene (8-bar video↔demo alternation + wall-clock backstop)
   - `live.js` — the live engine: owns `faustHandle` + `goLive`/`stopLive`, the
     honest boot-progress hairline, `?wavDebug` overlay, `?clicktest` bed, Media Session
-  - `panels.js` — the ⚙ controls (preact-rendered) + chip↔modal plumbing; registers
-    the store render subs
-  - `readouts.js` — the CPU meter + the playhead/chyron lower-third (self-ticking)
+  - `panels.js` — the ⚙ controls (preact-rendered) + chip↔modal plumbing incl.
+    the download cluster (⤓ preset/path + ⤓ midi/wav/mp3); registers the store
+    render subs
+  - `export.js` — ⤓ download the current song: MIDI via `engine/midi-export.js`,
+    plus a TRUE offline in-browser press (dedicated stream-worker `renderWav`
+    with real found/sampler/speech PCM) → WAV, or MP3 via the lamejs worker
+    (docs/EXPORT.md; explorer-ui-test section J)
+  - `readouts.js` — the playhead/chyron lower-third (self-ticking; the ⚡ CPU
+    meter box was removed 2026-07-09 — load/eco still reads out in the chyron
+    tech line)
 - `engine/` — the deterministic core + WASM engine (classic global scripts; NOT
   modules — the app reads them off `window`):
   - `csd-engine.js` — the score brain: `buildEvents(state)` → pitched/drums/found/
-    sfx events + PROGRESSIONS/kits/patterns vocabulary. (csound codegen: `legacy-csound`.)
+    sfx events + PROGRESSIONS/kits/patterns vocabulary, incl. ODD METERS —
+    `state.meter {beats,unit}` (absent = 4/4, byte-identical), kits
+    waltz/waltzswing/sixeight, bass oompahpah/waltzroot/siciliana, melody
+    waltz/lilt6, chordEvery defaulting to 6 under meter (`test/meter.test.js`).
+    (csound codegen: `legacy-csound`.)
   - `theory.js` — `CsdTheory`, the harmony brain (MUSIC-MIND organ #1): modes,
     voice-leading, and a functional-harmony progression generator with an
     `adventure` knob; consumed by buildEvents via `state.theory.reharm`
@@ -189,7 +208,8 @@ docs in `docs/`.
       through per-voice Faust effect chains; synths are the fallback/color
     - `live.js` — `FaustLive.exploreLive`: chord-bar JIT scheduler on the WebAudio
       clock, voice pools, eco-mode load shedding. Desktop rides a SharedArrayBuffer
-      ring (`ring-player.js`, `stream-worker.js`, `stream-renderer.js`); mobile
+      ring (`ring-player.js`, `stream-worker.js`, `stream-renderer.js`) and a
+      hidden desktop tab KEEPS PLAYING (bg-survival-run's contract); mobile
       takes the **WAV-FIRST** path — a real `<audio>` element fed rendered media
       segments so audio survives pocket/lock (`docs/history/WAV-FIRST.md`)
     - `found-player.js` — native found sound: granular bed + slice chopper on
@@ -200,10 +220,23 @@ docs in `docs/`.
   `render-sample-video.js`, `make-mix-page.js` (mix/index.html + mix.m3u from a
   rendered playlist dir), etc. (All rendering is Faust-press now; the csound
   `render.sh` is on `legacy-csound`.)
+  - `genre-tool.js` — author a genre anchor from a `genre-specs/*.json` spec:
+    validates against the live engine vocabulary, MEASURES verifier targets
+    from real renders (auto-tightened so no existing diagonal falls), splices
+    kernel + verifier in house style, runs the gates. Notes: `spec.pos` is
+    OPTIONAL (omit it and boot derives a star near the genre's musical family
+    — re-bake `app/world.js` POS after the batch); the tool applies
+    `K.deriveMind` to the injected anchor so create-time measurement matches
+    load; and `MIND_OVERRIDES` is applied INSIDE `deriveMind` (since
+    2026-07-10), so overrides beat derivation identically at measurement,
+    serialization, and load.
 - `test/` — gates + headless probes: `engine.test.js` (faust-press smoke),
-  `explorer-ui-test.js`/`genre-viz-test.js`/`demo-layer-test.js` and the live/
-  wavout/resilience/bg-survival runs (they `goto /index.html` and read the
-  `window.__` debug hooks), `probe-harness.js` (shared static server + chromium)
+  `meter.test.js` (odd-meter grids, pure node), `explorer-ui-test.js`/
+  `genre-viz-test.js`/`demo-layer-test.js` and the live/wavout/resilience/
+  bg-survival runs plus `blend-arrival-run.js` (the live-blend arrival
+  contract), `speech-live-run.js` (espeak WASM live), `mp3-bed-decode-run.js`
+  (the MP3 diet decode proof) — they `goto /index.html` and read the
+  `window.__` debug hooks; `probe-harness.js` (shared static server + chromium)
 - `audio-verifier.py` — EMPIRICAL gate: Essentia Discogs-EffNet genre model on
   rendered audio. Setup: `python3 -m venv .venv-verify && .venv-verify/bin/pip
   install essentia-tensorflow`, then download to `models/`:

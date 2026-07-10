@@ -40,8 +40,8 @@ MCP tool, nothing in the app or the gates imports it. A plain clone without
 `./verify.sh` green:
 
 - **matrix** — the symbolic confusion matrix must stay
-  **diagonal-dominant: 178/178**. Every genre must still sound most like
-  itself, symbolically. This is the big one: it's what makes 178 genres a
+  **diagonal-dominant: N/N (228 as of 2026-07)**. Every genre must still sound most like
+  itself, symbolically. This is the big one: it's what makes 228 genres a
   space instead of a soup.
 - **validate** — the kernel gate suite: **determinism** (same state, same
   seed → byte-identical events), **vocabulary** (genres draw from the
@@ -67,7 +67,7 @@ same role, or to `hits.sources` (always safe). NEVER add a `found:{role:…}`
 block to a genre that lacks one, change a role, or touch bpm/scored fields —
 that shifts the confusion matrix for everyone. After every batch:
 `node engine/genre-verifier.js matrix --no-cache` must still print
-`diagonal dominant: 178/178`.
+`diagonal dominant: N/N — 228/228 as of 2026-07`.
 
 **A new pipe** (event transform). Register it in `CsdPipes.REGISTRY`
 (`engine/pipes.js`) with its **own seeded rng stream** — never share or reuse

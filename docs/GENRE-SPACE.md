@@ -19,7 +19,7 @@ with its own blend rule:
 | **rhythm** | pool of kits | four-on-floor, pulse, breaks, jungle chop, boombap, none | weighted pool union |
 | **rhythm representation** (KERNEL-V4 Phase 1) | data lanes | every kit is a pulse-set lane table (`CsdEngine.KITS`) rendered by one interpreter; a state `euclid` spec is lane *notation* that replaces the matching lane, not an overlay | kits stay a pool; lane tables are the shared vocabulary the verifier/blends can read |
 | **harmonic rhythm** (KERNEL-V4 Phase 1) | scalar `chordEvery` | beats per chord bar; default 8 (the legacy CHORD_BEATS). An anchor may declare 4 (jazz-speed changes) or 16/32 (drone plateaus); kit/bass cells tile, melody phrases breathe | parent pick by weight, drawn LAST (zero draws when absent — byte-stable) |
-| **meter** (ODD-METER 2026-07) | enum `meter:{beats,unit}` | 4/4 (absent — the default, byte-identical), 3/4 waltz `{beats:3,unit:4}`, compound 6/8 `{beats:6,unit:8}` (the engine beat is the 8th; the pulse is the dotted quarter) | parent-pick by weight, drawn LAST, ZERO draws when no parent declares it. Meters don't lerp — a bar holds an integer beat count, so a blend keeps ONE parent's bar line and a journey crosses an audible meter-FLIP, not a smear. A meter anchor defaults `chordEvery` to 6 (two 3/4 measures / one 6/8 measure) and pools the meter vocabulary: kits `waltz`/`waltzswing`/`sixeight`, bass `oompahpah`/`waltzroot`/`siciliana`, melody `waltz`/`lilt6` |
+| **meter** (ODD-METER 2026-07) | enum `meter:{beats,unit}` | 4/4 (absent — the default, byte-identical), 3/4 waltz `{beats:3,unit:4}`, compound 6/8 `{beats:6,unit:8}` (the engine beat is the 8th; the pulse is the dotted quarter) | parent-pick by weight, drawn LAST, ZERO draws when no parent declares it. Meters don't lerp — a bar holds an integer beat count, so a blend keeps ONE parent's bar line and a journey crosses an audible meter-FLIP, not a smear. A meter anchor defaults `chordEvery` to 6 (two 3/4 measures / one 6/8 measure) and pools the meter vocabulary: kits `waltz`/`waltzswing`/`sixeight`, bass `oompahpah`/`waltzroot`/`siciliana`, melody `waltz`/`lilt6`. First production anchors: `salondawdle` + `greasepaintoompah` (both 3/4; 6/8 is engine-proven — `test/meter.test.js` — awaiting its first anchor) |
 | **harmonic motion** | scalar + pool | techno ≈ 0 (drone), city pop ≈ 1 (changes every 2 bars) | lerp rate, pick progression from pooled candidates compatible with rate |
 | **harmonic color** | pool | maj7/9 (vapor, lofi), minor triads (synthwave), single minor drone (techno) | pool union |
 | **key** | offset + mode bias | jungle/techno favor minor; vapor favors major-ish IVΔ | walked, not blended (see playlist) |
@@ -35,19 +35,24 @@ with its own blend rule:
 | **pipes** (MUSIC-MIND) | prob-weighted pool | fugue echoCanon (imitation IS the genre), dub throwFx, jungle ghost + throws, techno octavePump + densityArc, blues callResponse | weighted pool union: parent-scaled inclusion probs, dedupe by id, cap 3 — drawn LAST; densityArc evicts echoCanon (mud) |
 | **rhythmic complexity** (MUSIC-MIND) | scalar range | jungle .55-.8 (cell mutation + melody rhythm cells), techno .1-.25, ambient 0-.05 | lerp range then sample, drawn LAST; constrain caps ≤.4 above 165bpm (fast genres saturate on their own) |
 
-**Resolved axes note (MUSIC-MIND, 2026-07).** The three new axes are not 178
+**Resolved axes note (MUSIC-MIND, 2026-07).** The three new axes are not 228
 hand edits: `deriveMind()` runs at load and infers each anchor's
 `theory`/`pipes`/`rhythm` from what the anchor already declares (progression
 pool → harmonic appetite and extension color; kit pool + euclid → complexity;
 models/patterns → which pipes fit), with a small curated `MIND_OVERRIDES`
-table where inference reads a flagship wrong — explicit always wins. The
+table where inference reads a flagship wrong — explicit always wins
+(`MIND_OVERRIDES` is applied inside `deriveMind` itself since 2026-07-10, so
+genre-tool's create-time measurement, serialization, and load all agree). The
 resolved values ride the state as `state.theory` / `state.pipes` /
 `state.rhythm`, consumed by the CsdTheory/CsdPipes organs and the rhythm-cell
 passes in `buildEvents`; an absent knob is byte-identical output by law. The
 organs, the taste constraints ("locked in"), and the derivation rationale live
 in docs/MUSIC-MIND.md.
 
-Genres are **anchors** (178 of them as of 2026-07): named points with curated
+Genres are **anchors** (228 of them as of 2026-07 — 178 at the expansion's
+dawn, grown in four themed integration cycles: the synth gods, prog + the
+Liverpool eras, the classical wing incl. the first real 3/4 waltzes, and
+motown/funk + metal/nordic): named points with curated
 values on every dimension, grounded in the genre literature (techno: rhythm-over-harmony, drones, DJ
 form; house: 4-floor + claps, 8-bar additive builds; jungle: chopped breaks,
 sub pressure, rhythm-as-melody; trip hop: slowed dusty breaks, jazz color,
@@ -137,7 +142,7 @@ snare/kick balance, hat density, harmonic motion, seventh color, reverb wash,
 sub presence, break usage, swing, compression, variation ratio) and scores any
 state against per-genre target ranges. `node genre-verifier.js matrix` builds a
 **confusion matrix** over all anchors — the kernel is tuned until every genre
-scores highest as itself (currently 178/178 diagonal-dominant). That's the
+scores highest as itself (currently 228/228 diagonal-dominant). That's the
 falsifiable answer to "does this actually sound like jungle?", and the loop to
 re-run after every kernel change. Adding the `dinosynth` anchor (dinosaur-themed
 dungeon synth) is a worked example: its tribal log-drum pulse + low swing are

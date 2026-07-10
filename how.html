@@ -205,7 +205,10 @@ the same music.</p>
   parent whose pattern-pool energy is &ge;1.25 rungs above the runner-up and
   carries weight &ge;.35 takes the draw outright — a dancey parent keeps its
   groove against a wash-heavy neighborhood. DX7 patches sharing an FM algorithm
-  morph by lerping their ~144-dim param vectors. The MUSIC-MIND axes (adventure,
+  morph by lerping their ~144-dim param vectors. Meters (3/4 waltz, compound
+  6/8) parent-pick and never lerp — a bar holds an integer beat count, so a
+  blend keeps ONE parent's bar line and a journey crosses an audible meter
+  flip, not a smear. The MUSIC-MIND axes (adventure,
   color, voicing, reharm, pipes, rhythm complexity) draw dead last on the same
   stream.</p>
   <p>Then <b>constrain()</b> keeps midpoints songs: the kit snaps to
@@ -456,7 +459,10 @@ the same music.</p>
   <b>ring/worklet path</b> (desktop — same voice topology &rArr; glide by
   feeding bars into the running stream; a topology change &rArr; bridge stream
   and equal-power crossfade) and the <b>WAV-first path</b> (mobile — rolling
-  rendered WAV segments on a real audio element, pocket-proof).</p>
+  rendered WAV segments on a real audio element, pocket-proof). The same
+  offline press powers the &#10515; midi / wav / mp3 buttons in the &#9881;
+  panel — the current song, pressed whole in your browser and downloaded,
+  named for the chyron's invented band.</p>
 </section>
 
 </div><!-- /rail -->
@@ -510,7 +516,11 @@ is seeded.</p>
   <p><b>Glide and travel.</b> While LIVE, moving the cursor queues a smooth
   glide — the continuous morph plus discrete voice and section flips — through
   the same per-bar path; the traveler walks a drawn path leg by leg, retargeting
-  every bar. Blends interpolate every dimension <em>including the mind axes</em>.</p>
+  every bar. Blends interpolate every dimension <em>including the mind axes</em>.
+  And arrival is a contract, not a hope: genre-identity flips (form, kit, lead)
+  are queued first, so parked on a new genre its drums are playing <b>within 3
+  bars</b> and its kit/lead identity lands <b>within 7</b> — gated by
+  test/blend-arrival-run.js.</p>
   <p><b>Journeys.</b> Waypoints are genre names or drawn points; weight vectors
   lerp leg by leg. Per track, the <b>key walks the circle of fifths</b> (+7 or
   +5 semitones mod 12), and a <b>novelty memory</b> remembers the last 2 tracks'
