@@ -1352,7 +1352,11 @@
       // the goal horn — FULL-volume opener (was the bespoke `hornSource`/hits path):
       // KERNEL-V4 opener sample-event, one blast on the first section's downbeat.
       // gain 1.8 = the old hits-handler boost; vol 0.42 = the old hornVol default.
-      sampleEvents:[{ pool:["ca_horn"], placement:"opener", gain:1.8, treatment:{cutoff:6000, vol:0.42, rsend:0.6, dsend:0.45} }],
+      sampleEvents:[{ pool:["ca_horn"], placement:"opener", gain:1.8, treatment:{cutoff:6000, vol:0.42, rsend:0.6, dsend:0.45} },
+        // CARD-TRUTH WAVE: the Canadiana anthems (sp_ca_maple/gold/lights/rockies/sorry) were
+        // registered speech wired to nothing — the "national news" the card promises. Buried
+        // and spaced under the anthem, kept low so it doesn't crowd the hockey vox.
+        { pool:["sp_ca_maple","sp_ca_gold","sp_ca_lights","sp_ca_rockies","sp_ca_sorry"], placement:"buried", sections:"all", treatment:{cutoff:4400, vol:0.36, every:4, maxDur:14, rsend:0.16, dsend:0.12} }],
       stab:["off"],
       form:"anthem" },   // pop structure; grand brass swell at the bridge (see buildSections)
     transitwave: { label:"Transitwave", info:"motorik regional-rail vaporwave: a Kraftwerk sequencer arp + 2/3-speed gritty counter-arp, station-PA announcements (harmonized, echo + glitch), a distorted heavy-metal solo, door chimes, and a chugging choo-choo swing",
@@ -2444,6 +2448,10 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.3,0.5], snare:[0.2,0.4], hat:[0.2,0.4], tune:[0.9,1], send:[0.2,0.4], dsend:[0,0]},
       fx:{reverb:[0.5,0.7], delayBeats:[0.75,1.5], delayFb:[0.15,0.3], delayCut:[2000,2800], pump:[0,0], crackle:[0,0.08], lowcut:[0,0], highcut:[0,0], comp:[0,0.15]},
       found:{role:"narration", vol:[0.4,0.6], pitch:[0.98,1.04], stretch:[0.9,1.05], cutoff:[3200,4200], sources:["vx_burroughs","vx_whitman","vx_ginsberg_class"]},
+      // CARD-TRUTH WAVE: the EULA reader (sp_eula_*) was registered speech wired to nothing
+      // — "a flat, unbroken monotone reading the End User License Agreement". Buried, the
+      // drone of consent riding clause after clause under every measure.
+      sampleEvents:[{pool:["sp_eula_1","sp_eula_2","sp_eula_3"], placement:"buried", sections:"all", treatment:{cutoff:3800, vol:0.42, every:2, maxDur:8, rsend:0.15, dsend:0.12}}],
       hits:{sources:["sp_system"], pattern:"sparse", prob:0.05},
       stab:["off"],
       form:"wave",
@@ -2464,7 +2472,11 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.4,0.6], snare:[0.25,0.45], hat:[0.25,0.45], tune:[0.9,1], send:[0.2,0.4], dsend:[0,0]},
       fx:{reverb:[0.5,0.7], delayBeats:[0.75,1.5], delayFb:[0.12,0.26], delayCut:[2000,3000], pump:[0,0], crackle:[0,0.1], lowcut:[0,0], highcut:[0,0], comp:[0,0.15]},
       found:{role:"bed", vol:[0.05,0.12], pitch:[0.9,1.02], stretch:[0.45,0.6], cutoff:[2000,3000], sources:["dw_cycle","tokyo_station"]},
-      sampleEvents:[{pool:["tw_ding"], placement:"cadence", sections:"all", treatment:{cutoff:5000, vol:0.5}}],
+      sampleEvents:[{pool:["tw_ding"], placement:"cadence", sections:"all", treatment:{cutoff:5000, vol:0.5}},
+        // CARD-TRUTH WAVE: the grace-before-the-meal recitations (sp_grace_*) were registered
+        // speech wired to nothing — this genre IS "Grace Before Microwave", the solemn hymn of
+        // thanks. Buried, the blessing murmured over the church organ before the three beeps.
+        {pool:["sp_grace_1","sp_grace_2"], placement:"buried", sections:"all", treatment:{cutoff:3800, vol:0.42, every:2, maxDur:8, rsend:0.16, dsend:0.12}}],
       hits:{sources:["tw_ding","sp_herenow"], pattern:"response", prob:0.3},
       stab:["off"],
       form:"ritual",
@@ -2485,6 +2497,10 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.4,0.65], snare:[0.25,0.45], hat:[0.25,0.45], tune:[0.9,1], send:[0.2,0.4], dsend:[0,0.05]},
       fx:{reverb:[0.45,0.65], delayBeats:[0.75,1.5], delayFb:[0.15,0.3], delayCut:[2000,3000], pump:[0,0], crackle:[0,0.12], lowcut:[0,0], highcut:[0,0], comp:[0.1,0.3]},
       found:{role:"narration", vol:[0.35,0.55], pitch:[0.98,1.05], stretch:[0.9,1.05], cutoff:[2600,3600], sources:["vx_apollo"]},
+      // CARD-TRUTH WAVE: the ATC read-backs (sp_atc_*) were registered speech wired to
+      // nothing — "the phonetic alphabet as a lullaby". Buried and sparse (one every 4
+      // bars), calm and muffled: unflappable, at the edge of sleep.
+      sampleEvents:[{pool:["sp_atc_1","sp_atc_2","sp_atc_3","sp_atc_4","sp_atc_5"], placement:"buried", sections:"all", treatment:{cutoff:3600, vol:0.4, every:4, maxDur:10, rsend:0.2, dsend:0.14}}],
       hits:{sources:["sp_system","tw_ding"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"wave",
@@ -2504,6 +2520,10 @@
       drums:{kickModel:["boom"], snareModel:["noise","crack"], hatModel:["noise"], kick:[0.5,0.72], snare:[0.35,0.55], hat:[0.4,0.6], tune:[0.9,1.02], send:[0.2,0.4], dsend:[0,0.1]},
       fx:{reverb:[0.4,0.6], delayBeats:[0.5,0.9], delayFb:[0.12,0.28], delayCut:[2200,3200], pump:[0,0], crackle:[0,0.12], lowcut:[0,0], highcut:[0,0], comp:[0.15,0.35]},
       found:{role:"bed", vol:[0.06,0.14], pitch:[0.9,1.05], stretch:[0.45,0.6], cutoff:[2200,3400], sources:["tokyo_station","fax_tone"]},
+      // CARD-TRUTH WAVE: sp_fax_nocarrier ("NO CARRIER") was registered speech wired to
+      // nothing — "the handshake that never completes". A single announcement at each
+      // section's end: the connection giving up.
+      sampleEvents:[{pool:["sp_fax_nocarrier"], placement:"cadence", sections:"all", treatment:{cutoff:4200, vol:0.44, rsend:0.15, dsend:0.12}}],
       rubato:{depth:[0.008,0.018], periodBars:[2,4], prob:0.35},
       hits:{sources:["tw_ding"], pattern:"sparse", prob:0.15},
       stab:["off"],
@@ -2543,6 +2563,10 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.4,0.65], snare:[0.25,0.45], hat:[0.25,0.45], tune:[0.9,1], send:[0.15,0.3], dsend:[0,0.05]},
       fx:{reverb:[0.4,0.6], delayBeats:[0.75,1.25], delayFb:[0.15,0.3], delayCut:[1800,2800], pump:[0,0.1], crackle:[0,0.1], lowcut:[0,0], highcut:[0,0], comp:[0.1,0.3]},
       found:{role:"bed", vol:[0.1,0.2], pitch:[0.85,1], stretch:[0.5,0.7], cutoff:[1600,2600], sources:["factory","hvac_hum"]},
+      // CARD-TRUTH WAVE: the thermostat passive-aggression (sp_therm_*) was registered
+      // speech wired to nothing — "in the key of who touched the thermostat". Buried,
+      // muffled and quiet: the resentful muttering you can only hear at night.
+      sampleEvents:[{pool:["sp_therm_1","sp_therm_2","sp_therm_3"], placement:"buried", sections:"all", treatment:{cutoff:3800, vol:0.38, every:2, maxDur:8, rsend:0.15, dsend:0.12}}],
       hits:{sources:["sp_system","tw_ding"], pattern:"sparse", prob:0.1},
       stab:["off"],
       form:"wave",
@@ -2563,7 +2587,11 @@
       drums:{kickModel:["boom"], snareModel:["noise","clap"], hatModel:["noise"], kick:[0.5,0.75], snare:[0.35,0.55], hat:[0.3,0.5], tune:[0.9,1.02], send:[0.2,0.4], dsend:[0,0.1]},
       fx:{reverb:[0.4,0.6], delayBeats:[0.5,0.75], delayFb:[0.15,0.3], delayCut:[2400,3400], pump:[0,0], crackle:[0,0.1], lowcut:[0,0], highcut:[0,0], comp:[0.15,0.35]},
       found:{role:"bed", vol:[0.05,0.12], pitch:[0.9,1.05], stretch:[0.4,0.6], cutoff:[2000,3200], sources:["tokyo_station","shibuya"]},
-      sampleEvents:[{pool:["sp_system","sp_herenow"], placement:"cadence", sections:"all", treatment:{cutoff:3000, vol:0.42}}],
+      sampleEvents:[{pool:["sp_system","sp_herenow"], placement:"cadence", sections:"all", treatment:{cutoff:3000, vol:0.42}},
+        // CARD-TRUTH WAVE: the hold-music apologies (sp_hold_*) were registered speech wired to
+        // nothing — "your call is important to us — please continue to hold". Buried and spaced
+        // (one every 4 bars) as the periodic interruption the card describes.
+        {pool:["sp_hold_1","sp_hold_2","sp_hold_3","sp_hold_4"], placement:"buried", sections:"all", treatment:{cutoff:4000, vol:0.42, every:4, maxDur:10, rsend:0.16, dsend:0.12}}],
       hits:{sources:["sp_system","sp_herenow","sp_slowdown"], pattern:"sparse", prob:0.35},
       stab:["off"],
       form:"wave",
@@ -2583,6 +2611,10 @@
       drums:{kickModel:["boom"], snareModel:["noise","crack"], hatModel:["noise"], kick:[0.6,0.85], snare:[0.4,0.6], hat:[0.35,0.6], tune:[0.9,1.02], send:[0.2,0.4], dsend:[0,0.1]},
       fx:{reverb:[0.45,0.65], delayBeats:[0.75,1.25], delayFb:[0.15,0.3], delayCut:[2200,3200], pump:[0,0], crackle:[0,0.12], lowcut:[0,0], highcut:[0,0], comp:[0.1,0.3]},
       found:{role:"bed", vol:[0.06,0.14], pitch:[0.9,1.05], stretch:[0.5,0.7], cutoff:[2200,3400], sources:["tw_stationhall","tokyo_station"]},
+      // CARD-TRUTH WAVE: the lunar-colony toasts (sp_luna_*) were registered speech wired
+      // to nothing — the beer stein rising over the low-gravity oom-pah. Buried, a toast
+      // rotating under the dance.
+      sampleEvents:[{pool:["sp_luna_1","sp_luna_2"], placement:"buried", sections:"all", treatment:{cutoff:4200, vol:0.4, every:2, maxDur:8, rsend:0.15, dsend:0.12}}],
       hits:{sources:["sp_herenow"], pattern:"sparse", prob:0.12},
       stab:["off"],
       form:"pop",
@@ -2602,6 +2634,10 @@
       drums:{kickModel:["boom"], snareModel:["noise","clap"], hatModel:["noise"], kick:[0.6,0.85], snare:[0.4,0.6], hat:[0.4,0.6], tune:[0.92,1.02], send:[0.15,0.35], dsend:[0,0.1]},
       fx:{reverb:[0.35,0.55], delayBeats:[0.5,0.75], delayFb:[0.12,0.28], delayCut:[2600,3600], pump:[0,0], crackle:[0,0.1], lowcut:[0,0], highcut:[0,0], comp:[0.2,0.4]},
       found:{role:"bed", vol:[0.05,0.12], pitch:[0.95,1.08], stretch:[0.4,0.6], cutoff:[2400,3400], sources:["shibuya","tokyo_station"]},
+      // CARD-TRUTH WAVE: the elevator floor calls (sp_floor_*) were registered speech wired
+      // to nothing — "going up: third floor, ladies' outerwear". Buried, the floor
+      // announcements riding the endless ascent.
+      sampleEvents:[{pool:["sp_floor_1","sp_floor_2","sp_floor_3","sp_floor_4","sp_floor_5","sp_floor_6"], placement:"buried", sections:"all", treatment:{cutoff:4300, vol:0.42, every:2, maxDur:9, rsend:0.15, dsend:0.12}}],
       thunk:{prob:0.6},
       hits:{sources:["tw_ding","sp_shopping"], pattern:"sparse", prob:0.3},
       stab:["off"],
@@ -2622,6 +2658,10 @@
       drums:{kickModel:["boom","808"], snareModel:["crack","clap"], hatModel:["metal","noise"], kick:[1,1.3], snare:[0.6,0.85], hat:[0.6,0.95], tune:[0.98,1.12], send:[0.1,0.25], dsend:[0.1,0.25]},
       fx:{reverb:[0.3,0.48], delayBeats:[0.375,0.6], delayFb:[0.2,0.35], delayCut:[3000,4500], pump:[0.3,0.55], crackle:[0,0.08], lowcut:[35,50], highcut:[0,0], comp:[0.4,0.6], grit:[0.2,0.5]},
       found:{role:"chops", vol:[0.12,0.22], pitch:[1,1.35], stretch:[0.35,0.55], cutoff:[3500,6000], sources:["horns_78","rave_b"]},
+      // CARD-TRUTH WAVE: the scoville dares (sp_scoville_*) were registered speech wired to
+      // nothing — "a challenge you regret accepting". Buried, the dares egging on each
+      // hotter section.
+      sampleEvents:[{pool:["sp_scoville_1","sp_scoville_2","sp_scoville_3","sp_scoville_4","sp_scoville_5"], placement:"buried", sections:"all", treatment:{cutoff:4500, vol:0.4, every:2, maxDur:8, rsend:0.15, dsend:0.12}}],
       hits:{sources:["bb_horn_a","rave_b"], pattern:"offbeat", prob:0.4},
       stab:["offbeat"],
       form:"pop" },
@@ -2641,6 +2681,10 @@
       drums:{kickModel:["808","909"], snareModel:["clap","noise"], hatModel:["metal"], kick:[1,1.25], snare:[0.5,0.7], hat:[0.8,1.1], tune:[1,1.12], send:[0.05,0.15], dsend:[0.1,0.2]},
       fx:{reverb:[0.2,0.38], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[3000,4500], pump:[0.35,0.55], crackle:[0,0.05], lowcut:[35,50], highcut:[0,0], comp:[0.4,0.6]},
       found:{role:"chops", vol:[0.12,0.2], pitch:[1,1.3], stretch:[0.35,0.5], cutoff:[4000,6000], sources:["sp_st_slussen","sp_st_centraal"]},
+      // CARD-TRUTH WAVE: the flat-pack step narration (sp_flatpack_*) was registered speech
+      // wired to nothing — the six-step instructional voice. Buried, the calm assembly
+      // narration over the Nordic pulse.
+      sampleEvents:[{pool:["sp_flatpack_1","sp_flatpack_2","sp_flatpack_3","sp_flatpack_4","sp_flatpack_5"], placement:"buried", sections:"all", treatment:{cutoff:4400, vol:0.4, every:2, maxDur:10, rsend:0.15, dsend:0.12}}],
       hits:{sources:["sp_st_slussen","tw_ding"], pattern:"offbeat", prob:0.35},
       stab:["offbeat"],
       form:"dj" },
@@ -2659,7 +2703,11 @@
       drums:{kickModel:["boom"], snareModel:["crack","noise"], hatModel:["noise","metal"], kick:[0.8,1.1], snare:[0.5,0.75], hat:[0.4,0.65], tune:[0.94,1.06], send:[0.15,0.35], dsend:[0.05,0.15]},
       fx:{reverb:[0.4,0.6], delayBeats:[0.5,0.9], delayFb:[0.12,0.28], delayCut:[2400,3400], pump:[0,0.1], crackle:[0,0.12], lowcut:[0,0], highcut:[0,0], comp:[0.2,0.4]},
       found:{role:"bed", vol:[0.1,0.2], pitch:[0.92,1.05], stretch:[0.5,0.7], cutoff:[2400,3800], sources:["vx_sv_choir","vx_sv_march"]},
-      sampleEvents:[{pool:["vx_sv_choir","vx_sv_march"], placement:"opener", sections:"all", treatment:{cutoff:3600, vol:0.4}}],
+      sampleEvents:[{pool:["vx_sv_choir","vx_sv_march"], placement:"opener", sections:"all", treatment:{cutoff:3600, vol:0.4}},
+        // CARD-TRUTH WAVE: the Zubrovian anthems (sp_zubrovia_*) were registered speech wired to
+        // nothing — "a choir singing in an invented language, broadcast nightly". Buried and
+        // spaced (long clips, one every 4 bars) so each anthem line finishes.
+        {pool:["sp_zubrovia_1","sp_zubrovia_2","sp_zubrovia_3"], placement:"buried", sections:"all", treatment:{cutoff:4000, vol:0.4, every:4, maxDur:14, rsend:0.16, dsend:0.12}}],
       hits:{sources:["horns_78","bb_horn_a"], pattern:"response", prob:0.3},
       stab:["off"],
       form:"anthem" },
@@ -2679,6 +2727,10 @@
       drums:{kickModel:["909"], snareModel:["clap","crack"], hatModel:["metal","noise"], kick:[1.15,1.4], snare:[0.5,0.75], hat:[0.7,1], tune:[0.96,1.08], send:[0.05,0.15], dsend:[0.1,0.2]},
       fx:{reverb:[0.3,0.5], delayBeats:[0.5,0.75], delayFb:[0.25,0.4], delayCut:[2400,3600], pump:[0.45,0.68], crackle:[0,0.1], lowcut:[35,50], highcut:[0,0], comp:[0.45,0.65]},
       found:{role:"bed", vol:[0.1,0.2], pitch:[0.9,1.1], stretch:[0.5,0.7], cutoff:[2000,3200], sources:["factory","dw_cycle"]},
+      // CARD-TRUTH WAVE: sp_dw_done ("cycle complete") was registered speech wired to
+      // nothing — the card says it "arrives like a drop at 2 a.m." A single announcement
+      // at each section's end.
+      sampleEvents:[{pool:["sp_dw_done"], placement:"cadence", sections:"all", treatment:{cutoff:4000, vol:0.46, rsend:0.15, dsend:0.12}}],
       hits:{sources:["tw_ding","sp_system"], pattern:"sparse", prob:0.25},
       stab:["off"],
       form:"dj" },
@@ -2697,7 +2749,11 @@
       drums:{kickModel:["909","boom"], snareModel:["clap"], hatModel:["noise","metal"], kick:[1.1,1.35], snare:[0.6,0.85], hat:[0.6,0.9], tune:[0.98,1.1], send:[0.1,0.25], dsend:[0.05,0.15]},
       fx:{reverb:[0.28,0.45], delayBeats:[0.375,0.5], delayFb:[0.18,0.32], delayCut:[3200,4500], pump:[0.4,0.62], crackle:[0,0], lowcut:[30,45], highcut:[0,0], comp:[0.35,0.55]},
       found:{role:"chops", vol:[0.12,0.2], pitch:[1.1,1.4], stretch:[0.35,0.5], cutoff:[3500,6000], sources:["sp_system","tw_ding"]},
-      sampleEvents:[{pool:["tw_ding","sp_system"], placement:"response", sections:"all", treatment:{cutoff:5000, vol:0.42}}],
+      sampleEvents:[{pool:["tw_ding","sp_system"], placement:"response", sections:"all", treatment:{cutoff:5000, vol:0.42}},
+        // CARD-TRUTH WAVE: the survey prompts (sp_survey_*) were registered speech wired to
+        // nothing — "on a scale of one to ten, how likely are you to recommend us?". Buried,
+        // the chirpy questions riding the corporate-pop bounce.
+        {pool:["sp_survey_1","sp_survey_2","sp_survey_3","sp_survey_4"], placement:"buried", sections:"all", treatment:{cutoff:4400, vol:0.42, every:2, maxDur:10, rsend:0.15, dsend:0.12}}],
       hits:{sources:["sp_system","tw_ding","sp_shopping"], pattern:"offbeat", prob:0.45},
       stab:["offbeat"],
       form:"pop" },
@@ -2737,6 +2793,10 @@
       drums:{kickModel:["909"], snareModel:["clap","crack"], hatModel:["noise","metal"], kick:[1.1,1.35], snare:[0.6,0.85], hat:[0.6,0.9], tune:[0.98,1.1], send:[0.1,0.25], dsend:[0.05,0.15]},
       fx:{reverb:[0.3,0.5], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[3000,4500], pump:[0.4,0.62], crackle:[0,0.06], lowcut:[30,45], highcut:[0,0], comp:[0.35,0.55]},
       found:{role:"chops", vol:[0.12,0.22], pitch:[1,1.3], stretch:[0.35,0.55], cutoff:[3500,6000], sources:["ca_horn","rave_a"]},
+      // CARD-TRUTH WAVE: the umpire calls (sp_ump_*) were registered speech wired to
+      // nothing — "the vocal hook is the umpire: STEE-RIKE THREE, you're OUT". Buried, the
+      // calls riding the ballpark-organ house as the hook.
+      sampleEvents:[{pool:["sp_ump_1","sp_ump_2","sp_ump_3","sp_ump_4"], placement:"buried", sections:"all", treatment:{cutoff:4600, vol:0.44, every:2, maxDur:8, rsend:0.15, dsend:0.12}}],
       hits:{sources:["ca_horn","bb_horn_a"], pattern:"offbeat", prob:0.4},
       stab:["offbeat"],
       form:"pop",
@@ -2774,7 +2834,11 @@
       drums:{kickModel:["909","808"], snareModel:["crack","clap"], hatModel:["metal","noise"], kick:[1.1,1.35], snare:[0.6,0.85], hat:[0.7,1], tune:[0.98,1.1], send:[0.08,0.2], dsend:[0.1,0.25]},
       fx:{reverb:[0.25,0.42], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[3000,4500], pump:[0.35,0.55], crackle:[0,0.05], lowcut:[35,50], highcut:[0,0], comp:[0.35,0.55]},
       found:{role:"chops", vol:[0.14,0.24], pitch:[1,1.3], stretch:[0.4,0.6], cutoff:[3500,5500], sources:["vx_conet_poacher","vx_conet_swedish"]},
-      sampleEvents:[{pool:["vx_conet_poacher","vx_conet_swedish"], placement:"response", sections:"all", treatment:{cutoff:4500, vol:0.4}}],
+      sampleEvents:[{pool:["vx_conet_poacher","vx_conet_swedish"], placement:"response", sections:"all", treatment:{cutoff:4500, vol:0.4}},
+        // CARD-TRUTH WAVE: the DMV window calls (sp_dmv_*) were registered speech wired to
+        // nothing — "now serving number B-47 at window four", the card's melodic hook. Buried,
+        // the ticket calls riding the swung 2-step.
+        {pool:["sp_dmv_1","sp_dmv_2","sp_dmv_3","sp_dmv_4","sp_dmv_5","sp_dmv_6"], placement:"buried", sections:"all", treatment:{cutoff:4500, vol:0.42, every:2, maxDur:10, rsend:0.15, dsend:0.12}}],
       hits:{sources:["vx_conet_poacher","tw_ding"], pattern:"offbeat", prob:0.4},
       stab:["offbeat"],
       form:"pop" },
@@ -2793,6 +2857,10 @@
       drums:{kickModel:["808","boom"], snareModel:["crack","clap"], hatModel:["metal","noise"], kick:[1.15,1.45], snare:[0.6,0.85], hat:[0.5,0.85], tune:[0.98,1.1], send:[0.08,0.2], dsend:[0.1,0.25]},
       fx:{reverb:[0.3,0.5], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[2800,4200], pump:[0.4,0.62], crackle:[0,0.06], lowcut:[35,50], highcut:[0,0], comp:[0.45,0.65], grit:[0.2,0.5]},
       found:{role:"chops", vol:[0.12,0.22], pitch:[0.9,1.2], stretch:[0.35,0.55], cutoff:[3000,5500], sources:["tw_ding","horns_78"]},
+      // CARD-TRUTH WAVE: the town-crier proclamations (sp_crier_*) were registered speech
+      // wired to nothing — "the royal decree read over a filthy sub". Buried and spaced
+      // (one every 4 bars) so the OYEZ lands and the drop has room.
+      sampleEvents:[{pool:["sp_crier_1","sp_crier_2","sp_crier_3"], placement:"buried", sections:"all", treatment:{cutoff:4200, vol:0.42, every:4, maxDur:10, rsend:0.16, dsend:0.12}}],
       hits:{sources:["tw_ding","bb_horn_a"], pattern:"response", prob:0.4},
       stab:["off"],
       form:"drop" },
@@ -2833,7 +2901,11 @@
       // wired to nothing (and the bpm-matched `break` role can't take a texture clip).
       // The card says "chopped into an IDM shuffle" — a slice layer chops the seek
       // tick-tick-grind across the beat, riding over the amen.
-      sampleEvents:[{pool:["floppy_seek"], placement:"slice", sections:"all", gain:1.0, prob:0.5, treatment:{cutoff:6500, vol:0.3}}],
+      sampleEvents:[{pool:["floppy_seek"], placement:"slice", sections:"all", gain:1.0, prob:0.5, treatment:{cutoff:6500, vol:0.3}},
+        // CARD-TRUTH WAVE: sp_floppy_save ("saving document") was registered speech wired to
+        // nothing — "a ritual with real stakes: do not remove the disk". A single announcement
+        // at each section's end, the save committing.
+        {pool:["sp_floppy_save"], placement:"cadence", sections:"all", treatment:{cutoff:4200, vol:0.44, rsend:0.15, dsend:0.12}}],
       hits:{sources:["tw_ding","rave_a"], pattern:"offbeat", prob:0.4},
       stab:["offbeat"],
       form:"dj" },
@@ -2852,6 +2924,10 @@
       drums:{kickModel:["909","boom"], snareModel:["clap"], hatModel:["metal","noise"], kick:[1.2,1.45], snare:[0.65,0.9], hat:[0.7,1.05], tune:[1,1.15], send:[0.1,0.25], dsend:[0.05,0.15]},
       fx:{reverb:[0.28,0.45], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[3500,5500], pump:[0.5,0.75], crackle:[0.4,0.7], lowcut:[30,45], highcut:[0,0], comp:[0.4,0.6]},
       found:{role:"chops", vol:[0.14,0.24], pitch:[1.2,1.5], stretch:[0.35,0.5], cutoff:[4000,7000], sources:["rave_a","rave_b","rave_c"]},
+      // CARD-TRUTH WAVE: the cereal ads (sp_cereal_*) were registered speech wired to
+      // nothing — "part of this complete breakfast". Buried, the mascot jingle patter
+      // riding the sugar-rush hyperpop.
+      sampleEvents:[{pool:["sp_cereal_1","sp_cereal_2","sp_cereal_3"], placement:"buried", sections:"all", treatment:{cutoff:4600, vol:0.4, every:2, maxDur:8, rsend:0.15, dsend:0.12}}],
       hits:{sources:["rave_a","rave_b","bb_horn_a"], pattern:"offbeat", prob:0.5},
       stab:["rave"],
       form:"drop" },
@@ -2873,7 +2949,11 @@
       // THE TUMBLE (card-truth wave): dryer_spin was registered "domestic break bed"
       // but wired to nothing. The card's "wash of white noise you mistake for rain" is
       // a sustained bed under the chopped amen — the spin-cycle drone the break rides on.
-      sampleEvents:[{pool:["dryer_spin"], placement:"bed", sections:"all", gain:1.0, treatment:{cutoff:5200, vol:0.2, stretch:0.6}}],
+      sampleEvents:[{pool:["dryer_spin"], placement:"bed", sections:"all", gain:1.0, treatment:{cutoff:5200, vol:0.2, stretch:0.6}},
+        // CARD-TRUTH WAVE: the laundry stabs (sp_laundry_*) were registered speech wired to
+        // nothing — "tumble dry low as the vocal stab". Buried, the care-label calls riding
+        // the chopped amen.
+        {pool:["sp_laundry_1","sp_laundry_2"], placement:"buried", sections:"all", treatment:{cutoff:4600, vol:0.42, every:2, maxDur:8, rsend:0.15, dsend:0.12}}],
       hits:{sources:["tw_ding","sp_system"], pattern:"offbeat", prob:0.35},
       stab:["off"],
       form:"drop" },
