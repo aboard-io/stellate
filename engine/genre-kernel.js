@@ -78,19 +78,19 @@
     // item license basis) + 5 synthesized tech elegies. Recovery recipe + exact
     // fetch URLs live in genre-specs/MATERIALS.md and SOURCES.md; url:"" here where
     // the bed is synthesized or awaiting the fetch-found-sound.sh recipe bump.
-    whale_song:      { label:"NOAA/PMEL humpback whale song (US-gov PUBLIC DOMAIN)", url:"" },   // whalejazz — trading fours with the humpback
-    hydrophone:      { label:"NOAA hydrophone ocean-column ambience (PUBLIC DOMAIN)", url:"" },   // atlantidrone — the water column
-    crickets:        { label:"Snowy tree cricket / katydid night chorus (PD nature)", url:"" },   // crickettempo — Dolbear's Law
-    ferment_bubble:  { label:"Sourdough starter fermenting (+15dB) — food-bed", url:"" },          // sourdough — a starter is alive
-    dw_cycle:        { label:"Dishwasher rinse-pump + heated-dry tick — domestic bed", url:"" },   // dishwasherwave
-    pigeon_coo:      { label:"Feral pigeon / rock dove coo (CC BY-SA 4.0 — flagged, see SOURCES.md)", url:"" },  // pigeonstep
-    chickadee:       { label:"Black-capped chickadee fee-bee song (PD-adjacent, verify)", url:"" },  // chickadeecore — the descending m3
-    dryer_spin:      { label:"Tumble-dryer accelerating spin cycle — domestic break bed", url:"" }, // laundrycore
-    fax_tone:        { label:"Fax CNG/CED tones, synthesized (1100/2100Hz) — license-free", url:"" },   // faxbossa
-    hvac_hum:        { label:"HVAC furnace drone, synthesized room-tone — license-free", url:"" },      // thermostatwave
-    floppy_seek:     { label:"3.5\" floppy head-stepper seek, synthesized — license-free", url:"" },    // floppycore — the break
+    whale_song:      { label:"NOAA/PMEL humpback whale song (US-gov PUBLIC DOMAIN)", url:"found/whale_song.mp3" },   // whalejazz — trading fours with the humpback
+    hydrophone:      { label:"NOAA hydrophone ocean-column ambience (PUBLIC DOMAIN)", url:"found/hydrophone.mp3" },   // atlantidrone — the water column
+    crickets:        { label:"Snowy tree cricket / katydid night chorus (PD nature)", url:"found/crickets.mp3" },   // crickettempo — Dolbear's Law
+    ferment_bubble:  { label:"Sourdough starter fermenting (+15dB) — food-bed", url:"found/ferment_bubble.mp3" },          // sourdough — a starter is alive
+    dw_cycle:        { label:"Dishwasher rinse-pump + heated-dry tick — domestic bed", url:"found/dw_cycle.mp3" },   // dishwasherwave
+    pigeon_coo:      { label:"Feral pigeon / rock dove coo (CC BY-SA 4.0 — flagged, see SOURCES.md)", url:"found/pigeon_coo.mp3" },  // pigeonstep
+    chickadee:       { label:"Black-capped chickadee fee-bee song (PD-adjacent, verify)", url:"found/chickadee.mp3" },  // chickadeecore — the descending m3
+    dryer_spin:      { label:"Tumble-dryer accelerating spin cycle — domestic break bed", url:"found/dryer_spin.mp3" }, // laundrycore
+    fax_tone:        { label:"Fax CNG/CED tones, synthesized (1100/2100Hz) — license-free", url:"found/fax_tone.mp3" },   // faxbossa
+    hvac_hum:        { label:"HVAC furnace drone, synthesized room-tone — license-free", url:"found/hvac_hum.mp3" },      // thermostatwave
+    floppy_seek:     { label:"3.5\" floppy head-stepper seek, synthesized — license-free", url:"found/floppy_seek.mp3" },    // floppycore — the break
     modem_handshake: { label:"56k modem handshake negotiation, synthesized — license-free", url:"found/modem_handshake.mp3" },   // dialupgabber — the drop (was url:"" = unfetchable; the file was on disk, so the handshake never played; card-truth wave 2026-07-10)
-    crt_whine:       { label:"CRT flyback whine at the true 15734Hz NTSC line, synthesized", url:"" },   // crtwave — the high drone
+    crt_whine:       { label:"CRT flyback whine at the true 15734Hz NTSC line, synthesized", url:"found/crt_whine.mp3" },   // crtwave — the high drone
   };
   // sample layer: local files under found/samples/ (kind: break|hit|vox)
   const SAMPLES = {
@@ -2829,6 +2829,11 @@
       drums:{kickModel:["808","909"], snareModel:["crack","noise"], hatModel:["metal","noise"], kick:[1,1.3], snare:[0.55,0.8], hat:[0.7,1.05], tune:[1,1.14], send:[0.05,0.18], dsend:[0.1,0.25]},
       fx:{reverb:[0.25,0.42], delayBeats:[0.25,0.5], delayFb:[0.2,0.4], delayCut:[3000,4800], pump:[0.3,0.55], crackle:[0.05,0.2], lowcut:[35,50], highcut:[0,0], comp:[0.4,0.6]},
       found:{role:"break", vol:[0.16,0.28], pitch:[1,1.15], stretch:[0.8,1], cutoff:[4000,7000], sources:["amen_165","amen_170"]},
+      // THE SEEK-CLATTER (card-truth wave): floppy_seek was registered "the break" but
+      // wired to nothing (and the bpm-matched `break` role can't take a texture clip).
+      // The card says "chopped into an IDM shuffle" — a slice layer chops the seek
+      // tick-tick-grind across the beat, riding over the amen.
+      sampleEvents:[{pool:["floppy_seek"], placement:"slice", sections:"all", gain:1.0, prob:0.5, treatment:{cutoff:6500, vol:0.3}}],
       hits:{sources:["tw_ding","rave_a"], pattern:"offbeat", prob:0.4},
       stab:["offbeat"],
       form:"dj" },
@@ -2865,6 +2870,10 @@
       drums:{kickModel:["808"], snareModel:["crack","noise"], hatModel:["noise","metal"], kick:[1.1,1.35], snare:[0.55,0.8], hat:[0.6,0.9], tune:[0.98,1.1], send:[0.08,0.2], dsend:[0.1,0.25]},
       fx:{reverb:[0.28,0.45], delayBeats:[0.375,0.5], delayFb:[0.2,0.38], delayCut:[3000,4500], pump:[0.3,0.5], crackle:[0,0.08], lowcut:[35,50], highcut:[0,0], comp:[0.35,0.55]},
       found:{role:"break", vol:[0.2,0.35], pitch:[1,1.05], stretch:[0.9,1.05], cutoff:[4000,7000], sources:["amen_170","amen_172","amen_175"]},
+      // THE TUMBLE (card-truth wave): dryer_spin was registered "domestic break bed"
+      // but wired to nothing. The card's "wash of white noise you mistake for rain" is
+      // a sustained bed under the chopped amen — the spin-cycle drone the break rides on.
+      sampleEvents:[{pool:["dryer_spin"], placement:"bed", sections:"all", gain:1.0, treatment:{cutoff:5200, vol:0.2, stretch:0.6}}],
       hits:{sources:["tw_ding","sp_system"], pattern:"offbeat", prob:0.35},
       stab:["off"],
       form:"drop" },
