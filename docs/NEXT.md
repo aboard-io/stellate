@@ -61,6 +61,12 @@ synthesized-source class (new finding, below) + the promises gate.
 - **DONE — modem_handshake → dialupgabber**: root cause was `url:""` — the file
   (found/modem_handshake.mp3) was on disk but unfetchable, so it never played. URL
   restored; handshake wired as a section opener. Matrix 228/228 --no-cache.
+- **DONE — the full 20-genre speech cast**: every remaining orphaned commission
+  voice wired into its namesake genre (buried vox for running voices, cadence for
+  the "end" one-shots dw_done/fax_nocarrier/floppy_save). Ambiguous three resolved
+  by card: cereal→cerealwave, eula→termswave, grace→microwave. Matrix 228/228
+  --no-cache; each genre resolves + emits speech events; live-renders clean.
+  TASTE PENDING: vols set 0.36-0.46 by the wiring agent — Paul's ear on prominence.
 - **DONE — the SILENT SYNTHESIZED-SOURCE CLASS** (specific is general): modem was
   one of TWELVE SOURCES with `url:""` but a real found/<id>.mp3 on disk, so the
   found-player fetched "" → silence. ~51 genre-source references across the catalog
