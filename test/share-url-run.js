@@ -86,6 +86,18 @@ async function main() {
   else if (drag.after.t !== drag.before.t || drag.after.seg !== drag.before.seg) ok(`playhead dragged (t ${drag.before.t.toFixed(3)} -> ${drag.after.t.toFixed(3)}, startBar ${drag.after.sb})`);
   else fail(`playhead drag did not move travel: ${JSON.stringify(drag)}`);
 
+  // (d2) transport law: stop remembers the measure; STOP TWICE rewinds to the top
+  const tr = await page.evaluate(() => {
+    const afterStop = { sb: __S.startBar, seg: __S.travel.seg };      // stopLive already ran above
+    window.__X.stopLive();                                            // second stop while stopped = rewind
+    return { afterStop, afterDouble: { sb: __S.startBar, seg: __S.travel.seg, t: __S.travel.t, m: new URLSearchParams(location.search).get("m") } };
+  });
+  if (tr.afterStop.sb > 0) ok(`stop remembers the measure (startBar ${tr.afterStop.sb})`);
+  else fail(`stop lost the measure: ${JSON.stringify(tr.afterStop)}`);
+  if (tr.afterDouble.sb === 0 && tr.afterDouble.seg === 0 && tr.afterDouble.t === 0 && tr.afterDouble.m == null)
+    ok("stop twice rewinds to the top (startBar 0, travel 0/0, URL m dropped)");
+  else fail(`double-stop did not rewind: ${JSON.stringify(tr.afterDouble)}`);
+
   // (e) macros gone + no errors
   const macroCount = await page.evaluate(() => document.querySelectorAll("#panel .mac, #panel .mrow").length);
   if (macroCount === 0) ok("macros gone from the panel"); else fail(`${macroCount} macro rows still render`);
