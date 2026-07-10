@@ -127,8 +127,16 @@ document.getElementById("helpChip").onclick=()=>toggleModal("about");
 // keep the ⓘ readout live: re-render every frame it's open (cheap; the radar is a
 // handful of SVG nodes). Closed = no work beyond the on-map glyph drawMap draws.
 subs.push(()=>{ if(MODALS.inside.classList.contains("open")) renderInside(); });
-for(const [k,el] of Object.entries(MODALS))
+for(const [k,el] of Object.entries(MODALS)){
   el.addEventListener("pointerdown",e=>{ if(e.target===el) toggleModal(k,false); });   // tap outside = dismiss
+  // BELT: force-navigate links inside modals. On iOS a plain <a> tap inside the
+  // about card sometimes never navigated (Paul 2026-07-10) — the exact
+  // interceptor is Safari-side and unreproducible in chromium, so navigate
+  // explicitly on click; harmless where native navigation already works
+  // (location.assign to the same href is idempotent mid-navigation).
+  el.addEventListener("click",e=>{ const a=e.target.closest&&e.target.closest("a[href]");
+    if(a&&!/^https?:/.test(a.getAttribute("href"))){ e.preventDefault(); location.assign(a.href); } });
+}
 addEventListener("keydown",e=>{ if(e.key==="Escape") for(const k of Object.keys(MODALS)) toggleModal(k,false); });
 // LIVE/STOP is ONE tap from the clean sky
 const playChip=document.getElementById("playChip");
