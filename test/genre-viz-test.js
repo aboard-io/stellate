@@ -79,12 +79,12 @@ async function main() {
   ok(!mix.chip, `B1: #mixChip still exists`);
   ok(!mix.modal, `B2: #mixWrap modal still exists`);
   ok(!mix.glyph, `B3: mixer glyph 𝄚 still on the chip row`);
-  ok(mix.chipRow.length === 4 && mix.chipRow.join(",") === "playChip,insideChip,bgChip,cfgChip",
-    `B4: chip row is [${mix.chipRow.join(", ")}] (want play,inside,bg,cfg — 4 chips)`);
+  ok(mix.chipRow.length === 3 && mix.chipRow.join(",") === "playChip,viewChip,cfgChip",
+    `B4: chip row is [${mix.chipRow.join(", ")}] (want play,view,cfg — 3 chips; the ONE view button, 2026-07-10)`);
   console.log(`\n=== MIXER REMOVED ===\n  mixChip=${mix.chip} mixWrap=${mix.modal} glyph=${mix.glyph}  chips=[${mix.chipRow.join(", ")}]`);
 
   // ---- open the ⓘ tool ----
-  await page.click("#insideChip");
+  await page.click("#viewChip");   // map -> viz (the one view button)
   await page.waitForTimeout(150);
   const shell = await page.evaluate(() => {
     const box = document.getElementById("inside");

@@ -17,7 +17,10 @@ export const S={ cursor:{x:MAP_CENTER.x,y:MAP_CENTER.y}, waypoints:[], travel:{s
   // THE THREE VIEWS (Paul 2026-07-10): star map / video / viz are exclusive
   // 100% views. vizView=true shows the full-screen viz (map + video off);
   // otherwise bgMode>0 (background.js) = the video view (map off); else the map.
-  vizView:false };
+  vizView:false,
+  // ±BPM DELTA (Paul 2026-07-10): a global offset on whatever plays, re-applied
+  // to every retarget target so it survives travel until dialed back to 0.
+  bpmDelta:0 };
 // (the eight MACRO axes lived here 2026-07-06..10 — removed on Paul's "get rid
 // of all macros"; the kernel's applyMacros machinery survives unused, and
 // absent macros = byte-identical resolution, so nothing musical moved.)

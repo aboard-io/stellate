@@ -248,3 +248,8 @@
   padding:.6rem 1rem;font:600 14px/1 system-ui,sans-serif;text-decoration:none;
   transform:translateY(-160%);transition:transform .15s}
 .a11y-skip:focus{transform:none;outline:3px solid #ffd23f}
+
+/* the view chip's SPINNER state: rides while the next view warms (video layer
+   coming up); cleared by applyBg the moment the layer is genuinely enabled. */
+.chip.spin{animation:chipspin 1s linear infinite}
+@keyframes chipspin{to{transform:rotate(360deg)}}

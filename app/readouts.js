@@ -3,7 +3,7 @@
 // timer, independent of the store's render subs. (The ⚡ CPU meter box lived
 // here until 2026-07-09 — Paul: "get rid of the CPU monitor box"; the engine's
 // load/eco machinery is untouched and still surfaces in the chyron tech line.)
-import { S, esc } from "./state.js";
+import { S, esc, K } from "./state.js";
 import { KEYS, PROG_MODE } from "./world.js";
 import { faustHandle } from "./live.js";
 
@@ -42,7 +42,7 @@ export async function playheadTick(){
     }
     const c=chyron();
     const line2=`key ${keyModeOf(S.playing)} · ${S.playing.bpm}bpm · `+
-      S.weights.map(w=>`${w.g} ${Math.round(w.w*100)}%`).join(" · ")+
+      S.weights.map(w=>`${(K.GENRES[w.g]&&K.GENRES[w.g].label)||w.g} ${Math.round(w.w*100)}%`).join(" · ")+
       (S.live&&S.queue.length?` · ${S.queue.length} changes queued`:"")+
       ` · verifier hears: ${S.best}`;
     document.getElementById("playhead").innerHTML=

@@ -97,7 +97,12 @@ export function genreVideo(info){
 // and demoscene options into one thing"). Each mode enables its layer + disables the
 // other; unavailable layers are skipped in the cycle. Default off. While in demoscene
 // mode, a double-tap advances to the next cart.
-const bgChip=document.getElementById("bgChip");
+// THE ONE VIEW CHIP (Paul 2026-07-10: "combine the video and information
+// buttons into one button with a spinner state and different icons per state").
+// panels.js wires the click cycle (map -> viz -> video -> map); applyBg below
+// keeps its ICON on the CURRENT view and clears the spinner once the target
+// view's layer is actually up.
+const viewChip=document.getElementById("viewChip");
 // bgMode is the ONE persisted background preference (the layers no longer remember
 // their own on/off — their localStorage self-restore used to re-enable them at init
 // behind the mode program's back, stacking video + demos). Restored per load,
@@ -144,8 +149,14 @@ function applyBg(){
   if(V&&w.v) V.setEnabled(true);
   if(D&&w.d) D.setEnabled(true);
   if(V) bgHadV=w.v;
-  if(bgChip.textContent!==BG_GLYPH[bgMode]) bgChip.textContent=BG_GLYPH[bgMode];   // applyBg also runs on the 1Hz reconciler — skip no-op DOM writes
-  bgChip.classList.toggle("live",bgMode!==0);
+  // view icon: ✦ map · ⓘ viz · ▣ video — the CURRENT view; spinner clears when
+  // the video layer is genuinely enabled (or instantly for map/viz).
+  const icon=S.vizView?"ⓘ":(bgMode!==0?"▣":"✦");
+  if(viewChip&&viewChip.textContent!==icon) viewChip.textContent=icon;
+  if(viewChip){ viewChip.classList.toggle("live",S.vizView||bgMode!==0);
+    const wantVideo=!S.vizView&&bgMode!==0;
+    const videoUp=!!(V&&V.enabled&&V.enabled())||!!(D&&D.enabled&&D.enabled());
+    if(!wantVideo||videoUp) viewChip.classList.remove("spin"); }
   // THE VIEW CLASSES (three exclusive 100% views, Paul 2026-07-10):
   // body.view-video hides the star map under footage/demos; body.view-viz hides
   // both under the full-screen viz. applyBg already runs on every render + the
@@ -187,16 +198,17 @@ function bgAltClock(){
 // stack the layers for at most ~1s before the XOR law is restored.
 function startBgAltClock(){ if(!bgAltTimer) bgAltTimer=setInterval(()=>{ if(bgMode===1) bgAltClock(); applyBg(); },1000); }
 window.__BGALT={ state:()=>({mode:bgMode,side:bgAlt.side,beats:bgAlt.beats}), tick:bgBarTick, flip:bgFlip };   // headless gate hook
-bgChip.onclick=()=>{
-  const V=window.VideoLayer, D=window.DemoLayer;
-  for(let i=0;i<3;i++){ bgMode=(bgMode+1)%3;                       // advance to the next AVAILABLE mode
-    if(bgMode===0) break;
-    if(bgMode===1 && V && V.available()) break;
-    if(bgMode===2 && D && D.available()) break;
-  }
+// the view cycle sets the background MODE directly (0 = no video, 1 = the
+// footage+demos alternation program). Mode 2 (demoscene-only) left the chip
+// cycle with the one-button redesign; it survives for saved prefs/DemoLayer.
+export function bgSetVideo(on){
+  const V=window.VideoLayer;
+  if(on&&!(V&&V.available())) return false;
+  bgMode=on?1:0;
   bgAlt.side="video"; bgAlt.beats=0; bgAlt.lastFlip=Date.now();    // a fresh program starts on footage
-  bgSave(); applyBg(); startBgAltClock(); set({status:"background: "+BG_LABEL[bgMode]});
-};
+  bgSave(); applyBg(); startBgAltClock(); set({status:on?"view: video":"view: star map"});
+  return true;
+}
 // The ⚙-panel "video" button routes HERE (it used to call VideoLayer.setEnabled
 // directly — the rogue path that could stack video over an active demo side and
 // then lose a fight with applyBg one frame later). Semantics: toggle the
@@ -210,5 +222,4 @@ export function bgVideoToggle(){
   return true;
 }
 export const bgVideoOn=()=>bgMode===1;
-bgChip.ondblclick=()=>{ if(bgMode!==0 && window.DemoLayer&&DemoLayer.next){ DemoLayer.next(); set({status:"demo: "+(DemoLayer.currentName?DemoLayer.currentName():"next")}); } };
 subs.push(applyBg); applyBg(); startBgAltClock();

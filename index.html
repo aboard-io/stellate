@@ -29,9 +29,11 @@
   <p class="ab-play"><b>Drag</b> anywhere to set a destination — the song journeys there, never jumps.
   <b>Double-click</b> to drop path waypoints: a constellation line connects them and a traveler
   walks the path, morphing the music through every genre it crosses — the path <em>is</em> the mix.
-  Drag waypoints to move them, right-click to erase. Set the pace in the panel.
-  <b>Pinch</b> (or ctrl+scroll) zooms the chart.
-  ▶ plays, ⓘ opens “inside the sound” (the live voice timeline), ▢ the background, ⚙ the controls.</p>
+  Drag the <b>pink playhead</b> to scrub; drag waypoints to reshape; right-click erases.
+  <b>Pinch</b> (or ctrl+scroll) zooms the chart. <b>Stop twice</b> rewinds to the top.
+  ▶ plays · ✦/ⓘ/▣ cycles the three views (star map, inside-the-sound, video) · ⚙ seed, pace, ±bpm
+  and in-browser downloads. The address bar carries your seed, path and measure —
+  a bookmark or a shared link reopens exactly this music, right here.</p>
   <!-- a real button-sized target (the bare inline link was unreliable to tap on
        iOS — Paul 2026-07-10: "tapping accessible text version goes nowhere");
        panels.js also force-navigates modal links on click as a belt. -->
@@ -48,8 +50,10 @@
      the engine load/eco readouts survive in the chyron tech line) -->
 <div id="chips">
   <button class="chip" id="playChip" title="LIVE / STOP">▶</button>
-  <button class="chip" id="insideChip" title="inside the sound — the live voice timeline">ⓘ</button>
-  <button class="chip" id="bgChip" title="background: off → video → demoscene (tap to cycle)">▢</button>
+  <!-- ONE view button (Paul 2026-07-10): cycles the three 100% views —
+       starmap ✦ → infoviz ⓘ → video ▣ — icon shows the CURRENT view;
+       a spinner rides it while the next view warms. -->
+  <button class="chip" id="viewChip" title="view: star map → info → video (tap to cycle)">✦</button>
   <button class="chip" id="cfgChip" title="controls">⚙</button>
 </div>
 <!-- ENGINE: classic global scripts (window.CsdEngine / GenreKernel / … / FaustLive).
