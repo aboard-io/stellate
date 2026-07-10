@@ -28,6 +28,18 @@
   // rather than throwing (never die over an expression organ).
   const CsdTheoryRef=(typeof module!=="undefined"&&module.exports)?require("./theory.js"):root.CsdTheory;
   const CsdPipesRef =(typeof module!=="undefined"&&module.exports)?require("./pipes.js") :root.CsdPipes;
+  // COLUMNAR EVENTS (vector-kernel STEP 1 — docs/NEXT.md §5b): the groove +
+  // voice-dynamics passes run their arithmetic on struct-of-arrays compute
+  // views (engine/columns.js) while writing results back into the same event
+  // objects — BYTE-IDENTICAL to the scalar loops (test/columns.test.js proves
+  // it across all genres x seeds). Node requires the module; a browser reads
+  // root.CsdColumns LAZILY at call time (loaders that don't ship columns.js
+  // yet fall back to the identical scalar path — no load-order trap, no
+  // behavior fork). CSD_SCALAR_PASSES=1 (node only) forces the scalar path —
+  // the test's permanent columnar-vs-scalar A/B lever, never set in production.
+  const CsdColumnsRef=(typeof module!=="undefined"&&module.exports)?require("./columns.js"):null;
+  const SCALAR_PASSES=(typeof process!=="undefined"&&process.env&&process.env.CSD_SCALAR_PASSES==="1");
+  function columnsRef(){ return SCALAR_PASSES?null:(CsdColumnsRef||root.CsdColumns||null); }
 
   const NOTE={C:0,"C#":1,Db:1,D:2,"D#":3,Eb:3,E:4,F:5,"F#":6,Gb:6,G:7,"G#":8,Ab:8,A:9,"A#":10,Bb:10,B:11};
   const QUAL={maj:[0,4,7],min:[0,3,7],maj7:[0,4,7,11],min7:[0,3,7,10],dom7:[0,4,7,10],m7b5:[0,3,6,10],sus4:[0,5,7]};
@@ -1078,10 +1090,43 @@
   // draw only when e.amp!=null — the historical draw shape), then push-pull
   // (drawless per-voice offset). Called once per lane (pitched, then drums),
   // sharing one rng stream — draw ORDER is the byte-stability contract.
+  // COLUMNAR (vector-kernel STEP 1): the warp arithmetic runs elementwise on a
+  // {beat, amp} compute view and writes back into the same event objects. The
+  // rng TAPE is pre-drawn in the exact per-event order of the scalar loop
+  // (timing draw always, amp draw only when the row has a numeric amp — the
+  // historical draw shape), so draw order is byte-stable; every arithmetic
+  // step keeps the scalar loop's left-to-right operation order, so the
+  // doubles are bit-equal. Scalar twin below for column-less loaders.
   function applyGroove(events, tfeel, rng){
     const sw=tfeel.swing.amount, grid=SWING_GRIDS[tfeel.swing.grid];
     const ht=tfeel.humanize.timing, hl=tfeel.humanize.level, pp=tfeel.pushPull;
     if(!sw && !ht && !hl && !pp) return;
+    const C=columnsRef();
+    if(!C) return applyGrooveScalar(events, tfeel, rng);
+    const cols=C.toColumns(events,["beat","amp"],{view:true});
+    const n=cols.n, beat=cols.beat, amp=cols.amp, ampM=cols.mask.amp;
+    if(sw){                     // grid swing (drawless) — masked on the ORIGINAL fractional beat
+      const swM=C.where(beat, b=>grid.at(b-Math.floor(b)));
+      C.shift(beat, sw*grid.push, swM);
+    }
+    if(ht||hl){                 // THE TAPE: rng consumed positionally, same sequence as the loop
+      const tD=new Float64Array(n), aD=new Float64Array(n);
+      for(let i=0;i<n;i++){ tD[i]=(rng()*2-1)*ht*0.04; if(ampM[i]) aD[i]=1+(rng()*2-1)*hl*0.25; }
+      C.shift(beat, tD);
+      C.scale(amp, aD, ampM);
+      C.map(amp, a=>Math.max(0.01,a), ampM);
+    }
+    if(pp){                     // push-pull: drawless per-row offset by voice/drum lane
+      const off=new Float64Array(n);
+      for(let i=0;i<n;i++){ const o=pp[events[i].voice||events[i].drum]; if(o) off[i]=o; }
+      C.shift(beat, off);
+    }
+    C.map(beat, b=>Math.max(0,b));
+    C.writeBack(cols, events);
+  }
+  function applyGrooveScalar(events, tfeel, rng){   // the pre-columnar loop, byte-identical twin
+    const sw=tfeel.swing.amount, grid=SWING_GRIDS[tfeel.swing.grid];
+    const ht=tfeel.humanize.timing, hl=tfeel.humanize.level, pp=tfeel.pushPull;
     for(const e of events){
       let b=e.beat; const f=b-Math.floor(b);
       if(sw && grid.at(f)) b += sw*grid.push;
@@ -1213,8 +1258,57 @@
       i = j + 1;
     }
   }
+  // COLUMNAR (vector-kernel STEP 1): the run-edge fades run as masked
+  // elementwise scales over {beat, amp} compute views (no rng in this pass);
+  // amp0 stamping and every multiply keep the scalar loop's order, so the
+  // doubles are bit-equal. Scalar twin below for column-less loaders.
   function applyVoiceDynamics(pitched, drums, state, spans, CBEATS){
     if(state.voiceDynamics === false) return;
+    const C=columnsRef();
+    if(!C) return applyVoiceDynamicsScalar(pitched, drums, state, spans, CBEATS);
+    const laneMask=(evs,n,v)=>{ const m=new Uint8Array(n);
+      for(let i=0;i<n;i++) if(evs[i].voice===v && !evs[i].solo) m[i]=1; return m; };
+    // LIVE: the walk supplies (barInRun, runBars) per lane for this single bar.
+    if(state._voiceRun){
+      const pc=C.toColumns(pitched,["amp"],{view:true});
+      for(const v of DYN_VOICES){ const r = state._voiceRun[v]; if(!r || !(r.n > 0)) continue;
+        if(v === "drums"){ for(const e of drums){ const f = DYN_DRUM[e.drum] || DYN_DRUM._default;
+            const s = rampScalar(f[0], f[1], r.i, r.n); if(s < 1){ if(e.amp0==null) e.amp0 = e.amp; e.amp *= s; } } }
+        else { const fl = DYN_FLOOR[v]; const s = rampScalar(fl[0], fl[1], r.i, r.n);
+          if(s < 1) C.scale(pc.amp, s, laneMask(pitched, pc.n, v)); }
+      }
+      C.writeBack(pc, pitched);
+      return;
+    }
+    // PRESS: compute each lane's active runs across the section list, ramp the edge
+    // bars. A voice on for the WHOLE song still breathes in at the top and out at
+    // the tail (a single play-through has a real beginning and end).
+    const secs = state.sections || [];
+    if(secs.length < 2 || spans.length !== secs.length) return;
+    const barsOf = i => Math.max(1, Math.round(spans[i].beats / CBEATS));
+    const pc=C.toColumns(pitched,["beat","amp"],{view:true});
+    for(const v of ["pad","bass","melody"]){
+      const fl = DYN_FLOOR[v], lm = laneMask(pitched, pc.n, v);
+      dynRuns(secs.map(s => !!dynActive[v](s)), barsOf, spans, (barInRun, runBars, lo) => {
+        const scal = rampScalar(fl[0], fl[1], barInRun, runBars);
+        if(scal < 1) C.scale(pc.amp, scal, C.and(lm, C.where(pc.beat, b=>b>=lo && b<lo+CBEATS)));
+      });
+    }
+    C.writeBack(pc, pitched, ["amp"]);
+    const dc=C.toColumns(drums,["beat","amp"],{view:true});
+    const fIn=new Float64Array(dc.n), fEx=new Float64Array(dc.n);
+    for(let i=0;i<dc.n;i++){ const f=DYN_DRUM[drums[i].drum]||DYN_DRUM._default; fIn[i]=f[0]; fEx[i]=f[1]; }
+    dynRuns(secs.map(s => !!dynActive.drums(s)), barsOf, spans, (barInRun, runBars, lo) => {
+      const wM=C.where(dc.beat, b=>b>=lo && b<lo+CBEATS);
+      const scal=new Float64Array(dc.n);
+      C.map(scal, (_,i)=>rampScalar(fIn[i],fEx[i],barInRun,runBars), wM);
+      const sM=C.and(wM, C.where(scal, s=>s<1));
+      for(let i=0;i<dc.n;i++) if(sM[i] && drums[i].amp0==null) drums[i].amp0=drums[i].amp;   // amp0 = composed accent, for the snare-law re-check (loudness envelope ≠ accent identity)
+      C.scale(dc.amp, scal, sM);
+    });
+    C.writeBack(dc, drums, ["amp"]);
+  }
+  function applyVoiceDynamicsScalar(pitched, drums, state, spans, CBEATS){   // the pre-columnar loop, byte-identical twin
     // LIVE: the walk supplies (barInRun, runBars) per lane for this single bar.
     if(state._voiceRun){
       for(const v of DYN_VOICES){ const r = state._voiceRun[v]; if(!r || !(r.n > 0)) continue;
