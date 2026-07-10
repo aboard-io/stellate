@@ -487,7 +487,11 @@
       ((g.lead && g.lead.patterns) || []).forEach(p => melP.add(p));
       (g.fills || []).forEach(f => fills.add(f));
       if (g.form) forms.add(g.form);
-      ((g.found && g.found.sources) || []).forEach(s => srcs.add(s));
+      ((g.found && g.found.sources) || []).forEach(s => {   // POOL LAW: a "pool:<class>[*N]" token counts as its members (K.SOURCE_POOLS)
+        const m = typeof s === "string" && /^pool:([a-z][a-z0-9_]*)(?:\*\d)?$/.exec(s);
+        if (m && K.SOURCE_POOLS && K.SOURCE_POOLS[m[1]]) K.SOURCE_POOLS[m[1]].forEach(x => srcs.add(x));
+        else srcs.add(s);
+      });
       ((g.hits && g.hits.sources) || []).forEach(s => hitsSrc.add(s));
       if (g.hits && g.hits.pattern) hitPats.add(g.hits.pattern);
       (g.stab || []).forEach(s => stabs.add(s));

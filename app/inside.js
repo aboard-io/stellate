@@ -91,14 +91,17 @@ const FOUND_CHAR={ speech:"cut-up announcer voice", vox:"vocal fragments", break
 // bed CHARACTER by id-class (Paul 2026-07-10: "you use tape atmosphere all over
 // the place" — it was the one fallback label for 48 different beds; name what
 // KIND of air it is, still never the source — the J1/J2 provenance law holds).
-const BED_CHAR=[
-  [/station|shibuya|tokyo|plaza|tw_|metro/i, "city air"],
-  [/highway|road|traffic|train/i,            "road hum"],
-  [/factory|industr|machine|boiler|furnace/i,"machine room"],
-  [/^vx_|voice|radio|conet|apollo|wwvh/i,    "voices on tape"],
-  [/frog|cricket|bird|loon|chickadee|pigeon|nature|wind/i, "night air"],
-  [/hydro|whale|water|ocean|sea|rain/i,      "deep water"],
-  [/hum|hvac|drone|fan|thermo/i,             "room tone"],
+const BED_CHAR=[   // ordered: specific tokens fire before the broad city/road/water nets (bed-pool expansion rows, 2026-07-10)
+  [/factory|industr|machine|furnace|mill\b|_press|turbine|grinding|pumping|silo/i, "machine room"],
+  [/shortwave|vlf|_em$|interference|static/i,  "shortwave"],
+  [/bell|village|brocante|carillon|calgary|tongluo/i, "smalltown"],
+  [/station|shibuya|tokyo|plaza|tw_|metro|market|bazaar|souk|forge|arcade|casino|subway|escalator|schoolyard|playground|bart_/i, "city air"],
+  [/hydro|whale|water|ocean|sea|surf|beach|glacier/i, "deep water"],
+  [/highway|road|traffic|train|freight|tram\b/i, "road hum"],
+  [/rain|thunder|storm|blizzard|_wind|wind_/i, "weather"],
+  [/^vx_|voice|radio|conet|apollo|wwvh|_pa$|terrace|fans|choir/i, "voices on tape"],
+  [/frog|cricket|bird|loon|chickadee|pigeon|nature|wind|coyote|owl|cicada|ibis|_dawn$|fox|mull_/i, "night air"],
+  [/hum|hvac|drone|fan\b|thermo|office|fridge|boiler|vault|vent|elevator/i, "room tone"],
 ];
 const foundChar=s=>{ if(FOUND_CHAR[s&&s.kind]) return FOUND_CHAR[s.kind];
   const id=(s&&s.id)||""; for(const [re,c] of BED_CHAR) if(re.test(id)) return c;
