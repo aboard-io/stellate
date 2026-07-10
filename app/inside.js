@@ -198,12 +198,16 @@ function masterFx(st){
 // Math.random — so it's stable in the headless gate and identical to the audio.
 const freqToMidi=hz=>hz>0?Math.round(69+12*Math.log2(hz/440)):0;
 // unit key (mapEvents) -> a coarse voice ROLE for lanes + the DemoLayer contract.
-function noteRole(unit){
+function noteRole(unit, isDrum){
   if(unit==="melody") return "melody";
   if(unit.indexOf("solo:")===0) return "solo";
   if(unit==="pad"||unit==="bass") return unit;
-  if(unit==="kick"||unit==="snare"||unit==="hat"||unit==="tom") return "drums";
   if(unit==="stab"||unit==="sfx") return "sfx";
+  // EVERY drum-flagged unit is the drums lane (Paul 2026-07-10: "synthesized
+  // samples and other samples don't show up in the viz" — the sampled kits'
+  // clap/rim/ride/crash/perc pieces fell through this map and matched no lane,
+  // so half of every sampled kit was invisible).
+  if(isDrum||unit==="kick"||unit==="snare"||unit==="hat"||unit==="tom") return "drums";
   return unit;
 }
 let _barMemo={st:null,ci:-1,serial:-1,sec:"",val:null};
@@ -246,13 +250,18 @@ function barVoiceEvents(st, bar){
     for(const e of m.events){
       const freq=(e.sets&&e.sets.freq)||0;
       const vel=e.amp!=null?e.amp:(e.sets&&(e.sets.gain!=null?e.sets.gain:e.sets.level!=null?e.sets.level:0.5));
-      notes.push({ role:noteRole(e.unit), unit:e.unit, beat:e.beat-lo, durB:Math.max(0.03,e.durB||0.1),
+      notes.push({ role:noteRole(e.unit, !!e.drum), unit:e.unit, beat:e.beat-lo, durB:Math.max(0.03,e.durB||0.1),
         midi:freqToMidi(freq), freq, vel:clamp01(vel), drum:!!e.drum });
     }
+    // kind map: srcId -> the source's KIND, so spoken/vocal chops get their
+    // own track (Paul 2026-07-10: "you're not showing all tracks").
+    const kindOf={}; for(const src of (one.foundSources||[])) if(src&&src.id) kindOf[src.id]=src.kind||"";
     for(const f of (m.found||[])){
       if(f.type==="chop"){   // chops are onsets — real hits, in-window already
-        notes.push({ role:"found", unit:"found", beat:f.beat-lo, durB:Math.max(0.03,f.durB||0.12),
-          midi:0, freq:0, vel:clamp01(f.amp!=null?f.amp:0.5), drum:true });
+        const k=kindOf[f.srcId]||"";
+        const role=(k==="speech"||k==="vox")?"voices":"found";
+        notes.push({ role, unit:role, beat:f.beat-lo, durB:Math.max(0.03,f.durB||0.12),
+          midi:0, freq:0, vel:clamp01(f.amp!=null?f.amp:0.5), drum:true, kind:k });
       }else{                 // BED: a sustained texture — draw the slice that overlaps THIS bar
         const s=Math.max(f.beat,lo), e2=Math.min(f.beat+(f.durB||0),hi);
         if(e2-s>0.01) notes.push({ role:"found", unit:"bed", beat:s-lo, durB:e2-s,
@@ -269,27 +278,37 @@ function barVoiceEvents(st, bar){
 // A lane shows whenever the instrument is voiced (roster) OR it has notes this bar.
 function timelineLanes(st, roster, found, bar, audit){
   const by={}; roster.forEach(r=>by[r.role]=r);
+  // ALL TRACKS (Paul 2026-07-10 "you're not showing all tracks"): stabs/hits
+  // and spoken/vocal layers are their own lanes now, not folded into lead/found.
   const specs=[
     {key:"pad",    from:"pad",  label:"pad",     col:"--purple", roles:["pad"]},
     {key:"bass",   from:"bass", label:"bass",    col:"--cyan",   roles:["bass"]},
-    {key:"melody", from:"lead", label:"lead",    col:"--pink",   roles:["melody","sfx"]},
+    {key:"melody", from:"lead", label:"lead",    col:"--pink",   roles:["melody"]},
     {key:"solo",   from:"lead", label:"counter", col:"--amber",  roles:["solo"]},
     {key:"drums",  from:"kit",  label:"drums",   col:"--mint",   roles:["drums"]},
+    {key:"stabs",  from:null,   label:"stabs",   col:"--amber",  roles:["sfx"]},
+    {key:"voices", from:null,   label:"voices",  col:"--pink",   roles:["voices"]},
     {key:"found",  from:null,   label:"found",   col:"--cyan",   roles:["found"]},
   ];
   const lanes=[];
   for(const sp of specs){
     const notes=bar.notes.filter(n=>sp.roles.indexOf(n.role)>=0);
     const r=sp.from?by[sp.from]:null;
-    const has=r||notes.length||(sp.key==="found"&&found.length);
+    // the counter/stabs/voices lanes only EARN a row with actual notes this bar
+    // (the counter shares the lead's roster entry, so it used to render empty).
+    const has=(sp.key==="solo"||sp.key==="stabs"||sp.key==="voices")?notes.length
+      :(r||notes.length||(sp.key==="found"&&found.length));
     if(!has) continue;
-    const name=r?r.name:(sp.key==="found"?(found[0]||"tape atmosphere"):sp.label);
+    const name=r?r.name:
+      sp.key==="found"?(found[0]||"tape atmosphere"):
+      sp.key==="voices"?((notes[0]&&notes[0].kind==="speech")?"cut-up announcer voice":"vocal fragments"):
+      sp.key==="stabs"?"sampled stabs":sp.label;
     // AUDIT-TRUTH: this lane's role was EXPECTED-BUT-SILENT in the measured audit for
     // this bar (not just the score) → paint it red/hatched with the probable reason.
     let sil=null;
     if(audit) for(const rl of sp.roles){ if(audit[rl]){ sil=audit[rl]; break; } }
     lanes.push({ key:sp.key, label:sp.label, name, col:sp.col, fx:r?(r.fx||[]):[],
-      notes, drumLane:sp.key==="drums"||sp.key==="found",
+      notes, drumLane:sp.key==="drums"||sp.key==="found"||sp.key==="voices"||sp.key==="stabs",
       silent:!!sil, silReason:sil?sil.reason:null, silMissing:sil?(sil.missing||[]):[] });
   }
   return lanes;
@@ -312,7 +331,7 @@ export function vizData(){
   }
   // found textures by CHARACTER (kind), deduped — never the recording's name/id
   const found=[]; for(const s of (st.foundSources||[]))
-    if((s.vol||0)>0.02){ const c=foundChar(s); if(!found.includes(c)&&found.length<2) found.push(c); }
+    if((s.vol||0)>0.02&&s.kind!=="hit"&&s.kind!=="speech"&&s.kind!=="vox"){ const c=foundChar(s); if(!found.includes(c)&&found.length<2) found.push(c); }   // the found lane names TEXTURES; hits/voices have their own lanes now
   const dom=blend[0], info=dom&&K.GENRES[dom.g]?K.GENRES[dom.g].info:"";
   const bar=barVoiceEvents(st, S.barInfo);
   // AUDIT-TRUTH: pull the measured expected-vs-actual audit for the bar currently heard
@@ -390,7 +409,7 @@ function radarSVG(feel){
 // duration; melodic lanes map PITCH to y (high notes ride high), drum/found lanes
 // stack each hit type on its own row. Block opacity = velocity. All CSS/HTML (no
 // SVG) so it stays crisp, responsive and cheap to rebuild every frame.
-const DRUM_ROW={ hat:0.10, tom:0.34, snare:0.52, kick:0.76, found:0.5, bed:0.18 };
+const DRUM_ROW={ crash:0.02, hat:0.10, ride:0.20, shaker:0.27, tom:0.34, clap:0.44, snare:0.52, rim:0.60, stick:0.60, perc:0.68, kick:0.76, cowbell:0.30, found:0.5, voices:0.5, stab:0.5, bed:0.18 };   // every sampled-kit piece gets its own row (2026-07-10)
 // THE UNIT IS ALWAYS 8 (Paul 2026-07): the visible roll is a constant 8-cell
 // window whatever the genre's harmonic rhythm. chordEvery=16/32 structures PAGE
 // (Paul 2026-07: the old stacked fold rows read as "double bars for each" —
