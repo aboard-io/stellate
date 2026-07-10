@@ -1101,6 +1101,75 @@
   const TF_DEFAULT_POOL=["rev","ply","degrade","octflip","rest"];   // the historical global 5 (order = the old t=0..4 mapping)
   const STABLE_SECTION=/chorus|hook|drop|peak|refrain/i;            // formAware schedule: transforms rest on these (the section is the hook — leave it alone)
 
+  // ---------- MUSICAL DYNAMICS: voices swell in and fade out, they don't snap ---
+  // A harmonic/melodic voice (pad, bass, melody) that was SILENT in the previous
+  // section and sounds in this one fades IN over the first bars of its RUN (the
+  // maximal stretch of consecutive sections it's on for) instead of snapping to
+  // full level; a voice about to go silent fades OUT over its last bars. Drums are
+  // exempt — their fills / dropouts / drops ARE their dynamics, and a slammed drop
+  // must stay slammed. Runs on the built EVENT list (renderer stage), so the
+  // symbolic verifier + musicality never see it (matrix unmoved); only rendered
+  // fixtures shift. It serves BOTH engines: press hands the whole multi-section
+  // song, so runs are computed from state.sections + spans here; live's stepWalk
+  // renders one section per bar and can't see the run, so it hands
+  // state._voiceRun={voice:{i:barInRun,n:runBars}} and the SAME ramp curve applies
+  // bar-by-bar. Per-genre opt-out: state.voiceDynamics===false. Tunables:
+  const DYN_RAMP_BARS = 2;                                    // entrance/exit length in bars, capped at half the run
+  const DYN_FLOOR = { pad: 0.12, bass: 0.35, melody: 0.30 };  // level a voice starts an entrance / ends an exit at (audible-but-soft, not silent — softens the edge without gutting energy; pads lowest since a swell from near-silence is their idiom)
+  const dynSmooth = t => t<=0 ? 0 : t>=1 ? 1 : t*t*(3-2*t);   // smoothstep ease (musical, not linear)
+  function voiceRampScalar(voice, barInRun, runBars){
+    const rb = Math.min(DYN_RAMP_BARS, Math.floor(runBars/2));
+    if(rb < 1) return 1;                                      // run too short to ramp — leave it
+    const fl = DYN_FLOOR[voice] != null ? DYN_FLOOR[voice] : 0.15;
+    let s = 1;
+    if(barInRun < rb)                                         // fade IN over the first rb bars
+      s = Math.min(s, fl + (1-fl)*dynSmooth((barInRun + 1) / (rb + 1)));
+    const fromEnd = runBars - 1 - barInRun;
+    if(fromEnd < rb)                                          // fade OUT over the last rb bars
+      s = Math.min(s, fl + (1-fl)*dynSmooth((fromEnd + 1) / (rb + 1)));
+    return s;
+  }
+  const DYN_VOICES = ["pad","bass","melody"];
+  const dynActive = { pad:s=>!!s.pads, bass:s=>s.bass&&s.bass!=="off", melody:s=>s.melody&&s.melody!=="off" };
+  function applyVoiceDynamics(pitched, state, spans, CBEATS){
+    if(state.voiceDynamics === false) return;
+    // LIVE: the walk supplies (barInRun, runBars) per voice for this single bar.
+    if(state._voiceRun){
+      for(const v of DYN_VOICES){ const r = state._voiceRun[v];
+        if(!r || !(r.n > 0)) continue;
+        const s = voiceRampScalar(v, r.i, r.n);
+        if(s < 1) for(const e of pitched) if(e.voice===v && !e.solo) e.amp *= s;
+      }
+      return;
+    }
+    // PRESS: compute each voice's active runs across the section list, ramp the
+    // edge bars. A voice on for the WHOLE song still breathes in at the top and out
+    // at the tail (a single play-through has a real beginning and end).
+    const secs = state.sections || [];
+    if(secs.length < 2 || spans.length !== secs.length) return;
+    const barsOf = i => Math.max(1, Math.round(spans[i].beats / CBEATS));
+    for(const v of DYN_VOICES){
+      const on = secs.map(s => !!dynActive[v](s));
+      let i = 0;
+      while(i < secs.length){
+        if(!on[i]){ i++; continue; }
+        let j = i; while(j+1 < secs.length && on[j+1]) j++;   // run of active sections [i..j]
+        let runBars = 0; for(let s=i;s<=j;s++) runBars += barsOf(s);
+        let barBase = 0;
+        for(let s=i;s<=j;s++){
+          const secBars = barsOf(s), start = spans[s].start;
+          for(let b=0;b<secBars;b++){
+            const scal = voiceRampScalar(v, barBase + b, runBars);
+            if(scal < 1){ const lo = start + b*CBEATS, hi = lo + CBEATS;
+              for(const e of pitched) if(e.voice===v && !e.solo && e.beat>=lo && e.beat<hi) e.amp *= scal; }
+          }
+          barBase += secBars;
+        }
+        i = j + 1;
+      }
+    }
+  }
+
   function buildEvents(state){
     let prg=getProgression(state.progression);
     // MUSIC-MIND organ #1 (state.theory): when `reharm` is set the named
@@ -2053,6 +2122,7 @@
       if(addD.length) for(const d of addD) drums.push(d);
       if(dropD.size)  drums=drums.filter(d=>!dropD.has(d));
     }
+    applyVoiceDynamics(pitched, state, spans, CBEATS);   // voices swell in / fade out at their run edges (renderer-only; verifier/matrix unaffected)
     return { bpm:state.bpm, totalBeats, pitched, drums, found, sfx, srcById,
       ...(Object.keys(regHome).length?{regHome}:{}) };   // register-home decision (absent when no slot shifted — bundle shape unchanged)
   }
