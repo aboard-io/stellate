@@ -27,7 +27,9 @@ const snap = () => `(() => {
     weights: (__S.weights||[]).map(w => w.g+":"+Math.round(w.w*100)),
     errN: h ? h.errors.length : -1,
     errs: h ? h.errors.slice(-4) : [],
-    pools: h ? [...h._pools].map(([k,p]) => k+"="+p.module+"x"+p.nodes.length).join(",") : "",
+    // h._pools died with the JIT/pool scheduler (1648ad7 — ring engine rebuild);
+    // the ring handle's voice-count proxy is nodeCount() (active units in the sig).
+    nodes: h && h.nodeCount ? h.nodeCount() : -1,
     status: __S.status,
   };
 })()`;
@@ -83,7 +85,7 @@ async function main() {
     console.log(
       `${t.leg.padEnd(12)} bar${String(t.bar).padStart(3)} rms=${String(t.rms).padStart(7)} ` +
       `load=${t.load} q=${t.qlen}[${t.q.join(",")}] lead=${t.lead} pad=${t.pad} ` +
-      `errN=${t.errN} pools=[${t.pools}]`);
+      `errN=${t.errN} nodes=${t.nodes}`);
     if (t.errs && t.errs.length) console.log(`      errs: ${t.errs.join(" | ")}`);
   }
   console.log("\n=== page errors (uncaught / console.error) ===");
