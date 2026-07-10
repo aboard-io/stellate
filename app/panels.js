@@ -5,7 +5,7 @@
 // preset/path/reset plumbing are gone) plus the chip↔view wiring.
 import { S, set, subs, html, render } from "./state.js";
 import { BARS_PER_SEG } from "./world.js";
-import { goLive, stopLive } from "./live.js";
+import { goLive, stopLive, setMasterVol } from "./live.js";
 import { renderInside } from "./inside.js";
 import { bgSetVideo, bgVideoOn } from "./background.js";
 import { drawMap, startPulse } from "./starmap.js";
@@ -39,6 +39,10 @@ function Panel(){
       <button onclick=${()=>{set({seed:Math.floor(Math.random()*99999)});}}>🎲</button>
       <button title="copy a link to THIS mix — seed, path and the current measure ride the URL; anyone opening it drops in right here"
         onclick=${copyShareUrl}>⧉ share</button></div>
+    <div class="row"><label>volume</label>
+      <input type="range" min="0" max="150" step="1" value=${Math.round((S.masterVol!=null?S.masterVol:1)*100)}
+        onInput=${e=>setMasterVol((+e.target.value||0)/100)} />
+      <output>${Math.round((S.masterVol!=null?S.masterVol:1)*100)}%</output></div>
     <div class="row"><label>pace</label>
       <input type="range" min="4" max="12" step="1" value=${16-Math.round(Math.log2(Math.max(16,Math.min(4096,+S.pace||BARS_PER_SEG))))}
         onInput=${e=>set({pace:Math.pow(2,16-Math.max(4,Math.min(12,+e.target.value||8)))})} />

@@ -59,7 +59,10 @@
   #panelWrap{z-index:7}   /* settings above every view (map, video, viz) */
   #aboutWrap{z-index:7}
   .modal.open{display:block}
-  #panel{position:absolute;top:.7rem;right:.7rem;width:330px;max-height:calc(100vh - 1.4rem);overflow:auto}
+  /* the ⚙ panel pops up RIGHT-ALIGNED ABOVE the settings button (the chips row
+     sits at bottom:.7rem, 48px tall), not at the top of the screen (Paul). It
+     grows upward and scrolls if it ever gets tall. */
+  #panel{position:absolute;bottom:4.2rem;right:.7rem;width:330px;max-height:calc(100vh - 5.6rem);overflow:auto}
   body.dragging{user-select:none;-webkit-user-select:none;cursor:crosshair}
   /* 61 stars: labels fade back — it's a star chart, constellation over caption */
   .anchor{font:11px VT323,monospace;fill:rgba(220,214,255,.42);text-shadow:0 0 6px #000;transition:fill .45s ease}

@@ -373,9 +373,16 @@
         processorOptions: { ctrlSab, ring0Sab: ringSabs[0], ring1Sab: ringSabs[1], cap: RING_FRAMES } });
     const masterGain = ctx.createGain(); masterGain.gain.value = 1;
     const analyser = ctx.createAnalyser(); analyser.fftSize = 2048;
+    // USER MASTER VOLUME (Paul): a dedicated monitor gain AFTER the analyser, so
+    // the listener's volume never collides with the engine's fade/mute automation
+    // on masterGain, and the RMS meters read PRE-volume (stable). setMasterVol()
+    // rides this node; range is the UI's business (0..~1.5).
+    const userGain = ctx.createGain();
+    userGain.gain.value = (opts.masterVol != null ? Math.max(0, Math.min(4, opts.masterVol)) : 1);
     ringNode.connect(masterGain);
     masterGain.connect(analyser);
-    if (msDest) analyser.connect(msDest); else analyser.connect(ctx.destination);
+    analyser.connect(userGain);
+    userGain.connect(msDest || ctx.destination);
 
     // ── found routing: a small submix into master. dry → master; rev/del/pp → a
     // light native reverb (short feedback delay + lowpass) → master. Found stays
@@ -1204,6 +1211,8 @@
       },
       // pre-open the idle worker so a later crossfade is snappy (real speedup proxy)
       prepare(targetState) { try { ensureWorker(cur ? (cur.ring ^ 1) : 1); } catch (e) {} },
+      // USER MASTER VOLUME — smooth (click-free) ride of the post-analyser gain.
+      setMasterVol(v) { try { userGain.gain.setTargetAtTime(Math.max(0, Math.min(4, +v || 0)), ctx.currentTime, 0.02); } catch (e) {} },
       // real proxy: runway health ("am I keeping up"); the rest are stubs (deleted machinery)
       loadRatio: () => loadRatio,
       ecoLevel: () => 0,
@@ -2463,8 +2472,13 @@
     startLoadReporter();
     pump();
 
+    let wavMasterVol = (opts.masterVol != null ? Math.max(0, Math.min(1, opts.masterVol)) : 1);   // <audio>.volume can't exceed 1 (no boost on the media path)
+    const applyWavVol = () => { for (const e of [els[0], els[1], mp3El]) { if (e) try { e.volume = wavMasterVol; } catch (x) {} } };
+    applyWavVol();
     const handle = {
       ctx, analyser: null, errors,
+      // USER MASTER VOLUME — the media path can only attenuate (element.volume ≤ 1).
+      setMasterVol(v) { wavMasterVol = Math.max(0, Math.min(1, +v || 0)); applyWavVol(); },
       // GETTERS so they reflect a runtime route demotion (mp3 → segAB), not the boot route.
       get mediaEl() { return useMp3 ? mp3El : els[0]; },
       get outputRoute() { return outRoute; },
