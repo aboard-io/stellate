@@ -195,7 +195,9 @@ async function assemble(state, sched, env, opts) {
   // fx_bus L/R inputs while every mono voice stays centered (dry, duplicated).
   const dry = new Float32Array(TOTAL), rev = new Float32Array(TOTAL),
         del = new Float32Array(TOTAL), pp = new Float32Array(TOTAL);
-  const anyStereo = Object.values(sched.units).some(u => u && u.stereo);
+  // MASTERING: units carrying `pan` (state-engine applyMasterPan) ride the
+  // same wide buses stereo voices use — so a panned mix allocates them too.
+  const anyStereo = Object.values(sched.units).some(u => u && (u.stereo || u.pan || u.panSpread));
   const wL = anyStereo ? new Float32Array(TOTAL) : null;
   const wR = anyStereo ? new Float32Array(TOTAL) : null;
 
@@ -226,6 +228,7 @@ async function assemble(state, sched, env, opts) {
         swell: !!u.sampler.swell,
         mello: u.sampler.mello || null,   // MELLOTRON: LFO phase off note tSec (deterministic)
         bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,
+        pan: SE.notePan(u, e.sets.freq),  // MASTERING: unit pan + pad pitch spread
       })).filter(n => n.tSec < totalSec);
       // INSERTS-ON-SAMPLED-VOICES: a sampled unit carrying its declared insert
       // chain (state-engine samplerUnit — explicit kernel inserts, distort
@@ -251,17 +254,23 @@ async function assemble(state, sched, env, opts) {
           }
         }
         const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
+        // MASTERING pan (unit-level for insert-carrying sampled units — the
+        // per-note spread is lost through the mono insert chain, accepted)
+        const pgi = (u.pan && wL) ? RC.panLR(u.pan) : null;
         for (let i = 0; i < TOTAL; i++) {
           const x = ubuf[i];
-          dry[i] += x * dg; rev[i] += x * rg; del[i] += x * lg;
+          if (pgi) { const xd = x * dg; wL[i] += xd * pgi.l; wR[i] += xd * pgi.r; }
+          else dry[i] += x * dg;
+          rev[i] += x * rg; del[i] += x * lg;
         }
         console.log(`  ${key}: ${notes.length} ev -> sampler:${u.sampler.id} (native PCM, ${u.sampler.zones.length} zones)` +
           ` [inserts: ${u.inserts.map(i => i.type).join(">")}]`);
         continue;
       }
-      SP.mixPCM(notes, buffers, SR, { dry, rev, del },
+      SP.mixPCM(notes, buffers, SR, { dry, rev, del, dryL: wL, dryR: wR },
         { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip });
-      console.log(`  ${key}: ${notes.length} ev -> sampler:${u.sampler.id} (native PCM, ${u.sampler.zones.length} zones)`);
+      console.log(`  ${key}: ${notes.length} ev -> sampler:${u.sampler.id} (native PCM, ${u.sampler.zones.length} zones)` +
+        (u.carve ? ` [carve: shares ${u.carve} — HPF/mud-dip]` : "") + (u.pan ? ` [pan ${u.pan}]` : ""));
       continue;
     }
     // FAUST units: the whole pool/legato/insert walk lives in render-core.js
@@ -372,6 +381,24 @@ async function assemble(state, sched, env, opts) {
   return { L, Rr, TOTAL };
 }
 
+// ---------------------------------------------------------------- makeup gain
+// MASTERING STAGE §4 (2026-07-10): per-press GAIN STAGING. The catalog norm
+// peaks at -3..-5 dBFS but quiet genres (fugue seed 3: max -22 dB) pressed
+// badly under-gained. computeMakeup is the whole law: a press whose float
+// master peaks BELOW the target window is lifted toward MASTER_TARGET_PEAK
+// (-6 dBFS), capped at MASTER_MAX_MAKEUP; a press already at/above the target
+// gets gain 1 — LOUD GENRES ARE BYTE-UNTOUCHED and nothing is ever turned
+// down, so no squash and (since post-gain peak <= target < 1) no clipping.
+// Applied in press() AFTER assemble(): assemble stays the segment-parity
+// reference, and the streaming path (causal — it cannot know the whole-song
+// peak) keeps its own gain structure (live has its own output chain).
+const MASTER_TARGET_PEAK = 0.5;   // -6 dBFS
+const MASTER_MAX_MAKEUP = 8;      // +18 dB ceiling — a near-silent press stays honest
+function computeMakeup(peak) {
+  if (!(peak > 1e-6) || peak >= MASTER_TARGET_PEAK) return 1;
+  return Math.min(MASTER_TARGET_PEAK / peak, MASTER_MAX_MAKEUP);
+}
+
 // ---------------------------------------------------------------- main
 async function press(state, outPath, opts) {
   opts = opts || {};
@@ -393,6 +420,20 @@ async function press(state, outPath, opts) {
   const dx7Presets = loadDx7Presets();
   const { L, Rr } = await assemble(state, sched,
     { mkProc, rootOf, buffers, speech, dx7Presets }, { spb, totalSec, TOTAL });
+
+  // MASTERING makeup (see computeMakeup above): lift under-gained presses
+  // toward the catalog loudness window; loud presses pass byte-untouched.
+  let peak = 0;
+  for (let i = 0; i < TOTAL; i++) {
+    const al = Math.abs(L[i]), ar = Math.abs(Rr[i]);
+    if (al > peak) peak = al;
+    if (ar > peak) peak = ar;
+  }
+  const makeup = computeMakeup(peak);
+  if (makeup > 1) {
+    for (let i = 0; i < TOTAL; i++) { L[i] *= makeup; Rr[i] *= makeup; }
+    console.log(`  master makeup: peak ${(20 * Math.log10(Math.max(peak, 1e-9))).toFixed(1)} dBFS -> x${makeup.toFixed(2)} (${(20 * Math.log10(makeup)).toFixed(1)} dB) toward ${(20 * Math.log10(MASTER_TARGET_PEAK)).toFixed(0)} dBFS`);
+  }
 
   writeWav(outPath, L, Rr);
   let sq = 0; for (let i = 0; i < TOTAL; i++) sq += L[i] * L[i];
@@ -416,4 +457,5 @@ if (require.main === module) {
   const state = JSON.parse(fs.readFileSync(args[0], "utf8"));
   press(state, args[1], { dur }).catch(e => { console.error(e); process.exit(1); });
 }
-module.exports = { press, assemble, decodeInputs, loadDx7Presets, mkProc, rootOf, SR, BS };
+module.exports = { press, assemble, decodeInputs, loadDx7Presets, mkProc, rootOf, SR, BS,
+  computeMakeup, MASTER_TARGET_PEAK, MASTER_MAX_MAKEUP };

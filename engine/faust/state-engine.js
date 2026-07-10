@@ -236,6 +236,120 @@
   // uniform scalar on top of the recipe send (relative wetness preserved); bass
   // and drums unaffected. Clamped like every send.
   const AIR_REV = { pad: 1.15, melody: 1.1, solo: 1.1 };
+
+  // ==== THE MASTERING STAGE (2026-07-10, Paul: "a final mixing/balancing/
+  // panning/gainstage/compression stage that does what a good DJ or live sound
+  // engineer does. The sound of the fugue is very muddy in the final mix. We
+  // may be using too much reverb overall.") ==================================
+  // Three renderer-level mechanisms, all MATRIX-BLIND by construction (they
+  // live on the resolved UNITS / master fx params; the symbolic verifier and
+  // the confusion matrix read only state fields, which are untouched):
+  //   1. STEREO PLACEMENT — per-voice constant-power pan at the unit level
+  //      (bass/kick/snare/sfx stay center; lead slightly right, solos
+  //      alternating left/right, pad slightly left with a per-note pitch
+  //      spread on the sampled path, hats/rides/perc kit-spread). Realized by
+  //      the offline renderers (press + the wavOut stream) on the existing
+  //      wide buses; the live ring path ignores `pan` (mono placement there,
+  //      documented) — a unit WITHOUT pan renders through the exact old
+  //      mono-dry path, byte-identical.
+  //   2. SAME-TIMBRE COLLISION CARVE — when two PITCHED voices resolve the
+  //      SAME sampler id (fugue seed 3: church_organ on bass AND melody),
+  //      they read as soup, not parts. The lead keeps its full range; every
+  //      other voice in the collision gets an EQ carve on its channel strip:
+  //      HPF ~300 Hz (pad/lead accompaniment) and/or a 300-600 Hz mud-band
+  //      dip. Bass keeps its lows (it IS the bass) and takes only the dip.
+  //   3. REVERB BUDGET — a density-aware scale on the MASTER reverb return:
+  //      wetSum = (Σ voice sends) × state.reverb estimates the wash;
+  //      beat DENSITY (share of sections with drums on) decides how much wash
+  //      the mix can afford. Beatless drones (ambient/mallsoft/doomdrone —
+  //      the wash IS the genre) keep cap ~capHi and never scale; driving
+  //      drenched mixes scale down toward definition. Measured on the full
+  //      catalog (seed 3): 11/228 genres trim (all reverb >= 0.7, all
+  //      beat-carrying: dinosynth 0.67, vaporwave 0.74 … hvacbop 0.95);
+  //      ambient/fugue/techno/gabber/jazz all scale 1.0 exactly.
+  // Tunables (conservative defaults — Paul's knobs):
+  const MASTER_PAN = {
+    melody: 0.10,   // lead a touch right
+    pad: -0.08,     // pad counterweights left (+ per-note spread below)
+    hat: 0.18, ride: 0.22, rim: -0.16, crash: 0.12, clap: 0.08, perc: -0.18,
+    tom: -0.10, stab: -0.10,
+    // bass/kick/snare/sfx: CENTER (no entry => no pan field => old byte path)
+  };
+  const PAN_SOLO = 0.14;        // solos alternate ±this, in sorted key order
+  const PAN_SPREAD_PAD = 0.28;  // sampled-pad per-note spread: ±this per octave off middle C
+  const CARVE_HPF = 300;                              // Hz — accompaniment high-pass
+  const CARVE_DIP = { f: 450, gain: -4, q: 0.9 };     // the 300-600 mud-band dip
+  const REV_BUDGET = { capHi: 2.2, slope: 1.9, floor: 0.55 };
+
+  // constant-power pan gains, ×√2 so center ≈ the old dup-to-both-channels
+  // level (pan 0 is never routed here — the old path handles it bit-exactly).
+  function panGains(pan) {
+    const th = (clamp(pan, -1, 1) + 1) * Math.PI / 4;
+    return { l: Math.SQRT2 * Math.cos(th), r: Math.SQRT2 * Math.sin(th) };
+  }
+  // per-NOTE pan for sampled voices: unit pan + (pad) pitch spread — higher
+  // chord tones drift right, lower left, like a real ensemble seating. Pure
+  // function of (unit, freq): window-independent => segment-parity safe.
+  function notePan(u, freq) {
+    const base = (u && u.pan) || 0;
+    const spread = (u && u.panSpread) || 0;
+    if (!spread) return base;
+    const off = Math.log2(Math.max(20, freq || 261.63) / 261.63) * spread;
+    return clamp(base + clamp(off, -spread, spread), -0.9, 0.9);
+  }
+  function applyMasterPan(units) {
+    for (const [k, p] of Object.entries(MASTER_PAN)) if (units[k]) units[k].pan = p;
+    const solos = Object.keys(units).filter((k) => k.startsWith("solo:")).sort();
+    solos.forEach((k, i) => { units[k].pan = (i % 2 ? 1 : -1) * PAN_SOLO; });
+    if (units.pad && units.pad.sampler) units.pad.panSpread = PAN_SPREAD_PAD;
+  }
+  // SAME-TIMBRE COLLISION CARVE — pitched units grouped by resolved sampler
+  // id; in each group the most lead-like voice keeps its range, the rest get
+  // the carve on a CLONED strip (STRIP_PROFILES are shared objects — never
+  // mutate them). Returns the carved keys (test/debug surface).
+  const CARVE_RANK = { melody: 0, solo: 1, pad: 2, bass: 3 };
+  function collisionCarve(units) {
+    const groups = {};
+    for (const [k, u] of Object.entries(units)) {
+      if (!u || u.__meta || u.drum || !u.sampler || !u.sampler.id) continue;
+      if (!(u.role in CARVE_RANK)) continue;
+      (groups[u.sampler.id] = groups[u.sampler.id] || []).push(k);
+    }
+    const carved = [];
+    for (const [id, keys] of Object.entries(groups)) {
+      if (keys.length < 2) continue;
+      keys.sort((a, b) => (CARVE_RANK[units[a].role] - CARVE_RANK[units[b].role]) || (a < b ? -1 : 1));
+      for (const k of keys.slice(1)) {
+        const u = units[k];
+        const strip = { ...(u.sampler.strip || {}) };
+        if (u.role !== "bass") strip.hpf = Math.max(strip.hpf || 0, CARVE_HPF);
+        if (!strip.eq2) strip.eq2 = { ...CARVE_DIP };   // aggressive strips already spend eq2 — keep theirs
+        u.sampler = { ...u.sampler, strip };
+        u.carve = id;
+        carved.push(k);
+      }
+    }
+    return carved;
+  }
+  // REVERB BUDGET — the density-aware master-return scale (1 = untouched).
+  // Consumed by fxParams (internal zita rgain) + reverbColor (color rgain),
+  // so press, the wavOut stream AND live all inherit it from this one point.
+  function reverbScale(state) {
+    const I = (state && state.instruments) || {};
+    const s = (v, d) => (v && v.send != null ? v.send : d);
+    const sendSum = s(I.pad, 0.55) + s(I.bass, 0.08) + s(I.melody, 0.45) + s(I.drums, 0.18);
+    const rv = state && state.reverb != null ? state.reverb : 0.7;
+    let dsum = 0, n = 0;
+    for (const sec of ((state && state.sections) || [])) {
+      n++;
+      const d = sec.drums;
+      dsum += (!d || d === "off") ? 0 : d === "full" ? 1 : 0.6;
+    }
+    const density = n ? dsum / n : 0;
+    const wet = rv * sendSum;
+    const cap = REV_BUDGET.capHi - REV_BUDGET.slope * density;
+    return Math.max(REV_BUDGET.floor, Math.min(1, cap / Math.max(wet, 1e-6)));
+  }
   // friendly reverb-character names for the fxLabels roster (viz metadata).
   const REVERB_LABELS = { dattorro: "plate", greyhole: "hall", fdn: "room", spring: "spring", shimmer: "shimmer" };
   const revLabel = (state) => REVERB_LABELS[state && state.reverbColor] || "reverb";
@@ -1280,6 +1394,12 @@
     // changes the pitched INSTRUMENT source — sfx/stab play in the full mix too.
     units.stab = { module: "stab", pool: 2, dry: 1, rev: 0.35, del: 0.3, lvl: 1, drum: true, params: { level: 1 }, tail: 0.6, freqMax: 2000 };
     units.sfx = { module: "sfx", pool: 2, dry: 1, rev: 0.3, del: 0, lvl: 1, hold: true, params: { level: 1 }, tail: 1.2 };
+    // MASTERING STAGE at the unit choke point (shared by press + stream + live):
+    // stereo placement, then the same-timbre collision carve. Before the trim
+    // so fxLabels reflect the final strips; both are pure functions of the
+    // resolved units (zero rng — determinism-gated like everything here).
+    applyMasterPan(units);
+    collisionCarve(units);
     const out = trimToBudget(units, state);
     // fxLabels (viz roster metadata; computed post-trim so labels reflect the
     // final shed state). Pure metadata — ignored by every render loop.
@@ -1339,7 +1459,10 @@
     const module = REVERB_COLORS[state && state.reverbColor];
     if (!module) return null;   // default => fx_bus internal zita
     const rv = state.reverb != null ? state.reverb : 0.7;
-    return { name: state.reverbColor, module, rgain: clamp(rv * 3.2, 0, 3.5), rtone: REVERB_TONE[state.reverbColor] };
+    // MASTERING: the density-aware reverb BUDGET scales the color return the
+    // same way fxParams scales the internal zita (scale 1 => byte-identical;
+    // post-clamp so saturated returns still trim — see fxParams).
+    return { name: state.reverbColor, module, rgain: clamp(rv * 3.2, 0, 3.5) * reverbScale(state), rtone: REVERB_TONE[state.reverbColor] };
   }
 
   // ---- AUTO-TUNE (fx wings stage 2) — snap found VOICE clips to the song scale ----
@@ -1373,7 +1496,13 @@
     const pp = state.pingpong || {};
     const colored = !!REVERB_COLORS[state && state.reverbColor];   // internal zita off when a color is active
     return {
-      rgain: colored ? 0 : clamp((state.reverb != null ? state.reverb : 0.7) * 3.2, 0, 2), dgain: 1,
+      // MASTERING: reverbScale is the density-aware reverb BUDGET (see the
+      // mastering block above) — 1 for most of the catalog (byte-identical),
+      // < 1 only for drenched beat-carrying mixes. Applied AFTER the slider
+      // clamp: the drenched genres saturate rgain at 2 (reverb > 0.625), so a
+      // pre-clamp scale would never reach them — the budget scales the actual
+      // RETURN.
+      rgain: colored ? 0 : clamp((state.reverb != null ? state.reverb : 0.7) * 3.2, 0, 2) * reverbScale(state), dgain: 1,
       // SHIMMER LEAN — Paul 2026-07-07, on-device: "a little more shimmer reverb
       // would be good." The internal zita tail is lowpassed at rtone; opening it
       // from the legacy-dark 2 kHz to 2.6 kHz lets more HF air through the tail,
@@ -1651,5 +1780,7 @@
     return mapEvents(E, state, ev, { bedAll: true });
   }
 
-  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, fxLabels, reverbColor, REVERB_COLORS, autoTune, masterMb, mapEvents, buildSchedule, COST, unitCost, stateCost, effectivePool, BUDGET, trimToBudget, stemClass, STEM_COST_MIN, pickSampledId, STRIP_PROFILES };
+  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, fxLabels, reverbColor, REVERB_COLORS, autoTune, masterMb, mapEvents, buildSchedule, COST, unitCost, stateCost, effectivePool, BUDGET, trimToBudget, stemClass, STEM_COST_MIN, pickSampledId, STRIP_PROFILES,
+    // MASTERING STAGE surface (renderers + test/mastering.test.js)
+    panGains, notePan, reverbScale, collisionCarve, MASTER_PAN };
 });

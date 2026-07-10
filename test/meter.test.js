@@ -118,7 +118,7 @@ function handState(meter, kit, bass, melody, seed, chordEvery) {
   try {
     headDir = fs.mkdtempSync(path.join(os.tmpdir(), "meter-head-"));
     fs.mkdirSync(path.join(headDir, "engine", "faust"), { recursive: true });
-    const files = ["csd-engine.js", "genre-kernel.js", "theory.js", "pipes.js", "namebank.js", "speech.js"];
+    const files = ["csd-engine.js", "columns.js", "genre-kernel.js", "theory.js", "pipes.js", "namebank.js", "speech.js"];   // columns.js: csd-engine requires it since vector-kernel STEP 1 (b6b6a3f)
     for (const f of files)
       fs.writeFileSync(path.join(headDir, "engine", f),
         execFileSync("git", ["show", "HEAD:engine/" + f], { cwd: path.join(HERE, ".."), maxBuffer: 64 * 1024 * 1024 }));
