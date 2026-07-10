@@ -214,6 +214,7 @@
     // synth fleet (2026-07): nine classic-synth Faust voices (faust/dsp/*.dsp)
     model==="juno60"||model==="tb303"||model==="solina"||model==="hammond"||model==="synclead"||
     model==="casiocz"||model==="oberheim"||model==="ppg"||model==="vp330"||
+    model==="hoover"||   // Alpha-Juno rave stab (SIGNATURE synth; supersaw voice with hoover defaults — state-engine)
     model==="dx7"||model==="sampler"||   // sampler: native pitched sample zones (found/samples/instruments/)
     // drums: kick boom|808|909 · snare noise|crack|clap · hat noise|metal
     model==="boom"||model==="808"||model==="909"||model==="noise"||model==="crack"||
@@ -249,6 +250,7 @@
     modeld:{class:"analog",ac:0}, juno60:{class:"analog",ac:0}, tb303:{class:"analog",ac:0},
     solina:{class:"analog",ac:0}, synclead:{class:"analog",ac:0}, casiocz:{class:"analog",ac:0},
     oberheim:{class:"analog",ac:0}, ppg:{class:"analog",ac:0}, vp330:{class:"analog",ac:0},
+    hoover:{class:"analog",ac:0},
     strings:{class:"analog",ac:0}, choir:{class:"analog",ac:0}, bell:{class:"analog",ac:0},
     brass:{class:"analog",ac:0}, vocoder:{class:"analog",ac:0}, guitar:{class:"analog",ac:0},
     fm:{class:"fm",ac:0}, dx7:{class:"fm",ac:0},
