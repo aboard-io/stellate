@@ -218,7 +218,7 @@ const FLIP_PHRASES={
 // order within each rank is a stable per-seed hash — rebuilds stop reshuffling,
 // so the queue's head survives the per-bar retarget churn. Pacing is untouched:
 // still one flip per 2 bars (glideStep) — the fix is order, not speed.
-let appliedFlips=new Set();
+let appliedFlips=new Map();   // flip name -> the TARGET's value signature when applied (revision detection)
 // the flips a listener IDENTIFIES a genre by — first-timers among these lead
 // the queue so a parked destination reads as itself within a few measures
 const LEAD_FLIPS=new Set(["form","drum kit","lead voice"]);
@@ -236,16 +236,42 @@ const LEAD_FLIPS=new Set(["form","drum kit","lead voice"]);
 // ~6 bars of dominance, and flips scale with bars-in-neighborhood. Parked
 // behavior is unchanged (dominant stable = the set accumulates exactly as
 // before; holds still pace timbre swaps at boundaries).
+// REVISION RE-TIER (the path simulator's "identity churn" finding): K.mix
+// re-picks discrete identity dims (lead model etc.) as the blend weights
+// sharpen mid-approach — the target's lead at w=0.5 isn't its lead at w=0.96.
+// The revised dim used to re-queue at the BOTTOM tier behind the whole frozen
+// already-applied set, waiting ~a full re-cycle (measured 12 mismatched bars,
+// never re-converging, on the default loop's closing re-entry into disco). So
+// appliedFlips now REMEMBERS the target's value it applied: a dim whose target
+// CHANGED since application is a REVISION. A revised IDENTITY dim (LEAD_FLIPS
+// — what a listener knows the genre by) re-enters right behind the
+// never-applied identity dims: mid-approach the applied set was just cleared
+// (new dominant), so the old bottom tier put a lead re-pick behind the ENTIRE
+// never-applied queue (~8 dims x 2 bars). Revised non-identity dims rank
+// after never-applied dims but above applied-and-current (stale re-applies
+// last). The starvation guarantee holds: never-applied identity dims still
+// go absolutely first (transit-arrival gate is the referee), and revision
+// thrash is paced by the HELD_FLIPS hold window (4 bars per timbre slot),
+// during which the queue's non-held dims keep flowing.
 let lastDominant="";
+const flipSig=(get,st)=>{try{return JSON.stringify(get(st));}catch(e){return "?";}};
 export function rebuildQueue(){
   if(!S.playing||!S.target)return;
   const dom=(S.weights&&S.weights[0]&&S.weights[0].g)||"";
   if(dom!==lastDominant){ lastDominant=dom; appliedFlips.clear(); }
-  const diffs=DISCRETE.filter(([n,get])=>{try{return JSON.stringify(get(S.playing))!==JSON.stringify(get(S.target));}catch(e){return false;}});
+  const diffs=DISCRETE.filter(([n,get])=>flipSig(get,S.playing)!==flipSig(get,S.target));
   if(!diffs.length) appliedFlips.clear();   // converged: the next journey starts fresh
   const rank=n=>{let h=(S.seed>>>0)||1; for(const ch of n) h=(h*31+ch.charCodeAt(0))>>>0; return h;};
-  const tier=n=>appliedFlips.has(n)?2:(LEAD_FLIPS.has(n)?0:1);
-  set({queue:diffs.slice().sort((a,b)=>(tier(a[0])-tier(b[0]))||(rank(a[0])-rank(b[0])))});
+  // tiers: 0 never-applied identity dims, 1 REVISED identity dims (the target
+  // re-picked what it already delivered), 2 never-applied rest, 3 revised
+  // rest, 4 applied-and-current (the target still wants what we applied;
+  // playing drifted via another flip's overlap — re-apply last).
+  const tier=([n,get])=>{
+    const revised=appliedFlips.has(n)&&appliedFlips.get(n)!==flipSig(get,S.target);
+    if(LEAD_FLIPS.has(n)) return appliedFlips.has(n)?(revised?1:4):0;
+    return appliedFlips.has(n)?(revised?3:4):2;
+  };
+  set({queue:diffs.slice().sort((a,b)=>(tier(a)-tier(b))||(rank(a[0])-rank(b[0])))});
 }
 export function glideStep(){
   const c=S.playing, t=S.target; if(!c||!t)return;
@@ -282,9 +308,9 @@ export function glideStep(){
     const arrived=arrivedNow();
     const idx=S.queue.findIndex(([name])=>!HELD_FLIPS.has(name)||arrived||(S.holdUntil[name]||0)<=S.barCount);
     if(idx>=0){
-      const [name,,apply]=S.queue[idx];
+      const [name,get,apply]=S.queue[idx];
       try{ apply(c,t);
-        appliedFlips.add(name);   // this dimension has had its turn — first-timers rank ahead of it now
+        appliedFlips.set(name,flipSig(get,t));   // had its turn — remember WHAT the target wanted, so a later re-pick reads as a revision
         // a timbre just walked on stage — lock this slot for a few measures
         const hold=HELD_FLIPS.has(name)?{...S.holdUntil,[name]:S.barCount+HOLD_BARS}:S.holdUntil;
         set({queue:S.queue.filter((_,i)=>i!==idx),holdUntil:hold,status:FLIP_PHRASES[name]||("journey: "+name)}); }catch(e){}
