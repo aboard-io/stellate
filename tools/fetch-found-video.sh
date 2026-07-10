@@ -70,6 +70,37 @@ HAW="$IA/97351_hm_hawaii/97351.mp4"                                             
 FFL="$IA/200633_The_Fight_For_Life/200633_The_Fight_for_Life_master.intros.mp4"               # The Fight for Life: Survival Under the Sea (1930, Prelinger)
 LMS="$IA/LampOfMemory/LampOfMemory.mp4"                                                       # Lamp of Memory soundie (1944, Prelinger)
 GDN="$IA/Amateur_Film_Girls_Dancing/6034_Amateur_Film_Girls_Dancing_01_00_56_25_3mb.mp4"      # Girls Dancing amateur film (1960, Prelinger)
+# REPERTOIRE wave 3 (curated 2026-07-10) — the de-clone fetch: weather/storms,
+# volcano fire, snow, crowds/funfair, dance-hall soundies, neon signage, desert,
+# nature macro/time-lapse, steel, printing, textile mills, atomic-age animation.
+# Licenses checked per item 2026-07-10 (archive.org metadata): CC PD mark on
+# tornado/ShockTro1938/volcanoes/Wathenco1944/ConeyIsl1940/soundie_12/SoundieD/
+# SoundieF/steel_the_hardest_metal/Printing1947; the rest are Prelinger
+# collection standard (ephemeral/home movies, no known restrictions); the Plow
+# that Broke the Plains is a 1936 US federal film (PD-gov). Every URL
+# HEAD-checked 200 + range-seek 206; windows hand-picked from frame contact
+# sheets (the 2026-06 method). See SOURCES.md.
+TOR="$IA/tornado/tornado.mp4"                                                                  # Tornado (Prelinger) — the funnel
+HUR="$IA/ShockTro1938/ShockTro1938.mp4"                                                        # Shock Troops of Disaster (1938, WPA) — New England hurricane
+PLW="$IA/0315_Plow_that_Broke_the_Plains_The_16_38_41_28/0315_Plow_that_Broke_the_Plains_The_16_38_41_28.mp4"  # The Plow that Broke the Plains (1936, PD-gov) — dust bowl
+VOL="$IA/volcanoes/volcanoes.mp4"                                                              # Volcanoes (Prelinger) — Kilauea in color
+TAC="$IA/2096_Tacoma-Narrows_Bridge_Collapse_03_11_13_15/2096_Tacoma-Narrows_Bridge_Collapse_03_11_13_15.mp4"  # Tacoma Narrows collapse (1940)
+SNW="$IA/Wathenco1944/Wathenco1944.mp4"                                                        # Wathen home movie (1944, Kodachrome) — NY snowstorm + Coney
+CON="$IA/ConeyIsl1940/ConeyIsl1940.mp4"                                                        # Coney Island (1940, Prelinger) — crowds + Luna Park neon
+CRN="$IA/0432_Carnival_01_11_31_00/0432_Carnival_01_11_31_00_3mb.mp4"                          # Carnival (Prelinger) — rides
+HB="$IA/soundie_12/soundie_12.mp4"                                                             # Soundie: Hollywood Boogie (1946) — all-girl big band
+ZIG="$IA/SoundieD/SoundieD.mp4"                                                                # Soundie: Zig Me Baby with a Gentle Zag (1941) — ballroom
+MRB="$IA/SoundieF/SoundieF.mp4"                                                                # Soundie: Reg Kehoe and his Marimba Queens (ca. 1940)
+LAS="$IA/0838_Musical_Review_11_Louis_Armstrong_Soundie_11_33_03_18/0838_Musical_Review_11_Louis_Armstrong_Soundie_11_33_03_18_3mb.mp4"  # Louis Armstrong soundie
+TSQ="$IA/098461/098461.mp4"                                                                    # Home movie 098461 (1965) — Times Square neon
+LV5="$IA/010112-001/010112_001.mp4"                                                            # Home movie 010112 (1950s) — Las Vegas neon + desert
+BEE="$IA/bees_and_spiders/bees_and_spiders.mp4"                                                # Bees and Spiders (1927) — nature macro
+GRO="$IA/200634_The_Growth_of_Plants/200634_The_Growth_of_Plants_master.intros.mp4"            # The Growth of Plants (Prelinger) — time-lapse macro
+STL="$IA/steel_the_hardest_metal/steel_the_hardest_metal.mp4"                                  # Steel (1931, Pathé) — furnaces + molten pours
+PRN="$IA/Printing1947/Printing1947.mp4"                                                        # Printing (1947) — linotype + press run
+TEX="$IA/0333HowTextileMillsAreModernizing/0333_How_Textile_Mills_Are_Modernizing.mp4"         # Textile Mills (1948) — spinning frames + looms
+ATM="$IA/0159_A_is_for_Atom_01_00_48_00/0159_A_is_for_Atom_01_00_48_00.mp4"                    # A is for Atom (1953, GE) — atomic-age animation
+CHM="$IA/6143_Wonder_World_of_Chemistry_A_Film_Story_of_Better_Things_for_Bet_01_19_13_16/6143_Wonder_World_of_Chemistry_A_Film_Story_of_Better_Things_for_Bet_01_19_13_16.mp4"  # Wonder World of Chemistry (1936, Du Pont)
 
 # name|url|start(s)|dur(s)|credit
 clips() { cat <<'EOF'
@@ -191,10 +222,57 @@ ns_rays|FFL|505|32|The Fight for Life (1930, Prelinger) — rays gliding over th
 ns_octopus|FFL|628|32|The Fight for Life (1930, Prelinger) — octopus ink cloud
 dn_soundie|LMS|84|36|Lamp of Memory soundie (1944, Prelinger) — ballroom twirl
 dn_schoolyard|GDN|198|36|Girls Dancing (1960, Prelinger) — schoolyard dance in Kodachrome
+wx_funnel|TOR|176|18|Tornado (Prelinger) — the funnel over the town
+wx_stormsky|TOR|756|18|Tornado (Prelinger) — a funnel on the horizon
+wx_surge|HUR|70|30|Shock Troops of Disaster (1938, WPA) — the storm surge
+wx_wreckage|HUR|235|30|Shock Troops of Disaster (1938, WPA) — waves through the wreckage
+wx_fogghosts|HUR|626|22|Shock Troops of Disaster (1938, WPA) — figures in the storm fog
+wx_duststorm|PLW|1190|32|The Plow that Broke the Plains (1936, PD-gov) — the dust front rolls in
+vo_lavariver|VOL|285|32|Volcanoes (Prelinger) — a lava river in the dark
+vo_firewall|VOL|450|32|Volcanoes (Prelinger) — the wall of fire
+vo_ashplume|VOL|700|32|Volcanoes (Prelinger) — fountains over the burnt forest
+wx_bridgegallop|TAC|160|30|Tacoma Narrows collapse (1940) — the deck gallops
+wx_bridgefall|TAC|203|30|Tacoma Narrows collapse (1940) — the span lets go
+sn_buriedcars|SNW|474|30|Wathen home movie (1944, Kodachrome) — cars buried by the snowstorm
+sn_churchtower|SNW|620|26|Wathen home movie (1944, Kodachrome) — church tower in the snow
+sn_village|SNW|694|30|Wathen home movie (1944, Kodachrome) — snowed-in lanes
+cr_arcade|SNW|396|28|Wathen home movie (1944, Kodachrome) — Coney Island rides
+cr_surfbathers|CON|15|30|Coney Island (1940, Prelinger) — a million bathers
+cr_boardwalk|CON|62|30|Coney Island (1940, Prelinger) — boardwalk barkers
+cr_wonderwheel|CON|156|28|Coney Island (1940, Prelinger) — the Wonder Wheel
+cr_coaster|CON|483|28|Coney Island (1940, Prelinger) — Cyclone faces
+ne_lunapark|CON|528|28|Coney Island (1940, Prelinger) — Luna Park lit up at night
+cr_carousel|CRN|253|28|Carnival (Prelinger) — the carousel
+dh_boogieband|HB|78|32|Soundie: Hollywood Boogie (1946) — the all-girl big band
+dh_ballroom|ZIG|40|32|Soundie: Zig Me Baby (1941) — ballroom couple, band in silhouette
+dh_marimba|MRB|88|32|Soundie: Reg Kehoe's Marimba Queens (ca. 1940) — the slap bass goes wild
+dh_trumpet|LAS|335|24|Musical Review #11 (ca. 1942) — Louis Armstrong takes the horn
+dh_bigband|LAS|476|28|Musical Review #11 (ca. 1942) — the band swings the room
+ne_timessquare|TSQ|914|32|Home movie 098461 (1965) — Times Square neon canyon
+ne_broadway|TSQ|826|28|Home movie 098461 (1965) — Broadway signs at night
+ne_fremont|LV5|660|30|Home movie 010112 (1950s) — Fremont Street casino neon
+ne_thunderbird|LV5|738|28|Home movie 010112 (1950s) — Thunderbird and Dunes neon
+ds_deserthighway|LV5|30|30|Home movie 010112 (1950s) — empty desert highway
+nm_hiveswarm|BEE|14|28|Bees and Spiders (1927) — the hive swarms
+nm_spiderweb|BEE|332|20|Bees and Spiders (1927) — dew on the web
+nm_roots|GRO|60|28|The Growth of Plants (Prelinger) — roots in time-lapse
+nm_shoots|GRO|150|30|The Growth of Plants (Prelinger) — seedlings climb
+nm_orchid|GRO|198|28|The Growth of Plants (Prelinger) — a flower opens
+st_pigiron|STL|126|22|Steel (1931, Pathé) — liquid pig iron at 2600 degrees
+st_furnaceman|STL|150|28|Steel (1931, Pathé) — the furnace face
+st_steelcurls|STL|466|30|Steel (1931, Pathé) — adamantine steel cut like cheese
+pr_linotype|PRN|180|28|Printing (1947) — the linotype line
+pr_pressrun|PRN|508|24|Printing (1947) — the press run
+tx_spindles|TEX|183|28|Textile Mills (1948) — the spinning frames
+tx_knitters|TEX|695|28|Textile Mills (1948) — knitting machines
+tx_redloom|TEX|824|26|Textile Mills (1948) — cloth through the loom
+lb_atomorbits|ATM|399|28|A is for Atom (1953, GE) — electron orbits
+lb_atomman|ATM|844|28|A is for Atom (1953, GE) — the glowing giant
+lb_jars|CHM|403|22|Wonder World of Chemistry (1936) — the apothecary wall
 EOF
 }
 
-resolve() { case "$1" in VD1) echo "$VD1";; VD2) echo "$VD2";; PIO) echo "$PIO";; LV) echo "$LV";; SP) echo "$SP";; TK) echo "$TK";; SF) echo "$SF";; LW) echo "$LW";; CA) echo "$CA";; DC) echo "$DC";; SUB) echo "$SUB";; LCC) echo "$LCC";; IHR) echo "$IHR";; DBN) echo "$DBN";; NLC) echo "$NLC";; CHC) echo "$CHC";; RKC) echo "$RKC";; SKC) echo "$SKC";; LAM) echo "$LAM";; NYM) echo "$NYM";; ISB) echo "$ISB";; DD) echo "$DD";; AL) echo "$AL";; MH2) echo "$MH2";; NH) echo "$NH";; C21) echo "$C21";; TF) echo "$TF";; SMK) echo "$SMK";; SG) echo "$SG";; CH) echo "$CH";; MN) echo "$MN";; MS) echo "$MS";; SDG) echo "$SDG";; BM) echo "$BM";; FAN) echo "$FAN";; AP) echo "$AP";; HAW) echo "$HAW";; FFL) echo "$FFL";; LMS) echo "$LMS";; GDN) echo "$GDN";; esac; }
+resolve() { case "$1" in VD1) echo "$VD1";; VD2) echo "$VD2";; PIO) echo "$PIO";; LV) echo "$LV";; SP) echo "$SP";; TK) echo "$TK";; SF) echo "$SF";; LW) echo "$LW";; CA) echo "$CA";; DC) echo "$DC";; SUB) echo "$SUB";; LCC) echo "$LCC";; IHR) echo "$IHR";; DBN) echo "$DBN";; NLC) echo "$NLC";; CHC) echo "$CHC";; RKC) echo "$RKC";; SKC) echo "$SKC";; LAM) echo "$LAM";; NYM) echo "$NYM";; ISB) echo "$ISB";; DD) echo "$DD";; AL) echo "$AL";; MH2) echo "$MH2";; NH) echo "$NH";; C21) echo "$C21";; TF) echo "$TF";; SMK) echo "$SMK";; SG) echo "$SG";; CH) echo "$CH";; MN) echo "$MN";; MS) echo "$MS";; SDG) echo "$SDG";; BM) echo "$BM";; FAN) echo "$FAN";; AP) echo "$AP";; HAW) echo "$HAW";; FFL) echo "$FFL";; LMS) echo "$LMS";; GDN) echo "$GDN";; TOR) echo "$TOR";; HUR) echo "$HUR";; PLW) echo "$PLW";; VOL) echo "$VOL";; TAC) echo "$TAC";; SNW) echo "$SNW";; CON) echo "$CON";; CRN) echo "$CRN";; HB) echo "$HB";; ZIG) echo "$ZIG";; MRB) echo "$MRB";; LAS) echo "$LAS";; TSQ) echo "$TSQ";; LV5) echo "$LV5";; BEE) echo "$BEE";; GRO) echo "$GRO";; STL) echo "$STL";; PRN) echo "$PRN";; TEX) echo "$TEX";; ATM) echo "$ATM";; CHM) echo "$CHM";; esac; }
 
 manifest="found/video/clips.json"
 echo "[" > "$manifest.tmp"
