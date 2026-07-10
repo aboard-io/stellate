@@ -24,7 +24,11 @@ echo "== media manifest (local) =="
 # tw_vocal.mp3 excluded too: sing.py RE-SINGS it on every offline render
 # (per-render lyrics/key under a fixed name) — mutable by nature, served
 # no-cache by the same nginx exception as the manifests.
-find found engine/faust/dist -type f ! -name '*.ogg' ! -name '*.json' ! -name 'tw_vocal.mp3' ! -path 'found/video/lib/*' \
+# engine/faust/dist/ left OUT of the manifest (2026-07-10): compiled wasm is
+# CODE — it changes under the same name whenever a .dsp recompiles (the
+# synthesis-depth program proved it). It deploys like JS: no-cache, not
+# immutable. Only found/ media is versioned-by-name.
+find found -type f ! -name '*.ogg' ! -name '*.json' ! -name 'tw_vocal.mp3' ! -path 'found/video/lib/*' \
   -print0 | sort -z | xargs -0 sha256sum > /tmp/MEDIA_MANIFEST.new
 
 echo "== immutable invariant check against deployed manifest =="
