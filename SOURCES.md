@@ -69,6 +69,106 @@ The transitwave station-PA voice (train-schedule announcements + the departures 
 is **synthesized** with `espeak-ng` through a telephone-band filter — see the
 `saytransit` recipes in `fetch-found-samples.sh`. Not a found recording.
 
+## Bed-pool expansion (repertoire wave 3, 2026-07-10)
+
+79 field-recording beds from radio aporee ::: maps (archive.org mirrors),
+curated into ten character classes for the bed-POOL law (`genre-kernel.js`
+`SOURCE_POOLS`; recipe: `tools/fetch-bed-expansion.sh`). **Permissive licenses
+only** (PD Mark / BY / BY-SA), each verified against its item's live
+archive.org `licenseurl` metadata on 2026-07-10 — stricter than the original
+corpus above (zero NC, zero ND). **Flag for the human release decision:** BY
+items require attribution in any distributed render; BY-SA items additionally
+inherit ShareAlike. The three bird-forward night beds (`berlin_dawn_fox`,
+`kruger_dawn`, `mull_night`) are registered but join NO general pool (the
+bird-rarity law).
+
+| local name | class | Internet Archive item | content | license |
+|---|---|---|---|---|
+| `empress_market` | city air | [`aporee_33725_38795`](https://archive.org/details/aporee_33725_38795) — `EmperessMarketEdited.mp3` | circular binaural walk through Karachi's Empress Market — vendor calls over a deep crowd rumble | **CC Public Domain Mark 1.0** |
+| `xanthi_bazaar` | city air | [`aporee_30735_35347`](https://archive.org/details/aporee_30735_35347) — `Bigbazaarambience.mp3` | Saturday-morning bazaar in full cry, Xanthi GR — layered hawkers and crowd | **CC BY** |
+| `tunis_souk` | city air | [`aporee_56148_64205`](https://archive.org/details/aporee_56148_64205) — `TunisSoukchant.mp3` | souk walk with a distant chant, Tunis medina | **CC Public Domain Mark 1.0** |
+| `marrakesh_forge` | city air | [`aporee_22317_25900`](https://archive.org/details/aporee_22317_25900) — `marrakeshMedinaBlacksmith140226.mp3` | blacksmith hammering deep inside the Haddadine metalworkers' souk, Marrakesh | **CC BY** |
+| `brighton_arcade` | city air | [`aporee_27514_31721`](https://archive.org/details/aporee_27514_31721) — `BrightonPierarcade.mp3` | penny-arcade sensory overload on Brighton Pier — chimes, coins, holy noise | **CC Public Domain Mark 1.0** |
+| `vegas_casino` | city air | [`aporee_21167_24591`](https://archive.org/details/aporee_21167_24591) — `lasvegascasino.mp3` | binaural casino floor, Las Vegas Strip — slot chimes over the HVAC wash | **CC Public Domain Mark 1.0** |
+| `nyc_subway` | city air | [`aporee_21691_25214`](https://archive.org/details/aporee_21691_25214) — `032140215173333.mp3` | Times Square station entrance hall — pedestrians, a piano, the ticket-counter voice | **CC Public Domain Mark 1.0** |
+| `bart_last_train` | city air | [`aporee_18542_21525`](https://archive.org/details/aporee_18542_21525) — `LastBARTMacArthur.mp3` | the last BART of the night, a car full of Friday revelers — MacArthur, Oakland | **CC Public Domain Mark 1.0** |
+| `budapest_escalator` | city air | [`aporee_34266_39393`](https://archive.org/details/aporee_34266_39393) — `DeakFerenczTerescelator.mp3` | the fast old M3 escalators at Deák Ferenc tér, a train leaving below | **CC Public Domain Mark 1.0** |
+| `schoolyard_break` | city air | [`aporee_27924_32185`](https://archive.org/details/aporee_27924_32185) — `GrundschuleLlsdorf.mp3` | schoolyard break — children to the right of the mic, cars to the left, Niederkassel DE | **CC Public Domain Mark 1.0** |
+| `playground_amsterdam` | city air | [`aporee_19823_23031`](https://archive.org/details/aporee_19823_23031) — `STE0012KinderspeelplaatsHendrik27092013.mp3` | Friday-afternoon playground crowd, Amsterdam Zuid | **CC Public Domain Mark 1.0** |
+| `keelung_fishmarket` | city air | [`aporee_17407_20260`](https://archive.org/details/aporee_17407_20260) — `Soundmap2012062452.mp3` | Keelung fish market — calls, ice, scales | **CC BY** |
+| `beitou_night_traffic` | road hum | [`aporee_20245_23563`](https://archive.org/details/aporee_20245_23563) — `SoundMap201311026.mp3` | night traffic from a convenience-store doorway, Beitou Taipei | **CC Public Domain Mark 1.0** |
+| `morning_traffic_ny` | road hum | [`aporee_14133_16462`](https://archive.org/details/aporee_14133_16462) — `guilderlandtraffic.mp3` | arterial morning traffic from a parking lot, a radio far off — Guilderland NY | **CC Public Domain Mark 1.0** |
+| `cairo_traffic_jam` | road hum | [`aporee_13530_15782`](https://archive.org/details/aporee_13530_15782) — `alazharstreet.mp3` | inside a cab in a Cairo jam — horns, idling engine, motorcycles threading through | **CC BY** |
+| `blizzard_freight` | road hum | [`aporee_30574_35173`](https://archive.org/details/aporee_30574_35173) — `FreightTrainSnowstorm.mp3` | a freight train grinding through a blizzard, Colorado Springs | **CC BY** |
+| `snow_highway` | road hum | [`aporee_30577_35176`](https://archive.org/details/aporee_30577_35176) — `I25PedestrianBridgeSnowTREAT.mp3` | I-25 under snow from a pedestrian bridge — muffled highway hiss | **CC BY** |
+| `porto_tram` | road hum | [`aporee_20129_23437`](https://archive.org/details/aporee_20129_23437) — `tramone.mp3` | old tram car trembling and crackling down line 1, murmuring passengers — Porto | **CC Public Domain Mark 1.0** |
+| `bratislava_trainyard` | road hum | [`aporee_48325_54967`](https://archive.org/details/aporee_48325_54967) — `201603242133Ruchaposun.mp3` | night shunting in the Bratislava yard — horn, couplers, commands on a worker's radio | **CC BY** |
+| `coldharbour_mill` | machine room | [`aporee_16852_19600`](https://archive.org/details/aporee_16852_19600) — `21042009coldharbourmill01.mp3` | Victorian spinning machinery still making yarn, Coldharbour Mill, Devon | **CC BY-SA ⚠ SA** |
+| `litho_press` | machine room | [`aporee_25084_30610`](https://archive.org/details/aporee_25084_30610) — `B12h33m27s02oct2014oldprintingpress.mp3` | an early-1900s litho press, big clunky metal parts — Williams Press, Berkshire | **CC BY-SA ⚠ SA** |
+| `zaandam_sawmill` | machine room | [`aporee_54394_62217`](https://archive.org/details/aporee_54394_62217) — `zaandampila.mp3` | inside a wind-powered wooden sawmill, Het Jonge Schaap, Zaanse Schans | **CC Public Domain Mark 1.0** |
+| `hydro_turbine` | machine room | [`aporee_13260_15495`](https://archive.org/details/aporee_13260_15495) — `elektrine.mp3` | turbine and falling water at a small hydro dam, Užpaliai LT | **CC Public Domain Mark 1.0** |
+| `wind_turbine_motor` | machine room | [`aporee_34689_39885`](https://archive.org/details/aporee_34689_39885) — `CAPSEoliennemoteurcricket.mp3` | a wind turbine's yaw motor turning the axis, crickets underneath — Bouin FR | **CC Public Domain Mark 1.0** |
+| `grinding_plant` | machine room | [`aporee_14900_17371`](https://archive.org/details/aporee_14900_17371) — `besidegrinder.mp3` | coal lumps ground to a uniform size at the Nástup mine, Kadaň CZ | **CC Public Domain Mark 1.0** |
+| `pumping_station` | machine room | [`aporee_47462_53934`](https://archive.org/details/aporee_47462_53934) — `FobneyVictorianpumpingstation.mp3` | inside a locked Victorian canal pumping station, Fobney Lock, Reading | **CC Public Domain Mark 1.0** |
+| `ice_machine` | machine room | [`aporee_16196_18783`](https://archive.org/details/aporee_16196_18783) — `DusseldorfEisstadionEiswagenNeumannb.mp3` | the ice machine circling the old Düsseldorf ice stadium | **CC Public Domain Mark 1.0** |
+| `silo_resonance` | machine room | [`aporee_13729_16009`](https://archive.org/details/aporee_13729_16009) — `mariborMehlmuehleSilos290512.mp3` | interfering machine drones in a flour-mill silo hall, Maribor | **CC BY-SA ⚠ SA** |
+| `pulkovo_pa` | voices on tape | [`aporee_52884_60425`](https://archive.org/details/aporee_52884_60425) — `610eBIPETERSBURGairportannouncenemtssoundwalking190904003.mp3` | airport announcements drifting over a binaural soundwalk, Pulkovo, St Petersburg | **CC Public Domain Mark 1.0** |
+| `kaohsiung_pa` | voices on tape | [`aporee_18791_21802`](https://archive.org/details/aporee_18791_21802) — `SoundMap2012032942.mp3` | station broadcast messages beside a cooling tank at night, Kaohsiung | **CC Public Domain Mark 1.0** |
+| `leeds_terrace` | voices on tape | [`aporee_31056_35699`](https://archive.org/details/aporee_31056_35699) — `LeedsUnitedGameSR004BinauraleditedConverted.mp3` | the Elland Road terraces, last match of the season — chants and roars | **CC Public Domain Mark 1.0** |
+| `celtic_fans` | voices on tape | [`aporee_7691_9439`](https://archive.org/details/aporee_7691_9439) — `BloemfonteinCelticSupportersOct2009.mp3` | Bloemfontein Celtic supporters singing the stadium into one voice | **CC BY-SA ⚠ SA** |
+| `nevsky_choir` | voices on tape | [`aporee_30388_34974`](https://archive.org/details/aporee_30388_34974) — `LordhavemercyAlexanderNevskyMonastery.mp3` | 'Lord have mercy' sung in the Alexander Nevsky Monastery, St Petersburg | **CC BY-SA ⚠ SA** |
+| `oslo_ferry_pa` | voices on tape | [`aporee_14593_16997`](https://archive.org/details/aporee_14593_16997) — `FahrenachOsloAnkunftAnsage.mp3` | the arrival announcement in German and English aboard the Kiel–Oslo ferry | **CC Public Domain Mark 1.0** |
+| `coyote_prairie` | night air | [`aporee_38611_44124`](https://archive.org/details/aporee_38611_44124) — `215141felixblumeacoyoteishowlingduringthenightinthetallgrassprairieoklahomausa.mp3` | a coyote howling at night on the Tall Grass Prairie as a plane passes, crickets under | **CC Public Domain Mark 1.0** |
+| `tepoztlan_cricket` | night air | [`aporee_43806_49863`](https://archive.org/details/aporee_43806_49863) — `GrilloTEP130102T05RxNoise.mp3` | one cricket close up; village dogs and a far church bell — Tepoztlán MX | **CC Public Domain Mark 1.0** |
+| `nj_owls` | night air | [`aporee_28200_32491`](https://archive.org/details/aporee_28200_32491) — `06Track6.mp3` | great horned owls over an insect drone, south-Jersey pine flats | **CC Public Domain Mark 1.0** |
+| `mugla_cicadas` | night air | [`aporee_37508_42950`](https://archive.org/details/aporee_37508_42950) — `07312306391trim.mp3` | beach-camp cicadas after dark, Muğla TR | **CC Public Domain Mark 1.0** |
+| `berlin_dawn_fox` | night air | [`aporee_48991_55788`](https://archive.org/details/aporee_48991_55788) — `DawnchorusFriedhofColumbiadammedit.mp3` | dawn chorus with fox barks and a nightingale, Berlin cemetery (bird-forward — no general pool) | **CC Public Domain Mark 1.0** |
+| `kruger_dawn` | night air | [`aporee_33795_38875`](https://archive.org/details/aporee_33795_38875) — `TsendzeRusticCampsite.mp3` | first light in Kruger Park — ground hornbills and hippos (bird-forward — no general pool) | **CC Public Domain Mark 1.0** |
+| `mull_night` | night air | [`aporee_47362_53818`](https://archive.org/details/aporee_47362_53818) — `NightCurlewandHeronwithfirtrees.mp3` | curlew and grey heron at night, pines singing in the breeze, Isle of Mull (bird-forward — no general pool) | **CC Public Domain Mark 1.0** |
+| `ibis_evening` | night air | [`aporee_19043_22382`](https://archive.org/details/aporee_19043_22382) — `IbisEvening.mp3` | amphibian chorus at an ibis house, moonless Florida night | **CC Public Domain Mark 1.0** |
+| `swamp_underwater` | deep water | [`aporee_19431_22572`](https://archive.org/details/aporee_19431_22572) — `hidrofonasaporee1.mp3` | hydrophone in an autumn swamp, Utena LT — the tick and fizz of pond life | **CC Public Domain Mark 1.0** |
+| `underwater_mechanica` | deep water | [`aporee_23818_27676`](https://archive.org/details/aporee_23818_27676) — `underwatermechanika.mp3` | an unexplained underwater machine rhythm in a swamp, traffic bleeding through | **CC Public Domain Mark 1.0** |
+| `weir_underwater` | deep water | [`aporee_30821_35445`](https://archive.org/details/aporee_30821_35445) — `hydropwier.mp3` | hydrophone under a swollen mill weir, Colchester | **CC Public Domain Mark 1.0** |
+| `glacier_melt` | deep water | [`aporee_64980_75062`](https://archive.org/details/aporee_64980_75062) — `2407100485frammAporee.mp3` | flow-borne hydrophones riding glacier meltwater streams, Svalbard | **CC Public Domain Mark 1.0** |
+| `pebble_surf` | deep water | [`aporee_13421_15669`](https://archive.org/details/aporee_13421_15669) — `11100803edit.mp3` | surf raking a pebble beach, Corfu | **CC BY** |
+| `winter_surf` | deep water | [`aporee_15707_18266`](https://archive.org/details/aporee_15707_18266) — `StrandNov2712.mp3` | glassy chest-high winter surf, no wind — Silver Strand CA | **CC Public Domain Mark 1.0** |
+| `night_beach` | deep water | [`aporee_22007_25563`](https://archive.org/details/aporee_22007_25563) — `NocturnalBeachScheveningen.mp3` | an empty nocturnal beach, Scheveningen after dark | **CC Public Domain Mark 1.0** |
+| `sealion_traffic` | deep water | [`aporee_69662_81117`](https://archive.org/details/aporee_69662_81117) — `sealionsboatsnarrows914.mp3` | sea lions barking on the narrows buoy, a boat passing — from a kayak, Alaska | **CC Public Domain Mark 1.0** |
+| `office_predawn` | room tone | [`aporee_16161_22114`](https://archive.org/details/aporee_16161_22114) — `officee.mp3` | a help-desk room half an hour before opening — computers, water cooler, idling printer | **CC Public Domain Mark 1.0** |
+| `kitchen_fridge` | room tone | [`aporee_13335_15645`](https://archive.org/details/aporee_13335_15645) — `lodowa.mp3` | recorder behind the fridge — casing cracks, coolant drips, a wonderful low drone | **CC Public Domain Mark 1.0** |
+| `oil_boiler` | room tone | [`aporee_56425_64543`](https://archive.org/details/aporee_56425_64543) — `domesticoilboiler.mp3` | an old domestic oil boiler firing up and calming down, Suffolk | **CC Public Domain Mark 1.0** |
+| `maat_boiler` | room tone | [`aporee_64588_74537`](https://archive.org/details/aporee_64588_74537) — `1167aBILISBOAMAATelectrictyboilerroom2404201735.mp3` | the boiler room of a former coal power plant, MAAT Lisbon | **CC Public Domain Mark 1.0** |
+| `seedvault_tunnel` | room tone | [`aporee_9378_11274`](https://archive.org/details/aporee_9378_11274) — `seedvaultalarmbeepventfan.mp3` | alarm tone and HVAC fans in the Svalbard Seed Vault utility tunnel | **CC BY-SA ⚠ SA** |
+| `platform_vent` | room tone | [`aporee_32401_37255`](https://archive.org/details/aporee_32401_37255) — `bremenHbfGleis8Ventilation160605.mp3` | exhaust-fan drone on platform 8, Bremen Hauptbahnhof | **CC BY-SA ⚠ SA** |
+| `mills_elevator` | room tone | [`aporee_41528_47359`](https://archive.org/details/aporee_41528_47359) — `oaklandMillsMusicDepartmentElevator10162018.mp3` | riding a busy music-hall elevator, Mills College, Oakland | **CC Public Domain Mark 1.0** |
+| `krabi_thunder` | weather | [`aporee_41798_47650`](https://archive.org/details/aporee_41798_47650) — `RainandthunderinThailandTH181001T01.mp3` | monsoon rain and rolling thunder over a small Thai village | **CC Public Domain Mark 1.0** |
+| `geres_thunder` | weather | [`aporee_41611_47443`](https://archive.org/details/aporee_41611_47443) — `THUNDERSTORM.mp3` | a 4am thunderstorm in the distance, crickets, owls, occasional dogs — Peneda-Gerês | **CC Public Domain Mark 1.0** |
+| `queens_thunder` | weather | [`aporee_46275_52573`](https://archive.org/details/aporee_46275_52573) — `RainandDistantThunderstorm.mp3` | heavy rain with a distant thunderstorm, Ridgewood Queens | **CC BY** |
+| `istanbul_storm` | weather | [`aporee_8182_9955`](https://archive.org/details/aporee_8182_9955) — `nahendesgewitter.mp3` | a thunderstorm gathering over the Bosphorus before it strikes the city | **CC BY-SA ⚠ SA** |
+| `kielce_rain` | weather | [`aporee_19222_22313`](https://archive.org/details/aporee_19222_22313) — `STE00255.mp3` | the onset of heavy rain in a restaurant park — voices in duet with the percussion | **CC Public Domain Mark 1.0** |
+| `queens_blizzard` | weather | [`aporee_55553_63498`](https://archive.org/details/aporee_55553_63498) — `BlizzardNightRidgewoodQueens.mp3` | blizzard winds before dawn, snowplows working the street — Queens | **CC BY** |
+| `shetland_storm` | weather | [`aporee_58995_67701`](https://archive.org/details/aporee_58995_67701) — `CarolineSimpsonsHousestorm1.mp3` | a storm heard from inside the house — rain on glass, muffled chat, Shetland | **CC BY-SA ⚠ SA** |
+| `lighthouse_storm` | weather | [`aporee_43160_49192`](https://archive.org/details/aporee_43160_49192) — `160319sanisidrolighthouse.mp3` | wind at the southernmost lighthouse on the continent, Strait of Magellan | **CC Public Domain Mark 1.0** |
+| `grenoble_wind` | weather | [`aporee_30729_35341`](https://archive.org/details/aporee_30729_35341) — `ventARLEQUIN.mp3` | the wind set singing by a slit under a door, like the mouth of an organ pipe | **CC Public Domain Mark 1.0** |
+| `cordes_bells` | smalltown | [`aporee_68104_78862`](https://archive.org/details/aporee_68104_78862) — `Cordessurcielpigeonglise.mp3` | pigeons, church bells and far-away voices in a hilltop village square, Tarn FR | **CC Public Domain Mark 1.0** |
+| `brugge_bells` | smalltown | [`aporee_31799_36524`](https://archive.org/details/aporee_31799_36524) — `bruggeolv.mp3` | the solo of the biggest bell, recorded inside the Bruges church tower | **CC BY** |
+| `stjosef_bells` | smalltown | [`aporee_27760_31992`](https://archive.org/details/aporee_27760_31992) — `20150421StJosefinOhligs.mp3` | the 7am bells of St. Josef over light traffic, Solingen-Ohligs | **CC Public Domain Mark 1.0** |
+| `sunday_bell` | smalltown | [`aporee_26388_30478`](https://archive.org/details/aporee_26388_30478) — `ChurchBellsJaneiroDeBaixo.mp3` | the village priest hand-ringing the Sunday bell (and enjoying it), Janeiro de Baixo PT | **CC Public Domain Mark 1.0** |
+| `calgary_noon` | smalltown | [`aporee_30896_35526`](https://archive.org/details/aporee_30896_35526) — `NoonBellsintheStairway.mp3` | the noon carillon heard down the Calgary Tower emergency stairwell | **CC Public Domain Mark 1.0** |
+| `brocante_bells` | smalltown | [`aporee_24286_28194`](https://archive.org/details/aporee_24286_28194) — `Bourgueilbrocantebells.mp3` | church bells tolling a tune over a small-town antiques market, Bourgueil FR | **CC Public Domain Mark 1.0** |
+| `tongluo_market` | smalltown | [`aporee_35408_40667`](https://archive.org/details/aporee_35408_40667) — `soundmap201702169.mp3` | small-town market selling-calls and passing traffic, Tongluo TW | **CC BY** |
+| `taranto_storm_bells` | smalltown | [`aporee_21030_24432`](https://archive.org/details/aporee_21030_24432) — `TramontoneWindRainBellsedit.mp3` | a St. Stephen's day storm from inside a flat, church bells playing far away — Taranto | **CC Public Domain Mark 1.0** |
+| `kintai_shortwave` | shortwave | [`aporee_57712_66065`](https://archive.org/details/aporee_57712_66065) — `swinKintai.mp3` | tuning a shortwave radio at an artist residency, Kintai LT (anti-phase stereo: single-channel take) | **CC Public Domain Mark 1.0** |
+| `wendover_shortwave` | shortwave | [`aporee_6463_8010`](https://archive.org/details/aporee_6463_8010) — `17shortwavewendoverUT.mp3` | shortwave reception on the fringe of the edge of the known world, Wendover UT | **CC BY-SA ⚠ SA** |
+| `bridge_vlf` | shortwave | [`aporee_62035_71384`](https://archive.org/details/aporee_62035_71384) — `UnderBR1railway20231108114318.mp3` | railway electrics heard as VLF radio under a bridge, St Petersburg | **CC BY-SA ⚠ SA** |
+| `power_em` | shortwave | [`aporee_39991_45685`](https://archive.org/details/aporee_39991_45685) — `antaliepteshespriezor2.mp3` | power-station motors heard through an electromagnetic listening antenna, Antalieptė LT | **CC Public Domain Mark 1.0** |
+| `harbour_interference` | shortwave | [`aporee_28537_32885`](https://archive.org/details/aporee_28537_32885) — `RadioInterferenceBallsHead.mp3` | unexplained radio interference stalking a harbour-park recording, Sydney | **CC BY-SA ⚠ SA** |
+
+Pipeline note (`kintai_shortwave`): the item's stereo channels are anti-phase;
+a plain `-ac 1` downmix cancels to −57 dB. The fetch script's `getbed1` takes
+channel 0 instead (verified −18 LUFS out). If any other bed ever comes out
+silent, check downmix cancellation first.
+
 ## Recordings used historically (available to re-layer)
 
 These appeared in earlier versions of the arrangement (as solo interludes /

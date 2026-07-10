@@ -340,7 +340,14 @@ function gateVocabulary() {
     }
     if (A.found) {
       check(g, "found.role", A.found.role, inSet(roles), "unknown found role");
-      check(g, "found.sources", A.found.sources, inSet(sourceIds), "not in SOURCES/SAMPLES registry");
+      // the POOL LAW (2026-07-10): found.sources may carry "pool:<class>[*N]"
+      // tokens (genre-kernel SOURCE_POOLS / expandPools). A token is valid iff
+      // its class exists and EVERY pool member is itself in the registry —
+      // so a typo'd member id inside SOURCE_POOLS still fails this gate.
+      const inSetOrPool = (v) => { if (sourceIds.has(v)) return true;
+        const m = typeof v === "string" && /^pool:([a-z][a-z0-9_]*)(?:\*\d)?$/.exec(v);
+        return !!(m && K.SOURCE_POOLS && K.SOURCE_POOLS[m[1]] && K.SOURCE_POOLS[m[1]].every((id) => sourceIds.has(id))); };
+      check(g, "found.sources", A.found.sources, inSetOrPool, "not in SOURCES/SAMPLES registry (or a valid pool: token)");
     }
     if (A.hits) {
       // 2026-07-03: toState resolves hits from SAMPLES or SOURCES (remote
