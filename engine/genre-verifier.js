@@ -739,6 +739,54 @@
     /* genre-tool:beakstampede:targets */
     beakstampede:{ bpm:[149,174,3], drumDensity:[1.25,2.53,2], wash:[0,0.251,1], pump:[0,0.193,1], swing:[0,0.063,2], seventh:[0.35,1,1], acoustic:[0.68,0.92,2], crackle:[0,0.274,1], sub:[0.05,1,1], motion:[0.52,1,1], bedUse:[0.71,0.95,1] },
     /* /genre-tool:beakstampede:targets */
+    /* genre-tool:velvetconveyor:targets */
+    velvetconveyor:{ bpm:[109,128,3], drumDensity:[0.74,1.81,2], wash:[0,0.262,1], pump:[0,0.1,1], swing:[0.004,0.138,2], seventh:[0,1,1], acoustic:[0.68,1,2], crackle:[0.123,0.481,1], sub:[0.05,1,1], motion:[0.85,1,1], bedUse:[0.51,0.75,1] },
+    /* /genre-tool:velvetconveyor:targets */
+    /* genre-tool:talcumcasino:targets */
+    talcumcasino:{ bpm:[121,142,3], drumDensity:[0.86,1.86,2], wash:[0,0.256,1], pump:[0,0.195,1], swing:[0,0.118,2], seventh:[0,1,1], acoustic:[0.68,1,2], crackle:[0.223,0.581,1], sub:[0.05,0.35,1], motion:[0.85,1,1], bedUse:[0.51,0.75,1], softTop:[1,1,3] },
+    /* /genre-tool:talcumcasino:targets */
+    /* genre-tool:capesnap:targets */
+    capesnap: { bpm:[96,114,3], drumDensity:[1.2,2.32,2], wash:[0,0.173,1], pump:[0,0.176,1], swing:[0,0.122,2], seventh:[0,1,1], acoustic:[0.68,0.92,2], crackle:[0.173,0.531,1], sub:[0.05,1,1], motion:[0.18,1,1], bedUse:[0.01,0.25,1], comp:[0.446,0.778,3] },
+    /* /genre-tool:capesnap:targets */
+    /* genre-tool:chromeufo:targets */
+    chromeufo:{ bpm:[85,104,3], drumDensity:[1.05,3.21,2], wash:[0,0.257,1], pump:[0,0.212,1], swing:[0.046,0.19,2], seventh:[0.85,1,1], acoustic:[0.48,0.92,2], crackle:[0.011,0.34,1], sub:[0.05,1,1], motion:[0.18,1,1], bedUse:[0.63,0.87,1], softTop:[0,0,3] },
+    /* /genre-tool:chromeufo:targets */
+    /* genre-tool:mirrorseven:targets */
+    mirrorseven:{ bpm:[91,109,3], drumDensity:[0.6,2.25,2], wash:[0,0.205,1], pump:[0,0.187,1], swing:[0.076,0.22,2], seventh:[0.85,1,1], acoustic:[0,0.92,2], crackle:[0.033,0.306,1], sub:[0.05,1,1], motion:[0.52,1,1], bedUse:[0.51,0.75,1], comp:[0.346,0.709,3] },
+    /* /genre-tool:mirrorseven:targets */
+    /* genre-tool:sundialsyrup:targets */
+    sundialsyrup:{ bpm:[61,84,3], drumDensity:[0.35,1.88,2], wash:[0.07,0.374,1], pump:[0,0.1,1], swing:[0.057,0.213,2], seventh:[0.85,1,1], acoustic:[0,0.92,2], crackle:[0.006,0.339,1], sub:[0.05,1,1], motion:[0.52,1,1], bedUse:[0.38,0.75,1], softTop:[1,1,3] },
+    /* /genre-tool:sundialsyrup:targets */
+    /* genre-tool:sequinfreight:targets */
+    sequinfreight:{ bpm:[101,120,3], drumDensity:[0.74,1.78,2], wash:[0.02,0.26,1], pump:[0.121,0.459,1], swing:[0.014,0.148,2], seventh:[0.85,1,1], acoustic:[0,0.92,2], crackle:[0.091,0.355,1], sub:[0.05,0.35,1], motion:[0.18,1,1], bedUse:[0.01,0.25,1], softTop:[1,1,3] },
+    /* /genre-tool:sequinfreight:targets */
+    /* genre-tool:rollerlacquer:targets */
+    rollerlacquer:{ bpm:[105,124,3], drumDensity:[0.64,2.38,2], wash:[0,0.211,1], pump:[0.201,0.537,1], swing:[0.035,0.174,2], seventh:[0.85,1,1], acoustic:[0,0.12,2], crackle:[0,0.174,1], sub:[0.05,0.75,1], motion:[0.18,1,1], bedUse:[0.51,0.75,1] },
+    /* /genre-tool:rollerlacquer:targets */
+    /* genre-tool:longshipwhip:targets */
+    longshipwhip:{ bpm:[170,196,3], drumDensity:[1,2.6,2], acoustic:[0.68,0.92,2], pump:[0,0.167,2], crackle:[0,0.1,1], comp:[0.481,0.937,1], swing:[0,0.063,1], bedUse:[0.51,0.75,1] },
+    /* /genre-tool:longshipwhip:targets */
+    /* genre-tool:bogironwallow:targets */
+    bogironwallow:{ bpm:[42,63,3], drumDensity:[0.17,1.57,2], wash:[0.134,0.447,2], acoustic:[0,0.72,1], crackle:[0,0.267,1], sub:[0.85,1,1], comp:[0.35,0.704,1] },
+    /* /genre-tool:bogironwallow:targets */
+    /* genre-tool:barrowwake:targets */
+    barrowwake:{ bpm:[35,54,3], drumDensity:[0,0.69,2], acoustic:[0.48,0.72,2], wash:[0.412,0.731,1], crackle:[0,0.183,1], motion:[0,1,1] },
+    /* /genre-tool:barrowwake:targets */
+    /* genre-tool:ravensquall:targets */
+    ravensquall:{ bpm:[155,180,3], hatDensity:[0.26,1.96,2], drumDensity:[1.16,3.18,2], crackle:[0.067,0.385,2], wash:[0.208,0.534,1], pump:[0,0.157,1], acoustic:[0,0.12,1], breakUse:[0,0.08,3] },
+    /* /genre-tool:ravensquall:targets */
+    /* genre-tool:runeromp:targets */
+    runeromp: { bpm:[96,123,3], drumDensity:[0.75,2.52,2], acoustic:[0,0.92,2], swing:[0,0.108,2], wash:[0.071,0.33,1], sub:[0.45,1,1], comp:[0.349,0.73,3], bedUse:[0.51,0.75,3], pump:[0,0.198,3] },
+    /* /genre-tool:runeromp:targets */
+    /* genre-tool:meadhallbellow:targets */
+    meadhallbellow:{ bpm:[81,107,3], drumDensity:[0.68,3.28,2], bedUse:[0.71,0.95,2], snareBalance:[0.04,1.34,1], wash:[0.154,0.493,1], acoustic:[0,0.92,1], comp:[0.285,0.74,3], humanize:[0.001,0.308,3] },
+    /* /genre-tool:meadhallbellow:targets */
+    /* genre-tool:valkyrieswoop:targets */
+    valkyrieswoop:{ bpm:[139,162,3], drumDensity:[1.11,2.83,2], acoustic:[0,0.92,2], wash:[0.131,0.38,2], comp:[0.459,0.896,1], crackle:[0,0.1,1], swing:[0,0.069,2], pump:[0,0.2,3], leadVoices:[1,3,3], sub:[0.05,0.35,3] },
+    /* /genre-tool:valkyrieswoop:targets */
+    /* genre-tool:permafrostveil:targets */
+    permafrostveil:{ bpm:[49,74,3], drumDensity:[0,0.51,2], crackle:[0.121,0.463,2], motion:[0.52,1,2], wash:[0.321,0.67,1], acoustic:[0,0.92,1], bedUse:[0.88,1,1] },
+    /* /genre-tool:permafrostveil:targets */
   };
 
   // the piecewise-linear target-row scorer — the shared primitive (genre-tool
