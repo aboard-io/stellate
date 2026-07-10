@@ -305,7 +305,7 @@ function timelineLanes(st, roster, found, bar, audit){
     const name=r?r.name:
       sp.key==="found"?(found[0]||"tape atmosphere"):
       sp.key==="voices"?((notes[0]&&notes[0].kind==="speech")?"cut-up announcer voice":"vocal fragments"):
-      sp.key==="stabs"?"sampled stabs":sp.label;
+      sp.key==="stabs"?"synth stabs":sp.label;   // the sfx/stab lane is the SYNTH stab voice (stab.dsp); the SAMPLED one-shot stabs render in the found lane as FOUND_CHAR.hit ("sampled stabs")
     // AUDIT-TRUTH: this lane's role was EXPECTED-BUT-SILENT in the measured audit for
     // this bar (not just the score) → paint it red/hatched with the probable reason.
     let sil=null;
