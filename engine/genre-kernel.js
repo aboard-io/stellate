@@ -6417,6 +6417,22 @@
         else if(c.introMode==="short") first.cycles=1;
       }
     }
+    // ---- SOLO (2026-07): idiomatic genres get an improvised solo section ----
+    // A CsdTheory-driven line over the changes (csd-engine melodyEvents "solo"),
+    // backing ducked (soloDuck lowers the comp), spliced before the final head so
+    // the arc reads head -> SOLO -> head. Opt-in by the per-genre SOLO_IDIOM map;
+    // the genre's OWN lead voice takes it (the sax that comps also solos). Injected
+    // BEFORE the duration solver so it's balanced into the ±10% length target, and
+    // the drop pass exempts a melody:"solo" section (it IS the identity here). The
+    // 3-minute evolution reshape can still shed it on a floored genre (blues) — an
+    // accepted edge, its call-response "blues" lead already solos. Matrix-gated: a
+    // new dense-melody section moves the melody/motion features on purpose.
+    const SOLO_IDIOM={ bebop:"bop", jazz:"bop", blues:"blues", funk:"funk", bluegrass:"roll" };
+    const soloIdiom=SOLO_IDIOM[(c.genres&&c.genres[0])];
+    if(soloIdiom && secs.length>=3){
+      const at=Math.max(1, secs.length-2);   // before the final head + outro
+      secs.splice(at, 0, S("solo", { cycles:1, drums:kit, bass:bass, pads:true, melody:"solo", soloIdiom, soloDuck:true, fill:"off" }));
+    }
     // ---- duration SOLVER (KERNEL-V4 Phase 5, §3.5) ----
     // Land the track within ±10% of opts.targetSec. track()/blend()/mix()
     // default targetSec to 180 (the 3-minute rule); journeys pass a per-leg
@@ -6551,6 +6567,7 @@
           for(const tag of DROP_TAGS){
             for(let i=0;i<trial.length;i++){
               if(tagOf(trial[i])!==tag) continue;
+              if(trial[i].melody==="solo") continue;                     // the improvised solo IS the identity here — never drop it (cf. witchhouse's drone bridge)
               if(tdur()-secSec(trial[i])>=target*0.9){ idx=i; break; }   // removal keeps us above the floor
             }
             if(idx>=0) break;
