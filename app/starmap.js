@@ -5,6 +5,7 @@
 import { S, set, K } from "./state.js";
 import { POS, WORLD_W, WORLD_H, MAP_CENTER, WORLD_MARGIN, recomputeWorld } from "./world.js";
 import { retarget } from "./targeting.js";
+import { urlTick } from "./share.js";   // scrubbing the playhead while stopped must rewrite the bookmark's measure
 
 // ---------- map (imperative SVG: 60Hz drags stay cheap) ----------
 const svg=document.getElementById("map"), NS="http://www.w3.org/2000/svg";
@@ -231,6 +232,7 @@ function dragPlayhead(e){
   set({travel:{seg:p.seg,t:p.t}});
   if(!S.live){ S.startBar=bar; S.barCount=bar; }
   retarget({x:p.x,y:p.y});
+  urlTick();   // the address bar's ?m= follows the scrubbed measure (stopped or live) so the bookmark is always current
   set({status:"playhead → measure "+(bar+1)+" (leg "+(p.seg+1)+")"});
 }
 
