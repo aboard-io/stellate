@@ -197,6 +197,12 @@
       const LEN = barEnd - barBase;
       const hasIns = us.chain && us.chain.length;
       const ubuf = hasIns ? new Float32Array(LEN) : null;
+      // MASTERING pan (render-core panLR's exact law): mono units with `pan`
+      // write their DRY send onto the wide buses; rev/del/pp stay mono.
+      const pg2 = (u.pan && buses.wL && buses.wR && !u.stereo) ? (() => {
+        const p = Math.min(1, Math.max(-1, u.pan)), th = (p + 1) * Math.PI / 4;
+        return { l: Math.SQRT2 * Math.cos(th), r: Math.SQRT2 * Math.sin(th) };
+      })() : null;
       let rendered = 0;
       for (const v of us.procs) {
         if (!v.pending.length && !v.ivals.length) continue;
@@ -248,7 +254,9 @@
                     lg = (u.del || 0) * v.curOut, pg = v.curPP * v.curOut;
               for (let i = Math.max(0, -idx0); i < len; i++) {
                 const x = o[i], j = idx0 + i;
-                buses.dry[j] += x * dg; buses.rev[j] += x * rg; buses.del[j] += x * lg;
+                if (pg2) { const xd = x * dg; buses.wL[j] += xd * pg2.l; buses.wR[j] += xd * pg2.r; }
+                else buses.dry[j] += x * dg;
+                buses.rev[j] += x * rg; buses.del[j] += x * lg;
                 if (pg) buses.pp[j] += x * pg;
               }
             }
@@ -273,7 +281,9 @@
         const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
         for (let i = 0; i < LEN; i++) {
           const x = ubuf[i];
-          buses.dry[i] += x * dg; buses.rev[i] += x * rg; buses.del[i] += x * lg;
+          if (pg2) { const xd = x * dg; buses.wL[i] += xd * pg2.l; buses.wR[i] += xd * pg2.r; }
+          else buses.dry[i] += x * dg;
+          buses.rev[i] += x * rg; buses.del[i] += x * lg;
         }
       }
       return rendered;
@@ -332,7 +342,7 @@
         const us = units.get(key);
         if (!us) continue;   // ensure failed at ingest — reported via h.failedModules
         const layer = h.layerOf[key] || "fx";
-        renderUnitWindow(us, busFor(layer, !!(us.u && us.u.stereo)), W);
+        renderUnitWindow(us, busFor(layer, !!(us.u && (us.u.stereo || us.u.pan))), W);
       }
       // STALE units (retired — not cached in the held bar and not in the newer
       // bar either): flush their carried tails + let insert chains ring out for
@@ -343,7 +353,7 @@
         const hasTail = us.procs.some((v) => v.ivals.length || v.pending.length);
         us.staleBars = (us.staleBars || 0) + 1;
         if (hasTail || (us.chain && us.chain.length && us.staleBars <= 2)) {
-          renderUnitWindow(us, busFor(us.layer, !!(us.u && us.u.stereo)), W);
+          renderUnitWindow(us, busFor(us.layer, !!(us.u && (us.u.stereo || us.u.pan))), W);
         } else if (us.staleBars > 2) units.delete(key);
       }
       // package: per layer x per bus, SPARSE — sub-noise-floor channels omitted
