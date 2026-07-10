@@ -193,7 +193,7 @@ function barVoiceEvents(st, bar){
   const secs=(st.sections&&st.sections.length)?st.sections:null;
   if(secs){ const sec=(secName&&secs.find(s=>s.name===secName))||secs[0];
     one.sections=[Object.assign({},sec,{cycles:1})]; }
-  const lo=ci*CBEATS, hi=lo+CBEATS, notes=[];
+  let lo=ci*CBEATS, hi=lo+CBEATS; const notes=[];
   try{
     const ev=E.buildEvents(one), units=SE.voiceUnits(E,one);
     // bedAll: beds emit ONE event at section start (beat 0) and SUSTAIN across the
@@ -201,7 +201,21 @@ function barVoiceEvents(st, bar){
     // which is exactly the "found audio plays but the viz shows nothing" bug (the
     // engine schedules the bed once at ci=0 for its full duration; see faust/
     // live.js scheduleNative). Ask for all beds, then CLIP each to this bar.
-    const m=SE.mapEvents(E,one,ev,{lo,hi,units,bedAll:true});
+    let m=SE.mapEvents(E,one,ev,{lo,hi,units,bedAll:true});
+    // MID-FLIP DIVERGENCE (Paul: "the viz just drops when a transition starts"):
+    // live bars are scheduled a runway AHEAD of playback, so a glide flip that
+    // rewrites progression/sections lands BETWEEN a bar's scheduling and its
+    // sounding. The stale barInfo.ci — legal under the OLD harmony (say 8
+    // chords) — can point past the new progression's chord count; [lo,hi) then
+    // sits beyond every built event and the WHOLE timeline drew dead for that
+    // bar (10+s of blank rolls at chordEvery 16, once per flip through the
+    // storm). When an exact ci>0 window maps to NOTHING, re-window on the first
+    // chord-bar: an honest picture of the state now sounding — the engine
+    // re-syncs the meta on the next bar.
+    if(ci>0&&!m.events.length&&!(m.found||[]).some(f=>f.type==="chop")){
+      lo=0; hi=CBEATS;
+      m=SE.mapEvents(E,one,ev,{lo,hi,units,bedAll:true});
+    }
     for(const e of m.events){
       const freq=(e.sets&&e.sets.freq)||0;
       const vel=e.amp!=null?e.amp:(e.sets&&(e.sets.gain!=null?e.sets.gain:e.sets.level!=null?e.sets.level:0.5));
@@ -422,7 +436,11 @@ function timelineHTML(tl){
   // lives INSIDE the last page, so it only shows when that page is the window.
   const deadW=(pages*VIEW-cb)/VIEW*100;
   const shift=(-page*100/pages).toFixed(4), pw=(100/pages).toFixed(4);
+  // PER-LANE guard (transition hardening): one lane's formatter choking on a
+  // mid-flip transitional shape must never blank the whole panel — render every
+  // lane we can, skip (and console.warn) the one that throws.
   const rows=tl.lanes.map(L=>{
+   try{
     // ALL effects as one TINY line UNDER the roll (Paul: pills stacked/clipped so only
     // one showed — untangle to compact text that shows the whole chain, tightened).
     const fx=(L.fx&&L.fx.length)?`<div class="vz-fxline">${L.fx.map(esc).join(" · ")}</div>`:"";
@@ -443,10 +461,14 @@ function timelineHTML(tl){
       `<div class="vz-tlrole">${esc(L.label)}</div></div>`+
       roll+`</div>`+
       fx+`</div>`;
+   }catch(e){ try{console.warn("inside: lane",L&&L.key,"skipped:",e);}catch(_){} return ""; }
   }).join("");
   // ONE shared playhead spanning every lane (they share the beat grid) —
   // rendered dormant when idle; the ~10Hz ticker lights and sweeps it while live.
-  const frac=beat==null?0:(beat-page*VIEW)/VIEW;
+  // frac CLAMPED: mid-flip, barInfo.cbeats (the sounding bar) can outrun this
+  // render's cbeats (the flipped state) — the cursor must park at the roll edge,
+  // never escape the track.
+  const frac=beat==null?0:Math.max(0,Math.min(1,(beat-page*VIEW)/VIEW));
   const ph=`<div class="vz-ph${beat==null?"":" on"}" data-page="${page}"${beat==null?"":` data-beat="${beat.toFixed(3)}"`}><i style="left:${(frac*100).toFixed(2)}%"></i></div>`;
   return `<div class="vz-ruler" style="background-image:${grid}">${ruler}${pgind}</div>`+
     `<div class="vz-tl" data-pages="${pages}" data-page="${page}">${rows}${ph}</div>`;
@@ -492,7 +514,9 @@ function phFrame(){
     box.querySelectorAll(".vz-ruler span").forEach((s,i)=>{ s.textContent=String(page*VIEW+i+1); });
     const ind=box.querySelector(".vz-pgind"); if(ind) ind.textContent="·"+(page+1)+"/"+pages;
   }
-  const line=ph.firstElementChild, left=(beat-page*VIEW)/VIEW*100;
+  // CLAMPED like the baked render: barInfo.cbeats can outrun this DOM's page
+  // count mid-flip — park at the roll edge, never escape the track.
+  const line=ph.firstElementChild, left=Math.max(0,Math.min(100,(beat-page*VIEW)/VIEW*100));
   if(line){  // never sweep BACKWARDS across the roll at a bar/page wrap — snap instead
     if(left<parseFloat(line.style.left||"0")) line.style.transition="none"; else line.style.transition="";
     line.style.left=left.toFixed(2)+"%";
@@ -507,6 +531,11 @@ export function renderInside(){
   const legend=d.blend.filter(b=>b.pct>0).map(b=>`<span class="vz-g"><i style="background:${genreCol(b.g)}"></i>${esc(b.label)} <b>${b.pct}%</b></span>`).join("");
   const feelNums=d.feel.map(([n,v])=>`<b>${n}</b> ${Math.round(v*100)}`).join(" · ");
   const masterLine=(d.master&&d.master.length)?`<div class="vz-in vz-master"><span class="vz-ir">master</span><div class="vz-fxline">${d.master.map(esc).join(" · ")}</div></div>`:"";
+  // transition hardening: a timeline hiccup must never blank the whole panel —
+  // blend/feel/mind still render; the roll announces itself instead of dying.
+  let tlHtml; try{ tlHtml=timelineHTML(d.timeline); }
+  catch(e){ try{console.warn("inside: timeline render skipped:",e);}catch(_){}
+    tlHtml=`<div class="vz-info">— timeline resyncing —</div>`; }
   box.innerHTML=
     `<h2>inside the sound</h2>`+
     `<div class="vz-sec"><div class="vz-lbl">blend — the genres in this mix</div>`+
@@ -516,7 +545,7 @@ export function renderInside(){
       `<div class="vz-feelnums">${feelNums}</div></div>`+
     mindHTML(d.mind)+
     `<div class="vz-sec"><div class="vz-lbl">timeline — what each voice plays this bar</div>`+
-      `${timelineHTML(d.timeline)}${masterLine}</div>`;
+      `${tlHtml}${masterLine}</div>`;
   // arm the playhead ticker only when it has work (live + modal open); it stops itself.
   const wrap=document.getElementById("insideWrap");
   if(S.live&&wrap&&wrap.classList.contains("open")) ensurePhTicker();

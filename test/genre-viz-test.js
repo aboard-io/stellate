@@ -24,6 +24,15 @@
 //   K. LIVE PLAYHEAD: parked on prelude, ONE shared beat cursor sweeps the roll
 //      (beat monotonic within a bar) and DRIVES the paging — the window flips to
 //      page 2 when the beat crosses 8; the cursor goes dark after ■.
+//   L. TRANSITION LIVENESS (Paul: "the viz just drops when a transition starts"):
+//      live bars are scheduled a runway ahead of playback, so a glide flip that
+//      rewrites progression/sections mid-flight leaves barInfo.ci pointing past
+//      the new progression's chord count — the viz's [lo,hi) window then missed
+//      every built event and the WHOLE timeline drew dead for that bar. Pure
+//      regression: a stale barInfo (old section name + high ci) against a
+//      freshly-flipped state must still yield notes. Live regression: ride a
+//      real cross-genre flip with the ⓘ open — every sampled bar across the
+//      flip window renders a non-empty timeline, zero page errors.
 //   I. FOUND-LANE LIVENESS: a sustained bed shows as a ribbon in EVERY bar it
 //      sounds (pure ci=1 check + a live ride parked on vaporwave).
 //   J. DESCRIPTIONS name role+character, never the source (no sampler/DX7/
@@ -325,6 +334,69 @@ async function main() {
   await page.waitForTimeout(400);
   const dark = await page.evaluate(() => !document.querySelector("#inside .vz-ph.on"));
   ok(dark, `K6: playhead still lit after stop (ticker did not cancel)`);
+
+  // ---- L: TRANSITION LIVENESS (Paul: "the viz just drops when a transition
+  // starts"). PURE regression first — the exact divergence, deterministic: a
+  // bar whose meta was scheduled under the OLD harmony (section name gone, ci
+  // past the new progression's chord count) must still draw notes against the
+  // freshly-flipped state (pre-fix this was 0 notes = a dead panel for 10+s).
+  const L0 = await page.evaluate(() => {
+    const p = window.__X.POS.house; window.__X.retarget({ x: p[0], y: p[1] });
+    const probe = (bi) => {
+      const save = window.__S.barInfo; window.__S.barInfo = bi;
+      let notes = -1, err = null;
+      try { const d = window.__VIZ.data(); notes = d.timeline.lanes.reduce((a, l) => a + l.notes.length, 0); }
+      catch (e) { err = String(e).slice(0, 200); }
+      window.__S.barInfo = save;
+      return { notes, err };
+    };
+    return { fresh: probe({ ci: 0, serial: 3, section: (window.__S.playing.sections[0] || {}).name }),
+      staleSec: probe({ ci: 5, serial: 5, section: "arrive" }),           // old-genre section, overflowed ci
+      staleHi: probe({ ci: 7, serial: 9, section: "NO_SUCH_SECTION" }) }; // fully bogus meta
+  });
+  ok(L0.fresh.notes > 0 && !L0.fresh.err, `L0: sanity — fresh bar draws no notes (${JSON.stringify(L0.fresh)})`);
+  ok(L0.staleSec.notes > 0 && !L0.staleSec.err,
+    `L1: stale barInfo (old section + ci=5) drew a DEAD timeline (${JSON.stringify(L0.staleSec)}) — mid-flip divergence regressed`);
+  ok(L0.staleHi.notes > 0 && !L0.staleHi.err,
+    `L2: bogus barInfo (ci=7, unknown section) drew a DEAD timeline (${JSON.stringify(L0.staleHi)})`);
+  // LIVE regression: ride a REAL cross-genre flip with the ⓘ open (house →
+  // prelude: sections+harmony rewritten under the ride) — every sampled bar
+  // across the flip window must render a non-empty timeline.
+  await page.evaluate(async () => {
+    const p = window.__X.POS.house;
+    window.__S.waypoints = [{ x: p[0], y: p[1] }, { x: p[0] + 1, y: p[1] + 1 }];
+    window.__X.retarget({ x: p[0], y: p[1] });
+    await window.__X.goLive();
+  });
+  await page.waitForFunction(() => window.__S.live && window.__S.barCount >= 2, { timeout: 40000 });
+  const Lb0 = await page.evaluate(() => {
+    const p = window.__X.POS.prelude;                       // flip mid-ride
+    window.__S.waypoints = [{ x: p[0], y: p[1] }, { x: p[0] + 1, y: p[1] + 1 }];
+    window.__X.retarget({ x: p[0], y: p[1] });
+    return window.__S.barCount;
+  });
+  const Lbars = [], Ldead = [];
+  for (let i = 0; i < 300; i++) {
+    const s = await page.evaluate(() => {
+      const box = document.getElementById("inside");
+      return { bar: window.__S.barCount, rows: box.querySelectorAll(".vz-tlrow").length,
+        html: box.innerHTML.length,
+        notes: (() => { try { return window.__VIZ.data().timeline.lanes.reduce((a, l) => a + l.notes.length, 0); } catch (e) { return -1; } })() };
+    });
+    if (!Lbars.length || Lbars[Lbars.length - 1].bar !== s.bar) {
+      Lbars.push(s);
+      if (s.rows < 2 || s.html < 1500 || s.notes <= 0) Ldead.push(s);
+    }
+    if (s.bar >= Lb0 + 7) break;
+    await page.waitForTimeout(400);
+  }
+  ok(Lbars.length >= 6, `L3: flip ride sampled too few bars (${Lbars.length})`);
+  ok(Ldead.length === 0, `L4: viz dropped on ${Ldead.length} bar(s) across the flip window: ${JSON.stringify(Ldead.slice(0, 3))}`);
+  console.log(`\n=== TRANSITION LIVENESS (house→prelude flip) ===`);
+  console.log(`  pure: fresh=${L0.fresh.notes} staleSec=${L0.staleSec.notes} staleHi=${L0.staleHi.notes} notes`);
+  console.log(`  live: bars=[${Lbars.map(b => b.bar + ":" + b.notes + "n/" + b.rows + "r").join(" ")}] dead=${Ldead.length}`);
+  await page.evaluate(() => window.__X.stopLive());
+  await page.waitForTimeout(400);
 
   // ---- I: FOUND-LANE LIVENESS (Paul: "found audio plays but the viz shows nothing").
   // Beds emit ONE event at section start and sustain across the whole cycle; every
