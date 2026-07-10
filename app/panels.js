@@ -43,8 +43,8 @@ function Panel(){
         onchange=${e=>{set({seed:+e.target.value||1});retarget(S.cursor);}} />
       <button onclick=${()=>{set({seed:Math.floor(Math.random()*99999)});retarget(S.cursor);}}>🎲</button></div>
     <div class="row"><label>pace (bars/leg)</label>
-      <input type="range" min="16" max="256" step="8" value=${S.pace}
-        onInput=${e=>set({pace:Math.max(8,Math.min(512,+e.target.value||BARS_PER_SEG))})} />
+      <input type="range" min="4" max="12" step="1" value=${Math.round(Math.log2(Math.max(16,Math.min(4096,+S.pace||BARS_PER_SEG))))}
+        onInput=${e=>set({pace:Math.pow(2,Math.max(4,Math.min(12,+e.target.value||8)))})} />
       <output>${S.pace}</output></div>
     <div class="mac">
       <div class="mac-h"><span>macros — bend every genre at once</span>

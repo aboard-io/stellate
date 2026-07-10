@@ -18,7 +18,12 @@
 //      and the payload has the contract shape {role,midi,freq,vel,durSec,section}.
 //   F. zero console/page errors throughout.
 //   H. THE UNIT IS ALWAYS 8 (Paul 2026-07): the roll is a constant 8-cell window
-//      for every genre; chordEvery=16 (prelude) FOLDS into stacked 8-cell rows.
+//      for every genre; chordEvery=16 (prelude) PAGES — ONE 8-cell row per lane
+//      (no stacked fold rows: Paul read those as "double bars", i.e. duplication)
+//      with a quiet ·1/2 page indicator; idle shows page 1 (beats 1..8).
+//   K. LIVE PLAYHEAD: parked on prelude, ONE shared beat cursor sweeps the roll
+//      (beat monotonic within a bar) and DRIVES the paging — the window flips to
+//      page 2 when the beat crosses 8; the cursor goes dark after ■.
 //   I. FOUND-LANE LIVENESS: a sustained bed shows as a ribbon in EVERY bar it
 //      sounds (pure ci=1 check + a live ride parked on vaporwave).
 //   J. DESCRIPTIONS name role+character, never the source (no sampler/DX7/
@@ -195,34 +200,46 @@ async function main() {
   console.log(`  after stop: ${afterStop} → ${settled} (no new onsets)`);
 
   // ---- H: THE UNIT IS ALWAYS 8 (Paul 2026-07). The visible roll is a constant
-  // 8-cell window whatever the genre's chordEvery; longer chord bars FOLD into
-  // stacked 8-cell rows (they never shrink). prelude (chordEvery:16) must fold;
-  // house (chordEvery 8) must show the SAME 8-unit ruler.
+  // 8-cell window whatever the genre's chordEvery; longer chord bars PAGE — ONE
+  // 8-cell row per lane, NEVER a stacked fold (Paul read the stack as "double
+  // bars for each": duplication, not continuation). prelude (chordEvery:16) must
+  // page (2 pages, a quiet ·1/2 indicator, idle on page 1 = beats 1..8); house
+  // (chordEvery 8) must show the SAME 8-unit ruler with no indicator.
   const H = await page.evaluate(() => {
     const p = window.__X.POS.prelude; window.__X.retarget({ x: p[0], y: p[1] });
     const d = window.__VIZ.data();
     window.__X.renderInside();
     const box = document.getElementById("inside");
-    const stack = box.querySelector(".vz-rollstack");
     return { dom: d.blend[0] ? d.blend[0].g : null, cbeats: d.timeline.cbeats, view: d.timeline.view,
-      folds: d.timeline.folds, spans: box.querySelectorAll(".vz-ruler span").length,
-      hasStack: !!stack, foldRolls: stack ? stack.querySelectorAll(".vz-roll").length : 0 };
+      pages: d.timeline.pages, spans: box.querySelectorAll(".vz-ruler span").length,
+      stacks: box.querySelectorAll(".vz-rollstack").length,
+      lanes: box.querySelectorAll(".vz-tlmain").length,
+      rolls: box.querySelectorAll(".vz-roll").length,
+      pageDivs: box.querySelectorAll(".vz-roll .vz-page").length,
+      ind: (box.querySelector(".vz-pgind") || { textContent: "" }).textContent.trim(),
+      firstBeat: (box.querySelector(".vz-ruler span") || { textContent: "" }).textContent.trim() };
   });
   const H2 = await page.evaluate(() => {
     const p = window.__X.POS.house; window.__X.retarget({ x: p[0], y: p[1] });
     const d = window.__VIZ.data(); window.__X.renderInside();
-    return { cbeats: d.timeline.cbeats, view: d.timeline.view,
-      spans: document.querySelectorAll("#inside .vz-ruler span").length };
+    return { cbeats: d.timeline.cbeats, view: d.timeline.view, pages: d.timeline.pages,
+      spans: document.querySelectorAll("#inside .vz-ruler span").length,
+      ind: !!document.querySelector("#inside .vz-pgind") };
   });
   ok(H.dom === "prelude", `H0: retarget dominant is ${H.dom} (want prelude)`);
-  ok(H.cbeats > 8, `H1: prelude chord window is ${H.cbeats} beats (need >8 to exercise the fold)`);
+  ok(H.cbeats > 8, `H1: prelude chord window is ${H.cbeats} beats (need >8 to exercise paging)`);
   ok(H.view === 8 && H.spans === 8, `H2: prelude view=${H.view} rulerUnits=${H.spans} (must both be 8)`);
-  ok(H.hasStack && H.folds === Math.ceil(H.cbeats / 8) && H.foldRolls === H.folds,
-    `H3: fold stack wrong (stack=${H.hasStack} folds=${H.folds} rolls=${H.foldRolls} for cbeats=${H.cbeats})`);
+  ok(H.stacks === 0 && H.lanes > 0 && H.rolls === H.lanes,
+    `H3: lanes must be ONE row each, no fold stack (stacks=${H.stacks} rolls=${H.rolls} lanes=${H.lanes})`);
+  ok(H.pages === Math.ceil(H.cbeats / 8) && H.pageDivs === H.lanes * H.pages,
+    `H3b: paging wrong (pages=${H.pages} pageDivs=${H.pageDivs} for cbeats=${H.cbeats}, lanes=${H.lanes})`);
+  ok(/1\s*\/\s*2/.test(H.ind), `H3c: page indicator missing/wrong for cbeats=16 (ind="${H.ind}")`);
+  ok(H.firstBeat === "1", `H3d: idle must show page 1 (first ruler beat="${H.firstBeat}")`);
   ok(H2.view === 8 && H2.spans === 8, `H4: house view=${H2.view} rulerUnits=${H2.spans} (unit must be 8 for EVERY genre)`);
-  console.log(`\n=== 8-UNIT TIMELINE ===`);
-  console.log(`  prelude cbeats=${H.cbeats} view=${H.view} ruler=${H.spans} folds=${H.folds}/${H.foldRolls}`);
-  console.log(`  house   cbeats=${H2.cbeats} view=${H2.view} ruler=${H2.spans}`);
+  ok(H2.pages === 1 && !H2.ind, `H5: house must be a single page with NO indicator (pages=${H2.pages} ind=${H2.ind})`);
+  console.log(`\n=== 8-UNIT TIMELINE (PAGED) ===`);
+  console.log(`  prelude cbeats=${H.cbeats} view=${H.view} ruler=${H.spans} pages=${H.pages} rolls=${H.rolls}/${H.lanes} ind="${H.ind}"`);
+  console.log(`  house   cbeats=${H2.cbeats} view=${H2.view} ruler=${H2.spans} pages=${H2.pages}`);
 
   // ---- J: descriptions never name the source (no sampler/DX7/soundfont/raw ids),
   // and the MIND readout renders for a genre whose state carries the MUSIC-MIND axes.
@@ -248,6 +265,66 @@ async function main() {
   console.log(`\n=== DESCRIPTIONS + MIND ===`);
   console.log(`  lane names=[${J.names.join(" · ")}]`);
   console.log(`  mind@${J.mindGenre}: ${JSON.stringify(J.mind)}  dom meters=${J.mindDom && J.mindDom.meters} moves="${J.mindDom && J.mindDom.moves}"`);
+
+  // ---- K: LIVE PLAYHEAD + PLAYHEAD-DRIVEN PAGING. Park the ride ON prelude
+  // (chordEvery:16) with the ⓘ open; ONE shared .vz-ph cursor must light, its
+  // beat must advance monotonically within a bar, and the window must flip to
+  // page 2 exactly when the beat crosses 8 (page = floor(beat/8)). After ■ the
+  // cursor goes dark (the ticker cancels itself — zero cost idle).
+  ok(await page.evaluate(() => document.getElementById("insideWrap").classList.contains("open")),
+    `K pre: ⓘ modal must still be open for the playhead ride`);
+  await page.evaluate(async () => {
+    const p = window.__X.POS.prelude;
+    window.__S.waypoints = [{ x: p[0], y: p[1] }, { x: p[0] + 1, y: p[1] + 1 }];
+    window.__X.retarget({ x: p[0], y: p[1] });
+    await window.__X.goLive();
+  });
+  await page.waitForFunction(() => window.__S.live && window.__S.barCount >= 1, { timeout: 40000 });
+  // sample the cursor ~3x/sec across ~1.5 chord bars (prelude bars run ~14s)
+  const K = [];
+  for (let i = 0; i < 140; i++) {
+    const s = await page.evaluate(() => {
+      const ph = document.querySelector("#inside .vz-ph");
+      const tl = document.querySelector("#inside .vz-tl");
+      return { on: !!(ph && ph.classList.contains("on")), count: document.querySelectorAll("#inside .vz-ph").length,
+        beat: ph && ph.dataset.beat != null ? parseFloat(ph.dataset.beat) : -1,
+        page: ph ? +(ph.dataset.page || -1) : -1, pages: tl ? +(tl.dataset.pages || 0) : 0,
+        serial: window.__S.barInfo ? window.__S.barInfo.serial : -1,
+        cbeats: window.__S.barInfo ? window.__S.barInfo.cbeats : 0,
+        firstBeat: (document.querySelector("#inside .vz-ruler span") || { textContent: "" }).textContent.trim(),
+        ind: (document.querySelector("#inside .vz-pgind") || { textContent: "" }).textContent.trim() };
+    });
+    if (s.on && s.beat >= 0) K.push(s);
+    // done once we've watched a full page-0 sweep AND landed on page 2
+    if (K.length >= 12 && K.some(x => x.page === 1)) break;
+    await page.waitForTimeout(350);
+  }
+  const flips = [], backsteps = [];
+  for (let i = 1; i < K.length; i++) {
+    const a = K[i - 1], b = K[i];
+    if (a.serial !== b.serial) continue;                       // bar wrap: beat legally resets
+    const wrap = a.beat > a.cbeats - 1.5 && b.beat < 1.5;      // serial/beat sampling skew at a bar edge (~100ms)
+    if (b.beat < a.beat - 0.05 && !wrap) backsteps.push(`${a.beat.toFixed(2)}→${b.beat.toFixed(2)}@s${b.serial}`);
+    if (a.page === 0 && b.page === 1) flips.push({ from: a.beat, to: b.beat });
+  }
+  const flip = flips[0];
+  ok(K.length >= 12, `K1: playhead never lit / too few live samples (${K.length})`);
+  ok(K.every(s => s.count === 1), `K2: want exactly ONE shared playhead (counts=[${[...new Set(K.map(s => s.count))]}])`);
+  ok(backsteps.length === 0, `K3: beat not monotonic within a bar: ${backsteps.slice(0, 4).join(" | ")}`);
+  ok(!!flip && flip.from < 8.6 && flip.to >= 7.9,
+    `K4: no page flip at beat 8 (flips=${flips.length}${flip ? ` around ${flip.from.toFixed(2)}→${flip.to.toFixed(2)}` : ""})`);
+  const onP2 = K.find(s => s.page === 1);
+  ok(!!onP2 && onP2.firstBeat === "9" && /2\s*\/\s*2/.test(onP2.ind),
+    `K5: page 2 must relabel the ruler 9..16 + indicator ·2/2 (first="${onP2 && onP2.firstBeat}" ind="${onP2 && onP2.ind}")`);
+  console.log(`\n=== LIVE PLAYHEAD (prelude) ===`);
+  console.log(`  samples=${K.length} cbeats=${K[0] && K[0].cbeats} pages=${K[0] && K[0].pages}`);
+  console.log(`  beats=[${K.slice(0, 16).map(s => s.beat.toFixed(1) + "/p" + s.page).join(" ")}${K.length > 16 ? " …" : ""}]`);
+  console.log(`  flip=${flip ? flip.from.toFixed(2) + "→" + flip.to.toFixed(2) : "none"} backsteps=${backsteps.length}`);
+  // ■ — the cursor must go dark within a couple of ticker frames
+  await page.evaluate(() => window.__X.stopLive());
+  await page.waitForTimeout(400);
+  const dark = await page.evaluate(() => !document.querySelector("#inside .vz-ph.on"));
+  ok(dark, `K6: playhead still lit after stop (ticker did not cancel)`);
 
   // ---- I: FOUND-LANE LIVENESS (Paul: "found audio plays but the viz shows nothing").
   // Beds emit ONE event at section start and sustain across the whole cycle; every

@@ -289,7 +289,10 @@ export function travelStep(){
   let {seg,t}=S.travel;
   // pace slider = bars per path leg (bigger = slower journey). Clamp hard so a
   // mangled input can never freeze the traveler (t must always advance).
-  const pace=Math.max(8,Math.min(512,+S.pace||BARS_PER_SEG));
+  // Ceiling 4096 (2026-07-10): the blend-arrival fix made flips actually LAND,
+  // so the old default read "way too fast" — default now 256 (world.js), and
+  // the log-scale slider reaches 4096 bars/leg for hours-long journeys.
+  const pace=Math.max(8,Math.min(4096,+S.pace||BARS_PER_SEG));
   t+=1/pace;
   // CLOSED LOOP (Paul: "the path should always close itself and be a loop"): the
   // path has n segments, seg n-1 being the CLOSING leg from waypoint[n-1] back to
