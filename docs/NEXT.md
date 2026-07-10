@@ -1,180 +1,120 @@
-# NEXT — the handoff (2026-07-10, end of the marathon session)
+# NEXT — the handoff (big feature session)
 
-*Read this whole file, then CLAUDE.md. The memory system carries the same
-queue with more color (start at wave2-program + musical-dynamics +
-vector-kernel-program); THIS file is the committed source of truth. 44
-commits shipped today; everything below either finishes that work or is
-Paul-stated and unstarted.*
+*Read this whole file, then CLAUDE.md. Everything below is DEPLOYED to
+stellate.app unless marked. Paul's active program is in THE PROGRAM section —
+work it in order.*
 
-## Where the world stands
+## SHIPPED THIS SESSION (all live on stellate.app + aboardresearch)
+- WAVE 3 integrated: beds/hits/forms/clips (4 branches merged, byte-verified);
+  bed+hits media fetched (176/176 SOURCE_POOLS members resolve); 9 clips copied;
+  world.js PROG_MODE labels for the 6 new progressions.
+- Background SUPERIMPOSITION (mode 1 desktop = video + demoscene at once; the
+  demo screen-blends through the footage). `?bgMix=1/0` forces on/off (device
+  default = UA/cores). GLYPHS bigger + livelier (pool 10, weight 14, size 4.5-34
+  vmin, short scheduler return so they layer). Demoscene ~3x slower (speed 0.3).
+- STARMAP REGIONS: 10 deterministic k-means territories, energy-ordered goofy
+  names + distinct colors, big labels behind the stars, inactive halos tinted by
+  region. computeRegions() in starmap.js, wired after computeGenreLayout.
+- MASTER VOLUME control (0-150%, userGain after the analyser) + the ⚙ panel
+  repositioned to pop up right-aligned ABOVE the settings button.
+- NARRATION FADE: live found VOX/CHOP lanes fade when the mix leaves a genre
+  (termswave no longer blares after it's gone). found-player fadeAll + live.js
+  genre-change hook. LIVE-ONLY.
+- MASTER BUS (the "muted" fix): glue comp -> +8dB makeup -> brickwall limiter on
+  the live sum (live.js, after masterGain). RMS 0.48->0.65. LIVE-ONLY (baked
+  press mix untouched -> byte-identity safe). Reverb/delay DEPTH on sampled
+  voices NOT yet done (see backlog).
+- STAB relabel: the constantly-firing "stabs" viz lane is the SYNTH stab voice,
+  now labeled "synth stabs" (the sampled one-shot stabs are the found lane).
+- PLAYHEAD URL: dragPlayhead now calls urlTick (the ?m= followed the scrub).
+  goLive drop-in verified correct — residual "reverts" is grab-vs-waypoint
+  hit-test overlap; needs Paul's repro.
+- SOUNDFONT SWITCHER (12 fonts): ⚙ "soundfont" dropdown re-voices every sampled
+  instrument live, hot-restarts the engine, persists. FluidR3 (default, baked,
+  BYTE-IDENTICAL) + SGM/Windows/Yamaha XG/Montego/SC-55/Gravis/GBA/E-mu APS/Diet
+  Candy/Blackberry/8-bit. tools/gen-font.js extracts any GM SF2 (full-capture,
+  program-matched to FluidR3) -> found/samples/instruments-<key>/ (WAVs
+  gitignored) + engine/faust/font-<key>.json (committed, 588KB). VELOCITY-LAYER
+  selection wired (zoneFor by velocity; multi-velocity fonts play soft samples).
 
-Live at stellate.app: **240 genres** (twelve new spaces born fictional), every
-real-world genre wearing an invented name (ids stable — techno's LABEL is
-"Concrete Metronome"; the id `techno` is load-bearing, never rename ids), THE
-MASTERING STAGE (pan + same-timbre carve + density-aware reverb budget + press
-makeup), improvised SOLOS (ear-blessed), musical DYNAMICS (voices + per-drum
-swells), the hoover signature synth, real instruments (looped tenor sax,
-crunch/DI guitars, upright piano), the priming fix (chordEvery-32 bars split
-into sub-windows — the 4 dead drone genres play), bookmarkable URLs with
-measure drop-in (`?seed&path&pace&m` → makeWalk startBar), a draggable
-playhead, stop-resumes/stop-twice-rewinds, THREE exclusive 100% views on ONE
-view chip (✦ map → ⓘ viz → ▣ video, spinner while warming), a four-row ⚙
-panel (seed+share · inverted pace · ±bpm delta · in-browser downloads), the
-11-axis vector rose (no numbers), per-cell viz playhead, offline
-(stale-while-revalidate SW + route precache that waits for the music), the
-accessible version (trued up), THE POOL LAW (`pool:<class>*N` tokens in
-sources lists, per-(seed,class) dedicated stream, byte-clean when unused), and
-the offline matrix prover as verify.sh's fifth referee.
+## THE PROGRAM (Paul: "Do #2, then Faithful, then everything else, then Vapor")
+### 1. #2 soundfont — DONE (the switcher above).
 
-## IN FLIGHT AT HANDOFF (check these FIRST)
-- The all-tracks viz landed as `ca5c33f` ("The viz shows every track") and its
-  ship ran in a background task — CONFIRM stellate.app carries it (curl the
-  deployed app/inside.js for "voices") and re-run tools/ship.sh if not.
-- Then go straight to §1: all four wave-3 branches are done and waiting.
+### 2. FAITHFUL whole-path renderer — DO THIS NEXT
+Export audio/MIDI/video of the ENTIRE LOOP (Paul: "export the entire path, not
+just the current song. The whole mix"). User chose: **one full loop**, video
+**in-browser from local clips only**. Spadework already done:
+- `FaustLive.makeWalk` is EXPORTED (engine/faust/live.js) — drive the SAME
+  per-bar walk offline with a getState that walks the loop.
+- Add `stateAt(pt)` to app/targeting.js (I reverted it; re-add): the pure state
+  builder = `K.mix(weightsAt(pt),{seed:S.seed,keyOffset:keyFor(weights,S.seed)})`
+  + `if(S.bpmDelta) target.bpm+=...` + `if(MODE_LOCKS[S.modeLock]) target.progression=...`.
+  (`keyFor` is module-local in targeting.js.) NO side effects.
+- Offline walk: `total = n*pace` bars (one loop). For bar b: `pt =
+  pointOnPath(travelForBar(b))` (share.js exports both) -> `state = stateAt(pt)`
+  -> getState returns it -> `stepWalk()` returns per-bar `r = {one, units, events,
+  spb, lo, hi, found, foundSources, meta, barLenFrames, musicalSec}`.
+- AUDIO: feed the per-bar r payloads to a render worker. The ring path's
+  openLive/feedBar/renderChunk (stream-renderer.js) already render per-bar into a
+  ring — adapt an OFFLINE mode that dumps PCM + concatenates, then reuse
+  encodeMp3 (app/export.js). This worker mode is the biggest single piece.
+- MIDI: need note-level events per bar (buildEvents pitched/drums), which
+  stepWalk builds internally on a collapsed one-section state — either make
+  makeWalk also return `ev`, or re-run buildEvents on that section. Assemble one
+  SMF (engine/midi-export.js buildMidi) with a tempo map (per-bar bpm) + beat
+  offsets.
+- VIDEO: in-browser, LOCAL clips only. archive.org footage is CORS-TAINTED
+  (uncapturable — video-layer.js:9-11 plays it without crossorigin). Capture the
+  demoscene canvas + viz + local found/video/*.mp4 (same-origin) + the whole-loop
+  audio -> MediaRecorder webm; ffmpeg.wasm for MP4.
+- app/export.js is the current single-song exporter (downloadMidi/exportAudio);
+  extend it or add app/journey.js.
 
-## THE QUEUE, in order
+### 3. EVERYTHING ELSE (backlog)
+- Master-chain REVERB/DELAY DEPTH on sampled voices (lever b): the found/sampler
+  submix routes to a thin single native reverb tap (live.js:383-389) — no real
+  delay/ping-pong. Route it through a fuller reverb + a real echo. Ear-check the
+  master-bus makeup (2.6) first — it may already be enough now the mix is louder.
+- Sampled-stab single-pick balance: genre-kernel:6504 picks ONE hits source,
+  ~50% speech vs stab pools. Biasing toward stabs = deterministic render drift +
+  taste. Surfaced, not done.
+- ARACHNO font: /tmp/newfont2/ has "Arachno …sfArk" (needs sfArkXTc decompression,
+  bundled in the zip). Likely has velocity layers. gen-font.js it in if decompressed.
+- Old NEXT §3-5 standing items still open: WAV-first mobile split residual,
+  stem-parity re-pin (citypop_s7), browser/node rng divergence, dead-range asks,
+  VOICES.md completeness, --full 5-seed dominance (7 genres), demoscene surface,
+  the VECTOR-KERNEL program (step 2 randomness tape onward), the hour-render
+  service, repo public flip (`gh repo edit ftrain/stellate --visibility public`).
 
-### 1. INTEGRATE WAVE 3 — all four branches ARE DONE and reported green
-Branches (each self-gated verify.sh --no-cache in its worktree, matrix
-240/240, byte-clean proofs where claimed — their commit messages carry the
-numbers):
-- `worktree-wf_72496dd1-2c3-1` @ 3c50cd7 — BEDS: 79 new beds (PD×55, CC-BY×12,
-  CC-BY-SA×12), ten classes (weather/smalltown/shortwave new), SOURCE_POOLS
-  filled (city 16 … shortwave 5; 3 bird beds registered-unpooled), 152 anchors
-  swept to pool tokens / 88 pinned (identity lists in its commit), BED_CHAR
-  rows added.
-- `worktree-wf_72496dd1-2c3-2` @ bcfc8a5 — HITS/BREAKS: 34 new samples
-  (12 live funk breaks CC-BY-2.5, VCSL CC0 chimes/perc, PD-by-age 78s stabs,
-  NASA lines, 4 synthesized rave stabs incl. hoover_a/b), pools vocal_stab/
-  chime/horn_stab/rave_stab/perc_hit + bpm-banded break_75_95…break_155_175,
-  170 anchors swept / 17 pinned (tw_ding + sp_herenow/sp_rhythm DELIBERATELY
-  pinned — de-cloning the commissioned voice needs a new speech wave).
-- `worktree-wf_72496dd1-2c3-3` @ 9839f53 — FORMS: six new arcs (aaba/vamp/
-  storm/throughline/duet/suite) + reassignments (53 genres drift by hash,
-  187 byte-identical; several reverted after dominance fights — its message
-  names them) + new progressions.
-- `worktree-wf_72496dd1-2c3-4` @ 10a090b — CLIPS: 47 new PD clips from 21
-  items, top-5 concentration 21% -> 13.8%, every genre >= 4 clips (the 42
-  poolless anchors got card-matched pools; surgical removals only where a
-  top-5 clip was template filler).
+### 4. VAPOR SLIDER — DO LAST
+New ⚙ "Vapor" slider. Lowest = mix passes straight through. Highest = reverb up
++ HIGHS CUT = "walking through a mall." Implementation: LIVE-ONLY master EQ in
+exploreLive's graph (live.js) near the master bus / userGain — a lowpass or high-
+shelf cutting highs + a global reverb increase, both scaled by the Vapor amount
+(0..1). The found submix already has a native reverb (live.js:385-389) to scale.
+Persist like masterVol (state.js `_vapor`, live.js `setVapor`, panels.js slider).
+Live-only -> no byte-identity impact. (Wire setMasterVol-style: handle.setVapor.)
 
-THE PROCEDURE:
-1. **CONFLICT WARNING**: beds AND hits both edited `engine/validate-genres.js`
-   (orPool: found/hits/vox source checks accept pool tokens iff every member
-   registered) and `engine/invariants.js` (tokens expand through members).
-   Their versions are near-identical — on conflict, take either and make sure
-   BOTH call sites (found+hits+vox) are covered; run prove + validate to
-   confirm.
-2. Merge order: beds -> hits (resolve the referee conflicts) -> forms ->
-   clips. `git merge --no-ff` each; verify.sh --no-cache after each.
-3. MEDIA: rerun `tools/fetch-bed-expansion.sh` and `tools/fetch-hits-expansion.sh`
-   on main (both curl+ffmpeg, no 7z needed). Clips: cut clips live in the
-   worktree `found/video/` — copy them (`.claude/worktrees/wf_72496dd1-2c3-4/
-   found/video/*.mp4`) or rerun its fetch; check its script name in the
-   branch. NEVER overwrite an existing deployed file (immutability law).
-4. `world.js` PROG_MODE rows for the forms agent's new progressions (its
-   flagged integrator item — check csd-engine PROGRESSIONS for the new ids
-   and add [keyOffset, display] rows; app territory).
-5. After all four: `node test/fixtures.js capture` (name the causes), the
-   full browser battery, a rotation spot-proof (a swept genre resolves
-   different beds/hits across seeds 1..6; crickettempo/atlantidrone keep
-   identity beds every seed), tools/ship.sh.
-6. Report to Paul: pool sizes, sweep/pin counts, the before/after clip
-   concentration, and WHICH genres changed form (his ear will want a listen
-   list — vamp funk, aaba jazz, storm doom are the audition picks).
+## LAWS LEARNED THIS SESSION
+- LIVE-ONLY audio changes (master bus, userGain volume, narration fade, the
+  coming Vapor EQ) ride the MAIN-THREAD graph AFTER masterGain — they never touch
+  the worker-baked press mix, so segment-parity/fixtures stay byte-identical.
+  This is THE pattern for live-audio taste changes.
+- Soundfont switcher: default "fluidr3" MUST stay byte-identical. `SAMPLERS[id].dir
+  != id` for some (tenor_sax -> tenor_sax_fp, immutability law) — samplePath uses
+  S.dir, NOT the slug. Font WAVs gitignored; font-*.json committed source.
+- Video export: archive.org footage is CORS-tainted (uncapturable in-browser);
+  local same-origin clips ARE capturable.
+- fixtures.js baseline can lag HEAD -> recapture after intentional drift; verify
+  drift is explained (compare pipelines) before assuming a bug. The 71%-drift
+  scare this session was a stale baseline, NOT the pool-law landmine.
 
-### 2. Paul's remaining ear/verdict items
-- The fugue mastering A/B went to Paul — his verdict steers whether the
-  mastering constants (reverb budget cap/floor, makeup target) get retuned.
-- Speech-cast vols (0.36-0.46) + the dynamics floors are shipped defaults
-  awaiting complaint, not re-tuning.
-- `S.best` (the "verifier hears" readout in access.html nowSnapshot) still
-  prints a raw genre ID — label it (small: K.GENRES[best].label).
-- Sweep for any remaining real-genre-name leaks Paul spots (the map, chyron,
-  lock screen, cards, how.html, README are done; access menus use labels).
-
-### 3. The standing engineering queue (small, filed, real)
-- **WAV-FIRST mobile split residual**: the priming fix split oversized bars on
-  the ring path; `runBarAccumPump` (mobile WAV path) still renders a 30-38s
-  first segment for the drone genres — slow start, not a hang. Splitting there
-  interacts with bakeNative bed windowing. Awaits Paul's device test anyway.
-- **stem-parity-test re-pin**: citypop_s7's pinned state went sampler when
-  sampled-by-default landed (pre-existing red, proven on HEAD).
-- **browser/node rng divergence**: same seed, different insert params per
-  environment (suspect NameBank consumption order) — kernel determinism
-  nuance; diagnose, decide if it matters.
-- **Dead-range asks**: edm asks 8 voices renders 7; six anchors ask pad
-  release past the 3s cap — honest-up the anchors or lift the caps.
-- **VOICES.md completeness**: verify it fully covers higain/fenv/LFO params
-  (the synthesis-depth agent died mid-write; balance3 then landed claims).
-- **Identity churn deeper fix**: quantize weights for discrete draws so the
-  target stops re-rolling along an approach (tier-1 re-queue fix landed).
-- **--full validate 5-seed dominance**: 7 genres win 60% (canawave, phonk,
-  surfrock, afrobeat, sludgemetal, industrialmetal, eurodance) — pre-existing,
-  NOT a ship gate; a deliberate fence-tuning pass someday.
-- **Bird-flagged beds**: berlin_dawn_fox/kruger_dawn/mull_night registered but
-  unpooled (bird-rarity law) — canawave-adjacent dawn pools only, if ever.
-- **Demoscene surface**: mode 2 (demos-only) left the view cycle; demos still
-  alternate inside the video program. Decide if a dedicated surface returns.
-
-### 4. THE VECTOR-KERNEL PROGRAM (Paul's architecture directive, staged)
-Step 0 (matrix prover) + step 1 (columnar events, engine/columns.js) SHIPPED.
-- **Step 2 — THE RANDOMNESS TAPE** (the big one): pre-draw rng into a vector
-  consumed positionally; every pass becomes pure (state, tape) → events;
-  draw-order byte-identity becomes true BY CONSTRUCTION. The amp0/snare-law
-  collision and every "pass order shifts the rng" landmine is the motivating
-  bug class. Method: fixture-gated, the FORMS-refactor precedent (byte-
-  identical, zero drift).
-- Step 3 — combinator DSL over the columns (generalize the transforms pool).
-- Step 4 — blend/verify as first-class matrix ops; BLAS/GSL-WASM at the
-  matrix()/hull() seam when feature-space scale demands.
-
-### 5. The standing horizon (Paul-stated, unscheduled)
-- The hour-render service (docs/EXPORT.md sketch: tools/render-server.js on
-  the droplet, queue + credits).
-- Repo public flip: `gh repo edit ftrain/stellate --visibility public` is
-  PAUL'S step; the site's GitHub links 404 until then.
-- Odd-meter wishlist round 2 (sliderule 7/8 true, hexagonstampede 5/4,
-  meadowmellotron 9/8) + author vocabulary wishlists (partially landed via
-  the forms agent's new progressions — check its report).
-- More instrument upgrades from scratch/guitar-research/REPORT.md roadmap
-  items 6-8 (VSCO2 strings 618MB CC0, Iowa alto sax, Karoryfer jangle).
-
-## THE LAWS LEARNED TODAY (violate these and the gates will catch you — slowly)
-- **Media immutability**: a deployed found/ file NEVER changes content under
-  its name (clients + the SW cache it forever). Replacements get a NEW
-  dir/name; the id can stay and point at the new dir (the tenor_sax_fp
-  precedent). tools/ship.sh enforces it — it has been right four times.
-- **POS placement**: screen anisotropy at the 1200x850 reference is ~2
-  x-units/px vs ~30 y-units/px. Place new stars by the explorer gate's own
-  metric (spiral search; the "screen-safe homes" commit has the script).
-  NEVER full-rebake — the relaxation rescales the space, decalibrating
-  SNAP/CUTOFF and moving fugue off its D2e spot.
-- **The pool law**: pool tokens draw on a DEDICATED per-(seed,class) stream —
-  never the shared rng (one extra shared draw = catalog-wide byte drift).
-- **The snare-law/dynamics order**: dynamics runs DEAD LAST and stashes amp0;
-  invariants re-checks bucket on amp0 (composed accent), not faded loudness.
-- **sampleEvents point-placements** (opener/oneShot/cadence) are gated by
-  stepWalk's `_liveEdge` on the live path; press never carries it.
-- **Solo sections** are drop-pass-exempt and injected BEFORE the duration
-  solver; blues can legally shed its solo (floored genre).
-- **SW deploy semantics**: app code is stale-while-revalidate — a deploy
-  lands ONE reload later. Hard-reload busts. Never make found/ network-first.
-- **Fiction naming**: ids are code, labels are fiction. New genres are BORN
-  fictional. No band names in cards; the promises gate parses cards for
-  instrument nouns — keep claims truthful or the card-lie tripwire (pinned
-  at 0!) fires.
-
-## Gates to run before ANY ship
-`tools/ship.sh` = verify.sh (matrix N/N --no-cache when the kernel moved +
-validate + engine + prove + matproof) → push → deploy. For app/engine
-changes also run the browser battery: explorer-ui, access-ui, share-url,
-genre-viz, blend-arrival, transit-arrival, simulate-path-run,
-sampler-inserts-live, bg-survival, live-test, wavout
-(NODE_PATH=/home/ford/ftrain-2025/node_modules, pinned chromium-1217; the
-fixed ports mean NEVER run the battery concurrently with itself). fixtures.js
-capture after intentional drift, with the causes NAMED. segment-parity must
-stay BYTE-EQUAL. musicality must stay all green with card-lies = 0.
-
-Machines verify structure. Ears verify taste. The ears are Paul's;
-everything else is yours to finish.
+## GATES before any ship
+`tools/ship.sh` = verify.sh (matrix/validate/engine/prove/matproof) +
+theory/pipes/speech -> git push -> tools/deploy-stellate.sh (rsync to droplet).
+For app/engine changes ALSO the browser battery (explorer-ui, access-ui,
+share-url, genre-viz, blend-arrival, transit-arrival, simulate-path-run,
+sampler-inserts-live, bg-survival, live-test, wavout;
+NODE_PATH=/home/ford/ftrain-2025/node_modules). fixtures.js capture after
+intentional drift (name causes). segment-parity BYTE-EQUAL. musicality green,
+card-lies=0. Machines verify structure; ears verify taste (Paul's).
