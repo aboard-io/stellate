@@ -1169,7 +1169,7 @@
     if(state._voiceRun){
       for(const v of DYN_VOICES){ const r = state._voiceRun[v]; if(!r || !(r.n > 0)) continue;
         if(v === "drums"){ for(const e of drums){ const f = DYN_DRUM[e.drum] || DYN_DRUM._default;
-            const s = rampScalar(f[0], f[1], r.i, r.n); if(s < 1) e.amp *= s; } }
+            const s = rampScalar(f[0], f[1], r.i, r.n); if(s < 1){ if(e.amp0==null) e.amp0 = e.amp; e.amp *= s; } } }
         else { const fl = DYN_FLOOR[v]; const s = rampScalar(fl[0], fl[1], r.i, r.n);
           if(s < 1) for(const e of pitched) if(e.voice===v && !e.solo) e.amp *= s; }
       }
@@ -1192,7 +1192,7 @@
       for(const e of drums){ if(e.beat<lo || e.beat>=lo+CBEATS) continue;
         const f = DYN_DRUM[e.drum] || DYN_DRUM._default;
         const scal = rampScalar(f[0], f[1], barInRun, runBars);
-        if(scal < 1) e.amp *= scal; }
+        if(scal < 1){ if(e.amp0==null) e.amp0 = e.amp; e.amp *= scal; } }   // amp0 = composed accent, for the snare-law re-check (loudness envelope ≠ accent identity)
     });
   }
 
@@ -2148,7 +2148,15 @@
       if(addD.length) for(const d of addD) drums.push(d);
       if(dropD.size)  drums=drums.filter(d=>!dropD.has(d));
     }
-    applyVoiceDynamics(pitched, drums, state, spans, CBEATS);   // voices + drum kits swell in / fade out at their run edges (renderer-only; verifier/matrix unaffected)
+    // MUSICAL DYNAMICS runs DEAD LAST, after the snare-law: the law dedups on the
+    // COMPOSED accent pattern (its no-three-peat guarantee is about rhythm, not
+    // loudness), and running dynamics first would shift its variation choices and
+    // drift the verifier's drum features (validate's 2-seed dominance tipped on
+    // sludgemetal). So the envelope is applied last; it stashes each drum's
+    // pre-envelope amp as amp0 so the invariants prove re-check buckets on the
+    // composed accent, not the faded loudness (a fade already varies the bars, so
+    // pattern-identical bars under it are not ad-nauseam).
+    applyVoiceDynamics(pitched, drums, state, spans, CBEATS);
     return { bpm:state.bpm, totalBeats, pitched, drums, found, sfx, srcById,
       ...(Object.keys(regHome).length?{regHome}:{}) };   // register-home decision (absent when no slot shifted — bundle shape unchanged)
   }

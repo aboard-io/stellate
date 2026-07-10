@@ -642,9 +642,15 @@
     const BARLEN = Math.min(CB, 8);
     const cyc = E.getProgression(state.progression).chords.length * CB;
     const q = (o) => Math.round(o * 2) / 2, bk = (a) => a < 0.14 ? 0 : a < 0.34 ? 1 : 2;
+    // bucket on the COMPOSED accent (amp0, stashed by the dynamics envelope before
+    // it faded the bar), not the post-envelope loudness: the snare-law is a
+    // no-ad-nauseam PATTERN promise, and a fade already varies bar loudness, so
+    // pattern-identical bars under one aren't a repeat. amp0 is absent on any bar
+    // the envelope didn't touch => d.amp, i.e. byte-identical for un-faded bars.
+    const av = (d) => d.amp0 != null ? d.amp0 : d.amp;
     const inBar = (b, b0) => b >= b0 - 1e-6 && b < b0 + BARLEN - 1e-6;
-    const snSig = (l, b0) => l.map(d => q(d.beat - b0) + ":" + bk(d.amp)).sort().join("|");
-    const haSig = (l, b0) => l.map(d => q(d.beat - b0) + ":" + bk(d.amp) + (d.open ? "o" : "")).sort().join("|");
+    const snSig = (l, b0) => l.map(d => q(d.beat - b0) + ":" + bk(av(d))).sort().join("|");
+    const haSig = (l, b0) => l.map(d => q(d.beat - b0) + ":" + bk(av(d)) + (d.open ? "o" : "")).sort().join("|");
     let cur = 0; const spans = state.sections.map(s => { const sp = { start: cur, beats: (s.cycles || 1) * cyc }; cur += sp.beats; return sp; });
     let s1 = null, s2 = null, h1 = null, h2 = null, viol = 0;
     for (const sp of spans) {
