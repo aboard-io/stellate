@@ -637,7 +637,7 @@
       stream.fedFrames += wLen;
       stream.fedMusicalSec += r.musicalSec;
       const barRec = { len: wLen, meta: r.meta, found: r.found, foundSources: r.foundSources,
-        spb: r.spb, lo: r.lo, units: r.units, events: r.events };
+        spb: r.spb, lo: r.lo, units: r.units, events: r.events, genre: (r.one && r.one.genre) || null };
       if (stream.startGlobal != null) { barRec.globalStart = stream.startGlobal + localStart; playQueue.push(barRec); }
       else { barRec.localStart = localStart; stream.pendingBars.push(barRec); }
       // decode-ahead any found/sampler sources this bar needs (ready by playback)
@@ -815,6 +815,7 @@
     // ── onBar scheduler: fire opts.onBar (+ schedule native found/sampler) at each
     // bar's PLAYBACK instant, derived from the ring-player read cursor → ctx clock. ──
     let barTimer = 0;
+    let lastFoundGenre = null;   // the genre whose live found voices are currently ringing (fade on change)
     // drainDueBars: fire every bar whose playback instant has arrived. Idempotent,
     // driven by BOTH the 30ms page interval (exact while visible) and the worker
     // tick (unthrottled while hidden). HIDDEN LOOKAHEAD: background pages clamp
@@ -846,6 +847,16 @@
     // native found (bed/chop/vox) + sampler at playback — the same fabric the old
     // injectChord scheduled, on the ctx clock via at(beat).
     function scheduleNative(b, when) {
+      // GENRE MOVED ON: fade the departing genre's live vocal/chop found voices
+      // so a long narration/vox LOOP (e.g. termswave's terms&conditions read)
+      // doesn't keep blaring at full volume after the mix has left it (Paul,
+      // 2026-07-10). Live-only — the baked press mix is a separate path, so the
+      // byte-identity gates are untouched. Beds keep their own durSec envelope
+      // for ambient continuity; only the loud one-shot/vocal lanes fade here.
+      if (b.genre && b.genre !== lastFoundGenre) {
+        if (lastFoundGenre != null) { try { foundVox.fadeAll(2.0); foundChops.fadeAll(2.0); } catch (e) {} }
+        lastFoundGenre = b.genre;
+      }
       const spb = b.spb, lo = b.lo;
       const at = (beat) => when + (beat - lo) * spb;
       const beatAbs = (beat) => b.meta.absBeatLo + (beat - lo);

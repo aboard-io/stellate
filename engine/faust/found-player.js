@@ -740,6 +740,7 @@
       if (f.ppsend && dests.pp) { const pp = ctx.createGain(); pp.gain.value = f.ppsend; tail.connect(pp); pp.connect(dests.pp); }
       srcN.start(when, (f.offset % 1) * buffer.duration);
       srcN.stop(when + durSec + 0.05);
+      srcN._ampParam = g;   // the amplitude envelope — live.fadeAll ramps it down when the mix leaves this genre
       live.active.add(srcN);
       srcN.onended = () => { live.active.delete(srcN); try { dry.disconnect(); rev.disconnect(); del.disconnect(); } catch (e) {} };
     };
@@ -836,6 +837,13 @@
         state.stopped = true; clearTimeout(state.timer);
         if (state.loopSrc) { try { state.loopSrc.stop(); } catch (e) {} }
         try { out.disconnect(); } catch (e) {} live.beds.delete(handle);
+      }, fade(sec) {   // ramp this bed out over `sec` then stop — the graceful sibling of stop()
+        const t = ctx.currentTime, s = Math.max(0.05, sec || 1.5);
+        try { if (out.gain.cancelAndHoldAtTime) out.gain.cancelAndHoldAtTime(t); else out.gain.cancelScheduledValues(t);
+          out.gain.linearRampToValueAtTime(0, t + s); } catch (e) {}
+        if (state.loopSrc) { try { state.loopSrc.stop(t + s + 0.05); } catch (e) {} }
+        state.stopped = true; clearTimeout(state.timer);
+        setTimeout(() => { try { out.disconnect(); } catch (e) {} live.beds.delete(handle); }, (s + 0.15) * 1000);
       } };
       live.beds.add(handle);
       setTimeout(() => live.beds.delete(handle), (when - ctx.currentTime + durSec + 1) * 1000);
@@ -863,6 +871,19 @@
       for (const b of [...live.beds]) b.stop();
       for (const s of [...live.active]) { try { s.stop(); } catch (e) {} }
       live.active.clear();
+    };
+    // fade every active voice out over `sec` and let it stop — the graceful
+    // transition used when the live mix moves to a new genre (a hard stopAll is
+    // for ■). Chops ramp their amp envelope; beds use handle.fade.
+    live.fadeAll = function (sec) {
+      const t = ctx.currentTime, s = Math.max(0.05, sec || 1.5);
+      for (const src of [...live.active]) {
+        const p = src._ampParam;
+        if (p) { try { if (p.cancelAndHoldAtTime) p.cancelAndHoldAtTime(t); else p.cancelScheduledValues(t);
+          p.linearRampToValueAtTime(0, t + s); } catch (e) {} }
+        try { src.stop(t + s + 0.06); } catch (e) {}
+      }
+      for (const b of [...live.beds]) { try { (b.fade ? b.fade(s) : b.stop()); } catch (e) {} }
     };
     return live;
   }
