@@ -2,6 +2,7 @@
   "name": "mirrorseven",
   "label": "Mirrorseven",
   "info": "seven years bad luck, one immortal riff: a percussive keyboard bites sixteenth-note chords through a half-open wah while a fat synth bass slinks underneath, hats hissing double-time — every chord wears its seventh like a ring, dry, dark, and impossibly in the pocket",
+  "damp": "fx.comp 0.3-0.5 -> 0.42-0.6 (2026-07-10): bossanova's seed-2 vector sat inside every derived range (comp .239 vs lo .231), stealing its diagonal in validate gate 2 — the named rival sodabop was the runner-up, the argmax was this row. Heavier bus glue is taste-right for the pocket and lifts the comp floor past bossa's ceiling.",
   "anchor": {
     "bpm": [96, 103],
     "swing": [0.12, 0.2],
@@ -15,7 +16,7 @@
       "inserts": { "prob": 0.5, "max": 1, "pool": [["wah", { "sens": [0.5, 0.72], "base": [300, 450], "range": [1.8, 2.6], "q": [4, 6], "mix": [0.65, 0.85] }]] } },
     "pads": { "prob": 0.6, "samplerPool": ["rhodes_ep", "synth_strings_1"], "recipe": { "model": ["sampler", "fm"], "wave": "sine", "cutoff": [900, 1500], "detune": [0.003, 0.008], "attack": [0.15, 0.5], "level": [0.4, 0.54], "send": [0.25, 0.4], "dsend": [0.05, 0.15] } },
     "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [1.0, 1.2], "snare": [0.8, 1.05], "hat": [1.15, 1.55], "tune": [0.9, 1.05], "send": [0.08, 0.18], "dsend": [0.03, 0.1], "kit": "room" },
-    "fx": { "reverb": [0.3, 0.45], "delayBeats": [0.5, 0.75], "delayFb": [0.12, 0.25], "delayCut": [2400, 3400], "pump": [0, 0.1], "crackle": [0.12, 0.28], "lowcut": [25, 40], "highcut": [9000, 13000], "comp": [0.3, 0.5] },
+    "fx": { "reverb": [0.3, 0.45], "delayBeats": [0.5, 0.75], "delayFb": [0.12, 0.25], "delayCut": [2400, 3400], "pump": [0, 0.1], "crackle": [0.12, 0.28], "lowcut": [25, 40], "highcut": [9000, 13000], "comp": [0.42, 0.6] },
     "found": { "role": "bed", "vol": [0.05, 0.1], "pitch": [0.9, 1.05], "stretch": [0.45, 0.6], "cutoff": [1800, 2800], "sources": ["shibuya", "tokyo_station"] },
     "stab": ["off", "sparse"],
     "hits": { "sources": ["bb_horn_b", "bb_stab_b", "vox_b"], "pattern": "sparse", "prob": 0.4 },

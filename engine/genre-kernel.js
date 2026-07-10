@@ -4991,6 +4991,358 @@
       rhythm:[0.37,0.603],
       pipes:[] },
     /* /genre-tool:beakstampede:genres */
+    /* genre-tool:velvetconveyor:genres */
+    velvetconveyor: { label:"Velvetconveyor", info:"the hit factory at 118: snare and tambourine slam on ALL FOUR beats while an impossible bass walks melodies underneath — vibes and trumpet trade the tune, strings and choir ride the belt, a 78rpm voice calls and the horns answer",
+      bpm:[114,122],
+      swing:[0.05,0.11],
+      humanize:[0.15,0.32],
+      progressions:["pop_1625","doo_wop","four_chords"],
+      kits:["four","open"],
+      fills:["drum fill","tom fill","off"],
+      bass:{patterns:["walking","melodic","octaves"], samplerPool:["finger_bass","picked_bass"], recipe:{model:["sampler","sampler","sub"], cutoff:[450,800], res:[0.05,0.15], level:[1,1.2], send:[0.08,0.16], dsend:[0,0.05], attack:0.005, release:[0.08,0.14]}},
+      lead:{patterns:["pentaup","wander","double"], samplerPool:["vibraphone","trumpet","electric_piano"], recipe:{model:["sampler","sampler","piano"], wave:"sine", voices:[1,2], spread:[0.001,0.004], cutoff:[2200,3400], level:[0.46,0.58], send:[0.3,0.45], dsend:[0.1,0.22], attack:0.005, release:[0.1,0.18], sustain:[0.6,0.72]}},
+      pads:{prob:0.85, samplerPool:["strings","ahh_choir","slow_strings"], recipe:{model:["sampler","sampler","piano"], wave:"sine", cutoff:[1000,1600], detune:[0.003,0.007], attack:[0.2,0.6], level:[0.42,0.56], send:[0.3,0.45], dsend:[0.05,0.15]}},
+      drums:{kickModel:["boom"], snareModel:["noise","crack"], hatModel:["noise"], kick:[0.95,1.15], snare:[1,1.25], hat:[0.55,0.85], tune:[0.9,1.05], send:[0.15,0.28], dsend:[0.03,0.1], kit:"room"},
+      fx:{reverb:[0.35,0.5], delayBeats:[0.5,0.75], delayFb:[0.1,0.2], delayCut:[2200,3200], pump:[0,0], crackle:[0.2,0.4], lowcut:[0,30], highcut:[9000,13000], comp:[0.25,0.45]},
+      found:{role:"bed", vol:[0.05,0.1], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1600,2600], sources:["factory","shibuya","tokyo_station"]},
+      hits:{sources:["horns_78","blues_vox_78","horns_78"], pattern:"response", prob:0.6},
+      stab:["off"],
+      form:"pop",
+      timeFeel:{pushPull:{bass:0.011}},
+      theory:{adventure:[0.1,0.207], color:[0.233,0.417], voicing:"close", reharm:true},
+      rhythm:[0.09,0.235],
+      pipes:[{id:"harmonize", w:0.45, prob:0.35}] },
+    /* /genre-tool:velvetconveyor:genres */
+    /* genre-tool:talcumcasino:genres */
+    talcumcasino: { label:"Talcumcasino", info:"powder on the floorboards at 130: a pounding four-to-the-floor stomp under dramatic minor-key strings, trumpet hooks punched out double-time, the bass sprinting octaves — every 45 rarer and more worn than the last, spins and backdrops until dawn",
+      bpm:[126,136],
+      swing:[0.03,0.09],
+      humanize:[0.12,0.28],
+      progressions:["minor_run","pop_1625","sad_pop"],
+      kits:["four","open"],
+      fills:["drum fill","tom fill","hat rush"],
+      bass:{patterns:["octaves","walking","drive"], samplerPool:["picked_bass","finger_bass"], recipe:{model:["sampler","sampler","saw"], cutoff:[500,900], res:[0.05,0.15], level:[1,1.2], send:[0.05,0.12], dsend:[0,0.05], attack:0.005, release:[0.07,0.12]}},
+      lead:{patterns:["double","updown","hero"], samplerPool:["trumpet","brass_section","strings"], recipe:{model:["sampler","sampler","piano"], wave:"sine", voices:[1,2], spread:[0.001,0.004], cutoff:[2400,3600], level:[0.46,0.58], send:[0.3,0.45], dsend:[0.1,0.22], attack:0.005, release:[0.08,0.14], sustain:[0.6,0.72]}},
+      pads:{prob:0.9, samplerPool:["strings","slow_strings"], recipe:{model:["sampler","sampler","strings"], wave:"saw", cutoff:[1100,1700], detune:[0.003,0.008], attack:[0.3,0.8], level:[0.44,0.58], send:[0.3,0.45], dsend:[0.05,0.15]}},
+      drums:{kickModel:["boom","909"], snareModel:["crack","noise"], hatModel:["noise"], kick:[1.15,1.4], snare:[1,1.25], hat:[0.9,1.2], tune:[0.95,1.1], send:[0.12,0.25], dsend:[0.03,0.1], kit:"power"},
+      fx:{reverb:[0.35,0.5], delayBeats:[0.375,0.5], delayFb:[0.1,0.22], delayCut:[2400,3400], pump:[0,0.1], crackle:[0.3,0.5], lowcut:[0,30], highcut:[8500,12000], comp:[0.35,0.55]},
+      found:{role:"bed", vol:[0.05,0.1], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1600,2600], sources:["shibuya","tokyo_station","vx_timelady"]},
+      hits:{sources:["horns_78","stml_hit_b3","vox_a"], pattern:"offbeat", prob:0.55},
+      stab:["off","sparse"],
+      form:"pop",
+      theory:{adventure:[0.1,0.213], color:[0.2,0.367], voicing:"close", reharm:true},
+      rhythm:[0.09,0.235],
+      pipes:[{id:"harmonize", w:0.45, prob:0.35}] },
+    /* /genre-tool:talcumcasino:genres */
+    /* genre-tool:capesnap:genres */
+    capesnap: { label:"Capesnap", info:"the kick lands ON the one and the whole band snaps to it: scratched guitar chucks the offbeats dry as bone, a popping bass locks the vamp, horn stabs bark on cue while the hats sizzle sixteenths — dusty chopped-loop air, ghost-note snare, sweat on the downbeat",
+      bpm:[101,108],
+      swing:[0.04,0.09],
+      humanize:[0.15,0.35],
+      progressions:["funk_vamp","sad_pop","sad_pop"],
+      kits:["house","electro"],
+      fills:["off","drum fill","kit fill"],
+      bass:{patterns:["syncopated","stab","dub"], samplerPool:["slap_bass","picked_bass"], recipe:{model:["sampler","sampler","sub"], cutoff:[450,800], res:[0.08,0.2], level:[1.1,1.3], send:[0.03,0.1], dsend:[0,0.05], attack:0.004, release:[0.06,0.1]}},
+      lead:{patterns:["double","sparse","pentaup"], samplerPool:["clean_guitar","palm_muted_guitar","muted_trumpet"], recipe:{model:["sampler","sampler"], wave:"sine", voices:[1,2], spread:[0.001,0.004], cutoff:[2200,3400], level:[0.42,0.54], send:[0.15,0.3], dsend:[0.08,0.2], attack:0.003, release:[0.05,0.09], sustain:[0.45,0.58]}, inserts:{prob:0.35, max:1, pool:[["wah",{sens:[0.5,0.7], base:[300,450], range:[1.6,2.4], q:[3.5,5.5], mix:[0.6,0.8]}]]}},
+      pads:{prob:0.3, samplerPool:["brass_section","percussive_organ"], recipe:{model:["sampler","sampler"], wave:"saw", cutoff:[1000,1600], detune:[0.003,0.008], attack:[0.02,0.1], level:[0.4,0.52], send:[0.15,0.3], dsend:[0.05,0.15]}},
+      drums:{kickModel:["boom"], snareModel:["noise","crack"], hatModel:["noise"], kick:[1.05,1.3], snare:[0.55,0.8], hat:[1.1,1.5], tune:[0.95,1.1], send:[0.08,0.18], dsend:[0.03,0.1], kit:"acoustic"},
+      fx:{reverb:[0.22,0.36], delayBeats:[0.5,0.75], delayFb:[0.1,0.2], delayCut:[2200,3400], pump:[0,0.08], crackle:[0.25,0.45], lowcut:[25,40], highcut:[0,0], comp:[0.55,0.75]},
+      found:{role:"chops", vol:[0.2,0.3], pitch:[0.95,1.1], stretch:[0.4,0.6], cutoff:[2500,4000], sources:["stml_chop_a","stml_chop_b","stml_chop_c","bb_horn_a"]},
+      hits:{sources:["bb_horn_a","bb_horn_b","bb_stab_a","stml_hit_01"], pattern:"offbeat", prob:0.7},
+      stab:["offbeat","sparse"],
+      form:"pop",
+      timeFeel:{pushPull:{bass:0.011, hat:-0.005}},
+      theory:{adventure:[0.083,0.183], color:[0.2,0.367], voicing:"close", reharm:false},
+      rhythm:[0.21,0.4],
+      pipes:[{id:"strum", w:0.55, step:0.02}] },
+    /* /genre-tool:capesnap:genres */
+    /* genre-tool:chromeufo:genres */
+    chromeufo: { label:"Chromeufo", info:"the ship comes down at 94: a rubber synth-bass squelches through an envelope filter that never stops chewing, wah guitar smears across a choir-and-string cloud, the groove loose and swampy — radio chatter from somewhere above, a party that landed instead of started",
+      bpm:[90,98],
+      swing:[0.09,0.17],
+      humanize:[0.3,0.5],
+      progressions:["funk_vamp","neosoul","deep_two"],
+      kits:["boombap","house"],
+      fills:["drum fill","downlift","off"],
+      bass:{patterns:["syncopated","dub","melodic"], recipe:{model:["modeld","modeld","sub"], cutoff:[350,650], res:[0.15,0.3], level:[1.15,1.35], send:[0,0.08], dsend:[0,0.05], glide:[25,45], envAmount:[1.5,2.6], envDecay:[0.09,0.16], oscMix:[0.25,0.55], drift:[3,7]}, inserts:{prob:0.65, max:1, pool:[["wah",{sens:[0.55,0.75], base:[240,380], range:[1.8,2.6], q:[4,6], mix:[0.7,0.9]}]]}},
+      lead:{patterns:["wander","blues","sparse"], samplerPool:["overdrive_guitar","distortion_guitar","solo_vox"], recipe:{model:["sampler","sampler","fm"], wave:"sine", voices:[1,2], spread:[0.002,0.005], cutoff:[2000,3200], drive:[0.25,0.4], vibrato:[0.003,0.008], level:[0.42,0.54], send:[0.35,0.5], dsend:[0.2,0.35], attack:0.01, release:[0.12,0.2], sustain:[0.65,0.78]}, inserts:{prob:0.5, max:1, pool:[["wah",{sens:[0.5,0.7], base:[320,460], range:[1.6,2.4], q:[3.5,5.5], mix:[0.6,0.85]}]]}},
+      pads:{prob:0.75, samplerPool:["ahh_choir","synth_strings_1"], recipe:{model:["sampler","sampler","juno60"], wave:"saw", cutoff:[900,1500], detune:[0.004,0.009], attack:[0.5,1.2], chorus:[1.2,1.6], ensemble:[0.7,0.85], level:[0.45,0.6], send:[0.35,0.5], dsend:[0.1,0.2]}},
+      drums:{kickModel:["boom","808"], snareModel:["noise","crack"], hatModel:["noise"], kick:[1.1,1.35], snare:[0.75,1], hat:[0.7,1], tune:[0.9,1.05], send:[0.12,0.25], dsend:[0.05,0.15], kit:"room"},
+      fx:{reverb:[0.35,0.5], delayBeats:[0.5,0.75], delayFb:[0.2,0.35], delayCut:[2000,3000], pump:[0,0.12], crackle:[0.1,0.25], lowcut:[25,40], highcut:[0,0], comp:[0.3,0.5], grit:[0.1,0.25]},
+      found:{role:"bed", vol:[0.08,0.16], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["vx_apollo","vx_wwvh","highway_night"]},
+      hits:{sources:["vox_a","vox_b","sp_energy"], pattern:"offbeat", prob:0.5},
+      stab:["off","sparse"],
+      form:"dj",
+      theory:{adventure:[0.133,0.253], color:[0.333,0.55], voicing:"close", reharm:true},
+      rhythm:[0.21,0.4],
+      pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"callResponse", w:0.5, level:0.85},{id:"strum", w:0.55, step:0.02}] },
+    /* /genre-tool:chromeufo:genres */
+    /* genre-tool:mirrorseven:genres */
+    mirrorseven: { label:"Mirrorseven", info:"seven years bad luck, one immortal riff: a percussive keyboard bites sixteenth-note chords through a half-open wah while a fat synth bass slinks underneath, hats hissing double-time — every chord wears its seventh like a ring, dry, dark, and impossibly in the pocket",
+      bpm:[96,103],
+      swing:[0.12,0.2],
+      humanize:[0.18,0.35],
+      progressions:["neosoul","ii_v_i","mode_dorian"],
+      kits:["house","boombap"],
+      fills:["off","drum fill","kit fill"],
+      bass:{patterns:["syncopated","melodic","sixteenths"], recipe:{model:["modeld","modeld","sub"], cutoff:[400,700], res:[0.12,0.25], level:[1.1,1.3], send:[0,0.08], dsend:[0,0.05], glide:[20,40], envAmount:[1.2,2], envDecay:[0.08,0.14], oscMix:[0.2,0.5], drift:[2,6]}},
+      lead:{patterns:["double","pentaup","updown"], patchPool:["CLAV    1","FUNK CLAV"], samplerPool:["clavinet","clavinet","clavinet","electric_piano"], recipe:{model:["sampler","sampler","sampler","dx7"], wave:"sine", voices:[1,2], spread:[0.001,0.004], cutoff:[2400,3600], level:[0.46,0.58], send:[0.15,0.3], dsend:[0.08,0.2], attack:0.003, release:[0.06,0.1], sustain:[0.5,0.62]}, inserts:{prob:0.5, max:1, pool:[["wah",{sens:[0.5,0.72], base:[300,450], range:[1.8,2.6], q:[4,6], mix:[0.65,0.85]}]]}},
+      pads:{prob:0.6, samplerPool:["rhodes_ep","synth_strings_1"], recipe:{model:["sampler","fm"], wave:"sine", cutoff:[900,1500], detune:[0.003,0.008], attack:[0.15,0.5], level:[0.4,0.54], send:[0.25,0.4], dsend:[0.05,0.15]}},
+      drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[1,1.2], snare:[0.8,1.05], hat:[1.15,1.55], tune:[0.9,1.05], send:[0.08,0.18], dsend:[0.03,0.1], kit:"room"},
+      fx:{reverb:[0.3,0.45], delayBeats:[0.5,0.75], delayFb:[0.12,0.25], delayCut:[2400,3400], pump:[0,0.1], crackle:[0.12,0.28], lowcut:[25,40], highcut:[9000,13000], comp:[0.42,0.6]},
+      found:{role:"bed", vol:[0.05,0.1], pitch:[0.9,1.05], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station"]},
+      hits:{sources:["bb_horn_b","bb_stab_b","vox_b"], pattern:"sparse", prob:0.4},
+      stab:["off","sparse"],
+      form:"pop",
+      timeFeel:{pushPull:{bass:0.013, hat:-0.005}},
+      theory:{adventure:[0.317,0.5], color:[0.467,0.7], voicing:"drop2", reharm:true},
+      rhythm:[0.21,0.4],
+      pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
+    /* /genre-tool:mirrorseven:genres */
+    /* genre-tool:sundialsyrup:genres */
+    sundialsyrup: { label:"Sundialsyrup", info:"72 on the clock and nobody's counting: electric-piano ninths pour slow over a soft brushless kit, the bass murmurs melodies a beat behind, and a reedy bent-note voice sings the lead where words would go — golden-hour chords, every one stacked past the seventh",
+      bpm:[66,78],
+      swing:[0.1,0.2],
+      humanize:[0.3,0.5],
+      progressions:["neosoul","ii_v_i","lofi"],
+      kits:["halftime","boombap"],
+      fills:["off","drum fill"],
+      bass:{patterns:["melodic","simple","dub"], samplerPool:["finger_bass","fretless_bass"], recipe:{model:["sampler","sampler","sub"], cutoff:[400,750], res:[0.05,0.15], level:[0.9,1.1], send:[0.08,0.16], dsend:[0,0.05], attack:0.006, release:[0.1,0.16]}},
+      lead:{patterns:["wander","sparse","blues"], patchPool:["HARMONICA1"], samplerPool:["harmonica","harmonica","rhodes_ep"], recipe:{model:["sampler","sampler","sampler","fm"], wave:"sine", voices:[1,2], spread:[0.001,0.004], cutoff:[2000,3200], vibrato:[0.004,0.01], level:[0.44,0.56], send:[0.35,0.55], dsend:[0.15,0.3], attack:0.02, release:[0.15,0.25], sustain:[0.7,0.82]}},
+      pads:{prob:0.95, samplerPool:["rhodes_ep","electric_piano","strings"], recipe:{model:["sampler","sampler","fm"], wave:"sine", cutoff:[850,1400], detune:[0.003,0.008], attack:[0.3,0.9], level:[0.5,0.65], send:[0.35,0.55], dsend:[0.08,0.18]}},
+      drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.7,0.95], snare:[0.55,0.8], hat:[0.4,0.7], tune:[0.85,1], send:[0.2,0.35], dsend:[0.03,0.1], kit:"room"},
+      fx:{reverb:[0.5,0.65], delayBeats:[0.5,0.75], delayFb:[0.15,0.3], delayCut:[2000,3000], pump:[0,0], crackle:[0.1,0.25], lowcut:[0,25], highcut:[9000,13000], comp:[0.15,0.3]},
+      found:{role:"bed", vol:[0.06,0.12], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[1500,2500], sources:["tokyo_station","shibuya","vx_dickinson"]},
+      hits:{sources:["blues_vox_78","vox_b"], pattern:"sparse", prob:0.3},
+      stab:["off"],
+      form:"pop",
+      timeFeel:{pushPull:{bass:0.015, snare:0.008}},
+      theory:{adventure:[0.367,0.55], color:[0.533,0.783], voicing:"drop2", reharm:true},
+      rhythm:[0.225,0.425],
+      pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"callResponse", w:0.5, level:0.85},{id:"harmonize", w:0.45, prob:0.35}] },
+    /* /genre-tool:sundialsyrup:genres */
+    /* genre-tool:sequinfreight:genres */
+    sequinfreight: { label:"Sequinfreight", info:"heavy cargo in a mirrored elevator: a slapped bass hauls octaves under four-on-the-floor while chopped-loop steam hisses between the horn hits — strings glide overhead, the snare cracks bigger than the room, half glitter, half diesel",
+      bpm:[106,114],
+      swing:[0.06,0.12],
+      humanize:[0.12,0.28],
+      progressions:["funk_vamp","house_min7","neosoul"],
+      kits:["four","open"],
+      fills:["hat rush","drum fill","riser"],
+      bass:{patterns:["octaves","syncopated","rolling"], samplerPool:["slap_bass"], recipe:{model:["sampler","modeld"], cutoff:[550,950], res:[0.1,0.2], level:[1.05,1.25], send:[0.03,0.08], dsend:[0,0.05], glide:[20,35], envAmount:[1,1.8], envDecay:[0.07,0.14], oscMix:[0.2,0.5], drift:[3,7]}, inserts:{prob:0.5, max:1, pool:[["wah",{sens:[0.5,0.72], base:[280,420], range:[1.8,2.5], q:[3.5,6], mix:[0.7,0.9]}]]}},
+      lead:{patterns:["double","pentaup","updown"], samplerPool:["brass_section","trumpet","clean_guitar"], recipe:{model:["sampler","sampler","fm"], wave:"sine", voices:[1,2], spread:[0.002,0.005], cutoff:[2400,3600], level:[0.44,0.56], send:[0.25,0.4], dsend:[0.12,0.25], attack:0.005, release:[0.08,0.14], sustain:[0.58,0.7]}},
+      pads:{prob:0.85, samplerPool:["strings","slow_strings"], recipe:{model:["sampler","strings"], wave:"saw", cutoff:[1100,1700], detune:[0.004,0.009], attack:[0.25,0.7], level:[0.44,0.58], send:[0.3,0.45], dsend:[0.05,0.15]}},
+      drums:{kickModel:["909","boom"], snareModel:["noise","clap"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.95,1.2], hat:[1,1.3], tune:[0.95,1.1], send:[0.12,0.25], dsend:[0.05,0.15], kit:"power"},
+      fx:{reverb:[0.4,0.55], delayBeats:[0.375,0.5], delayFb:[0.15,0.3], delayCut:[2600,3800], pump:[0.22,0.38], crackle:[0.18,0.32], lowcut:[30,45], highcut:[8500,12500], comp:[0.35,0.55]},
+      found:{role:"chops", vol:[0.12,0.2], pitch:[0.95,1.1], stretch:[0.4,0.6], cutoff:[2400,3800], sources:["stml_chop_c","stml_chop_d","bb_horn_b"]},
+      hits:{sources:["horns_78","bb_horn_a","sp_rhythm"], pattern:"offbeat", prob:0.6},
+      stab:["offbeat","off"],
+      form:"pop",
+      theory:{adventure:[0.173,0.317], color:[0.433,0.65], voicing:"close", reharm:true},
+      rhythm:[0.09,0.235],
+      pipes:[{id:"strum", w:0.55, step:0.02},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
+    /* /genre-tool:sequinfreight:genres */
+    /* genre-tool:rollerlacquer:genres */
+    rollerlacquer: { label:"Rollerlacquer", info:"fresh varnish on the rink at 114: a glassy digital bass plucks the vamp while handclaps crack every backbeat, chorused electric-piano chords skating wide over a light sidechain bounce — machine-tight but grinning, wheels drawing circles under the mirror ball",
+      bpm:[110,118],
+      swing:[0.08,0.15],
+      humanize:[0.05,0.18],
+      progressions:["funk_vamp","neosoul","house_min7"],
+      kits:["electro","four"],
+      fills:["hat rush","cut","riser"],
+      bass:{patterns:["stab","syncopated","octaves"], patchPool:["SYN-BASS 1","PLUCK BASS"], recipe:{model:["dx7","dx7","fm"], cutoff:[420,650], res:[0.1,0.2], level:[1.05,1.25], send:[0,0.06], dsend:[0,0.06], attack:0.003, release:[0.06,0.1]}},
+      lead:{patterns:["pentaup","double","arpup"], patchPool:["E.PIANO 1","SYN-LEAD 2"], recipe:{model:["dx7","fm","synclead"], wave:"pulse", voices:[1,2], spread:[0.002,0.005], cutoff:[2600,3600], syncRatio:[1.3,1.7], syncSweep:[1,2], syncDecay:[0.12,0.22], level:[0.44,0.56], send:[0.25,0.4], dsend:[0.2,0.35], attack:0.004, release:[0.07,0.12], sustain:[0.6,0.72], fenv:[0.3,0.6]}, inserts:{prob:0.5, max:1, pool:[["chorus",{rate:[0.6,1.1], depth:[0.4,0.6], mix:[0.4,0.55]}]]}},
+      pads:{prob:0.7, recipe:{model:["juno60","fm"], wave:"saw", cutoff:[1100,1800], detune:[0.005,0.01], attack:[0.3,0.9], chorus:[1.3,1.7], chorusSpread:[0.8,1], ensemble:[0.7,0.85], level:[0.42,0.56], send:[0.25,0.4], dsend:[0.08,0.18]}},
+      drums:{kickModel:["909","808"], snareModel:["clap"], hatModel:["noise","metal"], kick:[1.15,1.35], snare:[0.95,1.2], hat:[0.9,1.2], tune:[0.95,1.1], send:[0.1,0.2], dsend:[0.05,0.15]},
+      fx:{reverb:[0.3,0.45], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[2800,4000], pump:[0.25,0.45], crackle:[0,0.08], lowcut:[30,45], highcut:[0,0], comp:[0.4,0.6]},
+      found:{role:"bed", vol:[0.06,0.12], pitch:[0.9,1.05], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["highway_night","shibuya","vx_timelady"]},
+      hits:{sources:["sp_rhythm","vox_a","stml_hit_b3"], pattern:"offbeat", prob:0.6},
+      stab:["offbeat","sparse"],
+      form:"pop",
+      theory:{adventure:[0.173,0.317], color:[0.433,0.65], voicing:"close", reharm:true},
+      rhythm:[0.19,0.36],
+      pipes:[{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
+    /* /genre-tool:rollerlacquer:genres */
+    /* genre-tool:longshipwhip:genres */
+    longshipwhip: { label:"Longshipwhip", info:"oar-stroke thrash at 180: palm-muted chug locked to a galloping double kick, a dry screaming riff over the crack of the snare — row, row, row until the coastline burns",
+      bpm:[175,190],
+      swing:[0,0.02],
+      humanize:[0,0.1],
+      progressions:["mode_phrygian","minor_run","epic_min"],
+      kits:["four","pulse"],
+      fills:["impact","cut","snare roll","tom fill"],
+      euclid:{kick:[7,16]},
+      bass:{patterns:["sixteenths","drive","pedal"], samplerPool:["picked_bass"], recipe:{model:["sampler","saw"], cutoff:[480,820], res:[0.1,0.22], level:[1.15,1.4], send:[0,0.05], dsend:[0,0.05]}, inserts:{prob:1, max:1, pool:[["distort",{drive:[0.55,0.8], mix:[0.75,0.95]}]]}},
+      lead:{patterns:["double","blues","hero"], samplerPool:["distortion_guitar","overdrive_guitar"], recipe:{model:["sampler","sampler"], wave:"saw", voices:[1,2], spread:[0.003,0.008], cutoff:[2600,3800], level:[0.54,0.7], send:[0.12,0.24], dsend:[0.08,0.18], attack:0.004, release:[0.08,0.16], sustain:[0.55,0.7]}, inserts:{prob:1, max:1, pool:[["distort",{drive:[0.6,0.85], mix:[0.75,0.95]}]]}},
+      pads:{prob:0.8, samplerPool:["palm_muted_guitar","distortion_guitar"], recipe:{model:["sampler","sampler"], wave:"saw", cutoff:[700,1300], detune:[0.004,0.01], attack:[0.01,0.06], release:[0.08,0.2], level:[0.5,0.66], send:[0.1,0.2], dsend:[0.05,0.12]}, inserts:{prob:1, max:1, pool:[["distort",{drive:[0.55,0.8], mix:[0.7,0.9]}]]}},
+      drums:{kickModel:["boom"], snareModel:["crack","noise"], hatModel:["metal","noise"], kick:[1.4,1.65], snare:[0.95,1.2], hat:[0.6,0.9], tune:[1,1.12], send:[0.06,0.14], dsend:[0.04,0.1]},
+      fx:{reverb:[0.2,0.34], delayBeats:[0.375,0.5], delayFb:[0.15,0.28], delayCut:[2400,3600], pump:[0,0.08], crackle:[0,0.05], lowcut:[30,45], highcut:[0,0], comp:[0.6,0.85], grit:[0.55,0.8]},
+      found:{role:"bed", vol:[0.04,0.1], pitch:[0.85,1], stretch:[0.4,0.6], cutoff:[2000,3200], sources:["factory","highway_night"]},
+      hits:{sources:["vox_b","sp_energy"], pattern:"sparse", prob:0.25},
+      stab:["off"],
+      form:"pop",
+      pipes:[],
+      theory:{adventure:[0.133,0.24], color:[0.167,0.333], voicing:"close", reharm:true},
+      rhythm:[0.14,0.3] },
+    /* /genre-tool:longshipwhip:genres */
+    /* genre-tool:bogironwallow:genres */
+    bogironwallow: { label:"Bogironwallow", info:"doom at the speed of peat: downtuned fuzz sinking a half-step at a time, mourning strings behind the stomp, every backbeat a stone dropped into the bog and never heard landing",
+      bpm:[47,57],
+      swing:[0,0.05],
+      humanize:[0.1,0.28],
+      progressions:["minor_run","epic_min","drone_min"],
+      kits:["halftime","kick"],
+      fills:["off","downlift","impact"],
+      bass:{patterns:["root","sub","pedal"], recipe:{model:["reese","sub"], cutoff:[180,330], res:[0.05,0.15], level:[1.25,1.5], send:[0.05,0.12], dsend:[0,0.06]}, inserts:{prob:0.9, max:1, pool:[["distort",{drive:[0.65,1], mix:[0.8,1]}]]}},
+      lead:{patterns:["sparse","double","blues"], recipe:{model:["fuzz"], wave:"saw", voices:[1,2], spread:[0.003,0.008], cutoff:[1200,2000], res:[0.2,0.35], drive:[0.7,1], level:[0.5,0.62], send:[0.35,0.5], dsend:[0.15,0.3], attack:[0.02,0.06], release:[0.4,0.7], sustain:[0.85,0.95]}},
+      pads:{prob:0.55, samplerPool:["cello","slow_strings"], recipe:{model:["strings","sampler","sampler"], wave:"saw", cutoff:[500,950], detune:[0.007,0.015], attack:[3,5], mellotron:true, level:[0.45,0.6], send:[0.5,0.7], dsend:[0.1,0.25]}},
+      drums:{kickModel:["boom","808"], snareModel:["noise"], hatModel:["noise"], kick:[1.35,1.6], snare:[0.7,0.95], hat:[0.3,0.55], tune:[0.72,0.88], send:[0.2,0.35], dsend:[0.05,0.18]},
+      fx:{reverb:[0.55,0.72], delayBeats:[0.75,1.5], delayFb:[0.3,0.45], delayCut:[1400,2400], pump:[0,0.05], crackle:[0.05,0.18], lowcut:[0,20], highcut:[0,0], comp:[0.45,0.7], grit:[0.6,0.9]},
+      found:{role:"bed", vol:[0.16,0.28], pitch:[0.5,0.65], stretch:[0.45,0.6], cutoff:[1400,2400], sources:["frogs","factory"]},
+      hits:{sources:["vox_c","sp_pressure"], pattern:"sparse", prob:0.2},
+      stab:["off"],
+      form:"pop",
+      timeFeel:{pushPull:{kick:0.04, snare:0.06, bass:0.07}},
+      reverbColor:"greyhole",
+      pipes:[{id:"sweepArc", w:0.45, lo:0.7, hi:2}],
+      theory:{adventure:[0.067,0.153], color:[0.117,0.3], voicing:"close", reharm:false},
+      rhythm:[0.1,0.25] },
+    /* /genre-tool:bogironwallow:genres */
+    /* genre-tool:barrowwake:genres */
+    barrowwake: { label:"Barrowwake", info:"funeral doom from inside the burial mound: a pipe organ exhaling dread over a heartbeat kick, one bell toll per lifetime, wind combing the grave-grass six feet up",
+      bpm:[40,48],
+      swing:[0,0.03],
+      humanize:[0.1,0.3],
+      progressions:["deep_two","drone_min","minor_run"],
+      kits:["kick","kick","off"],
+      fills:["off"],
+      bass:{patterns:["root","sub","off"], recipe:{model:["sub","reese"], cutoff:[160,300], res:[0.05,0.12], level:[1.15,1.4], send:[0.1,0.25], dsend:[0,0.08]}, inserts:{prob:0.7, max:1, pool:[["distort",{drive:[0.5,0.8], mix:[0.7,0.95]}]]}},
+      lead:{patterns:["sparse","off","off"], patchPool:["TUB BELLS","CHIMES"], recipe:{model:["bell","dx7"], wave:"sine", voices:[1,1], spread:[0.002,0.004], cutoff:[1800,2800], level:[0.34,0.46], send:[0.55,0.75], dsend:[0.3,0.45], attack:[0.01,0.05], release:[0.8,1.2], sustain:[0.9,1]}},
+      pads:{prob:1, samplerPool:["church_organ","reed_organ"], recipe:{model:["organ","sampler","sampler"], wave:"saw", cutoff:[450,850], detune:[0.008,0.016], attack:[2.5,4.5], mellotron:true, level:[0.7,0.9], send:[0.65,0.85], dsend:[0.15,0.3]}},
+      drums:{kickModel:["boom","808"], snareModel:["noise"], hatModel:["noise"], kick:[1.15,1.4], snare:[0.3,0.5], hat:[0.2,0.4], tune:[0.72,0.86], send:[0.3,0.5], dsend:[0.05,0.2]},
+      fx:{reverb:[0.86,0.95], delayBeats:[1,1.5], delayFb:[0.45,0.6], delayCut:[1200,2200], pump:[0,0], crackle:[0,0.1], lowcut:[0,20], highcut:[0,0], comp:[0.3,0.55], grit:[0.45,0.75]},
+      found:{role:"bed", vol:[0.2,0.32], pitch:[0.5,0.62], stretch:[0.45,0.6], cutoff:[1200,2200], sources:["highway_night","hvac_hum"]},
+      hits:{sources:["sp_pressure","vox_c"], pattern:"sparse", prob:0.15},
+      stab:["off"],
+      form:"wave",
+      timeFeel:{pushPull:{kick:0.05, bass:0.08}},
+      reverbColor:"greyhole",
+      theory:{adventure:[0.033,0.107], color:[0.133,0.317], voicing:"open", reharm:false},
+      rhythm:[0.033,0.127],
+      pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
+    /* /genre-tool:barrowwake:genres */
+    /* genre-tool:ravensquall:genres */
+    ravensquall: { label:"Ravensquall", info:"blizzard metal: blast-pulse hats like sleet on iron, a tremolo-picked wall smeared into frost reverb, tape hiss standing in for snowfall — grim, glacial, gone by morning",
+      bpm:[160,174],
+      swing:[0,0.02],
+      humanize:[0,0.12],
+      progressions:["frost","minor_run","mode_phrygian"],
+      kits:["pulse","four"],
+      fills:["snare roll","cut","impact","off"],
+      bass:{patterns:["drive","pedal","root"], recipe:{model:["reese","saw"], cutoff:[260,460], res:[0.1,0.22], level:[1.1,1.35], send:[0.05,0.12], dsend:[0,0.06]}, inserts:{prob:0.8, max:1, pool:[["distort",{drive:[0.5,0.8], mix:[0.75,1]}]]}},
+      lead:{patterns:["motorik","arp16","double"], recipe:{model:["fuzz"], wave:"saw", voices:[1,2], spread:[0.004,0.009], cutoff:[1700,2700], res:[0.2,0.35], drive:[0.7,1], level:[0.5,0.62], send:[0.45,0.65], dsend:[0.2,0.35], attack:0.005, release:[0.15,0.3], sustain:[0.85,0.95]}},
+      pads:{prob:1, recipe:{model:["saw","saw","strings"], wave:"saw", cutoff:[800,1500], detune:[0.014,0.022], attack:[0.3,0.9], level:[0.6,0.76], send:[0.5,0.7], dsend:[0.1,0.25]}},
+      drums:{kickModel:["808","boom"], snareModel:["noise"], hatModel:["noise"], kick:[1.05,1.3], snare:[0.7,0.95], hat:[0.95,1.3], tune:[0.9,1.05], send:[0.25,0.4], dsend:[0.05,0.15]},
+      fx:{reverb:[0.7,0.85], delayBeats:[0.5,0.75], delayFb:[0.3,0.45], delayCut:[1800,2800], pump:[0,0.06], crackle:[0.15,0.3], lowcut:[25,40], highcut:[0,0], comp:[0.4,0.65], grit:[0.55,0.8]},
+      found:{role:"bed", vol:[0.08,0.16], pitch:[0.6,0.78], stretch:[0.45,0.6], cutoff:[1600,2800], sources:["highway_night","vx_conet_swedish"]},
+      hits:{sources:["sp_pressure","vox_a"], pattern:"sparse", prob:0.2},
+      stab:["off"],
+      form:"dj",
+      reverbColor:"dattorro",
+      theory:{adventure:[0.133,0.24], color:[0.167,0.317], voicing:"quartal", reharm:true},
+      rhythm:[0.08,0.22],
+      pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
+    /* /genre-tool:ravensquall:genres */
+    /* genre-tool:runeromp:genres */
+    runeromp: { label:"Runeromp", info:"folk metal for the wolf winter: drone fifths under a fiddle-and-bagpipe reel, tribal toms circling the fire, an open-string melody older than the treeline",
+      bpm:[100,118],
+      swing:[0.02,0.08],
+      humanize:[0.15,0.3],
+      progressions:["primeval","mode_dorian","minor_run"],
+      kits:["tribal","full"],
+      fills:["tom fill","tom fill","downlift"],
+      bass:{patterns:["sludge","pedal","root"], recipe:{model:["sub","saw"], cutoff:[240,440], res:[0.08,0.18], level:[1.05,1.3], send:[0.08,0.18], dsend:[0,0.08]}, inserts:{prob:0.5, max:1, pool:[["distort",{drive:[0.3,0.6], mix:[0.6,0.85]}]]}},
+      lead:{patterns:["pentaup","updown","hero"], samplerPool:["fiddle","bagpipe"], recipe:{model:["sampler","sampler","kpluck"], wave:"saw", voices:[1,2], spread:[0.002,0.006], cutoff:[2200,3400], level:[0.5,0.64], send:[0.25,0.4], dsend:[0.15,0.3], vibrato:[0.006,0.012]}},
+      pads:{prob:0.7, recipe:{model:["strings","choir","saw"], wave:"saw", cutoff:[700,1300], detune:[0.006,0.014], attack:[1.5,3], level:[0.45,0.6], send:[0.35,0.55], dsend:[0.1,0.2]}},
+      drums:{kickModel:["boom","808"], snareModel:["noise","crack"], hatModel:["noise"], kick:[1.3,1.55], snare:[0.7,0.95], hat:[0.5,0.8], tune:[0.85,1], send:[0.15,0.3], dsend:[0.1,0.25]},
+      fx:{reverb:[0.45,0.62], delayBeats:[0.5,0.75], delayFb:[0.25,0.4], delayCut:[1800,2800], pump:[0,0.1], crackle:[0,0.12], lowcut:[25,40], highcut:[0,0], comp:[0.4,0.62], grit:[0.35,0.6]},
+      found:{role:"bed", vol:[0.1,0.2], pitch:[0.7,0.85], stretch:[0.45,0.6], cutoff:[1800,3000], sources:["iriomote","highway_night"]},
+      hits:{sources:["vox_a","sp_rhythm"], pattern:"sparse", prob:0.3},
+      stab:["off"],
+      form:"pop",
+      theory:{adventure:[0.133,0.257], color:[0.183,0.367], voicing:"close", reharm:true},
+      rhythm:[0.235,0.45],
+      pipes:[{id:"strum", w:0.55, step:0.02}] },
+    /* /genre-tool:runeromp:genres */
+    /* genre-tool:meadhallbellow:genres */
+    meadhallbellow: { label:"Meadhallbellow", info:"battle chant under the mead-hall rafters: massed male voices over war drums, a horn blast when the doors bang open, fists on oak tables keeping the time",
+      bpm:[86,102],
+      swing:[0,0.05],
+      humanize:[0.1,0.25],
+      progressions:["epic_min","drone_min","minor_run"],
+      kits:["tribal","halftime"],
+      fills:["tom fill","impact","off"],
+      bass:{patterns:["root","pedal","sub"], recipe:{model:["sub","saw"], cutoff:[220,400], res:[0.05,0.15], level:[1.1,1.3], send:[0.1,0.2], dsend:[0,0.08]}, inserts:{prob:0.4, max:1, pool:[["distort",{drive:[0.3,0.55], mix:[0.6,0.85]}]]}},
+      lead:{patterns:["anthem","roar","sparse"], samplerPool:["ohh_voices"], recipe:{model:["choir","vocoder","sampler"], wave:"saw", voices:[2,3], spread:[0.004,0.009], cutoff:[1600,2600], level:[0.5,0.64], send:[0.4,0.6], dsend:[0.2,0.35], vibrato:[0.004,0.008], attack:[0.1,0.3], release:[0.4,0.7], sustain:[0.85,0.95]}},
+      pads:{prob:1, samplerPool:["ahh_choir"], recipe:{model:["choir","choir","vp330","sampler"], wave:"saw", cutoff:[600,1200], detune:[0.006,0.012], attack:[1.5,3.5], vowel:[0.3,0.45], ensemble:[0.7,0.9], level:[0.6,0.78], send:[0.5,0.7], dsend:[0.1,0.25]}},
+      drums:{kickModel:["boom"], snareModel:["crack","noise"], hatModel:["noise"], kick:[1.5,1.75], snare:[1,1.25], hat:[0.3,0.55], tune:[0.8,0.95], send:[0.2,0.35], dsend:[0.1,0.25]},
+      fx:{reverb:[0.6,0.78], delayBeats:[0.75,1], delayFb:[0.25,0.4], delayCut:[1600,2600], pump:[0,0.06], crackle:[0,0.08], lowcut:[0,25], highcut:[0,0], comp:[0.4,0.65], grit:[0.25,0.5]},
+      found:{role:"bed", vol:[0.2,0.32], pitch:[0.72,0.88], stretch:[0.45,0.6], cutoff:[1600,2800], sources:["vx_sv_choir","vx_sv_march"]},
+      hits:{sources:["ca_horn","vox_c"], pattern:"sparse", prob:0.35},
+      stab:["off"],
+      form:"anthem",
+      reverbColor:"fdn",
+      theory:{adventure:[0.067,0.153], color:[0.117,0.3], voicing:"close", reharm:false},
+      rhythm:[0.25,0.475],
+      pipes:[{id:"harmonize", w:0.45, prob:0.35}] },
+    /* /genre-tool:meadhallbellow:genres */
+    /* genre-tool:valkyrieswoop:genres */
+    valkyrieswoop: { label:"Valkyrieswoop", info:"symphonic metal diving out of the aurora: a string section riding double-kick thunder, an operatic lead soaring over the iron wall, the whole sky scored for strings and steel",
+      bpm:[144,156],
+      swing:[0,0.03],
+      humanize:[0.03,0.12],
+      progressions:["epic_min","canon","minor_run"],
+      kits:["four","pulse"],
+      fills:["impact","riser","tom fill"],
+      euclid:{kick:[7,16]},
+      bass:{patterns:["drive","pedal","sixteenths"], samplerPool:["picked_bass"], recipe:{model:["sampler","saw"], cutoff:[500,850], res:[0.1,0.22], level:[1.2,1.4], send:[0,0.06], dsend:[0,0.05]}, inserts:{prob:0.9, max:1, pool:[["distort",{drive:[0.5,0.75], mix:[0.7,0.95]}]]}},
+      lead:{patterns:["hero","anthem","updown"], samplerPool:["solo_vox","violin"], recipe:{model:["sampler","sampler","stack"], wave:"saw", voices:[1,2], spread:[0.003,0.008], cutoff:[2600,3800], level:[0.52,0.66], send:[0.35,0.5], dsend:[0.15,0.3], vibrato:[0.006,0.012]}},
+      pads:{prob:1, samplerPool:["slow_strings","strings"], recipe:{model:["strings","strings","solina","sampler"], wave:"saw", cutoff:[900,1600], detune:[0.005,0.012], attack:[0.6,1.8], ensemble:[0.7,0.9], level:[0.55,0.72], send:[0.4,0.6], dsend:[0.1,0.2]}},
+      drums:{kickModel:["boom","909"], snareModel:["crack","noise"], hatModel:["metal","noise"], kick:[1.4,1.65], snare:[0.85,1.1], hat:[0.6,0.9], tune:[0.95,1.1], send:[0.2,0.35], dsend:[0.08,0.2]},
+      fx:{reverb:[0.55,0.72], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[2200,3400], pump:[0,0.1], crackle:[0,0.05], lowcut:[28,42], highcut:[0,0], comp:[0.55,0.8], grit:[0.45,0.7]},
+      found:{role:"bed", vol:[0.05,0.12], pitch:[0.8,0.95], stretch:[0.4,0.6], cutoff:[2000,3200], sources:["tw_stationhall","highway_night"]},
+      hits:{sources:["vox_b","sp_pressure"], pattern:"sparse", prob:0.25},
+      stab:["off"],
+      form:"pop",
+      reverbColor:"dattorro",
+      masterComp:0.35,
+      theory:{adventure:[0.117,0.24], color:[0.183,0.367], voicing:"close", reharm:true},
+      rhythm:[0.14,0.3],
+      pipes:[{id:"harmonize", w:0.45, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
+    /* /genre-tool:valkyrieswoop:genres */
+    /* genre-tool:permafrostveil:genres */
+    permafrostveil: { label:"Permafrostveil", info:"dungeon synth frozen solid: ice-bell music boxes and ghost choirs drifting over frost triads, snow-static in the grooves, no drums at all — nothing down here survives the cold",
+      bpm:[54,68],
+      swing:[0,0.03],
+      humanize:[0.1,0.3],
+      progressions:["frost","frost","epic_min"],
+      kits:["off"],
+      fills:["off"],
+      bass:{patterns:["off","root"], recipe:{model:["sub"], cutoff:[220,400], res:[0.05,0.12], level:[0.6,0.85], send:[0.2,0.4], dsend:[0,0.1]}},
+      lead:{patterns:["sparse","wander","off"], samplerPool:["music_box","celesta","glockenspiel"], recipe:{model:["bell","sampler","sampler"], wave:"sine", voices:[1,2], spread:[0.002,0.005], cutoff:[2400,3600], level:[0.34,0.46], send:[0.55,0.75], dsend:[0.3,0.45], attack:[0.01,0.05], release:[0.5,0.9], sustain:[0.85,0.95]}},
+      pads:{prob:1, patchPool:["SHIMMER","ORCH-CHIME","TUB BELLS"], samplerPool:["bowed_glass","ahh_choir"], recipe:{model:["vp330","strings","dx7","sampler"], wave:"saw", cutoff:[800,1500], detune:[0.005,0.012], attack:[3,5], vowel:[0.4,0.55], ensemble:[0.7,0.9], level:[0.6,0.8], send:[0.6,0.8], dsend:[0.15,0.3]}},
+      drums:{kickModel:["808"], snareModel:["noise"], hatModel:["noise"], kick:[0.4,0.6], snare:[0.3,0.5], hat:[0.25,0.45], tune:[0.85,1], send:[0.3,0.5], dsend:[0,0.1]},
+      fx:{reverb:[0.82,0.92], delayBeats:[1,1.5], delayFb:[0.4,0.55], delayCut:[2000,3200], pump:[0,0], crackle:[0.2,0.38], lowcut:[0,0], highcut:[0,0], comp:[0,0.15]},
+      found:{role:"bed", vol:[0.18,0.3], pitch:[0.55,0.72], stretch:[0.45,0.6], cutoff:[1800,3000], sources:["hvac_hum","vx_wwvh"]},
+      thunk:{prob:[0.15,0.3], amp:[0.02,0.032]},
+      hits:{sources:["tw_ding","sp_herenow"], pattern:"sparse", prob:0.15},
+      stab:["off"],
+      form:"wave",
+      reverbColor:"dattorro",
+      theory:{adventure:[0.1,0.2], color:[0.1,0.267], voicing:"open", reharm:true},
+      rhythm:[0,0.08],
+      pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"harmonize", w:0.45, prob:0.35}] },
+    /* /genre-tool:permafrostveil:genres */
   };
 
   // ---------- MUSIC-MIND anchor axes (docs/MUSIC-MIND.md §"The vector space grows new axes") ----------
@@ -5076,11 +5428,22 @@
     miamibass:   { bassCells:["tresillo"] },   // the 808 tresillo backbone joins the pool
     breakcore:   { rhythm:[.6,.8] },   // maximum chop appetite on paper — the bpm>165 constrain law caps the render at .4 (the amen at 190 saturates alone)
     sludgemetal: { rhythm:[.05,.2], pipes:[] },   // gate-loop damping (iter 1: fell to dub on a drumDensity knife-edge — baseline was already a 100-100 tie there): sludge is a slow CRUSH, not a conversation — the derived callResponse (via its "blues" lead pattern) read wrong, and the wall needs no plumbing at all; zero pipe candidates also means zero extra draws, keeping its fill/sweep stream nearest the proven baseline roll
+    longshipwhip:{ pipes:[] },   // the sludgemetal precedent: a crush genre, not a conversation — derivation read callResponse off the "blues" lead pattern and strum off the guitar pool, but the 180bpm palm-muted wall answers nobody and never rolls a chord
+    bogironwallow:{ pipes:[{id:"sweepArc",w:.45,lo:.7,hi:2}] },   // crush, not conversation (callResponse leaked in via the "blues" lead pattern); the reese bass DOES earn sweepArc — the slow filter swell is the doom gesture, so keep exactly that one
   };
   // deriveMind(name, g) — attach the three axes to one anchor. Weighted
   // averages over the anchor's own pools (pool repetition IS weighting, the
   // kit/progression convention); every rule below cites what it reads.
+  // MIND_OVERRIDES is applied HERE (not only in the load loop) so genre-tool's
+  // create-time measurement path (which calls K.deriveMind on an injected
+  // anchor) sees the same curated axes the kernel loads — before 2026-07-10
+  // the tool derived, measured AND SERIALIZED conversational pipes onto crush
+  // anchors, and the serialized field then beat the override forever
+  // (explicit-wins read the tool's own inference as curation).
   function deriveMind(name, g){
+    const ov=MIND_OVERRIDES[name];
+    if(ov){ for(const k of ["theory","pipes","rhythm"]) if(ov[k]&&!g[k]) g[k]=ov[k];
+            if(ov.bassCells) for(const c of ov.bassCells) if(!g.bass.patterns.includes(c)) g.bass.patterns.push(c); }
     const avgR=(names,tbl,dflt)=>{ let lo=0,hi=0;
       for(const n of names){ const r=tbl[n]||dflt; lo+=r[0]; hi+=r[1]; }
       return [round(lo/names.length,3), round(hi/names.length,3)]; };
@@ -5130,15 +5493,11 @@
       g.pipes=p.slice(0,3);   // the taste cap: ≤3 candidates per anchor
     }
   }
-  // load-time pass: overrides first (they ARE explicit declarations), then
-  // the heuristic fills every gap. After this loop every anchor carries all
-  // three axes — resolveMulti can blend without presence guards.
-  for(const name of Object.keys(GENRES)){
-    const g=GENRES[name], ov=MIND_OVERRIDES[name];
-    if(ov){ for(const k of ["theory","pipes","rhythm"]) if(ov[k]&&!g[k]) g[k]=ov[k];
-            if(ov.bassCells) for(const c of ov.bassCells) if(!g.bass.patterns.includes(c)) g.bass.patterns.push(c); }
-    deriveMind(name, g);
-  }
+  // load-time pass: overrides first (they ARE explicit declarations — applied
+  // inside deriveMind since 2026-07-10, so the tool's measurement path agrees),
+  // then the heuristic fills every gap. After this loop every anchor carries
+  // all three axes — resolveMulti can blend without presence guards.
+  for(const name of Object.keys(GENRES)) deriveMind(name, GENRES[name]);
 
   // ---------- transition micro-lick soloists (2026-07 musical transitions) ----------
   // Per-genre instrument pools for the "micro lick" transition: a 1-2 bar
