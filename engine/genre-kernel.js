@@ -1243,7 +1243,7 @@
 
   // ---------- the anchors ----------
   const GENRES = {
-    techno: { label:"Techno", info:"rhythm over harmony: drones, machine four, DJ plateaus",   // SYNTH-FORWARD: samples are texture, not the hook
+    techno: { label:"Concrete Metronome", info:"rhythm over harmony: drones over a machine four that never blinks, DJ plateaus long as weather fronts — the building dances and nobody remembers who pressed start",   // SYNTH-FORWARD: samples are texture, not the hook
       bpm:[124,140], swing:[0,0.06], humanize:[0,0.15],
       progressions:["drone_min","deep_two"], kits:["techno","pulse"], fills:["off","riser","cut","hat rush"],
       euclid:{hat:[7,16]},   // E(7,16) rotating closed-hat undergrid beneath the machine four (opens survive)
@@ -1256,7 +1256,7 @@
       found:{role:"chops", vol:[.1,.18], pitch:[.9,1.1], stretch:[.4,.6], cutoff:[1800,3200], sources:["factory","shibuya","vx_wwvh","stml_chop_c4","stml_chop_d"]},
       stab:["offbeat","offbeat","rave","sparse"], hits:{sources:["vox_b","rave_a","sp_system","sp_energy"], pattern:"sparse", prob:.5},
       form:"dj" },
-    house: { label:"House", info:"Chicago house: four-on-floor + claps + open-hat offbeats, warm organ stabs, piano color, min7 sevenths",   // sample-mid: chops present, synths carry
+    house: { label:"Basement Sermon", info:"a four-on-floor congregation: claps and open-hat offbeats, warm organ stabs, piano color, min7 sevenths — the kick is the sermon and everyone is welcome",   // sample-mid: chops present, synths carry
       reverbColor:"dattorro",   // fx wings: clean plate on the stabs
       masterComp:0.3,   // effects audit B6: the SSL-buss pump-and-glue on the four-on-floor — the bus-comp argument that earned disco its masterComp applies most directly to Chicago house. Zero rng, dominant-parent
       bpm:[120,126], swing:[.08,.15], humanize:[.05,.18],
@@ -1270,7 +1270,7 @@
       found:{role:"chops", vol:[.1,.18], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["shibuya","tokyo_station","vx_timelady","stml_chop_a","stml_chop_b","stml_chop_c4"]},
       stab:["rave","offbeat"], hits:{sources:["rave_b","rave_c","vox_a","sp_rhythm","stml_hit_01","stml_hit_03"], pattern:"offbeat", prob:.55},
       form:"dj" },
-    jungle: { label:"Jungle", info:"chopped breaks, sub pressure, rhythm-as-melody, dub space",   // SAMPLE-FORWARD: the amen IS the track
+    jungle: { label:"Canopy Pressure", info:"chopped breaks ricocheting under sub pressure, rhythm as the melody, echo hung like humidity — the floor is a long way down",   // SAMPLE-FORWARD: the amen IS the track
       bpm:[158,172], swing:[0,.08], humanize:[.1,.25],
       progressions:["deep_two","drone_min","minor_run"], kits:["jungle","breaks"], fills:["break fill","break fill","reverse","off"],
       euclid:{kick:[3,16]},   // E(3,16) tresillo kicks rotating under the amen — breakbeat kick science
@@ -1284,7 +1284,7 @@
       found:{role:"break", vol:[.3,.45], pitch:[1,1], stretch:[.5,.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175","stml_loop_148a","stml_loop_157a","stml_loop_157b","stml_loop_167a"]},   // the BREAK DOMINATES: loud + wide open, real sampled drums not "light FM"
       stab:["off","sparse"], hits:{sources:["vox_a","rave_d","sp_rewind","sp_pressure"], pattern:"dub", prob:.75},
       form:"dj" },
-    triphop: { label:"Trip hop", info:"slowed dusty breaks, jazz color, melancholy, dub weight",   // SAMPLE-FORWARD
+    triphop: { label:"Drizzle Noir", info:"slowed dusty breaks under a raincoat: blue seventh-chord color, melancholy with sub weight, every snare heard through a wet window",   // SAMPLE-FORWARD
       bpm:[72,92], swing:[.15,.3], humanize:[.2,.45],
       progressions:["neosoul","lofi","minor_run","mode_dorian"], kits:["boombap","breaks","halftime"], fills:["off","drum fill","downlift"],
       bass:{patterns:["dub","simple","sub"], samplerPool:["acoustic_bass"], recipe:{model:["sub","saw","sampler"],cutoff:[300,600],res:[.05,.2],level:[1.0,1.25],send:[.05,.12],dsend:[0,.1]},
@@ -1299,7 +1299,7 @@
       found:{role:"break", vol:[.18,.3], pitch:[1,1], stretch:[.5,.5], cutoff:[3800,5500], sources:["amen_165","amen_170","stml_loop_81a","stml_loop_85a","stml_loop_89b"]},
       stab:["off"], hits:{sources:["vox_b","blues_vox_78","sp_slowdown"], pattern:"sparse", prob:.55},
       form:"pop" },
-    vaporwave: { label:"Vaporwave", info:"slowed mall nostalgia: maj7 city-pop harmony, drenched reverb, found sound",   // SAMPLE-FORWARD: the bed is the place
+    vaporwave: { label:"Marble Escalator", info:"slowed department-store nostalgia: maj7 city-pop harmony at two-thirds speed, drenched reverb, found sound — the fountain remembers you",   // SAMPLE-FORWARD: the bed is the place
       bpm:[62,88], swing:[0,.12], humanize:[.05,.25],
       progressions:["royal_road","dream","pop_1625","neosoul"], kits:["full","open","halftime"], fills:["drum fill","riser","downlift","off"],
       bass:{patterns:["simple","walking","root"], recipe:{model:["saw"],cutoff:[500,900],res:[.1,.25],level:[.9,1.1],send:[.05,.15],dsend:[0,.1]}},
@@ -1313,7 +1313,7 @@
       stab:["off"], hits:{sources:["sp_plaza","sp_shopping","vox_b"], pattern:"sparse", prob:.5},
       autoTune:0.25,   // fx wings stage 2: a GENTLE bend of the slowed mall bed toward the maj7 key — subtle, not hyperpop
       form:"pop" },
-    synthwave: { label:"Synthwave", info:"night-drive pulse, supersaw leads, gated drums, minor keys",   // SYNTH-FORWARD: beds distant
+    synthwave: { label:"Night Odometer", info:"the night-drive pulse: supersaw leads in minor keys, gated drums flashing past like streetlights, the dashboard lit all the way home",   // SYNTH-FORWARD: beds distant
       bpm:[88,116], swing:[0,.05], humanize:[.05,.15],
       progressions:["synthwave","epic_min","andalusian","minor_run"], kits:["pulse","four","open"], fills:["tom fill","tom fill","riser","off"],
       bass:{patterns:["drive","octaves","sixteenths","pedal"], recipe:{model:["saw","reese"],cutoff:[550,900],res:[.15,.3],level:[1.1,1.3],send:[0,.08],dsend:[0,0]}},
@@ -1326,7 +1326,7 @@
       found:{role:"bed", vol:[.08,.14], pitch:[.65,.8], stretch:[.45,.6], cutoff:[1000,1800], sources:["highway_night","factory","vx_apollo"]},
       stab:["off","sparse"], hits:{sources:["vox_a","sp_nightdrive"], pattern:"sparse", prob:.3},
       form:"pop" },
-    lofi: { label:"Lo-fi", info:"dusty boombap, jazzy 7ths, crackle, everything softened",   // SAMPLE-FORWARD
+    lofi: { label:"Desk Lamp Dust", info:"a soft head-nod under a desk lamp: warm seventh chords through vinyl crackle, drums like pencil erasers, everything rounded until nothing can hurt you",   // SAMPLE-FORWARD
       bpm:[72,88], swing:[.18,.32], humanize:[.25,.5],
       progressions:["lofi","neosoul","ii_v_i","pop_1625"], kits:["boombap","halftime"], fills:["off","off","drum fill"],
       bass:{patterns:["simple","dub","root"], samplerPool:["acoustic_bass"], recipe:{model:["sub","saw","sampler"],cutoff:[350,650],res:[.05,.15],level:[.9,1.1],send:[.05,.12],dsend:[0,.05]},
@@ -1341,7 +1341,7 @@
       found:{role:"bed", vol:[.14,.22], pitch:[.75,.9], stretch:[.4,.55], cutoff:[1600,2600], sources:["tokyo_station","shibuya","vx_dday"]},
       stab:["off"], hits:{sources:["vox_c","sp_slowdown"], pattern:"sparse", prob:.35},
       form:"pop" },
-    downtempo: { label:"Downtempo", info:"the head-nod: a slow swung boom-bap under long warm pads — Bristol patience, but there is always a BEAT",   // 2026-07 wash-trio deep pass: the BEAT one. Its identity claim ambient/newage can't share is a real swung backbeat (drumDensity + swing floors), leaned laid-back
+    downtempo: { label:"Warm Undertow", info:"the head-nod at low tide: a slow swung beat under long warm pads — harbor-town patience, but there is always a BEAT",   // 2026-07 wash-trio deep pass: the BEAT one. Its identity claim ambient/newage can't share is a real swung backbeat (drumDensity + swing floors), leaned laid-back
       bpm:[62,80], swing:[.1,.22], humanize:[.15,.35],   // 2026-07: bpm ceiling 84->80 keeps downtempo clearly SLOWER than exotica's tiki-lounge floor (82) — the swung-acoustic-lounge collision was pre-existing (downtempo's flute lead reads acoustic); the bpm fence breaks it. swing FLOOR up .05->.10 — the groove is never straight, and clearly ABOVE vaporwave's machine-time (renders .03-.08): the two-way fence — downtempo scores off vaporwave's diagonal (vaporwave row caps swing .08) AND the straight-time wash cluster scores off downtempo's (row swing floor .06)
       timeFeel:{ pushPull:{ bass:.011, hat:-.007 } },   // 2026-07: the Bristol lean made structural (drawless per-voice offset) — bass drags behind the grid, hats ride a touch on top: the head-nod that says trip-hop, not machine-time vaporwave. HALVED 2026-07-04 (Paul: went a little too far on timing feel)
       progressions:["neosoul","dream","deep_two","mode_mixo"], kits:["boombap","halftime","kick"], fills:["off","downlift","riser"],
@@ -1356,7 +1356,7 @@
       found:{role:"bed", vol:[.14,.24], pitch:[.7,.9], stretch:[.45,.6], cutoff:[1800,2800], sources:["tokyo_station","highway_night","vx_apollo"]},
       stab:["off"], hits:{sources:["vox_b","sp_herenow"], pattern:"sparse", prob:.2},
       form:"pop" },
-    ambient: { label:"Ambient", info:"beatless drift: a single held minor-7 drone the length of the room, place recordings, enormous reverb — nothing moves",   // 2026-07 wash-trio deep pass: the STATIC one. Its identity claim the wash trio can't share is ZERO harmonic motion + ZERO kit + the longest plateau
+    ambient: { label:"Standing Air", info:"beatless drift: a single held minor-7 drone the length of the room, recordings of places instead of drums, reverb like architecture — nothing moves, on purpose",   // 2026-07 wash-trio deep pass: the STATIC one. Its identity claim the wash trio can't share is ZERO harmonic motion + ZERO kit + the longest plateau
       bpm:[58,72], swing:[0,0], humanize:[.1,.3],
       progressions:["drone_min","drone_min","deep_two"], kits:["off"], fills:["off"],   // 2026-07: DRONE-ONLY (was dream/deep_two/drone_min/mode_lydian) — motion collapses to 0 (deep_two the rare 2-chord breath, .33); and NO kit EVER (was off/off/kick) — drumDensity strictly 0. This is the structural fence vs downtempo (which now REQUIRES a beat) and newage (which now REQUIRES motion+rubato)
       chordEvery:32,   // 2026-07: the LONGEST harmonic plateau in the catalog (4 bars per chord — twice mallsoft's 16) — the drone holds the length of the room; nothing changes
@@ -1445,7 +1445,7 @@
         { pool:["tw_ding"], placement:"cadence", sections:"platform|board|interchange|terminus", treatment:{maxDur:2.2, cutoff:2400, vol:0.28, rsend:0.26, dsend:0.04, ppsend:0.7} }],
       stab:["off"],
       form:"transit" },   // a commuter journey: platform -> board -> transit -> interchange -> SOLO -> express -> terminus (see buildSections)
-    neoclassical: { label:"Neoclassical", info:"felt piano, slow counterpoint, strings swelling underneath, key thunks, rubato",
+    neoclassical: { label:"Felt Hammer Recital", info:"felt piano writing slow counterpoint, strings swelling underneath, the key thunks left in — rubato like breathing, a recital for an audience of one",
       // 2026-07 deep pass: the genre's VOICE is now a real sampled felt piano
       // (FluidR3 Yamaha Grand, lowpassed at extraction — SAMPLERS.felt_piano):
       // lead AND bass 2/3+ sampled piano, soft velocity, slightly slow attack,
@@ -1469,7 +1469,7 @@
       thunk:{prob:[.2,.35], amp:[.026,.038]},   // soft key/pedal noise on that fraction of lead notes, ~-30dB
       stab:["off"], hits:{sources:["sp_herenow"], pattern:"sparse", prob:.1},
       form:"wave" },
-    dancepop: { label:"Dance pop", info:"New Order-ish: melodic synth bass up high, bright leads, big pop changes",   // SYNTH-FORWARD
+    dancepop: { label:"Glitter Curfew", info:"melodic synth bass up high where the hook lives, bright leads, big chorus-sized changes — joy manufactured by machines that mean it, home before midnight",   // SYNTH-FORWARD
       bpm:[116,128], swing:[0,.1], humanize:[.05,.2],
       progressions:["four_chords","sad_pop","doo_wop"], kits:["four","pulse","open"], fills:["drum fill","tom fill","riser","snare roll"],
       bass:{patterns:["octaves","melodic","drive","syncopated"], patchPool:["SYN-BASS 2","BASS    2"], recipe:{model:["saw","saw","dx7"],cutoff:[900,1500],res:[.1,.25],level:[1.05,1.25],send:[.05,.15],dsend:[0,.1]}},   // ~1/3 the DX7 synth-bass pair (alg 17 both -> morphable) — the New Order hook machine
@@ -1481,7 +1481,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.8,1], stretch:[.45,.6], cutoff:[1500,2500], sources:["shibuya","highway_night"]},
       stab:["off","sparse"], hits:{sources:["rave_b","vox_a"], pattern:"sparse", prob:.3},
       form:"pop" },
-    edm: { label:"EDM", info:"festival big-room: riser into THE DROP, max pump, supersaw walls",   // SYNTH-FORWARD
+    edm: { label:"Fireworks Budget", info:"the main stage as a physics demo: a riser into THE DROP, maximum pump, supersaw walls wide as the fairground — hands go up on schedule, and it works anyway",   // SYNTH-FORWARD
       bpm:[124,132], swing:[0,.05], humanize:[0,.1],
       progressions:["epic_min","minor_run","sad_pop","drone_min"], kits:["four","pulse"], fills:["riser","riser","impact","cut","dropout"],
       bass:{patterns:["rolling","drive","stab"], recipe:{model:["saw","reese","modeld"],cutoff:[500,900],res:[.2,.35],level:[1.15,1.35],send:[0,.08],dsend:[0,0],
@@ -1495,7 +1495,7 @@
       found:{role:"chops", vol:[.08,.15], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2500,4000], sources:["shibuya","factory","vx_xminusone"]},
       stab:["rave","offbeat"], hits:{sources:["rave_a","rave_c","sp_energy"], pattern:"offbeat", prob:.6},
       form:"drop" },
-    dubstep: { label:"Dubstep", info:"140 halftime: wobble bass, snare on three, cavernous space",
+    dubstep: { label:"Pendulum Threat", info:"halftime at 140: a wobble bass swung like a pendulum, the snare landing on three, space cavernous enough to lose your keys in",
       bpm:[136,146], swing:[0,.08], humanize:[.05,.2],
       progressions:["drone_min","deep_two","minor_run"], kits:["halftime","breaks"], fills:["break fill","riser","impact","off","dropout"],
       euclid:{hat:[5,16]},   // E(5,16) sparse uneven hats rotating over the halftime frame
@@ -1512,7 +1512,7 @@
       found:{role:"chops", vol:[.1,.18], pitch:[.85,1.1], stretch:[.4,.6], cutoff:[2000,3500], sources:["factory","highway_night"]},
       stab:["off","sparse"], hits:{sources:["vox_c","sp_pressure","rave_d"], pattern:"dub", prob:.55},
       form:"drop" },
-    blues: { label:"Blues", info:"12-bar dom7 changes, triplet shuffle, call-and-response guitar, worn-record air",   // ACOUSTIC-forward (2026-07 deep pass: "the whole thing is acoustic")
+    blues: { label:"Kerosene Twelve", info:"twelve bars of dom7 trouble: a triplet shuffle, call-and-response guitar, the record worn gray where the good parts are",   // ACOUSTIC-forward (2026-07 deep pass: "the whole thing is acoustic")
       reverbColor:"fdn",   // fx wings: a dry juke-joint room, not a wash
       timeFeel:{ pushPull:{ bass:.015, snare:.01 } },   // effects audit B7: behind-the-beat by definition — the lazy shuffle. jazz got the walking-upright bass push; blues wants the lazier version, the snare offset kept tiny so offgrid doesn't move. Zero-rng dominant-parent. HALVED 2026-07-04 (Paul: went a little too far on timing feel)
       bpm:[78,100], swing:[.24,.42], humanize:[.3,.55],
@@ -1525,7 +1525,7 @@
       found:{role:"bed", vol:[.05,.12], pitch:[.8,1], stretch:[.45,.6], cutoff:[1500,2500], sources:["shibuya","tokyo_station","vx_whitman"]},
       stab:["off"], hits:{sources:["blues_vox_78","blues_vox_78","horns_78"], pattern:"response", prob:.75},   // the 78rpm singer takes the response bars the guitar rests — and gets answered
       form:"pop" },
-    jazz: { label:"Jazz", info:"ii-V-I machinery, walking bass, brushed kit, piano comping",
+    jazz: { label:"Smoke Arithmetic", info:"ii-V-I machinery run by hand: walking bass, brushed kit, piano comping the changes — improvised, and the arithmetic always lands",
       reverbColor:"dattorro",   // effects audit C: the Rudy Van Gelder / Blue Note plate (EMT-140) — the sound of the sessions; zero rng, dominant-parent
       bpm:[96,144], swing:[.28,.48], humanize:[.35,.6],
       progressions:["ii_v_i","neosoul","lofi","mode_dorian"], kits:["breaks","boombap"], fills:["off","drum fill"],
@@ -1540,7 +1540,7 @@
       timeFeel:{ pushPull:{ bass:0.015 } },   // Phase 3: the upright WALKS behind the beat — bass onsets pushed ~7ms late (a per-voice offset, no verifier feature reads bass timing, so pure feel). HALVED 2026-07-04 (Paul: went a little too far on timing feel)
       stab:["off"], hits:{sources:["horns_78","vox_b"], pattern:"sparse", prob:.35},
       form:"pop" },
-    dub: { label:"Dub", info:"one-drop riddim: the delay IS the genre — sub pressure, wet skanks, enormous echo tails",   // SAMPLE-FORWARD: wet vox hits + Burroughs in the smoke
+    dub: { label:"Echo Kingdom", info:"the one-drop with the delay promoted to lead instrument: sub pressure, wet offbeat skanks, every hit fed back until the tail outlives the song",   // SAMPLE-FORWARD: wet vox hits + Burroughs in the smoke
       reverbColor:"spring",   // effects audit A2: the spring tank (King Tubby's AKG BX20 "splash") IS dub's ROOM — additive to and distinct from the runaway echo (delayFb .5-.7); surfrock already proves the module. Zero rng, dominant-parent
       bpm:[68,82], swing:[.02,.1], humanize:[.1,.3],
       progressions:["deep_two","deep_two","drone_min"], kits:["halftime","boombap"], fills:["off","downlift","reverse"],
@@ -1553,7 +1553,7 @@
       found:{role:"bed", vol:[.18,.3], pitch:[.7,.85], stretch:[.45,.6], cutoff:[1800,3000], sources:["tw_platform","highway_night","vx_burroughs"]},
       stab:["off","sparse"], hits:{sources:["vox_a","vox_b","sp_rewind","sp_pressure"], pattern:"dub", prob:.75, wet:true},
       form:"dj" },
-    trance: { label:"Trance", info:"uplifting 138: rolling 16th bass, supersaw hero over a huge wash, hands-up drops",   // SYNTH-FORWARD: beds distant
+    trance: { label:"Sunrise Protocol", info:"uplifting 138: rolling 16th bass, one supersaw hero over a huge wash, a breakdown engineered to make ten thousand strangers cry at dawn",   // SYNTH-FORWARD: beds distant
       bpm:[132,142], swing:[0,.04], humanize:[0,.1],
       progressions:["uplift","epic_min","sad_pop","synthwave"], kits:["four","pulse"], fills:["riser","riser","impact","cut","dropout"],
       bass:{patterns:["rolling","sixteenths","drive","pedal"], recipe:{model:["saw"],cutoff:[520,850],res:[.15,.3],level:[1.1,1.3],send:[0,.08],dsend:[0,.05]},
@@ -1567,7 +1567,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.7,.9], stretch:[.45,.6], cutoff:[1500,2500], sources:["highway_night","tokyo_station","vx_apollo"]},
       stab:["off","sparse"], hits:{sources:["rave_c","sp_energy","vox_a"], pattern:"offbeat", prob:.4},
       form:"drop" },
-    disco: { label:"Disco", info:"four-on-floor + octave bass + organ glitter, min7 funk vamps, 78rpm horns",   // sample-mid: the horns are dressing
+    disco: { label:"Mirrorball Shift", info:"four-on-floor under the mirrorball: octave bass, organ glitter, min7 vamps, horns off a worn 78 — Saturday night run like a factory of joy",   // sample-mid: the horns are dressing
       reverbColor:"dattorro",   // effects audit A1: the EMT-140 PLATE (Sigma Sound) IS the Salsoul/Philly-International disco-string room — the lush strings/horns rode a bright plate, not the generic hall (citypop/house/mallsoft already share it; zero rng, dominant-parent)
       bpm:[110,122], swing:[.05,.12], humanize:[.1,.25],
       progressions:["funk_vamp","house_min7","pop_1625"], kits:["four","open"], fills:["hat rush","drum fill","riser"],
@@ -1583,7 +1583,7 @@
       stab:["off","sparse"], hits:{sources:["horns_78","sp_rhythm","vox_a","stml_hit_b3"], pattern:"offbeat", prob:.5},
       masterComp:0.35,   // fx wings stage 4: gentle 3-band glue on the four-on-floor — the disco mix cohered (zero rng, dominant-parent inherited)
       form:"pop" },
-    italo: { label:"Italo disco", info:"sparkling pluck arps over octave bass — brighter and happier than synthwave",   // SYNTH-FORWARD
+    italo: { label:"Espresso Laser", info:"sparkling pluck arpeggios over an octave bass — chrome and citrus, sunnier and happier than the night-drive two doors down, a beach at noon inside a synthesizer",   // SYNTH-FORWARD
       bpm:[108,120], swing:[0,.08], humanize:[.02,.12],
       progressions:["sad_pop","synthwave","doo_wop"], kits:["pulse","four"], fills:["tom fill","riser","drum fill"],
       bass:{patterns:["octaves","sixteenths","pedal"], recipe:{model:["saw","modeld"],cutoff:[750,1150],res:[.12,.22],level:[1.05,1.25],send:[.03,.08],dsend:[0,.05],
@@ -1597,7 +1597,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.8,.95], stretch:[.45,.6], cutoff:[1500,2500], sources:["shibuya","highway_night","vx_xminusone"]},
       stab:["off","offbeat"], hits:{sources:["rave_b","vox_a","sp_nightdrive"], pattern:"sparse", prob:.4},
       form:"pop" },
-    bigbeat: { label:"Big beat", info:"amen-driven block-rocking beats: acid bass, rave stabs galore, maximum cheek",   // SAMPLE-FORWARD: the break + the sample-CD arsenal
+    bigbeat: { label:"Klaxon Circus", info:"block-rocking swagger: acid bass under rave-siren stabs, the big break driving, maximum cheek — a fairground ride that plays itself",   // SAMPLE-FORWARD: the break + the sample-CD arsenal
       bpm:[118,136], swing:[0,.1], humanize:[.05,.2],
       progressions:["minor_run","house_min","deep_two"], kits:["breaks","house"], fills:["break fill","riser","impact","cut","snare roll"],
       bass:{patterns:["stab","rolling","drive","syncopated"], recipe:{model:["acid"],cutoff:[420,700],res:[.3,.45],level:[1.1,1.3],send:[0,.08],dsend:[0,.1]},
@@ -1614,7 +1614,7 @@
       // break/hits handlers are untouched; only bigbeat's own fixtures drift.
       sampleEvents:[{ pool:["bb_horn_a","bb_horn_b"], placement:"opener", gain:.6, treatment:{cutoff:7000, dsend:.3} }],
       form:"drop" },
-    garage: { label:"UK garage", info:"2-step shuffle at 130: swung skippy drums, sub weight, chopped vox",   // sample-mid: vox chops as percussion
+    garage: { label:"Pirate Signal", info:"the 2-step shuffle at 130: skippy swung drums, sub weight, chopped vox — broadcast from a tower-block antenna after dark",   // sample-mid: vox chops as percussion
       bpm:[128,136], swing:[.2,.3], humanize:[.1,.25],
       progressions:["house_min7","deep_two","lofi"], kits:["breaks","house"], fills:["off","hat rush","cut","break fill"],
       euclid:{hat:[7,16]},   // E(7,16) skippy 2-step hats, rotation per chord (swing rides on top)
@@ -1641,7 +1641,7 @@
       found:{role:"bed", vol:[.2,.32], pitch:[.5,.65], stretch:[.45,.6], cutoff:[1200,2200], sources:["factory","highway_night","vx_blake","vx_conet_swedish"]},   // the factory WAY down + tyger tyger + the haunted music box
       stab:["off"], hits:{sources:["sp_pressure","vox_c"], pattern:"sparse", prob:.2},
       form:"wave" },
-    newage: { label:"New age", info:"luminous major-key drift: a gentle sine/flute MELODY breathing (rubato) over moving major-7 changes — choir + strings + harp, frogs at dusk",   // 2026-07 wash-trio deep pass: the MELODIC one. Its identity claim ambient/downtempo can't share is a PRESENT melody over MOVING harmony that BREATHES — the only wash-cluster genre with rubato
+    newage: { label:"Crystal Greenhouse", info:"luminous major-key drift: a gentle sine/flute MELODY breathing (rubato) over moving major-7 changes — choir + strings + harp, frogs at dusk outside the glass",   // 2026-07 wash-trio deep pass: the MELODIC one. Its identity claim ambient/downtempo can't share is a PRESENT melody over MOVING harmony that BREATHES — the only wash-cluster genre with rubato
       bpm:[58,76], swing:[0,.06], humanize:[.2,.4],
       rubato:{depth:[.008,.02], periodBars:[3,5], prob:1},   // 2026-07: the melody ALWAYS breathes (state.rubato beat-warp) — gentler than neoclassical (.02-.04) and slower-period (3-5 bars): a devotional new-age drift, not a Romantic-piano rubato. This is the structural fence — every other wash-cluster genre renders rubato 0 (machine/drone time); newage is the one that sways
       progressions:["dream","canon","neosoul"], kits:["off"], fills:["off"],   // 2026-07: MOVING major-7 changes only (was dream/mode_lydian/canon) — dropped mode_lydian (motion .33) so newage renders motion 1 always: the melodic harmony that ambient (drone, motion 0) can never reach
@@ -1654,7 +1654,7 @@
       found:{role:"bed", vol:[.16,.26], pitch:[.75,.9], stretch:[.45,.6], cutoff:[2400,3800], sources:["frogs","hydrophone","vx_whitman"]},
       stab:["off"], hits:{sources:["sp_herenow"], pattern:"sparse", prob:.15},
       form:"wave" },
-    exotica: { label:"Exotica", info:"tiki-lounge jazz: swung brushes, piano + organ, the birds ARE the percussion color",   // SAMPLE-FORWARD: the aviary up front
+    exotica: { label:"Plastic Volcano", info:"cocktail-hour scenery that never left the hotel: swung brushes, piano + organ trading pleasantries, the birds hired as the percussion section",   // SAMPLE-FORWARD: the aviary up front
       bpm:[85,105], swing:[.12,.22], humanize:[.25,.45],
       progressions:["ii_v_i","lofi","neosoul"], kits:["halftime","boombap"], fills:["off","drum fill"],
       bass:{patterns:["walking","simple","root"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sampler","piano"],cutoff:[500,900],res:[.05,.12],level:[.9,1.1],send:[.1,.2],dsend:[0,.05],attack:.005,release:[.08,.14]}},   // STRONG-SAMPLE (2026-07 boopy-fix): the real upright now anchors the tiki combo 2/3 of seeds (no sub target — matrix-invisible)
@@ -1675,7 +1675,7 @@
       // feature moves; only exotica's own fixtures drift.
       sampleEvents:[{ pool:["whale_song","vx_timelady"], placement:"response", sections:"verse|chorus|bridge|hook", prob:.4, gain:.5, treatment:{pitch:1.15, cutoff:6000, rsend:.35, dsend:.12} }],
       form:"pop" },
-    industrial: { label:"Industrial", info:"detuned machine music: metal hats, phrygian drones, the metallurgy plant finally stars",   // SAMPLE-FORWARD: the factory IS the hook (chops role)
+    industrial: { label:"Foundry Nocturne", info:"detuned machine music: metal hats, phrygian drones, the metallurgy plant promoted to soloist — the third shift keeps the time",   // SAMPLE-FORWARD: the factory IS the hook (chops role)
       bpm:[100,126], swing:[0,.05], humanize:[0,.15],
       progressions:["mode_phrygian","drone_min","deep_two"], kits:["techno","pulse"], fills:["cut","impact","noise","hat rush","stutter"],
       euclid:{hat:[11,16]},   // E(11,16) relentless uneven metal-hat clatter — the machine's gait
@@ -1689,7 +1689,7 @@
       found:{role:"chops", vol:[.16,.26], pitch:[.85,1], stretch:[.4,.6], cutoff:[2500,4000], sources:["factory","factory","vx_conet_poacher"]},   // siderurgia, sliced; the numbers station cuts through
       stab:["offbeat","sparse"], hits:{sources:["sp_system","sp_pressure","rave_d"], pattern:"dub", prob:.55},
       form:"dj" },
-    spokenword: { label:"Spoken word", info:"beat poetry over jazz: quiet boombap, piano color, the poets narrating through the dust",   // SAMPLE-FORWARD: the VOICE leads
+    spokenword: { label:"Coffeehouse Oracle", info:"poets narrating through the dust: a quiet head-nod beat, piano color, the human voice as the lead instrument — every prophecy read from a napkin",   // SAMPLE-FORWARD: the VOICE leads
       bpm:[72,96], swing:[.05,.14], humanize:[.2,.4],
       progressions:["ii_v_i","neosoul","mode_dorian"], kits:["boombap"], fills:["off","off","drum fill"],
       bass:{patterns:["walking","dub","simple"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sampler","piano"],cutoff:[350,650],res:[.05,.12],level:[.85,1.05],send:[.05,.15],dsend:[0,.05],attack:.005,release:[.08,.14]}},   // STRONG-SAMPLE (2026-07 boopy-fix): the real upright now walks 2/3 under the poets (no sub target — matrix-invisible)
@@ -1701,7 +1701,7 @@
       stab:["off"], hits:{sources:["sp_herenow","sp_slowdown","sp_rewind"], pattern:"sparse", prob:.6},
       autoTune:0,   // fx wings stage 2: EXPLICITLY off — never pitch-correct the poets; a spokenword-dominant blend inherits this 0
       form:"pop" },
-    chiptune: { label:"Chiptune", info:"square-wave arps at speed: bright triads, dry mix, zero dust — pure synth",   // SYNTH-FORWARD: no samples to speak of
+    chiptune: { label:"Cartridge Sprint", info:"square-wave arpeggios at player-two speed: bright triads, bone-dry mix, zero dust — four channels and nothing to hide",   // SYNTH-FORWARD: no samples to speak of
       bpm:[140,148], swing:[0,.02], humanize:[0,.05],   // pinned under 150 — the engine forces a jungle kit above that
       progressions:["four_chords","sad_pop","minor_run"], kits:["four","pulse"], fills:["hat rush","cut","riser"],
       bass:{patterns:["octaves","sixteenths","drive"], recipe:{model:["saw"],cutoff:[900,1500],res:[.1,.2],level:[1,1.2],send:[0,.05],dsend:[0,.05]}},
@@ -1766,7 +1766,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.95,1.05], stretch:[.45,.6], cutoff:[2200,3400], sources:["shibuya","tokyo_station","vx_timelady"]},
       stab:["off"], hits:{sources:["sp_shopping","vox_a","rave_b"], pattern:"sparse", prob:.4},
       form:"pop" },
-    bossanova: { label:"Bossa nova", info:"soft Brazilian swing: nylon-string pluck over ii-V changes, rim-click clave, a whisper of a kit",   // acoustic-leaning: the guitar IS the song
+    bossanova: { label:"Balcony Whisper", info:"a soft seaside swing: nylon-string plucks over ii-V changes, rim-click clave, a kit played at the volume of a secret",   // acoustic-leaning: the guitar IS the song
       timeFeel:{ pushPull:{ bass:.01 } },   // effects audit C: a subtle behind-the-beat sway on the bass (the nylon guitar leans back) — swing .08-.18 already carries most of it, this is the gentlest structural nudge. Zero-rng dominant-parent, bass timing unread. HALVED 2026-07-04 (Paul: went a little too far on timing feel)
       bpm:[84,100], swing:[.08,.18], humanize:[.25,.45],
       progressions:["ii_v_i","neosoul","lofi"], kits:["bossa"], fills:["off","off","drum fill"],
@@ -1778,7 +1778,7 @@
       found:{role:"bed", vol:[.08,.16], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["shibuya","tokyo_station","vx_dickinson"]},
       stab:["off"], hits:{sources:["horns_78","vox_b"], pattern:"sparse", prob:.25},
       form:"pop" },
-    idm: { label:"IDM", info:"braindance: euclidean drum tangles that never repeat, detuned FM bells, dry close mix — machine precision faking clumsiness",   // SYNTH-FORWARD: the PATTERN is the artist
+    idm: { label:"Solder Ballet", info:"drum tangles tied in euclidean knots that never repeat, detuned FM bells, a dry close mix — machine precision doing an impression of clumsiness",   // SYNTH-FORWARD: the PATTERN is the artist
       bpm:[88,116], swing:[0,.05], humanize:[.3,.5],
       progressions:["deep_two","mode_lydian","neosoul","drone_min"], kits:["breaks","techno","boombap"], fills:["cut","noise","reverse","off","stutter"],
       euclid:{kick:[5,16],hat:[11,16]},   // E(5,16) against E(11,16), both rotating — the tangle
@@ -1792,7 +1792,7 @@
       found:{role:"chops", vol:[.1,.18], pitch:[.85,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["factory","vx_wwvh","vx_conet_poacher"]},
       stab:["off","sparse"], hits:{sources:["sp_system","sp_rewind","vox_c"], pattern:"sparse", prob:.45},
       form:"pop" },
-    electro: { label:"Electro", info:"1982 machine funk: 808 boom-bap, euclid tresillo claps, the robot sings through the vocoder",   // SYNTH-FORWARD: the drum machine is the lead instrument
+    electro: { label:"Mainframe Strut", info:"1982 machine groove: an 808 boom under euclid tresillo claps, the robot on lead vocal through the vocoder — pop and lock at the mainframe",   // SYNTH-FORWARD: the drum machine is the lead instrument
       bpm:[118,130], swing:[0,.06], humanize:[0,.12],
       progressions:["funk_vamp","deep_two","minor_run"], kits:["electro"], fills:["cut","hat rush","impact","off"],
       euclid:{snare:[3,16]},   // E(3,16) tresillo CLAPS rotating per chord over the boom-bap frame
@@ -1806,7 +1806,7 @@
       found:{role:"chops", vol:[.08,.15], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2400,3800], sources:["factory","vx_apollo","vx_wwvh","stml_chop_a","stml_chop_c4"]},
       stab:["offbeat","sparse"], hits:{sources:["sp_system","sp_energy","rave_a","stml_hit_03"], pattern:"offbeat", prob:.6},
       form:"dj" },   // 2026-07 dominance fix: pop->dj — the 1982 electro record is a 12" CLUB SINGLE (warmup/build/main/peak plateau), not verse-chorus pop. MEASURED: pop's 3 drumless sections (intro/bridge/outro) diluted whole-track hatDensity to 1.16-1.28 vs electro's own [1.5,2.8] floor (active sections render 1.9/beat) — the self-score sat at 98-99 every seed, inside reach of any 99 rival (heavymetal/hotsaucecore/italo each took a seed). dj's near-full plateau restores the crisp 16th machine hats the kit already plays
-    miamibass: { label:"Miami bass", info:"808 subs shaking the trunk: fast stuttering hats, chant hits, the low end IS the song",   // SYNTH-FORWARD: the 808 sub is the hook
+    miamibass: { label:"Trunk Parade", info:"808 subs rattling the license plate: fast stuttering hats, chant hits, the low end promoted to melody — heard three blocks before it is seen",   // SYNTH-FORWARD: the 808 sub is the hook
       bpm:[100,128], swing:[0,.08], humanize:[0,.12],
       progressions:["funk_vamp","deep_two","house_min7"], kits:["trap","electro"], fills:["hat rush","cut","impact"],
       bass:{patterns:["sub","stab","dub"], recipe:{model:["sub"],cutoff:[250,420],res:[.05,.15],level:[1.3,1.5],send:[0,.05],dsend:[0,.05]}},   // the 808 sub LOUD
@@ -1817,7 +1817,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[1800,3000], sources:["highway_night","shibuya"]},
       stab:["offbeat","sparse"], hits:{sources:["vox_a","vox_c","sp_energy","stml_hit_01","stml_hit_b3"], pattern:"offbeat", prob:.7},
       form:"pop" },
-    phonk: { label:"Phonk", info:"Memphis tape menace: dark cowbell-plucks over 808s, drowned in hiss, pitched-down voices in the smoke",   // SAMPLE-FORWARD: the dusty vox hits + tape filth
+    phonk: { label:"Graveyard Cassette", info:"tape menace from a glovebox: dark cowbell-plucks over 808s, drowned in hiss, pitched-down voices circling in the smoke",   // SAMPLE-FORWARD: the dusty vox hits + tape filth
       bpm:[126,142], swing:[0,.1], humanize:[.1,.25],
       progressions:["deep_two","drone_min","mode_phrygian"], kits:["trap","boombap"], fills:["cut","off","downlift"],
       bass:{patterns:["sub","dub","stab"], recipe:{model:["sub","reese"],cutoff:[240,420],res:[.05,.18],level:[1.2,1.45],send:[0,.06],dsend:[0,.08]},
@@ -1830,7 +1830,7 @@
       found:{role:"bed", vol:[.1,.18], pitch:[.7,.82], stretch:[.45,.6], cutoff:[1600,2600], sources:["vx_suspense","highway_night","factory"]},   // pitched-DOWN radio voices — the Memphis tape ghost
       stab:["off","sparse"], hits:{sources:["blues_vox_78","vox_c","sp_slowdown"], pattern:"dub", prob:.7, wet:true},
       form:"pop" },
-    witchhouse: { label:"Witch house", info:"drowned rave: slowed 808 crawl, pitched-down voices, choirs in a cathedral of reverb",   // SAMPLE-FORWARD: the slowed voice is the ghost
+    witchhouse: { label:"Velvet Hex", info:"the party slowed to a crawl and cursed: 808s at half speed, pitched-down voices, choirs echoing in a cathedral that is not on any map",   // SAMPLE-FORWARD: the slowed voice is the ghost
       reverbColor:"greyhole",   // fx wings: the cathedral-of-reverb smear
       bpm:[60,76], swing:[0,.08], humanize:[.1,.3],
       progressions:["drone_min","drone_min","deep_two","mode_phrygian"], kits:["trap","halftime"], fills:["downlift","off","reverse"],   // 2026-07 wash-trio deep pass: DRONE-DOMINANT (was deep_two/mode_phrygian/drone_min) — the slowed 808 crawls over a single held minor-7 the length of the cathedral (motion collapses to ~0), with the phrygian menace the rare tension. This is the occult-drone identity that fences witchhouse off downtempo (which now REQUIRES moving harmony, motion floor .4/w2) while its DRENCHED wash (.46-.51) fences it off the DRY dub (wash ceiling .34)
@@ -1871,7 +1871,7 @@
       found:{role:"bed", vol:[.12,.22], pitch:[.6,.78], stretch:[.45,.6], cutoff:[1800,3000], sources:["highway_night","hvac_hum","vx_conet_swedish"]},   // pitched-down wind stand-ins
       stab:["off"], hits:{sources:["sp_herenow"], pattern:"sparse", prob:.15},
       form:"wave" },
-    gabber: { label:"Gabber", info:"Rotterdam hammer: 150-185 distorted 909 four, hoover stabs, zero swing, maximum grit",   // SYNTH-FORWARD: the KICK is the genre
+    gabber: { label:"Jackhammer Communion", info:"the hammer: a distorted 909 four at 150-185, hoover stabs, zero swing, maximum grit — tenderness expressed at a hundred decibels",   // SYNTH-FORWARD: the KICK is the genre
       bpm:[155,185], swing:[0,.03], humanize:[0,.08],
       progressions:["drone_min","deep_two","mode_phrygian"], kits:["four","techno"], fills:["impact","cut","riser","hat rush","stutter","stutter"],   // BRUTAL: the stutter-gate is very gabber
       bass:{patterns:["stab","drive","rolling"], recipe:{model:["acid","reese"],cutoff:[420,700],res:[.25,.4],level:[1.2,1.4],send:[0,.06],dsend:[0,.08]},
@@ -1885,7 +1885,7 @@
       stab:["rave","offbeat"], hits:{sources:["rave_a","rave_c","bb_stab_a","sp_energy","stml_hit_01","stml_hit_b3"], pattern:"offbeat", prob:.8},
       introMode:"off",   // Paul's optional-intro pilot: gabber is brutality — it opens COLD on the machine (drops the dj "warmup" ground node; the solver regrows the groove to still land ~180s). Margin 19 absorbs the bedUse/density shift; matrix-gated.
       form:"dj" },
-    psytrance: { label:"Psytrance", info:"Goa at 145: the rolling 16th acid bassline that never stops, phrygian squelch, full-power",   // SYNTH-FORWARD: the bassline is the drug
+    psytrance: { label:"Third Eye Turbine", info:"145 and fully airborne: the rolling 16th bassline that never stops, phrygian squelch, full power all night — the forest floor becomes a circuit board",   // SYNTH-FORWARD: the bassline is the drug
       bpm:[140,148], swing:[0,.03], humanize:[0,.08],
       progressions:["mode_phrygian","drone_min","deep_two"], kits:["four","pulse"], fills:["riser","cut","impact","hat rush"],
       bass:{patterns:["rolling","sixteenths"], recipe:{model:["tb303","tb303","tb303","tb303","acid"],cutoff:[380,650],res:[.25,.4],envmod:[.55,.8],decay:[.3,.5],waveform:[0,.2],level:[1.2,1.4],send:[0,.05],dsend:[0,.06],release:[.06,.1],fenv:[.8,1.4]},
@@ -1898,7 +1898,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.75,.9], stretch:[.45,.6], cutoff:[1800,3000], sources:["highway_night","factory"]},   // the night road + the generator behind the rig
       stab:["off","sparse"], hits:{sources:["rave_c","sp_energy"], pattern:"sparse", prob:.35},
       form:"dj" },
-    minimal: { label:"Minimal", info:"techno with the air let out: a kick, five tiny percs, a dry room — every event audible",   // SYNTH-FORWARD: subtraction as composition
+    minimal: { label:"Five Small Sounds", info:"the air let out on purpose: a kick, five tiny percs, a dry room — every event audible, every absence load-bearing",   // SYNTH-FORWARD: subtraction as composition
       bpm:[120,128], swing:[0,.05], humanize:[0,.1],
       progressions:["drone_min","drone_min","deep_two"], kits:["kick","kick","pulse"], fills:["off","cut","hat rush"],
       euclid:{hat:[5,16]},   // E(5,16) tiny rotating percs — the whole topography
@@ -1912,7 +1912,7 @@
       found:{role:"chops", vol:[.06,.12], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["tokyo_station","vx_wwvh"]},
       stab:["off","sparse"], hits:{sources:["sp_system"], pattern:"sparse", prob:.25},
       form:"dj" },
-    deephouse: { label:"Deep house", info:"house after midnight: subby bass, dusky 7th pads, the pump turned down and the lights low",   // SYNTH-FORWARD sibling of house
+    deephouse: { label:"After-Hours Aquarium", info:"after midnight with the lights low: subby bass, dusky seventh-chord pads, the pump turned down to a slow breath — the floor half empty and better for it",   // SYNTH-FORWARD sibling of house
       bpm:[118,124], swing:[.08,.16], humanize:[.05,.18],
       progressions:["deep_two","house_min7","neosoul"], kits:["four","house"], fills:["off","hat rush","riser"],
       bass:{patterns:["rolling","rolling","dub","syncopated"], recipe:{model:["sub"],cutoff:[280,450],res:[.05,.15],level:[1.1,1.3],send:[0,.06],dsend:[0,.05]}},
@@ -1924,7 +1924,7 @@
       found:{role:"bed", vol:[.07,.13], pitch:[.85,1], stretch:[.45,.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station","vx_timelady"]},
       stab:["off","sparse"], hits:{sources:["vox_b","sp_herenow"], pattern:"sparse", prob:.35},
       form:"dj" },
-    coldwave: { label:"Coldwave", info:"post-punk synth gloom: bass-forward triads, dry drums, cassette hiss, everything at arm's length",   // SYNTH-FORWARD: dry = the aesthetic
+    coldwave: { label:"Overcoat Distance", info:"gloom at arm's length: bass-forward triads, dry drums, cassette hiss — recorded in an unheated room and proud of it",   // SYNTH-FORWARD: dry = the aesthetic
       bpm:[100,118], swing:[0,.06], humanize:[.1,.25],
       progressions:["frost","sad_pop"], kits:["pulse","four"], fills:["drum fill","cut","off"],
       transforms:{ pool:["rest","degrade"], rate:.12 },   // 2026-07 deep pass — MINIMAL-WAVE AUSTERITY: the cheap drum machine is machine-tight (no swing/humanize warp), but ~1/8 of bars the melody sits out (rest) or the hats thin hard (degrade) — the stark subtraction of French coldwave, the arm's-length gap. NOT idm's tangle (no rot/stutter/rev that scramble the grid): coldwave stays rigid and just occasionally goes silent
@@ -1937,7 +1937,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.8,.95], stretch:[.45,.6], cutoff:[1500,2500], sources:["factory","highway_night"]},
       stab:["off"], hits:{sources:["sp_pressure","vox_c"], pattern:"sparse", prob:.3},
       form:"pop" },
-    ebm: { label:"EBM", info:"body music: 16th-note bass stabs like pistons, claps that snap, a shout in the machine hall",   // SYNTH-FORWARD: the sequencer is the muscle
+    ebm: { label:"Machine Hall Drill", info:"16th-note bass stabs like pistons, claps that snap to attention, a shout down the machine hall — exercise as ideology",   // SYNTH-FORWARD: the sequencer is the muscle
       bpm:[118,130], swing:[0,.04], humanize:[0,.1],
       progressions:["deep_two","mode_phrygian","drone_min"], kits:["pulse","techno"], fills:["cut","impact","hat rush","stutter"],
       bass:{patterns:["sixteenths","stab","drive","pedal"], recipe:{model:["reese","acid"],cutoff:[350,560],res:[.2,.35],level:[1.2,1.4],send:[0,.06],dsend:[0,.08],release:[.05,.09],fenv:[.5,.9]},
@@ -1950,7 +1950,7 @@
       found:{role:"bed", vol:[.08,.15], pitch:[.75,.9], stretch:[.45,.6], cutoff:[1800,3000], sources:["factory","vx_conet_poacher"]},   // the plant hums BEHIND (industrial owns the chops)
       stab:["offbeat","sparse"], hits:{sources:["sp_pressure","sp_system","rave_d"], pattern:"dub", prob:.6},
       form:"dj" },
-    krautrock: { label:"Krautrock", info:"motorik on the autobahn: organ drones over the eternal pulse, one chord for a very long time",   // SYNTH-FORWARD: repetition is the destination
+    krautrock: { label:"Eternal Merge Lane", info:"the motorik pulse in the fast lane: organ drones over a beat that never varies, one chord held until the odometer rolls over",   // SYNTH-FORWARD: repetition is the destination
       bpm:[102,118], swing:[0,.05], humanize:[.05,.18],
       progressions:["funk_vamp","deep_two","mode_mixo"], kits:["pulse","four"], fills:["off","drum fill","riser"],
       bass:{patterns:["drive","root","pedal"], recipe:{model:["saw","modeld"],cutoff:[600,950],res:[.1,.18],level:[1.05,1.25],send:[.03,.08],dsend:[0,.05],
@@ -1963,7 +1963,7 @@
       found:{role:"bed", vol:[.15,.25], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["highway_night","factory"]},   // the autobahn ITSELF, near natural pitch
       stab:["off"], hits:{sources:["sp_herenow","vox_a"], pattern:"sparse", prob:.25},
       form:"dj" },
-    newjack: { label:"New jack swing", info:"swingbeat: bouncing kicks under HUGE claps, FM synth-bass, everything grinning",   // SYNTH-FORWARD: the drum program is the producer's signature
+    newjack: { label:"Patent Leather Bounce", info:"the bounce in a pressed suit: swinging kicks under HUGE claps, FM synth-bass, every element grinning at the camera",   // SYNTH-FORWARD: the drum program is the producer's signature
       bpm:[100,115], swing:[.16,.28], humanize:[.1,.25],
       progressions:["house_min7","funk_vamp","neosoul"], kits:["newjack"], fills:["drum fill","hat rush","riser","snare roll"],
       bass:{patterns:["stab","melodic","dub","syncopated"], patchPool:["SYN-BASS 2","BASS    2"], samplerPool:["fretless_bass"], recipe:{model:["dx7","saw","sampler"],cutoff:[400,540],res:[.1,.2],level:[1.05,1.25],send:[0,.06],dsend:[0,.06]},   // the DX7 SYN-BASS pair (alg 17 both -> morphable) — Teddy Riley's engine room
@@ -1976,7 +1976,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[1800,2800], sources:["shibuya","vx_timelady"]},
       stab:["off","sparse"], hits:{sources:["vox_a","sp_rhythm","rave_b"], pattern:"offbeat", prob:.6},
       form:"pop" },
-    breakcore: { label:"Breakcore", info:"the amen at 190, shredded: euclid kicks fighting the chops, rave hits everywhere, maximum jux",   // SAMPLE-FORWARD: the break, weaponized
+    breakcore: { label:"Shrapnel Lullaby", info:"the break at 190, shredded: euclid kicks fighting the chops for the wheel, rave hits everywhere, maximum jux — a drum solo having a beautiful emergency",   // SAMPLE-FORWARD: the break, weaponized
       bpm:[172,198], swing:[0,.06], humanize:[.2,.4],
       progressions:["minor_run","mode_phrygian","deep_two"], kits:["jungle","breaks"], fills:["break fill","impact","cut","noise","stutter"],
       euclid:{kick:[5,16]},   // E(5,16) kicks punching THROUGH the amen
@@ -1991,7 +1991,7 @@
       stab:["rave","offbeat"], hits:{sources:["rave_a","rave_d","bb_stab_b","sp_rewind"], pattern:"dub", prob:.85},
       introMode:"off",   // Paul's optional-intro pilot (drop form): no wind-up — the amen slams in cold (drops the drop "intro" ground node; solver regrows the drops to hold ~180s). Margin +6.2 vs jungle absorbs the -0.2 shift; matrix-gated.
       form:"drop" },
-    acidhouse: { label:"Acid house", info:"1988 Chicago: the 303 squelching over a dusty four-floor, smiley-face simple everything else",   // SYNTH-FORWARD: one machine, misused, forever
+    acidhouse: { label:"Smiley Chemistry", info:"1988 in a single silver box: the 303 squelching over a dusty four-on-the-floor, everything else smiley-face simple — one machine misused into a religion",   // SYNTH-FORWARD: one machine, misused, forever
       bpm:[118,126], swing:[0,.08], humanize:[.05,.15],
       progressions:["house_min7","drone_min","funk_vamp"], kits:["house","four"], fills:["hat rush","riser","cut"],
       bass:{patterns:["sixteenths","rolling","sixteenths","stab"], recipe:{model:["tb303"],cutoff:[420,700],res:[.55,.75],envmod:[.55,.85],decay:[.35,.6],waveform:[0,.15],level:[1.15,1.35],send:[0,.06],dsend:[0,.1],release:[.08,.14],fenv:[1,2]},
@@ -2003,7 +2003,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station"]},
       stab:["rave","offbeat"], hits:{sources:["rave_b","rave_c","sp_rhythm"], pattern:"offbeat", prob:.7},
       form:"dj" },
-    surfrock: { label:"Surf rock", info:"reverb-tank twang: tremolo guitar over a fast doo-wop, drums like breakers, 45rpm dust",   // guitar-FORWARD: the spring tank is the room
+    surfrock: { label:"Reverb Tank Riptide", info:"twang from inside the reverb tank: tremolo guitar over fast doo-wop changes, drums crashing like breakers, 45rpm dust in the spray",   // guitar-FORWARD: the spring tank is the room
       reverbColor:"spring",   // fx wings: the boing/flutter spring tank IS surf rock's room
       bpm:[126,144], swing:[.06,.14], humanize:[.15,.35],
       progressions:["doo_wop","sad_pop","andalusian"], kits:["open","four"], fills:["drum fill","tom fill","hat rush"],
@@ -2039,7 +2039,7 @@
       sampleEvents:[{ pool:["vx_apollo","vx_wwvh"], placement:"response", sections:"verse|chorus|bridge|hook", prob:.3, gain:.4, treatment:{pitch:1, cutoff:1600, rsend:.5, dsend:.3} }],
       form:"pop" },
     // ---- world cluster (honest interpretations; source-shelf gaps noted per anchor) ----
-    arabpop: { label:"Arab pop", info:"hijaz color over a darbuka-science kit: MAJOR tonic against bII, ornamental vibrato lead",   // INTERPRETATION: no oud/qanun models — brass+fm ornaments carry the maqam flavor
+    arabpop: { label:"Jasmine Frequency", info:"hijaz color over a darbuka-science kit: a MAJOR tonic leaning against bII, an ornamented vibrato lead — radio pop from a city of minarets and satellite dishes",   // INTERPRETATION: no oud/qanun models — brass+fm ornaments carry the maqam flavor
       bpm:[95,115], swing:[.02,.1], humanize:[.15,.3],
       progressions:["hijaz","hijaz","andalusian","mode_phrygian"], kits:["tribal","breaks"], fills:["drum fill","tom fill","off"],
       euclid:{kick:[5,16]},   // E(5,16) dum-tek placement rotating under the hand drums
@@ -2051,7 +2051,7 @@
       found:{role:"bed", vol:[.08,.15], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2000,3200], sources:["shibuya","highway_night"]},   // HONESTY: no Arab-world recording on the shelf yet — generic city/night beds sit far back
       stab:["off"], hits:{sources:["vox_b","sp_rhythm"], pattern:"sparse", prob:.4},
       form:"pop" },
-    tango: { label:"Tango", info:"the habanera cell as law: sampled bandoneon and nylon guitar over staccato piano, dry marcato strings, 78rpm dust, dramatic silence",   // acoustic-FORWARD: 2026-07 ear-fix — the SYNTH voices are out of the front line
+    tango: { label:"Knife Ballroom", info:"the habanera cell as law: bandoneon and nylon guitar over staccato piano, dry marcato strings, 78rpm dust — a dance with the manners of a duel, silence used like a blade",   // acoustic-FORWARD: 2026-07 ear-fix — the SYNTH voices are out of the front line
       reverbColor:"fdn",   // fx wings: a dry room (freeverb), not a wash — the salon
       bpm:[100,124], swing:[0,.06], humanize:[.3,.55],
       progressions:["andalusian","andalusian","minor_run"],   // STRICTLY minor. frost PURGED (it was the verifier's triad fence, but it read as wintersynth pads by ear — the human heard it)
@@ -2066,7 +2066,7 @@
       transforms:{ pool:["rest"], rate:0.05 },   // Phase 2: "dramatic silence" as law — very rarely (5%) the bandoneon line drops out for a bar; the habanera bass carries it
       stab:["off"], hits:{sources:["horns_78","blues_vox_78"], pattern:"sparse", prob:.35},
       form:"pop" },
-    afrobeat: { label:"Afrobeat", info:"the long groove: interlocking euclid percussion, organ stabs on a dorian vamp, horn-section hits — one chord until it means something",   // groove-FORWARD: Fela's arithmetic
+    afrobeat: { label:"Percussion Parliament", info:"the long groove in session: interlocking euclid percussion, organ stabs on a dorian vamp, horn-section hits — one chord held until it means something",   // groove-FORWARD: Fela's arithmetic
       bpm:[100,114], swing:[.04,.12], humanize:[.15,.3],   // below disco's 106-124 core
       progressions:["funk_vamp","mode_dorian","house_min"], kits:["tribal","house"], fills:["drum fill","hat rush","off"],
       euclid:{kick:[3,16],hat:[11,16]},   // tresillo kicks INTERLOCKING with E(11,16) shekere hats — two clocks arguing politely
@@ -2080,7 +2080,7 @@
       found:{role:"bed", vol:[.1,.18], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2200,3400], sources:["highway_night","shibuya"]},   // HONESTY: no Lagos shelf — night traffic + street stand in quietly
       stab:["off","sparse"], hits:{sources:["horns_78","sp_rhythm","vox_a"], pattern:"offbeat", prob:.7},   // the 78rpm horns finally play a section part
       form:"dj" },
-    desertblues: { label:"Desert blues", info:"Sahel guitar hypnosis: pentatonic loops over a lope, handclap air, tape-worn top end",   // guitar-FORWARD: one riff, circling
+    desertblues: { label:"Horizon Lope", info:"guitar hypnosis at a camel's lope: pentatonic loops that refuse to resolve, handclap air, the top end worn away by sand and tape",   // guitar-FORWARD: one riff, circling
       bpm:[84,104], swing:[.06,.16], humanize:[.2,.4],
       progressions:["funk_vamp","mode_dorian","deep_two"], kits:["shuffle","halftime","boombap"], fills:["off","off","drum fill"],   // the triplet shuffle lopes 1/3 of seeds
       bass:{patterns:["simple","dub","root"], recipe:{model:["sub"],cutoff:[300,520],res:[.05,.12],level:[1,1.2],send:[.03,.08],dsend:[0,.05]}},
@@ -2093,7 +2093,7 @@
       stab:["off"], hits:{sources:["blues_vox_78","vox_b"], pattern:"sparse", prob:.4},
       form:"pop" },
     // ---- harder cluster (fuzz/grit the engine can voice HONESTLY — riffs, not fake shredding) ----
-    sludgemetal: { label:"Sludge metal", info:"downtuned fuzz crawling at 60: halftime stomp, a BIG backbeat, the amp about to die",   // fuzz-FORWARD: the riff exhales, the room shakes
+    sludgemetal: { label:"Molasses Avalanche", info:"downtuned fuzz crawling at 60: halftime stomp, a BIG backbeat, the amplifier one song from death and playing like it knows",   // fuzz-FORWARD: the riff exhales, the room shakes
       bpm:[52,70], swing:[0,.06], humanize:[.1,.3],
       timeFeel:{ pushPull:{ kick:.03, snare:.045, bass:.055 } },   // 2026-07 deep pass — THE DOOM DRAG: the whole band plays BEHIND the beat, the bass draggiest (the amp about to die pulls the riff late). A per-voice offset drawn from timeFeel (pure feel — no verifier feature reads onset timing, so byte-stable to the matrix), it's the crawling lurch that half-time bpm alone can't give: the riff EXHALES between the stomps
       progressions:["mode_phrygian","drone_min","deep_two"], kits:["halftime","kick"], fills:["impact","off","downlift"],
@@ -2107,7 +2107,7 @@
       found:{role:"bed", vol:[.15,.25], pitch:[.55,.7], stretch:[.45,.6], cutoff:[1400,2400], sources:["factory","highway_night"]},   // the plant, pitched into the swamp
       stab:["off"], hits:{sources:["sp_pressure","vox_c"], pattern:"sparse", prob:.3},
       form:"pop" },
-    industrialmetal: { label:"Industrial metal", info:"the machine with a backbeat: halftime slam, fuzz stabs on the grid, everything quantized and furious",   // fuzz-FORWARD sibling of EBM: SLAM where EBM pistons
+    industrialmetal: { label:"Hydraulic Tantrum", info:"the machine grows a backbeat: halftime slam, fuzz stabs bolted to the grid, everything quantized and furious — rage with a maintenance schedule",   // fuzz-FORWARD sibling of EBM: SLAM where EBM pistons
       bpm:[100,126], swing:[0,.05], humanize:[0,.12],
       progressions:["mode_phrygian","minor_run","drone_min"], kits:["halftime","breaks"], fills:["impact","cut","noise"],
       reverbColor:"fdn",   // GRIT PASS: a big hard-surfaced industrial slam room behind the machine
@@ -2120,7 +2120,7 @@
       found:{role:"bed", vol:[.12,.2], pitch:[.7,.85], stretch:[.45,.6], cutoff:[1600,2800], sources:["factory","vx_conet_poacher"]},
       stab:["off","sparse"], hits:{sources:["sp_system","sp_pressure","rave_d"], pattern:"dub", prob:.6},
       form:"pop" },
-    darksynth: { label:"Darksynth", info:"synthwave's violent sibling at 140: distorted supersaw + fuzz trading, phrygian menace, the chase scene",   // SYNTH-FORWARD: the night drive turned hostile
+    darksynth: { label:"Neon Manhunt", info:"the chase scene at 140: distorted supersaw and fuzz trading blows, phrygian menace, headlights in the mirror gaining every chorus",   // SYNTH-FORWARD: the night drive turned hostile
       bpm:[122,136], swing:[0,.05], humanize:[0,.12],   // UNDER dubstep's 133-148 core — chase-scene tempo, not halftime wobble
       progressions:["mode_phrygian","andalusian","epic_min"], kits:["pulse","four"], fills:["impact","riser","tom fill","cut"],
       transforms:{ pool:["stutter","rot"], rate:.16 },   // 2026-07 deep pass (v4 transform dimension): the RELENTLESS pulse is machine-tight, but ~1/6 of bars snap into a gated 16th-stutter or a displaced-hat lurch — the John-Carpenter/Perturbator horror gate. Distinct from dubstep's halftime (which mutates via the wobble, not the grid); keeps the drive (low rate, no rev/rest that would open holes)
@@ -2137,7 +2137,7 @@
       stab:["off","sparse"], hits:{sources:["sp_pressure","rave_d","vox_c"], pattern:"sparse", prob:.4},
       form:"drop" },
     /* genre-tool:prelude:genres */
-    prelude: { label:"Prelude", info:"Bach-prelude figuration as a genre: continuous broken-chord 16th arpeggiation over a slow harmonic rhythm (chordEvery:16), felt-piano / bright-grand voices, drum kit OFF, even Baroque touch with only the lightest rubato — the WTC Book I C-major prelude, generalized",
+    prelude: { label:"The Turning Stair", info:"continuous broken-chord 16th figuration over a slow harmonic rhythm — one chord every four bars of the climb — felt-piano and bright-grand voices, drum kit OFF, an even touch with only the lightest rubato; the quiet room before the chase",
       reverbColor:"fdn",   // fx wings: a dry recital room, not a wash — the close felt-piano
       introMode:"off",   // MUSICALITY balance loop 1 (BLOOM, Paul: "takes so long to get going"): the WTC prelude opens ON the figuration — bar 1, no curtain. The wave "arrive" node (pads-only) held the first keyboard note out 37-101s at prelude's giant cycles (chordEvery:16 -> 48-128-beat sections); dropping it opens every seed on the drift figuration at 0s, strings swelling UNDER the line, the bass continuo joining at the swell (36-101s). Unhurried stays (the cycles are still long) — DEAD goes. MEASURED across seeds 1-5: every declared part sounds inside a 3-minute listen (worst bass 101s, was 202s on the canon seed)
       bpm:[62,80],
@@ -2158,7 +2158,7 @@
       stab:["off"],
       form:"wave" },
     /* /genre-tool:prelude:genres */
-    fugue: { label:"Fugue", info:"Baroque imitative counterpoint as a genre: a subject stated then ANSWERED across three or four interweaving voices, at a STEADY moderate tempo with NO rubato (the clock is the law) and a faster harmonic rhythm than the prelude's slow figuration — harpsichord + church-organ, drum kit OFF. The Well-Tempered-Clavier FUGUE to prelude's PRELUDE: same Bach room, but polyphonic, driving and metronomic instead of freely arpeggiated",
+    fugue: { label:"The Patient Chase", info:"a subject stated, then ANSWERED, across three or four interweaving voices — steady tempo, NO rubato, the clock is the law, the harmony moving faster than the turning stair's — harpsichord + church-organ, drum kit OFF; the same stone room, but now everyone is running, politely",
       reverbColor:"fdn",   // fx wings: a dry chapel/recital room, not a wash — the close harpsichord+organ
       bpm:[90,106],
       swing:[0,0.02],
@@ -2178,7 +2178,7 @@
     // ======== 2026-07 GENRE-EXPANSION (Paul: "what's missing? and get some more uptempo in there baby") ========
     // 14 canonical additions, uptempo-biased (10 at/above ~140 BPM). Each fenced
     // in genre-verifier.js so the confusion matrix stays diagonal-dominant.
-    dnb: { label:"Drum & Bass", info:"liquid drum'n'bass: a rolling programmed two-step at 174, warm sub and smooth Rhodes pads, no ragga chops — the amen polished into a groove",   // UPTEMPO. distinct from jungle: NO break role (smooth bed), higher wash
+    dnb: { label:"Rolling Horizon", info:"a rolling programmed two-step at 174: warm sub, smooth Rhodes pads, no rough chops — the old break polished until it reflects the ceiling lights",   // UPTEMPO. distinct from jungle: NO break role (smooth bed), higher wash
       bpm:[170,176], swing:[0,.04], humanize:[.05,.14],
       progressions:["neosoul","deep_two","minor_run","dream"], kits:["breaks","jungle"], fills:["off","drum fill","riser","downlift"],
       bass:{patterns:["sub","rolling"], recipe:{model:["sub","reese"],cutoff:[280,520],res:[.05,.2],level:[1.15,1.4],send:[0,.05],dsend:[0,0]}},   // reese stays synth (signature) — the smooth dnb sub
@@ -2189,7 +2189,7 @@
       found:{role:"bed", vol:[.1,.18], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["highway_night","tokyo_station","vx_apollo"]},   // BED not break — this is dnb's whole distinction from jungle
       stab:["off","sparse"], hits:{sources:["vox_a","rave_b","sp_pressure"], pattern:"sparse", prob:.4},
       form:"dj" },
-    footwork: { label:"Footwork", info:"Chicago juke/footwork: an 808 sub triplet, machine-gun toms and a chopped vocal stutter at 160 — the battle-circle tempo",   // UPTEMPO
+    footwork: { label:"Ankle Velocity", info:"the battle-circle tempo: an 808 sub triplet, machine-gun toms and a chopped vocal stutter at 160 — dancers negotiating with gravity and winning on points",   // UPTEMPO
       bpm:[155,162], swing:[.06,.16], humanize:[0,.08],
       progressions:["deep_two","drone_min","neosoul"], kits:["trap","electro"], fills:["off","stutter","cut","hat rush"],
       bass:{patterns:["sub","stab"], recipe:{model:["sub","reese"],cutoff:[240,420],res:[.05,.2],level:[1.2,1.45],send:[0,.05],dsend:[0,.05]}},
@@ -2200,7 +2200,7 @@
       found:{role:"chops", vol:[.15,.28], pitch:[.9,1.15], stretch:[.35,.55], cutoff:[2000,3600], sources:["shibuya","vx_wwvh","vox_a"]},   // the chopped vocal stutter IS footwork
       stab:["off","sparse"], hits:{sources:["vox_a","vox_c","sp_rhythm"], pattern:"dub", prob:.6},
       form:"dj" },
-    happyhardcore: { label:"Happy Hardcore", info:"UK rave euphoria at 172: pounding four-on-floor, hoover stabs, breakbeat rolls and a major-key piano riff, hands in the air",   // UPTEMPO
+    happyhardcore: { label:"Sugar Rocket", info:"euphoria at 172: pounding four-on-the-floor, hoover stabs, breakbeat rolls and a major-key piano riff — hands in the air by order of the heart",   // UPTEMPO
       bpm:[168,176], swing:[0,.05], humanize:[.03,.12],
       progressions:["uplift","four_chords","pop_1625","doo_wop"], kits:["four","pulse"], fills:["riser","impact","hat rush","drum fill"],
       bass:{patterns:["drive","octaves","rolling"], recipe:{model:["saw","reese"],cutoff:[500,850],res:[.15,.3],level:[1.1,1.3],send:[0,.08],dsend:[0,0]}},
@@ -2218,7 +2218,7 @@
       sampleEvents:[{pool:["amen_170","amen_172","amen_175"], placement:"cadence", sections:"all", treatment:{cutoff:6000, vol:0.34, maxDur:4}}],
       stab:["rave","offbeat"], hits:{sources:["rave_a","rave_b","rave_c","sp_energy"], pattern:"offbeat", prob:.7},
       form:"dj" },
-    hardstyle: { label:"Hardstyle", info:"the reverse-bass stomp at 150: a pitched distorted kick, a screeching detuned lead and a minor-key euphoric breakdown — Dutch hard dance",   // UPTEMPO
+    hardstyle: { label:"Anvil Euphoria", info:"the reverse-bass stomp at 150: a pitched distorted kick that is also the bassline, a screeching detuned lead, a minor-key breakdown built for closed eyes and open arms",   // UPTEMPO
       bpm:[148,156], swing:[0,.03], humanize:[0,.08],
       progressions:["epic_min","minor_run","andalusian"], kits:["four","pulse"], fills:["impact","riser","cut","hat rush"],
       bass:{patterns:["stab","drive","rolling"], recipe:{model:["reese","acid"],cutoff:[420,720],res:[.2,.4],level:[1.2,1.4],send:[0,.06],dsend:[0,.06]},
@@ -2230,7 +2230,7 @@
       found:{role:"bed", vol:[.05,.12], pitch:[.85,1], stretch:[.4,.6], cutoff:[2000,3200], sources:["rave_c","sp_energy","factory"]},
       stab:["rave","offbeat"], hits:{sources:["rave_c","rave_d","sp_energy"], pattern:"offbeat", prob:.55},
       form:"dj" },
-    eurodance: { label:"Eurodance", info:"90s Eurodance: a four-on-floor pop-rave at 140, a big detuned saw hook over an M1 house-piano stab, diva-major harmony, hands-up energy",   // UPTEMPO. acoustic = the M1 house-piano/organ pad (all-synth trance/edm can't reach it); pump LOW (a pop track, not a trance gate)
+    eurodance: { label:"Chartbuster Esperanto", info:"the pop-rave at 140: a big detuned saw hook over a bright piano stab, diva-major harmony, hands-up energy — one invented language, the whole continent fluent by the second chorus",   // UPTEMPO. acoustic = the M1 house-piano/organ pad (all-synth trance/edm can't reach it); pump LOW (a pop track, not a trance gate)
       bpm:[138,145], swing:[0,.05], humanize:[.03,.1],
       progressions:["four_chords","uplift","pop_1625","doo_wop"], kits:["four","pulse"], fills:["riser","hat rush","impact","drum fill"],
       bass:{patterns:["octaves","drive","rolling"], recipe:{model:["saw","reese"],cutoff:[500,820],res:[.15,.3],level:[1.05,1.28],send:[0,.08],dsend:[0,0]}},
@@ -2241,7 +2241,7 @@
       found:{role:"bed", vol:[.05,.12], pitch:[.9,1.05], stretch:[.4,.6], cutoff:[2400,3600], sources:["rave_b","sp_energy","shibuya"]},
       stab:["rave","offbeat"], hits:{sources:["rave_a","rave_b","vox_a"], pattern:"offbeat", prob:.6},
       form:"dj" },
-    singeli: { label:"Singeli", info:"Tanzanian singeli: a frantic 200+ BPM loop music — hyperspeed hats, a chopped taarab riff and a relentless synth line, the fastest thing in the room",   // UPTEMPO (fastest in the catalog)
+    singeli: { label:"Hummingbird Overclock", info:"frantic loop music past 200 BPM: hyperspeed hats, a chopped riff spun like a plate, a relentless synth line — the fastest thing in any room it enters",   // UPTEMPO (fastest in the catalog)
       bpm:[200,214], swing:[0,.05], humanize:[0,.1],
       progressions:["hijaz","mode_phrygian","minor_run"], kits:["electro","four"], fills:["hat rush","cut","stutter","impact"],
       bass:{patterns:["stab","rolling","drive"], recipe:{model:["saw","acid"],cutoff:[400,700],res:[.2,.35],level:[1.1,1.35],send:[0,.06],dsend:[0,.06]}},
@@ -2252,7 +2252,7 @@
       found:{role:"chops", vol:[.12,.22], pitch:[.9,1.15], stretch:[.35,.55], cutoff:[2200,3600], sources:["shibuya","vx_wwvh","vox_a"]},
       stab:["rave","offbeat"], hits:{sources:["vox_a","rave_c","sp_energy"], pattern:"dub", prob:.6},
       form:"dj" },
-    bebop: { label:"Bebop", info:"frantic bebop at 220: a walking upright bass, a brushed ride and a sampled sax/trumpet head tearing through the ii-V changes — Parker's tempo",   // UPTEMPO. jazz's fast acoustic cousin — bpm floor fences it off jazz's [96,148]
+    bebop: { label:"Quicksilver Changes", info:"frantic changes at 220: a walking upright bass, a brushed ride and a sampled sax/trumpet head tearing through the ii-Vs — a conversation held at a dead sprint",   // UPTEMPO. jazz's fast acoustic cousin — bpm floor fences it off jazz's [96,148]
       bpm:[196,220], swing:[.28,.5], humanize:[.25,.5],
       progressions:["ii_v_i","neosoul","blues_12"], kits:["shuffle","shuffle","boombap"], fills:["off","drum fill","kit fill"],
       bass:{patterns:["walking","walking","root"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sub"],cutoff:[400,700],res:[.05,.15],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
@@ -2263,7 +2263,7 @@
       found:{role:"bed", vol:[.06,.14], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2000,3200], sources:["blues_vox_78","horns_78","tokyo_station"]},
       stab:["off"], hits:{sources:["horns_78","bb_horn_a","bb_stab_a"], pattern:"response", prob:.4},
       form:"pop" },
-    bluegrass: { label:"Bluegrass", info:"high-lonesome bluegrass at 165: rolling banjo, a fiddle break, a walking doghouse bass and brushes — straight-ahead major-key string-band drive",   // UPTEMPO. banjo+fiddle acoustic; bpm floor fences it off surfrock, straight-major seventh fences it off bebop
+    bluegrass: { label:"Porchlight Overdrive", info:"high-lonesome drive at 165: rolling banjo, a fiddle break, a walking doghouse bass under brushes — a string band doing the work of a locomotive, all major key, no brakes",   // UPTEMPO. banjo+fiddle acoustic; bpm floor fences it off surfrock, straight-major seventh fences it off bebop
       bpm:[156,170], swing:[.04,.14], humanize:[.15,.4],
       progressions:["four_chords","doo_wop","uplift"], kits:["shuffle","boombap"], fills:["off","drum fill","kit fill"],
       bass:{patterns:["walking","root","simple"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sub"],cutoff:[400,700],res:[.05,.15],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
@@ -2274,7 +2274,7 @@
       found:{role:"bed", vol:[.06,.14], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2000,3200], sources:["blues_vox_78","tokyo_station"]},
       stab:["off"], hits:{sources:["blues_vox_78","bb_horn_a"], pattern:"sparse", prob:.2},
       form:"pop" },
-    ska: { label:"Ska", info:"2-tone ska at 152: choppy offbeat guitar upstrokes, a walking bass and a punchy brass-section riff — the skank on every &",   // UPTEMPO. brass acoustic + offbeat skank; bpm band sits between surfrock and bluegrass
+    ska: { label:"Rude Checkerboard", info:"the upstroke engine at 152: choppy offbeat guitar, a walking bass, a punchy brass-section riff — the skank on every & and a suit that fits",   // UPTEMPO. brass acoustic + offbeat skank; bpm band sits between surfrock and bluegrass
       bpm:[146,156], swing:[.04,.14], humanize:[.1,.3],
       progressions:["doo_wop","four_chords","ii_v_i"], kits:["shuffle","four"], fills:["off","drum fill","kit fill"],
       bass:{patterns:["walking","octaves","root"], samplerPool:["finger_bass","acoustic_bass"], recipe:{model:["sampler","saw"],cutoff:[450,750],res:[.1,.2],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
@@ -2285,7 +2285,7 @@
       found:{role:"bed", vol:[.05,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2200,3400], sources:["blues_vox_78","tokyo_station"]},
       stab:["offbeat","rave"], hits:{sources:["bb_horn_a","bb_horn_b","bb_stab_a"], pattern:"offbeat", prob:.6},
       form:"pop" },
-    klezmer: { label:"Klezmer", info:"a freylekhs at 140: a wailing clarinet over a freygish (hijaz) mode, a boom-chick accordion and a driving 2-beat — the wedding-band frenzy",   // UPTEMPO. clarinet acoustic + hijaz; bpm floor fences it off arabpop's slower hijaz
+    klezmer: { label:"Wedding Comet", info:"the wedding-band frenzy at 140: a wailing clarinet over a freygish (hijaz) mode, a boom-chick accordion, a driving 2-beat — grief and joy holding hands and spinning",   // UPTEMPO. clarinet acoustic + hijaz; bpm floor fences it off arabpop's slower hijaz
       bpm:[132,144], swing:[.04,.16], humanize:[.15,.4],
       progressions:["hijaz","andalusian","minor_run"], kits:["shuffle","four"], fills:["off","drum fill","kit fill"],
       bass:{patterns:["root","walking","octaves"], samplerPool:["acoustic_bass","tuba"], recipe:{model:["sampler","sub"],cutoff:[400,700],res:[.05,.15],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
@@ -2296,7 +2296,7 @@
       found:{role:"bed", vol:[.05,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2200,3400], sources:["blues_vox_78","tokyo_station"]},
       stab:["off"], hits:{sources:["bb_horn_a","bb_stab_a"], pattern:"sparse", prob:.25},
       form:"pop" },
-    funk: { label:"Funk", info:"James Brown funk at 108: a wah clavinet riff, a syncopated popping bass, tight horn stabs and a busy 16th hi-hat — on the one",   // clavinet acoustic + horn CHOPS (fences four-on-floor disco, which forbids chops)
+    funk: { label:"Sweat Equity", info:"everything lands on the one at 108: a wah clavinet riff, a syncopated popping bass, tight horn stabs, a busy 16th hi-hat — a pocket so deep it earns interest",   // clavinet acoustic + horn CHOPS (fences four-on-floor disco, which forbids chops)
       bpm:[102,114], swing:[.04,.14], humanize:[.1,.3],
       progressions:["funk_vamp","neosoul","ii_v_i"], kits:["newjack","house","four"], fills:["off","drum fill","kit fill"],
       bass:{patterns:["syncopated","melodic","stab"], samplerPool:["slap_bass","finger_bass"], recipe:{model:["sampler","saw"],cutoff:[500,850],res:[.1,.25],level:[1.05,1.28],send:[.03,.1],dsend:[0,.05]},
@@ -2308,7 +2308,7 @@
       found:{role:"chops", vol:[.08,.16], pitch:[.9,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["bb_horn_a","shibuya","stml_chop_a","stml_chop_c","stml_chop_b"]},
       stab:["offbeat","rave"], hits:{sources:["bb_horn_a","bb_horn_b","bb_stab_a","bb_stab_b"], pattern:"offbeat", prob:.55},
       form:"pop" },
-    boombap: { label:"Boom Bap", info:"golden-era boom bap at 92: a hard dusty break, a chopped soul loop, a fat sampled bass and jazzy Rhodes stabs — head-nod hip-hop",   // hard SNARE-forward break at 90+, bright (softTop 0) — fences the slower, tape-dark lofi/triphop
+    boombap: { label:"Milk Crate Scripture", info:"the golden era at 92: a hard dusty break, a chopped soul loop, a fat sampled bass and smoky Rhodes stabs — head-nod verses dug out of a milk crate",   // hard SNARE-forward break at 90+, bright (softTop 0) — fences the slower, tape-dark lofi/triphop
       bpm:[88,96], swing:[.1,.24], humanize:[.15,.35],
       progressions:["neosoul","lofi","ii_v_i","pop_1625"], kits:["boombap","breaks"], fills:["off","drum fill","downlift"],
       bass:{patterns:["simple","dub","root"], samplerPool:["acoustic_bass","finger_bass"], recipe:{model:["sub","sampler"],cutoff:[350,600],res:[.05,.15],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
@@ -2320,7 +2320,7 @@
       found:{role:"break", vol:[.2,.32], pitch:[1,1], stretch:[.5,.5], cutoff:[4000,6000], sources:["amen_165","amen_170","stml_loop_86a","stml_loop_89a","stml_loop_92a","stml_loop_94a"]},
       stab:["off"], hits:{sources:["vox_b","vox_c","sp_rewind"], pattern:"sparse", prob:.4},
       form:"pop" },
-    amapiano: { label:"Amapiano", info:"South African amapiano at 112: a deep log-drum bassline, jazzy Rhodes chords, wide shakers and a spacious swung groove — the yanos",   // sub log-drum + jazzy sevenths + fast shaker hats at 112; bpm cap fences it under deephouse
+    amapiano: { label:"Log Drum Diplomacy", info:"a deep log-drum bassline at 112: plush Rhodes chords, wide shakers, a spacious swung groove — patient and social, the drum that speaks last and says the most",   // sub log-drum + jazzy sevenths + fast shaker hats at 112; bpm cap fences it under deephouse
       bpm:[108,116], swing:[.08,.2], humanize:[.05,.2],
       progressions:["deep_two","house_min7","neosoul"], kits:["house","four"], fills:["off","hat rush","riser"],
       bass:{patterns:["stab","syncopated","rolling"], recipe:{model:["sub","sub"],cutoff:[260,440],res:[.05,.15],level:[1.15,1.4],send:[0,.06],dsend:[0,.05]}},
@@ -2331,7 +2331,7 @@
       found:{role:"bed", vol:[.06,.14], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["tokyo_station","shibuya"]},
       stab:["offbeat","off"], hits:{sources:["vox_a","sp_rhythm"], pattern:"offbeat", prob:.4},
       form:"dj" },
-    reggae: { label:"Reggae", info:"one-drop reggae at 75: an offbeat organ-and-guitar skank, a round melodic bass, the kick on beat three — roots and culture",   // the SONG to dub's dubbed-out instrumental: real harmonic motion + skank organ, vs dub's static drone
+    reggae: { label:"Kick On Three", info:"the one-drop at 75: an offbeat organ-and-guitar skank, a round melodic bass, the kick landing on beat three — unhurried and completely certain",   // the SONG to dub's dubbed-out instrumental: real harmonic motion + skank organ, vs dub's static drone
       bpm:[70,80], swing:[.04,.14], humanize:[.1,.3],
       progressions:["deep_two","neosoul","four_chords","minor_run"], kits:["onedrop"], fills:["off","downlift","drum fill"],   // MUSICALITY balance loop 1 (2026-07): the card says ONE DROP — kick+cross-stick on beat 3, beat 1 empty. The old kick/halftime/four pool put the kick on 1 (Paul: "NONE of that is happening" — MEASURED 2-5% kick-on-3). Single-kit pool like bossa/electro/newjack: onedrop IS reggae's kit; variety lives in the kit's own ghost/open draws, and kickOn:[3] is now a written PROMISE (musicality.js) the pool must keep on every seed (a mixed pool drew halftime on 3 of 5 seeds — measured)
       bass:{patterns:["melodic","dub","simple"], samplerPool:["finger_bass","acoustic_bass"], recipe:{model:["sub","sampler"],cutoff:[280,480],res:[.05,.15],level:[1.15,1.4],send:[.03,.1],dsend:[0,.05]}},
@@ -2342,7 +2342,7 @@
       found:{role:"bed", vol:[.08,.16], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["blues_vox_78","tokyo_station"]},
       stab:["offbeat"], hits:{sources:["vox_b","sp_herenow"], pattern:"offbeat", prob:.5},
       form:"pop" },
-    heavymetal: { label:"Heavy Metal", info:"classic heavy metal at 140: a HUGE wall of distorted electric-guitar power chords doubled to the sub-octave, a screaming lead over a galloping double-kick, deep room reverb — turn it up",   // distorted guitars front and center; comp+drumDensity+bpm fence it off the halftime industrialmetal, the slow sludgemetal, the clean surfrock
+    heavymetal: { label:"Molten Horsepower", info:"a HUGE wall of distorted electric-guitar power chords doubled to the sub-octave at 140: a screaming lead over a galloping double-kick, deep room reverb — turn it up",   // distorted guitars front and center; comp+drumDensity+bpm fence it off the halftime industrialmetal, the slow sludgemetal, the clean surfrock
       bpm:[130,148], swing:[0,.04], humanize:[.03,.12],
       progressions:["epic_min","minor_run","andalusian","mode_phrygian"], kits:["four","pulse","electro"], fills:["impact","cut","riser","tom fill"],
       reverbColor:"fdn",   // GRIT PASS: a big bright drum ROOM behind the kit + guitars — "a lot of deep reverb, classic metal effects"
