@@ -1,0 +1,426 @@
+// musicality.js — proving genres GOOD, not just distinct (docs/MUSICALITY.md).
+// The matrix verifies the SCORE; this verifies the PERFORMANCE. v1 is the four
+// SYMBOLIC laws — everything here reads buildEvents(state), no audio:
+//
+//   BLOOM    every declared part arrives within a listener's patience
+//            (bounds per FORM); a declared part that NEVER sounds = hard fail.
+//   REGISTER sampled voices play inside the sampler's natural window
+//            (the mapping layer's fold window: top zone root +6 st, bottom
+//            zone root -12 st — mirrors faust/state-engine SAMPLER_*_ST).
+//   PROMISES the genre card as a falsifiable contract: machine-checkable
+//            claims (kickOn / drumless / skankOffbeat / bassStyle / meter /
+//            partPresent). Unknown promise keys WARN, never crash.
+//   MOTION   boredom check — >2 consecutive byte-identical sections = WARN.
+//
+//   audit(genreOrState, {seeds})  -> {genre, seeds, laws:{...}, overall, verdict}
+//   auditAll({seeds, rank})       -> rows over every kernel anchor
+//   node engine/musicality.js audit <genre|all> [--seeds 1,2,3] [--rank] [--json]
+//
+// Gate posture: SOFT FIRST (validate-genres gate 8 is WARN-level; a law goes
+// hard only when its offender list and Paul's ear agree twice). Deterministic:
+// same seed, same scorecard. Scores are [0,1] with NAMED failures — defect
+// classes, not preferences (the doc's "what this is not").
+//
+// PROMISES live in the PROMISES table below (keyed by genre) until the kernel
+// anchors grow a `promises:` field — the kernel is another agent's file during
+// this phase; state.promises, when it exists, overrides the table.
+(function (root) {
+  "use strict";
+  const isNode = typeof module !== "undefined" && module.exports;
+  const E = isNode ? require("./csd-engine.js") : root.CsdEngine;
+  const K = isNode ? require("./genre-kernel.js") : root.GenreKernel;
+
+  const round = (x, p) => +(+x).toFixed(p == null ? 3 : p);
+  const CORE = { kick: 1, snare: 1, hat: 1, tom: 1 };   // the rhythm fabric; perc lane is color (genre-verifier's law)
+
+  // ---------------------------------------------------------------- BLOOM
+  // First-onset bounds in BEATS per FORM per part. Honest defaults, not
+  // taste: pop expects the kit and bass inside 4 chord bars and the lead by
+  // beat 64; the slow-bloom forms (dj plateau / wave drift / ritual) get
+  // 2-3x the patience. A part is MEASURED only when the resolved state
+  // declares it (some section turns it on) — sections all drums:"off" means
+  // the drums part simply isn't declared, so drumless-by-design is exempt
+  // by construction, not by exemption list.
+  const BLOOM_BOUNDS = {
+    pop:     { drums: 32, bass: 32, melody: 64,  pads: 48,  found: 48,  counter: 96 },
+    anthem:  { drums: 32, bass: 32, melody: 64,  pads: 48,  found: 48,  counter: 96 },
+    drop:    { drums: 48, bass: 48, melody: 80,  pads: 64,  found: 64,  counter: 112 },
+    transit: { drums: 48, bass: 48, melody: 80,  pads: 64,  found: 64,  counter: 112 },
+    wave:    { drums: 80, bass: 80, melody: 144, pads: 112, found: 112, counter: 176 },
+    dj:      { drums: 96, bass: 96, melody: 160, pads: 128, found: 128, counter: 192 },
+    ritual:  { drums: 96, bass: 96, melody: 192, pads: 128, found: 128, counter: 192 },
+  };
+
+  // Mapping-layer window (faust/state-engine.js SAMPLER_STRETCH_ST /
+  // SAMPLER_FLOOR_ST): notes outside octave-fold at render. Symbolically a
+  // note outside the window means the SCORE asked for a register the
+  // instrument doesn't own — the fold saves the ear but bends the contour,
+  // so the law names it here where it can be fixed at the anchor.
+  const STRETCH_ST = 6, FLOOR_ST = 12;
+
+  // ---------------------------------------------------------------- parts
+  // Section spans re-derive buildEvents' beat arithmetic (chordEvery /
+  // meter-fitting default / CHORD_BEATS=8) — theory.reharm preserves chord
+  // count, so progression length is stable either way.
+  function sectionSpans(state) {
+    const prg = E.getProgression(state.progression);
+    const mtb = state.meter ? (state.meter.beats | 0) : 0;
+    const CB = Math.max(2, Math.round(state.chordEvery || ((mtb === 3 || mtb === 6) ? 6 : 8)));
+    const cycleBeats = prg.chords.length * CB;
+    const spans = []; let cur = 0;
+    for (const sec of state.sections || []) {
+      const b = (sec.cycles || 1) * cycleBeats;
+      spans.push({ sec, start: cur, end: cur + b });
+      cur += b;
+    }
+    spans.CB = CB;   // the chord-bar length rides along (BLOOM's arrival grid)
+    return spans;
+  }
+
+  // Per-part declaration + first onset + event counts. Counter events carry
+  // e.solo === sec.counter.solo (every kernel counter declares a solo voice —
+  // measured over the full catalog), so they're identified by solo-tag match
+  // inside counter-declared spans; everything else melody-voiced is melody.
+  function partsOf(state, ev) {
+    const spans = sectionSpans(state);
+    const secs = state.sections || [];
+    const declared = {
+      drums:   secs.some((s) => s.drums && s.drums !== "off"),
+      bass:    secs.some((s) => s.bass && s.bass !== "off"),
+      melody:  secs.some((s) => s.melody && s.melody !== "off"),
+      pads:    secs.some((s) => !!s.pads),
+      found:   secs.some((s) => s.found && s.found.sourceId),
+      counter: secs.some((s) => s.counter && s.counter.pattern),
+    };
+    const cSpans = spans.filter((sp) => sp.sec.counter && sp.sec.counter.pattern && sp.sec.counter.solo)
+      .map((sp) => ({ start: sp.start, end: sp.end, key: JSON.stringify(sp.sec.counter.solo) }));
+    const isCounter = (e) => {
+      if (!e.solo) return false;
+      const k = JSON.stringify(e.solo);
+      return cSpans.some((sp) => k === sp.key && e.beat >= sp.start - 0.5 && e.beat < sp.end + 0.5);
+    };
+    const fSpans = spans.filter((sp) => sp.sec.found && sp.sec.found.sourceId);
+    const inFound = (b) => fSpans.some((sp) => b >= sp.start - 0.5 && b < sp.end + 0.5);
+    const first = {}, count = {};
+    for (const p of Object.keys(declared)) { first[p] = null; count[p] = 0; }
+    const see = (part, beat) => { count[part]++; if (first[part] == null || beat < first[part]) first[part] = beat; };
+    for (const d of ev.drums) if (CORE[d.drum]) see("drums", d.beat);
+    for (const p of ev.pitched) {
+      const part = p.voice === "pad" ? "pads" : p.voice === "bass" ? "bass" : isCounter(p) ? "counter" : "melody";
+      see(part, p.beat);
+    }
+    // found part = the section-declared found layer; hits/vox share the found
+    // event stream, so membership is gated to found-declared spans (v1: a
+    // hits event inside a found span still counts — accepted coarseness).
+    for (const f of ev.found || []) if (inFound(f.beat)) see("found", f.beat);
+    return { declared, first, count, spans, isCounter };
+  }
+
+  // ---------------------------------------------------------------- law: BLOOM
+  function bloom(state, ev, form, P) {
+    P = P || partsOf(state, ev);
+    const bounds = BLOOM_BOUNDS[form] || BLOOM_BOUNDS.pop;
+    const failures = []; let measured = 0, ok = 0, hard = false;
+    for (const part of Object.keys(P.declared)) {
+      if (!P.declared[part]) continue;
+      measured++;
+      if (!P.count[part]) {
+        hard = true;
+        failures.push({ part, hard: true, what: part + " is declared in the resolved state but NEVER sounds" });
+        continue;
+      }
+      const bound = bounds[part] != null ? bounds[part] : 96;
+      // ARRIVAL is bar-grained: a dub bass whose cell starts at beat 2.5 of
+      // its bar arrived AT the bar — floor the first onset to the chord-bar
+      // grid before judging patience (in-bar pattern offsets are the groove,
+      // not lateness).
+      const CB = P.spans.CB || 8;
+      const arrival = Math.floor(P.first[part] / CB) * CB;
+      if (arrival > bound)
+        failures.push({ part, what: `${part} first sounds at beat ${round(P.first[part], 1)} (bound ${bound}, form ${form})` });
+      else ok++;
+    }
+    return { score: measured ? round(ok / measured) : 1, failures, hard };
+  }
+
+  // ---------------------------------------------------------------- law: REGISTER
+  // Per sampled voice slot (melody/pad/bass): % of its pitched events whose
+  // midi sits in the natural window [bottom zone root - 12, top zone root + 6].
+  // Synth voices exempt; solo/counter events exempt from the melody slot
+  // (they render on their own solo units with their own samplers — v1 scope).
+  function register(state, ev, P) {
+    const I = state.instruments || {};
+    const failures = [], per = [];
+    for (const [slot, voice] of [["melody", "melody"], ["pad", "pad"], ["bass", "bass"]]) {
+      const m = I[slot];
+      if (!m || m.model !== "sampler" || !m.sampler || !Array.isArray(m.sampler.zones) || !m.sampler.zones.length) continue;
+      const roots = m.sampler.zones.map((z) => z.root).filter((r) => r != null);
+      if (!roots.length) continue;
+      const lo = Math.min.apply(null, roots) - FLOOR_ST, hi = Math.max.apply(null, roots) + STRETCH_ST;
+      const evs = ev.pitched.filter((p) => slot === "melody" ? (p.voice === "melody" && !p.solo) : p.voice === voice);
+      if (!evs.length) continue;
+      let inW = 0, worst = null;
+      for (const p of evs) {
+        const md = E.pchToMidi(p.pch);
+        if (md >= lo && md <= hi) inW++;
+        else { const off = md > hi ? md - hi : lo - md; if (!worst || off > worst.off) worst = { off, dir: md > hi ? "above" : "below" }; }
+      }
+      const frac = inW / evs.length;
+      per.push(frac);
+      if (frac < 0.95) failures.push({ voice: slot, what:
+        `${slot} (${m.sampler.id}): ${Math.round((1 - frac) * 100)}% of ${evs.length} notes outside natural range [${lo}..${hi}] midi (worst ${worst.off} st ${worst.dir})` });
+    }
+    return { score: per.length ? round(per.reduce((a, b) => a + b, 0) / per.length) : 1, failures };
+  }
+
+  // ---------------------------------------------------------------- law: PROMISES
+  // Seed promises (Paul-blessed truth only, each VERIFIED against renders
+  // before being written — MUSICALITY.md rollout §6):
+  //   reggae      — the skank chops the offbeat eighths (verified: 100% of
+  //                 stab-layer onsets on off-eighths, seeds 1-3). NOTE: the
+  //                 card's kickOn:[3] one-drop claim is NOT written — measured
+  //                 2026-07-10 it fails (kick-on-3 in 2-5% of kitted measures
+  //                 on seeds 1/3; only seed 2's four-on-floor kit covers beat
+  //                 3, which isn't one-drop either). That's a finding for the
+  //                 balance loop, not a promise to fail on. The pad voice is
+  //                 downbeat chord sustains, so skankOffbeat:"pad" would fail
+  //                 too — the skank lives in the stab layer.
+  //   salondawdle — waltz: meter 3/4 (verified, seeds 1-3).
+  //   chalkvespers— drumless by design (verified: zero drum events, seeds 1-3).
+  const PROMISES = {
+    reggae:       { skankOffbeat: "stab" },
+    salondawdle:  { meter: "3/4" },
+    chalkvespers: { drumless: true },
+  };
+
+  const OFFBEAT = (b) => ((Math.round(b * 2) % 2) + 2) % 2 === 1;   // nearest eighth slot is an "&"
+
+  function checkPromises(promises, state, ev, P) {
+    P = P || partsOf(state, ev);
+    const failures = [], warnings = [];
+    let total = 0, kept = 0;
+    if (!promises) return { score: 1, failures, warnings, declared: 0 };
+    const measureBeats = state.meter && (state.meter.beats | 0) >= 3 ? (state.meter.beats | 0) : 4;
+    for (const [key, val] of Object.entries(promises)) {
+      switch (key) {
+        case "kickOn": {   // kick present on those (1-based) beats in >=60% of kitted measures
+          total++;
+          const kit = ev.drums.filter((d) => CORE[d.drum]);
+          const kicks = ev.drums.filter((d) => d.drum === "kick");
+          const kitted = new Set(kit.map((d) => Math.floor(d.beat / measureBeats)));
+          const bad = [];
+          for (const b of [].concat(val)) {
+            const hitM = new Set();
+            for (const k of kicks) {
+              const m = Math.floor(k.beat / measureBeats), pos = k.beat - m * measureBeats;
+              if (Math.abs(pos - (b - 1)) < 0.2) hitM.add(m);
+            }
+            let hits = 0; for (const m of kitted) if (hitM.has(m)) hits++;
+            const frac = kitted.size ? hits / kitted.size : 0;
+            if (frac < 0.6) bad.push(`beat ${b} in ${Math.round(frac * 100)}% of ${kitted.size} kitted measures (need 60%)`);
+          }
+          if (bad.length) failures.push({ promise: "kickOn", what: "kickOn[" + [].concat(val).join(",") + "] broken: " + bad.join("; ") });
+          else kept++;
+          break;
+        }
+        case "drumless": {
+          total++;
+          const n = ev.drums.length;
+          if (val ? n === 0 : n > 0) kept++;
+          else failures.push({ promise: "drumless", what: val ? `drumless promised but ${n} drum events sound` : "drums promised but none sound" });
+          break;
+        }
+        case "skankOffbeat": {   // that voice's onsets >=70% on the off-eighths
+          total++;
+          let onsets;
+          if (val === "pad") onsets = ev.pitched.filter((p) => p.voice === "pad").map((p) => p.beat);
+          else if (val === "lead") onsets = ev.pitched.filter((p) => p.voice === "melody" && !p.solo).map((p) => p.beat);
+          else if (val === "stab") onsets = (ev.sfx || []).filter((s) => s.stab).map((s) => s.beat);
+          else { total--; warnings.push({ promise: key, what: `unknown skankOffbeat target "${val}" (know pad|lead|stab)` }); break; }
+          const off = onsets.filter(OFFBEAT).length;
+          const frac = onsets.length ? off / onsets.length : 0;
+          if (frac >= 0.7) kept++;
+          else failures.push({ promise: "skankOffbeat", what: `skankOffbeat:${val} broken: ${Math.round(frac * 100)}% of ${onsets.length} onsets on offbeats (need 70%)` });
+          break;
+        }
+        case "bassStyle": {   // resolved bass vocabulary (section patterns + bass model) intersects the promised set
+          total++;
+          const want = [].concat(val);
+          const got = new Set((state.sections || []).map((s) => s.bass).filter((b) => b && b !== "off"));
+          if (state.instruments && state.instruments.bass && state.instruments.bass.model) got.add(state.instruments.bass.model);
+          if (want.some((w) => got.has(w))) kept++;
+          else failures.push({ promise: "bassStyle", what: `bassStyle ${JSON.stringify(val)} broken: resolved bass is {${[...got].join(",")}}` });
+          break;
+        }
+        case "meter": {
+          total++;
+          const m = state.meter, sig = m ? (m.beats | 0) + "/" + ((m.unit | 0) || 4) : "4/4";
+          if (sig === val || (val === "4/4" && !m)) kept++;
+          else failures.push({ promise: "meter", what: `meter ${val} promised but state resolves ${sig}` });
+          break;
+        }
+        case "partPresent": {   // those parts declared AND sounding
+          total++;
+          const missing = [].concat(val).filter((p) => !(P.declared[p] && P.count[p] > 0));
+          if (!missing.length) kept++;
+          else failures.push({ promise: "partPresent", what: `partPresent broken: ${missing.join(", ")} ${missing.length > 1 ? "are" : "is"} not sounding` });
+          break;
+        }
+        default:
+          warnings.push({ promise: key, what: `unknown promise key "${key}" — vocabulary grows with the cards (WARN, not a crash)` });
+      }
+    }
+    return { score: total ? round(kept / total) : 1, failures, warnings, declared: total };
+  }
+
+  // ---------------------------------------------------------------- law: MOTION
+  // Boredom check: consecutive sections with the same declaration head AND a
+  // byte-identical event signature, in runs longer than 2, are a WARN-level
+  // finding. Cheap FNV hash over sorted per-section event strings (relative
+  // beats) — the amp/humanity jitters mean only true verbatim loops collide.
+  function motion(state, ev, P) {
+    P = P || partsOf(state, ev);
+    const sigs = P.spans.map((sp) => {
+      const s = sp.sec;
+      const head = [s.drums || "off", s.bass || "off", s.melody || "off", s.pads ? 1 : 0,
+        s.keyShift | 0, s.stab || "", (s.found && s.found.sourceId) || ""].join("|");
+      const lines = [];
+      for (const d of ev.drums) if (d.beat >= sp.start && d.beat < sp.end)
+        lines.push("d" + round(d.beat - sp.start, 2) + ":" + d.drum + ":" + round(d.amp, 2));
+      for (const p of ev.pitched) if (p.beat >= sp.start && p.beat < sp.end)
+        lines.push("p" + round(p.beat - sp.start, 2) + ":" + p.pch + ":" + round(p.amp, 2) + ":" + p.voice);
+      lines.sort();
+      let h = 2166136261;
+      for (const ln of lines) for (let i = 0; i < ln.length; i++) { h ^= ln.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+      return head + "#" + (h >>> 0).toString(16);
+    });
+    const failures = []; let excess = 0;
+    let i = 0;
+    while (i < sigs.length) {
+      let j = i + 1;
+      while (j < sigs.length && sigs[j] === sigs[i]) j++;
+      const L = j - i;
+      if (L > 2) {
+        excess += L - 2;
+        const s = P.spans[i].sec;
+        failures.push({ warn: true, what: `sections ${i + 1}-${j} identical x${L} (kit=${s.drums || "off"} bass=${s.bass || "off"} lead=${s.melody || "off"})` });
+      }
+      i = j;
+    }
+    return { score: sigs.length ? round(1 - excess / sigs.length) : 1, failures };
+  }
+
+  // ---------------------------------------------------------------- audit
+  function promisesFor(state, genre) {
+    if (state && state.promises) return state.promises;                          // future kernel field wins
+    if (genre && PROMISES[genre]) return PROMISES[genre];
+    return null;
+  }
+
+  function auditOne(state, genre, form) {
+    const ev = E.buildEvents(state);
+    const P = partsOf(state, ev);
+    return {
+      bloom: bloom(state, ev, form, P),
+      register: register(state, ev, P),
+      promises: checkPromises(promisesFor(state, genre), state, ev, P),
+      motion: motion(state, ev, P),
+    };
+  }
+
+  const LAWS = ["bloom", "register", "promises", "motion"];
+
+  function audit(genreOrState, opts) {
+    opts = opts || {};
+    const isState = genreOrState && typeof genreOrState === "object";
+    const genre = isState
+      ? ((genreOrState.genreMeta && genreOrState.genreMeta.genres && genreOrState.genreMeta.genres[0]) || "(state)")
+      : String(genreOrState);
+    if (!isState && (!K || !K.GENRES[genre])) throw new Error("unknown genre: " + genre);
+    const seeds = isState ? [genreOrState.seed != null ? genreOrState.seed : 1]
+      : (opts.seeds && opts.seeds.length ? opts.seeds : [1, 2, 3]);
+    const states = isState ? [genreOrState] : seeds.map((s) => K.track(genre, { seed: s }));
+    const form = (states[0].genreMeta && states[0].genreMeta.form)
+      || (K && K.GENRES[genre] && K.GENRES[genre].form) || "pop";
+    const laws = {};
+    for (const l of LAWS) laws[l] = { score: 0, failures: [], warnings: [] };
+    let hard = false;
+    states.forEach((st, i) => {
+      const r = auditOne(st, genre, form);
+      for (const l of LAWS) {
+        laws[l].score += r[l].score;
+        for (const f of r[l].failures || []) laws[l].failures.push(Object.assign({ seed: seeds[i] }, f));
+        for (const w of r[l].warnings || []) laws[l].warnings.push(Object.assign({ seed: seeds[i] }, w));
+      }
+      laws.promises.declared = Math.max(laws.promises.declared || 0, r.promises.declared || 0);
+      if (r.bloom.hard) hard = true;
+    });
+    for (const l of LAWS) laws[l].score = round(laws[l].score / states.length);
+    const overall = round(LAWS.reduce((s, l) => s + laws[l].score, 0) / LAWS.length);
+    const nFail = LAWS.reduce((s, l) => s + laws[l].failures.length, 0);
+    const nWarn = LAWS.reduce((s, l) => s + laws[l].warnings.length, 0);
+    const verdict = hard || laws.promises.failures.length ? "FAIL" : (nFail || nWarn) ? "WARN" : "OK";
+    return { genre, form, seeds, laws, overall, verdict,
+      worst: nFail ? [...laws.bloom.failures, ...laws.promises.failures, ...laws.register.failures, ...laws.motion.failures][0].what : null };
+  }
+
+  function auditAll(opts) {
+    opts = opts || {};
+    if (!K) throw new Error("auditAll needs the genre kernel");
+    const rows = Object.keys(K.GENRES).map((g) => audit(g, opts));
+    if (opts.rank) rows.sort((a, b) => a.overall - b.overall || a.genre.localeCompare(b.genre));
+    return rows;
+  }
+
+  // ---------------------------------------------------------------- report
+  function scorecard(a) {
+    const L = [];
+    L.push(`${a.genre} (form ${a.form}, seeds [${a.seeds.join(",")}]) — overall ${a.overall.toFixed(2)}  ${a.verdict}`);
+    for (const l of LAWS) {
+      const r = a.laws[l];
+      L.push(`  ${l.padEnd(8)} ${r.score.toFixed(2)}${l === "promises" && !r.declared ? "  (none declared)" : ""}`);
+      for (const f of r.failures) L.push(`    x ${f.what}${f.seed != null ? ` [seed ${f.seed}]` : ""}`);
+      for (const w of r.warnings) L.push(`    ~ ${w.what}${w.seed != null ? ` [seed ${w.seed}]` : ""}`);
+    }
+    return L.join("\n");
+  }
+
+  function rankTable(rows) {
+    const L = [`rank genre               overall bloom  reg   prom  mot   verdict`];
+    rows.forEach((r, i) => {
+      L.push(`${String(i + 1).padStart(4)} ${r.genre.padEnd(19)} ${r.overall.toFixed(2)}    ${LAWS.map((l) => r.laws[l].score.toFixed(2)).join("  ")}  ${r.verdict}${r.worst ? "  — " + r.worst : ""}`);
+    });
+    return L.join("\n");
+  }
+
+  const api = { audit, auditAll, scorecard, rankTable,
+    PROMISES, BLOOM_BOUNDS,
+    laws: { bloom, register, promises: checkPromises, motion },
+    partsOf, sectionSpans };
+  if (isNode) module.exports = api; else root.Musicality = api;
+
+  // ---------------------------------------------------------------- CLI
+  if (isNode && require.main === module) {
+    const args = process.argv.slice(2);
+    const cmd = args[0];
+    const has = (f) => args.includes("--" + f);
+    const flagV = (f, d) => { const i = args.indexOf("--" + f); return i >= 0 && args[i + 1] != null ? args[i + 1] : d; };
+    const seeds = String(flagV("seeds", "1,2,3")).split(",").map((s) => parseInt(s, 10)).filter((n) => n > 0);
+    if (cmd !== "audit" || !args[1]) {
+      console.log("usage: node engine/musicality.js audit <genre|all> [--seeds 1,2,3] [--rank] [--json]");
+      process.exit(2);
+    }
+    const target = args[1];
+    if (target === "all") {
+      const rows = auditAll({ seeds, rank: has("rank") });
+      if (has("json")) console.log(JSON.stringify(rows, null, 2));
+      else if (has("rank")) console.log(rankTable(rows));
+      else rows.forEach((r) => { console.log(scorecard(r)); console.log(""); });
+      const counts = rows.reduce((c, r) => ((c[r.verdict] = (c[r.verdict] || 0) + 1), c), {});
+      if (!has("json")) console.log(`\n${rows.length} genres x ${seeds.length} seeds — ${counts.OK || 0} ok, ${counts.WARN || 0} warn, ${counts.FAIL || 0} fail (soft gate: findings, not blocks)`);
+    } else {
+      const a = audit(target, { seeds });
+      console.log(has("json") ? JSON.stringify(a, null, 2) : scorecard(a));
+    }
+  }
+})(typeof window !== "undefined" ? window : globalThis);

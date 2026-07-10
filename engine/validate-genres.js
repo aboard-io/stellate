@@ -11,6 +11,9 @@
 //   5 blend paths   scores morph monotonically along blend(a,b,t)     (WARN)
 //   6 vocabulary    every anchor reference resolves in the engine     (FAIL)
 //   7 --audio       optional empirical probe via audio-verifier.py    (WARN/skip)
+//   8 musicality    symbolic law audit (BLOOM/REGISTER/PROMISES/      (WARN,
+//                   MOTION, docs/MUSICALITY.md) — soft first,          never
+//                   never blocks until laws graduate against ears      FAIL)
 //
 //   node validate-genres.js [--seeds N] [--quick] [--json] [--audio]
 //                           [--serial] [--jobs N] [--no-cache]
@@ -49,8 +52,9 @@ const SHARD = L.shardOf(args);
 const SEEDS = Array.from({ length: N_SEEDS }, (_, i) => i + 1);
 const DET_SEEDS = QUICK ? [1] : [1, SEEDS[SEEDS.length - 1]];
 // the run-report cache key covers the 3 core capability files plus these:
-// gate logic lives here, gate 6 scrapes the faust state mapping.
-const RUN_EXTRAS = ["validate-genres.js", "faust/state-engine.js"];
+// gate logic lives here, gate 6 scrapes the faust state mapping, gate 8 runs
+// the musicality law library.
+const RUN_EXTRAS = ["validate-genres.js", "faust/state-engine.js", "musicality.js"];
 
 const allGenres = Object.keys(K.GENRES);
 const scoredGenres = allGenres.filter((g) => V.TARGETS[g]);   // gates 2-5 need target ranges
@@ -434,6 +438,40 @@ function gateAudio() {
   return status;
 }
 
+// ============================================================ gate 8: musicality (WARN — soft first)
+// docs/MUSICALITY.md phase 2: the symbolic laws (BLOOM / REGISTER / PROMISES /
+// MOTION) score every anchor so the number exists in every verify run. Gate
+// posture is SOFT — this gate NEVER fails the suite; a law goes hard only
+// after its top-offender list and Paul's ear agree twice (the graduation
+// rule). Prints the 5 worst scorecards worst-first: the balance loop's
+// standing worklist.
+function gateMusicality() {
+  let M;
+  try { M = require("./musicality.js"); }
+  catch (e) {
+    result.gates.musicality = { status: "SKIP", note: "musicality.js unavailable: " + String(e.message || e) };
+    log(`[SKIP] 8 musicality — musicality.js unavailable`);
+    return "SKIP";
+  }
+  try {
+    const mSeeds = SEEDS.slice(0, 2);   // quick seeds: symbolic-only, whole catalog
+    const rows = M.auditAll({ seeds: mSeeds, rank: true });
+    const counts = rows.reduce((c, r) => ((c[r.verdict] = (c[r.verdict] || 0) + 1), c), {});
+    const worst = rows.slice(0, 5).map((r) => ({ genre: r.genre, overall: r.overall,
+      scores: { bloom: r.laws.bloom.score, register: r.laws.register.score, promises: r.laws.promises.score, motion: r.laws.motion.score },
+      verdict: r.verdict, worst: r.worst }));
+    const status = (counts.FAIL || counts.WARN) ? "WARN" : "PASS";
+    result.gates.musicality = { status, genres: rows.length, seeds: mSeeds, counts, worst5: worst };
+    log(`[${status}] 8 musicality (soft) — symbolic laws over ${rows.length} genres x ${mSeeds.length} seeds: ${counts.OK || 0} ok, ${counts.WARN || 0} warn, ${counts.FAIL || 0} fail (never blocks; MUSICALITY.md graduation rule)`);
+    worst.forEach((r) => log(`       ~ ${r.genre}: ${r.overall.toFixed(2)} (bloom ${r.scores.bloom.toFixed(2)} reg ${r.scores.register.toFixed(2)} prom ${r.scores.promises.toFixed(2)} mot ${r.scores.motion.toFixed(2)})${r.worst ? " — " + r.worst : ""}`));
+    return status;
+  } catch (e) {
+    result.gates.musicality = { status: "WARN", note: "audit threw: " + String(e.message || e) };
+    log(`[WARN] 8 musicality — audit threw: ${String(e.message || e)}`);
+    return "WARN";
+  }
+}
+
 // ============================================================ run
 function runGates(detByGenre, blendData) {
   const s1 = gateDeterminism(detByGenre);
@@ -442,12 +480,13 @@ function runGates(detByGenre, blendData) {
   const s5 = reportBlend(blendData || computeBlend());
   const s6 = gateVocabulary();
   const s7 = gateAudio();
+  const s8 = gateMusicality();   // WARN-only by design: excluded from hardFail below
   if (trackErrors.length) result.meta.trackErrors = trackErrors;
 
   const hardFail = s1 === "FAIL" || s2 === "FAIL" || s6 === "FAIL";
   result.exitCode = hardFail ? 1 : 0;
   log("");
-  const statuses = { determinism: s1, dominance: s2, margin: s3, geometry: s4, blend: s5, vocabulary: s6, audio: s7 };
+  const statuses = { determinism: s1, dominance: s2, margin: s3, geometry: s4, blend: s5, vocabulary: s6, audio: s7, musicality: s8 };
   const counts = Object.values(statuses).reduce((c, s) => ((c[s] = (c[s] || 0) + 1), c), {});
   log(`result: ${hardFail ? "FAIL" : "PASS"} — ${counts.PASS || 0} pass, ${counts.WARN || 0} warn, ${counts.FAIL || 0} fail${counts.SKIP ? ", " + counts.SKIP + " skipped" : ""}`);
   log(`(hard gates: 1 determinism, 2 dominance, 6 vocabulary; the rest warn)`);
