@@ -6,11 +6,12 @@
     "bpm": [103, 112],
     "swing": [0.05, 0.13],
     "humanize": [0.3, 0.5],
+    "meter": { "beats": 3, "unit": 4 },
     "progressions": ["minor_run", "doo_wop", "sad_pop"],
-    "kits": ["shuffle", "open"],
+    "kits": ["waltz"],
     "fills": ["off", "drum fill", "kit fill"],
     "bass": {
-      "patterns": ["octaves", "root", "charleston"],
+      "patterns": ["oompahpah"],
       "samplerPool": ["tuba", "acoustic_bass"],
       "recipe": { "model": ["sampler", "sampler", "sub"], "cutoff": [400, 800], "res": [0.05, 0.15], "level": [0.85, 1.05], "send": [0.05, 0.15], "dsend": [0, 0.05], "attack": [0.01, 0.03], "release": [0.15, 0.35] }
     },

@@ -709,6 +709,36 @@
     /* genre-tool:tangerinearcade:targets */
     tangerinearcade:{ bpm:[117,138,3], drumDensity:[0.77,2.49,2], wash:[0,0.229,1], pump:[0.217,0.567,1], swing:[0,0.082,2], seventh:[0,1,1], acoustic:[0,0.12,2], crackle:[0,0.176,1], sub:[0.05,1,1], motion:[0.85,1,1], bedUse:[0.51,0.75,1] },
     /* /genre-tool:tangerinearcade:targets */
+    /* genre-tool:chalkvespers:targets */
+    chalkvespers:{ bpm:[41,61,3], drumDensity:[0,0.4,2], wash:[0.161,0.518,1], pump:[0,0.1,1], swing:[0,0.063,2], seventh:[0.35,1,1], acoustic:[0.68,0.92,2], crackle:[0,0.239,1], sub:[0.05,0.35,1], motion:[0,0.82,1], bedUse:[0.71,1,1] },
+    /* /genre-tool:chalkvespers:targets */
+    /* genre-tool:salondawdle:targets */
+    salondawdle:{ bpm:[52,71,3], drumDensity:[0.12,1.23,2], wash:[0.059,0.373,1], pump:[0,0.1,1], swing:[0,0.088,2], seventh:[0.85,1,1], acoustic:[0.88,1,2], crackle:[0.012,0.479,1], sub:[0.05,0.35,1], motion:[0.52,1,1], bedUse:[0.88,1,1] },
+    /* /genre-tool:salondawdle:targets */
+    /* genre-tool:candlegauze:targets */
+    candlegauze:{ bpm:[64,82,3], drumDensity:[0,0.4,2], wash:[0.172,0.5,1], pump:[0,0.1,1], swing:[0,0.063,2], seventh:[0.85,1,1], acoustic:[0.68,1,2], crackle:[0.06,0.482,1], sub:[0.05,0.35,1], motion:[0.18,1,1], bedUse:[0.88,1,1] },
+    /* /genre-tool:candlegauze:targets */
+    /* genre-tool:cloisterloom:targets */
+    cloisterloom:{ bpm:[73,93,3], drumDensity:[0,0.4,2], wash:[0.142,0.493,1], pump:[0,0.1,1], swing:[0,0.063,2], seventh:[0.48,1,1], acoustic:[0.68,0.92,2], crackle:[0,0.211,1], sub:[0.05,0.35,1], motion:[0.52,1,1], bedUse:[0.88,1,1] },
+    /* /genre-tool:cloisterloom:targets */
+    /* genre-tool:miasmarow:targets */
+    miasmarow:{ bpm:[84,104,3], drumDensity:[0.17,1.41,2], wash:[0.17,0.501,1], pump:[0,0.1,1], swing:[0,0.075,2], seventh:[0,1,1], acoustic:[0.68,0.92,2], crackle:[0.081,0.489,1], sub:[0.05,0.35,1], motion:[0,1,1], bedUse:[0.71,0.95,1] },
+    /* /genre-tool:miasmarow:targets */
+    /* genre-tool:greasepaintoompah:targets */
+    greasepaintoompah:{ bpm:[98,118,3], drumDensity:[1.47,2.43,2], wash:[0,0.242,1], pump:[0,0.1,1], swing:[0.006,0.15,2], seventh:[0,1,1], acoustic:[0.68,0.92,2], crackle:[0.201,0.643,1], sub:[0.05,1,1], motion:[0.85,1,1], bedUse:[0.51,0.75,1] },
+    /* /genre-tool:greasepaintoompah:targets */
+    /* genre-tool:urchinmatinee:targets */
+    urchinmatinee:{ bpm:[110,130,3], drumDensity:[0.86,2.03,2], wash:[0.004,0.248,1], pump:[0,0.17,1], swing:[0.111,0.295,2], seventh:[0,1,1], acoustic:[0.68,0.92,2], crackle:[0,0.284,1], sub:[0.05,1,1], motion:[0.85,1,1], bedUse:[0.51,0.75,1] },
+    /* /genre-tool:urchinmatinee:targets */
+    /* genre-tool:marblefury:targets */
+    marblefury:{ bpm:[122,144,3], drumDensity:[0.28,2.04,2], wash:[0.068,0.358,1], pump:[0,0.174,1], swing:[0,0.075,2], seventh:[0.6,1,1], acoustic:[0.68,0.92,2], crackle:[0,0.274,1], sub:[0.05,1,1], motion:[0.52,1,1], bedUse:[0.71,0.95,1] },
+    /* /genre-tool:marblefury:targets */
+    /* genre-tool:perukelotto:targets */
+    perukelotto:{ bpm:[136,157,3], drumDensity:[0,2.34,2], wash:[0,0.261,1], pump:[0,0.1,1], swing:[0,0.069,2], seventh:[0,1,1], acoustic:[0.68,0.92,2], crackle:[0,0.326,1], sub:[0.05,0.35,1], motion:[0.52,1,1], bedUse:[0.63,0.87,1] },
+    /* /genre-tool:perukelotto:targets */
+    /* genre-tool:beakstampede:targets */
+    beakstampede:{ bpm:[149,174,3], drumDensity:[1.25,2.53,2], wash:[0,0.251,1], pump:[0,0.193,1], swing:[0,0.063,2], seventh:[0.35,1,1], acoustic:[0.68,0.92,2], crackle:[0,0.274,1], sub:[0.05,1,1], motion:[0.52,1,1], bedUse:[0.71,0.95,1] },
+    /* /genre-tool:beakstampede:targets */
   };
 
   // the piecewise-linear target-row scorer — the shared primitive (genre-tool
