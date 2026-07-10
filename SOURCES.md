@@ -184,7 +184,7 @@ sketches but flag a human decision before any release that chops/pitches them.
 | `vx_sv_speech` | [`leninspeeches1919-1921`](https://archive.org/details/leninspeeches1919-1921) | V.I. Lenin, speeches recorded on gramophone discs, 1919–1921 (sovietwave) | PD-old (1919–21 recordings) |
 | `vx_sv_radio` | [`sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977`](https://archive.org/details/sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977) | Radio Moscow English service, Soyuz 26 launch, Dec 10 1977 — Shortwave Radio Audio Archive (sovietwave) | **CC BY-NC 3.0** (derivatives OK, non-commercial) |
 
-## Sampled instruments (found/samples/instruments/ — fetch-found-samples.sh, faust/sf2.js)
+## Sampled instruments (found/samples/instruments/ — fetch-found-samples.sh + fetch-guitar-samples.sh, faust/sf2.js + faust/extract-gm.js)
 
 The SAMPLER voice model plays real instrument zones extracted from a SoundFont
 at fetch time (SF2 → wav zones + zones.json with root keys and loop points;
@@ -196,6 +196,24 @@ the font itself is never committed or shipped).
 | **the full General MIDI set** — all 128 bank-0 FluidR3 melodic presets (`faust/extract-gm.js`, 2026-07 "all of GM"): the acoustic families above plus `rhodes_ep` `legend_ep_2` `electric_piano` `yamaha_grand_piano` `violin` `viola` `contrabass` `slow_strings` `tremolo` `timpani` `ohh_voices` `solo_vox` `orchestra_hit` `clean_guitar` `palm_muted_guitar` `overdrive_guitar` `distortion_guitar` `guitar_harmonics` `soprano_sax` `baritone_sax` `english_horn` `bassoon` `piccolo` `recorder` `ocarina` `banjo` `koto` `shamisen` `fiddle` `dulcimer` `music_box` `xylophone` `tubular_bells` `tinker_bell` `picked_bass` `pop_bass` `slap_bass` `reed_organ` `brass_section` `bowed_glass` `space_voice` … | **FluidR3 GM/GS** (same font/item as above) | 105 usable multi-zone keymaps (6 zones each). The 24 single-zone presets (SFX, one-note synth pads, DrawbarOrgan) extract but are one-shot color only. Now the default sound: `state.sampledOnly` on by default, signature synths (tb303 etc.) exempt. | **MIT** (Frank Wen, as above) |
 | `felt_piano` | **FluidR3 GM/GS** GM 0 "Yamaha Grand Piano" (same font/item as above) | 10-zone keymap (dense midrange — the neoclassical lead is exposed), made *felt* by baking a 3 kHz lowpass into the zone wavs at extraction (fetch-found-samples.sh; sample counts unchanged, SF2 loop points preserved). A derivative work of the FluidR3 samples, not a new recording. Chosen over external "felt piano" sample sets: no CC0/PD felt piano with verifiable provenance and per-note loop data was found (the well-known felt libraries — e.g. Spitfire LABS Soft Piano — are EULA-restricted, not redistributable). | **MIT** (Frank Wen, as above) |
 | `drums/acoustic` `drums/room` `drums/power` `drums/electronic` `drums/jazz` `drums/brush` | **FluidR3 GM/GS** GM **bank 128** percussion (Standard / Room / Power / Electronic / Jazz / Brush kits; same font/item as above) | SAMPLED DRUM KITS — per-hit one-shots (kick/snare/hi-hats/toms + rim/clap/crash/ride), one recorded GM drum note each, at natural pitch (`faust/sf2.js drumkit`). Additive to the Faust synth kicks; genres opt in via `drums.kit` (genre-kernel `DRUMKITS`). Wavs gitignored/derived, `len` mirrored in `DRUMKITS`. | **MIT** (Frank Wen, as above) |
+| `crunch_guitar` `di_guitar` | **FreePats "FSBS Electric Guitar"** (roberto@zenvoid.org, version 2022-09-11) — [freepats.zenvoid.org/ElectricGuitar/](https://freepats.zenvoid.org/ElectricGuitar/distorted-electric-guitar.html); SF2 variants fetched by `tools/fetch-guitar-samples.sh`, zones extracted by `faust/extract-gm.js` | a real Fender, bridge pickups: **dist #2** re-amped through an amplifier + effects rack (distorted, 10–33 s natural sustains, trimmed to 8 s + fade at fetch) → `crunch_guitar`; **direct** = the raw DI pickup signal (~-27 dB RMS by design) meant to feed the engine's staged `insert_higain` amp → `di_guitar`. New ids; the polite GM guitar dirs stay. | **CC0 1.0** — `cc0.txt` ships inside every archive; the site states it; `readme.txt` repeats it |
+| `tenor_sax` (REPLACEMENT of the FluidR3 extract, same id) | **FreePats Tenor Saxophone** (VCSL samples by Versilian Studios LLC, re-edited with infinite sustain loops by roberto@zenvoid.org, version 2020-07-17) — [freepats.zenvoid.org/Reed/saxophone.html](https://freepats.zenvoid.org/Reed/saxophone.html); fetched by `tools/fetch-guitar-samples.sh` | 8-zone looped tenor-sax keymap (every zone carries a sustain loop — real reed breath that holds under a solo note) | **CC0 1.0** (`readme.txt` in the archive; VCSL itself is CC0) |
+| `upright_piano` | **FreePats Upright Piano KW** (a Kawai upright in a living room; recorded by Gonzalo & Roberto, January 2017) — [freepats.zenvoid.org/Piano/acoustic-grand-piano.html#UprightKW](https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html#UprightKW); fetched by `tools/fetch-guitar-samples.sh` | 10-zone upright-piano keymap, full 21–108 span, bass-note sustain loops, top octaves natural decay — the intimate/domestic piano voice (NEW id; the GM grand + felt_piano stay) | **CC0 1.0** (`cc0.txt` + `readme.txt` in the archive) |
+
+## Power-chord one-shots (found/samples/hits/pc_* — fetch-guitar-samples.sh)
+
+| local ids | source | content | license |
+|---|---|---|---|
+| `pc_ds2_open` `pc_ds2_pm` `pc_ds2_pm2` `pc_as2_open` | **Ax_Grinder, "Electric Guitar Power Chords"** — [freesound.org pack 14939](https://freesound.org/people/Ax_Grinder/packs/14939/) (sounds 242799/242800/242801/242802; Jackson Warrior → Line6 POD XT, drop-D). Keyless HQ-preview MP3s (128 kbps — fine for one-shot chugs under a mix; the original WAVs need a freesound API key). | drop-D power chords: open ~10–12.5 s walls (D#2 / A#2 roots, measured) + palm-muted chugs. Registered in genre-kernel `SAMPLES` as `pc_*` (kind:"hit") for the grunge/metal wave to claim. | **CC BY 3.0** — ⚠ **attribution required** in any distributed render/credits: credit *"Ax_Grinder (freesound.org)"* with a link to the pack |
+
+Instrument libraries **rejected on license** during the 2026-07 research pass
+(do not fetch, in any form): Unreal Instruments Metal GTX / Standard Guitar
+(custom license, no published redistribution grant); lotkey
+free-sample-libraries-sfz (no LICENSE file → all rights reserved); Ivy Audio
+Piano in 162 (no stated license anywhere on the publisher's site);
+Philharmonia samples (their terms prohibit redistribution "as is… as a sampler
+instrument" — exactly what this engine does); Shreddage-free / DSK-class /
+Spitfire-LABS-class freeware (EULA: free to use, never to redistribute).
 
 ## Sample CDs (found/samples/<prefix>/ — tools/fetch-sample-cd.sh)
 
