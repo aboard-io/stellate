@@ -189,3 +189,28 @@ per-genre affinity pool — a blend's pool is the union of its parents' pools,
 dominant genre first, cuts locked to section downbeats — then concatenates
 `journey.mp4`.
 
+## Simulating a path
+
+Three fidelity levels, fastest first — pick by the question you're asking:
+
+1. **Virtual ride** — `node tools/simulate-path.js <default|path.json|genreA,genreB,…>
+   [--seed N] [--pace 256] [--bars auto|N] [--json]`. Drives the REAL app
+   headless (the explorer's own `travelStep()`/`glideStep()`, no forked logic)
+   but with **no audio clock**: a bar is an iteration, so a full pace-256
+   default loop (768 bars) simulates in ~8s. Per virtual bar it samples the
+   blend weights, flip queue, and the playing state's identity (kit / lead /
+   bass / bpm / meter / progression); per dominant-genre segment it checks the
+   transit-arrival contract (identity within ≤8 bars of dominance) and runs
+   the musicality audit on the segment's most-settled state. Answers: *does
+   this path's every crossing actually arrive and hold musical law, at the
+   state level?* Cannot answer anything about sound. Gated by
+   `test/simulate-path-run.js` (default loop, deterministic per seed).
+2. **Headless live gates** — `test/transit-arrival-run.js`,
+   `test/explorer-ui-test.js`'s ride, `test/blend-arrival-run.js`: the real
+   Faust engine in headless chromium, realtime, real RMS and real
+   `note()` scheduling. Answers: *does it SOUND — do the promised instruments
+   reach the graph?* Minutes per ride, so used on pinned slices.
+3. **Journey CLI full render** — `node engine/genre-kernel.js journey
+   <path.json> --hours 4 --render --video`: the offline press. Answers:
+   *ship it* — hours of mp3/mp4 for human ears.
+

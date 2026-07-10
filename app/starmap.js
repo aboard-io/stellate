@@ -472,15 +472,22 @@ function autoPath(){
       "… — ▶ LIVE to travel (✕ path to roam free)"});
   retarget(pts[0]);
 }
-// DEFAULT CLOSED LOOP (Paul 2026-07-08: "four steps default; step 1 always
-// centred; always a loop"). Seeds exactly 4 waypoints: waypoint[0] pinned to the
-// MAP CENTRE, plus 3 real genre stars spread ~120° around it at a comfortable
-// radius, so the constellation line is an immediate closed quad through inter-
-// genre blend space. Deterministic (no Math.random) so "default" is stable: the
-// three outer stars are the nearest genre to each of three evenly-spaced compass
-// directions at ~0.34·(min half-span). This IS a normal S.waypoints loop — drag/
-// add/erase it like any hand-drawn path; the loop closes itself (travelStep wraps
-// seg mod n, drawMap repeats waypoint[0]) no matter how you edit it. window.__LOOP
+// DEFAULT CLOSED LOOP (Paul 2026-07-08: "step 1 always centred; always a
+// loop"; 2026-07-10: THREE waypoints — the default is a triangle). Seeds
+// exactly 3 waypoints: waypoint[0] pinned to the MAP CENTRE (which sits in
+// disco's neighborhood — the blend snap makes the centre read ~pure disco),
+// plus 2 real genre stars, so the constellation line is an immediate closed
+// triangle through inter-genre blend space. Deterministic (no Math.random) so
+// "default" is stable: the outer stars are the nearest genre to each of two
+// compass directions (up, lower-right) at ~0.34·(min half-span) — currently
+// lasertemple (108-116bpm ritual pulse) then doomdrone (48-62bpm doom wash,
+// drums mostly off). The third node is doomdrone ON PURPOSE: against the
+// centre's disco four-on-the-floor and lasertemple's temple pulse it is the
+// maximal musical contrast in reach (form pop→ritual→wave, tempo ~116→~112→
+// ~55), so the default triangle rides a real energy arc instead of three
+// flavors of the same beat. This IS a normal S.waypoints loop — drag/add/erase
+// it like any hand-drawn path; the loop closes itself (travelStep wraps seg
+// mod n, drawMap repeats waypoint[0]) no matter how you edit it. window.__LOOP
 // reports the seed shape for the headless gate.
 // ---------- DYNAMIC genre layout (deterministic, run at load) ----------
 // Replaces the old hand-tuned POS with a computed layout so genre NAME LABELS
@@ -603,7 +610,7 @@ export function seedDefaultLoop(){
   const rad=0.34*Math.min(WORLD_W,WORLD_H)/2;
   const gs=Object.keys(POS);
   const used=new Set(), outer=[];
-  for(const ang of [-Math.PI/2, -Math.PI/2+2*Math.PI/3, -Math.PI/2+4*Math.PI/3]){   // top, lower-right, lower-left
+  for(const ang of [-Math.PI/2, -Math.PI/2+2*Math.PI/3]){   // top, lower-right (centre itself is node 1 — a 3-point triangle)
     const tx=c.x+rad*Math.cos(ang), ty=c.y+rad*Math.sin(ang);
     let best=null, bd=Infinity;
     for(const g of gs){ if(used.has(g))continue;

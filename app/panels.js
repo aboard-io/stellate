@@ -110,7 +110,7 @@ function Panel(){
         title=${!S.playing?"nothing playing yet — the buttons capture the current song":"offline-press the current song, then encode MP3 (192kbps) — takes a minute; progress shows in the status line"}
         onclick=${()=>exportAudio("mp3")}>⤓ mp3</button>
     </div>
-    <p class="hint">the path is a closed 4-step loop (waypoint 1 = centre) · dbl-click the sky to add a waypoint ·
+    <p class="hint">the path is a closed 3-step loop (waypoint 1 = centre) · dbl-click the sky to add a waypoint ·
     right-click a waypoint to erase (erase to nothing re-seeds the loop) · ↺ reset loop restores it ·
     pinch / ctrl+scroll zooms the spread ·
     ⤓/⤒ path saves and reloads a journey · render it: node genre-kernel.js journey ${"<path.json>"} --render --video</p>`:""}`;
