@@ -887,7 +887,7 @@
         const u = b.units[e.unit]; if (!u || !u.sampler) continue;
         const ent = samplerOf(e.unit, u, spb);
         const midi = SP.midiOfFreq(e.sets.freq);
-        const z = SP.zoneFor(u.sampler.zones, midi);
+        const z = SP.zoneFor(u.sampler.zones, midi, e.sets.gain != null ? Math.round(e.sets.gain * 127) : 100);
         const buf = z && samplerBufs[z.srcId];
         if (!ent || !buf) continue;
         // chained unit (declared inserts): notes enter the chain PRE-SEND —

@@ -1379,6 +1379,27 @@
     yamaha_grand_piano: { label:"Yamaha Grand Piano (FluidR3, MIT)", dir:"yamaha_grand_piano", sr:44100, zones:[{file:"z00_r26.wav",root:26,lo:0,hi:26,loop:1,ls:235512,le:302497},{file:"z01_r42.wav",root:42,lo:39,hi:42,loop:1,ls:166050,le:214439},{file:"z02_r58.wav",root:58,lo:55,hi:58,loop:1,ls:72608,le:120644},{file:"z03_r70.wav",root:70,lo:67,hi:70,loop:1,ls:70933,le:97968},{file:"z04_r90.wav",root:90,lo:85,hi:90,loop:1,ls:55512,le:83140},{file:"z05_r108.wav",root:108,lo:105,hi:108,loop:1,ls:16604,le:17548}] },
   };
 
+  // ---------- SOUNDFONT SWITCHER (Paul 2026-07-10: "let me switch soundfonts") ----------
+  // The default sampled instruments above are FluidR3 (baked). Alternate fonts —
+  // extracted by tools/gen-font.js into found/samples/instruments-<key>/ + a
+  // font-<key>.json {base, instr:{slug:{sr,zones}}} — register at runtime; the
+  // active font re-voices every sampled instrument it covers, falling back to
+  // FluidR3 per-instrument for anything the font lacks. Presentational: default
+  // "fluidr3" is untouched, so fixtures / segment-parity stay byte-identical.
+  let ACTIVE_FONT="fluidr3";
+  const FONTS=Object.create(null);
+  function registerFont(key,data){ if(key && data && data.instr) FONTS[key]={base:data.base||("instruments-"+key), instr:data.instr}; }
+  function setFont(key){ ACTIVE_FONT=(key && FONTS[key])?key:"fluidr3"; }
+  function activeFont(){ return ACTIVE_FONT; }
+  function fontList(){ return ["fluidr3", ...Object.keys(FONTS)]; }
+  // resolve an instrument's {sr, zones (raw font shape: file/root/lo/hi/vlo/vhi/
+  // loop/ls/le), base sample dir} for the ACTIVE font, per-instrument fallback.
+  function fontInstr(id){
+    const F=ACTIVE_FONT!=="fluidr3" && FONTS[ACTIVE_FONT];
+    if(F && F.instr[id]) return { sr:F.instr[id].sr, zones:F.instr[id].zones, base:F.base, dir:id };   // gen-font.js writes to <base>/<slug>/
+    const S=SAMPLERS[id]; return S ? { sr:S.sr, zones:S.zones, base:"instruments", dir:S.dir } : null;   // default dir may be a renamed dir (tenor_sax -> tenor_sax_fp, immutability law)
+  }
+
   // ---------- SAMPLED DRUM KITS (2026-07) ----------
   // Real recorded drum kits (GM percussion, FluidR3 bank 128, MIT) extracted per
   // hit by faust/sf2.js `drumkit` into found/samples/drums/<dir>/ (wavs gitignored
@@ -7632,9 +7653,9 @@
     // wav into foundSources at vol 0 so both engines decode it through the
     // existing found paths (press ffdecode / live fetch+decode).
     const samplerSpec=(id)=>{
-      const S=SAMPLERS[id]; if(!S) return null;
+      const S=fontInstr(id); if(!S) return null;
       return { id, sr:S.sr, zones:S.zones.map((z,i)=>({srcId:"ins_"+id+"_"+i, root:z.root, lo:z.lo, hi:z.hi,
-        loop:!!z.loop, loopStart:z.ls, loopEnd:z.le })) };
+        vlo:z.vlo, vhi:z.vhi, loop:!!z.loop, loopStart:z.ls, loopEnd:z.le })) };
     };
     // SAMPLED DRUM KIT resolution (drums.kit -> per-drum native sampler specs on
     // instruments.drums; faust/state-engine drumSamp overlays them onto the
@@ -7702,9 +7723,9 @@
     const samplerIds=[c.leadSampler, c.padSampler, c.bassSampler, lickSamplerId].filter(Boolean);
     if(c.form==="transit") samplerIds.push("crunch_guitar");   // the transit form's metal-solo section (R_TW_METAL) rides the crunch sampler
     for(const id of new Set(samplerIds)){
-      const S=SAMPLERS[id]; if(!S) continue;
-      S.zones.forEach((z,i)=>foundSources.push({id:"ins_"+id+"_"+i,label:S.label,url:"",
-        samplePath:"found/samples/instruments/"+S.dir+"/"+z.file, vol:0, pitch:1, stretch:0.5, cutoff:18000}));
+      const S=fontInstr(id); if(!S) continue;
+      S.zones.forEach((z,i)=>foundSources.push({id:"ins_"+id+"_"+i,label:(SAMPLERS[id]&&SAMPLERS[id].label)||id,url:"",
+        samplePath:"found/samples/"+S.base+"/"+S.dir+"/"+z.file, vol:0, pitch:1, stretch:0.5, cutoff:18000}));
     }
     // sampled drum kit: resolve the genre's drums.kit and ride each hit wav into
     // foundSources at vol 0 (decoded through the same paths as instrument zones).
@@ -8016,9 +8037,9 @@
   // ?allSampled=1 applies it as a getState transform so it survives retargets/
   // glides). Never touched on the default path — genres press byte-identically.
   const _sampledOnlySpec=(id)=>{
-    const S=SAMPLERS[id]; if(!S) return null;
+    const S=fontInstr(id); if(!S) return null;
     return { id, sr:S.sr, zones:S.zones.map((z,i)=>({srcId:"ins_"+id+"_"+i, root:z.root, lo:z.lo, hi:z.hi,
-      loop:!!z.loop, loopStart:z.ls, loopEnd:z.le })) };
+      vlo:z.vlo, vhi:z.vhi, loop:!!z.loop, loopStart:z.ls, loopEnd:z.le })) };
   };
   // mirrors toState's inner drumKitSpec (kept separate so toState stays byte-exact)
   const _sampledOnlyKit=(name)=>{
@@ -8047,9 +8068,9 @@
     const lib={};
     for(const id of Object.keys(SAMPLERS)){
       lib[id]=_sampledOnlySpec(id);
-      const S=SAMPLERS[id];
+      const S=fontInstr(id); if(!S) continue;
       S.zones.forEach((z,i)=>{ const sid="ins_"+id+"_"+i; if(have.has(sid)) return; have.add(sid);
-        state.foundSources.push({id:sid,label:S.label,url:"",samplePath:"found/samples/instruments/"+S.dir+"/"+z.file,vol:0,pitch:1,stretch:0.5,cutoff:18000}); });
+        state.foundSources.push({id:sid,label:(SAMPLERS[id]&&SAMPLERS[id].label)||id,url:"",samplePath:"found/samples/"+S.base+"/"+S.dir+"/"+z.file,vol:0,pitch:1,stretch:0.5,cutoff:18000}); });
     }
     state.samplerLib=lib;
     // (4) force a sampled kit when the genre runs a synth kit (no *Sampler overlay)
@@ -8064,7 +8085,7 @@
     return state;
   }
 
-  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, SOURCE_POOLS, expandPools, GENRE_CLIPS, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), FORM_ENTRY, PERC_STYLES, PERC_STYLE_GENRES, PERC_ELEMENTS, resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly, deriveMind };
+  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, SOURCE_POOLS, expandPools, GENRE_CLIPS, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), FORM_ENTRY, PERC_STYLES, PERC_STYLE_GENRES, PERC_ELEMENTS, resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly, deriveMind, registerFont, setFont, activeFont, fontList };
   if(isNode) module.exports=api; else root.GenreKernel=api;
 
   // ---------- CLI ----------

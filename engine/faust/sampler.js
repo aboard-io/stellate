@@ -221,13 +221,21 @@
     return x * S.trim;
   }
 
-  function zoneFor(zones, midi) {
+  function zoneFor(zones, midi, vel) {
     if (!zones || !zones.length) return null;
-    let z = zones.find((x) => midi >= x.lo && midi <= x.hi);
-    if (!z) { // nearest root wins outside the mapped range
-      z = zones[0];
-      for (const x of zones) if (Math.abs(midi - x.root) < Math.abs(midi - z.root)) z = x;
+    const v = vel == null ? 100 : vel;
+    // among the zones covering this note, prefer the one whose VELOCITY LAYER
+    // covers v (vlo/vhi absent = full range 0..127, so single-velocity fonts are
+    // unaffected). The soundfont switcher's multi-velocity fonts (upright piano,
+    // sax…) pick a softly-recorded sample for a soft note instead of the loud one.
+    const covers = zones.filter((x) => midi >= x.lo && midi <= x.hi);
+    if (covers.length) {
+      const byVel = covers.find((x) => (x.vlo == null || v >= x.vlo) && (x.vhi == null || v <= x.vhi));
+      return byVel || covers[0];
     }
+    // nearest root wins outside the mapped range
+    let z = zones[0];
+    for (const x of zones) if (Math.abs(midi - x.root) < Math.abs(midi - z.root)) z = x;
     return z;
   }
   // INSTRUMENT-REGISTER LAW backstop (2026-07 audio-quality pass): a zone is
@@ -281,7 +289,7 @@
     const basePan = sends.pan || 0;
     for (const n of notes) {
       const midi = midiOfFreq(n.freq);
-      const z = zoneFor(n.zones, midi);
+      const z = zoneFor(n.zones, midi, n.gain != null ? Math.round(n.gain * 127) : 100);
       if (!z) continue;
       const src = buffers[z.srcId];
       if (!src || !src.length) {
