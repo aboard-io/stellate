@@ -5,9 +5,13 @@
 Every genre is a point in one deterministic vector space. Drag the star chart,
 draw a path, or drift, and the music continuously morphs through whatever the
 traveler crosses — tempo, harmony, groove, instrumentation, and effects all
-blending between neighbours. 228 genres, from `techno` and `citypop` to
-`singeli`, `budstep`, `fugue`, and `salondawdle` (a brushed 3/4 salon waltz —
-the space carries real odd meters), all generated live in the browser.
+blending between neighbours. 228 genres, all generated live in the browser.
+The catalog is a work of mathematical fiction: every genre wears an invented
+display name — the anchor id `techno` appears on the map as "Concrete
+Metronome", `jazz` as "Smoke Arithmetic", `fugue` as "The Patient Chase", and
+`salondawdle` (a brushed 3/4 salon waltz — the space carries real odd meters)
+was born fictional — while the ids underneath stay stable and load-bearing
+for paths, presets, and the verifier matrix.
 
 **Play it:** https://aboardresearch.com/projects/stellate/
 
