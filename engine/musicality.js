@@ -339,10 +339,29 @@
   // assigns the actual GM sampler at K.mix time, so the spec's recipe.samplerPool
   // misses reggae's organ / bebop's sax / bluegrass's banjo. Union across the
   // audited seeds so a pooled instrument that only some seeds draw still counts.
-  function cardCap(states) {
+  function cardCap(states, G) {
     const cap = { models: new Set(), samplers: new Set(), patches: new Set(),
       refIds: [], speechIds: [], hasSpeech: false, breakRole: false };
     const refs = new Set();
+    // SPEC POOLS too (hybrid capability): an instrument the recipe CAN draw but
+    // this seed didn't (whalejazz's tenor_sax is in samplerPool but seeds 1,2 drew
+    // the muted trumpet) is still a kept promise. State catches sampled-by-default's
+    // GM assignment; the pools catch the un-drawn options. Union = the genre's true
+    // vocabulary, matching the card-truth sweep's capability basis.
+    if (G) {
+      for (const part of [G.bass, G.lead, G.pads]) {
+        const R = part && part.recipe; if (!R) continue;
+        (Array.isArray(R.model) ? R.model : [R.model]).forEach((m) => m && cap.models.add(m));
+        _arr(part.samplerPool).concat(_arr(R.samplerPool)).forEach((s) => cap.samplers.add(String(s)));
+        _arr(part.patchPool).concat(_arr(R.patchPool)).forEach((p) => cap.patches.add(String(p)));
+      }
+      const DD = G.drums || {};
+      ["kickModel", "snareModel", "hatModel"].forEach((k) => _arr(DD[k]).forEach((m) => cap.models.add("drum:" + m)));
+      for (const src of [G.found, G.hits, G.vox]) _arr(src && src.sources).forEach((id) => refs.add(id));
+      _arr(G.sampleEvents).forEach((ev) => _arr(ev.pool).forEach((id) => refs.add(id)));
+      if (/break|chop/.test((G.found && G.found.role) || "")) cap.breakRole = true;
+      if (G.synthText) cap.hasSpeech = true;
+    }
     for (const st of states) {
       const I = st.instruments || {};
       for (const vk of ["pad", "bass", "melody"]) {
@@ -371,7 +390,7 @@
   const _ref = (cap, re) => cap.refIds.some((id) => re.test(id));
   // [name, regex to find the noun in the card, predicate the spec can realize it]
   const CARD_CLAIMS = [
-    ["piano",         /\b(piano|grand)\b/i,                                (c) => _model(c,"piano") || _samp(c,"piano","grand","honky_tonk") || _patch(c,/PIANO/)],
+    ["piano",         /\b(piano|grand)\b/i,                                (c) => _model(c,"piano") || _samp(c,"piano","grand","honky_tonk") || _patch(c,/PIANO/), /electric[- ]piano|e-?piano|tine/i],   // skip when the card means ELECTRIC piano (own claim below)
     ["electric-piano",/\b(rhodes|e-?piano|electric[- ]piano|tine)\b/i,     (c) => _model(c,"rhodes","fm") || _samp(c,"rhodes","electric_piano","legend_ep") || _patch(c,/E\.?PIANO|CLAV/)],
     ["organ",         /\b(organ|hammond|tonewheel|leslie|harmonium)\b/i,   (c) => _model(c,"organ","hammond") || _samp(c,"organ") || _patch(c,/ORGAN/)],
     ["harpsichord",   /\bharpsichord\b/i,                                  (c) => _model(c,"harpsichord") || _samp(c,"harpsichord") || _patch(c,/HARPSI/)],
@@ -382,7 +401,7 @@
     ["glockenspiel",  /\b(glockenspiel|glocken)\b/i,                       (c) => _samp(c,"glock") || _model(c,"bell")],
     ["music-box",     /\bmusic[- ]box\b/i,                                 (c) => _samp(c,"music_box")],
     ["bells/chimes",  /\b(tubular bell|orch.?chime|hand ?bell|carillon)\b/i,(c) => _samp(c,"bell","chime","tubular") || _model(c,"bell") || _patch(c,/BELL|CHIME/)],
-    ["strings",       /\b(strings|violin|cello|viola|orchestral)\b/i,      (c) => _model(c,"strings") || _samp(c,"strings","violin","cello") || _patch(c,/STRING/)],
+    ["strings",       /\b(strings|violin|cello|viola|orchestral)\b/i,      (c) => _model(c,"strings","atmosphere") || _samp(c,"strings","violin","cello","bowed_glass","atmosphere") || _patch(c,/STRING/), /palm[- ]muted|low strings|guitar/i],   // "low strings"/"palm-muted strings" = guitar, not orchestral
     ["harp",          /\bharp\b/i,                                         (c) => _samp(c,"harp") || _patch(c,/HARP/)],
     ["flute",         /\bflute\b/i,                                        (c) => _samp(c,"flute") || _patch(c,/FLUTE/)],
     ["saxophone",     /\b(sax|saxophone)\b/i,                              (c) => _samp(c,"sax") || _patch(c,/SAX/)],
@@ -391,15 +410,15 @@
     ["trumpet/brass", /\b(trumpet|brass|fanfare)\b/i,                      (c) => _samp(c,"trumpet","brass") || _patch(c,/BRASS|TRUMPET/) || _ref(c,/horn/)],
     ["trombone",      /\btrombone\b/i,                                     (c) => _samp(c,"trombone")],
     ["accordion",     /\b(accordion|accordian|bandoneon)\b/i,              (c) => _samp(c,"accordion","accordian","bandoneon") || _patch(c,/ACCOR/)],
-    ["guitar",        /\bguitar\b/i,                                       (c) => _model(c,"pluck","karplus") || _samp(c,"guitar") || _patch(c,/GUITAR/)],
+    ["guitar",        /\bguitar\b/i,                                       (c) => _model(c,"pluck","karplus","kpluck") || _samp(c,"guitar") || _patch(c,/GUITAR/)],
     ["banjo",         /\bbanjo\b/i,                                        (c) => _samp(c,"banjo")],
     ["mandolin",      /\bmandolin\b/i,                                     (c) => _samp(c,"mandolin")],
     ["koto",          /\bkoto\b/i,                                         (c) => _samp(c,"koto")],
     ["sitar",         /\bsitar\b/i,                                        (c) => _samp(c,"sitar")],
     ["panpipe",       /\b(panpipe|pan flute|pan pipe)\b/i,                 (c) => _samp(c,"pan_flute","panflute","panpipe","whistle") || _patch(c,/PIPE|WHISTLE/)],
-    ["theremin",      /\btheremin\b/i,                                     (c) => _samp(c,"theremin")],
+    ["theremin",      /\btheremin\b/i,                                     (c) => _samp(c,"theremin") || _model(c,"stack","modeld","sine")],   // a theremin IS a vibrato sine lead (spacelounge's card: "theremin-vibrato sine")
     ["choir/vocal",   /\b(choir|vocal|chant|anthem|sing|vox|voice)\b/i,    (c) => c.hasSpeech || _samp(c,"choir","ahh","ooh") || _model(c,"vocoder")],
-    ["amen/break",    /\b(amen|breakbeat|chopped break)\b/i,               (c) => c.breakRole || _ref(c,/amen|break/i)],
+    ["amen/break",    /\b(amen break|breakbeat|chopped[- ]break|break(-| )?chops)\b/i,  (c) => c.breakRole || _ref(c,/amen|break/i)],   // "amen break" the sample, not the amen CADENCE ("resolved on the amen") or lineage ("the amen polished into a groove")
     ["303/acid",      /\b(303|acid line|squelch)\b/i,                      (c) => _model(c,"303","tb303","acid") || _samp(c,"303")],
     ["hoover",        /\bhoover\b/i,                                       (c) => _model(c,"hoover")],
     ["reese",         /\breese\b/i,                                        (c) => _model(c,"reese")],
@@ -409,9 +428,10 @@
     const warnings = [];
     if (!G || !G.info) return { warnings };
     if (!states || !states.length) states = [1, 2].map((s) => K.track(genre, { seed: s }));   // standalone call: mix a couple seeds
-    const card = String(G.info), cap = cardCap(states);
-    for (const [name, re, has] of CARD_CLAIMS) {
+    const card = String(G.info), cap = cardCap(states, G);
+    for (const [name, re, has, skipRe] of CARD_CLAIMS) {
       if (!re.test(card)) continue;
+      if (skipRe && skipRe.test(card)) continue;   // the card means a DIFFERENT thing (electric piano, guitar "strings")
       let ok = false; try { ok = !!has(cap); } catch (e) { ok = true; }   // a predicate bug must never fail a genre
       if (!ok) warnings.push({ promise: "card:" + name, what: `card claims "${name}" but no recipe realizes it (STATE-MISSING)` });
     }

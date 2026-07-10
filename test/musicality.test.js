@@ -300,10 +300,12 @@ gate("card-parse: a card with no instrument nouns is never penalised", () => {
 });
 gate("card-parse: catalog card-lie count within the regression tripwire", () => {
   let n = 0; for (const g of Object.keys(K.GENRES)) n += M.checkCardClaims(g).warnings.length;
-  console.log("      card-lie WARNs across catalog: " + n + " (baseline 38 after the 2026-07-10 card-truth wave)");
-  // fixing a lie only lowers this; a NEW card promising an unrealized instrument
-  // raises it. Loose ceiling so ±a few predicate edges don't churn the gate.
-  assert(n <= 45, "card-lie count " + n + " > 45 — a card likely promises an instrument its recipe can't realize; run M.checkCardClaims per genre");
+  console.log("      card-lie WARNs across catalog: " + n + " (hybrid capability; the honest remainder)");
+  // After the 2026-07-10 wave + the hybrid-capability precision pass, the gate
+  // names only GENUINE lies: gabber/happyhardcore's hoover (never sounds sampled,
+  // NEXT.md §5 signature-synth candidate), happyhardcore's missing piano/break,
+  // ska's guitar skank. Fixing a lie lowers this; a new over-promise raises it.
+  assert(n <= 6, "card-lie count " + n + " > 6 — a card likely promises an instrument its recipe can't realize; run M.checkCardClaims per genre");
 });
 
 // ---------- SOLOS: the improvised solo form-node ----------
