@@ -221,3 +221,12 @@
     #playhead{font-size:12px;bottom:4.2rem}
     .brand{font-size:.9rem}
   }
+
+/* ACCESSIBLE-VERSION skip link: the star map is a pure-visual SVG instrument, so
+   a screen-reader user landing here is offered the text version first thing. Off
+   screen until focused (keyboard Tab reveals it); a11y best practice. */
+.a11y-skip{position:absolute;left:.5rem;top:.5rem;z-index:1000;
+  background:#0b0e17;color:#eef2ff;border:2px solid #6ea8ff;border-radius:.4rem;
+  padding:.6rem 1rem;font:600 14px/1 system-ui,sans-serif;text-decoration:none;
+  transform:translateY(-160%);transition:transform .15s}
+.a11y-skip:focus{transform:none;outline:3px solid #ffd23f}

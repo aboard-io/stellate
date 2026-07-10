@@ -111,6 +111,21 @@ changes, don't index pattern tables), backing response (comp levels duck,
 drums simplify). Deterministic, matrix-gated, musicality-audited.
 
 ### 5. Smaller filed items
+- **PRIMING HANG — a genre that never plays** (2026-07-10, found building the
+  accessible page; reproduces on BOTH index.html and access.html): a small class
+  of genres never fills the engine runway — status stalls at "priming…",
+  `rms()` stays 0.00000 (no audio at all, not merely quiet), no page errors. A
+  representative 22-genre scan hit `ambient`, `atlantidrone`, `chalkvespers`
+  (3/22); adjacent drone/ambient genres — newage, doomdrone, spacelounge,
+  submarinelullaby, permafrostveil — all prime fine, so it is NOT "quiet = hangs."
+  Exact-zero RMS points at a true pump stall on some state field these three
+  share, not slow attack. NEXT: run the full 228 scan
+  (`scratchpad/prime-scan.js` pattern: goLive per genre, poll rms, 9s budget) to
+  get the whole class, then diff the hanging states against a priming neighbour
+  (doomdrone vs atlantidrone) to find the choking field in faust/live.js's pump
+  (`status("priming…")` → RUN-on-primed, ~live.js:1077). This is high-value:
+  a never-priming genre is dead air, and the matrix/musicality referees are
+  symbolic — they never caught it because they don't render THAT path to audio.
 - **bpm SAFE bound** (invariants OPEN finding): nothing clamps tempo
   anywhere; decide the consumer bound and close the hull.
 - **gabber's hoover** never sounds in sampled mode (wind fallback) —
@@ -145,9 +160,15 @@ drums simplify). Deterministic, matrix-gated, musicality-audited.
 `tools/ship.sh` does it, but know what it means: verify.sh (matrix 228/228 +
 validate + engine + prove), theory/pipes/speech/meter/musicality/invariants
 suites, and for engine/app changes the browser battery
-(explorer-ui, blend-arrival, transit-arrival, simulate-path-run, genre-viz,
-sampler-inserts-live, bg-survival, live-test, wavout — NODE_PATH=
-/home/ford/ftrain-2025/node_modules, pinned chromium-1217). The deploy
+(explorer-ui, access-ui, blend-arrival, transit-arrival, simulate-path-run,
+genre-viz, sampler-inserts-live, bg-survival, live-test, wavout — NODE_PATH=
+/home/ford/ftrain-2025/node_modules, pinned chromium-1217).
+`test/access-ui-run.js` (added 2026-07-10) is the accessible-page gate: it drives
+access.html headless and asserts the text/keyboard UI is the SAME deterministic
+instrument (all 228 genres, hold + A/B blend + journey with real audio, page mix
+byte-equal to a direct kernel mix, zero errors). Run it after any targeting.js /
+live.js / state.js change — it exercises the shared glide engine from the second
+entry point. The deploy
 invariant will catch you honestly if you misclass a mutable file — it's
 been right three times.
 

@@ -43,10 +43,19 @@ function keyFor(weights,seed){
   return h%12;
 }
 export function retarget(pt){
-  const weights=weightsAt(pt);
-  const target=K.mix(weights.map(w=>({...w})),{seed:S.seed, keyOffset:keyFor(weightsAt(pt),S.seed), macros:macrosOn(S.macros)?{...S.macros}:undefined});
+  return retargetWeights(weightsAt(pt), pt);
+}
+// retarget from an EXPLICIT weight blend rather than a map point. The accessible
+// text UI (access.html) drives the same glide engine this way — a listener who
+// can't see the star map still gets byte-identical music for the same seed +
+// blend. When `pt` is supplied the cursor is placed too (the map path); the
+// accessible page omits it (there is no cursor to move). retarget() above is the
+// map's caller and stays behavior-identical: weightsAt(pt) then this.
+export function retargetWeights(weights, pt){
+  const target=K.mix(weights.map(w=>({...w})),{seed:S.seed, keyOffset:keyFor(weights,S.seed), macros:macrosOn(S.macros)?{...S.macros}:undefined});
   if(MODE_LOCKS[S.modeLock]) target.progression=MODE_LOCKS[S.modeLock];
-  const patch={weights,target,cursor:pt};
+  const patch={weights,target};
+  if(pt) patch.cursor=pt;
   // before LIVE (or after STOP) the cursor PLACES you — the playing state IS
   // the target. Only mid-performance do we glide instead of jump.
   if(!S.playing||!S.live){ patch.playing=deep(target); }

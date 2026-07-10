@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STELLATE — accessible text version</title>
+<link rel="icon" href="data:,">
+<style>
+  /* Self-contained, theme-aware, high-contrast styles. No images, no motion that
+     isn't opt-out. Designed to be legible at large zoom and navigable by keyboard
+     and screen reader — this is the point of the page. */
+  :root{
+    --bg:#0b0e17; --fg:#eef2ff; --muted:#9fb0d0; --line:#2b3550;
+    --card:#141a2b; --accent:#6ea8ff; --accent-fg:#04122e;
+    --focus:#ffd23f; --ok:#57d98a; --warn:#ffb454;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f6f8ff; --fg:#0c1330; --muted:#455174; --line:#c9d3ee;
+           --card:#ffffff; --accent:#1b5fd9; --accent-fg:#ffffff; --focus:#a15c00; }
+  }
+  *{ box-sizing:border-box; }
+  html{ font-size:18px; }
+  body{ margin:0; background:var(--bg); color:var(--fg);
+    font-family: system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55; padding:0 0 4rem; }
+  .wrap{ max-width:52rem; margin:0 auto; padding:1.25rem clamp(1rem,4vw,2rem); }
+  a{ color:var(--accent); }
+  h1{ font-size:1.6rem; margin:.2rem 0 .1rem; letter-spacing:.04em; }
+  h1 .tag{ font-size:.9rem; color:var(--muted); font-weight:400; letter-spacing:0; }
+  h2{ font-size:1.15rem; margin:1.6rem 0 .5rem; padding-top:.9rem; border-top:1px solid var(--line); }
+  .intro{ color:var(--muted); max-width:46rem; }
+  section{ margin:0; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:.6rem;
+    padding:.9rem 1rem; margin:.5rem 0; }
+  label{ display:block; font-weight:600; margin:.6rem 0 .2rem; }
+  .hint{ color:var(--muted); font-size:.9rem; margin:.15rem 0 .4rem; }
+  select, input[type=number]{ font-size:1rem; padding:.5rem .6rem; width:100%;
+    background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:.4rem; }
+  input[type=range]{ width:100%; accent-color:var(--accent); height:1.8rem; }
+  button{ font-size:1rem; font-family:inherit; padding:.55rem .9rem; cursor:pointer;
+    background:var(--card); color:var(--fg); border:1px solid var(--line); border-radius:.45rem; }
+  button:hover{ border-color:var(--accent); }
+  button.primary{ background:var(--accent); color:var(--accent-fg); border-color:var(--accent);
+    font-size:1.15rem; font-weight:700; padding:.7rem 1.4rem; }
+  button.primary.live{ background:var(--warn); border-color:var(--warn); color:#2a1600; }
+  :focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
+  .row{ display:grid; grid-template-columns:12rem 1fr; gap:.5rem 1rem; align-items:center; margin:.3rem 0; }
+  .row label{ margin:0; }
+  .row .ends{ display:flex; justify-content:space-between; color:var(--muted); font-size:.8rem; grid-column:2; }
+  @media (max-width:34rem){ .row{ grid-template-columns:1fr; } .row .ends{ grid-column:1; } }
+  .transport{ display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; }
+  dl{ display:grid; grid-template-columns:9rem 1fr; gap:.25rem .8rem; margin:.2rem 0; }
+  dl dt{ color:var(--muted); }
+  dl dd{ margin:0; }
+  #nowDetail{ min-height:3rem; }
+  #events{ max-height:11rem; overflow:auto; border:1px solid var(--line); border-radius:.4rem;
+    padding:.4rem .7rem; background:var(--bg); }
+  #events p{ margin:.15rem 0; padding-left:1rem; text-indent:-1rem; }
+  #events p::before{ content:"▸ "; color:var(--accent); }
+  ol#journeyList{ list-style:none; margin:.4rem 0; padding:0; }
+  ol#journeyList li{ display:flex; justify-content:space-between; align-items:center; gap:.5rem;
+    padding:.35rem .5rem; border:1px solid var(--line); border-radius:.4rem; margin:.25rem 0; background:var(--bg); }
+  ol#journeyList li.empty{ color:var(--muted); justify-content:flex-start; }
+  .jbtns button{ padding:.35rem .55rem; margin-left:.2rem; }
+  .modes{ display:flex; gap:1.2rem; flex-wrap:wrap; }
+  .modes label{ display:flex; align-items:center; gap:.4rem; margin:0; font-weight:600; }
+  .modes input{ width:1.15rem; height:1.15rem; accent-color:var(--accent); }
+  .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+    clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+  .inline{ display:grid; grid-template-columns:1fr auto; gap:.6rem; align-items:end; }
+  output{ color:var(--muted); }
+  /* the engine warm-up hairline (live.js drives it); aria-hidden — the events log
+     narrates warm-up for screen readers */
+  #boot{ position:fixed; left:0; top:0; right:0; height:3px; opacity:0; transition:opacity .3s; z-index:50; }
+  #boot.on{ opacity:1; }
+  #boot .btrack{ height:3px; background:transparent; }
+  #boot .bfill{ height:3px; width:0; background:var(--accent); transition:width .3s; }
+  #boot.ind .bfill{ animation:shimmer 1s linear infinite; }
+  #boot .blabel{ position:fixed; left:.6rem; top:.4rem; font-size:.7rem; color:var(--muted); }
+  @keyframes shimmer{ 0%{opacity:.4}50%{opacity:1}100%{opacity:.4} }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none!important; animation:none!important; } }
+</style>
+</head>
+<body>
+<!-- inert stubs: the engine warm-up hairline (#boot) and the map's background
+     toggle (#bgChip, imported transitively by live.js). Kept minimal + aria-hidden
+     so the imported modules don't throw and screen readers ignore them. -->
+<div id="boot" aria-hidden="true"><div class="btrack"><div class="bfill"></div></div><div class="blabel"></div></div>
+<button id="bgChip" class="sr-only" tabindex="-1" aria-hidden="true"></button>
+
+<div class="wrap">
+  <header>
+    <h1>STELLATE <span class="tag">· accessible text version</span></h1>
+    <p class="intro">A generative instrument you play by moving through a space of
+    228 musical genres. Every song is rendered live in your browser and is fully
+    deterministic from a seed — the same seed always plays the same music. This
+    version needs no vision: pick a genre or build a journey, shape the sound with
+    sliders, and read what's playing as text. <a href="index.html">Switch to the
+    visual star-map version.</a></p>
+  </header>
+
+  <!-- TRANSPORT ------------------------------------------------------------->
+  <section aria-labelledby="h-play">
+    <h2 id="h-play">Play</h2>
+    <div class="card transport">
+      <button id="playBtn" class="primary" aria-pressed="false">▶ Play</button>
+      <button id="announceBtn">🔊 Announce what's playing</button>
+      <span class="hint" style="flex-basis:100%">Tip: press <kbd>Space</kbd> to play or stop
+      (unless you're focused on a control). It may take a few seconds to warm up the first time.</span>
+    </div>
+  </section>
+
+  <!-- NOW PLAYING (visible detail; not auto-announced) ---------------------->
+  <section aria-labelledby="h-now">
+    <h2 id="h-now">Now playing</h2>
+    <div id="nowDetail" class="card" aria-live="off"><p>Not playing.</p></div>
+    <h3 class="sr-only" id="h-events">Live narration</h3>
+    <div id="events" role="log" aria-live="polite" aria-relevant="additions" aria-label="Live narration"></div>
+  </section>
+
+  <!-- assertive, on-demand full announcement -->
+  <div id="announce" class="sr-only" role="alert" aria-live="assertive"></div>
+
+  <!-- WHAT TO PLAY ---------------------------------------------------------->
+  <section aria-labelledby="h-choose">
+    <h2 id="h-choose">What to play</h2>
+    <div class="card">
+      <fieldset style="border:0;padding:0;margin:0">
+        <legend class="sr-only">Choose how to play</legend>
+        <div class="modes" role="radiogroup" aria-label="Play mode">
+          <label><input type="radio" name="mode" value="hold" checked> Hold on one place</label>
+          <label><input type="radio" name="mode" value="journey"> Journey through several genres</label>
+        </div>
+      </fieldset>
+
+      <!-- HOLD -->
+      <div id="holdPanel">
+        <label for="genreSel">Genre</label>
+        <select id="genreSel" aria-describedby="genreInfo"></select>
+        <p class="hint" id="genreInfo"></p>
+
+        <label for="blendSel">Blend with a second genre (optional)</label>
+        <select id="blendSel"></select>
+        <div id="blendAmtRow" hidden>
+          <label for="blendAmt">Blend amount</label>
+          <div class="inline">
+            <input type="range" id="blendAmt" min="0" max="100" value="30" step="5" aria-describedby="blendAmtOut">
+            <output id="blendAmtOut">30%</output>
+          </div>
+          <p class="hint">How much of the second genre to mix in. 0% is pure first genre.</p>
+        </div>
+      </div>
+
+      <!-- JOURNEY -->
+      <div id="journeyPanel" hidden>
+        <label for="journeyAdd">Add a stop to the journey</label>
+        <div class="inline">
+          <select id="journeyAdd"></select>
+          <button id="journeyAddBtn" type="button">Add stop</button>
+        </div>
+        <h3 style="font-size:1rem;margin:.8rem 0 .2rem">Journey stops (plays as a loop)</h3>
+        <ol id="journeyList"></ol>
+        <p class="hint" id="journeyState" aria-live="polite"></p>
+        <label for="paceRange">Journey pace</label>
+        <div class="inline">
+          <input type="range" id="paceRange" min="0" max="100" value="50" step="1" aria-describedby="paceOut">
+          <output id="paceOut"></output>
+        </div>
+        <p class="hint">Bars spent on each leg between stops. Larger = slower, more gradual morphing.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SHAPE (macros) -------------------------------------------------------->
+  <section aria-labelledby="h-shape">
+    <h2 id="h-shape">Shape the sound</h2>
+    <p class="hint">Eight global sliders. Centre (0) leaves the genre untouched; move
+    left for less, right for more. They apply instantly, even while playing.</p>
+    <div class="card" id="macroList"></div>
+    <button id="resetMacros" type="button">Reset shape to neutral</button>
+  </section>
+
+  <!-- ADVANCED -------------------------------------------------------------->
+  <section aria-labelledby="h-adv">
+    <h2 id="h-adv">Seed &amp; musical mode</h2>
+    <div class="card">
+      <label for="seedInp">Seed (1–99999)</label>
+      <div class="inline">
+        <input type="number" id="seedInp" min="1" max="99999" step="1">
+        <button id="randSeed" type="button">Randomize</button>
+      </div>
+      <p class="hint">The same seed always plays exactly the same music. Change it for a different arrangement of the same genre.</p>
+
+      <label for="modeSel">Musical mode</label>
+      <select id="modeSel">
+        <option value="auto" selected>Auto (each genre's own mode)</option>
+        <option value="major">Major</option>
+        <option value="minor">Minor</option>
+        <option value="dorian">Dorian</option>
+        <option value="phrygian">Phrygian</option>
+        <option value="lydian">Lydian</option>
+        <option value="mixolydian">Mixolydian</option>
+        <option value="blues">Blues</option>
+      </select>
+      <p class="hint">Force a key/mode across every genre, or leave on Auto.</p>
+    </div>
+  </section>
+
+  <footer class="intro" style="margin-top:2rem">
+    made by <a href="https://aboardresearch.com">Aboard</a> ·
+    <a href="https://github.com/ftrain/stellate">open source</a> · MIT
+  </footer>
+</div>
+
+<!-- ENGINE: the same classic global scripts index.html loads, minus the video and
+     demoscene layers (this page has no visuals). They must run before the module. -->
+<script src="engine/theory.js"></script>
+<script src="engine/pipes.js"></script>
+<script src="engine/csd-engine.js"></script>
+<script src="engine/genre-kernel.js"></script>
+<script src="engine/genre-verifier.js"></script>
+<script src="engine/namebank.js"></script>
+<script src="engine/speech.js"></script>
+<script src="engine/faust/state-engine.js"></script>
+<script src="engine/faust/found-player.js"></script>
+<script src="engine/faust/sampler.js"></script>
+<script src="engine/faust/live.js"></script>
+<script type="module" src="app/access.js"></script>
+</body>
+</html>
