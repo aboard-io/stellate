@@ -211,6 +211,22 @@ committed, recoverable deliverable. Workflow documented in CLAUDE.md
 |---|---|---|---|
 | `stml/` (`stml_*` ids) | **Fatboy Slim / Norman Cook — "Skip to My Loops"** sample CD, [`fatboy-slim-skip-to-my-loops`](https://archive.org/details/fatboy-slim-skip-to-my-loops) on archive.org (single zip, 79 generically-named WAVs) | funky breakbeat **loops** (bpm recovered by the classifier), plus a handful of vocal/funk **chops** and one-shot **hits**. Big-beat DNA — wired into `bigbeat` (+ breakcore/jungle/boombap/triphop and the invented *break* genres), the *house*/*funk* chops pools, and the bigbeat/house/gabber/electro/miamibass/disco hit pools. | unauthorized rip of an out-of-print commercial sample CD; no license chain (the CD's own user license was of doubtful validity) — tier 3: never redistributed in any form, never in a distributed render |
 
+## Repertoire wave 3 — hits + breaks expansion (found/samples/ — tools/fetch-hits-expansion.sh, 2026-07)
+
+The one-shot/break vocabulary expansion that fills the `SOURCE_POOLS` classes
+(`vocal_stab` / `chime` / `horn_stab` / `rave_stab` / `perc_hit` + the
+bpm-banded `break_*` pools — docs/NEXT.md §5f). Every source license-verified
+per item (metadata, not search index) — this wave is deliberately tier-1-only:
+
+| local files / ids | source | content | license |
+|---|---|---|---|
+| `breaks/dl_*.wav` (`dl_82_10` … `dl_140_07`, 12 breaks) | **drumloops113** — [`drumloops113`](https://archive.org/details/drumloops113) on archive.org: "13 drum loops I made by recording and choping live drumming and by playing with virtual drum machines" (uploader = author) | live/machine funk breaks, 82–140 bpm (bpm measured by `tools/classify-sample-cd.py`, pinned in the fetch script) — the `break_75_95`…`break_135_150` pool bands | **CC BY 2.5** (author-granted; attribute "jeremy@agitprop.ca, drumloops 1-13, archive.org") |
+| `hits/chime_*.wav`, `hits/perc_*.wav` (4 chimes + 7 percussion one-shots) | **VCSL — Versilian Community Sample Library** ([github.com/sgossner/VCSL](https://github.com/sgossner/VCSL)) | tubular bells C4/E3, hand chime A4, glockenspiel C6; timpani hit, gong, anvil, woodblock, slapstick, agogo, cowbell — the `chime` + `perc_hit` pools | **CC0-1.0** (repo LICENSE, verified via GitHub license API) |
+| `78s/horns_ne_78.wav`, `78s/horns_ll_78.wav` | George Blood 78rpm digitizations: [`78_national-emblem…gbia0426619a`](https://archive.org/details/78_national-emblem_manhattan-military-band-e-e-bagley_gbia0426619a) (1922), [`78_liberty-loan-march…gbia0440191a`](https://archive.org/details/78_liberty-loan-march_paramount-military-band-sousa_gbia0440191a) (1918) | military-band brass tuttis cut at the loudest window — the shellac `horn_stab` pool (with the existing `horns_78`) | published pre-1923 → **US public domain by age** (Music Modernization Act; item `date` metadata verified) |
+| `78s/caruso_78.wav`, `78s/laughs_78.wav` | [`78_tosca---e-lucevan-le-stelle…gbia0012566a`](https://archive.org/details/78_tosca---e-lucevan-le-stelle-the-stars-were-shining_enrico-caruso-puccini-victor-o_gbia0012566a) (Caruso, 1909), [`78_some-laughs_gbia0395185a`](https://archive.org/details/78_some-laughs_gbia0395185a) (1920 laughing record) | the Tosca climax + a laughing-record burst as vocal stabs — `vocal_stab` pool spice | published pre-1923 → **US public domain by age** |
+| `vox/apollo_d..f.wav` (`vox_d`/`vox_e`/`vox_f`) | [`Apollo11Audio`](https://archive.org/details/Apollo11Audio) (NASA JSC Houston Audio Control Room tapes 11-03302/11-03306/11-03308) | three more capcom one-liners for the `vocal_stab` pool (joins `vox_a..c`) | NASA radio traffic — **public domain** (PD mark on item) |
+| `hits/hoover_a.wav` `hoover_b` `stab_organ` `stab_saw` | synthesized in-house (ffmpeg `aevalsrc`, recipe in the fetch script — the `tw_ding`/`timer_ding` precedent) | two hoover/mentasm stabs + an M1-ish organ chord + a sus4 saw chord — the `rave_stab` pool (joins the dcc `rave_a..d`) | pure synthesis, **license-free** |
+
 ## DX7 patch bank (faust/dx7-presets.json — committed source, not audio)
 
 113 presets decoded (faust/sysex2params.js) from the eight **Yamaha DX7

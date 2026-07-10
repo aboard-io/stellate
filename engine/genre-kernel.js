@@ -110,6 +110,32 @@
     nature:   ["frogs","crickets"],
     water:    ["hydrophone"],
     room:     ["hvac_hum"],
+    // --- one-shot classes (repertoire wave 3, 2026-07-10) — for hits.sources.
+    // Members are SAMPLES ids (fetch-hits-expansion.sh + fetch-found-samples.sh).
+    // IDENTITY hits stay raw ids in their anchors: tw_ding is the transit-door /
+    // kitchen / gavel signature (microwave, aldente, auctioncore, the
+    // transitwave family), the loon is canawave's, ca_horn is the goal horn —
+    // none of those anchors take a chime token; tw_ding rides IN the chime pool
+    // for everyone else.
+    vocal_stab: ["vox_a","vox_b","vox_c","vox_d","vox_e","vox_f","caruso_78","laughs_78"],
+    chime:      ["tw_ding","handbell","timer_ding","chime_tub_hi","chime_tub_lo","chime_hand","chime_glock"],
+    // horn_stab is SHELLAC-ONLY (era law): bb_horn_a/b are the bigbeat wing's
+    // rave-brass identity and stay raw ids in their anchors — mixing them in
+    // would flash a rave horn into tango/jazz on unlucky seeds.
+    horn_stab:  ["horns_78","horns_ne_78","horns_ll_78"],
+    rave_stab:  ["rave_a","rave_b","rave_c","rave_d","hoover_a","hoover_b","stab_organ","stab_saw"],
+    perc_hit:   ["perc_timpani","perc_gong","perc_anvil","perc_wood","perc_slap","perc_agogo","perc_cowbell"],
+    // --- break classes, BANDED BY BPM (the tempo lock): found role "break"
+    // time-stretches by state.bpm/sample.bpm (csd-engine) and constrain() falls
+    // back to amen_170 when the drawn source has no bpm — so a break pool is
+    // only safe if every member carries bpm AND the band is narrow enough that
+    // the stretch stays musical (<~15%). Anchors reference the band that
+    // matches their tempo range, exactly as their raw lists already did.
+    break_75_95:  ["dl_82_10","dl_89_08","dl_89_09","dl_89_12","stml_loop_81a","stml_loop_82a","stml_loop_85a","stml_loop_86a","stml_loop_89a","stml_loop_89b","stml_loop_92a","stml_loop_94a"],
+    break_95_115: ["dl_99_01","dl_99_03","dl_101_04","stml_loop_96a","stml_loop_99a","stml_loop_103a","stml_loop_105a","stml_loop_108a","stml_loop_110a","stml_loop_112a","stml_loop_112b"],
+    break_115_135:["dl_120_13","dl_126_02","dl_133_11","stml_loop_115a","stml_loop_117a","stml_loop_117b","stml_loop_120a","stml_loop_126a","stml_loop_129a","stml_loop_129b","stml_loop_133a","stml_loop_133b"],
+    break_135_150:["dl_140_06","dl_140_07","stml_loop_136a","stml_loop_140a","stml_loop_144a","stml_loop_148a","stml_loop_148b"],
+    break_155_175:["amen_165","amen_170","amen_172","amen_175","stml_loop_157a","stml_loop_157b","stml_loop_161a","stml_loop_167a"],
   };
   const fnv1a = (str)=>{ let h=2166136261>>>0; for(const ch of String(str)) h=Math.imul(h^ch.charCodeAt(0),16777619); return h>>>0; };
   function expandPools(list, seed){
@@ -477,6 +503,50 @@
     stml_hit_01:{ file:"stml/hit_01.wav", kind:"hit", durSec:1.145 },
     stml_hit_b3:{ file:"stml/hit_b3_02.wav", kind:"hit", durSec:1.623, note:"B3" },
     stml_hit_03:{ file:"stml/hit_03.wav", kind:"hit", durSec:1.29 },
+    // --- REPERTOIRE WAVE 3 (2026-07-10, tools/fetch-hits-expansion.sh) ---
+    // the hits+breaks expansion that fills the SOURCE_POOLS one-shot classes;
+    // every source license-verified (SOURCES.md): drumloops113 CC BY 2.5,
+    // VCSL CC0, pre-1923 78s PD by age, NASA PD, or synthesized in-house.
+    // breaks: drumloops113 — author-recorded live/machine funk breaks
+    dl_82_10: { file:"breaks/dl_82_10.wav",  kind:"break", bpm:82,  durSec:2.286 },
+    dl_89_08: { file:"breaks/dl_89_08.wav",  kind:"break", bpm:89,  durSec:5.333 },
+    dl_89_09: { file:"breaks/dl_89_09.wav",  kind:"break", bpm:89,  durSec:5.393 },
+    dl_89_12: { file:"breaks/dl_89_12.wav",  kind:"break", bpm:89,  durSec:5.349 },
+    dl_99_01: { file:"breaks/dl_99_01.wav",  kind:"break", bpm:99,  durSec:2.4 },
+    dl_99_03: { file:"breaks/dl_99_03.wav",  kind:"break", bpm:99,  durSec:2.4 },
+    dl_101_04:{ file:"breaks/dl_101_04.wav", kind:"break", bpm:101, durSec:2.4 },
+    dl_120_13:{ file:"breaks/dl_120_13.wav", kind:"break", bpm:120, durSec:8.0 },
+    dl_126_02:{ file:"breaks/dl_126_02.wav", kind:"break", bpm:126, durSec:2.4 },
+    dl_133_11:{ file:"breaks/dl_133_11.wav", kind:"break", bpm:133, durSec:3.692 },
+    dl_140_06:{ file:"breaks/dl_140_06.wav", kind:"break", bpm:140, durSec:1.714 },
+    dl_140_07:{ file:"breaks/dl_140_07.wav", kind:"break", bpm:140, durSec:3.429 },
+    // vocal stabs: three more Apollo capcom lines (NASA PD) + two pre-1923 78s
+    vox_d:    { file:"vox/apollo_d.wav", kind:"vox", durSec:3.0 },
+    vox_e:    { file:"vox/apollo_e.wav", kind:"vox", durSec:2.6 },
+    vox_f:    { file:"vox/apollo_f.wav", kind:"vox", durSec:3.0 },
+    caruso_78:{ file:"78s/caruso_78.wav", kind:"hit", durSec:2.8 },   // Tosca climax, 1909 (PD by age)
+    laughs_78:{ file:"78s/laughs_78.wav", kind:"hit", durSec:2.5 },   // "Some Laughs", 1920 (PD by age)
+    // horn stabs: military-band brass tuttis, pre-1923 78s (PD by age)
+    horns_ne_78:{ file:"78s/horns_ne_78.wav", kind:"hit", durSec:3.0 },   // National Emblem, 1922
+    horns_ll_78:{ file:"78s/horns_ll_78.wav", kind:"hit", durSec:3.0 },   // Liberty Loan March (Sousa), 1918
+    // chimes: VCSL (CC0) struck idiophones
+    chime_tub_hi:{ file:"hits/chime_tub_hi.wav", kind:"hit", durSec:6.0, note:"C4" },
+    chime_tub_lo:{ file:"hits/chime_tub_lo.wav", kind:"hit", durSec:6.0, note:"E3" },
+    chime_hand:  { file:"hits/chime_hand.wav",   kind:"hit", durSec:5.0, note:"A4" },
+    chime_glock: { file:"hits/chime_glock.wav",  kind:"hit", durSec:4.0, note:"C6" },
+    // orchestral percussion one-shots: VCSL (CC0)
+    perc_timpani:{ file:"hits/perc_timpani.wav", kind:"hit", durSec:4.0 },
+    perc_gong:   { file:"hits/perc_gong.wav",    kind:"hit", durSec:6.0 },
+    perc_anvil:  { file:"hits/perc_anvil.wav",   kind:"hit", durSec:1.686 },
+    perc_wood:   { file:"hits/perc_wood.wav",    kind:"hit", durSec:0.758 },
+    perc_slap:   { file:"hits/perc_slap.wav",    kind:"hit", durSec:1.308 },
+    perc_agogo:  { file:"hits/perc_agogo.wav",   kind:"hit", durSec:1.112 },
+    perc_cowbell:{ file:"hits/perc_cowbell.wav", kind:"hit", durSec:1.131 },
+    // rave stabs: synthesized in-house (license-free — the tw_ding precedent)
+    hoover_a:  { file:"hits/hoover_a.wav",   kind:"hit", durSec:1.4 },   // A2 mentasm drop-in
+    hoover_b:  { file:"hits/hoover_b.wav",   kind:"hit", durSec:1.1 },   // E3, faster + brighter
+    stab_organ:{ file:"hits/stab_organ.wav", kind:"hit", durSec:0.9 },   // M1-ish minor organ chord
+    stab_saw:  { file:"hits/stab_saw.wav",   kind:"hit", durSec:1.0 },   // sus4 saw chord stab
   };
 
   // ---------- genre -> found-video clip affinity ----------
@@ -1287,7 +1357,7 @@
       drums:{kickModel:["909"],snareModel:["clap","crack"],hatModel:["metal","noise"],kick:[1.25,1.5],snare:[.55,.8],hat:[.7,1],tune:[.95,1.1],send:[.05,.15],dsend:[.1,.25]},
       fx:{reverb:[.35,.55], delayBeats:[.5,.75], delayFb:[.3,.45], delayCut:[2000,3500], pump:[.4,.65], crackle:[0,.1], lowcut:[35,50], highcut:[0,0], comp:[.5,.7], grit:[.2,.45], jux:[.15,.35]},
       found:{role:"chops", vol:[.1,.18], pitch:[.9,1.1], stretch:[.4,.6], cutoff:[1800,3200], sources:["factory","shibuya","vx_wwvh","stml_chop_c4","stml_chop_d"]},
-      stab:["offbeat","offbeat","rave","sparse"], hits:{sources:["vox_b","rave_a","sp_system","sp_energy"], pattern:"sparse", prob:.5},
+      stab:["offbeat","offbeat","rave","sparse"], hits:{sources:["pool:vocal_stab*1","pool:rave_stab*1","sp_system","sp_energy"], pattern:"sparse", prob:.5},
       form:"dj" },
     house: { label:"Basement Sermon", info:"a four-on-floor congregation: claps and open-hat offbeats, warm organ stabs, piano color, min7 sevenths — the kick is the sermon and everyone is welcome",   // sample-mid: chops present, synths carry
       reverbColor:"dattorro",   // fx wings: clean plate on the stabs
@@ -1301,7 +1371,7 @@
       drums:{kickModel:["909","boom"],snareModel:["clap"],hatModel:["noise"],kick:[1.15,1.4],snare:[.6,.85],hat:[1.0,1.3],tune:[.95,1.1],send:[.1,.25],dsend:[.05,.15]},   // hats UP — the open-hat offbeat must be heard
       fx:{reverb:[.4,.6], delayBeats:[.375,.75], delayFb:[.25,.4], delayCut:[2500,4000], pump:[.35,.5], crackle:[0,.15], lowcut:[30,45], highcut:[0,0], comp:[.4,.6]},
       found:{role:"chops", vol:[.1,.18], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["shibuya","tokyo_station","vx_timelady","stml_chop_a","stml_chop_b","stml_chop_c4"]},
-      stab:["rave","offbeat"], hits:{sources:["rave_b","rave_c","vox_a","sp_rhythm","stml_hit_01","stml_hit_03"], pattern:"offbeat", prob:.55},
+      stab:["rave","offbeat"], hits:{sources:["pool:rave_stab*2","pool:vocal_stab*1","sp_rhythm","stml_hit_01","stml_hit_03"], pattern:"offbeat", prob:.55},
       form:"dj" },
     jungle: { label:"Canopy Pressure", info:"chopped breaks ricocheting under sub pressure, rhythm as the melody, echo hung like humidity — the floor is a long way down",   // SAMPLE-FORWARD: the amen IS the track
       bpm:[158,172], swing:[0,.08], humanize:[.1,.25],
@@ -1315,7 +1385,7 @@
       drums:{kickModel:["808"],snareModel:["crack"],hatModel:["noise"],kick:[1.15,1.4],snare:[.6,.85],hat:[.4,.7],tune:[1.0,1.15],send:[.05,.15],dsend:[.35,.6]},
       fx:{reverb:[.35,.55], delayBeats:[.75,1.5], delayFb:[.4,.6], delayCut:[1800,3000], pump:[0,.15], crackle:[.05,.2], lowcut:[25,40], highcut:[0,0], comp:[.35,.55], grit:[.15,.35], jux:[.25,.5]},
       found:{role:"break", vol:[.3,.45], pitch:[1,1], stretch:[.5,.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175","stml_loop_148a","stml_loop_157a","stml_loop_157b","stml_loop_167a"]},   // the BREAK DOMINATES: loud + wide open, real sampled drums not "light FM"
-      stab:["off","sparse"], hits:{sources:["vox_a","rave_d","sp_rewind","sp_pressure"], pattern:"dub", prob:.75},
+      stab:["off","sparse"], hits:{sources:["pool:vocal_stab*1","pool:rave_stab*1","sp_rewind","sp_pressure"], pattern:"dub", prob:.75},
       form:"dj" },
     triphop: { label:"Drizzle Noir", info:"slowed dusty breaks under a raincoat: blue seventh-chord color, melancholy with sub weight, every snare heard through a wet window",   // SAMPLE-FORWARD
       bpm:[72,92], swing:[.15,.3], humanize:[.2,.45],
@@ -1330,7 +1400,7 @@
       drums:{kickModel:["808","boom"],snareModel:["noise","crack"],hatModel:["noise"],kick:[1.05,1.3],snare:[.65,.9],hat:[.5,.8],tune:[.8,.95],send:[.15,.3],dsend:[.15,.35],kit:"room"},   // SAMPLED room kit — the slowed Bristol break (note: sampled snare skips the pp throw)
       fx:{reverb:[.6,.78], delayBeats:[.75,1.5], delayFb:[.3,.5], delayCut:[1500,2600], pump:[0,.1], crackle:[.35,.6], lowcut:[0,30], highcut:[9000,14000], comp:[.25,.4]},
       found:{role:"break", vol:[.18,.3], pitch:[1,1], stretch:[.5,.5], cutoff:[3800,5500], sources:["amen_165","amen_170","stml_loop_81a","stml_loop_85a","stml_loop_89b"]},
-      stab:["off"], hits:{sources:["vox_b","blues_vox_78","sp_slowdown"], pattern:"sparse", prob:.55},
+      stab:["off"], hits:{sources:["pool:vocal_stab*1","blues_vox_78","sp_slowdown"], pattern:"sparse", prob:.55},
       form:"pop" },
     vaporwave: { label:"Marble Escalator", info:"slowed department-store nostalgia: maj7 city-pop harmony at two-thirds speed, drenched reverb, found sound — the fountain remembers you",   // SAMPLE-FORWARD: the bed is the place
       bpm:[62,88], swing:[0,.12], humanize:[.05,.25],
@@ -1343,7 +1413,7 @@
       drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.9,1.15],snare:[.6,.85],hat:[.75,1.05],tune:[.95,1.1],send:[.15,.3],dsend:[0,.1]},
       fx:{reverb:[.8,.92], delayBeats:[.75,1.5], delayFb:[.25,.4], delayCut:[2200,3200], pump:[0,.1], crackle:[.05,.3], lowcut:[0,0], highcut:[9000,13000], comp:[0,.15]},   // effects audit tier-C soft-top: slowed-VHS tape muffle — a GENTLE soft-top (brighter than lofi's 7500-11k; the mall tape is worn, not crushed). Flips softTop 0->1, re-fenced (see below)
       found:{role:"bed", vol:[.18,.28], pitch:[.7,.85], stretch:[.4,.55], cutoff:[2200,3200], sources:["tokyo_station","shibuya","tw_stationhall","vx_timelady","vx_conet_swedish","vx_wwvh"]},
-      stab:["off"], hits:{sources:["sp_plaza","sp_shopping","vox_b"], pattern:"sparse", prob:.5},
+      stab:["off"], hits:{sources:["sp_plaza","sp_shopping","pool:vocal_stab*1"], pattern:"sparse", prob:.5},
       autoTune:0.25,   // fx wings stage 2: a GENTLE bend of the slowed mall bed toward the maj7 key — subtle, not hyperpop
       form:"pop" },
     synthwave: { label:"Night Odometer", info:"the night-drive pulse: supersaw leads in minor keys, gated drums flashing past like streetlights, the dashboard lit all the way home",   // SYNTH-FORWARD: beds distant
@@ -1357,7 +1427,7 @@
       drums:{kickModel:["909","boom"],snareModel:["noise"],hatModel:["noise"],kick:[1.2,1.45],snare:[.9,1.15],hat:[.4,.65],tune:[.85,1],send:[.45,.65],dsend:[.05,.15]},
       fx:{reverb:[.75,.88], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[1800,2800], pump:[.15,.35], crackle:[0,.1], lowcut:[30,45], highcut:[0,0], comp:[.25,.4]},
       found:{role:"bed", vol:[.08,.14], pitch:[.65,.8], stretch:[.45,.6], cutoff:[1000,1800], sources:["highway_night","factory","vx_apollo"]},
-      stab:["off","sparse"], hits:{sources:["vox_a","sp_nightdrive"], pattern:"sparse", prob:.3},
+      stab:["off","sparse"], hits:{sources:["pool:vocal_stab*1","sp_nightdrive"], pattern:"sparse", prob:.3},
       form:"pop" },
     lofi: { label:"Desk Lamp Dust", info:"a soft head-nod under a desk lamp: warm seventh chords through vinyl crackle, drums like pencil erasers, everything rounded until nothing can hurt you",   // SAMPLE-FORWARD
       bpm:[72,88], swing:[.18,.32], humanize:[.25,.5],
@@ -1372,7 +1442,7 @@
       drums:{kickModel:["808"],snareModel:["noise"],hatModel:["noise"],kick:[1.0,1.25],snare:[.55,.8],hat:[.55,.85],tune:[.8,.95],send:[.1,.22],dsend:[0,.1],kit:"room"},   // SAMPLED room kit — warm/dusty for the lo-fi head-nod (note: sampled snare skips the pp throw)
       fx:{reverb:[.5,.7], delayBeats:[.5,.75], delayFb:[.2,.35], delayCut:[1800,2800], pump:[0,.1], crackle:[.5,.8], lowcut:[0,25], highcut:[7500,11000], comp:[.15,.3]},
       found:{role:"bed", vol:[.14,.22], pitch:[.75,.9], stretch:[.4,.55], cutoff:[1600,2600], sources:["tokyo_station","shibuya","vx_dday"]},
-      stab:["off"], hits:{sources:["vox_c","sp_slowdown"], pattern:"sparse", prob:.35},
+      stab:["off"], hits:{sources:["pool:vocal_stab*1","sp_slowdown"], pattern:"sparse", prob:.35},
       form:"pop" },
     downtempo: { label:"Warm Undertow", info:"the head-nod at low tide: a slow swung beat under long warm pads — harbor-town patience, but there is always a BEAT",   // 2026-07 wash-trio deep pass: the BEAT one. Its identity claim ambient/newage can't share is a real swung backbeat (drumDensity + swing floors), leaned laid-back
       bpm:[62,80], swing:[.1,.22], humanize:[.15,.35],   // 2026-07: bpm ceiling 84->80 keeps downtempo clearly SLOWER than exotica's tiki-lounge floor (82) — the swung-acoustic-lounge collision was pre-existing (downtempo's flute lead reads acoustic); the bpm fence breaks it. swing FLOOR up .05->.10 — the groove is never straight, and clearly ABOVE vaporwave's machine-time (renders .03-.08): the two-way fence — downtempo scores off vaporwave's diagonal (vaporwave row caps swing .08) AND the straight-time wash cluster scores off downtempo's (row swing floor .06)
@@ -1387,7 +1457,7 @@
       drums:{kickModel:["808","boom"],snareModel:["noise"],hatModel:["noise"],kick:[.95,1.2],snare:[.5,.75],hat:[.45,.75],tune:[.85,1],send:[.2,.35],dsend:[.05,.2]},
       fx:{reverb:[.72,.88], delayBeats:[.75,1.5], delayFb:[.3,.5], delayCut:[1800,2800], pump:[0,.15], crackle:[.1,.3], lowcut:[0,25], highcut:[0,0], comp:[.15,.3]},
       found:{role:"bed", vol:[.14,.24], pitch:[.7,.9], stretch:[.45,.6], cutoff:[1800,2800], sources:["tokyo_station","highway_night","vx_apollo"]},
-      stab:["off"], hits:{sources:["vox_b","sp_herenow"], pattern:"sparse", prob:.2},
+      stab:["off"], hits:{sources:["pool:vocal_stab*1","sp_herenow"], pattern:"sparse", prob:.2},
       form:"pop" },
     ambient: { label:"Standing Air", info:"beatless drift: a single held minor-7 drone the length of the room, recordings of places instead of drums, reverb like architecture — nothing moves, on purpose",   // 2026-07 wash-trio deep pass: the STATIC one. Its identity claim the wash trio can't share is ZERO harmonic motion + ZERO kit + the longest plateau
       bpm:[58,72], swing:[0,0], humanize:[.1,.3],
@@ -1400,7 +1470,7 @@
       drums:{kickModel:["808"],snareModel:["noise"],hatModel:["noise"],kick:[.6,.9],snare:[.4,.65],hat:[.4,.7],tune:[.8,1],send:[.3,.5],dsend:[0,.1]},
       fx:{reverb:[.88,.95], delayBeats:[1,1.5], delayFb:[.4,.6], delayCut:[1500,2500], pump:[0,0], crackle:[0,.2], lowcut:[0,0], highcut:[0,0], comp:[0,.1]},
       found:{role:"bed", vol:[.2,.32], pitch:[.6,.8], stretch:[.45,.6], cutoff:[2000,3400], sources:["tw_intrain","highway_night","tokyo_station","vx_wwvh","vx_apollo"]},
-      stab:["off"], hits:{sources:["vox_a","sp_herenow"], pattern:"sparse", prob:.15},
+      stab:["off"], hits:{sources:["pool:vocal_stab*1","sp_herenow"], pattern:"sparse", prob:.15},
       form:"wave" },
     dinosynth: { label:"Dino synth", info:"dinosaur-themed dungeon synth: dark-ambient drones, medieval choir, tribal log-drums, primordial swamp",
       reverbColor:"greyhole",   // fx wings: the diffuse dark-ambient smear (primordial swamp)
@@ -1414,7 +1484,7 @@
       fx:{reverb:[.82,.94], delayBeats:[.75,1.5], delayFb:[.5,.68], delayCut:[1500,2500], pump:[0,.05], crackle:[.04,.12], lowcut:[0,25], highcut:[8000,13000], comp:[.4,.62], grit:[.25,.5]},   // crackle way down; compressed + long dub echo
       found:{role:"bed", vol:[.18,.3], pitch:[.6,.78], stretch:[.45,.6], cutoff:[1800,3000], sources:["hydrophone","highway_night","tokyo_station","factory"]},   // 4 beds rotate — pitched-down ocean-column + city recordings read as tar-pit / geothermal swamp
       vox:{sources:["sp_paleo_welcome","sp_paleo_mesozoic","sp_paleo_sauropod","sp_paleo_rex","sp_paleo_bones","sp_paleo_skies"], vol:0.5, pitch:0.96, cutoff:6500},   // glitched paleontologist narration
-      stab:["off"], hits:{sources:["sp_herenow","vox_a"], pattern:"sparse", prob:.15},
+      stab:["off"], hits:{sources:["sp_herenow","pool:vocal_stab*1"], pattern:"sparse", prob:.15},
       // Phase-4 PILOT: a distant paleontologist RESPONSE — the blues 78rpm
       // call-and-response / the thunk "answer the lead" idea, generalized to a
       // sample role: a glitched utterance answers on the back half of the
@@ -1512,7 +1582,7 @@
       drums:{kickModel:["909","boom"],snareModel:["noise","clap"],hatModel:["noise"],kick:[1.1,1.35],snare:[.8,1.05],hat:[.6,.9],tune:[.9,1.05],send:[.25,.45],dsend:[.05,.15]},
       fx:{reverb:[.5,.7], delayBeats:[.5,.75], delayFb:[.2,.35], delayCut:[2400,3600], pump:[.05,.25], crackle:[0,.1], lowcut:[30,45], highcut:[0,0], comp:[.3,.5]},
       found:{role:"bed", vol:[.06,.12], pitch:[.8,1], stretch:[.45,.6], cutoff:[1500,2500], sources:["shibuya","highway_night"]},
-      stab:["off","sparse"], hits:{sources:["rave_b","vox_a"], pattern:"sparse", prob:.3},
+      stab:["off","sparse"], hits:{sources:["pool:rave_stab*1","pool:vocal_stab*1"], pattern:"sparse", prob:.3},
       form:"pop" },
     edm: { label:"Fireworks Budget", info:"the main stage as a physics demo: a riser into THE DROP, maximum pump, supersaw walls wide as the fairground — hands go up on schedule, and it works anyway",   // SYNTH-FORWARD
       bpm:[124,132], swing:[0,.05], humanize:[0,.1],
@@ -1526,7 +1596,7 @@
       drums:{kickModel:["909"],snareModel:["clap","noise"],hatModel:["noise","metal"],kick:[1.35,1.6],snare:[.8,1.05],hat:[.5,.8],tune:[.95,1.1],send:[.2,.4],dsend:[.05,.2]},
       fx:{reverb:[.45,.65], delayBeats:[.375,.5], delayFb:[.25,.4], delayCut:[2500,4000], pump:[.55,.8], crackle:[0,0], lowcut:[30,45], highcut:[0,0], comp:[.6,.8], grit:[.2,.4], jux:[.2,.45]},
       found:{role:"chops", vol:[.08,.15], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2500,4000], sources:["shibuya","factory","vx_xminusone"]},
-      stab:["rave","offbeat"], hits:{sources:["rave_a","rave_c","sp_energy"], pattern:"offbeat", prob:.6},
+      stab:["rave","offbeat"], hits:{sources:["pool:rave_stab*2","sp_energy"], pattern:"offbeat", prob:.6},
       form:"drop" },
     dubstep: { label:"Pendulum Threat", info:"halftime at 140: a wobble bass swung like a pendulum, the snare landing on three, space cavernous enough to lose your keys in",
       bpm:[136,146], swing:[0,.08], humanize:[.05,.2],
@@ -1543,7 +1613,7 @@
       drums:{kickModel:["808","909"],snareModel:["crack","clap"],hatModel:["noise","metal"],kick:[1.2,1.45],snare:[.85,1.1],hat:[.4,.7],tune:[.9,1.05],send:[.15,.35],dsend:[.25,.5]},
       fx:{reverb:[.5,.7], delayBeats:[.75,1.5], delayFb:[.35,.55], delayCut:[1800,3000], pump:[.1,.3], crackle:[0,.15], lowcut:[25,40], highcut:[0,0], comp:[.4,.6], grit:[.3,.55]},
       found:{role:"chops", vol:[.1,.18], pitch:[.85,1.1], stretch:[.4,.6], cutoff:[2000,3500], sources:["factory","highway_night"]},
-      stab:["off","sparse"], hits:{sources:["vox_c","sp_pressure","rave_d"], pattern:"dub", prob:.55},
+      stab:["off","sparse"], hits:{sources:["pool:vocal_stab*1","sp_pressure","pool:rave_stab*1"], pattern:"dub", prob:.55},
       form:"drop" },
     blues: { label:"Kerosene Twelve", info:"twelve bars of dom7 trouble: a triplet shuffle, call-and-response guitar, the record worn gray where the good parts are",   // ACOUSTIC-forward (2026-07 deep pass: "the whole thing is acoustic")
       reverbColor:"fdn",   // fx wings: a dry juke-joint room, not a wash
@@ -1556,7 +1626,7 @@
       drums:{kickModel:["boom","808"],snareModel:["noise"],hatModel:["noise"],kick:[.9,1.15],snare:[.5,.7],hat:[.5,.8],tune:[.85,1],send:[.15,.3],dsend:[0,.1],kit:"acoustic"},   // snare tuned brushes-soft under the shuffle ride; SAMPLED acoustic kit
       fx:{reverb:[.45,.65], delayBeats:[.5,.75], delayFb:[.1,.25], delayCut:[2000,3000], pump:[0,0], crackle:[.25,.55], lowcut:[0,30], highcut:[8000,12000], comp:[.15,.3]},
       found:{role:"bed", vol:[.05,.12], pitch:[.8,1], stretch:[.45,.6], cutoff:[1500,2500], sources:["shibuya","tokyo_station","vx_whitman"]},
-      stab:["off"], hits:{sources:["blues_vox_78","blues_vox_78","horns_78"], pattern:"response", prob:.75},   // the 78rpm singer takes the response bars the guitar rests — and gets answered
+      stab:["off"], hits:{sources:["blues_vox_78","blues_vox_78","pool:horn_stab*1"], pattern:"response", prob:.75},   // the 78rpm singer takes the response bars the guitar rests — and gets answered
       form:"pop" },
     jazz: { label:"Smoke Arithmetic", info:"ii-V-I machinery run by hand: walking bass, brushed kit, piano comping the changes — improvised, and the arithmetic always lands",
       reverbColor:"dattorro",   // effects audit C: the Rudy Van Gelder / Blue Note plate (EMT-140) — the sound of the sessions; zero rng, dominant-parent
@@ -1571,7 +1641,7 @@
       rubato:{depth:[.008,.018], periodBars:[2,3], prob:.35},   // the light option: a third of seeds get a subtle combo-breathing (never as deep as neoclassical)
       blueNote:0.32,   // the SAX SCOOP: when the lead resolves to a sampled sax/guitar, ~32% of held notes gain a blue-note bend (slide up into the b3/b7), mirroring csd-engine's blues pattern. A separate seeded stream => other events byte-identical; only SAMPLER voices render the slide (VOICES.md), and `bend` is not a verifier feature (matrix-invisible)
       timeFeel:{ pushPull:{ bass:0.015 } },   // Phase 3: the upright WALKS behind the beat — bass onsets pushed ~7ms late (a per-voice offset, no verifier feature reads bass timing, so pure feel). HALVED 2026-07-04 (Paul: went a little too far on timing feel)
-      stab:["off"], hits:{sources:["horns_78","vox_b"], pattern:"sparse", prob:.35},
+      stab:["off"], hits:{sources:["pool:horn_stab*1","pool:vocal_stab*1"], pattern:"sparse", prob:.35},
       form:"pop" },
     dub: { label:"Echo Kingdom", info:"the one-drop with the delay promoted to lead instrument: sub pressure, wet offbeat skanks, every hit fed back until the tail outlives the song",   // SAMPLE-FORWARD: wet vox hits + Burroughs in the smoke
       reverbColor:"spring",   // effects audit A2: the spring tank (King Tubby's AKG BX20 "splash") IS dub's ROOM — additive to and distinct from the runaway echo (delayFb .5-.7); surfrock already proves the module. Zero rng, dominant-parent
@@ -1584,7 +1654,7 @@
       drums:{kickModel:["808","boom"],snareModel:["crack","noise"],hatModel:["noise"],kick:[1.1,1.35],snare:[.9,1.15],hat:[.45,.75],tune:[.9,1.05],send:[.15,.3],dsend:[.5,.7]},   // the snare rides the delay — dsend IS the one-drop
       fx:{reverb:[.55,.7], delayBeats:[.75,1.5], delayFb:[.5,.7], delayCut:[1600,2600], pump:[0,.1], crackle:[0,.08], lowcut:[25,40], highcut:[0,0], comp:[.3,.5], grit:[.1,.25], jux:[.15,.3]},   // effects audit C: a touch of mixing-desk hard-pan width (small — the echo owns most of the stereo). jux is matrix-safe
       found:{role:"bed", vol:[.18,.3], pitch:[.7,.85], stretch:[.45,.6], cutoff:[1800,3000], sources:["tw_platform","highway_night","vx_burroughs"]},
-      stab:["off","sparse"], hits:{sources:["vox_a","vox_b","sp_rewind","sp_pressure"], pattern:"dub", prob:.75, wet:true},
+      stab:["off","sparse"], hits:{sources:["pool:vocal_stab*2","sp_rewind","sp_pressure"], pattern:"dub", prob:.75, wet:true},
       form:"dj" },
     trance: { label:"Sunrise Protocol", info:"uplifting 138: rolling 16th bass, one supersaw hero over a huge wash, a breakdown engineered to make ten thousand strangers cry at dawn",   // SYNTH-FORWARD: beds distant
       bpm:[132,142], swing:[0,.04], humanize:[0,.1],
@@ -1598,7 +1668,7 @@
       drums:{kickModel:["909"],snareModel:["clap","noise"],hatModel:["noise"],kick:[1.3,1.55],snare:[.7,.95],hat:[.7,1],tune:[.95,1.1],send:[.15,.3],dsend:[.1,.25]},
       fx:{reverb:[.6,.75], delayBeats:[.75,.75], delayFb:[.4,.55], delayCut:[2400,3600], pump:[.4,.6], crackle:[0,0], lowcut:[30,45], highcut:[0,0], comp:[.5,.7], grit:[0,.15]},
       found:{role:"bed", vol:[.06,.12], pitch:[.7,.9], stretch:[.45,.6], cutoff:[1500,2500], sources:["highway_night","tokyo_station","vx_apollo"]},
-      stab:["off","sparse"], hits:{sources:["rave_c","sp_energy","vox_a"], pattern:"offbeat", prob:.4},
+      stab:["off","sparse"], hits:{sources:["pool:rave_stab*1","sp_energy","pool:vocal_stab*1"], pattern:"offbeat", prob:.4},
       form:"drop" },
     disco: { label:"Mirrorball Shift", info:"four-on-floor under the mirrorball: octave bass, organ glitter, min7 vamps, horns off a worn 78 — Saturday night run like a factory of joy",   // sample-mid: the horns are dressing
       reverbColor:"dattorro",   // effects audit A1: the EMT-140 PLATE (Sigma Sound) IS the Salsoul/Philly-International disco-string room — the lush strings/horns rode a bright plate, not the generic hall (citypop/house/mallsoft already share it; zero rng, dominant-parent)
@@ -1613,7 +1683,7 @@
       drums:{kickModel:["909","boom"],snareModel:["clap","noise"],hatModel:["noise"],kick:[1.1,1.3],snare:[.75,1],hat:[1.1,1.4],tune:[.95,1.1],send:[.15,.3],dsend:[.05,.15],kit:"power"},   // OPEN HATS UP — the offbeat sizzle; SAMPLED power kit (real 4-on-the-floor)
       fx:{reverb:[.4,.55], delayBeats:[.375,.5], delayFb:[.15,.3], delayCut:[2600,3800], pump:[0,.15], crackle:[.05,.2], lowcut:[30,45], highcut:[0,0], comp:[.3,.5], grit:[0,0]},
       found:{role:"bed", vol:[.06,.12], pitch:[.85,1], stretch:[.45,.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station","vx_timelady"]},
-      stab:["off","sparse"], hits:{sources:["horns_78","sp_rhythm","vox_a","stml_hit_b3"], pattern:"offbeat", prob:.5},
+      stab:["off","sparse"], hits:{sources:["pool:horn_stab*1","sp_rhythm","pool:vocal_stab*1","stml_hit_b3"], pattern:"offbeat", prob:.5},
       masterComp:0.35,   // fx wings stage 4: gentle 3-band glue on the four-on-floor — the disco mix cohered (zero rng, dominant-parent inherited)
       form:"pop" },
     italo: { label:"Espresso Laser", info:"sparkling pluck arpeggios over an octave bass — chrome and citrus, sunnier and happier than the night-drive two doors down, a beach at noon inside a synthesizer",   // SYNTH-FORWARD
@@ -1628,7 +1698,7 @@
       drums:{kickModel:["909"],snareModel:["clap","noise"],hatModel:["noise"],kick:[1.15,1.35],snare:[.8,1.05],hat:[.9,1.2],tune:[.95,1.1],send:[.2,.35],dsend:[.05,.15]},
       fx:{reverb:[.45,.6], delayBeats:[.375,.75], delayFb:[.25,.4], delayCut:[2800,4000], pump:[.1,.3], crackle:[0,.08], lowcut:[30,45], highcut:[0,0], comp:[.3,.5], grit:[0,0]},
       found:{role:"bed", vol:[.06,.12], pitch:[.8,.95], stretch:[.45,.6], cutoff:[1500,2500], sources:["shibuya","highway_night","vx_xminusone"]},
-      stab:["off","offbeat"], hits:{sources:["rave_b","vox_a","sp_nightdrive"], pattern:"sparse", prob:.4},
+      stab:["off","offbeat"], hits:{sources:["pool:rave_stab*1","pool:vocal_stab*1","sp_nightdrive"], pattern:"sparse", prob:.4},
       form:"pop" },
     bigbeat: { label:"Klaxon Circus", info:"block-rocking swagger: acid bass under rave-siren stabs, the big break driving, maximum cheek — a fairground ride that plays itself",   // SAMPLE-FORWARD: the break + the sample-CD arsenal
       bpm:[118,136], swing:[0,.1], humanize:[.05,.2],
@@ -1658,7 +1728,7 @@
       drums:{kickModel:["909","808"],snareModel:["crack","clap"],hatModel:["noise","metal"],kick:[1.1,1.3],snare:[.85,1.1],hat:[.8,1.15],tune:[1,1.1],send:[.08,.18],dsend:[.1,.25]},
       fx:{reverb:[.35,.5], delayBeats:[.375,.75], delayFb:[.25,.4], delayCut:[2400,3600], pump:[.15,.35], crackle:[0,.08], lowcut:[30,45], highcut:[0,0], comp:[.4,.6], grit:[.1,.25]},
       found:{role:"chops", vol:[.1,.18], pitch:[.95,1.15], stretch:[.4,.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense"]},
-      stab:["off","sparse"], hits:{sources:["vox_a","vox_c","sp_rhythm"], pattern:"offbeat", prob:.65},
+      stab:["off","sparse"], hits:{sources:["pool:vocal_stab*2","sp_rhythm"], pattern:"offbeat", prob:.65},
       form:"pop" },
     doomdrone: { label:"Doom drone", info:"glacial fuzz over tectonic drones — the metallurgy plant pitched into the abyss",   // SYNTH-FORWARD (the bed is dread, not hook)
       bpm:[48,62], swing:[0,.04], humanize:[.1,.3],
@@ -1672,7 +1742,7 @@
       drums:{kickModel:["boom","808"],snareModel:["noise"],hatModel:["noise"],kick:[1.3,1.6],snare:[.4,.6],hat:[.3,.5],tune:[.78,.9],send:[.3,.5],dsend:[.1,.3]},
       fx:{reverb:[.85,.95], delayBeats:[1,1.5], delayFb:[.45,.6], delayCut:[1200,2200], pump:[0,0], crackle:[0,.1], lowcut:[0,20], highcut:[0,0], comp:[.5,.75], grit:[.5,.8]},
       found:{role:"bed", vol:[.2,.32], pitch:[.5,.65], stretch:[.45,.6], cutoff:[1200,2200], sources:["factory","highway_night","vx_blake","vx_conet_swedish"]},   // the factory WAY down + tyger tyger + the haunted music box
-      stab:["off"], hits:{sources:["sp_pressure","vox_c"], pattern:"sparse", prob:.2},
+      stab:["off"], hits:{sources:["sp_pressure","pool:vocal_stab*1"], pattern:"sparse", prob:.2},
       form:"wave" },
     newage: { label:"Crystal Greenhouse", info:"luminous major-key drift: a gentle sine/flute MELODY breathing (rubato) over moving major-7 changes — choir + strings + harp, frogs at dusk outside the glass",   // 2026-07 wash-trio deep pass: the MELODIC one. Its identity claim ambient/downtempo can't share is a PRESENT melody over MOVING harmony that BREATHES — the only wash-cluster genre with rubato
       bpm:[58,76], swing:[0,.06], humanize:[.2,.4],
@@ -1697,7 +1767,7 @@
       drums:{kickModel:["boom","808"],snareModel:["noise"],hatModel:["noise"],kick:[.9,1.15],snare:[.45,.66],hat:[.6,.9],tune:[.9,1.05],send:[.2,.35],dsend:[.05,.2],kit:"jazz"},   // snare trimmed (2026-07): brushes, not backbeat — keeps snareBalance under the exotica fence with the kit-quote fills; SAMPLED jazz kit (tiki combo)
       fx:{reverb:[.55,.7], delayBeats:[.5,.75], delayFb:[.2,.35], delayCut:[2200,3200], pump:[0,0], crackle:[0,.15], lowcut:[0,25], highcut:[0,0], comp:[.1,.3], grit:[0,0]},
       found:{role:"bed", vol:[.2,.32], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[3500,5200], sources:["hydrophone","shibuya","vx_timelady"]},   // lagoon water + lounge crowd near natural pitch, bright and present
-      stab:["off"], hits:{sources:["horns_78","vox_b"], pattern:"sparse", prob:.35},
+      stab:["off"], hits:{sources:["pool:horn_stab*1","pool:vocal_stab*1"], pattern:"sparse", prob:.35},
       // 2026-07 exotica deep pass — THE AVIARY MADE LITERAL: the Les Baxter / Martin Denny
       // signature is the band ANSWERING the melodic phrase with an animal call. Now a real
       // sampleEvents "response" layer (a birdcall on the back half of each chord bar, ~40% of
@@ -1720,7 +1790,7 @@
       drums:{kickModel:["909","808"],snareModel:["crack","clap"],hatModel:["metal"],kick:[1.3,1.55],snare:[.7,.95],hat:[.8,1.15],tune:[.8,.9],send:[.1,.2],dsend:[.15,.35]},   // tuned DOWN — the kit as machinery
       fx:{reverb:[.45,.65], delayBeats:[.5,.75], delayFb:[.35,.5], delayCut:[1800,2800], pump:[.1,.3], crackle:[0,.08], lowcut:[35,50], highcut:[0,0], comp:[.5,.7], grit:[.5,.8], jux:[.3,.55]},
       found:{role:"chops", vol:[.16,.26], pitch:[.85,1], stretch:[.4,.6], cutoff:[2500,4000], sources:["factory","factory","vx_conet_poacher"]},   // siderurgia, sliced; the numbers station cuts through
-      stab:["offbeat","sparse"], hits:{sources:["sp_system","sp_pressure","rave_d"], pattern:"dub", prob:.55},
+      stab:["offbeat","sparse"], hits:{sources:["sp_system","sp_pressure","pool:rave_stab*1"], pattern:"dub", prob:.55},
       form:"dj" },
     spokenword: { label:"Coffeehouse Oracle", info:"poets narrating through the dust: a quiet head-nod beat, piano color, the human voice as the lead instrument — every prophecy read from a napkin",   // SAMPLE-FORWARD: the VOICE leads
       bpm:[72,96], swing:[.05,.14], humanize:[.2,.4],
@@ -1743,7 +1813,7 @@
       drums:{kickModel:["909"],snareModel:["noise","clap"],hatModel:["noise"],kick:[1.1,1.35],snare:[.7,.95],hat:[.8,1.15],tune:[1,1.15],send:[.05,.12],dsend:[0,.1]},
       fx:{reverb:[.3,.45], delayBeats:[.375,.5], delayFb:[.15,.3], delayCut:[3000,4500], pump:[0,.15], crackle:[0,0], lowcut:[0,0], highcut:[0,0], comp:[.3,.5], grit:[.15,.35], jux:[.25,.45]},   // SID-chip hard-ish channel panning
       found:{role:"bed", vol:[.04,.08], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2000,3200], sources:["shibuya","vx_xminusone"]},
-      stab:["off","sparse"], hits:{sources:["rave_a","sp_energy"], pattern:"offbeat", prob:.4},
+      stab:["off","sparse"], hits:{sources:["pool:rave_stab*1","sp_energy"], pattern:"offbeat", prob:.4},
       form:"pop" },
     chinawave: { label:"Chinawave", info:"socialist 1950s China wave: march snare, pentatonic brass over choir, shellac crackle, The East Is Red through the wire recorder",   // SAMPLE-FORWARD: the massed chorus IS the bed
       bpm:[96,118], swing:[0,.04], humanize:[.05,.18],
@@ -1784,7 +1854,7 @@
       drums:{kickModel:["boom","909"],snareModel:["noise","clap"],hatModel:["noise"],kick:[1.05,1.25],snare:[.75,1],hat:[.9,1.2],tune:[.95,1.1],send:[.12,.22],dsend:[.03,.1],kit:"power"},   // SAMPLED power kit — the big 80s city-pop drums
       fx:{reverb:[.35,.5], delayBeats:[.5,.75], delayFb:[.2,.32], delayCut:[2800,4000], pump:[0,.1], crackle:[0,.1], lowcut:[25,40], highcut:[0,0], comp:[.1,.24], grit:[0,0]},   // light-touch master (transitwave is the COMPRESSED one)
       found:{role:"bed", vol:[.07,.13], pitch:[.9,1], stretch:[.45,.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station","highway_night"]},   // the city at NATURAL pitch, way back
-      stab:["off"], hits:{sources:["sp_nightdrive","vox_a"], pattern:"sparse", prob:.3},
+      stab:["off"], hits:{sources:["sp_nightdrive","pool:vocal_stab*1"], pattern:"sparse", prob:.3},
       form:"pop" },
     shibuyakei: { label:"Shibuya-kei", info:"twee 60s-pop futurism: bells + plucks skipping over doo-wop changes, a real swing, sunshine bright",   // SYNTH-FORWARD: toy orchestration, zero dust
       reverbColor:"dattorro",   // effects audit C: the bright 60s sunshine-pop plate (EMT-140) over the twee bells — the Pizzicato-Five gloss; zero rng, dominant-parent
@@ -1797,7 +1867,7 @@
       drums:{kickModel:["boom"],snareModel:["noise","clap"],hatModel:["noise"],kick:[.95,1.15],snare:[.7,.95],hat:[1,1.3],tune:[1,1.15],send:[.15,.25],dsend:[.05,.12]},
       fx:{reverb:[.35,.5], delayBeats:[.375,.5], delayFb:[.15,.3], delayCut:[3000,4200], pump:[0,.08], crackle:[0,.08], lowcut:[20,35], highcut:[0,0], comp:[.15,.35], grit:[0,0]},
       found:{role:"bed", vol:[.06,.12], pitch:[.95,1.05], stretch:[.45,.6], cutoff:[2200,3400], sources:["shibuya","tokyo_station","vx_timelady"]},
-      stab:["off"], hits:{sources:["sp_shopping","vox_a","rave_b"], pattern:"sparse", prob:.4},
+      stab:["off"], hits:{sources:["sp_shopping","pool:vocal_stab*1","pool:rave_stab*1"], pattern:"sparse", prob:.4},
       form:"pop" },
     bossanova: { label:"Balcony Whisper", info:"a soft seaside swing: nylon-string plucks over ii-V changes, rim-click clave, a kit played at the volume of a secret",   // acoustic-leaning: the guitar IS the song
       timeFeel:{ pushPull:{ bass:.01 } },   // effects audit C: a subtle behind-the-beat sway on the bass (the nylon guitar leans back) — swing .08-.18 already carries most of it, this is the gentlest structural nudge. Zero-rng dominant-parent, bass timing unread. HALVED 2026-07-04 (Paul: went a little too far on timing feel)
@@ -1809,7 +1879,7 @@
       drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.85,1.05],snare:[.5,.7],hat:[.5,.8],tune:[.95,1.1],send:[.12,.25],dsend:[0,.08],kit:"acoustic"},   // SAMPLED acoustic kit under the nylon-string bossa combo
       fx:{reverb:[.4,.55], delayBeats:[.5,.75], delayFb:[.1,.22], delayCut:[2400,3400], pump:[0,0], crackle:[.08,.25], lowcut:[0,25], highcut:[9000,13000], comp:[.1,.25], grit:[0,0]},
       found:{role:"bed", vol:[.08,.16], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["shibuya","tokyo_station","vx_dickinson"]},
-      stab:["off"], hits:{sources:["horns_78","vox_b"], pattern:"sparse", prob:.25},
+      stab:["off"], hits:{sources:["pool:horn_stab*1","pool:vocal_stab*1"], pattern:"sparse", prob:.25},
       form:"pop" },
     idm: { label:"Solder Ballet", info:"drum tangles tied in euclidean knots that never repeat, detuned FM bells, a dry close mix — machine precision doing an impression of clumsiness",   // SYNTH-FORWARD: the PATTERN is the artist
       bpm:[88,116], swing:[0,.05], humanize:[.3,.5],
@@ -1823,7 +1893,7 @@
       drums:{kickModel:["808","909"],snareModel:["crack","noise"],hatModel:["metal","noise"],kick:[1.05,1.3],snare:[.6,.85],hat:[.7,1],tune:[.9,1.1],send:[.05,.15],dsend:[.15,.35]},
       fx:{reverb:[.3,.45], delayBeats:[.375,.75], delayFb:[.3,.45], delayCut:[2200,3400], pump:[0,.1], crackle:[0,.1], lowcut:[25,40], highcut:[0,0], comp:[.3,.5], grit:[.15,.4], jux:[.4,.7]},   // jux MAX — the stereo field disagrees with itself
       found:{role:"chops", vol:[.1,.18], pitch:[.85,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["factory","vx_wwvh","vx_conet_poacher"]},
-      stab:["off","sparse"], hits:{sources:["sp_system","sp_rewind","vox_c"], pattern:"sparse", prob:.45},
+      stab:["off","sparse"], hits:{sources:["sp_system","sp_rewind","pool:vocal_stab*1"], pattern:"sparse", prob:.45},
       form:"pop" },
     electro: { label:"Mainframe Strut", info:"1982 machine groove: an 808 boom under euclid tresillo claps, the robot on lead vocal through the vocoder — pop and lock at the mainframe",   // SYNTH-FORWARD: the drum machine is the lead instrument
       bpm:[118,130], swing:[0,.06], humanize:[0,.12],
@@ -1837,7 +1907,7 @@
       drums:{kickModel:["808"],snareModel:["clap"],hatModel:["metal","noise"],kick:[1.2,1.4],snare:[.85,1.1],hat:[.8,1.1],tune:[1,1.1],send:[.05,.15],dsend:[.1,.25]},
       fx:{reverb:[.3,.45], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[2600,3800], pump:[.02,.1], crackle:[0,.1], lowcut:[30,45], highcut:[0,0], comp:[.4,.6], grit:[.1,.3], jux:[.15,.35]},   // 2026-07 dominance fix: pump cap .2->.1 — the anchor's own claim ("techno pumps, electro doesn't") rendered up to .19, INSIDE hotsaucecore's pump[.181,.652]w3 floor (seed 5 lost 98-99, seed 2 nearly). Dry machine funk pumps ~0; renders now .03-.09, failing every pump-floor rival (hotsaucecore/ikeacore/aldente) on a weight-3 axis
       found:{role:"chops", vol:[.08,.15], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2400,3800], sources:["factory","vx_apollo","vx_wwvh","stml_chop_a","stml_chop_c4"]},
-      stab:["offbeat","sparse"], hits:{sources:["sp_system","sp_energy","rave_a","stml_hit_03"], pattern:"offbeat", prob:.6},
+      stab:["offbeat","sparse"], hits:{sources:["sp_system","sp_energy","pool:rave_stab*1","stml_hit_03"], pattern:"offbeat", prob:.6},
       form:"dj" },   // 2026-07 dominance fix: pop->dj — the 1982 electro record is a 12" CLUB SINGLE (warmup/build/main/peak plateau), not verse-chorus pop. MEASURED: pop's 3 drumless sections (intro/bridge/outro) diluted whole-track hatDensity to 1.16-1.28 vs electro's own [1.5,2.8] floor (active sections render 1.9/beat) — the self-score sat at 98-99 every seed, inside reach of any 99 rival (heavymetal/hotsaucecore/italo each took a seed). dj's near-full plateau restores the crisp 16th machine hats the kit already plays
     miamibass: { label:"Trunk Parade", info:"808 subs rattling the license plate: fast stuttering hats, chant hits, the low end promoted to melody — heard three blocks before it is seen",   // SYNTH-FORWARD: the 808 sub is the hook
       bpm:[100,128], swing:[0,.08], humanize:[0,.12],
@@ -1848,7 +1918,7 @@
       drums:{kickModel:["808"],snareModel:["clap","crack"],hatModel:["noise","metal"],kick:[1.35,1.6],snare:[.75,1],hat:[.9,1.2],tune:[1,1.15],send:[.05,.12],dsend:[.05,.15]},
       fx:{reverb:[.25,.4], delayBeats:[.375,.5], delayFb:[.2,.35], delayCut:[2800,4000], pump:[.05,.2], crackle:[0,.08], lowcut:[25,38], highcut:[0,0], comp:[.25,.45], grit:[.1,.25], jux:[.1,.3]},
       found:{role:"bed", vol:[.06,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[1800,3000], sources:["highway_night","shibuya"]},
-      stab:["offbeat","sparse"], hits:{sources:["vox_a","vox_c","sp_energy","stml_hit_01","stml_hit_b3"], pattern:"offbeat", prob:.7},
+      stab:["offbeat","sparse"], hits:{sources:["pool:vocal_stab*2","sp_energy","stml_hit_01","stml_hit_b3"], pattern:"offbeat", prob:.7},
       form:"pop" },
     phonk: { label:"Graveyard Cassette", info:"tape menace from a glovebox: dark cowbell-plucks over 808s, drowned in hiss, pitched-down voices circling in the smoke",   // SAMPLE-FORWARD: the dusty vox hits + tape filth
       bpm:[126,142], swing:[0,.1], humanize:[.1,.25],
@@ -1861,7 +1931,7 @@
       drums:{kickModel:["808"],snareModel:["crack","clap"],hatModel:["noise"],kick:[1.25,1.5],snare:[.8,1.05],hat:[.7,1],tune:[.85,1],send:[.1,.2],dsend:[.1,.25]},
       fx:{reverb:[.35,.5], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[1800,2800], pump:[.05,.2], crackle:[.35,.6], lowcut:[25,40], highcut:[7000,10000], comp:[.35,.6], grit:[.2,.4]},   // TAPE: heavy hiss + soft top
       found:{role:"bed", vol:[.1,.18], pitch:[.7,.82], stretch:[.45,.6], cutoff:[1600,2600], sources:["vx_suspense","highway_night","factory"]},   // pitched-DOWN radio voices — the Memphis tape ghost
-      stab:["off","sparse"], hits:{sources:["blues_vox_78","vox_c","sp_slowdown"], pattern:"dub", prob:.7, wet:true},
+      stab:["off","sparse"], hits:{sources:["blues_vox_78","pool:vocal_stab*1","sp_slowdown"], pattern:"dub", prob:.7, wet:true},
       form:"pop" },
     witchhouse: { label:"Velvet Hex", info:"the party slowed to a crawl and cursed: 808s at half speed, pitched-down voices, choirs echoing in a cathedral that is not on any map",   // SAMPLE-FORWARD: the slowed voice is the ghost
       reverbColor:"greyhole",   // fx wings: the cathedral-of-reverb smear
@@ -1875,7 +1945,7 @@
       fx:{reverb:[.85,.95], delayBeats:[.75,1.5], delayFb:[.4,.6], delayCut:[1500,2500], pump:[0,.1], crackle:[0,.15], lowcut:[0,25], highcut:[0,0], comp:[.2,.4], grit:[.1,.3]},
       found:{role:"bed", vol:[.2,.32], pitch:[.55,.7], stretch:[.45,.6], cutoff:[1800,3000], sources:["vx_conet_swedish","vx_blake","vx_timelady"]},   // the haunted music box + tyger tyger + the time lady, ALL slowed to a crawl
       sampleEvents:[{ pool:["vx_blake","vx_conet_swedish"], placement:"response", gain:.42, treatment:{pitch:.42, cutoff:1700, rsend:.62, dsend:.42} }],   // 2026-07 wash-trio deep pass (KERNEL-V4 Phase-4 role): THE GHOST IN THE CATHEDRAL — the pitched-DOWN voice (tyger-tyger / the numbers-station music box dragged to .42, below even the bed's .55 crawl, lowpassed to a moan and drenched) ANSWERS on the back half of each drone bar. This is witchhouse's bespoke identity claim — the slowed voice IS the genre (the audit's "needs pitched-down vox"), now a real sample-event layer, not just a bed
-      stab:["off"], hits:{sources:["vox_c","sp_pressure"], pattern:"dub", prob:.5, wet:true},
+      stab:["off"], hits:{sources:["pool:vocal_stab*1","sp_pressure"], pattern:"dub", prob:.5, wet:true},
       form:"pop" },
     mallsoft: { label:"Mallsoft", info:"the DEAD MALL: muzak heard from two stores away — escalator stopped, one chord every four bars, the whole tape drowned in the empty-atrium reverb; the time-lady and the fountain louder than the band",   // SAMPLE-FORWARD: the WASH is the architecture
       reverbColor:"dattorro",   // fx wings: DELIBERATE — the bright tiled-atrium PLATE (a big diffuse hall of hard surfaces), NOT dinosynth/doomdrone's greyhole dark-swamp smear. The mall is reverberant and bright, not murky
@@ -1915,7 +1985,7 @@
       drums:{kickModel:["909"],snareModel:["clap","crack"],hatModel:["metal","noise"],kick:[1.5,1.8],snare:[.7,.95],hat:[.6,.9],tune:[1.05,1.2],send:[.05,.12],dsend:[.05,.15]},   // the kick DISTORTED LOUD (grit does the rest)
       fx:{reverb:[.25,.4], delayBeats:[.375,.5], delayFb:[.25,.4], delayCut:[2200,3400], pump:[.4,.7], crackle:[0,.05], lowcut:[30,45], highcut:[0,0], comp:[.6,.85], grit:[.7,.95], jux:[.15,.35]},
       found:{role:"chops", vol:[.1,.18], pitch:[.9,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["factory","vx_xminusone"]},
-      stab:["rave","offbeat"], hits:{sources:["rave_a","rave_c","bb_stab_a","sp_energy","stml_hit_01","stml_hit_b3"], pattern:"offbeat", prob:.8},
+      stab:["rave","offbeat"], hits:{sources:["pool:rave_stab*2","bb_stab_a","sp_energy","stml_hit_01","stml_hit_b3"], pattern:"offbeat", prob:.8},
       introMode:"off",   // Paul's optional-intro pilot: gabber is brutality — it opens COLD on the machine (drops the dj "warmup" ground node; the solver regrows the groove to still land ~180s). Margin 19 absorbs the bedUse/density shift; matrix-gated.
       form:"dj" },
     psytrance: { label:"Third Eye Turbine", info:"145 and fully airborne: the rolling 16th bassline that never stops, phrygian squelch, full power all night — the forest floor becomes a circuit board",   // SYNTH-FORWARD: the bassline is the drug
@@ -1929,7 +1999,7 @@
       drums:{kickModel:["909"],snareModel:["clap","noise"],hatModel:["noise","metal"],kick:[1.3,1.5],snare:[.5,.7],hat:[.8,1.1],tune:[1,1.1],send:[.08,.16],dsend:[.05,.15]},
       fx:{reverb:[.45,.6], delayBeats:[.375,.375], delayFb:[.4,.55], delayCut:[2400,3600], pump:[.35,.6], crackle:[0,.04], lowcut:[30,45], highcut:[0,0], comp:[.5,.7], grit:[.1,.3], jux:[.2,.4]},   // effects audit B11: hard-panned/rotating stereo percussion — psy's signature width. jux is matrix-safe
       found:{role:"bed", vol:[.06,.12], pitch:[.75,.9], stretch:[.45,.6], cutoff:[1800,3000], sources:["highway_night","factory"]},   // the night road + the generator behind the rig
-      stab:["off","sparse"], hits:{sources:["rave_c","sp_energy"], pattern:"sparse", prob:.35},
+      stab:["off","sparse"], hits:{sources:["pool:rave_stab*1","sp_energy"], pattern:"sparse", prob:.35},
       form:"dj" },
     minimal: { label:"Five Small Sounds", info:"the air let out on purpose: a kick, five tiny percs, a dry room — every event audible, every absence load-bearing",   // SYNTH-FORWARD: subtraction as composition
       bpm:[120,128], swing:[0,.05], humanize:[0,.1],
@@ -1955,7 +2025,7 @@
       drums:{kickModel:["909","808"],snareModel:["clap"],hatModel:["noise"],kick:[1.15,1.35],snare:[.5,.75],hat:[.7,1],tune:[.95,1.05],send:[.1,.2],dsend:[.05,.15]},
       fx:{reverb:[.5,.65], delayBeats:[.75,.75], delayFb:[.3,.45], delayCut:[2200,3200], pump:[.15,.35], crackle:[.05,.2], lowcut:[30,45], highcut:[0,0], comp:[.35,.55]},
       found:{role:"bed", vol:[.07,.13], pitch:[.85,1], stretch:[.45,.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station","vx_timelady"]},
-      stab:["off","sparse"], hits:{sources:["vox_b","sp_herenow"], pattern:"sparse", prob:.35},
+      stab:["off","sparse"], hits:{sources:["pool:vocal_stab*1","sp_herenow"], pattern:"sparse", prob:.35},
       form:"dj" },
     coldwave: { label:"Overcoat Distance", info:"gloom at arm's length: bass-forward triads, dry drums, cassette hiss — recorded in an unheated room and proud of it",   // SYNTH-FORWARD: dry = the aesthetic
       bpm:[100,118], swing:[0,.06], humanize:[.1,.25],
@@ -1968,7 +2038,7 @@
       drums:{kickModel:["boom","909"],snareModel:["noise"],hatModel:["noise"],kick:[1.15,1.35],snare:[.5,.68],hat:[.7,1],tune:[.9,1.05],send:[.05,.12],dsend:[0,.08]},   // DRY drums — no gated wash; 2026-07 deep pass: kick UP + snare recessed = the BASS-FORWARD post-punk mix (the bass leads, the drum machine sits behind it), fencing chinawave's forward "march snare UP" (snareBalance renders .30-.45 vs chinawave's .74-.90)
       fx:{reverb:[.18,.32], delayBeats:[.5,.5], delayFb:[.2,.35], delayCut:[2200,3200], pump:[0,.1], crackle:[.15,.35], lowcut:[25,40], highcut:[0,0], comp:[.25,.45], grit:[.05,.2]},   // cassette hiss instead of reverb
       found:{role:"bed", vol:[.06,.12], pitch:[.8,.95], stretch:[.45,.6], cutoff:[1500,2500], sources:["factory","highway_night"]},
-      stab:["off"], hits:{sources:["sp_pressure","vox_c"], pattern:"sparse", prob:.3},
+      stab:["off"], hits:{sources:["sp_pressure","pool:vocal_stab*1"], pattern:"sparse", prob:.3},
       form:"pop" },
     ebm: { label:"Machine Hall Drill", info:"16th-note bass stabs like pistons, claps that snap to attention, a shout down the machine hall — exercise as ideology",   // SYNTH-FORWARD: the sequencer is the muscle
       bpm:[118,130], swing:[0,.04], humanize:[0,.1],
@@ -1981,7 +2051,7 @@
       drums:{kickModel:["909"],snareModel:["clap","crack"],hatModel:["metal"],kick:[1.3,1.5],snare:[.85,1.1],hat:[.7,1],tune:[.9,1.05],send:[.05,.12],dsend:[.1,.25]},
       fx:{reverb:[.3,.45], delayBeats:[.5,.5], delayFb:[.25,.4], delayCut:[2200,3400], pump:[.2,.45], crackle:[0,.06], lowcut:[30,45], highcut:[0,0], comp:[.5,.7], grit:[.4,.7], jux:[.15,.35]},
       found:{role:"bed", vol:[.08,.15], pitch:[.75,.9], stretch:[.45,.6], cutoff:[1800,3000], sources:["factory","vx_conet_poacher"]},   // the plant hums BEHIND (industrial owns the chops)
-      stab:["offbeat","sparse"], hits:{sources:["sp_pressure","sp_system","rave_d"], pattern:"dub", prob:.6},
+      stab:["offbeat","sparse"], hits:{sources:["sp_pressure","sp_system","pool:rave_stab*1"], pattern:"dub", prob:.6},
       form:"dj" },
     krautrock: { label:"Eternal Merge Lane", info:"the motorik pulse in the fast lane: organ drones over a beat that never varies, one chord held until the odometer rolls over",   // SYNTH-FORWARD: repetition is the destination
       bpm:[102,118], swing:[0,.05], humanize:[.05,.18],
@@ -1994,7 +2064,7 @@
       drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[1.1,1.3],snare:[.55,.8],hat:[.8,1.1],tune:[.95,1.05],send:[.08,.16],dsend:[0,.08]},   // dry live-room motorik
       fx:{reverb:[.3,.45], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[2400,3600], pump:[0,.1], crackle:[.1,.25], lowcut:[25,40], highcut:[0,0], comp:[.25,.45], grit:[.05,.2]},
       found:{role:"bed", vol:[.15,.25], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["highway_night","factory"]},   // the autobahn ITSELF, near natural pitch
-      stab:["off"], hits:{sources:["sp_herenow","vox_a"], pattern:"sparse", prob:.25},
+      stab:["off"], hits:{sources:["sp_herenow","pool:vocal_stab*1"], pattern:"sparse", prob:.25},
       form:"dj" },
     newjack: { label:"Patent Leather Bounce", info:"the bounce in a pressed suit: swinging kicks under HUGE claps, FM synth-bass, every element grinning at the camera",   // SYNTH-FORWARD: the drum program is the producer's signature
       bpm:[100,115], swing:[.16,.28], humanize:[.1,.25],
@@ -2007,7 +2077,7 @@
       drums:{kickModel:["909","boom"],snareModel:["clap"],hatModel:["noise"],kick:[1.1,1.3],snare:[1,1.25],hat:[.8,1.1],tune:[.95,1.1],send:[.15,.25],dsend:[.05,.15]},   // the CLAP is the star
       fx:{reverb:[.35,.5], delayBeats:[.375,.5], delayFb:[.2,.35], delayCut:[2600,3800], pump:[.05,.2], crackle:[0,.12], lowcut:[30,45], highcut:[0,0], comp:[.35,.55]},
       found:{role:"bed", vol:[.06,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[1800,2800], sources:["shibuya","vx_timelady"]},
-      stab:["off","sparse"], hits:{sources:["vox_a","sp_rhythm","rave_b"], pattern:"offbeat", prob:.6},
+      stab:["off","sparse"], hits:{sources:["pool:vocal_stab*1","sp_rhythm","pool:rave_stab*1"], pattern:"offbeat", prob:.6},
       form:"pop" },
     breakcore: { label:"Shrapnel Lullaby", info:"the break at 190, shredded: euclid kicks fighting the chops for the wheel, rave hits everywhere, maximum jux — a drum solo having a beautiful emergency",   // SAMPLE-FORWARD: the break, weaponized
       bpm:[172,198], swing:[0,.06], humanize:[.2,.4],
@@ -2021,7 +2091,7 @@
       drums:{kickModel:["909","808"],snareModel:["crack"],hatModel:["noise","metal"],kick:[1.3,1.55],snare:[.8,1.05],hat:[.5,.8],tune:[1.05,1.2],send:[.05,.12],dsend:[.15,.35]},
       fx:{reverb:[.3,.5], delayBeats:[.375,.75], delayFb:[.35,.5], delayCut:[2000,3200], pump:[.05,.25], crackle:[0,.15], lowcut:[25,40], highcut:[0,0], comp:[.55,.8], grit:[.4,.7], jux:[.45,.75]},   // stereo chaos
       found:{role:"break", vol:[.32,.45], pitch:[1,1], stretch:[.5,.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175","stml_loop_148a","stml_loop_157a","stml_loop_157b","stml_loop_161a","stml_loop_167a"]},   // the break LOUD, wide open, re-sliced every chord
-      stab:["rave","offbeat"], hits:{sources:["rave_a","rave_d","bb_stab_b","sp_rewind"], pattern:"dub", prob:.85},
+      stab:["rave","offbeat"], hits:{sources:["pool:rave_stab*2","bb_stab_b","sp_rewind"], pattern:"dub", prob:.85},
       introMode:"off",   // Paul's optional-intro pilot (drop form): no wind-up — the amen slams in cold (drops the drop "intro" ground node; solver regrows the drops to hold ~180s). Margin +6.2 vs jungle absorbs the -0.2 shift; matrix-gated.
       form:"drop" },
     acidhouse: { label:"Smiley Chemistry", info:"1988 in a single silver box: the 303 squelching over a dusty four-on-the-floor, everything else smiley-face simple — one machine misused into a religion",   // SYNTH-FORWARD: one machine, misused, forever
@@ -2034,7 +2104,7 @@
       drums:{kickModel:["909"],snareModel:["clap"],hatModel:["noise"],kick:[1.15,1.35],snare:[1,1.25],hat:[.9,1.2],tune:[.95,1.1],send:[.1,.2],dsend:[.05,.15]},
       fx:{reverb:[.35,.5], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[2400,3600], pump:[.3,.5], crackle:[.1,.28], lowcut:[30,45], highcut:[0,0], comp:[.4,.6]},   // warehouse dust on the record
       found:{role:"bed", vol:[.06,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station"]},
-      stab:["rave","offbeat"], hits:{sources:["rave_b","rave_c","sp_rhythm"], pattern:"offbeat", prob:.7},
+      stab:["rave","offbeat"], hits:{sources:["pool:rave_stab*2","sp_rhythm"], pattern:"offbeat", prob:.7},
       form:"dj" },
     surfrock: { label:"Reverb Tank Riptide", info:"twang from inside the reverb tank: tremolo guitar over fast doo-wop changes, drums crashing like breakers, 45rpm dust in the spray",   // guitar-FORWARD: the spring tank is the room
       reverbColor:"spring",   // fx wings: the boing/flutter spring tank IS surf rock's room
@@ -2048,7 +2118,7 @@
       drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[1,1.2],snare:[.85,1.1],hat:[.8,1.1],tune:[.95,1.1],send:[.2,.32],dsend:[0,.08]},
       fx:{reverb:[.4,.55], delayBeats:[.375,.375], delayFb:[.15,.28], delayCut:[2600,3800], pump:[0,.08], crackle:[.15,.35], lowcut:[25,40], highcut:[0,0], comp:[.2,.4], grit:[0,.1]},   // short slapback = the spring tank
       found:{role:"bed", vol:[.1,.18], pitch:[.9,1], stretch:[.45,.6], cutoff:[2400,3800], sources:["hydrophone","highway_night"]},   // water column + highway wash read as surf, near natural pitch
-      stab:["off"], hits:{sources:["vox_a","sp_rhythm"], pattern:"sparse", prob:.4},
+      stab:["off"], hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"sparse", prob:.4},
       form:"pop" },
     spacelounge: { label:"Space lounge", info:"bachelor-pad cosmos: theremin-vibrato sine over organ chords, Apollo crackle, a very dry martini",   // sample-mid: mission audio as furniture
       reverbColor:"dattorro",   // effects audit B9: space-age bachelor-pad pop (Esquivel, Les Baxter) is drenched in a BRIGHT plate/chamber — the martini cosmos, not a dark generic hall. Zero rng, dominant-parent
@@ -2082,7 +2152,7 @@
       drums:{kickModel:["808","boom"],snareModel:["crack"],hatModel:["noise"],kick:[1.1,1.3],snare:[.7,.95],hat:[.9,1.2],tune:[1.05,1.2],send:[.1,.2],dsend:[.1,.25]},   // tuned UP = the tek ringing
       fx:{reverb:[.45,.6], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[2200,3400], pump:[0,.1], crackle:[.05,.2], lowcut:[25,40], highcut:[0,0], comp:[.25,.45]},
       found:{role:"bed", vol:[.08,.15], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2000,3200], sources:["shibuya","highway_night"]},   // HONESTY: no Arab-world recording on the shelf yet — generic city/night beds sit far back
-      stab:["off"], hits:{sources:["vox_b","sp_rhythm"], pattern:"sparse", prob:.4},
+      stab:["off"], hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"sparse", prob:.4},
       form:"pop" },
     tango: { label:"Knife Ballroom", info:"the habanera cell as law: bandoneon and nylon guitar over staccato piano, dry marcato strings, 78rpm dust — a dance with the manners of a duel, silence used like a blade",   // acoustic-FORWARD: 2026-07 ear-fix — the SYNTH voices are out of the front line
       reverbColor:"fdn",   // fx wings: a dry room (freeverb), not a wash — the salon
@@ -2097,7 +2167,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.8,.95], stretch:[.45,.6], cutoff:[1800,2800], sources:["vx_suspense","tokyo_station"]},   // old-radio air stands in, low (the bandoneon itself is real now)
       rubato:{depth:[.02,.035], periodBars:[2,4], prob:.5},   // half the seeds breathe — tango rubato is real but the habanera stays the law
       transforms:{ pool:["rest"], rate:0.05 },   // Phase 2: "dramatic silence" as law — very rarely (5%) the bandoneon line drops out for a bar; the habanera bass carries it
-      stab:["off"], hits:{sources:["horns_78","blues_vox_78"], pattern:"sparse", prob:.35},
+      stab:["off"], hits:{sources:["pool:horn_stab*1","blues_vox_78"], pattern:"sparse", prob:.35},
       form:"pop" },
     afrobeat: { label:"Percussion Parliament", info:"the long groove in session: interlocking euclid percussion, organ stabs on a dorian vamp, horn-section hits — one chord held until it means something",   // groove-FORWARD: Fela's arithmetic
       bpm:[100,114], swing:[.04,.12], humanize:[.15,.3],   // below disco's 106-124 core
@@ -2111,7 +2181,7 @@
       drums:{kickModel:["boom","808"],snareModel:["noise","crack"],hatModel:["noise"],kick:[1.05,1.25],snare:[.6,.85],hat:[1,1.3],tune:[1,1.1],send:[.08,.16],dsend:[.05,.12]},
       fx:{reverb:[.3,.45], delayBeats:[.5,.75], delayFb:[.2,.35], delayCut:[2600,3800], pump:[0,.1], crackle:[.1,.25], lowcut:[25,40], highcut:[0,0], comp:[.3,.5]},
       found:{role:"bed", vol:[.1,.18], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2200,3400], sources:["highway_night","shibuya"]},   // HONESTY: no Lagos shelf — night traffic + street stand in quietly
-      stab:["off","sparse"], hits:{sources:["horns_78","sp_rhythm","vox_a"], pattern:"offbeat", prob:.7},   // the 78rpm horns finally play a section part
+      stab:["off","sparse"], hits:{sources:["pool:horn_stab*1","sp_rhythm","pool:vocal_stab*1"], pattern:"offbeat", prob:.7},   // the 78rpm horns finally play a section part
       form:"dj" },
     desertblues: { label:"Horizon Lope", info:"guitar hypnosis at a camel's lope: pentatonic loops that refuse to resolve, handclap air, the top end worn away by sand and tape",   // guitar-FORWARD: one riff, circling
       bpm:[84,104], swing:[.06,.16], humanize:[.2,.4],
@@ -2123,7 +2193,7 @@
       drums:{kickModel:["808","boom"],snareModel:["noise"],hatModel:["noise"],kick:[1,1.2],snare:[.55,.8],hat:[.6,.9],tune:[.9,1.05],send:[.1,.2],dsend:[.05,.15]},
       fx:{reverb:[.35,.5], delayBeats:[.5,.75], delayFb:[.2,.35], delayCut:[2000,3000], pump:[0,.05], crackle:[.2,.45], lowcut:[0,30], highcut:[8000,12000], comp:[.15,.35]},   // tape-worn: hiss + soft top
       found:{role:"bed", vol:[.12,.2], pitch:[.8,.95], stretch:[.45,.6], cutoff:[1800,3000], sources:["highway_night","hvac_hum"]},   // HONESTY: no Sahara shelf — wind-adjacent beds pitched down
-      stab:["off"], hits:{sources:["blues_vox_78","vox_b"], pattern:"sparse", prob:.4},
+      stab:["off"], hits:{sources:["blues_vox_78","pool:vocal_stab*1"], pattern:"sparse", prob:.4},
       form:"pop" },
     // ---- harder cluster (fuzz/grit the engine can voice HONESTLY — riffs, not fake shredding) ----
     sludgemetal: { label:"Molasses Avalanche", info:"downtuned fuzz crawling at 60: halftime stomp, a BIG backbeat, the amplifier one song from death and playing like it knows",   // fuzz-FORWARD: the riff exhales, the room shakes
@@ -2138,7 +2208,7 @@
       drums:{kickModel:["boom","808"],snareModel:["noise","crack"],hatModel:["noise"],kick:[1.35,1.6],snare:[.9,1.15],hat:[.4,.7],tune:[.75,.9],send:[.15,.28],dsend:[.05,.15]},   // snare UP — the stomp (vs doomdrone's buried kit)
       fx:{reverb:[.4,.6], delayBeats:[.75,1], delayFb:[.25,.4], delayCut:[1600,2600], pump:[0,.1], crackle:[.05,.2], lowcut:[0,25], highcut:[0,0], comp:[.5,.75], grit:[.65,.95]},   // grit MAXED
       found:{role:"bed", vol:[.15,.25], pitch:[.55,.7], stretch:[.45,.6], cutoff:[1400,2400], sources:["factory","highway_night"]},   // the plant, pitched into the swamp
-      stab:["off"], hits:{sources:["sp_pressure","vox_c"], pattern:"sparse", prob:.3},
+      stab:["off"], hits:{sources:["sp_pressure","pool:vocal_stab*1"], pattern:"sparse", prob:.3},
       form:"pop" },
     industrialmetal: { label:"Hydraulic Tantrum", info:"the machine grows a backbeat: halftime slam, fuzz stabs bolted to the grid, everything quantized and furious — rage with a maintenance schedule",   // fuzz-FORWARD sibling of EBM: SLAM where EBM pistons
       bpm:[100,126], swing:[0,.05], humanize:[0,.12],
@@ -2151,7 +2221,7 @@
       drums:{kickModel:["909","808"],snareModel:["crack","clap"],hatModel:["metal"],kick:[1.3,1.55],snare:[1,1.3],hat:[.5,.8],tune:[.85,1],send:[.1,.2],dsend:[.1,.25]},   // the SLAM snare
       fx:{reverb:[.35,.5], delayBeats:[.5,.5], delayFb:[.25,.4], delayCut:[2000,3000], pump:[.1,.3], crackle:[0,.1], lowcut:[25,40], highcut:[0,0], comp:[.55,.8], grit:[.6,.9], jux:[.2,.45]},
       found:{role:"bed", vol:[.12,.2], pitch:[.7,.85], stretch:[.45,.6], cutoff:[1600,2800], sources:["factory","vx_conet_poacher"]},
-      stab:["off","sparse"], hits:{sources:["sp_system","sp_pressure","rave_d"], pattern:"dub", prob:.6},
+      stab:["off","sparse"], hits:{sources:["sp_system","sp_pressure","pool:rave_stab*1"], pattern:"dub", prob:.6},
       form:"pop" },
     darksynth: { label:"Neon Manhunt", info:"the chase scene at 140: distorted supersaw and fuzz trading blows, phrygian menace, headlights in the mirror gaining every chorus",   // SYNTH-FORWARD: the night drive turned hostile
       bpm:[122,136], swing:[0,.05], humanize:[0,.12],   // UNDER dubstep's 133-148 core — chase-scene tempo, not halftime wobble
@@ -2167,7 +2237,7 @@
       drums:{kickModel:["909"],snareModel:["noise","clap"],hatModel:["noise","metal"],kick:[1.3,1.5],snare:[.95,1.2],hat:[.5,.8],tune:[.9,1.05],send:[.25,.4],dsend:[.05,.15]},   // big gated snare, faster
       fx:{reverb:[.45,.6], delayBeats:[.375,.5], delayFb:[.25,.4], delayCut:[2200,3400], pump:[.1,.3], crackle:[0,.06], lowcut:[30,45], highcut:[0,0], comp:[.45,.65], grit:[.4,.7], jux:[.15,.35]},
       found:{role:"bed", vol:[.06,.12], pitch:[.7,.85], stretch:[.45,.6], cutoff:[1400,2400], sources:["factory","highway_night","vx_xminusone"]},
-      stab:["off","sparse"], hits:{sources:["sp_pressure","rave_d","vox_c"], pattern:"sparse", prob:.4},
+      stab:["off","sparse"], hits:{sources:["sp_pressure","pool:rave_stab*1","pool:vocal_stab*1"], pattern:"sparse", prob:.4},
       form:"drop" },
     /* genre-tool:prelude:genres */
     prelude: { label:"The Turning Stair", info:"continuous broken-chord 16th figuration over a slow harmonic rhythm — one chord every four bars of the climb — felt-piano and bright-grand voices, drum kit OFF, an even touch with only the lightest rubato; the quiet room before the chase",
@@ -2220,7 +2290,7 @@
       drums:{kickModel:["808"],snareModel:["crack","noise"],hatModel:["noise"],kick:[1.05,1.3],snare:[.55,.8],hat:[.5,.85],tune:[1,1.12],send:[.1,.2],dsend:[.2,.4]},
       fx:{reverb:[.5,.68], delayBeats:[.75,1.5], delayFb:[.3,.5], delayCut:[2000,3200], pump:[0,.15], crackle:[0,.1], lowcut:[25,40], highcut:[0,0], comp:[.3,.5]},
       found:{role:"bed", vol:[.1,.18], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["highway_night","tokyo_station","vx_apollo"]},   // BED not break — this is dnb's whole distinction from jungle
-      stab:["off","sparse"], hits:{sources:["vox_a","rave_b","sp_pressure"], pattern:"sparse", prob:.4},
+      stab:["off","sparse"], hits:{sources:["pool:vocal_stab*1","pool:rave_stab*1","sp_pressure"], pattern:"sparse", prob:.4},
       form:"dj" },
     footwork: { label:"Ankle Velocity", info:"the battle-circle tempo: an 808 sub triplet, machine-gun toms and a chopped vocal stutter at 160 — dancers negotiating with gravity and winning on points",   // UPTEMPO
       bpm:[155,162], swing:[.06,.16], humanize:[0,.08],
@@ -2231,7 +2301,7 @@
       drums:{kickModel:["808"],snareModel:["crack","clap"],hatModel:["metal","noise"],kick:[1.2,1.45],snare:[.5,.75],hat:[.7,1],tune:[1,1.15],send:[.05,.14],dsend:[.1,.25]},
       fx:{reverb:[.3,.45], delayBeats:[.375,.75], delayFb:[.3,.45], delayCut:[2000,3200], pump:[.1,.3], crackle:[0,.1], lowcut:[30,45], highcut:[0,0], comp:[.3,.5]},
       found:{role:"chops", vol:[.15,.28], pitch:[.9,1.15], stretch:[.35,.55], cutoff:[2000,3600], sources:["shibuya","vx_wwvh","vox_a"]},   // the chopped vocal stutter IS footwork
-      stab:["off","sparse"], hits:{sources:["vox_a","vox_c","sp_rhythm"], pattern:"dub", prob:.6},
+      stab:["off","sparse"], hits:{sources:["pool:vocal_stab*2","sp_rhythm"], pattern:"dub", prob:.6},
       form:"dj" },
     happyhardcore: { label:"Sugar Rocket", info:"euphoria at 172: pounding four-on-the-floor, hoover stabs, breakbeat rolls and a major-key piano riff — hands in the air by order of the heart",   // UPTEMPO
       bpm:[168,176], swing:[0,.05], humanize:[.03,.12],
@@ -2249,7 +2319,7 @@
       // the kit four/pulse + the rave bed keeps this matrix-invisible: sampleEvents
       // is the zero-rng dominant-parent dim, and no verifier feature reads it).
       sampleEvents:[{pool:["amen_170","amen_172","amen_175"], placement:"cadence", sections:"all", treatment:{cutoff:6000, vol:0.34, maxDur:4}}],
-      stab:["rave","offbeat"], hits:{sources:["rave_a","rave_b","rave_c","sp_energy"], pattern:"offbeat", prob:.7},
+      stab:["rave","offbeat"], hits:{sources:["pool:rave_stab*3","sp_energy"], pattern:"offbeat", prob:.7},
       form:"dj" },
     hardstyle: { label:"Anvil Euphoria", info:"the reverse-bass stomp at 150: a pitched distorted kick that is also the bassline, a screeching detuned lead, a minor-key breakdown built for closed eyes and open arms",   // UPTEMPO
       bpm:[148,156], swing:[0,.03], humanize:[0,.08],
@@ -2261,7 +2331,7 @@
       drums:{kickModel:["909","boom"],snareModel:["clap","crack"],hatModel:["metal","noise"],kick:[1.4,1.65],snare:[.7,.95],hat:[.6,.9],tune:[1,1.1],send:[.1,.2],dsend:[.08,.18]},
       fx:{reverb:[.4,.58], delayBeats:[.375,.5], delayFb:[.25,.4], delayCut:[2200,3400], pump:[.45,.75], crackle:[0,.06], lowcut:[30,45], highcut:[0,0], comp:[.5,.8]},
       found:{role:"bed", vol:[.05,.12], pitch:[.85,1], stretch:[.4,.6], cutoff:[2000,3200], sources:["rave_c","sp_energy","factory"]},
-      stab:["rave","offbeat"], hits:{sources:["rave_c","rave_d","sp_energy"], pattern:"offbeat", prob:.55},
+      stab:["rave","offbeat"], hits:{sources:["pool:rave_stab*2","sp_energy"], pattern:"offbeat", prob:.55},
       form:"dj" },
     eurodance: { label:"Chartbuster Esperanto", info:"the pop-rave at 140: a big detuned saw hook over a bright piano stab, diva-major harmony, hands-up energy — one invented language, the whole continent fluent by the second chorus",   // UPTEMPO. acoustic = the M1 house-piano/organ pad (all-synth trance/edm can't reach it); pump LOW (a pop track, not a trance gate)
       bpm:[138,145], swing:[0,.05], humanize:[.03,.1],
@@ -2272,7 +2342,7 @@
       drums:{kickModel:["909","boom"],snareModel:["clap"],hatModel:["noise"],kick:[1.25,1.5],snare:[.7,.95],hat:[.9,1.25],tune:[.98,1.08],send:[.12,.24],dsend:[.05,.15]},
       fx:{reverb:[.4,.58], delayBeats:[.375,.75], delayFb:[.25,.4], delayCut:[2400,3600], pump:[.06,.2], crackle:[0,.06], lowcut:[30,45], highcut:[0,0], comp:[.35,.55]},   // pump kept LOW (below trance's .3 floor) — a pop-rave, not a trance gate
       found:{role:"bed", vol:[.05,.12], pitch:[.9,1.05], stretch:[.4,.6], cutoff:[2400,3600], sources:["rave_b","sp_energy","shibuya"]},
-      stab:["rave","offbeat"], hits:{sources:["rave_a","rave_b","vox_a"], pattern:"offbeat", prob:.6},
+      stab:["rave","offbeat"], hits:{sources:["pool:rave_stab*2","pool:vocal_stab*1"], pattern:"offbeat", prob:.6},
       form:"dj" },
     singeli: { label:"Hummingbird Overclock", info:"frantic loop music past 200 BPM: hyperspeed hats, a chopped riff spun like a plate, a relentless synth line — the fastest thing in any room it enters",   // UPTEMPO (fastest in the catalog)
       bpm:[200,214], swing:[0,.05], humanize:[0,.1],
@@ -2283,7 +2353,7 @@
       drums:{kickModel:["909","808"],snareModel:["clap","crack"],hatModel:["metal","noise"],kick:[1.2,1.45],snare:[.6,.85],hat:[.9,1.3],tune:[1,1.15],send:[.06,.14],dsend:[.08,.18]},
       fx:{reverb:[.3,.48], delayBeats:[.375,.5], delayFb:[.3,.45], delayCut:[2200,3400], pump:[.2,.45], crackle:[0,.12], lowcut:[30,45], highcut:[0,0], comp:[.4,.65]},
       found:{role:"chops", vol:[.12,.22], pitch:[.9,1.15], stretch:[.35,.55], cutoff:[2200,3600], sources:["shibuya","vx_wwvh","vox_a"]},
-      stab:["rave","offbeat"], hits:{sources:["vox_a","rave_c","sp_energy"], pattern:"dub", prob:.6},
+      stab:["rave","offbeat"], hits:{sources:["pool:vocal_stab*1","pool:rave_stab*1","sp_energy"], pattern:"dub", prob:.6},
       form:"dj" },
     bebop: { label:"Quicksilver Changes", info:"frantic changes at 220: a walking upright bass, a brushed ride and a sampled sax/trumpet head tearing through the ii-Vs — a conversation held at a dead sprint",   // UPTEMPO. jazz's fast acoustic cousin — bpm floor fences it off jazz's [96,148]
       bpm:[196,220], swing:[.28,.5], humanize:[.25,.5],
@@ -2294,7 +2364,7 @@
       drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.6,.9],snare:[.55,.8],hat:[.8,1.15],tune:[.9,1.05],send:[.2,.4],dsend:[0,.1],kit:"brush"},
       fx:{reverb:[.4,.6], delayBeats:[.75,1.5], delayFb:[.15,.3], delayCut:[2000,3200], pump:[0,.05], crackle:[.1,.4], lowcut:[0,30], highcut:[0,0], comp:[.2,.4]},
       found:{role:"bed", vol:[.06,.14], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2000,3200], sources:["blues_vox_78","horns_78","tokyo_station"]},
-      stab:["off"], hits:{sources:["horns_78","bb_horn_a","bb_stab_a"], pattern:"response", prob:.4},
+      stab:["off"], hits:{sources:["pool:horn_stab*1","bb_horn_a","bb_stab_a"], pattern:"response", prob:.4},
       form:"pop" },
     bluegrass: { label:"Porchlight Overdrive", info:"high-lonesome drive at 165: rolling banjo, a fiddle break, a walking doghouse bass under brushes — a string band doing the work of a locomotive, all major key, no brakes",   // UPTEMPO. banjo+fiddle acoustic; bpm floor fences it off surfrock, straight-major seventh fences it off bebop
       bpm:[156,170], swing:[.04,.14], humanize:[.15,.4],
@@ -2351,7 +2421,7 @@
       drums:{kickModel:["boom","808"],snareModel:["crack","noise"],hatModel:["noise"],kick:[1.1,1.35],snare:[.8,1.05],hat:[.6,.9],tune:[.9,1.05],send:[.12,.25],dsend:[.05,.15],kit:"room"},
       fx:{reverb:[.4,.58], delayBeats:[.5,.75], delayFb:[.2,.35], delayCut:[1800,2800], pump:[0,.1], crackle:[.2,.45], lowcut:[0,25], highcut:[0,0], comp:[.25,.45]},
       found:{role:"break", vol:[.2,.32], pitch:[1,1], stretch:[.5,.5], cutoff:[4000,6000], sources:["amen_165","amen_170","stml_loop_86a","stml_loop_89a","stml_loop_92a","stml_loop_94a"]},
-      stab:["off"], hits:{sources:["vox_b","vox_c","sp_rewind"], pattern:"sparse", prob:.4},
+      stab:["off"], hits:{sources:["pool:vocal_stab*2","sp_rewind"], pattern:"sparse", prob:.4},
       form:"pop" },
     amapiano: { label:"Log Drum Diplomacy", info:"a deep log-drum bassline at 112: plush Rhodes chords, wide shakers, a spacious swung groove — patient and social, the drum that speaks last and says the most",   // sub log-drum + jazzy sevenths + fast shaker hats at 112; bpm cap fences it under deephouse
       bpm:[108,116], swing:[.08,.2], humanize:[.05,.2],
@@ -2362,7 +2432,7 @@
       drums:{kickModel:["boom","808"],snareModel:["clap","noise"],hatModel:["noise"],kick:[1,1.25],snare:[.4,.65],hat:[1.1,1.5],tune:[.95,1.1],send:[.12,.25],dsend:[.08,.2]},
       fx:{reverb:[.5,.68], delayBeats:[.5,.75], delayFb:[.25,.4], delayCut:[2200,3400], pump:[.15,.35], crackle:[0,.12], lowcut:[25,40], highcut:[0,0], comp:[.25,.45]},
       found:{role:"bed", vol:[.06,.14], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["tokyo_station","shibuya"]},
-      stab:["offbeat","off"], hits:{sources:["vox_a","sp_rhythm"], pattern:"offbeat", prob:.4},
+      stab:["offbeat","off"], hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"offbeat", prob:.4},
       form:"dj" },
     reggae: { label:"Kick On Three", info:"the one-drop at 75: an offbeat organ-and-guitar skank, a round melodic bass, the kick landing on beat three — unhurried and completely certain",   // the SONG to dub's dubbed-out instrumental: real harmonic motion + skank organ, vs dub's static drone
       bpm:[70,80], swing:[.04,.14], humanize:[.1,.3],
@@ -2373,7 +2443,7 @@
       drums:{kickModel:["boom"],snareModel:["crack","noise"],hatModel:["noise"],kick:[1.05,1.3],snare:[.6,.85],hat:[.6,.9],tune:[.9,1.05],send:[.15,.3],dsend:[.1,.25],kit:"acoustic"},
       fx:{reverb:[.45,.62], delayBeats:[.75,1.5], delayFb:[.3,.5], delayCut:[2000,3200], pump:[0,.1], crackle:[.05,.25], lowcut:[15,30], highcut:[0,0], comp:[.2,.4]},
       found:{role:"bed", vol:[.08,.16], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["blues_vox_78","tokyo_station"]},
-      stab:["offbeat"], hits:{sources:["vox_b","sp_herenow"], pattern:"offbeat", prob:.5},
+      stab:["offbeat"], hits:{sources:["pool:vocal_stab*1","sp_herenow"], pattern:"offbeat", prob:.5},
       form:"pop" },
     heavymetal: { label:"Molten Horsepower", info:"a HUGE wall of distorted electric-guitar power chords doubled to the sub-octave at 140: a screaming lead over a galloping double-kick, deep room reverb — turn it up",   // distorted guitars front and center; comp+drumDensity+bpm fence it off the halftime industrialmetal, the slow sludgemetal, the clean surfrock
       bpm:[130,148], swing:[0,.04], humanize:[.03,.12],
@@ -2389,7 +2459,7 @@
       drums:{kickModel:["boom","909"],snareModel:["crack","noise"],hatModel:["metal","noise"],kick:[1.45,1.7],snare:[.9,1.15],hat:[.7,1],tune:[1,1.1],send:[.2,.34],dsend:[.1,.22]},   // galloping double-kick, forward snare, deep room send
       fx:{reverb:[.46,.64], delayBeats:[.375,.5], delayFb:[.2,.35], delayCut:[2400,3600], pump:[.05,.25], crackle:[0,.06], lowcut:[30,45], highcut:[0,0], comp:[.55,.9], grit:[.55,.82]},
       found:{role:"bed", vol:[.05,.12], pitch:[.85,1], stretch:[.4,.6], cutoff:[2000,3200], sources:["factory","highway_night"]},
-      stab:["off","rave"], hits:{sources:["rave_c","sp_energy"], pattern:"sparse", prob:.3},
+      stab:["off","rave"], hits:{sources:["pool:rave_stab*1","sp_energy"], pattern:"sparse", prob:.3},
       form:"pop" },
     budstep: { label:"Budstep", info:"amen breaks under a relentless SUNN O)))/SLEEP wall of DOUBLED distorted-guitar SLUDGE CHORDS — power chords, massive, anthemic, drowned in deep reverb — while a deadpan synth voice recites cannabis strain names: Blue Dream, Northern Lights, Purple Haze",   // the amen (breakUse) + the doubled sludge-chord wall + the doubled sub drone: a triple no other break/bass genre carries
       bpm:[138,146], swing:[0,.06], humanize:[.05,.18],
@@ -2419,7 +2489,7 @@
       drums:{kickModel:["909","boom"],snareModel:["noise","clap"],hatModel:["noise"],kick:[1.15,1.4],snare:[.85,1.15],hat:[.5,.85],tune:[.95,1.08],send:[.2,.4],dsend:[.05,.15]},
       fx:{reverb:[.7,.86], delayBeats:[.375,.75], delayFb:[.25,.4], delayCut:[2200,3400], pump:[.04,.18], crackle:[0,.12], lowcut:[25,40], highcut:[0,0], comp:[.3,.55]},
       found:{role:"bed", vol:[.06,.14], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["highway_night","factory","vx_apollo"]},
-      stab:["off","sparse"], hits:{sources:["vox_a","sp_nightdrive"], pattern:"sparse", prob:.35},
+      stab:["off","sparse"], hits:{sources:["pool:vocal_stab*1","sp_nightdrive"], pattern:"sparse", prob:.35},
       form:"anthem" },
     /* genre-tool:hogcore:genres */
     hogcore: { label:"Hogcore", info:"VERY simple hyperpop at 150+: four-on-floor, sidechain pump, bright supersaw hooks, and the 24-voice cast declaring \"<name> is trans\" as the hook — pitched-up vocal chops, a full phrase every other bar, name-stabs on the drop",
@@ -2758,7 +2828,7 @@
       // nothing — "a challenge you regret accepting". Buried, the dares egging on each
       // hotter section.
       sampleEvents:[{pool:["sp_scoville_1","sp_scoville_2","sp_scoville_3","sp_scoville_4","sp_scoville_5"], placement:"buried", sections:"all", treatment:{cutoff:4500, vol:0.4, every:2, maxDur:8, rsend:0.15, dsend:0.12}}],
-      hits:{sources:["bb_horn_a","rave_b"], pattern:"offbeat", prob:0.4},
+      hits:{sources:["bb_horn_a","pool:rave_stab*1"], pattern:"offbeat", prob:0.4},
       stab:["offbeat"],
       form:"pop" },
     /* /genre-tool:hotsaucecore:genres */
@@ -2804,7 +2874,7 @@
         // nothing — "a choir singing in an invented language, broadcast nightly". Buried and
         // spaced (long clips, one every 4 bars) so each anthem line finishes.
         {pool:["sp_zubrovia_1","sp_zubrovia_2","sp_zubrovia_3"], placement:"buried", sections:"all", treatment:{cutoff:4000, vol:0.4, every:4, maxDur:14, rsend:0.16, dsend:0.12}}],
-      hits:{sources:["horns_78","bb_horn_a"], pattern:"response", prob:0.3},
+      hits:{sources:["pool:horn_stab*1","bb_horn_a"], pattern:"response", prob:0.3},
       stab:["off"],
       form:"anthem" },
     /* /genre-tool:zubrovia:genres */
@@ -3002,7 +3072,7 @@
         // nothing — "a ritual with real stakes: do not remove the disk". A single announcement
         // at each section's end, the save committing.
         {pool:["sp_floppy_save"], placement:"cadence", sections:"all", treatment:{cutoff:4200, vol:0.44, rsend:0.15, dsend:0.12}}],
-      hits:{sources:["tw_ding","rave_a"], pattern:"offbeat", prob:0.4},
+      hits:{sources:["pool:chime*1","pool:rave_stab*1"], pattern:"offbeat", prob:0.4},
       stab:["offbeat"],
       form:"dj" },
     /* /genre-tool:floppycore:genres */
@@ -3024,7 +3094,7 @@
       // nothing — "part of this complete breakfast". Buried, the mascot jingle patter
       // riding the sugar-rush hyperpop.
       sampleEvents:[{pool:["sp_cereal_1","sp_cereal_2","sp_cereal_3"], placement:"buried", sections:"all", treatment:{cutoff:4600, vol:0.4, every:2, maxDur:8, rsend:0.15, dsend:0.12}}],
-      hits:{sources:["rave_a","rave_b","bb_horn_a"], pattern:"offbeat", prob:0.5},
+      hits:{sources:["pool:rave_stab*2","bb_horn_a"], pattern:"offbeat", prob:0.5},
       stab:["rave"],
       form:"drop" },
     /* /genre-tool:cerealwave:genres */
@@ -3077,7 +3147,7 @@
       sampleEvents:[
         {pool:["sp_auction_1","sp_auction_2","sp_auction_3"], placement:"buried", sections:"all", treatment:{cutoff:4200, vol:0.44, every:2, maxDur:9, rsend:0.16, dsend:0.12}},
         {pool:["tw_ding"], placement:"cadence", sections:"all", treatment:{cutoff:5000, vol:0.5}}],
-      hits:{sources:["tw_ding","rave_c","sp_auction_2"], pattern:"offbeat", prob:0.4},   // "SOLD to the raver in the back" — a number-stab punctuates the offbeats
+      hits:{sources:["tw_ding","pool:rave_stab*1","sp_auction_2"], pattern:"offbeat", prob:0.4},   // "SOLD to the raver in the back" — a number-stab punctuates the offbeats
       stab:["off"],
       form:"drop" },
     /* /genre-tool:auctioncore:genres */
@@ -3101,7 +3171,7 @@
       // the 56k handshake dials up at each section START (opener — once per section
       // via the LIVE cadence fix, the "connection" that opens the breakdown).
       sampleEvents:[{pool:["modem_handshake"], placement:"opener", sections:"all", gain:0.7, treatment:{maxDur:16, cutoff:4600, vol:0.5, rsend:0.12, dsend:0.1}}],
-      hits:{sources:["rave_c","rave_d","bb_stab_a"], pattern:"offbeat", prob:0.5},
+      hits:{sources:["pool:rave_stab*2","bb_stab_a"], pattern:"offbeat", prob:0.5},
       stab:["rave"],
       form:"drop" },
     /* /genre-tool:dialupgabber:genres */
@@ -3119,7 +3189,7 @@
       drums:{kickModel:["boom","808"], snareModel:["noise"], hatModel:["noise"], kick:[0.9,1.15], snare:[0.5,0.7], hat:[0.5,0.8], tune:[0.85,1], send:[0.15,0.3], dsend:[0,0.1], kit:"acoustic"},
       fx:{reverb:[0.39,0.57], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[2600,3800], pump:[0.12,0.34], crackle:[0.19,0.35], lowcut:[30,45], highcut:[2600,3400], comp:[0.25,0.47]},
       found:{role:"bed", vol:[0.2,0.32], pitch:[0.9,1], stretch:[0.45,0.6], cutoff:[2800,4200], sources:["vx_cn_east","vx_cn_march","vx_cn_opera","vx_cn_speech"]},
-      hits:{sources:["vox_a","sp_rhythm","rave_b"], pattern:"offbeat", prob:0.6},
+      hits:{sources:["pool:vocal_stab*1","sp_rhythm","pool:rave_stab*1"], pattern:"offbeat", prob:0.6},
       stab:["off","sparse"],
       form:"pop" },
     /* /genre-tool:picnicswing:genres */
@@ -3158,7 +3228,7 @@
       found:{role:"bed", vol:[0.18,0.3], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[2400,3800], sources:["vx_apollo","hvac_hum","vx_timelady"]},
       rubato:{depth:[0.008,0.02], periodBars:[3,5], prob:1},
       sampleEvents:[{pool:["vx_apollo","vx_wwvh"], placement:"response", sections:"verse|chorus|bridge|hook", prob:0.3, gain:0.4, treatment:{pitch:1, cutoff:1600, rsend:0.5, dsend:0.3}}],
-      hits:{sources:["sp_herenow","vox_b"], pattern:"sparse", prob:0.3},
+      hits:{sources:["sp_herenow","pool:vocal_stab*1"], pattern:"sparse", prob:0.3},
       stab:["off"],
       form:"pop",
       reverbColor:"dattorro" },
@@ -3178,7 +3248,7 @@
       drums:{kickModel:["909"], snareModel:["clap","crack"], hatModel:["noise","metal"], kick:[1.1,1.35], snare:[0.6,0.85], hat:[0.6,0.9], tune:[0.98,1.1], send:[0.1,0.25], dsend:[0.05,0.15]},
       fx:{reverb:[0.87,1], delayBeats:[0.75,1.5], delayFb:[0.15,0.3], delayCut:[2000,3000], pump:[0,0.12], crackle:[0.01,0.17], lowcut:[0,0], highcut:[2600,3400], comp:[0.21,0.43]},
       found:{role:"narration", vol:[0.35,0.55], pitch:[0.98,1.05], stretch:[0.9,1.05], cutoff:[2600,3600], sources:["vx_apollo"]},
-      hits:{sources:["sp_system","tw_ding"], pattern:"sparse", prob:0.15},
+      hits:{sources:["sp_system","pool:chime*1"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"wave",
       reverbColor:"greyhole" },
@@ -3198,7 +3268,7 @@
       drums:{kickModel:["808","boom"], snareModel:["crack"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.7,0.95], hat:[0.9,1.2], tune:[1.05,1.2], send:[0.1,0.2], dsend:[0.1,0.25]},
       fx:{reverb:[0.3,0.48], delayBeats:[0.5,0.75], delayFb:[0.25,0.4], delayCut:[2200,3400], pump:[0.04,0.26], crackle:[0.14,0.3], lowcut:[25,40], highcut:[2600,3400], comp:[0.26,0.48]},
       found:{role:"chops", vol:[0.1,0.18], pitch:[0.95,1.15], stretch:[0.4,0.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense"]},
-      hits:{sources:["vox_b","sp_rhythm"], pattern:"sparse", prob:0.4},
+      hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"sparse", prob:0.4},
       stab:["off"],
       form:"pop" },
     /* /genre-tool:sepiadrive:genres */
@@ -3235,7 +3305,7 @@
       drums:{kickModel:["909","boom"], snareModel:["clap","noise"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.75,1], hat:[1.1,1.4], tune:[0.95,1.1], send:[0.15,0.3], dsend:[0.05,0.15], kit:"power"},
       fx:{reverb:[0.66,0.84], delayBeats:[0.375,0.5], delayFb:[0.15,0.3], delayCut:[2600,3800], pump:[0.13,0.35], crackle:[0.35,0.51], lowcut:[30,45], highcut:[0,0], comp:[0.26,0.48], grit:[0,0]},
       found:{role:"bed", vol:[0.06,0.12], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station","vx_timelady"]},
-      hits:{sources:["horns_78","sp_rhythm","vox_a"], pattern:"offbeat", prob:0.5},
+      hits:{sources:["pool:horn_stab*1","sp_rhythm","pool:vocal_stab*1"], pattern:"offbeat", prob:0.5},
       stab:["off","sparse"],
       form:"pop",
       reverbColor:"dattorro",
@@ -3255,7 +3325,7 @@
       drums:{kickModel:["909"], snareModel:["clap","crack"], hatModel:["noise","metal"], kick:[1.1,1.35], snare:[0.6,0.85], hat:[0.6,0.9], tune:[0.98,1.1], send:[0.1,0.25], dsend:[0.05,0.15]},
       fx:{reverb:[0.7,0.88], delayBeats:[0.75,1.5], delayFb:[0.5,0.7], delayCut:[1600,2600], pump:[0.03,0.25], crackle:[0.03,0.19], lowcut:[25,40], highcut:[0,0], comp:[0.12,0.34], grit:[0.1,0.25], jux:[0.15,0.3]},
       found:{role:"chops", vol:[0.1,0.18], pitch:[0.95,1.15], stretch:[0.4,0.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense","stml_chop_a","stml_chop_b"]},
-      hits:{sources:["vox_a","vox_b","sp_rewind","sp_pressure"], pattern:"dub", prob:0.75, wet:true},
+      hits:{sources:["pool:vocal_stab*2","sp_rewind","sp_pressure"], pattern:"dub", prob:0.75, wet:true},
       stab:["off","sparse"],
       form:"dj",
       reverbColor:"spring" },
@@ -3275,7 +3345,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.4,0.65], snare:[0.25,0.45], hat:[0.25,0.45], tune:[0.9,1], send:[0.2,0.4], dsend:[0,0.05]},
       fx:{reverb:[0.61,0.79], delayBeats:[0.75,1.5], delayFb:[0.15,0.3], delayCut:[2000,3000], pump:[0,0.22], crackle:[0.08,0.24], lowcut:[0,0], highcut:[2600,3400], comp:[0.09,0.31]},
       found:{role:"bed", vol:[0.2,0.32], pitch:[0.9,1], stretch:[0.45,0.6], cutoff:[2800,4200], sources:["vx_cn_east","vx_cn_march","vx_cn_opera","vx_cn_speech"]},
-      hits:{sources:["sp_system","tw_ding"], pattern:"sparse", prob:0.15},
+      hits:{sources:["sp_system","pool:chime*1"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"wave",
       reverbColor:"greyhole" },
@@ -3315,7 +3385,7 @@
       fx:{reverb:[0.45,0.63], delayBeats:[0.5,0.75], delayFb:[0.2,0.35], delayCut:[1800,2800], pump:[0.17,0.39], crackle:[0.08,0.24], lowcut:[0,25], highcut:[0,0], comp:[0.29,0.51]},
       found:{role:"break", vol:[0.32,0.45], pitch:[1,1], stretch:[0.5,0.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175"]},
       snarePP:0.5,
-      hits:{sources:["vox_b","vox_c","sp_rewind"], pattern:"sparse", prob:0.4},
+      hits:{sources:["pool:vocal_stab*2","sp_rewind"], pattern:"sparse", prob:0.4},
       stab:["off"],
       form:"pop" },
     /* /genre-tool:zestgallop:genres */
@@ -3335,7 +3405,7 @@
       found:{role:"bed", vol:[0.14,0.24], pitch:[0.7,0.9], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["tokyo_station","highway_night","vx_apollo"]},
       rubato:{depth:[0.008,0.02], periodBars:[3,5], prob:1},
       sampleEvents:[{pool:["vx_apollo","vx_wwvh"], placement:"response", sections:"verse|chorus|bridge|hook", prob:0.3, gain:0.4, treatment:{pitch:1, cutoff:1600, rsend:0.5, dsend:0.3}}],
-      hits:{sources:["sp_herenow","vox_b"], pattern:"sparse", prob:0.3},
+      hits:{sources:["sp_herenow","pool:vocal_stab*1"], pattern:"sparse", prob:0.3},
       stab:["off"],
       form:"pop",
       reverbColor:"dattorro" },
@@ -3355,7 +3425,7 @@
       fx:{reverb:[0.58,0.76], delayBeats:[0.5,0.5], delayFb:[0.25,0.4], delayCut:[2200,3400], pump:[0.24,0.46], crackle:[0,0.09], lowcut:[30,45], highcut:[0,0], comp:[0.52,0.74], grit:[0.4,0.7], jux:[0.15,0.35]},
       found:{role:"break", vol:[0.32,0.45], pitch:[1,1], stretch:[0.5,0.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175"]},
       vocSource:"sp_pressure",
-      hits:{sources:["sp_pressure","sp_system","rave_d"], pattern:"dub", prob:0.6},
+      hits:{sources:["sp_pressure","sp_system","pool:rave_stab*1"], pattern:"dub", prob:0.6},
       stab:["offbeat","sparse"],
       form:"dj" },
     /* /genre-tool:bunkerthump:genres */
@@ -3393,7 +3463,7 @@
       fx:{reverb:[0.8,0.98], delayBeats:[0.75,1], delayFb:[0.3,0.45], delayCut:[2200,3200], pump:[0,0.12], crackle:[0.13,0.29], lowcut:[0,20], highcut:[0,0], comp:[0.08,0.3]},
       found:{role:"bed", vol:[0.18,0.3], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[2400,3800], sources:["vx_apollo","hvac_hum","vx_timelady"]},
       sampleEvents:[{pool:["vx_apollo","vx_wwvh"], placement:"response", sections:"verse|chorus|bridge|hook", prob:0.3, gain:0.4, treatment:{pitch:1, cutoff:1600, rsend:0.5, dsend:0.3}}],
-      hits:{sources:["sp_herenow","vox_b"], pattern:"sparse", prob:0.3},
+      hits:{sources:["sp_herenow","pool:vocal_stab*1"], pattern:"sparse", prob:0.3},
       stab:["off"],
       form:"pop",
       reverbColor:"dattorro" },
@@ -3412,7 +3482,7 @@
       drums:{kickModel:["808"], snareModel:["crack","noise"], hatModel:["noise","metal"], kick:[1.1,1.35], snare:[0.55,0.8], hat:[0.6,0.9], tune:[0.98,1.1], send:[0.08,0.2], dsend:[0.1,0.25]},
       fx:{reverb:[0.43,0.61], delayBeats:[0.375,0.5], delayFb:[0.2,0.38], delayCut:[3000,4500], pump:[0.14,0.36], crackle:[0.23,0.39], lowcut:[35,50], highcut:[0,0], comp:[0.22,0.44]},
       found:{role:"break", vol:[0.32,0.45], pitch:[1,1], stretch:[0.5,0.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175"]},
-      hits:{sources:["tw_ding","sp_system"], pattern:"offbeat", prob:0.35},
+      hits:{sources:["pool:chime*1","sp_system"], pattern:"offbeat", prob:0.35},
       stab:["off"],
       form:"drop" },
     /* /genre-tool:glosspump:genres */
@@ -3449,7 +3519,7 @@
       fx:{reverb:[0.44,0.62], delayBeats:[0.5,0.75], delayFb:[0.2,0.35], delayCut:[1800,2800], pump:[0.29,0.51], crackle:[0.28,0.44], lowcut:[0,25], highcut:[0,0], comp:[0.39,0.61]},
       found:{role:"chops", vol:[0.1,0.18], pitch:[0.95,1.15], stretch:[0.4,0.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense"]},
       snarePP:0.5,
-      hits:{sources:["vox_b","vox_c","sp_rewind"], pattern:"sparse", prob:0.4},
+      hits:{sources:["pool:vocal_stab*2","sp_rewind"], pattern:"sparse", prob:0.4},
       stab:["off"],
       form:"pop" },
     /* /genre-tool:sherbetchop:genres */
@@ -3467,7 +3537,7 @@
       drums:{kickModel:["909","boom"], snareModel:["clap","noise"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.75,1], hat:[1.1,1.4], tune:[0.95,1.1], send:[0.15,0.3], dsend:[0.05,0.15], kit:"power"},
       fx:{reverb:[0.42,0.6], delayBeats:[0.375,0.5], delayFb:[0.15,0.3], delayCut:[2600,3800], pump:[0.04,0.26], crackle:[0,0.15], lowcut:[30,45], highcut:[0,0], comp:[0.25,0.47], grit:[0,0]},
       found:{role:"break", vol:[0.32,0.45], pitch:[1,1], stretch:[0.5,0.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175"]},
-      hits:{sources:["horns_78","sp_rhythm","vox_a"], pattern:"offbeat", prob:0.5},
+      hits:{sources:["pool:horn_stab*1","sp_rhythm","pool:vocal_stab*1"], pattern:"offbeat", prob:0.5},
       stab:["off","sparse"],
       form:"pop",
       reverbColor:"dattorro",
@@ -3487,7 +3557,7 @@
       drums:{kickModel:["909","808"], snareModel:["clap"], hatModel:["noise"], kick:[1.15,1.35], snare:[0.5,0.75], hat:[0.7,1], tune:[0.95,1.05], send:[0.1,0.2], dsend:[0.05,0.15]},
       fx:{reverb:[0.87,1], delayBeats:[0.75,0.75], delayFb:[0.3,0.45], delayCut:[2200,3200], pump:[0.11,0.33], crackle:[0.04,0.2], lowcut:[30,45], highcut:[0,0], comp:[0.27,0.49]},
       found:{role:"break", vol:[0.32,0.45], pitch:[1,1], stretch:[0.5,0.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175"]},
-      hits:{sources:["vox_b","sp_herenow"], pattern:"sparse", prob:0.35},
+      hits:{sources:["pool:vocal_stab*1","sp_herenow"], pattern:"sparse", prob:0.35},
       stab:["off","sparse"],
       form:"dj" },
     /* /genre-tool:idlingsplice:genres */
@@ -3506,7 +3576,7 @@
       drums:{kickModel:["909"], snareModel:["clap","crack"], hatModel:["noise","metal"], kick:[1.1,1.35], snare:[0.6,0.85], hat:[0.6,0.9], tune:[0.98,1.1], send:[0.1,0.25], dsend:[0.05,0.15]},
       fx:{reverb:[0.87,1], delayBeats:[0.75,1.5], delayFb:[0.15,0.3], delayCut:[2000,3000], pump:[0,0.12], crackle:[0,0.15], lowcut:[0,0], highcut:[0,0], comp:[0.18,0.4]},
       found:{role:"narration", vol:[0.35,0.55], pitch:[0.98,1.05], stretch:[0.9,1.05], cutoff:[2600,3600], sources:["vx_apollo"]},
-      hits:{sources:["sp_system","tw_ding"], pattern:"sparse", prob:0.15},
+      hits:{sources:["sp_system","pool:chime*1"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"wave",
       reverbColor:"greyhole" },
@@ -3526,7 +3596,7 @@
       drums:{kickModel:["808","boom"], snareModel:["crack"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.7,0.95], hat:[0.9,1.2], tune:[1.05,1.2], send:[0.1,0.2], dsend:[0.1,0.25]},
       fx:{reverb:[0.69,0.87], delayBeats:[0.5,0.75], delayFb:[0.25,0.4], delayCut:[2200,3400], pump:[0.09,0.31], crackle:[0.03,0.19], lowcut:[25,40], highcut:[2600,3400], comp:[0.4,0.62]},
       found:{role:"chops", vol:[0.1,0.18], pitch:[0.95,1.15], stretch:[0.4,0.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense"]},
-      hits:{sources:["vox_b","sp_rhythm"], pattern:"sparse", prob:0.4},
+      hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"sparse", prob:0.4},
       stab:["off"],
       form:"pop" },
     /* /genre-tool:tarbreak:genres */
@@ -3544,7 +3614,7 @@
       drums:{kickModel:["boom","808"], snareModel:["noise"], hatModel:["noise"], kick:[0.9,1.15], snare:[0.5,0.7], hat:[0.5,0.8], tune:[0.85,1], send:[0.15,0.3], dsend:[0,0.1], kit:"acoustic"},
       fx:{reverb:[0.3,0.48], delayBeats:[0.5,0.75], delayFb:[0.1,0.25], delayCut:[2000,3000], pump:[0,0.13], crackle:[0.22,0.38], lowcut:[0,30], highcut:[2600,3400], comp:[0.17,0.39]},
       found:{role:"bed", vol:[0.05,0.12], pitch:[0.8,1], stretch:[0.45,0.6], cutoff:[1500,2500], sources:["shibuya","tokyo_station","vx_whitman"]},
-      hits:{sources:["blues_vox_78","blues_vox_78","horns_78"], pattern:"response", prob:0.75},
+      hits:{sources:["blues_vox_78","blues_vox_78","pool:horn_stab*1"], pattern:"response", prob:0.75},
       stab:["off"],
       form:"pop",
       reverbColor:"fdn",
@@ -3565,7 +3635,7 @@
       fx:{reverb:[0.7,0.88], delayBeats:[0.75,1.5], delayFb:[0.3,0.5], delayCut:[1800,2800], pump:[0,0.14], crackle:[0.19,0.35], lowcut:[0,25], highcut:[2600,3400], comp:[0.18,0.4]},
       found:{role:"bed", vol:[0.18,0.3], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[2400,3800], sources:["vx_apollo","hvac_hum","vx_timelady"]},
       snarePP:0.66,
-      hits:{sources:["vox_b","sp_herenow"], pattern:"sparse", prob:0.2},
+      hits:{sources:["pool:vocal_stab*1","sp_herenow"], pattern:"sparse", prob:0.2},
       stab:["off"],
       form:"pop",
       timeFeel:{pushPull:{bass:0.011, hat:-0.007}} },
@@ -3585,7 +3655,7 @@
       drums:{kickModel:["808","boom"], snareModel:["crack"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.7,0.95], hat:[0.9,1.2], tune:[1.05,1.2], send:[0.1,0.2], dsend:[0.1,0.25]},
       fx:{reverb:[0.44,0.62], delayBeats:[0.5,0.75], delayFb:[0.25,0.4], delayCut:[2200,3400], pump:[0.04,0.26], crackle:[0.08,0.24], lowcut:[25,40], highcut:[0,0], comp:[0.42,0.64]},
       found:{role:"chops", vol:[0.1,0.18], pitch:[0.95,1.15], stretch:[0.4,0.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense"]},
-      hits:{sources:["vox_b","sp_rhythm"], pattern:"sparse", prob:0.4},
+      hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"sparse", prob:0.4},
       stab:["off"],
       form:"pop" },
     /* /genre-tool:toastercore:genres */
@@ -3603,7 +3673,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.6,0.85], snare:[0.4,0.6], hat:[0.3,0.5], tune:[0.95,1.1], send:[0.1,0.2], dsend:[0,0.05]},
       fx:{reverb:[0.58,0.76], delayBeats:[0.5,0.75], delayFb:[0.2,0.32], delayCut:[2800,4000], pump:[0,0.22], crackle:[0.01,0.17], lowcut:[25,40], highcut:[0,0], comp:[0.15,0.37], grit:[0,0]},
       found:{role:"bed", vol:[0.07,0.13], pitch:[0.9,1], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station","highway_night"]},
-      hits:{sources:["sp_nightdrive","vox_a"], pattern:"sparse", prob:0.3},
+      hits:{sources:["sp_nightdrive","pool:vocal_stab*1"], pattern:"sparse", prob:0.3},
       stab:["off"],
       form:"pop",
       reverbColor:"dattorro" },
@@ -3623,7 +3693,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.6,0.85], snare:[0.4,0.6], hat:[0.3,0.5], tune:[0.95,1.1], send:[0.1,0.2], dsend:[0,0.05]},
       fx:{reverb:[0.87,1], delayBeats:[0.75,1.5], delayFb:[0.15,0.3], delayCut:[2000,3000], pump:[0,0.14], crackle:[0.05,0.21], lowcut:[0,0], highcut:[0,0], comp:[0.18,0.4]},
       found:{role:"narration", vol:[0.35,0.55], pitch:[0.98,1.05], stretch:[0.9,1.05], cutoff:[2600,3600], sources:["vx_apollo"]},
-      hits:{sources:["sp_system","tw_ding"], pattern:"sparse", prob:0.15},
+      hits:{sources:["sp_system","pool:chime*1"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"wave",
       reverbColor:"greyhole" },
@@ -3642,7 +3712,7 @@
       drums:{kickModel:["909"], snareModel:["noise","clap"], hatModel:["noise","metal"], kick:[1.3,1.5], snare:[0.95,1.2], hat:[0.5,0.8], tune:[0.9,1.05], send:[0.25,0.4], dsend:[0.05,0.15]},
       fx:{reverb:[0.81,0.99], delayBeats:[0.375,0.5], delayFb:[0.25,0.4], delayCut:[2200,3400], pump:[0.3,0.52], crackle:[0,0.14], lowcut:[30,45], highcut:[0,0], comp:[0.51,0.73], grit:[0.4,0.7], jux:[0.15,0.35]},
       found:{role:"chops", vol:[0.1,0.18], pitch:[0.95,1.15], stretch:[0.4,0.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense"]},
-      hits:{sources:["sp_pressure","rave_d","vox_c"], pattern:"sparse", prob:0.4},
+      hits:{sources:["sp_pressure","pool:rave_stab*1","pool:vocal_stab*1"], pattern:"sparse", prob:0.4},
       stab:["off","sparse"],
       form:"drop",
       transforms:{pool:["stutter","rot"], rate:0.16} },
@@ -3662,7 +3732,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.4,0.65], snare:[0.25,0.45], hat:[0.25,0.45], tune:[0.9,1], send:[0.2,0.4], dsend:[0,0.05]},
       fx:{reverb:[0.76,0.94], delayBeats:[0.75,1.5], delayFb:[0.15,0.3], delayCut:[2000,3000], pump:[0,0.14], crackle:[0.22,0.38], lowcut:[0,0], highcut:[0,0], comp:[0.09,0.31]},
       found:{role:"bed", vol:[0.14,0.24], pitch:[0.7,0.9], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["tokyo_station","highway_night","vx_apollo"]},
-      hits:{sources:["sp_system","tw_ding"], pattern:"sparse", prob:0.15},
+      hits:{sources:["sp_system","pool:chime*1"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"wave",
       reverbColor:"greyhole" },
@@ -3682,7 +3752,7 @@
       fx:{reverb:[0.68,0.86], delayBeats:[0.75,1], delayFb:[0.3,0.45], delayCut:[2200,3200], pump:[0.07,0.29], crackle:[0.08,0.24], lowcut:[0,20], highcut:[0,0], comp:[0.22,0.44]},
       found:{role:"bed", vol:[0.18,0.3], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[2400,3800], sources:["vx_apollo","hvac_hum","vx_timelady"]},
       sampleEvents:[{pool:["vx_apollo","vx_wwvh"], placement:"response", sections:"verse|chorus|bridge|hook", prob:0.3, gain:0.4, treatment:{pitch:1, cutoff:1600, rsend:0.5, dsend:0.3}}],
-      hits:{sources:["sp_herenow","vox_b"], pattern:"sparse", prob:0.3},
+      hits:{sources:["sp_herenow","pool:vocal_stab*1"], pattern:"sparse", prob:0.3},
       stab:["off"],
       form:"pop",
       reverbColor:"dattorro" },
@@ -3702,7 +3772,7 @@
       drums:{kickModel:["808","boom"], snareModel:["crack"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.7,0.95], hat:[0.9,1.2], tune:[1.05,1.2], send:[0.1,0.2], dsend:[0.1,0.25]},
       fx:{reverb:[0.22,0.4], delayBeats:[0.5,0.75], delayFb:[0.25,0.4], delayCut:[2200,3400], pump:[0,0.21], crackle:[0.12,0.28], lowcut:[25,40], highcut:[2600,3400], comp:[0.12,0.34]},
       found:{role:"break", vol:[0.32,0.45], pitch:[1,1], stretch:[0.5,0.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175"]},
-      hits:{sources:["vox_b","sp_rhythm"], pattern:"sparse", prob:0.4},
+      hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"sparse", prob:0.4},
       stab:["off"],
       form:"pop" },
     /* /genre-tool:earthmoversplice:genres */
@@ -3720,7 +3790,7 @@
       drums:{kickModel:["boom","808"], snareModel:["noise"], hatModel:["noise"], kick:[1.3,1.6], snare:[0.4,0.6], hat:[0.3,0.5], tune:[0.78,0.9], send:[0.3,0.5], dsend:[0.1,0.3]},
       fx:{reverb:[0.38,0.56], delayBeats:[0.5,0.75], delayFb:[0.1,0.25], delayCut:[2000,3000], pump:[0.06,0.28], crackle:[0.16,0.32], lowcut:[0,30], highcut:[2600,3400], comp:[0.13,0.35]},
       found:{role:"bed", vol:[0.05,0.12], pitch:[0.8,1], stretch:[0.45,0.6], cutoff:[1500,2500], sources:["shibuya","tokyo_station","vx_whitman"]},
-      hits:{sources:["blues_vox_78","blues_vox_78","horns_78"], pattern:"response", prob:0.75},
+      hits:{sources:["blues_vox_78","blues_vox_78","pool:horn_stab*1"], pattern:"response", prob:0.75},
       stab:["off"],
       form:"pop",
       reverbColor:"fdn",
@@ -3741,7 +3811,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.75,1], snare:[0.5,0.75], hat:[0.6,0.9], tune:[0.9,1.05], send:[0.35,0.5], dsend:[0,0.1]},
       fx:{reverb:[0.87,1], delayBeats:[0.75,1.5], delayFb:[0.15,0.3], delayCut:[2000,3000], pump:[0.07,0.29], crackle:[0,0.12], lowcut:[0,0], highcut:[0,0], comp:[0.21,0.43]},
       found:{role:"bed", vol:[0.3,0.42], pitch:[0.95,1], stretch:[0.45,0.6], cutoff:[3200,4600], sources:["vx_burroughs","vx_ginsberg","vx_waldman","vx_dickinson","leacock1","leacock4","vx_ginsberg_class"]},
-      hits:{sources:["sp_system","tw_ding"], pattern:"sparse", prob:0.15},
+      hits:{sources:["sp_system","pool:chime*1"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"wave",
       reverbColor:"greyhole" },
@@ -3760,7 +3830,7 @@
       drums:{kickModel:["boom","808"], snareModel:["noise"], hatModel:["noise"], kick:[0.9,1.15], snare:[0.5,0.7], hat:[0.5,0.8], tune:[0.85,1], send:[0.15,0.3], dsend:[0,0.1], kit:"acoustic"},
       fx:{reverb:[0.51,0.69], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[2600,3800], pump:[0,0.2], crackle:[0.2,0.36], lowcut:[30,45], highcut:[0,0], comp:[0.2,0.42]},
       found:{role:"bed", vol:[0.18,0.3], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[2400,3800], sources:["vx_apollo","hvac_hum","vx_timelady"]},
-      hits:{sources:["vox_a","sp_rhythm","rave_b"], pattern:"offbeat", prob:0.6},
+      hits:{sources:["pool:vocal_stab*1","sp_rhythm","pool:rave_stab*1"], pattern:"offbeat", prob:0.6},
       stab:["off","sparse"],
       form:"pop" },
     /* /genre-tool:tectonicdash:genres */
@@ -3800,7 +3870,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.6,0.85], snare:[0.4,0.6], hat:[0.3,0.5], tune:[0.95,1.1], send:[0.1,0.2], dsend:[0,0.05]},
       fx:{reverb:[0.41,0.59], delayBeats:[0.375,0.5], delayFb:[0.15,0.3], delayCut:[2600,3800], pump:[0,0.21], crackle:[0,0.14], lowcut:[30,45], highcut:[0,0], comp:[0.17,0.39], grit:[0,0]},
       found:{role:"bed", vol:[0.06,0.12], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station","vx_timelady"]},
-      hits:{sources:["horns_78","sp_rhythm","vox_a"], pattern:"offbeat", prob:0.5},
+      hits:{sources:["pool:horn_stab*1","sp_rhythm","pool:vocal_stab*1"], pattern:"offbeat", prob:0.5},
       stab:["off","sparse"],
       form:"pop",
       reverbColor:"dattorro",
@@ -3821,7 +3891,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.4,0.65], snare:[0.25,0.45], hat:[0.25,0.45], tune:[0.9,1], send:[0.2,0.4], dsend:[0,0.05]},
       fx:{reverb:[0.6,0.78], delayBeats:[0.75,1.5], delayFb:[0.15,0.3], delayCut:[2000,3000], pump:[0,0.18], crackle:[0.06,0.22], lowcut:[0,0], highcut:[0,0], comp:[0,0.22]},
       found:{role:"bed", vol:[0.18,0.3], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[2400,3800], sources:["vx_apollo","hvac_hum","vx_timelady"]},
-      hits:{sources:["sp_system","tw_ding"], pattern:"sparse", prob:0.15},
+      hits:{sources:["sp_system","pool:chime*1"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"wave",
       reverbColor:"greyhole" },
@@ -3840,7 +3910,7 @@
       drums:{kickModel:["boom"], snareModel:["noise","crack"], hatModel:["noise"], kick:[0.5,0.72], snare:[0.35,0.55], hat:[0.4,0.6], tune:[0.9,1.02], send:[0.2,0.4], dsend:[0,0.1]},
       fx:{reverb:[0.64,0.82], delayBeats:[0.5,0.9], delayFb:[0.12,0.28], delayCut:[2200,3200], pump:[0,0.12], crackle:[0.04,0.2], lowcut:[0,0], highcut:[0,0], comp:[0.26,0.48]},
       found:{role:"bed", vol:[0.18,0.3], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[2400,3800], sources:["vx_apollo","hvac_hum","vx_timelady"]},
-      hits:{sources:["tw_ding"], pattern:"sparse", prob:0.15},
+      hits:{sources:["pool:chime*1"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"pop",
       reverbColor:"spring" },
@@ -3860,7 +3930,7 @@
       fx:{reverb:[0.79,0.97], delayBeats:[0.75,1], delayFb:[0.3,0.45], delayCut:[2200,3200], pump:[0.15,0.37], crackle:[0.12,0.28], lowcut:[0,20], highcut:[0,0], comp:[0.31,0.53]},
       found:{role:"chops", vol:[0.1,0.18], pitch:[0.95,1.15], stretch:[0.4,0.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense"]},
       sampleEvents:[{pool:["vx_apollo","vx_wwvh"], placement:"response", sections:"verse|chorus|bridge|hook", prob:0.3, gain:0.4, treatment:{pitch:1, cutoff:1600, rsend:0.5, dsend:0.3}}],
-      hits:{sources:["sp_herenow","vox_b"], pattern:"sparse", prob:0.3},
+      hits:{sources:["sp_herenow","pool:vocal_stab*1"], pattern:"sparse", prob:0.3},
       stab:["off"],
       form:"pop",
       reverbColor:"dattorro" },
@@ -3898,7 +3968,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.6,0.85], snare:[0.4,0.6], hat:[0.3,0.5], tune:[0.95,1.1], send:[0.1,0.2], dsend:[0,0.05]},
       fx:{reverb:[0.77,0.95], delayBeats:[0.5,0.75], delayFb:[0.2,0.32], delayCut:[2800,4000], pump:[0.26,0.48], crackle:[0,0.1], lowcut:[25,40], highcut:[0,0], comp:[0.3,0.52], grit:[0,0]},
       found:{role:"bed", vol:[0.07,0.13], pitch:[0.9,1], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station","highway_night"]},
-      hits:{sources:["sp_nightdrive","vox_a"], pattern:"sparse", prob:0.3},
+      hits:{sources:["sp_nightdrive","pool:vocal_stab*1"], pattern:"sparse", prob:0.3},
       stab:["off"],
       form:"pop",
       reverbColor:"dattorro" },
@@ -3918,7 +3988,7 @@
       fx:{reverb:[0.87,1], delayBeats:[0.75,1.5], delayFb:[0.3,0.5], delayCut:[1800,2800], pump:[0,0.2], crackle:[0.07,0.23], lowcut:[0,25], highcut:[2600,3400], comp:[0.07,0.29]},
       found:{role:"bed", vol:[0.05,0.12], pitch:[0.8,1], stretch:[0.45,0.6], cutoff:[1500,2500], sources:["shibuya","tokyo_station","vx_whitman"]},
       snarePP:0.66,
-      hits:{sources:["vox_b","sp_herenow"], pattern:"sparse", prob:0.2},
+      hits:{sources:["pool:vocal_stab*1","sp_herenow"], pattern:"sparse", prob:0.2},
       stab:["off"],
       form:"pop",
       timeFeel:{pushPull:{bass:0.011, hat:-0.007}} },
@@ -3956,7 +4026,7 @@
       drums:{kickModel:["808"], snareModel:["clap","crack"], hatModel:["noise","metal"], kick:[1.35,1.6], snare:[0.75,1], hat:[0.9,1.2], tune:[1,1.15], send:[0.05,0.12], dsend:[0.05,0.15]},
       fx:{reverb:[0.54,0.72], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[2800,4000], pump:[0.03,0.25], crackle:[0.13,0.29], lowcut:[25,38], highcut:[0,0], comp:[0.19,0.41], grit:[0.1,0.25], jux:[0.1,0.3]},
       found:{role:"bed", vol:[0.06,0.12], pitch:[0.9,1.05], stretch:[0.45,0.6], cutoff:[1800,3000], sources:["highway_night","shibuya"]},
-      hits:{sources:["vox_a","vox_c","sp_energy"], pattern:"offbeat", prob:0.7},
+      hits:{sources:["pool:vocal_stab*2","sp_energy"], pattern:"offbeat", prob:0.7},
       stab:["offbeat","sparse"],
       form:"pop" },
     /* /genre-tool:fathomarch:genres */
@@ -3975,7 +4045,7 @@
       fx:{reverb:[0.5,0.68], delayBeats:[0.5,0.75], delayFb:[0.08,0.16], delayCut:[2200,3200], pump:[0,0.12], crackle:[0.11,0.27], lowcut:[0,25], highcut:[0,0], comp:[0.02,0.24]},
       found:{role:"bed", vol:[0.06,0.12], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["vx_suspense","tokyo_station"]},
       rubato:{depth:[0.008,0.02], periodBars:[3,5], prob:1},
-      hits:{sources:["horns_78","blues_vox_78"], pattern:"sparse", prob:0.35},
+      hits:{sources:["pool:horn_stab*1","blues_vox_78"], pattern:"sparse", prob:0.35},
       stab:["off"],
       form:"pop",
       reverbColor:"fdn",
@@ -3996,7 +4066,7 @@
       fx:{reverb:[0.71,0.89], delayBeats:[0.5,0.5], delayFb:[0.25,0.4], delayCut:[2200,3400], pump:[0.16,0.38], crackle:[0,0.15], lowcut:[30,45], highcut:[2600,3400], comp:[0.48,0.7], grit:[0.4,0.7], jux:[0.15,0.35]},
       found:{role:"bed", vol:[0.18,0.3], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[2400,3800], sources:["vx_apollo","hvac_hum","vx_timelady"]},
       vocSource:"sp_pressure",
-      hits:{sources:["sp_pressure","sp_system","rave_d"], pattern:"dub", prob:0.6},
+      hits:{sources:["sp_pressure","sp_system","pool:rave_stab*1"], pattern:"dub", prob:0.6},
       stab:["offbeat","sparse"],
       form:"dj" },
     /* /genre-tool:boilerroomstomp:genres */
@@ -4014,7 +4084,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.6,0.85], snare:[0.4,0.6], hat:[0.3,0.5], tune:[0.95,1.1], send:[0.1,0.2], dsend:[0,0.05]},
       fx:{reverb:[0.78,0.96], delayBeats:[0.375,0.5], delayFb:[0.15,0.3], delayCut:[2600,3800], pump:[0,0.09], crackle:[0.12,0.28], lowcut:[30,45], highcut:[0,0], comp:[0.14,0.36], grit:[0,0]},
       found:{role:"bed", vol:[0.06,0.12], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station","vx_timelady"]},
-      hits:{sources:["horns_78","sp_rhythm","vox_a"], pattern:"offbeat", prob:0.5},
+      hits:{sources:["pool:horn_stab*1","sp_rhythm","pool:vocal_stab*1"], pattern:"offbeat", prob:0.5},
       stab:["off","sparse"],
       form:"pop",
       reverbColor:"dattorro",
@@ -4054,7 +4124,7 @@
       fx:{reverb:[0.79,0.97], delayBeats:[0.75,1.5], delayFb:[0.3,0.5], delayCut:[1800,2800], pump:[0.01,0.23], crackle:[0.05,0.21], lowcut:[0,25], highcut:[0,0], comp:[0.26,0.48]},
       found:{role:"bed", vol:[0.2,0.32], pitch:[0.9,1], stretch:[0.45,0.6], cutoff:[2800,4200], sources:["vx_cn_east","vx_cn_march","vx_cn_opera","vx_cn_speech"]},
       snarePP:0.66,
-      hits:{sources:["vox_b","sp_herenow"], pattern:"sparse", prob:0.2},
+      hits:{sources:["pool:vocal_stab*1","sp_herenow"], pattern:"sparse", prob:0.2},
       stab:["off"],
       form:"pop",
       timeFeel:{pushPull:{bass:0.011, hat:-0.007}} },
@@ -4073,7 +4143,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.75,1], snare:[0.5,0.75], hat:[0.6,0.9], tune:[0.9,1.05], send:[0.35,0.5], dsend:[0,0.1]},
       fx:{reverb:[0.13,0.31], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[3500,5000], pump:[0.56,0.78], crackle:[0.02,0.18], lowcut:[30,45], highcut:[0,0], comp:[0.39,0.61]},
       found:{role:"bed", vol:[0.18,0.3], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[2400,3800], sources:["vx_apollo","hvac_hum","vx_timelady"]},
-      hits:{sources:["tw_ding"], pattern:"sparse", prob:0.2},
+      hits:{sources:["pool:chime*1"], pattern:"sparse", prob:0.2},
       stab:["off"],
       form:"pop" },
     /* /genre-tool:ceilingfanchop:genres */
@@ -4092,7 +4162,7 @@
       drums:{kickModel:["909"], snareModel:["clap","crack"], hatModel:["noise","metal"], kick:[1.1,1.35], snare:[0.6,0.85], hat:[0.6,0.9], tune:[0.98,1.1], send:[0.1,0.25], dsend:[0.05,0.15]},
       fx:{reverb:[0.87,1], delayBeats:[0.75,1.5], delayFb:[0.15,0.3], delayCut:[2000,3000], pump:[0,0.12], crackle:[0.02,0.18], lowcut:[0,0], highcut:[2600,3400], comp:[0.21,0.43]},
       found:{role:"narration", vol:[0.35,0.55], pitch:[0.98,1.05], stretch:[0.9,1.05], cutoff:[2600,3600], sources:["vx_apollo"]},
-      hits:{sources:["sp_system","tw_ding"], pattern:"sparse", prob:0.15},
+      hits:{sources:["sp_system","pool:chime*1"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"wave",
       reverbColor:"greyhole" },
@@ -4111,7 +4181,7 @@
       drums:{kickModel:["909","boom"], snareModel:["clap","noise"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.75,1], hat:[1.1,1.4], tune:[0.95,1.1], send:[0.15,0.3], dsend:[0.05,0.15], kit:"power"},
       fx:{reverb:[0.27,0.45], delayBeats:[0.375,0.5], delayFb:[0.15,0.3], delayCut:[2600,3800], pump:[0.09,0.31], crackle:[0.13,0.29], lowcut:[30,45], highcut:[0,0], comp:[0.35,0.57], grit:[0,0]},
       found:{role:"chops", vol:[0.1,0.18], pitch:[0.95,1.15], stretch:[0.4,0.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense"]},
-      hits:{sources:["horns_78","sp_rhythm","vox_a"], pattern:"offbeat", prob:0.5},
+      hits:{sources:["pool:horn_stab*1","sp_rhythm","pool:vocal_stab*1"], pattern:"offbeat", prob:0.5},
       stab:["off","sparse"],
       form:"pop",
       reverbColor:"dattorro",
@@ -4132,7 +4202,7 @@
       fx:{reverb:[0.23,0.41], delayBeats:[0.5,0.75], delayFb:[0.2,0.35], delayCut:[1800,2800], pump:[0.29,0.51], crackle:[0.3,0.46], lowcut:[0,25], highcut:[0,0], comp:[0.27,0.49]},
       found:{role:"break", vol:[0.32,0.45], pitch:[1,1], stretch:[0.5,0.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175"]},
       snarePP:0.5,
-      hits:{sources:["vox_b","vox_c","sp_rewind"], pattern:"sparse", prob:0.4},
+      hits:{sources:["pool:vocal_stab*2","sp_rewind"], pattern:"sparse", prob:0.4},
       stab:["off"],
       form:"pop" },
     /* /genre-tool:shellacsplice:genres */
@@ -4188,7 +4258,7 @@
       drums:{kickModel:["808","boom"], snareModel:["crack"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.7,0.95], hat:[0.9,1.2], tune:[1.05,1.2], send:[0.1,0.2], dsend:[0.1,0.25]},
       fx:{reverb:[0.25,0.43], delayBeats:[0.5,0.75], delayFb:[0.25,0.4], delayCut:[2200,3400], pump:[0.11,0.33], crackle:[0.16,0.32], lowcut:[25,40], highcut:[2600,3400], comp:[0.2,0.42]},
       found:{role:"break", vol:[0.32,0.45], pitch:[1,1], stretch:[0.5,0.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175"]},
-      hits:{sources:["vox_b","sp_rhythm"], pattern:"sparse", prob:0.4},
+      hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"sparse", prob:0.4},
       stab:["off"],
       form:"pop" },
     /* /genre-tool:atticfanthrashsplice:genres */
@@ -4206,7 +4276,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.6,0.85], snare:[0.4,0.6], hat:[0.3,0.5], tune:[0.95,1.1], send:[0.1,0.2], dsend:[0,0.05]},
       fx:{reverb:[0.35,0.53], delayBeats:[0.375,0.5], delayFb:[0.15,0.3], delayCut:[2600,3800], pump:[0.21,0.43], crackle:[0.31,0.47], lowcut:[30,45], highcut:[2600,3400], comp:[0.23,0.45], grit:[0,0]},
       found:{role:"bed", vol:[0.06,0.12], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station","vx_timelady"]},
-      hits:{sources:["horns_78","sp_rhythm","vox_a"], pattern:"offbeat", prob:0.5},
+      hits:{sources:["pool:horn_stab*1","sp_rhythm","pool:vocal_stab*1"], pattern:"offbeat", prob:0.5},
       stab:["off","sparse"],
       form:"pop",
       reverbColor:"dattorro",
@@ -4227,7 +4297,7 @@
       fx:{reverb:[0.48,0.66], delayBeats:[0.5,0.75], delayFb:[0.1,0.25], delayCut:[2000,3000], pump:[0,0.12], crackle:[0.2,0.36], lowcut:[0,30], highcut:[2600,3400], comp:[0.07,0.29]},
       found:{role:"bed", vol:[0.05,0.12], pitch:[0.8,1], stretch:[0.45,0.6], cutoff:[1500,2500], sources:["shibuya","tokyo_station","vx_whitman"]},
       rubato:{depth:[0.008,0.02], periodBars:[3,5], prob:1},
-      hits:{sources:["blues_vox_78","blues_vox_78","horns_78"], pattern:"response", prob:0.75},
+      hits:{sources:["blues_vox_78","blues_vox_78","pool:horn_stab*1"], pattern:"response", prob:0.75},
       stab:["off"],
       form:"pop",
       reverbColor:"fdn",
@@ -4248,7 +4318,7 @@
       fx:{reverb:[0.39,0.57], delayBeats:[0.5,0.75], delayFb:[0.2,0.35], delayCut:[1800,2800], pump:[0.2,0.42], crackle:[0.5,0.66], lowcut:[0,25], highcut:[2600,3400], comp:[0.34,0.56]},
       found:{role:"chops", vol:[0.1,0.18], pitch:[0.95,1.15], stretch:[0.4,0.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense"]},
       snarePP:0.5,
-      hits:{sources:["vox_b","vox_c","sp_rewind"], pattern:"sparse", prob:0.4},
+      hits:{sources:["pool:vocal_stab*2","sp_rewind"], pattern:"sparse", prob:0.4},
       stab:["off"],
       form:"pop" },
     /* /genre-tool:duststrut:genres */
@@ -4285,7 +4355,7 @@
       fx:{reverb:[0.84,1], delayBeats:[0.75,1.5], delayFb:[0.3,0.5], delayCut:[1800,2800], pump:[0,0.17], crackle:[0.2,0.36], lowcut:[0,25], highcut:[0,0], comp:[0.13,0.35]},
       found:{role:"bed", vol:[0.14,0.24], pitch:[0.7,0.9], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["tokyo_station","highway_night","vx_apollo"]},
       snarePP:0.66,
-      hits:{sources:["vox_b","sp_herenow"], pattern:"sparse", prob:0.2},
+      hits:{sources:["pool:vocal_stab*1","sp_herenow"], pattern:"sparse", prob:0.2},
       stab:["off"],
       form:"pop",
       timeFeel:{pushPull:{bass:0.011, hat:-0.007}} },
@@ -4304,7 +4374,7 @@
       drums:{kickModel:["boom"], snareModel:["noise","crack"], hatModel:["noise"], kick:[0.5,0.72], snare:[0.35,0.55], hat:[0.4,0.6], tune:[0.9,1.02], send:[0.2,0.4], dsend:[0,0.1]},
       fx:{reverb:[0.4,0.58], delayBeats:[0.5,0.9], delayFb:[0.12,0.28], delayCut:[2200,3200], pump:[0.03,0.25], crackle:[0.28,0.44], lowcut:[0,0], highcut:[2600,3400], comp:[0.3,0.52]},
       found:{role:"chops", vol:[0.1,0.18], pitch:[0.95,1.15], stretch:[0.4,0.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense"]},
-      hits:{sources:["tw_ding"], pattern:"sparse", prob:0.15},
+      hits:{sources:["pool:chime*1"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"pop",
       reverbColor:"spring" },
@@ -4323,7 +4393,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.6,0.85], snare:[0.4,0.6], hat:[0.3,0.5], tune:[0.95,1.1], send:[0.1,0.2], dsend:[0,0.05]},
       fx:{reverb:[0.81,0.99], delayBeats:[0.375,0.5], delayFb:[0.15,0.3], delayCut:[2600,3800], pump:[0.21,0.43], crackle:[0.21,0.37], lowcut:[30,45], highcut:[0,0], comp:[0.28,0.5], grit:[0,0]},
       found:{role:"bed", vol:[0.06,0.12], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station","vx_timelady"]},
-      hits:{sources:["horns_78","sp_rhythm","vox_a"], pattern:"offbeat", prob:0.5},
+      hits:{sources:["pool:horn_stab*1","sp_rhythm","pool:vocal_stab*1"], pattern:"offbeat", prob:0.5},
       stab:["off","sparse"],
       form:"pop",
       reverbColor:"dattorro",
@@ -4363,7 +4433,7 @@
       drums:{kickModel:["808","boom"], snareModel:["crack"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.7,0.95], hat:[0.9,1.2], tune:[1.05,1.2], send:[0.1,0.2], dsend:[0.1,0.25]},
       fx:{reverb:[0.71,0.89], delayBeats:[0.5,0.75], delayFb:[0.25,0.4], delayCut:[2200,3400], pump:[0.06,0.28], crackle:[0.03,0.19], lowcut:[25,40], highcut:[0,0], comp:[0.29,0.51]},
       found:{role:"chops", vol:[0.1,0.18], pitch:[0.95,1.15], stretch:[0.4,0.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense"]},
-      hits:{sources:["vox_b","sp_rhythm"], pattern:"sparse", prob:0.4},
+      hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"sparse", prob:0.4},
       stab:["off"],
       form:"pop" },
     /* /genre-tool:hydracore:genres */
@@ -4382,7 +4452,7 @@
       drums:{kickModel:["808","boom"], snareModel:["crack"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.7,0.95], hat:[0.9,1.2], tune:[1.05,1.2], send:[0.1,0.2], dsend:[0.1,0.25]},
       fx:{reverb:[0.39,0.57], delayBeats:[0.5,0.75], delayFb:[0.25,0.4], delayCut:[2200,3400], pump:[0,0.15], crackle:[0.28,0.44], lowcut:[25,40], highcut:[2600,3400], comp:[0.26,0.48]},
       found:{role:"break", vol:[0.32,0.45], pitch:[1,1], stretch:[0.5,0.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175"]},
-      hits:{sources:["vox_b","sp_rhythm"], pattern:"sparse", prob:0.4},
+      hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"sparse", prob:0.4},
       stab:["off"],
       form:"pop" },
     /* /genre-tool:ashfunk:genres */
@@ -4460,7 +4530,7 @@
       drums:{kickModel:["909","boom"], snareModel:["noise","clap"], hatModel:["metal","noise"], kick:[1.05,1.25], snare:[0.6,0.85], hat:[0.7,1], tune:[0.95,1.1], send:[0.3,0.45], dsend:[0.05,0.15]},
       fx:{reverb:[0.6,0.75], delayBeats:[0.375,0.75], delayFb:[0.3,0.45], delayCut:[2500,3800], pump:[0.08,0.2], crackle:[0,0.1], lowcut:[30,45], highcut:[0,0], comp:[0.25,0.4]},
       found:{role:"bed", vol:[0.08,0.15], pitch:[0.7,0.9], stretch:[0.45,0.6], cutoff:[1800,3000], sources:["vx_wwvh","vx_conet_swedish","vx_apollo"]},
-      hits:{sources:["vx_wwvh","rave_b"], pattern:"sparse", prob:0.25},
+      hits:{sources:["vx_wwvh","pool:rave_stab*1"], pattern:"sparse", prob:0.25},
       stab:["off","sparse"],
       form:"ritual",
       reverbColor:"dattorro",
@@ -4527,7 +4597,7 @@
       drums:{kickModel:["909"], snareModel:["clap","noise"], hatModel:["noise"], kick:[1.25,1.45], snare:[0.85,1.1], hat:[1,1.3], tune:[0.95,1.05], send:[0.15,0.3], dsend:[0.05,0.12]},
       fx:{reverb:[0.35,0.5], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[3000,4200], pump:[0.35,0.55], crackle:[0.05,0.15], lowcut:[30,45], highcut:[0,0], comp:[0.4,0.6]},
       found:{role:"bed", vol:[0.05,0.1], pitch:[0.75,0.9], stretch:[0.45,0.6], cutoff:[1500,2500], sources:["factory","highway_night"]},
-      hits:{sources:["vox_a","rave_b","sp_nightdrive"], pattern:"offbeat", prob:0.35},
+      hits:{sources:["pool:vocal_stab*1","pool:rave_stab*1","sp_nightdrive"], pattern:"offbeat", prob:0.35},
       stab:["off","offbeat"],
       form:"dj",
       masterComp:0.3,
@@ -4571,7 +4641,7 @@
       drums:{kickModel:["909","boom"], snareModel:["noise","clap"], hatModel:["noise"], kick:[1.1,1.3], snare:[1,1.25], hat:[0.6,0.9], tune:[0.9,1.05], send:[0.45,0.65], dsend:[0.05,0.15]},
       fx:{reverb:[0.55,0.7], delayBeats:[0.375,0.5], delayFb:[0.15,0.3], delayCut:[3200,4500], pump:[0.08,0.22], crackle:[0,0.08], lowcut:[35,50], highcut:[0,0], comp:[0.35,0.55]},
       found:{role:"bed", vol:[0.04,0.09], pitch:[0.85,1], stretch:[0.45,0.55], cutoff:[2000,3200], sources:["shibuya","highway_night"]},
-      hits:{sources:["vox_a","sp_herenow"], pattern:"sparse", prob:0.3},
+      hits:{sources:["pool:vocal_stab*1","sp_herenow"], pattern:"sparse", prob:0.3},
       stab:["off","sparse"],
       form:"pop",
       reverbColor:"dattorro",
@@ -4593,7 +4663,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise","metal"], kick:[1.05,1.3], snare:[0.85,1.1], hat:[0.8,1.1], tune:[0.95,1.1], send:[0.2,0.35], dsend:[0.05,0.12]},
       fx:{reverb:[0.45,0.6], delayBeats:[0.5,0.75], delayFb:[0.15,0.3], delayCut:[2800,4000], pump:[0,0.1], crackle:[0.1,0.25], lowcut:[25,40], highcut:[0,0], comp:[0.3,0.5], grit:[0.05,0.2]},
       found:{role:"bed", vol:[0.06,0.12], pitch:[0.75,0.9], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["vx_suspense","vx_timelady"]},
-      hits:{sources:["vx_suspense","vox_b"], pattern:"sparse", prob:0.25},
+      hits:{sources:["vx_suspense","pool:vocal_stab*1"], pattern:"sparse", prob:0.25},
       stab:["off","sparse"],
       form:"anthem",
       theory:{adventure:[0.15,0.29], color:[0.333,0.533], voicing:"quartal", reharm:true},
@@ -4616,7 +4686,7 @@
       fx:{reverb:[0.4,0.55], delayBeats:[0.375,0.75], delayFb:[0.2,0.35], delayCut:[2600,3800], pump:[0,0.1], crackle:[0,0.12], lowcut:[25,40], highcut:[0,0], comp:[0.25,0.45]},
       found:{role:"bed", vol:[0.06,0.14], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[1800,3000], sources:["vx_blake","tw_stationhall"]},
       counterpoint:{prob:0.35},
-      hits:{sources:["bb_horn_a","bb_horn_b","horns_78"], pattern:"response", prob:0.45},
+      hits:{sources:["bb_horn_a","bb_horn_b","pool:horn_stab*1"], pattern:"response", prob:0.45},
       stab:["off"],
       form:"anthem",
       theory:{adventure:[0.138,0.263], color:[0.2,0.4], voicing:"quartal", reharm:true},
@@ -4639,7 +4709,7 @@
       fx:{reverb:[0.5,0.68], delayBeats:[0.5,1], delayFb:[0.15,0.3], delayCut:[2200,3200], pump:[0,0], crackle:[0.05,0.2], lowcut:[0,0], highcut:[0,0], comp:[0,0.2]},
       found:{role:"bed", vol:[0.08,0.16], pitch:[0.8,1], stretch:[0.45,0.6], cutoff:[2000,3200], sources:["crickets","frogs","vx_dickinson"]},
       rubato:{depth:[0.008,0.02], periodBars:[2,4], prob:0.6},
-      hits:{sources:["handbell","ca_loon"], pattern:"sparse", prob:0.2},
+      hits:{sources:["pool:chime*1","ca_loon"], pattern:"sparse", prob:0.2},
       stab:["off"],
       form:"ritual",
       theory:{adventure:[0.163,0.308], color:[0.413,0.638], voicing:"close", reharm:true},
@@ -4706,7 +4776,7 @@
       fx:{reverb:[0.6,0.8], delayBeats:[0.75,1.5], delayFb:[0.4,0.6], delayCut:[2400,3600], pump:[0,0], crackle:[0.05,0.18], lowcut:[0,25], highcut:[0,0], comp:[0.1,0.3]},
       found:{role:"bed", vol:[0.12,0.22], pitch:[0.7,0.9], stretch:[0.45,0.6], cutoff:[1600,2800], sources:["hydrophone","vx_apollo","highway_night"]},
       rubato:{depth:[0.006,0.015], periodBars:[2,4], prob:0.4},
-      hits:{sources:["vx_timelady","timer_ding"], pattern:"sparse", prob:0.2},
+      hits:{sources:["vx_timelady","pool:chime*1"], pattern:"sparse", prob:0.2},
       stab:["off"],
       form:"wave",
       blueNote:0.35,
@@ -4730,7 +4800,7 @@
       drums:{kickModel:["909","boom"], snareModel:["crack","noise"], hatModel:["metal","noise"], kick:[1.2,1.45], snare:[0.85,1.1], hat:[0.8,1.15], tune:[0.95,1.1], send:[0.12,0.24], dsend:[0.05,0.15]},
       fx:{reverb:[0.3,0.45], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[2800,4000], pump:[0,0.12], crackle:[0,0.08], lowcut:[28,42], highcut:[0,0], comp:[0.4,0.6]},
       found:{role:"bed", vol:[0.05,0.12], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[2000,3200], sources:["highway_night","hvac_hum"]},
-      hits:{sources:["vox_a","sp_energy"], pattern:"sparse", prob:0.25},
+      hits:{sources:["pool:vocal_stab*1","sp_energy"], pattern:"sparse", prob:0.25},
       stab:["off"],
       form:"pop",
       timeFeel:{pushPull:{hat:-0.005}},
@@ -4753,7 +4823,7 @@
       fx:{reverb:[0.4,0.55], delayBeats:[0.5,0.75], delayFb:[0.15,0.28], delayCut:[2400,3400], pump:[0,0], crackle:[0.08,0.22], lowcut:[0,25], highcut:[9000,14000], comp:[0.05,0.2]},
       found:{role:"bed", vol:[0.06,0.14], pitch:[0.8,1], stretch:[0.45,0.6], cutoff:[2000,3200], sources:["frogs","ferment_bubble"]},
       rubato:{depth:[0.006,0.014], periodBars:[2,3], prob:0.35},
-      hits:{sources:["timer_ding","vox_b"], pattern:"sparse", prob:0.25},
+      hits:{sources:["timer_ding","pool:vocal_stab*1"], pattern:"sparse", prob:0.25},
       stab:["off"],
       form:"pop",
       timeFeel:{pushPull:{bass:0.012}},
@@ -4797,7 +4867,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.85,1.05], snare:[0.8,1.05], hat:[0.7,1], tune:[0.95,1.1], send:[0.15,0.28], dsend:[0,0.08], kit:"acoustic"},
       fx:{reverb:[0.3,0.45], delayBeats:[0.375,0.5], delayFb:[0.1,0.22], delayCut:[2400,3600], pump:[0,0.05], crackle:[0.3,0.5], lowcut:[30,45], highcut:[9000,12000], comp:[0.15,0.32], grit:[0,0.1]},
       found:{role:"bed", vol:[0.06,0.12], pitch:[0.95,1.05], stretch:[0.45,0.6], cutoff:[2400,3600], sources:["leacock1","leacock2"]},
-      hits:{sources:["blues_vox_78","horns_78"], pattern:"response", prob:0.4},
+      hits:{sources:["blues_vox_78","pool:horn_stab*1"], pattern:"response", prob:0.4},
       stab:["off"],
       form:"pop",
       theory:{adventure:[0.163,0.288], color:[0.263,0.45], voicing:"close", reharm:true},
@@ -4818,7 +4888,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.85,1.05], snare:[0.75,1], hat:[0.9,1.2], tune:[0.95,1.1], send:[0.15,0.28], dsend:[0,0.08], kit:"acoustic"},
       fx:{reverb:[0.3,0.45], delayBeats:[0.5,0.75], delayFb:[0.1,0.22], delayCut:[2800,4000], pump:[0,0.05], crackle:[0.15,0.28], lowcut:[25,40], highcut:[0,0], comp:[0.08,0.2], grit:[0,0.08]},
       found:{role:"bed", vol:[0.05,0.1], pitch:[0.95,1.05], stretch:[0.45,0.6], cutoff:[2600,3800], sources:["crickets","chickadee"]},
-      hits:{sources:["vox_a","sp_rhythm"], pattern:"sparse", prob:0.25},
+      hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"sparse", prob:0.25},
       stab:["off"],
       form:"pop",
       theory:{adventure:[0.133,0.257], color:[0.25,0.433], voicing:"close", reharm:true},
@@ -4839,7 +4909,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.75,0.95], snare:[0.6,0.85], hat:[0.5,0.8], tune:[0.9,1.05], send:[0.25,0.4], dsend:[0.05,0.15], kit:"acoustic"},
       fx:{reverb:[0.5,0.68], delayBeats:[0.75,1], delayFb:[0.35,0.5], delayCut:[2000,3000], pump:[0,0.08], crackle:[0.15,0.3], lowcut:[25,40], highcut:[7000,11000], comp:[0.15,0.32], grit:[0.05,0.18]},
       found:{role:"bed", vol:[0.15,0.25], pitch:[0.75,0.95], stretch:[0.5,0.65], cutoff:[2000,3200], sources:["vx_conet_swedish","vx_wwvh","loon","tw_intrain"]},
-      hits:{sources:["sp_rewind","vox_b"], pattern:"sparse", prob:0.3},
+      hits:{sources:["sp_rewind","pool:vocal_stab*1"], pattern:"sparse", prob:0.3},
       stab:["off"],
       form:"wave",
       reverbColor:"greyhole",
@@ -4863,7 +4933,7 @@
       found:{role:"bed", vol:[0.05,0.1], pitch:[0.95,1.05], stretch:[0.45,0.6], cutoff:[2200,3400], sources:["pigeon_coo","tw_stationhall"]},
       rubato:{depth:[0.008,0.02], periodBars:[2,4], prob:0.5},
       counterpoint:{prob:0.5},
-      hits:{sources:["handbell","tw_ding"], pattern:"sparse", prob:0.2},
+      hits:{sources:["pool:chime*2"], pattern:"sparse", prob:0.2},
       stab:["off"],
       form:"pop",
       reverbColor:"dattorro",
@@ -4885,7 +4955,7 @@
       drums:{kickModel:["boom"], snareModel:["crack","noise"], hatModel:["noise"], kick:[1.15,1.4], snare:[0.9,1.15], hat:[0.7,1], tune:[0.9,1.05], send:[0.15,0.28], dsend:[0,0.08], kit:"power"},
       fx:{reverb:[0.35,0.5], delayBeats:[0.375,0.5], delayFb:[0.12,0.25], delayCut:[2200,3400], pump:[0,0.1], crackle:[0.1,0.25], lowcut:[30,45], highcut:[0,0], comp:[0.4,0.62], grit:[0.35,0.58]},
       found:{role:"bed", vol:[0.08,0.15], pitch:[0.9,1.05], stretch:[0.45,0.6], cutoff:[2200,3400], sources:["factory","leacock3"]},
-      hits:{sources:["sp_rewind","vox_c"], pattern:"sparse", prob:0.25},
+      hits:{sources:["sp_rewind","pool:vocal_stab*1"], pattern:"sparse", prob:0.25},
       stab:["off"],
       form:"pop",
       reverbColor:"fdn",
@@ -4907,7 +4977,7 @@
       drums:{kickModel:["boom"], snareModel:["noise","crack"], hatModel:["noise"], kick:[1,1.2], snare:[0.85,1.1], hat:[0.75,1.05], tune:[0.95,1.1], send:[0.12,0.24], dsend:[0,0.08], kit:"acoustic"},
       fx:{reverb:[0.3,0.45], delayBeats:[0.5,0.75], delayFb:[0.1,0.22], delayCut:[2400,3600], pump:[0,0.1], crackle:[0.1,0.22], lowcut:[25,40], highcut:[0,0], comp:[0.3,0.5], grit:[0.05,0.18]},
       found:{role:"bed", vol:[0.08,0.16], pitch:[0.95,1.05], stretch:[0.45,0.6], cutoff:[2200,3400], sources:["highway_night","tw_platform"]},
-      hits:{sources:["vox_a","sp_rhythm"], pattern:"response", prob:0.4},
+      hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"response", prob:0.4},
       stab:["off"],
       form:"pop",
       timeFeel:{pushPull:{bass:0.012}},
@@ -4931,7 +5001,7 @@
       found:{role:"bed", vol:[0.08,0.16], pitch:[0.8,0.95], stretch:[0.5,0.65], cutoff:[1800,2800], sources:["whale_song","hydrophone"]},
       rubato:{depth:[0.015,0.03], periodBars:[2,4], prob:0.8},
       counterpoint:{prob:0.4},
-      hits:{sources:["tw_ding"], pattern:"sparse", prob:0.1},
+      hits:{sources:["pool:chime*1"], pattern:"sparse", prob:0.1},
       stab:["off"],
       form:"wave",
       reverbColor:"dattorro",
@@ -4953,7 +5023,7 @@
       drums:{kickModel:["909","boom"], snareModel:["clap","noise"], hatModel:["noise","metal"], kick:[1.1,1.3], snare:[0.8,1.05], hat:[0.6,0.9], tune:[0.95,1.1], send:[0.1,0.2], dsend:[0.03,0.1]},
       fx:{reverb:[0.4,0.58], delayBeats:[0.375,0.5], delayFb:[0.18,0.32], delayCut:[2800,4000], pump:[0.3,0.5], crackle:[0,0.08], lowcut:[30,45], highcut:[0,0], comp:[0.25,0.45], grit:[0,0.06]},
       found:{role:"bed", vol:[0.05,0.1], pitch:[0.95,1.05], stretch:[0.45,0.6], cutoff:[2400,3600], sources:["highway_night","crt_whine"]},
-      hits:{sources:["vox_a","sp_nightdrive"], pattern:"sparse", prob:0.3},
+      hits:{sources:["pool:vocal_stab*1","sp_nightdrive"], pattern:"sparse", prob:0.3},
       stab:["off","sparse"],
       form:"pop",
       theory:{adventure:[0.1,0.207], color:[0.183,0.367], voicing:"close", reharm:true},
@@ -4977,7 +5047,7 @@
       fx:{reverb:[0.65,0.85], delayBeats:[1,2], delayFb:[0.1,0.22], delayCut:[1800,2600], pump:[0,0], crackle:[0,0.15], lowcut:[0,0], highcut:[0,0], comp:[0,0.1]},
       found:{role:"bed", vol:[0.05,0.11], pitch:[0.6,0.8], stretch:[0.5,0.65], cutoff:[1500,2400], sources:["tw_stationhall","vx_sv_choir"]},
       rubato:{depth:[0.03,0.05], periodBars:[4,8], prob:1},
-      hits:{sources:["handbell"], pattern:"sparse", prob:0.15},
+      hits:{sources:["pool:chime*1"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"ritual",
       reverbColor:"fdn",
@@ -5026,7 +5096,7 @@
       fx:{reverb:[0.68,0.82], delayBeats:[0.75,1.5], delayFb:[0.15,0.28], delayCut:[2200,3200], pump:[0,0], crackle:[0.15,0.4], lowcut:[0,0], highcut:[0,0], comp:[0,0.12]},
       found:{role:"bed", vol:[0.05,0.12], pitch:[0.7,0.9], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["tw_stationhall","hydrophone"]},
       rubato:{depth:[0.025,0.045], periodBars:[2,4], prob:1},
-      hits:{sources:["handbell"], pattern:"sparse", prob:0.08},
+      hits:{sources:["pool:chime*1"], pattern:"sparse", prob:0.08},
       stab:["off"],
       form:"wave",
       theory:{adventure:[0.167,0.31], color:[0.45,0.683], voicing:"open", reharm:true},
@@ -5050,7 +5120,7 @@
       found:{role:"bed", vol:[0.05,0.11], pitch:[0.7,0.85], stretch:[0.5,0.65], cutoff:[1600,2600], sources:["vx_sv_choir","tw_stationhall"]},
       rubato:{depth:[0.01,0.02], periodBars:[2,4], prob:0.6},
       counterpoint:{prob:0.85},
-      hits:{sources:["handbell"], pattern:"sparse", prob:0.1},
+      hits:{sources:["pool:chime*1"], pattern:"sparse", prob:0.1},
       stab:["off"],
       form:"wave",
       reverbColor:"fdn",
@@ -5074,7 +5144,7 @@
       fx:{reverb:[0.6,0.8], delayBeats:[1,2], delayFb:[0.2,0.35], delayCut:[1800,2800], pump:[0,0], crackle:[0.18,0.42], lowcut:[0,0], highcut:[0,0], comp:[0,0.15]},
       found:{role:"bed", vol:[0.06,0.13], pitch:[0.6,0.85], stretch:[0.5,0.65], cutoff:[1600,2600], sources:["vx_conet_swedish","tw_stationhall"]},
       rubato:{depth:[0.03,0.055], periodBars:[2,4], prob:1},
-      hits:{sources:["handbell"], pattern:"sparse", prob:0.12},
+      hits:{sources:["pool:chime*1"], pattern:"sparse", prob:0.12},
       stab:["off"],
       form:"ritual",
       reverbColor:"greyhole",
@@ -5096,7 +5166,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.6,0.9], snare:[0.6,0.9], hat:[0.5,0.8], tune:[0.9,1.05], send:[0.15,0.35], dsend:[0,0.08], kit:"room"},
       fx:{reverb:[0.3,0.45], delayBeats:[0.75,1], delayFb:[0.1,0.22], delayCut:[2200,3200], pump:[0,0.05], crackle:[0.3,0.58], lowcut:[0,30], highcut:[0,0], comp:[0.15,0.35]},
       found:{role:"bed", vol:[0.06,0.13], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[2000,3200], sources:["horns_78","vx_burroughs"]},
-      hits:{sources:["horns_78"], pattern:"response", prob:0.3},
+      hits:{sources:["pool:horn_stab*1"], pattern:"response", prob:0.3},
       stab:["off"],
       form:"pop",
       meter:{beats:3, unit:4},
@@ -5119,7 +5189,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.7,1], snare:[0.65,0.95], hat:[0.6,0.9], tune:[0.95,1.05], send:[0.15,0.32], dsend:[0,0.08], kit:"jazz"},
       fx:{reverb:[0.35,0.5], delayBeats:[0.5,0.75], delayFb:[0.1,0.22], delayCut:[2400,3400], pump:[0,0.08], crackle:[0.05,0.3], lowcut:[0,30], highcut:[0,0], comp:[0.25,0.45]},
       found:{role:"bed", vol:[0.05,0.12], pitch:[0.9,1.05], stretch:[0.45,0.6], cutoff:[2000,3200], sources:["horns_78","vx_suspense"]},
-      hits:{sources:["bb_horn_a","horns_78"], pattern:"response", prob:0.4},
+      hits:{sources:["bb_horn_a","pool:horn_stab*1"], pattern:"response", prob:0.4},
       stab:["offbeat","off"],
       form:"pop",
       masterComp:0.3,
@@ -5162,7 +5232,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.45,0.7], snare:[0.4,0.65], hat:[0.35,0.6], tune:[0.95,1.05], send:[0.15,0.3], dsend:[0,0.05], kit:"acoustic"},
       fx:{reverb:[0.35,0.5], delayBeats:[0.5,1], delayFb:[0.1,0.2], delayCut:[2400,3400], pump:[0,0], crackle:[0,0.25], lowcut:[0,0], highcut:[0,0], comp:[0.05,0.2]},
       found:{role:"bed", vol:[0.04,0.1], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["tw_stationhall","tokyo_station"]},
-      hits:{sources:["timer_ding","handbell"], pattern:"sparse", prob:0.15},
+      hits:{sources:["pool:chime*2"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"dj",
       theory:{adventure:[0.17,0.304], color:[0.31,0.51], voicing:"close", reharm:true},
@@ -5207,7 +5277,7 @@
       drums:{kickModel:["boom"], snareModel:["noise","crack"], hatModel:["noise"], kick:[0.95,1.15], snare:[1,1.25], hat:[0.55,0.85], tune:[0.9,1.05], send:[0.15,0.28], dsend:[0.03,0.1], kit:"room"},
       fx:{reverb:[0.35,0.5], delayBeats:[0.5,0.75], delayFb:[0.1,0.2], delayCut:[2200,3200], pump:[0,0], crackle:[0.2,0.4], lowcut:[0,30], highcut:[9000,13000], comp:[0.25,0.45]},
       found:{role:"bed", vol:[0.05,0.1], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1600,2600], sources:["factory","shibuya","tokyo_station"]},
-      hits:{sources:["horns_78","blues_vox_78","horns_78"], pattern:"response", prob:0.6},
+      hits:{sources:["pool:horn_stab*2","blues_vox_78"], pattern:"response", prob:0.6},
       stab:["off"],
       form:"pop",
       timeFeel:{pushPull:{bass:0.011}},
@@ -5229,7 +5299,7 @@
       drums:{kickModel:["boom","909"], snareModel:["crack","noise"], hatModel:["noise"], kick:[1.15,1.4], snare:[1,1.25], hat:[0.9,1.2], tune:[0.95,1.1], send:[0.12,0.25], dsend:[0.03,0.1], kit:"power"},
       fx:{reverb:[0.35,0.5], delayBeats:[0.375,0.5], delayFb:[0.1,0.22], delayCut:[2400,3400], pump:[0,0.1], crackle:[0.3,0.5], lowcut:[0,30], highcut:[8500,12000], comp:[0.35,0.55]},
       found:{role:"bed", vol:[0.05,0.1], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1600,2600], sources:["shibuya","tokyo_station","vx_timelady"]},
-      hits:{sources:["horns_78","stml_hit_b3","vox_a"], pattern:"offbeat", prob:0.55},
+      hits:{sources:["pool:horn_stab*1","stml_hit_b3","pool:vocal_stab*1"], pattern:"offbeat", prob:0.55},
       stab:["off","sparse"],
       form:"pop",
       theory:{adventure:[0.1,0.213], color:[0.2,0.367], voicing:"close", reharm:true},
@@ -5293,7 +5363,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[1,1.2], snare:[0.8,1.05], hat:[1.15,1.55], tune:[0.9,1.05], send:[0.08,0.18], dsend:[0.03,0.1], kit:"room"},
       fx:{reverb:[0.3,0.45], delayBeats:[0.5,0.75], delayFb:[0.12,0.25], delayCut:[2400,3400], pump:[0,0.1], crackle:[0.12,0.28], lowcut:[25,40], highcut:[9000,13000], comp:[0.42,0.6]},
       found:{role:"bed", vol:[0.05,0.1], pitch:[0.9,1.05], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station"]},
-      hits:{sources:["bb_horn_b","bb_stab_b","vox_b"], pattern:"sparse", prob:0.4},
+      hits:{sources:["bb_horn_b","bb_stab_b","pool:vocal_stab*1"], pattern:"sparse", prob:0.4},
       stab:["off","sparse"],
       form:"pop",
       timeFeel:{pushPull:{bass:0.013, hat:-0.005}},
@@ -5315,7 +5385,7 @@
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.7,0.95], snare:[0.55,0.8], hat:[0.4,0.7], tune:[0.85,1], send:[0.2,0.35], dsend:[0.03,0.1], kit:"room"},
       fx:{reverb:[0.5,0.65], delayBeats:[0.5,0.75], delayFb:[0.15,0.3], delayCut:[2000,3000], pump:[0,0], crackle:[0.1,0.25], lowcut:[0,25], highcut:[9000,13000], comp:[0.15,0.3]},
       found:{role:"bed", vol:[0.06,0.12], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[1500,2500], sources:["tokyo_station","shibuya","vx_dickinson"]},
-      hits:{sources:["blues_vox_78","vox_b"], pattern:"sparse", prob:0.3},
+      hits:{sources:["blues_vox_78","pool:vocal_stab*1"], pattern:"sparse", prob:0.3},
       stab:["off"],
       form:"pop",
       timeFeel:{pushPull:{bass:0.015, snare:0.008}},
@@ -5337,7 +5407,7 @@
       drums:{kickModel:["909","boom"], snareModel:["noise","clap"], hatModel:["noise"], kick:[1.1,1.3], snare:[0.95,1.2], hat:[1,1.3], tune:[0.95,1.1], send:[0.12,0.25], dsend:[0.05,0.15], kit:"power"},
       fx:{reverb:[0.4,0.55], delayBeats:[0.375,0.5], delayFb:[0.15,0.3], delayCut:[2600,3800], pump:[0.22,0.38], crackle:[0.18,0.32], lowcut:[30,45], highcut:[8500,12500], comp:[0.35,0.55]},
       found:{role:"chops", vol:[0.12,0.2], pitch:[0.95,1.1], stretch:[0.4,0.6], cutoff:[2400,3800], sources:["stml_chop_c","stml_chop_d","bb_horn_b"]},
-      hits:{sources:["horns_78","bb_horn_a","sp_rhythm"], pattern:"offbeat", prob:0.6},
+      hits:{sources:["pool:horn_stab*1","bb_horn_a","sp_rhythm"], pattern:"offbeat", prob:0.6},
       stab:["offbeat","off"],
       form:"pop",
       theory:{adventure:[0.173,0.317], color:[0.433,0.65], voicing:"close", reharm:true},
@@ -5358,7 +5428,7 @@
       drums:{kickModel:["909","808"], snareModel:["clap"], hatModel:["noise","metal"], kick:[1.15,1.35], snare:[0.95,1.2], hat:[0.9,1.2], tune:[0.95,1.1], send:[0.1,0.2], dsend:[0.05,0.15]},
       fx:{reverb:[0.3,0.45], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[2800,4000], pump:[0.25,0.45], crackle:[0,0.08], lowcut:[30,45], highcut:[0,0], comp:[0.4,0.6]},
       found:{role:"bed", vol:[0.06,0.12], pitch:[0.9,1.05], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["highway_night","shibuya","vx_timelady"]},
-      hits:{sources:["sp_rhythm","vox_a","stml_hit_b3"], pattern:"offbeat", prob:0.6},
+      hits:{sources:["sp_rhythm","pool:vocal_stab*1","stml_hit_b3"], pattern:"offbeat", prob:0.6},
       stab:["offbeat","sparse"],
       form:"pop",
       theory:{adventure:[0.173,0.317], color:[0.433,0.65], voicing:"close", reharm:true},
@@ -5380,7 +5450,7 @@
       drums:{kickModel:["boom"], snareModel:["crack","noise"], hatModel:["metal","noise"], kick:[1.4,1.65], snare:[0.95,1.2], hat:[0.6,0.9], tune:[1,1.12], send:[0.06,0.14], dsend:[0.04,0.1]},
       fx:{reverb:[0.2,0.34], delayBeats:[0.375,0.5], delayFb:[0.15,0.28], delayCut:[2400,3600], pump:[0,0.08], crackle:[0,0.05], lowcut:[30,45], highcut:[0,0], comp:[0.6,0.85], grit:[0.55,0.8]},
       found:{role:"bed", vol:[0.04,0.1], pitch:[0.85,1], stretch:[0.4,0.6], cutoff:[2000,3200], sources:["factory","highway_night"]},
-      hits:{sources:["vox_b","sp_energy"], pattern:"sparse", prob:0.25},
+      hits:{sources:["pool:vocal_stab*1","sp_energy"], pattern:"sparse", prob:0.25},
       stab:["off"],
       form:"pop",
       pipes:[],
@@ -5401,7 +5471,7 @@
       drums:{kickModel:["boom","808"], snareModel:["noise"], hatModel:["noise"], kick:[1.35,1.6], snare:[0.7,0.95], hat:[0.3,0.55], tune:[0.72,0.88], send:[0.2,0.35], dsend:[0.05,0.18]},
       fx:{reverb:[0.55,0.72], delayBeats:[0.75,1.5], delayFb:[0.3,0.45], delayCut:[1400,2400], pump:[0,0.05], crackle:[0.05,0.18], lowcut:[0,20], highcut:[0,0], comp:[0.45,0.7], grit:[0.6,0.9]},
       found:{role:"bed", vol:[0.16,0.28], pitch:[0.5,0.65], stretch:[0.45,0.6], cutoff:[1400,2400], sources:["frogs","factory"]},
-      hits:{sources:["vox_c","sp_pressure"], pattern:"sparse", prob:0.2},
+      hits:{sources:["pool:vocal_stab*1","sp_pressure"], pattern:"sparse", prob:0.2},
       stab:["off"],
       form:"pop",
       timeFeel:{pushPull:{kick:0.04, snare:0.06, bass:0.07}},
@@ -5424,7 +5494,7 @@
       drums:{kickModel:["boom","808"], snareModel:["noise"], hatModel:["noise"], kick:[1.15,1.4], snare:[0.3,0.5], hat:[0.2,0.4], tune:[0.72,0.86], send:[0.3,0.5], dsend:[0.05,0.2]},
       fx:{reverb:[0.86,0.95], delayBeats:[1,1.5], delayFb:[0.45,0.6], delayCut:[1200,2200], pump:[0,0], crackle:[0,0.1], lowcut:[0,20], highcut:[0,0], comp:[0.3,0.55], grit:[0.45,0.75]},
       found:{role:"bed", vol:[0.2,0.32], pitch:[0.5,0.62], stretch:[0.45,0.6], cutoff:[1200,2200], sources:["highway_night","hvac_hum"]},
-      hits:{sources:["sp_pressure","vox_c"], pattern:"sparse", prob:0.15},
+      hits:{sources:["sp_pressure","pool:vocal_stab*1"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"wave",
       timeFeel:{pushPull:{kick:0.05, bass:0.08}},
@@ -5447,7 +5517,7 @@
       drums:{kickModel:["808","boom"], snareModel:["noise"], hatModel:["noise"], kick:[1.05,1.3], snare:[0.7,0.95], hat:[0.95,1.3], tune:[0.9,1.05], send:[0.25,0.4], dsend:[0.05,0.15]},
       fx:{reverb:[0.7,0.85], delayBeats:[0.5,0.75], delayFb:[0.3,0.45], delayCut:[1800,2800], pump:[0,0.06], crackle:[0.15,0.3], lowcut:[25,40], highcut:[0,0], comp:[0.4,0.65], grit:[0.55,0.8]},
       found:{role:"bed", vol:[0.08,0.16], pitch:[0.6,0.78], stretch:[0.45,0.6], cutoff:[1600,2800], sources:["highway_night","vx_conet_swedish"]},
-      hits:{sources:["sp_pressure","vox_a"], pattern:"sparse", prob:0.2},
+      hits:{sources:["sp_pressure","pool:vocal_stab*1"], pattern:"sparse", prob:0.2},
       stab:["off"],
       form:"dj",
       reverbColor:"dattorro",
@@ -5469,7 +5539,7 @@
       drums:{kickModel:["boom","808"], snareModel:["noise","crack"], hatModel:["noise"], kick:[1.3,1.55], snare:[0.7,0.95], hat:[0.5,0.8], tune:[0.85,1], send:[0.15,0.3], dsend:[0.1,0.25]},
       fx:{reverb:[0.45,0.62], delayBeats:[0.5,0.75], delayFb:[0.25,0.4], delayCut:[1800,2800], pump:[0,0.1], crackle:[0,0.12], lowcut:[25,40], highcut:[0,0], comp:[0.4,0.62], grit:[0.35,0.6]},
       found:{role:"bed", vol:[0.1,0.2], pitch:[0.7,0.85], stretch:[0.45,0.6], cutoff:[1800,3000], sources:["iriomote","highway_night"]},
-      hits:{sources:["vox_a","sp_rhythm"], pattern:"sparse", prob:0.3},
+      hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"sparse", prob:0.3},
       stab:["off"],
       form:"pop",
       theory:{adventure:[0.133,0.257], color:[0.183,0.367], voicing:"close", reharm:true},
@@ -5490,7 +5560,7 @@
       drums:{kickModel:["boom"], snareModel:["crack","noise"], hatModel:["noise"], kick:[1.5,1.75], snare:[1,1.25], hat:[0.3,0.55], tune:[0.8,0.95], send:[0.2,0.35], dsend:[0.1,0.25]},
       fx:{reverb:[0.6,0.78], delayBeats:[0.75,1], delayFb:[0.25,0.4], delayCut:[1600,2600], pump:[0,0.06], crackle:[0,0.08], lowcut:[0,25], highcut:[0,0], comp:[0.4,0.65], grit:[0.25,0.5]},
       found:{role:"bed", vol:[0.2,0.32], pitch:[0.72,0.88], stretch:[0.45,0.6], cutoff:[1600,2800], sources:["vx_sv_choir","vx_sv_march"]},
-      hits:{sources:["ca_horn","vox_c"], pattern:"sparse", prob:0.35},
+      hits:{sources:["ca_horn","pool:vocal_stab*1"], pattern:"sparse", prob:0.35},
       stab:["off"],
       form:"anthem",
       reverbColor:"fdn",
@@ -5513,7 +5583,7 @@
       drums:{kickModel:["boom","909"], snareModel:["crack","noise"], hatModel:["metal","noise"], kick:[1.4,1.65], snare:[0.85,1.1], hat:[0.6,0.9], tune:[0.95,1.1], send:[0.2,0.35], dsend:[0.08,0.2]},
       fx:{reverb:[0.55,0.72], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[2200,3400], pump:[0,0.1], crackle:[0,0.05], lowcut:[28,42], highcut:[0,0], comp:[0.55,0.8], grit:[0.45,0.7]},
       found:{role:"bed", vol:[0.05,0.12], pitch:[0.8,0.95], stretch:[0.4,0.6], cutoff:[2000,3200], sources:["tw_stationhall","highway_night"]},
-      hits:{sources:["vox_b","sp_pressure"], pattern:"sparse", prob:0.25},
+      hits:{sources:["pool:vocal_stab*1","sp_pressure"], pattern:"sparse", prob:0.25},
       stab:["off"],
       form:"pop",
       reverbColor:"dattorro",
@@ -5537,7 +5607,7 @@
       fx:{reverb:[0.82,0.92], delayBeats:[1,1.5], delayFb:[0.4,0.55], delayCut:[2000,3200], pump:[0,0], crackle:[0.2,0.38], lowcut:[0,0], highcut:[0,0], comp:[0,0.15]},
       found:{role:"bed", vol:[0.18,0.3], pitch:[0.55,0.72], stretch:[0.45,0.6], cutoff:[1800,3000], sources:["hvac_hum","vx_wwvh"]},
       thunk:{prob:[0.15,0.3], amp:[0.02,0.032]},
-      hits:{sources:["tw_ding","sp_herenow"], pattern:"sparse", prob:0.15},
+      hits:{sources:["pool:chime*1","sp_herenow"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"wave",
       reverbColor:"dattorro",
@@ -5559,7 +5629,7 @@
       drums:{kickModel:["boom","808"], snareModel:["crack","noise"], hatModel:["noise"], kick:[1.1,1.35], snare:[0.85,1.1], hat:[0.6,0.9], tune:[0.9,1.05], send:[0.1,0.22], dsend:[0.05,0.15], kit:"room"},
       fx:{reverb:[0.35,0.5], delayBeats:[0.5,0.75], delayFb:[0.2,0.35], delayCut:[1800,2800], pump:[0,0.1], crackle:[0.25,0.5], lowcut:[0,25], highcut:[0,0], comp:[0.3,0.5]},
       found:{role:"chops", vol:[0.16,0.28], pitch:[0.95,1.1], stretch:[0.4,0.55], cutoff:[2400,3800], sources:["blues_vox_78","stml_chop_a","stml_chop_b","stml_chop_c","stml_chop_d","vx_timelady"]},
-      hits:{sources:["bb_horn_a","bb_horn_b","sp_rewind","vox_b"], pattern:"sparse", prob:0.5},
+      hits:{sources:["bb_horn_a","bb_horn_b","sp_rewind","pool:vocal_stab*1"], pattern:"sparse", prob:0.5},
       stab:["off"],
       form:"pop",
       theory:{adventure:[0.325,0.5], color:[0.475,0.713], voicing:"drop2", reharm:true},
@@ -5580,7 +5650,7 @@
       drums:{kickModel:["808","boom"], snareModel:["crack","clap"], hatModel:["noise"], kick:[1.15,1.4], snare:[0.8,1.05], hat:[0.6,0.9], tune:[0.9,1.05], send:[0.12,0.25], dsend:[0.05,0.15]},
       fx:{reverb:[0.35,0.5], delayBeats:[0.5,0.75], delayFb:[0.2,0.35], delayCut:[2000,3000], pump:[0,0.12], crackle:[0.1,0.3], lowcut:[0,25], highcut:[0,0], comp:[0.3,0.5]},
       found:{role:"bed", vol:[0.05,0.12], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1800,3000], sources:["highway_night","shibuya"]},
-      hits:{sources:["vox_b","sp_slowdown","sp_nightdrive"], pattern:"sparse", prob:0.35},
+      hits:{sources:["pool:vocal_stab*1","sp_slowdown","sp_nightdrive"], pattern:"sparse", prob:0.35},
       stab:["off","sparse"],
       form:"pop",
       theory:{adventure:[0.117,0.24], color:[0.25,0.433], voicing:"close", reharm:true},
@@ -5601,7 +5671,7 @@
       drums:{kickModel:["808"], snareModel:["crack","clap"], hatModel:["noise"], kick:[1.25,1.5], snare:[0.75,1], hat:[1.15,1.5], tune:[0.85,1], send:[0.1,0.22], dsend:[0.08,0.2]},
       fx:{reverb:[0.3,0.45], delayBeats:[0.375,0.75], delayFb:[0.2,0.35], delayCut:[2000,3200], pump:[0.05,0.2], crackle:[0,0.08], lowcut:[20,35], highcut:[0,0], comp:[0.35,0.55]},
       found:{role:"bed", vol:[0.04,0.1], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1800,3000], sources:["highway_night","factory"]},
-      hits:{sources:["vox_c","sp_pressure","sp_rewind"], pattern:"dub", prob:0.5},
+      hits:{sources:["pool:vocal_stab*1","sp_pressure","sp_rewind"], pattern:"dub", prob:0.5},
       stab:["off"],
       form:"dj",
       theory:{adventure:[0.067,0.133], color:[0.167,0.35], voicing:"open", reharm:false},
@@ -5622,7 +5692,7 @@
       drums:{kickModel:["808"], snareModel:["clap","crack"], hatModel:["noise"], kick:[1.35,1.6], snare:[1,1.25], hat:[0.8,1.1], tune:[0.85,1], send:[0.15,0.3], dsend:[0.08,0.2]},
       fx:{reverb:[0.35,0.5], delayBeats:[0.5,0.75], delayFb:[0.2,0.35], delayCut:[1800,3000], pump:[0.2,0.4], crackle:[0,0.1], lowcut:[20,35], highcut:[0,0], comp:[0.45,0.7]},
       found:{role:"bed", vol:[0.04,0.1], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1800,3000], sources:["factory","highway_night"]},
-      hits:{sources:["rave_a","rave_c","vox_a","sp_energy"], pattern:"offbeat", prob:0.7},
+      hits:{sources:["pool:rave_stab*2","pool:vocal_stab*1","sp_energy"], pattern:"offbeat", prob:0.7},
       stab:["off"],
       form:"dj",
       theory:{adventure:[0.1,0.187], color:[0.167,0.333], voicing:"close", reharm:false},
@@ -5643,7 +5713,7 @@
       drums:{kickModel:["boom"], snareModel:["crack","noise"], hatModel:["noise"], kick:[1.2,1.45], snare:[1,1.3], hat:[0.5,0.8], tune:[0.95,1.08], send:[0.15,0.3], dsend:[0.05,0.15], kit:"room"},
       fx:{reverb:[0.3,0.45], delayBeats:[0.375,0.5], delayFb:[0.15,0.28], delayCut:[2200,3400], pump:[0,0.08], crackle:[0.05,0.2], lowcut:[25,40], highcut:[0,0], comp:[0.45,0.7], grit:[0.3,0.55]},
       found:{role:"bed", vol:[0.04,0.1], pitch:[0.85,1], stretch:[0.4,0.6], cutoff:[1800,3000], sources:["factory","highway_night"]},
-      hits:{sources:["vox_b","sp_pressure"], pattern:"sparse", prob:0.2},
+      hits:{sources:["pool:vocal_stab*1","sp_pressure"], pattern:"sparse", prob:0.2},
       stab:["off"],
       form:"anthem",
       theory:{adventure:[0.1,0.205], color:[0.138,0.3], voicing:"close", reharm:true},
@@ -5664,7 +5734,7 @@
       drums:{kickModel:["boom"], snareModel:["crack"], hatModel:["noise"], kick:[1.25,1.5], snare:[1.05,1.35], hat:[0.5,0.8], tune:[0.95,1.1], send:[0.04,0.1], dsend:[0.02,0.08], kit:"room"},
       fx:{reverb:[0.08,0.18], delayBeats:[0.375,0.5], delayFb:[0.1,0.2], delayCut:[2400,3600], pump:[0,0.06], crackle:[0,0.1], lowcut:[25,40], highcut:[0,0], comp:[0.25,0.45], grit:[0.2,0.4]},
       found:{role:"bed", vol:[0.03,0.08], pitch:[0.9,1], stretch:[0.4,0.6], cutoff:[2000,3200], sources:["factory"]},
-      hits:{sources:["vox_c","sp_pressure"], pattern:"sparse", prob:0.15},
+      hits:{sources:["pool:vocal_stab*1","sp_pressure"], pattern:"sparse", prob:0.15},
       stab:["off"],
       form:"pop",
       theory:{adventure:[0.1,0.187], color:[0.167,0.333], voicing:"close", reharm:false},
@@ -5685,7 +5755,7 @@
       drums:{kickModel:["boom","909"], snareModel:["crack","noise"], hatModel:["noise"], kick:[1.25,1.5], snare:[1,1.25], hat:[0.7,1], tune:[0.98,1.1], send:[0.12,0.24], dsend:[0.05,0.15]},
       fx:{reverb:[0.25,0.4], delayBeats:[0.375,0.5], delayFb:[0.15,0.28], delayCut:[2400,3600], pump:[0,0.08], crackle:[0,0.1], lowcut:[25,40], highcut:[0,0], comp:[0.5,0.75], grit:[0.25,0.45]},
       found:{role:"bed", vol:[0.04,0.09], pitch:[0.85,1], stretch:[0.4,0.6], cutoff:[2000,3200], sources:["highway_night","shibuya"]},
-      hits:{sources:["vox_a","sp_energy"], pattern:"sparse", prob:0.2},
+      hits:{sources:["pool:vocal_stab*1","sp_energy"], pattern:"sparse", prob:0.2},
       stab:["off"],
       form:"anthem",
       theory:{adventure:[0.1,0.2], color:[0.183,0.35], voicing:"close", reharm:true},
@@ -5706,7 +5776,7 @@
       drums:{kickModel:["boom"], snareModel:["crack","noise"], hatModel:["noise"], kick:[1,1.25], snare:[0.85,1.1], hat:[0.6,0.9], tune:[0.95,1.1], send:[0.15,0.28], dsend:[0.05,0.15], kit:"acoustic"},
       fx:{reverb:[0.32,0.46], delayBeats:[0.375,0.5], delayFb:[0.12,0.24], delayCut:[2200,3400], pump:[0.1,0.22], crackle:[0,0.06], lowcut:[20,35], highcut:[0,0], comp:[0.25,0.45]},
       found:{role:"bed", vol:[0.04,0.1], pitch:[0.9,1], stretch:[0.45,0.6], cutoff:[2000,3200], sources:["shibuya","tw_stationhall"]},
-      hits:{sources:["vox_a","stml_hit_01","handbell"], pattern:"sparse", prob:0.3},
+      hits:{sources:["pool:vocal_stab*1","stml_hit_01","pool:chime*1"], pattern:"sparse", prob:0.3},
       stab:["off","sparse"],
       form:"pop",
       theory:{adventure:[0.1,0.207], color:[0.233,0.417], voicing:"close", reharm:true},
@@ -5728,7 +5798,7 @@
       fx:{reverb:[0.18,0.32], delayBeats:[0.375,0.5], delayFb:[0.15,0.28], delayCut:[2400,3600], pump:[0.1,0.28], crackle:[0.05,0.18], lowcut:[25,40], highcut:[0,0], comp:[0.4,0.6]},
       found:{role:"bed", vol:[0.04,0.1], pitch:[0.9,1.05], stretch:[0.45,0.6], cutoff:[2200,3400], sources:["factory","shibuya"]},
       sampleEvents:[{pool:["sp_energy","sp_rhythm","sp_pressure","sp_rewind"], placement:"buried", sections:"all", treatment:{cutoff:5000, vol:0.4, glitch:true, every:2, maxDur:4}}],
-      hits:{sources:["rave_a","rave_b","vox_a","sp_energy"], pattern:"offbeat", prob:0.7},
+      hits:{sources:["pool:rave_stab*2","pool:vocal_stab*1","sp_energy"], pattern:"offbeat", prob:0.7},
       stab:["off","sparse"],
       form:"pop",
       theory:{adventure:[0.067,0.153], color:[0.133,0.3], voicing:"close", reharm:false},
@@ -5749,7 +5819,7 @@
       drums:{kickModel:["909","boom"], snareModel:["noise"], hatModel:["noise"], kick:[1.05,1.28], snare:[1.2,1.45], hat:[0.7,1], tune:[0.92,1.05], send:[0.35,0.55], dsend:[0.05,0.15]},
       fx:{reverb:[0.45,0.6], delayBeats:[0.5,0.75], delayFb:[0.2,0.35], delayCut:[2400,3600], pump:[0.2,0.4], crackle:[0,0.08], lowcut:[28,42], highcut:[0,0], comp:[0.4,0.6]},
       found:{role:"bed", vol:[0.04,0.1], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1800,3000], sources:["shibuya","tokyo_station"]},
-      hits:{sources:["vox_a","rave_b","sp_rhythm"], pattern:"offbeat", prob:0.4},
+      hits:{sources:["pool:vocal_stab*1","pool:rave_stab*1","sp_rhythm"], pattern:"offbeat", prob:0.4},
       stab:["off","sparse"],
       form:"pop",
       theory:{adventure:[0.2,0.35], color:[0.45,0.683], voicing:"close", reharm:true},
@@ -5770,7 +5840,7 @@
       drums:{kickModel:["909"], snareModel:["clap","noise"], hatModel:["noise"], kick:[1.2,1.45], snare:[0.85,1.1], hat:[1,1.3], tune:[0.95,1.1], send:[0.15,0.3], dsend:[0.05,0.15]},
       fx:{reverb:[0.35,0.5], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[2600,4000], pump:[0.25,0.45], crackle:[0,0.08], lowcut:[28,42], highcut:[0,0], comp:[0.35,0.55]},
       found:{role:"bed", vol:[0.04,0.1], pitch:[0.9,1.05], stretch:[0.45,0.6], cutoff:[2200,3400], sources:["shibuya","highway_night"]},
-      hits:{sources:["rave_b","vox_a","sp_energy"], pattern:"offbeat", prob:0.5},
+      hits:{sources:["pool:rave_stab*1","pool:vocal_stab*1","sp_energy"], pattern:"offbeat", prob:0.5},
       stab:["offbeat","sparse"],
       form:"dj",
       theory:{adventure:[0.1,0.205], color:[0.125,0.3], voicing:"close", reharm:true},
@@ -5791,7 +5861,7 @@
       drums:{kickModel:["909"], snareModel:["clap"], hatModel:["noise"], kick:[1.25,1.5], snare:[0.9,1.15], hat:[1,1.3], tune:[0.95,1.1], send:[0.1,0.22], dsend:[0.05,0.15]},
       fx:{reverb:[0.3,0.45], delayBeats:[0.375,0.5], delayFb:[0.2,0.35], delayCut:[2400,3600], pump:[0.3,0.5], crackle:[0,0.1], lowcut:[28,42], highcut:[0,0], comp:[0.45,0.65]},
       found:{role:"bed", vol:[0.04,0.1], pitch:[0.9,1.05], stretch:[0.45,0.6], cutoff:[2200,3400], sources:["shibuya","tokyo_station"]},
-      hits:{sources:["rave_c","vox_a","sp_rhythm","stml_hit_03"], pattern:"offbeat", prob:0.6},
+      hits:{sources:["pool:rave_stab*1","pool:vocal_stab*1","sp_rhythm","stml_hit_03"], pattern:"offbeat", prob:0.6},
       stab:["rave","offbeat"],
       form:"dj",
       theory:{adventure:[0.067,0.153], color:[0.15,0.317], voicing:"close", reharm:false},
