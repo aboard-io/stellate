@@ -236,6 +236,34 @@ kernel applyMacros machinery intentionally kept (absent = byte-identical);
 test/macro-live-run.js retired. Gate: test/share-url-run.js (11 checks).
 access.html: seed/genre/blend in ITS query string too.
 
+### 5d. WAVE 2 (Paul 2026-07-10, queued behind the engine fleet)
+- **THE MASTERING STAGE** ("a final mixing/balancing/panning/gainstage/
+  compression stage that does what a good DJ or live sound engineer does").
+  Measured evidence: fugue seed 3 = church_organ on BOTH bass and melody +
+  strings pad at cutoff 1377 — three sustained midrange voices, sends .32-.46,
+  reverb .53, zero stereo separation = the mud. Catalog: mean reverb .594,
+  62/228 genres >= .7 ("too much reverb overall" quantified). Design: a
+  state-engine master pass — per-voice stereo placement (bass center, pad wide,
+  lead off-center), same-timbre collision carve (two voices on one sampler id =>
+  EQ-carve/HPF the comp), a density-aware reverb BUDGET (wet-sum cap), per-bus
+  gain staging into the existing glue comp. Matrix-blind (renderer), fixture
+  drift expected, A/B renders to Paul's ear (fugue is the acceptance test).
+- **NEW GENRE SPACES**: indie (April March / Le Tigre pop), Albini indie, THE
+  HIP HOP COSMOS (boom bap exists; the rest doesn't), Nirvana/grunge, emo/
+  pop-punk, Madonna pop, gay disco + house. tools/genre-tool.js is the pipeline;
+  each needs POS placement + matrix gates.
+- **THE MATHEMATICAL FICTION** ("rename all the 'real' genres with evocative
+  names — make this whole thing a work of mathematical fiction"). Design call:
+  anchor IDS stay stable (load-bearing: POS/fixtures/tests), the LABEL + card
+  language become fiction (techno -> an invented evocative name, etc.), the way
+  the invented genres already read. NameBank.inventGenreName exists.
+- **CRUNCHY GUITAR SOLOS**: the GM guitars are polite; hunt better soundfonts/
+  sample sets in the world (freepats, Versilian, FluidR3 alternates —
+  SOURCES.md licensing law applies), wire distortion staging (the higain
+  machinery) into the solo voice.
+- Offline/precache SHIPPED (sw.js cache-first on the immutable found/ class +
+  app/precache.js route warming); a11y-link belt SHIPPED.
+
 ### 6. The standing horizon (Paul-stated goals not yet scheduled)
 - The hour-render service (docs/EXPORT.md sketch: tools/render-server.js
   on the droplet, queue + credits.txt with tier-3 stripped).
