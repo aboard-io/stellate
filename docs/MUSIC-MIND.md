@@ -1,14 +1,15 @@
 # MUSIC-MIND — the music-intelligence program
 
 *2026-07-09. The question: what would make richer, more interesting, more
-complex music across all 178 genres — applying music theory automatically,
-exploring rhythmic and chromatic ideas, more polyphony where it earns its
-place — while keeping the listener locked in?*
+complex music across all 178 genres (the space's size when this was written;
+228 as of 2026-07-10, and the laws below hold at 228) — applying music theory
+automatically, exploring rhythmic and chromatic ideas, more polyphony where it
+earns its place — while keeping the listener locked in?*
 
 The answer is three new organs and a set of new genre-space axes, all behind
 the two standing laws: **determinism** (same seed → byte-identical events;
-absent knob → byte-identical output) and the **matrix** (178/178
-diagonal-dominant after every change).
+absent knob → byte-identical output) and the **matrix** (every genre
+diagonal-dominant after every change — 228/228 today).
 
 ## The diagnosis
 
@@ -89,7 +90,8 @@ Expression pipes write **annotation fields** on pitched events
 voice's model exposes the param** (per-model whitelist; silently dropped
 otherwise). The verifier reads none of these fields — expression is
 matrix-neutral by construction. Musical pipes (harmonize, echoCanon…) do
-shift features; genres opt in and the matrix is retuned to stay 178/178.
+shift features; genres opt in and the matrix is retuned to stay
+diagonal-dominant (228/228 today).
 
 Live caveat: live builds one chord-bar per call; pipes therefore never emit
 outside the build's own `[0, totalBeats)` window (echo/canon delays cap at
@@ -147,12 +149,12 @@ genre's intelligence lives *in the space*: blends inherit and interpolate it.
    csd-engine.
 3. **Space**: genre-kernel resolves + emits the new axes; anchor derivation
    + curation.
-4. **Gate + tune**: `./verify.sh --full`, matrix back to 178/178, fixture
-   refresh, docs.
+4. **Gate + tune**: `./verify.sh --full`, matrix back to fully
+   diagonal-dominant (178/178 then; 228/228 now), fixture refresh, docs.
 
 ## Verification
 
 `node test/theory.test.js` · `node test/pipes.test.js` · gate 1 determinism
 (absent knobs byte-identical **and** present knobs seed-stable) ·
-`node engine/genre-verifier.js matrix --no-cache` → 178/178 ·
+`node engine/genre-verifier.js matrix --no-cache` → 228/228 ·
 `node test/engine.test.js --quick` non-silent presses · ears via the live app.

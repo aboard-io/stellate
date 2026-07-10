@@ -5,8 +5,9 @@
 Every genre is a point in one deterministic vector space. Drag the star chart,
 draw a path, or drift, and the music continuously morphs through whatever the
 traveler crosses — tempo, harmony, groove, instrumentation, and effects all
-blending between neighbours. 178 genres, from `techno` and `citypop` to
-`singeli`, `budstep`, and `fugue`, all generated live in the browser.
+blending between neighbours. 228 genres, from `techno` and `citypop` to
+`singeli`, `budstep`, `fugue`, and `salondawdle` (a brushed 3/4 salon waltz —
+the space carries real odd meters), all generated live in the browser.
 
 **Play it:** https://aboardresearch.com/projects/stellate/
 
@@ -55,15 +56,22 @@ worked example of the generator → verifier → feedback-loop thesis from the
 **Pocket-proof mobile.** On phones the audible path is a real media element fed
 a continuously-rendered, encoded stream (the WAV-FIRST pipeline), so playback
 survives screen-lock and backgrounding where a live WebAudio graph would be
-frozen. See `docs/history/WAV-FIRST.md`.
+frozen. See `docs/history/WAV-FIRST.md`. On desktop, a hidden tab just keeps
+playing — the live ring rides through tab switches (the bg-survival gate's
+contract).
 
 ## The explorer (STELLATE, `index.html`)
 
 The whole UI is the star map. Drag it, mouse-wheel to zoom, double-tap to drop
-path waypoints and travel the loop. Chips: ▶ live, ⓘ **inside the sound** (a live
-per-voice timeline showing each instrument's rhythm and its effect chain), a
-background toggle (off → laserdisc video → MicroW8 demoscene, which alternate
-every few bars), and ⚙ controls.
+path waypoints and travel the loop — and travel *arrives*: parked on a new
+genre, its drums are playing within 3 bars and its kit/lead identity within 7
+(a committed gate, `test/blend-arrival-run.js`). Chips: ▶ live, ⓘ **inside the
+sound** (a live per-voice timeline — always 8 cells, folded for long bars —
+with plain-language character descriptions, sustained bed ribbons, and the
+MUSIC-MIND meters), a background toggle (off → laserdisc video → MicroW8
+demoscene, which strictly alternate every eight bars, cutting on the beat),
+and ⚙ controls. The ⚙ panel also **downloads the current song** — ⤓ midi /
+⤓ wav / ⤓ mp3, a true offline press run in your browser (`docs/EXPORT.md`).
 
 ## The genesis parable (why the source is the artifact)
 
@@ -88,7 +96,7 @@ with reach: the vendored eSpeak NG WASM speech module is GPL-3.0, so the app
 https://github.com/ftrain/stellate; made by
 [Aboard](https://aboardresearch.com). Contributions welcome:
 `CONTRIBUTING.md` is the social contract — the gates a PR must keep green
-(the 178/178 matrix, determinism, non-silence) and what's left for ears.
+(the 228/228 matrix, determinism, non-silence) and what's left for ears.
 No audio, video, SoundFont, or model binary is ever committed; the media
 policy and the full attribution ledger live in `SOURCES.md`.
 
@@ -124,6 +132,8 @@ its renderer live on the `legacy-csound` branch). Headless browser gates live in
 - **`CLAUDE.md`** — the full layout and working notes.
 - **`docs/GENRE-SPACE.md`** — how the vector space and journeys are designed.
 - **`docs/MUSIC-MIND.md`** — the music-intelligence program (theory, pipes, axes).
+- **`docs/EXPORT.md`** — downloads: the shipped in-browser ⤓ midi/wav/mp3 press
+  and the hour-scale render-service design.
 - **`engine/faust/VOICES.md`** — the synthesis/effect voice library.
 - **`SOURCES.md`** — every found-sound, sample, video, and vendored-code credit.
 - **`docs/HOSTING.md`** — the stellate.app hosting plan (droplet + nginx,

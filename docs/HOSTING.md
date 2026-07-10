@@ -2,7 +2,7 @@
 
 **Philosophy first:** per the genesis parable (README), the source is the
 artifact and everything rendered is derived — so the server is **disposable**.
-Any box that can run nginx and hold ~500 MB of derived media can be stood up
+Any box that can run nginx and hold ~600 MB of derived media can be stood up
 from a clean droplet + one rsync; nothing lives on the server that the repo
 (plus its fetch scripts) cannot regenerate. Losing the droplet must cost us an
 afternoon, not the project.
@@ -86,7 +86,9 @@ never fetches** (facts-media §1). What ships to the droplet vs stays local:
 | Video source reels | `found/video/lib/` | 443 MB | **stays local** | Crate source only; video-layer reads `clips.json`, never `lib/` |
 | Essentia models | `models/` | 20 MB | **stays local** | Offline python verifier only (`audio-verifier.py:21-22`) |
 
-**Net server media ≈ 500 MB** (≈ 460 MB by the table, headroom to 500).
+**Net server media ≈ 500 MB** (≈ 460 MB by the table, headroom to 500 —
+the plan's estimate; the deployed payload measured **608 MB** after the
+2026-07-09 diet, §7).
 
 **Why MP3 and not OGG:** facts-media §4 leans Vorbis/Opus (sample-accurate),
 but **Safari cannot `decodeAudioData` OGG** — Safari 18.4's Ogg support is
