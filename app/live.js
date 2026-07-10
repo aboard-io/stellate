@@ -242,6 +242,18 @@ export async function goLive(){
   }catch(e){ set({live:false,status:"live failed: "+e.message}); bootAbort(); console.error(e); }
 }
 export function stopLive(){
+  // STOP TWICE = REWIND (Paul 2026-07-10: "When I hit stop and start keep
+  // playing at the playhead. If I click stop TWICE, then reset to the
+  // beginning."): a stop while already stopped clears the resume measure and
+  // parks the traveler back at the path start — ▶ then opens from measure 1.
+  if(!S.live){
+    S.startBar=0;
+    set({barCount:0, travel:{seg:0,t:0}, queue:[], barInfo:null});
+    if(S.waypoints.length>=2) retarget({x:S.waypoints[0].x, y:S.waypoints[0].y});
+    urlTick();   // the URL drops its m — the bookmark is the top again
+    set({status:"⏮ rewound to the top — ▶ starts from measure 1"});
+    return;
+  }
   // remember WHERE we stopped: the next play (and the shareable URL) resumes at
   // this measure instead of rewinding to the path start.
   if(S.barInfo) S.startBar=S.barInfo.serial+1;
@@ -281,5 +293,5 @@ function updateMediaSession(force){
 if(MSESSION){ try{
   MSESSION.setActionHandler("play", ()=>{ if(!S.live) goLive(); });
   MSESSION.setActionHandler("pause", ()=>{ if(S.live) stopLive(); });   // pause == stop: the engine has no freeze, a clean stop is honest
-  MSESSION.setActionHandler("stop", ()=>{ if(S.live) stopLive(); });
+  MSESSION.setActionHandler("stop", ()=>{ stopLive(); });   // unguarded: a second stop from the lock screen rewinds to the top (the stop-twice rule)
 }catch(e){} }
