@@ -126,9 +126,25 @@
       // the pass keeps its full-song behavior => press stays byte-identical. Continuous
       // placements (bed/buried/response/slice) are untouched; they run every bar by design.
       const liveEdge = { start: (cycIdx === 0 && ci === 0), end: (lastCyc && ci === nch - 1) };
+      // MUSICAL DYNAMICS (voices swell in / fade out): buildEvents renders this ONE
+      // section in isolation and can't see where the bar sits in a voice's run, so
+      // the walk — which knows the real form — hands it (barInRun, runBars) per
+      // voice. A voice on across the ENTIRE looping form gets no ramp (null) so
+      // there's no dip at the loop seam; genuine entrances/exits within the form do.
+      const vAct = { pad: s => !!s.pads, bass: s => s.bass && s.bass !== "off", melody: s => s.melody && s.melody !== "off" };
+      const secBarsOf = s => Math.max(1, (s.cycles || 1) * nch);
+      const voiceRun = {};
+      for (const v of ["pad", "bass", "melody"]) {
+        if (!vAct[v](cur0) || secs.every(s => vAct[v](s))) { voiceRun[v] = null; continue; }   // off now, or on the whole loop → no ramp
+        let a = secIdx; while (a - 1 >= 0 && vAct[v](secs[a - 1])) a--;
+        let b = secIdx; while (b + 1 < secs.length && vAct[v](secs[b + 1])) b++;
+        let before = 0; for (let s = a; s < secIdx; s++) before += secBarsOf(secs[s]);
+        let runBars = 0; for (let s = a; s <= b; s++) runBars += secBarsOf(secs[s]);
+        voiceRun[v] = { i: before + cycIdx * nch + ci, n: runBars };
+      }
       const one = Object.assign({}, st, { sections: [sec], seed: ((st.seed || 1) + serial * 7919) >>> 0,
         instrumentSeed: st.instrumentSeed != null ? st.instrumentSeed : (st.seed || 1),   // instrument identity rides the SONG seed, not the per-bar reseed
-        _liveEdge: liveEdge });
+        _liveEdge: liveEdge, _voiceRun: voiceRun });
       const spb = 60 / st.bpm;
       const CBEATS = Math.max(2, Math.round(st.chordEvery || (st.meter ? 6 : 8)));   // meter default mirrors buildEvents (kernel states carry explicit chordEvery; this covers hand states — ODD-METER 2026-07-09)
       const lo = ci * CBEATS, hi = lo + CBEATS;
