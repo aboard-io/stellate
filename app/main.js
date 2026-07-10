@@ -7,7 +7,7 @@
 import { POS, MAP_CENTER, WORLD_W, WORLD_H } from "./world.js";
 import { S, K, set, subs } from "./state.js";
 import { retarget, weightsAt, travelStep, rescore, forceRetarget } from "./targeting.js";
-import { clampZoom, zoomAround, seedDefaultLoop, insertWaypoint, computeGenreLayout, centerView } from "./starmap.js";
+import { clampZoom, zoomAround, seedDefaultLoop, insertWaypoint, computeGenreLayout, computeRegions, centerView } from "./starmap.js";
 import { renderInside } from "./inside.js";
 import { goLive, stopLive, faustHandle } from "./live.js";
 import { playheadTick } from "./readouts.js";
@@ -32,7 +32,7 @@ function boot(){
   // default loop would overwrite them; a restored path skips seedDefaultLoop.
   const fromUrl=applyUrlState();
   const urlBar=S.startBar||0;   // seedDefaultLoop clears startBar (fresh-loop law) — the URL's m survives boot
-  computeGenreLayout(); if(!fromUrl) seedDefaultLoop(); centerView();
+  computeGenreLayout(); computeRegions(); if(!fromUrl) seedDefaultLoop(); centerView();
   S.startBar=urlBar;
   if(fromUrl && S.waypoints.length>=2){
     // place the traveler (and the mix) at the URL's measure along the path

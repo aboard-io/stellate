@@ -69,6 +69,11 @@
   #map.itx .anchor{fill:#fff}
   .wlabel{font:11px VT323,monospace;fill:#4dffb0}
   .wpn{font:11px VT323,monospace;fill:#0c0a1a;font-weight:700}
+  /* REGION titles: big goofy territory names washed behind the stars. Fill is set
+     inline per-region (the territory color); the dark stroke keeps them legible
+     over bright footage, and they sit faint so the constellation reads on top. */
+  .region{font-family:VT323,monospace;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+    opacity:.5;paint-order:stroke;stroke:rgba(6,4,20,.6);stroke-width:3px;stroke-linejoin:round}
   /* (CPU meter chrome removed 2026-07-09 — Paul's ask) */
   /* the chips: the ONLY floating affordances (with the brand) */
   #chips{position:fixed;right:.7rem;bottom:.7rem;z-index:6;display:flex;gap:.5rem}
