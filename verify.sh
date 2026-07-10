@@ -5,6 +5,7 @@
 #   matrix     node engine/genre-verifier.js matrix        (symbolic confusion matrix)
 #   validate   node engine/validate-genres.js --quick      (kernel differentiation gates)
 #   engine     node test/engine.test.js --quick          (real faust renders, 8s)
+#   prove      node engine/invariants.js prove             (interval proofs + property sweeps)
 #
 #   ./verify.sh          the fast loop gate (quick validate + 8s presses)
 #   ./verify.sh --full   pre-ship: 5-seed validate + full-length 24s presses
@@ -54,14 +55,15 @@ run() {   # run <name> <cmd...>: capture output, write "<rc> <secs>" when done
   awk -v r="$rc" -v a="$s" -v b="$(date +%s.%N)" 'BEGIN{printf "%d %.1f\n", r, b-a}' >"$TMP/$name.res"
 }
 
-echo "verify ($MODE) — matrix + validate + engine.test, concurrent"
+echo "verify ($MODE) — matrix + validate + engine.test + prove, concurrent"
 run "matrix  " node engine/genre-verifier.js matrix ${PASS_ARGS[@]+"${PASS_ARGS[@]}"} &
 run "validate" node engine/validate-genres.js ${VAL_ARGS[@]+"${VAL_ARGS[@]}"} ${PASS_ARGS[@]+"${PASS_ARGS[@]}"} &
 run "engine  " node test/engine.test.js ${ENG_ARGS[@]+"${ENG_ARGS[@]}"} &
+run "prove   " node engine/invariants.js prove &
 
 FAILED=0
 declare -A DONE
-for _ in 1 2 3; do
+for _ in 1 2 3 4; do
   wait -n
   for f in "$TMP"/*.res; do
     [ -e "$f" ] || continue
