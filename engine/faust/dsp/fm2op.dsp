@@ -32,8 +32,17 @@ car  = os.osc(kf + mod);
 
 env = en.adsr(attack, decay, sustain, release, gate);
 
+// fenv* = SYNTHESIS-DEPTH unified filter envelope (2026-07);
+// fenvAmount 0 is a bit-exact bypass (absent-law); it multiplies IN ADDITION to
+// the legacy `fenv` zap, inside the existing kcut clamp.
+fenvAmount = hslider("fenvAmount", 0, -4, 4, 0.01);       // cutoff env depth, OCTAVES (signed; 0 = off, bit-exact)
+fenvAttack = hslider("fenvAttack", 0.005, 0.001, 2, 0.001);
+fenvDecay  = hslider("fenvDecay", 0.18, 0.01, 3, 0.005);
+fenvC   = en.adsr(fenvAttack, fenvDecay, 0, fenvDecay, gate);   // AD contour (sustain 0), note-on triggered
+fenvMul = exp(0.6931472 * fenvAmount * fenvC);                  // 2^(amt*contour); amt 0 -> exactly 1.0
+
 // filter env settles AT attack+0.06 (csound: kcf expseg cutoff*(1+fenv), atk+0.06, cutoff)
 fdec = ba.impulsify(gate) : (+ ~ *(ba.tau2pole(max((attack + 0.06)/3, 0.003))));
-kcut = max(30, min(cutoff*(1 + fenv*fdec), 16000));
+kcut = max(30, min(cutoff*(1 + fenv*fdec)*fenvMul, 16000));
 
 process = car : fi.lowpass(2, kcut) : *(env*level*gain);

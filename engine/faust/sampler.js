@@ -596,6 +596,94 @@
             node.connect(bp); bp.connect(wg); wg.connect(sum); nodes.push(bp, rect, env, scale, wg);
           }); stages.push("wah"); break;
         }
+        case "higain": {
+          // staged-amp twin (insert_higain; strip-twin contract: perceptual,
+          // not byte-parallel): envelope-follower tightness gate (rectifier ->
+          // LP -> expander curve driving a zero-based gain, the wah-follower
+          // pattern) -> two WaveShaper drive stages with an inter-stage HP
+          // (curves bake the module's tanh/cubic/hard transfer + loudness
+          // normalization; the stage-3 character folds into the second curve
+          // by the static `stages` weight) -> tone shelves -> cab (HP 80 +
+          // presence peak 2.5k + LP 5.2k) -> level makeup.
+          const drive = clampS(p.drive != null ? p.drive : 0.65, 0, 1);
+          const stg = clampS(p.stages != null ? p.stages : 2, 1, 3);
+          parallel(clampS(p.mix != null ? p.mix : 1, 0, 1), (sum, mix) => {
+            let n = node;
+            const hook = (nd) => { n.connect(nd); n = nd; nodes.push(nd); };
+            // gate: |x| -> 30 Hz LP -> expander curve -> gain.gain (base 0)
+            const gk = clampS(p.gate != null ? p.gate : 0.35, 0, 1);
+            const thr = Math.pow(10, (-70 + gk * 50) / 20);
+            const NC = 2048, rectC = new Float32Array(NC), expC = new Float32Array(NC);
+            for (let i = 0; i < NC; i++) {
+              const x = (i / (NC - 1)) * 2 - 1;
+              rectC[i] = Math.abs(x);
+              expC[i] = x <= 0 ? 0 : Math.min(1, Math.pow(x / thr, 3));
+            }
+            const rect = ctx.createWaveShaper(); rect.curve = rectC;
+            const envf = ctx.createBiquadFilter(); envf.type = "lowpass"; envf.frequency.value = 30; envf.Q.value = 0.5;
+            const gexp = ctx.createWaveShaper(); gexp.curve = expC;
+            const gg = ctx.createGain(); gg.gain.value = 0;
+            node.connect(rect); rect.connect(envf); envf.connect(gexp); gexp.connect(gg.gain);
+            nodes.push(rect, envf, gexp);
+            hook(gg);
+            // drive stage 1: tanh(x*g1) * n1
+            const g1 = 1 + drive * 14, n1 = 0.79 / (1 + drive * 1.6);
+            const c1 = new Float32Array(NC);
+            for (let i = 0; i < NC; i++) { const x = (i / (NC - 1)) * 2 - 1; c1[i] = Math.tanh(x * g1) * n1; }
+            const ws1 = ctx.createWaveShaper(); ws1.curve = c1; ws1.oversample = "2x"; hook(ws1);
+            // stages > 1: inter-stage HP + a second shaper blending the
+            // cubic (stage 2) and hard-clip (stage 3) transfers by weight
+            if (stg > 1.02) {
+              const hp1 = ctx.createBiquadFilter(); hp1.type = "highpass"; hp1.frequency.value = 140; hp1.Q.value = 0.5; hook(hp1);
+              const w3 = Math.max(0, Math.min(1, stg - 2));
+              const g2 = 1 + drive * 9, g3 = 1 + drive * 6;
+              const n2 = 0.256 / (1 + drive * 0.9) / n1, n3 = 0.144 / (1 + drive * 0.7) / n1;
+              const cl = (x) => Math.max(-1, Math.min(1, x));
+              const cub = (x) => cl(x) - Math.pow(cl(x), 3) / 3;
+              const c2 = new Float32Array(NC);
+              for (let i = 0; i < NC; i++) {
+                const x = (i / (NC - 1)) * 2 - 1;
+                const s2 = cub(x * g2) * 1.5 * n2;
+                const s3 = (cl(x * g3 * 1.6) * 0.72 + cub(x * g3) * 0.42) * n3;
+                c2[i] = s2 * (1 - w3) + s3 * w3;
+              }
+              const ws2 = ctx.createWaveShaper(); ws2.curve = c2; ws2.oversample = "2x"; hook(ws2);
+            }
+            // tone stack (0.5 = flat, ±12 dB) + cab + makeup
+            const shelf = (type, f, db) => { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.gain.value = db; return b; };
+            hook(shelf("lowshelf", 130, ((p.low != null ? p.low : 0.5) - 0.5) * 24));
+            const mp = ctx.createBiquadFilter(); mp.type = "peaking"; mp.frequency.value = 650; mp.Q.value = 1.1;
+            mp.gain.value = ((p.mid != null ? p.mid : 0.5) - 0.5) * 24; hook(mp);
+            hook(shelf("highshelf", 3200, ((p.high != null ? p.high : 0.5) - 0.5) * 24));
+            const chp = ctx.createBiquadFilter(); chp.type = "highpass"; chp.frequency.value = 80; chp.Q.value = 0.7; hook(chp);
+            const pres = ctx.createBiquadFilter(); pres.type = "peaking"; pres.frequency.value = 2500; pres.Q.value = 1.3;
+            pres.gain.value = (p.presence != null ? p.presence : 0.5) * 7; hook(pres);
+            const lp1 = ctx.createBiquadFilter(); lp1.type = "lowpass"; lp1.frequency.value = 5200; lp1.Q.value = 0.7; hook(lp1);
+            const lp2 = ctx.createBiquadFilter(); lp2.type = "lowpass"; lp2.frequency.value = 6500; lp2.Q.value = 0.5; hook(lp2);
+            const wg = ctx.createGain(); wg.gain.value = mix * (p.level != null ? p.level : 0.7) * 1.3;
+            n.connect(wg); wg.connect(sum); nodes.push(wg);
+          }); stages.push("higain"); break;
+        }
+        case "fenv": {
+          // filter-envelope twin (insert_fenv): the wah follower driving a
+          // resonant LOWPASS around `base` by `amount` octaves (signed —
+          // negative ducks on hits, the reverse squelch). Approximate
+          // (linear-Hz vs the module's exponential octaves), genuinely dynamic.
+          parallel(clampS(p.mix != null ? p.mix : 1, 0, 1), (sum, mix) => {
+            const base = p.base || 400, amt = p.amount != null ? p.amount : 2, sens = p.sens != null ? p.sens : 0.6;
+            const lp = ctx.createBiquadFilter(); lp.type = "lowpass";
+            lp.frequency.value = base; lp.Q.value = 0.707 + (p.res != null ? p.res : 0.5) * 6;
+            const N = 1024, curve = new Float32Array(N);
+            for (let i = 0; i < N; i++) { const x = (i / (N - 1)) * 2 - 1; curve[i] = Math.abs(x); }
+            const rect = ctx.createWaveShaper(); rect.curve = curve;
+            const env = ctx.createBiquadFilter(); env.type = "lowpass"; env.Q.value = 0.5;
+            env.frequency.value = Math.max(2, Math.min(25, 1 / (2 * Math.PI * (p.decay || 0.18))));
+            const scale = ctx.createGain(); scale.gain.value = sens * base * (Math.pow(2, amt) - 1) * 6;
+            node.connect(rect); rect.connect(env); env.connect(scale); scale.connect(lp.frequency);
+            const wg = ctx.createGain(); wg.gain.value = mix;
+            node.connect(lp); lp.connect(wg); wg.connect(sum); nodes.push(lp, rect, env, scale, wg);
+          }); stages.push("fenv"); break;
+        }
         default: skipped.push(eff.type);   // granular &c: dry on the ring path (real module on press/wavOut)
       }
     }

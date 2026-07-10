@@ -315,6 +315,18 @@
     const explicit = Array.isArray(m.inserts) && m.inserts.length > 0;
     const list = explicit ? m.inserts
       : (role && state ? defaultInserts(role, m, state) : []);
+    // SYNTHESIS-DEPTH Part C (tempo-synced LFOs): any Hz-rate LFO insert
+    // (tremolo/chorus/phaser/flanger) may declare `rateBars` — the LFO period
+    // as a fraction of a bar (house unit, like timeBars: 0.125 = an 1/8-note
+    // wobble, 1/12 = 1/8-triplet, 2 = a two-bar sweep) — and the ENGINE
+    // resolves it to Hz from state.bpm (filtersweep already has true barSec
+    // sync in-module and stays the first-class bar-locked sweep). Baked at
+    // chain build: a live bpm GLIDE keeps the old Hz until the chain rebuilds
+    // (genre changes rebuild chains — documented, perceptual-twin class).
+    // Absent rateBars => the Hz path, byte-identical.
+    const syncHz = (bars, lo, hi) => clamp(1 / (Math.max(0.01, bars) * 4 * (60 / state.bpm)), lo, hi);
+    const rateOf = (it, dflt, lo, hi) => (it.rateBars != null && state && state.bpm)
+      ? syncHz(it.rateBars, lo, hi) : clamp(it.rate != null ? it.rate : dflt, lo, hi);
     const out = [];
     for (const it of list) {
       if (!it || out.length >= 2) break;
@@ -323,6 +335,48 @@
           drive: clamp(it.drive != null ? it.drive : 0.5, 0, 1),
           tone: clamp(it.tone != null ? it.tone : 4500, 500, 12000),
           mix: clamp(it.mix != null ? it.mix : 1, 0, 1) } }); break;
+        // higain — the STAGED heavy amp (SYNTHESIS-DEPTH Part A): tightness
+        // gate -> 3 cascaded waveshaper stages (inter-stage HP) -> 3-band tone
+        // stack -> fixed 4x12 cab sim -> level comp + DC block. The proper
+        // chain for the heavy genres; insert_distort stays the light dirt.
+        // tone may arrive as {low,mid,high} (the recipe spelling) or flat
+        // low/mid/high keys; 0.5 = flat, 0..1 = ±12 dB. mix 0 = bit-exact
+        // bypass like every insert. NOTE for anchors: a SAMPLED voice
+        // declaring higain should not also carry heavy strip distortion
+        // (heavyDriveOf) — the amp IS the drive.
+        case "higain": {
+          const tn = it.tone && typeof it.tone === "object" ? it.tone : it;
+          out.push({ type: "higain", module: "insert_higain", params: {
+            gate: clamp(it.gate != null ? it.gate : 0.35, 0, 1),
+            drive: clamp(it.drive != null ? it.drive : 0.65, 0, 1),
+            stages: clamp(it.stages != null ? it.stages : 2, 1, 3),
+            low: clamp(tn.low != null ? tn.low : 0.5, 0, 1),
+            mid: clamp(tn.mid != null ? tn.mid : 0.5, 0, 1),
+            high: clamp(tn.high != null ? tn.high : 0.5, 0, 1),
+            presence: clamp(it.presence != null ? it.presence : 0.5, 0, 1),
+            level: clamp(it.level != null ? it.level : 0.7, 0, 1),
+            mix: clamp(it.mix != null ? it.mix : 1, 0, 1) } }); break;
+        }
+        // fenv — note-triggered FILTER ENVELOPE insert (SYNTHESIS-DEPTH Part
+        // B): an amp-follower contour sweeps a resonant ladder `amount`
+        // OCTAVES (signed) around `base` — the squelch for SAMPLED basses/
+        // keys (synth models get the per-model fenv* params instead, see
+        // FENV_MAP). base defaults to the voice's recipe cutoff; the swept
+        // top is fenced by cutMaxForRes (SHRIEK GUARD, like filtersweep).
+        case "fenv": {
+          const fres = clamp(it.res != null ? it.res : 0.5, 0, 0.95);
+          const fbase = clamp(it.base != null ? it.base : (cutoffHz || 800), 60, 12000);
+          let famt = clamp(it.amount != null ? it.amount : 2, -4, 4);
+          const fCap = cutMaxForRes(fres, 16000);
+          if (famt > 0) famt = Math.min(famt, Math.max(0, Math.log2(Math.max(1, fCap / fbase))));
+          out.push({ type: "fenv", module: "insert_fenv", params: {
+            sens: clamp(it.sens != null ? it.sens : 0.6, 0, 1),
+            amount: famt,
+            attack: clamp(it.attack != null ? it.attack : 0.004, 0.001, 0.5),
+            decay: clamp(it.decay != null ? it.decay : 0.18, 0.02, 2),
+            base: fbase, res: fres,
+            mix: clamp(it.mix != null ? it.mix : 1, 0, 1) } }); break;
+        }
         // leslie — MONO rotary speaker (crossover + inertial horn/drum rotors,
         // AM + doppler FM). speed 0 chorale..1 tremolo. mix 0 = bit-exact bypass.
         case "leslie": out.push({ type: "leslie", module: "insert_leslie", params: {
@@ -331,7 +385,7 @@
           mix: clamp(it.mix != null ? it.mix : 0.6, 0, 1) } }); break;
         // flanger — swept short delay + SIGNED feedback (the jet zip). mix 0 bypass.
         case "flanger": out.push({ type: "flanger", module: "insert_flanger", params: {
-          rate: clamp(it.rate != null ? it.rate : 0.4, 0.01, 8),
+          rate: rateOf(it, 0.4, 0.01, 8),
           depth: clamp(it.depth != null ? it.depth : 0.8, 0, 1),
           feedback: clamp(it.feedback != null ? it.feedback : 0.5, -0.95, 0.95),
           mix: clamp(it.mix != null ? it.mix : 0.6, 0, 1) } }); break;
@@ -354,11 +408,11 @@
           rate: clamp(it.rate != null ? it.rate : 12, 1, 40),
           mix: clamp(it.mix != null ? it.mix : 0.5, 0, 1) } }); break;
         case "phaser": out.push({ type: "phaser", module: "insert_phaser", params: {
-          rate: clamp(it.rate != null ? it.rate : 0.5, 0.01, 8),
+          rate: rateOf(it, 0.5, 0.01, 8),
           depth: clamp(it.depth != null ? it.depth : 0.7, 0, 1),
           mix: clamp(it.mix != null ? it.mix : 0.7, 0, 1) } }); break;
         case "chorus": out.push({ type: "chorus", module: "insert_chorus", params: {
-          rate: clamp(it.rate != null ? it.rate : 0.8, 0.01, 8),
+          rate: rateOf(it, 0.8, 0.01, 8),
           depth: clamp(it.depth != null ? it.depth : 0.5, 0, 1),
           mix: clamp(it.mix != null ? it.mix : 0.5, 0, 1) } }); break;
         // wah — crybaby/Mutron AUTO-WAH (envelope-follower bandpass), for funk/
@@ -374,7 +428,7 @@
         // (0 sine -> 1 hard bias) and a wobble param (exotica's vibraphone-fan
         // cents-level pitch flutter). mix 0 = bit-exact bypass (insert law).
         case "tremolo": out.push({ type: "tremolo", module: "insert_tremolo", params: {
-          rate: clamp(it.rate != null ? it.rate : 5, 0.5, 12),
+          rate: rateOf(it, 5, 0.5, 12),
           depth: clamp(it.depth != null ? it.depth : 0.7, 0, 1),
           shape: clamp(it.shape != null ? it.shape : 0, 0, 1),
           wobble: clamp(it.wobble != null ? it.wobble : 0, 0, 1),
@@ -400,7 +454,9 @@
   }
 
   // inserts whose PRESENCE is a voice's identity (never shed even in 2nd slot).
-  const IDENTITY_INSERTS = new Set(["tremolo", "leslie", "granular"]);
+  // higain: a heavy genre's staged amp IS the genre — shedding it turns
+  // sludgemetal into easy listening (fenv stays sheddable seasoning).
+  const IDENTITY_INSERTS = new Set(["tremolo", "leslie", "granular", "higain"]);
 
   // ---- DEFAULT TWO-INSERT POLICY (2026-07 "two per voice" house style) --------
   // When a recipe carries no explicit `inserts`, pick TWO role/model-appropriate
@@ -470,7 +526,61 @@
       if (P.res != null) P.res = easeRes(P.cutoff, P.res);
       if (P.resonance != null) P.resonance = easeRes(P.cutoff, P.resonance);
     }
+    applyFenv(u, m);
     return u;
+  }
+
+  // ---- SYNTHESIS-DEPTH unified filter-envelope surface (2026-07) -----------
+  // Recipe keys `fenvAmount` (cutoff env depth, OCTAVES, signed) /
+  // `fenvAttack` / `fenvDecay` (seconds) drive the model's filter envelope
+  // whatever its internal spelling: models with a NATIVE env keep their own
+  // params (mapped + clamped to the DSP slider ranges below); every other
+  // filter-bearing model gained uniform fenv* sliders this round (dsp/*.dsp,
+  // fenvAmount default 0 = bit-exact off). ABSENT KEYS SET NOTHING — an
+  // untouched recipe resolves byte-identical params (the absent-law).
+  // Deliberate exclusions: juno60 maps only fenvAmount (its single ADSR
+  // drives VCF+VCA together — fenvAttack/Decay would move the amp envelope);
+  // tb303 keeps its envmod/decay signature contract; piano/bell/brass/
+  // hammond/robot_choir have no filter env to drive (decay-shaped /
+  // bite-driven / drawbars / vocoder). SAMPLED voices get the `fenv` INSERT
+  // instead (insertChain above). The legacy `fenv` recipe key (the csound
+  // multiplier zap) is untouched and coexists.
+  const FENV_T2 = { amt: ["fenvAmount", -4, 4], atk: ["fenvAttack", 0.001, 2], dec: ["fenvDecay", 0.01, 3] };
+  const FENV_MAP = {
+    // native-env models
+    modeld:   { amt: ["envAmount", 0, 5], atk: ["envAttack", 0.001, 0.5], dec: ["envDecay", 0.01, 2] },
+    synclead: { amt: ["envAmount", 0, 5], dec: ["envDecay", 0.01, 2] },
+    oberheim: { amt: ["envAmount", 0, 5], atk: ["envAttack", 0.001, 5], dec: ["envDecay", 0.01, 5] },
+    juno60:   { amt: ["envAmount", -4, 6] },
+    ppg:      { amt: ["envAmount", 0, 4] },
+    // unified fenv* models (this round's dsp edits)
+    pad_saw: FENV_T2, strings: FENV_T2, choir: FENV_T2, organ: FENV_T2, vp330: FENV_T2,
+    solina: FENV_T2, bass_sub: FENV_T2, bass_reese: FENV_T2, bass_wobble: FENV_T2,
+    supersaw: FENV_T2, lead_fuzz: FENV_T2, lead_pluck: FENV_T2, fm2op: FENV_T2,
+    bass_saw: FENV_T2, bass_acid: FENV_T2, casiocz: FENV_T2, lead_guitar: FENV_T2,
+    // lead_kpluck: DELIBERATELY absent — its brightness lowpass is a pure
+    // control-rate expression; multiplying in a sample-rate fenvMul perturbs
+    // the recursive waveguide's float rounding even at fenvMul==1.0 (measured
+    // 1e-7, growing), so a bit-exact absent-law is impossible without
+    // restructuring the voice. Its flanger evolution is its motion anyway.
+  };
+  function applyFenv(u, m) {
+    const fm = FENV_MAP[u.module], P = u.params;
+    if (!fm || !P) return;
+    if (m.fenvAmount != null && fm.amt) {
+      let amt = clamp(m.fenvAmount, fm.amt[1], fm.amt[2]);
+      // SHRIEK GUARD: a positive env may not sweep a resonant peak past the
+      // taste fence (the filtersweep / per-note cutoffMul law). Applied
+      // against the RESOLVED static cutoff + eased res; non-resonant models
+      // (no res param) need no fence.
+      const res = P.res != null ? P.res : P.resonance;
+      const base = P.cutoff != null ? P.cutoff : P.tone;
+      if (amt > 0 && res != null && base > 0)
+        amt = Math.min(amt, Math.max(0, Math.log2(Math.max(1, cutMaxForRes(res, 16000) / base))));
+      P[fm.amt[0]] = amt;
+    }
+    if (m.fenvAttack != null && fm.atk) P[fm.atk[0]] = clamp(m.fenvAttack, fm.atk[1], fm.atk[2]);
+    if (m.fenvDecay != null && fm.dec) P[fm.dec[0]] = clamp(m.fenvDecay, fm.dec[1], fm.dec[2]);
   }
   function pitchedUnitRaw(role, m, state) {
     // param-reader: clamp(m[k]!=null?m[k]:d,lo,hi) — the null-coalescing default
@@ -579,7 +689,9 @@
       // bottomRoot - SAMPLER_FLOOR_ST octave-fold UP (mapEvents).
       const declared = Array.isArray(m.inserts)
         ? m.inserts.filter((i) => i && i.type && i.type !== "distort") : [];
-      const nativeIns = declared.length ? insertChain({ ...m, inserts: declared }, c) : [];
+      // role/state deliberately NOT passed as role (no default chain on
+      // samplers — absent-law); state rides along for rateBars tempo-sync.
+      const nativeIns = declared.length ? insertChain({ ...m, inserts: declared }, c, null, state) : [];
       const zs = Array.isArray(sp.zones) ? sp.zones : [];
       const zRoots = zs.map((z) => z.root || 60);
       const topRoot = zRoots.length ? Math.max(...zRoots) : 0;
@@ -647,7 +759,14 @@
           ...(m.release != null ? { release: clamp(m.release, 0.01, 3) } : {}),
           ...(m.fenv != null ? { fenv: clamp(m.fenv, 0, 6) } : {}) } };
         case "reese":  return { ...base, module: "bass_reese", params: { ...base.params, cutoff: clamp(c, 80, 12000) } };
-        case "wobble": return { ...base, module: "bass_wobble",params: { ...base.params, cutoff: clamp(c, 80, 12000), res, wobbleHz: clamp(m.wobbleHz || 2.4, 0.1, 12) } };
+        // wobble — recipe `wobbleBars` (LFO period as a bar fraction, e.g.
+        // 0.125 = the dubstep 1/8 wobble) tempo-syncs the cutoff LFO from
+        // state.bpm (SYNTHESIS-DEPTH Part C); absent => the free-running
+        // wobbleHz path, byte-identical.
+        case "wobble": return { ...base, module: "bass_wobble",params: { ...base.params, cutoff: clamp(c, 80, 12000), res,
+          wobbleHz: clamp((m.wobbleBars != null && state && state.bpm)
+            ? 1 / (Math.max(0.02, m.wobbleBars) * 4 * (60 / state.bpm))
+            : (m.wobbleHz || 2.4), 0.1, 12) } };
         case "piano":  return { ...base, module: "piano", decayFromDur: true, params: { ...base.params, cutoff: clamp(Math.min(4000, c * 2.5), 200, 14000) } };
         case "sampler": return samplerUnit();   // the upright &co (native path)
         default:       return { ...base, module: "bass_saw",   params: { ...base.params, cutoff: clamp(c, 80, 12000), res, ...bassArt } };
@@ -853,6 +972,10 @@
     insert_tremolo: 0.51, insert_filtersweep: 1.47,
     // inserts (2026-07 expanded FX round — measured vs pad_saw, min-of-3 8s render)
     insert_leslie: 0.35, insert_flanger: 0.28, insert_delay: 0.42, insert_ringmod: 0.2, insert_granular: 0.5,
+    // SYNTHESIS-DEPTH inserts (measured min-of-3 8s vs insert_distort=1.01):
+    // higain is the heaviest insert (3 always-computed shaper taps + 6 EQ
+    // biquads) — heavy genres budget it like a voice, not a seasoning
+    insert_higain: 2.7, insert_fenv: 1.4,
     // reverb colors + master
     reverb_dattorro: 0.49, reverb_greyhole: 2.37, reverb_fdn: 0.75, reverb_spring: 0.61, reverb_shimmer: 0.75,
     fx_bus: 2.32, master_mb: 1.55, rev_bleed: 0.18,
@@ -1284,27 +1407,33 @@
   // per-note params — inventing plumbing is out of scope for this wiring.
   //   cut: [paramName, lo, hi]   vib: true (vibrato 0-0.03 + vibRate 0.1-12)
   //   pw:  [paramName, lo, hi]   (PWM-capable models only)
+  //   fenvAmt: [paramName, lo, hi]  per-note filter-env DEPTH (SYNTHESIS-DEPTH:
+  //     event field p.fenvAmount, octaves signed — the per-note squelch accent;
+  //     bass/lead models where a per-note depth is musical; sticky like every
+  //     per-note set, only annotated notes touch it)
   const NOTE_PARAMS = {
     pad_saw:  { cut: ["cutoff", 80, 12000] },
-    supersaw: { cut: ["cutoff", 80, 18000], vib: true },
-    bass_saw: { cut: ["cutoff", 60, 6000] }, bass_sub: { cut: ["cutoff", 60, 6000] },
-    bass_acid:{ cut: ["cutoff", 60, 6000] }, bass_reese: { cut: ["cutoff", 60, 6000] },
-    bass_wobble: { cut: ["cutoff", 60, 6000] },
+    supersaw: { cut: ["cutoff", 80, 18000], vib: true, fenvAmt: ["fenvAmount", -4, 4] },
+    bass_saw: { cut: ["cutoff", 60, 6000], fenvAmt: ["fenvAmount", -4, 4] },
+    bass_sub: { cut: ["cutoff", 60, 6000], fenvAmt: ["fenvAmount", -4, 4] },
+    bass_acid:{ cut: ["cutoff", 60, 6000], fenvAmt: ["fenvAmount", -4, 4] },
+    bass_reese: { cut: ["cutoff", 60, 6000], fenvAmt: ["fenvAmount", -4, 4] },
+    bass_wobble: { cut: ["cutoff", 60, 6000], fenvAmt: ["fenvAmount", -4, 4] },
     organ:   { cut: ["cutoff", 80, 12000] }, strings: { cut: ["cutoff", 80, 12000] },
     choir:   { cut: ["cutoff", 200, 12000] }, bell: { cut: ["cutoff", 200, 14000] },
     piano:   { cut: ["cutoff", 200, 14000] }, brass: { cut: ["cutoff", 500, 12000] },
-    fm2op:   { cut: ["cutoff", 200, 14000], vib: true },
-    lead_pluck:  { cut: ["cutoff", 200, 14000] },
+    fm2op:   { cut: ["cutoff", 200, 14000], vib: true, fenvAmt: ["fenvAmount", -4, 4] },
+    lead_pluck:  { cut: ["cutoff", 200, 14000], fenvAmt: ["fenvAmount", -4, 4] },
     lead_kpluck: { cut: ["cutoff", 200, 14000] },
-    lead_fuzz:   { cut: ["cutoff", 200, 12000], vib: true },
+    lead_fuzz:   { cut: ["cutoff", 200, 12000], vib: true, fenvAmt: ["fenvAmount", -4, 4] },
     lead_guitar: { cut: ["cutoff", 200, 14000] },
     robot_choir: { cut: ["cutoff", 200, 14000] },
-    modeld:  { cut: ["cutoff", 60, 16000] },
-    tb303:   { cut: ["cutoff", 60, 6000] },
-    synclead:{ cut: ["cutoff", 60, 16000] },
-    casiocz: { cut: ["cutoff", 200, 16000] },
+    modeld:  { cut: ["cutoff", 60, 16000], fenvAmt: ["envAmount", 0, 5] },
+    tb303:   { cut: ["cutoff", 60, 6000] },   // per-note depth is ACCENT's job (the 303 contract)
+    synclead:{ cut: ["cutoff", 60, 16000], fenvAmt: ["envAmount", 0, 5] },
+    casiocz: { cut: ["cutoff", 200, 16000], fenvAmt: ["fenvAmount", -4, 4] },
     oberheim:{ cut: ["cutoff", 40, 16000] },
-    ppg:     { cut: ["cutoff", 60, 16000] },
+    ppg:     { cut: ["cutoff", 60, 16000], fenvAmt: ["envAmount", 0, 4] },
     juno60:  { cut: ["cutoff", 60, 16000], pw: ["pwmBase", 0.05, 0.5] },
     vp330:   { cut: ["cutoff", 300, 12000] },
     solina:  { cut: ["tone", 300, 12000] },   // solina's brightness param is `tone` (no res, no cutoff)
@@ -1377,6 +1506,9 @@
           sets.vibRate = clamp(p.vib.rate != null ? p.vib.rate : 5.2, 0.1, 12);
         }
         if (p.pw != null && np.pw) sets[np.pw[0]] = clamp(p.pw, np.pw[1], np.pw[2]);
+        // per-note filter-env depth (SYNTHESIS-DEPTH): the squelch accent —
+        // events without the annotation write nothing (absent-law, per event)
+        if (p.fenvAmount != null && np.fenvAmt) sets[np.fenvAmt[0]] = clamp(p.fenvAmount, np.fenvAmt[1], np.fenvAmt[2]);
       }
       // blue-note bend contract (VOICES.md): only sampler units render it;
       // Faust-module voices carry no matching param and simply ignore it.

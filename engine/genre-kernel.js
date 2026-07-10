@@ -900,6 +900,7 @@
     filtersweep:{ rateBars:4, lo:-1, hi:1, res:0.3 },
     wah:        { sens:0.6, base:320, range:2.2, q:4, mix:0.85 },   // fx wings stage 3: auto-wah (funk/disco bass)
     tremolo:    { rate:5, depth:0.7, shape:0, wobble:0, mix:0.8 },   // amp tremolo (surf) + vibraphone fan (exotica wobble)
+    granular:   { pitch:0, density:0.5, rate:12, mix:0.5 },   // grain stutter/cloud — was a DEAD declaration (dubstep's clouds never fired; invariants finding, SYNTHESIS-DEPTH fix 2026-07)
   };
 
   // ---------- SAMPLER instruments (real sampled instruments — the sax ask) ----------
