@@ -253,10 +253,12 @@
     fxlayer = document.createElement("div");
     fxlayer.style.cssText = "position:absolute;inset:0;pointer-events:none;transition:backdrop-filter " + (120 * SLOTH) + "ms ease,-webkit-backdrop-filter " + (120 * SLOTH) + "ms ease";   // resting effect-grade easing, SLOTH'd
     wrap.appendChild(fxlayer);
-    // readability veil + VHS scanlines + jittering grain over the footage, under the UI
+    // (the readability VEIL — a dark gradient scrim so map text read over
+    // footage — is GONE, Paul 2026-07-10: "make sure the video isn't darkened
+    // any more". The star map never sits over the video now — three exclusive
+    // views — so the footage plays at full brightness; scanlines + grain stay.)
     const veil = document.createElement("div");
-    veil.style.cssText = "position:absolute;inset:0;" +
-      "background:linear-gradient(rgba(12,10,26,.44),rgba(12,10,26,.26) 30%,rgba(12,10,26,.5))";
+    veil.style.cssText = "position:absolute;inset:0;display:none";
     // ANALOG VERTICAL-BLANKING BAR (Paul 2026-07-06: the old dense multi-line
     // repeating-gradient read as "too much and too obviously digital"). Now: ONE
     // soft, slow-rolling darker band — the classic hum / vertical-hold bar — over

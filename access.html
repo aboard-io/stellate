@@ -94,8 +94,9 @@
     <p class="intro">A generative instrument you play by moving through a space of
     228 musical genres. Every song is rendered live in your browser and is fully
     deterministic from a seed — the same seed always plays the same music. This
-    version needs no vision: pick a genre or build a journey, shape the sound with
-    sliders, and read what's playing as text. <a href="index.html">Switch to the
+    version needs no vision: pick a genre or build a journey, and read what's
+    playing as text. Your choices ride the address bar, so bookmarking or sharing
+    the URL captures this exact music. <a href="index.html">Switch to the
     visual star-map version.</a></p>
   </header>
 
@@ -104,9 +105,12 @@
     <h2 id="h-play">Play</h2>
     <div class="card transport">
       <button id="playBtn" class="primary" aria-pressed="false">▶ Play</button>
+      <button id="restartBtn" title="rewind to the beginning">⏮ Restart</button>
       <button id="announceBtn">🔊 Announce what's playing</button>
+      <button id="copyLinkBtn">⧉ Copy link to this music</button>
       <span class="hint" style="flex-basis:100%">Tip: press <kbd>Space</kbd> to play or stop
-      (unless you're focused on a control). It may take a few seconds to warm up the first time.</span>
+      (unless you're focused on a control). Stopping remembers your place; Play resumes there,
+      and Restart rewinds to the top. It may take a few seconds to warm up the first time.</span>
     </div>
   </section>
 

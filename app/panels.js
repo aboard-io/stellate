@@ -119,7 +119,13 @@ function toggleModal(which,force){
   const open=force!=null?force:!el.classList.contains("open");
   el.classList.toggle("open",open);
   document.getElementById(CHIP_OF[which]).classList.toggle("on",open);
-  if(which==="inside"&&open) renderInside();   // populate immediately on open (then subs keep it live)
+  if(which==="inside"){
+    // the viz is a 100% VIEW now (Paul 2026-07-10: three exclusive views) —
+    // S.vizView drives the body class + background suppression via applyBg;
+    // the wrap keeps its "open" class so the ticker/gates read as before.
+    set({vizView:open});
+    if(open) renderInside();   // populate immediately on open (then subs keep it live)
+  }
 }
 document.getElementById("cfgChip").onclick=()=>toggleModal("panel");
 document.getElementById("insideChip").onclick=()=>toggleModal("inside");

@@ -267,6 +267,19 @@ access.html: seed/genre/blend in ITS query string too.
 - Offline/precache SHIPPED (sw.js cache-first on the immutable found/ class +
   app/precache.js route warming); a11y-link belt SHIPPED.
 
+### 5e. BED-CLASS SIMPLIFICATION (Paul 2026-07-10: "are there other found sound
+beds that we use all the time? we could simplify there.") MEASURED: 48 distinct
+bed SOURCES across 501 anchor bed-slots, top-heavy — tokyo_station 73 genres,
+shibuya 64, highway_night 52, factory 37, vx_apollo 37 (top-5 = 52% of slots).
+The viz's "tape atmosphere" was the one fallback label for all of them — now
+labeled by character class (city air / road hum / machine room / voices on
+tape / night air / deep water / room tone, app/inside.js BED_CHAR). PROPOSAL
+(kernel work, unscheduled): make those seven CLASSES first-class bed POOLS
+(anchors reference a class + treatment instead of raw ids) — 48 ids collapse to
+~7 pools + per-genre treatment, new beds join a class once and every member
+genre inherits, and the precache warms classes not files. Matrix-gated; a big
+but mechanical sweep.
+
 ### 6. The standing horizon (Paul-stated goals not yet scheduled)
 - The hour-render service (docs/EXPORT.md sketch: tools/render-server.js
   on the droplet, queue + credits.txt with tier-3 stripped).

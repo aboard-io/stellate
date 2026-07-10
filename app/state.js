@@ -13,7 +13,11 @@ import { MAP_CENTER, BARS_PER_SEG } from "./world.js";
 export const S={ cursor:{x:MAP_CENTER.x,y:MAP_CENTER.y}, waypoints:[], travel:{seg:0,t:0}, weights:[],
   target:null, playing:null, queue:[], holdUntil:{}, barCount:0, barInfo:null, live:false,
   seed:Math.floor(Math.random()*99999)+1, modeLock:"auto", pace:BARS_PER_SEG, more:false, load:1, eco:0, scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
-  pool:"", beatLine:"▶ press LIVE" };
+  pool:"", beatLine:"▶ press LIVE",
+  // THE THREE VIEWS (Paul 2026-07-10): star map / video / viz are exclusive
+  // 100% views. vizView=true shows the full-screen viz (map + video off);
+  // otherwise bgMode>0 (background.js) = the video view (map off); else the map.
+  vizView:false };
 // (the eight MACRO axes lived here 2026-07-06..10 — removed on Paul's "get rid
 // of all macros"; the kernel's applyMacros machinery survives unused, and
 // absent macros = byte-identical resolution, so nothing musical moved.)
