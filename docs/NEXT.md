@@ -202,6 +202,25 @@ blessed dynamics; speech vols 0.36-0.46 matrix-safe).
   the tier-1 re-queue fix landed, but the deeper fix (quantize weights for
   discrete draws so the target stops re-rolling) is unexplored.
 
+### 5b. THE VECTOR-KERNEL PROGRAM (Paul 2026-07-10: "the kernel can be
+simplified and rebuilt in terms of lists of vectors run through streaming
+transformations ala APL… increase the verifiability and expressiveness")
+Step 0 SHIPPED: **engine/prove-matrix.js**, the offline matrix prover — the
+anchor catalog as LO/HI Float64Array vectors, the blend hull as one reduction
+per dim, DIFFERENTIALLY cross-checked vs invariants.js (37/38 EQUAL, fx.jux
+TIGHTER-by-design, 0 WIDER) + a 300-blend seeded witness through real K.mix;
+verify.sh's fifth referee ("matproof"). The staged path (each step
+fixture-gated, the FORMS-refactor method):
+  1. COLUMNAR EVENTS: buildEvents emits {beat[],pitch[],amp[],dur[],voice[]}
+     struct-of-arrays behind the current API; passes (swing/humanize/dynamics/
+     snare-law/transforms/solo) become elementwise array ops.
+  2. THE RANDOMNESS TAPE: pre-draw rng into a vector consumed positionally;
+     every pass becomes pure (state, tape) -> events; draw-order byte-identity
+     becomes true BY CONSTRUCTION (the amp0/snare-law collision class dies).
+  3. Combinator DSL over the columns (the transform pool generalized).
+  4. Blend/verify as first-class matrix ops; BLAS/GSL-WASM at the
+     matrix()/hull() seam when feature-space scale demands it.
+
 ### 6. The standing horizon (Paul-stated goals not yet scheduled)
 - The hour-render service (docs/EXPORT.md sketch: tools/render-server.js
   on the droplet, queue + credits.txt with tier-3 stripped).
