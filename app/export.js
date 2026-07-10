@@ -15,6 +15,7 @@
 // shows ("The Signalmen — Standard Time.mid"), so the download matches the
 // on-screen band card.
 import { S, set, deep } from "./state.js";
+import { buildLoopMidi } from "./journey.js";   // whole-path MIDI (the full loop, not just the current song)
 
 const SR = 44100;
 
@@ -43,11 +44,16 @@ function saveBlob(blob, name, skip) {
 // ---------- ⤓ MIDI ----------
 export function downloadMidi() {
   if (!S.playing || !window.MidiExport) { set({ status: "MIDI export unavailable" }); return null; }
-  const bytes = MidiExport.buildMidi(S.playing);
+  // WHOLE PATH (Paul): with a drawn loop, export the entire journey — every genre
+  // it crosses — not just the current song. Falls back to the current song when
+  // there is no path (or the walk can't run).
+  let bytes = null, whole = false;
+  if (S.waypoints.length >= 2) { try { bytes = buildLoopMidi(); whole = !!bytes; } catch (e) {} }
+  if (!bytes) bytes = MidiExport.buildMidi(S.playing);
   EXPORT.lastMidi = bytes;                      // headless probe hook (SMF parse gate)
-  const name = fileStem() + ".mid";
+  const name = fileStem() + (whole ? " (full path)" : "") + ".mid";
   saveBlob(new Blob([bytes], { type: "audio/midi" }), name);
-  set({ status: "MIDI saved — " + name + " (" + bytes.length + " bytes)" });
+  set({ status: "MIDI saved — " + name + " (" + bytes.length + " bytes" + (whole ? ", whole path" : "") + ")" });
   return bytes;
 }
 

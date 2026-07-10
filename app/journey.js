@@ -32,6 +32,20 @@ export function walkLoop(opts) {
   return { bars, total, n, pace, musicalSec, seed: S.seed };
 }
 
+// WHOLE-PATH MIDI: walk the loop and assemble one SMF spanning the full journey
+// (every genre it crosses), not just the current song. Returns Uint8Array | null.
+export function buildLoopMidi(opts) {
+  const w = walkLoop(opts);
+  if (!w || !window.MidiExport || !window.MidiExport.buildMidiJourney) return null;
+  const bars = []; let startBeat = 0;
+  for (const r of w.bars) {
+    const cbeats = (r.meta && r.meta.cbeats) || (r.ev && r.ev.totalBeats) || 8;
+    bars.push({ ev: r.ev, startBeat, bpm: (r.ev && r.ev.bpm) || (r.one && r.one.bpm) || 88 });
+    startBeat += cbeats;
+  }
+  return window.MidiExport.buildMidiJourney(bars);
+}
+
 // summary for headless verification: distinct genres crossed, bar count, seconds
 export function walkLoopSummary(opts) {
   const w = walkLoop(opts);

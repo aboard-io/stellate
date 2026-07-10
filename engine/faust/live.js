@@ -177,7 +177,7 @@
       const barLenFrames = Math.max(BS, Math.round((hi - lo) * spb * SR / BS) * BS);
       const r = { one, units, sig: sigOf(units), spb, lo, hi, events: m.events, fxParams,
         sweepsRaw: m.sweeps, found: m.found, foundSources: one.foundSources || [], meta,
-        barLenFrames, musicalSec: (hi - lo) * spb };
+        barLenFrames, musicalSec: (hi - lo) * spb, ev };   // ev = note-level buildEvents (this bar's collapsed section) for the offline MIDI exporter
       absBeat += CBEATS; ci++; serial++;
       if (ci >= nch) { ci = 0; cycIdx++; if (cycIdx >= (secs[secIdx].cycles || 1)) { cycIdx = 0; secIdx = (secIdx + 1) % secs.length; } }
       return r;
