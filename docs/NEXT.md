@@ -112,11 +112,16 @@ delivered). The wave, in value order:
   piano), submarinelullaby, umpirehouse (orphaned umpire vocal, the
   auctioncore class). Where the element honestly shouldn't exist, soften
   the CARD — cards must not lie in either direction.
-- **The promises gate**: port the sweep extractor into
-  engine/musicality.js as PROMISES' card-parse mode (STATE-MISSING = FAIL,
-  SILENT = WARN, UNDISCLOSED = WARN + auto-disclose suggestion); wire into
-  gate 8. Pin-or-hedge the 75 PARTIAL instrument claims as WARN-with-
-  suggestion (don't mass-rewrite cards).
+- **DONE — the promises gate**: card-parse mode ported into engine/musicality.js
+  (checkCardClaims), capability read from the MIXED STATES (not spec pools, so
+  reggae's organ isn't false-flagged), wired once-per-genre into audit() as
+  WARN-level (graduation rule); shows in validate gate 8 (197 ok / 31 warn).
+  test/musicality.test.js pins it (catches gabber's hoover, ceiling <=45 as the
+  regression tripwire). REMAINING (taste/ear): the 38 flagged card-lies are the
+  honest worklist — either give the genre its element or soften the card. Notable
+  real ones the gate now names: gabber hoover (§5 signature-model candidate), dnb
+  amen (no break source), whalejazz sax (empty pool), happyhardcore. STILL OPEN:
+  the 7 identity-lies + softening cards that over-promise (don't mass-rewrite).
 
 ### 2. Balance loop 3 — anchor wiring for the new synthesis surface
 The synthesis-depth program shipped the machinery (commit `b328159`); no
