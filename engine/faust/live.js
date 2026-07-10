@@ -2020,9 +2020,23 @@
         if (abort || demoted || !useMp3 || !mp3El) return;
         const ct = mp3El.currentTime || 0;
         if (ct > lastCt + 1e-3) { lastCt = ct; lastMove = now(); return; }
-        // stalled: only a fault if there IS buffered audio ahead to play (not a benign
-        // starve where nothing has been appended yet).
-        if (now() - lastMove > WD_FROZEN_MS && bufferedAhead() > 0.1)
+        if (now() - lastMove <= WD_FROZEN_MS) return;
+        // stalled: only a fault if the element has genuinely playable data it refuses to
+        // advance through. An underrun at the buffered EDGE is BENIGN: when the forward
+        // runway drains (e.g. a steer's decode-then-render wait outlasting the ~5s mp3
+        // runway under an iOS-grade decode storm), the element parks with readyState <=
+        // HAVE_CURRENT_DATA and strands a sub-frame sliver (~0.09-0.15s, mp3-frame-
+        // boundary dependent) it cannot play until the next append lands — measured in
+        // the live-resilience storm: ct frozen 3.8s at buffered.end-0.088 with rs=2,
+        // then auto-resumed (rs 2->4) the instant the new gen's append arrived. That
+        // sliver made bufferedAhead()>0.1 a coin flip, spuriously demoting a healthy
+        // mse-mp3 route to segAB. Dead-element criteria instead: frozen AND (the UA
+        // itself claims playable future data (rs>=3) OR a healthy multi-second buffer
+        // sits ahead regardless of rs). A starving element re-arms the full window so
+        // the post-append resume isn't judged on a clock that ran out mid-starve.
+        const ahead = bufferedAhead();
+        if ((mp3El.readyState || 0) < 3 && ahead < 2) { lastMove = now(); return; }   // benign starve
+        if (ahead > 0.1)
           demoteToSegAB("currentTime frozen " + WD_FROZEN_MS + "ms after first append");
       }, 500);
     }
