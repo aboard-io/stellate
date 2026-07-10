@@ -55,15 +55,20 @@ run() {   # run <name> <cmd...>: capture output, write "<rc> <secs>" when done
   awk -v r="$rc" -v a="$s" -v b="$(date +%s.%N)" 'BEGIN{printf "%d %.1f\n", r, b-a}' >"$TMP/$name.res"
 }
 
-echo "verify ($MODE) — matrix + validate + engine.test + prove, concurrent"
+echo "verify ($MODE) — matrix + validate + engine.test + prove + matproof, concurrent"
 run "matrix  " node engine/genre-verifier.js matrix ${PASS_ARGS[@]+"${PASS_ARGS[@]}"} &
 run "validate" node engine/validate-genres.js ${VAL_ARGS[@]+"${VAL_ARGS[@]}"} ${PASS_ARGS[@]+"${PASS_ARGS[@]}"} &
 run "engine  " node test/engine.test.js ${ENG_ARGS[@]+"${ENG_ARGS[@]}"} &
 run "prove   " node engine/invariants.js prove &
+# matproof: the OFFLINE MATRIX PROVER (engine/prove-matrix.js) — the anchor
+# catalog as LO/HI vectors, the blend hull as a reduction, DIFFERENTIALLY
+# cross-checked against `prove` (two independent implementations must agree)
+# plus a seeded Monte-Carlo witness through the real K.mix.
+run "matproof" node test/prove-matrix.test.js &
 
 FAILED=0
 declare -A DONE
-for _ in 1 2 3 4; do
+for _ in 1 2 3 4 5; do
   wait -n
   for f in "$TMP"/*.res; do
     [ -e "$f" ] || continue
