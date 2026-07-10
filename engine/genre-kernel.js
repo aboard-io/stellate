@@ -92,6 +92,39 @@
     modem_handshake: { label:"56k modem handshake negotiation, synthesized — license-free", url:"found/modem_handshake.mp3" },   // dialupgabber — the drop (was url:"" = unfetchable; the file was on disk, so the handshake never played; card-truth wave 2026-07-10)
     crt_whine:       { label:"CRT flyback whine at the true 15734Hz NTSC line, synthesized", url:"found/crt_whine.mp3" },   // crtwave — the high drone
   };
+  // ---------- SOURCE POOLS (the repertoire law, 2026-07-10) ----------
+  // Paul: "not lock one bit of found sound into one genre." A sources list may
+  // name a CLASS instead of a raw id — "pool:city" (3 seeded members) or
+  // "pool:city*2" (2) — and expandPools swaps the token for members drawn on a
+  // DEDICATED per-(seed,class) stream: zero draws on the shared rng, so every
+  // genre without a token is byte-identical, and the same seed always draws the
+  // same members (determinism law). IDENTITY beds stay raw ids in their anchors
+  // (the loon is canawave's; the whale is whalejazz's — the bird-rarity law
+  // keeps birds out of the general pools). Wave 3 fills these classes from the
+  // bed-curation register (scratch/bed-curation/BEDS.md, 79 verified beds).
+  const SOURCE_POOLS = {
+    city:     ["tokyo_station","shibuya","tw_stationhall","tw_platform"],
+    road:     ["highway_night","tw_intrain","tw_trains"],
+    industry: ["factory"],
+    voices:   ["vx_apollo","vx_timelady","vx_wwvh","vx_conet_swedish","vx_conet_poacher"],
+    nature:   ["frogs","crickets"],
+    water:    ["hydrophone"],
+    room:     ["hvac_hum"],
+  };
+  const fnv1a = (str)=>{ let h=2166136261>>>0; for(const ch of String(str)) h=Math.imul(h^ch.charCodeAt(0),16777619); return h>>>0; };
+  function expandPools(list, seed){
+    if(!Array.isArray(list) || !list.some(x=>typeof x==="string" && x.slice(0,5)==="pool:")) return list;
+    const out=[];
+    for(const m of list){
+      const mm=typeof m==="string" ? /^pool:([a-z][a-z0-9_]*)(?:\*(\d))?$/.exec(m) : null;
+      if(!mm){ out.push(m); continue; }
+      const pool=(SOURCE_POOLS[mm[1]]||[]).slice();
+      const n=Math.min(pool.length, +(mm[2]||3));
+      const r=mulberry32((((seed??1)>>>0) ^ fnv1a(mm[1]) ^ 0x9E00D5) >>> 0);   // dedicated stream: the shared rng never moves
+      for(let i=0;i<n && pool.length;i++) out.push(pool.splice(Math.floor(r()*pool.length),1)[0]);
+    }
+    return out;
+  }
   // sample layer: local files under found/samples/ (kind: break|hit|vox)
   const SAMPLES = {
     amen_165:{ file:"breaks/amen_165_02.wav", kind:"break", bpm:165 },
@@ -6194,10 +6227,10 @@
       drumRecipe: blendRecipe(g=>g.drums),
       fx: blendRecipe(g=>g.fx),
       foundRole: foundSide.found.role,
-      foundSource: pick(rng, foundSide.found.sources),
-      foundPool: (()=>{ const a=foundSide.found.sources.slice(), o=[], n=Math.min(6,a.length);   // distinct beds/narration chunks to rotate (kills the one-loop repeat)
+      foundSource: pick(rng, expandPools(foundSide.found.sources, seed)),
+      foundPool: (()=>{ const a=expandPools(foundSide.found.sources, seed).slice(), o=[], n=Math.min(6,a.length);   // distinct beds/narration chunks to rotate (kills the one-loop repeat)
         while(o.length<n&&a.length) o.push(a.splice(Math.floor(rng()*a.length),1)[0]); return o; })(),
-      voxPool: (voxSide.vox ? (()=>{ const a=voxSide.vox.sources.slice(), o=[], n=Math.min(3,a.length);   // VO lines to rotate across sections
+      voxPool: (voxSide.vox ? (()=>{ const a=expandPools(voxSide.vox.sources, seed).slice(), o=[], n=Math.min(3,a.length);   // VO lines to rotate across sections
         while(o.length<n&&a.length) o.push(a.splice(Math.floor(rng()*a.length),1)[0]); return o; })() : []),
       voxRecipe: voxSide.vox || null,
       voxClean: !!(voxSide.vox && voxSide.vox.clean),
@@ -6208,7 +6241,7 @@
       realHats: !!extraSide.realHats,
       foundRecipe: blendRecipe(g=>({vol:g.found.vol,pitch:g.found.pitch,stretch:g.found.stretch,cutoff:g.found.cutoff})),
       stab: pick(rng, side().stab),
-      hits: rng()<hitsSide.hits.prob ? {source:pick(rng,hitsSide.hits.sources), pattern:hitsSide.hits.pattern, wet:hitsSide.hits.wet, glitch:hitsSide.hits.glitch, vol:hitsSide.hits.vol, cut:hitsSide.hits.cut} : null,
+      hits: rng()<hitsSide.hits.prob ? {source:pick(rng,expandPools(hitsSide.hits.sources, seed)), pattern:hitsSide.hits.pattern, wet:hitsSide.hits.wet, glitch:hitsSide.hits.glitch, vol:hitsSide.hits.vol, cut:hitsSide.hits.cut} : null,
       form: side().form,
       rng,
     };
@@ -7680,7 +7713,7 @@
     return state;
   }
 
-  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, GENRE_CLIPS, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), FORM_ENTRY, PERC_STYLES, PERC_STYLE_GENRES, PERC_ELEMENTS, resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly, deriveMind };
+  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, SOURCE_POOLS, expandPools, GENRE_CLIPS, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), FORM_ENTRY, PERC_STYLES, PERC_STYLE_GENRES, PERC_ELEMENTS, resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly, deriveMind };
   if(isNode) module.exports=api; else root.GenreKernel=api;
 
   // ---------- CLI ----------
