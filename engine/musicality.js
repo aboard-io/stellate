@@ -163,7 +163,21 @@
       }
       // ONE-CYCLE FLOOR: an opener of one full harmonic cycle is idiomatic
       // (blues' 12-bar piano chorus), never lateness.
-      const bound = Math.max(bounds[part] != null ? bounds[part] : 96, P.spans.cycleBeats || 0);
+      // ON-DESIGN FLOOR (balance loop 2): the form GRAPH's designed entry
+      // fraction for this part (K.FORM_ENTRY, derived from the graphs so it
+      // can never drift from them) x the realized track length, plus one
+      // cycle of solver-quantization slack. A part arriving there is exactly
+      // where the arc PLACED it — the form is the genre's identity; the beat
+      // table above stays the cap for drag the form never asked for (dance-
+      // pop's loop-1 hook at 54% vs a 37.5% design stays named). This clears
+      // the fast/long-cycle geometry outliers that are on design: the beat
+      // table punished standbylightdrive's 137bpm wave (swell bass at beat
+      // 160 = 38.5% of the arc = 70 SECONDS) and singeli's 214bpm dj lift
+      // (beat 288 = 81s) for having many beats, not for dragging.
+      const totalBeats = P.spans.length ? P.spans[P.spans.length - 1].end : 0;
+      const desFrac = K && K.FORM_ENTRY && K.FORM_ENTRY[form] ? K.FORM_ENTRY[form][part] : null;
+      const designBound = desFrac != null ? desFrac * totalBeats + (P.spans.cycleBeats || 0) : -1;
+      const bound = Math.max(bounds[part] != null ? bounds[part] : 96, P.spans.cycleBeats || 0, designBound);
       // ARRIVAL is bar-grained: a dub bass whose cell starts at beat 2.5 of
       // its bar arrived AT the bar — floor the first onset to the chord-bar
       // grid before judging patience (in-bar pattern offsets are the groove,
