@@ -43,6 +43,12 @@ function genreFiles(g){
 let warming=false, lastKey="";
 export async function precacheRoute(){
   if(!("serviceWorker" in navigator)||!navigator.serviceWorker.controller) return;   // no SW yet: first load caches by playing
+  // NEVER COMPETE WITH THE MUSIC OR THE BOOT (Paul 2026-07-10 "it loads very
+  // slowly now"): the warm waits until the engine is actually PLAYING and a few
+  // bars deep (its own decodes done), or the page has sat idle 25s. On a phone
+  // link, a boot-time 400-file warm was fighting the shell + the play warm-up.
+  const quiet=(S.live&&S.barCount>=3)||(performance.now()>25000&&!S.live);
+  if(!quiet){ precacheSoon(); return; }   // re-arm; the debounce keeps this cheap
   const wps=S.waypoints; if(!wps||wps.length<2) return;
   const key=S.seed+"|"+wps.map(w=>Math.round(w.x)+","+Math.round(w.y)).join(";");
   if(key===lastKey||warming) return;
@@ -60,7 +66,8 @@ export async function precacheRoute(){
     }
     const urls=new Set();
     for(const g of genres) for(const u of genreFiles(g)) urls.add(u);
-    const list=[...urls].slice(0,400);                         // cap per run — a warm-up, not a flood
+    const MOBILE=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    const list=[...urls].slice(0, MOBILE?120:400);             // cap per run — a warm-up, not a flood (phones get the lighter one)
     let i=0, okN=0;
     const worker=async()=>{ for(;;){ const u=list[i++]; if(!u) return;
       try{ const r=await fetch(u,{priority:"low"}); if(r.ok) okN++; }catch(e){} } };
