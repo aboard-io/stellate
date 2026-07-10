@@ -469,6 +469,139 @@
     return { input, output: node, oscs, nodes };
   }
 
+  // ---- live PER-UNIT insert chain (INSERTS-ON-SAMPLED-VOICES) --------------
+  // Web Audio twins of the declared Faust insert chain for a sampled unit on
+  // the ring-path live graph — one LONG-LIVED chain per unit (per-VOICE, like
+  // synth units carry inserts), shared by all its notes: note envelopes/strips
+  // feed `input`, the unit-level dry/rev/del sends tap `output` (live.js wires
+  // them — the render-core insert law, sends POST-chain). Same contract as
+  // buildStripNodes: a perceptual twin, NOT byte-parallel — press/stream/wavOut
+  // run the real dist/ modules; this keeps the live ring path in character.
+  // `inserts` is the NORMALIZED chain off the unit (state-engine insertChain:
+  // {type, params} with clamps applied); `barSec` = 4*spb for the tempo-synced
+  // types. Oscillators start immediately and run for the chain's life — caller
+  // stops them at teardown (returned in `oscs`). Types with no honest native
+  // twin (granular) pass DRY and are reported in `skipped` (they still sound
+  // on press + the wavOut/mobile lane, where the real module renders).
+  function buildInsertNodes(ctx, inserts, barSec) {
+    const oscs = [], nodes = [], stages = [], skipped = [];
+    const input = ctx.createGain(); nodes.push(input);
+    let node = input;
+    const chain = (n) => { node.connect(n); node = n; nodes.push(n); };
+    const lfo = (hz) => { const o = ctx.createOscillator(); o.frequency.value = hz; o.start(); oscs.push(o); return o; };
+    const parallel = (mix, wet) => {   // dry/wet split -> sum; node advances to the sum
+      const sum = ctx.createGain();
+      const dry = ctx.createGain(); dry.gain.value = 1 - mix; node.connect(dry); dry.connect(sum); nodes.push(dry, sum);
+      wet(sum, mix); node = sum;
+    };
+    for (const eff of (inserts || [])) {
+      const p = eff.params || {};
+      switch (eff.type) {
+        case "chorus": {
+          parallel(clampS(p.mix != null ? p.mix : 0.5, 0, 1), (sum, mix) => {
+            const dl = ctx.createDelay(0.06); dl.delayTime.value = 0.012;
+            const lg = ctx.createGain(); lg.gain.value = 0.005 * (p.depth != null ? p.depth : 0.5);
+            lfo(p.rate || 0.8).connect(lg); lg.connect(dl.delayTime);
+            const wg = ctx.createGain(); wg.gain.value = mix;
+            node.connect(dl); dl.connect(wg); wg.connect(sum); nodes.push(dl, lg, wg);
+          }); stages.push("chorus"); break;
+        }
+        case "phaser": {
+          parallel(clampS(p.mix != null ? p.mix : 0.7, 0, 1), (sum, mix) => {
+            const dep = p.depth != null ? p.depth : 0.7, center = 700;
+            const lg = ctx.createGain(); lg.gain.value = 600 * dep;
+            lfo(p.rate || 0.5).connect(lg);
+            let apn = node;
+            for (let k = 0; k < 4; k++) { const ap = ctx.createBiquadFilter(); ap.type = "allpass"; ap.frequency.value = center; ap.Q.value = 0.7; lg.connect(ap.frequency); apn.connect(ap); apn = ap; nodes.push(ap); }
+            nodes.push(lg);
+            const wg = ctx.createGain(); wg.gain.value = mix; apn.connect(wg); wg.connect(sum); nodes.push(wg);
+          }); stages.push("phaser"); break;
+        }
+        case "leslie": {
+          const sp = clampS(p.speed != null ? p.speed : 0.5, 0, 1), hRate = 0.80 + sp * (6.70 - 0.80), dep = p.depth != null ? p.depth : 0.8;
+          parallel(clampS(p.mix != null ? p.mix : 0.6, 0, 1) * 0.9, (sum, mix) => {
+            const dl = ctx.createDelay(0.02); dl.delayTime.value = 0.0018;
+            const o = lfo(hRate);
+            const dg = ctx.createGain(); dg.gain.value = 0.0012 * dep; o.connect(dg); dg.connect(dl.delayTime);
+            const am = ctx.createGain(); am.gain.value = 1;
+            const ag = ctx.createGain(); ag.gain.value = 0.5 * dep; o.connect(ag); ag.connect(am.gain);
+            const wg = ctx.createGain(); wg.gain.value = mix;
+            node.connect(dl); dl.connect(am); am.connect(wg); wg.connect(sum); nodes.push(dl, dg, am, ag, wg);
+          }); stages.push("leslie"); break;
+        }
+        case "flanger": {
+          parallel(clampS(p.mix != null ? p.mix : 0.6, 0, 1), (sum, mix) => {
+            const dl = ctx.createDelay(0.02); dl.delayTime.value = 0.0006;
+            const lg = ctx.createGain(); lg.gain.value = 0.005 * (p.depth != null ? p.depth : 0.8);
+            lfo(p.rate || 0.4).connect(lg); lg.connect(dl.delayTime);
+            const fb = ctx.createGain(); fb.gain.value = clampS(p.feedback != null ? p.feedback : 0.5, -0.95, 0.95);
+            node.connect(dl); dl.connect(fb); fb.connect(dl);
+            const wg = ctx.createGain(); wg.gain.value = mix; dl.connect(wg); wg.connect(sum); nodes.push(dl, lg, fb, wg);
+          }); stages.push("flanger"); break;
+        }
+        case "delay": {
+          const timeSec = Math.min(1.9, (p.timeBars != null ? p.timeBars : 0.1875) * (barSec || 2));
+          parallel(clampS(p.mix != null ? p.mix : 0.35, 0, 1), (sum, mix) => {
+            const dl = ctx.createDelay(2.0); dl.delayTime.value = timeSec;
+            const fb = ctx.createGain(); fb.gain.value = clampS(p.feedback != null ? p.feedback : 0.35, 0, 0.9);
+            const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = p.tone || 3000;
+            node.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl);
+            const wg = ctx.createGain(); wg.gain.value = mix; lp.connect(wg); wg.connect(sum); nodes.push(dl, fb, lp, wg);
+          }); stages.push("delay"); break;
+        }
+        case "ringmod": {
+          parallel(clampS(p.mix != null ? p.mix : 0.4, 0, 1), (sum, mix) => {
+            const rm = ctx.createGain(); rm.gain.value = 0;   // out = x * sin(2πft)
+            lfo(p.freq || 220).connect(rm.gain);
+            const wg = ctx.createGain(); wg.gain.value = mix;
+            node.connect(rm); rm.connect(wg); wg.connect(sum); nodes.push(rm, wg);
+          }); stages.push("ringmod"); break;
+        }
+        case "tremolo": {
+          parallel(clampS(p.mix != null ? p.mix : 0.8, 0, 1), (sum, mix) => {
+            const dep = clampS(p.depth != null ? p.depth : 0.7, 0, 1);
+            const am = ctx.createGain(); am.gain.value = 1 - 0.5 * dep;
+            const ag = ctx.createGain(); ag.gain.value = 0.5 * dep;
+            lfo(p.rate || 5).connect(ag); ag.connect(am.gain);
+            const wg = ctx.createGain(); wg.gain.value = mix;
+            node.connect(am); am.connect(wg); wg.connect(sum); nodes.push(am, ag, wg);
+          }); stages.push("tremolo"); break;
+        }
+        case "filtersweep": {
+          // full-signal swept resonant lowpass (serial — the Faust module has no
+          // mix param). LFO period = rateBars * barSec; linear lo..hi Hz sweep.
+          const loHz = p.lo || 500, hiHz = Math.max(p.hi || 4000, loHz * 1.05);
+          const f = ctx.createBiquadFilter(); f.type = "lowpass";
+          f.frequency.value = (loHz + hiHz) / 2; f.Q.value = 0.707 + (p.res || 0) * 6;
+          const lg = ctx.createGain(); lg.gain.value = (hiHz - loHz) / 2;
+          lfo(1 / Math.max(0.05, (p.rateBars != null ? p.rateBars : 4) * (barSec || 2))).connect(lg);
+          lg.connect(f.frequency); nodes.push(lg);
+          chain(f); stages.push("filtersweep"); break;
+        }
+        case "wah": {
+          // native envelope follower: |x| (waveshaper) -> 25 Hz lowpass ->
+          // scaled into a resonant bandpass's frequency. Approximate (linear-Hz
+          // sweep vs the module's exponential octaves) but genuinely dynamic.
+          parallel(clampS(p.mix != null ? p.mix : 0.85, 0, 1), (sum, mix) => {
+            const base = p.base || 320, range = p.range != null ? p.range : 2.2, sens = p.sens != null ? p.sens : 0.6;
+            const bp = ctx.createBiquadFilter(); bp.type = "bandpass";
+            bp.frequency.value = base; bp.Q.value = clampS(p.q || 4, 0.5, 12);
+            const N = 1024, curve = new Float32Array(N);
+            for (let i = 0; i < N; i++) { const x = (i / (N - 1)) * 2 - 1; curve[i] = Math.abs(x); }
+            const rect = ctx.createWaveShaper(); rect.curve = curve;
+            const env = ctx.createBiquadFilter(); env.type = "lowpass"; env.frequency.value = 25; env.Q.value = 0.5;
+            const scale = ctx.createGain(); scale.gain.value = sens * base * (Math.pow(2, range) - 1) * 6;
+            node.connect(rect); rect.connect(env); env.connect(scale); scale.connect(bp.frequency);
+            const wg = ctx.createGain(); wg.gain.value = mix;
+            node.connect(bp); bp.connect(wg); wg.connect(sum); nodes.push(bp, rect, env, scale, wg);
+          }); stages.push("wah"); break;
+        }
+        default: skipped.push(eff.type);   // granular &c: dry on the ring path (real module on press/wavOut)
+      }
+    }
+    return { input, output: node, oscs, nodes, stages, skipped };
+  }
+
   // ---- (b) live path ------------------------------------------------------
   // dests: {dry, rev, del} nodes (a mixer layer's taps, like FoundLive).
   function SamplerLive(ctx, dests) {
@@ -541,6 +674,6 @@
     return live;
   }
 
-  return { midiOfFreq, zoneFor, rateFor, mixPCM, decodeUrlRaw, SamplerLive, GAIN,
+  return { midiOfFreq, zoneFor, rateFor, mixPCM, decodeUrlRaw, SamplerLive, buildInsertNodes, GAIN,
     __test: { makeStrip, stripStep, rbjCoefs } };   // faust/strip-fuzz-test.js hooks
 });

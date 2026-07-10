@@ -227,6 +227,38 @@ async function assemble(state, sched, env, opts) {
         mello: u.sampler.mello || null,   // MELLOTRON: LFO phase off note tSec (deterministic)
         bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,
       })).filter(n => n.tSec < totalSec);
+      // INSERTS-ON-SAMPLED-VOICES: a sampled unit carrying its declared insert
+      // chain (state-engine samplerUnit — explicit kernel inserts, distort
+      // excluded) renders through the SAME dist/ insert modules synth units use,
+      // under render-core's exact insert law: notes mix PRE-SEND into a
+      // unit-local buffer (per-note gain + channel strip inside mixPCM), the
+      // chain processes it whole-song (LFO phase + tails continuous), THEN the
+      // dry/rev/del sends apply. Units without inserts keep the original
+      // direct-mix path untouched (bit-identical, the absent-law).
+      if (u.inserts && u.inserts.length) {
+        const ubuf = new Float32Array(TOTAL);
+        SP.mixPCM(notes, buffers, SR, { dry: ubuf, rev: ubuf, del: ubuf },
+          { dry: 1, rev: 0, del: 0, strip: u.sampler.strip });
+        for (const eff of u.inserts) {
+          const ip = await mkProc(eff.module);
+          const IR = "/" + rootOf(eff.module) + "/";
+          for (const [k, pv] of Object.entries(eff.params)) ip.setParamValue(IR + k, pv);
+          if (eff.barSec) ip.setParamValue(IR + "barSec", 4 * spb); // tempo-synced LFO
+          for (let s = 0; s < TOTAL; s += BS) {
+            const len = Math.min(BS, TOTAL - s);
+            const o = ip.render([ubuf.subarray(s, s + len)], len)[0];
+            for (let i = 0; i < len; i++) ubuf[s + i] = o[i];
+          }
+        }
+        const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
+        for (let i = 0; i < TOTAL; i++) {
+          const x = ubuf[i];
+          dry[i] += x * dg; rev[i] += x * rg; del[i] += x * lg;
+        }
+        console.log(`  ${key}: ${notes.length} ev -> sampler:${u.sampler.id} (native PCM, ${u.sampler.zones.length} zones)` +
+          ` [inserts: ${u.inserts.map(i => i.type).join(">")}]`);
+        continue;
+      }
       SP.mixPCM(notes, buffers, SR, { dry, rev, del },
         { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip });
       console.log(`  ${key}: ${notes.length} ev -> sampler:${u.sampler.id} (native PCM, ${u.sampler.zones.length} zones)`);

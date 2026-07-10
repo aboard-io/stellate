@@ -379,8 +379,54 @@
       decGate.run(() => SP.decodeUrlRaw(ctx, url), (b) => !!b, () => !abort)
         .then(({ v }) => { samplerBufs[srcId] = v || null; });
     }
-    const samplerPlayers = new Map();
-    const samplerOf = (key) => { if (!SP) return null; if (!samplerPlayers.has(key)) samplerPlayers.set(key, SP.SamplerLive(ctx, foundDests)); return samplerPlayers.get(key); };
+    // ── sampler players, one per unit key. INSERTS-ON-SAMPLED-VOICES (ring
+    // path): a sampled unit whose resolved state declares an insert chain gets
+    // ONE long-lived Web Audio twin chain (SP.buildInsertNodes) between its
+    // notes and its unit-level dry/rev/del sends — per VOICE, mirroring how
+    // synth units carry inserts (render-core law: sends POST-chain, so notes
+    // enter the chain at dry 1 / sends 0 and the unit gains tap the output).
+    // The wavOut/mobile lane renders the REAL Faust insert modules in the
+    // worker (stream-renderer bakeNative); this twin keeps the ring path in
+    // character. Keyed by a chain signature: a glide/crossfade that changes
+    // the declared chain rebuilds the routing; the OLD chain is torn down on
+    // a delay so in-flight note tails drain through it (no click).
+    const samplerPlayers = new Map();   // key -> { sig, player, chain|null }
+    function teardownSamplerChain(ent) {
+      if (!ent || !ent.chain) return;
+      for (const o of ent.chain.ch.oscs) { try { o.stop(); } catch (e) {} }
+      for (const n of ent.chain.ch.nodes) { try { n.disconnect(); } catch (e) {} }
+      for (const g of ent.chain.sends) { try { g.disconnect(); } catch (e) {} }
+    }
+    const samplerOf = (key, u, spb) => {
+      if (!SP) return null;
+      const ins = (u && u.inserts && u.inserts.length) ? u.inserts : null;
+      const sig = ins ? JSON.stringify(ins) : "";
+      let ent = samplerPlayers.get(key);
+      if (ent && ent.sig !== sig) {
+        const old = ent;
+        setTimeout(() => teardownSamplerChain(old), 8000);   // drain tails, then free
+        samplerPlayers.delete(key); ent = null;
+      }
+      if (!ent) {
+        let dests = foundDests, chain = null;
+        if (ins && SP.buildInsertNodes) {
+          try {
+            const ch = SP.buildInsertNodes(ctx, ins, 4 * (spb || 0.5));
+            const dryG = ctx.createGain(); dryG.gain.value = u.dry != null ? u.dry : 1;
+            const revG = ctx.createGain(); revG.gain.value = u.rev || 0;
+            const delG = ctx.createGain(); delG.gain.value = u.del || 0;
+            ch.output.connect(dryG); dryG.connect(foundDests.dry);
+            ch.output.connect(revG); revG.connect(foundDests.rev);
+            ch.output.connect(delG); delG.connect(foundDests.del);
+            chain = { ch, sends: [dryG, revG, delG], types: ins.map((i) => i.type) };
+            dests = { dry: ch.input, rev: ch.input, del: ch.input };
+          } catch (e) { errors.push("samplerChain " + key + ": " + (e && e.message || e)); chain = null; dests = foundDests; }
+        }
+        ent = { sig, player: SP.SamplerLive(ctx, dests), chain };
+        samplerPlayers.set(key, ent);
+      }
+      return ent;
+    };
 
     // ── VOCODER speech carrier (robot_choir has one audio input) — decode the
     // speech source PCM ONCE per source id and hand it to the worker's openLive so
@@ -714,17 +760,22 @@
       // sampler notes (native BufferSource, like found)
       if (SP) for (const e of (b.events || [])) {
         const u = b.units[e.unit]; if (!u || !u.sampler) continue;
-        const player = samplerOf(e.unit);
+        const ent = samplerOf(e.unit, u, spb);
         const midi = SP.midiOfFreq(e.sets.freq);
         const z = SP.zoneFor(u.sampler.zones, midi);
         const buf = z && samplerBufs[z.srcId];
-        if (!player || !buf) continue;
+        if (!ent || !buf) continue;
+        // chained unit (declared inserts): notes enter the chain PRE-SEND —
+        // dry 1 / sends 0 here; the unit-level gains tap the chain output.
+        const chained = !!ent.chain;
         const zsr = u.sampler.sr || 44100;
-        player.note(buf, at(e.beat), { rate: SP.rateFor(z, midi), durSec: e.durB * spb,
+        ent.player.note(buf, at(e.beat), { rate: SP.rateFor(z, midi), durSec: e.durB * spb,
           gain: (u.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
           atk: u.sampler.atk, rel: u.sampler.rel, swell: !!u.sampler.swell, mello: u.sampler.mello || null,
           strip: u.sampler.strip || null,   // per-voice band EQ/comp/saturation/air (SamplerLive builds the node twin)
-          songT: beatAbs(e.beat) * spb, dry: u.dry != null ? u.dry : 1, rsend: u.rev || 0, dsend: u.del || 0,
+          songT: beatAbs(e.beat) * spb,
+          dry: chained ? 1 : (u.dry != null ? u.dry : 1),
+          rsend: chained ? 0 : (u.rev || 0), dsend: chained ? 0 : (u.del || 0),
           bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,
           loop: !!z.loop, loopStartSec: (z.loopStart || 0) / zsr, loopEndSec: (z.loopEnd || 0) / zsr });
       }
@@ -1074,6 +1125,16 @@
       // openLive sends that carried a non-null speech buffer vs. null-carrier opens
       // of a vocoder-needing state, and the last carrier length in samples. ──
       __voxSpeech: () => ({ speechOpens: voxSpeechOpens, nullOpens: voxNullOpens, lastLen: lastSpeechLen }),
+      // ── INSERTS-ON-SAMPLED-VOICES debug (headless verification): the live
+      // per-unit insert-chain twins currently in the graph — declared types,
+      // stages actually built, and any types passing dry (no native twin). ──
+      __samplerInserts: () => {
+        const out = [];
+        for (const [k, ent] of samplerPlayers) out.push(ent && ent.chain
+          ? { unit: k, types: ent.chain.types.slice(), stages: ent.chain.ch.stages.slice(), skipped: ent.chain.ch.skipped.slice() }
+          : { unit: k, types: [], stages: [], skipped: [] });   // chainless sampled unit (no declared inserts)
+        return out;
+      },
       // ring / underrun telemetry (real — reads the shared control block)
       underruns: () => Atomics.load(ctrl, C_UNDER_CNT),
       underrunFlag: () => Atomics.load(ctrl, C_UNDERRUN),
@@ -1113,7 +1174,7 @@
         if (bgAudio) { try { bgAudio.pause(); bgAudio.src = ""; bgAudio.remove(); } catch (e) {} }
         if (bgUrl) { try { root.URL.revokeObjectURL(bgUrl); } catch (e) {} bgUrl = null; }
         try { foundBeds.stopAll(); foundChops.stopAll(); foundVox.stopAll(); } catch (e) {}
-        for (const [, p] of samplerPlayers) { try { p.stopAll(); } catch (e) {} }
+        for (const [, ent] of samplerPlayers) { try { ent.player.stopAll(); } catch (e) {} try { teardownSamplerChain(ent); } catch (e) {} }
         setTimeout(() => { for (const w of workers) if (w) { try { w.terminate(); } catch (e) {} } if (bgWorker) { try { bgWorker.terminate(); } catch (e) {} } try { ctx.close(); } catch (e) {} }, 1200);
         status("stopped");
       },
