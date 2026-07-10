@@ -318,6 +318,17 @@ function gateVocabulary() {
   const sampleIds = new Set(Object.keys(K.SAMPLES));
   const sourceIds = new Set([...Object.keys(K.SOURCES), ...sampleIds]);
   const inSet = (set) => (v) => set.has(v);
+  // THE POOL LAW (repertoire wave 3, 2026-07-10): sources lists may carry
+  // "pool:<class>" / "pool:<class>*N" tokens (genre-kernel SOURCE_POOLS,
+  // expanded per-(seed,class) by K.expandPools). A token is valid when the
+  // class exists, is non-empty, and EVERY member passes the same registry
+  // check the surrounding list validates against.
+  const orPool = (valid) => (v) => {
+    const mm = typeof v === "string" && /^pool:([a-z][a-z0-9_]*)(?:\*(\d))?$/.exec(v);
+    if (!mm) return valid(v);
+    const pool = K.SOURCE_POOLS && K.SOURCE_POOLS[mm[1]];
+    return Array.isArray(pool) && pool.length > 0 && pool.every(valid);
+  };
 
   const check = (g, field, list, valid, describe) => {
     for (const v of [].concat(list || [])) {
@@ -340,15 +351,15 @@ function gateVocabulary() {
     }
     if (A.found) {
       check(g, "found.role", A.found.role, inSet(roles), "unknown found role");
-      check(g, "found.sources", A.found.sources, inSet(sourceIds), "not in SOURCES/SAMPLES registry");
+      check(g, "found.sources", A.found.sources, orPool(inSet(sourceIds)), "not in SOURCES/SAMPLES registry");
     }
     if (A.hits) {
       // 2026-07-03: toState resolves hits from SAMPLES or SOURCES (remote
       // material as stabs, e.g. Radio Moscow) — validate against the union.
-      check(g, "hits.sources", A.hits.sources, inSet(sourceIds), "not in SAMPLES/SOURCES registry");
+      check(g, "hits.sources", A.hits.sources, orPool(inSet(sourceIds)), "not in SAMPLES/SOURCES registry");
       check(g, "hits.pattern", A.hits.pattern, inSet(hitPats), "unknown HIT_PATTERNS key");
     }
-    if (A.vox) check(g, "vox.sources", A.vox.sources, inSet(sampleIds), "not in SAMPLES registry");
+    if (A.vox) check(g, "vox.sources", A.vox.sources, orPool(inSet(sampleIds)), "not in SAMPLES registry");
     check(g, "voxPoem", A.voxPoem, inSet(sampleIds), "not in SAMPLES registry");
     // KERNEL-V4 Phase 4: the unified sample-event role registry — every spec's
     // pool must resolve to a real SAMPLES (local) or SOURCES (remote) id, the

@@ -487,8 +487,19 @@
       ((g.lead && g.lead.patterns) || []).forEach(p => melP.add(p));
       (g.fills || []).forEach(f => fills.add(f));
       if (g.form) forms.add(g.form);
-      ((g.found && g.found.sources) || []).forEach(s => srcs.add(s));
-      ((g.hits && g.hits.sources) || []).forEach(s => hitsSrc.add(s));
+      // THE POOL LAW (repertoire wave 3): "pool:<class>*N" tokens prove
+      // through their SOURCE_POOLS members — the token is sugar for a
+      // per-(seed,class) draw over that member list (K.expandPools), so the
+      // enumeration proof closes over the members; an unknown or empty class
+      // keeps the raw token and stays a violation.
+      const expandTok = (s, into) => {
+        const mm = typeof s === "string" && /^pool:([a-z][a-z0-9_]*)(?:\*(\d))?$/.exec(s);
+        const members = mm && (K.SOURCE_POOLS || {})[mm[1]];
+        if (members && members.length) members.forEach(m => into.add(m));
+        else into.add(s);
+      };
+      ((g.found && g.found.sources) || []).forEach(s => expandTok(s, srcs));
+      ((g.hits && g.hits.sources) || []).forEach(s => expandTok(s, hitsSrc));
       if (g.hits && g.hits.pattern) hitPats.add(g.hits.pattern);
       (g.stab || []).forEach(s => stabs.add(s));
       for (const v of [g.bass, g.lead, g.pads]) {
