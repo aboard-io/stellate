@@ -6,17 +6,18 @@
     "bpm": [57, 65],
     "swing": [0, 0.06],
     "humanize": [0.35, 0.6],
+    "meter": { "beats": 3, "unit": 4 },
     "progressions": ["dream", "ii_v_i", "neosoul"],
-    "kits": ["off"],
+    "kits": ["waltz", "waltzswing"],
     "fills": ["off"],
-    "chordEvery": 16,
+    "chordEvery": 12,
     "bass": {
-      "patterns": ["root", "simple", "off"],
+      "patterns": ["waltzroot"],
       "samplerPool": ["felt_piano", "yamaha_grand_piano"],
       "recipe": { "model": ["sampler", "sampler", "piano"], "cutoff": [700, 1400], "res": [0.05, 0.1], "level": [0.5, 0.68], "send": [0.25, 0.45], "dsend": [0, 0.08], "attack": [0.01, 0.03], "release": [0.35, 0.7] }
     },
     "lead": {
-      "patterns": ["sparse", "composed", "wander"],
+      "patterns": ["waltz", "sparse", "composed"],
       "samplerPool": ["felt_piano", "felt_piano", "yamaha_grand_piano"],
       "recipe": { "model": ["sampler", "sampler", "piano"], "wave": "sine", "voices": [1, 1], "spread": [0.001, 0.002], "cutoff": [2200, 3400], "level": [0.42, 0.55], "send": [0.3, 0.5], "dsend": [0.05, 0.15], "attack": [0.01, 0.03], "release": [0.4, 0.8] }
     },
