@@ -94,10 +94,14 @@
           const kr = gens[43] != null ? gens[43] : 0x7f00;
           const vr = gens[44] != null ? gens[44] : 0x7f00;
           const vLo = vr & 0xff, vHi = (vr >> 8) & 0xff;
-          if (!(vLo <= 100 && 100 <= vHi)) continue;                          // one velocity layer (forte-ish)
+          // FULL CAPTURE (Paul 2026-07-10: "re-extract fully, capture everything"):
+          // keep EVERY velocity layer, not just the forte one — the sampler picks
+          // the layer by note velocity, so a soft note plays a softly-recorded
+          // sample instead of a loud one turned down.
           const modes = gens[54] != null ? gens[54] : 0;
           zones.push({
             keyLo: kr & 0xff, keyHi: (kr >> 8) & 0xff,
+            velLo: vLo, velHi: vHi,
             root: gens[58] != null ? gens[58] : s.origPitch,
             coarse: (gens[51] != null ? (gens[51] << 16 >> 16) : 0),
             fine: (gens[52] != null ? (gens[52] << 16 >> 16) : 0) + s.pitchCorr,
@@ -133,7 +137,7 @@ if (typeof module !== "undefined" && require.main === module) {
     for (const p of sf.presets) console.log(`bank ${String(p.bank).padStart(3)} prog ${String(p.preset).padStart(3)}  ${p.name}`);
   } else if (cmd === "extract") {
     const [, font, pick, outBase] = args;
-    const maxZones = args.includes("--max-zones") ? +args[args.indexOf("--max-zones") + 1] : 6;
+    const maxZones = args.includes("--max-zones") ? +args[args.indexOf("--max-zones") + 1] : 0;   // 0 = FULL CAPTURE (every zone, every velocity layer)
     const OUT_SR = 44100;
     const sf = SF2.parse(fs.readFileSync(font));
     const want = pick.replace(/^\/|\/$/g, "").toUpperCase();
@@ -144,14 +148,23 @@ if (typeof module !== "undefined" && require.main === module) {
     const P = sf.presets[ix];
     let zones = sf.zonesOf(ix);
     if (!zones.length) { console.error("no zones in preset " + P.name); process.exit(1); }
-    zones.sort((a, b) => a.root - b.root || a.keyLo - b.keyLo);
-    // dedupe stereo twins (same keyrange+root) and thin to maxZones spread across the keymap
+    zones.sort((a, b) => a.velLo - b.velLo || a.root - b.root || a.keyLo - b.keyLo);
+    // dedupe EXACT twins (stereo R halves are already dropped in zonesOf; this
+    // guards identical key+root+vel rows). FULL CAPTURE (--max-zones 0 / omitted):
+    // keep every key-zone AND every velocity layer. If --max-zones N is given it
+    // thins the KEY zones per velocity layer (so all layers survive the thin).
     const seen = new Set();
-    zones = zones.filter((z) => { const k = z.keyLo + ":" + z.keyHi + ":" + z.root; if (seen.has(k)) return false; seen.add(k); return true; });
-    if (zones.length > maxZones) {
+    zones = zones.filter((z) => { const k = z.keyLo + ":" + z.keyHi + ":" + z.root + ":" + z.velLo + ":" + z.velHi; if (seen.has(k)) return false; seen.add(k); return true; });
+    if (maxZones && zones.length > maxZones) {
+      const byVel = {};
+      for (const z of zones) (byVel[z.velLo + ":" + z.velHi] = byVel[z.velLo + ":" + z.velHi] || []).push(z);
+      const per = Math.max(2, Math.round(maxZones / Object.keys(byVel).length));
       const kept = [];
-      for (let i = 0; i < maxZones; i++) kept.push(zones[Math.round(i * (zones.length - 1) / (maxZones - 1))]);
-      zones = [...new Set(kept)];
+      for (const layer of Object.values(byVel)) {
+        if (layer.length <= per) { kept.push(...layer); continue; }
+        for (let i = 0; i < per; i++) kept.push(layer[Math.round(i * (layer.length - 1) / (per - 1))]);
+      }
+      zones = [...new Set(kept)].sort((a, b) => a.velLo - b.velLo || a.root - b.root || a.keyLo - b.keyLo);
     }
     const slug = P.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
     const dir = path.join(outBase, slug);
@@ -177,6 +190,7 @@ if (typeof module !== "undefined" && require.main === module) {
       // fine/coarse tune folded into an effective (possibly fractional) root
       const rootEff = z.root - z.coarse - z.fine / 100;
       meta.zones.push({ file, root: Math.round(rootEff * 100) / 100, lo: z.keyLo, hi: z.keyHi,
+        velLo: z.velLo, velHi: z.velHi,
         loop: z.loop && le > ls + 8, loopStart: ls, loopEnd: le, len: pcm.length });
       console.log(`  ${file}  root=${rootEff} keys=${z.keyLo}-${z.keyHi} loop=${z.loop ? ls + ".." + le : "-"} ${(pcm.length / OUT_SR).toFixed(2)}s`);
     });
