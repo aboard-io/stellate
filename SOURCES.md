@@ -215,6 +215,39 @@ Timestamps were hand-curated by sampling frames across each disc (2026-06); the
 | [`HMIronHorseRamble98234`](https://archive.org/details/HMIronHorseRamble98234) | Iron Horse Ramble, Reading RR (home movie, 1960) | from the train — transitwave | home movie |
 | [`098243`](https://archive.org/details/098243) | PA rail fan: Dearborn station (home movie, 1960–61) | station platform & concourse — transitwave | home movie |
 
+### REPERTOIRE wave 3 (2026-07-10) — the de-clone fetch
+
+47 clips from 21 archive.org items (Prelinger unless noted), curated to break the
+night-city/space/abstract skew: weather/storms, volcano fire, snow, crowds and
+funfairs, dance-hall soundies, neon signage, desert road, nature macro,
+steelmaking, printing, textile mills, atomic-age animation. Cue windows
+hand-picked from frame contact sheets; URLs HEAD-checked (200 + range 206);
+licenses read from item metadata 2026-07-10.
+
+| Internet Archive item | film | clips | license |
+|---|---|---|---|
+| [`tornado`](https://archive.org/details/tornado) | Tornado (ca. 1950s) | funnel over the town, storm horizon | CC PD mark |
+| [`ShockTro1938`](https://archive.org/details/ShockTro1938) | Shock Troops of Disaster (1938, WPA) | storm surge, waves through wreckage, fog figures | CC PD mark |
+| [`0315_Plow_that_Broke_the_Plains_The_16_38_41_28`](https://archive.org/details/0315_Plow_that_Broke_the_Plains_The_16_38_41_28) | The Plow that Broke the Plains (1936) | the dust front | US federal film — public domain |
+| [`volcanoes`](https://archive.org/details/volcanoes) | Volcanoes (Kilauea, color) | lava river, wall of fire, ash fountains | CC PD mark |
+| [`2096_Tacoma-Narrows_Bridge_Collapse_03_11_13_15`](https://archive.org/details/2096_Tacoma-Narrows_Bridge_Collapse_03_11_13_15) | Tacoma Narrows Bridge Collapse (1940) | the galloping deck, the fall | Prelinger, no known restrictions |
+| [`Wathenco1944`](https://archive.org/details/Wathenco1944) | Wathen home movie (1944, Kodachrome) | buried cars, church tower, snowed-in lanes, Coney rides | CC PD mark |
+| [`ConeyIsl1940`](https://archive.org/details/ConeyIsl1940) | Coney Island (1940) | surf crowds, boardwalk, Wonder Wheel, Cyclone, Luna Park neon | CC PD mark |
+| [`0432_Carnival_01_11_31_00`](https://archive.org/details/0432_Carnival_01_11_31_00) | Carnival | the carousel | Prelinger, no known restrictions |
+| [`soundie_12`](https://archive.org/details/soundie_12) | Soundie: Hollywood Boogie (1946) | the all-girl big band | CC PD mark |
+| [`SoundieD`](https://archive.org/details/SoundieD) | Soundie: Zig Me Baby with a Gentle Zag (1941) | ballroom couple, band in silhouette | CC PD mark |
+| [`SoundieF`](https://archive.org/details/SoundieF) | Soundie: Reg Kehoe and his Marimba Queens (ca. 1940) | marimba orchestra, wild slap bass | CC PD mark |
+| [`0838_Musical_Review_11_Louis_Armstrong_Soundie_11_33_03_18`](https://archive.org/details/0838_Musical_Review_11_Louis_Armstrong_Soundie_11_33_03_18) | Musical Review #11 (ca. 1942) | Louis Armstrong's trumpet, the band swings | Prelinger, no known restrictions |
+| [`098461`](https://archive.org/details/098461) | Home movie: New York 1965 | Times Square neon canyon, Broadway signs | Prelinger home movies |
+| [`010112-001`](https://archive.org/details/010112-001) | Home movie: Las Vegas road trip (1950s) | Fremont St casino neon, Thunderbird/Dunes neon, desert highway | Prelinger home movies |
+| [`bees_and_spiders`](https://archive.org/details/bees_and_spiders) | Bees and Spiders (1927) | the swarming hive, dew on the web | Prelinger/ephemera, no known restrictions |
+| [`200634_The_Growth_of_Plants`](https://archive.org/details/200634_The_Growth_of_Plants) | The Growth of Plants | time-lapse roots, seedlings, a flower opens | Prelinger, no known restrictions |
+| [`steel_the_hardest_metal`](https://archive.org/details/steel_the_hardest_metal) | Industries of the US: Steel (1931, Pathé) | pig iron pour, furnace face, steel curls | CC PD mark |
+| [`Printing1947`](https://archive.org/details/Printing1947) | Printing (1947) | the linotype line, the press run | CC PD mark |
+| [`0333HowTextileMillsAreModernizing`](https://archive.org/details/0333HowTextileMillsAreModernizing) | How Textile Mills Are Modernizing (1948) | spinning frames, knitters, the loom | Prelinger, no known restrictions |
+| [`0159_A_is_for_Atom_01_00_48_00`](https://archive.org/details/0159_A_is_for_Atom_01_00_48_00) | A is for Atom (1953, GE) | electron orbits, the glowing giant | Prelinger, no known restrictions |
+| [`6143_Wonder_World_of_Chemistry_A_Film_Story_of_Better_Things_for_Bet_01_19_13_16`](https://archive.org/details/6143_Wonder_World_of_Chemistry_A_Film_Story_of_Better_Things_for_Bet_01_19_13_16) | Wonder World of Chemistry (1936, Du Pont) | the apothecary wall | Prelinger, no known restrictions |
+
 The NASA material is public domain. The demo discs and Video Drug volumes carry
 no explicit license; they're used here as brief, transformed, muted excerpts in
 a non-commercial art context. Don't redistribute the clips as media — point
