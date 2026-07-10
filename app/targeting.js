@@ -222,8 +222,25 @@ let appliedFlips=new Set();
 // the flips a listener IDENTIFIES a genre by — first-timers among these lead
 // the queue so a parked destination reads as itself within a few measures
 const LEAD_FLIPS=new Set(["form","drum kit","lead voice"]);
+// TRANSIT RE-TIER (Paul's "we hit dnb — it's loaded but the promised
+// instruments don't show up; only the flute we had earlier"): appliedFlips is
+// journey-scoped and a TRAVELING journey never converges, so ~24 bars in every
+// dimension was tier 2 and the queue degenerated to one FIXED per-seed hash
+// order. A crossed neighborhood's dwell (dnb: ~10 of 256 bars on the
+// blues->industrial line) only ever executed the head few flips of that order —
+// "lead voice"/"drum kit" ranked late NEVER fired again for the rest of the
+// path, at ANY pace (dwell and approach scale together), so the first
+// neighborhood's lead haunted every later genre. The applied-set is therefore
+// per-DOMINANT-GENRE: when the nearest star changes, clear it — the new
+// neighborhood's identity flips (form/kit/lead) re-enter tier 0 and land within
+// ~6 bars of dominance, and flips scale with bars-in-neighborhood. Parked
+// behavior is unchanged (dominant stable = the set accumulates exactly as
+// before; holds still pace timbre swaps at boundaries).
+let lastDominant="";
 export function rebuildQueue(){
   if(!S.playing||!S.target)return;
+  const dom=(S.weights&&S.weights[0]&&S.weights[0].g)||"";
+  if(dom!==lastDominant){ lastDominant=dom; appliedFlips.clear(); }
   const diffs=DISCRETE.filter(([n,get])=>{try{return JSON.stringify(get(S.playing))!==JSON.stringify(get(S.target));}catch(e){return false;}});
   if(!diffs.length) appliedFlips.clear();   // converged: the next journey starts fresh
   const rank=n=>{let h=(S.seed>>>0)||1; for(const ch of n) h=(h*31+ch.charCodeAt(0))>>>0; return h;};
