@@ -89,8 +89,28 @@
   // each bar (retarget/glide = mutating what getState returns): seed+serial*7919 per bar,
   // collapsed single-cycle sections, fills only on the last cycle, sweeps only on first/
   // last, chordEvery-aware CBEATS. Each makeWalk() owns its own cursor state.
-  function makeWalk(getState, E, SE) {
+  function makeWalk(getState, E, SE, startBar) {
     let ci = 0, serial = 0, secIdx = 0, cycIdx = 0, absBeat = 0;
+    // DROP-IN (the bookmarkable measure, 2026-07-10): startBar>0 fast-forwards
+    // the walk's indices as if that many bars had already played — same
+    // per-bar seed law ((seed + serial*7919)), same section arithmetic, so
+    // measure N sounds byte-identical to having reached it live. Uses the
+    // boot state's sections (constant at start; glides only mutate later).
+    if (startBar > 0) {
+      const st0 = getState();
+      if (st0) {
+        const prg0 = (E.PROGRESSIONS[st0.progression] || E.PROGRESSIONS.royal_road);
+        const nch0 = prg0.chords.length;
+        const secs0 = st0.sections && st0.sections.length ? st0.sections : [null];
+        const CB0 = Math.max(2, Math.round(st0.chordEvery || (st0.meter ? 6 : 8)));
+        for (let b = 0; b < startBar; b++) {
+          absBeat += CB0; ci++; serial++;
+          if (ci >= nch0) { ci = 0; cycIdx++;
+            const cur = secs0[secIdx] || {};
+            if (cycIdx >= (cur.cycles || 1)) { cycIdx = 0; secIdx = (secIdx + 1) % secs0.length; } }
+        }
+      }
+    }
     function grooveSec(st) {
       const score = (s) => (s.pads ? 1 : 0) + (s.bass && s.bass !== "off" ? 1 : 0) +
         (s.drums && s.drums !== "off" ? 2 : 0) + (s.melody && s.melody !== "off" ? 1 : 0);
@@ -700,7 +720,7 @@
     }
 
     // ONE authoritative section/ci/serial walk, shared with the WAV-FIRST path (makeWalk).
-    const stepWalk = makeWalk(getState, E, SE);
+    const stepWalk = makeWalk(getState, E, SE, (opts && opts.startBar) | 0);   // drop-in at the bookmarked measure
 
     // decide glide (feedBar into the one stream) vs crossfade (new stream + ring)
     function produceAndRoute() {
@@ -1399,7 +1419,7 @@
 
     // ── THE WALK: the one authoritative section/ci/serial walk, shared with the ring
     // conductor (makeWalk). Polls getState() each bar; steering takes effect next bar. ──
-    const stepWalk = makeWalk(getState, E, SE);
+    const stepWalk = makeWalk(getState, E, SE, (opts && opts.startBar) | 0);   // drop-in at the bookmarked measure
 
     // ── the producer workers: TWO, ping-ponged per gen (gen%2) so a new gen renders
     // its first segment IN PARALLEL with the OLD gen still feeding+playing (the ring

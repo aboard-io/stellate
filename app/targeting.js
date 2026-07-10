@@ -3,7 +3,7 @@
 // engine state (via K.mix) and either snaps (pre-LIVE) or queues a smooth glide
 // (mid-performance). glideStep()/rebuildQueue() run the continuous morph + the
 // discrete voice/section flips; travelStep() walks the drawn path leg by leg.
-import { S, set, deep, macrosOn, K, V } from "./state.js";
+import { S, set, deep, K, V } from "./state.js";
 import { POS, SNAP, CUTOFF, MODE_LOCKS, BARS_PER_SEG } from "./world.js";
 import { faustHandle } from "./live.js";
 
@@ -52,7 +52,7 @@ export function retarget(pt){
 // accessible page omits it (there is no cursor to move). retarget() above is the
 // map's caller and stays behavior-identical: weightsAt(pt) then this.
 export function retargetWeights(weights, pt){
-  const target=K.mix(weights.map(w=>({...w})),{seed:S.seed, keyOffset:keyFor(weights,S.seed), macros:macrosOn(S.macros)?{...S.macros}:undefined});
+  const target=K.mix(weights.map(w=>({...w})),{seed:S.seed, keyOffset:keyFor(weights,S.seed)});
   if(MODE_LOCKS[S.modeLock]) target.progression=MODE_LOCKS[S.modeLock];
   const patch={weights,target};
   if(pt) patch.cursor=pt;
@@ -69,20 +69,9 @@ export function retargetWeights(weights, pt){
   // latest target).
   if(S.live&&faustHandle&&faustHandle.prepare){ try{ faustHandle.prepare(target); }catch(e){} }
 }
-// MACRO slider handler: update the axis, then REBUILD the target so the change
-// flows through the same per-bar glide path a genre move uses. While LIVE the
-// glide eases playing->target within a bar or two (no click); before LIVE the
-// cursor rule in retarget snaps playing to the new target immediately.
-export function setMacro(axis,val){
-  const v=Math.max(-1,Math.min(1,+val||0));
-  set({macros:{...S.macros,[axis]:v}});
-  retarget(S.cursor);
-  rebuildQueue();   // a macro can flip a discrete voice/section (acoustic swap, pads off) — requeue those flips
-}
-export function resetMacros(){
-  set({macros:{acoustic:0,density:0,dust:0,space:0,bright:0,feel:0,energy:0,vocal:0}});
-  retarget(S.cursor); rebuildQueue();
-}
+// (setMacro/resetMacros lived here until 2026-07-10 — Paul: "get rid of all
+// macros". The kernel's applyMacros machinery stays; no caller passes
+// opts.macros now, and absent macros = byte-identical resolution.)
 
 // ---------- glide ----------
 const PATHS=["swing","humanize","reverb","pump","crackle","comp","delay.beats","delay.feedback","delay.cutoff",

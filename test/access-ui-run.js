@@ -51,7 +51,6 @@ async function main() {
     genreOpts: document.getElementById("genreSel").options.length,
     blendOpts: document.getElementById("blendSel").options.length,
     journeyOpts: document.getElementById("journeyAdd").options.length,
-    macros: document.getElementById("macroList").querySelectorAll("input[type=range]").length,
     playing: !!window.__S.playing,
     seed: window.__S.seed,
   }));
@@ -59,7 +58,7 @@ async function main() {
   else fail(`genre menu ${menu.genreOpts} != kernel ${kernelGenres}`);
   if (menu.blendOpts === kernelGenres + 1) ok(`blend menu = ${kernelGenres} + none`);
   else fail(`blend menu ${menu.blendOpts} != ${kernelGenres + 1}`);
-  if (menu.macros === 8) ok("8 shape sliders"); else fail(`${menu.macros} shape sliders != 8`);
+  // (the "8 shape sliders" check retired with the macros — Paul 2026-07-10)
   if (menu.playing) ok("S.playing seeded before Play"); else fail("S.playing null before Play");
 
   // deterministic seed for the rest

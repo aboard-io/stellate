@@ -13,12 +13,10 @@ import { MAP_CENTER, BARS_PER_SEG } from "./world.js";
 export const S={ cursor:{x:MAP_CENTER.x,y:MAP_CENTER.y}, waypoints:[], travel:{seg:0,t:0}, weights:[],
   target:null, playing:null, queue:[], holdUntil:{}, barCount:0, barInfo:null, live:false,
   seed:Math.floor(Math.random()*99999)+1, modeLock:"auto", pace:BARS_PER_SEG, more:false, load:1, eco:0, scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
-  pool:"", beatLine:"▶ press LIVE",
-  // MACRO axes: eight global sliders in [-1,+1], 0 = neutral. Threaded into
-  // every K.mix() as opts.macros (the keyOffset altitude — a post-resolution
-  // transform); absent/all-zero = byte-identical to the un-macroed space.
-  macros:{acoustic:0,density:0,dust:0,space:0,bright:0,feel:0,energy:0,vocal:0} };
-export const macrosOn=m=>Object.values(m||{}).some(v=>v);
+  pool:"", beatLine:"▶ press LIVE" };
+// (the eight MACRO axes lived here 2026-07-06..10 — removed on Paul's "get rid
+// of all macros"; the kernel's applyMacros machinery survives unused, and
+// absent macros = byte-identical resolution, so nothing musical moved.)
 export const subs=[];
 window.__S=S;   // debug/probe access (headless verification)
 let _raf=0;
