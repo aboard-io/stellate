@@ -63,6 +63,14 @@
     const { E, SE, FP, SP, mergeIvals, mkProc, rootOf, SR, BS } = env;
     const dx7Presets = env.dx7Presets || {};
 
+    // MASTERING STAGE pan gains — render-core.panLR's twin (constant-power,
+    // ×√2 center-normalized). pan 0/absent never routes here (old byte path).
+    function panLR(pan) {
+      const p = Math.min(1, Math.max(-1, pan));
+      const th = (p + 1) * Math.PI / 4;
+      return { l: Math.SQRT2 * Math.cos(th), r: Math.SQRT2 * Math.sin(th) };
+    }
+
     // ============================================================ per-unit fleet
     // ensureUnit — a persistent processor pool + insert chain per unit key, with
     // its static params applied once (lifted from stem-worker.ensureUnit, minus
@@ -173,6 +181,9 @@
       const LEN = barEnd - barBase;
       const hasIns = us.chain && us.chain.length;
       const ubuf = hasIns ? new Float32Array(LEN) : null;
+      // MASTERING pan (render-core's exact law — parity): mono units with
+      // `pan` write their DRY send onto the wide buses; rev/del/pp stay mono.
+      const pg2 = (u.pan && buses.wL && buses.wR && !u.stereo) ? panLR(u.pan) : null;
       for (const v of us.procs) {
         if (!v.pending.length && !v.ivals.length) continue;
         v.pending.sort((a, b) => a[0] - b[0]);   // stable (ES2019): equal-pos order == push order
@@ -218,7 +229,9 @@
                     lg = (u.del || 0) * v.curOut, pg = v.curPP * v.curOut;
               for (let i = Math.max(0, -idx0); i < len; i++) {
                 const x = o[i], j = idx0 + i;
-                buses.dry[j] += x * dg; buses.rev[j] += x * rg; buses.del[j] += x * lg;
+                if (pg2) { const xd = x * dg; buses.wL[j] += xd * pg2.l; buses.wR[j] += xd * pg2.r; }
+                else buses.dry[j] += x * dg;
+                buses.rev[j] += x * rg; buses.del[j] += x * lg;
                 if (pg) buses.pp[j] += x * pg;
                 if (meter) { const xd = x * dg; meter.e += xd * xd; }
               }
@@ -232,7 +245,9 @@
         const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
         for (let i = 0; i < LEN; i++) {
           const x = ubuf[i];
-          buses.dry[i] += x * dg; buses.rev[i] += x * rg; buses.del[i] += x * lg;
+          if (pg2) { const xd = x * dg; buses.wL[i] += xd * pg2.l; buses.wR[i] += xd * pg2.r; }
+          else buses.dry[i] += x * dg;
+          buses.rev[i] += x * rg; buses.del[i] += x * lg;
           if (meter) { const xd = x * dg; meter.e += xd * xd; }
         }
       }
@@ -324,6 +339,7 @@
             atk: u.sampler.atk, rel: u.sampler.rel, zones: u.sampler.zones,
             swell: !!u.sampler.swell, mello: u.sampler.mello || null,
             bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,
+            pan: SE.notePan(u, e.sets.freq),  // MASTERING (press parity)
           })).filter((n) => n.tSec < totalSec);
           // precompute each note's [s0, end) sample span for per-window filtering
           for (const n of notes) {
@@ -331,7 +347,7 @@
             const holdN = Math.max(Math.max(8, Math.floor((n.atk || 0.01) * SR)), Math.floor(n.durSec * SR));
             n._end = n._s0 + holdN + relN;
           }
-          const su = { notes, role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip } };
+          const su = { notes, role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip, pan: u.pan || 0 } };
           // INSERTS-ON-SAMPLED-VOICES: persistent insert procs for the unit's
           // declared chain (renderChunk mixes the unit pre-send into a window
           // buffer, runs the chain, THEN applies sends — the render-core law).
@@ -348,7 +364,8 @@
         }
       }
 
-      const anyStereo = Object.values(sched.units).some((u) => u && u.stereo);
+      // MASTERING: panned units ride the wide buses too (press's exact condition)
+      const anyStereo = Object.values(sched.units).some((u) => u && (u.stereo || u.pan || u.panSpread));
 
       // ---- persistent master-stage procs (fx_bus + optional color + master_mb) ----
       const fxp = SE.fxParams(state);
@@ -434,7 +451,7 @@
 
       // the initial unit spec — for lazy ensureUnit + the stereo-bus decision
       const unitsSpec = SE.voiceUnits(E, state);
-      const anyStereo = Object.values(unitsSpec).some((u) => u && u.stereo);
+      const anyStereo = Object.values(unitsSpec).some((u) => u && (u.stereo || u.pan || u.panSpread));
 
       ST = { live: true, state, spb: spb0, TOTAL: LIVE_TOTAL, buffers: io.buffers || {},
         bakeNative: !!io.bakeNative,   // wavOut segs path: bake native found+sampler here (no live graph)
@@ -521,7 +538,7 @@
           if (!u || !u.sampler) continue;
           let su = ST.samplerUnits.get(key);
           if (!su) {
-            su = { notes: [], role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip } };
+            su = { notes: [], role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip, pan: u.pan || 0 } };
             // INSERTS-ON-SAMPLED-VOICES (wavOut lane): same persistent chain as open()
             if (u.inserts && u.inserts.length) { su.chain = await mkChain(u.inserts); su.chainBarSet = false; }
             ST.samplerUnits.set(key, su);
@@ -533,7 +550,8 @@
               gain: (u.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
               atk: u.sampler.atk, rel: u.sampler.rel, zones: u.sampler.zones,
               swell: !!u.sampler.swell, mello: u.sampler.mello || null,
-              bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0 };
+              bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,
+              pan: SE.notePan(u, e.sets.freq) };  // MASTERING (press parity)
             n._s0 = Math.max(0, Math.floor(n.tSec * SR));
             const holdN = Math.max(Math.max(8, Math.floor((n.atk || 0.01) * SR)), Math.floor(n.durSec * SR));
             n._end = n._s0 + holdN + relN;
@@ -617,13 +635,17 @@
               { dry: 1, rev: 0, del: 0, strip: su.sends.strip }, { base, len: LEN, total: TOTAL }, meter);
             runChain(su, ubuf, LEN, spb);
             const dg = su.sends.dry != null ? su.sends.dry : 1, rg = su.sends.rev || 0, lg = su.sends.del || 0;
+            // MASTERING pan (press's insert-path law: unit-level pan post-chain)
+            const pgi = (su.sends.pan && wL) ? panLR(su.sends.pan) : null;
             meter.e = 0;
             for (let i = 0; i < LEN; i++) {
               const x = ubuf[i];
-              dry[i] += x * dg; rev[i] += x * rg; del[i] += x * lg;
+              if (pgi) { const xd = x * dg; wL[i] += xd * pgi.l; wR[i] += xd * pgi.r; }
+              else dry[i] += x * dg;
+              rev[i] += x * rg; del[i] += x * lg;
               const xd = x * dg; meter.e += xd * xd;
             }
-          } else if (win.length) SP.mixPCM(win, ST.buffers, SR, { dry, rev, del }, su.sends, { base, len: LEN, total: TOTAL }, meter);
+          } else if (win.length) SP.mixPCM(win, ST.buffers, SR, { dry, rev, del, dryL: wL, dryR: wR }, su.sends, { base, len: LEN, total: TOTAL }, meter);
           const notes = expect ? (expect[key] || 0) : win.filter((nt) => nt._s0 >= base && nt._s0 < end).length;
           auditVoice(voices, key, su.role || auditRole(null, key), notes, meter.e, LEN, meter.missing);
         } else {

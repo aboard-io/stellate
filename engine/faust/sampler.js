@@ -259,12 +259,26 @@
   // bytes. `meter.e` sums the squared dry-send sample this unit wrote (energy → RMS);
   // `meter.missing` collects srcIds skipped because their buffer was absent/empty at
   // bake time (the decode-race silence). Purely additive reads — never gates output.
+  // MASTERING STAGE — constant-power pan gains (×√2 so center matches the old
+  // dup-to-both-channels level; pan 0 never routes here — bit-exact old path).
+  const panLR = (pan) => {
+    const th = (clampS(pan, -1, 1) + 1) * Math.PI / 4;
+    return { l: Math.SQRT2 * Math.cos(th), r: Math.SQRT2 * Math.sin(th) };
+  };
+
   function mixPCM(notes, buffers, sr, into, sends, win, meter) {
     const winBase = win ? win.base : 0;
     const busLen = win ? win.len : into.dry.length;
     const total = win ? win.total : into.dry.length;
     const dg = sends.dry != null ? sends.dry : 1, rg = sends.rev || 0, lg = sends.del || 0;
     const strip = sends.strip || null;   // per-voice channel strip (see makeStrip)
+    // MASTERING pan: a note carrying `pan` (state-engine notePan — unit pan +
+    // the pad pitch spread) writes its DRY send onto the caller's wide stereo
+    // buses (into.dryL/dryR) with constant-power gains instead of the mono dry.
+    // rev/del sends stay mono (the reverb/delay buses are mono by design).
+    // Notes without pan — or callers without wide buses — keep the EXACT old
+    // mono write (byte-identical, the absent-law).
+    const basePan = sends.pan || 0;
     for (const n of notes) {
       const midi = midiOfFreq(n.freq);
       const z = zoneFor(n.zones, midi);
@@ -286,6 +300,9 @@
       const g = (n.gain != null ? n.gain : 0.5) * GAIN;
       // per-note channel strip (fresh state each note -> window-independent).
       const S = strip ? makeStrip(strip, sr) : null;
+      // MASTERING pan (see the header note above): null => the old mono write
+      const pan = (n.pan != null ? n.pan : basePan) || 0;
+      const pg = (pan && into.dryL && into.dryR) ? panLR(pan) : null;
       // blue-note bend: start bendFrom semitones off target, linear-in-rate
       // glide over bendMs (matches live's linearRampToValueAtTime), then the
       // fixed target rate. pos accumulates ONLY on the bend path so unbent
@@ -324,7 +341,7 @@
           if (S) v = stripStep(S, v, (s0 + i) / sr);
           const j = s0 + i - winBase;
           if (j >= busLen) break;
-          if (j >= 0) { const vd = v * dg; into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; }
+          if (j >= 0) { const vd = v * dg; if (pg) { into.dryL[j] += vd * pg.l; into.dryR[j] += vd * pg.r; } else into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; }
         }
         continue;
       }
@@ -345,7 +362,7 @@
         if (S) v = stripStep(S, v, (s0 + i) / sr);
         const j = s0 + i - winBase;
         if (j >= busLen) break;
-        if (j >= 0) { const vd = v * dg; into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; }
+        if (j >= 0) { const vd = v * dg; if (pg) { into.dryL[j] += vd * pg.l; into.dryR[j] += vd * pg.r; } else into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; }
       }
     }
     return into;
