@@ -148,12 +148,23 @@ buried color or re-instrument). The stem-surgery pattern is proven
 (the steel-guitar diagnosis). Graduation rule stands: a law goes HARD when
 its top-10 and Paul's ear agree twice.
 
-### 4. Solos (task #23 — never started)
-sec.solo/soloOctave/LICKS exist; the concept doesn't. A solo form-node for
-idiomatic genres (bebop/blues/prog/funk/jazz), a CsdTheory-driven
-improvisation generator (scale/register/regHome-aware — compose over the
-changes, don't index pattern tables), backing response (comp levels duck,
-drums simplify). Deterministic, matrix-gated, musicality-audited.
+### 4. Solos (task #23) — DONE 2026-07-10
+Shipped: a CsdTheory-driven improviser (csd-engine melodyEvents "solo" — chord
+tones + chromatic approaches + contour + call-response, per-bar dedicated rng)
+and a solo section injected into bebop/jazz/blues/funk/bluegrass (buildSections,
+before the solver, drop-pass exempt), comp ducked (soloDuck). Matrix 228/228,
+determinism-gated. OPEN: prog's odd-meter solo (no prog genre wired yet — add
+one to SOLO_IDIOM), blues's evolution can shed its solo (floored edge), and
+richer idioms (outside/altered scales) are a future pass.
+
+### 4b. Card-lie worklist (from the promises gate, 2026-07-10)
+The gate names 3 GENUINE remaining lies: **gabber + happyhardcore's hoover**
+(never sounds in sampled mode — §5 signature-synth candidate; add "hoover" to
+whatever list keeps tb303/hammond synth), **happyhardcore's absent piano +
+breakbeat rolls** (an identity lie — pools are saw/reese/stack/juno60), **ska's
+guitar skank** (pools are brass/organ, no guitar/kpluck). Each: give the element
+or soften the card. Dynamics floors + speech-cast vols were kept as tuned (Paul
+blessed dynamics; speech vols 0.36-0.46 matrix-safe).
 
 ### 5. Smaller filed items
 - **PRIMING HANG — a genre that never plays** (2026-07-10, found building the
