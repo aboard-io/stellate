@@ -257,10 +257,13 @@ access.html: seed/genre/blend in ITS query string too.
   anchor IDS stay stable (load-bearing: POS/fixtures/tests), the LABEL + card
   language become fiction (techno -> an invented evocative name, etc.), the way
   the invented genres already read. NameBank.inventGenreName exists.
-- **CRUNCHY GUITAR SOLOS**: the GM guitars are polite; hunt better soundfonts/
-  sample sets in the world (freepats, Versilian, FluidR3 alternates —
-  SOURCES.md licensing law applies), wire distortion staging (the higain
-  machinery) into the solo voice.
+- **THE INSTRUMENT-LIBRARY UPGRADE** (Paul: crunchy guitars first, then "better
+  pianos, better saxophones, and so forth" — the FluidR3 GM extracts are polite
+  across the board). Research agent running: licenses (SOURCES.md law), crunch/
+  weight/breath verdicts, zones.json mapping, and a ranked
+  quality-per-MB roadmap (route-precache makes library size matter). Guitars
+  headline (higain staging into the solo voice); piano (Salamander-class),
+  saxes (VCSL/Karoryfer-class), then trumpet/upright/rhodes/strings by usage.
 - Offline/precache SHIPPED (sw.js cache-first on the immutable found/ class +
   app/precache.js route warming); a11y-link belt SHIPPED.
 
