@@ -61,15 +61,22 @@ synthesized-source class (new finding, below) + the promises gate.
 - **DONE — modem_handshake → dialupgabber**: root cause was `url:""` — the file
   (found/modem_handshake.mp3) was on disk but unfetchable, so it never played. URL
   restored; handshake wired as a section opener. Matrix 228/228 --no-cache.
-- **NEW FINDING — the SILENT SYNTHESIZED-SOURCE CLASS** (specific is general):
-  modem was one of EIGHT SOURCES with `url:""` but a real found/<id>.mp3 on disk —
-  fax_tone (faxbossa), crt_whine (crtwave), hvac_hum (thermostatwave), floppy_seek
-  (floppycore), dryer_spin (laundrycore), hydrophone (atlantidrone), crickets
-  (crickettempo). All silent for the same reason. Each is that genre's defining
-  element (several are the sweep's identity-lies). Fix = point each url at its
-  disk file (as modem got) + verify matrix + the card. NOTE: hydrophone feeds
-  atlantidrone, one of the PRIMING-HANG genres (§5) — check if the url:"" fetch is
-  what stalls its runway before fixing.
+- **DONE — the SILENT SYNTHESIZED-SOURCE CLASS** (specific is general): modem was
+  one of TWELVE SOURCES with `url:""` but a real found/<id>.mp3 on disk, so the
+  found-player fetched "" → silence. ~51 genre-source references across the catalog
+  were mute (hvac_hum 20 refs, hydrophone 10, whale_song/crickets 4 — the
+  pitched-down wind/water/whale/cricket beds the cards + code comments describe as
+  if they sound). ALL 12 urls restored (crt_whine, floppy_seek, hvac_hum, fax_tone,
+  dryer_spin, chickadee, pigeon_coo, dw_cycle, ferment_bubble, crickets, hydrophone,
+  whale_song); all decode to real audio. The two that were also UNWIRED got proper
+  layers (not the bpm-matched `break` role, which silently drops texture clips):
+  floppy_seek → floppycore `slice` (the seek-clatter chopped into the IDM shuffle,
+  231 events), dryer_spin → laundrycore `bed` (the wash). Matrix 228/228 --no-cache,
+  verify.sh green, affected genres live-render clean. **TASTE PENDING (Paul's ear):
+  ~15 genres just gained their intended ambient beds — confirm none are too loud.**
+  **PRIMING NOTE: fixing hydrophone did NOT revive atlantidrone — it still hangs at
+  "priming…" (rms 0). So the priming hang (§5) is NOT the url:"" bug; it's a
+  separate stall (likely the sampler-zone decode flood). Hypothesis disproven.**
 Full findings: the card-truth sweep report (2026-07-10 session) +
 `/tmp/.../scratchpad/card-truth.json` may be gone — RE-RUN the sweep extractor
 if needed (its design: parse info cards into claims, classify
