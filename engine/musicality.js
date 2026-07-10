@@ -322,6 +322,102 @@
     return { score: total ? round(kept / total) : 1, failures, warnings, declared: total };
   }
 
+  // ------------------------------------------------ card-parse PROMISES (auto)
+  // The hand PROMISES table above encodes Paul-blessed STRUCTURED claims. This
+  // reads the CARD itself as a falsifiable contract, automatically: parse the
+  // genre's `info` blurb for concrete instrument/voice NOUNS and check each
+  // against what the genre's recipe can realize (capability from the spec pools —
+  // the same basis the card-truth sweep used, ported here as the standing guard
+  // that wave earned). A noun the card promises but no recipe can produce is
+  // STATE-MISSING: a card lie. Reported WARN-level (the graduation rule — the
+  // capability KEPT is deliberately generous, audibility is a separate ear-blessed
+  // layer), tagged "card:<name>" so the suite surfaces lies without failing the
+  // build. Regex must MATCH a claim to check it, so a card that never names an
+  // instrument is never penalised.
+  const _arr = (a) => Array.isArray(a) ? a : (a == null ? [] : [a]);
+  // Capability from the MIXED STATES (not the spec pools): sampled-by-default
+  // assigns the actual GM sampler at K.mix time, so the spec's recipe.samplerPool
+  // misses reggae's organ / bebop's sax / bluegrass's banjo. Union across the
+  // audited seeds so a pooled instrument that only some seeds draw still counts.
+  function cardCap(states) {
+    const cap = { models: new Set(), samplers: new Set(), patches: new Set(),
+      refIds: [], speechIds: [], hasSpeech: false, breakRole: false };
+    const refs = new Set();
+    for (const st of states) {
+      const I = st.instruments || {};
+      for (const vk of ["pad", "bass", "melody"]) {
+        const u = I[vk]; if (!u) continue;
+        if (u.model) cap.models.add(u.model);
+        if (u.sampler && u.sampler.id) cap.samplers.add(String(u.sampler.id));
+        if (u.dx7 && u.dx7.name) cap.patches.add(String(u.dx7.name));
+      }
+      const D = I.drums || {};
+      ["kickModel", "snareModel", "hatModel"].forEach((k) => { if (D[k]) cap.models.add("drum:" + D[k]); });
+      for (const k of Object.keys(D)) if (/Sampler$/.test(k) && D[k] && D[k].id) cap.samplers.add(String(D[k].id));
+      _arr(st.foundSources).forEach((s) => s && s.id && refs.add(s.id));
+      _arr(st.sampleEvents).forEach((ev) => _arr(ev.pool).forEach((id) => refs.add(id)));
+      _arr(st.sections).forEach((s) => { if (s.found && s.found.sourceId) refs.add(s.found.sourceId);
+        if (/break|chop/.test((s.found && s.found.role) || "")) cap.breakRole = true; });
+      if (st.synthText) cap.hasSpeech = true;
+    }
+    cap.refIds = [...refs];
+    cap.speechIds = cap.refIds.filter((id) => /^sp_|^vx_|choir|vocal|voice/i.test(id));
+    if (cap.speechIds.length) cap.hasSpeech = true;
+    return cap;
+  }
+  const _samp = (cap, ...subs) => [...cap.samplers].some((s) => subs.some((sub) => s.includes(sub)));
+  const _model = (cap, ...ms) => ms.some((m) => cap.models.has(m) || cap.models.has("drum:" + m));
+  const _patch = (cap, re) => [...cap.patches].some((p) => re.test(p));
+  const _ref = (cap, re) => cap.refIds.some((id) => re.test(id));
+  // [name, regex to find the noun in the card, predicate the spec can realize it]
+  const CARD_CLAIMS = [
+    ["piano",         /\b(piano|grand)\b/i,                                (c) => _model(c,"piano") || _samp(c,"piano","grand","honky_tonk") || _patch(c,/PIANO/)],
+    ["electric-piano",/\b(rhodes|e-?piano|electric[- ]piano|tine)\b/i,     (c) => _model(c,"rhodes","fm") || _samp(c,"rhodes","electric_piano","legend_ep") || _patch(c,/E\.?PIANO|CLAV/)],
+    ["organ",         /\b(organ|hammond|tonewheel|leslie|harmonium)\b/i,   (c) => _model(c,"organ","hammond") || _samp(c,"organ") || _patch(c,/ORGAN/)],
+    ["harpsichord",   /\bharpsichord\b/i,                                  (c) => _model(c,"harpsichord") || _samp(c,"harpsichord") || _patch(c,/HARPSI/)],
+    ["clavinet",      /\bclav(inet)?\b/i,                                  (c) => _model(c,"clavinet") || _samp(c,"clavinet") || _patch(c,/CLAV/)],
+    ["celesta",       /\b(celesta|celeste)\b/i,                            (c) => _samp(c,"celesta") || _patch(c,/CELEST/)],
+    ["vibraphone",    /\b(vibraphone|vibes)\b/i,                           (c) => _samp(c,"vibraphone") || _patch(c,/VIBE/)],
+    ["marimba",       /\bmarimba\b/i,                                      (c) => _samp(c,"marimba") || _patch(c,/MARIMBA/)],
+    ["glockenspiel",  /\b(glockenspiel|glocken)\b/i,                       (c) => _samp(c,"glock") || _model(c,"bell")],
+    ["music-box",     /\bmusic[- ]box\b/i,                                 (c) => _samp(c,"music_box")],
+    ["bells/chimes",  /\b(tubular bell|orch.?chime|hand ?bell|carillon)\b/i,(c) => _samp(c,"bell","chime","tubular") || _model(c,"bell") || _patch(c,/BELL|CHIME/)],
+    ["strings",       /\b(strings|violin|cello|viola|orchestral)\b/i,      (c) => _model(c,"strings") || _samp(c,"strings","violin","cello") || _patch(c,/STRING/)],
+    ["harp",          /\bharp\b/i,                                         (c) => _samp(c,"harp") || _patch(c,/HARP/)],
+    ["flute",         /\bflute\b/i,                                        (c) => _samp(c,"flute") || _patch(c,/FLUTE/)],
+    ["saxophone",     /\b(sax|saxophone)\b/i,                              (c) => _samp(c,"sax") || _patch(c,/SAX/)],
+    ["clarinet",      /\bclarinet\b/i,                                     (c) => _samp(c,"clarinet")],
+    ["oboe",          /\boboe\b/i,                                         (c) => _samp(c,"oboe")],
+    ["trumpet/brass", /\b(trumpet|brass|fanfare)\b/i,                      (c) => _samp(c,"trumpet","brass") || _patch(c,/BRASS|TRUMPET/) || _ref(c,/horn/)],
+    ["trombone",      /\btrombone\b/i,                                     (c) => _samp(c,"trombone")],
+    ["accordion",     /\b(accordion|accordian|bandoneon)\b/i,              (c) => _samp(c,"accordion","accordian","bandoneon") || _patch(c,/ACCOR/)],
+    ["guitar",        /\bguitar\b/i,                                       (c) => _model(c,"pluck","karplus") || _samp(c,"guitar") || _patch(c,/GUITAR/)],
+    ["banjo",         /\bbanjo\b/i,                                        (c) => _samp(c,"banjo")],
+    ["mandolin",      /\bmandolin\b/i,                                     (c) => _samp(c,"mandolin")],
+    ["koto",          /\bkoto\b/i,                                         (c) => _samp(c,"koto")],
+    ["sitar",         /\bsitar\b/i,                                        (c) => _samp(c,"sitar")],
+    ["panpipe",       /\b(panpipe|pan flute|pan pipe)\b/i,                 (c) => _samp(c,"pan_flute","panflute","panpipe","whistle") || _patch(c,/PIPE|WHISTLE/)],
+    ["theremin",      /\btheremin\b/i,                                     (c) => _samp(c,"theremin")],
+    ["choir/vocal",   /\b(choir|vocal|chant|anthem|sing|vox|voice)\b/i,    (c) => c.hasSpeech || _samp(c,"choir","ahh","ooh") || _model(c,"vocoder")],
+    ["amen/break",    /\b(amen|breakbeat|chopped break)\b/i,               (c) => c.breakRole || _ref(c,/amen|break/i)],
+    ["303/acid",      /\b(303|acid line|squelch)\b/i,                      (c) => _model(c,"303","tb303","acid") || _samp(c,"303")],
+    ["hoover",        /\bhoover\b/i,                                       (c) => _model(c,"hoover")],
+    ["reese",         /\breese\b/i,                                        (c) => _model(c,"reese")],
+  ];
+  function checkCardClaims(genre, states) {
+    const G = K && K.GENRES && K.GENRES[genre];
+    const warnings = [];
+    if (!G || !G.info) return { warnings };
+    if (!states || !states.length) states = [1, 2].map((s) => K.track(genre, { seed: s }));   // standalone call: mix a couple seeds
+    const card = String(G.info), cap = cardCap(states);
+    for (const [name, re, has] of CARD_CLAIMS) {
+      if (!re.test(card)) continue;
+      let ok = false; try { ok = !!has(cap); } catch (e) { ok = true; }   // a predicate bug must never fail a genre
+      if (!ok) warnings.push({ promise: "card:" + name, what: `card claims "${name}" but no recipe realizes it (STATE-MISSING)` });
+    }
+    return { warnings };
+  }
+
   // ---------------------------------------------------------------- law: MOTION
   // Boredom check: consecutive sections with the same declaration head AND a
   // byte-identical event signature, in runs longer than 2, are a WARN-level
@@ -404,6 +500,9 @@
       laws.promises.declared = Math.max(laws.promises.declared || 0, r.promises.declared || 0);
       if (r.bloom.hard) hard = true;
     });
+    // card-parse promises: once per genre (state-independent), WARN-level — the
+    // standing card-lie guard. Skipped for a raw state (no genre card to read).
+    if (!isState) for (const w of checkCardClaims(genre, states).warnings) laws.promises.warnings.push(w);
     for (const l of LAWS) laws[l].score = round(laws[l].score / states.length);
     const overall = round(LAWS.reduce((s, l) => s + laws[l].score, 0) / LAWS.length);
     const nFail = LAWS.reduce((s, l) => s + laws[l].failures.length, 0);
@@ -443,7 +542,7 @@
   }
 
   const api = { audit, auditAll, scorecard, rankTable,
-    PROMISES, BLOOM_BOUNDS,
+    PROMISES, BLOOM_BOUNDS, checkCardClaims, CARD_CLAIMS,
     laws: { bloom, register, promises: checkPromises, motion },
     partsOf, sectionSpans };
   if (isNode) module.exports = api; else root.Musicality = api;

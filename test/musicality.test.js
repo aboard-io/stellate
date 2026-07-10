@@ -282,5 +282,29 @@ gate("smoke: auditAll --rank completes over the whole catalog, one row per ancho
   assert(typeof M.rankTable(rows) === "string" && M.rankTable(rows).split("\n").length === nGenres + 1, "rankTable malformed");
 });
 
+// ---------- PROMISES: card-parse (the card-truth standing guard) ----------
+gate("card-parse: flags a real missing instrument (gabber's hoover)", () => {
+  const w = M.checkCardClaims("gabber").warnings.map((x) => x.promise);
+  assert(w.some((p) => /hoover/.test(p)), "gabber's card sells a hoover its sampled recipe never sounds — must WARN (NEXT.md §5)");
+});
+gate("card-parse: state-capability clears sampled instruments (reggae's organ)", () => {
+  // reggae's organ is a GM sampler assigned at mix time, not a spec samplerPool —
+  // reading the mixed state (not the recipe) must not false-flag it.
+  const w = M.checkCardClaims("reggae").warnings.map((x) => x.promise);
+  assert(!w.some((p) => /organ/.test(p)), "reggae's organ IS realized — a spec-only cap would have false-flagged it");
+});
+gate("card-parse: a card with no instrument nouns is never penalised", () => {
+  // synthetic: a genre whose card names nothing checkable -> zero card warnings
+  const w = M.checkCardClaims("__nope__").warnings;   // unknown genre -> empty, no throw
+  assert(w.length === 0, "unknown/blurbless genre must not warn");
+});
+gate("card-parse: catalog card-lie count within the regression tripwire", () => {
+  let n = 0; for (const g of Object.keys(K.GENRES)) n += M.checkCardClaims(g).warnings.length;
+  console.log("      card-lie WARNs across catalog: " + n + " (baseline 38 after the 2026-07-10 card-truth wave)");
+  // fixing a lie only lowers this; a NEW card promising an unrealized instrument
+  // raises it. Loose ceiling so ±a few predicate edges don't churn the gate.
+  assert(n <= 45, "card-lie count " + n + " > 45 — a card likely promises an instrument its recipe can't realize; run M.checkCardClaims per genre");
+});
+
 console.log(fails ? "\n" + fails + " FAILING" : "\nall green");
 process.exit(fails ? 1 : 0);
