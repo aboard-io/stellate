@@ -296,7 +296,7 @@
     // so route through it on Safari too — belt for old WebKits, throttle shield now.
     const isSafari = /^((?!chrome|crios|chromium|android|fxios|edg).)*safari/i.test(ua) &&
       /Apple/.test((typeof navigator !== "undefined" && navigator.vendor) || "");
-    let msDest = null, mediaEl = null;
+    let msDest = null, mediaEl = null, _capDest = null;   // _capDest: lazy audio capture tap for the video exporter (desktop)
     const canMediaEl = !opts.directOut && !opts.forceClassicOut && (opts.forceMediaEl || isMobile || isSafari) &&
       typeof document !== "undefined" &&
       typeof ctx.createMediaStreamDestination === "function" && typeof root.Audio !== "undefined";
@@ -1248,11 +1248,16 @@
 
     const handle = {
       ctx, analyser, errors, mediaEl,
-      // VIDEO EXPORT (E): the live master as a MediaStream audio track — the same
-      // msDest that feeds the mobile <audio>. video-export.js muxes it with a
-      // canvas.captureStream via MediaRecorder. Null on paths without msDest (the
-      // exporter falls back to mediaEl.captureStream).
-      audioStream: () => (msDest && msDest.stream) || null,
+      // VIDEO EXPORT (E): the live master as a MediaStream audio track that the
+      // video exporter muxes via MediaRecorder. On the mobile route msDest already
+      // exists; on DESKTOP there is no msDest (userGain → destination directly), so
+      // lazily tap userGain into a dedicated capture destination — otherwise the
+      // recorded video had NO AUDIO (Paul). POST vapor + volume (userGain is last).
+      audioStream: () => {
+        if (msDest) return msDest.stream;
+        try { if (!_capDest) { _capDest = ctx.createMediaStreamDestination(); userGain.connect(_capDest); } return _capDest.stream; }
+        catch (e) { return null; }
+      },
       // ── background-WAV handoff debug hooks (headless verification) ──
       __bgWavReady: () => !!bgUrl,
       __bgUrl: () => bgUrl,
