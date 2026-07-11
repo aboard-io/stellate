@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 // alien-dancer-run.js — headless proof for the DANCER contract in
 // app/starcruise/alien.js: makeAlien(THREE, traits, {role:'dancer'}, seed) returns
-// an INSTRUMENT-LESS full-body dancer that grooves to the beat. Asserts:
+// an INSTRUMENT-LESS full-body NON-HUMAN creature that grooves. Asserts:
 //
 //   A. a dancer builds a real rig (>8 child meshes) and has NO instrument object
 //      (a player of the same genre DOES gain one — the dancer has fewer children);
-//   B. the dancer MOVES over time (body + limbs travel as beatPhase sweeps);
-//   C. it renders NON-BLANK; D. determinism (same seed -> identical motion trace).
+//   B. the dancer MOVES over time (body + limbs travel as the phase sweeps), and
+//      grooves HARDER when the level is high than when it is quiet;
+//   C. it renders NON-BLANK; D. determinism (same seed -> identical motion trace);
+//   E. it accepts BOTH the legacy beatPhase-number call AND the ctx-object call.
 //
 //   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/alien-dancer-run.js
 "use strict";
@@ -38,7 +40,7 @@ async function inPage() {
   const traits = traitsMod.traitsFromGenre(K, V, genre, 7);
 
   const dancer = makeAlien(THREE, traits, { role: "dancer" }, 314);
-  const player = makeAlien(THREE, traits, { role: "lead", instrument: { family: "wailhorn", playStyle: "blow", appendage: 2, hitsPerBeat: 1 } }, 314);
+  const player = makeAlien(THREE, traits, { role: "lead", voice: "lead", instrument: { family: "bladder-horn", playStyle: "blow", appendage: 2, hitsPerBeat: 1 } }, 314);
 
   // ---- scene + low-res target ---------------------------------------------------
   const canvas = document.createElement("canvas");
@@ -57,40 +59,48 @@ async function inPage() {
 
   const out = { errors: [] };
 
-  // A. structure — dancer builds a body but NO instrument (fewer children than a player).
+  // A. structure — dancer builds a body but NO instrument (fewer children).
   out.dancerChildren = dancer.group.children.length;
   out.playerChildren = player.group.children.length;
   out.dancerPlayStyle = dancer.playStyle;
-  out.dancerHasNoInstrument = out.playerChildren > out.dancerChildren; // player adds the instrument object
+  out.dancerPlan = dancer.plan;
+  out.dancerHasNoInstrument = out.playerChildren > out.dancerChildren;
 
-  // B. motion — sweep beatPhase, measure how far a sampled world vertex travels.
-  const probe = dancer.group.children.find((c) => c.isMesh) || dancer.group.children[0];
-  const lo = { x: 1e9, y: 1e9, z: 1e9 }, hi = { x: -1e9, y: -1e9, z: -1e9 };
-  const trace = [];
-  const v = new THREE.Vector3();
-  for (let s = 0; s < 120; s++) {
-    const phase = s / 120;
-    dancer.update(0.016, phase);
-    dancer.group.updateMatrixWorld(true);
-    probe.getWorldPosition(v);
-    trace.push(+v.y.toFixed(6));
-    lo.x = Math.min(lo.x, v.x); hi.x = Math.max(hi.x, v.x);
-    lo.y = Math.min(lo.y, v.y); hi.y = Math.max(hi.y, v.y);
-    lo.z = Math.min(lo.z, v.z); hi.z = Math.max(hi.z, v.z);
+  // helper: sweep a phase, measure how far a sampled world vertex travels.
+  function travel(al, drive, steps) {
+    const probe = al.group.children.find((c) => c.isMesh) || al.group.children[0];
+    const lo = { x: 1e9, y: 1e9, z: 1e9 }, hi = { x: -1e9, y: -1e9, z: -1e9 };
+    const v = new THREE.Vector3();
+    for (let s = 0; s < steps; s++) {
+      al.update(0.016, drive(s / steps));
+      al.group.updateMatrixWorld(true);
+      probe.getWorldPosition(v);
+      lo.x = Math.min(lo.x, v.x); hi.x = Math.max(hi.x, v.x);
+      lo.y = Math.min(lo.y, v.y); hi.y = Math.max(hi.y, v.y);
+      lo.z = Math.min(lo.z, v.z); hi.z = Math.max(hi.z, v.z);
+    }
+    return +Math.hypot(hi.x - lo.x, hi.y - lo.y, hi.z - lo.z).toFixed(4);
   }
-  out.moved = +Math.hypot(hi.x - lo.x, hi.y - lo.y, hi.z - lo.z).toFixed(4);
+
+  // B. motion — ctx-object drive, loud vs quiet.
+  out.movedLoud = travel(dancer, (p) => ({ barPhase: p, playing: true, level: 1.0, notes: [] }), 120);
+  out.movedQuiet = travel(makeAlien(THREE, traits, { role: "dancer" }, 314), (p) => ({ barPhase: p, playing: true, level: 0.15, notes: [] }), 120);
+  out.grooveScalesWithLevel = out.movedLoud > out.movedQuiet + 0.005;
+
+  // E. legacy beatPhase-NUMBER call still animates.
+  out.movedLegacy = travel(makeAlien(THREE, traits, { role: "dancer" }, 314), (p) => p, 120);
 
   // C. render NON-BLANK.
-  dancer.update(0.016, 0.25);
+  dancer.update(0.016, { barPhase: 0.25, playing: true, level: 1, notes: [] });
   renderer.setRenderTarget(target); renderer.clear(); renderer.render(scene, camera);
   const buf = new Uint8Array(LOW_W * LOW_H * 4);
   renderer.readRenderTargetPixels(target, 0, 0, LOW_W, LOW_H, buf);
   let minR = 255, maxR = 0, minG = 255, maxG = 0, minB = 255, maxB = 0, nonBg = 0;
   for (let i = 0; i < buf.length; i += 4) {
     const r = buf[i], g = buf[i + 1], b = buf[i + 2];
-    if (r < minR) minR = r; if (r > maxR) maxR = r;
-    if (g < minG) minG = g; if (g > maxG) maxG = g;
-    if (b < minB) minB = b; if (b > maxB) maxB = b;
+    minR = Math.min(minR, r); maxR = Math.max(maxR, r);
+    minG = Math.min(minG, g); maxG = Math.max(maxG, g);
+    minB = Math.min(minB, b); maxB = Math.max(maxB, b);
     if (r > 20 || g > 20 || b > 30) nonBg++;
   }
   out.render = { spread: Math.max(maxR - minR, maxG - minG, maxB - minB), nonBg };
@@ -99,8 +109,8 @@ async function inPage() {
   const d1 = makeAlien(THREE, traits, { role: "dancer" }, 77);
   const d2 = makeAlien(THREE, traits, { role: "dancer" }, 77);
   const t1 = [], t2 = [];
-  for (let s = 0; s < 48; s++) { d1.update(0.016, s / 48); t1.push(d1.debug().handTip.y); }
-  for (let s = 0; s < 48; s++) { d2.update(0.016, s / 48); t2.push(d2.debug().handTip.y); }
+  for (let s = 0; s < 48; s++) { d1.update(0.016, { barPhase: s / 48, playing: true, level: 1, notes: [] }); t1.push(d1.debug().handTip.y); }
+  for (let s = 0; s < 48; s++) { d2.update(0.016, { barPhase: s / 48, playing: true, level: 1, notes: [] }); t2.push(d2.debug().handTip.y); }
   out.deterministic = t1.every((val, k) => Math.abs(val - t2[k]) < 1e-9);
 
   renderer.setRenderTarget(null); target.dispose(); renderer.dispose();
@@ -127,14 +137,16 @@ async function main() {
 
   console.log("\n  RESULT:", JSON.stringify(R, null, 2), "\n");
 
-  ok(R.dancerChildren > 8, `A1. dancer built a real body (${R.dancerChildren} child meshes)`);
+  ok(R.dancerChildren > 8, `A1. dancer built a real NON-HUMAN body (${R.dancerChildren} child meshes, plan=${R.dancerPlan})`);
   ok(R.dancerPlayStyle === "dance", `A2. dancer playStyle == 'dance' (${R.dancerPlayStyle})`);
   ok(R.dancerHasNoInstrument, `A3. dancer has NO instrument (dancer ${R.dancerChildren} < player ${R.playerChildren} children)`);
-  ok(R.moved > 0.02, `B1. dancer MOVES to the beat (world travel=${R.moved})`);
+  ok(R.movedLoud > 0.02, `B1. dancer MOVES to the beat (world travel=${R.movedLoud})`);
+  ok(R.grooveScalesWithLevel, `B2. dancer grooves HARDER when loud (loud=${R.movedLoud} > quiet=${R.movedQuiet})`);
+  ok(R.movedLegacy > 0.02, `E1. legacy beatPhase-number call still animates (travel=${R.movedLegacy})`);
   ok(R.render.spread > 8, `C1. NON-BLANK render (colour spread=${R.render.spread})`);
   ok(R.render.nonBg > 200, `C2. real geometry drawn (${R.render.nonBg} non-bg px)`);
   ok(R.deterministic, "D1. deterministic: same seed -> identical dancer motion");
-  ok(perr.length === 0, "E1. no console/page errors" + (perr.length ? " :: " + perr.join(" | ") : ""));
+  ok(perr.length === 0, "F1. no console/page errors" + (perr.length ? " :: " + perr.join(" | ") : ""));
 
   await browser.close(); srv.close();
   console.log("\n" + (fails.length ? "FAILED (" + fails.length + "):\n  " + fails.join("\n  ") : "ALL PASS"));

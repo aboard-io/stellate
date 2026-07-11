@@ -28,6 +28,12 @@ import { pointOnPath } from "./share.js";   // measure->world position along the
 // they arrive a tick late.
 const K = () => window.GenreKernel;
 const V = () => window.GenreVerifier;
+// E = window.CsdEngine — the SCORE BRAIN. E.buildEvents(state) returns the exact
+// per-voice note/drum EVENT list the audio engine renders. The score-bridge below
+// calls it ONCE per genre (on land) to build a cached per-bar note plan, then each
+// frame hands every band member the real onsets of ITS voice for the current bar —
+// so the aliens PLAY the score instead of just moving on the beat. READ-ONLY.
+const E = () => window.CsdEngine;
 
 // ---- TEST INJECTION (production-null) -------------------------------------------
 // The headless probe scripts a deterministic travel/beat stream to force a clean
@@ -190,6 +196,148 @@ async function ensureLoaded() {
   loaded = true;
 }
 
+// ---- THE SCORE BRIDGE -----------------------------------------------------------
+// The bridge that turns each alien from a beat-keeper into a PLAYER of its part.
+// On land / genre change it resolves the current playing STATE and calls
+// E.buildEvents ONCE for the whole track (cheaper than the contract's once-per-bar:
+// one call yields every bar), then buckets every event by VOICE into a per-bar note
+// plan { bars:[ { voice:{ notes:[{t,pitch,dur,vel}], level, playing } } ] }. Each
+// frame the controller picks the CURRENT bar (from the audio beat's serial) and the
+// bar-local phase, and passes each band member its voice's notes/level/playing as
+// ctx — NEVER rebuilding per frame. Rebuilt only when the genre (plan key) changes.
+let eventPlan = null;        // { bars, numBars, cbeats, bpm } — the cached per-bar note plan
+let eventPlanKey = null;     // genre+seed signature; a change triggers a rebuild
+let planBuildCount = 0;      // how many times buildEvents ran (headless proof it is NOT per-frame)
+let _localBar = 0;           // bar counter used when no real audio serial is available
+let _lastBarPhase = 0;       // for local bar advancement (wrap detection)
+let _curBarIdx = 0;          // the bar the band is currently playing (headless-probe visibility)
+const _lastCtx = Object.create(null);   // last ctx passed per voice (headless-probe visibility)
+
+// engine voice ids the CORE kit vs the decorative PERC lane split into.
+const PERC_DRUMS = { rim: 1, ride: 1, ride8: 1, crash: 1, crashDown: 1, perc: 1, conga: 1,
+  shaker: 1, cowbell: 1, tamb: 1, tambourine: 1, clave: 1, click: 1, cabasa: 1, guiro: 1,
+  woodblock: 1, triangle: 1, bongo: 1, timbale: 1, agogo: 1 };
+// per-voice reference loudness (event amps differ by lane) so `level` reads 0..1
+// meaningfully — a faded/quiet bar drops below the rest threshold and the alien idles.
+const VOICE_REF = { drums: 0.5, perc: 0.32, bass: 0.24, melody: 0.2, pad: 0.2, found: 0.4 };
+const clamp01n = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
+
+// resolve the FULL engine state (sections + voices) the audio renders for a genre
+// name or a weights blend — the same resolution traits.js uses.
+function resolveState(genreOrWeights, seed) {
+  const k = K(); if (!k) return null;
+  try {
+    if (typeof genreOrWeights === "string") return k.track(genreOrWeights, { seed });
+    if (Array.isArray(genreOrWeights) && genreOrWeights.length) return k.mix(genreOrWeights, { seed });
+  } catch (e) {
+    // a bad blend — fall back to the dominant single genre.
+    try { const d = firstGenre(); return k.track(typeof genreOrWeights === "string" ? genreOrWeights : d, { seed }); } catch (e2) {}
+  }
+  return null;
+}
+
+// buildEventPlan(genreOrWeights, seed) — resolve state, run buildEvents ONCE, and
+// bucket every event by voice into per-bar note lists. Cached on eventPlan; rebuilt
+// only when the (genre+seed) key changes. Safe/no-throw: leaves eventPlan null on
+// any failure so the controller falls back to the beat-only path.
+function buildEventPlan(genreOrWeights, seed) {
+  const key = (typeof genreOrWeights === "string" ? genreOrWeights
+    : (Array.isArray(genreOrWeights) ? genreOrWeights.map((w) => w.g + ":" + (w.w || 0).toFixed(3)).join(",") : "?")) + "@" + seed;
+  if (eventPlan && eventPlanKey === key) return eventPlan;   // already cached this genre
+  eventPlanKey = key; eventPlan = null; _localBar = 0; _lastBarPhase = 0;
+  const eng = E(); const st = resolveState(genreOrWeights, seed);
+  if (!eng || !eng.buildEvents || !st) return null;
+  let ev;
+  try { ev = eng.buildEvents(st); } catch (e) { return null; }
+  planBuildCount++;
+  const CBEATS = Math.max(2, Math.round(st.chordEvery || (st.meter ? 6 : 8)));
+  const total = ev.totalBeats || 0;
+  // events only live in [0, total-8) (the +8 is a silent tail); bar count = that span.
+  const numBars = Math.max(1, Math.round(Math.max(CBEATS, total - 8) / CBEATS));
+  const bars = new Array(numBars);
+  for (let i = 0; i < numBars; i++) bars[i] = Object.create(null);
+  const pchToMidi = eng.pchToMidi || ((s) => { const p = String(s).split("."); return (parseInt(p[0], 10) - 3) * 12 + parseInt(p[1], 10); });
+  // push one note into its bar bucket for a voice. t = position 0..1 within the bar,
+  // dur = fraction of a bar, vel = event amp (post-dynamics — quiet bars read quiet).
+  const put = (voice, beat, pitch, durBeats, amp) => {
+    if (!(beat >= 0)) beat = 0;
+    let bi = Math.floor(beat / CBEATS);
+    if (bi >= numBars) bi = ((bi % numBars) + numBars) % numBars;
+    const t = clamp01n((beat - bi * CBEATS) / CBEATS);
+    const bar = bars[bi];
+    let slot = bar[voice]; if (!slot) slot = bar[voice] = { notes: [], maxAmp: 0 };
+    slot.notes.push({ t, pitch: pitch | 0, dur: Math.max(0, (durBeats || 0) / CBEATS), vel: +(+amp || 0).toFixed(4) });
+    if (amp > slot.maxAmp) slot.maxAmp = amp;
+  };
+  // PITCHED — bass / pad / melody(lead) carry their own voice id + pch (octave.step).
+  for (const e of (ev.pitched || [])) {
+    const v = e.voice; if (v !== "bass" && v !== "pad" && v !== "melody") continue;
+    put(v, e.beat, pchToMidi(e.pch) + 60, e.dur, e.amp != null ? e.amp : (e.amp0 || 0.15));
+  }
+  // DRUMS — the core kit is one 'drums' voice; the decorative perc lane a 'perc' voice.
+  const DRUM_MIDI = { kick: 36, kick2: 36, snare: 38, clap: 39, hat: 42, hat2: 44, tom: 45,
+    ride: 51, rim: 37, crash: 49, crashDown: 49, perc: 60, conga: 47, shaker: 70, cowbell: 56 };
+  for (const e of (ev.drums || [])) {
+    const voice = PERC_DRUMS[e.drum] ? "perc" : "drums";
+    put(voice, e.beat, DRUM_MIDI[e.drum] || 50, e.dur, e.amp != null ? e.amp : (e.amp0 || 0.3));
+  }
+  // FOUND — the sampled/vocal layer; pitch field is a playback RATE -> a nominal midi.
+  for (const e of (ev.found || [])) {
+    const rate = e.pitch != null ? e.pitch : 1;
+    const midi = 60 + Math.round(12 * Math.log2(rate > 0 ? rate : 1));
+    put("found", e.beat, midi, e.dur, e.amp != null ? e.amp : 0.3);
+  }
+  // finalize each bar/voice: representative level + playing flag + time-sorted notes.
+  for (const bar of bars) {
+    for (const voice in bar) {
+      const slot = bar[voice];
+      slot.notes.sort((a, b) => a.t - b.t);
+      slot.level = clamp01n(slot.maxAmp / (VOICE_REF[voice] || 0.3));
+      slot.playing = slot.notes.length > 0 && slot.level > 0.05;
+    }
+  }
+  eventPlan = { bars, numBars, cbeats: CBEATS, bpm: ev.bpm || st.bpm || 120 };
+  return eventPlan;
+}
+
+// currentBar(bt) — which cached bar the audio is on right now, from the beat's bar
+// SERIAL (S.barInfo increments it per chord-bar; loops the song). No serial (early
+// frame / headless without a driven serial) -> a locally advanced counter.
+function currentBar(bt) {
+  if (!eventPlan) return 0;
+  const nb = eventPlan.numBars;
+  const serial = bt && bt.serial;
+  if (typeof serial === "number" && serial >= 0) return ((serial % nb) + nb) % nb;
+  return ((_localBar % nb) + nb) % nb;
+}
+// barPhaseOf(bt) — 0..1 across the CURRENT bar. Real getBeat gives beat (integer
+// beats-into-bar) + beatPhase; injected beats give only beatPhase (treated per-bar).
+function barPhaseOf(bt) {
+  const cb = (bt && bt.cbeats) || (eventPlan && eventPlan.cbeats) || 8;
+  const beatIdx = (bt && typeof bt.beat === "number") ? bt.beat : 0;
+  let ph = (beatIdx + ((bt && bt.beatPhase) || 0)) / cb;
+  ph = ph - Math.floor(ph);
+  return ph < 0 ? 0 : ph > 1 ? 1 : ph;
+}
+// ctxForVoice(voice, barIdx, barPhase) — the per-frame ctx a band member receives.
+// Carries barPhase (0..1 over the bar), whether the voice is PLAYING this bar, its
+// dynamics level, and the bar's note onsets. valueOf() returns barPhase so the OLD
+// beat-only alien path (which reads a numeric phase) still animates if it hasn't
+// been upgraded — the new path reads .notes/.level/.playing/.barPhase.
+function ctxForVoice(voice, barIdx, barPhase) {
+  let slot = null;
+  if (eventPlan && eventPlan.bars[barIdx]) slot = eventPlan.bars[barIdx][voice] || null;
+  const ctx = {
+    barPhase,
+    playing: !!(slot && slot.playing),
+    level: slot ? slot.level : 0,
+    notes: slot ? slot.notes : [],
+    valueOf() { return barPhase; },
+  };
+  _lastCtx[voice] = { barPhase: +barPhase.toFixed(4), playing: ctx.playing, level: +ctx.level.toFixed(3), notes: ctx.notes.length };
+  return ctx;
+}
+
 // build the band + backdrop + ship for a genre (called on land / dominant change).
 // Everything spawned here is torn down together in despawnBand().
 function spawnFor(genreOrWeights, seed) {
@@ -197,6 +345,9 @@ function spawnFor(genreOrWeights, seed) {
   const useSeed = seed || S.seed || 1;
   const traits = mods.traitsFromGenre(K(), V(), genreOrWeights, useSeed);
   curTraits = traits;
+  // SCORE BRIDGE: build (once, cached) the per-bar note plan for THIS genre so each
+  // band member can play its voice's real onsets. Never rebuilt per frame.
+  buildEventPlan(genreOrWeights, useSeed);
   // RENDERSTYLE: this genre's visual language. Push its post-fx bag into the PS1 pass
   // so the ACTIVE planet's whole-screen render (dither/scanlines/aberration/bloom/
   // posterize/grade/vignette/curvature) changes by genre. Stored so a render-target
@@ -227,6 +378,8 @@ function spawnFor(genreOrWeights, seed) {
   let cx = 0, cz = 0;
   band = members.map((member, i) => {
     const a = mods.makeAlien(THREE, traits, member, useSeed + i * 101);
+    a._voice = member.voice || member.role;   // the engine voice this alien plays (score-bridge lookup)
+    a._role = member.role;
     const spread = 1.5;
     const off = (i - (n - 1) / 2);           // centered index, e.g. -1,0,1
     a.group.position.x = off * spread;
@@ -737,10 +890,24 @@ export function update(dt) {
     sun.position.set(tx + 6, ty + 11, tz + 7);
     sun.target.updateMatrixWorld();
   }
-  // aliens groove + hit on the beat — ALL driven by the SAME st.beatPhase so the
-  // whole band locks together to the shared audio beat. Dancers groove to the SAME
-  // phase so the crowd moves with the players.
-  for (const a of band) a.update(dt, st.beatPhase);
+  // SCORE BRIDGE (per frame — NO rebuild): read the audio beat, resolve the CURRENT
+  // bar + bar-local phase, and hand every band member its voice's real note onsets
+  // for this bar as ctx {barPhase, playing, level, notes}. The alien triggers its
+  // playing appendage on those onsets when playing && level>~0.05, and RESTS (idles/
+  // sways, instrument lowered) otherwise. Dancers have no part -> the beat-only groove.
+  const bt = getBeat();
+  const barPhase = eventPlan ? barPhaseOf(bt) : (st.beatPhase || 0);
+  // advance the LOCAL bar counter on a barPhase wrap when there is no audio serial.
+  if (eventPlan && !(bt && typeof bt.serial === "number" && bt.serial >= 0)) {
+    if (barPhase < _lastBarPhase - 0.3) _localBar++;
+    _lastBarPhase = barPhase;
+  }
+  const barIdx = currentBar(bt);
+  _curBarIdx = barIdx;
+  for (const a of band) {
+    if (eventPlan && a._voice) a.update(dt, ctxForVoice(a._voice, barIdx, barPhase));
+    else a.update(dt, st.beatPhase);   // fallback: beat-only path (no plan yet)
+  }
   for (const d of dancers) d.update(dt, st.beatPhase);
   if (backdrop) backdrop.update(dt);
   if (ship) ship.update(dt, st.phase, st.landProgress);
@@ -807,6 +974,7 @@ export function stop() {
   displayCanvas = null; renderer = null; scene = null; camera = null; lowResTarget = null; ps1 = null; flight = null;
   sun = null; _spaceCol = null; _lastActive = null;
   curTraits = null; curDominant = null; curRenderStyle = null;
+  eventPlan = null; eventPlanKey = null; _localBar = 0; _lastBarPhase = 0; _curBarIdx = 0;
   document.body.classList.remove("view-starcruise");
   const chip = document.getElementById("cruiseChip"); if (chip) chip.classList.remove("on");
   window.__STARCRUISE && (window.__STARCRUISE.running = false);
@@ -887,6 +1055,36 @@ window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBe
   // __step(dt): advance one frame and return the flight state (phase probe).
   __step: (dt) => { update(dt || 0); return lastState; },
   state: () => lastState,
+  // ---- SCORE-BRIDGE probes (headless-proof; harmless in production) ----------------
+  // eventPlan(): a summary of the cached per-bar note plan + how many times
+  // buildEvents ran (proves it is built PER GENRE, never per frame).
+  eventPlan: () => (eventPlan ? {
+    numBars: eventPlan.numBars, cbeats: eventPlan.cbeats, bpm: eventPlan.bpm,
+    buildCount: planBuildCount, curBar: _curBarIdx,
+    // per-voice: total onsets across the whole plan + how many bars each voice sounds in.
+    voices: (() => {
+      const agg = {};
+      eventPlan.bars.forEach((bar) => { for (const v in bar) {
+        agg[v] = agg[v] || { onsets: 0, barsPlaying: 0 };
+        agg[v].onsets += bar[v].notes.length; if (bar[v].playing) agg[v].barsPlaying++;
+      } });
+      return agg;
+    })(),
+  } : null),
+  buildCount: () => planBuildCount,
+  // bandVoices(): the engine voice id each spawned alien is in charge of.
+  bandVoices: () => band.map((a) => a._voice || null),
+  // voiceCtx(voice): the LAST ctx the bridge passed that voice this frame
+  // ({barPhase, playing, level, notes:count}) — proves real per-voice notes flow.
+  voiceCtx: (v) => _lastCtx[v] || null,
+  // barAt(barIdx, voice): the raw note list a voice plays in a given bar (onset t,
+  // pitch, dur, vel) — proves the bucketing produced ACTUAL onsets, not beat ticks.
+  barAt: (barIdx, voice) => {
+    if (!eventPlan) return null;
+    const bi = ((barIdx | 0) % eventPlan.numBars + eventPlan.numBars) % eventPlan.numBars;
+    const slot = eventPlan.bars[bi] && eventPlan.bars[bi][voice];
+    return slot ? { playing: slot.playing, level: +slot.level.toFixed(3), notes: slot.notes.slice(0, 12) } : { playing: false, level: 0, notes: [] };
+  },
   // ---- headless-probe: scene inspection + deterministic travel/beat injection ----
   hasBackdrop: () => !!backdrop,
   hasShip: () => !!ship,

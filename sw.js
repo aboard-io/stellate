@@ -18,7 +18,7 @@
 //
 // Cached Response objects keep their original headers, so COOP/COEP isolation
 // (SharedArrayBuffer for the render worker) survives offline replay.
-const VERSION = "stellate-v7";   // v7 (2026-07-11): star-cruise round 2 — front-centred nav, 800x600, richer aliens (faces/stalks/joints/dancers), varied city+lights+foliage, fly-away cockpit, lighting+shadows; BUMP purges the old cache on activate so a deploy lands
+const VERSION = "stellate-v8";   // v8 (2026-07-11): star-cruise real band (non-human species play the SCORE per voice on alien instruments) + genre-driven shaders + 3D genre-space coords; AND the 16-bar pad-dropout fix (live-loop re-entry swell); BUMP purges the old cache on activate so a deploy lands
                                  // in ONE load, not two (the v2 stale-while-revalidate served a load-behind copy —
                                  // Paul saw none of the synth-font/video/vapor batch until a second reload). Bump
                                  // this string every deploy that must reach users immediately.
