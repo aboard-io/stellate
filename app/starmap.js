@@ -5,7 +5,7 @@
 import { S, set, K, subs } from "./state.js";
 import { POS, WORLD_W, WORLD_H, MAP_CENTER, WORLD_MARGIN, recomputeWorld } from "./world.js";
 import { retarget } from "./targeting.js";
-import { urlTick } from "./share.js";   // scrubbing the playhead while stopped must rewrite the bookmark's measure
+import { urlTick, legMetrics, paceSpeed } from "./share.js";   // scrubbing the playhead: rewrite the bookmark's measure using the SAME constant-pace distance math as travelForBar/goLive
 
 // ---------- map (imperative SVG: 60Hz drags stay cheap) ----------
 const svg=document.getElementById("map"), NS="http://www.w3.org/2000/svg";
@@ -227,8 +227,13 @@ function projectOnPath(pt){
 }
 function dragPlayhead(e){
   const p=projectOnPath(toXY(e));
-  const pace=Math.max(8,Math.min(4096,+S.pace||256));
-  const bar=Math.round((p.seg+p.t)*pace);
+  // CONSTANT PACE (2026-07-11 fix): the measure at a scrubbed point is its DISTANCE
+  // along the perimeter ÷ the constant speed — the exact inverse of travelForBar —
+  // NOT (seg+t)*pace. With the old formula the scrubbed measure and goLive's
+  // distance-based drop-in disagreed, so hitting ▶ jumped back to where it was (Paul).
+  const { legs }=legMetrics();
+  let d=0; for(let i=0;i<p.seg;i++) d+=legs[i]||0; d+=p.t*(legs[p.seg]||0);
+  const bar=Math.round(d/Math.max(1e-6,paceSpeed()));
   set({travel:{seg:p.seg,t:p.t}});
   if(!S.live){ S.startBar=bar; S.barCount=bar; }
   retarget({x:p.x,y:p.y});
