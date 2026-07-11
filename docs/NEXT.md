@@ -28,11 +28,26 @@ Two DSP CAPABILITIES landed but OPT-IN (silent until wired):
 ## THE QUEUE (agreed, not done — pick top-down)
 
 ### A. Wire the two DSP capabilities so they PLAY (Paul: "from time to time")
-1. **Scratch** — set `f.scratch` on chop events *occasionally* + deterministically
-   (seeded), biased to chop/turntablist genres (boombap/jungle/crateflip/hiphop).
-   Plumb the flag from csd-engine sampleEvents (or the found spec) → the chop `f`.
-   Byte-safe: absent = identical; wire behind a genre opt-in so only opted genres
-   drift (recapture fixtures; segment-parity stays equal — mixPCM both sides).
+1. **Scratch** — ✅ DONE (committed f1c9a14, NOT yet deployed — awaits ship). The
+   found spec gained `scratch:<prob>` (pulled from the found parent, baked onto
+   opted sources only). csd-engine stamps `f.scratch` via a DEDICATED +7333 rng
+   (never drawn unless a genre opts in → byte-identical absent) on chops-role hits
+   AND the break-role STUTTER ornament only (groove slices stay clean). Plumbed
+   through state-engine's chop push; honored by mixPCM AND the real-time
+   FoundLive.chop (pre-renders the triangle scrub — WebAudio has no scrub prim).
+   OPTED: crateflip 0.18 (chops, "the flip is the art"), boombap 0.5 / jungle 0.45
+   (stutter-only → ~3% of slices). Fixtures drift scoped to EXACTLY those 3
+   (240→3), recaptured; segment-parity byte-equal both paths. FULL battery green.
+   TASTE PENDING PAUL'S EARS. BROADENED (Paul: "opt in lots of other genres —
+   anywhere we loop a vocal chop / synth sample / instrumental"): the CHOPS role
+   now scratches BY DEFAULT catalog-wide (foundScratch defaults 0.14 for role
+   "chops"; explicit per-genre `scratch:` still overrides, incl 0 to opt out) →
+   ~41 genres now scratch (was 3). BREAK stays per-genre opt-in (not defaulted —
+   it's drum loops, not the vocal/instrumental material Paul named; boombap/jungle
+   keep their explicit stutter-only scratch). Drift scoped to EXACTLY the chops/
+   break genres (bed/narration/response/buried untouched, byte-identical); 0.14 and
+   span/cycles are tunable once Paul weighs in. sampleEvents `slice` placement is
+   NOT wired (only floppycore uses it, a disk-seek, not vocal/instrumental).
 2. **Granular repitch** — fire `n.granular` when a sampled note is pushed far from
    its zone root (the register law in state-engine mapEvents octave-folds today;
    let far notes granular-repitch instead so they keep formants). Opt-in/threshold.
