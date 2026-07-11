@@ -403,7 +403,27 @@
     ringNode.connect(masterGain);
     masterGain.connect(busComp); busComp.connect(makeup); makeup.connect(limiter);
     limiter.connect(analyser);
-    analyser.connect(userGain);
+    // VAPOR (C.1, live-only): a global "walking through a mall" EQ on the master —
+    // a high-shelf that rolls the top off + a short reverb wash, both scaled by
+    // vapor 0..1. Sits AFTER the analyser (the RMS meters stay pre-vapor/pre-volume)
+    // and before userGain. LIVE-ONLY (main-thread graph, the classic exploreLive
+    // path) — the worker-baked export/WAV mix never sees it, so segment-parity and
+    // fixtures are untouched. (The WAV-first mobile path plays a plain <audio> with
+    // no WebAudio graph, so vapor rides the classic/desktop path only.)
+    const vaporShelf = ctx.createBiquadFilter();
+    vaporShelf.type = "highshelf"; vaporShelf.frequency.value = 1500; vaporShelf.gain.value = 0;
+    const vaporSend = ctx.createGain(); vaporSend.gain.value = 0;   // mall-wash reverb send
+    const vpDelay = ctx.createDelay(0.5); vpDelay.delayTime.value = 0.17;
+    const vpFb = ctx.createGain(); vpFb.gain.value = 0.5;
+    const vpLp = ctx.createBiquadFilter(); vpLp.type = "lowpass"; vpLp.frequency.value = 2600;
+    analyser.connect(vaporShelf);
+    vaporShelf.connect(userGain);
+    vaporShelf.connect(vaporSend); vaporSend.connect(vpDelay);
+    vpDelay.connect(vpLp); vpLp.connect(vpFb); vpFb.connect(vpDelay); vpLp.connect(userGain);
+    const applyVapor = (v) => { v = Math.max(0, Math.min(1, +v || 0));
+      try { vaporShelf.gain.setTargetAtTime(-16 * v, ctx.currentTime, 0.05);   // roll off up to -16 dB of top
+            vaporSend.gain.setTargetAtTime(0.6 * v, ctx.currentTime, 0.05); } catch (e) {} };   // add the mall wash
+    applyVapor(opts.vapor);
     userGain.connect(msDest || ctx.destination);
 
     // ── found routing: a small submix into master. dry → master; rev/del/pp → a
@@ -1235,6 +1255,8 @@
       prepare(targetState) { try { ensureWorker(cur ? (cur.ring ^ 1) : 1); } catch (e) {} },
       // USER MASTER VOLUME — smooth (click-free) ride of the post-analyser gain.
       setMasterVol(v) { try { userGain.gain.setTargetAtTime(Math.max(0, Math.min(4, +v || 0)), ctx.currentTime, 0.02); } catch (e) {} },
+      // VAPOR — live-only master EQ (high-shelf cut + reverb wash), 0..1.
+      setVapor(v) { applyVapor(v); },
       // real proxy: runway health ("am I keeping up"); the rest are stubs (deleted machinery)
       loadRatio: () => loadRatio,
       ecoLevel: () => 0,

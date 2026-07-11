@@ -5,7 +5,7 @@
 // preset/path/reset plumbing are gone) plus the chip↔view wiring.
 import { S, set, subs, html, render } from "./state.js";
 import { BARS_PER_SEG } from "./world.js";
-import { goLive, stopLive, setMasterVol } from "./live.js";
+import { goLive, stopLive, setMasterVol, setVapor } from "./live.js";
 import { fontManifest, setSoundfont } from "./fonts.js";
 import { renderInside } from "./inside.js";
 import { bgSetVideo, bgVideoOn } from "./background.js";
@@ -47,6 +47,10 @@ function Panel(){
       <input type="range" min="0" max="150" step="1" value=${Math.round((S.masterVol!=null?S.masterVol:1)*100)}
         onInput=${e=>setMasterVol((+e.target.value||0)/100)} />
       <output>${Math.round((S.masterVol!=null?S.masterVol:1)*100)}%</output></div>
+    <div class="row"><label title="global 'walking through a mall' EQ — rolls off the highs and adds reverb wash (live only)">vapor</label>
+      <input type="range" min="0" max="100" step="1" value=${Math.round((S.vapor||0)*100)}
+        onInput=${e=>setVapor((+e.target.value||0)/100)} />
+      <output>${Math.round((S.vapor||0)*100)}%</output></div>
     <div class="row"><label>soundfont</label>
       <select class="sfsel" onChange=${e=>setSoundfont(e.target.value)}>
         ${fontManifest().map(f=>html`<option value=${f.key} selected=${(S.soundfont||"fluidr3")===f.key}>${f.label}</option>`)}
