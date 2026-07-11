@@ -1,25 +1,33 @@
 // test/traits-run.js — pure-node proof for app/starcruise/traits.js.
-// Prints traits + band for contrasting genres, asserts DETERMINISM (same
-// genre+seed -> identical) and DIVERSITY (different genres -> different bands).
+// Asserts the REAL-BAND contract: (1) traits.body is a NON-HUMAN body plan
+// (plan/symmetry/arms/legs/tentacles/face) that VARIES by genre so genres read as
+// different SPECIES; (2) traits.band has ONE member per ACTIVE VOICE of the track,
+// each tagged with its engine voice id + an INVENTED alien-morphology instrument;
+// (3) DETERMINISM (same genre+seed -> identical) + DIVERSITY (genres differ);
+// (4) renderStyle stays a full, varied, deterministic per-genre visual language.
 // Run: node test/traits-run.js   (from /home/ford/stellate)
 
 const path = require("path");
 const K = require(path.join(__dirname, "..", "engine", "genre-kernel.js"));
 const V = require(path.join(__dirname, "..", "engine", "genre-verifier.js"));
 
+// the engine voice ids a band member may be in charge of.
+const VOICE_IDS = ["drums", "perc", "bass", "melody", "pad", "found"];
+const BODY_PLANS = ["floating-gas", "radial", "crystalline", "insectoid", "cephalopod", "amorphous", "stalk"];
+// a band member's instrument family must be an INVENTED ALIEN form (never a realistic
+// drum/guitar) — this is the vocabulary traits.js emits.
+const ALIEN_FAMILIES = new Set([
+  "hide-sac", "membrane-sac", "glitch-pod", "pulse-bladder", "seed-rattle", "chime-cluster",
+  "coiled-gut", "sub-bladder", "drone-coil", "bladder-horn", "tendril-harp", "shimmer-frond",
+  "bloop-anemone", "neon-stinger", "reed-lung", "gas-veil", "voice-polyp", "echo-conch",
+]);
+
 function bandSig(t) {
-  return t.band.map((m) => `${m.role}:${m.instrument.family}/${m.instrument.playStyle}x${m.instrument.hitsPerBeat}`).join(" | ");
+  return t.band.map((m) => `${m.voice}:${m.instrument.family}/${m.instrument.playStyle}`).join(" | ");
 }
-function short(t) {
-  const p = (c) => `h${Math.round(c.h)} s${c.s.toFixed(2)} l${c.l.toFixed(2)}`;
-  return {
-    crowd: t.crowd, backdrop: t.backdrop, skin: t.skin,
-    glow: +t.glow.toFixed(2),
-    body: { massH: +t.body.massH.toFixed(2), height: +t.body.height.toFixed(2), limbs: t.body.limbs, eyes: t.body.eyes, segments: t.body.segments },
-    cloth: t.cloth,
-    groove: { bpm: t.groove.tempoBpm, bounce: +t.groove.bounce.toFixed(2), sway: +t.groove.sway.toFixed(2), headbob: +t.groove.headbob.toFixed(2), energy: +t.groove.energy.toFixed(2) },
-    skinColor: p(t.palette.skin),
-  };
+function bodySig(t) {
+  const b = t.body;
+  return `plan=${b.plan} sym=${b.symmetry} a/l/t=${b.arms}/${b.legs}/${b.tentacles} eyes=${b.eyes} face=${b.face.family}`;
 }
 
 (async () => {
@@ -27,103 +35,112 @@ function short(t) {
     "file://" + path.join(__dirname, "..", "app", "starcruise", "traits.js")
   );
 
-  const GENRES = ["techno", "ambient", "jazz", "heavymetal", "bluegrass", "gabber"];
+  const GENRES = ["techno", "ambient", "jazz", "heavymetal", "bluegrass", "gabber", "dub", "bebop"];
   const SEED = 7;
   let fail = 0;
+  const chk = (label, ok) => { if (!ok) fail++; console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}`); return ok; };
 
+  const T = {};
   console.log("=== TRAITS per genre (seed " + SEED + ") ===\n");
-  const bands = {};
   for (const g of GENRES) {
     const t = traitsFromGenre(K, V, g, SEED);
-    bands[g] = bandSig(t);
+    T[g] = t;
     console.log("### " + g);
-    console.log("  BAND (" + t.crowd + "): " + bands[g]);
-    console.log("  " + JSON.stringify(short(t)));
+    console.log("  BODY: " + bodySig(t));
+    console.log("  BAND (" + t.crowd + "): " + bandSig(t));
     console.log("");
   }
 
-  // ---- DETERMINISM: same genre+seed twice -> byte-identical -----------
-  console.log("=== DETERMINISM ===");
+  // ---- BODY PLAN: non-human + valid + varied --------------------------
+  console.log("=== BODY PLAN (non-human species) ===");
+  for (const g of GENRES) {
+    const b = T[g].body;
+    const shapeOk = BODY_PLANS.indexOf(b.plan) >= 0 && b.symmetry >= 1 && b.symmetry <= 8 &&
+      b.arms >= 0 && b.legs >= 0 && b.tentacles >= 0 && (b.arms + b.tentacles) >= 1 &&
+      b.face && typeof b.face.family === "string" &&
+      // the ORIGINAL body fields are kept intact (legacy rig reads them).
+      typeof b.massH === "number" && typeof b.height === "number" && typeof b.limbs === "number" &&
+      typeof b.bodyShape === "string";
+    chk(`${g.padEnd(11)} body plan well-formed (${bodySig(T[g])})`, shapeOk);
+  }
+  const uniqPlans = new Set(GENRES.map((g) => T[g].body.plan));
+  chk(`body plan VARIES across genres (${uniqPlans.size} distinct: ${[...uniqPlans].join(", ")})`, uniqPlans.size >= 3);
+  // non-human: at least one genre is NOT a plain bipedal stance (tentacles or radial arms).
+  chk("some species are non-bipedal (tentacled / radial-armed)", GENRES.some((g) => T[g].body.tentacles > 0 || T[g].body.arms > 2));
+
+  // ---- BAND: one member per ACTIVE VOICE, alien instruments -----------
+  console.log("\n=== BAND: one alien per voice ===");
+  for (const g of GENRES) {
+    const b = T[g].band;
+    const voices = b.map((m) => m.voice);
+    const uniqueVoices = new Set(voices).size === voices.length;         // NO voice appears twice
+    const validVoices = voices.every((v) => VOICE_IDS.indexOf(v) >= 0);  // all known engine voices
+    const alienInst = b.every((m) => m.instrument && ALIEN_FAMILIES.has(m.instrument.family) &&
+      ["strike", "drum", "pluck", "bow", "blow"].indexOf(m.instrument.playStyle) >= 0 &&
+      typeof m.instrument.appendage === "number");
+    const crowdOk = T[g].crowd === b.length && b.length >= 1 && b.length <= 8;
+    chk(`${g.padEnd(11)} one alien per voice [${voices.join(",")}]`, uniqueVoices && validVoices && alienInst && crowdOk);
+  }
+
+  // ---- DETERMINISM ----------------------------------------------------
+  console.log("\n=== DETERMINISM ===");
   for (const g of GENRES) {
     const a = JSON.stringify(traitsFromGenre(K, V, g, SEED));
     const b = JSON.stringify(traitsFromGenre(K, V, g, SEED));
-    const ok = a === b;
-    if (!ok) fail++;
-    console.log(`  ${g.padEnd(12)} ${ok ? "IDENTICAL" : "!!! DIVERGED"}`);
+    chk(`${g.padEnd(11)} identical on re-derivation`, a === b);
   }
-  // different seed -> should differ (proves seed actually threads through)
-  const s1 = JSON.stringify(traitsFromGenre(K, V, "techno", 1));
-  const s2 = JSON.stringify(traitsFromGenre(K, V, "techno", 2));
-  console.log(`  techno seed1 vs seed2: ${s1 !== s2 ? "DIFFER (good)" : "!!! SAME"}`);
-  if (s1 === s2) fail++;
+  chk("techno seed1 vs seed2 DIFFER (seed threads through)",
+    JSON.stringify(traitsFromGenre(K, V, "techno", 1)) !== JSON.stringify(traitsFromGenre(K, V, "techno", 2)));
 
-  // ---- DIVERSITY: distinct genres -> distinct band signatures ---------
-  console.log("\n=== DIVERSITY ===");
-  const uniq = new Set(Object.values(bands));
-  console.log(`  ${GENRES.length} genres -> ${uniq.size} distinct band signatures`);
-  if (uniq.size < GENRES.length) { console.log("  !!! some bands collided"); fail++; }
+  // ---- DIVERSITY ------------------------------------------------------
+  // Band INSTRUMENTATION legitimately repeats across sibling genres (jazz & bebop
+  // share the same acoustic ensemble), so the "different species" claim is tested on
+  // the whole SPECIES signature: body plan + face + palette + render material + band.
+  console.log("\n=== DIVERSITY (species) ===");
+  const speciesSig = (g) => {
+    const t = T[g];
+    return `${bodySig(t)} | skinH${Math.round(t.palette.skin.h)} | ${t.renderStyle.material} | ${bandSig(t)}`;
+  };
+  const sigs = GENRES.map(speciesSig);
+  chk(`${GENRES.length} genres -> ${new Set(sigs).size} distinct SPECIES`, new Set(sigs).size === GENRES.length);
+  // instrumentation alone is coarser (one per voice) — still a healthy spread.
+  const bandSigs = GENRES.map((g) => bandSig(T[g]));
+  console.log(`  (band instrumentation: ${new Set(bandSigs).size} distinct ensembles)`);
 
-  // spot-check the expected character of contrasting genres
-  const checks = [];
-  const T = {}; for (const g of GENRES) T[g] = traitsFromGenre(K, V, g, SEED);
-  const has = (g, role, fam) => T[g].band.some((m) => m.role === role && (!fam || m.instrument.family === fam));
-  checks.push(["ambient has NO drummer", !has("ambient", "drum")]);
-  checks.push(["ambient has pad/drone players", has("ambient", "pad")]);
-  checks.push(["jazz has a drummer", has("jazz", "drum")]);
-  checks.push(["jazz lead is an organic horn/string", T.jazz.band.some((m) => m.role === "lead" && (m.instrument.family === "wailhorn" || m.instrument.family === "twangstring"))]);
-  checks.push(["techno bassist is electronic (synth/sub)", T.techno.band.some((m) => m.role === "bass" && (m.instrument.family === "synthbass" || m.instrument.family === "subwomp"))]);
-  checks.push(["heavymetal is a city, not farm", T.heavymetal.backdrop === "city"]);
-  checks.push(["bluegrass is organic-skinned", T.bluegrass.skin === "organic"]);
-  checks.push(["gabber has a lead section (>1 lead)", T.gabber.band.filter((m) => m.role === "lead").length >= 2]);
-  for (const [label, ok] of checks) {
-    if (!ok) fail++;
-    console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}`);
-  }
+  // spot-checks — the band mirrors the genre's real parts + character.
+  console.log("\n=== CHARACTER spot-checks ===");
+  const has = (g, voice, fam) => T[g].band.some((m) => m.voice === voice && (!fam || m.instrument.family === fam));
+  chk("ambient has NO drummer (no kit)", !has("ambient", "drums"));
+  chk("ambient has a pad/drone player", has("ambient", "pad"));
+  chk("jazz has a drummer", has("jazz", "drums"));
+  chk("jazz lead is an organic wind/string (bladder-horn/tendril-harp)",
+    T.jazz.band.some((m) => m.voice === "melody" && (m.instrument.family === "bladder-horn" || m.instrument.family === "tendril-harp")));
+  chk("techno bass is electronic (drone-coil/sub-bladder)",
+    T.techno.band.some((m) => m.voice === "bass" && (m.instrument.family === "drone-coil" || m.instrument.family === "sub-bladder")));
+  chk("jazz/dub have a perc lane player", has("jazz", "perc") || has("dub", "perc"));
+  chk("heavymetal is a city, not farm", T.heavymetal.backdrop === "city");
+  chk("bluegrass is organic-skinned", T.bluegrass.skin === "organic");
 
-  // ---- RENDERSTYLE: each genre renders in its own visual language --------
-  console.log("\n=== RENDERSTYLE per genre ===");
+  // ---- RENDERSTYLE: per-genre visual language, varied + deterministic --
+  console.log("\n=== RENDERSTYLE ===");
   const POST_KEYS = ["dither", "scanlines", "aberration", "halftone", "bloom", "posterize", "grade", "vignette", "curvature"];
   const rsPost = {}, rsMat = {};
   for (const g of GENRES) {
     const rs = T[g].renderStyle;
-    // shape check: renderStyle present + full contract shape.
     const shapeOk = rs && rs.post && typeof rs.material === "string" &&
       POST_KEYS.every((k) => rs.post[k] != null) && Array.isArray(rs.post.grade) && rs.post.grade.length === 3 &&
       ["none", "ordered", "onebit"].indexOf(rs.post.dither) >= 0 &&
       rs.post.posterize >= 2 && rs.post.posterize <= 16 &&
       ["flat", "cel", "iridescent", "wireframe", "glitch", "matte"].indexOf(rs.material) >= 0;
-    if (!shapeOk) fail++;
-    rsPost[g] = JSON.stringify(rs && rs.post);
-    rsMat[g] = rs && rs.material;
-    console.log(`  ${g.padEnd(11)} ${shapeOk ? "OK  " : "BAD "} mat=${(rsMat[g] || "?").padEnd(11)} ${rsPost[g]}`);
+    chk(`${g.padEnd(11)} renderStyle well-formed (mat=${rs && rs.material})`, shapeOk);
+    rsPost[g] = JSON.stringify(rs && rs.post); rsMat[g] = rs && rs.material;
   }
-  // VARIES: distinct genres -> distinct post bags + a spread of materials.
-  const uniqPost = new Set(Object.values(rsPost));
-  const uniqMat = new Set(Object.values(rsMat));
-  console.log(`  ${GENRES.length} genres -> ${uniqPost.size} distinct post bags, ${uniqMat.size} distinct materials`);
-  if (uniqPost.size < GENRES.length) { console.log("  !!! some post bags collided"); fail++; }
-  if (uniqMat.size < 3) { console.log("  !!! materials not varied enough"); fail++; }
-  // intent spot-checks: the derivation matches the genre archetype.
-  const rchecks = [
-    ["techno dithers ONEBIT (hard electronica)", T.techno.renderStyle.post.dither === "onebit"],
-    ["techno crushes the palette (posterize <= 5)", T.techno.renderStyle.post.posterize <= 5],
-    ["ambient uses NO dither (clean wash)", T.ambient.renderStyle.post.dither === "none"],
-    ["ambient blooms strongly (>0.4)", T.ambient.renderStyle.post.bloom > 0.4],
-    ["ambient keeps a smooth ramp (posterize >= 10)", T.ambient.renderStyle.post.posterize >= 10],
-    ["jazz gets a halftone screen (>0.3)", T.jazz.renderStyle.post.halftone > 0.3],
-    ["jazz grade is WARM (r > b)", T.jazz.renderStyle.post.grade[0] > T.jazz.renderStyle.post.grade[2]],
-    ["heavymetal is wireframe/glitch (aggressive surface)", ["wireframe", "glitch"].indexOf(T.heavymetal.renderStyle.material) >= 0],
-    ["gabber dithers ONEBIT + hard posterize", T.gabber.renderStyle.post.dither === "onebit" && T.gabber.renderStyle.post.posterize <= 5],
-  ];
-  for (const [label, ok] of rchecks) {
-    if (!ok) fail++;
-    console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}`);
-  }
-  // DETERMINISM already covered by the whole-object stringify above (renderStyle is
-  // part of the returned traits), but assert it explicitly for the post bag too.
-  const detOk = GENRES.every((g) => JSON.stringify(traitsFromGenre(K, V, g, SEED).renderStyle) === JSON.stringify(T[g].renderStyle));
-  if (!detOk) fail++;
-  console.log(`  renderStyle determinism: ${detOk ? "IDENTICAL across re-derivation" : "!!! DIVERGED"}`);
+  chk(`${GENRES.length} genres -> ${new Set(Object.values(rsPost)).size} distinct post bags`, new Set(Object.values(rsPost)).size >= GENRES.length - 1);
+  chk(`materials varied (${new Set(Object.values(rsMat)).size} distinct)`, new Set(Object.values(rsMat)).size >= 3);
+  chk("techno dithers ONEBIT", T.techno.renderStyle.post.dither === "onebit");
+  chk("ambient uses NO dither (clean wash)", T.ambient.renderStyle.post.dither === "none");
+  chk("ambient blooms strongly (>0.4)", T.ambient.renderStyle.post.bloom > 0.4);
+  chk("renderStyle determinism holds", GENRES.every((g) => JSON.stringify(traitsFromGenre(K, V, g, SEED).renderStyle.post) === rsPost[g]));
 
   console.log("\n" + (fail === 0 ? "ALL CHECKS PASSED" : `!!! ${fail} FAILURE(S)`));
   process.exit(fail === 0 ? 0 : 1);

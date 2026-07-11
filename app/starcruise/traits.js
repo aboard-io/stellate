@@ -83,6 +83,41 @@ function featuresFor(K, V, genreOrWeights, seed) {
   } catch (e) { return NEUTRAL; }
 }
 
+// STATE: resolve the FULL engine state (sections + voices) for a genre name OR a
+// weights blend — the same state the audio engine renders. Used to read which
+// musical VOICES are actually present so the band gets ONE alien per real part.
+// Returns null on any failure (headless early-frame safety); presentVoices then
+// falls back to a basic trio so the scaffold never throws.
+function stateFor(K, genreOrWeights, seed) {
+  try {
+    if (!K) return null;
+    if (typeof genreOrWeights === "string") return K.track(genreOrWeights, { seed });
+    if (Array.isArray(genreOrWeights) && genreOrWeights.length) return K.mix(genreOrWeights, { seed });
+  } catch (e) {}
+  return null;
+}
+
+// presentVoices(state): which engine VOICES sound anywhere in the track. Read
+// STRUCTURALLY off the sections (each turns voices on/off) so it matches what
+// buildEvents will actually emit — the band mirrors the real parts. `perc` is the
+// decorative percussion LANE (state.perc.lanes) which the engine only lays over
+// sections that HAVE a kit, so it needs `drums` too. `found` is the sampled/vocal
+// layer (a section's found/hits sourceId). Absent state -> a safe drums/bass/lead trio.
+function presentVoices(state) {
+  const V = { drums: false, perc: false, bass: false, melody: false, pad: false, found: false };
+  if (!state || !Array.isArray(state.sections) || !state.sections.length)
+    return { drums: true, perc: false, bass: true, melody: true, pad: true, found: false };
+  for (const s of state.sections) {
+    if (s.drums && s.drums !== "off") V.drums = true;
+    if (s.bass && s.bass !== "off") V.bass = true;
+    if ((s.melody && s.melody !== "off") || s.solo || s.counter) V.melody = true;
+    if (s.pads) V.pad = true;
+    if ((s.found && s.found.sourceId) || (s.hits && s.hits.sourceId)) V.found = true;
+  }
+  if (state.perc && Array.isArray(state.perc.lanes) && state.perc.lanes.length && V.drums) V.perc = true;
+  return V;
+}
+
 // dominant genre name from a name or a weights array (for PRNG keying + label).
 function dominantName(genreOrWeights) {
   if (typeof genreOrWeights === "string") return genreOrWeights;
@@ -101,6 +136,7 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
   seed = (seed | 0) || 1;
   const name = dominantName(genreOrWeights);
   const f = featuresFor(K, V, genreOrWeights, seed);
+  const st = stateFor(K, genreOrWeights, seed);   // the real engine state (voice presence)
   const rng = mulberry32((hashStr(name) ^ (seed * 0x9e3779b1)) >>> 0);
 
   // n(key) -> the feature normalized into 0..1 by its catalog range.
@@ -193,6 +229,74 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
     asymmetry: +clamp01(nVar * 0.5 + nChop * 0.4 + rng() * 0.2).toFixed(4),
   };
 
+  // ---- BODY PLAN (the SPECIES) -----------------------------------------
+  // The 23-vector decides the whole BODY PLAN so genres read as different
+  // SPECIES, not a biped-with-extras. Seven plans compete on feature-affinity
+  // scores; the argmax (with a tiny seeded tiebreak) wins, then symmetry + the
+  // appendage budget (arms / legs / tentacles / cilia) follow from the plan +
+  // features. Every original body field above stays intact + same-shaped (the
+  // legacy rig reads them); the new rig reads plan/symmetry/arms/legs/tentacles/
+  // face. Deterministic — the only randomness is the seeded tiebreak draw.
+  //   floating-gas  washy + soft + no kit (ambient/drone) — a jelly of cilia
+  //   radial        interlocked + hats + pump (techno/idm) — N-fold spokes
+  //   crystalline   choppy + crackly electronic (glitch) — faceted shards
+  //   insectoid     swinging acoustic (jazz/folk) — segmented, many legs, mandibles
+  //   cephalopod    high-motion washy — a tentacled floating head
+  //   amorphous     sub-heavy dense kit (metal/dub) — a pseudopod blob
+  //   stalk         slow / tall / light — a spindly single-stalk cluster
+  const planScores = {
+    "floating-gas": nWash * 1.25 + nSoft * 0.5 + (1 - nDrum) * 0.6 + (organic ? 0 : 0.18),
+    radial: nIl * 1.15 + nHat * 0.6 + nPump * 0.4 + (organic ? 0 : 0.3),
+    crystalline: nChop * 1.2 + nCrackle * 0.85 + (organic ? 0 : 0.25),
+    insectoid: nSwing * 1.0 + (organic ? 0.6 : 0) + nSeventh * 0.4 + nHat * 0.3,
+    cephalopod: nMotion * 0.95 + nWash * 0.45 + nSwing * 0.3,
+    amorphous: nSub * 1.0 + nDrum * 0.6 + (1 - nVar) * 0.3,
+    stalk: (1 - nBpm) * 0.85 + nSoft * 0.6 + (massH < 1.1 ? 0.4 : 0) + (height > 2.4 ? 0.3 : 0),
+  };
+  let plan = "amorphous", planBest = -Infinity;
+  for (const p of Object.keys(planScores)) {
+    const sc = planScores[p] + rng() * 0.14;   // seeded tiebreak keeps genres spread across plans
+    if (sc > planBest) { planBest = sc; plan = p; }
+  }
+  // SYMMETRY — radial/crystalline/gas fan out N-fold; everything else bilateral/blobby.
+  let symmetry;
+  if (plan === "radial") symmetry = 3 + Math.round(nIl * 3 + nHat * 2);
+  else if (plan === "crystalline") symmetry = 4 + Math.round(nChop * 3);
+  else if (plan === "floating-gas") symmetry = 3 + Math.round(nWash * 4);
+  else if (plan === "cephalopod" || plan === "amorphous") symmetry = 1;
+  else symmetry = 2;
+  symmetry = Math.max(1, Math.min(8, symmetry));
+  // APPENDAGE BUDGET — arms (play + hold), legs (stance), tentacles/cilia (sway).
+  let arms = 0, legs = 0, tentacles = 0;
+  if (plan === "radial") { arms = symmetry; legs = nSub > 0.5 ? symmetry : 0; }
+  else if (plan === "crystalline") { arms = symmetry; legs = 0; }
+  else if (plan === "floating-gas") { tentacles = 3 + Math.round(nWash * 3); arms = 0; }
+  else if (plan === "cephalopod") { tentacles = 4 + Math.round(nMotion * 4); arms = 0; }
+  else if (plan === "insectoid") { legs = nDrum > 0.6 ? 6 : 4; arms = 2; }
+  else if (plan === "amorphous") { tentacles = 2 + Math.round(nDrum * 2); arms = Math.round(nMotion); }
+  else { arms = 2; legs = 1; }   // stalk
+  arms = Math.max(0, Math.min(8, arms));
+  legs = Math.max(0, Math.min(8, legs));
+  tentacles = Math.max(0, Math.min(8, tentacles));
+  if (arms + tentacles === 0) arms = 2;   // guarantee at least one PLAYING appendage
+  // FACE FAMILY — ridiculous to menacing: one giant eye, a ring of eyes, a no-face
+  // maw, or insect mandibles. Reads the eye count + plan + character.
+  let faceFamily;
+  if (body.eyes >= 4) faceFamily = "eye-ring";
+  else if (plan === "insectoid") faceFamily = "mandibles";
+  else if (body.eyes === 1) faceFamily = (nSub > 0.55 || nDrum > 0.7) ? "cyclops-maw" : "cyclops";
+  else if (organic && nSwing > 0.3) faceFamily = "beak-cluster";
+  else if (!organic && (nChop > 0.35 || nCrackle > 0.4)) faceFamily = "sensor-array";
+  else faceFamily = "maw";
+  body.plan = plan;
+  body.symmetry = symmetry;
+  body.arms = arms;
+  body.legs = legs;
+  body.tentacles = tentacles;
+  // the new rig reads body.face for the FACE family; traits.face (below) keeps its
+  // full existing shape (+ the same family echoed) so the legacy rig is untouched.
+  body.face = { family: faceFamily, eyes: body.eyes };
+
   // ---- CLOTH -----------------------------------------------------------
   // motif reads the rhythmic character; coverage from softTop/wash (soft, washy
   // genres wear more flowing cloth; hard percussive genres go bare/armored).
@@ -212,6 +316,7 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
   //   teeth  aggressive/dense genres bare fangs
   //   mouthWide resting gape scale, grows with energy (louder = bigger maw)
   const face = {
+    family: faceFamily,   // the SPECIES face family (echoed from body.face for the new rig)
     mouth: nSwing > 0.3 ? "beak" : organic ? "maw" : "grille",
     brow: (nChop > 0.35 || nCrackle > 0.45) ? "angular" : nWash > 0.45 ? "soft" : "ridge",
     snout: organic ? (nSub > 0.55 ? "snout" : "nostrils") : "vents",
@@ -241,92 +346,96 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
     energy: clamp01(0.2 + nBpm * 0.4 + nDrum * 0.3 + nVar * 0.2),
   };
 
-  // ---- BAND ------------------------------------------------------------
-  // Mirror the genre's ACTUAL parts. Each member is one alien; hitsPerBeat is how
-  // many contacts land per beat (drums busy, pads sustained). appendage picks the
-  // limb that strikes/plucks/bows/blows the invented instrument. Members are
-  // pushed in importance order, then trimmed to a mobile crowd cap.
+  // ---- BAND: ONE ALIEN PER ACTIVE VOICE --------------------------------
+  // The band mirrors the track's ACTUAL parts — one alien "in charge" of EACH
+  // musical VOICE present in the resolved state (drums, perc, bass, lead/melody,
+  // pad, found). Presence is read structurally from the sections (presentVoices)
+  // so it matches what the engine renders; the controller then feeds each member
+  // its voice's real per-bar note ONSETS (ctx.notes) and it plays THOSE — resting
+  // when the voice is silent/quiet. Each member keeps the legacy {role, instrument
+  // {family, playStyle, appendage, hitsPerBeat}} shape (downstream + the fallback
+  // beat-path read it) AND carries `voice` = the engine voice id the score-bridge
+  // buckets events by. Instrument FAMILIES are INVENTED alien forms (membrane-sacs,
+  // coiled resonators, crystal chime-clusters, tendril-harps, bladder-horns) — never
+  // realistic drums/guitars; playStyle stays in the known set (strike/drum/pluck/
+  // bow/blow) so the playing appendage still lands on the instrument. Capped 8 (mobile).
+  const present = presentVoices(st);
   const band = [];
-  const CAP = 6;                                   // mobile draw-call ceiling
+  const CAP = 8;                                   // mobile draw-call ceiling
+  const appAll = Math.max(1, arms + tentacles);    // playing-appendage budget
 
-  // DRUMMER — only if the genre actually has a kit (drumDensity above the floor).
-  if (f.drumDensity > 0.15) {
+  // DRUMS — a pulsing membrane-sac (acoustic) or a glitch-pod / pulse-bladder (electronic).
+  if (present.drums) {
     let family, playStyle;
-    if (organic && nSwing > 0.35) { family = "brushpan"; playStyle = "strike"; }   // brushed jazz kit
-    else if (organic) { family = "skindrum"; playStyle = "drum"; }                 // acoustic kit
-    else if (nCrackle > 0.35 || nChop > 0.35) { family = "glitchpad"; playStyle = "strike"; } // sampled/glitch
-    else { family = "thumpdrum"; playStyle = "drum"; }                             // electronic kit
-    band.push({ role: "drum", instrument: {
+    if (organic && nSwing > 0.35) { family = "hide-sac"; playStyle = "strike"; }
+    else if (organic) { family = "membrane-sac"; playStyle = "drum"; }
+    else if (nCrackle > 0.35 || nChop > 0.35) { family = "glitch-pod"; playStyle = "strike"; }
+    else { family = "pulse-bladder"; playStyle = "drum"; }
+    band.push({ role: "drum", voice: "drums", instrument: {
       family, playStyle, appendage: 0,
       hitsPerBeat: Math.max(1, Math.min(6, Math.round(1.5 + nDrum * 3.5))),
     } });
   }
 
-  // BASSIST — the low end. Gut-string upright (bowed when jazzy) for acoustic;
-  // fat synth/sub for electronic. Walks (2/beat) when interlock is high.
-  {
-    let family, playStyle;
-    if (organic) { family = "gutstring"; playStyle = nSwing > 0.4 || n("rubato") > 0.5 ? "bow" : "pluck"; }
-    else if (nSub > 0.7) { family = "subwomp"; playStyle = "pluck"; }
-    else { family = "synthbass"; playStyle = "pluck"; }
-    band.push({ role: "bass", instrument: {
-      family, playStyle, appendage: 1,
-      hitsPerBeat: nIl > 0.5 ? 2 : 1,
-    } });
-  }
-
-  // LEAD — the melodic voice(s). Horns (blow) for swinging acoustic, twang-strings
-  // (pluck) for folky acoustic, glassy/neon synths for electronic. A big leadVoices
-  // count spawns a small SECTION (extra lead members) up to the cap.
-  {
-    let family, playStyle;
-    if (organic) {
-      if (nSwing > 0.12) { family = "wailhorn"; playStyle = "blow"; }
-      else { family = "twangstring"; playStyle = "pluck"; }
-    } else if (nWash > 0.4) { family = "shimmerlead"; playStyle = "bow"; }
-    else if (nMotion > 0.5) { family = "bloopharp"; playStyle = "pluck"; }
-    else { family = "neonsquare"; playStyle = "strike"; }
-    const leadHits = Math.max(1, Math.min(3, Math.round(1 + nMotion * 2)));
-    const section = Math.max(1, Math.min(3, leadVoices - 1));   // leadVoices 1->1, 4->3
-    for (let i = 0; i < section; i++) {
-      band.push({ role: "lead", instrument: {
-        family, playStyle, appendage: 2, hitsPerBeat: leadHits,
-      } });
-    }
-  }
-
-  // PAD / DRONE — sustained wash. When wash dominates and there is little/no kit
-  // (ambient, drone), the pad becomes a small CHOIR of droners; the reed-harmonium
-  // is the organic variant, the glasspad the electronic one.
-  if (f.wash > 0.28) {
-    const family = organic ? "reedharmonium" : "glasspad";
-    const playStyle = organic ? "blow" : "bow";
-    const droneChoir = f.drumDensity < 0.3 ? Math.max(1, Math.min(3, 1 + Math.round(nWash * 2))) : 1;
-    for (let i = 0; i < droneChoir; i++) {
-      band.push({ role: "pad", instrument: { family, playStyle, appendage: 3, hitsPerBeat: 1 } });
-    }
-  }
-
-  // PERC — an extra percussionist when the rhythm is busy or tightly interlocked.
-  // Shakers/woodblocks that strike fast; hitsPerBeat tracks hatDensity.
-  if (nIl > 0.4 || nHat > 0.6 || nDrum > 0.85) {
-    const family = organic ? "shakerpod" : "clackshell";
-    band.push({ role: "perc", instrument: {
-      family, playStyle: "strike", appendage: 0,
+  // PERC — the decorative percussion lane: seed-rattle (organic) / crystal chime-cluster.
+  if (present.perc) {
+    band.push({ role: "perc", voice: "perc", instrument: {
+      family: organic ? "seed-rattle" : "chime-cluster", playStyle: "strike", appendage: 0,
       hitsPerBeat: Math.max(2, Math.min(4, Math.round(1 + nHat * 3))),
     } });
   }
 
-  // Guarantee at least one player, then trim to the mobile crowd cap. Trimming
-  // drops the least-essential trailing members (perc/extra leads) first.
+  // BASS — a coiled-gut resonator (bowed when jazzy) or a fat sub/drone bladder-coil.
+  if (present.bass) {
+    let family, playStyle;
+    if (organic) { family = "coiled-gut"; playStyle = nSwing > 0.4 || n("rubato") > 0.5 ? "bow" : "pluck"; }
+    else if (nSub > 0.7) { family = "sub-bladder"; playStyle = "pluck"; }
+    else { family = "drone-coil"; playStyle = "pluck"; }
+    band.push({ role: "bass", voice: "bass", instrument: {
+      family, playStyle, appendage: 1, hitsPerBeat: nIl > 0.5 ? 2 : 1,
+    } });
+  }
+
+  // LEAD (engine voice `melody`) — bladder-horn (blown), tendril-harp (plucked),
+  // shimmer-frond (bowed wash), bloop-anemone (plucked motion) or neon-stinger.
+  if (present.melody) {
+    let family, playStyle;
+    if (organic) {
+      if (nSwing > 0.12) { family = "bladder-horn"; playStyle = "blow"; }
+      else { family = "tendril-harp"; playStyle = "pluck"; }
+    } else if (nWash > 0.4) { family = "shimmer-frond"; playStyle = "bow"; }
+    else if (nMotion > 0.5) { family = "bloop-anemone"; playStyle = "pluck"; }
+    else { family = "neon-stinger"; playStyle = "strike"; }
+    band.push({ role: "lead", voice: "melody", instrument: {
+      family, playStyle, appendage: 2,
+      hitsPerBeat: Math.max(1, Math.min(3, Math.round(1 + nMotion * 2))),
+    } });
+  }
+
+  // PAD / DRONE — a sustained reed-lung (organic) or a bowed gas-veil (electronic).
+  if (present.pad) {
+    band.push({ role: "pad", voice: "pad", instrument: {
+      family: organic ? "reed-lung" : "gas-veil", playStyle: organic ? "blow" : "bow",
+      appendage: 3, hitsPerBeat: 1,
+    } });
+  }
+
+  // FOUND — the sampled/vocal layer: a struck voice-polyp (organic) / echo-conch.
+  if (present.found) {
+    band.push({ role: "found", voice: "found", instrument: {
+      family: organic ? "voice-polyp" : "echo-conch", playStyle: "strike", appendage: 1, hitsPerBeat: 1,
+    } });
+  }
+
+  // Guarantee at least one player, then trim to the mobile crowd cap.
   if (band.length === 0) {
-    band.push({ role: "lead", instrument: { family: "bloopharp", playStyle: "pluck", appendage: 2, hitsPerBeat: 1 } });
+    band.push({ role: "lead", voice: "melody", instrument: { family: "tendril-harp", playStyle: "pluck", appendage: 2, hitsPerBeat: 1 } });
   }
   if (band.length > CAP) band.length = CAP;
 
-  // Clamp each appendage into the actual limb count so alien.js never indexes a
-  // missing limb.
-  for (const m of band) m.instrument.appendage = m.instrument.appendage % Math.max(1, body.limbs);
+  // Clamp each appendage into the actual playing-appendage budget so the rig never
+  // indexes a missing limb.
+  for (const m of band) m.instrument.appendage = ((m.instrument.appendage % appAll) + appAll) % appAll;
 
   // ---- BACKDROP / GLOW -------------------------------------------------
   // Calm, acoustic genres greet you on FARMS (crop rows, silos); aggressive,

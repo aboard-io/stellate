@@ -54,12 +54,15 @@ async function driveToDance(page, genre) {
       if (st.phase === "DANCE") break;
     }
     const tr = SC.traits();
+    const b = tr && tr.body;
     return {
       phases, phase: SC.state().phase, band: SC.band().length,
       backdrop: tr && tr.backdrop, crowd: tr && tr.crowd, skin: tr && tr.skin,
       genre: tr && tr._genre,
+      body: b ? { plan: b.plan, symmetry: b.symmetry, arms: b.arms, legs: b.legs,
+        tentacles: b.tentacles, eyes: b.eyes, face: b.face && b.face.kind ? b.face.kind : b.face } : null,
       members: (tr && tr.band || []).map((m) => ({
-        role: m.role, family: m.instrument.family, playStyle: m.instrument.playStyle,
+        role: m.role, voice: m.voice, family: m.instrument.family, playStyle: m.instrument.playStyle,
         hitsPerBeat: m.instrument.hitsPerBeat,
       })),
       groove: tr && tr.groove ? { tempoBpm: Math.round(tr.groove.tempoBpm), energy: +tr.groove.energy.toFixed(2),
@@ -136,8 +139,10 @@ async function main() {
   console.log("\n==== BAND MAKEUP PER GENRE ====");
   for (const r of report) {
     const i = r.info;
-    console.log(`\n${r.genre}  [${i.backdrop} backdrop, ${i.skin} skin, ~${i.bpm}bpm, energy ${i.groove && i.groove.energy}] — ${i.crowd} players:`);
-    for (const m of i.members) console.log(`   • ${m.role.padEnd(5)} ${m.family.padEnd(14)} ${m.playStyle.padEnd(7)} ${m.hitsPerBeat} hit/beat`);
+    const bp = i.body ? `BODY plan=${i.body.plan} sym=${i.body.symmetry} a/l/t=${i.body.arms}/${i.body.legs}/${i.body.tentacles} eyes=${i.body.eyes} face=${i.body.face}` : "BODY <none>";
+    console.log(`\n${r.genre}  [${i.backdrop} backdrop, ${i.skin} skin, ~${i.bpm}bpm, energy ${i.groove && i.groove.energy}] — ${i.crowd} players`);
+    console.log(`   ${bp}`);
+    for (const m of i.members) console.log(`   • ${(m.voice||m.role).padEnd(7)} ${m.family.padEnd(14)} ${m.playStyle.padEnd(7)} ${m.hitsPerBeat} hit/beat`);
   }
   if (errs.length) console.log("\nPAGE ERRORS:\n  " + errs.join("\n  "));
   console.log("\nDONE — " + report.length + " screenshots in " + OUT);

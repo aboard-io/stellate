@@ -201,6 +201,67 @@ async function main() {
     for (let i = 0; i < 60; i++) { const st = SC.__step(0.1); if (st.phase === "DANCE") break; }
   }, GEN);
 
+  // ---- SB: SCORE BRIDGE — aliens PLAY the score (one per voice, real onsets, rest) ----
+  // On land the controller resolves the playing state + calls E.buildEvents ONCE for
+  // the whole track, buckets every event by VOICE into a per-bar note plan, spawns ONE
+  // alien per active voice, and each frame hands each member its voice's real onsets as
+  // ctx. Prove: (1) the plan built with real per-voice onsets; (2) buildEvents is NOT
+  // re-run per frame (buildCount constant across many steps); (3) one alien per voice,
+  // covering the sounding voices; (4) the notes are ACTUAL onsets (varied t / pitch);
+  // (5) REST — a voice with no notes this bar drives its alien to idle (playing=false).
+  const KNOWN_VOICES = ["drums", "perc", "bass", "melody", "pad", "found"];
+  const sb = await page.evaluate((KNOWN) => {
+    const SC = window.__STARCRUISE;
+    const plan0 = SC.eventPlan();
+    const bc0 = SC.buildCount();
+    // step ~40 frames of real time — buildEvents must NOT run again (cached per genre).
+    for (let i = 0; i < 40; i++) SC.__step(0.05);
+    const bc1 = SC.buildCount();
+    const plan = SC.eventPlan();
+    const voices = SC.bandVoices();
+    const vAgg = (plan && plan.voices) || {};
+    const soundingVoices = Object.keys(vAgg).filter((v) => vAgg[v].onsets > 0);
+    // pick the busiest sounding voice; scan its bars for both PLAY and REST bars.
+    let busy = null, busyOnsets = -1;
+    for (const v of soundingVoices) if (vAgg[v].onsets > busyOnsets) { busy = v; busyOnsets = vAgg[v].onsets; }
+    let playFound = false, restFound = false, sampleNotes = [];
+    if (plan && busy) {
+      for (let b = 0; b < plan.numBars; b++) {
+        const s = SC.barAt(b, busy);
+        if (s.playing && s.notes.length) { playFound = true; if (sampleNotes.length < 16) sampleNotes = sampleNotes.concat(s.notes); }
+        else restFound = true;
+      }
+      sampleNotes = sampleNotes.slice(0, 16);
+    }
+    // a fully-RESTING alien = a band voice that never sounds anywhere in the plan.
+    const idleVoice = voices.find((v) => v && !(vAgg[v] && vAgg[v].onsets > 0)) || null;
+    // ctx actually delivered to each member this frame.
+    const ctxs = voices.map((v) => ({ v, ctx: SC.voiceCtx(v) }));
+    return { plan, bc0, bc1, voices, soundingVoices, busy, busyOnsets, playFound, restFound,
+      sampleNotes, idleVoice, ctxs, numBars: plan && plan.numBars, cbeats: plan && plan.cbeats,
+      covered: soundingVoices.filter((v) => voices.indexOf(v) >= 0),
+      allKnown: voices.every((v) => KNOWN.indexOf(v) >= 0) };
+  }, KNOWN_VOICES);
+  console.log("       SB plan:", JSON.stringify({ numBars: sb.numBars, cbeats: sb.cbeats, voices: sb.plan && sb.plan.voices, buildCount: sb.bc1 }));
+  console.log("       SB bandVoices:", JSON.stringify(sb.voices), " sounding:", JSON.stringify(sb.soundingVoices));
+  console.log("       SB sampleNotes(", sb.busy, "):", JSON.stringify(sb.sampleNotes));
+  console.log("       SB ctx delivered:", JSON.stringify(sb.ctxs));
+  ok(sb.numBars >= 1 && sb.bc1 >= 1 && sb.soundingVoices.length >= 1,
+    `SB1. buildEvents ran ONCE -> per-bar note plan (${sb.numBars} bars, ${sb.soundingVoices.length} sounding voices, buildCount=${sb.bc1})`);
+  ok(sb.bc0 === sb.bc1,
+    `SB2. plan is cached — buildEvents NOT re-run across 40 frames (buildCount ${sb.bc0}==${sb.bc1}, never per-frame)`);
+  ok(sb.voices.length >= 1 && sb.allKnown && sb.covered.length === sb.soundingVoices.length,
+    `SB3. ONE alien per voice, covering every sounding part (band=${JSON.stringify(sb.voices)}, covers ${JSON.stringify(sb.covered)})`);
+  const distinctT = sb.sampleNotes ? new Set(sb.sampleNotes.map((n) => n.t)).size : 0;
+  const distinctP = sb.sampleNotes ? new Set(sb.sampleNotes.map((n) => n.pitch)).size : 0;
+  const notesVaried = sb.sampleNotes && sb.sampleNotes.length >= 3 && (distinctT >= 3 || distinctP >= 2) &&
+    sb.sampleNotes.every((n) => typeof n.t === "number" && n.t >= 0 && n.t <= 1 && typeof n.pitch === "number" && typeof n.vel === "number" && typeof n.dur === "number");
+  ok(!!notesVaried, `SB4. members get REAL note ONSETS ({t,pitch,dur,vel}) for '${sb.busy}' — varied (${distinctT} onset positions, ${distinctP} pitches), not beat ticks`);
+  ok(sb.restFound || !!sb.idleVoice,
+    `SB5. REST when silent — ${sb.idleVoice ? "voice '" + sb.idleVoice + "' never sounds (alien idles)" : "'" + sb.busy + "' has rest bars (no notes -> lowers instrument)"}`);
+  const ctxOk = sb.ctxs.every((c) => c.ctx && typeof c.ctx.barPhase === "number" && c.ctx.barPhase >= 0 && c.ctx.barPhase <= 1 && typeof c.ctx.playing === "boolean");
+  ok(ctxOk, `SB6. each member receives a well-formed ctx {barPhase(0..1), playing, level, notes} every frame`);
+
   // ---- N: NAVIGATION — default framing is FRONT-CENTRED, and a DRAG moves the view ----
   // (1) the landed view must be centred on the band (target ~ centroid, yaw ~ 0 = front,
   // camera IN FRONT on +Z) — the fix for "side profile / off to the left / zoomed out".
@@ -252,34 +313,127 @@ async function main() {
   ok(sh.enabled && sh.sunCast, `Sh1. shadows ENABLED + key light casts (enabled=${sh.enabled}, sunCast=${sh.sunCast}, map=${sh.mapSize})`);
   ok(sh.bandCasters > 0, `Sh2. the band/dancers CAST shadows so forms read modelled (${sh.bandCasters} caster meshes)`);
 
-  // ---- H: the band PLAYS ON the beat and LOCKS to the shared phase ----
-  // At beatPhase 0 (a hit boundary) EVERY playing hand sits ON its instrument's
-  // contact point (dist ~ 0) — simultaneously, which is the whole band locking to
-  // one shared beat. Sweeping the beat, each hand must travel meaningfully away
-  // between hits (it really strikes/plucks/bows/blows, not frozen on the contact).
-  const HIT_EPS = 0.03;
+  // ---- H: ONSET MODEL — the band PLAYS ITS SCORE (real per-voice onsets, not a pulse)
+  // The rebuilt band hands each alien ITS OWN voice's real note onsets (from the cached
+  // per-bar plan) as ctx.notes each frame — replacing the old "every hand hits uniformly
+  // on the beat" model. We drive the LANDED band's actual aliens (SC.band()) with the
+  // score the plan holds for each voice (SC.barAt) and assert the integration end-to-end:
+  //   H1. the injected beatPhase still reaches the band through flight;
+  //   H2. (a) each PLAYING alien's instrument-appendage REACHES its instrument AT its
+  //       voice's real onset times (contactness peaks + reachDist->0 within a tick of
+  //       each onset) — and the contact PHASES differ across voices (syncopation), so the
+  //       hands do NOT all land on the contact uniformly at phase 0;
+  //   H3. (b) an alien whose voice is SILENT/quiet (ctx.playing=false / level<=0.05) does
+  //       NOT reach its instrument — contactness dies to ~0 and the hand stays lowered
+  //       (proven both by a forced-silent ctx and by a REAL rest bar from the plan).
+  const HIT_EPS = 0.03, REACH_EPS = 0.05, C_HIT = 0.7;
+
+  // H1: the pipeline must still deliver the injected beatPhase all the way to the band.
   const beat = await page.evaluate(() => {
     const SC = window.__STARCRUISE;
-    // the pipeline must deliver the injected beatPhase all the way to the band.
     SC.__injectBeat({ bpm: 120, spb: 0.5, cbeats: 8, serial: 2, beatPhase: 0, playing: true });
     SC.__step(0.016);
-    const pipePhase = SC.state().beatPhase;
-    const onHit = SC.__beatProbe(0);                    // all hands at the hit
-    const per = onHit.map(() => ({ min: Infinity, max: 0 }));
-    for (let k = 0; k <= 40; k++) {
-      const p = SC.__beatProbe(k / 40);
-      p.forEach((e, i) => { if (e) { if (e.dist < per[i].min) per[i].min = e.dist; if (e.dist > per[i].max) per[i].max = e.dist; } });
-    }
-    return { pipePhase, onHit, per, n: onHit.length };
+    return { pipePhase: SC.state().beatPhase };
   });
-  console.log("       beat.onHit:", JSON.stringify(beat.onHit));
-  console.log("       beat.per:", JSON.stringify(beat.per));
   ok(Math.abs(beat.pipePhase) < 1e-6, `H1. injected beatPhase reaches the band through flight (pipe=${beat.pipePhase})`);
-  ok(beat.n >= 1 && beat.onHit.every((e) => e && e.dist < HIT_EPS),
-    `H2. ALL ${beat.n} hands land ON the contact at beatPhase 0 — band locked to one shared beat (max dist ${Math.max(...beat.onHit.map((e) => e ? e.dist : 9)).toFixed(3)})`);
-  ok(beat.per.every((p) => p.max > HIT_EPS * 4 && p.min < HIT_EPS),
-    `H3. every hand actually STRIKES — swings away between hits then returns to contact`);
 
+  // H2/H3: sweep barPhase over each landed alien with the REAL notes its voice plays
+  // (from the cached plan) and read the appendage's contact trace via alien.debug().
+  const onset = await page.evaluate((cfg) => {
+    const SC = window.__STARCRUISE;
+    const band = SC.band();
+    const plan = SC.eventPlan();
+    const numBars = plan ? plan.numBars : 0;
+    const wrap = (a, b) => { const d = Math.abs(a - b); return Math.min(d, 1 - d); };
+    // drive ONE alien across a bar with a GIVEN {notes,playing,level}; capture contact.
+    function sweep(al, notes, playing, level, steps) {
+      const rows = [];
+      for (let s = 0; s < steps; s++) {
+        const bp = s / steps;
+        al.update(0.016, { barPhase: bp, playing, level, notes, valueOf() { return bp; } });
+        const d = al.debug();
+        rows.push({ bp, c: d.contactness, dist: d.dist, reach: d.reachDist });
+      }
+      return rows;
+    }
+    const maxCwin = (rows, t, w) => { let m = 0; for (const r of rows) if (wrap(r.bp, t) <= w) m = Math.max(m, r.c); return m; };
+    const minReachWin = (rows, t, w) => { let m = 1e9; for (const r of rows) if (wrap(r.bp, t) <= w) m = Math.min(m, r.reach); return m; };
+    const atRow = (rows, t) => { let best = rows[0], bd = 1e9; for (const r of rows) { const dd = wrap(r.bp, t); if (dd < bd) { bd = dd; best = r; } } return best; };
+    const W = cfg.W, STEPS = cfg.STEPS;
+
+    const players = [], resters = [];
+    for (const al of band) {
+      const voice = al._voice;
+      // find a bar where this voice sounds (onsets + audible level) and one where it rests.
+      let playBar = -1, restBar = -1;
+      for (let b = 0; b < numBars; b++) {
+        const s = SC.barAt(b, voice);
+        if (s.playing && s.notes.length && s.level > 0.05) { if (playBar < 0) playBar = b; }
+        else if (restBar < 0) restBar = b;
+      }
+      // (a) PLAY: the appendage must reach the instrument AT this voice's real onsets.
+      if (playBar >= 0) {
+        const s = SC.barAt(playBar, voice);
+        const notes = s.notes, onsets = notes.map((n) => n.t);
+        const rows = sweep(al, notes, true, s.level, STEPS);
+        const onsetC = onsets.map((t) => +maxCwin(rows, t, W).toFixed(3));
+        const onsetReach = onsets.map((t) => +minReachWin(rows, t, W).toFixed(4));
+        const distAt0 = +atRow(rows, 0).dist.toFixed(4);
+        const playMinDist = +Math.min.apply(null, onsets.map((t) => atRow(rows, t).dist)).toFixed(4);
+        players.push({ voice, playStyle: al.playStyle, playBar,
+          onsets: onsets.map((t) => +t.toFixed(3)), onsetC, onsetReach, distAt0, playMinDist });
+      }
+      // (b) REST: a forced-silent ctx (playing=false) — the hand must NOT reach.
+      const silentRows = sweep(al, [], false, 0, 120);
+      let restMaxC = 0, restMinDist = 1e9;
+      for (const r of silentRows) { restMaxC = Math.max(restMaxC, r.c); restMinDist = Math.min(restMinDist, r.dist); }
+      // and a REAL rest bar for this voice from the plan (if one exists), driven as-is.
+      let realRest = null;
+      if (restBar >= 0) {
+        const s = SC.barAt(restBar, voice);
+        const rr = sweep(al, s.notes || [], !!s.playing, s.level || 0, 60);
+        let rc = 0; for (const r of rr) rc = Math.max(rc, r.c);
+        realRest = { restBar, playing: !!s.playing, level: +(s.level || 0).toFixed(3), notes: (s.notes || []).length, maxC: +rc.toFixed(4) };
+      }
+      resters.push({ voice, playStyle: al.playStyle, restMaxC: +restMaxC.toFixed(4), restMinDist: +restMinDist.toFixed(4), realRest });
+    }
+    // cross-voice syncopation: onset-time SETS + phase-of-contact differ across voices,
+    // and NOT every hand sits on its contact at phase 0 (the old "one shared beat" claim).
+    const onsetSig = players.map((p) => p.onsets.join(","));
+    const distinctSigs = new Set(onsetSig).size;
+    const allOnsetPhases = [].concat.apply([], players.map((p) => p.onsets));
+    const distinctPhases = new Set(allOnsetPhases.map((t) => Math.round(t * 32))).size;
+    const someOffZero = allOnsetPhases.some((t) => t > 0.1 && t < 0.9);
+    const allHandsAtZero = players.length > 0 && players.every((p) => p.distAt0 < cfg.HIT_EPS);
+    const playMin = {}; players.forEach((p) => { playMin[p.voice] = p.playMinDist; });
+    return { players, resters, distinctSigs, distinctPhases, someOffZero, allHandsAtZero, playMin, band: SC.bandVoices() };
+  }, { W: 0.02, STEPS: 400, HIT_EPS });
+  console.log("       onset.players:", JSON.stringify(onset.players));
+  console.log("       onset.resters:", JSON.stringify(onset.resters));
+  console.log("       onset.sync:", JSON.stringify({ distinctSigs: onset.distinctSigs, distinctPhases: onset.distinctPhases, someOffZero: onset.someOffZero, allHandsAtZero: onset.allHandsAtZero }));
+
+  // H2 — (a) plays the SCORE: reaches its instrument at its real onsets, and different
+  // voices contact at different phases (syncopation), not a uniform hit at phase 0.
+  const reachesAtOnsets = onset.players.length >= 1 && onset.players.every((p) =>
+    p.onsetC.length >= 1 && p.onsetC.every((c) => c > C_HIT) && p.onsetReach.every((d) => d < REACH_EPS));
+  const syncopated = onset.distinctSigs >= 2 && onset.distinctPhases >= 3 && onset.someOffZero && !onset.allHandsAtZero;
+  ok(reachesAtOnsets && syncopated,
+    `H2. ONSET MODEL — every playing alien reaches its instrument AT its voice's real onsets (${onset.players.length} players, contact>${C_HIT} & reach<${REACH_EPS} at each onset); contact PHASES differ across voices (${onset.distinctSigs} distinct onset sets over ${onset.distinctPhases} phases, off-beat=${onset.someOffZero}) so hands do NOT uniformly land at phase 0 (allAtZero=${onset.allHandsAtZero})`);
+
+  // H3 — (b) rests when silent: a silent/quiet voice's appendage does not reach. Every
+  // alien's contactness dies to ~0 under a silent ctx and the hand pulls back from the
+  // contact; a REAL rest bar from the plan confirms the same on live score data.
+  const restsWhenSilent = onset.resters.length >= 1 && onset.resters.every((r) => {
+    const pm = onset.playMin[r.voice];
+    return r.restMaxC < 0.05 && (pm == null || r.restMinDist > pm + 0.05);
+  });
+  const realRester = onset.resters.find((r) => r.realRest);
+  const realRestOk = !realRester || realRester.realRest.maxC < 0.05;
+  ok(restsWhenSilent && realRestOk,
+    `H3. REST — a SILENT/quiet voice's appendage does NOT reach the instrument (every alien restMaxC<0.05 & hand pulled back when playing=false${realRester ? `; real rest bar for '${realRester.voice}' -> maxC=${realRester.realRest.maxC}` : ""})`);
+
+  // restore the injected beat park so the frame is stepped consistently for H4.
+  await page.evaluate(() => window.__STARCRUISE.__step(0.016));
   const sample3 = await page.evaluate(() => window.__STARCRUISE.sampleLowRes());
   ok(sample3 && !sample3.blank && sample3.nonBg > 50, `H4. NON-BLANK while the band plays (nonBg=${sample3 && sample3.nonBg})`);
 
