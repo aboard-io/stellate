@@ -1234,6 +1234,11 @@
 
     const handle = {
       ctx, analyser, errors, mediaEl,
+      // VIDEO EXPORT (E): the live master as a MediaStream audio track — the same
+      // msDest that feeds the mobile <audio>. video-export.js muxes it with a
+      // canvas.captureStream via MediaRecorder. Null on paths without msDest (the
+      // exporter falls back to mediaEl.captureStream).
+      audioStream: () => (msDest && msDest.stream) || null,
       // ── background-WAV handoff debug hooks (headless verification) ──
       __bgWavReady: () => !!bgUrl,
       __bgUrl: () => bgUrl,

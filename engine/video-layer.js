@@ -1150,6 +1150,11 @@
     init, setEnabled, idle, makeBag, setGenre,
     enabled: () => on && ready,
     available: () => ready,
+    // VIDEO EXPORT (E): the front <video> element for canvas compositing. Clips
+    // are LOCAL (found/video/*.mp4, same-origin) so drawImage doesn't taint the
+    // capture canvas; returns null if nothing's playing. `_localBase` (unused here)
+    // documents the local-first source.
+    _frontEl: () => vids[front] || null,
     onSection: (idx) => { stopIdle(); const n = names[((idx % names.length) + names.length) % names.length]; if (n) show(n); },
     showFile: (file) => { stopIdle(); show(String(file).replace(/\.mp4$/, "")); },
     prefetch: (file) => { if (file) prefetch(String(file).replace(/\.mp4$/, "")); },
