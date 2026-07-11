@@ -1364,18 +1364,37 @@
   // badly across a keymap. pickFrom hashes (role, model, seed) into these, so a
   // wider pool = more instrument variety across the genre space (deterministic per
   // seed). Kept musically sane per family (no bagpipe/shenai in the default lead).
-  const SAMPLED_BASSES = ["acoustic_bass", "fretless_bass", "finger_bass", "picked_bass", "pop_bass", "slap_bass", "contrabass"];
-  const SAMPLED_PADS   = ["strings", "slow_strings", "ahh_choir", "ohh_voices", "church_organ", "french_horns", "cello", "bowed_glass", "synth_strings_1", "space_voice"];
+  // GM VARIETY (Paul: "use way more General MIDI — where are marimbas?? see how
+  // often we fall back on samples"). We have 108 sampled instruments; the fallback
+  // (a synth-model voice remapped to a sample under sampledOnly) used to funnel
+  // almost everything to reedy WINDS. These pools are wide, and — crucially — an
+  // UNMAPPED generic synth (saw/fm/stack/sub/…: the majority of leads) now draws a
+  // family PER SONG across the whole palette instead of always wind, so marimba,
+  // koto, dulcimer, vibraphone, accordion &c actually appear. RENDER-only
+  // (pickSampledId runs in forceSampled, not buildEvents) => fixtures/matrix/
+  // segment-parity byte-identical; the instrument HEARD changes, the score doesn't.
+  const SAMPLED_BASSES = ["acoustic_bass", "fretless_bass", "finger_bass", "picked_bass", "pop_bass", "slap_bass", "contrabass", "synth_bass_1", "synth_bass_2"];
+  const SAMPLED_PADS   = ["strings", "slow_strings", "ahh_choir", "ohh_voices", "church_organ", "french_horns", "cello", "bowed_glass", "synth_strings_1", "synth_strings_2", "space_voice", "atmosphere", "fantasia", "crystal", "ice_rain"];
   const SAMPLED_LEAD = {
-    keys:   ["felt_piano", "yamaha_grand_piano", "bright_yamaha_grand", "honky_tonk", "rhodes_ep", "legend_ep_2", "electric_piano", "harpsichord", "clavinet"],
-    mallet: ["vibraphone", "glockenspiel", "marimba", "celesta", "xylophone", "music_box", "kalimba", "dulcimer", "tinker_bell"],
-    guitar: ["nylon_string_guitar", "steel_string_guitar", "jazz_guitar", "clean_guitar", "palm_muted_guitar", "overdrive_guitar", "guitar_harmonics"],
-    brass:  ["trumpet", "muted_trumpet", "trombone", "tuba", "french_horns", "brass_section"],
-    organ:  ["rock_organ", "percussive_organ", "church_organ", "reed_organ"],
-    voice:  ["ahh_choir", "ohh_voices", "strings", "solo_vox", "synth_voice"],
-    wind:   ["alto_sax", "tenor_sax", "soprano_sax", "baritone_sax", "flute", "clarinet", "oboe", "english_horn", "bassoon", "piccolo", "recorder", "pan_flute", "harmonica", "ocarina"],   // reeds/pipes: the vaporwave default lead
+    keys:   ["felt_piano", "yamaha_grand_piano", "bright_yamaha_grand", "honky_tonk", "rhodes_ep", "legend_ep_2", "electric_piano", "harpsichord", "clavinet", "celesta"],
+    mallet: ["vibraphone", "glockenspiel", "marimba", "celesta", "xylophone", "music_box", "kalimba", "dulcimer", "tinker_bell", "tubular_bells", "steel_drums"],
+    guitar: ["nylon_string_guitar", "steel_string_guitar", "jazz_guitar", "clean_guitar", "palm_muted_guitar", "overdrive_guitar", "guitar_harmonics", "banjo"],
+    brass:  ["trumpet", "muted_trumpet", "trombone", "tuba", "french_horns", "brass_section", "synth_brass_1", "synth_brass_2"],
+    organ:  ["rock_organ", "percussive_organ", "church_organ", "reed_organ", "harmonica", "accordion"],
+    voice:  ["ahh_choir", "ohh_voices", "strings", "solo_vox", "synth_voice", "space_voice"],
+    wind:   ["alto_sax", "tenor_sax", "soprano_sax", "baritone_sax", "flute", "clarinet", "oboe", "english_horn", "bassoon", "piccolo", "recorder", "pan_flute", "harmonica", "ocarina", "shenai"],
+    world:  ["koto", "sitar", "shamisen", "dulcimer", "harp", "banjo", "bagpipe", "accordion", "bandoneon", "kalimba", "shenai", "pan_flute"],   // plucked/free-reed/world color
+    synth:  ["saw_wave", "square_lead", "charang", "chiffer_lead", "fifth_sawtooth_wave", "bass_lead", "star_theme", "fantasia", "crystal", "echo_drops"],   // sampled GM synth-leads/FX
+    // MELODIC = the broad, coherent lead palette an unmapped generic synth draws
+    // from (winds + mallets + world + a keyboard/plucked touch) — spice, not chaos.
+    melodic:["flute", "clarinet", "oboe", "alto_sax", "soprano_sax", "pan_flute", "recorder", "ocarina", "harmonica",
+             "vibraphone", "marimba", "glockenspiel", "celesta", "kalimba", "music_box", "xylophone",
+             "koto", "sitar", "shamisen", "dulcimer", "harp", "banjo", "accordion", "bandoneon", "shenai"],
   };
-  // requested synth model -> lead timbre family (anything unmapped -> reedy wind)
+  const LEAD_FALLBACK_FAMS = ["melodic", "mallet", "world", "guitar", "keys", "wind", "brass", "voice", "synth"];
+  // requested synth model -> lead timbre family. Mapped models keep their family
+  // (a guitar genre stays guitar); UNMAPPED generic synths pick a family PER SONG
+  // (pickSampledId) so the lead instrument actually varies across the catalog.
   const LEAD_FAMILY = { piano: "keys", rhodes: "keys", bell: "mallet", guitar: "guitar",
     pluck: "guitar", kpluck: "guitar", brass: "brass", organ: "organ", hammond: "organ",
     choir: "voice", vocoder: "voice", vp330: "voice", solina: "voice", strings: "voice" };
@@ -1385,7 +1404,10 @@
   function pickSampledId(role, model, seed) {
     if (role === "bass") return pickFrom(SAMPLED_BASSES, seed, role, model || "");
     if (role === "pad")  return pickFrom(SAMPLED_PADS, seed, role, model || "");
-    const fam = LEAD_FAMILY[model] || "wind";
+    // mapped model → its family; UNMAPPED generic synth → a family drawn PER SONG
+    // from the whole palette (was always "wind"), so the lead instrument varies.
+    let fam = LEAD_FAMILY[model];
+    if (!fam) fam = LEAD_FALLBACK_FAMS[famHash("leadfam|" + (model || "") + "|" + (seed >>> 0)) % LEAD_FALLBACK_FAMS.length];
     return pickFrom(SAMPLED_LEAD[fam], seed, role, model || "");
   }
   // rewrite a pitched recipe into a sampler recipe (model "sampler" + zone spec)
