@@ -1407,6 +1407,12 @@
     const scrng=mulberry32((((state.seed??1)>>>0)+7333)>>>0);
     let pitched=[], drums=[];
     let found=[], sfx=[];   // let: CsdPipes may hand back filtered arrays
+    // FOUND-AT-90% (Paul 2026-07-11): the vocal/sampled-chop + found-sound-bed
+    // layer only plays when a genre is DOMINANT (top blend weight >= 90%, i.e.
+    // genreMeta.t <= 0.1) — so the weird found textures land when you're AT a
+    // genre, not smeared across every transition. Single-genre states (t=0) and
+    // states with no genreMeta keep the found layer => byte-identical (fixtures).
+    const foundOK = !state.genreMeta || (state.genreMeta.t || 0) <= 0.1 + 1e-9;
     const spans=[];   // spans: section extents for the per-bar transform pool
     let cur=0, narrOffset=0;   // narration plays through the clip across sections (always playing)
     for(const sec of state.sections){
@@ -2324,6 +2330,7 @@
     // composed accent, not the faded loudness (a fade already varies the bars, so
     // pattern-identical bars under it are not ad-nauseam).
     applyVoiceDynamics(pitched, drums, state, spans, CBEATS);
+    if(!foundOK) found=[];   // FOUND-AT-90%: drop the found layer in blends below the 90% threshold
     return { bpm:state.bpm, totalBeats, pitched, drums, found, sfx, srcById,
       ...(Object.keys(regHome).length?{regHome}:{}) };   // register-home decision (absent when no slot shifted — bundle shape unchanged)
   }
