@@ -860,6 +860,12 @@
           atk: mp("attack", role === "bass" ? 0.006 : 0.012, 0.003, 5),
           rel: mp("release", role === "bass" ? 0.07 : 0.09, 0.02, 6),
           swell: (m.swell || 0) >= 0.5,
+          // GRANULAR REPITCH (A.2): recipe `granular` opts a sampled voice into
+          // formant/length-preserving playback when a note stretches far from a
+          // zone root (threshold in semitones; `true` => 4 st). grainSec tunes the
+          // grain. Absent => no keys => byte-identical (the sampler never triggers).
+          ...(m.granular ? { granularOverSt: clamp(typeof m.granular === "number" ? m.granular : 4, 1, 24),
+                             grainSec: clamp(m.grainSec || 0.09, 0.02, 0.3) } : {}),
           strip: stripFor(role, sp.id, state, m),   // channel strip + per-song voice-FX (leads); m carries the genre's declared distortion (heavy strip)
           ...(mello ? { mello } : {}),
         }, freqMax: 4000 };

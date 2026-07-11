@@ -141,6 +141,10 @@ async function runState(name, state) {
     // citypop_s2 bass 34 ev — pads/melodies with inserts often enter later.)
     ["trance_s1 (SAMPLED-voice inserts: bass filtersweep[barSec] + lead chorus)", K.track("trance", { seed: 1 })],
     ["citypop_s2 (SAMPLED-voice chorus on slap bass — the city-pop gloss)", K.track("citypop", { seed: 2 })],
+    // GRANULAR REPITCH (A.2): vaporwave's mall-sax opts into granular — the
+    // overlap-add grain read is a NEW mixPCM branch; this proves the windowed
+    // stream render reproduces the whole-song press render bit-for-bit on it.
+    ["vaporwave_s1 (granular-repitch sampled sax)", K.track("vaporwave", { seed: 1 })],
   ];
   let all = true; const summary = [];
   for (const [name, stRaw] of cases) {

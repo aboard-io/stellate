@@ -294,6 +294,15 @@
     // Notes without pan — or callers without wide buses — keep the EXACT old
     // mono write (byte-identical, the absent-law).
     const basePan = sends.pan || 0;
+    // GRANULAR REPITCH THRESHOLD (A.2, opt-in per unit): when a unit sets
+    // sends.granularOverSt, any note whose playback rate stretches the sample
+    // >= that many semitones from a zone root takes the granular path below —
+    // it keeps its LENGTH + character instead of chipmunk/rumble rate-stretch
+    // (the "slowed" vaporwave sample, a sax dragged high). Absent => never
+    // triggers => the exact rate-read (byte-identical). Per-note n.granular
+    // still forces it on regardless of threshold.
+    const granOverSt = sends.granularOverSt != null ? sends.granularOverSt : null;
+    const granSec = sends.grainSec || 0.09;
     for (const n of notes) {
       const midi = midiOfFreq(n.freq);
       const z = zoneFor(n.zones, midi, n.gain != null ? Math.round(n.gain * 127) : 100);
@@ -377,8 +386,8 @@
       // source at `rate` (the pitch). A sample pushed far from its zone root then
       // holds its character instead of chipmunk/rumble rate-stretch. 50%-overlap
       // overlap-add, loop-aware. Absent => the exact rate-read below (byte-identical).
-      if (n.granular) {
-        const Gn = Math.max(128, Math.floor((n.grainSec || 0.09) * sr)), Hn = Math.max(1, Gn >> 1);
+      if (n.granular || (granOverSt != null && rate > 0 && Math.abs(12 * Math.log2(rate)) >= granOverSt)) {
+        const Gn = Math.max(128, Math.floor((n.grainSec || granSec) * sr)), Hn = Math.max(1, Gn >> 1);
         const han = grainHann(Gn);
         const wrap = (p) => (loop && p >= loopEnd) ? z.loopStart + ((p - z.loopStart) % loopLen) : p;
         for (let i = 0; i < outN; i++) {
