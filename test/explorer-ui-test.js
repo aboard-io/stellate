@@ -306,8 +306,9 @@ async function main() {
     await new Promise((r) => setTimeout(r, 150));
     const names = [...document.querySelectorAll("#panel button")].map((b) => b.textContent.trim());
     const midiBtn = btnOf("⤓ midi");
-    if (midiBtn) midiBtn.click();                           // the REAL button path
-    await new Promise((r) => setTimeout(r, 100));
+    window.__EXPORT.lastMidi = null;                        // clear so we detect THIS export
+    if (midiBtn) midiBtn.click();                           // the REAL button path (downloadMidi is ASYNC now — chunked whole-path walk, yields to keep the page alive)
+    for (let i = 0; i < 250 && !window.__EXPORT.lastMidi; i++) await new Promise((r) => setTimeout(r, 100));   // poll up to ~25s for the async walk
     const m = window.__EXPORT.lastMidi;
     return { names, hasMidi: !!btnOf("⤓ midi"), hasWav: !!btnOf("⤓ wav"), hasMp3: !!btnOf("⤓ mp3"),
       midi: m ? Array.from(m) : null, fileName: window.__EXPORT.lastName };

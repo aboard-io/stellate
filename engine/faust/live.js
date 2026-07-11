@@ -89,7 +89,7 @@
   // each bar (retarget/glide = mutating what getState returns): seed+serial*7919 per bar,
   // collapsed single-cycle sections, fills only on the last cycle, sweeps only on first/
   // last, chordEvery-aware CBEATS. Each makeWalk() owns its own cursor state.
-  function makeWalk(getState, E, SE, startBar) {
+  function makeWalk(getState, E, SE, startBar, opts) {
     let ci = 0, serial = 0, secIdx = 0, cycIdx = 0, absBeat = 0;
     // DROP-IN (the bookmarkable measure, 2026-07-10): startBar>0 fast-forwards
     // the walk's indices as if that many bars had already played — same
@@ -169,17 +169,24 @@
       const CBEATS = Math.max(2, Math.round(st.chordEvery || (st.meter ? 6 : 8)));   // meter default mirrors buildEvents (kernel states carry explicit chordEvery; this covers hand states — ODD-METER 2026-07-09)
       const lo = ci * CBEATS, hi = lo + CBEATS;
       const ev = E.buildEvents(one);
+      const meta = { serial, ci, nch, spb, cbeats: CBEATS, chord: (prg.chords[ci] || {}).name || "",
+        section: sec.name, absBeatLo: absBeat, lo };
+      const advance = () => { absBeat += CBEATS; ci++; serial++;
+        if (ci >= nch) { ci = 0; cycIdx++; if (cycIdx >= (secs[secIdx].cycles || 1)) { cycIdx = 0; secIdx = (secIdx + 1) % secs.length; } } };
+      // LIGHT MIDI WALK (2026-07-11 crash fix): the whole-path MIDI export only
+      // needs the note events (ev) + timing; skip voiceUnits/mapEvents/fxParams (the
+      // expensive AUDIO mapping + the big unit objects) so buildLoopMidi's SYNCHRONOUS
+      // main-thread walk over a long loop doesn't block the UI for seconds and get
+      // the page killed. Same per-bar seed/section walk => identical MIDI.
+      if (opts && opts.midiOnly) { const rl = { one, spb, lo, hi, meta, musicalSec: (hi - lo) * spb, ev }; advance(); return rl; }
       const units = SE.voiceUnits(E, one);
       const m = SE.mapEvents(E, one, ev, { lo, hi, units });
       const fxParams = SE.fxParams(one);
-      const meta = { serial, ci, nch, spb, cbeats: CBEATS, chord: (prg.chords[ci] || {}).name || "",
-        section: sec.name, absBeatLo: absBeat, lo };
       const barLenFrames = Math.max(BS, Math.round((hi - lo) * spb * SR / BS) * BS);
       const r = { one, units, sig: sigOf(units), spb, lo, hi, events: m.events, fxParams,
         sweepsRaw: m.sweeps, found: m.found, foundSources: one.foundSources || [], meta,
         barLenFrames, musicalSec: (hi - lo) * spb, ev };   // ev = note-level buildEvents (this bar's collapsed section) for the offline MIDI exporter
-      absBeat += CBEATS; ci++; serial++;
-      if (ci >= nch) { ci = 0; cycIdx++; if (cycIdx >= (secs[secIdx].cycles || 1)) { cycIdx = 0; secIdx = (secIdx + 1) % secs.length; } }
+      advance();
       return r;
     };
   }

@@ -19,7 +19,7 @@ export function walkLoop(opts) {
   const pace = Math.max(8, Math.min(4096, +S.pace || 256));
   const total = Math.max(1, opts.bars || loopBars());   // CONSTANT PACE: one loop = perimeter / speed bars
   let cur = null;
-  const stepWalk = FL.makeWalk(() => cur, E, SE, 0);
+  const stepWalk = FL.makeWalk(() => cur, E, SE, 0, opts.light ? { midiOnly: true } : undefined);   // MIDI: light walk (no voiceUnits/mapEvents) so the main-thread export can't hang the page
   const bars = [];
   let musicalSec = 0;
   for (let b = 0; b < total; b++) {
@@ -99,17 +99,30 @@ export function buildLoopPlan(opts) {
 }
 
 // WHOLE-PATH MIDI: walk the loop and assemble one SMF spanning the full journey
-// (every genre it crosses), not just the current song. Returns Uint8Array | null.
-export function buildLoopMidi(opts) {
-  const w = walkLoop(opts);
-  if (!w || !window.MidiExport || !window.MidiExport.buildMidiJourney) return null;
+// (every genre it crosses), not just the current song. ASYNC + CHUNKED (2026-07-11
+// crash fix): the per-bar stateAt (K.mix genre blend) + buildEvents cost ~11ms, so
+// a long loop's SYNCHRONOUS main-thread walk froze the UI for 20s+ and the browser
+// killed the page. Now it yields every 32 bars (opts.onProgress reports %), keeping
+// the page alive; a light midiOnly walk (no voiceUnits/mapEvents) + only the note
+// events retained keeps memory + cost down. Returns Promise<Uint8Array|null>.
+export async function buildLoopMidi(opts) {
+  opts = opts || {};
+  const E = window.CsdEngine, SE = window.FaustStateEngine, FL = window.FaustLive, MX = window.MidiExport;
+  if (!E || !SE || !FL || !FL.makeWalk || !MX || !MX.buildMidiJourney) return null;
+  const n = S.waypoints.length; if (n < 2) return null;
+  const total = Math.max(1, opts.bars || loopBars());
+  let cur = null;
+  const stepWalk = FL.makeWalk(() => cur, E, SE, 0, { midiOnly: true });
   const bars = []; let startBeat = 0;
-  for (const r of w.bars) {
+  for (let b = 0; b < total; b++) {
+    cur = stateAt(pointOnPath(travelForBar(b)));
+    const r = stepWalk();
     const cbeats = (r.meta && r.meta.cbeats) || (r.ev && r.ev.totalBeats) || 8;
     bars.push({ ev: r.ev, startBeat, bpm: (r.ev && r.ev.bpm) || (r.one && r.one.bpm) || 88 });
     startBeat += cbeats;
+    if ((b & 31) === 31) { if (opts.onProgress) opts.onProgress(b + 1, total); await new Promise((res) => setTimeout(res, 0)); }
   }
-  return window.MidiExport.buildMidiJourney(bars);
+  return MX.buildMidiJourney(bars);
 }
 
 // summary for headless verification: distinct genres crossed, bar count, seconds
