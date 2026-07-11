@@ -18,7 +18,7 @@
 //
 // Cached Response objects keep their original headers, so COOP/COEP isolation
 // (SharedArrayBuffer for the render worker) survives offline replay.
-const VERSION = "stellate-v4";   // v4 (2026-07-11): +9 genres (intl+western); BUMP purges the old cache on activate so a deploy lands
+const VERSION = "stellate-v5";   // v5 (2026-07-11): star-cruise 3D mode (🛸 chip + app/starcruise.js); BUMP purges the old cache on activate so a deploy lands
                                  // in ONE load, not two (the v2 stale-while-revalidate served a load-behind copy —
                                  // Paul saw none of the synth-font/video/vapor batch until a second reload). Bump
                                  // this string every deploy that must reach users immediately.
