@@ -280,6 +280,17 @@
   const CARVE_HPF = 300;                              // Hz — accompaniment high-pass
   const CARVE_DIP = { f: 450, gain: -4, q: 0.9 };     // the 300-600 mud-band dip
   const REV_BUDGET = { capHi: 2.2, slope: 1.9, floor: 0.55 };
+  // DRUM BALANCE (2026-07-10, Paul: "drums in the louder genres to the bottom
+  // right are very hot — a limiter/compressor strategy to balance voices
+  // everywhere"). The hottest kits (kick/snare lvl up to ~1.65 in thrash/metal/
+  // gabber) dominate the sum and slam the live master limiter, ducking the
+  // melodic voices. A gentle KIT-LEVEL pull toward `target` lets the voices sit
+  // up without flattening the kit's character — only the OVERAGE above target is
+  // trimmed, and only partway (`keep` = fraction of the overage retained). Kits
+  // already at/under target are untouched => byte-identical there. Shared unit
+  // choke point => press + stream + live-bake all inherit it (everywhere). Tune
+  // here; Paul's ears are the calibration.
+  const DRUM_BAL = { target: 1.1, keep: 0.6, floor: 0.72 };
 
   // constant-power pan gains, ×√2 so center ≈ the old dup-to-both-channels
   // level (pan 0 is never routed here — the old path handles it bit-exactly).
@@ -349,6 +360,21 @@
     const wet = rv * sendSum;
     const cap = REV_BUDGET.capHi - REV_BUDGET.slope * density;
     return Math.max(REV_BUDGET.floor, Math.min(1, cap / Math.max(wet, 1e-6)));
+  }
+  // DRUM BALANCE — gentle kit-level pull for hot genres (see DRUM_BAL). Scales
+  // the drum UNIT lvls (which carry the recipe kick/snare/hat/tom levels — the
+  // drum event gain is u.lvl*amp) toward `target`; pure function of the resolved
+  // units (zero rng — determinism-safe like the pan/carve/budget passes). Returns
+  // the applied scale (1 = untouched) for the fxLabels/debug roster.
+  function drumBalance(units) {
+    const kit = ["kick", "snare", "hat", "tom", "ride", "crash", "perc", "clap", "rim"];
+    let peak = 0;
+    for (const k of kit) { const u = units[k]; if (u && u.lvl != null) peak = Math.max(peak, u.lvl); }
+    if (peak <= DRUM_BAL.target) return 1;   // gentle kits untouched (byte-identical)
+    const scale = Math.max(DRUM_BAL.floor,
+      (DRUM_BAL.target + (peak - DRUM_BAL.target) * DRUM_BAL.keep) / peak);
+    for (const k of kit) { const u = units[k]; if (u && u.lvl != null) u.lvl *= scale; }
+    return scale;
   }
   // friendly reverb-character names for the fxLabels roster (viz metadata).
   const REVERB_LABELS = { dattorro: "plate", greyhole: "hall", fdn: "room", spring: "spring", shimmer: "shimmer" };
@@ -803,9 +829,25 @@
       // bottomRoot - SAMPLER_FLOOR_ST octave-fold UP (mapEvents).
       const declared = Array.isArray(m.inserts)
         ? m.inserts.filter((i) => i && i.type && i.type !== "distort") : [];
+      // FILTER-ENV ON SAMPLES (2026-07-10, Paul: "filter envelopes on samples are
+      // great esp when you want resonance and to mess with dynamics"). The recipe
+      // `fenv` key was inert on the native sampler lane — only synth models read it
+      // (FENV_MAP / the plucky path). Wire it to the amp-follower filter-env INSERT
+      // (insert_fenv, already built for BOTH press and live): louder notes swing a
+      // resonant ladder up to ~`fenv` octaves above the voice cutoff, then it
+      // settles back — movement + resonance that tracks dynamics, WITHOUT dulling
+      // sustain (base sits AT the cutoff; the sweep only adds brightness on
+      // transients). Appended so authored inserts keep their slots (insertChain
+      // caps the chain at 2). Absent m.fenv => no insert => byte-identical.
+      const fenvIns = (m.fenv && !declared.some((i) => i.type === "fenv"))
+        ? [{ type: "fenv", amount: clamp(m.fenv * 2.5, 0, 4),
+             res: clamp(m.fenvRes != null ? m.fenvRes : 0.4, 0, 0.95), base: c, sens: 0.6,
+             attack: 0.004, decay: clamp(m.fenvDecay != null ? m.fenvDecay : 0.18, 0.02, 2), mix: 1 }]
+        : [];
+      const declaredAll = declared.concat(fenvIns);
       // role/state deliberately NOT passed as role (no default chain on
       // samplers — absent-law); state rides along for rateBars tempo-sync.
-      const nativeIns = declared.length ? insertChain({ ...m, inserts: declared }, c, null, state) : [];
+      const nativeIns = declaredAll.length ? insertChain({ ...m, inserts: declaredAll }, c, null, state) : [];
       const zs = Array.isArray(sp.zones) ? sp.zones : [];
       const zRoots = zs.map((z) => z.root || 60);
       const topRoot = zRoots.length ? Math.max(...zRoots) : 0;
@@ -1400,6 +1442,7 @@
     // resolved units (zero rng — determinism-gated like everything here).
     applyMasterPan(units);
     collisionCarve(units);
+    drumBalance(units);   // gentle hot-kit level pull so voices sit up (Paul's "drums are hot")
     const out = trimToBudget(units, state);
     // fxLabels (viz roster metadata; computed post-trim so labels reflect the
     // final shed state). Pure metadata — ignored by every render loop.
