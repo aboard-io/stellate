@@ -143,28 +143,27 @@ async function main() {
     tl = await page.evaluate(() => {
       const box = document.getElementById("inside");
       const rows = [...box.querySelectorAll(".vz-tlrow")];
-      // fx now render as a tiny " · "-joined line UNDER the lane (was stacked pills);
-      // require the FULL chain shows (>1 effect), which is the point of the change.
-      const fxRow = rows.find(r => {
-        const nm = r.querySelector(".vz-tlname"), fx = r.querySelector(".vz-fxline");
-        return nm && nm.textContent.trim().length > 0 && fx && fx.textContent.includes(" · ");
-      });
+      // EFFECTS ARE NODES NOW (Paul 2026-07-11: "don't list them under the piano
+      // rolls — they should be nodes in the graph"). The per-lane .vz-fxline is
+      // gone; the mixing node graph (.vz-graph) under the rolls is the fx surface.
+      const graph = box.querySelector(".vz-graph");
+      const fxNodes = graph ? graph.querySelectorAll(".gins,.grev,.gdel,.gmaster").length : 0;
+      const hasName = rows.some(r => { const nm = r.querySelector(".vz-tlname"); return nm && nm.textContent.trim().length > 0; });
       return { lanes: rows.length, blocks: box.querySelectorAll(".vz-blk").length,
-        fxLane: !!fxRow, fxName: fxRow ? fxRow.querySelector(".vz-tlname").textContent.trim() : null,
-        fxLabel: fxRow ? fxRow.querySelector(".vz-fxline").textContent.trim() : null,
-        stackedPills: box.querySelectorAll(".vz-tlrow .vz-fx i").length,
+        graph: !!graph, fxNodes, hasName,
+        fxlines: box.querySelectorAll(".vz-fxline").length,   // must be 0 now
         notes: window.__notes.length, bars: window.__S.barCount, live: window.__S.live };
     });
-    if (tl.lanes >= 2 && tl.blocks >= 1 && tl.fxLane && tl.notes > 0 && tl.bars >= 3) break;
+    if (tl.lanes >= 2 && tl.blocks >= 1 && tl.graph && tl.fxNodes >= 1 && tl.notes > 0 && tl.bars >= 3) break;
     await page.waitForTimeout(300);
   }
   ok(tl.lanes >= 2, `C1: timeline rendered ${tl.lanes} lanes (want >=2)`);
   ok(tl.blocks >= 1, `C2: timeline rendered ${tl.blocks} note blocks (want >=1)`);
-  ok(tl.fxLane, `C3: no lane shows a name + a full (multi-effect) fx line under it`);
-  ok(!!tl.fxName && !!tl.fxLabel, `C4: name/fx lane incomplete (name=${tl.fxName} fx=${tl.fxLabel})`);
-  ok(tl.stackedPills === 0, `C5: fx must be tiny text, not stacked lozenges (found ${tl.stackedPills} pills)`);
+  ok(tl.graph && tl.hasName, `C3: the mixing node graph (.vz-graph) or named lanes did not render (graph=${tl.graph} named=${tl.hasName})`);
+  ok(tl.fxNodes >= 1, `C4: graph shows no effect nodes (.gins/.grev/.gdel/.gmaster=${tl.fxNodes} — effects should be nodes)`);
+  ok(tl.fxlines === 0, `C5: effects must be graph nodes, not a per-lane fx line under the roll (found ${tl.fxlines} .vz-fxline)`);
   console.log(`\n=== TIMELINE DOM (live house@seed1, bar ${tl.bars}) ===`);
-  console.log(`  lanes=${tl.lanes} blocks=${tl.blocks}  fxLane="${tl.fxName}" {${tl.fxLabel}}`);
+  console.log(`  lanes=${tl.lanes} blocks=${tl.blocks}  graph=${tl.graph} fxNodes=${tl.fxNodes} fxlines=${tl.fxlines}`);
 
   // ---- G: AUDIT-TRUTH red-lane paint. Inject a stub audit for the CURRENT bar's serial
   // reporting the pad voice expected-but-silent (missing sample) and re-render the ⓘ; the

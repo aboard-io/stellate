@@ -630,9 +630,9 @@ function timelineHTML(tl){
   // lane we can, skip (and console.warn) the one that throws.
   const rows=tl.lanes.map(L=>{
    try{
-    // ALL effects as one TINY line UNDER the roll (Paul: pills stacked/clipped so only
-    // one showed — untangle to compact text that shows the whole chain, tightened).
-    const fx=(L.fx&&L.fx.length)?`<div class="vz-fxline">${L.fx.map(esc).join(" · ")}</div>`:"";
+    // EFFECTS ARE NODES NOW (Paul 2026-07-11: "don't list them under the piano
+    // rolls — they should be nodes in the graph"). The per-lane fx caption is
+    // gone; the mixing node graph beneath the rolls (graphSVG) is the fx surface.
     // AUDIT-TRUTH silent-lane paint: red-hatched roll + a ✕ badge naming the reason.
     const silBadge=L.silent?`<span class="vz-silbadge" title="${esc(L.silReason==="missing"?("missing samples: "+(L.silMissing||[]).join(", ")):(L.silReason==="nan"?"render NaN (blown-up filter/strip)":"buffers present but silent — render-side mute"))}">✕ ${esc(L.silReason||"silent")}</span>`:"";
     // TITLE ABOVE THE ROLL (Paul 2026-07-10): the lane's name+role is its own
@@ -650,8 +650,7 @@ function timelineHTML(tl){
       `<div class="vz-tlhead">`+
       `<div class="vz-tlname"><i style="background:var(${L.col})"></i>${esc(L.name)}${silBadge}</div>`+
       `<div class="vz-tlrole">${esc(L.label)}</div></div>`+
-      roll+`</div>`+
-      fx+`</div>`;
+      roll+`</div></div>`;
    }catch(e){ try{console.warn("inside: lane",L&&L.key,"skipped:",e);}catch(_){} return ""; }
   }).join("");
   // ONE shared playhead spanning every lane (they share the beat grid) —
