@@ -49,18 +49,27 @@ export async function recordVideo(opts) {
   const wasVid = VL && VL.enabled && VL.enabled();
   if (DL && DL.setEnabled && !wasDemo) DL.setEnabled(true);
   if (VL && VL.setEnabled && VL.available && VL.available() && !wasVid) VL.setEnabled(true);
-  if ((!wasDemo && DL) || (!wasVid && VL)) await new Promise(r => setTimeout(r, 700));   // let a clip load + demo spin up
   _restoreDemo = () => {
     if (DL && DL.setEnabled && !wasDemo) try { DL.setEnabled(false); } catch (e) {}
     if (VL && VL.setEnabled && !wasVid) try { VL.setEnabled(false); } catch (e) {}
   };
+  // WAIT for the demoscene to actually be RENDERING before we roll (a blank/loading
+  // demo was why the earlier take was a static frame). Poll up to ~3s.
+  for (let i = 0; i < 30 && !(DL && DL.available && DL.available()); i++) await new Promise(r => setTimeout(r, 100));
+  await new Promise(r => setTimeout(r, 500));   // let a video clip load + the demo spin up
 
-  // output canvas + a RAF compositor: LOCAL video clip (cover-fit) under the
-  // demoscene (screen blend). Tainted frames (a rare remote fallback) are skipped.
+  // output canvas + a compositor: LOCAL video clip (cover-fit) under the demoscene
+  // (screen blend). ATTACHED to the DOM (off-DOM captureStream is unreliable) and
+  // driven at a steady 30 fps via requestFrame — a static off-DOM canvas is what
+  // gave the one-frame / hour-long / VLC-crash file. A moving corner tick guarantees
+  // the frame always CHANGES so no encoder de-dupes to a single keyframe.
   _canvas = document.createElement("canvas");
   _canvas.width = 960; _canvas.height = 540;
+  _canvas.style.cssText = "position:fixed;left:-4px;top:-4px;width:2px;height:2px;opacity:.01;pointer-events:none;z-index:-1";
+  document.body.appendChild(_canvas);
   const cx = _canvas.getContext("2d", { alpha: false });
   const cover = (w, h) => { const sc = Math.max(960 / w, 540 / h); return [w * sc, h * sc]; };
+  let _tick = 0;
   const draw = () => {
     cx.globalCompositeOperation = "source-over";
     cx.fillStyle = "#0a0410"; cx.fillRect(0, 0, 960, 540);
@@ -75,12 +84,21 @@ export async function recordVideo(opts) {
       const [dw, dh] = cover(src.width || 320, src.height || 240);
       cx.drawImage(src, (960 - dw) / 2, (540 - dh) / 2, dw, dh);
     } catch (e) {} }
-    _raf = requestAnimationFrame(draw);
+    cx.globalCompositeOperation = "source-over";
+    _tick = (_tick + 1) % 960; cx.fillStyle = "rgba(255,120,200,.9)"; cx.fillRect(_tick, 538, 3, 2);   // moving tick: never a static frame
   };
-  _raf = requestAnimationFrame(draw);
+  draw();   // first frame before capture starts
 
-  const vStream = _canvas.captureStream(30);
-  const tracks = [...vStream.getVideoTracks(), ...(aStream ? aStream.getAudioTracks() : [])];
+  // captureStream(0) → we push exactly one frame per 33 ms via requestFrame, so the
+  // pace is steady regardless of RAF throttling (a background tab won't stall it).
+  const vStream = _canvas.captureStream(0);
+  const vtrack = vStream.getVideoTracks()[0];
+  const canReq = vtrack && typeof vtrack.requestFrame === "function";
+  const vStream2 = canReq ? vStream : _canvas.captureStream(30);   // fallback: auto 30 fps
+  VIDEO.frames = 0;
+  _raf = setInterval(() => { try { draw(); if (canReq) vtrack.requestFrame(); VIDEO.frames++; } catch (e) {} }, 33);
+  VIDEO.hadAudio = !!(aStream && aStream.getAudioTracks && aStream.getAudioTracks().length);
+  const tracks = [...vStream2.getVideoTracks(), ...(aStream ? aStream.getAudioTracks() : [])];
   const stream = new MediaStream(tracks);
   const mime = pickMime();
   let rec; try { rec = mime != null ? new MediaRecorder(stream, mime ? { mimeType: mime } : undefined) : null; }
@@ -127,10 +145,11 @@ export function stopVideo() {
 }
 
 function cleanup() {
-  if (_raf) { cancelAnimationFrame(_raf); _raf = 0; }
+  if (_raf) { clearInterval(_raf); _raf = 0; }   // _raf is a setInterval handle now
   if (_stopTimer) { clearTimeout(_stopTimer); _stopTimer = 0; }
   if (_progIv) { clearInterval(_progIv); _progIv = 0; } exportProg(null);
   if (_restoreDemo) { try { _restoreDemo(); } catch (e) {} _restoreDemo = null; }
+  try { if (_canvas && _canvas.parentNode) _canvas.parentNode.removeChild(_canvas); } catch (e) {}
   _rec = null; _canvas = null; VIDEO.recording = false; set({});
 }
 

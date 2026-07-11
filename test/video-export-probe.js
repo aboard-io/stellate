@@ -43,20 +43,26 @@ async function main() {
 
   const res = await page.evaluate(async () => {
     try {
-      const blob = await window.__VIDEO.recordVideo({ seconds: 4, noDownload: true });
-      return { size: blob ? blob.size : 0, type: blob ? blob.type : null, status: window.__S.status };
+      const blob = await window.__VIDEO.recordVideo({ seconds: 6, noDownload: true });
+      const V = window.__VIDEO.VIDEO || {};
+      return { size: blob ? blob.size : 0, type: blob ? blob.type : null, status: window.__S.status,
+        frames: V.frames || 0, hadAudio: !!V.hadAudio };
     } catch (e) { return { err: String(e) }; }
   });
 
   console.log(`\n=== VIDEO-EXPORT PROBE ===`);
   console.log(`  button=${hasBtn}  MediaRecorder=${mrOk}`);
-  console.log(`  record -> size=${res.size || 0} type=${res.type || "-"} status="${res.status || res.err || ""}"`);
+  console.log(`  record -> size=${res.size || 0}B frames=${res.frames} audio=${res.hadAudio} type=${res.type || "-"} status="${res.status || res.err || ""}"`);
 
   if (mrOk) {
     ok(!res.err, `V2: recordVideo threw: ${res.err}`);
-    ok((res.size || 0) > 2000, `V3: video capture empty/too small (${res.size || 0} bytes)`);
+    // ~6 s at 30 fps ⇒ ~180 composited frames pushed (not a static one-frame file)
+    ok((res.frames || 0) > 120, `V3: too few frames captured (${res.frames}) — the compositor isn't producing motion`);
+    ok(res.hadAudio, `V4: NO audio track in the recording (audioStream/mediaEl both empty)`);
+    // real animated 960×540 vp9 for 6 s is well over 100 KB (the broken take was a near-static ~200 KB)
+    ok((res.size || 0) > 100000, `V5: video blob suspiciously small (${res.size}B) — likely near-static`);
   } else {
-    console.log("  (MediaRecorder unavailable in this headless build — code path unverified here; needs a real browser, like the iOS-pinch fix)");
+    console.log("  (MediaRecorder unavailable in this headless build — needs a real browser)");
   }
   const otherErrs = errs.filter(e => !/AudioContext|autoplay|user gesture/i.test(e));
   ok(otherErrs.length === 0, `page errors: ${otherErrs.join(" | ")}`);
