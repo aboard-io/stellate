@@ -1410,6 +1410,10 @@
     // behavior for whole-song (press) states, which never churn.
     const spec = lib[pickSampledId(role, m.model, state.instrumentSeed != null ? state.instrumentSeed : state.seed)];
     if (!spec) return m;
+    // SYNTH FONT (B): the picked instrument resolved to a synth voice, not zones —
+    // merge its analog params over the recipe and route to the modeld/dx7 unit
+    // through the EXISTING dispatch (level/sends/register ride through the ...m).
+    if (spec.synth) return { ...m, ...spec.params, model: spec.synth, sampler: null, dx7: spec.synth === "dx7" ? spec.dx7 : null };
     return { ...m, model: "sampler", sampler: spec, dx7: null };
   }
 

@@ -4,6 +4,16 @@
   "label": "FluidR3 GM (default)"
  },
  {
+  "key": "minimoog",
+  "label": "MiniMoog (analog synth)",
+  "synth": true
+ },
+ {
+  "key": "dx7",
+  "label": "Yamaha DX7 (FM)",
+  "synth": true
+ },
+ {
   "key": "sgm",
   "label": "SGM Pro 15"
  },

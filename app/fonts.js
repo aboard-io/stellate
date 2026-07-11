@@ -16,6 +16,10 @@ export function fontManifest() { return manifest; }
 
 async function ensureFont(key) {
   if (registered.has(key)) return true;
+  // SYNTH FONTS (B: MiniMoog/DX7) are built into the kernel — no assets to fetch;
+  // K.setFont already knows them. The manifest flags them with `synth:true`.
+  const entry = manifest.find(f => f.key === key);
+  if (entry && entry.synth) { registered.add(key); return true; }
   try {
     const d = await (await fetch("engine/faust/font-" + key + ".json")).json();
     K.registerFont(key, d); registered.add(key); return true;

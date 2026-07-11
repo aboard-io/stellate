@@ -1393,11 +1393,85 @@
   function setFont(key){ ACTIVE_FONT=(key && FONTS[key])?key:"fluidr3"; }
   function activeFont(){ return ACTIVE_FONT; }
   function fontList(){ return ["fluidr3", ...Object.keys(FONTS)]; }
+
+  // ---------- SYNTH FONTS (B, 2026-07-11: DX7 / MiniMoog) ----------
+  // A NON-sample font: picking it routes the sampler lane to a Faust synth voice
+  // per GM instrument instead of samples (Wendy-Carlos "Switched-On Bach"). No
+  // assets — pure params, registered built-in. OPT-IN + presentational: the
+  // default fluidr3 is untouched, so every deterministic gate stays byte-identical
+  // (state.samplerLib only differs when a synth font is ACTIVE). The kernel
+  // resolves each instrument id to {synth, params}; state-engine's forceSampled
+  // sees `spec.synth` and builds a modeld/dx7 unit through its EXISTING dispatch.
+  // Family classifier: map a GM instrument id to a tonal family, then to a MiniMoog
+  // (modeld: 3 osc + ladder + filter-env + glide) voice — cutoff/res/env/attack/
+  // sustain/drive/oscMix/drift are the analog palette.
+  function instrFamily(id){
+    if(/bass/.test(id)) return "bass";
+    if(/piccolo|flute|recorder|pan_flute|ocarina|whistle/.test(id)) return "flute";
+    if(/sax|clarinet|oboe|bassoon|english_horn|harmonica|bagpipe|accordion|bandoneon|reed/.test(id)) return "reed";
+    if(/trumpet|trombone|tuba|horn|brass/.test(id)) return "brass";
+    if(/violin|viola|cello|contrabass|fiddle|string|pizzicato|bowed_glass/.test(id)) return "string";
+    if(/glocken|celesta|music_box|vibraphone|marimba|xylophone|steel_drum|kalimba|tubular/.test(id)) return "mallet";
+    if(/organ/.test(id)) return "organ";
+    if(/choir|voice|vox|solo_vox/.test(id)) return "voice";
+    if(/guitar|banjo|sitar|harp|koto|shamisen|clav|harpsichord/.test(id)) return "pluck";
+    if(/piano|rhodes|electric_piano|honky|epiano/.test(id)) return "key";
+    return "lead";
+  }
+  // MiniMoog voice per family (modeld params). Osc waveform is fixed in modeld.dsp;
+  // character comes from cutoff/env/attack/sustain/drive/oscMix/drift + glide.
+  const MINIMOOG_FAMILY={
+    bass:  { cutoff:820,  res:0.30, envAmount:1.8, envDecay:0.16, attack:0.004, sustain:0.72, drive:0.32, oscMix:0.68, drift:3,  glide:16, release:0.14 },
+    flute: { cutoff:2600, res:0.08, envAmount:0.5, envDecay:0.30, attack:0.06,  sustain:0.92, drive:0.10, oscMix:0.15, drift:5,  glide:0,  release:0.22 },
+    reed:  { cutoff:1750, res:0.24, envAmount:1.1, envDecay:0.24, attack:0.03,  sustain:0.85, drive:0.22, oscMix:0.42, drift:4,  glide:0,  release:0.20 },
+    brass: { cutoff:1450, res:0.20, envAmount:2.6, envDecay:0.26, attack:0.03,  sustain:0.80, drive:0.36, oscMix:0.50, drift:5,  glide:6,  release:0.24 },
+    string:{ cutoff:1650, res:0.16, envAmount:1.0, envDecay:0.40, attack:0.16,  sustain:0.88, drive:0.16, oscMix:0.50, drift:11, glide:0,  release:0.45 },
+    mallet:{ cutoff:3000, res:0.12, envAmount:1.5, envDecay:0.30, attack:0.002, sustain:0.10, drive:0.14, oscMix:0.30, drift:6,  glide:0,  release:0.30 },
+    organ: { cutoff:2800, res:0.10, envAmount:0.3, envDecay:0.20, attack:0.01,  sustain:0.95, drive:0.18, oscMix:0.50, drift:2,  glide:0,  release:0.10 },
+    voice: { cutoff:1500, res:0.22, envAmount:0.5, envDecay:0.30, attack:0.12,  sustain:0.90, drive:0.12, oscMix:0.35, drift:8,  glide:0,  release:0.30 },
+    pluck: { cutoff:2200, res:0.20, envAmount:2.0, envDecay:0.15, attack:0.003, sustain:0.20, drive:0.20, oscMix:0.40, drift:5,  glide:0,  release:0.18 },
+    key:   { cutoff:2000, res:0.14, envAmount:1.2, envDecay:0.42, attack:0.004, sustain:0.42, drive:0.15, oscMix:0.45, drift:4,  glide:0,  release:0.28 },
+    lead:  { cutoff:2000, res:0.25, envAmount:1.5, envDecay:0.22, attack:0.01,  sustain:0.85, drive:0.25, oscMix:0.50, drift:6,  glide:8,  release:0.20 },
+  };
+  // Role-aware voice pick: modeld is a MONO lead/bass voice, so a chordal PAD
+  // routes to the poly juno60 instead (chords survive) — the mono Moog lead over a
+  // poly-analog pad, the honest "analog ensemble". Returns {voice, params}.
+  function minimoogVoiceFor(id, role){
+    if(role==="pad") return { voice:"juno60", params:{ cutoff:1500, res:0.18, envAmount:1.1, keytrack:0.3,
+      attack:0.5, decay:1.4, sustain:0.72, release:1.7, chorus:1.4 } };
+    return { voice:"modeld", params: MINIMOOG_FAMILY[instrFamily(id)] };
+  }
+  // DX7 (FM) font: every GM instrument → a Yamaha DX7 patch (the 114-patch ROM
+  // bank in DX7_PATCHES, {algorithm, params} = exactly the dx7-unit recipe). Per-
+  // instrument patch where the ROM has a name for it, else the family patch. The
+  // FM sound IS the identity across all roles (dx7 is poly, pool-capped at 2 for
+  // cost → pads read as FM dyads; the honest DX7-in-this-engine limit).
+  const DX7_FAMILY_PATCH={ flute:"FLUTE   1", reed:"CALIOPE", brass:"BRASS   1", string:"STRINGS 1",
+    pluck:"GUITAR  1", bass:"BASS    1", mallet:"VIBE    1", organ:"E.ORGAN 1", voice:"VOICE   1",
+    key:"E.PIANO 1", lead:"SYN-LEAD 1" };
+  const DX7_ID_PATCH={ sitar:"SITAR", banjo:"KOTO", accordion:"ACCORDION", bandoneon:"ACCORDION",
+    celesta:"CELESTE", music_box:"CELESTE", glockenspiel:"CELESTE", marimba:"MARIMBA", steel_drums:"STEEL DRUM",
+    harpsichord:"HARPSICH 1", clavinet:"CLAV    1", bassoon:"BASSOON", vibraphone:"VIBE    1",
+    orchestra_hit:"ORCHESTRA", strings:"STRINGS 1", slow_strings:"STRINGS 3" };
+  function dx7VoiceFor(id, _role){
+    const name=DX7_ID_PATCH[id] || DX7_FAMILY_PATCH[instrFamily(id)] || "E.PIANO 1";
+    const patch=DX7_PATCHES[name] || DX7_PATCHES["E.PIANO 1"];
+    return { voice:"dx7", params:{}, dx7:patch };
+  }
+  // the synth-font registry (built-in; registered into FONTS at init so setFont +
+  // fontList see them). kind:"synth" flips the instrument resolvers to the synth
+  // path; voiceFor(id, role) -> {voice, params[, dx7]}.
+  const SYNTH_FONTS={
+    minimoog: { label:"MiniMoog (analog)", voiceFor:minimoogVoiceFor },
+    dx7:      { label:"Yamaha DX7 (FM)",   voiceFor:dx7VoiceFor },
+  };
+  for(const k of Object.keys(SYNTH_FONTS)) FONTS[k]={ kind:"synth", voiceFor:SYNTH_FONTS[k].voiceFor };
+  function activeSynthFont(){ const F=FONTS[ACTIVE_FONT]; return (F&&F.kind==="synth")?F:null; }
   // resolve an instrument's {sr, zones (raw font shape: file/root/lo/hi/vlo/vhi/
   // loop/ls/le), base sample dir} for the ACTIVE font, per-instrument fallback.
   function fontInstr(id){
     const F=ACTIVE_FONT!=="fluidr3" && FONTS[ACTIVE_FONT];
-    if(F && F.instr[id]) return { sr:F.instr[id].sr, zones:F.instr[id].zones, base:F.base, dir:id };   // gen-font.js writes to <base>/<slug>/
+    if(F && F.instr && F.instr[id]) return { sr:F.instr[id].sr, zones:F.instr[id].zones, base:F.base, dir:id };   // gen-font.js writes to <base>/<slug>/ (SYNTH fonts have no .instr — fall through to default samples for any residual sample callers)
     const S=SAMPLERS[id]; return S ? { sr:S.sr, zones:S.zones, base:"instruments", dir:S.dir } : null;   // default dir may be a renamed dir (tenor_sax -> tenor_sax_fp, immutability law)
   }
 
@@ -7675,6 +7749,16 @@
       return { id, sr:S.sr, zones:S.zones.map((z,i)=>({srcId:"ins_"+id+"_"+i, root:z.root, lo:z.lo, hi:z.hi,
         vlo:z.vlo, vhi:z.vhi, loop:!!z.loop, loopStart:z.ls, loopEnd:z.le })) };
     };
+    // SYNTH FONT (B): the recipe fragment to MERGE for a resolved sampler instrument.
+    // Default → {model:"sampler", sampler:zones}. Under an active synth font →
+    // {model:modeld/dx7 + analog params, sampler:null}, overriding the recipe's
+    // "sampler" model so state-engine builds the synth voice. Merged LAST in toState
+    // so it wins. Opt-in => default fluidr3 returns the exact old sampler fragment.
+    const instrMerge=(id,role)=>{
+      const SF=activeSynthFont();
+      if(SF){ const v=SF.voiceFor(id,role); return { model:v.voice, ...v.params, sampler:null, dx7:v.voice==="dx7"?v.dx7:null }; }
+      return { model:"sampler", sampler:samplerSpec(id) };
+    };
     // SAMPLED DRUM KIT resolution (drums.kit -> per-drum native sampler specs on
     // instruments.drums; faust/state-engine drumSamp overlays them onto the
     // kick/snare/hat/tom voices). Each hit is one UNLOOPED one-shot zone; the hat
@@ -7853,9 +7937,9 @@
         // branch legacy-csound.)
         // inserts: the per-voice insert-FX chain (CONTRACT: [{type,...params}],
         // [] = bypass — see csd-engine defaultInstruments for units)
-        pad:Object.assign(E.defaultInstruments().pad, c.padRecipe, {inserts:c.padInserts||[]}, c.padDx7?{dx7:c.padDx7}:{}, c.padSampler?{sampler:samplerSpec(c.padSampler)}:{}),
-        bass:Object.assign(E.defaultInstruments().bass, c.bassRecipe, {inserts:c.bassInserts||[]}, c.bassDx7?{dx7:c.bassDx7}:{}, c.bassSampler?{sampler:samplerSpec(c.bassSampler)}:{}),
-        melody:Object.assign(E.defaultInstruments().melody, c.leadRecipe, {voices:Math.round(c.leadRecipe.voices||2), inserts:c.leadInserts||[]}, c.leadDx7?{dx7:c.leadDx7}:{}, c.leadSampler?{sampler:samplerSpec(c.leadSampler)}:{}),
+        pad:Object.assign(E.defaultInstruments().pad, c.padRecipe, {inserts:c.padInserts||[]}, c.padDx7?{dx7:c.padDx7}:{}, c.padSampler?instrMerge(c.padSampler,"pad"):{}),
+        bass:Object.assign(E.defaultInstruments().bass, c.bassRecipe, {inserts:c.bassInserts||[]}, c.bassDx7?{dx7:c.bassDx7}:{}, c.bassSampler?instrMerge(c.bassSampler,"bass"):{}),
+        melody:Object.assign(E.defaultInstruments().melody, c.leadRecipe, {voices:Math.round(c.leadRecipe.voices||2), inserts:c.leadInserts||[]}, c.leadDx7?{dx7:c.leadDx7}:{}, c.leadSampler?instrMerge(c.leadSampler,"melody"):{}),
         drums:Object.assign(E.defaultInstruments().drums, c.drumRecipe, drumKit?drumKit.overlay:{}, percOverlay),
       },
       ...(percStyle?{perc:{lanes:percStyle.lanes}}:{}),
@@ -8055,6 +8139,8 @@
   // ?allSampled=1 applies it as a getState transform so it survives retargets/
   // glides). Never touched on the default path — genres press byte-identically.
   const _sampledOnlySpec=(id)=>{
+    const SF=activeSynthFont();
+    if(SF){ const v=SF.voiceFor(id,null); return { id, synth:v.voice, params:v.params }; }   // SYNTH FONT: a synth voice per instrument, no sample zones (role-agnostic on the niche allSampled path)
     const S=fontInstr(id); if(!S) return null;
     return { id, sr:S.sr, zones:S.zones.map((z,i)=>({srcId:"ins_"+id+"_"+i, root:z.root, lo:z.lo, hi:z.hi,
       vlo:z.vlo, vhi:z.vhi, loop:!!z.loop, loopStart:z.ls, loopEnd:z.le })) };
@@ -8083,9 +8169,10 @@
     state.foundSources=state.foundSources||[];
     const have=new Set(state.foundSources.map(s=>s.id));
     // (2) library of every sampled instrument + (3) ride each zone wav in at vol 0
-    const lib={};
+    const lib={}, synthFont=activeSynthFont();
     for(const id of Object.keys(SAMPLERS)){
       lib[id]=_sampledOnlySpec(id);
+      if(synthFont) continue;   // SYNTH FONT: pure synth voices, no zone wavs to inject
       const S=fontInstr(id); if(!S) continue;
       S.zones.forEach((z,i)=>{ const sid="ins_"+id+"_"+i; if(have.has(sid)) return; have.add(sid);
         state.foundSources.push({id:sid,label:(SAMPLERS[id]&&SAMPLERS[id].label)||id,url:"",samplePath:"found/samples/"+S.base+"/"+S.dir+"/"+z.file,vol:0,pitch:1,stretch:0.5,cutoff:18000}); });
