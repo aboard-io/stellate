@@ -428,18 +428,32 @@ function graphSVG(g){
     if(on) cn+=sendPath(cx,oy,cx,delTop,v.del,"--amber");   // del send → delay (upstream)
     cn+=sendPath(cx,oy,cx,revTop,v.rev,"--cyan");            // rev send → reverb
   });
-  if(on) cn+=`<path d="${dcurve(cx,delTop+busH,cx,revTop)}" fill="none" stroke="var(--amber)" stroke-width="${(1+2.2*g.delay.fb).toFixed(2)}" opacity="${(0.34+0.5*g.delay.fb).toFixed(2)}"/>`;   // delay → reverb
-  cn+=`<path d="${dcurve(cx,revTop+busH,cx,mTop)}" fill="none" stroke="var(--cyan)" stroke-width="${(1+2.6*g.reverb.amt).toFixed(2)}" opacity="${(0.3+0.5*g.reverb.amt).toFixed(2)}"/>`;   // reverb → master
-  cn+=`<path d="${dcurve(cx,mBottom,cx,oTop)}" fill="none" stroke="var(--mint)" stroke-width="3" opacity="0.8"/>`;
-  // ---- node layer: each voice = a full-width name box + its chain as chip nodes --
+  if(on) cn+=`<path d="${dcurve(cx,delTop+busH,cx,revTop)}" fill="none" stroke="var(--amber)" stroke-width="${(1+2.2*g.delay.fb).toFixed(2)}" opacity="${(0.34+0.5*g.delay.fb).toFixed(2)}" marker-end="url(#garr)"/>`;   // delay → reverb
+  cn+=`<path d="${dcurve(cx,revTop+busH,cx,mTop)}" fill="none" stroke="var(--cyan)" stroke-width="${(1+2.6*g.reverb.amt).toFixed(2)}" opacity="${(0.3+0.5*g.reverb.amt).toFixed(2)}" marker-end="url(#garr)"/>`;   // reverb → master
+  cn+=`<path d="${dcurve(cx,mBottom,cx,oTop)}" fill="none" stroke="var(--mint)" stroke-width="3" opacity="0.8" marker-end="url(#garr)"/>`;
+  // ---- node layer: each voice = a full-width name box + its fx chain drawn as
+  // CONNECTED, directed nodes (voice → fx1 → fx2 → … → sends), so the signal flow
+  // through the series is legible, not a floating chip list (Paul 2026-07-11: "I
+  // can't see how they're connected"). Arrowheads (url(#garr)) show direction.
+  const arr=(x1,y1,x2,y2)=>`<path d="M${x1.toFixed(1)} ${y1.toFixed(1)} L${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="var(--dim)" stroke-width="1.1" opacity="0.62" marker-end="url(#garr)"/>`;
   let nd="";
   V.forEach((it,i)=>{ const v=it.v, y0=vy[i];
     nd+=`<rect x="${mgX}" y="${y0}" width="${innerW}" height="${nameH}" rx="6" class="gnode" style="stroke:var(${v.col})"/>`;
     nd+=`<text x="${mgX+8}" y="${(y0+16).toFixed(1)}" class="gtx">${esc(v.name)}</text>`;
-    if(!it.chips.length) nd+=`<text x="${W-mgX-8}" y="${(y0+16).toFixed(1)}" text-anchor="end" class="gsub">dry</text>`;
-    for(const c of it.chips){ const cyp=y0+nameH+3+c.row*chipRowH;
-      nd+=`<rect x="${(mgX+c.x).toFixed(1)}" y="${cyp}" width="${c.w}" height="${chipH}" rx="4" class="gins"/>`;
-      nd+=`<text x="${(mgX+c.x+c.w/2).toFixed(1)}" y="${(cyp+12).toFixed(1)}" text-anchor="middle" class="gchip">${esc(c.label)}</text>`;
+    if(!it.chips.length){ nd+=`<text x="${W-mgX-8}" y="${(y0+16).toFixed(1)}" text-anchor="end" class="gsub">dry →</text>`; }
+    else {
+      // connectors FIRST (chips drawn on top so the arrows read into each node)
+      let px=null, py=null;
+      it.chips.forEach((c,ci)=>{ const cyp=y0+nameH+3+c.row*chipRowH, lx=mgX+c.x, my=cyp+chipH/2;
+        if(ci===0) nd+=arr(lx+5, y0+nameH-1, lx+5, cyp-1);   // voice box → first fx
+        else nd+=arr(px, py, lx, my);                         // prev fx → this fx (elbow across a wrap)
+        px=mgX+c.x+c.w; py=my;
+      });
+      if(px!=null) nd+=arr(px, py, cx, vy[i]+it.h-1);         // last fx → the sends (down to the bus)
+      for(const c of it.chips){ const cyp=y0+nameH+3+c.row*chipRowH;
+        nd+=`<rect x="${(mgX+c.x).toFixed(1)}" y="${cyp}" width="${c.w}" height="${chipH}" rx="4" class="gins"/>`;
+        nd+=`<text x="${(mgX+c.x+c.w/2).toFixed(1)}" y="${(cyp+12).toFixed(1)}" text-anchor="middle" class="gchip">${esc(c.label)}</text>`;
+      }
     }
   });
   if(on){
@@ -459,7 +473,8 @@ function graphSVG(g){
   const hd=`<text x="${mgX}" y="16" class="ghead">voices · effects</text>`+
     `<text x="${mgX}" y="${((on?delTop:revTop)-7).toFixed(1)}" class="ghead">sends → bus</text>`+
     `<text x="${mgX}" y="${(mTop-7).toFixed(1)}" class="ghead">master</text>`;
-  return `<svg viewBox="0 0 ${W} ${H}" class="vz-graph" preserveAspectRatio="xMidYMid meet">${cn}${nd}${hd}</svg>`;
+  const defs=`<defs><marker id="garr" markerWidth="7" markerHeight="7" refX="5.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L6 3 L0 6 z" fill="var(--dim)"/></marker></defs>`;
+  return `<svg viewBox="0 0 ${W} ${H}" class="vz-graph" preserveAspectRatio="xMidYMid meet">${defs}${cn}${nd}${hd}</svg>`;
 }
 export function vizData(){
   const st=S.playing;
