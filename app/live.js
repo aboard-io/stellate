@@ -18,6 +18,14 @@ export function setMasterVol(v){
   try{ localStorage.setItem("vaporwave-master-vol",String(g)); }catch(e){}
   try{ if(faustHandle&&faustHandle.setMasterVol) faustHandle.setMasterVol(g); }catch(e){}
 }
+// VAPOR (C.1) — live-only master EQ ("walking through a mall"), 0..1; persisted,
+// applied live to the classic engine handle (the WAV path has no live graph).
+export function setVapor(v){
+  const g=Math.max(0,Math.min(1,+v||0));
+  S.vapor=g;
+  try{ localStorage.setItem("vaporwave-vapor",String(g)); }catch(e){}
+  try{ if(faustHandle&&faustHandle.setVapor) faustHandle.setVapor(g); }catch(e){}
+}
 // ---------- boot progress: honest warm-up meter (play tap -> first audio) ----
 // The live boot has real, observable phases (faust/live.js emits them via
 // onStatus, plus onBar for the first scheduled bar): "loading Faust modules…"
@@ -231,7 +239,7 @@ export async function goLive(){
     // EXPERIMENT: ?allSampled=1 — enrich every state the engine polls (survives
     // retargets/glides since it wraps the getState boundary, not a one-time set).
     if(ALLSAMPLED){ const raw=getState; getState=()=>{ const st=raw(); return st?K.applySampledOnly(st):st; }; }
-    faustHandle=await FaustLive.exploreLive(getState, m=>{set({status:m}); bootStatus(m);}, { forceClassicOut:FORCE_CLASSIC, forceMediaEl:FORCE_MEDIAEL, wavOut:WAVOUT, segAB:SEGAB, codec:CODEC, startBar:S.startBar||0, masterVol:S.masterVol, onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
+    faustHandle=await FaustLive.exploreLive(getState, m=>{set({status:m}); bootStatus(m);}, { forceClassicOut:FORCE_CLASSIC, forceMediaEl:FORCE_MEDIAEL, wavOut:WAVOUT, segAB:SEGAB, codec:CODEC, startBar:S.startBar||0, masterVol:S.masterVol, vapor:S.vapor, onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
       bootBar();   // first bar scheduled -> advance the warm-up bar, then it waits on real RMS
       set({barInfo:info,barCount:S.barCount+1});
       urlTick();   // the address bar carries the measure — copying it bookmarks THIS moment
