@@ -241,7 +241,7 @@ async function assemble(state, sched, env, opts) {
       if (u.inserts && u.inserts.length) {
         const ubuf = new Float32Array(TOTAL);
         SP.mixPCM(notes, buffers, SR, { dry: ubuf, rev: ubuf, del: ubuf },
-          { dry: 1, rev: 0, del: 0, strip: u.sampler.strip });
+          { dry: 1, rev: 0, del: 0, strip: u.sampler.strip, granularOverSt: u.sampler.granularOverSt, grainSec: u.sampler.grainSec });
         for (const eff of u.inserts) {
           const ip = await mkProc(eff.module);
           const IR = "/" + rootOf(eff.module) + "/";
@@ -268,7 +268,7 @@ async function assemble(state, sched, env, opts) {
         continue;
       }
       SP.mixPCM(notes, buffers, SR, { dry, rev, del, dryL: wL, dryR: wR },
-        { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip });
+        { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip, granularOverSt: u.sampler.granularOverSt, grainSec: u.sampler.grainSec });
       console.log(`  ${key}: ${notes.length} ev -> sampler:${u.sampler.id} (native PCM, ${u.sampler.zones.length} zones)` +
         (u.carve ? ` [carve: shares ${u.carve} — HPF/mud-dip]` : "") + (u.pan ? ` [pan ${u.pan}]` : ""));
       continue;

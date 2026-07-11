@@ -1612,7 +1612,7 @@
       bpm:[62,88], swing:[0,.12], humanize:[.05,.25],
       progressions:["royal_road","dream","pop_1625","neosoul"], kits:["full","open","halftime"], fills:["drum fill","riser","downlift","off"],
       bass:{patterns:["simple","walking","root"], recipe:{model:["saw"],cutoff:[500,900],res:[.1,.25],level:[.9,1.1],send:[.05,.15],dsend:[0,.1]}},
-      lead:{patterns:["composed","composed2","arpup","wander"], patchPool:["E.PIANO 1","TUB BELLS","E.PIANO 4","SHIMMER"], samplerPool:["alto_sax","tenor_sax"], recipe:{model:["stack","stack","dx7","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.003,.006],cutoff:[2800,4000],level:[.4,.52],send:[.4,.6],dsend:[.2,.4],vibrato:[.004,.009],octave:.2,attack:.08,release:[.45,.6],sustain:[.85,.95]},
+      lead:{patterns:["composed","composed2","arpup","wander"], patchPool:["E.PIANO 1","TUB BELLS","E.PIANO 4","SHIMMER"], samplerPool:["alto_sax","tenor_sax"], recipe:{model:["stack","stack","dx7","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.003,.006],cutoff:[2800,4000],level:[.4,.52],send:[.4,.6],dsend:[.2,.4],vibrato:[.004,.009],octave:.2,attack:.08,release:[.45,.6],sustain:[.85,.95],granular:4},   // granular repitch (A.2): the slowed mall sax keeps its breath/length when dragged far from a zone root instead of chipmunking (sampler-model draws only; stack/dx7 ignore it)
         inserts:{prob:.5, max:1, pool:[["chorus",{rate:[.5,1.1],depth:[.5,.7],mix:[.4,.6]}]]}},   // envelope identity (ex-ARTIC): lush sine wash — OWNS the legato-sine corner   // DX7 shelf all alg 5 -> blends MORPH between them; 1/4: THE mall sax (sampled, real) — the slowed-down smooth-jazz ghost
       pads:{prob:1, samplerPool:["ahh_choir","strings"], recipe:{model:["saw","choir","strings","sampler"],wave:"saw",cutoff:[1100,1800],detune:[.004,.009],attack:[1.2,2.4],mellotron:true,level:[.6,.8],send:[.5,.7],dsend:[.1,.25]},
         inserts:{prob:.55, max:1, pool:[["chorus",{rate:[.2,.5],depth:[.5,.75],mix:[.4,.6]}]]}},   // dreampop-wash chorus on the pad bed, now through the MELLOTRON tape head — the worn-VHS wow/flutter IS the vaporwave move (matrix-invisible flag; the ahh_choir+strings pad is the perfect substrate)
@@ -6376,6 +6376,7 @@
       }
       return side();
     };
+    const RECIPE_PASSTHROUGH = new Set(["granular", "grainSec"]);   // render-only sampler flags — never draw
     const blendRecipe = (get) => {
       const out={}, keys=new Set();
       ws.forEach(x=>Object.keys(get(GENRES[x.g])).forEach(k=>keys.add(k)));
@@ -6384,6 +6385,12 @@
         const have=ws.filter(x=>get(GENRES[x.g])[k]!=null);
         if(!have.length) continue;
         const v=get(have[0].g?GENRES[have[0].g]:GENRES[ws[0].g])[k];
+        // RENDER-ONLY numeric flags (granular threshold &c): pass the dominant
+        // parent's literal through with ZERO rng draws, so opting a genre in
+        // perturbs no downstream draw — the COMPOSITION is byte-identical and only
+        // the sampler render changes. (A plain scalar would else hit the numeric
+        // branch below and burn an inRange draw, rewriting the whole track.)
+        if(RECIPE_PASSTHROUGH.has(k)){ out[k]=v; continue; }
         if(Array.isArray(v)&&typeof v[0]==="string"){                 // model pool: draw a parent that has it
           let r=rng()*have.reduce((s,x)=>s+x.w,0), acc=0, src=have[have.length-1];
           for(const x of have){ acc+=x.w; if(r<=acc){ src=x; break; } }

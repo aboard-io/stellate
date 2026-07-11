@@ -347,7 +347,7 @@
             const holdN = Math.max(Math.max(8, Math.floor((n.atk || 0.01) * SR)), Math.floor(n.durSec * SR));
             n._end = n._s0 + holdN + relN;
           }
-          const su = { notes, role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip, pan: u.pan || 0 } };
+          const su = { notes, role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip, pan: u.pan || 0, granularOverSt: u.sampler.granularOverSt, grainSec: u.sampler.grainSec } };
           // INSERTS-ON-SAMPLED-VOICES: persistent insert procs for the unit's
           // declared chain (renderChunk mixes the unit pre-send into a window
           // buffer, runs the chain, THEN applies sends — the render-core law).
@@ -538,7 +538,7 @@
           if (!u || !u.sampler) continue;
           let su = ST.samplerUnits.get(key);
           if (!su) {
-            su = { notes: [], role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip, pan: u.pan || 0 } };
+            su = { notes: [], role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip, pan: u.pan || 0, granularOverSt: u.sampler.granularOverSt, grainSec: u.sampler.grainSec } };
             // INSERTS-ON-SAMPLED-VOICES (wavOut lane): same persistent chain as open()
             if (u.inserts && u.inserts.length) { su.chain = await mkChain(u.inserts); su.chainBarSet = false; }
             ST.samplerUnits.set(key, su);
@@ -632,7 +632,7 @@
             // POST-chain (that is the dry energy that actually reaches the mix).
             const ubuf = new Float32Array(LEN);
             if (win.length) SP.mixPCM(win, ST.buffers, SR, { dry: ubuf, rev: ubuf, del: ubuf },
-              { dry: 1, rev: 0, del: 0, strip: su.sends.strip }, { base, len: LEN, total: TOTAL }, meter);
+              { dry: 1, rev: 0, del: 0, strip: su.sends.strip, granularOverSt: su.sends.granularOverSt, grainSec: su.sends.grainSec }, { base, len: LEN, total: TOTAL }, meter);
             runChain(su, ubuf, LEN, spb);
             const dg = su.sends.dry != null ? su.sends.dry : 1, rg = su.sends.rev || 0, lg = su.sends.del || 0;
             // MASTERING pan (press's insert-path law: unit-level pan post-chain)
