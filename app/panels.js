@@ -11,6 +11,7 @@ import { renderInside } from "./inside.js";
 import { bgSetVideo, bgVideoOn } from "./background.js";
 import { drawMap, startPulse } from "./starmap.js";
 import { EXPORT, downloadMidi, exportAudio, exportLoopAudio } from "./export.js";
+import { recordVideo, stopVideo, VIDEO } from "./video-export.js";
 // ⤓ audio: the WHOLE PATH when a loop is drawn (Paul: "export the entire path"),
 // else the current song — mirrors downloadMidi's own whole-path routing.
 const exportAudioSmart = (fmt) => (S.waypoints.length >= 2 ? exportLoopAudio(fmt) : exportAudio(fmt));
@@ -73,6 +74,9 @@ function Panel(){
       <button disabled=${!S.playing||EXPORT.busy}
         title=${!S.playing?"nothing playing yet — the buttons capture the current song":(S.waypoints.length>=2?"render the ENTIRE PATH and encode MP3 (192kbps) — the whole journey, in your browser":"render the current song and encode MP3 (192kbps) — everything happens in your browser, takes a minute")}
         onclick=${()=>exportAudioSmart("mp3")}>⤓ mp3</button>
+      <button disabled=${!S.playing}
+        title=${!S.playing?"press ▶ LIVE first — video records the live visuals + audio":"record ~30s of the live visuals + audio to a .webm video (records in real time as the loop plays)"}
+        onclick=${()=>VIDEO.recording?stopVideo():recordVideo({seconds:30})}>${VIDEO.recording?"⏹ stop":"⏺ video"}</button>
     </div>
     <p class="hint">dbl-tap the sky to add a waypoint · drag the pink playhead to scrub ·
     right-click a waypoint to erase · stop twice to rewind · the URL is the bookmark</p>`;
