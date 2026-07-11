@@ -316,6 +316,144 @@ function timelineLanes(st, roster, found, bar, audit){
   }
   return lanes;
 }
+// ---------- MIXING NODE GRAPH: the signal-flow topology under the rolls --------
+// Paul 2026-07-10: "the effects being text isn't working for me — render the full
+// mixing node graph ... showing how effects are invoked and what levels are." A
+// visual replacement for the master effects TEXT line: each voice unit → its
+// per-voice INSERT chain (in order, type + mix) → its DRY/REV/DEL sends (send
+// LEVEL = line width + opacity) → the shared REVERB (color) + DELAY + MASTER bus
+// → OUT. Pure/read-only off the SAME voiceUnits + resolved state the engine
+// voices (zero rng, numeric layout — byte-stable in the headless gate).
+// friendly insert names (mirror state-engine INSERT_LABELS — can't import engine/).
+const INSERT_LABEL={ distort:"drive", higain:"amp", fenv:"filter env", phaser:"phaser",
+  chorus:"chorus", filtersweep:"filter", wah:"auto-wah", tremolo:"tremolo", leslie:"leslie",
+  flanger:"flanger", delay:"echo", ringmod:"ring", granular:"grains" };
+const REV_LABEL={ dattorro:"plate", greyhole:"hall", fdn:"room", spring:"spring", shimmer:"shimmer" };
+const gtrunc=(s,n)=>{ s=String(s||""); return s.length>n?s.slice(0,n-1)+"…":s; };
+// reduce the live voiceUnits (U) + resolved state + this bar's events to the graph
+// nodes actually present: pitched voices always, a counter/stab lane only when it
+// fires this bar, the drum kit as ONE node (max send across its firing pieces).
+function graphData(st, U, bar){
+  if(!st||!U) return null;
+  const notes=(bar&&bar.notes)||[];
+  const mkVoice=(name,col,key)=>{
+    const u=U[key]; if(!u||u.__meta) return null;
+    const inserts=(Array.isArray(u.inserts)?u.inserts:[]).slice(0,2).map(it=>({
+      label:INSERT_LABEL[it.type]||it.type,
+      mix:(it&&it.params&&it.params.mix!=null)?it.params.mix:null }));
+    return { name:gtrunc(name,16), col, inserts,
+      dry:u.dry!=null?u.dry:1, rev:u.rev||0, del:u.del||0 };
+  };
+  const voices=[], push=v=>{ if(v) voices.push(v); };
+  const I=st.instruments||{};
+  if(I.pad)    push(mkVoice(voiceName("pad",I.pad,st),"--purple","pad"));
+  if(I.bass)   push(mkVoice(voiceName("bass",I.bass,st),"--cyan","bass"));
+  if(I.melody) push(mkVoice(voiceName("melody",I.melody,st),"--pink","melody"));
+  // counter/solo lane — shares the melody recipe; only graph it when it sounds
+  const soloKey=Object.keys(U).find(k=>k.indexOf("solo:")===0);
+  if(soloKey&&notes.some(n=>n.role==="solo")) push(mkVoice("counter lead","--amber",soloKey));
+  // drum kit → one node aggregating the pieces firing this bar (max rev/del send)
+  const kitOn=!!(st.genreMeta&&st.genreMeta.kit&&st.genreMeta.kit!=="off");
+  if(kitOn){
+    const pieces=new Set();
+    for(const n of notes) if(n.role==="drums"&&U[n.unit]) pieces.add(n.unit);
+    if(pieces.size){
+      let rev=0,del=0; const ins=[];
+      for(const k of pieces){ const u=U[k]; rev=Math.max(rev,u.rev||0); del=Math.max(del,u.del||0);
+        for(const it of (u.inserts||[])) ins.push({label:INSERT_LABEL[it.type]||it.type,
+          mix:(it.params&&it.params.mix!=null)?it.params.mix:null}); }
+      voices.push({ name:gtrunc(kitChar(st.genreMeta.kit),16), col:"--mint", inserts:ins.slice(0,2), dry:1, rev, del });
+    }
+  }
+  // synth stab / fx sweep lanes when they actually fire this bar
+  for(const k of ["stab","sfx"]) if(U[k]&&notes.some(n=>n.unit===k))
+    push(mkVoice(k==="stab"?"synth stabs":"fx sweep","--amber",k));
+  if(!voices.length) return null;
+  const dl=st.delay;
+  return {
+    voices,
+    reverb:{ label:REV_LABEL[st.reverbColor]||"reverb", amt:clamp01(st.reverb!=null?st.reverb:0.3) },
+    delay:{ on:!!(dl&&(dl.beats||dl.feedback)), fb:clamp01(dl&&dl.feedback!=null?dl.feedback:0.3) },
+    master:{ comp:clamp01(st.comp||0), grit:clamp01(st.grit||0), pump:clamp01(st.pump||0), mb:!!(st.masterComp>0) },
+  };
+}
+// render the graph as one inline SVG, flowing TOP → BOTTOM so it stays legible on
+// a phone (a portrait column, not a wide horizontal fan that shrinks to nothing):
+// voice rows with their insert chain at the top → send curves fanning DOWN to the
+// shared reverb/delay bus → both into master → out at the bottom. Send LEVEL drives
+// each curve's stroke width + opacity; insert mix + reverb amount + delay fb +
+// master comp/drive/pump show as numbers. Numeric layout only (no font measurement)
+// so it's identical across loads / in the headless gate. W is phone-narrow; CSS
+// caps max-width so the same portrait shape reads on desktop.
+function graphSVG(g){
+  if(!g||!g.voices.length) return "";
+  const N=g.voices.length, W=340, mgX=8, cx=W/2;
+  const vTop=28, vH=44, nodeH=28, nameW=150, chipW=60, chipGap=7;
+  const chipX=k=>mgX+nameW+chipGap+k*(chipW+chipGap);
+  const voiceOutX=v=>Math.min(v.inserts.length?chipX(v.inserts.length-1)+chipW:mgX+nameW, W-mgX);
+  const vY=i=>vTop+i*vH, vCy=i=>vY(i)+nodeH/2;
+  const voicesBottom=vTop+N*vH;
+  // ── bus STACK: delay feeds reverb (Paul: "delay should come before reverb"),
+  // which is also the engine truth — rev_bleed(del,pp) bleeds into the reverb
+  // color, then reverb → master. Stacked vertically (delay above reverb) so the
+  // serial order reads down the column; reverb sits alone when there's no delay.
+  const on=g.delay.on, busW=204, busX=(W-busW)/2, busH=28;
+  const delTop=on?voicesBottom+34:0, delCy=delTop+busH/2;
+  const revTop=on?delTop+busH+26:voicesBottom+34, revCy=revTop+busH/2;
+  // master badges decide its height
+  const M=g.master, mb=[];
+  if(M.comp>0.02) mb.push("comp "+Math.round(M.comp*100));
+  if(M.grit>0.02) mb.push("drive "+Math.round(M.grit*100));
+  if(M.pump>0.02) mb.push("pump "+Math.round(M.pump*100));
+  if(M.mb) mb.push("MB comp");
+  const mW=232, mX=(W-mW)/2, mTop=revTop+busH+42, mH=30+mb.length*13, mBottom=mTop+mH;
+  const oW=64, oX=(W-oW)/2, oTop=mBottom+34, oH=28, oCy=oTop+oH/2, H=oTop+oH+12;
+  // downward bezier (control points offset in Y)
+  const dcurve=(x1,y1,x2,y2)=>{ const dy=Math.max(14,(y2-y1)*0.45);
+    return `M${x1.toFixed(1)} ${y1.toFixed(1)} C${x1.toFixed(1)} ${(y1+dy).toFixed(1)} ${x2.toFixed(1)} ${(y2-dy).toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`; };
+  const sendPath=(x1,y1,x2,y2,val,col)=>{ const v=clamp01(Math.min(1,val)); if(v<=0.02) return "";
+    return `<path d="${dcurve(x1,y1,x2,y2)}" fill="none" stroke="var(${col})" stroke-width="${(0.7+3.3*v).toFixed(2)}" opacity="${(0.22+0.6*v).toFixed(2)}"/>`; };
+  // ---- connection layer (drawn first, so the opaque node rects cover the joins) --
+  let cn="";
+  g.voices.forEach((v,i)=>{ const ox=voiceOutX(v), oy=vY(i)+nodeH;
+    cn+=`<path d="${dcurve(ox,oy,cx,mTop)}" fill="none" stroke="var(--line2)" stroke-width="${(0.6+1.1*clamp01(v.dry)).toFixed(2)}" opacity="${(0.14+0.2*clamp01(v.dry)).toFixed(2)}"/>`;
+    if(on) cn+=sendPath(ox,oy,cx,delTop,v.del,"--amber");   // del send → delay (upstream)
+    cn+=sendPath(ox,oy,cx,revTop,v.rev,"--cyan");            // rev send → reverb
+  });
+  if(on) cn+=`<path d="${dcurve(cx,delTop+busH,cx,revTop)}" fill="none" stroke="var(--amber)" stroke-width="${(1+2.2*g.delay.fb).toFixed(2)}" opacity="${(0.34+0.5*g.delay.fb).toFixed(2)}"/>`;   // delay → reverb
+  cn+=`<path d="${dcurve(cx,revTop+busH,cx,mTop)}" fill="none" stroke="var(--cyan)" stroke-width="${(1+2.6*g.reverb.amt).toFixed(2)}" opacity="${(0.3+0.5*g.reverb.amt).toFixed(2)}"/>`;   // reverb → master
+  cn+=`<path d="${dcurve(cx,mBottom,cx,oTop)}" fill="none" stroke="var(--mint)" stroke-width="3" opacity="0.8"/>`;
+  // ---- node layer ----
+  let nd="";
+  g.voices.forEach((v,i)=>{ const y=vY(i), ty=(vCy(i)+4).toFixed(1);
+    nd+=`<rect x="${mgX}" y="${y}" width="${nameW}" height="${nodeH}" rx="6" class="gnode" style="stroke:var(${v.col})"/>`;
+    nd+=`<text x="${mgX+8}" y="${ty}" class="gtx">${esc(v.name)}</text>`;
+    v.inserts.forEach((ins,k)=>{ const bx=chipX(k), px=k===0?mgX+nameW:chipX(k-1)+chipW, my=vCy(i);
+      nd+=`<line x1="${px}" y1="${my.toFixed(1)}" x2="${bx}" y2="${my.toFixed(1)}" stroke="var(--line2)" stroke-width="1" opacity="0.5"/>`;
+      nd+=`<rect x="${bx}" y="${y}" width="${chipW}" height="${nodeH}" rx="5" class="gins"/>`;
+      nd+=`<text x="${bx+chipW/2}" y="${(ins.mix!=null?my-1:my+4).toFixed(1)}" text-anchor="middle" class="gtx">${esc(ins.label)}</text>`;
+      if(ins.mix!=null) nd+=`<text x="${bx+chipW/2}" y="${(my+9).toFixed(1)}" text-anchor="middle" class="gmix">${Math.round(ins.mix*100)}%</text>`;
+    });
+  });
+  if(on){
+    nd+=`<rect x="${busX}" y="${delTop}" width="${busW}" height="${busH}" rx="6" class="gdel"/>`;
+    nd+=`<text x="${busX+8}" y="${(delCy+4).toFixed(1)}" class="gtx">delay</text>`;
+    nd+=`<text x="${busX+busW-8}" y="${(delCy+4).toFixed(1)}" text-anchor="end" class="gdsub">fb ${Math.round(g.delay.fb*100)}%</text>`;
+  }
+  nd+=`<rect x="${busX}" y="${revTop}" width="${busW}" height="${busH}" rx="6" class="grev"/>`;
+  nd+=`<text x="${busX+8}" y="${(revCy+4).toFixed(1)}" class="gtx">${esc(g.reverb.label)}</text>`;
+  nd+=`<text x="${busX+busW-8}" y="${(revCy+4).toFixed(1)}" text-anchor="end" class="gmix">${Math.round(g.reverb.amt*100)}%</text>`;
+  nd+=`<rect x="${mX}" y="${mTop}" width="${mW}" height="${mH.toFixed(1)}" rx="6" class="gmaster"/>`;
+  nd+=`<text x="${cx}" y="${(mTop+18).toFixed(1)}" text-anchor="middle" class="gtx">master</text>`;
+  mb.forEach((t,k)=>{ nd+=`<text x="${cx}" y="${(mTop+31+k*13).toFixed(1)}" text-anchor="middle" class="gsub">${esc(t)}</text>`; });
+  nd+=`<rect x="${oX}" y="${oTop}" width="${oW}" height="${oH}" rx="6" class="gout"/>`;
+  nd+=`<text x="${cx}" y="${(oCy+4).toFixed(1)}" text-anchor="middle" class="goutx">out</text>`;
+  // ---- band captions (left-aligned in the gaps between stages) ----
+  const hd=`<text x="${mgX}" y="16" class="ghead">voices</text>`+
+    `<text x="${mgX}" y="${((on?delTop:revTop)-7).toFixed(1)}" class="ghead">sends → bus</text>`+
+    `<text x="${mgX}" y="${(mTop-7).toFixed(1)}" class="ghead">master</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" class="vz-graph" preserveAspectRatio="xMidYMid meet">${cn}${nd}${hd}</svg>`;
+}
 export function vizData(){
   const st=S.playing;
   const blend=(S.weights||[]).slice().sort((a,b)=>b.w-a.w).slice(0,4)
@@ -349,7 +487,8 @@ export function vizData(){
   }catch(e){}
   const timeline={cbeats:bar.cbeats, view:VIEW, pages:Math.max(1,Math.ceil(bar.cbeats/VIEW)),
     spb:bar.spb, bpm:bar.bpm, lanes:timelineLanes(st, roster, found, bar, auditSilent), audit:auditSilent};
-  return {blend, feel:feelAxes(st), roster, found, info, master:masterFx(st), timeline, mind:mindData(st)};
+  let graph=null; try{ graph=graphData(st, U, bar); }catch(e){}
+  return {blend, feel:feelAxes(st), roster, found, info, master:masterFx(st), timeline, graph, mind:mindData(st)};
 }
 // ---------- MIND: the MUSIC-MIND axes the state actually carries ----------
 // state.theory (adventure/color/voicing — the harmony brain), state.pipes (the
@@ -496,9 +635,10 @@ function timelineHTML(tl){
     const fx=(L.fx&&L.fx.length)?`<div class="vz-fxline">${L.fx.map(esc).join(" · ")}</div>`:"";
     // AUDIT-TRUTH silent-lane paint: red-hatched roll + a ✕ badge naming the reason.
     const silBadge=L.silent?`<span class="vz-silbadge" title="${esc(L.silReason==="missing"?("missing samples: "+(L.silMissing||[]).join(", ")):(L.silReason==="nan"?"render NaN (blown-up filter/strip)":"buffers present but silent — render-side mute"))}">✕ ${esc(L.silReason||"silent")}</span>`:"";
-    // ROW = [header + roll] stacked ABOVE the fx line, so effects sit BENEATH the
-    // piano-roll (not beside it, which squished the grid) and every roll aligns on
-    // an even vertical rhythm regardless of how long a voice's fx chain is.
+    // TITLE ABOVE THE ROLL (Paul 2026-07-10): the lane's name+role is its own
+    // full-width header ABOVE the piano-roll (was a fixed 128px column beside it),
+    // so every roll spans the full width and the lanes breathe vertically. The tiny
+    // fx caption still rides BENEATH the roll.
     // the roll: ONE 8-cell row per lane, always. Longer chord bars ride a pager
     // strip clipped behind the fixed grid; a page flip is a fast slide, not a scroll.
     const inner=lanePages(L,cb).map((h,p)=>`<div class="vz-page" style="width:${pw}%">${h}`+
@@ -506,7 +646,8 @@ function timelineHTML(tl){
     const roll=`<div class="vz-roll${L.silent?" vz-silent":""}" style="background-image:${grid}">`+
       `<div class="vz-pager" style="width:${pages*100}%;transform:translateX(${shift}%)">${inner}</div></div>`;
     return `<div class="vz-tlrow${L.silent?" vz-silent":""}">`+
-      `<div class="vz-tlmain"><div class="vz-tlhead">`+
+      `<div class="vz-tlmain">`+
+      `<div class="vz-tlhead">`+
       `<div class="vz-tlname"><i style="background:var(${L.col})"></i>${esc(L.name)}${silBadge}</div>`+
       `<div class="vz-tlrole">${esc(L.label)}</div></div>`+
       roll+`</div>`+
@@ -571,7 +712,12 @@ export function renderInside(){
   const d=vizData();
   const seg=d.blend.filter(b=>b.pct>0).map(b=>`<div style="width:${b.pct}%;background:${genreCol(b.g)}" title="${esc(b.label)} ${b.pct}%"></div>`).join("");
   const legend=d.blend.filter(b=>b.pct>0).map(b=>`<span class="vz-g"><i style="background:${genreCol(b.g)}"></i>${esc(b.label)} <b>${b.pct}%</b></span>`).join("");
-  const masterLine=(d.master&&d.master.length)?`<div class="vz-in vz-master"><span class="vz-ir">master</span><div class="vz-fxline">${d.master.map(esc).join(" · ")}</div></div>`:"";
+  // the MASTER effects text line is replaced by the visual MIXING NODE GRAPH
+  // (Paul 2026-07-10: "the effects being text isn't working for me"). Guarded like
+  // the timeline — a graph hiccup must never blank the whole panel.
+  let graphHtml=""; try{ if(d.graph){ const svg=graphSVG(d.graph);
+    if(svg) graphHtml=`<div class="vz-sec"><div class="vz-lbl">signal flow — how effects are invoked</div>${svg}</div>`; } }
+  catch(e){ try{console.warn("inside: graph render skipped:",e);}catch(_){}}
   // the mind's MOVES (voicing + active pipes) ride as one quiet text line under
   // the radar — the adventure/color/motion NUMBERS are radar axes now (Paul
   // 2026-07-10: no numeric readouts, one unified vector display).
@@ -589,7 +735,8 @@ export function renderInside(){
       `<div class="vz-bar">${seg}</div><div class="vz-leg">${legend}</div>`+
       (d.info?`<div class="vz-info">${esc(d.info)}</div>`:"")+`</div>`+
     `<div class="vz-sec">${radarSVG(d.feel)}${moves}</div>`+
-    `<div class="vz-sec">${tlHtml}${masterLine}</div>`;
+    `<div class="vz-sec">${tlHtml}</div>`+
+    graphHtml;
   // arm the playhead ticker only when it has work (live + modal open); it stops itself.
   const wrap=document.getElementById("insideWrap");
   if(S.live&&wrap&&wrap.classList.contains("open")) ensurePhTicker();

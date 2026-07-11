@@ -126,7 +126,7 @@
   /* effects as tiny text UNDER each lane's roll — no stacked lozenges */
   /* fx tiny-text beneath the roll, indented to align under it (past the 128px head) */
   .vz-fxline{font-size:9px;line-height:1.4;letter-spacing:.02em;color:var(--dim);opacity:.72;
-    margin:0;margin-left:calc(128px + .5rem);white-space:normal}
+    margin:.1rem 0 0;white-space:normal}
   .vz-master .vz-fxline{color:var(--amber);opacity:.85;margin-left:0}
   .vz-fx{display:inline-flex;flex-wrap:wrap;gap:.28rem}
   .vz-fx i{font-style:normal;font-size:11px;line-height:1.5;letter-spacing:.02em;color:var(--cyan);
@@ -136,18 +136,20 @@
   .vz-found{margin-top:.4rem;font:14px VT323,monospace;color:var(--cyan);opacity:.85}
   /* the VOICE TIMELINE: a lane per instrument, a beat-gridded piano-roll of what
      it plays this bar. Header (name + fx) on the left, the roll on the right. */
-  .vz-ruler{position:relative;height:13px;margin:0 0 .1rem;margin-left:calc(128px + .5rem);
+  .vz-ruler{position:relative;height:13px;margin:0 0 .1rem;
     border-radius:4px 4px 0 0;background-color:rgba(255,255,255,.02)}
   .vz-ruler span{position:absolute;top:0;font:11px VT323,monospace;color:var(--dim);opacity:.7;padding-left:2px}
-  /* each voice = header+roll row, with its fx line BENEATH; rows evenly spaced */
-  .vz-tlrow{display:flex;flex-direction:column;gap:.14rem;margin:.34rem 0}
-  .vz-tlmain{display:flex;align-items:stretch;gap:.5rem}
-  .vz-tlhead{flex:0 0 128px;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:.1rem}
-  .vz-tlname{display:flex;align-items:center;gap:.32rem;font:15px VT323,monospace;color:var(--pink);
+  /* TITLE ABOVE THE ROLL (Paul 2026-07-10): each lane is a header row (name+role)
+     ABOVE a full-width piano-roll, with its fx caption beneath; extra vertical
+     breathing room between lanes. */
+  .vz-tlrow{display:flex;flex-direction:column;gap:.14rem;margin:.85rem 0}
+  .vz-tlmain{display:flex;flex-direction:column;gap:.22rem}
+  .vz-tlhead{display:flex;align-items:baseline;gap:.5rem;min-width:0}
+  .vz-tlname{display:flex;align-items:center;gap:.32rem;font:16px VT323,monospace;color:var(--pink);
     line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .vz-tlname i{flex:0 0 auto;width:8px;height:8px;border-radius:2px;display:inline-block}
+  .vz-tlname i{flex:0 0 auto;width:9px;height:9px;border-radius:2px;display:inline-block}
   .vz-tlrole{font:10px VT323,monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);opacity:.8}
-  .vz-roll{position:relative;flex:1 1 auto;min-width:0;height:34px;border-radius:5px;
+  .vz-roll{position:relative;width:100%;min-width:0;height:34px;border-radius:5px;
     border:1px solid var(--line);background-color:rgba(255,255,255,.03);overflow:hidden}
   /* THE UNIT IS ALWAYS 8: longer chord bars PAGE — one row per lane whose window
      slides to the next 8 beats when the live beat crosses a page edge (the old
@@ -161,7 +163,7 @@
   /* ONE shared live playhead across every lane (they share the beat grid): a
      thin pink beat cursor, lit by the ~10Hz ticker only while LIVE + ⓘ open */
   .vz-tl{position:relative}
-  .vz-ph{position:absolute;top:0;bottom:0;left:calc(128px + .5rem);right:0;pointer-events:none;display:none}
+  .vz-ph{position:absolute;top:0;bottom:0;left:0;right:0;pointer-events:none;display:none}
   .vz-ph.on{display:block}
   /* the playhead lights ONE ruler cell at a time and steps cell to cell — no
      stripe, no sweep (Paul 2026-07-10: "each BAR should light up as it
@@ -170,7 +172,7 @@
     box-shadow:inset 0 0 12px rgba(255,110,199,.2);opacity:.95}
   /* quiet page indicator: ·1/2 in the ruler's EMPTY left gutter (over the lane-
      header column) — at 420px the roll's last beat number owns the right edge */
-  .vz-pgind{position:absolute;right:calc(100% + 8px);top:0;font:10px VT323,monospace;
+  .vz-pgind{position:absolute;right:3px;top:0;font:10px VT323,monospace;
     color:var(--dim);opacity:.7;letter-spacing:.05em;white-space:nowrap}
   .vz-blk{position:absolute;height:14%;min-width:2px;border-radius:2px;transition:opacity .12s linear}
   /* a found BED: one sustained texture ribbon, not a hit */
@@ -184,6 +186,22 @@
   .vz-tlrow.vz-silent .vz-tlname{color:#ff5064}
   .vz-silbadge{font:9px VT323,monospace;color:#0c081a;background:#ff5064;border-radius:3px;
     padding:0 .28rem;margin-left:.3rem;letter-spacing:.04em;text-transform:uppercase}
+  /* MIXING NODE GRAPH — the signal-flow topology beneath the rolls: voice boxes +
+     insert chain → send curves (width/opacity = level) → reverb/delay bus → master
+     → out. Replaces the master effects TEXT line (Paul 2026-07-10). */
+  .vz-graph{display:block;width:100%;max-width:380px;margin:.15rem auto 0;height:auto;overflow:visible}
+  .vz-graph .gnode{fill:rgba(28,24,56,.85);stroke:var(--line2);stroke-width:1}
+  .vz-graph .gins{fill:rgba(69,224,255,.07);stroke:rgba(69,224,255,.42);stroke-width:1}
+  .vz-graph .grev{fill:rgba(69,224,255,.07);stroke:var(--cyan);stroke-width:1.2}
+  .vz-graph .gdel{fill:rgba(255,216,107,.07);stroke:var(--amber);stroke-width:1.2}
+  .vz-graph .gmaster{fill:rgba(77,255,176,.06);stroke:var(--mint);stroke-width:1.2}
+  .vz-graph .gout{fill:rgba(255,110,199,.10);stroke:var(--pink);stroke-width:1.2}
+  .vz-graph .gtx{font:13px VT323,monospace;fill:var(--ink)}
+  .vz-graph .gsub{font:11px VT323,monospace;fill:var(--dim)}
+  .vz-graph .gmix{font:11px VT323,monospace;fill:var(--cyan)}
+  .vz-graph .gdsub{font:11px VT323,monospace;fill:var(--amber)}
+  .vz-graph .goutx{font:13px VT323,monospace;fill:var(--pink)}
+  .vz-graph .ghead{font:10px VT323,monospace;fill:var(--dim);letter-spacing:.14em;text-transform:uppercase;opacity:.6}
   /* the chyron: music-video lower-third (namebank.js invents the band) */
   .chy{border-left:3px solid var(--pink);padding-left:.65rem}
   .chy-title{font-family:Orbitron,sans-serif;font-size:.9rem;letter-spacing:.09em;color:#fff}
