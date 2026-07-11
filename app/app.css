@@ -52,10 +52,14 @@
   body.view-video #map, body.view-viz #map{display:none}
   /* the viz as a 100% VIEW: the modal wrap loses its dim backdrop and the card
      expands to the whole viewport (chips clearance at the bottom). */
-  body.view-viz #insideWrap{display:block;background:var(--bg)}
+  body.view-viz #insideWrap{display:block;background:var(--bg);overflow:hidden}  /* the viz zoom viewport: clips the scaled #inside */
   body.view-viz #inside{left:0;right:0;top:0;bottom:0;transform:none;width:auto;
     max-width:none;max-height:none;border:0;border-radius:0;
-    padding:1rem 1.2rem 4.6rem;overflow-y:auto}
+    padding:1rem 1.2rem 4.6rem;overflow-y:auto;touch-action:pan-y}  /* pan-y = native scroll but NO browser pinch-zoom of the viz */
+  /* VIZ ZOOMED (starmap.js VIZ state): an inline CSS transform scales #inside about
+     its top-left; transform-pan owns motion, so native scroll steps aside and the
+     surface owns the pinch entirely (touch-action:none) — no iOS fall-through. */
+  body.view-viz.viz-zoomed #inside{overflow:hidden;touch-action:none;transform-origin:0 0}
   #panelWrap{z-index:7}   /* settings above every view (map, video, viz) */
   #aboutWrap{z-index:7}
   .modal.open{display:block}
