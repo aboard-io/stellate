@@ -82,32 +82,61 @@ let renderer, scene, camera, lowResTarget, ps1, flight, clock;
 let displayCanvas = null;
 let raf = 0, lastT = 0;
 let band = [];               // [{group, update}]
+let dancers = [];            // [{group, update}] — extra background dancer-aliens (no instrument)
+let stage = null;            // shadow-RECEIVING stage disc under the band
 let backdrop = null;         // {group, update}
-let ship = null;             // { group, update(dt, phase, landProgress) } — the pilot's craft
+let ship = null;             // { group, update(dt, phase, landProgress) } — the greet-craft saucer
+let cockpit = null;          // { group, update, setGenres } — the transit COCKPIT interior
+let planet = null;           // { group, update, setPalette } — the planet you leave/approach
+let sun = null;              // the shadow-casting KEY light (module-scoped for the frustum + probes)
 let starfield = null;        // persistent THREE.Points deep-space (whole-session)
 let curTraits = null;        // TRAITS of the currently-spawned band (headless-probe visibility)
 let curDominant = null;
 let lastState = null;        // last flight state (headless-probe visibility)
+const bandCentroid = { x: 0, y: 1.2, z: 0.6 };   // centre of the spawned players (orbit target)
+// the SPACE ANCHOR — a fixed spot high above the band scene where the cockpit set +
+// planet live during transit, so they never overlap the (despawned) surface scene.
+const SPACE_ANCHOR = { x: 0, y: 40, z: 0 };
+const SKY_COLOR = 0x1a0b2e;    // dusk-purple sky at the surface (fades to space on liftoff)
+const SPACE_COLOR = 0x02010a;  // near-black deep space
 
-// internal framebuffer — the crunchy PS1 resolution. Sized ONCE per start() to the
-// display's aspect so the picture isn't stretched, with the long edge capped (a
-// touch higher than the old 320x240 potato: ~512 desktop / ~448 coarse-pointer, so
-// it's less pixelated but still low-res + dithered, and still cheap on a phone).
-let lowW = 512, lowH = 384;       // actual values recomputed in computeLowRes()
+// internal framebuffer — the render resolution. RAISED A LOT from the old 320x240
+// potato: now NEAR-NATIVE, DPR-aware, with the long edge capped (~1600 desktop /
+// ~1080 coarse-pointer mobile) so it's crisp on desktop + high on modern phones
+// while staying cheap (resolution is fill-rate; the geometry stays low-poly). The
+// canvas backing store is driven to this same size so the final blit is ~1:1.
+let lowW = 1280, lowH = 720;       // actual values recomputed in computeLowRes()
+function isCoarse() { try { return !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches); } catch (e) { return false; } }
 function computeLowRes() {
   const w = window.innerWidth || 640, h = window.innerHeight || 480;
   const aspect = w > 0 && h > 0 ? w / h : 4 / 3;
-  // coarse pointer (touch) => a slightly smaller long edge for mobile GPU headroom.
-  let coarse = false;
-  try { coarse = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches); } catch (e) {}
-  const longEdge = coarse ? 448 : 512;
+  const coarse = isCoarse();
+  const dpr = Math.min(2, (typeof window !== "undefined" && window.devicePixelRatio) || 1);
+  const cap = coarse ? 1080 : 1600;                 // hard cap on the long edge
+  const cssLong = Math.max(w, h);
+  const renderLong = Math.min(cssLong * dpr, cap);  // near-native, capped
+  const scale = cssLong > 0 ? renderLong / cssLong : 1;
   let tw, th;
-  if (aspect >= 1) { tw = longEdge; th = Math.round(longEdge / aspect); }
-  else { th = longEdge; tw = Math.round(longEdge * aspect); }
-  // clamp to sane bounds + keep even (nicer for the 0.5-density snap grid).
-  lowW = Math.max(160, Math.min(640, tw)) & ~1;
-  lowH = Math.max(120, Math.min(640, th)) & ~1;
+  if (aspect >= 1) { tw = Math.round(w * scale); th = Math.round(tw / aspect); }
+  else { th = Math.round(h * scale); tw = Math.round(th * aspect); }
+  // clamp to sane bounds + keep even.
+  lowW = Math.max(320, Math.min(1600, tw)) & ~1;
+  lowH = Math.max(240, Math.min(1600, th)) & ~1;
   return { lowW, lowH };
+}
+// (re)build the render target + PS1 pass at the current resolution and drive the
+// canvas backing store to the same size (blit ~1:1). Called on start() and on resize
+// / DPR change; disposes the previous target + pass so nothing leaks.
+function buildRenderTarget() {
+  computeLowRes();
+  if (ps1 && ps1.dispose) { try { ps1.dispose(); } catch (e) {} }
+  if (lowResTarget) { try { lowResTarget.dispose(); } catch (e) {} }
+  lowResTarget = new THREE.WebGLRenderTarget(lowW, lowH, {
+    minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: true,
+  });
+  ps1 = mods.makePS1(THREE, renderer, lowResTarget);
+  ps1.setSize(lowW, lowH);                 // canvas backing store == target size (crisp, near-native)
+  if (camera) { camera.aspect = lowW / lowH; camera.updateProjectionMatrix(); }
 }
 const BAND_CAP = 8;               // HARD mobile cap on simultaneous aliens (traits caps at 6)
 
@@ -137,12 +166,13 @@ async function ensureLoaded() {
   THREE = await import("../vendor/three/three.module.min.js");
   // some bundlers namespace the default; the ESM build exports named symbols.
   if (THREE.default && !THREE.WebGLRenderer) THREE = THREE.default;
-  const [traits, alien, backdropMod, postfx, flightMod] = await Promise.all([
+  const [traits, alien, backdropMod, postfx, flightMod, shipMod] = await Promise.all([
     import("./starcruise/traits.js"),
     import("./starcruise/alien.js"),
     import("./starcruise/backdrop.js"),
     import("./starcruise/postfx.js"),
     import("./starcruise/flight.js"),
+    import("./starcruise/ship.js"),
   ]);
   mods = {
     traitsFromGenre: traits.traitsFromGenre,
@@ -150,6 +180,8 @@ async function ensureLoaded() {
     makeBackdrop: backdropMod.makeBackdrop,
     makePS1: postfx.makePS1,
     makeFlight: flightMod.makeFlight,
+    makeCockpit: shipMod.makeCockpit,
+    makePlanet: shipMod.makePlanet,
   };
   loaded = true;
 }
@@ -167,11 +199,22 @@ function spawnFor(genreOrWeights, seed) {
   // ship: the pilot's craft the band greets you in front of; its ramp opens on land.
   ship = makeShip(traits, useSeed);
   scene.add(ship.group);
+  // STAGE: a shadow-RECEIVING disc under the band so the key light's cast shadows
+  // land on a clean plinth (sits just above the backdrop ground to avoid z-fight).
+  {
+    const smat = new THREE.MeshLambertMaterial({ color: 0x1b1526, flatShading: true });
+    smat.polygonOffset = true; smat.polygonOffsetFactor = 1; smat.polygonOffsetUnits = 1;
+    stage = new THREE.Mesh(new THREE.CircleGeometry(6.2, 40), smat);
+    stage.rotation.x = -Math.PI / 2; stage.position.y = 0.02;
+    stage.receiveShadow = true; stage.name = "stage";
+    scene.add(stage);
+  }
   // band: one alien per member (mobile-capped), arranged in a shallow arc that faces
   // the cockpit (+Z). Outer members sit slightly back and yaw inward so it reads as a
   // stage arc, not a firing line. They stand on the ground (y=0), in front of the ship.
   const members = traits.band.slice(0, BAND_CAP);
   const n = members.length;
+  let cx = 0, cz = 0;
   band = members.map((member, i) => {
     const a = mods.makeAlien(THREE, traits, member, useSeed + i * 101);
     const spread = 1.5;
@@ -180,16 +223,105 @@ function spawnFor(genreOrWeights, seed) {
     a.group.position.z = 1.5 - Math.abs(off) * 0.35;   // shallow arc: center forward
     a.group.position.y = 0;
     a.group.rotation.y = -off * 0.10;        // yaw toward the pilot at the arc center
+    enableShadows(a.group);                  // the players CAST shadows onto the stage
     scene.add(a.group);
+    cx += a.group.position.x; cz += a.group.position.z;
     return a;
   });
+  // orbit target = the CENTRE of the players (front-centred landed framing). y is an
+  // eye-height above the stage so the camera looks AT the band, not their feet.
+  bandCentroid.x = n ? cx / n : 0;
+  bandCentroid.z = n ? cz / n : 0.6;
+  bandCentroid.y = 1.2;
+
+  // DANCERS: traits.dancers extra dancer-aliens (role='dancer', NO instrument) in a
+  // ring/crowd AROUND + BEHIND the band, grooving to the same beat. Mobile-capped so
+  // the crowd draw-calls stay bounded (they share the low-poly alien rig geometry).
+  const wantD = Math.max(0, Math.round(traits.dancers || 0));
+  const dCap = isCoarse() ? 5 : 8;
+  const nd = Math.min(dCap, wantD);
+  dancers = [];
+  for (let i = 0; i < nd; i++) {
+    const d = mods.makeAlien(THREE, traits, { role: "dancer" }, useSeed + 4200 + i * 37);
+    // ring behind + beside the band: bias angles to the back hemisphere so the front
+    // (camera) view of the players stays open. Radius grows with the crowd size.
+    const seedR = mulberry(useSeed * 131 + i * 977);
+    const ang = Math.PI * (0.55 + 1.9 * (i + 0.5) / nd) + (seedR() - 0.5) * 0.4;  // ~back arc
+    const rad = 3.6 + (i % 2) * 1.1 + seedR() * 0.8;
+    const px = bandCentroid.x + Math.cos(ang) * rad;
+    const pz = bandCentroid.z + Math.sin(ang) * rad - 0.6;   // pushed back (-z)
+    d.group.position.set(px, 0, pz);
+    d.group.rotation.y = Math.atan2(bandCentroid.x - px, bandCentroid.z - pz);  // face the band
+    const sc = 0.85 + seedR() * 0.25;
+    d.group.scale.setScalar(sc);
+    enableShadows(d.group);
+    scene.add(d.group);
+    dancers.push(d);
+  }
+}
+// tiny local seeded rng (deterministic dancer scatter; NOT Math.random).
+function mulberry(a) {
+  return function () {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+// mark every mesh in a spawned group as a shadow caster + receiver so the key light
+// MODELS the forms — done here (on our spawns) so shadows are guaranteed even before
+// the alien/city agents wire castShadow into their own meshes.
+function enableShadows(root) {
+  root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+}
+// count shadow-casting meshes across the spawned band + dancers (shadow proof).
+function countCasters() {
+  let n = 0;
+  const scan = (g) => g && g.group && g.group.traverse((o) => { if (o.isMesh && o.castShadow) n++; });
+  band.forEach(scan); dancers.forEach(scan);
+  return n;
 }
 function despawnBand() {
   for (const a of band) { scene.remove(a.group); disposeObj(a.group); }
   band = [];
+  for (const d of dancers) { scene.remove(d.group); disposeObj(d.group); }
+  dancers = [];
+  if (stage) { scene.remove(stage); disposeObj(stage); stage = null; }
   if (backdrop) { scene.remove(backdrop.group); disposeObj(backdrop.group); backdrop = null; }
   if (ship) { scene.remove(ship.group); disposeObj(ship.group); ship = null; }
   curTraits = null;
+}
+
+// ---- SPACE / COCKPIT set (transit) ----------------------------------------------
+// Spawned on DEPART, torn down on the next LAND. The cockpit interior frames the
+// pilot; the planet recedes below through the viewport; the console screen shows the
+// GENRE MAP. Positioned at SPACE_ANCHOR, high above the (despawned) surface scene.
+function spawnSpaceRig(activeGenre) {
+  despawnSpaceRig();
+  cockpit = mods.makeCockpit(THREE, { genres: genreLabels(), active: genreLabelOf(activeGenre) });
+  cockpit.group.position.set(SPACE_ANCHOR.x, SPACE_ANCHOR.y, SPACE_ANCHOR.z);
+  scene.add(cockpit.group);
+  planet = mods.makePlanet(THREE, curTraits, (S.seed | 0) || 1);
+  scene.add(planet.group);
+  spaceActiveGenre = activeGenre || null;
+}
+function despawnSpaceRig() {
+  if (cockpit) { scene.remove(cockpit.group); disposeObj(cockpit.group); cockpit = null; }
+  if (planet) { scene.remove(planet.group); disposeObj(planet.group); planet = null; }
+  spaceActiveGenre = null;
+}
+let spaceActiveGenre = null;
+// the genre list for the console display: prefer the kernel's genre labels.
+function genreLabels() {
+  try {
+    const G = window.GenreKernel && window.GenreKernel.GENRES;
+    if (G) return Object.keys(G).map((g) => (G[g] && G[g].label) || g);
+  } catch (e) {}
+  return ["vaporwave", "ambient", "techno"];
+}
+function genreLabelOf(g) {
+  if (!g) return null;
+  try { const G = window.GenreKernel && window.GenreKernel.GENRES; return (G && G[g] && G[g].label) || g; } catch (e) { return g; }
 }
 
 // makeShip(traits) — a tiny low-poly saucer the band greets you beside; its boarding
@@ -239,7 +371,13 @@ function makeShip(traits, seed) {
 function disposeObj(obj) {
   obj.traverse((o) => {
     if (o.geometry) try { o.geometry.dispose(); } catch (e) {}
-    if (o.material) { const m = Array.isArray(o.material) ? o.material : [o.material]; m.forEach((x) => { try { x.dispose(); } catch (e) {} }); }
+    if (o.material) {
+      const m = Array.isArray(o.material) ? o.material : [o.material];
+      m.forEach((x) => {
+        try { if (x.map && x.map.dispose) x.map.dispose(); } catch (e) {}   // e.g. the cockpit CanvasTexture
+        try { x.dispose(); } catch (e) {}
+      });
+    }
   });
 }
 
@@ -258,28 +396,39 @@ export async function start() {
   renderer = new THREE.WebGLRenderer({ canvas: displayCanvas, antialias: false, powerPreference: "low-power" });
   renderer.setPixelRatio(1);
   renderer.autoClear = false;
-  const w = window.innerWidth || 640, h = window.innerHeight || 480;
-
-  // LOW-RES render target, NEAREST filtered = the crunchy PS1 framebuffer. Sized to
-  // the display aspect (computeLowRes) so it isn't stretched, a notch above potato.
-  computeLowRes();
-  lowResTarget = new THREE.WebGLRenderTarget(lowW, lowH, {
-    minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: true,
-  });
-  ps1 = mods.makePS1(THREE, renderer, lowResTarget);
-  ps1.setSize(w, h);
+  // SHADOWS ON: one PCF-soft shadow map, MODELS the forms (light-to-dark falloff +
+  // cast shadows) so the aliens/city read 3D instead of flat. Only the key light
+  // casts; the map is modest (smaller on mobile) with a tight frustum around the band.
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0a0410);
-  // BRIGHT, flat, vivid PS1-lofi lighting: a strong ambient floor + a bright
-  // sky/ground hemisphere fill so NOTHING falls to shadow-black, plus a punchy key
-  // and a back fill so the sides facing away from the sun still read colour. The
-  // renderer keeps NoToneMapping (default) so colours stay flat/vertex-lit, not
-  // filmic. (The linear->sRGB fix lives in postfx.js.)
-  scene.add(new THREE.AmbientLight(0xffffff, 1.15));
-  scene.add(new THREE.HemisphereLight(0xbfe0ff, 0x7a5a86, 1.2)); // cyan sky / magenta ground
-  const sun = new THREE.DirectionalLight(0xfff2e0, 1.35); sun.position.set(3, 6, 4); scene.add(sun);
-  const backFill = new THREE.DirectionalLight(0xffd0f2, 0.55); backFill.position.set(-4, 2, -5); scene.add(backFill);
+  scene.background = new THREE.Color(SKY_COLOR);
+  _spaceCol = new THREE.Color(SPACE_COLOR);   // reused for the sky->space fade in transit
+  _lastActive = null;
+  // BRIGHT-BUT-MODELLED lofi lighting. The scene was deliberately brightened from
+  // too-dark; we keep it bright but pull the flat FILL DOWN (ambient + hemisphere)
+  // and let a strong KEY directional light MODEL the forms with a clear light-to-dark
+  // falloff + cast shadows. A soft back/rim fill keeps the shadow side reading colour
+  // so it's not murky. (linear->sRGB output fix lives in postfx.js.)
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));                 // was 1.15 (flat floor down)
+  scene.add(new THREE.HemisphereLight(0xbfe0ff, 0x6a4a76, 0.55));    // was 1.2 (cyan sky / magenta ground)
+  sun = new THREE.DirectionalLight(0xfff2e0, 1.75);                  // the KEY that models the forms
+  sun.position.set(6, 11, 7);
+  sun.castShadow = true;
+  const shMap = isCoarse() ? 512 : 1024;                            // modest; smaller on mobile
+  sun.shadow.mapSize.set(shMap, shMap);
+  sun.shadow.camera.near = 1; sun.shadow.camera.far = 44;
+  const F = 11;                                                     // TIGHT ortho frustum around the band
+  sun.shadow.camera.left = -F; sun.shadow.camera.right = F;
+  sun.shadow.camera.top = F; sun.shadow.camera.bottom = -F;
+  sun.shadow.bias = -0.0012;
+  scene.add(sun);
+  scene.add(sun.target);                                            // aim the shadow frustum at the band
+  const backFill = new THREE.DirectionalLight(0xffd0f2, 0.5); backFill.position.set(-5, 3, -6); scene.add(backFill);
+
+  // build the near-native render target + PS1 pass + size the canvas (near 1:1 blit).
+  buildRenderTarget();
 
   // persistent STARFIELD — the deep-space you fly through between planets. It lives
   // for the whole session (NOT despawned on depart) so frames are never blank in
@@ -301,12 +450,12 @@ export async function start() {
     scene.add(starfield);
   }
 
-  camera = new THREE.PerspectiveCamera(60, lowW / lowH, 0.1, 200);
+  camera = new THREE.PerspectiveCamera(60, lowW / lowH, 0.1, 300);
   camera.position.set(0, 3, 8);
   camera.lookAt(0, 1, 0);
 
-  // orbit target = the band's centre; seeded properly the moment we land.
-  orbit.target = new THREE.Vector3(0, 1.2, 0);
+  // orbit target = the band's centre; seeded FRONT-ON the moment we land.
+  orbit.target = new THREE.Vector3(bandCentroid.x, bandCentroid.y, bandCentroid.z);
   wasLanded = false;
 
   clock = { now: (typeof performance !== "undefined" ? performance.now() : Date.now()) };
@@ -314,11 +463,18 @@ export async function start() {
   // flight state machine driven by the REAL travel + beat hooks.
   flight = mods.makeFlight({ getTravel, getBeat });
   flight.events.on("land", () => {
+    despawnSpaceRig();                       // leaving transit — drop the cockpit set
     const tv = getTravel();
     spawnFor(tv.weights && tv.weights.length ? tv.weights : (tv.dominant || firstGenre()), S.seed);
     curDominant = tv.dominant;
+    wasLanded = false;                        // force a fresh FRONT-ON seed next frame
   });
-  flight.events.on("depart", () => { despawnBand(); });
+  // DEPART: lift off. Drop the surface ensemble and raise the COCKPIT set so you fly
+  // away through space with the planet receding below + the genre display lit.
+  flight.events.on("depart", (e) => {
+    despawnBand();
+    spawnSpaceRig((e && e.to) || curDominant || (getTravel().dominant));
+  });
 
   // spawn an initial band immediately so the very first frame is non-blank even
   // before the flight machine reaches LAND (and for headless proof).
@@ -416,6 +572,20 @@ function orbitBy(dx, dy) {
 function dollyBy(factor) {
   orbit.dist = Math.max(orbit.minDist, Math.min(orbit.maxDist, orbit.dist * factor));
 }
+// seed the orbit FRONT-CENTRED on the band the moment we land: target = the band
+// centroid, camera placed in FRONT of the players (who face +Z / the camera) at a
+// sensible distance framed to the crowd width, looking slightly down. This is the
+// FIX for the user's "side profile / off to the left / zoomed out" landed view — the
+// framing no longer leaks the drifted flight pose; it derives straight from the band.
+function seedOrbitFrontOn() {
+  if (!orbit.target) return;
+  orbit.target.set(bandCentroid.x, bandCentroid.y, bandCentroid.z);
+  const width = 1.5 * Math.max(1, band.length);       // arc spread ~ crowd size
+  orbit.dist = Math.max(orbit.minDist, Math.min(orbit.maxDist, 5.5 + width * 0.55));
+  orbit.yaw = 0;                                       // 0 = looking from +Z straight at the front
+  orbit.pitch = 0.16;                                  // a gentle downward tilt (eye level-ish)
+  orbit.fov = 56;
+}
 // seed the orbit from a flight cameraPose so takeover is jump-free & front-on.
 function seedOrbitFromPose(p) {
   if (!p || !orbit.target) return;
@@ -511,8 +681,8 @@ function firstGenre() { try { return (window.GenreKernel && GenreKernel.GENRES) 
 
 function onResize() {
   if (!running) return;
-  const w = window.innerWidth || 640, h = window.innerHeight || 480;
-  ps1.setSize(w, h);
+  // rebuild the render target at the new size / aspect (near-native, DPR-aware).
+  buildRenderTarget();
 }
 
 export function update(dt) {
@@ -527,25 +697,77 @@ export function update(dt) {
   // jump-free and framed FROM THE FRONT, then leave the user in control.
   const landed = !!LANDED_PHASES[st.phase];
   if (landed) {
-    if (!wasLanded) seedOrbitFromPose(p);   // seed once on touchdown, then hands off
+    // seed FRONT-CENTRED on the band once on touchdown, then hand off to the user's
+    // orbit (drag = look, wheel/pinch = zoom, WASD/arrows = fly). Restore the surface
+    // sky (transit fades the background toward space).
+    if (!wasLanded) { seedOrbitFrontOn(); if (scene.background && scene.background.isColor) scene.background.setHex(SKY_COLOR); }
     applyKeyPan(dt);
     applyOrbitToCamera();
+  } else if (cockpit) {
+    // IN TRANSIT WITH THE COCKPIT SET: the pilot sits at the console looking OUT the
+    // viewport at the planet receding below + the stars, the genre display lit. The
+    // camera is fixed to the cockpit interior; spaceProgress drives the planet + fade.
+    updateSpaceRig(dt, st);
   } else {
-    // in transit: follow the cinematic flight pose, and keep the orbit shadowing it
-    // so the moment we land the user's takeover starts from exactly here.
+    // bootstrap transit (before the first depart): follow the cinematic flight pose,
+    // and keep the orbit shadowing it so the moment we land handover starts from here.
     camera.position.set(p.position.x, p.position.y, p.position.z);
     camera.lookAt(p.lookAt.x, p.lookAt.y, p.lookAt.z);
     if (camera.fov !== p.fov) { camera.fov = p.fov; camera.updateProjectionMatrix(); }
     seedOrbitFromPose(p);
   }
   wasLanded = landed;
+  // keep the shadow frustum + key aimed at wherever we are (band when landed, cockpit
+  // in transit) so cast shadows always land under the subject.
+  if (sun) {
+    const tx = (landed || !cockpit) ? bandCentroid.x : SPACE_ANCHOR.x;
+    const ty = (landed || !cockpit) ? 0 : SPACE_ANCHOR.y;
+    const tz = (landed || !cockpit) ? bandCentroid.z : SPACE_ANCHOR.z;
+    sun.target.position.set(tx, ty, tz);
+    sun.position.set(tx + 6, ty + 11, tz + 7);
+    sun.target.updateMatrixWorld();
+  }
   // aliens groove + hit on the beat — ALL driven by the SAME st.beatPhase so the
-  // whole band locks together to the shared audio beat.
+  // whole band locks together to the shared audio beat. Dancers groove to the SAME
+  // phase so the crowd moves with the players.
   for (const a of band) a.update(dt, st.beatPhase);
+  for (const d of dancers) d.update(dt, st.beatPhase);
   if (backdrop) backdrop.update(dt);
   if (ship) ship.update(dt, st.phase, st.landProgress);
   ps1.render(scene, camera);
 }
+
+// updateSpaceRig(dt, st) — drive the COCKPIT transit: fade the sky to space, place
+// the camera inside the cockpit looking out, recede/approach the planet below by
+// spaceProgress, keep the genre display's active target current, and spin the planet.
+function updateSpaceRig(dt, st) {
+  const s = Math.max(0, Math.min(1, st.spaceProgress != null ? st.spaceProgress : 1));
+  // sky -> space fade (bright dusk sky at the surface, near-black in deep space).
+  if (scene.background && scene.background.isColor) {
+    scene.background.setHex(SKY_COLOR).lerp(_spaceCol, s);
+  }
+  // camera INSIDE the cockpit, looking out the viewport (-Z) slightly down at the planet.
+  camera.position.set(SPACE_ANCHOR.x, SPACE_ANCHOR.y + 0.1, SPACE_ANCHOR.z + 0.15);
+  camera.lookAt(SPACE_ANCHOR.x, SPACE_ANCHOR.y - 0.25, SPACE_ANCHOR.z - 4);
+  if (camera.fov !== 62) { camera.fov = 62; camera.updateProjectionMatrix(); }
+  cockpit.update(dt);
+  // keep the display's highlighted target current as the blend resolves the next genre.
+  const active = genreLabelOf(st.dominant || spaceActiveGenre);
+  if (active && active !== _lastActive) { cockpit.setGenres(genreLabels(), active); _lastActive = active; }
+  // planet BELOW + through the viewport: near/large when close to a surface (s~0),
+  // far/small out in deep space (s~1) — so it RECEDES below on liftoff + GROWS on approach.
+  if (planet) {
+    if (curTraits && planet.setPalette) planet.setPalette(curTraits);
+    const py = SPACE_ANCHOR.y + (-2 + (-18) * s);     // drops away below as we climb
+    const pz = SPACE_ANCHOR.z - 9;
+    const sc = 2.6 + (0.4 - 2.6) * s;                 // 2.6 near-surface -> 0.4 deep space
+    planet.group.position.set(SPACE_ANCHOR.x, py, pz);
+    planet.group.scale.setScalar(Math.max(0.4, sc));
+    planet.update(dt);
+  }
+}
+let _lastActive = null;
+let _spaceCol = null;   // reusable THREE.Color for the sky->space lerp (set on start)
 
 function loop() {
   if (!running) return;
@@ -563,14 +785,17 @@ export function stop() {
   unbindInput();
   unmountExit();
   window.removeEventListener("resize", onResize);
-  despawnBand();                                   // disposes band + backdrop + ship
+  despawnBand();                                   // disposes band + dancers + stage + backdrop + ship
+  despawnSpaceRig();                               // disposes cockpit + planet (if in transit)
   if (starfield) { scene.remove(starfield); disposeObj(starfield); starfield = null; }
   // dispose remaining GL resources (lights carry none; belt-and-braces geometry sweep).
   try { scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); } catch (e) {}
+  try { ps1 && ps1.dispose && ps1.dispose(); } catch (e) {}
   try { lowResTarget && lowResTarget.dispose(); } catch (e) {}
   try { renderer && renderer.dispose(); } catch (e) {}
   if (displayCanvas && displayCanvas.parentNode) displayCanvas.parentNode.removeChild(displayCanvas);
   displayCanvas = null; renderer = null; scene = null; camera = null; lowResTarget = null; ps1 = null; flight = null;
+  sun = null; _spaceCol = null; _lastActive = null;
   curTraits = null; curDominant = null;
   document.body.classList.remove("view-starcruise");
   const chip = document.getElementById("cruiseChip"); if (chip) chip.classList.remove("on");
@@ -634,12 +859,29 @@ window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBe
   lowRes: () => ({ w: lowW, h: lowH }),
   orbit: () => ({ yaw: orbit.yaw, pitch: orbit.pitch, dist: orbit.dist, fov: orbit.fov,
     target: orbit.target ? { x: orbit.target.x, y: orbit.target.y, z: orbit.target.z } : null }),
+  // camera pose probe — proves drag actually MOVES the view + the landed framing.
+  cam: () => (camera ? { x: camera.position.x, y: camera.position.y, z: camera.position.z, fov: camera.fov,
+    tx: bandCentroid.x, ty: bandCentroid.y, tz: bandCentroid.z } : null),
+  centroid: () => ({ x: bandCentroid.x, y: bandCentroid.y, z: bandCentroid.z }),
+  // dispatch a synthetic drag on the canvas (headless nav proof).
+  __drag: (dx, dy) => { orbitBy(dx || 0, dy || 0); if (LANDED_PHASES[(lastState || {}).phase]) applyOrbitToCamera(); return { yaw: orbit.yaw, pitch: orbit.pitch }; },
+  // dancers + cockpit/space + shadow probes (headless-proof; harmless in production).
+  dancers: () => dancers.length,
+  space: () => ({ hasCockpit: !!cockpit, hasPlanet: !!planet,
+    spaceProgress: lastState ? lastState.spaceProgress : null,
+    genres: genreLabels().slice(0, 6), planetY: planet ? planet.group.position.y : null }),
+  shadows: () => ({ enabled: !!(renderer && renderer.shadowMap && renderer.shadowMap.enabled),
+    type: renderer && renderer.shadowMap ? renderer.shadowMap.type : null,
+    sunCast: !!(sun && sun.castShadow), mapSize: sun ? sun.shadow.mapSize.x : null,
+    bandCasters: countCasters() }),
   // __step(dt): advance one frame and return the flight state (phase probe).
   __step: (dt) => { update(dt || 0); return lastState; },
   state: () => lastState,
   // ---- headless-probe: scene inspection + deterministic travel/beat injection ----
   hasBackdrop: () => !!backdrop,
   hasShip: () => !!ship,
+  hasCockpit: () => !!cockpit,
+  hasPlanet: () => !!planet,
   sceneChildren: () => (scene ? scene.children.length : 0),
   traits: () => curTraits,
   // __injectTravel/__injectBeat(obj|null): OVERRIDE the real hooks with a scripted

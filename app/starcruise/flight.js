@@ -65,6 +65,7 @@ export function makeFlight({ getTravel, getBeat } = {}) {
   let phase = "FLY";
   let phaseT = 0;
   let landProgress = 0;
+  let spaceProgress = 0;     // 0 on the ground .. 1 out in deep space (drives the cockpit set)
   let landedGenre = null;    // the dominant we committed to when we last touched down
   let seenDominant = null;   // last non-null dominant we've observed
   let beatPhase = 0;
@@ -134,6 +135,18 @@ export function makeFlight({ getTravel, getBeat } = {}) {
     else target = 0.30 * clamp01(nearness / APPROACH_T);   // FLY
     landProgress += (target - landProgress) * Math.min(1, dt * 3);
 
+    // ---- spaceProgress: 0 on the surface .. 1 in deep space ----------------
+    // Rises as we DEPART (lift off + leave the atmosphere), holds high while we FLY
+    // between planets, then falls back to 0 as we APPROACH + descend to the next
+    // surface. Drives the cockpit set + planet recede + sky->space fade in the
+    // controller. (Smoothed so the fade/recede reads continuous, not stepped.)
+    let sTarget;
+    if (LANDED[phase]) sTarget = 0;
+    else if (phase === "DEPART") sTarget = clamp01(phaseT / Math.max(0.001, DUR.DEPART));  // lifting off
+    else if (phase === "APPROACH") sTarget = 1 - clamp01((nearness - APPROACH_T) / (LAND_T - APPROACH_T)); // descending
+    else sTarget = 1;   // FLY = deep space
+    spaceProgress += (sTarget - spaceProgress) * Math.min(1, dt * 2.2);
+
     // ---- cockpit camera pose ----------------------------------------------
     // High and far while cruising; descends and eases CLOSE and IN FRONT of the
     // band as we land (facing the players, who face +Z / the camera). This landed
@@ -145,14 +158,18 @@ export function makeFlight({ getTravel, getBeat } = {}) {
     const camZ = lerp(14.0, 5.2, lp);
     const bobAmp = phase === "DANCE" ? 0.06 : LANDED[phase] ? 0.03 : 0.0;
     const bob = Math.sin(beatPhase * Math.PI * 2) * bobAmp;
-    const drift = tv.position ? (tv.position.x || 0) * 0.02 : 0;
+    // tv.position rides the DRAWN star-map path, whose world coords can be large;
+    // clamp the parallax drift HARD so the landed framing never slides off to the
+    // side / far away (the old un-clamped drift is what parked the camera off-left).
+    let drift = tv.position ? (tv.position.x || 0) * 0.02 : 0;
+    drift = drift < -1.2 ? -1.2 : drift > 1.2 ? 1.2 : drift;
     const cameraPose = {
       position: { x: drift, y: camY + bob, z: camZ },
       lookAt: { x: drift * 0.5, y: lerp(2.4, 1.2, lp), z: 0 },
       fov: lerp(66, 55, lp),
     };
 
-    return { phase, dominant, weights, cameraPose, landProgress, beatPhase };
+    return { phase, dominant, weights, cameraPose, landProgress, spaceProgress, beatPhase };
   }
 
   return { update, events };

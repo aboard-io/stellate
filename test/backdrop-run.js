@@ -60,18 +60,44 @@ async function main() {
         if (o.isInstancedMesh) {
           const arr = o.instanceMatrix.array;
           const sig = Array.from(arr, (v) => Math.round(v * 1e4)).join(",");
-          meshes.push({ name: o.name, count: o.count, sig });
+          meshes.push({ name: o.name, count: o.count, sig, family: (o.userData && o.userData.family) || "", cast: !!o.castShadow, receive: !!o.receiveShadow });
         }
       });
       return meshes;
     }
+    // ground (a plain Mesh) shadow-receive flag.
+    function groundReceives(b) {
+      let r = false;
+      b.group.traverse((o) => { if (o.name === "ground") r = !!o.receiveShadow; });
+      return r;
+    }
     const sumSig = (ms) => ms.map((m) => m.name + ":" + m.count + ":" + m.sig).join("|");
+
+    // capture a beacon mesh's per-instance colour array (for blink detection).
+    function beaconColors(b) {
+      let out = null;
+      b.group.traverse((o) => {
+        if (o.isInstancedMesh && o.name === "beacons" && o.instanceColor) out = Array.from(o.instanceColor.array);
+      });
+      return out;
+    }
+    // step update() a few times, return how many colour channels changed.
+    function blinkDelta(b) {
+      const before = beaconColors(b);
+      if (!before) return { has: false, changed: 0, total: 0 };
+      for (let k = 0; k < 6; k++) b.update(0.13);
+      const after = beaconColors(b);
+      let changed = 0;
+      for (let i = 0; i < before.length; i++) if (Math.abs(before[i] - after[i]) > 1e-4) changed++;
+      return { has: true, changed, total: before.length };
+    }
 
     // shared renderer + low-res target.
     const canvas = document.createElement("canvas");
     canvas.width = 256; canvas.height = 192;
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
     renderer.setSize(256, 192, false);
+    renderer.shadowMap.enabled = true;   // exercise the mesh castShadow/receiveShadow flags
     const rt = new THREE.WebGLRenderTarget(256, 192, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
     const buf = new Uint8Array(256 * 192 * 4);
 
@@ -81,7 +107,11 @@ async function main() {
       const amb = new THREE.AmbientLight(0xffffff, 0.5);
       const dir = new THREE.DirectionalLight(0xffffff, 1.0);
       dir.position.set(6, 12, 8);
-      scene.add(amb, dir, b.group);
+      dir.castShadow = true;              // one key shadow-caster, tight frustum around the band
+      dir.shadow.mapSize.set(1024, 1024);
+      const sc = dir.shadow.camera;
+      sc.left = -40; sc.right = 40; sc.top = 40; sc.bottom = -40; sc.near = 0.5; sc.far = 80;
+      scene.add(amb, dir, dir.target, b.group);
       const cam = new THREE.PerspectiveCamera(60, 256 / 192, 0.1, 400);
       cam.position.set(0, 5, 16);
       cam.lookAt(0, 4, -14);
@@ -107,6 +137,10 @@ async function main() {
     const cityStats = instats(city), farmStats = instats(farm);
     const cityRender = renderStats(city), farmRender = renderStats(farm);
 
+    // blink proof on FRESH instances (renderStats already stepped the clock).
+    const cityBlink = blinkDelta(makeBackdrop(THREE, traits("city"), 5));
+    const farmBlink = blinkDelta(makeBackdrop(THREE, traits("farm"), 5));
+
     // determinism: rebuild with the SAME seed and a DIFFERENT seed.
     const citySame = sumSig(instats(makeBackdrop(THREE, traits("city"), 5)));
     const cityDiff = sumSig(instats(makeBackdrop(THREE, traits("city"), 6)));
@@ -117,7 +151,16 @@ async function main() {
 
     renderer.dispose();
     return {
-      cityStats, farmStats, cityRender, farmRender,
+      cityStats, farmStats, cityRender, farmRender, cityBlink, farmBlink,
+      shadow: {
+        cityGround: groundReceives(city), farmGround: groundReceives(farm),
+        cityCasters: cityStats.filter((m) => m.name === "buildings" && m.cast).length,
+        cityBuildingReceives: cityStats.some((m) => m.name === "buildings" && m.receive),
+        cityFoliageCasts: cityStats.some((m) => m.name.indexOf("foliage") === 0 && m.cast),
+        farmCropCasts: farmStats.some((m) => m.name === "crops" && m.cast),
+        farmSiloCasts: farmStats.some((m) => m.name === "silos" && m.cast),
+        beaconNeverCasts: cityStats.concat(farmStats).every((m) => m.name !== "beacons" || !m.cast),
+      },
       det: {
         cityIdentical: cityBase === citySame, cityDiffers: cityBase !== cityDiff,
         farmIdentical: farmBase === farmSame, farmDiffers: farmBase !== farmDiff,
@@ -126,25 +169,49 @@ async function main() {
   });
 
   const sumCount = (ms, name) => ms.filter((m) => m.name === name).reduce((a, m) => a + m.count, 0);
+  const families = (ms, name) => Array.from(new Set(ms.filter((m) => m.name === name).map((m) => m.family)));
+  const hasMesh = (ms, name) => ms.some((m) => m.name === name && m.count > 0);
   const cityB = sumCount(R.cityStats, "buildings");
+  const cityFams = families(R.cityStats, "buildings");
   const farmC = sumCount(R.farmStats, "crops");
+  const farmFams = families(R.farmStats, "crops");
   const farmS = sumCount(R.farmStats, "silos");
 
   console.log("=== CITY ===");
-  console.log("  instanced:", JSON.stringify(R.cityStats.map((m) => ({ name: m.name, count: m.count }))));
+  console.log("  instanced:", JSON.stringify(R.cityStats.map((m) => ({ name: m.name, family: m.family, count: m.count }))));
+  console.log("  shape families:", cityFams.join(", "));
   console.log("  render:", JSON.stringify(R.cityRender));
-  ok(cityB >= 40, `A1. city has a non-trivial tower crowd (${cityB} buildings)`);
-  ok(R.cityStats.filter((m) => m.name === "buildings").length >= 2, `A2. city built multiple instanced tower variants (${R.cityStats.filter((m) => m.name === "buildings").length})`);
+  console.log("  blink:", JSON.stringify(R.cityBlink));
+  ok(cityB >= 40, `A1. city has a non-trivial building crowd (${cityB} buildings)`);
+  ok(cityFams.length >= 5, `A2. city spans MANY shape families (${cityFams.length}: ${cityFams.join("/")})`);
+  ok(hasMesh(R.cityStats, "beacons"), `A3. city has a blinking light field (${sumCount(R.cityStats, "beacons")} lights)`);
+  ok(R.cityBlink.has && R.cityBlink.changed > 20, `A4. city lights BLINK (${R.cityBlink.changed}/${R.cityBlink.total} colour channels change across update calls)`);
+  ok(hasMesh(R.cityStats, "foliage-trunk") && hasMesh(R.cityStats, "foliage-canopy"), `A5. city has foliage (trunks+canopies)`);
   ok(!R.cityRender.blank && !R.cityRender.allOneColor, `C1. city renders NON-BLANK (spread=${R.cityRender.spread})`);
   ok(R.cityRender.nonBg > 200, `C2. city draws real geometry (${R.cityRender.nonBg} non-bg px)`);
 
   console.log("=== FARM ===");
-  console.log("  instanced:", JSON.stringify(R.farmStats.map((m) => ({ name: m.name, count: m.count }))));
+  console.log("  instanced:", JSON.stringify(R.farmStats.map((m) => ({ name: m.name, family: m.family, count: m.count }))));
+  console.log("  crop families:", farmFams.join(", "));
   console.log("  render:", JSON.stringify(R.farmRender));
+  console.log("  blink:", JSON.stringify(R.farmBlink));
   ok(farmC >= 60, `B1. farm has non-trivial crop rows (${farmC} crops)`);
-  ok(farmS >= 3, `B2. farm has silos (${farmS})`);
+  ok(farmFams.length >= 3, `B2. farm crops span multiple families (${farmFams.length}: ${farmFams.join("/")})`);
+  ok(farmS >= 3, `B3. farm has silos (${farmS})`);
+  ok(hasMesh(R.farmStats, "silo-roofs"), `B4. farm silos have roofs (${sumCount(R.farmStats, "silo-roofs")})`);
+  ok(hasMesh(R.farmStats, "foliage-trunk") && hasMesh(R.farmStats, "foliage-canopy"), `B5. farm has foliage tree-lines`);
+  ok(R.farmBlink.has && R.farmBlink.changed > 5, `B6. farm fireflies BLINK (${R.farmBlink.changed}/${R.farmBlink.total} channels change)`);
   ok(!R.farmRender.blank && !R.farmRender.allOneColor, `C3. farm renders NON-BLANK (spread=${R.farmRender.spread})`);
   ok(R.farmRender.nonBg > 200, `C4. farm draws real geometry (${R.farmRender.nonBg} non-bg px)`);
+
+  console.log("=== SHADOWS ===");
+  console.log("  shadow flags:", JSON.stringify(R.shadow));
+  ok(R.shadow.cityGround && R.shadow.farmGround, "S1. ground receives shadows (city+farm)");
+  ok(R.shadow.cityCasters >= 5, `S2. city building families cast shadows (${R.shadow.cityCasters} caster meshes)`);
+  ok(R.shadow.cityBuildingReceives, "S3. city buildings also receive (self/neighbour depth)");
+  ok(R.shadow.cityFoliageCasts, "S4. city foliage casts shadows");
+  ok(R.shadow.farmCropCasts && R.shadow.farmSiloCasts, "S5. farm crops + silos cast shadows");
+  ok(R.shadow.beaconNeverCasts, "S6. glowing light octahedra never cast (no black holes in the glow)");
 
   console.log("=== DETERMINISM ===");
   ok(R.det.cityIdentical, "D1. city seed 5 == seed 5 (identical layout)");

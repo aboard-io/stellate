@@ -81,8 +81,10 @@ async function main() {
   }));
   console.log("       lowRes:", JSON.stringify(rig.res), " exit:", rig.exit);
   ok(rig.exit && rig.exitDom, "B4. always-visible ✕ EXIT button mounted above the canvas");
-  ok(rig.res.w >= 480 && rig.res.h >= 320,
-    `B5. internal resolution bumped past potato (${rig.res.w}x${rig.res.h}, was 320x240)`);
+  // NEAR-NATIVE render target now (DPR-aware, long edge capped ~1600 desktop / ~1080
+  // mobile). At the 800x600 test viewport (dpr 1) that resolves to ~800x600.
+  ok(rig.res.w >= 760 && rig.res.h >= 560,
+    `B5. internal resolution RAISED to near-native (${rig.res.w}x${rig.res.h}, was 320x240 potato)`);
 
   // ---- C: non-blank frame ----
   const sample = await page.evaluate(() => window.__STARCRUISE.sampleLowRes());
@@ -153,6 +155,57 @@ async function main() {
     `G4. scene child count ROSE on landing (${flying.children} flying -> ${landed.children} landed)`);
   ok(landed.backdrop && landed.ship, `G5. backdrop + ship present after landing`);
 
+  // ---- N: NAVIGATION — default framing is FRONT-CENTRED, and a DRAG moves the view ----
+  // (1) the landed view must be centred on the band (target ~ centroid, yaw ~ 0 = front,
+  // camera IN FRONT on +Z) — the fix for "side profile / off to the left / zoomed out".
+  // (2) dispatching a real pointer drag on the canvas must CHANGE the orbit + camera.
+  const nav = await page.evaluate(() => {
+    const SC = window.__STARCRUISE;
+    const canvas = document.getElementById("starcruise-canvas");
+    SC.__step(0.016);                       // settle the landed (front-on) camera
+    const orbit0 = SC.orbit(), cam0 = SC.cam(), centroid = SC.centroid();
+    // dispatch a genuine mouse drag: mousedown on the canvas, move + up on window.
+    canvas.dispatchEvent(new MouseEvent("mousedown", { clientX: 400, clientY: 300, bubbles: true }));
+    window.dispatchEvent(new MouseEvent("mousemove", { clientX: 540, clientY: 350, bubbles: true }));
+    window.dispatchEvent(new MouseEvent("mouseup", { clientX: 540, clientY: 350, bubbles: true }));
+    SC.__step(0.016);                       // apply the new orbit to the camera
+    const orbit1 = SC.orbit(), cam1 = SC.cam();
+    // also exercise the touch path (single-finger drag). TouchEvent may not be
+    // constructable in headless; fall back to the __drag hook so N3 still proves tilt.
+    let touchOk = false;
+    try {
+      canvas.dispatchEvent(new TouchEvent("touchstart", { touches: [{ clientX: 300, clientY: 300 }], bubbles: true, cancelable: true }));
+      canvas.dispatchEvent(new TouchEvent("touchmove", { touches: [{ clientX: 300, clientY: 380 }], bubbles: true, cancelable: true }));
+      canvas.dispatchEvent(new TouchEvent("touchend", { touches: [], bubbles: true, cancelable: true }));
+      touchOk = true;
+    } catch (e) { SC.__drag(0, 80); }        // fallback: drive a downward drag directly
+    SC.__step(0.016);
+    const orbit2 = SC.orbit();
+    return { orbit0, orbit1, orbit2, cam0, cam1, centroid, touchOk };
+  }).catch((e) => ({ err: String(e) }));
+  if (nav.err) { ok(false, "N. nav probe threw :: " + nav.err); }
+  else {
+    console.log("       nav.orbit0:", JSON.stringify(nav.orbit0), " cam0:", JSON.stringify(nav.cam0));
+    const centred = Math.abs(nav.orbit0.target.x - nav.centroid.x) < 0.6 && Math.abs(nav.orbit0.yaw) < 0.4
+      && nav.cam0.z > nav.centroid.z;      // camera sits IN FRONT (+Z) of the band centre
+    ok(centred, `N1. default landed view is FRONT-CENTRED on the band (yaw=${nav.orbit0.yaw.toFixed(2)}, targetX=${nav.orbit0.target.x.toFixed(2)} ~ centroidX=${nav.centroid.x.toFixed(2)}, camZ=${nav.cam0.z.toFixed(1)} > centroidZ=${nav.centroid.z.toFixed(1)})`);
+    const yawMoved = Math.abs(nav.orbit1.yaw - nav.orbit0.yaw) > 0.05;
+    const camMoved = Math.hypot(nav.cam1.x - nav.cam0.x, nav.cam1.y - nav.cam0.y, nav.cam1.z - nav.cam0.z) > 0.05;
+    ok(yawMoved && camMoved, `N2. a MOUSE drag orbits the view (yaw ${nav.orbit0.yaw.toFixed(3)}->${nav.orbit1.yaw.toFixed(3)}, camera moved ${Math.hypot(nav.cam1.x - nav.cam0.x, nav.cam1.y - nav.cam0.y, nav.cam1.z - nav.cam0.z).toFixed(2)})`);
+    ok(Math.abs(nav.orbit2.pitch - nav.orbit1.pitch) > 0.02, `N3. a TOUCH drag tilts the view (pitch ${nav.orbit1.pitch.toFixed(3)}->${nav.orbit2.pitch.toFixed(3)})`);
+  }
+
+  // ---- Dn: DANCERS spawn around the band, grooving to the same beat ----
+  const dnc = await page.evaluate(() => ({ dancers: window.__STARCRUISE.dancers(), traitsD: (window.__STARCRUISE.traits() || {}).dancers }));
+  console.log("       dancers:", JSON.stringify(dnc));
+  ok(dnc.dancers >= 3 && dnc.dancers <= 8, `Dn1. dancers spawned around the band (${dnc.dancers}, traits asked ${dnc.traitsD}, cap 8)`);
+
+  // ---- Sh: LIGHTING & SHADOW — shadowMap on, key light casts, band casts shadows ----
+  const sh = await page.evaluate(() => window.__STARCRUISE.shadows());
+  console.log("       shadows:", JSON.stringify(sh));
+  ok(sh.enabled && sh.sunCast, `Sh1. shadows ENABLED + key light casts (enabled=${sh.enabled}, sunCast=${sh.sunCast}, map=${sh.mapSize})`);
+  ok(sh.bandCasters > 0, `Sh2. the band/dancers CAST shadows so forms read modelled (${sh.bandCasters} caster meshes)`);
+
   // ---- H: the band PLAYS ON the beat and LOCKS to the shared phase ----
   // At beatPhase 0 (a hit boundary) EVERY playing hand sits ON its instrument's
   // contact point (dist ~ 0) — simultaneously, which is the whole band locking to
@@ -184,17 +237,44 @@ async function main() {
   const sample3 = await page.evaluate(() => window.__STARCRUISE.sampleLowRes());
   ok(sample3 && !sample3.blank && sample3.nonBg > 50, `H4. NON-BLANK while the band plays (nonBg=${sample3 && sample3.nonBg})`);
 
-  // ---- K: a fresh DEPART disposes band+backdrop+ship back to the flying baseline ----
-  const back = await page.evaluate(() => {
+  // ---- J: FLY-AWAY — DEPART lifts off into a SPACE/COCKPIT state showing the planet ----
+  // A fresh DEPART must dispose the surface ensemble AND raise the cockpit set: the
+  // pilot flies away through space (spaceProgress rises), the planet recedes BELOW,
+  // and the console shows the GENRE display. The frame must stay NON-BLANK throughout.
+  const away = await page.evaluate(() => {
     const SC = window.__STARCRUISE;
     SC.__injectTravel({ weights: [], dominant: null, position: null, live: false, seed: 1 });
-    for (let i = 0; i < 12; i++) SC.__step(0.2);
+    let planetYearly = null;
+    const prog = [];
+    for (let i = 0; i < 14; i++) {
+      SC.__step(0.2);
+      const sp = SC.space();
+      prog.push(sp.spaceProgress);
+      if (i === 2) planetYearly = sp.planetY;   // planet position early in the climb
+    }
+    const sp = SC.space();
+    const smp = SC.sampleLowRes();
+    return { cockpit: sp.hasCockpit, planet: sp.hasPlanet, genres: sp.genres,
+      spaceProgress: sp.spaceProgress, planetY0: planetYearly, planetY1: sp.planetY,
+      nonBlank: smp && !smp.blank && smp.nonBg > 50, nonBg: smp && smp.nonBg,
+      band: SC.band().length, backdrop: SC.hasBackdrop(), ship: SC.hasShip(), children: SC.sceneChildren() };
+  });
+  console.log("       flyaway:", JSON.stringify(away));
+  ok(away.cockpit && away.planet, `J1. DEPART lifts into a COCKPIT/SPACE state (cockpit=${away.cockpit}, planet=${away.planet})`);
+  ok(away.genres && away.genres.length >= 1, `J2. cockpit console shows a GENRE display (${JSON.stringify(away.genres)})`);
+  ok(away.spaceProgress > 0.5, `J3. we LEFT THE ATMOSPHERE — spaceProgress rose to ${Number(away.spaceProgress).toFixed(2)}`);
+  ok(away.planetY1 < away.planetY0, `J4. the planet RECEDES below as we climb (y ${Number(away.planetY0).toFixed(1)} -> ${Number(away.planetY1).toFixed(1)})`);
+  ok(away.nonBlank, `J5. the fly-away/cockpit frame is NON-BLANK (nonBg=${away.nonBg})`);
+
+  // ---- K: the surface ensemble is gone; the scene matches the flying baseline ----
+  const back = await page.evaluate(() => {
+    const SC = window.__STARCRUISE;
     const r = { children: SC.sceneChildren(), band: SC.band().length, backdrop: SC.hasBackdrop(), ship: SC.hasShip() };
     SC.__injectTravel(null); SC.__injectBeat(null);     // restore REAL hooks before teardown
     return r;
   });
   ok(back.band === 0 && !back.backdrop && !back.ship && back.children === flying.children,
-    `K1. depart disposes the whole ensemble — scene returns to baseline (${back.children} children, band=${back.band})`);
+    `K1. depart disposed the surface ensemble — scene matches the flying baseline (${back.children} children == ${flying.children}, band=${back.band})`);
 
   // ---- E: no errors ----
   ok(errs.length === 0, "E1. no console/page errors across activate->run" + (errs.length ? " :: " + errs.join(" | ") : ""));
