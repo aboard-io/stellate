@@ -1171,6 +1171,24 @@
     /* genre-tool:vespers:clips */
     vespers:["dc_village","earth_orbit"],
     /* /genre-tool:vespers:clips */
+    /* genre-tool:rnb:clips */
+    rnb:["blue_dinner","dark_face","dh_trumpet"],
+    /* /genre-tool:rnb:clips */
+    /* genre-tool:gospel:clips */
+    gospel:["ca_canada","dh_bigband","dc_village"],
+    /* /genre-tool:gospel:clips */
+    /* genre-tool:altcountry:clips */
+    altcountry:["bt_folksinger","ca_street","dark_face"],
+    /* /genre-tool:altcountry:clips */
+    /* genre-tool:yachtrock:clips */
+    yachtrock:["cs_liner","disc_sunset","blue_dinner","dh_bigband"],
+    /* /genre-tool:yachtrock:clips */
+    /* genre-tool:honkytonk:clips */
+    honkytonk:["bt_folksinger","bt_hootenanny","ca_street"],
+    /* /genre-tool:honkytonk:clips */
+    /* genre-tool:countrypop:clips */
+    countrypop:["ca_street","bt_hootenanny","dc_skyline"],
+    /* /genre-tool:countrypop:clips */
   };
 
   // ---------- DX7 patch registry (the genre-space thesis applied to INSTRUMENTS) ----------
@@ -6233,6 +6251,138 @@
       rhythm:[0,0.08],
       pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:vespers:genres */
+    /* genre-tool:rnb:genres */
+    rnb: { label:"R&B", info:"slow-jam quiet-storm soul ~72bpm — Rhodes and electric piano, a breathy solo-vocal lead, fingered bass, drum-machine snap, warm string pads, lush maj7/min9 harmony. Influences: Sade, D'Angelo, Anita Baker, neo-soul",
+      bpm:[62,82],
+      swing:[0.05,0.12],
+      humanize:[0.15,0.35],
+      progressions:["neosoul","house_min7","ii_v_i"],
+      kits:["newjack","house"],
+      fills:["off","drum fill"],
+      bass:{patterns:["root","simple","walking"], samplerPool:["finger_bass","fretless_bass"], recipe:{model:["sampler","sub"], cutoff:[350,620], res:[0.05,0.14], level:[0.85,1.05], send:[0.08,0.18], dsend:[0.04,0.12]}},
+      lead:{patterns:["composed","sparse","wander"], samplerPool:["solo_vox","rhodes_ep","electric_piano"], recipe:{model:["sampler"], wave:"sine", voices:[1,1], spread:[0.003,0.007], cutoff:[2200,3200], level:[0.5,0.64], send:[0.38,0.56], dsend:[0.18,0.34], vibrato:[0.01,0.02]}},
+      pads:{prob:0.9, samplerPool:["strings","slow_strings","rhodes_ep"], recipe:{model:["sampler","strings"], wave:"saw", cutoff:[900,1500], detune:[0.005,0.011], attack:[1,2.5], level:[0.44,0.6], send:[0.4,0.6], dsend:[0.14,0.3]}},
+      drums:{kickModel:["boom","808"], snareModel:["clap","noise"], hatModel:["noise"], kick:[0.55,0.8], snare:[0.45,0.7], hat:[0.4,0.65], tune:[0.95,1.05], send:[0.1,0.22], dsend:[0.06,0.16]},
+      fx:{reverb:[0.4,0.56], delayBeats:[0.5,0.75], delayFb:[0.22,0.36], delayCut:[2000,3000], pump:[0,0.06], crackle:[0.04,0.12], lowcut:[25,45], highcut:[0,0], comp:[0.2,0.4]},
+      found:{role:"bed", vol:[0.06,0.13], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["tokyo_station","oslo_ferry_pa"]},
+      hits:{sources:["tw_ding"], pattern:"sparse", prob:0.14},
+      stab:["off","sparse"],
+      form:"duet",
+      reverbColor:"dattorro",
+      theory:{adventure:[0.29,0.467], color:[0.517,0.75], voicing:"drop2", reharm:true},
+      rhythm:[0.235,0.425],
+      pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"harmonize", w:0.45, prob:0.35}] },
+    /* /genre-tool:rnb:genres */
+    /* genre-tool:gospel:genres */
+    gospel: { label:"Gospel", info:"hand-clap church gospel ~92bpm — Hammond organ and gospel piano, a massed choir on the hook, walking bass, a big driving backbeat, wide reverb, major IV-V-I cadences. Influences: Mahalia Jackson, Kirk Franklin, Sunday-morning choir",
+      bpm:[84,102],
+      swing:[0.06,0.14],
+      humanize:[0.15,0.3],
+      progressions:["doo_wop","four_chords","uplift"],
+      kits:["full","open"],
+      fills:["drum fill","kit fill"],
+      bass:{patterns:["walking","root","simple"], samplerPool:["finger_bass","acoustic_bass"], recipe:{model:["sampler","sub"], cutoff:[400,700], res:[0.05,0.14], level:[0.85,1.05], send:[0.1,0.2], dsend:[0.04,0.12]}},
+      lead:{patterns:["composed","updown","wander"], samplerPool:["ahh_choir","ohh_voices","church_organ"], recipe:{model:["sampler"], wave:"sine", voices:[1,2], spread:[0.004,0.009], cutoff:[2200,3200], level:[0.5,0.66], send:[0.44,0.64], dsend:[0.16,0.3], attack:[0.05,0.2]}},
+      pads:{prob:1, samplerPool:["church_organ","rock_organ","strings"], recipe:{model:["sampler","strings"], wave:"saw", cutoff:[1000,1700], detune:[0.004,0.009], attack:[0.4,1.4], level:[0.52,0.68], send:[0.46,0.66], dsend:[0.14,0.3]}},
+      drums:{kickModel:["boom"], snareModel:["clap","noise"], hatModel:["noise"], kick:[0.72,0.98], snare:[0.7,0.92], hat:[0.62,0.9], tune:[0.95,1.05], send:[0.14,0.26], dsend:[0.05,0.14]},
+      fx:{reverb:[0.62,0.8], delayBeats:[0.5,0.75], delayFb:[0.24,0.4], delayCut:[2200,3200], pump:[0,0.05], crackle:[0.02,0.08], lowcut:[20,40], highcut:[0,0], comp:[0.18,0.36]},
+      found:{role:"bed", vol:[0.06,0.13], pitch:[0.9,1], stretch:[0.45,0.6], cutoff:[2000,3000], sources:["nevsky_choir","celtic_fans"]},
+      hits:{sources:["tw_ding"], pattern:"sparse", prob:0.16},
+      stab:["off","sparse"],
+      form:"pop",
+      reverbColor:"shimmer",
+      theory:{adventure:[0.1,0.2], color:[0.167,0.35], voicing:"close", reharm:true},
+      rhythm:[0.11,0.275],
+      pipes:[{id:"harmonize", w:0.45, prob:0.35}] },
+    /* /genre-tool:gospel:genres */
+    /* genre-tool:altcountry:genres */
+    altcountry: { label:"Alt-Country", info:"dusty alt-country / Americana ~96bpm — jangly clean and steel-string guitars with a seam of fuzz, Rhodes haze, wide roomy reverb, tape crackle, straight-eighth melancholy under the twang. Influences: Wilco, Uncle Tupelo, Son Volt",
+      bpm:[88,104],
+      swing:[0.02,0.07],
+      humanize:[0.2,0.4],
+      progressions:["four_chords","lofi","mediant"],
+      kits:["boombap","open"],
+      fills:["off","drum fill"],
+      bass:{patterns:["root","simple","walking"], samplerPool:["finger_bass","picked_bass"], recipe:{model:["sampler","sub"], cutoff:[360,640], res:[0.05,0.14], level:[0.85,1.05], send:[0.08,0.18], dsend:[0.04,0.12]}},
+      lead:{patterns:["composed","wander","sparse"], samplerPool:["clean_guitar","steel_string_guitar","di_guitar"], recipe:{model:["sampler"], wave:"sine", voices:[1,1], spread:[0.003,0.008], cutoff:[2400,3400], level:[0.5,0.64], send:[0.34,0.52], dsend:[0.16,0.32], vibrato:[0.008,0.018]}},
+      pads:{prob:0.75, samplerPool:["rhodes_ep","strings","slow_strings"], recipe:{model:["sampler","strings"], wave:"saw", cutoff:[1000,1600], detune:[0.005,0.011], attack:[0.8,2.2], level:[0.42,0.58], send:[0.42,0.62], dsend:[0.16,0.32]}},
+      drums:{kickModel:["boom"], snareModel:["noise","crack"], hatModel:["noise"], kick:[0.5,0.76], snare:[0.5,0.72], hat:[0.42,0.68], tune:[0.95,1.05], send:[0.12,0.24], dsend:[0.06,0.16]},
+      fx:{reverb:[0.56,0.72], delayBeats:[0.75,1], delayFb:[0.26,0.42], delayCut:[2000,3000], pump:[0,0.04], crackle:[0.1,0.22], lowcut:[25,45], highcut:[0,0], comp:[0.14,0.32]},
+      found:{role:"bed", vol:[0.07,0.14], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[2000,3000], sources:["coyote_prairie","nj_owls"]},
+      hits:{sources:["tw_ding"], pattern:"sparse", prob:0.12},
+      stab:["off"],
+      form:"pop",
+      reverbColor:"spring",
+      theory:{adventure:[0.2,0.333], color:[0.25,0.45], voicing:"close", reharm:true},
+      rhythm:[0.2,0.375],
+      pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"strum", w:0.55, step:0.02}] },
+    /* /genre-tool:altcountry:genres */
+    /* genre-tool:yachtrock:genres */
+    yachtrock: { label:"Yacht Rock", info:"smooth West-Coast soft rock ~112bpm — Rhodes and clean electric guitar, a lyrical alto-sax hook, fretless bass, dry polished mix, lush maj7/min7 harmony. Influences: Steely Dan, Doobie Brothers, Toto, Michael McDonald",
+      bpm:[104,120],
+      swing:[0.02,0.06],
+      humanize:[0.08,0.2],
+      progressions:["neosoul","ii_v_i"],
+      kits:["full","open"],
+      fills:["drum fill","tom fill"],
+      bass:{patterns:["walking","root","simple"], samplerPool:["fretless_bass","finger_bass"], recipe:{model:["sampler","sampler"], cutoff:[400,700], res:[0.05,0.14], level:[0.85,1.05], send:[0.06,0.14], dsend:[0.02,0.08]}},
+      lead:{patterns:["composed","wander","updown"], samplerPool:["alto_sax","tenor_sax","rhodes_ep","electric_piano"], recipe:{model:["sampler"], wave:"sine", voices:[1,1], spread:[0.003,0.007], cutoff:[2600,3600], level:[0.5,0.64], send:[0.22,0.36], dsend:[0.08,0.18], vibrato:[0.008,0.016]}},
+      pads:{prob:0.85, samplerPool:["rhodes_ep","electric_piano","strings"], recipe:{model:["sampler","strings"], wave:"saw", cutoff:[1100,1800], detune:[0.004,0.009], attack:[0.6,1.8], level:[0.42,0.58], send:[0.22,0.4], dsend:[0.06,0.16]}},
+      drums:{kickModel:["boom"], snareModel:["noise","clap"], hatModel:["noise"], kick:[0.55,0.82], snare:[0.5,0.72], hat:[0.5,0.78], tune:[0.95,1.05], send:[0.08,0.18], dsend:[0.03,0.1]},
+      fx:{reverb:[0.3,0.44], delayBeats:[0.375,0.5], delayFb:[0.12,0.24], delayCut:[2600,3600], pump:[0,0.02], crackle:[0.02,0.06], lowcut:[30,50], highcut:[0,0], comp:[0.2,0.4]},
+      found:{role:"bed", vol:[0.05,0.1], pitch:[0.9,1], stretch:[0.45,0.6], cutoff:[2400,3400], sources:["oslo_ferry_pa","tokyo_station"]},
+      hits:{sources:["tw_ding"], pattern:"sparse", prob:0.1},
+      stab:["off","sparse"],
+      form:"pop",
+      reverbColor:"dattorro",
+      theory:{adventure:[0.375,0.575], color:[0.55,0.8], voicing:"drop2", reharm:true},
+      rhythm:[0.11,0.275],
+      pipes:[{id:"harmonize", w:0.45, prob:0.35}] },
+    /* /genre-tool:yachtrock:genres */
+    /* genre-tool:honkytonk:genres */
+    honkytonk: { label:"Honky-Tonk", info:"barroom honky-tonk country ~116bpm — twangy steel-string guitar, crying fiddle, harmonica, tack piano, walking upright bass, a loping brushed shuffle, dry spring reverb, three chords and the truth. Influences: Hank Williams, Buck Owens, Bakersfield",
+      bpm:[100,114],
+      swing:[0.13,0.19],
+      humanize:[0.15,0.35],
+      progressions:["four_chords","blues_12"],
+      kits:["shuffle","boombap"],
+      fills:["off","drum fill"],
+      bass:{patterns:["walking","root","simple"], samplerPool:["acoustic_bass","contrabass"], recipe:{model:["sampler","sampler"], cutoff:[350,600], res:[0.05,0.14], level:[0.85,1.05], send:[0.06,0.14], dsend:[0,0.06]}},
+      lead:{patterns:["composed","updown","wander"], samplerPool:["steel_string_guitar","fiddle","harmonica","banjo"], recipe:{model:["sampler"], wave:"sine", voices:[1,1], spread:[0.002,0.005], cutoff:[2600,3600], level:[0.5,0.64], send:[0.18,0.3], dsend:[0.06,0.16], vibrato:[0.014,0.024]}},
+      pads:{prob:0.5, samplerPool:["honky_tonk"], recipe:{model:["sampler"], wave:"saw", cutoff:[1400,2100], detune:[0.002,0.006], attack:[0.1,0.5], level:[0.38,0.52], send:[0.16,0.3], dsend:[0.04,0.12]}},
+      drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.42,0.64], snare:[0.42,0.62], hat:[0.38,0.58], tune:[0.95,1.05], send:[0.08,0.16], dsend:[0.02,0.08]},
+      fx:{reverb:[0.24,0.38], delayBeats:[0.375,0.5], delayFb:[0.1,0.22], delayCut:[2800,3800], pump:[0,0.03], crackle:[0.04,0.12], lowcut:[25,45], highcut:[0,0], comp:[0.1,0.26]},
+      found:{role:"bed", vol:[0.05,0.1], pitch:[0.9,1], stretch:[0.45,0.6], cutoff:[2400,3400], sources:["coyote_prairie","morning_traffic_ny"]},
+      hits:{sources:["tw_ding"], pattern:"sparse", prob:0.1},
+      stab:["off"],
+      form:"pop",
+      reverbColor:"spring",
+      theory:{adventure:[0.225,0.375], color:[0.275,0.45], voicing:"drop2", reharm:true},
+      rhythm:[0.275,0.475],
+      pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"callResponse", w:0.5, level:0.85},{id:"strum", w:0.55, step:0.02}] },
+    /* /genre-tool:honkytonk:genres */
+    /* genre-tool:countrypop:genres */
+    countrypop: { label:"Country Pop", info:"stadium Nashville country-pop ~136bpm — bright clean and steel-string guitars, banjo roll, fiddle sweetening, punchy picked bass, a big straight arena backbeat, dry polished mix, four-chord major hooks. Influences: Shania Twain, Keith Urban, modern CMA radio",
+      bpm:[128,146],
+      swing:[0.02,0.06],
+      humanize:[0.08,0.2],
+      progressions:["four_chords","uplift"],
+      kits:["full","open"],
+      fills:["drum fill","riser","tom fill"],
+      bass:{patterns:["root","simple"], samplerPool:["pop_bass","picked_bass","finger_bass"], recipe:{model:["sampler","sub"], cutoff:[420,720], res:[0.05,0.14], level:[0.9,1.1], send:[0.05,0.12], dsend:[0.02,0.08]}},
+      lead:{patterns:["composed","updown","wander"], samplerPool:["clean_guitar","steel_string_guitar","banjo"], recipe:{model:["sampler"], wave:"sine", voices:[1,1], spread:[0.002,0.006], cutoff:[2800,3800], level:[0.5,0.64], send:[0.16,0.3], dsend:[0.06,0.16], vibrato:[0.008,0.016]}},
+      pads:{prob:0.8, samplerPool:["strings","slow_strings"], recipe:{model:["sampler","strings"], wave:"saw", cutoff:[1200,1900], detune:[0.004,0.009], attack:[0.3,1.2], level:[0.4,0.55], send:[0.24,0.4], dsend:[0.06,0.16]}},
+      drums:{kickModel:["boom","909"], snareModel:["clap","noise"], hatModel:["noise"], kick:[0.74,1], snare:[0.7,0.94], hat:[0.62,0.9], tune:[0.95,1.05], send:[0.1,0.22], dsend:[0.04,0.12]},
+      fx:{reverb:[0.3,0.44], delayBeats:[0.375,0.5], delayFb:[0.12,0.24], delayCut:[2800,3800], pump:[0,0.06], crackle:[0.02,0.06], lowcut:[30,50], highcut:[0,0], comp:[0.24,0.44]},
+      found:{role:"bed", vol:[0.05,0.1], pitch:[0.9,1], stretch:[0.45,0.6], cutoff:[2400,3400], sources:["coyote_prairie","leeds_terrace"]},
+      hits:{sources:["tw_ding"], pattern:"sparse", prob:0.1},
+      stab:["off","sparse"],
+      form:"pop",
+      reverbColor:"dattorro",
+      theory:{adventure:[0.1,0.2], color:[0.125,0.3], voicing:"close", reharm:true},
+      rhythm:[0.11,0.275],
+      pipes:[{id:"strum", w:0.55, step:0.02}] },
+    /* /genre-tool:countrypop:genres */
   };
 
   // ---------- MUSIC-MIND anchor axes (docs/MUSIC-MIND.md §"The vector space grows new axes") ----------
