@@ -4537,9 +4537,9 @@
       kits:["newjack","house","four"],
       fills:["off","drum fill","kit fill"],
       bass:{patterns:["walking","melodic","dub"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sampler","piano"], cutoff:[400,800], res:[0.05,0.12], level:[0.95,1.15], send:[0.1,0.2], dsend:[0,0.05], attack:0.005, release:[0.08,0.14]}},
-      lead:{patterns:["arp16"], recipe:{model:["kpluck"], wave:"saw", drive:0.45, cutoff:[3000,3800], level:[0.62,0.74], send:[0.16,0.26], dsend:[0.46,0.56], voices:[1,3]}, inserts:{prob:0.8, max:1, pool:[["chorus",{rate:[0.7,1.1], depth:[0.45,0.65], mix:[0.45,0.6]}]]}},
+      lead:{patterns:["arp16"], recipe:{model:["kpluck"], wave:"saw", drive:0.45, cutoff:[3000,3800], level:[0.84,0.98], send:[0.16,0.26], dsend:[0.2,0.32], voices:[1,3]}, inserts:{prob:0.8, max:1, pool:[["chorus",{rate:[0.7,1.1], depth:[0.45,0.65], mix:[0.45,0.6]}]]}},   // LEAD FORWARD (Paul 2026-07-11: "lead too quiet"): level up + delay send halved (0.46-0.56 dry-drowning wash -> 0.2-0.32) so the kpluck arp sits up front, not buried in its own echo
       pads:{prob:1, samplerPool:["church_organ"], recipe:{model:["organ","organ","sampler"], wave:"saw", cutoff:[1500,2200], detune:[0.004,0.008], attack:[0.3,0.7], level:[0.4,0.52], send:[0.16,0.26], dsend:[0,0.06]}},
-      drums:{kickModel:["boom","909"], snareModel:["noise","crack"], hatModel:["noise"], kick:[1,1.25], snare:[0.7,0.95], hat:[0.9,1.3], tune:[0.95,1.1], send:[0.1,0.22], dsend:[0.03,0.12], kit:"acoustic"},
+      drums:{kickModel:["boom","909"], snareModel:["noise","crack"], hatModel:["noise"], kick:[0.85,1.05], snare:[0.7,0.95], hat:[0.9,1.3], tune:[0.95,1.1], send:[0.1,0.22], dsend:[0.03,0.12], kit:"acoustic"},   // KICK -15% (Paul 2026-07-11: "bass drum processed, bad transient click"): 1-1.25 slammed the master makeup+limiter; a fast limiter clamping that hot transient is the click — best-guess ear-check
       fx:{reverb:[0.26,0.44], delayBeats:[0.5,0.75], delayFb:[0.15,0.3], delayCut:[2200,3400], pump:[0.13,0.35], crackle:[0.12,0.28], lowcut:[25,40], highcut:[2600,3400], comp:[0.26,0.48]},
       found:{role:"chops", vol:[0.1,0.18], pitch:[0.95,1.15], stretch:[0.4,0.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense"]},
       hits:{sources:["bb_horn_a","bb_horn_b","bb_stab_a","bb_stab_b"], pattern:"offbeat", prob:0.55},
