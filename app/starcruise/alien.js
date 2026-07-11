@@ -126,15 +126,86 @@ export function makeAlien(THREE, traits, member, seed) {
   const crestType = body.crestType || "none";
   const asym = Math.max(0, Math.min(1, body.asymmetry || 0));
 
+  // ---- RENDER STYLE (the genre's visual LANGUAGE, from traits.renderStyle) --------
+  // traits.renderStyle.material picks how EVERY surface shades. Defaults to 'flat'
+  // (the original flat-lit Lambert) when the traits agent hasn't supplied one, so
+  // the alien is never blank. All six treatments keep light response + shadows
+  // (wireframe/glitch intentionally read as edges/broken). Materials are built ONCE
+  // per style and reused across the whole alien — no per-frame recompiles.
+  const style = (traits.renderStyle && traits.renderStyle.material) || "flat";
+  const wire = style === "wireframe";      // lit wire body (edges), face stays solid
+  const smooth = style === "matte";        // matte = soft SMOOTH shading (no facets)
+  const glitchTime = { value: 0 };         // shared uniform, driven by the clock
+
+  // CEL: a 3-band hard toon ramp (dark / mid / lit) so light falls in flat steps.
+  let celGrad = null;
+  if (style === "cel") {
+    const ramp = new Uint8Array([70, 70, 84, 255, 150, 150, 165, 255, 245, 245, 255, 255]);
+    celGrad = new THREE.DataTexture(ramp, 3, 1);   // RGBA, 3 hard steps
+    celGrad.magFilter = THREE.NearestFilter; celGrad.minFilter = THREE.NearestFilter;
+    celGrad.needsUpdate = true;
+  }
+
+  // IRIDESCENT: a view-angle fresnel rim whose HUE cycles with the angle (glossy).
+  const IRID_GLSL = [
+    "float _fr = pow(1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0), 2.2);",
+    "vec3 _ir = 0.5 + 0.5 * cos(6.2831853 * (_fr + vec3(0.0, 0.33, 0.66)));",
+    "outgoingLight = mix(outgoingLight, outgoingLight + _ir, _fr * 0.85);",
+  ].join("\n");
+  // GLITCH: seeded vertex jitter (position+time, occasional bursts) + rgb-split flicker.
+  const GLITCH_VERT = [
+    "float _burst = step(0.86, fract(uTime * 0.7));",
+    "transformed.x += sin(uTime * 13.0 + transformed.y * 20.0 + transformed.x * 7.0) * (0.006 + 0.03 * _burst);",
+    "transformed.z += cos(uTime * 17.0 + transformed.y * 14.0) * (0.004 + 0.02 * _burst);",
+  ].join("\n");
+  const GLITCH_FRAG = [
+    "float _fl = step(0.8, fract(uTime * 0.7 + 0.3));",
+    "outgoingLight.r += 0.16 * _fl * (0.5 + 0.5 * sin(uTime * 40.0));",
+    "outgoingLight.b -= 0.16 * _fl * (0.5 + 0.5 * sin(uTime * 37.0));",
+  ].join("\n");
+  // Attach the per-style shader hooks (iridescent fresnel / glitch jitter+flicker).
+  function applyStyleHook(m) {
+    if (style === "iridescent") {
+      m.onBeforeCompile = (shader) => {
+        shader.fragmentShader = shader.fragmentShader.replace(
+          "#include <opaque_fragment>", IRID_GLSL + "\n#include <opaque_fragment>");
+      };
+      m.customProgramCacheKey = () => "sc_irid";
+    } else if (style === "glitch") {
+      m.onBeforeCompile = (shader) => {
+        shader.uniforms.uTime = glitchTime;
+        shader.vertexShader = "uniform float uTime;\n" + shader.vertexShader.replace(
+          "#include <begin_vertex>", "#include <begin_vertex>\n" + GLITCH_VERT);
+        shader.fragmentShader = "uniform float uTime;\n" + shader.fragmentShader.replace(
+          "#include <opaque_fragment>", GLITCH_FRAG + "\n#include <opaque_fragment>");
+      };
+      m.customProgramCacheKey = () => "sc_glitch";
+    }
+    return m;
+  }
+
   // ---- shared, LIT + shadowed materials (bold contrast) --------------------------
   // Bodies get the procedural texture map (so surfaces read modelled, not flat);
   // accents stay untextured so they POP. Limbs are a darker value than the torso,
   // and a COMPLEMENTARY accent2 (hue+180) trims teeth/beads for extra contrast.
   const skinTex = makeSkinTexture(THREE, traits.texture || "plate", rand);
-  const mk = (col, textured) => new THREE.MeshLambertMaterial({
-    color: col, flatShading: true, map: textured ? skinTex : null,
-    emissive: (glow > 0.05 ? col.clone().multiplyScalar(0.16 * glow) : new THREE.Color(0, 0, 0)),
-  });
+  // mk builds ONE surface in the active render style. 'cel' => banded MeshToon;
+  // everything else => Lambert (flat/matte-smooth/wireframe) + the fresnel/glitch
+  // hook. All keep emissive glow, the skin map, and cast/receive shadows.
+  const mk = (col, textured) => {
+    const emissive = (glow > 0.05 ? col.clone().multiplyScalar(0.16 * glow) : new THREE.Color(0, 0, 0));
+    let m;
+    if (style === "cel") {
+      m = new THREE.MeshToonMaterial({ color: col, map: textured ? skinTex : null, emissive, gradientMap: celGrad });
+      m.flatShading = true;   // low-poly facets, banded by the toon ramp
+    } else {
+      m = new THREE.MeshLambertMaterial({
+        color: col, flatShading: !smooth, map: textured ? skinTex : null, wireframe: wire, emissive,
+      });
+      if (smooth) m.emissive = emissive.clone().add(col.clone().multiplyScalar(0.1)); // soft ambient lift
+    }
+    return applyStyleHook(m);
+  };
   const skinCol = colHSL(THREE, pal.skin || { h: 200, s: 0.5, l: chrome ? 0.62 : 0.5 });
   const clothCol = colHSL(THREE, pal.cloth || { h: 340, s: 0.5, l: 0.45 });
   const accentCol = colHSL(THREE, pal.accent || { h: 40, s: 0.85, l: 0.6 });
@@ -149,8 +220,10 @@ export function makeAlien(THREE, traits, member, seed) {
   const limbMat = mk(limbCol, true);
   const accentMat = mk(accentBright, false);
   const accent2Mat = mk(accent2Col, false);
-  const eyeMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x07070d), emissive: accentBright.clone().multiplyScalar(0.6), flatShading: true });
-  const mouthMat = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x18080f), flatShading: true });
+  // eyes + mouth stay SOLID (never wireframed) so the face reads, but take the
+  // glitch/iridescent hook so the whole alien shades in one visual language.
+  const eyeMat = applyStyleHook(new THREE.MeshLambertMaterial({ color: new THREE.Color(0x07070d), emissive: accentBright.clone().multiplyScalar(0.6), flatShading: !smooth }));
+  const mouthMat = applyStyleHook(new THREE.MeshLambertMaterial({ color: new THREE.Color(0x18080f), flatShading: !smooth }));
   const bodyDark = skinCol.clone().multiplyScalar(chrome ? 0.7 : 0.55);
   const instBodyMat = mk(bodyDark, false);
   const materials = [skinMat, clothMat, limbMat, accentMat, accent2Mat, eyeMat, mouthMat, instBodyMat];
@@ -538,6 +611,7 @@ export function makeAlien(THREE, traits, member, seed) {
 
   function update(dt, beatPhase) {
     dt = dt || 0; clock += dt;
+    glitchTime.value = clock;   // drives the 'glitch' style's jitter+flicker (cheap; uniform only)
     if (beatPhase == null) beatPhase = clock % 1;
     beatPhase = ((beatPhase % 1) + 1) % 1;
     const energy = groove.energy || 0.5;
