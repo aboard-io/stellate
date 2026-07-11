@@ -28,7 +28,10 @@ export function makePS1(THREE, renderer, lowResTarget) {
     uniforms: {
       uTex: { value: lowResTarget.texture },
       uResolution: { value: new THREE.Vector2(lowResTarget.width || 256, lowResTarget.height || 192) },
-      uLevels: { value: 32.0 }, // ~5 bits/channel, PS1 15-bit colour
+      // The internal target is now near-native, so we EASE the crunch: finer colour
+      // quantisation (64 levels ~6 bits vs the old 32) and a gentler dither, so the
+      // higher resolution reads clean rather than heavily pixel-mashed.
+      uLevels: { value: 64.0 },
     },
     depthTest: false,
     depthWrite: false,
@@ -90,8 +93,17 @@ export function makePS1(THREE, renderer, lowResTarget) {
   }
 
   function setSize(w, h) {
-    // display size only; the low-res target keeps its fixed internal resolution.
+    // sets the CANVAS backing store the blit writes into. It's driven to the same
+    // near-native size as the low-res target so the final blit is ~1:1 (crisp), and
+    // CSS stretches the canvas to fill the viewport.
     renderer.setSize(w, h, false);
+  }
+
+  // dispose the full-screen pass resources (called when the controller rebuilds the
+  // render target on resize / DPR change so nothing leaks).
+  function dispose() {
+    try { fsGeo.dispose(); } catch (e) {}
+    try { fsMat.dispose(); } catch (e) {}
   }
 
   // vertexSnapMaterial(base) -> the same material, patched so its vertices SNAP to
@@ -140,7 +152,7 @@ export function makePS1(THREE, renderer, lowResTarget) {
     return base;
   }
 
-  return { render, setSize, vertexSnapMaterial };
+  return { render, setSize, vertexSnapMaterial, dispose };
 }
 
 export default { makePS1 };

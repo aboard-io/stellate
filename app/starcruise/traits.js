@@ -13,8 +13,10 @@
 //                    bodyShape, armLength, eyeStalk, neck, antennae,  // (new morphology)
 //                    crestType, asymmetry},
 //              skin, cloth:{motif,coverage}, groove:{name,tempoBpm,bounce,sway,headbob,energy},
+//              face:{mouth,brow,snout,teeth,mouthWide},              // (facial character)
+//              texture,                                              // (procedural skin motif)
 //              band:[ {role, instrument:{family,playStyle,appendage,hitsPerBeat}} ],
-//              crowd, backdrop, glow }
+//              dancers, crowd, backdrop, glow }
 //
 // DETERMINISM: all randomness flows through a mulberry32 PRNG keyed by
 // (genre-name-hash + seed). NO Math.random in trait logic — ever.
@@ -198,6 +200,34 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
     : nSeventh > 0.6 ? "dot" : "solid";
   const cloth = { motif, coverage: clamp01(0.25 + nSoft * 0.5 + nWash * 0.3) };
 
+  // ---- FACE ------------------------------------------------------------
+  // Genre-driven facial character. The head gains a real face in alien.js — a
+  // mouth that opens on the beat (lead/vocalist widest), a brow ridge, and a
+  // snout/nostrils/vents — all keyed off the rhythmic + harmonic character so a
+  // swing-jazz face (beak, soft brow) differs from a glitch-techno face (grille,
+  // angular brow, vents). Every field is a small enum -> a cheap primitive.
+  //   mouth  swing->beak, organic->maw (fleshy jaw), electronic->grille (bars)
+  //   brow   chop/glitch->angular (V), washy->soft, else ridge
+  //   snout  heavy organic->snout, other organic->nostrils, electronic->vents
+  //   teeth  aggressive/dense genres bare fangs
+  //   mouthWide resting gape scale, grows with energy (louder = bigger maw)
+  const face = {
+    mouth: nSwing > 0.3 ? "beak" : organic ? "maw" : "grille",
+    brow: (nChop > 0.35 || nCrackle > 0.45) ? "angular" : nWash > 0.45 ? "soft" : "ridge",
+    snout: organic ? (nSub > 0.55 ? "snout" : "nostrils") : "vents",
+    teeth: (nChop > 0.4 || nDrum > 0.7 || (nBpm > 0.7 && !organic)),
+    mouthWide: +clamp01(0.3 + nBpm * 0.35 + nDrum * 0.2 + rng() * 0.1).toFixed(4),
+  };
+
+  // ---- TEXTURE ---------------------------------------------------------
+  // The procedural skin motif alien.js bakes into a tiny CanvasTexture (small +
+  // reused across the alien's surfaces). Reads the rhythmic character so surfaces
+  // aren't flat: static/glitch noise for choppy sampled genres, stripes for swing,
+  // scales for interlocked grooves, spots for harmonic genres, a value gradient for
+  // washy pads, else a subtle plate.
+  const texture = nChop > 0.35 ? "static" : nSwing > 0.4 ? "stripe" : nIl > 0.5 ? "scale"
+    : nSeventh > 0.5 ? "spot" : nWash > 0.5 ? "gradient" : "plate";
+
   // ---- GROOVE ----------------------------------------------------------
   // tempo drives limb speed; pump+sub -> vertical bounce; swing+humanize+rubato
   // -> loose lateral sway; motion+drums -> headbob; overall energy from tempo,
@@ -307,8 +337,16 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
   const backdrop = organic && groove.energy < 0.45 ? "farm" : "city";
   const glow = clamp01(nWash * 0.7 + nCrackle * 0.3 + (organic ? 0 : 0.15));
 
+  // ---- DANCERS ---------------------------------------------------------
+  // Extra background dancers (no instrument) the CONTROLLER arranges around/behind
+  // the band. Count scales with the party energy — dense, driving, high-tempo
+  // genres pack the floor; sparse ambient keeps a lonely few. Mobile-capped 4..8
+  // so crowd draw-calls stay bounded (dancers share the low-poly rig geometry).
+  const dancers = Math.max(4, Math.min(8, Math.round(4 + groove.energy * 3 + nDrum * 1.5 + nHat * 1.0 - 1)));
+
   return {
-    palette, body, skin, cloth, groove, band,
+    palette, body, skin, cloth, groove, face, texture, band,
+    dancers,
     crowd: band.length,
     backdrop, glow,
     // echo the raw vector + name for downstream tuning / docs verification.
