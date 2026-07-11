@@ -190,7 +190,7 @@
      insert chain → send curves (width/opacity = level) → reverb/delay bus → master
      → out. Replaces the master effects TEXT line (Paul 2026-07-10). */
   .vz-graph{display:block;width:100%;max-width:380px;margin:.15rem auto 0;height:auto;overflow:visible}
-  .vz-graph .gnode{fill:rgba(28,24,56,.85);stroke:var(--line2);stroke-width:1}
+  .vz-graph .gnode{fill:rgba(28,24,56,.42);stroke:var(--line2);stroke-width:1}   /* translucent — read the send curves beneath (Paul 2026-07-11) */
   .vz-graph .gins{fill:rgba(69,224,255,.07);stroke:rgba(69,224,255,.42);stroke-width:1}
   .vz-graph .grev{fill:rgba(69,224,255,.07);stroke:var(--cyan);stroke-width:1.2}
   .vz-graph .gdel{fill:rgba(255,216,107,.07);stroke:var(--amber);stroke-width:1.2}
