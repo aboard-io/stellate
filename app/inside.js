@@ -336,12 +336,17 @@ const gtrunc=(s,n)=>{ s=String(s||""); return s.length>n?s.slice(0,n-1)+"…":s;
 function graphData(st, U, bar){
   if(!st||!U) return null;
   const notes=(bar&&bar.notes)||[];
+  // a voice's chips = its FULL processing chain (channel strip + inserts — the
+  // same roster the old per-lane line showed, voiceFx→fxLabels), MINUS the
+  // reverb/delay SENDS (those are the shared bus nodes + the send curves, so they
+  // must not double-draw as per-voice chips). Paul 2026-07-11: "tons of effects
+  // listed and none in the nodes" — the graph was only drawing u.inserts (<=2),
+  // dropping the real strip DSP (HPF/LPF/EQ/comp/saturate/chorus…).
+  const dropSend=l=> l==="delay" || /^(plate|hall|room|spring|shimmer|reverb)\s+\d+%$/.test(l);
   const mkVoice=(name,col,key)=>{
     const u=U[key]; if(!u||u.__meta) return null;
-    const inserts=(Array.isArray(u.inserts)?u.inserts:[]).slice(0,2).map(it=>({
-      label:INSERT_LABEL[it.type]||it.type,
-      mix:(it&&it.params&&it.params.mix!=null)?it.params.mix:null }));
-    return { name:gtrunc(name,16), col, inserts,
+    const chain=voiceFx(u).filter(l=>!dropSend(l)).slice(0,8);
+    return { name:gtrunc(name,16), col, chain,
       dry:u.dry!=null?u.dry:1, rev:u.rev||0, del:u.del||0 };
   };
   const voices=[], push=v=>{ if(v) voices.push(v); };
@@ -358,11 +363,10 @@ function graphData(st, U, bar){
     const pieces=new Set();
     for(const n of notes) if(n.role==="drums"&&U[n.unit]) pieces.add(n.unit);
     if(pieces.size){
-      let rev=0,del=0; const ins=[];
+      let rev=0,del=0; const chain=[], seen=new Set();
       for(const k of pieces){ const u=U[k]; rev=Math.max(rev,u.rev||0); del=Math.max(del,u.del||0);
-        for(const it of (u.inserts||[])) ins.push({label:INSERT_LABEL[it.type]||it.type,
-          mix:(it.params&&it.params.mix!=null)?it.params.mix:null}); }
-      voices.push({ name:gtrunc(kitChar(st.genreMeta.kit),16), col:"--mint", inserts:ins.slice(0,2), dry:1, rev, del });
+        for(const l of voiceFx(u)){ if(dropSend(l)||seen.has(l)) continue; seen.add(l); chain.push(l); } }
+      voices.push({ name:gtrunc(kitChar(st.genreMeta.kit),16), col:"--mint", chain:chain.slice(0,8), dry:1, rev, del });
     }
   }
   // synth stab / fx sweep lanes when they actually fire this bar
@@ -387,53 +391,56 @@ function graphData(st, U, bar){
 // caps max-width so the same portrait shape reads on desktop.
 function graphSVG(g){
   if(!g||!g.voices.length) return "";
-  const N=g.voices.length, W=340, mgX=8, cx=W/2;
-  const vTop=28, vH=44, nodeH=28, nameW=150, chipW=60, chipGap=7;
-  const chipX=k=>mgX+nameW+chipGap+k*(chipW+chipGap);
-  const voiceOutX=v=>Math.min(v.inserts.length?chipX(v.inserts.length-1)+chipW:mgX+nameW, W-mgX);
-  const vY=i=>vTop+i*vH, vCy=i=>vY(i)+nodeH/2;
-  const voicesBottom=vTop+N*vH;
+  const W=340, mgX=8, cx=W/2, innerW=W-2*mgX;
+  const nameH=24, chipH=17, chipRowH=21, cgap=6, vGap=13;
+  // pack a voice's fx chips into rows within innerW — variable width per label
+  // (~6.4px/monospace char at 11px + padding), wrapping when a row is full. This
+  // is what makes the FULL chain (strip + inserts) fit on a phone (Paul 2026-07-11).
+  const packChips=(labels)=>{ const out=[]; let x=0,row=0;
+    for(const raw of (labels||[])){ const l=String(raw); const w=Math.min(innerW, Math.round(l.length*6.4)+16);
+      if(x>0 && x+w>innerW){ row++; x=0; }
+      out.push({label:l, w, x, row}); x+=w+cgap; }
+    return { chips:out, rows: (labels&&labels.length)?row+1:0 }; };
+  const V=g.voices.map(v=>{ const p=packChips(v.chain); return { v, chips:p.chips, h:nameH+(p.rows?p.rows*chipRowH+3:0) }; });
+  let y=28; const vy=[]; for(const it of V){ vy.push(y); y+=it.h+vGap; }
+  const voicesBottom=y-vGap+4;
   // ── bus STACK: delay feeds reverb (Paul: "delay should come before reverb"),
   // which is also the engine truth — rev_bleed(del,pp) bleeds into the reverb
-  // color, then reverb → master. Stacked vertically (delay above reverb) so the
-  // serial order reads down the column; reverb sits alone when there's no delay.
+  // color, then reverb → master. Stacked vertically (delay above reverb).
   const on=g.delay.on, busW=204, busX=(W-busW)/2, busH=28;
-  const delTop=on?voicesBottom+34:0, delCy=delTop+busH/2;
-  const revTop=on?delTop+busH+26:voicesBottom+34, revCy=revTop+busH/2;
-  // master badges decide its height
+  const delTop=on?voicesBottom+30:0, delCy=delTop+busH/2;
+  const revTop=on?delTop+busH+24:voicesBottom+30, revCy=revTop+busH/2;
   const M=g.master, mb=[];
   if(M.comp>0.02) mb.push("comp "+Math.round(M.comp*100));
   if(M.grit>0.02) mb.push("drive "+Math.round(M.grit*100));
   if(M.pump>0.02) mb.push("pump "+Math.round(M.pump*100));
   if(M.mb) mb.push("MB comp");
-  const mW=232, mX=(W-mW)/2, mTop=revTop+busH+42, mH=30+mb.length*13, mBottom=mTop+mH;
-  const oW=64, oX=(W-oW)/2, oTop=mBottom+34, oH=28, oCy=oTop+oH/2, H=oTop+oH+12;
-  // downward bezier (control points offset in Y)
+  const mW=232, mX=(W-mW)/2, mTop=revTop+busH+40, mH=30+mb.length*13, mBottom=mTop+mH;
+  const oW=64, oX=(W-oW)/2, oTop=mBottom+32, oH=28, oCy=oTop+oH/2, H=oTop+oH+12;
   const dcurve=(x1,y1,x2,y2)=>{ const dy=Math.max(14,(y2-y1)*0.45);
     return `M${x1.toFixed(1)} ${y1.toFixed(1)} C${x1.toFixed(1)} ${(y1+dy).toFixed(1)} ${x2.toFixed(1)} ${(y2-dy).toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`; };
-  const sendPath=(x1,y1,x2,y2,val,col)=>{ const v=clamp01(Math.min(1,val)); if(v<=0.02) return "";
-    return `<path d="${dcurve(x1,y1,x2,y2)}" fill="none" stroke="var(${col})" stroke-width="${(0.7+3.3*v).toFixed(2)}" opacity="${(0.22+0.6*v).toFixed(2)}"/>`; };
+  const sendPath=(x1,y1,x2,y2,val,col)=>{ const q=clamp01(Math.min(1,val)); if(q<=0.02) return "";
+    return `<path d="${dcurve(x1,y1,x2,y2)}" fill="none" stroke="var(${col})" stroke-width="${(0.7+3.3*q).toFixed(2)}" opacity="${(0.22+0.6*q).toFixed(2)}"/>`; };
   // ---- connection layer (drawn first, so the opaque node rects cover the joins) --
   let cn="";
-  g.voices.forEach((v,i)=>{ const ox=voiceOutX(v), oy=vY(i)+nodeH;
-    cn+=`<path d="${dcurve(ox,oy,cx,mTop)}" fill="none" stroke="var(--line2)" stroke-width="${(0.6+1.1*clamp01(v.dry)).toFixed(2)}" opacity="${(0.14+0.2*clamp01(v.dry)).toFixed(2)}"/>`;
-    if(on) cn+=sendPath(ox,oy,cx,delTop,v.del,"--amber");   // del send → delay (upstream)
-    cn+=sendPath(ox,oy,cx,revTop,v.rev,"--cyan");            // rev send → reverb
+  V.forEach((it,i)=>{ const v=it.v, oy=vy[i]+it.h;
+    cn+=`<path d="${dcurve(cx,oy,cx,mTop)}" fill="none" stroke="var(--line2)" stroke-width="${(0.6+1.1*clamp01(v.dry)).toFixed(2)}" opacity="${(0.14+0.2*clamp01(v.dry)).toFixed(2)}"/>`;
+    if(on) cn+=sendPath(cx,oy,cx,delTop,v.del,"--amber");   // del send → delay (upstream)
+    cn+=sendPath(cx,oy,cx,revTop,v.rev,"--cyan");            // rev send → reverb
   });
   if(on) cn+=`<path d="${dcurve(cx,delTop+busH,cx,revTop)}" fill="none" stroke="var(--amber)" stroke-width="${(1+2.2*g.delay.fb).toFixed(2)}" opacity="${(0.34+0.5*g.delay.fb).toFixed(2)}"/>`;   // delay → reverb
   cn+=`<path d="${dcurve(cx,revTop+busH,cx,mTop)}" fill="none" stroke="var(--cyan)" stroke-width="${(1+2.6*g.reverb.amt).toFixed(2)}" opacity="${(0.3+0.5*g.reverb.amt).toFixed(2)}"/>`;   // reverb → master
   cn+=`<path d="${dcurve(cx,mBottom,cx,oTop)}" fill="none" stroke="var(--mint)" stroke-width="3" opacity="0.8"/>`;
-  // ---- node layer ----
+  // ---- node layer: each voice = a full-width name box + its chain as chip nodes --
   let nd="";
-  g.voices.forEach((v,i)=>{ const y=vY(i), ty=(vCy(i)+4).toFixed(1);
-    nd+=`<rect x="${mgX}" y="${y}" width="${nameW}" height="${nodeH}" rx="6" class="gnode" style="stroke:var(${v.col})"/>`;
-    nd+=`<text x="${mgX+8}" y="${ty}" class="gtx">${esc(v.name)}</text>`;
-    v.inserts.forEach((ins,k)=>{ const bx=chipX(k), px=k===0?mgX+nameW:chipX(k-1)+chipW, my=vCy(i);
-      nd+=`<line x1="${px}" y1="${my.toFixed(1)}" x2="${bx}" y2="${my.toFixed(1)}" stroke="var(--line2)" stroke-width="1" opacity="0.5"/>`;
-      nd+=`<rect x="${bx}" y="${y}" width="${chipW}" height="${nodeH}" rx="5" class="gins"/>`;
-      nd+=`<text x="${bx+chipW/2}" y="${(ins.mix!=null?my-1:my+4).toFixed(1)}" text-anchor="middle" class="gtx">${esc(ins.label)}</text>`;
-      if(ins.mix!=null) nd+=`<text x="${bx+chipW/2}" y="${(my+9).toFixed(1)}" text-anchor="middle" class="gmix">${Math.round(ins.mix*100)}%</text>`;
-    });
+  V.forEach((it,i)=>{ const v=it.v, y0=vy[i];
+    nd+=`<rect x="${mgX}" y="${y0}" width="${innerW}" height="${nameH}" rx="6" class="gnode" style="stroke:var(${v.col})"/>`;
+    nd+=`<text x="${mgX+8}" y="${(y0+16).toFixed(1)}" class="gtx">${esc(v.name)}</text>`;
+    if(!it.chips.length) nd+=`<text x="${W-mgX-8}" y="${(y0+16).toFixed(1)}" text-anchor="end" class="gsub">dry</text>`;
+    for(const c of it.chips){ const cyp=y0+nameH+3+c.row*chipRowH;
+      nd+=`<rect x="${(mgX+c.x).toFixed(1)}" y="${cyp}" width="${c.w}" height="${chipH}" rx="4" class="gins"/>`;
+      nd+=`<text x="${(mgX+c.x+c.w/2).toFixed(1)}" y="${(cyp+12).toFixed(1)}" text-anchor="middle" class="gchip">${esc(c.label)}</text>`;
+    }
   });
   if(on){
     nd+=`<rect x="${busX}" y="${delTop}" width="${busW}" height="${busH}" rx="6" class="gdel"/>`;
@@ -449,7 +456,7 @@ function graphSVG(g){
   nd+=`<rect x="${oX}" y="${oTop}" width="${oW}" height="${oH}" rx="6" class="gout"/>`;
   nd+=`<text x="${cx}" y="${(oCy+4).toFixed(1)}" text-anchor="middle" class="goutx">out</text>`;
   // ---- band captions (left-aligned in the gaps between stages) ----
-  const hd=`<text x="${mgX}" y="16" class="ghead">voices</text>`+
+  const hd=`<text x="${mgX}" y="16" class="ghead">voices · effects</text>`+
     `<text x="${mgX}" y="${((on?delTop:revTop)-7).toFixed(1)}" class="ghead">sends → bus</text>`+
     `<text x="${mgX}" y="${(mTop-7).toFixed(1)}" class="ghead">master</text>`;
   return `<svg viewBox="0 0 ${W} ${H}" class="vz-graph" preserveAspectRatio="xMidYMid meet">${cn}${nd}${hd}</svg>`;
