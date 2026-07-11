@@ -274,6 +274,13 @@
     return { l: Math.SQRT2 * Math.cos(th), r: Math.SQRT2 * Math.sin(th) };
   };
 
+  // cached Hann windows for GRANULAR REPITCH (50%-overlap grains sum to unity —
+  // COLA — so no renormalization). Keyed by grain length.
+  const _hann = {};
+  function grainHann(n) { let w = _hann[n]; if (w) return w;
+    w = new Float32Array(n); for (let i = 0; i < n; i++) w[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / n);
+    _hann[n] = w; return w; }
+
   function mixPCM(notes, buffers, sr, into, sends, win, meter) {
     const winBase = win ? win.base : 0;
     const busLen = win ? win.len : into.dry.length;
@@ -361,6 +368,37 @@
           if (j >= busLen) break;
           if (j >= 0) { const vd = v * dg; if (pg) { into.dryL[j] += vd * pg.l; into.dryR[j] += vd * pg.r; } else into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; }
         }
+        continue;
+      }
+      // GRANULAR REPITCH (Pass 1 of the Faust-fun program, Paul 2026-07-11: "I
+      // really miss granular repitching when it made sense"). Opt-in via n.granular:
+      // decouple PITCH from DURATION — the grain START advances at the OUTPUT rate
+      // (so the note keeps its length + formants) while each Hann grain reads the
+      // source at `rate` (the pitch). A sample pushed far from its zone root then
+      // holds its character instead of chipmunk/rumble rate-stretch. 50%-overlap
+      // overlap-add, loop-aware. Absent => the exact rate-read below (byte-identical).
+      if (n.granular) {
+        const Gn = Math.max(128, Math.floor((n.grainSec || 0.09) * sr)), Hn = Math.max(1, Gn >> 1);
+        const han = grainHann(Gn);
+        const wrap = (p) => (loop && p >= loopEnd) ? z.loopStart + ((p - z.loopStart) % loopLen) : p;
+        for (let i = 0; i < outN; i++) {
+          let vv = 0;
+          const kLo = Math.max(0, Math.ceil((i - Gn + 1) / Hn)), kHi = (i / Hn) | 0;
+          for (let k = kLo; k <= kHi; k++) {
+            const gi = i - k * Hn;                       // within-grain output index [0,Gn)
+            let sp = wrap(k * Hn) + gi * rate;           // grain start (output-rate) + pitched read
+            if (loop) sp = wrap(sp);
+            if (sp >= src.length - 1) continue;
+            const i0 = sp | 0, fr = sp - i0;
+            vv += (src[i0] + fr * (src[i0 + 1] - src[i0])) * han[gi];
+          }
+          let v = vv * g;
+          if (i < atkN) { const a = i / atkN; v *= n.swell ? a * a : a; }
+          if (i > holdN) v *= Math.max(0, 1 - (i - holdN) / relN);
+          if (S) v = stripStep(S, v, (s0 + i) / sr);
+          const j = s0 + i - winBase;
+          if (j >= busLen) break;
+          if (j >= 0) { const vd = v * dg; if (pg) { into.dryL[j] += vd * pg.l; into.dryR[j] += vd * pg.r; } else into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; } }
         continue;
       }
       let posAcc = 0;
