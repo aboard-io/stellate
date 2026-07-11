@@ -80,7 +80,10 @@ export const POS={
   // computeGenreLayout's fast path: no relaxation, the hand-nudged fugue/breakcore
   // spots above stay exact. taqsim/vespers sit by their kin (arabpop/atlantidrone);
   // silkmist's pentatonic-calm corner was full, so it took the nearest open slot.
-  silkmist:[2335,12923], taqsim:[121,16807], vespers:[2374,14021]
+  silkmist:[2335,12923], taqsim:[121,16807], vespers:[2374,14021],
+  // Western/known batch 2026-07-11 (label-box search, 42-61px clearance): the
+  // soul/country family. Same complete-POS fast-path rule as the line above.
+  yachtrock:[2296,6531], rnb:[90,8181], gospel:[172,7086], honkytonk:[2178,5049], countrypop:[2384,5538], altcountry:[796,22032]
 };
 // The star map lives in a LOGICAL coordinate space. POS above is BAKED — the
 // full relaxed layout for every committed genre, precomputed once (headless boot

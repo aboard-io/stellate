@@ -832,6 +832,24 @@
     /* genre-tool:vespers:targets */
     vespers:  { bpm:[42,77,3], acoustic:[0.68,0.92,3], wash:[0.316,0.597,3], seventh:[0.3,1,2], drumDensity:[0,0.4,2], motion:[0,1,1], rubato:[0,0.008,3] },
     /* /genre-tool:vespers:targets */
+    /* genre-tool:rnb:targets */
+    rnb:      { bpm:[56,89,3], seventh:[0.85,1,3], wash:[0.044,0.316,2], acoustic:[0.68,0.92,1], motion:[0.487,1,1], drumDensity:[1.401,2.789,1] },
+    /* /genre-tool:rnb:targets */
+    /* genre-tool:gospel:targets */
+    gospel:   { bpm:[78,109,2], wash:[0.156,0.449,3], drumDensity:[0.818,1.882,3], acoustic:[0.68,0.92,2], seventh:[0,0.975,1], motion:[0.487,1,1] },
+    /* /genre-tool:gospel:targets */
+    /* genre-tool:altcountry:targets */
+    altcountry:{ bpm:[81,111,3], wash:[0.116,0.39,3], acoustic:[0.68,0.92,2], seventh:[0,1,1], motion:[0.487,1,1], swing:[0,0.105,1], snareBalance:[0.567,1.723,3] },
+    /* /genre-tool:altcountry:targets */
+    /* genre-tool:yachtrock:targets */
+    yachtrock:{ bpm:[97,127,2], seventh:[0.85,1,3], sub:[0.018,0.782,3], pump:[0,0.1,2], wash:[0,0.216,2], acoustic:[0.68,0.92,1], motion:[0.494,1,1], drumDensity:[0.965,1.985,1], softTop:[0,0,3] },
+    /* /genre-tool:yachtrock:targets */
+    /* genre-tool:honkytonk:targets */
+    honkytonk:{ bpm:[93,122,2], swing:[0.081,0.221,2], acoustic:[0.68,0.92,3], pump:[0,0.1,3], sub:[0.018,0.782,2], seventh:[0,1,1], drumDensity:[0.726,2.304,2], motion:[0.494,1,1], softTop:[0,0,3] },
+    /* /genre-tool:honkytonk:targets */
+    /* genre-tool:countrypop:targets */
+    countrypop:{ bpm:[122,153,3], drumDensity:[0.811,2.079,3], acoustic:[0.68,0.92,1], motion:[0.487,1,2], seventh:[0,0.975,1], swing:[0,0.097,1], crackle:[0,0.166,3], comp:[0.17,0.563,3], pump:[0,0.165,3] },
+    /* /genre-tool:countrypop:targets */
   };
 
   // the piecewise-linear target-row scorer — the shared primitive (genre-tool
