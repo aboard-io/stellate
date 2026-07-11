@@ -61,6 +61,7 @@ export function buildShareUrl(){
     q.set("path", S.waypoints.map(w=>Math.round(w.x)+"."+Math.round(w.y)).join(","));
   if(+S.pace!==BARS_PER_SEG) q.set("pace", String(S.pace));
   if(S.modeLock!=="auto") q.set("mode", S.modeLock);
+  if(S.soundfont && S.soundfont!=="fluidr3") q.set("sf", S.soundfont);   // the chosen soundfont rides the URL (Paul)
   const m=S.live&&S.barInfo?(S.barInfo.serial+1):((S.startBar||0)+1);   // 1-based measure; idle = the resume point
   if(m>1) q.set("m", String(m));
   return location.origin+location.pathname+"?"+q.toString();
