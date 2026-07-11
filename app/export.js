@@ -252,7 +252,8 @@ export async function exportLoopAudio(fmt, opts) {
   let w = null, mw = null;
   try {
     set({ status: "whole-path: planning the walk…" });
-    const plan = buildLoopPlan(opts.bars ? { bars: opts.bars } : undefined);
+    const plan = await buildLoopPlan({ ...(opts.bars ? { bars: opts.bars } : {}),
+      onProgress: (b, t) => set({ status: "whole-path: planning " + Math.round(100 * b / t) + "% of " + t + " bars" }) });
     if (!plan || !plan.runs.length) { set({ status: "whole-path export needs a drawn loop" }); return null; }
     set({ status: "whole-path: decoding " + (plan.foundIds.length + plan.samplerIds.length) + " sources…" });
     const { buffers, speechById, failed } = await decodeLoopInputs(plan);
