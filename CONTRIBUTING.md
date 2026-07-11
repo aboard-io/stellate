@@ -40,8 +40,8 @@ MCP tool, nothing in the app or the gates imports it. A plain clone without
 `./verify.sh` green:
 
 - **matrix** — the symbolic confusion matrix must stay
-  **diagonal-dominant: N/N (228 as of 2026-07)**. Every genre must still sound most like
-  itself, symbolically. This is the big one: it's what makes 228 genres a
+  **diagonal-dominant: N/N (249 as of 2026-07)**. Every genre must still sound most like
+  itself, symbolically. This is the big one: it's what makes 249 genres a
   space instead of a soup.
 - **validate** — the kernel gate suite: **determinism** (same state, same
   seed → byte-identical events), **vocabulary** (genres draw from the
@@ -67,7 +67,7 @@ same role, or to `hits.sources` (always safe). NEVER add a `found:{role:…}`
 block to a genre that lacks one, change a role, or touch bpm/scored fields —
 that shifts the confusion matrix for everyone. After every batch:
 `node engine/genre-verifier.js matrix --no-cache` must still print
-`diagonal dominant: N/N — 228/228 as of 2026-07`.
+`diagonal dominant: N/N — 249/249 as of 2026-07`.
 
 **A new pipe** (event transform). Register it in `CsdPipes.REGISTRY`
 (`engine/pipes.js`) with its **own seeded rng stream** — never share or reuse
@@ -109,6 +109,60 @@ determinism; byte-identity of old states is the part you must verify yourself
   anyone redistributing the bundled app WITH that module conveys a GPL-3.0
   combined work on that path. Removing `vendor/espeak-ng/` removes the
   obligation — the app degrades to the canned speech recipes.
+
+## Engine load order & the global namespace
+
+The app has **no bundler**. `index.html` loads the engine as an ordered list of
+classic `<script>` tags (see the block at `index.html:59-80`), and the browser
+executes them top-to-bottom before the app runs. That order is a contract, not
+decoration. The rules:
+
+- **`engine/` is classic-global / UMD; `app/` is native ES modules.** Every
+  engine file wraps itself in a UMD shim that publishes exactly one `window`
+  global (its node branch does `module.exports`, its browser branch does
+  `root.<Name> = …`). **Do not convert an engine file to an ES module** and do
+  not add a second global from one file. The public symbols are:
+
+  | script | global |
+  | --- | --- |
+  | `engine/theory.js` | `CsdTheory` |
+  | `engine/pipes.js` | `CsdPipes` |
+  | `engine/csd-engine.js` | `CsdEngine` |
+  | `engine/genre-kernel.js` | `GenreKernel` |
+  | `engine/genre-verifier.js` | `GenreVerifier` |
+  | `engine/namebank.js` | `NameBank` |
+  | `engine/midi-export.js` | `MidiExport` |
+  | `engine/speech.js` | `CsdSpeech` |
+  | `engine/video-layer.js` | `VideoLayer` |
+  | `engine/demo-layer.js` | `DemoLayer` |
+  | `engine/faust/state-engine.js` | `FaustStateEngine` |
+  | `engine/faust/found-player.js` | `FoundPlayer` |
+  | `engine/faust/sampler.js` | `FaustSampler` |
+  | `engine/faust/live.js` | `FaustLive` |
+
+- **`theory.js` and `pipes.js` MUST load before `csd-engine.js`.** csd-engine
+  reads `window.CsdTheory` / `window.CsdPipes` **at load time** (the MUSIC-MIND
+  organs); load it first and its theory/pipes references are dead.
+
+- **Every engine global MUST be published before `app/main.js`.** `app/main.js`
+  is the `type="module"` entry point; it reads the engine off `window` as
+  globals. Module scripts defer, so it already runs after the classic block —
+  keep it last and keep it a module.
+
+- **Adding a new engine script?** Insert its `<script>` in the right place in
+  `index.html`, give it a single UMD global, and register that global in the
+  boot-smoke gate (below). The DOM layers (`video-layer`, `demo-layer`,
+  `live.js`) are browser-only — they close over `window` directly and cannot
+  `require()` in node; that's fine, the gate loads them in a sandbox.
+
+The gate: **`node test/boot-smoke.js`**. It parses `index.html` for the ordered
+classic script list, runs each script in load order inside one browser-like
+sandbox (exercising the UMD *browser* branch, exactly as the page does), and
+asserts (a) each script publishes its expected global, (b) theory/pipes precede
+csd-engine, and (c) all engine globals precede `app/main.js`. A new classic
+engine script that index.html loads but the gate doesn't know about **fails**
+the gate — so you can't add a global without declaring it. Sub-second, pure
+node; run it alongside `theory.test.js` / `pipes.test.js`.
 
 ## Housekeeping
 

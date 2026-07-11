@@ -6,8 +6,15 @@
 // rest of the suite does (genre-kernel.js / csd-engine.js / genre-verifier.js /
 // faust/state-engine.js), so it always tracks the live schema.
 //
+//   node genre-tool.js init   <name> [--near <genre>] [--force]
 //   node genre-tool.js create <spec.json> [--dry-run] [--seeds N] [--engine]
 //   node genre-tool.js check  <name>      [--seeds N]
+//
+// init:    scaffold a starter genre-specs/<name>.json by cloning an existing
+//          genre's spec (the --near genre, else the lexically-nearest one) —
+//          anchor copied verbatim, label/info replaced with TODO placeholders,
+//          so a newcomer edits a working anchor instead of a blank file. Pure,
+//          offline, writes only the one new spec file.
 //
 // create:  validate spec -> build anchor -> MEASURE features across N seeds ->
 //          derive TARGET ranges from the measured spread (auto-tightening until
@@ -442,6 +449,103 @@ function cmdCheck() {
   console.log("  nearest neighbours: " + cross.map(c => `${c.g}:${c.s}`).join("  "));
 }
 
+// ============================================================ init (scaffold)
+// init <name> [--near <genre>]: write a starter genre-specs/<name>.json by
+// CLONING an existing genre's spec as an editable template — anchor copied
+// verbatim, label/info replaced with TODO placeholders. Pure/offline: reads
+// K.GENRES + K.GENRE_CLIPS (and the existing spec file if one exists), never
+// touches the render path, never mutates global state. A newcomer edits a real
+// working anchor instead of authoring 25 typed dimensions from a blank file
+// (ROADMAP §3.1.5). The template is the --near genre, or — when omitted — the
+// lexically-nearest existing genre name (deterministic; no feature cache
+// needed, so init works on a fresh clone before matrix.json is built).
+const SPECS_DIR = path.join(__dirname, "..", "genre-specs");
+const clone = v => JSON.parse(JSON.stringify(v));    // specs are pure JSON — round-trip is a faithful deep copy
+const DERIVED_KEYS = new Set(["label", "info", "theory", "pipes", "rhythm"]);
+
+// Levenshtein edit distance for the name-nearest fallback (deterministic).
+function editDist(a, b) {
+  const m = a.length, n = b.length;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++)
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[n];
+}
+// nearest existing genre BY NAME (ties broken alphabetically for determinism).
+function nearestByName(name) {
+  let best = null;
+  for (const g of Object.keys(K.GENRES).sort()) {
+    const d = editDist(name, g);
+    if (!best || d < best.d) best = { g, d };
+  }
+  return best;
+}
+
+// Build a template spec for `near`: prefer the hand-written genre-specs/<near>.json
+// (keeps the author's verify block + recipe layout); otherwise reconstruct from
+// the live kernel anchor + clip pool. Returns { source, spec }.
+function loadTemplate(near) {
+  const specFile = path.join(SPECS_DIR, near + ".json");
+  if (fs.existsSync(specFile)) {
+    let s; try { s = JSON.parse(fs.readFileSync(specFile, "utf8")); }
+    catch (e) { die(`template spec genre-specs/${near}.json is not valid JSON (${e.message})`); }
+    return { source: "spec-file", spec: s };
+  }
+  const a = K.GENRES[near];
+  const anchor = {};
+  for (const k of Object.keys(a)) if (!DERIVED_KEYS.has(k)) anchor[k] = clone(a[k]);
+  const spec = { name: near, label: a.label || near, info: a.info || "", anchor };
+  if (K.GENRE_CLIPS && K.GENRE_CLIPS[near]) spec.clips = clone(K.GENRE_CLIPS[near]);
+  return { source: "kernel-anchor", spec };
+}
+
+function cmdInit() {
+  const name = posArgs[0];
+  if (!name) die("usage: genre-tool.js init <name> [--near <genre>]");
+  if (!/^[a-z][a-z0-9]*$/.test(name)) die(`name "${name}" must be lower-case alphanumeric (start with a letter)`);
+  const outFile = path.join(SPECS_DIR, name + ".json");
+  if (fs.existsSync(outFile) && !has("force")) die(`genre-specs/${name}.json already exists — pass --force to overwrite`);
+
+  // choose the template genre
+  const nearOpt = opt("near", null);
+  let near, reason;
+  if (nearOpt != null) {
+    if (!K.GENRES[nearOpt]) die(`--near "${nearOpt}" is not an existing genre (see K.GENRES / genre-verifier.js matrix)`);
+    if (nearOpt === name) die(`--near cannot be the genre you are creating ("${name}")`);
+    near = nearOpt; reason = "requested via --near";
+  } else {
+    const nb = nearestByName(name);
+    near = nb.g; reason = `lexically-nearest existing genre (edit-distance ${nb.d}; pass --near to choose deliberately)`;
+  }
+
+  const tmpl = loadTemplate(near);
+  const out = {
+    name,
+    label: `TODO: display label for ${name}`,
+    info: `TODO: one-line pitch. Scaffolded from ${near} (${reason}) — edit the anchor below so this genre is musically distinct.`,
+    anchor: clone(tmpl.spec.anchor),
+  };
+  if (tmpl.spec.clips) out.clips = clone(tmpl.spec.clips);   // preserve after info, before anchor is fine — key order below is explicit
+  if (tmpl.spec.verify) out.verify = clone(tmpl.spec.verify);
+
+  // Re-key so serialized order reads well: name, label, info, clips, anchor, verify.
+  const ordered = { name: out.name, label: out.label, info: out.info };
+  if (out.clips) ordered.clips = out.clips;
+  ordered.anchor = out.anchor;
+  if (out.verify) ordered.verify = out.verify;
+
+  fs.writeFileSync(outFile, JSON.stringify(ordered, null, 2) + "\n");
+  console.log(`✓ scaffolded genre-specs/${name}.json`);
+  console.log(`  template : ${near}  (${reason})`);
+  console.log(`  source   : ${tmpl.source === "spec-file" ? "genre-specs/" + near + ".json" : "live kernel anchor + clip pool"}`);
+  console.log(`  anchor   : ${Object.keys(out.anchor).length} dimensions copied${out.clips ? `, ${out.clips.length} clips` : ""}${out.verify ? ", verify block carried over" : ""}`);
+  console.log(`  next     : edit label/info + the anchor, then  node tools/genre-tool.js create genre-specs/${name}.json --dry-run`);
+}
+
 // ============================================================ exports
 // The measure -> derive -> serialize -> splice machinery is reused by
 // tools/invent-genres.js (the gap-finding invention pipeline), so it requires
@@ -456,5 +560,6 @@ module.exports = {
 if (require.main === module) {
   if (cmd === "create") cmdCreate();
   else if (cmd === "check") cmdCheck();
-  else { console.log("usage:\n  node genre-tool.js create <spec.json> [--dry-run] [--skip-gates] [--seeds N] [--engine] [--force]\n  node genre-tool.js check <name> [--seeds N]"); process.exit(cmd ? 1 : 0); }
+  else if (cmd === "init") cmdInit();
+  else { console.log("usage:\n  node genre-tool.js init   <name> [--near <genre>] [--force]\n  node genre-tool.js create <spec.json> [--dry-run] [--skip-gates] [--seeds N] [--engine] [--force]\n  node genre-tool.js check  <name> [--seeds N]"); process.exit(cmd ? 1 : 0); }
 }

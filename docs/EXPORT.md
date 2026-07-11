@@ -66,13 +66,62 @@ frame-synced MPEG audio, zero page errors).
 
 ---
 
+## 1.5 Shipped: the whole-path (loop) audio export (2026-07-11)
+
+Paul: *"export the entire path, not just the current song. The whole mix."* When
+a **loop** is drawn (≥2 waypoints), ⤓ wav / ⤓ mp3 render the ENTIRE journey —
+every genre it crosses, gapless — instead of the single current song. The route
+is one line in `app/panels.js`:
+
+```js
+const exportAudioSmart = (fmt) =>
+  (S.waypoints.length >= 2 ? exportLoopAudio(fmt) : exportAudio(fmt));
+```
+
+so the same two buttons do the right thing with no new UI. The pipeline:
+
+1. **Plan** — `app/journey.js buildLoopPlan(opts)` walks the drawn path
+   bar-by-bar at constant pace and groups consecutive bars into
+   **topology-stable RUNS**: a run boundary (a crossfade seam) opens wherever
+   the Faust unit signature *or* a master-stage module (reverb color, master
+   comp) changes — because `openLive` fixes that topology once per session. It
+   also enumerates every found / sampler / vocoder / speech source the whole
+   loop touches (srcIds are global) so the caller decodes each ONCE. It is
+   **async + chunked** (F.3): it yields every 32 bars (`opts.onProgress`) and
+   builds runs as it walks, so a long plan can't freeze the page. `loopBars`
+   caps the walk at 2048 bars (the residual truncation for huge paths).
+2. **Decode** — `app/export.js decodeLoopInputs(plan)` decodes the plan's
+   sources on the main thread under a concurrency gate of 4 (speech carriers
+   stay RAW — `openLive` loops them, unlike the single-song TOTAL-tiling).
+3. **Render + stream** — a **dedicated** `engine/faust/stream-worker.js`
+   `renderLoop` message bakes each run in its own `openLive(bakeNative)`
+   session, crossfades the 0.12 s seams, and STREAMS int16 PCM back
+   block-by-block. It is memory-bounded by construction: the worker never holds
+   the whole loop, and the audio producers that feed live playback are never
+   touched (a fresh worker is spawned for the export).
+4. **Assemble** — for WAV, `exportLoopAudio` builds the file from int16 body
+   parts as a `Blob` of parts (no giant contiguous copy); for MP3 it feeds each
+   streamed block to `engine/faust/mp3-worker.js` (192 kbps) as it arrives.
+
+Failure posture matches §1 (sources that fail to decode are skipped with a
+status note). With no loop drawn, `exportAudioSmart` falls straight back to the
+single-song press of §1. Progress rides the chyron status line
+("whole-path: planning… / decoding… / rendering N%").
+
+---
+
 ## 2. The hour scale: a render service on the droplet
 
 ### Why server-side
 
 An hour of 44.1k stereo Float32 is ~1.2 GB per channel-pair in worker memory,
-the tab must stay open for the whole render, and video composition (ffmpeg
-xfade chains, the VHS fry) does not exist in the browser at all. Meanwhile the
+the tab must stay open for the whole render, and hour-scale **offline** video
+composition (ffmpeg xfade chains, the VHS fry) does not exist in the browser.
+(A realtime browser capture of the *live* visuals now DOES ship — `app/video-export.js`'s
+⏺ button records the canvas+audio through `MediaRecorder` → webm; see
+`docs/VIDEO-EXPORT.md`. But it captures what one foreground session plays, in
+one pass; it does not compose the hour-scale, genre-affine, deterministic reel
+— that stays a server-side ffmpeg job.) Meanwhile the
 node pipeline already does the ENTIRE job in one command — the same one the ⚙
 panel's ⤓ path hint prints:
 

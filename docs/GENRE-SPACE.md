@@ -35,7 +35,7 @@ with its own blend rule:
 | **pipes** (MUSIC-MIND) | prob-weighted pool | fugue echoCanon (imitation IS the genre), dub throwFx, jungle ghost + throws, techno octavePump + densityArc, blues callResponse | weighted pool union: parent-scaled inclusion probs, dedupe by id, cap 3 — drawn LAST; densityArc evicts echoCanon (mud) |
 | **rhythmic complexity** (MUSIC-MIND) | scalar range | jungle .55-.8 (cell mutation + melody rhythm cells), techno .1-.25, ambient 0-.05 | lerp range then sample, drawn LAST; constrain caps ≤.4 above 165bpm (fast genres saturate on their own) |
 
-**Resolved axes note (MUSIC-MIND, 2026-07).** The three new axes are not 228
+**Resolved axes note (MUSIC-MIND, 2026-07).** The three new axes are not 249
 hand edits: `deriveMind()` runs at load and infers each anchor's
 `theory`/`pipes`/`rhythm` from what the anchor already declares (progression
 pool → harmonic appetite and extension color; kit pool + euclid → complexity;
@@ -49,7 +49,7 @@ passes in `buildEvents`; an absent knob is byte-identical output by law. The
 organs, the taste constraints ("locked in"), and the derivation rationale live
 in docs/MUSIC-MIND.md.
 
-Genres are **anchors** (228 of them as of 2026-07 — 178 at the expansion's
+Genres are **anchors** (249 of them as of 2026-07 — 178 at the expansion's
 dawn, grown in four themed integration cycles: the synth gods, prog + the
 Liverpool eras, the classical wing incl. the first real 3/4 waltzes, and
 motown/funk + metal/nordic): named points with curated
@@ -140,9 +140,9 @@ re-slice every chord. All seeded — same seed, same song.
 `genre-verifier.js` extracts 23 symbolic features from `buildEvents` (syncopation,
 snare/kick balance, hat density, harmonic motion, seventh color, reverb wash,
 sub presence, break usage, swing, compression, variation ratio) and scores any
-state against per-genre target ranges. `node genre-verifier.js matrix` builds a
+state against per-genre target ranges. `node engine/genre-verifier.js matrix` builds a
 **confusion matrix** over all anchors — the kernel is tuned until every genre
-scores highest as itself (currently 228/228 diagonal-dominant). That's the
+scores highest as itself (currently 249/249 diagonal-dominant). That's the
 falsifiable answer to "does this actually sound like jungle?", and the loop to
 re-run after every kernel change. Adding the `dinosynth` anchor (dinosaur-themed
 dungeon synth) is a worked example: its tribal log-drum pulse + low swing are
@@ -161,13 +161,13 @@ existing renders.
 ## CLI
 
 ```bash
-node genre-kernel.js anchors                        # list genres + dimensions
-node genre-kernel.js track jungle --seed 7          # one track state -> json
-node genre-kernel.js blend techno vaporwave 0.5     # a midpoint state
-node genre-kernel.js playlist techno vaporwave synthwave jungle \
+node engine/genre-kernel.js anchors                        # list genres + dimensions
+node engine/genre-kernel.js track jungle --seed 7          # one track state -> json
+node engine/genre-kernel.js blend techno vaporwave 0.5     # a midpoint state
+node engine/genre-kernel.js playlist techno vaporwave synthwave jungle \
      --tracks 30 --hours 6 --out playlist/          # the full journey (json)
-node genre-kernel.js track jungle --seed 7 --render # faust press + ffmpeg -> mp3
-node genre-kernel.js journey genre-space-path.json \
+node engine/genre-kernel.js track jungle --seed 7 --render # faust press + ffmpeg -> mp3
+node engine/genre-kernel.js journey genre-space-path.json \
      --hours 4 --out journey/ --render --video      # a DRAWN path -> hours of
                                                     # mp3s + genre-affine video +
                                                     # journey.mp3/.mp4 + mix page

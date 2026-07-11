@@ -856,8 +856,13 @@
   // imports THIS so the two scorers never drift). Returns the RAW 0..100 percent
   // (unrounded, so callers can average before rounding, like genre-tool's
   // meanScore); pushes below-0.65 dims into `notes` when an array is passed.
-  function scoreRow(f, T, notes){
+  // OPT-IN contributions (4th arg): scoreRow(f,T,notes,{contributions:true})
+  // returns {score, parts} where parts[feature] is that dimension's share of the
+  // final score (parts sum to score). The DEFAULT 3-arg call is unchanged — it
+  // still returns the raw unrounded 0..100 number, byte-identical to before.
+  function scoreRow(f, T, notes, opts){
     let tw=0, ts=0;
+    const wantParts=!!(opts&&opts.contributions), raw=wantParts?{}:null;
     for(const [k,[lo,hi,w]] of Object.entries(T)){
       const v=f[k]; if(v==null) continue;
       let s;
@@ -865,8 +870,14 @@
       else { const width=Math.max(hi-lo,0.001), d=v<lo?lo-v:v-hi; s=Math.max(0,1-d/width); }
       if(notes && s<0.65) notes.push(`${k}=${v} wants [${lo},${hi}]`);
       tw+=w; ts+=w*s;
+      if(raw) raw[k]=w*s;
     }
-    return tw ? 100*ts/tw : 0;
+    const score = tw ? 100*ts/tw : 0;
+    if(wantParts){
+      const parts={}; if(tw) for(const k in raw) parts[k]=100*raw[k]/tw;
+      return {score, parts};
+    }
+    return score;
   }
   function scoreAgainst(f, genre){
     const T=TARGETS[genre]; if(!T) return {score:0,notes:["unknown genre"]};
@@ -948,6 +959,14 @@
           for(const r of rows) if(r.diag<r.maxOff)
             emit(`  ✗ ${r.g}: self=${r.diag} < best-other=${r.maxOff} (${genres[r.cells.indexOf(r.maxOff)]})`);
           const code=diagOk===genres.length?0:1;
+          // PERSIST the matrix for genre-geometry.matrix() — side effect only;
+          // stdout, exit code and the "diagonal dominant" line are untouched.
+          try{
+            const p=require("path");
+            fs.mkdirSync(L.CACHE_DIR,{recursive:true});
+            fs.writeFileSync(p.join(L.CACHE_DIR,"matrix.json"),
+              JSON.stringify({genres, cells:cellsByGenre, diagonalDominant:diagOk, code}));
+          }catch(e){/* cache is best-effort */}
           if(useCache) L.saveRun("matrix",args,null,{out:emit.text(),code});
           process.exit(code);
         };
