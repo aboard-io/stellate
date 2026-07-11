@@ -303,8 +303,18 @@
       const holdN = Math.max(atkN, Math.floor(n.durSec * sr));
       const outN = Math.min(total - s0, holdN + relN);
       if (outN <= 0) continue;
-      const loop = z.loop && z.loopEnd > z.loopStart + 8;
-      const loopLen = loop ? z.loopEnd - z.loopStart : 0;
+      // LOOP-END CLAMP (2026-07-10, the "Turtle Beach" fix). A soundfont-importer
+      // off-by-one (gen-font.js wrote loopEnd = sampleLen+1 on some switcher fonts
+      // — montego/blackberry/diet_candy) put the loop end AT or PAST the trimmed
+      // buffer, so the `pos >= src.length-1` guard below fired BEFORE the wrap
+      // could — the note one-shot instead of sustaining ("short envelopes, no
+      // ring-out, sweeping strings die after a bar" — Paul, on Turtle Beach =
+      // the Montego font, 19 broken zones). Clamp the wrap point inside the
+      // buffer so it always fires first. Byte-identical for the default font
+      // (every valid loop already has loopEnd < len — a strict no-op there).
+      const loopEnd = Math.min(z.loopEnd, src.length - 1);
+      const loop = z.loop && loopEnd > z.loopStart + 8;
+      const loopLen = loop ? loopEnd - z.loopStart : 0;
       const g = (n.gain != null ? n.gain : 0.5) * GAIN;
       // per-note channel strip (fresh state each note -> window-independent).
       const S = strip ? makeStrip(strip, sr) : null;
@@ -339,7 +349,7 @@
           if (i > effHold) pm *= 1 - 0.03 * ((i - effHold) / relN);   // tape-runout pitch sag (~½ semitone)
           const baseR = bendN ? (i < bendN ? r0 + (rate - r0) * (i / bendN) : rate) : rate;
           let pos = posAccM; posAccM += baseR * pm;
-          if (loop && pos >= z.loopEnd) pos = z.loopStart + ((pos - z.loopStart) % loopLen);
+          if (loop && pos >= loopEnd) pos = z.loopStart + ((pos - z.loopStart) % loopLen);
           if (pos >= src.length - 1) break;
           const i0 = pos | 0, fr = pos - i0;
           let v = (src[i0] + fr * (src[i0 + 1] - src[i0])) * g;
@@ -358,7 +368,7 @@
         let pos;
         if (bendN) { pos = posAcc; posAcc += i < bendN ? r0 + (rate - r0) * (i / bendN) : rate; }
         else pos = i * rate;
-        if (loop && pos >= z.loopEnd) pos = z.loopStart + ((pos - z.loopStart) % loopLen);
+        if (loop && pos >= loopEnd) pos = z.loopStart + ((pos - z.loopStart) % loopLen);
         if (pos >= src.length - 1) break;                    // unlooped: natural end
         const i0 = pos | 0, fr = pos - i0;
         let v = (src[i0] + fr * (src[i0 + 1] - src[i0])) * g;
@@ -747,7 +757,11 @@
         src.playbackRate.linearRampToValueAtTime(f.rate, when + Math.max(0.01, (f.bendMs || 90) / 1000));
       } else src.playbackRate.value = f.rate;
       if (f.loop && f.loopEndSec > f.loopStartSec) {
-        src.loop = true; src.loopStart = f.loopStartSec; src.loopEnd = f.loopEndSec;
+        // clamp loopEnd inside the buffer (the "Turtle Beach" off-by-one — see
+        // the mixPCM twin); WebAudio already clamps >duration, this makes it
+        // explicit + identical to the baked path.
+        src.loop = true; src.loopStart = f.loopStartSec;
+        src.loopEnd = Math.min(f.loopEndSec, buffer.duration);
       }
       // head-EQ: gentle lowpass = the dulled highs of the tape head
       let srcOut = src, headBiq = null;
