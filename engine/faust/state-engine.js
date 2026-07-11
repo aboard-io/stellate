@@ -74,6 +74,48 @@
   const SHRIEK_RES_FLOOR = 0.35, SHRIEK_RES_TOP = 0.95;
   const SAMPLER_STRETCH_ST = 6;   // max semitones a zone plays ABOVE its top root (rate ~1.41)
   const SAMPLER_FLOOR_ST = 12;    // max semitones BELOW the bottom root (rate ~0.5)
+  // INSTRUMENT-REGISTER LAW (D.1, Paul: "make good octave choices, avoid shrieks").
+  // A MUSICAL playing range per instrument, in MIDI notes (C4 = 60), sitting ON TOP
+  // of the sampler's technical zone fold: a note outside the range octave-FOLDS into
+  // it (whole octaves → same pitch class → stays in key), so a flute never climbs
+  // into its shriek register and a bass never rumbles below its body. Tops are set
+  // to the instrument's COMFORTABLE ceiling (a little under the physical extreme —
+  // that's where the shriek lives), floors to its practical bottom. Instruments not
+  // listed (pianos, harp — genuinely full-range) are unclamped => byte-identical.
+  const INSTRUMENT_RANGE = {
+    // — flutes / high woodwinds (the classic shriekers) —
+    piccolo:[74,102], flute:[60,96], recorder:[60,91], pan_flute:[59,88], harmonica:[60,96],
+    oboe:[58,91], english_horn:[52,83], clarinet:[50,91], bassoon:[34,75], bagpipe:[59,86],
+    soprano_sax:[56,89], alto_sax:[49,82], tenor_sax:[44,77], baritone_sax:[43,72], ocarina:[72,95],
+    // — strings —
+    violin:[55,100], fiddle:[55,100], viola:[48,91], cello:[36,84], contrabass:[28,67],
+    pizzicato_strings:[40,91],
+    // — brass —
+    trumpet:[54,84], muted_trumpet:[54,84], trombone:[40,74], french_horns:[34,77],
+    tuba:[28,58], brass_section:[40,86],
+    // — mallets / bells (bright, naturally high — cap the tinkly extreme) —
+    glockenspiel:[79,105], celesta:[60,103], music_box:[72,100], vibraphone:[53,89],
+    marimba:[45,91], kalimba:[60,96], steel_drums:[52,84], orchestra_hit:[36,84],
+    // — plucked / fretted (guitar tops ~E6) —
+    nylon_string_guitar:[40,88], steel_string_guitar:[40,88], jazz_guitar:[40,88],
+    clean_guitar:[40,88], palm_muted_guitar:[40,86], di_guitar:[40,88], crunch_guitar:[40,88],
+    distortion_guitar:[40,88], overdrive_guitar:[40,88], banjo:[48,84], sitar:[48,88],
+    // — basses (keep them in the bass register) —
+    acoustic_bass:[28,60], finger_bass:[28,62], fretless_bass:[28,62], picked_bass:[28,62],
+    slap_bass:[28,64], pop_bass:[28,62],
+    // — reeds / free-reed / voices —
+    accordion:[41,89], bandoneon:[41,86], church_organ:[36,96], rock_organ:[36,96],
+    percussive_organ:[36,96], reed_organ:[41,89], ahh_choir:[48,84], ohh_voices:[48,84],
+    solo_vox:[50,84],
+  };
+  // fold a MIDI note into [lo,hi] by whole octaves (same pitch class); if the range
+  // is narrower than an octave the nearest in-range octave wins.
+  function foldToRange(midi, lo, hi) {
+    while (midi > hi + 0.5) midi -= 12;
+    while (midi < lo - 0.5) midi += 12;
+    if (midi > hi + 0.5) midi -= 12;   // narrow range: settle on the nearest octave
+    return midi;
+  }
   function easeRes(cutHz, res) {
     if (!(cutHz > SHRIEK_HZ_LO) || !(res > SHRIEK_RES_FLOOR)) return res;
     const t = Math.min(1, (cutHz - SHRIEK_HZ_LO) / (SHRIEK_HZ_HI - SHRIEK_HZ_LO));
@@ -1667,6 +1709,15 @@
       // wide, so the folds never fight. Fixed-rate sampled drums never come
       // here (their branch is in the drums loop below).
       let noteHz = clamp(cpspch(p.pch), 20, u.freqMax || 4000);
+      // INSTRUMENT-REGISTER LAW (D.1): fold the note into the instrument's MUSICAL
+      // range first (a flute out of its top drops an octave, staying in key), THEN
+      // the sampler's technical zone fold runs as the safety net. Keyed by the GM
+      // sampler id; unlisted instruments (pianos/harp/synths) pass through.
+      const irange = u.sampler && INSTRUMENT_RANGE[u.sampler.id];
+      if (irange) {
+        const m = foldToRange(69 + 12 * Math.log2(noteHz / 440), irange[0], irange[1]);
+        noteHz = 440 * Math.pow(2, (m - 69) / 12);
+      }
       if (u.sampler && u.sampler.stretchMaxHz) {
         while (noteHz > u.sampler.stretchMaxHz && noteHz > 40) noteHz /= 2;
         while (noteHz < u.sampler.stretchMinHz && noteHz < 8000) noteHz *= 2;
