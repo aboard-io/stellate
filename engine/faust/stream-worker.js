@@ -129,6 +129,88 @@ async function renderWav(msg, token) {
   self.postMessage({ type: "wav", gen, durSec, frames: total, wav }, [wav]);
 }
 
+// makeStreamSink — memory-bounded seam crossfader for the whole-loop render. Runs
+// are rendered one at a time; consecutive runs are stitched with an EQUAL-POWER
+// crossfade over OV samples so the topology-change seam (a run opens fresh procs
+// from silence) doesn't click. Emission is DELAYED by OV: we always hold back the
+// last OV samples emitted as the pending seam tail, so worker memory stays ~OV +
+// one bar — never the whole (possibly 40-minute) loop.
+function makeStreamSink(OV, post) {
+  let prevTailL = null, prevTailR = null;   // previous run's held tail (xfade the next head against it)
+  let pL = new Float32Array(0), pR = new Float32Array(0);   // current run's not-yet-resolved buffer
+  let needX = false;                        // this run must xfade its first OV against prevTail
+  const cat = (a, b, n) => { const o = new Float32Array(a.length + n); o.set(a, 0); o.set(b.subarray(0, n), a.length); return o; };
+  const xfade = (aL, aR, bL, bR, n) => { for (let j = 0; j < n; j++) {
+    const x = (j + 0.5) / n, gO = Math.cos(x * Math.PI / 2), gI = Math.sin(x * Math.PI / 2);
+    bL[j] = aL[j] * gO + bL[j] * gI; bR[j] = aR[j] * gO + bR[j] * gI; } };
+  return {
+    beginRun(hasPrev) { needX = hasPrev && !!prevTailL; pL = new Float32Array(0); pR = new Float32Array(0); },
+    feed(L, R, n) {
+      pL = cat(pL, L, n); pR = cat(pR, R, n);
+      if (needX && pL.length >= OV) {                       // resolve the seam once the head arrives
+        xfade(prevTailL, prevTailR, pL, pR, OV);            // pL[0..OV) now the crossfaded seam
+        post(pL.slice(0, OV), pR.slice(0, OV));
+        pL = pL.slice(OV); pR = pR.slice(OV); needX = false; prevTailL = prevTailR = null;
+      }
+      if (!needX && pL.length > OV) {                       // flush all but a trailing OV (the potential tail)
+        const k = pL.length - OV;
+        post(pL.slice(0, k), pR.slice(0, k)); pL = pL.slice(k); pR = pR.slice(k);
+      }
+    },
+    endRun(isLast) {
+      if (needX) {                                          // run shorter than OV that owed a seam — xfade what we have
+        const ov = Math.min(prevTailL.length, pL.length);
+        if (ov) xfade(prevTailL.subarray(0, ov), prevTailR.subarray(0, ov), pL, pR, ov);
+        needX = false; prevTailL = prevTailR = null;
+      }
+      if (isLast) { if (pL.length) post(pL, pR); }
+      else if (pL.length > OV) { const k = pL.length - OV; post(pL.slice(0, k), pR.slice(0, k)); prevTailL = pL.slice(k); prevTailR = pR.slice(k); }
+      else { prevTailL = pL.slice(); prevTailR = pR.slice(); }   // whole (short) run becomes the tail
+      pL = new Float32Array(0); pR = new Float32Array(0);
+    },
+  };
+}
+
+// renderLoop — the OFFLINE WHOLE-PATH audio render (Paul: "export the entire path,
+// not just the current song. The whole mix"). The conductor (app/export.js) plans
+// the loop into topology-stable RUNS (app/journey.js buildLoopPlan) and ships them
+// here with ONE decoded buffer table (srcIds are global) + per-vocoder speech. We
+// render each run in its OWN openLive(bakeNative) session — feedBar per bar →
+// renderChunk (the same press-parity path segment-parity gates) — stitch the runs
+// with an equal-power crossfade, and STREAM the continuous PCM back as float32 L/R
+// blocks (the conductor int16→WAV or feeds the mp3 worker). Supersede-aware.
+async function renderLoop(msg, token) {
+  const gen = msg.gen | 0;
+  const alive = () => token === activeToken && !stopReq;
+  const runs = msg.runs || [], buffers = msg.buffers || {}, speechById = msg.speechById || {};
+  const OV = Math.max(1, Math.round((msg.crossfadeSec > 0 ? msg.crossfadeSec : 0.12) * SR));
+  let totalBars = 0; for (const r of runs) totalBars += (r.bars ? r.bars.length : 0);
+  let doneBars = 0, emitted = 0;
+  const post = (L, R) => { if (!L.length) return; emitted += L.length;
+    self.postMessage({ type: "looppcm", gen, L: L.buffer, R: R.buffer, n: L.length }, [L.buffer, R.buffer]); };
+  const sink = makeStreamSink(OV, post);
+  for (let ri = 0; ri < runs.length; ri++) {
+    if (!alive()) { try { eng.close(); } catch (e) {} self.postMessage({ type: "loopcancel", gen }); return; }
+    const run = runs[ri], bars = run.bars || [];
+    if (!bars.length) continue;
+    const speech = run.vocoderId ? (speechById[run.vocoderId] || null) : null;
+    await eng.openLive(run.state, { buffers, speech, bakeNative: true });
+    if (!alive()) { try { eng.close(); } catch (e) {} self.postMessage({ type: "loopcancel", gen }); return; }
+    sink.beginRun(ri > 0);
+    for (let bi = 0; bi < bars.length; bi++) {
+      if (!alive()) { try { eng.close(); } catch (e) {} self.postMessage({ type: "loopcancel", gen }); return; }
+      await eng.feedBar(bars[bi]);
+      const c = eng.renderChunk(bi);
+      sink.feed(c.L, c.R, c.length);
+      doneBars++;
+      if ((doneBars & 7) === 0) { self.postMessage({ type: "loopprog", gen, done: doneBars, total: totalBars, sec: +(emitted / SR).toFixed(1) }); await sleep(0); }
+    }
+    eng.close();
+    sink.endRun(ri === runs.length - 1);
+  }
+  self.postMessage({ type: "loopdone", gen, frames: emitted, sec: +(emitted / SR).toFixed(1) });
+}
+
 async function initDeps() {
   const BASE = new URL(".", self.location.href).href;   // .../faust/
   await import(BASE + "../theory.js");         // -> self.CsdTheory  (MUSIC-MIND organ; must precede csd-engine)
@@ -474,6 +556,16 @@ self.onmessage = async (e) => {
     activeToken = token;
     opChain = opChain.then(() => renderWav(msg, token)
       .catch((err) => self.postMessage({ type: "wavfail", error: String(err && err.stack || err), gen: msg.gen | 0 })));
+    return;
+  }
+  // ── WHOLE-PATH audio EXPORT (app/export.js exportLoopAudio) ──
+  if (msg.type === "renderLoop") {
+    if (!eng) { self.postMessage({ type: "loopfail", error: "not ready", gen: msg.gen | 0 }); return; }
+    stopReq = false;
+    const token = ++opSeq;
+    activeToken = token;
+    opChain = opChain.then(() => renderLoop(msg, token)
+      .catch((err) => self.postMessage({ type: "loopfail", error: String(err && err.stack || err), gen: msg.gen | 0 })));
     return;
   }
   // WAV-FIRST v3.1: merge streamed-in PCM into the current open's live buffer table.
