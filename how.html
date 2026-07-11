@@ -108,7 +108,7 @@ footer nav{display:flex;flex-wrap:wrap;gap:.4rem 1.4rem}
   <a class="backlink" href="index.html">&larr; back to the star map</a>
   <h1>STELLATE</h1>
   <p class="tag">A generative instrument you play by moving through a
-  <b>228-genre</b> vector space. This page walks the whole pipeline: how one
+  <b>243-genre</b> vector space. This page walks the whole pipeline: how one
   point on the star map becomes a song, how the song refuses to loop, and how
   a machine proves every genre still sounds like itself.</p>
 </header>
@@ -531,15 +531,15 @@ is seeded.</p>
 </section>
 
 <p class="part mint">Part three</p>
-<p class="partsub">THE VERIFIER LOOP — how a machine keeps 228 genres honest.</p>
+<p class="partsub">THE VERIFIER LOOP — how a machine keeps 243 genres honest.</p>
 
 <section class="stage" id="verifier" style="margin-bottom:1rem">
   <figure>
   <svg viewBox="0 0 640 300" role="img" aria-label="A genre-confusion matrix with a bright mint diagonal: every genre scores highest as itself">
     <g font-family="VT323,monospace" font-size="14">
-      <text x="320" y="22" fill="#9b93c6" text-anchor="middle">rendered as &rarr; scored against &darr; · 228 &times; 228</text>
+      <text x="320" y="22" fill="#9b93c6" text-anchor="middle">rendered as &rarr; scored against &darr; · 243 &times; 243</text>
       <g id="mx" transform="translate(204,44)"></g>
-      <text x="320" y="290" fill="#4dffb0" text-anchor="middle">228/228 diagonal-dominant · seeds 1, 2, 3</text>
+      <text x="320" y="290" fill="#4dffb0" text-anchor="middle">243/243 diagonal-dominant · seeds 1, 2, 3</text>
     </g>
   </svg>
   <figcaption>the genre-confusion matrix: the diagonal is the law</figcaption>
@@ -548,8 +548,8 @@ is seeded.</p>
   feel, snare balance, hat and drum density, variation, wash, sub, motion,
   sevenths, break/chop/bed use, crackle, pump, compression, swing, humanize,
   acoustic, rubato, lead voices, soft top, interlock — and scored against
-  <b>228 per-genre target rows</b> of [lo, hi, weight] fences. The matrix
-  renders every anchor at seeds 1, 2, 3 and requires <b>228/228 diagonal
+  <b>243 per-genre target rows</b> of [lo, hi, weight] fences. The matrix
+  renders every anchor at seeds 1, 2, 3 and requires <b>243/243 diagonal
   dominance</b>: every genre scores highest as itself. Run after every change.</p>
   <div class="laws">
     <h3>The two standing laws</h3>
@@ -557,7 +557,7 @@ is seeded.</p>
     knob &rArr; byte-identical output (zero rng draws). Every subsystem draws
     from its own seeded stream, so new dimensions draw dead last and untouched
     genres press byte-identically.</p>
-    <p><b>2 · The matrix.</b> 228/228 diagonal-dominant after every change. If a
+    <p><b>2 · The matrix.</b> 243/243 diagonal-dominant after every change. If a
     tweak makes a genre stop sounding most like itself, the change does not land.</p>
   </div>
 </section>
@@ -605,7 +605,7 @@ is seeded.</p>
   }
   sizeSky();addEventListener("resize",sizeSky);
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(sizeSky); // web fonts reflow the page after first measure
-  // the matrix: an 18x18 downsample of the 228x228 grid, bright diagonal
+  // the matrix: an 18x18 downsample of the 243x243 grid, bright diagonal
   var mx=document.getElementById("mx");
   if(mx){var N=18,S=11,g=mulberry32(23);
     for(var y=0;y<N;y++)for(var x=0;x<N;x++){
