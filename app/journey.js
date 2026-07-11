@@ -6,7 +6,7 @@
 // exporters consume the per-bar payloads this produces.
 import { S } from "./state.js";
 import { stateAt } from "./targeting.js";
-import { travelForBar, pointOnPath } from "./share.js";
+import { travelForBar, pointOnPath, loopBars } from "./share.js";
 
 // walk one full loop, returning the per-bar render payloads (r = {one, units,
 // events, spb, lo, hi, found, foundSources, meta, ...}) plus the note-level
@@ -17,7 +17,7 @@ export function walkLoop(opts) {
   if (!E || !SE || !FL || !FL.makeWalk) return null;
   const n = S.waypoints.length; if (n < 2) return null;
   const pace = Math.max(8, Math.min(4096, +S.pace || 256));
-  const total = Math.max(1, opts.bars || (n * pace));
+  const total = Math.max(1, opts.bars || loopBars());   // CONSTANT PACE: one loop = perimeter / speed bars
   let cur = null;
   const stepWalk = FL.makeWalk(() => cur, E, SE, 0);
   const bars = [];

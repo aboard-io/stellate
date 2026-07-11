@@ -14,7 +14,7 @@ import { EXPORT, downloadMidi, exportAudio, exportLoopAudio } from "./export.js"
 // ⤓ audio: the WHOLE PATH when a loop is drawn (Paul: "export the entire path"),
 // else the current song — mirrors downloadMidi's own whole-path routing.
 const exportAudioSmart = (fmt) => (S.waypoints.length >= 2 ? exportLoopAudio(fmt) : exportAudio(fmt));
-import { copyShareUrl } from "./share.js";
+import { copyShareUrl, loopBars } from "./share.js";
 
 // ---------- Preact panel ----------
 // pace: INVERTED (left = 4096 bars/leg = slowest, right = 16 = fastest —
@@ -54,7 +54,7 @@ function Panel(){
     <div class="row"><label>pace</label>
       <input type="range" min="4" max="12" step="1" value=${16-Math.round(Math.log2(Math.max(16,Math.min(4096,+S.pace||BARS_PER_SEG))))}
         onInput=${e=>set({pace:Math.pow(2,16-Math.max(4,Math.min(12,+e.target.value||8)))})} />
-      <output>${S.pace} bars/leg</output></div>
+      <output>~${S.waypoints.length>=2?loopBars():S.pace} bars/loop</output></div>
     <div class="row"><label>±bpm</label>
       <input type="range" min="-64" max="64" step="1" value=${S.bpmDelta||0}
         onInput=${e=>setBpmDelta(e.target.value)} />
