@@ -1421,25 +1421,34 @@
   // MiniMoog voice per family (modeld params). Osc waveform is fixed in modeld.dsp;
   // character comes from cutoff/env/attack/sustain/drive/oscMix/drift + glide.
   const MINIMOOG_FAMILY={
-    bass:  { cutoff:820,  res:0.30, envAmount:1.8, envDecay:0.16, attack:0.004, sustain:0.72, drive:0.32, oscMix:0.68, drift:3,  glide:16, release:0.14 },
+    bass:  { cutoff:820,  res:0.30, envAmount:1.8, envDecay:0.16, attack:0.004, sustain:0.72, drive:0.32, oscMix:0.68, drift:5,  glide:16, release:0.14 },
     flute: { cutoff:2600, res:0.08, envAmount:0.5, envDecay:0.30, attack:0.06,  sustain:0.92, drive:0.10, oscMix:0.15, drift:5,  glide:0,  release:0.22 },
-    reed:  { cutoff:1750, res:0.24, envAmount:1.1, envDecay:0.24, attack:0.03,  sustain:0.85, drive:0.22, oscMix:0.42, drift:4,  glide:0,  release:0.20 },
+    reed:  { cutoff:1750, res:0.24, envAmount:1.1, envDecay:0.24, attack:0.03,  sustain:0.85, drive:0.22, oscMix:0.42, drift:5,  glide:0,  release:0.20 },
     brass: { cutoff:1450, res:0.20, envAmount:2.6, envDecay:0.26, attack:0.03,  sustain:0.80, drive:0.36, oscMix:0.50, drift:5,  glide:6,  release:0.24 },
     string:{ cutoff:1650, res:0.16, envAmount:1.0, envDecay:0.40, attack:0.16,  sustain:0.88, drive:0.16, oscMix:0.50, drift:11, glide:0,  release:0.45 },
     mallet:{ cutoff:3000, res:0.12, envAmount:1.5, envDecay:0.30, attack:0.002, sustain:0.10, drive:0.14, oscMix:0.30, drift:6,  glide:0,  release:0.30 },
-    organ: { cutoff:2800, res:0.10, envAmount:0.3, envDecay:0.20, attack:0.01,  sustain:0.95, drive:0.18, oscMix:0.50, drift:2,  glide:0,  release:0.10 },
+    organ: { cutoff:2800, res:0.10, envAmount:0.3, envDecay:0.20, attack:0.01,  sustain:0.95, drive:0.18, oscMix:0.50, drift:5,  glide:0,  release:0.10 },
     voice: { cutoff:1500, res:0.22, envAmount:0.5, envDecay:0.30, attack:0.12,  sustain:0.90, drive:0.12, oscMix:0.35, drift:8,  glide:0,  release:0.30 },
     pluck: { cutoff:2200, res:0.20, envAmount:2.0, envDecay:0.15, attack:0.003, sustain:0.20, drive:0.20, oscMix:0.40, drift:5,  glide:0,  release:0.18 },
-    key:   { cutoff:2000, res:0.14, envAmount:1.2, envDecay:0.42, attack:0.004, sustain:0.42, drive:0.15, oscMix:0.45, drift:4,  glide:0,  release:0.28 },
+    key:   { cutoff:2000, res:0.14, envAmount:1.2, envDecay:0.42, attack:0.004, sustain:0.42, drive:0.15, oscMix:0.45, drift:5,  glide:0,  release:0.28 },
     lead:  { cutoff:2000, res:0.25, envAmount:1.5, envDecay:0.22, attack:0.01,  sustain:0.85, drive:0.25, oscMix:0.50, drift:6,  glide:8,  release:0.20 },
   };
   // Role-aware voice pick: modeld is a MONO lead/bass voice, so a chordal PAD
   // routes to the poly juno60 instead (chords survive) — the mono Moog lead over a
   // poly-analog pad, the honest "analog ensemble". Returns {voice, params}.
   function minimoogVoiceFor(id, role){
-    if(role==="pad") return { voice:"juno60", params:{ cutoff:1500, res:0.18, envAmount:1.1, keytrack:0.3,
-      attack:0.5, decay:1.4, sustain:0.72, release:1.7, chorus:1.4 } };
-    return { voice:"modeld", params: MINIMOOG_FAMILY[instrFamily(id)] };
+    const fam=instrFamily(id);
+    // SUSTAINED / POLYPHONIC families (voice/choir, strings, organ) — and any PAD —
+    // route to the POLY juno60 so chords and "hovering voices" don't collapse onto
+    // the MONO modeld (Paul: hovering voices didn't work on minimoog). Attacky/mono
+    // families (lead/brass/reed/flute/pluck/mallet/key/bass) keep the mono Moog.
+    if(role==="pad" || fam==="voice" || fam==="string" || fam==="organ"){
+      const attack = fam==="voice"?0.55 : fam==="string"?0.35 : fam==="organ"?0.01 : 0.5;
+      return { voice:"juno60", params:{ cutoff:{voice:1500,string:1650,organ:2600}[fam]||1500,
+        res:0.16, envAmount:1.0, keytrack:0.3, attack, decay:1.3, sustain:0.85,
+        release: fam==="organ"?0.14:1.6, chorus:1.4 } };
+    }
+    return { voice:"modeld", params: MINIMOOG_FAMILY[fam] };
   }
   // DX7 (FM) font: every GM instrument → a Yamaha DX7 patch (the 114-patch ROM
   // bank in DX7_PATCHES, {algorithm, params} = exactly the dx7-unit recipe). Per-
@@ -1462,8 +1471,8 @@
   // fontList see them). kind:"synth" flips the instrument resolvers to the synth
   // path; voiceFor(id, role) -> {voice, params[, dx7]}.
   const SYNTH_FONTS={
-    minimoog: { label:"MiniMoog (analog)", voiceFor:minimoogVoiceFor },
-    dx7:      { label:"Yamaha DX7 (FM)",   voiceFor:dx7VoiceFor },
+    minimoog: { label:"Pure Analog", voiceFor:minimoogVoiceFor },
+    dx7:      { label:"Pure FM",     voiceFor:dx7VoiceFor },
   };
   for(const k of Object.keys(SYNTH_FONTS)) FONTS[k]={ kind:"synth", voiceFor:SYNTH_FONTS[k].voiceFor };
   function activeSynthFont(){ const F=FONTS[ACTIVE_FONT]; return (F&&F.kind==="synth")?F:null; }
@@ -7831,7 +7840,11 @@
     }
     // sampled drum kit: resolve the genre's drums.kit and ride each hit wav into
     // foundSources at vol 0 (decoded through the same paths as instrument zones).
-    const drumKit = c.drumRecipe && c.drumRecipe.kit ? drumKitSpec(c.drumRecipe.kit) : null;
+    // SYNTH FONT (B, Paul: "I want drums synthesized by minimoog/dx7 too"): a synth
+    // font drops the SAMPLED drum kit so the drums are the engine's SYNTHESIZED
+    // voices (analog kick boom/808/909 + noise/crack snare + noise/metal hats) — an
+    // all-synth kit under the analog/FM font. Default (fluidr3) keeps its sampled kit.
+    const drumKit = (c.drumRecipe && c.drumRecipe.kit && !activeSynthFont()) ? drumKitSpec(c.drumRecipe.kit) : null;
     if(drumKit) for(const s of drumKit.srcs)
       foundSources.push({id:s.id, label:drumKit.label, url:"",
         samplePath:"found/samples/drums/"+drumKit.dir+"/"+s.file, vol:0, pitch:1, stretch:0.5, cutoff:18000});
@@ -8140,7 +8153,13 @@
   // glides). Never touched on the default path — genres press byte-identically.
   const _sampledOnlySpec=(id)=>{
     const SF=activeSynthFont();
-    if(SF){ const v=SF.voiceFor(id,null); return { id, synth:v.voice, params:v.params }; }   // SYNTH FONT: a synth voice per instrument, no sample zones (role-agnostic on the niche allSampled path)
+    // SYNTH FONT: a synth voice per instrument (no sample zones). Bake BOTH a lead
+    // and a pad voice so state-engine forceSampled can pick role-aware (this path
+    // runs on EVERY track via applySampledOnly, so pads must get the poly voice or
+    // hovering voices collapse on mono modeld).
+    if(SF){ const lead=SF.voiceFor(id,"melody"), pad=SF.voiceFor(id,"pad");
+      return { id, synth:lead.voice, params:lead.params, dx7:lead.dx7,
+        padSynth:pad.voice, padParams:pad.params, padDx7:pad.dx7 }; }
     const S=fontInstr(id); if(!S) return null;
     return { id, sr:S.sr, zones:S.zones.map((z,i)=>({srcId:"ins_"+id+"_"+i, root:z.root, lo:z.lo, hi:z.hi,
       vlo:z.vlo, vhi:z.vhi, loop:!!z.loop, loopStart:z.ls, loopEnd:z.le })) };
@@ -8179,8 +8198,12 @@
     }
     state.samplerLib=lib;
     // (4) force a sampled kit when the genre runs a synth kit (no *Sampler overlay)
+    // — UNLESS a synth font is active: then drums stay SYNTHESIZED too (Paul: "I
+    // want drums synthesized by minimoog/dx7 too"). This is the real gate — the
+    // "sampled by default" pass runs on every track() and would otherwise re-add a
+    // kit after toState dropped it.
     const D=state.instruments&&state.instruments.drums;
-    if(D && !D.kickSampler){
+    if(D && !D.kickSampler && !activeSynthFont()){
       const kits=Object.keys(DRUMKITS);
       const spec=_sampledOnlyKit(kits[(((seed>>>0)*2654435761)>>>0)%kits.length]);
       if(spec){ Object.assign(D, spec.overlay);

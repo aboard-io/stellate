@@ -16,9 +16,10 @@
 // so this is verified on a real browser like the iOS-pinch fix. webm output.
 import { S, set } from "./state.js";
 import { faustHandle } from "./live.js";
+import { exportProg } from "./export.js";
 
 export const VIDEO = { recording: false };
-let _rec = null, _raf = 0, _canvas = null, _stopTimer = 0, _restoreDemo = null;
+let _rec = null, _raf = 0, _canvas = null, _stopTimer = 0, _restoreDemo = null, _progIv = 0;
 
 function pickMime() {
   const cands = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm", "video/mp4"];
@@ -101,6 +102,9 @@ export async function recordVideo(opts) {
   set({ status: "video: recording…" });
 
   const seconds = Math.max(2, Math.min(600, +opts.seconds || 30));
+  const t0 = (typeof performance !== "undefined" ? performance.now() : 0);
+  exportProg(0, "recording video");
+  _progIv = setInterval(() => { try { exportProg(Math.min(0.99, ((performance.now() - t0) / 1000) / seconds), "recording video"); } catch (e) {} }, 250);
   _stopTimer = setTimeout(() => { try { rec.state !== "inactive" && rec.stop(); } catch (e) {} }, seconds * 1000);
 
   const blob = await done;
@@ -125,6 +129,7 @@ export function stopVideo() {
 function cleanup() {
   if (_raf) { cancelAnimationFrame(_raf); _raf = 0; }
   if (_stopTimer) { clearTimeout(_stopTimer); _stopTimer = 0; }
+  if (_progIv) { clearInterval(_progIv); _progIv = 0; } exportProg(null);
   if (_restoreDemo) { try { _restoreDemo(); } catch (e) {} _restoreDemo = null; }
   _rec = null; _canvas = null; VIDEO.recording = false; set({});
 }

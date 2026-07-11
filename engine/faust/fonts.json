@@ -5,12 +5,12 @@
  },
  {
   "key": "minimoog",
-  "label": "MiniMoog (analog synth)",
+  "label": "Pure Analog",
   "synth": true
  },
  {
   "key": "dx7",
-  "label": "Yamaha DX7 (FM)",
+  "label": "Pure FM",
   "synth": true
  },
  {

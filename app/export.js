@@ -19,6 +19,12 @@ import { buildLoopMidi, buildLoopPlan } from "./journey.js";   // whole-path MID
 
 const SR = 44100;
 
+// EXPORT PROGRESS (Paul: "put up a progress bar for the export"): a numeric 0..1 +
+// label the ⚙ panel renders as a bar. exportProg(null) hides it. Blocking is fine.
+export function exportProg(frac, label) {
+  set({ exportPct: frac == null ? null : Math.max(0, Math.min(1, frac)), exportLabel: label || "" });
+}
+
 // ---------- the song's identity (the chyron's derivation, app/readouts.js) ----------
 export function songIdentity() {
   const g = (S.weights[0] || { g: "vaporwave" }).g;
@@ -52,9 +58,10 @@ export async function downloadMidi() {
   // there is no path (or the walk can't run).
   let bytes = null, whole = false;
   if (S.waypoints.length >= 2) {
-    set({ status: "whole-path MIDI: walking the loop…" });
-    try { bytes = await buildLoopMidi({ onProgress: (b, t) => set({ status: "whole-path MIDI: " + Math.round(100 * b / t) + "% of " + t + " bars" }) }); whole = !!bytes; }
+    set({ status: "whole-path MIDI: walking the loop…" }); exportProg(0, "whole-path MIDI");
+    try { bytes = await buildLoopMidi({ onProgress: (b, t) => { set({ status: "whole-path MIDI: " + Math.round(100 * b / t) + "% of " + t + " bars" }); exportProg(b / t, "whole-path MIDI"); } }); whole = !!bytes; }
     catch (e) { console.warn("whole-path MIDI failed:", e); }
+    exportProg(null);
   }
   if (!bytes) bytes = MidiExport.buildMidi(S.playing);
   EXPORT.lastMidi = bytes;                      // headless probe hook (SMF parse gate)
@@ -251,11 +258,11 @@ export async function exportLoopAudio(fmt, opts) {
   EXPORT.busy = true; set({});
   let w = null, mw = null;
   try {
-    set({ status: "whole-path: planning the walk…" });
+    set({ status: "whole-path: planning the walk…" }); exportProg(0, "planning the walk");
     const plan = await buildLoopPlan({ ...(opts.bars ? { bars: opts.bars } : {}),
-      onProgress: (b, t) => set({ status: "whole-path: planning " + Math.round(100 * b / t) + "% of " + t + " bars" }) });
-    if (!plan || !plan.runs.length) { set({ status: "whole-path export needs a drawn loop" }); return null; }
-    set({ status: "whole-path: decoding " + (plan.foundIds.length + plan.samplerIds.length) + " sources…" });
+      onProgress: (b, t) => { set({ status: "whole-path: planning " + Math.round(100 * b / t) + "% of " + t + " bars" }); exportProg(0.12 * b / t, "planning the walk"); } });
+    if (!plan || !plan.runs.length) { set({ status: "whole-path export needs a drawn loop" }); exportProg(null); return null; }
+    set({ status: "whole-path: decoding " + (plan.foundIds.length + plan.samplerIds.length) + " sources…" }); exportProg(0.14, "decoding sources");
     const { buffers, speechById, failed } = await decodeLoopInputs(plan);
     if (failed.length) console.warn("whole-path: sources skipped:", failed.join(", "));
     w = new Worker("engine/faust/stream-worker.js", { type: "module" });
@@ -281,7 +288,9 @@ export async function exportLoopAudio(fmt, opts) {
           if (fmt === "mp3") mw.postMessage({ type: "mp3pcm", gen: 1, L: L.buffer, R: R.buffer, n, boot: first, bridge: false, barMap: [] }, [L.buffer, R.buffer]);
           else parts.push(pcmToInt16(L, R, n));
           first = false;
-        } else if (m.type === "loopprog") set({ status: "whole-path: rendering " + Math.round(100 * m.done / Math.max(1, m.total)) + "% (" + Math.round(m.sec) + "s)…" });
+        } else if (m.type === "loopprog") { const f = m.done / Math.max(1, m.total);
+          set({ status: "whole-path: rendering " + Math.round(100 * f) + "% (" + Math.round(m.sec) + "s)…" });
+          exportProg(0.15 + 0.8 * f, "rendering the whole path"); }
         else if (m.type === "loopdone") res(m);
         else if (m.type === "loopfail" || m.type === "loopcancel") rej(new Error(m.error || m.type));
       };
@@ -293,7 +302,7 @@ export async function exportLoopAudio(fmt, opts) {
 
     let blob, ext;
     if (fmt === "mp3") {
-      set({ status: "whole-path: encoding MP3…" });
+      set({ status: "whole-path: encoding MP3…" }); exportProg(0.97, "encoding MP3");
       mw.postMessage({ type: "mp3flush", gen: 1 }); await mp3done;
       let tot = 0; for (const c of mp3chunks) tot += c.length; const u = new Uint8Array(tot); let o = 0; for (const c of mp3chunks) { u.set(c, o); o += c.length; }
       blob = new Blob([u.buffer], { type: "audio/mpeg" }); ext = ".mp3";
@@ -310,7 +319,7 @@ export async function exportLoopAudio(fmt, opts) {
     console.error("whole-path export failed:", e);
     set({ status: "whole-path export failed: " + ((e && e.message) || e) });
     return null;
-  } finally { if (w) w.terminate(); if (mw) mw.terminate(); EXPORT.busy = false; set({}); }
+  } finally { if (w) w.terminate(); if (mw) mw.terminate(); EXPORT.busy = false; exportProg(null); set({}); }
 }
 
 // ---------- ⤓ audio: the offline press (the CURRENT song) ----------
@@ -341,10 +350,11 @@ export async function exportAudio(fmt, opts) {
         if (m.type === "ready") res(); else if (m.type === "initfail") rej(new Error(m.error)); };
       w.postMessage({ type: "init" });
     });
-    set({ status: "export: pressing 0% of " + Math.round(totalSec) + "s…" });
+    set({ status: "export: pressing 0% of " + Math.round(totalSec) + "s…" }); exportProg(0.05, "pressing the song");
     const wavBuf = await new Promise((res, rej) => {
       w.onmessage = (e) => { const m = e.data || {};
-        if (m.type === "wavprog") set({ status: "export: pressing " + Math.round(100 * m.chunk / Math.max(1, m.nChunks)) + "% of " + Math.round(m.totalSec || totalSec) + "s…" });
+        if (m.type === "wavprog") { const f = m.chunk / Math.max(1, m.nChunks);
+          set({ status: "export: pressing " + Math.round(100 * f) + "% of " + Math.round(m.totalSec || totalSec) + "s…" }); exportProg(0.05 + 0.9 * f, "pressing the song"); }
         else if (m.type === "wav") res(m.wav);
         else if (m.type === "wavfail" || m.type === "wavcancel") rej(new Error(m.error || m.type)); };
       const transfer = [];
@@ -365,7 +375,7 @@ export async function exportAudio(fmt, opts) {
     console.error("export failed:", e);
     set({ status: "export failed: " + ((e && e.message) || e) });
     return null;
-  } finally { if (w) w.terminate(); EXPORT.busy = false; set({}); }
+  } finally { if (w) w.terminate(); EXPORT.busy = false; exportProg(null); set({}); }
 }
 
 // ---------- headless probe hooks (test/explorer-ui-test.js) ----------

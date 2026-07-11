@@ -410,19 +410,33 @@
     // path) — the worker-baked export/WAV mix never sees it, so segment-parity and
     // fixtures are untouched. (The WAV-first mobile path plays a plain <audio> with
     // no WebAudio graph, so vapor rides the classic/desktop path only.)
-    const vaporShelf = ctx.createBiquadFilter();
-    vaporShelf.type = "highshelf"; vaporShelf.frequency.value = 1500; vaporShelf.gain.value = 0;
-    const vaporSend = ctx.createGain(); vaporSend.gain.value = 0;   // mall-wash reverb send
-    const vpDelay = ctx.createDelay(0.5); vpDelay.delayTime.value = 0.17;
-    const vpFb = ctx.createGain(); vpFb.gain.value = 0.5;
-    const vpLp = ctx.createBiquadFilter(); vpLp.type = "lowpass"; vpLp.frequency.value = 2600;
-    analyser.connect(vaporShelf);
-    vaporShelf.connect(userGain);
-    vaporShelf.connect(vaporSend); vaporSend.connect(vpDelay);
-    vpDelay.connect(vpLp); vpLp.connect(vpFb); vpFb.connect(vpDelay); vpLp.connect(userGain);
+    // "walking through an empty mall": as vapor 0→1 the master MUFFLES (a lowpass
+    // sweeping the top off — heard through walls / over a distant PA), the direct
+    // sound RECEDES (dry ducks), and it drenches in a big DIFFUSE hall wash (three
+    // lowpassed comb delays + pre-delay = a huge empty concourse). It's a strong,
+    // evocative move by design, not a gentle EQ. analyser → vaporLP → {dry + wash}.
+    const vaporLP = ctx.createBiquadFilter(); vaporLP.type = "lowpass";
+    vaporLP.frequency.value = 20000; vaporLP.Q.value = 0.4;
+    const vaporDry = ctx.createGain(); vaporDry.gain.value = 1;
+    const vaporWet = ctx.createGain(); vaporWet.gain.value = 0;
+    const vaporPre = ctx.createDelay(0.2); vaporPre.delayTime.value = 0.028;   // pre-delay = distance/space
+    [[0.113, 0.74], [0.149, 0.71], [0.193, 0.68]].forEach(([t, fb]) => {   // 3 damped combs → diffuse mall wash
+      const d = ctx.createDelay(0.5); d.delayTime.value = t;
+      const g = ctx.createGain(); g.gain.value = fb;
+      const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 3000;
+      vaporPre.connect(d); d.connect(lp); lp.connect(g); g.connect(d); d.connect(vaporWet);
+    });
+    analyser.connect(vaporLP);
+    vaporLP.connect(vaporDry); vaporDry.connect(userGain);
+    vaporLP.connect(vaporPre); vaporWet.connect(userGain);
+    const _expLerp = (a, b, t) => a * Math.pow(b / a, t);
     const applyVapor = (v) => { v = Math.max(0, Math.min(1, +v || 0));
-      try { vaporShelf.gain.setTargetAtTime(-16 * v, ctx.currentTime, 0.05);   // roll off up to -16 dB of top
-            vaporSend.gain.setTargetAtTime(0.6 * v, ctx.currentTime, 0.05); } catch (e) {} };   // add the mall wash
+      try {
+        vaporLP.frequency.setTargetAtTime(_expLerp(20000, 1400, v), ctx.currentTime, 0.1);   // muffle the top
+        vaporDry.gain.setTargetAtTime(1 - 0.45 * v, ctx.currentTime, 0.1);                    // the music recedes
+        vaporWet.gain.setTargetAtTime(0.7 * v, ctx.currentTime, 0.1);                         // fill the concourse
+      } catch (e) {}
+    };
     applyVapor(opts.vapor);
     userGain.connect(msDest || ctx.destination);
 

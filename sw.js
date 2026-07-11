@@ -18,7 +18,11 @@
 //
 // Cached Response objects keep their original headers, so COOP/COEP isolation
 // (SharedArrayBuffer for the render worker) survives offline replay.
-const VERSION = "stellate-v2";   // v2 (2026-07-10): app code goes STALE-WHILE-REVALIDATE — the origin serves
+const VERSION = "stellate-v3";   // v3 (2026-07-11): BUMP purges the old cache on activate so a deploy lands
+                                 // in ONE load, not two (the v2 stale-while-revalidate served a load-behind copy —
+                                 // Paul saw none of the synth-font/video/vapor batch until a second reload). Bump
+                                 // this string every deploy that must reach users immediately.
+                                 // (2026-07-10): app code goes STALE-WHILE-REVALIDATE — the origin serves
 // cache-control:no-cache, so pre-SW every visit revalidated ~20 files serially (one RTT each — Paul: "it
 // loads very slowly now" on a phone) and v1's network-first made that a hard wait. Now a repeat visit
 // paints from cache INSTANTLY while a background fetch refreshes the copy for the NEXT load — a deploy
