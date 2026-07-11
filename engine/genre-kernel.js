@@ -1590,7 +1590,7 @@
       pads:{prob:.25, recipe:{model:["saw","organ"],wave:"saw",cutoff:[500,850],detune:[.005,.012],attack:[2,3.5],level:[.3,.42],send:[.45,.65],dsend:[.15,.3]}},   // dark, mostly ABSENT — no soft royal-road wash under the amen
       drums:{kickModel:["808"],snareModel:["crack"],hatModel:["noise"],kick:[1.15,1.4],snare:[.6,.85],hat:[.4,.7],tune:[1.0,1.15],send:[.05,.15],dsend:[.35,.6]},
       fx:{reverb:[.35,.55], delayBeats:[.75,1.5], delayFb:[.4,.6], delayCut:[1800,3000], pump:[0,.15], crackle:[.05,.2], lowcut:[25,40], highcut:[0,0], comp:[.35,.55], grit:[.15,.35], jux:[.25,.5]},
-      found:{role:"break", vol:[.3,.45], pitch:[1,1], stretch:[.5,.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175","stml_loop_148a","stml_loop_157a","stml_loop_157b","stml_loop_167a"]},   // the BREAK DOMINATES: loud + wide open, real sampled drums not "light FM"
+      found:{role:"break", scratch:0.45, vol:[.3,.45], pitch:[1,1], stretch:[.5,.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175","stml_loop_148a","stml_loop_157a","stml_loop_157b","stml_loop_167a"]},   // the BREAK DOMINATES: loud + wide open, real sampled drums not "light FM"; scratch on the stutter ornament
       stab:["off","sparse"], hits:{sources:["pool:vocal_stab*1","pool:rave_stab*1","sp_rewind","sp_pressure"], pattern:"dub", prob:.75},
       form:"dj" },
     triphop: { label:"Drizzle Noir", info:"slowed dusty breaks under a raincoat: blue seventh-chord color, melancholy with sub weight, every snare heard through a wet window",   // SAMPLE-FORWARD
@@ -2626,7 +2626,7 @@
       pads:{prob:.7, samplerPool:["strings"], recipe:{model:["fm","sampler"],wave:"sine",cutoff:[900,1500],detune:[.003,.008],attack:[.8,1.8],level:[.5,.66],send:[.3,.5],dsend:[.1,.2]}},
       drums:{kickModel:["boom","808"],snareModel:["crack","noise"],hatModel:["noise"],kick:[1.1,1.35],snare:[.8,1.05],hat:[.6,.9],tune:[.9,1.05],send:[.12,.25],dsend:[.05,.15],kit:"room"},
       fx:{reverb:[.4,.58], delayBeats:[.5,.75], delayFb:[.2,.35], delayCut:[1800,2800], pump:[0,.1], crackle:[.2,.45], lowcut:[0,25], highcut:[0,0], comp:[.25,.45]},
-      found:{role:"break", vol:[.2,.32], pitch:[1,1], stretch:[.5,.5], cutoff:[4000,6000], sources:["amen_165","amen_170","stml_loop_86a","stml_loop_89a","stml_loop_92a","stml_loop_94a"]},
+      found:{role:"break", scratch:0.5, vol:[.2,.32], pitch:[1,1], stretch:[.5,.5], cutoff:[4000,6000], sources:["amen_165","amen_170","stml_loop_86a","stml_loop_89a","stml_loop_92a","stml_loop_94a"]},   // scratch rides only the ~7% stutter ornament (~3.5% of slices) — flourish, not groove-loss
       stab:["off"], hits:{sources:["pool:vocal_stab*2","sp_rewind"], pattern:"sparse", prob:.4},
       form:"pop" },
     amapiano: { label:"Log Drum Diplomacy", info:"a deep log-drum bassline at 112: plush Rhodes chords, wide shakers, a spacious swung groove — patient and social, the drum that speaks last and says the most",   // sub log-drum + jazzy sevenths + fast shaker hats at 112; bpm cap fences it under deephouse
@@ -5835,7 +5835,7 @@
       pads:{prob:0.6, samplerPool:["strings"], recipe:{model:["sampler","fm"], wave:"sine", cutoff:[900,1500], detune:[0.003,0.008], attack:[0.6,1.5], level:[0.46,0.6], send:[0.3,0.45], dsend:[0.1,0.2]}},
       drums:{kickModel:["boom","808"], snareModel:["crack","noise"], hatModel:["noise"], kick:[1.1,1.35], snare:[0.85,1.1], hat:[0.6,0.9], tune:[0.9,1.05], send:[0.1,0.22], dsend:[0.05,0.15], kit:"room"},
       fx:{reverb:[0.35,0.5], delayBeats:[0.5,0.75], delayFb:[0.2,0.35], delayCut:[1800,2800], pump:[0,0.1], crackle:[0.25,0.5], lowcut:[0,25], highcut:[0,0], comp:[0.3,0.5]},
-      found:{role:"chops", vol:[0.16,0.28], pitch:[0.95,1.1], stretch:[0.4,0.55], cutoff:[2400,3800], sources:["blues_vox_78","stml_chop_a","stml_chop_b","stml_chop_c","stml_chop_d","vx_timelady"]},
+      found:{role:"chops", scratch:0.18, vol:[0.16,0.28], pitch:[0.95,1.1], stretch:[0.4,0.55], cutoff:[2400,3800], sources:["blues_vox_78","stml_chop_a","stml_chop_b","stml_chop_c","stml_chop_d","vx_timelady"]},   // scratch: the flip IS the art — ~1-in-5 soul-78 chops get the fwd↔back hand
       hits:{sources:["bb_horn_a","bb_horn_b","sp_rewind","pool:vocal_stab*1"], pattern:"sparse", prob:0.5},
       stab:["off"],
       form:"pop",
@@ -6510,6 +6510,7 @@
       drumRecipe: blendRecipe(g=>g.drums),
       fx: blendRecipe(g=>g.fx),
       foundRole: foundSide.found.role,
+      foundScratch: foundSide.found.scratch || 0,   // OPT-IN: per-hit scratch probability on chops/break stutter (turntablist genres)
       foundSource: pick(rng, expandPools(foundSide.found.sources, seed)),
       foundPool: (()=>{ const a=expandPools(foundSide.found.sources, seed).slice(), o=[], n=Math.min(6,a.length);   // distinct beds/narration chunks to rotate (kills the one-loop repeat)
         while(o.length<n&&a.length) o.push(a.splice(Math.floor(rng()*a.length),1)[0]); return o; })(),
@@ -7600,7 +7601,8 @@
       foundSources.push(Object.assign({id:sid,label:sid,url:sr.url||"",kind:sr.kind},
         isS?{samplePath:"found/samples/"+sr.file,bpm:sr.bpm,durSec:sr.durSec}:{},
         {vol:c.foundRecipe.vol,pitch:c.foundRole==="break"?1:round(c.foundRecipe.pitch*pj,3),
-         stretch:c.foundRecipe.stretch,cutoff:Math.round(c.foundRecipe.cutoff)}));
+         stretch:c.foundRecipe.stretch,cutoff:Math.round(c.foundRecipe.cutoff)},
+        c.foundScratch?{scratch:c.foundScratch}:{}));   // scratch key present ONLY on opted genres => others byte-identical
     });
     if(c.hits){
       // hits resolve from SAMPLES (local one-shots) OR SOURCES (remote material

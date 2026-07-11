@@ -721,9 +721,23 @@
     live.chop = function (buffer, when, f) {
       _stats.chops++;
       const durSec = f.durSec;
-      const atPitch = tunedPitch(f, buffer.getChannelData(0), buffer.sampleRate);   // AUTO-TUNE bend
       const srcN = ctx.createBufferSource();
-      srcN.buffer = buffer; srcN.loop = true; srcN.playbackRate.value = atPitch;
+      if (f.scratch) {
+        // SCRATCH live twin: a WebAudio BufferSource has no scrub primitive, so
+        // pre-render the fwd↔back triangle read (SAME math as mixPCM's scratch
+        // branch) into a one-shot buffer, played at rate 1 through the same lp+env
+        // as a normal chop. Opt-in via f.scratch => normal loop read otherwise.
+        const src = buffer.getChannelData(0), sr = buffer.sampleRate;
+        const n = Math.max(1, Math.floor(durSec * sr)), start = (f.offset || 0) * src.length;
+        const span = (f.scratchSpan || 0.05) * src.length, cyc = Math.max(1, f.scratchCycles || 4);
+        const seg = new Float32Array(n);
+        for (let i = 0; i < n; i++) { const x = cyc * i / n, t = x - (x | 0), tri = t < 0.5 ? 4 * t - 1 : 3 - 4 * t; seg[i] = readLerp(src, start + span * tri); }
+        const sb = ctx.createBuffer(1, n, sr); sb.getChannelData(0).set(seg);
+        srcN.buffer = sb; srcN.loop = false; srcN.playbackRate.value = 1;
+      } else {
+        const atPitch = tunedPitch(f, buffer.getChannelData(0), buffer.sampleRate);   // AUTO-TUNE bend
+        srcN.buffer = buffer; srcN.loop = true; srcN.playbackRate.value = atPitch;
+      }
       const lp = ctx.createBiquadFilter(); lp.type = "lowpass";
       lp.frequency.value = Math.min(Math.max(f.cutoff, 40), 18000); lp.Q.value = 0.0001;
       const env = ctx.createGain(); env.gain.value = 0;
@@ -749,7 +763,7 @@
       const rev = ctx.createGain(); rev.gain.value = f.rsend; tail.connect(rev); rev.connect(dests.rev);
       const del = ctx.createGain(); del.gain.value = f.dsend; tail.connect(del); del.connect(dests.del);
       if (f.ppsend && dests.pp) { const pp = ctx.createGain(); pp.gain.value = f.ppsend; tail.connect(pp); pp.connect(dests.pp); }
-      srcN.start(when, (f.offset % 1) * buffer.duration);
+      srcN.start(when, f.scratch ? 0 : (f.offset % 1) * buffer.duration);   // scratch seg is pre-rendered from offset => start at 0
       srcN.stop(when + durSec + 0.05);
       srcN._ampParam = g;   // the amplitude envelope — live.fadeAll ramps it down when the mix leaves this genre
       live.active.add(srcN);

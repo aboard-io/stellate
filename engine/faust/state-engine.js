@@ -1806,6 +1806,7 @@
           pitch: fp, offset: f.offset || 0, cutoff: f.cutoff || 3500,
           rsend: f.rsend != null ? f.rsend : 0.3, dsend: f.dsend != null ? f.dsend : 0.2,
           ppsend: f.ppsend || 0, fade: f.fade || 0, sqRate: f.sqRate || 0, sqDepth: f.sqDepth || 0,
+          scratch: f.scratch || 0,   // OPT-IN turntablist scratch (found-player triangle fwd↔back read); 0 => identical
           ...tuned });
       } else {
         if (!(opts.bedAll || win(f.beat))) continue;
