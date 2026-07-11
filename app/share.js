@@ -35,8 +35,17 @@ export function legMetrics(){
 }
 // world-units the traveler advances per bar (constant; bigger pace = slower).
 export function paceSpeed(){ return PACE_REF/Math.max(8,Math.min(4096,+S.pace||BARS_PER_SEG)); }
-// bars for one full loop at the current pace (perimeter / speed) — path-length only.
-export function loopBars(){ const { perim }=legMetrics(); return Math.max(1, Math.round(perim/Math.max(1e-6, paceSpeed()))); }
+// EXPORT/RENDER SAFETY CAP (2026-07-11 crash fix): a constant-pace loop over a
+// large-coordinate path can be tens of thousands of bars (perim/speed). The whole-
+// path MIDI/audio walk MATERIALIZES every bar (events + units) — 32k of them OOM'd
+// and crashed the browser (Paul's ?m=787 URL, perim ~63k → ~32k bars). The live
+// playhead is UNAFFECTED (travelStep never materializes the loop; it steps one bar
+// at a time and travelForBar wraps at the perimeter). So cap only the walk length.
+export const MAX_LOOP_BARS = 2048;
+// bars for one full loop at the current pace (perimeter / speed) — path-length only,
+// clamped to MAX_LOOP_BARS so a giant path can't hang the whole-path export.
+export function loopBars(){ const { perim }=legMetrics();
+  return Math.max(1, Math.min(MAX_LOOP_BARS, Math.round(perim/Math.max(1e-6, paceSpeed())))); }
 // distance-along-perimeter -> {seg,t} (walk the legs; perim precomputed).
 function segAtDistance(d, legs, perim, n){
   d=((d%perim)+perim)%perim;
