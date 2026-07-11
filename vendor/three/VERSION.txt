@@ -1,0 +1,18 @@
+three.js — vendored for the star-cruise 3D video mode (app/starcruise/*).
+
+version:  r160 (npm three@0.160.0)
+build:    three.module.min.js  (ESM, minified — the ONLY file the app loads)
+license:  MIT (see ./LICENSE) — Copyright 2010-2023 three.js authors
+source:   `npm pack three@0.160.0`, extracted package/build/three.module.min.js
+date:     2026-07-11
+
+LOAD RULE: this is NOT in index.html's initial <script> load. It is lazy
+`import()`-ed by app/starcruise.js ONLY when the 🛸 star-cruise mode is first
+activated, so the zero-dependency initial page weight is untouched until tapped.
+
+To re-vendor a new version:
+  npm pack three@<ver>
+  tar xzf three-<ver>.tgz
+  cp package/build/three.module.min.js vendor/three/three.module.min.js
+  cp package/LICENSE vendor/three/LICENSE
+  # update this file's version/date
