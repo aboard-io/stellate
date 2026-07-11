@@ -178,6 +178,9 @@ if (typeof module !== "undefined" && require.main === module) {
         for (let j = 0; j < n; j++) { const x = j / k, x0 = Math.floor(x), f = x - x0; r[j] = pcm[x0] + f * ((pcm[x0 + 1] || 0) - pcm[x0]); }
         pcm = r; ls = Math.round(ls * k); le = Math.round(le * k);
       }
+      // clamp the loop end INSIDE the written buffer (see gen-font.js — the
+      // Montego "short envelopes" off-by-one: le=len+1 made the loop one-shot).
+      le = Math.min(le, pcm.length); ls = Math.min(ls, Math.max(0, le - 1));
       const file = `z${String(i).padStart(2, "0")}_r${z.root}.wav`;
       const data = Buffer.alloc(pcm.length * 2);
       for (let j = 0; j < pcm.length; j++) data.writeInt16LE(Math.max(-1, Math.min(1, pcm[j])) * 32767 | 0, j * 2);

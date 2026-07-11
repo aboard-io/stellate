@@ -75,6 +75,11 @@ for (const [slug, v] of Object.entries(K.SAMPLERS)) {
       for (let j = 0; j < n; j++) { const x = j / k, x0 = Math.floor(x), f = x - x0; r[j] = pcm[x0] + f * ((pcm[x0 + 1] || 0) - pcm[x0]); }
       pcm = r; ls = Math.round(ls * k); le = Math.round(le * k);
     }
+    // clamp the loop end INSIDE the written buffer — some SF2 loopEnds sit one
+    // past the sample end (and resample rounding can nudge it over), which put
+    // le = len+1 and made the runtime loop silently one-shot (the Turtle Beach /
+    // Montego "short envelopes" bug). Never emit a loop point past the samples.
+    le = Math.min(le, pcm.length); ls = Math.min(ls, Math.max(0, le - 1));
     const file = `z${String(i).padStart(2, "0")}_r${z.root}.wav`;
     writeWav(path.join(dir, file), pcm);
     const rootEff = z.root - z.coarse - z.fine / 100;
