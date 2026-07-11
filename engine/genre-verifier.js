@@ -850,6 +850,9 @@
     /* genre-tool:countrypop:targets */
     countrypop:{ bpm:[122,153,3], drumDensity:[0.811,2.079,3], acoustic:[0.68,0.92,1], motion:[0.487,1,2], seventh:[0,0.975,1], swing:[0,0.097,1], crackle:[0,0.166,3], comp:[0.17,0.563,3], pump:[0,0.165,3] },
     /* /genre-tool:countrypop:targets */
+    /* genre-tool:folk:targets */
+    folk:     { bpm:[92,123,3], drumDensity:[0,0.4,3], wash:[0,0.176,3], acoustic:[0.68,0.92,2], swing:[0,0.097,2], seventh:[0,1,1], pump:[0,0.1,1], crackle:[0,0.242,1] },
+    /* /genre-tool:folk:targets */
   };
 
   // the piecewise-linear target-row scorer — the shared primitive (genre-tool

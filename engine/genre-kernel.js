@@ -1189,6 +1189,9 @@
     /* genre-tool:countrypop:clips */
     countrypop:["ca_street","bt_hootenanny","dc_skyline"],
     /* /genre-tool:countrypop:clips */
+    /* genre-tool:folk:clips */
+    folk:["bt_folksinger","lw_valley","mo_pastoral"],
+    /* /genre-tool:folk:clips */
   };
 
   // ---------- DX7 patch registry (the genre-space thesis applied to INSTRUMENTS) ----------
@@ -1999,7 +2002,7 @@
       drums:{kickModel:["909","boom"],snareModel:["clap","noise"],hatModel:["noise"],kick:[.82,.98],snare:[.56,.75],hat:[.82,1.05],tune:[.95,1.1],send:[.15,.3],dsend:[.05,.15],kit:"power"},   // DRUMS -25% (Paul 2026-07-11: "drums dominate, come down ~25%" — the mirrorball kit sat too hot over the octave bass/organ; kick/snare/hat all ×0.75). OPEN HATS still the offbeat sizzle; SAMPLED power kit (real 4-on-the-floor)
       fx:{reverb:[.4,.55], delayBeats:[.375,.5], delayFb:[.15,.3], delayCut:[2600,3800], pump:[0,.15], crackle:[.05,.2], lowcut:[30,45], highcut:[0,0], comp:[.3,.5], grit:[0,0]},
       found:{role:"bed", vol:[.06,.12], pitch:[.85,1], stretch:[.45,.6], cutoff:[1800,2800], sources:["pool:city*2","pool:voices*1"]},
-      stab:["off","sparse"], hits:{sources:["pool:horn_stab*1","sp_rhythm","pool:vocal_stab*1","stml_hit_b3"], pattern:"offbeat", prob:.5},
+      stab:["off","sparse","charleston"], hits:{sources:["pool:horn_stab*1","sp_rhythm","pool:vocal_stab*1","stml_hit_b3"], pattern:"offbeat", prob:.5},   // VARIETY: + charleston (the syncopated disco/funk chord-stab rhythm — the mirrorball glitter punch)
       masterComp:0.35,   // fx wings stage 4: gentle 3-band glue on the four-on-floor — the disco mix cohered (zero rng, dominant-parent inherited)
       form:"vamp" },
     italo: { label:"Espresso Laser", info:"sparkling pluck arpeggios over an octave bass — chrome and citrus, sunnier and happier than the night-drive two doors down, a beach at noon inside a synthesizer",   // SYNTH-FORWARD
@@ -2189,6 +2192,7 @@
       timeFeel:{ pushPull:{ bass:.01 } },   // effects audit C: a subtle behind-the-beat sway on the bass (the nylon guitar leans back) — swing .08-.18 already carries most of it, this is the gentlest structural nudge. Zero-rng dominant-parent, bass timing unread. HALVED 2026-07-04 (Paul: went a little too far on timing feel)
       bpm:[84,100], swing:[.08,.18], humanize:[.25,.45],
       progressions:["ii_v_i","neosoul","lofi"], kits:["bossa"], fills:["off","off","drum fill"],
+      strum:"bossa",   // STRUM: the nylon-string guitar IS the song — bossa syncope comp on the pad voice (taste-pending Paul)
       bass:{patterns:["dub","simple","root"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sampler","piano"],cutoff:[380,700],res:[.05,.12],level:[.85,1.05],send:[.05,.12],dsend:[0,.05],attack:.005,release:[.08,.14]}},   // STRONG-SAMPLE (2026-07 boopy-fix): the real upright now walks 2/3 of seeds (bass unread by acoustic, cutoff keeps sub=.2 — matrix-invisible)
       lead:{patterns:["wander","sparse","pentaup"], samplerPool:["nylon_string_guitar","nylon_string_guitar","flute"], recipe:{model:["sampler","sampler","sampler"],wave:"sine",drive:0,voices:[1,1],spread:[.001,.003],cutoff:[2400,3400],level:[.5,.62],send:[.25,.4],dsend:[.08,.2]}},   // STRONG-SAMPLE (2026-07 boopy-fix): the KS-pluck synth dropped — the REAL nylon string / breathy flute IS the song, every seed (.8, in bossa's [.5,1] fence)
       pads:{prob:.8, samplerPool:["nylon_string_guitar"], recipe:{model:["organ","piano","sampler"],wave:"sine",cutoff:[1000,1600],detune:[.002,.005],attack:[.3,.8],level:[.38,.5],send:[.3,.45],dsend:[.05,.12]}},
@@ -2425,7 +2429,7 @@
     surfrock: { label:"Reverb Tank Riptide", info:"twang from inside the reverb tank: tremolo guitar over fast doo-wop changes, drums crashing like breakers, 45rpm dust in the spray",   // guitar-FORWARD: the spring tank is the room
       reverbColor:"spring",   // fx wings: the boing/flutter spring tank IS surf rock's room
       bpm:[126,144], swing:[.06,.14], humanize:[.15,.35],
-      progressions:["doo_wop","sad_pop","andalusian"], kits:["open","four"], fills:["drum fill","tom fill","hat rush"],
+      progressions:["doo_wop","sad_pop","andalusian"], kits:["open","four"], fills:["drum fill","tom fill","tom cascade","hat rush"],   // VARIETY: + tom cascade (surf drumming loves the hi->lo tom run down the kit)
       bass:{patterns:["walking","octaves"], recipe:{model:["saw"],cutoff:[600,950],res:[.08,.16],level:[1,1.2],send:[.03,.08],dsend:[0,.05]}},
       lead:{patterns:["double","updown","hero"], samplerPool:["steel_string_guitar","jazz_guitar"], recipe:{model:["sampler","sampler","sampler","guitar"],wave:"saw",voices:[1,2],spread:[.001,.004],cutoff:[3000,4200],level:[.52,.64],send:[.35,.5],dsend:[.1,.2],vibrato:[.006,.012],vibRate:[6,7.5]},
         inserts:{prob:.5, max:1, pool:[["tremolo",{rate:[4,7],depth:[.5,.7],shape:[.2,.5],wobble:[0,0],mix:[.6,.85]}]]}},   // effects audit C (module built d924567): the DEFINING Fender-amp tremolo — bias/opto AM at 4-7Hz, moderate-deep, wobble 0 (no fan). Fires on the waveguide "guitar" draw (the amp'd electric); the sampled steel/jazz strings render clean. RING-CLASS pass: only the reverb-send lifted (.3-.45 -> .35-.5, more twang into the spring tank) — surfrock rides an ultra-tight klezmer/perukelotto margin, so no rng-shifting insert/field was added
@@ -2515,7 +2519,7 @@
     sludgemetal: { label:"Molasses Avalanche", info:"downtuned fuzz crawling at 60: halftime stomp, a BIG backbeat, the amplifier one song from death and playing like it knows",   // fuzz-FORWARD: the riff exhales, the room shakes
       bpm:[52,70], swing:[0,.06], humanize:[.1,.3],
       timeFeel:{ pushPull:{ kick:.03, snare:.045, bass:.055 } },   // 2026-07 deep pass — THE DOOM DRAG: the whole band plays BEHIND the beat, the bass draggiest (the amp about to die pulls the riff late). A per-voice offset drawn from timeFeel (pure feel — no verifier feature reads onset timing, so byte-stable to the matrix), it's the crawling lurch that half-time bpm alone can't give: the riff EXHALES between the stomps
-      progressions:["mode_phrygian","drone_min","deep_two"], kits:["halftime","kick"], fills:["impact","off","downlift"],
+      progressions:["mode_phrygian","drone_min","deep_two"], kits:["halftime","kick"], fills:["impact","off","downlift","tape stop"],   // VARIETY: + tape stop (the decelerating pitch-drop drag suits the amp-one-song-from-death crawl)
       reverbColor:"greyhole",   // GRIT PASS: the room shakes — the cavernous smear the amp dies into
       bass:{patterns:["root","sub","dub"], recipe:{model:["reese","sub"],cutoff:[200,360],res:[.05,.15],level:[1.25,1.5],send:[.05,.12],dsend:[0,.06]},
         inserts:{prob:.85, max:1, pool:[["higain",{gate:[.05,.18],drive:[.8,.95],stages:3,low:.7,mid:.55,high:.35,presence:[.2,.35],mix:[.9,1]}]]}},   // BALANCE LOOP 3: doom SATURATED-LOOSE — 3 stages near-max drive, gate nearly OFF (the riff exhales, the amp rings into the room), dark tone stack. NB the mix range is LOAD-BEARING for gate 2: 8 draw keys keeps seed 1's downstream section draws where drumDensity lands >= .8 (the 7-key claim rolled .73 and handed dub the seed)
@@ -2685,6 +2689,7 @@
     bluegrass: { label:"Porchlight Overdrive", info:"high-lonesome drive at 165: rolling banjo, a fiddle break, a walking doghouse bass under brushes — a string band doing the work of a locomotive, all major key, no brakes",   // UPTEMPO. banjo+fiddle acoustic; bpm floor fences it off surfrock, straight-major seventh fences it off bebop
       bpm:[156,170], swing:[.04,.14], humanize:[.15,.4],
       progressions:["four_chords","doo_wop","uplift"], kits:["shuffle","boombap"], fills:["off","drum fill","kit fill"],
+      strum:"country",   // STRUM: the boom-chick steel-string strum under the banjo roll (taste-pending Paul)
       bass:{patterns:["walking","root","simple"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sub"],cutoff:[400,700],res:[.05,.15],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
       lead:{patterns:["arp16","pentaup","double","wander"], samplerPool:["banjo","fiddle","banjo"], recipe:{model:["sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2600,3800],level:[.42,.56],send:[.2,.4],dsend:[.05,.18],attack:.005,release:[.1,.2],sustain:[.55,.68]}},
       pads:{prob:.3, samplerPool:["steel_string_guitar","fiddle"], recipe:{model:["sampler","sampler"],wave:"sine",cutoff:[1400,2400],detune:[.002,.005],attack:[.1,.4],level:[.38,.5],send:[.2,.35],dsend:[.05,.15]}},
@@ -2696,6 +2701,7 @@
     ska: { label:"Rude Checkerboard", info:"the upstroke engine at 152: choppy offbeat guitar, a walking bass, a punchy brass-section riff — the skank on every & and a suit that fits",   // UPTEMPO. brass acoustic + offbeat skank; bpm band sits between surfrock and bluegrass
       bpm:[146,156], swing:[.04,.14], humanize:[.1,.3],
       progressions:["doo_wop","four_chords","ii_v_i"], kits:["shuffle","four"], fills:["off","drum fill","kit fill"],
+      strum:"skank",   // STRUM: the clean-guitar upstroke on every & IS ska — the skank chop on the pad voice (taste-pending Paul)
       bass:{patterns:["walking","octaves","root"], samplerPool:["finger_bass","acoustic_bass"], recipe:{model:["sampler","saw"],cutoff:[450,750],res:[.1,.2],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
       lead:{patterns:["anthem","double","hero"], samplerPool:["brass_section","trumpet","trombone"], recipe:{model:["sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2200,3400],level:[.44,.56],send:[.25,.4],dsend:[.1,.25],attack:.01,release:[.1,.2],sustain:[.6,.72]}},
       pads:{prob:.6, patchPool:["E.ORGAN 1"], samplerPool:["clean_guitar","clean_guitar","percussive_organ","rock_organ"], recipe:{model:["sampler","sampler"],wave:"saw",cutoff:[1000,1700],detune:[.003,.008],attack:[.1,.4],level:[.44,.58],send:[.25,.4],dsend:[.08,.2]}},   // THE SKANK (card-truth wave 2026-07-10): the choppy offbeat comp layer is GUITAR-FIRST — the clean-guitar upstroke IS ska (half the draws; the 2-tone organ keeps the rest). The card promised "choppy offbeat guitar upstrokes" over an organ-only pool
@@ -2752,6 +2758,7 @@
       form:"dj" },
     reggae: { label:"Kick On Three", info:"the one-drop at 75: an offbeat organ-and-guitar skank, a round melodic bass, the kick landing on beat three — unhurried and completely certain",   // the SONG to dub's dubbed-out instrumental: real harmonic motion + skank organ, vs dub's static drone
       bpm:[70,80], swing:[.04,.14], humanize:[.1,.3],
+      strum:"skank",   // STRUM: the offbeat organ-and-guitar skank IS reggae — the & chop on the pad voice (percussive_organ pad = the bubble), taste-pending Paul
       progressions:["deep_two","neosoul","four_chords","minor_run"], kits:["onedrop"], fills:["off","downlift","drum fill"],   // MUSICALITY balance loop 1 (2026-07): the card says ONE DROP — kick+cross-stick on beat 3, beat 1 empty. The old kick/halftime/four pool put the kick on 1 (Paul: "NONE of that is happening" — MEASURED 2-5% kick-on-3). Single-kit pool like bossa/electro/newjack: onedrop IS reggae's kit; variety lives in the kit's own ghost/open draws, and kickOn:[3] is now a written PROMISE (musicality.js) the pool must keep on every seed (a mixed pool drew halftime on 3 of 5 seeds — measured)
       bass:{patterns:["melodic","dub","simple"], samplerPool:["finger_bass","acoustic_bass"], recipe:{model:["sub","sampler"],cutoff:[280,480],res:[.05,.15],level:[1.15,1.4],send:[.03,.1],dsend:[0,.05]}},
       lead:{patterns:["sparse","off","pentaup"], samplerPool:["clean_guitar","rhodes_ep"], recipe:{model:["sampler","fm"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2000,3000],level:[.38,.5],send:[.3,.45],dsend:[.15,.3],attack:.01,release:[.1,.18],sustain:[.6,.72]}},
@@ -2763,7 +2770,7 @@
       form:"pop" },
     heavymetal: { label:"Molten Horsepower", info:"a HUGE wall of distorted electric-guitar power chords doubled to the sub-octave at 140: a screaming lead over a galloping double-kick, deep room reverb — turn it up",   // distorted guitars front and center; comp+drumDensity+bpm fence it off the halftime industrialmetal, the slow sludgemetal, the clean surfrock
       bpm:[130,148], swing:[0,.04], humanize:[.03,.12],
-      progressions:["epic_min","minor_run","andalusian","mode_phrygian"], kits:["four","pulse","electro"], fills:["impact","cut","riser","tom fill"],
+      progressions:["epic_min","minor_run","andalusian","mode_phrygian"], kits:["four","pulse","electro"], fills:["impact","cut","riser","tom fill","crash choke"],   // VARIETY: + crash choke (the choked stop-crash accent off a two-tom pickup)
       reverbColor:"fdn",   // GRIT PASS: a big bright drum ROOM behind the kit + guitars — "a lot of deep reverb, classic metal effects"
       padDouble:true,      // WALL OF SOUND: the power-chord pad wall doubled to the octave below
       bass:{patterns:["drive","octaves","pedal"], samplerPool:["picked_bass"], recipe:{model:["sampler","saw"],cutoff:[500,850],res:[.1,.25],level:[1.2,1.45],send:[0,.06],dsend:[0,.05]},
@@ -6383,6 +6390,29 @@
       rhythm:[0.11,0.275],
       pipes:[{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:countrypop:genres */
+    /* genre-tool:folk:genres */
+    folk: { label:"Kitchen-Table Folk", info:"the singer-songwriter's front porch at ~106bpm — fingerpicked and strummed steel-and-nylon acoustic guitar over an upright doghouse bass, no drums at all, warm and dry and close-miked, all diatonic and modal. The guitar carries the whole song. Influences: Nick Drake, John Fahey, Simon & Garfunkel, Iron & Wine, early Dylan",
+      bpm:[98,116],
+      swing:[0.02,0.06],
+      humanize:[0.18,0.4],
+      progressions:["four_chords","mode_mixo","mode_dorian"],
+      kits:["off"],
+      fills:["off"],
+      bass:{patterns:["root","simple","walking"], samplerPool:["acoustic_bass","finger_bass"], recipe:{model:["sampler","sub"], cutoff:[340,620], res:[0.05,0.13], level:[0.9,1.1], send:[0.06,0.14], dsend:[0.02,0.08]}},
+      lead:{patterns:["pentaup","wander","sparse","arpup","composed"], samplerPool:["steel_string_guitar","nylon_string_guitar","guitar_harmonics","harmonica"], recipe:{model:["sampler"], wave:"sine", voices:[1,1], spread:[0.002,0.006], cutoff:[2600,3600], level:[0.5,0.64], send:[0.16,0.3], dsend:[0.06,0.16], attack:0.004, release:[0.1,0.2], sustain:[0.5,0.66], vibrato:[0.006,0.014]}},
+      pads:{prob:0.85, samplerPool:["nylon_string_guitar","steel_string_guitar","nylon_string_guitar"], recipe:{model:["sampler","sampler"], wave:"sine", cutoff:[1600,2600], detune:[0.002,0.005], attack:[0.05,0.3], level:[0.4,0.54], send:[0.18,0.32], dsend:[0.05,0.14]}},
+      drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.4,0.62], snare:[0.4,0.6], hat:[0.34,0.56], tune:[0.95,1.05], send:[0.1,0.22], dsend:[0.04,0.12], kit:"brush"},
+      fx:{reverb:[0.24,0.38], delayBeats:[0.5,0.75], delayFb:[0.1,0.22], delayCut:[2400,3400], pump:[0,0.04], crackle:[0.04,0.14], lowcut:[25,45], highcut:[0,0], comp:[0.1,0.26]},
+      found:{role:"bed", vol:[0.05,0.11], pitch:[0.9,1.05], stretch:[0.45,0.6], cutoff:[2200,3200], sources:["coyote_prairie","nj_owls","kielce_rain"]},
+      hits:{sources:["tw_ding"], pattern:"sparse", prob:0.08},
+      stab:["off"],
+      form:"pop",
+      strum:"folk",
+      reverbColor:"spring",
+      theory:{adventure:[0.167,0.3], color:[0.25,0.433], voicing:"open", reharm:true},
+      rhythm:[0,0.08],
+      pipes:[{id:"strum", w:0.55, step:0.02},{id:"harmonize", w:0.45, prob:0.35}] },
+    /* /genre-tool:folk:genres */
   };
 
   // ---------- MUSIC-MIND anchor axes (docs/MUSIC-MIND.md §"The vector space grows new axes") ----------
@@ -7022,8 +7052,8 @@
       const top=ws.slice().sort((a,b)=>b.w-a.w)[0], G=top&&GENRES[top.g];
       const declared={ sampleEvents:v=>Array.isArray(v)&&v.length, reverbColor:v=>!!v,
         autoTune:v=>v!=null, masterComp:v=>v!=null, introMode:v=>!!v, blueNote:v=>v>0, padDouble:v=>!!v,
-        leadOctave:v=>!!v };   // whole-track lead register shift (MUSICALITY balance loop 1: the SCORE asks in the sampler's range — chalkvespers); absent/0 = byte-identical
-      if(G) for(const d of ["sampleEvents","reverbColor","autoTune","masterComp","introMode","blueNote","padDouble","leadOctave"])
+        leadOctave:v=>!!v, strum:v=>!!v };   // strum: the dominant parent's rhythm-guitar comp survives the blend (absent = flat pad = byte-identical)
+      if(G) for(const d of ["sampleEvents","reverbColor","autoTune","masterComp","introMode","blueNote","padDouble","leadOctave","strum"])
         if(declared[d](G[d])) choice[d]=G[d];
     }
     // ---- MUSIC-MIND axes (organ wiring, 2026-07): theory / pipes / rhythm —
@@ -8140,6 +8170,7 @@
       reverb:c.fx.reverb, seed:c.seed, swing:c.swing, humanize:c.humanize,
       ...(c.reverbColor?{reverbColor:c.reverbColor}:{}),   // fx wings: per-genre reverb character (absent = fx_bus zita default; byte-identical)
       ...(c.padDouble?{padDouble:true}:{}),                // WALL OF SOUND: octave-below pad double (heavymetal); absent = byte-identical
+      ...(c.strum?{strum:c.strum}:{}),                     // RHYTHM-GUITAR STRUM: pattern name (or {pattern,spread}); pad chord struck rhythmically on a dedicated stream. Absent = flat pad block, byte-identical
       ...(c.autoTune!=null?{autoTune:c.autoTune}:{}),       // fx wings stage 2: found-vocal auto-tune strength 0..1 (absent = no bend; byte-identical)
       ...(c.masterComp?{masterComp:c.masterComp}:{}),       // fx wings stage 4: 3-band master glue-comp drive (absent/0 = bypass; byte-identical)
       ...(c.blueNote?{blueNote:c.blueNote}:{}),             // blue-note bend strength for a sampled sax/guitar lead (absent/0 = no bends; a separate stream in buildEvents keeps all other events byte-identical)
