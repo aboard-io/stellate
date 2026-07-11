@@ -182,7 +182,14 @@
   //  state.lickVoice; + "kit fill" — a half-bar mini-fill that QUOTES the
   //  section's own drum pattern. The noise/sweep/riser SFX are demoted -8dB
   //  and rationed by the kernel's auto-transition pass.)
-  const TRANSITIONS=["off","drum fill","tom fill","break fill","hat rush","cut","riser","sweep","downlift","impact","reverse","noise","snare roll","stutter","dropout","micro lick","kit fill"];
+  // (2026-07 VARIETY pass: + a batch of new named fills — "flam roll" (grace-note
+  //  snare roll), "tom cascade" (melodic hi->lo tom run), "crash choke" (a hard
+  //  choked stop-crash off a two-tom pickup), "tape stop" (a decelerating,
+  //  pitch-dropping retrigger = a tape halt), "reverse crash" (reverse-cymbal
+  //  suck-in resolving to crash+impact), "filter riser" (riser SFX under a hat
+  //  rush), "build drop" (snare-roll+riser crescendo then a final-beat drop-out).
+  //  All new options: a genre that does not pool them is byte-identical.)
+  const TRANSITIONS=["off","drum fill","tom fill","break fill","hat rush","cut","riser","sweep","downlift","impact","reverse","noise","snare roll","stutter","dropout","micro lick","kit fill","flam roll","tom cascade","crash choke","tape stop","reverse crash","filter riser","build drop"];
   // ---------- PERCUSSION LANE (2026-07 "use the percussion" pass) ----------
   // Decorative percussion layered OVER the kick/snare/hat/tom kit: the real
   // recorded clap/rim/ride/crash (kit samples) + the wide GM perc bank
@@ -787,6 +794,50 @@
     while(o<2){ s(o,a); a=Math.min(0.4,a+0.03); o+=(r()<0.4?0.125:0.25); }
     return out;
   }
+  // ---------- VARIETY-PASS FILLS (2026-07) — all new named ⚡ options ----------
+  // FLAM ROLL — a snappy 2-beat snare roll where each main hit carries a tight
+  // grace-note "flam" (a quiet hit ~1/32 ahead), the whole thing crescendoing.
+  function flamRollEvents(S,rng){
+    const r=rng||Math.random, out=[];
+    out.push({drum:"kick",beat:S,dur:0.3,amp:0.5});
+    for(let i=0;i<8;i++){ const o=i*0.25, a=0.2+i*0.035+r()*0.03;
+      out.push({drum:"snare",beat:S+o-0.06,dur:0.08,amp:a*0.45});     // the flam grace
+      out.push({drum:"snare",beat:S+o,dur:0.16,amp:a}); }
+    out.push({drum:"kick",beat:S+1.75,dur:0.3,amp:0.55});
+    return out;
+  }
+  // TOM CASCADE — a melodic descending tom run down the whole kit (2 beats),
+  // hi->lo, landing on a kick+low-tom slam (surf/prog energy, distinct from
+  // bigFill's variant rolls).
+  function tomCascadeEvents(S,rng){
+    const r=rng||Math.random, out=[];
+    const T=[150,132,116,102,90,80,70,62];
+    for(let i=0;i<8;i++) out.push({drum:"tom",beat:S+i*0.25,dur:0.2,amp:0.62+r()*0.14,pitch:T[i]});
+    out.push({drum:"kick",beat:S+2,dur:0.4,amp:0.6});
+    out.push({drum:"tom",beat:S+2,dur:0.4,amp:0.7,pitch:58});
+    return out;
+  }
+  // CRASH CHOKE — a hard crash on the (next) downbeat that is instantly CHOKED
+  // (very short dur), set up by a quick two-tom pickup: the punctuating stop-hit
+  // (metal/rock accents). S is the fill start; the crash lands on S+2.
+  function crashChokeEvents(S,rng){
+    const r=rng||Math.random, out=[];
+    out.push({drum:"tom",beat:S+1,dur:0.22,amp:0.6+r()*0.1,pitch:120});
+    out.push({drum:"tom",beat:S+1.5,dur:0.22,amp:0.66+r()*0.1,pitch:96});
+    out.push({drum:"kick",beat:S+2,dur:0.4,amp:0.62});
+    out.push({drum:"crash",beat:S+2,dur:0.18,amp:0.9});             // the choke: crash cut SHORT
+    return out;
+  }
+  // TAPE STOP — a decelerating, pitch-dropping retrigger of the last hit that
+  // approximates a tape halt: widening gaps + a descending tom pitch + a fade,
+  // over the final 2 beats (doom/sludge/vaporwave gesture).
+  function tapeStopEvents(S,rng){
+    const r=rng||Math.random, out=[];
+    let o=0, gap=0.16, pitch=150, a=0.5;
+    while(o<2){ out.push({drum:"tom",beat:S+o,dur:Math.min(0.3,gap*0.9),amp:a,pitch});
+      o+=gap; gap*=1.34; pitch*=0.86; a*=0.9; }                     // slowing + falling = the tape drag
+    return out;
+  }
   // generative melody phrases: [beatOffset, dur, leadIndex, octaveShift] over an
   // 8-beat chord — each style has a distinct rhythm + contour (not just chord arps).
   const MEL_PHRASES={
@@ -1156,7 +1207,37 @@
     [0,2,1,3,4,4,6,7,0,2,1,3,7,6,5,4],
     [0,-1,2,-1,4,5,-1,7,0,-1,2,3,-1,5,6,7],
   ];
-  const STAB_PATTERNS={ offbeat:[1.5,3.5,5.5,7.5], rave:[0,1.5,3,4.5,6,7], sparse:[3.5,7] };
+  // (2026-07 VARIETY pass: + fourfloor (a chord stab on every beat — disco/EDM),
+  //  charleston (the syncopated dotted-quarter/eighth chord punch — disco/funk),
+  //  gallop (triple 16th bursts — metal/energetic), clave (3-2 son rhythm as
+  //  stabs), pushpull (anticipated pairs), stax (the backbeat 2-&-4 horn punch).
+  //  New keys only: a genre whose stab pool does not reference them is byte-identical.)
+  const STAB_PATTERNS={ offbeat:[1.5,3.5,5.5,7.5], rave:[0,1.5,3,4.5,6,7], sparse:[3.5,7],
+    fourfloor:[0,2,4,6], charleston:[0,1.5,4,5.5], gallop:[0,0.5,0.75,4,4.5,4.75],
+    clave:[0,1.5,3,4,6], pushpull:[1.5,2,5.5,6], stax:[2,6] };
+  // ---------- STRUM / RHYTHM-GUITAR COMP (2026-07 variety pass) ----------
+  // Opt-in via state.strum (a pattern NAME, or {pattern,spread}). When present,
+  // a chord's pad is no longer a dead-flat 8-beat block held once: it is STRUCK
+  // rhythmically. Each strum-hit RAKES the chord's notes in rapid succession —
+  // the per-note time offset is the strum SPREAD; a down-stroke rakes low->high,
+  // an up-stroke high->low — with a DEDICATED seeded stream (seed+53000)
+  // humanizing each hit's timing and level. When state.strum is ABSENT the
+  // stream is never created and the pad loop runs its exact legacy flat-block
+  // branch => byte-identical for every genre that does not opt in (the law).
+  // Cells TILE across the chord bar (CBEATS); a hit past the bar end is dropped,
+  // so odd-meter chord bars (chordEvery 6) tile cleanly too. A down-stroke rings
+  // (long release); an up-stroke chokes (short). Lots of idioms want this:
+  // folk / country / rock / bossa / flamenco / reggae-skank / indie.
+  //   hit = [beatInCell, dir(+1 down-stroke / -1 up-stroke), ampScale]
+  const STRUM_PATTERNS={
+    folk:    {cell:4, hits:[[0,1,1],[1,1,0.82],[1.5,-1,0.68],[2.5,-1,0.7],[3,1,0.88],[3.5,-1,0.72]]},  // the classic "D · D U · U D U"
+    drive:   {cell:2, hits:[[0,1,1],[0.5,1,0.78],[1,1,0.9],[1.5,1,0.78]]},                              // steady down-eighths (rock / punk / indie)
+    country: {cell:2, hits:[[0,1,0.6],[1,-1,0.92]]},                                                    // boom-chick: a bass beat then an up-chord
+    skank:   {cell:1, hits:[[0.5,-1,1]]},                                                               // the offbeat up-CHOP on every "&" (ska / reggae)
+    bossa:   {cell:4, hits:[[0,1,0.95],[1.5,-1,0.8],[2,1,0.85],[3.5,-1,0.82]]},                         // the nylon-guitar bossa syncope
+    ballad:  {cell:4, hits:[[0,1,1],[2,-1,0.62]]},                                                      // slow: one soft down + a mid up
+    flamenco:{cell:2, hits:[[0,1,1],[0.66,-1,0.7],[1.33,1,0.85]]},                                      // rasgueado triplet feel
+    waltz3:  {cell:3, hits:[[0,1,1],[1,-1,0.7],[2,-1,0.72]]} };                                         // 3/4 down-up-up (meter genres)
   const HIT_PATTERNS={ sparse:[0], offbeat:[3.5], dub:[2.5,6.5], response:[4] };   // response: the vox takes the blues response bars the lead rests (crStream)
 
   // ---------- pattern-transform algebra (KERNEL-V4 Phase 2) ----------
@@ -1405,6 +1486,14 @@
     const rcx=state.rhythm?Math.min(1,Math.max(0,+state.rhythm.complexity||0)):0;
     const brng=state.rhythm?mulberry32((((state.seed??1)>>>0)+52100)>>>0):null;
     const mrng=state.rhythm?mulberry32((((state.seed??1)>>>0)+52200)>>>0):null;
+    // STRUM / rhythm-guitar comp (state.strum): resolve the pattern + spread and
+    // open a DEDICATED stream (seed+53000). strumSpec stays null (=> the pad
+    // loop's legacy flat-block branch, zero draws on any stream) unless a valid
+    // pattern name is present — so every non-strum genre is byte-identical.
+    const strumSel=state.strum?(typeof state.strum==="string"?state.strum:state.strum.pattern):null;
+    const strumSpec=strumSel?(STRUM_PATTERNS[strumSel]||null):null;
+    const strumSpread=(state.strum&&typeof state.strum==="object"&&state.strum.spread!=null)?+state.strum.spread:0.03;
+    const strumRng=strumSpec?mulberry32((((state.seed??1)>>>0)+53000)>>>0):null;
     // SCRATCH decorator stream (+7333): a DEDICATED rng so opting a turntablist
     // genre into scratches (fsrc.scratch>0) layers the fwd↔back read onto some
     // chop/break-stutter hits WITHOUT perturbing the section's chop-pattern rng —
@@ -1584,10 +1673,31 @@
         chords.forEach((chord,ci)=>{
           const Sp=cycleBase+ci*CBEATS;
           if(sec.pads){ const padAmp=(sec.swell ? 0.085*(0.5+1.9*((Sp-cur)/Math.max(1,secBeats))) : 0.085) * (sec.soloDuck?0.5:1);   // solo sections duck the comp so the improviser sits forward
+            if(strumSpec){
+              // RHYTHM-GUITAR STRUM (state.strum): the flat block becomes a
+              // rhythmic comp — rake the chord's notes per strum-hit on the
+              // dedicated strumRng stream (down-strokes low->high, ups high->low).
+              const notes=chord.pads.map(p=>pchAdd(p,k));
+              const ord=notes.map((_,i)=>i).sort((a,b)=>parsePch(notes[a])-parsePch(notes[b]));   // low->high indices
+              const eff=Math.min(strumSpread,0.11/Math.max(1,notes.length-1));                    // keep the whole rake < ~0.11 beat
+              const span=Math.max(0.5,strumSpec.cell);
+              for(let t=0;t<CBEATS;t+=span) for(const[ho,dir,as]of strumSpec.hits){
+                const hb=t+ho; if(hb>=CBEATS-0.001) continue;
+                const jit=(strumRng()*2-1)*0.018;                                                 // per-hit timing humanize
+                const hitAmp=padAmp*as*(0.85+strumRng()*0.28);                                    // per-hit level humanize
+                const ring=dir>0?Math.min(CBEATS-hb,1.6):Math.min(CBEATS-hb,0.55);                // down-strokes ring, up-strokes choke
+                for(let n=0;n<ord.length;n++){
+                  const idx=dir>0?ord[n]:ord[ord.length-1-n];
+                  const off=n*eff+(strumRng()*2-1)*0.003;
+                  pitched.push({voice:"pad",beat:Sp+hb+jit+off,dur:Math.max(0.12,ring-off),pch:notes[idx],amp:hitAmp});
+                }
+              }
+              if(state.padDouble) pitched.push({voice:"pad",beat:Sp,dur:CBEATS,pch:pchAdd(chord.pads[0],k-12),amp:padAmp*0.9});
+            } else {
             chord.pads.forEach(p=>pitched.push({voice:"pad",beat:Sp,dur:CBEATS,pch:pchAdd(p,k),amp:padAmp}));
             // WALL OF SOUND (state.padDouble — heavymetal): thicken the power-chord
             // wall with an octave-below root double. One extra low voice per chord.
-            if(state.padDouble) pitched.push({voice:"pad",beat:Sp,dur:CBEATS,pch:pchAdd(chord.pads[0],k-12),amp:padAmp*0.9}); }
+            if(state.padDouble) pitched.push({voice:"pad",beat:Sp,dur:CBEATS,pch:pchAdd(chord.pads[0],k-12),amp:padAmp*0.9}); } }
           if(sec.bass&&sec.bass!=="off"){
             const be=bassEvents(sec.bass,Sp,chord.bass,k,rng,CBEATS);
             const kept=brng?[]:null;   // rhythm knob only: collect survivors for the mutation pass (no draws, no byte drift)
@@ -1689,6 +1799,14 @@
       } else if(sec.sweep==="close"){
         sfx.push({sweep:1,beat:cur,dur:secBeats,from:16000,to:380});
         sfx.push({sweep:1,beat:cur+secBeats,dur:0.05,from:21000,to:21000});   // the drop: snap open
+      } else if(sec.sweep==="swell"){        // VARIETY: rise then fall — a filter "breath" across the section
+        sfx.push({sweep:1,beat:cur,dur:secBeats*0.5,from:400,to:16000});
+        sfx.push({sweep:1,beat:cur+secBeats*0.5,dur:secBeats*0.5,from:16000,to:500});
+      } else if(sec.sweep==="dip"){          // VARIETY: fall then rise — a mid-section duck (the V)
+        sfx.push({sweep:1,beat:cur,dur:secBeats*0.5,from:15000,to:700});
+        sfx.push({sweep:1,beat:cur+secBeats*0.5,dur:secBeats*0.5,from:700,to:16000});
+      } else if(sec.sweep==="openslow"){     // VARIETY: a gentler, higher-floored open (less dramatic than "open")
+        sfx.push({sweep:1,beat:cur,dur:secBeats,from:900,to:14000});
       }
       // ⚡ transition into the next section
       const tr = sec.fill || (sec.fillInto ? "drum fill" : "off");
@@ -1731,6 +1849,33 @@
         else fillEvents(cur+secBeats-2).forEach(e=>drums.push(e));   // no lick voice in state: degrade musically
       } else if(tr==="kit fill"){
         miniFillEvents(drums, cur+secBeats, rng);
+      } else if(tr==="flam roll"){
+        flamRollEvents(cur+secBeats-2,rng).forEach(e=>drums.push(e));
+      } else if(tr==="tom cascade"){
+        tomCascadeEvents(cur+secBeats-2,rng).forEach(e=>drums.push(e));
+      } else if(tr==="crash choke"){
+        crashChokeEvents(cur+secBeats-2,rng).forEach(e=>drums.push(e));
+      } else if(tr==="tape stop"){
+        tapeStopEvents(cur+secBeats-2,rng).forEach(e=>drums.push(e));
+      } else if(tr==="reverse crash"){
+        // reverse-cymbal suck-in (quiet SFX build over the last bar) resolving to
+        // a crash + impact slam on the next downbeat
+        sfx.push({beat:Math.max(0,cur+secBeats-4),dur:4,type:SFX_NUM.reverse,amp:0.07});
+        drums.push({drum:"crash",beat:cur+secBeats,dur:1.2,amp:0.85});
+        sfx.push({beat:cur+secBeats,dur:1.5,type:SFX_NUM.impact,amp:0.34});
+      } else if(tr==="filter riser"){
+        // a riser SFX (type 1) UNDER an accelerating hat rush — a doubled build
+        sfx.push({beat:Math.max(0,cur+secBeats-4),dur:4,type:SFX_NUM.riser,amp:0.06});
+        let o=0,st=0.5;
+        while(o<2){ drums.push({drum:"hat",beat:cur+secBeats-2+o,dur:0.08,amp:0.07+o*0.05}); o+=st; st=Math.max(0.125,st*0.82); }
+      } else if(tr==="build drop"){
+        // full-bar snare-roll crescendo + riser, THEN the final beat DROPS OUT
+        // (drums + non-solo pitched cleared) so the next downbeat slams
+        snareRollEvents(cur+secBeats-4,rng).forEach(e=>drums.push(e));
+        sfx.push({beat:Math.max(0,cur+secBeats-4),dur:4,type:SFX_NUM.riser,amp:0.05});
+        const dfrom=cur+secBeats-1, dupto=cur+secBeats;
+        for(let i=drums.length-1;i>=0;i--) if(drums[i].beat>=dfrom&&drums[i].beat<dupto) drums.splice(i,1);
+        pitched=pitched.filter(e=>!(e.beat>=dfrom&&e.beat<dupto&&!e.solo));
       } else if(SFX_NUM[tr]){
         const hit=(tr==="impact"||tr==="noise");
         const sbeat = hit ? cur+secBeats : cur+secBeats-4;   // hit on next downbeat; build in final bar
