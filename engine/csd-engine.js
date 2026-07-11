@@ -1389,7 +1389,7 @@
     const CBEATS=Math.max(2,Math.round(state.chordEvery||(meter?6:CHORD_BEATS)));
     const chords=prg.chords, k0=state.keyOffset|0, cycleBeats=chords.length*CBEATS;
     const srcById={};
-    state.foundSources.forEach((s,i)=>{ srcById[s.id]={id:s.id,kind:s.kind,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".mp3"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec,wet:!!s.wet,glitch:!!s.glitch,distant:!!s.distant}; });
+    state.foundSources.forEach((s,i)=>{ const o={id:s.id,kind:s.kind,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".mp3"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec,wet:!!s.wet,glitch:!!s.glitch,distant:!!s.distant}; if(s.scratch) o.scratch=s.scratch; srcById[s.id]=o; });
     const rng=mulberry32((state.seed??1)>>>0);
     // MUSIC-MIND rhythm knob (state.rhythm={complexity:0..1}): two DEDICATED
     // streams — bass-cell mutation (+52100) and melody rhythm cells (+52200) —
@@ -1399,6 +1399,12 @@
     const rcx=state.rhythm?Math.min(1,Math.max(0,+state.rhythm.complexity||0)):0;
     const brng=state.rhythm?mulberry32((((state.seed??1)>>>0)+52100)>>>0):null;
     const mrng=state.rhythm?mulberry32((((state.seed??1)>>>0)+52200)>>>0):null;
+    // SCRATCH decorator stream (+7333): a DEDICATED rng so opting a turntablist
+    // genre into scratches (fsrc.scratch>0) layers the fwd↔back read onto some
+    // chop/break-stutter hits WITHOUT perturbing the section's chop-pattern rng —
+    // the rhythm stays identical, only the read of a few hits turns to a scratch.
+    // Drawn ONLY when fsrc.scratch is truthy => absent => zero draws => byte-identical.
+    const scrng=mulberry32((((state.seed??1)>>>0)+7333)>>>0);
     let pitched=[], drums=[];
     let found=[], sfx=[];   // let: CsdPipes may hand back filtered arrays
     const spans=[];   // spans: section extents for the per-bar transform pool
@@ -1417,8 +1423,10 @@
         if(role==="chops"){
           // rhythmic slice hits on a seeded 8th grid instead of one long bed
           for(let b=0;b<secBeats;b++){
-            if(rng()<0.55) found.push({chop:1,beat:cur+b+(rng()<0.3?0.5:0),dur:0.35+rng()*0.5,
-              amp:fsrc.vol*1.7,tableNum:fsrc.tableNum,pitch:fsrc.pitch,offset:rng(),cutoff:fsrc.cutoff});
+            if(rng()<0.55){ const ev={chop:1,beat:cur+b+(rng()<0.3?0.5:0),dur:0.35+rng()*0.5,
+              amp:fsrc.vol*1.7,tableNum:fsrc.tableNum,pitch:fsrc.pitch,offset:rng(),cutoff:fsrc.cutoff};
+              if(fsrc.scratch && scrng()<fsrc.scratch) ev.scratch=1;   // occasional turntablist scratch on the soul chop
+              found.push(ev); }
           }
         } else if(role==="break"){
           // beat-synced break chopping: slice patterns rotate per chord, mutate per seed
@@ -1432,8 +1440,10 @@
               const beat=cur+cb*CBEATS+i8*0.5;
               found.push({chop:1,beat,dur:0.52,amp:fsrc.vol*2.1,tableNum:fsrc.tableNum,
                 pitch:sync,offset:sl/8,cutoff:fsrc.cutoff||5000});
-              if(rng()<0.07) found.push({chop:1,beat:beat+0.25,dur:0.26,amp:fsrc.vol*1.6,
-                tableNum:fsrc.tableNum,pitch:sync,offset:sl/8,cutoff:fsrc.cutoff||5000});  // stutter
+              if(rng()<0.07){ const st={chop:1,beat:beat+0.25,dur:0.26,amp:fsrc.vol*1.6,
+                tableNum:fsrc.tableNum,pitch:sync,offset:sl/8,cutoff:fsrc.cutoff||5000};  // stutter
+                if(fsrc.scratch && scrng()<fsrc.scratch) st.scratch=1;   // scratch the ornament, not the groove slices
+                found.push(st); }
             }
           }
         } else if(role==="narration" && !sec.vox){
