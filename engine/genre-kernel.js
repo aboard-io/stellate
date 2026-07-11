@@ -5642,7 +5642,7 @@
       pipes:[{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
     /* /genre-tool:rollerlacquer:genres */
     /* genre-tool:longshipwhip:genres */
-    longshipwhip: { label:"Longshipwhip", info:"oar-stroke thrash at 180: palm-muted chug locked to a galloping double kick, a dry screaming riff over the crack of the snare — row, row, row until the coastline burns",
+    longshipwhip: { label:"Longshipwhip", info:"oar-stroke DEATH METAL at 180: a galloping double kick under a thick wall of downtuned power chords, the riff ringing out in cavernous reverb — row, row, row until the coastline burns",
       bpm:[175,190],
       swing:[0,0.02],
       humanize:[0,0.1],
@@ -5651,14 +5651,15 @@
       fills:["impact","cut","snare roll","tom fill"],
       euclid:{kick:[7,16]},
       bass:{patterns:["sixteenths","drive","pedal"], samplerPool:["picked_bass"], recipe:{model:["sampler","saw"], cutoff:[480,820], res:[0.1,0.22], level:[1.15,1.4], send:[0,0.05], dsend:[0,0.05]}, inserts:{prob:1, max:1, pool:[["higain",{gate:[0.55,0.7], drive:[0.55,0.75], stages:2, low:0.55, mid:0.4, high:0.6, presence:[0.5,0.65]}]]}},   // BALANCE LOOP 3: thrash TIGHT-GATED — the oar-stroke bass chugs, gate high so the inter-stroke silence is silent
-      lead:{patterns:["double","blues","hero"], samplerPool:["crunch_guitar","distortion_guitar","overdrive_guitar","di_guitar"], recipe:{model:["sampler","sampler"], wave:"saw", voices:[1,2], spread:[0.003,0.008], cutoff:[2600,3800], level:[0.54,0.7], send:[0.12,0.24], dsend:[0.08,0.18], attack:0.004, release:[0.08,0.16], sustain:[0.55,0.7]}, inserts:{prob:1, max:1, pool:[["higain",{gate:[0.6,0.75], drive:[0.6,0.8], stages:2, low:0.5, mid:0.35, high:0.65, presence:[0.6,0.75]}]]}},   // BALANCE LOOP 3: the DRY screaming riff — thrash scoop (mid down), gate + presence up. INSTRUMENT-LIBRARY 2026-07-10: crunch_guitar + the DI signal join the pool — di_guitar through THIS tight-gated higain (prob 1) is the real thrash chain
-      pads:{prob:0.8, samplerPool:["palm_muted_guitar","distortion_guitar"], recipe:{model:["sampler","sampler"], wave:"saw", cutoff:[700,1300], detune:[0.004,0.01], attack:[0.01,0.06], release:[0.08,0.2], level:[0.5,0.66], send:[0.1,0.2], dsend:[0.05,0.12]}, inserts:{prob:1, max:1, pool:[["higain",{gate:[0.65,0.8], drive:[0.55,0.75], stages:2, low:0.6, mid:0.35, high:0.55, presence:[0.5,0.65]}]]}},   // BALANCE LOOP 3: the palm-muted chug wall — the TIGHTEST gate in the wing (the chug must stop dead between strokes)
+      lead:{patterns:["double","blues","hero"], samplerPool:["crunch_guitar","distortion_guitar","overdrive_guitar","di_guitar"], recipe:{model:["sampler","sampler"], wave:"saw", voices:[1,2], spread:[0.003,0.008], cutoff:[2600,3800], level:[0.54,0.7], send:[0.26,0.42], dsend:[0.1,0.22], attack:0.004, release:[0.3,0.6], sustain:[0.74,0.9]}, inserts:{prob:1, max:1, pool:[["higain",{gate:[0.3,0.45], drive:[0.65,0.85], stages:3, low:0.55, mid:0.4, high:0.6, presence:[0.55,0.7]}]]}},   // DEATH METAL (Paul 2026-07-11: "big reverb + chords, thick, not dry"): the riff RINGS OUT — gate eased off the tail-choke, release + sustain up, reverb send up, 3 cascaded stages for a fuller scream
+      pads:{prob:0.8, samplerPool:["palm_muted_guitar","distortion_guitar"], recipe:{model:["sampler","sampler"], wave:"saw", cutoff:[850,1500], detune:[0.006,0.014], attack:[0.02,0.1], release:[0.55,1.15], level:[0.64,0.82], send:[0.32,0.48], dsend:[0.08,0.16]}, inserts:{prob:1, max:1, pool:[["higain",{gate:[0.32,0.48], drive:[0.6,0.8], stages:2, low:0.62, mid:0.35, high:0.55, presence:[0.5,0.65]}]]}},   // DEATH METAL WALL (Paul 2026-07-11): the power-chord wall now RINGS — long release, gate eased so the chords sustain, reverb send up, octave-doubled (padDouble below)
       drums:{kickModel:["boom"], snareModel:["crack","noise"], hatModel:["metal","noise"], kick:[1.4,1.65], snare:[0.95,1.2], hat:[0.6,0.9], tune:[1,1.12], send:[0.06,0.14], dsend:[0.04,0.1]},
-      fx:{reverb:[0.2,0.34], delayBeats:[0.375,0.5], delayFb:[0.15,0.28], delayCut:[2400,3600], pump:[0,0.08], crackle:[0,0.05], lowcut:[30,45], highcut:[0,0], comp:[0.6,0.85], grit:[0.55,0.8]},
+      fx:{reverb:[0.52,0.7], delayBeats:[0.375,0.5], delayFb:[0.2,0.34], delayCut:[2400,3600], pump:[0,0.08], crackle:[0,0.05], lowcut:[30,45], highcut:[0,0], comp:[0.6,0.85], grit:[0.55,0.8]},   // DEATH METAL: cavernous reverb (was 0.2-0.34 dry) + more delay feedback for the space
       found:{role:"bed", vol:[0.04,0.1], pitch:[0.85,1], stretch:[0.4,0.6], cutoff:[2000,3200], sources:["pool:industry*1","pool:road*1"]},
       hits:{sources:["pool:vocal_stab*1","sp_energy"], pattern:"sparse", prob:0.25},
       stab:["off"],
       form:"pop",
+      padDouble:true,   // WALL OF SOUND: octave-below power-chord double (death-metal thickness, like heavymetal) — Paul 2026-07-11 "thick"
       pipes:[],
       theory:{adventure:[0.133,0.24], color:[0.167,0.333], voicing:"close", reharm:true},
       rhythm:[0.14,0.3] },
