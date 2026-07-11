@@ -71,31 +71,47 @@ function vocoderIdFor(r) {
 //   foundIds/samplerIds/speechIds: every source the loop touches (decode once)
 // Returns null if the walk can't run (no engine / no path). The heavy PCM never
 // touches this thread — the worker renders each run; this only plans.
-export function buildLoopPlan(opts) {
-  const w = walkLoop(opts);
-  if (!w || !w.bars.length) return null;
-  const SE = window.FaustStateEngine;
+// ASYNC + CHUNKED (2026-07-11, F.3): the per-bar stateAt (K.mix blend) +
+// buildEvents + voiceUnits cost adds up, so this walk — like buildLoopMidi — is
+// async and yields every 32 bars (opts.onProgress reports %) so a long loop's
+// plan can't freeze the page. It also groups bars into runs AS it walks (no
+// full w.bars array retained — a memory win over the old walkLoop() + re-scan).
+// Returns Promise<plan|null>.
+export async function buildLoopPlan(opts) {
+  opts = opts || {};
+  const E = window.CsdEngine, SE = window.FaustStateEngine, FL = window.FaustLive;
+  if (!E || !SE || !FL || !FL.makeWalk) return null;
+  const n = S.waypoints.length; if (n < 2) return null;
+  const pace = Math.max(8, Math.min(4096, +S.pace || 256));
+  const total = Math.max(1, opts.bars || loopBars());   // CONSTANT PACE: perimeter / speed bars
+  let cur = null;
+  const stepWalk = FL.makeWalk(() => cur, E, SE, 0, undefined);
   const runs = [];
   const foundIds = new Set(), samplerIds = new Set(), speechIds = new Set();
   const byId = {};   // srcId -> source record (url/synthText/samplePath) for the decoder
-  let curKey = null, cur = null;
-  for (const r of w.bars) {
+  let curKey = null, run = null, musicalSec = 0;
+  for (let b = 0; b < total; b++) {
+    cur = stateAt(pointOnPath(travelForBar(b)));
+    const r = stepWalk();
+    musicalSec += r.musicalSec;
     for (const s of (r.foundSources || [])) if (s && s.id && !byId[s.id]) byId[s.id] = s;
     const key = topoKey(r, SE);
     if (key !== curKey) {
       curKey = key;
-      cur = { state: r.one, bars: [], vocoderId: vocoderIdFor(r) };
-      if (cur.vocoderId) speechIds.add(cur.vocoderId);
-      runs.push(cur);
+      run = { state: r.one, bars: [], vocoderId: vocoderIdFor(r) };
+      if (run.vocoderId) speechIds.add(run.vocoderId);
+      runs.push(run);
     }
-    cur.bars.push(loopBarSpec(r));
+    run.bars.push(loopBarSpec(r));
     // every found source this bar plays, and every sampler zone's source
     for (const f of (r.found || [])) foundIds.add(f.srcId);
     for (const e of (r.events || [])) { const u = r.units[e.unit];
       if (u && u.sampler) for (const z of (u.sampler.zones || [])) samplerIds.add(z.srcId); }
+    if ((b & 31) === 31) { if (opts.onProgress) opts.onProgress(b + 1, total); await new Promise((res) => setTimeout(res, 0)); }
   }
+  if (!runs.length) return null;
   return { runs, byId, foundIds: [...foundIds], samplerIds: [...samplerIds], speechIds: [...speechIds],
-    total: w.total, musicalSec: w.musicalSec, n: w.n, pace: w.pace, seed: w.seed };
+    total, musicalSec, n, pace, seed: S.seed };
 }
 
 // WHOLE-PATH MIDI: walk the loop and assemble one SMF spanning the full journey
