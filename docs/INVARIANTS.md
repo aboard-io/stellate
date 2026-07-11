@@ -33,7 +33,7 @@ weighted means with Σw = 1:
 - `specRange` / `pushPull` / `transforms.rate`: same shape.
 
 A convex combination of values from `[minᵢ loᵢ, maxᵢ hiᵢ]` cannot leave that
-interval. So **min/max over the 228 anchors bounds every possible blend** —
+interval. So **min/max over the 249 anchors bounds every possible blend** —
 at every point of the weight simplex, for every seed, for every path the
 explorer can draw. That is a proof over the uncountable space; no sweep
 could ever say it.
@@ -141,13 +141,13 @@ byte-for-byte (gate 9 of the test).
    allowance cites the engine behavior that earns it).
 
 **Scale, honestly.** A build (state → events) costs ~12–17 ms, so building
-all 228×227/2 pairs × 3 t-values × 2 seeds (~155k) would take ~35 minutes.
-The full mode therefore runs the **entire 155k lattice at the state level**
+all 249×248/2 pairs × 3 t-values × 2 seeds (~185k) would take ~42 minutes.
+The full mode therefore runs the **entire 185k lattice at the state level**
 — where the convexity proof lives, and where idempotence + hull membership
 are checked on every single resolution (~0.5 ms each) — and samples the
-event level: all 228 anchors × seeds 1–5 built in full, plus a seeded
+event level: all 249 anchors × seeds 1–5 built in full, plus a seeded
 4,000-combination pair-build subsample for the behavioral laws. Quick mode
-shrinks both (228×2 anchors, 3,000 resolutions, 300 pair builds) to stay
+shrinks both (249×2 anchors, 3,000 resolutions, 300 pair builds) to stay
 under a minute. The split is printed in every run's report; it is a design
 decision, not a hidden shortcut.
 
@@ -178,7 +178,7 @@ Honesty about what each rung actually establishes:
    between rungs 1 and 2 is exactly the gap between algebra and testing,
    and this file never blurs it.
 3. **GATED ELSEWHERE — different machines own different laws.** The
-   confusion matrix (genre-verifier: 228/228 diagonal dominance), the
+   confusion matrix (genre-verifier: 249/249 diagonal dominance), the
    musicality laws (musicality.js: bloom/register/promises/motion), byte
    determinism + vocabulary + coverage (validate-genres), meter grids
    (meter.test), organ contracts (theory/pipes tests), and everything

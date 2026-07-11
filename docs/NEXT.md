@@ -1,128 +1,74 @@
-# NEXT — the backlog (post-marathon reset, 2026-07-11)
+# NEXT — the live backlog (reconciled 2026-07-11)
 
-*Read this, then CLAUDE.md. Everything in "SHIPPED" is live on stellate.app.
-Everything in "THE QUEUE" is agreed work not yet done — pick top-down, each is a
-real build. Ship law at the bottom.*
+*Short status board. **The forward plan lives in `docs/ROADMAP.md`** (six workstreams,
+authored this session from a full-system analysis). Read that for what to build; read
+`CLAUDE.md` for how the system works.*
 
-## SHIPPED THIS SESSION (all live on stellate.app + aboardresearch)
-Turtle-Beach/Montego **loop-end clamp** (sampler.js: `loopEnd = min(z.loopEnd,
-src.length-1)`; importers clamp too). **fenv on samples** (recipe `fenv` → an
-insert_fenv on the native sampler lane). **Drum balance** (`DRUM_BAL` kit-level
-pull in state-engine mastering) + **disco −25%** + **reedrush lead-forward/kick-−15%**.
-**Ring-out + delay** on the dreamy guitar genres (+ registered the dead `delay`
-INSERT_DEFAULT). **longshipwhip → death metal** (gate eased, long release, big
-reverb, padDouble). **Whole-loop AUDIO export** (journey.buildLoopPlan → topology
-runs → stream-worker.renderLoop bakes+crossfades → WAV/MP3; ⤓ buttons route via
-panels.exportAudioSmart). **Constant-pace travel** (share.js PACE_REF/paceSpeed/
-loopBars + distance-based travelForBar/travelStep; playhead scrub uses the same
-distance math; loopBars capped 2048). **Mixing-graph viz** under the piano rolls
-(inside.graphData/graphSVG: full per-voice chains as CONNECTED directed chip-nodes,
-delay→reverb→master, translucent, portrait/mobile, bigger). **Independent viz zoom**
-(starmap VIZ={k,ox,oy}, separate from map ZOOM) + **iOS pinch containment**
-(global multi-touch touchmove preventDefault). **MIDI crash fix** (buildLoopMidi
-ASYNC+chunked, midiOnly light walk — no page freeze).
+**Ground truth:** **249 anchors** (`Object.keys(GENRES).length === 249`; matrix prints
+`249/249`). Tree clean; `HEAD == main == origin/main`. Docs still saying 228/240 are stale
+(see ROADMAP §4.1).
 
-Two DSP CAPABILITIES landed but OPT-IN (silent until wired):
-`sampler.js n.granular` (granular repitch) · `found-player.js f.scratch` (chop scratch).
+## What actually shipped (the old A–F queue was stale)
+Committed + pushed to main since the last NEXT.md: A.1 scratch (f1c9a14/db5dba5),
+A.2 granular repitch (f583c5b), B synth fonts DX7/MiniMoog (993e33b), C.1 Vapor slider
+(45057a0), D.1 register-aware voicing (a13703e), D.2 applied-dominant chromaticism
+(2d8dcdc), F.2 reedrush kick (5b672dc), F.3 async audio-export walk (19f44d1), plus the
+realtime video-export v1 (6df19f8/53c5198) and the live-feedback wins (GM variety, +9
+genres, found-at-90%, playhead-scrub). Several are **taste-gated on Paul's ears** and may
+be held from prod by the auto-guard until his word: A.1, D.1, D.2, F.2.
 
-## THE QUEUE (agreed, not done — pick top-down)
+## Shipped this session (2026-07-11, uncommitted in-tree, offline + byte-safe, verify.sh GREEN)
+- **W1 — genre-intelligence layer (MARQUEE) — LANDED.** The whole offline read-only
+  analysis+search layer is built over the verifier feature-space + confusion matrix:
+  foundation (`engine/genre-geometry.js`, `engine/genre-sim.js`, persisted
+  `matrix.json`); the 1.2 static checks WIRED into `validate-genres.js` as **advisory
+  WARN gates 9–13** (near-duplicate, margin sentinel, resolveMulti determinism fuzz,
+  feature-level blend monotonicity, dead-axis) via `gateAdvisory` — never hard-fail,
+  SKIP-degrading; plus `tools/target-lint.js`, `tools/feature-pca.js`,
+  `tools/leak-attribution.js`; and the 1.3/1.4 offline CLI tools (`target-blend`,
+  `genre-math`, `surprise`, `empty-space`, `mutate`, `feature-layout`, `neighbors`,
+  `genome-diff`, `lesson`, `coverage`, `cross-metric-audit`), each with a `test/*-run.js`.
+  **Proof:** `verify.sh` GREEN (matrix+validate+engine+prove+matproof); matrix
+  **249/249**; `fixtures.js` 3726 hashes byte-stable (zero drift); segment-parity ALL
+  byte-equal. **Remaining:** commit the batch; the two app-UI halves (starmap layout
+  toggle + explorer neighbors hover); `docs/GENRE-VECTORS.md`; taste review of WARNs.
+  Also landed: W3 quick wins (`docs/KERNEL-MAP.md`, `tools/render-diff.sh`,
+  `test/boot-smoke.js`), W4 docs (ARCHITECTURE / ADDING-A-GENRE / GENRE-SPEC-SCHEMA /
+  VIDEO-EXPORT), and the 228/240→249 count-drift + stale-claim doc fixes. ROADMAP §1/§3/§4.
 
-### A. Wire the two DSP capabilities so they PLAY (Paul: "from time to time")
-1. **Scratch** — ✅ DONE (committed f1c9a14, NOT yet deployed — awaits ship). The
-   found spec gained `scratch:<prob>` (pulled from the found parent, baked onto
-   opted sources only). csd-engine stamps `f.scratch` via a DEDICATED +7333 rng
-   (never drawn unless a genre opts in → byte-identical absent) on chops-role hits
-   AND the break-role STUTTER ornament only (groove slices stay clean). Plumbed
-   through state-engine's chop push; honored by mixPCM AND the real-time
-   FoundLive.chop (pre-renders the triangle scrub — WebAudio has no scrub prim).
-   OPTED: crateflip 0.18 (chops, "the flip is the art"), boombap 0.5 / jungle 0.45
-   (stutter-only → ~3% of slices). Fixtures drift scoped to EXACTLY those 3
-   (240→3), recaptured; segment-parity byte-equal both paths. FULL battery green.
-   TASTE PENDING PAUL'S EARS. BROADENED (Paul: "opt in lots of other genres —
-   anywhere we loop a vocal chop / synth sample / instrumental"): the CHOPS role
-   now scratches BY DEFAULT catalog-wide (foundScratch defaults 0.14 for role
-   "chops"; explicit per-genre `scratch:` still overrides, incl 0 to opt out) →
-   ~41 genres now scratch (was 3). BREAK stays per-genre opt-in (not defaulted —
-   it's drum loops, not the vocal/instrumental material Paul named; boombap/jungle
-   keep their explicit stutter-only scratch). Drift scoped to EXACTLY the chops/
-   break genres (bed/narration/response/buried untouched, byte-identical); 0.14 and
-   span/cycles are tunable once Paul weighs in. sampleEvents `slice` placement is
-   NOT wired (only floppycore uses it, a disk-seek, not vocal/instrumental).
-2. **Granular repitch** — fire `n.granular` when a sampled note is pushed far from
-   its zone root (the register law in state-engine mapEvents octave-folds today;
-   let far notes granular-repitch instead so they keep formants). Opt-in/threshold.
-3. **Granular program passes 2–3** — revive the granular INSERT (audible on the
-   live ring path, not dry — sampler.js:722 passes it dry; wire to vaporwave/
-   plunderphonic); then the broad Faust-fun sweep (more synth-fleet voices + effect
-   inserts as color where pure sampling lost character).
-
-### B. Synth fonts (the big Faust-fun feature)
-Two NON-sample fonts in the ⚙ soundfont switcher: **DX7** — every GM program is a
-Faust DX7 (FM) patch; **MiniMoog** — every GM program is an analog-oscillator voice
-(Wendy Carlos / Switched-On-Bach). Font switcher currently maps a font to sampled
-zones (fonts.json + font-*.json); add a "synth font" kind that routes the sampler
-lane to a Faust synth voice per GM program instead of samples. Signature synths
-(tb303 etc.) can stay. See soundfont-switcher memory + engine/faust/state-engine
-samplerUnit / the synth fleet.
-
-### C. Settings pass (IN PROGRESS — paused at the reset)
-1. **Global VAPOR slider** (NEXT.md's long-standing item 4): live-only master EQ in
-   exploreLive's graph (engine/faust/live.js, near userGain/masterGain, after the
-   limiter) — a lowpass/high-shelf cutting HIGHS + a global reverb increase, both
-   scaled by vapor 0..1 ("walking through a mall"). Persist like masterVol
-   (state.js `_vapor`, live.js `setVapor`, panels.js slider, handle.setVapor).
-   LIVE-ONLY → no byte-identity impact. I'd read live.js:368-412 (the output graph:
-   masterGain→busComp→makeup→limiter→analyser→userGain→dest; found submix has a
-   native reverb fvDelay/fvLp/fvFb at 405-411 to scale).
-2. **Settings cleanup** — visual-consistency/elegance pass on the ⚙ panel
-   (panels.js + app.css `.row`/sliders/labels).
-
-### D. Musicality (NEW — Paul cares about this deeply)
-1. **Register-aware voicing** — give each instrument a defined octave range (a few
-   octaves; piano/synth wide), and rewrite notes on the fly (inversions / octave
-   drops) to STAY IN RANGE — flute must not shriek into the top. Today mapEvents
-   octave-folds sampled notes into the zone window; extend the CONCEPT to all voices
-   in csd-engine buildEvents (per-instrument range + fold), not just samplers.
-2. **Harmonic richness / accidentals** — the notation shows NO accidentals: the
-   music is all-diatonic. Paul wants richness+complexity (secondary dominants,
-   borrowed/chromatic-mediant chords, chromatic voice-leading, richer 9/11/13
-   extensions) — NOT dissonance. Work in engine/theory.js (the harmony organ,
-   `adventure`/`color` knobs) + pipes.js; factor chromaticism into the voice-leading
-   so real accidentals appear.
-
-### E. Video (largest build)
-Offline whole-loop VIDEO, local clips only (archive.org footage is CORS-tainted).
-Frame-step the demoscene (DemoLayer.renderFrame(dt) IS steppable off the clock —
-de-risked) + seek local found/video clips deterministically + composite per frame
-→ faster-than-realtime capture → **ffmpeg.wasm** (not vendored, ~30MB) mux with the
-whole-loop WAV. Multi-session.
-
-### F. Follow-ups / verify
-- **iOS pinch** — implemented (multi-touch preventDefault + touch-action + viewport);
-  NEEDS a real-device confirm (headless can't fire Safari gesture events).
-- **reedrush kick-click** — best-guess fix (kick −15%); confirm by ear it's gone,
-  else dig into the acoustic-kit kick sample / the master limiter transient.
-- **Whole-path AUDIO export** — buildLoopPlan's walk is still SYNCHRONOUS main-thread
-  (same shape as the MIDI crash); make it async/chunked (or worker) before a big
-  loop hangs it. And loopBars caps at 2048 (huge paths truncate) — a worker export
-  could be faster + un-truncated.
+## What's genuinely open (pick from ROADMAP)
+- **W1 residuals.** Commit the batch; wire the two 1.4 app-UI halves; write
+  `docs/GENRE-VECTORS.md`; taste-review the surfaced WARN findings (Paul's ears). ROADMAP §1.
+- **W2 — video export.** Fix the shipped path first (silent cross-origin canvas taint;
+  false "immune to tab-throttling" claim; no iOS guard; container/extension mismatch;
+  unbounded buffering; the CI probe skips assertions headless), then the offline
+  ffmpeg.wasm build (item **E**, the largest — mind the COOP/COEP + GPL traps). ROADMAP §2.
+- **W3 — modularization.** Quick wins mostly DONE (KERNEL-MAP, render-diff.sh, boot-smoke);
+  still open: de-hardcode the absolute `NODE_PATH`, then split the 940KB `genre-kernel.js`
+  (63% is the `GENRES` literal) into per-family fragments via byte-safe source-split +
+  concat (never a runtime JSON load). ROADMAP §3.
+- **W4 — docs.** 228/240→249 drift + stale claims + 4 new contributor docs DONE; only
+  `docs/GENRE-VECTORS.md` (the W1 home doc) remains. ROADMAP §4.
+- **W6 — remainder:** A.3 (dry granular insert), C.2 (settings visual pass), D.1-coverage
+  + **D.3** (borrowed/chromatic-mediant + 9/11/13 extensions), F.1 (iOS device), LFB
+  (intl genres, descriptions, node coloring, sample sourcing). ROADMAP §6.
 
 ## GATES / SHIP LAW
-`tools/ship.sh` = verify.sh (matrix/validate/engine/prove/matproof) + theory/pipes/
-speech → git push → deploy-stellate.sh (rsync to droplet). Refuses a dirty tree.
-For app/engine changes ALSO the browser battery (explorer-ui, genre-viz,
-share-url, simulate-path, blend-arrival, sampler-inserts-live, wavout, segment-parity;
-NODE_PATH=/home/ford/ftrain-2025/node_modules). Recapture `node test/fixtures.js
-capture` after intentional recipe drift (name the cause). segment-parity BYTE-EQUAL.
-matrix diagonal-dominant (240/240). Machines verify structure; **Paul's ears verify
-taste** — every genre/mix change is a best-guess pending his ear.
+`tools/ship.sh` = verify.sh (matrix/validate/engine/prove/matproof) + theory/pipes/speech
+→ git push → deploy-stellate.sh (rsync to droplet). Refuses a dirty tree. For app/engine
+changes ALSO the browser battery (explorer-ui, genre-viz, share-url, simulate-path,
+blend-arrival, sampler-inserts-live, wavout, segment-parity;
+`NODE_PATH=/home/ford/ftrain-2025/node_modules` — see ROADMAP §3.1 to de-hardcode this).
+Recapture `node test/fixtures.js capture` after intentional recipe drift (name the cause).
+segment-parity BYTE-EQUAL. matrix diagonal-dominant (**249/249**). Machines verify
+structure; **Paul's ears verify taste**.
 
-## LAWS (still true)
-- LIVE-ONLY audio (master bus, userGain vol, the coming Vapor EQ) rides the main-
-  thread graph AFTER masterGain → never touches the worker-baked press mix → segment-
-  parity/fixtures stay byte-identical. THE pattern for live-audio taste changes.
-- Opt-in DSP flags (n.granular, f.scratch, recipe fenv) are byte-identical when
-  absent — the safe way to add sampler/found DSP.
-- Whole-path exports MATERIALIZE bars → cap + async-yield or they OOM/freeze the page.
-- Constant pace: the LIVE playhead never materializes the loop (steps one bar, wraps
-  at the perimeter); only the EXPORT walks it, so caps/async live in the export path.
+## LAWS (still true — full list in ROADMAP §Guardrails)
+- **LIVE-ONLY audio** rides the main-thread graph AFTER masterGain → never touches the
+  worker-baked press mix → segment-parity/fixtures stay byte-identical.
+- **Opt-in DSP flags** (n.granular, f.scratch, recipe fenv) are byte-identical when absent.
+- **Whole-path exports MATERIALIZE bars** → cap + async-yield or they OOM/freeze.
+- **Constant pace:** the LIVE playhead never materializes the loop; only the EXPORT walks
+  it, so caps/async live in the export path.
+- **New optional dimensions draw LAST in resolveMulti, ZERO rng when absent** — the reason
+  the space grows without regressing fixtures.

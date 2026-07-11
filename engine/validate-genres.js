@@ -54,7 +54,11 @@ const DET_SEEDS = QUICK ? [1] : [1, SEEDS[SEEDS.length - 1]];
 // the run-report cache key covers the 3 core capability files plus these:
 // gate logic lives here, gate 6 scrapes the faust state mapping, gate 8 runs
 // the musicality law library.
-const RUN_EXTRAS = ["validate-genres.js", "faust/state-engine.js", "musicality.js"];
+const RUN_EXTRAS = ["validate-genres.js", "faust/state-engine.js", "musicality.js",
+  // gates 9-13 (advisory offline battery) — cache-key on the check modules + the
+  // shared geometry lib so editing any of them invalidates a cached run report.
+  "genre-geometry.js", "checks/near-duplicate.js", "checks/margin-sentinel.js",
+  "checks/determinism-fuzz.js", "checks/blend-monotonicity.js", "checks/dead-axis.js"];
 
 const allGenres = Object.keys(K.GENRES);
 const scoredGenres = allGenres.filter((g) => V.TARGETS[g]);   // gates 2-5 need target ranges
@@ -483,6 +487,73 @@ function gateMusicality() {
   }
 }
 
+// ============================================================ gates 9-13: advisory offline battery (WARN — never hard-fail)
+// The offline genre-intelligence checks (ROADMAP §1.2) live as pure, READ-ONLY
+// check() modules under engine/checks/. They are wired here as ADVISORY gates:
+// each surfaces WARN findings but NONE feeds hardFail, so verify.sh stays green.
+// Robustness law: a missing module, a require throw, or a check throw degrades to
+// SKIP-with-note — a tool bug can never fail validate. A module that itself
+// returns "FAIL" (e.g. determinism-fuzz) is DISPLAYED as WARN here (advisory
+// posture) while its raw verdict is preserved in result.gates for --json.
+const ADVISORY_CHECKS = [
+  { n: 9, key: "nearDuplicate", mod: "./checks/near-duplicate.js", name: "near-duplicate anchors",
+    // don't fold in the affinity matrix during validate — centroid signal only,
+    // cheap and never depends on a persisted matrix being present.
+    opts: {}, count: (r) => (r.findings || []).length,
+    line: (r) => `${(r.findings || []).length} pair(s) within centroid/affinity threshold (dist<=${r.thresholds ? r.thresholds.distThreshold : "?"})`,
+    top: (r) => (r.findings || []).slice(0, 6).map((f) => `~ ${f.a} <-> ${f.b} (dist ${f.dist}${f.affinity != null ? ", aff " + f.affinity : ""})`) },
+  { n: 10, key: "marginSentinel", mod: "./checks/margin-sentinel.js", name: "margin regression sentinel",
+    opts: {}, count: (r) => (r.regressions || []).length,
+    line: (r) => r.status === "SKIP" ? (r.note || "no baseline") : `${(r.regressions || []).length} margin regression(s) vs baseline (delta ${r.delta}, seeds ${(r.seeds || []).join(",")})`,
+    top: (r) => (r.regressions || []).slice(0, 6).map((x) => `~ ${x.genre}: ${x.baseline} -> ${x.current} (drop ${x.drop})`) },
+  { n: 11, key: "determinismFuzz", mod: "./checks/determinism-fuzz.js", name: "resolveMulti N-way determinism fuzz",
+    opts: {}, count: (r) => (r.findings || []).length,
+    line: (r) => `${r.passed || 0}/${r.vectors || 0} random N-way vectors byte-stable across ${r.repeats || 2} calls`,
+    top: (r) => (r.findings || []).slice(0, 6).map((f) => `x seed=${f.seed}: ${f.what}`) },
+  { n: 12, key: "blendMonotonicity", mod: "./checks/blend-monotonicity.js", name: "feature-level blend monotonicity",
+    opts: {}, count: (r) => (r.violations || []).length,
+    line: (r) => `${(r.pairs || []).length} random pairs x ${(r.seeds || []).length} seeds, ${r.evaluated || 0} directional checks, ${(r.violations || []).length} overshoot(s)`,
+    top: (r) => (r.violations || []).slice(0, 6).map((v) => v.feature === "*" ? `~ ${v.pair} seed=${v.seed}: ${v.what}` : `~ ${v.pair} seed=${v.seed}: ${v.feature}@t=${v.t} over by ${v.overZ}sd`) },
+  { n: 13, key: "deadAxis", mod: "./checks/dead-axis.js", name: "dead-axis feature variance",
+    opts: {}, count: (r) => (r.dead || []).length,
+    line: (r) => `${(r.dead || []).length} near-zero-variance feature(s) of ${r.dims || "?"} (threshold ${r.threshold})`,
+    top: (r) => (r.dead || []).slice(0, 6).map((d) => `~ ${d.feature}: var ${d.variance}`) },
+];
+
+function gateAdvisory() {
+  const statuses = [];
+  for (const c of ADVISORY_CHECKS) {
+    let mod;
+    try { mod = require(c.mod); }
+    catch (e) {
+      result.gates[c.key] = { status: "SKIP", note: "module unavailable: " + String(e.message || e) };
+      log(`[SKIP] ${c.n} ${c.name} — module unavailable`);
+      statuses.push("SKIP"); continue;
+    }
+    if (!mod || typeof mod.check !== "function") {
+      result.gates[c.key] = { status: "SKIP", note: "module exports no check()" };
+      log(`[SKIP] ${c.n} ${c.name} — module exports no check()`);
+      statuses.push("SKIP"); continue;
+    }
+    let r;
+    try { r = mod.check(c.opts) || {}; }
+    catch (e) {
+      result.gates[c.key] = { status: "SKIP", note: "check threw: " + String(e.message || e) };
+      log(`[SKIP] ${c.n} ${c.name} — check threw: ${String(e.message || e)}`);
+      statuses.push("SKIP"); continue;
+    }
+    const raw = r.status || "PASS";
+    // advisory display posture: PASS/SKIP pass through, everything else (WARN,
+    // and a module-internal FAIL) is shown as WARN and never enters hardFail.
+    const disp = raw === "PASS" || raw === "SKIP" ? raw : "WARN";
+    result.gates[c.key] = Object.assign({ status: disp, rawStatus: raw }, r);
+    log(`[${disp}] ${c.n} ${c.name} — ${c.line(r)}${raw === "FAIL" ? " (module FAIL, advisory here)" : ""}`);
+    if (disp === "WARN") for (const t of c.top(r)) log(`       ${t}`);
+    statuses.push(disp);
+  }
+  return statuses;
+}
+
 // ============================================================ run
 function runGates(detByGenre, blendData) {
   const s1 = gateDeterminism(detByGenre);
@@ -492,12 +563,14 @@ function runGates(detByGenre, blendData) {
   const s6 = gateVocabulary();
   const s7 = gateAudio();
   const s8 = gateMusicality();   // WARN-only by design: excluded from hardFail below
+  const sAdv = gateAdvisory();   // gates 9-13 advisory offline battery: never hard-fail
   if (trackErrors.length) result.meta.trackErrors = trackErrors;
 
   const hardFail = s1 === "FAIL" || s2 === "FAIL" || s6 === "FAIL";
   result.exitCode = hardFail ? 1 : 0;
   log("");
   const statuses = { determinism: s1, dominance: s2, margin: s3, geometry: s4, blend: s5, vocabulary: s6, audio: s7, musicality: s8 };
+  ADVISORY_CHECKS.forEach((c, i) => { statuses[c.key] = sAdv[i]; });
   const counts = Object.values(statuses).reduce((c, s) => ((c[s] = (c[s] || 0) + 1), c), {});
   log(`result: ${hardFail ? "FAIL" : "PASS"} — ${counts.PASS || 0} pass, ${counts.WARN || 0} warn, ${counts.FAIL || 0} fail${counts.SKIP ? ", " + counts.SKIP + " skipped" : ""}`);
   log(`(hard gates: 1 determinism, 2 dominance, 6 vocabulary; the rest warn)`);

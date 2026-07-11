@@ -1,6 +1,6 @@
 # CLAUDE.md — stellate
 
-A self-contained generative genre-space instrument: a **228-genre**
+A self-contained generative genre-space instrument: a **249-genre**
 deterministic vector space (`genre-kernel.js`, incl. real 3/4 odd-meter
 anchors — `state.meter`) over one score brain
 (`engine/csd-engine.js buildEvents`) with a generative harmony/pipes layer
@@ -116,7 +116,7 @@ tools/fetch-sample-cd.sh fatboy-slim-skip-to-my-loops \
    genres) or to `hits.sources` (always safe). NEVER add a `found:{role:…}` block to
    a genre lacking one, change a role, or touch bpm/scored fields — that shifts the
    confusion matrix. After every batch, `node engine/genre-verifier.js matrix
-   --no-cache` MUST still print `diagonal dominant: 228/228`.
+   --no-cache` MUST still print `diagonal dominant: 249/249`.
 
 The audio lands gitignored under `found/`; the recipe + registry/genre edits are
 the committed deliverable (the one rule). Credit the CD in SOURCES.md.
@@ -199,7 +199,7 @@ docs in `docs/`.
   - `demo-layer.js` — MicroW8 demoscene background carts (off until toggled)
   - `song-verifier.js` — `analyzeSong`/`improveSong`: the verifier half of the loop
   - `midi-export.js` — Standard MIDI File from the same buildEvents walk
-  - `faust/` — THE engine (see docs `FAUST-PORT.md`, `engine/faust/VOICES.md`):
+  - `faust/` — THE engine (see docs `history/FAUST-PORT.md`, `engine/faust/VOICES.md`):
     - `dsp/` + `dist/` — one precompiled WASM AudioWorklet per synthesis model
       (`node engine/faust/build.js` rebuilds); DX7 family decodes real cartridge banks
     - `state-engine.js` — state → voice units + param/event mapping (shared by live + press)
