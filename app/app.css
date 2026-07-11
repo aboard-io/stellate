@@ -199,6 +199,7 @@
   .vz-graph .gtx{font:13px VT323,monospace;fill:var(--ink)}
   .vz-graph .gsub{font:11px VT323,monospace;fill:var(--dim)}
   .vz-graph .gmix{font:11px VT323,monospace;fill:var(--cyan)}
+  .vz-graph .gchip{font:11px VT323,monospace;fill:var(--ink)}   /* per-voice fx chip label (the full strip+insert chain) */
   .vz-graph .gdsub{font:11px VT323,monospace;fill:var(--amber)}
   .vz-graph .goutx{font:13px VT323,monospace;fill:var(--pink)}
   .vz-graph .ghead{font:10px VT323,monospace;fill:var(--dim);letter-spacing:.14em;text-transform:uppercase;opacity:.6}
