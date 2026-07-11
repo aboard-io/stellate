@@ -78,5 +78,9 @@
 <!-- THE APP: native ES modules under app/ (no bundler). type=module defers, so it
      runs after the classic engine scripts above and after the DOM is parsed. -->
 <script type="module" src="app/main.js"></script>
+<!-- STAR-CRUISE (🛸): the opt-in 3D genre-flythrough mode. Side-effecting module —
+     it INJECTS its own chip into #chips and lazy-imports vendored Three.js ONLY on
+     first activation, so the initial zero-dependency page load stays untouched. -->
+<script type="module" src="app/starcruise.js"></script>
 </body>
 </html>
