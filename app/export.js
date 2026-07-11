@@ -42,13 +42,20 @@ function saveBlob(blob, name, skip) {
 }
 
 // ---------- ⤓ MIDI ----------
-export function downloadMidi() {
+// ASYNC (2026-07-11 crash fix): the whole-path MIDI walk yields to the event loop
+// (buildLoopMidi is chunked) so a long loop can't freeze the page — so downloadMidi
+// awaits it and rides progress on the status line.
+export async function downloadMidi() {
   if (!S.playing || !window.MidiExport) { set({ status: "MIDI export unavailable" }); return null; }
   // WHOLE PATH (Paul): with a drawn loop, export the entire journey — every genre
   // it crosses — not just the current song. Falls back to the current song when
   // there is no path (or the walk can't run).
   let bytes = null, whole = false;
-  if (S.waypoints.length >= 2) { try { bytes = buildLoopMidi(); whole = !!bytes; } catch (e) {} }
+  if (S.waypoints.length >= 2) {
+    set({ status: "whole-path MIDI: walking the loop…" });
+    try { bytes = await buildLoopMidi({ onProgress: (b, t) => set({ status: "whole-path MIDI: " + Math.round(100 * b / t) + "% of " + t + " bars" }) }); whole = !!bytes; }
+    catch (e) { console.warn("whole-path MIDI failed:", e); }
+  }
   if (!bytes) bytes = MidiExport.buildMidi(S.playing);
   EXPORT.lastMidi = bytes;                      // headless probe hook (SMF parse gate)
   const name = fileStem() + (whole ? " (full path)" : "") + ".mid";
