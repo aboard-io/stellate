@@ -17,6 +17,34 @@
 import { S, set } from "./state.js";
 import { BARS_PER_SEG } from "./world.js";
 
+// ── CONSTANT-PACE TRAVEL (Paul 2026-07-11: "the playhead should always move at a
+// constant pace; distance between nodes shouldn't matter"). The old model gave
+// EVERY leg exactly `pace` bars, so the traveler raced across long legs and
+// crawled short ones. Now the traveler moves at a constant SPEED — PACE_REF/pace
+// world-units per bar — so a leg's bar-count is proportional to its LENGTH and a
+// whole loop's duration depends only on the total path length, not the number or
+// spacing of nodes. PACE_REF ≈ the default loop's average leg (497), so `pace`
+// keeps its old feel for the default triangle (~764 bars vs the old 768).
+export const PACE_REF = 500;
+// per-waypoint closed-loop leg lengths + perimeter (the closing leg n-1 -> 0 too).
+export function legMetrics(){
+  const n=S.waypoints.length, legs=[]; let perim=0;
+  for(let i=0;i<n;i++){ const a=S.waypoints[i], b=S.waypoints[(i+1)%n];
+    const d=Math.hypot(b.x-a.x,b.y-a.y); legs.push(d); perim+=d; }
+  return { n, legs, perim };
+}
+// world-units the traveler advances per bar (constant; bigger pace = slower).
+export function paceSpeed(){ return PACE_REF/Math.max(8,Math.min(4096,+S.pace||BARS_PER_SEG)); }
+// bars for one full loop at the current pace (perimeter / speed) — path-length only.
+export function loopBars(){ const { perim }=legMetrics(); return Math.max(1, Math.round(perim/Math.max(1e-6, paceSpeed()))); }
+// distance-along-perimeter -> {seg,t} (walk the legs; perim precomputed).
+function segAtDistance(d, legs, perim, n){
+  d=((d%perim)+perim)%perim;
+  let seg=0;
+  while(seg<n-1 && d>=legs[seg]){ d-=legs[seg]; seg++; }
+  return { seg, t: legs[seg]>1e-6 ? Math.min(1, d/legs[seg]) : 0 };
+}
+
 export function buildShareUrl(){
   const q=new URLSearchParams();
   q.set("seed", String(S.seed));
@@ -47,22 +75,18 @@ export function applyUrlState(){
   if(m>0){
     S.startBar=m-1;                                  // engine walk serial (0-based)
     S.barCount=m-1;
-    if(S.waypoints.length>=2){                       // traveler position from the measure
-      const pace=Math.max(8,Math.min(4096,+S.pace||BARS_PER_SEG)), n=S.waypoints.length;
-      const bar=(m-1)%(n*pace);
-      S.travel={seg:Math.floor(bar/pace)%n, t:(bar%pace)/pace};
-    }
+    if(S.waypoints.length>=2) S.travel=travelForBar(m-1);   // traveler position from the measure (constant pace)
   }
   return restored;
 }
 
 // measure -> travel position along the loop (shared by boot restore, goLive's
-// drop-in, and the draggable playhead's inverse).
+// drop-in, and the draggable playhead's inverse). CONSTANT PACE: the traveler
+// is at distance bar×speed along the perimeter (speed = PACE_REF/pace), so leg
+// spacing never changes how fast it moves.
 export function travelForBar(bar){
-  const n=S.waypoints.length; if(n<2) return {seg:0,t:0};
-  const pace=Math.max(8,Math.min(4096,+S.pace||BARS_PER_SEG));
-  const b=((bar%(n*pace))+n*pace)%(n*pace);
-  return {seg:Math.floor(b/pace)%n, t:(b%pace)/pace};
+  const { n, legs, perim }=legMetrics(); if(n<2) return {seg:0,t:0};
+  return segAtDistance(bar*paceSpeed(), legs, perim, n);
 }
 export function pointOnPath(travel){
   const n=S.waypoints.length; if(n<2) return null;

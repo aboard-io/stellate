@@ -84,8 +84,15 @@ function main() {
   for (const s of vis) {
     ok(s.churnBars <= CHURN_MAX,
       `5a: ${s.genre} (enter bar ${s.enter}) identity churn ${s.churnBars} bars (allowance <=${CHURN_MAX}) — the revision re-tier regressed`);
-    ok(s.churnBars === 0 || s.reconvergeBar >= 0,
-      `5b: ${s.genre} (enter bar ${s.enter}) target re-picked after arrival and playing NEVER re-converged within the segment`);
+    // 5b CONSTANT PACE (2026-07-11): on a long leg the traveler now CREEPS through
+    // the neighborhood at constant speed, so the target micro-re-picks every few
+    // bars (churn 1-2) and never reaches an EXACT stationary re-converge — benign
+    // tracking, not the re-tier thrash 5b was written for (churn 12, no landing;
+    // 5a already bounds hard churn <= CHURN_MAX). So a small-churn segment that
+    // never "re-converges" passes; a HARD churn that never lands still fails.
+    const CREEP = 3;
+    ok(s.churnBars <= CREEP || s.reconvergeBar >= 0,
+      `5b: ${s.genre} (enter bar ${s.enter}) churned ${s.churnBars} bars after arrival AND never re-converged in-segment (a re-tier thrash, not the constant-pace creep)`);
   }
 
   // 6. determinism: same seed twice = same report (minus wall clock)

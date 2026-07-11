@@ -40,8 +40,11 @@ async function main() {
   if (st.seed === 42) ok("seed restored"); else fail(`seed ${st.seed}`);
   if (st.wps === PATH) ok("waypoints restored verbatim (default loop skipped)"); else fail(`waypoints ${st.wps}`);
   if (st.startBar === 96) ok("startBar = m-1"); else fail(`startBar ${st.startBar}`);
-  // m=97, pace 64 -> bar 96 -> seg 1, t 0.5
-  if (st.travel.seg === 1 && Math.abs(st.travel.t - 0.5) < 1e-6) ok(`travel at measure 97 (seg ${st.travel.seg}, t ${st.travel.t})`);
+  // CONSTANT PACE (2026-07-11): bar 96 = distance 96×(500/64)=750 units along the
+  // perimeter; leg 0 (len ~1369) contains it, so seg 0, t ~0.548 (was seg 1, t 0.5
+  // under the old fixed-bars-per-leg model — distance between nodes no longer
+  // changes the traveler's speed, so the measure maps by arc-length now).
+  if (st.travel.seg === 0 && Math.abs(st.travel.t - 0.548) < 0.006) ok(`travel at measure 97 (seg ${st.travel.seg}, t ${st.travel.t.toFixed(3)})`);
   else fail(`travel ${JSON.stringify(st.travel)}`);
   if (/seed=42/.test(st.share) && /m=97/.test(st.share) && st.share.includes("path=")) ok("shareUrl round-trips");
   else fail(`shareUrl ${st.share}`);

@@ -97,17 +97,25 @@ async function main() {
   });
   const nWp = seed.n;
   ok(poly.pts === nWp + 1, `C1: constellation polyline has ${poly.pts} points (want n+1=${nWp + 1} — closing leg drawn)`);
-  // drive travelStep deterministically (no audio): pace=8 -> 8 steps per leg,
-  // n legs -> n*8 steps to return; record seg after each and the traveller pos.
+  // drive travelStep deterministically (no audio). CONSTANT PACE (2026-07-11):
+  // every bar advances the SAME distance (paceSpeed units) along the perimeter,
+  // regardless of leg length — so we no longer land on waypoints at fixed step
+  // counts. Instead drive one full loop (loopBars) plus a little, and prove the
+  // motion is SEAMLESS: it visits every leg, wraps the closing leg back to 0, and
+  // never TELEPORTS (the biggest single-step chord stays ≤ the per-bar speed; a
+  // discontinuity at the seam would spike it to a map-crossing jump).
   const wrap = await page.evaluate(() => {
-    __S.pace = 8;
-    const c = __X.mapCenter(); void c;
-    const segs = [], n = __S.waypoints.length;
-    const start = { x: __S.cursor.x, y: __S.cursor.y };
-    // pace=8 -> 8 steps per leg lands exactly on the next waypoint; n*8 steps
-    // completes the whole loop and returns to waypoint[0] (seg 0, t 0).
-    for (let i = 0; i < n * 8; i++) { __X.travelStep(); segs.push(__S.travel.seg); }
-    return { segs, n, endCursor: { x: __S.cursor.x, y: __S.cursor.y }, start };
+    __S.pace = 32;
+    const segs = [], n = __S.waypoints.length, v = __X.paceSpeed();
+    const loop = __X.loopBars();
+    let prev = { x: __S.cursor.x, y: __S.cursor.y }, maxStep = 0;
+    for (let i = 0; i < loop + 6; i++) {
+      __X.travelStep(); segs.push(__S.travel.seg);
+      const c = __S.cursor, d = Math.hypot(c.x - prev.x, c.y - prev.y);
+      if (i > 0) maxStep = Math.max(maxStep, d);
+      prev = { x: c.x, y: c.y };
+    }
+    return { segs, n, v, loop, maxStep };
   });
   // seg must visit every leg 0..n-1 and then wrap back to 0 (a decrease event).
   const segSet = new Set(wrap.segs);
@@ -115,11 +123,13 @@ async function main() {
   let wrapped = false; for (let i = 1; i < wrap.segs.length; i++) if (wrap.segs[i] < wrap.segs[i - 1]) wrapped = true;
   ok(sawAllLegs, `C2: travelStep visited legs [${[...segSet].sort().join(",")}], want 0..${wrap.n - 1}`);
   ok(wrapped, `C3: seg never wrapped back to 0 (closing leg not seamless)`);
-  const backDist = Math.hypot(wrap.endCursor.x - wrap.start.x, wrap.endCursor.y - wrap.start.y);
-  ok(backDist < 5, `C4: after one full loop the traveller is ${backDist.toFixed(1)} logical px from start (want <5 — seamless return)`);
-  console.log(`\n=== CLOSED LOOP ===`);
-  console.log(`  polylinePoints=${poly.pts} (n+1=${nWp + 1})  segSequence sample=[${wrap.segs.slice(0, 12).join(",")}…]`);
-  console.log(`  visitedAllLegs=${sawAllLegs}  wrappedTo0=${wrapped}  returnDist=${backDist.toFixed(2)}px`);
+  // seamless = constant speed with no seam teleport: the largest single-bar chord
+  // never exceeds the per-bar speed by more than a hair (chord <= arc = v; a jump
+  // at the wrap would be orders of magnitude larger).
+  ok(wrap.maxStep <= wrap.v * 1.05, `C4: constant pace not seamless — biggest step ${wrap.maxStep.toFixed(2)} px vs speed ${wrap.v.toFixed(2)} px/bar (a seam teleport would spike this)`);
+  console.log(`\n=== CLOSED LOOP (constant pace) ===`);
+  console.log(`  polylinePoints=${poly.pts} (n+1=${nWp + 1})  loopBars=${wrap.loop}  speed=${wrap.v.toFixed(2)}px/bar  segSequence sample=[${wrap.segs.slice(0, 12).join(",")}…]`);
+  console.log(`  visitedAllLegs=${sawAllLegs}  wrappedTo0=${wrapped}  maxStep=${wrap.maxStep.toFixed(2)}px (<= speed => no teleport)`);
 
   // ---- D: min pairwise SCREEN separation at the DEFAULT zoom (what Paul sees) ----
   // Projected at k = default zoom; overlap/separation is pan-invariant so offsets

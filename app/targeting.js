@@ -6,6 +6,7 @@
 import { S, set, deep, K, V } from "./state.js";
 import { POS, SNAP, CUTOFF, MODE_LOCKS, BARS_PER_SEG } from "./world.js";
 import { faustHandle } from "./live.js";
+import { legMetrics, paceSpeed } from "./share.js";   // constant-pace travel (distance/bar)
 
 // ---------- weights / targeting ----------
 export function weightsAt(pt){
@@ -337,23 +338,21 @@ export function rescore(){
 
 // ---------- path travel: the traveler IS the destination ----------
 export function travelStep(){
-  const n=S.waypoints.length;
+  const { n, legs }=legMetrics();
   if(n<2)return;
-  let {seg,t}=S.travel;
-  // pace slider = bars per path leg (bigger = slower journey). Clamp hard so a
-  // mangled input can never freeze the traveler (t must always advance).
-  // Ceiling 4096 (2026-07-10): the blend-arrival fix made flips actually LAND,
-  // so the old default read "way too fast" — default now 256 (world.js), and
-  // the log-scale slider reaches 4096 bars/leg for hours-long journeys.
-  const pace=Math.max(8,Math.min(4096,+S.pace||BARS_PER_SEG));
-  t+=1/pace;
-  // CLOSED LOOP (Paul: "the path should always close itself and be a loop"): the
-  // path has n segments, seg n-1 being the CLOSING leg from waypoint[n-1] back to
-  // waypoint[0]. seg wraps mod n, so on reaching the end the traveler continues
-  // seamlessly into the closing leg and then back onto leg 0 — no stop, no jump,
-  // BARS_PER_SEG pacing identical on every leg (the closing leg is just seg n-1).
-  if(t>=1){ t=0; seg=(seg+1)%n; }
-  if(seg>=n) seg=0;   // waypoints erased under us mid-step: clamp into range
+  let {seg,t}=S.travel; seg=((seg%n)+n)%n;
+  // CONSTANT PACE (Paul 2026-07-11: "the playhead should always move at a constant
+  // pace; distance between nodes shouldn't matter"). Advance a fixed DISTANCE —
+  // paceSpeed() world-units (= PACE_REF/pace) — along the perimeter each bar, not
+  // a fixed FRACTION of the leg, so long and short legs are crossed at the same
+  // speed and a loop's duration tracks only its total length. Carry across leg
+  // boundaries (a bar's step can span a whole short leg); the guard stops a
+  // degenerate tiny-path/huge-speed case from spinning. The closing leg (n-1 -> 0)
+  // is just another leg, so the loop stays seamless.
+  let d=(legs[seg]>1e-6 ? t*legs[seg] : 0) + paceSpeed();
+  let guard=0;
+  while(d>=legs[seg] && guard++<n+2){ d-=legs[seg]; seg=(seg+1)%n; }
+  t = legs[seg]>1e-6 ? Math.min(1, d/legs[seg]) : 0;
   const a=S.waypoints[seg], b=S.waypoints[(seg+1)%n];
   const pt={x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t};
   set({travel:{seg,t}});

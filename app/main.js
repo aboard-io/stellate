@@ -13,7 +13,7 @@ import { goLive, stopLive, faustHandle } from "./live.js";
 import { playheadTick } from "./readouts.js";
 import "./background.js";   // side effects: video/demoscene chip + alternation + subs.push(applyBg)
 import "./panels.js";       // side effects: control panel + chips/modals + store render subs
-import { applyUrlState, buildShareUrl } from "./share.js";   // the bookmarkable mix (seed+path+measure in the query string)
+import { applyUrlState, buildShareUrl, paceSpeed, loopBars } from "./share.js";   // the bookmarkable mix (seed+path+measure in the query string) + constant-pace travel
 import { loadFonts } from "./fonts.js";   // the soundfont switcher: register + apply the saved font
 import { walkLoop, walkLoopSummary, buildLoopMidi } from "./journey.js";   // offline whole-path walk + MIDI (export foundation)
 window.__JOURNEY={ walkLoop:(...a)=>walkLoop(...a), summary:(...a)=>walkLoopSummary(...a), buildLoopMidi:(...a)=>buildLoopMidi(...a) };
@@ -27,6 +27,7 @@ window.__X={retarget:(...a)=>retarget(...a), goLive:(...a)=>goLive(...a), stopLi
   seedLoop:()=>seedDefaultLoop(), mapCenter:()=>({...MAP_CENTER}), world:()=>({w:WORLD_W,h:WORLD_H}),
   minPairDist:()=>window.__MINSEP, pathClosed:()=>S.waypoints.length>=2,
   travelStep:()=>travelStep(), insertWaypoint:(...a)=>insertWaypoint(...a),
+  paceSpeed:()=>paceSpeed(), loopBars:()=>loopBars(),   // constant-pace travel probes (units/bar, bars/loop)
   shareUrl:()=>buildShareUrl()};   // headless stop→path→LIVE + corner-reach probe + loop-wrap probe + mid-chain insert + the bookmarkable-URL probe
 
 // ---------- boot ----------
