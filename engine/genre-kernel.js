@@ -6510,7 +6510,14 @@
       drumRecipe: blendRecipe(g=>g.drums),
       fx: blendRecipe(g=>g.fx),
       foundRole: foundSide.found.role,
-      foundScratch: foundSide.found.scratch || 0,   // OPT-IN: per-hit scratch probability on chops/break stutter (turntablist genres)
+      // SCRATCH probability. Paul: "scratch anywhere we loop a vocal chop / synth
+      // sample / instrumental" — so the CHOPS role (looped vocal/instrumental/
+      // synth-sample slices) scratches BY DEFAULT catalog-wide; a genre can still
+      // override with an explicit `scratch:` (incl 0 to opt out). BREAK (drum
+      // loops) is NOT defaulted — it stays per-genre opt-in (boombap/jungle set it
+      // explicitly, and there the scratch rides only the stutter ornament).
+      foundScratch: foundSide.found.scratch != null ? foundSide.found.scratch
+        : (foundSide.found.role === "chops" ? 0.14 : 0),
       foundSource: pick(rng, expandPools(foundSide.found.sources, seed)),
       foundPool: (()=>{ const a=expandPools(foundSide.found.sources, seed).slice(), o=[], n=Math.min(6,a.length);   // distinct beds/narration chunks to rotate (kills the one-loop repeat)
         while(o.length<n&&a.length) o.push(a.splice(Math.floor(rng()*a.length),1)[0]); return o; })(),
