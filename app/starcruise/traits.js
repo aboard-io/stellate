@@ -344,11 +344,80 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
   // so crowd draw-calls stay bounded (dancers share the low-poly rig geometry).
   const dancers = Math.max(4, Math.min(8, Math.round(4 + groove.energy * 3 + nDrum * 1.5 + nHat * 1.0 - 1)));
 
+  // ---- RENDERSTYLE -----------------------------------------------------
+  // Give each genre its own VISUAL LANGUAGE: the whole screen renders differently.
+  // A small set of feature "archetype" scalars is read off the SAME normalized
+  // vector, then the fixed-shape renderStyle contract (post-fx bag + surface
+  // material) is derived from them. Deterministic (only the seeded rng jitter);
+  // computed LAST so it never perturbs any earlier trait's rng draws.
+  //
+  //   lofi     crackle/vinyl grit          -> heavy dither + scanlines + curve
+  //   driving  dense, fast, pumped kit      -> onebit + low posterize + hard grade
+  //   washy    sustained pad wash           -> bloom + soft posterize + no dither
+  //   harmonic seventh-rich colour          -> aberration + iridescence (with wash)
+  //   vapor    electronic + washy + harmonic-> magenta/cyan grade + bloom + aberration
+  //   metal    acoustic + hard + fast kit   -> grain vignette + wireframe/glitch
+  //   warm     organic (acoustic) surfaces  -> amber grade + halftone (with swing)
+  const lofi = nCrackle;
+  const driving = clamp01(nDrum * 0.5 + nBpm * 0.4 + nPump * 0.3);
+  const washy = nWash;
+  const harmonic = nSeventh;
+  const vapor = organic ? 0 : clamp01(nWash * nSeventh * 2.4);
+  const metal = organic ? clamp01(nDrum * 0.55 + nBpm * 0.45 - nSwing * 0.7) : 0;
+  const j = (a) => (rng() - 0.5) * a;   // small deterministic jitter
+
+  // dither: hard 1-bit for driving electronica, ordered grit for lofi, none for
+  // clean/washy pads, ordered otherwise.
+  let dither;
+  if (!organic && driving > 0.5 && washy < 0.55) dither = "onebit";
+  else if (lofi > 0.4) dither = "ordered";
+  else if (washy > 0.5 && nDrum < 0.45) dither = "none";
+  else dither = "ordered";
+
+  // posterize: driving/lofi crush the palette (low step count = harsh); washy/soft
+  // genres keep a smooth ramp (high step count). Contract range 2..16.
+  const smooth = clamp01(0.42 + washy * 0.55 + nSoft * 0.35 - driving * 0.55 - lofi * 0.35);
+  const posterize = Math.max(2, Math.min(16, Math.round(2 + smooth * 14)));
+
+  // per-channel colour grade: organic = warm amber (r up, b down); vaporwave =
+  // magenta/cyan (r+b up, g down); hard electronica = cool high-contrast.
+  const grade = [
+    +(1 + (organic ? 0.14 + nSwing * 0.09 : -0.03) + vapor * 0.18).toFixed(3),
+    +(1 + (organic ? 0.02 : -0.02) - vapor * 0.12 - lofi * 0.05).toFixed(3),
+    +(1 - (organic ? 0.12 + nCrackle * 0.07 : -0.10) + vapor * 0.16).toFixed(3),
+  ];
+
+  const post = {
+    dither,
+    scanlines: +clamp01(lofi * 0.85 + (!organic && driving > 0.6 ? 0.18 : 0) + j(0.05)).toFixed(3),
+    aberration: +clamp01(vapor * 0.7 + harmonic * 0.15 * (organic ? 0 : 1) + nMotion * 0.12 * (organic ? 0 : 1) + j(0.04)).toFixed(3),
+    halftone: +clamp01(nSwing * 0.8 * (organic ? 1 : 0.35) + (organic ? harmonic * 0.2 : 0)).toFixed(3),
+    bloom: +clamp01(washy * 0.7 + nSoft * 0.3 + vapor * 0.3 + glow * 0.2 + j(0.05)).toFixed(3),
+    posterize,
+    grade,
+    vignette: +clamp01(metal * 0.6 + lofi * 0.3 + driving * 0.12 + j(0.04)).toFixed(3),
+    curvature: +clamp01(lofi * 0.6 + (dither === "onebit" ? 0.12 : 0)).toFixed(3),
+  };
+
+  // material (surface treatment): metal -> wireframe/glitch; driving electronica ->
+  // flat/glitch; vaporwave -> iridescent; ambient wash -> cel/iridescent; swinging
+  // acoustic -> matte; lofi -> matte; else cel.
+  let material;
+  if (metal > 0.42) material = nChop > 0.3 ? "glitch" : "wireframe";
+  else if (!organic && driving > 0.5 && washy < 0.5) material = nChop > 0.35 ? "glitch" : "flat";
+  else if (vapor > 0.4) material = "iridescent";
+  else if (washy > 0.5 && nDrum < 0.45) material = harmonic > 0.4 ? "iridescent" : "cel";
+  else if (organic && nSwing > 0.3) material = "matte";
+  else if (lofi > 0.45) material = "matte";
+  else material = "cel";
+
+  const renderStyle = { post, material };
+
   return {
     palette, body, skin, cloth, groove, face, texture, band,
     dancers,
     crowd: band.length,
-    backdrop, glow,
+    backdrop, glow, renderStyle,
     // echo the raw vector + name for downstream tuning / docs verification.
     _features: f, _genre: name,
   };

@@ -37,6 +37,25 @@ function colHSL(THREE, h, s, l) {
 }
 const TAU = Math.PI * 2;
 
+// ---- RENDER-STYLE GLSL (the shared visual LANGUAGE, same vocab as the aliens) ----
+// IRIDESCENT: view-angle fresnel rim whose HUE cycles with the angle (glossy oil).
+const IRID_GLSL = [
+  "float _fr = pow(1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0), 2.2);",
+  "vec3 _ir = 0.5 + 0.5 * cos(6.2831853 * (_fr + vec3(0.0, 0.33, 0.66)));",
+  "outgoingLight = mix(outgoingLight, outgoingLight + _ir, _fr * 0.85);",
+].join("\n");
+// GLITCH: seeded vertex jitter (position+time, occasional bursts) + rgb-split flicker.
+const GLITCH_VERT = [
+  "float _burst = step(0.86, fract(uTime * 0.7));",
+  "transformed.x += sin(uTime * 13.0 + transformed.y * 20.0 + transformed.x * 7.0) * (0.01 + 0.05 * _burst);",
+  "transformed.z += cos(uTime * 17.0 + transformed.y * 14.0) * (0.008 + 0.03 * _burst);",
+].join("\n");
+const GLITCH_FRAG = [
+  "float _fl = step(0.8, fract(uTime * 0.7 + 0.3));",
+  "outgoingLight.r += 0.16 * _fl * (0.5 + 0.5 * sin(uTime * 40.0));",
+  "outgoingLight.b -= 0.16 * _fl * (0.5 + 0.5 * sin(uTime * 37.0));",
+].join("\n");
+
 export function makeBackdrop(THREE, traits, seed) {
   seed = (seed | 0) || 1;
   traits = traits || {};
@@ -47,6 +66,59 @@ export function makeBackdrop(THREE, traits, seed) {
   const acc = traits.palette && traits.palette.accent
     ? { h: traits.palette.accent.h || 40, s: traits.palette.accent.s != null ? traits.palette.accent.s : 0.85, l: traits.palette.accent.l != null ? traits.palette.accent.l : 0.6 }
     : { h: 40, s: 0.85, l: 0.6 };
+
+  // ---- RENDER STYLE ---- the genre's surface LANGUAGE (traits.renderStyle.material).
+  // The whole world — buildings, foliage, crops, silos — shades in ONE vocabulary so
+  // a techno city reads glitched/wire while an ambient one reads cel/iridescent. Built
+  // ONCE per style and reused across every InstancedMesh (mobile-cheap, no recompiles).
+  // Defaults to 'flat' (the original flat-lit Lambert) so the world is never blank.
+  const style = (traits.renderStyle && traits.renderStyle.material) || "flat";
+  const wire = style === "wireframe";     // lit wire silhouette (buildings read as edges)
+  const smooth = style === "matte";       // matte = soft SMOOTH shading (no low-poly facets)
+  const glitchTime = { value: 0 };        // shared uniform, driven by update()'s clock
+  let celGrad = null;                     // CEL: 3-band hard toon ramp (dark/mid/lit)
+  if (style === "cel") {
+    const ramp = new Uint8Array([70, 70, 84, 255, 150, 150, 165, 255, 245, 245, 255, 255]);
+    celGrad = new THREE.DataTexture(ramp, 3, 1);
+    celGrad.magFilter = THREE.NearestFilter; celGrad.minFilter = THREE.NearestFilter;
+    celGrad.needsUpdate = true;
+  }
+  function applyStyleHook(m) {
+    if (style === "iridescent") {
+      m.onBeforeCompile = (shader) => {
+        shader.fragmentShader = shader.fragmentShader.replace(
+          "#include <opaque_fragment>", IRID_GLSL + "\n#include <opaque_fragment>");
+      };
+      m.customProgramCacheKey = () => "sc_irid";
+    } else if (style === "glitch") {
+      m.onBeforeCompile = (shader) => {
+        shader.uniforms.uTime = glitchTime;
+        shader.vertexShader = "uniform float uTime;\n" + shader.vertexShader.replace(
+          "#include <begin_vertex>", "#include <begin_vertex>\n" + GLITCH_VERT);
+        shader.fragmentShader = "uniform float uTime;\n" + shader.fragmentShader.replace(
+          "#include <opaque_fragment>", GLITCH_FRAG + "\n#include <opaque_fragment>");
+      };
+      m.customProgramCacheKey = () => "sc_glitch";
+    }
+    return m;
+  }
+  // styleMat — one lit + shadowed surface in the active style. cel -> banded MeshToon;
+  // everything else -> Lambert (flat / matte-smooth / wireframe) + the fresnel/glitch
+  // hook. Keeps emissive glow, vertex colours (baked windows), and light response.
+  function styleMat(o) {
+    const flat = o.flatShading !== false && !smooth;
+    const emissive = o.emissive || new THREE.Color(0, 0, 0);
+    let m;
+    if (style === "cel") {
+      m = new THREE.MeshToonMaterial({ color: o.color, emissive, gradientMap: celGrad, vertexColors: !!o.vertexColors });
+      m.flatShading = true;
+    } else {
+      m = new THREE.MeshLambertMaterial({ color: o.color, emissive, vertexColors: !!o.vertexColors, flatShading: flat, wireframe: wire });
+      if (smooth && o.color) m.emissive = emissive.clone().add(o.color.clone().multiplyScalar(0.08)); // soft ambient lift
+    }
+    if (o.emissiveIntensity != null) m.emissiveIntensity = o.emissiveIntensity;
+    return applyStyleHook(m);
+  }
 
   const group = new THREE.Object3D();
   // SHADOW law: the controller enables renderer.shadowMap + ONE key directional
@@ -236,7 +308,7 @@ export function makeBackdrop(THREE, traits, seed) {
   // a building material: dark genre-tinted wall with a faint emissive breath.
   function buildingMat(hue) {
     const h = hue == null ? acc.h : hue;
-    return new THREE.MeshLambertMaterial({
+    return styleMat({
       vertexColors: true, flatShading: true,
       color: colHSL(THREE, h, 0.22, 0.30),
       emissive: colHSL(THREE, h, 0.55, 0.35),
@@ -311,8 +383,8 @@ export function makeBackdrop(THREE, traits, seed) {
     const stalkGeo = normGeo(new THREE.ConeGeometry(0.34, 1, 5));     // bushy stalk
     const bushGeo = normGeo(new THREE.IcosahedronGeometry(0.5, 0));    // round bush
     const cornGeo = normGeo(new THREE.CylinderGeometry(0.12, 0.16, 1, 5)); // tall corn
-    const mkCropMat = (h, s, l) => new THREE.MeshLambertMaterial({
-      color: colHSL(THREE, h, s, l), flatShading: true,
+    const mkCropMat = (h, s, l) => styleMat({
+      color: colHSL(THREE, h, s, l),
       emissive: colHSL(THREE, h, 0.4, 0.12), emissiveIntensity: 0.2 + glow * 0.2,
     });
     const stalkMat = mkCropMat(95 + rand() * 25, 0.55, 0.34);
@@ -358,8 +430,8 @@ export function makeBackdrop(THREE, traits, seed) {
     const NSILO = 5;
     const siloGeo = normGeo(new THREE.CylinderGeometry(0.9, 0.9, 1, 8));
     const roofGeo = normGeo(new THREE.ConeGeometry(1.05, 0.5, 8));
-    const siloMat = new THREE.MeshLambertMaterial({ color: colHSL(THREE, 30, 0.15, 0.55), flatShading: true });
-    const roofMat = new THREE.MeshLambertMaterial({ color: colHSL(THREE, acc.h, 0.5, 0.4), flatShading: true });
+    const siloMat = styleMat({ color: colHSL(THREE, 30, 0.15, 0.55) });
+    const roofMat = styleMat({ color: colHSL(THREE, acc.h, 0.5, 0.4) });
     const silos = new THREE.InstancedMesh(siloGeo, siloMat, NSILO);
     const roofs = new THREE.InstancedMesh(roofGeo, roofMat, NSILO);
     silos.name = "silos"; roofs.name = "silo-roofs"; roofs.userData.family = "silo-roof";
@@ -397,10 +469,10 @@ export function makeBackdrop(THREE, traits, seed) {
     const canopyGeo = leafy
       ? normGeo(new THREE.ConeGeometry(0.5, 1, 6))            // rounded-ish leaf cone
       : normGeo(new THREE.ConeGeometry(0.4, 1, 4));           // sharp alien frond
-    const trunkMat = new THREE.MeshLambertMaterial({ color: colHSL(THREE, 28, 0.45, 0.22), flatShading: true });
+    const trunkMat = styleMat({ color: colHSL(THREE, 28, 0.45, 0.22) });
     const canHue = leafy ? 110 + rand() * 30 : acc.h + 30;
-    const canopyMat = new THREE.MeshLambertMaterial({
-      color: colHSL(THREE, canHue, leafy ? 0.55 : 0.6, leafy ? 0.32 : 0.42), flatShading: true,
+    const canopyMat = styleMat({
+      color: colHSL(THREE, canHue, leafy ? 0.55 : 0.6, leafy ? 0.32 : 0.42),
       emissive: colHSL(THREE, canHue, 0.5, leafy ? 0.08 : 0.2), emissiveIntensity: leafy ? 0.12 : 0.2 + glow * 0.2,
     });
     const trunk = new THREE.InstancedMesh(trunkGeo, trunkMat, count);
@@ -474,6 +546,7 @@ export function makeBackdrop(THREE, traits, seed) {
   // ---- ANIMATION -------------------------------------------------------
   function update(dt) {
     clock += dt || 0;
+    glitchTime.value = clock;   // drives the 'glitch' style's jitter+flicker (uniform only)
     // building skyline slow neon breath.
     if (flicker.length) {
       const f = 0.12 + glow * 0.22 + Math.sin(clock * 2.1) * 0.05;

@@ -80,6 +80,51 @@ function short(t) {
     console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}`);
   }
 
+  // ---- RENDERSTYLE: each genre renders in its own visual language --------
+  console.log("\n=== RENDERSTYLE per genre ===");
+  const POST_KEYS = ["dither", "scanlines", "aberration", "halftone", "bloom", "posterize", "grade", "vignette", "curvature"];
+  const rsPost = {}, rsMat = {};
+  for (const g of GENRES) {
+    const rs = T[g].renderStyle;
+    // shape check: renderStyle present + full contract shape.
+    const shapeOk = rs && rs.post && typeof rs.material === "string" &&
+      POST_KEYS.every((k) => rs.post[k] != null) && Array.isArray(rs.post.grade) && rs.post.grade.length === 3 &&
+      ["none", "ordered", "onebit"].indexOf(rs.post.dither) >= 0 &&
+      rs.post.posterize >= 2 && rs.post.posterize <= 16 &&
+      ["flat", "cel", "iridescent", "wireframe", "glitch", "matte"].indexOf(rs.material) >= 0;
+    if (!shapeOk) fail++;
+    rsPost[g] = JSON.stringify(rs && rs.post);
+    rsMat[g] = rs && rs.material;
+    console.log(`  ${g.padEnd(11)} ${shapeOk ? "OK  " : "BAD "} mat=${(rsMat[g] || "?").padEnd(11)} ${rsPost[g]}`);
+  }
+  // VARIES: distinct genres -> distinct post bags + a spread of materials.
+  const uniqPost = new Set(Object.values(rsPost));
+  const uniqMat = new Set(Object.values(rsMat));
+  console.log(`  ${GENRES.length} genres -> ${uniqPost.size} distinct post bags, ${uniqMat.size} distinct materials`);
+  if (uniqPost.size < GENRES.length) { console.log("  !!! some post bags collided"); fail++; }
+  if (uniqMat.size < 3) { console.log("  !!! materials not varied enough"); fail++; }
+  // intent spot-checks: the derivation matches the genre archetype.
+  const rchecks = [
+    ["techno dithers ONEBIT (hard electronica)", T.techno.renderStyle.post.dither === "onebit"],
+    ["techno crushes the palette (posterize <= 5)", T.techno.renderStyle.post.posterize <= 5],
+    ["ambient uses NO dither (clean wash)", T.ambient.renderStyle.post.dither === "none"],
+    ["ambient blooms strongly (>0.4)", T.ambient.renderStyle.post.bloom > 0.4],
+    ["ambient keeps a smooth ramp (posterize >= 10)", T.ambient.renderStyle.post.posterize >= 10],
+    ["jazz gets a halftone screen (>0.3)", T.jazz.renderStyle.post.halftone > 0.3],
+    ["jazz grade is WARM (r > b)", T.jazz.renderStyle.post.grade[0] > T.jazz.renderStyle.post.grade[2]],
+    ["heavymetal is wireframe/glitch (aggressive surface)", ["wireframe", "glitch"].indexOf(T.heavymetal.renderStyle.material) >= 0],
+    ["gabber dithers ONEBIT + hard posterize", T.gabber.renderStyle.post.dither === "onebit" && T.gabber.renderStyle.post.posterize <= 5],
+  ];
+  for (const [label, ok] of rchecks) {
+    if (!ok) fail++;
+    console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}`);
+  }
+  // DETERMINISM already covered by the whole-object stringify above (renderStyle is
+  // part of the returned traits), but assert it explicitly for the post bag too.
+  const detOk = GENRES.every((g) => JSON.stringify(traitsFromGenre(K, V, g, SEED).renderStyle) === JSON.stringify(T[g].renderStyle));
+  if (!detOk) fail++;
+  console.log(`  renderStyle determinism: ${detOk ? "IDENTICAL across re-derivation" : "!!! DIVERGED"}`);
+
   console.log("\n" + (fail === 0 ? "ALL CHECKS PASSED" : `!!! ${fail} FAILURE(S)`));
   process.exit(fail === 0 ? 0 : 1);
 })();

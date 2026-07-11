@@ -24,15 +24,27 @@ export function makePS1(THREE, renderer, lowResTarget) {
   const fsScene = new THREE.Scene();
   const fsCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   const fsGeo = new THREE.PlaneGeometry(2, 2);
+  // The full-screen pass is now driven by a per-genre renderStyle.post BAG (see
+  // traits.js). Every effect scales by its 0..1 param so genres render in distinct
+  // visual languages, yet it stays ONE fragment pass (mobile-cheap). setStyle(post)
+  // below pushes a renderStyle.post into these uniforms. Defaults = a neutral clean
+  // look until a genre is landed.
+  const DITHER = { none: 0, ordered: 1, onebit: 2 };
+  const uniforms = {
+    uTex: { value: lowResTarget.texture },
+    uResolution: { value: new THREE.Vector2(lowResTarget.width || 256, lowResTarget.height || 192) },
+    uDither: { value: 1 },                                   // 0 none | 1 ordered | 2 onebit
+    uPosterize: { value: 16.0 },                             // colour-step count 2..16
+    uScan: { value: 0.0 },
+    uAberr: { value: 0.0 },
+    uHalftone: { value: 0.0 },
+    uBloom: { value: 0.0 },
+    uGrade: { value: new THREE.Vector3(1, 1, 1) },
+    uVignette: { value: 0.12 },
+    uCurve: { value: 0.0 },
+  };
   const fsMat = new THREE.ShaderMaterial({
-    uniforms: {
-      uTex: { value: lowResTarget.texture },
-      uResolution: { value: new THREE.Vector2(lowResTarget.width || 256, lowResTarget.height || 192) },
-      // The internal target is now near-native, so we EASE the crunch: finer colour
-      // quantisation (64 levels ~6 bits vs the old 32) and a gentler dither, so the
-      // higher resolution reads clean rather than heavily pixel-mashed.
-      uLevels: { value: 64.0 },
-    },
+    uniforms,
     depthTest: false,
     depthWrite: false,
     vertexShader: `
@@ -43,7 +55,15 @@ export function makePS1(THREE, renderer, lowResTarget) {
       precision mediump float;
       uniform sampler2D uTex;
       uniform vec2 uResolution;
-      uniform float uLevels;
+      uniform int uDither;          // 0 none | 1 ordered | 2 onebit
+      uniform float uPosterize;     // colour-step count (low = harsh)
+      uniform float uScan;          // CRT scanline strength
+      uniform float uAberr;         // chromatic aberration (RGB split)
+      uniform float uHalftone;      // halftone dot strength
+      uniform float uBloom;         // soft glow
+      uniform vec3 uGrade;          // per-channel colour grade
+      uniform float uVignette;
+      uniform float uCurve;         // CRT barrel curvature
       varying vec2 vUv;
       // 4x4 Bayer ordered-dither threshold, returned in 0..1.
       float bayer4(vec2 p) {
@@ -58,25 +78,103 @@ export function makePS1(THREE, renderer, lowResTarget) {
         return (v + 0.5) / 16.0;
       }
       void main() {
-        vec3 c = texture2D(uTex, vUv).rgb;
-        // The scene renders into a LINEAR render target; this pass blits straight to
-        // the canvas via a raw ShaderMaterial, so Three applies NO output encoding.
-        // Writing linear values to an sRGB canvas crushes the midtones (murky/dark).
-        // Convert linear -> sRGB here so the picture reads at its true brightness, and
-        // give it a touch of extra saturation + lift for the punchy flat PS1 look.
+        // -- CRT barrel curvature: warp the sample UV outward from centre.
+        vec2 uv = vUv;
+        if (uCurve > 0.0) {
+          vec2 cc = uv - 0.5;
+          uv = uv + cc * dot(cc, cc) * uCurve * 0.35;
+        }
+        bool outside = (uCurve > 0.0) && (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0);
+        vec2 suv = clamp(uv, 0.0, 1.0);
+        // -- chromatic aberration: split the R/B taps along the centre-radial dir.
+        vec2 off = (suv - 0.5) * uAberr * 0.02;
+        vec3 c;
+        c.r = texture2D(uTex, clamp(suv + off, 0.0, 1.0)).r;
+        c.g = texture2D(uTex, suv).g;
+        c.b = texture2D(uTex, clamp(suv - off, 0.0, 1.0)).b;
+        // -- cheap single-pass bloom: a 6-tap bright-pass blur added back additively.
+        if (uBloom > 0.0) {
+          vec2 px = 1.5 / uResolution;
+          vec3 b = texture2D(uTex, suv + vec2(px.x, 0.0)).rgb
+                 + texture2D(uTex, suv - vec2(px.x, 0.0)).rgb
+                 + texture2D(uTex, suv + vec2(0.0, px.y)).rgb
+                 + texture2D(uTex, suv - vec2(0.0, px.y)).rgb
+                 + texture2D(uTex, suv + px).rgb
+                 + texture2D(uTex, suv - px).rgb;
+          b *= (1.0 / 6.0);
+          float bl = max(0.0, dot(b, vec3(0.299, 0.587, 0.114)) - 0.5);
+          c += b * bl * uBloom * 2.4;
+        }
+        // The scene renders into a LINEAR target; this raw pass gets NO output
+        // encoding, so convert linear -> sRGB here (the darkness fix), then grade.
         c = clamp(c, 0.0, 1.0);
-        c = pow(c, vec3(1.0 / 2.2));              // linear -> sRGB (the darkness fix)
+        c = pow(c, vec3(1.0 / 2.2));                 // linear -> sRGB
+        c = clamp(c * uGrade, 0.0, 1.0);             // per-channel colour grade/tint
         float l = dot(c, vec3(0.299, 0.587, 0.114));
-        c = clamp(mix(vec3(l), c, 1.28), 0.0, 1.0); // punchy saturation
-        // dither in low-res texel space so the pattern rides the crunchy pixels.
-        vec2 texel = floor(vUv * uResolution);
-        float t = bayer4(texel) - 0.5;      // -0.5..0.5
-        c += t / uLevels;                    // nudge before quantising
-        c = floor(c * uLevels + 0.5) / uLevels;
+        c = clamp(mix(vec3(l), c, 1.28), 0.0, 1.0);  // punchy saturation
+        // -- halftone: a dot grid that grows in the dark tones (newsprint look).
+        if (uHalftone > 0.0) {
+          vec2 hp = suv * uResolution / 3.0;
+          float dd = length(fract(hp) - 0.5);
+          float dotv = smoothstep(0.5, 0.12, dd + (0.5 - l) * 0.5);
+          c = mix(c, c * (0.55 + 0.45 * dotv), uHalftone);
+        }
+        // -- dither + posterize in low-res texel space so it rides the crunchy pixels.
+        vec2 texel = floor(suv * uResolution);
+        if (uDither == 2) {
+          // 1-bit: hard ordered threshold per channel (a stark, high-contrast look).
+          float t = bayer4(texel);
+          c = step(vec3(t), c);
+        } else {
+          float levels = max(2.0, uPosterize);
+          float t = (uDither == 1) ? (bayer4(texel) - 0.5) : 0.0;
+          c += t / levels;                            // ordered nudge before quantising
+          c = floor(c * levels + 0.5) / levels;       // posterize (colour-step quantize)
+        }
+        // -- scanlines: darken every other display row.
+        if (uScan > 0.0) {
+          float s = 0.5 + 0.5 * sin(suv.y * uResolution.y * 3.14159);
+          c *= 1.0 - uScan * 0.5 * (1.0 - s);
+        }
+        // -- vignette: fall off toward the corners.
+        if (uVignette > 0.0) {
+          c *= 1.0 - uVignette * smoothstep(0.35, 0.85, length(suv - 0.5));
+        }
+        if (outside) c = vec3(0.0);                   // black border past the CRT curve
         gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
       }
     `,
   });
+  // setStyle(post) — push a renderStyle.post bag (from traits.js) into the pass so
+  // the ACTIVE planet's whole-screen render changes by genre. Missing fields fall
+  // back to the neutral defaults; every value is clamped to its contract range.
+  function setStyle(post) {
+    if (!post) return;
+    const cl = (x, lo, hi, d) => (typeof x === "number" && isFinite(x) ? Math.max(lo, Math.min(hi, x)) : d);
+    if (post.dither != null) uniforms.uDither.value = DITHER[post.dither] != null ? DITHER[post.dither] : 1;
+    uniforms.uPosterize.value = cl(post.posterize, 2, 16, uniforms.uPosterize.value);
+    uniforms.uScan.value = cl(post.scanlines, 0, 1, uniforms.uScan.value);
+    uniforms.uAberr.value = cl(post.aberration, 0, 1, uniforms.uAberr.value);
+    uniforms.uHalftone.value = cl(post.halftone, 0, 1, uniforms.uHalftone.value);
+    uniforms.uBloom.value = cl(post.bloom, 0, 1, uniforms.uBloom.value);
+    uniforms.uVignette.value = cl(post.vignette, 0, 1, uniforms.uVignette.value);
+    uniforms.uCurve.value = cl(post.curvature, 0, 1, uniforms.uCurve.value);
+    if (Array.isArray(post.grade) && post.grade.length === 3) {
+      uniforms.uGrade.value.set(cl(post.grade[0], 0, 4, 1), cl(post.grade[1], 0, 4, 1), cl(post.grade[2], 0, 4, 1));
+    }
+  }
+  // getStyle() — a plain numeric snapshot of the LIVE uniforms (headless-proof so the
+  // probe can assert the active style differs by genre + updates on landing).
+  function getStyle() {
+    const g = uniforms.uGrade.value;
+    return {
+      dither: uniforms.uDither.value, posterize: uniforms.uPosterize.value,
+      scanlines: uniforms.uScan.value, aberration: uniforms.uAberr.value,
+      halftone: uniforms.uHalftone.value, bloom: uniforms.uBloom.value,
+      vignette: uniforms.uVignette.value, curvature: uniforms.uCurve.value,
+      grade: [g.x, g.y, g.z],
+    };
+  }
   const fsQuad = new THREE.Mesh(fsGeo, fsMat);
   fsQuad.frustumCulled = false;
   fsScene.add(fsQuad);
@@ -152,7 +250,7 @@ export function makePS1(THREE, renderer, lowResTarget) {
     return base;
   }
 
-  return { render, setSize, vertexSnapMaterial, dispose };
+  return { render, setSize, vertexSnapMaterial, dispose, setStyle, getStyle };
 }
 
 export default { makePS1 };

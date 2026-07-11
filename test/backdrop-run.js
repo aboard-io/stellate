@@ -46,6 +46,7 @@ async function main() {
   const R = await page.evaluate(async () => {
     const THREE = await import("/vendor/three/three.module.min.js");
     const { makeBackdrop } = await import("/app/starcruise/backdrop.js");
+    const { makePlanet } = await import("/app/starcruise/ship.js");
 
     const traits = (kind) => ({
       backdrop: kind, glow: 0.4,
@@ -132,6 +133,37 @@ async function main() {
       return { spread, nonBg, blank: spread < 8, allOneColor: spread < 4 };
     }
 
+    // ---- RENDER STYLE: the city + planet SHADE in the genre's material language ----
+    // Inject each renderStyle.material and confirm the building/planet material's
+    // signature genuinely differs (a new shader/type, not just a recolour), that each
+    // style COMPILES + renders non-blank, and that layout stays byte-identical (the
+    // style is render-only — it must not perturb the seeded geometry placement).
+    const styleTraits = (kind, mat) => Object.assign(traits(kind), { renderStyle: { material: mat } });
+    function matSig(root, name) {
+      let out = null;
+      root.traverse((o) => {
+        if (out) return;
+        if ((o.isInstancedMesh || o.isMesh) && (name ? o.name === name : true) && o.material && o.material.isMaterial) {
+          const m = o.material;
+          const key = m.customProgramCacheKey ? m.customProgramCacheKey() : "";
+          out = { type: m.type, toon: !!m.isMeshToonMaterial, wire: !!m.wireframe, smooth: m.flatShading === false, shader: /^sc_/.test(key) ? key : "" };
+        }
+      });
+      return out;
+    }
+    const STYLES = ["flat", "cel", "iridescent", "wireframe", "glitch", "matte"];
+    const buildStyle = {}, planetStyle = {}, styleLayout = {}, styleRenderSpread = {};
+    const baseLayout = sumSig(instats(makeBackdrop(THREE, traits("city"), 5)));
+    for (const s of STYLES) {
+      const bd = makeBackdrop(THREE, styleTraits("city", s), 5);
+      buildStyle[s] = matSig(bd.group, "buildings");
+      styleLayout[s] = sumSig(instats(bd)) === baseLayout;   // geometry layout unchanged
+      styleRenderSpread[s] = renderStats(bd).spread;         // compiles + renders
+      const pl = makePlanet(THREE, styleTraits("city", s), 5);
+      planetStyle[s] = matSig(pl.group, "planet-body");
+      pl.update(0.1); pl.update(0.1);                        // step (glitch clock) — no throw
+    }
+
     const city = makeBackdrop(THREE, traits("city"), 5);
     const farm = makeBackdrop(THREE, traits("farm"), 5);
     const cityStats = instats(city), farmStats = instats(farm);
@@ -152,6 +184,7 @@ async function main() {
     renderer.dispose();
     return {
       cityStats, farmStats, cityRender, farmRender, cityBlink, farmBlink,
+      style: { build: buildStyle, planet: planetStyle, layout: styleLayout, spread: styleRenderSpread },
       shadow: {
         cityGround: groundReceives(city), farmGround: groundReceives(farm),
         cityCasters: cityStats.filter((m) => m.name === "buildings" && m.cast).length,
@@ -212,6 +245,27 @@ async function main() {
   ok(R.shadow.cityFoliageCasts, "S4. city foliage casts shadows");
   ok(R.shadow.farmCropCasts && R.shadow.farmSiloCasts, "S5. farm crops + silos cast shadows");
   ok(R.shadow.beaconNeverCasts, "S6. glowing light octahedra never cast (no black holes in the glow)");
+
+  console.log("=== RENDER STYLE (material language) ===");
+  const J = (o) => JSON.stringify(o);
+  const st = R.style;
+  console.log("  building material by style:");
+  for (const s of ["flat", "cel", "iridescent", "wireframe", "glitch", "matte"]) {
+    console.log(`    ${s.padEnd(11)} build=${J(st.build[s])} planet=${J(st.planet[s])} layout-eq=${st.layout[s]} spread=${st.spread[s]}`);
+  }
+  // buildings: contrasting genres render in genuinely different material languages.
+  ok(J(st.build.flat) !== J(st.build.wireframe), `M1. CITY buildings differ flat vs wireframe (${J(st.build.flat)} vs ${J(st.build.wireframe)})`);
+  ok(J(st.build.cel) !== J(st.build.glitch) && J(st.build.cel) !== J(st.build.iridescent), "M2. CITY buildings differ cel vs glitch vs iridescent");
+  ok(st.build.cel.toon && st.build.iridescent.shader === "sc_irid" && st.build.glitch.shader === "sc_glitch" && st.build.wireframe.wire && st.build.matte.smooth,
+    "M3. CITY building treatments applied (cel=toon, irid/glitch shaders, wire, matte-smooth)");
+  // planet: the highlight — clearly distinct surface per genre.
+  ok(J(st.planet.flat) !== J(st.planet.wireframe) && J(st.planet.cel) !== J(st.planet.iridescent), `M4. PLANET surface differs by genre (flat=${J(st.planet.flat)} wire=${J(st.planet.wireframe)})`);
+  ok(st.planet.cel.toon && st.planet.iridescent.shader === "sc_irid" && st.planet.glitch.shader === "sc_glitch" && st.planet.wireframe.wire,
+    "M5. PLANET treatments applied (cel=toon, irid/glitch shaders, wireframe)");
+  // render-only: the style must not perturb the seeded geometry layout.
+  ok(["flat", "cel", "iridescent", "wireframe", "glitch", "matte"].every((s) => st.layout[s]), "M6. styled city layout byte-identical to base (render-only, seed untouched)");
+  // every style compiles + renders non-blank (injected shaders survive compilation).
+  ok(["flat", "cel", "iridescent", "wireframe", "glitch", "matte"].every((s) => st.spread[s] >= 8), `M7. every style renders NON-BLANK (spreads: ${["flat", "cel", "iridescent", "wireframe", "glitch", "matte"].map((s) => st.spread[s]).join("/")})`);
 
   console.log("=== DETERMINISM ===");
   ok(R.det.cityIdentical, "D1. city seed 5 == seed 5 (identical layout)");

@@ -92,6 +92,7 @@ let sun = null;              // the shadow-casting KEY light (module-scoped for 
 let starfield = null;        // persistent THREE.Points deep-space (whole-session)
 let curTraits = null;        // TRAITS of the currently-spawned band (headless-probe visibility)
 let curDominant = null;
+let curRenderStyle = null;   // renderStyle of the ACTIVE genre (pushed into the PS1 post pass)
 let lastState = null;        // last flight state (headless-probe visibility)
 const bandCentroid = { x: 0, y: 1.2, z: 0.6 };   // centre of the spawned players (orbit target)
 // the SPACE ANCHOR — a fixed spot high above the band scene where the cockpit set +
@@ -136,6 +137,9 @@ function buildRenderTarget() {
   });
   ps1 = mods.makePS1(THREE, renderer, lowResTarget);
   ps1.setSize(lowW, lowH);                 // canvas backing store == target size (crisp, near-native)
+  // the pass is freshly built here (start / resize / DPR change) — re-apply the
+  // active genre's renderStyle so the by-genre look survives a rebuild.
+  if (ps1.setStyle && curRenderStyle) ps1.setStyle(curRenderStyle.post);
   if (camera) { camera.aspect = lowW / lowH; camera.updateProjectionMatrix(); }
 }
 const BAND_CAP = 8;               // HARD mobile cap on simultaneous aliens (traits caps at 6)
@@ -193,6 +197,12 @@ function spawnFor(genreOrWeights, seed) {
   const useSeed = seed || S.seed || 1;
   const traits = mods.traitsFromGenre(K(), V(), genreOrWeights, useSeed);
   curTraits = traits;
+  // RENDERSTYLE: this genre's visual language. Push its post-fx bag into the PS1 pass
+  // so the ACTIVE planet's whole-screen render (dither/scanlines/aberration/bloom/
+  // posterize/grade/vignette/curvature) changes by genre. Stored so a render-target
+  // rebuild (resize / DPR change) re-applies it to the freshly-built pass.
+  curRenderStyle = traits.renderStyle || null;
+  if (ps1 && ps1.setStyle && curRenderStyle) ps1.setStyle(curRenderStyle.post);
   // backdrop (procedural city/farm behind the band).
   backdrop = mods.makeBackdrop(THREE, traits, useSeed);
   scene.add(backdrop.group);
@@ -796,7 +806,7 @@ export function stop() {
   if (displayCanvas && displayCanvas.parentNode) displayCanvas.parentNode.removeChild(displayCanvas);
   displayCanvas = null; renderer = null; scene = null; camera = null; lowResTarget = null; ps1 = null; flight = null;
   sun = null; _spaceCol = null; _lastActive = null;
-  curTraits = null; curDominant = null;
+  curTraits = null; curDominant = null; curRenderStyle = null;
   document.body.classList.remove("view-starcruise");
   const chip = document.getElementById("cruiseChip"); if (chip) chip.classList.remove("on");
   window.__STARCRUISE && (window.__STARCRUISE.running = false);
@@ -884,6 +894,10 @@ window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBe
   hasPlanet: () => !!planet,
   sceneChildren: () => (scene ? scene.children.length : 0),
   traits: () => curTraits,
+  // renderStyle probes: the active genre's derived style + the LIVE post-fx uniforms
+  // it pushed into the PS1 pass (proves the pass changes by genre + updates on land).
+  renderStyle: () => curRenderStyle,
+  postStyle: () => (ps1 && ps1.getStyle ? ps1.getStyle() : null),
   // __injectTravel/__injectBeat(obj|null): OVERRIDE the real hooks with a scripted
   // stream so the probe can force a clean FLY->APPROACH->LAND cycle and park the
   // beatPhase exactly on a hit. Pass null to restore the real app hooks. Null in

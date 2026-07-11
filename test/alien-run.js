@@ -146,6 +146,58 @@ async function inPage() {
   const t2 = hitTrace(makeAlien(THREE, traits, m, 42), 64).trace;
   out.deterministic = t1.length === t2.length && t1.every((v, k) => Math.abs(v - t2[k]) < 1e-9);
 
+  // ---- RENDER STYLE: aliens of contrasting genres SHADE differently -------------
+  // traits.renderStyle.material selects the surface language. Inject each style
+  // (the traits agent supplies it in prod; here we set it) and confirm the body
+  // material's signature genuinely differs — not just a recolour.
+  function sig(a) {
+    const m = a.materials[0];
+    const key = m.customProgramCacheKey ? m.customProgramCacheKey() : "";
+    return {
+      type: m.type, toon: !!m.isMeshToonMaterial, wire: !!m.wireframe,
+      smooth: m.flatShading === false, shader: /^sc_/.test(key) ? key : null,
+    };
+  }
+  const withStyle = (mat) => Object.assign({}, traits, { renderStyle: { material: mat } });
+  const drumM = { role: "drum", instrument: { family: "thumpdrum", playStyle: "drum", appendage: 0, hitsPerBeat: 4 } };
+  out.styles = {};
+  for (const s of ["flat", "cel", "iridescent", "wireframe", "glitch", "matte"]) {
+    out.styles[s] = sig(makeAlien(THREE, withStyle(s), drumM, 9));
+  }
+  const J = (o) => JSON.stringify(o);
+  out.styleDistinct = J(out.styles.cel) !== J(out.styles.iridescent)
+    && J(out.styles.flat) !== J(out.styles.glitch)
+    && J(out.styles.flat) !== J(out.styles.wireframe)
+    && J(out.styles.flat) !== J(out.styles.cel)
+    && J(out.styles.flat) !== J(out.styles.matte);
+  out.styleTreated = out.styles.cel.toon && out.styles.iridescent.shader === "sc_irid"
+    && out.styles.glitch.shader === "sc_glitch" && out.styles.wireframe.wire && out.styles.matte.smooth
+    && out.styles.flat.type === "MeshLambertMaterial" && !out.styles.flat.shader && !out.styles.flat.toon;
+
+  // Each style must actually COMPILE + RENDER non-blank on the real GL context
+  // (the injected fresnel/glitch/toon shaders must survive program compilation).
+  out.styleRender = {};
+  for (const s of ["flat", "cel", "iridescent", "wireframe", "glitch", "matte"]) {
+    const sc = new THREE.Scene();
+    sc.background = new THREE.Color(0x0a0410);
+    sc.add(new THREE.AmbientLight(0x8899aa, 0.7));
+    const dl = new THREE.DirectionalLight(0xffeedd, 0.9); dl.position.set(3, 6, 4); sc.add(dl);
+    const al = makeAlien(THREE, withStyle(s), drumM, 9);
+    al.update(0.05, 0.5);   // advance so glitch has a non-zero clock
+    sc.add(al.group);
+    renderer.setRenderTarget(target); renderer.clear(); renderer.render(sc, camera);
+    const b = new Uint8Array(LOW_W * LOW_H * 4);
+    renderer.readRenderTargetPixels(target, 0, 0, LOW_W, LOW_H, b);
+    let mn = 255, mx = 0, nb = 0;
+    for (let i = 0; i < b.length; i += 4) {
+      const r = b[i], g = b[i + 1], bl = b[i + 2];
+      mn = Math.min(mn, r, g, bl); mx = Math.max(mx, r, g, bl);
+      if (r > 20 || g > 20 || bl > 30) nb++;
+    }
+    out.styleRender[s] = { spread: mx - mn, nonBg: nb };
+  }
+  out.allStylesRender = Object.values(out.styleRender).every((v) => v.spread > 8 && v.nonBg > 150);
+
   renderer.setRenderTarget(null);
   target.dispose(); renderer.dispose();
   return out;
@@ -193,6 +245,13 @@ async function main() {
   ok(R.render.nonBg > 200, `C3. real geometry drawn (${R.render.nonBg} non-bg px)`);
 
   ok(R.deterministic, "D1. deterministic: same (traits,member,seed) -> identical hit trace");
+
+  console.log("  STYLE SIGNATURES:", JSON.stringify(R.styles, null, 2));
+  console.log("  STYLE RENDERS:", JSON.stringify(R.styleRender, null, 2));
+  ok(R.styleDistinct, "F1. material DIFFERS by renderStyle.material (flat/cel/iridescent/wireframe/glitch/matte all distinct)");
+  ok(R.styleTreated, "F2. each style applies its treatment (cel=toon, iridescent/glitch=shader-hooked, wireframe=wire, matte=smooth, flat=plain Lambert)");
+  ok(R.allStylesRender, "F3. every style COMPILES + renders non-blank on GL (injected shaders survive compilation)");
+
   ok(perr.length === 0, "E1. no console/page errors" + (perr.length ? " :: " + perr.join(" | ") : ""));
 
   await browser.close();

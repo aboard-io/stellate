@@ -155,6 +155,52 @@ async function main() {
     `G4. scene child count ROSE on landing (${flying.children} flying -> ${landed.children} landed)`);
   ok(landed.backdrop && landed.ship, `G5. backdrop + ship present after landing`);
 
+  // ---- RS: RENDERSTYLE — the active planet's whole-screen render CHANGES by genre ----
+  // Landing a genre pushes traits.renderStyle.post into the PS1 post pass. Land two
+  // genres and assert (1) the ACTIVE post-fx uniforms match the landed genre's derived
+  // style, (2) they DIFFER between two distinct genres, and (3) the frame stays
+  // non-blank under each style. Scans candidate genres so it always finds a contrast.
+  const rs = await page.evaluate(() => {
+    const SC = window.__STARCRUISE;
+    const gs = Object.keys(window.GenreKernel.GENRES || {});
+    function land(g) {
+      SC.__injectTravel({ weights: [], dominant: null, position: null, live: false, seed: 1 });
+      for (let i = 0; i < 12; i++) SC.__step(0.2);           // depart -> clean flying baseline
+      SC.__injectTravel({ weights: [{ g, w: 1 }], dominant: g, position: { x: 0, y: 0 }, live: true, seed: 1 });
+      for (let i = 0; i < 60; i++) { const st = SC.__step(0.1); if (st.phase === "DANCE") break; }
+      const smp = SC.sampleLowRes();
+      return { g, post: SC.postStyle(), rs: SC.renderStyle(),
+        nonBlank: !!(smp && !smp.blank && smp.nonBg > 50), nonBg: smp && smp.nonBg };
+    }
+    const a = land(gs[7] || gs[0]);
+    // find a genre whose landed post bag differs from A's (distinct visual language).
+    let b = null;
+    for (let i = 0; i < gs.length && !b; i++) {
+      const cand = land(gs[i]);
+      if (JSON.stringify(cand.post) !== JSON.stringify(a.post)) b = cand;
+    }
+    // does the LIVE pass match the genre's DERIVED style? (proves the push landed)
+    const matchA = a.rs && a.post && a.rs.post.dither &&
+      ({ none: 0, ordered: 1, onebit: 2 }[a.rs.post.dither] === a.post.dither) &&
+      Math.abs(a.rs.post.bloom - a.post.bloom) < 1e-3 &&
+      Math.abs(a.rs.post.posterize - a.post.posterize) < 1e-3;
+    return { a, b, matchA };
+  });
+  console.log("       rs.A:", rs.a && rs.a.g, JSON.stringify(rs.a && rs.a.post));
+  console.log("       rs.B:", rs.b && rs.b.g, JSON.stringify(rs.b && rs.b.post));
+  ok(rs.a && rs.a.post && rs.matchA, `RS1. landing pushes the genre's renderStyle into the PS1 pass (live uniforms match ${rs.a && rs.a.g})`);
+  ok(!!(rs.b && rs.b.g), `RS2. two genres render in DISTINCT visual languages (${rs.a && rs.a.g} vs ${rs.b && rs.b.g}: post bags differ)`);
+  ok(!!(rs.a && rs.a.nonBlank) && !!(rs.b && rs.b.nonBlank), `RS3. frame stays NON-BLANK under each genre's style (A nonBg=${rs.a && rs.a.nonBg}, B nonBg=${rs.b && rs.b.nonBg})`);
+
+  // re-land the primary GEN so the following blocks see the same landed genre as G.
+  await page.evaluate((G) => {
+    const SC = window.__STARCRUISE;
+    SC.__injectTravel({ weights: [], dominant: null, position: null, live: false, seed: 1 });
+    for (let i = 0; i < 12; i++) SC.__step(0.2);
+    SC.__injectTravel({ weights: [{ g: G, w: 1 }], dominant: G, position: { x: 0, y: 0 }, live: true, seed: 1 });
+    for (let i = 0; i < 60; i++) { const st = SC.__step(0.1); if (st.phase === "DANCE") break; }
+  }, GEN);
+
   // ---- N: NAVIGATION — default framing is FRONT-CENTRED, and a DRAG moves the view ----
   // (1) the landed view must be centred on the band (target ~ centroid, yaw ~ 0 = front,
   // camera IN FRONT on +Z) — the fix for "side profile / off to the left / zoomed out".
