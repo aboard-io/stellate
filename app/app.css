@@ -217,14 +217,29 @@
   .chy-join{color:var(--amber);margin-top:.15rem}
   .chy-tech{margin-top:.4rem;color:var(--mint);opacity:.8;font-size:12px;line-height:1.45}
   .chy-status{margin-top:.25rem;color:var(--cyan);font-size:12px}
-  .row{display:flex;align-items:center;gap:.5rem;margin:.3rem 0}
-  .row label{width:86px;font-size:.7rem;color:var(--dim)}
-  .row input[type=range]{flex:1;accent-color:var(--pink);margin:0}
-  .row output{width:46px;text-align:right;color:var(--mint);font-variant-numeric:tabular-nums;font-size:.74rem}
-  .row select{flex:1;background:rgba(28,24,56,.6);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.25rem .4rem;font-size:.78rem}
+  /* SETTINGS PANEL (redesigned 2026-07-11): grouped sections, aligned rows, no
+     wrapping value labels, uniform export buttons, an export progress bar. */
+  .psec{margin:.2rem 0 .5rem;padding:.15rem 0 .45rem;border-bottom:1px solid var(--line)}
+  .psec:last-of-type{border-bottom:none}
+  .ptitle{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);opacity:.7;margin:.1rem 0 .28rem}
+  .row{display:flex;align-items:center;gap:.55rem;margin:.28rem 0}
+  .row label{width:70px;flex:none;font-size:.72rem;color:var(--dim)}
+  .row input[type=range]{flex:1;min-width:0;accent-color:var(--pink);margin:0}
+  .row output{flex:none;min-width:60px;text-align:right;color:var(--mint);font-variant-numeric:tabular-nums;font-size:.72rem;white-space:nowrap}
+  .row select{flex:1;min-width:0;background:rgba(28,24,56,.6);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:.28rem .4rem;font-size:.76rem}
   button{font:inherit;cursor:pointer;border-radius:9px;border:1px solid var(--line2);background:rgba(28,24,56,.6);color:var(--ink);padding:.45rem .8rem}
   button.go{background:linear-gradient(90deg,var(--pink),var(--purple));border:none;color:#0c081a;font-weight:700}
-  .btns{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem}
+  button.mini{flex:none;padding:.3rem .55rem;font-size:.74rem;white-space:nowrap}
+  .btns{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-top:.15rem}
+  .btns button{padding:.5rem .4rem;font-size:.8rem;text-align:center;white-space:nowrap;
+    display:flex;align-items:center;justify-content:center}
+  .btns button:disabled{opacity:.4;cursor:default}
+  .btns button.rec{background:linear-gradient(90deg,#c0305a,#7a2050);border-color:#c0305a;color:#fff;font-weight:600}
+  /* export progress bar */
+  .exprog{margin:.1rem 0 .6rem}
+  .exbar{height:8px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden}
+  .exfill{height:100%;background:linear-gradient(90deg,var(--pink),var(--cyan));transition:width .2s ease}
+  .exlabel{margin-top:.24rem;font-size:.68rem;color:var(--mint);font-variant-numeric:tabular-nums}
   .sc{display:flex;align-items:center;gap:.5rem;font-size:.7rem;margin:.16rem 0}
   .sc .g{width:78px;color:var(--dim)}
   .sc .bar{flex:1;height:6px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}

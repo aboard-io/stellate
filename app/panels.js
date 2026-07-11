@@ -37,49 +37,60 @@ function setBpmDelta(v){
 }
 function Panel(){
   if(!S.playing) return html`<div>…</div>`;
+  const busy=EXPORT.busy||VIDEO.recording, pct=S.exportPct;
+  const vol=Math.round((S.masterVol!=null?S.masterVol:1)*100), vap=Math.round((S.vapor||0)*100);
+  const bpm=S.playing?Math.round(S.playing.bpm):0, dl=S.bpmDelta||0;
   return html`
-    <div class="row"><label>seed</label>
-      <input class="seedin" type="number" value=${S.seed}
-        onchange=${e=>{set({seed:+e.target.value||1});}} />
-      <button onclick=${()=>{set({seed:Math.floor(Math.random()*99999)});}}>🎲</button>
-      <button title="copy a link to THIS mix — seed, path and the current measure ride the URL; anyone opening it drops in right here"
-        onclick=${copyShareUrl}>⧉ share</button></div>
-    <div class="row"><label>volume</label>
-      <input type="range" min="0" max="150" step="1" value=${Math.round((S.masterVol!=null?S.masterVol:1)*100)}
-        onInput=${e=>setMasterVol((+e.target.value||0)/100)} />
-      <output>${Math.round((S.masterVol!=null?S.masterVol:1)*100)}%</output></div>
-    <div class="row"><label title="global 'walking through a mall' EQ — rolls off the highs and adds reverb wash (live only)">vapor</label>
-      <input type="range" min="0" max="100" step="1" value=${Math.round((S.vapor||0)*100)}
-        onInput=${e=>setVapor((+e.target.value||0)/100)} />
-      <output>${Math.round((S.vapor||0)*100)}%</output></div>
-    <div class="row"><label>soundfont</label>
-      <select class="sfsel" onChange=${e=>setSoundfont(e.target.value)}>
-        ${fontManifest().map(f=>html`<option value=${f.key} selected=${(S.soundfont||"fluidr3")===f.key}>${f.label}</option>`)}
-      </select></div>
-    <div class="row"><label>pace</label>
-      <input type="range" min="4" max="12" step="1" value=${16-Math.round(Math.log2(Math.max(16,Math.min(4096,+S.pace||BARS_PER_SEG))))}
-        onInput=${e=>set({pace:Math.pow(2,16-Math.max(4,Math.min(12,+e.target.value||8)))})} />
-      <output>~${S.waypoints.length>=2?loopBars():S.pace} bars/loop</output></div>
-    <div class="row"><label>±bpm</label>
-      <input type="range" min="-64" max="64" step="1" value=${S.bpmDelta||0}
-        onInput=${e=>setBpmDelta(e.target.value)} />
-      <output>${(S.bpmDelta||0)>0?"+":""}${S.bpmDelta||0}${S.playing?" → "+Math.round(S.playing.bpm):""}</output></div>
-    <div class="btns">
-      <button disabled=${!S.playing||EXPORT.busy}
-        title=${!S.playing?"nothing playing yet — the buttons capture the current song":"Standard MIDI File of the current song, named from the chyron's band card — built right here in your browser"}
-        onclick=${()=>downloadMidi()}>⤓ midi</button>
-      <button disabled=${!S.playing||EXPORT.busy}
-        title=${!S.playing?"nothing playing yet — the buttons capture the current song":(S.waypoints.length>=2?"render the ENTIRE PATH — every genre the loop crosses — to lossless WAV, right here in your browser (the whole mix; takes a while, progress in the status line)":"render the current song to lossless WAV — everything happens in your browser, takes a minute; progress shows in the status line")}
-        onclick=${()=>exportAudioSmart("wav")}>${EXPORT.busy?"…rendering":"⤓ wav"}</button>
-      <button disabled=${!S.playing||EXPORT.busy}
-        title=${!S.playing?"nothing playing yet — the buttons capture the current song":(S.waypoints.length>=2?"render the ENTIRE PATH and encode MP3 (192kbps) — the whole journey, in your browser":"render the current song and encode MP3 (192kbps) — everything happens in your browser, takes a minute")}
-        onclick=${()=>exportAudioSmart("mp3")}>⤓ mp3</button>
-      <button disabled=${!S.playing}
-        title=${!S.playing?"press ▶ LIVE first — video records the live visuals + audio":"record ~30s of the live visuals + audio to a .webm video (records in real time as the loop plays)"}
-        onclick=${()=>VIDEO.recording?stopVideo():recordVideo({seconds:30})}>${VIDEO.recording?"⏹ stop":"⏺ video"}</button>
+    ${pct!=null ? html`<div class="exprog">
+      <div class="exbar"><div class="exfill" style=${"width:"+Math.round(pct*100)+"%"}></div></div>
+      <div class="exlabel">${S.exportLabel||"exporting"} · ${Math.round(pct*100)}%</div></div>` : ""}
+
+    <div class="psec"><div class="ptitle">mix</div>
+      <div class="row"><label>volume</label>
+        <input type="range" min="0" max="150" step="1" value=${vol}
+          onInput=${e=>setMasterVol((+e.target.value||0)/100)} />
+        <output>${vol}%</output></div>
+      <div class="row"><label title="the mix recedes into a huge empty mall — muffled, distant, drenched in reverb (live only)">vapor</label>
+        <input type="range" min="0" max="100" step="1" value=${vap}
+          onInput=${e=>setVapor((+e.target.value||0)/100)} />
+        <output>${vap}%</output></div>
+      <div class="row"><label>soundfont</label>
+        <select class="sfsel" onChange=${e=>setSoundfont(e.target.value)}>
+          ${fontManifest().map(f=>html`<option value=${f.key} selected=${(S.soundfont||"fluidr3")===f.key}>${f.label}</option>`)}
+        </select></div>
     </div>
-    <p class="hint">dbl-tap the sky to add a waypoint · drag the pink playhead to scrub ·
-    right-click a waypoint to erase · stop twice to rewind · the URL is the bookmark</p>`;
+
+    <div class="psec"><div class="ptitle">structure</div>
+      <div class="row"><label>seed</label>
+        <input class="seedin" type="number" value=${S.seed}
+          onchange=${e=>{set({seed:+e.target.value||1});}} />
+        <button class="mini" title="random seed" onclick=${()=>{set({seed:Math.floor(Math.random()*99999)});}}>🎲</button>
+        <button class="mini" title="copy a link to THIS mix — seed, path and measure ride the URL"
+          onclick=${copyShareUrl}>↗ share</button></div>
+      <div class="row"><label>pace</label>
+        <input type="range" min="4" max="12" step="1" value=${16-Math.round(Math.log2(Math.max(16,Math.min(4096,+S.pace||BARS_PER_SEG))))}
+          onInput=${e=>set({pace:Math.pow(2,16-Math.max(4,Math.min(12,+e.target.value||8)))})} />
+        <output>${S.waypoints.length>=2?loopBars():S.pace} bars</output></div>
+      <div class="row"><label>±bpm</label>
+        <input type="range" min="-64" max="64" step="1" value=${dl}
+          onInput=${e=>setBpmDelta(e.target.value)} />
+        <output>${bpm} bpm${dl?" ("+(dl>0?"+":"")+dl+")":""}</output></div>
+    </div>
+
+    <div class="psec"><div class="ptitle">export</div>
+      <div class="btns">
+        <button disabled=${!S.playing||busy} title="Standard MIDI File — the whole path if a loop is drawn, else the current song"
+          onclick=${()=>downloadMidi()}>⤓ midi</button>
+        <button disabled=${!S.playing||busy} title=${S.waypoints.length>=2?"render the ENTIRE PATH to lossless WAV (in your browser)":"render the current song to lossless WAV"}
+          onclick=${()=>exportAudioSmart("wav")}>⤓ wav</button>
+        <button disabled=${!S.playing||busy} title=${S.waypoints.length>=2?"render the ENTIRE PATH to MP3 192k":"render the current song to MP3 192k"}
+          onclick=${()=>exportAudioSmart("mp3")}>⤓ mp3</button>
+        <button disabled=${!S.playing||EXPORT.busy} class=${VIDEO.recording?"rec":""}
+          title="record ~30s of the live visuals + audio to a .webm video"
+          onclick=${()=>VIDEO.recording?stopVideo():recordVideo({seconds:30})}>${VIDEO.recording?"⏹ stop":"⤓ video"}</button>
+      </div>
+    </div>
+    <p class="hint">dbl-tap the sky to add a waypoint · drag the pink playhead to scrub · right-click a waypoint to erase · the URL is the bookmark</p>`;
 }
 const panel=document.getElementById("panel");
 subs.push(()=>{ render(Panel(),panel); drawMap(); startPulse(); });   // startPulse: resume the breath loop when travel (re)starts
