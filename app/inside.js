@@ -392,12 +392,12 @@ function graphData(st, U, bar){
 function graphSVG(g){
   if(!g||!g.voices.length) return "";
   const W=340, mgX=8, cx=W/2, innerW=W-2*mgX;
-  const nameH=24, chipH=17, chipRowH=21, cgap=6, vGap=13;
+  const nameH=26, chipH=21, chipRowH=26, cgap=7, vGap=14;
   // pack a voice's fx chips into rows within innerW — variable width per label
   // (~6.4px/monospace char at 11px + padding), wrapping when a row is full. This
   // is what makes the FULL chain (strip + inserts) fit on a phone (Paul 2026-07-11).
   const packChips=(labels)=>{ const out=[]; let x=0,row=0;
-    for(const raw of (labels||[])){ const l=String(raw); const w=Math.min(innerW, Math.round(l.length*6.4)+16);
+    for(const raw of (labels||[])){ const l=String(raw); const w=Math.min(innerW, Math.round(l.length*7.1)+18);
       if(x>0 && x+w>innerW){ row++; x=0; }
       out.push({label:l, w, x, row}); x+=w+cgap; }
     return { chips:out, rows: (labels&&labels.length)?row+1:0 }; };
@@ -452,7 +452,7 @@ function graphSVG(g){
       if(px!=null) nd+=arr(px, py, cx, vy[i]+it.h-1);         // last fx → the sends (down to the bus)
       for(const c of it.chips){ const cyp=y0+nameH+3+c.row*chipRowH;
         nd+=`<rect x="${(mgX+c.x).toFixed(1)}" y="${cyp}" width="${c.w}" height="${chipH}" rx="4" class="gins"/>`;
-        nd+=`<text x="${(mgX+c.x+c.w/2).toFixed(1)}" y="${(cyp+12).toFixed(1)}" text-anchor="middle" class="gchip">${esc(c.label)}</text>`;
+        nd+=`<text x="${(mgX+c.x+c.w/2).toFixed(1)}" y="${(cyp+14).toFixed(1)}" text-anchor="middle" class="gchip">${esc(c.label)}</text>`;
       }
     }
   });

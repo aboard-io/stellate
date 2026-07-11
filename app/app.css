@@ -102,16 +102,16 @@
     width:min(560px,94vw);max-height:min(74vh,580px);overflow:auto;
     background:rgba(12,10,26,.94);border:1px solid var(--line)}
   #inside h2{font-family:Orbitron,sans-serif;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:0 0 .55rem}
-  .vz-sec{margin:.2rem 0 .75rem}
-  .vz-lbl{font:12px VT323,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);opacity:.85;margin-bottom:.32rem}
-  .vz-bar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+  .vz-sec{margin:.35rem 0 1.25rem}
+  .vz-lbl{font:14px VT323,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);opacity:.85;margin-bottom:.32rem}
+  .vz-bar{display:flex;height:22px;border-radius:11px;overflow:hidden;background:rgba(255,255,255,.06);border:1px solid var(--line)}
   .vz-bar>div{height:100%;min-width:2px;transition:width .2s ease}
   .vz-leg{display:flex;flex-wrap:wrap;gap:.15rem .85rem;margin-top:.42rem;font:15px VT323,monospace;color:var(--ink)}
   .vz-g{display:inline-flex;align-items:center;gap:.35rem}
   .vz-g i{width:9px;height:9px;border-radius:2px;display:inline-block}
   .vz-g b{color:var(--mint);font-weight:400}
   .vz-info{margin-top:.42rem;font:14px VT323,monospace;color:var(--dim);line-height:1.4}
-  .radar{display:block;margin:.1rem auto 0;max-width:262px}
+  .radar{display:block;margin:.25rem auto 0;max-width:340px}
   .radar .rax{font:11px VT323,monospace;fill:var(--dim);letter-spacing:.04em}
   .vz-feelnums{text-align:center;font:14px VT323,monospace;color:var(--mint);opacity:.92;margin-top:.15rem}
   .vz-feelnums b{color:var(--dim);font-weight:400}
@@ -146,14 +146,14 @@
   /* TITLE ABOVE THE ROLL (Paul 2026-07-10): each lane is a header row (name+role)
      ABOVE a full-width piano-roll, with its fx caption beneath; extra vertical
      breathing room between lanes. */
-  .vz-tlrow{display:flex;flex-direction:column;gap:.14rem;margin:.85rem 0}
+  .vz-tlrow{display:flex;flex-direction:column;gap:.24rem;margin:1.45rem 0}
   .vz-tlmain{display:flex;flex-direction:column;gap:.22rem}
   .vz-tlhead{display:flex;align-items:baseline;gap:.5rem;min-width:0}
-  .vz-tlname{display:flex;align-items:center;gap:.32rem;font:16px VT323,monospace;color:var(--pink);
+  .vz-tlname{display:flex;align-items:center;gap:.32rem;font:19px VT323,monospace;color:var(--pink);
     line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .vz-tlname i{flex:0 0 auto;width:9px;height:9px;border-radius:2px;display:inline-block}
   .vz-tlrole{font:10px VT323,monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);opacity:.8}
-  .vz-roll{position:relative;width:100%;min-width:0;height:34px;border-radius:5px;
+  .vz-roll{position:relative;width:100%;min-width:0;height:50px;border-radius:6px;
     border:1px solid var(--line);background-color:rgba(255,255,255,.03);overflow:hidden}
   /* THE UNIT IS ALWAYS 8: longer chord bars PAGE — one row per lane whose window
      slides to the next 8 beats when the live beat crosses a page edge (the old
@@ -193,7 +193,7 @@
   /* MIXING NODE GRAPH — the signal-flow topology beneath the rolls: voice boxes +
      insert chain → send curves (width/opacity = level) → reverb/delay bus → master
      → out. Replaces the master effects TEXT line (Paul 2026-07-10). */
-  .vz-graph{display:block;width:100%;max-width:380px;margin:.15rem auto 0;height:auto;overflow:visible}
+  .vz-graph{display:block;width:100%;max-width:470px;margin:.15rem auto 0;height:auto;overflow:visible}
   .vz-graph .gnode{fill:rgba(28,24,56,.42);stroke:var(--line2);stroke-width:1}   /* translucent — read the send curves beneath (Paul 2026-07-11) */
   .vz-graph .gins{fill:rgba(69,224,255,.07);stroke:rgba(69,224,255,.42);stroke-width:1}
   .vz-graph .grev{fill:rgba(69,224,255,.07);stroke:var(--cyan);stroke-width:1.2}
@@ -203,7 +203,7 @@
   .vz-graph .gtx{font:13px VT323,monospace;fill:var(--ink)}
   .vz-graph .gsub{font:11px VT323,monospace;fill:var(--dim)}
   .vz-graph .gmix{font:11px VT323,monospace;fill:var(--cyan)}
-  .vz-graph .gchip{font:11px VT323,monospace;fill:var(--ink)}   /* per-voice fx chip label (the full strip+insert chain) */
+  .vz-graph .gchip{font:13px VT323,monospace;fill:var(--ink)}   /* per-voice fx chip label (the full strip+insert chain) */
   .vz-graph .gdsub{font:11px VT323,monospace;fill:var(--amber)}
   .vz-graph .goutx{font:13px VT323,monospace;fill:var(--pink)}
   .vz-graph .ghead{font:10px VT323,monospace;fill:var(--dim);letter-spacing:.14em;text-transform:uppercase;opacity:.6}
