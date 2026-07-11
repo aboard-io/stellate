@@ -1,0 +1,28 @@
+{
+  "name": "taqsim",
+  "label": "Taqsim",
+  "info": "oud and ney improvising a hijaz maqam at ~78bpm — a bending monophonic line, deep hand-vibrato for the microtones, a barely-there hand drum, a qanun shimmer. Free-rhythm Arab classical, the taqsim before the song",
+  "clips": ["dc_village", "sun_riders", "bamboo"],
+  "anchor": {
+    "bpm": [66, 90],
+    "swing": [0.02, 0.1],
+    "humanize": [0.2, 0.4],
+    "progressions": ["hijaz", "hijaz", "andalusian", "mode_phrygian"],
+    "kits": ["tribal", "off"],
+    "fills": ["off", "tom fill"],
+    "bass": { "patterns": ["pedal", "root", "simple"], "samplerPool": ["acoustic_bass"],
+      "recipe": { "model": ["sampler", "sub"], "cutoff": [350, 600], "res": [0.05, 0.14], "level": [0.85, 1.05], "send": [0.08, 0.16], "dsend": [0, 0.06] } },
+    "lead": { "patterns": ["wander", "updown", "sparse"], "samplerPool": ["sitar", "oboe", "pan_flute", "harp"],
+      "recipe": { "model": ["sampler"], "wave": "sine", "voices": [1, 1], "spread": [0.002, 0.005], "cutoff": [2400, 3400], "level": [0.52, 0.66], "send": [0.35, 0.5], "dsend": [0.2, 0.35], "vibrato": [0.016, 0.026], "vibRate": [6, 7.5] } },
+    "pads": { "prob": 0.6, "samplerPool": ["strings", "bowed_glass"],
+      "recipe": { "model": ["sampler", "strings"], "wave": "saw", "cutoff": [900, 1500], "detune": [0.005, 0.011], "attack": [1, 2.5], "level": [0.4, 0.55], "send": [0.4, 0.6], "dsend": [0.1, 0.25] } },
+    "drums": { "kickModel": ["808", "boom"], "snareModel": ["crack"], "hatModel": ["noise"], "kick": [0.7, 1], "snare": [0.5, 0.75], "hat": [0.5, 0.8], "tune": [1, 1.15], "send": [0.12, 0.24], "dsend": [0.1, 0.25] },
+    "fx": { "reverb": [0.45, 0.62], "delayBeats": [0.5, 0.75], "delayFb": [0.2, 0.35], "delayCut": [2200, 3200], "pump": [0, 0.05], "crackle": [0.05, 0.18], "lowcut": [20, 40], "highcut": [0, 0], "comp": [0.15, 0.35] },
+    "reverbColor": "fdn",
+    "found": { "role": "bed", "vol": [0.07, 0.14], "pitch": [0.85, 1], "stretch": [0.45, 0.6], "cutoff": [1900, 3000], "sources": ["shibuya", "tokyo_station"] },
+    "hits": { "sources": ["tw_ding"], "pattern": "sparse", "prob": 0.25 },
+    "stab": ["off"],
+    "form": "pop"
+  },
+  "verify": { "seeds": 6, "widen": 0.12, "features": { "bpm": 3, "seventh": 2, "acoustic": 2, "drumDensity": 2, "motion": 2, "swing": 1 } }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "vespers",
+  "label": "Vespers",
+  "info": "Bulgarian Orthodox choir on a modal drone, ~58bpm, no drums — deep men's voices under a chant, a bell decaying in a stone reverb. Sacred, slow as candle smoke. Influences: Le Mystère des Voix Bulgares, Byzantine chant",
+  "clips": ["dc_village", "earth_orbit"],
+  "anchor": {
+    "bpm": [48, 70],
+    "swing": [0, 0.04],
+    "humanize": [0.1, 0.3],
+    "progressions": ["drone_min", "mode_phrygian", "minor_run"],
+    "kits": ["off"],
+    "fills": ["off"],
+    "bass": { "patterns": ["pedal", "root"], "samplerPool": ["contrabass", "cello"],
+      "recipe": { "model": ["sampler", "sub"], "cutoff": [250, 450], "res": [0.05, 0.12], "level": [0.8, 1], "send": [0.15, 0.3], "dsend": [0.05, 0.15] } },
+    "lead": { "patterns": ["composed", "wander", "composed"], "samplerPool": ["ahh_choir", "ohh_voices", "solo_vox"],
+      "recipe": { "model": ["sampler"], "wave": "sine", "voices": [1, 2], "spread": [0.003, 0.007], "cutoff": [1800, 2800], "level": [0.5, 0.64], "send": [0.55, 0.75], "dsend": [0.1, 0.25], "attack": [0.1, 0.3] } },
+    "pads": { "prob": 1, "samplerPool": ["ahh_choir", "strings", "slow_strings"],
+      "recipe": { "model": ["sampler", "strings"], "wave": "saw", "cutoff": [800, 1400], "detune": [0.004, 0.01], "attack": [2, 4], "level": [0.55, 0.72], "send": [0.55, 0.75], "dsend": [0.15, 0.3] } },
+    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0, 0.15], "snare": [0, 0.1], "hat": [0, 0.1], "tune": [0.9, 1], "send": [0.2, 0.4], "dsend": [0, 0.1] },
+    "fx": { "reverb": [0.82, 0.96], "delayBeats": [0.75, 1.5], "delayFb": [0.3, 0.45], "delayCut": [1800, 2800], "pump": [0, 0], "crackle": [0.02, 0.1], "lowcut": [0, 0], "highcut": [0, 0], "comp": [0, 0.12] },
+    "reverbColor": "shimmer",
+    "found": { "role": "bed", "vol": [0.08, 0.16], "pitch": [0.7, 0.85], "stretch": [0.45, 0.6], "cutoff": [1500, 2400], "sources": ["vx_sv_choir", "tokyo_station"] },
+    "hits": { "sources": ["tw_ding"], "pattern": "sparse", "prob": 0.15 },
+    "stab": ["off"],
+    "form": "wave"
+  },
+  "verify": { "seeds": 6, "widen": 0.1, "features": { "bpm": 3, "acoustic": 3, "wash": 3, "seventh": 2, "drumDensity": 2, "motion": 1 } }
+}

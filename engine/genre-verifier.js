@@ -823,6 +823,15 @@
     /* genre-tool:runwaystomp:targets */
     runwaystomp:{ bpm:[119,136,3], acoustic:[0.68,0.92,2], pump:[0.203,0.584,2], chopUse:[0,0.1,2], seventh:[0.6,1,2], swing:[0,0.12,1], sub:[0.05,0.35,1], hatDensity:[0.36,2.04,1] },
     /* /genre-tool:runwaystomp:targets */
+    /* genre-tool:silkmist:targets */
+    silkmist: { bpm:[61,96,3], acoustic:[0.68,0.92,3], wash:[0.108,0.408,2], seventh:[0.85,1,2], drumDensity:[0,1.341,1], motion:[0,0.9,1] },
+    /* /genre-tool:silkmist:targets */
+    /* genre-tool:taqsim:targets */
+    taqsim:   { bpm:[59,98,3], seventh:[0.32,0.93,2], acoustic:[0.68,0.92,2], drumDensity:[0,2.926,2], motion:[0.48,1,2], swing:[0,0.125,1] },
+    /* /genre-tool:taqsim:targets */
+    /* genre-tool:vespers:targets */
+    vespers:  { bpm:[42,77,3], acoustic:[0.68,0.92,3], wash:[0.316,0.597,3], seventh:[0.3,1,2], drumDensity:[0,0.4,2], motion:[0,1,1], rubato:[0,0.008,3] },
+    /* /genre-tool:vespers:targets */
   };
 
   // the piecewise-linear target-row scorer — the shared primitive (genre-tool

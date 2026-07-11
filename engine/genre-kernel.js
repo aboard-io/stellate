@@ -1162,6 +1162,15 @@
     meadhallbellow:["ind_furnace","wx_surge","sn_village","dark_face"],
     valkyrieswoop:["wx_funnel","vo_firewall","earth_orbit","dc_rockies","sn_churchtower"],
     permafrostveil:["sn_buriedcars","sn_churchtower","dc_rockies","wx_fogghosts","green_nebula"],
+    /* genre-tool:silkmist:clips */
+    silkmist:["bamboo","ns_waterfall","dc_village","nm_orchid","sun_riders"],
+    /* /genre-tool:silkmist:clips */
+    /* genre-tool:taqsim:clips */
+    taqsim:["dc_village","sun_riders","bamboo"],
+    /* /genre-tool:taqsim:clips */
+    /* genre-tool:vespers:clips */
+    vespers:["dc_village","earth_orbit"],
+    /* /genre-tool:vespers:clips */
   };
 
   // ---------- DX7 patch registry (the genre-space thesis applied to INSTRUMENTS) ----------
@@ -6158,6 +6167,72 @@
       rhythm:[0.1,0.26],
       pipes:[{id:"octavePump", w:0.5, prob:0.4},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:runwaystomp:genres */
+    /* genre-tool:silkmist:genres */
+    silkmist: { label:"Silk Mist", info:"guzheng and bamboo flute, pentatonic, ~78bpm — koto rolls and a bowed erhu line bending between five notes over slow strings; a scroll-painting calm. Influences: guqin/dizi folk, Chinese classical",
+      bpm:[68,88],
+      swing:[0,0.06],
+      humanize:[0.15,0.35],
+      progressions:["mode_mixo","mode_dorian","drone_min"],
+      kits:["off","kick"],
+      fills:["off","downlift"],
+      bass:{patterns:["pedal","root","simple"], samplerPool:["acoustic_bass","contrabass"], recipe:{model:["sampler","sub"], cutoff:[300,550], res:[0.05,0.15], level:[0.85,1.05], send:[0.1,0.2], dsend:[0,0.08]}},
+      lead:{patterns:["pentaup","pentaup","wander","sparse"], samplerPool:["koto","pan_flute","fiddle","kalimba"], recipe:{model:["sampler"], wave:"sine", voices:[1,1], spread:[0.002,0.005], cutoff:[2400,3600], level:[0.5,0.64], send:[0.35,0.55], dsend:[0.15,0.3], vibrato:[0.008,0.018]}},
+      pads:{prob:0.85, samplerPool:["strings","slow_strings","bowed_glass"], recipe:{model:["sampler","strings"], wave:"saw", cutoff:[900,1500], detune:[0.004,0.01], attack:[1.5,3], level:[0.4,0.55], send:[0.45,0.65], dsend:[0.15,0.3]}},
+      drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.4,0.7], snare:[0.3,0.5], hat:[0.3,0.55], tune:[0.9,1.05], send:[0.15,0.3], dsend:[0,0.1]},
+      fx:{reverb:[0.5,0.7], delayBeats:[0.5,0.75], delayFb:[0.2,0.35], delayCut:[2400,3400], pump:[0,0.05], crackle:[0.02,0.12], lowcut:[0,25], highcut:[0,0], comp:[0.1,0.3]},
+      found:{role:"bed", vol:[0.08,0.16], pitch:[0.8,0.95], stretch:[0.45,0.6], cutoff:[1800,2800], sources:["vx_cn_opera","iriomote"]},
+      hits:{sources:["tw_ding"], pattern:"sparse", prob:0.2},
+      stab:["off"],
+      form:"pop",
+      reverbColor:"fdn",
+      theory:{adventure:[0.133,0.247], color:[0.233,0.433], voicing:"open", reharm:true},
+      rhythm:[0.025,0.115],
+      pipes:[{id:"harmonize", w:0.45, prob:0.35}] },
+    /* /genre-tool:silkmist:genres */
+    /* genre-tool:taqsim:genres */
+    taqsim: { label:"Taqsim", info:"oud and ney improvising a hijaz maqam at ~78bpm — a bending monophonic line, deep hand-vibrato for the microtones, a barely-there hand drum, a qanun shimmer. Free-rhythm Arab classical, the taqsim before the song",
+      bpm:[66,90],
+      swing:[0.02,0.1],
+      humanize:[0.2,0.4],
+      progressions:["hijaz","hijaz","andalusian","mode_phrygian"],
+      kits:["tribal","off"],
+      fills:["off","tom fill"],
+      bass:{patterns:["pedal","root","simple"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sub"], cutoff:[350,600], res:[0.05,0.14], level:[0.85,1.05], send:[0.08,0.16], dsend:[0,0.06]}},
+      lead:{patterns:["wander","updown","sparse"], samplerPool:["sitar","oboe","pan_flute","harp"], recipe:{model:["sampler"], wave:"sine", voices:[1,1], spread:[0.002,0.005], cutoff:[2400,3400], level:[0.52,0.66], send:[0.35,0.5], dsend:[0.2,0.35], vibrato:[0.016,0.026], vibRate:[6,7.5]}},
+      pads:{prob:0.6, samplerPool:["strings","bowed_glass"], recipe:{model:["sampler","strings"], wave:"saw", cutoff:[900,1500], detune:[0.005,0.011], attack:[1,2.5], level:[0.4,0.55], send:[0.4,0.6], dsend:[0.1,0.25]}},
+      drums:{kickModel:["808","boom"], snareModel:["crack"], hatModel:["noise"], kick:[0.7,1], snare:[0.5,0.75], hat:[0.5,0.8], tune:[1,1.15], send:[0.12,0.24], dsend:[0.1,0.25]},
+      fx:{reverb:[0.45,0.62], delayBeats:[0.5,0.75], delayFb:[0.2,0.35], delayCut:[2200,3200], pump:[0,0.05], crackle:[0.05,0.18], lowcut:[20,40], highcut:[0,0], comp:[0.15,0.35]},
+      found:{role:"bed", vol:[0.07,0.14], pitch:[0.85,1], stretch:[0.45,0.6], cutoff:[1900,3000], sources:["shibuya","tokyo_station"]},
+      hits:{sources:["tw_ding"], pattern:"sparse", prob:0.25},
+      stab:["off"],
+      form:"pop",
+      reverbColor:"fdn",
+      theory:{adventure:[0.188,0.3], color:[0.225,0.375], voicing:"open", reharm:true},
+      rhythm:[0.175,0.34],
+      pipes:[{id:"strum", w:0.55, step:0.02}] },
+    /* /genre-tool:taqsim:genres */
+    /* genre-tool:vespers:genres */
+    vespers: { label:"Vespers", info:"Bulgarian Orthodox choir on a modal drone, ~58bpm, no drums — deep men's voices under a chant, a bell decaying in a stone reverb. Sacred, slow as candle smoke. Influences: Le Mystère des Voix Bulgares, Byzantine chant",
+      bpm:[48,70],
+      swing:[0,0.04],
+      humanize:[0.1,0.3],
+      progressions:["drone_min","mode_phrygian","minor_run"],
+      kits:["off"],
+      fills:["off"],
+      bass:{patterns:["pedal","root"], samplerPool:["contrabass","cello"], recipe:{model:["sampler","sub"], cutoff:[250,450], res:[0.05,0.12], level:[0.8,1], send:[0.15,0.3], dsend:[0.05,0.15]}},
+      lead:{patterns:["composed","wander","composed"], samplerPool:["ahh_choir","ohh_voices","solo_vox"], recipe:{model:["sampler"], wave:"sine", voices:[1,2], spread:[0.003,0.007], cutoff:[1800,2800], level:[0.5,0.64], send:[0.55,0.75], dsend:[0.1,0.25], attack:[0.1,0.3]}},
+      pads:{prob:1, samplerPool:["ahh_choir","strings","slow_strings"], recipe:{model:["sampler","strings"], wave:"saw", cutoff:[800,1400], detune:[0.004,0.01], attack:[2,4], level:[0.55,0.72], send:[0.55,0.75], dsend:[0.15,0.3]}},
+      drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0,0.15], snare:[0,0.1], hat:[0,0.1], tune:[0.9,1], send:[0.2,0.4], dsend:[0,0.1]},
+      fx:{reverb:[0.82,0.96], delayBeats:[0.75,1.5], delayFb:[0.3,0.45], delayCut:[1800,2800], pump:[0,0], crackle:[0.02,0.1], lowcut:[0,0], highcut:[0,0], comp:[0,0.12]},
+      found:{role:"bed", vol:[0.08,0.16], pitch:[0.7,0.85], stretch:[0.45,0.6], cutoff:[1500,2400], sources:["vx_sv_choir","tokyo_station"]},
+      hits:{sources:["tw_ding"], pattern:"sparse", prob:0.15},
+      stab:["off"],
+      form:"wave",
+      reverbColor:"shimmer",
+      theory:{adventure:[0.1,0.187], color:[0.167,0.333], voicing:"open", reharm:false},
+      rhythm:[0,0.08],
+      pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"harmonize", w:0.45, prob:0.35}] },
+    /* /genre-tool:vespers:genres */
   };
 
   // ---------- MUSIC-MIND anchor axes (docs/MUSIC-MIND.md §"The vector space grows new axes") ----------

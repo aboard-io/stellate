@@ -72,7 +72,15 @@ export const POS={
   velvetconveyor:[1926,5200], talcumcasino:[1499,8484], capesnap:[1168,9107], chromeufo:[1159,19264],
   mirrorseven:[234,9946], sundialsyrup:[191,7990], sequinfreight:[1231,7273], rollerlacquer:[1289,2784],
   longshipwhip:[576,3328], bogironwallow:[767,6563], barrowwake:[1705,13421], ravensquall:[1544,9204],
-  runeromp:[466,9962], meadhallbellow:[461,14061], valkyrieswoop:[549,6571], permafrostveil:[1635,14120]
+  runeromp:[466,9962], meadhallbellow:[461,14061], valkyrieswoop:[549,6571], permafrostveil:[1635,14120],
+  // international/modal batch 2026-07-11: placed by a LABEL-BOX search (the gate's
+  // own box math at boot k=2.8, tall-world Y-compression accounted for) into open
+  // space with 41-60px clearance — not just dot-distance, which missed that wide
+  // labels to the LEFT overlap a star below them. A COMPLETE 243-POS hits
+  // computeGenreLayout's fast path: no relaxation, the hand-nudged fugue/breakcore
+  // spots above stay exact. taqsim/vespers sit by their kin (arabpop/atlantidrone);
+  // silkmist's pentatonic-calm corner was full, so it took the nearest open slot.
+  silkmist:[2335,12923], taqsim:[121,16807], vespers:[2374,14021]
 };
 // The star map lives in a LOGICAL coordinate space. POS above is BAKED — the
 // full relaxed layout for every committed genre, precomputed once (headless boot
