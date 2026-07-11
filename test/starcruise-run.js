@@ -73,6 +73,17 @@ async function main() {
   ok(after.canvas, "B2. #starcruise-canvas mounted");
   ok(after.running && after.bandCount >= 1, `B3. running with a band (${after.bandCount} aliens)`);
 
+  // ---- B4/B5: always-visible EXIT affordance + bumped internal resolution ----
+  const rig = await page.evaluate(() => ({
+    res: window.__STARCRUISE.lowRes(),
+    exit: window.__STARCRUISE.hasExit(),
+    exitDom: !!document.getElementById("starcruise-exit"),
+  }));
+  console.log("       lowRes:", JSON.stringify(rig.res), " exit:", rig.exit);
+  ok(rig.exit && rig.exitDom, "B4. always-visible ✕ EXIT button mounted above the canvas");
+  ok(rig.res.w >= 480 && rig.res.h >= 320,
+    `B5. internal resolution bumped past potato (${rig.res.w}x${rig.res.h}, was 320x240)`);
+
   // ---- C: non-blank frame ----
   const sample = await page.evaluate(() => window.__STARCRUISE.sampleLowRes());
   console.log("       sample:", JSON.stringify(sample));
@@ -188,15 +199,24 @@ async function main() {
   // ---- E: no errors ----
   ok(errs.length === 0, "E1. no console/page errors across activate->run" + (errs.length ? " :: " + errs.join(" | ") : ""));
 
-  // ---- F: clean teardown ----
-  await page.evaluate(() => window.__STARCRUISE.stop());
+  // ---- F: clean teardown VIA THE EXIT BUTTON (the user's escape hatch) ----
+  // Programmatically click the always-visible ✕ EXIT button and confirm it stops the
+  // mode and removes the overlay — the user must NEVER be trapped.
+  const exited = await page.evaluate(() => {
+    const before = window.__STARCRUISE.hasExit();
+    window.__STARCRUISE.clickExit();     // dispatch a real click on the ✕ EXIT button
+    return { before };
+  });
   await page.waitForTimeout(200);
   const stopped = await page.evaluate(() => ({
     running: window.__STARCRUISE.isRunning(),
     canvas: !!document.getElementById("starcruise-canvas"),
+    exit: !!document.getElementById("starcruise-exit"),
   }));
-  ok(!stopped.running, "F1. isRunning() false after stop()");
-  ok(!stopped.canvas, "F2. canvas removed from DOM after stop()");
+  ok(exited.before, "F0. ✕ EXIT button present while running");
+  ok(!stopped.running, "F1. EXIT-button click stops the mode (isRunning() false)");
+  ok(!stopped.canvas, "F2. canvas removed from DOM after EXIT");
+  ok(!stopped.exit, "F2b. ✕ EXIT button removed from DOM after exit");
   ok(errs.length === 0, "F3. no errors after teardown" + (errs.length ? " :: " + errs.join(" | ") : ""));
 
   // ---- L: the app is UNAFFECTED when the mode is off ----

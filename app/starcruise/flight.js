@@ -135,18 +135,21 @@ export function makeFlight({ getTravel, getBeat } = {}) {
     landProgress += (target - landProgress) * Math.min(1, dt * 3);
 
     // ---- cockpit camera pose ----------------------------------------------
-    // High and far while cruising; descends and eases toward the band as we land.
+    // High and far while cruising; descends and eases CLOSE and IN FRONT of the
+    // band as we land (facing the players, who face +Z / the camera). This landed
+    // pose is also what the controller SEEDS its interactive orbit from, so the
+    // user takes over from a good, close, front-on framing.
     // A tiny beat-synced bob (deterministic from beatPhase) once we're grooving.
     const lp = landProgress;
-    const camY = lerp(6.0, 2.2, lp);
-    const camZ = lerp(14.0, 6.5, lp);
+    const camY = lerp(6.0, 1.7, lp);
+    const camZ = lerp(14.0, 5.2, lp);
     const bobAmp = phase === "DANCE" ? 0.06 : LANDED[phase] ? 0.03 : 0.0;
     const bob = Math.sin(beatPhase * Math.PI * 2) * bobAmp;
     const drift = tv.position ? (tv.position.x || 0) * 0.02 : 0;
     const cameraPose = {
       position: { x: drift, y: camY + bob, z: camZ },
-      lookAt: { x: drift * 0.5, y: lerp(2.4, 1.0, lp), z: 0 },
-      fov: lerp(66, 58, lp),
+      lookAt: { x: drift * 0.5, y: lerp(2.4, 1.2, lp), z: 0 },
+      fov: lerp(66, 55, lp),
     };
 
     return { phase, dominant, weights, cameraPose, landProgress, beatPhase };

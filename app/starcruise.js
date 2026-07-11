@@ -89,8 +89,47 @@ let curTraits = null;        // TRAITS of the currently-spawned band (headless-p
 let curDominant = null;
 let lastState = null;        // last flight state (headless-probe visibility)
 
-const LOW_W = 320, LOW_H = 240;   // internal framebuffer (mobile-first crunch)
+// internal framebuffer — the crunchy PS1 resolution. Sized ONCE per start() to the
+// display's aspect so the picture isn't stretched, with the long edge capped (a
+// touch higher than the old 320x240 potato: ~512 desktop / ~448 coarse-pointer, so
+// it's less pixelated but still low-res + dithered, and still cheap on a phone).
+let lowW = 512, lowH = 384;       // actual values recomputed in computeLowRes()
+function computeLowRes() {
+  const w = window.innerWidth || 640, h = window.innerHeight || 480;
+  const aspect = w > 0 && h > 0 ? w / h : 4 / 3;
+  // coarse pointer (touch) => a slightly smaller long edge for mobile GPU headroom.
+  let coarse = false;
+  try { coarse = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches); } catch (e) {}
+  const longEdge = coarse ? 448 : 512;
+  let tw, th;
+  if (aspect >= 1) { tw = longEdge; th = Math.round(longEdge / aspect); }
+  else { th = longEdge; tw = Math.round(longEdge * aspect); }
+  // clamp to sane bounds + keep even (nicer for the 0.5-density snap grid).
+  lowW = Math.max(160, Math.min(640, tw)) & ~1;
+  lowH = Math.max(120, Math.min(640, th)) & ~1;
+  return { lowW, lowH };
+}
 const BAND_CAP = 8;               // HARD mobile cap on simultaneous aliens (traits caps at 6)
+
+// ---- interactive camera (orbit + dolly + pan) -----------------------------------
+// A hand-rolled orbit controller (NO vendored Three addon — the core module only).
+// It orbits `target`, dollies via `dist`, and pans `target` with WASD/arrows. It is
+// SEEDED from the flight machine's front-on landed pose (seedOrbitFromPose) and only
+// DRIVES the camera while we're parked (landed); auto-flight owns the camera in
+// transit. Input handlers below mutate this object.
+const orbit = {
+  target: null,                   // THREE.Vector3, set on start()
+  dist: 8, minDist: 2.2, maxDist: 60,
+  yaw: 0, pitch: 0.18, fov: 58,
+  minPitch: -1.35, maxPitch: 1.45,
+};
+let wasLanded = false;            // edge-detect entering a landed phase (seed once)
+const keysDown = Object.create(null);   // pressed movement keys
+let exitBtn = null;               // the always-visible ✕ EXIT affordance
+// pointer/touch drag bookkeeping.
+let dragging = false, lastPX = 0, lastPY = 0;
+let pinchDist = 0;                // last two-finger distance (touch dolly)
+const LANDED_PHASES = { LAND: 1, OPEN: 1, GREET: 1, DANCE: 1 };
 
 // lazy-load Three + the sub-modules exactly once.
 async function ensureLoaded() {
@@ -221,8 +260,10 @@ export async function start() {
   renderer.autoClear = false;
   const w = window.innerWidth || 640, h = window.innerHeight || 480;
 
-  // LOW-RES render target, NEAREST filtered = the crunchy PS1 framebuffer.
-  lowResTarget = new THREE.WebGLRenderTarget(LOW_W, LOW_H, {
+  // LOW-RES render target, NEAREST filtered = the crunchy PS1 framebuffer. Sized to
+  // the display aspect (computeLowRes) so it isn't stretched, a notch above potato.
+  computeLowRes();
+  lowResTarget = new THREE.WebGLRenderTarget(lowW, lowH, {
     minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: true,
   });
   ps1 = mods.makePS1(THREE, renderer, lowResTarget);
@@ -260,9 +301,13 @@ export async function start() {
     scene.add(starfield);
   }
 
-  camera = new THREE.PerspectiveCamera(60, LOW_W / LOW_H, 0.1, 200);
+  camera = new THREE.PerspectiveCamera(60, lowW / lowH, 0.1, 200);
   camera.position.set(0, 3, 8);
   camera.lookAt(0, 1, 0);
+
+  // orbit target = the band's centre; seeded properly the moment we land.
+  orbit.target = new THREE.Vector3(0, 1.2, 0);
+  wasLanded = false;
 
   clock = { now: (typeof performance !== "undefined" ? performance.now() : Date.now()) };
 
@@ -281,10 +326,185 @@ export async function start() {
   spawnFor(tv0.weights && tv0.weights.length ? tv0.weights : firstGenre(), S.seed);
   curDominant = tv0.dominant;
 
+  mountExit();
+  bindInput();
   window.addEventListener("resize", onResize);
   lastT = clock.now;
   loop();
   window.__STARCRUISE && (window.__STARCRUISE.running = true);
+}
+
+// ---- ALWAYS-VISIBLE EXIT affordance ---------------------------------------------
+// The full-screen overlay canvas covers the chip row, so the mode MUST carry its own
+// escape hatch. This ✕ EXIT button sits ABOVE the canvas (z-index 60 > canvas 40),
+// keeps pointer-events even though the canvas eats drags, and is a fat thumb target
+// on mobile. Tapping it (or Escape) stops the mode and restores the app. The user
+// must NEVER be trapped.
+function mountExit() {
+  if (exitBtn) return;
+  exitBtn = document.createElement("button");
+  exitBtn.id = "starcruise-exit";
+  exitBtn.type = "button";
+  exitBtn.setAttribute("aria-label", "Exit star-cruise");
+  exitBtn.textContent = "✕ EXIT";
+  exitBtn.style.cssText = [
+    "position:fixed", "top:max(12px,env(safe-area-inset-top))",
+    "right:max(12px,env(safe-area-inset-right))", "z-index:60",
+    "min-width:76px", "min-height:48px", "padding:10px 16px",
+    "font:600 15px/1 system-ui,sans-serif", "letter-spacing:.06em",
+    "color:#fff", "background:rgba(20,6,30,.72)",
+    "border:2px solid rgba(255,255,255,.85)", "border-radius:24px",
+    "box-shadow:0 2px 10px rgba(0,0,0,.5)", "cursor:pointer",
+    "-webkit-tap-highlight-color:transparent", "touch-action:manipulation",
+    "user-select:none", "pointer-events:auto",
+  ].join(";");
+  // pointerup/click both stop — pointerup wins on touch even if a synthetic click is
+  // suppressed by the canvas's drag handling.
+  const doExit = (e) => { if (e) { e.preventDefault(); e.stopPropagation(); } stop(); };
+  exitBtn.addEventListener("click", doExit);
+  exitBtn.addEventListener("pointerup", doExit);
+  document.body.appendChild(exitBtn);
+}
+function unmountExit() {
+  if (exitBtn && exitBtn.parentNode) exitBtn.parentNode.removeChild(exitBtn);
+  exitBtn = null;
+}
+
+// ---- input wiring (mouse + touch + keys) ----------------------------------------
+// Attached to the display canvas so nav works without breaking the app's global
+// iOS multi-touch preventDefault (that guard only fires for touches.length>1; here
+// we preventDefault our OWN single-touch drag + wheel dolly on the overlay). Escape
+// + movement keys are on window (removed on stop).
+function bindInput() {
+  const c = displayCanvas;
+  c.style.touchAction = "none";                    // we own all gestures on the overlay
+  c.addEventListener("mousedown", onMouseDown);
+  window.addEventListener("mousemove", onMouseMove);
+  window.addEventListener("mouseup", onMouseUp);
+  c.addEventListener("wheel", onWheel, { passive: false });
+  c.addEventListener("touchstart", onTouchStart, { passive: false });
+  c.addEventListener("touchmove", onTouchMove, { passive: false });
+  c.addEventListener("touchend", onTouchEnd, { passive: false });
+  c.addEventListener("touchcancel", onTouchEnd, { passive: false });
+  window.addEventListener("keydown", onKeyDown);
+  window.addEventListener("keyup", onKeyUp);
+}
+function unbindInput() {
+  const c = displayCanvas;
+  if (c) {
+    c.removeEventListener("mousedown", onMouseDown);
+    c.removeEventListener("wheel", onWheel);
+    c.removeEventListener("touchstart", onTouchStart);
+    c.removeEventListener("touchmove", onTouchMove);
+    c.removeEventListener("touchend", onTouchEnd);
+    c.removeEventListener("touchcancel", onTouchEnd);
+  }
+  window.removeEventListener("mousemove", onMouseMove);
+  window.removeEventListener("mouseup", onMouseUp);
+  window.removeEventListener("keydown", onKeyDown);
+  window.removeEventListener("keyup", onKeyUp);
+  dragging = false; pinchDist = 0;
+  for (const k in keysDown) delete keysDown[k];
+}
+
+// -- orbit math -------------------------------------------------------------------
+const ORBIT_SPEED = 0.0055;       // radians per pixel dragged
+function orbitBy(dx, dy) {
+  orbit.yaw -= dx * ORBIT_SPEED;
+  orbit.pitch = Math.max(orbit.minPitch, Math.min(orbit.maxPitch, orbit.pitch - dy * ORBIT_SPEED));
+}
+function dollyBy(factor) {
+  orbit.dist = Math.max(orbit.minDist, Math.min(orbit.maxDist, orbit.dist * factor));
+}
+// seed the orbit from a flight cameraPose so takeover is jump-free & front-on.
+function seedOrbitFromPose(p) {
+  if (!p || !orbit.target) return;
+  orbit.target.set(p.lookAt.x, p.lookAt.y, p.lookAt.z);
+  const dx = p.position.x - p.lookAt.x, dy = p.position.y - p.lookAt.y, dz = p.position.z - p.lookAt.z;
+  const d = Math.hypot(dx, dy, dz) || orbit.dist;
+  orbit.dist = Math.max(orbit.minDist, Math.min(orbit.maxDist, d));
+  orbit.yaw = Math.atan2(dx, dz);
+  orbit.pitch = Math.max(orbit.minPitch, Math.min(orbit.maxPitch, Math.asin(Math.max(-0.999, Math.min(0.999, dy / d)))));
+  orbit.fov = p.fov || orbit.fov;
+}
+// drive the real camera from the orbit state.
+function applyOrbitToCamera() {
+  const cp = Math.cos(orbit.pitch), sp = Math.sin(orbit.pitch);
+  const sy = Math.sin(orbit.yaw), cy = Math.cos(orbit.yaw);
+  const t = orbit.target;
+  camera.position.set(t.x + orbit.dist * cp * sy, t.y + orbit.dist * sp, t.z + orbit.dist * cp * cy);
+  camera.lookAt(t.x, t.y, t.z);
+  if (camera.fov !== orbit.fov) { camera.fov = orbit.fov; camera.updateProjectionMatrix(); }
+}
+// WASD / arrows = fly: pan the orbit target in the camera's ground frame (+ up/down).
+function applyKeyPan(dt) {
+  const fwd = (keysDown["w"] || keysDown["arrowup"] ? 1 : 0) - (keysDown["s"] || keysDown["arrowdown"] ? 1 : 0);
+  const str = (keysDown["d"] || keysDown["arrowright"] ? 1 : 0) - (keysDown["a"] || keysDown["arrowleft"] ? 1 : 0);
+  const up = (keysDown["e"] || keysDown[" "] ? 1 : 0) - (keysDown["q"] ? 1 : 0);
+  if (!fwd && !str && !up) return;
+  const speed = (2.0 + orbit.dist * 0.5) * dt;   // scales with zoom-out
+  const sy = Math.sin(orbit.yaw), cy = Math.cos(orbit.yaw);
+  // horizontal forward (camera -> target) and right vectors from yaw.
+  const fx = -sy, fz = -cy, rx = cy, rz = -sy;
+  const t = orbit.target;
+  t.x += (fx * fwd + rx * str) * speed;
+  t.z += (fz * fwd + rz * str) * speed;
+  t.y = Math.max(0, t.y + up * speed);
+}
+
+// -- pointer handlers -------------------------------------------------------------
+function onMouseDown(e) { dragging = true; lastPX = e.clientX; lastPY = e.clientY; }
+function onMouseMove(e) {
+  if (!dragging) return;
+  orbitBy(e.clientX - lastPX, e.clientY - lastPY);
+  lastPX = e.clientX; lastPY = e.clientY;
+}
+function onMouseUp() { dragging = false; }
+function onWheel(e) {
+  e.preventDefault();
+  dollyBy(Math.exp((e.deltaY || 0) * 0.0012));
+}
+function onTouchStart(e) {
+  if (e.touches.length === 1) {
+    dragging = true; lastPX = e.touches[0].clientX; lastPY = e.touches[0].clientY;
+  } else if (e.touches.length >= 2) {
+    dragging = false;
+    pinchDist = touchSpread(e);
+  }
+  e.preventDefault();
+}
+function onTouchMove(e) {
+  if (e.touches.length >= 2) {
+    // two-finger PINCH = dolly.
+    const d = touchSpread(e);
+    if (pinchDist > 0 && d > 0) dollyBy(pinchDist / d);
+    pinchDist = d;
+  } else if (e.touches.length === 1 && dragging) {
+    // single-finger drag = orbit / look.
+    const x = e.touches[0].clientX, y = e.touches[0].clientY;
+    orbitBy(x - lastPX, y - lastPY);
+    lastPX = x; lastPY = y;
+  }
+  e.preventDefault();
+}
+function onTouchEnd(e) {
+  if (!e.touches || e.touches.length === 0) { dragging = false; pinchDist = 0; }
+  else if (e.touches.length === 1) { dragging = true; lastPX = e.touches[0].clientX; lastPY = e.touches[0].clientY; pinchDist = 0; }
+}
+function touchSpread(e) {
+  const a = e.touches[0], b = e.touches[1];
+  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+}
+// -- keys -------------------------------------------------------------------------
+const NAV_KEYS = { w: 1, a: 1, s: 1, d: 1, q: 1, e: 1, " ": 1, arrowup: 1, arrowdown: 1, arrowleft: 1, arrowright: 1 };
+function onKeyDown(e) {
+  if (e.key === "Escape") { e.preventDefault(); stop(); return; }
+  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key.toLowerCase();
+  if (NAV_KEYS[k]) { keysDown[k] = true; e.preventDefault(); }
+}
+function onKeyUp(e) {
+  const k = e.key.toLowerCase();
+  if (NAV_KEYS[k]) { keysDown[k] = false; e.preventDefault(); }
 }
 
 function firstGenre() { try { return (window.GenreKernel && GenreKernel.GENRES) ? Object.keys(GenreKernel.GENRES)[0] : "vaporwave"; } catch (e) { return "vaporwave"; } }
@@ -299,10 +519,26 @@ export function update(dt) {
   if (!running) return;
   const st = flight.update(dt);
   lastState = st;
-  // camera follows the flight's cockpit pose.
   const p = st.cameraPose;
-  camera.position.set(p.position.x, p.position.y, p.position.z);
-  camera.lookAt(p.lookAt.x, p.lookAt.y, p.lookAt.z);
+  // CAMERA ROUTING: auto-flight owns the camera IN TRANSIT (FLY/APPROACH/DEPART);
+  // once we're PARKED (LAND/OPEN/GREET/DANCE) the USER takes over via the orbit
+  // controller — drag to look, wheel/pinch to zoom, WASD/arrows to fly. On the frame
+  // we first land, seed the orbit from the flight's front-on pose so the handover is
+  // jump-free and framed FROM THE FRONT, then leave the user in control.
+  const landed = !!LANDED_PHASES[st.phase];
+  if (landed) {
+    if (!wasLanded) seedOrbitFromPose(p);   // seed once on touchdown, then hands off
+    applyKeyPan(dt);
+    applyOrbitToCamera();
+  } else {
+    // in transit: follow the cinematic flight pose, and keep the orbit shadowing it
+    // so the moment we land the user's takeover starts from exactly here.
+    camera.position.set(p.position.x, p.position.y, p.position.z);
+    camera.lookAt(p.lookAt.x, p.lookAt.y, p.lookAt.z);
+    if (camera.fov !== p.fov) { camera.fov = p.fov; camera.updateProjectionMatrix(); }
+    seedOrbitFromPose(p);
+  }
+  wasLanded = landed;
   // aliens groove + hit on the beat — ALL driven by the SAME st.beatPhase so the
   // whole band locks together to the shared audio beat.
   for (const a of band) a.update(dt, st.beatPhase);
@@ -324,6 +560,8 @@ export function stop() {
   if (!running) return;
   running = false;
   if (raf) cancelAnimationFrame(raf), raf = 0;
+  unbindInput();
+  unmountExit();
   window.removeEventListener("resize", onResize);
   despawnBand();                                   // disposes band + backdrop + ship
   if (starfield) { scene.remove(starfield); disposeObj(starfield); starfield = null; }
@@ -371,7 +609,7 @@ if (typeof document !== "undefined") {
 function sampleLowRes() {
   if (!running || !renderer || !lowResTarget) return null;
   update(0);   // ensure a fresh render into the target
-  const w = LOW_W, h = LOW_H, buf = new Uint8Array(w * h * 4);
+  const w = lowW, h = lowH, buf = new Uint8Array(w * h * 4);
   try { renderer.readRenderTargetPixels(lowResTarget, 0, 0, w, h, buf); } catch (e) { return { error: String(e) }; }
   // summarize: count distinct-ish colours + max channel spread.
   let minR = 255, maxR = 0, minG = 255, maxG = 0, minB = 255, maxB = 0, nonBg = 0;
@@ -390,6 +628,12 @@ function sampleLowRes() {
 window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBeat, running: false,
   canvas: () => displayCanvas, band: () => band, loaded: () => loaded, sampleLowRes,
   hasThree: () => !!(THREE && THREE.WebGLRenderer),
+  // exit affordance + resolution probes (headless-proof; harmless in production).
+  hasExit: () => !!(exitBtn && exitBtn.parentNode),
+  clickExit: () => { if (exitBtn) exitBtn.click(); return !running; },
+  lowRes: () => ({ w: lowW, h: lowH }),
+  orbit: () => ({ yaw: orbit.yaw, pitch: orbit.pitch, dist: orbit.dist, fov: orbit.fov,
+    target: orbit.target ? { x: orbit.target.x, y: orbit.target.y, z: orbit.target.z } : null }),
   // __step(dt): advance one frame and return the flight state (phase probe).
   __step: (dt) => { update(dt || 0); return lastState; },
   state: () => lastState,
