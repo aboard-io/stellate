@@ -234,9 +234,9 @@ function dragPlayhead(e){
   const { legs }=legMetrics();
   let d=0; for(let i=0;i<p.seg;i++) d+=legs[i]||0; d+=p.t*(legs[p.seg]||0);
   const bar=Math.round(d/Math.max(1e-6,paceSpeed()));
-  set({travel:{seg:p.seg,t:p.t}});
-  if(!S.live){ S.startBar=bar; S.barCount=bar; }
-  retarget({x:p.x,y:p.y});
+  set({travel:{seg:p.seg,t:p.t}, barCount:bar});   // reseat the traveler bar counter too (URL/bookmark follows)
+  if(!S.live) S.startBar=bar;
+  retarget({x:p.x,y:p.y});   // glide-preview during the drag; the SNAP happens on release (endPtr) so it's not choppy
   urlTick();   // the address bar's ?m= follows the scrubbed measure (stopped or live) so the bookmark is always current
   set({status:"playhead → measure "+(bar+1)+" (leg "+(p.seg+1)+")"});
 }
@@ -404,6 +404,9 @@ const endPtr=e=>{ ptrs.delete(e.pointerId); if(ptrs.size<2) pinch=null;
     // with a path the traveler owns the cursor, so a tap stays inert as before)
     if(!panMoved && S.waypoints.length<2 && panStart) retarget(panStart.pt);
     panMoved=false; panStart=null; }
+  // PLAYHEAD SCRUB release: SNAP the audio to where you dropped it (Paul: "move it
+  // and that's where things play"), so it doesn't slow-glide back toward the old spot.
+  else if(gestureMode==="travel" && S.live) retarget({x:S.cursor.x,y:S.cursor.y}, true);
   gestureMode="none"; dragWpI=-1; document.body.classList.remove("dragging"); };
 addEventListener("pointerup",endPtr);
 addEventListener("pointercancel",endPtr);

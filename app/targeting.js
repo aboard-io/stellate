@@ -43,8 +43,8 @@ function keyFor(weights,seed){
   let h=seed>>>0; for(const c of g) h=(h*31+c.charCodeAt(0))>>>0;
   return h%12;
 }
-export function retarget(pt){
-  return retargetWeights(weightsAt(pt), pt);
+export function retarget(pt, snap){
+  return retargetWeights(weightsAt(pt), pt, snap);
 }
 // PURE state at a map point — the same blend K.mix retargetWeights builds (seed,
 // key, ±bpm, mode lock) but WITHOUT touching the store. The offline whole-path
@@ -63,15 +63,17 @@ export function stateAt(pt){
 // blend. When `pt` is supplied the cursor is placed too (the map path); the
 // accessible page omits it (there is no cursor to move). retarget() above is the
 // map's caller and stays behavior-identical: weightsAt(pt) then this.
-export function retargetWeights(weights, pt){
+export function retargetWeights(weights, pt, snap){
   const target=K.mix(weights.map(w=>({...w})),{seed:S.seed, keyOffset:keyFor(weights,S.seed)});
   if(S.bpmDelta) target.bpm=Math.max(40,Math.min(240,Math.round(target.bpm+S.bpmDelta)));   // the ⚙ ±bpm delta rides every target
   if(MODE_LOCKS[S.modeLock]) target.progression=MODE_LOCKS[S.modeLock];
   const patch={weights,target};
   if(pt) patch.cursor=pt;
-  // before LIVE (or after STOP) the cursor PLACES you — the playing state IS
-  // the target. Only mid-performance do we glide instead of jump.
-  if(!S.playing||!S.live){ patch.playing=deep(target); }
+  // before LIVE (or after STOP) the cursor PLACES you — the playing state IS the
+  // target. Only mid-performance do we glide instead of jump. EXCEPT `snap` (a
+  // playhead SCRUB, Paul: "move it and that's where things play") which jumps the
+  // audio to the scrubbed spot immediately, so it doesn't slow-glide back.
+  if(!S.playing||!S.live||snap){ patch.playing=deep(target); patch.queue=[]; }
   set(patch);
   const sig=JSON.stringify(weights.map(w=>w.g+Math.round(w.w*20)))+S.modeLock;
   if(sig!==lastSig){ lastSig=sig; rebuildQueue(); }

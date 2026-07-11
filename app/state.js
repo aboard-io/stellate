@@ -12,8 +12,9 @@ import { MAP_CENTER, BARS_PER_SEG } from "./world.js";
 // user master volume persists across sessions (localStorage; 0..1.5, 1 = unity)
 const _masterVol=(()=>{ try{ const v=parseFloat(localStorage.getItem("vaporwave-master-vol")); return (v>=0&&v<=1.5)?v:1; }catch(e){ return 1; } })();
 const _vapor=(()=>{ try{ const v=parseFloat(localStorage.getItem("vaporwave-vapor")); return (v>=0&&v<=1)?v:0; }catch(e){ return 0; } })();   // VAPOR master-EQ amount (C.1)
-// the chosen soundfont (the switcher); "fluidr3" = the baked default
-const _soundfont=(()=>{ try{ return localStorage.getItem("vaporwave-soundfont")||"fluidr3"; }catch(e){ return "fluidr3"; } })();
+// the chosen soundfont (the switcher); "fluidr3" = the baked default. A shared
+// URL's ?sf= wins over localStorage so a link restores its font (Paul).
+const _soundfont=(()=>{ try{ return new URLSearchParams(location.search).get("sf") || localStorage.getItem("vaporwave-soundfont") || "fluidr3"; }catch(e){ return "fluidr3"; } })();
 
 // ---------- store ----------
 export const S={ cursor:{x:MAP_CENTER.x,y:MAP_CENTER.y}, waypoints:[], travel:{seg:0,t:0}, weights:[],
