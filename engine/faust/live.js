@@ -91,6 +91,11 @@
   // last, chordEvery-aware CBEATS. Each makeWalk() owns its own cursor state.
   function makeWalk(getState, E, SE, startBar, opts) {
     let ci = 0, serial = 0, secIdx = 0, cycIdx = 0, absBeat = 0;
+    // ENDLESS-LOOP entrance memory (per voice, persists across bars for this walk):
+    // dynPrevOn = was the voice sounding last bar; dynEnded = has a run of it ever
+    // finished (so it's an ESTABLISHED voice, not a first appearance); dynSuppressIn
+    // = suppress the entrance swell for the current run. See the voiceRun block below.
+    const dynPrevOn = {}, dynEnded = {}, dynSuppressIn = {};
     // DROP-IN (the bookmarkable measure, 2026-07-10): startBar>0 fast-forwards
     // the walk's indices as if that many bars had already played — same
     // per-bar seed law ((seed + serial*7919)), same section arithmetic, so
@@ -155,12 +160,28 @@
       const secBarsOf = s => Math.max(1, (s.cycles || 1) * nch);
       const voiceRun = {};
       for (const v of ["pad", "bass", "melody", "drums"]) {
-        if (!vAct[v](cur0) || secs.every(s => vAct[v](s))) { voiceRun[v] = null; continue; }   // off now, or on the whole loop → no ramp
+        // ENDLESS-LOOP entrance law (Paul: pads "should not suddenly go quiet ...
+        // every sixteen measures"). The entrance swell — a voice rising from its
+        // floor over the first bars of its run — is a REAL beginning only ONCE, at
+        // the voice's first appearance in the session. In press that's the whole
+        // story (one play-through has a real start), but the live/journey walk loops
+        // the form forever, so re-swelling from the floor every time the voice
+        // re-enters (after each breakdown/outro that drops it) is the reported dip.
+        // So: an ESTABLISHED voice (one whose run has ended at least once) returns at
+        // FULL — only its EXIT fade into the next silence remains. dynSuppressIn is
+        // latched at the off→on edge and persists (covering a run that WRAPS the loop
+        // seam, where there is no fresh edge). Exit fades and the first entrance are
+        // unchanged, so the swell a listener hears when a voice truly arrives stays.
+        const wasOn = !!dynPrevOn[v], onNow = !!vAct[v](cur0);
+        if (onNow && !wasOn) dynSuppressIn[v] = !!dynEnded[v];   // re-entrance of an established voice → no swell-in
+        if (!onNow && wasOn) dynEnded[v] = true;                 // a run just ended → the voice is now established
+        dynPrevOn[v] = onNow;
+        if (!onNow || secs.every(s => vAct[v](s))) { voiceRun[v] = null; continue; }   // off now, or on the whole loop → no ramp
         let a = secIdx; while (a - 1 >= 0 && vAct[v](secs[a - 1])) a--;
         let b = secIdx; while (b + 1 < secs.length && vAct[v](secs[b + 1])) b++;
         let before = 0; for (let s = a; s < secIdx; s++) before += secBarsOf(secs[s]);
         let runBars = 0; for (let s = a; s <= b; s++) runBars += secBarsOf(secs[s]);
-        voiceRun[v] = { i: before + cycIdx * nch + ci, n: runBars };
+        voiceRun[v] = { i: before + cycIdx * nch + ci, n: runBars, noIn: !!dynSuppressIn[v] };
       }
       const one = Object.assign({}, st, { sections: [sec], seed: ((st.seed || 1) + serial * 7919) >>> 0,
         instrumentSeed: st.instrumentSeed != null ? st.instrumentSeed : (st.seed || 1),   // instrument identity rides the SONG seed, not the per-bar reseed

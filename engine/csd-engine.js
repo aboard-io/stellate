@@ -1285,9 +1285,12 @@
     if(state._voiceRun){
       const pc=C.toColumns(pitched,["amp"],{view:true});
       for(const v of DYN_VOICES){ const r = state._voiceRun[v]; if(!r || !(r.n > 0)) continue;
+        // r.noIn (endless-loop entrance law, live walk): an established voice
+        // re-entering the looping form returns at FULL — floorIn 1 disables the
+        // swell-in while the exit fade is untouched. See faust/live.js makeWalk.
         if(v === "drums"){ for(const e of drums){ const f = DYN_DRUM[e.drum] || DYN_DRUM._default;
-            const s = rampScalar(f[0], f[1], r.i, r.n); if(s < 1){ if(e.amp0==null) e.amp0 = e.amp; e.amp *= s; } } }
-        else { const fl = DYN_FLOOR[v]; const s = rampScalar(fl[0], fl[1], r.i, r.n);
+            const s = rampScalar(r.noIn ? 1 : f[0], f[1], r.i, r.n); if(s < 1){ if(e.amp0==null) e.amp0 = e.amp; e.amp *= s; } } }
+        else { const fl = DYN_FLOOR[v]; const s = rampScalar(r.noIn ? 1 : fl[0], fl[1], r.i, r.n);
           if(s < 1) C.scale(pc.amp, s, laneMask(pitched, pc.n, v)); }
       }
       C.writeBack(pc, pitched);
@@ -1325,9 +1328,12 @@
     // LIVE: the walk supplies (barInRun, runBars) per lane for this single bar.
     if(state._voiceRun){
       for(const v of DYN_VOICES){ const r = state._voiceRun[v]; if(!r || !(r.n > 0)) continue;
+        // r.noIn (endless-loop entrance law, live walk): an established voice
+        // re-entering the looping form returns at FULL — floorIn 1 disables the
+        // swell-in while the exit fade is untouched. See faust/live.js makeWalk.
         if(v === "drums"){ for(const e of drums){ const f = DYN_DRUM[e.drum] || DYN_DRUM._default;
-            const s = rampScalar(f[0], f[1], r.i, r.n); if(s < 1){ if(e.amp0==null) e.amp0 = e.amp; e.amp *= s; } } }
-        else { const fl = DYN_FLOOR[v]; const s = rampScalar(fl[0], fl[1], r.i, r.n);
+            const s = rampScalar(r.noIn ? 1 : f[0], f[1], r.i, r.n); if(s < 1){ if(e.amp0==null) e.amp0 = e.amp; e.amp *= s; } } }
+        else { const fl = DYN_FLOOR[v]; const s = rampScalar(r.noIn ? 1 : fl[0], fl[1], r.i, r.n);
           if(s < 1) for(const e of pitched) if(e.voice===v && !e.solo) e.amp *= s; }
       }
       return;
