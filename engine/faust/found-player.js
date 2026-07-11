@@ -371,7 +371,18 @@
       } else {
         // chopper: full-buffer phasor at rate pitch from fractional offset, wraps
         const start = f.offset * src.length;
-        for (let i = 0; i < n; i++) seg[i] = readLerp(src, start + i * atPitch);
+        if (f.scratch) {
+          // SCRATCH (Paul 2026-07-11: "scratching on samples from time to time"):
+          // the read position oscillates forward↔reverse like a hand on vinyl — a
+          // TRIANGLE wave (constant rate each direction) over `cyc` passes across a
+          // small `span` of the buffer, so the chop plays fwd/back/fwd = a scratch.
+          // Opt-in via f.scratch => byte-identical when absent (the else path below).
+          const span = (f.scratchSpan || 0.05) * src.length, cyc = Math.max(1, f.scratchCycles || 4);
+          for (let i = 0; i < n; i++) { const x = cyc * i / n, t = x - (x | 0), tri = t < 0.5 ? 4 * t - 1 : 3 - 4 * t;
+            seg[i] = readLerp(src, start + span * tri); }
+        } else {
+          for (let i = 0; i < n; i++) seg[i] = readLerp(src, start + i * atPitch);
+        }
         lp24(seg, f.cutoff, sr);
         const fadeN = f.fade > 0 ? Math.min(Math.floor(f.fade * sr), n >> 1) : 0;
         const aN = fadeN || Math.min(Math.floor(0.006 * sr), n >> 1);
