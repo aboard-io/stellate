@@ -104,7 +104,7 @@
   let wrap = null, vbox = null, tear = null, vids = [], front = 0, scan = null;
   let osd = null, osdTimer = 0, glitchTimer = 0, idleTimer = 0, on = false, ready = false;   // on: DARK until the background program asks (controller-owned)
   let grain = null, dispEl = null, roEl = null, gbEl = null;   // SVG glitch knobs
-  let curName = null, seq = 0, curGenre = "", profile = null;
+  let curName = null, curKind = null, seq = 0, curGenre = "", profile = null;   // curKind: "local" | "remote" — the source tier of the clip actually SHOWN (the video exporter composites LOCAL-only to avoid tainting the capture canvas)
   // ---- ALIEN BROADCAST chaos-layer state (event-driven station personality) --
   let fxlayer = null, pipEl = null, barsEl = null, cardEl = null, subEl = null,
       chanEl = null, tsEl = null, trackEl = null,
@@ -1066,7 +1066,7 @@
       vOld.style.opacity = "0";
       setTimeout(() => { try { vOld.pause(); } catch (e) {} clearHandlers(vOld); }, FADE_MS + 120);
     }
-    front = back; curName = bl.name; backLoad = null;
+    front = back; curName = bl.name; curKind = bl.kind || null; backLoad = null;
     if (queuedPrefetch) { const q = queuedPrefetch; queuedPrefetch = null; loadBack(q, false); }   // the back element is free now
   }
 
@@ -1150,11 +1150,14 @@
     init, setEnabled, idle, makeBag, setGenre,
     enabled: () => on && ready,
     available: () => ready,
-    // VIDEO EXPORT (E): the front <video> element for canvas compositing. Clips
-    // are LOCAL (found/video/*.mp4, same-origin) so drawImage doesn't taint the
-    // capture canvas; returns null if nothing's playing. `_localBase` (unused here)
-    // documents the local-first source.
+    // VIDEO EXPORT (E): the front <video> element for canvas compositing, plus the
+    // SOURCE TIER of the clip currently shown. LOCAL clips (found/video/*.mp4) are
+    // same-origin and safe to drawImage; REMOTE archive.org streams have no
+    // `crossOrigin` and would SILENTLY TAINT the capture canvas (drawImage does not
+    // throw), so the exporter must skip compositing unless `_frontKind()==="local"`.
+    // Returns null when nothing is playing yet.
     _frontEl: () => vids[front] || null,
+    _frontKind: () => curKind,
     onSection: (idx) => { stopIdle(); const n = names[((idx % names.length) + names.length) % names.length]; if (n) show(n); },
     showFile: (file) => { stopIdle(); show(String(file).replace(/\.mp4$/, "")); },
     prefetch: (file) => { if (file) prefetch(String(file).replace(/\.mp4$/, "")); },

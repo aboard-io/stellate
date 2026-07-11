@@ -1258,6 +1258,14 @@
         try { if (!_capDest) { _capDest = ctx.createMediaStreamDestination(); userGain.connect(_capDest); } return _capDest.stream; }
         catch (e) { return null; }
       },
+      // VIDEO EXPORT cleanup: tear down the lazy DESKTOP capture tap after a take so
+      // userGain isn't left fanned out into an orphan MediaStreamDestination. No-op on
+      // the mobile route (msDest is the shared live sink and must stay connected).
+      releaseAudioStream: () => {
+        if (msDest || !_capDest) return;
+        try { userGain.disconnect(_capDest); } catch (e) {}
+        _capDest = null;
+      },
       // ── background-WAV handoff debug hooks (headless verification) ──
       __bgWavReady: () => !!bgUrl,
       __bgUrl: () => bgUrl,
