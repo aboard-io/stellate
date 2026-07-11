@@ -234,6 +234,15 @@
         // single pass, so it aims at the next bar's pre-substitution root)
         chords[i]=mk(chords[i+1].rootPc+7,QUAL.dom7,"D",chords[i].degree);
       }
+      else if(adv>0.32&&b<0.1+(adv-0.32)*1.2&&chords[i+1]&&mod12(chords[i+1].rootPc-key)!==0){
+        // BACH-MINUET applied dominant (D.2, Paul: "just a little"): tonicize the
+        // NEXT chord whenever it isn't the tonic — a V7/x, the leading-tone
+        // accidental of the classical cadence. A low ~10% floor so a little
+        // chromatic color appears even in mild genres, scaling with adventure
+        // (monotone; REUSES `b`, no new draw so the fixed-4-per-bar design holds).
+        // The exotic mediant/tritone-sub tiers still own high adventure above.
+        chords[i]=mk(chords[i+1].rootPc+7,QUAL.dom7,"D",chords[i].degree);
+      }
       else if(adv>0.25&&a<(adv-0.25)*2.2){
         if(majorish)                                                       // borrow from the parallel minor
           chords[i]= s<0.34? mk(key+5,seventh?QUAL.min7:QUAL.min,"S",3)    // iv
