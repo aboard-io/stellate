@@ -15,7 +15,7 @@
 // shows ("The Signalmen — Standard Time.mid"), so the download matches the
 // on-screen band card.
 import { S, set, deep } from "./state.js";
-import { buildLoopMidi } from "./journey.js";   // whole-path MIDI (the full loop, not just the current song)
+import { buildLoopMidi, buildLoopPlan } from "./journey.js";   // whole-path MIDI + audio plan (the full loop, not just the current song)
 
 const SR = 44100;
 
@@ -172,9 +172,145 @@ async function encodeMp3(wavBuf) {
   } finally { mw.terminate(); }
 }
 
-// ---------- ⤓ audio: the offline press ----------
+// ========================= ⤓ WHOLE-PATH audio (the loop) =====================
+// Paul: "export the entire path, not just the current song. The whole mix." When
+// a loop is drawn, ⤓ wav/mp3 render the ENTIRE journey — every genre it crosses —
+// via app/journey.js buildLoopPlan (topology-stable runs) + the dedicated
+// stream-worker renderLoop (bake each run, crossfade the seams, STREAM the PCM
+// back). Memory-bounded: the worker never holds the whole loop, and here we
+// assemble WAV from int16 body parts (a Blob of parts, no giant contiguous copy)
+// or feed the mp3 worker block-by-block. Falls back to the single-song press when
+// there is no path (exportAudio routes below).
+
+// enumerate + decode every found/sampler/vocoder source the WHOLE loop touches
+// (plan.byId holds the source records; srcIds are global so one table serves all
+// runs). Speech carriers are the RAW decoded buffer (openLive loops them — NOT
+// tiled to a TOTAL like the single-song press path).
+async function decodeLoopInputs(plan) {
+  const FP = window.FoundPlayer, SP = window.FaustSampler;
+  const ctx = decodeCtx();
+  const byId = plan.byId || {};
+  const buffers = {}, speechById = {}, failed = [];
+  const gate = makeGate(4);
+  const monoOf = (b) => {
+    if (!b || !b.length) return null;
+    if (b.numberOfChannels <= 1) return Float32Array.from(b.getChannelData(0));
+    const n = b.length, a = b.getChannelData(0), c = b.getChannelData(1), o = new Float32Array(n);
+    for (let i = 0; i < n; i++) o[i] = (a[i] + c[i]) * 0.5; return o;
+  };
+  const foundSet = new Set(plan.foundIds), sampSet = new Set(plan.samplerIds);
+  const jobs = [];
+  const decMono = async (s) => (s.synthText ? await FP.synthToBuffer(ctx, s.synthText) : await FP.decodeUrlToBuffer(ctx, urlOf(s)));
+  for (const id of foundSet) { const s = byId[id]; if (!s) { failed.push(id); continue; }
+    jobs.push(gate(async () => { try { const b = await decMono(s);
+      if (b && b.length) buffers[id] = Float32Array.from(b.getChannelData(0)); else failed.push(id); } catch (e) { failed.push(id); } })); }
+  for (const id of sampSet) { if (foundSet.has(id)) continue; const s = byId[id]; if (!s) { failed.push(id); continue; }
+    jobs.push(gate(async () => { try { const p = monoOf(await SP.decodeUrlRaw(ctx, urlOf(s))); if (p) buffers[id] = p; else failed.push(id); }
+      catch (e) { failed.push(id); } })); }
+  for (const id of (plan.speechIds || [])) { const s = byId[id]; if (!s) { failed.push(id + " (speech)"); continue; }
+    jobs.push(gate(async () => { try { const b = await decMono(s);
+      if (b && b.length) speechById[id] = Float32Array.from(b.getChannelData(0)); else failed.push(id + " (speech)"); }
+      catch (e) { failed.push(id + " (speech)"); } })); }
+  await Promise.all(jobs);
+  return { buffers, speechById, failed };
+}
+
+// int16-interleave one streamed float block into a WAV data-body chunk (no header;
+// truncate-toward-zero to match the worker's encodeWavPCM / wav.js "trunc" mode).
+function pcmToInt16(L, R, n) {
+  const buf = new ArrayBuffer(n * 4), dv = new DataView(buf);
+  for (let i = 0; i < n; i++) {
+    dv.setInt16(i * 4, Math.max(-1, Math.min(1, L[i])) * 32767 | 0, true);
+    dv.setInt16(i * 4 + 2, Math.max(-1, Math.min(1, R[i])) * 32767 | 0, true);
+  }
+  return buf;
+}
+// the canonical 44-byte RIFF/WAVE header for `frames` stereo 16-bit samples.
+function wavHeader(frames) {
+  const dataLen = frames * 4, buf = new ArrayBuffer(44), dv = new DataView(buf); let o = 0;
+  const w = (s) => { for (let i = 0; i < s.length; i++) dv.setUint8(o++, s.charCodeAt(i)); };
+  w("RIFF"); dv.setUint32(o, 36 + dataLen, true); o += 4; w("WAVE");
+  w("fmt "); dv.setUint32(o, 16, true); o += 4; dv.setUint16(o, 1, true); o += 2; dv.setUint16(o, 2, true); o += 2;
+  dv.setUint32(o, SR, true); o += 4; dv.setUint32(o, SR * 4, true); o += 4; dv.setUint16(o, 4, true); o += 2; dv.setUint16(o, 16, true); o += 2;
+  w("data"); dv.setUint32(o, dataLen, true); o += 4;
+  return buf;
+}
+
+// exportLoopAudio("wav"|"mp3", {bars, noDownload}) -> Promise<Blob|null>. One at a
+// time (EXPORT.busy); progress rides S.status. opts.bars caps the walk (headless).
+export async function exportLoopAudio(fmt, opts) {
+  opts = opts || {};
+  if (EXPORT.busy || !S.playing) return null;
+  EXPORT.busy = true; set({});
+  let w = null, mw = null;
+  try {
+    set({ status: "whole-path: planning the walk…" });
+    const plan = buildLoopPlan(opts.bars ? { bars: opts.bars } : undefined);
+    if (!plan || !plan.runs.length) { set({ status: "whole-path export needs a drawn loop" }); return null; }
+    set({ status: "whole-path: decoding " + (plan.foundIds.length + plan.samplerIds.length) + " sources…" });
+    const { buffers, speechById, failed } = await decodeLoopInputs(plan);
+    if (failed.length) console.warn("whole-path: sources skipped:", failed.join(", "));
+    w = new Worker("engine/faust/stream-worker.js", { type: "module" });
+    await new Promise((res, rej) => { w.onmessage = (e) => { const m = e.data || {};
+      if (m.type === "ready") res(); else if (m.type === "initfail") rej(new Error(m.error)); }; w.postMessage({ type: "init" }); });
+
+    const parts = []; let frames = 0, first = true;
+    const mp3chunks = []; let mp3done = null;
+    if (fmt === "mp3") {
+      mw = new Worker("engine/faust/mp3-worker.js", { type: "module" });
+      await new Promise((res, rej) => { mw.onmessage = (e) => { const m = e.data || {};
+        if (m.type === "mp3ready") res(); else if (m.type === "mp3fail") rej(new Error(m.error)); }; mw.postMessage({ type: "init" }); });
+      mp3done = new Promise((res, rej) => { mw.onmessage = (e) => { const m = e.data || {};
+        if (m.type === "mp3chunk") { if (m.bytes && m.bytes.byteLength) mp3chunks.push(new Uint8Array(m.bytes)); if (m.final) res(); }
+        else if (m.type === "mp3fail") rej(new Error(m.error)); }; });
+      mw.postMessage({ type: "mp3open", kbps: 192, overlapSec: 0.02, epoch: 1 });
+    }
+
+    await new Promise((res, rej) => {
+      w.onmessage = (e) => { const m = e.data || {};
+        if (m.type === "looppcm") {
+          const L = new Float32Array(m.L), R = new Float32Array(m.R), n = m.n | 0; frames += n;
+          if (fmt === "mp3") mw.postMessage({ type: "mp3pcm", gen: 1, L: L.buffer, R: R.buffer, n, boot: first, bridge: false, barMap: [] }, [L.buffer, R.buffer]);
+          else parts.push(pcmToInt16(L, R, n));
+          first = false;
+        } else if (m.type === "loopprog") set({ status: "whole-path: rendering " + Math.round(100 * m.done / Math.max(1, m.total)) + "% (" + Math.round(m.sec) + "s)…" });
+        else if (m.type === "loopdone") res(m);
+        else if (m.type === "loopfail" || m.type === "loopcancel") rej(new Error(m.error || m.type));
+      };
+      const transfer = [];
+      for (const b of Object.values(buffers)) transfer.push(b.buffer);
+      for (const b of Object.values(speechById)) transfer.push(b.buffer);
+      w.postMessage({ type: "renderLoop", gen: 1, runs: plan.runs, buffers, speechById, crossfadeSec: 0.12 }, transfer);
+    });
+
+    let blob, ext;
+    if (fmt === "mp3") {
+      set({ status: "whole-path: encoding MP3…" });
+      mw.postMessage({ type: "mp3flush", gen: 1 }); await mp3done;
+      let tot = 0; for (const c of mp3chunks) tot += c.length; const u = new Uint8Array(tot); let o = 0; for (const c of mp3chunks) { u.set(c, o); o += c.length; }
+      blob = new Blob([u.buffer], { type: "audio/mpeg" }); ext = ".mp3";
+    } else {
+      blob = new Blob([wavHeader(frames), ...parts], { type: "audio/wav" }); ext = ".wav";
+    }
+    EXPORT.lastLoopFrames = frames;
+    const name = fileStem() + " (full path)" + ext;
+    saveBlob(blob, name, opts.noDownload);
+    set({ status: "saved " + name + " — " + (frames / SR).toFixed(0) + "s, " + (blob.size / 1048576).toFixed(1) + " MB" +
+      (failed.length ? " (" + failed.length + " skipped)" : "") });
+    return blob;
+  } catch (e) {
+    console.error("whole-path export failed:", e);
+    set({ status: "whole-path export failed: " + ((e && e.message) || e) });
+    return null;
+  } finally { if (w) w.terminate(); if (mw) mw.terminate(); EXPORT.busy = false; set({}); }
+}
+
+// ---------- ⤓ audio: the offline press (the CURRENT song) ----------
 // exportAudio("wav"|"mp3", {durSec, noDownload}) -> Promise<ArrayBuffer|null>.
-// One at a time (EXPORT.busy); progress rides S.status (the chyron status line).
+// The current song only, returned as a raw WAV ArrayBuffer (or MP3). The ⤓ wav/mp3
+// buttons route to exportLoopAudio for the WHOLE PATH when a loop is drawn
+// (app/panels.js) — kept a distinct entry point because that render is streamed
+// (a Blob, possibly very long), a different contract from this quick press.
 export async function exportAudio(fmt, opts) {
   opts = opts || {};
   if (EXPORT.busy || !S.playing) return null;
@@ -225,6 +361,6 @@ export async function exportAudio(fmt, opts) {
 }
 
 // ---------- headless probe hooks (test/explorer-ui-test.js) ----------
-export const EXPORT = { busy: false, noDownload: false, lastMidi: null, lastName: null,
-  downloadMidi, exportAudio, fileStem, songIdentity };
+export const EXPORT = { busy: false, noDownload: false, lastMidi: null, lastName: null, lastLoopFrames: 0,
+  downloadMidi, exportAudio, exportLoopAudio, fileStem, songIdentity };
 window.__EXPORT = EXPORT;

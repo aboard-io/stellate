@@ -32,6 +32,72 @@ export function walkLoop(opts) {
   return { bars, total, n, pace, musicalSec, seed: S.seed };
 }
 
+// ── WHOLE-PATH AUDIO planning (the offline conductor) ───────────────────────
+// One openLive session fixes the FAUST timbre TOPOLOGY (voice units + reverb +
+// master modules); the loop evolves genre-to-genre, so a single session can't
+// carry the whole path. buildLoopPlan groups consecutive bars into topology-
+// stable RUNS (a new run = a crossfade seam), each rendered in its own
+// openLive(bakeNative) session by the worker, then enumerates every found /
+// sampler / vocoder source the whole loop touches so the caller can decode them
+// ONCE and ship a single buffer table (srcIds are global) into the render.
+
+// the feedBar barSpec from a walk payload (mirrors live.js postFeed exactly).
+function loopBarSpec(r) {
+  return { units: r.units, events: r.events, fxParams: r.fxParams, spb: r.spb, lo: r.lo, hi: r.hi,
+    sweeps: r.sweepsRaw, found: r.found, foundCi: r.meta.ci, meta: r.meta };
+}
+
+// the topology key: the faust unit signature PLUS the master-stage modules
+// (reverb color + master comp) that openLive fixes at open — a change in any of
+// them must start a fresh session, or the later bars would render in the wrong
+// space. Found/sampler are native (baked per bar) and don't gate the session.
+function topoKey(r, SE) {
+  const rc = SE.reverbColor(r.one), mb = SE.masterMb(r.one);
+  return r.sig + "|" + (rc ? rc.module : "") + "|" + (mb ? mb.module : "");
+}
+
+// the vocoder carrier a run needs (openLive loops the RAW carrier): the run's
+// state.vocoderSourceId or the first sp_/vx_/vox_ found source — but only when a
+// unit in the run actually vocodes (mirrors export.js/press decodeInputs).
+function vocoderIdFor(r) {
+  if (!Object.values(r.units).some((u) => u && u.vocoder)) return null;
+  const fs = r.foundSources || [];
+  const vs = fs.find((s) => s.id === r.one.vocoderSourceId) || fs.find((s) => /^(sp_|vx_|vox_)/.test(s.id || ""));
+  return vs ? vs.id : null;
+}
+
+// buildLoopPlan(opts) -> { runs, foundIds, samplerIds, speechIds, total, musicalSec, n, pace, seed }
+//   runs: [{ state, bars:[barSpec…], vocoderId }]  — one topology-stable session each
+//   foundIds/samplerIds/speechIds: every source the loop touches (decode once)
+// Returns null if the walk can't run (no engine / no path). The heavy PCM never
+// touches this thread — the worker renders each run; this only plans.
+export function buildLoopPlan(opts) {
+  const w = walkLoop(opts);
+  if (!w || !w.bars.length) return null;
+  const SE = window.FaustStateEngine;
+  const runs = [];
+  const foundIds = new Set(), samplerIds = new Set(), speechIds = new Set();
+  const byId = {};   // srcId -> source record (url/synthText/samplePath) for the decoder
+  let curKey = null, cur = null;
+  for (const r of w.bars) {
+    for (const s of (r.foundSources || [])) if (s && s.id && !byId[s.id]) byId[s.id] = s;
+    const key = topoKey(r, SE);
+    if (key !== curKey) {
+      curKey = key;
+      cur = { state: r.one, bars: [], vocoderId: vocoderIdFor(r) };
+      if (cur.vocoderId) speechIds.add(cur.vocoderId);
+      runs.push(cur);
+    }
+    cur.bars.push(loopBarSpec(r));
+    // every found source this bar plays, and every sampler zone's source
+    for (const f of (r.found || [])) foundIds.add(f.srcId);
+    for (const e of (r.events || [])) { const u = r.units[e.unit];
+      if (u && u.sampler) for (const z of (u.sampler.zones || [])) samplerIds.add(z.srcId); }
+  }
+  return { runs, byId, foundIds: [...foundIds], samplerIds: [...samplerIds], speechIds: [...speechIds],
+    total: w.total, musicalSec: w.musicalSec, n: w.n, pace: w.pace, seed: w.seed };
+}
+
 // WHOLE-PATH MIDI: walk the loop and assemble one SMF spanning the full journey
 // (every genre it crosses), not just the current song. Returns Uint8Array | null.
 export function buildLoopMidi(opts) {
