@@ -15,13 +15,22 @@ import { recordVideo, stopVideo, VIDEO } from "./video-export.js";
 // ⤓ audio: the WHOLE PATH when a loop is drawn (Paul: "export the entire path"),
 // else the current song — mirrors downloadMidi's own whole-path routing.
 const exportAudioSmart = (fmt) => (S.waypoints.length >= 2 ? exportLoopAudio(fmt) : exportAudio(fmt));
-import { copyShareUrl, loopBars } from "./share.js";
+import { copyShareUrl, loopBars, loopDuration, MIN_DURATION, MAX_DURATION } from "./share.js";
 
 // ---------- Preact panel ----------
-// pace: INVERTED (left = 4096 bars/leg = slowest, right = 16 = fastest —
-// "sliders should move slower to faster"), log2 steps.
-const paceSlider=p=>16-Math.round(Math.log2(Math.max(16,Math.min(4096,+p||BARS_PER_SEG))));   // pace 4096->4 … 16->12? see map below
-// slider v in [4..12]: pace = 2^(16-v)  (v=4 -> 4096 … v=12 -> 16)
+// DURATION SLIDER (Paul): the loop's TRAVEL TIME, dialed directly as a time from 8 min to
+// 24 h on a LOG scale (default 30 min), left = shortest, right = longest. The slider is a
+// 0..1000 integer; duration = MIN·(MAX/MIN)^(v/1000). This replaces the old bars-per-leg
+// "pace" — the number you set is now simply how long the whole path takes.
+const DUR_STEPS = 1000;
+const durToSlider = d => Math.round(DUR_STEPS * Math.log(Math.max(MIN_DURATION, Math.min(MAX_DURATION, d)) / MIN_DURATION) / Math.log(MAX_DURATION / MIN_DURATION));
+const sliderToDur = v => Math.round(MIN_DURATION * Math.pow(MAX_DURATION / MIN_DURATION, Math.max(0, Math.min(DUR_STEPS, +v || 0)) / DUR_STEPS));
+const fmtDuration = s => {
+  s = Math.round(s);
+  if (s < 3600) return Math.round(s / 60) + " min";
+  const h = s / 3600;
+  return (h < 10 ? (Math.round(h * 10) / 10) : Math.round(h)) + " hr";
+};
 // ±BPM DELTA (Paul: "an overall delta, so that I can subtract or add 64 BPM to
 // whatever is currently playing"). The slider shifts playing+target NOW, and
 // retargetWeights re-applies S.bpmDelta to every future target, so the offset
@@ -67,10 +76,10 @@ function Panel(){
         <button class="mini" title="random seed" onclick=${()=>{set({seed:Math.floor(Math.random()*99999)});}}>🎲</button>
         <button class="mini" title="copy a link to THIS mix — seed, path and measure ride the URL"
           onclick=${copyShareUrl}>↗ share</button></div>
-      <div class="row"><label>pace</label>
-        <input type="range" min="4" max="12" step="1" value=${16-Math.round(Math.log2(Math.max(16,Math.min(4096,+S.pace||BARS_PER_SEG))))}
-          onInput=${e=>set({pace:Math.pow(2,16-Math.max(4,Math.min(12,+e.target.value||8)))})} />
-        <output>${S.waypoints.length>=2?loopBars():S.pace} bars</output></div>
+      <div class="row"><label title="how long the whole loop takes to travel — dial the time directly (8 min … 24 h)">duration</label>
+        <input type="range" min="0" max="1000" step="1" value=${durToSlider(loopDuration())}
+          onInput=${e=>set({duration:sliderToDur(+e.target.value)})} />
+        <output>${fmtDuration(loopDuration())}</output></div>
       <div class="row"><label>±bpm</label>
         <input type="range" min="-64" max="64" step="1" value=${dl}
           onInput=${e=>setBpmDelta(e.target.value)} />

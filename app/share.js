@@ -33,8 +33,28 @@ export function legMetrics(){
     const d=Math.hypot(b.x-a.x,b.y-a.y); legs.push(d); perim+=d; }
   return { n, legs, perim };
 }
-// world-units the traveler advances per bar (constant; bigger pace = slower).
-export function paceSpeed(){ return PACE_REF/Math.max(8,Math.min(4096,+S.pace||BARS_PER_SEG)); }
+// TARGET LOOP DURATION (Paul): the traveler's speed is dialed as a TIME — how long the
+// WHOLE loop should take (8 min .. 24 h, log slider, default 30 min) — not an abstract
+// bars-per-leg "pace". Speed = perimeter × NOMINAL_SPB / duration, so the loop lasts
+// ~`duration` regardless of the path's SIZE (a big path just moves faster; a small one
+// slower). NOMINAL_SPB is a reference seconds-per-bar (~120 bpm × an 8-beat bar); the real
+// wall-clock scales with the song's actual tempo, so the dialed time is approximate by design.
+export const NOMINAL_SPB = 4;          // reference seconds per bar for the duration→speed map
+export const MIN_DURATION = 480;       // 8 minutes  (slider left)
+export const MAX_DURATION = 86400;     // 24 hours   (slider right)
+export const DEFAULT_DURATION = 1800;  // 30 minutes (default)
+export function loopDuration(){
+  const d = +S.duration > 0 ? +S.duration : DEFAULT_DURATION;
+  return Math.max(MIN_DURATION, Math.min(MAX_DURATION, d));
+}
+// world-units the traveler advances per bar. Derived from the target loop DURATION + the
+// path perimeter, so the whole loop takes ~loopDuration() seconds. No path yet -> a benign
+// default (the traveler isn't moving anyway).
+export function paceSpeed(){
+  const { perim } = legMetrics();
+  if (perim > 1e-6) return Math.max(1e-3, perim * NOMINAL_SPB / loopDuration());
+  return PACE_REF / BARS_PER_SEG;
+}
 // EXPORT/RENDER SAFETY CAP (2026-07-11 crash fix): a constant-pace loop over a
 // large-coordinate path can be tens of thousands of bars (perim/speed). The whole-
 // path MIDI/audio walk MATERIALIZES every bar (events + units) — 32k of them OOM'd
@@ -59,7 +79,7 @@ export function buildShareUrl(){
   q.set("seed", String(S.seed));
   if(S.waypoints.length>=2)
     q.set("path", S.waypoints.map(w=>Math.round(w.x)+"."+Math.round(w.y)).join(","));
-  if(+S.pace!==BARS_PER_SEG) q.set("pace", String(S.pace));
+  if(loopDuration()!==DEFAULT_DURATION) q.set("dur", String(Math.round(loopDuration())));   // loop duration (s) rides the URL
   if(S.modeLock!=="auto") q.set("mode", S.modeLock);
   if(S.soundfont && S.soundfont!=="fluidr3") q.set("sf", S.soundfont);   // the chosen soundfont rides the URL (Paul)
   const m=S.live&&S.barInfo?(S.barInfo.serial+1):((S.startBar||0)+1);   // 1-based measure; idle = the resume point
@@ -73,7 +93,6 @@ export function applyUrlState(){
   const q=new URLSearchParams(location.search);
   let restored=false;
   if(q.get("seed")){ const v=parseInt(q.get("seed"),10); if(v>=1&&v<=99999) S.seed=v; }
-  if(q.get("pace")){ const p=parseInt(q.get("pace"),10); if(p>=8&&p<=4096) S.pace=p; }
   if(q.get("mode")) S.modeLock=q.get("mode");
   const path=q.get("path");
   if(path){
@@ -81,6 +100,17 @@ export function applyUrlState(){
       .filter(w=>isFinite(w.x)&&isFinite(w.y));
     if(wps.length>=2){ S.waypoints=wps; restored=true; }
   }
+  // DURATION (loop time). New links carry `dur` (seconds). LEGACY links carry `pace`
+  // (bars/leg) — convert it to the equivalent duration so old bookmarks play at the SAME
+  // speed: old speed = PACE_REF/pace, old loop = perim/oldSpeed bars ≈ that × NOMINAL_SPB s.
+  // (Done AFTER waypoints so the perimeter is known.)
+  if(q.get("dur")){ const d=parseInt(q.get("dur"),10);
+    if(d>=1) S.duration=Math.max(MIN_DURATION, Math.min(MAX_DURATION, d)); }
+  else if(q.get("pace")){ const p=parseInt(q.get("pace"),10);
+    if(p>=8&&p<=4096){ const { perim }=legMetrics();
+      S.duration = perim>1e-6
+        ? Math.max(MIN_DURATION, Math.min(MAX_DURATION, perim*p/PACE_REF*NOMINAL_SPB))
+        : DEFAULT_DURATION; } }
   const m=parseInt(q.get("m"),10);
   if(m>0){
     S.startBar=m-1;                                  // engine walk serial (0-based)

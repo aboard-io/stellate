@@ -216,12 +216,19 @@ async function main() {
         if (row.q <= SIM.cur.minQ) { SIM.cur.minQ = row.q; SIM.cur.snapBar = row.bar; SIM.cur.state = JSON.parse(JSON.stringify(S.playing)); }
       } else SIM.cur = null;
     };
-    return { label, wps, legs: wps.length, loopGenres: inp.kind === "default" ? (window.__LOOP.genres || []) : null,
+    // loopBars() is one FULL loop at the current travel speed (now a duration model, not
+    // fixed bars-per-leg) — the auto walk length so every seeded genre is actually crossed.
+    const loopBars = (window.__X && window.__X.loopBars) ? window.__X.loopBars() : (pace * wps.length);
+    return { label, wps, legs: wps.length, loopBars, loopGenres: inp.kind === "default" ? (window.__LOOP.genres || []) : null,
       startWeights: (S.weights || []).slice(0, 3).map((x) => ({ g: x.g, w: +(+x.w).toFixed(3) })) };
   }, { inp, seed: args.seed, pace: args.pace });
   if (setup.err) { console.error(setup.err); await browser.close(); srv.close(); process.exit(2); }
 
-  const totalBars = args.bars === "auto" ? args.pace * setup.legs : Math.max(1, parseInt(args.bars, 10) || args.pace * setup.legs);
+  // AUTO = one full loop at the current speed (loopBars), + a little so the closing leg's
+  // arrival is observed. (Was pace×legs — the old fixed-bars-per-leg length, which under the
+  // duration speed model no longer completes a loop, so far genres were never reached.)
+  const autoBars = Math.round(setup.loopBars * 1.1);
+  const totalBars = args.bars === "auto" ? autoBars : Math.max(1, parseInt(args.bars, 10) || autoBars);
 
   // ---------- ride (chunked so no single evaluate runs long) ----------
   for (let done = 0; done < totalBars; done += CHUNK) {
