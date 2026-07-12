@@ -204,7 +204,7 @@ const BAND_CAP = 8;               // HARD mobile cap on simultaneous aliens (tra
 // transit. Input handlers below mutate this object.
 const orbit = {
   target: null,                   // THREE.Vector3, set on start()
-  dist: 8, minDist: 3.6, maxDist: 60,   // minDist raised (was 2.2) so nothing zooms in past a whole-body view
+  dist: 10, minDist: 5.0, maxDist: 60,   // minDist raised (was 2.2/3.6) so nothing zooms in past a whole-body view
   yaw: 0, pitch: 0.18, fov: 58,
   minPitch: -1.35, maxPitch: 1.45,
 };
@@ -217,8 +217,7 @@ let wasLanded = false;            // edge-detect entering a landed phase (seed o
 // pitch LOOK OFFSET that rotates the view direction about the flying eye WITHOUT
 // fighting the path; it eases gently back to the flight's framing when released (a
 // right-stick feel), and is zeroed on land/depart so the landed framing is clean.
-const transitLook = { yaw: 0, pitch: 0 };
-const TRANSIT_LOOK_TC = 3.5;      // recenter time-constant (s) — slow enough to hold a look
+const transitLook = { yaw: 0, pitch: 0 };   // PERSISTS while flying (no auto-recenter); reset on land/depart
 const _tv3 = { a: null, b: null, up: null, right: null };   // reused THREE.Vector3 scratch (set on start)
 
 // ---- MUSIC-VIDEO auto-camera (landed) -------------------------------------------
@@ -1409,10 +1408,10 @@ function applyTransitCamera(dt, p) {
   const eyeY = Math.max(FLOOR_Y, camFollow.y);
   camera.position.set(camFollow.x, eyeY, camFollow.z);
   // FREE-LOOK: rotate the flight's look direction about the eye by the user's yaw/pitch
-  // offset so they can turn their head in space; ease the offset back to 0 (the flight's
-  // framing) when released. When the offset is ~0 this is exactly the old lookAt.
-  const decay = Math.exp(-(dt > 0 ? dt : 0) / TRANSIT_LOOK_TC);
-  transitLook.yaw *= decay; transitLook.pitch *= decay;
+  // offset so they can turn their head in space. The offset PERSISTS where you leave it
+  // (no auto-recenter — the old 3.5s snap-back read as "can't change my view"); it only
+  // resets on depart/land so the next leg/landing starts clean. When the offset is ~0 this
+  // is exactly the old lookAt.
   if (_tv3.a && (Math.abs(transitLook.yaw) > 1e-4 || Math.abs(transitLook.pitch) > 1e-4)) {
     const dir = _tv3.a.set(camFollow.lx - camFollow.x, camFollow.ly - eyeY, camFollow.lz - camFollow.z);
     dir.applyAxisAngle(_tv3.up.set(0, 1, 0), transitLook.yaw);
@@ -1468,7 +1467,7 @@ function buildAutoShots() {
   const flyover = { target: { x: bandCentroid.x, y: cy + 0.6, z: bandCentroid.z }, yaw: 0.2, pitch: 0.85, dist: wide + 4, fov: 62, yawRate: 0.07, kind: "flyover" };
   // a GENTLE front push (was a hard dolly that craters right up onto the band). Starts well
   // back and eases in only a little, so it never zooms past a whole-body framing.
-  const through = { target: { x: bandCentroid.x, y: cy + 0.1, z: bandCentroid.z }, yaw: 0.0, pitch: 0.08, dist: Math.max(orbit.minDist + 3, 9.0), fov: 60, yawRate: 0.0, dolly: -0.6, kind: "through" };
+  const through = { target: { x: bandCentroid.x, y: cy + 0.1, z: bandCentroid.z }, yaw: 0.0, pitch: 0.08, dist: Math.max(orbit.minDist + 5, 12.0), fov: 58, yawRate: 0.0, dolly: -0.25, kind: "through" };
   // FULL-FIGURE FRONT medium on each player — the camera used to zoom in tight on the
   // torso/face and CROP the (now bigger, horned/winged/tailed) creatures. It now sits far
   // enough back to hold the WHOLE alien in frame (feet -> horns/crest), from a near-front
@@ -1476,7 +1475,7 @@ function buildAutoShots() {
   // vertical centre; a gentle downward tilt keeps it looking at the alien, not the floor.
   const closeups = band.map((a, i) => {
     const bp = (a.stage || a.group).position;
-    return { target: { x: bp.x, y: 1.15, z: bp.z }, yaw: (i % 2 ? 0.14 : -0.14), pitch: 0.12, dist: 7.0, fov: 52, yawRate: (i % 2 ? 1 : -1) * 0.05, kind: "closeup" };
+    return { target: { x: bp.x, y: 1.2, z: bp.z }, yaw: (i % 2 ? 0.14 : -0.14), pitch: 0.11, dist: 11.0, fov: 46, yawRate: (i % 2 ? 1 : -1) * 0.04, kind: "closeup" };
   });
   // the DRUMMER shot — a dedicated medium of the drums player (the auto-cam ALWAYS cuts
   // here on a fill). Framed on the kit/torso from slightly ABOVE, never a floor-up angle.
@@ -1496,7 +1495,7 @@ function buildAutoShots() {
   if (drummer) {
     const bp = (drummer.stage || drummer.group).position;
     autoCam.drummerShot = autoShots.length;
-    autoShots.push({ target: { x: bp.x, y: 1.15, z: bp.z }, yaw: 0.14, pitch: 0.12, dist: 6.8, fov: 52, yawRate: -0.04, kind: "drummer" });
+    autoShots.push({ target: { x: bp.x, y: 1.2, z: bp.z }, yaw: 0.14, pitch: 0.11, dist: 10.5, fov: 46, yawRate: -0.03, kind: "drummer" });
   }
   // FROM-BELOW GUARD (Fix 3): keep every shot's camera AT or ABOVE the band's eye level so
   // no shot ever looks UP from the floor (which framed mostly ground). For each shot the
@@ -1653,6 +1652,7 @@ export function update(dt) {
       // fix for the touchdown lurch/cut: the galaxy->surface descent flows straight into the
       // landed framing as one continuous move.
       seedOrbitFromLiveCamera();
+      transitLook.yaw = 0; transitLook.pitch = 0;   // clear any in-flight look so the landed framing is clean
       establish.active = true; establish.t = 0;
       autoCam.shot = 0; autoCam.shotT = 0; autoCam.cuts = 0; autoCam.forceCut = false; autoCam.active = false;
       _lastInputT = -1e9;                 // a fresh land starts in auto-camera (no stale input)

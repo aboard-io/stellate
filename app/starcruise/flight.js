@@ -304,7 +304,10 @@ export function makeFlight({ getTravel, getBeat } = {}) {
     else if (phase === "DEPART") target = 0;
     else target = Math.min(0.8, imm);      // FLY/APPROACH ride the dominant weight
     // DEAD-RECKONED (was smoothDampS, which spiked): the descent glides at constant velocity
-    // between per-bar steps, so the galaxy->surface zoom no longer lurches once a bar.
+    // between per-bar steps, so the galaxy->surface zoom no longer lurches once a bar. (The
+    // descent's SLOW, deliberate feel comes from the two-phase top-down->band choreography +
+    // ease-out settle in the cameraPose below, not from stretching this ramp — a longer ramp
+    // desynced the descent from the bar clock and left the camera mid-move.)
     landProgress = clamp01(scalarRamp(landRamp, target, barDur, dt));
     const t = clamp01(landProgress / 0.8);     // 0 deep space .. 1 at touchdown
     const fullZoom = clamp01((landProgress - 0.8) / 0.2);   // 0 just-landed .. 1 full
@@ -386,13 +389,34 @@ export function makeFlight({ getTravel, getBeat } = {}) {
       const ext = fieldExtent();
       const gpos = { x: pw.x + hx * ext * 0.38, y: pw.y + ext * 0.18, z: pw.z + hz * ext * 0.38 };
       const glook = { x: pw.x, y: pw.y, z: pw.z };
-      const _pos = lerp3(gpos, SURFACE_POSE.position, t);
-      if (_pos.y < FLOOR) _pos.y = FLOOR;                // floor clamp — never below ground
-      cameraPose = {
-        position: _pos,
-        lookAt: lerp3(glook, SURFACE_POSE.lookAt, t),
-        fov: lerp(64, SURFACE_POSE.fov, t),
-      };
+      // ARRIVAL CHOREOGRAPHY (Paul): descend LOOKING DOWN from high above the landing pad,
+      // ease slowly onto the planet, THEN swing to look AT the band right at touchdown.
+      //   Phase A (t 0..TA): fall from the galaxy vantage down to a pose HIGH OVER the pad,
+      //     the look tilting to straight DOWN at the surface (a top-down descent).
+      //   Phase B (t TA..1): ease-OUT (a slow, decelerating settle) from that top-down look
+      //     to the band-facing SURFACE_POSE — so you LAND looking at the band.
+      // Ends EXACTLY at SURFACE_POSE (== the landed pose at fullZoom 0) so the transit->landed
+      // handoff stays C0-continuous (no cut). Deterministic (only t).
+      const ABOVE = { position: { x: 0, y: 16, z: 2.0 }, lookAt: { x: 0, y: 0.5, z: 0.3 } };
+      const TA = 0.5;    // half the descent falls to the top-down pose, half is the slow settle
+      let cpos, clook;
+      if (t <= TA) {
+        const u = TA > 1e-4 ? t / TA : 1, e = u * u * (3 - 2 * u);    // smoothstep down to the top-down pose
+        cpos = lerp3(gpos, ABOVE.position, e);
+        clook = lerp3(glook, ABOVE.lookAt, e);
+      } else {
+        // Settle onto the pad: the POSITION decelerates in (cubic ease-out — a slow landing),
+        // while the LOOK HOLDS its downward gaze (quadratic ease-in) and only swings to the
+        // band near touchdown — so you "ease onto the planet looking down from above, THEN
+        // land looking at the band" rather than snapping to the band at the top of the settle.
+        const u = (t - TA) / (1 - TA), iu = 1 - u;
+        const ePos = 1 - iu * iu * iu;    // cubic ease-out (fast drop, slow settle)
+        const eLook = u * u;              // quadratic ease-in (hold the down-look, swing late)
+        cpos = lerp3(ABOVE.position, SURFACE_POSE.position, ePos);
+        clook = lerp3(ABOVE.lookAt, SURFACE_POSE.lookAt, eLook);
+      }
+      if (cpos.y < FLOOR) cpos.y = FLOOR;                // floor clamp — never below ground
+      cameraPose = { position: cpos, lookAt: clook, fov: lerp(64, SURFACE_POSE.fov, t) };
     } else {
       const camY = lerp(3.2, 1.5, fullZoom);
       const camZ = lerp(9.0, 4.4, fullZoom);
