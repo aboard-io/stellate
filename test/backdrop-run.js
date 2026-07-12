@@ -270,8 +270,69 @@ async function main() {
       planet: matSig(pbrPlanet.group, "planet-body"),
     };
 
+    // ---- #3 PER-GENRE GRAMMAR + LANDSCAPE VARIETY -----------------------------
+    // Two contrasting genres must grow OBVIOUSLY different cities: a different grammar
+    // ARCHETYPE (silhouette family), disjoint building instance-family SETS, and a
+    // different LANDSCAPE feature family set. Driven by body.plan, render-only-safe.
+    const genreTraits = (plan) => Object.assign(traits("city"), { body: { plan }, renderStyle: { material: "flat" } });
+    const bFamSet = (b) => { const s = new Set(); b.group.traverse((o) => { if (o.isInstancedMesh && o.name === "buildings") s.add((o.userData && o.userData.family) || ""); }); return Array.from(s).sort(); };
+    const lFamSet = (b) => { const s = new Set(); b.group.traverse((o) => { if (o.isInstancedMesh && /^land-/.test(o.name)) s.add((o.userData && o.userData.family) || ""); }); return Array.from(s).sort(); };
+    const gTag = (b) => (b.group.userData && b.group.userData.cityGrammar) || "";
+    const lTag = (b) => (b.group.userData && b.group.userData.landscape) || "";
+    const gA = makeBackdrop(THREE, genreTraits("crystalline"), 7);   // -> ziggurat + crystal
+    const gB = makeBackdrop(THREE, genreTraits("stalk"), 7);         // -> spires   + desert
+    const aB = bFamSet(gA), bB = bFamSet(gB), aL = lFamSet(gA), bL = lFamSet(gB);
+    const variety = {
+      aGrammar: gTag(gA), bGrammar: gTag(gB),
+      aLand: lTag(gA), bLand: lTag(gB),
+      aBuild: aB, bBuild: bB, aLandFams: aL, bLandFams: bL,
+      grammarsDiffer: gTag(gA) !== gTag(gB),
+      buildDisjoint: aB.length > 0 && bB.length > 0 && aB.every((f) => !bB.includes(f)),
+      landDiffer: JSON.stringify(aL) !== JSON.stringify(bL) && aL.length > 0 && bL.length > 0,
+      archetypes: ["crystalline", "stalk", "floating-gas", "insectoid", "radial", "amorphous"].map((p) => gTag(makeBackdrop(THREE, genreTraits(p), 7))),
+      landscapes: ["crystalline", "stalk", "floating-gas", "cephalopod", "amorphous"].map((p) => lTag(makeBackdrop(THREE, genreTraits(p), 7))),
+    };
+
+    // ---- CURVED-SURFACE PLACEMENT (small-world integration seam) ----------------
+    // A MOCK planet surface: a sphere of radius R with flat terrain. surfacePoint(dir)
+    // = dir*R, upAt(dir) = dir (outward normal), frame = the standard landing pole.
+    // Proves every instance foot-plants ON the sphere oriented to the surface normal.
+    const SR = 24;
+    const mockSurface = {
+      radius: SR, up: [0, 1, 0], tangentX: [1, 0, 0], tangentZ: [0, 0, 1],
+      surfacePoint: (d) => new THREE.Vector3(d.x * SR, d.y * SR, d.z * SR),
+      upAt: (d) => new THREE.Vector3(d.x, d.y, d.z),
+    };
+    const curved = makeBackdrop(THREE, traits("city"), 5, { surface: mockSurface });
+    function curvedSampleStats(b, onlyBuildings) {
+      const P = new THREE.Vector3(), Q = new THREE.Quaternion(), S = new THREE.Vector3();
+      const M = new THREE.Matrix4(), up = new THREE.Vector3(), nrm = new THREE.Vector3();
+      let n = 0, onSphere = 0, oriented = 0, minR = 1e9, maxR = 0;
+      b.group.traverse((o) => {
+        if (!o.isInstancedMesh) return;
+        if (onlyBuildings && o.name !== "buildings") return;
+        if (o.name === "orbs" || o.name === "beacons") return;   // point lights, tilt irrelevant
+        for (let i = 0; i < o.count; i++) {
+          o.getMatrixAt(i, M); M.decompose(P, Q, S);
+          const r = P.length();
+          up.set(0, 1, 0).applyQuaternion(Q);
+          nrm.copy(P).normalize();
+          n++; if (r < minR) minR = r; if (r > maxR) maxR = r;
+          if (r > SR - 3 && r < SR + 80) onSphere++;      // planted on / lifted above the sphere
+          if (up.dot(nrm) > 0.9) oriented++;              // local +Y ~ surface normal
+        }
+      });
+      return { n, onSphere, oriented, minR: +minR.toFixed(2), maxR: +maxR.toFixed(2) };
+    }
+    const curvedBuildings = curvedSampleStats(curved, true);
+    const curvedAll = curvedSampleStats(curved, false);
+    const curvedDet = sumSig(instats(curved)) === sumSig(instats(makeBackdrop(THREE, traits("city"), 5, { surface: mockSurface })));
+    const curvedVsFlat = sumSig(instats(curved)) !== baseLayout;   // placement genuinely mapped onto the sphere
+    const flatStillWorks = sumSig(instats(makeBackdrop(THREE, traits("city"), 5))) === baseLayout;   // no-surface path unchanged
+
     renderer.dispose();
     return {
+      variety, curved: { buildings: curvedBuildings, all: curvedAll, det: curvedDet, vsFlat: curvedVsFlat, flatStillWorks },
       cityStats, farmStats, cityRender, farmRender, cityBlink, farmBlink, worlds, planetWorld, grammar, pbr: pbrProbe,
       style: { build: buildStyle, planet: planetStyle, layout: styleLayout, spread: styleRenderSpread },
       shadow: {
@@ -389,6 +450,34 @@ async function main() {
   ok(PB.layoutEq, "P3. pbr city layout byte-identical to base (render-only, seed untouched)");
   ok(PB.spread >= 8, `P4. pbr city renders NON-BLANK (spread=${PB.spread})`);
   ok(PB.planet && PB.planet.type === "MeshStandardMaterial", `P5. 'pbr' PLANET body is a MeshStandardMaterial (${JSON.stringify(PB.planet)})`);
+
+  console.log("=== #3 PER-GENRE GRAMMAR + LANDSCAPE VARIETY ===");
+  const V = R.variety;
+  console.log("  genre A (crystalline): grammar=" + V.aGrammar + " land=" + V.aLand);
+  console.log("    building families:", V.aBuild.join(", "));
+  console.log("    landscape families:", V.aLandFams.join(", "));
+  console.log("  genre B (stalk):       grammar=" + V.bGrammar + " land=" + V.bLand);
+  console.log("    building families:", V.bBuild.join(", "));
+  console.log("    landscape families:", V.bLandFams.join(", "));
+  console.log("  archetypes across 6 plans:", V.archetypes.join(", "));
+  console.log("  landscapes across 5 plans:", V.landscapes.join(", "));
+  ok(V.grammarsDiffer, `V1. two genres grow DIFFERENT city grammar archetypes (${V.aGrammar} vs ${V.bGrammar})`);
+  ok(V.buildDisjoint, "V2. their building instance-family SETS are disjoint (obviously different silhouettes)");
+  ok(V.landDiffer, `V3. their LANDSCAPE feature families differ (${V.aLandFams.join("/")} vs ${V.bLandFams.join("/")})`);
+  ok(new Set(V.archetypes).size >= 4, `V4. the genre->grammar map spans MANY archetypes (${new Set(V.archetypes).size} distinct: ${Array.from(new Set(V.archetypes)).join("/")})`);
+  ok(new Set(V.landscapes).size >= 4, `V5. the genre->landscape map spans MANY types (${new Set(V.landscapes).size} distinct: ${Array.from(new Set(V.landscapes)).join("/")})`);
+
+  console.log("=== CURVED-SURFACE PLACEMENT (small-world integration) ===");
+  const CV = R.curved;
+  console.log("  building instances:", JSON.stringify(CV.buildings));
+  console.log("  all features:", JSON.stringify(CV.all));
+  ok(CV.buildings.n >= 20, `X1. curved mode placed a real building crowd (${CV.buildings.n} instances)`);
+  ok(CV.buildings.onSphere === CV.buildings.n && CV.buildings.minR > 21, `X2. every building foot-plants ON the mock sphere (r in [${CV.buildings.minR}, ${CV.buildings.maxR}], radius 24)`);
+  ok(CV.buildings.oriented >= CV.buildings.n * 0.85, `X3. buildings ORIENT to the surface normal (${CV.buildings.oriented}/${CV.buildings.n} local-up ~ normal)`);
+  ok(CV.all.onSphere === CV.all.n, `X4. all curved features (landscape/foliage/world) sit on the sphere (${CV.all.onSphere}/${CV.all.n})`);
+  ok(CV.vsFlat, "X5. curved layout genuinely differs from the flat layout (placement mapped onto the sphere)");
+  ok(CV.det, "X6. curved build is deterministic (same traits+seed+surface -> identical layout)");
+  ok(CV.flatStillWorks, "X7. the FLAT (no-surface) path is unchanged — v15 callers still work");
 
   console.log("=== DETERMINISM ===");
   ok(R.det.cityIdentical, "D1. city seed 5 == seed 5 (identical layout)");

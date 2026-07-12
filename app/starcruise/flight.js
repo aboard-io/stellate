@@ -114,6 +114,9 @@ function centroidCoordOf(weights, dominant) {
 function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
 function lerp(a, b, t) { return a + (b - a) * t; }
 function lerp3(a, b, t) { return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t), z: lerp(a.z, b.z, t) }; }
+// rampAt — the linear DEAD-RECKONING sample: where along the from->to segment we are at
+// elapsed `t` of an estimated `dur`. Clamped so it holds at `to` once the interval passes.
+function rampAt(a, b, t, dur) { return lerp3(a, b, dur > 1e-4 ? clamp01(t / dur) : 1); }
 
 // smoothDampS — a CRITICALLY-DAMPED scalar smoother (the classic Game-Programming-Gems
 // SmoothDamp). It eases `cur` toward `target` carrying a velocity term, so a STEP in the
@@ -187,13 +190,19 @@ export function makeFlight({ getTravel, getBeat } = {}) {
   const LAND_ZOOM = 0.795;
   const FLOOR = 0.35;        // camera floor clamp — the eye never dips below the ground
 
-  // SMOOTHED galaxy targets: where we ARE (blend centroid) and the RESOLVING planet, each
-  // eased with a critically-damped spring. The blend/dominant updates in discrete ~8-bar
-  // steps; these springs turn every step into a glide so the camera's goal moves smoothly
-  // and NEVER jumps on an update. Seeded to the live value on the first frame (no startup
-  // pop), then damped every frame (kept warm even while landed).
+  // WHERE WE ARE (blend centroid) + the RESOLVING planet. The blend/centroid updates in
+  // DISCRETE per-bar STEPS (app onBar), and a spring eased toward that STATIC between-bar
+  // target CONVERGES then SITS STILL until the next step — so the camera waits ~a bar and
+  // then lurches all at once (the reported "waits eight bars then moves all at once"). The
+  // cure is DEAD RECKONING: on each discrete update we start a LINEAR RAMP from the value
+  // we're currently displaying to the new target, spanning the OBSERVED update interval, so
+  // the followed goal advances EVERY FRAME at ~constant velocity and arrives about when the
+  // NEXT update lands — a continuous glide between systems, no wait-then-jump. When updates
+  // STOP (a held/static blend) the ramp completes and the camera correctly comes to rest.
+  // A LIGHT spring on top only rounds the ramp's corners at bar boundaries.
   let smHere = null, smPlanet = null;
-  const CAM_SMOOTH = 0.7;    // spring time-constant (s) — glide, not snap; still responsive
+  let rampFrom = null, rampTo = null, rampT = 0, rampDur = 0, lastHereKey = null;
+  const CAM_SMOOTH = 0.14;   // LIGHT corner-smoothing spring (s) — rounds the ramp, doesn't drive it
 
   function setPhase(next) {
     if (next === phase) return;
@@ -283,12 +292,36 @@ export function makeFlight({ getTravel, getBeat } = {}) {
       : centroidCoord;
     const hereWorld = worldOfCoord(centroidCoord);
     const planetWorld = worldOfCoord(planetCoord);
-    // DECOUPLE from the discrete blend clock: ease the two galaxy targets toward the
-    // (possibly just-jumped) live values with the critically-damped spring. The pose
-    // below is built from the SMOOTHED values, so a blend/dominant update nudges the goal
-    // and the camera GLIDES — the per-frame move ramps from zero, it never spikes.
-    if (!smHere) smHere = { x: hereWorld.x, y: hereWorld.y, z: hereWorld.z, vx: 0, vy: 0, vz: 0 };
-    else smoothVec(smHere, hereWorld, CAM_SMOOTH, dt);
+    // DEAD-RECKON "where we are" so the followed target advances EVERY FRAME (not just when
+    // the discrete blend steps). The app advances travel + re-targets S.weights ONCE PER BAR
+    // (app/live.js onBar -> travelStep), so the update interval IS one bar: barDur = sec/beat
+    // * beats. On each discrete centroid change we latch a fresh LINEAR ramp from the value
+    // we're displaying NOW to the new target, spanning barDur, so the goal glides at ~constant
+    // velocity and reaches the new centroid just as the NEXT per-bar update lands — a seamless
+    // cruise, no wait-then-jump. A HELD blend gets no new latch, so the ramp completes within
+    // barDur and the camera correctly COMES TO REST (a parked, unchanging blend is still). We
+    // clamp barDur so a missing/degenerate beat can't wedge the ramp permanently on or off.
+    const spb = bt.spb || (bt.bpm ? 60 / bt.bpm : 0.5);
+    const cbeats = bt.cbeats || 8;
+    let barDur = spb > 0 && cbeats > 0 ? spb * cbeats : 2;
+    if (barDur < 0.4) barDur = 0.4; else if (barDur > 3.2) barDur = 3.2;
+    const hereKey = hereWorld.x + "," + hereWorld.y + "," + hereWorld.z;
+    if (rampTo === null) {                     // first frame — seed at the live value (no pop)
+      rampFrom = { x: hereWorld.x, y: hereWorld.y, z: hereWorld.z };
+      rampTo = { x: hereWorld.x, y: hereWorld.y, z: hereWorld.z };
+      rampDur = barDur; lastHereKey = hereKey; rampT = 0;
+    } else if (hereKey !== lastHereKey) {       // a discrete update landed — re-latch the ramp
+      rampFrom = rampAt(rampFrom, rampTo, rampT, rampDur);   // ramp FROM where we ARE (carry motion)
+      rampTo = { x: hereWorld.x, y: hereWorld.y, z: hereWorld.z };
+      rampDur = barDur; lastHereKey = hereKey; rampT = 0;
+    }
+    rampT += dt;
+    const rampedHere = rampAt(rampFrom, rampTo, rampT, rampDur);
+    // LIGHT spring on top of the ramp — rounds the piecewise-linear corner at each bar edge
+    // (and gives the classic soft-start when a single isolated update follows a long rest),
+    // but the RAMP (not a spring-to-a-static-target) is what carries the motion between bars.
+    if (!smHere) smHere = { x: rampedHere.x, y: rampedHere.y, z: rampedHere.z, vx: 0, vy: 0, vz: 0 };
+    else smoothVec(smHere, rampedHere, CAM_SMOOTH, dt);
     if (!smPlanet) smPlanet = { x: planetWorld.x, y: planetWorld.y, z: planetWorld.z, vx: 0, vy: 0, vz: 0 };
     else smoothVec(smPlanet, planetWorld, CAM_SMOOTH, dt);
 
@@ -345,6 +378,11 @@ export function makeFlight({ getTravel, getBeat } = {}) {
       phase, dominant, weights, cameraPose, landProgress, spaceProgress, beatPhase,
       imm, dominantWeight: nearness, viewportFade: spaceProgress, fullZoom,
       landed: !!LANDED[phase], planetCoord, centroidCoord, planetWorld, hereWorld,
+      // hereSmoothed: the FOLLOWED "where we are" target the pose is built from — the
+      // dead-reckoned + lightly-sprung centroid. This is what the fix makes advance EVERY
+      // FRAME: its per-frame motion is a near-constant ramp during a cruise (no wait-then-
+      // jump), whereas the old spring-to-a-static-target sat still for each bar's tail.
+      hereSmoothed: smHere ? { x: smHere.x, y: smHere.y, z: smHere.z } : { x: hereWorld.x, y: hereWorld.y, z: hereWorld.z },
     };
   }
 

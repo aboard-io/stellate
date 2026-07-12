@@ -212,6 +212,76 @@ function pickWorld(traits, kind) {
   if (kind === "farm") return "tendrilforest";
   return "geomvoid";
 }
+// ---- #3 PER-GENRE CITY GRAMMAR + LANDSCAPE ARCHETYPES --------------------------
+// Goal 3: push per-genre variety HARD. The city is grown by a recursive shape grammar
+// (buildCity); which ARCHETYPE it grows in — the whole silhouette family — is chosen
+// here from the genre signal (body.plan first, then skin, then a seed fallback), NEVER
+// from renderStyle (re-skinning must not move geometry). Each archetype reshapes the
+// grammar knobs (roundness/verticality/branch), the finisher weights (spire vs cupola
+// vs a signature module), the baked-window box-tower share, AND emits a distinct
+// SIGNATURE module family (dome / ziggurat / blob-pod / sky-bridge) so two genres'
+// building family-sets + silhouettes are OBVIOUSLY different.
+//   towers   — vertical setback masses + baked-window boxes (the classic skyline).
+//   spires   — needle forest: tall thin tube spires dominate, almost no boxes.
+//   domes    — low rounded rotundas: lathe cupolas + hemisphere domes dominate.
+//   organic  — blobby pod-clusters: very-round superquadrics, branchy, no boxes.
+//   ziggurat — stepped stone terraces: merged-slab ziggurats as the signature mass.
+//   arcology — dense branching megastructure + sky-bridges between towers.
+const CITY_GRAMMAR_BY_PLAN = {
+  "floating-gas": "domes",
+  radial: "arcology",
+  crystalline: "ziggurat",
+  insectoid: "organic",
+  cephalopod: "domes",
+  amorphous: "organic",
+  stalk: "spires",
+};
+// per-archetype grammar shaping. null knobs keep the seed/species-derived defaults
+// (the classic 'towers' path stays byte-for-byte the v15 skyline). w = finisher
+// weights (spire / cupola / signature), boxPct = baked-window box-tower share, sig =
+// the signature module geometry kind emitted as this archetype's tell.
+const CITY_GRAMMAR = {
+  towers: { round: null, vert: null, branch: null, boxPct: 0.16, wSpire: 0.42, wCupola: 0.20, wSig: 0.0, sig: null },
+  spires: { round: 0.20, vert: 0.95, branch: 0.05, boxPct: 0.03, wSpire: 0.86, wCupola: 0.05, wSig: 0.0, sig: null },
+  domes: { round: 0.88, vert: 0.22, branch: 0.08, boxPct: 0.02, wSpire: 0.05, wCupola: 0.55, wSig: 0.30, sig: "dome" },
+  organic: { round: 0.96, vert: 0.35, branch: 0.30, boxPct: 0.00, wSpire: 0.10, wCupola: 0.22, wSig: 0.40, sig: "blob" },
+  ziggurat: { round: 0.24, vert: 0.52, branch: 0.10, boxPct: 0.00, wSpire: 0.05, wCupola: 0.10, wSig: 0.55, sig: "zig" },
+  arcology: { round: 0.55, vert: 0.72, branch: 0.85, boxPct: 0.05, wSpire: 0.30, wCupola: 0.16, wSig: 0.24, sig: "bridge" },
+};
+function pickCityGrammar(traits, seed) {
+  const plan = traits && traits.body && traits.body.plan;
+  if (plan && CITY_GRAMMAR_BY_PLAN[plan]) return CITY_GRAMMAR_BY_PLAN[plan];
+  const skin = traits && traits.skin;
+  if (skin === "glass") return "domes";
+  if (skin === "organic") return "organic";
+  if (skin === "matte") return "ziggurat";
+  if (skin === "chrome") return "towers";
+  // no genre signal at all -> the well-tested classic skyline (deterministic default).
+  return "towers";
+}
+// LANDSCAPE archetype: the near-ground natural features scattered over the world
+// (rocks / crystals / dunes / foliage clumps / arches / water). Chosen from the same
+// genre signal so each planet's ground reads distinct; independent of renderStyle.
+const LANDSCAPE_BY_PLAN = {
+  "floating-gas": "mist",
+  radial: "arches",
+  crystalline: "crystal",
+  insectoid: "fungal",
+  cephalopod: "water",
+  amorphous: "volcanic",
+  stalk: "desert",
+};
+function pickLandscape(traits, seed, kind) {
+  const plan = traits && traits.body && traits.body.plan;
+  if (plan && LANDSCAPE_BY_PLAN[plan]) return LANDSCAPE_BY_PLAN[plan];
+  if (kind === "farm") return "fungal";
+  const skin = traits && traits.skin;
+  if (skin === "glass") return "mist";
+  if (skin === "matte") return "volcanic";
+  const r = ihash((seed ^ 0x2c1b3a7d) >>> 0) / 4294967296;
+  return ["rocky", "crystal", "desert", "arches"][Math.floor(r * 4)];
+}
+
 // small deterministic ground-colour offsets (h,s,l) that push the floor into each
 // world's key — applied via Color.offsetHSL, so NO extra rng draw is consumed.
 const WORLD_GROUND = {
@@ -244,9 +314,10 @@ const GLITCH_FRAG = [
   "outgoingLight.b -= 0.16 * _fl * (0.5 + 0.5 * sin(uTime * 37.0));",
 ].join("\n");
 
-export function makeBackdrop(THREE, traits, seed) {
+export function makeBackdrop(THREE, traits, seed, opts) {
   seed = (seed | 0) || 1;
   traits = traits || {};
+  opts = opts || {};
   const rand = rng32((seed ^ 0x1b8734) >>> 0);
   const kind = traits.backdrop === "farm" ? "farm" : "city";
   const glow = Math.max(0, Math.min(1, traits.glow || 0.3));
@@ -256,6 +327,9 @@ export function makeBackdrop(THREE, traits, seed) {
     : { h: 40, s: 0.85, l: 0.6 };
   // the abstract WORLD wrapped around the little city/band stage (see pickWorld).
   const world = pickWorld(traits, kind);
+  // the near-ground LANDSCAPE features (rocks/crystals/dunes/arches/water/...) — a
+  // separate per-genre variety layer over the world (see pickLandscape/buildLandscape).
+  const landscape = pickLandscape(traits, seed, kind);
 
   // ---- RENDER STYLE ---- the genre's surface LANGUAGE (traits.renderStyle.material).
   // The whole world — buildings, foliage, crops, silos — shades in ONE vocabulary so
@@ -334,9 +408,77 @@ export function makeBackdrop(THREE, traits, seed) {
   // Glowing light octahedra never cast (they'd punch black holes in the glow).
   function shadow(mesh, cast, receive) { mesh.castShadow = !!cast; mesh.receiveShadow = !!receive; return mesh; }
   const _m = new THREE.Matrix4(), _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _s = new THREE.Vector3();
-  const _e = new THREE.Euler();
   const YAX = new THREE.Vector3(0, 1, 0);
   const _c = new THREE.Color();
+
+  // ---- CURVED-SURFACE PLACEMENT (small-world integration) --------------------
+  // Goal 3c: when the coming small-world integration hands us the planet's surface
+  // helpers, EVERY instance places ON the curved sphere oriented to the surface
+  // normal instead of on a flat ground plane — WITHOUT changing any per-genre layout
+  // logic. The whole builder keeps thinking in flat (x,z) ground coords + a y lift;
+  // composeAt() is the ONE seam that maps that ground frame onto the sphere.
+  //
+  // opts.surface CONTRACT (consumed here; supplied by the planet module / mock):
+  //   surfacePoint(dirVec3) -> world point ON the terrain surface for a UNIT dir
+  //     (Vector3 | [x,y,z] | {x,y,z} all accepted). This is planet.field's own
+  //     surface point, so buildings foot-plant exactly on the baked mesh.
+  //   upAt(dirVec3)         -> OUTWARD unit normal at that dir (same accepted forms).
+  //   up, tangentX, tangentZ (unit vecs) + radius : the landing tangent FRAME used to
+  //     map flat ground (x,z) onto a direction near the landing pole. planet.field
+  //     already exposes {up, tangentX, tangentZ, radius}; defaults fill any gaps.
+  // Absent opts.surface -> the classic FLAT path (v15 callers) runs byte-for-byte as
+  // before: composeAt degenerates to compose(position, yaw+tilt euler, scale).
+  const surface = (opts.surface && typeof opts.surface.surfacePoint === "function"
+    && typeof opts.surface.upAt === "function") ? opts.surface : null;
+  const _asV = (v) => (v == null ? [0, 0, 0]
+    : (v.isVector3 ? [v.x, v.y, v.z] : Array.isArray(v) ? v : [v.x || 0, v.y || 0, v.z || 0]));
+  let SF = null;
+  if (surface) {
+    const up = _asV(surface.up); if (!(up[0] || up[1] || up[2])) { up[1] = 1; }
+    let tX = _asV(surface.tangentX), tZ = _asV(surface.tangentZ);
+    if (!(tX[0] || tX[1] || tX[2])) tX = [1, 0, 0];
+    if (!(tZ[0] || tZ[1] || tZ[2])) tZ = [0, 0, 1];
+    const R = surface.radius > 0 ? surface.radius : 20;
+    SF = { up, tX, tZ, R };
+  }
+  const _dir = new THREE.Vector3(), _sp = new THREE.Vector3(), _nm = new THREE.Vector3();
+  const _qA = new THREE.Quaternion(), _qS = new THREE.Quaternion(), _qT = new THREE.Quaternion();
+  const _e2 = new THREE.Euler();
+  // compose ONE placement transform into `out` (a Matrix4). FLAT: pos (x,y,z), yaw
+  // about +Y plus optional (rx,rz) tilt, scale (sx,sy,sz). CURVED: map ground (x,z)
+  // -> a direction on the sphere, foot-plant at surfacePoint(dir), lift y along the
+  // outward normal, orient local +Y to that normal, and spin yaw about it (+ tilt).
+  function composeAt(out, x, y, z, yaw, sx, sy, sz, rx, rz) {
+    if (!SF) {
+      _e2.set(rx || 0, yaw || 0, rz || 0);
+      _q.setFromEuler(_e2);
+      _p.set(x, y, z); _s.set(sx, sy, sz);
+      out.compose(_p, _q, _s);
+      return out;
+    }
+    // ground (x,z) on the tangent plane -> unit direction near the landing pole.
+    _dir.set(SF.up[0] * SF.R + SF.tX[0] * x + SF.tZ[0] * z,
+      SF.up[1] * SF.R + SF.tX[1] * x + SF.tZ[1] * z,
+      SF.up[2] * SF.R + SF.tX[2] * x + SF.tZ[2] * z).normalize();
+    const sp = _asV(surface.surfacePoint(_dir));
+    _nm.fromArray(_asV(surface.upAt(_dir)));
+    if (_nm.lengthSq() < 1e-9) _nm.copy(_dir);
+    _nm.normalize();
+    // lift by y along the outward normal (y = height above the local ground).
+    _p.set(sp[0] + _nm.x * y, sp[1] + _nm.y * y, sp[2] + _nm.z * y);
+    _qA.setFromUnitVectors(YAX, _nm);                 // local +Y -> surface normal
+    _qS.setFromAxisAngle(_nm, yaw || 0);              // spin about the normal
+    _q.copy(_qS).multiply(_qA);
+    if (rx || rz) { _e2.set(rx || 0, 0, rz || 0); _qT.setFromEuler(_e2); _q.multiply(_qT); }
+    _s.set(sx, sy, sz);
+    out.compose(_p, _q, _s);
+    return out;
+  }
+  // place instance i of `mesh` via composeAt (curved-aware). The ONE emit seam.
+  function emit(mesh, i, x, y, z, sx, sy, sz, yaw, rx, rz) {
+    composeAt(_m, x, y, z, yaw, sx, sy, sz, rx, rz);
+    mesh.setMatrixAt(i, _m);
+  }
   const flicker = [];   // building materials the skyline breathes on update()
   const swayers = [];   // { mesh, sx, sz, px } gentle wind swayers (foliage/crops)
   const orbList = [];   // signature glowing balls-of-light gathered from the world
@@ -402,6 +544,7 @@ export function makeBackdrop(THREE, traits, seed) {
   // wrap the stage in the genre's abstract WORLD (peripheral structures + orbs),
   // then bake the gathered balls-of-light into one instanced field.
   buildWorld(world);
+  buildLandscape(landscape);
   if (orbList.length) buildOrbs(orbList);
 
   // ============================ CITY ====================================
@@ -423,15 +566,24 @@ export function makeBackdrop(THREE, traits, seed) {
     const bodyT = traits.body || {};
     // a deterministic per-seed shaping scalar so even minimal traits vary organically.
     const shapeSeed = ihash((seed ^ 0x9e3779b1) >>> 0) / 4294967296;
+    // #3 per-genre GRAMMAR ARCHETYPE (towers/spires/domes/organic/ziggurat/arcology):
+    // reshapes the whole silhouette family + finisher mix + signature module. The
+    // classic 'towers' archetype leaves the knobs null -> the v15 skyline byte-for-byte.
+    const archetype = pickCityGrammar(traits, seed);
+    const G = CITY_GRAMMAR[archetype] || CITY_GRAMMAR.towers;
+    group.userData.cityGrammar = archetype;
     // ROUNDNESS (box<->blob), VERTICALITY (stack height), GREEBLE, BRANCH probability
-    // — read off the species body-plan / skin when present, else the seed scalar.
-    const roundness = bodyT.bodyShape === "blob" ? 0.85
+    // — archetype override first, else the species body-plan / skin, else the seed scalar.
+    const roundness = G.round != null ? G.round
+      : bodyT.bodyShape === "blob" ? 0.85
       : bodyT.bodyShape === "wedge" ? 0.14 : bodyT.bodyShape === "triangle" ? 0.28
       : traits.skin === "glass" ? 0.7 : traits.skin === "chrome" ? 0.55
       : traits.skin === "matte" ? 0.32 : 0.3 + shapeSeed * 0.45;
-    const verticality = clampS((bodyT.height != null ? (bodyT.height - 1) / 2.8 : 0.5) * 0.7 + shapeSeed * 0.3);
+    const verticality = clampS(G.vert != null ? G.vert
+      : (bodyT.height != null ? (bodyT.height - 1) / 2.8 : 0.5) * 0.7 + shapeSeed * 0.3);
     const greebleAmt = clampS(bodyT.asymmetry != null ? bodyT.asymmetry : 0.35 + shapeSeed * 0.5);
-    const branchP = clampS(0.16 + (bodyT.segments != null ? (bodyT.segments - 1) / 3 : 0.35) * 0.4 + roundness * 0.12);
+    const branchP = clampS(G.branch != null ? G.branch
+      : 0.16 + (bodyT.segments != null ? (bodyT.segments - 1) / 3 : 0.35) * 0.4 + roundness * 0.12);
 
     // ---- SUPERQUADRIC mass palette (exponents pulled toward the genre roundness) --
     const NV = 6, massVariants = [];
@@ -457,10 +609,19 @@ export function makeBackdrop(THREE, traits, seed) {
     const cupolaGeo = boxNorm(gk.lathe([[0, 0], [0.35, 0.02], [0.5, 0.2], [0.42, 0.42], [0.22, 0.64], [0.08, 0.82], [0, 0.88]], 10));
     const greebleGeo = boxNorm(gk.sq(0.3, 0.3, 8));
 
+    // ---- ARCHETYPE SIGNATURE module — the per-genre tell (one extra family) --------
+    // domes: a low hemisphere rotunda. ziggurat: merged stepped terraces. organic: a
+    // very-round blob pod. arcology: a tube strut/buttress. Only built when selected.
+    let sigGeo = null, sigPrim = "sq", sigHigh = 0.8;
+    if (G.sig === "dome") { sigGeo = boxNorm(gk.lathe([[0, 0], [0.5, 0.0], [0.5, 0.06], [0.44, 0.3], [0.28, 0.52], [0.0, 0.6]], 12)); sigPrim = "lathe"; sigHigh = 0.7; }
+    else if (G.sig === "zig") { sigGeo = zigguratGeo(); sigPrim = "box"; sigHigh = 1.4; }
+    else if (G.sig === "blob") { sigGeo = boxNorm(gk.sq(1.55, 1.55, 12)); sigPrim = "sq"; sigHigh = 1.1; }
+    else if (G.sig === "bridge") { sigGeo = normGeo(gk.tube([[0, 0, 0], [0.05, 0.5, 0.02], [0.0, 1.0, 0.0]], { radius: 0.1, radialSegments: 6, tubularSegments: 8 })); sigPrim = "tube"; sigHigh = 0.9; }
+
     // ---- module slots (batched into one InstancedMesh per family, few draws) ------
     const massSlots = massVariants.map(() => []);
     const spireSlots = spireVariants.map(() => []);
-    const greebleSlots = [], cupolaSlots = [], towerSlots = [], bldgTops = [];
+    const greebleSlots = [], cupolaSlots = [], sigSlots = [], towerSlots = [], bldgTops = [];
     const pickMass = () => (rand() < roundness ? Math.floor(rand() * Math.ceil(NV / 2)) : Math.floor(rand() * NV));
     const MAXD = 2;   // grammar recursion cap (mobile budget)
 
@@ -483,12 +644,15 @@ export function makeBackdrop(THREE, traits, seed) {
           grow(x + Math.cos(ang) * off, z + Math.sin(ang) * off, cw * 0.7, cd * 0.7, y * 0.96, h * 0.5, rot + (rand() - 0.5) * 0.6, depth + 1);
         }
       } else {
+        // FINISH: spire / cupola / archetype-signature, weighted per archetype.
         const tr = rand();
-        if (tr < 0.42) {
+        if (tr < G.wSpire) {
           const sv = Math.floor(rand() * spireVariants.length);
           spireSlots[sv].push({ x, y, z, w: Math.max(0.4, cw * 0.6), h: 1.6 + rand() * 4.5 + verticality * 3, d: Math.max(0.4, cd * 0.6), r: rot, rx: (rand() - 0.5) * 0.15, rz: (rand() - 0.5) * 0.15 });
-        } else if (tr < 0.62) {
+        } else if (tr < G.wSpire + G.wCupola) {
           cupolaSlots.push({ x, y, z, w: cw * 1.15, h: Math.max(0.6, cw * 0.9), d: cd * 1.15, r: rot });
+        } else if (sigGeo && tr < G.wSpire + G.wCupola + G.wSig) {
+          sigSlots.push({ x, y, z, w: cw * 1.1, h: Math.max(0.6, cw * sigHigh), d: cd * 1.1, r: rot });
         }
       }
       if (depth === 0) {
@@ -507,7 +671,7 @@ export function makeBackdrop(THREE, traits, seed) {
       const lot = { x: -34 + rand() * 68, z: -6 - rand() * 40, w: 1.4 + rand() * 2.4, h: 3 + rand() * 15, r: rand() * TAU };
       lot.d = lot.w * (0.7 + rand() * 0.6);
       bldgTops.push({ x: lot.x, z: lot.z, h: lot.h });
-      if (rand() < 0.16) towerSlots.push(lot);
+      if (rand() < G.boxPct) towerSlots.push(lot);
       else grow(lot.x, lot.z, lot.w, lot.d, 0, lot.h, lot.r, 0);
     }
 
@@ -518,7 +682,9 @@ export function makeBackdrop(THREE, traits, seed) {
       if (!list.length) return;
       const mat = buildingMat(acc.h + hueOff(prim === "sq" ? 1 : prim === "tube" ? 5 : prim === "lathe" ? 8 : 2));
       const mesh = new THREE.InstancedMesh(geo, mat, list.length);
-      mesh.name = "buildings"; mesh.userData.family = family; mesh.userData.prim = prim;
+      // family name carries the archetype prefix so two genres' building family-SETS
+      // are obviously disjoint (per-genre variety is legible to the integration + tests).
+      mesh.name = "buildings"; mesh.userData.family = archetype + ":" + family; mesh.userData.prim = prim;
       shadow(mesh, true, receive !== false);
       for (let i = 0; i < list.length; i++) placeMod(mesh, i, list[i]);
       mesh.instanceMatrix.needsUpdate = true;
@@ -531,7 +697,7 @@ export function makeBackdrop(THREE, traits, seed) {
       if (!list.length) continue;
       const mat = buildingMat();
       const mesh = new THREE.InstancedMesh(towerGeo(v), mat, list.length);
-      mesh.name = "buildings"; mesh.userData.family = "tower"; mesh.userData.prim = "box";
+      mesh.name = "buildings"; mesh.userData.family = archetype + ":tower"; mesh.userData.prim = "box";
       shadow(mesh, true, true);
       for (let i = 0; i < list.length; i++) placeBuilding(mesh, i, list[i]);
       mesh.instanceMatrix.needsUpdate = true;
@@ -541,6 +707,7 @@ export function makeBackdrop(THREE, traits, seed) {
     spireVariants.forEach((geo, v) => addMesh("spire" + v, "tube", geo, spireSlots[v], false));
     addMesh("cupola", "lathe", cupolaGeo, cupolaSlots, false);
     addMesh("greeble", "sq", greebleGeo, greebleSlots, false);
+    if (sigGeo) addMesh("sig-" + G.sig, sigPrim, sigGeo, sigSlots, sigPrim !== "tube");
 
     // ---- blinking beacon / window lights -------------------------------
     // A light field: roof beacons + facade "windows" climbing many buildings, plus a
@@ -570,13 +737,10 @@ export function makeBackdrop(THREE, traits, seed) {
     }));
   }
   // place a grammar MODULE (base at y=0 geometry) at its world y with y-rot + tilt.
+  // Curved-aware: on the sphere the module foot-plants on terrain and rises along the
+  // local outward normal (a tower climbs local-up), oriented to the surface.
   function placeMod(mesh, i, m) {
-    _p.set(m.x, m.y || 0, m.z);
-    _e.set(m.rx || 0, m.r || 0, m.rz || 0);
-    _q.setFromEuler(_e);
-    _s.set(m.w, m.h, m.d == null ? m.w : m.d);
-    _m.compose(_p, _q, _s);
-    mesh.setMatrixAt(i, _m);
+    emit(mesh, i, m.x, m.y || 0, m.z, m.w, m.h, m.d == null ? m.w : m.d, m.r || 0, m.rx || 0, m.rz || 0);
   }
   // a building material: dark genre-tinted wall with a faint emissive breath.
   function buildingMat(hue) {
@@ -590,11 +754,7 @@ export function makeBackdrop(THREE, traits, seed) {
     // (vertexColors on a geometry without a color attr just falls back to color.)
   }
   function placeBuilding(mesh, i, b) {
-    _p.set(b.x, 0, b.z);                 // base sits on the ground (geo base at y=0)
-    _q.setFromAxisAngle(YAX, b.r);
-    _s.set(b.w, b.h, b.d || b.w);
-    _m.compose(_p, _q, _s);
-    mesh.setMatrixAt(i, _m);
+    emit(mesh, i, b.x, 0, b.z, b.w, b.h, b.d || b.w, b.r);   // base plants on ground/terrain
   }
   // stepped ziggurat: four shrinking stacked slabs merged into one geometry.
   function zigguratGeo() {
@@ -677,19 +837,16 @@ export function makeBackdrop(THREE, traits, seed) {
         const x = (c - (NX - 1) / 2) * colGap + jx;
         const z = -5 - r * rowGap + jz;
         const pick = rand();
-        _q.setFromAxisAngle(YAX, rand() * Math.PI);
+        const yaw = rand() * Math.PI;
         if (pick < 0.5) {
           const h = 0.7 + rand() * 0.9;
-          _p.set(x, 0, z); _s.set(0.7 + rand() * 0.5, h, 0.7 + rand() * 0.5);
-          _m.compose(_p, _q, _s); stalk.setMatrixAt(si++, _m);
+          emit(stalk, si++, x, 0, z, 0.7 + rand() * 0.5, h, 0.7 + rand() * 0.5, yaw);
         } else if (pick < 0.8) {
           const h = 0.6 + rand() * 0.6;
-          _p.set(x, 0, z); _s.set(0.8 + rand() * 0.5, h, 0.8 + rand() * 0.5);
-          _m.compose(_p, _q, _s); bush.setMatrixAt(bi++, _m);
+          emit(bush, bi++, x, 0, z, 0.8 + rand() * 0.5, h, 0.8 + rand() * 0.5, yaw);
         } else {
           const h = 1.4 + rand() * 1.1;
-          _p.set(x, 0, z); _s.set(0.8 + rand() * 0.4, h, 0.8 + rand() * 0.4);
-          _m.compose(_p, _q, _s); corn.setMatrixAt(ni++, _m);
+          emit(corn, ni++, x, 0, z, 0.8 + rand() * 0.4, h, 0.8 + rand() * 0.4, yaw);
         }
       }
     }
@@ -713,9 +870,8 @@ export function makeBackdrop(THREE, traits, seed) {
       const side = i % 2 === 0 ? -1 : 1;
       const h = 3 + rand() * 2.5, w = 1 + rand() * 0.4;
       const x = side * (12 + rand() * 8), z = -8 - rand() * 18;
-      _q.identity();
-      _p.set(x, 0, z); _s.set(w, h, w); _m.compose(_p, _q, _s); silos.setMatrixAt(i, _m);
-      _p.set(x, h, z); _s.set(w, 1, w); _m.compose(_p, _q, _s); roofs.setMatrixAt(i, _m);
+      emit(silos, i, x, 0, z, w, h, w, 0);
+      emit(roofs, i, x, h, z, w, 1, w, 0);
     }
     silos.instanceMatrix.needsUpdate = true; roofs.instanceMatrix.needsUpdate = true;
     group.add(silos); group.add(roofs);
@@ -758,11 +914,9 @@ export function makeBackdrop(THREE, traits, seed) {
       const th = (0.5 + rand() * 0.7) * P.s;               // trunk height
       const ch = (1.0 + rand() * 1.4) * P.s;               // canopy height
       const cw = (0.7 + rand() * 0.8) * P.s;               // canopy width
-      _q.setFromAxisAngle(YAX, rand() * TAU);
-      _p.set(P.x, 0, P.z); _s.set(0.7 * P.s, th, 0.7 * P.s);
-      _m.compose(_p, _q, _s); trunk.setMatrixAt(i, _m);
-      _p.set(P.x, th, P.z); _s.set(cw, ch, cw);
-      _m.compose(_p, _q, _s); canopy.setMatrixAt(i, _m);
+      const yaw = rand() * TAU;
+      emit(trunk, i, P.x, 0, P.z, 0.7 * P.s, th, 0.7 * P.s, yaw);
+      emit(canopy, i, P.x, th, P.z, cw, ch, cw, yaw);
     }
     trunk.instanceMatrix.needsUpdate = true; canopy.instanceMatrix.needsUpdate = true;
     group.add(trunk); group.add(canopy);
@@ -805,8 +959,7 @@ export function makeBackdrop(THREE, traits, seed) {
     mesh.name = "beacons"; mesh.userData.family = "lights";
     for (let i = 0; i < list.length; i++) {
       const L = list[i];
-      _p.set(L.x, L.y, L.z); _q.identity(); _s.set(L.scale, L.scale, L.scale);
-      _m.compose(_p, _q, _s); mesh.setMatrixAt(i, _m);
+      emit(mesh, i, L.x, L.y, L.z, L.scale, L.scale, L.scale, 0);
       _c.setRGB(L.r * L.hi, L.g * L.hi, L.b * L.hi);
       mesh.setColorAt(i, _c);                 // seed instanceColor so it exists pre-update
     }
@@ -833,13 +986,8 @@ export function makeBackdrop(THREE, traits, seed) {
     shadow(mesh, cast !== false, !!receive);
     for (let i = 0; i < count; i++) {
       const P = placer(i) || {};
-      _p.set(P.x || 0, P.y || 0, P.z || 0);
-      _e.set(P.rx || 0, P.ry || 0, P.rz || 0);
-      _q.setFromEuler(_e);
       const w = P.w == null ? 1 : P.w;
-      _s.set(w, P.h == null ? w : P.h, P.d == null ? w : P.d);
-      _m.compose(_p, _q, _s);
-      mesh.setMatrixAt(i, _m);
+      emit(mesh, i, P.x || 0, P.y || 0, P.z || 0, w, P.h == null ? w : P.h, P.d == null ? w : P.d, P.ry || 0, P.rx || 0, P.rz || 0);
     }
     mesh.instanceMatrix.needsUpdate = true;
     group.add(mesh);
@@ -1031,6 +1179,86 @@ export function makeBackdrop(THREE, traits, seed) {
     for (let i = 0; i < 20; i++) { const P = farPlace(); pushOrb(P.x, 2 + rand() * 16, P.z, 0.35 + rand() * 0.6, (acc.h + (rand() < 0.5 ? 0 : 180)) % 360, 0.9, 0.65); }
   }
 
+  // ---- #3 LANDSCAPE FEATURES: the near-ground per-genre natural layer ----------
+  // A distinct family of scattered GROUND features per planet — rocks / crystals /
+  // dunes / arches / water / fungi / mist-pads / lava-spurs — so two genres' worlds
+  // read obviously different at the surface (not just the peripheral megastructures).
+  // Each type emits 2+ distinct instanced families (prefixed "land:") + a little glow,
+  // all curved-surface-aware (routes through scatter -> composeAt). Counts capped.
+  function landPlace() {
+    let x = 0, z = -14;
+    for (let k = 0; k < 4; k++) {
+      x = -42 + rand() * 84; z = -3 - rand() * 46;
+      if (!(Math.abs(x) < 8 && z > -14)) break;    // dodge the central band pocket
+    }
+    return { x, z };
+  }
+  function buildLandscape(kind2) {
+    group.userData.landscape = kind2;
+    const feat = (name, geo, mat, count, placer, cast, receive) =>
+      scatter("land-" + name, "land:" + name, geo, mat, count, placer, cast !== false, !!receive);
+    const glowOrbs = (n, y0, y1, sc, hue, sat, lig) => { for (let i = 0; i < n; i++) { const P = landPlace(); pushOrb(P.x, y0 + rand() * (y1 - y0), P.z, sc + rand() * sc, hue, sat, lig); } };
+    switch (kind2) {
+      case "crystal": {
+        feat("crystal", normGeo(new THREE.OctahedronGeometry(0.5, 0)), structMat(acc.h + 130, 0.6, 0.4, 0.9, 0.5, 0.3 + glow * 0.4), 16,
+          () => { const P = landPlace(); return { x: P.x, y: 0, z: P.z, w: 0.5 + rand() * 1.4, h: 1.5 + rand() * 4.5, d: 0.5 + rand() * 1.4, ry: rand() * TAU, rz: (rand() - 0.5) * 0.4 }; }, true, false);
+        feat("geode", normGeo(new THREE.IcosahedronGeometry(0.5, 0)), structMat(acc.h + 90, 0.4, 0.28, 0.8, 0.42), 10,
+          () => { const P = landPlace(); return { x: P.x, y: 0, z: P.z, w: 1 + rand() * 2, h: 0.6 + rand() * 1.4, d: 1 + rand() * 2, ry: rand() * TAU }; }, true, true);
+        glowOrbs(8, 0.5, 2.5, 0.3, (acc.h + 150) % 360, 0.95, 0.6); break;
+      }
+      case "desert": {
+        feat("dune", normGeo(new THREE.SphereGeometry(0.5, 10, 6, 0, TAU, 0, Math.PI / 2)), structMat(38, 0.45, 0.4, 0.3, 0.3, 0.12 + glow * 0.15), 14,
+          () => { const P = landPlace(); return { x: P.x, y: 0, z: P.z, w: 5 + rand() * 10, h: 1 + rand() * 2.4, d: 4 + rand() * 8, ry: rand() * TAU }; }, true, true);
+        feat("mesa", normGeo(new THREE.CylinderGeometry(0.5, 0.6, 1, 6)), structMat(24, 0.5, 0.34, 0.4, 0.3), 8,
+          () => { const P = landPlace(); return { x: P.x, y: 0, z: P.z, w: 2 + rand() * 4, h: 2 + rand() * 5, d: 2 + rand() * 4, ry: rand() * TAU }; }, true, true);
+        glowOrbs(6, 0.6, 2, 0.28, 34, 0.7, 0.6); break;
+      }
+      case "arches": {
+        feat("arch", new THREE.TorusGeometry(0.5, 0.09, 6, 16, Math.PI), structMat(acc.h, 0.45, 0.34, 0.7, 0.42, 0.2 + glow * 0.3), 12,
+          () => { const P = landPlace(), w = 4 + rand() * 8; return { x: P.x, y: 0, z: P.z, w, h: w * 0.85, d: w, ry: rand() * TAU }; }, true, false);
+        feat("standstone", normGeo(new THREE.BoxGeometry(1, 1, 1)), structMat(acc.h + 20, 0.3, 0.28, 0.4, 0.26), 10,
+          () => { const P = landPlace(); return { x: P.x, y: 0, z: P.z, w: 0.8 + rand() * 1.6, h: 3 + rand() * 6, d: 0.8 + rand() * 1.6, ry: rand() * TAU, rz: (rand() - 0.5) * 0.2 }; }, true, true);
+        glowOrbs(8, 1, 8, 0.3, (acc.h + 180) % 360, 0.85, 0.62); break;
+      }
+      case "water": {
+        const poolMat = new THREE.MeshLambertMaterial({ color: colHSL(THREE, acc.h + 180, 0.5, 0.16), transparent: true, opacity: 0.5, flatShading: true });
+        feat("lily", new THREE.CylinderGeometry(0.5, 0.5, 0.08, 10), poolMat, 12,
+          () => { const P = landPlace(); return { x: P.x, y: 0.05, z: P.z, w: 2 + rand() * 5, h: 1, d: 2 + rand() * 5 }; }, false, false);
+        feat("reed", normGeo(new THREE.ConeGeometry(0.12, 1, 4)), structMat(acc.h + 120, 0.5, 0.34, 0.5, 0.34), 16,
+          () => { const P = landPlace(); return { x: P.x, y: 0, z: P.z, w: 0.4 + rand() * 0.6, h: 1.5 + rand() * 3, d: 0.4 + rand() * 0.6, ry: rand() * TAU }; }, true, false);
+        glowOrbs(10, 0.4, 3, 0.3, (acc.h + 180) % 360, 0.9, 0.66); break;
+      }
+      case "fungal": {
+        feat("cap", boxNorm(gk.lathe([[0, 0], [0.5, 0.0], [0.48, 0.16], [0.3, 0.36], [0.0, 0.42]], 10)), structMat(acc.h + 40, 0.55, 0.36, 0.7, 0.42, 0.22 + glow * 0.3), 14,
+          () => { const P = landPlace(); return { x: P.x, y: 1 + rand() * 2.5, z: P.z, w: 1.5 + rand() * 3, h: 1 + rand() * 2, d: 1.5 + rand() * 3, ry: rand() * TAU }; }, true, false);
+        feat("stipe", normGeo(new THREE.CylinderGeometry(0.16, 0.22, 1, 6)), structMat(acc.h + 60, 0.3, 0.4, 0.4, 0.3), 14,
+          () => { const P = landPlace(); return { x: P.x, y: 0, z: P.z, w: 0.5 + rand() * 0.8, h: 1 + rand() * 2.5, d: 0.5 + rand() * 0.8 }; }, true, true);
+        glowOrbs(8, 0.5, 3, 0.28, 90 + rand() * 40, 0.8, 0.62); break;
+      }
+      case "mist": {
+        feat("pad", normGeo(new THREE.IcosahedronGeometry(0.6, 1)), structMat(acc.h, 0.3, 0.55, 0.5, 0.5, 0.25 + glow * 0.4), 16,
+          () => { const P = landPlace(); return { x: P.x, y: 3 + rand() * 12, z: P.z, w: 3 + rand() * 7, h: 0.8 + rand() * 2, d: 3 + rand() * 7 }; }, false, false);
+        feat("wisp", new THREE.TorusGeometry(0.5, 0.05, 6, 16), structMat((acc.h + 40) % 360, 0.4, 0.55, 0.6, 0.5), 10,
+          () => { const P = landPlace(), w = 2 + rand() * 4; return { x: P.x, y: 4 + rand() * 12, z: P.z, w, h: w, d: w, rx: rand() * TAU, ry: rand() * TAU }; }, false, false);
+        glowOrbs(10, 4, 16, 0.32, acc.h, 0.75, 0.7); break;
+      }
+      case "volcanic": {
+        feat("spur", normGeo(new THREE.ConeGeometry(0.5, 1, 3)), structMat((acc.h + 15) % 360, 0.5, 0.24, 0.9, 0.4, 0.2 + glow * 0.3), 14,
+          () => { const P = landPlace(); return { x: P.x, y: 0, z: P.z, w: 1.5 + rand() * 3, h: 2.5 + rand() * 6, d: 1.5 + rand() * 3, ry: rand() * TAU, rz: (rand() - 0.5) * 0.4 }; }, true, false);
+        feat("magma", normGeo(new THREE.IcosahedronGeometry(0.7, 0)), structMat(12, 0.6, 0.24, 1.0, 0.4), 10,
+          () => { const P = landPlace(); return { x: P.x, y: 0, z: P.z, w: 2 + rand() * 5, h: 1 + rand() * 2.5, d: 2 + rand() * 5, ry: rand() * TAU }; }, true, true);
+        glowOrbs(10, 0.3, 3, 0.34, 14 + rand() * 26, 1.0, 0.55); break;
+      }
+      default: {   // "rocky" — the default stony ground
+        feat("rock", normGeo(new THREE.IcosahedronGeometry(0.6, 0)), structMat(acc.h, 0.25, 0.3, 0.4, 0.3, 0.15 + glow * 0.2), 16,
+          () => { const P = landPlace(); return { x: P.x, y: 0, z: P.z, w: 1 + rand() * 3, h: 0.8 + rand() * 2.4, d: 1 + rand() * 3, ry: rand() * TAU, rz: (rand() - 0.5) * 0.3 }; }, true, true);
+        feat("boulder", normGeo(new THREE.DodecahedronGeometry(0.6, 0)), structMat(acc.h + 20, 0.2, 0.26, 0.35, 0.26), 10,
+          () => { const P = landPlace(); return { x: P.x, y: 0, z: P.z, w: 2 + rand() * 4, h: 1.5 + rand() * 3, d: 2 + rand() * 4, ry: rand() * TAU }; }, true, true);
+        glowOrbs(8, 0.4, 3, 0.28, acc.h, 0.7, 0.6); break;
+      }
+    }
+  }
+
   // ---- ORBS: the signature balls-of-light field (one instanced mesh) ----
   // Unlit, tone-mapping-off, per-instance colour so they read as pure light against
   // the deep-shadowed world; update() pulses each from its seeded phase/period.
@@ -1043,8 +1271,7 @@ export function makeBackdrop(THREE, traits, seed) {
     mesh.castShadow = false; mesh.receiveShadow = false;
     for (let i = 0; i < list.length; i++) {
       const L = list[i];
-      _p.set(L.x, L.y, L.z); _q.identity(); _s.set(L.scale, L.scale, L.scale);
-      _m.compose(_p, _q, _s); mesh.setMatrixAt(i, _m);
+      emit(mesh, i, L.x, L.y, L.z, L.scale, L.scale, L.scale, 0);
       _c.setRGB(L.r * L.hi, L.g * L.hi, L.b * L.hi);
       mesh.setColorAt(i, _c);
     }

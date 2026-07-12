@@ -355,6 +355,39 @@ async function main() {
   ok(sp.n <= 1 || (sp.minGap >= 2.2 && sp.widthX >= 2.2 * (sp.n - 1) - 0.01),
     `SP1. band SPREAD OUT across a wide stage (n=${sp.n}, minGap=${sp.minGap.toFixed(2)}, widthX=${sp.widthX.toFixed(2)})`);
 
+  // ---- LP: LITTLE-PRINCE LANDING — the band stands on a SMALL CURVED WORLD -----------
+  // On landing the ground is a SMALL round planet (one of the 9 procedural terrain types),
+  // the band + dancers are PLANTED ON its curved surface oriented to the outward normal
+  // (standing upright on the little world, wings leaning out — visible curvature), the
+  // city/landscape WRAPPED the same sphere behind/around them, and SPACE IS TRUE BLACK.
+  const lp = await page.evaluate(() => {
+    const SC = window.__STARCRUISE;
+    return { small: SC.smallWorld(), band: SC.bandOnSurface(),
+      city: SC.backdropOnSurface(), bg: SC.bg() };
+  });
+  console.log("       little-prince.world:", JSON.stringify(lp.small));
+  console.log("       little-prince.band :", JSON.stringify(lp.band));
+  console.log("       little-prince.city :", JSON.stringify(lp.city));
+  console.log("       little-prince.bg   :", JSON.stringify(lp.bg));
+  // LP1: the ground is a SMALL curved world (radius small enough to read as a little planet,
+  // not the old 110-unit near-flat patch) with the horizon visibly bending across the band.
+  ok(lp.small && lp.small.small === true && lp.small.radius > 0 && lp.small.radius < 60 && lp.small.curveDrop > 0.3,
+    `LP1. LANDS ON A SMALL CURVED WORLD (terrain='${lp.small && lp.small.terrain}', radius=${lp.small && lp.small.radius} < 60, curve-drop across the band=${lp.small && lp.small.curveDrop} > 0.3: horizon bends away)`);
+  // LP2: every band member sits ON the terrain surface (distance-from-centre ≈ the planet
+  // radius) and stands UPRIGHT — its local +Y aligned to the outward surface normal.
+  const bandOK = lp.band && lp.band.length >= 1 &&
+    lp.band.every((m) => Math.abs(m.r - lp.small.radius) < 3.5 && m.upDotN > 0.9);
+  const minUpDot = lp.band ? Math.min.apply(null, lp.band.map((m) => m.upDotN)) : 0;
+  ok(bandOK,
+    `LP2. the BAND stands ON the curved surface oriented to the NORMAL (${lp.band && lp.band.length} members at r≈${lp.small && lp.small.radius}, every local +Y·normal >= ${minUpDot.toFixed(3)} > 0.9)`);
+  // LP3: the city/landscape WRAPPED the curved surface — a real crowd of instances, every
+  // one foot-planted ON the sphere (distance-from-centre ≈ the surface radius).
+  ok(lp.city && lp.city.curved === true && lp.city.count >= 20 && lp.city.onSphere === lp.city.count && lp.city.minR > lp.small.radius - 5,
+    `LP3. the CITY/landscape WRAPPED the curved surface (${lp.city && lp.city.onSphere}/${lp.city && lp.city.count} instances on the sphere, r in [${lp.city && lp.city.minR}, ${lp.city && lp.city.maxR}] around radius ${lp.small && lp.small.radius})`);
+  // LP4: SPACE IS TRUE BLACK — the scene background + renderer clear colour are 0x000000.
+  ok(lp.bg && lp.bg.scene === 0x000000 && lp.bg.clear === 0x000000,
+    `LP4. SPACE IS TRUE BLACK — scene background + clear colour are 0x000000 (was dark purple) (scene=${lp.bg && lp.bg.scene}, clear=${lp.bg && lp.bg.clear})`);
+
   // ---- PF: STAR-MAP — one planet per genre sits AT its GENRE_COORDS ----
   // The persistent planet field places every genre's marker at the flight projection of
   // its GENRE_COORDS; flying == traversing the genre space. Assert the markers match the

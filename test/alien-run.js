@@ -445,6 +445,43 @@ async function inPage() {
   out.instColourDeterministic = makeAlien(THREE, traits, members[0], 4242).palette.instrument
     === makeAlien(THREE, traits, members[0], 4242).palette.instrument;
 
+  // ---- T: FUSED MARCHING-CUBES BODY CORE — the central body mass is a baked STATIC
+  // isosurface (single connected surface, a BufferGeometry, NOT rebuilt per frame), and
+  // MarchingCubes is imported from our VENDOR, never a CDN.
+  out.core = aliens.map((al, i) => Object.assign({ role: members[i].role }, al.coreInfo()));
+  out.coreIsMarchingFused = out.core.every((c) =>
+    c.isMarching && c.isBufferGeometry && c.isFusedCore && c.hasImport && c.vertexCount > 0 && c.components === 1);
+  // it is BAKED ONCE: the geometry vertex count does not change as we animate frames.
+  {
+    const before = aliens[0].coreInfo().vertexCount;
+    for (let s = 0; s < 20; s++) aliens[0].update(0.016, { barPhase: s / 20, playing: true, level: 1, notes: asNotes(onsetSets.drum) });
+    out.coreStaticAcrossFrames = aliens[0].coreInfo().vertexCount === before && before > 0;
+  }
+  // import-source proof: the vendored MarchingCubes imports the vendored THREE core, no CDN.
+  {
+    const src = await (await fetch("/vendor/three/MarchingCubes.js")).text();
+    out.mcImportsVendor = /from\s*['"]\.\/three\.module\.min\.js['"]/.test(src);
+    out.mcNoCdn = !/https?:\/\//.test(src.replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, ""));
+  }
+
+  // ---- U: TWO-TENTACLE DRUMMER — the drummer strikes with >= 2 appendages, both landing
+  // on the drum contact at a drum onset.
+  {
+    const dr = aliens[0], dn = asNotes(onsetSets.drum);
+    dr.update(0.0, { barPhase: 0.375, playing: true, level: 1, notes: dn });
+    out.drumStrikers = dr.strikerProbe();
+  }
+  out.drummerTwoTentacles = out.drumStrikers.count >= 2 && out.drumStrikers.strikers.every((s) => s.contactDist < 0.05);
+
+  // ---- V: NO black-circle blob-shadow DISC remains under any alien.
+  out.discs = aliens.map((al, i) => Object.assign({ role: members[i].role }, al.discProbe()));
+  {
+    const dsc = makeAlien(THREE, traits, { role: "dancer" }, 71);
+    dsc.update(0.016, { barPhase: 0.2, playing: true, level: 1, notes: [] });
+    out.discs.push(Object.assign({ role: "dancer" }, dsc.discProbe()));
+  }
+  out.noDarkDiscs = out.discs.every((d) => d.darkDiscs === 0);
+
   renderer.setRenderTarget(null);
   target.dispose(); renderer.dispose();
   return out;
@@ -547,6 +584,18 @@ async function main() {
   }
   ok(R.instContrastsBody, `S1. every instrument is BOLD + saturated + light enough to pop (${JSON.stringify(R.instColour.map((c) => ({ h: c.hueDist, s: c.instSat, l: c.instL })))})`);
   ok(R.instColourDeterministic, "S2. instrument colour is DETERMINISTIC (same seed -> same colour)");
+
+  // T — FUSED marching-cubes core.
+  ok(R.coreIsMarchingFused, `T1. BODY CORE is a MARCHING-CUBES fused mesh: single connected BufferGeometry isosurface, baked (${JSON.stringify(R.core)})`);
+  ok(R.coreStaticAcrossFrames, "T2. the fused core is BAKED ONCE — static geometry, NOT re-marched per frame (vertex count constant across a bar)");
+  ok(R.mcImportsVendor, "T3. vendored MarchingCubes imports the VENDORED three core (./three.module.min.js)");
+  ok(R.mcNoCdn, "T4. vendored MarchingCubes has NO CDN/http import at runtime");
+
+  // U — two-tentacle drummer.
+  ok(R.drummerTwoTentacles, `U1. DRUMMER strikes with >= 2 appendages, both contacting the drum on onset (${JSON.stringify(R.drumStrikers)})`);
+
+  // V — no black-circle disc.
+  ok(R.noDarkDiscs, `V1. NO shaky black-circle blob-shadow DISC remains under any alien (${JSON.stringify(R.discs)})`);
 
   ok(perr.length === 0, "G1. no console/page errors" + (perr.length ? " :: " + perr.join(" | ") : ""));
 
