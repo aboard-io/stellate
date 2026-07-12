@@ -39,16 +39,27 @@ import { GENRE_COORDS } from "./genre-coords.js";
 import { GENRE_CLUSTERS } from "./genre-clusters.js";
 
 // ---- the GENRE STAR-MAP frame ---------------------------------------------------
-// worldOfCoord projects a genre's 3D feature coord (extent +/-100) into world space:
-// the map floats high ABOVE the surface scene (which lives at the origin) so "up in
-// space" among the planets never collides with the landed close-up. The controller
-// imports the SAME projection to place the planet markers, so camera + planets agree.
-export const FIELD = { scale: 0.55, ox: 0, oy: 150, oz: 0 };
+// worldOfCoord projects a genre's 3D feature coord (extent +/-100) into world space.
+// SPREAD WAY OUT: the old scale (0.55) packed 250 planets + 31 suns into a +/-55 blob
+// where suns (radius 4.5..11) OVERLAPPED — a pile of shapes, not a galaxy. We now blow
+// the layout up ~6x (scale 3.5) so the closest two suns sit ~19 world units apart (well
+// clear of their ~8-unit radii) with real EMPTY SPACE between systems. The whole map
+// FLOATS high above the origin (oy 380) so its lowest planet (y~58) still clears the
+// surface scene at the origin — the camera then flies one CONTINUOUS descent from the
+// galaxy down to the ground (see the transit pose below). The controller imports the
+// SAME projection to place the markers, so camera + planets + suns always agree.
+export const FIELD = { scale: 3.5, ox: 0, oy: 380, oz: 0 };
+const COORD_EXTENT = 100;                          // GENRE_COORDS half-extent (per header)
+function fieldExtent() { return COORD_EXTENT * FIELD.scale; }   // world half-extent of the map
 export function worldOfCoord(c) {
   return { x: (c[0] || 0) * FIELD.scale + FIELD.ox,
     y: (c[1] || 0) * FIELD.scale + FIELD.oy,
     z: (c[2] || 0) * FIELD.scale + FIELD.oz };
 }
+// SURFACE_POSE — the origin-frame establishing pose the transit descent RESOLVES TO at
+// full touchdown (t=1). It is byte-identical to the LANDED pose at fullZoom=0 below, so
+// the star-map->surface handoff is C0-continuous: no cut, no teleport between regions.
+const SURFACE_POSE = { position: { x: 0, y: 3.2, z: 9.0 }, lookAt: { x: 0, y: 1.7, z: 0 }, fov: 60 };
 // planetWorlds(): every genre's planet world-position (the controller builds the
 // instanced star-map field from this — one planet per genre AT its GENRE_COORDS).
 export function planetWorlds() {
@@ -102,6 +113,34 @@ function centroidCoordOf(weights, dominant) {
 
 function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
 function lerp(a, b, t) { return a + (b - a) * t; }
+function lerp3(a, b, t) { return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t), z: lerp(a.z, b.z, t) }; }
+
+// smoothDampS — a CRITICALLY-DAMPED scalar smoother (the classic Game-Programming-Gems
+// SmoothDamp). It eases `cur` toward `target` carrying a velocity term, so a STEP in the
+// target (which is exactly what the discrete ~8-bar blend clock delivers) produces a
+// smooth S-curve whose velocity STARTS AT ZERO and ramps — NO instantaneous jump. This
+// is the cure for the "lurch every 8 measures": a first-order lerp moves fastest the
+// frame right after the step (the spike); this second-order spring never does. Frame-rate
+// independent + deterministic (only dt). Returns [newValue, newVelocity].
+function smoothDampS(cur, target, vel, smoothTime, dt) {
+  if (smoothTime < 1e-4) smoothTime = 1e-4;
+  dt = dt > 0 ? dt : 0;
+  const omega = 2 / smoothTime;
+  const x = omega * dt;
+  const exp = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
+  const change = cur - target;
+  const temp = (vel + omega * change) * dt;
+  const newVel = (vel - omega * temp) * exp;
+  const out = target + (change + temp) * exp;
+  return [out, newVel];
+}
+// smoothVec — smoothDampS applied per-axis to a {x,y,z,vx,vy,vz} spring state.
+function smoothVec(s, target, smoothTime, dt) {
+  let r;
+  r = smoothDampS(s.x, target.x, s.vx, smoothTime, dt); s.x = r[0]; s.vx = r[1];
+  r = smoothDampS(s.y, target.y, s.vy, smoothTime, dt); s.y = r[0]; s.vy = r[1];
+  r = smoothDampS(s.z, target.z, s.vz, smoothTime, dt); s.z = r[0]; s.vz = r[1];
+}
 
 export function makeFlight({ getTravel, getBeat } = {}) {
   const events = makeEvents();
@@ -133,6 +172,14 @@ export function makeFlight({ getTravel, getBeat } = {}) {
   let landedGenre = null;    // the dominant we committed to when we last touched down
   let seenDominant = null;   // last non-null dominant we've observed
   let beatPhase = 0;
+
+  // SMOOTHED galaxy targets: where we ARE (blend centroid) and the RESOLVING planet, each
+  // eased with a critically-damped spring. The blend/dominant updates in discrete ~8-bar
+  // steps; these springs turn every step into a glide so the camera's goal moves smoothly
+  // and NEVER jumps on an update. Seeded to the live value on the first frame (no startup
+  // pop), then damped every frame (kept warm even while landed).
+  let smHere = null, smPlanet = null;
+  const CAM_SMOOTH = 0.7;    // spring time-constant (s) — glide, not snap; still responsive
 
   function setPhase(next) {
     if (next === phase) return;
@@ -216,6 +263,14 @@ export function makeFlight({ getTravel, getBeat } = {}) {
       : centroidCoord;
     const hereWorld = worldOfCoord(centroidCoord);
     const planetWorld = worldOfCoord(planetCoord);
+    // DECOUPLE from the discrete blend clock: ease the two galaxy targets toward the
+    // (possibly just-jumped) live values with the critically-damped spring. The pose
+    // below is built from the SMOOTHED values, so a blend/dominant update nudges the goal
+    // and the camera GLIDES — the per-frame move ramps from zero, it never spikes.
+    if (!smHere) smHere = { x: hereWorld.x, y: hereWorld.y, z: hereWorld.z, vx: 0, vy: 0, vz: 0 };
+    else smoothVec(smHere, hereWorld, CAM_SMOOTH, dt);
+    if (!smPlanet) smPlanet = { x: planetWorld.x, y: planetWorld.y, z: planetWorld.z, vx: 0, vy: 0, vz: 0 };
+    else smoothVec(smPlanet, planetWorld, CAM_SMOOTH, dt);
 
     // ---- cameraPose --------------------------------------------------------
     // TRANSIT (not landed): the long zoom through the star map. We sit BEHIND the
@@ -226,19 +281,25 @@ export function makeFlight({ getTravel, getBeat } = {}) {
     // music-video camera takes over from).
     let cameraPose;
     if (!LANDED[phase]) {
-      let dx = planetWorld.x - hereWorld.x, dy = planetWorld.y - hereWorld.y, dz = planetWorld.z - hereWorld.z;
-      let L = Math.hypot(dx, dy, dz);
-      if (L < 1e-3) { dx = 0; dy = 0; dz = 1; L = 1; }
-      dx /= L; dy /= L; dz /= L;
-      const back = lerp(78, 16, t);          // far (whole field) -> close (planet fills)
-      const rise = lerp(26, 4, t);           // extra altitude in deep space
-      // SMOOTH: no beat-driven drift/bob — the cruise is a clean eased zoom (the
-      // controller additionally damps the real camera toward this pose). Bobbing was
-      // the jitter the user called out; the pose is now a pure function of `t`.
+      // ONE CONTINUOUS DESCENT (the fix for the "landing is a teleport" break). The camera
+      // is a single lerp in `t` (0 deep-space .. 1 touchdown) from a GALAXY VANTAGE — out
+      // among the suns, high, looking at the resolving planet — DOWN to the ORIGIN SURFACE
+      // pose. At t=1 it equals SURFACE_POSE == the landed pose at fullZoom 0, so the
+      // star-map region and the surface region are ONE uninterrupted zoom: as the dominant
+      // weight climbs the camera flies to the planet and descends (Google-Maps style) to
+      // the band; as it falls, `t` drops and the camera LIFTS back out to the galaxy. No
+      // cut, no region jump. Built from the SMOOTHED planet target so it never lurches.
+      const pw = smPlanet;
+      let hx = FIELD.ox - pw.x, hz = FIELD.oz - pw.z;    // aim the descent toward the origin
+      let hl = Math.hypot(hx, hz); if (hl < 1e-3) { hx = 0; hz = 1; hl = 1; }
+      hx /= hl; hz /= hl;
+      const ext = fieldExtent();
+      const gpos = { x: pw.x + hx * ext * 0.38, y: pw.y + ext * 0.18, z: pw.z + hz * ext * 0.38 };
+      const glook = { x: pw.x, y: pw.y, z: pw.z };
       cameraPose = {
-        position: { x: planetWorld.x - dx * back, y: planetWorld.y - dy * back + rise, z: planetWorld.z - dz * back },
-        lookAt: { x: lerp(hereWorld.x, planetWorld.x, t), y: lerp(hereWorld.y, planetWorld.y, t), z: lerp(hereWorld.z, planetWorld.z, t) },
-        fov: lerp(70, 54, t),
+        position: lerp3(gpos, SURFACE_POSE.position, t),
+        lookAt: lerp3(glook, SURFACE_POSE.lookAt, t),
+        fov: lerp(64, SURFACE_POSE.fov, t),
       };
     } else {
       const camY = lerp(3.2, 1.5, fullZoom);
