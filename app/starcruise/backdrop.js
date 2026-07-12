@@ -730,10 +730,13 @@ export function makeBackdrop(THREE, traits, seed, opts) {
     buildLights(lights);
 
     // ---- foliage (street trees / alien fronds) -------------------------
-    buildFoliage(34, () => ({
+    // A LIGHT scatter of SMALL ground plants (not a forest, not skyscrapers): count is
+    // sparse and the placer scale hint stays <= 1 so no plant tops band scale (buildFoliage
+    // caps the height regardless). See the isolated backdrop-run foliage-height check.
+    buildFoliage(14, () => ({
       x: -40 + rand() * 80,
       z: (rand() < 0.5 ? -2 - rand() * 6 : -8 - rand() * 34),   // some near-front on the flanks
-      s: 0.7 + rand() * 1.3,
+      s: 0.5 + rand() * 0.5,
     }));
   }
   // place a grammar MODULE (base at y=0 geometry) at its world y with y-rot + tilt.
@@ -877,9 +880,11 @@ export function makeBackdrop(THREE, traits, seed, opts) {
     group.add(silos); group.add(roofs);
 
     // ---- tree-lines along the field edges -----------------------------
-    buildFoliage(26, () => {
+    // A sparse line of SMALL bushes/saplings (not a wall of spikes); scale hint <= 1 so
+    // the farm foliage stays near ground height, well under the silos + band.
+    buildFoliage(12, () => {
       const side = rand() < 0.5 ? -1 : 1;
-      return { x: side * (16 + rand() * 22), z: -2 - rand() * 40, s: 1.0 + rand() * 1.6 };
+      return { x: side * (16 + rand() * 22), z: -2 - rand() * 40, s: 0.55 + rand() * 0.45 };
     });
 
     // ---- a few blinking fireflies / barn lights -----------------------
@@ -891,9 +896,14 @@ export function makeBackdrop(THREE, traits, seed, opts) {
   }
 
   // ============================ FOLIAGE =================================
-  // Low-poly plants: brown trunk cylinders + tinted canopy cones (leafy scenes)
-  // or spiky alien fronds (electronic scenes). Two InstancedMeshes -> 2 draws.
+  // SMALL low-poly ground plants — a LIGHT scatter of knee/shoulder-high shrubs, NOT a
+  // forest of skyscraper spikes. Every plant is a small fraction of a building's height
+  // and never towers over the alien band: trunk + canopy are hard-capped to FOLIAGE_MAX_H
+  // world units (see the isolated backdrop-run foliage-height check). Brown trunk
+  // cylinders + tinted canopy cones (leafy scenes) or small spiky alien fronds
+  // (electronic scenes). Two InstancedMeshes -> 2 draws; counts kept deliberately sparse.
   function buildFoliage(count, placer) {
+    const FOLIAGE_MAX_H = 2.0;   // hard ceiling on a whole plant (trunk + canopy), band-scale
     const trunkGeo = normGeo(new THREE.CylinderGeometry(0.08, 0.13, 1, 5));
     const canopyGeo = leafy
       ? normGeo(new THREE.ConeGeometry(0.5, 1, 6))            // rounded-ish leaf cone
@@ -911,11 +921,14 @@ export function makeBackdrop(THREE, traits, seed, opts) {
     shadow(trunk, true, false); shadow(canopy, true, true);   // canopies catch trunk/neighbour shade
     for (let i = 0; i < count; i++) {
       const P = placer();
-      const th = (0.5 + rand() * 0.7) * P.s;               // trunk height
-      const ch = (1.0 + rand() * 1.4) * P.s;               // canopy height
-      const cw = (0.7 + rand() * 0.8) * P.s;               // canopy width
+      const s = Math.min(1, P.s == null ? 1 : P.s);        // clamp the placer scale hint
+      let th = (0.22 + rand() * 0.26) * s;                 // short trunk (~0.22..0.48)
+      let ch = (0.5 + rand() * 0.6) * s;                   // low canopy (~0.5..1.1)
+      const cw = (0.35 + rand() * 0.4) * s;                // narrow canopy
+      // never let a whole plant exceed the band-scale ceiling (defensive clamp).
+      if (th + ch > FOLIAGE_MAX_H) { const k = FOLIAGE_MAX_H / (th + ch); th *= k; ch *= k; }
       const yaw = rand() * TAU;
-      emit(trunk, i, P.x, 0, P.z, 0.7 * P.s, th, 0.7 * P.s, yaw);
+      emit(trunk, i, P.x, 0, P.z, 0.45 * s, th, 0.45 * s, yaw);
       emit(canopy, i, P.x, th, P.z, cw, ch, cw, yaw);
     }
     trunk.instanceMatrix.needsUpdate = true; canopy.instanceMatrix.needsUpdate = true;
@@ -1194,9 +1207,16 @@ export function makeBackdrop(THREE, traits, seed, opts) {
     return { x, z };
   }
   function buildLandscape(kind2) {
+    // NEAR-GROUND ceiling: the natural layer is scattered clutter (rocks, crystals, dunes,
+    // fungi...) — a fraction of a building's height, never a spike towering over the band.
+    // We clamp each feature's vertical EXTENT (its scale-y) to this; the peripheral WORLD
+    // megastructures (buildWorld) keep their drama, only this ground layer is kept low.
+    const LAND_MAX_H = 3.4;
     group.userData.landscape = kind2;
     const feat = (name, geo, mat, count, placer, cast, receive) =>
-      scatter("land-" + name, "land:" + name, geo, mat, count, placer, cast !== false, !!receive);
+      scatter("land-" + name, "land:" + name, geo, mat, count,
+        (i) => { const P = placer(i) || {}; if (P.h != null && P.h > LAND_MAX_H) P.h = LAND_MAX_H; return P; },
+        cast !== false, !!receive);
     const glowOrbs = (n, y0, y1, sc, hue, sat, lig) => { for (let i = 0; i < n; i++) { const P = landPlace(); pushOrb(P.x, y0 + rand() * (y1 - y0), P.z, sc + rand() * sc, hue, sat, lig); } };
     switch (kind2) {
       case "crystal": {

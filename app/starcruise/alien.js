@@ -444,6 +444,18 @@ export function makeAlien(THREE, traits, member, seed) {
   const accent2Mat = mk(accent2Col, false);
   const eyeMat = applyStyleHook(new THREE.MeshLambertMaterial({ color: new THREE.Color(0x07070d), emissive: accentBright.clone().multiplyScalar(0.9), flatShading: !smoothShade }));
   const mouthMat = applyStyleHook(new THREE.MeshLambertMaterial({ color: new THREE.Color(0x18080f), flatShading: !smoothShade }));
+  // ---- CUTE EYE MATERIALS (Priority 1) — read from the landed camera distance -------
+  // The classic legible cute eye: a BRIGHT WHITE SCLERA (a touch of emissive so it reads
+  // white even in shadow) + a per-alien COLOURED IRIS + a DARK PUPIL + a bright white
+  // CATCHLIGHT sparkle (fully emissive so it always glints). Deterministic (no rng) —
+  // built once + reused across every eye on this alien. A rosy translucent BLUSH adds
+  // the baby-face warmth. All wrapped in the style hook so iridescent/cel skins stay legible.
+  const scleraMat = applyStyleHook(new THREE.MeshLambertMaterial({ color: new THREE.Color(0xf5f5fc), emissive: new THREE.Color(0x33333d), flatShading: false }));
+  const irisEyeCol = accentBright.clone();
+  const irisMat = applyStyleHook(new THREE.MeshLambertMaterial({ color: irisEyeCol, emissive: irisEyeCol.clone().multiplyScalar(0.42), flatShading: false }));
+  const pupilMat = applyStyleHook(new THREE.MeshLambertMaterial({ color: new THREE.Color(0x05050a), flatShading: false }));
+  const catchMat = applyStyleHook(new THREE.MeshLambertMaterial({ color: new THREE.Color(0xffffff), emissive: new THREE.Color(0xffffff), flatShading: false }));
+  const blushMat = applyStyleHook(new THREE.MeshLambertMaterial({ color: new THREE.Color(0xff8fa6), emissive: new THREE.Color(0x401118), transparent: true, opacity: 0.5, flatShading: false }));
   const bodyDark = skinCol.clone().multiplyScalar(chrome ? 0.7 : 0.55);
   const instBodyMat = mk(bodyDark, false);
   // ---- INSTRUMENT COLOUR (Fix 2): a BOLD hue OPPOSITE the alien's body so the invented
@@ -467,7 +479,7 @@ export function makeAlien(THREE, traits, member, seed) {
     color: new THREE.Color(0x0a0a12), emissive: col.clone(), wireframe: wire, flatShading: !smoothShade,
   }));
   const orbMat = mkOrb(accentBright.clone().offsetHSL(0, 0.12, 0.14));
-  const materials = [skinMat, clothMat, limbMat, accentMat, accent2Mat, eyeMat, mouthMat, instBodyMat, orbMat, instMainMat, instAccMat];
+  const materials = [skinMat, clothMat, limbMat, accentMat, accent2Mat, eyeMat, mouthMat, instBodyMat, orbMat, instMainMat, instAccMat, scleraMat, irisMat, pupilMat, catchMat, blushMat];
 
   const group = new THREE.Object3D();
 
@@ -477,7 +489,34 @@ export function makeAlien(THREE, traits, member, seed) {
   let tentacleProof = null; // { err, tip, target, reached } — first FABRIK tentacle (headless proof)
   const pulseCores = [];    // { mesh, base:Vector3(scale), amp } — blob/gas breathing
   const orbs = [];          // { mesh, base:Vector3, ph, amp } — floating light-balls
+  const legs = [];          // { limb, footRest:Vector3, reach, side } — ARTICULATED jointed legs
   const YAX = new THREE.Vector3(0, 1, 0);
+  const ZAX = new THREE.Vector3(0, 0, 1);
+  const _jv = new THREE.Vector3(), _legTgt = new THREE.Vector3();
+
+  // ---- VISIBLE ARTICULATED JOINTS -------------------------------------------------
+  // Every limb reads as JOINTED — a rounded KNOB at each bend + a ball-and-socket at the
+  // body entry — so appendages pivot at joints instead of melting smoothly into the mass.
+  // Each joint mesh is tagged (userData.joint) so the headless joint probe can census it.
+  // Deterministic (NO rng) + mobile (low-seg spheres/tori; joint counts are capped by the
+  // capped segment/appendage counts, and only TRANSFORMS move in update — no rebuilds).
+  function addJointKnob(pos, r, kind, parent, mat) {
+    const j = new THREE.Mesh(new THREE.SphereGeometry(Math.max(1e-3, r), 8, 6), mat || skinMat);
+    j.position.copy(pos); j.userData.joint = kind;
+    (parent || group).add(j);
+    return j;
+  }
+  // a body-entry BALL-AND-SOCKET: a knob BALL + a darker collar RING around it, seated on
+  // the marching-cubes core surface, so the limb visibly PIVOTS from a socket (not a melt).
+  function addSocket(pos, r, kind) {
+    const ball = addJointKnob(pos, r, kind, group, skinMat);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(r * 1.12, r * 0.34, 5, 10), limbMat);
+    ring.position.copy(pos); ring.userData.joint = kind + "Collar";
+    const out = _jv.set(pos.x, 0, pos.z); if (out.lengthSq() < 1e-6) out.set(0, 1, 0); else out.normalize();
+    ring.quaternion.setFromUnitVectors(ZAX, out);   // hole faces outward — limb passes through
+    group.add(ring);
+    return ball;
+  }
 
   // ---- FUSED ORGANIC CORE (marching cubes) collection ----------------------------
   // Instead of gluing separate torso primitives (a hub, a mantle, thorax spheres…) the
@@ -499,6 +538,10 @@ export function makeAlien(THREE, traits, member, seed) {
     nSeg = clamp(Math.round(nSeg), 2, 5);
     pushRootToSurface(rootPos);              // Fix 1: seat legs/tentacles ON the body surface
     appendageRoots.push(rootPos.clone());    // fuse this limb's root into the marching-cubes core
+    // GOAL 0 — a VISIBLE ball-and-socket at the BODY ENTRY, so the tentacle pivots from a
+    // clear socket knob on the marching-cubes core (not a smooth melt). Static (the rootObj
+    // swings the whole limb from here).
+    addSocket(rootPos, width * 0.72, "socket");
     const rootObj = new THREE.Object3D();
     rootObj.position.copy(rootPos);
     rootObj.quaternion.setFromUnitVectors(YAX, dir.clone().normalize());
@@ -525,6 +568,14 @@ export function makeAlien(THREE, traits, member, seed) {
     const geo = tube(THREE, pts, { radius: width * 0.5, segs: clamp(nSeg * 4, 6, 24), radial: 6, taper });
     const tubeMesh = new THREE.Mesh(geo, mat);
     rootObj.add(tubeMesh);
+    // GOAL 3 — VISIBLE JOINT NODES along the FABRIK chain so the tentacle reads as a
+    // jointed, curling limb (rounded knobs at each interior joint, tapering along the run).
+    // Children of rootObj (local chain frame), so they curl + sway WITH the tube — no rng,
+    // no per-frame rebuild. Capped by nSeg (<=5 -> <=4 nodes).
+    for (let s = 1; s < nSeg; s++) {
+      const nr = width * 0.42 * (1 - 0.45 * (s / nSeg) * (1 - (opts.taper != null ? opts.taper : tentTaper)));
+      addJointKnob(pts[s], nr, "node", rootObj, capMat || mat);
+    }
     // tip cap: a rounded SUPERQUADRIC knob or an eye-globe — never a cube.
     const capW = width * 0.55;
     const tip = pts[nSeg];
@@ -555,6 +606,17 @@ export function makeAlien(THREE, traits, member, seed) {
       tn.root.rotateX(sx); tn.root.rotateZ(sz);
     }
   }
+  // GOAL 2 — FLEX the jointed legs on the beat so the KNEE visibly bends. Each leg's foot
+  // is raised toward its hip by a beat-driven amount (0..1), which SHORTENS the leg so the
+  // 2-bone IK bends the knee more; the foot only ever rises (never dips below its planted
+  // rest), so feet never clip the floor. Deterministic; transforms only (no rebuild).
+  function flexLegs(amp, beatK) {
+    for (const lg of legs) {
+      _legTgt.copy(lg.footRest);
+      _legTgt.y += beatK * lg.reach * 0.16 * clamp(amp, 0, 1);   // raise foot -> knee flexes
+      lg.limb.solve(_legTgt);
+    }
+  }
 
   // ---- 2-bone IK arm (the PLAYER manipulator — precise contact) -------------------
   // A limb = upper + fore + palm bones + a hand cap AT the tip. solve(target) runs a
@@ -563,6 +625,7 @@ export function makeAlien(THREE, traits, member, seed) {
   // it reads as an articulated 3-segment appendage.
   const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3();
   const _v4 = new THREE.Vector3(), _v5 = new THREE.Vector3(), _wrist = new THREE.Vector3();
+  const _eb1 = new THREE.Vector3(), _eb2 = new THREE.Vector3();
   const WRIST_FRAC = 0.62;
   function placeBone(mesh, a, b) {
     const dir = _v1.subVectors(b, a); const len = dir.length() || 1e-4;
@@ -570,22 +633,43 @@ export function makeAlien(THREE, traits, member, seed) {
     mesh.quaternion.setFromUnitVectors(YAX, _v2.copy(dir).multiplyScalar(1 / len));
     mesh.scale.set(1, len, 1);
   }
-  function makeLimb(rootPos, poleDir, L1, L2, width, mat, capMat) {
-    const upper = new THREE.Mesh(new THREE.CylinderGeometry(width * 0.5, width * 0.44, 1, 5), mat);
-    const fore = new THREE.Mesh(new THREE.CylinderGeometry(width * 0.42, width * 0.36, 1, 5), mat);
-    const palm = new THREE.Mesh(new THREE.CylinderGeometry(width * 0.36, width * 0.3, 1, 5), mat);
-    // DE-SQUARE hand: a rounded palm-globe flanked by two curving PINCER claws.
-    const cap = new THREE.Object3D();
+  // A 3-SEGMENT articulated limb (upper + fore + hand/foot) solved by a law-of-cosines
+  // 2-bone IK so the TIP lands EXACTLY on the target (the note-onset contact), while the
+  // MID joint (elbow/knee) BENDS as the tip reaches. Now carries VISIBLE rounded JOINT
+  // knobs at the mid (elbow/knee) + low (wrist/ankle) bends (GOALS 1 + 2) — tagged for the
+  // joint probe — and exposes `elbowAngle` (the interior bend angle) so the flex is legible.
+  // Segments TAPER from the root. opts.foot -> a flattened foot cap instead of pincer hand.
+  function makeLimb(rootPos, poleDir, L1, L2, width, mat, capMat, opts) {
+    opts = opts || {};
+    const jn = opts.jointNames || { mid: "elbow", low: "wrist" };
+    const upper = new THREE.Mesh(new THREE.CylinderGeometry(width * 0.5, width * 0.4, 1, 5), mat);
+    const fore = new THREE.Mesh(new THREE.CylinderGeometry(width * 0.4, width * 0.3, 1, 5), mat);
+    const palm = new THREE.Mesh(new THREE.CylinderGeometry(width * 0.3, width * 0.24, 1, 5), mat);
     const hMat = capMat || skinMat;
-    const palmBall = new THREE.Mesh(new THREE.SphereGeometry(width * 0.85, 7, 6), hMat);
-    cap.add(palmBall);
-    for (let s = -1; s <= 1; s += 2) {
-      const pin = new THREE.Mesh(new THREE.ConeGeometry(width * 0.32, width * 1.9, 5), hMat);
-      pin.position.set(s * width * 0.55, width * 0.75, 0); pin.rotation.z = -s * 0.55; cap.add(pin);
+    // VISIBLE bend joints: a knuckle KNOB at the elbow/knee + a smaller one at the wrist/
+    // ankle, bulging proud of the tapered bones so the articulation reads clearly.
+    const midJoint = new THREE.Mesh(new THREE.SphereGeometry(width * 0.62, 8, 6), hMat);
+    midJoint.userData.joint = jn.mid; group.add(midJoint);
+    const lowJoint = new THREE.Mesh(new THREE.SphereGeometry(width * 0.5, 8, 6), hMat);
+    lowJoint.userData.joint = jn.low; group.add(lowJoint);
+    const cap = new THREE.Object3D();
+    if (opts.foot) {
+      // FOOT: a rounded sole flattened in Y + elongated forward (no pincers).
+      const sole = new THREE.Mesh(new THREE.SphereGeometry(width * 0.9, 7, 6), hMat);
+      sole.scale.set(1.05, 0.5, 1.6); sole.position.y = width * 0.4; cap.add(sole);
+    } else {
+      // DE-SQUARE hand: a rounded palm-globe flanked by two curving PINCER claws.
+      const palmBall = new THREE.Mesh(new THREE.SphereGeometry(width * 0.85, 7, 6), hMat);
+      cap.add(palmBall);
+      for (let s = -1; s <= 1; s += 2) {
+        const pin = new THREE.Mesh(new THREE.ConeGeometry(width * 0.32, width * 1.9, 5), hMat);
+        pin.position.set(s * width * 0.55, width * 0.75, 0); pin.rotation.z = -s * 0.55; cap.add(pin);
+      }
     }
     group.add(upper); group.add(fore); group.add(palm); group.add(cap);
     const root = rootPos.clone(), pole = poleDir.clone().normalize();
     const elbow = new THREE.Vector3(), tip = new THREE.Vector3(), wristV = new THREE.Vector3();
+    const api = { root, tip, upper, fore, palm, cap, elbow, wrist: wristV, midJoint, lowJoint, elbowAngle: Math.PI };
     function solve(target) {
       // Fix 1: never aim a limb INTO the torso — clamp the target out of the keep-out shell
       // (a copy, so the caller's vector + the reach probe stay intact). Onset contacts sit
@@ -613,9 +697,18 @@ export function makeAlien(THREE, traits, member, seed) {
       placeBone(fore, elbow, _wrist);
       placeBone(palm, _wrist, tip);
       cap.position.copy(tip);
+      // ride the VISIBLE joint knobs on the posed bends (elbow/knee + wrist/ankle).
+      midJoint.position.copy(elbow); lowJoint.position.copy(_wrist);
+      // interior BEND angle at the mid joint (pi = straight, smaller = flexed) — exposed so
+      // the headless probe can prove the elbow/knee actually BENDS as the tip reaches.
+      _eb1.subVectors(root, elbow); _eb2.subVectors(tip, elbow);
+      const la = _eb1.length() || 1e-6, lb = _eb2.length() || 1e-6;
+      let cc = _eb1.dot(_eb2) / (la * lb); cc = cc < -1 ? -1 : cc > 1 ? 1 : cc;
+      api.elbowAngle = Math.acos(cc);
       return tip;
     }
-    return { root, solve, tip, upper, fore, palm, cap, elbow, wrist: wristV };
+    api.solve = solve;
+    return api;
   }
 
   // arm bone lengths (reach scales with H); the instrument contact below derives
@@ -624,9 +717,37 @@ export function makeAlien(THREE, traits, member, seed) {
   const armL1 = H * 0.2 * armLenMul, armL2 = H * 0.22 * armLenMul, armReach = armL1 + armL2;
   const armW = coreR * 0.34 * Math.max(0.6, 1.15 - armLenMul * 0.18);
 
+  // ---- ARTICULATED JOINTED LEG (GOAL 2) ------------------------------------------
+  // A standing/walking leg = thigh + shin + foot with a VISIBLE HIP ball-and-socket at
+  // the body entry, a KNEE and an ANKLE joint (reused makeLimb machinery), planted on the
+  // floor with the knee SOFTLY BENT. update() compresses the leg on the beat so the knee
+  // visibly flexes (the foot only ever raises toward the hip -> never dips through the
+  // floor). Deterministic; the root fuses into the marching-cubes core (contiguity).
+  function makeLeg(rootPos, outDir, side) {
+    pushRootToSurface(rootPos);
+    appendageRoots.push(rootPos.clone());
+    const legW = armW * 0.95, thigh = H * 0.2, shin = H * 0.2, reach = thigh + shin;
+    addSocket(rootPos, legW * 1.15, "hip");        // GOAL 0 — visible hip socket on the core
+    const od = outDir.clone().normalize();
+    // knee bends FORWARD + outward: the IK pole points up/out/front.
+    const pole = new THREE.Vector3(od.x, 0.9, od.z * 0.5 + 0.5).normalize();
+    const limb = makeLimb(rootPos.clone(), pole, thigh, shin, legW, limbMat, skinMat,
+      { jointNames: { mid: "knee", low: "ankle" }, foot: true });
+    // rest foot: down + slightly out/front, at ~0.82 of full reach (knee softly pre-bent).
+    const foot = new THREE.Vector3(
+      rootPos.x + od.x * reach * 0.32,
+      rootPos.y - reach * 0.82,
+      rootPos.z + od.z * reach * 0.32 + reach * 0.14);
+    limb.solve(foot);
+    legs.push({ limb, footRest: foot.clone(), reach, side });
+    return limb;
+  }
+
   // vertical anchors used across plans.
   const coreMidY = H * 0.5, shoulderY = H * 0.66, baseY = H * 0.16;
-  const headSz = H * 0.24;
+  // CHIBI PROPORTIONS (Priority 1): a bigger HEAD relative to the body reads as cute/baby.
+  // `let` (not const): the face-seating pass below may GROW it to scale with a big body.
+  let headSz = H * 0.31;
   // ---- LIMB KEEP-OUT (Fix 1) ------------------------------------------------------
   // The torso occupies a rough sphere of radius ~coreR about the core centre. The old
   // contiguity fix over-pulled limb ROOTS inward, sinking shoulders/hips INSIDE the body
@@ -678,13 +799,15 @@ export function makeAlien(THREE, traits, member, seed) {
   }
 
   if (plan === "radial") {
-    // N-fold star: a squat central hub (a wide fused lump) with arms spoked radially.
-    addCoreBall(0, coreMidY, 0, coreR * 1.35);
-    addCoreBall(0, coreMidY + H * 0.2, 0, coreR * 0.95);
-    addCoreBall(0, coreMidY - H * 0.14, 0, coreR * 1.1);
-    for (let i = 0; i < Math.max(3, symMetry); i++) {   // a soft bump under each spoke
-      const p = ringPos(i, Math.max(3, symMetry), coreR * 1.15, coreMidY, 1);
-      addCoreBall(p.x, p.y, p.z, coreR * 0.55);
+    // N-fold star: a WIDE, FLAT central hub-disc (a squat lily-pad) with arms spoked
+    // radially — deliberately low + wide so the silhouette reads as a broad many-armed
+    // hub, not a ball. The ring bumps splay OUT past the hub so the star arms have shoulders.
+    addCoreBall(0, coreMidY, 0, coreR * 1.6);            // broad hub
+    addCoreBall(0, coreMidY + H * 0.09, 0, coreR * 0.8); // shallow dome on top
+    addCoreBall(0, coreMidY - H * 0.11, 0, coreR * 1.25);// wide underside
+    for (let i = 0; i < Math.max(3, symMetry); i++) {   // a splayed lobe under each spoke
+      const p = ringPos(i, Math.max(3, symMetry), coreR * 1.5, coreMidY - H * 0.03, 1);
+      addCoreBall(p.x, p.y, p.z, coreR * 0.6);
     }
     head.position.y = coreMidY + H * 0.34;
     for (let i = 0; i < nArms; i++) {
@@ -694,40 +817,44 @@ export function makeAlien(THREE, traits, member, seed) {
     }
     if (nLegs > 0) addPseudopods(nLegs, coreR * 1.2, baseY + H * 0.08, H * 0.4, true);
   } else if (plan === "cephalopod") {
-    // a bulbous mantle (a tall fused dome) over a skirt of long curling tentacles.
-    addCoreBall(0, coreMidY + H * 0.28, 0, coreR * 1.3);
-    addCoreBall(0, coreMidY + H * 0.08, 0, coreR * 1.4);
-    addCoreBall(0, coreMidY - H * 0.1, 0, coreR * 1.1);
+    // a TALL, ELONGATED mantle — a narrow tapering dome stacked high (clearly taller than
+    // wide) over a skirt of long curling tentacles. The stacked, shrinking balls give a
+    // pointed squid-mantle taper instead of a round bulb.
+    addCoreBall(0, coreMidY - H * 0.12, 0, coreR * 1.02);
+    addCoreBall(0, coreMidY + H * 0.12, 0, coreR * 1.0);
+    addCoreBall(0, coreMidY + H * 0.36, 0, coreR * 0.82);
+    addCoreBall(0, coreMidY + H * 0.58, 0, coreR * 0.52);   // tapered mantle tip
     corePulse = true;   // the mantle breathes
-    head.position.y = coreMidY + H * 0.1;
-    // tentacle skirt hangs from the mantle base.
-    const skirtY = coreMidY - H * 0.02;
+    head.position.y = coreMidY + H * 0.28;
+    // tentacle skirt hangs from the (narrow) mantle base.
+    const skirtY = coreMidY - H * 0.06;
     for (let i = 0; i < nTent; i++) {
-      const p = ringPos(i, nTent, coreR * 1.25, skirtY, 0.85);
+      const p = ringPos(i, nTent, coreR * 1.08, skirtY, 0.85);
       const dir = new THREE.Vector3(p.x * 0.5, -1.2, p.z * 0.5).normalize();
       makeTendril(p, dir, H * 0.16, 4, coreR * 0.5, limbMat, skinMat, { curl: 0.42, amp: 0.22 });
     }
-    // two upper "arms" for playing, near the front of the mantle.
+    // two upper "arms" for playing, near the front of the (narrow) mantle.
     for (let i = 0; i < nArms; i++) {
       const side = i % 2 === 0 ? 1 : -1;
       const tier = Math.floor(i / 2);
-      const p = new THREE.Vector3(side * coreR * 1.2, shoulderY - tier * armW * 1.6, coreR * 0.5);
+      const p = new THREE.Vector3(side * coreR * 0.98, shoulderY - tier * armW * 1.6, coreR * 0.5);
       armRoots.push({ pos: p, pole: new THREE.Vector3(side * 0.4, 0.9, -0.6), side });
     }
   } else if (plan === "insectoid") {
-    // a segmented thorax (a fused chain of lumps trailing back) on many thin splayed legs.
-    const nSegT = 3;
-    for (let s = 0; s < nSegT; s++) {
-      const t = s / (nSegT - 1);
-      addCoreBall(0, coreMidY + (t - 0.4) * H * 0.34, -s * coreR * 0.5, coreR * (1.1 - 0.24 * s));
-    }
+    // a clearly SEGMENTED body: a head-thorax lobe up front and a long ABDOMEN trailing
+    // WAY back in -z as a chain of shrinking lobes — so the silhouette is long-and-low
+    // (thorax + abdomen), unmistakably different from any round mass.
+    addCoreBall(0, coreMidY + H * 0.05, coreR * 0.85, coreR * 0.82);   // head-thorax (front)
+    addCoreBall(0, coreMidY, -coreR * 0.35, coreR * 1.02);             // thorax
+    addCoreBall(0, coreMidY - H * 0.03, -coreR * 1.35, coreR * 0.92);  // abdomen
+    addCoreBall(0, coreMidY - H * 0.05, -coreR * 2.3, coreR * 0.64);   // abdomen tip (tapers back)
     head.position.y = coreMidY + H * 0.16;
     for (let i = 0; i < nLegs; i++) {
       const side = i % 2 === 0 ? 1 : -1;
       const row = Math.floor(i / 2);
       const p = new THREE.Vector3(side * coreR * 0.9, coreMidY - H * 0.04 - row * coreR * 0.3, coreR * (0.5 - row * 0.5));
-      const dir = new THREE.Vector3(side * 1.1, -0.15, 0.1).normalize();
-      makeTendril(p, dir, H * 0.16, 3, armW * 1.1, limbMat, limbMat, { curl: side * 0.5, amp: 0.06 });
+      // ARTICULATED jointed leg (hip socket + bending knee + ankle) instead of a stiff tube.
+      makeLeg(p, new THREE.Vector3(side * 1.1, 0, 0.1), side);
     }
     for (let i = 0; i < nArms; i++) {
       const side = i % 2 === 0 ? 1 : -1;
@@ -736,12 +863,12 @@ export function makeAlien(THREE, traits, member, seed) {
       armRoots.push({ pos: p, pole: new THREE.Vector3(side * 0.5, 0.85, -0.5), side });
     }
   } else if (plan === "blob") {
-    // amorphous pulsing mass with stubby pseudopods + a single maw — several off-centre
-    // lumps fuse (via marching cubes) into one lopsided organic mass.
-    addCoreBall(0, coreMidY, 0, coreR * 1.15);
-    addCoreBall(coreR * 0.6, coreMidY + coreR * 0.3, 0, coreR * 0.8);
-    addCoreBall(-coreR * 0.45, coreMidY - coreR * 0.4, coreR * 0.3, coreR * 0.72);
-    addCoreBall(coreR * 0.4, coreMidY + coreR * 0.55, coreR * 0.3, coreR * 0.7);
+    // a SQUAT, WIDE amorphous mass — deliberately low and spread out (a puddle-creature),
+    // several big off-centre lumps splayed sideways so it reads much wider than tall.
+    addCoreBall(0, coreMidY - coreR * 0.18, 0, coreR * 1.32);
+    addCoreBall(coreR * 0.95, coreMidY + coreR * 0.05, 0, coreR * 0.98);
+    addCoreBall(-coreR * 0.85, coreMidY - coreR * 0.28, coreR * 0.35, coreR * 0.92);
+    addCoreBall(coreR * 0.3, coreMidY + coreR * 0.42, coreR * 0.4, coreR * 0.72);
     corePulse = true;   // the blob breathes
     head.position.y = coreMidY + H * 0.06;
     if (nTent > 0) addPseudopods(nTent, coreR * 1.1, baseY + coreR * 0.4, H * 0.34, true);
@@ -751,14 +878,16 @@ export function makeAlien(THREE, traits, member, seed) {
       armRoots.push({ pos: p, pole: new THREE.Vector3(side * 0.5, 0.3, 0.2), side });
     }
   } else if (plan === "stalk") {
-    // a cluster of tall swaying stalks rising from a fused bulb-base; eyes on stalk-tips.
-    addCoreBall(0, baseY + H * 0.02, 0, coreR * 1.25);
-    addCoreBall(0, baseY + H * 0.2, 0, coreR * 0.85);
-    addCoreBall(0, coreMidY, 0, coreR * 0.62);           // stem up toward the neck/head
-    head.position.y = H * 0.7;
+    // a THIN, TALL stem — a slim bulb-base tapering up into a narrow neck (clearly
+    // taller than wide), from which swaying stalks rise; eyes on stalk-tips.
+    addCoreBall(0, baseY + H * 0.02, 0, coreR * 1.0);    // slim bulb base
+    addCoreBall(0, baseY + H * 0.24, 0, coreR * 0.56);
+    addCoreBall(0, coreMidY + H * 0.02, 0, coreR * 0.46);
+    addCoreBall(0, coreMidY + H * 0.28, 0, coreR * 0.4); // thin neck up toward the head
+    head.position.y = H * 0.82;
     const stalks = Math.max(2, nLegs || 3);
     for (let i = 0; i < stalks; i++) {
-      const p = ringPos(i, stalks, coreR * 0.7, baseY + H * 0.08, 1);
+      const p = ringPos(i, stalks, coreR * 0.62, baseY + H * 0.08, 1);
       const withEye = i < nEyes;
       makeTendril(p, new THREE.Vector3(p.x * 0.15, 1, p.z * 0.15).normalize(), H * 0.2, 4, coreR * 0.34, skinMat, accentMat,
         { curl: 0.05, amp: 0.14, tip: withEye ? "eye" : "box" });
@@ -766,33 +895,38 @@ export function makeAlien(THREE, traits, member, seed) {
     for (let i = 0; i < nArms; i++) {
       const side = i % 2 === 0 ? 1 : -1;
       const tier = Math.floor(i / 2);
-      const p = new THREE.Vector3(side * coreR * 0.9, H * 0.5 - tier * armW * 1.5, coreR * 0.3);
+      const p = new THREE.Vector3(side * coreR * 0.72, H * 0.52 - tier * armW * 1.5, coreR * 0.28);
       armRoots.push({ pos: p, pole: new THREE.Vector3(side * 0.4, 0.7, 0.1), side });
     }
   } else if (plan === "crystalline") {
-    // a fused stack of angular lumps (kept faceted by low-res marching cubes); shard limbs.
-    const nStack = 3;
-    for (let s = 0; s < nStack; s++) {
-      addCoreBall(0, coreMidY - H * 0.12 + s * H * 0.22, 0, coreR * (1.15 - 0.26 * s));
-    }
-    head.position.y = coreMidY + H * 0.3;
+    // a tall, ANGULAR TAPERED SPIRE — a stack of shrinking lumps rising to a point (a
+    // crystal shard silhouette), ringed by cone shard-limbs so it never reads as round.
+    addCoreBall(0, coreMidY - H * 0.16, 0, coreR * 1.02);
+    addCoreBall(0, coreMidY + H * 0.05, 0, coreR * 0.74);
+    addCoreBall(0, coreMidY + H * 0.27, 0, coreR * 0.5);
+    addCoreBall(0, coreMidY + H * 0.47, 0, coreR * 0.28);   // spire point
+    head.position.y = coreMidY + H * 0.34;
     for (let i = 0; i < Math.max(2, nLegs); i++) {
       const p = ringPos(i, Math.max(2, nLegs), coreR * 1.0, baseY + coreR * 0.3, 1);
       const shard = new THREE.Mesh(new THREE.ConeGeometry(coreR * 0.28, H * 0.34, 4), accent2Mat);
       shard.position.copy(p); shard.rotation.z = p.x * 0.6; shard.rotation.x = -p.z * 0.6; group.add(shard);
     }
+    // a crowning ANGULAR SPIKE at the spire tip — 4-sided cone, so the top reads faceted.
+    const crown = new THREE.Mesh(new THREE.ConeGeometry(coreR * 0.34, H * 0.4, 4), accent2Mat);
+    crown.position.set(0, coreMidY + H * 0.5, 0); group.add(crown);
     for (let i = 0; i < nArms; i++) {
       const side = i % 2 === 0 ? 1 : -1;
       const tier = Math.floor(i / 2);
-      const p = new THREE.Vector3(side * coreR * 1.15, shoulderY - tier * armW * 1.5, coreR * 0.4);
+      const p = new THREE.Vector3(side * coreR * 0.86, shoulderY - tier * armW * 1.5, coreR * 0.34);
       armRoots.push({ pos: p, pole: new THREE.Vector3(side * 0.5, 0.6, 0.2), side });
     }
   } else { // gas
-    // floating translucent sacs that bob (a fused cluster of offset lumps); wispy tendrils.
-    const sacs = 3;
-    for (let s = 0; s < sacs; s++) {
-      const r = coreR * (1.15 - s * 0.2);
-      addCoreBall((s - 1) * coreR * 0.5, coreMidY + s * coreR * 0.4, (s % 2 ? 1 : -1) * coreR * 0.3, r);
+    // a loosely-fused CLUSTER of bobbing sacs — several near-equal lobes offset in every
+    // axis so the mass reads as a bumpy grape-cluster (multi-lobe), not one smooth ball.
+    const sacOff = [[-0.7, -0.1, 0.4], [0.72, 0.28, -0.42], [-0.15, 0.62, -0.35], [0.25, 0.5, 0.55]];
+    for (let s = 0; s < sacOff.length; s++) {
+      const r = coreR * (1.0 - s * 0.11);
+      addCoreBall(sacOff[s][0] * coreR, coreMidY + sacOff[s][1] * coreR, sacOff[s][2] * coreR, r);
     }
     corePulse = true;   // the sacs breathe
     head.position.y = coreMidY + coreR * 0.6;
@@ -862,6 +996,41 @@ export function makeAlien(THREE, traits, member, seed) {
     orbs.push({ mesh: orb, base: base.clone(), ph: rand() * 6.28, amp: coreR * 0.09 });
   }
 
+  // ---- SEAT THE FACE ON THE BODY'S FRONT-UPPER OUTER SURFACE ----------------------
+  // THE FIX: on the dominant "the body IS the head" plans (radial/blob/gas/cephalopod/
+  // crystalline/insectoid — big superquadric + marching-cubes cores) the little face head
+  // used to sit at z=0, BURIED inside the mass, so the alien rendered as a smooth
+  // featureless apple. Push the head mount OUTWARD to the FRONT surface of the core at the
+  // face height, and SCALE the face to the body girth, so every face part (all built at
+  // local +z) reads PROUD of the body — clearly visible, camera-facing (+Z), never
+  // occluded. Deterministic: pure geometry off the already-placed metaballs, NO rng, so
+  // the per-alien rand stream + the matrix stay byte-identical (render-only).
+  // Front surface Z of the metaball-union body at a given (y,x), local space.
+  const bodyFrontZAt = (y, x) => {
+    let z = -Infinity;
+    for (const b of coreBalls) {
+      const rr = b.r * b.r - (y - b.y) * (y - b.y) - ((x || 0) - b.x) * ((x || 0) - b.x);
+      if (rr > 0) z = Math.max(z, b.z + Math.sqrt(rr));
+    }
+    return z;
+  };
+  {
+    // worst-case (most FORWARD) surface across the vertical band the face spans, at x=0,
+    // so even the lowest face part clears the body's bulge.
+    let front = -Infinity;
+    for (const yy of [head.position.y - headSz * 0.75, head.position.y - headSz * 0.3, head.position.y, head.position.y + headSz * 0.45]) {
+      const z = bodyFrontZAt(yy, 0);
+      if (z > front) front = z;
+    }
+    if (!isFinite(front)) front = coreR;              // degenerate field -> at least core radius
+    // SCALE the face to the body girth so it reads BIG on a big body (never shrinks it).
+    headSz = Math.max(headSz, front * 0.72);
+    // SEAT the head origin just PROUD of that surface. Every face part is built at local
+    // z>0, so the eyes/mouth/brows all end clearly IN FRONT of the body, not inside it.
+    // The back half of the face skull still embeds in the core -> stays contiguous.
+    head.position.z = Math.max(head.position.z, front + headSz * 0.14);
+  }
+
   // ---- FACE: a wild family on the head object ------------------------------------
   const faceZ = headSz * 0.5;
   const jaw = new THREE.Object3D();
@@ -906,33 +1075,53 @@ export function makeAlien(THREE, traits, member, seed) {
     faceRig.jaw = { upper: upPivot, lower, cavity: cav, cavZ, frontZ: zf, upBaseRotX: 0 };
     return faceRig.jaw;
   }
-  // an EYE unit: a socket pivot on the head carrying an eyeball, a pupil that darts
-  // toward the gaze target, and (for forward eyes) upper+lower eyelids that blink.
+  // an EYE unit (Priority 1 — a BIG, CUTE, readable eye): a socket pivot on the head
+  // carrying a BRIGHT WHITE SCLERA eyeball, a LOOK cluster (coloured IRIS + DARK PUPIL +
+  // bright white CATCHLIGHT) that DARTS toward the gaze target + BLINKS as one, and (for
+  // forward eyes) upper+lower eyelids. Sized LARGE relative to the head so the face reads
+  // from the landed camera. Deterministic (no rng). Materials reused across the alien.
   function addEye(host, cx, cy, cz, R, opts) {
     opts = opts || {};
     const pivot = new THREE.Object3D();
     pivot.position.set(cx, cy, cz); host.add(pivot);
-    const eyeball = new THREE.Mesh(new THREE.SphereGeometry(R, 9, 8), eyeMat);
+    // SCLERA — a big bright WHITE eyeball (the cute base; reads white at distance).
+    const eyeball = new THREE.Mesh(new THREE.SphereGeometry(R, 12, 10), scleraMat);
     pivot.add(eyeball);
-    if (opts.bigIris) {   // a coloured iris disc so the pupil reads on a giant cyclops eye
-      const iris = new THREE.Mesh(new THREE.SphereGeometry(R * 0.5, 10, 8), accentMat);
-      iris.position.set(0, 0, R * 0.6); iris.scale.set(1, 1, 0.4); pivot.add(iris);
-    }
-    const pupil = new THREE.Mesh(new THREE.SphereGeometry(R * (opts.bigIris ? 0.24 : 0.42), 7, 6),
-      opts.bigIris ? mouthMat : accentMat);
-    pupil.position.set(0, 0, R * 0.86); pivot.add(pupil);
-    const rec = { pivot, eyeball, pupil, R, baseScaleY: 1 };
+    // LOOK cluster — IRIS + PUPIL + CATCHLIGHT parented together so they TRACK the gaze
+    // and BLINK-squish as one. The update sets look.position (dart) + look.scale.y (blink).
+    const look = new THREE.Object3D();
+    look.position.set(0, 0, R * 0.86); pivot.add(look);
+    const irisR = R * (opts.irisScale != null ? opts.irisScale : 0.7);
+    const iris = new THREE.Mesh(new THREE.SphereGeometry(irisR, 10, 8), irisMat);
+    iris.scale.set(1, 1, 0.34); iris.position.z = R * 0.04; look.add(iris);
+    const pupilR = irisR * 0.52;
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(Math.max(1e-3, pupilR), 8, 7), pupilMat);
+    pupil.scale.set(1, 1, 0.4); pupil.position.z = R * 0.09; look.add(pupil);
+    // CATCHLIGHT — the little white glint (offset up-and-out) that makes the eye read alive.
+    const cl = new THREE.Mesh(new THREE.SphereGeometry(Math.max(1e-3, pupilR * 0.5), 6, 5), catchMat);
+    cl.position.set(pupilR * 0.5, pupilR * 0.55, R * 0.14); look.add(cl);
+    const rec = { pivot, eyeball, pupil: look, pupilDot: pupil, iris, catch: cl, R, baseScaleY: 1 };
     if (opts.lids) {
       const mkLid = (yy) => {
-        const l = new THREE.Mesh(new THREE.SphereGeometry(R * 1.06, 8, 6), skinMat);
-        l.scale.set(1, 0.5, 0.7); l.position.set(0, yy, R * 0.32); pivot.add(l); return l;
+        const l = new THREE.Mesh(new THREE.SphereGeometry(R * 1.08, 8, 6), skinMat);
+        l.scale.set(1, 0.5, 0.7); l.position.set(0, yy, R * 0.3); pivot.add(l); return l;
       };
-      rec.upLid = mkLid(R * 0.72); rec.lidUpY0 = R * 0.72;      // open above the eye
-      rec.loLid = mkLid(-R * 0.72); rec.lidLoY0 = -R * 0.72;    // open below; meet at centre on blink
+      rec.upLid = mkLid(R * 0.78); rec.lidUpY0 = R * 0.78;      // open above the eye
+      rec.loLid = mkLid(-R * 0.78); rec.lidLoY0 = -R * 0.78;    // open below; meet at centre on blink
       faceRig.hasLids = true;
     }
     faceRig.eyes.push(rec);
     return rec;
+  }
+  // ROSY CHEEK BLUSH (Priority 1 — baby-face warmth): two soft translucent pink patches on
+  // the camera-facing side of the head, flanking the mouth. Deterministic (no rng).
+  function addBlush(host, cy, spread, R) {
+    for (let s = -1; s <= 1; s += 2) {
+      const bl = new THREE.Mesh(new THREE.SphereGeometry(Math.max(1e-3, R), 8, 6), blushMat);
+      bl.scale.set(1.35, 0.85, 0.28);
+      bl.position.set(s * spread, cy, faceZ * 0.92);
+      host.add(bl);
+    }
   }
   // a BROW ridge that raises on accents/loudness (registered so the update drives it).
   function addBrow(host, cx, cy, cz, w, side) {
@@ -948,36 +1137,41 @@ export function makeAlien(THREE, traits, member, seed) {
     if (faceKind === "oneEye") {
       const dome = new THREE.Mesh(sqGeo(headSz * 0.6, sqEx, sqEy, 12), skinMat);
       head.add(dome);
-      addBrow(head, 0, headSz * 0.42, headSz * 0.34, headSz * 0.5, 0);
-      addEye(head, 0, 0, headSz * 0.34, headSz * 0.42, { lids: true, bigIris: true });
+      addBrow(head, 0, headSz * 0.5, headSz * 0.34, headSz * 0.52, 0);
+      addEye(head, 0, headSz * 0.04, headSz * 0.36, headSz * 0.46, { lids: true, irisScale: 0.62 });
+      addBlush(head, -headSz * 0.18, headSz * 0.4, headSz * 0.17);
       // a hinged maw below the giant eye so the singer can still gape (dark cavity).
       head.add(jaw);
-      buildHingedMouth(-headSz * 0.34, headSz * 0.34, {});
+      buildHingedMouth(-headSz * 0.36, headSz * 0.34, {});
     } else if (faceKind === "eyeRing") {
       const knob = new THREE.Mesh(sqGeo(headSz * 0.55, sqEx, sqEy, 12), skinMat);
       head.add(knob);
       const ring = Math.min(8, nEyes);
       for (let e = 0; e < ring; e++) {
-        const p = ringPos(e, ring, headSz * 0.55, 0, 1);
+        const p = ringPos(e, ring, headSz * 0.58, 0, 1);
         // the two front-most eyes get real eyelids; the rest blink by squish (cheap).
-        addEye(head, p.x, p.y, Math.abs(p.z) * 0.4 + headSz * 0.2, headSz * 0.15, { lids: e < 2 });
+        addEye(head, p.x, p.y, Math.abs(p.z) * 0.4 + headSz * 0.24, headSz * 0.21, { lids: e < 2 });
       }
-      addBrow(head, 0, headSz * 0.5, headSz * 0.3, headSz * 0.5, 0);
+      addBrow(head, 0, headSz * 0.54, headSz * 0.34, headSz * 0.5, 0);
+      addBlush(head, -headSz * 0.04, headSz * 0.44, headSz * 0.15);
       head.add(jaw);
-      buildHingedMouth(-headSz * 0.12, headSz * 0.32, {});
+      buildHingedMouth(-headSz * 0.14, headSz * 0.32, {});
     } else {
       // maw / mandibles — a SUPERQUADRIC skull (squareness from the genre) with a jaw
       // that drops, plus a couple of eyes.
       const skull = new THREE.Mesh(sqGeo(headSz * 0.64, sqEx, sqEy, 14), skinMat);
       skull.scale.set(1, 1.06, 0.94); head.add(skull);
-      addBrow(head, 0, headSz * 0.27, faceZ - headSz * 0.02, headSz * 0.4, 0);
       const eyeN = Math.min(3, Math.max(2, nEyes));
-      // per-alien vertical + spread jitter so faces read individual within the family.
-      const eyeY = headSz * (0.06 + eyeJit * 0.03), eyeSpread = headSz * (0.55 + morphR * 0.12);
+      // BIG cute eyes: sized LARGE vs the head (smaller only when 3 crowd the face); a wide
+      // brow arches over them. per-alien vertical + spread jitter keeps faces individual.
+      const eyeR = headSz * (eyeN >= 3 ? 0.23 : 0.31);
+      const eyeY = headSz * (0.1 + eyeJit * 0.03), eyeSpread = headSz * (0.84 + morphR * 0.12);
+      addBrow(head, 0, eyeY + eyeR * 1.15, faceZ - headSz * 0.02, headSz * 0.44, 0);
       for (let e = 0; e < eyeN; e++) {
         const sx = eyeN === 1 ? 0 : (e / (eyeN - 1) - 0.5) * eyeSpread;
-        addEye(head, sx, eyeY, faceZ, headSz * 0.13, { lids: e < 2 });
+        addEye(head, sx, eyeY, faceZ, eyeR, { lids: e < 2 });
       }
+      addBlush(head, eyeY - eyeR * 1.3, headSz * 0.52, headSz * 0.17);
       head.add(jaw);
       if (faceKind === "mandibles") {
         // side mandibles (cones on the driven lower jaw) PLUS a hinged dark-cavity mouth.
@@ -995,14 +1189,19 @@ export function makeAlien(THREE, traits, member, seed) {
   }
   buildFace();
 
-  // ---- CONTIGUITY: a NECK bridges the head to the core so the face never floats ----
-  // A tapered column spanning from inside the core up into the head base — it overlaps
-  // both, closing the gap the plans used to leave between body and head.
+  // ---- CONTIGUITY: a NECK/SNOUT bridges the head to the core so the face never floats ----
+  // A tapered column from DEEP INSIDE the core out to the head base. Because the head is now
+  // pushed FORWARD (+z) to sit on the body's front surface, the bridge must span that z gap
+  // too — it runs from a point well inside the mass up-and-forward to the (forward) head, so
+  // both ends overlap and the face-bump reads as fused to the body (never a floating apple).
   {
-    const y0 = coreMidY, y1 = head.position.y;
-    const span = Math.abs(y1 - y0) + headSz * 0.5;
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(coreR * 0.42, coreR * 0.58, span, 8), skinMat);
-    neck.position.set(0, (y0 + y1) * 0.5, faceZ * 0.1);
+    const p0 = new THREE.Vector3(0, coreMidY + (head.position.y - coreMidY) * 0.35, coreR * 0.2);
+    const p1 = new THREE.Vector3(0, head.position.y, head.position.z);
+    const axis = p1.clone().sub(p0);
+    const span = axis.length() + headSz * 0.6;
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(coreR * 0.42, coreR * 0.62, span, 8), skinMat);
+    neck.position.copy(p0).add(p1).multiplyScalar(0.5);
+    if (axis.lengthSq() > 1e-9) neck.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), axis.normalize());
     group.add(neck);
   }
   // OUTFIT: some aliens wear an accent SASH — a colour band hugging the core (a per-alien
@@ -1028,8 +1227,10 @@ export function makeAlien(THREE, traits, member, seed) {
     inner.y = coreMidY + (r.pos.y - coreMidY) * 0.45;
     const clav = new THREE.Mesh(tube(THREE, [inner, r.pos.clone()], { radius: armW * 0.9, segs: 6, radial: 5, taper: 0.85 }), limbMat);
     group.add(clav);
-    const nub = new THREE.Mesh(new THREE.SphereGeometry(armW * 1.15, 7, 6), skinMat);
-    nub.position.copy(r.pos); group.add(nub);
+    // GOAL 0 — a VISIBLE ball-and-socket SHOULDER at the body-entry point (a knob ball +
+    // a collar ring seated on the marching-cubes core) so the arm reads as ATTACHED AT A
+    // JOINT and pivots from it, not fused smoothly into the mass. Tagged for the joint probe.
+    addSocket(r.pos, armW * 1.08, "shoulder");
     const a = makeLimb(r.pos.clone(), r.pole.clone(), armL1, armL2, armW, limbMat, skinMat);
     a.side = r.side;
     a.rest = new THREE.Vector3(r.pos.x * 1.05, r.pos.y - armReach * 0.7, r.pos.z + coreR * 0.2); // relaxed hang
@@ -1177,10 +1378,23 @@ export function makeAlien(THREE, traits, member, seed) {
   }
 
   let clock = 0;
-  // FLOOR CLAMP: liftY raises the whole rig so its lowest point rests ON the ground
-  // plane; the body then only ever bobs UPWARD from there, so feet never clip through
-  // the floor. Computed once after the rig is posed (see below), 0 until then.
+  // FLOOR PLANT: liftY raises the whole rig so its STANDING FEET rest ON the ground plane
+  // (local y = 0, which the pedestal maps to the planet surface); the body then only ever
+  // bobs UPWARD from there. Unlike the old worst-case lift, liftY is planted off the true
+  // standing FOOT LINE (body + legs + tendrils) — NOT the held instrument or the hanging
+  // arms, which dip when the voice rests. Those held parts are FLOOR-CLAMPED per-frame to
+  // `groundLocal` (the group-local foot line) so they never clip the ground WITHOUT
+  // floating the whole creature. Both computed once after the rig is posed (see below).
   let liftY = 0;
+  let groundLocal = -Infinity;   // group-local y of the standing foot line (-inf = not planted yet)
+  let instBelow = 0;             // how far the instrument geometry hangs below its own origin
+  // keep a held HAND / instrument target from sinking below the standing foot line — with a
+  // little headroom so the cap rests ON the ground, not through it. A no-op until planted.
+  function floorTarget(v, headroom) {
+    const minY = groundLocal + (headroom || 0);
+    if (v.y < minY) v.y = minY;
+    return v;
+  }
   // rolling contact envelope (for the mouth + instrument animation + debug).
   let lastC = 0, lastEnergy = 0, lastRaise = 0;
   // FACE puppeteer state — the eased gaze position the pupils lerp toward, plus the
@@ -1426,13 +1640,14 @@ export function makeAlien(THREE, traits, member, seed) {
       group.rotation.y = Math.sin(beat * 0.6 + styleOff * 0.5) * 0.26 * amp;
       head.rotation.x = -0.1 + upb * 0.35 * (groove.headbob || 0.4) * amp;
       head.rotation.y = Math.sin(beat * 1.1) * 0.2 * amp;
+      flexLegs(amp, upb);   // knees bob-flex with the groove
       for (let i = 0; i < arms.length; i++) {
         const a = arms[i]; _rest.copy(a.rest);
         const lift = 0.5 + 0.5 * Math.sin(beat * 1.25 + i * 1.7 + styleOff);
         _rest.y += lift * armReach * 0.7 * amp;
         _rest.x += a.side * (0.2 + 0.3 * lift) * H * 0.3 + Math.sin(beat * 1.4 + i) * 0.05 * H;
         _rest.z += 0.2 * H * lift;
-        a.solve(_rest);
+        a.solve(floorTarget(_rest, armW));   // a hanging dance arm never dips through the floor
         _lastTarget.copy(_rest);
       }
       return;
@@ -1455,9 +1670,10 @@ export function makeAlien(THREE, traits, member, seed) {
     lastRaise = raise;
     if (instrument) {
       instrument.position.y = instBaseY - (1 - raise) * loweredDrop;
-      // FLOOR: the held instrument never sinks through the ground when it lowers to rest
-      // (clamp is liftY-relative so it holds the same world floor at build + at runtime).
-      const minInstY = -liftY + H * 0.2;
+      // FLOOR: the lowered instrument never sinks through the ground — clamped to the
+      // standing foot line (groundLocal) plus its own below-origin overhang, so it rests
+      // ON the ground when at rest instead of forcing the whole creature to float up.
+      const minInstY = groundLocal + instBelow;
       if (instrument.position.y < minInstY) instrument.position.y = minInstY;
       instrument.rotation.z = (instrument.rotation.z || 0);
       instrument.scale.setScalar(0.9 + 0.1 * raise);
@@ -1466,10 +1682,13 @@ export function makeAlien(THREE, traits, member, seed) {
     // PLAYER ARM: strike/pluck/bow/blow ON the real note onsets (or idle at rest).
     const pArm = arms[playerIdx];
     if (energyActive > 0.001) {
-      pArm.solve(playerTarget(c, barPhase));
+      // clamp to the foot line so a low/idle strike pose (e.g. a blow horn dipping between
+      // notes) never dips the hand through the ground; a real onset CONTACT sits well above
+      // the foot line so this is a no-op there and the onset reach stays exact.
+      pArm.solve(floorTarget(playerTarget(c, barPhase), armW));
     } else {
       _rest.copy(pArm.rest); _rest.y -= 0.05 * H;   // hand lowered, instrument at rest
-      pArm.solve(_rest);
+      pArm.solve(floorTarget(_rest, armW));          // never below the foot line at rest
     }
     _lastTarget.copy(_tgt);
     animateInstrument(c, vel);
@@ -1481,14 +1700,14 @@ export function makeAlien(THREE, traits, member, seed) {
         _tgt2.copy(contact2);
         const away = 1 - c;
         _tgt2.y += away * windup; _tgt2.z -= away * windup * 0.25;
-        a2.solve(_tgt2);
-      } else { _rest.copy(a2.rest); _rest.y -= 0.05 * H; a2.solve(_rest); }
+        a2.solve(floorTarget(_tgt2, armW));
+      } else { _rest.copy(a2.rest); _rest.y -= 0.05 * H; a2.solve(floorTarget(_rest, armW)); }
     }
 
     // holder braces the instrument for stringed/blown styles (when playing).
     if (stringed && holderIdx >= 0 && holderIdx !== playerIdx) {
       if (raise > 0.1) arms[holderIdx].solve(holdPoint);
-      else { _rest.copy(arms[holderIdx].rest); arms[holderIdx].solve(_rest); }
+      else { _rest.copy(arms[holderIdx].rest); arms[holderIdx].solve(floorTarget(_rest, armW)); }
     }
 
     // the remaining arms idle-sway.
@@ -1500,8 +1719,10 @@ export function makeAlien(THREE, traits, member, seed) {
       const idleAmp = 0.15 + 0.85 * gAmp;   // idle arms too calm down when the voice is quiet
       _rest.x += Math.sin(clock * (1.4 + energy) + i) * 0.05 * H * idleAmp;
       _rest.y += bob * 0.05 * H * gAmp + Math.sin(clock * 2 + i) * 0.02 * H * idleAmp;
-      a.solve(_rest);
+      a.solve(floorTarget(_rest, armW));   // idle-swaying arms stay above the foot line
     }
+    // legged plans (insectoid/stalk/crystalline): knees flex on the musical bob.
+    flexLegs(gAmp, bob);
   }
 
   // headless-proof accessor: player hand tip vs the true contact (alien-local).
@@ -1535,12 +1756,80 @@ export function makeAlien(THREE, traits, member, seed) {
     return { minClear: +minClear.toFixed(4), keepR: +CORE_KEEP.toFixed(4), coreR: +coreR.toFixed(4), samples: pts.length };
   }
 
+  // headless-proof accessor for the VISIBLE ARTICULATED JOINTS (GOALS 0-4). Censuses every
+  // joint mesh (tagged userData.joint) by KIND — body-entry sockets (shoulder/hip/socket)
+  // + their collars, mid bends (elbow/knee), low bends (wrist/ankle), and tentacle chain
+  // NODES — and reports the player arm's live elbow (mid-joint) interior angle + a leg's
+  // knee angle so the test can prove the mid joint BENDS as the limb reaches. Reflects the
+  // CURRENT posed frame (update() solves the arms/legs each tick). No rng.
+  function jointProbe() {
+    const kinds = {};
+    group.traverse((o) => {
+      if (o.isMesh && o.userData && o.userData.joint) {
+        const k = o.userData.joint; kinds[k] = (kinds[k] || 0) + 1;
+      }
+    });
+    // one body-entry joint per limb: an arm SHOULDER, a leg HIP, or a tentacle/leg SOCKET.
+    const bodyEntry = (kinds.shoulder || 0) + (kinds.hip || 0) + (kinds.socket || 0);
+    const limbTotal = nArms + legs.length + tendrils.length;
+    const pa = (playerIdx >= 0 ? arms[playerIdx] : arms[0]);
+    return {
+      kinds,
+      limbCount: limbTotal,
+      bodyEntryJoints: bodyEntry,                          // >= one per limb
+      everyLimbHasEntry: bodyEntry >= limbTotal,
+      // player arm articulation: elbow (mid) + wrist (low) knobs, live interior bend angle.
+      playerElbowKnob: !!pa.midJoint, playerWristKnob: !!pa.lowJoint,
+      playerArmJoints: (pa.midJoint ? 1 : 0) + (pa.lowJoint ? 1 : 0),
+      playerElbowAngle: +pa.elbowAngle.toFixed(4),         // pi = straight, smaller = flexed
+      tentacleNodes: kinds.node || 0,                      // visible knobs along the FABRIK chain
+      legs: legs.length,
+      kneeAngle: legs[0] ? +legs[0].limb.elbowAngle.toFixed(4) : null,
+      kneeKnob: legs[0] ? !!legs[0].limb.midJoint : false,
+      ankleKnob: legs[0] ? !!legs[0].limb.lowJoint : false,
+    };
+  }
+
+  // headless-proof accessor for the BODY SILHOUETTE (GOAL 5). Returns the baked fused-core
+  // geometry's bounding-box size + aspect ratios (yx = height/width, zx = depth/width) so
+  // the test can prove the 7 plans read as GENUINELY DISTINCT shapes (tall cephalopod vs
+  // squat blob vs long insectoid vs wide radial hub …), not uniform round blobs.
+  function bodySignature() {
+    const geo = coreMesh && coreMesh.geometry;
+    if (!geo) return null;
+    geo.computeBoundingBox();
+    const b = geo.boundingBox, s = _jv.set(b.max.x - b.min.x, b.max.y - b.min.y, b.max.z - b.min.z);
+    const x = s.x || 1e-3;
+    return {
+      plan, x: +s.x.toFixed(3), y: +s.y.toFixed(3), z: +s.z.toFixed(3),
+      yx: +(s.y / x).toFixed(3), zx: +(s.z / x).toFixed(3),
+      H: +H.toFixed(3), coreR: +coreR.toFixed(3),
+    };
+  }
+
   // headless-proof accessor for the animated FACE: the rig census + the live gaze /
   // blink / brow / mouth state + this alien's per-seed personality (individuality).
   function faceDebug() {
     const e0 = faceRig.eyes[0];
+    // EYE SPEC (Priority 1 proof): big WHITE sclera + coloured iris + DARK pupil + bright
+    // CATCHLIGHT, sized large vs the head, on the camera-facing (+Z local) side of the head.
+    const lumOf = (m) => { const c = m.color; return +(0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b).toFixed(4); };
+    let eyeSpec = null;
+    if (e0) {
+      // average eye centre Z (local to head) — >0 means the eyes sit on the FRONT/camera side.
+      let zsum = 0; for (const e of faceRig.eyes) zsum += e.pivot.position.z;
+      eyeSpec = {
+        count: faceRig.eyes.length,
+        R: +e0.R.toFixed(4), headSz: +headSz.toFixed(4), eyeToHead: +(e0.R / headSz).toFixed(4),
+        scleraLum: lumOf(e0.eyeball.material), pupilLum: e0.pupilDot ? lumOf(e0.pupilDot.material) : null,
+        catchLum: e0.catch ? lumOf(e0.catch.material) : null, hasCatchlight: !!e0.catch, hasIris: !!e0.iris,
+        pivotZ: +e0.pivot.position.z.toFixed(4), avgEyeZ: +(zsum / faceRig.eyes.length).toFixed(4),
+        camFacing: (zsum / faceRig.eyes.length) > 0,
+      };
+    }
     return {
       eyes: faceRig.eyes.length, brows: faceRig.brows.length, hasLids: faceRig.hasLids,
+      eyeSpec,
       role: roleName, sing,
       gaze: { x: +gzX.toFixed(4), y: +gzY.toFixed(4) },
       gazeTarget: { x: +lastGazeTX.toFixed(4), y: +lastGazeTY.toFixed(4) },
@@ -1564,6 +1853,43 @@ export function makeAlien(THREE, traits, member, seed) {
         gazeRestless: +P.gazeRestless.toFixed(4), browMobility: +P.browMobility.toFixed(4),
         restMouth: +P.restMouth.toFixed(4),
       },
+    };
+  }
+
+  // headless-proof accessor for FACE PLACEMENT (the "buried apple" fix): reports, per eye,
+  // the eye CENTRE in the alien's own (group-local) frame, the body's FRONT surface Z at
+  // that eye's (x,y), and whether the eye sits PROUD of the body (centre Z > surface Z) and
+  // CAMERA-FACING (+Z). `allProud`/`allCamFacing` are the headless proof that the face is on
+  // the FRONT-OUTER surface of the MAIN body, not sunk inside it, on every body plan.
+  function facePlacement() {
+    group.updateMatrixWorld(true);
+    const _w = new THREE.Vector3();
+    const eyes = faceRig.eyes.map((e) => {
+      e.pivot.getWorldPosition(_w); group.worldToLocal(_w);
+      const surf = bodyFrontZAt(_w.y, _w.x);
+      const has = isFinite(surf);
+      return {
+        x: +_w.x.toFixed(4), y: +_w.y.toFixed(4), z: +_w.z.toFixed(4), R: +e.R.toFixed(4),
+        surfZ: has ? +surf.toFixed(4) : null,
+        proud: has ? +(_w.z - surf).toFixed(4) : +_w.z.toFixed(4),
+        outside: has ? _w.z > surf : _w.z > 0,
+        camFacing: _w.z > 0,
+      };
+    });
+    // the mouth cavity front-lip in the same local frame (should also read proud/camera-side).
+    let cavZlocal = null;
+    if (faceRig.jaw && faceRig.jaw.cavity) {
+      faceRig.jaw.cavity.getWorldPosition(_w); group.worldToLocal(_w);
+      cavZlocal = { z: +_w.z.toFixed(4), surfZ: (() => { const s = bodyFrontZAt(_w.y, _w.x); return isFinite(s) ? +s.toFixed(4) : null; })(), outside: (() => { const s = bodyFrontZAt(_w.y, _w.x); return isFinite(s) ? _w.z > s : _w.z > 0; })() };
+    }
+    const proudVals = eyes.map((e) => e.proud);
+    return {
+      plan, coreR: +coreR.toFixed(4), headSz: +headSz.toFixed(4),
+      headY: +head.position.y.toFixed(4), headZ: +head.position.z.toFixed(4),
+      eyes, cavity: cavZlocal,
+      minProud: proudVals.length ? +Math.min(...proudVals).toFixed(4) : null,
+      allProud: eyes.length > 0 && eyes.every((e) => e.outside),
+      allCamFacing: eyes.length > 0 && eyes.every((e) => e.camFacing),
     };
   }
 
@@ -1644,33 +1970,56 @@ export function makeAlien(THREE, traits, member, seed) {
   // SHADOWS + modelling: every mesh casts and receives the key light.
   group.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
 
-  // FLOOR CLAMP: sweep a few PLAYING poses, capture the rig's true lowest live point
-  // (relative to its origin), then set liftY so the feet rest exactly on the ground —
-  // the per-frame groove only ever hops UPWARD from there, so nothing clips the floor.
-  function localMinY() {
+  // FLOOR PLANT: seat the STANDING FEET on the ground. The ground contact is the true
+  // standing FOOT LINE — the lowest point of the BODY + LEGS + tendrils/pseudopods — NOT
+  // the held instrument or the hanging player arms (those legitimately dip when the voice
+  // rests, and are FLOOR-CLAMPED per-frame instead). Measuring off the worst-case rest
+  // pose (the old way) floated the whole creature by the gap between the lowered instrument
+  // and the feet; measuring the feet directly plants them ON the surface.
+  const heldSet = new Set();     // arm segments + instrument subtree — excluded from the foot line
+  for (const a of arms) for (const p of [a.upper, a.fore, a.palm, a.cap, a.midJoint, a.lowJoint]) if (p) p.traverse((o) => heldSet.add(o));
+  if (instrument) {
+    instrument.traverse((o) => heldSet.add(o));
+    // the instrument's below-origin overhang (constant under translation) — used to clamp
+    // its rest-lowering so its BOTTOM, not its origin, stops at the foot line.
     group.updateMatrixWorld(true);
-    return new THREE.Box3().setFromObject(group).min.y - group.position.y;
+    const ib = new THREE.Box3().setFromObject(instrument);
+    if (!ib.isEmpty()) instBelow = Math.max(0, instrument.position.y - ib.min.y);
   }
-  // sweep the poses that reach LOWEST: for a player that is BOTH playing (limbs active)
-  // and resting (instrument lowered, arms hang); for a dancer BOTH loud (arms high) and
-  // quiet (arms hang low). Take the deepest point over all of them so nothing ever clips.
-  let footLocal = Infinity;
-  const FN = 6;
+  // the standing foot line over the BODY/LEGS only (arms + instrument excluded), measured
+  // relative to the group origin but KEEPING the live groove tilt/bob — the body rocks about
+  // the origin, swinging a corner below the flat line, so the plant must account for it. A
+  // little TIME is swept so breathing cores, swaying tendrils + the sway extremes are all
+  // caught at their lowest. The groove offset itself (group.position.y) is subtracted out.
+  const _fbox = new THREE.Box3();
+  function bodyFootLine() {
+    group.updateMatrixWorld(true);
+    let m = Infinity;
+    group.traverse((o) => {
+      if (!o.isMesh || !o.geometry || heldSet.has(o)) return;
+      _fbox.setFromObject(o);
+      if (!_fbox.isEmpty() && _fbox.min.y < m) m = _fbox.min.y;
+    });
+    return (m === Infinity ? group.position.y : m) - group.position.y;
+  }
+  let footLine = Infinity;
+  // sample DENSELY over CLOCK: the groove ROLL (and the dancer's bigger sway) tilts the body
+  // about the origin, swinging a bottom corner below the flat foot line — and that tilt is
+  // driven by continuous time, not bar phase — so we advance clock across several sway
+  // periods to catch the deepest tilt. barPhase steps through the bob=0 slots so the feet
+  // stay at their planted lowest. Loud (max-amplitude) sway is the worst case for the dip.
+  const FN = 48;
   for (let s = 0; s < FN; s++) {
-    const bp = s / FN;
-    if (isDancer) {
-      update(0, { barPhase: bp, playing: true, level: 1, loudness: 1, notes: [] });
-      footLocal = Math.min(footLocal, localMinY());
-      update(0, { barPhase: bp, playing: true, level: 0.08, loudness: 0.05, notes: [] });   // quiet: arms hang low
-      footLocal = Math.min(footLocal, localMinY());
-    } else {
-      update(0, { barPhase: bp, playing: true, level: 1, notes: [{ t: bp }] });
-      footLocal = Math.min(footLocal, localMinY());
-      update(0, { barPhase: bp, playing: false, level: 0, notes: [] });                     // rest: instrument lowered
-      footLocal = Math.min(footLocal, localMinY());
-    }
+    const bp = (s % 4) / 4;   // bob=0 phases hold the feet at their planted lowest
+    if (isDancer) update(0.11, { barPhase: bp, playing: true, level: 1, loudness: 1, notes: [] });
+    else update(0.11, { barPhase: bp, playing: true, level: 1, notes: [] });
+    footLine = Math.min(footLine, bodyFootLine());
   }
-  liftY = Math.max(0, -footLocal) + H * 0.07;   // + margin for live limb sway between sampled phases
+  groundLocal = footLine;                       // held parts (arms/instrument) clamp to this line
+  // seat the foot line at y ≈ 0: LOWER the rig when its feet sit above the origin (short legs)
+  // or RAISE it when they sit below — either way the lowest foot rests ON the ground, never
+  // floating (the old Math.max(0,…) could only raise, so above-origin feet stayed hovering).
+  liftY = -footLine + H * 0.02;                 // + a hair of margin so feet rest ON, not through
   update(0, isDancer ? 0 : { barPhase: 0, playing: true, level: 1, notes: [] });   // final visible pose
 
   // headless accessors: the world-space foot line (floor proof) + this alien's OWN
@@ -1686,7 +2035,7 @@ export function makeAlien(THREE, traits, member, seed) {
     instrument: instMainMat.color.getHexString(),   // Fix 2: bold complementary instrument colour
   };
 
-  return { group, update, debug, faceDebug, limbProbe, coreInfo, strikerProbe, discProbe, materials, playStyle, hitsPerBeat, voice, plan, tentacleProof, palette, liftY, footWorldY };
+  return { group, update, debug, faceDebug, facePlacement, limbProbe, jointProbe, bodySignature, coreInfo, strikerProbe, discProbe, materials, playStyle, hitsPerBeat, voice, plan, tentacleProof, palette, liftY, footWorldY };
 }
 
 export default { makeAlien };

@@ -243,6 +243,82 @@ function planetStats(mesh) {
   ok(sig(a) !== sig(c), "same seed, different type DIFFERS (volcanic vs ice)");
 }
 
+// ---- 11. SMALL-WORLD RELIEF READS at landing scale (the flat-planet fix) ---------
+// The integration builds the ground you land on with exactly these opts (smallWorld +
+// a forced tiny reliefFrac for the galaxy view). Before the fix that gave sub-0.5-unit
+// relief on an ~18-unit sphere = a flat smear. Assert the terrain now VARIES meaningfully.
+{
+  // mirror app/starcruise.js: smallWorld + forced reliefFrac:0.05, detail 4, no atmo.
+  const groundOpts = (t) => ({ detail: 4, smallWorld: true, bandSpan: 10, curveFactor: 1.8,
+    reliefFrac: 0.05, atmosphere: false, terrainType: t });
+  const reliefP2V = (mesh) => {
+    const f = mesh.field; let lo = Infinity, hi = -Infinity;
+    for (const d of DIRS) { const r = f.heightAtDir(d[0], d[1], d[2]); if (r < lo) lo = r; if (r > hi) hi = r; }
+    return hi - lo;
+  };
+  const hills = makePlanet(THREE, 9001, palette, groundOpts("hills"));
+  const mounts = makePlanet(THREE, 9001, palette, groundOpts("mountains"));
+  const R = hills.userData.radius;
+  const pHills = reliefP2V(hills), pMounts = reliefP2V(mounts);
+  // near-flat would be < ~0.4 units on an 18-unit sphere; require clearly-legible relief.
+  ok(pHills > 0.6, "small-world HILLS relief reads (peak-to-valley " + pHills.toFixed(2) + " units on R=" + R + ", was ~0.28 flat)");
+  ok(pMounts > 2.0, "small-world MOUNTAINS relief is dramatic (peak-to-valley " + pMounts.toFixed(2) + " units)");
+  // relief must scale to the BAND, not the tiny radius: forced reliefFrac 0.05 alone would
+  // give relief = R*0.05 = 0.9; the amplified relief must be several times that.
+  ok(hills.userData.knobs.relief > R * 0.05 * 3, "relief is amplified to band scale, not radius*reliefFrac (relief=" + hills.userData.knobs.relief.toFixed(2) + " >> " + (R * 0.05).toFixed(2) + ")");
+  // type differentiation survives the forced-flat reliefFrac: mountains >> hills.
+  ok(pMounts > pHills * 1.8, "terrain TYPE still drives relief (mountains " + pMounts.toFixed(2) + " >> hills " + pHills.toFixed(2) + ")");
+  // p2v as a fraction of the band you stand in — must be a legible slice of the world.
+  ok(pHills / 10 > 0.06, "relief is a legible fraction of band span (" + (pHills / 10 * 100).toFixed(0) + "% of bandSpan)");
+
+  // heightAtDir STILL matches the (now higher-relief) baked mesh EXACTLY (foot-plant safe)
+  {
+    const g = mounts.geometry, pos = g.attributes.position; let maxErr = 0;
+    for (let i = 0; i < pos.count; i += 29) {
+      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+      maxErr = Math.max(maxErr, Math.abs(Math.hypot(x, y, z) - mounts.heightAtDir(x, y, z)));
+    }
+    ok(maxErr < 1e-4, "high-relief small-world mesh still matches heightAtDir (max err " + maxErr.toExponential(2) + ")");
+  }
+  // surfacePoint (used to foot-plant the band/city) lands on the higher-relief surface
+  {
+    const g = mounts.geometry, pos = g.attributes.position; let maxSP = 0; const spV = [0, 0, 0];
+    for (let i = 0; i < pos.count; i += 41) {
+      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i), len = Math.hypot(x, y, z) || 1;
+      const sp = mounts.surfacePoint(x / len, y / len, z / len, spV);
+      maxSP = Math.max(maxSP, Math.hypot(sp[0] - x, sp[1] - y, sp[2] - z));
+    }
+    ok(maxSP < 1e-4, "surfacePoint foot-plants on the high-relief surface (max err " + maxSP.toExponential(2) + ")");
+  }
+  // determinism holds for the amplified small-world build
+  const a = makePlanet(THREE, 4242, palette, groundOpts("mountains"));
+  const b = makePlanet(THREE, 4242, palette, groundOpts("mountains"));
+  ok(sig(a) === sig(b), "amplified small-world build is BYTE-IDENTICAL same-seed");
+}
+
+// ---- 12. ELEVATION-BANDED vertex colours (legible bands, not a smear) ------------
+{
+  const m = makePlanet(THREE, 9001, palette, { detail: 4, smallWorld: true, bandSpan: 10,
+    reliefFrac: 0.05, atmosphere: false, terrainType: "mountains" });
+  const col = m.geometry.attributes.color.array;
+  // count DISTINCT quantized colours across the surface — banded terrain shows many.
+  const seen = new Set();
+  for (let i = 0; i < col.length; i += 3) {
+    const q = Math.round(col[i] * 24) + "," + Math.round(col[i + 1] * 24) + "," + Math.round(col[i + 2] * 24);
+    seen.add(q);
+  }
+  ok(seen.size >= 5, "surface shows multiple distinct elevation colour bands (" + seen.size + " distinct colours)");
+  // and the bands span a real luminance range (dark lowland rock -> bright snow), not flat
+  let lo = 1, hi = 0;
+  for (let i = 0; i < col.length; i += 3) {
+    const lum = 0.2126 * col[i] + 0.7152 * col[i + 1] + 0.0722 * col[i + 2];
+    if (lum < lo) lo = lum; if (lum > hi) hi = lum;
+  }
+  ok(hi - lo > 0.25, "colour bands span a real luminance range (" + lo.toFixed(2) + ".." + hi.toFixed(2) + ")");
+  // flat-shaded material flag is set (crisp facets)
+  ok(m.material.flatShading === true, "planet material uses flat shading (crisp facets)");
+}
+
 console.log(failures === 0
   ? "\nALL PLANET PROOFS PASSED\n"
   : "\n" + failures + " PLANET PROOF(S) FAILED\n");

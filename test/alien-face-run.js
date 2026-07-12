@@ -196,6 +196,48 @@ async function inPage() {
       && (Math.abs(open.upperRotX) > Math.abs(shut.upperRotX) + 0.02);
   }
 
+  // ---- H: BIG CUTE EYES — a bright WHITE sclera + coloured IRIS + DARK PUPIL + bright
+  // CATCHLIGHT, sized LARGE relative to the head, on the camera-facing (+Z) side. Sample the
+  // three built members (lead/bass/drum) so the read holds across face families.
+  out.eyeSpec = lead.faceDebug().eyeSpec;
+  const eyeSpecs = [lead, bass, drum].map((a) => a.faceDebug().eyeSpec);
+  out.eyeSpecs = eyeSpecs.map((s) => ({ eyeToHead: s.eyeToHead, scleraLum: s.scleraLum, pupilLum: s.pupilLum, catchLum: s.catchLum, avgEyeZ: s.avgEyeZ }));
+  out.eyesBig = eyeSpecs.every((s) => s && s.eyeToHead >= 0.18);
+  out.eyesWhiteScleraDarkPupil = eyeSpecs.every((s) => s && s.scleraLum > 0.6 && s.pupilLum != null && s.pupilLum < 0.12);
+  out.eyesHaveCatchlight = eyeSpecs.every((s) => s && s.hasCatchlight && s.catchLum != null && s.catchLum > 0.9 && s.hasIris);
+  out.eyesCamFacing = eyeSpecs.every((s) => s && s.camFacing && s.avgEyeZ > 0);
+
+  // ---- I: FACE ON THE BODY'S FRONT-OUTER SURFACE (the "buried apple" fix) ---------
+  // On the DOMINANT body plans — the big APPLE/superquadric hub (radial) and the round
+  // marching-cubes blob core — the face used to be a tiny head BURIED inside the mass, so
+  // the alien rendered as a smooth featureless apple. Force those plans (with a FAT body so
+  // the core dwarfs the little head, the exact regression) and prove the eyes now sit PROUD
+  // of the body surface (eye centre Z > body front-surface Z), CAMERA-FACING (+Z), still
+  // BIG, and still sclera+pupil+catchlight. Sweep every plan so the law holds catalog-wide.
+  const PLANS = ["radial", "blob", "cephalopod", "insectoid", "stalk", "crystalline", "gas"];
+  out.placement = {};
+  for (const plan of PLANS) {
+    const tr = { ...traits, body: { ...(traits.body || {}), plan, massH: 2.2, height: 1.7 } };
+    const al = makeAlien(THREE, tr, leadM, 314);
+    al.update(0.016, { barPhase: 0.0, playing: true, level: 1, notes: [{ t: 0.0 }] });
+    const fp = al.facePlacement(), es = al.faceDebug().eyeSpec;
+    out.placement[plan] = {
+      allProud: fp.allProud, allCamFacing: fp.allCamFacing, minProud: fp.minProud,
+      headZ: fp.headZ, eyeCount: fp.eyes.length,
+      eyeToHead: es && es.eyeToHead, scleraLum: es && es.scleraLum, pupilLum: es && es.pupilLum,
+      catchLum: es && es.catchLum, hasCatchlight: es && es.hasCatchlight, hasIris: es && es.hasIris,
+      cavityOutside: fp.cavity ? fp.cavity.outside : null,
+    };
+  }
+  // the APPLE/superquadric hub (radial) + the round marching-cubes blob are the plans the
+  // bug reported as featureless — call them out explicitly, plus require ALL plans to pass.
+  const P = out.placement;
+  out.applePlansFaceOutside = P.radial.allProud && P.radial.allCamFacing && P.blob.allProud && P.blob.allCamFacing;
+  out.everyPlanFaceOutside = PLANS.every((p) => P[p].allProud && P[p].allCamFacing);
+  out.everyPlanEyesBig = PLANS.every((p) => P[p].eyeToHead >= 0.18);
+  out.everyPlanEyeParts = PLANS.every((p) => P[p].scleraLum > 0.6 && P[p].pupilLum < 0.12 && P[p].hasCatchlight && P[p].catchLum > 0.9 && P[p].hasIris);
+  out.appleMinProud = Math.min(P.radial.minProud, P.blob.minProud);
+
   return out;
 }
 
@@ -242,6 +284,17 @@ async function main() {
   ok(R.jawIsHingedPair, `F1. MOUTH is a HINGED upper+lower JAW pair (${JSON.stringify(R.jaw)})`);
   ok(R.jawHasDarkCavity, `F2. the mouth opening is a RECESSED DARK CAVITY, not a flat black disc (recessed=${R.jaw.cavityRecessed}, cavityLum=${R.jaw.cavityLum})`);
   ok(R.jawOpensOnLipSync, `F3. the jaw OPENS on lip-sync — both jaws rotate + the mouth gapes at the onset vs between (open=${R.jaw.openAtOnset} vs shut=${R.jaw.openAtRest})`);
+
+  ok(R.eyesBig, `H1. BIG eyes — sized LARGE vs the head (eyeToHead across members ${JSON.stringify(R.eyeSpecs.map((s) => s.eyeToHead))} all >= 0.18)`);
+  ok(R.eyesWhiteScleraDarkPupil, `H2. WHITE sclera + DARK pupil (sclera lum ${JSON.stringify(R.eyeSpecs.map((s) => s.scleraLum))} > 0.6, pupil lum ${JSON.stringify(R.eyeSpecs.map((s) => s.pupilLum))} < 0.12)`);
+  ok(R.eyesHaveCatchlight, `H3. bright CATCHLIGHT + coloured IRIS present on every eye (catch lum ${JSON.stringify(R.eyeSpecs.map((s) => s.catchLum))} > 0.9)`);
+  ok(R.eyesCamFacing, `H4. eyes are CAMERA-FACING (front/+Z side of the head; avgEyeZ ${JSON.stringify(R.eyeSpecs.map((s) => s.avgEyeZ))} > 0)`);
+
+  ok(R.applePlansFaceOutside, `I1. APPLE/superquadric hub (radial) + round marching-cubes BLOB carry the face on the FRONT-OUTER surface — eyes PROUD + camera-facing, not buried (radial ${JSON.stringify({ proud: R.placement.radial.allProud, cam: R.placement.radial.allCamFacing, minProud: R.placement.radial.minProud })}, blob ${JSON.stringify({ proud: R.placement.blob.allProud, cam: R.placement.blob.allCamFacing, minProud: R.placement.blob.minProud })})`);
+  ok(R.everyPlanFaceOutside, `I2. EVERY body plan seats the face OUTSIDE the body surface + camera-facing (${JSON.stringify(Object.fromEntries(Object.entries(R.placement).map(([k, v]) => [k, { proud: v.allProud, cam: v.allCamFacing, min: v.minProud }])))})`);
+  ok(R.appleMinProud > 0.02, `I3. eye centres sit clearly PROUD of the body (apple/blob minProud=${R.appleMinProud} > 0.02, i.e. eye centre Z > body front-surface Z)`);
+  ok(R.everyPlanEyesBig, `I4. eyes stay BIG on every plan (eyeToHead ${JSON.stringify(Object.fromEntries(Object.entries(R.placement).map(([k, v]) => [k, v.eyeToHead])))} all >= 0.18)`);
+  ok(R.everyPlanEyeParts, "I5. sclera+iris+dark-pupil+catchlight present on the surface-seated face for every plan");
 
   ok(perr.length === 0, "G1. no console/page errors" + (perr.length ? " :: " + perr.join(" | ") : ""));
 

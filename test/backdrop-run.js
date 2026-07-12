@@ -177,6 +177,52 @@ async function main() {
     const cityBlink = blinkDelta(makeBackdrop(THREE, traits("city"), 5));
     const farmBlink = blinkDelta(makeBackdrop(THREE, traits("farm"), 5));
 
+    // ---- FOLIAGE / LANDSCAPE SCALE (the skyscraper-spike bug) ------------------
+    // In the FLAT (no-surface) frame, +Y is up, so an instance's world height reads
+    // straight off its matrix: TOP = translation.y + scale.y (a ground-planted plant's
+    // trunk-base + canopy stacks), and vertical EXTENT = scale.y (how tall the form is,
+    // ignoring float altitude — the right measure for "towering spike"). Prove foliage
+    // is SMALL (well under band scale + a small fraction of the tallest building), the
+    // near-ground landscape layer doesn't spike, and the scatter is sparse not a forest.
+    const _M = new THREE.Matrix4(), _tp = new THREE.Vector3(), _tq = new THREE.Quaternion(), _ts = new THREE.Vector3();
+    function heightStats(b, pred) {
+      let maxTop = 0, maxExtent = 0, n = 0;
+      b.group.traverse((o) => {
+        if (!o.isInstancedMesh || !pred(o)) return;
+        for (let i = 0; i < o.count; i++) {
+          o.getMatrixAt(i, _M); _M.decompose(_tp, _tq, _ts);
+          const top = _tp.y + _ts.y;
+          if (top > maxTop) maxTop = top;
+          if (_ts.y > maxExtent) maxExtent = _ts.y;
+          n++;
+        }
+      });
+      return { maxTop: +maxTop.toFixed(2), maxExtent: +maxExtent.toFixed(2), n };
+    }
+    const instCount = (b, name) => { let c = 0; b.group.traverse((o) => { if (o.isInstancedMesh && o.name === name) c = o.count; }); return c; };
+    const isFoliage = (o) => o.name === "foliage-trunk" || o.name === "foliage-canopy";
+    const isLand = (o) => /^land-/.test(o.name);
+    const isBuilding = (o) => o.name === "buildings";
+    // measure landscape scale across a few genres (each picks a different landscape kind).
+    const landGenre = (plan) => makeBackdrop(THREE, Object.assign(traits("city"), { body: { plan }, renderStyle: { material: "flat" } }), 5);
+    const landPlans = ["crystalline", "stalk", "amorphous", "cephalopod", "insectoid", "radial"];
+    let landMaxExtent = 0, landMaxTop = 0;
+    for (const p of landPlans) {
+      const hs = heightStats(landGenre(p), isLand);
+      if (hs.maxExtent > landMaxExtent) landMaxExtent = hs.maxExtent;
+      if (hs.maxTop > landMaxTop) landMaxTop = hs.maxTop;
+    }
+    const scale = {
+      cityFoliage: heightStats(city, isFoliage),
+      farmFoliage: heightStats(farm, isFoliage),
+      cityCrops: heightStats(farm, (o) => o.name === "crops"),
+      cityBuild: heightStats(city, isBuilding),
+      cityTrees: instCount(city, "foliage-canopy"),
+      farmTrees: instCount(farm, "foliage-canopy"),
+      landMaxExtent: +landMaxExtent.toFixed(2),
+      landMaxTop: +landMaxTop.toFixed(2),
+    };
+
     // determinism: rebuild with the SAME seed and a DIFFERENT seed.
     const citySame = sumSig(instats(makeBackdrop(THREE, traits("city"), 5)));
     const cityDiff = sumSig(instats(makeBackdrop(THREE, traits("city"), 6)));
@@ -332,6 +378,7 @@ async function main() {
 
     renderer.dispose();
     return {
+      scale,
       variety, curved: { buildings: curvedBuildings, all: curvedAll, det: curvedDet, vsFlat: curvedVsFlat, flatStillWorks },
       cityStats, farmStats, cityRender, farmRender, cityBlink, farmBlink, worlds, planetWorld, grammar, pbr: pbrProbe,
       style: { build: buildStyle, planet: planetStyle, layout: styleLayout, spread: styleRenderSpread },
@@ -478,6 +525,25 @@ async function main() {
   ok(CV.vsFlat, "X5. curved layout genuinely differs from the flat layout (placement mapped onto the sphere)");
   ok(CV.det, "X6. curved build is deterministic (same traits+seed+surface -> identical layout)");
   ok(CV.flatStillWorks, "X7. the FLAT (no-surface) path is unchanged — v15 callers still work");
+
+  console.log("=== FOLIAGE / LANDSCAPE SCALE (no skyscraper spikes) ===");
+  const SC = R.scale;
+  console.log("  city foliage:", JSON.stringify(SC.cityFoliage), " trees:", SC.cityTrees);
+  console.log("  farm foliage:", JSON.stringify(SC.farmFoliage), " trees:", SC.farmTrees);
+  console.log("  farm crops:  ", JSON.stringify(SC.cityCrops));
+  console.log("  tallest building top:", SC.cityBuild.maxTop, " (extent", SC.cityBuild.maxExtent + ")");
+  console.log("  near-ground landscape: maxExtent", SC.landMaxExtent, " maxTop", SC.landMaxTop);
+  const BAND = 2.5;   // band-scale ceiling: nothing near the band may top this
+  const LAND_CEIL = 3.6;   // near-ground landscape ceiling (matches backdrop LAND_MAX_H + fp slack)
+  ok(SC.cityFoliage.maxTop < BAND && SC.farmFoliage.maxTop < BAND,
+    `F1. FOLIAGE is small — no plant tops band scale (city=${SC.cityFoliage.maxTop}, farm=${SC.farmFoliage.maxTop} < ${BAND})`);
+  ok(SC.cityFoliage.maxTop * 3 < SC.cityBuild.maxTop,
+    `F2. foliage is a small FRACTION of a building's height (foliage ${SC.cityFoliage.maxTop} vs tallest building ${SC.cityBuild.maxTop})`);
+  ok(SC.landMaxExtent < LAND_CEIL && SC.landMaxExtent < SC.cityBuild.maxTop,
+    `F3. near-ground LANDSCAPE features don't spike (max extent ${SC.landMaxExtent} < ${LAND_CEIL} and < building ${SC.cityBuild.maxTop})`);
+  ok(SC.cityTrees > 0 && SC.cityTrees <= 18 && SC.farmTrees > 0 && SC.farmTrees <= 18,
+    `F4. foliage is a LIGHT scatter, not a forest (city=${SC.cityTrees}, farm=${SC.farmTrees} trees, each in [1,18])`);
+  ok(SC.cityCrops.maxTop < 3.2, `F5. farm crops stay near ground (max top ${SC.cityCrops.maxTop} < 3.2)`);
 
   console.log("=== DETERMINISM ===");
   ok(R.det.cityIdentical, "D1. city seed 5 == seed 5 (identical layout)");
