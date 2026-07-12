@@ -125,6 +125,36 @@ async function inPage() {
   for (let s = 0; s < 48; s++) { d2.update(0.016, { barPhase: s / 48, playing: true, level: 1, notes: [] }); t2.push(d2.debug().handTip.y); }
   out.deterministic = t1.every((val, k) => Math.abs(val - t2[k]) < 1e-9);
 
+  // H. DESYNC/SYNC by LOUDNESS — a floor of dancers (different seeds) dance OUT OF STEP
+  // when the mix is quiet and LOCK together when it is loud. Step them in lockstep and
+  // measure the cross-dancer spread of the (per-dancer STANDARDISED) vertical groove:
+  // that removes each dancer's own lift/size, leaving pure PHASE. Quiet => big spread
+  // (each its own phase/tempo); loud => ~0 spread (converged onto a shared beat).
+  function syncSpread(loud) {
+    const seeds = [11, 202, 3003, 40004, 555];
+    const crew = seeds.map((s) => makeAlien(THREE, traits, { role: "dancer" }, s));
+    const T = 120, series = crew.map(() => []);
+    for (let s = 0; s < T; s++) {
+      const bp = (s % 30) / 30;
+      crew.forEach((d, k) => { d.update(0.016, { barPhase: bp, playing: true, level: loud, loudness: loud, notes: [] }); series[k].push(d.group.position.y); });
+    }
+    const Z = series.map((arr) => {
+      const m = arr.reduce((a, b) => a + b, 0) / arr.length;
+      const sd = Math.sqrt(arr.reduce((a, b) => a + (b - m) * (b - m), 0) / arr.length) || 1e-9;
+      return arr.map((v) => (v - m) / sd);
+    });
+    let acc = 0, cnt = 0;
+    for (let t = 20; t < T; t++) {
+      const col = Z.map((z) => z[t]);
+      const m = col.reduce((a, b) => a + b, 0) / col.length;
+      acc += Math.sqrt(col.reduce((a, b) => a + (b - m) * (b - m), 0) / col.length); cnt++;
+    }
+    return +(acc / cnt).toFixed(4);
+  }
+  out.spreadQuiet = syncSpread(0.05);
+  out.spreadLoud = syncSpread(0.98);
+  out.dancersDesyncQuiet_syncLoud = out.spreadQuiet > out.spreadLoud + 0.15 && out.spreadLoud < 0.3;
+
   renderer.setRenderTarget(null); target.dispose(); renderer.dispose();
   return out;
 }
@@ -163,6 +193,7 @@ async function main() {
   ok(R.render.nonBg > 200, `C2. real geometry drawn (${R.render.nonBg} non-bg px)`);
   ok(R.dancersDiffer, `G1. PER-ALIEN randomization: 4 dancer seeds -> 4 DISTINCT bodies (${JSON.stringify(R.dancerSigs)})`);
   ok(R.deterministic, "D1. deterministic: same seed -> identical dancer motion");
+  ok(R.dancersDesyncQuiet_syncLoud, `H1. dancers DESYNC when quiet + SYNC when loud (standardised phase spread: quiet=${R.spreadQuiet} >> loud=${R.spreadLoud})`);
   ok(perr.length === 0, "F1. no console/page errors" + (perr.length ? " :: " + perr.join(" | ") : ""));
 
   await browser.close(); srv.close();

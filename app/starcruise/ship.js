@@ -112,113 +112,26 @@ function makeStyleKit(THREE, style, gk) {
   return { surface, apply, tick: (c) => { glitchTime.value = c; }, wire, smooth };
 }
 
-// ---- COCKPIT INTERIOR -----------------------------------------------------------
+// ---- COCKPIT (HUD-ONLY) ---------------------------------------------------------
+// The obstructing 3D cockpit interior (viewport frame, console housing, side panels,
+// the tilted genre-map screen) has been REMOVED per the SMOOTH+LEGIBLE brief: it sat
+// between the pilot and the world and blocked the view. The current star/cluster LABEL
+// now lives in a 2D DOM cockpit HUD the controller mounts over the canvas.
+//
+// This builder is kept as a tiny lifecycle HANDLE so the transit state machine
+// (spawnSpaceRig / despawnSpaceRig / hasCockpit) is unchanged: it returns an EMPTY
+// group (nothing to draw, nothing to obstruct), a no-op update, and a no-op setGenres
+// (the HUD is driven by the controller, not a 3D screen). No meshes, no textures.
 export function makeCockpit(THREE, opts = {}) {
   const group = new THREE.Object3D();
   group.name = "cockpit";
-
-  // The console ECHOES the genre's surface language (opts.renderStyle.material) so the
-  // cockpit shares the planet's look — a wire cockpit over a wire planet, an iridescent
-  // one that shimmers, a glitch one that jitters. Defaults to 'flat' (the original
-  // flat-lit shell) so today's look is unchanged. Screen + dots stay UNLIT + readable.
-  const gk = makeGeomKit(THREE);
-  const kit = makeStyleKit(THREE, (opts.renderStyle && opts.renderStyle.material) || "flat", gk);
-  const shell = kit.surface({ color: new THREE.Color(0x140d20), flatShading: true });
-  const trim = kit.surface({ color: new THREE.Color(0x33244a), emissive: new THREE.Color(0x140a24), flatShading: true });
-  const glow = new THREE.MeshBasicMaterial({ color: 0x66e0ff });   // unlit indicator dots
-
-  // -- viewport frame: bars around a window at z = FZ. The camera looks out -Z, so
-  // these sit just in front of the pilot and frame the planet/stars beyond.
-  const FZ = -1.55, W = 3.0, H = 1.9, T = 0.22;
-  const bar = (w, h, d, x, y, z, mat) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat || trim);
-    m.position.set(x, y, z); group.add(m); return m;
-  };
-  bar(W + T * 2, T, 0.3, 0, H / 2, FZ);          // top rail
-  bar(T, H, 0.3, -W / 2, H * 0.12, FZ);          // left pillar
-  bar(T, H, 0.3, W / 2, H * 0.12, FZ);           // right pillar
-  // canopy struts (two diagonals across the top corners for a cockpit read).
-  const strutGeo = new THREE.BoxGeometry(0.12, 0.12, 1.6);
-  const sl = new THREE.Mesh(strutGeo, trim); sl.position.set(-W / 2 + 0.3, H / 2 - 0.25, FZ + 0.7); sl.rotation.z = 0.5; group.add(sl);
-  const sr = new THREE.Mesh(strutGeo, trim); sr.position.set(W / 2 - 0.3, H / 2 - 0.25, FZ + 0.7); sr.rotation.z = -0.5; group.add(sr);
-
-  // -- console housing below the sightline (the dashboard the screen sits on).
-  const housing = new THREE.Mesh(new THREE.BoxGeometry(3.4, 1.0, 1.4), shell);
-  housing.position.set(0, -1.05, -0.55); housing.rotation.x = -0.22; group.add(housing);
-  // side consoles wrapping the pilot.
-  const sideGeo = new THREE.BoxGeometry(0.7, 0.9, 1.8);
-  const cl = new THREE.Mesh(sideGeo, shell); cl.position.set(-1.75, -0.6, -0.2); cl.rotation.y = 0.35; group.add(cl);
-  const cr = new THREE.Mesh(sideGeo, shell); cr.position.set(1.75, -0.6, -0.2); cr.rotation.y = -0.35; group.add(cr);
-  // blinking console indicator dots.
-  const dots = [];
-  for (let i = 0; i < 6; i++) {
-    const d = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.07), glow.clone());
-    d.position.set(-0.9 + i * 0.36, -0.62, 0.05); d.rotation.x = -0.22; group.add(d); dots.push(d);
-  }
-
-  // -- the big GENRE DISPLAY screen on the console, tilted up toward the pilot.
-  const cv = (typeof document !== "undefined") ? document.createElement("canvas") : null;
-  let tex = null, screenMat;
-  if (cv) {
-    cv.width = 512; cv.height = 288;
-    tex = new THREE.CanvasTexture(cv);
-    screenMat = new THREE.MeshBasicMaterial({ map: tex });   // unlit -> always readable
-  } else {
-    screenMat = new THREE.MeshBasicMaterial({ color: 0x0a1430 });
-  }
-  const screen = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.46), screenMat);
-  screen.position.set(0, -0.62, -0.02); screen.rotation.x = -0.72; group.add(screen);
-
-  function drawGenres(names, active) {
-    if (!cv) return;
-    const ctx = cv.getContext("2d");
-    const W2 = cv.width, H2 = cv.height;
-    // panel background + border glow.
-    ctx.fillStyle = "#070312"; ctx.fillRect(0, 0, W2, H2);
-    const grd = ctx.createLinearGradient(0, 0, 0, H2);
-    grd.addColorStop(0, "#0d0a26"); grd.addColorStop(1, "#060314");
-    ctx.fillStyle = grd; ctx.fillRect(6, 6, W2 - 12, H2 - 12);
-    ctx.strokeStyle = "#4de0ff"; ctx.lineWidth = 3; ctx.strokeRect(6, 6, W2 - 12, H2 - 12);
-    // title.
-    ctx.fillStyle = "#8ff0ff"; ctx.font = "bold 26px monospace";
-    ctx.fillText("◈ GENRE MAP", 22, 40);
-    ctx.fillStyle = "#5a7"; ctx.font = "13px monospace";
-    ctx.fillText("NAV → " + String(active || "?").toUpperCase(), 22, 62);
-    // genre list, two columns, active highlighted.
-    const list = (names && names.length ? names : ["vaporwave"]).slice(0, 16);
-    ctx.font = "16px monospace";
-    const colX = [26, 270], rowY0 = 92, rowH = 24, perCol = 8;
-    list.forEach((nm, i) => {
-      const col = i < perCol ? 0 : 1, row = i % perCol;
-      const x = colX[col], y = rowY0 + row * rowH;
-      const on = active && String(nm).toLowerCase() === String(active).toLowerCase();
-      if (on) {
-        ctx.fillStyle = "#4de0ff"; ctx.fillRect(x - 6, y - 15, 232, 21);
-        ctx.fillStyle = "#04121a";
-      } else {
-        ctx.fillStyle = "#7de";
-      }
-      const label = String(nm).slice(0, 20);
-      ctx.fillText((on ? "▸ " : "  ") + label, x, y);
-    });
-    if (tex) tex.needsUpdate = true;
-  }
-  drawGenres(opts.genres, opts.active);
-
-  let t = 0;
-  function update(dt) {
-    t += dt || 0;
-    kit.tick(t);   // drives the 'glitch' style's shell jitter (uniform only)
-    // console dots blink in a deterministic marquee.
-    for (let i = 0; i < dots.length; i++) {
-      const on = (Math.floor(t * 3) + i) % 3 === 0;
-      dots[i].material.color.setHex(on ? 0x66e0ff : 0x123040);
-    }
-  }
-
+  // intentionally NO child meshes — HUD-only. The group rides the camera in transit
+  // but renders nothing, so the fly-away view is a clean, unobstructed star field.
   return {
-    group, update, screen,
-    setGenres: (names, active) => drawGenres(names, active),
+    group,
+    update() {},
+    screen: null,
+    setGenres() {},
   };
 }
 

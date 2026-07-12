@@ -129,18 +129,50 @@ function bodySig(t) {
     const rs = T[g].renderStyle;
     const shapeOk = rs && rs.post && typeof rs.material === "string" &&
       POST_KEYS.every((k) => rs.post[k] != null) && Array.isArray(rs.post.grade) && rs.post.grade.length === 3 &&
-      ["none", "ordered", "onebit"].indexOf(rs.post.dither) >= 0 &&
-      rs.post.posterize >= 2 && rs.post.posterize <= 16 &&
-      ["flat", "cel", "iridescent", "wireframe", "glitch", "matte", "pbr"].indexOf(rs.material) >= 0;
+      ["none", "ordered"].indexOf(rs.post.dither) >= 0 &&
+      rs.post.posterize >= 6 && rs.post.posterize <= 16 &&
+      ["flat", "cel", "iridescent", "matte", "pbr"].indexOf(rs.material) >= 0;
     chk(`${g.padEnd(11)} renderStyle well-formed (mat=${rs && rs.material})`, shapeOk);
     rsPost[g] = JSON.stringify(rs && rs.post); rsMat[g] = rs && rs.material;
   }
   chk(`${GENRES.length} genres -> ${new Set(Object.values(rsPost)).size} distinct post bags`, new Set(Object.values(rsPost)).size >= GENRES.length - 1);
   chk(`materials varied (${new Set(Object.values(rsMat)).size} distinct)`, new Set(Object.values(rsMat)).size >= 3);
-  chk("techno dithers ONEBIT", T.techno.renderStyle.post.dither === "onebit");
+  chk("techno dithers ORDERED (gentle grit, not a 1-bit crunch)", T.techno.renderStyle.post.dither === "ordered");
   chk("ambient uses NO dither (clean wash)", T.ambient.renderStyle.post.dither === "none");
-  chk("ambient blooms strongly (>0.4)", T.ambient.renderStyle.post.bloom > 0.4);
+  chk("ambient blooms (>0.4, but capped <=0.5)", T.ambient.renderStyle.post.bloom > 0.4 && T.ambient.renderStyle.post.bloom <= 0.5);
   chk("renderStyle determinism holds", GENRES.every((g) => JSON.stringify(traitsFromGenre(K, V, g, SEED).renderStyle.post) === rsPost[g]));
+
+  // ---- CAP LAW: READABLE materials + GENTLE post-fx (SHADERS legibility) ----------
+  // The whole catalog (all 250 genres, not just the 8) must stay legible: the material
+  // vocabulary is the readable set ONLY (NO wireframe / pure-mesh / harsh glitch), no
+  // genre uses the hard 1-bit crunch, and every post-fx param sits within its gentle cap.
+  console.log("\n=== CAP LAW (readable materials + gentle post-fx) ===");
+  const READABLE = new Set(["flat", "cel", "matte", "pbr", "iridescent"]);
+  const BANNED_MAT = new Set(["wireframe", "mesh", "glitch"]);
+  const ALLG = Object.keys(K.GENRES || {});
+  let vocabBad = 0, onebitBad = 0, capBad = 0;
+  const matSeen = new Set();
+  for (const g of ALLG) {
+    const t = traitsFromGenre(K, V, g, SEED);
+    const p = t.renderStyle.post, m = t.renderStyle.material;
+    matSeen.add(m);
+    if (!READABLE.has(m) || BANNED_MAT.has(m)) { vocabBad++; if (vocabBad <= 5) console.log("   !! non-readable material:", g, m); }
+    if (p.dither === "onebit") onebitBad++;
+    const okCaps = p.posterize >= 6 && p.posterize <= 16 && p.scanlines <= 0.25 && p.aberration <= 0.22 &&
+      p.halftone <= 0.28 && p.bloom <= 0.5 && p.vignette <= 0.35 && p.curvature <= 0.15;
+    if (!okCaps) { capBad++; if (capBad <= 5) console.log("   !! over-cap post:", g, JSON.stringify(p)); }
+  }
+  chk(`material vocab is the READABLE set only — NO wireframe/pure-mesh/glitch across ${ALLG.length} genres (seen: ${[...matSeen].sort().join(", ")})`, vocabBad === 0);
+  chk(`NO genre uses the hard 1-bit crunch (onebit dropped) across ${ALLG.length} genres`, onebitBad === 0);
+  chk(`post-fx within GENTLE caps (posterize>=6, scan<=.25, aberr<=.22, halftone<=.28, bloom<=.5, vignette<=.35, curve<=.15) for ALL ${ALLG.length} genres`, capBad === 0);
+
+  // ---- DANCERS: OPTIONAL / GATED — 0 for some genres, >0 for others ---------------
+  console.log("\n=== DANCERS (optional, energy/kit-gated) ===");
+  let dZero = 0, dSome = 0;
+  for (const g of ALLG) { const d = traitsFromGenre(K, V, g, SEED).dancers; if (d === 0) dZero++; else if (d > 0) dSome++; }
+  chk(`dancers OPTIONAL — 0 for some genres (${dZero}) AND >0 for others (${dSome})`, dZero > 0 && dSome > 0);
+  chk("ambient (hushed, no kit) -> 0 dancers (band-only planet)", T.ambient.dancers === 0);
+  chk("gabber (driving) -> a dancing crowd (>0)", T.gabber.dancers > 0);
 
   // ---- PBR renderStyle: a VECTOR-SELECTED 'pbr' (real chrome/glass) material --------
   // Some clean chrome / glass electronic genres now select the 'pbr' style (a genuine

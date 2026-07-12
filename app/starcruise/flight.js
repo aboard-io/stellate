@@ -36,6 +36,7 @@
 // Same (dt, travel, beat) stream in -> same STATE stream out.
 
 import { GENRE_COORDS } from "./genre-coords.js";
+import { GENRE_CLUSTERS } from "./genre-clusters.js";
 
 // ---- the GENRE STAR-MAP frame ---------------------------------------------------
 // worldOfCoord projects a genre's 3D feature coord (extent +/-100) into world space:
@@ -54,6 +55,16 @@ export function planetWorlds() {
   return Object.keys(GENRE_COORDS).map((g) => {
     const w = worldOfCoord(GENRE_COORDS[g]);
     return { g, x: w.x, y: w.y, z: w.z };
+  });
+}
+// clusterWorlds(): every cluster's SUN world-position + colour + label (the controller
+// builds the instanced SUN field from this — one glowing colored star per cluster AT
+// its star coord). The two-level galaxy: suns == clusters, planets == genres near them.
+export function clusterWorlds() {
+  return (GENRE_CLUSTERS || []).map((c) => {
+    const w = worldOfCoord(c.star || [0, 0, 0]);
+    return { id: c.id, label: c.label, color: c.color || [1, 1, 1],
+      x: w.x, y: w.y, z: w.z, members: (c.members || []).length };
   });
 }
 const FALLBACK_GENRE = Object.keys(GENRE_COORDS)[0] || "vaporwave";
@@ -221,19 +232,21 @@ export function makeFlight({ getTravel, getBeat } = {}) {
       dx /= L; dy /= L; dz /= L;
       const back = lerp(78, 16, t);          // far (whole field) -> close (planet fills)
       const rise = lerp(26, 4, t);           // extra altitude in deep space
-      const drift = Math.sin(beatPhase * Math.PI * 2) * 0.15;   // gentle life
+      // SMOOTH: no beat-driven drift/bob — the cruise is a clean eased zoom (the
+      // controller additionally damps the real camera toward this pose). Bobbing was
+      // the jitter the user called out; the pose is now a pure function of `t`.
       cameraPose = {
-        position: { x: planetWorld.x - dx * back, y: planetWorld.y - dy * back + rise + drift, z: planetWorld.z - dz * back },
+        position: { x: planetWorld.x - dx * back, y: planetWorld.y - dy * back + rise, z: planetWorld.z - dz * back },
         lookAt: { x: lerp(hereWorld.x, planetWorld.x, t), y: lerp(hereWorld.y, planetWorld.y, t), z: lerp(hereWorld.z, planetWorld.z, t) },
         fov: lerp(70, 54, t),
       };
     } else {
       const camY = lerp(3.2, 1.5, fullZoom);
       const camZ = lerp(9.0, 4.4, fullZoom);
-      const bobAmp = phase === "DANCE" ? 0.06 : 0.03;
-      const bob = Math.sin(beatPhase * Math.PI * 2) * bobAmp;
+      // SMOOTH: no beat bob on the landed establishing pose either (the music-video
+      // auto-cam owns the landed camera and now moves on eased drifts, not beat bobs).
       cameraPose = {
-        position: { x: 0, y: camY + bob, z: camZ },
+        position: { x: 0, y: camY, z: camZ },
         lookAt: { x: 0, y: lerp(1.7, 1.1, fullZoom), z: 0 },
         fov: lerp(60, 50, fullZoom),
       };
@@ -249,4 +262,4 @@ export function makeFlight({ getTravel, getBeat } = {}) {
   return { update, events };
 }
 
-export default { makeFlight, FIELD, worldOfCoord, planetWorlds };
+export default { makeFlight, FIELD, worldOfCoord, planetWorlds, clusterWorlds };

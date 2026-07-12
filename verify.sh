@@ -70,10 +70,16 @@ run "matproof" node test/prove-matrix.test.js &
 # app boot drops into computeGenreLayout's relaxation and crashes the renderer
 # (the 2026-07-11 blank-app outage). Plain node, no browser — CI-safe.
 run "poscover" node test/pos-coverage.js &
+# coordscover: the STAR-CRUISE COORD/CLUSTER COMPLETENESS gate
+# (test/coords-coverage.js) — every runtime genre (GenreKernel.GENRES) MUST have
+# a planet in app/starcruise/genre-coords.js GENRE_COORDS AND a star in
+# genre-clusters.js CLUSTER_OF, else the 3D flight mode can't see that genre (the
+# same class as the folk POS outage). Plain node, no browser — CI-safe.
+run "coordscover" node test/coords-coverage.js &
 
 FAILED=0
 declare -A DONE
-for _ in 1 2 3 4 5 6; do
+for _ in 1 2 3 4 5 6 7; do
   wait -n
   for f in "$TMP"/*.res; do
     [ -e "$f" ] || continue
