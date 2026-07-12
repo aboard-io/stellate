@@ -170,6 +170,34 @@ export function makeAlien(THREE, traits, member, seed) {
   const glow = clamp(traits.glow || 0, 0, 1);
   const chrome = traits.skin === "chrome";
 
+  // ---- PER-ALIEN FACE PERSONALITY -------------------------------------------------
+  // Every face is PUPPETEERED with its OWN gaze rhythm, blink rate, brow mobility,
+  // expressiveness + resting mouth, so two band members (or dancers) of one genre read
+  // as distinct INDIVIDUALS. These flow from a DEDICATED PRNG stream seeded off THIS
+  // alien's OWN seed — INDEPENDENT of `rand` above, so no morph/colour/dance draw is
+  // perturbed (the per-alien rand stream stays byte-identical). A genre-level bias from
+  // traits.personality (feature-derived, no rng in traits -> drift-free) tilts the whole
+  // species: fast genres blink/dart more, aggressive brows are mobile, etc.
+  const prand = rng32(seed ^ 0x7face01);
+  const tp = traits.personality || {};
+  const bnum = (v, d) => (typeof v === "number" ? v : d);
+  const P = {
+    // overall face-motion gain (subtle vs vivid faces)
+    expressiveness: clamp(0.72 + (bnum(tp.expressive, 0.5) - 0.5) * 0.8 + (prand() - 0.5) * 0.5, 0.35, 1.5),
+    // seconds between blinks + a per-alien phase so a crowd never blinks in unison
+    blinkInterval: clamp(3.4 - bnum(tp.blink, 0.4) * 2.1 + (prand() - 0.5) * 1.5, 1.3, 5.0),
+    blinkPhase: prand() * 12,
+    blinkDur: 0.12 + prand() * 0.07,
+    // seconds a gaze target holds before wandering + its own phase
+    gazePeriod: clamp(1.7 - bnum(tp.restless, 0.4) * 1.1 + (prand() - 0.5) * 1.0, 0.45, 2.6),
+    gazePhase: prand() * 12,
+    gazeRestless: clamp(0.45 + (bnum(tp.restless, 0.4) - 0.4) * 0.8 + (prand() - 0.5) * 0.4, 0.15, 1.0),
+    gazeForward: clamp(0.45 + (prand() - 0.5) * 0.5, 0.1, 0.85),   // bias toward camera (+Z)
+    gazeSaccade: 7 + prand() * 9,                                  // pupil lerp speed toward target
+    browMobility: clamp(0.75 + (bnum(tp.browMob, 0.5) - 0.5) * 0.9 + (prand() - 0.5) * 0.5, 0.25, 1.6),
+    restMouth: clamp(bnum(tp.restMouth, 0.05) + prand() * 0.06, 0, 0.18),
+  };
+
   // ---- BODY PLAN resolution (NON-HUMAN) -----------------------------------------
   // The body plan is the top-level silhouette DECISION. Read traits.body.plan when
   // the traits agent supplies the new shape; otherwise DERIVE a plan from the older
@@ -684,17 +712,57 @@ export function makeAlien(THREE, traits, member, seed) {
   const jaw = new THREE.Object3D();
   const jawBaseY = -headSz * 0.2;
   jaw.position.set(0, jawBaseY, faceZ - headSz * 0.02);
+
+  // ---- the animated FACE RIG ------------------------------------------------------
+  // A small per-face rig the update PUPPETEERS: EYES (each in a socket pivot with a
+  // pupil that DARTS + eyelids that BLINK), BROWS that raise, and the hinged JAW. Parts
+  // are children of `head` (or eye pivots on the head) so the face is CONTIGUOUS and
+  // never floats; the update only sets TRANSFORMS (no geometry rebuilt) — mobile-cheap.
+  const faceRig = { eyes: [], brows: [], hasLids: false };
+  // an EYE unit: a socket pivot on the head carrying an eyeball, a pupil that darts
+  // toward the gaze target, and (for forward eyes) upper+lower eyelids that blink.
+  function addEye(host, cx, cy, cz, R, opts) {
+    opts = opts || {};
+    const pivot = new THREE.Object3D();
+    pivot.position.set(cx, cy, cz); host.add(pivot);
+    const eyeball = new THREE.Mesh(new THREE.SphereGeometry(R, 9, 8), eyeMat);
+    pivot.add(eyeball);
+    if (opts.bigIris) {   // a coloured iris disc so the pupil reads on a giant cyclops eye
+      const iris = new THREE.Mesh(new THREE.SphereGeometry(R * 0.5, 10, 8), accentMat);
+      iris.position.set(0, 0, R * 0.6); iris.scale.set(1, 1, 0.4); pivot.add(iris);
+    }
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(R * (opts.bigIris ? 0.24 : 0.42), 7, 6),
+      opts.bigIris ? mouthMat : accentMat);
+    pupil.position.set(0, 0, R * 0.86); pivot.add(pupil);
+    const rec = { pivot, eyeball, pupil, R, baseScaleY: 1 };
+    if (opts.lids) {
+      const mkLid = (yy) => {
+        const l = new THREE.Mesh(new THREE.SphereGeometry(R * 1.06, 8, 6), skinMat);
+        l.scale.set(1, 0.5, 0.7); l.position.set(0, yy, R * 0.32); pivot.add(l); return l;
+      };
+      rec.upLid = mkLid(R * 0.72); rec.lidUpY0 = R * 0.72;      // open above the eye
+      rec.loLid = mkLid(-R * 0.72); rec.lidLoY0 = -R * 0.72;    // open below; meet at centre on blink
+      faceRig.hasLids = true;
+    }
+    faceRig.eyes.push(rec);
+    return rec;
+  }
+  // a BROW ridge that raises on accents/loudness (registered so the update drives it).
+  function addBrow(host, cx, cy, cz, w, side) {
+    const b = new THREE.Mesh(new THREE.SphereGeometry(w, 8, 5), limbMat);
+    b.scale.set(1, 0.26, 0.42); b.position.set(cx, cy, cz); host.add(b);
+    faceRig.brows.push({ mesh: b, baseY: cy, baseRotZ: b.rotation.z, side: side || 0 });
+    return b;
+  }
+
   function buildFace() {
-    // a skull mass for maw/mandibles; a bare eye-cluster for the eye families.
+    // a skull mass for maw/mandibles; a bare eye-cluster for the eye families. Eyes +
+    // brows are built through the RIG helpers so the update can puppeteer them.
     if (faceKind === "oneEye") {
       const dome = new THREE.Mesh(sqGeo(headSz * 0.6, sqEx, sqEy, 12), skinMat);
       head.add(dome);
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.42, 10, 9), eyeMat);
-      eye.position.set(0, 0, headSz * 0.32); head.add(eye);
-      const iris = new THREE.Mesh(new THREE.CircleGeometry(headSz * 0.2, 12), accentMat);
-      iris.position.set(0, 0, headSz * 0.72); head.add(iris);
-      const pupil = new THREE.Mesh(new THREE.CircleGeometry(headSz * 0.09, 10), mouthMat);
-      pupil.position.set(0, 0, headSz * 0.74); head.add(pupil);
+      addBrow(head, 0, headSz * 0.42, headSz * 0.34, headSz * 0.5, 0);
+      addEye(head, 0, 0, headSz * 0.34, headSz * 0.42, { lids: true, bigIris: true });
       // a small slit maw below so the singer can still gape.
       const jbox = new THREE.Mesh(new THREE.BoxGeometry(headSz * 0.3, headSz * 0.08, headSz * 0.08), mouthMat);
       jbox.position.set(0, -headSz * 0.04, 0); jaw.add(jbox); head.add(jaw);
@@ -704,11 +772,10 @@ export function makeAlien(THREE, traits, member, seed) {
       const ring = Math.min(8, nEyes);
       for (let e = 0; e < ring; e++) {
         const p = ringPos(e, ring, headSz * 0.55, 0, 1);
-        const eye = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.15, 7, 6), eyeMat);
-        eye.position.set(p.x, p.y, Math.abs(p.z) * 0.4 + headSz * 0.2); head.add(eye);
-        const pu = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.05, 6, 5), accentMat);
-        pu.position.set(p.x, p.y, Math.abs(p.z) * 0.4 + headSz * 0.33); head.add(pu);
+        // the two front-most eyes get real eyelids; the rest blink by squish (cheap).
+        addEye(head, p.x, p.y, Math.abs(p.z) * 0.4 + headSz * 0.2, headSz * 0.15, { lids: e < 2 });
       }
+      addBrow(head, 0, headSz * 0.5, headSz * 0.3, headSz * 0.5, 0);
       const maw = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.2, 7, 6), mouthMat);
       maw.position.set(0, -headSz * 0.1, headSz * 0.4); maw.scale.set(1, 0.6, 0.6); jaw.add(maw); head.add(jaw);
     } else {
@@ -716,18 +783,13 @@ export function makeAlien(THREE, traits, member, seed) {
       // that drops, plus a couple of eyes.
       const skull = new THREE.Mesh(sqGeo(headSz * 0.64, sqEx, sqEy, 14), skinMat);
       skull.scale.set(1, 1.06, 0.94); head.add(skull);
-      const brow = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.4, 8, 5), limbMat);
-      brow.scale.set(1, 0.26, 0.42);
-      brow.position.set(0, headSz * 0.27, faceZ - headSz * 0.02); head.add(brow);
+      addBrow(head, 0, headSz * 0.27, faceZ - headSz * 0.02, headSz * 0.4, 0);
       const eyeN = Math.min(3, Math.max(2, nEyes));
       // per-alien vertical + spread jitter so faces read individual within the family.
       const eyeY = headSz * (0.06 + eyeJit * 0.03), eyeSpread = headSz * (0.55 + morphR * 0.12);
       for (let e = 0; e < eyeN; e++) {
         const sx = eyeN === 1 ? 0 : (e / (eyeN - 1) - 0.5) * eyeSpread;
-        const eye = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.13, 8, 7), eyeMat);
-        eye.position.set(sx, eyeY, faceZ); head.add(eye);
-        const pu = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.055, 6, 5), accentMat);
-        pu.position.set(sx, eyeY, faceZ + headSz * 0.08); head.add(pu);
+        addEye(head, sx, eyeY, faceZ, headSz * 0.13, { lids: e < 2 });
       }
       if (faceKind === "mandibles") {
         for (let s = -1; s <= 1; s += 2) {
@@ -926,6 +988,9 @@ export function makeAlien(THREE, traits, member, seed) {
   let liftY = 0;
   // rolling contact envelope (for the mouth + instrument animation + debug).
   let lastC = 0, lastEnergy = 0, lastRaise = 0;
+  // FACE puppeteer state — the eased gaze position the pupils lerp toward, plus the
+  // latest blink/brow/mouth values (all exposed via faceDebug for the headless proof).
+  let gzX = 0, gzY = 0, lastGazeTX = 0, lastGazeTY = 0, lastBlink = 0, lastBrow = 0, lastMouth = 0;
 
   // --- contactness from the REAL note onsets (SCORE mode) --------------------------
   // Returns c in 0..1: 1 == the hand is AT the instrument (a hit landing NOW). For
@@ -937,9 +1002,9 @@ export function makeAlien(THREE, traits, member, seed) {
   // the drum at the note's real onset speed (a big windup travelled over a tiny slice
   // of the bar reads as a convincing hit), then a crisp recoil. Sustained styles ignore.
   const APPROACH = isDrummer ? 0.055 : 0.11, RECOIL = isDrummer ? 0.05 : 0.07, ATTACK = 0.05, RELEASE = 0.08;
-  let biasPitch = 0.5, haveBias = false;
+  let biasPitch = 0.5, haveBias = false, biasVel = 0.65;
   function noteContactness(barPhase, notes) {
-    let c = 0; haveBias = false;
+    let c = 0; haveBias = false; biasVel = 0.65;
     for (let i = 0; i < notes.length; i++) {
       const nt = notes[i]; const t0 = nt.t;
       for (let off = -1; off <= 1; off++) {
@@ -958,7 +1023,12 @@ export function makeAlien(THREE, traits, member, seed) {
             else cc = smooth01(1 - d / RECOIL);
           }
         }
-        if (cc > c) { c = cc; if (nt.pitch != null) { biasPitch = clamp((nt.pitch - 40) / 44, 0, 1); haveBias = true; } }
+        if (cc > c) {
+          c = cc;
+          // capture the winning onset's VELOCITY for the mouth (wider on louder notes).
+          biasVel = nt.vel != null ? (nt.vel > 1 ? clamp(nt.vel / 127, 0, 1) : clamp(nt.vel, 0, 1)) : 0.7;
+          if (nt.pitch != null) { biasPitch = clamp((nt.pitch - 40) / 44, 0, 1); haveBias = true; }
+        }
       }
     }
     return c;
@@ -1004,6 +1074,80 @@ export function makeAlien(THREE, traits, member, seed) {
     }
     if (instrument._coil) { const q = 1 + Math.sin(clock * 40) * 0.04 * k; for (const s of instrument._coil) s.scale.x = q; }
     if (instrument._shards) instrument._shards.forEach((sh, s) => { sh.rotation.x = Math.sin(clock * 30 + s) * 0.1 * k; });
+  }
+
+  // deterministic per-alien value noise for the wandering gaze (seed-keyed; NO
+  // Date.now / Math.random) so each alien gets its OWN sequence of glance targets.
+  function gazeNoise(i) { const x = Math.sin(i * 127.1 + (seed & 1023) * 0.017 + 11.3) * 43758.5453; return x - Math.floor(x); }
+
+  // ---- PUPPETEER the face: gaze / blink / brows / mouth ---------------------------
+  // Runs every frame for players AND dancers (transforms only — no geometry rebuilt).
+  //   GAZE  : the pupils lerp (eased, no jitter) toward a target that WANDERS every
+  //           gazePeriod (per-alien) and is BIASED toward the camera (+Z / centre), so
+  //           the crowd mostly meets your eye but keeps darting / glancing aside.
+  //   BLINK : eyelids sweep shut+open on the per-alien blinkInterval (eyeball squishes;
+  //           forward eyes also drop real lids), each face on its own phase.
+  //   BROWS : raise on accents (this voice's onset contact) + overall loudness.
+  //   MOUTH : opens on the player's OWN note onsets — the LEAD vocalist lip-syncs
+  //           hardest (wider on higher velocity), the DRUMMER grimaces WIDE on hard
+  //           hits, bass/pad move subtly; everyone bobs a little with loudness. Shape
+  //           varies between a round O (soft/sustained) and a wide grimace.
+  function driveFace(dt, c, loud, bob, mVel) {
+    const ex = P.expressiveness;
+    // GAZE target — wander (value-noise per gaze segment) biased toward the viewer.
+    const seg = Math.floor((clock + P.gazePhase) / P.gazePeriod);
+    let tx = (gazeNoise(seg) * 2 - 1) * P.gazeRestless;
+    let ty = (gazeNoise(seg + 101.7) * 2 - 1) * P.gazeRestless * 0.65;
+    tx *= (1 - P.gazeForward);
+    ty = ty * (1 - P.gazeForward) + 0.06;                         // slight upward bias (toward camera)
+    tx += Math.sin(clock * 2.3 + P.gazePhase) * 0.04;            // tiny live tremor
+    tx = clamp(tx, -1, 1); ty = clamp(ty, -0.9, 0.9);
+    lastGazeTX = tx; lastGazeTY = ty;
+    const gk = dt > 0 ? 1 - Math.exp(-dt * P.gazeSaccade) : 0;    // eased approach (smooth dart)
+    gzX += (tx - gzX) * gk; gzY += (ty - gzY) * gk;
+    // BLINK — a fast eased close+open pulse on this alien's interval.
+    const bt = (clock + P.blinkPhase) % P.blinkInterval;
+    const closed = bt < P.blinkDur ? Math.sin((bt / P.blinkDur) * Math.PI) : 0;
+    lastBlink = closed;
+    // BROW raise — accents + loudness, scaled by this alien's brow mobility.
+    const brow = clamp((0.28 * loud + 0.72 * Math.max(c, 0.12 * bob)) * P.browMobility * ex, 0, 1.2);
+    lastBrow = brow;
+    for (const e of faceRig.eyes) {
+      const off = e.R * 0.42;
+      e.pupil.position.x = gzX * off;
+      e.pupil.position.y = gzY * off;
+      e.pupil.position.z = e.R * 0.86;
+      e.pupil.scale.y = 1 - 0.9 * closed;
+      e.eyeball.scale.y = e.baseScaleY * (1 - 0.86 * closed);
+      if (e.upLid) e.upLid.position.y = e.lidUpY0 * (1 - closed);   // lids meet at centre when shut
+      if (e.loLid) e.loLid.position.y = e.lidLoY0 * (1 - closed);
+    }
+    for (const b of faceRig.brows) {
+      b.mesh.position.y = b.baseY + brow * headSz * 0.12;
+      b.mesh.rotation.z = b.baseRotZ + b.side * brow * 0.12;
+    }
+    // MOUTH — role-specific open + shape.
+    const vShape = mVel == null ? 0.65 : clamp(mVel, 0, 1);
+    const bobMouth = 0.05 * loud * (0.5 + 0.5 * Math.sin(clock * 5.0 + P.blinkPhase));
+    let mo, wide = 0, round = 0;
+    if (isDancer) {                                 // dancer sings to the groove (no onsets)
+      mo = P.restMouth + 0.5 * (0.4 * loud + 0.6 * bob) + bobMouth; round = 0.3;
+    } else if (roleName === "drum") {               // DRUMMER grimaces WIDE on hard hits
+      mo = P.restMouth + (0.3 + 0.45 * vShape) * c + bobMouth * 0.4;
+      wide = 0.55 * c + 0.2 * vShape;
+    } else if (sing >= 1) {                          // LEAD / vocalist LIP-SYNC
+      mo = P.restMouth + (0.4 + 0.5 * vShape) * c + bobMouth;
+      round = 0.3 + 0.45 * (1 - vShape);            // rounder O on soft notes, wider on loud
+    } else if (roleName === "pad") {                // slow sustained drone-hum
+      mo = P.restMouth + 0.32 * c + 0.08 * loud * (0.5 + 0.5 * Math.sin(clock * 2.0)); round = 0.45;
+    } else {                                        // bass + perc/found — SUBTLE, near-closed
+      mo = P.restMouth + 0.16 * c + bobMouth * 0.35; round = 0.12;
+    }
+    mo = clamp(mo * (0.72 + 0.28 * ex), 0, 1);
+    lastMouth = mo;
+    jaw.position.y = jawBaseY - mo * headSz * 0.24;
+    jaw.rotation.x = mo * 0.55;
+    jaw.scale.set(1 + wide * 0.5, 1 + mo * 0.15, 1 + round * mo * 0.6);
   }
 
   function update(dt, ctx) {
@@ -1057,10 +1201,12 @@ export function makeAlien(THREE, traits, member, seed) {
     lastC = c;
     const vel = haveBias ? 1 : 1;
 
-    // MOUTH — the singer's jaw follows its own notes; others pulse gently.
-    const open = clamp(faceWide * 0.25 + sing * 0.6 * Math.max(c, (isDancer ? bob : 0.15 * bob)), 0, 1);
-    jaw.position.y = jawBaseY - open * headSz * 0.22;
-    jaw.rotation.x = open * 0.5;
+    // FACE — puppeteer the rig: pupils dart+track a wandering gaze, eyelids blink on
+    // the per-alien interval, brows raise on accents/loudness, and the MOUTH opens on
+    // this player's OWN note onsets (lead lip-syncs hardest, drummer grimaces, bass/pad
+    // subtle) + a gentle loudness bob. Runs for players AND dancers. Transforms only.
+    const mouthVel = notes ? biasVel : (isDancer ? loudness : 0.6);
+    driveFace(dt, c, loudness, bob, mouthVel);
 
     if (isDancer) {
       // DANCER — no instrument; a full-body groove that scales as a SMOOTH CONTINUUM
@@ -1161,6 +1307,26 @@ export function makeAlien(THREE, traits, member, seed) {
     };
   }
 
+  // headless-proof accessor for the animated FACE: the rig census + the live gaze /
+  // blink / brow / mouth state + this alien's per-seed personality (individuality).
+  function faceDebug() {
+    const e0 = faceRig.eyes[0];
+    return {
+      eyes: faceRig.eyes.length, brows: faceRig.brows.length, hasLids: faceRig.hasLids,
+      role: roleName, sing,
+      gaze: { x: +gzX.toFixed(4), y: +gzY.toFixed(4) },
+      gazeTarget: { x: +lastGazeTX.toFixed(4), y: +lastGazeTY.toFixed(4) },
+      pupil: e0 ? { x: +e0.pupil.position.x.toFixed(4), y: +e0.pupil.position.y.toFixed(4) } : null,
+      blink: +lastBlink.toFixed(4), brow: +lastBrow.toFixed(4), mouth: +lastMouth.toFixed(4),
+      personality: {
+        expressiveness: +P.expressiveness.toFixed(4), blinkInterval: +P.blinkInterval.toFixed(4),
+        blinkPhase: +P.blinkPhase.toFixed(4), gazePeriod: +P.gazePeriod.toFixed(4),
+        gazeRestless: +P.gazeRestless.toFixed(4), browMobility: +P.browMobility.toFixed(4),
+        restMouth: +P.restMouth.toFixed(4),
+      },
+    };
+  }
+
   // SHADOWS + modelling: every mesh casts and receives the key light.
   group.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
 
@@ -1205,7 +1371,7 @@ export function makeAlien(THREE, traits, member, seed) {
     accent: accentMat.color.getHexString(),
   };
 
-  return { group, update, debug, materials, playStyle, hitsPerBeat, voice, plan, tentacleProof, palette, liftY, footWorldY };
+  return { group, update, debug, faceDebug, materials, playStyle, hitsPerBeat, voice, plan, tentacleProof, palette, liftY, footWorldY };
 }
 
 export default { makeAlien };
