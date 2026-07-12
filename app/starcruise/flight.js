@@ -182,7 +182,28 @@ export function makeFlight({ getTravel, getBeat } = {}) {
   // weight jump nudges the goal and the descent GLIDES, ramping from the current velocity,
   // never jumping. Deterministic (only dt); no overshoot for a monotone target.
   let landVel = 0, spaceVel = 0;
-  const LAND_SMOOTH = 0.38, SPACE_SMOOTH = 0.5;   // spring time-constants (s)
+  const LAND_SMOOTH = 0.38, SPACE_SMOOTH = 0.5;   // spring time-constants (s) — legacy, kept for state parity
+  // DEAD-RECKONED ZOOM (the fix for the per-bar DESCENT lurch). smoothDampS on landProgress/
+  // spaceProgress still front-loaded each per-bar STEP of the target into an early-frame
+  // velocity SPIKE (measured ~6x the mean, ~0.35s into every bar) — and since the zoom drives
+  // the camera across the WHOLE galaxy->surface distance, that spike WAS the lurch. Instead we
+  // dead-reckon the zoom exactly like the lateral pan: on each per-bar step of the target we
+  // latch a LINEAR ramp from the value we're displaying now to the new target, spanning the
+  // observed bar interval, so the zoom advances at ~constant velocity every frame and arrives
+  // as the next update lands — a continuous descent, no spike. A held target completes the ramp
+  // and comes to rest. Deterministic (only dt). scalarRamp() carries {from,to,t,dur,last}.
+  const landRamp = { from: 0, to: 0, t: 0, dur: 1, last: 0, seeded: false };
+  const spaceRamp = { from: 1, to: 1, t: 0, dur: 1, last: 1, seeded: false };
+  function scalarRampValue(rs) { return rs.dur > 1e-4 ? rs.from + (rs.to - rs.from) * clamp01(rs.t / rs.dur) : rs.to; }
+  function scalarRamp(rs, target, barDur, dt) {
+    if (!rs.seeded) { rs.from = rs.to = rs.last = target; rs.t = 0; rs.dur = barDur; rs.seeded = true; }
+    else if (Math.abs(target - rs.last) > 1e-4) {          // a discrete per-bar step landed
+      rs.from = scalarRampValue(rs);                        // re-latch FROM where we ARE (carry motion)
+      rs.to = target; rs.dur = barDur; rs.t = 0; rs.last = target;
+    }
+    rs.t += dt;
+    return scalarRampValue(rs);
+  }
   // LAND when the SMOOTHED descent (landProgress) has actually reached the surface — NOT
   // the instant the raw weight crosses LAND_W. This decouples the phase flip from the raw
   // blend clock: at the flip the camera's descent `t` is already ~1 (== SURFACE_POSE), so
@@ -267,13 +288,24 @@ export function makeFlight({ getTravel, getBeat } = {}) {
       }
     }
 
+    // BAR INTERVAL (the app steps travel + S.weights ONCE PER BAR): dead-reckon every
+    // per-bar-stepping signal over exactly this span so each arrives as the next update
+    // lands — constant velocity, no boundary spike. Clamped so a degenerate beat can't
+    // wedge a ramp permanently on/off. Computed here (before the zoom) since the zoom ramps
+    // read it too; the lateral-pan ramp below reuses the same value.
+    const spb = bt.spb || (bt.bpm ? 60 / bt.bpm : 0.5);
+    const cbeats = bt.cbeats || 8;
+    let barDur = spb > 0 && cbeats > 0 ? spb * cbeats : 2;
+    if (barDur < 0.4) barDur = 0.4; else if (barDur > 3.2) barDur = 3.2;
+
     // ---- landProgress: 0 cruising .. 0.8 touchdown .. 1 full immersion ------
     let target;
     if (LANDED[phase]) target = Math.max(0.8, imm);
     else if (phase === "DEPART") target = 0;
     else target = Math.min(0.8, imm);      // FLY/APPROACH ride the dominant weight
-    // CRITICAL DAMP (was first-order): a step in `target` glides in, no boundary spike.
-    { const r = smoothDampS(landProgress, target, landVel, LAND_SMOOTH, dt); landProgress = clamp01(r[0]); landVel = r[1]; }
+    // DEAD-RECKONED (was smoothDampS, which spiked): the descent glides at constant velocity
+    // between per-bar steps, so the galaxy->surface zoom no longer lurches once a bar.
+    landProgress = clamp01(scalarRamp(landRamp, target, barDur, dt));
     const t = clamp01(landProgress / 0.8);     // 0 deep space .. 1 at touchdown
     const fullZoom = clamp01((landProgress - 0.8) / 0.2);   // 0 just-landed .. 1 full
 
@@ -282,7 +314,9 @@ export function makeFlight({ getTravel, getBeat } = {}) {
     if (LANDED[phase]) sTarget = 0;
     else if (phase === "DEPART") sTarget = clamp01(phaseT / Math.max(0.001, DUR.DEPART));
     else sTarget = clamp01(1 - imm / 0.8);   // FLY/APPROACH: deep -> surface as we zoom
-    { const r = smoothDampS(spaceProgress, sTarget, spaceVel, SPACE_SMOOTH, dt); spaceProgress = clamp01(r[0]); spaceVel = r[1]; }
+    // DEPART sweeps sTarget CONTINUOUSLY off phaseT already, so ramp it fast there (a short
+    // dur tracks the phase clock); otherwise dead-reckon over the bar like the descent.
+    spaceProgress = clamp01(scalarRamp(spaceRamp, sTarget, phase === "DEPART" ? 0.12 : barDur, dt));
 
     // ---- WHERE WE ARE in the genre map + the resolving planet --------------
     const centroidCoord = centroidCoordOf(weights, dominant);
@@ -301,10 +335,7 @@ export function makeFlight({ getTravel, getBeat } = {}) {
     // cruise, no wait-then-jump. A HELD blend gets no new latch, so the ramp completes within
     // barDur and the camera correctly COMES TO REST (a parked, unchanging blend is still). We
     // clamp barDur so a missing/degenerate beat can't wedge the ramp permanently on or off.
-    const spb = bt.spb || (bt.bpm ? 60 / bt.bpm : 0.5);
-    const cbeats = bt.cbeats || 8;
-    let barDur = spb > 0 && cbeats > 0 ? spb * cbeats : 2;
-    if (barDur < 0.4) barDur = 0.4; else if (barDur > 3.2) barDur = 3.2;
+    // (barDur is computed once, above, before the zoom ramps — reused here for the pan.)
     const hereKey = hereWorld.x + "," + hereWorld.y + "," + hereWorld.z;
     if (rampTo === null) {                     // first frame — seed at the live value (no pop)
       rampFrom = { x: hereWorld.x, y: hereWorld.y, z: hereWorld.z };

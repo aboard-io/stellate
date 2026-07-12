@@ -165,6 +165,23 @@ function makeSkinTexture(THREE, kind, rand) {
       g.fillStyle = rand() < 0.5 ? dk : lt;
       g.fillRect((rand() * S) | 0, (rand() * S) | 0, 2, 2);
     }
+  } else if (kind === "fur") {
+    // FURRY: dense short directional strokes -> reads soft/fuzzy at a glance.
+    g.lineWidth = 1;
+    for (let i = 0; i < 340; i++) {
+      const x = (rand() * S) | 0, y = (rand() * S) | 0, len = 3 + (rand() * 4 | 0);
+      g.strokeStyle = rand() < 0.5 ? "rgba(30,26,44,0.22)" : "rgba(255,255,255,0.18)";
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x + (rand() * 2 - 1) * 2, y - len); g.stroke();
+    }
+  } else if (kind === "rock") {
+    // STONY: irregular dark cracks + light chips -> reads rough/mineral.
+    g.strokeStyle = "rgba(20,18,30,0.34)"; g.lineWidth = 2;
+    for (let i = 0; i < 22; i++) {
+      g.beginPath(); g.moveTo((rand() * S) | 0, (rand() * S) | 0);
+      for (let k = 0; k < 3; k++) g.lineTo((rand() * S) | 0, (rand() * S) | 0);
+      g.stroke();
+    }
+    for (let i = 0; i < 60; i++) { g.fillStyle = rand() < 0.5 ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.18)"; g.fillRect((rand() * S) | 0, (rand() * S) | 0, 3, 3); }
   } else {                                                 // "plate": subtle panel lines
     g.strokeStyle = "rgba(30,26,44,0.16)"; g.lineWidth = 1;
     for (let x = 0; x < S; x += 16) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, S); g.stroke(); }
@@ -234,6 +251,11 @@ export function makeAlien(THREE, traits, member, seed) {
   const groove = Object.assign({ bounce: 0.4, sway: 0.3, headbob: 0.4, energy: 0.5 }, traits.groove || {});
   const glow = clamp(traits.glow || 0, 0, 1);
   const chrome = traits.skin === "chrome";
+  // SURFACE flavor (Complaint 3): fur / soft / wax / stone / chrome / glass / plastic.
+  // Prefer traits.surface (new), else traits.body.surface, else fall back off skin so an
+  // older traits object still resolves a sensible surface.
+  const surface = traits.surface || bIn.surface ||
+    (chrome ? "chrome" : traits.skin === "glass" ? "glass" : traits.skin === "organic" ? "soft" : "plastic");
 
   // ---- PER-ALIEN FACE PERSONALITY -------------------------------------------------
   // Every face is PUPPETEERED with its OWN gaze rhythm, blink rate, brow mobility,
@@ -290,6 +312,27 @@ export function makeAlien(THREE, traits, member, seed) {
   const PLANS = ["radial", "cephalopod", "insectoid", "blob", "stalk", "crystalline", "gas"];
   let plan = bIn.plan;
   if (!plan || PLANS.indexOf(plan) < 0) plan = derivePlan(bIn);
+
+  // ---- ARCHETYPE (the RECOGNIZABLE creature — Complaint 2) -----------------------
+  // On TOP of the low-level `plan` silhouette we read a recognizable SPECIES archetype
+  // (dragon / dog / person / robot / mollusk / jelly / star / crawler / blob) that drives
+  // the GEAR pass (horns/ears/wings/tail/fins/antennae/crest) + a STANCE tweak, so genres
+  // read as obviously different animals. Prefer traits.body.archetype; else derive from the
+  // plan so this module still works against older traits (and the plan-forced face test).
+  const ARCHES = ["draconic", "quadruped", "biped", "bot", "mollusk", "jelly", "star", "crawler", "blobby"];
+  let arche = bIn.archetype;
+  if (!arche || ARCHES.indexOf(arche) < 0) {
+    arche = ({ radial: "star", gas: "jelly", cephalopod: "mollusk", crystalline: "bot",
+      blob: "blobby", insectoid: "crawler", stalk: "biped" })[plan] || "biped";
+  }
+  // GEAR flags — prefer explicit traits fields, else derive from the archetype.
+  const gearWinged = bIn.winged != null ? !!bIn.winged : (arche === "draconic");
+  const gearTailed = bIn.tailed != null ? !!bIn.tailed : (arche === "draconic" || arche === "quadruped" || arche === "crawler");
+  const gearEared = bIn.eared != null ? !!bIn.eared : (arche === "quadruped");
+  const gearHorn = bIn.horniness != null ? clamp(bIn.horniness, 0, 1) : (arche === "draconic" ? 0.7 : arche === "bot" ? 0 : 0);
+  const gearBot = arche === "bot";
+  const gearAntenna = gearBot || plan === "crystalline";
+  const gearCrest = arche === "biped" || arche === "mollusk" || (arche === "draconic");
 
   const H = Math.max(0.9, (bIn.height || 1.5) * morphH);
   const massH = Math.max(0.5, (bIn.massH || 1) * morphMass);
@@ -391,14 +434,18 @@ export function makeAlien(THREE, traits, member, seed) {
   }
 
   // ---- shared, LIT + shadowed materials (bold contrast) — PRESERVED --------------
-  const skinTex = makeSkinTexture(THREE, traits.texture || "plate", rand);
-  // 'pbr' surface constants — REAL chrome / glass / polished metal from the skin trait.
-  // chrome = mirror metal; glass = clear low-roughness dielectric; else brushed metal.
-  const pbrGlass = traits.skin === "glass";
-  // SUBTLE pbr — legible: chrome keeps its metal read but a higher roughness stops it
-  // becoming a pure mirror; glass stays clear; else a soft brushed metal.
-  const pbrMetalness = chrome ? 0.85 : pbrGlass ? 0.06 : 0.6;
-  const pbrRoughness = chrome ? 0.3 : pbrGlass ? 0.08 : 0.5;
+  // Surface flavor picks the skin TEXTURE so materials read distinct: furry beasts get a
+  // fuzzy fur weave, stone brutes a cracked-rock grain, glass jellies/chrome bots a clean
+  // plate. Falls through to the genre's rhythmic texture for the plain/soft/wax skins.
+  const surfTex = surface === "fur" ? "fur" : surface === "stone" ? "rock"
+    : (surface === "chrome" || surface === "glass") ? "plate" : (traits.texture || "plate");
+  const skinTex = makeSkinTexture(THREE, surfTex, rand);
+  // 'pbr' surface constants — REAL chrome / glass / polished metal / WET-WAX from surface.
+  // chrome = near-mirror metal; glass = clear translucent jelly; wax = glossy dielectric
+  // sheen; else a soft brushed metal. Stronger separation than before so the materials read.
+  const pbrGlass = traits.skin === "glass" || surface === "glass";
+  const pbrMetalness = chrome ? 0.92 : pbrGlass ? 0.04 : surface === "wax" ? 0.0 : 0.55;
+  const pbrRoughness = chrome ? 0.16 : pbrGlass ? 0.06 : surface === "wax" ? 0.12 : 0.5;
   const mk = (col, textured) => {
     const emissive = (glow > 0.05 ? col.clone().multiplyScalar(0.16 * glow) : new THREE.Color(0, 0, 0));
     let m;
@@ -416,11 +463,19 @@ export function makeAlien(THREE, traits, member, seed) {
     if (style === "cel") {
       m = new THREE.MeshToonMaterial({ color: col, map: textured ? skinTex : null, emissive, gradientMap: celGrad });
       m.flatShading = true;
-    } else {
-      m = new THREE.MeshLambertMaterial({
-        color: col, flatShading: !smoothShade, map: textured ? skinTex : null, wireframe: wire, emissive,
+    } else if (surface === "wax") {
+      // WET / WAXY: a Phong sheen with a tight bright highlight — reads glossy/wet.
+      m = new THREE.MeshPhongMaterial({
+        color: col, map: textured ? skinTex : null, emissive,
+        specular: new THREE.Color(0xffffff), shininess: 64, flatShading: false,
       });
-      if (smoothShade) m.emissive = emissive.clone().add(col.clone().multiplyScalar(0.1));
+    } else {
+      // stone -> FACETED (flat) rough; fur/soft -> SMOOTH matte flesh; else style default.
+      const flat = surface === "stone" ? true : (surface === "fur" || surface === "soft") ? false : !smoothShade;
+      m = new THREE.MeshLambertMaterial({
+        color: col, flatShading: flat, map: textured ? skinTex : null, wireframe: wire, emissive,
+      });
+      if (smoothShade || surface === "fur" || surface === "soft") m.emissive = emissive.clone().add(col.clone().multiplyScalar(surface === "fur" ? 0.13 : 0.08));
     }
     return applyStyleHook(m);
   };
@@ -561,6 +616,20 @@ export function makeAlien(THREE, traits, member, seed) {
       (opts.tip === "eye" ? 0 : side * curlAmt * total * 0.14)
     );
     fabrik(pts, target, { iters: 6 });
+    // Fix 1 (NO CLIPPING): after the solve, push every INTERIOR joint OUTSIDE the torso
+    // keep-out shell so the mid-section/curl of the limb can never pass through the body
+    // core. Each local joint is mapped into group space (root pose), clamped out of the
+    // core sphere by the SAME keepOutOfCore shell the arms use, then mapped back — so the
+    // whole tube bows OUTWARD around the body. Root (0) + tip (nSeg) stay as solved, so the
+    // tip target + tentacleProof are unperturbed and the curl still reaches its mark.
+    {
+      const _gp = new THREE.Vector3(), _qi = rootObj.quaternion.clone().invert();
+      for (let s = 1; s < nSeg; s++) {
+        _gp.copy(pts[s]).applyQuaternion(rootObj.quaternion).add(rootObj.position);
+        keepOutOfCore(_gp);
+        pts[s].copy(_gp).sub(rootObj.position).applyQuaternion(_qi);
+      }
+    }
     const tipErr = pts[nSeg].distanceTo(target);
     if (!tentacleProof) tentacleProof = { err: +tipErr.toFixed(5), tip: pts[nSeg].clone(), target: target.clone(), reached: tipErr < 0.02 };
     // sweep a tapered CatmullRom TUBE through the solved joints (a smooth curved limb).
@@ -1189,6 +1258,105 @@ export function makeAlien(THREE, traits, member, seed) {
   }
   buildFace();
 
+  // ---- ARCHETYPE GEAR (Complaint 2: make plans read as DIFFERENT SPECIES) ----------
+  // Recognizable creature features bolted onto the finished body+face so a heavy-metal
+  // DRAGON (horns/wings/spines/tail), a jazz DOG (ears/snout/tail), a techno BOT (antennae),
+  // an upright PERSON (crest), a MOLLUSK (fin) and a JELLY all read at a glance — the
+  // Spore/Pokémon variety the user asked for. Gear meshes are children of `head` (horns/
+  // ears/antennae/crest) or `group` (wings/spines/tail) so they stay CONTIGUOUS with the
+  // body, cast shadows (the end-traverse tags them), and never dip below the feet (all sit
+  // high or curl backward). Cheap: low-poly cones/slabs, built ONCE, no per-frame rebuild.
+  function addArchetypeGear() {
+    const hornMat = accent2Mat, earMat = skinMat, finMat = accent2Mat, wingMat = accentMat, antMat = limbMat;
+    // HORNS — a pair (or a 4-horn crown for very horned beasts) curving up-and-back. Big +
+    // pale bony (accent) so they read as horns at the face camera.
+    if (gearHorn > 0.05) {
+      const nH = gearHorn > 0.6 ? 4 : 2;
+      for (let i = 0; i < nH; i++) {
+        const side = i % 2 === 0 ? 1 : -1, tier = Math.floor(i / 2);
+        const len = headSz * (0.75 + gearHorn * 0.6) * (1 - tier * 0.3);
+        const horn = new THREE.Mesh(new THREE.ConeGeometry(headSz * 0.16 * (1 - tier * 0.22), len, 5), hornMat);
+        horn.position.set(side * headSz * (0.42 + tier * 0.16), headSz * (0.56 - tier * 0.05), faceZ * 0.2 - tier * headSz * 0.22);
+        horn.rotation.z = side * (0.55 + tier * 0.25); horn.rotation.x = -0.6;
+        head.add(horn);
+      }
+    }
+    // EARS — big floppy flattened cones (dog/beast) with an inner-ear accent, standing tall
+    // and forward off the crown so they clear the body mass + read unmistakably as ears.
+    if (gearEared) {
+      for (let s = -1; s <= 1; s += 2) {
+        const ear = new THREE.Mesh(new THREE.ConeGeometry(headSz * 0.26, headSz * 0.78, 4), earMat);
+        ear.scale.set(1, 1, 0.38); ear.position.set(s * headSz * 0.6, headSz * 0.52, headSz * 0.06);
+        ear.rotation.z = s * 0.52; ear.rotation.x = -0.28; head.add(ear);
+        const inn = new THREE.Mesh(new THREE.ConeGeometry(headSz * 0.13, headSz * 0.5, 4), accent2Mat);
+        inn.scale.set(1, 1, 0.36); inn.position.set(s * headSz * 0.6, headSz * 0.54, headSz * 0.11);
+        inn.rotation.z = s * 0.52; inn.rotation.x = -0.28; head.add(inn);
+      }
+    }
+    // SNOUT / MUZZLE — an elongated forward muzzle with two dark nostrils. A strong ANIMAL
+    // read (dog/beast for quadruped, a shorter reptilian snout for a dragon).
+    if (gearEared || arche === "draconic") {
+      const len = arche === "draconic" ? headSz * 0.55 : headSz * 0.7;
+      const muzzle = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.3, 9, 7), skinMat);
+      muzzle.scale.set(0.72, 0.62, 1); muzzle.position.set(0, -headSz * 0.18, faceZ + len * 0.4);
+      head.add(muzzle);
+      for (let s = -1; s <= 1; s += 2) {
+        const nos = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.06, 6, 5), mouthMat);
+        nos.position.set(s * headSz * 0.1, -headSz * 0.12, faceZ + len * 0.62); head.add(nos);
+      }
+    }
+    // ANTENNAE — thin stalks tipped with a glowing orb (robot / crystalline).
+    if (gearAntenna) {
+      for (let s = -1; s <= 1; s += 2) {
+        const stalk = new THREE.Mesh(new THREE.CylinderGeometry(headSz * 0.028, headSz * 0.045, headSz * 0.52, 5), antMat);
+        stalk.position.set(s * headSz * 0.28, headSz * 0.64, -headSz * 0.04); stalk.rotation.z = s * 0.22; head.add(stalk);
+        const tip = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.1, 7, 6), orbMat);
+        tip.position.set(s * headSz * 0.34, headSz * 0.9, -headSz * 0.04); head.add(tip);
+      }
+    }
+    // CREST — a fan of fin-plates over the crown (biped topknot / dragon frill / mollusk).
+    if (gearCrest) {
+      for (let i = 0; i < 3; i++) {
+        const fin = new THREE.Mesh(new THREE.ConeGeometry(headSz * 0.15, headSz * (0.42 - i * 0.07), 3), finMat);
+        fin.scale.set(0.28, 1, 1); fin.position.set(0, headSz * 0.56, -headSz * (0.02 + i * 0.2));
+        fin.rotation.x = -0.15 + i * 0.14; head.add(fin);
+      }
+    }
+    // WINGS — two membrane fans with a couple of spar-bones off the upper back (draconic).
+    if (gearWinged) {
+      for (let s = -1; s <= 1; s += 2) {
+        const wing = new THREE.Object3D();
+        wing.position.set(s * coreR * 0.55, coreMidY + H * 0.14, -coreR * 0.45);
+        const memb = new THREE.Mesh(superquadric(THREE, { ex: 0.5, ey: 0.5, segs: 6, rx: H * 0.28, ry: H * 0.21, rz: H * 0.018 }), wingMat);
+        memb.position.set(s * H * 0.24, H * 0.07, 0); memb.rotation.z = s * 0.5; wing.add(memb);
+        for (let k = 0; k < 2; k++) {
+          const spar = new THREE.Mesh(new THREE.CylinderGeometry(coreR * 0.05, coreR * 0.03, H * (0.4 - k * 0.08), 4), limbMat);
+          spar.position.set(s * H * (0.12 + k * 0.16), H * (0.05 + k * 0.06), 0);
+          spar.rotation.z = s * (0.95 - k * 0.34); wing.add(spar);
+        }
+        wing.rotation.y = s * 0.5; group.add(wing);
+      }
+    }
+    // DORSAL SPINES — a shrinking row of back-plates down the spine (draconic).
+    if (arche === "draconic") {
+      const nS = 4;
+      for (let i = 0; i < nS; i++) {
+        const t = i / (nS - 1);
+        const sp = new THREE.Mesh(new THREE.ConeGeometry(coreR * 0.15 * (1 - 0.3 * Math.abs(t - 0.25)), H * 0.22 * (1 - 0.4 * t), 4), finMat);
+        sp.position.set(0, coreMidY + H * 0.2 - t * H * 0.08, -coreR * 0.2 - t * coreR * 0.75);
+        sp.rotation.x = -0.15; group.add(sp);
+      }
+    }
+    // TAIL — a curling tendril off the low back (draconic / quadruped / crawler). Curls
+    // BACK and slightly UP so it sways yet never becomes the floor-planted lowest point.
+    if (gearTailed) {
+      const root = new THREE.Vector3(0, coreMidY - H * 0.06, -coreR * 0.9);
+      makeTendril(root, new THREE.Vector3(0, 0.12, -1).normalize(), H * 0.13, 4, coreR * 0.34, limbMat, skinMat,
+        { curl: 0.45, amp: 0.16, side: 1 });
+    }
+  }
+  addArchetypeGear();
+
   // ---- CONTIGUITY: a NECK/SNOUT bridges the head to the core so the face never floats ----
   // A tapered column from DEEP INSIDE the core out to the head base. Because the head is now
   // pushed FORWARD (+z) to sit on the body's front surface, the bridge must span that z gap
@@ -1248,11 +1416,13 @@ export function makeAlien(THREE, traits, member, seed) {
   //   glass membrane-pane — a translucent pane a bow drags across (_pane,_bow)
   function instKindFor() {
     const f = (inst.family || "").toLowerCase();
+    if (/conch|polyp|echo/.test(f)) return "conch";       // found/vocal layer — a spiral shell
+    if (/veil|reed|lung|gas/.test(f)) return "veil";       // pad/drone — a floating membrane veil
     if (/sac|membrane|bladderdrum/.test(f)) return "sac";
     if (/coil|resonat|subwomp|synthbass|gutstring|bass/.test(f) && playStyle !== "strike") return playStyle === "bow" ? "pane" : "coil";
     if (/chime|crystal|clack|shaker/.test(f)) return "chime";
     if (/harp|tendril|bloop|twang|neon|shimmer/.test(f)) return "harp";
-    if (/horn|wail|reed|bladder/.test(f)) return "horn";
+    if (/horn|wail|bladder/.test(f)) return "horn";
     if (playStyle === "strike" || playStyle === "drum") return "sac";
     if (playStyle === "bow") return "pane";
     if (playStyle === "blow") return "horn";
@@ -1266,18 +1436,43 @@ export function makeAlien(THREE, traits, member, seed) {
     // contrasts the alien and reads as a distinct object.
     const acc = instAccMat, body2 = instMainMat;
     if (kind === "sac") {                                  // pulsing membrane-sac (drum)
-      const sac = new THREE.Mesh(sqGeo(H * 0.17, sqEx, sqEy, 12), body2);   // superquadric membrane
-      sac.scale.set(1, 0.8, 1); g.add(sac); g._sac = sac;
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(H * 0.17, H * 0.02, 5, 10), acc);
-      ring.rotation.x = Math.PI / 2; ring.position.y = H * 0.02; g.add(ring);
+      const sac = new THREE.Mesh(sqGeo(H * 0.21, sqEx, sqEy, 12), body2);   // superquadric membrane
+      sac.scale.set(1, 0.78, 1); g.add(sac); g._sac = sac;
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(H * 0.21, H * 0.028, 5, 12), acc);
+      ring.rotation.x = Math.PI / 2; ring.position.y = H * 0.03; g.add(ring);
       // a curved beater — a CatmullRom TUBE arcing off the rim.
       const handle = new THREE.Mesh(tube(THREE, [
-        new THREE.Vector3(0, H * 0.02, H * 0.16), new THREE.Vector3(H * 0.05, H * 0.12, H * 0.2),
-        new THREE.Vector3(H * 0.02, H * 0.24, H * 0.1),
-      ], { radius: H * 0.02, segs: 10, radial: 5, taper: 0.5 }), acc);
+        new THREE.Vector3(0, H * 0.02, H * 0.2), new THREE.Vector3(H * 0.06, H * 0.14, H * 0.24),
+        new THREE.Vector3(H * 0.02, H * 0.28, H * 0.12),
+      ], { radius: H * 0.024, segs: 10, radial: 5, taper: 0.5 }), acc);
       g.add(handle);
-      const nub = new THREE.Mesh(new THREE.SphereGeometry(H * 0.04, 6, 5), acc);
-      nub.position.set(H * 0.02, H * 0.26, H * 0.08); g.add(nub);
+      const nub = new THREE.Mesh(new THREE.SphereGeometry(H * 0.05, 6, 5), acc);
+      nub.position.set(H * 0.02, H * 0.3, H * 0.1); g.add(nub);
+    } else if (kind === "conch") {                         // echo-conch / voice-polyp (found) — a SPIRAL SHELL
+      const cpts = [];
+      const turns = 2.4, N = 22;
+      for (let k = 0; k <= N; k++) {
+        const t = k / N, a = t * Math.PI * 2 * turns, r = H * (0.03 + t * t * 0.17);
+        cpts.push(new THREE.Vector3(Math.cos(a) * r, -H * 0.04 + t * H * 0.14, Math.sin(a) * r));
+      }
+      // tube widens toward the aperture (taper > 1) so it reads as a growing shell horn.
+      const shell = new THREE.Mesh(tube(THREE, cpts, { radius: H * 0.02, segs: 44, radial: 7, taper: 4.2 }), body2);
+      g.add(shell); g._sac = shell;                       // pulses a touch when struck
+      const aperture = new THREE.Mesh(new THREE.SphereGeometry(H * 0.09, 9, 7), mouthMat);
+      aperture.scale.set(1, 1, 0.5); aperture.position.set(Math.cos(turns * Math.PI * 2) * H * 0.2, H * 0.1, Math.sin(turns * Math.PI * 2) * H * 0.2); g.add(aperture);
+      const knob = new THREE.Mesh(new THREE.SphereGeometry(H * 0.045, 6, 5), acc);
+      knob.position.set(0, -H * 0.06, 0); g.add(knob);
+    } else if (kind === "veil") {                          // gas-veil / reed-lung (pad/drone) — a floating VEIL
+      // a broad, thin, gently-curved membrane on a stalk — a lung/veil that hangs + billows.
+      const veil = new THREE.Mesh(superquadric(THREE, { ex: 0.9, ey: 0.9, segs: 14, rx: H * 0.24, ry: H * 0.3, rz: H * 0.02 }), body2);
+      veil.scale.set(1, 1, 1); veil.position.y = H * 0.06; g.add(veil); g._pane = veil;   // billows via _pane hook
+      // a couple of ribs + a base bulb (the reed/lung root).
+      for (let s = -1; s <= 1; s += 2) {
+        const rib = new THREE.Mesh(new THREE.CylinderGeometry(H * 0.012, H * 0.012, H * 0.4, 5), acc);
+        rib.position.set(s * H * 0.1, H * 0.06, H * 0.01); rib.rotation.z = s * 0.12; g.add(rib);
+      }
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(H * 0.08, 8, 6), acc);
+      bulb.position.set(0, -H * 0.12, 0); g.add(bulb);
     } else if (kind === "coil") {                          // coiled resonator (bass) — a spiral TUBE
       const cpts = [];
       const turns = 3, N = 18;
@@ -1289,35 +1484,37 @@ export function makeAlien(THREE, traits, member, seed) {
       g.add(coilMesh); g._coil = [coilMesh];
       const spine = new THREE.Mesh(new THREE.CylinderGeometry(H * 0.02, H * 0.02, H * 0.4, 5), acc);
       g.add(spine);
-    } else if (kind === "chime") {                         // crystal chime-cluster (perc)
+    } else if (kind === "chime") {                         // crystal chime-cluster (perc) — HANGING BARS
+      // a crossbar with tuned bars of clearly-varied length hanging beneath it (readable set).
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(H * 0.02, H * 0.02, H * 0.34, 6), acc);
+      bar.rotation.z = Math.PI / 2; bar.position.y = H * 0.16; g.add(bar);
       const shards = [];
       for (let k = 0; k < 5; k++) {
-        const len = H * (0.12 + (k % 3) * 0.05);
-        const sh = new THREE.Mesh(new THREE.ConeGeometry(H * 0.03, len, 4), k % 2 ? acc : body2);
-        sh.position.set((k - 2) * H * 0.06, -len * 0.3, (k % 2) * H * 0.03);
-        sh.rotation.z = (k - 2) * 0.12; g.add(sh); shards.push(sh);
+        const len = H * (0.24 - k * 0.03);
+        const sh = new THREE.Mesh(new THREE.CylinderGeometry(H * 0.02, H * 0.02, len, 6), k % 2 ? acc : body2);
+        sh.position.set((k - 2) * H * 0.075, H * 0.16 - len * 0.5, 0); g.add(sh); shards.push(sh);
       }
       g._shards = shards;
-    } else if (kind === "harp") {                          // tendril-harp (lead/pluck)
-      const frame = new THREE.Mesh(new THREE.TorusGeometry(H * 0.2, H * 0.022, 5, 10, Math.PI * 1.15), body2);
+    } else if (kind === "harp") {                          // tendril-harp (lead/pluck) — a TALL LYRE
+      const frame = new THREE.Mesh(new THREE.TorusGeometry(H * 0.26, H * 0.026, 5, 12, Math.PI * 1.15), body2);
       frame.rotation.z = -Math.PI / 2.2; g.add(frame);
       const strings = [];
       for (let s = 0; s < 6; s++) {
-        const str = new THREE.Mesh(new THREE.BoxGeometry(H * 0.006, H * 0.34 - s * H * 0.02, H * 0.006), acc);
-        str.position.set((s - 2.5) * H * 0.045, H * 0.02, 0); g.add(str); strings.push(str);
+        const str = new THREE.Mesh(new THREE.BoxGeometry(H * 0.007, H * 0.42 - s * H * 0.028, H * 0.007), acc);
+        str.position.set((s - 2.5) * H * 0.052, H * 0.03, 0); g.add(str); strings.push(str);
       }
       g._strings = strings;
-    } else if (kind === "horn") {                          // bladder-horn (blow)
-      const bladder = new THREE.Mesh(sqGeo(H * 0.1, sqEx, sqEy, 10), body2);   // superquadric bladder
-      bladder.position.set(-H * 0.02, -H * 0.04, 0); g.add(bladder); g._bladder = bladder;
+    } else if (kind === "horn") {                          // bladder-horn (blow) — big FLARED BELL
+      const bladder = new THREE.Mesh(sqGeo(H * 0.12, sqEx, sqEy, 10), body2);   // superquadric bladder
+      bladder.position.set(-H * 0.02, -H * 0.05, 0); g.add(bladder); g._bladder = bladder;
       // a curved THROAT — a CatmullRom TUBE from bladder up to the bell.
       const throat = new THREE.Mesh(tube(THREE, [
-        new THREE.Vector3(-H * 0.02, -H * 0.02, 0), new THREE.Vector3(H * 0.08, H * 0.06, 0),
-        new THREE.Vector3(H * 0.16, H * 0.14, 0), new THREE.Vector3(H * 0.24, H * 0.2, 0),
-      ], { radius: H * 0.03, segs: 14, radial: 6, taper: 0.8 }), body2);
+        new THREE.Vector3(-H * 0.02, -H * 0.02, 0), new THREE.Vector3(H * 0.09, H * 0.07, 0),
+        new THREE.Vector3(H * 0.18, H * 0.16, 0), new THREE.Vector3(H * 0.28, H * 0.24, 0),
+      ], { radius: H * 0.035, segs: 14, radial: 6, taper: 0.85 }), body2);
       g.add(throat);
-      const bell = new THREE.Mesh(new THREE.ConeGeometry(H * 0.13, H * 0.18, 9, 1, true), acc);
-      bell.rotation.z = -2.4; bell.position.set(H * 0.26, H * 0.24, 0); g.add(bell);
+      const bell = new THREE.Mesh(new THREE.ConeGeometry(H * 0.17, H * 0.22, 10, 1, true), acc);
+      bell.rotation.z = -2.4; bell.position.set(H * 0.31, H * 0.28, 0); g.add(bell);
     } else {                                               // glass membrane-pane (bow)
       const pane = new THREE.Mesh(sqGeo(1, 0.3, 0.3, 10), body2);   // faceted superquadric slab
       pane.scale.set(H * 0.21, H * 0.13, H * 0.016); pane.position.y = -H * 0.02; g.add(pane); g._pane = pane;

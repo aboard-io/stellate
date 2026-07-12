@@ -189,6 +189,25 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
   else if (nCrackle > 0.45) skin = "matte";
   else skin = "chrome";
 
+  // ---- SURFACE FLAVOR (Complaint 3: genuinely DIFFERENT materials) ------
+  // A finer, ADDITIVE surface class alien.js reads to give aliens genuinely
+  // different-feeling skins WITHOUT changing the tested `skin` enum. Organic
+  // creatures split into FURRY (soft/swing), WAXY/wet (lush harmonic), STONY
+  // (heavy/rough hide) or plain SOFT; electronic ones into CHROME (mirror),
+  // GLASS (translucent jelly) or MATTE-plastic. Drives roughness/emissive +
+  // the skin texture in alien.js so a furry folk beast, a chrome techno bot, a
+  // glass ambient jelly and a stone doom-brute all clearly read as different
+  // MATERIALS. Feature-derived (no rng draw) so it perturbs no earlier stream.
+  let surface;
+  if (organic) {
+    if (nSub > 0.58 && nDrum > 0.5) surface = "stone";     // heavy acoustic -> rough hide/stone
+    else if (nSeventh > 0.52 && nSoft > 0.45) surface = "wax"; // lush harmonic -> waxy/wet sheen
+    else if (nSwing > 0.28 || nSoft > 0.55 || nHum > 0.5) surface = "fur"; // soft/swing -> furry
+    else surface = "soft";                                 // plain matte flesh
+  } else if (skin === "glass") surface = "glass";          // translucent jelly
+  else if (skin === "chrome") surface = "chrome";          // polished mirror metal
+  else surface = "plastic";                                // matte plastic shell
+
   // ---- BODY ------------------------------------------------------------
   // A genuinely-alien, feature-driven morphology. The five original fields are
   // kept (downstream + tests read them); seven MORPHOLOGY fields are added so the
@@ -319,6 +338,50 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
   // the new rig reads body.face for the FACE family; traits.face (below) keeps its
   // full existing shape (+ the same family echoed) so the legacy rig is untouched.
   body.face = { family: faceFamily, eyes: body.eyes };
+
+  // ---- ARCHETYPE (Complaint 2: DOGS / DRAGONS / PEOPLE / ROBOTS) --------
+  // The 7 `plan` values above stay the LOW-LEVEL silhouette contract (tests +
+  // the face-seating rig read them). ON TOP we derive a RECOGNIZABLE creature
+  // ARCHETYPE — the Spore/Pokémon read — that alien.js uses to attach species
+  // GEAR (horns, ears, wings, tail, dorsal fins, antennae) + choose a STANCE
+  // (upright biped / horizontal quadruped / floating jelly / boxy bot / radial
+  // star / tentacled mollusk). Nine archetypes compete on feature affinity; the
+  // argmax wins (NO rng draw — pure feature normals, so it is deterministic and
+  // perturbs no earlier trait stream). This is what makes heavy-metal read as a
+  // horned DRAGON, jazz as a four-legged BEAST, techno as a chrome BOT, ambient
+  // as a floating JELLY, vaporwave as a drifting MOLLUSK — obviously different
+  // SPECIES at a glance, not one biped-with-extras on every planet.
+  //   draconic   heavy + harmonic + fast          — winged, horned, spiny, tailed
+  //   quadruped  swinging organic mid-groove       — four legs, ears, snout, tail
+  //   biped      melodic / vocal / tall            — upright, two legs, head on top
+  //   bot        electronic + choppy/glitchy       — boxy, antennae, stiff, sensor
+  //   mollusk    high-motion washy                 — tall mantle + curling tentacles
+  //   jelly      washy soft no-kit                 — floating translucent bell + cilia
+  //   star       interlocked radial                — N-fold spoked star
+  //   crawler    swing acoustic dense kit          — long low body, many legs
+  //   blobby     sub-heavy dense low-variation     — squat amorphous pseudopod mass
+  const archScores = {
+    draconic: nSub * 0.85 + nDrum * 0.5 + nBpm * 0.55 + nSeventh * 0.45 + (organic ? 0.12 : 0) - nSwing * 0.55 - nWash * 0.45,
+    quadruped: nSwing * 0.85 + (organic ? 0.72 : 0) + nHum * 0.3 + 0.32 - nWash * 0.5 - nSub * 0.25 - (height > 2.6 ? 0.4 : 0),
+    biped: (height > 2.4 ? 0.7 : 0) + nSoft * 0.55 + (leadVoices >= 3 ? 0.5 : 0) + nSeventh * 0.28 + (organic ? 0.18 : 0.08) - nDrum * 0.3 - nSub * 0.2,
+    bot: (organic ? 0 : 0.68) + nChop * 0.7 + nCrackle * 0.5 + nIl * 0.42 - nWash * 0.45,
+    mollusk: nMotion * 0.9 + nWash * 0.45 + (organic ? 0 : 0.12) + nSwing * 0.2 - nDrum * 0.25 - (nWash > 0.55 && nDrum < 0.4 ? 0 : 0.15),
+    jelly: nWash * 1.05 + nSoft * 0.5 + (1 - nDrum) * 0.7 + (organic ? 0.1 : 0.2),
+    star: nIl * 1.0 + nHat * 0.5 + nPump * 0.4 + (organic ? 0 : 0.28),
+    crawler: nSwing * 0.55 + (organic ? 0.48 : 0) + nHat * 0.4 + nDrum * 0.45,
+    blobby: nSub * 0.85 + nDrum * 0.45 + (1 - nVar) * 0.32 + (1 - nBpm) * 0.35,
+  };
+  let archetype = "biped", archBest = -Infinity;
+  for (const a of Object.keys(archScores)) {
+    if (archScores[a] > archBest) { archBest = archScores[a]; archetype = a; }
+  }
+  body.archetype = archetype;
+  // a small feature-derived GEAR budget the rig reads (0..1 knobs; no rng draw):
+  body.horniness = +clamp01(nSub * 0.5 + nSeventh * 0.4 + (archetype === "draconic" ? 0.4 : 0)).toFixed(3);
+  body.winged = archetype === "draconic" || (archetype === "mollusk" && nMotion > 0.6);
+  body.tailed = archetype === "draconic" || archetype === "quadruped" || archetype === "crawler";
+  body.eared = archetype === "quadruped";
+  body.surface = surface;
 
   // ---- CLOTH -----------------------------------------------------------
   // motif reads the rhythmic character; coverage from softTop/wash (soft, washy
@@ -578,7 +641,7 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
   };
 
   return {
-    palette, body, skin, cloth, groove, face, texture, band,
+    palette, body, skin, surface, cloth, groove, face, texture, band,
     dancers,
     crowd: band.length,
     backdrop, glow, renderStyle, personality,
