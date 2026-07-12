@@ -739,6 +739,35 @@ async function main() {
       `GX7. OPTIONAL DANCERS gated by energy — hushed 'ambient' is band-only (${gx.ambDancers}), driving '${GEN}' has a crowd (${gx.genDancers})`);
   }
 
+  // ---- CA: AUTO-CAM ANGLE — NO shot frames the band FROM BELOW ----------------------
+  // Every cinematic shot's RESOLVED camera eye height (target.y + dist*sin(pitch)) must sit
+  // AT or ABOVE the band's eye level, so no shot ever looks UP from the floor (a view that
+  // was mostly ground). The flyover stays high, the through-city stays at eye level; only
+  // the up-from-the-floor angles are lifted. Pitches stay >= 0 (never tilted up).
+  const ca = await page.evaluate((G) => {
+    const SC = window.__STARCRUISE;
+    SC.__injectBeat({ bpm: 120, spb: 0.5, cbeats: 8, serial: 2, beatPhase: 0, playing: true });
+    SC.__injectTravel({ weights: [], dominant: null, position: null, live: false, seed: 1 });
+    for (let i = 0; i < 12; i++) SC.__stepNoRender(0.2);
+    SC.__injectTravel({ weights: [{ g: G, w: 1 }], dominant: G, position: { x: 0, y: 0 }, live: true, seed: 1 });
+    for (let i = 0; i < 60; i++) { const st = SC.__stepNoRender(0.1); if (st.phase === "DANCE") break; }
+    const shots = SC.autoShotList();
+    const eyeY = SC.centroid().y;
+    SC.__injectTravel(null); SC.__injectBeat(null);
+    return { shots, eyeY, base: 0 };
+  }, GEN).catch((e) => ({ err: String(e) }));
+  if (ca.err) { ok(false, "CA. auto-cam angle probe threw :: " + ca.err); }
+  else {
+    console.log("       autoShots:", JSON.stringify(ca.shots));
+    const minCamY = ca.shots.length ? Math.min(...ca.shots.map((s) => s.camY)) : -1;
+    ok(ca.shots.length > 0 && ca.shots.every((s) => s.camY >= ca.eyeY - 0.05),
+      `CA1. NO auto-cam shot frames the band FROM BELOW — every shot's camera sits AT/ABOVE band eye level (eyeY=${ca.eyeY.toFixed(2)}, min shot camY=${minCamY.toFixed(2)})`);
+    ok(ca.shots.every((s) => s.camY >= ca.base),
+      `CA2. every shot's camera stays ABOVE the band base (min camY=${minCamY.toFixed(2)} >= ${ca.base})`);
+    ok(ca.shots.every((s) => s.pitch >= 0),
+      `CA3. no shot tilts UP from the floor — all shot pitches >= 0 (${JSON.stringify(ca.shots.map((s) => s.pitch))})`);
+  }
+
   // ---- E: no errors ----
   ok(errs.length === 0, "E1. no console/page errors across activate->run" + (errs.length ? " :: " + errs.join(" | ") : ""));
 

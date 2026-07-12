@@ -409,6 +409,42 @@ async function inPage() {
     out.drummerStrikes = out.drum.contactAtOnset > 0.82 && out.drum.reachAtOnset < 0.03 && out.drum.windupTravel > 0.12;
   }
 
+  // ---- R: LIMB KEEP-OUT — no player-limb SEGMENT penetrates the torso core, while the
+  // onset arm-CONTACT still reaches. Sweep the bar; each frame sample the player arm's
+  // segments (root->elbow->wrist->tip) vs the core keep-out shell (limbProbe) and take the
+  // WORST clearance; also confirm the onset reach stays tight (< 0.05) with the clamp active.
+  out.keepout = [];
+  for (let i = 0; i < aliens.length; i++) {
+    const a = aliens[i], notes = asNotes(onsetSets[members[i].role]);
+    let minRatio = 1e9;
+    for (let s = 0; s < 240; s++) {
+      a.update(0.016, { barPhase: s / 240, playing: true, level: 1, notes });
+      const lp = a.limbProbe();
+      minRatio = Math.min(minRatio, lp.minClear / lp.keepR);
+    }
+    // onset reach still lands ON the instrument (play-the-score law preserved).
+    const rows = sweep(a, notes, true, 400);
+    const onReach = Math.max(...notes.map((n) => minReachWin(rows, n.t, 0.02)));
+    out.keepout.push({ role: members[i].role, minRatio: +minRatio.toFixed(3), onReach: +onReach.toFixed(4) });
+  }
+  out.limbsClearCore = out.keepout.every((k) => k.minRatio >= 0.98);   // no segment inside the shell (tiny tol)
+  out.contactStillReaches = out.keepout.every((k) => k.onReach < 0.05);
+
+  // ---- S: INSTRUMENT COLOUR — each instrument wears a BOLD colour that CONTRASTS its
+  // alien (complementary hue -> large hue distance), saturated + light enough to pop, held
+  // per player. Deterministic (from the alien's own colour). Compare instrument vs body hue.
+  function hslOf(hex) { const c = new THREE.Color("#" + hex); const o = { h: 0, s: 0, l: 0 }; c.getHSL(o); return o; }
+  const hueDist = (a, b) => { const d = Math.abs(a - b) % 1; return Math.min(d, 1 - d); };
+  out.instColour = aliens.map((al, i) => {
+    const body = hslOf(al.palette.skin), inst = hslOf(al.palette.instrument);
+    return { role: members[i].role, bodyHue: +body.h.toFixed(3), instHue: +inst.h.toFixed(3),
+      hueDist: +hueDist(body.h, inst.h).toFixed(3), instSat: +inst.s.toFixed(3), instL: +inst.l.toFixed(3) };
+  });
+  out.instContrastsBody = out.instColour.every((c) => c.hueDist > 0.35 && c.instSat > 0.4 && c.instL > 0.3);
+  // determinism: same seed -> same instrument colour.
+  out.instColourDeterministic = makeAlien(THREE, traits, members[0], 4242).palette.instrument
+    === makeAlien(THREE, traits, members[0], 4242).palette.instrument;
+
   renderer.setRenderTarget(null);
   target.dispose(); renderer.dispose();
   return out;
@@ -497,6 +533,20 @@ async function main() {
   ok(R.colorsDistinct, `P1. PER-ALIEN COLOUR: two same-genre members (seeds 1234 vs 5678) wear DIFFERENT palettes (A=${JSON.stringify(R.palA)} B=${JSON.stringify(R.palB)})`);
   ok(R.colorDeterministic, "P2. palette is DETERMINISTIC (same seed -> same colours)");
   ok(R.drummerStrikes, `Q1. DRUMMER strikes fast: hand snaps a big arc (${R.drum.windupTravel}) onto the drum AT the onset (contact=${R.drum.contactAtOnset}, reach=${R.drum.reachAtOnset})`);
+
+  // R — LIMB KEEP-OUT: limbs sit ON/OUTSIDE the body, never THROUGH it; onset contact intact.
+  for (const k of R.keepout) {
+    ok(k.minRatio >= 0.98, `R[${k.role}]. NO player-limb segment penetrates the torso core (worst clearance ${k.minRatio}x the keep-out radius, >= 0.98)`);
+  }
+  ok(R.limbsClearCore, `R1. every player limb stays OUTSIDE the torso keep-out shell across the whole bar (${JSON.stringify(R.keepout.map((k) => k.minRatio))})`);
+  ok(R.contactStillReaches, `R2. PRESERVED — the onset arm-CONTACT still REACHES the instrument with the keep-out active (onset reach ${JSON.stringify(R.keepout.map((k) => k.onReach))} all < 0.05)`);
+
+  // S — INSTRUMENT COLOUR contrasts the body (complementary hue, bold + saturated).
+  for (const c of R.instColour) {
+    ok(c.hueDist > 0.35, `S[${c.role}]. instrument colour CONTRASTS the body (hue distance ${c.hueDist} > 0.35; bodyHue=${c.bodyHue} instHue=${c.instHue})`);
+  }
+  ok(R.instContrastsBody, `S1. every instrument is BOLD + saturated + light enough to pop (${JSON.stringify(R.instColour.map((c) => ({ h: c.hueDist, s: c.instSat, l: c.instL })))})`);
+  ok(R.instColourDeterministic, "S2. instrument colour is DETERMINISTIC (same seed -> same colour)");
 
   ok(perr.length === 0, "G1. no console/page errors" + (perr.length ? " :: " + perr.join(" | ") : ""));
 

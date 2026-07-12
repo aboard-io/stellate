@@ -176,11 +176,22 @@ async function runScenario(makeFlight) {
   const lpOK = flyLP < 0.4 && danceLP > 0.9;
   console.log(`  ${lpOK ? "PASS" : "FAIL"}  landProgress low in FLY (${flyLP.toFixed(2)}) -> ~1 in DANCE (${danceLP.toFixed(2)})`);
   if (!lpOK) fail++;
-  // camera descends as we land: FLY z far, DANCE z near
+  // CAMERA DESCENT — current model: there is NO 3D ship/cockpit; the CAMERA itself flies
+  // one CONTINUOUS descent from the star-map down onto the band. So over a landing cycle the
+  // flight pose must (1) end up much NEARER the band than it started (FLY z far -> DANCE z
+  // near), (2) move CONTINUOUSLY — no per-tick jump/teleport/cut between regions — and (3)
+  // carry a valid pose every tick.
   const flyCamZ = A.states.find((s) => s.phase === "FLY").cameraPose.position.z;
   const danceCamZ = danceStates[danceStates.length - 1].cameraPose.position.z;
-  const camOK = flyCamZ > danceCamZ + 2 && A.states.every((s) => s.cameraPose && s.cameraPose.position && s.cameraPose.lookAt);
-  console.log(`  ${camOK ? "PASS" : "FAIL"}  cockpit descends toward the band (z ${flyCamZ.toFixed(1)} -> ${danceCamZ.toFixed(1)})`);
+  const firstDanceIdx = A.states.findIndex((s) => s.phase === "DANCE");
+  let maxStepZ = 0;
+  for (let i = 1; i <= firstDanceIdx; i++) {
+    maxStepZ = Math.max(maxStepZ, Math.abs(A.states[i].cameraPose.position.z - A.states[i - 1].cameraPose.position.z));
+  }
+  const continuous = maxStepZ < 6;   // no teleport/cut — the descent is one smooth move
+  const camOK = flyCamZ > danceCamZ + 2 && continuous &&
+    A.states.every((s) => s.cameraPose && s.cameraPose.position && s.cameraPose.lookAt);
+  console.log(`  ${camOK ? "PASS" : "FAIL"}  camera descends CONTINUOUSLY toward the band, no 3D ship (z ${flyCamZ.toFixed(1)} -> ${danceCamZ.toFixed(1)}, max step ${maxStepZ.toFixed(2)} < 6)`);
   if (!camOK) fail++;
 
   // ---- F. DETERMINISM ---------------------------------------------------------

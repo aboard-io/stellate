@@ -381,13 +381,28 @@ export function makeAlien(THREE, traits, member, seed) {
   const mouthMat = applyStyleHook(new THREE.MeshLambertMaterial({ color: new THREE.Color(0x18080f), flatShading: !smoothShade }));
   const bodyDark = skinCol.clone().multiplyScalar(chrome ? 0.7 : 0.55);
   const instBodyMat = mk(bodyDark, false);
+  // ---- INSTRUMENT COLOUR (Fix 2): a BOLD hue OPPOSITE the alien's body so the invented
+  // instrument reads as a SEPARATE object, not another lump of the same creature. Take the
+  // body (skin) hue — which already carries this alien's per-alien hueSpin — rotate it a
+  // full 180° (complementary), and push saturation + value UP so it POPS against the body.
+  // Deterministic (derived from THIS alien's own colour; no rng) and held CONSTANT for this
+  // player's instrument. Used for BOTH the instrument body and its accents so the whole
+  // instrument is one contrasting object.
+  const _skinHSL = { h: 0, s: 0, l: 0 }; skinCol.getHSL(_skinHSL);
+  const instHue = (_skinHSL.h + 0.5) % 1;                              // complementary to the body
+  const instColBase = new THREE.Color().setHSL(instHue, clamp(0.74 + _skinHSL.s * 0.18, 0.6, 0.95), 0.55);
+  const instMainMat = mk(instColBase.clone(), false);                  // instrument BODY — bold, lit
+  const instAccMat = applyStyleHook(new THREE.MeshLambertMaterial({    // instrument ACCENTS — same family, brighter
+    color: new THREE.Color(0x0a0a12), emissive: instColBase.clone().offsetHSL(0.02, 0.12, 0.22),
+    flatShading: !smoothShade,
+  }));
   // GLOWING LIGHT-BALL material: a near-black core swamped by a bright saturated
   // emissive -> a ball of light. Deep-dark body vs blazing orb = bold contrast.
   const mkOrb = (col) => applyStyleHook(new THREE.MeshLambertMaterial({
     color: new THREE.Color(0x0a0a12), emissive: col.clone(), wireframe: wire, flatShading: !smoothShade,
   }));
   const orbMat = mkOrb(accentBright.clone().offsetHSL(0, 0.12, 0.14));
-  const materials = [skinMat, clothMat, limbMat, accentMat, accent2Mat, eyeMat, mouthMat, instBodyMat, orbMat];
+  const materials = [skinMat, clothMat, limbMat, accentMat, accent2Mat, eyeMat, mouthMat, instBodyMat, orbMat, instMainMat, instAccMat];
 
   const group = new THREE.Object3D();
 
@@ -406,6 +421,7 @@ export function makeAlien(THREE, traits, member, seed) {
   function makeTendril(rootPos, dir, segLen, nSeg, width, mat, capMat, opts) {
     opts = opts || {};
     nSeg = clamp(Math.round(nSeg), 2, 5);
+    pushRootToSurface(rootPos);              // Fix 1: seat legs/tentacles ON the body surface
     const rootObj = new THREE.Object3D();
     rootObj.position.copy(rootPos);
     rootObj.quaternion.setFromUnitVectors(YAX, dir.clone().normalize());
@@ -492,8 +508,12 @@ export function makeAlien(THREE, traits, member, seed) {
     }
     group.add(upper); group.add(fore); group.add(palm); group.add(cap);
     const root = rootPos.clone(), pole = poleDir.clone().normalize();
-    const elbow = new THREE.Vector3(), tip = new THREE.Vector3();
+    const elbow = new THREE.Vector3(), tip = new THREE.Vector3(), wristV = new THREE.Vector3();
     function solve(target) {
+      // Fix 1: never aim a limb INTO the torso — clamp the target out of the keep-out shell
+      // (a copy, so the caller's vector + the reach probe stay intact). Onset contacts sit
+      // outside the shell already, so this is a no-op there and reach stays exact.
+      target = keepOutOfCore(_kv.copy(target));
       const toT = _v3.subVectors(target, root);
       let d = toT.length();
       const maxD = (L1 + L2) * 0.999, minD = Math.abs(L1 - L2) + 1e-3;
@@ -508,14 +528,17 @@ export function makeAlien(THREE, traits, member, seed) {
       if (axis.lengthSq() < 1e-6) axis.set(1, 0, 0); else axis.normalize();
       const upperDir = _v1.copy(ndir).applyAxisAngle(axis, ang);
       elbow.copy(root).addScaledVector(upperDir, L1);
+      keepOutOfCore(elbow);                 // Fix 1: the elbow rides OUTSIDE the torso too
       _wrist.copy(elbow).lerp(tip, WRIST_FRAC);
+      keepOutOfCore(_wrist);
+      wristV.copy(_wrist);                  // expose the posed wrist for the keep-out probe
       placeBone(upper, root, elbow);
       placeBone(fore, elbow, _wrist);
       placeBone(palm, _wrist, tip);
       cap.position.copy(tip);
       return tip;
     }
-    return { root, solve, tip, upper, fore, palm, cap };
+    return { root, solve, tip, upper, fore, palm, cap, elbow, wrist: wristV };
   }
 
   // arm bone lengths (reach scales with H); the instrument contact below derives
@@ -527,6 +550,35 @@ export function makeAlien(THREE, traits, member, seed) {
   // vertical anchors used across plans.
   const coreMidY = H * 0.5, shoulderY = H * 0.66, baseY = H * 0.16;
   const headSz = H * 0.24;
+  // ---- LIMB KEEP-OUT (Fix 1) ------------------------------------------------------
+  // The torso occupies a rough sphere of radius ~coreR about the core centre. The old
+  // contiguity fix over-pulled limb ROOTS inward, sinking shoulders/hips INSIDE the body
+  // so arms/legs swung THROUGH it. Fix: (a) push every limb root OUT onto the body SURFACE
+  // (a shoulder sits ON the torso, not in it), and (b) POSE-LIMIT the swing — every limb
+  // target/joint is clamped to stay OUTSIDE a keep-out shell around the core, so a limb can
+  // never penetrate the torso mesh. Deterministic; no rng; the onset CONTACT is unaffected
+  // (contacts already sit well outside the shell, so reach stays exact).
+  const CORE_Y = coreMidY;
+  const CORE_KEEP = coreR * 1.02;          // limb points must stay OUTSIDE this shell
+  const ROOT_SURFACE = coreR * 1.05;       // roots sit on the body surface (just outside it)
+  const _kv = new THREE.Vector3();          // scratch: a clamped copy of a limb target
+  function keepOutOfCore(v) {
+    const dx = v.x, dy = v.y - CORE_Y, dz = v.z;
+    const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    if (d < CORE_KEEP) {
+      if (d < 1e-5) v.x += CORE_KEEP;                       // degenerate: push +x out
+      else { const k = CORE_KEEP / d; v.x = dx * k; v.y = CORE_Y + dy * k; v.z = dz * k; }
+    }
+    return v;
+  }
+  function pushRootToSurface(p) {
+    const rad = Math.hypot(p.x, p.z);                        // horizontal distance from the core axis
+    if (rad < ROOT_SURFACE) {
+      if (rad < 1e-5) p.x = ROOT_SURFACE;
+      else { const k = ROOT_SURFACE / rad; p.x *= k; p.z *= k; }
+    }
+    return p;
+  }
   const head = new THREE.Object3D();      // face mount; y set per plan
   head.position.y = H * 0.86; group.add(head);
 
@@ -689,6 +741,10 @@ export function makeAlien(THREE, traits, member, seed) {
     armRoots.push({ pos: new THREE.Vector3(side * coreR * 1.1, shoulderY, coreR * 0.5), pole: new THREE.Vector3(side * 0.5, 0.8, -0.4), side });
   }
   nArms = armRoots.length;
+  // Fix 1: seat every arm root ON the body surface, so no shoulder is sunk inside the torso
+  // (the over-pull regression). The player CONTACT derives from arms[playerIdx].root below,
+  // so it rides out with the shoulder and stays reachable — reach is unaffected.
+  for (const r of armRoots) pushRootToSurface(r.pos);
 
   // ---- CONTRAST: floating LIGHT-BALLS — small bright emissive orbs orbiting the
   // core. Per-alien count + jitter so no two aliens carry the same halo; a deep-dark
@@ -881,7 +937,9 @@ export function makeAlien(THREE, traits, member, seed) {
   const instKind = isDancer ? null : instKindFor();
   function buildInstrument(kind) {
     const g = new THREE.Object3D();
-    const acc = accentMat, body2 = instBodyMat;
+    // Fix 2: the instrument wears its OWN bold complementary colour (body + accents) so it
+    // contrasts the alien and reads as a distinct object.
+    const acc = instAccMat, body2 = instMainMat;
     if (kind === "sac") {                                  // pulsing membrane-sac (drum)
       const sac = new THREE.Mesh(sqGeo(H * 0.17, sqEx, sqEy, 12), body2);   // superquadric membrane
       sac.scale.set(1, 0.8, 1); g.add(sac); g._sac = sac;
@@ -1307,6 +1365,23 @@ export function makeAlien(THREE, traits, member, seed) {
     };
   }
 
+  // headless-proof accessor (Fix 1): sample the player arm's segments (root->elbow->wrist
+  // ->tip) and report the MIN clearance — the distance from any sampled limb point to the
+  // core centre. It must stay >= the keep-out radius, i.e. no limb segment penetrates the
+  // torso. Reflects the CURRENT posed frame (update() solves the player arm each tick).
+  function limbProbe() {
+    const a = (playerIdx >= 0 ? arms[playerIdx] : arms[0]);
+    const pts = [];
+    const seg = (p, q, n) => { for (let s = 0; s <= n; s++) pts.push(p.clone().lerp(q, s / n)); };
+    seg(a.root, a.elbow, 5); seg(a.elbow, a.wrist, 5); seg(a.wrist, a.tip, 5);
+    let minClear = Infinity;
+    for (const p of pts) {
+      const d = Math.hypot(p.x, p.y - CORE_Y, p.z);
+      if (d < minClear) minClear = d;
+    }
+    return { minClear: +minClear.toFixed(4), keepR: +CORE_KEEP.toFixed(4), coreR: +coreR.toFixed(4), samples: pts.length };
+  }
+
   // headless-proof accessor for the animated FACE: the rig census + the live gaze /
   // blink / brow / mouth state + this alien's per-seed personality (individuality).
   function faceDebug() {
@@ -1369,9 +1444,10 @@ export function makeAlien(THREE, traits, member, seed) {
     skin: skinMat.color.getHexString(),
     cloth: clothMat.color.getHexString(),
     accent: accentMat.color.getHexString(),
+    instrument: instMainMat.color.getHexString(),   // Fix 2: bold complementary instrument colour
   };
 
-  return { group, update, debug, faceDebug, materials, playStyle, hitsPerBeat, voice, plan, tentacleProof, palette, liftY, footWorldY };
+  return { group, update, debug, faceDebug, limbProbe, materials, playStyle, hitsPerBeat, voice, plan, tentacleProof, palette, liftY, footWorldY };
 }
 
 export default { makeAlien };
