@@ -210,6 +210,17 @@ const orbit = {
 };
 let wasLanded = false;            // edge-detect entering a landed phase (seed once)
 
+// ---- TRANSIT FREE-LOOK ----------------------------------------------------------
+// In transit the auto-flight owns WHERE the camera flies (the continuous star-map
+// descent), but the user must still be able to LOOK AROUND — turn their head to see
+// space + the planets they pass, never a locked-forward camera. A drag adds a yaw/
+// pitch LOOK OFFSET that rotates the view direction about the flying eye WITHOUT
+// fighting the path; it eases gently back to the flight's framing when released (a
+// right-stick feel), and is zeroed on land/depart so the landed framing is clean.
+const transitLook = { yaw: 0, pitch: 0 };
+const TRANSIT_LOOK_TC = 3.5;      // recenter time-constant (s) — slow enough to hold a look
+const _tv3 = { a: null, b: null, up: null, right: null };   // reused THREE.Vector3 scratch (set on start)
+
 // ---- MUSIC-VIDEO auto-camera (landed) -------------------------------------------
 // Once landed, an automatic cinematic camera slowly orbits/dollies and CUTS between
 // band aliens + wide city shots, on the beat — a little music video of the song.
@@ -228,7 +239,9 @@ const ESTAB_DUR = 0.75;
 let autoShots = [];               // per-land cinematic shot list (band closeups + wides)
 let _vclock = 0;                  // virtual clock (accumulated dt) — the auto-cam timebase
 let _lastInputT = -1e9;           // last user-input virtual time (manual override window)
-const AUTO_IDLE = 2.5;            // seconds of no input before the auto camera resumes
+const AUTO_IDLE = 4.5;            // seconds of no input before the music-video auto-camera resumes
+                                 // (raised from 2.5 so a manual look-around HOLDS — the user
+                                 // should never feel the camera yanked back mid-look)
 const CUT_BEATS = 8;              // cut roughly every 2 bars (musical, beat-synced)
 function noteInput() { _lastInputT = _vclock; }   // called by every manual nav handler
 
@@ -788,11 +801,104 @@ function genreLabelOf(g) {
 let planetBaseR = null;     // per-instance base radius (to restore the dominant highlight)
 let _hiIdx = -1;            // currently-highlighted (dominant) instance index
 function hueOf(name) { let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0; return (h % 360) / 360; }
+// PLANET-MARKER SHADER — the genre planets used to be flat MeshBasic "colored blobs"
+// (the user's complaint). Now each instanced marker is a LIT little WORLD: real
+// light/dark day-night shading, procedural continents/oceans over its per-genre hue,
+// polar ice caps, fine mottling, and a soft fresnel ATMOSPHERE rim — all in ONE
+// instanced draw call (mobile-cheap; the surface is a cheap 3-octave value-fbm, no
+// texture). A per-instance seed (aSeed) makes every planet's continents unique. The
+// injection targets only stable r160 shader chunks (<begin_vertex>, <color_fragment>,
+// <emissivemap_fragment>) so it survives the vendored three build.
+const PLANET_NOISE_GLSL = [
+  "float scHash(vec3 p){ p = fract(p*0.3183099 + 0.1); p *= 17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }",
+  "float scVN(vec3 x){ vec3 i=floor(x), f=fract(x); f=f*f*(3.0-2.0*f);",
+  "  return mix(mix(mix(scHash(i+vec3(0,0,0)),scHash(i+vec3(1,0,0)),f.x), mix(scHash(i+vec3(0,1,0)),scHash(i+vec3(1,1,0)),f.x),f.y),",
+  "             mix(mix(scHash(i+vec3(0,0,1)),scHash(i+vec3(1,0,1)),f.x), mix(scHash(i+vec3(0,1,1)),scHash(i+vec3(1,1,1)),f.x),f.y), f.z); }",
+  "float scFBM(vec3 p){ float a=0.5, s=0.0; for(int i=0;i<3;i++){ s+=a*scVN(p); p*=2.03; a*=0.5; } return s; }",
+].join("\n");
+function makePlanetMarkerMaterial() {
+  const mat = new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0.0 });
+  mat.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nattribute float aSeed;\nvarying vec3 vObjP;\nvarying float vSeed;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\n vObjP = normalize(position);\n vSeed = aSeed;");
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vObjP;\nvarying float vSeed;\n" + PLANET_NOISE_GLSL)
+      .replace("#include <color_fragment>", [
+        "#include <color_fragment>",
+        "vec3 sp = vObjP*2.1 + vec3(vSeed*53.0);",
+        "float land = scFBM(sp*1.7);",
+        "float terr = smoothstep(0.44, 0.60, land);",             // ocean -> continents
+        "vec3 base = diffuseColor.rgb;",
+        "vec3 ocean = base*0.42;",
+        "vec3 landc = clamp(base*1.2 + 0.04, 0.0, 1.0);",
+        "diffuseColor.rgb = mix(ocean, landc, terr);",
+        "diffuseColor.rgb *= 0.88 + 0.18*scFBM(sp*5.3);",          // fine mottling
+        "float lat = abs(vObjP.y);",
+        "diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.94,0.96,1.0), smoothstep(0.80,0.96,lat)*0.7);", // polar caps
+      ].join("\n"))
+      .replace("#include <emissivemap_fragment>", [
+        "#include <emissivemap_fragment>",
+        // soft base glow so the marker still reads against black, + a fresnel ATMOSPHERE rim.
+        "float scRim = pow(1.0 - abs(dot(normalize(vViewPosition), normal)), 3.0);",
+        "totalEmissiveRadiance += diffuseColor.rgb*0.22 + (diffuseColor.rgb*0.5 + 0.5)*scRim*0.85;",
+      ].join("\n"));
+  };
+  return mat;
+}
+// SUN (STAR) SHADER — the cluster suns used to be flat MeshBasic "balls of light".
+// Now each is a FLAMING STAR: a DARK ember base overlaid with bright turbulent plasma
+// (domain-warped fbm granulation + flares), dark SUNSPOTS, and LIMB DARKENING at the
+// edge — slowly churning off a deterministic dt clock (uTime = _vclock, so headless
+// snapshots at dt=0 stay stable). Purely EMISSIVE (a star is self-lit; it ignores the
+// scene lights). Per-instance aSeed makes every star's surface unique. One instanced
+// draw call. The additive corona shell (built separately) still bleeds light into space.
+let _sunShader = null;    // captured onBeforeCompile so update() can advance uTime
+function makeSunMaterial() {
+  const mat = new THREE.MeshStandardMaterial({ roughness: 1.0, metalness: 0.0 });   // color white -> instanceColor tints
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = { value: 0 };
+    _sunShader = shader;
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nattribute float aSeed;\nvarying vec3 vObjP;\nvarying float vSeed;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\n vObjP = normalize(position);\n vSeed = aSeed;");
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", "#include <common>\nuniform float uTime;\nvarying vec3 vObjP;\nvarying float vSeed;\n" + PLANET_NOISE_GLSL)
+      .replace("#include <emissivemap_fragment>", [
+        "#include <emissivemap_fragment>",
+        "vec3 sp = vObjP*3.0 + vec3(vSeed*41.0);",
+        "float t = uTime*0.12;",
+        // domain-warped turbulence -> churning plasma; fine granulation on top.
+        "float warp = scFBM(sp*1.6 + vec3(t*0.5, -t*0.4, t*0.6));",
+        "float gran = scFBM(sp*5.5 + warp*1.6 + vec3(t));",
+        "float heat = clamp(warp*0.8 + gran*0.6, 0.0, 1.0);",
+        "vec3 tint = diffuseColor.rgb;",                                    // the cluster color (keeps star hue)
+        "vec3 emberDark = tint*0.05;",                                     // near-BLACK valleys (user: 'darker')
+        // FIERY flare — a fire ramp (deep-red -> orange -> yellow-white) blended with the
+        // cluster tint, so even a cool-hued star reads as burning plasma, not a pastel ball.
+        "vec3 flameMid = mix(tint, vec3(0.95, 0.35, 0.05), 0.55);",        // orange body
+        "vec3 flameHot = clamp(mix(tint, vec3(1.5, 1.15, 0.55), 0.7), 0.0, 1.6);", // yellow-white peaks
+        "vec3 flame = mix(emberDark, flameMid, smoothstep(0.30, 0.62, heat));",
+        "flame = mix(flame, flameHot, smoothstep(0.66, 0.92, heat));",     // hot filaments punch through
+        // SUNSPOTS — dark cells where a slow second field dips near its mid value.
+        "float spot = 1.0 - smoothstep(0.0, 0.10, abs(scFBM(sp*2.4 + 13.0) - 0.5));",
+        "flame *= mix(1.0, 0.15, spot*0.8);",
+        // LIMB DARKENING — dimmer toward the grazing edge (a real solar disc).
+        "float limb = abs(dot(normalize(vViewPosition), normal));",
+        "flame *= 0.5 + 0.6*limb;",
+        "totalEmissiveRadiance += flame;",
+        "diffuseColor.rgb = vec3(0.0);",                                   // purely emissive — a star ignores scene light
+      ].join("\n"));
+  };
+  return mat;
+}
 function buildPlanetField() {
   const worlds = (mods.planetWorlds && mods.planetWorlds()) || [];
   if (!worlds.length || !scene) return;
-  const geo = new THREE.IcosahedronGeometry(1, 0);
-  const mat = new THREE.MeshBasicMaterial({ toneMapped: false });   // bright balls of light
+  const geo = new THREE.IcosahedronGeometry(1, 2);   // rounder little worlds (was detail 0 flat balls)
+  const seeds = new Float32Array(worlds.length);
+  geo.setAttribute("aSeed", new THREE.InstancedBufferAttribute(seeds, 1));   // per-planet terrain seed
+  const mat = makePlanetMarkerMaterial();
   planetField = new THREE.InstancedMesh(geo, mat, worlds.length);
   planetField.frustumCulled = false;
   planetField.name = "planetField";
@@ -803,9 +909,10 @@ function buildPlanetField() {
     let hh = 0; for (let k = 0; k < w.g.length; k++) hh = (hh * 131 + w.g.charCodeAt(k)) >>> 0;
     const r = 1.4 + (hh % 100) / 100 * 1.9;   // per-genre radius 1.4..3.3
     planetBaseR[i] = r;
+    seeds[i] = (hh % 997) / 997 * 1.0;        // deterministic per-genre terrain seed
     p.set(w.x, w.y, w.z); s.set(r, r, r);
     m4.compose(p, q, s); planetField.setMatrixAt(i, m4);
-    col.setHSL(hueOf(w.g), 0.72, 0.58); planetField.setColorAt(i, col);
+    col.setHSL(hueOf(w.g), 0.66, 0.55); planetField.setColorAt(i, col);
     planetIndex[w.g] = i;
   }
   planetField.instanceMatrix.needsUpdate = true;
@@ -827,17 +934,19 @@ function buildSunField() {
   // CORE — the STAR itself: a bright, fully self-lit (toneMapped:false, unlit-at-full-
   // brightness) sphere tinted the cluster color. Radius scales with membership but is kept
   // well under the ~19-unit min sun-sun spacing so systems never touch (real empty space).
-  const geo = new THREE.IcosahedronGeometry(1, 2);
-  const mat = new THREE.MeshBasicMaterial({ toneMapped: false });
+  const geo = new THREE.IcosahedronGeometry(1, 3);   // rounder star discs (flaming surface reads better)
+  const sunSeeds = new Float32Array(suns.length);
+  geo.setAttribute("aSeed", new THREE.InstancedBufferAttribute(sunSeeds, 1));   // per-star surface seed
+  const mat = makeSunMaterial();
   sunField = new THREE.InstancedMesh(geo, mat, suns.length);
   sunField.frustumCulled = false;
   sunField.name = "sunField";
   // GLOW — an additive CORONA/HALO shell around each star (radius ~2.6x the core), blended
   // ADDITIVELY so it reads as light bleeding into space, not a solid ball. One extra
   // InstancedMesh (one draw call) — mobile-cheap; caps the glow cost at a single pass.
-  const glowGeo = new THREE.IcosahedronGeometry(1, 1);
+  const glowGeo = new THREE.IcosahedronGeometry(1, 2);   // rounder corona (was faceted at detail 1)
   const glowMat = new THREE.MeshBasicMaterial({ blending: THREE.AdditiveBlending, transparent: true,
-    opacity: 0.5, depthWrite: false, toneMapped: false });
+    opacity: 0.28, depthWrite: false, toneMapped: false });   // softer corona so the darker flaming core reads
   sunGlowField = new THREE.InstancedMesh(glowGeo, glowMat, suns.length);
   sunGlowField.frustumCulled = false;
   sunGlowField.name = "sunGlowField";
@@ -846,13 +955,16 @@ function buildSunField() {
     const w = suns[i];
     const r = 4 + Math.min(8, w.members) * 0.5;    // 4..8 world units — landmark stars, well separated
     sunBaseR[i] = r;
+    sunSeeds[i] = ((i * 2654435761) >>> 0) % 1000 / 1000;   // deterministic per-star surface seed
     p.set(w.x, w.y, w.z);
     s.set(r, r, r); m4.compose(p, q, s); sunField.setMatrixAt(i, m4);
     const c = w.color || [1, 1, 1];
     col.setRGB(c[0], c[1], c[2]); sunField.setColorAt(i, col);
-    // the halo is the same hue but pushed brighter, at ~2.6x radius (soft additive corona).
-    const gr = r * 2.6; s.set(gr, gr, gr); m4.compose(p, q, s); sunGlowField.setMatrixAt(i, m4);
-    gcol.setRGB(0.5 + c[0] * 0.5, 0.5 + c[1] * 0.5, 0.5 + c[2] * 0.5); sunGlowField.setColorAt(i, gcol);
+    // the halo is the star's hue pushed toward a warm CORONA (a little fire in the tint),
+    // at ~2.1x radius — a soft additive glow bleeding into space (was a pale white bubble).
+    const gr = r * 2.1; s.set(gr, gr, gr); m4.compose(p, q, s); sunGlowField.setMatrixAt(i, m4);
+    gcol.setRGB(Math.min(1, c[0] * 0.7 + 0.35), Math.min(1, c[1] * 0.6 + 0.16), Math.min(1, c[2] * 0.6 + 0.05));
+    sunGlowField.setColorAt(i, gcol);
   }
   sunField.instanceMatrix.needsUpdate = true;
   if (sunField.instanceColor) sunField.instanceColor.needsUpdate = true;
@@ -1006,6 +1118,10 @@ export async function start() {
   // orbit target = the band's centre; seeded FRONT-ON the moment we land.
   orbit.target = new THREE.Vector3(bandCentroid.x, bandCentroid.y, bandCentroid.z);
   wasLanded = false;
+  // reusable scratch vectors for the transit free-look (avoid per-frame allocation).
+  _tv3.a = new THREE.Vector3(); _tv3.b = new THREE.Vector3();
+  _tv3.up = new THREE.Vector3(0, 1, 0); _tv3.right = new THREE.Vector3();
+  transitLook.yaw = 0; transitLook.pitch = 0;
 
   clock = { now: (typeof performance !== "undefined" ? performance.now() : Date.now()) };
 
@@ -1034,6 +1150,7 @@ export async function start() {
   // away through space with the planet receding below + the genre display lit.
   flight.events.on("depart", (e) => {
     despawnBand();
+    transitLook.yaw = 0; transitLook.pitch = 0;    // start the fly-away looking forward
     spawnSpaceRig((e && e.to) || curDominant || (getTravel().dominant));
   });
 
@@ -1175,6 +1292,14 @@ function unbindInput() {
 // -- orbit math -------------------------------------------------------------------
 const ORBIT_SPEED = 0.0055;       // radians per pixel dragged
 function orbitBy(dx, dy) {
+  // TRANSIT: a drag turns the head (look-offset) instead of orbiting the band — the
+  // auto-flight still flies the path, but the user can look around space freely.
+  if (!LANDED_PHASES[(lastState || {}).phase]) {
+    transitLook.yaw = Math.max(-2.4, Math.min(2.4, transitLook.yaw - dx * ORBIT_SPEED));
+    transitLook.pitch = Math.max(-1.15, Math.min(1.15, transitLook.pitch - dy * ORBIT_SPEED));
+    noteInput();
+    return;
+  }
   orbit.yaw -= dx * ORBIT_SPEED;
   orbit.pitch = Math.max(orbit.minPitch, Math.min(orbit.maxPitch, orbit.pitch - dy * ORBIT_SPEED));
   noteInput();                         // manual override suspends the music-video auto-cam
@@ -1281,8 +1406,23 @@ function applyTransitCamera(dt, p) {
   camFollow.ly += (p.lookAt.y - camFollow.ly) * k;
   camFollow.lz += (p.lookAt.z - camFollow.lz) * k;
   camFollow.fov += (p.fov - camFollow.fov) * k;
-  camera.position.set(camFollow.x, Math.max(FLOOR_Y, camFollow.y), camFollow.z);
-  camera.lookAt(camFollow.lx, camFollow.ly, camFollow.lz);
+  const eyeY = Math.max(FLOOR_Y, camFollow.y);
+  camera.position.set(camFollow.x, eyeY, camFollow.z);
+  // FREE-LOOK: rotate the flight's look direction about the eye by the user's yaw/pitch
+  // offset so they can turn their head in space; ease the offset back to 0 (the flight's
+  // framing) when released. When the offset is ~0 this is exactly the old lookAt.
+  const decay = Math.exp(-(dt > 0 ? dt : 0) / TRANSIT_LOOK_TC);
+  transitLook.yaw *= decay; transitLook.pitch *= decay;
+  if (_tv3.a && (Math.abs(transitLook.yaw) > 1e-4 || Math.abs(transitLook.pitch) > 1e-4)) {
+    const dir = _tv3.a.set(camFollow.lx - camFollow.x, camFollow.ly - eyeY, camFollow.lz - camFollow.z);
+    dir.applyAxisAngle(_tv3.up.set(0, 1, 0), transitLook.yaw);
+    const right = _tv3.right.crossVectors(dir, _tv3.up).normalize();
+    if (right.lengthSq() > 1e-6) dir.applyAxisAngle(right, transitLook.pitch);
+    const tgt = _tv3.b.set(camFollow.x + dir.x, eyeY + dir.y, camFollow.z + dir.z);
+    camera.lookAt(tgt.x, tgt.y, tgt.z);
+  } else {
+    camera.lookAt(camFollow.lx, camFollow.ly, camFollow.lz);
+  }
   if (Math.abs(camera.fov - camFollow.fov) > 1e-3) { camera.fov = camFollow.fov; camera.updateProjectionMatrix(); }
 }
 
@@ -1539,6 +1679,9 @@ export function update(dt) {
     seedOrbitFromPose(p);
   }
   wasLanded = landed;
+  // FLAMING SUNS: advance the star-surface plasma churn off the deterministic clock
+  // (_vclock accumulates dt; a headless snapshot at dt=0 stays byte-stable).
+  if (_sunShader) _sunShader.uniforms.uTime.value = _vclock;
   // 2D COCKPIT HUD: reflect the current dominant genre's star system (cluster label +
   // color). In deep space (no dominant) it reads "DEEP SPACE".
   updateHUD(st.dominant || curDominant || null);
@@ -1664,6 +1807,7 @@ export function stop() {
   if (planetField) { scene.remove(planetField); disposeObj(planetField); planetField = null; }
   if (sunGlowField) { scene.remove(sunGlowField); disposeObj(sunGlowField); sunGlowField = null; }
   if (sunField) { scene.remove(sunField); disposeObj(sunField); sunField = null; sunIndex = null; sunBaseR = null; }
+  _sunShader = null;   // shader is captured on compile; a fresh start rebuilds it
   for (const g in planetIndex) delete planetIndex[g];
   planetBaseR = null; _hiIdx = -1;
   autoShots = []; autoCam.active = false; autoCam.shot = 0; autoCam.shotT = 0; autoCam.cuts = 0; autoCam.forceCut = true;
@@ -1775,6 +1919,10 @@ window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBe
   cam: () => (camera ? { x: camera.position.x, y: camera.position.y, z: camera.position.z, fov: camera.fov,
     tx: bandCentroid.x, ty: bandCentroid.y, tz: bandCentroid.z } : null),
   centroid: () => ({ x: bandCentroid.x, y: bandCentroid.y, z: bandCentroid.z }),
+  // transit FREE-LOOK probes: the current look-offset + the camera's world forward
+  // direction (proves a drag in transit turns the view without moving the flight path).
+  transitLook: () => ({ yaw: +transitLook.yaw.toFixed(4), pitch: +transitLook.pitch.toFixed(4) }),
+  camDir: () => { if (!camera) return null; const v = new THREE.Vector3(); camera.getWorldDirection(v); return { x: +v.x.toFixed(4), y: +v.y.toFixed(4), z: +v.z.toFixed(4) }; },
   // dispatch a synthetic drag on the canvas (headless nav proof).
   __drag: (dx, dy) => { orbitBy(dx || 0, dy || 0); if (LANDED_PHASES[(lastState || {}).phase]) applyOrbitToCamera(); return { yaw: orbit.yaw, pitch: orbit.pitch }; },
   // ---- FIDELITY-CAMERA + STAR-MAP + MUSIC-VIDEO probes (headless-proof) -------------
