@@ -172,6 +172,20 @@ export function makeFlight({ getTravel, getBeat } = {}) {
   let landedGenre = null;    // the dominant we committed to when we last touched down
   let seenDominant = null;   // last non-null dominant we've observed
   let beatPhase = 0;
+  // CRITICALLY-DAMPED descent scalars. landProgress/spaceProgress used to be first-order
+  // lerps (`+= (target-cur)*k`), which front-load a STEP in the target — exactly what the
+  // ~8-bar blend clock delivers — into a per-frame velocity SPIKE on the boundary frame
+  // (the lurch). Driving them through smoothDampS carries velocity across each step: a
+  // weight jump nudges the goal and the descent GLIDES, ramping from the current velocity,
+  // never jumping. Deterministic (only dt); no overshoot for a monotone target.
+  let landVel = 0, spaceVel = 0;
+  const LAND_SMOOTH = 0.38, SPACE_SMOOTH = 0.5;   // spring time-constants (s)
+  // LAND when the SMOOTHED descent (landProgress) has actually reached the surface — NOT
+  // the instant the raw weight crosses LAND_W. This decouples the phase flip from the raw
+  // blend clock: at the flip the camera's descent `t` is already ~1 (== SURFACE_POSE), so
+  // the transit->landed handoff is continuous (no snap from a still-descending pose).
+  const LAND_ZOOM = 0.795;
+  const FLOOR = 0.35;        // camera floor clamp — the eye never dips below the ground
 
   // SMOOTHED galaxy targets: where we ARE (blend centroid) and the RESOLVING planet, each
   // eased with a critically-damped spring. The blend/dominant updates in discrete ~8-bar
@@ -231,7 +245,12 @@ export function makeFlight({ getTravel, getBeat } = {}) {
     } else if (phase === "FLY") {
       if (nearness >= APPROACH_W && dominant) setPhase("APPROACH");
     } else if (phase === "APPROACH") {
-      if (nearness >= LAND_W && dominant) {
+      // TOUCH DOWN only once the SMOOTHED descent has arrived at the surface (landProgress
+      // ~ 0.8 == transit `t` ~ 1 == SURFACE_POSE). The raw weight is already >= LAND_W by
+      // then (landProgress can only reach 0.8 when imm reaches 0.8, i.e. nearness >= LAND_W);
+      // waiting for the smoothed scalar guarantees the camera is AT the surface at the flip,
+      // so the controller's landed camera picks up exactly where the descent left off.
+      if (landProgress >= LAND_ZOOM && nearness >= LAND_W && dominant) {
         landedGenre = dominant;           // land is ALWAYS at a real dominant genre
         setPhase("LAND");
       } else if (nearness < APPROACH_W) {
@@ -244,7 +263,8 @@ export function makeFlight({ getTravel, getBeat } = {}) {
     if (LANDED[phase]) target = Math.max(0.8, imm);
     else if (phase === "DEPART") target = 0;
     else target = Math.min(0.8, imm);      // FLY/APPROACH ride the dominant weight
-    landProgress += (target - landProgress) * Math.min(1, dt * 3);
+    // CRITICAL DAMP (was first-order): a step in `target` glides in, no boundary spike.
+    { const r = smoothDampS(landProgress, target, landVel, LAND_SMOOTH, dt); landProgress = clamp01(r[0]); landVel = r[1]; }
     const t = clamp01(landProgress / 0.8);     // 0 deep space .. 1 at touchdown
     const fullZoom = clamp01((landProgress - 0.8) / 0.2);   // 0 just-landed .. 1 full
 
@@ -253,7 +273,7 @@ export function makeFlight({ getTravel, getBeat } = {}) {
     if (LANDED[phase]) sTarget = 0;
     else if (phase === "DEPART") sTarget = clamp01(phaseT / Math.max(0.001, DUR.DEPART));
     else sTarget = clamp01(1 - imm / 0.8);   // FLY/APPROACH: deep -> surface as we zoom
-    spaceProgress += (sTarget - spaceProgress) * Math.min(1, dt * 2.2);
+    { const r = smoothDampS(spaceProgress, sTarget, spaceVel, SPACE_SMOOTH, dt); spaceProgress = clamp01(r[0]); spaceVel = r[1]; }
 
     // ---- WHERE WE ARE in the genre map + the resolving planet --------------
     const centroidCoord = centroidCoordOf(weights, dominant);
@@ -289,15 +309,23 @@ export function makeFlight({ getTravel, getBeat } = {}) {
       // weight climbs the camera flies to the planet and descends (Google-Maps style) to
       // the band; as it falls, `t` drops and the camera LIFTS back out to the galaxy. No
       // cut, no region jump. Built from the SMOOTHED planet target so it never lurches.
-      const pw = smPlanet;
+      // AIM AT THE CONTINUOUS BLEND, not the discrete dominant. The vantage + look anchor
+      // is the weight-weighted centroid of ALL active genres' planet positions (smHere),
+      // spring-smoothed — so as the blend PANS across the map the camera glides with it and
+      // NEVER lurches to a new far planet when the discrete `dominant` flips at a bar edge.
+      // (Using the dominant planet, smPlanet, made every dominant flip a re-aim.) As one
+      // genre wins, the centroid converges onto its planet, so the descent still lands there.
+      const pw = smHere;
       let hx = FIELD.ox - pw.x, hz = FIELD.oz - pw.z;    // aim the descent toward the origin
       let hl = Math.hypot(hx, hz); if (hl < 1e-3) { hx = 0; hz = 1; hl = 1; }
       hx /= hl; hz /= hl;
       const ext = fieldExtent();
       const gpos = { x: pw.x + hx * ext * 0.38, y: pw.y + ext * 0.18, z: pw.z + hz * ext * 0.38 };
       const glook = { x: pw.x, y: pw.y, z: pw.z };
+      const _pos = lerp3(gpos, SURFACE_POSE.position, t);
+      if (_pos.y < FLOOR) _pos.y = FLOOR;                // floor clamp — never below ground
       cameraPose = {
-        position: lerp3(gpos, SURFACE_POSE.position, t),
+        position: _pos,
         lookAt: lerp3(glook, SURFACE_POSE.lookAt, t),
         fov: lerp(64, SURFACE_POSE.fov, t),
       };

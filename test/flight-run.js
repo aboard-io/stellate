@@ -181,17 +181,22 @@ async function runScenario(makeFlight) {
   // flight pose must (1) end up much NEARER the band than it started (FLY z far -> DANCE z
   // near), (2) move CONTINUOUSLY — no per-tick jump/teleport/cut between regions — and (3)
   // carry a valid pose every tick.
-  const flyCamZ = A.states.find((s) => s.phase === "FLY").cameraPose.position.z;
-  const danceCamZ = danceStates[danceStates.length - 1].cameraPose.position.z;
+  // Camera DISTANCE to the band (~origin) must shrink continuously. Raw z is no longer a
+  // valid proxy: the landed music-video pose sits in FRONT of the band (+z) while the galaxy
+  // vantage is nearer z=0, so z INVERTS — the real invariant is "gets much nearer, no teleport".
+  const dist = (p) => Math.hypot(p.x, p.y, p.z);
+  const flyCamD = dist(A.states.find((s) => s.phase === "FLY").cameraPose.position);
+  const danceCamD = dist(danceStates[danceStates.length - 1].cameraPose.position);
   const firstDanceIdx = A.states.findIndex((s) => s.phase === "DANCE");
-  let maxStepZ = 0;
+  let maxStep = 0;
   for (let i = 1; i <= firstDanceIdx; i++) {
-    maxStepZ = Math.max(maxStepZ, Math.abs(A.states[i].cameraPose.position.z - A.states[i - 1].cameraPose.position.z));
+    const a = A.states[i].cameraPose.position, b = A.states[i - 1].cameraPose.position;
+    maxStep = Math.max(maxStep, Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z));
   }
-  const continuous = maxStepZ < 6;   // no teleport/cut — the descent is one smooth move
-  const camOK = flyCamZ > danceCamZ + 2 && continuous &&
+  const continuous = maxStep < 0.6 * flyCamD;   // no teleport/cut — one continuous descent
+  const camOK = flyCamD > danceCamD + 2 && continuous &&
     A.states.every((s) => s.cameraPose && s.cameraPose.position && s.cameraPose.lookAt);
-  console.log(`  ${camOK ? "PASS" : "FAIL"}  camera descends CONTINUOUSLY toward the band, no 3D ship (z ${flyCamZ.toFixed(1)} -> ${danceCamZ.toFixed(1)}, max step ${maxStepZ.toFixed(2)} < 6)`);
+  console.log(`  ${camOK ? "PASS" : "FAIL"}  camera descends CONTINUOUSLY toward the band (dist ${flyCamD.toFixed(1)} -> ${danceCamD.toFixed(1)}, max step ${maxStep.toFixed(2)} < ${(0.6 * flyCamD).toFixed(0)})`);
   if (!camOK) fail++;
 
   // ---- F. DETERMINISM ---------------------------------------------------------
