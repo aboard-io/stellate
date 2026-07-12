@@ -559,11 +559,29 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
 
   const renderStyle = { post, material };
 
+  // ---- FACE PERSONALITY (genre-level bias for the animated face rig) ----------------
+  // A small, drift-free bias the alien face rig reads to tilt a whole SPECIES' face
+  // behaviour (alien.js then adds per-INDIVIDUAL variation off each alien's own seed):
+  //   expressive  motion/variation -> livelier faces (bigger gaze/brow/mouth swings)
+  //   blink       tempo -> faster genres blink more often
+  //   restless    motion/hats -> more darting, shorter-held gaze
+  //   browMob     angular brows + a driving kit -> mobile, emotive brows
+  //   restMouth   swing -> a slightly open resting mouth (a crooning idle)
+  // Computed from feature NORMALS ONLY (NO rng draw) so it perturbs no earlier trait
+  // stream and stays byte-identical on re-derivation — additive to the traits object.
+  const personality = {
+    expressive: +clamp01(0.4 + nMotion * 0.4 + nVar * 0.3).toFixed(3),
+    blink: +clamp01(0.3 + nBpm * 0.5).toFixed(3),
+    restless: +clamp01(0.3 + nMotion * 0.5 + nHat * 0.3).toFixed(3),
+    browMob: +clamp01(0.3 + (face.brow === "angular" ? 0.5 : face.brow === "soft" ? 0.1 : 0.3) + nDrum * 0.3).toFixed(3),
+    restMouth: +clamp01(0.02 + nSwing * 0.2).toFixed(3),
+  };
+
   return {
     palette, body, skin, cloth, groove, face, texture, band,
     dancers,
     crowd: band.length,
-    backdrop, glow, renderStyle,
+    backdrop, glow, renderStyle, personality,
     // echo the raw vector + name for downstream tuning / docs verification.
     _features: f, _genre: name,
   };
