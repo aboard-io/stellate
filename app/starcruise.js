@@ -204,7 +204,7 @@ const BAND_CAP = 8;               // HARD mobile cap on simultaneous aliens (tra
 // transit. Input handlers below mutate this object.
 const orbit = {
   target: null,                   // THREE.Vector3, set on start()
-  dist: 8, minDist: 2.2, maxDist: 60,
+  dist: 8, minDist: 3.6, maxDist: 60,   // minDist raised (was 2.2) so nothing zooms in past a whole-body view
   yaw: 0, pitch: 0.18, fov: 58,
   minPitch: -1.35, maxPitch: 1.45,
 };
@@ -1466,13 +1466,17 @@ function buildAutoShots() {
   // stay AT/ABOVE the band — the flyover from high above, the through-shot at eye level
   // looking slightly DOWN as it pushes in (Fix 3: never up from the floor).
   const flyover = { target: { x: bandCentroid.x, y: cy + 0.6, z: bandCentroid.z }, yaw: 0.2, pitch: 0.85, dist: wide + 4, fov: 62, yawRate: 0.07, kind: "flyover" };
-  const through = { target: { x: bandCentroid.x, y: cy + 0.15, z: bandCentroid.z }, yaw: 0.0, pitch: 0.06, dist: Math.max(orbit.minDist + 1, 4.5), fov: 66, yawRate: 0.0, dolly: -1.4, kind: "through" };
-  // MEDIUM closeups on each player — framed on the TORSO/face at a distance that keeps the
-  // whole figure in view (never a limb-only extreme zoom: dist floored ~3.4). Fix 3: a
-  // clear downward tilt so the camera looks DOWN AT the alien, not up from the floor.
+  // a GENTLE front push (was a hard dolly that craters right up onto the band). Starts well
+  // back and eases in only a little, so it never zooms past a whole-body framing.
+  const through = { target: { x: bandCentroid.x, y: cy + 0.1, z: bandCentroid.z }, yaw: 0.0, pitch: 0.08, dist: Math.max(orbit.minDist + 3, 9.0), fov: 60, yawRate: 0.0, dolly: -0.6, kind: "through" };
+  // FULL-FIGURE FRONT medium on each player — the camera used to zoom in tight on the
+  // torso/face and CROP the (now bigger, horned/winged/tailed) creatures. It now sits far
+  // enough back to hold the WHOLE alien in frame (feet -> horns/crest), from a near-front
+  // angle (small yaw) so you read the body, not a limb close-up. Target = the body's
+  // vertical centre; a gentle downward tilt keeps it looking at the alien, not the floor.
   const closeups = band.map((a, i) => {
     const bp = (a.stage || a.group).position;
-    return { target: { x: bp.x, y: 1.3, z: bp.z }, yaw: (i % 2 ? 0.30 : -0.30), pitch: 0.16, dist: 3.6, fov: 50, yawRate: (i % 2 ? 1 : -1) * 0.07, kind: "closeup" };
+    return { target: { x: bp.x, y: 1.15, z: bp.z }, yaw: (i % 2 ? 0.14 : -0.14), pitch: 0.12, dist: 7.0, fov: 52, yawRate: (i % 2 ? 1 : -1) * 0.05, kind: "closeup" };
   });
   // the DRUMMER shot — a dedicated medium of the drums player (the auto-cam ALWAYS cuts
   // here on a fill). Framed on the kit/torso from slightly ABOVE, never a floor-up angle.
@@ -1492,7 +1496,7 @@ function buildAutoShots() {
   if (drummer) {
     const bp = (drummer.stage || drummer.group).position;
     autoCam.drummerShot = autoShots.length;
-    autoShots.push({ target: { x: bp.x, y: 1.25, z: bp.z }, yaw: 0.18, pitch: 0.14, dist: 3.9, fov: 50, yawRate: -0.05, kind: "drummer" });
+    autoShots.push({ target: { x: bp.x, y: 1.15, z: bp.z }, yaw: 0.14, pitch: 0.12, dist: 6.8, fov: 52, yawRate: -0.04, kind: "drummer" });
   }
   // FROM-BELOW GUARD (Fix 3): keep every shot's camera AT or ABOVE the band's eye level so
   // no shot ever looks UP from the floor (which framed mostly ground). For each shot the
