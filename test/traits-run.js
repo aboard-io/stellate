@@ -131,7 +131,7 @@ function bodySig(t) {
       POST_KEYS.every((k) => rs.post[k] != null) && Array.isArray(rs.post.grade) && rs.post.grade.length === 3 &&
       ["none", "ordered", "onebit"].indexOf(rs.post.dither) >= 0 &&
       rs.post.posterize >= 2 && rs.post.posterize <= 16 &&
-      ["flat", "cel", "iridescent", "wireframe", "glitch", "matte"].indexOf(rs.material) >= 0;
+      ["flat", "cel", "iridescent", "wireframe", "glitch", "matte", "pbr"].indexOf(rs.material) >= 0;
     chk(`${g.padEnd(11)} renderStyle well-formed (mat=${rs && rs.material})`, shapeOk);
     rsPost[g] = JSON.stringify(rs && rs.post); rsMat[g] = rs && rs.material;
   }
@@ -141,6 +141,31 @@ function bodySig(t) {
   chk("ambient uses NO dither (clean wash)", T.ambient.renderStyle.post.dither === "none");
   chk("ambient blooms strongly (>0.4)", T.ambient.renderStyle.post.bloom > 0.4);
   chk("renderStyle determinism holds", GENRES.every((g) => JSON.stringify(traitsFromGenre(K, V, g, SEED).renderStyle.post) === rsPost[g]));
+
+  // ---- PBR renderStyle: a VECTOR-SELECTED 'pbr' (real chrome/glass) material --------
+  // Some clean chrome / glass electronic genres now select the 'pbr' style (a genuine
+  // MeshStandardMaterial in alien.js). It is opt-in per genre — never global — and
+  // acoustic genres never select it.
+  console.log("\n=== PBR MATERIAL (vector-selected) ===");
+  const pbrGenres = GENRES.filter((g) => T[g].renderStyle.material === "pbr");
+  chk(`some chrome/glass genre selects 'pbr' (${pbrGenres.join(", ") || "none"})`, pbrGenres.length >= 1);
+  chk("techno (clean chrome, driving) renders as pbr metal", T.techno.renderStyle.material === "pbr");
+  chk("pbr is NOT global — acoustic genres never pbr", !["jazz", "bluegrass", "bebop", "heavymetal"].some((g) => T[g].renderStyle.material === "pbr"));
+
+  // ---- SUPERQUADRIC exponents + curve-tube params (vector-driven geometry) ----------
+  console.log("\n=== GEOMETRY PARAMS (superquadric + tube) ===");
+  for (const g of GENRES) {
+    const b = T[g].body;
+    const ok = typeof b.sqEx === "number" && b.sqEx >= 0.16 && b.sqEx <= 1.5 &&
+      typeof b.sqEy === "number" && b.sqEy >= 0.16 && b.sqEy <= 2.0 &&
+      typeof b.tentTaper === "number" && b.tentTaper >= 0.08 && b.tentTaper <= 0.5 &&
+      typeof b.tentCurl === "number" && b.tentCurl >= 0.05 && b.tentCurl <= 1.2;
+    chk(`${g.padEnd(11)} superquadric/tube params well-formed (ex=${b.sqEx} ey=${b.sqEy} taper=${b.tentTaper} curl=${b.tentCurl})`, ok);
+  }
+  const uniqEx = new Set(GENRES.map((g) => T[g].body.sqEx));
+  chk(`superquadric exponents VARY across genres (${uniqEx.size} distinct)`, uniqEx.size >= 4);
+  chk("boxy genres (choppy techno/gabber) have LOW exponent (<0.6); round (jazz/ambient) HIGH (>0.9)",
+    T.techno.body.sqEx < 0.6 && T.gabber.body.sqEx < 0.6 && T.jazz.body.sqEx > 0.9 && T.ambient.body.sqEx > 0.9);
 
   console.log("\n" + (fail === 0 ? "ALL CHECKS PASSED" : `!!! ${fail} FAILURE(S)`));
   process.exit(fail === 0 ? 0 : 1);

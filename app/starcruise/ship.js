@@ -26,6 +26,11 @@
 // then renders cel-shaded / oil-iridescent / wire / glitched per genre. The screen +
 // indicator dots stay UNLIT (always readable). Defaults to 'flat' when unsupplied.
 
+// The de-squaring geom kit (superquadric / tube / lathe / pbr) is shared with the
+// backdrop — one guarded facade over geom.js, hand-rolled core-Three fallbacks so a
+// missing/late geom.js never breaks the planet or cockpit.
+import { makeGeomKit } from "./backdrop.js";
+
 // mulberry32 — tiny seeded PRNG (deterministic band layout; no Math.random).
 function rng32(a) {
   return function () {
@@ -55,9 +60,10 @@ const GLITCH_FRAG = [
 // makeStyleKit — the shared surface factory. surface(o) builds ONE lit material in
 // the active style (cel -> banded MeshToon; else Lambert + fresnel/glitch hook);
 // tick(clock) drives the glitch uniform. Reused across the planet + cockpit shell.
-function makeStyleKit(THREE, style) {
+function makeStyleKit(THREE, style, gk) {
   const wire = style === "wireframe";
   const smooth = style === "matte";
+  const pbr = style === "pbr";
   const glitchTime = { value: 0 };
   let celGrad = null;
   if (style === "cel") {
@@ -89,6 +95,10 @@ function makeStyleKit(THREE, style) {
     const flat = o.flatShading !== false && !smooth;
     const emissive = o.emissive || new THREE.Color(0, 0, 0);
     let m;
+    if (pbr && gk) {
+      // real chrome/glass planet + shell (MeshStandardMaterial + shared env map).
+      return gk.pbr({ color: o.color, emissive, emissiveIntensity: o.emissiveIntensity, metalness: 0.85, roughness: 0.28, vertexColors: !!o.vertexColors, flatShading: flat });
+    }
     if (style === "cel") {
       m = new THREE.MeshToonMaterial({ color: o.color, emissive, gradientMap: celGrad, vertexColors: !!o.vertexColors });
       m.flatShading = true;
@@ -111,7 +121,8 @@ export function makeCockpit(THREE, opts = {}) {
   // cockpit shares the planet's look — a wire cockpit over a wire planet, an iridescent
   // one that shimmers, a glitch one that jitters. Defaults to 'flat' (the original
   // flat-lit shell) so today's look is unchanged. Screen + dots stay UNLIT + readable.
-  const kit = makeStyleKit(THREE, (opts.renderStyle && opts.renderStyle.material) || "flat");
+  const gk = makeGeomKit(THREE);
+  const kit = makeStyleKit(THREE, (opts.renderStyle && opts.renderStyle.material) || "flat", gk);
   const shell = kit.surface({ color: new THREE.Color(0x140d20), flatShading: true });
   const trim = kit.surface({ color: new THREE.Color(0x33244a), emissive: new THREE.Color(0x140a24), flatShading: true });
   const glow = new THREE.MeshBasicMaterial({ color: 0x66e0ff });   // unlit indicator dots
@@ -235,11 +246,15 @@ export function makePlanet(THREE, traits, seed) {
   const group = new THREE.Object3D();
   group.name = "planet";
   const style = (traits && traits.renderStyle && traits.renderStyle.material) || "flat";
-  const kit = makeStyleKit(THREE, style);
+  const gk = makeGeomKit(THREE);
+  const kit = makeStyleKit(THREE, style, gk);
   const world = pickPlanetWorld(traits);
   const molten = world === "moltenvoid";
   const liquid = world === "liquidsea";
-  const geo = bandedSphere(THREE, traits, seed);
+  // #1 the body is now a SUPERQUADRIC whose exponents key off the species body-plan,
+  // so each genre's fly-away planet has a distinct (de-squared) silhouette — rounder,
+  // pinched, or octahedral — while keeping its baked latitude bands + render style.
+  const geo = bandedBody(THREE, traits, seed, gk);
   const col = planetColor(THREE, traits);
   const acc = (traits && traits.palette && traits.palette.accent) || { h: 200, s: 0.85, l: 0.6 };
   const accHex = (dh, s, l) => new THREE.Color().setHSL(((((acc.h + (dh || 0)) % 360) + 360) % 360) / 360, s == null ? 0.9 : s, l == null ? 0.6 : l);
@@ -260,9 +275,13 @@ export function makePlanet(THREE, traits, seed) {
   // RINGS — prominent on ring/cloud worlds, a lone thin ring on ~half other seeds.
   const nRing = world === "ringworld" ? 2 : world === "cloudsea" ? 1 : (((seed | 0) & 1) === 0 ? 1 : 0);
   for (let i = 0; i < nRing; i++) {
-    const r0 = 1.4 + i * 0.55, r1 = r0 + 0.4 + rnd() * 0.3;
-    const rmat = new THREE.MeshBasicMaterial({ color: accHex(i * 40, 0.7, 0.7), transparent: true, opacity: 0.45, side: THREE.DoubleSide, toneMapped: false });
-    const ring = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 40), rmat);
+    // #2 a CURVE-SWEPT TUBE ring (a closed spline circle) instead of a flat disc —
+    // a real solid band that catches the light around the planet.
+    const rr = 1.5 + i * 0.55;
+    const pts = [];
+    for (let a = 0; a < 28; a++) { const t = (a / 28) * TAU; pts.push([Math.cos(t) * rr, 0, Math.sin(t) * rr]); }
+    const rmat = new THREE.MeshBasicMaterial({ color: accHex(i * 40, 0.7, 0.7), transparent: true, opacity: 0.5, side: THREE.DoubleSide, toneMapped: false });
+    const ring = new THREE.Mesh(gk.tube(pts, { radius: 0.06 + rnd() * 0.05, radialSegments: 6, tubularSegments: 56, closed: true }), rmat);
     ring.name = "planet-ring";
     ring.rotation.x = Math.PI / 2 - 0.4 + (rnd() - 0.5) * 0.5;
     ring.rotation.y = (rnd() - 0.5) * 0.4;
@@ -323,6 +342,52 @@ export function makePlanet(THREE, traits, seed) {
   }
   function setPalette(tr) { body.material.color.copy(planetColor(THREE, tr)); }
   return { group, update, body, setPalette };
+}
+
+// a unit SUPERQUADRIC body (radius ~1) whose exponents key off the species body-plan
+// — so the planet silhouette is distinct + de-squared per genre — with the same 4..7
+// latitude bands baked into vertex colours. Deterministic (exponents + bands both key
+// off the seed via mulberry32; no Math.random). Falls back to a plain banded sphere in
+// look when exponents are ~1.
+function bandedBody(THREE, traits, seed, gk) {
+  const plan = traits && traits.body && traits.body.plan;
+  const skin = traits && traits.skin;
+  let e1 = 1, e2 = 1;                              // sphere default
+  if (plan === "crystalline") { e1 = 1.6; e2 = 0.72; }
+  else if (plan === "amorphous") { e1 = 1.35; e2 = 1.35; }
+  else if (plan === "radial") { e1 = 0.72; e2 = 0.72; }
+  else if (plan === "floating-gas") { e1 = 1.12; e2 = 1.12; }
+  else if (plan === "insectoid") { e1 = 0.6; e2 = 1.2; }
+  else if (skin === "chrome") { e1 = 0.82; e2 = 0.82; }
+  const rnd0 = rng32((((seed | 0) || 1) ^ 0x2ab37) >>> 0);
+  e1 *= 0.85 + rnd0() * 0.3; e2 *= 0.85 + rnd0() * 0.3;
+  const geo = gk.sq(Math.max(0.4, Math.min(2.2, e1)), Math.max(0.4, Math.min(2.2, e2)), 16);
+  // normalize to max half-extent ~1 (geom sq is radius ~1, a fallback is ~0.5) so the
+  // rings/spikes/glow (which assume a unit body) sit correctly regardless of source.
+  geo.computeBoundingBox();
+  const _bb = geo.boundingBox;
+  const _r = Math.max(_bb.max.x, _bb.max.y, _bb.max.z, -_bb.min.x, -_bb.min.y, -_bb.min.z) || 1;
+  geo.scale(1 / _r, 1 / _r, 1 / _r);
+  const pos = geo.attributes.position, n = pos.count;
+  const colors = new Float32Array(n * 3);
+  const pal = (traits && traits.palette) || {};
+  const sk = pal.skin || { h: 280, s: 0.5, l: 0.5 };
+  const ac = pal.accent || { h: 40, s: 0.85, l: 0.6 };
+  const rnd = rng32((((seed | 0) || 1) ^ 0x51ced) >>> 0);
+  const nBands = 4 + Math.floor(rnd() * 4);       // 4..7 bands
+  const bands = [];
+  for (let i = 0; i < nBands; i++) {
+    const h = (rnd() < 0.5 ? sk.h : ac.h) + (rnd() - 0.5) * 44;
+    const s = 0.35 + rnd() * 0.4, l = 0.32 + rnd() * 0.32;
+    bands.push(new THREE.Color().setHSL(((((h % 360) + 360) % 360) / 360), Math.min(1, s), Math.min(0.75, l)));
+  }
+  for (let i = 0; i < n; i++) {
+    const lat = pos.getY(i) * 0.5 + 0.5;           // 0..1 pole to pole (radius ~1)
+    const c = bands[Math.min(nBands - 1, Math.max(0, Math.floor(lat * nBands)))];
+    const b = i * 3; colors[b] = c.r; colors[b + 1] = c.g; colors[b + 2] = c.b;
+  }
+  geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  return geo;
 }
 
 // a unit sphere with 4..7 latitude bands baked into vertex colours (gas-giant look).

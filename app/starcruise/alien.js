@@ -41,6 +41,14 @@
 //
 //   debug() -> { playStyle, contactness, handTip, contact, target, dist, reachDist }
 //     (alien-local) — headless proof of onset-timed contact vs rest.
+//
+// GEOMETRY: bodies + instruments are built from the shared hand-rolled geom.js
+// library — SUPERQUADRIC superellipsoids (squareness fed from the genre vector),
+// CatmullRom curve-swept TUBES for tentacles/horns/coils (posed by a deterministic
+// FABRIK IK solver so many-jointed tentacles reach/curl smoothly), and the 'pbr'
+// renderStyle routes surfaces to a real MeshStandardMaterial + the ONE shared env map.
+
+import { superquadric, tube, fabrik, fuse, pbrMaterial } from "./geom.js";
 
 // tiny seeded PRNG so the alien is deterministic without importing traits.
 function rng32(a) {
@@ -192,6 +200,18 @@ export function makeAlien(THREE, traits, member, seed) {
   const nEyes = clamp(Math.round(bIn.eyes != null ? bIn.eyes : 2) + eyeJit, 1, 8);
   const asym = clamp(bIn.asymmetry || 0, 0, 1);
 
+  // SUPERQUADRIC exponents for THIS alien's bodies + instruments — the genre base
+  // (traits.body.sqEx/sqEy) nudged per-alien by EXISTING jitter (morphR/morphMass) so
+  // NO new rand() is drawn (the per-alien rand stream stays byte-identical). Low
+  // exponent = faceted/boxy, ~1 = round, >1 = pinched/star. tent taper/curl feed the
+  // curve-tube tentacles.
+  const sqEx = clamp((bIn.sqEx != null ? bIn.sqEx : 1) * morphR, 0.14, 1.7);
+  const sqEy = clamp((bIn.sqEy != null ? bIn.sqEy : 1) * (0.9 + (morphMass - 1) * 0.35), 0.14, 2.2);
+  const tentTaper = clamp(bIn.tentTaper != null ? bIn.tentTaper : 0.25, 0.08, 0.5);
+  const tentCurl = clamp(bIn.tentCurl != null ? bIn.tentCurl : 0.3, 0.05, 1.2);
+  // a reusable superquadric body geometry (rx/ry/rz set per call site).
+  const sqGeo = (r, ex, ey, segs) => superquadric(THREE, { ex: ex != null ? ex : sqEx, ey: ey != null ? ey : sqEy, segs: segs || 12, rx: r, ry: r, rz: r });
+
   // FACE family — new body.face.type first, else derive a wild face from eye count
   // + the legacy mouth motif so a swing face still differs from a glitch face.
   const faceIn = bIn.face || traits.face || {};
@@ -257,9 +277,25 @@ export function makeAlien(THREE, traits, member, seed) {
 
   // ---- shared, LIT + shadowed materials (bold contrast) — PRESERVED --------------
   const skinTex = makeSkinTexture(THREE, traits.texture || "plate", rand);
+  // 'pbr' surface constants — REAL chrome / glass / polished metal from the skin trait.
+  // chrome = mirror metal; glass = clear low-roughness dielectric; else brushed metal.
+  const pbrGlass = traits.skin === "glass";
+  const pbrMetalness = chrome ? 0.95 : pbrGlass ? 0.05 : 0.7;
+  const pbrRoughness = chrome ? 0.16 : pbrGlass ? 0.05 : 0.4;
   const mk = (col, textured) => {
     const emissive = (glow > 0.05 ? col.clone().multiplyScalar(0.16 * glow) : new THREE.Color(0, 0, 0));
     let m;
+    if (style === "pbr") {
+      // real MeshStandardMaterial + the shared env map (reflections). VECTOR-SELECTED
+      // by traits.renderStyle.material — never global. Keeps light + shadows + emissive.
+      m = pbrMaterial(THREE, {
+        color: col, map: textured ? skinTex : null,
+        metalness: pbrMetalness, roughness: pbrRoughness, emissive,
+        flatShading: !smoothShade, envMapIntensity: chrome ? 1.15 : pbrGlass ? 1.3 : 0.8,
+        transparent: pbrGlass, opacity: pbrGlass ? 0.7 : 1,
+      });
+      return m;   // pbr does not use the iridescent/glitch onBeforeCompile hooks
+    }
     if (style === "cel") {
       m = new THREE.MeshToonMaterial({ color: col, map: textured ? skinTex : null, emissive, gradientMap: celGrad });
       m.flatShading = true;
@@ -300,7 +336,9 @@ export function makeAlien(THREE, traits, member, seed) {
   const group = new THREE.Object3D();
 
   // continuously-waving parts (tentacles/stalks/cilia/antennae) — beat-independent.
-  const tendrils = [];      // { joints:[Object3D], sp, amp, ph, curl, sway }
+  // Each is a FABRIK-curled CatmullRom TUBE on a root that sways over time.
+  const tendrils = [];      // { root, baseQuat, sp, amp, ph, sway }
+  let tentacleProof = null; // { err, tip, target, reached } — first FABRIK tentacle (headless proof)
   const pulseCores = [];    // { mesh, base:Vector3(scale), amp } — blob/gas breathing
   const orbs = [];          // { mesh, base:Vector3, ph, amp } — floating light-balls
   const YAX = new THREE.Vector3(0, 1, 0);
@@ -311,48 +349,61 @@ export function makeAlien(THREE, traits, member, seed) {
   // and (curled at rest) idle NON-player arms. Capped segment count for mobile.
   function makeTendril(rootPos, dir, segLen, nSeg, width, mat, capMat, opts) {
     opts = opts || {};
-    nSeg = clamp(Math.round(nSeg), 2, 4);
+    nSeg = clamp(Math.round(nSeg), 2, 5);
     const rootObj = new THREE.Object3D();
     rootObj.position.copy(rootPos);
     rootObj.quaternion.setFromUnitVectors(YAX, dir.clone().normalize());
     group.add(rootObj);
-    const joints = [];
-    let parent = rootObj;
-    for (let s = 0; s < nSeg; s++) {
-      const j = new THREE.Object3D();
-      if (s > 0) j.position.y = segLen;
-      parent.add(j);
-      const w = width * (1 - 0.5 * (s / nSeg));
-      const seg = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.5, w * 0.42, segLen, 5), mat);
-      seg.position.y = segLen * 0.5; j.add(seg);
-      joints.push(j); parent = j;
-    }
+    // LOCAL joint chain straight up +Y, then FABRIK-curl it toward a REACHABLE target so
+    // the many-jointed tentacle reaches/curls smoothly. Deterministic; iters capped
+    // (mobile). The curl is baked into the tube geometry once; the whole tube then sways
+    // via the root rotation (cheap — no per-frame geometry rebuild).
+    const pts = [];
+    for (let s = 0; s <= nSeg; s++) pts.push(new THREE.Vector3(0, s * segLen, 0));
+    const total = nSeg * segLen;
+    const curlAmt = clamp(opts.curl != null ? Math.abs(opts.curl) : tentCurl, 0, 0.95);
+    const side = opts.curl != null && opts.curl < 0 ? -1 : (opts.side != null ? opts.side : 1);
+    const target = new THREE.Vector3(
+      side * curlAmt * total * 0.7,
+      total * (1 - curlAmt * 0.32),
+      (opts.tip === "eye" ? 0 : side * curlAmt * total * 0.14)
+    );
+    fabrik(pts, target, { iters: 6 });
+    const tipErr = pts[nSeg].distanceTo(target);
+    if (!tentacleProof) tentacleProof = { err: +tipErr.toFixed(5), tip: pts[nSeg].clone(), target: target.clone(), reached: tipErr < 0.02 };
+    // sweep a tapered CatmullRom TUBE through the solved joints (a smooth curved limb).
+    const taper = opts.taper != null ? opts.taper : tentTaper;
+    const geo = tube(THREE, pts, { radius: width * 0.5, segs: clamp(nSeg * 4, 6, 24), radial: 6, taper });
+    const tubeMesh = new THREE.Mesh(geo, mat);
+    rootObj.add(tubeMesh);
+    // tip cap: a rounded SUPERQUADRIC knob or an eye-globe — never a cube.
     const capW = width * 0.55;
-    // DE-SQUARE: tips are rounded knobs, eye-globes or claw-cones — never a cube.
-    let capGeo;
-    if (opts.tip === "eye") capGeo = new THREE.SphereGeometry(capW, 7, 6);
-    else if (opts.tip === "claw") capGeo = new THREE.ConeGeometry(capW * 0.72, capW * 2.4, 5);
-    else capGeo = new THREE.SphereGeometry(capW * 1.05, 6, 5);
+    const tip = pts[nSeg];
+    const capGeo = opts.tip === "eye"
+      ? new THREE.SphereGeometry(capW, 8, 6)
+      : superquadric(THREE, { ex: 0.85, ey: 0.85, segs: 8, rx: capW * 1.05, ry: capW * 1.05, rz: capW * 1.05 });
     const cap = new THREE.Mesh(capGeo, capMat || mat);
-    cap.position.y = segLen; parent.add(cap);
+    cap.position.copy(tip); rootObj.add(cap);
     if (opts.tip === "eye") {
       const pupil = new THREE.Mesh(new THREE.SphereGeometry(capW * 0.34, 6, 5), accentMat);
-      pupil.position.set(0, segLen, capW * 0.72); parent.add(pupil);
+      pupil.position.set(tip.x, tip.y, tip.z + capW * 0.72); rootObj.add(pupil);
     }
+    // rand draw order PRESERVED (sp, amp?, ph, sway) so the per-alien rand stream is
+    // byte-identical to the legacy chain rig (orbs / downstream jitter unchanged).
     const t = {
-      joints, cap,
+      root: rootObj, baseQuat: rootObj.quaternion.clone(),
       sp: 1.2 + rand() * 1.6, amp: opts.amp != null ? opts.amp : 0.16 + rand() * 0.12,
-      ph: rand() * 6.28, curl: opts.curl != null ? opts.curl : 0.14, sway: 0.6 + rand() * 0.5,
+      ph: rand() * 6.28, sway: 0.6 + rand() * 0.5,
     };
     tendrils.push(t);
     return t;
   }
   function waveTendrils(t) {
     for (const tn of tendrils) {
-      for (let s = 0; s < tn.joints.length; s++) {
-        tn.joints[s].rotation.z = tn.curl + Math.sin(t * tn.sp + s * 0.6 + tn.ph) * tn.amp;
-        tn.joints[s].rotation.x = Math.cos(t * tn.sp * tn.sway + s * 0.5 + tn.ph) * tn.amp * 0.6;
-      }
+      const sx = Math.sin(t * tn.sp + tn.ph) * tn.amp;
+      const sz = Math.cos(t * tn.sp * tn.sway + tn.ph) * tn.amp * 0.7;
+      tn.root.quaternion.copy(tn.baseQuat);
+      tn.root.rotateX(sx); tn.root.rotateZ(sz);
     }
   }
 
@@ -456,7 +507,7 @@ export function makeAlien(THREE, traits, member, seed) {
     if (nLegs > 0) addPseudopods(nLegs, coreR * 1.2, baseY + H * 0.08, H * 0.4, true);
   } else if (plan === "cephalopod") {
     // a bulbous mantle over a skirt of long curling tentacles.
-    const mantle = new THREE.Mesh(new THREE.SphereGeometry(coreR * 1.5, 8, 6), clothMat);
+    const mantle = new THREE.Mesh(sqGeo(coreR * 1.5, sqEx, sqEy, 14), clothMat);   // superquadric mantle
     mantle.position.y = coreMidY + H * 0.16; mantle.scale.set(1, 1.35, 0.92); group.add(mantle);
     pulseCores.push({ mesh: mantle, base: mantle.scale.clone(), amp: 0.06 });
     head.position.y = coreMidY + H * 0.1;
@@ -498,8 +549,13 @@ export function makeAlien(THREE, traits, member, seed) {
       armRoots.push({ pos: p, pole: new THREE.Vector3(side * 0.5, 0.85, -0.5), side });
     }
   } else if (plan === "blob") {
-    // amorphous pulsing mass with stubby pseudopods + a single maw.
-    const blob = new THREE.Mesh(new THREE.IcosahedronGeometry(coreR * 1.6, 0), clothMat);
+    // amorphous pulsing mass with stubby pseudopods + a single maw — a METABALL fuse
+    // of a few lumps reads as one organic mass.
+    const blob = new THREE.Mesh(fuse(THREE, [
+      { c: new THREE.Vector3(0, 0, 0), r: coreR * 0.9 },
+      { c: new THREE.Vector3(coreR * 0.6, coreR * 0.3, 0), r: coreR * 0.6 },
+      { c: new THREE.Vector3(-coreR * 0.4, -coreR * 0.4, coreR * 0.3), r: coreR * 0.55 },
+    ], { detail: 2, scale: coreR * 1.5, amp: 0.5 }), clothMat);
     blob.position.y = coreMidY; blob.scale.set(1.05, 1.1, 0.95); group.add(blob);
     pulseCores.push({ mesh: blob, base: blob.scale.clone(), amp: 0.09 });
     const lump = new THREE.Mesh(new THREE.IcosahedronGeometry(coreR * 0.9, 0), skinMat);
@@ -554,7 +610,7 @@ export function makeAlien(THREE, traits, member, seed) {
     const sacs = 3;
     for (let s = 0; s < sacs; s++) {
       const r = coreR * (1.2 - s * 0.22);
-      const sac = new THREE.Mesh(new THREE.SphereGeometry(r, 7, 6), s === 0 ? clothMat : skinMat);
+      const sac = new THREE.Mesh(sqGeo(r, sqEx, sqEy, 12), s === 0 ? clothMat : skinMat);
       sac.position.set((s - 1) * coreR * 0.5, coreMidY + s * coreR * 0.4, (s % 2 ? 1 : -1) * coreR * 0.3);
       group.add(sac); pulseCores.push({ mesh: sac, base: sac.scale.clone(), amp: 0.1 + s * 0.02 });
     }
@@ -598,7 +654,7 @@ export function makeAlien(THREE, traits, member, seed) {
   function buildFace() {
     // a skull mass for maw/mandibles; a bare eye-cluster for the eye families.
     if (faceKind === "oneEye") {
-      const dome = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.6, 8, 7), skinMat);
+      const dome = new THREE.Mesh(sqGeo(headSz * 0.6, sqEx, sqEy, 12), skinMat);
       head.add(dome);
       const eye = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.42, 10, 9), eyeMat);
       eye.position.set(0, 0, headSz * 0.32); head.add(eye);
@@ -610,7 +666,7 @@ export function makeAlien(THREE, traits, member, seed) {
       const jbox = new THREE.Mesh(new THREE.BoxGeometry(headSz * 0.3, headSz * 0.08, headSz * 0.08), mouthMat);
       jbox.position.set(0, -headSz * 0.04, 0); jaw.add(jbox); head.add(jaw);
     } else if (faceKind === "eyeRing") {
-      const knob = new THREE.Mesh(new THREE.IcosahedronGeometry(headSz * 0.55, 0), skinMat);
+      const knob = new THREE.Mesh(sqGeo(headSz * 0.55, sqEx, sqEy, 12), skinMat);
       head.add(knob);
       const ring = Math.min(8, nEyes);
       for (let e = 0; e < ring; e++) {
@@ -623,8 +679,9 @@ export function makeAlien(THREE, traits, member, seed) {
       const maw = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.2, 7, 6), mouthMat);
       maw.position.set(0, -headSz * 0.1, headSz * 0.4); maw.scale.set(1, 0.6, 0.6); jaw.add(maw); head.add(jaw);
     } else {
-      // maw / mandibles — a rounded skull with a jaw that drops, plus a couple of eyes.
-      const skull = new THREE.Mesh(new THREE.IcosahedronGeometry(headSz * 0.64, 0), skinMat);
+      // maw / mandibles — a SUPERQUADRIC skull (squareness from the genre) with a jaw
+      // that drops, plus a couple of eyes.
+      const skull = new THREE.Mesh(sqGeo(headSz * 0.64, sqEx, sqEy, 14), skinMat);
       skull.scale.set(1, 1.06, 0.94); head.add(skull);
       const brow = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.4, 8, 5), limbMat);
       brow.scale.set(1, 0.26, 0.42);
@@ -705,21 +762,27 @@ export function makeAlien(THREE, traits, member, seed) {
     const g = new THREE.Object3D();
     const acc = accentMat, body2 = instBodyMat;
     if (kind === "sac") {                                  // pulsing membrane-sac (drum)
-      const sac = new THREE.Mesh(new THREE.SphereGeometry(H * 0.17, 9, 7), body2);
+      const sac = new THREE.Mesh(sqGeo(H * 0.17, sqEx, sqEy, 12), body2);   // superquadric membrane
       sac.scale.set(1, 0.8, 1); g.add(sac); g._sac = sac;
       const ring = new THREE.Mesh(new THREE.TorusGeometry(H * 0.17, H * 0.02, 5, 10), acc);
       ring.rotation.x = Math.PI / 2; ring.position.y = H * 0.02; g.add(ring);
+      // a curved beater — a CatmullRom TUBE arcing off the rim.
+      const handle = new THREE.Mesh(tube(THREE, [
+        new THREE.Vector3(0, H * 0.02, H * 0.16), new THREE.Vector3(H * 0.05, H * 0.12, H * 0.2),
+        new THREE.Vector3(H * 0.02, H * 0.24, H * 0.1),
+      ], { radius: H * 0.02, segs: 10, radial: 5, taper: 0.5 }), acc);
+      g.add(handle);
       const nub = new THREE.Mesh(new THREE.SphereGeometry(H * 0.04, 6, 5), acc);
-      nub.position.y = H * 0.15; g.add(nub);
-    } else if (kind === "coil") {                          // coiled resonator (bass)
-      const strands = [];
-      for (let k = 0; k < 10; k++) {
-        const t = k / 10, r = H * (0.06 + t * 0.12);
-        const seg = new THREE.Mesh(new THREE.TorusGeometry(r, H * 0.018, 4, 8, Math.PI * 1.4), body2);
-        seg.position.y = -H * 0.18 + t * H * 0.36; seg.rotation.y = t * 6.0; seg.rotation.x = Math.PI / 2;
-        g.add(seg); strands.push(seg);
+      nub.position.set(H * 0.02, H * 0.26, H * 0.08); g.add(nub);
+    } else if (kind === "coil") {                          // coiled resonator (bass) — a spiral TUBE
+      const cpts = [];
+      const turns = 3, N = 18;
+      for (let k = 0; k <= N; k++) {
+        const t = k / N, a = t * Math.PI * 2 * turns, r = H * (0.06 + t * 0.12);
+        cpts.push(new THREE.Vector3(Math.cos(a) * r, -H * 0.18 + t * H * 0.36, Math.sin(a) * r));
       }
-      g._coil = strands;
+      const coilMesh = new THREE.Mesh(tube(THREE, cpts, { radius: H * 0.02, segs: 40, radial: 5, taper: 0.7 }), body2);
+      g.add(coilMesh); g._coil = [coilMesh];
       const spine = new THREE.Mesh(new THREE.CylinderGeometry(H * 0.02, H * 0.02, H * 0.4, 5), acc);
       g.add(spine);
     } else if (kind === "chime") {                         // crystal chime-cluster (perc)
@@ -741,21 +804,29 @@ export function makeAlien(THREE, traits, member, seed) {
       }
       g._strings = strings;
     } else if (kind === "horn") {                          // bladder-horn (blow)
-      const bladder = new THREE.Mesh(new THREE.SphereGeometry(H * 0.1, 8, 7), body2);
+      const bladder = new THREE.Mesh(sqGeo(H * 0.1, sqEx, sqEy, 10), body2);   // superquadric bladder
       bladder.position.set(-H * 0.02, -H * 0.04, 0); g.add(bladder); g._bladder = bladder;
-      const throat = new THREE.Mesh(new THREE.CylinderGeometry(H * 0.025, H * 0.05, H * 0.28, 6), body2);
-      throat.rotation.z = -0.7; throat.position.set(H * 0.12, H * 0.1, 0); g.add(throat);
+      // a curved THROAT — a CatmullRom TUBE from bladder up to the bell.
+      const throat = new THREE.Mesh(tube(THREE, [
+        new THREE.Vector3(-H * 0.02, -H * 0.02, 0), new THREE.Vector3(H * 0.08, H * 0.06, 0),
+        new THREE.Vector3(H * 0.16, H * 0.14, 0), new THREE.Vector3(H * 0.24, H * 0.2, 0),
+      ], { radius: H * 0.03, segs: 14, radial: 6, taper: 0.8 }), body2);
+      g.add(throat);
       const bell = new THREE.Mesh(new THREE.ConeGeometry(H * 0.13, H * 0.18, 9, 1, true), acc);
       bell.rotation.z = -2.4; bell.position.set(H * 0.26, H * 0.24, 0); g.add(bell);
     } else {                                               // glass membrane-pane (bow)
-      const pane = new THREE.Mesh(new THREE.BoxGeometry(H * 0.42, H * 0.26, H * 0.03), body2);
-      pane.position.y = -H * 0.02; g.add(pane); g._pane = pane;
+      const pane = new THREE.Mesh(sqGeo(1, 0.3, 0.3, 10), body2);   // faceted superquadric slab
+      pane.scale.set(H * 0.21, H * 0.13, H * 0.016); pane.position.y = -H * 0.02; g.add(pane); g._pane = pane;
       for (let s = 0; s < 4; s++) {
-        const rib = new THREE.Mesh(new THREE.BoxGeometry(H * 0.02, H * 0.28, H * 0.05), acc);
+        const rib = new THREE.Mesh(new THREE.CylinderGeometry(H * 0.012, H * 0.012, H * 0.28, 5), acc);
         rib.position.set((s - 1.5) * H * 0.1, 0, H * 0.01); g.add(rib);
       }
-      const bow = new THREE.Mesh(new THREE.CylinderGeometry(H * 0.008, H * 0.008, H * 0.4, 4), acc);
-      bow.rotation.z = Math.PI / 2; bow.position.set(0, 0, H * 0.07); g.add(bow); g._bow = bow;
+      // a curved BOW — a CatmullRom TUBE dragged across the pane.
+      const bow = new THREE.Mesh(tube(THREE, [
+        new THREE.Vector3(-H * 0.2, 0, H * 0.07), new THREE.Vector3(0, H * 0.02, H * 0.09),
+        new THREE.Vector3(H * 0.2, 0, H * 0.07),
+      ], { radius: H * 0.008, segs: 10, radial: 4 }), acc);
+      g.add(bow); g._bow = bow;
     }
     return g;
   }
@@ -1007,7 +1078,7 @@ export function makeAlien(THREE, traits, member, seed) {
 
   update(0, isDancer ? 0 : { barPhase: 0, playing: true, level: 1, notes: [] });   // pose once (non-blank)
 
-  return { group, update, debug, materials, playStyle, hitsPerBeat, voice, plan };
+  return { group, update, debug, materials, playStyle, hitsPerBeat, voice, plan, tentacleProof };
 }
 
 export default { makeAlien };
