@@ -18,7 +18,7 @@
 //
 // Cached Response objects keep their original headers, so COOP/COEP isolation
 // (SharedArrayBuffer for the render worker) survives offline replay.
-const VERSION = "stellate-v9";   // v9 (2026-07-12): star-cruise cinematic — fidelity-zoom camera flying the 3D genre-coord space, music-video roaming, motion-by-volume, abstract per-genre planets, de-squared shapes + light-balls, contrast, per-alien randomization; AND music variety (strumming + folk genre + new fills/sweeps/stabs); BUMP purges the old cache on activate so a deploy lands
+const VERSION = "stellate-v10";  // v10 (2026-07-12): HOTFIX — folk genre was missing from app/world.js POS, so the boot-time layout relaxation crashed the renderer (blank app, no chip). folk baked into POS -> POS complete -> computeGenreLayout early-returns. BUMP purges the broken v9 cache on activate so the fix lands
                                  // in ONE load, not two (the v2 stale-while-revalidate served a load-behind copy —
                                  // Paul saw none of the synth-font/video/vapor batch until a second reload). Bump
                                  // this string every deploy that must reach users immediately.
