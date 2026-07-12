@@ -49,6 +49,71 @@
 // renderStyle routes surfaces to a real MeshStandardMaterial + the ONE shared env map.
 
 import { superquadric, tube, fabrik, fuse, pbrMaterial } from "./geom.js";
+// MARCHING CUBES — the alien's fused ORGANIC BODY CORE (metaball isosurface) is baked
+// ONCE at makeAlien() time from this vendored three.js EXAMPLE class (r160). It imports
+// from our vendored three CORE (./three.module.min.js), NOT a CDN, so it works offline.
+// It is a *build-time* dependency only: we run marching cubes once to snapshot a static
+// BufferGeometry and NEVER touch it again per frame. Imported here (module scope) so the
+// class is resolved when alien.js loads — makeAlien is synchronous and needs it to bake
+// the core before returning the posed rig.
+import { MarchingCubes } from "../../vendor/three/MarchingCubes.js";
+
+// ONE reused MarchingCubes instance per (THREE, resolution) — its big Float32Array field
+// buffers are allocated once and wiped (reset) before each bake, so building a whole band
+// of aliens does not thrash the allocator. Bakes are synchronous + non-reentrant, so a
+// single shared grid is safe. Deterministic: marching cubes is pure float math.
+let _mcShared = null, _mcRes = 0;
+function sharedMarchingCubes(THREE, material, res) {
+  if (!_mcShared || _mcRes !== res) {
+    _mcShared = new MarchingCubes(res, material, false, false, 24000);
+    _mcRes = res;
+  }
+  _mcShared.material = material;   // flatShading read only; we recompute normals after
+  return _mcShared;
+}
+// Bake a set of metaballs into a STATIC fused BufferGeometry. `balls` are {x,y,z,r} in the
+// alien's LOCAL space (r in local units); `center` is the field-cube centre. Marching cubes
+// runs in a normalized [-1,1] cube; we map local->field, run once, then snapshot the used
+// slice of the vertex buffer, rescale it back to local units and recompute smooth normals.
+// The returned geometry is plain data (safe after the shared grid is reused/reset).
+function bakeMetaballGeometry(THREE, balls, center, res) {
+  const ISO = 80, SUBTRACT = 12;
+  const mat = { flatShading: false };
+  const mc = sharedMarchingCubes(THREE, mat, res);
+  mc.isolation = ISO;
+  mc.reset();
+  // field half-extent: fit the farthest ball surface at ~0.8 of the half-cube (keeps the
+  // surface off the outer layer, where marching-cube normals are undefined).
+  let maxR = 1e-3;
+  for (const b of balls) {
+    const d = Math.hypot(b.x - center.x, b.y - center.y, b.z - center.z) + b.r;
+    if (d > maxR) maxR = d;
+  }
+  const CE = maxR / 0.8;
+  for (const b of balls) {
+    const fx = 0.5 + 0.5 * ((b.x - center.x) / CE);
+    const fy = 0.5 + 0.5 * ((b.y - center.y) / CE);
+    const fz = 0.5 + 0.5 * ((b.z - center.z) / CE);
+    const rf = 0.5 * (b.r / CE);                       // field-space surface radius
+    const strength = Math.max(1e-3, rf * rf * (ISO + SUBTRACT));
+    mc.addBall(fx, fy, fz, strength, SUBTRACT);
+  }
+  mc.update();
+  const count = mc.count | 0;                          // vertex count
+  if (count < 12) return null;                          // degenerate — caller falls back
+  const src = mc.positionArray;
+  const pos = new Float32Array(count * 3);
+  // Keep the baked geometry CENTRED AT ORIGIN (map [-1,1] field -> local, minus centre) so
+  // the mesh's own position places it and a breathing SCALE pulses it in place. The metaball
+  // centres were mapped relative to `center`, so this recovers local-offset coords directly.
+  for (let i = 0; i < count * 3; i++) pos[i] = src[i] * CE;
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  geo.computeVertexNormals();
+  geo.computeBoundingBox(); geo.computeBoundingSphere();
+  geo.userData.mcVertexCount = count;
+  return geo;
+}
 
 // tiny seeded PRNG so the alien is deterministic without importing traits.
 function rng32(a) {
@@ -414,6 +479,17 @@ export function makeAlien(THREE, traits, member, seed) {
   const orbs = [];          // { mesh, base:Vector3, ph, amp } — floating light-balls
   const YAX = new THREE.Vector3(0, 1, 0);
 
+  // ---- FUSED ORGANIC CORE (marching cubes) collection ----------------------------
+  // Instead of gluing separate torso primitives (a hub, a mantle, thorax spheres…) the
+  // per-plan build now DESCRIBES the central body mass as a set of METABALLS — a spine of
+  // lumps + a lump at every limb ROOT — so the whole thing bakes to ONE fused isosurface
+  // where the appendages MELT into the torso. `coreBalls` is filled during the plan build;
+  // `appendageRoots` collects tendril/leg roots so limbs fuse in too. Baked ONCE below.
+  const coreBalls = [];         // { x, y, z, r } in local space (absolute y)
+  const appendageRoots = [];    // Vector3 roots of tendrils/legs to fuse into the core
+  let corePulse = false;        // blob/gas/cephalopod → the fused core breathes
+  const addCoreBall = (x, y, z, r) => coreBalls.push({ x, y, z, r: Math.max(1e-3, r) });
+
   // ---- a soft multi-segment TENDRIL (nested rotation chain) ----------------------
   // Cheap organic appendage: a chain of tapering cylinders that WAVES via a
   // traveling sine on each joint. Used for tentacles, stalks, cilia, gas wisps —
@@ -422,6 +498,7 @@ export function makeAlien(THREE, traits, member, seed) {
     opts = opts || {};
     nSeg = clamp(Math.round(nSeg), 2, 5);
     pushRootToSurface(rootPos);              // Fix 1: seat legs/tentacles ON the body surface
+    appendageRoots.push(rootPos.clone());    // fuse this limb's root into the marching-cubes core
     const rootObj = new THREE.Object3D();
     rootObj.position.copy(rootPos);
     rootObj.quaternion.setFromUnitVectors(YAX, dir.clone().normalize());
@@ -601,11 +678,14 @@ export function makeAlien(THREE, traits, member, seed) {
   }
 
   if (plan === "radial") {
-    // N-fold star: a squat central hub with a spoke ring; arms are the spokes.
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(coreR * 1.5, coreR * 1.7, H * 0.4, Math.max(5, symMetry)), clothMat);
-    hub.position.y = coreMidY; group.add(hub);
-    const cap = new THREE.Mesh(new THREE.CylinderGeometry(coreR * 0.7, coreR * 1.4, H * 0.22, Math.max(5, symMetry)), skinMat);
-    cap.position.y = coreMidY + H * 0.28; group.add(cap);
+    // N-fold star: a squat central hub (a wide fused lump) with arms spoked radially.
+    addCoreBall(0, coreMidY, 0, coreR * 1.35);
+    addCoreBall(0, coreMidY + H * 0.2, 0, coreR * 0.95);
+    addCoreBall(0, coreMidY - H * 0.14, 0, coreR * 1.1);
+    for (let i = 0; i < Math.max(3, symMetry); i++) {   // a soft bump under each spoke
+      const p = ringPos(i, Math.max(3, symMetry), coreR * 1.15, coreMidY, 1);
+      addCoreBall(p.x, p.y, p.z, coreR * 0.55);
+    }
     head.position.y = coreMidY + H * 0.34;
     for (let i = 0; i < nArms; i++) {
       const p = ringPos(i, nArms, coreR * 1.6, shoulderY - H * 0.06, 1);
@@ -614,10 +694,11 @@ export function makeAlien(THREE, traits, member, seed) {
     }
     if (nLegs > 0) addPseudopods(nLegs, coreR * 1.2, baseY + H * 0.08, H * 0.4, true);
   } else if (plan === "cephalopod") {
-    // a bulbous mantle over a skirt of long curling tentacles.
-    const mantle = new THREE.Mesh(sqGeo(coreR * 1.5, sqEx, sqEy, 14), clothMat);   // superquadric mantle
-    mantle.position.y = coreMidY + H * 0.16; mantle.scale.set(1, 1.35, 0.92); group.add(mantle);
-    pulseCores.push({ mesh: mantle, base: mantle.scale.clone(), amp: 0.06 });
+    // a bulbous mantle (a tall fused dome) over a skirt of long curling tentacles.
+    addCoreBall(0, coreMidY + H * 0.28, 0, coreR * 1.3);
+    addCoreBall(0, coreMidY + H * 0.08, 0, coreR * 1.4);
+    addCoreBall(0, coreMidY - H * 0.1, 0, coreR * 1.1);
+    corePulse = true;   // the mantle breathes
     head.position.y = coreMidY + H * 0.1;
     // tentacle skirt hangs from the mantle base.
     const skirtY = coreMidY - H * 0.02;
@@ -634,13 +715,11 @@ export function makeAlien(THREE, traits, member, seed) {
       armRoots.push({ pos: p, pole: new THREE.Vector3(side * 0.4, 0.9, -0.6), side });
     }
   } else if (plan === "insectoid") {
-    // a segmented thorax on many thin splayed legs.
+    // a segmented thorax (a fused chain of lumps trailing back) on many thin splayed legs.
     const nSegT = 3;
     for (let s = 0; s < nSegT; s++) {
       const t = s / (nSegT - 1);
-      const seg = new THREE.Mesh(new THREE.SphereGeometry(coreR * (1.15 - 0.28 * s), 7, 6), s % 2 ? skinMat : clothMat);
-      seg.position.set(0, coreMidY + (t - 0.4) * H * 0.34, -s * coreR * 0.5);
-      seg.scale.set(1, 0.85, 1.1); group.add(seg);
+      addCoreBall(0, coreMidY + (t - 0.4) * H * 0.34, -s * coreR * 0.5, coreR * (1.1 - 0.24 * s));
     }
     head.position.y = coreMidY + H * 0.16;
     for (let i = 0; i < nLegs; i++) {
@@ -657,17 +736,13 @@ export function makeAlien(THREE, traits, member, seed) {
       armRoots.push({ pos: p, pole: new THREE.Vector3(side * 0.5, 0.85, -0.5), side });
     }
   } else if (plan === "blob") {
-    // amorphous pulsing mass with stubby pseudopods + a single maw — a METABALL fuse
-    // of a few lumps reads as one organic mass.
-    const blob = new THREE.Mesh(fuse(THREE, [
-      { c: new THREE.Vector3(0, 0, 0), r: coreR * 0.9 },
-      { c: new THREE.Vector3(coreR * 0.6, coreR * 0.3, 0), r: coreR * 0.6 },
-      { c: new THREE.Vector3(-coreR * 0.4, -coreR * 0.4, coreR * 0.3), r: coreR * 0.55 },
-    ], { detail: 2, scale: coreR * 1.5, amp: 0.5 }), clothMat);
-    blob.position.y = coreMidY; blob.scale.set(1.05, 1.1, 0.95); group.add(blob);
-    pulseCores.push({ mesh: blob, base: blob.scale.clone(), amp: 0.09 });
-    const lump = new THREE.Mesh(new THREE.IcosahedronGeometry(coreR * 0.9, 0), skinMat);
-    lump.position.set(coreR * 0.4, coreMidY + coreR * 0.5, coreR * 0.3); group.add(lump);
+    // amorphous pulsing mass with stubby pseudopods + a single maw — several off-centre
+    // lumps fuse (via marching cubes) into one lopsided organic mass.
+    addCoreBall(0, coreMidY, 0, coreR * 1.15);
+    addCoreBall(coreR * 0.6, coreMidY + coreR * 0.3, 0, coreR * 0.8);
+    addCoreBall(-coreR * 0.45, coreMidY - coreR * 0.4, coreR * 0.3, coreR * 0.72);
+    addCoreBall(coreR * 0.4, coreMidY + coreR * 0.55, coreR * 0.3, coreR * 0.7);
+    corePulse = true;   // the blob breathes
     head.position.y = coreMidY + H * 0.06;
     if (nTent > 0) addPseudopods(nTent, coreR * 1.1, baseY + coreR * 0.4, H * 0.34, true);
     for (let i = 0; i < nArms; i++) {
@@ -676,9 +751,10 @@ export function makeAlien(THREE, traits, member, seed) {
       armRoots.push({ pos: p, pole: new THREE.Vector3(side * 0.5, 0.3, 0.2), side });
     }
   } else if (plan === "stalk") {
-    // a cluster of tall swaying stalks rising from a base; eyes on stalk-tips.
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(coreR * 1.1, coreR * 1.5, H * 0.18, 6), clothMat);
-    base.position.y = baseY; group.add(base);
+    // a cluster of tall swaying stalks rising from a fused bulb-base; eyes on stalk-tips.
+    addCoreBall(0, baseY + H * 0.02, 0, coreR * 1.25);
+    addCoreBall(0, baseY + H * 0.2, 0, coreR * 0.85);
+    addCoreBall(0, coreMidY, 0, coreR * 0.62);           // stem up toward the neck/head
     head.position.y = H * 0.7;
     const stalks = Math.max(2, nLegs || 3);
     for (let i = 0; i < stalks; i++) {
@@ -694,12 +770,10 @@ export function makeAlien(THREE, traits, member, seed) {
       armRoots.push({ pos: p, pole: new THREE.Vector3(side * 0.4, 0.7, 0.1), side });
     }
   } else if (plan === "crystalline") {
-    // a stack of angular glowing crystal prisms; rigid shard limbs.
+    // a fused stack of angular lumps (kept faceted by low-res marching cubes); shard limbs.
     const nStack = 3;
     for (let s = 0; s < nStack; s++) {
-      const t = s / nStack;
-      const prism = new THREE.Mesh(new THREE.ConeGeometry(coreR * (1.3 - 0.3 * s), H * 0.3, 4), s % 2 ? accentMat : instBodyMat);
-      prism.position.y = coreMidY - H * 0.12 + s * H * 0.22; prism.rotation.y = s * 0.5; group.add(prism);
+      addCoreBall(0, coreMidY - H * 0.12 + s * H * 0.22, 0, coreR * (1.15 - 0.26 * s));
     }
     head.position.y = coreMidY + H * 0.3;
     for (let i = 0; i < Math.max(2, nLegs); i++) {
@@ -714,14 +788,13 @@ export function makeAlien(THREE, traits, member, seed) {
       armRoots.push({ pos: p, pole: new THREE.Vector3(side * 0.5, 0.6, 0.2), side });
     }
   } else { // gas
-    // floating translucent sacs that bob; wispy tendrils below.
+    // floating translucent sacs that bob (a fused cluster of offset lumps); wispy tendrils.
     const sacs = 3;
     for (let s = 0; s < sacs; s++) {
-      const r = coreR * (1.2 - s * 0.22);
-      const sac = new THREE.Mesh(sqGeo(r, sqEx, sqEy, 12), s === 0 ? clothMat : skinMat);
-      sac.position.set((s - 1) * coreR * 0.5, coreMidY + s * coreR * 0.4, (s % 2 ? 1 : -1) * coreR * 0.3);
-      group.add(sac); pulseCores.push({ mesh: sac, base: sac.scale.clone(), amp: 0.1 + s * 0.02 });
+      const r = coreR * (1.15 - s * 0.2);
+      addCoreBall((s - 1) * coreR * 0.5, coreMidY + s * coreR * 0.4, (s % 2 ? 1 : -1) * coreR * 0.3, r);
     }
+    corePulse = true;   // the sacs breathe
     head.position.y = coreMidY + coreR * 0.6;
     for (let i = 0; i < nTent; i++) {
       const p = ringPos(i, nTent, coreR * 0.8, coreMidY - coreR * 0.6, 1);
@@ -745,6 +818,32 @@ export function makeAlien(THREE, traits, member, seed) {
   // (the over-pull regression). The player CONTACT derives from arms[playerIdx].root below,
   // so it rides out with the shoulder and stays reachable — reach is unaffected.
   for (const r of armRoots) pushRootToSurface(r.pos);
+
+  // ---- BAKE THE FUSED ORGANIC CORE (marching cubes, ONCE) -------------------------
+  // Seed a metaball at every ARM root + every tendril/leg root so the appendages MELT
+  // into the torso (limbs read as growing OUT of the mass, not clamped tubes butting it).
+  // Then bake the whole spine+limb-root metaball field to ONE static isosurface. This is
+  // a pure function of the seeded positions -> deterministic; NO rng; run ONCE (never per
+  // frame). Resolution capped for mobile. A degenerate field falls back to a superquadric.
+  for (const r of armRoots) addCoreBall(r.pos.x, r.pos.y, r.pos.z, coreR * 0.5);
+  for (const p of appendageRoots) addCoreBall(p.x, p.y, p.z, coreR * 0.42);
+  if (coreBalls.length === 0) addCoreBall(0, coreMidY, 0, coreR * 1.1);   // safety spine
+  const CORE_RES = 32;   // 28–40 band; static bake, so cheap at runtime
+  const coreCenter = new THREE.Vector3(0, coreMidY, 0);
+  let coreGeo = null;
+  try { coreGeo = bakeMetaballGeometry(THREE, coreBalls, coreCenter, CORE_RES); } catch (e) { coreGeo = null; }
+  let coreMesh, coreIsMarching = true;
+  if (coreGeo) {
+    coreMesh = new THREE.Mesh(coreGeo, clothMat);
+    coreMesh.position.copy(coreCenter);      // geometry is origin-centred; position seats it
+  } else {                                   // fallback (never expected): a plain lump
+    coreIsMarching = false;
+    coreMesh = new THREE.Mesh(sqGeo(coreR * 1.2, sqEx, sqEy, 14), clothMat);
+    coreMesh.position.y = coreMidY;
+  }
+  coreMesh.userData.fusedCore = true;
+  group.add(coreMesh);
+  if (corePulse) pulseCores.push({ mesh: coreMesh, base: coreMesh.scale.clone(), amp: 0.07 });
 
   // ---- CONTRAST: floating LIGHT-BALLS — small bright emissive orbs orbiting the
   // core. Per-alien count + jitter so no two aliens carry the same halo; a deep-dark
@@ -774,7 +873,39 @@ export function makeAlien(THREE, traits, member, seed) {
   // pupil that DARTS + eyelids that BLINK), BROWS that raise, and the hinged JAW. Parts
   // are children of `head` (or eye pivots on the head) so the face is CONTIGUOUS and
   // never floats; the update only sets TRANSFORMS (no geometry rebuilt) — mobile-cheap.
-  const faceRig = { eyes: [], brows: [], hasLids: false };
+  const faceRig = { eyes: [], brows: [], hasLids: false, jaw: null };
+  // ---- HINGED JAW with a DARK CAVITY ---------------------------------------------
+  // A real mouth: an UPPER jaw (on its own pivot) + a LOWER jaw (parented to the driven
+  // `jaw` object, which drops + rotates on lip-sync) framing a RECESSED DARK CAVITY —
+  // 3D interior geometry set BEHIND the jaw line, so an open mouth reads as a hollow, NOT
+  // a flat black disc. All rounded (spheres/cones, no boxes). No rng (determinism intact).
+  function buildHingedMouth(cy, w, opts) {
+    opts = opts || {};
+    const zf = faceZ, depth = w * 0.65;
+    const cavZ = zf - depth * 0.55;
+    // DARK CAVITY — a recessed dark pocket (interior geometry, not a disc on the face).
+    const cav = new THREE.Mesh(new THREE.SphereGeometry(w * 0.6, 9, 7), mouthMat);
+    cav.scale.set(1, 0.82, 0.62); cav.position.set(0, cy, cavZ); head.add(cav);
+    // UPPER JAW — a rounded top-lip mass on its OWN pivot (hinges up/back on open).
+    const upPivot = new THREE.Object3D();
+    upPivot.position.set(0, cy + w * 0.16, zf - w * 0.06); head.add(upPivot);
+    const upper = new THREE.Mesh(new THREE.SphereGeometry(w * 0.72, 10, 6), skinMat);
+    upper.scale.set(1, 0.34, 0.6); upPivot.add(upper);
+    // LOWER JAW — a rounded chin mass parented to `jaw` (drops + rotates on lip-sync).
+    const lowY = cy - jawBaseY - w * 0.08;
+    const lower = new THREE.Mesh(new THREE.SphereGeometry(w * 0.76, 10, 6), skinMat);
+    lower.scale.set(1, 0.42, 0.62); lower.position.set(0, lowY, w * 0.05); jaw.add(lower);
+    if (opts.fangs) {
+      for (let k = 0; k < 3; k++) {
+        const fu = new THREE.Mesh(new THREE.ConeGeometry(w * 0.09, w * 0.24, 4), accent2Mat);
+        fu.position.set((k - 1) * w * 0.34, cy - w * 0.02, zf); fu.rotation.x = Math.PI; head.add(fu);
+        const fl = new THREE.Mesh(new THREE.ConeGeometry(w * 0.08, w * 0.2, 4), accent2Mat);
+        fl.position.set((k - 1) * w * 0.34, lowY + w * 0.14, w * 0.05); jaw.add(fl);
+      }
+    }
+    faceRig.jaw = { upper: upPivot, lower, cavity: cav, cavZ, frontZ: zf, upBaseRotX: 0 };
+    return faceRig.jaw;
+  }
   // an EYE unit: a socket pivot on the head carrying an eyeball, a pupil that darts
   // toward the gaze target, and (for forward eyes) upper+lower eyelids that blink.
   function addEye(host, cx, cy, cz, R, opts) {
@@ -819,9 +950,9 @@ export function makeAlien(THREE, traits, member, seed) {
       head.add(dome);
       addBrow(head, 0, headSz * 0.42, headSz * 0.34, headSz * 0.5, 0);
       addEye(head, 0, 0, headSz * 0.34, headSz * 0.42, { lids: true, bigIris: true });
-      // a small slit maw below so the singer can still gape.
-      const jbox = new THREE.Mesh(new THREE.BoxGeometry(headSz * 0.3, headSz * 0.08, headSz * 0.08), mouthMat);
-      jbox.position.set(0, -headSz * 0.04, 0); jaw.add(jbox); head.add(jaw);
+      // a hinged maw below the giant eye so the singer can still gape (dark cavity).
+      head.add(jaw);
+      buildHingedMouth(-headSz * 0.34, headSz * 0.34, {});
     } else if (faceKind === "eyeRing") {
       const knob = new THREE.Mesh(sqGeo(headSz * 0.55, sqEx, sqEy, 12), skinMat);
       head.add(knob);
@@ -832,8 +963,8 @@ export function makeAlien(THREE, traits, member, seed) {
         addEye(head, p.x, p.y, Math.abs(p.z) * 0.4 + headSz * 0.2, headSz * 0.15, { lids: e < 2 });
       }
       addBrow(head, 0, headSz * 0.5, headSz * 0.3, headSz * 0.5, 0);
-      const maw = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.2, 7, 6), mouthMat);
-      maw.position.set(0, -headSz * 0.1, headSz * 0.4); maw.scale.set(1, 0.6, 0.6); jaw.add(maw); head.add(jaw);
+      head.add(jaw);
+      buildHingedMouth(-headSz * 0.12, headSz * 0.32, {});
     } else {
       // maw / mandibles — a SUPERQUADRIC skull (squareness from the genre) with a jaw
       // that drops, plus a couple of eyes.
@@ -847,26 +978,19 @@ export function makeAlien(THREE, traits, member, seed) {
         const sx = eyeN === 1 ? 0 : (e / (eyeN - 1) - 0.5) * eyeSpread;
         addEye(head, sx, eyeY, faceZ, headSz * 0.13, { lids: e < 2 });
       }
+      head.add(jaw);
       if (faceKind === "mandibles") {
+        // side mandibles (cones on the driven lower jaw) PLUS a hinged dark-cavity mouth.
         for (let s = -1; s <= 1; s += 2) {
           const md = new THREE.Mesh(new THREE.ConeGeometry(headSz * 0.1, headSz * 0.4, 4), accent2Mat);
           md.position.set(s * headSz * 0.22, -headSz * 0.06, faceZ + headSz * 0.05);
           md.rotation.z = s * 1.4; md.rotation.x = Math.PI / 2; jaw.add(md);
         }
-        const lip = new THREE.Mesh(new THREE.BoxGeometry(headSz * 0.4, headSz * 0.06, headSz * 0.08), mouthMat);
-        lip.position.set(0, headSz * 0.18, faceZ - headSz * 0.02); head.add(lip);
+        buildHingedMouth(-headSz * 0.02, headSz * 0.34, {});
       } else {
-        const lip = new THREE.Mesh(new THREE.BoxGeometry(headSz * 0.5, headSz * 0.06, headSz * 0.08), mouthMat);
-        lip.position.set(0, headSz * 0.2, faceZ - headSz * 0.02); head.add(lip);
-        const jbox = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.28, 8, 6), mouthMat);
-        jbox.scale.set(1, 0.5, 0.42);
-        jbox.position.set(0, -headSz * 0.04, 0); jaw.add(jbox);
-        for (let k = 0; k < 4; k++) {
-          const fang = new THREE.Mesh(new THREE.ConeGeometry(headSz * 0.03, headSz * 0.1, 3), accent2Mat);
-          fang.position.set((k - 1.5) * headSz * 0.12, headSz * 0.12, faceZ + headSz * 0.02); fang.rotation.x = Math.PI; head.add(fang);
-        }
+        // a fanged maw — hinged upper+lower jaw around a recessed dark cavity.
+        buildHingedMouth(-headSz * 0.02, headSz * 0.4, { fangs: true });
       }
-      head.add(jaw);
     }
   }
   buildFace();
@@ -1013,7 +1137,12 @@ export function makeAlien(THREE, traits, member, seed) {
   // contact point (alien-local) + the playing rig — PLAYERS ONLY.
   let contact = null, instrument = null, holdPoint = null, instBaseY = 0;
   const _tgt = new THREE.Vector3(), _rest = new THREE.Vector3(), _lastTarget = new THREE.Vector3();
+  const _tgt2 = new THREE.Vector3();
   let windup = 0, bowAmp = 0, loweredDrop = 0;
+  // TWO-TENTACLE DRUMMER: a drummer strikes with a SECOND appendage too, so both land on
+  // drum onsets. contact2 is that hand's own strike point (mirrored to its side) and is
+  // guaranteed reachable (same offset-from-shoulder formula as the primary hand).
+  let contact2 = null, drumSecondIdx = -1;
   const contactAxis = new THREE.Vector3();   // the along-instrument axis for pitch bias
   if (!isDancer) {
     const pShoulder = arms[playerIdx].root;
@@ -1037,6 +1166,14 @@ export function makeAlien(THREE, traits, member, seed) {
     windup = baseReach * (isDrummer ? 0.9 : 0.55) * (0.7 + 0.3 * armLenMul);
     bowAmp = baseReach * 0.42;
     loweredDrop = H * 0.34;    // how far the instrument sinks when the voice rests
+    // wire the SECOND drumming appendage (drummers only): its own reachable strike point.
+    if (isDrummer && nArms >= 2) {
+      drumSecondIdx = holderIdx >= 0 ? holderIdx : (playerIdx + 1) % nArms;
+      if (drumSecondIdx === playerIdx) drumSecondIdx = (playerIdx + 1) % nArms;
+      const s2 = arms[drumSecondIdx].root;
+      const side2 = arms[drumSecondIdx].side || (contact.x >= 0 ? -1 : 1);
+      contact2 = new THREE.Vector3().set(side2 * 0.28, -0.75, 0.72).normalize().multiplyScalar(REACH).add(s2);
+    }
   }
 
   let clock = 0;
@@ -1048,7 +1185,7 @@ export function makeAlien(THREE, traits, member, seed) {
   let lastC = 0, lastEnergy = 0, lastRaise = 0;
   // FACE puppeteer state — the eased gaze position the pupils lerp toward, plus the
   // latest blink/brow/mouth values (all exposed via faceDebug for the headless proof).
-  let gzX = 0, gzY = 0, lastGazeTX = 0, lastGazeTY = 0, lastBlink = 0, lastBrow = 0, lastMouth = 0;
+  let gzX = 0, gzY = 0, lastGazeTX = 0, lastGazeTY = 0, lastBlink = 0, lastBrow = 0, lastMouth = 0, lastMouthOpen = 0;
 
   // --- contactness from the REAL note onsets (SCORE mode) --------------------------
   // Returns c in 0..1: 1 == the hand is AT the instrument (a hit landing NOW). For
@@ -1206,6 +1343,10 @@ export function makeAlien(THREE, traits, member, seed) {
     jaw.position.y = jawBaseY - mo * headSz * 0.24;
     jaw.rotation.x = mo * 0.55;
     jaw.scale.set(1 + wide * 0.5, 1 + mo * 0.15, 1 + round * mo * 0.6);
+    // UPPER jaw hinges up/back a little so the mouth opens from BOTH lips (not just a
+    // dropping chin) — revealing the recessed dark cavity between them.
+    if (faceRig.jaw && faceRig.jaw.upper) faceRig.jaw.upper.rotation.x = -mo * 0.32;
+    lastMouthOpen = mo;
   }
 
   function update(dt, ctx) {
@@ -1333,6 +1474,17 @@ export function makeAlien(THREE, traits, member, seed) {
     _lastTarget.copy(_tgt);
     animateInstrument(c, vel);
 
+    // SECOND drumming appendage — strikes ON the same onsets as the first (drummers only).
+    if (drumSecondIdx >= 0) {
+      const a2 = arms[drumSecondIdx];
+      if (energyActive > 0.001) {
+        _tgt2.copy(contact2);
+        const away = 1 - c;
+        _tgt2.y += away * windup; _tgt2.z -= away * windup * 0.25;
+        a2.solve(_tgt2);
+      } else { _rest.copy(a2.rest); _rest.y -= 0.05 * H; a2.solve(_rest); }
+    }
+
     // holder braces the instrument for stringed/blown styles (when playing).
     if (stringed && holderIdx >= 0 && holderIdx !== playerIdx) {
       if (raise > 0.1) arms[holderIdx].solve(holdPoint);
@@ -1342,6 +1494,7 @@ export function makeAlien(THREE, traits, member, seed) {
     // the remaining arms idle-sway.
     for (let i = 0; i < arms.length; i++) {
       if (i === playerIdx) continue;
+      if (i === drumSecondIdx) continue;
       if (stringed && i === holderIdx) continue;
       const a = arms[i]; _rest.copy(a.rest);
       const idleAmp = 0.15 + 0.85 * gAmp;   // idle arms too calm down when the voice is quiet
@@ -1393,6 +1546,18 @@ export function makeAlien(THREE, traits, member, seed) {
       gazeTarget: { x: +lastGazeTX.toFixed(4), y: +lastGazeTY.toFixed(4) },
       pupil: e0 ? { x: +e0.pupil.position.x.toFixed(4), y: +e0.pupil.position.y.toFixed(4) } : null,
       blink: +lastBlink.toFixed(4), brow: +lastBrow.toFixed(4), mouth: +lastMouth.toFixed(4),
+      // HINGED-JAW rig state: an upper + lower jaw framing a RECESSED DARK CAVITY (not a
+      // flat black disc). `open` rises on lip-sync; both jaws rotate; the cavity sits behind
+      // the jaw line (cavZ < frontZ) and wears the dark mouth material.
+      mouthRig: faceRig.jaw ? {
+        hasUpper: !!faceRig.jaw.upper, hasLower: !!faceRig.jaw.lower, hasCavity: !!faceRig.jaw.cavity,
+        cavityRecessed: faceRig.jaw.cavZ < faceRig.jaw.frontZ,
+        cavityHex: mouthMat.color.getHexString(),
+        lowerRotX: +jaw.rotation.x.toFixed(4),
+        upperRotX: +(faceRig.jaw.upper ? faceRig.jaw.upper.rotation.x : 0).toFixed(4),
+        jawDropY: +jaw.position.y.toFixed(4),
+        open: +lastMouthOpen.toFixed(4),
+      } : null,
       personality: {
         expressiveness: +P.expressiveness.toFixed(4), blinkInterval: +P.blinkInterval.toFixed(4),
         blinkPhase: +P.blinkPhase.toFixed(4), gazePeriod: +P.gazePeriod.toFixed(4),
@@ -1400,6 +1565,80 @@ export function makeAlien(THREE, traits, member, seed) {
         restMouth: +P.restMouth.toFixed(4),
       },
     };
+  }
+
+  // headless-proof accessor for the FUSED marching-cubes CORE: confirms the central body
+  // mass is a baked STATIC BufferGeometry isosurface (not a per-frame rebuild), reports its
+  // vertex/triangle count, and runs a union-find over triangles sharing a vertex to prove it
+  // is ONE connected surface (the metaballs fused). MarchingCubes-imported => class exists.
+  function coreInfo() {
+    const geo = coreMesh && coreMesh.geometry;
+    const posAttr = geo && geo.getAttribute ? geo.getAttribute("position") : null;
+    const info = {
+      isMarching: !!(coreIsMarching && geo && geo.userData && geo.userData.mcVertexCount),
+      isBufferGeometry: !!(geo && geo.isBufferGeometry),
+      isFusedCore: !!(coreMesh && coreMesh.userData && coreMesh.userData.fusedCore),
+      hasImport: typeof MarchingCubes === "function",
+      vertexCount: geo && geo.userData ? (geo.userData.mcVertexCount || 0) : 0,
+      ballCount: coreBalls.length,
+      triCount: posAttr ? (posAttr.count / 3) | 0 : 0,
+      components: 0,
+    };
+    if (posAttr) {
+      const pos = posAttr.array, nTri = (posAttr.count / 3) | 0;
+      const parent = new Int32Array(nTri); for (let i = 0; i < nTri; i++) parent[i] = i;
+      const find = (a) => { while (parent[a] !== a) { parent[a] = parent[parent[a]]; a = parent[a]; } return a; };
+      const vmap = new Map();
+      const key = (vi) => Math.round(pos[vi * 3] * 1000) + "," + Math.round(pos[vi * 3 + 1] * 1000) + "," + Math.round(pos[vi * 3 + 2] * 1000);
+      for (let t = 0; t < nTri; t++) {
+        for (let k = 0; k < 3; k++) {
+          const kk = key(t * 3 + k);
+          if (vmap.has(kk)) parent[find(t)] = find(vmap.get(kk)); else vmap.set(kk, t);
+        }
+      }
+      const comps = new Set(); for (let t = 0; t < nTri; t++) comps.add(find(t));
+      info.components = comps.size;
+    }
+    return info;
+  }
+  // headless-proof accessor for the STRIKERS: how many appendages strike + each one's tip
+  // distance to its drum contact at the current pose (drummers report >= 2).
+  function strikerProbe() {
+    const list = [];
+    const pa = (playerIdx >= 0 ? arms[playerIdx] : arms[0]);
+    list.push({ which: "primary", contactDist: contact ? +pa.tip.distanceTo(contact).toFixed(4) : 0, reach: +pa.tip.distanceTo(_lastTarget).toFixed(4) });
+    if (drumSecondIdx >= 0) {
+      const a2 = arms[drumSecondIdx];
+      list.push({ which: "second", contactDist: contact2 ? +a2.tip.distanceTo(contact2).toFixed(4) : 0, reach: +a2.tip.distanceTo(_tgt2).toFixed(4) });
+    }
+    return { count: list.length, strikers: list };
+  }
+  // headless-proof accessor: no flat dark DISC/blob-shadow artifact remains under the alien.
+  // We scan for a mesh that is BOTH near-black AND disc-like (a CircleGeometry, or a very
+  // flat wide cylinder/ring) sitting low under the body. There should be NONE.
+  function discProbe() {
+    let discs = 0;
+    group.updateMatrixWorld(true);
+    // is `o` part of the (legit) invented INSTRUMENT? its rim/frame parts are meant to be
+    // flat + dark; they are NOT the shadow artifact this probe hunts for.
+    const inInstrument = (o) => { for (let p = o; p; p = p.parent) { if (p === instrument) return true; } return false; };
+    group.traverse((o) => {
+      if (!o.isMesh || !o.geometry) return;
+      if (inInstrument(o)) return;
+      const gt = o.geometry.type || "";
+      const m = o.material;
+      const col = m && m.color ? m.color : null;
+      const lum = col ? 0.2126 * col.r + 0.7152 * col.g + 0.0722 * col.b : 1;
+      if (lum > 0.12) return;                       // only worry about DARK meshes
+      const b = new THREE.Box3().setFromObject(o); if (b.isEmpty()) return;
+      const s = new THREE.Vector3(); b.getSize(s);
+      const flat = s.y < Math.min(s.x, s.z) * 0.28; // pancake-thin in Y (a disc/plane)
+      const wide = Math.min(s.x, s.z) > coreR * 0.9; // spans the body footprint
+      const low = b.max.y < coreMidY * 0.6;          // sits UNDER the body (near the floor)
+      const discGeo = /Circle/.test(gt);
+      if (discGeo || (flat && wide && low)) discs++;
+    });
+    return { darkDiscs: discs };
   }
 
   // SHADOWS + modelling: every mesh casts and receives the key light.
@@ -1447,7 +1686,7 @@ export function makeAlien(THREE, traits, member, seed) {
     instrument: instMainMat.color.getHexString(),   // Fix 2: bold complementary instrument colour
   };
 
-  return { group, update, debug, faceDebug, limbProbe, materials, playStyle, hitsPerBeat, voice, plan, tentacleProof, palette, liftY, footWorldY };
+  return { group, update, debug, faceDebug, limbProbe, coreInfo, strikerProbe, discProbe, materials, playStyle, hitsPerBeat, voice, plan, tentacleProof, palette, liftY, footWorldY };
 }
 
 export default { makeAlien };

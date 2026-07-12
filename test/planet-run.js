@@ -16,7 +16,10 @@ import * as THREE from "../vendor/three/three.module.min.js";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { makePlanet, makeHeightField } from "../app/starcruise/planet.js";
+import {
+  makePlanet, makeHeightField, chooseTerrainType, smallWorldRadius,
+  curvatureDrop, TERRAIN_TYPE_NAMES,
+} from "../app/starcruise/planet.js";
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 let failures = 0;
@@ -118,6 +121,126 @@ function sig(mesh) {
   const f = makeHeightField(5, { freq: 2.0, octaves: 3, seaLevel: 0.5, radius: 4, reliefFrac: 0.2 });
   ok(f.knobs.freq === 2.0 && f.knobs.octaves === 3 && f.knobs.seaLevel === 0.5, "opts override the seeded knobs");
   ok(f.knobs.octaves <= 6, "octaves capped for mobile");
+}
+
+// ---- shared: fibonacci-sphere direction sampler + per-planet terrain stats ------
+function sampleDirs(count) {
+  const dirs = [];
+  const ga = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < count; i++) {
+    const y = 1 - (2 * i + 1) / count;
+    const rad = Math.sqrt(Math.max(0, 1 - y * y));
+    const th = ga * i;
+    dirs.push([Math.cos(th) * rad, y, Math.sin(th) * rad]);
+  }
+  return dirs;
+}
+const DIRS = sampleDirs(600);
+// terrain signature: relief range, water fraction, mean vertex-colour hue.
+function planetStats(mesh) {
+  const f = mesh.field, k = f.knobs;
+  let lo = Infinity, hi = -Infinity, water = 0;
+  for (const d of DIRS) {
+    const r = f.heightAtDir(d[0], d[1], d[2]);
+    if (r < lo) lo = r; if (r > hi) hi = r;
+    if (f.elevation01(d[0], d[1], d[2]) < k.seaLevel) water++;
+  }
+  // mean vertex colour -> HSL hue
+  const col = mesh.geometry.attributes.color.array;
+  let mr = 0, mg = 0, mb = 0, nC = col.length / 3;
+  for (let i = 0; i < col.length; i += 3) { mr += col[i]; mg += col[i + 1]; mb += col[i + 2]; }
+  mr /= nC; mg /= nC; mb /= nC;
+  const c = new THREE.Color(mr, mg, mb); const hsl = { h: 0, s: 0, l: 0 }; c.getHSL(hsl);
+  return { type: mesh.userData.terrainType, relief: hi - lo,
+    water: water / DIRS.length, hue: hsl.h * 360, sat: hsl.s, colRGB: [mr, mg, mb] };
+}
+
+// ---- 6. LITTLE-PRINCE SMALL WORLD: small curvature-legible radius + surface API ---
+{
+  const sw = makePlanet(THREE, 4242, palette, { detail: 4, smallWorld: true, bandSpan: 10 });
+  const R = sw.userData.radius;
+  ok(R === smallWorldRadius(10), "smallWorld picks the small-world radius (R=" + R + " for band 10)");
+  ok(R >= 12 && R <= 24, "  -> a SMALL round world (12..24), not a flat-floor giant");
+  const drop = curvatureDrop(R, 5);                    // horizon fall across a 5-unit half-band
+  ok(drop > 0.3, "curvature is VISIBLE at band scale (horizon drops " + drop.toFixed(2) + " over 5 units)");
+  ok(sw.userData.smallWorld === true, "mesh flags userData.smallWorld");
+}
+
+// ---- 7. surfacePoint / upAt consistent with the baked mesh surface --------------
+{
+  const g = planet.geometry, pos = g.attributes.position;
+  let maxSP = 0, minRadialDot = 1, minOut = 1;
+  const spV = [0, 0, 0], upV = [0, 0, 0];
+  for (let i = 0; i < pos.count; i += 53) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const len = Math.hypot(x, y, z) || 1;
+    const dir = [x / len, y / len, z / len];
+    planet.surfacePoint(dir, undefined, undefined);    // vector-form (backdrop contract)
+    const sp = planet.surfacePoint(dir[0], dir[1], dir[2], spV);
+    maxSP = Math.max(maxSP, Math.hypot(sp[0] - x, sp[1] - y, sp[2] - z));
+    planet.upAt(dir[0], dir[1], dir[2], upV);
+    const ulen = Math.hypot(upV[0], upV[1], upV[2]);
+    minOut = Math.min(minOut, ulen);                   // upAt must be unit length
+    // radial outward normal: dot(up, dir) ~ 1, and dot(surfacePoint, up) > 0
+    minRadialDot = Math.min(minRadialDot, upV[0] * dir[0] + upV[1] * dir[1] + upV[2] * dir[2]);
+    const spd = sp[0] * upV[0] + sp[1] * upV[1] + sp[2] * upV[2];
+    if (spd <= 0) minRadialDot = -1;                   // surface point must be outward
+  }
+  ok(maxSP < 1e-4, "surfacePoint(dir) lands exactly on the baked mesh vertex (max err " + maxSP.toExponential(2) + ")");
+  ok(Math.abs(minOut - 1) < 1e-6, "upAt(dir) is a UNIT vector");
+  ok(minRadialDot > 0.999, "upAt(dir) is the OUTWARD radial normal (min dot " + minRadialDot.toFixed(5) + ")");
+  // vector-form (Vector3 | {x,y,z}) accepted like the backdrop calls it
+  const v3 = new THREE.Vector3(0.2, 0.9, -0.3);
+  const spVec = planet.surfacePoint(v3);
+  const spObj = planet.surfacePoint({ x: 0.2, y: 0.9, z: -0.3 });
+  ok(Array.isArray(spVec) && spVec.length === 3 && Number.isFinite(spVec[0]),
+    "surfacePoint accepts a Vector3 and returns [x,y,z]");
+  ok(Math.abs(spVec[0] - spObj[0]) < 1e-9 && Math.abs(spVec[1] - spObj[1]) < 1e-9,
+    "surfacePoint accepts {x,y,z} identically (backdrop _asV contract)");
+}
+
+// ---- 8. >= 6 DISTINCT terrain types selectable, each obviously different ----------
+{
+  ok(TERRAIN_TYPE_NAMES.length >= 6, "catalogue exposes >= 6 terrain types (" + TERRAIN_TYPE_NAMES.length + ": " + TERRAIN_TYPE_NAMES.join(",") + ")");
+  const stats = TERRAIN_TYPE_NAMES.map((t) =>
+    planetStats(makePlanet(THREE, 9001, palette, { detail: 4, radius: 10, terrainType: t })));
+  // every forced type reports its own name back
+  ok(stats.every((s, i) => s.type === TERRAIN_TYPE_NAMES[i]), "each forced terrainType round-trips to userData");
+  // distinctness: cluster by (water bucket, relief bucket, hue bucket) — expect many
+  const key = (s) => Math.round(s.water * 4) + "|" + Math.round(s.relief * 3) + "|" + Math.round(s.hue / 40);
+  const distinct = new Set(stats.map(key));
+  ok(distinct.size >= 6, "the terrain types fall into >= 6 distinct (water/relief/hue) signatures (" + distinct.size + ")");
+  // no two ADJACENT types share an identical colour+relief signature
+  const sigs = new Set(stats.map((s) => key(s)));
+  ok(sigs.size === distinct.size, "signatures are set-consistent");
+  // auto-selection across seeds actually spreads across the catalogue
+  const seen = new Set();
+  for (let s = 1; s <= 60; s++) seen.add(chooseTerrainType(s));
+  ok(seen.size >= 6, "auto-selection over 60 seeds spans >= 6 types (" + seen.size + ")");
+}
+
+// ---- 9. TWO CONTRASTING GENRES -> obviously different worlds ---------------------
+{
+  const palOcean = { skin: { h: 200, s: 0.5, l: 0.45 }, cloth: { h: 210, s: 0.5, l: 0.5 }, accent: { h: 190, s: 0.7, l: 0.6 } };
+  const palDune = { skin: { h: 30, s: 0.6, l: 0.5 }, cloth: { h: 40, s: 0.5, l: 0.55 }, accent: { h: 20, s: 0.85, l: 0.6 } };
+  const A = planetStats(makePlanet(THREE, 111, palOcean, { detail: 4, radius: 10, terrainType: "seas" }));
+  const B = planetStats(makePlanet(THREE, 222, palDune, { detail: 4, radius: 10, terrainType: "desert" }));
+  ok(A.type !== B.type, "different terrain TYPE (" + A.type + " vs " + B.type + ")");
+  ok(A.water > 0.35 && B.water < 0.05, "different WATER coverage (seas " + (A.water * 100).toFixed(0) + "% vs desert " + (B.water * 100).toFixed(0) + "%)");
+  // mean-colour distance in RGB is large (clearly different palettes)
+  const dCol = Math.hypot(A.colRGB[0] - B.colRGB[0], A.colRGB[1] - B.colRGB[1], A.colRGB[2] - B.colRGB[2]);
+  ok(dCol > 0.2, "different PALETTE (mean-colour RGB distance " + dCol.toFixed(3) + ")");
+  ok(Math.abs(A.hue - B.hue) > 60, "different base HUE (" + A.hue.toFixed(0) + "deg vs " + B.hue.toFixed(0) + "deg)");
+  ok(Math.abs(A.relief - B.relief) > 0.05 * 10 || A.type !== B.type, "different RELIEF profile (" + A.relief.toFixed(2) + " vs " + B.relief.toFixed(2) + ")");
+}
+
+// ---- 10. determinism holds per FORCED terrain type ------------------------------
+{
+  const a = makePlanet(THREE, 55, palette, { detail: 4, radius: 10, terrainType: "volcanic" });
+  const b = makePlanet(THREE, 55, palette, { detail: 4, radius: 10, terrainType: "volcanic" });
+  const c = makePlanet(THREE, 55, palette, { detail: 4, radius: 10, terrainType: "ice" });
+  ok(sig(a) === sig(b), "same seed + type = BYTE-IDENTICAL");
+  ok(sig(a) !== sig(c), "same seed, different type DIFFERS (volcanic vs ice)");
 }
 
 console.log(failures === 0

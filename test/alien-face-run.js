@@ -170,6 +170,32 @@ async function inPage() {
   out.armContact = { reach: +onReach.toFixed(4), contact: +onContact.toFixed(3) };
   out.armStillLands = onReach < 0.03 && onContact > 0.82;
 
+  // ---- F: HINGED JAW + DARK CAVITY — the mouth is a real upper+lower jaw pair opening on
+  // lip-sync around a RECESSED DARK CAVITY (not a single flat black disc). Drive the lead to
+  // a loud onset (open) and to a silent gap (closed) and compare the jaw rig.
+  {
+    const ja = makeAlien(THREE, traits, leadM, 314);
+    ja.update(0.016, { barPhase: 0.0, playing: true, level: 1, loudness: 1, notes: [{ t: 0.0, vel: 1.0 }] });
+    const open = ja.faceDebug().mouthRig;
+    ja.update(0.016, { barPhase: 0.3, playing: true, level: 1, loudness: 1, notes: [{ t: 0.0, vel: 1.0 }] });   // between onsets -> shut
+    const shut = ja.faceDebug().mouthRig;
+    const cx = new THREE.Color("#" + (open.cavityHex || "000000"));
+    const cavLum = 0.2126 * cx.r + 0.7152 * cx.g + 0.0722 * cx.b;
+    out.jaw = {
+      hasUpper: open.hasUpper, hasLower: open.hasLower, hasCavity: open.hasCavity,
+      cavityRecessed: open.cavityRecessed, cavityLum: +cavLum.toFixed(3),
+      openAtOnset: open.open, openAtRest: shut.open,
+      lowerRotOpen: open.lowerRotX, lowerRotShut: shut.lowerRotX,
+      upperRotOpen: open.upperRotX, upperRotShut: shut.upperRotX,
+      jawDropOpen: open.jawDropY, jawDropShut: shut.jawDropY,
+    };
+    out.jawIsHingedPair = open.hasUpper && open.hasLower;
+    out.jawHasDarkCavity = open.hasCavity && open.cavityRecessed && cavLum < 0.12;
+    out.jawOpensOnLipSync = (open.open > shut.open + 0.2)
+      && (Math.abs(open.lowerRotX) > Math.abs(shut.lowerRotX) + 0.05)
+      && (Math.abs(open.upperRotX) > Math.abs(shut.upperRotX) + 0.02);
+  }
+
   return out;
 }
 
@@ -212,6 +238,10 @@ async function main() {
   ok(R.personalityDeterministic, "D3. personality is deterministic per seed");
 
   ok(R.armStillLands, `E1. PRESERVED — the arm still CONTACTS the instrument at the onset (reach=${R.armContact.reach}, contact=${R.armContact.contact})`);
+
+  ok(R.jawIsHingedPair, `F1. MOUTH is a HINGED upper+lower JAW pair (${JSON.stringify(R.jaw)})`);
+  ok(R.jawHasDarkCavity, `F2. the mouth opening is a RECESSED DARK CAVITY, not a flat black disc (recessed=${R.jaw.cavityRecessed}, cavityLum=${R.jaw.cavityLum})`);
+  ok(R.jawOpensOnLipSync, `F3. the jaw OPENS on lip-sync — both jaws rotate + the mouth gapes at the onset vs between (open=${R.jaw.openAtOnset} vs shut=${R.jaw.openAtRest})`);
 
   ok(perr.length === 0, "G1. no console/page errors" + (perr.length ? " :: " + perr.join(" | ") : ""));
 

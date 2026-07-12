@@ -118,7 +118,9 @@ let dancers = [];            // [{group, update}] — extra background dancer-al
 let stage = null;            // shadow-RECEIVING stage disc under the band
 let groundPlanet = null;     // the PROCEDURAL PLANET the band stands on (planet.js; heightAt foot-plant)
 let groundH0 = 0;            // heightAt(0,0) of the ground planet (so its pole sits at y=0)
-const GROUND_R = 110;        // ground-planet radius (large => a gentle, walkable local patch)
+let groundRadius = 0;        // the ACTUAL base radius of the current ground planet (small-world)
+let smallWorldGround = false;// true when the ground is the LITTLE-PRINCE small curved world
+const GROUND_R = 110;        // legacy flat-fallback ground-planet radius (only if the small build fails)
 let backdrop = null;         // {group, update}
 let ship = null;             // { group, update(dt, phase, landProgress) } — the greet-craft saucer
 let cockpit = null;          // { group, update, setGenres } — the transit COCKPIT interior
@@ -145,8 +147,11 @@ const bandCentroid = { x: 0, y: 1.2, z: 0.6 };   // centre of the spawned player
 // the SPACE ANCHOR — a fixed spot high above the band scene where the cockpit set +
 // planet live during transit, so they never overlap the (despawned) surface scene.
 const SPACE_ANCHOR = { x: 0, y: 40, z: 0 };
-const SKY_COLOR = 0x1a0b2e;    // dusk-purple sky at the surface (fades to space on liftoff)
-const SPACE_COLOR = 0x02010a;  // near-black deep space
+// SPACE IS TRUE BLACK — the LITTLE-PRINCE landing sits on a tiny world in real black
+// space, and the galaxy's stars + glowing planets read best on 0x000000 (was dark purple).
+// Both the surface sky and deep space are black; the sky<->space fade is black->black.
+const SKY_COLOR = 0x000000;    // black space behind the little world at the surface
+const SPACE_COLOR = 0x000000;  // black deep space
 
 // internal framebuffer — the render resolution. RAISED A LOT from the old 320x240
 // potato: now NEAR-NATIVE, DPR-aware, with the long edge capped (~1600 desktop /
@@ -532,35 +537,82 @@ function spawnFor(genreOrWeights, seed) {
   // rebuild (resize / DPR change) re-applies it to the freshly-built pass.
   curRenderStyle = traits.renderStyle || null;
   if (ps1 && ps1.setStyle && curRenderStyle) ps1.setStyle(curRenderStyle.post);
-  // GROUND PLANET — the real procedural world the band stands on (vendored simplex-noise).
-  // Built per-genre from the SAME palette + seed, baked ONCE here (mobile-light: capped
-  // subdivision), placed so its north pole sits at y=0 (heightAt(0,0)). Stage/feet plant on
-  // heightAt so the ensemble sits ON the curved terrain, and the galaxy-to-surface descent
-  // lands onto a real growing world (the same genre's planet) rather than a flat stage that
-  // pops in. Guarded: if the build fails we fall back to the flat stage (groundPlanet null).
-  groundPlanet = null; groundH0 = 0;
+  // ---- ROSTER + STAGE GEOMETRY (resolved BEFORE the world so the world is sized to it) --
+  // ONE alien per SOUNDING voice (deterministic coverage), mobile-capped, laid out in a WIDE
+  // arc. We compute the arc + the (energy-gated) dancer crowd size UP FRONT so the little
+  // world's radius can be sized to hold the whole ensemble around the landing pole.
+  const members = rosterFor(traits.band);
+  const n = members.length;
+  const spread = n > 1 ? Math.max(3.2, Math.min(4.2, 2.6 + 5.2 / n)) : 0;   // wide arc; ~3.2+ per gap
+  const bandHalfW = n > 1 ? ((n - 1) / 2) * spread : 2;
+  const energy = (traits.groove && traits.groove.energy) || 0;
+  const DANCER_ENERGY_GATE = 0.34;         // below this the planet is band-only
+  const wantD = energy >= DANCER_ENERGY_GATE ? Math.max(0, Math.round(traits.dancers || 0)) : 0;
+  const dCap = isCoarse() ? 5 : 8;
+  const nd = Math.min(dCap, wantD);
+  const dancerReach = nd > 0 ? 7 : 0;      // outer radius of the dancer ring (matches below)
+
+  // LITTLE-PRINCE small world: a SMALL curved planet sized to the ensemble so the band reads
+  // as standing on a little round world with a clearly BENDING horizon. radius ≈ 1.8*bandSpan
+  // (≈ 2.7*halfExtent); halfExtent is clamped so tiny/huge bands still get a legible curve.
+  const halfExtent = Math.max(5, Math.min(12, Math.max(bandHalfW, dancerReach)));
+  const bandSpan = 1.5 * halfExtent;
+
+  // GROUND PLANET — the SMALL curved world the band stands ON (little-prince landing). Built
+  // per-genre from the SAME palette + seed via makePlanet({smallWorld}), which auto-selects
+  // one of 9 terrain types + its palette/atmosphere. Placed so its landing POLE surface sits
+  // at world y≈0 (planet centre at y=-groundH0) — the existing camera framing (looks at y~1.2)
+  // is preserved while the world curves away underfoot. The band/dancers/backdrop are wrapped
+  // ONTO this curved surface (surfacePoint/upAt) below. Baked ONCE, mobile-capped subdivision.
+  // Guarded: on any failure we fall back to the old flat frame (groundPlanet null / not small).
+  groundPlanet = null; groundH0 = 0; groundRadius = 0; smallWorldGround = false;
+  // Terrain TYPE + relief keyed to the GENRE (not just the session seed) so each planet's
+  // LANDSCAPE shape differs per genre — not only its palette. Deterministic per (seed, genre):
+  // mix a hash of the genre/blend key into the ground-planet seed. Palette stays genre-derived
+  // (traits.palette). Without this, every genre in one session shares the same terrain archetype.
+  const gKey = typeof genreOrWeights === "string" ? genreOrWeights : JSON.stringify(genreOrWeights || "");
+  let terrSeed = (useSeed >>> 0) || 1;
+  for (let i = 0; i < gKey.length; i++) terrSeed = Math.imul(terrSeed ^ gKey.charCodeAt(i), 2654435761) >>> 0;
   try {
     if (mods.makeGroundPlanet) {
-      groundPlanet = mods.makeGroundPlanet(THREE, useSeed, traits.palette, {
-        detail: isCoarse() ? 2 : 3, radius: GROUND_R, reliefFrac: 0.011,
-        seaLevel: 0.42, atmosphere: false,
+      groundPlanet = mods.makeGroundPlanet(THREE, terrSeed, traits.palette, {
+        smallWorld: true, bandSpan, curveFactor: 1.8,
+        detail: isCoarse() ? 3 : 4, reliefFrac: 0.05, atmosphere: false,
       });
-      groundH0 = (groundPlanet.heightAt && groundPlanet.heightAt(0, 0)) || GROUND_R;
-      groundPlanet.position.set(0, -groundH0, 0);           // north pole -> world y = 0
+      groundRadius = (groundPlanet.field && groundPlanet.field.radius) || GROUND_R;
+      groundH0 = (groundPlanet.heightAt && groundPlanet.heightAt(0, 0)) || groundRadius;
+      groundPlanet.position.set(0, -groundH0, 0);           // landing pole -> world y = 0
       groundPlanet.name = "groundPlanet";
+      smallWorldGround = !!(groundPlanet.userData && groundPlanet.userData.smallWorld);
       groundPlanet.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = true; } });
       scene.add(groundPlanet);
     }
-  } catch (e) { groundPlanet = null; groundH0 = 0; }
-  // backdrop (procedural city/farm behind the band).
-  backdrop = mods.makeBackdrop(THREE, traits, useSeed);
+  } catch (e) { groundPlanet = null; groundH0 = 0; groundRadius = 0; smallWorldGround = false; }
+
+  // BACKDROP (procedural city + landscape) WRAPPED on the curved surface: pass the planet's
+  // surface API so every building/feature foot-plants ON the sphere oriented to the normal,
+  // wrapping the city down to the little world's HORIZON behind/around the band (distinct per
+  // genre). surfacePoint is planet-LOCAL, so we offset the group to the planet's world frame
+  // (aligning it with the ground mesh) and HIDE the backdrop's own FLAT ground/sea planes —
+  // the curved planet mesh is the ground now, and a flat plane can't wrap a sphere.
+  const bkOpts = (groundPlanet && groundPlanet.field && smallWorldGround)
+    ? { surface: groundPlanet.field } : {};
+  backdrop = mods.makeBackdrop(THREE, traits, useSeed, bkOpts);
+  if (bkOpts.surface) {
+    backdrop.group.position.copy(groundPlanet.position);
+    backdrop.group.userData.scOnSurface = true;
+    backdrop.group.traverse((o) => {
+      if (o.isMesh && (o.name === "ground" || o.name === "world-sea")) o.visible = false;
+    });
+  }
   scene.add(backdrop.group);
-  // ship: the pilot's craft the band greets you in front of; its ramp opens on land.
+  // ship: empty group (kept only for the surface-scene lifecycle parity).
   ship = makeShip(traits, useSeed);
   scene.add(ship.group);
-  // STAGE: a shadow-RECEIVING disc under the band so the key light's cast shadows
-  // land on a clean plinth (sits just above the backdrop ground to avoid z-fight).
-  {
+  // STAGE plinth: ONLY in the flat fallback (a flat disc can't sit on a curved world — the
+  // small planet's terrain receives the cast shadows directly).
+  stage = null;
+  if (!smallWorldGround) {
     const smat = new THREE.MeshLambertMaterial({ color: 0x1b1526, flatShading: true });
     smat.polygonOffset = true; smat.polygonOffsetFactor = 1; smat.polygonOffsetUnits = 1;
     stage = new THREE.Mesh(new THREE.CircleGeometry(8.4, 44), smat);
@@ -568,65 +620,90 @@ function spawnFor(genreOrWeights, seed) {
     stage.receiveShadow = true; stage.name = "stage";
     scene.add(stage);
   }
-  // band: ONE alien per SOUNDING voice (deterministic coverage — every audible part
-  // gets a player), mobile-capped, arranged in a WIDE arc that faces the cockpit (+Z).
-  // Outer members sit further back and yaw inward so it reads as a big stage arc, not
-  // a firing line. Staging is spread out (wider than the old cluster) so the ensemble
-  // fills the frame. They stand on the ground (y=0), in front of the ship.
-  const members = rosterFor(traits.band);
-  const n = members.length;
-  // WIDER STAGE — aliens sit much farther apart (was ~2.3..2.7) so they read as
-  // distinct individuals with room to move, not a cramped firing line.
-  const spread = n > 1 ? Math.max(3.2, Math.min(4.2, 2.6 + 5.2 / n)) : 0;   // wide arc; ~3.2+ per gap
+  // BAND — each alien PLANTED ON the curved surface: its flat arc (x,z) maps to a surface
+  // direction; a PEDESTAL sits at surfacePoint(dir) and orients local +Y to upAt(dir) so the
+  // alien stands UPRIGHT on the little world (leaning outward on the wings — the little-prince
+  // pose). The alien reparents UNDER the pedestal and animates (bob/sway) in the pedestal's
+  // local frame, so its own +Y is the surface normal (its per-frame group.position.y /
+  // group.rotation writes ride the tangent frame instead of fighting it).
   let cx = 0, cz = 0;
   band = members.map((member, i) => {
     const a = mods.makeAlien(THREE, traits, member, useSeed + i * 101);
     a._voice = member.voice || member.role;   // the engine voice this alien plays (score-bridge lookup)
     a._role = member.role;
-    const off = (i - (n - 1) / 2);           // centered index, e.g. -2,-1,0,1,2
-    a.group.position.x = off * spread;
-    a.group.position.z = 2.0 - Math.abs(off) * 0.85;   // deeper arc: center forward, wings back
-    a.group.position.y = groundYAt(a.group.position.x, a.group.position.z);   // foot-plant on terrain
-    a.group.rotation.y = -off * 0.13;        // yaw toward the pilot at the arc center
-    enableShadows(a.group);                  // the players CAST shadows onto the stage
-    scene.add(a.group);
-    cx += a.group.position.x; cz += a.group.position.z;
+    const off = (i - (n - 1) / 2);             // centered index, e.g. -2,-1,0,1,2
+    const fx = off * spread;
+    const fz = 2.0 - Math.abs(off) * 0.85;     // deeper arc: center forward, wings back
+    const ped = new THREE.Object3D();
+    ped.name = "band-pedestal";
+    ped.add(a.group);
+    plantOnSurface(ped, fx, fz, -off * 0.13);  // yaw toward the pilot at the arc center
+    a.stage = ped;                             // the WORLD-staging node (probes/framing read this)
+    enableShadows(ped);                        // the players CAST shadows onto the terrain
+    scene.add(ped);
+    cx += ped.position.x; cz += ped.position.z;
     return a;
   });
   // orbit target = the CENTRE of the players (front-centred landed framing). y is an
-  // eye-height above the stage so the camera looks AT the band, not their feet.
+  // eye-height above the pole so the camera looks AT the band, not their feet.
   bandCentroid.x = n ? cx / n : 0;
   bandCentroid.z = n ? cz / n : 0.6;
   bandCentroid.y = 1.2;
 
-  // DANCERS — OPTIONAL, gated by ENERGY/genre: a low-energy planet (sparse ambient,
-  // hushed folk) is JUST THE BAND — no crowd. Louder, driving genres get a dancing
-  // crowd whose size scales with traits.dancers. The gate is a deterministic function
-  // of the genre's groove energy so the same genre always decides the same way. Ring/
-  // crowd AROUND + BEHIND the band; mobile-capped so the draw-calls stay bounded.
-  const energy = (traits.groove && traits.groove.energy) || 0;
-  const DANCER_ENERGY_GATE = 0.34;         // below this the planet is band-only
-  const wantD = energy >= DANCER_ENERGY_GATE ? Math.max(0, Math.round(traits.dancers || 0)) : 0;
-  const dCap = isCoarse() ? 5 : 8;
-  const nd = Math.min(dCap, wantD);
+  // DANCERS — OPTIONAL, gated by ENERGY (resolved above): a low-energy planet is JUST THE
+  // BAND. Louder genres get a crowd ringed AROUND/BEHIND the band, each also PLANTED ON the
+  // curved surface facing the band. Mobile-capped so the draw-calls stay bounded.
   dancers = [];
   for (let i = 0; i < nd; i++) {
     const d = mods.makeAlien(THREE, traits, { role: "dancer" }, useSeed + 4200 + i * 37);
-    // ring behind + beside the band: bias angles to the back hemisphere so the front
-    // (camera) view of the players stays open. Radius grows with the crowd size.
     const seedR = mulberry(useSeed * 131 + i * 977);
     const ang = Math.PI * (0.55 + 1.9 * (i + 0.5) / nd) + (seedR() - 0.5) * 0.4;  // ~back arc
     const rad = 5.0 + (i % 2) * 1.4 + seedR() * 1.0;   // wider ring (band is spread further)
     const px = bandCentroid.x + Math.cos(ang) * rad;
     const pz = bandCentroid.z + Math.sin(ang) * rad - 0.6;   // pushed back (-z)
-    d.group.position.set(px, groundYAt(px, pz), pz);          // foot-plant on terrain
-    d.group.rotation.y = Math.atan2(bandCentroid.x - px, bandCentroid.z - pz);  // face the band
-    const sc = 0.85 + seedR() * 0.25;
-    d.group.scale.setScalar(sc);
-    enableShadows(d.group);
-    scene.add(d.group);
+    const faceYaw = Math.atan2(bandCentroid.x - px, bandCentroid.z - pz);   // face the band
+    const ped = new THREE.Object3D();
+    ped.name = "dancer-pedestal";
+    ped.add(d.group);
+    plantOnSurface(ped, px, pz, faceYaw);
+    d.group.scale.setScalar(0.85 + seedR() * 0.25);
+    d.stage = ped;
+    enableShadows(ped);
+    scene.add(ped);
     dancers.push(d);
   }
+}
+// surfaceQuat(nm, yaw) — a quaternion that rotates local +Y onto the outward surface normal
+// `nm` and then spins `yaw` about that normal. The little-prince upright-on-a-sphere pose.
+function surfaceQuat(nm, yaw) {
+  const N = new THREE.Vector3(nm[0] || 0, nm[1] || 0, nm[2] || 0);
+  if (N.lengthSq() < 1e-9) N.set(0, 1, 0); else N.normalize();
+  const qA = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), N);
+  return new THREE.Quaternion().setFromAxisAngle(N, yaw || 0).multiply(qA);
+}
+// plantOnSurface(ped, x, z, yaw) — position + orient a pedestal (holding an alien) ON the
+// current ground planet's curved surface for a flat landing-patch offset (x,z): map (x,z) to
+// a surface direction near the pole, sit at surfacePoint(dir) (in the planet's WORLD frame),
+// and orient local +Y to upAt(dir) with a yaw spin. Falls back to the FLAT (x, groundYAt, z)
+// frame when there is no small-world ground (the flat-stage fallback). Returns ped.position.
+function plantOnSurface(ped, x, z, yaw) {
+  if (groundPlanet && groundPlanet.field && smallWorldGround) {
+    const f = groundPlanet.field;
+    // NB: the field's landing tangent basis is tX=+Z, tZ=+X (cross-product handedness), so
+    // dirForGround(a,b) puts `a`->world-Z and `b`->world-X. We feed (z,x) so the ensemble's
+    // flat X-spread lands on WORLD X (across the camera's view) and its Z-arc on world Z —
+    // the band reads as a wide stage arc FACING the pilot (+Z), not a line receding from it.
+    const dir = f.dirForGround(z, x);
+    const sp = f.surfacePoint(dir);
+    const nm = f.upAt(dir);
+    const o = groundPlanet.position;
+    ped.position.set(sp[0] + o.x, sp[1] + o.y, sp[2] + o.z);
+    ped.quaternion.copy(surfaceQuat(nm, yaw));
+  } else {
+    ped.position.set(x, groundYAt(x, z), z);
+    ped.rotation.y = yaw || 0;
+  }
+  return ped.position;
 }
 // tiny local seeded rng (deterministic dancer scatter; NOT Math.random).
 function mulberry(a) {
@@ -654,17 +731,17 @@ function enableShadows(root) {
 // count shadow-casting meshes across the spawned band + dancers (shadow proof).
 function countCasters() {
   let n = 0;
-  const scan = (g) => g && g.group && g.group.traverse((o) => { if (o.isMesh && o.castShadow) n++; });
+  const scan = (a) => { const g = a && (a.stage || a.group); if (g) g.traverse((o) => { if (o.isMesh && o.castShadow) n++; }); };
   band.forEach(scan); dancers.forEach(scan);
   return n;
 }
 function despawnBand() {
-  for (const a of band) { scene.remove(a.group); disposeObj(a.group); }
+  for (const a of band) { const g = a.stage || a.group; scene.remove(g); disposeObj(g); }
   band = [];
-  for (const d of dancers) { scene.remove(d.group); disposeObj(d.group); }
+  for (const d of dancers) { const g = d.stage || d.group; scene.remove(g); disposeObj(g); }
   dancers = [];
   if (stage) { scene.remove(stage); disposeObj(stage); stage = null; }
-  if (groundPlanet) { scene.remove(groundPlanet); disposeObj(groundPlanet); groundPlanet = null; groundH0 = 0; }
+  if (groundPlanet) { scene.remove(groundPlanet); disposeObj(groundPlanet); groundPlanet = null; groundH0 = 0; groundRadius = 0; smallWorldGround = false; }
   if (backdrop) { scene.remove(backdrop.group); disposeObj(backdrop.group); backdrop = null; }
   if (ship) { scene.remove(ship.group); disposeObj(ship.group); ship = null; }
   curTraits = null;
@@ -844,13 +921,14 @@ export async function start() {
 
   displayCanvas = document.createElement("canvas");
   displayCanvas.id = "starcruise-canvas";
-  displayCanvas.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;z-index:40;image-rendering:pixelated;background:#0a0410";
+  displayCanvas.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;z-index:40;image-rendering:pixelated;background:#000000";
   document.body.appendChild(displayCanvas);
   document.body.classList.add("view-starcruise");
 
   renderer = new THREE.WebGLRenderer({ canvas: displayCanvas, antialias: false, powerPreference: "low-power" });
   renderer.setPixelRatio(1);
   renderer.autoClear = false;
+  renderer.setClearColor(0x000000, 1);          // SPACE IS TRUE BLACK (was dark purple)
   // SHADOWS ON: one PCF-soft shadow map, MODELS the forms (light-to-dark falloff +
   // cast shadows) so the aliens/city read 3D instead of flat. Only the key light
   // casts; the map is modest (smaller on mobile) with a tight frustum around the band.
@@ -1181,18 +1259,21 @@ function applyOrbitToCamera() {
   if (camera.fov !== orbit.fov) { camera.fov = orbit.fov; camera.updateProjectionMatrix(); }
 }
 // applyTransitCamera(dt, p) — drive the camera in TRANSIT as a DAMPED follow of the
-// flight pose. This is the SMOOTH cruise: instead of snapping the camera onto the pose
-// each frame (which jittered + made lift-off/descent a hard cut), we ease toward it, so
-// the star-map fly-through glides and the take-off/zoom-in read as continuous moves.
-// Seeded from the LIVE camera the first transit frame (so lift-off glides up from the
-// surface). Floor-clamped. Deterministic (only dt).
+// flight pose. Seeded from the LIVE camera the first transit frame (so lift-off glides up
+// from the surface), then TIGHTLY follows the flight pose. The pose is ALREADY a smooth,
+// dead-reckoned glide (flight.js ramps the followed centroid every frame), so this follow
+// no longer needs to smooth a stepping pose — a LOOSE follow here just added its own LAG on
+// top, which lagged the aiming-amplified transit swing and left the camera drifting for ~a
+// second after the pose had settled (the "still moving after the blend stopped" bug). A
+// tight follow keeps the seed-glide on lift-off yet converges promptly. Floor-clamped;
+// deterministic (only dt).
 function applyTransitCamera(dt, p) {
   if (!camFollow.init) {
     camFollow.x = camera.position.x; camFollow.y = camera.position.y; camFollow.z = camera.position.z;
     camFollow.lx = p.lookAt.x; camFollow.ly = p.lookAt.y; camFollow.lz = p.lookAt.z;
     camFollow.fov = camera.fov; camFollow.init = true;
   }
-  const k = 1 - Math.exp(-(dt > 0 ? dt : 0) * 3.0);   // eased (frame-rate independent) follow
+  const k = 1 - Math.exp(-(dt > 0 ? dt : 0) * 6.0);   // eased (frame-rate independent) follow — tight (pose is pre-smoothed)
   camFollow.x += (p.position.x - camFollow.x) * k;
   camFollow.y += (p.position.y - camFollow.y) * k;
   camFollow.z += (p.position.z - camFollow.z) * k;
@@ -1231,11 +1312,12 @@ function buildAutoShots() {
   const cy = bandCentroid.y;
   // frame to the ACTUAL band width (aliens are spread wide now) so wides never crop.
   let halfW = 1.5;
-  for (const a of band) halfW = Math.max(halfW, Math.abs(a.group.position.x - bandCentroid.x));
+  for (const a of band) halfW = Math.max(halfW, Math.abs((a.stage || a.group).position.x - bandCentroid.x));
   const wide = Math.max(orbit.minDist + 2, 6.5 + 1.3 * halfW + 0.6 * Math.max(1, band.length));
   const wides = [
-    // 0: FRONT establishing wide (the landed default framing).
-    { target: { x: bandCentroid.x, y: cy, z: bandCentroid.z }, yaw: 0, pitch: 0.16, dist: wide, fov: 56, yawRate: 0.04, kind: "wide" },
+    // 0: FRONT establishing wide (the landed default framing). Tilted a touch DOWN for the
+    // little-prince scale so the small world's curved horizon + wrapped city read on landing.
+    { target: { x: bandCentroid.x, y: cy, z: bandCentroid.z }, yaw: 0, pitch: 0.24, dist: wide, fov: 56, yawRate: 0.04, kind: "wide" },
     // side 3/4 wide.
     { target: { x: bandCentroid.x, y: cy + 0.4, z: bandCentroid.z }, yaw: 0.95, pitch: 0.30, dist: wide + 2.5, fov: 60, yawRate: -0.05, kind: "wide" },
     { target: { x: bandCentroid.x, y: cy, z: bandCentroid.z }, yaw: -0.95, pitch: 0.12, dist: wide + 1.5, fov: 58, yawRate: 0.05, kind: "wide" },
@@ -1249,7 +1331,7 @@ function buildAutoShots() {
   // whole figure in view (never a limb-only extreme zoom: dist floored ~3.4). Fix 3: a
   // clear downward tilt so the camera looks DOWN AT the alien, not up from the floor.
   const closeups = band.map((a, i) => {
-    const bp = a.group.position;
+    const bp = (a.stage || a.group).position;
     return { target: { x: bp.x, y: 1.3, z: bp.z }, yaw: (i % 2 ? 0.30 : -0.30), pitch: 0.16, dist: 3.6, fov: 50, yawRate: (i % 2 ? 1 : -1) * 0.07, kind: "closeup" };
   });
   // the DRUMMER shot — a dedicated medium of the drums player (the auto-cam ALWAYS cuts
@@ -1268,7 +1350,7 @@ function buildAutoShots() {
   }
   while (ei < extras.length) autoShots.push(extras[ei++]);
   if (drummer) {
-    const bp = drummer.group.position;
+    const bp = (drummer.stage || drummer.group).position;
     autoCam.drummerShot = autoShots.length;
     autoShots.push({ target: { x: bp.x, y: 1.25, z: bp.z }, yaw: 0.18, pitch: 0.14, dist: 3.9, fov: 50, yawRate: -0.05, kind: "drummer" });
   }
@@ -1740,8 +1822,8 @@ window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBe
       clampedY: +Math.max(FLOOR_Y, camY).toFixed(3) };
   }),
   // bandPositions(): each spawned alien's staging position (proves the SPREAD).
-  bandPositions: () => band.map((a) => ({ voice: a._voice, x: +a.group.position.x.toFixed(2),
-    y: +a.group.position.y.toFixed(2), z: +a.group.position.z.toFixed(2) })),
+  bandPositions: () => band.map((a) => { const g = a.stage || a.group;
+    return { voice: a._voice, x: +g.position.x.toFixed(2), y: +g.position.y.toFixed(2), z: +g.position.z.toFixed(2) }; }),
   // ---- GALAXY (SUNS) + HUD + FILL probes (headless-proof; harmless in production) ----
   // suns(): the colored cluster SUNS — count + each sun's marker world-pos/color/label,
   // to prove they sit AT their cluster.star projection with the cluster's color.
@@ -1842,9 +1924,64 @@ window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBe
   // hasGround(): is the procedural PLANET ground present under the band? + a couple of
   // planted heights (proves the band sits ON real terrain, not a flat stage that popped in).
   hasGround: () => !!groundPlanet,
-  ground: () => (groundPlanet ? { radius: GROUND_R, h0: +groundH0.toFixed(3),
+  ground: () => (groundPlanet ? { radius: +groundRadius.toFixed(2), h0: +groundH0.toFixed(3),
     y00: +groundYAt(0, 0).toFixed(3), yEdge: +groundYAt(9, 0).toFixed(3),
+    smallWorld: smallWorldGround, terrain: groundPlanet.userData && groundPlanet.userData.terrainType,
     posY: +groundPlanet.position.y.toFixed(2) } : null),
+  // ---- LITTLE-PRINCE (small-world landing) probes (headless-proof; harmless in production) ----
+  // smallWorld(): is the landed ground a SMALL curved world? + its radius/terrain/offset. The
+  // curvatureDrop across a band half-span proves the horizon visibly bends away.
+  smallWorld: () => {
+    if (!groundPlanet) return null;
+    let drop = 0;
+    try { drop = groundYAt(0, 0) - groundYAt(Math.min(groundRadius * 0.4, 9), 0); } catch (e) {}
+    return { small: smallWorldGround, radius: +groundRadius.toFixed(2),
+      terrain: groundPlanet.userData && groundPlanet.userData.terrainType,
+      offsetY: +groundPlanet.position.y.toFixed(2), curveDrop: +drop.toFixed(3) };
+  },
+  // bandOnSurface(): each band member's distance from the planet CENTRE (≈ the surface radius,
+  // proving they sit ON the curved terrain) and how closely its local +Y aligns to the outward
+  // surface normal (≈ 1 => standing UPRIGHT on the little world, oriented to the normal).
+  bandOnSurface: () => {
+    if (!groundPlanet || !band.length) return null;
+    const c = new THREE.Vector3(0, groundPlanet.position.y, 0);   // planet centre in world space
+    const YA = new THREE.Vector3(0, 1, 0), up = new THREE.Vector3(), P = new THREE.Vector3();
+    return band.map((a) => {
+      const g = a.stage || a.group;
+      P.copy(g.position);
+      up.copy(YA).applyQuaternion(g.quaternion);
+      const nrm = P.clone().sub(c); const r = nrm.length(); nrm.normalize();
+      return { voice: a._voice, r: +r.toFixed(2), upDotN: +up.dot(nrm).toFixed(3),
+        y: +P.y.toFixed(2) };
+    });
+  },
+  // backdropOnSurface(): sample the city/landscape INSTANCES' world positions and report how
+  // many sit ON the planet's sphere (distance-from-centre ≈ the surface radius) — proves the
+  // city WRAPPED the curved surface rather than composing flat.
+  backdropOnSurface: () => {
+    if (!groundPlanet || !backdrop || !backdrop.group) return null;
+    const c = new THREE.Vector3(0, groundPlanet.position.y, 0);
+    const M = new THREE.Matrix4(), P = new THREE.Vector3(), Q = new THREE.Quaternion(), S = new THREE.Vector3();
+    backdrop.group.updateMatrixWorld(true);
+    let cnt = 0, onSphere = 0, minR = 1e9, maxR = 0;
+    backdrop.group.traverse((o) => {
+      if (!o.isInstancedMesh) return;
+      if (o.name === "orbs" || o.name === "beacons") return;   // point-lights; radius irrelevant
+      for (let i = 0; i < o.count; i++) {
+        o.getMatrixAt(i, M); M.premultiply(o.matrixWorld); M.decompose(P, Q, S);
+        const r = P.distanceTo(c);
+        cnt++; if (r < minR) minR = r; if (r > maxR) maxR = r;
+        if (r > groundRadius - 5) onSphere++;
+      }
+    });
+    return { curved: !!(backdrop.group.userData && backdrop.group.userData.scOnSurface),
+      count: cnt, onSphere, minR: +minR.toFixed(2), maxR: +maxR.toFixed(2), radius: +groundRadius.toFixed(2) };
+  },
+  // bg(): the scene background + renderer clear colour hex — proves SPACE IS TRUE BLACK.
+  bg: () => ({
+    scene: scene && scene.background && scene.background.isColor ? scene.background.getHex() : null,
+    clear: renderer ? renderer.getClearColor(new THREE.Color()).getHex() : null,
+  }),
   hasShip: () => !!ship,
   hasCockpit: () => !!cockpit,
   hasPlanet: () => !!planet,

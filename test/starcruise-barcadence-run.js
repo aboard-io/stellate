@@ -143,6 +143,84 @@ async function main() {
   ok(ratios.length >= 4 && worst.ratio <= 2.0,
     `1. NO LURCH at any BAR BOUNDARY — worst boundary camera move is ${worst.ratio}x the local median (frame ${worst.b}, move ${worst.move} vs median ${worst.med}); <= 2.0 means a spring glides across each step, not a first-order spike`);
 
+  // ==== 1b. CONTINUOUS CRUISE — the FOLLOWED TARGET advances EVERY FRAME =============
+  // THE ACTUAL BUG ("waits eight bars then moves all at once") is NOT a boundary SPIKE — it is
+  // the OPPOSITE: the camera FOLLOWS the weighted-centroid target, which the app updates only
+  // in DISCRETE per-bar STEPS. A spring eased toward that STATIC between-update target CONVERGES
+  // and then SITS STILL until the next step, then bursts — a wait-then-move whose boundary frame
+  // is LOW (so section 1's "no spike" test passes right through) yet the camera visibly waits.
+  //
+  // The FIX makes the FOLLOWED target dead-reckon: it ramps LINEARLY from where it is to the new
+  // value across the update interval, advancing every frame. We measure that followed target
+  // directly (state.hereSmoothed — the centroid the pose is built from, BEFORE the transit
+  // camera's aiming geometry, which has its own unrelated nonlinearities). We drive a MULTI-BAR
+  // CRUISE between WELL-SEPARATED genres exactly like the live app — weights HELD constant within
+  // a bar, STEPPED at each bar boundary, beatPhase advancing 0..1, dominance LOW so we stay in
+  // transit — and assert the target's per-frame motion is roughly FLAT/uniform: every cruise bar
+  // keeps moving (min per-frame move is a real fraction of that bar's mean), no near-zero stall.
+  const cruise = await page.evaluate(() => {
+    const SC = window.__STARCRUISE;
+    // WELL-SEPARATED systems — the dominant hops between distant genres each bar so the centroid
+    // pans a long way across the map (the worst case for a wait-then-jump).
+    const hops = ["ambient", "gabber", "jazz", "techno", "bossanova", "ambient", "gabber"];
+    const FPB = 24, DT = 0.1, SPB = (DT * FPB) / 8;   // 8 beats/bar => bar duration == FPB*DT (2.4s)
+    const blendFor = (g, o) => [{ g, w: 0.45 }, { g: o, w: 0.3 }, { g: "chiptune", w: 0.25 }];  // dominance 0.45 => transit
+    const setBeat = (serial, f) => SC.__injectBeat({ bpm: 120, spb: SPB, cbeats: 8, serial,
+      beat: Math.floor((f * 8) / FPB), beatPhase: ((f * 8) / FPB) % 1, playing: true });
+    const here = () => { const s = SC.state(); return (s && s.hereSmoothed) || { x: 0, y: 0, z: 0 }; };
+    // settle on the first hop so we START converged (no startup transient in the trace).
+    setBeat(0, 0);
+    SC.__injectTravel({ weights: blendFor("ambient", "techno"), dominant: "ambient", position: null, live: true, seed: 1 });
+    for (let i = 0; i < 60; i++) SC.__stepNoRender(DT);
+    const tgt = [], cam = [], boundary = [], landedAt = [];
+    let pt = here(), pc = SC.cam(), frame = 0;
+    for (let b = 1; b < hops.length; b++) {
+      // BAR BOUNDARY: step S.weights/travel (discrete) + advance the bar serial, like onBar.
+      SC.__injectTravel({ weights: blendFor(hops[b], hops[b - 1]), dominant: hops[b], position: null, live: true, seed: 1 });
+      for (let f = 0; f < FPB; f++) {
+        setBeat(b, f);                       // beatPhase advances 0..1 across the bar
+        SC.__stepNoRender(DT);
+        const h = here(), c = SC.cam();
+        tgt.push(+Math.hypot(h.x - pt.x, h.y - pt.y, h.z - pt.z).toFixed(4));   // followed-TARGET move
+        cam.push(+Math.hypot(c.x - pc.x, c.y - pc.y, c.z - pc.z).toFixed(4));   // world-camera move (for the eye)
+        if (f === 0) boundary.push(frame);
+        landedAt.push(!!(SC.state() && SC.state().landed));
+        pt = h; pc = c; frame++;
+      }
+    }
+    return { tgt, cam, boundary, landedAt, fpb: FPB };
+  });
+  const CD = cruise.tgt, FPB = cruise.fpb;
+  const meanC = CD.reduce((a, b) => a + b, 0) / Math.max(1, CD.length);
+  const nzT = 0.2 * meanC;                    // "not really moving" threshold (20% of the mean move)
+  let longestStill = 0, run = 0, stillFrames = 0;
+  for (const d of CD) { if (d < nzT) { run++; stillFrames++; if (run > longestStill) longestStill = run; } else run = 0; }
+  const movingFrac = 1 - stillFrames / Math.max(1, CD.length);
+  // per-bar min/mean — a human reads this to confirm every cruise bar KEEPS MOVING (the min
+  // per bar is a real fraction of that bar's mean, not ~0 for a stretch = the old sit-still).
+  const perBar = [];
+  for (let s = 0; s + FPB <= CD.length; s += FPB) {
+    const seg = CD.slice(s, s + FPB);
+    const mn = Math.min.apply(null, seg), mean = seg.reduce((a, b) => a + b, 0) / seg.length;
+    perBar.push({ bar: s / FPB + 1, min: +mn.toFixed(2), mean: +mean.toFixed(2), ratio: +(mn / (mean || 1)).toFixed(2) });
+  }
+  const worstBarRatio = perBar.reduce((m, r) => Math.min(m, r.ratio), 1);
+  console.log("       CRUISE followed-target per-frame motion (one number per frame, ~6 bars):");
+  console.log("       " + JSON.stringify(CD));
+  console.log("       CRUISE world-camera per-frame motion (for the eye):");
+  console.log("       " + JSON.stringify(cruise.cam));
+  console.log("       CRUISE per-bar target min/mean:", JSON.stringify(perBar));
+  console.log("       meanMove=" + meanC.toFixed(2) + " nearZeroThresh=" + nzT.toFixed(2) +
+    " longestStillRun=" + longestStill + " movingFrac=" + movingFrac.toFixed(3) + " worstBarMinOverMean=" + worstBarRatio.toFixed(2));
+  ok(!cruise.landedAt.some((v) => v),
+    "1bA. the cruise stays IN TRANSIT (low dominance) so we measure the PAN between systems, not a landing");
+  ok(longestStill <= 2,
+    `1bB. NO WAIT-THEN-JUMP — the followed target never SITS STILL for a stretch during the cruise (longest run of near-zero-move frames ${longestStill} <= 2; the OLD spring-to-a-static-target parks for each bar's tail then bursts, giving a long still run)`);
+  ok(movingFrac >= 0.9,
+    `1bC. the target MOVES CONTINUOUSLY across the bars — ${(movingFrac * 100).toFixed(0)}% of cruise frames carry real motion (>= 90%: roughly uniform travel, not near-zero-then-spike)`);
+  ok(worstBarRatio >= 0.3,
+    `1bD. every cruise bar KEEPS MOVING at a roughly CONSTANT pace — worst bar's MIN move is ${worstBarRatio.toFixed(2)}x its MEAN (>= 0.3: a flat ramp, not a bar that goes near-dead then lurches, which would be ~0)`);
+
   // ==== 2. CONTINUOUS DESCENT — distance falls smoothly, no teleport ==============
   const cds = cad.camDist.filter((v) => v != null);
   const firstDist = cds[0], lastDist = cds[cds.length - 1];
