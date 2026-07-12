@@ -13,23 +13,33 @@ export function weightsAt(pt){
   const ds=Object.entries(POS).map(([g,[x,y]])=>({g,d:Math.hypot(pt.x-x,pt.y-y)})).sort((a,b)=>a.d-b.d);
   const base=1/(CUTOFF*CUTOFF+80);
   let ws=ds.map(({g,d})=>({g,w:Math.max(0,1/(d*d+80)-base)})).filter(x=>x.w>0).slice(0,4);
+  // VOID BLEND (was: hold the single NEAREST genre at 100% whenever fewer than two stars
+  // clear the CUTOFF). Across a wide void that pinned ONE genre for the whole crossing — a
+  // path drawn through empty space then played the SAME genre with no evolution (Paul's ?path
+  // that sat on one genre for 20 min). Instead, when <2 stars are in range, keep at least the
+  // nearest TWO (three) weighted by inverse-square with NO cutoff, so the APPROACHING star's
+  // share grows continuously as you cross and the mix keeps shifting toward it. Only affects
+  // sparse regions — a dense in-cloud path (the default loop) always has >=2 in range, so this
+  // branch never fires there and its blend is unchanged.
+  if(ws.length<2){
+    ws=ds.slice(0,Math.min(3,ds.length)).map(({g,d})=>({g,w:1/(d*d+80)}));
+  }
   const tot=ws.reduce((s,x)=>s+x.w,0)||1;
   ws=ws.map(x=>({g:x.g,w:x.w/tot}));
-  // sparse-map safety: with the dynamic layout the star field can have voids wider
-  // than CUTOFF (a leg crossing an empty region). If nothing is in range, hold the
-  // single NEAREST genre at full weight so the mix never gets an empty weight list.
   if(!ws.length) ws=[{g:ds[0].g, w:1}];
-  // CONTINUOUS snap-to-anchor: pull toward the nearest star by how UNAMBIGUOUSLY
-  // nearest it is — the GAP to the 2nd-nearest star over SNAP. On a star the gap
-  // is huge -> pure genre; exactly between two stars the gap -> 0 -> natural
-  // blend. This is continuous everywhere, including where "nearest" changes
-  // (there the two distances are equal, so the pull is ~0). The OLD hard
-  // `if(d<SNAP) return 100%` snap had overlapping snap radii on close pairs
-  // (arabpop[215,285]/triphop[240,255] are 39px<2*SNAP apart) — the target
-  // swapped 100%->100% at the leg midpoint with NO blend zone, which read as a
-  // jump. Weight sum stays 1 (the lerp is convex).
+  // CONTINUOUS snap-to-anchor, now GATED BY PROXIMITY: pull toward the nearest star by how
+  // UNAMBIGUOUSLY nearest it is (the GAP to the 2nd over SNAP) — but only when you're actually
+  // NEAR a star. On/near a star the gap is huge -> pure genre (unchanged); exactly between two
+  // stars the gap -> 0 -> natural blend. The NEW `prox` term releases the pull out in a VOID:
+  // across a wide empty region the gap is ALSO large, so the old gap-only snap pinned 100% for
+  // the whole crossing (the static-for-hours bug). prox = 1 within CUTOFF of a star (near it,
+  // behavior identical) fading to 0 by 2×CUTOFF (deep void -> the void-blend above governs and
+  // keeps evolving). A dense in-cloud path stays within CUTOFF everywhere, so prox is 1 and the
+  // snap is unchanged there. Weight sum stays 1 (the lerp is convex).
   const d0=ds[0].d, d1=ds[1]?ds[1].d:Infinity;
-  const s=Math.max(0,Math.min(1,(d1-d0)/SNAP));
+  const gap=Math.max(0,Math.min(1,(d1-d0)/SNAP));
+  const prox=Math.max(0,Math.min(1,1-(d0-CUTOFF)/CUTOFF));
+  const s=gap*prox;
   if(s>0&&ws.length){ const near=ds[0].g;
     ws=ws.map(x=>({g:x.g,w:x.g===near?x.w+s*(1-x.w):x.w*(1-s)})); }
   return ws;

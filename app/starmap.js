@@ -305,7 +305,7 @@ export function insertWaypoint(pt){
 //             empty sky): arms on finger-down, pans once it clears the 4px
 //             deadzone (panMoved), else falls through to a tap on release.
 //   "pinch" — two-finger zoom (the `pinch` object below carries the anchor math)
-let gestureMode="none", dragWpI=-1, lastTap={t:0,x:0,y:0};
+let gestureMode="none", dragWpI=-1, lastTap={t:0,sx:0,sy:0};
 let panMoved=false, panStart=null;
 // "font should be white when interacting": any live pointer work on the map
 // (drag, waypoint drag, pinch, wheel-zoom) lights the anchor labels via the
@@ -330,14 +330,19 @@ svg.addEventListener("pointerdown",e=>{
     const [a,b]=[...ptrs.values()];
     pinch={d0:Math.max(12,Math.hypot(a.x-b.x,a.y-b.y)),k0:ZOOM.k,
            cx:(a.x+b.x)/2,cy:(a.y+b.y)/2,ox0:ZOOM.ox,oy0:ZOOM.oy};
-    gestureMode="pinch"; dragWpI=-1; panMoved=false; panStart=null; lastTap={t:0,x:0,y:0};
+    gestureMode="pinch"; dragWpI=-1; panMoved=false; panStart=null; lastTap={t:0,sx:0,sy:0};
     document.body.classList.remove("dragging");
     return;
   }
   const pt=toXY(e), now=performance.now();
   const wpi=hitWp(e);   // authoritative — a waypoint always beats the traveler (ITEM 5)
-  if(now-lastTap.t<380 && Math.hypot(pt.x-lastTap.x,pt.y-lastTap.y)<16){
-    lastTap={t:0,x:0,y:0};
+  // DOUBLE-TAP proximity is measured in SCREEN PIXELS, not logical world units. The map
+  // now spans ~25000 logical units tall, so at default zoom the old `<16 logical` window was
+  // ~0.4 SCREEN px — no finger (or mouse) could land two taps that close, so double-tap-to-add
+  // silently stopped working ("we've lost the ability to add nodes"). 28 screen px is a normal
+  // double-tap slop; window widened 380->440ms for touch.
+  if(now-lastTap.t<440 && Math.hypot(e.clientX-lastTap.sx, e.clientY-lastTap.sy)<28){
+    lastTap={t:0,sx:0,sy:0};
     // DOUBLE-TAP grammar: on a waypoint = DELETE it (ITEM 6); on empty sky =
     // extend the path (unchanged). Waypoints are hit-tested FIRST.
     if(wpi>=0){ deleteWaypoint(wpi); return; }
@@ -347,7 +352,7 @@ svg.addEventListener("pointerdown",e=>{
     insertWaypoint(pt);
     return;
   }
-  lastTap={t:now,x:pt.x,y:pt.y};
+  lastTap={t:now,sx:e.clientX,sy:e.clientY};
   // right-click delete is handled once, in the contextmenu listener below
   if(e.button!==0) return;
   if(wpi>=0){ gestureMode="wp"; dragWpI=wpi; }   // grab the waypoint even when the traveler sits on it (ITEM 5)

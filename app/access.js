@@ -17,6 +17,7 @@
 // inert stubs in access.html so the imports don't throw.
 import { S, K, V, set } from "./state.js";
 import { POS, KEYS, PROG_MODE, BARS_PER_SEG } from "./world.js";
+import { loopDuration, MIN_DURATION, MAX_DURATION } from "./share.js";
 import { retargetWeights, rescore } from "./targeting.js";
 import { goLive, stopLive, faustHandle } from "./live.js";
 
@@ -67,7 +68,7 @@ function boot(){
   }
   // seed + pace defaults reflected into the controls
   $("seedInp").value = S.seed;
-  $("paceRange").value = paceToSlider(S.pace||BARS_PER_SEG);
+  $("paceRange").value = paceToSlider(loopDuration());
   syncPaceOut();
   updateGenreInfo();
   renderJourney();
@@ -212,14 +213,18 @@ function announceNow(){
   requestAnimationFrame(()=>{ a.textContent=nowSnapshot(); });
 }
 
-// ---------- pace slider: log scale 8..4096 bars per leg ----------
-function paceToSlider(p){ return Math.round(100*Math.log(Math.max(8,Math.min(4096,p))/8)/Math.log(4096/8)); }
-function sliderToPace(v){ return Math.round(8*Math.pow(4096/8, v/100)); }
+// ---------- duration slider: log scale 8 min .. 24 h (loop travel time) ----------
+// (Was "pace" = bars per leg; now the same control dials the whole loop's DURATION,
+// matching the main panel. The HTML id/label stay "pace" for markup stability.)
+function fmtDur(s){ s=Math.round(s); if(s<3600) return Math.round(s/60)+" minutes";
+  const h=s/3600; return (h<10?(Math.round(h*10)/10):Math.round(h))+" hours"; }
+function paceToSlider(d){ return Math.round(100*Math.log(Math.max(MIN_DURATION,Math.min(MAX_DURATION,d))/MIN_DURATION)/Math.log(MAX_DURATION/MIN_DURATION)); }
+function sliderToPace(v){ return Math.round(MIN_DURATION*Math.pow(MAX_DURATION/MIN_DURATION, v/100)); }
 function syncPaceOut(){
-  const p=sliderToPace(+$("paceRange").value);
-  set({pace:p});
-  $("paceOut").textContent = p+" bars per leg";
-  $("paceRange").setAttribute("aria-valuetext", p+" bars per leg");
+  const d=sliderToPace(+$("paceRange").value);
+  set({duration:d});
+  $("paceOut").textContent = fmtDur(d);
+  $("paceRange").setAttribute("aria-valuetext", fmtDur(d));
 }
 
 // ---------- genre info blurb ----------
