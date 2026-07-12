@@ -1132,17 +1132,20 @@ function buildAutoShots() {
     { target: { x: bandCentroid.x, y: cy + 0.4, z: bandCentroid.z }, yaw: 0.95, pitch: 0.30, dist: wide + 2.5, fov: 60, yawRate: -0.05, kind: "wide" },
     { target: { x: bandCentroid.x, y: cy, z: bandCentroid.z }, yaw: -0.95, pitch: 0.12, dist: wide + 1.5, fov: 58, yawRate: 0.05, kind: "wide" },
   ];
-  // VARIETY: a high FLYOVER (up + over, looking down) and a low push THROUGH the city.
+  // VARIETY: a high FLYOVER (up + over, looking down) and a push THROUGH the city. Both
+  // stay AT/ABOVE the band — the flyover from high above, the through-shot at eye level
+  // looking slightly DOWN as it pushes in (Fix 3: never up from the floor).
   const flyover = { target: { x: bandCentroid.x, y: cy + 0.6, z: bandCentroid.z }, yaw: 0.2, pitch: 0.85, dist: wide + 4, fov: 62, yawRate: 0.07, kind: "flyover" };
-  const through = { target: { x: bandCentroid.x, y: 1.2, z: bandCentroid.z }, yaw: 0.0, pitch: 0.02, dist: Math.max(orbit.minDist + 1, 4.5), fov: 66, yawRate: 0.0, dolly: -1.4, kind: "through" };
-  // MEDIUM closeups on each player — framed on the TORSO (y~1.15) at a distance that
-  // keeps the whole figure in view (never a limb-only extreme zoom: dist floored ~3.4).
+  const through = { target: { x: bandCentroid.x, y: cy + 0.15, z: bandCentroid.z }, yaw: 0.0, pitch: 0.06, dist: Math.max(orbit.minDist + 1, 4.5), fov: 66, yawRate: 0.0, dolly: -1.4, kind: "through" };
+  // MEDIUM closeups on each player — framed on the TORSO/face at a distance that keeps the
+  // whole figure in view (never a limb-only extreme zoom: dist floored ~3.4). Fix 3: a
+  // clear downward tilt so the camera looks DOWN AT the alien, not up from the floor.
   const closeups = band.map((a, i) => {
     const bp = a.group.position;
-    return { target: { x: bp.x, y: 1.15, z: bp.z }, yaw: (i % 2 ? 0.30 : -0.30), pitch: 0.08, dist: 3.6, fov: 50, yawRate: (i % 2 ? 1 : -1) * 0.07, kind: "closeup" };
+    return { target: { x: bp.x, y: 1.3, z: bp.z }, yaw: (i % 2 ? 0.30 : -0.30), pitch: 0.16, dist: 3.6, fov: 50, yawRate: (i % 2 ? 1 : -1) * 0.07, kind: "closeup" };
   });
   // the DRUMMER shot — a dedicated medium of the drums player (the auto-cam ALWAYS cuts
-  // here on a fill). Framed on the kit/torso, never a limb crop.
+  // here on a fill). Framed on the kit/torso from slightly ABOVE, never a floor-up angle.
   const drummer = band.find((a) => a._voice === "drums") || band.find((a) => a._role === "drum");
   autoCam.drummerShot = -1;
   // interleave: front-wide, closeup, side-wide, flyover, closeup, through, ...
@@ -1159,7 +1162,20 @@ function buildAutoShots() {
   if (drummer) {
     const bp = drummer.group.position;
     autoCam.drummerShot = autoShots.length;
-    autoShots.push({ target: { x: bp.x, y: 1.2, z: bp.z }, yaw: 0.18, pitch: 0.06, dist: 3.9, fov: 50, yawRate: -0.05, kind: "drummer" });
+    autoShots.push({ target: { x: bp.x, y: 1.25, z: bp.z }, yaw: 0.18, pitch: 0.14, dist: 3.9, fov: 50, yawRate: -0.05, kind: "drummer" });
+  }
+  // FROM-BELOW GUARD (Fix 3): keep every shot's camera AT or ABOVE the band's eye level so
+  // no shot ever looks UP from the floor (which framed mostly ground). For each shot the
+  // resolved eye height is target.y + dist*sin(pitch); if that would sit below the band eye
+  // level we RAISE the pitch to the minimum that lands it exactly at eye level. Deterministic;
+  // preserves the flyover (high) + through-city (eye-level push) characters, only lifting the
+  // up-from-the-floor angles. Mirrors applyOrbitToCamera's dist clamp so the check is exact.
+  const eyeY = bandCentroid.y;
+  for (const sh of autoShots) {
+    const d = Math.max(orbit.minDist, Math.min(orbit.maxDist, sh.dist));
+    if (sh.target.y + d * Math.sin(sh.pitch) < eyeY) {
+      sh.pitch = Math.asin(Math.max(-1, Math.min(1, (eyeY - sh.target.y) / d)));
+    }
   }
 }
 // snap the orbit onto a shot (a hard CUT). Shared by cuts + the drummer-on-fill cut.
@@ -1568,6 +1584,16 @@ window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBe
     cuts: autoCam.cuts, userActive: (_vclock - _lastInputT) < AUTO_IDLE,
     onDrummer: !!autoCam.onDrummer, drummerShot: autoCam.drummerShot,
     kind: autoShots[autoCam.shot] ? autoShots[autoCam.shot].kind : null }),
+  // autoShotList(): the built cinematic shots with each shot's RESOLVED camera eye height
+  // (target.y + clamped-dist*sin(pitch)) — proves NO shot frames the band from below the
+  // eye level (Fix 3). camY is the raw eye height; clampedY applies the ground floor clamp.
+  autoShotList: () => autoShots.map((s) => {
+    const d = Math.max(orbit.minDist, Math.min(orbit.maxDist, s.dist));
+    const camY = s.target.y + d * Math.sin(s.pitch);
+    return { kind: s.kind, pitch: +s.pitch.toFixed(3), dist: +d.toFixed(2),
+      targetY: +s.target.y.toFixed(2), camY: +camY.toFixed(3),
+      clampedY: +Math.max(FLOOR_Y, camY).toFixed(3) };
+  }),
   // bandPositions(): each spawned alien's staging position (proves the SPREAD).
   bandPositions: () => band.map((a) => ({ voice: a._voice, x: +a.group.position.x.toFixed(2),
     y: +a.group.position.y.toFixed(2), z: +a.group.position.z.toFixed(2) })),
