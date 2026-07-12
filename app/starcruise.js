@@ -124,6 +124,7 @@ let sun = null;              // the shadow-casting KEY light (module-scoped for 
 let starfield = null;        // persistent THREE.Points deep-space (whole-session)
 let planetField = null;      // persistent InstancedMesh: ONE planet per genre AT its GENRE_COORDS
 let sunField = null;         // persistent InstancedMesh: ONE colored SUN per CLUSTER at its star coord
+let sunGlowField = null;     // persistent InstancedMesh: an ADDITIVE corona/halo shell per sun (the glow)
 const planetIndex = Object.create(null);   // genre -> instance index (dominant highlight)
 let hudEl = null;            // the 2D cockpit HUD (DOM overlay) — shows the current cluster label
 let _hudLabel = null;        // last label pushed to the HUD (avoid needless DOM writes)
@@ -681,27 +682,47 @@ function buildPlanetField() {
 // PLANETS orbit near them. A single InstancedMesh (31 low-poly balls, one draw call) —
 // mobile-cheap. The per-cluster LABEL is shown in the 2D HUD, not floated in 3D.
 let sunIndex = null;         // [{id,label,color,x,y,z}] parallel to instance indices
+let sunBaseR = null;         // per-sun core radius (for the glow-shell scale + probes)
 function buildSunField() {
   const suns = (mods.clusterWorlds && mods.clusterWorlds()) || [];
   if (!suns.length || !scene) return;
-  const geo = new THREE.IcosahedronGeometry(1, 1);
-  const mat = new THREE.MeshBasicMaterial({ toneMapped: false });   // bright suns (unlit)
+  sunIndex = suns;
+  sunBaseR = new Float32Array(suns.length);
+  // CORE — the STAR itself: a bright, fully self-lit (toneMapped:false, unlit-at-full-
+  // brightness) sphere tinted the cluster color. Radius scales with membership but is kept
+  // well under the ~19-unit min sun-sun spacing so systems never touch (real empty space).
+  const geo = new THREE.IcosahedronGeometry(1, 2);
+  const mat = new THREE.MeshBasicMaterial({ toneMapped: false });
   sunField = new THREE.InstancedMesh(geo, mat, suns.length);
   sunField.frustumCulled = false;
   sunField.name = "sunField";
-  sunIndex = suns;
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), col = new THREE.Color();
+  // GLOW — an additive CORONA/HALO shell around each star (radius ~2.6x the core), blended
+  // ADDITIVELY so it reads as light bleeding into space, not a solid ball. One extra
+  // InstancedMesh (one draw call) — mobile-cheap; caps the glow cost at a single pass.
+  const glowGeo = new THREE.IcosahedronGeometry(1, 1);
+  const glowMat = new THREE.MeshBasicMaterial({ blending: THREE.AdditiveBlending, transparent: true,
+    opacity: 0.5, depthWrite: false, toneMapped: false });
+  sunGlowField = new THREE.InstancedMesh(glowGeo, glowMat, suns.length);
+  sunGlowField.frustumCulled = false;
+  sunGlowField.name = "sunGlowField";
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), col = new THREE.Color(), gcol = new THREE.Color();
   for (let i = 0; i < suns.length; i++) {
     const w = suns[i];
-    // suns are bigger than planets (landmarks): radius scales with membership.
-    const r = 4.5 + Math.min(12, w.members) * 0.55;
-    p.set(w.x, w.y, w.z); s.set(r, r, r);
-    m4.compose(p, q, s); sunField.setMatrixAt(i, m4);
+    const r = 4 + Math.min(8, w.members) * 0.5;    // 4..8 world units — landmark stars, well separated
+    sunBaseR[i] = r;
+    p.set(w.x, w.y, w.z);
+    s.set(r, r, r); m4.compose(p, q, s); sunField.setMatrixAt(i, m4);
     const c = w.color || [1, 1, 1];
     col.setRGB(c[0], c[1], c[2]); sunField.setColorAt(i, col);
+    // the halo is the same hue but pushed brighter, at ~2.6x radius (soft additive corona).
+    const gr = r * 2.6; s.set(gr, gr, gr); m4.compose(p, q, s); sunGlowField.setMatrixAt(i, m4);
+    gcol.setRGB(0.5 + c[0] * 0.5, 0.5 + c[1] * 0.5, 0.5 + c[2] * 0.5); sunGlowField.setColorAt(i, gcol);
   }
   sunField.instanceMatrix.needsUpdate = true;
   if (sunField.instanceColor) sunField.instanceColor.needsUpdate = true;
+  sunGlowField.instanceMatrix.needsUpdate = true;
+  if (sunGlowField.instanceColor) sunGlowField.instanceColor.needsUpdate = true;
+  scene.add(sunGlowField);   // add glow first so the bright core draws over it
   scene.add(sunField);
 }
 // the CLUSTER the current dominant genre belongs to (label + color) — drives the HUD.
@@ -809,18 +830,21 @@ export async function start() {
   // for the whole session (NOT despawned on depart) so frames are never blank in
   // transit; a single THREE.Points draw call, disposed in stop().
   {
-    const N = 500, pos = new Float32Array(N * 3);
+    // SCALED UP to wrap the spread-out galaxy (now ~+/-350 wide, floating at y~380) and
+    // the full descent volume, so deep space reads as a real starry surround from every
+    // pose. A single cheap THREE.Points draw call; centered on the map's mid-height.
+    const N = 800, pos = new Float32Array(N * 3);
     let s = 0x51ce77 >>> 0;                                  // seeded scatter (deterministic)
     const rnd = () => { s = (s + 0x6d2b79f5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
     for (let i = 0; i < N; i++) {
-      const r = 60 + rnd() * 80, th = rnd() * Math.PI * 2, ph = Math.acos(2 * rnd() - 1);
+      const r = 700 + rnd() * 900, th = rnd() * Math.PI * 2, ph = Math.acos(2 * rnd() - 1);
       pos[i * 3] = r * Math.sin(ph) * Math.cos(th);
-      pos[i * 3 + 1] = 10 + Math.abs(r * Math.cos(ph)) * 0.6;   // bias above the horizon
+      pos[i * 3 + 1] = 320 + r * Math.cos(ph);                  // centered on the map's height
       pos[i * 3 + 2] = r * Math.sin(ph) * Math.sin(th);
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    starfield = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xcfe0ff, size: 0.6, sizeAttenuation: true }));
+    starfield = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xcfe0ff, size: 2.4, sizeAttenuation: true }));
     starfield.frustumCulled = false;
     scene.add(starfield);
   }
@@ -835,7 +859,10 @@ export async function start() {
   // you fly PAST labeled colored suns toward the dominant genre's planet).
   buildSunField();
 
-  camera = new THREE.PerspectiveCamera(60, lowW / lowH, 0.1, 300);
+  // FAR PLANE opened up for the SPREAD-OUT galaxy: the map now floats at y~380 and spans
+  // ~+/-350 in x/z, and the transit vantage climbs to ~y760, so the whole scene must stay
+  // inside the frustum from every pose along the descent.
+  camera = new THREE.PerspectiveCamera(60, lowW / lowH, 0.1, 2600);
   camera.position.set(0, 3, 8);
   camera.lookAt(0, 1, 0);
 
@@ -1370,13 +1397,17 @@ function updateSpaceRig(dt, st) {
   // & large just after liftoff (s~0), dropping away + shrinking out in deep space (s~1).
   if (planet) {
     if (curTraits && planet.setPalette) planet.setPalette(curTraits);
-    // sit it in front of / below the camera along the view direction so it stays framed.
-    const fwdX = p.lookAt.x - p.position.x, fwdY = p.lookAt.y - p.position.y, fwdZ = p.lookAt.z - p.position.z;
-    const fl = Math.hypot(fwdX, fwdY, fwdZ) || 1;
-    const ahead = 26;
-    const px = p.position.x + (fwdX / fl) * ahead;
-    const pz = p.position.z + (fwdZ / fl) * ahead;
-    const py = p.position.y - 6 - 30 * s;             // drops away below as we climb
+    // the world we're LEAVING sits near the surface (origin) and RECEDES below as we climb.
+    // Its fall is anchored to the surface (a straight drop with spaceProgress) — NOT to the
+    // camera, which now CLIMBS out to the galaxy on the continuous descent, so "below" is
+    // measured against the ground we left, not the rising eye. Kept near the origin x/z so
+    // it stays under us as we lift off.
+    const fwdX = p.lookAt.x - p.position.x, fwdZ = p.lookAt.z - p.position.z;
+    const fl = Math.hypot(fwdX, fwdZ) || 1;
+    const ahead = 10;
+    const px = (fwdX / fl) * ahead;
+    const pz = (fwdZ / fl) * ahead;
+    const py = 4 - 44 * s;                             // near the surface (s~0) -> dropped below (s~1)
     const sc = 4.2 + (0.6 - 4.2) * s;                 // large near-surface -> small deep space
     planet.group.position.set(px, py, pz);
     planet.group.scale.setScalar(Math.max(0.6, sc));
@@ -1417,7 +1448,8 @@ export function stop() {
   despawnSpaceRig();                               // disposes cockpit + planet (if in transit)
   if (starfield) { scene.remove(starfield); disposeObj(starfield); starfield = null; }
   if (planetField) { scene.remove(planetField); disposeObj(planetField); planetField = null; }
-  if (sunField) { scene.remove(sunField); disposeObj(sunField); sunField = null; sunIndex = null; }
+  if (sunGlowField) { scene.remove(sunGlowField); disposeObj(sunGlowField); sunGlowField = null; }
+  if (sunField) { scene.remove(sunField); disposeObj(sunField); sunField = null; sunIndex = null; sunBaseR = null; }
   for (const g in planetIndex) delete planetIndex[g];
   planetBaseR = null; _hiIdx = -1;
   autoShots = []; autoCam.active = false; autoCam.shot = 0; autoCam.shotT = 0; autoCam.cuts = 0; autoCam.forceCut = true;
@@ -1548,6 +1580,22 @@ window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBe
       id: w.id, label: w.label, color: w.color,
       marker: { x: +w.x.toFixed(2), y: +w.y.toFixed(2), z: +w.z.toFixed(2) } }));
     return { count: sunField.count, field: mods.FIELD, suns: list };
+  },
+  // sunGlow(): proves the suns render as EMISSIVE glowing STARS — a self-lit core
+  // (toneMapped:false == drawn at full brightness, not shaded down) PLUS an additive
+  // corona/halo shell. Used by the galaxy-spread probe to assert "suns are emissive".
+  sunGlow: () => {
+    if (!sunField) return null;
+    const cm = sunField.material, gm = sunGlowField && sunGlowField.material;
+    return {
+      cores: sunField.count,
+      coreToneMapped: !!cm.toneMapped,        // false => self-lit at full brightness (glowing star)
+      glowMesh: !!sunGlowField,
+      glows: sunGlowField ? sunGlowField.count : 0,
+      glowAdditive: !!(gm && gm.blending === THREE.AdditiveBlending),
+      glowTransparent: !!(gm && gm.transparent),
+      coreR: sunBaseR ? Array.from(sunBaseR).slice(0, 6).map((r) => +r.toFixed(2)) : null,
+    };
   },
   // hud(): the 2D cockpit HUD — mounted? + its current label/genre text (proves the
   // 3D cockpit was replaced by a DOM label overlay).
