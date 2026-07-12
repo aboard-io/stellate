@@ -16,7 +16,7 @@
 "use strict";
 const path = require("path");
 const fs = require("fs");
-const { serve, capturePageErrors } = require("./probe-harness.js");
+const { serve, capturePageErrors, installOfflineRoute } = require("./probe-harness.js");
 const ROOT = path.join(__dirname, ".."), PORT = 8812;
 const OUT = path.join(ROOT, "scratch", "shots");
 
@@ -79,10 +79,18 @@ async function main() {
   const page = await browser.newPage();
   // a comfortable frame so the landed band + backdrop read clearly.
   await page.setViewportSize({ width: 1024, height: 768 });
+  page.setDefaultTimeout(180000);
+  page.setDefaultNavigationTimeout(180000);
+  // OFFLINE ROBUSTNESS (mirrors starcruise-run.js): stub Google-Fonts + esm.sh and
+  // neutralise the full-app boot. star-cruise is self-contained (this probe drives
+  // it entirely via the __injectTravel/__injectBeat overrides — it never needs the
+  // app store), so skipping the app boot avoids the headless-slow, GL-crashy
+  // computeGenreLayout while still booting window.__STARCRUISE cleanly.
+  await installOfflineRoute(page, PORT, { neutralizeMain: true });
   const errs = capturePageErrors(page);
 
-  await page.goto(`http://localhost:${PORT}/index.html`);
-  await page.waitForFunction(() => window.__STARCRUISE && document.getElementById("cruiseChip"), { timeout: 20000 });
+  await page.goto(`http://localhost:${PORT}/index.html`, { waitUntil: "commit" }).catch(() => {});
+  await page.waitForFunction(() => window.__STARCRUISE && document.getElementById("cruiseChip"), { timeout: 120000 });
   await page.waitForTimeout(300);
 
   // activate the mode once (Three lazy-loads on the first start()); the RAF loop then

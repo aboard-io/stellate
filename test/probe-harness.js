@@ -56,4 +56,44 @@ function capturePageErrors(page) {
   return errors;
 }
 
-module.exports = { MIME, serve, launchChromium, capturePageErrors };
+// OFFLINE ROUTE — make a page boot with NO reachable network. index.html pulls a
+// cosmetic Google-Fonts stylesheet (fonts.googleapis.com / fonts.gstatic.com) and
+// app/state.js imports preact+htm from https://esm.sh as ES modules. In this
+// sealed sandbox those hosts black-hole, which (a) hangs the 'load' event and
+// times out page.goto, and (b) leaves the esm.sh module imports unresolved.
+// We fulfil every non-local request locally:
+//   - esm.sh / esm.run / unpkg / skypack (or any *.mjs/.js module URL): a VALID
+//     JS module exporting the preact/htm names state.js links against (h, render,
+//     Fragment + a default). An empty/CSS body would fail strict module-MIME
+//     checking and abort app/main.js's whole module graph (state.js never sets
+//     window.__S), which trips the probes' zero-error + live-store checks.
+//   - everything else (Google-Fonts CSS/woff): a harmless empty 200.
+// Only localhost (the harness) + data:/blob: URIs pass through untouched.
+const OFFLINE_MODULE_STUB =
+  "export const h=()=>null;export const render=()=>null;export const Fragment=()=>null;export default function(){return null;};";
+async function installOfflineRoute(page, port, opts) {
+  opts = opts || {};
+  await page.route("**/*", (route) => {
+    const u = route.request().url();
+    if (u.startsWith(`http://localhost:${port}`)) {
+      // NEUTRALISE THE FULL APP (opt-in). app/main.js's boot() runs
+      // app/starmap.js computeGenreLayout() synchronously at module-eval; under
+      // headless SwiftShader with a zero-size <svg> viewport that relaxation is
+      // pathologically slow AND collapses the layout, then the GL renderer
+      // crashes (~70s). The star-cruise mode + its submodules are self-contained
+      // (they don't need the app store), so the probes that only exercise
+      // star-cruise serve app/main.js as an inert module: no full-app boot, no
+      // esm.sh fetch (so no module-MIME console error), no crash. Probes that DO
+      // need the live store (window.__S) leave this off and pay the real boot.
+      if (opts.neutralizeMain && /\/app\/main\.js(?:\?|$)/.test(u))
+        return route.fulfill({ status: 200, contentType: "text/javascript", body: "" });
+      return route.continue();
+    }
+    if (u.startsWith("data:") || u.startsWith("blob:")) return route.continue();
+    if (/(?:esm\.sh|esm\.run|unpkg\.com|cdn\.skypack\.dev)/.test(u) || /\.m?js(?:\?|$)/.test(u))
+      return route.fulfill({ status: 200, contentType: "text/javascript", body: OFFLINE_MODULE_STUB });
+    return route.fulfill({ status: 200, contentType: "text/css", body: "" });
+  });
+}
+
+module.exports = { MIME, serve, launchChromium, capturePageErrors, installOfflineRoute };

@@ -35,6 +35,7 @@ function rng32(a) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+const TAU = Math.PI * 2;
 const IRID_GLSL = [
   "float _fr = pow(1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0), 2.2);",
   "vec3 _ir = 0.5 + 0.5 * cos(6.2831853 * (_fr + vec3(0.0, 0.33, 0.66)));",
@@ -215,28 +216,111 @@ export function makeCockpit(THREE, opts = {}) {
 // into vertex colours, deterministic off the seed) whose SURFACE then renders in the
 // genre's material language — cel-banded, oil-iridescent, wireframe, glitched, matte
 // or flat. setPalette re-tints the base colour; the bands (vertex colours) persist.
+// the abstract WORLD archetype for the fly-away planet — same species-body-plan map
+// the backdrop uses, so the planet you leave IS the world you were just on.
+function pickPlanetWorld(traits) {
+  const plan = traits && traits.body && traits.body.plan;
+  const skin = traits && traits.skin;
+  const byPlan = {
+    "floating-gas": "cloudsea", radial: "ringworld", crystalline: "crystalfield",
+    insectoid: "tendrilforest", cephalopod: "liquidsea", amorphous: "moltenvoid", stalk: "spiregarden",
+  };
+  if (plan && byPlan[plan]) return byPlan[plan];
+  if (skin === "glass") return "cloudsea";
+  if (skin === "matte") return "moltenvoid";
+  return "geomvoid";
+}
+
 export function makePlanet(THREE, traits, seed) {
   const group = new THREE.Object3D();
   group.name = "planet";
   const style = (traits && traits.renderStyle && traits.renderStyle.material) || "flat";
   const kit = makeStyleKit(THREE, style);
+  const world = pickPlanetWorld(traits);
+  const molten = world === "moltenvoid";
+  const liquid = world === "liquidsea";
   const geo = bandedSphere(THREE, traits, seed);
   const col = planetColor(THREE, traits);
+  const acc = (traits && traits.palette && traits.palette.accent) || { h: 200, s: 0.85, l: 0.6 };
+  const accHex = (dh, s, l) => new THREE.Color().setHSL(((((acc.h + (dh || 0)) % 360) + 360) % 360) / 360, s == null ? 0.9 : s, l == null ? 0.6 : l);
+  // moltenvoid glows hot; liquidsea is a smooth (non-faceted) ocean; else the flat
+  // low-poly gas-giant. The body keeps its styled + banded surface (the render-style
+  // highlight) — worlds ADD orbiting/surface features around it.
   const body = new THREE.Mesh(geo, kit.surface({
-    color: col, emissive: col.clone().multiplyScalar(0.18), vertexColors: true, flatShading: true,
+    color: col, emissive: col.clone().multiplyScalar(molten ? 0.55 : 0.18),
+    vertexColors: true, flatShading: !liquid,
   }));
   body.name = "planet-body";
   body.castShadow = false; body.receiveShadow = false;
   group.add(body);
-  // a thin equatorial ring on ~half the seeds (deterministic off the seed parity).
-  let ring = null;
-  if (((seed | 0) & 1) === 0) {
-    const rmat = new THREE.MeshBasicMaterial({ color: 0xbfe0ff, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
-    ring = new THREE.Mesh(new THREE.RingGeometry(1.4, 1.9, 32), rmat);
-    ring.rotation.x = Math.PI / 2 - 0.4; group.add(ring);
+
+  const rnd = rng32((((seed | 0) || 1) ^ 0x51ced ^ 0x9e37) >>> 0);
+  const spinners = [];   // { obj, rate } children the update() orbits/spins
+
+  // RINGS — prominent on ring/cloud worlds, a lone thin ring on ~half other seeds.
+  const nRing = world === "ringworld" ? 2 : world === "cloudsea" ? 1 : (((seed | 0) & 1) === 0 ? 1 : 0);
+  for (let i = 0; i < nRing; i++) {
+    const r0 = 1.4 + i * 0.55, r1 = r0 + 0.4 + rnd() * 0.3;
+    const rmat = new THREE.MeshBasicMaterial({ color: accHex(i * 40, 0.7, 0.7), transparent: true, opacity: 0.45, side: THREE.DoubleSide, toneMapped: false });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 40), rmat);
+    ring.name = "planet-ring";
+    ring.rotation.x = Math.PI / 2 - 0.4 + (rnd() - 0.5) * 0.5;
+    ring.rotation.y = (rnd() - 0.5) * 0.4;
+    group.add(ring);
   }
+
+  // MOONS / SKY ORBS — little glowing bodies orbiting on a pivot (cloud/spire/tendril
+  // worlds get more company; every world gets at least a companion or two).
+  const nMoon = world === "cloudsea" || world === "spiregarden" ? 3 : world === "tendrilforest" || world === "liquidsea" ? 2 : 1;
+  for (let i = 0; i < nMoon; i++) {
+    const pivot = new THREE.Object3D();
+    pivot.rotation.set((rnd() - 0.5) * 1.2, rnd() * TAU, (rnd() - 0.5) * 1.2);
+    const moon = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(0.12 + rnd() * 0.14, 1),
+      new THREE.MeshBasicMaterial({ color: accHex(180 + i * 30, 0.85, 0.66), toneMapped: false })
+    );
+    moon.position.set(1.9 + rnd() * 1.0, 0, 0);
+    moon.name = "planet-moon";
+    pivot.add(moon); group.add(pivot);
+    spinners.push({ obj: pivot, rate: 0.25 + rnd() * 0.4 });
+  }
+
+  // CRYSTALFIELD — faceted shards jutting from the surface (one instanced mesh).
+  if (world === "crystalfield") {
+    const n = 24;
+    const spikeMat = kit.surface({ color: accHex(140, 0.6, 0.4), emissive: accHex(160, 0.85, 0.4), emissiveIntensity: 0.4, flatShading: true });
+    const spikes = new THREE.InstancedMesh(new THREE.ConeGeometry(0.09, 0.5, 4), spikeMat, n);
+    spikes.name = "planet-spikes";
+    const _m = new THREE.Matrix4(), _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0), _d = new THREE.Vector3();
+    for (let i = 0; i < n; i++) {
+      const u = rnd(), v = rnd(), th = Math.acos(2 * u - 1), ph = v * TAU;
+      _d.set(Math.sin(th) * Math.cos(ph), Math.cos(th), Math.sin(th) * Math.sin(ph));
+      _p.copy(_d).multiplyScalar(0.98);
+      _q.setFromUnitVectors(_up, _d);
+      const h = 0.5 + rnd() * 0.9;
+      _s.set(1, h, 1);
+      _m.compose(_p, _q, _s); spikes.setMatrixAt(i, _m);
+    }
+    spikes.instanceMatrix.needsUpdate = true;
+    body.add(spikes);   // ride the body's spin
+  }
+
+  // MOLTENVOID — a bright inner glow shell so the world reads as lava-hot.
+  if (molten) {
+    const glow = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(1.03, 2),
+      new THREE.MeshBasicMaterial({ color: accHex(-180, 1.0, 0.5), transparent: true, opacity: 0.28, toneMapped: false })
+    );
+    glow.name = "planet-glow"; body.add(glow);
+  }
+
   let t = 0;
-  function update(dt) { t += dt || 0; body.rotation.y += (dt || 0) * 0.12; kit.tick(t); }
+  function update(dt) {
+    t += dt || 0;
+    body.rotation.y += (dt || 0) * 0.12;
+    for (const sp of spinners) sp.obj.rotation.y += (dt || 0) * sp.rate;
+    kit.tick(t);
+  }
   function setPalette(tr) { body.material.color.copy(planetColor(THREE, tr)); }
   return { group, update, body, setPalette };
 }

@@ -13,7 +13,7 @@
 //   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/alien-dancer-run.js
 "use strict";
 const path = require("path");
-const { serve } = require("./probe-harness.js");
+const { serve, installOfflineRoute } = require("./probe-harness.js");
 const ROOT = path.join(__dirname, ".."), PORT = 8815;
 
 async function launchGL() {
@@ -105,6 +105,18 @@ async function inPage() {
   }
   out.render = { spread: Math.max(maxR - minR, maxG - minG, maxB - minB), nonBg };
 
+  // G. PER-ALIEN randomization — two dancers of the SAME genre but DIFFERENT seeds
+  // are visibly different creatures (proportions/appendage/orb jitter off own seed).
+  function dsig(al) {
+    al.group.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(al.group);
+    const s = new THREE.Vector3(); box.getSize(s);
+    let meshes = 0; al.group.traverse((o) => { if (o.isMesh) meshes++; });
+    return `${s.x.toFixed(3)},${s.y.toFixed(3)},${s.z.toFixed(3)},${meshes}`;
+  }
+  out.dancerSigs = [11, 202, 3003, 40004].map((sd) => dsig(makeAlien(THREE, traits, { role: "dancer" }, sd)));
+  out.dancersDiffer = new Set(out.dancerSigs).size === out.dancerSigs.length;
+
   // D. determinism — same seed -> identical motion trace.
   const d1 = makeAlien(THREE, traits, { role: "dancer" }, 77);
   const d2 = makeAlien(THREE, traits, { role: "dancer" }, 77);
@@ -121,6 +133,10 @@ async function main() {
   const srv = await serve(ROOT, PORT);
   const browser = await launchGL();
   const page = await browser.newPage();
+  // OFFLINE: stub Google-Fonts + esm.sh and neutralise the full-app boot (this
+  // probe imports the star-cruise submodules directly and never needs the app
+  // store) so the page loads with no network and no slow/crashy boot.
+  await installOfflineRoute(page, PORT, { neutralizeMain: true });
   const perr = [];
   page.on("pageerror", (e) => perr.push(String(e)));
   page.on("console", (m) => { if (m.type() === "error") perr.push("console:" + m.text()); });
@@ -145,6 +161,7 @@ async function main() {
   ok(R.movedLegacy > 0.02, `E1. legacy beatPhase-number call still animates (travel=${R.movedLegacy})`);
   ok(R.render.spread > 8, `C1. NON-BLANK render (colour spread=${R.render.spread})`);
   ok(R.render.nonBg > 200, `C2. real geometry drawn (${R.render.nonBg} non-bg px)`);
+  ok(R.dancersDiffer, `G1. PER-ALIEN randomization: 4 dancer seeds -> 4 DISTINCT bodies (${JSON.stringify(R.dancerSigs)})`);
   ok(R.deterministic, "D1. deterministic: same seed -> identical dancer motion");
   ok(perr.length === 0, "F1. no console/page errors" + (perr.length ? " :: " + perr.join(" | ") : ""));
 

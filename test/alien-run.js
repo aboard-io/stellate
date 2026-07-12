@@ -20,7 +20,7 @@
 //   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/alien-run.js
 "use strict";
 const path = require("path");
-const { serve } = require("./probe-harness.js");
+const { serve, installOfflineRoute } = require("./probe-harness.js");
 const ROOT = path.join(__dirname, ".."), PORT = 8814;
 
 async function launchGL() {
@@ -242,6 +242,53 @@ async function inPage() {
   }
   out.allStylesRender = Object.values(out.styleRender).every((v) => v.spread > 8 && v.nonBg > 120);
 
+  // ---- H: PER-ALIEN RANDOMIZATION — same genre + same member, DIFFERENT seeds ->
+  // visibly different rigs (proportions/appendage-count/orb jitter off the OWN seed).
+  function rigSig(al) {
+    al.group.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(al.group);
+    const sz = new THREE.Vector3(); box.getSize(sz);
+    let meshes = 0; al.group.traverse((o) => { if (o.isMesh) meshes++; });
+    return { sx: +sz.x.toFixed(3), sy: +sz.y.toFixed(3), sz: +sz.z.toFixed(3), meshes };
+  }
+  const randSeeds = [11, 202, 3003, 40004, 555];
+  out.randomSigs = randSeeds.map((s) => {
+    const a = makeAlien(THREE, traits, members[0], s);
+    a.update(0.016, { barPhase: 0.0, playing: true, level: 1, notes: [{ t: 0.0 }] });
+    return rigSig(a);
+  });
+  out.randomDistinct = new Set(out.randomSigs.map((s) => JSON.stringify(s))).size === out.randomSigs.length;
+
+  // ---- I: MOTION scales with VOLUME — a player's body groove travels MORE when its
+  // voice is loud than when quiet (smooth continuum). notes:[] isolates the GROOVE
+  // (no onset contact), so this measures the volume-driven body amplitude only.
+  function bodyTravel(al, lvl, steps) {
+    let loY = 1e9, hiY = -1e9, loZ = 1e9, hiZ = -1e9;
+    for (let s = 0; s < steps; s++) {
+      al.update(0.016, { barPhase: s / steps, playing: true, level: lvl, notes: [] });
+      loY = Math.min(loY, al.group.position.y); hiY = Math.max(hiY, al.group.position.y);
+      loZ = Math.min(loZ, al.group.rotation.z); hiZ = Math.max(hiZ, al.group.rotation.z);
+    }
+    return +((hiY - loY) + Math.abs(hiZ - loZ)).toFixed(5);
+  }
+  out.motionLoud = bodyTravel(makeAlien(THREE, traits, members[0], 7), 1.0, 120);
+  out.motionQuiet = bodyTravel(makeAlien(THREE, traits, members[0], 7), 0.15, 120);
+  out.motionScalesWithLevel = out.motionLoud > out.motionQuiet + 0.002;
+
+  // ---- J: DE-SQUARE — the rig is built from CURVES, not cubes. Census geometry
+  // families across the whole band: spheres/cones/tori/cylinders dominate; the few
+  // remaining boxes (thin panes/lips/slits) are a small minority.
+  const census = {};
+  for (const a of aliens) {
+    a.group.traverse((o) => { if (o.isMesh && o.geometry) { const t = o.geometry.type; census[t] = (census[t] || 0) + 1; } });
+  }
+  out.shapeCensus = census;
+  out.boxMeshes = census.BoxGeometry || 0;
+  out.roundMeshes = (census.SphereGeometry || 0) + (census.ConeGeometry || 0) +
+    (census.CylinderGeometry || 0) + (census.TorusGeometry || 0) + (census.IcosahedronGeometry || 0);
+  out.mostlyRound = out.roundMeshes > out.boxMeshes * 2 &&
+    (census.SphereGeometry || 0) >= 4 && (census.ConeGeometry || 0) >= 2;
+
   renderer.setRenderTarget(null);
   target.dispose(); renderer.dispose();
   return out;
@@ -251,6 +298,10 @@ async function main() {
   const srv = await serve(ROOT, PORT);
   const browser = await launchGL();
   const page = await browser.newPage();
+  // OFFLINE: stub Google-Fonts + esm.sh and neutralise the full-app boot (this
+  // probe imports the star-cruise submodules directly and never needs the app
+  // store) so the page loads with no network and no slow/crashy boot.
+  await installOfflineRoute(page, PORT, { neutralizeMain: true });
   const perr = [];
   page.on("pageerror", (e) => perr.push(String(e)));
   page.on("console", (m) => { if (m.type() === "error") perr.push("console:" + m.text()); });
@@ -298,6 +349,10 @@ async function main() {
   ok(R.styleDistinct, "F1. material DIFFERS by renderStyle.material (flat/cel/iridescent/wireframe/glitch/matte distinct)");
   ok(R.styleTreated, "F2. each style applies its treatment (cel=toon, iridescent/glitch=shader, wireframe=wire, matte=smooth, flat=plain Lambert)");
   ok(R.allStylesRender, "F3. every style COMPILES + renders non-blank on GL");
+
+  ok(R.randomDistinct, `H1. PER-ALIEN randomization: 5 seeds of one genre+member -> 5 DISTINCT rigs (bbox/mesh sigs ${JSON.stringify(R.randomSigs)})`);
+  ok(R.motionScalesWithLevel, `I1. MOTION amplitude scales with VOLUME: loud groove=${R.motionLoud} > quiet groove=${R.motionQuiet} (smooth continuum)`);
+  ok(R.mostlyRound, `J1. DE-SQUARE: the band is CURVES not cubes (round=${R.roundMeshes} >> box=${R.boxMeshes}; census ${JSON.stringify(R.shapeCensus)})`);
 
   ok(perr.length === 0, "G1. no console/page errors" + (perr.length ? " :: " + perr.join(" | ") : ""));
 

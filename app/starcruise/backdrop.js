@@ -37,6 +37,49 @@ function colHSL(THREE, h, s, l) {
 }
 const TAU = Math.PI * 2;
 
+// ---- ABSTRACT WORLD selection --------------------------------------------------
+// #4 DISTINCT ABSTRACT PLANETS: each genre greets you on its OWN abstract world —
+// not the same city-on-a-ground-plane. The world archetype is read off the alien
+// SPECIES body-plan (the same 23-vector-derived plan the band shares), falling back
+// to skin / backdrop when the richer traits aren't present (headless minimal-traits
+// scaffold). The world is a PERIPHERAL environment wrapped around a recognizable
+// little city/band STAGE — a molten void, a crystal field, a ring world, a liquid
+// sea, a tendril forest, a cloud sea, a spire garden, or a geometric void.
+//
+// IMPORTANT (determinism/render-only law): the world is chosen from body.plan /
+// skin / backdrop ONLY — never from renderStyle.material — so re-skinning a genre
+// (flat->wireframe->glitch...) leaves the seeded LAYOUT byte-identical.
+function pickWorld(traits, kind) {
+  const plan = traits && traits.body && traits.body.plan;
+  const skin = traits && traits.skin;
+  const byPlan = {
+    "floating-gas": "cloudsea",
+    radial: "ringworld",
+    crystalline: "crystalfield",
+    insectoid: "tendrilforest",
+    cephalopod: "liquidsea",
+    amorphous: "moltenvoid",
+    stalk: "spiregarden",
+  };
+  if (plan && byPlan[plan]) return byPlan[plan];
+  if (skin === "glass") return "cloudsea";
+  if (skin === "matte") return "moltenvoid";
+  if (kind === "farm") return "tendrilforest";
+  return "geomvoid";
+}
+// small deterministic ground-colour offsets (h,s,l) that push the floor into each
+// world's key — applied via Color.offsetHSL, so NO extra rng draw is consumed.
+const WORLD_GROUND = {
+  ringworld: [0.0, 0.05, -0.02],
+  crystalfield: [0.33, 0.1, -0.02],
+  tendrilforest: [0.0, 0.05, 0.0],
+  liquidsea: [0.5, 0.15, -0.03],
+  cloudsea: [0.0, 0.0, 0.05],
+  moltenvoid: [-0.62, 0.18, -0.02],
+  spiregarden: [0.5, 0.05, 0.0],
+  geomvoid: [0.0, 0.0, 0.0],
+};
+
 // ---- RENDER-STYLE GLSL (the shared visual LANGUAGE, same vocab as the aliens) ----
 // IRIDESCENT: view-angle fresnel rim whose HUE cycles with the angle (glossy oil).
 const IRID_GLSL = [
@@ -66,6 +109,8 @@ export function makeBackdrop(THREE, traits, seed) {
   const acc = traits.palette && traits.palette.accent
     ? { h: traits.palette.accent.h || 40, s: traits.palette.accent.s != null ? traits.palette.accent.s : 0.85, l: traits.palette.accent.l != null ? traits.palette.accent.l : 0.6 }
     : { h: 40, s: 0.85, l: 0.6 };
+  // the abstract WORLD wrapped around the little city/band stage (see pickWorld).
+  const world = pickWorld(traits, kind);
 
   // ---- RENDER STYLE ---- the genre's surface LANGUAGE (traits.renderStyle.material).
   // The whole world — buildings, foliage, crops, silos — shades in ONE vocabulary so
@@ -128,11 +173,14 @@ export function makeBackdrop(THREE, traits, seed) {
   // Glowing light octahedra never cast (they'd punch black holes in the glow).
   function shadow(mesh, cast, receive) { mesh.castShadow = !!cast; mesh.receiveShadow = !!receive; return mesh; }
   const _m = new THREE.Matrix4(), _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _s = new THREE.Vector3();
+  const _e = new THREE.Euler();
   const YAX = new THREE.Vector3(0, 1, 0);
   const _c = new THREE.Color();
   const flicker = [];   // building materials the skyline breathes on update()
   const swayers = [];   // { mesh, sx, sz, px } gentle wind swayers (foliage/crops)
+  const orbList = [];   // signature glowing balls-of-light gathered from the world
   let beacons = null;   // { mesh, meta[] } the blinking-light field
+  let orbs = null;      // { mesh, meta[] } the pulsing balls-of-light field
   let clock = 0;
 
   // reusable throwaway geometry -> unit-height, base at y=0 (see normGeo).
@@ -166,6 +214,9 @@ export function makeBackdrop(THREE, traits, seed) {
   const groundCol = kind === "farm"
     ? colHSL(THREE, 90 + rand() * 30, 0.4, 0.20)      // tilled green-brown soil
     : colHSL(THREE, 220 + rand() * 30, 0.15, 0.11);   // dark wet asphalt
+  // push the floor into the active world's key (deterministic; no extra rng draw).
+  const wg = WORLD_GROUND[world] || WORLD_GROUND.geomvoid;
+  groundCol.offsetHSL(wg[0], wg[1], wg[2]);
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(200, 200),
     new THREE.MeshLambertMaterial({ color: groundCol, flatShading: true })
@@ -176,6 +227,10 @@ export function makeBackdrop(THREE, traits, seed) {
   group.add(ground);
 
   if (kind === "city") buildCity(); else buildFarm();
+  // wrap the stage in the genre's abstract WORLD (peripheral structures + orbs),
+  // then bake the gathered balls-of-light into one instanced field.
+  buildWorld(world);
+  if (orbList.length) buildOrbs(orbList);
 
   // ============================ CITY ====================================
   // A WILD skyline: buildings drawn from a whole family of polyhedra, one
@@ -543,6 +598,244 @@ export function makeBackdrop(THREE, traits, seed) {
     beacons = { mesh, meta: list };
   }
 
+  // ============================ ABSTRACT WORLD ==========================
+  // #4/#5/#6: the peripheral environment that turns the shared stage into a
+  // genre-specific abstract PLANET. Every world is a handful of InstancedMeshes
+  // of NON-BOX forms — spheres, torus rings, curved tendril arcs, faceted shards,
+  // domes, arches, tapered spires — placed in a wide ring AROUND the band so the
+  // little city reads as a settlement inside a wild alien world. Balls of light
+  // (orbs) are the signature scattered through every world for deep contrast.
+
+  // scatter — one InstancedMesh of a shape family; placer(i) -> a transform.
+  // Euler rotation (rx,ry,rz) so rings/tendrils can tilt; cheap, few draw calls.
+  function scatter(name, family, geo, mat, count, placer, cast, receive) {
+    if (count <= 0 || !geo) return null;
+    const mesh = new THREE.InstancedMesh(geo, mat, count);
+    mesh.name = name; mesh.userData.family = family;
+    shadow(mesh, cast !== false, !!receive);
+    for (let i = 0; i < count; i++) {
+      const P = placer(i) || {};
+      _p.set(P.x || 0, P.y || 0, P.z || 0);
+      _e.set(P.rx || 0, P.ry || 0, P.rz || 0);
+      _q.setFromEuler(_e);
+      const w = P.w == null ? 1 : P.w;
+      _s.set(w, P.h == null ? w : P.h, P.d == null ? w : P.d);
+      _m.compose(_p, _q, _s);
+      mesh.setMatrixAt(i, _m);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    group.add(mesh);
+    return mesh;
+  }
+  // a lit + shadowed world surface in the active render-style, genre-tinted with a
+  // real emissive breath (contrast law): deep body colour, bright emissive rim.
+  function structMat(hue, sat, light, emiSat, emiLight, emiInt) {
+    return styleMat({
+      flatShading: true,
+      color: colHSL(THREE, hue, sat, light),
+      emissive: colHSL(THREE, hue, emiSat == null ? 0.7 : emiSat, emiLight == null ? 0.4 : emiLight),
+      emissiveIntensity: emiInt == null ? 0.18 + glow * 0.32 : emiInt,
+    });
+  }
+  // a peripheral position in a wide arc BEHIND/AROUND the stage, dodging the
+  // central band pocket so the little city stays legible in front.
+  function farPlace() {
+    let x = 0, z = -20;
+    for (let k = 0; k < 4; k++) {
+      x = -56 + rand() * 112;
+      z = -10 - rand() * 66;
+      if (!(Math.abs(x) < 10 && z > -16)) break;
+    }
+    return { x, z };
+  }
+  // stage a glowing ball of light for the shared orb field (unlit, bright, pulsing).
+  function pushOrb(x, y, z, scale, hue, sat, light) {
+    const c = colHSL(THREE, hue, sat == null ? 0.9 : sat, light == null ? 0.62 : light);
+    orbList.push({
+      x, y, z, scale, r: c.r, g: c.g, b: c.b,
+      phase: rand(), period: 1.0 + rand() * 3.0,
+      lo: 0.45 + rand() * 0.2, hi: 0.9 + rand() * 0.3,
+    });
+  }
+
+  function buildWorld(w) {
+    switch (w) {
+      case "ringworld": return buildRingworld();
+      case "crystalfield": return buildCrystalfield();
+      case "tendrilforest": return buildTendrilforest();
+      case "liquidsea": return buildLiquidsea();
+      case "cloudsea": return buildCloudsea();
+      case "moltenvoid": return buildMoltenvoid();
+      case "spiregarden": return buildSpiregarden();
+      default: return buildGeomvoid();
+    }
+  }
+
+  // RADIAL genres — floating tilted RINGS + tall pylons + hub orbs.
+  function buildRingworld() {
+    const ringGeo = new THREE.TorusGeometry(0.5, 0.08, 6, 20);
+    scatter("world-ring", "ring", ringGeo,
+      structMat(acc.h, 0.5, 0.34, 0.7, 0.42, 0.28 + glow * 0.4), 16, () => {
+        const P = farPlace(), w = 3 + rand() * 7;
+        return { x: P.x, y: 4 + rand() * 16, z: P.z, w, h: w, d: w, rx: (rand() - 0.5) * 0.9, ry: rand() * TAU, rz: (rand() - 0.5) * 0.9 };
+      }, true, false);
+    const pyGeo = normGeo(new THREE.CylinderGeometry(0.16, 0.32, 1, 6));
+    scatter("world-pylon", "pylon", pyGeo,
+      structMat(acc.h + 40, 0.4, 0.3, 0.6, 0.36), 14, () => {
+        const P = farPlace();
+        return { x: P.x, y: 0, z: P.z, w: 0.8 + rand() * 1.2, h: 6 + rand() * 14, d: 0.8 + rand() * 1.2, ry: rand() * TAU };
+      }, true, true);
+    for (let i = 0; i < 12; i++) { const P = farPlace(); pushOrb(P.x, 4 + rand() * 16, P.z, 0.5 + rand() * 0.7, (acc.h + 180) % 360, 0.9, 0.62); }
+  }
+
+  // CRYSTALLINE genres — tall faceted SHARDS + spikes + gem orbs.
+  function buildCrystalfield() {
+    const shardGeo = normGeo(new THREE.OctahedronGeometry(0.6, 0));
+    scatter("world-shard", "shard", shardGeo,
+      structMat(acc.h + 120, 0.55, 0.32, 0.85, 0.46, 0.3 + glow * 0.4), 20, () => {
+        const P = farPlace();
+        return { x: P.x, y: 0, z: P.z, w: 1 + rand() * 2.5, h: 6 + rand() * 18, d: 1 + rand() * 2.5, ry: rand() * TAU, rz: (rand() - 0.5) * 0.3 };
+      }, true, true);
+    const spikeGeo = normGeo(new THREE.ConeGeometry(0.4, 1, 5));
+    scatter("world-spike", "spike", spikeGeo,
+      structMat(acc.h + 160, 0.6, 0.4, 0.9, 0.5), 16, () => {
+        const P = farPlace();
+        return { x: P.x, y: 0, z: P.z, w: 0.6 + rand() * 1.4, h: 4 + rand() * 12, d: 0.6 + rand() * 1.4 };
+      }, true, false);
+    for (let i = 0; i < 14; i++) { const P = farPlace(); pushOrb(P.x, 1 + rand() * 10, P.z, 0.35 + rand() * 0.5, (acc.h + 150) % 360, 0.95, 0.6); }
+  }
+
+  // INSECTOID / ORGANIC / FARM — curved TENDRIL arcs + soft mounds + warm orbs.
+  function buildTendrilforest() {
+    const tendGeo = new THREE.TorusGeometry(0.5, 0.09, 6, 16, Math.PI * 1.2);
+    scatter("world-tendril", "tendril", tendGeo,
+      structMat(acc.h + 30, 0.5, 0.3, 0.6, 0.36, 0.2 + glow * 0.3), 18, () => {
+        const P = farPlace(), h = 4 + rand() * 12;
+        return { x: P.x, y: h * 0.5, z: P.z, w: 1.2 + rand() * 1.8, h, d: 1.2 + rand() * 1.8, rx: Math.PI * 0.5, ry: rand() * TAU, rz: (rand() - 0.5) * 0.6 };
+      }, true, false);
+    const domeGeo = normGeo(new THREE.SphereGeometry(0.5, 10, 6, 0, TAU, 0, Math.PI / 2));
+    scatter("world-mound", "mound", domeGeo,
+      structMat(acc.h + 80, 0.45, 0.28, 0.4, 0.22), 12, () => {
+        const P = farPlace();
+        return { x: P.x, y: 0, z: P.z, w: 4 + rand() * 8, h: 1.5 + rand() * 3, d: 4 + rand() * 8 };
+      }, true, true);
+    for (let i = 0; i < 12; i++) { const P = farPlace(); pushOrb(P.x, 3 + rand() * 10, P.z, 0.3 + rand() * 0.4, 80 + rand() * 40, 0.85, 0.62); }
+  }
+
+  // CEPHALOPOD — a reflective SEA sheet + floating bubbles + big orbs.
+  function buildLiquidsea() {
+    const seaMat = new THREE.MeshLambertMaterial({
+      color: colHSL(THREE, acc.h + 180, 0.5, 0.12), transparent: true, opacity: 0.55, flatShading: true,
+    });
+    const sea = new THREE.Mesh(new THREE.PlaneGeometry(240, 240), seaMat);
+    sea.rotation.x = -Math.PI / 2; sea.position.y = 0.06; sea.name = "world-sea"; sea.receiveShadow = true;
+    group.add(sea);
+    const bubGeo = new THREE.SphereGeometry(0.5, 12, 8);
+    scatter("world-bubble", "bubble", bubGeo,
+      structMat(acc.h + 180, 0.4, 0.4, 0.6, 0.42, 0.2 + glow * 0.4), 22, () => {
+        const P = farPlace();
+        return { x: P.x, y: 1 + rand() * 14, z: P.z, w: 0.8 + rand() * 3 };
+      }, false, false);
+    for (let i = 0; i < 16; i++) { const P = farPlace(); pushOrb(P.x, 1 + rand() * 12, P.z, 0.4 + rand() * 0.8, (acc.h + 180) % 360, 0.9, 0.66); }
+  }
+
+  // FLOATING-GAS / GLASS — high floating gas SPHERES + faint rings + sky orbs.
+  function buildCloudsea() {
+    const cloudGeo = new THREE.IcosahedronGeometry(0.6, 1);
+    scatter("world-cloud", "cloud", cloudGeo,
+      structMat(acc.h, 0.35, 0.5, 0.5, 0.46, 0.25 + glow * 0.5), 20, () => {
+        const P = farPlace();
+        return { x: P.x, y: 6 + rand() * 20, z: P.z, w: 2 + rand() * 6, h: 1.5 + rand() * 4, d: 2 + rand() * 6 };
+      }, false, false);
+    const ringGeo = new THREE.TorusGeometry(0.5, 0.06, 6, 18);
+    scatter("world-ring", "ring", ringGeo,
+      structMat((acc.h + 60) % 360, 0.5, 0.5, 0.7, 0.5), 10, () => {
+        const P = farPlace(), w = 4 + rand() * 6;
+        return { x: P.x, y: 8 + rand() * 16, z: P.z, w, h: w, d: w, rx: rand() * TAU, ry: rand() * TAU };
+      }, false, false);
+    for (let i = 0; i < 18; i++) { const P = farPlace(); pushOrb(P.x, 5 + rand() * 18, P.z, 0.4 + rand() * 0.7, acc.h, 0.8, 0.7); }
+  }
+
+  // AMORPHOUS / MATTE — lumpy BLOB mounds + jagged spurs + half-buried lava orbs.
+  function buildMoltenvoid() {
+    const blobGeo = normGeo(new THREE.IcosahedronGeometry(0.7, 0));
+    scatter("world-blob", "blob", blobGeo,
+      structMat(acc.h, 0.4, 0.22, 0.9, 0.36, 0.2 + glow * 0.3), 16, () => {
+        const P = farPlace();
+        return { x: P.x, y: 0, z: P.z, w: 3 + rand() * 7, h: 2 + rand() * 6, d: 3 + rand() * 7, ry: rand() * TAU };
+      }, true, true);
+    const spurGeo = normGeo(new THREE.ConeGeometry(0.5, 1, 3));
+    scatter("world-spur", "spur", spurGeo,
+      structMat((acc.h + 20) % 360, 0.5, 0.28, 0.85, 0.42), 12, () => {
+        const P = farPlace();
+        return { x: P.x, y: 0, z: P.z, w: 1.5 + rand() * 3, h: 3 + rand() * 8, d: 1.5 + rand() * 3, ry: rand() * TAU, rz: (rand() - 0.5) * 0.4 };
+      }, true, false);
+    for (let i = 0; i < 18; i++) { const P = farPlace(); pushOrb(P.x, 0.3 + rand() * 3, P.z, 0.4 + rand() * 0.9, 12 + rand() * 30, 1.0, 0.55); }
+  }
+
+  // STALK — spindly tall SPIRES + floating bulbs + arches + high orbs.
+  function buildSpiregarden() {
+    const spireGeo = normGeo(new THREE.CylinderGeometry(0.06, 0.16, 1, 6));
+    scatter("world-stalk", "stalk", spireGeo,
+      structMat(acc.h, 0.4, 0.34, 0.6, 0.4, 0.2 + glow * 0.3), 20, () => {
+        const P = farPlace();
+        return { x: P.x, y: 0, z: P.z, w: 0.5 + rand() * 1, h: 8 + rand() * 18, d: 0.5 + rand() * 1 };
+      }, true, false);
+    const bulbGeo = new THREE.SphereGeometry(0.5, 10, 7);
+    scatter("world-bulb", "bulb", bulbGeo,
+      structMat((acc.h + 180) % 360, 0.6, 0.5, 0.85, 0.55, 0.35 + glow * 0.4), 16, () => {
+        const P = farPlace();
+        return { x: P.x, y: 8 + rand() * 16, z: P.z, w: 0.8 + rand() * 1.6 };
+      }, false, false);
+    const archGeo = new THREE.TorusGeometry(0.5, 0.08, 6, 16, Math.PI);
+    scatter("world-arch", "arch", archGeo,
+      structMat((acc.h + 40) % 360, 0.45, 0.3, 0.6, 0.36), 10, () => {
+        const P = farPlace(), w = 4 + rand() * 8;
+        return { x: P.x, y: 0, z: P.z, w, h: w, d: w, ry: rand() * TAU };
+      }, true, false);
+    for (let i = 0; i < 14; i++) { const P = farPlace(); pushOrb(P.x, 6 + rand() * 14, P.z, 0.35 + rand() * 0.5, (acc.h + 180) % 360, 0.85, 0.65); }
+  }
+
+  // DEFAULT (city) — a GEOMETRIC VOID: floating disc platforms + arches + orb grid.
+  function buildGeomvoid() {
+    const discGeo = normGeo(new THREE.CylinderGeometry(0.5, 0.5, 1, 12));
+    scatter("world-platform", "platform", discGeo,
+      structMat(acc.h, 0.4, 0.3, 0.6, 0.36, 0.2 + glow * 0.35), 14, () => {
+        const P = farPlace();
+        return { x: P.x, y: 3 + rand() * 16, z: P.z, w: 3 + rand() * 6, h: 0.4 + rand() * 0.8, d: 3 + rand() * 6 };
+      }, true, false);
+    const archGeo = new THREE.TorusGeometry(0.5, 0.07, 6, 18, Math.PI);
+    scatter("world-arch", "arch", archGeo,
+      structMat((acc.h + 180) % 360, 0.5, 0.4, 0.7, 0.5), 12, () => {
+        const P = farPlace(), w = 4 + rand() * 10;
+        return { x: P.x, y: 0, z: P.z, w, h: w * 0.8, d: w, ry: (rand() - 0.5) * 0.6 };
+      }, true, false);
+    for (let i = 0; i < 20; i++) { const P = farPlace(); pushOrb(P.x, 2 + rand() * 16, P.z, 0.35 + rand() * 0.6, (acc.h + (rand() < 0.5 ? 0 : 180)) % 360, 0.9, 0.65); }
+  }
+
+  // ---- ORBS: the signature balls-of-light field (one instanced mesh) ----
+  // Unlit, tone-mapping-off, per-instance colour so they read as pure light against
+  // the deep-shadowed world; update() pulses each from its seeded phase/period.
+  function buildOrbs(list) {
+    if (!list.length) return;
+    const geo = new THREE.IcosahedronGeometry(1, 1);
+    const mat = new THREE.MeshBasicMaterial({ toneMapped: false });
+    const mesh = new THREE.InstancedMesh(geo, mat, list.length);
+    mesh.name = "orbs"; mesh.userData.family = "lightball";
+    mesh.castShadow = false; mesh.receiveShadow = false;
+    for (let i = 0; i < list.length; i++) {
+      const L = list[i];
+      _p.set(L.x, L.y, L.z); _q.identity(); _s.set(L.scale, L.scale, L.scale);
+      _m.compose(_p, _q, _s); mesh.setMatrixAt(i, _m);
+      _c.setRGB(L.r * L.hi, L.g * L.hi, L.b * L.hi);
+      mesh.setColorAt(i, _c);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.instanceColor.needsUpdate = true;
+    group.add(mesh);
+    orbs = { mesh, meta: list };
+  }
+
   // ---- ANIMATION -------------------------------------------------------
   function update(dt) {
     clock += dt || 0;
@@ -566,6 +859,17 @@ export function makeBackdrop(THREE, traits, seed) {
         } else {
           b = L.lo + (L.hi - L.lo) * (0.5 + 0.5 * Math.sin(clock * TAU / L.period + L.phase * TAU)); // soft pulse
         }
+        _c.setRGB(L.r * b, L.g * b, L.b * b);
+        mesh.setColorAt(i, _c);
+      }
+      mesh.instanceColor.needsUpdate = true;
+    }
+    // PULSE the balls of light (signature glow breathing, deep-contrast accent).
+    if (orbs) {
+      const { mesh, meta } = orbs;
+      for (let i = 0; i < meta.length; i++) {
+        const L = meta[i];
+        const b = L.lo + (L.hi - L.lo) * (0.5 + 0.5 * Math.sin(clock * TAU / L.period + L.phase * TAU));
         _c.setRGB(L.r * b, L.g * b, L.b * b);
         mesh.setColorAt(i, _c);
       }
