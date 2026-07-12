@@ -211,17 +211,24 @@ async function inPage() {
   }
   const withStyle = (mat) => Object.assign({}, traits, { renderStyle: { material: mat } });
   out.styles = {};
-  for (const s of ["flat", "cel", "iridescent", "wireframe", "glitch", "matte"]) out.styles[s] = sig(makeAlien(THREE, withStyle(s), drumM, 9));
+  // READABLE vocabulary only — flat/cel/iridescent/pbr/matte.
+  for (const s of ["flat", "cel", "iridescent", "pbr", "matte"]) out.styles[s] = sig(makeAlien(THREE, withStyle(s), drumM, 9));
+  // DROPPED illegible treatments must FALL BACK to a clean flat surface (never wire/glitch).
+  for (const s of ["wireframe", "glitch", "mesh", "pure-mesh"]) out.styles[s] = sig(makeAlien(THREE, withStyle(s), drumM, 9));
   const J = (o) => JSON.stringify(o);
   out.styleDistinct = J(out.styles.cel) !== J(out.styles.iridescent)
-    && J(out.styles.flat) !== J(out.styles.glitch) && J(out.styles.flat) !== J(out.styles.wireframe)
-    && J(out.styles.flat) !== J(out.styles.cel) && J(out.styles.flat) !== J(out.styles.matte);
+    && J(out.styles.flat) !== J(out.styles.cel) && J(out.styles.flat) !== J(out.styles.matte)
+    && J(out.styles.flat) !== J(out.styles.iridescent) && J(out.styles.flat) !== J(out.styles.pbr);
   out.styleTreated = out.styles.cel.toon && out.styles.iridescent.shader === "sc_irid"
-    && out.styles.glitch.shader === "sc_glitch" && out.styles.wireframe.wire && out.styles.matte.smooth
-    && out.styles.flat.type === "MeshLambertMaterial" && !out.styles.flat.shader && !out.styles.flat.toon;
+    && out.styles.matte.smooth && out.styles.pbr.type === "MeshStandardMaterial"
+    && out.styles.flat.type === "MeshLambertMaterial" && !out.styles.flat.shader && !out.styles.flat.toon && !out.styles.flat.wire;
+  // READABLE law: every dropped style reads as legible flat (no wireframe, no glitch skin).
+  out.readableSet = ["wireframe", "glitch", "mesh", "pure-mesh"].every((s) =>
+    out.styles[s].wire === false && out.styles[s].shader !== "sc_glitch"
+    && J(out.styles[s]) === J(out.styles.flat));
 
   out.styleRender = {};
-  for (const s of ["flat", "cel", "iridescent", "wireframe", "glitch", "matte"]) {
+  for (const s of ["flat", "cel", "iridescent", "pbr", "matte"]) {
     const sc = new THREE.Scene();
     sc.background = new THREE.Color(0x0a0410);
     sc.add(new THREE.AmbientLight(0x8899aa, 0.7));
@@ -330,6 +337,78 @@ async function inPage() {
   const tentTraits = Object.assign({}, traits, { body: Object.assign({}, traits.body, { plan: "cephalopod", tentacles: 5, arms: 2 }) });
   out.tentacleProof = makeAlien(THREE, tentTraits, members[0], 55).tentacleProof;
 
+  // ---- N: CONTIGUOUS — every rig is ONE connected mesh cluster (no floating parts).
+  // Inflate each mesh's world AABB by a small fraction of the rig size; parts whose
+  // inflated boxes touch are joined (union-find). A contiguous creature => 1 component.
+  function contiguity(al, inflFrac) {
+    al.group.updateMatrixWorld(true);
+    const boxes = []; let maxDim = 0;
+    al.group.traverse((o) => {
+      if (o.isMesh && o.geometry) {
+        const b = new THREE.Box3().setFromObject(o); if (b.isEmpty()) return;
+        const s = new THREE.Vector3(); b.getSize(s); maxDim = Math.max(maxDim, s.x, s.y, s.z); boxes.push(b);
+      }
+    });
+    const infl = maxDim * inflFrac;
+    const bb = boxes.map((b) => b.clone().expandByScalar(infl));
+    const n = bb.length, parent = Array.from({ length: n }, (_, i) => i);
+    const find = (x) => { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) if (bb[i].intersectsBox(bb[j])) parent[find(i)] = find(j);
+    const roots = new Set(); for (let i = 0; i < n; i++) roots.add(find(i));
+    return { meshes: n, components: roots.size };
+  }
+  out.contiguity = [];
+  for (let i = 0; i < aliens.length; i++) {
+    // pose the player AT an onset so its hand is ON the instrument (a natural play pose).
+    aliens[i].update(0.016, { barPhase: 0.0, playing: true, level: 1, notes: [{ t: 0.0 }] });
+    out.contiguity.push(Object.assign({ role: members[i].role }, contiguity(aliens[i], 0.05)));
+  }
+  const dContig = makeAlien(THREE, traits, { role: "dancer" }, 909);
+  dContig.update(0.016, { barPhase: 0.3, playing: true, level: 1, notes: [] });
+  out.contiguity.push(Object.assign({ role: "dancer" }, contiguity(dContig, 0.05)));
+  out.allContiguous = out.contiguity.every((c) => c.components === 1);
+
+  // ---- O: FLOOR — feet/body never dip below the ground plane across a motion sweep
+  // (playing AND resting for players; loud AND quiet for the dancer). footWorldY() is
+  // the world-space lowest point; groundY defaults to 0, so it must stay >= ~0.
+  function minFoot(al, ctxs) { let m = 1e9; for (const c of ctxs) { al.update(0.016, c); m = Math.min(m, al.footWorldY()); } return +m.toFixed(4); }
+  out.floor = [];
+  for (let i = 0; i < aliens.length; i++) {
+    const ctxs = [];
+    for (let s = 0; s < 24; s++) ctxs.push({ barPhase: s / 24, playing: true, level: 1, notes: asNotes(onsetSets[members[i].role]) });
+    for (let s = 0; s < 8; s++) ctxs.push({ barPhase: s / 8, playing: false, level: 0, notes: [] });   // resting: instrument lowers
+    out.floor.push({ role: members[i].role, minFootY: minFoot(aliens[i], ctxs) });
+  }
+  {
+    const dFloor = makeAlien(THREE, traits, { role: "dancer" }, 55), ctxs = [];
+    for (let s = 0; s < 24; s++) ctxs.push({ barPhase: s / 24, playing: true, level: 1, loudness: 1, notes: [] });
+    for (let s = 0; s < 8; s++) ctxs.push({ barPhase: s / 8, playing: true, level: 0.1, loudness: 0.05, notes: [] });
+    out.floor.push({ role: "dancer", minFootY: minFoot(dFloor, ctxs) });
+  }
+  out.floorOK = out.floor.every((f) => f.minFootY >= -0.02);
+
+  // ---- P: PER-ALIEN COLOUR — two aliens of the SAME genre+member but DIFFERENT seeds
+  // wear DIFFERENT palettes (individually distinguishable); same seed => same palette.
+  const cA = makeAlien(THREE, traits, members[0], 1234);
+  const cB = makeAlien(THREE, traits, members[0], 5678);
+  const cC = makeAlien(THREE, traits, members[0], 1234);
+  out.palA = cA.palette; out.palB = cB.palette; out.palC = cC.palette;
+  out.colorsDistinct = cA.palette.skin !== cB.palette.skin && cA.palette.cloth !== cB.palette.cloth;
+  out.colorDeterministic = cA.palette.skin === cC.palette.skin && cA.palette.cloth === cC.palette.cloth && cA.palette.accent === cC.palette.accent;
+
+  // ---- Q: DRUMMER — the arm SNAPS a big arc onto the drum AT the onset (fast, real
+  // onset speed): full at the onset (contact), lifted just an approach-window before.
+  {
+    const dr = aliens[0], dn = asNotes(onsetSets.drum);
+    dr.update(0.0, { barPhase: 0.375 - 0.05, playing: true, level: 1, notes: dn }); const pre = dr.debug();
+    dr.update(0.0, { barPhase: 0.375, playing: true, level: 1, notes: dn }); const on = dr.debug();
+    out.drum = {
+      contactAtOnset: +on.contactness.toFixed(3), reachAtOnset: +on.reachDist.toFixed(4),
+      windupTravel: +Math.hypot(on.handTip.x - pre.handTip.x, on.handTip.y - pre.handTip.y, on.handTip.z - pre.handTip.z).toFixed(4),
+    };
+    out.drummerStrikes = out.drum.contactAtOnset > 0.82 && out.drum.reachAtOnset < 0.03 && out.drum.windupTravel > 0.12;
+  }
+
   renderer.setRenderTarget(null);
   target.dispose(); renderer.dispose();
   return out;
@@ -387,9 +466,10 @@ async function main() {
   ok(R.render.nonBg > 200, `E2. real geometry drawn (${R.render.nonBg} non-bg px)`);
   ok(R.deterministic, "E3. deterministic: same (traits,member,seed) -> identical contact trace");
 
-  ok(R.styleDistinct, "F1. material DIFFERS by renderStyle.material (flat/cel/iridescent/wireframe/glitch/matte distinct)");
-  ok(R.styleTreated, "F2. each style applies its treatment (cel=toon, iridescent/glitch=shader, wireframe=wire, matte=smooth, flat=plain Lambert)");
-  ok(R.allStylesRender, "F3. every style COMPILES + renders non-blank on GL");
+  ok(R.styleDistinct, "F1. material DIFFERS by renderStyle.material (readable set flat/cel/iridescent/pbr/matte distinct)");
+  ok(R.styleTreated, "F2. each readable style applies its treatment (cel=toon, iridescent=subtle shader, matte=smooth, pbr=standard, flat=plain Lambert)");
+  ok(R.readableSet, "F2b. DROPPED illegible styles (wireframe/glitch/mesh/pure-mesh) fall back to legible flat — no wire, no glitch skin");
+  ok(R.allStylesRender, "F3. every readable style COMPILES + renders non-blank on GL");
 
   ok(R.randomDistinct, `H1. PER-ALIEN randomization: 5 seeds of one genre+member -> 5 DISTINCT rigs (bbox/mesh sigs ${JSON.stringify(R.randomSigs)})`);
   ok(R.motionScalesWithLevel, `I1. MOTION amplitude scales with VOLUME: loud groove=${R.motionLoud} > quiet groove=${R.motionQuiet} (smooth continuum)`);
@@ -410,6 +490,13 @@ async function main() {
     `M1. FABRIK solver REACHES target (err=${R.fabrik.err}) preserving bone lengths (maxBoneErr=${R.fabrik.boneErr}) + fixed base (${R.fabrik.baseFixed})`);
   ok(R.tentacleProof && R.tentacleProof.reached && R.tentacleProof.err < 0.02,
     `M2. a FABRIK-posed TENTACLE reaches its curl target (err=${R.tentacleProof && R.tentacleProof.err}, reached=${R.tentacleProof && R.tentacleProof.reached})`);
+
+  // N/O/P/Q — the SMOOTH+LEGIBLE contract additions.
+  ok(R.allContiguous, `N1. CONTIGUOUS: every rig is ONE connected cluster, no floating parts (${JSON.stringify(R.contiguity)})`);
+  ok(R.floorOK, `O1. FLOOR: feet/body never clip below the ground across playing+resting sweeps (${JSON.stringify(R.floor)})`);
+  ok(R.colorsDistinct, `P1. PER-ALIEN COLOUR: two same-genre members (seeds 1234 vs 5678) wear DIFFERENT palettes (A=${JSON.stringify(R.palA)} B=${JSON.stringify(R.palB)})`);
+  ok(R.colorDeterministic, "P2. palette is DETERMINISTIC (same seed -> same colours)");
+  ok(R.drummerStrikes, `Q1. DRUMMER strikes fast: hand snaps a big arc (${R.drum.windupTravel}) onto the drum AT the onset (contact=${R.drum.contactAtOnset}, reach=${R.drum.reachAtOnset})`);
 
   ok(perr.length === 0, "G1. no console/page errors" + (perr.length ? " :: " + perr.join(" | ") : ""));
 

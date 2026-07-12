@@ -18,7 +18,7 @@
 //
 // Cached Response objects keep their original headers, so COOP/COEP isolation
 // (SharedArrayBuffer for the render worker) survives offline replay.
-const VERSION = "stellate-v10";  // v10 (2026-07-12): HOTFIX — folk genre was missing from app/world.js POS, so the boot-time layout relaxation crashed the renderer (blank app, no chip). folk baked into POS -> POS complete -> computeGenreLayout early-returns. BUMP purges the broken v9 cache on activate so the fix lands
+const VERSION = "stellate-v11";  // v11 (2026-07-12): star-cruise SMOOTH GALAXY — clusters=stars (31 labeled colored suns) + genres=planets, no-bobbing camera, ship removed (2D HUD), floor clamp, flyover/through-city + drummer-on-fills, wider spacing, optional/desynced dancers, contiguous aliens, per-alien colour, superquadric/FABRIK geometry, simplified readable shaders; + folk-coord fix + coords/POS/full-boot gates. BUMP purges the old cache on activate so a deploy lands
                                  // in ONE load, not two (the v2 stale-while-revalidate served a load-behind copy —
                                  // Paul saw none of the synth-font/video/vapor batch until a second reload). Bump
                                  // this string every deploy that must reach users immediately.

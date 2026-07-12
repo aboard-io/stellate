@@ -64,6 +64,10 @@ const NR = {
 const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
 // clamp to an arbitrary [lo,hi] (used for the widened, non-0..1 morphology fields).
 const clamp01Big = (x, lo, hi) => (x < lo ? lo : x > hi ? hi : x);
+// gentle upper cap for post-fx params (also floors at 0): never let an effect become
+// visual noise. traits emits post values ALREADY within these caps and postfx.js
+// clamps to the SAME caps, so the live uniforms equal what we emit here.
+const capTo = (x, hi) => (x < 0 ? 0 : x > hi ? hi : x);
 
 // FEATURES: resolve the 23-float vector for a genre name OR a weights blend.
 // Falls back to a neutral vector if the engine globals aren't ready (headless
@@ -166,10 +170,14 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
   // motion adds iridescent drift, plus a little seeded jitter for individuality.
   const hueBase = organic ? 20 + nSeventh * 120 : 190 + nSeventh * 130;
   const hue = (hueBase + nMotion * 40 + rng() * 30) % 360;
+  // Saturations run VIVID (skin .52..85, cloth .55..85, accent .9) on purpose: the
+  // aliens agent shifts each band member's hue/shade off its own seed, and a washed-
+  // out base would blur those offsets together. A saturated base keeps every member
+  // (and every dancer) individually distinguishable while still reading as the genre.
   const palette = {
-    skin: hsl(hue, 0.35 + nMotion * 0.4, organic ? 0.5 - nSub * 0.12 : 0.55 - nSub * 0.1),
-    cloth: hsl((hue + 150 + rng() * 40) % 360, 0.45 + nVar * 0.3, 0.42 + nSoft * 0.15),
-    accent: hsl((hue + 45) % 360, 0.85, 0.6 + nPump * 0.15),
+    skin: hsl(hue, 0.52 + nMotion * 0.33, organic ? 0.5 - nSub * 0.1 : 0.55 - nSub * 0.08),
+    cloth: hsl((hue + 150 + rng() * 40) % 360, 0.55 + nVar * 0.3, 0.44 + nSoft * 0.14),
+    accent: hsl((hue + 45) % 360, 0.9, 0.6 + nPump * 0.15),
   };
 
   // ---- SKIN MATERIAL ---------------------------------------------------
@@ -461,12 +469,16 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
   const backdrop = organic && groove.energy < 0.45 ? "farm" : "city";
   const glow = clamp01(nWash * 0.7 + nCrackle * 0.3 + (organic ? 0 : 0.15));
 
-  // ---- DANCERS ---------------------------------------------------------
+  // ---- DANCERS (OPTIONAL, energy/kit-GATED) ----------------------------
   // Extra background dancers (no instrument) the CONTROLLER arranges around/behind
-  // the band. Count scales with the party energy — dense, driving, high-tempo
-  // genres pack the floor; sparse ambient keeps a lonely few. Mobile-capped 4..8
-  // so crowd draw-calls stay bounded (dancers share the low-poly rig geometry).
-  const dancers = Math.max(4, Math.min(8, Math.round(4 + groove.energy * 3 + nDrum * 1.5 + nHat * 1.0 - 1)));
+  // the band. A dance floor forms ONLY when there is genuine party energy AND a kit
+  // driving it: hushed, sparse, or drumless genres (ambient/drone, quiet folk) are
+  // JUST THE BAND — zero dancers, and the controller skips spawning a crowd. Louder
+  // driving genres scale up a floor. Mobile-capped 8; deterministic (feature-derived,
+  // no rng draw) so the same genre always decides the same way.
+  let dancers;
+  if (!present.drums || groove.energy < 0.45) dancers = 0;
+  else dancers = Math.max(2, Math.min(8, Math.round(groove.energy * 5.5 + nHat * 1.5)));
 
   // ---- RENDERSTYLE -----------------------------------------------------
   // Give each genre its own VISUAL LANGUAGE: the whole screen renders differently.
@@ -490,18 +502,16 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
   const metal = organic ? clamp01(nDrum * 0.55 + nBpm * 0.45 - nSwing * 0.7) : 0;
   const j = (a) => (rng() - 0.5) * a;   // small deterministic jitter
 
-  // dither: hard 1-bit for driving electronica, ordered grit for lofi, none for
-  // clean/washy pads, ordered otherwise.
-  let dither;
-  if (!organic && driving > 0.5 && washy < 0.55) dither = "onebit";
-  else if (lofi > 0.4) dither = "ordered";
-  else if (washy > 0.5 && nDrum < 0.45) dither = "none";
-  else dither = "ordered";
+  // dither: gentle ORDERED grit as the default; clean washy pads get NONE. The old
+  // hard 1-bit ('onebit') crunch is DROPPED — it destroyed legibility (cap law: max
+  // crunch is out). Genres still differ through the continuous post fields below.
+  const dither = (washy > 0.5 && nDrum < 0.45) ? "none" : "ordered";
 
   // posterize: driving/lofi crush the palette (low step count = harsh); washy/soft
   // genres keep a smooth ramp (high step count). Contract range 2..16.
   const smooth = clamp01(0.42 + washy * 0.55 + nSoft * 0.35 - driving * 0.55 - lofi * 0.35);
-  const posterize = Math.max(2, Math.min(16, Math.round(2 + smooth * 14)));
+  // FLOORED at 6 steps — a gentle band, never a crushed <6-step palette (cap law).
+  const posterize = Math.max(6, Math.min(16, Math.round(2 + smooth * 14)));
 
   // per-channel colour grade: organic = warm amber (r up, b down); vaporwave =
   // magenta/cyan (r+b up, g down); hard electronica = cool high-contrast.
@@ -511,33 +521,37 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
     +(1 - (organic ? 0.12 + nCrackle * 0.07 : -0.10) + vapor * 0.16).toFixed(3),
   ];
 
+  // Every effect is held to a GENTLE cap (capTo) so no genre is ever over-processed
+  // into noise — a light grade + soft treatment only. postfx.js clamps to the SAME
+  // caps, so the live uniforms equal these emitted values (RS integration stays exact).
   const post = {
     dither,
-    scanlines: +clamp01(lofi * 0.85 + (!organic && driving > 0.6 ? 0.18 : 0) + j(0.05)).toFixed(3),
-    aberration: +clamp01(vapor * 0.7 + harmonic * 0.15 * (organic ? 0 : 1) + nMotion * 0.12 * (organic ? 0 : 1) + j(0.04)).toFixed(3),
-    halftone: +clamp01(nSwing * 0.8 * (organic ? 1 : 0.35) + (organic ? harmonic * 0.2 : 0)).toFixed(3),
-    bloom: +clamp01(washy * 0.7 + nSoft * 0.3 + vapor * 0.3 + glow * 0.2 + j(0.05)).toFixed(3),
+    scanlines: +capTo(lofi * 0.85 + (!organic && driving > 0.6 ? 0.18 : 0) + j(0.05), 0.25).toFixed(3),
+    aberration: +capTo(vapor * 0.7 + harmonic * 0.15 * (organic ? 0 : 1) + nMotion * 0.12 * (organic ? 0 : 1) + j(0.04), 0.22).toFixed(3),
+    halftone: +capTo(nSwing * 0.8 * (organic ? 1 : 0.35) + (organic ? harmonic * 0.2 : 0), 0.28).toFixed(3),
+    bloom: +capTo(washy * 0.7 + nSoft * 0.3 + vapor * 0.3 + glow * 0.2 + j(0.05), 0.5).toFixed(3),
     posterize,
     grade,
-    vignette: +clamp01(metal * 0.6 + lofi * 0.3 + driving * 0.12 + j(0.04)).toFixed(3),
-    curvature: +clamp01(lofi * 0.6 + (dither === "onebit" ? 0.12 : 0)).toFixed(3),
+    vignette: +capTo(metal * 0.6 + lofi * 0.3 + driving * 0.12 + j(0.04), 0.35).toFixed(3),
+    curvature: +capTo(lofi * 0.6, 0.15).toFixed(3),
   };
 
-  // material (surface treatment): metal -> wireframe/glitch; REAL chrome/glass (pbr) for
-  // clean, reflective electronic genres; driving electronica -> flat/glitch; vaporwave ->
-  // iridescent; ambient wash -> cel/iridescent; swinging acoustic -> matte; lofi -> matte;
-  // else cel.
+  // material (surface treatment) — the READABLE VOCAB ONLY: flat / matte / cel /
+  // SUBTLE pbr / SUBTLE iridescent. wireframe, pure-mesh and the harsh glitch shader
+  // are DROPPED (they were illegible); the genres that used to get them fall through
+  // to the nearest readable surface — hard acoustic (metal) -> matte, choppy driving
+  // electronica -> flat. Genres still differ, you can just always clearly SEE them.
   //   pbr = a genuine MeshStandardMaterial (metalness/roughness + the shared env map) so
   //   SOME genres render as real polished metal / glass — VECTOR-SELECTED, never global.
-  //   Chrome + driving but NOT glitchy/vapor/lofi -> polished chrome; glassy + washy but
-  //   NOT harmonic-iridescent -> real glass. vapor stays iridescent (excluded below).
+  //   Chrome + driving but NOT vapor/lofi -> polished chrome; glassy + washy but NOT
+  //   harmonic-iridescent -> real glass. vapor -> iridescent (kept subtle in alien.js).
   const chromeLean = skin === "chrome" && !organic && driving > 0.4 && vapor < 0.35 && lofi < 0.4;
   const glassLean = skin === "glass" && !organic && washy > 0.55 && harmonic < 0.35 && vapor < 0.35;
   let material;
-  if (metal > 0.42) material = nChop > 0.3 ? "glitch" : "wireframe";
-  else if (chromeLean || glassLean) material = "pbr";
-  else if (!organic && driving > 0.5 && washy < 0.5) material = nChop > 0.35 ? "glitch" : "flat";
-  else if (vapor > 0.4) material = "iridescent";
+  if (chromeLean || glassLean) material = "pbr";                        // subtle real chrome/glass
+  else if (metal > 0.42) material = "matte";                           // was wireframe/glitch
+  else if (!organic && driving > 0.5 && washy < 0.5) material = "flat"; // was glitch/flat
+  else if (vapor > 0.4) material = "iridescent";                       // subtle iridescent
   else if (washy > 0.5 && nDrum < 0.45) material = harmonic > 0.4 ? "iridescent" : "cel";
   else if (organic && nSwing > 0.3) material = "matte";
   else if (lofi > 0.45) material = "matte";

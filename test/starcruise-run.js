@@ -650,6 +650,95 @@ async function main() {
   ok(back.band === 0 && !back.backdrop && !back.ship && back.children === flying.children,
     `K1. depart disposed the surface ensemble — scene matches the flying baseline (${back.children} children == ${flying.children}, band=${back.band})`);
 
+  // ---- GX: TWO-LEVEL GALAXY + SMOOTH CAMERA (NAVIGATION rebuild) --------------------
+  // suns == clusters (colored spheres AT their star coords), planets == genres near them;
+  // the 3D ship/cockpit are GONE (2D HUD label only); the transit camera is SMOOTH (no
+  // per-frame jitter/bobbing once settled); the landed camera FLOOR-CLAMPS; the auto-cam
+  // ALWAYS cuts to the drummer on a FILL; and dancers are GATED by energy (some planets
+  // are just the band).
+  const gx = await page.evaluate(async (GEN) => {
+    const SC = window.__STARCRUISE;
+    const fl = await import("/app/starcruise/flight.js");
+    const cm = await import("/app/starcruise/genre-clusters.js");
+    function land(g, beat) {
+      SC.__injectFill(null);
+      SC.__injectBeat(beat || { bpm: 120, spb: 0.5, cbeats: 8, serial: 2, beatPhase: 0, playing: true });
+      SC.__injectTravel({ weights: [], dominant: null, position: null, live: false, seed: 1 });
+      for (let i = 0; i < 12; i++) SC.__stepNoRender(0.2);
+      SC.__injectTravel({ weights: [{ g, w: 1 }], dominant: g, position: { x: 0, y: 0 }, live: true, seed: 1 });
+      for (let i = 0; i < 60; i++) { const st = SC.__stepNoRender(0.1); if (st.phase === "DANCE") break; }
+    }
+    // --- SUNS at cluster stars (colored, labeled) ---
+    land(GEN);
+    const sunsP = SC.suns(10);
+    const sunChecks = sunsP.suns.map((s) => {
+      const c = cm.GENRE_CLUSTERS.find((x) => x.id === s.id);
+      const w = fl.worldOfCoord(c.star);
+      const err = Math.hypot(w.x - s.marker.x, w.y - s.marker.y, w.z - s.marker.z);
+      const colOk = c.color.every((v, i) => Math.abs(v - s.color[i]) < 1e-6);
+      return { id: s.id, err: +err.toFixed(3), colOk, labelOk: s.label === c.label };
+    });
+    const shipMeshes = SC.shipMeshCount();
+    const hud = SC.hud();
+    const hudExpect = (cm.GENRE_CLUSTERS.find((x) => x.id === cm.CLUSTER_OF[GEN]) || {}).label;
+    // --- SMOOTH transit camera: settle an even blend (deep space, not landed), then
+    // measure the max per-frame camera move — it must be tiny (no jitter/bobbing).
+    SC.__injectTravel({ weights: [], dominant: null, position: null, live: false, seed: 1 });
+    for (let i = 0; i < 12; i++) SC.__stepNoRender(0.2);
+    SC.__injectTravel({ weights: [{ g: GEN, w: 0.34 }, { g: "techno", w: 0.33 }, { g: "jazz", w: 0.33 }], dominant: GEN, position: null, live: true, seed: 1 });
+    for (let i = 0; i < 45; i++) SC.__stepNoRender(0.1);   // converge the damped follow
+    let maxDelta = 0, prev = SC.cam();
+    for (let i = 0; i < 15; i++) { SC.__stepNoRender(0.1); const c = SC.cam(); maxDelta = Math.max(maxDelta, Math.hypot(c.x - prev.x, c.y - prev.y, c.z - prev.z)); prev = c; }
+    const transitLanded = SC.state().landed;
+    // --- FLOOR CLAMP: land, slam the pitch under the ground, camera stays above FLOOR_Y.
+    land(GEN);
+    SC.__stepNoRender(0.05);
+    SC.__drag(0, 900);                      // tilt the orbit hard down (toward underground)
+    const camFloor = SC.cam();
+    // --- DRUMMER-ON-FILL: a fill forces a cut to the drummer; clearing it releases.
+    land("techno");
+    for (let i = 0; i < 4; i++) SC.__stepNoRender(0.1);
+    SC.__injectFill(true);
+    for (let i = 0; i < 6; i++) SC.__stepNoRender(0.1);
+    const dsFill = SC.autoCam();
+    SC.__injectFill(false);
+    for (let i = 0; i < 30; i++) SC.__stepNoRender(0.2);   // several shot durations
+    const dsAfter = SC.autoCam();
+    SC.__injectFill(null);
+    // --- DANCERS gated by energy: a hushed genre is band-only; a driving one has a crowd.
+    land("ambient");
+    const ambDancers = SC.dancers();
+    land(GEN);
+    const genDancers = SC.dancers();
+    SC.__injectTravel(null); SC.__injectBeat(null);
+    return { sunCount: sunsP.count, sunChecks, shipMeshes, hud, hudExpect,
+      maxDelta: +maxDelta.toFixed(4), transitLanded, camFloor,
+      dsFill, dsAfter, ambDancers, genDancers };
+  }, GEN).catch((e) => ({ err: String(e) }));
+  if (gx.err) { ok(false, "GX. galaxy probe threw :: " + gx.err); }
+  else {
+    console.log("       galaxy.suns:", JSON.stringify({ count: gx.sunCount, checks: gx.sunChecks.slice(0, 4) }));
+    console.log("       galaxy.hud:", JSON.stringify(gx.hud), " expect:", gx.hudExpect);
+    console.log("       galaxy.smooth:", JSON.stringify({ maxDelta: gx.maxDelta, transitLanded: gx.transitLanded }));
+    console.log("       galaxy.floor:", JSON.stringify(gx.camFloor));
+    console.log("       galaxy.drummer:", JSON.stringify({ fill: gx.dsFill, after: gx.dsAfter }));
+    console.log("       galaxy.dancers:", JSON.stringify({ ambient: gx.ambDancers, gen: gx.genDancers }));
+    ok(gx.sunCount === 31 && gx.sunChecks.every((c) => c.err < 0.05 && c.colOk && c.labelOk),
+      `GX1. SUNS: one colored labeled sun per cluster AT its star coord (${gx.sunCount} suns, markers == worldOfCoord(cluster.star), colors + labels match)`);
+    ok(gx.shipMeshes === 0,
+      `GX2. NO 3D ship/cockpit — the obstructing shell is gone (ship+cockpit draw ${gx.shipMeshes} meshes)`);
+    ok(gx.hud.mounted && gx.hud.label === String(gx.hudExpect).toUpperCase(),
+      `GX3. 2D cockpit HUD shows the current STAR/cluster label (hud="${gx.hud.label}" == ${String(gx.hudExpect).toUpperCase()})`);
+    ok(!gx.transitLanded && gx.maxDelta < 0.08,
+      `GX4. SMOOTH transit camera — no per-frame jitter/bobbing once settled (max frame move ${gx.maxDelta} < 0.08, in-transit)`);
+    ok(gx.camFloor.y >= 0.35 - 1e-6,
+      `GX5. FLOOR CLAMP — the camera never dips below the ground plane even at a hard downward tilt (camY=${gx.camFloor.y.toFixed(3)} >= 0.35)`);
+    ok(gx.dsFill.drummerShot >= 0 && gx.dsFill.onDrummer && gx.dsFill.kind === "drummer" && !gx.dsAfter.onDrummer,
+      `GX6. DRUMMER-ON-FILL — the auto-cam cuts to the drummer during a fill and releases after (onDrummer ${gx.dsFill.onDrummer}->${gx.dsAfter.onDrummer}, kind=${gx.dsFill.kind})`);
+    ok(gx.ambDancers === 0 && gx.genDancers >= 3,
+      `GX7. OPTIONAL DANCERS gated by energy — hushed 'ambient' is band-only (${gx.ambDancers}), driving '${GEN}' has a crowd (${gx.genDancers})`);
+  }
+
   // ---- E: no errors ----
   ok(errs.length === 0, "E1. no console/page errors across activate->run" + (errs.length ? " :: " + errs.join(" | ") : ""));
 

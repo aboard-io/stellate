@@ -20,6 +20,11 @@
 // beat via documented hooks (getTravel / getBeat) and must NOT fork the travel
 // logic or touch any render-path/engine file.
 
+// GALAXY DATA — pure static data modules (no Three, no esm.sh): the cluster->sun map
+// (labels + colors + star coords) and the genre->cluster index. Safe to static-import;
+// this does NOT couple the lazy Three load (those stay behind the dynamic import()).
+import { CLUSTER_OF, GENRE_CLUSTERS } from "./starcruise/genre-clusters.js";
+
 // LIVE STORE ACCESS — read the app's store LAZILY off the window global that
 // app/state.js publishes (window.__S). We deliberately do NOT static-import
 // state.js (nor share.js, which itself imports state.js): state.js eval-time
@@ -118,7 +123,16 @@ let planet = null;           // { group, update, setPalette } — the planet you
 let sun = null;              // the shadow-casting KEY light (module-scoped for the frustum + probes)
 let starfield = null;        // persistent THREE.Points deep-space (whole-session)
 let planetField = null;      // persistent InstancedMesh: ONE planet per genre AT its GENRE_COORDS
+let sunField = null;         // persistent InstancedMesh: ONE colored SUN per CLUSTER at its star coord
 const planetIndex = Object.create(null);   // genre -> instance index (dominant highlight)
+let hudEl = null;            // the 2D cockpit HUD (DOM overlay) — shows the current cluster label
+let _hudLabel = null;        // last label pushed to the HUD (avoid needless DOM writes)
+// SMOOTH transit camera: a damped follow of the flight pose (kills per-frame jitter and
+// makes lift-off / descent an eased glide rather than a snap). Landed uses orbit directly.
+const camFollow = { x: 0, y: 0, z: 0, lx: 0, ly: 0, lz: 0, fov: 60, init: false };
+let _wasTransit = false;     // edge-detect entering transit (seed the follow from the live camera)
+const FLOOR_Y = 0.35;        // camera FLOOR CLAMP — never dips below the ground plane at the surface
+let _fillInject = null;      // TEST override for the per-bar fill flag (null in production)
 let curTraits = null;        // TRAITS of the currently-spawned band (headless-probe visibility)
 let curDominant = null;
 let curRenderStyle = null;   // renderStyle of the ACTIVE genre (pushed into the PS1 post pass)
@@ -194,7 +208,7 @@ let wasLanded = false;            // edge-detect entering a landed phase (seed o
 // camera RESUMES after AUTO_IDLE seconds of no input. It drives the SAME orbit object
 // so applyOrbitToCamera renders it; a CUT snaps orbit to a new shot, and between cuts
 // it drifts (slow orbit) + bobs on the beat. All time comes from dt (deterministic).
-const autoCam = { active: false, shot: 0, shotT: 0, cuts: 0, forceCut: true };
+const autoCam = { active: false, shot: 0, shotT: 0, cuts: 0, forceCut: true, onDrummer: false, drummerShot: -1 };
 let autoShots = [];               // per-land cinematic shot list (band closeups + wides)
 let _vclock = 0;                  // virtual clock (accumulated dt) — the auto-cam timebase
 let _lastInputT = -1e9;           // last user-input virtual time (manual override window)
@@ -236,6 +250,7 @@ async function ensureLoaded() {
     FIELD: flightMod.FIELD,
     worldOfCoord: flightMod.worldOfCoord,
     planetWorlds: flightMod.planetWorlds,
+    clusterWorlds: flightMod.clusterWorlds,
   };
   loaded = true;
 }
@@ -340,7 +355,37 @@ function buildEventPlan(genreOrWeights, seed) {
       slot.playing = slot.notes.length > 0 && slot.level > 0.05;
     }
   }
-  eventPlan = { bars, numBars, cbeats: CBEATS, bpm: ev.bpm || st.bpm || 120 };
+  // PER-BAR OVERALL LOUDNESS (0..1) — the "how loud is the whole track right now" signal
+  // the controller hands every alien as ctx.loudness (dancers DESYNC when quiet, SYNC when
+  // loud). Deterministic: derived from the cached plan, no clock. Weighted toward the
+  // rhythm section (drums/perc) since that's what drives the room.
+  const loudness = new Array(numBars);
+  const drumsPerBar = new Array(numBars);
+  for (let i = 0; i < numBars; i++) {
+    const bar = bars[i];
+    let sum = 0, cnt = 0, drumL = 0;
+    for (const v in bar) {
+      const lv = bar[v].level || 0;
+      const w = (v === "drums" || v === "perc") ? 1.4 : (v === "bass" ? 1.0 : 0.8);
+      sum += lv * w; cnt += w;
+      if (v === "drums") drumL = Math.max(drumL, bar[v].notes.length);
+    }
+    loudness[i] = cnt > 0 ? clamp01n(sum / cnt) : 0;
+    drumsPerBar[i] = drumL;
+  }
+  // PER-BAR FILL flag — a drum FILL / transition (the camera ALWAYS cuts to the drummer
+  // on a fill). Deterministic heuristic: a bar whose kit is markedly BUSIER than the
+  // track's typical bar (>= 1.5x the mean drum onsets AND above a small floor). No fills
+  // in a track with no kit variation -> the flag simply never fires.
+  let meanDrums = 0; for (let i = 0; i < numBars; i++) meanDrums += drumsPerBar[i];
+  meanDrums = numBars > 0 ? meanDrums / numBars : 0;
+  const fillBars = [];
+  const fill = new Array(numBars);
+  for (let i = 0; i < numBars; i++) {
+    fill[i] = meanDrums > 0 && drumsPerBar[i] >= Math.max(meanDrums * 1.5, meanDrums + 2);
+    if (fill[i]) fillBars.push(i);
+  }
+  eventPlan = { bars, numBars, cbeats: CBEATS, bpm: ev.bpm || st.bpm || 120, loudness, fill, fillBars };
   return eventPlan;
 }
 
@@ -371,15 +416,31 @@ function barPhaseOf(bt) {
 function ctxForVoice(voice, barIdx, barPhase) {
   let slot = null;
   if (eventPlan && eventPlan.bars[barIdx]) slot = eventPlan.bars[barIdx][voice] || null;
+  const loud = loudnessAt(barIdx);
   const ctx = {
     barPhase,
     playing: !!(slot && slot.playing),
     level: slot ? slot.level : 0,
     notes: slot ? slot.notes : [],
+    loudness: loud,                 // CONTRACT: overall track level 0..1 (dancers sync when loud)
     valueOf() { return barPhase; },
   };
-  _lastCtx[voice] = { barPhase: +barPhase.toFixed(4), playing: ctx.playing, level: +ctx.level.toFixed(3), notes: ctx.notes.length };
+  _lastCtx[voice] = { barPhase: +barPhase.toFixed(4), playing: ctx.playing, level: +ctx.level.toFixed(3), notes: ctx.notes.length, loudness: +loud.toFixed(3) };
   return ctx;
+}
+// overall track loudness (0..1) for a bar — the per-alien ctx.loudness signal.
+function loudnessAt(barIdx) {
+  if (!eventPlan || !eventPlan.loudness) return 0;
+  const nb = eventPlan.numBars;
+  const bi = ((barIdx % nb) + nb) % nb;
+  return eventPlan.loudness[bi] || 0;
+}
+// currentFill() — is a drum FILL firing on the current bar? TEST override wins; else the
+// plan's per-bar fill flag. The auto-camera ALWAYS cuts to the drummer while this is true.
+function currentFill() {
+  if (_fillInject != null) return !!_fillInject;
+  if (!eventPlan || !eventPlan.fill) return false;
+  return !!eventPlan.fill[_curBarIdx];
 }
 
 // ---- DETERMINISTIC BAND COVERAGE ------------------------------------------------
@@ -464,7 +525,9 @@ function spawnFor(genreOrWeights, seed) {
   // fills the frame. They stand on the ground (y=0), in front of the ship.
   const members = rosterFor(traits.band);
   const n = members.length;
-  const spread = n > 1 ? Math.max(2.3, Math.min(2.7, 1.8 + 4.4 / n)) : 0;   // wide arc; ~2.3+ per gap
+  // WIDER STAGE — aliens sit much farther apart (was ~2.3..2.7) so they read as
+  // distinct individuals with room to move, not a cramped firing line.
+  const spread = n > 1 ? Math.max(3.2, Math.min(4.2, 2.6 + 5.2 / n)) : 0;   // wide arc; ~3.2+ per gap
   let cx = 0, cz = 0;
   band = members.map((member, i) => {
     const a = mods.makeAlien(THREE, traits, member, useSeed + i * 101);
@@ -472,9 +535,9 @@ function spawnFor(genreOrWeights, seed) {
     a._role = member.role;
     const off = (i - (n - 1) / 2);           // centered index, e.g. -2,-1,0,1,2
     a.group.position.x = off * spread;
-    a.group.position.z = 1.8 - Math.abs(off) * 0.7;    // deeper arc: center forward, wings back
+    a.group.position.z = 2.0 - Math.abs(off) * 0.85;   // deeper arc: center forward, wings back
     a.group.position.y = 0;
-    a.group.rotation.y = -off * 0.14;        // yaw toward the pilot at the arc center
+    a.group.rotation.y = -off * 0.13;        // yaw toward the pilot at the arc center
     enableShadows(a.group);                  // the players CAST shadows onto the stage
     scene.add(a.group);
     cx += a.group.position.x; cz += a.group.position.z;
@@ -486,10 +549,14 @@ function spawnFor(genreOrWeights, seed) {
   bandCentroid.z = n ? cz / n : 0.6;
   bandCentroid.y = 1.2;
 
-  // DANCERS: traits.dancers extra dancer-aliens (role='dancer', NO instrument) in a
-  // ring/crowd AROUND + BEHIND the band, grooving to the same beat. Mobile-capped so
-  // the crowd draw-calls stay bounded (they share the low-poly alien rig geometry).
-  const wantD = Math.max(0, Math.round(traits.dancers || 0));
+  // DANCERS — OPTIONAL, gated by ENERGY/genre: a low-energy planet (sparse ambient,
+  // hushed folk) is JUST THE BAND — no crowd. Louder, driving genres get a dancing
+  // crowd whose size scales with traits.dancers. The gate is a deterministic function
+  // of the genre's groove energy so the same genre always decides the same way. Ring/
+  // crowd AROUND + BEHIND the band; mobile-capped so the draw-calls stay bounded.
+  const energy = (traits.groove && traits.groove.energy) || 0;
+  const DANCER_ENERGY_GATE = 0.34;         // below this the planet is band-only
+  const wantD = energy >= DANCER_ENERGY_GATE ? Math.max(0, Math.round(traits.dancers || 0)) : 0;
   const dCap = isCoarse() ? 5 : 8;
   const nd = Math.min(dCap, wantD);
   dancers = [];
@@ -499,7 +566,7 @@ function spawnFor(genreOrWeights, seed) {
     // (camera) view of the players stays open. Radius grows with the crowd size.
     const seedR = mulberry(useSeed * 131 + i * 977);
     const ang = Math.PI * (0.55 + 1.9 * (i + 0.5) / nd) + (seedR() - 0.5) * 0.4;  // ~back arc
-    const rad = 3.6 + (i % 2) * 1.1 + seedR() * 0.8;
+    const rad = 5.0 + (i % 2) * 1.4 + seedR() * 1.0;   // wider ring (band is spread further)
     const px = bandCentroid.x + Math.cos(ang) * rad;
     const pz = bandCentroid.z + Math.sin(ang) * rad - 0.6;   // pushed back (-z)
     d.group.position.set(px, 0, pz);
@@ -608,6 +675,44 @@ function buildPlanetField() {
   if (planetField.instanceColor) planetField.instanceColor.needsUpdate = true;
   scene.add(planetField);
 }
+// buildSunField() — the STARS of the two-level galaxy: ONE glowing colored SUN per
+// CLUSTER at its star coord (worldOfCoord of cluster.star), tinted the cluster's own
+// color, scaled up so suns read as the big landmarks you cruise PAST while the genre
+// PLANETS orbit near them. A single InstancedMesh (31 low-poly balls, one draw call) —
+// mobile-cheap. The per-cluster LABEL is shown in the 2D HUD, not floated in 3D.
+let sunIndex = null;         // [{id,label,color,x,y,z}] parallel to instance indices
+function buildSunField() {
+  const suns = (mods.clusterWorlds && mods.clusterWorlds()) || [];
+  if (!suns.length || !scene) return;
+  const geo = new THREE.IcosahedronGeometry(1, 1);
+  const mat = new THREE.MeshBasicMaterial({ toneMapped: false });   // bright suns (unlit)
+  sunField = new THREE.InstancedMesh(geo, mat, suns.length);
+  sunField.frustumCulled = false;
+  sunField.name = "sunField";
+  sunIndex = suns;
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), col = new THREE.Color();
+  for (let i = 0; i < suns.length; i++) {
+    const w = suns[i];
+    // suns are bigger than planets (landmarks): radius scales with membership.
+    const r = 4.5 + Math.min(12, w.members) * 0.55;
+    p.set(w.x, w.y, w.z); s.set(r, r, r);
+    m4.compose(p, q, s); sunField.setMatrixAt(i, m4);
+    const c = w.color || [1, 1, 1];
+    col.setRGB(c[0], c[1], c[2]); sunField.setColorAt(i, col);
+  }
+  sunField.instanceMatrix.needsUpdate = true;
+  if (sunField.instanceColor) sunField.instanceColor.needsUpdate = true;
+  scene.add(sunField);
+}
+// the CLUSTER the current dominant genre belongs to (label + color) — drives the HUD.
+function clusterOfGenre(genre) {
+  if (!genre) return null;
+  const id = CLUSTER_OF[genre];
+  if (id == null) return null;
+  const c = (GENRE_CLUSTERS || []).find((x) => x.id === id);
+  return c || null;
+}
+
 // world position of a genre's planet marker (the exact GENRE_COORDS projection).
 function planetWorldOf(genre) {
   if (!genre || !mods.worldOfCoord) return null;
@@ -629,49 +734,14 @@ function highlightPlanet(genre) {
   planetField.instanceMatrix.needsUpdate = true;
 }
 
-// makeShip(traits) — a tiny low-poly saucer the band greets you beside; its boarding
-// ramp lowers as we touch down (landProgress) and it sits BEHIND the band toward the
-// camera so the pilot's craft frames the scene. Cheap: a handful of flat-shaded
-// prisms. Kept in the controller (procedural, asset-free, PS1 flat look).
+// makeShip() — REMOVED per the SMOOTH+LEGIBLE brief. The old low-poly saucer sat in
+// front of / behind the band and OBSTRUCTED the view. There is no 3D ship anymore.
+// This returns an EMPTY group + a no-op update so the surface-scene lifecycle
+// (spawn/despawn, hasShip) is unchanged — nothing is drawn, nothing blocks the band.
 function makeShip(traits, seed) {
   const g = new THREE.Object3D();
-  const pal = (traits && traits.palette) || {};
-  const acc = pal.accent || { h: 40, s: 0.85, l: 0.6 };
-  const hullCol = new THREE.Color().setHSL((((acc.h + 200) % 360) / 360), 0.25, 0.30);
-  const accCol = new THREE.Color().setHSL(((acc.h % 360) / 360), acc.s != null ? acc.s : 0.85, acc.l != null ? acc.l : 0.6);
-  const hullMat = new THREE.MeshLambertMaterial({ color: hullCol, flatShading: true });
-  const glowMat = new THREE.MeshLambertMaterial({ color: accCol, flatShading: true, emissive: accCol.clone().multiplyScalar(0.4 + 0.4 * (traits && traits.glow || 0)) });
-  // saucer hull: two stacked octagonal frusta (a classic flying-disc silhouette).
-  const lower = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 3.2, 1.0, 8), hullMat);
-  lower.position.y = 1.0; g.add(lower);
-  const upper = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 2.4, 1.0, 8), hullMat);
-  upper.position.y = 1.9; g.add(upper);
-  const dome = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 1.2, 0.7, 8), glowMat);
-  dome.position.y = 2.6; g.add(dome);
-  // running lights around the rim.
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2;
-    const dot = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), glowMat);
-    dot.position.set(Math.cos(a) * 3.0, 1.0, Math.sin(a) * 3.0); g.add(dot);
-  }
-  // boarding ramp (hinged at the hull front, lowers toward the band on the +Z side).
-  const ramp = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.12, 2.2), hullMat);
-  const rampPivot = new THREE.Object3D(); rampPivot.position.set(0, 0.6, 2.8); g.add(rampPivot);
-  ramp.position.set(0, 0, 1.1); rampPivot.add(ramp);
-  // the ship sits BEHIND the band (further from the +Z camera) so it backs the stage.
-  g.position.set(0, 0, -3.4);
-  let clock = 0, rampAng = -Math.PI / 2;   // start closed (ramp up against the hull)
-  function update(dt, phase, landProgress) {
-    clock += dt || 0;
-    g.rotation.y = Math.sin(clock * 0.2) * 0.03;              // idle drift
-    dome.material.emissiveIntensity = 0.7 + Math.sin(clock * 3) * 0.2;
-    // OPEN/GREET/DANCE (or high landProgress) -> ramp down to the ground.
-    const open = (phase === "OPEN" || phase === "GREET" || phase === "DANCE") ? 1 : Math.max(0, (landProgress || 0) - 0.7) / 0.3;
-    const target = -Math.PI / 2 + open * (Math.PI / 2);      // -90deg closed -> 0deg down
-    rampAng += (target - rampAng) * Math.min(1, (dt || 0) * 4);
-    rampPivot.rotation.x = rampAng;
-  }
-  return { group: g, update };
+  g.name = "ship-empty";   // no children — the 3D ship shell is gone (HUD-only cockpit)
+  return { group: g, update() {} };
 }
 function disposeObj(obj) {
   obj.traverse((o) => {
@@ -761,6 +831,9 @@ export async function start() {
   // (one draw call, ~249 low-poly balls of light) — mobile-cheap. Saturated per-genre
   // hues for contrast; the dominant planet is scaled up each frame during transit.
   buildPlanetField();
+  // the STARS: one colored SUN per cluster at its star coord (the two-level galaxy —
+  // you fly PAST labeled colored suns toward the dominant genre's planet).
+  buildSunField();
 
   camera = new THREE.PerspectiveCamera(60, lowW / lowH, 0.1, 300);
   camera.position.set(0, 3, 8);
@@ -795,6 +868,7 @@ export async function start() {
   curDominant = tv0.dominant;
 
   mountExit();
+  mountHUD();
   bindInput();
   window.addEventListener("resize", onResize);
   lastT = clock.now;
@@ -836,6 +910,53 @@ function mountExit() {
 function unmountExit() {
   if (exitBtn && exitBtn.parentNode) exitBtn.parentNode.removeChild(exitBtn);
   exitBtn = null;
+}
+
+// ---- 2D COCKPIT HUD (replaces the 3D cockpit) -----------------------------------
+// A lightweight DOM overlay showing the current STAR / cluster LABEL (color-coded to
+// the cluster's own sun color). This is the "cockpit HUD" — no obstructing 3D shell.
+// It sits above the canvas (z-index 55, below the ✕ EXIT at 60) and updates each frame.
+function mountHUD() {
+  if (hudEl) return;
+  hudEl = document.createElement("div");
+  hudEl.id = "starcruise-hud";
+  hudEl.style.cssText = [
+    "position:fixed", "top:max(14px,env(safe-area-inset-top))",
+    "left:max(14px,env(safe-area-inset-left))", "z-index:55",
+    "pointer-events:none", "user-select:none",
+    "font:600 13px/1.3 system-ui,sans-serif", "letter-spacing:.08em",
+    "color:#eef", "text-shadow:0 1px 6px rgba(0,0,0,.8)",
+    "padding:8px 12px", "border-radius:12px",
+    "background:rgba(12,6,24,.42)", "border:1px solid rgba(255,255,255,.16)",
+    "max-width:60vw",
+  ].join(";");
+  hudEl.innerHTML = '<div id="sc-hud-sys" style="opacity:.7;font-size:10px;letter-spacing:.14em">◈ STAR SYSTEM</div>'
+    + '<div id="sc-hud-label" style="font-size:16px;letter-spacing:.06em;margin-top:2px">—</div>'
+    + '<div id="sc-hud-genre" style="opacity:.72;font-size:11px;margin-top:2px">—</div>';
+  document.body.appendChild(hudEl);
+  _hudLabel = null;
+}
+function unmountHUD() {
+  if (hudEl && hudEl.parentNode) hudEl.parentNode.removeChild(hudEl);
+  hudEl = null; _hudLabel = null;
+}
+// updateHUD(genre) — reflect the current dominant genre's CLUSTER (its labeled sun) in
+// the HUD, tinted the cluster color. Cheap: only rewrites the DOM when the label changes.
+function updateHUD(genre) {
+  if (!hudEl) return;
+  const cl = clusterOfGenre(genre);
+  const label = cl ? String(cl.label).toUpperCase() : "DEEP SPACE";
+  const glabel = genre ? genreLabelOf(genre) : "cruising";
+  if (label === _hudLabel && hudEl._g === glabel) return;
+  _hudLabel = label; hudEl._g = glabel;
+  const lab = hudEl.querySelector("#sc-hud-label");
+  const gen = hudEl.querySelector("#sc-hud-genre");
+  if (lab) {
+    lab.textContent = label;
+    const c = cl && cl.color ? cl.color : [0.8, 0.85, 1];
+    lab.style.color = `rgb(${Math.round(c[0] * 255)},${Math.round(c[1] * 255)},${Math.round(c[2] * 255)})`;
+  }
+  if (gen) gen.textContent = glabel ? ("→ " + glabel) : "";
 }
 
 // ---- input wiring (mouse + touch + keys) ----------------------------------------
@@ -916,10 +1037,39 @@ function applyOrbitToCamera() {
   const cp = Math.cos(orbit.pitch), sp = Math.sin(orbit.pitch);
   const sy = Math.sin(orbit.yaw), cy = Math.cos(orbit.yaw);
   const t = orbit.target;
-  camera.position.set(t.x + orbit.dist * cp * sy, t.y + orbit.dist * sp, t.z + orbit.dist * cp * cy);
+  // FLOOR CLAMP: the camera never dips below the ground plane at the surface — a shot
+  // that would put the eye underground is lifted back to FLOOR_Y (keeps the band framed
+  // from above the stage instead of clipping through it).
+  const camY = Math.max(FLOOR_Y, t.y + orbit.dist * sp);
+  camera.position.set(t.x + orbit.dist * cp * sy, camY, t.z + orbit.dist * cp * cy);
   camera.lookAt(t.x, t.y, t.z);
   if (camera.fov !== orbit.fov) { camera.fov = orbit.fov; camera.updateProjectionMatrix(); }
 }
+// applyTransitCamera(dt, p) — drive the camera in TRANSIT as a DAMPED follow of the
+// flight pose. This is the SMOOTH cruise: instead of snapping the camera onto the pose
+// each frame (which jittered + made lift-off/descent a hard cut), we ease toward it, so
+// the star-map fly-through glides and the take-off/zoom-in read as continuous moves.
+// Seeded from the LIVE camera the first transit frame (so lift-off glides up from the
+// surface). Floor-clamped. Deterministic (only dt).
+function applyTransitCamera(dt, p) {
+  if (!camFollow.init) {
+    camFollow.x = camera.position.x; camFollow.y = camera.position.y; camFollow.z = camera.position.z;
+    camFollow.lx = p.lookAt.x; camFollow.ly = p.lookAt.y; camFollow.lz = p.lookAt.z;
+    camFollow.fov = camera.fov; camFollow.init = true;
+  }
+  const k = 1 - Math.exp(-(dt > 0 ? dt : 0) * 3.0);   // eased (frame-rate independent) follow
+  camFollow.x += (p.position.x - camFollow.x) * k;
+  camFollow.y += (p.position.y - camFollow.y) * k;
+  camFollow.z += (p.position.z - camFollow.z) * k;
+  camFollow.lx += (p.lookAt.x - camFollow.lx) * k;
+  camFollow.ly += (p.lookAt.y - camFollow.ly) * k;
+  camFollow.lz += (p.lookAt.z - camFollow.lz) * k;
+  camFollow.fov += (p.fov - camFollow.fov) * k;
+  camera.position.set(camFollow.x, Math.max(FLOOR_Y, camFollow.y), camFollow.z);
+  camera.lookAt(camFollow.lx, camFollow.ly, camFollow.lz);
+  if (Math.abs(camera.fov - camFollow.fov) > 1e-3) { camera.fov = camFollow.fov; camera.updateProjectionMatrix(); }
+}
+
 // WASD / arrows = fly: pan the orbit target in the camera's ground frame (+ up/down).
 function applyKeyPan(dt) {
   const fwd = (keysDown["w"] || keysDown["arrowup"] ? 1 : 0) - (keysDown["s"] || keysDown["arrowdown"] ? 1 : 0);
@@ -944,23 +1094,54 @@ function applyKeyPan(dt) {
 // the whole stage. Deterministic (derived from the spawned band positions).
 function buildAutoShots() {
   const cy = bandCentroid.y;
-  const wide = Math.max(orbit.minDist + 2, 6.0 + 1.15 * Math.max(1, band.length));
+  // frame to the ACTUAL band width (aliens are spread wide now) so wides never crop.
+  let halfW = 1.5;
+  for (const a of band) halfW = Math.max(halfW, Math.abs(a.group.position.x - bandCentroid.x));
+  const wide = Math.max(orbit.minDist + 2, 6.5 + 1.3 * halfW + 0.6 * Math.max(1, band.length));
   const wides = [
-    { target: { x: bandCentroid.x, y: cy, z: bandCentroid.z }, yaw: 0, pitch: 0.16, dist: wide, fov: 56, yawRate: 0.05 },
-    { target: { x: bandCentroid.x, y: cy + 0.4, z: bandCentroid.z }, yaw: 0.95, pitch: 0.34, dist: wide + 2.5, fov: 60, yawRate: -0.06 },
-    { target: { x: bandCentroid.x, y: cy, z: bandCentroid.z }, yaw: -0.95, pitch: 0.12, dist: wide + 1.5, fov: 58, yawRate: 0.06 },
+    // 0: FRONT establishing wide (the landed default framing).
+    { target: { x: bandCentroid.x, y: cy, z: bandCentroid.z }, yaw: 0, pitch: 0.16, dist: wide, fov: 56, yawRate: 0.04, kind: "wide" },
+    // side 3/4 wide.
+    { target: { x: bandCentroid.x, y: cy + 0.4, z: bandCentroid.z }, yaw: 0.95, pitch: 0.30, dist: wide + 2.5, fov: 60, yawRate: -0.05, kind: "wide" },
+    { target: { x: bandCentroid.x, y: cy, z: bandCentroid.z }, yaw: -0.95, pitch: 0.12, dist: wide + 1.5, fov: 58, yawRate: 0.05, kind: "wide" },
   ];
+  // VARIETY: a high FLYOVER (up + over, looking down) and a low push THROUGH the city.
+  const flyover = { target: { x: bandCentroid.x, y: cy + 0.6, z: bandCentroid.z }, yaw: 0.2, pitch: 0.85, dist: wide + 4, fov: 62, yawRate: 0.07, kind: "flyover" };
+  const through = { target: { x: bandCentroid.x, y: 1.2, z: bandCentroid.z }, yaw: 0.0, pitch: 0.02, dist: Math.max(orbit.minDist + 1, 4.5), fov: 66, yawRate: 0.0, dolly: -1.4, kind: "through" };
+  // MEDIUM closeups on each player — framed on the TORSO (y~1.15) at a distance that
+  // keeps the whole figure in view (never a limb-only extreme zoom: dist floored ~3.4).
   const closeups = band.map((a, i) => {
     const bp = a.group.position;
-    return { target: { x: bp.x, y: 1.05, z: bp.z }, yaw: (i % 2 ? 0.32 : -0.32), pitch: 0.05, dist: 3.4, fov: 48, yawRate: (i % 2 ? 1 : -1) * 0.09 };
+    return { target: { x: bp.x, y: 1.15, z: bp.z }, yaw: (i % 2 ? 0.30 : -0.30), pitch: 0.08, dist: 3.6, fov: 50, yawRate: (i % 2 ? 1 : -1) * 0.07, kind: "closeup" };
   });
-  // interleave: front-wide, closeup, wide, closeup, wide, closeup...
+  // the DRUMMER shot — a dedicated medium of the drums player (the auto-cam ALWAYS cuts
+  // here on a fill). Framed on the kit/torso, never a limb crop.
+  const drummer = band.find((a) => a._voice === "drums") || band.find((a) => a._role === "drum");
+  autoCam.drummerShot = -1;
+  // interleave: front-wide, closeup, side-wide, flyover, closeup, through, ...
   autoShots = [wides[0]];
   let wi = 1, ci = 0;
-  while (ci < closeups.length || wi < wides.length) {
+  const extras = [flyover, through];
+  let ei = 0;
+  while (ci < closeups.length || wi < wides.length || ei < extras.length) {
     if (ci < closeups.length) autoShots.push(closeups[ci++]);
     if (wi < wides.length) autoShots.push(wides[wi++]);
+    if (ei < extras.length && (ci & 1)) autoShots.push(extras[ei++]);
   }
+  while (ei < extras.length) autoShots.push(extras[ei++]);
+  if (drummer) {
+    const bp = drummer.group.position;
+    autoCam.drummerShot = autoShots.length;
+    autoShots.push({ target: { x: bp.x, y: 1.2, z: bp.z }, yaw: 0.18, pitch: 0.06, dist: 3.9, fov: 50, yawRate: -0.05, kind: "drummer" });
+  }
+}
+// snap the orbit onto a shot (a hard CUT). Shared by cuts + the drummer-on-fill cut.
+function applyShot(sh) {
+  if (!sh) return;
+  orbit.target.set(sh.target.x, sh.target.y, sh.target.z);
+  orbit.yaw = sh.yaw; orbit.pitch = sh.pitch;
+  orbit.dist = Math.max(orbit.minDist, Math.min(orbit.maxDist, sh.dist));
+  orbit.fov = sh.fov; autoCam._yawRate = sh.yawRate; autoCam._dolly = sh.dolly || 0;
 }
 // runAutoCam(dt, st): drive the orbit as a music video — CUT to a new shot on the beat
 // (every CUT_BEATS), and between cuts slowly drift the yaw + bob the framing on the
@@ -972,19 +1153,35 @@ function runAutoCam(dt, st) {
   const spb = (bt && bt.spb) > 0 ? bt.spb : 0.5;
   const shotDur = CUT_BEATS * spb;
   autoCam.shotT += dt;
-  if (autoCam.forceCut || autoCam.shotT >= shotDur) {
-    if (!autoCam.forceCut) { autoCam.shot = (autoCam.shot + 1) % autoShots.length; autoCam.cuts++; }
+
+  // DRUMMER-ON-FILL: while a fill is firing, ALWAYS be on the drummer. Cut there once
+  // (on the fill's rising edge) and hold until the fill ends — then resume normal cuts.
+  const fill = currentFill();
+  if (fill && autoCam.drummerShot >= 0) {
+    if (autoCam.shot !== autoCam.drummerShot) {
+      autoCam.shot = autoCam.drummerShot; autoCam.cuts++; autoCam.shotT = 0;
+      applyShot(autoShots[autoCam.shot]);
+    }
+    autoCam.onDrummer = true;
+    autoCam.forceCut = false;
+  } else if (autoCam.forceCut || autoCam.shotT >= shotDur) {
+    if (!autoCam.forceCut) {
+      // advance to the next shot, but SKIP the dedicated drummer shot in the normal
+      // rotation (it is reserved for fills) so the drummer read stays meaningful.
+      do { autoCam.shot = (autoCam.shot + 1) % autoShots.length; }
+      while (autoShots.length > 1 && autoCam.shot === autoCam.drummerShot);
+      autoCam.cuts++;
+    }
     autoCam.forceCut = false; autoCam.shotT = 0;
-    const sh = autoShots[autoCam.shot];
-    orbit.target.set(sh.target.x, sh.target.y, sh.target.z);
-    orbit.yaw = sh.yaw; orbit.pitch = sh.pitch;
-    orbit.dist = Math.max(orbit.minDist, Math.min(orbit.maxDist, sh.dist));
-    orbit.fov = sh.fov; autoCam._yawRate = sh.yawRate;
+    autoCam.onDrummer = false;
+    applyShot(autoShots[autoCam.shot]);
   } else {
-    orbit.yaw += (autoCam._yawRate || 0) * dt;            // slow orbit between cuts
+    autoCam.onDrummer = (autoCam.shot === autoCam.drummerShot);
+    // SMOOTH eased motion between cuts — a slow orbit drift + an optional dolly for the
+    // through-the-city shot. NO beat bob (that was the jitter the brief called out).
+    orbit.yaw += (autoCam._yawRate || 0) * dt;
+    if (autoCam._dolly) orbit.dist = Math.max(orbit.minDist, Math.min(orbit.maxDist, orbit.dist + autoCam._dolly * dt));
   }
-  const sh = autoShots[autoCam.shot];
-  if (sh) orbit.target.y = sh.target.y + Math.sin((st.beatPhase || 0) * Math.PI * 2) * 0.06;   // beat bob
 }
 
 // -- pointer handlers -------------------------------------------------------------
@@ -1066,6 +1263,9 @@ export function update(dt) {
   //     OVERRIDES it and it resumes after idle.
   const landed = !!LANDED_PHASES[st.phase];
   if (landed) {
+    // parked: the orbit/auto-cam owns the camera — mark the transit follow stale so the
+    // NEXT lift-off re-seeds its glide from wherever the landed camera ended up.
+    camFollow.init = false;
     // on touchdown: restore the surface sky + (re)build the cinematic shot list and
     // reset the auto-camera to its FRONT establishing wide shot.
     if (!wasLanded) {
@@ -1091,15 +1291,16 @@ export function update(dt) {
     // framing the view and fading as we descend; the leaving planet recedes below.
     updateSpaceRig(dt, st);
   } else {
-    // bootstrap transit (before the first depart): follow the star-map zoom pose, keep
-    // the orbit shadowing it, and highlight the resolving planet in the field.
-    camera.position.set(p.position.x, p.position.y, p.position.z);
-    camera.lookAt(p.lookAt.x, p.lookAt.y, p.lookAt.z);
-    if (camera.fov !== p.fov) { camera.fov = p.fov; camera.updateProjectionMatrix(); }
+    // bootstrap transit (before the first depart): SMOOTHLY follow the star-map zoom
+    // pose, keep the orbit shadowing it, and highlight the resolving planet in the field.
+    applyTransitCamera(dt, p);
     highlightPlanet(st.dominant || curDominant || null);
     seedOrbitFromPose(p);
   }
   wasLanded = landed;
+  // 2D COCKPIT HUD: reflect the current dominant genre's star system (cluster label +
+  // color). In deep space (no dominant) it reads "DEEP SPACE".
+  updateHUD(st.dominant || curDominant || null);
   // keep the shadow frustum + key aimed at the band when landed (transit forms are the
   // MeshBasic star-map + cockpit, which don't need cast shadows).
   if (sun) {
@@ -1121,11 +1322,17 @@ export function update(dt) {
   }
   const barIdx = currentBar(bt);
   _curBarIdx = barIdx;
+  const loud = eventPlan ? loudnessAt(barIdx) : clamp01n(st.beatPhase != null ? 0.5 : 0);
   for (const a of band) {
     if (eventPlan && a._voice) a.update(dt, ctxForVoice(a._voice, barIdx, barPhase));
     else a.update(dt, st.beatPhase);   // fallback: beat-only path (no plan yet)
   }
-  for (const d of dancers) d.update(dt, st.beatPhase);
+  // DANCERS get the overall track LOUDNESS in ctx (CONTRACT): each dancer keeps its own
+  // phase/style and DESYNCS when quiet, SYNCING UP when the room is loud. valueOf keeps
+  // the legacy numeric-phase path working if the alien rig hasn't been upgraded yet.
+  for (const d of dancers) {
+    d.update(dt, { barPhase, loudness: loud, playing: true, level: 1, valueOf() { return barPhase; } });
+  }
   if (backdrop) backdrop.update(dt);
   if (ship) ship.update(dt, st.phase, st.landProgress);
   if (!_skipRender) ps1.render(scene, camera);   // _skipRender: headless state-only stepping
@@ -1145,10 +1352,9 @@ function updateSpaceRig(dt, st) {
   if (scene.background && scene.background.isColor) {
     scene.background.setHex(SKY_COLOR).lerp(_spaceCol, s);
   }
-  // camera = the star-map zoom pose (long descent toward the resolving planet).
-  camera.position.set(p.position.x, p.position.y, p.position.z);
-  camera.lookAt(p.lookAt.x, p.lookAt.y, p.lookAt.z);
-  if (camera.fov !== p.fov) { camera.fov = p.fov; camera.updateProjectionMatrix(); }
+  // camera = the star-map zoom pose (long descent toward the resolving planet), driven
+  // as a SMOOTH damped follow so the lift-off + cruise glide instead of snapping.
+  applyTransitCamera(dt, p);
   // scale up the resolving planet in the star-map so the target reads.
   highlightPlanet(st.dominant || spaceActiveGenre || null);
   // cockpit RIDES the camera (its viewport frames the view) and FADES as we descend.
@@ -1205,14 +1411,18 @@ export function stop() {
   if (raf) cancelAnimationFrame(raf), raf = 0;
   unbindInput();
   unmountExit();
+  unmountHUD();
   window.removeEventListener("resize", onResize);
   despawnBand();                                   // disposes band + dancers + stage + backdrop + ship
   despawnSpaceRig();                               // disposes cockpit + planet (if in transit)
   if (starfield) { scene.remove(starfield); disposeObj(starfield); starfield = null; }
   if (planetField) { scene.remove(planetField); disposeObj(planetField); planetField = null; }
+  if (sunField) { scene.remove(sunField); disposeObj(sunField); sunField = null; sunIndex = null; }
   for (const g in planetIndex) delete planetIndex[g];
   planetBaseR = null; _hiIdx = -1;
   autoShots = []; autoCam.active = false; autoCam.shot = 0; autoCam.shotT = 0; autoCam.cuts = 0; autoCam.forceCut = true;
+  autoCam.onDrummer = false; autoCam.drummerShot = -1;
+  camFollow.init = false; _wasTransit = false; _fillInject = null;
   _vclock = 0; _lastInputT = -1e9;
   // dispose remaining GL resources (lights carry none; belt-and-braces geometry sweep).
   try { scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); } catch (e) {}
@@ -1323,10 +1533,40 @@ window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBe
   // autoCam(): the music-video camera state (active when landed + no recent input;
   // shot index advances on beat cuts; userActive = manual override in effect).
   autoCam: () => ({ active: autoCam.active, shot: autoCam.shot, shots: autoShots.length,
-    cuts: autoCam.cuts, userActive: (_vclock - _lastInputT) < AUTO_IDLE }),
+    cuts: autoCam.cuts, userActive: (_vclock - _lastInputT) < AUTO_IDLE,
+    onDrummer: !!autoCam.onDrummer, drummerShot: autoCam.drummerShot,
+    kind: autoShots[autoCam.shot] ? autoShots[autoCam.shot].kind : null }),
   // bandPositions(): each spawned alien's staging position (proves the SPREAD).
   bandPositions: () => band.map((a) => ({ voice: a._voice, x: +a.group.position.x.toFixed(2),
     y: +a.group.position.y.toFixed(2), z: +a.group.position.z.toFixed(2) })),
+  // ---- GALAXY (SUNS) + HUD + FILL probes (headless-proof; harmless in production) ----
+  // suns(): the colored cluster SUNS — count + each sun's marker world-pos/color/label,
+  // to prove they sit AT their cluster.star projection with the cluster's color.
+  suns: (n) => {
+    if (!sunField || !sunIndex) return null;
+    const list = sunIndex.slice(0, n || 6).map((w, i) => ({
+      id: w.id, label: w.label, color: w.color,
+      marker: { x: +w.x.toFixed(2), y: +w.y.toFixed(2), z: +w.z.toFixed(2) } }));
+    return { count: sunField.count, field: mods.FIELD, suns: list };
+  },
+  // hud(): the 2D cockpit HUD — mounted? + its current label/genre text (proves the
+  // 3D cockpit was replaced by a DOM label overlay).
+  hud: () => (hudEl ? { mounted: true,
+    sys: (hudEl.querySelector("#sc-hud-sys") || {}).textContent,
+    label: (hudEl.querySelector("#sc-hud-label") || {}).textContent,
+    genre: (hudEl.querySelector("#sc-hud-genre") || {}).textContent } : { mounted: false }),
+  // shipMeshCount(): how many DRAWN meshes the (now-empty) ship + cockpit groups hold —
+  // proves the obstructing 3D ship/cockpit shell is GONE (should be 0).
+  shipMeshCount: () => {
+    let n = 0;
+    const scan = (g) => g && g.group && g.group.traverse((o) => { if (o.isMesh) n++; });
+    scan(ship); scan(cockpit);
+    return n;
+  },
+  // fill()/__injectFill(): the per-bar drum-FILL flag the auto-camera cuts to the drummer
+  // on. __injectFill(bool|null) forces it for the headless drummer-cam proof (null=real).
+  fill: () => ({ now: currentFill(), fillBars: eventPlan ? eventPlan.fillBars : null, curBar: _curBarIdx }),
+  __injectFill: (b) => { _fillInject = (b == null ? null : !!b); },
   // dancers + cockpit/space + shadow probes (headless-proof; harmless in production).
   dancers: () => dancers.length,
   space: () => ({ hasCockpit: !!cockpit, hasPlanet: !!planet,

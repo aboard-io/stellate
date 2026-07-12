@@ -122,9 +122,12 @@ export function makePS1(THREE, renderer, lowResTarget) {
         // -- dither + posterize in low-res texel space so it rides the crunchy pixels.
         vec2 texel = floor(suv * uResolution);
         if (uDither == 2) {
-          // 1-bit: hard ordered threshold per channel (a stark, high-contrast look).
-          float t = bayer4(texel);
-          c = step(vec3(t), c);
+          // (compat) SOFTENED "1-bit": a gentle 3-level ordered quantise, NOT a hard
+          // black/white crunch — the image always stays readable (cap law). traits.js
+          // no longer emits this mode, but keep it legible if anything pushes it.
+          float t = bayer4(texel) - 0.5;
+          c += t / 3.0;
+          c = floor(c * 3.0 + 0.5) / 3.0;
         } else {
           float levels = max(2.0, uPosterize);
           float t = (uDither == 1) ? (bayer4(texel) - 0.5) : 0.0;
@@ -145,22 +148,30 @@ export function makePS1(THREE, renderer, lowResTarget) {
       }
     `,
   });
+  // GENTLE CAPS — legibility law: no genre is ever over-processed into visual noise.
+  // Every effect is held to a soft maximum here, MATCHING the caps traits.js already
+  // bakes in, so the live uniforms equal the emitted renderStyle values (the RS
+  // integration stays exact). The hard 1-bit crunch and a crushed <6-step palette are
+  // both OUT; pure-mesh (no post) is not a mode. These caps also defend against any
+  // out-of-range bag pushed from elsewhere.
+  const CAPS = { posterizeMin: 6, scan: 0.25, aberr: 0.22, halftone: 0.28, bloom: 0.5, vignette: 0.35, curve: 0.15 };
   // setStyle(post) — push a renderStyle.post bag (from traits.js) into the pass so
   // the ACTIVE planet's whole-screen render changes by genre. Missing fields fall
-  // back to the neutral defaults; every value is clamped to its contract range.
+  // back to the neutral defaults; every value is clamped to the gentle cap range.
   function setStyle(post) {
     if (!post) return;
     const cl = (x, lo, hi, d) => (typeof x === "number" && isFinite(x) ? Math.max(lo, Math.min(hi, x)) : d);
     if (post.dither != null) uniforms.uDither.value = DITHER[post.dither] != null ? DITHER[post.dither] : 1;
-    uniforms.uPosterize.value = cl(post.posterize, 2, 16, uniforms.uPosterize.value);
-    uniforms.uScan.value = cl(post.scanlines, 0, 1, uniforms.uScan.value);
-    uniforms.uAberr.value = cl(post.aberration, 0, 1, uniforms.uAberr.value);
-    uniforms.uHalftone.value = cl(post.halftone, 0, 1, uniforms.uHalftone.value);
-    uniforms.uBloom.value = cl(post.bloom, 0, 1, uniforms.uBloom.value);
-    uniforms.uVignette.value = cl(post.vignette, 0, 1, uniforms.uVignette.value);
-    uniforms.uCurve.value = cl(post.curvature, 0, 1, uniforms.uCurve.value);
+    uniforms.uPosterize.value = cl(post.posterize, CAPS.posterizeMin, 16, uniforms.uPosterize.value);
+    uniforms.uScan.value = cl(post.scanlines, 0, CAPS.scan, uniforms.uScan.value);
+    uniforms.uAberr.value = cl(post.aberration, 0, CAPS.aberr, uniforms.uAberr.value);
+    uniforms.uHalftone.value = cl(post.halftone, 0, CAPS.halftone, uniforms.uHalftone.value);
+    uniforms.uBloom.value = cl(post.bloom, 0, CAPS.bloom, uniforms.uBloom.value);
+    uniforms.uVignette.value = cl(post.vignette, 0, CAPS.vignette, uniforms.uVignette.value);
+    uniforms.uCurve.value = cl(post.curvature, 0, CAPS.curve, uniforms.uCurve.value);
     if (Array.isArray(post.grade) && post.grade.length === 3) {
-      uniforms.uGrade.value.set(cl(post.grade[0], 0, 4, 1), cl(post.grade[1], 0, 4, 1), cl(post.grade[2], 0, 4, 1));
+      // grade held near neutral — a light tint only, never a channel blow-out.
+      uniforms.uGrade.value.set(cl(post.grade[0], 0.7, 1.4, 1), cl(post.grade[1], 0.7, 1.4, 1), cl(post.grade[2], 0.7, 1.4, 1));
     }
   }
   // getStyle() — a plain numeric snapshot of the LIVE uniforms (headless-proof so the

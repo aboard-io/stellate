@@ -129,6 +129,20 @@ export function makeAlien(THREE, traits, member, seed) {
   const appJit = jPick(0.5) - jPick(0.4);                 // -1..+1 legs/tentacles
   const accentSpin = (rand() * 2 - 1) * 22;               // per-alien accent hue shift °
   const orbJit = jPick(0.6) + jPick(0.35);                // +0..2 extra light-balls
+  // PER-ALIEN COLOUR/OUTFIT — off THIS alien's OWN seed so two band members (or two
+  // dancers) of ONE genre read as individually distinguishable creatures, not a blur.
+  // The genre base palette is rotated/shifted (hue/sat/value) per alien and some wear
+  // an accent SASH — still inside the species' colour family (the shifts are bounded).
+  const hueSpin = (rand() * 2 - 1) * 44;                  // per-alien BODY hue rotation °
+  const valSpin = (rand() * 2 - 1) * 0.14;               // per-alien lightness shift
+  const satSpin = (rand() * 2 - 1) * 0.12;               // per-alien saturation shift
+  const wearsSash = jPick(0.5);                           // 0/1 an accent band/sash marking
+  // PER-DANCER groove individuality (own phase + tempo + style) so dancers DESYNC by
+  // default and SYNC only when the mix is loud. Drawn for every alien to keep the
+  // per-alien rand stream aligned between a dancer & a player built from one seed.
+  const dancePhase0 = rand() * 6.2831853;                // own starting phase (desync seed)
+  const danceRate = 1.35 + rand() * 1.15;                // own groove tempo
+  const danceStyle = jPick(0.5);                          // style variant 0/1
 
   traits = traits || {};
   member = member || { role: "perc", voice: "perc", instrument: { family: "clackshell", playStyle: "strike", appendage: 0, hitsPerBeat: 1 } };
@@ -146,6 +160,9 @@ export function makeAlien(THREE, traits, member, seed) {
   // sustained voices HOLD contact across a note (bow/blow/pad); impulse voices
   // strike a momentary contact then recoil (strike/drum/pluck).
   const sustained = playStyle === "bow" || playStyle === "blow";
+  // DRUMMER: the kit player — its strike is tuned to be genuinely fast (short approach,
+  // big windup) so the arm visibly snaps onto the drum at the note's real onset speed.
+  const isDrummer = (playStyle === "drum" || playStyle === "strike") && roleName === "drum";
 
   const pal = traits.palette || {};
   const bIn = traits.body || {};
@@ -225,13 +242,18 @@ export function makeAlien(THREE, traits, member, seed) {
   const faceWide = faceIn.mouthWide != null ? faceIn.mouthWide : (traits.face && traits.face.mouthWide) || 0.4;
 
   // ---- RENDER STYLE (the genre's visual LANGUAGE, from traits.renderStyle) --------
-  // PRESERVED verbatim: traits.renderStyle.material picks how EVERY surface shades.
-  // Defaults to 'flat' (flat-lit Lambert). All six treatments keep light response +
-  // shadows. Materials are built ONCE per style and reused across the whole alien.
-  const style = (traits.renderStyle && traits.renderStyle.material) || "flat";
-  const wire = style === "wireframe";
+  // traits.renderStyle.material picks how EVERY surface shades. The vocabulary is now
+  // the READABLE set only — { flat, matte, cel, pbr, iridescent } — so the aliens are
+  // always clearly legible. The old hard-to-read treatments (wireframe / pure-mesh /
+  // the harsh glitch) are DROPPED: any such request falls back to a clean flat surface
+  // rather than an illegible wire/noise skin. Materials are built ONCE per style and
+  // reused across the whole alien; every treatment keeps light response + shadows.
+  const READABLE = { flat: 1, matte: 1, cel: 1, pbr: 1, iridescent: 1 };
+  let style = (traits.renderStyle && traits.renderStyle.material) || "flat";
+  if (!READABLE[style]) style = "flat";                  // wireframe / mesh / glitch -> legible flat
+  const wire = false;                                    // never wireframe (illegible) — dropped
   const smoothShade = style === "matte";
-  const glitchTime = { value: 0 };
+  const glitchTime = { value: 0 };                       // retained (harmless) — no glitch skin emitted
 
   let celGrad = null;
   if (style === "cel") {
@@ -243,7 +265,7 @@ export function makeAlien(THREE, traits, member, seed) {
   const IRID_GLSL = [
     "float _fr = pow(1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0), 2.2);",
     "vec3 _ir = 0.5 + 0.5 * cos(6.2831853 * (_fr + vec3(0.0, 0.33, 0.66)));",
-    "outgoingLight = mix(outgoingLight, outgoingLight + _ir, _fr * 0.85);",
+    "outgoingLight = mix(outgoingLight, outgoingLight + _ir, _fr * 0.32);",
   ].join("\n");
   const GLITCH_VERT = [
     "float _burst = step(0.86, fract(uTime * 0.7));",
@@ -280,8 +302,10 @@ export function makeAlien(THREE, traits, member, seed) {
   // 'pbr' surface constants — REAL chrome / glass / polished metal from the skin trait.
   // chrome = mirror metal; glass = clear low-roughness dielectric; else brushed metal.
   const pbrGlass = traits.skin === "glass";
-  const pbrMetalness = chrome ? 0.95 : pbrGlass ? 0.05 : 0.7;
-  const pbrRoughness = chrome ? 0.16 : pbrGlass ? 0.05 : 0.4;
+  // SUBTLE pbr — legible: chrome keeps its metal read but a higher roughness stops it
+  // becoming a pure mirror; glass stays clear; else a soft brushed metal.
+  const pbrMetalness = chrome ? 0.85 : pbrGlass ? 0.06 : 0.6;
+  const pbrRoughness = chrome ? 0.3 : pbrGlass ? 0.08 : 0.5;
   const mk = (col, textured) => {
     const emissive = (glow > 0.05 ? col.clone().multiplyScalar(0.16 * glow) : new THREE.Color(0, 0, 0));
     let m;
@@ -307,8 +331,12 @@ export function makeAlien(THREE, traits, member, seed) {
     }
     return applyStyleHook(m);
   };
-  const skinCol = colHSL(THREE, pal.skin || { h: 200, s: 0.5, l: chrome ? 0.62 : 0.5 });
-  const clothCol = colHSL(THREE, pal.cloth || { h: 340, s: 0.5, l: 0.45 });
+  // per-alien hue/sat/value SPIN so every band member + dancer of one genre reads as an
+  // individual creature (cloth rotates a touch less + darker so it contrasts the skin).
+  const skinCol = colHSL(THREE, pal.skin || { h: 200, s: 0.5, l: chrome ? 0.62 : 0.5 })
+    .offsetHSL(hueSpin / 360, satSpin, valSpin);
+  const clothCol = colHSL(THREE, pal.cloth || { h: 340, s: 0.5, l: 0.45 })
+    .offsetHSL((hueSpin * 0.65) / 360, satSpin * 0.5, valSpin * -0.4);
   // per-alien accent hue SPIN + a saturation push -> individual, saturated pop.
   const accentCol = colHSL(THREE, pal.accent || { h: 40, s: 0.85, l: 0.6 }).offsetHSL(accentSpin / 360, 0.06, 0);
   const bodyCol = skinCol.clone().offsetHSL(0, 0.05, 0.08);
@@ -641,9 +669,14 @@ export function makeAlien(THREE, traits, member, seed) {
   for (let i = 0; i < nOrbs; i++) {
     const oc = (i % 2 ? accentBright : accent2Col).clone().offsetHSL(0, 0.14, 0.16);
     const orb = new THREE.Mesh(new THREE.SphereGeometry(coreR * (0.13 + rand() * 0.09), 7, 6), mkOrb(oc));
-    const base = ringPos(i, Math.max(1, nOrbs), coreR * 1.75, coreMidY + (rand() - 0.3) * H * 0.32, 0.9);
+    // CONTIGUITY: orbs are ANTENNA-TIPS, not free-floaters — each rides a thin STALK
+    // rooted in the core, and only bobs a little so it stays fused to its stalk tip.
+    const base = ringPos(i, Math.max(1, nOrbs), coreR * 1.2, coreMidY + (rand() - 0.3) * H * 0.28, 0.9);
+    const anchor = base.clone().multiplyScalar(0.42); anchor.y = coreMidY + (base.y - coreMidY) * 0.42;
+    const stalk = new THREE.Mesh(tube(THREE, [anchor, base.clone()], { radius: coreR * 0.05, segs: 6, radial: 4, taper: 0.7 }), limbMat);
+    group.add(stalk);
     orb.position.copy(base); group.add(orb);
-    orbs.push({ mesh: orb, base: base.clone(), ph: rand() * 6.28, amp: coreR * 0.28 });
+    orbs.push({ mesh: orb, base: base.clone(), ph: rand() * 6.28, amp: coreR * 0.09 });
   }
 
   // ---- FACE: a wild family on the head object ------------------------------------
@@ -720,6 +753,23 @@ export function makeAlien(THREE, traits, member, seed) {
   }
   buildFace();
 
+  // ---- CONTIGUITY: a NECK bridges the head to the core so the face never floats ----
+  // A tapered column spanning from inside the core up into the head base — it overlaps
+  // both, closing the gap the plans used to leave between body and head.
+  {
+    const y0 = coreMidY, y1 = head.position.y;
+    const span = Math.abs(y1 - y0) + headSz * 0.5;
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(coreR * 0.42, coreR * 0.58, span, 8), skinMat);
+    neck.position.set(0, (y0 + y1) * 0.5, faceZ * 0.1);
+    group.add(neck);
+  }
+  // OUTFIT: some aliens wear an accent SASH — a colour band hugging the core (a per-alien
+  // marking off the seed) so individuals stand apart. It hugs the body, so it stays fused.
+  if (wearsSash) {
+    const sash = new THREE.Mesh(new THREE.TorusGeometry(coreR * 1.02, coreR * 0.16, 6, 14), accent2Mat);
+    sash.rotation.x = Math.PI / 2 - 0.25; sash.position.y = coreMidY + coreR * 0.1; group.add(sash);
+  }
+
   // ---- build the ARMS from the plan's roots --------------------------------------
   // the player arm is the manipulator that plays the score; the holder braces the
   // instrument for stringed/blown styles; the rest idle.
@@ -729,6 +779,15 @@ export function makeAlien(THREE, traits, member, seed) {
   const arms = [];
   for (let i = 0; i < nArms; i++) {
     const r = armRoots[i];
+    // CONTIGUITY: a CLAVICLE tube from a point just inside the core out to the shoulder,
+    // capped by a shoulder NUB — so the arm is fused to the body at the joint (no gap),
+    // no matter how far the plan splays the arm root.
+    const inner = new THREE.Vector3(r.pos.x, r.pos.y, r.pos.z).multiplyScalar(0.45);
+    inner.y = coreMidY + (r.pos.y - coreMidY) * 0.45;
+    const clav = new THREE.Mesh(tube(THREE, [inner, r.pos.clone()], { radius: armW * 0.9, segs: 6, radial: 5, taper: 0.85 }), limbMat);
+    group.add(clav);
+    const nub = new THREE.Mesh(new THREE.SphereGeometry(armW * 1.15, 7, 6), skinMat);
+    nub.position.copy(r.pos); group.add(nub);
     const a = makeLimb(r.pos.clone(), r.pole.clone(), armL1, armL2, armW, limbMat, skinMat);
     a.side = r.side;
     a.rest = new THREE.Vector3(r.pos.x * 1.05, r.pos.y - armReach * 0.7, r.pos.z + coreR * 0.2); // relaxed hang
@@ -855,12 +914,16 @@ export function makeAlien(THREE, traits, member, seed) {
     instBaseY = contact.y;
     holdPoint = new THREE.Vector3(contact.x + coreR * 0.2, contact.y + armReach * 0.4, contact.z);
     const baseReach = H * 0.42;
-    windup = baseReach * 0.55 * (0.7 + 0.3 * armLenMul);
+    windup = baseReach * (isDrummer ? 0.9 : 0.55) * (0.7 + 0.3 * armLenMul);
     bowAmp = baseReach * 0.42;
     loweredDrop = H * 0.34;    // how far the instrument sinks when the voice rests
   }
 
   let clock = 0;
+  // FLOOR CLAMP: liftY raises the whole rig so its lowest point rests ON the ground
+  // plane; the body then only ever bobs UPWARD from there, so feet never clip through
+  // the floor. Computed once after the rig is posed (see below), 0 until then.
+  let liftY = 0;
   // rolling contact envelope (for the mouth + instrument animation + debug).
   let lastC = 0, lastEnergy = 0, lastRaise = 0;
 
@@ -870,7 +933,10 @@ export function makeAlien(THREE, traits, member, seed) {
   // sustained styles the contact is HELD across the note's duration. Wrap-safe at
   // the bar edges. Windows are short so sparse/syncopated onsets read as distinct
   // strikes; dense onsets overlap (busy playing).
-  const APPROACH = 0.11, RECOIL = 0.07, ATTACK = 0.05, RELEASE = 0.08;
+  // DRUMMER: a genuinely fast strike — a short APPROACH window so the arm snaps into
+  // the drum at the note's real onset speed (a big windup travelled over a tiny slice
+  // of the bar reads as a convincing hit), then a crisp recoil. Sustained styles ignore.
+  const APPROACH = isDrummer ? 0.055 : 0.11, RECOIL = isDrummer ? 0.05 : 0.07, ATTACK = 0.05, RELEASE = 0.08;
   let biasPitch = 0.5, haveBias = false;
   function noteContactness(barPhase, notes) {
     let c = 0; haveBias = false;
@@ -945,17 +1011,24 @@ export function makeAlien(THREE, traits, member, seed) {
     glitchTime.value = clock;
 
     // ---- parse ctx: SCORE object vs legacy beatPhase number vs null ---------------
-    let barPhase, playing, level, notes, bobPhase;
+    // loudness = OVERALL track level 0..1 (added contract field). Dancers desync when
+    // it is low and sync up when it is high; falls back to this voice's own level (or 1
+    // on the legacy number path) so older callers still animate.
+    let barPhase, playing, level, notes, bobPhase, loudness, groundY;
     if (ctx != null && typeof ctx === "object") {
       barPhase = ((((ctx.barPhase || 0) % 1) + 1) % 1);
       playing = ctx.playing !== false;
       level = ctx.level == null ? 1 : clamp(ctx.level, 0, 1);
       notes = Array.isArray(ctx.notes) ? ctx.notes : null;
       bobPhase = (barPhase * 4) % 1;   // pseudo-beat for the whole-body groove
+      loudness = ctx.loudness != null ? clamp(ctx.loudness, 0, 1) : level;
+      groundY = ctx.groundY != null ? ctx.groundY : 0;
     } else {
       const beatPhase = ctx == null ? (clock % 1) : ((((ctx % 1) + 1) % 1));
       barPhase = beatPhase; playing = true; level = 1; notes = null; bobPhase = beatPhase;
+      loudness = 1; groundY = 0;
     }
+    const floorY = groundY + liftY;   // the rig's origin height that sits feet-on-ground
     const energyActive = (playing && level > 0.05) ? level : 0;   // 0 => REST
     lastEnergy = energyActive;
 
@@ -992,17 +1065,27 @@ export function makeAlien(THREE, traits, member, seed) {
     if (isDancer) {
       // DANCER — no instrument; a full-body groove that scales as a SMOOTH CONTINUUM
       // with volume: barely a shimmer when the mix is quiet, a big sway when it's loud.
-      const amp = 0.12 + 0.88 * level;
-      group.position.y = -bob * 0.11 * (0.6 + (groove.bounce || 0.4)) * H * amp;
-      group.rotation.z = Math.sin(clock * (1.6 + energy)) * 0.14 * (0.6 + (groove.sway || 0.3)) * amp;
-      group.rotation.y = Math.sin(clock * 0.9) * 0.26 * amp;
-      head.rotation.x = -0.1 + bob * 0.35 * (groove.headbob || 0.4) * amp;
-      head.rotation.y = Math.sin(clock * 1.8) * 0.2 * amp;
+      // Each dancer has its OWN phase + tempo + style, so a quiet floor of dancers moves
+      // out of step (DESYNCED); as loudness rises they lock onto a shared beat (SYNC UP).
+      const amp = 0.12 + 0.88 * loudness;
+      const sync = smooth01(loudness);                 // 0 = do your own thing, 1 = lock together
+      const SHARED = 1.9;                              // the shared groove tempo everyone locks to
+      const rate = danceRate + (SHARED - danceRate) * sync;
+      const ph0 = dancePhase0 * (1 - sync);            // own phase offset melts away as it syncs
+      const beat = clock * rate + ph0;                 // this dancer's (blended) groove phase
+      const upb = (1 - Math.cos(beat)) * 0.5;          // 0..1 upward hop (never dips below floor)
+      const styleOff = danceStyle ? 0.9 : 0.0;         // style variant shapes the sway, not the beat lock
+      // FLOOR CLAMP: origin sits at floorY (feet on ground); the hop only lifts UPWARD.
+      group.position.y = floorY + upb * 0.12 * (0.6 + (groove.bounce || 0.4)) * H * amp;
+      group.rotation.z = Math.sin(beat + styleOff) * 0.14 * (0.6 + (groove.sway || 0.3)) * amp;
+      group.rotation.y = Math.sin(beat * 0.6 + styleOff * 0.5) * 0.26 * amp;
+      head.rotation.x = -0.1 + upb * 0.35 * (groove.headbob || 0.4) * amp;
+      head.rotation.y = Math.sin(beat * 1.1) * 0.2 * amp;
       for (let i = 0; i < arms.length; i++) {
         const a = arms[i]; _rest.copy(a.rest);
-        const lift = 0.5 + 0.5 * Math.sin(clock * (2 + energy) + i * 1.7);
+        const lift = 0.5 + 0.5 * Math.sin(beat * 1.25 + i * 1.7 + styleOff);
         _rest.y += lift * armReach * 0.7 * amp;
-        _rest.x += a.side * (0.2 + 0.3 * lift) * H * 0.3 + Math.sin(clock * 2.2 + i) * 0.05 * H;
+        _rest.x += a.side * (0.2 + 0.3 * lift) * H * 0.3 + Math.sin(beat * 1.4 + i) * 0.05 * H;
         _rest.z += 0.2 * H * lift;
         a.solve(_rest);
         _lastTarget.copy(_rest);
@@ -1014,7 +1097,8 @@ export function makeAlien(THREE, traits, member, seed) {
     // volume as a smooth continuum — subtle when the part is quiet, big when it's
     // loud (near-still at rest). The onset CONTACT below is independent (score law).
     const gAmp = 0.06 + 0.94 * energyActive;
-    group.position.y = -bob * 0.09 * (groove.bounce || 0.4) * H * gAmp;
+    // FLOOR CLAMP: origin rests at floorY (feet on ground); the beat lifts it UPWARD only.
+    group.position.y = floorY + bob * 0.09 * (groove.bounce || 0.4) * H * gAmp;
     group.rotation.z = Math.sin(clock * (1.2 + energy)) * 0.05 * (groove.sway || 0.3) * (0.15 + 0.85 * gAmp);
     group.rotation.y = Math.sin(clock * 0.7) * 0.04 * (groove.sway || 0.3) * (0.15 + 0.85 * gAmp);
     head.rotation.x = -0.12 + bob * 0.3 * (groove.headbob || 0.4) * gAmp;
@@ -1026,6 +1110,10 @@ export function makeAlien(THREE, traits, member, seed) {
     lastRaise = raise;
     if (instrument) {
       instrument.position.y = instBaseY - (1 - raise) * loweredDrop;
+      // FLOOR: the held instrument never sinks through the ground when it lowers to rest
+      // (clamp is liftY-relative so it holds the same world floor at build + at runtime).
+      const minInstY = -liftY + H * 0.2;
+      if (instrument.position.y < minInstY) instrument.position.y = minInstY;
       instrument.rotation.z = (instrument.rotation.z || 0);
       instrument.scale.setScalar(0.9 + 0.1 * raise);
     }
@@ -1076,9 +1164,48 @@ export function makeAlien(THREE, traits, member, seed) {
   // SHADOWS + modelling: every mesh casts and receives the key light.
   group.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
 
-  update(0, isDancer ? 0 : { barPhase: 0, playing: true, level: 1, notes: [] });   // pose once (non-blank)
+  // FLOOR CLAMP: sweep a few PLAYING poses, capture the rig's true lowest live point
+  // (relative to its origin), then set liftY so the feet rest exactly on the ground —
+  // the per-frame groove only ever hops UPWARD from there, so nothing clips the floor.
+  function localMinY() {
+    group.updateMatrixWorld(true);
+    return new THREE.Box3().setFromObject(group).min.y - group.position.y;
+  }
+  // sweep the poses that reach LOWEST: for a player that is BOTH playing (limbs active)
+  // and resting (instrument lowered, arms hang); for a dancer BOTH loud (arms high) and
+  // quiet (arms hang low). Take the deepest point over all of them so nothing ever clips.
+  let footLocal = Infinity;
+  const FN = 6;
+  for (let s = 0; s < FN; s++) {
+    const bp = s / FN;
+    if (isDancer) {
+      update(0, { barPhase: bp, playing: true, level: 1, loudness: 1, notes: [] });
+      footLocal = Math.min(footLocal, localMinY());
+      update(0, { barPhase: bp, playing: true, level: 0.08, loudness: 0.05, notes: [] });   // quiet: arms hang low
+      footLocal = Math.min(footLocal, localMinY());
+    } else {
+      update(0, { barPhase: bp, playing: true, level: 1, notes: [{ t: bp }] });
+      footLocal = Math.min(footLocal, localMinY());
+      update(0, { barPhase: bp, playing: false, level: 0, notes: [] });                     // rest: instrument lowered
+      footLocal = Math.min(footLocal, localMinY());
+    }
+  }
+  liftY = Math.max(0, -footLocal) + H * 0.07;   // + margin for live limb sway between sampled phases
+  update(0, isDancer ? 0 : { barPhase: 0, playing: true, level: 1, notes: [] });   // final visible pose
 
-  return { group, update, debug, materials, playStyle, hitsPerBeat, voice, plan, tentacleProof };
+  // headless accessors: the world-space foot line (floor proof) + this alien's OWN
+  // colour scheme (individual-distinguishability proof).
+  function footWorldY() {
+    group.updateMatrixWorld(true);
+    return new THREE.Box3().setFromObject(group).min.y;
+  }
+  const palette = {
+    skin: skinMat.color.getHexString(),
+    cloth: clothMat.color.getHexString(),
+    accent: accentMat.color.getHexString(),
+  };
+
+  return { group, update, debug, materials, playStyle, hitsPerBeat, voice, plan, tentacleProof, palette, liftY, footWorldY };
 }
 
 export default { makeAlien };
