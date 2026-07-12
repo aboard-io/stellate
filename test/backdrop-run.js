@@ -15,7 +15,7 @@
 //   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/backdrop-run.js
 "use strict";
 const path = require("path");
-const { serve, capturePageErrors } = require("./probe-harness.js");
+const { serve, capturePageErrors, installOfflineRoute } = require("./probe-harness.js");
 const ROOT = path.join(__dirname, ".."), PORT = 8813;
 
 async function launchGL() {
@@ -33,6 +33,10 @@ async function main() {
   const srv = await serve(ROOT, PORT);
   const browser = await launchGL();
   const page = await browser.newPage();
+  // OFFLINE: stub Google-Fonts + esm.sh and neutralise the full-app boot (this
+  // probe imports the star-cruise submodules directly and never needs the app
+  // store) so the page loads with no network and no slow/crashy boot.
+  await installOfflineRoute(page, PORT, { neutralizeMain: true });
   const errs = capturePageErrors(page);
   const fails = [];
   const ok = (cond, msg) => { console.log((cond ? "  PASS  " : "  FAIL  ") + msg); if (!cond) fails.push(msg); return cond; };
@@ -181,9 +185,64 @@ async function main() {
     const farmDiff = sumSig(instats(makeBackdrop(THREE, traits("farm"), 6)));
     const farmBase = sumSig(farmStats);
 
+    // ---- ABSTRACT WORLDS / DE-SQUARE / CONTRAST -------------------------------
+    // The set of instanced shape FAMILIES present, the balls-of-light count, and the
+    // brightest emissive material — used to prove non-box variety, per-genre distinct
+    // environments, and value/colour contrast.
+    const familySet = (b) => {
+      const s = new Set();
+      b.group.traverse((o) => { if (o.isInstancedMesh) s.add(o.name + "/" + ((o.userData && o.userData.family) || "")); });
+      return Array.from(s).sort();
+    };
+    const orbCount = (b) => { let n = 0; b.group.traverse((o) => { if (o.isInstancedMesh && o.name === "orbs") n = o.count; }); return n; };
+    const emissiveMax = (b) => {
+      let e = 0;
+      b.group.traverse((o) => {
+        if ((o.isMesh || o.isInstancedMesh) && o.material && o.material.emissive) {
+          const c = o.material.emissive, ei = o.material.emissiveIntensity == null ? 1 : o.material.emissiveIntensity;
+          const l = Math.max(c.r, c.g, c.b) * ei; if (l > e) e = l;
+        }
+      });
+      return e;
+    };
+    // build the world for a few distinct species body-plans (world keys off body.plan).
+    const worldTraits = (plan) => Object.assign(traits("city"), { skin: "chrome", body: { plan }, renderStyle: { material: "flat" } });
+    const wCrystal = makeBackdrop(THREE, worldTraits("crystalline"), 5);
+    const wGas = makeBackdrop(THREE, worldTraits("floating-gas"), 5);
+    const wAmorph = makeBackdrop(THREE, worldTraits("amorphous"), 5);
+    const fCrystal = familySet(wCrystal), fGas = familySet(wGas), fAmorph = familySet(wAmorph);
+    // NON-BOX round/curved families anywhere in the environment.
+    const roundRe = /ring|orb|lightball|arch|dome|bubble|cloud|tendril|blob|bulb|platform|mound/;
+    const worlds = {
+      cityOrbs: orbCount(city), farmOrbs: orbCount(farm),
+      cityHasRound: familySet(city).some((f) => roundRe.test(f)),
+      cityEmissive: emissiveMax(city),
+      crystalFams: fCrystal, gasFams: fGas, amorphFams: fAmorph,
+      distinct: JSON.stringify(fCrystal) !== JSON.stringify(fGas) && JSON.stringify(fGas) !== JSON.stringify(fAmorph) && JSON.stringify(fCrystal) !== JSON.stringify(fAmorph),
+      // determinism of the world: same plan+seed -> identical family+layout signature.
+      worldDet: sumSig(instats(wCrystal)) === sumSig(instats(makeBackdrop(THREE, worldTraits("crystalline"), 5))),
+    };
+
+    // ---- DISTINCT ABSTRACT PLANET per genre -----------------------------------
+    const planetKids = (p) => {
+      const names = [];
+      p.group.traverse((o) => { if (o !== p.group && (o.isMesh || o.isInstancedMesh)) names.push(o.name); });
+      return names.sort();
+    };
+    const pCrystal = makePlanet(THREE, worldTraits("crystalline"), 4);
+    const pGas = makePlanet(THREE, worldTraits("floating-gas"), 4);
+    const pMolten = makePlanet(THREE, worldTraits("amorphous"), 4);
+    pCrystal.update(0.1); pGas.update(0.1); pMolten.update(0.1);
+    const planetWorld = {
+      crystal: planetKids(pCrystal), gas: planetKids(pGas), molten: planetKids(pMolten),
+      crystalHasSpikes: planetKids(pCrystal).includes("planet-spikes"),
+      moltenHasGlow: planetKids(pMolten).includes("planet-glow"),
+      distinct: JSON.stringify(planetKids(pCrystal)) !== JSON.stringify(planetKids(pGas)),
+    };
+
     renderer.dispose();
     return {
-      cityStats, farmStats, cityRender, farmRender, cityBlink, farmBlink,
+      cityStats, farmStats, cityRender, farmRender, cityBlink, farmBlink, worlds, planetWorld,
       style: { build: buildStyle, planet: planetStyle, layout: styleLayout, spread: styleRenderSpread },
       shadow: {
         cityGround: groundReceives(city), farmGround: groundReceives(farm),
@@ -266,6 +325,25 @@ async function main() {
   ok(["flat", "cel", "iridescent", "wireframe", "glitch", "matte"].every((s) => st.layout[s]), "M6. styled city layout byte-identical to base (render-only, seed untouched)");
   // every style compiles + renders non-blank (injected shaders survive compilation).
   ok(["flat", "cel", "iridescent", "wireframe", "glitch", "matte"].every((s) => st.spread[s] >= 8), `M7. every style renders NON-BLANK (spreads: ${["flat", "cel", "iridescent", "wireframe", "glitch", "matte"].map((s) => st.spread[s]).join("/")})`);
+
+  console.log("=== ABSTRACT WORLDS / SHAPES / CONTRAST ===");
+  const W = R.worlds;
+  console.log("  city orbs:", W.cityOrbs, " city emissiveMax:", W.cityEmissive.toFixed(2));
+  console.log("  crystalline world families:", W.crystalFams.filter((f) => f.indexOf("world") === 0 || f.indexOf("orbs") === 0).join(", "));
+  console.log("  floating-gas world families:", W.gasFams.filter((f) => f.indexOf("world") === 0 || f.indexOf("orbs") === 0).join(", "));
+  console.log("  amorphous  world families:", W.amorphFams.filter((f) => f.indexOf("world") === 0 || f.indexOf("orbs") === 0).join(", "));
+  ok(W.cityOrbs > 0 && W.farmOrbs > 0, `W1. worlds scatter a signature field of glowing BALLS OF LIGHT (city=${W.cityOrbs}, farm=${W.farmOrbs} orbs)`);
+  ok(W.cityHasRound, "W2. environment includes NON-BOX round/curved families (spheres/rings/arches/tendrils/domes)");
+  ok(W.distinct, "W3. distinct genre body-plans yield DISTINCT abstract worlds (family sets differ)");
+  ok(W.cityEmissive > 0, `W4. environment has emissive CONTRAST (bright emissive present, max=${W.cityEmissive.toFixed(2)})`);
+  ok(W.worldDet, "W5. abstract world is deterministic (same plan+seed -> identical layout)");
+  const P = R.planetWorld;
+  console.log("  planet(crystalline) kids:", P.crystal.join(", "));
+  console.log("  planet(floating-gas) kids:", P.gas.join(", "));
+  console.log("  planet(amorphous)   kids:", P.molten.join(", "));
+  ok(P.distinct, "W6. fly-away PLANET renders a distinct abstract world per genre");
+  ok(P.crystalHasSpikes, "W7. crystalline planet grows surface shards (planet-spikes)");
+  ok(P.moltenHasGlow, "W8. molten planet reads hot (planet-glow shell)");
 
   console.log("=== DETERMINISM ===");
   ok(R.det.cityIdentical, "D1. city seed 5 == seed 5 (identical layout)");

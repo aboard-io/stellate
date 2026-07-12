@@ -20,8 +20,27 @@
 // beat via documented hooks (getTravel / getBeat) and must NOT fork the travel
 // logic or touch any render-path/engine file.
 
-import { S } from "./state.js";
-import { pointOnPath } from "./share.js";   // measure->world position along the drawn path
+// LIVE STORE ACCESS — read the app's store LAZILY off the window global that
+// app/state.js publishes (window.__S). We deliberately do NOT static-import
+// state.js (nor share.js, which itself imports state.js): state.js eval-time
+// imports preact+htm from esm.sh, so importing it would couple this
+// self-contained, lazily-loaded star-cruise module to the esm.sh module graph and
+// break offline/headless boot. window.__S may not exist yet at module-eval (or in
+// a bare headless harness), so getS() falls back to a benign empty store that
+// preserves the previous "no live weights" behavior.
+const _emptyStore = { weights: [], waypoints: [], travel: { seg: 0, t: 0 } };
+const getS = () => (typeof window !== "undefined" && window.__S) || _emptyStore;
+
+// pointOnPath: world position along the DRAWN travel path for a {seg,t} travel
+// state. Inlined here (was imported from share.js) so star-cruise carries NO
+// static dependency on share.js/state.js/esm.sh. Reads the live waypoints off the
+// store lazily; matches share.js's implementation exactly.
+function pointOnPath(travel) {
+  const wp = getS().waypoints || [];
+  const n = wp.length; if (n < 2) return null;
+  const a = wp[travel.seg % n], b = wp[(travel.seg + 1) % n];
+  return { x: a.x + (b.x - a.x) * travel.t, y: a.y + (b.y - a.y) * travel.t };
+}
 
 // engine globals live on window (loaded before app/main.js): K = GenreKernel,
 // V = GenreVerifier. Read them lazily at trait time so this module loads even if
@@ -51,11 +70,12 @@ let _btInject = null;   // a plain { bpm, spb, cbeats, serial, beatPhase, playin
 // This does NOT fork the travel logic — it only READS the store the app maintains.
 function getTravel() {
   if (_tvInject) return _tvInject;
-  const ws = (S.weights || []).filter((w) => w && w.w > 0).slice().sort((a, b) => b.w - a.w);
+  const st = getS();
+  const ws = (st.weights || []).filter((w) => w && w.w > 0).slice().sort((a, b) => b.w - a.w);
   const dominant = ws.length ? ws[0].g : null;
   let position = null;
-  try { position = S.waypoints && S.waypoints.length >= 2 ? pointOnPath(S.travel) : null; } catch (e) {}
-  return { weights: ws, dominant, position, live: !!S.live, seed: S.seed };
+  try { position = st.waypoints && st.waypoints.length >= 2 ? pointOnPath(st.travel) : null; } catch (e) {}
+  return { weights: ws, dominant, position, live: !!st.live, seed: st.seed };
 }
 
 // getBeat(): the REAL audio beat. onBar (app/live.js) writes S.barInfo every bar
@@ -68,16 +88,17 @@ function getTravel() {
 const _beat = { serial: -1, t0: 0 };
 function getBeat() {
   if (_btInject) return _btInject;
-  const info = S.barInfo;
-  const bpm = (S.playing && S.playing.bpm) || 120;
+  const st = getS();
+  const info = st.barInfo;
+  const bpm = (st.playing && st.playing.bpm) || 120;
   const spb = info && info.spb ? info.spb : 60 / bpm;
   const cbeats = info && info.cbeats ? info.cbeats : 8;
   const serial = info ? info.serial : -1;
   const now = (typeof performance !== "undefined" ? performance.now() : Date.now());
   if (serial !== _beat.serial) { _beat.serial = serial; _beat.t0 = now; }
-  const beatsIn = S.live && spb > 0 ? ((now - _beat.t0) / 1000) / spb : (now / 1000) / spb;
+  const beatsIn = st.live && spb > 0 ? ((now - _beat.t0) / 1000) / spb : (now / 1000) / spb;
   const beatPhase = beatsIn - Math.floor(beatsIn);
-  return { bpm, spb, cbeats, serial, beat: Math.floor(beatsIn), beatPhase, playing: !!S.live };
+  return { bpm, spb, cbeats, serial, beat: Math.floor(beatsIn), beatPhase, playing: !!st.live };
 }
 
 // ---- module handles (lazy) ------------------------------------------------------
@@ -96,6 +117,8 @@ let cockpit = null;          // { group, update, setGenres } — the transit COC
 let planet = null;           // { group, update, setPalette } — the planet you leave/approach
 let sun = null;              // the shadow-casting KEY light (module-scoped for the frustum + probes)
 let starfield = null;        // persistent THREE.Points deep-space (whole-session)
+let planetField = null;      // persistent InstancedMesh: ONE planet per genre AT its GENRE_COORDS
+const planetIndex = Object.create(null);   // genre -> instance index (dominant highlight)
 let curTraits = null;        // TRAITS of the currently-spawned band (headless-probe visibility)
 let curDominant = null;
 let curRenderStyle = null;   // renderStyle of the ACTIVE genre (pushed into the PS1 post pass)
@@ -163,6 +186,22 @@ const orbit = {
   minPitch: -1.35, maxPitch: 1.45,
 };
 let wasLanded = false;            // edge-detect entering a landed phase (seed once)
+
+// ---- MUSIC-VIDEO auto-camera (landed) -------------------------------------------
+// Once landed, an automatic cinematic camera slowly orbits/dollies and CUTS between
+// band aliens + wide city shots, on the beat — a little music video of the song.
+// Manual drag/pinch/WASD OVERRIDES it (noteInput() stamps _lastInputT) and the auto
+// camera RESUMES after AUTO_IDLE seconds of no input. It drives the SAME orbit object
+// so applyOrbitToCamera renders it; a CUT snaps orbit to a new shot, and between cuts
+// it drifts (slow orbit) + bobs on the beat. All time comes from dt (deterministic).
+const autoCam = { active: false, shot: 0, shotT: 0, cuts: 0, forceCut: true };
+let autoShots = [];               // per-land cinematic shot list (band closeups + wides)
+let _vclock = 0;                  // virtual clock (accumulated dt) — the auto-cam timebase
+let _lastInputT = -1e9;           // last user-input virtual time (manual override window)
+const AUTO_IDLE = 2.5;            // seconds of no input before the auto camera resumes
+const CUT_BEATS = 8;              // cut roughly every 2 bars (musical, beat-synced)
+function noteInput() { _lastInputT = _vclock; }   // called by every manual nav handler
+
 const keysDown = Object.create(null);   // pressed movement keys
 let exitBtn = null;               // the always-visible ✕ EXIT affordance
 // pointer/touch drag bookkeeping.
@@ -192,6 +231,11 @@ async function ensureLoaded() {
     makeFlight: flightMod.makeFlight,
     makeCockpit: shipMod.makeCockpit,
     makePlanet: shipMod.makePlanet,
+    // the GENRE STAR-MAP frame + projection (single source of truth shared with the
+    // flight camera) so the planet markers sit at the SAME coords the camera flies to.
+    FIELD: flightMod.FIELD,
+    worldOfCoord: flightMod.worldOfCoord,
+    planetWorlds: flightMod.planetWorlds,
   };
   loaded = true;
 }
@@ -338,11 +382,54 @@ function ctxForVoice(voice, barIdx, barPhase) {
   return ctx;
 }
 
+// ---- DETERMINISTIC BAND COVERAGE ------------------------------------------------
+// The canonical engine-voice order + a synthesized band-member for any SOUNDING voice
+// that traits.band didn't include. The band must have ONE alien for EVERY voice that
+// actually sounds in the cached note plan (fixes the intermittent case where a voice
+// the plan emits — e.g. a barely-present melody — has no alien): we align the "sounding"
+// test with band spawning by driving the roster off eventPlan, not off traits.band alone.
+const VOICE_ORDER = ["drums", "perc", "bass", "melody", "pad", "found"];
+const SYNTH_MEMBER = {
+  drums: { role: "drum", family: "pulse-bladder", playStyle: "drum", hitsPerBeat: 2 },
+  perc: { role: "perc", family: "chime-cluster", playStyle: "strike", hitsPerBeat: 3 },
+  bass: { role: "bass", family: "drone-coil", playStyle: "pluck", hitsPerBeat: 1 },
+  melody: { role: "lead", family: "tendril-harp", playStyle: "pluck", hitsPerBeat: 2 },
+  pad: { role: "pad", family: "gas-veil", playStyle: "bow", hitsPerBeat: 1 },
+  found: { role: "found", family: "echo-conch", playStyle: "strike", hitsPerBeat: 1 },
+};
+function synthMember(voice) {
+  const f = SYNTH_MEMBER[voice] || SYNTH_MEMBER.perc;
+  return { role: f.role, voice, instrument: { family: f.family, playStyle: f.playStyle, appendage: 0, hitsPerBeat: f.hitsPerBeat } };
+}
+// the voices that actually SOUND (any onset anywhere) in the current cached plan —
+// the exact same signal the score-bridge probe calls "sounding", so band == sounding.
+function soundingVoices() {
+  const set = Object.create(null);
+  if (eventPlan && eventPlan.bars) {
+    for (const bar of eventPlan.bars) for (const v in bar) { if (bar[v].notes && bar[v].notes.length) set[v] = 1; }
+  }
+  return set;
+}
+// resolve the final roster: one member per SOUNDING voice (reusing traits.band's
+// genre-tuned member where it exists, else a synthesized one), in canonical order.
+// Falls back to traits.band when there's no plan (early frame) so we never spawn empty.
+function rosterFor(traitsBand) {
+  const sounds = soundingVoices();
+  const byVoice = Object.create(null);
+  for (const m of (traitsBand || [])) if (m && m.voice && !byVoice[m.voice]) byVoice[m.voice] = m;
+  const voices = VOICE_ORDER.filter((v) => sounds[v]);
+  if (!voices.length) {
+    const fb = (traitsBand || []).slice(0, BAND_CAP);
+    return fb.length ? fb : [synthMember("melody")];
+  }
+  return voices.map((v) => byVoice[v] || synthMember(v)).slice(0, BAND_CAP);
+}
+
 // build the band + backdrop + ship for a genre (called on land / dominant change).
 // Everything spawned here is torn down together in despawnBand().
 function spawnFor(genreOrWeights, seed) {
   despawnBand();
-  const useSeed = seed || S.seed || 1;
+  const useSeed = seed || getS().seed || 1;
   const traits = mods.traitsFromGenre(K(), V(), genreOrWeights, useSeed);
   curTraits = traits;
   // SCORE BRIDGE: build (once, cached) the per-bar note plan for THIS genre so each
@@ -365,27 +452,29 @@ function spawnFor(genreOrWeights, seed) {
   {
     const smat = new THREE.MeshLambertMaterial({ color: 0x1b1526, flatShading: true });
     smat.polygonOffset = true; smat.polygonOffsetFactor = 1; smat.polygonOffsetUnits = 1;
-    stage = new THREE.Mesh(new THREE.CircleGeometry(6.2, 40), smat);
+    stage = new THREE.Mesh(new THREE.CircleGeometry(8.4, 44), smat);
     stage.rotation.x = -Math.PI / 2; stage.position.y = 0.02;
     stage.receiveShadow = true; stage.name = "stage";
     scene.add(stage);
   }
-  // band: one alien per member (mobile-capped), arranged in a shallow arc that faces
-  // the cockpit (+Z). Outer members sit slightly back and yaw inward so it reads as a
-  // stage arc, not a firing line. They stand on the ground (y=0), in front of the ship.
-  const members = traits.band.slice(0, BAND_CAP);
+  // band: ONE alien per SOUNDING voice (deterministic coverage — every audible part
+  // gets a player), mobile-capped, arranged in a WIDE arc that faces the cockpit (+Z).
+  // Outer members sit further back and yaw inward so it reads as a big stage arc, not
+  // a firing line. Staging is spread out (wider than the old cluster) so the ensemble
+  // fills the frame. They stand on the ground (y=0), in front of the ship.
+  const members = rosterFor(traits.band);
   const n = members.length;
+  const spread = n > 1 ? Math.max(2.3, Math.min(2.7, 1.8 + 4.4 / n)) : 0;   // wide arc; ~2.3+ per gap
   let cx = 0, cz = 0;
   band = members.map((member, i) => {
     const a = mods.makeAlien(THREE, traits, member, useSeed + i * 101);
     a._voice = member.voice || member.role;   // the engine voice this alien plays (score-bridge lookup)
     a._role = member.role;
-    const spread = 1.5;
-    const off = (i - (n - 1) / 2);           // centered index, e.g. -1,0,1
+    const off = (i - (n - 1) / 2);           // centered index, e.g. -2,-1,0,1,2
     a.group.position.x = off * spread;
-    a.group.position.z = 1.5 - Math.abs(off) * 0.35;   // shallow arc: center forward
+    a.group.position.z = 1.8 - Math.abs(off) * 0.7;    // deeper arc: center forward, wings back
     a.group.position.y = 0;
-    a.group.rotation.y = -off * 0.10;        // yaw toward the pilot at the arc center
+    a.group.rotation.y = -off * 0.14;        // yaw toward the pilot at the arc center
     enableShadows(a.group);                  // the players CAST shadows onto the stage
     scene.add(a.group);
     cx += a.group.position.x; cz += a.group.position.z;
@@ -464,7 +553,7 @@ function spawnSpaceRig(activeGenre) {
   cockpit = mods.makeCockpit(THREE, { genres: genreLabels(), active: genreLabelOf(activeGenre) });
   cockpit.group.position.set(SPACE_ANCHOR.x, SPACE_ANCHOR.y, SPACE_ANCHOR.z);
   scene.add(cockpit.group);
-  planet = mods.makePlanet(THREE, curTraits, (S.seed | 0) || 1);
+  planet = mods.makePlanet(THREE, curTraits, (getS().seed | 0) || 1);
   scene.add(planet.group);
   spaceActiveGenre = activeGenre || null;
 }
@@ -485,6 +574,59 @@ function genreLabels() {
 function genreLabelOf(g) {
   if (!g) return null;
   try { const G = window.GenreKernel && window.GenreKernel.GENRES; return (G && G[g] && G[g].label) || g; } catch (e) { return g; }
+}
+
+// ---- GENRE STAR-MAP FIELD -------------------------------------------------------
+// One glowing planet per genre AT its GENRE_COORDS (shared projection with the flight
+// camera). Deterministic per-genre hue + radius; a single InstancedMesh (one draw
+// call). Persistent for the whole session (like the starfield). The dominant planet
+// is scaled up while we fly toward it so the target reads.
+let planetBaseR = null;     // per-instance base radius (to restore the dominant highlight)
+let _hiIdx = -1;            // currently-highlighted (dominant) instance index
+function hueOf(name) { let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0; return (h % 360) / 360; }
+function buildPlanetField() {
+  const worlds = (mods.planetWorlds && mods.planetWorlds()) || [];
+  if (!worlds.length || !scene) return;
+  const geo = new THREE.IcosahedronGeometry(1, 0);
+  const mat = new THREE.MeshBasicMaterial({ toneMapped: false });   // bright balls of light
+  planetField = new THREE.InstancedMesh(geo, mat, worlds.length);
+  planetField.frustumCulled = false;
+  planetField.name = "planetField";
+  planetBaseR = new Float32Array(worlds.length);
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), col = new THREE.Color();
+  for (let i = 0; i < worlds.length; i++) {
+    const w = worlds[i];
+    let hh = 0; for (let k = 0; k < w.g.length; k++) hh = (hh * 131 + w.g.charCodeAt(k)) >>> 0;
+    const r = 1.4 + (hh % 100) / 100 * 1.9;   // per-genre radius 1.4..3.3
+    planetBaseR[i] = r;
+    p.set(w.x, w.y, w.z); s.set(r, r, r);
+    m4.compose(p, q, s); planetField.setMatrixAt(i, m4);
+    col.setHSL(hueOf(w.g), 0.72, 0.58); planetField.setColorAt(i, col);
+    planetIndex[w.g] = i;
+  }
+  planetField.instanceMatrix.needsUpdate = true;
+  if (planetField.instanceColor) planetField.instanceColor.needsUpdate = true;
+  scene.add(planetField);
+}
+// world position of a genre's planet marker (the exact GENRE_COORDS projection).
+function planetWorldOf(genre) {
+  if (!genre || !mods.worldOfCoord) return null;
+  const idx = planetIndex[genre];
+  if (idx == null || !planetField) return null;
+  const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3();
+  planetField.getMatrixAt(idx, m4); m4.decompose(p, q, s);
+  return { x: p.x, y: p.y, z: p.z, idx };
+}
+// scale up the dominant planet (restore the previous) — only when the dominant changes.
+function highlightPlanet(genre) {
+  if (!planetField || !planetBaseR) return;
+  const idx = genre != null ? planetIndex[genre] : null;
+  if ((idx == null ? -1 : idx) === _hiIdx) return;
+  const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3();
+  if (_hiIdx >= 0) { planetField.getMatrixAt(_hiIdx, m4); m4.decompose(p, q, s); const r = planetBaseR[_hiIdx]; s.set(r, r, r); m4.compose(p, q, s); planetField.setMatrixAt(_hiIdx, m4); }
+  if (idx != null) { planetField.getMatrixAt(idx, m4); m4.decompose(p, q, s); const r = planetBaseR[idx] * 2.0; s.set(r, r, r); m4.compose(p, q, s); planetField.setMatrixAt(idx, m4); }
+  _hiIdx = idx == null ? -1 : idx;
+  planetField.instanceMatrix.needsUpdate = true;
 }
 
 // makeShip(traits) — a tiny low-poly saucer the band greets you beside; its boarding
@@ -613,6 +755,13 @@ export async function start() {
     scene.add(starfield);
   }
 
+  // persistent GENRE STAR-MAP — ONE glowing planet per genre AT its GENRE_COORDS
+  // (the same projection the flight camera flies through), so flying == traversing the
+  // genre space and NEARBY planets == similar-sounding genres. A single InstancedMesh
+  // (one draw call, ~249 low-poly balls of light) — mobile-cheap. Saturated per-genre
+  // hues for contrast; the dominant planet is scaled up each frame during transit.
+  buildPlanetField();
+
   camera = new THREE.PerspectiveCamera(60, lowW / lowH, 0.1, 300);
   camera.position.set(0, 3, 8);
   camera.lookAt(0, 1, 0);
@@ -628,7 +777,7 @@ export async function start() {
   flight.events.on("land", () => {
     despawnSpaceRig();                       // leaving transit — drop the cockpit set
     const tv = getTravel();
-    spawnFor(tv.weights && tv.weights.length ? tv.weights : (tv.dominant || firstGenre()), S.seed);
+    spawnFor(tv.weights && tv.weights.length ? tv.weights : (tv.dominant || firstGenre()), getS().seed);
     curDominant = tv.dominant;
     wasLanded = false;                        // force a fresh FRONT-ON seed next frame
   });
@@ -642,7 +791,7 @@ export async function start() {
   // spawn an initial band immediately so the very first frame is non-blank even
   // before the flight machine reaches LAND (and for headless proof).
   const tv0 = getTravel();
-  spawnFor(tv0.weights && tv0.weights.length ? tv0.weights : firstGenre(), S.seed);
+  spawnFor(tv0.weights && tv0.weights.length ? tv0.weights : firstGenre(), getS().seed);
   curDominant = tv0.dominant;
 
   mountExit();
@@ -731,9 +880,11 @@ const ORBIT_SPEED = 0.0055;       // radians per pixel dragged
 function orbitBy(dx, dy) {
   orbit.yaw -= dx * ORBIT_SPEED;
   orbit.pitch = Math.max(orbit.minPitch, Math.min(orbit.maxPitch, orbit.pitch - dy * ORBIT_SPEED));
+  noteInput();                         // manual override suspends the music-video auto-cam
 }
 function dollyBy(factor) {
   orbit.dist = Math.max(orbit.minDist, Math.min(orbit.maxDist, orbit.dist * factor));
+  noteInput();
 }
 // seed the orbit FRONT-CENTRED on the band the moment we land: target = the band
 // centroid, camera placed in FRONT of the players (who face +Z / the camera) at a
@@ -783,6 +934,57 @@ function applyKeyPan(dt) {
   t.x += (fx * fwd + rx * str) * speed;
   t.z += (fz * fwd + rz * str) * speed;
   t.y = Math.max(0, t.y + up * speed);
+  noteInput();
+}
+
+// -- MUSIC-VIDEO auto-camera ------------------------------------------------------
+// buildAutoShots(): a per-land cinematic shot list — a FRONT establishing WIDE (shot
+// 0, = the landed default framing), a CLOSEUP of each band alien, and a couple of WIDE
+// side/high city shots — interleaved wide/closeup so cuts alternate between players and
+// the whole stage. Deterministic (derived from the spawned band positions).
+function buildAutoShots() {
+  const cy = bandCentroid.y;
+  const wide = Math.max(orbit.minDist + 2, 6.0 + 1.15 * Math.max(1, band.length));
+  const wides = [
+    { target: { x: bandCentroid.x, y: cy, z: bandCentroid.z }, yaw: 0, pitch: 0.16, dist: wide, fov: 56, yawRate: 0.05 },
+    { target: { x: bandCentroid.x, y: cy + 0.4, z: bandCentroid.z }, yaw: 0.95, pitch: 0.34, dist: wide + 2.5, fov: 60, yawRate: -0.06 },
+    { target: { x: bandCentroid.x, y: cy, z: bandCentroid.z }, yaw: -0.95, pitch: 0.12, dist: wide + 1.5, fov: 58, yawRate: 0.06 },
+  ];
+  const closeups = band.map((a, i) => {
+    const bp = a.group.position;
+    return { target: { x: bp.x, y: 1.05, z: bp.z }, yaw: (i % 2 ? 0.32 : -0.32), pitch: 0.05, dist: 3.4, fov: 48, yawRate: (i % 2 ? 1 : -1) * 0.09 };
+  });
+  // interleave: front-wide, closeup, wide, closeup, wide, closeup...
+  autoShots = [wides[0]];
+  let wi = 1, ci = 0;
+  while (ci < closeups.length || wi < wides.length) {
+    if (ci < closeups.length) autoShots.push(closeups[ci++]);
+    if (wi < wides.length) autoShots.push(wides[wi++]);
+  }
+}
+// runAutoCam(dt, st): drive the orbit as a music video — CUT to a new shot on the beat
+// (every CUT_BEATS), and between cuts slowly drift the yaw + bob the framing on the
+// beat. A cut SNAPS the orbit to the shot (hard cut); the drift is a slow dolly/orbit.
+function runAutoCam(dt, st) {
+  if (!autoShots.length) buildAutoShots();
+  if (!autoShots.length) return;
+  const bt = getBeat();
+  const spb = (bt && bt.spb) > 0 ? bt.spb : 0.5;
+  const shotDur = CUT_BEATS * spb;
+  autoCam.shotT += dt;
+  if (autoCam.forceCut || autoCam.shotT >= shotDur) {
+    if (!autoCam.forceCut) { autoCam.shot = (autoCam.shot + 1) % autoShots.length; autoCam.cuts++; }
+    autoCam.forceCut = false; autoCam.shotT = 0;
+    const sh = autoShots[autoCam.shot];
+    orbit.target.set(sh.target.x, sh.target.y, sh.target.z);
+    orbit.yaw = sh.yaw; orbit.pitch = sh.pitch;
+    orbit.dist = Math.max(orbit.minDist, Math.min(orbit.maxDist, sh.dist));
+    orbit.fov = sh.fov; autoCam._yawRate = sh.yawRate;
+  } else {
+    orbit.yaw += (autoCam._yawRate || 0) * dt;            // slow orbit between cuts
+  }
+  const sh = autoShots[autoCam.shot];
+  if (sh) orbit.target.y = sh.target.y + Math.sin((st.beatPhase || 0) * Math.PI * 2) * 0.06;   // beat bob
 }
 
 // -- pointer handlers -------------------------------------------------------------
@@ -850,44 +1052,59 @@ function onResize() {
 
 export function update(dt) {
   if (!running) return;
+  _vclock += (dt > 0 ? dt : 0);         // the deterministic auto-cam timebase
   const st = flight.update(dt);
   lastState = st;
   const p = st.cameraPose;
-  // CAMERA ROUTING: auto-flight owns the camera IN TRANSIT (FLY/APPROACH/DEPART);
-  // once we're PARKED (LAND/OPEN/GREET/DANCE) the USER takes over via the orbit
-  // controller — drag to look, wheel/pinch to zoom, WASD/arrows to fly. On the frame
-  // we first land, seed the orbit from the flight's front-on pose so the handover is
-  // jump-free and framed FROM THE FRONT, then leave the user in control.
+  // CAMERA ROUTING (FIDELITY-DRIVEN ZOOM):
+  //   TRANSIT (FLY/APPROACH/DEPART): the camera is the flight's continuous zoom through
+  //     the genre star-map — high & far when dominance is low (viewport visible, planets
+  //     seen from afar at their coords), descending toward the dominant planet as its
+  //     weight climbs. The cockpit rides the camera and FADES by viewportFade.
+  //   PARKED (LAND/OPEN/GREET/DANCE): the MUSIC-VIDEO auto-camera slowly orbits/dollies
+  //     and CUTS between band aliens + wide shots on the beat; manual drag/pinch/WASD
+  //     OVERRIDES it and it resumes after idle.
   const landed = !!LANDED_PHASES[st.phase];
   if (landed) {
-    // seed FRONT-CENTRED on the band once on touchdown, then hand off to the user's
-    // orbit (drag = look, wheel/pinch = zoom, WASD/arrows = fly). Restore the surface
-    // sky (transit fades the background toward space).
-    if (!wasLanded) { seedOrbitFrontOn(); if (scene.background && scene.background.isColor) scene.background.setHex(SKY_COLOR); }
-    applyKeyPan(dt);
+    // on touchdown: restore the surface sky + (re)build the cinematic shot list and
+    // reset the auto-camera to its FRONT establishing wide shot.
+    if (!wasLanded) {
+      if (scene.background && scene.background.isColor) scene.background.setHex(SKY_COLOR);
+      seedOrbitFrontOn();
+      buildAutoShots();
+      autoCam.shot = 0; autoCam.shotT = 0; autoCam.cuts = 0; autoCam.forceCut = true; autoCam.active = false;
+      _lastInputT = -1e9;                 // a fresh land starts in auto-camera (no stale input)
+    }
+    const userActive = (_vclock - _lastInputT) < AUTO_IDLE;
+    if (userActive) {
+      // MANUAL override: the user drives the orbit directly.
+      autoCam.active = false; autoCam.forceCut = true;   // resume with a fresh cut later
+      applyKeyPan(dt);
+    } else {
+      // MUSIC-VIDEO: the auto-camera drives the orbit (slow moves + beat-synced cuts).
+      autoCam.active = true;
+      runAutoCam(dt, st);
+    }
     applyOrbitToCamera();
   } else if (cockpit) {
-    // IN TRANSIT WITH THE COCKPIT SET: the pilot sits at the console looking OUT the
-    // viewport at the planet receding below + the stars, the genre display lit. The
-    // camera is fixed to the cockpit interior; spaceProgress drives the planet + fade.
+    // IN TRANSIT WITH THE COCKPIT SET: the long zoom through the star-map, cockpit
+    // framing the view and fading as we descend; the leaving planet recedes below.
     updateSpaceRig(dt, st);
   } else {
-    // bootstrap transit (before the first depart): follow the cinematic flight pose,
-    // and keep the orbit shadowing it so the moment we land handover starts from here.
+    // bootstrap transit (before the first depart): follow the star-map zoom pose, keep
+    // the orbit shadowing it, and highlight the resolving planet in the field.
     camera.position.set(p.position.x, p.position.y, p.position.z);
     camera.lookAt(p.lookAt.x, p.lookAt.y, p.lookAt.z);
     if (camera.fov !== p.fov) { camera.fov = p.fov; camera.updateProjectionMatrix(); }
+    highlightPlanet(st.dominant || curDominant || null);
     seedOrbitFromPose(p);
   }
   wasLanded = landed;
-  // keep the shadow frustum + key aimed at wherever we are (band when landed, cockpit
-  // in transit) so cast shadows always land under the subject.
+  // keep the shadow frustum + key aimed at the band when landed (transit forms are the
+  // MeshBasic star-map + cockpit, which don't need cast shadows).
   if (sun) {
-    const tx = (landed || !cockpit) ? bandCentroid.x : SPACE_ANCHOR.x;
-    const ty = (landed || !cockpit) ? 0 : SPACE_ANCHOR.y;
-    const tz = (landed || !cockpit) ? bandCentroid.z : SPACE_ANCHOR.z;
-    sun.target.position.set(tx, ty, tz);
-    sun.position.set(tx + 6, ty + 11, tz + 7);
+    sun.target.position.set(bandCentroid.x, 0, bandCentroid.z);
+    sun.position.set(bandCentroid.x + 6, 11, bandCentroid.z + 7);
     sun.target.updateMatrixWorld();
   }
   // SCORE BRIDGE (per frame — NO rebuild): read the audio beat, resolve the CURRENT
@@ -911,37 +1128,64 @@ export function update(dt) {
   for (const d of dancers) d.update(dt, st.beatPhase);
   if (backdrop) backdrop.update(dt);
   if (ship) ship.update(dt, st.phase, st.landProgress);
-  ps1.render(scene, camera);
+  if (!_skipRender) ps1.render(scene, camera);   // _skipRender: headless state-only stepping
 }
+let _skipRender = false;   // when true, update() advances all logic but skips the GL render
 
-// updateSpaceRig(dt, st) — drive the COCKPIT transit: fade the sky to space, place
-// the camera inside the cockpit looking out, recede/approach the planet below by
-// spaceProgress, keep the genre display's active target current, and spin the planet.
+// updateSpaceRig(dt, st) — drive the STAR-MAP transit: the camera is the flight's
+// continuous zoom through the planet field; the cockpit rides the camera and FADES by
+// viewportFade (visible high in space, gone as we descend); the LEAVING planet recedes
+// below; the genre display tracks the resolving dominant; the dominant planet in the
+// field is scaled up as the target.
 function updateSpaceRig(dt, st) {
   const s = Math.max(0, Math.min(1, st.spaceProgress != null ? st.spaceProgress : 1));
+  const fade = Math.max(0, Math.min(1, st.viewportFade != null ? st.viewportFade : s));
+  const p = st.cameraPose;
   // sky -> space fade (bright dusk sky at the surface, near-black in deep space).
   if (scene.background && scene.background.isColor) {
     scene.background.setHex(SKY_COLOR).lerp(_spaceCol, s);
   }
-  // camera INSIDE the cockpit, looking out the viewport (-Z) slightly down at the planet.
-  camera.position.set(SPACE_ANCHOR.x, SPACE_ANCHOR.y + 0.1, SPACE_ANCHOR.z + 0.15);
-  camera.lookAt(SPACE_ANCHOR.x, SPACE_ANCHOR.y - 0.25, SPACE_ANCHOR.z - 4);
-  if (camera.fov !== 62) { camera.fov = 62; camera.updateProjectionMatrix(); }
+  // camera = the star-map zoom pose (long descent toward the resolving planet).
+  camera.position.set(p.position.x, p.position.y, p.position.z);
+  camera.lookAt(p.lookAt.x, p.lookAt.y, p.lookAt.z);
+  if (camera.fov !== p.fov) { camera.fov = p.fov; camera.updateProjectionMatrix(); }
+  // scale up the resolving planet in the star-map so the target reads.
+  highlightPlanet(st.dominant || spaceActiveGenre || null);
+  // cockpit RIDES the camera (its viewport frames the view) and FADES as we descend.
   cockpit.update(dt);
+  cockpit.group.position.copy(camera.position);
+  cockpit.group.quaternion.copy(camera.quaternion);
+  cockpit.group.visible = fade > 0.06;
+  fadeGroup(cockpit.group, 0.15 + 0.85 * fade);
   // keep the display's highlighted target current as the blend resolves the next genre.
   const active = genreLabelOf(st.dominant || spaceActiveGenre);
   if (active && active !== _lastActive) { cockpit.setGenres(genreLabels(), active); _lastActive = active; }
-  // planet BELOW + through the viewport: near/large when close to a surface (s~0),
-  // far/small out in deep space (s~1) — so it RECEDES below on liftoff + GROWS on approach.
+  // the LEAVING planet (the detailed foreground world) recedes BELOW as we climb: near
+  // & large just after liftoff (s~0), dropping away + shrinking out in deep space (s~1).
   if (planet) {
     if (curTraits && planet.setPalette) planet.setPalette(curTraits);
-    const py = SPACE_ANCHOR.y + (-2 + (-18) * s);     // drops away below as we climb
-    const pz = SPACE_ANCHOR.z - 9;
-    const sc = 2.6 + (0.4 - 2.6) * s;                 // 2.6 near-surface -> 0.4 deep space
-    planet.group.position.set(SPACE_ANCHOR.x, py, pz);
-    planet.group.scale.setScalar(Math.max(0.4, sc));
+    // sit it in front of / below the camera along the view direction so it stays framed.
+    const fwdX = p.lookAt.x - p.position.x, fwdY = p.lookAt.y - p.position.y, fwdZ = p.lookAt.z - p.position.z;
+    const fl = Math.hypot(fwdX, fwdY, fwdZ) || 1;
+    const ahead = 26;
+    const px = p.position.x + (fwdX / fl) * ahead;
+    const pz = p.position.z + (fwdZ / fl) * ahead;
+    const py = p.position.y - 6 - 30 * s;             // drops away below as we climb
+    const sc = 4.2 + (0.6 - 4.2) * s;                 // large near-surface -> small deep space
+    planet.group.position.set(px, py, pz);
+    planet.group.scale.setScalar(Math.max(0.6, sc));
     planet.update(dt);
   }
+}
+// fade a group's meshes to `opacity` (transit-only, a handful of meshes) so the cockpit
+// dissolves as the viewport fades. Sets transparent + opacity on each material.
+function fadeGroup(group, opacity) {
+  const o = Math.max(0, Math.min(1, opacity));
+  group.traverse((n) => {
+    if (!n.isMesh || !n.material) return;
+    const ms = Array.isArray(n.material) ? n.material : [n.material];
+    for (const m of ms) { m.transparent = true; m.opacity = o; }
+  });
 }
 let _lastActive = null;
 let _spaceCol = null;   // reusable THREE.Color for the sky->space lerp (set on start)
@@ -965,6 +1209,11 @@ export function stop() {
   despawnBand();                                   // disposes band + dancers + stage + backdrop + ship
   despawnSpaceRig();                               // disposes cockpit + planet (if in transit)
   if (starfield) { scene.remove(starfield); disposeObj(starfield); starfield = null; }
+  if (planetField) { scene.remove(planetField); disposeObj(planetField); planetField = null; }
+  for (const g in planetIndex) delete planetIndex[g];
+  planetBaseR = null; _hiIdx = -1;
+  autoShots = []; autoCam.active = false; autoCam.shot = 0; autoCam.shotT = 0; autoCam.cuts = 0; autoCam.forceCut = true;
+  _vclock = 0; _lastInputT = -1e9;
   // dispose remaining GL resources (lights carry none; belt-and-braces geometry sweep).
   try { scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); } catch (e) {}
   try { ps1 && ps1.dispose && ps1.dispose(); } catch (e) {}
@@ -1043,6 +1292,41 @@ window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBe
   centroid: () => ({ x: bandCentroid.x, y: bandCentroid.y, z: bandCentroid.z }),
   // dispatch a synthetic drag on the canvas (headless nav proof).
   __drag: (dx, dy) => { orbitBy(dx || 0, dy || 0); if (LANDED_PHASES[(lastState || {}).phase]) applyOrbitToCamera(); return { yaw: orbit.yaw, pitch: orbit.pitch }; },
+  // ---- FIDELITY-CAMERA + STAR-MAP + MUSIC-VIDEO probes (headless-proof) -------------
+  // fidelity(): the dominant-weight -> zoom signal driving the camera (higher weight ->
+  // closer/landed; low -> up in space with the viewport visible).
+  fidelity: () => {
+    if (!lastState) return null;
+    const cp = lastState.cameraPose;
+    // the flight's INTENDED zoom (pose position -> look target) — monotonic with the
+    // dominant weight, independent of the auto-cam's roaming shots.
+    const poseDist = cp ? Math.hypot(cp.position.x - cp.lookAt.x, cp.position.y - cp.lookAt.y, cp.position.z - cp.lookAt.z) : null;
+    return {
+      dominantWeight: lastState.dominantWeight, imm: lastState.imm, landed: lastState.landed,
+      landProgress: lastState.landProgress, spaceProgress: lastState.spaceProgress,
+      viewportFade: lastState.viewportFade, fullZoom: lastState.fullZoom, phase: lastState.phase,
+      camDist: poseDist, camY: camera ? camera.position.y : null,
+    };
+  },
+  // planetField(): proof the star-map planets sit AT their GENRE_COORDS. Returns the
+  // count + a few genres' marker world-positions vs the flight projection of their coord.
+  planetField: (genres) => {
+    if (!planetField) return null;
+    const list = (genres && genres.length ? genres : Object.keys(planetIndex).slice(0, 4));
+    const checks = list.map((g) => {
+      const w = planetWorldOf(g);
+      const proj = (mods.worldOfCoord && window.GenreKernel) ? null : null;   // proj computed in test via GENRE_COORDS
+      return { g, marker: w ? { x: +w.x.toFixed(2), y: +w.y.toFixed(2), z: +w.z.toFixed(2) } : null };
+    });
+    return { count: planetField.count, field: mods.FIELD, checks };
+  },
+  // autoCam(): the music-video camera state (active when landed + no recent input;
+  // shot index advances on beat cuts; userActive = manual override in effect).
+  autoCam: () => ({ active: autoCam.active, shot: autoCam.shot, shots: autoShots.length,
+    cuts: autoCam.cuts, userActive: (_vclock - _lastInputT) < AUTO_IDLE }),
+  // bandPositions(): each spawned alien's staging position (proves the SPREAD).
+  bandPositions: () => band.map((a) => ({ voice: a._voice, x: +a.group.position.x.toFixed(2),
+    y: +a.group.position.y.toFixed(2), z: +a.group.position.z.toFixed(2) })),
   // dancers + cockpit/space + shadow probes (headless-proof; harmless in production).
   dancers: () => dancers.length,
   space: () => ({ hasCockpit: !!cockpit, hasPlanet: !!planet,
@@ -1054,6 +1338,15 @@ window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBe
     bandCasters: countCasters() }),
   // __step(dt): advance one frame and return the flight state (phase probe).
   __step: (dt) => { update(dt || 0); return lastState; },
+  // __stepNoRender(dt): advance ALL logic (flight, auto-cam, band, spawn/despawn) but
+  // SKIP the GL render — for long headless probe runs that only read state/camera/orbit
+  // (fidelity, music-video, re-lands), so they don't accumulate SwiftShader GPU load.
+  __stepNoRender: (dt) => { _skipRender = true; try { update(dt || 0); } finally { _skipRender = false; } return lastState; },
+  // __pauseLoop/__resumeLoop: headless-only — stop the RAF render loop so scripted
+  // __step()s are the SOLE renderer (halves GL load + makes long probe runs deterministic
+  // under headless SwiftShader). Harmless in production; only the test calls it.
+  __pauseLoop: () => { if (raf) { cancelAnimationFrame(raf); raf = 0; } return true; },
+  __resumeLoop: () => { if (running && !raf) { lastT = (typeof performance !== "undefined" ? performance.now() : Date.now()); loop(); } return true; },
   state: () => lastState,
   // ---- SCORE-BRIDGE probes (headless-proof; harmless in production) ----------------
   // eventPlan(): a summary of the cached per-bar note plan + how many times

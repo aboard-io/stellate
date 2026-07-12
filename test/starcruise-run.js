@@ -17,8 +17,8 @@
 //   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/starcruise-run.js
 "use strict";
 const path = require("path");
-const { serve, capturePageErrors } = require("./probe-harness.js");
-const ROOT = path.join(__dirname, ".."), PORT = 8811;
+const { serve, capturePageErrors, installOfflineRoute } = require("./probe-harness.js");
+const ROOT = path.join(__dirname, ".."), PORT = process.env.SC_PORT ? +process.env.SC_PORT : 8811;
 
 // launch chromium with WebGL forced on for headless (SwiftShader/ANGLE) — the
 // probe-harness launcher omits these, and the star-cruise mode needs a real GL
@@ -40,13 +40,33 @@ async function main() {
   const browser = await launchGL();
   const page = await browser.newPage();
   await page.setViewportSize({ width: 800, height: 600 });
+  // OFFLINE ROBUSTNESS: stub every external host (Google-Fonts + esm.sh) so the
+  // page boots with no reachable network (see installOfflineRoute).
+  await installOfflineRoute(page, PORT, { neutralizeMain: true });
   const errs = capturePageErrors(page);
   const fails = [];
   const ok = (cond, msg) => { console.log((cond ? "  PASS  " : "  FAIL  ") + msg); if (!cond) fails.push(msg); return cond; };
 
-  await page.goto(`http://localhost:${PORT}/index.html`);
-  await page.waitForFunction(() => window.__STARCRUISE && document.getElementById("cruiseChip"), { timeout: 20000 });
+  // waitUntil:"commit" — don't block on the 'load' event: the full app boot runs
+  // app/starmap.js computeGenreLayout(), which relaxes the whole genre field and,
+  // under headless SwiftShader with a zero-size <svg> viewport, is very slow. We
+  // gate on the real readiness signal (window.__STARCRUISE + the chip) instead,
+  // with a generous timeout that absorbs that boot.
+  await page.goto(`http://localhost:${PORT}/index.html`, { waitUntil: "commit" });
+  await page.waitForFunction(() => window.__STARCRUISE && document.getElementById("cruiseChip"), { timeout: 120000 });
   await page.waitForTimeout(300);
+
+  // SEED THE LIVE STORE. window.__S is normally published by app/main.js's boot();
+  // this offline probe neutralises that boot (headless-slow + GL-crashy — see
+  // installOfflineRoute), so publish a minimal LIVE store here in the exact shape
+  // app/state.js exports. This exercises the REAL getS()->window.__S read path the
+  // star-cruise decoupling relies on, and gives the un-injected D-phase a dominant
+  // so the flight machine actually flies FLY->APPROACH->LAND (as it does live).
+  await page.evaluate(() => {
+    const G = Object.keys((window.GenreKernel && window.GenreKernel.GENRES) || {})[7] || "vaporwave";
+    window.__S = { weights: [{ g: G, w: 1 }], waypoints: [{ x: 0, y: 0 }, { x: 120, y: 90 }],
+      travel: { seg: 0, t: 0.5 }, seed: 1, live: true, playing: { bpm: 120 }, barInfo: null };
+  });
 
   // ---- A: OFF by default ----
   const before = await page.evaluate(() => ({
@@ -85,6 +105,11 @@ async function main() {
   // mobile). At the 800x600 test viewport (dpr 1) that resolves to ~800x600.
   ok(rig.res.w >= 760 && rig.res.h >= 560,
     `B5. internal resolution RAISED to near-native (${rig.res.w}x${rig.res.h}, was 320x240 potato)`);
+
+  // PAUSE the RAF render loop: from here the scripted __step()s are the SOLE renderer,
+  // so the long fidelity/music-video probe runs don't double the GL load (headless
+  // SwiftShader dies on sustained background rendering across a long suite).
+  await page.evaluate(() => window.__STARCRUISE.__pauseLoop());
 
   // ---- C: non-blank frame ----
   const sample = await page.evaluate(() => window.__STARCRUISE.sampleLowRes());
@@ -142,15 +167,22 @@ async function main() {
       if (st.phase === "DANCE") break;
     }
     const tr = SC.traits();
+    const vp = SC.eventPlan();
+    const sounding = vp ? Object.keys(vp.voices).filter((v) => vp.voices[v].onsets > 0).length : 0;
     return { phases, phase: SC.state().phase, children: SC.sceneChildren(),
-      band: SC.band().length, crowd: tr && tr.crowd, genre: tr && tr._genre,
+      band: SC.band().length, crowd: tr && tr.crowd, genre: tr && tr._genre, sounding,
+      bandVoices: SC.bandVoices(),
       roles: SC.band().map((a) => a.playStyle), styles: (tr && tr.band || []).map((m) => m.instrument.family),
       backdrop: SC.hasBackdrop(), ship: SC.hasShip() };
   }, GEN);
   console.log("       landed:", JSON.stringify(landed));
   ok(landed.phases.indexOf("LAND") >= 0, `G2. flight flew to a landing (${landed.phases.join("->")})`);
-  ok(landed.band >= 1 && landed.band === landed.crowd && landed.band <= 8,
-    `G3. BAND assembled on land — one alien per part (${landed.band} aliens == crowd ${landed.crowd}, cap 8; instruments ${JSON.stringify(landed.styles)})`);
+  // DETERMINISTIC BAND COVERAGE (#9): one alien per SOUNDING voice — the roster is
+  // aligned with the plan's sounding set, so every audible part gets a player (this is
+  // stable across seeds, where traits.band alone was not: a barely-present melody used
+  // to sound with no alien — the old intermittent SB3).
+  ok(landed.band >= 1 && landed.band === landed.sounding && landed.band <= 8,
+    `G3. BAND assembled on land — ONE alien per SOUNDING voice (${landed.band} aliens == ${landed.sounding} sounding, voices ${JSON.stringify(landed.bandVoices)}, cap 8; instruments ${JSON.stringify(landed.styles)})`);
   ok(landed.children > flying.children,
     `G4. scene child count ROSE on landing (${flying.children} flying -> ${landed.children} landed)`);
   ok(landed.backdrop && landed.ship, `G5. backdrop + ship present after landing`);
@@ -196,9 +228,9 @@ async function main() {
   await page.evaluate((G) => {
     const SC = window.__STARCRUISE;
     SC.__injectTravel({ weights: [], dominant: null, position: null, live: false, seed: 1 });
-    for (let i = 0; i < 12; i++) SC.__step(0.2);
+    for (let i = 0; i < 12; i++) SC.__stepNoRender(0.2);
     SC.__injectTravel({ weights: [{ g: G, w: 1 }], dominant: G, position: { x: 0, y: 0 }, live: true, seed: 1 });
-    for (let i = 0; i < 60; i++) { const st = SC.__step(0.1); if (st.phase === "DANCE") break; }
+    for (let i = 0; i < 60; i++) { const st = SC.__stepNoRender(0.1); if (st.phase === "DANCE") break; }
   }, GEN);
 
   // ---- SB: SCORE BRIDGE — aliens PLAY the score (one per voice, real onsets, rest) ----
@@ -266,10 +298,17 @@ async function main() {
   // (1) the landed view must be centred on the band (target ~ centroid, yaw ~ 0 = front,
   // camera IN FRONT on +Z) — the fix for "side profile / off to the left / zoomed out".
   // (2) dispatching a real pointer drag on the canvas must CHANGE the orbit + camera.
-  const nav = await page.evaluate(() => {
+  const nav = await page.evaluate((G) => {
     const SC = window.__STARCRUISE;
     const canvas = document.getElementById("starcruise-canvas");
-    SC.__step(0.016);                       // settle the landed (front-on) camera
+    // FRESH LAND so the music-video auto-camera is on its FRONT establishing shot (the
+    // landed default framing); it roams + cuts after ~2 bars, but a fresh touchdown
+    // always opens front-centred on the band.
+    SC.__injectTravel({ weights: [], dominant: null, position: null, live: false, seed: 1 });
+    for (let i = 0; i < 12; i++) SC.__step(0.2);
+    SC.__injectTravel({ weights: [{ g: G, w: 1 }], dominant: G, position: { x: 0, y: 0 }, live: true, seed: 1 });
+    for (let i = 0; i < 60; i++) { const st = SC.__step(0.1); if (st.phase === "DANCE") break; }
+    SC.__step(0.016);                       // settle the landed (front-on) establishing shot
     const orbit0 = SC.orbit(), cam0 = SC.cam(), centroid = SC.centroid();
     // dispatch a genuine mouse drag: mousedown on the canvas, move + up on window.
     canvas.dispatchEvent(new MouseEvent("mousedown", { clientX: 400, clientY: 300, bubbles: true }));
@@ -289,7 +328,7 @@ async function main() {
     SC.__step(0.016);
     const orbit2 = SC.orbit();
     return { orbit0, orbit1, orbit2, cam0, cam1, centroid, touchOk };
-  }).catch((e) => ({ err: String(e) }));
+  }, GEN).catch((e) => ({ err: String(e) }));
   if (nav.err) { ok(false, "N. nav probe threw :: " + nav.err); }
   else {
     console.log("       nav.orbit0:", JSON.stringify(nav.orbit0), " cam0:", JSON.stringify(nav.cam0));
@@ -301,6 +340,141 @@ async function main() {
     ok(yawMoved && camMoved, `N2. a MOUSE drag orbits the view (yaw ${nav.orbit0.yaw.toFixed(3)}->${nav.orbit1.yaw.toFixed(3)}, camera moved ${Math.hypot(nav.cam1.x - nav.cam0.x, nav.cam1.y - nav.cam0.y, nav.cam1.z - nav.cam0.z).toFixed(2)})`);
     ok(Math.abs(nav.orbit2.pitch - nav.orbit1.pitch) > 0.02, `N3. a TOUCH drag tilts the view (pitch ${nav.orbit1.pitch.toFixed(3)}->${nav.orbit2.pitch.toFixed(3)})`);
   }
+
+  // ---- SP: STAGING — the band is SPREAD OUT (wider than the old cluster) ----
+  const sp = await page.evaluate(() => {
+    const pos = window.__STARCRUISE.bandPositions();
+    const xs = pos.map((p) => p.x).sort((a, b) => a - b);
+    let minGap = Infinity; for (let i = 1; i < xs.length; i++) minGap = Math.min(minGap, xs[i] - xs[i - 1]);
+    return { pos, n: pos.length, minGap: xs.length > 1 ? minGap : 0,
+      widthX: xs.length ? xs[xs.length - 1] - xs[0] : 0 };
+  });
+  console.log("       staging:", JSON.stringify(sp));
+  // wide staging: adjacent players sit >= 2.3 apart in x (was a 1.5 cluster), and the
+  // whole ensemble spans a broad arc — less clustered, fills the frame.
+  ok(sp.n <= 1 || (sp.minGap >= 2.2 && sp.widthX >= 2.2 * (sp.n - 1) - 0.01),
+    `SP1. band SPREAD OUT across a wide stage (n=${sp.n}, minGap=${sp.minGap.toFixed(2)}, widthX=${sp.widthX.toFixed(2)})`);
+
+  // ---- PF: STAR-MAP — one planet per genre sits AT its GENRE_COORDS ----
+  // The persistent planet field places every genre's marker at the flight projection of
+  // its GENRE_COORDS; flying == traversing the genre space. Assert the markers match the
+  // projection of the imported coords for a handful of genres.
+  const pf = await page.evaluate(() => {
+    const SC = window.__STARCRUISE;
+    const names = ["ambient", "techno", "jazz", "gabber", "vaporwave"].filter((g) => SC.planetField([g]) && SC.planetField([g]).checks[0].marker);
+    const field = SC.planetField(names);
+    // recompute the expected world pos from the shared FIELD projection + the module's
+    // coords (exposed via the flight worldOfCoord through planetField's field config).
+    const F = field.field;
+    // pull GENRE_COORDS off the loaded module via the field markers' inverse isn't
+    // available; instead assert the marker equals F-projection of a KNOWN coord by
+    // reading the coord from the field's own check (marker) consistency: markers are
+    // deterministic + distinct, and lie within the projected extent.
+    const extent = 100 * F.scale;
+    const within = field.checks.every((c) => c.marker &&
+      Math.abs(c.marker.x - F.ox) <= extent + 1 && Math.abs(c.marker.z - F.oz) <= extent + 1 &&
+      Math.abs(c.marker.y - F.oy) <= extent + 1);
+    const distinct = new Set(field.checks.map((c) => c.marker && `${c.marker.x},${c.marker.y},${c.marker.z}`)).size === field.checks.length;
+    return { count: field.count, field: F, checks: field.checks, within, distinct };
+  });
+  console.log("       planetField:", JSON.stringify(pf));
+  ok(pf.count >= 100, `PF1. star-map has ONE planet per genre (${pf.count} planets, field ${JSON.stringify(pf.field)})`);
+  ok(pf.within && pf.distinct, `PF2. planets sit AT their GENRE_COORDS projection (distinct markers within the +/-${(100 * pf.field.scale).toFixed(0)} extent around the field origin)`);
+
+  // PF3: the markers EXACTLY equal the flight projection of the imported GENRE_COORDS.
+  const pf3 = await page.evaluate(async () => {
+    const SC = window.__STARCRUISE;
+    const mod = await import("/app/starcruise/genre-coords.js");
+    const fl = await import("/app/starcruise/flight.js");
+    const names = ["ambient", "techno", "jazz"];
+    return names.map((g) => {
+      const w = fl.worldOfCoord(mod.GENRE_COORDS[g]);
+      const m = SC.planetField([g]).checks[0].marker;
+      const err = Math.hypot(w.x - m.x, w.y - m.y, w.z - m.z);
+      return { g, err: +err.toFixed(3) };
+    });
+  }).catch((e) => ({ err: String(e) }));
+  console.log("       planet@coords:", JSON.stringify(pf3));
+  ok(Array.isArray(pf3) && pf3.every((c) => c.err < 0.05),
+    `PF3. each planet marker == worldOfCoord(GENRE_COORDS[g]) (${Array.isArray(pf3) ? pf3.map((c) => c.g + ":" + c.err).join(", ") : pf3.err})`);
+
+  // ---- FZ: FIDELITY-DRIVEN ZOOM — the DOMINANT WEIGHT drives altitude/zoom ----
+  // Low dominance (even blend) => UP IN SPACE (not landed, viewport visible, high cam);
+  // high dominance => DESCEND/LAND; ~1.0 => full immersion (tightest zoom). Drive the
+  // blend across weights and read the fidelity signal.
+  const fz = await page.evaluate((G) => {
+    const SC = window.__STARCRUISE;
+    function settle(travel, steps) {
+      SC.__injectTravel(travel);
+      for (let i = 0; i < steps; i++) SC.__stepNoRender(0.1);   // state-only: no GL load
+      return SC.fidelity();
+    }
+    // even 3-way blend -> low dominance -> deep space.
+    const space = settle({ weights: [{ g: G, w: 0.34 }, { g: "techno", w: 0.33 }, { g: "jazz", w: 0.33 }], dominant: G, position: null, live: true, seed: 1 }, 28);
+    // strong dominant -> LAND.
+    const land = settle({ weights: [{ g: G, w: 0.9 }, { g: "techno", w: 0.1 }], dominant: G, position: { x: 0, y: 0 }, live: true, seed: 1 }, 34);
+    // pure dominant -> FULL immersion (tightest zoom).
+    const full = settle({ weights: [{ g: G, w: 1 }], dominant: G, position: { x: 0, y: 0 }, live: true, seed: 1 }, 34);
+    return { space, land, full };
+  }, GEN);
+  console.log("       fidelity.space:", JSON.stringify(fz.space));
+  console.log("       fidelity.land :", JSON.stringify(fz.land));
+  console.log("       fidelity.full :", JSON.stringify(fz.full));
+  ok(fz.space && !fz.space.landed && fz.space.spaceProgress > 0.5 && fz.space.viewportFade > 0.5,
+    `FZ1. LOW dominance => UP IN SPACE, viewport visible (weight=${fz.space.dominantWeight.toFixed(2)}, imm=${fz.space.imm.toFixed(2)}, landed=${fz.space.landed}, viewportFade=${fz.space.viewportFade.toFixed(2)})`);
+  ok(fz.land && fz.land.landed && fz.land.imm >= 0.8,
+    `FZ2. dominance >= 0.80 => LAND (weight=${fz.land.dominantWeight.toFixed(2)}, imm=${fz.land.imm.toFixed(2)}, landed=${fz.land.landed})`);
+  ok(fz.full && fz.full.fullZoom > 0.8 && fz.full.camDist < fz.land.camDist,
+    `FZ3. dominance ~1.0 => FULL immersion, tighter zoom than at touchdown (fullZoom ${fz.land.fullZoom.toFixed(2)}->${fz.full.fullZoom.toFixed(2)}, camDist ${fz.land.camDist.toFixed(1)}->${fz.full.camDist.toFixed(1)})`);
+  ok(fz.space.imm < fz.land.imm && fz.land.imm <= fz.full.imm,
+    `FZ4. zoom immersion rises MONOTONICALLY with the dominant weight (${fz.space.imm.toFixed(2)} < ${fz.land.imm.toFixed(2)} <= ${fz.full.imm.toFixed(2)})`);
+
+  // ---- MV: MUSIC-VIDEO — landed auto-camera roams + CUTS; manual overrides + resumes --
+  // The auto-camera advances on the flight/orbit LOGIC (before the GL render), so we
+  // drive it with __stepNoRender to avoid piling GPU load on the heavy landed scene.
+  const mv = await page.evaluate((G) => {
+    const SC = window.__STARCRUISE;
+    // fresh land on GEN with a fast beat (spb 0.2 -> shotDur ~1.6s so cuts land quickly).
+    SC.__injectBeat({ bpm: 300, spb: 0.2, cbeats: 8, serial: 3, beatPhase: 0, playing: true });
+    SC.__injectTravel({ weights: [], dominant: null, position: null, live: false, seed: 1 });
+    for (let i = 0; i < 12; i++) SC.__stepNoRender(0.2);
+    SC.__injectTravel({ weights: [{ g: G, w: 1 }], dominant: G, position: { x: 0, y: 0 }, live: true, seed: 1 });
+    for (let i = 0; i < 40; i++) { const st = SC.__stepNoRender(0.1); if (st.phase === "DANCE") break; }
+    // ROAM without input (~8s @ shotDur 1.6s -> several cuts): collect shots + cam moves.
+    const shots = new Set(); const cams = [];
+    for (let i = 0; i < 40; i++) {
+      SC.__stepNoRender(0.2);
+      const ac = SC.autoCam(); const c = SC.cam();
+      shots.add(ac.shot); if (i % 4 === 0) cams.push({ x: +c.x.toFixed(2), z: +c.z.toFixed(2) });
+    }
+    const acEnd = SC.autoCam();
+    let moved = 0; for (let i = 1; i < cams.length; i++) moved += Math.hypot(cams[i].x - cams[i - 1].x, cams[i].z - cams[i - 1].z);
+    // MANUAL override: a drag suspends the auto-camera.
+    SC.__drag(120, 40); SC.__stepNoRender(0.05);
+    const acManual = SC.autoCam();
+    // then IDLE (no input) long enough for the auto-camera to RESUME.
+    for (let i = 0; i < 24; i++) SC.__stepNoRender(0.2);   // ~4.8s > AUTO_IDLE
+    const acResume = SC.autoCam();
+    return { distinctShots: shots.size, cuts: acEnd.cuts, moved, shotsLen: acEnd.shots,
+      autoActive: acEnd.active, manualActive: acManual.active, manualUser: acManual.userActive,
+      resumeActive: acResume.active };
+  }, GEN);
+  console.log("       musicvideo:", JSON.stringify(mv));
+  ok(mv.autoActive && mv.cuts >= 1 && mv.distinctShots >= 2,
+    `MV1. landed MUSIC-VIDEO auto-camera CUTS between shots on the beat (${mv.cuts} cuts over ${mv.distinctShots} distinct shots of ${mv.shotsLen})`);
+  ok(mv.moved > 0.5, `MV2. the auto-camera MOVES (dolly/orbit + cuts) while landed (total planar move ${mv.moved.toFixed(1)})`);
+  ok(!mv.manualActive && mv.manualUser, `MV3. a manual drag OVERRIDES the auto-camera (auto active=${mv.manualActive}, userActive=${mv.manualUser})`);
+  ok(mv.resumeActive, `MV4. the auto-camera RESUMES after idle (active=${mv.resumeActive})`);
+
+  // re-land the primary GEN cleanly for the following (H/J/K) blocks.
+  await page.evaluate((G) => {
+    const SC = window.__STARCRUISE;
+    SC.__injectBeat({ bpm: 120, spb: 0.5, cbeats: 8, serial: 2, beatPhase: 0, playing: true });
+    SC.__injectTravel({ weights: [], dominant: null, position: null, live: false, seed: 1 });
+    for (let i = 0; i < 12; i++) SC.__stepNoRender(0.2);
+    SC.__injectTravel({ weights: [{ g: G, w: 1 }], dominant: G, position: { x: 0, y: 0 }, live: true, seed: 1 });
+    for (let i = 0; i < 60; i++) { const st = SC.__stepNoRender(0.1); if (st.phase === "DANCE") break; }
+  }, GEN);
 
   // ---- Dn: DANCERS spawn around the band, grooving to the same beat ----
   const dnc = await page.evaluate(() => ({ dancers: window.__STARCRUISE.dancers(), traitsD: (window.__STARCRUISE.traits() || {}).dancers }));

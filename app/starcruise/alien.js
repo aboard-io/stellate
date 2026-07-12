@@ -107,6 +107,21 @@ export function makeAlien(THREE, traits, member, seed) {
   seed = (seed | 0) || 1;
   const rand = rng32(seed ^ 0xa53c9);
 
+  // ---- PER-ALIEN morphology jitter (deterministic off THIS alien's OWN seed) ------
+  // Two band members (or dancers) of the SAME genre share traits (the species
+  // family) but must never be identical. These draws are consumed HERE — before any
+  // dancer/player divergence — so a dancer & a player built from one seed stay
+  // rand-aligned, yet every INDIVIDUAL nudges its PROPORTIONS, appendage/eye COUNTS,
+  // orb count and accent hue so it reads unique — still inside the genre's family.
+  const jSpan = (s) => 1 + (rand() * 2 - 1) * s;          // ~1 ± s multiplier
+  const jPick = (p) => (rand() < p ? 1 : 0);              // deterministic 0/1 draw
+  const morphH = jSpan(0.17), morphMass = jSpan(0.24), morphR = jSpan(0.12);
+  const eyeJit = jPick(0.5) - jPick(0.35);                // -1..+1 eye-count nudge
+  const armJit = jPick(0.45);                             // +0/+1 extra arm
+  const appJit = jPick(0.5) - jPick(0.4);                 // -1..+1 legs/tentacles
+  const accentSpin = (rand() * 2 - 1) * 22;               // per-alien accent hue shift °
+  const orbJit = jPick(0.6) + jPick(0.35);                // +0..2 extra light-balls
+
   traits = traits || {};
   member = member || { role: "perc", voice: "perc", instrument: { family: "clackshell", playStyle: "strike", appendage: 0, hitsPerBeat: 1 } };
   const roleName = member.role || "perc";
@@ -158,20 +173,23 @@ export function makeAlien(THREE, traits, member, seed) {
   let plan = bIn.plan;
   if (!plan || PLANS.indexOf(plan) < 0) plan = derivePlan(bIn);
 
-  const H = Math.max(0.9, bIn.height || 1.5);
-  const massH = Math.max(0.5, bIn.massH || 1);
-  const coreR = 0.5 * H * (0.32 + massH * 0.14);        // core radius, girth from massH
+  const H = Math.max(0.9, (bIn.height || 1.5) * morphH);
+  const massH = Math.max(0.5, (bIn.massH || 1) * morphMass);
+  const coreR = 0.5 * H * (0.32 + massH * 0.14) * morphR; // core radius, girth from massH (+per-alien)
   // appendage counts — new fields first, else derive from legacy limbs/eyes.
   const legacyLimbs = Math.round(bIn.limbs != null ? bIn.limbs : 4);
   let nArms = Math.round(bIn.arms != null ? bIn.arms : legacyLimbs);
   nArms = clamp(nArms, 2, 6);
   const symMetry = clamp(Math.round(bIn.symmetry || (plan === "radial" ? nArms : 2)), 2, 8);
   if (plan === "radial") nArms = clamp(symMetry, 3, 6);
+  else nArms = clamp(nArms + armJit, 2, 6);              // per-alien: maybe one extra arm
   let nLegs = Math.round(bIn.legs != null ? bIn.legs : (plan === "insectoid" ? 6 : plan === "stalk" ? 3 : plan === "crystalline" ? 3 : 0));
   let nTent = Math.round(bIn.tentacles != null ? bIn.tentacles : (plan === "cephalopod" ? Math.max(4, nArms + 2) : plan === "gas" ? 4 : plan === "blob" ? 3 : 0));
-  nLegs = clamp(nLegs, 0, 8); nTent = clamp(nTent, 0, 8);
+  // per-alien nudge on whichever sway-appendage this plan actually grows.
+  nLegs = clamp(nLegs + (nTent === 0 ? appJit : 0), 0, 8);
+  nTent = clamp(nTent + (nTent > 0 ? appJit : 0), 0, 8);
   if (nLegs + nTent > 8) nTent = Math.max(0, 8 - nLegs);   // mobile appendage cap
-  const nEyes = clamp(Math.round(bIn.eyes != null ? bIn.eyes : 2), 1, 8);
+  const nEyes = clamp(Math.round(bIn.eyes != null ? bIn.eyes : 2) + eyeJit, 1, 8);
   const asym = clamp(bIn.asymmetry || 0, 0, 1);
 
   // FACE family — new body.face.type first, else derive a wild face from eye count
@@ -255,7 +273,8 @@ export function makeAlien(THREE, traits, member, seed) {
   };
   const skinCol = colHSL(THREE, pal.skin || { h: 200, s: 0.5, l: chrome ? 0.62 : 0.5 });
   const clothCol = colHSL(THREE, pal.cloth || { h: 340, s: 0.5, l: 0.45 });
-  const accentCol = colHSL(THREE, pal.accent || { h: 40, s: 0.85, l: 0.6 });
+  // per-alien accent hue SPIN + a saturation push -> individual, saturated pop.
+  const accentCol = colHSL(THREE, pal.accent || { h: 40, s: 0.85, l: 0.6 }).offsetHSL(accentSpin / 360, 0.06, 0);
   const bodyCol = skinCol.clone().offsetHSL(0, 0.05, 0.08);
   const clothLit = clothCol.clone().offsetHSL(0, 0.05, 0.06);
   const limbCol = skinCol.clone().multiplyScalar(chrome ? 0.62 : 0.5);
@@ -266,17 +285,24 @@ export function makeAlien(THREE, traits, member, seed) {
   const limbMat = mk(limbCol, true);
   const accentMat = mk(accentBright, false);
   const accent2Mat = mk(accent2Col, false);
-  const eyeMat = applyStyleHook(new THREE.MeshLambertMaterial({ color: new THREE.Color(0x07070d), emissive: accentBright.clone().multiplyScalar(0.6), flatShading: !smoothShade }));
+  const eyeMat = applyStyleHook(new THREE.MeshLambertMaterial({ color: new THREE.Color(0x07070d), emissive: accentBright.clone().multiplyScalar(0.9), flatShading: !smoothShade }));
   const mouthMat = applyStyleHook(new THREE.MeshLambertMaterial({ color: new THREE.Color(0x18080f), flatShading: !smoothShade }));
   const bodyDark = skinCol.clone().multiplyScalar(chrome ? 0.7 : 0.55);
   const instBodyMat = mk(bodyDark, false);
-  const materials = [skinMat, clothMat, limbMat, accentMat, accent2Mat, eyeMat, mouthMat, instBodyMat];
+  // GLOWING LIGHT-BALL material: a near-black core swamped by a bright saturated
+  // emissive -> a ball of light. Deep-dark body vs blazing orb = bold contrast.
+  const mkOrb = (col) => applyStyleHook(new THREE.MeshLambertMaterial({
+    color: new THREE.Color(0x0a0a12), emissive: col.clone(), wireframe: wire, flatShading: !smoothShade,
+  }));
+  const orbMat = mkOrb(accentBright.clone().offsetHSL(0, 0.12, 0.14));
+  const materials = [skinMat, clothMat, limbMat, accentMat, accent2Mat, eyeMat, mouthMat, instBodyMat, orbMat];
 
   const group = new THREE.Object3D();
 
   // continuously-waving parts (tentacles/stalks/cilia/antennae) — beat-independent.
   const tendrils = [];      // { joints:[Object3D], sp, amp, ph, curl, sway }
   const pulseCores = [];    // { mesh, base:Vector3(scale), amp } — blob/gas breathing
+  const orbs = [];          // { mesh, base:Vector3, ph, amp } — floating light-balls
   const YAX = new THREE.Vector3(0, 1, 0);
 
   // ---- a soft multi-segment TENDRIL (nested rotation chain) ----------------------
@@ -302,13 +328,16 @@ export function makeAlien(THREE, traits, member, seed) {
       joints.push(j); parent = j;
     }
     const capW = width * 0.55;
-    const cap = new THREE.Mesh(
-      opts.tip === "eye" ? new THREE.SphereGeometry(capW, 6, 5) : new THREE.BoxGeometry(capW, capW, capW),
-      capMat || mat);
+    // DE-SQUARE: tips are rounded knobs, eye-globes or claw-cones — never a cube.
+    let capGeo;
+    if (opts.tip === "eye") capGeo = new THREE.SphereGeometry(capW, 7, 6);
+    else if (opts.tip === "claw") capGeo = new THREE.ConeGeometry(capW * 0.72, capW * 2.4, 5);
+    else capGeo = new THREE.SphereGeometry(capW * 1.05, 6, 5);
+    const cap = new THREE.Mesh(capGeo, capMat || mat);
     cap.position.y = segLen; parent.add(cap);
     if (opts.tip === "eye") {
-      const pupil = new THREE.Mesh(new THREE.BoxGeometry(capW * 0.5, capW * 0.5, capW * 0.3), accentMat);
-      pupil.position.set(0, segLen, capW * 0.7); parent.add(pupil);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(capW * 0.34, 6, 5), accentMat);
+      pupil.position.set(0, segLen, capW * 0.72); parent.add(pupil);
     }
     const t = {
       joints, cap,
@@ -345,7 +374,15 @@ export function makeAlien(THREE, traits, member, seed) {
     const upper = new THREE.Mesh(new THREE.CylinderGeometry(width * 0.5, width * 0.44, 1, 5), mat);
     const fore = new THREE.Mesh(new THREE.CylinderGeometry(width * 0.42, width * 0.36, 1, 5), mat);
     const palm = new THREE.Mesh(new THREE.CylinderGeometry(width * 0.36, width * 0.3, 1, 5), mat);
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(width * 1.5, width * 1.15, width * 1.5), capMat || skinMat);
+    // DE-SQUARE hand: a rounded palm-globe flanked by two curving PINCER claws.
+    const cap = new THREE.Object3D();
+    const hMat = capMat || skinMat;
+    const palmBall = new THREE.Mesh(new THREE.SphereGeometry(width * 0.85, 7, 6), hMat);
+    cap.add(palmBall);
+    for (let s = -1; s <= 1; s += 2) {
+      const pin = new THREE.Mesh(new THREE.ConeGeometry(width * 0.32, width * 1.9, 5), hMat);
+      pin.position.set(s * width * 0.55, width * 0.75, 0); pin.rotation.z = -s * 0.55; cap.add(pin);
+    }
     group.add(upper); group.add(fore); group.add(palm); group.add(cap);
     const root = rootPos.clone(), pole = poleDir.clone().normalize();
     const elbow = new THREE.Vector3(), tip = new THREE.Vector3();
@@ -541,6 +578,18 @@ export function makeAlien(THREE, traits, member, seed) {
   }
   nArms = armRoots.length;
 
+  // ---- CONTRAST: floating LIGHT-BALLS — small bright emissive orbs orbiting the
+  // core. Per-alien count + jitter so no two aliens carry the same halo; a deep-dark
+  // body under blazing orbs is the value/colour contrast the scene asks for. Capped.
+  const nOrbs = clamp(1 + orbJit, 1, 3);
+  for (let i = 0; i < nOrbs; i++) {
+    const oc = (i % 2 ? accentBright : accent2Col).clone().offsetHSL(0, 0.14, 0.16);
+    const orb = new THREE.Mesh(new THREE.SphereGeometry(coreR * (0.13 + rand() * 0.09), 7, 6), mkOrb(oc));
+    const base = ringPos(i, Math.max(1, nOrbs), coreR * 1.75, coreMidY + (rand() - 0.3) * H * 0.32, 0.9);
+    orb.position.copy(base); group.add(orb);
+    orbs.push({ mesh: orb, base: base.clone(), ph: rand() * 6.28, amp: coreR * 0.28 });
+  }
+
   // ---- FACE: a wild family on the head object ------------------------------------
   const faceZ = headSz * 0.5;
   const jaw = new THREE.Object3D();
@@ -568,24 +617,27 @@ export function makeAlien(THREE, traits, member, seed) {
         const p = ringPos(e, ring, headSz * 0.55, 0, 1);
         const eye = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.15, 7, 6), eyeMat);
         eye.position.set(p.x, p.y, Math.abs(p.z) * 0.4 + headSz * 0.2); head.add(eye);
-        const pu = new THREE.Mesh(new THREE.BoxGeometry(headSz * 0.07, headSz * 0.07, headSz * 0.04), accentMat);
+        const pu = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.05, 6, 5), accentMat);
         pu.position.set(p.x, p.y, Math.abs(p.z) * 0.4 + headSz * 0.33); head.add(pu);
       }
       const maw = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.2, 7, 6), mouthMat);
       maw.position.set(0, -headSz * 0.1, headSz * 0.4); maw.scale.set(1, 0.6, 0.6); jaw.add(maw); head.add(jaw);
     } else {
-      // maw / mandibles — a real skull with a jaw that drops, plus a couple of eyes.
-      const skull = new THREE.Mesh(new THREE.BoxGeometry(headSz, headSz, headSz), skinMat);
-      head.add(skull);
-      const brow = new THREE.Mesh(new THREE.BoxGeometry(headSz * 0.72, headSz * 0.1, headSz * 0.12), limbMat);
+      // maw / mandibles — a rounded skull with a jaw that drops, plus a couple of eyes.
+      const skull = new THREE.Mesh(new THREE.IcosahedronGeometry(headSz * 0.64, 0), skinMat);
+      skull.scale.set(1, 1.06, 0.94); head.add(skull);
+      const brow = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.4, 8, 5), limbMat);
+      brow.scale.set(1, 0.26, 0.42);
       brow.position.set(0, headSz * 0.27, faceZ - headSz * 0.02); head.add(brow);
       const eyeN = Math.min(3, Math.max(2, nEyes));
+      // per-alien vertical + spread jitter so faces read individual within the family.
+      const eyeY = headSz * (0.06 + eyeJit * 0.03), eyeSpread = headSz * (0.55 + morphR * 0.12);
       for (let e = 0; e < eyeN; e++) {
-        const sx = eyeN === 1 ? 0 : (e / (eyeN - 1) - 0.5) * headSz * 0.6;
-        const eye = new THREE.Mesh(new THREE.BoxGeometry(headSz * 0.22, headSz * 0.22, headSz * 0.12), eyeMat);
-        eye.position.set(sx, headSz * 0.1, faceZ); head.add(eye);
-        const pu = new THREE.Mesh(new THREE.BoxGeometry(headSz * 0.09, headSz * 0.09, headSz * 0.05), accentMat);
-        pu.position.set(sx, headSz * 0.1, faceZ + headSz * 0.08); head.add(pu);
+        const sx = eyeN === 1 ? 0 : (e / (eyeN - 1) - 0.5) * eyeSpread;
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.13, 8, 7), eyeMat);
+        eye.position.set(sx, eyeY, faceZ); head.add(eye);
+        const pu = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.055, 6, 5), accentMat);
+        pu.position.set(sx, eyeY, faceZ + headSz * 0.08); head.add(pu);
       }
       if (faceKind === "mandibles") {
         for (let s = -1; s <= 1; s += 2) {
@@ -598,7 +650,8 @@ export function makeAlien(THREE, traits, member, seed) {
       } else {
         const lip = new THREE.Mesh(new THREE.BoxGeometry(headSz * 0.5, headSz * 0.06, headSz * 0.08), mouthMat);
         lip.position.set(0, headSz * 0.2, faceZ - headSz * 0.02); head.add(lip);
-        const jbox = new THREE.Mesh(new THREE.BoxGeometry(headSz * 0.5, headSz * 0.14, headSz * 0.1), mouthMat);
+        const jbox = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.28, 8, 6), mouthMat);
+        jbox.scale.set(1, 0.5, 0.42);
         jbox.position.set(0, -headSz * 0.04, 0); jaw.add(jbox);
         for (let k = 0; k < 4; k++) {
           const fang = new THREE.Mesh(new THREE.ConeGeometry(headSz * 0.03, headSz * 0.1, 3), accent2Mat);
@@ -845,6 +898,12 @@ export function makeAlien(THREE, traits, member, seed) {
       const s = 1 + Math.sin(clock * 1.4 + pc.mesh.id * 0.3) * pc.amp;
       pc.mesh.scale.set(pc.base.x * s, pc.base.y * (2 - s), pc.base.z * s);
     }
+    // floating light-balls drift; they surge a little more when the voice is loud.
+    const orbDrive = 0.4 + 0.6 * (lastEnergy || 0);
+    for (const o of orbs) {
+      o.mesh.position.y = o.base.y + Math.sin(clock * 1.7 + o.ph) * o.amp * orbDrive;
+      o.mesh.position.x = o.base.x + Math.cos(clock * 1.3 + o.ph) * o.amp * 0.5;
+    }
 
     // contactness — from the SCORE when we have notes, else the beat sub-grid.
     let c;
@@ -860,13 +919,14 @@ export function makeAlien(THREE, traits, member, seed) {
     jaw.rotation.x = open * 0.5;
 
     if (isDancer) {
-      // DANCER — no instrument; a livelier full-body groove (calmer when quiet).
-      const amp = 0.5 + 0.5 * level;
+      // DANCER — no instrument; a full-body groove that scales as a SMOOTH CONTINUUM
+      // with volume: barely a shimmer when the mix is quiet, a big sway when it's loud.
+      const amp = 0.12 + 0.88 * level;
       group.position.y = -bob * 0.11 * (0.6 + (groove.bounce || 0.4)) * H * amp;
       group.rotation.z = Math.sin(clock * (1.6 + energy)) * 0.14 * (0.6 + (groove.sway || 0.3)) * amp;
-      group.rotation.y = Math.sin(clock * 0.9) * 0.26;
+      group.rotation.y = Math.sin(clock * 0.9) * 0.26 * amp;
       head.rotation.x = -0.1 + bob * 0.35 * (groove.headbob || 0.4) * amp;
-      head.rotation.y = Math.sin(clock * 1.8) * 0.2;
+      head.rotation.y = Math.sin(clock * 1.8) * 0.2 * amp;
       for (let i = 0; i < arms.length; i++) {
         const a = arms[i]; _rest.copy(a.rest);
         const lift = 0.5 + 0.5 * Math.sin(clock * (2 + energy) + i * 1.7);
@@ -879,13 +939,15 @@ export function makeAlien(THREE, traits, member, seed) {
       return;
     }
 
-    // PLAYER GROOVE: a musical bob + slow idle sway (quieter when resting).
-    const gAmp = 0.4 + 0.6 * energyActive;
+    // PLAYER GROOVE: a musical bob + idle sway whose AMPLITUDE tracks this voice's
+    // volume as a smooth continuum — subtle when the part is quiet, big when it's
+    // loud (near-still at rest). The onset CONTACT below is independent (score law).
+    const gAmp = 0.06 + 0.94 * energyActive;
     group.position.y = -bob * 0.09 * (groove.bounce || 0.4) * H * gAmp;
-    group.rotation.z = Math.sin(clock * (1.2 + energy)) * 0.05 * (groove.sway || 0.3);
-    group.rotation.y = Math.sin(clock * 0.7) * 0.04 * (groove.sway || 0.3);
+    group.rotation.z = Math.sin(clock * (1.2 + energy)) * 0.05 * (groove.sway || 0.3) * (0.15 + 0.85 * gAmp);
+    group.rotation.y = Math.sin(clock * 0.7) * 0.04 * (groove.sway || 0.3) * (0.15 + 0.85 * gAmp);
     head.rotation.x = -0.12 + bob * 0.3 * (groove.headbob || 0.4) * gAmp;
-    head.rotation.y = Math.sin(clock * 1.6) * 0.12 * (groove.headbob || 0.4);
+    head.rotation.y = Math.sin(clock * 1.6) * 0.12 * (groove.headbob || 0.4) * (0.15 + 0.85 * gAmp);
     if (playStyle === "blow") group.rotation.x = -0.12 - bob * 0.05 * energyActive;
 
     // RAISE the instrument when playing; LOWER + drop it toward the lap when resting.
@@ -919,8 +981,9 @@ export function makeAlien(THREE, traits, member, seed) {
       if (i === playerIdx) continue;
       if (stringed && i === holderIdx) continue;
       const a = arms[i]; _rest.copy(a.rest);
-      _rest.x += Math.sin(clock * (1.4 + energy) + i) * 0.05 * H;
-      _rest.y += bob * 0.05 * H * gAmp + Math.sin(clock * 2 + i) * 0.02 * H;
+      const idleAmp = 0.15 + 0.85 * gAmp;   // idle arms too calm down when the voice is quiet
+      _rest.x += Math.sin(clock * (1.4 + energy) + i) * 0.05 * H * idleAmp;
+      _rest.y += bob * 0.05 * H * gAmp + Math.sin(clock * 2 + i) * 0.02 * H * idleAmp;
       a.solve(_rest);
     }
   }
