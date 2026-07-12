@@ -20,7 +20,8 @@ const { serve, capturePageErrors, installOfflineRoute } = require("./probe-harne
 const ROOT = path.join(__dirname, ".."), PORT = 8812;
 const OUT = path.join(ROOT, "scratch", "shots");
 
-const GENRES = ["heavymetal", "jazz", "ambient", "techno", "vaporwave"];
+const GENRES = ["heavymetal", "jazz", "vaporwave"];
+const ORBIT_SPEED = 0.0055;   // must match app/starcruise.js orbitBy ORBIT_SPEED
 
 // same GL launch as starcruise-run.js — a real WebGL context via SwiftShader/ANGLE.
 async function launchGL() {
@@ -113,10 +114,42 @@ async function main() {
     });
     await page.waitForTimeout(250);   // let the compositor present the DANCE frame
 
+    // CLOSE-UP ON THE FACES. All three moves go through the REAL nav path
+    // (__drag -> orbitBy -> noteInput(); wheel -> onWheel -> dollyBy -> noteInput()),
+    // so the music-video auto-cam is suspended for AUTO_IDLE(2.5s) and holds our pose:
+    //   1) front-on (yaw -> 0, so the +Z-facing players look at the lens)
+    //   2) tilt the view UP toward the heads (pitch -> a small negative angle)
+    //   3) dolly in with a real wheel event so the faces fill the frame.
+    const handle0 = await page.$("#starcruise-canvas");
+    const box = await handle0.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    // 1)+2) orient: set yaw->0 and pitch->TARGET_PITCH via a single synthetic drag.
+    await page.evaluate((SPEED) => {
+      const SC = window.__STARCRUISE, o = SC.orbit();
+      const TARGET_PITCH = -0.24;                 // tilt UP so the heads/faces sit centre-frame
+      const dx = o.yaw / SPEED;                    // orbitBy: yaw -= dx*SPEED  => yaw 0
+      const dy = (o.pitch - TARGET_PITCH) / SPEED; // orbitBy: pitch -= dy*SPEED => TARGET
+      SC.__drag(dx, dy);
+    }, ORBIT_SPEED);
+    // 3) dolly IN toward the band until the faces are close (real wheel -> dollyBy).
+    //    Negative deltaY shrinks orbit.dist; loop until we hit a face-filling distance
+    //    (or the app's minDist clamp), reading orbit() back each notch.
+    for (let z = 0; z < 14; z++) {
+      const o = await page.evaluate(() => window.__STARCRUISE.orbit());
+      if (o.dist <= 5.8) break;
+      await page.mouse.wheel(0, -220);
+      await page.waitForTimeout(20);
+    }
+    // re-assert front-on pitch after the dolly (dolly doesn't move pitch, but keep it
+    // fresh so the 2.5s override clock is restamped right before the grab) + present.
+    await page.evaluate(() => { window.__STARCRUISE.__step(0.016); window.__STARCRUISE.__step(0.016); });
+    await page.waitForTimeout(200);
+
     // sanity: the low-res target is a real non-blank frame right now.
     const s = await page.evaluate(() => window.__STARCRUISE.sampleLowRes());
+    const orbitNow = await page.evaluate(() => window.__STARCRUISE.orbit());
 
-    const outPath = path.join(OUT, `starcruise-${genre}.png`);
+    const outPath = path.join(OUT, `land-${genre}.png`);
     const handle = await page.$("#starcruise-canvas");
     if (!handle) throw new Error("no #starcruise-canvas to screenshot");
     await handle.screenshot({ path: outPath });
@@ -137,7 +170,7 @@ async function main() {
     }
 
     report.push({ genre, info, sample: s, outPath, size: sz });
-    console.log(`  SHOT  ${genre.padEnd(11)} phase=${info.phase} band=${info.band} backdrop=${info.backdrop} nonBg=${s && s.nonBg} spread=${s && s.spread} -> ${outPath} (${sz} bytes)`);
+    console.log(`  SHOT  ${genre.padEnd(11)} phase=${info.phase} band=${info.band} backdrop=${info.backdrop} nonBg=${s && s.nonBg} spread=${s && s.spread} dist=${orbitNow && orbitNow.dist.toFixed(2)} yaw=${orbitNow && orbitNow.yaw.toFixed(2)} pitch=${orbitNow && orbitNow.pitch.toFixed(2)} -> ${outPath} (${sz} bytes)`);
   }
 
   await page.evaluate(() => window.__STARCRUISE.stop());

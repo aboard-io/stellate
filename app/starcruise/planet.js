@@ -58,6 +58,11 @@ export function mulberry32(a) {
 }
 
 const clamp = (x, lo, hi) => (x < lo ? lo : x > hi ? hi : x);
+// COLOUR BANDS. The vertex colour for a vertex is sampled at a QUANTIZED elevation so
+// the surface reads as legible terraced bands (beach / lowland / highland / peak / snow)
+// instead of one smeared gradient — the readability half of the flat-shaded facet look.
+// Deterministic (pure snap), mobile (no texture). 16 steps = distinct but not blocky.
+const COLOR_BANDS = 16;
 const lerp = (a, b, t) => a + (b - a) * t;
 const smooth = (t) => { t = t < 0 ? 0 : t > 1 ? 1 : t; return t * t * (3 - 2 * t); };
 
@@ -68,6 +73,16 @@ const smooth = (t) => { t = t < 0 ? 0 : t > 1 ? 1 : t; return t * t * (3 - 2 * t
 // (R = 18 for a 10-unit band) drops ~0.7 units over 5 units — an obvious bend —
 // while still reading as a coherent globe (not a marble you fall off).
 export const SMALL_WORLD = { bandSpan: 10, radiusFactor: 1.8 };
+// SMALL-WORLD RELIEF LEGIBILITY. On a little world the base radius (~1.8*bandSpan) is
+// tiny, so "mountain height = reliefFrac * radius" (fine for a giant globe) yields relief
+// of a fraction of a unit — invisible in the fixed ~bandSpan band you stand in (the
+// "flat smeared" bug). Instead, in small-world mode we scale relief to the BAND SPAN and
+// drive its MAGNITUDE off the terrain TYPE's intrinsic relief signature (mountains >>
+// hills) so hills/ridges/craters/dunes READ underfoot. GAIN sets the overall drama, MIN
+// floors even a flat type so nothing renders dead-level, MAXFRAC caps relief below the
+// radius so peaks never spike through the little core. The height FIELD and the baked
+// mesh both read k.relief, so foot-plant/heightAt stay pixel-consistent with the terrain.
+export const SMALL_WORLD_RELIEF = { gain: 4.0, min: 0.20, maxFrac: 0.5 };
 export function smallWorldRadius(bandSpan, factor) {
   bandSpan = bandSpan != null ? bandSpan : SMALL_WORLD.bandSpan;
   factor = factor != null ? factor : SMALL_WORLD.radiusFactor;
@@ -302,6 +317,10 @@ function resolveKnobs(seed, opts) {
   // apply the terrain-type overrides (seeded for per-planet variety WITHIN a type)
   const typed = def.knobs(mulberry32(((seed | 0) ^ 0x85ebca6b) >>> 0));
   Object.assign(k, typed);
+  // the TYPE's intrinsic relief signature (before any opts override) — small-world
+  // relief is driven off THIS so mountains stay dramatic and hills stay gentle even
+  // when the caller forces a tiny reliefFrac for the (huge-radius) galaxy view.
+  const typeReliefFrac = typed.reliefFrac != null ? typed.reliefFrac : k.reliefFrac;
 
   // explicit opts win over everything (backward-compatible knob overrides)
   for (const key of ["freq", "octaves", "gain", "lacunarity", "warp",
@@ -316,7 +335,21 @@ function resolveKnobs(seed, opts) {
   }
 
   k.octaves = clamp(Math.round(k.octaves), 1, 6) | 0;         // mobile cap
-  k.relief = k.radius * k.reliefFrac;
+
+  // RELIEF. Normal (large) planet: mountain height is a fraction of the radius. LITTLE-
+  // PRINCE small world (opts.smallWorld, radius auto-picked): scale relief to the BAND
+  // SPAN instead so terrain READS at landing scale, and drive its magnitude off the
+  // TYPE's intrinsic relief signature (mountains >> hills). An explicitly LARGE reliefFrac
+  // still wins; a tiny one is treated as a floor to amplify past, not a ceiling.
+  if (opts.smallWorld && opts.radius == null) {
+    const bandSpan = opts.bandSpan != null ? opts.bandSpan : SMALL_WORLD.bandSpan;
+    const frac = Math.max(typeReliefFrac, opts.reliefFrac != null ? opts.reliefFrac : 0);
+    let relief = bandSpan * frac * SMALL_WORLD_RELIEF.gain;
+    relief = clamp(relief, bandSpan * SMALL_WORLD_RELIEF.min, k.radius * SMALL_WORLD_RELIEF.maxFrac);
+    k.relief = relief;
+  } else {
+    k.relief = k.radius * k.reliefFrac;
+  }
   k.type = typeName;
   k.shape = def.shape;
   k.atmo = def.atmo;
@@ -605,7 +638,10 @@ export function makePlanet(THREE, seed, palette, opts) {
     const r = k.radius + land * k.relief;                        // == heightAtDir(dir)
     pos.setXYZ(i, dx * r, dy * r, dz * r);
     if (r > maxR) maxR = r;
-    ramp(e, tmp);
+    // colour from a QUANTIZED elevation -> crisp terraced bands, not a smear. Geometry
+    // still uses the continuous e above, so foot-plant/heightAt are unaffected.
+    const eBand = Math.round(e * COLOR_BANDS) / COLOR_BANDS;
+    ramp(eBand, tmp);
     const b = i * 3; colors[b] = tmp.r; colors[b + 1] = tmp.g; colors[b + 2] = tmp.b;
   }
   pos.needsUpdate = true;
@@ -613,11 +649,14 @@ export function makePlanet(THREE, seed, palette, opts) {
   geo.computeVertexNormals();                                    // re-derive after displacement
   geo.computeBoundingSphere();
 
+  // FLAT SHADING: crisp low-poly facets so each displaced triangle catches the light as
+  // its own plane — the relief reads as legible structure instead of a smeared blur. Pure
+  // material flag (screen-space derivatives), no geometry cost — stays mobile-light.
   const mat = new THREE.MeshStandardMaterial({
     vertexColors: true,
     roughness: 0.92,
     metalness: 0.02,
-    flatShading: false,
+    flatShading: true,
   });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = "planet";
@@ -649,5 +688,5 @@ export function makePlanet(THREE, seed, palette, opts) {
 export default {
   makePlanet, makeHeightField, mulberry32,
   chooseTerrainType, smallWorldRadius, curvatureDrop,
-  SMALL_WORLD, TERRAIN_TYPES, TERRAIN_TYPE_NAMES,
+  SMALL_WORLD, SMALL_WORLD_RELIEF, TERRAIN_TYPES, TERRAIN_TYPE_NAMES,
 };

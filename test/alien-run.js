@@ -386,6 +386,10 @@ async function inPage() {
     out.floor.push({ role: "dancer", minFootY: minFoot(dFloor, ctxs) });
   }
   out.floorOK = out.floor.every((f) => f.minFootY >= -0.02);
+  // FEET TOUCH THE GROUND (not floating): the LOWEST foot point across the motion sweep must
+  // rest at/just above the local ground (y ≈ 0), never hovering. Players stand near-still so
+  // they plant tight; dancers bounce/sway so their lowest still reaches near the floor.
+  out.floorTouch = out.floor.every((f) => f.minFootY <= (f.role === "dancer" ? 0.16 : 0.11));
 
   // ---- P: PER-ALIEN COLOUR — two aliens of the SAME genre+member but DIFFERENT seeds
   // wear DIFFERENT palettes (individually distinguishable); same seed => same palette.
@@ -482,6 +486,101 @@ async function inPage() {
   }
   out.noDarkDiscs = out.discs.every((d) => d.darkDiscs === 0);
 
+  // ---- W: VISIBLE ARTICULATED JOINTS (goals 0-4) --------------------------------
+  // (SH) EVERY limb carries a body-entry JOINT (a shoulder/hip/socket knob seated on the
+  //      marching-cubes core) so it reads as attached-at-a-joint, not fused smoothly in;
+  // (A)  the PLAYING arm has >= 2 joints (a visible ELBOW + WRIST knob) and the mid joint
+  //      (elbow) actually BENDS as the hand reaches — its interior angle CHANGES between an
+  //      onset pose (hand at the instrument) and a between-onset windup pose — while the
+  //      onset contact still reaches (reach < 0.05).
+  out.joints = [];
+  const impulseRole = { drum: 1, bass: 1 };   // strike/pluck — the elbow visibly windups→strikes
+  for (let i = 0; i < aliens.length; i++) {
+    const a = aliens[i], role = members[i].role, notes = asNotes(onsetSets[role]);
+    // onset arm-reach (min over a tiny window) — the play-the-score contact law, joints on.
+    const rows = sweep(a, notes, true, 400);
+    const onsetReach = Math.max(...notes.map((n) => minReachWin(rows, n.t, 0.02)));
+    // elbow interior angle at the ONSET contact (arm FLEXED to place the hand ON the
+    // instrument via the 2-bone IK — a bent elbow, not a rigid straight stick).
+    const onT = notes[0].t;
+    a.update(0.0, { barPhase: onT, playing: true, level: 1, notes });
+    const jOn = a.jointProbe();
+    const elbowOnset = jOn.playerElbowAngle;
+    // sweep the PLAYING bar and take the elbow-angle RANGE — the mid joint ARTICULATES as
+    // the hand travels (windup -> strike). Impulse styles (strike/pluck) flex a big arc;
+    // sustained styles (bow/blow) hold a flexed contact (small range) — both are jointed.
+    let elo = 9, ehi = -9;
+    for (let s = 0; s < 120; s++) {
+      a.update(0.016, { barPhase: s / 120, playing: true, level: 1, notes });
+      const e = a.jointProbe().playerElbowAngle; elo = Math.min(elo, e); ehi = Math.max(ehi, e);
+    }
+    out.joints.push({
+      role, kinds: jOn.kinds, impulse: !!impulseRole[role],
+      limbCount: jOn.limbCount, bodyEntryJoints: jOn.bodyEntryJoints, everyLimbHasEntry: jOn.everyLimbHasEntry,
+      playerArmJoints: jOn.playerArmJoints, elbowKnob: jOn.playerElbowKnob, wristKnob: jOn.playerWristKnob,
+      elbowOnset: +elbowOnset.toFixed(4),
+      elbowFlexed: elbowOnset < 2.85,                       // clearly bent at the contact, not straight (pi)
+      elbowRange: +(ehi - elo).toFixed(4),                  // how much the mid joint articulates over the bar
+      elbowArticulates: (ehi - elo) > (impulseRole[role] ? 0.3 : 0.05),
+      onsetReach: +onsetReach.toFixed(4),
+    });
+  }
+  out.everyLimbJointed = out.joints.every((j) => j.everyLimbHasEntry && j.bodyEntryJoints >= j.limbCount);
+  // every player arm: 2 visible joints (elbow+wrist), a clearly FLEXED elbow at the contact,
+  // and the mid joint ARTICULATES (big flex for impulse strikers; a jointed hold for sustained).
+  out.armsFlex = out.joints.every((j) => j.playerArmJoints >= 2 && j.elbowKnob && j.wristKnob && j.elbowFlexed && j.elbowArticulates);
+  out.impulseElbowFlexes = out.joints.filter((j) => j.impulse).every((j) => j.elbowRange > 0.3);
+  out.armContactWithJoints = out.joints.every((j) => j.onsetReach < 0.05);
+
+  // (B) LEGS on a legged plan (insectoid) bend at a visible KNEE + ANKLE — sweep the bar
+  //     and confirm the knee interior angle FLEXES (its range spans) and reads clearly bent.
+  {
+    const legTr = Object.assign({}, traits, { body: Object.assign({}, traits.body, { plan: "insectoid", legs: 6 }) });
+    const legAlien = makeAlien(THREE, legTr, members[0], 77);
+    let kneeLo = 9, kneeHi = -9;
+    for (let s = 0; s < 48; s++) {
+      legAlien.update(0.016, { barPhase: s / 48, playing: true, level: 1, notes: [] });
+      const k = legAlien.jointProbe().kneeAngle; if (k != null) { kneeLo = Math.min(kneeLo, k); kneeHi = Math.max(kneeHi, k); }
+    }
+    const lj = legAlien.jointProbe();
+    out.legJoints = { legs: lj.legs, kneeKnob: lj.kneeKnob, ankleKnob: lj.ankleKnob, kneeMin: +kneeLo.toFixed(4), kneeMax: +kneeHi.toFixed(4), flexRange: +(kneeHi - kneeLo).toFixed(4) };
+    out.legsBendKnee = lj.legs > 0 && lj.kneeKnob && lj.ankleKnob && out.legJoints.flexRange > 0.05 && kneeLo < 2.85;
+  }
+
+  // (C) TENTACLES carry visible JOINT NODES along the FABRIK chain (a tentacled plan).
+  {
+    const tentTr = Object.assign({}, traits, { body: Object.assign({}, traits.body, { plan: "cephalopod", tentacles: 5, arms: 2 }) });
+    const tentA = makeAlien(THREE, tentTr, members[0], 55);
+    tentA.update(0.016, { barPhase: 0.2, playing: true, level: 1, notes: [] });
+    out.tentacleNodes = tentA.jointProbe().tentacleNodes;
+    out.tentaclesJointed = out.tentacleNodes >= 3;
+  }
+
+  // ---- BV: BODY SILHOUETTES clearly DIFFER across the 7 plans (goal 5) — the fused-core
+  // bounding-box aspect ratios read as distinct creature shapes (tall cephalopod, squat
+  // wide blob, long segmented insectoid, wide radial hub, tall thin stalk, tall angular
+  // crystalline, lumpy gas cluster), AND two seeds of one plan read as different builds.
+  out.silhouettes = {};
+  for (const plan of PLANS) {
+    const tr = Object.assign({}, traits, { body: Object.assign({}, traits.body, { plan }) });
+    out.silhouettes[plan] = makeAlien(THREE, tr, members[0], 55).bodySignature();
+  }
+  const SIL = out.silhouettes;
+  out.silTall = SIL.cephalopod.yx > 1.1 && SIL.stalk.yx > 1.0 && SIL.crystalline.yx > 1.0;
+  out.silSquat = SIL.radial.yx < 0.95 && SIL.blob.yx < 0.9 && SIL.gas.yx < 0.95;
+  out.silInsectLong = SIL.insectoid.zx > 1.15;                 // segmented body trails back in z
+  out.silRadialHub = Math.abs(SIL.radial.zx - 1) < 0.15;      // radially symmetric wide hub
+  out.silBlobWide = SIL.blob.yx < 0.88;                        // squat + wide
+  out.silAllDistinct = new Set(PLANS.map((p) => JSON.stringify([SIL[p].x, SIL[p].y, SIL[p].z]))).size === PLANS.length;
+  {
+    const s1 = makeAlien(THREE, Object.assign({}, traits, { body: Object.assign({}, traits.body, { plan: "cephalopod" }) }), members[0], 111).bodySignature();
+    const s2 = makeAlien(THREE, Object.assign({}, traits, { body: Object.assign({}, traits.body, { plan: "cephalopod" }) }), members[0], 222).bodySignature();
+    out.silPerAlien = [s1, s2];
+    out.silPerAlienDiffer = JSON.stringify([s1.x, s1.y, s1.z]) !== JSON.stringify([s2.x, s2.y, s2.z]);
+  }
+  out.silhouettesDiffer = out.silTall && out.silSquat && out.silInsectLong && out.silRadialHub
+    && out.silBlobWide && out.silAllDistinct && out.silPerAlienDiffer;
+
   renderer.setRenderTarget(null);
   target.dispose(); renderer.dispose();
   return out;
@@ -567,6 +666,7 @@ async function main() {
   // N/O/P/Q — the SMOOTH+LEGIBLE contract additions.
   ok(R.allContiguous, `N1. CONTIGUOUS: every rig is ONE connected cluster, no floating parts (${JSON.stringify(R.contiguity)})`);
   ok(R.floorOK, `O1. FLOOR: feet/body never clip below the ground across playing+resting sweeps (${JSON.stringify(R.floor)})`);
+  ok(R.floorTouch, `O2. FEET TOUCH: the lowest foot rests ON the ground (y≈0), NOT floating, across the sweep (${JSON.stringify(R.floor)})`);
   ok(R.colorsDistinct, `P1. PER-ALIEN COLOUR: two same-genre members (seeds 1234 vs 5678) wear DIFFERENT palettes (A=${JSON.stringify(R.palA)} B=${JSON.stringify(R.palB)})`);
   ok(R.colorDeterministic, "P2. palette is DETERMINISTIC (same seed -> same colours)");
   ok(R.drummerStrikes, `Q1. DRUMMER strikes fast: hand snaps a big arc (${R.drum.windupTravel}) onto the drum AT the onset (contact=${R.drum.contactAtOnset}, reach=${R.drum.reachAtOnset})`);
@@ -596,6 +696,37 @@ async function main() {
 
   // V — no black-circle disc.
   ok(R.noDarkDiscs, `V1. NO shaky black-circle blob-shadow DISC remains under any alien (${JSON.stringify(R.discs)})`);
+
+  // W — VISIBLE ARTICULATED JOINTS (goals 0-4).
+  for (const j of R.joints) {
+    ok(j.everyLimbHasEntry && j.bodyEntryJoints >= j.limbCount,
+      `SH[${j.role}]. EVERY limb has a body-entry JOINT on the core (${j.bodyEntryJoints} entry knobs >= ${j.limbCount} limbs; kinds ${JSON.stringify(j.kinds)})`);
+  }
+  ok(R.everyLimbJointed, "SH1. every limb on every player is ATTACHED AT A VISIBLE JOINT (shoulder/hip/socket knob at the body entry)");
+  for (const j of R.joints) {
+    ok(j.playerArmJoints >= 2 && j.elbowKnob && j.wristKnob,
+      `A[${j.role}]. playing arm has >= 2 visible joints — a knob at the ELBOW + WRIST (joints=${j.playerArmJoints})`);
+    ok(j.elbowFlexed && j.elbowArticulates,
+      `A-flex[${j.role}]. the ELBOW is FLEXED at the contact (angle=${j.elbowOnset} < 2.85, not a straight stick) and the mid joint ARTICULATES over the bar (range=${j.elbowRange})`);
+  }
+  ok(R.armsFlex, "A1. every playing arm is a 3-segment JOINTED limb with a bent, articulating elbow (not a rigid pivot)");
+  ok(R.impulseElbowFlexes, `A1b. IMPULSE strikers (strike/pluck) visibly FLEX the elbow through windup->strike (${JSON.stringify(R.joints.filter((j) => j.impulse).map((j) => ({ role: j.role, range: j.elbowRange })))})`);
+  ok(R.armContactWithJoints, `A2. PRESERVED — the onset arm-CONTACT still reaches (reach ${JSON.stringify(R.joints.map((j) => j.onsetReach))} all < 0.05) with the jointed motion`);
+
+  // B — legs bend at a visible knee (legged plan).
+  ok(R.legsBendKnee, `B1. LEGS bend at a visible KNEE + ANKLE on a legged plan (insectoid): knee flexes ${JSON.stringify(R.legJoints)}`);
+
+  // C — tentacles have visible joint nodes.
+  ok(R.tentaclesJointed, `C1. TENTACLES carry visible JOINT NODES along the FABRIK chain (${R.tentacleNodes} chain-node knobs)`);
+
+  // BV — body silhouettes clearly differ across the 7 plans + per-alien build.
+  ok(R.silTall, `BV1. TALL plans read tall: cephalopod/stalk/crystalline yx>1 (${JSON.stringify({ ceph: R.silhouettes.cephalopod.yx, stalk: R.silhouettes.stalk.yx, cryst: R.silhouettes.crystalline.yx })})`);
+  ok(R.silSquat, `BV2. SQUAT/wide plans read wide: radial/blob/gas yx<1 (${JSON.stringify({ radial: R.silhouettes.radial.yx, blob: R.silhouettes.blob.yx, gas: R.silhouettes.gas.yx })})`);
+  ok(R.silInsectLong, `BV3. INSECTOID is a long segmented body (depth/width zx=${R.silhouettes.insectoid.zx} > 1.15)`);
+  ok(R.silRadialHub, `BV4. RADIAL is a radially-symmetric wide HUB (zx≈1: ${R.silhouettes.radial.zx})`);
+  ok(R.silAllDistinct, `BV5. all 7 plan silhouettes are DISTINCT bounding-box signatures (${JSON.stringify(Object.fromEntries(Object.entries(R.silhouettes).map(([k, v]) => [k, [v.x, v.y, v.z]])))})`);
+  ok(R.silPerAlienDiffer, `BV6. two seeds of ONE plan read as DIFFERENT builds (cephalopod ${JSON.stringify(R.silPerAlien.map((s) => [s.x, s.y, s.z]))})`);
+  ok(R.silhouettesDiffer, "BV7. BODY SILHOUETTES are genuinely distinct per plan + per alien — no uniform round blobs");
 
   ok(perr.length === 0, "G1. no console/page errors" + (perr.length ? " :: " + perr.join(" | ") : ""));
 
