@@ -116,6 +116,9 @@ let raf = 0, lastT = 0;
 let band = [];               // [{group, update}]
 let dancers = [];            // [{group, update}] — extra background dancer-aliens (no instrument)
 let stage = null;            // shadow-RECEIVING stage disc under the band
+let groundPlanet = null;     // the PROCEDURAL PLANET the band stands on (planet.js; heightAt foot-plant)
+let groundH0 = 0;            // heightAt(0,0) of the ground planet (so its pole sits at y=0)
+const GROUND_R = 110;        // ground-planet radius (large => a gentle, walkable local patch)
 let backdrop = null;         // {group, update}
 let ship = null;             // { group, update(dt, phase, landProgress) } — the greet-craft saucer
 let cockpit = null;          // { group, update, setGenres } — the transit COCKPIT interior
@@ -210,6 +213,13 @@ let wasLanded = false;            // edge-detect entering a landed phase (seed o
 // so applyOrbitToCamera renders it; a CUT snaps orbit to a new shot, and between cuts
 // it drifts (slow orbit) + bobs on the beat. All time comes from dt (deterministic).
 const autoCam = { active: false, shot: 0, shotT: 0, cuts: 0, forceCut: true, onDrummer: false, drummerShot: -1 };
+// ESTABLISH EASE — on touchdown the landed camera used to SNAP to the front establishing
+// wide shot (a hard cut from the descent pose = the "lurch/cut" at landing). Instead we
+// SEED the orbit from the live descent pose (continuous — the camera stays exactly where
+// the flight left it) and critically-EASE it into that establishing shot over ESTAB_DUR
+// seconds; runAutoCam (roam + beat cuts) takes over once the ease completes. Deterministic.
+const establish = { active: false, t: 0 };
+const ESTAB_DUR = 0.75;
 let autoShots = [];               // per-land cinematic shot list (band closeups + wides)
 let _vclock = 0;                  // virtual clock (accumulated dt) — the auto-cam timebase
 let _lastInputT = -1e9;           // last user-input virtual time (manual override window)
@@ -230,13 +240,14 @@ async function ensureLoaded() {
   THREE = await import("../vendor/three/three.module.min.js");
   // some bundlers namespace the default; the ESM build exports named symbols.
   if (THREE.default && !THREE.WebGLRenderer) THREE = THREE.default;
-  const [traits, alien, backdropMod, postfx, flightMod, shipMod] = await Promise.all([
+  const [traits, alien, backdropMod, postfx, flightMod, shipMod, planetMod] = await Promise.all([
     import("./starcruise/traits.js"),
     import("./starcruise/alien.js"),
     import("./starcruise/backdrop.js"),
     import("./starcruise/postfx.js"),
     import("./starcruise/flight.js"),
     import("./starcruise/ship.js"),
+    import("./starcruise/planet.js"),
   ]);
   mods = {
     traitsFromGenre: traits.traitsFromGenre,
@@ -246,6 +257,11 @@ async function ensureLoaded() {
     makeFlight: flightMod.makeFlight,
     makeCockpit: shipMod.makeCockpit,
     makePlanet: shipMod.makePlanet,
+    // the DETERMINISTIC PROCEDURAL PLANET (vendored simplex-noise) — the real GROUND the
+    // band lands on. makeGroundPlanet(THREE, seed, palette, opts) -> mesh with .heightAt so
+    // the stage/feet plant on the terrain and the descent lands onto a real world, not a
+    // flat stage that pops in (the galaxy marker + the ground are the SAME genre's planet).
+    makeGroundPlanet: planetMod.makePlanet,
     // the GENRE STAR-MAP frame + projection (single source of truth shared with the
     // flight camera) so the planet markers sit at the SAME coords the camera flies to.
     FIELD: flightMod.FIELD,
@@ -487,6 +503,19 @@ function rosterFor(traitsBand) {
   return voices.map((v) => byVoice[v] || synthMember(v)).slice(0, BAND_CAP);
 }
 
+// curSpawnDom — the DOMINANT genre the current surface (band+ground+backdrop) was built
+// for. The surface is keyed by planet identity so it is built ONCE per genre (on APPROACH),
+// PERSISTS through the descent + touchdown (no rebuild -> no pop), and is rebuilt only when
+// the dominant moves to a DIFFERENT genre. Cleared in despawnBand (depart / teardown).
+let curSpawnDom = null;
+// ensureSurface — (re)build the surface only if it is not already up for this dominant
+// genre. Called on APPROACH (grow in during the descent) and on LAND (covers a direct land).
+function ensureSurface(genreOrWeights, dominant, seed) {
+  if (dominant && dominant === curSpawnDom && band.length) return;   // already up for this planet
+  spawnFor(genreOrWeights, seed);
+  curSpawnDom = dominant || null;
+}
+
 // build the band + backdrop + ship for a genre (called on land / dominant change).
 // Everything spawned here is torn down together in despawnBand().
 function spawnFor(genreOrWeights, seed) {
@@ -503,6 +532,26 @@ function spawnFor(genreOrWeights, seed) {
   // rebuild (resize / DPR change) re-applies it to the freshly-built pass.
   curRenderStyle = traits.renderStyle || null;
   if (ps1 && ps1.setStyle && curRenderStyle) ps1.setStyle(curRenderStyle.post);
+  // GROUND PLANET — the real procedural world the band stands on (vendored simplex-noise).
+  // Built per-genre from the SAME palette + seed, baked ONCE here (mobile-light: capped
+  // subdivision), placed so its north pole sits at y=0 (heightAt(0,0)). Stage/feet plant on
+  // heightAt so the ensemble sits ON the curved terrain, and the galaxy-to-surface descent
+  // lands onto a real growing world (the same genre's planet) rather than a flat stage that
+  // pops in. Guarded: if the build fails we fall back to the flat stage (groundPlanet null).
+  groundPlanet = null; groundH0 = 0;
+  try {
+    if (mods.makeGroundPlanet) {
+      groundPlanet = mods.makeGroundPlanet(THREE, useSeed, traits.palette, {
+        detail: isCoarse() ? 2 : 3, radius: GROUND_R, reliefFrac: 0.011,
+        seaLevel: 0.42, atmosphere: false,
+      });
+      groundH0 = (groundPlanet.heightAt && groundPlanet.heightAt(0, 0)) || GROUND_R;
+      groundPlanet.position.set(0, -groundH0, 0);           // north pole -> world y = 0
+      groundPlanet.name = "groundPlanet";
+      groundPlanet.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = true; } });
+      scene.add(groundPlanet);
+    }
+  } catch (e) { groundPlanet = null; groundH0 = 0; }
   // backdrop (procedural city/farm behind the band).
   backdrop = mods.makeBackdrop(THREE, traits, useSeed);
   scene.add(backdrop.group);
@@ -515,7 +564,7 @@ function spawnFor(genreOrWeights, seed) {
     const smat = new THREE.MeshLambertMaterial({ color: 0x1b1526, flatShading: true });
     smat.polygonOffset = true; smat.polygonOffsetFactor = 1; smat.polygonOffsetUnits = 1;
     stage = new THREE.Mesh(new THREE.CircleGeometry(8.4, 44), smat);
-    stage.rotation.x = -Math.PI / 2; stage.position.y = 0.02;
+    stage.rotation.x = -Math.PI / 2; stage.position.y = groundYAt(0, 0) + 0.02;   // sit on the terrain
     stage.receiveShadow = true; stage.name = "stage";
     scene.add(stage);
   }
@@ -537,7 +586,7 @@ function spawnFor(genreOrWeights, seed) {
     const off = (i - (n - 1) / 2);           // centered index, e.g. -2,-1,0,1,2
     a.group.position.x = off * spread;
     a.group.position.z = 2.0 - Math.abs(off) * 0.85;   // deeper arc: center forward, wings back
-    a.group.position.y = 0;
+    a.group.position.y = groundYAt(a.group.position.x, a.group.position.z);   // foot-plant on terrain
     a.group.rotation.y = -off * 0.13;        // yaw toward the pilot at the arc center
     enableShadows(a.group);                  // the players CAST shadows onto the stage
     scene.add(a.group);
@@ -570,7 +619,7 @@ function spawnFor(genreOrWeights, seed) {
     const rad = 5.0 + (i % 2) * 1.4 + seedR() * 1.0;   // wider ring (band is spread further)
     const px = bandCentroid.x + Math.cos(ang) * rad;
     const pz = bandCentroid.z + Math.sin(ang) * rad - 0.6;   // pushed back (-z)
-    d.group.position.set(px, 0, pz);
+    d.group.position.set(px, groundYAt(px, pz), pz);          // foot-plant on terrain
     d.group.rotation.y = Math.atan2(bandCentroid.x - px, bandCentroid.z - pz);  // face the band
     const sc = 0.85 + seedR() * 0.25;
     d.group.scale.setScalar(sc);
@@ -587,6 +636,14 @@ function mulberry(a) {
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+// groundYAt(x,z) — the WORLD y of the ground-planet terrain under a landing-patch offset
+// (x,z). The planet is placed so its north pole (heightAt(0,0)) sits at y=0, so this is
+// heightAt(x,z) - heightAt(0,0): 0 at the stage centre, dipping gently with curvature /
+// terrain toward the edges. 0 when there is no ground planet (flat-stage fallback).
+function groundYAt(x, z) {
+  if (!groundPlanet || !groundPlanet.heightAt) return 0;
+  return groundPlanet.heightAt(x, z) - groundH0;
 }
 // mark every mesh in a spawned group as a shadow caster + receiver so the key light
 // MODELS the forms — done here (on our spawns) so shadows are guaranteed even before
@@ -607,9 +664,11 @@ function despawnBand() {
   for (const d of dancers) { scene.remove(d.group); disposeObj(d.group); }
   dancers = [];
   if (stage) { scene.remove(stage); disposeObj(stage); stage = null; }
+  if (groundPlanet) { scene.remove(groundPlanet); disposeObj(groundPlanet); groundPlanet = null; groundH0 = 0; }
   if (backdrop) { scene.remove(backdrop.group); disposeObj(backdrop.group); backdrop = null; }
   if (ship) { scene.remove(ship.group); disposeObj(ship.group); ship = null; }
   curTraits = null;
+  curSpawnDom = null;                              // surface is down — next genre must rebuild
 }
 
 // ---- SPACE / COCKPIT set (transit) ----------------------------------------------
@@ -874,12 +933,24 @@ export async function start() {
 
   // flight state machine driven by the REAL travel + beat hooks.
   flight = mods.makeFlight({ getTravel, getBeat });
+  // APPROACH: commit to descending toward a genre -> BUILD THE SURFACE NOW so it GROWS IN
+  // during the descent instead of popping in at touchdown (the unified-scene fix). Keyed by
+  // dominant genre (one build per planet); spawnFor uses the live WEIGHTS so the band still
+  // matches the mixed audio. It persists through LAND (no rebuild -> no content pop/cut).
+  flight.events.on("phase", (ph) => {
+    if (ph !== "APPROACH") return;
+    const tv = getTravel();
+    if (tv.dominant) ensureSurface(tv.weights && tv.weights.length ? tv.weights : tv.dominant, tv.dominant, getS().seed);
+  });
   flight.events.on("land", () => {
     despawnSpaceRig();                       // leaving transit — drop the cockpit set
     const tv = getTravel();
-    spawnFor(tv.weights && tv.weights.length ? tv.weights : (tv.dominant || firstGenre()), getS().seed);
+    // usually already built at APPROACH (ensureSurface is a no-op then); this covers a
+    // DIRECT land (dominance already high, no APPROACH pass) so we never land empty.
+    ensureSurface(tv.weights && tv.weights.length ? tv.weights : (tv.dominant || firstGenre()),
+      tv.dominant || firstGenre(), getS().seed);
     curDominant = tv.dominant;
-    wasLanded = false;                        // force a fresh FRONT-ON seed next frame
+    wasLanded = false;                        // force a fresh seamless seed next frame
   });
   // DEPART: lift off. Drop the surface ensemble and raise the COCKPIT set so you fly
   // away through space with the planet receding below + the genre display lit.
@@ -891,7 +962,7 @@ export async function start() {
   // spawn an initial band immediately so the very first frame is non-blank even
   // before the flight machine reaches LAND (and for headless proof).
   const tv0 = getTravel();
-  spawnFor(tv0.weights && tv0.weights.length ? tv0.weights : firstGenre(), getS().seed);
+  ensureSurface(tv0.weights && tv0.weights.length ? tv0.weights : firstGenre(), tv0.dominant || firstGenre(), getS().seed);
   curDominant = tv0.dominant;
 
   mountExit();
@@ -1047,6 +1118,43 @@ function seedOrbitFrontOn() {
   orbit.yaw = 0;                                       // 0 = looking from +Z straight at the front
   orbit.pitch = 0.16;                                  // a gentle downward tilt (eye level-ish)
   orbit.fov = 56;
+}
+// seedOrbitFromLiveCamera() — seed the orbit so applyOrbitToCamera reproduces the CURRENT
+// camera exactly (target = the band, dist/yaw/pitch derived from where the camera is). This
+// is the SEAMLESS-ARRIVAL seed: the descent leaves the camera somewhere near the surface and
+// the orbit picks up from that precise pose (no snap), then eases into the establishing shot.
+function seedOrbitFromLiveCamera() {
+  if (!orbit.target || !camera) return;
+  orbit.target.set(bandCentroid.x, bandCentroid.y, bandCentroid.z);
+  const dx = camera.position.x - bandCentroid.x, dy = camera.position.y - bandCentroid.y, dz = camera.position.z - bandCentroid.z;
+  const d = Math.hypot(dx, dy, dz) || orbit.dist;
+  orbit.dist = Math.max(orbit.minDist, Math.min(orbit.maxDist, d));
+  orbit.yaw = Math.atan2(dx, dz);
+  orbit.pitch = Math.max(orbit.minPitch, Math.min(orbit.maxPitch, Math.asin(Math.max(-0.999, Math.min(0.999, dy / d)))));
+  orbit.fov = camera.fov || orbit.fov;
+}
+// runEstablish(dt) — critically-ease the orbit from the seeded arrival pose into the front
+// establishing wide shot (autoShots[0]), then hand off to the roaming auto-cam. One smooth
+// pull-back reveal instead of a hard cut — the touchdown reads as an arrival, not a jump.
+function runEstablish(dt) {
+  const sh = autoShots[0];
+  if (!sh || !orbit.target) { establish.active = false; return; }
+  const k = 1 - Math.exp(-(dt > 0 ? dt : 0) / 0.32);
+  const shDist = Math.max(orbit.minDist, Math.min(orbit.maxDist, sh.dist));
+  orbit.target.x += (sh.target.x - orbit.target.x) * k;
+  orbit.target.y += (sh.target.y - orbit.target.y) * k;
+  orbit.target.z += (sh.target.z - orbit.target.z) * k;
+  orbit.dist += (shDist - orbit.dist) * k;
+  orbit.yaw += (sh.yaw - orbit.yaw) * k;
+  orbit.pitch += (sh.pitch - orbit.pitch) * k;
+  orbit.fov += (sh.fov - orbit.fov) * k;
+  establish.t += (dt > 0 ? dt : 0);
+  if (establish.t >= ESTAB_DUR) {
+    // done — resume the music-video roam on shot 0 (drift, no re-snap).
+    establish.active = false;
+    autoCam.shot = 0; autoCam.shotT = 0; autoCam.forceCut = false; autoCam.active = true;
+    autoCam._yawRate = sh.yawRate; autoCam._dolly = sh.dolly || 0;
+  }
 }
 // seed the orbit from a flight cameraPose so takeover is jump-free & front-on.
 function seedOrbitFromPose(p) {
@@ -1313,16 +1421,24 @@ export function update(dt) {
     // reset the auto-camera to its FRONT establishing wide shot.
     if (!wasLanded) {
       if (scene.background && scene.background.isColor) scene.background.setHex(SKY_COLOR);
-      seedOrbitFrontOn();
       buildAutoShots();
-      autoCam.shot = 0; autoCam.shotT = 0; autoCam.cuts = 0; autoCam.forceCut = true; autoCam.active = false;
+      // SEAMLESS ARRIVAL: seed the orbit from the LIVE descent pose (continuous — no snap),
+      // then EASE into the establishing wide shot, instead of hard-cutting to it. This is the
+      // fix for the touchdown lurch/cut: the galaxy->surface descent flows straight into the
+      // landed framing as one continuous move.
+      seedOrbitFromLiveCamera();
+      establish.active = true; establish.t = 0;
+      autoCam.shot = 0; autoCam.shotT = 0; autoCam.cuts = 0; autoCam.forceCut = false; autoCam.active = false;
       _lastInputT = -1e9;                 // a fresh land starts in auto-camera (no stale input)
     }
     const userActive = (_vclock - _lastInputT) < AUTO_IDLE;
     if (userActive) {
       // MANUAL override: the user drives the orbit directly.
-      autoCam.active = false; autoCam.forceCut = true;   // resume with a fresh cut later
+      autoCam.active = false; autoCam.forceCut = true; establish.active = false;   // cancel the ease
       applyKeyPan(dt);
+    } else if (establish.active) {
+      // ARRIVAL EASE: glide from the descent pose into the establishing shot (no hard cut).
+      runEstablish(dt);
     } else {
       // MUSIC-VIDEO: the auto-camera drives the orbit (slow moves + beat-synced cuts).
       autoCam.active = true;
@@ -1470,6 +1586,7 @@ export function stop() {
   planetBaseR = null; _hiIdx = -1;
   autoShots = []; autoCam.active = false; autoCam.shot = 0; autoCam.shotT = 0; autoCam.cuts = 0; autoCam.forceCut = true;
   autoCam.onDrummer = false; autoCam.drummerShot = -1;
+  establish.active = false; establish.t = 0;
   camFollow.init = false; _wasTransit = false; _fillInject = null;
   _vclock = 0; _lastInputT = -1e9;
   // dispose remaining GL resources (lights carry none; belt-and-braces geometry sweep).
@@ -1534,9 +1651,37 @@ function sampleLowRes() {
   return { w, h, pixels: buf.length / 4, spread, nonBg, blank: spread < 8, allOneColor: spread === 0 };
 }
 
+// frameSignature(gx,gy) — render the current frame and reduce it to a coarse gx*gy
+// grid of average luminance (0..1). A CONTINUITY probe: the L1 distance between two
+// consecutive frame signatures is a cheap "how much did the picture change" scalar,
+// so a SCENE SWAP / teleport (a whole-frame content jump) shows a large signature
+// delta while a smooth cruise/descent stays bounded. Headless-proof; only the test
+// calls it (it forces a render), harmless + unused in production.
+function frameSignature(gx, gy) {
+  if (!running || !renderer || !lowResTarget) return null;
+  gx = gx || 24; gy = gy || 18;
+  update(0);   // ensure a fresh render into the low-res target
+  const w = lowW, h = lowH, buf = new Uint8Array(w * h * 4);
+  try { renderer.readRenderTargetPixels(lowResTarget, 0, 0, w, h, buf); } catch (e) { return { error: String(e) }; }
+  const sig = new Float32Array(gx * gy);
+  const cnt = new Uint32Array(gx * gy);
+  for (let y = 0; y < h; y++) {
+    const cy = Math.min(gy - 1, (y * gy / h) | 0);
+    for (let x = 0; x < w; x++) {
+      const cx = Math.min(gx - 1, (x * gx / w) | 0);
+      const i = (y * w + x) * 4;
+      // Rec.601 luma, normalized 0..1
+      const lum = (0.299 * buf[i] + 0.587 * buf[i + 1] + 0.114 * buf[i + 2]) / 255;
+      const ci = cy * gx + cx; sig[ci] += lum; cnt[ci]++;
+    }
+  }
+  for (let i = 0; i < sig.length; i++) if (cnt[i]) sig[i] /= cnt[i];
+  return { gx, gy, sig: Array.from(sig, (v) => +v.toFixed(4)) };
+}
+
 // debug / headless-probe hook (mirrors window.__X / window.__VIDEO).
 window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBeat, running: false,
-  canvas: () => displayCanvas, band: () => band, loaded: () => loaded, sampleLowRes,
+  canvas: () => displayCanvas, band: () => band, loaded: () => loaded, sampleLowRes, frameSignature,
   hasThree: () => !!(THREE && THREE.WebGLRenderer),
   // exit affordance + resolution probes (headless-proof; harmless in production).
   hasExit: () => !!(exitBtn && exitBtn.parentNode),
@@ -1694,6 +1839,12 @@ window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBe
   },
   // ---- headless-probe: scene inspection + deterministic travel/beat injection ----
   hasBackdrop: () => !!backdrop,
+  // hasGround(): is the procedural PLANET ground present under the band? + a couple of
+  // planted heights (proves the band sits ON real terrain, not a flat stage that popped in).
+  hasGround: () => !!groundPlanet,
+  ground: () => (groundPlanet ? { radius: GROUND_R, h0: +groundH0.toFixed(3),
+    y00: +groundYAt(0, 0).toFixed(3), yEdge: +groundYAt(9, 0).toFixed(3),
+    posY: +groundPlanet.position.y.toFixed(2) } : null),
   hasShip: () => !!ship,
   hasCockpit: () => !!cockpit,
   hasPlanet: () => !!planet,
