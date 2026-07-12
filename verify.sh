@@ -65,10 +65,15 @@ run "prove   " node engine/invariants.js prove &
 # cross-checked against `prove` (two independent implementations must agree)
 # plus a seeded Monte-Carlo witness through the real K.mix.
 run "matproof" node test/prove-matrix.test.js &
+# poscover: the STAR-MAP POS COMPLETENESS gate (test/pos-coverage.js) — every
+# runtime genre (GenreKernel.GENRES) MUST have an app/world.js POS entry, else
+# app boot drops into computeGenreLayout's relaxation and crashes the renderer
+# (the 2026-07-11 blank-app outage). Plain node, no browser — CI-safe.
+run "poscover" node test/pos-coverage.js &
 
 FAILED=0
 declare -A DONE
-for _ in 1 2 3 4 5; do
+for _ in 1 2 3 4 5 6; do
   wait -n
   for f in "$TMP"/*.res; do
     [ -e "$f" ] || continue

@@ -79,8 +79,12 @@ is `[x,y]` in the chart's logical px and is now **optional**:
   (`app/starmap.js` similarity-seeded relaxation). After a batch of additions,
   re-bake the cache: open the app, read `window.__X.POS`, and paste it back into
   `app/world.js`'s `POS` table (the batch re-bake pastes the full relaxed layout
-  back). A genre missing from `POS` is *invisible-but-audible* — the hogcore/
-  prelude lesson — so don't skip the re-bake.
+  back). A genre missing from `POS` is worse than *invisible-but-audible* — under
+  the **real** app boot the missing-genre relaxation collapses the layout and
+  CRASHES the WebGL renderer (blank app, no 🛸 — the 2026-07-11 folk outage) — so
+  don't skip the re-bake. **`test/pos-coverage.js` (verify.sh `poscover` row)
+  hard-fails on any GENRES key missing from POS**, and `test/full-boot-run.js`
+  (browser battery) asserts the real boot actually comes up; run both after adding.
 
 ## Guardrails
 - **Never hand-edit the `GENRES` literal.** Use the tool; it owns the markers.

@@ -57,9 +57,17 @@ be held from prod by the auto-guard until his word: A.1, D.1, D.2, F.2.
 `tools/ship.sh` = verify.sh (matrix/validate/engine/prove/matproof) + theory/pipes/speech
 → git push → deploy-stellate.sh (rsync to droplet). Refuses a dirty tree. For app/engine
 changes ALSO the browser battery (explorer-ui, genre-viz, share-url, simulate-path,
-blend-arrival, sampler-inserts-live, wavout, segment-parity;
+blend-arrival, sampler-inserts-live, wavout, segment-parity, **full-boot-run**;
 `NODE_PATH=/home/ford/ftrain-2025/node_modules` — see ROADMAP §3.1 to de-hardcode this).
 Recapture `node test/fixtures.js capture` after intentional recipe drift (name the cause).
+- **POS COMPLETENESS (2026-07-11 outage law):** ADDING A GENRE requires updating
+  `app/world.js` POS (see `docs/ADDING-A-GENRE.md`) — a genre in `GenreKernel.GENRES`
+  but missing from POS drops app boot into `computeGenreLayout`'s relaxation and CRASHES
+  the WebGL renderer (blank app, no 🛸). Two gates guard this class: `test/pos-coverage.js`
+  (plain node, in verify.sh's `poscover` row — CI-safe, catches the exact bug symbolically)
+  and `test/full-boot-run.js` (browser battery — loads the REAL index.html/app/main.js boot,
+  asserts no crash + 🛸 present + starmap rendered; the star-cruise probes stub main.js so
+  ONLY this gate catches a real-boot crash).
 segment-parity BYTE-EQUAL. matrix diagonal-dominant (**249/249**). Machines verify
 structure; **Paul's ears verify taste**.
 
