@@ -240,9 +240,39 @@ async function main() {
       distinct: JSON.stringify(planetKids(pCrystal)) !== JSON.stringify(planetKids(pGas)),
     };
 
+    // ---- #5 L-SYSTEM / SHAPE-GRAMMAR + #4 PBR --------------------------------
+    // The city is grown by a recursive split-grammar into MODULES: superquadric
+    // masses ('sq'), curve-swept tube spires ('tube'), lathe cupolas ('lathe') +
+    // greebles, plus a minority of baked-window box towers ('box'). Prove the
+    // buildings are de-squared (curve/superquadric prims present, not just boxes),
+    // span many module families, and that the 'pbr' renderStyle swaps in a real
+    // MeshStandardMaterial (env-mapped) for city + planet — render-only + non-blank.
+    function buildingPrims(b) { const s = new Set(); b.group.traverse((o) => { if (o.isInstancedMesh && o.name === "buildings") s.add((o.userData && o.userData.prim) || "?"); }); return Array.from(s).sort(); }
+    function buildingFamilyCount(b) { let n = 0; b.group.traverse((o) => { if (o.isInstancedMesh && o.name === "buildings") n++; }); return n; }
+    function pbrBuildMat(b) {
+      let out = null;
+      b.group.traverse((o) => {
+        if (out) return;
+        if (o.isInstancedMesh && o.name === "buildings" && o.material) {
+          const m = o.material; out = { type: m.type, standard: !!m.isMeshStandardMaterial, env: !!m.envMap, metal: m.metalness };
+        }
+      });
+      return out;
+    }
+    const grammar = { cityPrims: buildingPrims(city), cityBFams: buildingFamilyCount(city) };
+    const pbrCity = makeBackdrop(THREE, styleTraits("city", "pbr"), 5);
+    const pbrPlanet = makePlanet(THREE, styleTraits("city", "pbr"), 5);
+    pbrPlanet.update(0.1);
+    const pbrProbe = {
+      build: pbrBuildMat(pbrCity),
+      layoutEq: sumSig(instats(pbrCity)) === baseLayout,
+      spread: renderStats(pbrCity).spread,
+      planet: matSig(pbrPlanet.group, "planet-body"),
+    };
+
     renderer.dispose();
     return {
-      cityStats, farmStats, cityRender, farmRender, cityBlink, farmBlink, worlds, planetWorld,
+      cityStats, farmStats, cityRender, farmRender, cityBlink, farmBlink, worlds, planetWorld, grammar, pbr: pbrProbe,
       style: { build: buildStyle, planet: planetStyle, layout: styleLayout, spread: styleRenderSpread },
       shadow: {
         cityGround: groundReceives(city), farmGround: groundReceives(farm),
@@ -344,6 +374,21 @@ async function main() {
   ok(P.distinct, "W6. fly-away PLANET renders a distinct abstract world per genre");
   ok(P.crystalHasSpikes, "W7. crystalline planet grows surface shards (planet-spikes)");
   ok(P.moltenHasGlow, "W8. molten planet reads hot (planet-glow shell)");
+
+  console.log("=== L-SYSTEM / SHAPE-GRAMMAR + PBR ===");
+  const GR = R.grammar, PB = R.pbr;
+  console.log("  building module prims:", GR.cityPrims.join(", "), " | building family meshes:", GR.cityBFams);
+  console.log("  pbr city building material:", JSON.stringify(PB.build), " layout-eq:", PB.layoutEq, " spread:", PB.spread);
+  console.log("  pbr planet-body material:", JSON.stringify(PB.planet));
+  ok(GR.cityPrims.indexOf("sq") >= 0 && GR.cityPrims.indexOf("tube") >= 0, `G1. city grown from SUPERQUADRIC masses + CURVE-SWEPT tube spires (prims: ${GR.cityPrims.join("/")})`);
+  ok(GR.cityPrims.indexOf("lathe") >= 0, `G2. grammar uses LATHE profiles (cupola toppers) too (prims: ${GR.cityPrims.join("/")})`);
+  ok(!(GR.cityPrims.length === 1 && GR.cityPrims[0] === "box"), "G3. buildings are DE-SQUARED (curved/superquadric geometry, not just boxes)");
+  ok(GR.cityBFams >= 8, `G4. grammar yields MANY varied module families (${GR.cityBFams} building meshes)`);
+  ok(PB.build && PB.build.standard && PB.build.type === "MeshStandardMaterial", `P1. 'pbr' renderStyle uses a real MeshStandardMaterial for buildings (${JSON.stringify(PB.build)})`);
+  ok(PB.build && PB.build.env, "P2. pbr buildings reflect the ONE shared procedural env map (envMap present)");
+  ok(PB.layoutEq, "P3. pbr city layout byte-identical to base (render-only, seed untouched)");
+  ok(PB.spread >= 8, `P4. pbr city renders NON-BLANK (spread=${PB.spread})`);
+  ok(PB.planet && PB.planet.type === "MeshStandardMaterial", `P5. 'pbr' PLANET body is a MeshStandardMaterial (${JSON.stringify(PB.planet)})`);
 
   console.log("=== DETERMINISM ===");
   ok(R.det.cityIdentical, "D1. city seed 5 == seed 5 (identical layout)");

@@ -289,6 +289,47 @@ async function inPage() {
   out.mostlyRound = out.roundMeshes > out.boxMeshes * 2 &&
     (census.SphereGeometry || 0) >= 4 && (census.ConeGeometry || 0) >= 2;
 
+  // ---- K: SUPERQUADRIC + curve-TUBE census (richer procedural geometry) -----------
+  out.superquadricMeshes = census.BufferGeometry || 0;   // hand-rolled superellipsoids
+  out.tubeMeshes = census.TubeGeometry || 0;             // CatmullRom curve-swept tubes
+  out.hasSuperquadric = out.superquadricMeshes >= 4;
+  out.hasTube = out.tubeMeshes >= 3;
+  out.fewerBoxes = (census.BoxGeometry || 0) <= 4;
+
+  // ---- L: PBR renderStyle uses a REAL MeshStandardMaterial + the shared env map ----
+  const pbrAlien = makeAlien(THREE, withStyle("pbr"), drumM, 9);
+  const pbrMat = pbrAlien.materials[0];
+  out.pbr = {
+    type: pbrMat.type, isStandard: !!pbrMat.isMeshStandardMaterial,
+    hasEnvMap: !!pbrMat.envMap, metalness: pbrMat.metalness, roughness: pbrMat.roughness,
+  };
+  {
+    const sc = new THREE.Scene(); sc.background = new THREE.Color(0x0a0410);
+    sc.add(new THREE.AmbientLight(0x8899aa, 0.7));
+    const dl = new THREE.DirectionalLight(0xffeedd, 0.9); dl.position.set(3, 6, 4); sc.add(dl);
+    pbrAlien.update(0.05, { barPhase: 0.5, playing: true, level: 1, notes: [{ t: 0.5 }] });
+    sc.add(pbrAlien.group);
+    renderer.setRenderTarget(target); renderer.clear(); renderer.render(sc, camera);
+    const b = new Uint8Array(LOW_W * LOW_H * 4);
+    renderer.readRenderTargetPixels(target, 0, 0, LOW_W, LOW_H, b);
+    let mn = 255, mx = 0, nb = 0;
+    for (let k = 0; k < b.length; k += 4) { const r = b[k], g = b[k + 1], bl = b[k + 2]; mn = Math.min(mn, r, g, bl); mx = Math.max(mx, r, g, bl); if (r > 20 || g > 20 || bl > 30) nb++; }
+    out.pbr.spread = mx - mn; out.pbr.nonBg = nb;
+  }
+
+  // ---- M: FABRIK IK — the geom solver reaches its target (bones + base preserved),
+  // and a body plan WITH tentacles poses at least one tentacle to reach its curl target.
+  const GEOM = await import("/app/starcruise/geom.js");
+  const chain = []; for (let i = 0; i < 7; i++) chain.push(new THREE.Vector3(0, i * 0.25, 0));   // reach 1.5
+  const fTarget = new THREE.Vector3(0.6, 0.8, 0.35);
+  GEOM.fabrik(chain, fTarget, { iters: 10 });
+  let boneErr = 0; for (let i = 0; i < 6; i++) boneErr = Math.max(boneErr, Math.abs(chain[i + 1].distanceTo(chain[i]) - 0.25));
+  out.fabrik = {
+    err: +chain[6].distanceTo(fTarget).toFixed(4), boneErr: +boneErr.toFixed(4), baseFixed: +chain[0].length().toFixed(4),
+  };
+  const tentTraits = Object.assign({}, traits, { body: Object.assign({}, traits.body, { plan: "cephalopod", tentacles: 5, arms: 2 }) });
+  out.tentacleProof = makeAlien(THREE, tentTraits, members[0], 55).tentacleProof;
+
   renderer.setRenderTarget(null);
   target.dispose(); renderer.dispose();
   return out;
@@ -353,6 +394,22 @@ async function main() {
   ok(R.randomDistinct, `H1. PER-ALIEN randomization: 5 seeds of one genre+member -> 5 DISTINCT rigs (bbox/mesh sigs ${JSON.stringify(R.randomSigs)})`);
   ok(R.motionScalesWithLevel, `I1. MOTION amplitude scales with VOLUME: loud groove=${R.motionLoud} > quiet groove=${R.motionQuiet} (smooth continuum)`);
   ok(R.mostlyRound, `J1. DE-SQUARE: the band is CURVES not cubes (round=${R.roundMeshes} >> box=${R.boxMeshes}; census ${JSON.stringify(R.shapeCensus)})`);
+
+  // K — richer procedural geometry: superquadrics + curve-tubes present, fewer boxes.
+  ok(R.hasSuperquadric, `K1. SUPERQUADRIC geometry present (${R.superquadricMeshes} superellipsoid meshes across the band)`);
+  ok(R.hasTube, `K2. curve-swept TUBE geometry present (${R.tubeMeshes} CatmullRom tube meshes)`);
+  ok(R.fewerBoxes, `K3. FEWER box prims (box=${R.boxMeshes} <= 4, down from the all-cube rig)`);
+
+  // L — 'pbr' renderStyle is a REAL MeshStandardMaterial + the shared reflection env map.
+  ok(R.pbr.isStandard && R.pbr.type === "MeshStandardMaterial", `L1. 'pbr' renderStyle uses a REAL MeshStandardMaterial (type=${R.pbr.type})`);
+  ok(R.pbr.hasEnvMap && R.pbr.metalness > 0.5, `L2. pbr carries the shared ENV MAP + metalness (env=${R.pbr.hasEnvMap} metalness=${R.pbr.metalness} roughness=${R.pbr.roughness})`);
+  ok(R.pbr.spread > 8 && R.pbr.nonBg > 120, `L3. a pbr (chrome/glass) alien renders non-blank (spread=${R.pbr.spread} nonBg=${R.pbr.nonBg})`);
+
+  // M — FABRIK IK reaches its target; a tentacle is fabrik-posed to its curl target.
+  ok(R.fabrik.err < 0.01 && R.fabrik.boneErr < 1e-3 && R.fabrik.baseFixed < 1e-4,
+    `M1. FABRIK solver REACHES target (err=${R.fabrik.err}) preserving bone lengths (maxBoneErr=${R.fabrik.boneErr}) + fixed base (${R.fabrik.baseFixed})`);
+  ok(R.tentacleProof && R.tentacleProof.reached && R.tentacleProof.err < 0.02,
+    `M2. a FABRIK-posed TENTACLE reaches its curl target (err=${R.tentacleProof && R.tentacleProof.err}, reached=${R.tentacleProof && R.tentacleProof.reached})`);
 
   ok(perr.length === 0, "G1. no console/page errors" + (perr.length ? " :: " + perr.join(" | ") : ""));
 

@@ -3,15 +3,20 @@
 // asset-free and cheap — a handful of InstancedMeshes (few draw calls), flat /
 // vertex-lit for the PS1 look; postfx adds the dither/warp.
 //
-// The CITY is a WILD skyline: a whole family of polyhedra — boxes, cylinders,
-// cones, pyramids, triangular prisms, tetrahedra, octahedra, domes, spires,
-// stepped ziggurats and tapered towers — one InstancedMesh per shape family, so
-// the silhouette is varied while the draw-call count stays low. On top of it all
-// sits a crowd of BLINKING beacon/window lights (a single instanced-color mesh
-// whose per-light brightness is driven by seeded phases/periods in update(dt)),
-// and low-poly FOLIAGE (trunks + canopies) is scattered through the scene. The
-// FARM is the calm variant: varied crops (stalks, bushes, corn), silos with
-// conical roofs, foliage tree-lines and a few blinking fireflies.
+// The CITY is a DE-SQUARED skyline grown by a recursive SHAPE GRAMMAR (see
+// buildCity): each lot sprouts a trunk of setback SUPERQUADRIC masses (exponents fed
+// from the genre/species vector), then BRANCHES into child towers or FINISHES with a
+// CURVE-SWEPT TUBE spire or a LATHE cupola, with greebled superquadric bumps on the
+// facades — all via app/starcruise/geom.js. Every module family batches into one
+// InstancedMesh so the silhouette is wildly varied + curvy while draw calls stay low.
+// A minority of baked-window box towers keep the readable-windows read. On top sits a
+// crowd of BLINKING beacon/window lights (a single instanced-color mesh whose
+// per-light brightness is driven by seeded phases/periods in update(dt)), and low-poly
+// FOLIAGE (trunks + canopies) is scattered through the scene. The FARM is the calm
+// variant: varied crops (stalks, bushes, corn), silos with conical roofs, foliage
+// tree-lines and a few blinking fireflies. When the genre's renderStyle.material is
+// 'pbr', the whole city + planet render as real chrome/glass (MeshStandardMaterial +
+// ONE shared procedural env map) alongside the existing flat/cel/wire/glitch styles.
 //
 // CONTRACT
 //   makeBackdrop(THREE, traits, seed) -> { group, update(dt) }
@@ -36,6 +41,146 @@ function colHSL(THREE, h, s, l) {
   return new THREE.Color().setHSL(((((h % 360) + 360) % 360) / 360), s < 0 ? 0 : s > 1 ? 1 : s, l < 0 ? 0 : l > 1 ? 1 : l);
 }
 const TAU = Math.PI * 2;
+
+// ---- GEOM LIB (de-squaring primitives) -----------------------------------------
+// The sibling app/starcruise/geom.js supplies the vector-driven procedural
+// primitives that replace box monotony: SUPERQUADRICS (one exponent-morphing family
+// box<->sphere<->octahedron<->cylinder<->pinched-star), CURVE-SWEPT TUBES along
+// Catmull-Rom splines, LATHE profiles, and a 'pbr' MeshStandardMaterial with ONE
+// shared procedural env map. We import it LAZILY (top-level await) so a missing/late
+// geom.js can never crash the module: every call in makeGeomKit is guarded and falls
+// back to a hand-rolled CORE-Three implementation (superquadric math / TubeGeometry
+// along a CatmullRomCurve3 / LatheGeometry / MeshStandardMaterial), so the world is
+// always curvy + de-squared whether or not geom.js is present.
+//
+// geom.js API consumed here (reconciled to the sibling lib's real signatures):
+//   superquadric(THREE, { ex, ey, segs }) -> BufferGeometry (radius ~1; ex=EW, ey=NS)
+//   tube(THREE, points({x,y,z})[], { radius, radial, segs, closed, taper }) -> BufferGeometry
+//   lathe(THREE, profile({x,y})[], { segs }) -> BufferGeometry
+//   pbrMaterial(THREE, { color, emissive, metalness, roughness, flatShading, ... })
+//       -> MeshStandardMaterial wired to geom's ONE shared env map
+//   sharedEnvMap(THREE) -> Texture
+// Our kit takes convenient (e1=NS,e2=EW / [x,y,z] / [x,y]) inputs and translates; a
+// missing/mismatched geom.js falls back to the hand-rolled core-Three primitive.
+let GEOM = null;
+try { GEOM = await import("./geom.js"); } catch (_e) { GEOM = null; }
+
+// signed power (superellipsoid needs sign-preserving |v|^p).
+function _spow(v, p) { const s = v < 0 ? -1 : 1; return s * Math.pow(Math.abs(v), p); }
+// hand-rolled superellipsoid: a unit (radius ~0.5) superquadric whose two exponents
+// morph box(≈0.1)<->sphere(1)<->octahedron(2)<->cylinder<->pinched-star(>2).
+function sqFallback(THREE, e1, e2, seg) {
+  const rows = Math.max(6, seg | 0), cols = Math.max(6, ((seg * 1.3) | 0));
+  const grid = [];
+  for (let i = 0; i <= rows; i++) {
+    const eta = -Math.PI / 2 + (i / rows) * Math.PI;
+    const ce = Math.cos(eta), se = Math.sin(eta), line = [];
+    for (let j = 0; j <= cols; j++) {
+      const om = -Math.PI + (j / cols) * TAU, co = Math.cos(om), so = Math.sin(om);
+      line.push([_spow(ce, e1) * _spow(co, e2) * 0.5, _spow(se, e1) * 0.5, _spow(ce, e1) * _spow(so, e2) * 0.5]);
+    }
+    grid.push(line);
+  }
+  const v = [];
+  for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) {
+    const a = grid[i][j], b = grid[i][j + 1], c = grid[i + 1][j + 1], d = grid[i + 1][j];
+    v.push(a[0], a[1], a[2], b[0], b[1], b[2], d[0], d[1], d[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2]);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(v), 3));
+  g.computeVertexNormals();
+  return g;
+}
+function tubeFallback(THREE, pts, o) {
+  o = o || {};
+  const vecs = pts.map((p) => (p && p.isVector3) ? p : new THREE.Vector3(p[0], p[1], p[2]));
+  const curve = new THREE.CatmullRomCurve3(vecs);
+  return new THREE.TubeGeometry(curve, o.tubularSegments || 14, o.radius == null ? 0.1 : o.radius, o.radialSegments || 6, !!o.closed);
+}
+function latheFallback(THREE, profile, seg) {
+  const v2 = profile.map((p) => (p && p.isVector2) ? p : new THREE.Vector2(p[0], p[1]));
+  return new THREE.LatheGeometry(v2, Math.max(3, seg | 0));
+}
+// ONE shared procedural equirectangular env map (chrome/glass reflections). Cheap
+// canvas gradient sky + a bright sun blob; deterministic, asset-free, mobile-light.
+function buildEnvMap(THREE) {
+  if (typeof document === "undefined") return null;
+  const cv = document.createElement("canvas"); cv.width = 128; cv.height = 64;
+  const ctx = cv.getContext("2d");
+  const g = ctx.createLinearGradient(0, 0, 0, 64);
+  g.addColorStop(0, "#20263a"); g.addColorStop(0.44, "#5a708f"); g.addColorStop(0.5, "#e3ecff");
+  g.addColorStop(0.56, "#39485c"); g.addColorStop(1, "#080a12");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 64);
+  ctx.fillStyle = "rgba(255,248,228,0.95)"; ctx.beginPath(); ctx.arc(42, 21, 6.5, 0, TAU); ctx.fill();
+  ctx.fillStyle = "rgba(120,200,255,0.5)"; ctx.beginPath(); ctx.arc(96, 30, 9, 0, TAU); ctx.fill();
+  const tex = new THREE.CanvasTexture(cv);
+  tex.mapping = THREE.EquirectangularReflectionMapping; tex.needsUpdate = true;
+  return tex;
+}
+// makeGeomKit — the guarded facade over geom.js: prefer the sibling lib, fall back
+// to the hand-rolled core-Three primitive on any absence/mismatch/throw. envMap is
+// created ONCE, lazily, and shared across every pbr material (mobile budget).
+export function makeGeomKit(THREE) {
+  const has = (n) => GEOM && typeof GEOM[n] === "function";
+  let envMap;
+  const ensureEnv = () => {
+    if (envMap !== undefined) return envMap;
+    envMap = null;
+    if (has("sharedEnvMap")) { try { const e = GEOM.sharedEnvMap(THREE); if (e) envMap = e; } catch (_e) { /* fall through */ } }
+    if (!envMap) envMap = buildEnvMap(THREE);
+    return envMap;
+  };
+  const okGeo = (g) => g && g.isBufferGeometry && g.attributes && g.attributes.position && g.attributes.position.count > 0;
+  return {
+    // e1 = north-south exponent, e2 = east-west exponent (mapped to geom ey/ex).
+    sq(e1, e2, seg) {
+      if (has("superquadric")) { try { const g = GEOM.superquadric(THREE, { ex: e2, ey: e1, segs: seg }); if (okGeo(g)) return g; } catch (_e) { /* fall */ } }
+      return sqFallback(THREE, e1, e2, seg);
+    },
+    // pts as [x,y,z] arrays; opts.radius / radialSegments / tubularSegments / closed / taper.
+    tube(pts, o) {
+      o = o || {};
+      if (has("tube")) {
+        try {
+          const g = GEOM.tube(THREE, pts.map((p) => (p.isVector3 ? p : { x: p[0], y: p[1], z: p[2] })),
+            { radius: o.radius, radial: o.radialSegments, segs: o.tubularSegments, closed: !!o.closed, taper: o.taper });
+          if (okGeo(g)) return g;
+        } catch (_e) { /* fall */ }
+      }
+      return tubeFallback(THREE, pts, o);
+    },
+    // profile as [x,y] arrays (x = radius, y = height).
+    lathe(profile, seg) {
+      if (has("lathe")) { try { const g = GEOM.lathe(THREE, profile.map((p) => (p.isVector2 ? p : { x: p[0], y: p[1] })), { segs: seg }); if (okGeo(g)) return g; } catch (_e) { /* fall */ } }
+      return latheFallback(THREE, profile, seg);
+    },
+    pbr(o) {
+      const env = ensureEnv();
+      if (has("pbrMaterial")) {
+        try {
+          const m = GEOM.pbrMaterial(THREE, {
+            color: o.color, emissive: o.emissive, metalness: o.metalness, roughness: o.roughness,
+            flatShading: !!o.flatShading, vertexColors: !!o.vertexColors, envMap: env,
+          });
+          if (m && m.isMaterial) {
+            if (o.vertexColors) m.vertexColors = true;   // baked windows still ride through
+            if (o.emissiveIntensity != null) m.emissiveIntensity = o.emissiveIntensity;
+            return m;
+          }
+        } catch (_e) { /* fall */ }
+      }
+      const m = new THREE.MeshStandardMaterial({
+        color: o.color, emissive: o.emissive || new THREE.Color(0, 0, 0),
+        metalness: o.metalness == null ? 0.85 : o.metalness, roughness: o.roughness == null ? 0.3 : o.roughness,
+        vertexColors: !!o.vertexColors, flatShading: !!o.flatShading, envMap: env,
+      });
+      m.envMapIntensity = o.envMapIntensity == null ? 1.0 : o.envMapIntensity;
+      if (o.emissiveIntensity != null) m.emissiveIntensity = o.emissiveIntensity;
+      return m;
+    },
+    ensureEnv,
+  };
+}
 
 // ---- ABSTRACT WORLD selection --------------------------------------------------
 // #4 DISTINCT ABSTRACT PLANETS: each genre greets you on its OWN abstract world —
@@ -120,6 +265,12 @@ export function makeBackdrop(THREE, traits, seed) {
   const style = (traits.renderStyle && traits.renderStyle.material) || "flat";
   const wire = style === "wireframe";     // lit wire silhouette (buildings read as edges)
   const smooth = style === "matte";       // matte = soft SMOOTH shading (no low-poly facets)
+  const pbr = style === "pbr";            // PBR = real chrome/glass (MeshStandardMaterial + env map)
+  // the de-squaring primitive kit (superquadric / tube / lathe / pbr) — one per world.
+  const gk = makeGeomKit(THREE);
+  // glass genres read as clearer, less metallic PBR; chrome/default read as bright metal.
+  const pbrMetal = traits.skin === "glass" ? 0.2 : 0.9;
+  const pbrRough = traits.skin === "glass" ? 0.08 : 0.25;
   const glitchTime = { value: 0 };        // shared uniform, driven by update()'s clock
   let celGrad = null;                     // CEL: 3-band hard toon ramp (dark/mid/lit)
   if (style === "cel") {
@@ -154,6 +305,16 @@ export function makeBackdrop(THREE, traits, seed) {
     const flat = o.flatShading !== false && !smooth;
     const emissive = o.emissive || new THREE.Color(0, 0, 0);
     let m;
+    if (pbr) {
+      // real material: chrome/glass reflecting the ONE shared env map. Keeps the
+      // genre-tint as base colour + emissive breath; vertex colours (baked windows)
+      // still ride through. Not global — only when the genre selects 'pbr'.
+      return gk.pbr({
+        color: o.color, emissive, emissiveIntensity: o.emissiveIntensity,
+        metalness: pbrMetal, roughness: pbrRough,
+        vertexColors: !!o.vertexColors, flatShading: flat,
+      });
+    }
     if (style === "cel") {
       m = new THREE.MeshToonMaterial({ color: o.color, emissive, gradientMap: celGrad, vertexColors: !!o.vertexColors });
       m.flatShading = true;
@@ -189,6 +350,17 @@ export function makeBackdrop(THREE, traits, seed) {
     const bb = geo.boundingBox, h = bb.max.y - bb.min.y || 1;
     geo.translate(0, -bb.min.y, 0);
     geo.scale(1, 1 / h, 1);
+    return geo;
+  }
+  // like normGeo but ALSO normalizes the footprint to a unit cube (x,z in [-0.5,0.5],
+  // y in [0,1]) so a superquadric (geom radius ~1) or a fallback (radius ~0.5) both
+  // scale by the same instance w/d as the old boxes did — geometry-source-agnostic.
+  function boxNorm(geo) {
+    geo.computeBoundingBox();
+    const bb = geo.boundingBox;
+    const hx = (bb.max.x - bb.min.x) || 1, hy = (bb.max.y - bb.min.y) || 1, hz = (bb.max.z - bb.min.z) || 1;
+    geo.translate(-(bb.max.x + bb.min.x) / 2, -bb.min.y, -(bb.max.z + bb.min.z) / 2);
+    geo.scale(1 / hx, 1 / hy, 1 / hz);
     return geo;
   }
   // merge a list of (indexed or not) geometries' position+normal into one — a
@@ -236,112 +408,155 @@ export function makeBackdrop(THREE, traits, seed) {
   // A WILD skyline: buildings drawn from a whole family of polyhedra, one
   // InstancedMesh per shape family (few draw calls), genre-tinted, plus a crowd
   // of blinking beacon/window lights and scattered foliage.
+  // ---- #5 L-SYSTEM / SPLIT-GRAMMAR CITY --------------------------------------
+  // The skyline is no longer a bag of stock polyhedra. Each building lot is grown by
+  // a small RECURSIVE SHAPE GRAMMAR: a vertical trunk of setback SUPERQUADRIC masses
+  // (box<->sphere<->octahedron<->pinched-star, exponents fed from the genre/species
+  // vector), which — by a seeded rule — either BRANCHES into smaller offset child
+  // towers (a Y-branching arcology) or FINISHES with a CURVE-SWEPT TUBE spire or a
+  // LATHE cupola, plus greebled superquadric bumps hugging the base facade. The
+  // result is a recognizable city STAGE, far more varied + curvy + de-squared, at a
+  // handful of draw calls (every module batches into one InstancedMesh per family).
+  // Mobile budget: grammar depth capped, module counts bounded, geometries shared.
   function buildCity() {
-    // ---- shape families. Each has a unit geometry (base at y=0, height 1) and a
-    // profile that biases its footprint/height so spires are thin+tall, domes
-    // squat+wide, gems short, ziggurats broad, etc.
-    const fams = {
-      // box towers carry BAKED WINDOW vertex colors and come in 3 hue variants,
-      // so they are built specially below (not from this table).
-      cyl:      { wMul: 1.0, hMul: 1.0, geo: () => normGeo(new THREE.CylinderGeometry(0.5, 0.5, 1, 8)) },
-      cone:     { wMul: 1.15, hMul: 1.15, geo: () => normGeo(new THREE.ConeGeometry(0.5, 1, 7)) },
-      pyramid:  { wMul: 1.2, hMul: 0.9, geo: () => normGeo(new THREE.ConeGeometry(0.5, 1, 4)) },
-      prism:    { wMul: 1.0, hMul: 1.0, geo: () => normGeo(new THREE.CylinderGeometry(0.5, 0.5, 1, 3)) },
-      tetra:    { wMul: 1.1, hMul: 0.75, geo: () => normGeo(new THREE.TetrahedronGeometry(0.62)) },
-      octa:     { wMul: 1.0, hMul: 0.8, geo: () => normGeo(new THREE.OctahedronGeometry(0.58)) },
-      dome:     { wMul: 1.7, hMul: 0.55, geo: () => normGeo(new THREE.SphereGeometry(0.5, 10, 6, 0, TAU, 0, Math.PI / 2)) },
-      spire:    { wMul: 0.4, hMul: 1.7, geo: () => normGeo(new THREE.ConeGeometry(0.5, 1, 6)) },
-      ziggurat: { wMul: 1.35, hMul: 1.0, geo: () => zigguratGeo() },
-      taper:    { wMul: 1.0, hMul: 1.1, geo: () => normGeo(new THREE.CylinderGeometry(0.26, 0.5, 1, 5)) },
-    };
-    // weighted family draw (box handled separately, ~30% of the crowd).
-    const wtable = [
-      ["cyl", 0.14], ["taper", 0.11], ["spire", 0.11], ["ziggurat", 0.09],
-      ["pyramid", 0.09], ["cone", 0.08], ["prism", 0.08], ["dome", 0.08],
-      ["tetra", 0.06], ["octa", 0.06],
-    ];
-    const wsum = wtable.reduce((a, e) => a + e[1], 0);
+    const clampS = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+    const bodyT = traits.body || {};
+    // a deterministic per-seed shaping scalar so even minimal traits vary organically.
+    const shapeSeed = ihash((seed ^ 0x9e3779b1) >>> 0) / 4294967296;
+    // ROUNDNESS (box<->blob), VERTICALITY (stack height), GREEBLE, BRANCH probability
+    // — read off the species body-plan / skin when present, else the seed scalar.
+    const roundness = bodyT.bodyShape === "blob" ? 0.85
+      : bodyT.bodyShape === "wedge" ? 0.14 : bodyT.bodyShape === "triangle" ? 0.28
+      : traits.skin === "glass" ? 0.7 : traits.skin === "chrome" ? 0.55
+      : traits.skin === "matte" ? 0.32 : 0.3 + shapeSeed * 0.45;
+    const verticality = clampS((bodyT.height != null ? (bodyT.height - 1) / 2.8 : 0.5) * 0.7 + shapeSeed * 0.3);
+    const greebleAmt = clampS(bodyT.asymmetry != null ? bodyT.asymmetry : 0.35 + shapeSeed * 0.5);
+    const branchP = clampS(0.16 + (bodyT.segments != null ? (bodyT.segments - 1) / 3 : 0.35) * 0.4 + roundness * 0.12);
 
-    const TOTAL = 96;
-    const boxSlots = [];               // -> baked-window towers
-    const famSlots = {};               // key -> [slots]
-    for (const k in fams) famSlots[k] = [];
+    // ---- SUPERQUADRIC mass palette (exponents pulled toward the genre roundness) --
+    const NV = 6, massVariants = [];
+    for (let v = 0; v < NV; v++) {
+      const base = 0.12 + roundness * 0.9;                 // 0.12 (box) .. ~1.0 (round)
+      let e1 = base * (0.6 + (v / NV) * 1.1), e2 = base * (0.6 + ((NV - 1 - v) / NV) * 1.1);
+      if (v === NV - 1) { e1 = 1.7 + roundness * 0.8; e2 = 0.5; }   // pinched-star accent
+      else if (v === NV - 2) { e1 = 1.55; e2 = 1.55; }             // octahedron-ish accent
+      e1 = Math.max(0.1, Math.min(3, e1)); e2 = Math.max(0.1, Math.min(3, e2));
+      massVariants.push({ geo: boxNorm(gk.sq(e1, e2, 12)), e1, e2 });
+    }
+    // ---- CURVE-SWEPT tube spire palette (near-straight / S-curve / leaning) -------
+    const spireCurve = (k) => k === 0
+      ? [[0, 0, 0], [0.02, 0.35, 0.0], [-0.03, 0.7, 0.02], [0, 1.05, 0]]
+      : k === 1
+        ? [[0, 0, 0], [0.12, 0.3, 0.05], [-0.12, 0.62, -0.04], [0.05, 1.0, 0.02]]
+        : [[0, 0, 0], [0.08, 0.28, 0.0], [0.18, 0.6, 0.05], [0.28, 0.95, 0.08]];
+    const spireVariants = [];
+    for (let v = 0; v < 3; v++) {
+      spireVariants.push(normGeo(gk.tube(spireCurve(v), { radius: 0.06, radialSegments: 6, tubularSegments: 14 })));
+    }
+    // ---- LATHE cupola (a rounded rotunda topper) + greeble superquadric bump ------
+    const cupolaGeo = boxNorm(gk.lathe([[0, 0], [0.35, 0.02], [0.5, 0.2], [0.42, 0.42], [0.22, 0.64], [0.08, 0.82], [0, 0.88]], 10));
+    const greebleGeo = boxNorm(gk.sq(0.3, 0.3, 8));
 
+    // ---- module slots (batched into one InstancedMesh per family, few draws) ------
+    const massSlots = massVariants.map(() => []);
+    const spireSlots = spireVariants.map(() => []);
+    const greebleSlots = [], cupolaSlots = [], towerSlots = [], bldgTops = [];
+    const pickMass = () => (rand() < roundness ? Math.floor(rand() * Math.ceil(NV / 2)) : Math.floor(rand() * NV));
+    const MAXD = 2;   // grammar recursion cap (mobile budget)
+
+    // the recursive production: a trunk of setback superquadric masses, then a seeded
+    // BRANCH (child towers) OR FINISH (spire / cupola), plus base greebles at depth 0.
+    function grow(x, z, w, d, baseY, h, rot, depth) {
+      let y = baseY, cw = w, cd = d;
+      const nStack = 1 + Math.floor(rand() * (1.4 + verticality * 2.4 + roundness * 0.6));   // 1..~4
+      for (let s = 0; s < nStack; s++) {
+        const mv = pickMass();
+        const segh = (h / nStack) * (0.75 + rand() * 0.6);
+        massSlots[mv].push({ x, y, z, w: cw, h: segh, d: cd, r: rot + (rand() - 0.5) * 0.25 });
+        y += segh * (0.8 + rand() * 0.14);                 // slight overlap so masses fuse
+        cw *= 0.68 + rand() * 0.2; cd *= 0.68 + rand() * 0.2;   // setback
+      }
+      if (depth < MAXD && rand() < branchP && h > 5) {
+        const nb = 1 + (rand() < 0.45 ? 1 : 0);
+        for (let b = 0; b < nb; b++) {
+          const ang = rand() * TAU, off = (cw + cd) * 0.35;
+          grow(x + Math.cos(ang) * off, z + Math.sin(ang) * off, cw * 0.7, cd * 0.7, y * 0.96, h * 0.5, rot + (rand() - 0.5) * 0.6, depth + 1);
+        }
+      } else {
+        const tr = rand();
+        if (tr < 0.42) {
+          const sv = Math.floor(rand() * spireVariants.length);
+          spireSlots[sv].push({ x, y, z, w: Math.max(0.4, cw * 0.6), h: 1.6 + rand() * 4.5 + verticality * 3, d: Math.max(0.4, cd * 0.6), r: rot, rx: (rand() - 0.5) * 0.15, rz: (rand() - 0.5) * 0.15 });
+        } else if (tr < 0.62) {
+          cupolaSlots.push({ x, y, z, w: cw * 1.15, h: Math.max(0.6, cw * 0.9), d: cd * 1.15, r: rot });
+        }
+      }
+      if (depth === 0) {
+        const ng = Math.floor(rand() * (1 + greebleAmt * 5));
+        for (let k = 0; k < ng; k++) {
+          const ga = rand() * TAU, grad = Math.max(w, d) * 0.5;
+          greebleSlots.push({ x: x + Math.cos(ga) * grad * 0.92, y: 0.5 + rand() * Math.max(0.6, h * 0.55), z: z + Math.sin(ga) * grad * 0.92, w: 0.25 + rand() * 0.5, h: 0.25 + rand() * 0.55, d: 0.25 + rand() * 0.5, r: ga });
+        }
+      }
+    }
+
+    // ---- the lots: ~16% keep the BAKED-WINDOW box tower (readable windows), the
+    // rest are GROWN by the grammar. All heights feed the beacon/window light field.
+    const TOTAL = 44;
     for (let i = 0; i < TOTAL; i++) {
-      const slot = {
-        x: -34 + rand() * 68,
-        z: -6 - rand() * 40,
-        w: 1.3 + rand() * 2.6,
-        d: 1.3 + rand() * 2.6,
-        h: 3 + rand() * 15,
-        r: rand() * TAU,
-      };
-      // ~30% baked-window boxes; the rest picked from the polyhedra families.
-      if (rand() < 0.30) { boxSlots.push(slot); continue; }
-      let t = rand() * wsum, key = wtable[0][0];
-      for (const [k, w] of wtable) { t -= w; if (t <= 0) { key = k; break; } }
-      const pf = fams[key];
-      slot.w *= pf.wMul; slot.d = slot.w * (0.7 + rand() * 0.6);
-      slot.h *= pf.hMul;
-      slot.family = key;
-      famSlots[key].push(slot);
+      const lot = { x: -34 + rand() * 68, z: -6 - rand() * 40, w: 1.4 + rand() * 2.4, h: 3 + rand() * 15, r: rand() * TAU };
+      lot.d = lot.w * (0.7 + rand() * 0.6);
+      bldgTops.push({ x: lot.x, z: lot.z, h: lot.h });
+      if (rand() < 0.16) towerSlots.push(lot);
+      else grow(lot.x, lot.z, lot.w, lot.d, 0, lot.h, lot.r, 0);
     }
 
-    // ---- baked-window box towers (3 hue/pattern variants) --------------
-    const boxVariants = 3, boxPer = Math.ceil(boxSlots.length / boxVariants);
+    // ---- realize the module slots into InstancedMeshes (one draw per family) ------
+    // per-family hue offset so the masses glow slightly different tints from accent.
+    const hueOff = (salt) => salt * 41 + (rand() - 0.5) * 22;
+    const addMesh = (family, prim, geo, list, receive) => {
+      if (!list.length) return;
+      const mat = buildingMat(acc.h + hueOff(prim === "sq" ? 1 : prim === "tube" ? 5 : prim === "lathe" ? 8 : 2));
+      const mesh = new THREE.InstancedMesh(geo, mat, list.length);
+      mesh.name = "buildings"; mesh.userData.family = family; mesh.userData.prim = prim;
+      shadow(mesh, true, receive !== false);
+      for (let i = 0; i < list.length; i++) placeMod(mesh, i, list[i]);
+      mesh.instanceMatrix.needsUpdate = true;
+      group.add(mesh); flicker.push(mat);
+    };
+    // baked-window box towers (kept as a minority — the readable-windows silhouette).
+    const boxVariants = Math.min(3, Math.max(1, towerSlots.length)), boxPer = Math.ceil(towerSlots.length / boxVariants);
     for (let v = 0; v < boxVariants; v++) {
-      const list = boxSlots.slice(v * boxPer, (v + 1) * boxPer);
+      const list = towerSlots.slice(v * boxPer, (v + 1) * boxPer);
       if (!list.length) continue;
-      const geo = towerGeo(v);
       const mat = buildingMat();
-      const mesh = new THREE.InstancedMesh(geo, mat, list.length);
-      mesh.name = "buildings";
-      mesh.userData.family = "box";
+      const mesh = new THREE.InstancedMesh(towerGeo(v), mat, list.length);
+      mesh.name = "buildings"; mesh.userData.family = "tower"; mesh.userData.prim = "box";
       shadow(mesh, true, true);
       for (let i = 0; i < list.length; i++) placeBuilding(mesh, i, list[i]);
       mesh.instanceMatrix.needsUpdate = true;
-      group.add(mesh);
-      flicker.push(mat);
+      group.add(mesh); flicker.push(mat);
     }
-
-    // ---- one InstancedMesh per polyhedron family -----------------------
-    for (const key in fams) {
-      const list = famSlots[key];
-      if (!list.length) continue;
-      const geo = fams[key].geo();
-      const hue = acc.h + hueJitter(key);
-      const mat = buildingMat(hue);
-      const mesh = new THREE.InstancedMesh(geo, mat, list.length);
-      mesh.name = "buildings";
-      mesh.userData.family = key;
-      shadow(mesh, true, true);
-      for (let i = 0; i < list.length; i++) placeBuilding(mesh, i, list[i]);
-      mesh.instanceMatrix.needsUpdate = true;
-      group.add(mesh);
-      flicker.push(mat);
-    }
+    massVariants.forEach((mv, v) => addMesh("mass" + v, "sq", mv.geo, massSlots[v], true));
+    spireVariants.forEach((geo, v) => addMesh("spire" + v, "tube", geo, spireSlots[v], false));
+    addMesh("cupola", "lathe", cupolaGeo, cupolaSlots, false);
+    addMesh("greeble", "sq", greebleGeo, greebleSlots, false);
 
     // ---- blinking beacon / window lights -------------------------------
-    // A light field: roof beacons + facade "windows" on many buildings, plus a
+    // A light field: roof beacons + facade "windows" climbing many buildings, plus a
     // low scatter of street lights. Each light gets a seeded blink profile.
     const lights = [];
-    const allSlots = boxSlots.concat.apply(boxSlots, Object.keys(famSlots).map((k) => famSlots[k]));
-    for (const b of allSlots) {
+    for (const b of bldgTops) {
       const top = b.h;
-      // a roof beacon on most tall-ish buildings.
       if (b.h > 4 && rand() < 0.85 && lights.length < 240) {
         lights.push(makeLight(b.x, top + 0.15 + rand() * 0.4, b.z, 0.18 + rand() * 0.12, "beacon"));
       }
-      // facade windows: a few lit points climbing the front face.
       const nWin = Math.min(4, Math.floor(rand() * 5));
       for (let k = 0; k < nWin && lights.length < 240; k++) {
         const fy = 1 + rand() * (top - 1.2);
-        const fx = b.x + (rand() - 0.5) * b.w * 0.8;
-        const fz = b.z + (b.d * 0.5 + 0.05);
-        lights.push(makeLight(fx, fy, fz, 0.1 + rand() * 0.08, "window"));
+        lights.push(makeLight(b.x + (rand() - 0.5) * 2.4, fy, b.z + 1.4, 0.1 + rand() * 0.08, "window"));
       }
     }
-    // street-level scatter.
     for (let i = 0; i < 26 && lights.length < 240; i++) {
       lights.push(makeLight(-32 + rand() * 64, 0.4 + rand() * 0.6, -4 - rand() * 40, 0.12 + rand() * 0.08, "beacon"));
     }
@@ -354,11 +569,14 @@ export function makeBackdrop(THREE, traits, seed) {
       s: 0.7 + rand() * 1.3,
     }));
   }
-
-  // per-family hue offset so the polyhedra glow different tints from the accent.
-  function hueJitter(key) {
-    const T = { cyl: 8, cone: 40, pyramid: -30, prism: 70, tetra: 120, octa: 160, dome: -60, spire: 200, ziggurat: 25, taper: -15 };
-    return (T[key] || 0) + (rand() - 0.5) * 20;
+  // place a grammar MODULE (base at y=0 geometry) at its world y with y-rot + tilt.
+  function placeMod(mesh, i, m) {
+    _p.set(m.x, m.y || 0, m.z);
+    _e.set(m.rx || 0, m.r || 0, m.rz || 0);
+    _q.setFromEuler(_e);
+    _s.set(m.w, m.h, m.d == null ? m.w : m.d);
+    _m.compose(_p, _q, _s);
+    mesh.setMatrixAt(i, _m);
   }
   // a building material: dark genre-tinted wall with a faint emissive breath.
   function buildingMat(hue) {

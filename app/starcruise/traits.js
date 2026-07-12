@@ -214,6 +214,20 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
   else if (nSub > 0.6 || nDrum > 0.7) bodyShape = "triangle";
   else if (nSeventh > 0.5) bodyShape = "blob";
   else bodyShape = "segmented";
+  // SUPERQUADRIC exponents — the superellipsoid "squareness" of bodies + instruments,
+  // fed to geom.superquadric() in alien.js so silhouettes morph box<->sphere<->pinched
+  // organically by genre. Choppy/crackly/wedge genres go BOXY (low exponent, faceted);
+  // washy/harmonic/organic genres go ROUND (~1); sub-heavy genres PINCH the profile
+  // (>1, star/teardrop). Derived from feature NORMALS ONLY (no rng draw) so the trait
+  // stream is unperturbed; alien.js jitters these per-alien off its OWN seed.
+  const boxy = clamp01(nChop * 0.6 + nCrackle * 0.5 + (bodyShape === "wedge" ? 0.3 : 0));
+  const roundNess = clamp01(0.5 + nWash * 0.4 + nSeventh * 0.3 + (organic ? 0.15 : 0) - boxy);
+  const sqEx = +clamp01Big(0.28 + roundNess * 1.0 - boxy * 0.12, 0.16, 1.5).toFixed(3);
+  const sqEy = +clamp01Big(0.3 + roundNess * 0.85 + nSub * 0.5, 0.16, 2.0).toFixed(3);
+  // TENTACLE / curve-tube params — tip thinness (taper = tip/root radius) grows with
+  // motion (whippy fast tentacles); curl grows with swing + wash (loose, curling limbs).
+  const tentTaper = +clamp01Big(0.14 + nMotion * 0.26, 0.08, 0.5).toFixed(3);
+  const tentCurl = +clamp01Big(0.15 + nSwing * 0.6 + nWash * 0.4, 0.05, 1.2).toFixed(3);
   const body = {
     massH,
     height,
@@ -221,6 +235,7 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
     eyes: 1 + Math.round(nVar * 2 + nSeventh * 1),         // 1..4
     segments: 1 + Math.round(nDrum * 3),                   // 1..4
     bodyShape,
+    sqEx, sqEy, tentTaper, tentCurl,                       // superquadric + curve-tube params
     armLength: +armLength.toFixed(4),
     eyeStalk: +clamp01(nMotion * 0.5 + nVar * 0.35 + (organic ? 0.05 : 0.25) + rng() * 0.15).toFixed(4),
     neck: +clamp01(0.08 + (1 - nBpm) * 0.5 + nWash * 0.35 + (bodyShape === "tower" ? 0.3 : 0)).toFixed(4),
@@ -508,11 +523,19 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
     curvature: +clamp01(lofi * 0.6 + (dither === "onebit" ? 0.12 : 0)).toFixed(3),
   };
 
-  // material (surface treatment): metal -> wireframe/glitch; driving electronica ->
-  // flat/glitch; vaporwave -> iridescent; ambient wash -> cel/iridescent; swinging
-  // acoustic -> matte; lofi -> matte; else cel.
+  // material (surface treatment): metal -> wireframe/glitch; REAL chrome/glass (pbr) for
+  // clean, reflective electronic genres; driving electronica -> flat/glitch; vaporwave ->
+  // iridescent; ambient wash -> cel/iridescent; swinging acoustic -> matte; lofi -> matte;
+  // else cel.
+  //   pbr = a genuine MeshStandardMaterial (metalness/roughness + the shared env map) so
+  //   SOME genres render as real polished metal / glass — VECTOR-SELECTED, never global.
+  //   Chrome + driving but NOT glitchy/vapor/lofi -> polished chrome; glassy + washy but
+  //   NOT harmonic-iridescent -> real glass. vapor stays iridescent (excluded below).
+  const chromeLean = skin === "chrome" && !organic && driving > 0.4 && vapor < 0.35 && lofi < 0.4;
+  const glassLean = skin === "glass" && !organic && washy > 0.55 && harmonic < 0.35 && vapor < 0.35;
   let material;
   if (metal > 0.42) material = nChop > 0.3 ? "glitch" : "wireframe";
+  else if (chromeLean || glassLean) material = "pbr";
   else if (!organic && driving > 0.5 && washy < 0.5) material = nChop > 0.35 ? "glitch" : "flat";
   else if (vapor > 0.4) material = "iridescent";
   else if (washy > 0.5 && nDrum < 0.45) material = harmonic > 0.4 ? "iridescent" : "cel";
