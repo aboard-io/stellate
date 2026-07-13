@@ -1,0 +1,16 @@
+{
+  "services": {
+    "web": {
+      "build": ".",
+      "port": 80,
+      "public": true,
+      "dockerfile": "Dockerfile",
+      "healthCheckPath": "/",
+      "replicas": 1,
+      "volumes": [],
+      "needs": [],
+      "env": {},
+      "secrets": []
+    }
+  }
+}
