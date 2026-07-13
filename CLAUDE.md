@@ -1,6 +1,6 @@
 # CLAUDE.md — stellate
 
-A self-contained generative genre-space instrument: a **249-genre**
+A self-contained generative genre-space instrument: a **250-genre**
 deterministic vector space (`genre-kernel.js`, incl. real 3/4 odd-meter
 anchors — `state.meter`) over one score brain
 (`engine/csd-engine.js buildEvents`) with a generative harmony/pipes layer
@@ -116,7 +116,7 @@ tools/fetch-sample-cd.sh fatboy-slim-skip-to-my-loops \
    genres) or to `hits.sources` (always safe). NEVER add a `found:{role:…}` block to
    a genre lacking one, change a role, or touch bpm/scored fields — that shifts the
    confusion matrix. After every batch, `node engine/genre-verifier.js matrix
-   --no-cache` MUST still print `diagonal dominant: 249/249`.
+   --no-cache` MUST still print `diagonal dominant: 250/250`.
 
 The audio lands gitignored under `found/`; the recipe + registry/genre edits are
 the committed deliverable (the one rule). Credit the CD in SOURCES.md.

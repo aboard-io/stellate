@@ -5,7 +5,7 @@
 Every genre is a point in one deterministic vector space. Drag the star chart,
 draw a path, or drift, and the music continuously morphs through whatever the
 traveler crosses — tempo, harmony, groove, instrumentation, and effects all
-blending between neighbours. 249 genres, all generated live in the browser.
+blending between neighbours. 250 genres, all generated live in the browser.
 The catalog is a work of mathematical fiction: every genre wears an invented
 display name — the anchor id `techno` appears on the map as "Concrete
 Metronome", `jazz` as "Smoke Arithmetic", `fugue` as "The Patient Chase", and
@@ -100,7 +100,7 @@ with reach: the vendored eSpeak NG WASM speech module is GPL-3.0, so the app
 https://github.com/ftrain/stellate; made by
 [Aboard](https://aboardresearch.com). Contributions welcome:
 `CONTRIBUTING.md` is the social contract — the gates a PR must keep green
-(the 249/249 matrix, determinism, non-silence) and what's left for ears.
+(the 250/250 matrix, determinism, non-silence) and what's left for ears.
 No audio, video, SoundFont, or model binary is ever committed; the media
 policy and the full attribution ledger live in `SOURCES.md`.
 
