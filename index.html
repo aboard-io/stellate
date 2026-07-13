@@ -31,7 +31,7 @@
   walks the path, morphing the music through every genre it crosses — the path <em>is</em> the mix.
   Drag the <b>pink playhead</b> to scrub; drag waypoints to reshape; right-click erases.
   <b>Pinch</b> (or ctrl+scroll) zooms the chart. <b>Stop twice</b> rewinds to the top.
-  ▶ plays · ✦/ⓘ/▣ cycles the three views (star map, inside-the-sound, video) · ⚙ seed, pace, ±bpm
+  ▶ plays · ✦ cycles the four views (star map, inside-the-sound, video, aliens) · ⚙ seed, duration, ±bpm
   and in-browser downloads. The address bar carries your seed, path and measure —
   a bookmark or a shared link reopens exactly this music, right here.</p>
   <!-- a real button-sized target (the bare inline link was unreliable to tap on
@@ -78,9 +78,10 @@
 <!-- THE APP: native ES modules under app/ (no bundler). type=module defers, so it
      runs after the classic engine scripts above and after the DOM is parsed. -->
 <script type="module" src="app/main.js"></script>
-<!-- STAR-CRUISE (🛸): the opt-in 3D genre-flythrough mode. Side-effecting module —
-     it INJECTS its own chip into #chips and lazy-imports vendored Three.js ONLY on
-     first activation, so the initial zero-dependency page load stays untouched. -->
+<!-- ALIENS (star-cruise): the 3D genre-flythrough, now the 4th VIEW in the ✦ cycle
+     (app/panels.js drives it via window.__STARCRUISE). Side-effecting module that
+     lazy-imports vendored Three.js ONLY when you switch to the aliens view, so the
+     initial zero-dependency page load stays untouched. -->
 <script type="module" src="app/starcruise.js"></script>
 </body>
 </html>

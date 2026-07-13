@@ -163,14 +163,15 @@ function applyBg(){
   if(V&&w.v) V.setEnabled(true);
   if(D&&w.d) D.setEnabled(true);
   if(V) bgHadV=w.v;
-  // view icon: ✦ map · ⓘ viz · ▣ video — the CURRENT view; spinner clears when
-  // the video layer is genuinely enabled (or instantly for map/viz).
-  const icon=S.vizView?"ⓘ":(bgMode!==0?"▣":"✦");
+  // view icon: ✦ map · ⓘ viz · ▣ video · 👾 aliens — the CURRENT view; spinner clears
+  // when the video/aliens layer is genuinely up (or instantly for map/viz).
+  const aliensOn=!!(window.__STARCRUISE&&window.__STARCRUISE.isRunning&&window.__STARCRUISE.isRunning());
+  const icon=aliensOn?"👾":(S.vizView?"ⓘ":(bgMode!==0?"▣":"✦"));
   if(viewChip&&viewChip.textContent!==icon) viewChip.textContent=icon;
-  if(viewChip){ viewChip.classList.toggle("live",S.vizView||bgMode!==0);
+  if(viewChip){ viewChip.classList.toggle("live",S.vizView||bgMode!==0||aliensOn);
     const wantVideo=!S.vizView&&bgMode!==0;
     const videoUp=!!(V&&V.enabled&&V.enabled())||!!(D&&D.enabled&&D.enabled());
-    if(!wantVideo||videoUp) viewChip.classList.remove("spin"); }
+    if(!aliensOn&&(!wantVideo||videoUp)) viewChip.classList.remove("spin"); }   // aliens keeps its own spin until up
   // THE VIEW CLASSES (three exclusive 100% views, Paul 2026-07-10):
   // body.view-video hides the star map under footage/demos; body.view-viz hides
   // both under the full-screen viz. applyBg already runs on every render + the

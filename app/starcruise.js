@@ -126,6 +126,7 @@ let ship = null;             // { group, update(dt, phase, landProgress) } — t
 let cockpit = null;          // { group, update, setGenres } — the transit COCKPIT interior
 let planet = null;           // { group, update, setPalette } — the planet you leave/approach
 let sun = null;              // the shadow-casting KEY light (module-scoped for the frustum + probes)
+let stageSpots = [];         // sweeping colored concert SPOTLIGHTS over the stage (animated)
 let starfield = null;        // persistent THREE.Points deep-space (whole-session)
 let planetField = null;      // persistent InstancedMesh: ONE planet per genre AT its GENRE_COORDS
 let sunField = null;         // persistent InstancedMesh: ONE colored SUN per CLUSTER at its star coord
@@ -245,7 +246,7 @@ const CUT_BEATS = 8;              // cut roughly every 2 bars (musical, beat-syn
 function noteInput() { _lastInputT = _vclock; }   // called by every manual nav handler
 
 const keysDown = Object.create(null);   // pressed movement keys
-let exitBtn = null;               // the always-visible ✕ EXIT affordance
+let vhsEl = null;                 // the VHS scanline overlay div (in front of the 3D view)
 // pointer/touch drag bookkeeping.
 let dragging = false, lastPX = 0, lastPY = 0;
 let pinchDist = 0;                // last two-finger distance (touch dolly)
@@ -555,7 +556,7 @@ function spawnFor(genreOrWeights, seed) {
   // world's radius can be sized to hold the whole ensemble around the landing pole.
   const members = rosterFor(traits.band);
   const n = members.length;
-  const spread = n > 1 ? Math.max(3.2, Math.min(4.2, 2.6 + 5.2 / n)) : 0;   // wide arc; ~3.2+ per gap
+  const spread = n > 1 ? Math.max(5.0, Math.min(7.0, 4.2 + 8 / n)) : 0;   // WIDE arc — Paul: space the band much further apart (was 3.2-4.2)
   const bandHalfW = n > 1 ? ((n - 1) / 2) * spread : 2;
   const energy = (traits.groove && traits.groove.energy) || 0;
   const DANCER_ENERGY_GATE = 0.34;         // below this the planet is band-only
@@ -567,7 +568,7 @@ function spawnFor(genreOrWeights, seed) {
   // LITTLE-PRINCE small world: a SMALL curved planet sized to the ensemble so the band reads
   // as standing on a little round world with a clearly BENDING horizon. radius ≈ 1.8*bandSpan
   // (≈ 2.7*halfExtent); halfExtent is clamped so tiny/huge bands still get a legible curve.
-  const halfExtent = Math.max(5, Math.min(12, Math.max(bandHalfW, dancerReach)));
+  const halfExtent = Math.max(6, Math.min(15, Math.max(bandHalfW, dancerReach)));   // grow the world to hold the WIDER band (capped so it stays a little planet)
   const bandSpan = 1.5 * halfExtent;
 
   // GROUND PLANET — the SMALL curved world the band stands ON (little-prince landing). Built
@@ -601,22 +602,12 @@ function spawnFor(genreOrWeights, seed) {
     }
   } catch (e) { groundPlanet = null; groundH0 = 0; groundRadius = 0; smallWorldGround = false; }
 
-  // BACKDROP (procedural city + landscape) WRAPPED on the curved surface: pass the planet's
-  // surface API so every building/feature foot-plants ON the sphere oriented to the normal,
-  // wrapping the city down to the little world's HORIZON behind/around the band (distinct per
-  // genre). surfacePoint is planet-LOCAL, so we offset the group to the planet's world frame
-  // (aligning it with the ground mesh) and HIDE the backdrop's own FLAT ground/sea planes —
-  // the curved planet mesh is the ground now, and a flat plane can't wrap a sphere.
-  const bkOpts = (groundPlanet && groundPlanet.field && smallWorldGround)
-    ? { surface: groundPlanet.field } : {};
-  backdrop = mods.makeBackdrop(THREE, traits, useSeed, bkOpts);
-  if (bkOpts.surface) {
-    backdrop.group.position.copy(groundPlanet.position);
-    backdrop.group.userData.scOnSurface = true;
-    backdrop.group.traverse((o) => {
-      if (o.isMesh && (o.name === "ground" || o.name === "world-sea")) o.visible = false;
-    });
-  }
+  // BACKDROP — REMOVED for now (Paul: "get rid of the trees and background objects"). The
+  // planet's bare terrain is the whole stage; no procedural city/farm/foliage. We keep an
+  // EMPTY backdrop object so the spawn/despawn + update lifecycle (and hasBackdrop) are
+  // unchanged — nothing is drawn, nothing clutters the little world.
+  backdrop = { group: new THREE.Object3D(), update() {} };
+  backdrop.group.name = "backdrop-empty";
   scene.add(backdrop.group);
   // ship: empty group (kept only for the surface-scene lifecycle parity).
   ship = makeShip(traits, useSeed);
@@ -678,9 +669,15 @@ function spawnFor(genreOrWeights, seed) {
     ped.name = "dancer-pedestal";
     ped.add(d.group);
     plantOnSurface(ped, px, pz, faceYaw);
-    d.group.scale.setScalar(0.85 + seedR() * 0.25);
+    // scale the PEDESTAL (about the surface-contact point), not the alien inside it — scaling
+    // the inner group shrank each dancer about its own centre and lifted its FEET off the
+    // ground (Paul: "the dancers don't touch the ground"). Scaling the planted pedestal keeps
+    // the feet on the surface while still giving the crowd size variety.
+    ped.scale.setScalar(0.85 + seedR() * 0.25);
     d.stage = ped;
-    enableShadows(ped);
+    // dancers RECEIVE but do NOT CAST shadows — halves the shadow-map pass (the band still
+    // casts), which keeps the render cheap now that the crowd + creatures are richer.
+    ped.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = true; } });
     scene.add(ped);
     dancers.push(d);
   }
@@ -940,16 +937,11 @@ function buildSunField() {
   sunField = new THREE.InstancedMesh(geo, mat, suns.length);
   sunField.frustumCulled = false;
   sunField.name = "sunField";
-  // GLOW — an additive CORONA/HALO shell around each star (radius ~2.6x the core), blended
-  // ADDITIVELY so it reads as light bleeding into space, not a solid ball. One extra
-  // InstancedMesh (one draw call) — mobile-cheap; caps the glow cost at a single pass.
-  const glowGeo = new THREE.IcosahedronGeometry(1, 2);   // rounder corona (was faceted at detail 1)
-  const glowMat = new THREE.MeshBasicMaterial({ blending: THREE.AdditiveBlending, transparent: true,
-    opacity: 0.28, depthWrite: false, toneMapped: false });   // softer corona so the darker flaming core reads
-  sunGlowField = new THREE.InstancedMesh(glowGeo, glowMat, suns.length);
-  sunGlowField.frustumCulled = false;
-  sunGlowField.name = "sunGlowField";
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), col = new THREE.Color(), gcol = new THREE.Color();
+  // NO HALO (Paul: "give the stars no halo"). The additive corona/glow shell is removed —
+  // each star is JUST its flaming plasma core, no bloom bubble around it. sunGlowField stays
+  // null (dispose + probes already guard for null).
+  sunGlowField = null;
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), col = new THREE.Color();
   for (let i = 0; i < suns.length; i++) {
     const w = suns[i];
     const r = 4 + Math.min(8, w.members) * 0.5;    // 4..8 world units — landmark stars, well separated
@@ -959,17 +951,9 @@ function buildSunField() {
     s.set(r, r, r); m4.compose(p, q, s); sunField.setMatrixAt(i, m4);
     const c = w.color || [1, 1, 1];
     col.setRGB(c[0], c[1], c[2]); sunField.setColorAt(i, col);
-    // the halo is the star's hue pushed toward a warm CORONA (a little fire in the tint),
-    // at ~2.1x radius — a soft additive glow bleeding into space (was a pale white bubble).
-    const gr = r * 2.1; s.set(gr, gr, gr); m4.compose(p, q, s); sunGlowField.setMatrixAt(i, m4);
-    gcol.setRGB(Math.min(1, c[0] * 0.7 + 0.35), Math.min(1, c[1] * 0.6 + 0.16), Math.min(1, c[2] * 0.6 + 0.05));
-    sunGlowField.setColorAt(i, gcol);
   }
   sunField.instanceMatrix.needsUpdate = true;
   if (sunField.instanceColor) sunField.instanceColor.needsUpdate = true;
-  sunGlowField.instanceMatrix.needsUpdate = true;
-  if (sunGlowField.instanceColor) sunGlowField.instanceColor.needsUpdate = true;
-  scene.add(sunGlowField);   // add glow first so the bright core draws over it
   scene.add(sunField);
 }
 // the CLUSTER the current dominant genre belongs to (label + color) — drives the HUD.
@@ -1055,21 +1039,37 @@ export async function start() {
   // and let a strong KEY directional light MODEL the forms with a clear light-to-dark
   // falloff + cast shadows. A soft back/rim fill keeps the shadow side reading colour
   // so it's not murky. (linear->sRGB output fix lives in postfx.js.)
-  scene.add(new THREE.AmbientLight(0xffffff, 0.55));                 // was 1.15 (flat floor down)
-  scene.add(new THREE.HemisphereLight(0xbfe0ff, 0x6a4a76, 0.55));    // was 1.2 (cyan sky / magenta ground)
-  sun = new THREE.DirectionalLight(0xfff2e0, 1.75);                  // the KEY that models the forms
-  sun.position.set(6, 11, 7);
+  // DRAMATIC STAGE LIGHTING (Paul: "spotlights sweeping over the stage" — everything was lit
+  // like high noon). A DARK ambient/hemisphere base so the little world sits in near-night, a
+  // low warm KEY that still models the forms + casts the grounding shadows, and THREE saturated
+  // SPOTLIGHTS that SWEEP across the band on slow offset cycles (animated in update()) — moving
+  // pools of magenta / cyan / amber, like a little concert on the planet.
+  scene.add(new THREE.AmbientLight(0xffffff, 0.18));                 // dark base (was 0.55 — the "high noon" floor)
+  scene.add(new THREE.HemisphereLight(0x38507a, 0x241826, 0.22));   // dim cool sky / dark ground
+  sun = new THREE.DirectionalLight(0xfff2e0, 0.65);                 // LOW key — models forms + casts the shadow
+  sun.position.set(6, 16, 7);
   sun.castShadow = true;
   const shMap = isCoarse() ? 512 : 1024;                            // modest; smaller on mobile
   sun.shadow.mapSize.set(shMap, shMap);
-  sun.shadow.camera.near = 1; sun.shadow.camera.far = 44;
-  const F = 11;                                                     // TIGHT ortho frustum around the band
+  sun.shadow.camera.near = 1; sun.shadow.camera.far = 70;
+  const F = 26;                                                     // WIDE ortho frustum — the band is spread far now
   sun.shadow.camera.left = -F; sun.shadow.camera.right = F;
   sun.shadow.camera.top = F; sun.shadow.camera.bottom = -F;
   sun.shadow.bias = -0.0012;
   scene.add(sun);
   scene.add(sun.target);                                            // aim the shadow frustum at the band
-  const backFill = new THREE.DirectionalLight(0xffd0f2, 0.5); backFill.position.set(-5, 3, -6); scene.add(backFill);
+  // sweeping concert SPOTLIGHTS — saturated cones from high above, targets drifting over the
+  // stage (updated each frame in update()). decay 0 / distance 0 = constant (matches the
+  // legacy-intensity light rig); non-shadow-casting so they stay cheap on mobile.
+  stageSpots = [];
+  const spotCols = [0xff2f86, 0x33e2ff];   // magenta + cyan sweeping beams (2 keeps SwiftShader/mobile light)
+  for (let i = 0; i < spotCols.length; i++) {
+    const sp = new THREE.SpotLight(spotCols[i], 3.8, 0, 0.55, 0.7, 0);
+    sp.position.set((i === 0 ? -9 : 9), 24, 7);
+    sp.target.position.set(0, 0.6, 0);
+    scene.add(sp); scene.add(sp.target);
+    stageSpots.push({ light: sp, ph: i * 2.1 });
+  }
 
   // build the near-native render target + PS1 pass + size the canvas (near 1:1 blit).
   buildRenderTarget();
@@ -1159,7 +1159,7 @@ export async function start() {
   ensureSurface(tv0.weights && tv0.weights.length ? tv0.weights : firstGenre(), tv0.dominant || firstGenre(), getS().seed);
   curDominant = tv0.dominant;
 
-  mountExit();
+  mountVHS();
   mountHUD();
   bindInput();
   window.addEventListener("resize", onResize);
@@ -1168,40 +1168,44 @@ export async function start() {
   window.__STARCRUISE && (window.__STARCRUISE.running = true);
 }
 
-// ---- ALWAYS-VISIBLE EXIT affordance ---------------------------------------------
-// The full-screen overlay canvas covers the chip row, so the mode MUST carry its own
-// escape hatch. This ✕ EXIT button sits ABOVE the canvas (z-index 60 > canvas 40),
-// keeps pointer-events even though the canvas eats drags, and is a fat thumb target
-// on mobile. Tapping it (or Escape) stops the mode and restores the app. The user
-// must NEVER be trapped.
-function mountExit() {
-  if (exitBtn) return;
-  exitBtn = document.createElement("button");
-  exitBtn.id = "starcruise-exit";
-  exitBtn.type = "button";
-  exitBtn.setAttribute("aria-label", "Exit star-cruise");
-  exitBtn.textContent = "✕ EXIT";
-  exitBtn.style.cssText = [
-    "position:fixed", "top:max(12px,env(safe-area-inset-top))",
-    "right:max(12px,env(safe-area-inset-right))", "z-index:60",
-    "min-width:76px", "min-height:48px", "padding:10px 16px",
-    "font:600 15px/1 system-ui,sans-serif", "letter-spacing:.06em",
-    "color:#fff", "background:rgba(20,6,30,.72)",
-    "border:2px solid rgba(255,255,255,.85)", "border-radius:24px",
-    "box-shadow:0 2px 10px rgba(0,0,0,.5)", "cursor:pointer",
-    "-webkit-tap-highlight-color:transparent", "touch-action:manipulation",
-    "user-select:none", "pointer-events:auto",
+// ---- VHS SCANLINE OVERLAY (in front of the 3D view) -----------------------------
+// Paul: "put the same glitchy VHS scanline filters in front of the 3D views." A DOM
+// overlay above the canvas (z 44, below the raised chips at 50) — pure CSS, pointer-
+// events:none so it never eats taps: fine horizontal scanlines, a slow VHS tracking
+// ROLL bar drifting down the screen, and a soft vignette. On top of the PS1 post pass
+// already baked into the render, it pushes the whole view into worn-tape territory.
+// There is no ✕ EXIT button any more — the star-cruise is a VIEW, left via the ✦ chip.
+function mountVHS() {
+  if (vhsEl) return;
+  if (!document.getElementById("starcruise-vhs-kf")) {
+    const st = document.createElement("style");
+    st.id = "starcruise-vhs-kf";
+    st.textContent =
+      "@keyframes scVhsRoll{0%{transform:translateY(-20vh)}100%{transform:translateY(120vh)}}" +
+      "@keyframes scVhsJit{0%,97%,100%{opacity:.5}98%{opacity:.9}99%{opacity:.35}}";
+    document.head.appendChild(st);
+  }
+  vhsEl = document.createElement("div");
+  vhsEl.id = "starcruise-vhs";
+  vhsEl.style.cssText = [
+    "position:fixed", "inset:0", "z-index:44", "pointer-events:none", "overflow:hidden",
+    // fine scanlines + a soft edge vignette
+    "background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,.16) 3px,rgba(0,0,0,.16) 3.5px)",
+    "box-shadow:inset 0 0 180px 40px rgba(0,0,0,.55)",
+    "animation:scVhsJit 5s steps(1) infinite",
   ].join(";");
-  // pointerup/click both stop — pointerup wins on touch even if a synthetic click is
-  // suppressed by the canvas's drag handling.
-  const doExit = (e) => { if (e) { e.preventDefault(); e.stopPropagation(); } stop(); };
-  exitBtn.addEventListener("click", doExit);
-  exitBtn.addEventListener("pointerup", doExit);
-  document.body.appendChild(exitBtn);
+  const roll = document.createElement("div");
+  roll.style.cssText = [
+    "position:absolute", "left:0", "right:0", "height:16vh",
+    "background:linear-gradient(to bottom,rgba(255,255,255,0) 0,rgba(255,255,255,.06) 45%,rgba(255,255,255,.10) 50%,rgba(255,255,255,.06) 55%,rgba(255,255,255,0) 100%)",
+    "animation:scVhsRoll 7s linear infinite", "will-change:transform",
+  ].join(";");
+  vhsEl.appendChild(roll);
+  document.body.appendChild(vhsEl);
 }
-function unmountExit() {
-  if (exitBtn && exitBtn.parentNode) exitBtn.parentNode.removeChild(exitBtn);
-  exitBtn = null;
+function unmountVHS() {
+  if (vhsEl && vhsEl.parentNode) vhsEl.parentNode.removeChild(vhsEl);
+  vhsEl = null;
 }
 
 // ---- 2D COCKPIT HUD (replaces the 3D cockpit) -----------------------------------
@@ -1693,8 +1697,21 @@ export function update(dt) {
   // MeshBasic star-map + cockpit, which don't need cast shadows).
   if (sun) {
     sun.target.position.set(bandCentroid.x, 0, bandCentroid.z);
-    sun.position.set(bandCentroid.x + 6, 11, bandCentroid.z + 7);
+    sun.position.set(bandCentroid.x + 6, 16, bandCentroid.z + 7);
     sun.target.updateMatrixWorld();
+  }
+  // SWEEP the concert spotlights across the stage — each target drifts on an offset Lissajous
+  // over the (now wide) band, so the pools of coloured light glide over the players. Cheap;
+  // deterministic (driven by _vclock). Widened to cover the spread-out band.
+  if (stageSpots.length) {
+    const cx = bandCentroid.x, cz = bandCentroid.z, t = _vclock;
+    const reach = 13;
+    for (const s of stageSpots) {
+      const L = s.light;
+      L.position.set(cx + Math.sin(t * 0.18 + s.ph) * 6, 24, cz + 7 + Math.cos(t * 0.13 + s.ph) * 3);
+      L.target.position.set(cx + Math.sin(t * 0.52 + s.ph) * reach, 0.5, cz + Math.cos(t * 0.41 + s.ph * 1.7) * reach * 0.7);
+      L.target.updateMatrixWorld();
+    }
   }
   // SCORE BRIDGE (per frame — NO rebuild): read the audio beat, resolve the CURRENT
   // bar + bar-local phase, and hand every band member its voice's real note onsets
@@ -1802,7 +1819,7 @@ export function stop() {
   running = false;
   if (raf) cancelAnimationFrame(raf), raf = 0;
   unbindInput();
-  unmountExit();
+  unmountVHS();
   unmountHUD();
   window.removeEventListener("resize", onResize);
   despawnBand();                                   // disposes band + dancers + stage + backdrop + ship
@@ -1826,38 +1843,20 @@ export function stop() {
   try { renderer && renderer.dispose(); } catch (e) {}
   if (displayCanvas && displayCanvas.parentNode) displayCanvas.parentNode.removeChild(displayCanvas);
   displayCanvas = null; renderer = null; scene = null; camera = null; lowResTarget = null; ps1 = null; flight = null;
-  sun = null; _spaceCol = null; _lastActive = null;
+  sun = null; stageSpots = []; _spaceCol = null; _lastActive = null;
   curTraits = null; curDominant = null; curRenderStyle = null;
   eventPlan = null; eventPlanKey = null; _localBar = 0; _lastBarPhase = 0; _curBarIdx = 0;
   document.body.classList.remove("view-starcruise");
-  const chip = document.getElementById("cruiseChip"); if (chip) chip.classList.remove("on");
   window.__STARCRUISE && (window.__STARCRUISE.running = false);
 }
 
 export function toggle() { return running ? (stop(), false) : (start(), true); }
 export function isRunning() { return running; }
 
-// ---- the 🛸 chip: injected into #chips (mirrors the ✦/⚙ chip pattern) -----------
-function injectChip() {
-  if (document.getElementById("cruiseChip")) return;
-  const chips = document.getElementById("chips");
-  if (!chips) return;
-  const btn = document.createElement("button");
-  btn.className = "chip"; btn.id = "cruiseChip";
-  btn.title = "star-cruise: fly the genre map in 3D (loads a 3D engine on first tap)";
-  btn.textContent = "🛸";
-  btn.onclick = () => {
-    const on = toggle();
-    btn.classList.toggle("on", on === true);
-    // toggle() may return a promise-less truthy for start(); reconcile after a tick.
-    setTimeout(() => btn.classList.toggle("on", isRunning()), 0);
-  };
-  chips.appendChild(btn);
-}
-if (typeof document !== "undefined") {
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", injectChip, { once: true });
-  else injectChip();
-}
+// The star-cruise is now ONE of the app's VIEWS (Paul: "make the aliens just one more view
+// along with star map, video, and viz"), cycled by the ✦ view chip in app/panels.js via
+// window.__STARCRUISE.start()/stop()/isRunning(). It no longer injects its own 🛸 chip and
+// has no ✕ EXIT button — you switch away with the view chip like any other view.
 
 // sampleLowRes() — read back the low-res target's pixels (works under headless
 // WebGL regardless of preserveDrawingBuffer, unlike canvas.toDataURL). Returns a
@@ -1914,8 +1913,11 @@ window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBe
   canvas: () => displayCanvas, band: () => band, loaded: () => loaded, sampleLowRes, frameSignature,
   hasThree: () => !!(THREE && THREE.WebGLRenderer),
   // exit affordance + resolution probes (headless-proof; harmless in production).
-  hasExit: () => !!(exitBtn && exitBtn.parentNode),
-  clickExit: () => { if (exitBtn) exitBtn.click(); return !running; },
+  // no ✕ EXIT button any more — the star-cruise is a VIEW (left via the ✦ chip). These
+  // probes stay for the run-test: hasExit is false; "clickExit" now just stops the mode.
+  hasExit: () => false,
+  hasVHS: () => !!(vhsEl && vhsEl.parentNode),
+  clickExit: () => { stop(); return !running; },
   lowRes: () => ({ w: lowW, h: lowH }),
   orbit: () => ({ yaw: orbit.yaw, pitch: orbit.pitch, dist: orbit.dist, fov: orbit.fov,
     target: orbit.target ? { x: orbit.target.x, y: orbit.target.y, z: orbit.target.z } : null }),

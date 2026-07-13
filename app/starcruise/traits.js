@@ -366,21 +366,49 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
     biped: (height > 2.4 ? 0.7 : 0) + nSoft * 0.55 + (leadVoices >= 3 ? 0.5 : 0) + nSeventh * 0.28 + (organic ? 0.18 : 0.08) - nDrum * 0.3 - nSub * 0.2,
     bot: (organic ? 0 : 0.68) + nChop * 0.7 + nCrackle * 0.5 + nIl * 0.42 - nWash * 0.45,
     mollusk: nMotion * 0.9 + nWash * 0.45 + (organic ? 0 : 0.12) + nSwing * 0.2 - nDrum * 0.25 - (nWash > 0.55 && nDrum < 0.4 ? 0 : 0.15),
-    jelly: nWash * 1.05 + nSoft * 0.5 + (1 - nDrum) * 0.7 + (organic ? 0.1 : 0.2),
+    jelly: nWash * 1.05 + nSoft * 0.5 + (1 - nDrum) * 0.7 + (nDrum < 0.2 ? 0.6 : 0) + (organic ? 0.1 : 0.2),
     star: nIl * 1.0 + nHat * 0.5 + nPump * 0.4 + (organic ? 0 : 0.28),
     crawler: nSwing * 0.55 + (organic ? 0.48 : 0) + nHat * 0.4 + nDrum * 0.45,
     blobby: nSub * 0.85 + nDrum * 0.45 + (1 - nVar) * 0.32 + (1 - nBpm) * 0.35,
   };
-  let archetype = "biped", archBest = -Infinity;
-  for (const a of Object.keys(archScores)) {
-    if (archScores[a] > archBest) { archBest = archScores[a]; archetype = a; }
-  }
+  // ---- EARTH-ANIMAL ARCHETYPE (make the aliens read as CUTE, RECOGNIZABLE EARTH ANIMALS) --
+  // On TOP of the alien `plan` + gear we resolve the creature to a recognizable EARTH ANIMAL
+  // — dog / dino / gator / robot / human — so different genres show OBVIOUSLY different animals
+  // (kept charming + a little alien: extra eyes, antennae, odd palettes, a glowing tail-tip).
+  // Five earth archetypes compete on feature affinity; the argmax wins (NO rng draw — pure
+  // feature normals, deterministic, perturbs no earlier trait stream). The nine older alien
+  // archetypes stay as FALLBACKS: they win only in the extreme corners the five don't cover
+  // (a pure ambient drone still reads as a floating JELLY) — held at a DISCOUNT below.
+  //   dog    swinging organic mid-groove, plain harmony  — 4 legs, floppy ears, snout, waggy tail
+  //   dino   heavy + fast + hard kit                     — upright, big jaws, heavy tail, tiny arms
+  //   gator  sub-heavy + SLOW + dense low (dub/swamp)     — low long body, long toothy snout, ridged back
+  //   robot  electronic + choppy / interlocked           — boxy, antenna, plated, one glowing eye
+  //   human  melodic / vocal / harmonic / soft / tall    — upright, rounded head, friendly face
+  // alien.js keys a dedicated EARTH-BODY build off the archetype; to keep the low-level `plan`
+  // silhouette CONTRACT intact (tests force + read `plan`), each earth archetype PINS body.plan
+  // to a canonical home plan — a tall STALK for the upright bipeds, a long low INSECTOID for the
+  // horizontal quadrupeds — so the stance reads right AND forced-plan tests (which set a
+  // DIFFERENT plan) still fall through to the alien plan build.
+  const earthScores = {
+    dog:   (organic ? 0.5 : 0.1) + nHum * 0.6 + nSwing * 0.4 + 0.3 - nDrum * 0.35 - nSub * 0.3 - nChop * 0.4 - (nBpm > 0.75 ? 0.3 : 0),
+    dino:  0.1 + nDrum * 0.5 + nBpm * 0.45 + (1 - nSwing) * 0.35 + (1 - nSoft) * 0.3 - nWash * 0.3 - nSub * 0.2 - nHum * 0.35,
+    gator: 0.1 + nSub * 0.7 + (1 - nBpm) * 0.5 - nSwing * 0.2 - nDrum * 0.1,
+    robot: (organic ? 0 : 0.5) + nChop * 0.6 + nPump * 0.45 + nIl * 0.4 + nCrackle * 0.35 + nWash * 0.3 - nSwing * 0.2,
+    human: nSoft * 0.6 + nSwing * 0.45 + (leadVoices >= 2 ? 0.35 : 0) + nHum * 0.3 + (organic ? 0.15 : 0.08) - nSub * 0.3 - nDrum * 0.2 - nChop * 0.3,
+  };
+  let archetype = "human", archBest = -Infinity;
+  for (const a of Object.keys(earthScores)) if (earthScores[a] > archBest) { archBest = earthScores[a]; archetype = a; }
+  // legacy alien archetypes only win when they clearly BEAT the best earth animal (fallback).
+  for (const a of Object.keys(archScores)) if (archScores[a] - 0.85 > archBest) { archBest = archScores[a] - 0.85; archetype = a; }
+  const EARTH_HOME = { dog: "insectoid", gator: "insectoid", dino: "stalk", human: "stalk", robot: "stalk" };
   body.archetype = archetype;
+  if (EARTH_HOME[archetype]) body.plan = EARTH_HOME[archetype];   // pin the home plan (stance reads right; plan stays canonical)
   // a small feature-derived GEAR budget the rig reads (0..1 knobs; no rng draw):
   body.horniness = +clamp01(nSub * 0.5 + nSeventh * 0.4 + (archetype === "draconic" ? 0.4 : 0)).toFixed(3);
   body.winged = archetype === "draconic" || (archetype === "mollusk" && nMotion > 0.6);
-  body.tailed = archetype === "draconic" || archetype === "quadruped" || archetype === "crawler";
-  body.eared = archetype === "quadruped";
+  body.tailed = archetype === "draconic" || archetype === "quadruped" || archetype === "crawler" ||
+    archetype === "dog" || archetype === "dino" || archetype === "gator";
+  body.eared = archetype === "quadruped" || archetype === "dog";
   body.surface = surface;
 
   // ---- CLOTH -----------------------------------------------------------

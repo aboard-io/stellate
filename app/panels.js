@@ -122,16 +122,21 @@ function toggleModal(which,force){
   }
 }
 document.getElementById("cfgChip").onclick=()=>toggleModal("panel");
-// THE VIEW CYCLE (one button, three 100% views): map -> viz -> video -> map.
-// The chip's icon tracks the CURRENT view (background.js applyBg); switching
-// to video arms the spinner until the layer is actually up.
+// THE VIEW CYCLE (one button, FOUR 100% views): map -> viz -> video -> ALIENS -> map.
+// The chip's icon tracks the CURRENT view (background.js applyBg). Aliens = the 3D
+// star-cruise (window.__STARCRUISE), started/stopped like any other view — no separate
+// chip, no ✕ EXIT button; the ✦ chip cycles right out of it.
 document.getElementById("viewChip").onclick=()=>{
   const chip=document.getElementById("viewChip");
-  if(S.vizView){                    // viz -> video (fall back to map if no footage)
+  const SC=window.__STARCRUISE;
+  if(SC&&SC.isRunning()){           // aliens -> map
+    SC.stop(); chip.classList.remove("spin");
+  } else if(S.vizView){             // viz -> video (fall back to map if no footage)
     toggleModal("inside",false);
     if(bgSetVideo(true)) chip.classList.add("spin");
-  } else if(bgVideoOn()){           // video -> map
-    bgSetVideo(false); chip.classList.remove("spin");
+  } else if(bgVideoOn()){           // video -> ALIENS
+    bgSetVideo(false);
+    if(SC){ chip.classList.add("spin"); Promise.resolve(SC.start()).then(()=>chip.classList.remove("spin")); }
   } else {                          // map -> viz
     toggleModal("inside",true);
   }
