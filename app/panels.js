@@ -59,7 +59,7 @@ function Panel(){
         <input type="range" min="0" max="150" step="1" value=${vol}
           onInput=${e=>setMasterVol((+e.target.value||0)/100)} />
         <output>${vol}%</output></div>
-      <div class="row"><label title="the mix recedes into a huge empty mall — muffled, distant, drenched in reverb (live only)">vapor</label>
+      <div class="row"><label title="the mix recedes into a huge empty mall — muffled, distant, drenched in reverb; eases in over a few bars">vapor</label>
         <input type="range" min="0" max="100" step="1" value=${vap}
           onInput=${e=>setVapor((+e.target.value||0)/100)} />
         <output>${vap}%</output></div>

@@ -407,6 +407,7 @@
       ST = { state, sched, spb, totalSec, TOTAL, buffers, foundAcc, samplerUnits, units, unitOrder,
         anyStereo, fx, revBleed, revColor, rc, master, mb, sweeps, S, nChunks, CBEATS,
         zero: new Float32Array(BS),
+        vapor: 0, vaporTgt: Math.max(0, Math.min(1, +(state && state.vapor) || 0)), vaporSt: null,
         cursor: 0, mcut: 21000, swi: 0, activeSw: [] };
       return { nChunks, TOTAL, SR, spb, CBEATS, S: S.slice(),
         totalSec, foundEvents: foundSec.length, unitKeys: unitOrder.map((x) => x.key) };
@@ -459,6 +460,7 @@
         unitParams: new Map(), unitsSpec, speech: io.speech || null,
         anyStereo, fx, fxp: { ...fxp }, revBleed, revColor, rc, master, mb,
         sweeps: [], S: null, bars: [], liveWriteEnd: 0,
+        vapor: 0, vaporTgt: Math.max(0, Math.min(1, +(state && state.vapor) || 0)), vaporSt: null,
         zero: new Float32Array(BS), cursor: 0, mcut: 21000, swi: 0, activeSw: [] };
       return { live: true, SR, spb: spb0, anyStereo, unitKeys: Object.keys(unitsSpec) };
     }
@@ -478,6 +480,9 @@
       if (barLen < BS) barLen = BS;
       const end = base + barLen;
 
+      // BAKED VAPOR: a live slider move rides in on the bar and eases in from the next chunk
+      // (renderChunk smooths ST.vapor -> ST.vaporTgt), so vapor "takes effect over time".
+      if (bar.vapor != null) ST.vaporTgt = Math.max(0, Math.min(1, +bar.vapor || 0));
       // master-stage (fx_bus) param glide — changed keys only, applied to the
       // persistent proc so the change takes effect from this bar's first block.
       if (bar.fxParams) {
@@ -710,8 +715,49 @@
         }
       }
 
+      // ── BAKED VAPOR (Paul: "can't vapor take effect over time? like BPM?") ──────────
+      // The "walking through an empty mall" master EQ, baked into the FULL-MIX stream so it
+      // rides BOTH the desktop ring AND the mobile WAV segments (the old live-graph version
+      // only existed on the desktop output graph). It lands OVER TIME like a BPM change: the
+      // amount eases toward ST.vaporTgt per chunk (feedBar sets it from bar.vapor). Filter +
+      // reverb state carries on ST across chunk seams (no clicks). BYPASSED entirely at ~0, so
+      // at the default (vapor 0) the stream is BYTE-IDENTICAL and every fixture/segment-parity
+      // gate is untouched — only a turned-up vapor adds processing.
+      applyVapor(L, R, LEN);
+
       ST.cursor = n + 1;
       return { L, R, startSample: base, length: LEN, audit: ST.lastAudit };
+    }
+
+    // vapor DSP state (lazy): a one-pole muffle lowpass per channel + a 3-comb damped mall
+    // wash (Freeverb-style feedback combs). Buffers/filter memories persist across chunks.
+    function mkVaporState() {
+      const comb = (sec, fb, damp) => ({ buf: new Float32Array(Math.max(1, Math.round(sec * SR))), idx: 0, lp: 0, fb, damp });
+      return { lpL: 0, lpR: 0, combs: [comb(0.113, 0.74, 0.35), comb(0.149, 0.71, 0.40), comb(0.193, 0.68, 0.45)] };
+    }
+    function applyVapor(L, R, LEN) {
+      const tgt = Math.max(0, Math.min(1, ST.vaporTgt || 0));
+      ST.vapor = (ST.vapor || 0) + (tgt - (ST.vapor || 0)) * 0.3;   // ease per chunk -> lands over a few bars
+      const v = ST.vapor;
+      if (v <= 1e-4 && tgt <= 1e-4) { ST.vapor = 0; return; }        // BYPASS -> byte-identical at vapor 0
+      if (!ST.vaporSt) ST.vaporSt = mkVaporState();
+      const st = ST.vaporSt;
+      const fc = Math.min(20000 * Math.pow(1400 / 20000, v), SR * 0.45);   // muffle: 20k -> 1.4k
+      const a = Math.exp(-2 * Math.PI * fc / SR);                    // one-pole lowpass coeff (once/chunk)
+      const dry = 1 - 0.45 * v, wg = 0.7 * v;                        // the music recedes; the concourse fills
+      const combs = st.combs, nc = combs.length;
+      for (let i = 0; i < LEN; i++) {
+        const l = L[i] * (1 - a) + st.lpL * a; st.lpL = l;
+        const r = R[i] * (1 - a) + st.lpR * a; st.lpR = r;
+        const inp = (l + r) * 0.5;
+        let wet = 0;
+        for (let k = 0; k < nc; k++) { const c = combs[k]; const d = c.buf[c.idx];
+          c.lp = d * (1 - c.damp) + c.lp * c.damp; c.buf[c.idx] = inp + c.lp * c.fb;
+          if (++c.idx >= c.buf.length) c.idx = 0; wet += d; }
+        wet *= 0.33;
+        L[i] = l * dry + wet * wg;
+        R[i] = r * dry + wet * wg;
+      }
     }
 
     // addBuffers(map) — MERGE decoded PCM into the OPEN stream's live buffer table
