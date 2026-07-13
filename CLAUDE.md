@@ -237,7 +237,7 @@ docs in `docs/`.
   contract), `speech-live-run.js` (espeak WASM live), `mp3-bed-decode-run.js`
   (the MP3 diet decode proof) — they `goto /index.html` and read the
   `window.__` debug hooks; `probe-harness.js` (shared static server + chromium)
-- `audio-verifier.py` — EMPIRICAL gate: Essentia Discogs-EffNet genre model on
+- `tools/audio-verifier.py` — EMPIRICAL gate: Essentia Discogs-EffNet genre model on
   rendered audio. Setup: `python3 -m venv .venv-verify && .venv-verify/bin/pip
   install essentia-tensorflow`, then download to `models/`:
   `discogs-effnet-bs64-1.pb` (essentia.upf.edu/models/feature-extractors/discogs-effnet/)

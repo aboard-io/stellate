@@ -84,7 +84,7 @@ never fetches** (facts-media §1). What ships to the droplet vs stays local:
 | Manifests + app + vendor | | ~few MB | as-is | |
 | Bed originals | `found/*.ogg` (38) | 211 MB | **stays local** | Raw archive.org downloads; never fetched at runtime — the `.wav` is the runtime twin (`tools/fetch-found-sound.sh:46-48`) |
 | Video source reels | `found/video/lib/` | 443 MB | **stays local** | Crate source only; video-layer reads `clips.json`, never `lib/` |
-| Essentia models | `models/` | 20 MB | **stays local** | Offline python verifier only (`audio-verifier.py:21-22`) |
+| Essentia models | `models/` | 20 MB | **stays local** | Offline python verifier only (`tools/audio-verifier.py`) |
 
 **Net server media ≈ 500 MB** (≈ 460 MB by the table, headroom to 500 —
 the plan's estimate; the deployed payload measured **608 MB** after the
@@ -217,7 +217,7 @@ Notes:
   (`found-player.js:521`), manifests fetch `cache:"no-cache"`
   (`found-player.js:488`, `video-layer.js:1092-1093`).
 - **The mutable class** (learned when the invariant fired for real,
-  2026-07-09): manifests (`*.json`) AND `found/tw_vocal.mp3` — sing.py
+  2026-07-09): manifests (`*.json`) AND `found/tw_vocal.mp3` — tools/sing.py
   re-sings the transitwave vocal on every offline render under a fixed
   name — are mutable by design: excluded from MEDIA_MANIFEST and served
   `no-cache` (dedicated nginx `location =` block). Everything else under

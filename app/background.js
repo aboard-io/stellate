@@ -134,13 +134,13 @@ const BG_MIX_Q = QSFLAGS.get("bgMix");
 const bgCanMix = BG_MIX_Q==="1" ? true : BG_MIX_Q==="0" ? false :
   !(/Mobi|iPhone|iPad|Android/.test(navigator.userAgent) || (navigator.hardwareConcurrency||8)<=4);
 function bgWant(){
-  // STAR-CRUISE (aliens view) projects the footage onto a sky screen BEHIND the
-  // 3D band, so it wants the video layer streaming local clips even though the
-  // 2D background sits hidden under the full-screen 3D canvas. The authority
-  // model (applyBg imposes bgWant on every render) enables it on entry and
-  // restores the prior state on exit — no manual save/restore needed.
+  // STAR-CRUISE (aliens view) wraps the WASM DEMOSCENE around the planet as its
+  // atmosphere (Paul: "project the wasm demoscene to the sky"), so it wants the
+  // demo layer running — even though the 2D canvas hides under the 3D view. The
+  // authority model (applyBg imposes bgWant on every render) starts it on entry
+  // and restores the prior state on exit — no manual save/restore needed.
   if(window.__STARCRUISE && window.__STARCRUISE.isRunning && window.__STARCRUISE.isRunning())
-    return { v:true, d:false };
+    return { v:false, d:true };
   // THE VIZ VIEW SUPPRESSES the background layers entirely (three exclusive
   // views, Paul 2026-07-10) — bgMode is REMEMBERED, so leaving the viz returns
   // to whatever video state you were in.
@@ -173,18 +173,15 @@ function applyBg(){
   // view icon: ✦ map · ⓘ viz · ▣ video · 👾 aliens — the CURRENT view; spinner clears
   // when the video/aliens layer is genuinely up (or instantly for map/viz).
   const aliensOn=!!(window.__STARCRUISE&&window.__STARCRUISE.isRunning&&window.__STARCRUISE.isRunning());
-  const icon=aliensOn?"👾":(S.vizView?"ⓘ":(bgMode!==0?"▣":"✦"));
+  // THREE views only (Paul: "get rid of video mode"): ✦ map · ⓘ viz · 👾 aliens.
+  const icon=aliensOn?"👾":(S.vizView?"ⓘ":"✦");
   if(viewChip&&viewChip.textContent!==icon) viewChip.textContent=icon;
-  if(viewChip){ viewChip.classList.toggle("live",S.vizView||bgMode!==0||aliensOn);
-    const wantVideo=!S.vizView&&bgMode!==0;
-    const videoUp=!!(V&&V.enabled&&V.enabled())||!!(D&&D.enabled&&D.enabled());
-    if(!aliensOn&&(!wantVideo||videoUp)) viewChip.classList.remove("spin"); }   // aliens keeps its own spin until up
-  // THE VIEW CLASSES (three exclusive 100% views, Paul 2026-07-10):
-  // body.view-video hides the star map under footage/demos; body.view-viz hides
-  // both under the full-screen viz. applyBg already runs on every render + the
-  // 1Hz backstop, so the body class can never drift from the layer state.
+  if(viewChip){ viewChip.classList.toggle("live",S.vizView||aliensOn);
+    if(!aliensOn) viewChip.classList.remove("spin"); }   // aliens keeps its own spin until up
+  // THE VIEW CLASSES: body.view-viz hides the star map under the full-screen viz.
+  // applyBg runs on every render + the 1Hz backstop, so it can never drift.
   document.body.classList.toggle("view-viz", !!S.vizView);
-  document.body.classList.toggle("view-video", !S.vizView && bgMode!==0);
+  document.body.classList.toggle("view-video", false);   // video view retired
 }
 // FLIP the background side: video <-> demo (fresh cart each demo turn), announce it.
 function bgFlip(){

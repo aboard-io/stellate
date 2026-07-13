@@ -747,17 +747,17 @@ function countCasters() {
   band.forEach(scan); dancers.forEach(scan);
   return n;
 }
-// SKY DOME — wrap the found-video layer AROUND THE PLANET like a glowing
-// atmosphere (Paul: "the video should be mapped around the planet like its
-// atmosphere"). A big BackSide sphere concentric with the ground planet, with
-// the front <video> element as a live texture. ADDITIVE + depth-tested so it
-// reads as luminous atmosphere in the OPEN SKY only — the depth test keeps it
-// from washing over the near band/planet (those are closer, so the dome fails
-// depth there), while it glows over the far stars. LOCAL clips only — a REMOTE
-// archive.org stream has no crossOrigin and would taint the WebGL context
-// (texImage2D throws), so those are skipped and the sky stays clear.
-// background.js's bgWant() keeps the layer streaming while the cruise runs (the
-// 2D wrap hides under the 3D canvas). All guarded — a hiccup never kills render.
+// SKY DOME — wrap the visuals AROUND THE PLANET like a glowing atmosphere (Paul:
+// "mapped around the planet like its atmosphere"). A big BackSide sphere
+// concentric with the ground planet. It projects the WASM DEMOSCENE canvas
+// (DemoLayer, same-origin, generative — the primary source Paul asked for), and
+// falls back to the found-video's front <video> when no demo is running (LOCAL
+// clips only — a remote archive.org stream would taint the WebGL context).
+// ADDITIVE + depth-tested so it reads as luminous atmosphere in the OPEN SKY only
+// — the depth test keeps it off the near band/planet (those are closer, so the
+// dome fails depth there) while it glows over the far stars. background.js's
+// bgWant() keeps the demo layer running while the cruise runs (its 2D canvas
+// hides under the 3D view). All guarded — a hiccup never kills the render.
 function makeSkyDome() {
   const R = (smallWorldGround ? groundRadius : 0) + 60;   // enclose the landed camera orbit
   const cy = smallWorldGround ? -groundH0 : 0;            // concentric with the planet core
@@ -772,24 +772,32 @@ function makeSkyDome() {
   mesh.renderOrder = 1;                    // after opaque: additive glow only in open-sky pixels
   mesh.visible = false;
   mesh.name = "sky-atmosphere";
-  let tex = null, texEl = null;
+  let tex = null, texSrc = null, texKind = null;
   return {
     mesh,
     update(dt) {
       try {
+        // PREFER the demoscene canvas (generative, same-origin, always safe).
+        const D = window.DemoLayer;
+        const demoCv = D && D.enabled && D.enabled() && D._canvas && D._canvas();
+        const demoOk = !!(demoCv && demoCv.width > 0 && D._running && D._running());
+        // FALL BACK to the found-video front element (LOCAL clips only).
         const V = window.VideoLayer;
-        const el = V && V._frontEl && V._frontEl();
-        const kind = V && V._frontKind && V._frontKind();
-        const ok = el && kind === "local" && el.videoWidth > 0 && el.readyState >= 2;
-        if (ok) {
-          if (el !== texEl) {                 // (re)bind on crossfade to the new front clip
+        const vEl = V && V._frontEl && V._frontEl();
+        const vOk = vEl && V._frontKind && V._frontKind() === "local" && vEl.videoWidth > 0 && vEl.readyState >= 2;
+        let src = null, kind = null;
+        if (demoOk) { src = demoCv; kind = "canvas"; }
+        else if (vOk) { src = vEl; kind = "video"; }
+        if (src) {
+          if (src !== texSrc) {                 // (re)bind when the source changes
             if (tex) tex.dispose();
-            tex = new THREE.VideoTexture(el);
+            tex = kind === "video" ? new THREE.VideoTexture(src) : new THREE.CanvasTexture(src);
             if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
-            tex.wrapS = THREE.RepeatWrapping;   // wrap the footage around the dome
+            tex.wrapS = THREE.RepeatWrapping;   // wrap the visuals around the dome
             mat.map = tex; mat.color.setHex(0xffffff); mat.needsUpdate = true;
-            texEl = el;
+            texSrc = src; texKind = kind;
           }
+          if (texKind === "canvas" && tex) tex.needsUpdate = true;   // canvas: refresh each frame
           mesh.visible = true;
         } else {
           mesh.visible = false;
@@ -1276,7 +1284,8 @@ function mountHUD() {
   hudEl.id = "starcruise-hud";
   hudEl.style.cssText = [
     "position:fixed", "top:max(14px,env(safe-area-inset-top))",
-    "left:max(14px,env(safe-area-inset-left))", "z-index:55",
+    "right:max(14px,env(safe-area-inset-right))", "z-index:55",   // top-RIGHT (Paul)
+    "text-align:right",
     "pointer-events:none", "user-select:none",
     "font:600 13px/1.3 system-ui,sans-serif", "letter-spacing:.08em",
     "color:#eef", "text-shadow:0 1px 6px rgba(0,0,0,.8)",
