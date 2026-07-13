@@ -18,9 +18,10 @@ warnings.filterwarnings("ignore")
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-EMB = os.path.join(HERE, "models", "discogs-effnet-bs64-1.pb")
-HEAD = os.path.join(HERE, "models", "genre_discogs400-discogs-effnet-1.pb")
-META = os.path.join(HERE, "models", "genre_discogs400-discogs-effnet-1.json")
+ROOT = os.path.dirname(HERE)   # this script lives in tools/; models/ is at the repo root
+EMB = os.path.join(ROOT, "models", "discogs-effnet-bs64-1.pb")
+HEAD = os.path.join(ROOT, "models", "genre_discogs400-discogs-effnet-1.pb")
+META = os.path.join(ROOT, "models", "genre_discogs400-discogs-effnet-1.json")
 
 # Discogs styles -> our kernel anchors (max of mapped activations)
 ANCHOR_MAP = {

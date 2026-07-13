@@ -8,7 +8,6 @@ import { BARS_PER_SEG } from "./world.js";
 import { goLive, stopLive, setMasterVol, setVapor } from "./live.js";
 import { fontManifest, setSoundfont } from "./fonts.js";
 import { renderInside } from "./inside.js";
-import { bgSetVideo, bgVideoOn } from "./background.js";
 import { drawMap, startPulse } from "./starmap.js";
 import { EXPORT, downloadMidi, exportAudio, exportLoopAudio } from "./export.js";
 import { recordVideo, stopVideo, VIDEO } from "./video-export.js";
@@ -133,13 +132,11 @@ document.getElementById("cfgChip").onclick=()=>toggleModal("panel");
 document.getElementById("viewChip").onclick=()=>{
   const chip=document.getElementById("viewChip");
   const SC=window.__STARCRUISE;
+  // THREE views only (Paul: "get rid of video mode"): map -> viz -> aliens -> map.
   if(SC&&SC.isRunning()){           // aliens -> map
     SC.stop(); chip.classList.remove("spin");
-  } else if(S.vizView){             // viz -> video (fall back to map if no footage)
+  } else if(S.vizView){             // viz -> ALIENS
     toggleModal("inside",false);
-    if(bgSetVideo(true)) chip.classList.add("spin");
-  } else if(bgVideoOn()){           // video -> ALIENS
-    bgSetVideo(false);
     if(SC){ chip.classList.add("spin"); Promise.resolve(SC.start()).then(()=>chip.classList.remove("spin")); }
   } else {                          // map -> viz
     toggleModal("inside",true);

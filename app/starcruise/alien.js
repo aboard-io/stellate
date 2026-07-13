@@ -1738,10 +1738,10 @@ export function makeAlien(THREE, traits, member, seed) {
   }
 
   // contact point (alien-local) + the playing rig — PLAYERS ONLY.
-  let contact = null, instrument = null, holdPoint = null, instBaseY = 0;
+  let contact = null, instrument = null, instrument2 = null, holdPoint = null, instBaseY = 0;
   const _tgt = new THREE.Vector3(), _rest = new THREE.Vector3(), _lastTarget = new THREE.Vector3();
   const _tgt2 = new THREE.Vector3();
-  let windup = 0, bowAmp = 0, loweredDrop = 0;
+  let windup = 0, bowAmp = 0, loweredDrop = 0, drumRate2 = 9;
   // TWO-TENTACLE DRUMMER: a drummer strikes with a SECOND appendage too, so both land on
   // drum onsets. contact2 is that hand's own strike point (mirrored to its side) and is
   // guaranteed reachable (same offset-from-shoulder formula as the primary hand).
@@ -1776,6 +1776,18 @@ export function makeAlien(THREE, traits, member, seed) {
       const s2 = arms[drumSecondIdx].root;
       const side2 = arms[drumSecondIdx].side || (contact.x >= 0 ? -1 : 1);
       contact2 = new THREE.Vector3().set(side2 * 0.28, -0.75, 0.72).normalize().multiplyScalar(REACH).add(s2);
+      // A REAL SECOND DRUM at that hand (minimal membrane + rim, no beater — the
+      // hand IS the beater). So drummers have TWO drums, one per hand.
+      instrument2 = new THREE.Object3D();
+      const sac2 = new THREE.Mesh(sqGeo(H * 0.17, sqEx, sqEy, 12), instMainMat);
+      sac2.scale.set(1, 0.78, 1); instrument2.add(sac2); instrument2._sac = sac2;
+      const ring2 = new THREE.Mesh(new THREE.TorusGeometry(H * 0.17, H * 0.024, 5, 12), instAccMat);
+      ring2.rotation.x = Math.PI / 2; ring2.position.y = H * 0.03; instrument2.add(ring2);
+      instrument2.position.copy(contact2);
+      group.add(instrument2);
+      // the second hand keeps its OWN pace — a steady cross-rhythm (rad/s), keyed
+      // per-alien so it visibly differs from the note-onset primary hand.
+      drumRate2 = 7.5 + (seed % 7) * 0.9;
     }
   }
 
@@ -2095,14 +2107,18 @@ export function makeAlien(THREE, traits, member, seed) {
     _lastTarget.copy(_tgt);
     animateInstrument(c, vel);
 
-    // SECOND drumming appendage — strikes ON the same onsets as the first (drummers only).
+    // SECOND drumming hand — strikes its OWN drum at its OWN pace (a steady
+    // cross-rhythm off `clock`, independent of the primary hand's note onsets),
+    // so the two hands visibly move at DIFFERENT rates (Paul). Animates drum 2.
     if (drumSecondIdx >= 0) {
       const a2 = arms[drumSecondIdx];
       if (energyActive > 0.001) {
+        const c2 = 0.5 - 0.5 * Math.cos(clock * drumRate2);   // 0..1 own-pace oscillation
         _tgt2.copy(contact2);
-        const away = 1 - c;
-        _tgt2.y += away * windup; _tgt2.z -= away * windup * 0.25;
+        const away2 = 1 - c2;
+        _tgt2.y += away2 * windup; _tgt2.z -= away2 * windup * 0.25;
         a2.solve(floorTarget(_tgt2, armW));
+        if (instrument2 && instrument2._sac) instrument2._sac.scale.set(1 + 0.14 * c2, 0.78 - 0.18 * c2, 1 + 0.14 * c2);
       } else { _rest.copy(a2.rest); _rest.y -= 0.05 * H; a2.solve(floorTarget(_rest, armW)); }
     }
 

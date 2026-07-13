@@ -190,7 +190,7 @@ function prepVocal(st) {
   const vsrc = st.foundSources.find(s => s.id === "tw_vocal");
   if (!vsrc) return;
   try { execFileSync(path.join(HERE, "..", ".venv-sing", "bin", "python"),
-    [path.join(HERE, "..", "sing.py"), "--bpm", String(st.bpm), "--transpose", String((st.keyOffset | 0) - 12),
+    [path.join(HERE, "sing.py"), "--bpm", String(st.bpm), "--transpose", String((st.keyOffset | 0) - 12),
      "--out", path.join(HERE, "..", vsrc.samplePath)], { stdio: ["ignore", "ignore", "inherit"] }); }
   catch (e) { console.error("  (sung chorus skipped — .venv-sing/sing.py unavailable)");
     st.foundSources = st.foundSources.filter(s => s.id !== "tw_vocal");
@@ -245,7 +245,7 @@ for (const s of state.foundSources)
 if (P.presetJson) {   // keep the loadable builder preset in sync with this render
   const pj = JSON.parse(JSON.stringify(state));
   pj.foundSources.forEach(s => delete s.fsPath);
-  fs.writeFileSync(path.join(HERE, "..", P.presetJson), JSON.stringify(pj, null, 2));
+  fs.writeFileSync(path.join(HERE, P.presetJson), JSON.stringify(pj, null, 2));
   console.log(`wrote ${P.presetJson}`);
 }
 const prg = (E.PROGRESSIONS[state.progression] || E.PROGRESSIONS.royal_road);

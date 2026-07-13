@@ -437,7 +437,7 @@ function gateAudio() {
       // classifier probe: the middle ~45s, where the full arrangement plays
       execFileSync("ffmpeg", ["-y", "-v", "error", "-ss", "30", "-t", "45", "-i", wav, "-codec:a", "libmp3lame", "-b:a", "160k", mp3]);
       try {
-        const out = execFileSync(py, [path.join(__dirname, "..", "audio-verifier.py"), mp3, "--expect", g], { encoding: "utf8" });
+        const out = execFileSync(py, [path.join(__dirname, "..", "tools", "audio-verifier.py"), mp3, "--expect", g], { encoding: "utf8" });
         results.push({ genre: g, status: "pass", output: out.trim().split("\n").slice(-3).join(" | ") });
       } catch (e) {
         results.push({ genre: g, status: "miss", note: "expected genre not in classifier top ranks",
