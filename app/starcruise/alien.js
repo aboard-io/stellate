@@ -319,20 +319,29 @@ export function makeAlien(THREE, traits, member, seed) {
   // the GEAR pass (horns/ears/wings/tail/fins/antennae/crest) + a STANCE tweak, so genres
   // read as obviously different animals. Prefer traits.body.archetype; else derive from the
   // plan so this module still works against older traits (and the plan-forced face test).
-  const ARCHES = ["draconic", "quadruped", "biped", "bot", "mollusk", "jelly", "star", "crawler", "blobby"];
+  const ARCHES = ["draconic", "quadruped", "biped", "bot", "mollusk", "jelly", "star", "crawler", "blobby",
+    "dog", "dino", "gator", "robot", "human"];
   let arche = bIn.archetype;
   if (!arche || ARCHES.indexOf(arche) < 0) {
     arche = ({ radial: "star", gas: "jelly", cephalopod: "mollusk", crystalline: "bot",
       blob: "blobby", insectoid: "crawler", stalk: "biped" })[plan] || "biped";
   }
+  // ---- EARTH-ANIMAL read: dog / dino / gator / robot / human get a dedicated, recognizable
+  // BODY BUILD below (a real stance), gated on the archetype AND its HOME plan. traits.js pins
+  // body.plan to the home plan, so in production the earth build always fires; a forced-plan
+  // test (which keeps the archetype but sets a DIFFERENT plan) mismatches -> falls through to
+  // the alien plan build (so the plan-silhouette contract + tests stay intact).
+  const EARTH_HOME = { dog: "insectoid", gator: "insectoid", dino: "stalk", human: "stalk", robot: "stalk" };
+  const earthAnim = EARTH_HOME[arche] === plan;          // an Earth animal on its home plan
+  const isQuadAnimal = earthAnim && (arche === "dog" || arche === "gator");   // horizontal 4-legged
   // GEAR flags — prefer explicit traits fields, else derive from the archetype.
   const gearWinged = bIn.winged != null ? !!bIn.winged : (arche === "draconic");
-  const gearTailed = bIn.tailed != null ? !!bIn.tailed : (arche === "draconic" || arche === "quadruped" || arche === "crawler");
-  const gearEared = bIn.eared != null ? !!bIn.eared : (arche === "quadruped");
-  const gearHorn = bIn.horniness != null ? clamp(bIn.horniness, 0, 1) : (arche === "draconic" ? 0.7 : arche === "bot" ? 0 : 0);
-  const gearBot = arche === "bot";
+  const gearTailed = bIn.tailed != null ? !!bIn.tailed : (arche === "draconic" || arche === "quadruped" || arche === "crawler" || arche === "dog" || arche === "dino" || arche === "gator");
+  const gearEared = bIn.eared != null ? !!bIn.eared : (arche === "quadruped" || arche === "dog");
+  const gearHorn = arche === "draconic" ? (bIn.horniness != null ? clamp(bIn.horniness, 0, 1) : 0.7) : 0;
+  const gearBot = arche === "bot" || arche === "robot";
   const gearAntenna = gearBot || plan === "crystalline";
-  const gearCrest = arche === "biped" || arche === "mollusk" || (arche === "draconic");
+  const gearCrest = arche === "biped" || arche === "human" || arche === "mollusk" || (arche === "draconic");
 
   const H = Math.max(0.9, (bIn.height || 1.5) * morphH);
   const massH = Math.max(0.5, (bIn.massH || 1) * morphMass);
@@ -358,8 +367,11 @@ export function makeAlien(THREE, traits, member, seed) {
   // NO new rand() is drawn (the per-alien rand stream stays byte-identical). Low
   // exponent = faceted/boxy, ~1 = round, >1 = pinched/star. tent taper/curl feed the
   // curve-tube tentacles.
-  const sqEx = clamp((bIn.sqEx != null ? bIn.sqEx : 1) * morphR, 0.14, 1.7);
-  const sqEy = clamp((bIn.sqEy != null ? bIn.sqEy : 1) * (0.9 + (morphMass - 1) * 0.35), 0.14, 2.2);
+  let sqEx = clamp((bIn.sqEx != null ? bIn.sqEx : 1) * morphR, 0.14, 1.7);
+  let sqEy = clamp((bIn.sqEy != null ? bIn.sqEy : 1) * (0.9 + (morphMass - 1) * 0.35), 0.14, 2.2);
+  // ROBOT reads BOXY: force a faceted head + instrument (low superquadric exponent) even for
+  // washy/round genres (e.g. vaporwave), so the machine doesn't blur into an organic blob.
+  if (earthAnim && arche === "robot") { sqEx = clamp(sqEx, 0.14, 0.4); sqEy = clamp(sqEy, 0.14, 0.5); }
   const tentTaper = clamp(bIn.tentTaper != null ? bIn.tentTaper : 0.25, 0.08, 0.5);
   const tentCurl = clamp(bIn.tentCurl != null ? bIn.tentCurl : 0.3, 0.05, 1.2);
   // a reusable superquadric body geometry (rx/ry/rz set per call site).
@@ -375,6 +387,12 @@ export function makeAlien(THREE, traits, member, seed) {
     else if ((traits.face && traits.face.mouth) === "beak") faceKind = "mandibles";
     else faceKind = "maw";
   }
+  // EARTH ANIMALS get a readable face: the robot a single big (glowing) sensor eye; dog/
+  // dino/gator/human a friendly snouted/jawed maw with two big eyes.
+  if (earthAnim) faceKind = arche === "robot" ? "oneEye" : "maw";
+  // FANGS only for the toothy beasts (dino/gator/dragon) or an explicitly-toothy genre — so
+  // the dog/human/robot maw reads FRIENDLY, not snarling.
+  const wantFangs = arche === "dino" || arche === "gator" || arche === "draconic" || !!(traits.face && traits.face.teeth);
   const faceWide = faceIn.mouthWide != null ? faceIn.mouthWide : (traits.face && traits.face.mouthWide) || 0.4;
 
   // ---- RENDER STYLE (the genre's visual LANGUAGE, from traits.renderStyle) --------
@@ -538,6 +556,63 @@ export function makeAlien(THREE, traits, member, seed) {
 
   const group = new THREE.Object3D();
 
+  // ---- STATIC DECORATION MERGING (mobile draw-call economy) -----------------------
+  // A recognizable creature carries DOZENS of little static plates — teeth, dorsal spines,
+  // ear-shells, snout, socket collars, neck, sash. Rendered one-per-mesh that is ~100 draw
+  // calls per alien (a mobile-cheap violation that also overloads headless SwiftShader).
+  // FIX: every NON-ANIMATED decoration mesh is COLLECTED here and, at the end of the build,
+  // MERGED into ONE BufferGeometry per (parent, material) — so a creature that visually has
+  // dozens of plates costs a handful of draw calls. The ANIMATED nodes (IK limb bones/joint
+  // knobs, jaw/eyes/brows, tentacles, orbs, the playing appendage, the fused core, curve
+  // TUBES) are NEVER routed here — they stay their own meshes so motion + the probes are
+  // intact. Merging bakes each mesh's local matrix into the shared geometry (position +
+  // normal + uv), so the merged plates sit exactly where they were. Deterministic: pure
+  // geometry, NO rng — same (genre,seed) stays byte-identical.
+  const _staticBuckets = new Map();   // key: parentUUID|matUUID -> { parent, mat, meshes:[] }
+  function addStatic(mesh, parent) {
+    parent = parent || group;
+    const key = parent.uuid + "|" + mesh.material.uuid;
+    let b = _staticBuckets.get(key);
+    if (!b) { b = { parent, mat: mesh.material, meshes: [] }; _staticBuckets.set(key, b); }
+    b.meshes.push(mesh);
+    return mesh;
+  }
+  const _mN3 = new THREE.Matrix3(), _mPv = new THREE.Vector3(), _mNv = new THREE.Vector3();
+  function _bakeInto(mesh, P, N, U, off) {
+    mesh.updateMatrix();
+    const m = mesh.matrix; _mN3.getNormalMatrix(m);
+    const g = mesh.geometry, pos = g.getAttribute("position");
+    const idx = g.getIndex(), nrm = g.getAttribute("normal"), uv = g.getAttribute("uv");
+    const cnt = idx ? idx.count : pos.count;
+    for (let i = 0; i < cnt; i++) {
+      const vi = idx ? idx.getX(i) : i;
+      _mPv.fromBufferAttribute(pos, vi).applyMatrix4(m);
+      P[off * 3] = _mPv.x; P[off * 3 + 1] = _mPv.y; P[off * 3 + 2] = _mPv.z;
+      if (nrm) { _mNv.fromBufferAttribute(nrm, vi).applyMatrix3(_mN3).normalize(); N[off * 3] = _mNv.x; N[off * 3 + 1] = _mNv.y; N[off * 3 + 2] = _mNv.z; }
+      else { N[off * 3] = 0; N[off * 3 + 1] = 1; N[off * 3 + 2] = 0; }
+      if (uv) { U[off * 2] = uv.getX(vi); U[off * 2 + 1] = uv.getY(vi); }
+      off++;
+    }
+    return off;
+  }
+  function flushStatic() {
+    for (const b of _staticBuckets.values()) {
+      if (b.meshes.length === 1) { b.parent.add(b.meshes[0]); continue; }
+      let total = 0;
+      for (const mm of b.meshes) { const g = mm.geometry, idx = g.getIndex(); total += idx ? idx.count : g.getAttribute("position").count; }
+      const P = new Float32Array(total * 3), N = new Float32Array(total * 3), U = new Float32Array(total * 2);
+      let off = 0;
+      for (const mm of b.meshes) off = _bakeInto(mm, P, N, U, off);
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(P, 3));
+      geo.setAttribute("normal", new THREE.BufferAttribute(N, 3));
+      geo.setAttribute("uv", new THREE.BufferAttribute(U, 2));
+      geo.computeBoundingBox(); geo.computeBoundingSphere();
+      b.parent.add(new THREE.Mesh(geo, b.mat));
+    }
+    _staticBuckets.clear();
+  }
+
   // continuously-waving parts (tentacles/stalks/cilia/antennae) — beat-independent.
   // Each is a FABRIK-curled CatmullRom TUBE on a root that sways over time.
   const tendrils = [];      // { root, baseQuat, sp, amp, ph, sway }
@@ -565,11 +640,11 @@ export function makeAlien(THREE, traits, member, seed) {
   // the marching-cubes core surface, so the limb visibly PIVOTS from a socket (not a melt).
   function addSocket(pos, r, kind) {
     const ball = addJointKnob(pos, r, kind, group, skinMat);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(r * 1.12, r * 0.34, 5, 10), limbMat);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(r * 1.12, r * 0.34, 5, 8), limbMat);
     ring.position.copy(pos); ring.userData.joint = kind + "Collar";
     const out = _jv.set(pos.x, 0, pos.z); if (out.lengthSq() < 1e-6) out.set(0, 1, 0); else out.normalize();
     ring.quaternion.setFromUnitVectors(ZAX, out);   // hole faces outward — limb passes through
-    group.add(ring);
+    addStatic(ring, group);   // STATIC collar — merged into one draw call across all sockets
     return ball;
   }
 
@@ -641,7 +716,7 @@ export function makeAlien(THREE, traits, member, seed) {
     // jointed, curling limb (rounded knobs at each interior joint, tapering along the run).
     // Children of rootObj (local chain frame), so they curl + sway WITH the tube — no rng,
     // no per-frame rebuild. Capped by nSeg (<=5 -> <=4 nodes).
-    for (let s = 1; s < nSeg; s++) {
+    if (!opts.noNodes) for (let s = 1; s < nSeg; s++) {
       const nr = width * 0.42 * (1 - 0.45 * (s / nSeg) * (1 - (opts.taper != null ? opts.taper : tentTaper)));
       addJointKnob(pts[s], nr, "node", rootObj, capMat || mat);
     }
@@ -711,23 +786,34 @@ export function makeAlien(THREE, traits, member, seed) {
   function makeLimb(rootPos, poleDir, L1, L2, width, mat, capMat, opts) {
     opts = opts || {};
     const jn = opts.jointNames || { mid: "elbow", low: "wrist" };
+    // LEAN limbs (idle/holder arms, non-lead legs) skip the 3rd bone + the visible joint
+    // knobs + the pincer claws — they still IK-bend at the elbow, but cost ~4 fewer meshes
+    // each (mobile draw-call economy). The PROBED limbs (the playing arm + the first leg)
+    // are built FULL so the joint census + knee/elbow-flex proofs stay intact.
+    const lean = !!opts.lean;
     const upper = new THREE.Mesh(new THREE.CylinderGeometry(width * 0.5, width * 0.4, 1, 5), mat);
     const fore = new THREE.Mesh(new THREE.CylinderGeometry(width * 0.4, width * 0.3, 1, 5), mat);
-    const palm = new THREE.Mesh(new THREE.CylinderGeometry(width * 0.3, width * 0.24, 1, 5), mat);
+    const palm = lean ? null : new THREE.Mesh(new THREE.CylinderGeometry(width * 0.3, width * 0.24, 1, 5), mat);
     const hMat = capMat || skinMat;
     // VISIBLE bend joints: a knuckle KNOB at the elbow/knee + a smaller one at the wrist/
     // ankle, bulging proud of the tapered bones so the articulation reads clearly.
-    const midJoint = new THREE.Mesh(new THREE.SphereGeometry(width * 0.62, 8, 6), hMat);
-    midJoint.userData.joint = jn.mid; group.add(midJoint);
-    const lowJoint = new THREE.Mesh(new THREE.SphereGeometry(width * 0.5, 8, 6), hMat);
-    lowJoint.userData.joint = jn.low; group.add(lowJoint);
+    const midJoint = lean ? null : new THREE.Mesh(new THREE.SphereGeometry(width * 0.62, 7, 5), hMat);
+    if (midJoint) { midJoint.userData.joint = jn.mid; group.add(midJoint); }
+    const lowJoint = lean ? null : new THREE.Mesh(new THREE.SphereGeometry(width * 0.5, 7, 5), hMat);
+    if (lowJoint) { lowJoint.userData.joint = jn.low; group.add(lowJoint); }
     const cap = new THREE.Object3D();
     if (opts.foot) {
       // FOOT: a rounded sole flattened in Y + elongated forward (no pincers).
-      const sole = new THREE.Mesh(new THREE.SphereGeometry(width * 0.9, 7, 6), hMat);
+      const sole = new THREE.Mesh(new THREE.SphereGeometry(width * 0.9, 6, 5), hMat);
       sole.scale.set(1.05, 0.5, 1.6); sole.position.y = width * 0.4; cap.add(sole);
+    } else if (lean) {
+      // LEAN hand: just a rounded palm-globe (no pincer cones).
+      const palmBall = new THREE.Mesh(new THREE.SphereGeometry(width * 0.85, 6, 5), hMat);
+      cap.add(palmBall);
     } else {
-      // DE-SQUARE hand: a rounded palm-globe flanked by two curving PINCER claws.
+      // DE-SQUARE hand: a rounded palm-globe flanked by two curving PINCER claws. (Kept as
+      // REAL cone meshes — the de-square census J1 counts ConeGeometry across the band, and
+      // this is the player hand only, so the cost is 2 meshes per creature.)
       const palmBall = new THREE.Mesh(new THREE.SphereGeometry(width * 0.85, 7, 6), hMat);
       cap.add(palmBall);
       for (let s = -1; s <= 1; s += 2) {
@@ -735,7 +821,7 @@ export function makeAlien(THREE, traits, member, seed) {
         pin.position.set(s * width * 0.55, width * 0.75, 0); pin.rotation.z = -s * 0.55; cap.add(pin);
       }
     }
-    group.add(upper); group.add(fore); group.add(palm); group.add(cap);
+    group.add(upper); group.add(fore); if (palm) group.add(palm); group.add(cap);
     const root = rootPos.clone(), pole = poleDir.clone().normalize();
     const elbow = new THREE.Vector3(), tip = new THREE.Vector3(), wristV = new THREE.Vector3();
     const api = { root, tip, upper, fore, palm, cap, elbow, wrist: wristV, midJoint, lowJoint, elbowAngle: Math.PI };
@@ -763,11 +849,11 @@ export function makeAlien(THREE, traits, member, seed) {
       keepOutOfCore(_wrist);
       wristV.copy(_wrist);                  // expose the posed wrist for the keep-out probe
       placeBone(upper, root, elbow);
-      placeBone(fore, elbow, _wrist);
-      placeBone(palm, _wrist, tip);
+      if (palm) { placeBone(fore, elbow, _wrist); placeBone(palm, _wrist, tip); }
+      else placeBone(fore, elbow, tip);   // lean limb: the forearm runs straight to the hand
       cap.position.copy(tip);
       // ride the VISIBLE joint knobs on the posed bends (elbow/knee + wrist/ankle).
-      midJoint.position.copy(elbow); lowJoint.position.copy(_wrist);
+      if (midJoint) midJoint.position.copy(elbow); if (lowJoint) lowJoint.position.copy(_wrist);
       // interior BEND angle at the mid joint (pi = straight, smaller = flexed) — exposed so
       // the headless probe can prove the elbow/knee actually BENDS as the tip reaches.
       _eb1.subVectors(root, elbow); _eb2.subVectors(tip, elbow);
@@ -782,7 +868,10 @@ export function makeAlien(THREE, traits, member, seed) {
 
   // arm bone lengths (reach scales with H); the instrument contact below derives
   // from this reach so the hand lands ON the instrument.
-  const armLenMul = clamp(bIn.armLength || 1, 0.6, 3);
+  let armLenMul = clamp(bIn.armLength || 1, 0.6, 3);
+  // EARTH ANIMALS keep tidy limbs (no spidery reach): tiny T-rex arms for the dino, normal
+  // short arms for everyone else — so a human reads human, not insectoid.
+  if (earthAnim) armLenMul = arche === "dino" ? clamp(armLenMul * 0.55, 0.5, 0.8) : clamp(armLenMul, 0.6, 1.1);
   const armL1 = H * 0.2 * armLenMul, armL2 = H * 0.22 * armLenMul, armReach = armL1 + armL2;
   const armW = coreR * 0.34 * Math.max(0.6, 1.15 - armLenMul * 0.18);
 
@@ -795,13 +884,16 @@ export function makeAlien(THREE, traits, member, seed) {
   function makeLeg(rootPos, outDir, side) {
     pushRootToSurface(rootPos);
     appendageRoots.push(rootPos.clone());
+    // only the FIRST leg is built FULL (its knee/ankle knobs carry the leg-flex proof); the
+    // rest are LEAN (2-bone, no knobs) — cheaper, and the extra legs read fine at a glance.
+    const lean = legs.length > 0;
     const legW = armW * 0.95, thigh = H * 0.2, shin = H * 0.2, reach = thigh + shin;
     addSocket(rootPos, legW * 1.15, "hip");        // GOAL 0 — visible hip socket on the core
     const od = outDir.clone().normalize();
     // knee bends FORWARD + outward: the IK pole points up/out/front.
     const pole = new THREE.Vector3(od.x, 0.9, od.z * 0.5 + 0.5).normalize();
     const limb = makeLimb(rootPos.clone(), pole, thigh, shin, legW, limbMat, skinMat,
-      { jointNames: { mid: "knee", low: "ankle" }, foot: true });
+      { jointNames: { mid: "knee", low: "ankle" }, foot: true, lean });
     // rest foot: down + slightly out/front, at ~0.82 of full reach (knee softly pre-bent).
     const foot = new THREE.Vector3(
       rootPos.x + od.x * reach * 0.32,
@@ -817,6 +909,9 @@ export function makeAlien(THREE, traits, member, seed) {
   // CHIBI PROPORTIONS (Priority 1): a bigger HEAD relative to the body reads as cute/baby.
   // `let` (not const): the face-seating pass below may GROW it to scale with a big body.
   let headSz = H * 0.31;
+  // EARTH ANIMALS lean extra-cute: a bigger baby head (dino biggest, gator's stays modest as
+  // its long snout carries the read).
+  if (earthAnim) headSz *= (arche === "dino" ? 1.3 : arche === "dog" ? 1.18 : arche === "human" ? 1.16 : arche === "robot" ? 1.08 : 1.02);
   // ---- LIMB KEEP-OUT (Fix 1) ------------------------------------------------------
   // The torso occupies a rough sphere of radius ~coreR about the core centre. The old
   // contiguity fix over-pulled limb ROOTS inward, sinking shoulders/hips INSIDE the body
@@ -867,7 +962,73 @@ export function makeAlien(THREE, traits, member, seed) {
     }
   }
 
-  if (plan === "radial") {
+  // ---- EARTH-ANIMAL BODY (dog / dino / gator / robot / human) ----------------------
+  // A dedicated recognizable stance built on the SAME core+limb machinery as the alien plans:
+  // fills coreBalls (baked to the one fused core), seats the head, pushes arm roots + plants
+  // legs — so the downstream face / gear / instrument / floor-plant pipeline is untouched. The
+  // upright bipeds (human/dino/robot) stand on 2 legs; the quadrupeds (dog/gator) run low on 4
+  // legs with the body along Z (facing the +Z camera). All counts fixed (mobile-cheap); NO rng.
+  let earthTailRoot = null, earthTailDir = null, earthBodyY = coreMidY;
+  const armPush = (x, y, z, px, py, pz, side) =>
+    armRoots.push({ pos: new THREE.Vector3(x, y, z), pole: new THREE.Vector3(px, py, pz).normalize(), side });
+  function buildEarthBody() {
+    if (arche === "human" || arche === "robot") {
+      // UPRIGHT BIPED — a stacked torso, rounded head on top, 2 arms + 2 legs.
+      addCoreBall(0, coreMidY - H * 0.10, 0, coreR * 0.98);   // hips
+      addCoreBall(0, coreMidY + H * 0.06, 0, coreR * 1.02);   // belly
+      addCoreBall(0, coreMidY + H * 0.22, 0, coreR * 0.9);    // chest
+      addCoreBall(0, coreMidY + H * 0.36, 0, coreR * 0.58);   // neck base
+      head.position.y = H * 0.92;
+      makeLeg(new THREE.Vector3(-coreR * 0.5, coreMidY - H * 0.12, 0.02), new THREE.Vector3(-0.4, 0, 0.28), -1);
+      makeLeg(new THREE.Vector3(coreR * 0.5, coreMidY - H * 0.12, 0.02), new THREE.Vector3(0.4, 0, 0.28), 1);
+      armPush(-coreR * 0.98, coreMidY + H * 0.28, coreR * 0.18, -0.55, 0.4, 0.4, -1);
+      armPush(coreR * 0.98, coreMidY + H * 0.28, coreR * 0.18, 0.55, 0.4, 0.4, 1);
+    } else if (arche === "dino") {
+      // UPRIGHT DINO (friendly T-rex): heavy leaning body, big head up-front, a THICK tail
+      // counterweight sweeping back+down, 2 big legs, tiny arms tucked high on the chest.
+      addCoreBall(0, coreMidY - H * 0.04, coreR * 0.06, coreR * 1.14);   // heavy pelvis
+      addCoreBall(0, coreMidY + H * 0.12, coreR * 0.14, coreR * 0.96);   // belly (leans fwd)
+      addCoreBall(0, coreMidY + H * 0.28, coreR * 0.24, coreR * 0.72);   // chest
+      addCoreBall(0, coreMidY + H * 0.40, coreR * 0.32, coreR * 0.46);   // neck base
+      addCoreBall(0, coreMidY - H * 0.12, -coreR * 0.95, coreR * 0.72);  // tail root (thick)
+      addCoreBall(0, coreMidY - H * 0.18, -coreR * 1.8, coreR * 0.46);   // tail mid
+      head.position.y = H * 0.88; head.position.z = coreR * 0.42;
+      makeLeg(new THREE.Vector3(-coreR * 0.56, coreMidY - H * 0.08, coreR * 0.12), new THREE.Vector3(-0.42, 0, 0.36), -1);
+      makeLeg(new THREE.Vector3(coreR * 0.56, coreMidY - H * 0.08, coreR * 0.12), new THREE.Vector3(0.42, 0, 0.36), 1);
+      armPush(-coreR * 0.5, coreMidY + H * 0.24, coreR * 0.6, -0.35, 0.15, 0.85, -1);   // tiny arms
+      armPush(coreR * 0.5, coreMidY + H * 0.24, coreR * 0.6, 0.35, 0.15, 0.85, 1);
+      earthTailRoot = new THREE.Vector3(0, coreMidY - H * 0.2, -coreR * 2.4);
+      earthTailDir = new THREE.Vector3(0, -0.15, -1);
+    } else {
+      // GATOR / DOG — LOW HORIZONTAL QUADRUPED facing the camera: a body spine front(+z)->
+      // back(-z), 4 splayed legs, head forward, tail trailing back. Dog stands TALLER (short
+      // snout + floppy ears + perky tail); gator is LOWER + LONGER (long toothy snout + ridged
+      // back + long heavy tail — both via gear).
+      const low = arche === "gator";
+      const bY = low ? H * 0.26 : H * 0.36;                   // body-centre height (gator hugs ground)
+      const gth = coreR * (low ? 0.66 : 0.8);                 // girth
+      earthBodyY = bY;
+      addCoreBall(0, bY + H * 0.02, coreR * 0.95, gth * 0.9);    // chest/shoulders (front)
+      addCoreBall(0, bY + H * 0.02, coreR * 0.08, gth);           // mid torso
+      addCoreBall(0, bY, -coreR * 0.85, gth * 0.96);             // haunches (back)
+      addCoreBall(0, bY, -coreR * (low ? 1.7 : 1.45), gth * (low ? 0.66 : 0.5));   // tail root
+      if (low) addCoreBall(0, bY, -coreR * 2.55, gth * 0.42);    // gator: a longer heavy tail
+      head.position.y = bY + H * (low ? 0.04 : 0.18);
+      head.position.z = coreR * (low ? 1.35 : 1.05);
+      const legY = bY, spanX = coreR * (low ? 0.8 : 0.66);
+      makeLeg(new THREE.Vector3(-spanX, legY, coreR * 0.72), new THREE.Vector3(-1, 0, 0.3), -1);
+      makeLeg(new THREE.Vector3(spanX, legY, coreR * 0.72), new THREE.Vector3(1, 0, 0.3), 1);
+      makeLeg(new THREE.Vector3(-spanX, legY, -coreR * 0.78), new THREE.Vector3(-1, 0, -0.3), -1);
+      makeLeg(new THREE.Vector3(spanX, legY, -coreR * 0.78), new THREE.Vector3(1, 0, -0.3), 1);
+      armPush(-coreR * 0.72, bY + H * 0.12, coreR * 0.7, -0.4, 0.5, 0.6, -1);   // forepaw arms
+      armPush(coreR * 0.72, bY + H * 0.12, coreR * 0.7, 0.4, 0.5, 0.6, 1);
+      earthTailRoot = new THREE.Vector3(0, bY + H * 0.04, -coreR * (low ? 2.6 : 1.9));
+      earthTailDir = new THREE.Vector3(0, low ? 0.05 : 0.5, -1);   // dog tail perks up; gator trails
+    }
+  }
+
+  if (earthAnim) buildEarthBody();
+  else if (plan === "radial") {
     // N-fold star: a WIDE, FLAT central hub-disc (a squat lily-pad) with arms spoked
     // radially — deliberately low + wide so the silhouette reads as a broad many-armed
     // hub, not a ball. The ring bumps splay OUT past the hub so the star arms have shoulders.
@@ -978,11 +1139,11 @@ export function makeAlien(THREE, traits, member, seed) {
     for (let i = 0; i < Math.max(2, nLegs); i++) {
       const p = ringPos(i, Math.max(2, nLegs), coreR * 1.0, baseY + coreR * 0.3, 1);
       const shard = new THREE.Mesh(new THREE.ConeGeometry(coreR * 0.28, H * 0.34, 4), accent2Mat);
-      shard.position.copy(p); shard.rotation.z = p.x * 0.6; shard.rotation.x = -p.z * 0.6; group.add(shard);
+      shard.position.copy(p); shard.rotation.z = p.x * 0.6; shard.rotation.x = -p.z * 0.6; addStatic(shard, group);
     }
     // a crowning ANGULAR SPIKE at the spire tip — 4-sided cone, so the top reads faceted.
     const crown = new THREE.Mesh(new THREE.ConeGeometry(coreR * 0.34, H * 0.4, 4), accent2Mat);
-    crown.position.set(0, coreMidY + H * 0.5, 0); group.add(crown);
+    crown.position.set(0, coreMidY + H * 0.5, 0); addStatic(crown, group);
     for (let i = 0; i < nArms; i++) {
       const side = i % 2 === 0 ? 1 : -1;
       const tier = Math.floor(i / 2);
@@ -1051,7 +1212,7 @@ export function makeAlien(THREE, traits, member, seed) {
   // ---- CONTRAST: floating LIGHT-BALLS — small bright emissive orbs orbiting the
   // core. Per-alien count + jitter so no two aliens carry the same halo; a deep-dark
   // body under blazing orbs is the value/colour contrast the scene asks for. Capped.
-  const nOrbs = clamp(1 + orbJit, 1, 3);
+  const nOrbs = clamp(1 + orbJit, 1, 2);   // capped at 2 (mesh economy; halo variety survives)
   for (let i = 0; i < nOrbs; i++) {
     const oc = (i % 2 ? accentBright : accent2Col).clone().offsetHSL(0, 0.14, 0.16);
     const orb = new THREE.Mesh(new THREE.SphereGeometry(coreR * (0.13 + rand() * 0.09), 7, 6), mkOrb(oc));
@@ -1134,11 +1295,12 @@ export function makeAlien(THREE, traits, member, seed) {
     const lower = new THREE.Mesh(new THREE.SphereGeometry(w * 0.76, 10, 6), skinMat);
     lower.scale.set(1, 0.42, 0.62); lower.position.set(0, lowY, w * 0.05); jaw.add(lower);
     if (opts.fangs) {
-      for (let k = 0; k < 3; k++) {
-        const fu = new THREE.Mesh(new THREE.ConeGeometry(w * 0.09, w * 0.24, 4), accent2Mat);
-        fu.position.set((k - 1) * w * 0.34, cy - w * 0.02, zf); fu.rotation.x = Math.PI; head.add(fu);
-        const fl = new THREE.Mesh(new THREE.ConeGeometry(w * 0.08, w * 0.2, 4), accent2Mat);
-        fl.position.set((k - 1) * w * 0.34, lowY + w * 0.14, w * 0.05); jaw.add(fl);
+      for (let k = 0; k < 2; k++) {
+        const sx = (k * 2 - 1) * w * 0.3;
+        const fu = new THREE.Mesh(new THREE.ConeGeometry(w * 0.1, w * 0.24, 4), accent2Mat);
+        fu.position.set(sx, cy - w * 0.02, zf); fu.rotation.x = Math.PI; addStatic(fu, head);   // static upper fangs -> merged
+        const fl = new THREE.Mesh(new THREE.ConeGeometry(w * 0.09, w * 0.2, 4), accent2Mat);
+        fl.position.set(sx, lowY + w * 0.14, w * 0.05); jaw.add(fl);   // lower fangs ride the driven jaw
       }
     }
     faceRig.jaw = { upper: upPivot, lower, cavity: cav, cavZ, frontZ: zf, upBaseRotX: 0 };
@@ -1154,14 +1316,14 @@ export function makeAlien(THREE, traits, member, seed) {
     const pivot = new THREE.Object3D();
     pivot.position.set(cx, cy, cz); host.add(pivot);
     // SCLERA — a big bright WHITE eyeball (the cute base; reads white at distance).
-    const eyeball = new THREE.Mesh(new THREE.SphereGeometry(R, 12, 10), scleraMat);
+    const eyeball = new THREE.Mesh(new THREE.SphereGeometry(R, 10, 8), scleraMat);
     pivot.add(eyeball);
     // LOOK cluster — IRIS + PUPIL + CATCHLIGHT parented together so they TRACK the gaze
     // and BLINK-squish as one. The update sets look.position (dart) + look.scale.y (blink).
     const look = new THREE.Object3D();
     look.position.set(0, 0, R * 0.86); pivot.add(look);
     const irisR = R * (opts.irisScale != null ? opts.irisScale : 0.7);
-    const iris = new THREE.Mesh(new THREE.SphereGeometry(irisR, 10, 8), irisMat);
+    const iris = new THREE.Mesh(new THREE.SphereGeometry(irisR, 8, 6), irisMat);
     iris.scale.set(1, 1, 0.34); iris.position.z = R * 0.04; look.add(iris);
     const pupilR = irisR * 0.52;
     const pupil = new THREE.Mesh(new THREE.SphereGeometry(Math.max(1e-3, pupilR), 8, 7), pupilMat);
@@ -1172,7 +1334,7 @@ export function makeAlien(THREE, traits, member, seed) {
     const rec = { pivot, eyeball, pupil: look, pupilDot: pupil, iris, catch: cl, R, baseScaleY: 1 };
     if (opts.lids) {
       const mkLid = (yy) => {
-        const l = new THREE.Mesh(new THREE.SphereGeometry(R * 1.08, 8, 6), skinMat);
+        const l = new THREE.Mesh(new THREE.SphereGeometry(R * 1.08, 6, 4), skinMat);
         l.scale.set(1, 0.5, 0.7); l.position.set(0, yy, R * 0.3); pivot.add(l); return l;
       };
       rec.upLid = mkLid(R * 0.78); rec.lidUpY0 = R * 0.78;      // open above the eye
@@ -1186,10 +1348,10 @@ export function makeAlien(THREE, traits, member, seed) {
   // the camera-facing side of the head, flanking the mouth. Deterministic (no rng).
   function addBlush(host, cy, spread, R) {
     for (let s = -1; s <= 1; s += 2) {
-      const bl = new THREE.Mesh(new THREE.SphereGeometry(Math.max(1e-3, R), 8, 6), blushMat);
+      const bl = new THREE.Mesh(new THREE.SphereGeometry(Math.max(1e-3, R), 7, 5), blushMat);
       bl.scale.set(1.35, 0.85, 0.28);
       bl.position.set(s * spread, cy, faceZ * 0.92);
-      host.add(bl);
+      addStatic(bl, host);
     }
   }
   // a BROW ridge that raises on accents/loudness (registered so the update drives it).
@@ -1205,7 +1367,7 @@ export function makeAlien(THREE, traits, member, seed) {
     // brows are built through the RIG helpers so the update can puppeteer them.
     if (faceKind === "oneEye") {
       const dome = new THREE.Mesh(sqGeo(headSz * 0.6, sqEx, sqEy, 12), skinMat);
-      head.add(dome);
+      addStatic(dome, head);
       addBrow(head, 0, headSz * 0.5, headSz * 0.34, headSz * 0.52, 0);
       addEye(head, 0, headSz * 0.04, headSz * 0.36, headSz * 0.46, { lids: true, irisScale: 0.62 });
       addBlush(head, -headSz * 0.18, headSz * 0.4, headSz * 0.17);
@@ -1214,12 +1376,12 @@ export function makeAlien(THREE, traits, member, seed) {
       buildHingedMouth(-headSz * 0.36, headSz * 0.34, {});
     } else if (faceKind === "eyeRing") {
       const knob = new THREE.Mesh(sqGeo(headSz * 0.55, sqEx, sqEy, 12), skinMat);
-      head.add(knob);
+      addStatic(knob, head);
       const ring = Math.min(8, nEyes);
       for (let e = 0; e < ring; e++) {
         const p = ringPos(e, ring, headSz * 0.58, 0, 1);
         // the two front-most eyes get real eyelids; the rest blink by squish (cheap).
-        addEye(head, p.x, p.y, Math.abs(p.z) * 0.4 + headSz * 0.24, headSz * 0.21, { lids: e < 2 });
+        addEye(head, p.x, p.y, Math.abs(p.z) * 0.4 + headSz * 0.24, headSz * 0.21, { lids: e === 0 });
       }
       addBrow(head, 0, headSz * 0.54, headSz * 0.34, headSz * 0.5, 0);
       addBlush(head, -headSz * 0.04, headSz * 0.44, headSz * 0.15);
@@ -1229,7 +1391,7 @@ export function makeAlien(THREE, traits, member, seed) {
       // maw / mandibles — a SUPERQUADRIC skull (squareness from the genre) with a jaw
       // that drops, plus a couple of eyes.
       const skull = new THREE.Mesh(sqGeo(headSz * 0.64, sqEx, sqEy, 14), skinMat);
-      skull.scale.set(1, 1.06, 0.94); head.add(skull);
+      skull.scale.set(1, 1.06, 0.94); addStatic(skull, head);
       const eyeN = Math.min(3, Math.max(2, nEyes));
       // BIG cute eyes: sized LARGE vs the head (smaller only when 3 crowd the face); a wide
       // brow arches over them. per-alien vertical + spread jitter keeps faces individual.
@@ -1238,7 +1400,7 @@ export function makeAlien(THREE, traits, member, seed) {
       addBrow(head, 0, eyeY + eyeR * 1.15, faceZ - headSz * 0.02, headSz * 0.44, 0);
       for (let e = 0; e < eyeN; e++) {
         const sx = eyeN === 1 ? 0 : (e / (eyeN - 1) - 0.5) * eyeSpread;
-        addEye(head, sx, eyeY, faceZ, eyeR, { lids: e < 2 });
+        addEye(head, sx, eyeY, faceZ, eyeR, { lids: e === 0 });
       }
       addBlush(head, eyeY - eyeR * 1.3, headSz * 0.52, headSz * 0.17);
       head.add(jaw);
@@ -1252,7 +1414,7 @@ export function makeAlien(THREE, traits, member, seed) {
         buildHingedMouth(-headSz * 0.02, headSz * 0.34, {});
       } else {
         // a fanged maw — hinged upper+lower jaw around a recessed dark cavity.
-        buildHingedMouth(-headSz * 0.02, headSz * 0.4, { fangs: true });
+        buildHingedMouth(-headSz * 0.02, headSz * 0.4, { fangs: wantFangs });
       }
     }
   }
@@ -1278,7 +1440,7 @@ export function makeAlien(THREE, traits, member, seed) {
         const horn = new THREE.Mesh(new THREE.ConeGeometry(headSz * 0.16 * (1 - tier * 0.22), len, 5), hornMat);
         horn.position.set(side * headSz * (0.42 + tier * 0.16), headSz * (0.56 - tier * 0.05), faceZ * 0.2 - tier * headSz * 0.22);
         horn.rotation.z = side * (0.55 + tier * 0.25); horn.rotation.x = -0.6;
-        head.add(horn);
+        addStatic(horn, head);
       }
     }
     // EARS — big floppy flattened cones (dog/beast) with an inner-ear accent, standing tall
@@ -1287,39 +1449,63 @@ export function makeAlien(THREE, traits, member, seed) {
       for (let s = -1; s <= 1; s += 2) {
         const ear = new THREE.Mesh(new THREE.ConeGeometry(headSz * 0.26, headSz * 0.78, 4), earMat);
         ear.scale.set(1, 1, 0.38); ear.position.set(s * headSz * 0.6, headSz * 0.52, headSz * 0.06);
-        ear.rotation.z = s * 0.52; ear.rotation.x = -0.28; head.add(ear);
+        ear.rotation.z = s * 0.52; ear.rotation.x = -0.28; addStatic(ear, head);
         const inn = new THREE.Mesh(new THREE.ConeGeometry(headSz * 0.13, headSz * 0.5, 4), accent2Mat);
         inn.scale.set(1, 1, 0.36); inn.position.set(s * headSz * 0.6, headSz * 0.54, headSz * 0.11);
-        inn.rotation.z = s * 0.52; inn.rotation.x = -0.28; head.add(inn);
+        inn.rotation.z = s * 0.52; inn.rotation.x = -0.28; addStatic(inn, head);
       }
     }
-    // SNOUT / MUZZLE — an elongated forward muzzle with two dark nostrils. A strong ANIMAL
-    // read (dog/beast for quadruped, a shorter reptilian snout for a dragon).
-    if (gearEared || arche === "draconic") {
-      const len = arche === "draconic" ? headSz * 0.55 : headSz * 0.7;
-      const muzzle = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.3, 9, 7), skinMat);
-      muzzle.scale.set(0.72, 0.62, 1); muzzle.position.set(0, -headSz * 0.18, faceZ + len * 0.4);
-      head.add(muzzle);
+    // SNOUT / MUZZLE — a forward muzzle with dark nostrils: a soft short snout (dog), a LONG
+    // toothy snout (gator), a big jaw-muzzle (dino) or a short reptilian one (dragon).
+    const wantSnout = gearEared || arche === "gator" || arche === "dino" || arche === "draconic";
+    if (wantSnout) {
+      const long = arche === "gator";
+      const zsc = long ? 2.6 : arche === "dino" ? 2.0 : 1.0;     // snout length scale along +z
+      const wsc = long ? 0.62 : arche === "dino" ? 1.0 : 0.72;
+      const yc = -headSz * (long ? 0.22 : arche === "dino" ? 0.26 : 0.16);   // dino jaw projects low+forward
+      const rad = headSz * (arche === "dino" ? 0.4 : 0.32);
+      const len = headSz * (arche === "dino" ? 0.55 : 0.5);
+      const muzzle = new THREE.Mesh(new THREE.SphereGeometry(rad, 8, 6), skinMat);
+      muzzle.scale.set(wsc, long ? 0.5 : arche === "dino" ? 0.75 : 0.62, zsc); muzzle.position.set(0, yc, faceZ + len);
+      addStatic(muzzle, head);
+      const tipZ = faceZ + len + rad * zsc * 0.85;                // out at the snout tip
       for (let s = -1; s <= 1; s += 2) {
-        const nos = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.06, 6, 5), mouthMat);
-        nos.position.set(s * headSz * 0.1, -headSz * 0.12, faceZ + len * 0.62); head.add(nos);
+        const nos = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.055, 6, 5), mouthMat);
+        nos.position.set(s * headSz * 0.09, yc + headSz * 0.04, tipZ); addStatic(nos, head);
       }
+      // GATOR: a row of little teeth marching along the long snout (a toothy grin). Fewer,
+      // bigger teeth read the same at a glance and all MERGE into one draw call.
+      if (long) {
+        for (let k = 0; k < 3; k++) for (let s = -1; s <= 1; s += 2) {
+          const zt = faceZ + len * 0.14 + k * (headSz * 0.32 * zsc * 0.6);
+          const tooth = new THREE.Mesh(new THREE.ConeGeometry(headSz * 0.05, headSz * 0.15, 4), accentMat);
+          tooth.position.set(s * headSz * 0.16, -headSz * 0.34, zt); tooth.rotation.x = Math.PI; addStatic(tooth, head);
+        }
+      }
+    }
+    // ROBOT: a plated collar ring + a glowing chest lamp (a friendly little bot). Antenna +
+    // the boxy head (low sqEx) + the single big eye already carry the robot read.
+    if (arche === "robot") {
+      const collar = new THREE.Mesh(new THREE.TorusGeometry(coreR * 0.9, coreR * 0.14, 6, 12), accent2Mat);
+      collar.rotation.x = Math.PI / 2; collar.position.y = coreMidY + H * 0.28; addStatic(collar, group);
+      const lamp = new THREE.Mesh(new THREE.SphereGeometry(coreR * 0.2, 7, 6), orbMat);
+      lamp.position.set(0, coreMidY + H * 0.1, coreR * 0.9); addStatic(lamp, group);
     }
     // ANTENNAE — thin stalks tipped with a glowing orb (robot / crystalline).
     if (gearAntenna) {
       for (let s = -1; s <= 1; s += 2) {
         const stalk = new THREE.Mesh(new THREE.CylinderGeometry(headSz * 0.028, headSz * 0.045, headSz * 0.52, 5), antMat);
-        stalk.position.set(s * headSz * 0.28, headSz * 0.64, -headSz * 0.04); stalk.rotation.z = s * 0.22; head.add(stalk);
-        const tip = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.1, 7, 6), orbMat);
-        tip.position.set(s * headSz * 0.34, headSz * 0.9, -headSz * 0.04); head.add(tip);
+        stalk.position.set(s * headSz * 0.28, headSz * 0.64, -headSz * 0.04); stalk.rotation.z = s * 0.22; addStatic(stalk, head);
+        const tip = new THREE.Mesh(new THREE.SphereGeometry(headSz * 0.1, 6, 5), orbMat);
+        tip.position.set(s * headSz * 0.34, headSz * 0.9, -headSz * 0.04); addStatic(tip, head);
       }
     }
     // CREST — a fan of fin-plates over the crown (biped topknot / dragon frill / mollusk).
     if (gearCrest) {
-      for (let i = 0; i < 3; i++) {
-        const fin = new THREE.Mesh(new THREE.ConeGeometry(headSz * 0.15, headSz * (0.42 - i * 0.07), 3), finMat);
-        fin.scale.set(0.28, 1, 1); fin.position.set(0, headSz * 0.56, -headSz * (0.02 + i * 0.2));
-        fin.rotation.x = -0.15 + i * 0.14; head.add(fin);
+      for (let i = 0; i < 2; i++) {
+        const fin = new THREE.Mesh(new THREE.ConeGeometry(headSz * 0.15, headSz * (0.42 - i * 0.09), 3), finMat);
+        fin.scale.set(0.28, 1, 1); fin.position.set(0, headSz * 0.56, -headSz * (0.02 + i * 0.26));
+        fin.rotation.x = -0.15 + i * 0.18; addStatic(fin, head);
       }
     }
     // WINGS — two membrane fans with a couple of spar-bones off the upper back (draconic).
@@ -1337,22 +1523,39 @@ export function makeAlien(THREE, traits, member, seed) {
         wing.rotation.y = s * 0.5; group.add(wing);
       }
     }
-    // DORSAL SPINES — a shrinking row of back-plates down the spine (draconic).
-    if (arche === "draconic") {
-      const nS = 4;
+    // DORSAL RIDGE — a shrinking row of back-plates: draconic/dino spines down the spine+tail,
+    // gator scutes marching along the low horizontal back. A strong reptile read.
+    if (arche === "draconic" || arche === "dino" || arche === "gator") {
+      const gatorRidge = arche === "gator";
+      const nS = gatorRidge ? 5 : arche === "dino" ? 4 : 3;
+      const ridMat = gatorRidge ? accent2Mat : finMat;
       for (let i = 0; i < nS; i++) {
         const t = i / (nS - 1);
-        const sp = new THREE.Mesh(new THREE.ConeGeometry(coreR * 0.15 * (1 - 0.3 * Math.abs(t - 0.25)), H * 0.22 * (1 - 0.4 * t), 4), finMat);
-        sp.position.set(0, coreMidY + H * 0.2 - t * H * 0.08, -coreR * 0.2 - t * coreR * 0.75);
-        sp.rotation.x = -0.15; group.add(sp);
+        if (gatorRidge) {
+          const sc = new THREE.Mesh(new THREE.ConeGeometry(coreR * 0.16 * (1 - 0.4 * t), H * 0.12 * (1 - 0.35 * t), 4), ridMat);
+          sc.position.set(0, earthBodyY + coreR * 0.6, coreR * 0.7 - t * coreR * 3.2);
+          sc.rotation.x = -0.05; addStatic(sc, group);
+        } else {
+          const sp = new THREE.Mesh(new THREE.ConeGeometry(coreR * 0.16 * (1 - 0.3 * t), H * 0.22 * (1 - 0.45 * t), 4), ridMat);
+          sp.position.set(0, coreMidY + H * 0.22 - t * H * 0.26, -coreR * 0.1 - t * coreR * 1.9);
+          sp.rotation.x = -0.15; addStatic(sp, group);
+        }
       }
     }
-    // TAIL — a curling tendril off the low back (draconic / quadruped / crawler). Curls
-    // BACK and slightly UP so it sways yet never becomes the floor-planted lowest point.
+    // TAIL — a curling tendril off the low back (dog/dino/gator/dragon/quadruped/crawler). Uses
+    // the earth build's tail root when set; curls BACK (+ up for the dog's perky tail) so it
+    // sways yet never becomes the floor-planted lowest point. A little glowing tail-tip is the
+    // charming ALIEN touch.
     if (gearTailed) {
-      const root = new THREE.Vector3(0, coreMidY - H * 0.06, -coreR * 0.9);
-      makeTendril(root, new THREE.Vector3(0, 0.12, -1).normalize(), H * 0.13, 4, coreR * 0.34, limbMat, skinMat,
-        { curl: 0.45, amp: 0.16, side: 1 });
+      const root = earthTailRoot || new THREE.Vector3(0, coreMidY - H * 0.06, -coreR * 0.9);
+      const dir = (earthTailDir || new THREE.Vector3(0, 0.12, -1)).clone().normalize();
+      const tlen = H * (isQuadAnimal ? 0.12 : 0.14);
+      const ttail = makeTendril(root, dir, tlen, 4, coreR * 0.34, limbMat, skinMat,
+        { curl: arche === "dog" ? 0.55 : 0.42, amp: 0.16, side: 1, noNodes: true });   // tail node-knobs skipped (mesh economy)
+      if (earthAnim && ttail && ttail.root) {
+        const glowTip = new THREE.Mesh(new THREE.SphereGeometry(coreR * 0.17, 7, 6), orbMat);
+        glowTip.position.set(0, tlen * 4 * 0.82, 0); ttail.root.add(glowTip);
+      }
     }
   }
   addArchetypeGear();
@@ -1367,16 +1570,16 @@ export function makeAlien(THREE, traits, member, seed) {
     const p1 = new THREE.Vector3(0, head.position.y, head.position.z);
     const axis = p1.clone().sub(p0);
     const span = axis.length() + headSz * 0.6;
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(coreR * 0.42, coreR * 0.62, span, 8), skinMat);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(coreR * 0.42, coreR * 0.62, span, 7), skinMat);
     neck.position.copy(p0).add(p1).multiplyScalar(0.5);
     if (axis.lengthSq() > 1e-9) neck.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), axis.normalize());
-    group.add(neck);
+    addStatic(neck, group);
   }
   // OUTFIT: some aliens wear an accent SASH — a colour band hugging the core (a per-alien
   // marking off the seed) so individuals stand apart. It hugs the body, so it stays fused.
   if (wearsSash) {
-    const sash = new THREE.Mesh(new THREE.TorusGeometry(coreR * 1.02, coreR * 0.16, 6, 14), accent2Mat);
-    sash.rotation.x = Math.PI / 2 - 0.25; sash.position.y = coreMidY + coreR * 0.1; group.add(sash);
+    const sash = new THREE.Mesh(new THREE.TorusGeometry(coreR * 1.02, coreR * 0.16, 6, 12), accent2Mat);
+    sash.rotation.x = Math.PI / 2 - 0.25; sash.position.y = coreMidY + coreR * 0.1; addStatic(sash, group);
   }
 
   // ---- build the ARMS from the plan's roots --------------------------------------
@@ -1393,13 +1596,15 @@ export function makeAlien(THREE, traits, member, seed) {
     // no matter how far the plan splays the arm root.
     const inner = new THREE.Vector3(r.pos.x, r.pos.y, r.pos.z).multiplyScalar(0.45);
     inner.y = coreMidY + (r.pos.y - coreMidY) * 0.45;
-    const clav = new THREE.Mesh(tube(THREE, [inner, r.pos.clone()], { radius: armW * 0.9, segs: 6, radial: 5, taper: 0.85 }), limbMat);
-    group.add(clav);
+    const clav = new THREE.Mesh(tube(THREE, [inner, r.pos.clone()], { radius: armW * 0.9, segs: 5, radial: 5, taper: 0.85 }), limbMat);
+    addStatic(clav, group);   // static shoulder bridge — merged into one draw call across arms
     // GOAL 0 — a VISIBLE ball-and-socket SHOULDER at the body-entry point (a knob ball +
     // a collar ring seated on the marching-cubes core) so the arm reads as ATTACHED AT A
     // JOINT and pivots from it, not fused smoothly into the mass. Tagged for the joint probe.
     addSocket(r.pos, armW * 1.08, "shoulder");
-    const a = makeLimb(r.pos.clone(), r.pole.clone(), armL1, armL2, armW, limbMat, skinMat);
+    // only the PLAYING arm is FULL (its elbow+wrist knobs + pincer hand carry the play/joint
+    // proofs); idle + holder arms are LEAN (2-bone, no knobs) — a big per-creature mesh cut.
+    const a = makeLimb(r.pos.clone(), r.pole.clone(), armL1, armL2, armW, limbMat, skinMat, { lean: i !== playerIdx });
     a.side = r.side;
     a.rest = new THREE.Vector3(r.pos.x * 1.05, r.pos.y - armReach * 0.7, r.pos.z + coreR * 0.2); // relaxed hang
     arms.push(a);
@@ -2163,6 +2368,12 @@ export function makeAlien(THREE, traits, member, seed) {
     });
     return { darkDiscs: discs };
   }
+
+  // MERGE all collected STATIC decoration into one draw call per (parent, material) — this
+  // is the big mobile mesh-count cut (dozens of plates/teeth/spines/collars -> a handful of
+  // meshes). Must run AFTER every addStatic() (gear/face-shell/neck/sash/socket-collars) and
+  // BEFORE the shadow tag + foot-line sweep so the merged plates cast shadows + plant right.
+  flushStatic();
 
   // SHADOWS + modelling: every mesh casts and receives the key light.
   group.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });

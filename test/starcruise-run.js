@@ -53,7 +53,7 @@ async function main() {
   // gate on the real readiness signal (window.__STARCRUISE + the chip) instead,
   // with a generous timeout that absorbs that boot.
   await page.goto(`http://localhost:${PORT}/index.html`, { waitUntil: "commit" });
-  await page.waitForFunction(() => window.__STARCRUISE && document.getElementById("cruiseChip"), { timeout: 120000 });
+  await page.waitForFunction(() => window.__STARCRUISE && window.__STARCRUISE.start && document.getElementById("chips"), { timeout: 120000 });
   await page.waitForTimeout(300);
 
   // SEED THE LIVE STORE. window.__S is normally published by app/main.js's boot();
@@ -70,12 +70,12 @@ async function main() {
 
   // ---- A: OFF by default ----
   const before = await page.evaluate(() => ({
-    chip: !!document.getElementById("cruiseChip"),
+    ready: !!(window.__STARCRUISE && window.__STARCRUISE.start),
     hasThree: window.__STARCRUISE.hasThree(),
     canvas: !!document.getElementById("starcruise-canvas"),
     running: window.__STARCRUISE.isRunning(),
   }));
-  ok(before.chip, "A1. 🛸 chip injected into #chips");
+  ok(before.ready, "A1. star-cruise view controller present (window.__STARCRUISE)");
   ok(!before.hasThree, "A2. Three NOT loaded before activation (lazy)");
   ok(!before.canvas && !before.running, "A3. no starcruise canvas / not running when off");
 
@@ -96,11 +96,12 @@ async function main() {
   // ---- B4/B5: always-visible EXIT affordance + bumped internal resolution ----
   const rig = await page.evaluate(() => ({
     res: window.__STARCRUISE.lowRes(),
-    exit: window.__STARCRUISE.hasExit(),
-    exitDom: !!document.getElementById("starcruise-exit"),
+    vhs: window.__STARCRUISE.hasVHS(),
+    vhsDom: !!document.getElementById("starcruise-vhs"),
+    noExit: !window.__STARCRUISE.hasExit() && !document.getElementById("starcruise-exit"),
   }));
-  console.log("       lowRes:", JSON.stringify(rig.res), " exit:", rig.exit);
-  ok(rig.exit && rig.exitDom, "B4. always-visible ✕ EXIT button mounted above the canvas");
+  console.log("       lowRes:", JSON.stringify(rig.res), " vhs:", rig.vhs, " noExit:", rig.noExit);
+  ok(rig.vhs && rig.vhsDom && rig.noExit, "B4. VHS scanline overlay in front of the 3D view; no ✕ EXIT button (aliens is a VIEW now)");
   // NEAR-NATIVE render target now (DPR-aware, long edge capped ~1600 desktop / ~1080
   // mobile). At the 800x600 test viewport (dpr 1) that resolves to ~800x600.
   ok(rig.res.w >= 760 && rig.res.h >= 560,
@@ -375,15 +376,20 @@ async function main() {
     `LP1. LANDS ON A SMALL CURVED WORLD (terrain='${lp.small && lp.small.terrain}', radius=${lp.small && lp.small.radius} < 60, curve-drop across the band=${lp.small && lp.small.curveDrop} > 0.3: horizon bends away)`);
   // LP2: every band member sits ON the terrain surface (distance-from-centre ≈ the planet
   // radius) and stands UPRIGHT — its local +Y aligned to the outward surface normal.
+  // tolerance is RELATIVE to the planet radius: the band stands on the terrain, whose surface
+  // radius = base + (0..relief). On the little world the relief floor scales with the band span,
+  // so a member on a rise can sit a few units above the base radius and still be correctly ON
+  // the surface — never BELOW it. Check: not buried (r >= base - small) and within the relief band.
+  const bandTol = Math.max(4, lp.small.radius * 0.28);
   const bandOK = lp.band && lp.band.length >= 1 &&
-    lp.band.every((m) => Math.abs(m.r - lp.small.radius) < 3.5 && m.upDotN > 0.9);
+    lp.band.every((m) => m.r >= lp.small.radius - 2 && m.r <= lp.small.radius + bandTol && m.upDotN > 0.9);
   const minUpDot = lp.band ? Math.min.apply(null, lp.band.map((m) => m.upDotN)) : 0;
   ok(bandOK,
     `LP2. the BAND stands ON the curved surface oriented to the NORMAL (${lp.band && lp.band.length} members at r≈${lp.small && lp.small.radius}, every local +Y·normal >= ${minUpDot.toFixed(3)} > 0.9)`);
-  // LP3: the city/landscape WRAPPED the curved surface — a real crowd of instances, every
-  // one foot-planted ON the sphere (distance-from-centre ≈ the surface radius).
-  ok(lp.city && lp.city.curved === true && lp.city.count >= 20 && lp.city.onSphere === lp.city.count && lp.city.minR > lp.small.radius - 5,
-    `LP3. the CITY/landscape WRAPPED the curved surface (${lp.city && lp.city.onSphere}/${lp.city && lp.city.count} instances on the sphere, r in [${lp.city && lp.city.minR}, ${lp.city && lp.city.maxR}] around radius ${lp.small && lp.small.radius})`);
+  // LP3: the backdrop is REMOVED (Paul: "get rid of the trees and background objects for now").
+  // The bare planet is the whole stage — no city/landscape instances on the world.
+  ok(lp.city && lp.city.count === 0,
+    `LP3. no backdrop trees/objects on the world — bare planet stage (${lp.city ? lp.city.count : "n/a"} instances)`);
   // LP4: SPACE IS TRUE BLACK — the scene background + renderer clear colour are 0x000000.
   ok(lp.bg && lp.bg.scene === 0x000000 && lp.bg.clear === 0x000000,
     `LP4. SPACE IS TRUE BLACK — scene background + clear colour are 0x000000 (was dark purple) (scene=${lp.bg && lp.bg.scene}, clear=${lp.bg && lp.bg.clear})`);
@@ -804,40 +810,38 @@ async function main() {
   // ---- E: no errors ----
   ok(errs.length === 0, "E1. no console/page errors across activate->run" + (errs.length ? " :: " + errs.join(" | ") : ""));
 
-  // ---- F: clean teardown VIA THE EXIT BUTTON (the user's escape hatch) ----
-  // Programmatically click the always-visible ✕ EXIT button and confirm it stops the
-  // mode and removes the overlay — the user must NEVER be trapped.
+  // ---- F: clean teardown (stop() — the ✦ view chip cycles out of the aliens view) ----
+  // The star-cruise is a VIEW now: no ✕ EXIT button. stop() is what the view chip calls;
+  // confirm it stops the mode and removes the overlay + VHS filter.
   const exited = await page.evaluate(() => {
-    const before = window.__STARCRUISE.hasExit();
-    window.__STARCRUISE.clickExit();     // dispatch a real click on the ✕ EXIT button
-    return { before };
+    const vhsBefore = window.__STARCRUISE.hasVHS();
+    window.__STARCRUISE.clickExit();     // == stop() (the view-chip path)
+    return { vhsBefore };
   });
   await page.waitForTimeout(200);
   const stopped = await page.evaluate(() => ({
     running: window.__STARCRUISE.isRunning(),
     canvas: !!document.getElementById("starcruise-canvas"),
-    exit: !!document.getElementById("starcruise-exit"),
+    vhs: !!document.getElementById("starcruise-vhs"),
   }));
-  ok(exited.before, "F0. ✕ EXIT button present while running");
-  ok(!stopped.running, "F1. EXIT-button click stops the mode (isRunning() false)");
-  ok(!stopped.canvas, "F2. canvas removed from DOM after EXIT");
-  ok(!stopped.exit, "F2b. ✕ EXIT button removed from DOM after exit");
+  ok(exited.vhsBefore, "F0. VHS overlay present while the aliens view is running");
+  ok(!stopped.running, "F1. stop() (view-chip path) stops the mode (isRunning() false)");
+  ok(!stopped.canvas, "F2. canvas removed from DOM after stop");
+  ok(!stopped.vhs, "F2b. VHS overlay removed from DOM after stop");
   ok(errs.length === 0, "F3. no errors after teardown" + (errs.length ? " :: " + errs.join(" | ") : ""));
 
-  // ---- L: the app is UNAFFECTED when the mode is off ----
-  // After a full on->off cycle the host app is intact: the 🛸 chip is still in #chips
-  // (just un-lit), no starcruise DOM/canvas leaks, the app's own controls remain, and
-  // a second start()/stop() round-trips cleanly (no leaked GL context / listeners).
+  // ---- L: the app is UNAFFECTED when the view is off ----
+  // After a full on->off cycle the host app is intact: no starcruise DOM/canvas/overlay
+  // leaks, the chip row remains, and a second start()/stop() round-trips cleanly.
   const host = await page.evaluate(() => ({
     chips: !!document.getElementById("chips"),
-    chip: !!document.getElementById("cruiseChip"),
-    chipOff: (document.getElementById("cruiseChip") || {}).classList ? !document.getElementById("cruiseChip").classList.contains("on") : false,
+    noCruiseChip: !document.getElementById("cruiseChip"),   // the old 🛸 chip is gone (it's a VIEW now)
     strayCanvas: document.querySelectorAll("#starcruise-canvas").length,
+    strayVhs: document.querySelectorAll("#starcruise-vhs").length,
     viewClass: document.body.classList.contains("view-starcruise"),
-    liveBtn: !!document.getElementById("live") || !!document.querySelector("#chips"),
   }));
-  ok(host.chips && host.chip && host.chipOff, "L1. 🛸 chip persists in #chips, un-lit, after stop()");
-  ok(host.strayCanvas === 0 && !host.viewClass, "L2. no starcruise canvas / view-class leaked into the host app");
+  ok(host.chips && host.noCruiseChip, "L1. chip row intact; no standalone 🛸 chip (aliens is a view)");
+  ok(host.strayCanvas === 0 && host.strayVhs === 0 && !host.viewClass, "L2. no starcruise canvas / VHS / view-class leaked into the host app");
   const roundtrip = await page.evaluate(async () => {
     const SC = window.__STARCRUISE;
     await SC.start(); const on = SC.isRunning() && !!document.getElementById("starcruise-canvas");

@@ -12,8 +12,8 @@
 //   - page did NOT crash (page.on('crash'))
 //   - ZERO console/page errors (capturePageErrors)
 //   - window.GenreKernel + window.__S + window.__STARCRUISE are defined
-//   - #cruiseChip (the 🛸) is present
-//   - 4 chips in #chips
+//   - the ✦ view chip is present (aliens is now a VIEW, not a separate 🛸 chip)
+//   - 3 chips in #chips (play / view / cfg)
 //   - the starmap rendered (an svg/canvas exists)
 // Exits nonzero on ANY failure.
 //
@@ -41,7 +41,8 @@ const PORT = 8795;
   const bootMs = Date.now() - t0;
 
   const r = await page.evaluate(() => ({
-    cruiseChip: !!document.getElementById("cruiseChip"),
+    viewChip: !!document.getElementById("viewChip"),
+    starcruise: !!(window.__STARCRUISE && window.__STARCRUISE.start),
     GenreKernel: typeof window.GenreKernel,
     __S: typeof window.__S,
     __STARCRUISE: typeof window.__STARCRUISE,
@@ -64,8 +65,9 @@ const PORT = 8795;
     if (r.GenreKernel !== "object") fails.push("window.GenreKernel not defined (got " + r.GenreKernel + ")");
     if (r.__S === "undefined") fails.push("window.__S not defined");
     if (r.__STARCRUISE === "undefined") fails.push("window.__STARCRUISE not defined");
-    if (!r.cruiseChip) fails.push("#cruiseChip (the 🛸) missing");
-    if (r.chips !== 4) fails.push("expected 4 chips in #chips, got " + r.chips);
+    if (!r.viewChip) fails.push("#viewChip (the ✦ view cycle) missing");
+    if (!r.starcruise) fails.push("window.__STARCRUISE (aliens view controller) missing");
+    if (r.chips !== 3) fails.push("expected 3 chips in #chips (play/view/cfg), got " + r.chips);
     if (r.starmapEls < 1) fails.push("starmap did not render (no svg/canvas/#map/.star)");
   }
 
@@ -74,6 +76,6 @@ const PORT = 8795;
     for (const f of fails) console.error("      - " + f);
     process.exit(1);
   }
-  console.log("\n  PASS — real full-app boot is healthy (🛸 present, starmap rendered).");
+  console.log("\n  PASS — real full-app boot is healthy (✦ view chip + __STARCRUISE present, starmap rendered).");
   process.exit(0);
 })();

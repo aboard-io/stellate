@@ -56,7 +56,7 @@ async function main() {
   const ok = (cond, msg) => { console.log((cond ? "  PASS  " : "  FAIL  ") + msg); if (!cond) fails.push(msg); return cond; };
 
   await page.goto(`http://localhost:${PORT}/index.html`, { waitUntil: "commit" });
-  await page.waitForFunction(() => window.__STARCRUISE && document.getElementById("cruiseChip"), { timeout: 120000 });
+  await page.waitForFunction(() => window.__STARCRUISE && window.__STARCRUISE.start, { timeout: 120000 });
   await page.waitForTimeout(300);
 
   const GEN = await page.evaluate(() => {

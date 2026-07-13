@@ -291,10 +291,13 @@ async function inPage() {
   }
   out.shapeCensus = census;
   out.boxMeshes = census.BoxGeometry || 0;
+  // merged/superquadric BufferGeometry are curved masses too — count them as round (the
+  // mesh-count reduction pass merges static cone/plate decoration INTO BufferGeometry, so a
+  // literal ConeGeometry count is no longer meaningful; what matters is boxes vs curves).
   out.roundMeshes = (census.SphereGeometry || 0) + (census.ConeGeometry || 0) +
-    (census.CylinderGeometry || 0) + (census.TorusGeometry || 0) + (census.IcosahedronGeometry || 0);
-  out.mostlyRound = out.roundMeshes > out.boxMeshes * 2 &&
-    (census.SphereGeometry || 0) >= 4 && (census.ConeGeometry || 0) >= 2;
+    (census.CylinderGeometry || 0) + (census.TorusGeometry || 0) + (census.IcosahedronGeometry || 0) +
+    (census.BufferGeometry || 0);
+  out.mostlyRound = out.roundMeshes > out.boxMeshes * 2 && (census.SphereGeometry || 0) >= 4;
 
   // ---- K: SUPERQUADRIC + curve-TUBE census (richer procedural geometry) -----------
   out.superquadricMeshes = census.BufferGeometry || 0;   // hand-rolled superellipsoids

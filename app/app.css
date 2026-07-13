@@ -84,6 +84,10 @@
   /* (CPU meter chrome removed 2026-07-09 — Paul's ask) */
   /* the chips: the ONLY floating affordances (with the brand) */
   #chips{position:fixed;right:.7rem;bottom:.7rem;z-index:6;display:flex;gap:.5rem}
+  /* ALIENS VIEW: the 3D canvas is a full-screen overlay (z 40) — float the chips ABOVE it
+     (and above the VHS overlay at 44) so the ✦ view chip stays tappable to cycle out. */
+  body.view-starcruise #chips{z-index:50}
+  body.view-starcruise .brand{z-index:50;position:relative}
   .chip{width:48px;height:48px;border-radius:50%;font-size:1.25rem;line-height:1;display:grid;place-items:center;
     padding:0;border:1px solid var(--line2);color:var(--ink);cursor:pointer;
     background:rgba(18,15,38,.72);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
