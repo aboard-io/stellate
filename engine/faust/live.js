@@ -458,7 +458,12 @@
         vaporWet.gain.setTargetAtTime(0.7 * v, ctx.currentTime, 0.1);                         // fill the concourse
       } catch (e) {}
     };
-    applyVapor(opts.vapor);
+    // VAPOR is now BAKED into the rendered stream (stream-renderer applyVapor), so it rides
+    // the mobile WAV segments too and lands over time like a BPM change. The live output-graph
+    // vapor is kept at BYPASS (transparent) so it doesn't DOUBLE-apply on desktop; curVapor is
+    // the live amount, fed into each bar (feedBar) so a slider move eases in from the next bar.
+    let curVapor = Math.max(0, Math.min(1, +opts.vapor || 0));
+    applyVapor(0);
     userGain.connect(msDest || ctx.destination);
 
     // ── found routing: a small submix into master. dry → master; rev/del/pp → a
@@ -686,7 +691,7 @@
     function postFeed(stream, r) {
       workers[stream.wi].postMessage({ type: "feedBar", bar: {
         units: r.units, events: r.events, fxParams: r.fxParams, spb: r.spb, lo: r.lo, hi: r.hi,
-        barStartSec: r._base, sweeps: r._sweeps } });
+        barStartSec: r._base, sweeps: r._sweeps, vapor: curVapor } });
     }
     function openStream(stream, one, primeSec) {
       const go = (speech) => {
@@ -1308,8 +1313,10 @@
       prepare(targetState) { try { ensureWorker(cur ? (cur.ring ^ 1) : 1); } catch (e) {} },
       // USER MASTER VOLUME — smooth (click-free) ride of the post-analyser gain.
       setMasterVol(v) { try { userGain.gain.setTargetAtTime(Math.max(0, Math.min(4, +v || 0)), ctx.currentTime, 0.02); } catch (e) {} },
-      // VAPOR — live-only master EQ (high-shelf cut + reverb wash), 0..1.
-      setVapor(v) { applyVapor(v); },
+      // VAPOR — now BAKED into the render (rides mobile + desktop, lands over time). Store the
+      // amount; the next fed bar carries it into the stream (see postFeed). The live-graph node
+      // stays at bypass, so this no longer touches it.
+      setVapor(v) { curVapor = Math.max(0, Math.min(1, +v || 0)); },
       // real proxy: runway health ("am I keeping up"); the rest are stubs (deleted machinery)
       loadRatio: () => loadRatio,
       ecoLevel: () => 0,
@@ -1637,10 +1644,15 @@
     let curGenReceived = 0, curGenPlayed = 0;      // curGen backpressure (unplayed-ahead bound)
 
     function workerOf(gen) { return workers[gen % 2]; }
+    // BAKED VAPOR (WAV-first mobile path): the amount rides each fed bar into the worker's
+    // stream renderer, which bakes it into the WAV segments — so vapor finally works on mobile
+    // and lands over time. Was unreachable before (this path has no live output graph).
+    let curVaporWav = Math.max(0, Math.min(1, +(opts && opts.vapor) || 0));
     function postFeed(r) {
       workerOf(curGen).postMessage({ type: "feedBar", bar: {
         units: r.units, events: r.events, fxParams: r.fxParams, spb: r.spb, lo: r.lo, hi: r.hi,
-        barStartSec: r._base, sweeps: r._sweeps, found: r.found, foundCi: r.meta.ci, meta: r.meta } });
+        barStartSec: r._base, sweeps: r._sweeps, found: r.found, foundCi: r.meta.ci, meta: r.meta,
+        vapor: curVaporWav } });
     }
     // stream the not-yet-cached found/sampler PCM of gen `gen` in as it decodes: each
     // decode posts an addBuffers to that gen's worker, whose engine merges it into the
@@ -2576,6 +2588,8 @@
       ctx, analyser: null, errors,
       // USER MASTER VOLUME — the media path can only attenuate (element.volume ≤ 1).
       setMasterVol(v) { wavMasterVol = Math.max(0, Math.min(1, +v || 0)); applyWavVol(); },
+      // VAPOR — baked into the WAV segments via the fed bars (finally works on mobile).
+      setVapor(v) { curVaporWav = Math.max(0, Math.min(1, +v || 0)); },
       // GETTERS so they reflect a runtime route demotion (mp3 → segAB), not the boot route.
       get mediaEl() { return useMp3 ? mp3El : els[0]; },
       get outputRoute() { return outRoute; },
