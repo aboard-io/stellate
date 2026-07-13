@@ -16,11 +16,16 @@ Everything below is a corollary.
 
 ```bash
 git clone <this repo> && cd stellate
-cd engine/faust && npm ci && cd ../..   # the one dependency install (faustwasm)
+cd engine/faust && npm ci && cd ../..   # Faust's build dep (faustwasm)
 node tools/ci-standin-media.js          # synthesize stand-in media (no network, ~1s)
 ./verify.sh                             # matrix + validate + engine smoke, concurrent
 node test/theory.test.js && node test/pipes.test.js
 ./serve.sh                              # the app at http://localhost:8777/
+
+# OPTIONAL — the headless BROWSER gates (real WebGL/WebAudio via Playwright):
+npm install                             # the one browser-test dep (playwright)
+npm run setup:browser                   # download the Chromium build (npx playwright install chromium)
+node test/starcruise-run.js             # then any test/*-run.js runs with NO NODE_PATH
 ```
 
 Requires `node` (20+) and `ffmpeg`. The stand-in step exists because a fresh
@@ -40,8 +45,8 @@ MCP tool, nothing in the app or the gates imports it. A plain clone without
 `./verify.sh` green:
 
 - **matrix** — the symbolic confusion matrix must stay
-  **diagonal-dominant: N/N (249 as of 2026-07)**. Every genre must still sound most like
-  itself, symbolically. This is the big one: it's what makes 249 genres a
+  **diagonal-dominant: N/N (250 as of 2026-07)**. Every genre must still sound most like
+  itself, symbolically. This is the big one: it's what makes 250 genres a
   space instead of a soup.
 - **validate** — the kernel gate suite: **determinism** (same state, same
   seed → byte-identical events), **vocabulary** (genres draw from the
@@ -50,8 +55,9 @@ MCP tool, nothing in the app or the gates imports it. A plain clone without
   non-silence. Structure, not beauty.
 
 Plus `node test/theory.test.js` and `node test/pipes.test.js` (pure node,
-sub-second). If your change touches the app UI, run the headless browser gates
-listed in CLAUDE.md too.
+sub-second). If your change touches the app UI or the 3D star-cruise, run the
+headless browser gates (`test/*-run.js`) after the one-time `npm install` +
+`npm run setup:browser` above — they need no `NODE_PATH`.
 
 What the gates don't check — whether it sounds *good* — is checked by playing
 it. Say in the PR what you listened to. No gate will ever be added for taste,
