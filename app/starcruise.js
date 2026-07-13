@@ -122,7 +122,7 @@ let groundRadius = 0;        // the ACTUAL base radius of the current ground pla
 let smallWorldGround = false;// true when the ground is the LITTLE-PRINCE small curved world
 const GROUND_R = 110;        // legacy flat-fallback ground-planet radius (only if the small build fails)
 let backdrop = null;         // {group, update}
-let skyScreen = null;        // {mesh, update, dispose} — footage projected in the sky behind the band
+let skyDome = null;          // {mesh, update, dispose} — footage wrapped around the planet as a glowing atmosphere
 let ship = null;             // { group, update(dt, phase, landProgress) } — the greet-craft saucer
 let cockpit = null;          // { group, update, setGenres } — the transit COCKPIT interior
 let planet = null;           // { group, update, setPalette } — the planet you leave/approach
@@ -610,8 +610,8 @@ function spawnFor(genreOrWeights, seed) {
   backdrop = { group: new THREE.Object3D(), update() {} };
   backdrop.group.name = "backdrop-empty";
   scene.add(backdrop.group);
-  skyScreen = makeSkyScreen();   // project the found-video layer high in the sky behind the band
-  scene.add(skyScreen.mesh);
+  skyDome = makeSkyDome();       // wrap the found-video layer around the planet as its atmosphere
+  scene.add(skyDome.mesh);
   // ship: empty group (kept only for the surface-scene lifecycle parity).
   ship = makeShip(traits, useSeed);
   scene.add(ship.group);
@@ -747,28 +747,35 @@ function countCasters() {
   band.forEach(scan); dancers.forEach(scan);
   return n;
 }
-// SKY SCREEN — project the found-video layer onto a big screen high in the night
-// sky behind the band (Paul: "stream/project the video layer in the sky behind
-// the 3d band"). Unlit so it glows like a screen; yaw-billboards to face the
-// camera so it reads from any orbit angle; shows the front <video> element as a
-// live texture ONLY when it's a LOCAL clip with data — a REMOTE archive.org
-// stream has no crossOrigin and would taint the WebGL context (texImage2D throws
-// a SecurityError), so those are skipped and the sky stays black. background.js's
-// bgWant() keeps the layer streaming while the cruise runs (the 2D wrap hides
-// under the 3D canvas). All guarded — a texture hiccup never kills the render.
-function makeSkyScreen() {
-  const W = 28, H = W * 9 / 16;
-  const geo = new THREE.PlaneGeometry(W, H);
-  const mat = new THREE.MeshBasicMaterial({ color: 0x000000, toneMapped: false });
+// SKY DOME — wrap the found-video layer AROUND THE PLANET like a glowing
+// atmosphere (Paul: "the video should be mapped around the planet like its
+// atmosphere"). A big BackSide sphere concentric with the ground planet, with
+// the front <video> element as a live texture. ADDITIVE + depth-tested so it
+// reads as luminous atmosphere in the OPEN SKY only — the depth test keeps it
+// from washing over the near band/planet (those are closer, so the dome fails
+// depth there), while it glows over the far stars. LOCAL clips only — a REMOTE
+// archive.org stream has no crossOrigin and would taint the WebGL context
+// (texImage2D throws), so those are skipped and the sky stays clear.
+// background.js's bgWant() keeps the layer streaming while the cruise runs (the
+// 2D wrap hides under the 3D canvas). All guarded — a hiccup never kills render.
+function makeSkyDome() {
+  const R = (smallWorldGround ? groundRadius : 0) + 60;   // enclose the landed camera orbit
+  const cy = smallWorldGround ? -groundH0 : 0;            // concentric with the planet core
+  const geo = new THREE.SphereGeometry(R, 48, 32);
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0x000000, side: THREE.BackSide, transparent: true, opacity: 0.72,
+    blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false,
+  });
   const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.set(0, 13, -4);          // high in the sky, behind + above the band centre
+  mesh.position.set(0, cy, 0);
   mesh.frustumCulled = false;
+  mesh.renderOrder = 1;                    // after opaque: additive glow only in open-sky pixels
   mesh.visible = false;
-  mesh.name = "sky-screen";
+  mesh.name = "sky-atmosphere";
   let tex = null, texEl = null;
   return {
     mesh,
-    update() {
+    update(dt) {
       try {
         const V = window.VideoLayer;
         const el = V && V._frontEl && V._frontEl();
@@ -779,6 +786,7 @@ function makeSkyScreen() {
             if (tex) tex.dispose();
             tex = new THREE.VideoTexture(el);
             if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
+            tex.wrapS = THREE.RepeatWrapping;   // wrap the footage around the dome
             mat.map = tex; mat.color.setHex(0xffffff); mat.needsUpdate = true;
             texEl = el;
           }
@@ -786,9 +794,7 @@ function makeSkyScreen() {
         } else {
           mesh.visible = false;
         }
-        // yaw-billboard: keep the screen facing the camera (readable from any
-        // orbit angle) while it stays fixed high in the sky behind the band.
-        if (camera) mesh.rotation.y = Math.atan2(camera.position.x - mesh.position.x, camera.position.z - mesh.position.z);
+        mesh.rotation.y += (dt || 0) * 0.012;   // slow atmospheric drift
       } catch (e) { mesh.visible = false; }
     },
     dispose() { try { if (tex) tex.dispose(); geo.dispose(); mat.dispose(); if (mesh.parent) mesh.parent.remove(mesh); } catch (e) {} },
@@ -803,7 +809,7 @@ function despawnBand() {
   if (stage) { scene.remove(stage); disposeObj(stage); stage = null; }
   if (groundPlanet) { scene.remove(groundPlanet); disposeObj(groundPlanet); groundPlanet = null; groundH0 = 0; groundRadius = 0; smallWorldGround = false; }
   if (backdrop) { scene.remove(backdrop.group); disposeObj(backdrop.group); backdrop = null; }
-  if (skyScreen) { skyScreen.dispose(); skyScreen = null; }
+  if (skyDome) { skyDome.dispose(); skyDome = null; }
   if (ship) { scene.remove(ship.group); disposeObj(ship.group); ship = null; }
   curTraits = null;
   curSpawnDom = null;                              // surface is down — next genre must rebuild
@@ -1791,7 +1797,7 @@ export function update(dt) {
     d.update(dt, { barPhase, loudness: loud, playing: true, level: 1, valueOf() { return barPhase; } });
   }
   if (backdrop) backdrop.update(dt);
-  if (skyScreen) skyScreen.update(dt);
+  if (skyDome) skyDome.update(dt);
   if (ship) ship.update(dt, st.phase, st.landProgress);
   if (!_skipRender) ps1.render(scene, camera);   // _skipRender: headless state-only stepping
 }
