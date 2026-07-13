@@ -277,6 +277,7 @@ export function stopLive(){
   bootAbort();   // stopped before sound? clear the warm-up bar
   if(faustHandle){ try{faustHandle.stop();}catch(e){} faustHandle=null; }
   if(MSESSION){ try{ MSESSION.playbackState="paused"; }catch(e){} }
+  try{ document.title=ORIG_TITLE; }catch(e){}   // restore the tab title when idle
   set({status:"stopped"}); }
 setInterval(()=>{ if(!S.live&&S.playing&&S.target){ set({barCount:S.barCount+1}); glideStep(); } },1400);
 
@@ -289,22 +290,31 @@ setInterval(()=>{ if(!S.live&&S.playing&&S.target){ set({barCount:S.barCount+1})
 // the star chart is live SVG (no canvas), so a snapshot would mean an offscreen
 // re-render for marginal payoff.
 const MSESSION = (typeof navigator!=="undefined" && "mediaSession" in navigator) ? navigator.mediaSession : null;
-function mediaSessionLabel(){
-  // the current blend, mirroring the chyron's genre readout: dominant genre, or
-  // "a + b" when genuinely blended (2nd weight rides above ~25%).
+const ORIG_TITLE = (typeof document!=="undefined" && document.title) || "STELLATE";
+const msLbl=g=>(K.GENRES[g]&&K.GENRES[g].label)||g;   // the lock screen speaks the fiction too
+// ALBUM = the PARENT genre you're anchored to (the dominant weight in the blend).
+function msParentGenre(){
   const ws=(S.weights||[]).filter(w=>w&&w.w>0.001);
-  if(!ws.length) return "the genre space";
-  const lbl=g=>(K.GENRES[g]&&K.GENRES[g].label)||g;   // the lock screen speaks the fiction too
-  const a=lbl(ws[0].g);
-  return (ws[1]&&ws[1].w>0.25) ? a+" + "+lbl(ws[1].g) : a;
+  return ws.length ? msLbl(ws[0].g) : "the genre space";
 }
-let msLastTitle="";
+// SONG = the CURRENT CLOSEST genre — what the verifier hears this moment as most
+// (S.best), which drifts as you travel/blend; falls back to the parent when idle.
+// S.best may be a key (-> its label) or already human text (returned as-is).
+function msClosestGenre(){
+  const b=S.best;
+  return (b && b!=="…") ? msLbl(b) : msParentGenre();
+}
+let msLastTitle="", msLastAlbum="";
 function updateMediaSession(force){
+  const title=msClosestGenre(), album=msParentGenre();
+  if(!force && title===msLastTitle && album===msLastAlbum) return;
+  msLastTitle=title; msLastAlbum=album;
+  // Drive the document title too, so a streaming/lock-screen display that falls
+  // back to the page title (or the bare hostname) never shows "aboardresearch".
+  try{ document.title = (S.live ? title+" · STELLATE" : ORIG_TITLE); }catch(e){}
   if(!MSESSION || typeof MediaMetadata==="undefined") return;
-  const title=mediaSessionLabel();
-  if(!force && title===msLastTitle) return;
-  msLastTitle=title;
-  try{ MSESSION.metadata=new MediaMetadata({ title, artist:"STELLATE", album:"the genre space" }); }catch(e){}
+  // artist = the project; album = parent genre; song/title = current closest genre.
+  try{ MSESSION.metadata=new MediaMetadata({ title, artist:"stellate.app", album }); }catch(e){}
 }
 if(MSESSION){ try{
   MSESSION.setActionHandler("play", ()=>{ if(!S.live) goLive(); });

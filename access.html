@@ -206,6 +206,13 @@
         <option value="blues">Blues</option>
       </select>
       <p class="hint">Force a key/mode across every genre, or leave on Auto.</p>
+
+      <label for="vaporRange">Vapor (mall-haze filter)</label>
+      <div class="inline">
+        <input type="range" id="vaporRange" min="0" max="100" value="0" step="5" aria-describedby="vaporOut vaporHint">
+        <output id="vaporOut">0%</output>
+      </div>
+      <p class="hint" id="vaporHint">Muffles the highs and adds a washed-out reverb — like the music is playing in an empty shopping mall. Takes effect gradually while playing. 0% is off.</p>
     </div>
   </section>
 
