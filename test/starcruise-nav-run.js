@@ -3,8 +3,8 @@
 // the old 'settled-smoothness' probes MISSED):
 //
 //   1. SPREAD + LOOK — the galaxy is blown WAY OUT (min sun-sun distance large, not a
-//      pile) and the suns render as EMISSIVE glowing STARS (self-lit core + additive
-//      corona halo), distinct from the smaller genre planets.
+//      pile) and the suns render as flaming star CORES (one per cluster, no halo — Paul:
+//      "give the stars no halo"), distinct from the smaller genre planets.
 //   2. CONTINUOUS CAMERA (no 8-measure lurch) — across an injected blend/DOMINANT change
 //      the per-frame camera move NEVER spikes at the update: it starts ~0 (a spring, not
 //      a step) and ramps, so the cruise glides.
@@ -41,7 +41,7 @@ async function main() {
   const ok = (cond, msg) => { console.log((cond ? "  PASS  " : "  FAIL  ") + msg); if (!cond) fails.push(msg); return cond; };
 
   await page.goto(`http://localhost:${PORT}/index.html`, { waitUntil: "commit" });
-  await page.waitForFunction(() => window.__STARCRUISE && document.getElementById("cruiseChip"), { timeout: 120000 });
+  await page.waitForFunction(() => window.__STARCRUISE && window.__STARCRUISE.start && document.getElementById("chips"), { timeout: 120000 });
   await page.waitForTimeout(300);
 
   // seed a live store + start the mode, then pause the RAF loop so scripted __steps are
@@ -75,14 +75,14 @@ async function main() {
   });
   console.log("       spread:", JSON.stringify(spread));
   const maxCoreR = spread.glow.coreR ? Math.max.apply(null, spread.glow.coreR) : 8;
-  ok(spread.count === 31 && spread.minSunDist > 15 && spread.minSunDist > 2 * maxCoreR,
+  ok(spread.count === 33 && spread.minSunDist > 15 && spread.minSunDist > 2 * maxCoreR,
     `1A. galaxy SPREAD WAY OUT — closest two suns ${spread.minSunDist} apart (>15 and > 2x the ${maxCoreR} core radius: real empty space, NOT piled)`);
   ok(spread.fieldScale >= 2.5,
     `1B. the layout is blown up (FIELD.scale=${spread.fieldScale}, was 0.55 — ~${(spread.fieldScale / 0.55).toFixed(1)}x larger)`);
-  ok(spread.glow && spread.glow.coreToneMapped === false && spread.glow.cores === 31,
-    `1C. suns are EMISSIVE — self-lit cores drawn at full brightness (toneMapped=${spread.glow.coreToneMapped}, ${spread.glow.cores} stars)`);
-  ok(spread.glow && spread.glow.glowMesh && spread.glow.glowAdditive && spread.glow.glowTransparent && spread.glow.glows === 31,
-    `1D. each sun has an ADDITIVE corona/HALO glow shell (glowMesh=${spread.glow.glowMesh}, additive=${spread.glow.glowAdditive}, ${spread.glow.glows} halos)`);
+  ok(spread.glow && spread.glow.cores === 33,
+    `1C. one flaming star CORE per cluster (${spread.glow && spread.glow.cores} cores == 33 clusters)`);
+  ok(spread.glow && spread.glow.glowMesh === false && spread.glow.glows === 0,
+    `1D. NO HALO (Paul: "give the stars no halo") — each star is just its flaming plasma core, no corona shell (glowMesh=${spread.glow && spread.glow.glowMesh}, ${spread.glow && spread.glow.glows} halos)`);
 
   // ==== 2. CONTINUOUS CAMERA — no spike at a blend/dominant update =================
   // Settle an even (deep-space) blend dominated by GEN, then SWITCH the dominant to a FAR

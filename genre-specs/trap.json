@@ -1,0 +1,303 @@
+{
+  "name": "trap",
+  "label": "808 Trap Rolls",
+  "info": "Trap as a genre: booming 808 sub-bass glides and rattling triplet hi-hat rolls under a half-time kick-snare, sparse minor bell and synth-brass hooks, dark and spacious — the Atlanta hip-hop blueprint",
+  "clips": [
+    "earth_orbit",
+    "spacewalk",
+    "blue_dinner",
+    "dc_village",
+    "bamboo"
+  ],
+  "anchor": {
+    "bpm": [
+      128,
+      152
+    ],
+    "swing": [
+      0,
+      0.04
+    ],
+    "humanize": [
+      0.03,
+      0.1
+    ],
+    "progressions": [
+      "minor_run",
+      "sad_pop",
+      "house_min",
+      "andalusian"
+    ],
+    "kits": [
+      "trap",
+      "halftime",
+      "full"
+    ],
+    "fills": [
+      "off",
+      "cut",
+      "hat rush"
+    ],
+    "chordEvery": 8,
+    "bass": {
+      "patterns": [
+        "sub",
+        "root",
+        "octaves"
+      ],
+      "samplerPool": [
+        "synth_bass_1",
+        "synth_bass_2"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "cutoff": [
+          400,
+          950
+        ],
+        "level": [
+          0.54,
+          0.76
+        ],
+        "send": [
+          0.04,
+          0.14
+        ],
+        "dsend": [
+          0.02,
+          0.1
+        ],
+        "attack": [
+          0.004,
+          0.014
+        ],
+        "release": [
+          0.15,
+          0.5
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "sparse",
+        "wander",
+        "composed"
+      ],
+      "samplerPool": [
+        "celesta",
+        "synth_brass_1"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "cutoff": [
+          2200,
+          3800
+        ],
+        "level": [
+          0.38,
+          0.56
+        ],
+        "send": [
+          0.16,
+          0.36
+        ],
+        "dsend": [
+          0.02,
+          0.1
+        ],
+        "attack": [
+          0.006,
+          0.03
+        ],
+        "release": [
+          0.3,
+          0.8
+        ],
+        "wave": "saw",
+        "voices": [
+          1,
+          2
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.35,
+      "samplerPool": [
+        "synth_brass_1",
+        "strings"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "strings"
+        ],
+        "cutoff": [
+          1100,
+          2000
+        ],
+        "level": [
+          0.24,
+          0.42
+        ],
+        "send": [
+          0.2,
+          0.4
+        ],
+        "dsend": [
+          0.02,
+          0.1
+        ],
+        "attack": [
+          0.2,
+          0.8
+        ],
+        "release": [
+          0.8,
+          2
+        ],
+        "wave": "saw"
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom",
+        "909"
+      ],
+      "snareModel": [
+        "crack",
+        "noise"
+      ],
+      "hatModel": [
+        "metal",
+        "noise"
+      ],
+      "kick": [
+        0.55,
+        0.8
+      ],
+      "snare": [
+        0.45,
+        0.68
+      ],
+      "hat": [
+        0.34,
+        0.58
+      ],
+      "tune": [
+        0.94,
+        1.05
+      ],
+      "send": [
+        0.1,
+        0.28
+      ],
+      "dsend": [
+        0,
+        0.05
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.2,
+        0.42
+      ],
+      "delayBeats": [
+        0.5,
+        1
+      ],
+      "delayFb": [
+        0.1,
+        0.24
+      ],
+      "delayCut": [
+        2000,
+        3000
+      ],
+      "pump": [
+        0,
+        0.1
+      ],
+      "crackle": [
+        0,
+        0.05
+      ],
+      "lowcut": [
+        0,
+        0.1
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.2,
+        0.45
+      ]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.03,
+        0.09
+      ],
+      "pitch": [
+        0.75,
+        0.95
+      ],
+      "stretch": [
+        0.4,
+        0.6
+      ],
+      "cutoff": [
+        1800,
+        2800
+      ],
+      "sources": [
+        "iriomote",
+        "tokyo_station"
+      ]
+    },
+    "rubato": {
+      "depth": [
+        0,
+        0.006
+      ],
+      "periodBars": [
+        4,
+        8
+      ],
+      "prob": 0.06
+    },
+    "hits": {
+      "sources": [
+        "sp_herenow"
+      ],
+      "pattern": "sparse",
+      "prob": 0.04
+    },
+    "stab": [
+      "off"
+    ],
+    "form": "wave"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 2,
+      "drumDensity": 3,
+      "sub": 3,
+      "acoustic": 3,
+      "motion": 2,
+      "seventh": 1,
+      "wash": 1,
+      "humanize": 1
+    }
+  }
+}

@@ -1,0 +1,308 @@
+{
+  "name": "celtic",
+  "label": "Fiddle & Pipe Jig",
+  "info": "Celtic folk as a genre: a lilting fiddle-and-bagpipe melody in a rolling 6/8 jig over a driving root-and-walking acoustic bass, Dorian/Mixolydian modal tunes, bright and acoustic and dance-driven — the Irish/Scottish session reel-and-jig",
+  "clips": [
+    "earth_orbit",
+    "spacewalk",
+    "blue_dinner",
+    "dc_village",
+    "bamboo"
+  ],
+  "anchor": {
+    "bpm": [
+      108,
+      134
+    ],
+    "swing": [
+      0.02,
+      0.1
+    ],
+    "humanize": [
+      0.08,
+      0.2
+    ],
+    "progressions": [
+      "mode_dorian",
+      "mode_mixo",
+      "four_chords",
+      "canon"
+    ],
+    "kits": [
+      "sixeight",
+      "full",
+      "open"
+    ],
+    "fills": [
+      "off",
+      "drum fill",
+      "hat rush"
+    ],
+    "chordEvery": 4,
+    "bass": {
+      "patterns": [
+        "root",
+        "walking",
+        "pedal"
+      ],
+      "samplerPool": [
+        "acoustic_bass",
+        "contrabass"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "cutoff": [
+          500,
+          1200
+        ],
+        "level": [
+          0.46,
+          0.66
+        ],
+        "send": [
+          0.12,
+          0.3
+        ],
+        "dsend": [
+          0.02,
+          0.1
+        ],
+        "attack": [
+          0.006,
+          0.03
+        ],
+        "release": [
+          0.3,
+          0.8
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "double",
+        "updown",
+        "hero"
+      ],
+      "samplerPool": [
+        "fiddle",
+        "bagpipe"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "cutoff": [
+          2400,
+          4200
+        ],
+        "level": [
+          0.44,
+          0.62
+        ],
+        "send": [
+          0.18,
+          0.38
+        ],
+        "dsend": [
+          0.02,
+          0.1
+        ],
+        "attack": [
+          0.006,
+          0.03
+        ],
+        "release": [
+          0.3,
+          0.8
+        ],
+        "wave": "saw",
+        "voices": [
+          1,
+          2
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.45,
+      "samplerPool": [
+        "strings",
+        "fiddle"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "strings"
+        ],
+        "cutoff": [
+          1000,
+          1900
+        ],
+        "level": [
+          0.28,
+          0.46
+        ],
+        "send": [
+          0.24,
+          0.44
+        ],
+        "dsend": [
+          0.02,
+          0.1
+        ],
+        "attack": [
+          0.4,
+          1.4
+        ],
+        "release": [
+          1,
+          2.6
+        ],
+        "wave": "saw",
+        "swell": 1,
+        "detune": [
+          0.002,
+          0.006
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom",
+        "909"
+      ],
+      "snareModel": [
+        "crack",
+        "noise"
+      ],
+      "hatModel": [
+        "metal",
+        "noise"
+      ],
+      "kick": [
+        0.55,
+        0.8
+      ],
+      "snare": [
+        0.45,
+        0.68
+      ],
+      "hat": [
+        0.34,
+        0.58
+      ],
+      "tune": [
+        0.94,
+        1.05
+      ],
+      "send": [
+        0.1,
+        0.28
+      ],
+      "dsend": [
+        0,
+        0.05
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.25,
+        0.46
+      ],
+      "delayBeats": [
+        0.75,
+        1.5
+      ],
+      "delayFb": [
+        0.08,
+        0.2
+      ],
+      "delayCut": [
+        2200,
+        3200
+      ],
+      "pump": [
+        0,
+        0.05
+      ],
+      "crackle": [
+        0,
+        0.08
+      ],
+      "lowcut": [
+        0,
+        0
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.08,
+        0.28
+      ]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.03,
+        0.09
+      ],
+      "pitch": [
+        0.75,
+        0.95
+      ],
+      "stretch": [
+        0.4,
+        0.6
+      ],
+      "cutoff": [
+        1800,
+        2800
+      ],
+      "sources": [
+        "iriomote",
+        "tokyo_station"
+      ]
+    },
+    "rubato": {
+      "depth": [
+        0.004,
+        0.016
+      ],
+      "periodBars": [
+        2,
+        4
+      ],
+      "prob": 0.3
+    },
+    "hits": {
+      "sources": [
+        "sp_herenow"
+      ],
+      "pattern": "sparse",
+      "prob": 0.04
+    },
+    "stab": [
+      "off"
+    ],
+    "form": "wave"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 2,
+      "drumDensity": 3,
+      "acoustic": 3,
+      "bright": 2,
+      "motion": 2,
+      "swing": 2,
+      "seventh": 1,
+      "humanize": 1
+    }
+  }
+}
