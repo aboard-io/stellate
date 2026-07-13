@@ -34,8 +34,9 @@
     padding:.9rem 1rem; margin:.5rem 0; }
   label{ display:block; font-weight:600; margin:.6rem 0 .2rem; }
   .hint{ color:var(--muted); font-size:.9rem; margin:.15rem 0 .4rem; }
-  select, input[type=number]{ font-size:1rem; padding:.5rem .6rem; width:100%;
+  select, input[type=number], input[type=text]{ font-size:1rem; padding:.5rem .6rem; width:100%;
     background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:.4rem; }
+  input[type=text]:focus, select:focus{ outline:2px solid var(--accent); outline-offset:1px; }
   input[type=range]{ width:100%; accent-color:var(--accent); height:1.8rem; }
   button{ font-size:1rem; font-family:inherit; padding:.55rem .9rem; cursor:pointer;
     background:var(--card); color:var(--fg); border:1px solid var(--line); border-radius:.45rem; }
@@ -92,11 +93,11 @@
   <header>
     <h1>STELLATE <span class="tag">· accessible text version</span></h1>
     <p class="intro">A generative instrument you play by moving through a space of
-    228 musical genres. Every song is rendered live in your browser and is fully
-    deterministic from a seed — the same seed always plays the same music. This
-    version needs no vision: pick a genre or build a journey, and read what's
-    playing as text. Your choices ride the address bar, so bookmarking or sharing
-    the URL captures this exact music. <a href="index.html">Switch to the
+    <span id="genreCount">273</span> musical genres. Every song is rendered live in
+    your browser and is fully deterministic from a seed — the same seed always plays
+    the same music. This version needs no vision: pick a genre or build a journey, and
+    read what's playing as text. Your choices ride the address bar, so bookmarking or
+    sharing the URL captures this exact music. <a href="index.html">Switch to the
     visual star-map version.</a></p>
   </header>
 
@@ -140,11 +141,14 @@
       <!-- HOLD -->
       <div id="holdPanel">
         <label for="genreSel">Genre</label>
-        <select id="genreSel" aria-describedby="genreInfo"></select>
+        <input type="text" id="genreSel" list="genreList" autocomplete="off" spellcheck="false"
+               aria-describedby="genreInfo comboHint" placeholder="Type to search 273 genres…">
+        <p class="hint" id="comboHint">Start typing a genre name (e.g. “salsa”, “raga”, “techno”) and pick from the list.</p>
         <p class="hint" id="genreInfo"></p>
 
         <label for="blendSel">Blend with a second genre (optional)</label>
-        <select id="blendSel"></select>
+        <input type="text" id="blendSel" list="genreList" autocomplete="off" spellcheck="false"
+               placeholder="none — type a second genre to blend">
         <div id="blendAmtRow" hidden>
           <label for="blendAmt">Blend amount</label>
           <div class="inline">
@@ -159,20 +163,23 @@
       <div id="journeyPanel" hidden>
         <label for="journeyAdd">Add a stop to the journey</label>
         <div class="inline">
-          <select id="journeyAdd"></select>
+          <input type="text" id="journeyAdd" list="genreList" autocomplete="off" spellcheck="false"
+                 placeholder="Type a genre, then Add stop">
           <button id="journeyAddBtn" type="button">Add stop</button>
         </div>
         <h3 style="font-size:1rem;margin:.8rem 0 .2rem">Journey stops (plays as a loop)</h3>
         <ol id="journeyList"></ol>
         <p class="hint" id="journeyState" aria-live="polite"></p>
-        <label for="paceRange">Journey pace</label>
+        <label for="paceRange">Journey duration</label>
         <div class="inline">
-          <input type="range" id="paceRange" min="0" max="100" value="50" step="1" aria-describedby="paceOut">
+          <input type="range" id="paceRange" min="0" max="100" value="50" step="1" aria-describedby="paceOut paceHint">
           <output id="paceOut"></output>
         </div>
-        <p class="hint">Bars spent on each leg between stops. Larger = slower, more gradual morphing.</p>
+        <p class="hint" id="paceHint">Total time to travel the whole loop — from 8 minutes to 24 hours. Larger = slower, more gradual morphing between stops.</p>
       </div>
     </div>
+    <!-- shared type-to-filter option list for all three genre comboboxes -->
+    <datalist id="genreList"></datalist>
   </section>
 
   <!-- ADVANCED (the "Shape the sound" macro sliders lived here until

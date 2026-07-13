@@ -1,0 +1,306 @@
+{
+  "name": "raga",
+  "label": "Sitar Alap Drone",
+  "info": "Indian classical raga as a genre: a singing sitar tracing microtonal meend over a tonic tanpura drone and a sparse tabla-like pulse, slow rubato alap opening into a gat, Phrygian/hijaz modal colour with no Western functional harmony — patient, hypnotic, acoustic",
+  "clips": [
+    "earth_orbit",
+    "spacewalk",
+    "blue_dinner",
+    "dc_village",
+    "bamboo"
+  ],
+  "anchor": {
+    "bpm": [
+      64,
+      92
+    ],
+    "swing": [
+      0,
+      0.04
+    ],
+    "humanize": [
+      0.1,
+      0.26
+    ],
+    "progressions": [
+      "drone_min",
+      "mode_phrygian",
+      "hijaz",
+      "mode_dorian"
+    ],
+    "kits": [
+      "off",
+      "tribal",
+      "kick"
+    ],
+    "fills": [
+      "off"
+    ],
+    "chordEvery": 16,
+    "bass": {
+      "patterns": [
+        "pedal",
+        "root",
+        "sub"
+      ],
+      "samplerPool": [
+        "contrabass",
+        "cello"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "cutoff": [
+          400,
+          1000
+        ],
+        "level": [
+          0.42,
+          0.6
+        ],
+        "send": [
+          0.2,
+          0.4
+        ],
+        "dsend": [
+          0.02,
+          0.1
+        ],
+        "attack": [
+          0.02,
+          0.08
+        ],
+        "release": [
+          0.6,
+          1.6
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "wander",
+        "arpup",
+        "sparse"
+      ],
+      "samplerPool": [
+        "sitar",
+        "sitar"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "cutoff": [
+          2400,
+          4200
+        ],
+        "level": [
+          0.44,
+          0.62
+        ],
+        "send": [
+          0.24,
+          0.46
+        ],
+        "dsend": [
+          0.02,
+          0.1
+        ],
+        "attack": [
+          0.01,
+          0.05
+        ],
+        "release": [
+          0.4,
+          1
+        ],
+        "wave": "saw",
+        "voices": [
+          1,
+          2
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.7,
+      "samplerPool": [
+        "strings",
+        "sitar"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "strings"
+        ],
+        "cutoff": [
+          900,
+          1700
+        ],
+        "level": [
+          0.3,
+          0.5
+        ],
+        "send": [
+          0.34,
+          0.56
+        ],
+        "dsend": [
+          0.02,
+          0.1
+        ],
+        "attack": [
+          1.5,
+          3.5
+        ],
+        "release": [
+          2.5,
+          5
+        ],
+        "wave": "saw",
+        "swell": 1,
+        "detune": [
+          0.002,
+          0.006
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom",
+        "909"
+      ],
+      "snareModel": [
+        "crack",
+        "noise"
+      ],
+      "hatModel": [
+        "metal",
+        "noise"
+      ],
+      "kick": [
+        0.55,
+        0.8
+      ],
+      "snare": [
+        0.45,
+        0.68
+      ],
+      "hat": [
+        0.34,
+        0.58
+      ],
+      "tune": [
+        0.94,
+        1.05
+      ],
+      "send": [
+        0.1,
+        0.28
+      ],
+      "dsend": [
+        0,
+        0.05
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.4,
+        0.62
+      ],
+      "delayBeats": [
+        0.75,
+        1.5
+      ],
+      "delayFb": [
+        0.1,
+        0.24
+      ],
+      "delayCut": [
+        2000,
+        3000
+      ],
+      "pump": [
+        0,
+        0
+      ],
+      "crackle": [
+        0,
+        0.06
+      ],
+      "lowcut": [
+        0,
+        0
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0,
+        0.12
+      ]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.03,
+        0.09
+      ],
+      "pitch": [
+        0.75,
+        0.95
+      ],
+      "stretch": [
+        0.4,
+        0.6
+      ],
+      "cutoff": [
+        1800,
+        2800
+      ],
+      "sources": [
+        "iriomote",
+        "tokyo_station"
+      ]
+    },
+    "rubato": {
+      "depth": [
+        0.02,
+        0.05
+      ],
+      "periodBars": [
+        1,
+        3
+      ],
+      "prob": 0.85
+    },
+    "hits": {
+      "sources": [
+        "sp_herenow"
+      ],
+      "pattern": "sparse",
+      "prob": 0.04
+    },
+    "stab": [
+      "off"
+    ],
+    "form": "wave"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "acoustic": 3,
+      "bpm": 2,
+      "drumDensity": 3,
+      "rubato": 3,
+      "wash": 2,
+      "motion": 2,
+      "seventh": 2,
+      "humanize": 1
+    }
+  }
+}

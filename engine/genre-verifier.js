@@ -247,7 +247,7 @@
     miamibass:{ bpm:[98,130,2], sub:[.6,1,3], hatDensity:[1.1,2.2,2], swing:[0,.08,2], snareBalance:[.3,1.1,1],
                 crackle:[0,.1,1], pump:[0,.25,1], comp:[.2,.5,1], chopUse:[0,.1,1], acoustic:[0,.25,1] },   // the 808 sub + fast hats, all machine — electro's sub-light sibling
     phonk:    { bpm:[122,146,3], crackle:[.3,.7,3], sub:[.6,1,2], softTop:[1,1,2], swing:[0,.12,1],
-                hatDensity:[1.6,3.2,1], motion:[0,.5,1], comp:[.3,.7,1] },   // tape filth at dubstep tempo — dubstep is CLEAN, lofi is SLOW
+                hatDensity:[.5,1.5,1], motion:[0,.7,1], comp:[.3,.7,1] },   // tape filth at dubstep tempo — dubstep is CLEAN, lofi is SLOW; kit floors track the real (sparse) hat density, 2026-07 recalibration after the lerp batch shifted z-scoring
     witchhouse:{ bpm:[56,80,3], wash:[.35,.8,3], sub:[.6,1,2], drumDensity:[1,3.2,1], motion:[0,.7,1],
                 swing:[0,.1,2], crackle:[0,.18,1], comp:[.15,.45,1], pump:[0,.12,1] },   // slowed 808s UNDER the cathedral — vaporwave majors, this drones minor
     mallsoft: { bpm:[42,60,3], drumDensity:[0,1.5,3], wash:[.5,1,2], seventh:[.5,1,1], motion:[.5,1,1],
@@ -274,8 +274,8 @@
                 drumDensity:[2,6,1], snareBalance:[.3,1.2,1], swing:[0,.07,1], pump:[0,.3,1] },   // the amen PAST jungle tempo, compressed to death
     acidhouse:{ bpm:[115,128,3], swing:[0,.09,2], crackle:[.05,.35,2], pump:[.2,.6,2], snareBalance:[.45,1.2,2],
                 motion:[0,.7,2], seventh:[.8,1,1], chopUse:[0,.1,1], comp:[.3,.7,1] },   // loud claps + record dust — techno's snare is optional color, house chops vox
-    surfrock: { bpm:[122,148,3], swing:[.05,.16,2], crackle:[.1,.4,2], seventh:[0,.6,2], acoustic:[.3,.8,1],
-                leadVoices:[1,2,1], drumDensity:[1.6,3,1], hatDensity:[.9,1.8,1], pump:[0,.1,1], humanize:[.1,.4,1] },   // 45rpm twang — chiptune is bone-dry and swingless at this tempo
+    surfrock: { bpm:[122,148,3], swing:[.05,.16,2], crackle:[.1,.4,2], seventh:[0,.75,2], acoustic:[.3,.8,1],
+                leadVoices:[1,2,1], drumDensity:[1.1,1.6,1], hatDensity:[.5,.9,1], pump:[0,.1,1], humanize:[.1,.4,1] },   // 45rpm twang — chiptune is bone-dry and swingless at this tempo; kit floors track the (lightened) open/four kit's real density, 2026-07 recalibration after the rock-genre batch shifted z-scoring
     spacelounge:{ bpm:[84,104,3], swing:[.08,.22,2], acoustic:[.4,.8,2], wash:[.30,.40,2], drumDensity:[.2,.9,2],
                 hatDensity:[0,1,2], seventh:[.4,1,1], bedUse:[.4,1,1], crackle:[.05,.3,1], pump:[0,.05,1], leadVoices:[1,1,2] },   // theremin over organ, kit nearly gone — exotica keeps a real (brushed) kit. 2026-07 split: structural fences vs the tiki twin AND the slow-wet downtempo — leadVoices [1,1] weight 2 is the MONO theremin/ondes line (renders exactly 1; exotica's vibes/sax run 1-2, downtempo 1-2 — their 2-voice seeds fall off); wash BAND .30-.40 is the martini-bar orbit (renders .33-.37) — the FLOOR fences exotica's dry room (.21-.28), the CAP fences the washier downtempo/vaporwave (.39-.44); drumDensity CAP 1.4->.9 (renders .39-.73, the band is nearly gone) fences exotica's fuller brushed kit (up to 1.13); bpm floor 82->84 sharpens the real tempo gap to downtempo's slowed 64-79 (its own home min is 87). Orbit = electronics + width + no band; tiki = acoustic birds + a real combo
     arabpop:  { bpm:[92,118,2], seventh:[.3,.8,2], motion:[.4,1,2], drumDensity:[1.1,2.6,2], swing:[0,.12,1],
@@ -853,6 +853,75 @@
     /* genre-tool:folk:targets */
     folk:     { bpm:[92,123,3], drumDensity:[0,0.4,3], wash:[0,0.176,3], acoustic:[0.68,0.92,2], swing:[0,0.097,2], seventh:[0,1,1], pump:[0,0.1,1], crackle:[0,0.242,1] },
     /* /genre-tool:folk:targets */
+    /* genre-tool:romanticism:targets */
+    romanticism:{ rubato:[0.019,0.081,3], bpm:[49,92,2], seventh:[0,1,3], acoustic:[0.66,1,3], wash:[0.064,0.439,2], humanize:[0.03,0.366,2], drumDensity:[0,0.4,3], motion:[0.487,1,1] },
+    /* /genre-tool:romanticism:targets */
+    /* genre-tool:chamber:targets */
+    chamber:  { acoustic:[0.68,0.92,3], bpm:[65,108,2], drumDensity:[0,0.4,3], rubato:[0,0.029,2], wash:[0,0.284,2], humanize:[0,0.239,2], motion:[0.487,1,2], seventh:[0,1,1] },
+    /* /genre-tool:chamber:targets */
+    /* genre-tool:impressionism:targets */
+    impressionism:{ wash:[0.097,0.492,3], seventh:[0,1,3], acoustic:[0.68,0.92,3], bpm:[51,94,2], drumDensity:[0,0.4,3], rubato:[0.006,0.05,2], motion:[0.146,0.854,1], softTop:[0,0,2], humanize:[0,0.275,3] },
+    /* /genre-tool:impressionism:targets */
+    /* genre-tool:postminimal:targets */
+    postminimal:{ motion:[0,1,3], rubato:[0,0.008,3], acoustic:[0.66,1,3], humanize:[0,0.167,2], drumDensity:[0,0.4,3], bpm:[73,116,2], wash:[0.063,0.431,1], variation:[0,0.12,2] },
+    /* /genre-tool:postminimal:targets */
+    /* genre-tool:symphony:targets */
+    symphony: { acoustic:[0.68,0.92,3], bpm:[69,132,3], seventh:[0,0.975,2], drumDensity:[0,0.4,3], wash:[0.033,0.398,2], motion:[0.487,1,2], leadVoices:[1,5,2], humanize:[0,0.257,1] },
+    /* /genre-tool:symphony:targets */
+    /* genre-tool:punk:targets */
+    punk:     { bpm:[149,201,3], drumDensity:[0.141,1.169,3], acoustic:[0.68,0.92,3], motion:[0.487,1,2], wash:[0,0.154,2], humanize:[0,0.185,1], seventh:[0.85,1,1] },
+    /* /genre-tool:punk:targets */
+    /* genre-tool:indie:targets */
+    indie:    { bpm:[98,142,2], drumDensity:[0.162,1.058,3], acoustic:[0.68,0.92,3], seventh:[0.85,1,2], wash:[0,0.219,2], motion:[0.85,1,2], humanize:[0,0.239,1] },
+    /* /genre-tool:indie:targets */
+    /* genre-tool:grunge:targets */
+    grunge:   { bpm:[85,137,2], drumDensity:[0,1.058,3], acoustic:[0.68,0.92,3], motion:[0.487,1,2], wash:[0,0.202,2], seventh:[0.575,1,1], humanize:[0,0.222,1], variation:[0.88,1,3] },
+    /* /genre-tool:grunge:targets */
+    /* genre-tool:postrock:targets */
+    postrock: { bpm:[66,114,2], drumDensity:[0,1.047,3], acoustic:[0.68,0.92,3], wash:[0.026,0.391,3], motion:[0.487,1,2], seventh:[0.443,1,1], humanize:[0,0.222,1], variation:[0.88,1,3] },
+    /* /genre-tool:postrock:targets */
+    /* genre-tool:cryptvespers:targets */
+    cryptvespers:{ acoustic:[0,1,3], bpm:[52,82,2], drumDensity:[0,2.076,3], wash:[0.154,0.474,2], motion:[0.48,1,2], seventh:[0.29,1,2], rubato:[0.026,0.06,1], humanize:[0.132,0.531,1], softTop:[1,1,3] },
+    /* /genre-tool:cryptvespers:targets */
+    /* genre-tool:nocturnesmash:targets */
+    nocturnesmash:{ acoustic:[0,1,3], bpm:[107,149,2], drumDensity:[0,1.024,3], wash:[0.033,0.338,2], motion:[0.48,1,2], seventh:[0,1,2], rubato:[0.022,0.068,1], humanize:[0.056,0.415,1] },
+    /* /genre-tool:nocturnesmash:targets */
+    /* genre-tool:glacialgabber:targets */
+    glacialgabber:{ acoustic:[0,1,3], bpm:[100,137,2], drumDensity:[0,3.724,3], wash:[0.109,0.41,2], motion:[0,0.9,2], seventh:[0.29,1,2], rubato:[0,0.008,1], humanize:[0,0.263,1], bedUse:[0.462,0.888,3], softTop:[0,0,3], snareBalance:[0,0.525,3], pump:[0.09,0.455,3], swing:[0,0.06,3] },
+    /* /genre-tool:glacialgabber:targets */
+    /* genre-tool:breakbop:targets */
+    breakbop: { acoustic:[0.456,0.944,3], bpm:[171,203,2], drumDensity:[0.97,2.29,3], wash:[0.003,0.328,2], motion:[0.48,1,2], seventh:[0.85,1,2], rubato:[0,0.008,1], humanize:[0.059,0.436,1] },
+    /* /genre-tool:breakbop:targets */
+    /* genre-tool:atticlament:targets */
+    atticlament:{ acoustic:[0,0.12,3], bpm:[80,105,2], drumDensity:[0,1.853,3], wash:[0.224,0.561,2], motion:[0.48,1,2], seventh:[0,1,2], rubato:[0.006,0.039,1], humanize:[0.004,0.309,1] },
+    /* /genre-tool:atticlament:targets */
+    /* genre-tool:hazebunker:targets */
+    hazebunker:{ acoustic:[0,1,3], bpm:[85,116,2], drumDensity:[0,1.796,3], wash:[0.116,0.454,2], motion:[0.139,0.861,2], seventh:[0,1,2], rubato:[0,0.046,1], humanize:[0,0.27,1], softTop:[0,0,3], crackle:[0,0.174,3], variation:[0.88,1,3], bedUse:[0.88,1,3] },
+    /* /genre-tool:hazebunker:targets */
+    /* genre-tool:salsa:targets */
+    salsa:    { bpm:[152,198,3], drumDensity:[0.28,1.2,3], acoustic:[0.68,0.92,3], motion:[0.85,1,2], seventh:[0,1,2], swing:[0,0.091,1] },
+    /* /genre-tool:salsa:targets */
+    /* genre-tool:samba:targets */
+    samba:    { bpm:[89,119,2], drumDensity:[0.149,1.561,3], acoustic:[0.68,0.92,3], swing:[0,0.159,2], motion:[0.85,1,2], seventh:[0,1,2] },
+    /* /genre-tool:samba:targets */
+    /* genre-tool:reggaeton:targets */
+    reggaeton:{ bpm:[81,108,2], drumDensity:[0,1.308,3], sub:[0.05,0.35,2], acoustic:[0.68,0.92,3], motion:[0.487,1,2], seventh:[0,0.975,1], swing:[0,0.085,1], variation:[0.88,1,3], wash:[0,0.189,3] },
+    /* /genre-tool:reggaeton:targets */
+    /* genre-tool:raga:targets */
+    raga:     { acoustic:[0.68,0.92,3], bpm:[57,100,2], drumDensity:[0,1.236,3], rubato:[0.01,0.06,3], wash:[0.043,0.303,2], motion:[0.52,0.82,2], seventh:[0.3,1,2], humanize:[0,0.326,1] },
+    /* /genre-tool:raga:targets */
+    /* genre-tool:celtic:targets */
+    celtic:   { bpm:[101,142,2], drumDensity:[0.123,1.127,3], acoustic:[0.68,0.92,3], motion:[0.487,1,2], swing:[0,0.124,2], seventh:[0,1,1], humanize:[0,0.275,1], wash:[0,0.222,3] },
+    /* /genre-tool:celtic:targets */
+    /* genre-tool:trap:targets */
+    trap:     { bpm:[121,160,2], drumDensity:[0.006,1.094,3], sub:[0.05,0.35,3], acoustic:[0.68,0.92,3], motion:[0.487,1,2], seventh:[0,0.975,1], wash:[0,0.204,1], humanize:[0,0.185,1] },
+    /* /genre-tool:trap:targets */
+    /* genre-tool:bigband:targets */
+    bigband:  { bpm:[116,187,2], drumDensity:[0,1.226,3], acoustic:[0.68,0.92,3], swing:[0.071,0.253,3], seventh:[0,1,2], motion:[0.487,1,2], humanize:[0,0.275,1] },
+    /* /genre-tool:bigband:targets */
+    /* genre-tool:flamenco:targets */
+    flamenco: { bpm:[114,185,2], acoustic:[0.68,0.92,3], drumDensity:[0,1.234,3], seventh:[0.3,1,2], motion:[0.487,1,2], rubato:[0,0.042,2], humanize:[0,0.326,1], offgrid:[0.138,0.59,3] },
+    /* /genre-tool:flamenco:targets */
   };
 
   // the piecewise-linear target-row scorer — the shared primitive (genre-tool

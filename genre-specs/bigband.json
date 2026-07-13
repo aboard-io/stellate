@@ -1,0 +1,303 @@
+{
+  "name": "bigband",
+  "label": "Swing Era Big Band",
+  "info": "Jazz big band as a genre: a full brass-and-reed section (trumpets, trombones, saxes) trading shout-chorus riffs over a walking upright bass and a swung ride-cymbal kit, ii-V-I and blues changes, bright and hot — the Basie/Ellington swing-era orchestra",
+  "clips": [
+    "earth_orbit",
+    "spacewalk",
+    "blue_dinner",
+    "dc_village",
+    "bamboo"
+  ],
+  "anchor": {
+    "bpm": [
+      122,
+      178
+    ],
+    "swing": [
+      0.12,
+      0.24
+    ],
+    "humanize": [
+      0.08,
+      0.2
+    ],
+    "progressions": [
+      "ii_v_i",
+      "blues_12",
+      "blues_16",
+      "four_chords"
+    ],
+    "kits": [
+      "shuffle",
+      "full",
+      "boombap"
+    ],
+    "fills": [
+      "off",
+      "drum fill",
+      "tom fill"
+    ],
+    "chordEvery": 4,
+    "bass": {
+      "patterns": [
+        "walking",
+        "root",
+        "octaves"
+      ],
+      "samplerPool": [
+        "acoustic_bass",
+        "contrabass"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "cutoff": [
+          500,
+          1200
+        ],
+        "level": [
+          0.48,
+          0.68
+        ],
+        "send": [
+          0.1,
+          0.26
+        ],
+        "dsend": [
+          0.02,
+          0.1
+        ],
+        "attack": [
+          0.006,
+          0.03
+        ],
+        "release": [
+          0.3,
+          0.8
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "hero",
+        "anthem",
+        "blues"
+      ],
+      "samplerPool": [
+        "brass_section",
+        "alto_sax"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "cutoff": [
+          2400,
+          4200
+        ],
+        "level": [
+          0.44,
+          0.64
+        ],
+        "send": [
+          0.16,
+          0.34
+        ],
+        "dsend": [
+          0.02,
+          0.1
+        ],
+        "attack": [
+          0.006,
+          0.03
+        ],
+        "release": [
+          0.3,
+          0.8
+        ],
+        "wave": "saw",
+        "voices": [
+          1,
+          2
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.5,
+      "samplerPool": [
+        "brass_section",
+        "tenor_sax"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "cutoff": [
+          1400,
+          2400
+        ],
+        "level": [
+          0.28,
+          0.46
+        ],
+        "send": [
+          0.18,
+          0.36
+        ],
+        "dsend": [
+          0.02,
+          0.1
+        ],
+        "attack": [
+          0.05,
+          0.4
+        ],
+        "release": [
+          0.5,
+          1.4
+        ],
+        "wave": "saw"
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom",
+        "909"
+      ],
+      "snareModel": [
+        "crack",
+        "noise"
+      ],
+      "hatModel": [
+        "metal",
+        "noise"
+      ],
+      "kick": [
+        0.55,
+        0.8
+      ],
+      "snare": [
+        0.45,
+        0.68
+      ],
+      "hat": [
+        0.34,
+        0.58
+      ],
+      "tune": [
+        0.94,
+        1.05
+      ],
+      "send": [
+        0.1,
+        0.28
+      ],
+      "dsend": [
+        0,
+        0.05
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.25,
+        0.46
+      ],
+      "delayBeats": [
+        0.5,
+        1
+      ],
+      "delayFb": [
+        0.06,
+        0.16
+      ],
+      "delayCut": [
+        2200,
+        3200
+      ],
+      "pump": [
+        0,
+        0.05
+      ],
+      "crackle": [
+        0.05,
+        0.2
+      ],
+      "lowcut": [
+        0,
+        0
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0.12,
+        0.34
+      ]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.03,
+        0.09
+      ],
+      "pitch": [
+        0.75,
+        0.95
+      ],
+      "stretch": [
+        0.4,
+        0.6
+      ],
+      "cutoff": [
+        1800,
+        2800
+      ],
+      "sources": [
+        "iriomote",
+        "tokyo_station"
+      ]
+    },
+    "rubato": {
+      "depth": [
+        0,
+        0.01
+      ],
+      "periodBars": [
+        4,
+        8
+      ],
+      "prob": 0.15
+    },
+    "hits": {
+      "sources": [
+        "sp_herenow"
+      ],
+      "pattern": "sparse",
+      "prob": 0.04
+    },
+    "stab": [
+      "off"
+    ],
+    "form": "wave"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 2,
+      "drumDensity": 3,
+      "acoustic": 3,
+      "swing": 3,
+      "bright": 2,
+      "seventh": 2,
+      "motion": 2,
+      "humanize": 1
+    }
+  }
+}

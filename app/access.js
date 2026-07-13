@@ -36,9 +36,27 @@ let journey = [];                  // ordered list of genre keys
 // rid of all macros")
 
 // ---------- populate the genre menus ----------
-function optionsHTML(includeNone){
-  return (includeNone?`<option value="">— none —</option>`:``) +
-    GENRES.map(g=>`<option value="${g}">${label(g)}</option>`).join("");
+// The three genre pickers are native type-to-filter comboboxes (<input list>
+// + one shared <datalist>) instead of 273-row <select>s — you type a few
+// letters and the browser filters. Each <option value=KEY label=Friendly>: the
+// input's value is the genre KEY (so the rest of the controller is unchanged),
+// while the dropdown shows the friendly label. Fully keyboard + screen-reader
+// native (the browser owns the combobox role/expanded state); no external lib.
+function escAttr(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+function datalistHTML(){
+  return GENRES.map(g=>`<option value="${escAttr(g)}" label="${escAttr(label(g))}"></option>`).join("");
+}
+// free text -> a valid genre key (exact key, case-insensitive key, exact label,
+// then a lenient prefix match), or "" if nothing matches. Lets a listener type
+// "salsa", "Salsa", or "Montuno Brass Fire" and land on the same genre.
+function resolveGenre(raw){
+  const v=(raw||"").trim(); if(!v) return "";
+  if(K.GENRES[v]) return v;
+  const lc=v.toLowerCase();
+  return GENRES.find(g=>g.toLowerCase()===lc)
+    || GENRES.find(g=>label(g).toLowerCase()===lc)
+    || GENRES.find(g=>g.toLowerCase().startsWith(lc)||label(g).toLowerCase().startsWith(lc))
+    || "";
 }
 // bookmarkable, here too (Paul: "the entire site"): ?seed=N&genre=g&blend=g2&amt=30
 // restores the accessible page's choices; changes update the URL in place.
@@ -51,16 +69,15 @@ function accUrlRestore(){
 function accUrlTick(){
   try{
     const q=new URLSearchParams();
-    q.set("seed",String(S.seed)); q.set("genre",$("genreSel").value);
-    const bg=$("blendSel").value; if(bg){ q.set("blend",bg); q.set("amt",$("blendAmt").value); }
+    q.set("seed",String(S.seed)); q.set("genre",resolveGenre($("genreSel").value)||single);
+    const bg=resolveGenre($("blendSel").value); if(bg){ q.set("blend",bg); q.set("amt",$("blendAmt").value); }
     history.replaceState(null,"","?"+q.toString());
   }catch(e){}
 }
 function boot(){
   const urlBits=accUrlRestore();
-  $("genreSel").innerHTML = optionsHTML(false);
-  $("blendSel").innerHTML = optionsHTML(true);
-  $("journeyAdd").innerHTML = optionsHTML(false);
+  $("genreList").innerHTML = datalistHTML();          // one shared list feeds all three comboboxes
+  const gc=$("genreCount"); if(gc) gc.textContent=String(GENRES.length);
   $("genreSel").value = single;
   if(urlBits.blend&&GENRES.includes(urlBits.blend)){
     $("blendSel").value=urlBits.blend; $("blendAmtRow").hidden=false;
@@ -83,8 +100,8 @@ function boot(){
 
 // ---------- HOLD mode: one place in genre space (optionally a 2-genre blend) --
 function applyHold(){
-  const g = $("genreSel").value;
-  const bg = $("blendSel").value;
+  const g = resolveGenre($("genreSel").value) || single;   // fall back to last valid while mid-type
+  const bg = resolveGenre($("blendSel").value);
   let ws;
   if(bg){
     const amt = (+$("blendAmt").value)/100;              // fraction that is the blend genre
@@ -229,7 +246,7 @@ function syncPaceOut(){
 
 // ---------- genre info blurb ----------
 function updateGenreInfo(){
-  const g=$("genreSel").value;
+  const g=resolveGenre($("genreSel").value)||single;
   $("genreInfo").textContent = info(g) ? label(g)+" — "+info(g) : label(g);
 }
 
@@ -278,11 +295,19 @@ function wire(){
     });
   });
 
-  // hold controls
-  $("genreSel").addEventListener("change",()=>{ updateGenreInfo(); applyHold(); logEvent("Genre: "+label($("genreSel").value)); });
+  // hold controls (free-text comboboxes: resolve the typed text to a genre key)
+  $("genreSel").addEventListener("change",()=>{
+    const g=resolveGenre($("genreSel").value);
+    if(!g){ $("genreSel").value=single; logEvent("Genre not found — type a name and pick from the list."); announceNow(); return; }
+    $("genreSel").value=g;                       // normalize the box to the key
+    updateGenreInfo(); applyHold(); logEvent("Genre: "+label(g));
+  });
   $("blendSel").addEventListener("change",()=>{
-    const on=!!$("blendSel").value;
-    $("blendAmtRow").hidden=!on;
+    const raw=$("blendSel").value.trim();
+    const bg=resolveGenre(raw);
+    if(raw && !bg){ $("blendSel").value=""; logEvent("Second genre not found — cleared."); }
+    else if(bg){ $("blendSel").value=bg; }
+    $("blendAmtRow").hidden=!bg;
     applyHold();
   });
   $("blendAmt").addEventListener("input",()=>{
@@ -293,12 +318,17 @@ function wire(){
   });
 
   // journey controls
-  $("journeyAddBtn").addEventListener("click",()=>{
-    const g=$("journeyAdd").value;
+  const addStop=()=>{
+    const g=resolveGenre($("journeyAdd").value);
+    if(!g){ logEvent("Type a genre name, then Add stop."); return; }
     journey.push(g); renderJourney();
+    $("journeyAdd").value="";                     // clear for the next add
+    $("journeyAdd").focus();
     logEvent("Added stop: "+label(g)+" (now "+journey.length+")");
     if(S.live && mode==="journey") { /* takes effect on next Play — keep the current loop stable */ }
-  });
+  };
+  $("journeyAddBtn").addEventListener("click", addStop);
+  $("journeyAdd").addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); addStop(); } });
   $("journeyList").addEventListener("click",e=>{
     const btn=e.target.closest("button[data-j]"); if(!btn) return;
     const i=+btn.dataset.i, act=btn.dataset.j;

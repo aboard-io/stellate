@@ -1,0 +1,310 @@
+{
+  "name": "romanticism",
+  "label": "Rubato Nocturne",
+  "info": "19th-century Romantic piano as a genre: a singing concert-grand melody over rolling pedalled arpeggios, harmony thick with chromatic mediants and seventh/ninth colour, dynamics that surge and hush, and heavy RUBATO \u2014 the tempo breathes constantly (Chopin/Liszt/Rachmaninoff), the opposite of the prelude's metronomic Baroque touch and richer than neoclassical's spare felt piano",
+  "clips": [
+    "earth_orbit",
+    "blue_dinner",
+    "spacewalk",
+    "dc_village",
+    "bamboo"
+  ],
+  "anchor": {
+    "bpm": [
+      56,
+      84
+    ],
+    "swing": [
+      0,
+      0.04
+    ],
+    "humanize": [
+      0.14,
+      0.3
+    ],
+    "progressions": [
+      "royal_road",
+      "mediant",
+      "sad_pop",
+      "neosoul"
+    ],
+    "kits": [
+      "off"
+    ],
+    "fills": [
+      "off"
+    ],
+    "chordEvery": 8,
+    "bass": {
+      "patterns": [
+        "octaves",
+        "pedal",
+        "melodic",
+        "walking"
+      ],
+      "samplerPool": [
+        "yamaha_grand_piano",
+        "bright_yamaha_grand"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "cutoff": [
+          600,
+          1400
+        ],
+        "res": [
+          0.05,
+          0.1
+        ],
+        "level": [
+          0.5,
+          0.74
+        ],
+        "send": [
+          0.28,
+          0.5
+        ],
+        "dsend": [
+          0,
+          0.08
+        ],
+        "attack": [
+          0.008,
+          0.03
+        ],
+        "release": [
+          0.6,
+          1.4
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "arpup",
+        "updown",
+        "canon"
+      ],
+      "samplerPool": [
+        "yamaha_grand_piano",
+        "bright_yamaha_grand"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "wave": "sine",
+        "voices": [
+          1,
+          2
+        ],
+        "spread": [
+          0.001,
+          0.004
+        ],
+        "cutoff": [
+          2400,
+          4200
+        ],
+        "level": [
+          0.4,
+          0.66
+        ],
+        "send": [
+          0.3,
+          0.55
+        ],
+        "dsend": [
+          0.04,
+          0.16
+        ],
+        "attack": [
+          0.006,
+          0.03
+        ],
+        "release": [
+          0.5,
+          1.1
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.45,
+      "samplerPool": [
+        "strings",
+        "slow_strings"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "strings"
+        ],
+        "wave": "sine",
+        "cutoff": [
+          900,
+          1800
+        ],
+        "detune": [
+          0.002,
+          0.006
+        ],
+        "attack": [
+          1.2,
+          3
+        ],
+        "release": [
+          2,
+          4
+        ],
+        "swell": 1,
+        "level": [
+          0.3,
+          0.5
+        ],
+        "send": [
+          0.4,
+          0.62
+        ],
+        "dsend": [
+          0,
+          0.1
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom"
+      ],
+      "snareModel": [
+        "noise"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        0.5,
+        0.7
+      ],
+      "snare": [
+        0.4,
+        0.6
+      ],
+      "hat": [
+        0.3,
+        0.5
+      ],
+      "tune": [
+        0.9,
+        1
+      ],
+      "send": [
+        0.15,
+        0.35
+      ],
+      "dsend": [
+        0,
+        0
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.5,
+        0.72
+      ],
+      "delayBeats": [
+        1,
+        2
+      ],
+      "delayFb": [
+        0.12,
+        0.26
+      ],
+      "delayCut": [
+        2000,
+        3000
+      ],
+      "pump": [
+        0,
+        0
+      ],
+      "crackle": [
+        0,
+        0.08
+      ],
+      "lowcut": [
+        0,
+        0
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0,
+        0.1
+      ]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.03,
+        0.09
+      ],
+      "pitch": [
+        0.7,
+        0.9
+      ],
+      "stretch": [
+        0.45,
+        0.6
+      ],
+      "cutoff": [
+        1800,
+        2800
+      ],
+      "sources": [
+        "iriomote",
+        "tokyo_station"
+      ]
+    },
+    "rubato": {
+      "depth": [
+        0.03,
+        0.07
+      ],
+      "periodBars": [
+        1,
+        3
+      ],
+      "prob": 1
+    },
+    "hits": {
+      "sources": [
+        "sp_herenow"
+      ],
+      "pattern": "sparse",
+      "prob": 0.03
+    },
+    "stab": [
+      "off"
+    ],
+    "form": "wave"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "rubato": 3,
+      "bpm": 2,
+      "seventh": 3,
+      "acoustic": 3,
+      "wash": 2,
+      "humanize": 2,
+      "drumDensity": 3,
+      "motion": 1
+    }
+  }
+}

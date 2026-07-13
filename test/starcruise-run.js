@@ -762,7 +762,7 @@ async function main() {
     console.log("       galaxy.floor:", JSON.stringify(gx.camFloor));
     console.log("       galaxy.drummer:", JSON.stringify({ fill: gx.dsFill, after: gx.dsAfter }));
     console.log("       galaxy.dancers:", JSON.stringify({ ambient: gx.ambDancers, gen: gx.genDancers }));
-    ok(gx.sunCount === 31 && gx.sunChecks.every((c) => c.err < 0.05 && c.colOk && c.labelOk),
+    ok(gx.sunCount === 33 && gx.sunChecks.every((c) => c.err < 0.05 && c.colOk && c.labelOk),
       `GX1. SUNS: one colored labeled sun per cluster AT its star coord (${gx.sunCount} suns, markers == worldOfCoord(cluster.star), colors + labels match)`);
     ok(gx.shipMeshes === 0,
       `GX2. NO 3D ship/cockpit — the obstructing shell is gone (ship+cockpit draw ${gx.shipMeshes} meshes)`);

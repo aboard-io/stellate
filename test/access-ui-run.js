@@ -44,20 +44,25 @@ async function main() {
   await page.goto(`http://localhost:${PORT}/access.html`);
 
   // (a)+(b) boot, no errors, menus populated, target seeded
-  await page.waitForFunction(() => window.__S && window.__ACCESS && document.getElementById("genreSel").options.length > 0, { timeout: 20000 });
+  // the three genre pickers are now type-to-filter comboboxes sharing one
+  // <datalist id="genreList"> (was three 273-row <select>s).
+  await page.waitForFunction(() => window.__S && window.__ACCESS && document.getElementById("genreList").options.length > 0, { timeout: 20000 });
   await page.waitForTimeout(300);
   const kernelGenres = Object.keys(K.GENRES).length;
   const menu = await page.evaluate(() => ({
-    genreOpts: document.getElementById("genreSel").options.length,
-    blendOpts: document.getElementById("blendSel").options.length,
-    journeyOpts: document.getElementById("journeyAdd").options.length,
+    genreOpts: document.getElementById("genreList").options.length,
+    blendOpts: document.getElementById("genreList").options.length,
+    journeyOpts: document.getElementById("genreList").options.length,
+    genreIsCombobox: document.getElementById("genreSel").getAttribute("list") === "genreList",
     playing: !!window.__S.playing,
     seed: window.__S.seed,
   }));
-  if (menu.genreOpts === kernelGenres) ok(`genre menu = all ${kernelGenres} genres`);
-  else fail(`genre menu ${menu.genreOpts} != kernel ${kernelGenres}`);
-  if (menu.blendOpts === kernelGenres + 1) ok(`blend menu = ${kernelGenres} + none`);
-  else fail(`blend menu ${menu.blendOpts} != ${kernelGenres + 1}`);
+  if (menu.genreOpts === kernelGenres) ok(`genre combobox list = all ${kernelGenres} genres`);
+  else fail(`genre list ${menu.genreOpts} != kernel ${kernelGenres}`);
+  if (menu.genreIsCombobox) ok("genre picker is a type-to-filter combobox (input+datalist)");
+  else fail("genre picker is not wired to the datalist");
+  if (menu.blendOpts === kernelGenres) ok(`blend combobox list = all ${kernelGenres} genres (empty = none)`);
+  else fail(`blend list ${menu.blendOpts} != ${kernelGenres}`);
   // (the "8 shape sliders" check retired with the macros — Paul 2026-07-10)
   if (menu.playing) ok("S.playing seeded before Play"); else fail("S.playing null before Play");
 

@@ -1,0 +1,30 @@
+{
+  "name": "grunge",
+  "label": "Overdrive Garage Sludge",
+  "info": "Heavy mid-tempo grunge / garage rock as a genre: thick overdriven and crunch electric guitars grinding minor power-chord riffs over a pounding octave bass and a hard backbeat kit, loud-quiet-loud dynamics, dry and dirty and compressed — the Nirvana/Mudhoney/Stooges Northwest sludge, slower and heavier than punk",
+  "clips": ["dc_village", "spacewalk", "blue_dinner", "earth_orbit", "bamboo"],
+  "anchor": {
+    "bpm": [92, 128],
+    "swing": [0, 0.04],
+    "humanize": [0.05, 0.14],
+    "progressions": ["four_chords", "minor_run", "blues_12", "andalusian"],
+    "kits": ["full", "breaks", "halftime"],
+    "fills": ["drum fill", "tom fill", "cut"],
+    "chordEvery": 4,
+    "bass": { "patterns": ["octaves", "root", "drive"], "samplerPool": ["picked_bass", "synth_bass_1"], "recipe": { "model": ["sampler", "sampler"], "cutoff": [600, 1300], "res": [0.06, 0.14], "level": [0.5, 0.72], "send": [0.06, 0.18], "dsend": [0, 0.04], "attack": [0.005, 0.016], "release": [0.18, 0.45] } },
+    "lead": { "patterns": ["sludge", "roar", "blues"], "samplerPool": ["overdrive_guitar", "crunch_guitar"], "recipe": { "model": ["sampler", "sampler"], "wave": "saw", "voices": [1, 2], "spread": [0.003, 0.008], "cutoff": [2200, 4000], "level": [0.46, 0.66], "send": [0.08, 0.22], "dsend": [0, 0.08], "attack": [0.004, 0.014], "release": [0.15, 0.4] } },
+    "pads": { "prob": 0.25, "samplerPool": ["rock_organ", "distortion_guitar"], "recipe": { "model": ["sampler", "sampler"], "wave": "saw", "cutoff": [1200, 2200], "detune": [0.004, 0.01], "attack": [0.1, 0.5], "release": [0.5, 1.4], "swell": 0, "level": [0.24, 0.42], "send": [0.12, 0.3], "dsend": [0, 0.06] } },
+    "drums": { "kickModel": ["boom", "909"], "snareModel": ["crack", "noise"], "hatModel": ["metal", "noise"], "kick": [0.66, 0.9], "snare": [0.56, 0.8], "hat": [0.34, 0.56], "tune": [0.92, 1.02], "send": [0.08, 0.22], "dsend": [0, 0.05] },
+    "fx": { "reverb": [0.2, 0.42], "delayBeats": [0.5, 0.75], "delayFb": [0.06, 0.18], "delayCut": [2000, 3000], "pump": [0, 0.1], "crackle": [0, 0.08], "lowcut": [0, 0.1], "highcut": [0, 0], "comp": [0.2, 0.45] },
+    "found": { "role": "bed", "vol": [0.02, 0.06], "pitch": [0.8, 1], "stretch": [0.3, 0.45], "cutoff": [1800, 2800], "sources": ["tokyo_station", "iriomote"] },
+    "rubato": { "depth": [0, 0.008], "periodBars": [4, 8], "prob": 0.1 },
+    "hits": { "sources": ["sp_herenow"], "pattern": "sparse", "prob": 0.03 },
+    "stab": ["off"],
+    "form": "wave"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": { "bpm": 2, "drumDensity": 3, "acoustic": 3, "bright": 2, "motion": 2, "wash": 2, "seventh": 1, "humanize": 1 }
+  }
+}

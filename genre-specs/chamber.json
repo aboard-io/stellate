@@ -1,0 +1,310 @@
+{
+  "name": "chamber",
+  "label": "String Quartet Room",
+  "info": "Classical string-quartet chamber music as a genre: a bowed violin melody woven with viola and a walking cello line in close contrapuntal conversation, moderate andante-to-allegretto tempo, gentle ensemble rubato, NO piano and NO drums, recorded dry and intimate \u2014 the Haydn/Beethoven/Schubert quartet, all strings",
+  "clips": [
+    "earth_orbit",
+    "dc_village",
+    "blue_dinner",
+    "bamboo",
+    "spacewalk"
+  ],
+  "anchor": {
+    "bpm": [
+      72,
+      100
+    ],
+    "swing": [
+      0,
+      0.03
+    ],
+    "humanize": [
+      0.06,
+      0.16
+    ],
+    "progressions": [
+      "canon",
+      "ii_v_i",
+      "four_chords",
+      "mode_dorian"
+    ],
+    "kits": [
+      "off"
+    ],
+    "fills": [
+      "off"
+    ],
+    "chordEvery": 8,
+    "bass": {
+      "patterns": [
+        "walking",
+        "pedal",
+        "root",
+        "melodic"
+      ],
+      "samplerPool": [
+        "cello",
+        "contrabass"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "cutoff": [
+          500,
+          1200
+        ],
+        "res": [
+          0.05,
+          0.1
+        ],
+        "level": [
+          0.46,
+          0.66
+        ],
+        "send": [
+          0.18,
+          0.36
+        ],
+        "dsend": [
+          0,
+          0.05
+        ],
+        "attack": [
+          0.02,
+          0.06
+        ],
+        "release": [
+          0.4,
+          0.9
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "updown",
+        "arpup",
+        "canon"
+      ],
+      "samplerPool": [
+        "violin",
+        "viola"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "wave": "sine",
+        "voices": [
+          1,
+          2
+        ],
+        "spread": [
+          0.001,
+          0.004
+        ],
+        "cutoff": [
+          2200,
+          3600
+        ],
+        "level": [
+          0.4,
+          0.58
+        ],
+        "send": [
+          0.22,
+          0.42
+        ],
+        "dsend": [
+          0.02,
+          0.1
+        ],
+        "attack": [
+          0.03,
+          0.09
+        ],
+        "release": [
+          0.35,
+          0.8
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.5,
+      "samplerPool": [
+        "strings",
+        "slow_strings"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "strings"
+        ],
+        "wave": "sine",
+        "cutoff": [
+          1000,
+          1900
+        ],
+        "detune": [
+          0.001,
+          0.004
+        ],
+        "attack": [
+          0.5,
+          1.6
+        ],
+        "release": [
+          1,
+          2.4
+        ],
+        "swell": 1,
+        "level": [
+          0.3,
+          0.46
+        ],
+        "send": [
+          0.28,
+          0.46
+        ],
+        "dsend": [
+          0,
+          0.06
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom"
+      ],
+      "snareModel": [
+        "noise"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        0.5,
+        0.7
+      ],
+      "snare": [
+        0.4,
+        0.6
+      ],
+      "hat": [
+        0.3,
+        0.5
+      ],
+      "tune": [
+        0.9,
+        1
+      ],
+      "send": [
+        0.15,
+        0.35
+      ],
+      "dsend": [
+        0,
+        0
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.3,
+        0.48
+      ],
+      "delayBeats": [
+        0.75,
+        1.5
+      ],
+      "delayFb": [
+        0.08,
+        0.2
+      ],
+      "delayCut": [
+        2000,
+        3000
+      ],
+      "pump": [
+        0,
+        0
+      ],
+      "crackle": [
+        0,
+        0.06
+      ],
+      "lowcut": [
+        0,
+        0
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0,
+        0.1
+      ]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.03,
+        0.08
+      ],
+      "pitch": [
+        0.7,
+        0.9
+      ],
+      "stretch": [
+        0.45,
+        0.6
+      ],
+      "cutoff": [
+        1800,
+        2800
+      ],
+      "sources": [
+        "iriomote",
+        "tokyo_station"
+      ]
+    },
+    "rubato": {
+      "depth": [
+        0.006,
+        0.02
+      ],
+      "periodBars": [
+        2,
+        4
+      ],
+      "prob": 0.7
+    },
+    "hits": {
+      "sources": [
+        "sp_herenow"
+      ],
+      "pattern": "sparse",
+      "prob": 0.03
+    },
+    "stab": [
+      "off"
+    ],
+    "form": "wave"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "acoustic": 3,
+      "bpm": 2,
+      "drumDensity": 3,
+      "rubato": 2,
+      "wash": 2,
+      "humanize": 2,
+      "motion": 2,
+      "seventh": 1
+    }
+  }
+}

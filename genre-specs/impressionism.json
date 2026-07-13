@@ -1,0 +1,310 @@
+{
+  "name": "impressionism",
+  "label": "Whole-Tone Haze",
+  "info": "French Impressionist classical as a genre: Debussy/Ravel colour \u2014 parallel whole-tone and quartal harmony with no functional pull, gliding celesta and harp figuration over a wash of blurred strings, soft and pedalled and rubato, drums off, everything smeared in hall reverb like light on water",
+  "clips": [
+    "earth_orbit",
+    "spacewalk",
+    "blue_dinner",
+    "bamboo",
+    "dc_village"
+  ],
+  "anchor": {
+    "bpm": [
+      58,
+      86
+    ],
+    "swing": [
+      0,
+      0.04
+    ],
+    "humanize": [
+      0.08,
+      0.2
+    ],
+    "progressions": [
+      "whole_tone",
+      "quartal",
+      "mode_lydian",
+      "mediant"
+    ],
+    "kits": [
+      "off"
+    ],
+    "fills": [
+      "off"
+    ],
+    "chordEvery": 8,
+    "bass": {
+      "patterns": [
+        "pedal",
+        "melodic",
+        "root",
+        "walking"
+      ],
+      "samplerPool": [
+        "harp",
+        "cello"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "cutoff": [
+          500,
+          1200
+        ],
+        "res": [
+          0.05,
+          0.1
+        ],
+        "level": [
+          0.42,
+          0.62
+        ],
+        "send": [
+          0.3,
+          0.52
+        ],
+        "dsend": [
+          0,
+          0.08
+        ],
+        "attack": [
+          0.01,
+          0.04
+        ],
+        "release": [
+          0.6,
+          1.4
+        ]
+      }
+    },
+    "lead": {
+      "patterns": [
+        "updown",
+        "arpup",
+        "arpdown"
+      ],
+      "samplerPool": [
+        "celesta",
+        "harp"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "sampler"
+        ],
+        "wave": "sine",
+        "voices": [
+          1,
+          2
+        ],
+        "spread": [
+          0.002,
+          0.005
+        ],
+        "cutoff": [
+          2600,
+          4400
+        ],
+        "level": [
+          0.38,
+          0.56
+        ],
+        "send": [
+          0.34,
+          0.58
+        ],
+        "dsend": [
+          0.04,
+          0.16
+        ],
+        "attack": [
+          0.004,
+          0.02
+        ],
+        "release": [
+          0.4,
+          1
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.6,
+      "samplerPool": [
+        "slow_strings",
+        "strings"
+      ],
+      "recipe": {
+        "model": [
+          "sampler",
+          "strings"
+        ],
+        "wave": "sine",
+        "cutoff": [
+          800,
+          1600
+        ],
+        "detune": [
+          0.003,
+          0.008
+        ],
+        "attack": [
+          1.5,
+          3.5
+        ],
+        "release": [
+          2.5,
+          5
+        ],
+        "swell": 1,
+        "level": [
+          0.3,
+          0.48
+        ],
+        "send": [
+          0.45,
+          0.68
+        ],
+        "dsend": [
+          0,
+          0.1
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": [
+        "boom"
+      ],
+      "snareModel": [
+        "noise"
+      ],
+      "hatModel": [
+        "noise"
+      ],
+      "kick": [
+        0.5,
+        0.7
+      ],
+      "snare": [
+        0.4,
+        0.6
+      ],
+      "hat": [
+        0.3,
+        0.5
+      ],
+      "tune": [
+        0.9,
+        1
+      ],
+      "send": [
+        0.15,
+        0.35
+      ],
+      "dsend": [
+        0,
+        0
+      ]
+    },
+    "fx": {
+      "reverb": [
+        0.55,
+        0.78
+      ],
+      "delayBeats": [
+        1,
+        2
+      ],
+      "delayFb": [
+        0.14,
+        0.3
+      ],
+      "delayCut": [
+        1800,
+        2800
+      ],
+      "pump": [
+        0,
+        0
+      ],
+      "crackle": [
+        0,
+        0.06
+      ],
+      "lowcut": [
+        0,
+        0
+      ],
+      "highcut": [
+        0,
+        0
+      ],
+      "comp": [
+        0,
+        0.08
+      ]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [
+        0.04,
+        0.11
+      ],
+      "pitch": [
+        0.7,
+        0.9
+      ],
+      "stretch": [
+        0.5,
+        0.65
+      ],
+      "cutoff": [
+        1600,
+        2600
+      ],
+      "sources": [
+        "iriomote",
+        "tokyo_station"
+      ]
+    },
+    "rubato": {
+      "depth": [
+        0.015,
+        0.04
+      ],
+      "periodBars": [
+        2,
+        4
+      ],
+      "prob": 0.9
+    },
+    "hits": {
+      "sources": [
+        "sp_herenow"
+      ],
+      "pattern": "sparse",
+      "prob": 0.03
+    },
+    "stab": [
+      "off"
+    ],
+    "form": "wave"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "wash": 3,
+      "seventh": 3,
+      "acoustic": 3,
+      "bpm": 2,
+      "drumDensity": 3,
+      "rubato": 2,
+      "motion": 1,
+      "softTop": 2
+    }
+  }
+}
