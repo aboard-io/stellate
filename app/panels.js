@@ -15,6 +15,9 @@ import { recordVideo, stopVideo, VIDEO } from "./video-export.js";
 // ⤓ audio: the WHOLE PATH when a loop is drawn (Paul: "export the entire path"),
 // else the current song — mirrors downloadMidi's own whole-path routing.
 const exportAudioSmart = (fmt) => (S.waypoints.length >= 2 ? exportLoopAudio(fmt) : exportAudio(fmt));
+// Paul 2026-07-13: show ONLY the MIDI download for now — hide wav/mp3/video.
+// Flip to true to bring the audio + video render downloads back.
+const SHOW_AV_DOWNLOADS = false;
 import { copyShareUrl, loopBars, loopDuration, MIN_DURATION, MAX_DURATION } from "./share.js";
 
 // ---------- Preact panel ----------
@@ -90,13 +93,14 @@ function Panel(){
       <div class="btns">
         <button disabled=${!S.playing||busy} title="Standard MIDI File — the whole path if a loop is drawn, else the current song"
           onclick=${()=>downloadMidi()}>⤓ midi</button>
+        ${SHOW_AV_DOWNLOADS ? html`
         <button disabled=${!S.playing||busy} title=${S.waypoints.length>=2?"render the ENTIRE PATH to lossless WAV (in your browser)":"render the current song to lossless WAV"}
           onclick=${()=>exportAudioSmart("wav")}>⤓ wav</button>
         <button disabled=${!S.playing||busy} title=${S.waypoints.length>=2?"render the ENTIRE PATH to MP3 192k":"render the current song to MP3 192k"}
           onclick=${()=>exportAudioSmart("mp3")}>⤓ mp3</button>
         <button disabled=${!S.playing||EXPORT.busy} class=${VIDEO.recording?"rec":""}
           title="record ~30s of the live visuals + audio to a .webm video"
-          onclick=${()=>VIDEO.recording?stopVideo():recordVideo({seconds:30})}>${VIDEO.recording?"⏹ stop":"⤓ video"}</button>
+          onclick=${()=>VIDEO.recording?stopVideo():recordVideo({seconds:30})}>${VIDEO.recording?"⏹ stop":"⤓ video"}</button>` : ""}
       </div>
     </div>
     <p class="hint">dbl-tap the sky to add a waypoint · drag the pink playhead to scrub · right-click a waypoint to erase · the URL is the bookmark</p>`;

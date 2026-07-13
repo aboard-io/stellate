@@ -88,6 +88,10 @@
      (and above the VHS overlay at 44) so the ✦ view chip stays tappable to cycle out. */
   body.view-starcruise #chips{z-index:50}
   body.view-starcruise .brand{z-index:50;position:relative}
+  /* the ⚙ settings + about modals must also ride ABOVE the 3D canvas (40), the
+     VHS overlay (44), and the HUD (55) — else opening ⚙ in aliens view pops the
+     panel behind the flight and it looks like nothing happened. */
+  body.view-starcruise #panelWrap, body.view-starcruise #aboutWrap{z-index:60}
   .chip{width:48px;height:48px;border-radius:50%;font-size:1.25rem;line-height:1;display:grid;place-items:center;
     padding:0;border:1px solid var(--line2);color:var(--ink);cursor:pointer;
     background:rgba(18,15,38,.72);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}

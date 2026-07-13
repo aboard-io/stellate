@@ -19,7 +19,7 @@ import { S, K, V, set } from "./state.js";
 import { POS, KEYS, PROG_MODE, BARS_PER_SEG } from "./world.js";
 import { loopDuration, MIN_DURATION, MAX_DURATION } from "./share.js";
 import { retargetWeights, rescore } from "./targeting.js";
-import { goLive, stopLive, faustHandle } from "./live.js";
+import { goLive, stopLive, faustHandle, setVapor } from "./live.js";
 
 const $ = id => document.getElementById(id);
 const GENRES = Object.keys(K.GENRES).sort((a,b)=>label(a).localeCompare(label(b)));
@@ -87,6 +87,8 @@ function boot(){
   $("seedInp").value = S.seed;
   $("paceRange").value = paceToSlider(loopDuration());
   syncPaceOut();
+  // vapor (live-only master EQ) reflected from persisted state
+  if($("vaporRange")){ $("vaporRange").value = Math.round((S.vapor||0)*100); syncVaporOut(); }
   updateGenreInfo();
   renderJourney();
   applyHold();          // seed S.playing so "Now playing" reads and Play has a target
@@ -244,6 +246,14 @@ function syncPaceOut(){
   $("paceRange").setAttribute("aria-valuetext", fmtDur(d));
 }
 
+// ---------- vapor: the live-only "mall haze" master EQ (parity with the map) --
+function syncVaporOut(){
+  const v=+$("vaporRange").value;
+  $("vaporOut").textContent = v+"%";
+  $("vaporRange").setAttribute("aria-valuetext", v+"% mall haze");
+  setVapor(v/100);                 // persists + applies to the live graph over time
+}
+
 // ---------- genre info blurb ----------
 function updateGenreInfo(){
   const g=resolveGenre($("genreSel").value)||single;
@@ -338,6 +348,7 @@ function wire(){
     renderJourney();
   });
   $("paceRange").addEventListener("input", syncPaceOut);
+  if($("vaporRange")) $("vaporRange").addEventListener("input", syncVaporOut);
 
   // seed + mode
   $("seedInp").addEventListener("change",()=>{

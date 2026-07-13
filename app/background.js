@@ -134,6 +134,13 @@ const BG_MIX_Q = QSFLAGS.get("bgMix");
 const bgCanMix = BG_MIX_Q==="1" ? true : BG_MIX_Q==="0" ? false :
   !(/Mobi|iPhone|iPad|Android/.test(navigator.userAgent) || (navigator.hardwareConcurrency||8)<=4);
 function bgWant(){
+  // STAR-CRUISE (aliens view) projects the footage onto a sky screen BEHIND the
+  // 3D band, so it wants the video layer streaming local clips even though the
+  // 2D background sits hidden under the full-screen 3D canvas. The authority
+  // model (applyBg imposes bgWant on every render) enables it on entry and
+  // restores the prior state on exit — no manual save/restore needed.
+  if(window.__STARCRUISE && window.__STARCRUISE.isRunning && window.__STARCRUISE.isRunning())
+    return { v:true, d:false };
   // THE VIZ VIEW SUPPRESSES the background layers entirely (three exclusive
   // views, Paul 2026-07-10) — bgMode is REMEMBERED, so leaving the viz returns
   // to whatever video state you were in.
