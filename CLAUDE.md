@@ -169,7 +169,11 @@ folk/jazz/ragtime/dub lead pools and fingerprint-gated by
 `node test/melody-cells.test.js`. `tools/mine-groove.js <rip>` mines per-16th
 velocity-accent profiles for the pipes `accentProfile` expression (only dub
 carried real signal — jazz/folk velocities are flat, negative result noted in
-pipes.js).
+pipes.js). `tools/mine-weave.js <rip[:alias]>… --splice` fits the mined melody
+ORGAN (MINED_WEAVE in csd-engine — Markov pitch walk over the voicing ladder +
+IOI rhythm chain; patterns `<alias>weave`); the splice refuses any family that
+loses to the wander baseline on held-out lines (wander itself measures worse
+than uniform). Gates: `node test/melody-weave.test.js`.
 
 `calibrate` is the EXTERNAL check on a verifier row (everything else measures
 the engine against its own renders). Provenance rules live in SOURCES.md: MIDI
