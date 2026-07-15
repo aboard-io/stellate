@@ -63,13 +63,18 @@ function melState(pattern, seed) {
     const d = mel.length / Math.max(1, ev.totalBeats);
     dens[f] = d;
     if (!(d >= 0.5 && d <= 4)) { ok = false; why = `${f} density ${d.toFixed(2)}`; }
-    // chord-safety: every melody pc must be a lead-tone pc of its chord bar
+    // chord-safety: every LANDING pc must be a lead-tone pc of its chord bar
+    // (v2 passing tones are off-ladder BY DESIGN — flagged pass:1, exempt,
+    // and capped below half the line)
     const prg = E.getProgression(st.progression), cb = st.chordEvery || 8;
     for (const e of mel) {
+      if (e.pass) continue;
       const ci = Math.floor((e.beat % (prg.chords.length * cb)) / cb);
       const leadPcs = new Set(prg.chords[ci].lead.map(p => E.pchToMidi(p) % 12));
       if (!leadPcs.has(E.pchToMidi(e.pch) % 12)) { safe = false; why = why || `${f} off-ladder pc at beat ${e.beat}`; break; }
     }
+    const passShare = mel.filter(e => e.pass).length / Math.max(1, mel.length);
+    if (passShare > 0.5) { safe = false; why = why || `${f} passing-tone share ${passShare.toFixed(2)} > .5`; }
     if (JSON.stringify(E.buildEvents(st)) !== JSON.stringify(ev)) det = false;
   }
   gate("organs emit at sane density", ok, why);
@@ -78,6 +83,25 @@ function melState(pattern, seed) {
   // ---- 6: density order ----
   gate("density order: folk sparser than classical", dens.folkweave < dens.classicalweave,
     `folk ${dens.folkweave.toFixed(2)} classical ${dens.classicalweave.toFixed(2)}`);
+})();
+
+// ---- 7: v2 step motion (the passing-tone connectors move rendered stepFrac
+// toward the corpus ~.4-.5; v1's ladder-only walk sat at ~.07). Floors are
+// below measured with margin; guitar/classical plateau lower because their
+// corpus steps live inside fast runs no subdivision can host (the v3 note).
+(() => {
+  const floors = { folkweave: 0.3, jazzweave: 0.28, guitarweave: 0.18, classicalweave: 0.18 };
+  let ok = true, why = "";
+  for (const f of FAMS) {
+    let step = 0, ivN = 0;
+    for (const seed of [1, 3, 5, 8]) {
+      const mel = E.buildEvents(melState(f, seed)).pitched.filter(x => x.voice === "melody").sort((a, b) => a.beat - b.beat);
+      for (let i = 0; i + 1 < mel.length; i++) { const a = Math.abs(E.pchToMidi(mel[i + 1].pch) - E.pchToMidi(mel[i].pch)); if (a >= 1 && a <= 2) step++; ivN++; }
+    }
+    const sf = step / Math.max(1, ivN);
+    if (sf < floors[f]) { ok = false; why = `${f} stepFrac ${sf.toFixed(3)} < ${floors[f]}`; }
+  }
+  gate("v2 connectors: rendered step motion above floors", ok, why);
 })();
 
 process.exit(fails ? 1 : 0);

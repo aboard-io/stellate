@@ -86,9 +86,17 @@ function mineRip(db, rip, minConf) {
              ioi: { mined: +(iM / n2).toFixed(4), wander: +(iW / n2).toFixed(4), uniform: +(iU / n2).toFixed(4), n: n2 } };
   };
   const legSorted = train.leg.sort((a, b) => a - b);
+  // stepFrac target for the v2 passing-tone connectors: measured on the
+  // trusted lines directly (fraction of 1-2 semitone intervals)
+  let step = 0, ivN = 0;
+  for (const r of rows.filter(r => r.id % 2 === 0)) {
+    const line = C.unpackNotes(r.blob, r.ppq);
+    for (let i = 0; i + 1 < line.length; i++) { const a = Math.abs(line[i + 1].pitch - line[i].pitch); if (a >= 1 && a <= 2) step++; ivN++; }
+  }
   return { lines: rows.length, windows: nWin, held: evalLL(),
     table: { start: norm(train.start), slot: slotP, ioiStart: norm(train.ioiU), ioi: ioiP,
-      legato: +(legSorted[legSorted.length >> 1] || 0.9).toFixed(3) } };
+      legato: +(legSorted[legSorted.length >> 1] || 0.9).toFixed(3),
+      step: +(ivN ? step / ivN : 0).toFixed(3) } };
 }
 
 function main() {
