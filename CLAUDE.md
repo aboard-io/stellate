@@ -1,6 +1,6 @@
 # CLAUDE.md — stellate
 
-A self-contained generative genre-space instrument: a **273-genre**
+A self-contained generative genre-space instrument: a **274-genre**
 deterministic vector space (`genre-kernel.js`, incl. real 3/4 odd-meter
 anchors — `state.meter`) over one score brain
 (`engine/csd-engine.js buildEvents`) with a generative harmony/pipes layer
@@ -116,10 +116,70 @@ tools/fetch-sample-cd.sh fatboy-slim-skip-to-my-loops \
    genres) or to `hits.sources` (always safe). NEVER add a `found:{role:…}` block to
    a genre lacking one, change a role, or touch bpm/scored fields — that shifts the
    confusion matrix. After every batch, `node engine/genre-verifier.js matrix
-   --no-cache` MUST still print `diagonal dominant: 273/273`.
+   --no-cache` MUST still print `diagonal dominant: 274/274`.
 
 The audio lands gitignored under `found/`; the recipe + registry/genre edits are
 the committed deliverable (the one rule). Credit the CD in SOURCES.md.
+
+## Mining the MIDI trove
+
+`tools/fetch-midi-trove.sh` pulls genre-labeled MIDI rips (MIDIMAN Melody Kit,
+archive.org) into gitignored `found/midi/`; `tools/mine-midi.js` (zero deps —
+SMF parser, verifier-formula features, KK key detection, per-bar chord
+estimation) measures them:
+
+```bash
+tools/fetch-midi-trove.sh                                 # one-time: ~34MB, 5 rips
+node test/midi-mine.test.js                               # parser gates (round-trip vs midi-export, keycheck)
+node tools/mine-midi.js calibrate jazz found/midi/jazz    # corpus vs anchor renders vs TARGETS row
+node tools/mine-midi.js scan found/midi/ragtime           # corpus feature distributions
+```
+
+Parsed ONCE into a derived SQLite corpus on the external drive
+(`tools/corpus-db.js` — needs `npm install` in `tools/`; note blobs + extracted
+melody lines + 26-dim feature vectors; DB at
+`/mnt/sources/relocated/stellate-midi-corpus/corpus.db`, OFF-repo because
+ship.sh rsyncs `found/`): after the one-time build every corpus question is
+milliseconds (`stats` / `keycheck` / `melody --rip x` / `near <id|path>` /
+`bench`; gates in `test/corpus-db.test.js`, CI-skips without node_modules).
+Melody lines carry a `mel_conf` — statistics only trust `>=0.55`; polyphonic
+skylines are flagged, never averaged in as lines.
+
+`tools/fetch-midi-bulk.sh` pulls the ~104k-file unlabeled bulk straight to the
+external drive; `tools/mine-theory.js` fits FUNC_NEXT/POOL harmony tables from
+the DB (dedup first, diatonic bigrams, train/test split) and `--splice`
+regenerates the MINED block in `engine/theory.js` ONLY when the mined tables
+beat the hand tables on held-out log-likelihood in both modes. The tables are
+opt-in per state (`state.theory.tables:"corpus"`) — absent, theory output is
+byte-identical (gates: `node test/theory-tables.test.js`). Since 2026-07-15
+the TABLES LAW in `deriveMind` wires every reharm genre (201/274) to the
+corpus tables; an anchor opts out with `tables:"hand"`. NOTE the verifier is
+blind to the reharm walk (motion/seventh read the SKELETON progression), so
+the matrix can't gate table changes — the gates that matter are the held-out
+likelihood (mine-theory refuses a losing splice), the theory invariants, and
+ears. `test/meter.test.js` head_byte_identity trips on any uncommitted
+tables-law change (intended drift: `state.theory.tables` + reharmed pitched
+events; drums byte-identical) and self-heals on commit.
+
+`tools/mine-melody.js <rip>` mines melody phrase cells (modal 8-beat rhythm +
+MEDOID real-phrase contour — never per-slot averages, the median of a thousand
+melodies is a monotone) in MEL_PHRASES format; mined cells folkline/jazzline/
+ragline/dubline (+"2" twins, generic per-chord alternation) are wired into
+folk/jazz/ragtime/dub lead pools and fingerprint-gated by
+`node test/melody-cells.test.js`. `tools/mine-groove.js <rip>` mines per-16th
+velocity-accent profiles for the pipes `accentProfile` expression (only dub
+carried real signal — jazz/folk velocities are flat, negative result noted in
+pipes.js).
+
+`calibrate` is the EXTERNAL check on a verifier row (everything else measures
+the engine against its own renders). Provenance rules live in SOURCES.md: MIDI
+never committed, statistics always committable, verbatim vocabulary only from
+PD-composition rips. Known instrument caveats (velocity-as-amp, swing
+estimator counts 16th syncopation, chord estimation not ground truth) are
+documented at the top of `mine-midi.js` — read them before trusting a
+divergence. First fruits (2026-07-14): the jazz hatDensity fence recalibration,
+the mined `dub_vamp`/`rag_cycle` progressions, and the `ragtime` anchor — the
+first anchor authored from a measured corpus (`genre-specs/ragtime.json`).
 
 ## Layout
 

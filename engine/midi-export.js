@@ -36,10 +36,13 @@
   }
 
   function drumTrack(drums){
-    const map={kick:36,snare:38,hat:42};
+    // full kit -> GM percussion; lanes without a GM home are skipped (an
+    // unmapped lane used to fall through as note `undefined` -> byte 0)
+    const map={kick:36,snare:38,hat:42,tom:45,crash:49,ride:51,clap:39,rim:37,perc:63};
     const evs=[];
     for(const d of drums){
       const note = d.drum==="hat" ? (d.open?46:42) : map[d.drum];
+      if(note==null) continue;
       const on=Math.round(d.beat*PPQ), off=on+Math.max(1,Math.round((d.dur||0.1)*PPQ));
       const vel=Math.max(1,Math.min(127,Math.round(40+d.amp*220)));
       evs.push({t:on,b:[0x99,note,vel]});      // channel 10 (index 9)
@@ -51,7 +54,10 @@
   function buildMidi(state){
     const ev = Eng.buildEvents(state);
     const us = Math.round(60000000/(ev.bpm||88));
-    const meta=[ 0x00,0xFF,0x58,0x04,0x04,0x02,0x18,0x08,
+    // real time signature (state.meter, absent = 4/4 — was hardcoded 4/4)
+    const nn=(state.meter&&state.meter.beats)||4;
+    const dd=Math.round(Math.log2((state.meter&&state.meter.unit)||4));
+    const meta=[ 0x00,0xFF,0x58,0x04,nn,dd,0x18,0x08,
                  0x00,0xFF,0x51,0x03,(us>>16)&255,(us>>8)&255,us&255,
                  0x00,0xFF,0x2F,0x00 ];
     const tracks=[meta];

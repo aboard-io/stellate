@@ -1261,6 +1261,9 @@
     /* genre-tool:flamenco:clips */
     flamenco:["earth_orbit","spacewalk","blue_dinner","dc_village","bamboo"],
     /* /genre-tool:flamenco:clips */
+    /* genre-tool:ragtime:clips */
+    ragtime:["earth_orbit","spacewalk","blue_dinner","dc_village","bamboo"],
+    /* /genre-tool:ragtime:clips */
   };
 
   // ---------- DX7 patch registry (the genre-space thesis applied to INSTRUMENTS) ----------
@@ -2021,7 +2024,7 @@
       bpm:[96,144], swing:[.28,.48], humanize:[.35,.6],
       progressions:["ii_v_i","neosoul","lofi","mode_dorian"], kits:["breaks","boombap"], fills:["off","drum fill"],
       bass:{patterns:["walking","melodic","dub"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sampler","piano"],cutoff:[400,800],res:[.05,.12],level:[.95,1.15],send:[.1,.2],dsend:[0,.05],attack:.005,release:[.08,.14]}},   // the UPRIGHT walks 2/3 of seeds (real, FluidR3); piano the rest
-      lead:{patterns:["wander","sparse","canon"], samplerPool:["alto_sax","tenor_sax","bright_yamaha_grand","jazz_guitar"], recipe:{model:["sampler","sampler","sampler","piano"],wave:"sine",voices:[1,2],spread:[.001,.004],cutoff:[2400,3600],level:[.45,.6],send:[.35,.55],dsend:[.1,.3]}},   // THE SAX (real, sampled): 2/3 of seeds the horn leads, else comping piano
+      lead:{patterns:["jazzline","wander","sparse","canon"], samplerPool:["alto_sax","tenor_sax","bright_yamaha_grand","jazz_guitar"], recipe:{model:["sampler","sampler","sampler","piano"],wave:"sine",voices:[1,2],spread:[.001,.004],cutoff:[2400,3600],level:[.45,.6],send:[.35,.55],dsend:[.1,.3]}},   // THE SAX (real, sampled): 2/3 of seeds the horn leads, else comping piano
       pads:{prob:.8, samplerPool:["bright_yamaha_grand","percussive_organ","rock_organ"], recipe:{model:["piano","fm","sampler"],wave:"sine",cutoff:[1000,1700],detune:[.002,.006],attack:[.2,.8],level:[.4,.6],send:[.35,.55],dsend:[.05,.2]}},   // the organ-trio option (Jimmy Smith / Larry Young B-3) beside the comping grand — a real second home for the near-dead rock/percussive organs; jazz's melody is always acoustic so the pad never drives acoustic (matrix-invisible)
       drums:{kickModel:["boom"],snareModel:["noise"],hatModel:["noise"],kick:[.6,.9],snare:[.45,.7],hat:[.8,1.15],tune:[.9,1.05],send:[.2,.4],dsend:[0,.1],kit:"brush"},   // SAMPLED brush kit — the real jazz brushes on the ride
       fx:{reverb:[.5,.7], delayBeats:[.5,.75], delayFb:[.1,.25], delayCut:[2200,3400], pump:[0,0], crackle:[.15,.4], lowcut:[0,25], highcut:[9000,14000], comp:[.1,.25]},
@@ -2034,9 +2037,9 @@
     dub: { label:"Echo Kingdom", info:"the one-drop with the delay promoted to lead instrument: sub pressure, wet offbeat skanks, every hit fed back until the tail outlives the song",   // SAMPLE-FORWARD: wet vox hits + Burroughs in the smoke
       reverbColor:"spring",   // effects audit A2: the spring tank (King Tubby's AKG BX20 "splash") IS dub's ROOM — additive to and distinct from the runaway echo (delayFb .5-.7); surfrock already proves the module. Zero rng, dominant-parent
       bpm:[68,82], swing:[.02,.1], humanize:[.1,.3],
-      progressions:["deep_two","deep_two","drone_min"], kits:["halftime","boombap"], fills:["off","downlift","reverse"],
+      progressions:["dub_vamp","dub_vamp","deep_two","drone_min"], kits:["halftime","boombap"], fills:["off","downlift","reverse"],   // MIDI-trove calibration 2026-07-14: real dub is triadic i-iv on the tonic-subdominant axis (corpus seventh .08 median vs renders 1.0 — mine-midi.js, 108 files) — dub_vamp is the mined progression, weighted to half the pool; deep_two (i-VI) + drone_min keep the old colors
       bass:{patterns:["dub","sub"], recipe:{model:["sub"],cutoff:[260,460],res:[.05,.15],level:[1.2,1.4],send:[0,.06],dsend:[0,.05]}},
-      lead:{patterns:["sparse","off","pentaup"], samplerPool:["harmonica","trombone","clarinet"], recipe:{model:["pluck","sampler","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1600,2600],level:[.32,.44],send:[.4,.6],dsend:[.5,.7],attack:.004,release:[.06,.1],sustain:[.5,.62]}},   // STRONG-SAMPLE (2026-07 boopy-fix): the fm synth dropped — 3/4 real melodica-flavor reeds (harmonica/trombone/clarinet) thrown to the echo; pluck the dry fallback
+      lead:{patterns:["dubline","sparse","off","pentaup"], samplerPool:["harmonica","trombone","clarinet"], recipe:{model:["pluck","sampler","sampler","sampler"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[1600,2600],level:[.32,.44],send:[.4,.6],dsend:[.5,.7],attack:.004,release:[.06,.1],sustain:[.5,.62]}},   // STRONG-SAMPLE (2026-07 boopy-fix): the fm synth dropped — 3/4 real melodica-flavor reeds (harmonica/trombone/clarinet) thrown to the echo; pluck the dry fallback
       pads:{prob:.35, recipe:{model:["organ","saw"],wave:"saw",cutoff:[550,900],detune:[.004,.01],attack:[.15,.5],level:[.32,.44],send:[.3,.5],dsend:[.3,.5]},
         inserts:{prob:.4, max:1, pool:[["phaser",{rate:[.08,.2],depth:[.5,.7],mix:[.35,.55]}]]}},   // effects audit A3: the swept phaser/flanger over the off-beat skank — a core dub-mix signature (Lee Perry, Scientist, "Phase 90 on everything"). Dark organ skank thrown to the echo — NOT a wash
       drums:{kickModel:["808","boom"],snareModel:["crack","noise"],hatModel:["noise"],kick:[1.1,1.35],snare:[.9,1.15],hat:[.45,.75],tune:[.9,1.05],send:[.15,.3],dsend:[.5,.7]},   // the snare rides the delay — dsend IS the one-drop
@@ -6468,7 +6471,7 @@
       kits:["off"],
       fills:["off"],
       bass:{patterns:["root","simple","walking"], samplerPool:["acoustic_bass","finger_bass"], recipe:{model:["sampler","sub"], cutoff:[340,620], res:[0.05,0.13], level:[0.9,1.1], send:[0.06,0.14], dsend:[0.02,0.08]}},
-      lead:{patterns:["pentaup","wander","sparse","arpup","composed"], samplerPool:["steel_string_guitar","nylon_string_guitar","guitar_harmonics","harmonica"], recipe:{model:["sampler"], wave:"sine", voices:[1,1], spread:[0.002,0.006], cutoff:[2600,3600], level:[0.5,0.64], send:[0.16,0.3], dsend:[0.06,0.16], attack:0.004, release:[0.1,0.2], sustain:[0.5,0.66], vibrato:[0.006,0.014]}},
+      lead:{patterns:["folkline","pentaup","wander","sparse","arpup","composed"], samplerPool:["steel_string_guitar","nylon_string_guitar","guitar_harmonics","harmonica"], recipe:{model:["sampler"], wave:"sine", voices:[1,1], spread:[0.002,0.006], cutoff:[2600,3600], level:[0.5,0.64], send:[0.16,0.3], dsend:[0.06,0.16], attack:0.004, release:[0.1,0.2], sustain:[0.5,0.66], vibrato:[0.006,0.014]}},
       pads:{prob:0.85, samplerPool:["nylon_string_guitar","steel_string_guitar","nylon_string_guitar"], recipe:{model:["sampler","sampler"], wave:"sine", cutoff:[1600,2600], detune:[0.002,0.005], attack:[0.05,0.3], level:[0.4,0.54], send:[0.18,0.32], dsend:[0.05,0.14]}},
       drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.4,0.62], snare:[0.4,0.6], hat:[0.34,0.56], tune:[0.95,1.05], send:[0.1,0.22], dsend:[0.04,0.12], kit:"brush"},
       fx:{reverb:[0.24,0.38], delayBeats:[0.5,0.75], delayFb:[0.1,0.22], delayCut:[2400,3400], pump:[0,0.04], crackle:[0.04,0.14], lowcut:[25,45], highcut:[0,0], comp:[0.1,0.26]},
@@ -7007,6 +7010,29 @@
       rhythm:[0.157,0.327],
       pipes:[{id:"strum", w:0.55, step:0.02},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:flamenco:genres */
+    /* genre-tool:ragtime:genres */
+    ragtime: { label:"Player Piano", info:"The rag cycle measured off 236 archive rolls: syncopated right hand over a striding octave left, secondary dominants chaining home (I-VI7-II7-V7), ~100 on the metronome, no kit, no rubato — the first pop music, straight off the roll. The first stellate anchor authored from a corpus (tools/mine-midi.js on the MIDIMAN ragtime rip) rather than by hand.",
+      bpm:[104,126],
+      swing:[0,0.06],
+      humanize:[0.04,0.12],
+      progressions:["rag_cycle","rag_cycle","doo_wop","canon"],
+      kits:["off"],
+      fills:["off"],
+      chordEvery:4,
+      bass:{patterns:["octaves"], recipe:{model:["piano"], cutoff:[700,1400], level:[0.55,0.75], send:[0.04,0.12], dsend:[0,0.04], attack:[0.004,0.012], release:[0.1,0.25]}},
+      lead:{patterns:["ragline","ragline","composed","canon"], samplerPool:["honky_tonk","upright_piano","bright_yamaha_grand"], recipe:{model:["sampler","sampler","piano"], cutoff:[2200,3600], level:[0.5,0.68], send:[0.08,0.2], dsend:[0,0.06], attack:[0.002,0.008], release:[0.08,0.2], wave:"sine", voices:[1,2]}},
+      pads:{prob:0.25, samplerPool:["honky_tonk","upright_piano"], recipe:{model:["sampler","piano"], cutoff:[1200,2000], level:[0.24,0.38], send:[0.06,0.16], dsend:[0,0.05], attack:[0.01,0.05], release:[0.15,0.4]}},
+      drums:{kickModel:["boom"], snareModel:["noise"], hatModel:["noise"], kick:[0.3,0.5], snare:[0.25,0.45], hat:[0.2,0.4], tune:[0.95,1.05], send:[0.05,0.15], dsend:[0,0.04]},
+      fx:{reverb:[0.12,0.28], delayBeats:[0.5,0.75], delayFb:[0.02,0.08], delayCut:[2400,3400], pump:[0,0], crackle:[0.3,0.5], lowcut:[40,90], highcut:[7000,10500], comp:[0.05,0.18]},
+      found:{role:"bed", vol:[0.03,0.08], pitch:[0.8,1], stretch:[0.45,0.6], cutoff:[1600,2600], sources:["brighton_arcade","schoolyard_break","nyc_subway"]},
+      rubato:{depth:[0,0], periodBars:[4,8], prob:0},
+      hits:{sources:["sp_herenow"], pattern:"sparse", prob:0.04},
+      stab:["off"],
+      form:"aaba",
+      theory:{adventure:[0.113,0.225], color:[0.238,0.438], voicing:"open", reharm:true},
+      rhythm:[0,0.08],
+      pipes:[{id:"echoCanon", w:0.55, prob:0.45, delay:2}] },
+    /* /genre-tool:ragtime:genres */
   };
 
   // ---------- MUSIC-MIND anchor axes (docs/MUSIC-MIND.md §"The vector space grows new axes") ----------
@@ -7073,26 +7099,26 @@
     jungle:      { rhythm:[.55,.8], pipes:[{id:"throwFx",w:.6,prob:.6},{id:"ghost",w:.4,prob:.3},{id:"densityArc",w:.4,floor:.6}] },   // the amen IS the melody — complexity floor .55; dub-space throws punctuate the chop
     vaporwave:   { theory:{adventure:[.05,.14], color:[.6,.8], voicing:"open", reharm:false}, rhythm:[0,.1],
                    pipes:[{id:"vibratoSwell",w:.5,depth:.25},{id:"harmonize",w:.35,prob:.3}] },   // the slowed tape does NOT reharmonize (machine time, frozen maj7 nostalgia); color stays maxed — the royal-road 7ths ARE the genre
-    lofi:        { theory:{adventure:[.3,.45], color:[.55,.75], voicing:"drop2", reharm:true},
+    lofi:        { theory:{adventure:[.3,.45], color:[.55,.75], voicing:"drop2", reharm:true, tables:"corpus"},
                    pipes:[{id:"ghost",w:.5,prob:.35},{id:"strum",w:.5,step:.02},{id:"harmonize",w:.35,prob:.3}], bassCells:["charleston"] },   // the head-nod pocket: ghosted bass + rolled felt chords; charleston comp cell joins the pool (space is the groove)
-    jazz:        { theory:{adventure:[.45,.65], color:[.55,.8], voicing:"drop2", reharm:true}, rhythm:[.35,.55],
+    jazz:        { theory:{adventure:[.45,.65], color:[.55,.8], voicing:"drop2", reharm:true, tables:"corpus"}, rhythm:[.35,.55],   // tables:"corpus" = the MIDI-trove MINED walk (theory.js) — first wired genre, 2026-07-14; matrix-gated
                    pipes:[{id:"ghost",w:.55,prob:.4},{id:"echoCanon",w:.4,prob:.4,delay:2}], bassCells:["charleston"] },   // the harmony brain's home: every song rewalks the changes (drop2 shells, real substitutions); approach-note bass, imitative answers
-    bebop:       { theory:{adventure:[.55,.75], color:[.6,.85], voicing:"drop2", reharm:true} },   // maximum substitution appetite (constrain caps .75; the bpm>165 law caps complexity — fast genres saturate on their own)
+    bebop:       { theory:{adventure:[.55,.75], color:[.6,.85], voicing:"drop2", reharm:true, tables:"corpus"} },   // maximum substitution appetite (constrain caps .75; the bpm>165 law caps complexity — fast genres saturate on their own)
     blues:       { theory:{adventure:[.3,.45], color:[.4,.6], voicing:"close", reharm:false},
                    pipes:[{id:"callResponse",w:.7,level:.85},{id:"ghost",w:.45,prob:.35}] },   // the 12-bar IS the form — never reharmonized; call-and-response is the genre's engine
-    fugue:       { theory:{adventure:[.2,.35], color:[.35,.55], voicing:"close", reharm:true},
+    fugue:       { theory:{adventure:[.2,.35], color:[.35,.55], voicing:"close", reharm:true, tables:"corpus"},   // 2026-07-14 second wired genre: the corpus is baroque-heavy — fugue's walk now comes from its own repertoire (minor table esp.: hand prior was worse than uniform)
                    pipes:[{id:"echoCanon",w:.9,prob:.7,delay:4,semis:-12,amp:.55}] },   // imitation IS the genre: the canon pipe near-always fires, a 4-beat answer at the lower octave; adventure modest (Bach modulates by rule, not risk)
-    neoclassical:{ theory:{adventure:[.25,.45], color:[.4,.6], voicing:"close", reharm:true},
+    neoclassical:{ theory:{adventure:[.25,.45], color:[.4,.6], voicing:"close", reharm:true, tables:"corpus"},
                    pipes:[{id:"echoCanon",w:.5,prob:.45,delay:4},{id:"strum",w:.4,step:.015}] },   // the felt piano rewalks its progressions gently; rolled chords are pianism, not effect
     dub:         { theory:{adventure:[0,.05], color:[.2,.4], voicing:"close", reharm:false}, rhythm:[.25,.45],
-                   pipes:[{id:"throwFx",w:.85,prob:.75,rsend:3,dsend:3},{id:"ghost",w:.4,prob:.3}], bassCells:["tresillo"] },   // the throw IS dub — two chords, enormous sends, zero reharm; tresillo joins the riddim pool
+                   pipes:[{id:"throwFx",w:.85,prob:.75,rsend:3,dsend:3},{id:"ghost",w:.4,prob:.3},{id:"accentProfile",w:.8,profile:"dub",amount:.8}], bassCells:["tresillo"] },   // the throw IS dub — two chords, enormous sends, zero reharm; tresillo joins the riddim pool; accentProfile = the MINED skank velocity lean (mine-groove.js)
     acidhouse:   { pipes:[{id:"sweepArc",w:.75,lo:.6,hi:2.4},{id:"octavePump",w:.5,prob:.4}] },   // the 303 filter IS the gesture — sweepArc rides the acid line hard
     electro:     { pipes:[{id:"sweepArc",w:.45,lo:.7,hi:2},{id:"vibratoSwell",w:.4,prob:.4,depth:.25}] },   // NO densityArc (same reason as house): form:"dj" would derive one, but the crisp 16th machine hats ARE the identity (verifier hatDensity floor 1.5) — an arc that thins hats attacks it. Keeps the two synth-expression pipes the pre-dj derivation already chose
     minimal:     { theory:{adventure:[0,.03], color:[.1,.25], voicing:"close", reharm:false}, rhythm:[.05,.2],
                    pipes:[{id:"densityArc",w:.7,floor:.65}] },   // ONE pipe: the additive plateau is the whole argument; everything else stays out of the way
     ambient:     { theory:{adventure:[0,.03], color:[.2,.45], voicing:"open", reharm:false}, rhythm:[0,.05],
                    pipes:[{id:"vibratoSwell",w:.5,minDur:2,depth:.2,rate:4.5}] },   // nothing moves — except the sustains, which learn to sing
-    citypop:     { theory:{adventure:[.2,.4], color:[.55,.8], voicing:"close", reharm:true},
+    citypop:     { theory:{adventure:[.2,.4], color:[.55,.8], voicing:"close", reharm:true, tables:"corpus"},   // 2026-07-14 corpus-tables batch 2: lofi/bebop/neoclassical/citypop (jazz+fugue were 1) — one matrix run gates the batch
                    pipes:[{id:"strum",w:.5,step:.02},{id:"harmonize",w:.4,prob:.35}] },   // royal-road maj7 sheen: strummed guitar-pop chords, parallel-3rd gloss
     afrobeat:    { rhythm:[.4,.6], bassCells:["tresillo","son"] },   // Fela's interlock earns the clave-locked cells; complexity mid (the lock is tight, not busy)
     miamibass:   { bassCells:["tresillo"] },   // the 808 tresillo backbone joins the pool
@@ -7135,6 +7161,14 @@
       // .15 (constrain re-asserts this on every blend: restraint is identity)
       g.theory={ adventure:adv, color:col, voicing, reharm:adv[1]>=.2 };
     }
+    // THE TABLES LAW (2026-07-14, MIDI-trove): a genre that reharmonizes walks
+    // the CORPUS tables (theory.js MINED block — 86k songs, held-out-gated
+    // better than the hand priors in both modes) unless the anchor opts out
+    // with tables:"hand". Applied post-derivation so create-time measurement
+    // (genre-tool) matches load; non-reharm genres never ship state.theory, so
+    // the field is inert there. Fleet gated by the matrix + the paired
+    // self-score sweep the day it landed (corpus vs hand per reharm genre).
+    if(g.theory.reharm && !g.theory.tables) g.theory.tables="corpus";
     if(!g.rhythm){
       const r=avgR(g.kits, KIT_CX, [.1,.3]);
       // a declared euclid undergrid is stated syncopation appetite: bump both ends
@@ -7669,7 +7703,8 @@
       // reharming parents carry at least half the weight (constrain below
       // re-fences it against low adventure and drone plateaus).
       const reharmShare=ws.reduce((s,x)=>s+(GENRES[x.g].theory.reharm?x.w:0),0);
-      choice.theory={ adventure:adv, color:col, voicing:vSide.theory.voicing, reharm:reharmShare>=.5 };
+      choice.theory={ adventure:adv, color:col, voicing:vSide.theory.voicing, reharm:reharmShare>=.5,
+        ...(vSide.theory.tables?{tables:vSide.theory.tables}:{}) };   // corpus tables follow the dominant parent, like voicing (conditional spread — tableless blends byte-identical)
       // pipes: weighted pool UNION (the transforms union order — weight-
       // ordered parents, dedupe by id keeping the dominant parent's params);
       // inclusion prob = Σ spec.w × parent weight, so a techno×ambient
@@ -8780,7 +8815,8 @@
       // is emitted ONLY when reharm survived constrain — adventure/color/
       // voicing are reharmonize() opts, dead weight without it (the truly-
       // absent rule: no {} husks). pipes/rhythm likewise vanish at zero/empty.
-      ...(c.theory&&c.theory.reharm?{theory:{adventure:c.theory.adventure,color:c.theory.color,voicing:c.theory.voicing,reharm:true}}:{}),
+      ...(c.theory&&c.theory.reharm?{theory:{adventure:c.theory.adventure,color:c.theory.color,voicing:c.theory.voicing,reharm:true,
+        ...(c.theory.tables?{tables:c.theory.tables}:{})}}:{}),   // MIDI-trove MINED tables (theory.js) — opt-in per anchor, conditional so tableless states are byte-identical
       ...(c.pipes&&c.pipes.length?{pipes:c.pipes}:{}),
       ...(c.rhythmComplexity>.02?{rhythm:{complexity:c.rhythmComplexity}}:{}),
       ...((c.sampleEvents||paSpec)?{sampleEvents:[...(c.sampleEvents||[]),...(paSpec?[paSpec]:[])]}:{}),  // generalized sample-event roles (Phase 4) + the SPEECH-organ PA opener appended last: absent = no sample-event layer, byte-identical

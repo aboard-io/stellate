@@ -3,6 +3,7 @@
 // blend/space constants (SNAP/CUTOFF/BARS_PER_SEG) + progression vocabulary.
 // No app imports: this is the geometric/constant foundation everything builds on.
 export const POS={
+  ragtime:[760,14640],
   romanticism:[980,1650], chamber:[600,2050], impressionism:[470,1150], postminimal:[1280,950], symphony:[1330,4300],
   punk:[1450,7400], grunge:[1236,7959], indie:[1620,7700], postrock:[1200,8600],
   cryptvespers:[1058,12288], nocturnesmash:[1396,10084], glacialgabber:[1956,15254], breakbop:[1206,17294], atticlament:[1145,12729], hazebunker:[998,8830], salsa:[262,12820], samba:[674,12142], reggaeton:[337,12820], raga:[241,16927], celtic:[2045,5870], flamenco:[1065,16152], trap:[1504,8654], bigband:[814,14181],

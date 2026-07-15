@@ -1,0 +1,8 @@
+{
+  "name": "stellate-tools",
+  "private": true,
+  "description": "node deps for the corpus tools only (corpus-db.js); the engine and app stay dependency-free",
+  "dependencies": {
+    "better-sqlite3": "^12.11.1"
+  }
+}

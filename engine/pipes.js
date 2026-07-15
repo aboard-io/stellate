@@ -68,6 +68,17 @@
   // ---------- the launch library ----------
   // Every pipe: fn(ev, state, rng, p) -> mutates ev in place. Registry-
   // extensible: consumers may add {id:{fn,doc}} entries before apply().
+  // MIDI-trove MINED accent profiles (tools/mine-groove.js, 2026-07-15): mean
+  // melody velocity per 16th slot of a 4-beat bar, normalized to mean 1,
+  // clamped ±30%. Only corpora with real signal ship a profile — jazz and
+  // folk measured FLAT (±2%: 90s MIDI velocities are normalized away; the
+  // negative result is stated here so nobody re-mines them expecting more).
+  // dub = the skank lean: 8th-grid notes loud, 16th offbeats ghosted
+  // (96 melodica-grade lines, 28k notes).
+  const ACCENT_PROFILES={
+    dub: [1.089,0.822,1.052,0.899,1.076,0.777,1.065,0.843,1.083,0.852,1.063,0.877,1.064,0.72,1.042,0.836],
+  };
+
   const REGISTRY={
 
     harmonize:{ doc:"adds one scale-locked parallel 3rd/6th per melody note (prob), snapped to the pad/bass pitch-class set sounding at that beat — instant polyphony that can't clash",
@@ -201,6 +212,17 @@
           const last=ph.reduce((m,e)=>e.beat>m.beat?e:m,ph[0]);    // latest onset = the phrase's final gesture
           last.rsendMul=SEND((last.rsendMul||1)*rs);
           last.dsendMul=SEND((last.dsendMul||1)*ds);
+        }
+      }},
+
+    accentProfile:{ doc:"expression: scales melody+bass amps by a MINED per-16th velocity profile (profile:name, amount 0..1) — the genre's loudness fingerprint as groove; drawless, drums/pads untouched",
+      fn(ev,_state,_rng,p){
+        const prof=ACCENT_PROFILES[p.profile]; if(!prof) return;
+        const amt=cl(p.amount!=null?p.amount:1,0,1);
+        for(const e of ev.pitched){
+          if(e.voice==="pad") continue;                            // pads are wash, not groove
+          const slot=((Math.round((e.beat%4)*4)%16)+16)%16;
+          e.amp=A(e.amp*(1+amt*(prof[slot]-1)));
         }
       }},
 

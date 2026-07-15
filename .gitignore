@@ -19,6 +19,7 @@ models/
 /*.state.json
 /node_modules/
 engine/faust/node_modules/
+tools/node_modules/
 .venv-sing/
 journey/
 

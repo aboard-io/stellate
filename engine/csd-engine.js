@@ -112,6 +112,19 @@
     // the verifier's "seventh" feature needs a 0-seventh minor home) + phrygian
     // DOMINANT (arab pop's hijaz color: MAJOR tonic against bII)
     frost:      prog("Frost (i-VI-III-VII triads)", [["A","min"],["F","maj"],["C","maj"],["G","maj"]]),
+    // MIDI-trove mined (2026-07-14, tools/mine-midi.js on the MIDIMAN dub rip,
+    // 108 files): real dub harmony is TRIADIC (seventh-bar fraction .08 median
+    // vs the engine's all-7ths pools) and lives on the tonic-subdominant axis —
+    // root movement of a 4th/5th outnumbers everything else 2:1, chord roots
+    // sit on 1^ (6908 bars) and 4^ (3679) far ahead of 5^ (1898). The i-iv
+    // plain-triad vamp is that measurement as vocabulary.
+    dub_vamp:   prog("Dub vamp (i-iv triads)",   [["A","min"],["D","min"]]),
+    // MIDI-trove mined (2026-07-14, MIDIMAN ragtime rip, 236 files, 82% major):
+    // ascending-4th root movement dominates (4788 vs 2789 for 5ths-down-the-
+    // other-way), roots concentrate on 1^/5^/2^/6^ — the classic rag circle,
+    // secondary dominants chaining home (VI7->II7->V7->I). Corpus seventh-bar
+    // fraction .51: the tonic stays a plain triad, the cycle is all dom7s.
+    rag_cycle:  prog("Rag cycle (I-VI7-II7-V7)", [["C","maj"],["A","dom7"],["D","dom7"],["G","dom7"]]),
     hijaz:      prog("Hijaz (I-bII, phrygian dominant)", [["A","maj"],["Bb","maj7"],["A","maj"],["G","min7"]]),
     blues_12:   prog("12-bar blues (all dom7)",  [["C","dom7"],["C","dom7"],["C","dom7"],["C","dom7"],
                                                   ["F","dom7"],["F","dom7"],["C","dom7"],["C","dom7"],
@@ -150,7 +163,7 @@
   // otherwise: a 4/4 state that requests them just gets the short cell tiled
   // over its 8-beat bar (a polymeter, never a crash).
   const BASS_PATTERNS=["off","root","simple","walking","octaves","sixteenths","dub","drive","rolling","sub","stab","melodic","habanera","syncopated","pedal","sludge","tresillo","son","hemiola","charleston","oompahpah","waltzroot","siciliana"];
-  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16","motorik","motorik23","fugue","sludge","waltz","lilt6"];
+  const MELODY_PATTERNS=["off","composed","composed2","arpup","arpdown","updown","pentaup","wander","sparse","double","hero","blues","canon","roar","anthem","arp16","motorik","motorik23","fugue","sludge","waltz","lilt6","folkline","jazzline","ragline","dubline"];   // +4 MIDI-trove mined cells (tools/mine-melody.js)
   const DRUM_PATTERNS=["off","kick","full","open","four","boombap","halftime","trap","pulse","techno","house","breaks","jungle","tribal","bossa","electro","newjack","shuffle","waltz","waltzswing","sixeight","onedrop"];
   // KERNEL-V4 Phase 5 (§3.5) — the form as a graph of TYPED NODES. Every
   // section, whatever a form names it, classifies to one of six node types:
@@ -854,7 +867,30 @@
     // anthemic, hymn-like: fewer notes that work harder — dotted/syncopated rhythm,
     // held notes, octave-leap payoff, space. A/B alternate per chord for variation.
     anthem:  [[0,1.5,0,0],[1.5,.5,1,0],[2,1.5,3,0],[3.5,.5,2,0],[4,2,3,1],[6,1.5,0,1],[7.5,.5,2,0]],
-    anthem2: [[0,2,2,0],[2,1,3,0],[3,1,2,0],[4,1.5,0,1],[5.5,.5,1,0],[6,2,3,0]]
+    anthem2: [[0,2,2,0],[2,1,3,0],[3,1,2,0],[4,1.5,0,1],[5.5,.5,1,0],[6,2,3,0]],
+    // MIDI-trove MINED cells (tools/mine-melody.js, 2026-07-15): each is the
+    // MEDOID real phrase of its corpus's MODAL 8-beat rhythm (typicality
+    // selects against hooks; the 8-slot voicing quantization keeps it a
+    // contour, not a quotation — SOURCES.md). A/B pairs alternate per chord
+    // via the generic twin rule in melodyEvents.
+    // folk (pdmusic, 5628 lines; fingerprint sync16 .08, step .49): quarters,
+    // an arch that walks home — narrow, on-beat, singable
+    folkline:  [[0,1,0,1],[1,1,2,1],[2,1,3,1],[3,1,3,1],[4,1,3,1],[5,1,3,1],[6,1,0,1],[7,1,0,0]],
+    folkline2: [[0,.5,0,1],[.5,.5,0,0],[1,.5,1,0],[1.5,.5,2,0],[2,.5,1,1],[2.5,.5,0,1],[3,.5,0,1],[3.5,.5,3,1],[4,.5,0,1],[4.5,.5,0,1],[5,.5,1,1],[5.5,.5,0,1],[6,.5,0,1],[6.5,.5,0,0],[7,.5,1,0],[7.5,.5,0,0]],
+    // jazz (thejazzpage, 307 lines; sync16 .66, step .48): A = the descending
+    // 8th-note line; B = ENTIRELY off-beat 16th placements (the comping push)
+    jazzline:  [[0,.5,2,1],[.5,.5,1,1],[1,.5,3,1],[1.5,.5,2,1],[2,.5,1,1],[2.5,.5,0,1],[3,.5,1,1],[3.5,.25,2,0],[4,.5,2,0],[4.5,.5,1,0],[5,.5,1,0],[5.5,.5,3,0],[6,.5,0,0],[6.5,.5,2,0],[7,.5,0,1],[7.5,.5,2,1]],
+    jazzline2: [[.25,.5,0,0],[.75,.5,3,1],[1.25,.5,2,1],[1.75,.5,0,1],[2.25,.5,3,0],[2.75,.5,3,0],[3.25,.5,1,0],[3.75,.5,3,0],[4.25,.5,1,0],[4.75,.5,3,0],[5.25,.5,0,0],[5.75,.5,1,0],[6.25,.5,1,0],[6.75,.5,2,0],[7.25,.5,2,0],[7.75,.25,3,0]],
+    // ragtime (rtpress, 225 skyline lines; sync16 .81, step .21): dense
+    // syncopated 16th runs — the right hand of the rag (skyline caveat stated
+    // in mine-melody.js; solo-piano corpus, the skyline IS the tune)
+    ragline:   [[0,.25,1,0],[.25,.5,0,0],[.75,.25,0,1],[1,.25,0,1],[1.5,.25,1,1],[1.75,.25,2,1],[2.25,.25,1,0],[2.5,.25,2,1],[3,.25,1,0],[3.25,.5,2,1],[3.75,.25,1,0],[4,.25,2,1],[4.5,.25,1,0],[4.75,.25,3,1],[5.25,.25,1,0],[5.5,.25,3,1],[6,.25,1,0],[6.25,.25,2,1],[6.75,.25,1,0],[7,.25,2,1],[7.5,.25,0,1],[7.75,.25,2,1]],
+    ragline2:  [[0,.25,0,0],[.5,.25,0,1],[.75,.5,1,0],[1.25,.25,1,1],[1.5,.5,2,0],[2,.25,2,1],[2.25,.5,3,0],[2.75,.25,2,1],[3,.5,0,1],[3.5,.25,3,1],[3.75,.5,3,0],[4.25,.25,2,1],[4.5,.5,2,0],[5,.25,2,1],[5.25,.5,1,0],[5.75,.25,1,1],[6,.25,0,0],[6.5,.25,0,1],[6.75,.5,1,0],[7.25,.25,1,1],[7.5,.5,2,0]],
+    // dub (96 melodica-grade lines; sync16 .34, repeat .31, range 8): A = the
+    // staccato repeated-note riff falling to a held root, with real SPACE
+    // (beats 3-4.5 rest); B = near-silence, a 4-note answer at the bar's tail
+    dubline:   [[0,.25,1,1],[.5,.25,3,1],[1,.25,3,1],[1.5,.25,3,1],[2,.25,3,1],[2.5,.25,3,1],[3,.25,3,1],[4.5,.25,0,1],[5,.25,0,0],[5.5,.25,0,1],[6,1,0,0]],
+    dubline2:  [[5.5,.25,0,0],[6,.25,3,1],[6.25,.25,1,1],[6.5,.25,0,0]]
   };
   // ---- MUSIC-MIND melody rhythm cells (state.rhythm) ----
   // Named onset grids an existing phrase gets RE-TIMED onto — pitch material
@@ -1104,7 +1140,9 @@
         const ph6=[[0,1.4,0,0],[1.5,0.45,1,0],[2,0.9,2,0],[3,1.4,3,0],[4.5,0.45,2,0],[5,0.9,1,0]];
         for(let m=0;m*6<cb;m++) ph6.forEach(([o,d,idx,oct])=>note(m*6+o,d,idx,oct));
         return; }
-      const ph=MEL_PHRASES[gen];
+      // generic A/B twin rule (the hero/anthem alternation, generalized for
+      // the mined cells): a cell with a "<name>2" sibling alternates per chord
+      const ph=(MEL_PHRASES[gen+"2"]&&ci%2)?MEL_PHRASES[gen+"2"]:MEL_PHRASES[gen];
       if(ph){ ph.forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       // wander: rhythmic random walk over chord tones, occasional octave leap
       const span=Math.min(8,cb);
@@ -1455,6 +1493,7 @@
       const th=state.theory;
       prg=Object.assign({},prg,CsdTheoryRef.reharmonize(prg,{
         adventure:th.adventure, color:th.color, voicing:th.voicing,
+        tables:th.tables,   // "corpus" opts into the MINED trove tables (theory.js)
         seed:(((state.seed??1)>>>0)+40961)>>>0 }));
     }
     // ---- ODD METER (2026-07): state.meter = {beats:3|6, unit:4|8} ----

@@ -1,0 +1,123 @@
+{
+  "name": "ragtime",
+  "label": "Player Piano",
+  "info": "The rag cycle measured off 236 archive rolls: syncopated right hand over a striding octave left, secondary dominants chaining home (I-VI7-II7-V7), ~100 on the metronome, no kit, no rubato — the first pop music, straight off the roll. The first stellate anchor authored from a corpus (tools/mine-midi.js on the MIDIMAN ragtime rip) rather than by hand.",
+  "pos": [760, 14640],
+  "clips": [
+    "earth_orbit",
+    "spacewalk",
+    "blue_dinner",
+    "dc_village",
+    "bamboo"
+  ],
+  "anchor": {
+    "bpm": [104, 126],
+    "swing": [0, 0.06],
+    "humanize": [0.04, 0.12],
+    "progressions": [
+      "rag_cycle",
+      "rag_cycle",
+      "doo_wop",
+      "canon"
+    ],
+    "kits": ["off"],
+    "fills": ["off"],
+    "chordEvery": 4,
+    "bass": {
+      "patterns": ["octaves"],
+      "recipe": {
+        "model": ["piano"],
+        "cutoff": [700, 1400],
+        "level": [0.55, 0.75],
+        "send": [0.04, 0.12],
+        "dsend": [0, 0.04],
+        "attack": [0.004, 0.012],
+        "release": [0.1, 0.25]
+      }
+    },
+    "lead": {
+      "patterns": ["ragline", "ragline", "composed", "canon"],
+      "samplerPool": ["honky_tonk", "upright_piano", "bright_yamaha_grand"],
+      "recipe": {
+        "model": ["sampler", "sampler", "piano"],
+        "cutoff": [2200, 3600],
+        "level": [0.5, 0.68],
+        "send": [0.08, 0.2],
+        "dsend": [0, 0.06],
+        "attack": [0.002, 0.008],
+        "release": [0.08, 0.2],
+        "wave": "sine",
+        "voices": [1, 2]
+      }
+    },
+    "pads": {
+      "prob": 0.25,
+      "samplerPool": ["honky_tonk", "upright_piano"],
+      "recipe": {
+        "model": ["sampler", "piano"],
+        "cutoff": [1200, 2000],
+        "level": [0.24, 0.38],
+        "send": [0.06, 0.16],
+        "dsend": [0, 0.05],
+        "attack": [0.01, 0.05],
+        "release": [0.15, 0.4]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.3, 0.5],
+      "snare": [0.25, 0.45],
+      "hat": [0.2, 0.4],
+      "tune": [0.95, 1.05],
+      "send": [0.05, 0.15],
+      "dsend": [0, 0.04]
+    },
+    "fx": {
+      "reverb": [0.12, 0.28],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.02, 0.08],
+      "delayCut": [2400, 3400],
+      "pump": [0, 0],
+      "crackle": [0.3, 0.5],
+      "lowcut": [40, 90],
+      "highcut": [7000, 10500],
+      "comp": [0.05, 0.18]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.03, 0.08],
+      "pitch": [0.8, 1],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1600, 2600],
+      "sources": ["brighton_arcade", "schoolyard_break", "nyc_subway"]
+    },
+    "rubato": {
+      "depth": [0, 0],
+      "periodBars": [4, 8],
+      "prob": 0
+    },
+    "hits": {
+      "sources": ["sp_herenow"],
+      "pattern": "sparse",
+      "prob": 0.04
+    },
+    "stab": ["off"],
+    "form": "aaba"
+  },
+  "verify": {
+    "seeds": 6,
+    "widen": 0.1,
+    "features": {
+      "bpm": 2,
+      "drumDensity": 3,
+      "acoustic": 3,
+      "swing": 3,
+      "crackle": 2,
+      "seventh": 2,
+      "motion": 2,
+      "humanize": 1
+    }
+  }
+}

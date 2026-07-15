@@ -174,11 +174,21 @@
   const FUNC_NEXT={T:{T:0.15,S:0.50,D:0.35}, S:{S:0.15,D:0.60,T:0.25}, D:{D:0.10,T:0.75,S:0.15}};
   const POOL7={T:[[0,0.60],[5,0.25],[2,0.15]], S:[[3,0.60],[1,0.40]], D:[[4,0.75],[6,0.25]]};
   const POOL5={T:[[0,1]],                      S:[[1,0.5],[3,0.5]],   D:[[2,0.6],[4,0.4]]};
+  // ---- MINED-TABLES BEGIN (tools/mine-theory.js — do not hand-edit) ----
+  // Corpus-fit FUNC_NEXT/POOL (MIDIMAN trove via corpus-db, 2026-07-14): 57165+29136
+  // deduped files, 3065897+1352325 diatonic root transitions. Held-out mean
+  // log-lik (mined vs hand): major -1.6681 vs -1.7982, minor -1.7685 vs -1.9721.
+  // OPT-IN via progress({tables:"corpus"}) / state.theory.tables — absent, the
+  // hand tables above run byte-identically (test/theory-tables.test.js).
+  const MINED={"major":{"FUNC_NEXT":{"T":{"T":0.3021,"S":0.4017,"D":0.2962},"S":{"T":0.5782,"S":0.1031,"D":0.3187},"D":{"T":0.7399,"S":0.2142,"D":0.046}},"POOL":{"T":[[0,0.6037],[2,0.1687],[5,0.2276]],"S":[[1,0.4022],[3,0.5978]],"D":[[4,0.8986],[6,0.1014]]}},"minor":{"FUNC_NEXT":{"T":{"T":0.3975,"S":0.2659,"D":0.3366},"S":{"T":0.6073,"S":0.0591,"D":0.3336},"D":{"T":0.7573,"S":0.1614,"D":0.0813}},"POOL":{"T":[[0,0.5349],[2,0.2219],[5,0.2432]],"S":[[1,0.243],[3,0.757]],"D":[[4,0.5941],[6,0.4059]]}}};
+  // ---- MINED-TABLES END ----
   function wpick(pairs,r){ let acc=0; for(const [v,w] of pairs){ acc+=w; if(r<acc) return v; } return pairs[pairs.length-1][0]; }
   function wkey(obj,r){ let acc=0; for(const k in obj){ acc+=obj[k]; if(r<acc) return k; } return "T"; }
 
-  // progress({mode, root, adventure, color, bars, seed, voicing}) → chord[]
+  // progress({mode, root, adventure, color, bars, seed, voicing, tables}) → chord[]
   // (each {name, rootPc, ivs, pcs, func, degree, pads}) — one chord per bar.
+  // tables:"corpus" swaps FUNC_NEXT/POOL for the MINED block (same walk, same
+  // draw count, same handrails); absent → the hand tables, byte-identical.
   function progress(o){
     o=o||{};
     const scale=scaleOf(o.mode||"ionian"), n=scale.length;
@@ -191,8 +201,11 @@
     // FIXED 4 numbers per bar — raising adventure only raises thresholds, so
     // chromaticism grows ~monotonically for a fixed seed (test-gated).
     const rngW=mulberry32(seed), rngC=mulberry32((seed+0x9E37)>>>0), rngX=mulberry32((seed+40961)>>>0);
-    const pool=n>=6?POOL7:POOL5;
     const majorish=scale.includes(4)&&!scale.includes(3);   // tonic third decides the borrow palette
+    // corpus tables (opt-in): 7-note scales only — pentatonic keeps POOL5
+    const mined=(o.tables==="corpus"&&typeof MINED!=="undefined"&&n>=6)?MINED[majorish?"major":"minor"]:null;
+    const funcNext=mined?mined.FUNC_NEXT:FUNC_NEXT;
+    const pool=mined?mined.POOL:(n>=6?POOL7:POOL5);
 
     // -- the walk (handrail: bar 0 IS the tonic; last bar tonic-functional;
     //    penultimate bar forced dominant — the cadence the ear expects)
@@ -200,7 +213,7 @@
     for(let i=1;i<bars;i++){
       if(i===bars-1){ const d=rngW()<0.7?0:wpick(pool.T,rngW()); degs.push(d); funcs.push("T"); }
       else if(i===bars-2&&bars>=3){ degs.push(wpick(pool.D,rngW())); funcs.push("D"); }
-      else { const f=wkey(FUNC_NEXT[funcs[i-1]],rngW()); degs.push(wpick(pool[f],rngW())); funcs.push(f); }
+      else { const f=wkey(funcNext[funcs[i-1]],rngW()); degs.push(wpick(pool[f],rngW())); funcs.push(f); }
     }
 
     // -- diatonic chords, color-scaled extensions (triad→7→9→11→13)
@@ -301,7 +314,7 @@
       for(const pc of first) sc+=set.has(pc)?0.5:0;
       if(sc>best){ best=sc; mode=m; } }
     const chords=progress({ mode, root:key, bars:src.length,
-      adventure:o.adventure, color:o.color, voicing:o.voicing,
+      adventure:o.adventure, color:o.color, voicing:o.voicing, tables:o.tables,
       seed:o.seed==null?1:o.seed });
     return toProgression(chords, prg.label||prg.name||"reharm");
   }

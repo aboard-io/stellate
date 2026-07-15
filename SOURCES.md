@@ -362,6 +362,35 @@ committed, recoverable deliverable. Workflow documented in CLAUDE.md
 |---|---|---|---|
 | `stml/` (`stml_*` ids) | **Fatboy Slim / Norman Cook — "Skip to My Loops"** sample CD, [`fatboy-slim-skip-to-my-loops`](https://archive.org/details/fatboy-slim-skip-to-my-loops) on archive.org (single zip, 79 generically-named WAVs) | funky breakbeat **loops** (bpm recovered by the classifier), plus a handful of vocal/funk **chops** and one-shot **hits**. Big-beat DNA — wired into `bigbeat` (+ breakcore/jungle/boombap/triphop and the invented *break* genres), the *house*/*funk* chops pools, and the bigbeat/house/gabber/electro/miamibass/disco hit pools. | unauthorized rip of an out-of-print commercial sample CD; no license chain (the CD's own user license was of doubtful validity) — tier 3: never redistributed in any form, never in a distributed render |
 
+## MIDI trove (found/midi/ — tools/fetch-midi-trove.sh, 2026-07)
+
+Genre-labeled MIDI rips from the **MIDIMAN Melody Kit 1.0**
+([`midiman_melody_kit_1.0_2015-06`](https://archive.org/details/midiman_melody_kit_1.0_2015-06)
+on archive.org — ~130k files crawled from ~200 sites in 2015, deduped and
+repackaged by Jason Scott, 2022). Used by `tools/mine-midi.js` for **verifier
+calibration** (real symbolic distributions vs anchor renders — the first
+external check on `genre-verifier.js` targets) and vocabulary/harmony mining.
+The MIDI files are **never committed** (gitignored under `found/midi/`) and
+never redistributed; what lands in git is the fetch recipe, the miner, and
+aggregate statistics (feature distributions, progression/transition tables).
+Verbatim musical material is only ever mined from public-domain-composition
+sources (pdmusic.org folk, ragtime, classical).
+
+| local dir | rip | content | provenance |
+|---|---|---|---|
+| `ragtime/` | `Ragtime_rtpress.com_MIDIRip.zip` | ragtime piano (PD compositions) | transcriptions of pre-1926 works; transcriber rights unasserted — statistics + vocabulary |
+| `jazz/` | `Jazz_www.thejazzpage.de_MIDIRip.zip` | jazz standards | copyrighted compositions — aggregate statistics only |
+| `dub/` | `Dub_MIDIRip.zip` | dub / reggae | copyrighted compositions — aggregate statistics only |
+| `folk/` | `AMERICANA_FOLK_www.pdmusic.org_MIDIRip.zip` | American folk/parlor songs (pdmusic.org, PD compositions) | statistics + vocabulary |
+| `classical_piano/` | `Classical_Piano_piano-midi.de_MIDIRip.zip` | classical piano (key-detection ground truth) | PD compositions; piano-midi.de rips are CC BY-SA — statistics only |
+| `classical_greats/` `classical_guitar/` `classical_violin/` `classical_mfiles/` `classical_midiworld/` | the trove's five other classical rips (~53MB) | classical expansion — the corpus-db melody test bed (solo/chamber lines, strong key signatures) | PD compositions; transcriber rights per-site — statistics only |
+
+The corpus also lives as a **derived SQLite database** (`tools/corpus-db.js` —
+note blobs + extracted melody lines + feature vectors) at
+`/mnt/sources/relocated/stellate-midi-corpus/corpus.db`, deliberately OFF-repo:
+`found/` is rsynced to the droplet by `tools/ship.sh`, so multi-GB derived
+artifacts must never land under it. Rebuildable from the rips at any time.
+
 ## Repertoire wave 3 — hits + breaks expansion (found/samples/ — tools/fetch-hits-expansion.sh, 2026-07)
 
 The one-shot/break vocabulary expansion that fills the `SOURCE_POOLS` classes

@@ -202,7 +202,7 @@
     blues:    { bpm:[74,102,3], swing:[.22,.46,3], acoustic:[.4,1,2], seventh:[.85,1,3],
                 motion:[.5,.7,2], crackle:[.2,.6,1], drumDensity:[.7,2.6,1], pump:[0,.05,1] },
     jazz:     { bpm:[96,148,2], swing:[.26,.52,3], acoustic:[.4,1,2], seventh:[.6,1,1],
-                motion:[.55,1,2], snareBalance:[.6,1.3,2], hatDensity:[.42,.68,2], humanize:[.3,.7,1],
+                motion:[.55,1,2], snareBalance:[.6,1.3,2], hatDensity:[.42,.87,2], humanize:[.3,.7,1],   // 2026-07-14 MIDI-trove calibration (tools/mine-midi.js): kit-vocabulary drift since the acoustic-twin fence pass left ALL 8 jazz seeds at hatDensity .70-.83, above the old .68 ceiling (self 93-99, and seed 4 LOST its diagonal to gospel 99<100). Real-jazz corpus median .64 (thejazzpage.de rip, 432 files) sits inside either ceiling; re-set to the anchor's own renders + house pad (.83+.04). The blues fence never needed this ceiling: the snareBalance floor [.6,...] carries it alone (jazz renders .61-.91, blues .25-.58; blues on-jazz-row 80-97 < blues self 100). Self restored 100/100 across 8 seeds.
                 crackle:[0,.42,1] },   // 2026-07 (blues acoustic pass): blues now rides shuffle+upright+organ and was TYING jazz at 100. Honest fences: bpm lo = the jazz anchor's own floor (96, was 92); crackle hi = the anchor's own cap (.4+margin) — blues IS the worn-record genre (.25-.55), jazz is merely dusty. 2026-07 jazz/blues acoustic-twin FENCE pass (the last negative column margin, jazz col -1): the two share swing/acoustic/7th/motion/crackle almost feature-for-feature, so the fence is the DRUM IDENTITY, measured over 8 seeds each. snareBalance flipped from a loose ceiling [0,.75] to a FLOOR [.6,1.3] weight 2: jazz is walking-swing with a STRONG comping backbeat snare (renders .67-.89), blues is a kick-forward triplet shuffle with a QUIET snare (renders .22-.59) — the old ceiling let blues pass fully AND jazz's own high-snare seeds partly failed it. hatDensity flipped from a loose floor [.7,2.6] (which jazz's OWN renders .51-.64 fell below!) to a CEILING [.42,.68] weight 2: jazz swings on a SPARSE ride cymbal (.51-.64), blues drives a FULLER shuffle kit (.67-1.39). Both corrections make the row describe jazz's actual renders, so jazz's own diagonal RISES 99->100 while blues drops 100->84 (rival becomes triphop 94, margin +6). Anchors untouched (pure verifier fence); no other column moved (jazz row scored against jazz only)
     dub:      { bpm:[64,86,3], sub:[.6,1,2], motion:[0,.4,2], crackle:[0,.1,2], swing:[0,.12,2],
                 snareBalance:[.4,1.4,1], breakUse:[0,.1,1], drumDensity:[.5,2.4,1], pump:[0,.15,1], wash:[0,.34,2] },   // 2026-07 wash-trio pass: wash CEILING added — dub is DRY (the delay is the genre, not the reverb; renders wash .19-.26). This fences the drowned witchhouse (renders wash .46-.51, the cathedral-of-reverb) off dub's diagonal — the two are both slow/sub/dark/drone-minor, and wash was the missing separator (witchhouse was scoring 97 here). MEASURED: dub's own max wash .262 < .34, self unchanged
@@ -922,6 +922,9 @@
     /* genre-tool:flamenco:targets */
     flamenco: { bpm:[114,185,2], acoustic:[0.68,0.92,3], drumDensity:[0,1.234,3], seventh:[0.3,1,2], motion:[0.487,1,2], rubato:[0,0.042,2], humanize:[0,0.326,1], offgrid:[0.138,0.59,3] },
     /* /genre-tool:flamenco:targets */
+    /* genre-tool:ragtime:targets */
+    ragtime:  { bpm:[98,133,2], drumDensity:[0,0.4,3], acoustic:[0.66,1,3], swing:[0,0.091,3], crackle:[0.185,0.602,2], seventh:[0,0.975,2], motion:[0.85,1,2], humanize:[0,0.204,1] },
+    /* /genre-tool:ragtime:targets */
   };
 
   // the piecewise-linear target-row scorer — the shared primitive (genre-tool
