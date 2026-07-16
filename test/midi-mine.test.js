@@ -101,8 +101,8 @@ gate("GM lane coverage (no note-0 drums)", laneOk, `decorative-lane events exerc
 
 // ---- 5: keycheck vs embedded key signatures (needs the fetched corpus) ----
 (() => {
-  const dir = path.join(__dirname, "..", "found", "midi", "classical_piano");
-  if (!fs.existsSync(dir)) { console.log("SKIP  keycheck: found/midi/classical_piano not fetched (tools/fetch-midi-trove.sh)"); return; }
+  const dir = "/mnt/sources/relocated/stellate-midi-corpus/rips/classical_piano";
+  if (!fs.existsSync(dir)) { console.log("SKIP  keycheck: classical_piano rip not fetched (tools/fetch-midi-trove.sh — external drive; the MIDI never lives under found/, it would deploy)"); return; }
   const { rows } = Mine.scanDir(dir, {});
   const withSig = rows.filter(r => r._keySig);
   if (withSig.length < 10) { console.log(`SKIP  keycheck: only ${withSig.length} files carry key signatures`); return; }

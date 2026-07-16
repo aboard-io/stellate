@@ -7,11 +7,13 @@
 #
 # Downloads the genre-labeled site rips used by tools/mine-midi.js (verifier
 # calibration + vocabulary mining; the ~1GB unlabeled bulk is deliberately
-# skipped). Unzips each into found/midi/<slug>/, flattening to one dir per rip.
+# skipped). Unzips each into <dest>/<slug>/ (default: the EXTERNAL drive — found/ is
+# rsynced to the droplet by ship.sh and the MIDI must NEVER deploy; SOURCES.md).
 # Requires: curl, unzip.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-mkdir -p found/midi
+DEST="${1:-/mnt/sources/relocated/stellate-midi-corpus/rips}"
+mkdir -p "$DEST"
 
 ITEM="https://archive.org/download/midiman_melody_kit_1.0_2015-06"
 
@@ -33,14 +35,14 @@ rips=(
 
 for spec in "${rips[@]}"; do
   slug="${spec%%|*}"; zipname="${spec#*|}"
-  dest="found/midi/$slug"
+  dest="$DEST/$slug"
   if [ -d "$dest" ] && [ -n "$(find "$dest" -iname '*.mid' -print -quit 2>/dev/null)" ]; then
     echo "== $slug: already fetched, skipping"
     continue
   fi
   echo "== $slug: $zipname"
   url="$ITEM/$(printf '%s' "$zipname" | sed 's/ /%20/g')"
-  tmp="found/midi/.$slug.zip"
+  tmp="$DEST/.$slug.zip"
   curl -fL --retry 3 -o "$tmp" "$url"
   mkdir -p "$dest"
   unzip -oqj "$tmp" -d "$dest" -x '*.txt' '*.TXT' '*.html' '*.htm' || true
@@ -48,4 +50,4 @@ for spec in "${rips[@]}"; do
   echo "   $(find "$dest" -iname '*.mid' | wc -l) .mid files"
 done
 
-echo "done: found/midi/"
+echo "done: $DEST"

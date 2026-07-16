@@ -124,15 +124,15 @@ the committed deliverable (the one rule). Credit the CD in SOURCES.md.
 ## Mining the MIDI trove
 
 `tools/fetch-midi-trove.sh` pulls genre-labeled MIDI rips (MIDIMAN Melody Kit,
-archive.org) into gitignored `found/midi/`; `tools/mine-midi.js` (zero deps —
+archive.org) onto the EXTERNAL drive (/mnt/sources/relocated/stellate-midi-corpus/rips — NEVER under found/, which ship.sh rsyncs to the droplet: the MIDI must not deploy); `tools/mine-midi.js` (zero deps —
 SMF parser, verifier-formula features, KK key detection, per-bar chord
 estimation) measures them:
 
 ```bash
 tools/fetch-midi-trove.sh                                 # one-time: ~34MB, 5 rips
 node test/midi-mine.test.js                               # parser gates (round-trip vs midi-export, keycheck)
-node tools/mine-midi.js calibrate jazz found/midi/jazz    # corpus vs anchor renders vs TARGETS row
-node tools/mine-midi.js scan found/midi/ragtime           # corpus feature distributions
+node tools/mine-midi.js calibrate jazz /mnt/sources/relocated/stellate-midi-corpus/rips/jazz    # corpus vs anchor renders vs TARGETS row
+node tools/mine-midi.js scan /mnt/sources/relocated/stellate-midi-corpus/rips/ragtime           # corpus feature distributions
 ```
 
 Parsed ONCE into a derived SQLite corpus on the external drive

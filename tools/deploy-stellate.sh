@@ -28,7 +28,10 @@ echo "== media manifest (local) =="
 # CODE — it changes under the same name whenever a .dsp recompiles (the
 # synthesis-depth program proved it). It deploys like JS: no-cache, not
 # immutable. Only found/ media is versioned-by-name.
-find found -type f ! -name '*.ogg' ! -name '*.json' ! -name 'tw_vocal.mp3' ! -path 'found/video/lib/*' \
+# found/midi/ excluded (2026-07-16): the MIDI trove must never deploy
+# (SOURCES.md "never redistributed") — it lives on the external drive now;
+# this exclusion is the belt in case a fetch ever lands there again.
+find found -type f ! -name '*.ogg' ! -name '*.json' ! -name 'tw_vocal.mp3' ! -path 'found/video/lib/*' ! -path 'found/midi/*' \
   -print0 | sort -z | xargs -0 sha256sum > /tmp/MEDIA_MANIFEST.new
 
 echo "== immutable invariant check against deployed manifest =="
@@ -49,6 +52,7 @@ fi
 echo "== rsync =="
 rsync -a --delete --delay-updates --info=stats1 \
   --exclude '.git' --exclude '.gitmodules' \
+  --exclude 'found/midi/' \
   --exclude 'found/*.ogg' \
   --exclude 'found/video/lib/' \
   --exclude 'models/' \

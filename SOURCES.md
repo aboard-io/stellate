@@ -362,7 +362,7 @@ committed, recoverable deliverable. Workflow documented in CLAUDE.md
 |---|---|---|---|
 | `stml/` (`stml_*` ids) | **Fatboy Slim / Norman Cook — "Skip to My Loops"** sample CD, [`fatboy-slim-skip-to-my-loops`](https://archive.org/details/fatboy-slim-skip-to-my-loops) on archive.org (single zip, 79 generically-named WAVs) | funky breakbeat **loops** (bpm recovered by the classifier), plus a handful of vocal/funk **chops** and one-shot **hits**. Big-beat DNA — wired into `bigbeat` (+ breakcore/jungle/boombap/triphop and the invented *break* genres), the *house*/*funk* chops pools, and the bigbeat/house/gabber/electro/miamibass/disco hit pools. | unauthorized rip of an out-of-print commercial sample CD; no license chain (the CD's own user license was of doubtful validity) — tier 3: never redistributed in any form, never in a distributed render |
 
-## MIDI trove (found/midi/ — tools/fetch-midi-trove.sh, 2026-07)
+## MIDI trove (external drive: /mnt/sources/relocated/stellate-midi-corpus/rips — tools/fetch-midi-trove.sh, 2026-07)
 
 Genre-labeled MIDI rips from the **MIDIMAN Melody Kit 1.0**
 ([`midiman_melody_kit_1.0_2015-06`](https://archive.org/details/midiman_melody_kit_1.0_2015-06)
@@ -370,7 +370,7 @@ on archive.org — ~130k files crawled from ~200 sites in 2015, deduped and
 repackaged by Jason Scott, 2022). Used by `tools/mine-midi.js` for **verifier
 calibration** (real symbolic distributions vs anchor renders — the first
 external check on `genre-verifier.js` targets) and vocabulary/harmony mining.
-The MIDI files are **never committed** (gitignored under `found/midi/`) and
+The MIDI files are **never committed** and live OFF-REPO on the external drive (they briefly sat under found/midi and DEPLOYED on 2026-07-15 — ship.sh rsyncs found/; caught by the deploy invariant 2026-07-16, scrubbed from the droplet, relocated) and
 never redistributed; what lands in git is the fetch recipe, the miner, and
 aggregate statistics (feature distributions, progression/transition tables).
 Verbatim musical material is only ever mined from public-domain-composition
