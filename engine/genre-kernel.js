@@ -1284,6 +1284,19 @@
     const reg={};
     for(const [name,p] of Object.entries(raw||{}))
       if(p&&p.params) reg[name]={algorithm:p.alg, params:p.params};
+    // SILENT-ROM REMAP (2026-07-16, measured by tools/font-coverage.js
+    // --dx7-rms): 8 of the 114 converted ROM patches render < -60 dBFS — dead
+    // conversions, and "TUB BELLS" alone was wired into 23 anchors' patchPools
+    // as a silently-dead voice option. Each remaps to its nearest AUDIBLE
+    // sibling (bells->celeste, plucked->the working guitar/harpsi/koto,
+    // timpani->vibe) so every reference — anchor pools, dx7-font family
+    // fallbacks — lands on a patch that speaks. The names stay: a patchPool
+    // asking for "TUB BELLS" gets the celeste params under that name.
+    const SILENT_REMAP={ "TUB BELLS":"CELESTE", "BELLS":"CELESTE", "TIMPANI":"VIBE    1",
+      "GUITAR  3":"GUITAR  1", "SPANISHGTR":"GUITAR  1", "LUTE":"HARPSICH 1",
+      "LOG DRUM":"MARIMBA", "PIZZ STGS":"KOTO" };
+    for(const [dead,alive] of Object.entries(SILENT_REMAP))
+      if(reg[dead]&&reg[alive]) reg[dead]={algorithm:reg[alive].algorithm, params:reg[alive].params};
     return reg;
   })();
 
@@ -1508,22 +1521,28 @@
   // (modeld: 3 osc + ladder + filter-env + glide) voice — cutoff/res/env/attack/
   // sustain/drive/oscMix/drift are the analog palette.
   function instrFamily(id){
-    if(/bass/.test(id)) return "bass";
+    // ORDER + WORD-SHAPE MATTER (2026-07-16 sf-dropout fix, gated by
+    // test/font-coverage.test.js): "nylon_STRING_guitar" used to match the
+    // string rule before the pluck rule ever ran — guitars landed on the
+    // slow-attack juno60 pad voice and lead lines all but vanished (Paul's
+    // minimoog bass+guitar dropout). And /bass/ swallowed "bassoon". Pluck
+    // now outranks string, and bass won't eat the reed.
+    if(/guitar|banjo|sitar|harp\b|koto|shamisen|clav|harpsichord/.test(id)) return "pluck";
+    if(/bass(?!oon)/.test(id)) return "bass";
+    if(/organ/.test(id)) return "organ";   // before reed: reed_organ IS an organ (comparator's catch)
     if(/piccolo|flute|recorder|pan_flute|ocarina|whistle/.test(id)) return "flute";
     if(/sax|clarinet|oboe|bassoon|english_horn|harmonica|bagpipe|accordion|bandoneon|reed/.test(id)) return "reed";
     if(/trumpet|trombone|tuba|horn|brass/.test(id)) return "brass";
     if(/violin|viola|cello|contrabass|fiddle|string|pizzicato|bowed_glass/.test(id)) return "string";
     if(/glocken|celesta|music_box|vibraphone|marimba|xylophone|steel_drum|kalimba|tubular/.test(id)) return "mallet";
-    if(/organ/.test(id)) return "organ";
     if(/choir|voice|vox|solo_vox/.test(id)) return "voice";
-    if(/guitar|banjo|sitar|harp|koto|shamisen|clav|harpsichord/.test(id)) return "pluck";
-    if(/piano|rhodes|electric_piano|honky|epiano/.test(id)) return "key";
+    if(/piano|rhodes|electric_piano|honky|epiano|grand/.test(id)) return "key";   // "grand" catches bright_yamaha_grand (was falling to generic lead — the comparator's catch)
     return "lead";
   }
   // MiniMoog voice per family (modeld params). Osc waveform is fixed in modeld.dsp;
   // character comes from cutoff/env/attack/sustain/drive/oscMix/drift + glide.
   const MINIMOOG_FAMILY={
-    bass:  { cutoff:820,  res:0.30, envAmount:1.8, envDecay:0.16, attack:0.004, sustain:0.72, drive:0.32, oscMix:0.68, drift:5,  glide:16, release:0.14 },
+    bass:  { cutoff:820,  res:0.30, envAmount:1.8, envDecay:0.16, attack:0.004, sustain:0.80, drive:0.40, oscMix:0.68, drift:5,  glide:16, release:0.14, levelMul:1.35 },   // 2026-07-16 audit makeup: measured 35% under fluidr3 in the live mix
     flute: { cutoff:2600, res:0.08, envAmount:0.5, envDecay:0.30, attack:0.06,  sustain:0.92, drive:0.10, oscMix:0.15, drift:5,  glide:0,  release:0.22 },
     reed:  { cutoff:1750, res:0.24, envAmount:1.1, envDecay:0.24, attack:0.03,  sustain:0.85, drive:0.22, oscMix:0.42, drift:5,  glide:0,  release:0.20 },
     brass: { cutoff:1450, res:0.20, envAmount:2.6, envDecay:0.26, attack:0.03,  sustain:0.80, drive:0.36, oscMix:0.50, drift:5,  glide:6,  release:0.24 },
@@ -1531,7 +1550,7 @@
     mallet:{ cutoff:3000, res:0.12, envAmount:1.5, envDecay:0.30, attack:0.002, sustain:0.10, drive:0.14, oscMix:0.30, drift:6,  glide:0,  release:0.30 },
     organ: { cutoff:2800, res:0.10, envAmount:0.3, envDecay:0.20, attack:0.01,  sustain:0.95, drive:0.18, oscMix:0.50, drift:5,  glide:0,  release:0.10 },
     voice: { cutoff:1500, res:0.22, envAmount:0.5, envDecay:0.30, attack:0.12,  sustain:0.90, drive:0.12, oscMix:0.35, drift:8,  glide:0,  release:0.30 },
-    pluck: { cutoff:2200, res:0.20, envAmount:2.0, envDecay:0.15, attack:0.003, sustain:0.20, drive:0.20, oscMix:0.40, drift:5,  glide:0,  release:0.18 },
+    pluck: { cutoff:2200, res:0.20, envAmount:2.0, envDecay:0.24, attack:0.003, sustain:0.34, drive:0.30, oscMix:0.40, drift:5,  glide:0,  release:0.22, levelMul:2.6 },   // 2026-07-16 sf-dropout fix: the .15s-decay-to-.2 plink measured rms .004 as a LEAD (5x under fluidr3, heard as "the guitar dropped out") — still plucky, but it speaks
     key:   { cutoff:2000, res:0.14, envAmount:1.2, envDecay:0.42, attack:0.004, sustain:0.42, drive:0.15, oscMix:0.45, drift:5,  glide:0,  release:0.28 },
     lead:  { cutoff:2000, res:0.25, envAmount:1.5, envDecay:0.22, attack:0.01,  sustain:0.85, drive:0.25, oscMix:0.50, drift:6,  glide:8,  release:0.20 },
   };
@@ -1545,10 +1564,17 @@
     // the MONO modeld (Paul: hovering voices didn't work on minimoog). Attacky/mono
     // families (lead/brass/reed/flute/pluck/mallet/key/bass) keep the mono Moog.
     if(role==="pad" || fam==="voice" || fam==="string" || fam==="organ"){
-      const attack = fam==="voice"?0.55 : fam==="string"?0.35 : fam==="organ"?0.01 : 0.5;
+      // ROLE-AWARE ATTACK (2026-07-16 sf-dropout fix): the pad's slow swell
+      // (.35-.55s) on a MELODY role playing short notes meant the note ended
+      // before the envelope opened — the live audit measured the lead at rms
+      // .004 vs .02-.03 on the other fonts (heard as "the guitar dropped
+      // out"). A melody/solo on the poly juno keeps the hovering TIMBRE but
+      // speaks immediately; pads keep the swell.
+      const padAtk = fam==="voice"?0.55 : fam==="string"?0.35 : fam==="organ"?0.01 : 0.5;
+      const attack = role==="pad" ? padAtk : Math.min(padAtk, fam==="organ"?0.01:0.06);
       return { voice:"juno60", params:{ cutoff:{voice:1500,string:1650,organ:2600}[fam]||1500,
         res:0.16, envAmount:1.0, keytrack:0.3, attack, decay:1.3, sustain:0.85,
-        release: fam==="organ"?0.14:1.6, chorus:1.4 } };
+        release: fam==="organ"?0.14 : (role==="pad"?1.6:0.5), chorus:1.4 } };
     }
     return { voice:"modeld", params: MINIMOOG_FAMILY[fam] };
   }
@@ -9099,7 +9125,7 @@
     return state;
   }
 
-  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, SOURCE_POOLS, expandPools, GENRE_CLIPS, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), FORM_ENTRY, PERC_STYLES, PERC_STYLE_GENRES, PERC_ELEMENTS, resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly, deriveMind, registerFont, setFont, activeFont, fontList };
+  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, SOURCE_POOLS, expandPools, GENRE_CLIPS, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), FORM_ENTRY, PERC_STYLES, PERC_STYLE_GENRES, PERC_ELEMENTS, resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly, deriveMind, registerFont, setFont, activeFont, fontList, instrFamily };
   if(isNode) module.exports=api; else root.GenreKernel=api;
 
   // ---------- CLI ----------

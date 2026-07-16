@@ -1439,7 +1439,14 @@
     if (spec.synth) {
       const v = (role === "pad" && spec.padSynth) ? { voice: spec.padSynth, params: spec.padParams, dx7: spec.padDx7 }
                                                   : { voice: spec.synth, params: spec.params, dx7: spec.dx7 };
-      return { ...m, ...v.params, model: v.voice, sampler: null, dx7: v.voice === "dx7" ? v.dx7 : null };
+      // levelMul (2026-07-16 sf-dropout fix): a per-family MAKEUP GAIN that
+      // multiplies the genre's own level instead of replacing it — the modeld
+      // pluck lead measured 4-5x under the sampled equivalent in the live mix
+      // (heard as "the guitar dropped out" on sf=minimoog). Genre balance is
+      // preserved; only the synth voice's loudness deficit is compensated.
+      const out = { ...m, ...v.params, model: v.voice, sampler: null, dx7: v.voice === "dx7" ? v.dx7 : null };
+      if (v.params && v.params.levelMul) { out.level = (m.level != null ? m.level : 0.5) * v.params.levelMul; delete out.levelMul; }
+      return out;
     }
     return { ...m, model: "sampler", sampler: spec, dx7: null };
   }
@@ -1739,7 +1746,12 @@
       // playing the sample at chipmunk/rumble rate. The window is >= 18 st
       // wide, so the folds never fight. Fixed-rate sampled drums never come
       // here (their branch is in the drums loop below).
-      let noteHz = clamp(cpspch(p.pch), 20, u.freqMax || 4000);
+      // (2026-07-16 sf-dropout fix: this used to HARD-CLAMP to freqMax — every
+      // note above the module's compiled range played AT the ceiling, e.g. any
+      // lead note over MIDI ~83 hit the dx7's 1000Hz cap in a register where
+      // the patch's operator scaling is ~zero: Paul's "present-but-silent"
+      // bars. The octave FOLD below replaces the clamp.)
+      let noteHz = clamp(cpspch(p.pch), 20, 1e9);
       // INSTRUMENT-REGISTER LAW (D.1): fold the note into the instrument's MUSICAL
       // range first (a flute out of its top drops an octave, staying in key), THEN
       // the sampler's technical zone fold runs as the safety net. Keyed by the GM
@@ -1752,6 +1764,18 @@
       if (u.sampler && u.sampler.stretchMaxHz) {
         while (noteHz > u.sampler.stretchMaxHz && noteHz > 40) noteHz /= 2;
         while (noteHz < u.sampler.stretchMinHz && noteHz < 8000) noteHz *= 2;
+      }
+      // SYNTH REGISTER FOLD (2026-07-16 sf-dropout fix): freqMax finally gets
+      // its consumer. The dx7.lib freq slider is COMPILED [50,1000]Hz — a note
+      // above it runs the FM operators off their tables and flushes to zero
+      // (Paul's sf=dx7 lead: chords voicing above MIDI ~83 measured
+      // present-but-silent in the live audit while lower bars sounded).
+      // Octave-fold into the unit's declared range — the drop a real player
+      // makes — instead of feeding the module a pitch it cannot say.
+      if (u.freqMax) {
+        while (noteHz > u.freqMax && noteHz > 40) noteHz /= 2;
+        const fmin = u.freqMin != null ? u.freqMin : (u.dx7 ? 52 : 0);
+        while (fmin && noteHz < fmin && noteHz < 8000) noteHz *= 2;
       }
       const sets = { freq: noteHz };
       if (!u.dx7) sets.gain = clamp(p.amp * u.gmul, 0, 2);
