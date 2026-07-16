@@ -17,7 +17,7 @@
 // inert stubs in access.html so the imports don't throw.
 import { S, K, V, set } from "./state.js";
 import { POS, KEYS, PROG_MODE, BARS_PER_SEG } from "./world.js";
-import { loopDuration, MIN_DURATION, MAX_DURATION } from "./share.js";
+import { loopDuration, baseDuration, durMult, fmtDuration, fmtMult, MULT_MIN, MULT_MAX } from "./share.js";
 import { retargetWeights, rescore } from "./targeting.js";
 import { goLive, stopLive, faustHandle, setVapor } from "./live.js";
 
@@ -85,7 +85,7 @@ function boot(){
   }
   // seed + pace defaults reflected into the controls
   $("seedInp").value = S.seed;
-  $("paceRange").value = paceToSlider(loopDuration());
+  $("paceRange").value = paceToSlider(durMult());
   syncPaceOut();
   // vapor (live-only master EQ) reflected from persisted state
   if($("vaporRange")){ $("vaporRange").value = Math.round((S.vapor||0)*100); syncVaporOut(); }
@@ -233,17 +233,19 @@ function announceNow(){
 }
 
 // ---------- duration slider: log scale 8 min .. 24 h (loop travel time) ----------
-// (Was "pace" = bars per leg; now the same control dials the whole loop's DURATION,
-// matching the main panel. The HTML id/label stay "pace" for markup stability.)
-function fmtDur(s){ s=Math.round(s); if(s<3600) return Math.round(s/60)+" minutes";
-  const h=s/3600; return (h<10?(Math.round(h*10)/10):Math.round(h))+" hours"; }
-function paceToSlider(d){ return Math.round(100*Math.log(Math.max(MIN_DURATION,Math.min(MAX_DURATION,d))/MIN_DURATION)/Math.log(MAX_DURATION/MIN_DURATION)); }
-function sliderToPace(v){ return Math.round(MIN_DURATION*Math.pow(MAX_DURATION/MIN_DURATION, v/100)); }
+// (Was "pace" = bars per leg, then absolute duration; now the SPEED MULTIPLE,
+// matching the main panel — ×0.01 (100× faster) … ×1,000,000 (a million times
+// longer) on a log scale over the path's own distance-derived default time.
+// The HTML id/label stay "pace" for markup stability.)
+const MULT_DECADES=Math.log10(MULT_MAX/MULT_MIN);   // 8
+function paceToSlider(m){ return Math.round(100*Math.log10(Math.max(MULT_MIN,Math.min(MULT_MAX,m))/MULT_MIN)/MULT_DECADES); }
+function sliderToPace(v){ const raw=MULT_MIN*Math.pow(10,MULT_DECADES*v/100); return Math.abs(raw-1)<0.15?1:raw; }   // coarser ×1 detent: this slider is 0..100
 function syncPaceOut(){
-  const d=sliderToPace(+$("paceRange").value);
-  set({duration:d});
-  $("paceOut").textContent = fmtDur(d);
-  $("paceRange").setAttribute("aria-valuetext", fmtDur(d));
+  const m=sliderToPace(+$("paceRange").value);
+  set({durMult:m});
+  $("paceOut").textContent = fmtMult(m)+" · "+fmtDuration(loopDuration());
+  $("paceRange").setAttribute("aria-valuetext",
+    fmtMult(m)+" speed — this loop about "+fmtDuration(loopDuration())+"; its own time at times one is "+fmtDuration(baseDuration()));
 }
 
 // ---------- vapor: the live-only "mall haze" master EQ (parity with the map) --

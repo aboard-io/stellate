@@ -17,21 +17,20 @@ const exportAudioSmart = (fmt) => (S.waypoints.length >= 2 ? exportLoopAudio(fmt
 // Paul 2026-07-13: show ONLY the MIDI download for now — hide wav/mp3/video.
 // Flip to true to bring the audio + video render downloads back.
 const SHOW_AV_DOWNLOADS = false;
-import { copyShareUrl, loopBars, loopDuration, MIN_DURATION, MAX_DURATION } from "./share.js";
+import { copyShareUrl, loopBars, loopDuration, baseDuration, durMult, fmtDuration, fmtMult, MULT_MIN, MULT_MAX } from "./share.js";
 
 // ---------- Preact panel ----------
-// DURATION SLIDER (Paul): the loop's TRAVEL TIME, dialed directly as a time from 8 min to
-// 24 h on a LOG scale (default 30 min), left = shortest, right = longest. The slider is a
-// 0..1000 integer; duration = MIN·(MAX/MIN)^(v/1000). This replaces the old bars-per-leg
-// "pace" — the number you set is now simply how long the whole path takes.
-const DUR_STEPS = 1000;
-const durToSlider = d => Math.round(DUR_STEPS * Math.log(Math.max(MIN_DURATION, Math.min(MAX_DURATION, d)) / MIN_DURATION) / Math.log(MAX_DURATION / MIN_DURATION));
-const sliderToDur = v => Math.round(MIN_DURATION * Math.pow(MAX_DURATION / MIN_DURATION, Math.max(0, Math.min(DUR_STEPS, +v || 0)) / DUR_STEPS));
-const fmtDuration = s => {
-  s = Math.round(s);
-  if (s < 3600) return Math.round(s / 60) + " min";
-  const h = s / 3600;
-  return (h < 10 ? (Math.round(h * 10) / 10) : Math.round(h)) + " hr";
+// SPEED SLIDER (Paul 2026-07-16): a LOG MULTIPLE of the path's own distance-
+// derived default duration — ×0.01 (100× faster, left) … ×1,000,000 (a million
+// times longer, right), ×1 at the marked center. The slider is a 0..1000
+// integer over the 8 decades; the ×1 detent sits at v=250. The base time is
+// measured off the path (share.js baseDuration) and shown in the readout +
+// the node-drag tooltip; playback = the default rate adjusted by the multiple.
+const DUR_STEPS = 1000, MULT_DECADES = Math.log10(MULT_MAX / MULT_MIN);   // 8
+const multToSlider = m => Math.round(DUR_STEPS * Math.log10(Math.max(MULT_MIN, Math.min(MULT_MAX, m)) / MULT_MIN) / MULT_DECADES);
+const sliderToMult = v => {
+  const raw = MULT_MIN * Math.pow(10, MULT_DECADES * Math.max(0, Math.min(DUR_STEPS, +v || 0)) / DUR_STEPS);
+  return Math.abs(raw - 1) < 0.06 ? 1 : raw;   // soft ×1 detent at center
 };
 // ±BPM DELTA (Paul: "an overall delta, so that I can subtract or add 64 BPM to
 // whatever is currently playing"). The slider shifts playing+target NOW, and
@@ -78,10 +77,10 @@ function Panel(){
         <button class="mini" title="random seed" onclick=${()=>{set({seed:Math.floor(Math.random()*99999)});}}>🎲</button>
         <button class="mini" title="copy a link to THIS mix — seed, path and measure ride the URL"
           onclick=${copyShareUrl}>↗ share</button></div>
-      <div class="row"><label title="how long the whole loop takes to travel — dial the time directly (8 min … 24 h)">duration</label>
-        <input type="range" min="0" max="1000" step="1" value=${durToSlider(loopDuration())}
-          onInput=${e=>set({duration:sliderToDur(+e.target.value)})} />
-        <output>${fmtDuration(loopDuration())}</output></div>
+      <div class="row"><label title=${"faster ⇠ ×1 ⇢ slower — a log multiple of the path's own time (this path ≈ "+fmtDuration(baseDuration())+" at ×1); ×0.01 = 100× faster, ×1,000,000 = the Longplayer end"}>speed</label>
+        <input type="range" min="0" max="1000" step="1" value=${multToSlider(durMult())}
+          onInput=${e=>set({durMult:sliderToMult(+e.target.value)})} />
+        <output>${fmtMult(durMult())} · ${fmtDuration(loopDuration())}</output></div>
       <div class="row"><label>±bpm</label>
         <input type="range" min="-64" max="64" step="1" value=${dl}
           onInput=${e=>setBpmDelta(e.target.value)} />

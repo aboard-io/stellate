@@ -19,7 +19,7 @@ const _soundfont=(()=>{ try{ return new URLSearchParams(location.search).get("sf
 // ---------- store ----------
 export const S={ cursor:{x:MAP_CENTER.x,y:MAP_CENTER.y}, waypoints:[], travel:{seg:0,t:0}, weights:[],
   target:null, playing:null, queue:[], holdUntil:{}, barCount:0, barInfo:null, live:false, masterVol:_masterVol, vapor:_vapor, soundfont:_soundfont,
-  seed:Math.floor(Math.random()*99999)+1, modeLock:"auto", pace:BARS_PER_SEG, duration:1800, more:false, load:1, eco:0, scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
+  seed:Math.floor(Math.random()*99999)+1, modeLock:"auto", pace:BARS_PER_SEG, durMult:1, more:false, load:1, eco:0, scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
   pool:"", beatLine:"▶ press LIVE",
   // THE THREE VIEWS (Paul 2026-07-10): star map / video / viz are exclusive
   // 100% views. vizView=true shows the full-screen viz (map + video off);

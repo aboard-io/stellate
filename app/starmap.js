@@ -5,7 +5,26 @@
 import { S, set, K, subs } from "./state.js";
 import { POS, WORLD_W, WORLD_H, MAP_CENTER, WORLD_MARGIN, recomputeWorld } from "./world.js";
 import { retarget } from "./targeting.js";
-import { urlTick, legMetrics, paceSpeed } from "./share.js";   // scrubbing the playhead: rewrite the bookmark's measure using the SAME constant-pace distance math as travelForBar/goLive
+import { urlTick, legMetrics, paceSpeed, baseDuration, durMult, loopDuration, fmtDuration, fmtMult } from "./share.js";   // scrubbing the playhead: rewrite the bookmark's measure using the SAME constant-pace distance math as travelForBar/goLive; the dur* family feeds the node-drag duration tooltip
+
+// ---------- node-drag DURATION TOOLTIP (Paul 2026-07-16: "put that duration up
+// as a tooltip when people move nodes") ----------
+// While a waypoint is dragged, a small floating readout follows the pointer with
+// the loop's distance-derived time at ×1 (share.js baseDuration — live, since
+// the drag is changing the perimeter under it), plus the dialed multiple's
+// effective time when the speed slider is off ×1. Created lazily, hidden on
+// pointer release; pure DOM, never touches the SVG hot path.
+let durTipEl=null;
+function durTipShow(e){
+  if(!durTipEl){ durTipEl=document.createElement("div"); durTipEl.id="durTip"; document.body.appendChild(durTipEl); }
+  const m=durMult();
+  durTipEl.textContent = "loop ≈ "+fmtDuration(baseDuration())
+    + (Math.abs(m-1)>1e-9 ? "  ·  "+fmtMult(m)+" → "+fmtDuration(loopDuration()) : "");
+  durTipEl.style.left=(e.clientX+16)+"px";
+  durTipEl.style.top=(e.clientY-14)+"px";
+  durTipEl.style.display="block";
+}
+function durTipHide(){ if(durTipEl) durTipEl.style.display="none"; }
 
 // ---------- map (imperative SVG: 60Hz drags stay cheap) ----------
 const svg=document.getElementById("map"), NS="http://www.w3.org/2000/svg";
@@ -399,7 +418,7 @@ svg.addEventListener("pointermove",e=>{
       ZOOM.ox=panStart.ox0+dx; ZOOM.oy=panStart.oy0+dy; clampZoom(); set({}); }
     return;
   }
-  if(gestureMode==="wp"){ markItx(); const pt=toXY(e); S.waypoints[dragWpI]=pt; set({}); }
+  if(gestureMode==="wp"){ markItx(); const pt=toXY(e); S.waypoints[dragWpI]=pt; set({}); durTipShow(e); }
   else if(gestureMode==="travel"){ e.preventDefault(); markItx(); dragPlayhead(e); }
   else if(gestureMode==="drag"){ e.preventDefault(); markItx(); retarget(toXY(e)); }
 });
@@ -412,7 +431,7 @@ const endPtr=e=>{ ptrs.delete(e.pointerId); if(ptrs.size<2) pinch=null;
   // PLAYHEAD SCRUB release: SNAP the audio to where you dropped it (Paul: "move it
   // and that's where things play"), so it doesn't slow-glide back toward the old spot.
   else if(gestureMode==="travel" && S.live) retarget({x:S.cursor.x,y:S.cursor.y}, true);
-  gestureMode="none"; dragWpI=-1; document.body.classList.remove("dragging"); };
+  gestureMode="none"; dragWpI=-1; document.body.classList.remove("dragging"); durTipHide(); };
 addEventListener("pointerup",endPtr);
 addEventListener("pointercancel",endPtr);
 svg.addEventListener("wheel",e=>{

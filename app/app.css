@@ -307,3 +307,10 @@
    coming up); cleared by applyBg the moment the layer is genuinely enabled. */
 .chip.spin{animation:chipspin 1s linear infinite}
 @keyframes chipspin{to{transform:rotate(360deg)}}
+
+/* node-drag duration tooltip (starmap durTipShow — the path's own time at x1
+   plus the dialed multiple's effective time; follows the pointer, no events) */
+#durTip{position:fixed;z-index:60;display:none;pointer-events:none;white-space:nowrap;
+  font:15px VT323,monospace;color:var(--mint);background:rgba(12,10,26,.92);
+  border:1px solid var(--line);border-radius:9px;padding:.28rem .55rem;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}

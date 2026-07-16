@@ -40,12 +40,44 @@ export function legMetrics(){
 // slower). NOMINAL_SPB is a reference seconds-per-bar (~120 bpm × an 8-beat bar); the real
 // wall-clock scales with the song's actual tempo, so the dialed time is approximate by design.
 export const NOMINAL_SPB = 4;          // reference seconds per bar for the duration→speed map
-export const MIN_DURATION = 480;       // 8 minutes  (slider left)
-export const MAX_DURATION = 86400;     // 24 hours   (slider right)
-export const DEFAULT_DURATION = 1800;  // 30 minutes (default)
-export function loopDuration(){
-  const d = +S.duration > 0 ? +S.duration : DEFAULT_DURATION;
-  return Math.max(MIN_DURATION, Math.min(MAX_DURATION, d));
+export const MIN_DURATION = 480;       // (legacy-URL conversion only)
+export const MAX_DURATION = 86400;     // (legacy-URL conversion only)
+export const DEFAULT_DURATION = 1800;  // 30 minutes — the ×1 reference (see BASE_SPW)
+// ── DISTANCE-DERIVED DURATION × A LOG MULTIPLE (Paul 2026-07-16: "change the
+// duration slider to a logarithmic duration multiple, faster to slower, 100×
+// speed to a million times longer; measure the full distance as nodes are
+// added and come up with a reasonable default; play at the default rate
+// adjusted by the multiple"). The path's own length now sets the BASE time —
+// BASE_SPW seconds per world-unit, tuned so the seeded default triangle
+// (~1500 wu perimeter) plays its historical ~30 minutes at ×1 — and the dial
+// is a pure MULTIPLE of that: ×0.01 (100× faster) … ×1,000,000 (the
+// Longplayer end). Bigger paths simply take proportionally longer at ×1.
+export const BASE_SPW = DEFAULT_DURATION / 1500;   // 1.2 s per world-unit at ×1
+export const MULT_MIN = 0.01, MULT_MAX = 1e6;
+export function durMult(){
+  const m = +S.durMult > 0 ? +S.durMult : 1;
+  return Math.max(MULT_MIN, Math.min(MULT_MAX, m));
+}
+// the "reasonable default" — what the loop takes at ×1, measured off the path
+export function baseDuration(){
+  const { perim } = legMetrics();
+  return perim > 1e-6 ? Math.max(30, perim * BASE_SPW) : DEFAULT_DURATION;
+}
+export function loopDuration(){ return Math.max(10, baseDuration() * durMult()); }
+// one duration formatter for the panel + the node-drag tooltip (seconds → the
+// natural unit; the ×1e6 end reads in years, so the ladder goes all the way)
+export function fmtDuration(s){
+  s = Math.max(0, +s || 0);
+  if (s < 90) return Math.round(s) + " s";
+  if (s < 5400) return Math.round(s / 60) + " min";
+  if (s < 172800) { const h = s / 3600; return (h < 10 ? Math.round(h * 10) / 10 : Math.round(h)) + " hr"; }
+  if (s < 63072000) { const d = s / 86400; return (d < 10 ? Math.round(d * 10) / 10 : Math.round(d)) + " days"; }
+  const y = s / 31536000; return (y < 10 ? Math.round(y * 10) / 10 : Math.round(y)) + " years";
+}
+export function fmtMult(m){
+  if (m >= 0.95 && m < 1.05) return "×1";
+  if (m >= 1) return "×" + (m >= 100 ? Math.round(m).toLocaleString("en-US") : (Math.round(m * 10) / 10));
+  return "×" + (Math.round(m * 1000) / 1000);
 }
 // world-units the traveler advances per bar. Derived from the target loop DURATION + the
 // path perimeter, so the whole loop takes ~loopDuration() seconds. No path yet -> a benign
@@ -79,7 +111,7 @@ export function buildShareUrl(){
   q.set("seed", String(S.seed));
   if(S.waypoints.length>=2)
     q.set("path", S.waypoints.map(w=>Math.round(w.x)+"."+Math.round(w.y)).join(","));
-  if(loopDuration()!==DEFAULT_DURATION) q.set("dur", String(Math.round(loopDuration())));   // loop duration (s) rides the URL
+  if(Math.abs(durMult()-1)>1e-9) q.set("xdur", String(durMult()));   // the duration MULTIPLE rides the URL (×1 omitted)
   if(S.modeLock!=="auto") q.set("mode", S.modeLock);
   if(S.soundfont && S.soundfont!=="fluidr3") q.set("sf", S.soundfont);   // the chosen soundfont rides the URL (Paul)
   const m=S.live&&S.barInfo?(S.barInfo.serial+1):((S.startBar||0)+1);   // 1-based measure; idle = the resume point
@@ -100,17 +132,21 @@ export function applyUrlState(){
       .filter(w=>isFinite(w.x)&&isFinite(w.y));
     if(wps.length>=2){ S.waypoints=wps; restored=true; }
   }
-  // DURATION (loop time). New links carry `dur` (seconds). LEGACY links carry `pace`
-  // (bars/leg) — convert it to the equivalent duration so old bookmarks play at the SAME
-  // speed: old speed = PACE_REF/pace, old loop = perim/oldSpeed bars ≈ that × NOMINAL_SPB s.
-  // (Done AFTER waypoints so the perimeter is known.)
-  if(q.get("dur")){ const d=parseInt(q.get("dur"),10);
-    if(d>=1) S.duration=Math.max(MIN_DURATION, Math.min(MAX_DURATION, d)); }
+  // DURATION. New links carry `xdur` (the multiple). LEGACY links carried `dur`
+  // (absolute seconds) or `pace` (bars/leg) — both convert to the multiple that
+  // plays THIS path at the same speed the old link meant. (Done AFTER waypoints
+  // so baseDuration()'s perimeter is known.)
+  if(q.get("xdur")){ const m=parseFloat(q.get("xdur"));
+    if(m>0) S.durMult=Math.max(MULT_MIN, Math.min(MULT_MAX, m)); }
+  else if(q.get("dur")){ const d=parseInt(q.get("dur"),10);
+    if(d>=1){ const legacy=Math.max(MIN_DURATION, Math.min(MAX_DURATION, d));
+      S.durMult=Math.max(MULT_MIN, Math.min(MULT_MAX, legacy/baseDuration())); } }
   else if(q.get("pace")){ const p=parseInt(q.get("pace"),10);
     if(p>=8&&p<=4096){ const { perim }=legMetrics();
-      S.duration = perim>1e-6
+      const legacy = perim>1e-6
         ? Math.max(MIN_DURATION, Math.min(MAX_DURATION, perim*p/PACE_REF*NOMINAL_SPB))
-        : DEFAULT_DURATION; } }
+        : DEFAULT_DURATION;
+      S.durMult=Math.max(MULT_MIN, Math.min(MULT_MAX, legacy/baseDuration())); } }
   const m=parseInt(q.get("m"),10);
   if(m>0){
     S.startBar=m-1;                                  // engine walk serial (0-based)
