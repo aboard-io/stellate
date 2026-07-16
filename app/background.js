@@ -185,8 +185,20 @@ function applyBg(){
 }
 // FLIP the background side: video <-> demo (fresh cart each demo turn), announce it.
 function bgFlip(){
-  if(bgMode!==1) return;
+  if(bgMode!==1&&bgMode!==2) return;
   bgAlt.beats=0; bgAlt.lastFlip=Date.now();
+  // STAR-CRUISE owns its sky: carts are PLANET-KEYED there (starcruise
+  // ensureSurface picks per dominant genre) — the alternator stands down so it
+  // never fights the planet's own cart.
+  if(window.__STARCRUISE&&window.__STARCRUISE.isRunning&&window.__STARCRUISE.isRunning()) return;
+  // MODE 2 (demos-only) had NO rotator at all — the same cart ran forever (the
+  // 2026-07-16 sticking bug, same class as the cruise's). It cycles now, on the
+  // same musical clock / backstop as mode 1's demo side.
+  if(bgMode===2){
+    if(window.DemoLayer&&DemoLayer.next) DemoLayer.next();
+    set({status:"background → fresh demo: "+(window.DemoLayer&&DemoLayer.currentName?DemoLayer.currentName():"microw8")});
+    return;
+  }
   if(bgCanMix){
     // MIXED (desktop): both layers stay up, so there is no side to flip — instead
     // roll the demoscene to a FRESH cart each cycle so the superimposed demo keeps
@@ -205,7 +217,7 @@ function bgFlip(){
 // MUSICAL driver: flip every BG_ALT_BEATS beats (8 measures) while LIVE — called
 // from onBar at the bar's PLAYBACK instant, so the cut is beat-aligned.
 export function bgBarTick(info){
-  if(bgMode!==1||!S.live) return;
+  if((bgMode!==1&&bgMode!==2)||!S.live) return;
   bgAlt.lastBar=Date.now();   // the musical clock is flowing — backstop stands down
   bgAlt.beats+=(info&&info.cbeats)||8;
   if(bgAlt.beats>=BG_ALT_BEATS) bgFlip();
@@ -216,7 +228,7 @@ export function bgBarTick(info){
 // slow tempos: 8 measures at 80bpm is 24s, and the 16s backstop cut mid-bar).
 let bgAltTimer=0;
 function bgAltClock(){
-  if(bgMode!==1) return;
+  if(bgMode!==1&&bgMode!==2) return;
   if(S.live && (Date.now()-bgAlt.lastBar)<8000) return;   // live + bars flowing: the beat owns the cut
   if((Date.now()-bgAlt.lastFlip)>=BG_ALT_MS) bgFlip();
 }
@@ -224,7 +236,7 @@ function bgAltClock(){
 // no-change), so re-imposing bgWant every second means even a rogue direct
 // setEnabled call from outside the program (console, stray future code) can
 // stack the layers for at most ~1s before the XOR law is restored.
-function startBgAltClock(){ if(!bgAltTimer) bgAltTimer=setInterval(()=>{ if(bgMode===1) bgAltClock(); applyBg(); },1000); }
+function startBgAltClock(){ if(!bgAltTimer) bgAltTimer=setInterval(()=>{ if(bgMode===1||bgMode===2) bgAltClock(); applyBg(); },1000); }   // mode 2 rotates too (the 2026-07-16 sticking fix)
 window.__BGALT={ state:()=>({mode:bgMode,side:bgAlt.side,beats:bgAlt.beats,mix:bgCanMix}), tick:bgBarTick, flip:bgFlip };   // headless gate hook
 // the view cycle sets the background MODE directly (0 = no video, 1 = the
 // footage+demos alternation program). Mode 2 (demoscene-only) left the chip

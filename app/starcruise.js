@@ -533,6 +533,21 @@ function ensureSurface(genreOrWeights, dominant, seed) {
   if (dominant && dominant === curSpawnDom && band.length) return;   // already up for this planet
   spawnFor(genreOrWeights, seed);
   curSpawnDom = dominant || null;
+  // SKY CART IS PLANET-KEYED (Paul 2026-07-16: "the wasm background is sticking
+  // — the same, not shifting on the planets"): the cruise forces the demo layer
+  // up via bgWant() but the background alternator only rotates carts in bgMode
+  // 1, so the same cart wrapped every planet forever. Each dominant genre now
+  // OWNS a cart, picked deterministically (FNV-1a of the name) at the
+  // once-per-planet surface build — travel shifts the atmosphere, revisits
+  // look like themselves. Guarded: a missing demo layer never hurts the land.
+  try {
+    const D = window.DemoLayer;
+    if (D && D.setCart && D.carts) {
+      let h = 2166136261 >>> 0; const s = String(dominant || "space");
+      for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+      D.setCart((h >>> 0) % Math.max(1, D.carts().length));
+    }
+  } catch (e) {}
 }
 
 // build the band + backdrop + ship for a genre (called on land / dominant change).
