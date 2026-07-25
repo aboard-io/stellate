@@ -79,7 +79,7 @@
 //     the live engine voices it (buffers decoded, worklets alive, RMS real) is
 //     tier 2's job (transit-arrival-run.js / explorer-ui-test's ride);
 //   - no barInfo: the engine's section walk / serials never happen, so
-//     anything keyed to onBar's info (scheduleBarNotes, video pulses) is
+//     anything keyed to onBar's info (scheduleBarNotes, demo pulses) is
 //     inert; the musicality audit reads buildEvents(state) — the score, not
 //     the live section pointer;
 //   - genreMeta.genres attribution: glide flips never rewrite playing's

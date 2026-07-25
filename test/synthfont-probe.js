@@ -29,9 +29,8 @@ async function main() {
   }, FONT);
   ok(hasOption, "B1: no 'minimoog' option in the soundfont switcher");
 
-  // start playback (so __EXPORT.exportAudio can capture the current song via the
-  // deterministic PRESS path — the reliable audio check, as explorer-ui-test uses;
-  // live rms() reads 0 headless because there's no real output device).
+  // start playback so the font switch exercises the LIVE engine (stop + retarget
+  // + restart on the new font).
   await page.evaluate(() => __X.goLive());
   await page.waitForFunction(() => window.__S.playing, { timeout: 25000 }).catch(() => {});
   await page.waitForTimeout(2500);
@@ -53,18 +52,10 @@ async function main() {
   const noSampler = ["melody", "bass", "pad"].every(r => !st[r] || !st[r].sampler);
   ok(noSampler, `B3: a voice is still a sampler under the synth font: ${JSON.stringify(st)}`);
 
-  // AUDIO: render the current song under the synth font via the press path.
-  const wav = await page.evaluate(async () => {
-    try {
-      const buf = await window.__EXPORT.exportAudio("wav", { durSec: 8, noDownload: true });
-      if (!buf) return { ok: false, status: window.__S.status };
-      const dv = new DataView(buf); let sq = 0, n = 0;
-      for (let o = 44; o + 1 < buf.byteLength; o += 2) { const s = dv.getInt16(o, true) / 32768; sq += s * s; n++; }
-      return { ok: true, rms: Math.sqrt(sq / Math.max(1, n)), bytes: buf.byteLength };
-    } catch (e) { return { ok: false, err: String(e) }; }
-  });
-  ok(wav.ok && wav.rms > 1e-4, `B4: synth font rendered silence (${wav.ok ? "rms " + wav.rms.toExponential(2) : "err " + (wav.err || wav.status)})`);
-  const maxRms = wav.rms || 0;
+  // (B4 — the pressed-WAV audio capture — went with the in-browser ⤓ export
+  // path, removed 2026-07-25; playback survival is asserted below instead.)
+  const playAlive = await page.evaluate(() => !!window.__S.playing && !!window.__S.live);
+  ok(playAlive, "B4: playback died after the font switch");
 
   const otherErrs = errs.filter(e => !/AudioContext|autoplay|user gesture/i.test(e));
   ok(otherErrs.length === 0, `page errors: ${otherErrs.join(" | ")}`);
@@ -72,7 +63,7 @@ async function main() {
   console.log(`\n=== SYNTH-FONT PROBE (${FONT}) ===`);
   console.log(`  option=${hasOption} font=${st.font}`);
   console.log(`  voices: melody=${JSON.stringify(st.melody)} bass=${JSON.stringify(st.bass)} pad=${JSON.stringify(st.pad)}`);
-  console.log(`  peak rms=${maxRms.toFixed(4)}`);
+  console.log(`  playbackAlive=${playAlive}`);
 
   await browser.close(); srv.close();
   if (fails.length) { console.log(`\nFAIL:\n  ${fails.join("\n  ")}`); process.exit(1); }

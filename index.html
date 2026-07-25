@@ -31,8 +31,8 @@
   walks the path, morphing the music through every genre it crosses — the path <em>is</em> the mix.
   Drag the <b>pink playhead</b> to scrub; drag waypoints to reshape; right-click erases.
   <b>Pinch</b> (or ctrl+scroll) zooms the chart. <b>Stop twice</b> rewinds to the top.
-  ▶ plays · ✦ cycles the four views (star map, inside-the-sound, video, aliens) · ⚙ seed, duration, ±bpm
-  and in-browser downloads. The address bar carries your seed, path and measure —
+  ▶ plays · ✦ cycles the three views (star map, inside-the-sound, aliens) · ▦ toggles the
+  demoscene backdrop · ⚙ seed, duration and ±bpm. The address bar carries your seed, path and measure —
   a bookmark or a shared link reopens exactly this music, right here.</p>
   <!-- a real button-sized target (the bare inline link was unreliable to tap on
        iOS — Paul 2026-07-10: "tapping accessible text version goes nowhere");
@@ -51,9 +51,11 @@
 <div id="chips">
   <button class="chip" id="playChip" title="LIVE / STOP">▶</button>
   <!-- ONE view button (Paul 2026-07-10): cycles the three 100% views —
-       starmap ✦ → infoviz ⓘ → video ▣ — icon shows the CURRENT view;
+       starmap ✦ → infoviz ⓘ → aliens 👾 — icon shows the CURRENT view;
        a spinner rides it while the next view warms. -->
-  <button class="chip" id="viewChip" title="view: star map → info → video (tap to cycle)">✦</button>
+  <button class="chip" id="viewChip" title="view: star map → info → aliens (tap to cycle)">✦</button>
+  <!-- the background chip: ▢ off ↔ ▦ MicroW8 demoscene backdrop (app/background.js) -->
+  <button class="chip" id="bgChip" title="background: demoscene on/off">▢</button>
   <button class="chip" id="cfgChip" title="controls">⚙</button>
 </div>
 <!-- ENGINE: classic global scripts (window.CsdEngine / GenreKernel / … / FaustLive).
@@ -66,10 +68,8 @@
 <script src="engine/genre-kernel.js"></script>
 <script src="engine/genre-verifier.js"></script>
 <script src="engine/namebank.js"></script>
-<script src="engine/midi-export.js"></script><!-- SMF builder for the ⚙ panel's ⤓ midi download (app/export.js) -->
 <script src="engine/speech.js"></script><!-- SPEECH organ (lazy: the espeak wasm loads only when a synthText source arms) -->
 
-<script src="engine/video-layer.js"></script>
 <script src="engine/demo-layer.js"></script>
 <script src="engine/faust/state-engine.js"></script>
 <script src="engine/faust/found-player.js"></script>

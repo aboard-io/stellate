@@ -72,10 +72,8 @@ genre, its drums are playing within 3 bars and its kit/lead identity within 7
 (a committed gate, `test/blend-arrival-run.js`). Chips: ▶ live, ⓘ **inside the
 sound** (a live per-voice timeline — always 8 cells, folded for long bars —
 with plain-language character descriptions, sustained bed ribbons, and the
-MUSIC-MIND meters), a background toggle (off → laserdisc video → MicroW8
-demoscene, which strictly alternate every eight bars, cutting on the beat),
-and ⚙ controls. The ⚙ panel also **downloads the current song** — ⤓ midi /
-⤓ wav / ⤓ mp3, a true offline press run in your browser (`docs/EXPORT.md`).
+MUSIC-MIND meters), a background toggle (off → MicroW8 demoscene, the cart
+rotating every eight bars, cutting on the beat), and ⚙ controls.
 
 ## The genesis parable (why the source is the artifact)
 
@@ -112,8 +110,8 @@ The tree is organized `app/` · `engine/` (core + `engine/faust/` WASM engine) �
 ```bash
 (cd engine/faust && npm ci)            # the WASM engine's deps
 tools/fetch-found-samples.sh           # one-time: SoundFont/GM + breaks + speech
-tools/fetch-found-sound.sh; tools/fetch-found-bbc.sh; tools/fetch-found-video.sh
-                                       # one-time: found audio/video layers (BBC = RemArc licence, see SOURCES.md)
+tools/fetch-found-sound.sh; tools/fetch-found-bbc.sh
+                                       # one-time: found audio layers (BBC = RemArc licence, see SOURCES.md)
 ./serve.sh                             # http://localhost:8777/  (needs http, not file://)
 git submodule update --init            # optional: verifier-catalog reference data + MCP tool (skip freely)
 ```
@@ -144,10 +142,8 @@ production headers, and how to add your own audio: `docs/SETUP.md`.
 - **`CLAUDE.md`** — the full layout and working notes.
 - **`docs/GENRE-SPACE.md`** — how the vector space and journeys are designed.
 - **`docs/MUSIC-MIND.md`** — the music-intelligence program (theory, pipes, axes).
-- **`docs/EXPORT.md`** — downloads: the shipped in-browser ⤓ midi/wav/mp3 press
-  and the hour-scale render-service design.
 - **`engine/faust/VOICES.md`** — the synthesis/effect voice library.
-- **`SOURCES.md`** — every found-sound, sample, video, and vendored-code credit.
+- **`SOURCES.md`** — every found-sound, sample, and vendored-code credit.
 - **`docs/HOSTING.md`** — the stellate.app hosting plan (droplet + nginx,
   same-origin media, COOP/COEP for the SAB ring engine).
 - **`docs/history/`** — the design/planning trail (WAV-FIRST, kernel, etc.).

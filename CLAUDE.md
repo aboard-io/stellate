@@ -54,7 +54,6 @@ in `tools/`; gates/harnesses in `test/`; docs in `docs/`.
 ```bash
 tools/fetch-found-sound.sh     # one-time: Internet Archive field recordings -> found/
 tools/fetch-found-samples.sh   # one-time: SoundFont GM + breaks/one-shots/vox -> found/samples/
-tools/fetch-found-video.sh     # one-time: Internet Archive laserdisc clips -> found/video/
 ./serve.sh                     # http://localhost:8777/  (serves index.html; needs http, not file://)
 ./verify.sh                    # orchestrator: matrix + validate + engine smoke
 node test/engine.test.js       # faust-press smoke: states render, gated on non-silence
@@ -63,9 +62,8 @@ node test/meter.test.js        # ODD-METER gates: 3/4 + 6/8 grids, meter-safety 
 node engine/validate-genres.js --quick   # symbolic gates (all genres); --audio adds Discogs-EffNet
 node engine/genre-verifier.js matrix      # genre confusion matrix — must stay diagonal-dominant
 node engine/genre-kernel.js track jungle --seed 7 --render   # one track -> mp3 via engine/faust/press.js
-node tools/render-sample-video.js         # sample.mp4: song + video layer, cuts on section downbeats
-node engine/genre-kernel.js journey path.json --hours 4 --out journey/ --render --video
-                               # explorer path -> mp3s + genre-affine videos + gapless journey (GENRE-SPACE.md)
+node engine/genre-kernel.js journey path.json --hours 4 --out journey/ --render
+                               # explorer path -> mp3s + gapless journey mix (GENRE-SPACE.md)
 # headless browser gates (need `npm install && npm run setup:browser` at the repo root, once):
 node test/explorer-ui-test.js   # (+ genre-viz / demo-layer / live-test-run / wavout-test-run / live-resilience / bg-survival)
 node test/blend-arrival-run.js  # live-blend ARRIVAL contract: drums ≤3 bars, kit/lead identity ≤7
@@ -195,7 +193,7 @@ docs in `docs/`.
 - `index.html` — the lean entry (STELLATE). `<head>` links `app/app.css`;
   `<body>` holds the DOM skeleton, the `engine/…` classic `<script src>` tags
   (order matters — they define `window.CsdEngine`/`GenreKernel`/`FaustStateEngine`/
-  `FaustLive`/`VideoLayer`/`DemoLayer`/`NameBank` before the app runs), then the
+  `FaustLive`/`DemoLayer`/`NameBank` before the app runs), then the
   module entry `<script type="module" src="app/main.js">`. No inline style/JS.
 - `how.html` — the standalone visual explainer of the pipeline (self-contained;
   its stage narrative + numbers must track csd-engine/genre-kernel reality).
@@ -221,17 +219,14 @@ docs in `docs/`.
     role/character descriptions that never name a source; beds render as
     sustained ribbons; a compact "mind" section shows the MUSIC-MIND meters +
     active pipes; `vizData`/`renderInside`) + the DemoLayer note feed
-  - `background.js` — genre-affine laserdisc video + the ▢→▣→▦ chip that cycles
-    off → video+demos → demoscene (8-bar video↔demo alternation + wall-clock backstop)
+  - `background.js` — the MicroW8 demoscene background program + the ▢→▦ chip
+    that toggles off → demoscene; cart rotates every 8 bars on the musical
+    clock with a wall-clock backstop (the laserdisc video layer + the ⤓
+    download/export cluster were removed 2026-07-25 — branch legacy-download-video)
   - `live.js` — the live engine: owns `faustHandle` + `goLive`/`stopLive`, the
     honest boot-progress hairline, `?wavDebug` overlay, `?clicktest` bed, Media Session
-  - `panels.js` — the ⚙ controls (preact-rendered) + chip↔modal plumbing incl.
-    the download cluster (⤓ preset/path + ⤓ midi/wav/mp3); registers the store
-    render subs
-  - `export.js` — ⤓ download the current song: MIDI via `engine/midi-export.js`,
-    plus a TRUE offline in-browser press (dedicated stream-worker `renderWav`
-    with real found/sampler/speech PCM) → WAV, or MP3 via the lamejs worker
-    (docs/EXPORT.md; explorer-ui-test section J)
+  - `panels.js` — the ⚙ controls (preact-rendered) + chip↔modal plumbing;
+    registers the store render subs
   - `readouts.js` — the playhead/chyron lower-third (self-ticking; the ⚡ CPU
     meter box was removed 2026-07-09 — load/eco still reads out in the chyron
     tech line)
@@ -258,11 +253,8 @@ docs in `docs/`.
   - `validate-genres.js` — the gate suite (determinism, vocabulary, coverage…;
     `--audio` renders probes via faust press for the classifier)
   - `namebank.js` — invents band/album/roster identities for the chyron
-  - `video-layer.js` — laserdisc background video: dual-`<video>` crossfade, switches
-    on section changes during playback, ambient cycling when idle
   - `demo-layer.js` — MicroW8 demoscene background carts (off until toggled)
   - `song-verifier.js` — `analyzeSong`/`improveSong`: the verifier half of the loop
-  - `midi-export.js` — Standard MIDI File from the same buildEvents walk
   - `faust/` — THE engine (see docs `history/FAUST-PORT.md`, `engine/faust/VOICES.md`):
     - `dsp/` + `dist/` — one precompiled WASM AudioWorklet per synthesis model
       (`node engine/faust/build.js` rebuilds); DX7 family decodes real cartridge banks
@@ -281,7 +273,7 @@ docs in `docs/`.
       boost-normalizes quiet speech (the spokenword fix)
     - `press.js` — offline render (faustwasm offline processors + PCM found mix)
 - `tools/` — Node CLIs + shell recipes: `fetch-found-*.sh`,
-  `render-sample-video.js`, `make-mix-page.js` (mix/index.html + mix.m3u from a
+  `make-mix-page.js` (mix/index.html + mix.m3u from a
   rendered playlist dir), etc. (All rendering is Faust-press now; the csound
   `render.sh` is on `legacy-csound`.)
   - `genre-tool.js` — author a genre anchor from a `genre-specs/*.json` spec:
@@ -312,8 +304,8 @@ docs in `docs/`.
   `KERNEL-V4.md`, `ZERO-STATIC.md`, `ab-report.md`, `EVALUATION.md`,
   `VALIDATION.md`, `NEXT.md`). The old csound-WASM pages (`builder.html` song
   builder, `play.html` player) live fully working on branch `legacy-csound`.
-- `found/` — fetched found-sound + found-video layers (gitignored except `.gitignore`;
-  recipes: `fetch-found-sound.sh`, `fetch-found-video.sh`, credits in SOURCES.md)
+- `found/` — the fetched found-sound layer (gitignored except `.gitignore`;
+  recipes: `fetch-found-sound.sh` and friends, credits in SOURCES.md)
 - `LICENSE` (MIT, © 2026 Paul Ford) + `NOTICE` (third-party carve-outs:
   MicroW8/lamejs/faustwasm) + `CONTRIBUTING.md` (the PR contract) +
   `SOURCES.md` (media policy + attribution ledger) + `.github/`
@@ -328,5 +320,5 @@ The working tree **is** the web root: nginx serves it at
 2026-07-09; `/projects/vaporwave/` 301-redirects here — alias block in
 `/etc/nginx/sites-enabled/aboardresearch`, `Cache-Control: no-cache`). File
 moves/renames here are production changes; gitignored-but-present files
-(`found/`, `found/video/`, `faust/node_modules`) are required for the live
+(`found/`, `faust/node_modules`) are required for the live
 site; `faust/dist` is committed.

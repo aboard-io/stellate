@@ -258,7 +258,10 @@
     industry: ["factory",
                "coldharbour_mill","litho_press","zaandam_sawmill","hydro_turbine","wind_turbine_motor","grinding_plant","pumping_station","ice_machine","silo_resonance",
                "bbc_hand_loom","bbc_water_mill","bbc_centurion_press","bbc_beam_engine"],
-    voices:   ["vx_apollo","vx_timelady","vx_wwvh","vx_conet_swedish","vx_conet_poacher",
+    // vx_apollo benched from the GENERAL pool in the same beep audit — the
+    // mission-audio bed carries comm tones that cut through bright-genre bed
+    // filters. Genres that name it raw (identity law) keep it.
+    voices:   ["vx_timelady","vx_wwvh","vx_conet_swedish","vx_conet_poacher",
                "pulkovo_pa","kaohsiung_pa","leeds_terrace","celtic_fans","nevsky_choir","oslo_ferry_pa",
                "bbc_concert_hall_murmur","bbc_playground_1971","bbc_shoshu_chant","bbc_versailles_market"],
     nature:   ["frogs","crickets",
@@ -283,9 +286,17 @@
     // transitwave family), the loon is canawave's, ca_horn is the goal horn —
     // none of those anchors take a chime token; tw_ding rides IN the chime pool
     // for everyone else.
-    vocal_stab: ["vox_a","vox_b","vox_c","vox_d","vox_e","vox_f","caruso_78","laughs_78"],
+    // BEEP AUDIT 2026-07-25 (Paul: "high pitched beeps… ALL OVER the map"):
+    // FFT'd every pool one-shot. vox_b carries a constant 2.97kHz carrier
+    // whistle end-to-end, vox_e the same in half its window, vox_c a steady
+    // 1.6kHz tone — benched from the pool (SAMPLES entries stay; a genre may
+    // still name them raw). Apollo share drops 6/8 -> 3/5.
+    vocal_stab: ["vox_a","vox_d","vox_f","caruso_78","laughs_78"],
+    // bbc_electro_gong BENCHED same audit: 95% of its energy is one 1163Hz
+    // sine — in the global pool it read as a beep in every genre that drew a
+    // chime (it joined the pool that very morning; the "NASA beeps" report).
     chime:      ["tw_ding","handbell","timer_ding","chime_tub_hi","chime_tub_lo","chime_hand","chime_glock",
-                 "bbc_lutine_bell","bbc_electro_gong","bbc_tram_bell","bbc_dingdong_door"],
+                 "bbc_lutine_bell","bbc_tram_bell","bbc_dingdong_door"],
     // horn_stab is SHELLAC-ONLY (era law): bb_horn_a/b are the bigbeat wing's
     // rave-brass identity and stay raw ids in their anchors — mixing them in
     // would flash a rave horn into tango/jazz on unlucky seeds.
@@ -729,604 +740,6 @@
     hoover_b:  { file:"hits/hoover_b.wav",   kind:"hit", durSec:1.1 },   // E3, faster + brighter
     stab_organ:{ file:"hits/stab_organ.wav", kind:"hit", durSec:0.9 },   // M1-ish minor organ chord
     stab_saw:  { file:"hits/stab_saw.wav",   kind:"hit", durSec:1.0 },   // sus4 saw chord stab
-  };
-
-  // ---------- genre -> found-video clip affinity ----------
-  // shared by the live explorer (video-layer.js background) and the offline
-  // renderer (render-sample-video.js journey mode). A blend's pool is the
-  // union of its parents' pools, dominant genre first. Files: found/video/.
-  const GENRE_CLIPS = {
-    // 2026-07: merged the Prelinger/city-symphony/abstract/steel/Apollo/Hawaii/soundie
-    // batch (pl_/cs_/ab_/ind_/sp_/ns_/dn_/bt_ — credits in found/video/clips.json)
-    // + the crate-dig LIBRARY batch (cmm_/im_/jm_/la_/mo_ — Bell Labs early CGI,
-    // Jupiter magnetosphere viz, Los Alamos 1975 wireframes, PD Momotaro anime;
-    // recipe cut-lib-clips.sh, cues found/video/lib/segments.json)
-    vaporwave:  ["disc_sunset","bamboo","blue_dinner","sun_riders","sharpest_city","cgi_bird","kaleido","rainbow_rings","tv_room","spacewalk","pl_supermarket","pl_motorama","pl_kitchen","pl_futurama","cmm_wireglobe","cmm_crescent","la_meshvase","im_paint","jm_dipole","ne_timessquare","ne_lunapark"],
-    synthwave:  ["drive_bluehour","drive_dusk","drive_bridge","drive_taillights","night_lines","night_lights","pl_dreamcar","pl_parkinglot","pl_futurama","pl_modelcity","pl_sage","ne_thunderbird","ne_timessquare"],
-    techno:     ["night_lines","phuture_red","dark_face","green_nebula","tv_room","kaleido","pl_sage","cs_manhatta","ind_furnace","ab_diagonale","im_redroom","st_furnaceman","lb_atomorbits"],
-    house:      ["kaleido","rainbow_rings","night_lights","phuture_red","sun_riders","cs_manhatta","cs_marketstreet","dh_boogieband","ne_lunapark"],
-    jungle:     ["dark_face","phuture_red","night_lines","green_nebula","tw_subway","wx_stormsky","vo_ashplume"],
-    triphop:    ["deep_face","dark_face","tv_room","night_lights","tw_window","bt_folksinger","ns_octopus","mo_dance","wx_fogghosts","ne_broadway"],
-    lofi:       ["bamboo","blue_dinner","tv_room","dc_village","disc_sunset","pl_kitchen","pl_americana","pl_lawns","pl_supermarket","pl_parkinglot","bt_folksinger","cs_marketstreet","ab_fantasma","im_paint","mo_pastoral","sn_village","nm_orchid"],
-    downtempo:  ["earth_orbit","spacewalk","bamboo","green_nebula","disc_sunset","cs_liner","ns_waterfall","ns_hula","ns_rays","nm_shoots","nm_orchid"],
-    ambient:    ["earth_orbit","spacewalk","green_nebula","lw_plateau","dc_rockies","sp_eva","sp_lander","ns_waterfall","ns_rays","ns_octopus","jm_dipole","cmm_crescent","mo_pastoral","nm_orchid","nm_shoots"],
-    dinosynth:  ["lw_plateau","lw_graze","lw_herd","lw_valley","lw_london","lw_rampage"],
-    canawave:   ["dc_vancouver","dc_alberta","dc_rockies","dc_village","dc_skyline","ca_canada","ca_tide","ca_street","pl_lawns","pl_spacefair","dn_schoolyard","sn_buriedcars","sn_village"],
-    transitwave:["tw_platform","tw_interchange","tw_board","tw_subway","tw_terminus","tw_window","tw_express","tw_rails"],
-    neoclassical:["earth_orbit","blue_dinner","bamboo","dc_village","spacewalk","cs_manhatta","im_paint","sn_churchtower","nm_orchid"],
-    dancepop:   ["kaleido","rainbow_rings","sun_riders","night_lights","cgi_bird","pl_motorama","pl_kitchen","pl_americana","pl_supermarket","pl_spacefair","pl_worldsfair","dn_schoolyard","ne_timessquare","dh_boogieband"],
-    edm:        ["phuture_red","kaleido","night_lines","rainbow_rings","cgi_bird","pl_modelcity","pl_sage","ab_diagonale","ab_balletmec","sp_eva","jm_flux","cr_coaster","ne_timessquare"],
-    dubstep:    ["dark_face","phuture_red","night_lines","green_nebula","ind_molten","ab_diagonale","wx_stormsky","vo_ashplume"],
-    blues:      ["tv_room","dc_village","ca_street","disc_sunset","bt_hootenanny","bt_folksinger","cs_liner","dn_soundie","dh_trumpet","dh_bigband"],
-    jazz:       ["blue_dinner","tv_room","sharpest_city","night_lights","bt_hootenanny","ab_fantasma","dn_soundie","dh_trumpet","dh_bigband"],
-    dub:        ["deep_face","green_nebula","tv_room","ns_rays","ns_octopus","wx_surge","wx_fogghosts"],
-    trance:     ["night_lights","rainbow_rings","kaleido","night_lines","phuture_red","pl_futurama","sp_eva","sp_lander","jm_axis","lb_atomman","ne_timessquare"],
-    disco:      ["kaleido","rainbow_rings","night_lights","sun_riders","blue_dinner","pl_motorama","pl_worldsfair","dn_soundie","dn_schoolyard","dh_boogieband","ne_timessquare"],
-    italo:      ["rainbow_rings","kaleido","sun_riders","night_lights","drive_taillights","cgi_bird","pl_motorama","pl_dreamcar","ne_fremont","ne_thunderbird"],
-    bigbeat:    ["phuture_red","kaleido","green_nebula","night_lines","dark_face","cs_manhatta","cs_liner","cs_marketstreet","ab_balletmec","cr_coaster","dh_boogieband"],
-    garage:     ["night_lights","phuture_red","drive_taillights","cs_marketstreet","ne_broadway","ne_timessquare"],
-    doomdrone:  ["dark_face","deep_face","green_nebula","earth_orbit","lw_plateau","ind_furnace","ind_molten","ns_rays","ns_octopus","vo_lavariver","wx_duststorm"],
-    newage:     ["earth_orbit","spacewalk","bamboo","dc_rockies","green_nebula","lw_valley","sp_lander","ns_waterfall","ns_hula","nm_orchid","nm_roots"],
-    exotica:    ["bamboo","lw_valley","lw_graze","dc_village","disc_sunset","ns_waterfall","ns_hula","mo_pastoral","nm_orchid","cr_surfbathers"],
-    industrial:["dark_face","night_lines","tw_subway","phuture_red","tw_rails","pl_sage","ind_furnace","ind_molten","ab_balletmec","im_redroom","st_pigiron","pr_pressrun"],
-    spokenword:["tv_room","deep_face","ca_street","sharpest_city","bt_hootenanny","bt_folksinger","pr_linotype","dh_trumpet"],
-    chiptune:   ["cgi_bird","kaleido","rainbow_rings","phuture_red","sun_riders","ab_diagonale","ab_balletmec","ab_fantasma","mo_singalong","im_pixeltext","im_scope","mo_dance","lb_atomorbits","cr_coaster"],
-    // placeholders until dedicated propaganda footage lands (video agent)
-    chinawave:  ["bamboo","ns_waterfall","dn_schoolyard","cs_marketstreet","sun_riders","dc_village","nm_orchid","tx_spindles"],
-    sovietwave:["ind_furnace","ind_molten","cs_manhatta","cs_liner","sp_lander","spacewalk","earth_orbit","tw_rails","st_pigiron","st_furnaceman"],
-    // round-3 pools — drawn from the existing clip shelf, aesthetic-kin first
-    citypop:    ["sharpest_city","night_lights","blue_dinner","drive_taillights","sun_riders","cs_marketstreet","pl_motorama","ne_timessquare","ne_broadway"],
-    shibuyakei:["cgi_bird","rainbow_rings","kaleido","sun_riders","pl_kitchen","pl_supermarket","dn_schoolyard","mo_singalong","cr_carousel","dh_marimba"],
-    bossanova:  ["bamboo","disc_sunset","ns_hula","ns_waterfall","cs_liner","dc_village","mo_pastoral","cr_surfbathers","nm_orchid"],
-    idm:        ["ab_diagonale","ab_balletmec","ab_fantasma","green_nebula","tv_room","ind_furnace","im_scope","im_pixeltext","la_mesh2","cmm_gyrobox","lb_jars","lb_atomorbits"],
-    electro:    ["ab_balletmec","phuture_red","night_lines","pl_modelcity","cs_manhatta","sp_eva","im_pixeltext","la_mesh1","im_scope","jm_flux","lb_atomman","pr_pressrun"],
-    miamibass:  ["night_lights","drive_taillights","sun_riders","pl_motorama","pl_parkinglot","ne_fremont","cr_surfbathers"],
-    phonk:      ["dark_face","deep_face","drive_taillights","tv_room","ind_molten","ne_thunderbird","wx_stormsky"],
-    witchhouse:["dark_face","deep_face","green_nebula","tv_room","ab_fantasma","lw_london","mo_dance","wx_fogghosts","nm_spiderweb"],
-    mallsoft:   ["pl_supermarket","pl_kitchen","blue_dinner","disc_sunset","tv_room","pl_futurama","la_meshvase","la_mesh1","cmm_wireglobe","im_paint","im_pixeltext","cr_arcade","ne_broadway"],
-    wintersynth:["lw_plateau","dc_rockies","earth_orbit","green_nebula","sp_lander","dc_alberta","sn_buriedcars","sn_village"],
-    gabber:     ["phuture_red","ind_furnace","ind_molten","dark_face","ab_balletmec","st_furnaceman","wx_funnel"],
-    psytrance:  ["green_nebula","kaleido","rainbow_rings","night_lines","sp_eva","earth_orbit","jm_flux","jm_axis","jm_dipole","lb_atomorbits","nm_orchid"],
-    minimal:    ["night_lines","tv_room","ab_diagonale","pl_sage","cs_manhatta","cmm_gyrobox","im_scope","la_mesh2","lb_jars","pr_linotype"],
-    deephouse:  ["night_lights","deep_face","blue_dinner","cs_marketstreet","drive_bluehour","ne_broadway","dh_trumpet"],
-    coldwave:   ["tw_window","dark_face","cs_manhatta","tw_rails","ind_furnace","im_redroom","sn_buriedcars","sn_churchtower"],
-    ebm:        ["ind_furnace","ind_molten","phuture_red","ab_balletmec","tw_subway","im_redroom","st_pigiron","pr_pressrun"],
-    krautrock:  ["drive_bridge","drive_dusk","tw_rails","cs_manhatta","pl_modelcity","drive_bluehour","ds_deserthighway","lb_atomorbits"],
-    newjack:    ["rainbow_rings","night_lights","sun_riders","dn_schoolyard","pl_americana","dh_boogieband","ne_timessquare"],
-    breakcore:  ["dark_face","phuture_red","green_nebula","ab_balletmec","tw_subway","wx_bridgegallop","wx_funnel"],
-    acidhouse:  ["phuture_red","rainbow_rings","night_lights","cs_marketstreet","pl_sage","lb_jars","ne_lunapark"],
-    surfrock:   ["sun_riders","disc_sunset","ca_tide","ns_hula","dn_soundie","bt_hootenanny","pl_americana","cr_surfbathers","cr_boardwalk"],
-    spacelounge:["spacewalk","earth_orbit","sp_eva","sp_lander","ns_rays","blue_dinner","pl_futurama","jm_dipole","cmm_crescent","jm_axis","lb_atomman","ne_thunderbird"],
-    arabpop:    ["dc_village","sun_riders","cs_marketstreet","bamboo","ns_rays","disc_sunset"],
-    tango:      ["tv_room","ab_fantasma","cs_liner","dn_soundie","bt_folksinger","dh_ballroom","dh_marimba"],
-    afrobeat:   ["cs_marketstreet","sun_riders","dn_schoolyard","bt_hootenanny","ns_hula","dh_trumpet","cr_carousel"],
-    desertblues:["lw_plateau","dc_alberta","disc_sunset","dc_rockies","bt_folksinger","ca_tide","ds_deserthighway","wx_duststorm"],
-    sludgemetal:["ind_molten","ind_furnace","lw_rampage","green_nebula","deep_face","vo_lavariver","vo_ashplume"],
-    industrialmetal:["ind_furnace","ind_molten","ab_balletmec","dark_face","phuture_red","tw_subway","st_pigiron","st_furnaceman"],
-    darksynth:  ["drive_taillights","night_lines","phuture_red","dark_face","drive_bluehour","ind_molten","jm_dipole","jm_flux","im_redroom","cmm_crescent","la_mesh2","ne_thunderbird","wx_stormsky"],
-    /* genre-tool:prelude:clips */
-    prelude:["earth_orbit","blue_dinner","bamboo","dc_village","spacewalk","sn_churchtower","nm_orchid"],
-    /* /genre-tool:prelude:clips */
-    fugue:["earth_orbit","blue_dinner","bamboo","spacewalk","dc_village","sn_churchtower","tx_redloom"],
-    dnb:["night_lines","green_nebula","tw_subway","drive_taillights","wx_stormsky","ne_broadway"],
-    footwork:["night_lines","phuture_red","dark_face","tw_subway","ne_timessquare","wx_bridgegallop"],
-    happyhardcore:["kaleido","rainbow_rings","sun_riders","phuture_red","cr_coaster","cr_carousel"],
-    hardstyle:["phuture_red","ind_furnace","ind_molten","dark_face","vo_firewall","st_pigiron"],
-    eurodance:["kaleido","rainbow_rings","sun_riders","cs_marketstreet","cr_carousel","ne_timessquare"],
-    singeli:["green_nebula","phuture_red","kaleido","jm_flux","cr_coaster","wx_bridgegallop"],
-    bebop:["cs_manhatta","night_lights","tv_room","dh_trumpet","ne_timessquare"],
-    bluegrass:["lw_valley","lw_plateau","mo_pastoral","dc_alberta","dc_rockies","mo_singalong"],
-    ska:["mo_dance","mo_singalong","ca_street","dh_ballroom","cr_carousel"],
-    klezmer:["mo_dance","mo_pastoral","dc_village","dh_ballroom","cr_carousel"],
-    funk:["rainbow_rings","cs_manhatta","night_lights","disc_sunset","dh_trumpet","dh_boogieband"],
-    boombap:["dark_face","tv_room","cs_marketstreet","night_lines","blue_dinner","ne_timessquare","cr_boardwalk"],
-    amapiano:["night_lights","blue_dinner","cs_marketstreet","drive_bluehour","ne_broadway","dh_trumpet"],
-    reggae:["ns_hula","ca_tide","mo_dance","disc_sunset","cr_surfbathers","dh_trumpet"],
-    heavymetal:["ind_furnace","ind_molten","dark_face","phuture_red","vo_firewall","wx_funnel"],
-    budstep:["green_nebula","ind_molten","phuture_red","tw_subway","vo_lavariver","wx_stormsky"],
-    pixiewave:["drive_dusk","drive_taillights","dark_face","tv_room","wx_stormsky","cr_coaster"],
-    /* genre-tool:hogcore:clips */
-    hogcore:["kaleido","rainbow_rings","cgi_bird","sun_riders","phuture_red","pl_kitchen","mo_singalong","cr_coaster","ne_timessquare"],
-    /* /genre-tool:hogcore:clips */
-    /* genre-tool:atlantidrone:clips */
-    atlantidrone:["ns_waterfall","green_nebula","earth_orbit","deep_face"],
-    /* /genre-tool:atlantidrone:clips */
-    /* genre-tool:sourdough:clips */
-    sourdough:["earth_orbit","green_nebula","bamboo","ns_waterfall"],
-    /* /genre-tool:sourdough:clips */
-    /* genre-tool:crtwave:clips */
-    crtwave:["tv_room","dark_face","deep_face","green_nebula"],
-    /* /genre-tool:crtwave:clips */
-    /* genre-tool:whalejazz:clips */
-    whalejazz:["earth_orbit","blue_dinner","ns_waterfall","spacewalk","wx_surge","ns_rays"],
-    /* /genre-tool:whalejazz:clips */
-    /* genre-tool:termswave:clips */
-    termswave:["earth_orbit","spacewalk","green_nebula","tv_room"],
-    /* /genre-tool:termswave:clips */
-    /* genre-tool:microwave:clips */
-    microwave:["dc_village","earth_orbit","tv_room","lb_jars","tx_knitters"],
-    /* /genre-tool:microwave:clips */
-    /* genre-tool:airtrafficdrone:clips */
-    airtrafficdrone:["earth_orbit","spacewalk","sp_eva","ds_deserthighway","lb_atomorbits"],
-    /* /genre-tool:airtrafficdrone:clips */
-    /* genre-tool:faxbossa:clips */
-    faxbossa:["bamboo","tv_room","dc_village","pr_pressrun","pr_linotype"],
-    /* /genre-tool:faxbossa:clips */
-    /* genre-tool:crickettempo:clips */
-    crickettempo:["earth_orbit","green_nebula","bamboo","ns_waterfall"],
-    /* /genre-tool:crickettempo:clips */
-    /* genre-tool:thermostatwave:clips */
-    thermostatwave:["ind_furnace","earth_orbit","green_nebula","tv_room"],
-    /* /genre-tool:thermostatwave:clips */
-    /* genre-tool:holdmusic:clips */
-    holdmusic:["tv_room","pl_kitchen","sharpest_city","pr_linotype","tx_knitters"],
-    /* /genre-tool:holdmusic:clips */
-    /* genre-tool:lunapolka:clips */
-    lunapolka:["earth_orbit","spacewalk","sp_eva","sp_lander","ne_lunapark","lb_atomorbits"],
-    /* /genre-tool:lunapolka:clips */
-    /* genre-tool:elevatorcore:clips */
-    elevatorcore:["pl_kitchen","pl_supermarket","tv_room","tx_knitters","cr_arcade"],
-    /* /genre-tool:elevatorcore:clips */
-    /* genre-tool:hotsaucecore:clips */
-    hotsaucecore:["ind_molten","phuture_red","kaleido","cs_marketstreet"],
-    /* /genre-tool:hotsaucecore:clips */
-    /* genre-tool:ikeacore:clips */
-    ikeacore:["ab_diagonale","pl_modelcity","phuture_red","tx_knitters","pr_linotype"],
-    /* /genre-tool:ikeacore:clips */
-    /* genre-tool:zubrovia:clips */
-    zubrovia:["ca_canada","dc_skyline","earth_orbit","cs_manhatta"],
-    /* /genre-tool:zubrovia:clips */
-    /* genre-tool:dishwasherwave:clips */
-    dishwasherwave:["ind_furnace","green_nebula","tv_room","tx_knitters","pr_pressrun"],
-    /* /genre-tool:dishwasherwave:clips */
-    /* genre-tool:surveywave:clips */
-    surveywave:["kaleido","rainbow_rings","pl_motorama","ne_broadway","dh_bigband"],
-    /* /genre-tool:surveywave:clips */
-    /* genre-tool:aldente:clips */
-    aldente:["pl_modelcity","phuture_red","ab_diagonale","lb_jars","tx_knitters"],
-    /* /genre-tool:aldente:clips */
-    /* genre-tool:umpirehouse:clips */
-    umpirehouse:["rainbow_rings","cs_manhatta","cr_wonderwheel","cr_boardwalk"],
-    /* /genre-tool:umpirehouse:clips */
-    /* genre-tool:pigeonstep:clips */
-    pigeonstep:["cs_marketstreet","tw_subway","phuture_red","cr_surfbathers","nm_hiveswarm"],
-    /* /genre-tool:pigeonstep:clips */
-    /* genre-tool:dmvstep:clips */
-    dmvstep:["phuture_red","cs_marketstreet","tw_subway","pr_linotype","cr_boardwalk"],
-    /* /genre-tool:dmvstep:clips */
-    /* genre-tool:towncrier:clips */
-    towncrier:["phuture_red","green_nebula","pr_linotype","pr_pressrun"],
-    /* /genre-tool:towncrier:clips */
-    /* genre-tool:chickadeecore:clips */
-    chickadeecore:["rainbow_rings","cgi_bird","nm_hiveswarm","nm_orchid"],
-    /* /genre-tool:chickadeecore:clips */
-    /* genre-tool:floppycore:clips */
-    floppycore:["ab_diagonale","phuture_red","im_redroom","pr_linotype","pr_pressrun"],
-    /* /genre-tool:floppycore:clips */
-    /* genre-tool:cerealwave:clips */
-    cerealwave:["rainbow_rings","pl_motorama","cgi_bird","cr_carousel","nm_hiveswarm"],
-    /* /genre-tool:cerealwave:clips */
-    /* genre-tool:laundrycore:clips */
-    laundrycore:["phuture_red","green_nebula","tx_redloom","tx_spindles"],
-    /* /genre-tool:laundrycore:clips */
-    /* genre-tool:auctioncore:clips */
-    auctioncore:["phuture_red","green_nebula","cs_manhatta","cr_carousel","wx_duststorm"],
-    /* /genre-tool:auctioncore:clips */
-    /* genre-tool:dialupgabber:clips */
-    dialupgabber:["phuture_red","green_nebula","night_lines","pr_pressrun","st_steelcurls"],
-    /* /genre-tool:dialupgabber:clips */
-    /* genre-tool:picnicswing:clips */
-    picnicswing:["rainbow_rings","night_lights","sun_riders","dn_schoolyard","pl_americana","dh_ballroom","cr_surfbathers"],
-    /* /genre-tool:picnicswing:clips */
-    /* genre-tool:cerealboxwave:clips */
-    cerealboxwave:["earth_orbit","bamboo","spacewalk","dc_village","nm_hiveswarm","cr_arcade"],
-    /* /genre-tool:cerealboxwave:clips */
-    /* genre-tool:rosinamblelilt:clips */
-    rosinamblelilt:["spacewalk","earth_orbit","sp_eva","sp_lander","ns_rays","pl_futurama","jm_dipole","cmm_crescent","jm_axis","nm_orchid","dh_marimba"],
-    /* /genre-tool:rosinamblelilt:clips */
-    /* genre-tool:subwooferbalm:clips */
-    subwooferbalm:["earth_orbit","spacewalk","sp_eva","lb_atomman","wx_fogghosts"],
-    /* /genre-tool:subwooferbalm:clips */
-    /* genre-tool:sepiadrive:clips */
-    sepiadrive:["dc_village","sun_riders","cs_marketstreet","bamboo","ns_rays","disc_sunset"],
-    /* /genre-tool:sepiadrive:clips */
-    /* genre-tool:sparkbreak:clips */
-    sparkbreak:["phuture_red","kaleido","green_nebula","dark_face","cs_manhatta","cs_liner","cs_marketstreet","ab_balletmec","cr_coaster","dh_boogieband"],
-    /* /genre-tool:sparkbreak:clips */
-    /* genre-tool:hopscotchwave:clips */
-    hopscotchwave:["rainbow_rings","night_lights","sun_riders","pl_motorama","pl_worldsfair","dn_soundie","dn_schoolyard","cr_carousel","dh_boogieband"],
-    /* /genre-tool:hopscotchwave:clips */
-    /* genre-tool:moltenhouse:clips */
-    moltenhouse:["dark_face","deep_face","green_nebula","tv_room","ns_rays","ns_octopus","vo_lavariver","vo_ashplume"],
-    /* /genre-tool:moltenhouse:clips */
-    /* genre-tool:magmastrut:clips */
-    magmastrut:["earth_orbit","spacewalk","sp_eva","vo_lavariver","vo_firewall"],
-    /* /genre-tool:magmastrut:clips */
-    /* genre-tool:hammerhouse:clips */
-    hammerhouse:["rainbow_rings","cs_manhatta","cr_boardwalk","st_pigiron"],
-    /* /genre-tool:hammerhouse:clips */
-    /* genre-tool:zestgallop:clips */
-    zestgallop:["dark_face","tv_room","cs_marketstreet","cr_coaster","dh_boogieband"],
-    /* /genre-tool:zestgallop:clips */
-    /* genre-tool:whittlertrot:clips */
-    whittlertrot:["spacewalk","earth_orbit","sp_eva","sp_lander","ns_rays","pl_futurama","jm_dipole","cmm_crescent","jm_axis","nm_roots","tx_spindles"],
-    /* /genre-tool:whittlertrot:clips */
-    /* genre-tool:bunkerthump:clips */
-    bunkerthump:["ind_furnace","ind_molten","phuture_red","ab_balletmec","tw_subway","im_redroom","st_pigiron","lb_atomorbits"],
-    /* /genre-tool:bunkerthump:clips */
-    /* genre-tool:gumballdrive:clips */
-    gumballdrive:["rainbow_rings","cs_manhatta","night_lights","cr_carousel","ne_broadway"],
-    /* /genre-tool:gumballdrive:clips */
-    /* genre-tool:kettlefunk:clips */
-    kettlefunk:["spacewalk","earth_orbit","sp_eva","sp_lander","ns_rays","pl_futurama","jm_dipole","cmm_crescent","jm_axis","lb_jars","st_pigiron"],
-    /* /genre-tool:kettlefunk:clips */
-    /* genre-tool:glosspump:clips */
-    glosspump:["phuture_red","green_nebula","tx_redloom","ne_broadway"],
-    /* /genre-tool:glosspump:clips */
-    /* genre-tool:refrigeratorfunk:clips */
-    refrigeratorfunk:["earth_orbit","spacewalk","bamboo","dc_rockies","green_nebula","lw_valley","sp_lander","ns_waterfall","ns_hula"],
-    /* /genre-tool:refrigeratorfunk:clips */
-    /* genre-tool:sherbetchop:clips */
-    sherbetchop:["dark_face","tv_room","cs_marketstreet","cr_carousel","ne_broadway"],
-    /* /genre-tool:sherbetchop:clips */
-    /* genre-tool:pinballchop:clips */
-    pinballchop:["rainbow_rings","night_lights","sun_riders","pl_motorama","pl_worldsfair","dn_soundie","dn_schoolyard","cr_coaster","dh_boogieband"],
-    /* /genre-tool:pinballchop:clips */
-    /* genre-tool:idlingsplice:clips */
-    idlingsplice:["night_lights","deep_face","cs_marketstreet","drive_bluehour","ne_broadway","ds_deserthighway"],
-    /* /genre-tool:idlingsplice:clips */
-    /* genre-tool:trenchsway:clips */
-    trenchsway:["earth_orbit","spacewalk","sp_eva","wx_surge","wx_fogghosts"],
-    /* /genre-tool:trenchsway:clips */
-    /* genre-tool:tarbreak:clips */
-    tarbreak:["dc_village","sun_riders","cs_marketstreet","bamboo","ns_rays","disc_sunset"],
-    /* /genre-tool:tarbreak:clips */
-    /* genre-tool:cedarskank:clips */
-    cedarskank:["tv_room","dc_village","ca_street","disc_sunset","bt_hootenanny","bt_folksinger","cs_liner","dn_soundie"],
-    /* /genre-tool:cedarskank:clips */
-    /* genre-tool:bramblestep:clips */
-    bramblestep:["earth_orbit","spacewalk","bamboo","green_nebula","disc_sunset","cs_liner","ns_waterfall","ns_hula","ns_rays"],
-    /* /genre-tool:bramblestep:clips */
-    /* genre-tool:toastercore:clips */
-    toastercore:["dc_village","sun_riders","cs_marketstreet","bamboo","ns_rays","disc_sunset"],
-    /* /genre-tool:toastercore:clips */
-    /* genre-tool:vendingmachinethump:clips */
-    vendingmachinethump:["sharpest_city","night_lights","drive_taillights","sun_riders","cs_marketstreet","pl_motorama","ne_timessquare","ne_broadway"],
-    /* /genre-tool:vendingmachinethump:clips */
-    /* genre-tool:boilercreep:clips */
-    boilercreep:["earth_orbit","spacewalk","sp_eva","st_furnaceman","wx_fogghosts"],
-    /* /genre-tool:boilercreep:clips */
-    /* genre-tool:fluorescentstrut:clips */
-    fluorescentstrut:["drive_taillights","phuture_red","dark_face","drive_bluehour","ind_molten","jm_dipole","jm_flux","im_redroom","cmm_crescent","la_mesh2","ne_thunderbird","ne_broadway"],
-    /* /genre-tool:fluorescentstrut:clips */
-    /* genre-tool:dialtonehaze:clips */
-    dialtonehaze:["earth_orbit","spacewalk","sp_eva","lb_atomorbits","lb_atomman"],
-    /* /genre-tool:dialtonehaze:clips */
-    /* genre-tool:breadboxmince:clips */
-    breadboxmince:["spacewalk","earth_orbit","sp_eva","sp_lander","ns_rays","pl_futurama","jm_dipole","cmm_crescent","jm_axis","tx_knitters","nm_shoots"],
-    /* /genre-tool:breadboxmince:clips */
-    /* genre-tool:earthmoversplice:clips */
-    earthmoversplice:["dc_village","sun_riders","cs_marketstreet","bamboo","ns_rays","disc_sunset"],
-    /* /genre-tool:earthmoversplice:clips */
-    /* genre-tool:butterchurnbounce:clips */
-    butterchurnbounce:["tv_room","dc_village","ca_street","disc_sunset","bt_hootenanny","bt_folksinger","cs_liner","dn_soundie"],
-    /* /genre-tool:butterchurnbounce:clips */
-    /* genre-tool:furnacestrut:clips */
-    furnacestrut:["earth_orbit","spacewalk","sp_eva","st_furnaceman","st_pigiron"],
-    /* /genre-tool:furnacestrut:clips */
-    /* genre-tool:tectonicdash:clips */
-    tectonicdash:["rainbow_rings","night_lights","sun_riders","dn_schoolyard","pl_americana","cr_coaster","wx_bridgegallop"],
-    /* /genre-tool:tectonicdash:clips */
-    /* genre-tool:tundradoom:clips */
-    tundradoom:["tv_room","pl_kitchen","sharpest_city","sn_buriedcars","wx_fogghosts"],
-    /* /genre-tool:tundradoom:clips */
-    /* genre-tool:sodabop:clips */
-    sodabop:["rainbow_rings","night_lights","sun_riders","pl_motorama","pl_worldsfair","dn_soundie","dn_schoolyard","dh_boogieband","cr_coaster"],
-    /* /genre-tool:sodabop:clips */
-    /* genre-tool:citrushaze:clips */
-    citrushaze:["earth_orbit","spacewalk","sp_eva","nm_orchid","ds_deserthighway"],
-    /* /genre-tool:citrushaze:clips */
-    /* genre-tool:confettililt:clips */
-    confettililt:["bamboo","tv_room","dc_village","cr_carousel","nm_orchid"],
-    /* /genre-tool:confettililt:clips */
-    /* genre-tool:willowmarch:clips */
-    willowmarch:["spacewalk","earth_orbit","sp_eva","sp_lander","ns_rays","pl_futurama","jm_dipole","cmm_crescent","jm_axis","nm_shoots","nm_orchid"],
-    /* /genre-tool:willowmarch:clips */
-    /* genre-tool:standbylightdrive:clips */
-    standbylightdrive:["earth_orbit","bamboo","spacewalk","dc_village","lb_atomman","ds_deserthighway"],
-    /* /genre-tool:standbylightdrive:clips */
-    /* genre-tool:cairntrot:clips */
-    cairntrot:["sharpest_city","night_lights","drive_taillights","sun_riders","cs_marketstreet","pl_motorama","ds_deserthighway","sn_village"],
-    /* /genre-tool:cairntrot:clips */
-    /* genre-tool:dumptruckdub:clips */
-    dumptruckdub:["earth_orbit","spacewalk","bamboo","green_nebula","disc_sunset","cs_liner","ns_waterfall","ns_hula","ns_rays"],
-    /* /genre-tool:dumptruckdub:clips */
-    /* genre-tool:tallowtrot:clips */
-    tallowtrot:["ind_furnace","ind_molten","cs_manhatta","cs_liner","sp_lander","spacewalk","earth_orbit","tw_rails"],
-    /* /genre-tool:tallowtrot:clips */
-    /* genre-tool:fathomarch:clips */
-    fathomarch:["night_lights","drive_taillights","sun_riders","pl_motorama","pl_parkinglot","wx_surge","ne_fremont"],
-    /* /genre-tool:fathomarch:clips */
-    /* genre-tool:masonshuffle:clips */
-    masonshuffle:["tv_room","ab_fantasma","cs_liner","dn_soundie","bt_folksinger","sn_churchtower","tx_spindles"],
-    /* /genre-tool:masonshuffle:clips */
-    /* genre-tool:boilerroomstomp:clips */
-    boilerroomstomp:["ind_furnace","ind_molten","phuture_red","ab_balletmec","tw_subway","im_redroom","st_furnaceman","st_pigiron"],
-    /* /genre-tool:boilerroomstomp:clips */
-    /* genre-tool:brinedub:clips */
-    brinedub:["rainbow_rings","sun_riders","blue_dinner","pl_motorama","pl_worldsfair","dn_soundie","dn_schoolyard","wx_surge","cr_surfbathers"],
-    /* /genre-tool:brinedub:clips */
-    /* genre-tool:attichouse:clips */
-    attichouse:["ind_furnace","ind_molten","cs_manhatta","cs_liner","sp_lander","spacewalk","earth_orbit","tw_rails"],
-    /* /genre-tool:attichouse:clips */
-    /* genre-tool:driftrot:clips */
-    driftrot:["earth_orbit","spacewalk","bamboo","green_nebula","disc_sunset","cs_liner","ns_waterfall","ns_hula","ns_rays"],
-    /* /genre-tool:driftrot:clips */
-    /* genre-tool:ceilingfanchop:clips */
-    ceilingfanchop:["rainbow_rings","cgi_bird","night_lights","kaleido"],
-    /* /genre-tool:ceilingfanchop:clips */
-    /* genre-tool:strawdub:clips */
-    strawdub:["earth_orbit","spacewalk","sp_eva","nm_shoots","nm_roots"],
-    /* /genre-tool:strawdub:clips */
-    /* genre-tool:wickershimmy:clips */
-    wickershimmy:["rainbow_rings","night_lights","sun_riders","pl_motorama","pl_worldsfair","dn_soundie","dn_schoolyard","dh_marimba","tx_spindles"],
-    /* /genre-tool:wickershimmy:clips */
-    /* genre-tool:shellacsplice:clips */
-    shellacsplice:["dark_face","tv_room","cs_marketstreet","dh_bigband","pr_linotype"],
-    /* /genre-tool:shellacsplice:clips */
-    /* genre-tool:gourdscuttle:clips */
-    gourdscuttle:["mo_dance","mo_singalong","ca_street","cr_carousel","dh_marimba"],
-    /* /genre-tool:gourdscuttle:clips */
-    /* genre-tool:auroragallop:clips */
-    auroragallop:["ind_furnace","ind_molten","cs_manhatta","cs_liner","sp_lander","spacewalk","earth_orbit","tw_rails"],
-    /* /genre-tool:auroragallop:clips */
-    /* genre-tool:atticfanthrashsplice:clips */
-    atticfanthrashsplice:["dc_village","sun_riders","cs_marketstreet","bamboo","ns_rays","disc_sunset"],
-    /* /genre-tool:atticfanthrashsplice:clips */
-    /* genre-tool:obelisktrot:clips */
-    obelisktrot:["rainbow_rings","night_lights","sun_riders","pl_motorama","pl_worldsfair","dn_soundie","dn_schoolyard","dh_marimba","cr_wonderwheel"],
-    /* /genre-tool:obelisktrot:clips */
-    /* genre-tool:oakdublilt:clips */
-    oakdublilt:["tv_room","dc_village","ca_street","disc_sunset","bt_hootenanny","bt_folksinger","cs_liner","dn_soundie"],
-    /* /genre-tool:oakdublilt:clips */
-    /* genre-tool:duststrut:clips */
-    duststrut:["dark_face","tv_room","cs_marketstreet","wx_duststorm","ds_deserthighway"],
-    /* /genre-tool:duststrut:clips */
-    /* genre-tool:reedrush:clips */
-    reedrush:["rainbow_rings","cs_manhatta","disc_sunset","dh_marimba","cr_carousel"],
-    /* /genre-tool:reedrush:clips */
-    /* genre-tool:hearthsway:clips */
-    hearthsway:["earth_orbit","spacewalk","bamboo","green_nebula","disc_sunset","cs_liner","ns_waterfall","ns_hula","ns_rays"],
-    /* /genre-tool:hearthsway:clips */
-    /* genre-tool:graingroove:clips */
-    graingroove:["bamboo","tv_room","dc_village","nm_shoots","nm_roots"],
-    /* /genre-tool:graingroove:clips */
-    /* genre-tool:hvacbop:clips */
-    hvacbop:["rainbow_rings","night_lights","sun_riders","pl_motorama","pl_worldsfair","dn_soundie","dn_schoolyard","dh_bigband","cr_arcade"],
-    /* /genre-tool:hvacbop:clips */
-    /* genre-tool:moldcore:clips */
-    moldcore:["ind_furnace","ind_molten","cs_manhatta","cs_liner","sp_lander","spacewalk","earth_orbit","tw_rails"],
-    /* /genre-tool:moldcore:clips */
-    /* genre-tool:hydracore:clips */
-    hydracore:["dc_village","sun_riders","cs_marketstreet","bamboo","ns_rays","disc_sunset"],
-    /* /genre-tool:hydracore:clips */
-    /* genre-tool:ashfunk:clips */
-    ashfunk:["dc_village","sun_riders","cs_marketstreet","bamboo","ns_rays","disc_sunset"],
-    /* /genre-tool:ashfunk:clips */
-    /* genre-tool:steamdub:clips */
-    steamdub:["ind_furnace","ind_molten","cs_manhatta","cs_liner","sp_lander","spacewalk","earth_orbit","tw_rails"],
-    /* /genre-tool:steamdub:clips */
-    /* genre-tool:seraphswing:clips */
-    seraphswing:["mo_dance","mo_singalong","ca_street","dh_ballroom","dh_bigband"],
-    /* /genre-tool:seraphswing:clips */
-    /* genre-tool:androidlament:clips */
-    androidlament:["night_lines","dark_face","drive_bluehour","sp_eva","im_redroom","green_nebula","wx_fogghosts","ne_thunderbird"],
-    /* /genre-tool:androidlament:clips */
-    /* genre-tool:lasertemple:clips */
-    lasertemple:["sp_lander","night_lights","jm_axis","kaleido","pl_futurama","sp_eva","lb_atomman","ne_lunapark"],
-    /* /genre-tool:lasertemple:clips */
-    /* genre-tool:oscillatorminuet:clips */
-    oscillatorminuet:["im_paint","ab_fantasma","cmm_wireglobe","jm_dipole","lb_jars","pr_linotype"],
-    /* /genre-tool:oscillatorminuet:clips */
-    /* genre-tool:cometwhistle:clips */
-    cometwhistle:["earth_orbit","spacewalk","green_nebula","ns_waterfall","sp_lander"],
-    /* /genre-tool:cometwhistle:clips */
-    /* genre-tool:chromepiston:clips */
-    chromepiston:["night_lights","drive_taillights","pl_motorama","rainbow_rings","st_steelcurls","ne_thunderbird"],
-    /* /genre-tool:chromepiston:clips */
-    /* genre-tool:patchcordmirage:clips */
-    patchcordmirage:["night_lines","earth_orbit","sp_eva","green_nebula","drive_dusk","ds_deserthighway","lb_atomorbits"],
-    /* /genre-tool:patchcordmirage:clips */
-    /* genre-tool:velourregatta:clips */
-    velourregatta:["sun_riders","sharpest_city","night_lights","pl_dreamcar","ne_fremont","dh_marimba"],
-    /* /genre-tool:velourregatta:clips */
-    /* genre-tool:sorcerercape:clips */
-    sorcerercape:["kaleido","green_nebula","ab_balletmec","phuture_red","im_redroom","vo_firewall","wx_stormsky"],
-    /* /genre-tool:sorcerercape:clips */
-    /* genre-tool:crateflip:clips */
-    crateflip:["dark_face","tv_room","cs_marketstreet","blue_dinner","dh_trumpet","pr_linotype"],
-    /* /genre-tool:crateflip:clips */
-    /* genre-tool:lowglide:clips */
-    lowglide:["drive_taillights","sun_riders","night_lights","blue_dinner","pl_dreamcar","ds_deserthighway","ne_thunderbird"],
-    /* /genre-tool:lowglide:clips */
-    /* genre-tool:subrattle:clips */
-    subrattle:["dark_face","phuture_red","tv_room","wx_stormsky","st_pigiron"],
-    /* /genre-tool:subrattle:clips */
-    /* genre-tool:hollerknock:clips */
-    hollerknock:["dark_face","phuture_red","ind_molten","st_pigiron","wx_stormsky"],
-    /* /genre-tool:hollerknock:clips */
-    /* genre-tool:flannelburst:clips */
-    flannelburst:["ind_furnace","dark_face","tv_room","sn_buriedcars","wx_stormsky"],
-    /* /genre-tool:flannelburst:clips */
-    /* genre-tool:drywire:clips */
-    drywire:["ind_furnace","ind_molten","dark_face","cs_manhatta","st_steelcurls","pr_pressrun"],
-    /* /genre-tool:drywire:clips */
-    /* genre-tool:heartsprint:clips */
-    heartsprint:["ind_furnace","dn_schoolyard","cr_coaster","wx_bridgegallop"],
-    /* /genre-tool:heartsprint:clips */
-    /* genre-tool:bouffantbeat:clips */
-    bouffantbeat:["sun_riders","blue_dinner","dn_soundie","dn_schoolyard","tv_room","dh_bigband","cr_arcade"],
-    /* /genre-tool:bouffantbeat:clips */
-    /* genre-tool:chantcircuit:clips */
-    chantcircuit:["phuture_red","dark_face","pr_pressrun","cr_boardwalk"],
-    /* /genre-tool:chantcircuit:clips */
-    /* genre-tool:halogloss:clips */
-    halogloss:["rainbow_rings","sun_riders","night_lights","pl_motorama","ne_timessquare","dh_boogieband"],
-    /* /genre-tool:halogloss:clips */
-    /* genre-tool:octanerush:clips */
-    octanerush:["rainbow_rings","sun_riders","night_lights","pl_motorama","ne_thunderbird","cr_coaster"],
-    /* /genre-tool:octanerush:clips */
-    /* genre-tool:runwaystomp:clips */
-    runwaystomp:["night_lights","phuture_red","cs_manhatta","dh_boogieband","ne_broadway"],
-    /* /genre-tool:runwaystomp:clips */
-    // --- REPERTOIRE wave 3 (2026-07-10): the 42 anchors that had NO clip pool
-    // (journeys fell back to the vaporwave pool). Pools drawn from the new
-    // Prelinger fetch wave (wx_/vo_/sn_/cr_/ne_/ds_/dh_/nm_/st_/pr_/tx_/lb_ —
-    // tools/fetch-found-video.sh) + existing shelf, matched to each card.
-    wizardcape:["sp_eva","earth_orbit","kaleido","vo_firewall","sn_churchtower"],
-    meadowmellotron:["nm_orchid","nm_shoots","nm_hiveswarm","lw_valley","dc_alberta"],
-    hexagonstampede:["wx_bridgegallop","ind_furnace","tw_express","phuture_red","st_furnaceman"],
-    crimsoncourt:["im_redroom","dark_face","ab_balletmec","wx_stormsky","st_pigiron"],
-    moonlagoon:["ns_rays","green_nebula","ns_octopus","earth_orbit","sp_lander"],
-    sliderule:["lb_atomorbits","lb_jars","pr_linotype","ab_diagonale","pl_sage"],
-    crumpetwhirl:["pl_kitchen","nm_orchid","dn_soundie","blue_dinner"],
-    polygonforge:["st_steelcurls","st_pigiron","la_mesh1","cmm_gyrobox","ind_molten"],
-    moptoprattle:["dn_schoolyard","dh_ballroom","cr_coaster","ca_street","mo_singalong"],
-    meadowjangle:["nm_hiveswarm","dc_alberta","pl_lawns","dn_schoolyard","cr_surfbathers"],
-    strawberryfog:["nm_orchid","disc_sunset","bamboo","ab_fantasma","green_nebula"],
-    octopusminuet:["ns_octopus","ns_rays","ab_fantasma","blue_dinner"],
-    walrusfuzz:["dark_face","tv_room","ind_furnace","dh_boogieband"],
-    rooftopholler:["cs_manhatta","sn_buriedcars","cs_liner","tv_room"],
-    submarinelullaby:["ns_rays","ns_octopus","cs_liner","earth_orbit"],
-    tangerinearcade:["cgi_bird","kaleido","ne_timessquare","im_pixeltext","rainbow_rings"],
-    chalkvespers:["sn_churchtower","ns_rays","ab_fantasma","earth_orbit"],
-    salondawdle:["blue_dinner","pl_kitchen","ab_fantasma","sn_village"],
-    candlegauze:["nm_orchid","ns_waterfall","sn_churchtower","blue_dinner"],
-    cloisterloom:["tx_redloom","tx_spindles","ab_diagonale","sn_churchtower"],
-    miasmarow:["wx_fogghosts","nm_spiderweb","ab_fantasma","dark_face"],
-    greasepaintoompah:["dn_soundie","cr_boardwalk","ab_fantasma","tv_room"],
-    urchinmatinee:["dh_bigband","dh_trumpet","cr_boardwalk","dn_soundie","pl_worldsfair"],
-    marblefury:["wx_funnel","wx_stormsky","wx_surge","vo_firewall","wx_bridgefall"],
-    perukelotto:["im_paint","ab_fantasma","cmm_wireglobe","blue_dinner","pr_linotype"],
-    beakstampede:["lw_herd","lw_rampage","wx_funnel","ab_balletmec","vo_firewall"],
-    velvetconveyor:["dh_boogieband","dh_trumpet","tx_spindles","st_steelcurls","dn_soundie"],
-    talcumcasino:["dh_boogieband","dh_ballroom","ne_fremont","dn_schoolyard"],
-    capesnap:["dh_trumpet","dh_boogieband","ne_timessquare","cr_boardwalk"],
-    chromeufo:["ne_thunderbird","sp_lander","cgi_bird","green_nebula","kaleido"],
-    mirrorseven:["ne_broadway","dh_trumpet","kaleido","night_lights"],
-    sundialsyrup:["disc_sunset","blue_dinner","dh_trumpet","ns_hula"],
-    sequinfreight:["st_steelcurls","tx_spindles","ne_fremont","tw_rails","dh_boogieband"],
-    rollerlacquer:["dh_ballroom","ne_timessquare","cr_coaster","dn_schoolyard","kaleido"],
-    longshipwhip:["wx_surge","wx_wreckage","vo_firewall","wx_funnel"],
-    bogironwallow:["vo_lavariver","wx_duststorm","ind_molten","nm_spiderweb"],
-    barrowwake:["wx_fogghosts","sn_churchtower","dark_face","vo_ashplume"],
-    ravensquall:["sn_buriedcars","sn_village","wx_fogghosts","wx_stormsky","dc_rockies"],
-    runeromp:["dc_rockies","sn_village","lw_herd","wx_duststorm"],
-    meadhallbellow:["ind_furnace","wx_surge","sn_village","dark_face"],
-    valkyrieswoop:["wx_funnel","vo_firewall","earth_orbit","dc_rockies","sn_churchtower"],
-    permafrostveil:["sn_buriedcars","sn_churchtower","dc_rockies","wx_fogghosts","green_nebula"],
-    /* genre-tool:silkmist:clips */
-    silkmist:["bamboo","ns_waterfall","dc_village","nm_orchid","sun_riders"],
-    /* /genre-tool:silkmist:clips */
-    /* genre-tool:taqsim:clips */
-    taqsim:["dc_village","sun_riders","bamboo"],
-    /* /genre-tool:taqsim:clips */
-    /* genre-tool:vespers:clips */
-    vespers:["dc_village","earth_orbit"],
-    /* /genre-tool:vespers:clips */
-    /* genre-tool:rnb:clips */
-    rnb:["blue_dinner","dark_face","dh_trumpet"],
-    /* /genre-tool:rnb:clips */
-    /* genre-tool:gospel:clips */
-    gospel:["ca_canada","dh_bigband","dc_village"],
-    /* /genre-tool:gospel:clips */
-    /* genre-tool:altcountry:clips */
-    altcountry:["bt_folksinger","ca_street","dark_face"],
-    /* /genre-tool:altcountry:clips */
-    /* genre-tool:yachtrock:clips */
-    yachtrock:["cs_liner","disc_sunset","blue_dinner","dh_bigband"],
-    /* /genre-tool:yachtrock:clips */
-    /* genre-tool:honkytonk:clips */
-    honkytonk:["bt_folksinger","bt_hootenanny","ca_street"],
-    /* /genre-tool:honkytonk:clips */
-    /* genre-tool:countrypop:clips */
-    countrypop:["ca_street","bt_hootenanny","dc_skyline"],
-    /* /genre-tool:countrypop:clips */
-    /* genre-tool:folk:clips */
-    folk:["bt_folksinger","lw_valley","mo_pastoral"],
-    /* /genre-tool:folk:clips */
-    /* genre-tool:romanticism:clips */
-    romanticism:["earth_orbit","blue_dinner","spacewalk","dc_village","bamboo"],
-    /* /genre-tool:romanticism:clips */
-    /* genre-tool:chamber:clips */
-    chamber:["earth_orbit","dc_village","blue_dinner","bamboo","spacewalk"],
-    /* /genre-tool:chamber:clips */
-    /* genre-tool:impressionism:clips */
-    impressionism:["earth_orbit","spacewalk","blue_dinner","bamboo","dc_village"],
-    /* /genre-tool:impressionism:clips */
-    /* genre-tool:postminimal:clips */
-    postminimal:["earth_orbit","spacewalk","blue_dinner","dc_village","bamboo"],
-    /* /genre-tool:postminimal:clips */
-    /* genre-tool:symphony:clips */
-    symphony:["earth_orbit","spacewalk","dc_village","blue_dinner","bamboo"],
-    /* /genre-tool:symphony:clips */
-    /* genre-tool:punk:clips */
-    punk:["dc_village","spacewalk","earth_orbit","blue_dinner","bamboo"],
-    /* /genre-tool:punk:clips */
-    /* genre-tool:indie:clips */
-    indie:["dc_village","blue_dinner","earth_orbit","spacewalk","bamboo"],
-    /* /genre-tool:indie:clips */
-    /* genre-tool:grunge:clips */
-    grunge:["dc_village","spacewalk","blue_dinner","earth_orbit","bamboo"],
-    /* /genre-tool:grunge:clips */
-    /* genre-tool:postrock:clips */
-    postrock:["earth_orbit","spacewalk","blue_dinner","dc_village","bamboo"],
-    /* /genre-tool:postrock:clips */
-    /* genre-tool:cryptvespers:clips */
-    cryptvespers:["deep_face","dark_face","tv_room","night_lights","tw_window"],
-    /* /genre-tool:cryptvespers:clips */
-    /* genre-tool:nocturnesmash:clips */
-    nocturnesmash:["dark_face","phuture_red","green_nebula","ab_balletmec","tw_subway"],
-    /* /genre-tool:nocturnesmash:clips */
-    /* genre-tool:glacialgabber:clips */
-    glacialgabber:["earth_orbit","spacewalk","green_nebula","lw_plateau","dc_rockies"],
-    /* /genre-tool:glacialgabber:clips */
-    /* genre-tool:breakbop:clips */
-    breakbop:["dark_face","phuture_red","night_lines","green_nebula","tw_subway"],
-    /* /genre-tool:breakbop:clips */
-    /* genre-tool:atticlament:clips */
-    atticlament:["ind_furnace","ind_molten","cs_manhatta","cs_liner","sp_lander"],
-    /* /genre-tool:atticlament:clips */
-    /* genre-tool:hazebunker:clips */
-    hazebunker:["ind_furnace","ind_molten","phuture_red","ab_balletmec","tw_subway"],
-    /* /genre-tool:hazebunker:clips */
-    /* genre-tool:salsa:clips */
-    salsa:["ca_tide","dc_village","blue_dinner","spacewalk","bamboo"],
-    /* /genre-tool:salsa:clips */
-    /* genre-tool:samba:clips */
-    samba:["earth_orbit","spacewalk","blue_dinner","dc_village","bamboo"],
-    /* /genre-tool:samba:clips */
-    /* genre-tool:reggaeton:clips */
-    reggaeton:["earth_orbit","spacewalk","blue_dinner","dc_village","bamboo"],
-    /* /genre-tool:reggaeton:clips */
-    /* genre-tool:raga:clips */
-    raga:["earth_orbit","spacewalk","blue_dinner","dc_village","bamboo"],
-    /* /genre-tool:raga:clips */
-    /* genre-tool:celtic:clips */
-    celtic:["earth_orbit","spacewalk","blue_dinner","dc_village","bamboo"],
-    /* /genre-tool:celtic:clips */
-    /* genre-tool:trap:clips */
-    trap:["earth_orbit","spacewalk","blue_dinner","dc_village","bamboo"],
-    /* /genre-tool:trap:clips */
-    /* genre-tool:bigband:clips */
-    bigband:["earth_orbit","spacewalk","blue_dinner","dc_village","bamboo"],
-    /* /genre-tool:bigband:clips */
-    /* genre-tool:flamenco:clips */
-    flamenco:["earth_orbit","spacewalk","blue_dinner","dc_village","bamboo"],
-    /* /genre-tool:flamenco:clips */
-    /* genre-tool:ragtime:clips */
-    ragtime:["earth_orbit","spacewalk","blue_dinner","dc_village","bamboo"],
-    /* /genre-tool:ragtime:clips */
   };
 
   // ---------- DX7 patch registry (the genre-space thesis applied to INSTRUMENTS) ----------
@@ -9188,7 +8601,7 @@
     return state;
   }
 
-  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, SOURCE_POOLS, expandPools, GENRE_CLIPS, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), FORM_ENTRY, PERC_STYLES, PERC_STYLE_GENRES, PERC_ELEMENTS, resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly, deriveMind, registerFont, setFont, activeFont, fontList, instrFamily };
+  const api={ GENRES, SOURCES, SAMPLES, SAMPLERS, SOURCE_POOLS, expandPools, DX7_PATCHES, FORM_NAMES:Object.keys(FORMS), FORM_ENTRY, PERC_STYLES, PERC_STYLE_GENRES, PERC_ELEMENTS, resolve, resolveMulti, track, blend, mix, playlist, journey, applySampledOnly, deriveMind, registerFont, setFont, activeFont, fontList, instrFamily };
   if(isNode) module.exports=api; else root.GenreKernel=api;
 
   // ---------- CLI ----------
@@ -9389,7 +8802,7 @@
       console.log(`✓ ${dir}/: ${pl.length} tracks, ${(total/3600).toFixed(2)}h`);
       pl.forEach(t=>console.log(`  ${String(t.i+1).padStart(2)} ${t.from}→${t.to} t=${t.t} ${t.bpm}bpm key=${t.key} ${Math.round(t.seconds/60)}min ${t.meta.kit} ${t.meta.bass} ${t.meta.lead} ${t.meta.progression} ${t.meta.found} hits=${t.meta.hits}`));
       if(has("render")){
-        // full render -> DJ-mixed journey.mp3 + mix page (like journey, no video)
+        // full render -> DJ-mixed journey.mp3 + mix page (like journey)
         renderAndMix(dir, pl, pl.map(t=>path.join(dir,"track-"+String(t.i+1).padStart(2,"0"))));
         try{ execFileSync("node",[path.join(ROOT,"tools","make-mix-page.js"),dir],{stdio:"inherit"}); }catch(e){}
       } else {
@@ -9398,7 +8811,7 @@
       }
     } else if(cmd==="journey"){
       // the bridge: a drawn path (explorer "⤓ path" JSON) or genre names ->
-      // hours of tracks -> mp3s -> per-track video -> one long journey.mp3/.mp4 + mix page
+      // hours of tracks -> mp3s -> one long journey.mp3 + mix page
       const dashIx=args.findIndex(a=>a.startsWith("--"));
       const posArgs=args.slice(1,dashIx<0?undefined:dashIx);
       let ways, pathSeed=null;
@@ -9409,7 +8822,7 @@
         if(pj.seed!=null) pathSeed=pj.seed;
       } else {
         ways=posArgs;                                   // genre names, like playlist
-        if(ways.length<1){ console.error("usage: genre-kernel.js journey <path.json | genreA genreB ...> [--hours H --tracks N --out DIR --render --video --seed N]"); process.exit(1); }
+        if(ways.length<1){ console.error("usage: genre-kernel.js journey <path.json | genreA genreB ...> [--hours H --tracks N --out DIR --render --seed N]"); process.exit(1); }
       }
       const hours=+flag("hours",2);
       const seed=flag("seed",null)!=null?+flag("seed",1):(pathSeed!=null?pathSeed:42);
@@ -9426,21 +8839,11 @@
       if(has("render")){
         // per-track mp3s + one continuous DJ-mixed journey.mp3 (beat-aligned seams)
         renderAndMix(dir, pl, bases);
-      }
-      if(has("video")){
-        bases.forEach((b,i)=>{ console.log(`[video ${i+1}/${pl.length}]`);
-          execFileSync("node",[path.join(ROOT,"tools","render-sample-video.js"),"journey",b+".state.json",path.resolve(b+".mp4")],{stdio:["ignore","inherit","inherit"]}); });
-        const vlist=path.join(dir,"concat-video.txt");
-        fs.writeFileSync(vlist,bases.map(b=>`file '${path.resolve(b+".mp4")}'`).join("\n")+"\n");
-        execFileSync("ffmpeg",["-y","-v","error","-f","concat","-safe","0","-i",vlist,"-c","copy",path.join(dir,"journey.mp4")]);
-        console.log("✓ "+path.join(dir,"journey.mp4"));
-      }
-      // mix page LAST so it links whatever exists (track videos, journey.mp3/.mp4)
-      if(has("render")||has("video")){
+        // mix page LAST so it links whatever exists (journey.mp3, tracks)
         try{ execFileSync("node",[path.join(ROOT,"tools","make-mix-page.js"),dir],{stdio:"inherit"}); }catch(e){}
       }
     } else {
-      console.log("usage: genre-kernel.js anchors | track <genre> | blend <a> <b> <t> | playlist <a> <b> ... | journey <path.json|genres...> [--hours H --tracks N --out DIR --render --video]");
+      console.log("usage: genre-kernel.js anchors | track <genre> | blend <a> <b> <t> | playlist <a> <b> ... | journey <path.json|genres...> [--hours H --tracks N --out DIR --render]");
     }
   }
 })(typeof window!=="undefined"?window:globalThis);

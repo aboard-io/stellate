@@ -625,7 +625,7 @@ function spawnFor(genreOrWeights, seed) {
   backdrop = { group: new THREE.Object3D(), update() {} };
   backdrop.group.name = "backdrop-empty";
   scene.add(backdrop.group);
-  skyDome = makeSkyDome();       // wrap the found-video layer around the planet as its atmosphere
+  skyDome = makeSkyDome();       // wrap the demoscene canvas around the planet as its atmosphere
   scene.add(skyDome.mesh);
   // ship: empty group (kept only for the surface-scene lifecycle parity).
   ship = makeShip(traits, useSeed);
@@ -765,9 +765,8 @@ function countCasters() {
 // SKY DOME — wrap the visuals AROUND THE PLANET like a glowing atmosphere (Paul:
 // "mapped around the planet like its atmosphere"). A big BackSide sphere
 // concentric with the ground planet. It projects the WASM DEMOSCENE canvas
-// (DemoLayer, same-origin, generative — the primary source Paul asked for), and
-// falls back to the found-video's front <video> when no demo is running (LOCAL
-// clips only — a remote archive.org stream would taint the WebGL context).
+// (DemoLayer, same-origin, generative — the only source since the found-video
+// layer's 2026-07-25 removal; no demo running = no dome).
 // ADDITIVE + depth-tested so it reads as luminous atmosphere in the OPEN SKY only
 // — the depth test keeps it off the near band/planet (those are closer, so the
 // dome fails depth there) while it glows over the far stars. background.js's
@@ -787,32 +786,26 @@ function makeSkyDome() {
   mesh.renderOrder = 1;                    // after opaque: additive glow only in open-sky pixels
   mesh.visible = false;
   mesh.name = "sky-atmosphere";
-  let tex = null, texSrc = null, texKind = null;
+  let tex = null, texSrc = null;
   return {
     mesh,
     update(dt) {
       try {
-        // PREFER the demoscene canvas (generative, same-origin, always safe).
+        // the demoscene canvas (generative, same-origin, always safe).
         const D = window.DemoLayer;
         const demoCv = D && D.enabled && D.enabled() && D._canvas && D._canvas();
         const demoOk = !!(demoCv && demoCv.width > 0 && D._running && D._running());
-        // FALL BACK to the found-video front element (LOCAL clips only).
-        const V = window.VideoLayer;
-        const vEl = V && V._frontEl && V._frontEl();
-        const vOk = vEl && V._frontKind && V._frontKind() === "local" && vEl.videoWidth > 0 && vEl.readyState >= 2;
-        let src = null, kind = null;
-        if (demoOk) { src = demoCv; kind = "canvas"; }
-        else if (vOk) { src = vEl; kind = "video"; }
+        const src = demoOk ? demoCv : null;
         if (src) {
           if (src !== texSrc) {                 // (re)bind when the source changes
             if (tex) tex.dispose();
-            tex = kind === "video" ? new THREE.VideoTexture(src) : new THREE.CanvasTexture(src);
+            tex = new THREE.CanvasTexture(src);
             if (THREE.SRGBColorSpace) tex.colorSpace = THREE.SRGBColorSpace;
             tex.wrapS = THREE.RepeatWrapping;   // wrap the visuals around the dome
             mat.map = tex; mat.color.setHex(0xffffff); mat.needsUpdate = true;
-            texSrc = src; texKind = kind;
+            texSrc = src;
           }
-          if (texKind === "canvas" && tex) tex.needsUpdate = true;   // canvas: refresh each frame
+          if (tex) tex.needsUpdate = true;      // canvas: refresh each frame
           mesh.visible = true;
         } else {
           mesh.visible = false;
@@ -1991,7 +1984,7 @@ function frameSignature(gx, gy) {
   return { gx, gy, sig: Array.from(sig, (v) => +v.toFixed(4)) };
 }
 
-// debug / headless-probe hook (mirrors window.__X / window.__VIDEO).
+// debug / headless-probe hook (mirrors window.__X).
 window.__STARCRUISE = { start, stop, toggle, update, isRunning, getTravel, getBeat, running: false,
   canvas: () => displayCanvas, band: () => band, loaded: () => loaded, sampleLowRes, frameSignature,
   hasThree: () => !!(THREE && THREE.WebGLRenderer),

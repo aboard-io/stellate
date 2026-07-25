@@ -249,6 +249,11 @@ sources in `engine/genre-kernel.js`, and re-render.
 
 # Found-video sources & attribution
 
+> **REMOVED 2026-07-25:** the laserdisc video layer was removed from the app —
+> clips are no longer fetched or played; the recipes, catalog, and layer code
+> are preserved on branch `legacy-download-video`. The sections below stay as
+> the attribution ledger for the era the layer shipped.
+
 The background video layer (`video-layer.js`) plays short clips from **LaserDisc
 rips on the Internet Archive**. Since 2026-07 the LIVE layer **streams** them
 straight from archive.org (no pre-bake): the committed source is

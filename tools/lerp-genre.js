@@ -67,12 +67,9 @@ function main() {
   // it). Keep the blended vol/cutoff FEEL but pin sources to the known-safe set.
   if (anchor.found) { anchor.found = Object.assign({}, anchor.found, { role: "bed", sources: ["iriomote", "tokyo_station"] }); }
   if (anchor.hits) { anchor.hits = { sources: ["sp_herenow"], pattern: "sparse", prob: Math.min(0.12, (anchor.hits.prob || 0.03)) }; }
-  // clips: prefer A's (a real GENRE_CLIPS set), fall back to B's
-  const clips = (K.GENRE_CLIPS && (K.GENRE_CLIPS[A] || K.GENRE_CLIPS[B])) || [];
   const spec = {
     name, label: label || name,
     info: info || `invented genre — a lerp (t=${t}) between ${A} and ${B}`,
-    clips: clips.slice(0, 5),
     anchor,
     verify: { seeds: 6, widen: 0.12, features: { acoustic: 3, bpm: 2, drumDensity: 3, wash: 2, motion: 2, seventh: 2, rubato: 1, humanize: 1 } },
   };

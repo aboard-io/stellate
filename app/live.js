@@ -5,7 +5,7 @@
 // (FAUST-PORT.md phase 3; the csound WASM path lives on branch legacy-csound).
 import { S, set, K, E, QSFLAGS } from "./state.js";
 import { retarget, rebuildQueue, travelStep, glideStep } from "./targeting.js";
-import { vidReset, genreVideo, bgBarTick } from "./background.js";
+import { bgBarTick } from "./background.js";
 import { scheduleBarNotes, clearNoteTimers } from "./inside.js";
 import { urlTick, travelForBar, pointOnPath } from "./share.js";   // the bookmarkable measure: per-bar URL refresh + measure->path math
 
@@ -232,7 +232,6 @@ export async function goLive(){
       set({travel:tv, queue:[], barCount:sb});
       retarget(sb>0?pointOnPath(tv):{x:S.waypoints[0].x, y:S.waypoints[0].y});
     }
-    vidReset();   // fresh shuffled video bag per play session — different clip order every time
     set({live:true,barCount:S.startBar||0,holdUntil:{}}); rebuildQueue();   // fresh instrument-hold timers per session; barCount continues from the drop-in measure
     if(CLICKTEST) ctN=0;   // first PLAYED bar is n=0 (the seed calls above advanced it)
     let getState=CLICKTEST?(()=>clickTestState()):(()=>S.playing);
@@ -246,9 +245,7 @@ export async function goLive(){
       scheduleBarNotes(info);   // fire DemoLayer.note(ev) at each note onset (no-op unless the demoscene layer is on)
       if(S.waypoints.length>=2) travelStep();
       glideStep();
-      bgBarTick(info);   // video↔demo 8-measure alternation (mode 1, live only) — BEFORE genreVideo so a flip back to footage shows its fresh clip on this same beat
-      genreVideo(info);
-      if(window.VideoLayer&&VideoLayer.pulse)VideoLayer.pulse(info);   // ALIEN BROADCAST: musical hook (section/downbeat-aligned chaos)
+      bgBarTick(info);   // demoscene 8-measure cart rotation (live only), cut on the beat
       if(window.DemoLayer&&DemoLayer.pulse)DemoLayer.pulse(info);      // demoscene: surge the effect's clock on the bar
       updateMediaSession();   // reflect the current genre/blend on the lock screen (updates across a swap)
     }});

@@ -31,7 +31,9 @@ echo "== media manifest (local) =="
 # found/midi/ excluded (2026-07-16): the MIDI trove must never deploy
 # (SOURCES.md "never redistributed") — it lives on the external drive now;
 # this exclusion is the belt in case a fetch ever lands there again.
-find found -type f ! -name '*.ogg' ! -name '*.json' ! -name 'tw_vocal.mp3' ! -path 'found/video/lib/*' ! -path 'found/midi/*' \
+# found/video/ excluded (2026-07-25): the laserdisc video layer was removed
+# (legacy-download-video) — any locally cached clips must not deploy.
+find found -type f ! -name '*.ogg' ! -name '*.json' ! -name 'tw_vocal.mp3' ! -path 'found/video/*' ! -path 'found/midi/*' \
   -print0 | sort -z | xargs -0 sha256sum > /tmp/MEDIA_MANIFEST.new
 
 echo "== immutable invariant check against deployed manifest =="
@@ -60,7 +62,7 @@ rsync -a --delete --delay-updates --info=stats1 \
   --exclude '/*.mp3' --exclude '/*.wav' --exclude '/*.state.json' \
   --exclude 'found/midi/' \
   --exclude 'found/*.ogg' \
-  --exclude 'found/video/lib/' \
+  --exclude 'found/video/' \
   --exclude 'models/' \
   --exclude 'scratch/' \
   --exclude '.venv-verify/' \

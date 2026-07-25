@@ -1,6 +1,6 @@
 // main.js — the app entry. Loaded by index.html as <script type="module">, it
 // runs AFTER the classic engine scripts (window.CsdEngine / GenreKernel /
-// FaustStateEngine / FaustLive / VideoLayer / DemoLayer / NameBank) and the DOM
+// FaustStateEngine / FaustLive / DemoLayer / NameBank) and the DOM
 // are ready. Importing the feature modules wires their event listeners, store
 // subs and window.__ debug hooks; this file assembles window.__X and runs the
 // one-shot boot sequence (layout → default loop → centre → first score → tickers).
@@ -11,12 +11,10 @@ import { clampZoom, zoomAround, seedDefaultLoop, insertWaypoint, computeGenreLay
 import { renderInside } from "./inside.js";
 import { goLive, stopLive, faustHandle } from "./live.js";
 import { playheadTick } from "./readouts.js";
-import "./background.js";   // side effects: video/demoscene chip + alternation + subs.push(applyBg)
+import "./background.js";   // side effects: demoscene chip + cart rotation + subs.push(applyBg)
 import "./panels.js";       // side effects: control panel + chips/modals + store render subs
 import { applyUrlState, buildShareUrl, paceSpeed, loopBars } from "./share.js";   // the bookmarkable mix (seed+path+measure in the query string) + constant-pace travel
 import { loadFonts } from "./fonts.js";   // the soundfont switcher: register + apply the saved font
-import { walkLoop, walkLoopSummary, buildLoopMidi } from "./journey.js";   // offline whole-path walk + MIDI (export foundation)
-window.__JOURNEY={ walkLoop:(...a)=>walkLoop(...a), summary:(...a)=>walkLoopSummary(...a), buildLoopMidi:(...a)=>buildLoopMidi(...a) };
 import { registerSW, precacheSoon } from "./precache.js";    // offline-where-possible + route-ahead sample warming
 
 window.__X={retarget:(...a)=>retarget(...a), goLive:(...a)=>goLive(...a), stopLive:(...a)=>stopLive(...a), weightsAt:(...a)=>weightsAt(...a),
@@ -54,7 +52,6 @@ function boot(){
       if(p&&p.params) K.DX7_PATCHES[name]={algorithm:p.alg, params:p.params};
     forceRetarget();
   }).catch(()=>{});
-  if(window.VideoLayer)VideoLayer.init().then(()=>set({}));   // found-video background (genre-affine, follows the mix)
   if(window.DemoLayer)DemoLayer.init().then(()=>set({}));     // MicroW8 demoscene background (off until toggled)
   registerSW(); precacheSoon();   // offline-where-possible: the SW caches by class; warm the route's samples ahead of the traveler
   // re-warm on path/seed changes (the sub fires on every store write; precacheSoon

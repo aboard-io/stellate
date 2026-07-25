@@ -9,9 +9,6 @@
 # never streams archive.org for anything already downloaded). Small, committed;
 # the found/*.wav it points at stay ignored (regenerable: ../fetch-found-*.sh).
 !found-manifest.json
-# EXCEPTION: the live-video stream catalog is SOURCE (cue windows + genre tags
-# into remote archive.org files), committed like clips is derived. The local
-# found/video/*.mp4 clips stay ignored — they're a regenerable cache / fallback.
-!video/
-video/*
-!video/stream-catalog.json
+# (the live-video stream catalog + found/video/ exceptions lived here until
+# 2026-07-25 — the laserdisc video layer was removed; recipe + catalog are
+# preserved on branch legacy-download-video)

@@ -14,6 +14,14 @@ ever outgrows the droplet allowance (§6). Facts backing every claim:
 `scratchpad/facts-media.md` + `scratchpad/facts-hosting.md` (2026-07-09), or
 `file:line` in this tree.
 
+> **2026-07-25:** the laserdisc found-video layer (`engine/video-layer.js`,
+> `found/video/`, the `<video>` no-cors streaming tier) was **removed from the
+> app** — preserved on branch `legacy-download-video`. Every video-specific
+> passage below (no-cors `<video>` loads, `stream-catalog.json` bases, the
+> found/video payload rows, `deploy-stellate.sh` video excludes) is
+> point-in-time record of the era the layer shipped, not current behavior;
+> `found/video/` no longer deploys at all.
+
 ---
 
 ## 1. Requirements: cross-origin isolation, and what it does to media

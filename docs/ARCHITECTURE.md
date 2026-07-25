@@ -31,8 +31,8 @@ layout; this doc is the wiring diagram between files.
   │             │  -worker (browser)│                       │
   └─────────────┴──────────────────┴───────────────────────┘
             │
-            ▼        (also: engine/midi-export.js → Standard MIDI File,
-   audio out          straight off the same buildEvents walk)
+            ▼
+   audio out
 ```
 
 ## The stages
@@ -77,13 +77,11 @@ live so the mix is the same.
 - **PRESS** (`engine/faust/press.js`, node) — full-length offline "pressing" of
   a state: the same `dist/` modules via faustwasm OFFLINE processors, plus the
   native found-sound layer mixed as PCM in JS (`found-player.js mixPCM`). The
-  in-browser press reuses the same core via `engine/faust/stream-worker.js`
-  (`renderWav` / `renderLoop`) for ⤓ wav/mp3 (see `docs/EXPORT.md`).
+  browser reuses the same core via `engine/faust/stream-worker.js` (`renderWav`,
+  the background-WAV survival producer).
 - **WAV-FIRST** (mobile) — pocket-proof iOS/mobile audio: rolling WAV segments
   played through a real `<audio>` element (no live graph). See
   `docs/history/WAV-FIRST.md`.
-- **MIDI** (`engine/midi-export.js`) — `buildMidi(state)` emits a type-1 SMF
-  from the same `buildEvents` walk (⤓ midi).
 
 ### The verifier (a parallel, offline coordinate system)
 `engine/genre-verifier.js` extracts a **23-symbolic-feature** vector from
@@ -114,7 +112,7 @@ genre-intelligence tooling built on top of it).
 ```
 engine/theory.js → engine/pipes.js → engine/csd-engine.js →
 engine/genre-kernel.js → engine/genre-verifier.js → engine/namebank.js →
-engine/midi-export.js → engine/speech.js → engine/video-layer.js →
+engine/speech.js →
 engine/demo-layer.js → engine/faust/state-engine.js →
 engine/faust/found-player.js → engine/faust/sampler.js →
 engine/faust/live.js → app/main.js  (ES-module entry for the app/ tree)
@@ -128,5 +126,4 @@ wrapper, so the same files run under Node (`require`) for the CLI and gates.
 - `docs/KERNEL-MAP.md` — inside the kernel.
 - `docs/ADDING-A-GENRE.md` — add an anchor without breaking the laws.
 - `docs/INVARIANTS.md` — what is *proven* about the blend algebra.
-- `docs/EXPORT.md` / `docs/VIDEO-EXPORT.md` — the download/capture paths.
 - `engine/faust/VOICES.md` — the recipe→param voice mappings (stage 3 detail).

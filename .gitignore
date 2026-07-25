@@ -12,7 +12,7 @@
 # Claude Code session state — never committed, never deployed
 .claude/
 
-# found-video clips are DERIVED via fetch-found-video.sh — never committed
+# rendered/cached video artifacts are never committed (the media guard's law)
 *.mp4
 *.webm
 

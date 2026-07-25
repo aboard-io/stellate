@@ -34,13 +34,13 @@ against `git log` + code:
 | C.2 settings visual cleanup | **open** | no commit; small front-end pass |
 | D.1 register-aware voicing | **shipped** (a13703e), taste-gated | verify it covers *all* voices, not just samplers (spec asked for all) |
 | D.2 harmonic richness | **partial** (2d8dcdc), taste-gated | applied dominants only; borrowed/chromatic-mediant + 9/11/13 extensions still open → track as **D.3** |
-| E offline video (ffmpeg.wasm) | **open** (the big build) | only a realtime MediaRecorder webm v1 shipped; the offline mux is untouched |
+| E offline video (ffmpeg.wasm) | **retired 2026-07-25** | the whole video/export surface left main (legacy-download-video) |
 | F.1 iOS pinch | **blocked** | needs a real device |
 | F.2 reedrush kick | **shipped** best-guess, ear-gated | |
 | F.3 async audio export walk | **shipped** (19f44d1) | residual: `loopBars` still caps at 2048 |
 | LFB live-feedback backlog | **in progress** | intl genres, GM variety (done), per-genre descriptions, node coloring, sample sourcing — where recent momentum actually went |
 
-**Genuinely open work:** A.3, C.2, **D.3** (harmonic extensions), **E** (offline video),
+**Genuinely open work:** A.3, C.2, **D.3** (harmonic extensions),
 F.1/F.2 confirmations, the LFB items — plus the two new programs this plan adds
 (Workstream 1 genre-intelligence, Workstream 3 modularization).
 
@@ -246,75 +246,15 @@ times. All are offline gates/tools; none touch renders.
 
 ---
 
-## Workstream 2 — Video export: harden the live path, then build the offline path
+## Workstream 2 — Video export [RETIRED 2026-07-25]
 
-Two paths: the **shipped** realtime browser capture (`app/video-export.js`,
-MediaRecorder → webm) and the **planned** offline whole-loop render (NEXT.md item E,
-ffmpeg.wasm). The realtime fix (53c5198) is sound for the desktop-foreground case but
-has concrete gaps. Fix these **before** the big E build.
-
-### 2.1 — Correctness fixes (do first)
-1. **HIGH — silent canvas taint on cross-origin clips.** `VideoLayer.candidates()`
-   (`engine/video-layer.js:959`) still emits remote archive.org sources, and `<video>`
-   elements have no `crossOrigin`, so `cx.drawImage(vel,…)` (`app/video-export.js:79`)
-   **silently taints the canvas without throwing** — the surrounding try/catch never
-   fires, and `captureStream` then yields the exact broken/near-static webm the fix was
-   meant to kill. The header comment claiming taint "is caught and skipped" is **false**.
-   **Fix:** restrict the export take to **local candidates only** (expose
-   `candidate.kind`, skip `drawImage` unless local), and/or probe taint via a 1×1
-   `getImageData` after the first draw and drop the video layer if it throws. Fix the
-   comment. *(M)*
-2. **HIGH — background-tab throttling.** The claim that `setInterval`-driven
-   `captureStream(0)`+`requestFrame` is "immune to throttling" is wrong: hidden tabs clamp
-   `setInterval` to ≥1s **and** `DemoLayer` stops its RAF on `visibilitychange`
-   (`engine/demo-layer.js:350`). Backgrounding mid-take → ~1fps frozen video. **Fix:**
-   drive compositing from an OffscreenCanvas in a worker, or refuse/pause recording when
-   `document.hidden` with an explicit "keep this tab foreground" warning. Drop the false
-   comment. *(M)*
-3. **HIGH — no iOS/mobile guard.** `canvas.captureStream`/`requestFrame` are
-   unsupported/partial on iOS, and the mobile audio route is a real `<audio>` element (no
-   live-graph `msDest`), so `recordVideo()` fails or emits a broken/silent blob. **Fix:**
-   feature-detect (`typeof HTMLCanvasElement.prototype.captureStream === 'function'` +
-   a working audio track) and disable/hide ⏺ on unsupported devices with a clear message.
-   *(S)*
-4. **MEDIUM — container/extension mismatch.** `pickMime()` may return `video/mp4`
-   (Safari) but the download is hard-coded `.webm` and the Blob defaults to
-   `video/webm`. **Fix:** derive extension + Blob type from `rec.mimeType`. *(S)*
-
-### 2.2 — Robustness / smaller fixes
-5. **MEDIUM — unbounded chunk buffering.** All slices held in `chunks[]` for the whole
-   10-min-capped take → OOM risk; the "hour of video" ambition is unreachable here.
-   **Fix:** stream via File System Access API (`showSaveFilePicker` writable), or lower
-   the cap on constrained devices; reserve hour-scale for the server-side node render. *(M)*
-6. **MEDIUM — video is non-deterministic per seed** (Math.random bursts/clip offsets,
-   timing jitter) — unlike the byte-identical audio law, and unlike the node offline path
-   which *is* seeded. **Fix:** document that browser capture is a live performance, not a
-   reproducible render; give the offline path a seeded RNG so video matches audio's
-   guarantee. *(S doc / part of E)*
-7. **LOW** — wrap the `captureStream` setup in try/catch that calls `cleanup()` (or it
-   leaks the hidden canvas + leaves layers force-enabled); disconnect the desktop audio
-   tap (`live.js` `_capDest`) on cleanup; possible A/V drift on long main-thread takes.
-
-### 2.3 — Test hardening (this is how the 1-frame regression shipped green)
-8. **MEDIUM — the CI probe skips all assertions when MediaRecorder is absent** (headless),
-   so this path is effectively unguarded. **Fix:** run `test/video-export-probe.js` in a
-   headful-capable Chromium and **hard-fail** if MediaRecorder is missing; add a **taint
-   regression case** (composite a cross-origin clip, assert the exporter degrades to a
-   non-empty, non-static, demo-only file); assert container/extension match. *(M)*
-
-### 2.4 — The offline path (NEXT.md item E, the largest build) · effort XL, multi-session
-Frame-step `DemoLayer.renderFrame(dt)` off the clock (de-risked — it is steppable) +
-deterministic local clip seeks + composite per frame → faster-than-realtime capture →
-**ffmpeg.wasm** mux with the whole-loop WAV. **Before committing to ffmpeg.wasm, resolve
-these:**
-- **SharedArrayBuffer needs COOP/COEP cross-origin isolation**, which the site does not
-  set — and enabling it **breaks the cross-origin archive.org `<video>` streams**. Scope
-  any header change so it doesn't break streaming (or go local-clip-only under isolation).
-- **x264/mp4 ffmpeg.wasm builds are GPL**; distributing muxed mp4 imposes GPL on the
-  combined work. Prefer an **LGPL VP9/webm-only build**, and do x264/mp4 muxing
-  **server-side** in the existing `tools/render-sample-video.js` (node + ffmpeg) pipeline.
-- **Vendor** ffmpeg.wasm (~30MB) rather than CDN-fetch (availability + perf).
-See `docs/HOSTING.md` (COOP/COEP) and `SOURCES.md` (distributed-artifact media tiers).
+> The entire download/export surface (⤓ midi/wav/mp3, the ⏺ video capture,
+> `app/video-export.js`, `app/export.js`, `engine/midi-export.js`) and the
+> laserdisc found-video layer (`engine/video-layer.js`, `tools/render-sample-video.js`,
+> `tools/fetch-found-video*.sh`, `tools/cut-lib-clips.sh`) were REMOVED from main —
+> everything is preserved working on branch `legacy-download-video`. The items that
+> lived in this workstream (canvas taint, background-tab throttling, iOS guards,
+> the ffmpeg.wasm offline path) are moot on main.
 
 ---
 
@@ -397,6 +337,7 @@ single computed value (or a generated snippet) to stop the recurring drift. *Lea
   files are under `engine/` — prefix the commands. (partly already correct; verify)
 - `docs/EXPORT.md` says browser video "does not exist at all" — **false** (video-export.js
   shipped); add the whole-loop **audio** export section too (undocumented).
+  *(EXPORT.md and the export paths themselves were removed 2026-07-25 — legacy-download-video.)*
 - Move completed migration docs to `docs/history/`: `docs/FAUST-PORT.md` (Faust is the
   sole backend) and `genre-specs/MATERIALS.md` (a completed work order referencing the
   deleted `explorer.html`).
@@ -411,6 +352,7 @@ single computed value (or a generated snippet) to stop the recurring drift. *Lea
   `deriveMind`/`MIND_OVERRIDES` → re-baking `app/world.js` POS.
 - **`docs/GENRE-SPEC-SCHEMA.md`** — the `genre-specs/*.json` schema reference.
 - **`docs/VIDEO-EXPORT.md`** — the shipped ⏺ live capture + the planned offline path.
+  *(removed 2026-07-25 with the video-export feature — legacy-download-video)*
 - **`docs/GENRE-VECTORS.md`** — the Workstream 1 program (this section, expanded), so the
   genre-intelligence layer has a home doc as it's built.
 
@@ -423,14 +365,12 @@ single computed value (or a generated snippet) to stop the recurring drift. *Lea
   (`deploy-stellate.sh` rsyncs the whole tree; `scratch/` is the only folder both
   gitignored **and** rsync-excluded). Fixed a real deploy-bloat leak; zero references, no
   breakage.
-- **Optional, needs 1 edit:** `night-drive-preset.json` is tracked but write-only
-  (`tools/render-sample-video.js:248` writes it, nothing reads it). To relocate: edit
-  `render-sample-video.js:55` `presetJson` to `examples/night-drive-preset.json`, then
-  `git mv`. Low value — leave it unless doing a broader tools pass.
+- **[DONE 2026-07-25]** `night-drive-preset.json` was write-only output of the removed
+  `tools/render-sample-video.js` — deleted along with the video pipeline.
 - **Leave at root** (all referenced by served/gated paths): `index.html`, `sw.js`,
   `access.html`, `how.html`, `serve.sh`, `verify.sh`, the standard project docs, and the
   repo-root-anchored `audio-verifier.py`/`sing.py` (companions of `.venv-*`, referenced
-  by `genre-kernel.js`/`validate-genres.js`/`render-sample-video.js`).
+  by `genre-kernel.js`/`validate-genres.js`).
 - **.gitignore:** add `.DS_Store`; optionally `/night-drive-preset.json` if not relocated.
 
 ---

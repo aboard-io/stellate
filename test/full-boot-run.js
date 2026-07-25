@@ -13,7 +13,7 @@
 //   - ZERO console/page errors (capturePageErrors)
 //   - window.GenreKernel + window.__S + window.__STARCRUISE are defined
 //   - the ✦ view chip is present (aliens is now a VIEW, not a separate 🛸 chip)
-//   - 3 chips in #chips (play / view / cfg)
+//   - 4 chips in #chips (play / view / bg / cfg)
 //   - the starmap rendered (an svg/canvas exists)
 // Exits nonzero on ANY failure.
 //
@@ -67,7 +67,7 @@ const PORT = 8795;
     if (r.__STARCRUISE === "undefined") fails.push("window.__STARCRUISE not defined");
     if (!r.viewChip) fails.push("#viewChip (the ✦ view cycle) missing");
     if (!r.starcruise) fails.push("window.__STARCRUISE (aliens view controller) missing");
-    if (r.chips !== 3) fails.push("expected 3 chips in #chips (play/view/cfg), got " + r.chips);
+    if (r.chips !== 4) fails.push("expected 4 chips in #chips (play/view/bg/cfg), got " + r.chips);
     if (r.starmapEls < 1) fails.push("starmap did not render (no svg/canvas/#map/.star)");
   }
 

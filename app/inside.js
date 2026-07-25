@@ -155,8 +155,14 @@ function feelAxes(st){
   const dust=clamp01((st.crackle||0)/0.8);
   // FEEL: how human the timing is (humanize; swing is its own axis)
   const feelAx=clamp01((st.humanize||0)/0.6);
-  const axes=[["tempo",tempo],["swing",swing],["feel",feelAx],["bright",bright],["space",space],
-    ["dust",dust],["drive",drive],["density",density]];
+  // RUBATO: the breathing — state.rubato beat-warp depth (0.045 = the deepest
+  // neoclassical setting), weighted by prob where the blend still carries one.
+  // Visibility wave 2026-07-25: it was the most FELT invisible axis.
+  const rb=st.rubato||null;
+  const rbDepth=rb?(Array.isArray(rb.depth)?(((+rb.depth[0]||0)+(+rb.depth[1]||0))/2):(+rb.depth||0)):0;
+  const rubato=clamp01((rbDepth/0.045)*(rb&&rb.prob!=null?clamp01(+rb.prob||0):1));
+  const axes=[["tempo",tempo],["swing",swing],["feel",feelAx],["rubato",rubato],["bright",bright],
+    ["space",space],["dust",dust],["drive",drive],["density",density]];
   // the MUSIC-MIND axes join the SAME radar (Paul 2026-07-10: "why are adventure
   // color motion different than the other vectors" — they aren't, anymore).
   // num1 handles the range-shaped fields exactly as mindData does.
@@ -510,7 +516,10 @@ export function vizData(){
   const timeline={cbeats:bar.cbeats, view:VIEW, pages:Math.max(1,Math.ceil(bar.cbeats/VIEW)),
     spb:bar.spb, bpm:bar.bpm, lanes:timelineLanes(st, roster, found, bar, auditSilent), audit:auditSilent};
   let graph=null; try{ graph=graphData(st, U, bar); }catch(e){}
-  return {blend, feel:feelAxes(st), roster, found, info, master:masterFx(st), timeline, graph, mind:mindData(st)};
+  // meter badge (visibility wave 2026-07-25): always shown — the timeline's
+  // 8-cell fold visually erases a waltz grid, so the meter must say itself.
+  const meter=st.meter?`${st.meter.beats}/${st.meter.unit}`:"4/4";
+  return {blend, feel:feelAxes(st), roster, found, info, master:masterFx(st), timeline, graph, mind:mindData(st), meter};
 }
 // ---------- MIND: the MUSIC-MIND axes the state actually carries ----------
 // state.theory (adventure/color/voicing — the harmony brain), state.pipes (the
@@ -526,7 +535,10 @@ function mindData(st){
   const pipes=[]; for(const p of (st.pipes||[])){ const n=PIPE_CHAR[p.id]||titleCase(p.id).toLowerCase(); if(!pipes.includes(n)) pipes.push(n); }
   if(!th&&!pipes.length&&cx<=0) return null;
   return { adventure:th?num1(th.adventure):0, color:th?num1(th.color):0, complexity:cx,
-    voicing:th?String(th.voicing||""):"", pipes };
+    voicing:th?String(th.voicing||""):"", pipes,
+    // visibility wave 2026-07-25: the TABLES LAW and the reharm walk were the
+    // biggest hidden switches (201/274 genres ride corpus tables) — surface both.
+    reharm:!!(th&&th.reharm), tables:th?String(th.tables||"hand"):"" };
 }
 window.__VIZ={ data:()=>vizData() };   // headless gate: read the live viz content
 // ---------- note feed → the demoscene layer ----------
@@ -744,6 +756,11 @@ export function renderInside(){
   // 2026-07-10: no numeric readouts, one unified vector display).
   const mv=[]; if(d.mind&&d.mind.voicing) mv.push(`voicing <b>${esc(d.mind.voicing)}</b>`);
   if(d.mind&&d.mind.pipes.length) mv.push(`moves <b>${d.mind.pipes.map(esc).join(" · ")}</b>`);
+  // harmony provenance (visibility wave 2026-07-25): reharm walk + which tables
+  if(d.mind&&(d.mind.reharm||d.mind.tables)){ const hm=[];
+    if(d.mind.reharm) hm.push("reharm");
+    if(d.mind.tables) hm.push(esc(d.mind.tables)+" tables");
+    mv.push(`harmony <b>${hm.join(" · ")}</b>`); }
   const moves=mv.length?`<div class="vz-mmoves">${mv.join(" &nbsp; ")}</div>`:"";
   // transition hardening: a timeline hiccup must never blank the whole panel —
   // blend/feel still render; the roll announces itself instead of dying.
@@ -755,7 +772,7 @@ export function renderInside(){
     `<div class="vz-sec"><div class="vz-lbl">blend — the genres in this mix</div>`+
       `<div class="vz-bar">${seg}</div><div class="vz-leg">${legend}</div>`+
       (d.info?`<div class="vz-info">${esc(d.info)}</div>`:"")+`</div>`+
-    `<div class="vz-sec">${radarSVG(d.feel)}${moves}</div>`+
+    `<div class="vz-sec"><span class="vz-meter" title="meter — beats per bar / beat unit">${esc(d.meter||"4/4")}</span>${radarSVG(d.feel)}${moves}</div>`+
     `<div class="vz-sec">${tlHtml}</div>`+
     graphHtml;
   // arm the playhead ticker only when it has work (live + modal open); it stops itself.

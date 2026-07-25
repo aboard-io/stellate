@@ -132,6 +132,9 @@
   .vz-mrow b{flex:0 0 26px;text-align:right;color:var(--mint);font-weight:400}
   .vz-mmoves{font:14px VT323,monospace;color:var(--dim);margin-top:.12rem;line-height:1.45}
   .vz-mmoves b{color:var(--cyan);font-weight:400}
+  /* the meter badge (visibility wave 2026-07-25) — floats over the radar corner */
+  .vz-meter{float:right;font:16px VT323,monospace;letter-spacing:.1em;color:var(--cyan);
+    border:1px solid var(--cyan);border-radius:4px;padding:.05rem .45rem;opacity:.85}
   .vz-in{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;font:16px VT323,monospace;margin:.16rem 0}
   .vz-ir{flex:0 0 46px;color:var(--dim);text-transform:uppercase;font-size:11px;letter-spacing:.1em}
   .vz-inm{color:var(--pink)}

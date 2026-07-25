@@ -1,7 +1,13 @@
 // midi-export.js — Standard MIDI File (type 1) from the same buildEvents() the
-// Csound path uses, so the MIDI matches what you hear (minus the found sound,
+// audio path uses, so the MIDI matches what you hear (minus the found sound,
 // which is audio, not notes). Tracks: Pads (ch1), Bass (ch2), Melody (ch3),
 // Drums (ch10, GM percussion). buildMidi(state) -> Uint8Array.
+//
+// NODE-SIDE ONLY since 2026-07-25: the in-app ⤓ midi download was removed
+// (branch legacy-download-video) and index.html no longer loads this file.
+// It stays because the MIDI-corpus gates depend on it as the reference SMF
+// WRITER: test/midi-mine.test.js round-trips the mine-midi parser against it,
+// and test/corpus-db.test.js builds fixture SMFs with it.
 
 (function (root) {
   "use strict";

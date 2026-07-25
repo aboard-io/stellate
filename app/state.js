@@ -21,9 +21,9 @@ export const S={ cursor:{x:MAP_CENTER.x,y:MAP_CENTER.y}, waypoints:[], travel:{s
   target:null, playing:null, queue:[], holdUntil:{}, barCount:0, barInfo:null, live:false, masterVol:_masterVol, vapor:_vapor, soundfont:_soundfont,
   seed:Math.floor(Math.random()*99999)+1, modeLock:"auto", pace:BARS_PER_SEG, durMult:1, more:false, load:1, eco:0, scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
   pool:"", beatLine:"▶ press LIVE",
-  // THE THREE VIEWS (Paul 2026-07-10): star map / video / viz are exclusive
-  // 100% views. vizView=true shows the full-screen viz (map + video off);
-  // otherwise bgMode>0 (background.js) = the video view (map off); else the map.
+  // THE EXCLUSIVE VIEWS (Paul 2026-07-10): star map / viz (+ the 3D star-cruise).
+  // vizView=true shows the full-screen viz (map off; background suppressed via
+  // background.js applyBg); else the map.
   vizView:false,
   // ±BPM DELTA (Paul 2026-07-10): a global offset on whatever plays, re-applied
   // to every retarget target so it survives travel until dialed back to 0.

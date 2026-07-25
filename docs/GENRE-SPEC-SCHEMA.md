@@ -20,7 +20,7 @@ kernel. This reference is cross-checked against `tools/genre-tool.js`
 | `label` | rec. | string | display name (the band-card genre name); defaults to `name` |
 | `info` | rec. | string | the genre card prose (one paragraph); defaults to `""` |
 | `anchor` | **yes** | object | the dimension bundle — see below |
-| `clips` | no | string[] | local `found/video/*.mp4` clip ids → spliced into `GENRE_CLIPS` |
+| `clips` | no | string[] | ignored since 2026-07-25 (the found-video layer + `GENRE_CLIPS` were removed; legacy specs may still carry it) |
 | `pos` | no | `[x,y]` | star-map coordinate (logical px); validated ≥55px from every existing star. Omit to let boot derive one, then re-bake `app/world.js` POS |
 | `verify` | no | object | controls target-row derivation — see "The verify block" |
 | `materials` | no | string | provenance note for sourcing (MATERIALS-style); **informational only**, not consumed by the kernel |

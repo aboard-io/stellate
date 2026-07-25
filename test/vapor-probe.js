@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// vapor-loopexport-probe.js — verifies C.1 (VAPOR slider, live-only master EQ)
-// and F.3 (whole-path loop export via the async buildLoopPlan).
-//   node test/vapor-loopexport-probe.js
+// vapor-probe.js — verifies C.1 (VAPOR slider, live-only master EQ).
+// (Formerly vapor-loopexport-probe.js; the F.3 whole-path loop-export half went
+// with the ⤓ download cluster, removed 2026-07-25 — legacy-download-video.)
+//   node test/vapor-probe.js
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");
@@ -17,7 +18,7 @@ async function main() {
   const ok = (c, m) => { if (!c) fails.push(m); return c; };
 
   await page.goto(`http://localhost:${PORT}/index.html`);
-  await page.waitForFunction(() => window.__X && window.__S && window.__EXPORT, { timeout: 20000 });
+  await page.waitForFunction(() => window.__X && window.__S, { timeout: 20000 });
   await page.waitForTimeout(400);
 
   // ---- C.1: drive the VAPOR slider in the settings panel ----
@@ -51,33 +52,13 @@ async function main() {
   const playing = await page.evaluate(() => !!window.__S.playing);
   ok(playing, "C1e: playback died after driving vapor");
 
-  // ---- F.3: whole-path loop export via the async buildLoopPlan ----
-  const exp = await page.evaluate(async () => {
-    const statuses = [];
-    const t = setInterval(() => statuses.push(window.__S.status || ""), 60);
-    let blob = null, err = null;
-    try { blob = await window.__EXPORT.exportLoopAudio("wav", { bars: 48, noDownload: true }); }  // > 32 so the async walk yields at b=31
-    catch (e) { err = String(e); }
-    clearInterval(t);
-    return { size: blob ? blob.size : 0, err, sawPlanning: statuses.some((s) => /planning/i.test(s)),
-      status: window.__S.status };
-  });
-  // F.3 proof: the async buildLoopPlan ran to completion and fed the render — a
-  // valid multi-MB whole-path WAV came back with NO error and the page stayed
-  // responsive (this probe kept running). sawPlanning is informational only: at
-  // 48 bars the walk yields just once (b=31), so a 60ms status poll can't reliably
-  // sample the sub-second planning phase — not a code signal.
-  ok(!exp.err, `F3a: exportLoopAudio threw: ${exp.err}`);
-  ok(exp.size > 100000, `F3b: whole-path WAV too small / empty (${exp.size} bytes) — async walk may have failed`);
-
-  console.log(`\n=== VAPOR + LOOP-EXPORT PROBE ===`);
+  console.log(`\n=== VAPOR PROBE ===`);
   console.log(`  C.1 vapor: row=${vap.found} S.vapor=${vap.sVapor} persisted=${vap.ls} live-ride errs=${errs.length === liveErrs1 ? 0 : "SOME"} stillPlaying=${playing}`);
-  console.log(`  F.3 loop export: ${exp.size} bytes, sawPlanning=${exp.sawPlanning}, err=${exp.err || "none"}`);
   const otherErrs = errs.filter((e) => !/AudioContext|autoplay|user gesture/i.test(e));
   ok(otherErrs.length === 0, `page errors: ${otherErrs.join(" | ")}`);
 
   await browser.close(); srv.close();
   if (fails.length) { console.log(`\nFAIL:\n  ${fails.join("\n  ")}`); process.exit(1); }
-  console.log(`\nVAPOR + LOOP-EXPORT PROBE: PASS`);
+  console.log(`\nVAPOR PROBE: PASS`);
 }
 main().catch((e) => { console.error(e); process.exit(1); });

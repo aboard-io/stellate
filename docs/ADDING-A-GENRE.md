@@ -19,7 +19,7 @@ $EDITOR genre-specs/mygenre.json        # set name, label, info, anchor dims, po
 node tools/genre-tool.js create genre-specs/mygenre.json --dry-run
 
 # 3. For real: splice anchor → genre-kernel.js, target row → genre-verifier.js,
-#    clips → GENRE_CLIPS, star → app/world.js POS, then run the gates.
+#    star → app/world.js POS, then run the gates.
 node tools/genre-tool.js create genre-specs/mygenre.json
 
 # 4. Confirm the confusion matrix still holds (the tool runs this, but re-check):
@@ -54,11 +54,10 @@ node engine/genre-kernel.js track mygenre --seed 7 --render
    the new row, it adds the feature that best separates the worst offenders.
    The dry-run prints the row, the self-score, nearest neighbours, and who you
    crowd — read this before committing.
-4. **Splice (matrix-safe wiring)** — four idempotent, marker-delimited inserts:
+4. **Splice (matrix-safe wiring)** — three idempotent, marker-delimited inserts:
    - anchor → `GENRES` literal in `engine/genre-kernel.js`
      (`/* genre-tool:<name>:genres */` markers, at the `TERM.genres` point).
    - target row → `TARGETS` in `engine/genre-verifier.js`.
-   - clips (if any) → `GENRE_CLIPS` in the kernel.
    - star position → `POS` in `app/world.js` (see below).
    Re-running `create` replaces the prior tool insertion in place (idempotent),
    so iterating on a spec never duplicates or corrupts the block.

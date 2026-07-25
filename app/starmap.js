@@ -71,7 +71,10 @@ export function drawMap(){
   const rb=svg.getBoundingClientRect(), X=x=>(x*rb.width/WORLD_W)*ZOOM.k+ZOOM.ox, Y=y=>(y*rb.height/WORLD_H)*ZOOM.k+ZOOM.oy;
   // pinch zoom grows the TYPE too (sub-linear, capped 3x): zooming in is asking
   // to read the chart. fs===1 at 1x, so the un-zoomed chart is untouched.
-  const fs=Math.min(3,Math.max(1,Math.pow(ZOOM.k,0.85)));
+  // Below the fit point (galaxy zoom) type and star geometry SHRINK with k so
+  // the field reads as a galaxy of small stars; at k>=1 the old floors hold.
+  const fs=Math.min(3,Math.max(ZOOM.k<1?0.55:1,Math.pow(ZOOM.k,0.85)));
+  const gs=Math.min(1,Math.max(0.35,ZOOM.k));   // geometry scale: 1 at fit+, shrinks toward the galaxy floor
   // REGIONS behind everything: a soft color wash + a big goofy label at each
   // territory's centroid. Drawn first so stars/lines/traveler sit on top; the
   // labels are watermark-faint (see .region CSS) so they never fight the UI.
@@ -121,8 +124,8 @@ export function drawMap(){
   for(const e of ent){
     const {g,w,cx,cy}=e;
     const rc=(REGION_OF[g]!=null&&REGIONS[REGION_OF[g]])?REGIONS[REGION_OF[g]].color:"#a06bff";   // inactive halo wears its region color
-    svg.appendChild(el("circle",{cx,cy,r:8+(w>0.01?w*26:0),fill:w>0.01?"#ff6ec7":rc,opacity:.10+w*.28}));  // halo
-    svg.appendChild(el("circle",{cx,cy,r:w>0.01?3.2:2.2,fill:w>0.01?"#ffd7ee":"#e6e0ff",opacity:.95}));           // the star
+    svg.appendChild(el("circle",{cx,cy,r:(8+(w>0.01?w*26:0))*gs,fill:w>0.01?"#ff6ec7":rc,opacity:.10+w*.28}));  // halo (gs-scaled: shrinks at galaxy zoom)
+    svg.appendChild(el("circle",{cx,cy,r:(w>0.01?3.2:2.2)*gs,fill:w>0.01?"#ffd7ee":"#e6e0ff",opacity:.95}));           // the star
     if(!show[g]) continue;   // name culled at this zoom — the star still shows; zoom in to read it
     const t=el("text",{x:cx+9*fs,y:cy+4*fs,"class":w>0.01?"anchor hot":"anchor"});
     t.style.fontSize=fpx(e)+"px"; t.textContent=e.label; svg.appendChild(t);
@@ -183,17 +186,24 @@ function centerView(){ const r=svg.getBoundingClientRect(); if(!r.width) return;
 // on purpose: 0.55·width brings the edge to center whether k is 1.5 or 4. Only
 // bites when zoomed (at k===1 offsets snap 0).
 const PAN_PAD=0.55;
+// GALAXY FLOOR (Paul 2026-07-25: "zoomed out and the top is cut off… let me zoom
+// way out so that the genres are small like a galaxy"). k may now go BELOW the
+// fit point: at k<=1 the world is centered with symmetric screen margins on all
+// sides (which also fixes the top clip — at exact fit the tall ribbon's first
+// stars sat ~0.4% from the viewport top and their labels drew off-screen).
+// At k===1 the centering formula yields ox=oy=0, byte-identical to the old snap.
+const MIN_ZOOM=0.3;
 export function clampZoom(){
   const r=svg.getBoundingClientRect();
-  ZOOM.k=Math.max(1,Math.min(6,ZOOM.k));
-  if(ZOOM.k===1){ ZOOM.ox=0; ZOOM.oy=0; return; }
+  ZOOM.k=Math.max(MIN_ZOOM,Math.min(6,ZOOM.k));
+  if(ZOOM.k<=1){ ZOOM.ox=r.width*(1-ZOOM.k)/2; ZOOM.oy=r.height*(1-ZOOM.k)/2; return; }
   const padX=r.width*PAN_PAD, padY=r.height*PAN_PAD;
   ZOOM.ox=Math.max(r.width*(1-ZOOM.k)-padX,Math.min(padX,ZOOM.ox));
   ZOOM.oy=Math.max(r.height*(1-ZOOM.k)-padY,Math.min(padY,ZOOM.oy));
 }
 export function zoomAround(cx,cy,k2){ // keep the screen point (cx,cy) fixed while scaling
   const r=svg.getBoundingClientRect(), sx=cx-r.left, sy=cy-r.top;
-  const k1=ZOOM.k; k2=Math.max(1,Math.min(6,k2));
+  const k1=ZOOM.k; k2=Math.max(MIN_ZOOM,Math.min(6,k2));
   ZOOM.ox=sx-(sx-ZOOM.ox)*(k2/k1); ZOOM.oy=sy-(sy-ZOOM.oy)*(k2/k1); ZOOM.k=k2;
   clampZoom(); set({});
 }

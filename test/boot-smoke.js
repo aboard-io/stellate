@@ -36,9 +36,7 @@ const EXPECTED = {
   "engine/genre-kernel.js": "GenreKernel",
   "engine/genre-verifier.js": "GenreVerifier",
   "engine/namebank.js": "NameBank",
-  "engine/midi-export.js": "MidiExport",
   "engine/speech.js": "CsdSpeech",
-  "engine/video-layer.js": "VideoLayer",
   "engine/demo-layer.js": "DemoLayer",
   "engine/faust/state-engine.js": "FaustStateEngine",
   "engine/faust/found-player.js": "FoundPlayer",
@@ -61,7 +59,7 @@ function parseScripts(html) {
 }
 
 // --- a minimal, side-effect-free browser sandbox --------------------------
-// Enough surface for the DOM layers (video/demo/live) to DEFINE their module
+// Enough surface for the DOM layers (demo/live) to DEFINE their module
 // at load without a real browser. Timers/RAF are no-ops so nothing schedules a
 // background loop (the scripts only publish their global at load; loops start
 // on later init() calls we never make).

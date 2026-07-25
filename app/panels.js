@@ -1,22 +1,14 @@
-// panels.js — the ⚙ panel (Paul 2026-07-10 redesign: seed + ⧉ share, pace,
-// a live ±BPM delta, and the in-browser render downloads — NOTHING else: the
-// transport lives on ▶, the views on the ONE view chip, and the old
-// LIVE/STOP/MORE/VIDEO buttons, mode lock, DIMS detail sliders and
-// preset/path/reset plumbing are gone) plus the chip↔view wiring.
+// panels.js — the ⚙ panel (Paul 2026-07-10 redesign: seed + ⧉ share, pace and
+// a live ±BPM delta — NOTHING else: the transport lives on ▶, the views on the
+// ONE view chip, and the old LIVE/STOP/MORE/VIDEO buttons, mode lock, DIMS
+// detail sliders, preset/path/reset plumbing and the ⤓ download cluster are
+// gone) plus the chip↔view wiring.
 import { S, set, subs, html, render } from "./state.js";
 import { BARS_PER_SEG } from "./world.js";
 import { goLive, stopLive, setMasterVol, setVapor } from "./live.js";
 import { fontManifest, setSoundfont } from "./fonts.js";
 import { renderInside } from "./inside.js";
 import { drawMap, startPulse } from "./starmap.js";
-import { EXPORT, downloadMidi, exportAudio, exportLoopAudio } from "./export.js";
-import { recordVideo, stopVideo, VIDEO } from "./video-export.js";
-// ⤓ audio: the WHOLE PATH when a loop is drawn (Paul: "export the entire path"),
-// else the current song — mirrors downloadMidi's own whole-path routing.
-const exportAudioSmart = (fmt) => (S.waypoints.length >= 2 ? exportLoopAudio(fmt) : exportAudio(fmt));
-// Paul 2026-07-13: show ONLY the MIDI download for now — hide wav/mp3/video.
-// Flip to true to bring the audio + video render downloads back.
-const SHOW_AV_DOWNLOADS = false;
 import { copyShareUrl, loopBars, loopDuration, baseDuration, durMult, fmtDuration, fmtMult, MULT_MIN, MULT_MAX } from "./share.js";
 
 // ---------- Preact panel ----------
@@ -47,14 +39,9 @@ function setBpmDelta(v){
 }
 function Panel(){
   if(!S.playing) return html`<div>…</div>`;
-  const busy=EXPORT.busy||VIDEO.recording, pct=S.exportPct;
   const vol=Math.round((S.masterVol!=null?S.masterVol:1)*100), vap=Math.round((S.vapor||0)*100);
   const bpm=S.playing?Math.round(S.playing.bpm):0, dl=S.bpmDelta||0;
   return html`
-    ${pct!=null ? html`<div class="exprog">
-      <div class="exbar"><div class="exfill" style=${"width:"+Math.round(pct*100)+"%"}></div></div>
-      <div class="exlabel">${S.exportLabel||"exporting"} · ${Math.round(pct*100)}%</div></div>` : ""}
-
     <div class="psec"><div class="ptitle">mix</div>
       <div class="row"><label>volume</label>
         <input type="range" min="0" max="150" step="1" value=${vol}
@@ -86,21 +73,6 @@ function Panel(){
           onInput=${e=>setBpmDelta(e.target.value)} />
         <output>${bpm} bpm${dl?" ("+(dl>0?"+":"")+dl+")":""}</output></div>
     </div>
-
-    <div class="psec"><div class="ptitle">export</div>
-      <div class="btns">
-        <button disabled=${!S.playing||busy} title="Standard MIDI File — the whole path if a loop is drawn, else the current song"
-          onclick=${()=>downloadMidi()}>⤓ midi</button>
-        ${SHOW_AV_DOWNLOADS ? html`
-        <button disabled=${!S.playing||busy} title=${S.waypoints.length>=2?"render the ENTIRE PATH to lossless WAV (in your browser)":"render the current song to lossless WAV"}
-          onclick=${()=>exportAudioSmart("wav")}>⤓ wav</button>
-        <button disabled=${!S.playing||busy} title=${S.waypoints.length>=2?"render the ENTIRE PATH to MP3 192k":"render the current song to MP3 192k"}
-          onclick=${()=>exportAudioSmart("mp3")}>⤓ mp3</button>
-        <button disabled=${!S.playing||EXPORT.busy} class=${VIDEO.recording?"rec":""}
-          title="record ~30s of the live visuals + audio to a .webm video"
-          onclick=${()=>VIDEO.recording?stopVideo():recordVideo({seconds:30})}>${VIDEO.recording?"⏹ stop":"⤓ video"}</button>` : ""}
-      </div>
-    </div>
     <p class="hint">dbl-tap the sky to add a waypoint · drag the pink playhead to scrub · right-click a waypoint to erase · the URL is the bookmark</p>`;
 }
 const panel=document.getElementById("panel");
@@ -124,14 +96,14 @@ function toggleModal(which,force){
   }
 }
 document.getElementById("cfgChip").onclick=()=>toggleModal("panel");
-// THE VIEW CYCLE (one button, FOUR 100% views): map -> viz -> video -> ALIENS -> map.
+// THE VIEW CYCLE (one button, THREE 100% views): map -> viz -> ALIENS -> map.
 // The chip's icon tracks the CURRENT view (background.js applyBg). Aliens = the 3D
 // star-cruise (window.__STARCRUISE), started/stopped like any other view — no separate
 // chip, no ✕ EXIT button; the ✦ chip cycles right out of it.
 document.getElementById("viewChip").onclick=()=>{
   const chip=document.getElementById("viewChip");
   const SC=window.__STARCRUISE;
-  // THREE views only (Paul: "get rid of video mode"): map -> viz -> aliens -> map.
+  // THREE views (Paul: "get rid of video mode"): map -> viz -> aliens -> map.
   if(SC&&SC.isRunning()){           // aliens -> map
     SC.stop(); chip.classList.remove("spin");
   } else if(S.vizView){             // viz -> ALIENS

@@ -373,7 +373,6 @@ function gateVocabulary() {
     check(g, "stab", A.stab, inSet(stabs), "unknown STAB_PATTERNS key");
     if (A.form && !forms.has(A.form)) warnings.push({ genre: g, field: "form", value: A.form, note: "unknown form — silently falls back to pop" });
     if (!V.TARGETS[g]) warnings.push({ genre: g, field: "TARGETS", note: "anchor has no genre-verifier target ranges — unverifiable, excluded from gates 2-5" });
-    if (!K.GENRE_CLIPS[g]) warnings.push({ genre: g, field: "GENRE_CLIPS", note: "no video clip pool — journeys fall back" });
   }
   for (const t of Object.keys(V.TARGETS)) if (!K.GENRES[t]) warnings.push({ genre: t, field: "GENRES", note: "verifier target with no kernel anchor" });
   // PERC LANE (2026-07): every genre perc style must name a real engine perc

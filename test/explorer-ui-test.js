@@ -6,7 +6,7 @@
 //   2. Genres laid out DYNAMICALLY at load (computeGenreLayout, deterministic) —
 //      every K.GENRES genre placed, no two stars within a comfortable on-screen
 //      distance AND no two NAME LABELS overlap at the default zoom; zoomable.
-//   3. VIDEO on/off button DEFAULTS OFF.
+//   3. the DEMOSCENE background DEFAULTS OFF.
 // Drives explorer.html headless and asserts (all must PASS):
 //   A. exactly 3 default waypoints on a fresh load;
 //   B. waypoint[0] sits at the computed map centre (within ~1 logical px);
@@ -19,41 +19,17 @@
 //      overlap at the default zoom (boxes measured in real px); fugue lands near
 //      prelude, afrobeat gets a sensible spot (the two genres derived at load);
 //   E. zoom in (k up to 4) and back to fit; k stays in range, k===1 recentres;
-//   F. VideoLayer.enabled() === false on load;
+//   F. DemoLayer.enabled() === false on load;
 //   G. no console/page errors on load, nor after starting playback (a short
 //      live ride: engine boots, real audio comes out, then STOP).
+//   H. the ▢/▦ background chip toggles the demoscene program on/off and the
+//      cart rotates on the musical clock + the wall-clock backstop.
 //   node faust/explorer-ui-test.js
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");
 const ROOT = path.join(__dirname, ".."), PORT = 8799;
 
-// Standard MIDI File checker (test J): full chunk math, not a magic sniff —
-// MThd header (len 6, format/ntrks/ppq), then exactly ntrks MTrk chunks whose
-// declared lengths tile the file, each ending in the FF 2F 00 end-of-track meta.
-function parseSmf(bytes) {
-  const b = Uint8Array.from(bytes || []);
-  if (b.length < 22) return { ok: false, err: `only ${b.length} bytes` };
-  const str = (o, n) => String.fromCharCode(...b.slice(o, o + n));
-  const u32 = (o) => ((b[o] << 24) | (b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3]) >>> 0;
-  const u16 = (o) => (b[o] << 8) | b[o + 1];
-  if (str(0, 4) !== "MThd") return { ok: false, err: "no MThd magic" };
-  if (u32(4) !== 6) return { ok: false, err: `MThd length ${u32(4)} (want 6)` };
-  const fmt = u16(8), ntrk = u16(10), ppq = u16(12);
-  let o = 14, tracks = 0;
-  while (o < b.length) {
-    if (str(o, 4) !== "MTrk") return { ok: false, err: `chunk ${tracks} @${o} not MTrk` };
-    const len = u32(o + 4);
-    if (o + 8 + len > b.length) return { ok: false, err: `track ${tracks} overruns file (${len} bytes @${o})` };
-    const e = o + 8 + len;
-    if (!(b[e - 3] === 0xFF && b[e - 2] === 0x2F && b[e - 1] === 0x00))
-      return { ok: false, err: `track ${tracks} lacks FF 2F 00 end-of-track` };
-    o = e; tracks++;
-  }
-  if (o !== b.length) return { ok: false, err: `${b.length - o} trailing bytes` };
-  if (tracks !== ntrk) return { ok: false, err: `header says ${ntrk} tracks, file has ${tracks}` };
-  return { ok: true, fmt, ntrk, ppq, bytes: b.length };
-}
 const SCREEN_SEP_MIN = 40;   // px between any two stars at DEFAULT zoom (1200x850 viewport); the
                              // computed layout enforces a hard 52px dot floor, lands ~47px min
 
@@ -205,14 +181,15 @@ async function main() {
   ok(zoom.zout.k === 1 && zoom.zout.ox === 0 && zoom.zout.oy === 0, `E2: zoom-out to fit left k=${zoom.zout.k} ox=${zoom.zout.ox} oy=${zoom.zout.oy} (want 1/0/0)`);
   console.log(`\n=== ZOOM ===\n  zoomIn k=${zoom.zin.k}  zoomOut k=${zoom.zout.k} ox=${zoom.zout.ox} oy=${zoom.zout.oy}`);
 
-  // ---- F: video default OFF ----
-  const vid = await page.evaluate(() => ({
-    present: !!window.VideoLayer,
-    enabled: window.VideoLayer ? VideoLayer.enabled() : null,
-    available: window.VideoLayer ? VideoLayer.available() : null,
+  // ---- F: demoscene background default OFF ----
+  const bg = await page.evaluate(() => ({
+    present: !!window.DemoLayer,
+    enabled: window.DemoLayer ? DemoLayer.enabled() : null,
+    mode: window.__BGALT ? window.__BGALT.state().mode : null,
   }));
-  ok(vid.enabled === false, `F: VideoLayer.enabled() === ${vid.enabled} on load (want false)`);
-  console.log(`\n=== VIDEO ===\n  present=${vid.present} available=${vid.available} enabled=${vid.enabled}`);
+  ok(bg.enabled === false, `F: DemoLayer.enabled() === ${bg.enabled} on load (want false)`);
+  ok(bg.mode === 0, `F: background mode ${bg.mode} on load (want 0 = off)`);
+  console.log(`\n=== BACKGROUND ===\n  present=${bg.present} enabled=${bg.enabled} mode=${bg.mode}`);
 
   // ---- F2: the ? chip opens the ABOUT layer (what/how-to-play/provenance) ----
   // The 2026-07-09 rename+about change: ? is a real modal on the shared chip
@@ -291,117 +268,59 @@ async function main() {
   console.log(`  maxRms=${maxRms.toFixed(5)}  realRideErrors=${realRide.length}  envFoundSoundErrors=${envRide.length}  engineErrors=${engineErrs.length}`);
   if (realRide.length) console.log(`  REAL:\n   ${realRide.slice(0, 20).join("\n   ")}`);
 
-  // ---- J: ⤓ EXPORT (2026-07-09 first slice) — the ⚙ panel's download cluster
-  // grows ⤓ midi / ⤓ wav / ⤓ mp3. J1: the buttons exist in the rendered panel.
-  // J2: CLICKING ⤓ midi produces a byte-valid Standard MIDI File (full chunk
-  // math parsed here in node, not just a magic sniff). J3: the audio path is a
-  // REAL offline press — an 8s capped run of the same renderWav press-parity
-  // path returns a canonical RIFF/WAVE with sound in it.
-  const expBtns = await page.evaluate(async () => {
-    window.__EXPORT.noDownload = true;                      // capture, don't download
-    document.getElementById("cfgChip").click();             // open the ⚙ panel
-    await new Promise((r) => setTimeout(r, 150));
-    const btnOf = (t) => [...document.querySelectorAll("#panel button")].find((b) => b.textContent.trim() === t);
-    // (the "⚙ more" tier retired 2026-07-10 — downloads live on the main panel now)
-    await new Promise((r) => setTimeout(r, 150));
-    const names = [...document.querySelectorAll("#panel button")].map((b) => b.textContent.trim());
-    const midiBtn = btnOf("⤓ midi");
-    window.__EXPORT.lastMidi = null;                        // clear so we detect THIS export
-    if (midiBtn) midiBtn.click();                           // the REAL button path (downloadMidi is ASYNC now — chunked whole-path walk, yields to keep the page alive)
-    for (let i = 0; i < 250 && !window.__EXPORT.lastMidi; i++) await new Promise((r) => setTimeout(r, 100));   // poll up to ~25s for the async walk
-    const m = window.__EXPORT.lastMidi;
-    return { names, hasMidi: !!btnOf("⤓ midi"), hasWav: !!btnOf("⤓ wav"), hasMp3: !!btnOf("⤓ mp3"),
-      midi: m ? Array.from(m) : null, fileName: window.__EXPORT.lastName };
-  });
-  ok(expBtns.hasMidi && expBtns.hasWav && expBtns.hasMp3,
-    `J1: download cluster missing export buttons (have: ${expBtns.names.join(", ")})`);
-  const smf = parseSmf(expBtns.midi || []);
-  ok(!!expBtns.midi, `J2a: clicking ⤓ midi captured no bytes`);
-  ok(smf.ok, `J2b: MIDI does not parse as SMF — ${smf.err}`);
-  ok(smf.ok && smf.fmt === 1 && smf.ppq === 480, `J2c: SMF format/ppq = ${smf.fmt}/${smf.ppq} (want 1/480)`);
-  ok(smf.ok && smf.ntrk >= 2, `J2d: SMF has ${smf.ntrk} tracks (want >=2: tempo meta + voices)`);
-  ok(/\.mid$/.test(expBtns.fileName || ""), `J2e: filename "${expBtns.fileName}" (want NameBank identity + .mid)`);
-  console.log(`\n=== EXPORT (⤓ midi) ===`);
-  console.log(`  file="${expBtns.fileName}"  ${smf.ok ? `SMF ok: format ${smf.fmt}, ${smf.ntrk} tracks, ${smf.ppq} ppq, ${smf.bytes} bytes` : "PARSE FAIL: " + smf.err}`);
-  const wavSmoke = await page.evaluate(async () => {
-    const buf = await window.__EXPORT.exportAudio("wav", { durSec: 8, noDownload: true });
-    if (!buf) return { ok: false, status: window.__S.status };
-    const dv = new DataView(buf);
-    const tag = (o) => String.fromCharCode(dv.getUint8(o), dv.getUint8(o + 1), dv.getUint8(o + 2), dv.getUint8(o + 3));
-    const n = (buf.byteLength - 44) >> 2;
-    let sq = 0; for (let i = 0; i < n; i++) { const v = dv.getInt16(44 + (i << 2), true) / 32768; sq += v * v; }
-    return { ok: true, riff: tag(0), wave: tag(8), bytes: buf.byteLength, frames: n,
-      sr: dv.getUint32(24, true), rms: Math.sqrt(sq / Math.max(1, n)), name: window.__EXPORT.lastName };
-  });
-  // close the ⚙ panel again (H below drives chips on a clean sky)
-  await page.evaluate(() => { document.getElementById("cfgChip").click(); });
-  ok(wavSmoke.ok, `J3a: exportAudio returned nothing (status: ${wavSmoke.status})`);
-  ok(wavSmoke.ok && wavSmoke.riff === "RIFF" && wavSmoke.wave === "WAVE", `J3b: not a RIFF/WAVE (${wavSmoke.riff}/${wavSmoke.wave})`);
-  ok(wavSmoke.ok && wavSmoke.sr === 44100, `J3c: WAV sample rate ${wavSmoke.sr} (want 44100)`);
-  ok(wavSmoke.ok && Math.abs(wavSmoke.frames - 8 * 44100) <= 4096, `J3d: WAV frames ${wavSmoke.frames} (want ~${8 * 44100} for the 8s cap)`);
-  ok(wavSmoke.ok && wavSmoke.rms > 1e-4, `J3e: pressed WAV is silent (rms=${wavSmoke.ok ? wavSmoke.rms.toExponential(2) : "n/a"})`);
-  ok(/\.wav$/.test(wavSmoke.name || ""), `J3f: filename "${wavSmoke.name}" (want NameBank identity + .wav)`);
-  console.log(`=== EXPORT (⤓ wav, 8s cap) ===`);
-  if (wavSmoke.ok) console.log(`  file="${wavSmoke.name}"  ${wavSmoke.bytes} bytes, ${wavSmoke.frames} frames @ ${wavSmoke.sr}Hz, rms=${wavSmoke.rms.toFixed(4)}`);
-
-  // H: the "video+demos" background ACTUALLY alternates on the reliable wall-clock
-  // (the earlier version only worked via onBar while live and was imperceptibly slow —
-  // Paul: "it never switches"). Page loaded with ?bgAltMs=1200 so the idle backstop
-  // flips fast. Stub video availability, cycle the chip to mode 1, wait, and require
-  // real flips over real time, both sides, the enabled layer tracking the side, and
-  // that DemoLayer.next() genuinely cycles the cart name.
-  // H5 (2026-07-09, Paul: "sometimes they are on top of each other"): STRICT
-  // EXCLUSIVITY — poll BOTH layers' enabled() AND their wraps' real DOM visibility
-  // every 150ms through the whole alternation window and require an exact XOR at
-  // EVERY sample: exactly one of {video, demo} visible, enabled matching visible.
+  // ---- H: the ▢/▦ background chip — demoscene-only program (the laserdisc
+  // video layer + the ⤓ download cluster were removed 2026-07-25 — branch
+  // legacy-download-video; the chip now toggles off → demoscene). Page loaded
+  // with ?bgAltMs=1200 so the idle wall-clock backstop rotates fast. Assert:
+  // the chip reaches mode 2, the demo layer comes up (enabled + DOM visible),
+  // DemoLayer.next() cycles the cart, the idle backstop rotates the cart on
+  // its own, the chip glyph tracks the mode, and the chip toggles back off.
   const alt = await page.evaluate(async () => {
-    window.VideoLayer.available = () => true;
-    let g = 0; while (window.__BGALT.state().mode !== 1 && g++ < 4) document.getElementById("viewChip").click();
+    const chip = document.getElementById("bgChip");
+    let g = 0; while (window.__BGALT.state().mode !== 2 && g++ < 3) chip.click();
     const startMode = window.__BGALT.state().mode;
-    const n0 = window.DemoLayer.currentName && window.DemoLayer.currentName();
-    window.DemoLayer.next(); const n1 = window.DemoLayer.currentName && window.DemoLayer.currentName();
+    // wait for the layer to materialize (setEnabled pre-ready is recorded by init)
+    for (let i = 0; i < 100 && !(window.DemoLayer && DemoLayer.enabled()); i++) await new Promise(r => setTimeout(r, 100));
     const vis = (id) => { const el = document.getElementById(id); return !!el && getComputedStyle(el).display !== "none"; };
-    const sides = [], viol = [];
-    const N = 40;   // 40 × 150ms = the same 6s window as before, sampled finer
-    for (let i = 0; i < N; i++) {
-      await new Promise(r => setTimeout(r, 150));
-      const side = window.__BGALT.state().side;
-      const vOn = window.VideoLayer.enabled(), dOn = window.DemoLayer.enabled();
-      const vVis = vis("vidlayer"), dVis = vis("demolayer");
-      sides.push(side);
-      // the XOR law: exactly one layer visible, exactly one enabled, DOM tracks state
-      if (!(vVis !== dVis && vOn !== dOn && vVis === vOn && dVis === dOn))
-        viol.push({ i, side, vOn, dOn, vVis, dVis });
-    }
-    const flips = sides.filter((s, i) => i && s !== sides[i - 1]).length;
-    const s = window.__BGALT.state();
-    const r = { startMode, flips, sides: [...new Set(sides)], cartCycles: n0 !== n1, viol, samples: N,
-      side: s.side, vidOn: window.VideoLayer.enabled(), demoOn: window.DemoLayer.enabled() };
-    let hh = 0; while (window.__BGALT.state().mode !== 0 && hh++ < 4) document.getElementById("viewChip").click();  // back to the map
-    return r;
+    const up = window.DemoLayer && DemoLayer.enabled(), domUp = vis("demolayer");
+    const n0 = DemoLayer.currentName && DemoLayer.currentName();
+    DemoLayer.next(); const n1 = DemoLayer.currentName && DemoLayer.currentName();
+    // idle backstop rotation: sample the cart over the same 6s window the old
+    // alternation test used (40 × 150ms)
+    const seen = new Set([n1]);
+    for (let i = 0; i < 40; i++) { await new Promise(r => setTimeout(r, 150)); seen.add(DemoLayer.currentName()); }
+    const chipGlyph = chip.textContent;
+    let h = 0; while (window.__BGALT.state().mode !== 0 && h++ < 3) chip.click();
+    const endMode = window.__BGALT.state().mode, endEnabled = DemoLayer.enabled();
+    return { startMode, up, domUp, cartCycles: n0 !== n1, rotations: seen.size - 1, chipGlyph, endMode, endEnabled };
   });
-  ok(alt.startMode === 1, `H0: chip reaches video+demos mode (got ${alt.startMode})`);
-  ok(alt.flips >= 3 && alt.sides.length === 2, `H1: background alternates on the clock (flips=${alt.flips} sides=${alt.sides.join("/")})`);
+  ok(alt.startMode === 2, `H0: bg chip reaches demoscene mode (got ${alt.startMode})`);
+  ok(alt.up && alt.domUp, `H1: demo layer up while on (enabled=${alt.up} visible=${alt.domUp})`);
   ok(alt.cartCycles, `H2: DemoLayer.next() changes the cart`);
-  ok((alt.side === "demo") === alt.demoOn && (alt.side !== "demo") === alt.vidOn,
-    `H3: enabled layer tracks the active side (side=${alt.side} vid=${alt.vidOn} demo=${alt.demoOn})`);
-  ok(alt.viol.length === 0, `H5: layer exclusivity violated at ${alt.viol.length}/${alt.samples} samples (want XOR — never both, never neither): ${JSON.stringify(alt.viol.slice(0, 4))}`);
-  console.log(`  bg-alt: flips=${alt.flips} sides=${alt.sides.join("/")} cartCycles=${alt.cartCycles} exclusivityViolations=${alt.viol.length}/${alt.samples}`);
+  ok(alt.rotations >= 1, `H3: idle backstop rotates the cart (fresh carts seen=${alt.rotations})`);
+  ok(alt.chipGlyph === "▦", `H5: chip glyph shows ▦ while demoscene is on (got "${alt.chipGlyph}")`);
+  ok(alt.endMode === 0 && !alt.endEnabled, `H6: chip toggles back off (mode=${alt.endMode} enabled=${alt.endEnabled})`);
+  console.log(`\n=== BACKGROUND CHIP ===`);
+  console.log(`  mode=${alt.startMode} cartCycles=${alt.cartCycles} backstopRotations=${alt.rotations} endMode=${alt.endMode}`);
 
   // H4: the MUSICAL driver counts beats, not chord-bar ticks — 8 measures = 32
-  // beats. With cbeats=8 (2 measures/bar) the flip must land on tick 4, not 8.
+  // beats. With cbeats=8 (2 measures/bar) the rotation must land on tick 4, not 8.
   const beat = await page.evaluate(() => {
-    window.VideoLayer.available = () => true;
-    let g = 0; while (window.__BGALT.state().mode !== 1 && g++ < 4) document.getElementById("viewChip").click();
+    const chip = document.getElementById("bgChip");
+    let g = 0; while (window.__BGALT.state().mode !== 2 && g++ < 3) chip.click();
     const wasLive = window.__S.live; window.__S.live = true;
-    window.__BGALT.flip();   // reset the beat counter to a known 0
-    const s1 = window.__BGALT.state().side; let firstFlip = 0;
-    for (let i = 1; i <= 8 && !firstFlip; i++) { window.__BGALT.tick({ cbeats: 8 }); if (window.__BGALT.state().side !== s1) firstFlip = i; }
+    window.__BGALT.flip();   // reset the beat counter to a known 0 (also rotates the cart)
+    const c0 = window.DemoLayer.currentName && DemoLayer.currentName();
+    let firstFlip = 0;
+    for (let i = 1; i <= 8 && !firstFlip; i++) {
+      window.__BGALT.tick({ cbeats: 8 });
+      if ((DemoLayer.currentName && DemoLayer.currentName()) !== c0) firstFlip = i;
+    }
     window.__S.live = wasLive;
-    let h = 0; while (window.__BGALT.state().mode !== 0 && h++ < 4) document.getElementById("viewChip").click();  // back to off
+    let h = 0; while (window.__BGALT.state().mode !== 0 && h++ < 3) chip.click();  // back to off
     return { firstFlip };
   });
-  ok(beat.firstFlip === 4, `H4: musical flip lands after 32 beats = 4 two-measure bars (got tick ${beat.firstFlip})`);
+  ok(beat.firstFlip === 4, `H4: musical rotation lands after 32 beats = 4 two-measure bars (got tick ${beat.firstFlip})`);
 
   // I: plain mouse-wheel zooms the map (desktop), no ctrl needed (Paul 2026-07-09).
   const wheel = await page.evaluate(() => {

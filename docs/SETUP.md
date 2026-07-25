@@ -22,7 +22,6 @@ git clone https://github.com/aboard-io/stellate && cd stellate
 tools/fetch-found-samples.sh         # SoundFont GM + breaks/one-shots/vox  → found/samples/
 tools/fetch-found-sound.sh           # field-recording beds                 → found/
 tools/fetch-found-bbc.sh             # BBC Sound Effects beds + chimes      → found/  (RemArc licence — see SOURCES.md)
-tools/fetch-found-video.sh           # laserdisc background clips           → found/video/  (optional)
 ./serve.sh                           # → http://localhost:8777/
 ```
 

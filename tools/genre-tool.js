@@ -19,14 +19,13 @@
 // create:  validate spec -> build anchor -> MEASURE features across N seeds ->
 //          derive TARGET ranges from the measured spread (auto-tightening until
 //          no existing genre is knocked off its own diagonal) -> splice anchor
-//          into GENRES + GENRE_CLIPS (genre-kernel.js) and the TARGET row into
+//          into GENRES (genre-kernel.js) and the TARGET row into
 //          genre-verifier.js -> run gates (matrix + validate).
 // check:   re-measure an existing genre: feature stats, self-score, nearest
 //          neighbours, and whether its committed target row still fits. No writes.
 //
 // SPEC FORMAT (see genre-specs/*.json):
 //   { "name":"hogcore", "label":"Hogcore", "info":"one-line pitch",
-//     "clips":["kaleido",...],            // optional GENRE_CLIPS video pool
 //     "anchor":{ ...kernel dimension bundle (bpm/swing/humanize/progressions/
 //                kits/fills/bass/lead/pads/drums/fx/found/stab/hits/form + any
 //                optional dimension: euclid, chordEvery, rubato, vox, stations…) },
@@ -282,10 +281,9 @@ function deriveTargets(name, spec, stats, ownVecs) {
 }
 
 // ---------- source splicing ----------
-// tag = `${name}:${slot}` — anchor and clips both live in genre-kernel.js, so
-// the slot suffix keeps their markers distinct (else the clips splice would
-// find the anchor's marker and overwrite it). Idempotent: a prior insertion
-// with the same tag is replaced in place. Inserts on their own lines.
+// tag = `${name}:${slot}` — the slot suffix keeps markers for different slots
+// in the same file distinct. Idempotent: a prior insertion with the same tag
+// is replaced in place. Inserts on their own lines.
 function spliceBlock(file, terminator, blockText, tag) {
   let src = fs.readFileSync(file, "utf8");
   const marked = `\n    /* genre-tool:${tag} */\n` + blockText + `\n    /* /genre-tool:${tag} */`;
@@ -300,7 +298,6 @@ function spliceBlock(file, terminator, blockText, tag) {
 }
 const TERM = {
   genres: "\n  };\n\n  // ---------- MUSIC-MIND anchor axes",   // the section that follows the GENRES close (was transition micro-lick soloists before the 2026-07 MUSIC-MIND insert)
-  clips: "\n  };\n\n  // ---------- DX7 patch registry",
   targets: "\n  };\n\n  // the piecewise-linear target-row scorer",
 };
 
@@ -401,13 +398,11 @@ function cmdCreate() {
 
   if (has("dry-run")) { console.log("\n(dry-run: no files written)"); return; }
 
-  // ---- write: anchor -> GENRES, clips -> GENRE_CLIPS, targets -> verifier
+  // ---- write: anchor -> GENRES, targets -> verifier
   spliceBlock(path.join(ROOT, "genre-kernel.js"), TERM.genres, serializeAnchor(name, anchor), name + ":genres");
-  if (spec.clips && spec.clips.length)
-    spliceBlock(path.join(ROOT, "genre-kernel.js"), TERM.clips, `    ${name}:${inline(spec.clips)},`, name + ":clips");
   spliceBlock(path.join(ROOT, "genre-verifier.js"), TERM.targets, serializeTarget(name, row), name + ":targets");
   splicePosition(name, spec.pos);   // star-chart coordinates (the hogcore lesson: a genre without a star is invisible-but-audible)
-  console.log(`\n✓ wrote ${name}: anchor -> genre-kernel.js, target row -> genre-verifier.js${spec.clips ? ", clips -> GENRE_CLIPS" : ""}, star -> explorer.html`);
+  console.log(`\n✓ wrote ${name}: anchor -> genre-kernel.js, target row -> genre-verifier.js, star -> explorer.html`);
 
   // ---- gates
   if (has("skip-gates")) { console.log("\n(--skip-gates: run ./verify.sh and `node genre-verifier.js matrix` yourself)"); return; }
@@ -453,7 +448,7 @@ function cmdCheck() {
 // init <name> [--near <genre>]: write a starter genre-specs/<name>.json by
 // CLONING an existing genre's spec as an editable template — anchor copied
 // verbatim, label/info replaced with TODO placeholders. Pure/offline: reads
-// K.GENRES + K.GENRE_CLIPS (and the existing spec file if one exists), never
+// K.GENRES (and the existing spec file if one exists), never
 // touches the render path, never mutates global state. A newcomer edits a real
 // working anchor instead of authoring 25 typed dimensions from a blank file
 // (ROADMAP §3.1.5). The template is the --near genre, or — when omitted — the
@@ -499,7 +494,6 @@ function loadTemplate(near) {
   const anchor = {};
   for (const k of Object.keys(a)) if (!DERIVED_KEYS.has(k)) anchor[k] = clone(a[k]);
   const spec = { name: near, label: a.label || near, info: a.info || "", anchor };
-  if (K.GENRE_CLIPS && K.GENRE_CLIPS[near]) spec.clips = clone(K.GENRE_CLIPS[near]);
   return { source: "kernel-anchor", spec };
 }
 
@@ -529,20 +523,18 @@ function cmdInit() {
     info: `TODO: one-line pitch. Scaffolded from ${near} (${reason}) — edit the anchor below so this genre is musically distinct.`,
     anchor: clone(tmpl.spec.anchor),
   };
-  if (tmpl.spec.clips) out.clips = clone(tmpl.spec.clips);   // preserve after info, before anchor is fine — key order below is explicit
   if (tmpl.spec.verify) out.verify = clone(tmpl.spec.verify);
 
-  // Re-key so serialized order reads well: name, label, info, clips, anchor, verify.
+  // Re-key so serialized order reads well: name, label, info, anchor, verify.
   const ordered = { name: out.name, label: out.label, info: out.info };
-  if (out.clips) ordered.clips = out.clips;
   ordered.anchor = out.anchor;
   if (out.verify) ordered.verify = out.verify;
 
   fs.writeFileSync(outFile, JSON.stringify(ordered, null, 2) + "\n");
   console.log(`✓ scaffolded genre-specs/${name}.json`);
   console.log(`  template : ${near}  (${reason})`);
-  console.log(`  source   : ${tmpl.source === "spec-file" ? "genre-specs/" + near + ".json" : "live kernel anchor + clip pool"}`);
-  console.log(`  anchor   : ${Object.keys(out.anchor).length} dimensions copied${out.clips ? `, ${out.clips.length} clips` : ""}${out.verify ? ", verify block carried over" : ""}`);
+  console.log(`  source   : ${tmpl.source === "spec-file" ? "genre-specs/" + near + ".json" : "live kernel anchor"}`);
+  console.log(`  anchor   : ${Object.keys(out.anchor).length} dimensions copied${out.verify ? ", verify block carried over" : ""}`);
   console.log(`  next     : edit label/info + the anchor, then  node tools/genre-tool.js create genre-specs/${name}.json --dry-run`);
 }
 

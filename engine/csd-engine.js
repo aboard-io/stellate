@@ -354,7 +354,7 @@
         { id:"tsukiji", label:"Tsukiji Market",  url:"https://archive.org/download/aporee_35166_40406/201714020750tsukijifishmarket01.mp3", pitch:0.8, stretch:0.5 },
         { id:"asakusa", label:"Asakusa Noodles", url:"https://archive.org/download/aporee_21091_24510/nov92013asakusaNoodleSoupRest1910.mp3", pitch:0.72, stretch:0.45 }
       ],
-      // fresh deep-copy each call: callers (render-sample-video, legacy A/B) mutate sections
+      // fresh deep-copy each call: callers (offline renderers, legacy A/B) mutate sections
       sections: JSON.parse(JSON.stringify(DEFAULT_SONG))
     };
   }

@@ -168,26 +168,21 @@ node engine/genre-kernel.js playlist techno vaporwave synthwave jungle \
      --tracks 30 --hours 6 --out playlist/          # the full journey (json)
 node engine/genre-kernel.js track jungle --seed 7 --render # faust press + ffmpeg -> mp3
 node engine/genre-kernel.js journey genre-space-path.json \
-     --hours 4 --out journey/ --render --video      # a DRAWN path -> hours of
-                                                    # mp3s + genre-affine video +
-                                                    # journey.mp3/.mp4 + mix page
+     --hours 4 --out journey/ --render              # a DRAWN path -> hours of
+                                                    # mp3s + journey.mp3 + mix page
 ```
 
-## Journeys (drawn paths → hours of music + video)
+## Journeys (drawn paths → hours of music)
 
-The explorer's **⤓ path** button exports the drawn waypoints as
-`genre-space-path.json` — each waypoint carries its blend weights
-(`[{g,w},…]`), so a point *between* anchors is a first-class waypoint.
-`journey()` generalizes `playlist()`: waypoints may be genre names **or**
-weight vectors; weights lerp along each leg and every track resolves via the
-same N-way `resolveMulti` the live explorer uses, with playlist discipline
+A drawn path serializes as `genre-space-path.json` — each waypoint carries its
+blend weights (`[{g,w},…]`), so a point *between* anchors is a first-class
+waypoint. `journey()` generalizes `playlist()`: waypoints may be genre names
+**or** weight vectors; weights lerp along each leg and every track resolves via
+the same N-way `resolveMulti` the live explorer uses, with playlist discipline
 (key walks the circle of fifths, novelty memory rerolls repeats, duration
 targets met by section/cycle scaling). `--render` produces per-track mp3s,
-one gapless `journey.mp3`, and the mix page; `--video` renders each track's
-mp4 (`render-sample-video.js journey <state>`) with clips drawn from a
-per-genre affinity pool — a blend's pool is the union of its parents' pools,
-dominant genre first, cuts locked to section downbeats — then concatenates
-`journey.mp4`.
+one gapless `journey.mp3`, and the mix page. (The `--video` track-video path
+was removed 2026-07-25 — legacy-download-video.)
 
 ## Simulating a path
 
@@ -211,6 +206,6 @@ Three fidelity levels, fastest first — pick by the question you're asking:
    `note()` scheduling. Answers: *does it SOUND — do the promised instruments
    reach the graph?* Minutes per ride, so used on pinned slices.
 3. **Journey CLI full render** — `node engine/genre-kernel.js journey
-   <path.json> --hours 4 --render --video`: the offline press. Answers:
-   *ship it* — hours of mp3/mp4 for human ears.
+   <path.json> --hours 4 --render`: the offline press. Answers:
+   *ship it* — hours of mp3 for human ears.
 

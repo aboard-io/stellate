@@ -9,7 +9,7 @@ the whole table in one shot.
 
 > Regenerate this index:
 > ```bash
-> grep -nE "^  // -{4,}|^  const (SOURCES|SOURCE_POOLS|SAMPLES|GENRE_CLIPS|DX7_PATCHES|SAMPLERS|FONTS|GENRES|MIND_OVERRIDES|FORMS|FORM_ENTRY) *=" engine/genre-kernel.js
+> grep -nE "^  // -{4,}|^  const (SOURCES|SOURCE_POOLS|SAMPLES|DX7_PATCHES|SAMPLERS|FONTS|GENRES|MIND_OVERRIDES|FORMS|FORM_ENTRY) *=" engine/genre-kernel.js
 > ```
 
 ## The map
@@ -20,8 +20,7 @@ the whole table in one shot.
 | `29` / `30` | found-sound + sample registry | `SOURCES` — every found-sound/sample id → url/synthText (fetch recipes in the header) |
 | `188` / `198` | SOURCE POOLS | `SOURCE_POOLS` — the repertoire law (which sources a role may draw) |
 | `265` | SAMPLES | `SAMPLES` — the sampled-instrument / one-shot registry |
-| `671` / `675` | genre → found-video clip affinity | `GENRE_CLIPS` — per-genre local `found/video/*.mp4` pools |
-| `1194` / `1205` | DX7 patch registry | `DX7_PATCHES` — the genre-space thesis applied to FM instruments |
+| `1194` / `1205` | DX7 patch registry | `DX7_PATCHES` — the genre-space thesis applied to FM instruments (line numbers pre-date the 2026-07-25 `GENRE_CLIPS` removal — regenerate with the grep above) |
 | `1215` | per-voice insert FX | the insert-effect axis (ringmod, granular, …) |
 | `1245` / `1255` | SAMPLER instruments | `SAMPLERS` — real sampled instruments (the sax ask); GM ids |
 | `1410` / `1418` | SOUNDFONT SWITCHER | `FONTS` registry (⚙ dropdown, 12 GM fonts) |

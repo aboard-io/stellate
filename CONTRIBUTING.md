@@ -137,9 +137,7 @@ decoration. The rules:
   | `engine/genre-kernel.js` | `GenreKernel` |
   | `engine/genre-verifier.js` | `GenreVerifier` |
   | `engine/namebank.js` | `NameBank` |
-  | `engine/midi-export.js` | `MidiExport` |
   | `engine/speech.js` | `CsdSpeech` |
-  | `engine/video-layer.js` | `VideoLayer` |
   | `engine/demo-layer.js` | `DemoLayer` |
   | `engine/faust/state-engine.js` | `FaustStateEngine` |
   | `engine/faust/found-player.js` | `FoundPlayer` |
@@ -157,7 +155,7 @@ decoration. The rules:
 
 - **Adding a new engine script?** Insert its `<script>` in the right place in
   `index.html`, give it a single UMD global, and register that global in the
-  boot-smoke gate (below). The DOM layers (`video-layer`, `demo-layer`,
+  boot-smoke gate (below). The DOM layers (`demo-layer`,
   `live.js`) are browser-only — they close over `window` directly and cannot
   `require()` in node; that's fine, the gate loads them in a sandbox.
 

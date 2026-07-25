@@ -17,8 +17,8 @@
 //                               [--write] [--specs] [--verbose] [--json]
 //
 //   (default) dry run: embed -> gaps -> invent -> name -> gate -> REPORT accept/reject
-//   --write   splice the accepted anchors into engine/genre-kernel.js (GENRES +
-//             GENRE_CLIPS) and their target rows into engine/genre-verifier.js
+//   --write   splice the accepted anchors into engine/genre-kernel.js (GENRES)
+//             and their target rows into engine/genre-verifier.js
 //   --specs   also dump each accepted genre's spec.json under genre-specs/invented/
 //
 // Reuses (never duplicates) tools/genre-tool.js — the measure -> derive-targets
@@ -327,8 +327,7 @@ function run() {
     if (holds && knocks.length === 0) {
       taken.add(name);
       if (root) takenRoots.add(root);
-      const clips = K.GENRE_CLIPS[nn] ? clone(K.GENRE_CLIPS[nn]) : null;
-      accepted.push({ name, label, nn, gap: r2(gap.gap), anchor, row, self: selfMean, topRival, margin: selfMean - topRival.s, added, transplants, traits, distinguishing, mundane, clips, target });
+      accepted.push({ name, label, nn, gap: r2(gap.gap), anchor, row, self: selfMean, topRival, margin: selfMean - topRival.s, added, transplants, traits, distinguishing, mundane, target });
     } else {
       delete K.GENRES[name]; delete V.TARGETS[name];
       const reason = knocks.length ? `would knock off ${knocks.slice(0, 3).join(", ")} — its column steals a seed from an existing genre`
@@ -345,7 +344,6 @@ function writeAccepted(accepted) {
   const verifierFile = path.join(ROOT, "engine", "genre-verifier.js");
   for (const a of accepted) {
     T.spliceBlock(kernelFile, T.TERM.genres, T.serializeAnchor(a.name, a.anchor), a.name + ":genres");
-    if (a.clips && a.clips.length) T.spliceBlock(kernelFile, T.TERM.clips, `    ${a.name}:${T.inline(a.clips)},`, a.name + ":clips");
     T.spliceBlock(verifierFile, T.TERM.targets, T.serializeTarget(a.name, a.row), a.name + ":targets");
   }
 }
@@ -362,7 +360,7 @@ function writeSpecs(accepted) {
   }
   for (const a of accepted) {
     const { label, info, ...anchorDims } = a.anchor;
-    const spec = { name: a.name, label, info, invented: { seed: SEED, nearest: a.nn, gap: a.gap, transplants: a.transplants, traits: a.traits }, clips: a.clips || undefined, anchor: anchorDims };
+    const spec = { name: a.name, label, info, invented: { seed: SEED, nearest: a.nn, gap: a.gap, transplants: a.transplants, traits: a.traits }, anchor: anchorDims };
     fs.writeFileSync(path.join(dir, a.name + ".json"), JSON.stringify(spec, null, 2));
   }
 }

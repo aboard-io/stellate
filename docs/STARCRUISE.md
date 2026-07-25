@@ -1,4 +1,4 @@
-# STAR-CRUISE — the 🛸 3D genre-flythrough video mode
+# STAR-CRUISE — the 🛸 3D genre-flythrough view
 
 A PS1-era-lofi 3D flythrough of the genre star map. The playhead is the pilot's
 cockpit view; you fly genre→genre and **land** on planets; the ship opens and
