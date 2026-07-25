@@ -987,7 +987,11 @@
         const u = b.units[e.unit]; if (!u || !u.sampler) continue;
         const ent = samplerOf(e.unit, u, spb);
         const midi = SP.midiOfFreq(e.sets.freq);
-        const z = SP.zoneFor(u.sampler.zones, midi, e.sets.gain != null ? Math.round(e.sets.gain * 127) : 100);
+        // VELOCITY LAYER: the same SP.selVel(e.amp) press feeds mixPCM — this
+        // used to be round(e.sets.gain*127), a mix gain AND a different formula
+        // from press's, so the two engines could pick different velocity layers
+        // for the same note (ENGINE-AUDIT 2026-07 Tier 2).
+        const z = SP.zoneFor(u.sampler.zones, midi, SP.selVelOf(e));
         const buf = z && samplerBufs[z.srcId];
         if (!ent || !buf) continue;
         // chained unit (declared inserts): notes enter the chain PRE-SEND —

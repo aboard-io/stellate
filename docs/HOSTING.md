@@ -378,3 +378,263 @@ third-party. Open source (GoatCounter, single Go binary + SQLite).
   then http://localhost:8081 (Host: stellate.app). Password reset:
   `goatcounter db update-user -email ford@ftrain.com -password ... -db
   sqlite3+/var/lib/goatcounter/goatcounter.sqlite3` on the droplet.
+
+## Embedding (2026-07-25): `embed.html`, oEmbed, and the nginx bits
+
+The player is embeddable on other sites — `embed.html` + a static oEmbed
+document. The full story for authors is in **docs/EMBED.md**; this section is
+only what the *server* has to be told.
+
+### 1. Nothing currently blocks framing — keep it that way
+
+The config in §5 sends no `X-Frame-Options` and no `Content-Security-Policy`,
+so `embed.html` frames anywhere today. **Do not add `X-Frame-Options` or a
+`frame-ancestors` CSP** without carving `embed.html` out first; either one
+turns every embed into a blank box with a console error and no other symptom.
+
+`Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` stay exactly as
+they are. COOP only governs *top-level* browsing contexts, so it is inert in an
+iframe; COEP only constrains our own subresources, which are same-origin. The
+one real consequence is that a framed page is **not cross-origin isolated**
+(isolation needs the whole ancestor chain), so `SharedArrayBuffer` is undefined
+inside the embed and the ring engine cannot run there. That is handled in the
+app, not the server: `app/live.js`'s NO-ISOLATION FALLBACK routes to the
+WAV-FIRST path automatically. Gate: `node test/embed-audio-run.js`.
+
+### 2. oEmbed: we ship a STATIC document, deliberately
+
+`/oembed.json` is a plain file in the tree, and both `index.html` and
+`embed.html` advertise it:
+
+```html
+<link rel="alternate" type="application/json+oembed"
+      href="https://stellate.app/oembed.json" title="STELLATE">
+```
+
+**Why static.** The spec says a consumer calls the endpoint with `?url=` (and
+optionally `format`/`maxwidth`/`maxheight`), so a "correct" endpoint is dynamic
+— but this site is a working tree behind nginx with no application server, and
+adding one for a single JSON document would put a process (and a patch cadence,
+and a failure mode) on the deploy path to answer a question whose answer is
+almost always the same. The consumers that matter here — Mastodon, WordPress,
+Discourse, Notion — all *discover* the endpoint from the `<link>`, fetch it,
+and use `html`; every one of them tolerates a response that ignores the query
+string, because the returned `html` is a complete embed on its own. The cost is
+real but small and precisely bounded: **an unfurl of a deep link (a specific
+seed/path/measure) embeds the app's front door instead of that exact mix.**
+Anyone who wants the exact mix embedded uses the ⚙ panel's *copy embed* button,
+which builds the `<iframe>` from the live share URL.
+
+Serve it as `application/json` — nginx's default `mime.types` already does
+(`application/json json;`). One optional nicety, since some consumers fetch it
+from the browser:
+
+```nginx
+  location = /oembed.json {
+    add_header Cross-Origin-Opener-Policy  "same-origin" always;   # add_header does NOT inherit
+    add_header Cross-Origin-Embedder-Policy "require-corp" always;
+    add_header Access-Control-Allow-Origin "*" always;
+    add_header Cache-Control "public, max-age=3600";
+    default_type application/json;
+  }
+```
+
+### 3. IF we ever want per-URL oEmbed: the parameterized endpoint
+
+Drop this in the `server` block. It answers `/oembed?url=…` by echoing the
+requested URL back inside the iframe `src`, with **no** application server.
+
+```nginx
+  # oEmbed, parameterized. SECURITY: $arg_url is NOT url-decoded by nginx and is
+  # interpolated straight into a JSON string, so it is whitelisted first — the
+  # regex admits only our own origin plus the characters our share URLs use, and
+  # notably excludes " and \ (JSON string escapes) and < > (HTML). Anything else
+  # 404s rather than being sanitized, because sanitizing in nginx is a trap.
+  location = /oembed {
+    default_type application/json;
+    add_header Cross-Origin-Opener-Policy  "same-origin" always;
+    add_header Cross-Origin-Embedder-Policy "require-corp" always;
+    add_header Access-Control-Allow-Origin "*" always;
+    add_header Cache-Control "public, max-age=3600";
+
+    if ($arg_url !~ "^https://stellate\.app/[A-Za-z0-9/._~%!$&*+,;=:@?=-]*$") { return 404; }
+    # oEmbed says a consumer MAY ask for xml; we only speak json.
+    if ($arg_format != "") { set $fmt $arg_format; }
+    if ($fmt != "json") { return 501; }
+
+    return 200 '{"version":"1.0","type":"rich","provider_name":"STELLATE","provider_url":"https://stellate.app/","title":"STELLATE — draw a path through genre space","author_name":"Paul Ford","author_url":"https://www.ftrain.com/","width":800,"height":480,"thumbnail_url":"https://stellate.app/assets/og-card.png","thumbnail_width":1200,"thumbnail_height":630,"cache_age":86400,"html":"<iframe src=\'$arg_url\' title=\'STELLATE\' width=\'100%\' height=\'480\' loading=\'lazy\' allow=\'autoplay; clipboard-write\' referrerpolicy=\'strict-origin-when-cross-origin\' style=\'border:0;width:100%;height:480px;min-height:320px\'></iframe>"}';
+  }
+```
+
+Caveats, all of them load-bearing:
+
+- `set $fmt json;` must be initialised before the `if` blocks (nginx `if` inside
+  `location` is famously sharp — see "If Is Evil"); simplest safe form is to
+  `set $fmt "json";` at the top of the location and only override it from
+  `$arg_format`. Test with `nginx -t` **and** real requests before shipping.
+- The `html` value uses single quotes for the HTML attributes so the JSON string
+  needs no escaping — valid HTML, and it keeps the nginx literal readable.
+- It answers for `/embed.html?…` URLs too, since those match the whitelist.
+- If this lands, **change the discovery `<link>` in `index.html`,
+  `embed.html` and `access.html` to `…/oembed?url=…&format=json`**, and update
+  `test/social-meta.test.js`, which asserts the static document exists.
+
+### 4. Deploy checklist additions
+
+- `assets/` (og-card.png, icon-32.png, icon-180.png, favicon.ico), `embed.html`,
+  `oembed.json` and `app/embed.js` must all be in the rsync — they are tracked
+  files in the working tree, so the existing `ship.sh` rsync carries them.
+- `tools/.font-cache/` is gitignored *and* must not deploy (it is only input to
+  `tools/gen-og-card.js`); confirm the rsync excludes ignored files.
+- After a deploy that changes any of the above, **bump `sw.js` `VERSION`** or
+  returning visitors keep the cached shell (the standing lesson in that file).
+
+---
+
+## The open-web layer (2026-07-25): feeds, manifest, robots, security.txt, 404, CSP
+
+Everything in this section is static files in the working tree plus a handful
+of nginx lines. Nothing here needs a runtime, a database or a third party.
+
+### 1. What was added
+
+| Path | What it is | Committed? |
+|---|---|---|
+| `tools/gen-feed.js` | the release-notes generator: `git log` → RSS 2.0 + JSON Feed, one **playable** link per entry | yes (the recipe) |
+| `feed.xml` / `feed.json` | the live feed, latest 50 releases | **no — derived, gitignored** |
+| `feed-archive.xml` / `feed-archive.json` | the complete history, back to the first commit (2026-06-06) | **no — derived, gitignored** |
+| `manifest.webmanifest` | PWA manifest (installable, standalone, theme `#0c0a1a`) | yes |
+| `robots.txt` | allow everything, AI crawlers named explicitly, points at the repo + sitemap | yes |
+| `sitemap.xml` | 5 pages + 22 exemplary deep genre URLs, one per family | yes |
+| `.well-known/security.txt` | RFC 9116 contact/expiry/policy | yes |
+| `colophon.html` | what the thing is made of, and whose work is in it (zero JS) | yes |
+| `404.html` | the empty-space page: the map + six genres to fall into (zero JS) | yes |
+| `test/feed-links-run.js` | gate: the feeds validate AND a sample of showcase URLs really lands on the named genre in a real browser | yes |
+
+### 2. The feed is generated ON THE WAY OUT (and why it is gitignored)
+
+`tools/deploy-stellate.sh` runs `node tools/gen-feed.js --historic` immediately
+before the rsync, so every deploy publishes notes that include the commit being
+deployed. The feeds are **derived artifacts** — the git log is their source — so
+they obey the one rule and stay gitignored (`/feed.xml`, `/feed.json`,
+`/feed-archive.*`). Three consequences worth knowing:
+
+- **`ship.sh`'s dirty-tree refusal is untouched.** Generation happens inside the
+  deploy step, and the outputs are ignored files, so a regenerated feed can
+  never make the tree dirty and can never block the next ship. (This is why
+  generation is *not* wired before the dirty check: it does not need to be.)
+- **A feed is never one commit stale.** Because the artifact is written after
+  `git push`, the newest entry is the deploy you are doing.
+- **CI and clean clones have no feed** — nothing gates on its presence. Run
+  `node tools/gen-feed.js --historic` locally any time; `--dry` prints without
+  writing, `--show 10` dumps rendered entries as text for eyeballing the prose.
+
+Everything under `found/` and the feeds are the only files nginx serves that
+aren't in git; `rsync` ships the working tree, not a git ref, so they deploy
+normally.
+
+### 3. nginx additions
+
+```nginx
+  # ── the open-web layer ──────────────────────────────────────────────────
+  # 404: the styled empty-space page (internal, so the URL is preserved)
+  error_page 404 /404.html;
+  location = /404.html { internal; add_header Cache-Control "no-cache"; }
+
+  # .well-known must be reachable. certbot usually adds a location for
+  # /.well-known/acme-challenge/ — that is FINE, but check the config for a
+  # blanket dotfile deny, which is the classic reason security.txt 404s:
+  #     location ~ /\.  { deny all; }        # <- if this exists, carve it out:
+  #     location ^~ /.well-known/ { allow all; }
+  location ^~ /.well-known/ {
+    default_type text/plain;
+    add_header Cache-Control "public, max-age=86400";
+  }
+
+  # correct content types (nginx 1.24's mime.types has neither)
+  location = /manifest.webmanifest { default_type application/manifest+json;
+                                     add_header Cache-Control "no-cache"; }
+  location ~ ^/feed(-archive)?\.xml$  { default_type application/rss+xml;
+                                        add_header Cache-Control "no-cache"; }
+  location ~ ^/feed(-archive)?\.json$ { default_type application/feed+json;
+                                        add_header Cache-Control "no-cache"; }
+  location = /robots.txt  { add_header Cache-Control "public, max-age=86400"; }
+  location = /sitemap.xml { add_header Cache-Control "public, max-age=86400"; }
+```
+
+Remember the standing nginx trap in §5: `add_header` does **not** inherit into a
+`location` that sets its own, so any location block above that must also carry
+COOP/COEP has to repeat them. None of these files needs cross-origin isolation
+(they are documents and text, not SAB consumers), but `/404.html` is rendered
+inside the app's origin — if a 404 ever needs to boot the engine, repeat the two
+isolation headers there.
+
+The same additions belong in the `aboardresearch.com/projects/stellate/` alias
+block, except `error_page`, which that site owns globally.
+
+### 4. Content-Security-Policy
+
+Derived from the code, not from a template. **Ship it as
+`Content-Security-Policy-Report-Only` first**, watch the browser console (and
+your own smoke run: play live on desktop and mobile, open the aliens view, run
+the demoscene backdrop, load an embed on a third-party page), and only then
+promote it to the enforcing header. One wrong token here silences the whole
+instrument.
+
+```nginx
+  # REPORT-ONLY first — violations print to the console and nothing breaks.
+  add_header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob: data: https://archive.org https://*.archive.org; connect-src 'self' https://archive.org https://*.archive.org; worker-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors *" always;
+
+  # …then, once it is quiet, the identical policy as the enforcing header:
+  # add_header Content-Security-Policy "…same string…" always;
+```
+
+Per-directive, with the evidence and how sure we are:
+
+| Directive | Why | Confidence |
+|---|---|---|
+| `default-src 'self'` | everything the app loads is same-origin except the two hosts below | **high** |
+| `script-src 'self' https://esm.sh` | `app/state.js` imports preact + htm from `https://esm.sh` on *every* page; all other scripts are same-origin | **high** |
+| `script-src 'wasm-unsafe-eval'` | Faust DSP modules, the espeak build and MicroW8 carts all `WebAssembly.compile()` **fetched bytes**, on the main thread *and* inside module workers (workers inherit the document policy). No string eval anywhere, so plain `'unsafe-eval'` is **not** needed | **high** |
+| `script-src 'unsafe-inline'` | `how.html` carries the site's only inline `<script>` (the starfield + matrix diagram). Two better endings: move it to `app/how.js`, or pin its hash — `printf '%s' "$(sed -n '/<script>/,/<\/script>/p' how.html)"` is not good enough, use the browser's own console message, which prints the exact `'sha256-…'` to allow. Once it is gone, delete this token | **medium — remove it when how.html's script moves out** |
+| `style-src 'unsafe-inline'` | inline `<style>` blocks in `access.html`, `how.html`, `colophon.html`, `404.html`; `style="…"` attributes in the HTML; injected `<style>` text in `app/starcruise.js` and `engine/demo-layer.js`. (Element-level `el.style.x = …` is CSSOM and unaffected.) No practical nonce path for the injected keyframes | **high — required** |
+| `style-src https://fonts.googleapis.com` + `font-src https://fonts.gstatic.com` | the Orbitron/VT323 `<link>` on every page; the CSS it returns fetches the woff2 from gstatic | **high** |
+| `img-src 'self' data:` | `engine/demo-layer.js` uses a `data:image/svg+xml` turbulence texture as a CSS background. `blob:` is precautionary (canvas snapshots in the 3D view) and costs nothing | **high / medium on `blob:`** |
+| `media-src 'self' blob: data:` | the WAV-first mobile path plays `URL.createObjectURL(new Blob([wav]))` through a real `<audio>`; a silent `data:` WAV primes the element; found media is same-origin | **high** |
+| `media-src`/`connect-src` `https://archive.org https://*.archive.org` | `engine/faust/found-player.js` falls back to streaming the original archive.org item when a local `found/` cache file is missing. Production ships all media same-origin (§3), so this should never fire — but omitting it turns a rare degraded case into a hard failure, and archive.org redirects through `ia*.us.archive.org`, which is why the wildcard is there | **medium — keep unless the fallback is deliberately retired** |
+| `connect-src 'self'` | every other fetch is same-origin: manifests, `dist/*.wasm`, found media, and the cookie-free GoatCounter beacon at `/gc/count` (same origin, `sendBeacon`) | **high** |
+| `worker-src 'self'` | `new Worker(BASE + "stream-worker.js", {type:"module"})`, the mp3 worker, `audioWorklet.addModule(BASE + "ring-player.js")`, `navigator.serviceWorker.register("sw.js")` — all same-origin paths, no blob workers | **high** |
+| `manifest-src 'self'` | the new `manifest.webmanifest` | **high** |
+| `frame-src 'none'`, `object-src 'none'` | the app frames nothing and has no `<object>`/`<embed>` | **high** |
+| `base-uri 'self'`, `form-action 'self'` | no `<base>`, no `<form>` anywhere | **high** |
+| **`frame-ancestors *`** | `embed.html` exists to be embedded in **other people's pages** (docs/EMBED.md). Do not tighten this, and do not add `X-Frame-Options` — either one silently kills every embed in the wild. If a future policy needs framing locked down, carve `embed.html` out **first** | **high — load-bearing** |
+
+Notes:
+
+- **No `report-uri`/`report-to`.** There is no collector and no wish to run one;
+  report-only mode prints to the console, which is where a one-person deploy
+  actually reads it.
+- **CSP does not replace COOP/COEP** and does not interact with them. The
+  cross-origin subresources (esm.sh, Google Fonts) already satisfy
+  `require-corp` today; CSP only decides whether they are *allowed*, not
+  whether they are *embeddable*.
+- **The service worker inherits nothing.** `sw.js` is fetched under
+  `worker-src 'self'`, and requests it makes on the page's behalf are governed
+  by the page's policy.
+- **Test the embed path explicitly.** `node test/embed-audio-run.js` plays
+  `embed.html` inside a genuinely cross-origin parent — the one gate that would
+  catch a `frame-ancestors` mistake.
+
+### 5. Deploy checklist additions
+
+- `manifest.webmanifest`, `robots.txt`, `sitemap.xml`, `colophon.html`,
+  `404.html` and `.well-known/security.txt` are tracked files — the existing
+  rsync carries them. **Check that rsync is not filtering the dot-directory**:
+  `.well-known/` is not in the exclude list, and `--exclude '/.claude*'` does
+  not match it, so it ships.
+- The feeds are written by the deploy script itself, just before the rsync.
+- After adding `<link rel="manifest">` (or any other `<head>` change) to
+  `index.html`, **bump `sw.js` `VERSION`** — otherwise returning visitors keep
+  the cached shell and never see it.
+- `security.txt` has an `Expires` date. **It is 2027-07-25.** Renew it before
+  then or it is formally invalid.

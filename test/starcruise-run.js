@@ -709,7 +709,8 @@ async function main() {
     }
     // --- SUNS at cluster stars (colored, labeled) ---
     land(GEN);
-    const sunsP = SC.suns(10);
+    const clusterCount = cm.GENRE_CLUSTERS.length;   // the EXPECTED sun count, read from the data (never a literal: clusters grow with the kernel)
+    const sunsP = SC.suns(clusterCount);              // ask for EVERY sun, so the per-sun checks below cover them all
     const sunChecks = sunsP.suns.map((s) => {
       const c = cm.GENRE_CLUSTERS.find((x) => x.id === s.id);
       const w = fl.worldOfCoord(c.star);
@@ -750,20 +751,24 @@ async function main() {
     land(GEN);
     const genDancers = SC.dancers();
     SC.__injectTravel(null); SC.__injectBeat(null);
-    return { sunCount: sunsP.count, sunChecks, shipMeshes, hud, hudExpect,
+    return { sunCount: sunsP.count, clusterCount, sunChecks, shipMeshes, hud, hudExpect,
       maxDelta: +maxDelta.toFixed(4), transitLanded, camFloor,
       dsFill, dsAfter, ambDancers, genDancers };
   }, GEN).catch((e) => ({ err: String(e) }));
   if (gx.err) { ok(false, "GX. galaxy probe threw :: " + gx.err); }
   else {
-    console.log("       galaxy.suns:", JSON.stringify({ count: gx.sunCount, checks: gx.sunChecks.slice(0, 4) }));
+    console.log("       galaxy.suns:", JSON.stringify({ count: gx.sunCount, clusters: gx.clusterCount, checks: gx.sunChecks.slice(0, 4) }));
     console.log("       galaxy.hud:", JSON.stringify(gx.hud), " expect:", gx.hudExpect);
     console.log("       galaxy.smooth:", JSON.stringify({ maxDelta: gx.maxDelta, transitLanded: gx.transitLanded }));
     console.log("       galaxy.floor:", JSON.stringify(gx.camFloor));
     console.log("       galaxy.drummer:", JSON.stringify({ fill: gx.dsFill, after: gx.dsAfter }));
     console.log("       galaxy.dancers:", JSON.stringify({ ambient: gx.ambDancers, gen: gx.genDancers }));
-    ok(gx.sunCount === 33 && gx.sunChecks.every((c) => c.err < 0.05 && c.colOk && c.labelOk),
-      `GX1. SUNS: one colored labeled sun per cluster AT its star coord (${gx.sunCount} suns, markers == worldOfCoord(cluster.star), colors + labels match)`);
+    // COUNT DERIVED FROM THE DATA (2026-07-25): this asserted a literal 33 and went
+    // stale the moment the clusterer emitted a 34th cluster. GENRE_CLUSTERS.length is
+    // the only truth — one sun per cluster, however many clusters there are.
+    ok(gx.sunCount === gx.clusterCount && gx.sunChecks.length === gx.clusterCount
+       && gx.sunChecks.every((c) => c.err < 0.05 && c.colOk && c.labelOk),
+      `GX1. SUNS: one colored labeled sun per cluster AT its star coord (${gx.sunCount} suns vs ${gx.clusterCount} GENRE_CLUSTERS, markers == worldOfCoord(cluster.star), colors + labels match)`);
     ok(gx.shipMeshes === 0,
       `GX2. NO 3D ship/cockpit — the obstructing shell is gone (ship+cockpit draw ${gx.shipMeshes} meshes)`);
     ok(gx.hud.mounted && gx.hud.label === String(gx.hudExpect).toUpperCase(),

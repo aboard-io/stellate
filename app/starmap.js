@@ -116,20 +116,33 @@ export function drawMap(){
     return {l:lx-3, r:lx+tw+3, t:e.cy+4*fs-fpx(e)*0.92, b:e.cy+4*fs+fpx(e)*0.28}; };
   // placement priority: active genres first (always shown), then the rest stable
   const order=[...ent].sort((a,b)=>((b.w>0.01)-(a.w>0.01))||(b.w-a.w));
-  const placed=[], show={};
+  const placed=[], show={}, ldy={};
+  const hits=bx=>placed.some(p=>bx.l<p.r&&bx.r>p.l&&bx.t<p.b&&bx.b>p.t);
+  const shift=(bx,dy)=>({l:bx.l,r:bx.r,t:bx.t+dy,b:bx.b+dy});
   for(const e of order){ const bx=lbox(e);
-    if(e.w>0.01){ show[e.g]=true; placed.push(bx); continue; }
-    let hit=false; for(const p of placed){ if(bx.l<p.r&&bx.r>p.l&&bx.t<p.b&&bx.b>p.t){hit=true;break;} }
-    if(!hit){ show[e.g]=true; placed.push(bx); } }
+    if(e.w>0.01){
+      // ACTIVE genres are never culled — you must be able to read what you are
+      // hearing. But a blend IS a neighbourhood: two active stars sit close
+      // together by definition, and their names are 130-230px wide, so the
+      // natural slot often lands on one already taken (the boot blend drew
+      // "Servo Elegy" straight through "Non Euclidean Court"). So slide this
+      // name vertically — one line down, then up, then two — until it clears;
+      // if nothing clears, draw it anyway. A covered name is a bug; a hidden
+      // active genre is a worse one. (Inactive names below still just cull.)
+      const h=(bx.b-bx.t)*1.05; let dy=0;
+      for(const d of [0,h,-h,2*h,-2*h]) if(!hits(shift(bx,d))){ dy=d; break; }
+      show[e.g]=true; ldy[e.g]=dy; placed.push(shift(bx,dy)); continue; }
+    if(!hits(bx)){ show[e.g]=true; placed.push(bx); } }
   for(const e of ent){
     const {g,w,cx,cy}=e;
     const rc=(REGION_OF[g]!=null&&REGIONS[REGION_OF[g]])?REGIONS[REGION_OF[g]].color:"#a06bff";   // inactive halo wears its region color
     svg.appendChild(el("circle",{cx,cy,r:(8+(w>0.01?w*26:0))*gs,fill:w>0.01?"#ff6ec7":rc,opacity:.10+w*.28}));  // halo (gs-scaled: shrinks at galaxy zoom)
     svg.appendChild(el("circle",{cx,cy,r:(w>0.01?3.2:2.2)*gs,fill:w>0.01?"#ffd7ee":"#e6e0ff",opacity:.95}));           // the star
     if(!show[g]) continue;   // name culled at this zoom — the star still shows; zoom in to read it
-    const t=el("text",{x:cx+9*fs,y:cy+4*fs,"class":w>0.01?"anchor hot":"anchor"});
+    const dy=ldy[g]||0;      // an active name that had to slide clear of another (see the placement pass)
+    const t=el("text",{x:cx+9*fs,y:cy+4*fs+dy,"class":w>0.01?"anchor hot":"anchor"});
     t.style.fontSize=fpx(e)+"px"; t.textContent=e.label; svg.appendChild(t);
-    if(w>0.01){const wl=el("text",{x:cx+9*fs,y:cy+17*fs,"class":"wlabel"});
+    if(w>0.01){const wl=el("text",{x:cx+9*fs,y:cy+17*fs+dy,"class":"wlabel"});
       wl.style.fontSize=(11*fs)+"px"; wl.textContent=Math.round(w*100)+"%"; svg.appendChild(wl);}
   }
   S.waypoints.forEach((w,i)=>{

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STELLATE — no star here</title>
+<meta name="description" content="That address isn't a place in this space. Here is the star map, and a few genres to fall into instead.">
+<meta name="author" content="Paul Ford">
+<meta name="theme-color" content="#0c0a1a">
+<meta name="robots" content="noindex,follow">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+/* 404.html — the empty-space page. Zero JavaScript, zero images: it has to be
+   the most reliable page on the site, because it is the one that renders when
+   something has already gone wrong. Paths are RELATIVE so it works at both
+   mounts (stellate.app and aboardresearch.com/projects/stellate/). */
+:root{--bg:#0c0a1a;--panel:rgba(18,15,38,.62);--line:#2c2750;--ink:#ece9ff;
+  --dim:#9b93c6;--pink:#ff6ec7;--cyan:#45e0ff;--mint:#4dffb0;--amber:#ffd86b;
+  --star:rgba(236,233,255,.5)}
+@media (prefers-color-scheme: light){
+  :root{--bg:#f7f5ef;--panel:#fffdf7;--line:#d9d3c4;--ink:#1d1a2e;--dim:#5c5570;
+    --pink:#b2237c;--cyan:#0d6f8c;--mint:#136b4c;--amber:#8a5a06;--star:rgba(29,26,46,.16)}
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);
+  font:20px/1.55 VT323,monospace;letter-spacing:.01em;
+  display:flex;align-items:center;justify-content:center;padding:2rem 1.2rem;
+  background-image:
+    radial-gradient(1.4px 1.4px at 14% 18%, var(--star), transparent 60%),
+    radial-gradient(1.1px 1.1px at 78% 11%, var(--star), transparent 60%),
+    radial-gradient(1.6px 1.6px at 37% 44%, var(--star), transparent 60%),
+    radial-gradient(1.2px 1.2px at 91% 57%, var(--star), transparent 60%),
+    radial-gradient(1.3px 1.3px at 22% 74%, var(--star), transparent 60%),
+    radial-gradient(1.1px 1.1px at 63% 88%, var(--star), transparent 60%);
+  background-attachment:fixed}
+main{max-width:56ch}
+a{color:var(--cyan)}
+a:hover{color:var(--mint)}
+a:focus-visible{outline:2px solid var(--pink);outline-offset:2px;border-radius:4px}
+.code{font-family:Orbitron,sans-serif;font-size:.72rem;letter-spacing:.34em;
+  text-transform:uppercase;color:var(--amber);margin:0}
+h1{font-family:Orbitron,sans-serif;font-weight:700;font-size:clamp(1.7rem,6vw,2.8rem);
+  letter-spacing:.07em;margin:.5rem 0 .6rem;
+  background:linear-gradient(90deg,var(--amber),var(--pink) 52%,var(--cyan));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+p{margin:.7rem 0;color:var(--ink)}
+p.dim{color:var(--dim)}
+.big{display:inline-block;margin:1.1rem 0 .4rem;padding:.35rem .9rem;
+  border:1px solid var(--pink);border-radius:999px;text-decoration:none;
+  color:var(--pink);letter-spacing:.06em}
+.big:hover{background:var(--pink);color:var(--bg)}
+.crate{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:.8rem 1.1rem;margin:1.4rem 0}
+.crate h2{font-family:Orbitron,sans-serif;font-size:.66rem;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--cyan);margin:.2rem 0 .5rem}
+.crate ul{margin:0;padding-left:1.1rem}
+.crate li{margin:.25rem 0}
+.crate .id{color:var(--dim)}
+footer{margin-top:1.8rem;font-size:17px;color:var(--dim)}
+footer a{margin-right:1.1rem}
+</style>
+</head>
+<body>
+<main>
+  <p class="code">404 · empty space</p>
+  <h1>No star here</h1>
+  <p>Every address on this site is a position in a 274-genre space. That one
+  isn't — it's a void between anchors, and the void doesn't play anything.</p>
+  <a class="big" href="index.html">▶ open the star map</a>
+  <p class="dim">Drag anywhere to travel. Double-click to drop waypoints and the
+  music morphs through every genre the path crosses.</p>
+
+  <div class="crate">
+    <h2>Or fall into one of these</h2>
+    <ul>
+      <li><a href="./?genre=vaporwave&amp;seed=3545&amp;path=1691.4480,1710.4513,1672.4513&amp;xdur=13.122">Food Court Eternity</a> <span class="id">vaporwave</span></li>
+      <li><a href="./?genre=jungle&amp;seed=1405&amp;path=1718.20504,1737.20537,1699.20537&amp;xdur=13.122">Barometric Stampede</a> <span class="id">jungle</span></li>
+      <li><a href="./?genre=jazz&amp;seed=6967&amp;path=292.16704,311.16737,273.16737&amp;xdur=13.122">Smoke Arithmetic</a> <span class="id">jazz</span></li>
+      <li><a href="./?genre=salondawdle&amp;seed=3016&amp;path=781.3832,800.3865,762.3865&amp;xdur=13.122">Ottoman Heat Death</a> <span class="id">salondawdle, a 3/4 waltz</span></li>
+      <li><a href="./?genre=doomdrone&amp;seed=6695&amp;path=1568.12903,1587.12936,1549.12936&amp;xdur=13.122">Subduction Hymnal</a> <span class="id">doomdrone</span></li>
+      <li><a href="./?genre=spokenword&amp;seed=4676&amp;path=217.11999,236.12032,198.12032&amp;xdur=13.122">Dial Tone Prophet</a> <span class="id">spokenword</span></li>
+    </ul>
+  </div>
+
+  <footer>
+    <a href="how.html">how a song is made</a>
+    <a href="colophon.html">colophon</a>
+    <a href="access.html">accessible version</a>
+    <a href="https://github.com/aboard-io/stellate">source</a>
+  </footer>
+</main>
+</body>
+</html>

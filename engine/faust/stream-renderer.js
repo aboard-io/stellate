@@ -156,7 +156,9 @@
               us.procs.reduce((a, b) => (a.busyUntil <= b.busyUntil ? a : b));
         }
         for (const [k, val] of Object.entries(e.sets)) v.pending.push([s - BS, v.R + k, val]);
-        if (u.extGainPerAmp) v.pending.push([s - BS, "@out", Math.min(1, u.extGainPerAmp * (e.amp || 0.1))]);
+        // @out ceiling: dx7OutCeil (the dx7 SYNTH FONT makeup, state-engine) or
+        // the historical 1.0 for every other extGainPerAmp voice.
+        if (u.extGainPerAmp) v.pending.push([s - BS, "@out", Math.min(u.dx7OutCeil || 1, u.extGainPerAmp * (e.amp || 0.1))]);
         v.pending.push([s - BS, "@pp", e.pp || 0]);
         if (legato) {
           const ix = v.pending.indexOf(v.lastOff);
@@ -333,9 +335,14 @@
           // depends on it, so match it for byte parity.
           events.sort((a, b) => a.beat - b.beat);
           const relN = Math.max(32, Math.floor((u.sampler.rel || 0.09) * SR));
+          // delay-strip ring-out: mixPCM renders stripTailN samples past the note
+          // so the tape echoes decay instead of being cut mid-repeat; a note must
+          // stay in the per-window filter that long or the tail is lost at a seam.
+          const tailN = SP.stripTailN(u.sampler.strip, SR);
           const notes = events.map((e) => ({
             tSec: e.beat * spb, durSec: e.durB * spb, freq: e.sets.freq,
             gain: (u.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
+            vel: SP.selVelOf(e),   // velocity layer off the MUSICAL amp (press parity)
             atk: u.sampler.atk, rel: u.sampler.rel, zones: u.sampler.zones,
             swell: !!u.sampler.swell, mello: u.sampler.mello || null,
             bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,
@@ -345,7 +352,7 @@
           for (const n of notes) {
             n._s0 = Math.max(0, Math.floor(n.tSec * SR));
             const holdN = Math.max(Math.max(8, Math.floor((n.atk || 0.01) * SR)), Math.floor(n.durSec * SR));
-            n._end = n._s0 + holdN + relN;
+            n._end = n._s0 + holdN + relN + tailN;
           }
           const su = { notes, role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip, pan: u.pan || 0, granularOverSt: u.sampler.granularOverSt, grainSec: u.sampler.grainSec } };
           // INSERTS-ON-SAMPLED-VOICES: persistent insert procs for the unit's
@@ -550,16 +557,18 @@
             ST.unitOrder.push({ key, kind: "sampler" });
           }
           const relN = Math.max(32, Math.floor((u.sampler.rel || 0.09) * SR));
+          const tailN = SP.stripTailN(u.sampler.strip, SR);   // delay-strip ring-out (see above)
           for (const e of byUnit[key].slice().sort((a, b) => a.beat - b.beat)) {
             const n = { tSec: base / SR + (e.beat - lo) * spb, durSec: e.durB * spb, freq: e.sets.freq,
               gain: (u.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
+              vel: SP.selVelOf(e),   // velocity layer off the MUSICAL amp (press parity)
               atk: u.sampler.atk, rel: u.sampler.rel, zones: u.sampler.zones,
               swell: !!u.sampler.swell, mello: u.sampler.mello || null,
               bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,
               pan: SE.notePan(u, e.sets.freq) };  // MASTERING (press parity)
             n._s0 = Math.max(0, Math.floor(n.tSec * SR));
             const holdN = Math.max(Math.max(8, Math.floor((n.atk || 0.01) * SR)), Math.floor(n.durSec * SR));
-            n._end = n._s0 + holdN + relN;
+            n._end = n._s0 + holdN + relN + tailN;
             su.notes.push(n);
           }
         }

@@ -229,6 +229,9 @@
     guiroLong:74, guiroShort:73, woodblockHi:76, woodblockLo:77,
     triangleOpen:81, triangleMute:80, vibraslap:58 };
   // one 8-unit bar (=CHORD_BEATS) of a named perc pattern, starting at beat S.
+  // The cell is 4/4-authored; the PERC PASS tiles it by min(CBEATS,CHORD_BEATS)
+  // and truncates/clips at the cell + span edge (see the pass) — the same
+  // tile-or-truncate law drumEvents applies to the KITS cells.
   // dedicated voices carry no note (clap/rim/ride/crash); the shared "perc" voice
   // carries a GM note that selects its sample zone. ci = bar index (variation).
   function percBar(name, S, lvl, ci){
@@ -2033,11 +2036,22 @@
       if(dropT.size){ pitched=pitched.filter(e=>!dropT.has(e)); drums=drums.filter(e=>!dropT.has(e)); }
     }
     // ---- jux stereo divergence (production dimension; state.jux in [0,1]) ----
-    // Events gain a `pan` offset in [-1,1] (absent/0 = center). Engines MAY
-    // ignore it: the Faust engine reads it; the legacy csound path renders
-    // center-summed exactly as before. Hats alternate L/R, toms spread by
-    // pitch, melody alternates sides, pads scatter; kick/snare/bass stay
-    // center (the low end never leaves the middle).
+    // Events gain a `pan` offset in [-1,1] (absent/0 = center; the SIGNED
+    // convention every consumer must use — pipes.js mirrors with -pan, faust
+    // panGains clamps to [-1,1]). Hats alternate L/R, toms spread by pitch,
+    // melody alternates sides, pads scatter; kick/snare/bass stay center (the
+    // low end never leaves the middle).
+    //
+    // HONEST STATUS (audit 2026-07-25 — do not restore the old claim that "the
+    // Faust engine reads it"): NO backend consumes event.pan today. Faust
+    // state-engine.mapEvents translates only cutoffMul/vib/pw; every per-note
+    // pan in press/stream/live/sampler comes from SE.notePan(unit,freq), i.e.
+    // the UNIT pan (MASTER_PAN + pad panSpread). So state.jux currently widens
+    // nothing audible — the score-side stamping below is the half of the
+    // feature that exists, kept (a) byte-identical, (b) correct, and (c) ready
+    // for the mapEvents→note.pan wiring, which lives in engine/faust and must
+    // be made there. Until that lands, treat jux as a SCORE annotation, not a
+    // mix control (docs/MUSIC-MIND.md "The dead knob: jux").
     {
       const jux=Math.min(1,Math.max(0,state.jux||0));
       if(jux>0){
@@ -2278,21 +2292,40 @@
     // kit (isolated rng), then pushed into `drums` so the rubato warp below keeps
     // it sample-locked. NEW event types (clap/rim/ride/crash/perc) are ignored by
     // the snare-law (snare/hat only) and by the verifier (core-kit fabric only).
+    // METER / chordEvery AWARENESS (audit 2026-07-25): the pass used to tile at
+    // a hardcoded 8-beat stride with nbars=round(sp.beats/8) whatever the chord
+    // bar was, so a span whose length is not a multiple of 8 (a 3-chord
+    // progression on a 12-beat bar: 36 beats -> round(4.5)=5 bars) ran its last
+    // perc bar up to 4 beats PAST the section end — clattering into the next
+    // section even when that section's kit is "off" or a cut/dropout transition
+    // just silenced everything (perc is added after the transition chain, so
+    // nothing downstream clears it). Now the perc cell tiles exactly like
+    // drumEvents' kit cells: stride PCELL=min(CBEATS,CHORD_BEATS) — a 6-beat
+    // waltz bar or a 4-beat half-bar tiles by its OWN period and truncates the
+    // 8-unit cell; a 12/16/32-beat bar keeps the 8-unit cell and tiles ceil()
+    // of the span — and emission is a FILTER (nothing past the cell, nothing
+    // past the span end). RNG DISCIPLINE: both prng draws happen before the
+    // filter, exactly as before, so draw counts — and therefore every existing
+    // genre's bytes — are untouched (verified: no catalog state pairs perc with
+    // a non-8 chord bar, so the whole 274x3 build is byte-identical here).
     if(state.perc && Array.isArray(state.perc.lanes) && state.perc.lanes.length){
       const prng=mulberry32(((state.seed??1)+61453)>>>0);
       const percArr=[];
+      const PCELL=Math.min(CHORD_BEATS,Math.max(1,CBEATS));
       for(const sp of spans){
         if(!sp.kit || sp.kit==="off") continue;
-        const nbars=Math.max(1,Math.round(sp.beats/CHORD_BEATS));
+        const spEnd=sp.start+sp.beats;
+        const nbars=Math.max(1,Math.ceil(sp.beats/PCELL));
         for(const lane of state.perc.lanes){
           const crash=lane.p==="crashDown", busy=/shaker|ride8/.test(lane.p);
           for(let bi=0;bi<nbars;bi++){
             if(crash && bi>0) continue;                          // crash only on the section downbeat
-            const ev=percBar(lane.p, sp.start+bi*CHORD_BEATS, lane.lvl!=null?lane.lvl:0.2, bi);
+            const b0=sp.start+bi*PCELL;
+            const ev=percBar(lane.p, b0, lane.lvl!=null?lane.lvl:0.2, bi);
             for(const e of ev){
               if(busy && prng()<0.12) continue;                  // thin the dense lanes (humanity)
               e.amp=Math.max(0.03, e.amp*(0.85+prng()*0.3));
-              percArr.push(e);
+              if(e.beat<b0+PCELL-1e-9 && e.beat<spEnd-1e-9) percArr.push(e);   // filter AFTER the draws
             }
           }
         }

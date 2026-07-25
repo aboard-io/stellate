@@ -119,18 +119,45 @@
       }},
 
     strum:{ doc:"rolls each pad chord by a few ms per voice (offsets < 0.1 beat), direction alternating low-first/high-first per chord — humanity on pads; deterministic, no rng",
-      fn(ev,_state,_rng,p){
+      // GROUPING NOTE (audit 2026-07-25 — the pipe was dead vocabulary): pads
+      // were grouped on e.beat.toFixed(6), an EXACT-onset key, but apply() runs
+      // after applyGroove's humanize pass has nudged every event by its own
+      // ±ht·0.04-beat draw (and after the rubato warp). With any humanize>0 no
+      // two chord-mates shared a 6-dp beat, every group had size 1, and the
+      // roll never fired anywhere in the catalog. Chord-mates are now found by
+      // TOLERANCE CLUSTERING: pads sorted by (beat,pitch), a new chord starting
+      // when the onset is more than `tol` past the cluster's anchor. tol
+      // defaults to 0.1 beat — comfortably above the ±0.08 worst-case humanize
+      // spread between two mates, comfortably under a 16th (0.25) so distinct
+      // onsets never merge. Drawless, so still deterministic and seeded; the
+      // roll is laid from the cluster's OWN earliest (already humanized) onset
+      // so the chord keeps its human placement while the rake reads cleanly,
+      // and each voice's release edge stays exactly where it was.
+      fn(ev,state,_rng,p){
+        // The SCORE's own rhythm-guitar rake (state.strum, csd-engine
+        // STRUM_PATTERNS) already lays each pad chord out low->high / high->low
+        // per stroke; re-rolling it here would fight the stroke direction and
+        // flatten the guitar's per-hit jitter, so the pipe stands down and lets
+        // the guitar own the rake (the roll is present either way).
+        if(state&&state.strum) return;
         const step=p.step!=null?p.step:0.02;              // beats between voices; total spread capped under 0.1
-        const groups=new Map();                           // pads sharing an onset = one chord
-        for(const e of ev.pitched){ if(e.voice!=="pad") continue;
-          const k=e.beat.toFixed(6); (groups.get(k)||groups.set(k,[]).get(k)).push(e); }
-        [...groups.keys()].sort((a,b)=>+a-+b).forEach((k,gi)=>{
-          const g=groups.get(k); if(g.length<2) return;
+        const tol=p.tol!=null?p.tol:0.1;                  // chord-mate window (humanize-proof, sub-16th)
+        const pads=ev.pitched.filter(e=>e.voice==="pad")
+          .sort((a,b)=>(a.beat-b.beat)||(parsePch(a.pch)-parsePch(b.pch)));
+        const groups=[]; let cur=null, anchor=0;
+        for(const e of pads){
+          if(!cur || e.beat-anchor>tol+EPS){ cur=[]; groups.push(cur); anchor=e.beat; }
+          cur.push(e);
+        }
+        groups.forEach((g,gi)=>{
+          if(g.length<2) return;
+          const base=g[0].beat;                           // the chord's humanized onset (earliest mate)
           g.sort((a,b)=>parsePch(a.pch)-parsePch(b.pch));
           const eff=Math.min(step,0.09/(g.length-1));     // guarantee max offset < 0.1 beat
           g.forEach((e,idx)=>{
             const off=(gi%2?g.length-1-idx:idx)*eff;      // even chords roll up, odd roll down
-            e.beat+=off; e.dur=Math.max(0.05,e.dur-off);  // keep the chord's release edge aligned
+            const end=e.beat+e.dur;
+            e.beat=base+off; e.dur=Math.max(0.05,end-e.beat);   // keep the chord's release edge aligned
           });
         });
       }},
@@ -156,7 +183,12 @@
           if(pi%2===0) return;                             // calls stay put; responses flip
           for(const e of ph){
             e.pch=pchAdd(e.pch,12*oct);                    // register flip
-            e.pan=e.pan==null?(p.pan!=null?p.pan:0.72):+((1-e.pan).toFixed(4)); // pan mirror
+            // pan mirror in the ENGINE'S SIGNED convention: pan lives in [-1,1]
+            // with 0 = centre (csd-engine's jux pass, faust panGains), so the
+            // mirror of an existing pan is -pan. (Until 2026-07-25 this read
+            // 1-e.pan, a 0..1-convention mirror, which sent every response note
+            // hard right the moment a jux state stamped a negative pan.)
+            e.pan=e.pan==null?(p.pan!=null?p.pan:0.72):+((-e.pan).toFixed(4)); // pan mirror
             e.amp=A(e.amp*lvl);                            // level flip (softer answer)
           }
         });

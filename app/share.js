@@ -15,7 +15,7 @@
 //
 // path = x.y waypoint pairs (logical world coords, integers); m = 1-based measure.
 import { S, set } from "./state.js";
-import { BARS_PER_SEG } from "./world.js";
+import { BARS_PER_SEG, POS } from "./world.js";
 
 // ── CONSTANT-PACE TRAVEL (Paul 2026-07-11: "the playhead should always move at a
 // constant pace; distance between nodes shouldn't matter"). The old model gave
@@ -107,6 +107,20 @@ function segAtDistance(d, legs, perim, n){
   return { seg, t: legs[seg]>1e-6 ? Math.min(1, d/legs[seg]) : 0 };
 }
 
+// travel position -> measure: the CONSTANT-PACE INVERSE of travelForBar (distance
+// along the perimeter / speed). THE PLAYHEAD IS THE SOURCE OF TRUTH for the
+// measure: dragging the traveler while LIVE moves the playhead without moving the
+// engine's bar serial, so anything that reports "where are we" must read the
+// traveler. Lives here beside travelForBar (its forward direction) and is used by
+// both buildShareUrl below and live.js stopLive's resume measure — one inverse,
+// one answer, so a copied link and a stop-then-play land on the same spot.
+export function barForTravel(travel){
+  const { legs }=legMetrics();
+  let d=0; for(let i=0;i<travel.seg;i++) d+=legs[i]||0;
+  d+=travel.t*(legs[travel.seg]||0);
+  return Math.max(0, Math.round(d/Math.max(1e-6, paceSpeed())));
+}
+
 export function buildShareUrl(){
   const q=new URLSearchParams();
   q.set("seed", String(S.seed));
@@ -115,7 +129,16 @@ export function buildShareUrl(){
   if(Math.abs(durMult()-1)>1e-9) q.set("xdur", String(durMult()));   // the duration MULTIPLE rides the URL (×1 omitted)
   if(S.modeLock!=="auto") q.set("mode", S.modeLock);
   if(S.soundfont && S.soundfont!=="fluidr3") q.set("sf", S.soundfont);   // the chosen soundfont rides the URL (Paul)
-  const m=S.live&&S.barInfo?(S.barInfo.serial+1):((S.startBar||0)+1);   // 1-based measure; idle = the resume point
+  // 1-based measure. LIVE = wherever the PLAYHEAD is (barForTravel), not the
+  // engine's bar serial: a mid-live playhead drag moves the traveler and leaves
+  // the serial running, so the serial-based URL used to bookmark a measure the
+  // user is no longer at. Reading the traveler makes the copied link agree with
+  // the visible playhead AND with stopLive's resume measure (same inverse). It
+  // also means the measure wraps with the loop, exactly as a stop→play does.
+  // No path (a single point) has no traveler, so it falls back to the serial;
+  // idle = the resume point.
+  const m=S.live?(S.waypoints.length>=2?barForTravel(S.travel)+1:(S.barInfo?S.barInfo.serial+1:1))
+                :((S.startBar||0)+1);
   if(m>1) q.set("m", String(m));
   return location.origin+location.pathname+"?"+q.toString();
 }
@@ -127,6 +150,20 @@ export function applyUrlState(){
   let restored=false;
   if(q.get("seed")){ const v=parseInt(q.get("seed"),10); if(v>=1&&v<=99999) S.seed=v; }
   if(q.get("mode")) S.modeLock=q.get("mode");
+  // ?genre=<id> — the guessable entry point (access.html and embed.html
+  // already honour it, and every release-feed link carries it as its readable
+  // half). A tight triangle ON the star: radius 22 world-units keeps every
+  // point unambiguously nearest this anchor (closest star pair in the baked
+  // layout is ~107 apart; targeting.js snaps once the gap clears SNAP=64), so
+  // the loop plays the pure genre while the traveler still moves. An explicit
+  // ?path= always wins — it is the more specific instruction.
+  const gid=q.get("genre");
+  if(gid && !q.get("path") && POS[gid]){
+    const [gx,gy]=POS[gid], R=22;
+    S.waypoints=[0,2.0944,4.1888].map(a=>({x:Math.round(gx+R*Math.cos(a-Math.PI/2)),
+                                           y:Math.round(gy+R*Math.sin(a-Math.PI/2))}));
+    restored=true;
+  }
   const path=q.get("path");
   if(path){
     const wps=path.split(",").map(s=>{ const [x,y]=s.split(".").map(Number); return {x,y}; })

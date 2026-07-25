@@ -119,7 +119,9 @@
       // JS-side per-note gains ("@" pseudo-params, applied in the mix loop, not
       // setParamValue): @out = DX7 velocity (GainNode-equivalent, matches live's
       // min(1, extGainPerAmp*amp)); @pp = per-EVENT ping-pong send (snarePP).
-      if (u.extGainPerAmp) v.changes.push([s - BS, "@out", Math.min(1, u.extGainPerAmp * (e.amp || 0.1))]);
+      // dx7OutCeil (state-engine DX7_OUT_CEIL) lifts that ceiling for the dx7
+      // SYNTH FONT only — absent on every other voice, so `|| 1` is the old law.
+      if (u.extGainPerAmp) v.changes.push([s - BS, "@out", Math.min(u.dx7OutCeil || 1, u.extGainPerAmp * (e.amp || 0.1))]);
       v.changes.push([s - BS, "@pp", e.pp || 0]);
       if (legato) {
         // join the group: withdraw the pending gate-off, keep the gate high

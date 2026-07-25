@@ -470,6 +470,36 @@ the font itself is never committed or shipped).
 | `tenor_sax` (REPLACEMENT of the FluidR3 extract, same id) | **FreePats Tenor Saxophone** (VCSL samples by Versilian Studios LLC, re-edited with infinite sustain loops by roberto@zenvoid.org, version 2020-07-17) — [freepats.zenvoid.org/Reed/saxophone.html](https://freepats.zenvoid.org/Reed/saxophone.html); fetched by `tools/fetch-guitar-samples.sh` | 8-zone looped tenor-sax keymap (every zone carries a sustain loop — real reed breath that holds under a solo note) | **CC0 1.0** (`readme.txt` in the archive; VCSL itself is CC0) |
 | `upright_piano` | **FreePats Upright Piano KW** (a Kawai upright in a living room; recorded by Gonzalo & Roberto, January 2017) — [freepats.zenvoid.org/Piano/acoustic-grand-piano.html#UprightKW](https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html#UprightKW); fetched by `tools/fetch-guitar-samples.sh` | 10-zone upright-piano keymap, full 21–108 span, bass-note sustain loops, top octaves natural decay — the intimate/domestic piano voice (NEW id; the GM grand + felt_piano stay) | **CC0 1.0** (`cc0.txt` + `readme.txt` in the archive) |
 
+## Alternate soundfont shelf (`engine/faust/font-*.json` + `found/samples/instruments-<key>/` — `tools/gen-font.js`)
+
+The runtime soundfont switcher plays alternate GM fonts alongside the default
+FluidR3. **The in-app names are jokes, not trade names** (Paul 2026-07-25:
+"rename the external soundfonts with joking similar names… don't use the trade
+names") — the map below is the honest record of what each shelf slot actually
+is, so provenance and licensing stay checkable even though the UI never says
+a brand.
+
+| in-app name | what it actually is | status |
+|---|---|---|
+| **FluidR3 GM (default)** | FluidR3 GM/GS, Frank Wen | **MIT** — open, named honestly (see the sampled-instruments table above) |
+| **SGM Pro 15** | SGM (Shan's General MIDI) | permissive/open — named honestly |
+| **Seattle Glass Factory** | the Microsoft GM font shipped with Windows | ⚠ proprietary OEM font — **fetch-only, never committed, never redistributed** (tier 3); the extracted zones are gitignored like all media |
+| **Hamamatsu Three Forks** | a Yamaha XG-family font | ⚠ proprietary — tier 3, fetch-only |
+| **Oliphant Canvas** | a Roland SC-55 (Sound Canvas) sample set | ⚠ proprietary — tier 3, fetch-only |
+| **Terrapin Strand** | a Turtle Beach Montego font | ⚠ proprietary — tier 3, fetch-only |
+| **Gravitas Oversound** | the Gravis Ultrasound patch set | ⚠ legacy/abandonware, no clear grant — tier 3, fetch-only |
+| **Rossum's Robots** | an E-mu APS font | ⚠ proprietary — tier 3, fetch-only |
+| **Pocket Lad Forward** | a Game Boy Advance GM rip | ⚠ proprietary rip — tier 3, fetch-only |
+| **Thumbfruit** | a BlackBerry handset GM font | ⚠ proprietary — tier 3, fetch-only |
+| **Pure Analog** / **Pure FM** | this project's own synth voices (Minimoog-style analog model; DX7 ROM patch data) | in-house synthesis — see the DX7 patch-bank note below |
+
+**The rule this table encodes:** every ⚠ row is tier 3 in the media policy —
+the fonts are the user's own local files or their own fetch, the extracted
+zones are gitignored, nothing proprietary is committed or redistributed here,
+and no distributed render should lean on one. Renaming is a taste/branding
+choice (the catalog is fiction all the way down); it is **not** a licensing
+workaround, which is exactly why this table exists.
+
 ## Power-chord one-shots (found/samples/hits/pc_* — fetch-guitar-samples.sh)
 
 | local ids | source | content | license |

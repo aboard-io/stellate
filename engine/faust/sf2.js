@@ -192,8 +192,16 @@ if (typeof module !== "undefined" && require.main === module) {
       fs.writeFileSync(path.join(dir, file), Buffer.concat([h, data]));
       // fine/coarse tune folded into an effective (possibly fractional) root
       const rootEff = z.root - z.coarse - z.fine / 100;
+      // vlo/vhi are the names the PLAYER reads (faust/sampler.js zoneFor picks
+      // the layer covering a note's velocity); velLo/velHi are kept for the
+      // extractor's own vocabulary and for existing readers. Emitting both is
+      // what makes a FULL CAPTURE multi-velocity extraction actually playable —
+      // a zones.json carrying only velLo/velHi looks single-layer to zoneFor, so
+      // its forte samples were unreachable no matter what velocity was fed in
+      // (ENGINE-AUDIT 2026-07 Tier 2, the velocity-layer finding). JSON-only
+      // change: no audio path reads zones.json at render time.
       meta.zones.push({ file, root: Math.round(rootEff * 100) / 100, lo: z.keyLo, hi: z.keyHi,
-        velLo: z.velLo, velHi: z.velHi,
+        velLo: z.velLo, velHi: z.velHi, vlo: z.velLo, vhi: z.velHi,
         loop: z.loop && le > ls + 8, loopStart: ls, loopEnd: le, len: pcm.length });
       console.log(`  ${file}  root=${rootEff} keys=${z.keyLo}-${z.keyHi} loop=${z.loop ? ls + ".." + le : "-"} ${(pcm.length / OUT_SR).toFixed(2)}s`);
     });

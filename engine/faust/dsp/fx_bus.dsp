@@ -46,6 +46,22 @@ highcut = hslider("highcut", 20500, 1000, 20500, 1);
 // never sets params hears the same master.
 shelf   = hslider("shelf", -3, -12, 0, 0.1);
 AIR_FC  = 7000;   // shelf corner: midpoint of the cut — puts the >=8 kHz band at ~-3 dB
+// THE TAPE (Paul 2026-07-25: "just a bit of saturated tape wobble plus reverb
+// in the final mix"). Three always-on master colours — the machine the whole
+// catalogue is played back on. Defaults mirror the state-engine constants so a
+// host that sets no params hears the same master.
+//   wob  — wow & flutter: decorrelated slow LFOs modulate a short fractional
+//          delay per channel (wow ~0.6 Hz + flutter ~6 Hz). Tiny depth: the
+//          pitch drifts, it never seasicks. Decorrelation gives a little width.
+//   tsat — gentle tape saturation: soft knee well under the clip stage, exact
+//          bypass at 0, level-preserving for small signals.
+//   mrev — a little of the DRY mix into the reverb so the WHOLE mix shares one
+//          room (the per-voice sends are untouched — this is the global bleed).
+wob     = hslider("wob", 0.35, 0, 1, 0.01);
+tsat    = hslider("tsat", 0.18, 0, 1, 0.01);
+mrev    = hslider("mrev", 0.07, 0, 0.5, 0.01);
+WOB_MS  = 1.6;    // base delay; peak deviation is 90% of it at wob=1 (~±0.1% pitch)
+TSAT_K  = 1.8;    // saturation drive at tsat=1
 
 MAXD = 131072;   // ~3 s at 44.1k
 
@@ -73,7 +89,18 @@ gritmix(x) = x + (gritfx(x) - x)*min(1.0, grit*8);
 cratio  = 1.0/max(0.45, 1 - 0.55*comp);
 cthresh = 20*log10(max(0.2, 0.55 - 0.35*comp));
 makeup  = 1 + 0.8*comp;
+// --- the tape transport (see the wob/tsat sliders above) ---
+// wow (slow, dominant) + flutter (fast, quarter-weight); L/R run at different
+// rates so the drift decorrelates into width instead of shifting the image.
+wowL = os.osc(0.61)*0.75 + os.osc(5.70)*0.25;
+wowR = os.osc(0.53)*0.75 + os.osc(6.30)*0.25;
+wobble(lfo, x) = de.fdelay(1024, dly, x)
+  with { base = WOB_MS*0.001*ma.SR; dly = base*(1 + 0.9*wob*lfo); };
+// level-preserving soft knee; exact bypass at tsat=0 (the (…-x)*tsat term dies)
+tapesat(x) = x + (ma.tanh(x*k)/k - x)
+  with { k = 1 + TSAT_K*tsat; };
 master(sc, l, r) = l, r
+  : (wobble(wowL), wobble(wowR))                                  // the transport, before everything downstream
   : (fi.lowpass(2, min(mcut, 20500)), fi.lowpass(2, min(mcut, 20500)))
   : (*(duck), *(duck))
   : (gritmix, gritmix)
@@ -81,6 +108,7 @@ master(sc, l, r) = l, r
   : (*(makeup), *(makeup))
   : (fi.highpass(2, lowcut), fi.highpass(2, lowcut))
   : (fi.lowpass(2, highcut), fi.lowpass(2, highcut))
+  : (tapesat, tapesat)                                             // tape saturation, under the clip stage
   : (fi.high_shelf(shelf, AIR_FC), fi.high_shelf(shelf, AIR_FC))   // master AIR shelf (see hslider above)
   : (clip, clip)
 with {
@@ -101,7 +129,9 @@ with {
   d   = fbdel(del) * dgain;
   ppl = pingpong(pp) : _, !;      // identical subtrees are hash-consed:
   ppr = pingpong(pp) : !, _;      // one ping-pong, one zita instance
-  rin = (rev + d*0.2 + (ppl + ppr)*0.12) * rgain;
+  // + mrev: a little of the DRY mix joins the sends, so every voice shares one
+  // room even when its own send is 0 (the global bleed — see the mrev slider)
+  rin = (rev + d*0.2 + (ppl + ppr)*0.12 + (dl + dr)*0.5*mrev) * rgain;
   // dark crossover/return + LONG t60: reverbsc at fb 0.85 has a much longer,
   // darker tail than stock zita — this is what pulls the A/B centroid in line
   rl  = (rin, rin) : re.zita_rev1_stereo(40, 200, 2000, 5.0, 3.5, 48000) : fi.lowpass(1, rtone), ! ;

@@ -101,6 +101,51 @@ async function main() {
     ok("stop twice rewinds to the top (startBar 0, travel 0/0, URL m dropped)");
   else fail(`double-stop did not rewind: ${JSON.stringify(tr.afterDouble)}`);
 
+  // (f) THE LIVE URL FOLLOWS THE PLAYHEAD (2026-07-25). buildShareUrl's live
+  // branch used to read the ENGINE's bar serial, so copying the URL after a
+  // mid-live playhead drag bookmarked a measure the user was no longer at (the
+  // traveler had moved; the serial had not). It now reads barForTravel(S.travel)
+  // — the same inverse stopLive uses — so the copied link, the visible playhead
+  // and the resume measure are one answer. Drag while LIVE, then assert the URL's
+  // m == the traveler's measure AND that it is NOT the stale serial+1.
+  // drop in mid-leg first: at travel 0/0 the traveler sits ON waypoint 1 and the
+  // waypoint wins the hit-test (it is authoritative), so the grab must start from
+  // a spot where only the playhead lives.
+  await page.evaluate(() => { window.__S.startBar = 300; window.__X.goLive(); });
+  await page.waitForFunction(() => window.__S.barInfo && window.__S.live, {}, { timeout: 25000 });
+  const livedrag = await page.evaluate(async () => {
+    const svg = document.getElementById("map"), r = svg.getBoundingClientRect();
+    const dot = [...svg.querySelectorAll("circle.cur")].pop();
+    if (!dot) return { err: "no traveler dot" };
+    const cx = +dot.getAttribute("cx"), cy = +dot.getAttribute("cy");
+    const fire = (type, x, y) => svg.dispatchEvent(new PointerEvent(type, { bubbles: true, clientX: r.left + x, clientY: r.top + y, pointerId: 9, button: 0, isPrimary: true }));
+    const before = { seg: __S.travel.seg, t: __S.travel.t, serial: __S.barInfo.serial };
+    fire("pointerdown", cx, cy);
+    for (let i = 1; i <= 20; i++) fire("pointermove", cx + i * 12, cy + i * 6);
+    window.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 9 }));
+    await new Promise((res) => setTimeout(res, 200));
+    // the traveler's measure, computed independently of share.js (arc length / pace)
+    const wps = __S.waypoints, legs = wps.map((a, i) => { const b = wps[(i + 1) % wps.length]; return Math.hypot(b.x - a.x, b.y - a.y); });
+    let d = 0; for (let i = 0; i < __S.travel.seg; i++) d += legs[i];
+    d += __S.travel.t * legs[__S.travel.seg];
+    const want = Math.max(0, Math.round(d / __X.paceSpeed())) + 1;
+    return { before, after: { seg: __S.travel.seg, t: __S.travel.t, serial: __S.barInfo.serial },
+      want, m: +new URLSearchParams(__X.shareUrl().split("?")[1]).get("m") };
+  });
+  if (livedrag.err) fail("live playhead drag: " + livedrag.err);
+  else {
+    const moved = livedrag.after.seg !== livedrag.before.seg || Math.abs(livedrag.after.t - livedrag.before.t) > 1e-6;
+    const stale = livedrag.after.serial + 1;
+    if (moved) ok(`live playhead dragged (seg ${livedrag.before.seg}/${livedrag.before.t.toFixed(3)} -> ${livedrag.after.seg}/${livedrag.after.t.toFixed(3)})`);
+    else fail(`live playhead drag did not move travel: ${JSON.stringify(livedrag)}`);
+    if (livedrag.m === livedrag.want) ok(`shared URL m=${livedrag.m} == the dragged playhead's measure`);
+    else fail(`shared URL m=${livedrag.m}, playhead is at measure ${livedrag.want}`);
+    if (Math.abs(stale - livedrag.want) >= 2) ok(`…and NOT the engine serial (the old formula would have said m=${stale})`);
+    else fail(`drag too small to distinguish: serial says ${stale}, playhead says ${livedrag.want}`);
+  }
+  await page.evaluate(() => window.__X.stopLive());
+  await page.waitForTimeout(200);
+
   // (e) macros gone + no errors
   const macroCount = await page.evaluate(() => document.querySelectorAll("#panel .mac, #panel .mrow").length);
   if (macroCount === 0) ok("macros gone from the panel"); else fail(`${macroCount} macro rows still render`);

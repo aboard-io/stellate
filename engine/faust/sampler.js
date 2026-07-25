@@ -144,6 +144,35 @@
     return S;
   }
 
+  // ---- STRIP TAIL (ENGINE-AUDIT 2026-07 Tier 2) ---------------------------
+  // The per-note tape delay (S.dly) still holds near-full-level echo when the
+  // note's render loop ends at holdN+relN: press measured a -24 dBFS SINGLE-
+  // SAMPLE step (an audible tick) at the end of every sustained delay-strip
+  // lead note, and a note SHORTER than the delay time emitted no echo at all
+  // (the first echo would emerge `ds` samples in, past the end) while still
+  // paying the (1-mix) dry attenuation — the declared lead "air" was pure
+  // signal loss. So a delay-bearing strip renders TAIL samples past the note,
+  // feeding x = 0 (the envelope is already closed there) so the echoes decay
+  // naturally. Three delay times ≈ the third repeat at fb^2 — for the shipped
+  // profiles that lands the residual near -50 dBFS — capped so a 1.4 s delay
+  // can't drag a 4 s tail behind every note.
+  //
+  // WINDOW PARITY: this is a pure function of the strip spec + sr, so the
+  // stream renderer's per-window note filter must use the SAME value for a
+  // note's end (stream-renderer.js `n._end = n._s0 + holdN + relN + tailN`) —
+  // otherwise a tail crossing a chord-bar boundary is dropped there and press
+  // parity breaks. The tail itself is computed from the note's i=0 strip state
+  // like every other sample, so re-rendering the note in a later window
+  // reproduces it byte-for-byte.
+  const STRIP_TAIL_REPEATS = 3, STRIP_TAIL_MAX_SEC = 3.0;
+  function stripTailN(strip, sr) {
+    if (!strip || !strip.delay) return 0;
+    const mix = clampS(strip.delay.mix != null ? strip.delay.mix : 0.25, 0, 1);
+    if (!(mix > 0)) return 0;
+    const ds = Math.max(1, Math.floor((strip.delay.timeSec || 0.3) * sr));
+    return Math.min(STRIP_TAIL_REPEATS * ds, Math.floor(STRIP_TAIL_MAX_SEC * sr));
+  }
+
   // process one sample through the per-note strip. `t` = GLOBAL song seconds.
   function stripStep(S, x, t) {
     if (S.hp) x = biq(S.hp, x);
@@ -221,9 +250,89 @@
     return x * S.trim;
   }
 
+  // ---- SELECTION VELOCITY (ENGINE-AUDIT 2026-07 Tier 2) -------------------
+  // The ONE formula both engines use to pick a velocity layer. It takes the
+  // MUSICAL amplitude — buildEvents' note amp, carried on the event as `e.amp`
+  // (state-engine mapEvents) — never a mix gain.
+  //
+  // What it replaces: press fed zoneFor round(n.gain*127) where n.gain was
+  // (u.lvl||0.5)*e.sets.gain, a fully mix-staged level. Measured over 10,109
+  // sampler notes in 8 genres that gain never exceeded 0.484 => velocity capped
+  // at 61, so every layer above vlo 61 — the forte samples sf2.js's FULL
+  // CAPTURE extraction exists to keep — was unreachable. live.js used a THIRD
+  // value (round(e.sets.gain*127), no u.lvl), so press and live could pick
+  // different layers for the same note. And gain > 1 (sets.gain clamps at 2)
+  // gave v > 127, which fails every vhi<=127 test and fell through to
+  // covers[0] — the SOFTEST layer, since sf2.js sorts zones velLo-ascending.
+  //
+  // The two lanes are authored on DIFFERENT amplitude scales in csd-engine, so
+  // each carries its own full-scale reference (measured over 40,450 sampler
+  // events across 46 genres, seed 3):
+  //   pitched  amps are authored in a 0..0.25 band (pad 0.07-0.10, melody
+  //            0.115-0.19, bass 0.22, licks/lands to 0.19; p99 0.233, max
+  //            0.306) — the mix stage, not the note, supplies the loudness.
+  //            Against PITCHED_AMP_FULL that spreads to p50 64 / p90 113, with
+  //            0.08% of notes clamping at 127: the forte layers are reachable
+  //            and a voice's own dynamics (accents, fills, ghosted pads) still
+  //            move the velocity.
+  //   drum     hits ARE authored 0..1 (ghost 0.1 … crash 0.93), so the recovered
+  //            amp is already the velocity — full scale 1.
+  // Anything else (sfx/stab lane): VEL_DEFAULT, identically in both engines.
+  // Every shipped font has one velocity layer spanning 0:127, so this is
+  // byte-identical today; it is the first multi-velocity font that needs it.
+  const VEL_DEFAULT = 100;
+  const PITCHED_AMP_FULL = 0.25;   // csd-engine's authored "firm note" ceiling
+  const DRUM_SAMP_GAIN = 0.5;      // mirrors state-engine's velocity->sample-gain calibration
+  const clampVel = (v) => (v < 0 ? 0 : v > 127 ? 127 : v);
+  function selVel(amp, fullScale) {
+    if (amp == null || !isFinite(amp)) return VEL_DEFAULT;
+    return clampVel(Math.round(127 * amp / (fullScale || 1)));
+  }
+  // event -> selection velocity. Pitched events carry `amp` (the note's musical
+  // amplitude). The sampled-DRUM lane doesn't: state-engine emits only
+  // sets.gain = amp * DRUM_SAMP_GAIN, so the hit's velocity is recovered through
+  // that same constant — a kit's ghost notes and accents must still pick
+  // different layers on a multi-velocity kit.
+  function selVelOf(e) {
+    if (!e) return VEL_DEFAULT;
+    if (e.amp != null) return selVel(e.amp, PITCHED_AMP_FULL);
+    if (e.drum && e.sets && e.sets.gain != null) return selVel(e.sets.gain / DRUM_SAMP_GAIN, 1);
+    return VEL_DEFAULT;
+  }
+
+  // TAIL step: the ring-out end of the strip only — the delay line that holds
+  // the echoes, the flanger that follows it, and the trim. The pre-delay stages
+  // (filters/EQ/sat/comp/chorus/phaser/leslie) are fed x = 0 during the tail, so
+  // all they contribute is their own decaying residue of the note's last ~35 ms
+  // (tens of dB under the echo) — while running the full ~150-op strip for a
+  // 1.5 s tail on every note measured a 2x press-time regression (20 s jazz:
+  // 7 s -> 15 s). The arithmetic below is byte-for-byte the dly/fla/trim block
+  // of stripStep, so press and the stream renderer compute the identical tail
+  // and window parity is untouched.
+  function stripTailStep(S, t) {
+    let x = 0;
+    if (S.dly) {
+      const D = S.dly; let rp = D.w - D.ds; if (rp < 0) rp += D.n;
+      let echo = D.buf[rp];
+      D.lp += D.lpA * (echo - D.lp); echo = D.lp;
+      D.buf[D.w] = x + D.fb * echo; D.w = (D.w + 1) % D.n;
+      x = (1 - D.mix) * x + D.mix * echo;
+    }
+    if (S.fla) {
+      const F = S.fla, lfo = 0.5 - 0.5 * Math.cos(2 * Math.PI * F.rate * t);
+      let d = F.base + F.swing * F.depth * lfo; if (d < 1) d = 1; else if (d > F.n - 2) d = F.n - 2;
+      let rp = F.w - d; while (rp < 0) rp += F.n;
+      const i0 = rp | 0, fr = rp - i0, i1 = (i0 + 1) % F.n;
+      const del = F.buf[i0] + fr * (F.buf[i1] - F.buf[i0]);
+      F.buf[F.w] = x + F.fb * del; F.w = (F.w + 1) % F.n;
+      x = (1 - F.mix) * x + F.mix * del;
+    }
+    return x * S.trim;
+  }
+
   function zoneFor(zones, midi, vel) {
     if (!zones || !zones.length) return null;
-    const v = vel == null ? 100 : vel;
+    const v = vel == null ? VEL_DEFAULT : clampVel(vel);
     // among the zones covering this note, prefer the one whose VELOCITY LAYER
     // covers v (vlo/vhi absent = full range 0..127, so single-velocity fonts are
     // unaffected). The soundfont switcher's multi-velocity fonts (upright piano,
@@ -303,9 +412,13 @@
     // still forces it on regardless of threshold.
     const granOverSt = sends.granularOverSt != null ? sends.granularOverSt : null;
     const granSec = sends.grainSec || 0.09;
+    // delay-strip ring-out length (see stripTailN) — a per-UNIT constant.
+    const tailN = strip ? stripTailN(strip, sr) : 0;
     for (const n of notes) {
       const midi = midiOfFreq(n.freq);
-      const z = zoneFor(n.zones, midi, n.gain != null ? Math.round(n.gain * 127) : 100);
+      // VELOCITY LAYER: the note's musical velocity (press/live share selVel);
+      // absent => VEL_DEFAULT, the old default for a note with no gain.
+      const z = zoneFor(n.zones, midi, n.vel != null ? n.vel : VEL_DEFAULT);
       if (!z) continue;
       const src = buffers[z.srcId];
       if (!src || !src.length) {
@@ -337,6 +450,35 @@
       // MASTERING pan (see the header note above): null => the old mono write
       const pan = (n.pan != null ? n.pan : basePan) || 0;
       const pg = (pan && into.dryL && into.dryR) ? panLR(pan) : null;
+      // DELAY-STRIP RING-OUT (see stripTailN): keep stepping the strip past the
+      // note with x = 0 — the note's envelope is already closed at `from`, so
+      // the input is continuous and only the delay line's stored echoes decay
+      // out. Same write/clip rules as the note body, so a windowed render sees
+      // exactly the slice that lands in its window. The quiet counter is a pure
+      // function of the strip state (window-independent) — parity-safe.
+      const ringOut = (from) => {
+        if (!S || !tailN) return;
+        // stop early only once the delay LINE is provably empty: a full delay
+        // period of silent output means every sample the read pointer can still
+        // reach is zero. (A shorter run would cut the FIRST echo of a note
+        // shorter than the delay time — the very case this fix exists for.)
+        const quietMax = (S.dly ? S.dly.ds : 0) + 64;
+        // HANDOVER: the first 60 ms of the tail still run the FULL strip, so the
+        // pre-delay stages' stored history (chorus/leslie delay lines ≤35 ms,
+        // biquad + phaser ringing) empties into the delay continuously instead
+        // of vanishing at the seam — that is the difference between a -47 dBFS
+        // and a -66 dBFS residual step, for 4% of the tail's samples.
+        const handoverN = Math.min(tailN, Math.ceil(0.06 * sr));
+        let quiet = 0;
+        for (let i = from; i < from + tailN; i++) {
+          if (s0 + i >= total) break;
+          const v = i - from < handoverN ? stripStep(S, 0, (s0 + i) / sr) : stripTailStep(S, (s0 + i) / sr);
+          const j = s0 + i - winBase;
+          if (j >= busLen) break;
+          if (j >= 0) { const vd = v * dg; if (pg) { into.dryL[j] += vd * pg.l; into.dryR[j] += vd * pg.r; } else into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; }
+          if (v > -1e-7 && v < 1e-7) { if (++quiet > quietMax) break; } else quiet = 0;
+        }
+      };
       // blue-note bend: start bendFrom semitones off target, linear-in-rate
       // glide over bendMs (matches live's linearRampToValueAtTime), then the
       // fixed target rate. pos accumulates ONLY on the bend path so unbent
@@ -358,7 +500,7 @@
         const outNm = Math.min(total - s0, effHold + relN);
         // head-EQ: gentle one-pole lowpass (dulled highs of the playback head)
         const fc = 9000 - (M.headEq || 0) * 6500, aLp = (M.headEq || 0) > 0 ? 1 - Math.exp(-2 * Math.PI * fc / sr) : 0;
-        let lp = 0, posAccM = 0;
+        let lp = 0, posAccM = 0, iEnd = outNm, pastWin = false;
         for (let i = 0; i < outNm; i++) {
           const t = (s0 + i) / sr;
           let pm = Math.pow(2, (wowD * Math.sin(2 * Math.PI * wowR * t) + flD * Math.sin(2 * Math.PI * flR * t)) / 12);
@@ -366,7 +508,7 @@
           const baseR = bendN ? (i < bendN ? r0 + (rate - r0) * (i / bendN) : rate) : rate;
           let pos = posAccM; posAccM += baseR * pm;
           if (loop && pos >= loopEnd) pos = z.loopStart + ((pos - z.loopStart) % loopLen);
-          if (pos >= src.length - 1) break;
+          if (pos >= src.length - 1) { iEnd = i; break; }
           const i0 = pos | 0, fr = pos - i0;
           let v = (src[i0] + fr * (src[i0 + 1] - src[i0])) * g;
           if (aLp) { lp += aLp * (v - lp); v = lp; }
@@ -374,9 +516,10 @@
           if (i > effHold) v *= Math.max(0, 1 - (i - effHold) / relN);   // tape-runout release
           if (S) v = stripStep(S, v, (s0 + i) / sr);
           const j = s0 + i - winBase;
-          if (j >= busLen) break;
+          if (j >= busLen) { iEnd = i; pastWin = true; break; }
           if (j >= 0) { const vd = v * dg; if (pg) { into.dryL[j] += vd * pg.l; into.dryR[j] += vd * pg.r; } else into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; }
         }
+        if (!pastWin) ringOut(iEnd);
         continue;
       }
       // GRANULAR REPITCH (Pass 1 of the Faust-fun program, Paul 2026-07-11: "I
@@ -390,6 +533,7 @@
         const Gn = Math.max(128, Math.floor((n.grainSec || granSec) * sr)), Hn = Math.max(1, Gn >> 1);
         const han = grainHann(Gn);
         const wrap = (p) => (loop && p >= loopEnd) ? z.loopStart + ((p - z.loopStart) % loopLen) : p;
+        let iEnd = outN, pastWin = false;
         for (let i = 0; i < outN; i++) {
           let vv = 0;
           const kLo = Math.max(0, Math.ceil((i - Gn + 1) / Hn)), kHi = (i / Hn) | 0;
@@ -406,17 +550,18 @@
           if (i > holdN) v *= Math.max(0, 1 - (i - holdN) / relN);
           if (S) v = stripStep(S, v, (s0 + i) / sr);
           const j = s0 + i - winBase;
-          if (j >= busLen) break;
+          if (j >= busLen) { iEnd = i; pastWin = true; break; }
           if (j >= 0) { const vd = v * dg; if (pg) { into.dryL[j] += vd * pg.l; into.dryR[j] += vd * pg.r; } else into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; } }
+        if (!pastWin) ringOut(iEnd);
         continue;
       }
-      let posAcc = 0;
+      let posAcc = 0, iEnd = outN, pastWin = false;
       for (let i = 0; i < outN; i++) {
         let pos;
         if (bendN) { pos = posAcc; posAcc += i < bendN ? r0 + (rate - r0) * (i / bendN) : rate; }
         else pos = i * rate;
         if (loop && pos >= loopEnd) pos = z.loopStart + ((pos - z.loopStart) % loopLen);
-        if (pos >= src.length - 1) break;                    // unlooped: natural end
+        if (pos >= src.length - 1) { iEnd = i; break; }       // unlooped: natural end
         const i0 = pos | 0, fr = pos - i0;
         let v = (src[i0] + fr * (src[i0 + 1] - src[i0])) * g;
         // attack: linear declick ramp; SWELL mode (n.swell — strings pads)
@@ -426,9 +571,10 @@
         if (i > holdN) v *= Math.max(0, 1 - (i - holdN) / relN); // release ramp
         if (S) v = stripStep(S, v, (s0 + i) / sr);
         const j = s0 + i - winBase;
-        if (j >= busLen) break;
+        if (j >= busLen) { iEnd = i; pastWin = true; break; }
         if (j >= 0) { const vd = v * dg; if (pg) { into.dryL[j] += vd * pg.l; into.dryR[j] += vd * pg.r; } else into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; }
       }
+      if (!pastWin) ringOut(iEnd);
     }
     return into;
   }
@@ -437,18 +583,60 @@
   // found-player's decodeUrlToBuffer skips "lead-in" and boosts quiet audio —
   // both would break instrument zones (soft attacks cut, loop offsets shifted,
   // level calibration destroyed). Zones decode verbatim.
-  const _cache = new Map();
+  // ENGINE-AUDIT 2026-07 Tier 2: this cache used to be unbounded (deletes only
+  // on fetch/decode FAILURE) and, being module-scoped, survived stopLive/goLive
+  // — so every zone of every instrument of every genre a session visited stayed
+  // pinned, plus a disjoint keyspace per switcher font (11 shipped). The default
+  // font alone is 644 zones / ~204 MB decoded. Now an LRU on decoded SAMPLES:
+  //   * insertion order IS the LRU order and every hit re-inserts, so the
+  //     genre being played refreshes its own working set on every bar — a
+  //     journey evicts the genre it left, never the one it is in;
+  //   * ZONE_CACHE_MIN keeps a comfortable multiple of one genre's zone count
+  //     resident regardless of the byte budget, so arrival never thrashes:
+  //     measured over all 274 genres, a genre's units need p50 23 / p90 34 /
+  //     max 49 zones, so 128 holds two worst-case genres (a live crossfade)
+  //     plus headroom;
+  //   * only SETTLED entries evict (an in-flight decode is never dropped), and
+  //     an evicted url re-fetches from the same static file — identical PCM.
+  // Browser-only path (press/node never calls this): byte-transparent.
+  const ZONE_CACHE_MAX_SAMPLES = 24e6;   // ~96 MB of float32 PCM (~290 avg zones)
+  const ZONE_CACHE_MIN = 128;            // never evict below this many zones (2 worst-case genres)
+  const _cache = new Map();              // url -> Promise<AudioBuffer>, LRU order
+  const _cacheSize = new Map();          // url -> decoded sample count (settled only)
+  let _cacheSamples = 0, _cacheEvicted = 0;
+  function _cacheDrop(url) {
+    if (!_cache.has(url)) return;
+    _cache.delete(url);
+    const n = _cacheSize.get(url);
+    if (n) { _cacheSamples -= n; _cacheSize.delete(url); }
+  }
   function decodeUrlRaw(ctx, url) {
-    if (_cache.has(url)) return _cache.get(url);
+    if (_cache.has(url)) {                 // LRU refresh: move to the tail
+      const hit = _cache.get(url);
+      _cache.delete(url); _cache.set(url, hit);
+      return hit;
+    }
     const job = (async () => {
       const r = await fetch(url, { mode: "cors" });
       if (!r.ok) throw new Error("fetch " + r.status + " for " + url);
       return await ctx.decodeAudioData(await r.arrayBuffer());
     })();
     _cache.set(url, job);
-    job.catch(() => _cache.delete(url));
+    job.then((buf) => {
+      if (!_cache.has(url)) return;
+      const n = (buf && buf.length) || 0;
+      _cacheSize.set(url, n); _cacheSamples += n;
+      if (_cacheSamples <= ZONE_CACHE_MAX_SAMPLES) return;
+      for (const k of [..._cache.keys()]) {   // oldest first
+        if (_cacheSamples <= ZONE_CACHE_MAX_SAMPLES || _cache.size <= ZONE_CACHE_MIN) break;
+        if (!_cacheSize.has(k)) continue;     // in flight — never evict a pending decode
+        _cacheEvicted++; _cacheDrop(k);
+      }
+    }, () => _cacheDrop(url));
     return job;
   }
+  const zoneCacheInfo = () => ({ entries: _cache.size, samples: _cacheSamples,
+    mb: +(_cacheSamples * 4 / 1048576).toFixed(1), evicted: _cacheEvicted, max: ZONE_CACHE_MAX_SAMPLES });
 
   // ---- live channel strip (Web Audio) — the perceptual twin of makeStrip/
   // stripStep, built from the SAME `strip` spec (u.sampler.strip). Not byte-
@@ -831,15 +1019,22 @@
       srcOut.connect(env);
       // per-note channel strip (band-appropriate filter/EQ/comp + saturation +
       // chorus/phaser air). Sends tap POST-strip, like the JS path.
+      // DELAY-STRIP RING-OUT (ENGINE-AUDIT 2026-07 Tier 2, the live twin of
+      // mixPCM's ringOut): a delay-bearing strip used to have its feedback loop
+      // disconnected at note end + 50 ms, truncating the echoes exactly like
+      // press did. Keep the chain (and its LFOs) alive for the same tail the
+      // baked path renders, then tear down.
+      const tailSec = f.strip ? stripTailN(f.strip, ctx.sampleRate || 44100) / (ctx.sampleRate || 44100) : 0;
       let post = env, striph = null;
-      if (f.strip) { striph = buildStripNodes(ctx, f.strip, when, hold + rel); env.connect(striph.input); post = striph.output; for (const o of striph.oscs) live.active.add(o); }
+      if (f.strip) { striph = buildStripNodes(ctx, f.strip, when, hold + rel + tailSec); env.connect(striph.input); post = striph.output; for (const o of striph.oscs) live.active.add(o); }
       const dry = ctx.createGain(); dry.gain.value = f.dry != null ? f.dry : 1; post.connect(dry); dry.connect(dests.dry);
       const rev = ctx.createGain(); rev.gain.value = f.rsend || 0; post.connect(rev); rev.connect(dests.rev);
       const del = ctx.createGain(); del.gain.value = f.dsend || 0; post.connect(del); del.connect(dests.del);
       src.start(when);
       src.stop(when + hold + rel + 0.05);
       live.active.add(src);
-      src.onended = () => { live.active.delete(src); try { dry.disconnect(); rev.disconnect(); del.disconnect(); if (headBiq) headBiq.disconnect(); if (striph) { for (const o of striph.oscs) { try { o.stop(); } catch (e) {} live.active.delete(o); } for (const nd of striph.nodes) try { nd.disconnect(); } catch (e) {} } } catch (e) {} };
+      const teardown = () => { try { dry.disconnect(); rev.disconnect(); del.disconnect(); if (headBiq) headBiq.disconnect(); if (striph) { for (const o of striph.oscs) { try { o.stop(); } catch (e) {} live.active.delete(o); } for (const nd of striph.nodes) try { nd.disconnect(); } catch (e) {} } } catch (e) {} };
+      src.onended = () => { live.active.delete(src); if (tailSec > 0) setTimeout(teardown, (tailSec + 0.05) * 1000); else teardown(); };
     };
     live.stopAll = function () {
       for (const s of [...live.active]) { try { s.stop(); } catch (e) {} }
@@ -849,5 +1044,10 @@
   }
 
   return { midiOfFreq, zoneFor, rateFor, mixPCM, decodeUrlRaw, SamplerLive, buildInsertNodes, GAIN,
+    // ENGINE-AUDIT 2026-07 Tier 2: the ONE selection-velocity formula (press +
+    // live must both call it) and the delay-strip tail length (mixPCM renders
+    // it; the stream renderer must add it to each note's window-filter end).
+    selVel, selVelOf, stripTailN, VEL_DEFAULT,
+    zoneCacheInfo,   // ENGINE-AUDIT Tier 2: bounded zone-cache telemetry (?wavDebug/tests)
     __test: { makeStrip, stripStep, rbjCoefs } };   // faust/strip-fuzz-test.js hooks
 });

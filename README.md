@@ -139,10 +139,24 @@ production headers, and how to add your own audio: `docs/SETUP.md`.
 ## More
 
 - **`how.html`** — the visual explainer of how a song is made.
+- **`colophon.html`** — what it's made of and whose work is in it: the found-sound
+  ledger by licence tier, the vendored carve-outs, the two standing laws.
+- **The release feed** — [`feed.xml`](https://stellate.app/feed.xml) (RSS, latest
+  50) · [`feed.json`](https://stellate.app/feed.json) (JSON Feed) ·
+  [`feed-archive.xml`](https://stellate.app/feed-archive.xml) (the complete
+  history). Generated from this git log by `tools/gen-feed.js` at deploy time,
+  and **every entry links to a mix that plays what changed** — found-sound work
+  links a bed-heavy genre, harmony work links the jazziest one. Derived, so it's
+  gitignored: `node tools/gen-feed.js --historic` writes all four,
+  `--show 10` prints them as text.
 - **`CLAUDE.md`** — the full layout and working notes.
 - **`docs/GENRE-SPACE.md`** — how the vector space and journeys are designed.
 - **`docs/MUSIC-MIND.md`** — the music-intelligence program (theory, pipes, axes).
 - **`engine/faust/VOICES.md`** — the synthesis/effect voice library.
+- **`docs/EMBED.md`** — putting STELLATE in someone else's page: the `<iframe>`
+  snippet (⚙ → embed copies one for the mix you're hearing), `embed.html`'s
+  `?genre=`/`?seed=`/`?path=` entry points, oEmbed, and why an embed still makes
+  sound with no `SharedArrayBuffer`.
 - **`SOURCES.md`** — every found-sound, sample, and vendored-code credit.
 - **`docs/HOSTING.md`** — the stellate.app hosting plan (droplet + nginx,
   same-origin media, COOP/COEP for the SAB ring engine).

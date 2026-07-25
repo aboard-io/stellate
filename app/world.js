@@ -41,10 +41,10 @@ export const POS={
   ikeacore:[1923,23134], zubrovia:[364,17425], dishwasherwave:[1968,25160], surveywave:[2011,7366],
   aldente:[2001,24486], umpirehouse:[1735,12741], pigeonstep:[1052,17952], dmvstep:[1014,17387],
   towncrier:[1026,13988], chickadeecore:[1355,18505], floppycore:[1681,19828], cerealwave:[1913,14117],
-  laundrycore:[1556,19248], auctioncore:[1647,15288], dialupgabber:[1423,11742], afrobeat:[1232,17523],
+  laundrycore:[1556,19248], auctioncore:[1647,15288], dialupgabber:[1423,11742], afrobeat:[1237,17573],
   // fugue hand-nudged into the classical corner after the 228-genre re-bake (explorer gate D2e: fugue's 3 nearest must include prelude; the relaxation packed it out toward newage/picnicswing — grid-searched under the gate's own constraints to a spot whose 3 nearest are prelude/cloisterloom/submarinelullaby, min sep 700). breakcore/budstep/patchcordmirage each nudged ~120 units off their bake spots: the relaxation left them 86-89.5 from ebm/idm/dub, under MIN_SEP_FLOOR 90 (min pair after nudges: 106.6, funk/octopusminuet).
   fugue:[196,90], dnb:[1376,19860], footwork:[1838,21125], happyhardcore:[1992,10036],
-  hardstyle:[1379,9806], eurodance:[2026,9339], singeli:[1267,16846], bebop:[694,14061],
+  hardstyle:[1369,9731], eurodance:[2026,9339], singeli:[1267,16846], bebop:[694,14061],
   bluegrass:[1618,5199], ska:[1560,2064], klezmer:[113,13376], funk:[1030,7806],
   boombap:[205,10649], amapiano:[1223,19961], reggae:[508,4670], heavymetal:[430,3999],
   budstep:[1090,13377], pixiewave:[1470,14513], picnicswing:[1234,2088], cerealboxwave:[987,5821],
@@ -58,22 +58,22 @@ export const POS={
   earthmoversplice:[829,11941], butterchurnbounce:[90,11320], furnacestrut:[261,16040], tectonicdash:[1248,3450],
   tundradoom:[2474,10565], sodabop:[1247,13557], citrushaze:[2262,8548], confettililt:[652,9278],
   willowmarch:[398,10681], standbylightdrive:[1107,11608], cairntrot:[1931,8010], dumptruckdub:[596,7260],
-  tallowtrot:[637,5204], fathomarch:[805,14000], masonshuffle:[164,15342], boilerroomstomp:[991,14661],
+  tallowtrot:[637,5204], fathomarch:[790,13775], masonshuffle:[164,15342], boilerroomstomp:[991,14661],
   brinedub:[942,12636], attichouse:[636,14739], driftrot:[587,8616], ceilingfanchop:[467,15416],
   strawdub:[1004,21288], wickershimmy:[1247,14807], shellacsplice:[1678,5888], gourdscuttle:[1536,3401],
-  auroragallop:[696,16784], atticfanthrashsplice:[794,11310], obelisktrot:[327,12666], oakdublilt:[1007,22664],
+  auroragallop:[696,16784], atticfanthrashsplice:[794,11310], obelisktrot:[312,12441], oakdublilt:[1007,22664],
   duststrut:[1255,20605], reedrush:[838,14658], hearthsway:[370,6712], graingroove:[426,9354],
   hvacbop:[322,14708], moldcore:[588,16087], hydracore:[1706,10048], ashfunk:[496,14713],
   steamdub:[830,7917], seraphswing:[1438,1394], androidlament:[1653,10719], lasertemple:[1164,12307],
   oscillatorminuet:[1016,6498], cometwhistle:[1706,11390], chromepiston:[740,16094], patchcordmirage:[2077,23742],
   velourregatta:[1493,7121], sorcerercape:[1062,16689], wizardcape:[702,15407], meadowmellotron:[1089,8546],
-  hexagonstampede:[1137,16093], crimsoncourt:[1124,12859], moonlagoon:[1463,10556], sliderule:[1180,4166],
+  hexagonstampede:[1137,16093], crimsoncourt:[1109,12859], moonlagoon:[1463,10556], sliderule:[1180,4166],
   crumpetwhirl:[254,13365], polygonforge:[1468,12226], moptoprattle:[1590,2733], meadowjangle:[1532,7820],
   strawberryfog:[1884,13440], octopusminuet:[1128,7848], walrusfuzz:[801,7257], rooftopholler:[1275,6606],
   submarinelullaby:[879,1458], tangerinearcade:[1856,3839], chalkvespers:[1717,16539], salondawdle:[781,3854],
   candlegauze:[1097,2798], cloisterloom:[835,759], miasmarow:[1465,13769], greasepaintoompah:[1106,10359],
   urchinmatinee:[1896,5863], marblefury:[520,12691], perukelotto:[1871,10710], beakstampede:[760,10612],
-  velvetconveyor:[1926,5200], talcumcasino:[1499,8484], capesnap:[1168,9107], chromeufo:[1159,19264],
+  velvetconveyor:[1926,5200], talcumcasino:[1489,8184], capesnap:[1168,9107], chromeufo:[1159,19264],
   mirrorseven:[234,9946], sundialsyrup:[191,7990], sequinfreight:[1231,7273], rollerlacquer:[1289,2784],
   longshipwhip:[576,3328], bogironwallow:[767,6563], barrowwake:[1705,13421], ravensquall:[1544,9204],
   runeromp:[466,9962], meadhallbellow:[461,14061], valkyrieswoop:[549,6571], permafrostveil:[1635,14120],
@@ -89,6 +89,21 @@ export const POS={
   // soul/country family. Same complete-POS fast-path rule as the line above.
   yachtrock:[2296,6531], rnb:[90,8181], gospel:[172,7086], honkytonk:[2178,5049], countrypop:[2384,5538], altcountry:[796,22032], folk:[1850,5750]
 };
+// SCREEN-SEPARATION NUDGES, 2026-07-25 (explorer gate D). The world is ~2.5k wide
+// and ~25k tall, so drawMap's independent per-axis fit COMPRESSES Y ~14x against X
+// at the default zoom: a pair 170 logical units apart in Y is 16px apart on screen.
+// Six stars added by hand after the bake had been placed by LOGICAL distance and
+// so landed under the 40px screen floor (worst: trap/talcumcasino 17.3px). Each was
+// moved the SMALLEST screen distance (8-31px, solved against every other star) that
+// clears 48px — talcumcasino 1499,8484 -> 1489,8184; obelisktrot 327,12666 ->
+// 312,12441; fathomarch 805,14000 -> 790,13775; crimsoncourt 1124,12859 ->
+// 1109,12859; hardstyle 1379,9806 -> 1369,9731; afrobeat 1232,17523 -> 1237,17573.
+// Min pairwise SCREEN distance is now 46.8px (hazebunker/lowglide, untouched); the
+// world extents, MAP_CENTER and the default loop are unchanged (no mover is an
+// extreme, none is near a seedDefaultLoop anchor point). NOT a re-bake: the relaxed
+// layout of the other 268 stars is byte-identical. Place any NEW star by SCREEN
+// distance (computeGenreLayout's own floor is 72px at the default zoom), not by
+// logical distance, or it lands in this same trap.
 // The star map lives in a LOGICAL coordinate space. POS above is BAKED — the
 // full relaxed layout for every committed genre, precomputed once (headless boot
 // at a 1200×850 reference viewport) and pasted here. It is a cache of

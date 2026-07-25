@@ -324,6 +324,90 @@
 .chip.spin{animation:chipspin 1s linear infinite}
 @keyframes chipspin{to{transform:rotate(360deg)}}
 
+/* ── THE STANDING CREDIT (2026-07-25, Paul's attribution ask) ────────────────
+   "made by Paul Ford at Aboard", always on screen, never in the way: bottom-LEFT
+   (the chips own bottom-right, #playhead owns bottom-centre), dim VT323, and
+   pointer-events only on the two links so the star map keeps the whole viewport
+   to drag on. Hidden inside the 3D star-cruise, which draws its own world. */
+.credit{position:fixed;left:.9rem;bottom:.8rem;z-index:6;margin:0;pointer-events:none;
+  font:13px/1 VT323,monospace;letter-spacing:.06em;color:var(--dim);opacity:.82;
+  text-shadow:0 0 4px #06040f,0 0 10px rgba(6,4,20,.95)}
+.credit a{pointer-events:auto;color:var(--dim);text-decoration:none;border-bottom:1px dotted var(--line2)}
+.credit a:hover{color:var(--cyan);border-bottom-color:var(--cyan)}
+.credit:hover{opacity:1}
+body.view-starcruise .credit, body.view-viz .credit{display:none}
+@media(max-width:640px){ .credit{font-size:11px;left:.5rem;bottom:.45rem} }
+
+/* HONEST BOOT FAILURE (panels.js bootFailWatch): when the engine can't start at
+   all — no WebAudio, no WASM, a blocked worklet — the warm-up hairline stops
+   pretending and turns amber with the real reason, instead of silently vanishing
+   and leaving a 400px embed looking merely broken. */
+#boot.fail .bfill{background:linear-gradient(90deg,var(--amber),var(--pink));box-shadow:0 0 8px var(--amber)}
+#boot.fail .blabel{color:var(--amber)}
+
+/* ── EMBED MODE (embed.html) ─────────────────────────────────────────────────
+   The SAME app, in a 400px box on someone else's page. Nothing here forks the
+   engine or the map: `body.embed` just suppresses the surfaces that make no
+   sense in an embed (settings, about, the viz/aliens views, the lower-third)
+   and shrinks the two that do (the brand and the ▶ chip). The modal DOM still
+   exists — panels.js binds to it at load — it is simply never openable. */
+body.embed .modal{display:none!important}
+body.embed #cfgChip, body.embed #viewChip, body.embed .help{display:none}
+body.embed #playhead{display:none}
+/* the drifting alien-ident glyphs are ambient wallpaper at 1200px and a smear at
+   400px — they are drawn at absolute sizes, so in a small box they swallow the
+   map. Off in embeds (the layer keeps running elsewhere, untouched). */
+body.embed #glyphmap{display:none}
+body.embed .credit{opacity:.85}
+body.embed .brand{font-size:.8rem;top:.5rem;left:.6rem}
+body.embed #chips{right:.5rem;bottom:.5rem}
+body.embed .chip{width:40px;height:40px;font-size:1.05rem}
+body.embed .credit{left:.6rem;bottom:.5rem;font-size:11px}
+/* the escape hatch: every embed carries ONE link back to the full instrument
+   (target=_blank, because we are inside someone else's frame). */
+.embed-open{position:fixed;right:.6rem;top:.5rem;z-index:6;
+  font:12px/1 VT323,monospace;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim);text-decoration:none;border:1px solid var(--line2);border-radius:99px;
+  padding:.32rem .6rem;background:rgba(18,15,38,.72);
+  backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+.embed-open:hover{color:var(--cyan);border-color:var(--cyan)}
+/* THE PLAY AFFORDANCE. An embed must never autoplay (browsers block it and it
+   is rude), so the box opens with a big, obvious, keyboard-reachable invitation
+   over the map; the first tap is the user gesture that unlocks audio. */
+#embedPlay{position:fixed;inset:0;z-index:7;display:grid;place-items:center;
+  border:0;width:100%;cursor:pointer;color:var(--ink);
+  /* the scrim has to actually WIN over a field of genre labels — the first pass
+     was translucent enough that "tap to play" read as part of the star map. */
+  background:radial-gradient(circle at 50% 44%,rgba(80,40,140,.60),rgba(6,5,14,.90) 66%),rgba(6,5,14,.55);
+  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+#embedPlay.gone{display:none}
+#embedPlay .ep-in{display:grid;justify-items:center;gap:.55rem;pointer-events:none}
+#embedPlay .ep-disc{width:66px;height:66px;border-radius:50%;display:grid;place-items:center;
+  font-size:1.7rem;color:#0c081a;background:linear-gradient(90deg,var(--pink),var(--purple));
+  box-shadow:0 0 30px rgba(255,110,199,.45)}
+#embedPlay .ep-t{font-family:Orbitron,sans-serif;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;
+  background:linear-gradient(90deg,var(--amber),var(--pink) 52%,var(--cyan));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+#embedPlay .ep-s{font:13px VT323,monospace;letter-spacing:.06em;color:var(--dim);
+  max-width:min(84%,320px);text-align:center}
+#embedPlay:focus-visible{outline:3px solid var(--amber);outline-offset:-6px}
+
+/* ── THE EMBED SNIPPET (⚙ panel) ─────────────────────────────────────────────
+   A readonly <textarea> holding the ready-to-paste <iframe>, next to a copy
+   button that behaves exactly like ↗ share (clipboard, legacy fallback, a
+   status line). The snippet always carries THIS view — same seed/path/measure
+   URL builder the share link uses. */
+/* the "preview ↗" link sits beside a button.mini and must read as its twin */
+a.mini{flex:none;padding:.3rem .55rem;font-size:.74rem;white-space:nowrap;
+  border-radius:9px;border:1px solid var(--line2);background:rgba(28,24,56,.6);
+  color:var(--ink);text-decoration:none;line-height:1.45}
+a.mini:hover{border-color:var(--cyan);color:var(--cyan)}
+.embedbox{width:100%;margin:.15rem 0 .3rem;resize:vertical;min-height:4.6rem;
+  font:11px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;
+  background:rgba(8,6,20,.72);color:var(--mint);border:1px solid var(--line);
+  border-radius:8px;padding:.45rem .55rem;-webkit-user-select:text;user-select:text}
+.embedbox:focus{outline:1px solid var(--cyan)}
+
 /* node-drag duration tooltip (starmap durTipShow — the path's own time at x1
    plus the dialed multiple's effective time; follows the pointer, no events) */
 #durTip{position:fixed;z-index:60;display:none;pointer-events:none;white-space:nowrap;

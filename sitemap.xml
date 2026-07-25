@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- sitemap.xml — STELLATE.
+
+     Four pages and a hand-picked crate of twenty-two deep links. The catalog
+     has 274 anchors; dumping all of them would be a data export, not a
+     sitemap, so these are one exemplar per family — classical, jazz lineage,
+     Latin, folk/diaspora, breakbeat, four-on-the-floor, drone, spoken word,
+     chiptune, and the 3/4 salon waltz that proves the space carries real odd
+     meters. Each URL is a real position in the star map (waypoints are the
+     baked app/world.js coordinates) with a seed, so it always plays the same
+     music, and an `xdur` speed multiple that makes the loop last about half
+     an hour. tools/gen-feed.js builds the same kind of link for every release
+     note. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <url>
+    <loc>https://stellate.app/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://stellate.app/how.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://stellate.app/access.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://stellate.app/colophon.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://stellate.app/embed.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <!-- ── the crate: one genre per family, each a playable position ────────── -->
+
+  <!-- Food Court Eternity (vaporwave) — the founding genre -->
+  <url><loc>https://stellate.app/?genre=vaporwave&amp;seed=3545&amp;path=1691.4480,1710.4513,1672.4513&amp;xdur=13.122</loc><priority>0.7</priority></url>
+  <!-- Neon Fiscal Year (citypop) -->
+  <url><loc>https://stellate.app/?genre=citypop&amp;seed=9390&amp;path=1539.6443,1558.6476,1520.6476&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Smoke Arithmetic (jazz) — where the harmony organ shows off -->
+  <url><loc>https://stellate.app/?genre=jazz&amp;seed=6967&amp;path=292.16704,311.16737,273.16737&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Mercury Interrogation (bebop) -->
+  <url><loc>https://stellate.app/?genre=bebop&amp;seed=3680&amp;path=694.14039,713.14072,675.14072&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Perforated Afterlife (ragtime) — the first anchor authored from a measured corpus -->
+  <url><loc>https://stellate.app/?genre=ragtime&amp;seed=5981&amp;path=760.14618,779.14651,741.14651&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Saudade Observatory (bossanova) -->
+  <url><loc>https://stellate.app/?genre=bossanova&amp;seed=2176&amp;path=554.12000,573.12033,535.12033&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Clave Reactor (salsa) -->
+  <url><loc>https://stellate.app/?genre=salsa&amp;seed=6092&amp;path=262.12798,281.12831,243.12831&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Polyrhythm Senate (afrobeat) -->
+  <url><loc>https://stellate.app/?genre=afrobeat&amp;seed=2648&amp;path=1237.17551,1256.17584,1218.17584&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Wedding Comet (klezmer) -->
+  <url><loc>https://stellate.app/?genre=klezmer&amp;seed=3780&amp;path=113.13354,132.13387,94.13387&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Dune Recursion (desertblues) -->
+  <url><loc>https://stellate.app/?genre=desertblues&amp;seed=3884&amp;path=945.16010,964.16043,926.16043&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Barometric Stampede (jungle) — the genre that is mostly drums -->
+  <url><loc>https://stellate.app/?genre=jungle&amp;seed=1405&amp;path=1718.20504,1737.20537,1699.20537&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Seismic Ultimatum (dubstep) — the genre that is mostly bass -->
+  <url><loc>https://stellate.app/?genre=dubstep&amp;seed=2293&amp;path=1385.17810,1404.17843,1366.17843&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Unblinking Interval (techno) -->
+  <url><loc>https://stellate.app/?genre=techno&amp;seed=1911&amp;path=1956.22414,1975.22447,1937.22447&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Benthic Concierge (deephouse) -->
+  <url><loc>https://stellate.app/?genre=deephouse&amp;seed=3396&amp;path=1157.21298,1176.21331,1138.21331&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Echo Ministry (dub) -->
+  <url><loc>https://stellate.app/?genre=dub&amp;seed=1825&amp;path=1887.23793,1906.23826,1868.23826&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Stationary Weather (ambient) — put the phone in your pocket -->
+  <url><loc>https://stellate.app/?genre=ambient&amp;seed=4296&amp;path=2103.13280,2122.13313,2084.13313&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Subduction Hymnal (doomdrone) -->
+  <url><loc>https://stellate.app/?genre=doomdrone&amp;seed=6695&amp;path=1568.12903,1587.12936,1549.12936&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Dial Tone Prophet (spokenword) — the voice layer -->
+  <url><loc>https://stellate.app/?genre=spokenword&amp;seed=4676&amp;path=217.11999,236.12032,198.12032&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Rail Replacement Rapture (transitwave) — where the found sound carries the room -->
+  <url><loc>https://stellate.app/?genre=transitwave&amp;seed=9132&amp;path=749.12635,768.12668,730.12668&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Sprite Metabolism (chiptune) -->
+  <url><loc>https://stellate.app/?genre=chiptune&amp;seed=6548&amp;path=1347.7865,1366.7898,1328.7898&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- Ottoman Heat Death (salondawdle) — a brushed 3/4 salon waltz -->
+  <url><loc>https://stellate.app/?genre=salondawdle&amp;seed=3016&amp;path=781.3832,800.3865,762.3865&amp;xdur=13.122</loc><priority>0.6</priority></url>
+  <!-- The Patient Chase (fugue) — the classical corner -->
+  <url><loc>https://stellate.app/?genre=fugue&amp;seed=3400&amp;path=196.68,215.101,177.101&amp;xdur=13.122</loc><priority>0.6</priority></url>
+
+</urlset>

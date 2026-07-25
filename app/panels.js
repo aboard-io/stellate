@@ -9,7 +9,51 @@ import { goLive, stopLive, setMasterVol, setVapor } from "./live.js";
 import { fontManifest, setSoundfont } from "./fonts.js";
 import { renderInside } from "./inside.js";
 import { drawMap, startPulse } from "./starmap.js";
-import { copyShareUrl, loopBars, loopDuration, baseDuration, durMult, fmtDuration, fmtMult, MULT_MIN, MULT_MAX } from "./share.js";
+import { copyShareUrl, buildShareUrl, loopBars, loopDuration, baseDuration, durMult, fmtDuration, fmtMult, MULT_MIN, MULT_MAX } from "./share.js";
+
+// ---------- EMBED: the paste-into-your-blog snippet -------------------------
+// (2026-07-25) The ↗ share button hands out a LINK; this hands out the same mix
+// as an <iframe>. It is built from buildShareUrl() — one URL grammar, so an
+// embed carries whatever the map is showing right now: seed, path, measure,
+// speed multiple, soundfont. Only the FILE changes (index → embed.html), which
+// is why this reuses the share URL rather than assembling its own query.
+//
+// The attributes are the boring, correct ones and each is load-bearing:
+//   title=        — the frame's accessible name (screen readers, a11y audits)
+//   loading=lazy  — an embed far down a page costs the host nothing until seen
+//   allow="autoplay; clipboard-write" — WE NEVER AUTOPLAY (embed.js gates on a
+//                   real gesture), but without the autoplay permission Chrome
+//                   blocks the AudioContext EVEN AFTER the user taps inside the
+//                   frame; clipboard-write lets the framed ↗ share still copy
+//   referrerpolicy — send the origin, not the host's full path
+//   style="border:0"  — the modern spelling of frameborder=0
+//   aspect-ratio + min-height — responsive without a resize script: the frame
+//                   fills the host's column and keeps a sane shape on phones
+export function embedUrl(){
+  const share=buildShareUrl();                       // origin + path + ?seed…&m=…
+  const q=share.indexOf("?")>=0?share.slice(share.indexOf("?")):"";
+  return location.origin+location.pathname.replace(/[^/]*$/,"")+"embed.html"+q;
+}
+export function embedSnippet(){
+  return '<iframe src="'+embedUrl().replace(/&/g,"&amp;")+'"\n'+
+    '  title="STELLATE — draw a path through genre space"\n'+
+    '  width="100%" height="480" loading="lazy"\n'+
+    '  allow="autoplay; clipboard-write"\n'+
+    '  referrerpolicy="strict-origin-when-cross-origin"\n'+
+    '  style="border:0;width:100%;max-width:100%;height:480px;aspect-ratio:16/10;min-height:320px;border-radius:12px"></iframe>';
+}
+// same clipboard behaviour (and same legacy fallback) as share.js copyShareUrl.
+function copyEmbed(){
+  const t=embedSnippet();
+  const ok=()=>set({status:"embed code copied — paste it into any page"});
+  const fallback=()=>{ try{ const ta=document.querySelector("#panel .embedbox")||document.createElement("textarea");
+    if(!ta.isConnected){ ta.value=t; document.body.appendChild(ta); }
+    ta.select(); ta.setSelectionRange(0,ta.value.length); document.execCommand("copy");
+    if(!ta.closest("#panel")) ta.remove(); ok();
+  }catch(e){ set({status:"copy failed — select the embed code and copy it"}); } };
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok,fallback);
+  else fallback();
+}
 
 // ---------- Preact panel ----------
 // SPEED SLIDER (Paul 2026-07-16): a LOG MULTIPLE of the path's own distance-
@@ -73,6 +117,17 @@ function Panel(){
           onInput=${e=>setBpmDelta(e.target.value)} />
         <output>${bpm} bpm${dl?" ("+(dl>0?"+":"")+dl+")":""}</output></div>
     </div>
+
+    <div class="psec"><div class="ptitle">embed</div>
+      <textarea class="embedbox" readonly spellcheck="false" rows="5"
+        aria-label="iframe embed code for this mix"
+        onFocus=${e=>e.target.select()} value=${embedSnippet()}></textarea>
+      <div class="row"><label title="a lightweight player — the map plus ▶, no settings — pointed at THIS seed, path and measure">iframe</label>
+        <button class="mini" title="copy the &lt;iframe&gt; snippet for this exact mix"
+          onclick=${copyEmbed}>⧉ copy embed</button>
+        <a class="mini" href=${embedUrl()} target="_blank" rel="noopener"
+          title="open the embed player in a new tab">preview ↗</a></div>
+    </div>
     <p class="hint">dbl-tap the sky to add a waypoint · drag the pink playhead to scrub · right-click a waypoint to erase · the URL is the bookmark</p>`;
 }
 const panel=document.getElementById("panel");
@@ -128,6 +183,28 @@ for(const [k,el] of Object.entries(MODALS)){
     if(a&&!/^https?:/.test(a.getAttribute("href"))){ e.preventDefault(); location.assign(a.href); } });
 }
 addEventListener("keydown",e=>{ if(e.key==="Escape") for(const k of Object.keys(MODALS)) toggleModal(k,false); });
+// ---------- HONEST FAILURE: when audio can't start at all -------------------
+// goLive()'s catch sets status "live failed: …" and pulls the warm-up hairline
+// straight back down — on the full page the chyron still carries the reason, but
+// in a 400px embed (no chyron, no settings) the box just went quiet with no
+// explanation. So re-raise the hairline in its FAIL colour with the real
+// message. Deferred a tick because live.js's bootAbort() runs immediately AFTER
+// the set() that publishes the status, and would otherwise clear this again.
+// Lives here, not in live.js, so the live engine keeps one owner this session.
+let lastFail="";
+subs.push(()=>{
+  const m=String(S.status||"");
+  if(!/^live failed/i.test(m)){ if(lastFail){ lastFail=""; const b=document.getElementById("boot"); if(b) b.classList.remove("fail"); } return; }
+  if(m===lastFail) return;
+  lastFail=m;
+  setTimeout(()=>{
+    const b=document.getElementById("boot"); if(!b) return;
+    const lbl=b.querySelector(".blabel"), fill=b.querySelector(".bfill");
+    if(fill) fill.style.width="100%";
+    if(lbl) lbl.textContent="audio couldn't start — "+m.replace(/^live failed:\s*/i,"");
+    b.classList.add("on","fail"); b.classList.remove("ind");
+  },0);
+});
 // LIVE/STOP is ONE tap from the clean sky
 const playChip=document.getElementById("playChip");
 playChip.onclick=()=>{ S.live?stopLive():goLive(); };

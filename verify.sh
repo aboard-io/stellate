@@ -60,6 +60,7 @@ run "matrix  " node engine/genre-verifier.js matrix ${PASS_ARGS[@]+"${PASS_ARGS[
 run "validate" node engine/validate-genres.js ${VAL_ARGS[@]+"${VAL_ARGS[@]}"} ${PASS_ARGS[@]+"${PASS_ARGS[@]}"} &
 run "engine  " node test/engine.test.js ${ENG_ARGS[@]+"${ENG_ARGS[@]}"} &
 run "prove   " node engine/invariants.js prove &
+run "social  " node test/social-meta.test.js &   # OG/JSON-LD/icons/oembed contract (pure node, ~10ms)
 # matproof: the OFFLINE MATRIX PROVER (engine/prove-matrix.js) — the anchor
 # catalog as LO/HI vectors, the blend hull as a reduction, DIFFERENTIALLY
 # cross-checked against `prove` (two independent implementations must agree)

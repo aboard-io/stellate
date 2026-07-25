@@ -4,7 +4,75 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>STELLATE — draw a path through genre space</title>
-<link rel="icon" href="data:,">
+<!-- ── SOCIAL / IDENTITY (2026-07-25) ─────────────────────────────────────────
+     Everything a crawler, a chat unfurl or an app-icon needs. Two rules here:
+     (1) icons/manifest paths stay RELATIVE — this same tree is also served at
+     aboardresearch.com/projects/stellate/, where an absolute /assets/… would
+     404; (2) og:image / canonical / JSON-LD urls are ABSOLUTE, because a card
+     crawler resolves nothing and every unfurl must point at the canonical home,
+     stellate.app. The card + icons are DERIVED art: `node tools/gen-og-card.js`
+     regenerates them from a committed recipe (the images themselves are the one
+     committed binary exception — a crawler can't run a generator). -->
+<meta name="description" content="STELLATE is a generative music instrument: draw a path across a star map of 274 genres and hear the music of wherever you are — rendered live in your browser, deterministic from a seed.">
+<meta name="author" content="Paul Ford">
+<meta name="theme-color" content="#0c0a1a">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://stellate.app/">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<!-- RELEASE NOTES. Generated from the git log at deploy time
+     (tools/gen-feed.js, run by tools/deploy-stellate.sh before the rsync);
+     every entry links to a mix that plays what changed. feed.xml is the
+     latest 50, feed-archive.xml the whole history back to 2026-06-06. -->
+<link rel="alternate" type="application/rss+xml" title="STELLATE — release notes" href="feed.xml">
+<link rel="alternate" type="application/feed+json" title="STELLATE — release notes (JSON Feed)" href="feed.json">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="STELLATE">
+<meta property="og:title" content="STELLATE — draw a path through genre space">
+<meta property="og:description" content="A generative music instrument. Draw a path across a star map of 274 genres and hear the music of wherever you are — rendered live in your browser, deterministic from a seed. By Paul Ford at Aboard.">
+<meta property="og:url" content="https://stellate.app/">
+<meta property="og:image" content="https://stellate.app/assets/og-card.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE — draw a path through genre space.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="STELLATE — draw a path through genre space">
+<meta name="twitter:description" content="Draw a path across a star map of 274 genres and hear the music of wherever you are. Generated live in your browser.">
+<meta name="twitter:image" content="https://stellate.app/assets/og-card.png">
+<meta name="twitter:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE.">
+<meta name="twitter:creator" content="@aboard">
+<meta name="twitter:site" content="@aboard">
+<!-- oEmbed discovery: Mastodon / WordPress / Discourse / Notion read this link
+     and unfurl the <iframe> from /oembed.json instead of a bare screenshot.
+     The endpoint is a STATIC file (nginx serves this tree); docs/EMBED.md
+     explains the trade and docs/HOSTING.md carries the nginx snippet for a
+     parameterized endpoint if we ever want per-path embeds. -->
+<link rel="alternate" type="application/json+oembed" href="https://stellate.app/oembed.json" title="STELLATE">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "STELLATE",
+  "alternateName": "stellate",
+  "url": "https://stellate.app/",
+  "description": "A generative music instrument: a 274-genre deterministic vector space you play by drawing a path across a star map. Every song is rendered live in the browser and is reproducible from its seed.",
+  "applicationCategory": "MusicApplication",
+  "operatingSystem": "Any (modern web browser)",
+  "browserRequirements": "Requires JavaScript, WebAudio and WebAssembly.",
+  "image": "https://stellate.app/assets/og-card.png",
+  "screenshot": "https://stellate.app/assets/og-card.png",
+  "license": "https://opensource.org/licenses/MIT",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "Paul Ford", "url": "https://www.ftrain.com/" },
+  "creator": { "@type": "Organization", "name": "Aboard", "url": "https://aboard.com" },
+  "publisher": { "@type": "Organization", "name": "Aboard", "url": "https://aboard.com" },
+  "codeRepository": "https://github.com/aboard-io/stellate"
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=VT323&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="app/app.css">
 </head>
@@ -20,7 +88,7 @@
 <div class="modal" id="aboutWrap"><div class="card" id="about">
   <h2>Stellate</h2>
   <p class="ab-what">A generative instrument you play by moving through a
-  <b>273-genre</b> space. Every song is rendered live in your browser and
+  <b>274-genre</b> space. Every song is rendered live in your browser and
   is fully deterministic from a seed — the same seed always plays the same music.
   Every genre is verified by a genre-confusion matrix: all 273 must sound most
   like themselves after every change.</p>
@@ -39,9 +107,17 @@
        panels.js also force-navigates modal links on click as a belt. -->
   <a class="ab-how ab-a11y" href="access.html">Accessible text version &rarr;
     <span style="display:block;font-size:.72rem;opacity:.75">screen-reader- and keyboard-first, no visuals required</span></a>
-  <p class="ab-foot">made by <a href="https://aboardresearch.com">Aboard</a> ·
-  <a href="https://github.com/ftrain/stellate">open source</a> · MIT</p>
+  <!-- ATTRIBUTION (Paul's ask, 2026-07-25): the page must SAY who made it and
+       link to aboard.com — here in the human-readable about layer, again in the
+       always-visible .credit line below, and once more in the JSON-LD/OG head. -->
+  <p class="ab-foot">made by <a href="https://www.ftrain.com/">Paul Ford</a> at
+  <a href="https://aboard.com">Aboard</a> ·
+  <a href="https://github.com/aboard-io/stellate">open source</a> · MIT</p>
 </div></div>
+<!-- the standing credit: small, dim, never in the way, always readable without
+     opening anything. Only the links take pointer events, so the star map keeps
+     the whole viewport to drag on. -->
+<p class="credit">made by <a href="https://www.ftrain.com/">Paul Ford</a> at <a href="https://aboard.com">Aboard</a></p>
 <!-- boot progress: a pixel-locked hairline at the very top edge, shown while the
      live engine warms up (module load -> voices -> first bar -> first audio),
      faded on the first real RMS. Honest: stalls shimmer, never fake 100%. -->

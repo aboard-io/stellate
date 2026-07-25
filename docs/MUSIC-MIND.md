@@ -97,6 +97,29 @@ Live caveat: live builds one chord-bar per call; pipes therefore never emit
 outside the build's own `[0, totalBeats)` window (echo/canon delays cap at
 the chord bar).
 
+#### Chord grouping: `strum` fires on a TOLERANCE window, not an exact onset
+
+The pipe chain runs at the choke point *after* `applyGroove` (whose humanize
+pass nudges every event by its own ±`ht`·0.04-beat draw) and *after* the
+rubato beat-warp. From the 2026-07 engine audit: `strum` used to collect
+chord-mates by an exact `beat.toFixed(6)` key, so with any `humanize > 0`
+— i.e. in every catalog state that pools it — no two pad notes shared a key,
+every group had one member, and the roll never fired anywhere. **Dead
+vocabulary, fixed 2026-07-25.**
+
+The law now: pads are sorted by (beat, pitch) and clustered with a
+**tolerance window** `tol` (default 0.1 beat) measured from each cluster's
+first onset — above the ±0.08 worst-case humanize spread between mates, far
+below the closest distinct pad onset the score can emit (a half beat). Each
+cluster of ≥2 rolls from its own earliest (already humanized) onset, so the
+chord keeps its human placement while the rake reads cleanly, and every
+voice's release edge stays where it was. Still drawless, therefore still
+deterministic and seeded. One deliberate abstention: when the SCORE already
+rakes the pads (`state.strum`, the rhythm-guitar `STRUM_PATTERNS` comp), the
+pipe stands down rather than fight the stroke direction — the roll is
+present either way. Byte drift is confined to states that actually pool
+`strum` and have pads; that drift *is* the fix.
+
 ### 3. Rhythmic + chromatic exploration in `csd-engine.js`
 
 - **Clave/cell bass**: new `BASS_PATTERNS` cells — `tresillo` (3-3-2),
@@ -108,7 +131,12 @@ the chord bar).
   the melody stream, gated by `state.rhythm.complexity`.
 - **Polymeter perc**: `perc.lanes` learn non-4 cycle lengths (3- and 5-beat
   cells tiling over the bar) — decorative lanes only, invisible to the
-  matrix by design.
+  matrix by design. The perc pass tiles the 8-unit cell at
+  `min(chordEvery, 8)` and clips emission to the cell **and** the section
+  span (2026-07-25): under a 6-beat waltz bar or a 4-beat half-bar the cell
+  truncates like a kit cell, and no perc hit ever spills past a section end
+  into a kit-`"off"` or cut/dropout span the way `round(beats/8)` tiling
+  used to.
 
 ```js
 state.rhythm = { complexity: 0..1 }   // absent = byte-identical
@@ -129,6 +157,35 @@ declares (progressions pool → adventure/color; kit/euclid → complexity;
 lead/counter → harmonize/echo pipes) then spot-curated — jazz/neosoul/fusion
 adventurous, techno/minimal near zero (restraint is an identity too). A
 genre's intelligence lives *in the space*: blends inherit and interpolate it.
+
+## The dead knob: `jux` (per-event pan is scored but not rendered)
+
+Honest status as of the 2026-07 engine audit, recorded here so nobody tunes
+against it again: **no backend consumes `event.pan`.**
+
+- `buildEvents` stamps `pan ∈ [-1,1]` (signed, 0 = centre) on hats, toms,
+  melody and pads from `state.jux`, and `callResponse` mirrors it.
+- The Faust engine never reads that field. `state-engine.mapEvents`
+  translates only `cutoffMul` / `vib` / `pw`; every per-note pan in press,
+  the stream renderer, the live ring and the sampler comes from
+  `SE.notePan(unit, freq)` — i.e. the **unit** pan (`MASTER_PAN`, pad
+  `panSpread`). MIDI export ignores pan too.
+
+So the ~28 anchors whose `fx.jux` ranges promise audible width ("the stereo
+field disagrees with itself") currently render with zero per-event stereo
+divergence. The score-side half is kept — it is correct, cheap and
+byte-identical — and the missing half is a `mapEvents → note.pan` wiring
+inside `engine/faust/` (state-engine + the press/stream note paths; the
+mono live ring stays mono by design). Until that lands, treat `jux` as a
+**score annotation, not a mix control**: the honest way to widen a genre is
+unit pan.
+
+Convention (fixed 2026-07-25): pan is **signed**, so a mirror is `-pan`.
+`callResponse` used to mirror with `1 - pan`, a 0..1-convention leftover
+that would have slammed every response note hard right the moment a jux
+state stamped a negative pan; it now mirrors correctly, which is why the one
+catalog state carrying both `callResponse` and `jux > 0` drifts on the
+`pan` field (inaudibly — nothing reads it yet).
 
 ## What "locked in" means (the taste constraints)
 

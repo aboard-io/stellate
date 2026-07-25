@@ -7,22 +7,10 @@ import { S, set, K, E, QSFLAGS } from "./state.js";
 import { retarget, rebuildQueue, travelStep, glideStep } from "./targeting.js";
 import { bgBarTick } from "./background.js";
 import { scheduleBarNotes, clearNoteTimers } from "./inside.js";
-import { urlTick, travelForBar, pointOnPath, legMetrics, paceSpeed } from "./share.js";   // the bookmarkable measure: per-bar URL refresh + measure<->path math (legMetrics/paceSpeed: the constant-pace inverse for the resume measure)
+import { urlTick, travelForBar, pointOnPath, barForTravel } from "./share.js";   // the bookmarkable measure: per-bar URL refresh + measure<->path math (barForTravel: THE PLAYHEAD IS THE SOURCE OF TRUTH — the constant-pace inverse now lives beside travelForBar in share.js, shared with buildShareUrl so a copied link and a stop→play agree)
 
 // ---------- live engine ----------
 export let faustHandle=null;
-// THE PLAYHEAD IS THE SOURCE OF TRUTH for the resume measure. The constant-pace
-// inverse of share.js travelForBar: the traveler's {seg,t} -> its measure
-// (distance along the perimeter / speed). Same distance math starmap.js
-// dragPlayhead uses to label a scrubbed measure, so a stop resumes exactly at
-// the visible playhead — including after a LIVE playhead drag (the engine's bar
-// serial doesn't move when you drag, but the traveler does).
-function barForTravel(travel){
-  const { legs }=legMetrics();
-  let d=0; for(let i=0;i<travel.seg;i++) d+=legs[i]||0;
-  d+=travel.t*(legs[travel.seg]||0);
-  return Math.max(0, Math.round(d/Math.max(1e-6, paceSpeed())));
-}
 // USER MASTER VOLUME — persisted; applied live to whichever engine handle is up.
 export function setMasterVol(v){
   const g=Math.max(0,Math.min(1.5,+v||0));
@@ -101,7 +89,22 @@ const FORCE_CLASSIC=QSFLAGS.get("forceClassicOut")==="1";
 const FORCE_MEDIAEL=QSFLAGS.get("forceMediaEl")==="1";
 // ?wavOut=1 force the WAV-FIRST mobile audible path anywhere (desktop test hatch);
 // ?wavOut=0 escape back to the ring/worklet path; unset = auto (on when isMobile).
-const WAVOUT=QSFLAGS.has("wavOut")?(QSFLAGS.get("wavOut")!=="0"):undefined;
+// ── NO-ISOLATION FALLBACK (2026-07-25, the EMBED blocker) ───────────────────
+// The ring/worklet path is built on a SharedArrayBuffer, and a SAB only exists on
+// a CROSS-ORIGIN ISOLATED page (COOP:same-origin + COEP:require-corp all the way
+// up the frame chain). Our own origin sends those headers, but a cross-origin
+// <iframe> — i.e. ANY embed of stellate on someone else's site — inherits the
+// parent's (non-)isolation, so SharedArrayBuffer is undefined there and
+// faust/live.js's ring path throws "SharedArrayBuffer unavailable…": a silent
+// embed. The WAV-FIRST route (exploreLiveWav, built for pockets) needs no SAB at
+// all, so take it AUTOMATICALLY whenever isolation is missing, on any platform.
+// An explicit ?wavOut= still wins in both directions (the desktop escape
+// hatches are untouched), and on the isolated top-level site nothing changes:
+// SAB_LIVE is true there, so the default stays `undefined` = auto-by-platform.
+const SAB_LIVE = typeof SharedArrayBuffer!=="undefined" &&
+  (typeof self==="undefined" || self.crossOriginIsolated!==false);
+const WAVOUT=QSFLAGS.has("wavOut")?(QSFLAGS.get("wavOut")!=="0"):(SAB_LIVE?undefined:true);
+window.__AUDIOROUTE={ sab:SAB_LIVE, isolated:(typeof self!=="undefined"&&!!self.crossOriginIsolated), wavOut:WAVOUT };   // headless embed-audio gate reads this
 // ?segAB=1 — v3: force the v2 A/B <audio> element pair instead of the default
 // continuous-MP3 (Managed)MediaSource append stream (the WAV-FIRST fallback tier).
 const SEGAB=QSFLAGS.has("segAB")?(QSFLAGS.get("segAB")!=="0"):undefined;

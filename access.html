@@ -4,7 +4,58 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>STELLATE — accessible text version</title>
-<link rel="icon" href="data:,">
+<!-- SOCIAL / IDENTITY — same contract as index.html: relative icon paths (this
+     tree is also served under aboardresearch.com/projects/stellate/), absolute
+     canonical/og urls (a crawler resolves nothing). Canonical points at the
+     ACCESSIBLE page itself, not the map, so a shared link to this page keeps
+     landing screen-reader users here. -->
+<meta name="description" content="The screen-reader- and keyboard-first version of STELLATE: pick genres and hear generated music, no visuals required. A generative music instrument by Paul Ford at Aboard.">
+<meta name="author" content="Paul Ford">
+<meta name="theme-color" content="#0b0e17">
+<link rel="canonical" href="https://stellate.app/access.html">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<!-- RELEASE NOTES. Generated from the git log at deploy time
+     (tools/gen-feed.js, run by tools/deploy-stellate.sh before the rsync);
+     every entry links to a mix that plays what changed. feed.xml is the
+     latest 50, feed-archive.xml the whole history back to 2026-06-06. -->
+<link rel="alternate" type="application/rss+xml" title="STELLATE — release notes" href="feed.xml">
+<link rel="alternate" type="application/feed+json" title="STELLATE — release notes (JSON Feed)" href="feed.json">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="STELLATE">
+<meta property="og:title" content="STELLATE — accessible text version">
+<meta property="og:description" content="Screen-reader- and keyboard-first STELLATE: choose genres, set a seed, and hear music generated live in your browser. No visuals required.">
+<meta property="og:url" content="https://stellate.app/access.html">
+<meta property="og:image" content="https://stellate.app/assets/og-card.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE — draw a path through genre space.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="STELLATE — accessible text version">
+<meta name="twitter:description" content="Screen-reader- and keyboard-first STELLATE: choose genres, set a seed, and hear music generated live in your browser.">
+<meta name="twitter:image" content="https://stellate.app/assets/og-card.png">
+<meta name="twitter:creator" content="@aboard">
+<link rel="alternate" type="application/json+oembed" href="https://stellate.app/oembed.json" title="STELLATE">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "STELLATE",
+  "url": "https://stellate.app/",
+  "description": "A generative music instrument: a 274-genre deterministic vector space you play by drawing a path across a star map.",
+  "applicationCategory": "MusicApplication",
+  "operatingSystem": "Any (modern web browser)",
+  "image": "https://stellate.app/assets/og-card.png",
+  "license": "https://opensource.org/licenses/MIT",
+  "isAccessibleForFree": true,
+  "author": { "@type": "Person", "name": "Paul Ford", "url": "https://www.ftrain.com/" },
+  "creator": { "@type": "Organization", "name": "Aboard", "url": "https://aboard.com" },
+  "publisher": { "@type": "Organization", "name": "Aboard", "url": "https://aboard.com" }
+}
+</script>
 <style>
   /* Self-contained, theme-aware, high-contrast styles. No images, no motion that
      isn't opt-out. Designed to be legible at large zoom and navigable by keyboard
@@ -98,7 +149,7 @@
     the same music. This version needs no vision: pick a genre or build a journey, and
     read what's playing as text. Your choices ride the address bar, so bookmarking or
     sharing the URL captures this exact music. <a href="index.html">Switch to the
-    visual star-map version.</a></p>
+    visual star-map version.</a> · <a href="colophon.html">colophon</a></p>
   </header>
 
   <!-- TRANSPORT ------------------------------------------------------------->
@@ -217,8 +268,9 @@
   </section>
 
   <footer class="intro" style="margin-top:2rem">
-    made by <a href="https://aboardresearch.com">Aboard</a> ·
-    <a href="https://github.com/ftrain/stellate">open source</a> · MIT
+    made by <a href="https://www.ftrain.com/">Paul Ford</a> at
+    <a href="https://aboard.com">Aboard</a> ·
+    <a href="https://github.com/aboard-io/stellate">open source</a> · MIT
   </footer>
 </div>
 

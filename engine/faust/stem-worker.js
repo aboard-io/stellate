@@ -178,7 +178,9 @@
         const v = us.procs.find((p) => p.busyUntil <= s) ||
                   us.procs.reduce((a, b) => (a.busyUntil <= b.busyUntil ? a : b));
         for (const [k, val] of Object.entries(e.sets)) v.pending.push([s - BS, v.R + k, val]);
-        if (u.extGainPerAmp) v.pending.push([s - BS, "@out", Math.min(1, u.extGainPerAmp * (e.amp || 0.1))]);
+        // @out ceiling: dx7OutCeil (the dx7 SYNTH FONT makeup, state-engine) or
+        // the historical 1.0 for every other extGainPerAmp voice.
+        if (u.extGainPerAmp) v.pending.push([s - BS, "@out", Math.min(u.dx7OutCeil || 1, u.extGainPerAmp * (e.amp || 0.1))]);
         v.pending.push([s - BS, "@pp", e.pp || 0]);
         v.pending.push([s, v.R + "gate", 1]);
         v.pending.push([offS, v.R + "gate", 0]);

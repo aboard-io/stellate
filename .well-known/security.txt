@@ -1,0 +1,17 @@
+# security.txt — STELLATE (https://stellate.app/), RFC 9116
+#
+# STELLATE is a static, open-source, single-page instrument: no accounts, no
+# login, no database, no cookies (the analytics beacon is cookie-free and
+# same-origin), no user data collected or stored server-side. The interesting
+# surface is small — nginx, the service worker, the WASM engine, and the media
+# fetched into found/ — but if you find something, please say so.
+#
+# The whole thing is readable: https://github.com/aboard-io/stellate
+
+Contact: mailto:ford@ftrain.com
+Contact: https://github.com/aboard-io/stellate/issues
+Expires: 2027-07-25T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://stellate.app/.well-known/security.txt
+Policy: https://github.com/aboard-io/stellate/blob/main/CONTRIBUTING.md
+Acknowledgments: https://stellate.app/colophon.html

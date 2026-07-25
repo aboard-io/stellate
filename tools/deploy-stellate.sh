@@ -17,6 +17,15 @@ cd "$(dirname "$0")/.."
 HOST="${1:-root@stellate.app}"
 ROOT=/srv/stellate
 
+# THE RELEASE FEED is generated HERE, on the way out the door (docs/HOSTING.md
+# "The open-web layer" §2): git log -> RSS 2.0 + JSON Feed with a playable link
+# per entry. It runs before the rsync so the deploy publishes notes that include
+# the commit being deployed, and its four outputs are gitignored derived
+# artifacts (the one rule) — which is also why regenerating here can never
+# dirty the tree or trip ship.sh's clean-tree check.
+echo "== release feed =="
+node tools/gen-feed.js --historic
+
 echo "== media manifest (local) =="
 # .json excluded: manifests/catalogs are MUTABLE by design (nginx serves them
 # no-cache — HOSTING.md §5 "manifests map names, never immutable"); the
@@ -84,4 +93,12 @@ for u in / /engine/faust/stream-worker.js /found/found-manifest.json; do
     | sed 's/^2$/isolation OK/;s/^[01]$/MISSING ISOLATION HEADERS/'
 done
 curl -s -o /dev/null -w 'how.html %{http_code}\n' https://stellate.app/how.html
+# the open-web layer: every one of these must answer 200 (a 404 on
+# .well-known/security.txt usually means a blanket dotfile deny in nginx —
+# docs/HOSTING.md "The open-web layer" §3)
+for u in /feed.xml /feed.json /feed-archive.xml /manifest.webmanifest /robots.txt \
+         /sitemap.xml /colophon.html /404.html /.well-known/security.txt; do
+  printf '%-34s' "$u"
+  curl -s -o /dev/null -w '%{http_code}\n' "https://stellate.app$u"
+done
 echo "deployed."

@@ -54,7 +54,7 @@ chop's onended disconnects dry/rev/del but not the pp gain created at line 765 (
 
 **Verifier:** Both mechanisms hold exactly as described in engine/faust/found-player.js. (1) live.chop line 765 creates a ppsend GainNode connected to dests.pp, but the onended handler at line 770 disconnects only dry/rev/del — grep confirms no other disconnect site in the file touches pp, and stopAll/fadeAll disconnect nothing — so every ppsend chop leaves a GainNode on the pp bus until JS GC collects the source-less subgraph. (2) live.bed's natural-end path (line 874) is only a live.beds.delete setTimeout; out.disconnect() exists solely in stop() (864) and fade() (871), so a bed playing to completion leaves out/dry/rev (plus lp/schedBus on the scheduler leg) attached to the dests until GC; fadeAll only runs on genre transitions and never reaches a naturally-completed bed. Severity is modest (spec-wise the subgraphs are GC-eligible since downstream connections don't keep upstream nodes alive), but between GCs the dead nodes are live mixer inputs each render quantum, and the file's own pervasive explicit-disconnect pattern (lines 770, 826, 857, 864, 871 — the ZERO-STATIC node-churn discipline) shows the omissions are unintended, not design. The suggested fix is audio-graph teardown only and cannot affect buildEvents byte-determinism.
 
-### [ ] decodeUrlRaw zone cache is unbounded — decoded instrument PCM accumulates for the whole session
+### [x] (2026-07-25) decodeUrlRaw zone cache is unbounded — decoded instrument PCM accumulates for the whole session
 *engine/faust/sampler.js:440-451 · sampler*
 
 The browser zone decoder caches every fetched zone wav as a decoded AudioBuffer promise in a module-level Map keyed by URL, with eviction only on fetch failure. A journey/exploration session that visits many genres (each pulling several multi-zone instruments, ~10-40 zones each of seconds-long 44.1k float PCM ≈ 0.2-1MB per zone) monotonically accumulates buffers; switching soundfonts via the switcher (11 alternate font sets shipped) multiplies the key space. Nothing ever frees a buffer no longer referenced by the current state's instruments. Code-trace finding (browser-only path, not node-reachable).
@@ -155,7 +155,7 @@ The ring path caches every decoded found AudioBuffer (bufCache, live.js:515) and
 
 **Verifier:** Mechanism fully confirmed: bufCache (live.js:515), samplerBufs (533), foundPCM/samplerPCM/speechPCM + jobs maps (1496-1497) are never evicted for the life of an exploreLive session (which spans a whole journey), and two module-global caches the finding missed — sampler.js:440 _cache and found-player.js:517 _bufCache (beds up to 90s ≈ 16MB each) — survive even stop/restart; the wav path additionally holds pcm.slice() copies in the worker (live.js:1662/1729, stream-worker.js:482), so mobile keeps up to 3 copies per zone. Not by-design (found-player already LRU-bounds its bed-loop cache, BED_CACHE_MAX=6) and eviction cannot break byte-determinism (decode caches feed live playback only; buildEvents/press untouched; re-decode yields identical PCM). Magnitude corrected: srcIds are instrument-keyed so genres dedup — measured ~85MB single-copy over a 30-genre journey (first-visit genres 3-15MB, ~2.8MB/genre average), ~200-250MB on the mobile path with copies, ceiling = full library (~210MB default font decoded) not truly unbounded. The '10-20MB per genre' figure overstates typical increments, but multi-hour mobile sessions pinning 200-500MB of PCM is real iOS jetsam risk, and the suggested LRU (keep bufFail/null-pin semantics, key on live per-bar sets) is compatible with all existing invariants.
 
-### [ ] jux stereo dimension is audibly dead: no Faust consumer reads per-event pan (and callResponse's pan mirror uses the wrong convention)
+### [x] (2026-07-25) jux stereo dimension is audibly dead: no Faust consumer reads per-event pan (and callResponse's pan mirror uses the wrong convention)
 *engine/csd-engine.js:2021 · score*
 
 The jux pass (lines 2021-2035) stamps `pan` in [-1,1] on hats/toms/melody/pads, and the header comment claims "the Faust engine reads it". Code-trace of the whole backend says otherwise: state-engine.js never reads event.pan (mapEvents translates cutoffMul/vib/pw only); press.js builds note pan exclusively from SE.notePan(unit,freq); render-core.js/stream-renderer.js/stem-worker.js read only unit-level u.pan (MASTER_PAN); sampler.js's n.pan comes from notePan; live.js/ring-player.js/stream-worker.js contain no per-event pan handling at all. So dozens of anchors tuned with fx.jux (breakcore "maximum jux", "jux MAX — the stereo field disagrees with itself") render with zero per-event stereo divergence — only the static unit pans sound. Secondary: pipes.js:159 callResponse "pan mirror" computes 1-e.pan (a 0..1-convention mirror) against jux's signed [-1,1] pans, so if per-event pan is ever wired up, every response note lands ~hard right (1-(-0.35)=1.35, clamped to 1 by panGains) instead of mirrored; the correct mirror in the engine's convention is -e.pan.
@@ -166,7 +166,20 @@ The jux pass (lines 2021-2035) stamps `pan` in [-1,1] on hats/toms/melody/pads, 
 
 **Verifier:** Confirmed dead state dimension: the jux pass (csd-engine.js:2016-2035) stamps event.pan in [-1,1] and its comment claims "the Faust engine reads it," but no code in the Faust backend consumes event-level pan — state-engine.js mapEvents translates only cutoffMul/vib/pw (lines 1800-1815); all per-note pan comes from SE.notePan(unit,freq) (unit pan + pad panSpread); render-core/stream-renderer/stem-worker/press read only unit-level u.pan; live.js/ring-player/stream-worker have zero per-event pan handling; grep for "jux" across engine/faust/ and app/ finds nothing. 28 kernel anchors tune fx.jux ranges with comments promising audible width ("jux MAX — the stereo field disagrees with itself"), so this is a stale-contract dead feature, not by-design. Secondary claim also holds: pipes.js:159 callResponse mirrors pan as 1-e.pan with default 0.72 (0..1 csound convention) against the signed [-1,1] convention of jux and panGains(clamp(pan,-1,1)); if wired, mirrored responses would clamp hard-right — correct mirror in the signed convention is -e.pan. Additionally the jux pass runs after pipes and unconditionally overwrites callResponse melody pans.
 
-### [ ] strum pipe is dead vocabulary: it groups pads by exact beat AFTER applyGroove humanize jitter
+**Fixed (2026-07-25) — HALF, honestly:** the render half lives in
+`engine/faust/` (owned by another agent this round), so it ships as a patch
+spec: `scratchpad/jux-per-event-pan.patch.md` (mapEvents carries `p.pan`/`d.pan`
+onto unit events; `notePan(u,freq,evPan)` folds it in; the three press/stream
+call sites pass it; `anyStereo` learns about event pan — sampler `mixPCM`
+already honours `n.pan`). Landed here: pipes.js `callResponse` now mirrors in
+the engine's SIGNED convention (`-e.pan`, was `1-e.pan` — the hard-right bug),
+the csd-engine jux pass no longer claims "the Faust engine reads it" and
+carries a HONEST STATUS note, and docs/MUSIC-MIND.md gains "The dead knob:
+`jux`". Score-side stamping kept byte-identical (it is the correct half and the
+hook the wiring needs). Byte drift: 1 catalog state (breakbop@4 — the only one
+pooling callResponse with jux>0), pan field only, inaudible until wiring lands.
+
+### [x] (2026-07-25) strum pipe is dead vocabulary: it groups pads by exact beat AFTER applyGroove humanize jitter
 *engine/pipes.js:126 · score*
 
 The strum pipe forms chords by grouping pad events on `e.beat.toFixed(6)` and only rolls groups of >=2. But CsdPipes.apply runs at the buildEvents choke point AFTER applyGroove, whose humanize pass shifts every event by an independent ±ht·0.04-beat draw — so with any humanize>0 no two pad notes share a 6-dp beat and the pipe no-ops. Demonstrated: on real kernel output (moonlagoon seed 3) only 1 of 111 pad onset groups had >=2 members; a synthetic A/B shows the pipe rolls exact-equal chords (0/.02/.04/.06) and leaves 1e-4-jittered chords untouched. Every catalog genre that pools {id:"strum"} carries humanize>0 (moonlagoon seeds 1/5 humanize .27/.29, moptoprattle seeds 3/6 humanize .31/.20 — strum pipe ACTIVE in the resolved state, inert in effect), so the promised "humanity on pads" roll never sounds anywhere.
@@ -177,7 +190,18 @@ The strum pipe forms chords by grouping pad events on `e.beat.toFixed(6)` and on
 
 **Verifier:** Confirmed dead vocabulary. CsdPipes.apply runs at csd-engine.js:2321, after applyGroove (line 2038) has shifted every pitched event's beat by an independent ±ht*0.04 draw; the strum pipe (pipes.js:121-136) then groups pads on e.beat.toFixed(6) and skips groups <2, so with any humanize>0 it no-ops. Every strum-active resolved kernel state carries humanize>0 (286/286 across 73 genres pooling strum — wider than the finding's ~10 — seeds 1-8), so the promised pad roll never sounds anywhere. Not by-design (the pipe's own doc promises the roll); the pipe is drawless so the quantized-grouping fix preserves determinism, with byte drift only where the pipe correctly starts firing.
 
-### [ ] PERC pass tiles bars at hardcoded CHORD_BEATS=8, ignoring chordEvery/meter — latent event spill past section ends
+**Fixed (2026-07-25):** pads are now clustered by a TOLERANCE window (0.1 beat
+from the cluster's first onset, param `tol`) instead of an exact
+`beat.toFixed(6)` key, so humanize jitter (±0.04/event) and the rubato warp no
+longer atomize every chord; each cluster rolls from its own earliest onset with
+release edges preserved. Drawless, so determinism/seeding unchanged. The pipe
+stands down when the SCORE already rakes the pads (`state.strum`) rather than
+fighting the stroke direction. Drift: 95 of 822 catalog builds (274 genres ×
+seeds 1/4/7), all pooling `strum` and carrying pads — the pipe finally firing
+(1 of them, butterchurnbounce@7, also shifts `state.regHome` because the moved
+pad onsets change `harmonize`'s sounding-pc set → melody register measurement).
+
+### [x] (2026-07-25) PERC pass tiles bars at hardcoded CHORD_BEATS=8, ignoring chordEvery/meter — latent event spill past section ends
 *engine/csd-engine.js:2266 · score*
 
 The percussion lane computes `nbars=Math.max(1,Math.round(sp.beats/CHORD_BEATS))` and places bars at `sp.start+bi*CHORD_BEATS` — always the 8-beat 4/4 stride, even when the state's chord bar is 4/6/12 beats. When sp.beats ≡ 4 (mod 8) (e.g. a 3-chord progression like ii_v_i under chordEvery 4 or 12: 36-beat sections → Math.round(4.5)=5 bars), the last perc bar extends up to ~4 beats past the section boundary — perc keeps clattering into a section whose kit is "off" (and past a "cut"/dropout transition, which also never clears perc since perc is added after the transition chain). No stock ANCHOR currently hits it (verified: the chordEvery:4 genres punk/indie/grunge pool only 4- and 12-chord progressions; the meter and chordEvery:12 anchors carry no perc styles), but blends can combine a perc-dominant parent with another parent's chordEvery (resolveMulti picks chordEvery from one declaring parent, perc style from the dominant), and any future perc wiring of a meter genre misaligns 8-beat perc cells against 6-beat bars.
@@ -187,6 +211,15 @@ The percussion lane computes `nbars=Math.max(1,Math.round(sp.beats/CHORD_BEATS))
 **Fix:** Clamp emission to the span (`if(e.beat < sp.start+sp.beats) percArr.push(e)`) as the minimal byte-safe-for-all-current-anchors fix, and/or use nbars=floor. A fuller fix strides by min(CBEATS, CHORD_BEATS) like the snare-law's BARLEN. rng discipline: the prng draws happen per emitted event inside the loop, so a clamp BEFORE the draw changes draw counts — clamp after the draws (filter at push) to keep existing genres byte-identical.
 
 **Verifier:** Confirmed. engine/csd-engine.js:2266 tiles perc bars at hardcoded CHORD_BEATS=8 while sp.beats is a multiple of CBEATS (chordEvery/meter), not 8; Math.round rounds 4.5 up, so a 36-beat span (ii_v_i x chordEvery 12) gets 5 bars and the last spills up to 4 beats past the section boundary into a following kit-off span (the pass only checks the emitting span's kit, and runs after the transition chain so cut/dropout never clears it). Reachable via the public blend API, not just synthetic states: perc comes from the dominant PERC_STYLES parent (resolvePercStyle, no rng) while chordEvery is a weighted draw from any declaring parent. Not by-design (the pass's own comment promises perc only on kit!=="off" spans), and the suggested clamp-after-draw fix preserves both determinism and byte-identity for all non-spilling genres.
+
+**Fixed (2026-07-25):** the pass strides `PCELL = min(CBEATS, CHORD_BEATS)` and
+emission is a FILTER applied AFTER both prng draws (draw counts, hence bytes,
+untouched): nothing lands past the cell or past the span end, and `nbars` is
+`ceil(sp.beats/PCELL)` so the span is covered without a `round()` overshoot.
+Probe (3-chord ii_v_i + perc into a kit-"off" span): chordEvery 12 spilled 5
+events past the section end and chordEvery 4 spilled 8 — both now 0, with the
+legacy chordEvery-8 case byte-identical. Catalog drift: zero (no stock state
+pairs perc with a non-8 chord bar, exactly as the finding predicted).
 
 ### [ ] Segment walk double-renders a 64-sample block when a non-merged gap lands inside one block (confirmed live: floppycore seed 1)
 *engine/faust/render-core.js:151 · render*
@@ -199,7 +232,7 @@ renderUnit's per-segment block walk renders past the segment end `to` up to the 
 
 **Verifier:** Real bug, mechanism and live repro both confirmed. In engine/faust/render-core.js renderUnit, each merged segment's block walk starts at Math.floor(a/BS)*BS (line 151) and renders full 64-sample blocks past the segment end because len clamps only to TOTAL, never to `to` (lines 154-155); mergeIvals merges only touching/overlapping intervals, so a 1-63-sample gap landing inside one 64-block leaves that block in both segments — it is rendered twice, accumulating doubled output into the buses and advancing the Faust voice's internal DSP state 64 extra samples. Not by-design (the header's 'keep the walk exactly' note is the press/render-core byte-parity contract, not an endorsement), not an eco-mode/absent-knob case, and the bug is deterministic so it silently bakes into fixtures. The suggested renderedEnd clamp preserves determinism and is byte-identical for every state without an intra-block gap. Minor correction: the stream renderer inherits the same pattern via its verbatim renderUnitWindow copy (stream-renderer.js ~line 206), not via a literal call to the shared renderUnit.
 
-### [ ] Per-note tape-delay strip truncates its echoes: audible click at note end, zero echo on short notes
+### [x] (2026-07-25) Per-note tape-delay strip truncates its echoes: audible click at note end, zero echo on short notes
 *engine/faust/sampler.js:205-211 · sampler*
 
 mixPCM renders a note for exactly outN = holdN + relN samples (line 320), but the strip's tape delay (S.dly, buffer sized to timeSec = clamp(0.75*spb, 0.05, 1.4) — up to 1.4s) still holds near-full-level echo when the loop breaks. Probe: a 1.0s note (gain 0.4, lead strip + delay 0.35s/fb 0.28/mix 0.2) measures -24.4 dBFS in the 50 samples before the cut and exact 0 after — a single-sample step. Worse: a note shorter than the delay time emits NO echo at all — the first echo emerges ds samples after note start, past outN (a 0.25s eighth-note lead at 120bpm vs a 0.375s delay: outN=0.34s < 0.375s). voiceFxStage assigns this delay to ALL non-organ/non-guitar sampled leads and half the guitar leads (state-engine.js:246-249), so for typical staccato lead lines the declared echo is effectively silent, and for sustained notes it clicks. The live path has the same truncation: SamplerLive's onended (sampler.js:842) disconnects the buildStripNodes delay feedback loop at note end + 50ms.
@@ -208,9 +241,11 @@ mixPCM renders a note for exactly outN = holdN + relN samples (line 320), but th
 
 **Fix:** When the strip carries S.dly (or S.fla with high feedback), extend the render loop past outN by ~3x the delay time feeding x=0 (envelope already zero), so echoes decay naturally; in SamplerLive, defer teardown of delay-bearing strip nodes by the same tail. Bytes change only for delay-strip notes; gate with segment-parity + ears.
 
+**Landed (2026-07-25):** sampler.js grows `stripTailN(strip, sr)` (3 delay times, capped 3.0s, 0 for any strip without a delay) and mixPCM rings the strip out past every note's end — the first 60ms through the full strip (so the chorus/leslie/biquad history empties into the delay continuously) then through a delay+flanger+trim-only `stripTailStep`, which measured byte-identical at 16 bit for a fraction of the CPU. SamplerLive defers its node teardown by the same tail. Probe (real vaporwave lead strip, 0.517s delay): the single-sample step at the cut falls -25.7 → -66.4 dBFS on a 1.0s note, and a 0.25s note goes from ZERO echo to a -36.4 dBFS ring-out; in-note samples bit-identical. **Requires a 4-line stream-renderer.js hunk** (`n._end = … + SP.stripTailN(u.sampler.strip, SR)` at both note-spec sites) or a tail crossing a chord-bar seam is dropped from the windowed render: without it segment-parity FAILS jungle_s2/darksynth_s7/jazz_s3, with it all 10 states are byte-equal.
+
 **Verifier:** Confirmed on both paths. Press: mixPCM renders exactly outN=holdN+relN samples (sampler.js:320,414) while the per-note strip delay (S.dly, stripStep lines 205-211; buffer sized to up to 1.4s in makeStrip:130-135) still carries echo — probe shows a 1.0s lead-strip note cut from -26.4 dBFS to exact 0 in one sample (audible tick), and a 0.25s note vs a 0.375s delay (120bpm eighth) emits ZERO echo samples while its dry is attenuated to exactly 0.800x by the (1-mix) term — the effect is pure signal loss on short notes. voiceFxStage (state-engine.js:240-249) puts this delay on all non-organ sampled melody/solo leads plus half of guitar leads, the default sampled sound. Live has the same truncation: src.stop(when+hold+rel+0.05) then onended disconnects the buildStripNodes delay feedback loop (sampler.js:835,840-842). Not by-design (the per-note-buffer comment is about window parity, not tail amputation; voiceFxStage declares the delay as lead 'air') and the suggested tail-extension fix is deterministic + window-parity-safe, so no law is broken.
 
-### [ ] Velocity-layer zone selection is fed a mix gain, not a velocity — multi-velocity fonts can never reach their loud layers, and press/live disagree
+### [x] (2026-07-25) Velocity-layer zone selection is fed a mix gain, not a velocity — multi-velocity fonts can never reach their loud layers, and press/live disagree
 *engine/faust/sampler.js:224-240 · sampler*
 
 zoneFor picks a velocity layer via v = round(n.gain*127). But press feeds n.gain = (u.lvl||0.5) * e.sets.gain (press.js:226) — a MIX gain. Probe over 8 genres (jazz/citypop/vaporwave/heavymetal/dub/folk/ragtime/bossanova, seed 7): 10,109 sampler notes, max gain 0.484 → max velocity 61. So on any multi-velocity font, layers above ~vlo 61 (the forte samples that FULL CAPTURE in sf2.js exists to keep — 'upright piano, sax…' per the comment) are unreachable. live.js:957 computes round(e.sets.gain*127) WITHOUT u.lvl — press and live would select different layers for the same note. Additionally gain>1 (possible: sets.gain clamps at 2, lvl can exceed 1) gives v>127, which fails every vhi<=127 check and falls to covers[0] — the SOFTEST layer, since extraction sorts zones velLo-ascending (sf2.js:151). Verified currently latent: all 133 shipped zones.json and all 11 font-*.json switcher manifests have exactly one velocity layer, so nothing audible today — the feature is dead on arrival for the first real multi-vel font.
@@ -232,7 +267,7 @@ In the bakeNative (WAV-FIRST mobile segs + background-WAV) path, a bed event is 
 
 **Verifier:** Confirmed: on the bakeNative (WAV-segs/background-WAV) path, a multi-bar found bed is attached only to its foundCi===0 bar (stream-renderer.js:566-571, and mapEvents' beat-window filter already omits it from later bars since live.js:1658 passes no bedAll) and mixed once via windowed FP.mixPCM (renderChunk:617-618), whose write clamps to [base,base+len) (found-player.js:364-366). Unlike sampler notes (persisted in su.notes and re-filtered per window, lines 628-629), the bed is never re-passed, so everything past the first chord bar is silent. Live mode (live.js:989-991) and press play the full durSec — this is a parity break, not design (the code comment itself claims scheduleNative parity). Beds span whole sections (csd-engine.js:2193 dur:B), so typically (nch-1)/nch of the bed is lost plus a step-discontinuity click at the chord-0 bar boundary. The suggested fix (persist and re-pass with same tSec per window) is byte-exact vs press, preserving determinism.
 
-### [ ] _bufCache is unbounded — decoded found AudioBuffers (up to ~16MB each) are retained forever
+### [x] (2026-07-25) _bufCache is unbounded — decoded found AudioBuffers (up to ~16MB each) are retained forever
 *engine/faust/found-player.js:517 · found*
 
 The url → Promise<AudioBuffer> map is only ever deleted on decode FAILURE (line 625); success entries live for the session. Each entry is up to FOUND_MAX_SECONDS=90s of mono 44.1k float32 ≈ 15.9MB, plus speech-synth entries share the same map. The repo ships 168 found mp3s; a multi-hour journey ride that crosses many genres steadily accumulates every touched source.
@@ -276,6 +311,29 @@ startFade: nextDown = playQueue.length ? playQueue[0].globalStart : fedEnd (live
 
 **Verifier:** Confirmed. With playQueue empty at startFade (live.js:771), the fade anchor is fedEnd — the exact frame where ring A's data ends (bridging stopped feeding cur at live.js:864, so nothing is ever written past fedEnd), and the ramp holds until the cursor reaches that frame (:780). So ring A is dry for the entire 400ms ramp: the reader mixes silence at gA≈1 (ring-player.js:133-134), turning the promised bar-aligned crossfade into a 400ms fade-in-from-silence (incoming stream at -14dB at 50ms, -5dB at 150ms), and counts a false underrun every quantum since countA = gA > GAIN_EPS (137/137 quanta per fade at 44.1k — the title's "~34" is wrong, the detail's ~138 is right). Not by-design: startFade's own comment claims the old ring "can never underrun before the anchor" while guaranteeing it underruns throughout the ramp, and GAIN_EPS exists specifically to exempt non-contributing rings from the counter. Determinism unaffected (live gain/telemetry only, not buildEvents). One overstatement: no test reads underruns() — the polluted consumer is the ?wavDebug telemetry (app/live.js:166 starves), not a gate.
 
+### [ ] (2026-07-25, gate observation) The mse-mp3 tier has no realtime margin: one post-steer `waiting` underrun in 4 of 6 runs on a loaded 4-core box — mse-opus never
+*engine/faust/live.js:2269 · scheduler · found by triaging the wavout gate, NOT fixed here*
+
+`test/wavout-test-run.js`'s mse-mp3 leg fails `noStall` (segStats().zeroPlayable == 1) after its single `swapTo("house")` steer. zeroPlayable on the append routes counts GENUINE mid-stream underruns only — the element's `waiting` event with `currentTime > 0.3` and `bufferedAhead() < 0.15` (live.js:2269) — so the element really did reach its buffer edge at the gen cutover.
+
+**Evidence (6 runs, 2026-07-25, 4 cores, other agents rendering concurrently; 1-min load 6.58-8.32):**
+
+| leg | runs | post-steer zeroPlayable | firstSound |
+|---|---|---|---|
+| mse-opus (WebCodecs native encode) | 2 full-gate | 0, 0 | 2.9-3.4s |
+| mse-mp3 (lamejs, JS encode) | 2 full-gate + 4 isolated | 1, 1, 1, 0, 0, 1 | 3.0s, 4.8s, 6.6s, 6.7s, 8.7s, 14.9s |
+| segAB | 2 full-gate | 0, 0 | 4.6s |
+
+Every mp3 run reported a HEALTHY buffer either side of the event (max buffered 14-22s) and NO audible gap: 100% nonzero RMS at 100ms sampling, longest silent run 0. So the stall is a momentary buffer-edge starve at the cutover, not silence — and it happens only on the tier whose encoder is JavaScript. `firstSound` on the same leg ranged 3.0s → 14.9s across runs of identical code, which is the same story: the mp3 tier is the one with no headroom when the CPU is contended.
+
+**Relationship to the open finding above** ("mp3 route counts skipped-gen PCM as buffered"): that entry predicts exactly this symptom ("before full deadlock, each leaked gen silently shrinks the real forward buffer, raising underrun ('waiting') stalls") but by a mechanism that needs a SKIPPED gen — a single steer with a healthy encoder should not skip one. So this is either (a) a milder second path to the same starve (the encoder falls behind, the pump's runway estimate is optimistic anyway), or (b) the first observable edge of that leak at one steer. Whoever fixes the accounting bug should re-run this leg on an IDLE box first, record the baseline, and use it as the fix's gate.
+
+**Impact:** Fallback-tier only, and no audible gap was ever measured — but it is the tier a device drops to when AAC/opus encode is unavailable, and the ENGINE-AUDIT entry above says this same starve becomes permanent silence after rapid steering.
+
+**Fix:** Not attempted here (engine territory). Candidates: forward-buffer accounting (see the entry above), a deeper pre-roll on the mp3 tier before the cutover completes, or dropping the tier's segment size when encode wall-time approaches realtime.
+
+**Gate handling meanwhile:** `noStall` and `firstSound` are the gate's only realtime-MARGIN assertions. wavout-test-run.js now measures the 1-min load at start and, when the box is oversubscribed (>1.5x cores), reports those two as loud NOTICES instead of failures; route/continuity/section/steer/single/bounded/errors stay hard at every load. An idle box still holds the full contract.
+
 ## Tier 3 — safe speedups (byte-identical contracts)
 
 ### [x] (2026-07-25) mixGrains recomputes Math.cos per sample and pays 2-3 modulos per read — 2.9x speedup, bit-identical
@@ -289,7 +347,7 @@ The inner grain loop evaluates the hann window `0.5 - 0.5*Math.cos(2πi/gLen)` f
 
 **Verifier:** Confirmed: mixGrains (engine/faust/found-player.js:311-325) recomputes the hann cos per sample with gLen constant per call, and readLerp (lines 72-77) pays 2 modulos per sample; a per-call Float64Array hann table plus an in-range no-modulo fast path is bit-identical (verified sample-for-sample across 7 pitch/stretch/wrap cases including heavy-wrap) and gives 3.28x on this machine (shipped 215.6ms vs 65.7ms for a 24s bed render; per 42-grain live idle slice 12.0ms -> 4.2ms, a real main-thread frame-budget win). Float32 table indeed breaks identity (first diff at sample 1), so the finding's Float64 caveat is correct. Paths are real: renderBedLoopPCM live idle slices, wavOut per-bar bed bake inside the must-beat-realtime stream render, and press mixPCM beds. Byte-determinism preserved; ~3x of its path, far above the 2% bar.
 
-### [ ] Cold f0Profile (~130-190ms synchronous) runs at bar-fire time on the main thread for autoTune'd found sources
+### [x] (2026-07-25) Cold f0Profile (~130-190ms synchronous) runs at bar-fire time on the main thread for autoTune'd found sources
 *engine/faust/found-player.js:619 · found*
 
 decodeUrlToBuffer only pre-seeds the F0 cache when gain > NONSPEECH_GAIN_CAP (line 619's && short-circuits the f0Profile call when gain <= 2 — which is the common case for local cache files already loudnorm'ed to -18 LUFS). For genres declaring state.autoTune, the first live.bed/live.chop for each buffer then calls tunedPitch (lines 738, 787) → cold _computeF0Profile, a synchronous O(frames·lags·frame) scan. Measured in node: 130-190ms for 10-90s buffers at 44.1k. This runs inside fireBar/scheduleNative, i.e. on the main thread from the 30ms bar-scheduler interval (live.js:925-930), exactly when the bar is due.

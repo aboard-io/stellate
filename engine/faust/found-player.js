@@ -38,7 +38,9 @@
   // stay near-flat once loops are cached; bedLoopRenders/bedLoopHits track the
   // loop cache itself.
   const _stats = { decodeOk: 0, decodeFail: 0, beds: 0, chops: 0, grains: 0,
-    bedLoopRenders: 0, bedLoopHits: 0 };
+    bedLoopRenders: 0, bedLoopHits: 0,
+    // ENGINE-AUDIT 2026-07 Tier 2/3: decode-cache evictions + idle F0 pre-warms
+    bufEvicted: 0, f0Warm: 0 };
 
   // hann grain window for the LIVE grain scheduler (parity with mixPCM's
   // 0.5-0.5cos window; was a triangle ramp) — one shared curve, applied per
@@ -529,7 +531,86 @@
     return map[url] ? SITE_ROOT + map[url] : null;   // manifest values are site-root-relative (found/<id>.mp3)
   }
 
-  const _bufCache = new Map(); // url -> Promise<AudioBuffer>
+  // ---- decoded-buffer cache: LRU with a SAMPLE budget -------------------
+  // ENGINE-AUDIT 2026-07 Tier 2: this map used to grow for the life of the page
+  // (deletes only on decode FAILURE), so every found bed/break/chop/narration
+  // and every synthesized utterance a ride touched stayed pinned — up to
+  // FOUND_MAX_SECONDS (90 s) of mono float32 ≈ 15.9 MB each, hundreds of MB
+  // across a multi-hour journey, on exactly the mobile lane iOS jetsams.
+  // Now bounded like its neighbour _bedLoopCache (BED_CACHE_MAX):
+  //   * insertion order IS the LRU order — every get() re-inserts (below), so
+  //     the CURRENT genre's working set is refreshed every bar it fires and can
+  //     never be the eviction candidate while it is playing (a journey crossing
+  //     genres evicts the genre it LEFT, not the one it is in);
+  //   * eviction is by total decoded SAMPLES (the honest memory measure), with
+  //     a floor of BUF_CACHE_MIN entries so a single 90 s bed can never push a
+  //     whole genre's set out;
+  //   * only SETTLED entries are evicted (an in-flight decode stays), and an
+  //     evicted url simply re-decodes from the local cache file next use —
+  //     deterministically identical PCM (analyzeActive/speech-gate are pure).
+  // Byte-transparent: node/press never calls decodeUrlToBuffer, and playing
+  // AudioBufferSourceNodes hold their own reference to an evicted buffer.
+  const BUF_CACHE_MAX_SAMPLES = 48e6;   // ~192 MB of float32 PCM
+  const BUF_CACHE_MIN = 8;              // never evict below this many entries
+  const _bufCache = new Map(); // url -> Promise<AudioBuffer>, in LRU order
+  const _bufSize = new Map();  // url -> decoded sample count (settled entries only)
+  let _bufSamples = 0;
+  function bufCacheGet(key) {
+    if (!_bufCache.has(key)) return null;
+    const job = _bufCache.get(key);                 // LRU refresh: move to the tail
+    _bufCache.delete(key); _bufCache.set(key, job);
+    return job;
+  }
+  function bufCacheDrop(key) {
+    if (!_bufCache.has(key)) return;
+    _bufCache.delete(key);
+    const n = _bufSize.get(key);
+    if (n) { _bufSamples -= n; _bufSize.delete(key); }
+  }
+  function bufCacheEvict() {
+    if (_bufSamples <= BUF_CACHE_MAX_SAMPLES) return;
+    for (const key of [..._bufCache.keys()]) {      // oldest first
+      if (_bufSamples <= BUF_CACHE_MAX_SAMPLES || _bufCache.size <= BUF_CACHE_MIN) break;
+      if (!_bufSize.has(key)) continue;             // in flight — never evict a pending decode
+      _stats.bufEvicted++;
+      bufCacheDrop(key);
+    }
+  }
+  // register a settled entry's size and run the budget sweep.
+  function bufCacheSettled(key, buf) {
+    if (!_bufCache.has(key)) return;                // already dropped/superseded
+    const n = (buf && buf.length) || 0;
+    _bufSize.set(key, n); _bufSamples += n;
+    bufCacheEvict();
+  }
+  // ---- F0 PRE-WARM (ENGINE-AUDIT 2026-07 Tier 3) -------------------------
+  // tunedPitch's f0Profile is a 67-204 ms synchronous scan. Cold, it used to run
+  // inside fireBar/scheduleNative — on the main thread at the bar's playback
+  // instant — for every autoTune'd source's first bed/chop. decodeUrlToBuffer's
+  // pre-seed was defeated by an && (it only ran when gain > NONSPEECH_GAIN_CAP,
+  // never true for the loudnorm'ed local cache files). Warm it for EVERY decoded
+  // buffer instead, on idle time so the scan never lands mid-bar. The profile is
+  // a pure, scale-invariant function of (data, sr) — warming changes zero
+  // rendered bytes, only WHEN the identical computation happens.
+  const _chan0 = typeof WeakMap !== "undefined" ? new WeakMap() : new Map();
+  // stable channel-0 view: the _pitchCache WeakMap is keyed on the Float32Array
+  // identity, and a browser returning a fresh array from getChannelData(0) would
+  // miss it on EVERY fire (turning the one-time stall into a per-bar one). Pin
+  // the array we profiled against the AudioBuffer.
+  function chan0(buffer) {
+    if (!buffer) return null;
+    let d = _chan0.get(buffer);
+    if (!d) { d = buffer.getChannelData(0); _chan0.set(buffer, d); }
+    return d;
+  }
+  const _idle = (fn) => (typeof requestIdleCallback === "function")
+    ? requestIdleCallback(fn, { timeout: 400 }) : setTimeout(fn, 0);
+  function warmF0(buffer, sr) {
+    if (!buffer) return;
+    const d = chan0(buffer);
+    if (!d || !d.length || _pitchCache.has(d)) return;
+    _idle(() => { try { if (!_pitchCache.has(d)) { f0Profile(d, sr || buffer.sampleRate); _stats.f0Warm++; } } catch (e) {} });
+  }
 
   // ---- SPEECH organ decode (engine/speech.js) ----
   // A foundSource may carry `synthText` {text, voice, variant, pitch, speed}
@@ -548,19 +629,22 @@
     const CS = speechOrgan();
     if (!CS || !spec || !spec.text) return Promise.reject(new Error("CsdSpeech organ unavailable"));
     const k = CS.key(spec.text, spec);
-    if (_bufCache.has(k)) return _bufCache.get(k);
+    const hit = bufCacheGet(k);
+    if (hit) return hit;
     const job = CS.synth(spec.text, spec).then(({ pcm, sr }) => {
       const out = ctx.createBuffer(1, Math.max(1, pcm.length), sr);
       out.getChannelData(0).set(pcm);
       return out;
     });
     _bufCache.set(k, job);
-    job.then(() => _stats.decodeOk++, () => { _stats.decodeFail++; _bufCache.delete(k); });
+    job.then((buf) => { _stats.decodeOk++; bufCacheSettled(k, buf); warmF0(buf); },
+      () => { _stats.decodeFail++; bufCacheDrop(k); });
     return job;
   }
 
   function decodeUrlToBuffer(ctx, url, maxSeconds) {
-    if (_bufCache.has(url)) return _bufCache.get(url);
+    const hit = bufCacheGet(url);
+    if (hit) return hit;
     const job = (async () => {
       const maxSec = maxSeconds || FOUND_MAX_SECONDS;
       const local = await localCacheFor(url);
@@ -654,6 +738,9 @@
       // this call also pre-seeds the cache that tunedPitch reads later, and the
       // gain multiply below doesn't invalidate it. Speech-like material gets
       // the full spokenword boost, everything else keeps its distance (+6 dB cap).
+      // (The && short-circuits for every loudnorm'ed local file, which is why
+      // warmF0 below now does the pre-seed unconditionally, on idle time.)
+      _chan0.set(out, d);   // pin the profiled array as this buffer's channel 0
       let gain = pick.gain || 1;
       if (gain > NONSPEECH_GAIN_CAP && !isSpeechLike(f0Profile(d, audio.sampleRate)))
         gain = NONSPEECH_GAIN_CAP;
@@ -661,7 +748,8 @@
       return out;
     })();
     _bufCache.set(url, job);
-    job.then(() => _stats.decodeOk++, () => { _stats.decodeFail++; _bufCache.delete(url); });
+    job.then((buf) => { _stats.decodeOk++; bufCacheSettled(url, buf); warmF0(buf); },
+      () => { _stats.decodeFail++; bufCacheDrop(url); });
     return job;
   }
 
@@ -719,7 +807,7 @@
   // all. Cutoff is bucketed to 1/4 octave; the render itself uses the first
   // caller's exact cutoff (state cutoffs are far coarser than the bucket).
   function bedLoopEntry(buffer, f, atPitch) {
-    const sr = buffer.sampleRate, src = buffer.getChannelData(0);
+    const sr = buffer.sampleRate, src = chan0(buffer);
     const G = Math.max(1, Math.round(Math.min(f.durSec, BED_LOOP_MAX_SEC) * GRAIN_HZ));
     let id = _bedIds.get(buffer);
     if (id === undefined) { id = ++_bedIdSeq; _bedIds.set(buffer, id); }
@@ -766,7 +854,7 @@
         // pre-render the fwd↔back triangle read (SAME math as mixPCM's scratch
         // branch) into a one-shot buffer, played at rate 1 through the same lp+env
         // as a normal chop. Opt-in via f.scratch => normal loop read otherwise.
-        const src = buffer.getChannelData(0), sr = buffer.sampleRate;
+        const src = chan0(buffer), sr = buffer.sampleRate;
         const n = Math.max(1, Math.floor(durSec * sr)), start = (f.offset || 0) * src.length;
         const span = (f.scratchSpan || 0.05) * src.length, cyc = Math.max(1, f.scratchCycles || 4);
         const seg = new Float32Array(n);
@@ -774,7 +862,7 @@
         const sb = ctx.createBuffer(1, n, sr); sb.getChannelData(0).set(seg);
         srcN.buffer = sb; srcN.loop = false; srcN.playbackRate.value = 1;
       } else {
-        const atPitch = tunedPitch(f, buffer.getChannelData(0), buffer.sampleRate);   // AUTO-TUNE bend
+        const atPitch = tunedPitch(f, chan0(buffer), buffer.sampleRate);   // AUTO-TUNE bend
         srcN.buffer = buffer; srcN.loop = true; srcN.playbackRate.value = atPitch;
       }
       const lp = ctx.createBiquadFilter(); lp.type = "lowpass";
@@ -827,7 +915,7 @@
     live.bed = function (buffer, when, f) {
       _stats.beds++;
       const durSec = f.durSec;
-      const atPitch = tunedPitch(f, buffer.getChannelData(0), buffer.sampleRate);   // AUTO-TUNE bend
+      const atPitch = tunedPitch(f, chan0(buffer), buffer.sampleRate);   // AUTO-TUNE bend
       const out = ctx.createGain(); out.gain.value = 0;
       const dry = ctx.createGain(); dry.gain.value = 0.55; out.connect(dry); dry.connect(dests.dry);
       const rev = ctx.createGain(); rev.gain.value = 0.6; out.connect(rev); rev.connect(dests.rev);
@@ -970,6 +1058,11 @@
     // + the loop machinery exposed for direct tests.
     _legacyBed: false,
     _mixGrains: mixGrains, _renderBedLoopPCM: renderBedLoopPCM,
-    _bedLoopEntry: bedLoopEntry, _bedLoopCache };
+    _bedLoopEntry: bedLoopEntry, _bedLoopCache,
+    // ENGINE-AUDIT 2026-07 Tier 2/3: the bounded decode cache + F0 pre-warm,
+    // exposed for the browser gates (?wavDebug) and direct tests.
+    _bufCache, _bufCacheInfo: () => ({ entries: _bufCache.size, samples: _bufSamples,
+      mb: +(_bufSamples * 4 / 1048576).toFixed(1), evicted: _stats.bufEvicted, max: BUF_CACHE_MAX_SAMPLES }),
+    _warmF0: warmF0, _chan0: chan0 };
   return FP;
 });

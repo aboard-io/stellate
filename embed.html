@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>STELLATE — embedded player</title>
+<!-- embed.html — STELLATE IN SOMEONE ELSE'S PAGE.
+     ============================================================================
+     This is NOT a fork of the app: it loads the SAME engine globals and the SAME
+     app/ modules as index.html, in the same order, and differs only in (a) the
+     DOM it hands them, (b) `class="embed"` on <body> — see app/app.css "EMBED
+     MODE", which suppresses the settings/about/viz surfaces that make no sense
+     in a 400px box — and (c) app/embed.js, which adds the play affordance and
+     the ?genre= entry point. The modal wrappers below are PRESENT BUT NEVER
+     OPENABLE: app/panels.js binds to #panel/#panelWrap/#insideWrap/#aboutWrap
+     and the four chips at module load, so they must exist; embed CSS hides them
+     and removes every way to open them.
+
+     TWO deliberate omissions from index.html's script list, both guarded at
+     every call site so nothing breaks: engine/demo-layer.js (the MicroW8
+     demoscene backdrop — real CPU inside someone else's page) and
+     app/analytics.js + the GoatCounter beacon (we do not fire a beacon from a
+     third party's page). app/starcruise.js is omitted too: the aliens view is
+     unreachable here.
+
+     AUDIO IN A CROSS-ORIGIN FRAME: an embedded page is NOT cross-origin
+     isolated, so SharedArrayBuffer is undefined and the ring/worklet engine
+     cannot run. app/live.js detects that and routes to the WAV-FIRST path
+     automatically (see its NO-ISOLATION FALLBACK block) — no query flag needed.
+     Gate: test/embed-audio-run.js plays this page inside a genuinely
+     cross-origin parent frame and asserts real RMS.
+
+     NEVER AUTOPLAY. #embedPlay covers the box until a real user gesture; that
+     tap is what unlocks WebAudio, and it is also simply polite.
+     Params honoured: ?genre= ?seed= ?path= ?m= ?xdur= ?sf= ?bg=off  -->
+<meta name="description" content="STELLATE, embedded: a generative music instrument you play by drawing a path across a star map of 274 genres.">
+<meta name="author" content="Paul Ford">
+<meta name="theme-color" content="#0c0a1a">
+<meta name="color-scheme" content="dark">
+<!-- an embed is a VIEW of the canonical app, not a page of its own: point search
+     engines at stellate.app and keep the frame out of the index. -->
+<meta name="robots" content="noindex,follow">
+<link rel="canonical" href="https://stellate.app/">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="STELLATE">
+<meta property="og:title" content="STELLATE — draw a path through genre space">
+<meta property="og:description" content="A generative music instrument. Draw a path across a star map of 274 genres and hear the music of wherever you are. By Paul Ford at Aboard.">
+<meta property="og:url" content="https://stellate.app/">
+<meta property="og:image" content="https://stellate.app/assets/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE — draw a path through genre space.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="STELLATE — draw a path through genre space">
+<meta name="twitter:description" content="Draw a path across a star map of 274 genres and hear the music of wherever you are.">
+<meta name="twitter:image" content="https://stellate.app/assets/og-card.png">
+<meta name="twitter:creator" content="@aboard">
+<link rel="alternate" type="application/json+oembed" href="https://stellate.app/oembed.json" title="STELLATE">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app/app.css">
+</head>
+<body class="embed">
+<h1 class="brand">STELLATE<button class="help" id="helpChip" title="about stellate" aria-label="About stellate">?</button></h1>
+<a class="embed-open" href="https://stellate.app/" target="_blank" rel="noopener">open ↗</a>
+<svg id="map"></svg>
+<!-- present-but-hidden: app/panels.js binds these at load (see the note above) -->
+<div class="modal" id="panelWrap"><div class="card" id="panel"></div></div>
+<div class="modal" id="insideWrap"><div id="inside" class="card"></div></div>
+<div class="modal" id="aboutWrap"><div class="card" id="about"></div></div>
+<div id="boot" aria-hidden="true"><div class="btrack"><div class="bfill"></div></div><div class="blabel"></div></div>
+<div id="chips">
+  <button class="chip" id="playChip" title="LIVE / STOP" aria-label="Play live / stop">▶</button>
+  <button class="chip" id="viewChip" hidden aria-hidden="true" tabindex="-1"></button>
+  <button class="chip" id="cfgChip" hidden aria-hidden="true" tabindex="-1"></button>
+</div>
+<!-- THE PLAY AFFORDANCE: covers the box until a real gesture (never autoplay). -->
+<button id="embedPlay" aria-label="Play STELLATE — generated music from a star map of 274 genres">
+  <span class="ep-in">
+    <span class="ep-disc" aria-hidden="true">▶</span>
+    <span class="ep-t">Stellate</span>
+    <span class="ep-s">draw a path through genre space — tap to play</span>
+  </span>
+</button>
+<p class="credit">made by <a href="https://www.ftrain.com/" target="_blank" rel="noopener">Paul Ford</a> at <a href="https://aboard.com" target="_blank" rel="noopener">Aboard</a></p>
+<!-- ENGINE: the same ordered classic globals index.html loads (theory/pipes
+     BEFORE csd-engine; every global BEFORE app/main.js). -->
+<script src="engine/theory.js"></script>
+<script src="engine/pipes.js"></script>
+<script src="engine/csd-engine.js"></script>
+<script src="engine/genre-kernel.js"></script>
+<script src="engine/genre-verifier.js"></script>
+<script src="engine/namebank.js"></script>
+<script src="engine/speech.js"></script>
+<script src="engine/faust/state-engine.js"></script>
+<script src="engine/faust/found-player.js"></script>
+<script src="engine/faust/sampler.js"></script>
+<script src="engine/faust/live.js"></script>
+<script type="module" src="app/main.js"></script>
+<script type="module" src="app/embed.js"></script>
+</body>
+</html>

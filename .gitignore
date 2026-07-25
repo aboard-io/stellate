@@ -27,8 +27,21 @@ models/
 /node_modules/
 engine/faust/node_modules/
 tools/node_modules/
+# webfont bytes fetched by tools/gen-og-card.js so the card renders offline and
+# byte-identically. Derived (Google Fonts is the source); ship.sh rsyncs the
+# working tree, so this must never ride along to the droplet.
+tools/.font-cache/
 .venv-sing/
 journey/
 
 # scratch/ — parked derived renders & state.jsons (regenerable via seeds)
 scratch/
+
+# The RELEASE FEED (tools/gen-feed.js) is DERIVED from the git log — the recipe
+# is committed, the artifacts are not (the one rule). tools/deploy-stellate.sh
+# regenerates all four just before the rsync, so the deployed feed always
+# includes the commit being deployed. docs/HOSTING.md "The open-web layer" §2.
+/feed.xml
+/feed.json
+/feed-archive.xml
+/feed-archive.json

@@ -693,6 +693,57 @@
              melody: { ...D.melody, ...s.melody }, drums: { ...D.drums, ...s.drums } };
   }
 
+  // ---- DX7 SYNTH FONT ("Pure FM") output ceiling ---------------------------
+  // dx7.lib has no output gain: the engine scales every FM note externally as
+  // @out = min(1, extGainPerAmp*amp), extGainPerAmp = 1.333*level (the rhodes-
+  // preset calibration). Under the dx7 FONT — where FM stands in for the whole
+  // sampled GM library, not as one genre's chosen colour — that 1.0 per-note
+  // ceiling is a wall: `level` is itself clamped to 1, `gmul` is skipped for
+  // dx7 (the `if (!u.dx7) sets.gain` site), so no makeup can lift the font.
+  // Melody-only 8s A/B presses, each instrument played BOTH sampled and through
+  // the font (2026-07-25), measured the FM font under sampled parity by:
+  //   string 15.0  brass 7.1  voice 6.2  pluck 4.4  bass 2.1  key 1.9
+  //   organ -1.0   mallet -3.9   (dB, pre-master-makeup RMS)
+  // DX7_MAKEUP = +3.5 dB (x1.5 on the old coefficient) is the fit: the mean of
+  // the six honest families, and near the mean of all eight. It is a GLOBAL
+  // lift — the two outliers are not gain-ceiling problems and are deliberately
+  // not chased here: `string` is the ROM patch STRINGS 1 rendering ~15 dB below
+  // every other font patch (per-note peak -29.9 dBFS vs -13..-20 for the rest —
+  // the FLUTE 1 / CALIOPE class, whose fix is a DX7_FAMILY_PATCH remap in the
+  // kernel), and `mallet` compares against genuinely quiet sampled xylophone/
+  // kalimba. Per-family trim, if ever wanted, belongs in the kernel's dx7VoiceFor
+  // as `levelMul` (the minimoog font's mechanism) — which only works at all once
+  // this ceiling is open.
+  // DX7_OUT_CEIL opens the per-note clamp enough that the lift survives the
+  // loudest notes instead of being flattened back to 1.0. Measured: every
+  // family's peak rose the full +3.5 dB (so the clamp never engaged), worst
+  // post-lift peak -9.6 dBFS — nothing leans on the 0.95 master soft-clip.
+  // FONT-GATED: applied only when the state's samplerLib resolves to dx7 synth
+  // voices. A genre that authors model "dx7" as its own signature colour keeps
+  // the historical 1.333 / 1.0 exactly — every fluidr3 render stays byte-
+  // identical (verified by hash on the jungle/synthwave/vaporwave press trio).
+  const DX7_MAKEUP   = 2.0;   // was 1.333 everywhere (the rhodes-preset calibration)
+  const DX7_OUT_CEIL = 1.8;   // was the implicit 1.0 @out clamp
+  // is the dx7 SYNTH FONT the active font for this state? applySampledOnly fills
+  // samplerLib with {synth:"dx7", dx7:patch} specs for EVERY instrument under a
+  // synth font (zone specs under fluidr3/file fonts), so one entry settles it.
+  // Cached per library object — pitchedUnit runs per voice, per bar, live.
+  const _dx7FontLib = typeof WeakMap === "function" ? new WeakMap() : null;
+  function dx7FontActive(state) {
+    const lib = state && state.sampledOnly && state.samplerLib;
+    if (!lib) return false;
+    if (_dx7FontLib && _dx7FontLib.has(lib)) return _dx7FontLib.get(lib);
+    let on = false;
+    for (const k in lib) {
+      const s = lib[k];
+      if (!s || !s.synth) continue;
+      on = (s.synth === "dx7" || s.padSynth === "dx7");
+      break;
+    }
+    if (_dx7FontLib) _dx7FontLib.set(lib, on);
+    return on;
+  }
+
   // ---- pitched voice unit: recipe -> {module, static params, per-note flags} ----
   // rev/del gains divide out `level` because csound sends tap PRE-level
   // (instr 1/2/4: gaMix += asig*level but gaRev += asig*send) while the Faust
@@ -807,10 +858,14 @@
     // per-algorithm dx7.lib module with those params. dx7.lib has no output
     // gain — the engine scales externally (GainNode live / PCM in press),
     // per NOTE via extGainPerAmp*amp (same calibration as the rhodes preset).
+    // Under the dx7 FONT the per-note ceiling opens (DX7_MAKEUP/DX7_OUT_CEIL
+    // above); a genre's own dx7 colour keeps the historical 1.333 / min(1,…).
     if (m.dx7 && m.dx7.algorithm != null) {
       const alg = Math.round(clamp(m.dx7.algorithm, 1, 32));
+      const font = dx7FontActive(state);
       return { ...base, module: "dx7_alg" + alg, dx7: true, dx7Params: m.dx7.params || {},
-        freqMax: 1000, extGainPerAmp: 1.333 * lvl, params: {} };
+        freqMax: 1000, extGainPerAmp: (font ? DX7_MAKEUP : 1.333) * lvl,
+        ...(font ? { dx7OutCeil: DX7_OUT_CEIL } : {}), params: {} };
     }
 
     // native pitched sample zones (faust/sampler.js) — no Faust module. ALL

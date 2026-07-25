@@ -25,6 +25,11 @@ echo "== gates =="
 node test/theory.test.js >/dev/null && echo "  theory     PASS"
 node test/pipes.test.js  >/dev/null && echo "  pipes      PASS"
 node test/speech.test.js >/dev/null && echo "  speech     PASS"
+# the release feed is GENERATED at deploy time (tools/deploy-stellate.sh runs
+# `gen-feed.js --historic` just before the rsync, writing gitignored artifacts —
+# which is why the clean-tree check above is unaffected). --dry proves the
+# generator still runs and its four feeds still self-validate BEFORE we push.
+node tools/gen-feed.js --dry >/dev/null && echo "  feed       PASS"
 
 echo "== push =="
 git push

@@ -16,9 +16,10 @@
 //      0→1→2→0 seamlessly, the traveller returning to waypoint[0];
 //   D. min pairwise star distance in SCREEN space (default zoom) exceeds the
 //      comfort threshold;
-//   D2. every K.GENRES genre has a computed position AND no two genre NAME LABELS
-//      overlap at the default zoom (boxes measured in real px); fugue lands near
-//      prelude, afrobeat gets a sensible spot (the two genres derived at load);
+//   D2. every K.GENRES genre has a computed position AND no two DRAWN genre NAME
+//      LABELS overlap at the default zoom (the real SVG text rects — drawMap culls
+//      names by level-of-detail, since 274 labels cannot fit a viewport; active
+//      genres are never culled); fugue lands near prelude;
 //   E. zoom in (k up to 4) and back to fit; k stays in range, k===1 recentres;
 //   F. DemoLayer up on load with NO interaction (mode 2, enabled);
 //   G. no console/page errors on load, nor after starting playback (a short
@@ -32,7 +33,13 @@ const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js
 const ROOT = path.join(__dirname, ".."), PORT = 8799;
 
 const SCREEN_SEP_MIN = 40;   // px between any two stars at DEFAULT zoom (1200x850 viewport); the
-                             // computed layout enforces a hard 52px dot floor, lands ~47px min
+                             // computed layout enforces a hard 72px dot floor (computeGenreLayout
+                             // MIN_DOT) and the baked POS lands ~47px min, so this is a floor with
+                             // real slack — a star under it was placed by LOGICAL distance and
+                             // forgot that drawMap compresses Y ~14x (see the world.js nudge note)
+const LABELS_DRAWN_MIN = 90; // names actually drawn at the default zoom. 274 labels need ~2.4x the
+                             // viewport's area, so drawMap culls by design (LOD); ~120 draw today.
+                             // This floor catches "the map went blank", not the culling itself.
 
 async function main() {
   const srv = await serve(ROOT, PORT);
@@ -127,45 +134,75 @@ async function main() {
   console.log(`\n=== SPREAD (default zoom k=${sep.k}) ===`);
   console.log(`  ${sep.count} stars  minScreenDist=${sep.mn.toFixed(1)}px (${sep.pr})  minLogicalDist=${sep.logical.toFixed(1)}`);
 
-  // ---- D2: EVERY genre present + NO two NAME LABELS overlap at default zoom ----
+  // ---- D2: EVERY genre present + NO DRAWN NAME LABEL overlaps another ----
   // The core of the 2026-07-08 dynamic-layout change (Paul: "genre names still
-  // overlap and are unreadable"). Measure each label's screen box (real VT323/mono
-  // width at the default-zoom font, to the RIGHT of the dot, matching drawMap) and
-  // assert no two rectangles intersect. Also assert fugue is present and lands near
-  // prelude (its most-similar genre), and afrobeat — the two genres derived at load.
+  // overlap and are unreadable").
+  //
+  // 2026-07-25 — WHAT THIS MEASURES, AND WHY IT CHANGED. D2c used to build a
+  // hypothetical box for ALL 274 genre IDS and assert none of the 37,401 pairs
+  // intersect. That is unsatisfiable BY ARITHMETIC, not by layout: at the default
+  // zoom the label font is 28.8px, so 274 name boxes need ~2.4 MILLION px² of a
+  // 1,020,000px² viewport. It also measured the wrong strings (the id, e.g.
+  // "citypop") where drawMap draws the kernel LABEL, and the wrong set (every
+  // genre) where drawMap draws a NAME ONLY IF ITS BOX IS CLEAR — the label
+  // level-of-detail pass in starmap.js drawMap, which is the app's deliberate
+  // answer to exactly this arithmetic (active genres always get a name, the rest
+  // fill greedily; zoom in and more appear). So the old gate reported 27 "overlaps"
+  // that no user can see, and could never go green.
+  //
+  // We now assert the CONTRACT THE APP ACTUALLY MAKES, on the real DOM:
+  //   D2c: no two DRAWN labels (#map text.anchor, real client rects) overlap;
+  //   D2f: every ACTIVE (weighted) genre gets a drawn name — culling never hides
+  //        the genres you are currently hearing;
+  //   D2g: the map is still legible — a healthy number of names actually draw
+  //        (a bug that culls everything would otherwise pass D2c trivially).
+  // Also asserts fugue is present and lands near prelude (its most-similar genre).
+  await page.evaluate(async () => {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;   // VT323 in: measure what the user reads, not the fallback
+    __X.retarget({ x: __S.cursor.x, y: __S.cursor.y });                       // store write -> drawMap redraws with the real font
+  });
+  await page.waitForTimeout(150);
   const lab = await page.evaluate(() => {
     const svg = document.getElementById("map"), r = svg.getBoundingClientRect();
-    const W = __X.world().w, H = __X.world().h, P = __X.POS, k = window.__ZOOM.k;
+    const P = __X.POS;
     const ALL = Object.keys(GenreKernel.GENRES);
     const missing = ALL.filter(g => !P[g]);
-    const fsD = Math.min(3, Math.max(1, Math.pow(k, 0.85)));
-    const fontPx = 12 * fsD, ctx = document.createElement("canvas").getContext("2d");
-    ctx.font = fontPx + "px VT323, monospace";
-    const box = g => { const px = (P[g][0] * r.width / W) * k, py = (P[g][1] * r.height / H) * k, tw = ctx.measureText(g).width;
-      return { g, l: px - 4 * fsD, rr: px + 9 * fsD + tw + 3 * fsD, t: py - fontPx / 2 - 3 * fsD, b: py + fontPx / 2 + 3 * fsD }; };
-    const B = ALL.map(box);
-    let overlaps = 0, worst = "", worstPen = 0, minGap = Infinity, minGapPair = "";
-    for (let i = 0; i < B.length; i++) for (let j = i + 1; j < B.length; j++) {
-      const A = B[i], C = B[j];
+    // the labels the app DREW (text.anchor == a genre name; .wlabel percentages and
+    // .region watermarks are other layers), measured as real on-screen rectangles.
+    const drawn = [...svg.querySelectorAll("text.anchor")].map(t => {
+      const b = t.getBoundingClientRect();
+      return { name: t.textContent, l: b.left - r.left, rr: b.right - r.left, t: b.top - r.top, b: b.bottom - r.top };
+    });
+    let overlaps = 0, worst = "", worstPen = 0;
+    for (let i = 0; i < drawn.length; i++) for (let j = i + 1; j < drawn.length; j++) {
+      const A = drawn[i], C = drawn[j];
       const ox = Math.min(A.rr, C.rr) - Math.max(A.l, C.l);
       const oy = Math.min(A.b, C.b) - Math.max(A.t, C.t);
-      if (ox > 0 && oy > 0) { overlaps++; const pen = Math.min(ox, oy); if (pen > worstPen) { worstPen = pen; worst = A.g + "/" + C.g; } }
-      else { const gap = Math.max(ox > 0 ? 0 : -ox, oy > 0 ? 0 : -oy); if (gap < minGap) { minGap = gap; minGapPair = A.g + "/" + C.g; } }
+      if (ox > 0 && oy > 0) { overlaps++; const pen = Math.min(ox, oy); if (pen > worstPen) { worstPen = pen; worst = A.name + "/" + C.name; } }
     }
-    // fugue / afrobeat nearest-neighbour rank (by dot distance)
+    // every ACTIVE genre must carry a drawn name (drawMap gives them a slot first)
+    const shown = new Set(drawn.map(d => d.name));
+    const glabel = g => (GenreKernel.GENRES[g] && GenreKernel.GENRES[g].label) || g;
+    const active = __S.weights.filter(w => w.w > 0.01).map(w => w.g);
+    const activeUnlabelled = active.filter(g => !shown.has(glabel(g)));
+    // fugue nearest-neighbour rank (by dot distance)
     const near = t => Object.keys(P).filter(g => g !== t).map(g => ({ g, d: Math.hypot(P[t][0] - P[g][0], P[t][1] - P[g][1]) }))
       .sort((a, b) => a.d - b.d).slice(0, 4).map(x => x.g);
     return { total: ALL.length, placed: ALL.filter(g => P[g]).length, missing, overlaps, worst, worstPen,
-      minGap, minGapPair, fugue: P.fugue ? near("fugue") : null, afrobeat: P.afrobeat ? near("afrobeat") : null };
+      drawn: drawn.length, active, activeUnlabelled,
+      fugue: P.fugue ? near("fugue") : null, afrobeat: P.afrobeat ? near("afrobeat") : null };
   });
   ok(lab.missing.length === 0, `D2a: ${lab.missing.length} K.GENRES genres have NO computed position: ${lab.missing.slice(0, 8).join(", ")}`);
   ok(lab.placed === lab.total, `D2b: placed ${lab.placed}/${lab.total} genres (want all)`);
-  ok(lab.overlaps === 0, `D2c: ${lab.overlaps} pairs of genre LABELS overlap at default zoom (worst ${lab.worst} pen ${lab.worstPen.toFixed(1)}px)`);
+  ok(lab.overlaps === 0, `D2c: ${lab.overlaps} pairs of DRAWN genre labels overlap at default zoom (worst ${lab.worst} pen ${lab.worstPen.toFixed(1)}px)`);
+  ok(lab.activeUnlabelled.length === 0, `D2f: active genres with no drawn name: ${lab.activeUnlabelled.join(", ")} (the LOD pass must never cull what you are hearing)`);
+  ok(lab.drawn >= LABELS_DRAWN_MIN, `D2g: only ${lab.drawn} of ${lab.total} names drew at default zoom (want >=${LABELS_DRAWN_MIN} — the map has gone unreadable)`);
   ok(!!lab.fugue, `D2d: fugue has no computed position`);
   ok(lab.fugue && lab.fugue.slice(0, 3).includes("prelude"), `D2e: fugue's 3 nearest are [${(lab.fugue || []).slice(0, 3).join(", ")}] — want prelude among them`);
-  console.log(`\n=== LABELS (no-overlap @ default zoom) ===`);
+  console.log(`\n=== LABELS (drawn, no-overlap @ default zoom) ===`);
   console.log(`  genres placed=${lab.placed}/${lab.total}  missing=[${lab.missing.join(", ")}]`);
-  console.log(`  label overlaps=${lab.overlaps}  min label gap=${lab.minGap === Infinity ? "n/a" : lab.minGap.toFixed(1) + "px"} (${lab.minGapPair})`);
+  console.log(`  names drawn=${lab.drawn}/${lab.total} (the rest are culled by the LOD pass — zoom in to read them)  overlaps=${lab.overlaps}`);
+  console.log(`  active=[${lab.active.join(", ")}]  unlabelled=[${lab.activeUnlabelled.join(", ")}]`);
   console.log(`  fugue nearest=[${(lab.fugue || []).join(", ")}]  afrobeat nearest=[${(lab.afrobeat || []).join(", ")}]`);
 
   // ---- E: zoom reaches in and recentres out ----
@@ -214,8 +251,17 @@ async function main() {
   ok(about.open, `F2b: clicking ? did not open the about layer (#aboutWrap.open)`);
   const hasLink = s => (about.hrefs || []).some(h => h && h.includes(s));
   ok(hasLink("how.html"), `F2c: about layer has no link to how.html (links: ${(about.hrefs || []).join(", ")})`);
-  ok(hasLink("github.com/ftrain/stellate"), `F2d: about layer has no link to github.com/ftrain/stellate`);
-  ok(hasLink("aboardresearch.com"), `F2e: about layer has no link to aboardresearch.com`);
+  // F2d asserts the SOURCE link exists, not a specific owner — the repo moved
+  // ftrain/ -> aboard-io/ on 2026-07-25 and the old literal outlived the fact
+  // (same stale-literal class as GX1 and F2e).
+  ok(hasLink("github.com/") && hasLink("/stellate"), `F2d: about layer has no link to the GitHub source repo`);
+  // ATTRIBUTION, not a domain (2026-07-25): the about layer's credit line was
+  // "made by Aboard" (aboardresearch.com) and is now "made by Paul Ford at Aboard"
+  // (ftrain.com + aboard.com). What the gate is for is that the page CREDITS its
+  // author/publisher with a live outbound link — assert that, so the next rebrand
+  // doesn't strand the gate on a dead literal.
+  ok(hasLink("ftrain.com") || hasLink("aboard.com") || hasLink("aboardresearch.com"),
+    `F2e: about layer carries no outbound author/publisher credit link (links: ${(about.hrefs || []).join(", ")})`);
   ok(about.closed, `F2f: Escape did not close the about layer`);
   console.log(`\n=== ABOUT (?) ===\n  open=${about.open} closedOnEsc=${about.closed} links=[${(about.hrefs || []).join(", ")}]`);
 
