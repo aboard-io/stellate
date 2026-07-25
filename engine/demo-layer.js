@@ -180,6 +180,8 @@
   // ---- DOM ----
   let wrap = null, canvas = null, ctx = null, imgData = null, imgU32 = null;
   let fadeCanvas = null, fadeCtx = null, dissolveTimer = 0;
+  let fadeImg = null, fadeU32 = null;    // the incoming rig's blit target
+  let rigIn = null;                      // incoming cart's own runtime, alive only mid-crossfade
   const DISSOLVE_MS = 1400;              // cart-swap crossfade (freeze-frame dissolve)
   let opacity = DEFAULT_OPACITY, blend = DEFAULT_BLEND;
   // analog effect stack (overlay nodes owned by DemoLayer, children of #demolayer)
@@ -190,7 +192,7 @@
   // ---- clock / reactivity ----
   let rafId = 0, lastTs = 0, acc = 0;
   let virtualTime = 0;                   // ms fed to the cart's TIME register
-  let speed = 0.03;                      // steady time multiplier — slowed 10x again (Paul 2026-07-25: "all the 2D things move like 10x too fast"; was 0.3 from the 2026-07-10 slowdown). The music-reactive kick is retired with the flash (seizure-safety pass below), so this IS the clock.
+  let speed = 0.010;                      // steady time multiplier — slowed AGAIN 2026-07-25 ("Slowwwwwwwwwwwwer"): 0.3 -> 0.03 -> 0.010, i.e. 30x slower than the 07-10 setting. This IS the clock; the music-reactive kick is retired (seizure pass). The music-reactive kick is retired with the flash (seizure-safety pass below), so this IS the clock.
   let kick = 0;                          // decaying speed bump from pulse()/note()
   let frameCount = 0;
   // Note-reactivity levers. These are CART-AGNOSTIC: `kick` surges the shared
@@ -260,13 +262,39 @@
     return wasm;
   }
 
+  // Build a SELF-CONTAINED rig: its own 256KB runtime memory, platform instance
+  // and cart. Used for the incoming cart during a crossfade so both animate.
+  async function makeRig(name) {
+    const mem = new WebAssembly.Memory({ initial: MEM_PAGES, maximum: MEM_PAGES });
+    const rig = { mem, u8: new Uint8Array(mem.buffer), u32: new Uint32Array(mem.buffer),
+                  pal: new Uint32Array(mem.buffer, PAL_OFFSET, 256),
+                  platform: null, cart: null, virtualTime: 0, frameCount: 0 };
+    const renv = buildEnv(mem);
+    const platWasm = await decode(platBytes);
+    rig.platform = (await WebAssembly.instantiate(
+      platWasm.buffer.slice(platWasm.byteOffset, platWasm.byteOffset + platWasm.length), { env: renv })).instance;
+    for (const k in rig.platform.exports) renv[k] = rig.platform.exports[k];
+    const wasm = await decodeCart(name);
+    rig.cart = (await WebAssembly.instantiate(
+      wasm.buffer.slice(wasm.byteOffset, wasm.byteOffset + wasm.length), { env: renv })).instance;
+    if (rig.cart.exports.start) { try { rig.cart.exports.start(); } catch (e) {} }
+    return rig;
+  }
+
+  // Promote the incoming rig to be THE rig: its memory/instances become the
+  // module-level ones the main canvas renders from. The old runtime is dropped
+  // here (GC takes it) — the only moment two 256KB runtimes are alive is the
+  // crossfade window itself.
+  function promoteRig(rig) {
+    runMem = rig.mem; u8 = rig.u8; u32 = rig.u32; palView = rig.pal;
+    platform = rig.platform; cart = rig.cart;
+    virtualTime = rig.virtualTime; frameCount = rig.frameCount;
+  }
+
   async function loadCart(i) {
     if (!ready && !platform) return;
     cur = ((i % CARTS.length) + CARTS.length) % CARTS.length;
     const name = CARTS[cur].name;
-    // snapshot the OUTGOING frame before the runtime is torn down, so the
-    // dissolve has something to fade from (no-op on first load / when hidden).
-    beginDissolve();
     const wasm = await decodeCart(name);
     // re-instantiate the platform per cart swap: a fresh runtime memory means a
     // new cart never inherits the previous effect's framebuffer/heap garbage.
@@ -280,8 +308,27 @@
   // -------------------------------------------------------------------------
   // per-frame render
   // -------------------------------------------------------------------------
+  // Render ONE rig (a {mem,u8,u32,pal,platform,cart,virtualTime,frameCount} set)
+  // into one canvas. Two rigs exist only during a cart crossfade — the outgoing
+  // one keeps animating in the main canvas while the incoming one animates in
+  // the fade canvas, so an 8-bar dissolve is two LIVE images, never a still.
+  function renderRig(rig, tctx, timg, tout, dt) {
+    if (!rig || !rig.cart || !tctx) return;
+    rig.virtualTime += dt * (speed + kick);
+    rig.u32[REG_TIME] = rig.virtualTime & 0xffffffff;
+    rig.u32[REG_GAMEPAD] = 0;
+    rig.u32[REG_FRAME] = rig.frameCount++;
+    try { if (rig.cart.exports.upd) rig.cart.exports.upd(); } catch (e) {}
+    try { if (rig.platform.exports.endFrame) rig.platform.exports.endFrame(); } catch (e) {}
+    const fb2 = rig.u8;
+    for (let e = 0; e < FB_PIXELS; e++) tout[e] = 0xff000000 | rig.pal[fb2[e + FB_OFFSET]];
+    tctx.putImageData(timg, 0, 0);
+  }
+
   function renderFrame(dt) {
     if (!cart || !ctx) return;
+    // the incoming rig animates into the fade canvas during a crossfade
+    if (rigIn) renderRig(rigIn, fadeCtx, fadeImg, fadeU32, dt);
     // advance the virtual clock (steady speed + decaying musical kick)
     virtualTime += dt * (speed + kick);
     kick *= 0.9; if (kick < 0.002) kick = 0;
@@ -368,6 +415,8 @@
     fadeCanvas.style.cssText = canvas.style.cssText +
       ";opacity:0;transition:opacity " + DISSOLVE_MS + "ms linear;pointer-events:none";
     fadeCtx = fadeCanvas.getContext("2d", { alpha: true });
+    fadeImg = fadeCtx.createImageData(320, 240);
+    fadeU32 = new Uint32Array(fadeImg.data.buffer);
     wrap.appendChild(fadeCanvas);
     makeFx();              // the analog overlay stack sits OVER the graded canvas
     document.body.appendChild(wrap);
@@ -535,30 +584,47 @@
     return true;
   }
 
-  // freeze the current frame onto the dissolve canvas at full opacity, then let
-  // CSS fade it out over DISSOLVE_MS while the incoming cart draws underneath.
-  function beginDissolve() {
-    if (!fadeCanvas || !fadeCtx || !canvas || !on || !ready) return;
-    if (reduced) return;                 // prefers-reduced-motion: hard cut, no animation
-    try { fadeCtx.clearRect(0, 0, 320, 240); fadeCtx.drawImage(canvas, 0, 0); } catch (e) { return; }
+  // START A LIVE CROSSFADE to cart `i` over `ms` (Paul 2026-07-25: "change it
+  // every 32 bars or slower. Fade the new one in over the last eight bars").
+  // The incoming cart gets its OWN runtime and animates into the fade canvas
+  // while the outgoing one keeps animating in the main canvas; at the end the
+  // incoming rig is promoted and the fade canvas resets. A freeze-frame was
+  // fine for a 1.4s dissolve; over an 8-bar (20-30s) fade a still would read as
+  // "the old one broke", which is why this pays for a second 256KB runtime for
+  // the duration of the fade only.
+  async function crossfadeTo(i, ms) {
+    const next = ((i % CARTS.length) + CARTS.length) % CARTS.length;
+    if (!ready || !on || reduced || !fadeCanvas || ms <= 0) { return loadCart(next); }
+    if (rigIn) return;                                   // a fade is already running
+    let rig;
+    try { rig = await makeRig(CARTS[next].name); } catch (e) { return loadCart(next); }
+    rigIn = rig;
     clearTimeout(dissolveTimer);
     fadeCanvas.style.transition = "none";
-    fadeCanvas.style.opacity = "1";
-    // next frame: re-arm the transition and drop to 0 (a same-frame change would
-    // not animate — the browser coalesces it into the "none" above)
+    fadeCanvas.style.opacity = "0";
     requestAnimationFrame(() => { requestAnimationFrame(() => {
-      if (!fadeCanvas) return;
-      fadeCanvas.style.transition = "opacity " + DISSOLVE_MS + "ms linear";
-      fadeCanvas.style.opacity = "0";
+      if (!fadeCanvas || !rigIn) return;
+      fadeCanvas.style.transition = "opacity " + ms + "ms linear";
+      fadeCanvas.style.opacity = "1";                    // the NEW cart fades IN
     }); });
-    dissolveTimer = setTimeout(() => { if (fadeCtx) fadeCtx.clearRect(0, 0, 320, 240); }, DISSOLVE_MS + 200);
+    dissolveTimer = setTimeout(() => {
+      if (!rigIn) return;
+      promoteRig(rigIn); rigIn = null; cur = next;
+      try { localStorage.setItem(LS_CART, String(cur)); } catch (e) {}
+      // main canvas now shows the promoted cart: drop the overlay instantly
+      if (fadeCanvas) { fadeCanvas.style.transition = "none"; fadeCanvas.style.opacity = "0"; }
+      if (fadeCtx) fadeCtx.clearRect(0, 0, 320, 240);
+    }, ms + 140);   // margin: the CSS transition starts ~2 rAF after the call, so
+                    // promote only once it has certainly reached 1.0 — otherwise
+                    // the overlay drops from ~0.9 and the last 10% shows as a step.
   }
 
-  async function setCart(i) {
+  async function setCart(i, ms) {
     if (!ready) { cur = i; return; }
+    if (ms > 0) return crossfadeTo(i, ms);
     await loadCart(i);
   }
-  function next() { return setCart(cur + 1); }
+  function next(ms) { return setCart(cur + 1, ms); }
 
   // Musical nudge. Call per bar (or on section changes). `info` may carry
   // {energy:0..1} to scale the kick; anything truthy gives a default pulse.

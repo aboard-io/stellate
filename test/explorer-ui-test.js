@@ -351,21 +351,25 @@ async function main() {
   console.log(`\n=== BACKGROUND WALLPAPER ===`);
   console.log(`  mode=${alt.startMode} cartCycles=${alt.cartCycles} backstopRotations=${alt.rotations} chipGone=${alt.chipGone}`);
 
-  // H4: the MUSICAL driver counts beats, not chord-bar ticks — 8 measures = 32
-  // beats. With cbeats=8 (2 measures/bar) the rotation must land on tick 4, not 8.
-  const beat = await page.evaluate(() => {
+  // H4: the MUSICAL driver counts BEATS, not chord-bar ticks. The period is now
+  // 64 BARS (2026-07-25, "leave it running much longer") = 256 beats, and the
+  // incoming cart CROSSFADES IN over the last 8 bars (32 beats) — so the FADE
+  // starts at beat 224 (tick 28 at cbeats=8) and the cart only becomes current
+  // when the fade completes. We assert the fade START, which is the musical
+  // event; promotion is wall-clock and belongs to the demo-layer gate.
+  const beat = await page.evaluate(async () => {
     const wasLive = window.__S.live; window.__S.live = true;
-    window.__BGALT.flip();   // reset the beat counter to a known 0 (also rotates the cart)
-    const c0 = window.DemoLayer.currentName && DemoLayer.currentName();
-    let firstFlip = 0;
-    for (let i = 1; i <= 8 && !firstFlip; i++) {
+    window.__BGALT.flip();                       // reset the beat counter to a known 0
+    const st = () => window.__BGALT.state();
+    let fadeTick = 0;
+    for (let i = 1; i <= 40 && !fadeTick; i++) {
       window.__BGALT.tick({ cbeats: 8 });
-      if ((DemoLayer.currentName && DemoLayer.currentName()) !== c0) firstFlip = i;
+      if (st().fading) fadeTick = i;
     }
     window.__S.live = wasLive;
-    return { firstFlip };
+    return { fadeTick, beats: st().beats };
   });
-  ok(beat.firstFlip === 4, `H4: musical rotation lands after 32 beats = 4 two-measure bars (got tick ${beat.firstFlip})`);
+  ok(beat.fadeTick === 28, `H4: the 8-bar crossfade arms at beat 224 of a 64-bar period = tick 28 at cbeats 8 (got tick ${beat.fadeTick})`);
 
   // I: plain mouse-wheel zooms the map (desktop), no ctrl needed (Paul 2026-07-09).
   const wheel = await page.evaluate(() => {

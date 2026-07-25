@@ -40,6 +40,10 @@
   const C_STATE = 0, C_XFADE = 1, C_ACTIVE = 2, C_READ_LO = 3, C_READ_HI = 4,
         C_UNDERRUN = 5, C_UNDER_CNT = 6;
   const C_RING0 = 8, RING_STRIDE = 4, R_WRITE = 0, R_READ = 1;
+  // ARMED crossfade (2026-07-25): the conductor writes the output frame the ramp
+  // starts on + its length ONCE and ring-player.js runs the equal-power ramp off
+  // its own sample clock. See ring-player.js "SAMPLE-EXACT FADE".
+  const C_FADE_AT_LO = 16, C_FADE_AT_HI = 17, C_FADE_LEN = 18, CTRL_INTS = 24;
 
   const RING_SEC = 30, RING_FRAMES = RING_SEC * SR;    // each ring holds ~30s
   const TARGET_SEC = 3.0, TARGET_FRAMES = TARGET_SEC * SR;  // runway we keep filled ahead (short = responsive steering)
@@ -183,9 +187,18 @@
         let runBars = 0; for (let s = a; s <= b; s++) runBars += secBarsOf(secs[s]);
         voiceRun[v] = { i: before + cycIdx * nch + ci, n: runBars, noIn: !!dynSuppressIn[v] };
       }
+      // THE SEAM LAW (docs/TIMING-AUDIT-2026-07 finding 1): this walk regenerates the
+      // whole collapsed section EVERY bar with a different seed, so the two generations
+      // that straddle a chord-bar boundary draw their humanize jitter independently —
+      // half-open windowing on the jittered beat dropped ~24% of chord-bar downbeats and
+      // doubled ~24%. _seamWin asks buildEvents to stamp e.beat0 (the DRAWLESS musical
+      // position: swing + push-pull in, the humanize draw out); SE.mapEvents windows on
+      // THAT while the note still plays at its jittered beat, so ownership is decided on
+      // a quantity both generations agree on and the groove is untouched. Live-only flag
+      // — press never sets it, stamps no beat0, and stays byte-identical.
       const one = Object.assign({}, st, { sections: [sec], seed: ((st.seed || 1) + serial * 7919) >>> 0,
         instrumentSeed: st.instrumentSeed != null ? st.instrumentSeed : (st.seed || 1),   // instrument identity rides the SONG seed, not the per-bar reseed
-        _liveEdge: liveEdge, _voiceRun: voiceRun });
+        _liveEdge: liveEdge, _voiceRun: voiceRun, _seamWin: true });
       const spb = 60 / st.bpm;
       const CBEATS = Math.max(2, Math.round(st.chordEvery || (st.meter ? 6 : 8)));   // meter default mirrors buildEvents (kernel states carry explicit chordEvery; this covers hand states — ODD-METER 2026-07-09)
       const lo = ci * CBEATS, hi = lo + CBEATS;
@@ -387,7 +400,7 @@
     // ── SharedArrayBuffer rings + control block ──
     if (typeof SharedArrayBuffer === "undefined")
       throw new Error("FaustLive: SharedArrayBuffer unavailable (page must be cross-origin isolated: COOP:same-origin + COEP:require-corp)");
-    const ctrlSab = new SharedArrayBuffer(16 * 4);
+    const ctrlSab = new SharedArrayBuffer(CTRL_INTS * 4);
     const ctrl = new Int32Array(ctrlSab);
     const ringSabs = [new SharedArrayBuffer(RING_FRAMES * 2 * 4), new SharedArrayBuffer(RING_FRAMES * 2 * 4)];
     const read53 = () => (Atomics.load(ctrl, C_READ_HI) * 0x100000000) + (Atomics.load(ctrl, C_READ_LO) >>> 0);
@@ -494,7 +507,15 @@
       const gen = new FaustMonoDspGenerator();
       const fac = await FaustWasmInstantiator.loadDSPFactory(BASE + "dist/clickmon-module.wasm", BASE + "dist/clickmon-meta.json");
       const cm = await gen.createNode(ctx, "clickmon", fac);
-      masterGain.connect(cm);
+      // TAP POINT (2026-07-25, docs/TIMING-AUDIT-2026-07 "the always-on click
+      // detector cannot see the clicks it exists to catch"): this used to hang off
+      // masterGain — BEFORE the ×2.6 makeup and the limiter. A measured full-scale
+      // dropout (299 ms of digital silence, edges of 0.923/0.884 AT THE OUTPUT)
+      // divided back through the makeup read ≈0.35 at that tap, under the detector's
+      // 0.5 bar: `clicks` counted 0 through a total dropout. Tap the LISTENER'S
+      // signal instead — the limiter output is exactly what the analyser (and the
+      // ear) gets — so the 0.5 threshold means 0.5 of full scale, as documented.
+      limiter.connect(cm);
       const cmSink = ctx.createGain(); cmSink.gain.value = 0;
       cm.connect(cmSink); cmSink.connect(ctx.destination);
       clickMonState = { node: cm, latest: { clicks: 0, peakjump: 0, rms: 0, gaps: 0 } };
@@ -678,14 +699,19 @@
     let cur = null, br = null;              // current + bridging stream objects
     let phase = "idle";                    // idle | bridging | fading  (before RUN: idle, cur priming)
     let running = false, abort = false;
-    let fadeStartCursor = 0, fadeStartMs = 0, fadeTimer = 0, swapTimer = 0;
+    let fadeStartCursor = 0, swapTimer = 0;
+    const fadeLog = [];   // crossfade telemetry (the seam gate + __fades() read this)
 
     // the onBar playback queue: bars awaiting their read-cursor crossing.
     const playQueue = [];
 
     function newStream(ring) {
+      // musicFrames = fedFrames MINUS any tail top-ups (see feedTail): the end of
+      // the last real bar, which is where the crossfade may anchor. tailRef carries
+      // what a tail window needs to continue this stream past that point.
       return { ring, wi: ring, gen: null, sig: null, readyToFeed: false, primed: false,
-        fedFrames: 0, fedMusicalSec: 0, startGlobal: null, preFeed: [], pendingBars: [] };
+        fedFrames: 0, musicFrames: 0, tailFrames: 0, tailRef: null,
+        fedMusicalSec: 0, startGlobal: null, preFeed: [], pendingBars: [] };
     }
     function postOpenLive(stream, one, primeSec, speech) {
       stream.gen = ++genCounter;
@@ -744,7 +770,10 @@
         : pieces.reduce((a, p) => a + p.barLenFrames, 0);   // exactly what the worker will write
       const localStart = stream.fedFrames;
       stream.fedFrames += wLen;
+      stream.musicFrames = stream.fedFrames;   // real bars only — a tail never moves this
       stream.fedMusicalSec += r.musicalSec;
+      // what a TAIL window would need to continue this stream past its last bar
+      stream.tailRef = { units: r.units, spb: r.spb, hi: r.hi };
       const barRec = { len: wLen, meta: r.meta, found: r.found, foundSources: r.foundSources,
         spb: r.spb, lo: r.lo, units: r.units, events: r.events, genre: (r.one && r.one.genre) || null };
       if (stream.startGlobal != null) { barRec.globalStart = stream.startGlobal + localStart; playQueue.push(barRec); }
@@ -759,8 +788,71 @@
       stream.pendingBars = [];
     }
 
+    // ── THE TAIL (2026-07-25 — docs/TIMING-AUDIT-2026-07 finding 2) ────────────
+    // The outgoing stream is never fed again once a bridge opens, so its ring
+    // ended at its last fed bar — and the fade anchors on a BAR BOUNDARY, which
+    // when the play queue is empty (measured: most of the time by the moment the
+    // bridge primes) IS that end. Result, measured on every steer: the old ring
+    // was DRY for the entire 400 ms ramp — 3437 underrun quanta over a 19-swap
+    // ride, 100% of them inside a crossfade window, 16 of 19 landing on exactly
+    // 138 quanta = one full ramp of nothing, with the runway reading 3.4–27 s and
+    // loadRatio 1.00 the whole time. The engine was never behind; it had nothing
+    // left to play from the old stream.
+    //
+    // A tail window is a fed bar with NO EVENTS: the renderer's procs are
+    // persistent, so it renders exactly the outgoing genre's own decay — reverb,
+    // delay, releases — continuing past its last note. That is real audio under
+    // the ramp (an equal-power fade needs BOTH sides to have content or it is
+    // just a fade to silence), it costs no walk step, and it can't invent a
+    // downbeat. Tails never enter the playQueue and never move musicFrames, so
+    // the fade still anchors on the last real bar boundary.
+    function feedTail(stream, sec) {
+      const ref = stream.tailRef;
+      if (!ref || !(sec > 0)) return 0;
+      const beats = sec / ref.spb;
+      const lo = ref.hi, hi = ref.hi + beats;
+      const len = Math.max(BS, Math.round((hi - lo) * ref.spb * SR / BS) * BS);   // mirrors feedBar's rounding
+      const piece = { units: ref.units, events: [], fxParams: null, spb: ref.spb,
+        lo, hi, _base: stream.fedMusicalSec, _sweeps: [] };
+      ref.hi = hi;
+      stream.fedFrames += len;
+      stream.tailFrames += len;
+      stream.fedMusicalSec += (hi - lo) * ref.spb;
+      if (stream.readyToFeed) postFeed(stream, piece); else stream.preFeed.push(piece);
+      return len;
+    }
+    const TAIL_STEP_SEC = 0.5;             // one tail window
+    // ramp + a full second of margin: the tail has to be RENDERED before it is
+    // read, and the worker that would render it is competing with the bridge's
+    // own priming burst (measured on a 4-core box under load: a bridge can take
+    // longer to prime than the outgoing stream's whole 3 s runway, which is the
+    // 2.2 s / 1.3 s outlier shape in the audit's per-swap table).
+    const TAIL_KEEP_FRAMES = Math.round((XFADE_MS / 1000 + 1.1) * SR);
+    // keep the OUTGOING stream wet: fed at least up to `endFrame` (default: a ramp
+    // plus a margin ahead of the read cursor). Idempotent, cheap and self-limiting —
+    // called from the pump it only ever holds the old ring ~0.75 s ahead of playback,
+    // so a bridge that primes promptly renders at most one or two tail windows;
+    // called from startFade with the ramp's end it GUARANTEES the coverage up front
+    // rather than racing the 25 ms pump for it.
+    // CAP: the tail's job is to carry the RAMP. Past a few seconds it is inaudible
+    // decay — and rendering it costs the outgoing worker CPU that the BRIDGE needs
+    // to prime, which on a loaded box turns into a feedback loop (a slow bridge
+    // buys more tail, which slows the bridge). Measured at 3× oversubscription:
+    // uncapped, a single bridge grew a 9 s tail.
+    const TAIL_MAX_FRAMES = Math.round(3.0 * SR);
+    function keepOutgoingWet(endFrame) {
+      if (!cur || cur.startGlobal == null || !cur.tailRef) return;
+      if (phase !== "bridging" && phase !== "fading") return;
+      const need = endFrame != null ? endFrame : read53() + TAIL_KEEP_FRAMES;
+      let guard = 0;
+      while (cur.startGlobal + cur.fedFrames < need && cur.tailFrames < TAIL_MAX_FRAMES && guard++ < 24)
+        feedTail(cur, TAIL_STEP_SEC);
+    }
+
+    let bridgeUnder = 0;   // C_UNDER_CNT when the current bridge opened (fade telemetry)
     function beginBridge(r) {
       phase = "bridging";
+      bridgeUnder = Atomics.load(ctrl, C_UNDER_CNT);
       br = newStream(cur.ring ^ 1);
       br.sig = r.sig;
       openStream(br, r.one, BRIDGE_PRIME_SEC);
@@ -768,7 +860,8 @@
     }
     function repointBridge(r) {   // coalesce a newer target mid-bridge (supersede via new gen)
       br.sig = r.sig; br.primed = false; br.readyToFeed = false;
-      br.fedFrames = 0; br.fedMusicalSec = 0; br.pendingBars = []; br.preFeed = [];
+      br.fedFrames = 0; br.musicFrames = 0; br.tailFrames = 0; br.tailRef = null;
+      br.fedMusicalSec = 0; br.pendingBars = []; br.preFeed = [];
       openStream(br, r.one, BRIDGE_PRIME_SEC);
       feed(br, r);
     }
@@ -776,52 +869,86 @@
       phase = "fading";
       // BAR-ALIGNED CROSSFADE (Paul's "out of sync"): the fade used to anchor at
       // read53() — an arbitrary sample INSIDE the old bar — so the incoming
-      // stream's bar 0 (and the whole new beat grid: commitFade re-bases
-      // br.startGlobal here) began mid-bar while already-scheduled NATIVE notes
+      // stream's bar 0 began mid-bar while already-scheduled NATIVE notes
       // (drums/samplers/found ride the OLD grid) rang across the new downbeat.
-      // Anchor at the old grid's NEXT BAR BOUNDARY instead: playQueue[0] is the
-      // next unfired bar (its audio is provably fed, so the old ring can never
-      // underrun before the anchor); empty queue means the old stream is inside
-      // its last fed bar, whose END (startGlobal+fedFrames, a bar boundary) is
-      // the anchor. The xfade ramp holds at 0 until the cursor crosses the
-      // anchor — the incoming ring is only consumed from the downbeat, so
-      // native lanes and the new stream share one grid.
+      // Anchor at the old grid's NEXT BAR BOUNDARY instead: the first bar in the
+      // queue we can still disown; an empty queue means the old stream is inside
+      // its last fed bar, whose END (startGlobal+musicFrames, a bar boundary) is
+      // the anchor. The armed ramp holds at 0 until the cursor reaches the anchor
+      // — the incoming ring is only consumed from the downbeat, so native lanes
+      // and the new stream share one grid.
       const pg = read53();
-      const fedEnd = (cur && cur.startGlobal != null) ? cur.startGlobal + cur.fedFrames : pg;
-      const nextDown = playQueue.length ? playQueue[0].globalStart : fedEnd;
-      fadeStartCursor = Math.max(pg, Math.min(nextDown, fedEnd));
+      const musicEnd = (cur && cur.startGlobal != null) ? cur.startGlobal + cur.musicFrames : pg;
+      // A bar whose native notes are ALREADY scheduled (drainDueBars' lookahead —
+      // AudioBufferSourceNode.start is a commitment, there is no unschedule) can
+      // not be disowned, so the anchor moves to the boundary after it. Without
+      // this the pruned bar's drums would ring on top of the incoming bar 0.
+      let idx = 0;
+      while (idx < playQueue.length && playQueue[idx].nativeAt != null) idx++;
+      const nextDown = idx < playQueue.length ? playQueue[idx].globalStart : musicEnd;
+      fadeStartCursor = Math.max(pg, Math.min(nextDown, musicEnd));
       // prune NOW, not at commit: bars at/after the anchor belong to the incoming
       // stream — left queued, drainDueBars would fire their native notes on top
       // of the new stream's bar 0 during the ramp (double drums for a bar).
-      for (let i = playQueue.length - 1; i >= 0; i--) if (playQueue[i].globalStart >= fadeStartCursor) playQueue.splice(i, 1);
-      fadeStartMs = 0;   // ramp clock starts when the read cursor reaches the anchor
-      if (fadeTimer) clearInterval(fadeTimer);
-      fadeTimer = setInterval(() => {
-        if (read53() < fadeStartCursor) return;   // hold at 0 until the downbeat
-        if (!fadeStartMs) fadeStartMs = now();
-        const el = now() - fadeStartMs;
-        if (el >= XFADE_MS) { Atomics.store(ctrl, C_XFADE, 10000); clearInterval(fadeTimer); fadeTimer = 0; waitSwap(); }
-        else Atomics.store(ctrl, C_XFADE, Math.min(9999, Math.floor(10000 * el / XFADE_MS)));
-      }, 5);
+      for (let i = playQueue.length - 1; i >= 0; i--)
+        if (playQueue[i].globalStart >= fadeStartCursor && playQueue[i].nativeAt == null) playQueue.splice(i, 1);
+      // THE INCOMING GRID, ON TIME (docs/TIMING-AUDIT-2026-07 finding 2b). This
+      // used to happen in commitFade — AFTER the whole 400 ms ramp had run — so
+      // the bridge's bar 0 was published onto an anchor already ~450 ms in the
+      // past and drainDueBars fired it instantly: every native note of the
+      // incoming genre's first half-second got start(when-in-the-past) and
+      // clumped at `now` instead of landing on its grid. MEASURED: 19 bars over
+      // 300 ms late across 19 swaps, one per crossfade, every time. That is the
+      // lurch. Publish the anchor HERE, before the ramp, so the bar is scheduled
+      // ahead of its instant like any other.
+      br.startGlobal = fadeStartCursor;
+      flushPending(br);
+      // guarantee the outgoing ring has audio across the WHOLE ramp (see feedTail)
+      const rampFrames = Math.max(1, Math.round(XFADE_MS / 1000 * SR));
+      keepOutgoingWet(fadeStartCursor + rampFrames + Math.round(0.5 * SR));
+      // ARM the ramp: ring-player.js runs it off its own sample clock from this
+      // exact output frame, so B's frame 0 and the native notes we just published
+      // for that frame share one instant no matter what the main thread does.
+      Atomics.store(ctrl, C_FADE_AT_LO, fadeStartCursor >>> 0);
+      Atomics.store(ctrl, C_FADE_AT_HI, Math.floor(fadeStartCursor / 0x100000000));
+      Atomics.store(ctrl, C_FADE_LEN, rampFrames);
+      if (fadeLog.length > 256) fadeLog.shift();
+      fadeLog.push({ t: now() / 1000, anchor: fadeStartCursor, pg, rampFrames,
+        waitSec: +((fadeStartCursor - pg) / SR).toFixed(3),
+        wetSec: +((cur.startGlobal + cur.fedFrames - fadeStartCursor) / SR).toFixed(3),
+        tailSec: +(cur.tailFrames / SR).toFixed(3),
+        // underOpen = the underrun counter when the BRIDGE opened, so a fade's cost
+        // covers the whole seam (bridge priming + ramp), not just the ramp
+        underOpen: bridgeUnder, under0: Atomics.load(ctrl, C_UNDER_CNT), under1: null });
+      waitSwap();
+    }
+    // pollSwap: has the worklet finished the armed ramp and promoted the incoming
+    // ring? Idempotent and safe from any clock — the worker tick drives it too, so
+    // a hidden tab (page timers clamped to >=1s) still commits promptly instead of
+    // sitting in `fading` with the pump held off.
+    function pollSwap() {
+      if (!swapTimer || phase !== "fading" || !br) return;
+      if (Atomics.load(ctrl, C_ACTIVE) === br.ring && Atomics.load(ctrl, C_FADE_LEN) === 0) {
+        clearInterval(swapTimer); swapTimer = 0; commitFade();
+      }
     }
     function waitSwap() {
       if (swapTimer) clearInterval(swapTimer);
-      swapTimer = setInterval(() => {
-        if (Atomics.load(ctrl, C_ACTIVE) === br.ring && Atomics.load(ctrl, C_XFADE) === 0) {
-          clearInterval(swapTimer); swapTimer = 0; commitFade();
-        }
-      }, 3);
+      swapTimer = setInterval(pollSwap, 3);
     }
     function commitFade() {
-      // startFade already pruned the superseded old-stream bars at the anchor
-      // (kept here as a safety sweep), so just re-base the bridge's fed bars onto
-      // the BAR-ALIGNED anchor and adopt it — the new stream's bar 0 IS the old
-      // grid's downbeat, one grid for native lanes and stream alike.
-      for (let i = playQueue.length - 1; i >= 0; i--) if (playQueue[i].globalStart >= fadeStartCursor) playQueue.splice(i, 1);
-      br.startGlobal = fadeStartCursor;
-      flushPending(br);
+      // The anchor was published at startFade (bar 0 is already on the queue with
+      // the right globalStart); the ramp has now completed in the worklet, so this
+      // is purely the handover: adopt the bridge and retire the old producer.
       const old = cur;
       cur = br; br = null; phase = "idle";
+      const f = fadeLog[fadeLog.length - 1];
+      if (f && f.under1 == null) {
+        f.under1 = Atomics.load(ctrl, C_UNDER_CNT);
+        // what the outgoing ring actually held past the anchor, ramp included
+        f.wetSec = +((old.startGlobal + old.fedFrames - f.anchor) / SR).toFixed(3);
+        f.tailSec = +(old.tailFrames / SR).toFixed(3);
+      }
       try { workers[old.wi].postMessage({ type: "stop" }); } catch (e) {}   // retire the old producer / free its ring
     }
 
@@ -831,6 +958,7 @@
       flushPending(cur);
       Atomics.store(ctrl, C_ACTIVE, cur.ring);
       Atomics.store(ctrl, C_XFADE, 0);
+      Atomics.store(ctrl, C_FADE_LEN, 0);   // no fade armed
       Atomics.store(ctrl, C_STATE, 1);   // RUN
       status(ctx.state === "running" ? "live (faust) — drag the space" : "live (tap again if silent)");
       startBarScheduler();
@@ -861,7 +989,7 @@
       // timers are NOT throttled in hidden tabs, so this keeps the feed pump and the
       // bar scheduler alive when the page's own timers clamp to >=1s (tab in the
       // background but the ctx still running — the desktop keep-playing path).
-      if (m.type === "tick") { pumpOnce(); drainDueBars(); return; }
+      if (m.type === "tick") { pollSwap(); pumpOnce(); drainDueBars(); return; }
       const stream = (cur && cur.gen === m.gen) ? cur : (br && br.gen === m.gen) ? br : null;
       if (!stream) return;   // superseded open — ignore
       if (m.type === "primed") {
@@ -904,7 +1032,8 @@
       // bridge's fed frames (it owns playback from the anchor on). Reporting only
       // the draining old stream here read as a phantom starve on the load meter
       // (and would over-drive the pump) while nothing was at risk.
-      if (phase === "fading" && br) return Math.max(0, fadeStartCursor - read53() + br.fedFrames);
+      if (phase === "fading" && br && br.startGlobal != null)
+        return Math.max(0, br.startGlobal + br.fedFrames - read53());
       if (!cur) return 0;
       const played = cur.startGlobal != null ? Math.max(0, read53() - cur.startGlobal) : 0;
       return cur.fedFrames - played;
@@ -924,6 +1053,7 @@
     function pumpOnce() {
       if (abort) return;
       try {
+        keepOutgoingWet();   // the outgoing ring must not run dry under the ramp
         let guard = 0;
         while (!abort && phase !== "fading" && guard < 24 && feedRunwayFrames() < targetFrames()) { produceAndRoute(); guard++; }
       } catch (e) { errors.push("pump: " + (e && e.message || e)); console.error("FaustLive pump", e); }
@@ -945,22 +1075,61 @@
     // second LATE (start(when-in-the-past) clumps at now). While hidden we fire
     // bars up to ~0.6s EARLY instead — fireBar computes an absolute ctx-clock
     // `when`, so early scheduling is sample-accurate; only the (invisible) onBar
-    // UI callback leads. Visible drains stay exact, as before.
+    // UI callback leads.
+    //
+    // VISIBLE LOOKAHEAD (2026-07-25 — docs/TIMING-AUDIT-2026-07 finding 3). The
+    // visible path used a horizon of ZERO, so a bar was only DISCOVERED when the
+    // 30 ms poll next ran, and 92.6% of all note events (every sampled voice, every
+    // found sound — 254 of 274 genres have a fully sampled kit) are scheduled from
+    // here on the main thread. MEASURED anchor lateness `ctx.currentTime - when`:
+    // bare engine page p50 17 ms; the real app, whose 7.7% main-thread occupancy
+    // the drum scheduler shares, p50 41 ms / p90 80 ms — re-randomised every bar.
+    // 5–7% of start() calls landed in the PAST (the downbeat cluster). The comment
+    // here used to claim "visible drains stay exact"; measured, they were not, and
+    // the HIDDEN path was strictly the more accurate one.
+    //
+    // So the NATIVE lane now gets a real lookahead while visible too. `when` is
+    // absolute and start(future) is sample-accurate, so scheduling a bar early
+    // makes it land EXACTLY on the ring's grid — nothing sounds early, it sounds
+    // on time. onBar keeps a horizon of 0 while visible: the chyron playhead, the
+    // ⓘ timeline and the background cart rotator must not lead the audio.
     const BAR_LOOKAHEAD_FRAMES = Math.round(0.6 * SR);
+    const NATIVE_LOOKAHEAD_FRAMES = Math.round(0.25 * SR);
+    const barAnchors = [];   // native-lane anchor telemetry (see __barAnchors)
     function drainDueBars() {
       if (abort) return;
       const pg = read53();
-      const horizon = pg + ((typeof document !== "undefined" && document.visibilityState === "hidden") ? BAR_LOOKAHEAD_FRAMES : 0);
+      const hidden = (typeof document !== "undefined" && document.visibilityState === "hidden");
+      // (1) hand the NATIVE lane its bars early, anchored on absolute ctx time
+      const look = pg + (hidden ? BAR_LOOKAHEAD_FRAMES : NATIVE_LOOKAHEAD_FRAMES);
+      for (let i = 0; i < playQueue.length; i++) {
+        const b = playQueue[i];
+        if (b.globalStart > look) break;
+        if (b.nativeAt == null) armNative(b, pg);
+      }
+      // (2) then fire the bar itself (onBar / UI) at its own instant
+      const horizon = pg + (hidden ? BAR_LOOKAHEAD_FRAMES : 0);
       while (playQueue.length && playQueue[0].globalStart <= horizon) fireBar(playQueue.shift(), pg);
     }
     function startBarScheduler() {
       if (barTimer) return;
       barTimer = setInterval(drainDueBars, 30);
     }
-    function fireBar(b, pg) {
-      const when = ctx.currentTime + (b.globalStart - pg) / SR;   // ≈ ctx.currentTime (bar just reached playback)
-      lastPlayedLayers = new Set([...Object.keys(b.units)].map(LAYER_OF_UNIT));
+    // armNative: schedule one bar's native (sampler/found) notes onto the absolute
+    // ctx clock. Idempotent per bar via b.nativeAt — a bar armed by the lookahead
+    // is never re-armed by fireBar, and a bar already armed can no longer be pruned
+    // by startFade (there is no unschedule for an AudioBufferSourceNode).
+    function armNative(b, pg) {
+      const when = ctx.currentTime + (b.globalStart - pg) / SR;
+      b.nativeAt = when;
+      if (barAnchors.length > 512) barAnchors.shift();
+      barAnchors.push({ serial: b.meta.serial, lateMs: +((ctx.currentTime - when) * 1000).toFixed(2) });
       try { scheduleNative(b, when); } catch (e) { errors.push("found@" + b.meta.serial + ": " + (e && e.message || e)); }
+    }
+    function fireBar(b, pg) {
+      if (b.nativeAt == null) armNative(b, pg);
+      const when = b.nativeAt;   // the instant the native lane was anchored on
+      lastPlayedLayers = new Set([...Object.keys(b.units)].map(LAYER_OF_UNIT));
       if (opts.onBar) try {
         opts.onBar({ serial: b.meta.serial, ci: b.meta.ci, nch: b.meta.nch, when: when,
           spb: b.meta.spb, cbeats: b.meta.cbeats, chord: b.meta.chord, section: b.meta.section });
@@ -1411,6 +1580,24 @@
       // ring / underrun telemetry (real — reads the shared control block)
       underruns: () => Atomics.load(ctrl, C_UNDER_CNT),
       underrunFlag: () => Atomics.load(ctrl, C_UNDERRUN),
+      // ── CROSSFADE TELEMETRY (test/crossfade-seam-run.js). One record per fade:
+      // where it anchored, how long the anchor was in the future, how much OUTGOING
+      // audio sits past the anchor (must exceed the ramp — that is finding 2), how
+      // much of that is tail, and the underrun counter either side of the ramp. ──
+      __fades: () => fadeLog.slice(),
+      // ── NATIVE-LANE ANCHOR LATENESS (finding 3). ctx.currentTime - when at the
+      // moment the bar's sampler/found notes were scheduled: <=0 means the whole
+      // bar was handed to the audio thread ahead of its instant (sample-accurate).
+      __barAnchors: () => barAnchors.slice(),
+      // the reader's OUTPUT ledger minus the active ring's own consumed count —
+      // they diverge by exactly the frames an underrun swallowed, permanently, so
+      // this is the standing sensor for "have the native lanes drifted off the
+      // stream" (the audit's unfalsifiable worry, made a number).
+      ringDeficit: () => {
+        const a = Atomics.load(ctrl, C_ACTIVE) & 1;
+        return read53() - Atomics.load(ctrl, C_RING0 + a * RING_STRIDE + R_READ)
+          - ((cur && cur.startGlobal != null) ? cur.startGlobal : 0);
+      },
       runwaySec: () => Math.max(0, feedRunwayFrames()) / SR,
       readCursor: () => read53(),
       rms() { return analyserRms(); },
@@ -1429,7 +1616,8 @@
       stop() {
         abort = true;
         clearTimeout(pumpTimer); if (barTimer) clearInterval(barTimer); if (loadTimer) clearInterval(loadTimer);
-        if (fadeTimer) clearInterval(fadeTimer); if (swapTimer) clearInterval(swapTimer);
+        if (swapTimer) clearInterval(swapTimer);
+        Atomics.store(ctrl, C_FADE_LEN, 0);   // disarm any pending ramp
         if (elRecycleTimer) clearInterval(elRecycleTimer);
         if (bgPollTimer) clearInterval(bgPollTimer); if (bgDebounceTimer) clearTimeout(bgDebounceTimer);
         Atomics.store(ctrl, C_STATE, 2);   // stopped — ring-player emits silence

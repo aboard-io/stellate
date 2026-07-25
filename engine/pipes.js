@@ -112,7 +112,13 @@
           for(const m of ph){
             const nb=m.beat+delay;
             if(nb>=ev.totalBeats-EPS) continue;           // window law: onset must land in [0,totalBeats)
-            adds.push(Object.assign({},m,{beat:nb,pch:pchAdd(m.pch,semis),amp:A(m.amp*gain),echo:1}));
+            const c=Object.assign({},m,{beat:nb,pch:pchAdd(m.pch,semis),amp:A(m.amp*gain),echo:1});
+            // SEAM LAW (csd-engine applyGroove): the copy is a pure TRANSLATION, so its
+            // drawless address translates with it — off the parent's beat0, never
+            // re-derived from the jittered beat (that would differ by an ulp between the
+            // live walk's per-bar generations, which is the whole bug). Absent on press.
+            if(m.beat0!=null) c.beat0=m.beat0+delay;
+            adds.push(c);
           }
         }
         for(const a of adds) ev.pitched.push(a);
@@ -152,12 +158,14 @@
         groups.forEach((g,gi)=>{
           if(g.length<2) return;
           const base=g[0].beat;                           // the chord's humanized onset (earliest mate)
+          const base0=g[0].beat0;                         // its drawless twin (SEAM LAW; absent on press)
           g.sort((a,b)=>parsePch(a.pch)-parsePch(b.pch));
           const eff=Math.min(step,0.09/(g.length-1));     // guarantee max offset < 0.1 beat
           g.forEach((e,idx)=>{
             const off=(gi%2?g.length-1-idx:idx)*eff;      // even chords roll up, odd roll down
             const end=e.beat+e.dur;
             e.beat=base+off; e.dur=Math.max(0.05,end-e.beat);   // keep the chord's release edge aligned
+            if(base0!=null) e.beat0=base0+off;             // the rake's drawless address, laid off the same anchor
           });
         });
       }},
@@ -170,8 +178,10 @@
           if(rng()>=prob) continue;
           const nb=e.beat-off; if(nb<-EPS) continue;       // stay inside the window
           const semi=rng()<0.5?-2:-1;                      // chromatic vs diatonic-ish approach from below
-          adds.push(Object.assign({},e,{beat:Math.max(0,nb),dur:Math.min(0.18,off*0.8),
-            pch:pchAdd(e.pch,semi),amp:A(e.amp*0.35),ghost:1}));
+          const c=Object.assign({},e,{beat:Math.max(0,nb),dur:Math.min(0.18,off*0.8),
+            pch:pchAdd(e.pch,semi),amp:A(e.amp*0.35),ghost:1});
+          if(e.beat0!=null) c.beat0=Math.max(0,e.beat0-off);   // SEAM LAW: translate the drawless address
+          adds.push(c);
         }
         for(const a of adds) ev.pitched.push(a);
       }},

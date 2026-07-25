@@ -1792,7 +1792,29 @@
     opts = opts || {};
     const spb = 60 / state.bpm;
     const lo = opts.lo != null ? opts.lo : -1e9, hi = opts.hi != null ? opts.hi : 1e9;
-    const win = (b) => b >= lo && b < hi;
+    // THE SEAM LAW (docs/TIMING-AUDIT-2026-07 finding 1). The live conductor
+    // regenerates the WHOLE collapsed section every chord bar with a different
+    // seed and windows one bar out of it — so an event sitting ON a chord-bar
+    // boundary lives in two generations whose humanize jitter was drawn
+    // INDEPENDENTLY. Windowing half-open on the JITTERED beat let both copies
+    // land on the same side: ~24% of chord-bar downbeats were dropped by BOTH
+    // windows and ~24% played by both (measured, 205 genres). Ownership must be
+    // decided on a quantity both generations agree on, so it is decided on
+    // `e.beat0` — the DRAWLESS musical position csd-engine's applyGroove stamps
+    // under state._seamWin (swing + push-pull in, the humanize DRAW out). The
+    // event still PLAYS at its jittered `beat`, so the groove is untouched; it
+    // may spill a few ms across the bar edge, which both consumers handle (the
+    // native lane schedules on absolute ctx time; the stream renderer carries
+    // late intervals into the next window and joins early ones in progress).
+    // Press passes no lo/hi and stamps no beat0 => `own` degrades to the old
+    // predicate on `beat`, byte-identical.
+    //   THE CYCLE WRAP: an event whose drawless position is the cycle's END
+    //   (a strum/ornament tiled to the last edge, jittered back under it) is no
+    //   longer claimed by the last chord bar. That is deliberate — the same
+    //   musical instant is the NEXT generation's beat 0, which it does claim, so
+    //   the old law's "the tail note AND the downbeat both fire" wrap-double
+    //   goes away with the interior one. 48 events per 274 genres x 6 bars.
+    const own = (e) => { const b = e.beat0 != null ? e.beat0 : e.beat; return b >= lo && b < hi; };
     const units = opts.units || voiceUnits(E, state);
     // Sampled mode changes only the pitched INSTRUMENT source (voiceUnits/
     // forceSampled). Found beds/chops, speech/vocoder and synth sfx/stab all play
@@ -1801,7 +1823,7 @@
     const solos = E.soloVoices ? E.soloVoices(state, (state.instruments || {}).melody) : [];
 
     for (const p of ev.pitched) {
-      if (!win(p.beat)) continue;
+      if (!own(p)) continue;
       let key = p.voice;
       if (p.voice === "melody" && p.solo) { const v = solos.find((x) => x.key === JSON.stringify(p.solo)); if (v) key = "solo:" + v.key; }
       const u = units[key]; if (!u) continue;
@@ -1907,7 +1929,7 @@
       return lo < L.length ? L[lo] : Infinity;
     };
     for (const d of ev.drums) {
-      if (!win(d.beat)) continue;
+      if (!own(d)) continue;
       const u = units[d.drum]; if (!u) continue;
       // SAMPLED DRUM: the voice unit carries a native sampler (a genre's drums.kit).
       // Emit the hit as a one-shot for the shared sampler path (press/stream read
@@ -1947,8 +1969,8 @@
       out.push({ unit: d.drum, beat: d.beat, durB: d.dur, sets, drum: true, pp: clamp(d.pp || 0, 0, 2) });
     }
     for (const s of ev.sfx) {
-      if (s.sweep) { if (win(s.beat)) sweeps.push({ beat: s.beat, durB: s.dur, from: s.from, to: s.to }); continue; }
-      if (!win(s.beat)) continue;
+      if (s.sweep) { if (own(s)) sweeps.push({ beat: s.beat, durB: s.dur, from: s.from, to: s.to }); continue; }
+      if (!own(s)) continue;
       if (s.stab) out.push({ unit: "stab", beat: s.beat, durB: s.dur, drum: true,
         sets: { freq: clamp(cpspch(s.pch), 40, 2000), decay: clamp(s.dur * spb, 0.05, 2), gain: clamp(s.amp, 0, 2) } });
       else out.push({ unit: "sfx", beat: s.beat, durB: s.dur, hold: true,
@@ -1978,7 +2000,7 @@
       // found sources are untouched (byte-identical). ~-3.4 st from rate 1.
       const fp = (src.kind === "speech" && f.pitch != null) ? Math.min(f.pitch, SPEECH_RATE_CAP) : f.pitch;
       if (f.chop) {
-        if (!win(f.beat)) continue;
+        if (!own(f)) continue;
         found.push({ type: "chop", srcId: src.id, beat: f.beat, durB: Math.max(0.02, f.dur), amp: f.amp,
           pitch: fp, offset: f.offset || 0, cutoff: f.cutoff || 3500,
           rsend: f.rsend != null ? f.rsend : 0.3, dsend: f.dsend != null ? f.dsend : 0.2,
@@ -1986,7 +2008,7 @@
           scratch: f.scratch || 0,   // OPT-IN turntablist scratch (found-player triangle fwd↔back read); 0 => identical
           ...tuned });
       } else {
-        if (!(opts.bedAll || win(f.beat))) continue;
+        if (!(opts.bedAll || own(f))) continue;
         found.push({ type: "bed", srcId: src.id, beat: f.beat, durB: f.dur, amp: f.amp,
           pitch: fp, stretch: f.stretch != null ? f.stretch : 0.45, cutoff: f.cutoff || 2600,
           ...tuned });

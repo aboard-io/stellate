@@ -645,9 +645,14 @@ const GROOVE_EVERY=3;      // force a reachable groove anchor at least this ofte
 const REGION_K=10;
 // energy-ordered (mellow wash .. hardest banger); rank r gets NAMES[r]. Goofy in
 // the house style ("Food Court Eternity", "Kerosene Twelve") — evocative, invented.
-const REGION_NAMES=["Fathom Parish","The Drone Pastures","Vapor Sanatorium","Cardigan Hollow",
-  "Dust Cul-de-sac","The Escalator Riviera","Sequin Junction","The Boogie Reservoir",
-  "Piston Prairie","The Kickdrum Quarry"];
+// Renamed 2026-07-25 (Paul: "Sequin Junction is pretty pedestrian… think cosmic
+// weirdness, a mix of eldritch and ridiculous and scientific") — the same brief
+// the 274 genre names and the 34 clusters were rewritten to. Still energy-ordered
+// (rank 0 = mellow wash … rank 9 = hardest banger), so the name has to land on
+// the vibe as well as the register.
+const REGION_NAMES=["The Sleeping Instrument","Cathedral of Slow Decay","Hypnagogic Shelf","Wool Gravity Well",
+  "The Sediment Wards","Escalator Eschaton","Glitter Predation","Ecstatic Machine Country",
+  "Piston Liturgy","The Anvil Singularity"];
 const REGION_COLORS=["#6a5cff","#22c1dc","#34d17a","#9bd93a","#ffd23f",
   "#ff9e3d","#ff7233","#ff5c8a","#b06bff","#ff3d5a"];
 export let REGIONS=[];          // energy-sorted: [{label,color,cx,cy,members:[g],spread}]

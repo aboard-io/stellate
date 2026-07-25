@@ -1256,22 +1256,42 @@
   // historical draw shape), so draw order is byte-stable; every arithmetic
   // step keeps the scalar loop's left-to-right operation order, so the
   // doubles are bit-equal. Scalar twin below for column-less loaders.
-  function applyGroove(events, tfeel, rng){
+  // ---- THE SEAM LAW (`stamp`, docs/TIMING-AUDIT-2026-07 finding 1) ----------
+  // LIVE ONLY (state._seamWin, set by faust/live.js stepWalk; absent on the press
+  // path => not one extra field, byte-identical). The live conductor regenerates
+  // the whole collapsed section EVERY chord bar with a different seed and slices a
+  // half-open beat window out of it, so an event sitting ON a chord-bar boundary
+  // exists in two generations that each drew their humanize jitter INDEPENDENTLY:
+  // ~25% of the time neither window claimed it (a dropped downbeat), ~25% both did.
+  // The cure is to decide OWNERSHIP on a quantity both generations agree on: the
+  // DRAWLESS musical position — swing and push-pull (deterministic) applied, the
+  // humanize DRAW not. `stamp` records it as e.beat0; faust/state-engine.mapEvents
+  // windows on beat0 while the event still PLAYS at its jittered e.beat, so the
+  // humanize spread is untouched and every event fires in exactly one bar.
+  // beat0 is tracked in its own accumulator (never derived by subtracting the
+  // jitter back off) so it is bit-identical across generations — a 1-ULP
+  // disagreement at the boundary would resurrect the bug.
+  function applyGroove(events, tfeel, rng, stamp){
     const sw=tfeel.swing.amount, grid=SWING_GRIDS[tfeel.swing.grid];
     const ht=tfeel.humanize.timing, hl=tfeel.humanize.level, pp=tfeel.pushPull;
     if(!sw && !ht && !hl && !pp) return;
     const C=columnsRef();
-    if(!C) return applyGrooveScalar(events, tfeel, rng);
+    if(!C) return applyGrooveScalar(events, tfeel, rng, stamp);
     const cols=C.toColumns(events,["beat","amp"],{view:true});
     const n=cols.n, beat=cols.beat, amp=cols.amp, ampM=cols.mask.amp;
+    // the drawless twin of `beat`. An EARLIER stage may already have stamped one
+    // (strum's rake) — that reading wins, since it removes a draw this pass cannot see.
+    const nom=stamp?new Float64Array(n):null;
+    if(nom) for(let i=0;i<n;i++){ const p=events[i].beat0; nom[i]=(typeof p==="number")?p:beat[i]; }
     if(sw){                     // grid swing (drawless) — masked on the ORIGINAL fractional beat
       const swM=C.where(beat, b=>grid.at(b-Math.floor(b)));
+      if(nom) for(let i=0;i<n;i++) if(swM[i]) nom[i]+=sw*grid.push;
       C.shift(beat, sw*grid.push, swM);
     }
     if(ht||hl){                 // THE TAPE: rng consumed positionally, same sequence as the loop
       const tD=new Float64Array(n), aD=new Float64Array(n);
       for(let i=0;i<n;i++){ tD[i]=(rng()*2-1)*ht*0.04; if(ampM[i]) aD[i]=1+(rng()*2-1)*hl*0.25; }
-      C.shift(beat, tD);
+      C.shift(beat, tD);        // nom deliberately skips the tape — that IS the point
       C.scale(amp, aD, ampM);
       C.map(amp, a=>Math.max(0.01,a), ampM);
     }
@@ -1279,19 +1299,24 @@
       const off=new Float64Array(n);
       for(let i=0;i<n;i++){ const o=pp[events[i].voice||events[i].drum]; if(o) off[i]=o; }
       C.shift(beat, off);
+      if(nom) for(let i=0;i<n;i++) if(off[i]) nom[i]+=off[i];
     }
     C.map(beat, b=>Math.max(0,b));
     C.writeBack(cols, events);
+    if(nom){ const bm=cols.mask.beat; for(let i=0;i<n;i++) if(bm[i]) events[i].beat0=Math.max(0,nom[i]); }
   }
-  function applyGrooveScalar(events, tfeel, rng){   // the pre-columnar loop, byte-identical twin
+  function applyGrooveScalar(events, tfeel, rng, stamp){   // the pre-columnar loop, byte-identical twin
     const sw=tfeel.swing.amount, grid=SWING_GRIDS[tfeel.swing.grid];
     const ht=tfeel.humanize.timing, hl=tfeel.humanize.level, pp=tfeel.pushPull;
     for(const e of events){
       let b=e.beat; const f=b-Math.floor(b);
-      if(sw && grid.at(f)) b += sw*grid.push;
+      const swd=(sw && grid.at(f))?sw*grid.push:0;
+      let nb=stamp?((typeof e.beat0==="number"?e.beat0:b)+swd):0;   // the drawless twin (THE SEAM LAW)
+      if(swd) b += swd;
       if(ht||hl){ b += (rng()*2-1)*ht*0.04; if(e.amp!=null) e.amp=Math.max(0.01, e.amp*(1+(rng()*2-1)*hl*0.25)); }
-      if(pp){ const o=pp[e.voice||e.drum]; if(o) b+=o; }
+      if(pp){ const o=pp[e.voice||e.drum]; if(o){ b+=o; if(stamp) nb+=o; } }
       e.beat=Math.max(0,b);
+      if(stamp) e.beat0=Math.max(0,nb);
     }
   }
 
@@ -1596,6 +1621,11 @@
     // open a DEDICATED stream (seed+53000). strumSpec stays null (=> the pad
     // loop's legacy flat-block branch, zero draws on any stream) unless a valid
     // pattern name is present — so every non-strum genre is byte-identical.
+    // THE SEAM LAW (see applyGroove): LIVE walk only — every stage that moves an
+    // event's beat by a DRAW stamps the drawless position as e.beat0 so
+    // faust/state-engine.mapEvents can decide chord-bar ownership on it. Absent
+    // (press) => not one extra field anywhere, byte-identical.
+    const seamWin=state._seamWin===true;
     const strumSel=state.strum?(typeof state.strum==="string"?state.strum:state.strum.pattern):null;
     const strumSpec=strumSel?(STRUM_PATTERNS[strumSel]||null):null;
     const strumSpread=(state.strum&&typeof state.strum==="object"&&state.strum.spread!=null)?+state.strum.spread:0.03;
@@ -1795,7 +1825,13 @@
                 for(let n=0;n<ord.length;n++){
                   const idx=dir>0?ord[n]:ord[ord.length-1-n];
                   const off=n*eff+(strumRng()*2-1)*0.003;
-                  pitched.push({voice:"pad",beat:Sp+hb+jit+off,dur:Math.max(0.12,ring-off),pch:notes[idx],amp:hitAmp});
+                  const pe={voice:"pad",beat:Sp+hb+jit+off,dur:Math.max(0.12,ring-off),pch:notes[idx],amp:hitAmp};
+                  // SEAM LAW: `jit` and off's tail are DRAWS on the strum stream, so a
+                  // rake landing on a chord-bar line straddles it differently in each of
+                  // the live walk's per-bar generations. Ownership rides the drawless
+                  // rake position; applyGroove carries this beat0 forward.
+                  if(seamWin) pe.beat0=Sp+hb+n*eff;
+                  pitched.push(pe);
                 }
               }
               if(state.padDouble) pitched.push({voice:"pad",beat:Sp,dur:CBEATS,pch:pchAdd(chord.pads[0],k-12),amp:padAmp*0.9});
@@ -2069,8 +2105,8 @@
     }
     const grng=mulberry32(((state.seed??1)+777)>>>0);
     const tfeel=resolveTimeFeel(state);   // KERNEL-V4 Phase 3: one resolved time-feel spec for both stages
-    applyGroove(pitched, tfeel, grng);
-    applyGroove(drums,   tfeel, grng);
+    applyGroove(pitched, tfeel, grng, seamWin);
+    applyGroove(drums,   tfeel, grng, seamWin);
     // ---- MECHANICAL INTIMACY (state.thunk = {prob, amp}) ----
     // Soft key/pedal noise on a fraction of LEAD notes: a whisper-level tom
     // "thump" (pitch 90-160Hz, amp ~-30dB) exactly at the grooved note onset
@@ -2080,8 +2116,11 @@
       const trng=mulberry32(((state.seed??1)+8181)>>>0);
       for(const e of pitched){
         if(e.voice!=="melody"||e.solo) continue;
-        if(trng()<state.thunk.prob)
-          drums.push({drum:"tom",beat:e.beat,dur:0.09,amp:(state.thunk.amp||0.03)*(0.8+0.4*trng()),pitch:90+Math.round(trng()*70)});
+        if(trng()<state.thunk.prob){
+          const th={drum:"tom",beat:e.beat,dur:0.09,amp:(state.thunk.amp||0.03)*(0.8+0.4*trng()),pitch:90+Math.round(trng()*70)};
+          if(seamWin && e.beat0!=null) th.beat0=e.beat0;   // the thunk rides its key strike's ownership (SEAM LAW)
+          drums.push(th);
+        }
       }
     }
     // feed individual snare hits to the long ping-pong delay — the classic dusty
@@ -2330,7 +2369,7 @@
           }
         }
       }
-      applyGroove(percArr, tfeel, mulberry32(((state.seed??1)+61454)>>>0));
+      applyGroove(percArr, tfeel, mulberry32(((state.seed??1)+61454)>>>0), seamWin);
       for(const e of percArr) drums.push(e);
     }
     // ---- RUBATO — the SECTION stage of the unified time-feel (Phase 3) ----
@@ -2361,6 +2400,7 @@
       for(const arr of [pitched,drums,found,sfx]) for(const e of arr){
         const d0=e.dur||0, b1=rubW(e.beat+d0);
         e.beat=rubW(e.beat); if(d0) e.dur=Math.max(0.02,b1-e.beat);
+        if(e.beat0!=null) e.beat0=rubW(e.beat0);   // SEAM LAW: the drawless twin rides the same warp
       }
     }
     // ---- CsdPipes (MUSIC-MIND organ #2) — the one true choke point ----
@@ -2637,6 +2677,27 @@
     // pattern-identical bars under it are not ad-nauseam).
     applyVoiceDynamics(pitched, drums, state, spans, CBEATS);
     if(!foundOK) found=[];   // FOUND-AT-90%: drop the found layer in blends below the 90% threshold
+    // ---- SEAM LAW, the honesty clamp (live walk only) ----------------------
+    // beat0 is the DRAWLESS twin of beat, and it is only a legitimate ownership
+    // address while the *draw* is all that separates them. Plenty of later passes
+    // genuinely RELOCATE an event — the drum transforms (rev/ply/rot/stutter), the
+    // snare-law's ±0.5-beat machine moves, a pipe copy landing beats away. For
+    // those, ownership must follow where the event actually SOUNDS, or the live
+    // conductor would hand a note to a bar it plays a long way outside of: the
+    // native lane schedules on `when + (beat-lo)*spb`, so a stale address means a
+    // note dumped in the past (audible) rather than placed on the grid. So: any
+    // event that has drifted further from its beat0 than the groove itself could
+    // have moved it gives up the drawless address and is owned by its played beat
+    // — the pre-seam-law behaviour, for exactly the events the seam law was never
+    // about. Bound = the humanize draw (+ strum's own per-hit/per-voice draws),
+    // with headroom for the rubato warp's derivative (|depth| <= 0.2).
+    if(seamWin){
+      let md=tfeel.humanize.timing*0.04;
+      if(strumSpec) md+=0.021;                            // strum's jit (0.018) + per-voice off tail (0.003)
+      md=md*1.3+1e-9;
+      for(const arr of [pitched,drums]) for(const e of arr)
+        if(e.beat0!=null && Math.abs(e.beat-e.beat0)>md) e.beat0=e.beat;
+    }
     return { bpm:state.bpm, totalBeats, pitched, drums, found, sfx, srcById,
       ...(Object.keys(regHome).length?{regHome}:{}) };   // register-home decision (absent when no slot shifted — bundle shape unchanged)
   }

@@ -92,8 +92,12 @@ function fail(msg) { console.error("DEMO-LAYER GATE: FAIL —", msg); process.ex
     for (let k = 0; k < CYCLE; k++) {
       const name = await page.evaluate(() => DemoLayer.currentName());
       seenNames.push(name);
+      // 2.5s window, not 400ms: the layer's steady clock is 0.010 (2026-07-25,
+      // "Slowwwwwwwwwwwwer") — 1s of wall time is 10ms of cart time, so a short
+      // sample legitimately sees an unchanged frame. The contract is that it
+      // MOVES, not that it moves fast.
       const a = await page.evaluate(() => DemoLayer._frameHash());
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(2500);
       const b = await page.evaluate(() => DemoLayer._frameHash());
       if (a === b) fail("cart '" + name + "' did not animate (hash " + a + " stable)");
       const lit = await page.evaluate(() => {

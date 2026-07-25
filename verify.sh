@@ -77,6 +77,12 @@ run "poscover" node test/pos-coverage.js &
 # genre-clusters.js CLUSTER_OF, else the 3D flight mode can't see that genre (the
 # same class as the folk POS outage). Plain node, no browser — CI-safe.
 run "coordscover" node test/coords-coverage.js &
+# seamwalk: THE SEAM GATE (test/live-walk-parity.test.js) — replays the real
+# faust/live.js makeWalk in node and asserts every event on a chord-bar boundary
+# fires EXACTLY ONCE across the join. The hole that let finding 1 of
+# docs/TIMING-AUDIT-2026-07 live for a year: every existing gate tests inside a
+# unit, never across it. Plain node, no browser, ~2s — CI-safe.
+run "seamwalk" node test/live-walk-parity.test.js &
 
 FAILED=0
 declare -A DONE
