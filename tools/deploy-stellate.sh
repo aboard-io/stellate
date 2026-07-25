@@ -33,7 +33,9 @@ echo "== media manifest (local) =="
 # this exclusion is the belt in case a fetch ever lands there again.
 # found/video/ excluded (2026-07-25): the laserdisc video layer was removed
 # (legacy-download-video) — any locally cached clips must not deploy.
-find found -type f ! -name '*.ogg' ! -name '*.json' ! -name 'tw_vocal.mp3' ! -path 'found/video/*' ! -path 'found/midi/*' \
+# .gitignore excluded (2026-07-25): config, not media — it changes under its
+# name legitimately (the video-exception removal tripped the invariant).
+find found -type f ! -name '*.ogg' ! -name '*.json' ! -name '.gitignore' ! -name 'tw_vocal.mp3' ! -path 'found/video/*' ! -path 'found/midi/*' \
   -print0 | sort -z | xargs -0 sha256sum > /tmp/MEDIA_MANIFEST.new
 
 echo "== immutable invariant check against deployed manifest =="
