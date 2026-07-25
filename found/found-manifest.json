@@ -39,7 +39,32 @@
   "https://archive.org/download/78_polushko-polie-my-own-my-beloved-field_a-v-alexandrov-peoples-artist-of-the-u_gbia0060054b/Polushk%20-%20A.%20V.%20Alexandrov%20People%27s%20Artist%20of%20the%20U.S.S.R..mp3": "found/vx_sv_choir.mp3",
   "https://archive.org/download/78_march-of-the-tanks_chorus-and-orch-gabt-ussr-elen-senkewich-v-timofeiev-m-bl_gbia0033872b/March%20of%20the%20Tanks%20-%20Chorus%20and%20orch.%20Gabt%20U.S.S.R.%20Elen%20Senkewich.mp3": "found/vx_sv_march.mp3",
   "https://archive.org/download/leninspeeches1919-1921/sideA.mp3": "found/vx_sv_speech.mp3",
-  "https://archive.org/download/sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977/1977-12-10%20Saturday%20-%20Soyuz%2026%20Launch%20%281%29.mp3": "found/vx_sv_radio.mp3"
+  "https://archive.org/download/sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977/1977-12-10%20Saturday%20-%20Soyuz%2026%20Launch%20%281%29.mp3": "found/vx_sv_radio.mp3",
+  "https://archive.org/download/Gregory_Corso_The_history_of_poetry_June_1975_75P002/Gregory_Corso_The_history_of_poetry_June_1975_75P002_64kb.mp3": "found/vx_corso_history75.mp3",
+  "https://archive.org/download/Gregory_Corso_class_1_July_1977_77P091/Gregory_Corso_class_1_July_1977_77P091_64kb.mp3": "found/vx_corso_class77.mp3",
+  "https://archive.org/download/Gregory_Corso_workshop_1_July_1981_81P081/Gregory_Corso_workshop_1_July_1981_81P081_64kb.mp3": "found/vx_corso_workshop81.mp3",
+  "https://archive.org/download/Gregory_Corso_class_1_July_1981_81P083/Gregory_Corso_class_1_July_1981_81P083_64kb.mp3": "found/vx_corso_class81.mp3",
+  "https://archive.org/download/Peter_Orlovsky_Poetry_for_Dumb_Students_June_1981_81P138/Peter_Orlovsky_Poetry_for_Dumb_Students_June_1981_81P138_64kb.mp3": "found/vx_orlovsky_dumb81.mp3",
+  "https://archive.org/download/Diane_di_Prima_reading_July_1987_87P064/Diane_di_Prima_reading_July_1987_87P064_64kb.mp3": "found/vx_diprima_1987.mp3",
+  "https://archive.org/download/diPrima_Ginsberg_Waldman_reading_July_1994_94P041A/diPrima_Ginsberg_Waldman_reading_July_1994_94P041A_64kb.mp3": "found/vx_diprima_1994.mp3",
+  "https://archive.org/download/Joanne_Kyger_Lorenzo_Thomas_reading_July_1989_89P165/Joanne_Kyger_Lorenzo_Thomas_reading_July_1989_89P165_64kb.mp3": "found/vx_kyger_1989.mp3",
+  "https://archive.org/download/Kyger_Mackey_Corbett_Hollo_reading_July_1993_93P053/Kyger_Mackey_Corbett_Hollo_reading_July_1993_93P053_64kb.mp3": "found/vx_kyger_1993.mp3",
+  "https://archive.org/download/Waldman_reading_Crack_in_the_world_ND012/Waldman_reading_Crack_in_the_world_ND012_64kb.mp3": "found/vx_waldman_crack.mp3",
+  "https://archive.org/download/Gary_Snyder_reading_August_1983_83P099/Gary_Snyder_reading_August_1983_83P099_64kb.mp3": "found/vx_snyder_reading83.mp3",
+  "https://archive.org/download/Reading_with_Whalen_Clausen_Hollow_part_1_July_1980_80p181/Reading_with_Whalen_Clausen_Hollow_part_1_July_1980_80p181_64kb.mp3": "found/vx_whalen_reading80.mp3",
+  "https://archive.org/download/Whalen_lecture_part_3_June_1987_87P047/Whalen_lecture_part_3_June_1987_87P047_64kb.mp3": "found/vx_whalen_lecture87.mp3",
+  "https://archive.org/download/Michael_McClure_and_Steven_Taylor_perfor_99P035/99P035_64kb.mp3": "found/vx_mcclure_perf99.mp3",
+  "https://archive.org/download/Gary_Snyder_Book_of_Songs_class_part_1_1983_83p067/Gary_Snyder_Book_of_Songs_class_part_1_1983_83p067_64kb.mp3": "found/vx_snyder_songs83.mp3",
+  "https://archive.org/download/John_Cage_studio_performance_January_1979_79P127/John_Cage_studio_performance_January_1979_79P127_64kb.mp3": "found/vx_cage_studio79.mp3",
+  "https://archive.org/download/Simon_Ortiz_Amiri_Baraka_reading_July_1984_84P060/Simon_Ortiz_Amiri_Baraka_reading_July_1984_84P060_64kb.mp3": "found/vx_baraka_ortiz84.mp3",
+  "https://archive.org/download/Steven_Taylor_performs_class_on_performa_87P051/87P051_64kb.mp3": "found/vx_kupferberg_fugs87.mp3",
+  "https://archive.org/download/naropa_amiri_baraka_lecture_on/naropa_amiri_baraka_lecture_on_64kb.mp3": "found/vx_baraka_revpoetry94.mp3",
+  "https://archive.org/download/Sanders_Blaser_Sikelianos_Durand_Warshall_Waldman_panel_Alternative_communities_and_writing_June_2003_03P004/Sanders_Blaser_Sikelianos_Durand_Warshall_Waldman_panel_Alternative_communities_and_writing_June_2003_03P004.mp3": "found/vx_sanders_panel03.mp3",
+  "https://archive.org/download/Ginsber_Mexico_City_Blues_July_1988_88P044/Ginsber_Mexico_City_Blues_July_1988_88P044_64kb.mp3": "found/vx_ginsberg_mexcityblues.mp3",
+  "https://archive.org/download/Ginsberg_reading_Sincerity_rap_July_1985_85P017/Ginsberg_reading_Sincerity_rap_July_1985_85P017_64kb.mp3": "found/vx_ginsberg_sincerity.mp3",
+  "https://archive.org/download/naropa_allen_ginsberg_workshop_jack2/naropa_allen_ginsberg_workshop_jack2_64kb.mp3": "found/vx_ginsberg_kerouacconf.mp3",
+  "https://archive.org/download/naropa_william_s_burroughs2/naropa_william_s_burroughs2_64kb.mp3": "found/vx_burroughs_lecture76.mp3",
+  "https://archive.org/download/William_S_Burroughs_Sr_and_John_Giorno_reading_August_1979_79P104/William_S_Burroughs_Sr_and_John_Giorno_reading_August_1979_79P104_64kb.mp3": "found/vx_burroughs_giorno79.mp3"
  },
  "rows": [
   {
@@ -269,6 +294,156 @@
    "url": "https://archive.org/download/sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977/1977-12-10%20Saturday%20-%20Soyuz%2026%20Launch%20%281%29.mp3",
    "item": "sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977",
    "local": "found/vx_sv_radio.mp3"
+  },
+  {
+   "id": "vx_corso_history75",
+   "url": "https://archive.org/download/Gregory_Corso_The_history_of_poetry_June_1975_75P002/Gregory_Corso_The_history_of_poetry_June_1975_75P002_64kb.mp3",
+   "item": "Gregory_Corso_The_history_of_poetry_June_1975_75P002",
+   "local": "found/vx_corso_history75.mp3"
+  },
+  {
+   "id": "vx_corso_class77",
+   "url": "https://archive.org/download/Gregory_Corso_class_1_July_1977_77P091/Gregory_Corso_class_1_July_1977_77P091_64kb.mp3",
+   "item": "Gregory_Corso_class_1_July_1977_77P091",
+   "local": "found/vx_corso_class77.mp3"
+  },
+  {
+   "id": "vx_corso_workshop81",
+   "url": "https://archive.org/download/Gregory_Corso_workshop_1_July_1981_81P081/Gregory_Corso_workshop_1_July_1981_81P081_64kb.mp3",
+   "item": "Gregory_Corso_workshop_1_July_1981_81P081",
+   "local": "found/vx_corso_workshop81.mp3"
+  },
+  {
+   "id": "vx_corso_class81",
+   "url": "https://archive.org/download/Gregory_Corso_class_1_July_1981_81P083/Gregory_Corso_class_1_July_1981_81P083_64kb.mp3",
+   "item": "Gregory_Corso_class_1_July_1981_81P083",
+   "local": "found/vx_corso_class81.mp3"
+  },
+  {
+   "id": "vx_orlovsky_dumb81",
+   "url": "https://archive.org/download/Peter_Orlovsky_Poetry_for_Dumb_Students_June_1981_81P138/Peter_Orlovsky_Poetry_for_Dumb_Students_June_1981_81P138_64kb.mp3",
+   "item": "Peter_Orlovsky_Poetry_for_Dumb_Students_June_1981_81P138",
+   "local": "found/vx_orlovsky_dumb81.mp3"
+  },
+  {
+   "id": "vx_diprima_1987",
+   "url": "https://archive.org/download/Diane_di_Prima_reading_July_1987_87P064/Diane_di_Prima_reading_July_1987_87P064_64kb.mp3",
+   "item": "Diane_di_Prima_reading_July_1987_87P064",
+   "local": "found/vx_diprima_1987.mp3"
+  },
+  {
+   "id": "vx_diprima_1994",
+   "url": "https://archive.org/download/diPrima_Ginsberg_Waldman_reading_July_1994_94P041A/diPrima_Ginsberg_Waldman_reading_July_1994_94P041A_64kb.mp3",
+   "item": "diPrima_Ginsberg_Waldman_reading_July_1994_94P041A",
+   "local": "found/vx_diprima_1994.mp3"
+  },
+  {
+   "id": "vx_kyger_1989",
+   "url": "https://archive.org/download/Joanne_Kyger_Lorenzo_Thomas_reading_July_1989_89P165/Joanne_Kyger_Lorenzo_Thomas_reading_July_1989_89P165_64kb.mp3",
+   "item": "Joanne_Kyger_Lorenzo_Thomas_reading_July_1989_89P165",
+   "local": "found/vx_kyger_1989.mp3"
+  },
+  {
+   "id": "vx_kyger_1993",
+   "url": "https://archive.org/download/Kyger_Mackey_Corbett_Hollo_reading_July_1993_93P053/Kyger_Mackey_Corbett_Hollo_reading_July_1993_93P053_64kb.mp3",
+   "item": "Kyger_Mackey_Corbett_Hollo_reading_July_1993_93P053",
+   "local": "found/vx_kyger_1993.mp3"
+  },
+  {
+   "id": "vx_waldman_crack",
+   "url": "https://archive.org/download/Waldman_reading_Crack_in_the_world_ND012/Waldman_reading_Crack_in_the_world_ND012_64kb.mp3",
+   "item": "Waldman_reading_Crack_in_the_world_ND012",
+   "local": "found/vx_waldman_crack.mp3"
+  },
+  {
+   "id": "vx_snyder_reading83",
+   "url": "https://archive.org/download/Gary_Snyder_reading_August_1983_83P099/Gary_Snyder_reading_August_1983_83P099_64kb.mp3",
+   "item": "Gary_Snyder_reading_August_1983_83P099",
+   "local": "found/vx_snyder_reading83.mp3"
+  },
+  {
+   "id": "vx_whalen_reading80",
+   "url": "https://archive.org/download/Reading_with_Whalen_Clausen_Hollow_part_1_July_1980_80p181/Reading_with_Whalen_Clausen_Hollow_part_1_July_1980_80p181_64kb.mp3",
+   "item": "Reading_with_Whalen_Clausen_Hollow_part_1_July_1980_80p181",
+   "local": "found/vx_whalen_reading80.mp3"
+  },
+  {
+   "id": "vx_whalen_lecture87",
+   "url": "https://archive.org/download/Whalen_lecture_part_3_June_1987_87P047/Whalen_lecture_part_3_June_1987_87P047_64kb.mp3",
+   "item": "Whalen_lecture_part_3_June_1987_87P047",
+   "local": "found/vx_whalen_lecture87.mp3"
+  },
+  {
+   "id": "vx_mcclure_perf99",
+   "url": "https://archive.org/download/Michael_McClure_and_Steven_Taylor_perfor_99P035/99P035_64kb.mp3",
+   "item": "Michael_McClure_and_Steven_Taylor_perfor_99P035",
+   "local": "found/vx_mcclure_perf99.mp3"
+  },
+  {
+   "id": "vx_snyder_songs83",
+   "url": "https://archive.org/download/Gary_Snyder_Book_of_Songs_class_part_1_1983_83p067/Gary_Snyder_Book_of_Songs_class_part_1_1983_83p067_64kb.mp3",
+   "item": "Gary_Snyder_Book_of_Songs_class_part_1_1983_83p067",
+   "local": "found/vx_snyder_songs83.mp3"
+  },
+  {
+   "id": "vx_cage_studio79",
+   "url": "https://archive.org/download/John_Cage_studio_performance_January_1979_79P127/John_Cage_studio_performance_January_1979_79P127_64kb.mp3",
+   "item": "John_Cage_studio_performance_January_1979_79P127",
+   "local": "found/vx_cage_studio79.mp3"
+  },
+  {
+   "id": "vx_baraka_ortiz84",
+   "url": "https://archive.org/download/Simon_Ortiz_Amiri_Baraka_reading_July_1984_84P060/Simon_Ortiz_Amiri_Baraka_reading_July_1984_84P060_64kb.mp3",
+   "item": "Simon_Ortiz_Amiri_Baraka_reading_July_1984_84P060",
+   "local": "found/vx_baraka_ortiz84.mp3"
+  },
+  {
+   "id": "vx_kupferberg_fugs87",
+   "url": "https://archive.org/download/Steven_Taylor_performs_class_on_performa_87P051/87P051_64kb.mp3",
+   "item": "Steven_Taylor_performs_class_on_performa_87P051",
+   "local": "found/vx_kupferberg_fugs87.mp3"
+  },
+  {
+   "id": "vx_baraka_revpoetry94",
+   "url": "https://archive.org/download/naropa_amiri_baraka_lecture_on/naropa_amiri_baraka_lecture_on_64kb.mp3",
+   "item": "naropa_amiri_baraka_lecture_on",
+   "local": "found/vx_baraka_revpoetry94.mp3"
+  },
+  {
+   "id": "vx_sanders_panel03",
+   "url": "https://archive.org/download/Sanders_Blaser_Sikelianos_Durand_Warshall_Waldman_panel_Alternative_communities_and_writing_June_2003_03P004/Sanders_Blaser_Sikelianos_Durand_Warshall_Waldman_panel_Alternative_communities_and_writing_June_2003_03P004.mp3",
+   "item": "Sanders_Blaser_Sikelianos_Durand_Warshall_Waldman_panel_Alternative_communities_and_writing_June_2003_03P004",
+   "local": "found/vx_sanders_panel03.mp3"
+  },
+  {
+   "id": "vx_ginsberg_mexcityblues",
+   "url": "https://archive.org/download/Ginsber_Mexico_City_Blues_July_1988_88P044/Ginsber_Mexico_City_Blues_July_1988_88P044_64kb.mp3",
+   "item": "Ginsber_Mexico_City_Blues_July_1988_88P044",
+   "local": "found/vx_ginsberg_mexcityblues.mp3"
+  },
+  {
+   "id": "vx_ginsberg_sincerity",
+   "url": "https://archive.org/download/Ginsberg_reading_Sincerity_rap_July_1985_85P017/Ginsberg_reading_Sincerity_rap_July_1985_85P017_64kb.mp3",
+   "item": "Ginsberg_reading_Sincerity_rap_July_1985_85P017",
+   "local": "found/vx_ginsberg_sincerity.mp3"
+  },
+  {
+   "id": "vx_ginsberg_kerouacconf",
+   "url": "https://archive.org/download/naropa_allen_ginsberg_workshop_jack2/naropa_allen_ginsberg_workshop_jack2_64kb.mp3",
+   "item": "naropa_allen_ginsberg_workshop_jack2",
+   "local": "found/vx_ginsberg_kerouacconf.mp3"
+  },
+  {
+   "id": "vx_burroughs_lecture76",
+   "url": "https://archive.org/download/naropa_william_s_burroughs2/naropa_william_s_burroughs2_64kb.mp3",
+   "item": "naropa_william_s_burroughs2",
+   "local": "found/vx_burroughs_lecture76.mp3"
+  },
+  {
+   "id": "vx_burroughs_giorno79",
+   "url": "https://archive.org/download/William_S_Burroughs_Sr_and_John_Giorno_reading_August_1979_79P104/William_S_Burroughs_Sr_and_John_Giorno_reading_August_1979_79P104_64kb.mp3",
+   "item": "William_S_Burroughs_Sr_and_John_Giorno_reading_August_1979_79P104",
+   "local": "found/vx_burroughs_giorno79.mp3"
   }
  ]
 }

@@ -385,6 +385,75 @@ sketches but flag a human decision before any release that chops/pitches them.
 | `vx_sv_speech` | [`leninspeeches1919-1921`](https://archive.org/details/leninspeeches1919-1921) | V.I. Lenin, speeches recorded on gramophone discs, 1919–1921 (sovietwave) | PD-old (1919–21 recordings) |
 | `vx_sv_radio` | [`sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977`](https://archive.org/details/sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977) | Radio Moscow English service, Soyuz 26 launch, Dec 10 1977 — Shortwave Radio Audio Archive (sovietwave) | **CC BY-NC 3.0** (derivatives OK, non-commercial) |
 
+
+## Naropa expansion (2026-07-25) — tools/fetch-found-naropa.sh
+
+25 more readings from the **Naropa Poetics Audio Archive** (the Jack Kerouac
+School of Disembodied Poetics, Naropa University; `collection:naropa` on the
+Internet Archive), joining the `vx_*` shelf above — the Beat / New American
+Poetry circle: Corso, Orlovsky, di Prima, Kyger, Waldman, Snyder, Whalen,
+McClure, Cage, Baraka, Ortiz, Kupferberg, Sanders, Ginsberg, Burroughs. Every
+item is Creative Commons **Attribution-NonCommercial-NoDerivatives** — the
+archaic `by-nd-nc/1.0` slug, functionally **CC BY-NC-ND 1.0**. **⚠ ND = No
+Derivatives**: folding a trimmed reading into generative music is a
+derivative/remix use, so this is **tier 2** — the audio is fetched to gitignored
+`found/`, NON-COMMERCIAL, never redistributed; `fetch-found-naropa.sh` is the
+committed deliverable and every runner downloads from the Archive directly.
+Credit **Naropa Poetics Audio Archive** in any non-commercial use. **⚠ Flag:**
+`vx_waldman_crack` (item ID **ND012**) is **UNDATED** (no decade anchor).
+`vx_cage_studio79` (chance-ordered phonemes) is wired only into idm/experimental
+found pools, never the general voices pool.
+
+| local name | Internet Archive item | content / creator | license |
+|---|---|---|---|
+| `vx_corso_history75` | [`Gregory_Corso_The_history_of_poetry_June_1975_75P002`](https://archive.org/details/Gregory_Corso_The_history_of_poetry_June_1975_75P002) | Corso teaching/reading, 'History of Poetry', Naropa 1975 — Gregory Corso | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_corso_class77` | [`Gregory_Corso_class_1_July_1977_77P091`](https://archive.org/details/Gregory_Corso_class_1_July_1977_77P091) | Corso class 1, Naropa July 1977 — Gregory Corso | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_corso_workshop81` | [`Gregory_Corso_workshop_1_July_1981_81P081`](https://archive.org/details/Gregory_Corso_workshop_1_July_1981_81P081) | Corso workshop 1, Naropa July 1981 — Gregory Corso | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_corso_class81` | [`Gregory_Corso_class_1_July_1981_81P083`](https://archive.org/details/Gregory_Corso_class_1_July_1981_81P083) | Corso class 1, Naropa July 1981 — Gregory Corso | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_orlovsky_dumb81` | [`Peter_Orlovsky_Poetry_for_Dumb_Students_June_1981_81P138`](https://archive.org/details/Peter_Orlovsky_Poetry_for_Dumb_Students_June_1981_81P138) | Orlovsky, 'Poetry for Dumb Students', Naropa 1981 — Peter Orlovsky | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_diprima_1987` | [`Diane_di_Prima_reading_July_1987_87P064`](https://archive.org/details/Diane_di_Prima_reading_July_1987_87P064) | Diane di Prima solo reading, Naropa 1987 — Diane di Prima | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_diprima_1994` | [`diPrima_Ginsberg_Waldman_reading_July_1994_94P041A`](https://archive.org/details/diPrima_Ginsberg_Waldman_reading_July_1994_94P041A) | Diane di Prima reading (di Prima/Ginsberg/Waldman), Naropa 1994 — Diane di Prima | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_kyger_1989` | [`Joanne_Kyger_Lorenzo_Thomas_reading_July_1989_89P165`](https://archive.org/details/Joanne_Kyger_Lorenzo_Thomas_reading_July_1989_89P165) | Joanne Kyger reading (with Lorenzo Thomas), Naropa 1989 — Joanne Kyger | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_kyger_1993` | [`Kyger_Mackey_Corbett_Hollo_reading_July_1993_93P053`](https://archive.org/details/Kyger_Mackey_Corbett_Hollo_reading_July_1993_93P053) | Joanne Kyger reading (American mythology), Naropa 1993 — Joanne Kyger | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_waldman_crack` | [`Waldman_reading_Crack_in_the_world_ND012`](https://archive.org/details/Waldman_reading_Crack_in_the_world_ND012) | Anne Waldman reading 'Crack in the World', Naropa (date n/a) — Anne Waldman | **CC BY-NC-ND 1.0** (⚠ ND; **UNDATED** ND012) |
+| `vx_snyder_reading83` | [`Gary_Snyder_reading_August_1983_83P099`](https://archive.org/details/Gary_Snyder_reading_August_1983_83P099) | Gary Snyder reading, Naropa Aug 1983 — Gary Snyder | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_whalen_reading80` | [`Reading_with_Whalen_Clausen_Hollow_part_1_July_1980_80p181`](https://archive.org/details/Reading_with_Whalen_Clausen_Hollow_part_1_July_1980_80p181) | Philip Whalen reading (Whalen/Clausen/Hollo), Naropa July 1980 — Philip Whalen | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_whalen_lecture87` | [`Whalen_lecture_part_3_June_1987_87P047`](https://archive.org/details/Whalen_lecture_part_3_June_1987_87P047) | Philip Whalen lecture, part 3, Naropa June 1987 — Philip Whalen | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_mcclure_perf99` | [`Michael_McClure_and_Steven_Taylor_perfor_99P035`](https://archive.org/details/Michael_McClure_and_Steven_Taylor_perfor_99P035) | Michael McClure & Steven Taylor performance, Naropa June 1999 — Michael McClure | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_snyder_songs83` | [`Gary_Snyder_Book_of_Songs_class_part_1_1983_83p067`](https://archive.org/details/Gary_Snyder_Book_of_Songs_class_part_1_1983_83p067) | Gary Snyder, Book of Songs (Shijing) class, Naropa 1983 — Gary Snyder | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_cage_studio79` | [`John_Cage_studio_performance_January_1979_79P127`](https://archive.org/details/John_Cage_studio_performance_January_1979_79P127) | John Cage studio performance, Naropa Jan 1979 — John Cage | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_baraka_ortiz84` | [`Simon_Ortiz_Amiri_Baraka_reading_July_1984_84P060`](https://archive.org/details/Simon_Ortiz_Amiri_Baraka_reading_July_1984_84P060) | Simon Ortiz & Amiri Baraka reading, Naropa July 1984 — Simon Ortiz / Amiri Baraka | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_kupferberg_fugs87` | [`Steven_Taylor_performs_class_on_performa_87P051`](https://archive.org/details/Steven_Taylor_performs_class_on_performa_87P051) | Steven Taylor performance class w/ Tuli Kupferberg of the Fugs, Naropa July 1987 — Tuli Kupferberg / Steven Taylor | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_baraka_revpoetry94` | [`naropa_amiri_baraka_lecture_on`](https://archive.org/details/naropa_amiri_baraka_lecture_on) | Amiri Baraka lecture on revolutionary poetry, Naropa 1994 — Amiri Baraka | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_sanders_panel03` | [`Sanders_Blaser_Sikelianos_Durand_Warshall_Waldman_panel_Alternative_communities_and_writing_June_2003_03P004`](https://archive.org/details/Sanders_Blaser_Sikelianos_Durand_Warshall_Waldman_panel_Alternative_communities_and_writing_June_2003_03P004) | Ed Sanders panel: Alternative communities and writing, Naropa June 2003 — Ed Sanders | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_ginsberg_mexcityblues` | [`Ginsber_Mexico_City_Blues_July_1988_88P044`](https://archive.org/details/Ginsber_Mexico_City_Blues_July_1988_88P044) | Ginsberg reads Kerouac's Mexico City Blues, Naropa 1988 — Allen Ginsberg | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_ginsberg_sincerity` | [`Ginsberg_reading_Sincerity_rap_July_1985_85P017`](https://archive.org/details/Ginsberg_reading_Sincerity_rap_July_1985_85P017) | Ginsberg 'Sincerity rap' reading, Naropa 1985 — Allen Ginsberg | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_ginsberg_kerouacconf` | [`naropa_allen_ginsberg_workshop_jack2`](https://archive.org/details/naropa_allen_ginsberg_workshop_jack2) | Ginsberg workshop, Jack Kerouac Conference, Naropa 1982 — Allen Ginsberg | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_burroughs_lecture76` | [`naropa_william_s_burroughs2`](https://archive.org/details/naropa_william_s_burroughs2) | William S. Burroughs lecture (Part 1), Naropa 1976 — William S. Burroughs | **CC BY-NC-ND 1.0** (⚠ ND) |
+| `vx_burroughs_giorno79` | [`William_S_Burroughs_Sr_and_John_Giorno_reading_August_1979_79P104`](https://archive.org/details/William_S_Burroughs_Sr_and_John_Giorno_reading_August_1979_79P104) | Burroughs & Giorno reading, Naropa 1979 — William S. Burroughs | **CC BY-NC-ND 1.0** (⚠ ND) |
+
+## Synthesized voice bank (found/samples/voxbank/ — tools/gen-voice-bank.js, 2026-07-25)
+
+A deterministic bank of **360 synthesized voice clips** — 12 families × 30
+phrases — generated locally with **espeak-ng** (v1.51). Voice variant, speed and
+pitch are derived from an fnv1a hash of `(family + text)` honouring each phrase's
+`{gender, pace, tone}` tags, so the same inputs always yield byte-stable params.
+The phrase text lives committed at **`tools/voxbank-phrases.json`** (the source
+text IS the recipe); the wavs are derived and **gitignored** under
+`found/samples/voxbank/<family>/vb_<family>_NN.wav`. Each family registers as a
+`SOURCE_POOLS.vb_<family>` pool and rides genres' `hits.sources` (matrix-safe:
+the confusion matrix stays 274/274). Every clip passes the build's clip-gate
+(durSec 0.5–8, RMS > −34 dBFS, no pure-tone dominance).
+
+**License:** espeak-ng synthesizes locally — the output is license-free (no
+recording, no third party); all phrase text is original. **Tier 1** — freely
+committable/usable. Families: `mallsoft_vapor`, `transit`, `rave_hardcore`,
+`junglist`, `jazz_blues`, `classical_chamber`, `folk_pastoral`,
+`maritime_weather`, `cosmic_space`, `domestic_appliance`, `industrial_machine`,
+`spoken_poetic`. The `transit`/`mallsoft_vapor` **official**-tone clips ride a
+subtle telephone band (highpass 280 / lowpass 3600) — the `saytransit` PA
+precedent; every other clip is dry.
+
 ## Sampled instruments (found/samples/instruments/ — fetch-found-samples.sh + fetch-guitar-samples.sh, faust/sf2.js + faust/extract-gm.js)
 
 The SAMPLER voice model plays real instrument zones extracted from a SoundFont
