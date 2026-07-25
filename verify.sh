@@ -80,7 +80,12 @@ run "coordscover" node test/coords-coverage.js &
 
 FAILED=0
 declare -A DONE
-for _ in 1 2 3 4 5 6 7; do
+# one iteration per BACKGROUND JOB — counted, never hardcoded. (2026-07-25: the
+# list said 1..7 while eight jobs were running, so the loop exited early, the
+# EXIT trap wiped $TMP under the still-running matproof, and a half-written
+# .res read as a spurious FAIL. Adding a gate must not require editing a tally.)
+NJOBS=$(jobs -rp | wc -l)
+for _ in $(seq 1 "$NJOBS"); do
   wait -n
   for f in "$TMP"/*.res; do
     [ -e "$f" ] || continue
