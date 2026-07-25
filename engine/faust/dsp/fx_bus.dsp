@@ -57,7 +57,17 @@ AIR_FC  = 7000;   // shelf corner: midpoint of the cut — puts the >=8 kHz band
 //          bypass at 0, level-preserving for small signals.
 //   mrev — a little of the DRY mix into the reverb so the WHOLE mix shares one
 //          room (the per-voice sends are untouched — this is the global bleed).
-wob     = hslider("wob", 0.35, 0, 1, 0.01);
+// wob DEFAULT 0 (2026-07-25, same day it landed): the wow/flutter is a
+// MODULATED DELAY, i.e. master-bus state, and fx_bus is instantiated fresh at
+// every stream open() (stream-renderer.js:379/442). On a travelling path each
+// steer opens a new generation, so the LFO restarted at phase 0 while the
+// outgoing stream sat elsewhere in its cycle — the master delay time JUMPED at
+// every crossfade and the two blended streams were time-offset from each other.
+// Paul heard it immediately: "definitely lurching… esp drums". Segment-parity
+// never caught it because parity tests ONE generation, never a crossfade.
+// Kept as a param (an offline single-instance press can still dial it in);
+// re-enabling it live needs a phase source shared across instances.
+wob     = hslider("wob", 0, 0, 1, 0.01);
 tsat    = hslider("tsat", 0.18, 0, 1, 0.01);
 mrev    = hslider("mrev", 0.07, 0, 0.5, 0.01);
 WOB_MS  = 1.6;    // base delay; peak deviation is 90% of it at wob=1 (~±0.1% pitch)

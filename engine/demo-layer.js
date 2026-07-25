@@ -78,7 +78,7 @@
   // footage at .55; drop it to .45 so the carts sit INSIDE the murk with the
   // analog stack (grade + grain + scan + bursts) layered over them, matching the
   // found-footage layer's treatment rather than floating above it.
-  const DEFAULT_OPACITY = 0.45;          // present but never drowns the footage; sits in the murk
+  const DEFAULT_OPACITY = 0.72;          // present but never drowns the footage; sits in the murk
   const DEFAULT_BLEND = "screen";        // additive glow of light-on-dark demoscene over dark VHS
   const reduced = root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -103,7 +103,7 @@
   // blur 0.35px -> 4px (Paul 2026-07-25: "always blur the demoscene visualization
   // in the background") — the carts dissolve into soft phosphor color fields;
   // CSS-side only, so the gates' getImageData reads of the raw canvas are untouched.
-  const GRADE = "saturate(.75) contrast(1.15) brightness(.55) sepia(.35) hue-rotate(175deg) blur(4px)";
+  const GRADE = "saturate(.8) contrast(1.1) brightness(1.0) sepia(.32) hue-rotate(175deg) blur(4px)";
   // heavier grain than the footage layer's vhs tier (.13) — the carts want more
   // tooth to knock the digital sheen off (Paul: "a little danker").
   const GRAIN_OPACITY = 0.17;
@@ -388,13 +388,13 @@
     fxVeil.className = "dm-veil";
     // deepened + blued 2026-07-25 (the TV ask) — a cold phosphor wash
     fxVeil.style.cssText = "position:absolute;inset:0;pointer-events:none;" +
-      "background:linear-gradient(rgba(5,10,30,.5),rgba(5,10,30,.28) 32%,rgba(5,10,30,.56))";
+      "background:linear-gradient(rgba(5,10,30,.28),rgba(5,10,30,.12) 32%,rgba(5,10,30,.32))";
     // TUBE VIGNETTE (new, same ask): darkened corners pull the flat canvas into
     // a CRT's curved face; compositor-only, sits under the scan stack.
     const fxVign = document.createElement("div");
     fxVign.className = "dm-vignette";
     fxVign.style.cssText = "position:absolute;inset:0;pointer-events:none;" +
-      "background:radial-gradient(ellipse 72% 62% at 50% 48%,transparent 52%,rgba(2,4,16,.38) 78%,rgba(2,4,16,.72) 100%)";
+      "background:radial-gradient(ellipse 76% 66% at 50% 48%,transparent 56%,rgba(2,4,16,.24) 80%,rgba(2,4,16,.5) 100%)";
     wrap.appendChild(fxVign);
     // analog vertical-blanking hum + near-subliminal scanlines (video-layer's
     // scanBand/scanLines, trimmed to 2 drifting bands for a background layer).
