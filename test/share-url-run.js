@@ -12,7 +12,7 @@
 //       dragged toward waypoint 2, moves S.travel off its start and re-places
 //       startBar while stopped;
 //   (e) zero page errors; macros are GONE from the ⚙ panel (the removal held).
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/share-url-run.js
+//   node test/share-url-run.js
 "use strict";
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");
 const path = require("path");

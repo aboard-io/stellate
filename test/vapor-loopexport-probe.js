@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // vapor-loopexport-probe.js — verifies C.1 (VAPOR slider, live-only master EQ)
 // and F.3 (whole-path loop export via the async buildLoopPlan).
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/vapor-loopexport-probe.js
+//   node test/vapor-loopexport-probe.js
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");

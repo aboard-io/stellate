@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // synthfont-probe.js — verifies B (synth fonts): selecting the MiniMoog synth
 // font routes the sampler lane to modeld/juno60 voices AND still produces audio.
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/synthfont-probe.js
+//   node test/synthfont-probe.js
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");

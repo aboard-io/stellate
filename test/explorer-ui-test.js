@@ -22,7 +22,7 @@
 //   F. VideoLayer.enabled() === false on load;
 //   G. no console/page errors on load, nor after starting playback (a short
 //      live ride: engine boots, real audio comes out, then STOP).
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node faust/explorer-ui-test.js
+//   node faust/explorer-ui-test.js
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");

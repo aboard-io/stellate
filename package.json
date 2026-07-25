@@ -1,7 +1,7 @@
 {
   "name": "stellate",
   "version": "1.0.0",
-  "description": "A generative music instrument you play by moving through a map of 250 genres — every song rendered live in the browser and fully deterministic from a seed.",
+  "description": "A generative music instrument you play by moving through a map of 274 genres — every song rendered live in the browser and fully deterministic from a seed.",
   "homepage": "https://stellate.app",
   "license": "MIT",
   "private": true,

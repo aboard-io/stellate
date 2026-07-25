@@ -5,7 +5,7 @@
 // the lead timbre wants to flip every bar; the hold must cap that to <= once per
 // HOLD window (4 bars). Then we snap to PURE neoclassical (an ARRIVAL) and check
 // the lead flips to felt_piano promptly despite the hold (arrival override).
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node faust/hold-verify-run.js
+//   node faust/hold-verify-run.js
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");

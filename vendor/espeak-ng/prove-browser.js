@@ -3,7 +3,7 @@
 // artifact loads and synthesizes in a real browser page served with the
 // production COOP/COEP headers (require-corp; see serve.sh / docs/HOSTING.md).
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node vendor/espeak-ng/prove-browser.js
+//   node vendor/espeak-ng/prove-browser.js
 //
 // Serves the repo root same-origin (so espeak-ng.data needs no CORP/ACAO),
 // dynamically imports the ES-module glue, synthesizes the same phrase as

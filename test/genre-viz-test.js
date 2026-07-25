@@ -39,7 +39,7 @@
 //      soundfont/raw ids); the MIND readout renders where the state carries
 //      MUSIC-MIND axes (theory/pipes/rhythm).
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node faust/genre-viz-test.js
+//   node faust/genre-viz-test.js
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");

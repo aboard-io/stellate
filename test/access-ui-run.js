@@ -15,7 +15,7 @@
 //   (f) determinism sanity: same seed+genre yields the same mixed bpm/progression
 //       on the accessible page as a direct kernel mix (it IS the same engine).
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/access-ui-run.js
+//   node test/access-ui-run.js
 "use strict";
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");
 const path = require("path");

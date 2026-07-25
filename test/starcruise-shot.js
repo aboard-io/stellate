@@ -8,7 +8,7 @@
 // saves a PNG of the UPSCALED display canvas (#starcruise-canvas — the pixels the
 // user actually sees) so a human can eyeball the genre->band diversity.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/starcruise-shot.js
+//   node test/starcruise-shot.js
 //
 // Writes scratch/shots/starcruise-<genre>.png. Reads NOTHING from app/ or engine/
 // beyond the documented window.__STARCRUISE probe hooks; injects only the

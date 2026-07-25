@@ -86,6 +86,19 @@ them); Yamaha has never asserted rights over the patch DATA — PD-adjacent by
 long convention, noted here rather than claimed as a formal grant. The raw
 .syx cartridge files are not committed; only decoded parameter JSON is.
 
+## three.js — vendored (MIT)
+
+`vendor/three/` contains the minified ESM build of **three.js r160**
+(three.module.min.js) plus `MarchingCubes.js` from the r160 examples, both
+© 2010-2023 three.js authors, MIT license (`vendor/three/LICENSE`). Used by
+the star-cruise 3D video mode (`app/starcruise/`).
+
+## simplex-noise — vendored (MIT)
+
+`vendor/simplex-noise/` contains **simplex-noise 4.0.3** by Jonas Wagner,
+MIT license (`vendor/simplex-noise/LICENSE`). Used by the star-cruise mode's
+procedural motion.
+
 ## Fonts and UI libraries — loaded from CDNs, not redistributed
 
 - Orbitron and VT323 (SIL OFL 1.1) are loaded from Google Fonts.

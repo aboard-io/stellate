@@ -46,7 +46,7 @@
 //   (d) pitched note() calls keep flowing across the crossing, RMS stays
 //       real, zero page errors (the blues side must also play first).
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/transit-arrival-run.js
+//   node test/transit-arrival-run.js
 "use strict";
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");
 const path = require("path");

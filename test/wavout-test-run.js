@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // faust/wavout-test-run.js — headless WAV-FIRST gate (gate 3, updated for v3).
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node faust/wavout-test-run.js
+//   node faust/wavout-test-run.js
 //
 // TWO passes in chromium (the pinned build), both booting faust/live-test.html with
 // ?wavOut=1 (forces the WAV-FIRST audible path on desktop chromium — the test hatch):

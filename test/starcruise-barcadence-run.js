@@ -19,7 +19,7 @@
 //   4. LANDS ON A REAL PLANET — the unified scene puts a procedural planet ground under
 //      the band (heightAt foot-plant), present through the descent (no pop-in).
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/starcruise-barcadence-run.js
+//   node test/starcruise-barcadence-run.js
 "use strict";
 const path = require("path");
 const { serve, capturePageErrors, installOfflineRoute } = require("./probe-harness.js");

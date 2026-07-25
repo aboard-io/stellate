@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // faust/bg-handoff-test.js — HEADLESS GATE for the BACKGROUND-WAV HANDOFF.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node faust/bg-handoff-test.js
+//   node faust/bg-handoff-test.js
 //
 // Verifies the WIRING of faust/live.js's iOS background-audio handoff (real iOS
 // background playback can only be confirmed by a human on a device — this proves

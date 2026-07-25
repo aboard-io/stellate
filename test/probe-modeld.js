@@ -15,7 +15,7 @@
 // Read-only: adds no repo file besides this probe; no source is modified.
 "use strict";
 const path = require("path");
-// run: NODE_PATH=/home/ford/ftrain-2025/node_modules node faust/probe-modeld.js (same borrow as live-test-run.js)
+// run: node faust/probe-modeld.js (same borrow as live-test-run.js)
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");
 
 const ROOT = path.join(__dirname, "..");

@@ -26,7 +26,7 @@
 //   (c) RMS stays real throughout and the page logs zero errors;
 //   (d) the fugue side still plays correctly first (no start-of-set regression).
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/blend-arrival-run.js
+//   node test/blend-arrival-run.js
 "use strict";
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");
 const path = require("path");

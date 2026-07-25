@@ -17,7 +17,7 @@
 //   - the starmap rendered (an svg/canvas exists)
 // Exits nonzero on ANY failure.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/full-boot-run.js
+//   node test/full-boot-run.js
 //
 // Needs the pinned chromium (requireChromium:true) — it's the ONE gate that
 // exercises the real boot, so it lives in the this-box browser battery, not CI.

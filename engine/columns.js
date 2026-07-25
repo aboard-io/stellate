@@ -1,4 +1,4 @@
-// columns.js — COLUMNAR EVENTS (vector-kernel STEP 1, docs/NEXT.md §5b).
+// columns.js — COLUMNAR EVENTS (vector-kernel STEP 1, docs/history/NEXT.md §5b).
 // The event fabric as struct-of-arrays: numeric fields become Float64Array
 // columns, everything else rides along per-row, and the array-of-objects can
 // be rebuilt BYTE-IDENTICALLY (JSON.stringify-equal, key insertion order and

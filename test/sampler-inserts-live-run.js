@@ -2,7 +2,7 @@
 // test/sampler-inserts-live-run.js — headless gate for INSERTS-ON-SAMPLED-VOICES
 // on the LIVE ring path.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/sampler-inserts-live-run.js
+//   node test/sampler-inserts-live-run.js
 //
 // Rides citypop seed 2 (resolved anchor: chorus on the SAMPLED slap bass — the
 // city-pop gloss) live for ~18s on the ring path and asserts:

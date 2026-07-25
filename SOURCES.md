@@ -64,6 +64,14 @@ illustrative render, not a release.
 | `tw_stationhall` | [`aporee_39219_48146`](https://archive.org/details/aporee_39219_48146) — `soundmap201812162.mp3` | walking into Taoyuan station hall, Taiwan | genre-kernel: transitwave |
 | `tw_platform` | [`aporee_72529_84687`](https://archive.org/details/aporee_72529_84687) | Hastings railway station approach, UK | genre-kernel: transitwave |
 | `tw_arrival` / `tw_pass` (one-shots) | [`aporee_9730_11655`](https://archive.org/details/aporee_9730_11655) — `CuteffectMuggenhof.mp3` | a train passing, Muggenhof, Nuremberg — trimmed to two one-shots in `fetch-found-samples.sh` | genre-kernel: transitwave |
+| `loon` | [`CommonLoon`](https://archive.org/details/CommonLoon) — `loons.mp3` | common loon calls (USFWS recording) — canawave's bird, bed + one-shot | genre-kernel: canawave (**public domain** — US Fish & Wildlife Service) |
+| `leacock1`…`leacock4` | [`aboriginal_canada`](https://archive.org/details/aboriginal_canada) — LibriVox | Stephen Leacock, *The Dawn of Canadian History* chs. 1/2/3/5 — the canawave narration | genre-kernel: canawave (**public domain** — LibriVox) |
+
+⚠ Rows above without an inline license (tokyo_station, the `tw_*` beds) are
+radio-aporee items fetched before per-item license verification became the
+rule (wave 3 and later); they are CC-family on aporee but the exact per-item
+grant is **unverified** — verify against the archive.org item before any
+distributed render that includes them.
 
 The transitwave station-PA voice (train-schedule announcements + the departures litany)
 is **synthesized** with `espeak-ng` through a telephone-band filter — see the
@@ -168,6 +176,61 @@ Pipeline note (`kintai_shortwave`): the item's stereo channels are anti-phase;
 a plain `-ac 1` downmix cancels to −57 dB. The fetch script's `getbed1` takes
 channel 0 instead (verified −18 LUFS out). If any other bed ever comes out
 silent, check downmix cancellation first.
+
+## BBC Sound Effects (2026-07-25) — tools/fetch-found-bbc.sh
+
+40 recordings (36 pool beds + 4 chime one-shots) from the [BBC Sound Effects
+archive](https://sound-effects.bbcrewind.co.uk/), curated one wing per
+`SOURCE_POOLS` class. **All under the BBC’s RemArc licence: personal,
+educational or research use only, NON-COMMERCIAL, no redistribution** — tier 2
+in the policy above, leaning strict: fetch-only, local-cache, never committed,
+never mirrored, never in a packaged build or distributed render. The recipe
+downloads straight from the BBC’s own CDN, so every user’s copy is their own
+fetch under that licence. © BBC — the catalogue numbers below are the
+permanent references (browse: sound-effects.bbcrewind.co.uk/search?q=<id>).
+
+| local name | class | BBC catalogue id | content | licence |
+|---|---|---|---|---|
+| `bbc_petticoat_market_76` | city | `07028153` | Market: London street market, 1976. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_arcade_85` | city | `07062096` | Atmosphere in an amusement arcade - 1985 (2N2, reprocessed). | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_istanbul_bazaar` | city | `07052062` | Istanbul, covered bazaar, indoor acoustic with general activity, clinking crockery, and voices. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_termini_platform` | city | `07035165` | Termini Railway Station, Rome, platform atmosphere. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_m1_drone` | road | `07014026` | Mid-distant perspective sound of fast motorway traffic passing continously. (M1.) | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_italian_steam` | road | `07041063` | Italian Steam Train, interior, constant run. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_blackpool_tram` | road | `07032017` | Blackpool Tram, interior, start, run with intermediate stops. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_container_engineroom` | road | `07018079` | Container Ship, interior, recording of atmosphere in engine room, no speech. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_hand_loom` | industry | `07070124` | Weaving - Hand loom | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_water_mill` | industry | `07042022` | Water Mill, interior, mill operating. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_centurion_press` | industry | `07027028` | Printing: Centurion, two revolution press running. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_beam_engine` | industry | `07072106` | Compound rotative horizontal beam steam engine: start, constant run, stop - occaisional voices in background. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_concert_hall_murmur` | voices | `07003059` | Audience murmur (Recorded in Broadcasting House Concert Hall, London) | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_playground_1971` | voices | `07060109` | Children playing in a school playground in the Midlands (Birmingham) - 1971 (3C1, reprocessed) | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_shoshu_chant` | voices | `07048068` | Nichiren Shoshu - evening prayers, beginning of ceremony - chanting, with noise of beads and bells 2'09" chanting pauses, bells 2'43" chanting starts again in different rhythm 3'59" bells | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_versailles_market` | voices | `07049099` | Versailles market atmosphere in busy street market on sunday morning, with vendors' calling. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_nz_cicada_shimmer` | nature | `07059128` | Cicadas - large number in trees (NZ) | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_kakamega_night` | nature | `NHU05035028` | Night. Many crickets and other insects. High-pitched bat calls. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_ranomafana_frognight` | nature | `NHU05075034` | Night - Frogs, crickets and other insects, river in background. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_berenty_treegroan` | nature | `NHU05075028` | Wind in trees and trees squeaking and groaning. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_underwater_river` | water | `07068032` | Underwater - river. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_anchor_locker` | water | `07034013` | Ferry: Cross-Channel, 'Dover', Seawash recorded from anchor chain locker. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_loch_lapping` | water | `07012119` | Water lapping on loch shore. (Loch Broom, Ullapool.) | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_skye_stream` | water | `07012120` | Mountain stream, fast running water over rocks. (Isle of Skye.) | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_clock_room` | room | `07070160` | Room full of ticking clocks | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_grandfather_1680` | room | `07070147` | Grandfather clock (1680) - ticking | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_fridge_hum` | room | `07027236` | Household: Refrigerator hum. (Technical note: for use at low level) | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_brewery_boiler` | room | `07060091` | Boiler room - Courage Brewery (large modern brewer) | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_wire_song` | weather | `07047154` | Gusty wind through wires. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_hail_umbrella` | weather | `07044115` | Hail falling on umbrella. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_blizzard_shutters` | weather | `07054120` | Blizzard - heard inside house, with banging shutters | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_yacht_cabin_gale` | weather | `07043384` | Gale force wind & rain on yacht. (Recorded in cockpit/cabin - cabin acoustic.) | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_kilndown_peal` | smalltown | `07040004` | Village Church Bells, peal of six bells. (Christ Church, Kilndown, Kent.) | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_forge_shoeing` | smalltown | `07019105` | Blacksmith, shoeing a horse. (Close perspective, no speech.) | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_cart_ride` | smalltown | `07050159` | One horse & wooden cart travelling. (Recorded on cart.) | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_perigord_square` | smalltown | `07063076` | A small village square - recorded near Perigord. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_lutine_bell` | chime | `07042284` | Lloyds of London, Lutine bell, rung twice (for an overdue ship). | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_electro_gong` | chime | `07014106` | Gong sounded. (Specially created electronic sound.) | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_tram_bell` | chime | `07032001` | Blackpool Tram, bell rung once to stop tram. | **RemArc ⚠ NC, no-redistribution** |
+| `bbc_dingdong_door` | chime | `07042240` | Doorbell with electric chime rung. (Ding-dong note.) | **RemArc ⚠ NC, no-redistribution** |
 
 ## Recordings used historically (available to re-layer)
 
@@ -361,6 +424,7 @@ committed, recoverable deliverable. Workflow documented in CLAUDE.md
 | local dir / prefix | source | content | license |
 |---|---|---|---|
 | `stml/` (`stml_*` ids) | **Fatboy Slim / Norman Cook — "Skip to My Loops"** sample CD, [`fatboy-slim-skip-to-my-loops`](https://archive.org/details/fatboy-slim-skip-to-my-loops) on archive.org (single zip, 79 generically-named WAVs) | funky breakbeat **loops** (bpm recovered by the classifier), plus a handful of vocal/funk **chops** and one-shot **hits**. Big-beat DNA — wired into `bigbeat` (+ breakcore/jungle/boombap/triphop and the invented *break* genres), the *house*/*funk* chops pools, and the bigbeat/house/gabber/electro/miamibass/disco hit pools. | unauthorized rip of an out-of-print commercial sample CD; no license chain (the CD's own user license was of doubtful validity) — tier 3: never redistributed in any form, never in a distributed render |
+| `hits/bb_*.wav`, `hits/rave_a..d.wav` (`bb_horn_a/b`, `rave_a`…`rave_d` ids — recipe in `fetch-found-samples.sh`, silence-split from CD tracks) | **Dangerous CD Company — "Danger 1"** sample CD, [`dangerous-cd-company-danger-1-sample-cd`](https://archive.org/details/dangerous-cd-company-danger-1-sample-cd) on archive.org | early-90s rave brass stabs + hoover/stab one-shots — the bigbeat wing's rave-horn identity and the seed of the `rave_stab` pool | unauthorized rip of a commercial sample CD, no license chain — **tier 3**: never redistributed in any form, never in a distributed render *(ledger row added 2026-07-25; the fetch predates it)* |
 
 ## MIDI trove (external drive: /mnt/sources/relocated/stellate-midi-corpus/rips — tools/fetch-midi-trove.sh, 2026-07)
 
@@ -391,11 +455,24 @@ note blobs + extracted melody lines + feature vectors) at
 `found/` is rsynced to the droplet by `tools/ship.sh`, so multi-GB derived
 artifacts must never land under it. Rebuildable from the rips at any time.
 
+## Breaks & one-shots from the original fetch (tools/fetch-found-samples.sh) — ledger completed 2026-07-25
+
+These predate the wave-3 discipline below and were missing from (or misfiled
+in) the ledger; rows added after the 2026-07-25 release review. Two are
+**tier 3** and one was mis-dated — flagged honestly:
+
+| local files / ids | source | content | license |
+|---|---|---|---|
+| `breaks/amen_*.wav` (`amen_165`/`amen_170`/`amen_172`/`amen_175`) | [`amen-breaks`](https://archive.org/details/amen-breaks) on archive.org (`cw_amen*.wav` cuts) | four tempo-cuts of **the Amen break** — The Winstons, "Amen, Brother" (1969 B-side), the most-sampled drum recording in history; the `break_155_175` pool and the jungle/breakcore identity | never formally licensed for sampling by anyone in 50 years; no license chain — **tier 3**: fetch-only, never committed, never redistributed; any distributed render that includes it needs a human release decision |
+| `hits/goal_horn.wav` (`ca_horn`) | [`washingtoncapitalsgoalhorn`](https://archive.org/details/washingtoncapitalsgoalhorn) on archive.org | a real NHL goal horn (Washington Capitals) — canawave's goal-horn identity hit | ⚠ no license stated on the item, arena-horn recording of unknown provenance — treat as **tier 3**: fetch-only, never redistributed |
+| `78s/blues_vox_78.wav` (`blues_vox_78`) | [`78_after-youve-gone…gbia0262239b`](https://archive.org/details/78_after-youve-gone_pee-wee-hunt-and-his-orchestra-crammer-layton_gbia0262239b) (George Blood rip) | Pee Wee Hunt and his Orchestra, "After You've Gone" — vocal-band 78 | **NOT PD by age** (previously misfiled as a pre-1923 78): a c.1946 recording is protected in the US until c.2047 under the Music Modernization Act — treat as **tier 3**: fetch-only, never redistributed |
+| `78s/horns_78.wav` (`horns_78`) | [`Europes_Society_Orch-Castle_Rag`](https://archive.org/details/Europes_Society_Orch-Castle_Rag) | Europe's Society Orchestra, "Castle House Rag" (Victor 35372, **1914**) — brass tutti window, the third shellac `horn_stab` | published pre-1923 → **US public domain by age** |
+
 ## Repertoire wave 3 — hits + breaks expansion (found/samples/ — tools/fetch-hits-expansion.sh, 2026-07)
 
 The one-shot/break vocabulary expansion that fills the `SOURCE_POOLS` classes
 (`vocal_stab` / `chime` / `horn_stab` / `rave_stab` / `perc_hit` + the
-bpm-banded `break_*` pools — docs/NEXT.md §5f). Every source license-verified
+bpm-banded `break_*` pools — docs/history/NEXT.md §5f). Every source license-verified
 per item (metadata, not search index) — this wave is deliberately tier-1-only:
 
 | local files / ids | source | content | license |

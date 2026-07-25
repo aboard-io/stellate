@@ -212,7 +212,7 @@
     };
   }
 
-  // ── OVERSIZED-BAR SPLIT (the PRIMING HANG, docs/NEXT.md §5). The chord-bar is the
+  // ── OVERSIZED-BAR SPLIT (the PRIMING HANG, docs/history/NEXT.md §5). The chord-bar is the
   // worker's feed/render QUANTUM: runLivePump renders one fed bar as ONE blocking
   // renderChunk and only posts "primed" after that first chunk lands — and a chunk
   // larger than the SAB ring is a hard openfail ("chunk > ring"). Slow-drone anchors
@@ -846,7 +846,7 @@
         errors.push("openfail gen" + m.gen + ": " + m.error);
         // never a silent forever-"priming…": a dead current stream is an honest error
         // (the pre-split symptom: a >30s chord-bar overflowed the ring and the app
-        // just spun — atlantidrone/chalkvespers, docs/NEXT.md §5).
+        // just spun — atlantidrone/chalkvespers, docs/history/NEXT.md §5).
         if (stream === cur && !running) status("engine error: " + m.error);
         return;
       }

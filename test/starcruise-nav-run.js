@@ -12,7 +12,7 @@
 //      continuously from the galaxy down to the surface: distance-to-target decreases
 //      smoothly with NO teleport step between the star-map region and the surface region.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/starcruise-nav-run.js
+//   node test/starcruise-nav-run.js
 "use strict";
 const path = require("path");
 const { serve, capturePageErrors, installOfflineRoute } = require("./probe-harness.js");

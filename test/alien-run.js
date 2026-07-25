@@ -17,7 +17,7 @@
 //   E. determinism — same (traits, member, seed) -> identical contact trace;
 //   F. render-style shading (material treatments) + shadows are INTACT.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/alien-run.js
+//   node test/alien-run.js
 "use strict";
 const path = require("path");
 const { serve, installOfflineRoute } = require("./probe-harness.js");

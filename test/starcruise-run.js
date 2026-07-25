@@ -14,7 +14,7 @@
 //   E. NO console/page errors across activate -> run -> stop;
 //   F. stop() tears down cleanly — canvas removed, isRunning() false.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/starcruise-run.js
+//   node test/starcruise-run.js
 "use strict";
 const path = require("path");
 const { serve, capturePageErrors, installOfflineRoute } = require("./probe-harness.js");

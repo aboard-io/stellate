@@ -17,7 +17,7 @@
 //   E. PRESERVED — the arm still CONTACTS the instrument at the onset (play-the-score
 //      law intact) even with the face rig driving every frame.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/alien-face-run.js
+//   node test/alien-face-run.js
 "use strict";
 const path = require("path");
 const { serve, installOfflineRoute } = require("./probe-harness.js");

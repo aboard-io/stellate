@@ -10,7 +10,7 @@
 //   C. it renders NON-BLANK; D. determinism (same seed -> identical motion trace);
 //   E. it accepts BOTH the legacy beatPhase-number call AND the ctx-object call.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/alien-dancer-run.js
+//   node test/alien-dancer-run.js
 "use strict";
 const path = require("path");
 const { serve, installOfflineRoute } = require("./probe-harness.js");

@@ -13,7 +13,7 @@
 // anomalies (every sampler voice sounds); the instrument is SPECIFIC (healthy voices are
 // NOT flagged); no double-playback leak; zero console errors.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node faust/audit-gate-test.js
+//   node faust/audit-gate-test.js
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");

@@ -4,6 +4,13 @@
 *.mp3
 *.aiff
 *.flac
+*.ogg
+*.m4a
+*.aac
+*.aif
+
+# Claude Code session state — never committed, never deployed
+.claude/
 
 # found-video clips are DERIVED via fetch-found-video.sh — never committed
 *.mp4

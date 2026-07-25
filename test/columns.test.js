@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// columns.test.js — COLUMNAR EVENTS gates (vector-kernel STEP 1, docs/NEXT.md
+// columns.test.js — COLUMNAR EVENTS gates (vector-kernel STEP 1, docs/history/NEXT.md
 // §5b; engine/columns.js + the two converted passes in csd-engine.js).
 //   node test/columns.test.js            all gates (full catalog A/B, ~1 min)
 //   node test/columns.test.js --hashes   (internal) print buildEvents hashes

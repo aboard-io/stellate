@@ -201,7 +201,7 @@ makeFlight({ getTravel, getBeat }) -> { update(dt) -> STATE, events }
 
 `test/starcruise-run.js` (playwright, SwiftShader WebGL):
 ```
-NODE_PATH=/home/ford/ftrain-2025/node_modules node test/starcruise-run.js
+node test/starcruise-run.js
 ```
 Asserts: off-by-default (Three unloaded, no canvas) → `start()` lazy-loads Three +
 mounts the canvas + spawns a band → a **non-blank** frame renders (low-res target

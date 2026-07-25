@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// faust/live-test-run.js — headless live gate for the FaustLive facade.
+// test/live-test-run.js — headless live gate for the FaustLive facade.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node faust/live-test-run.js
+//   node test/live-test-run.js
 //
-// Serves the repo root on a local port, drives faust/live-test.html in
+// Serves the repo root on a local port, drives test/live-test.html in
 // headless chromium (playwright, autoplay allowed): goes live on jungle for
 // ~30s with a jungle->house state swap at 15s, then asserts:
 //   - AnalyserNode RMS nonzero (music actually played)
@@ -18,7 +18,7 @@ const PORT = 8791;
 
 async function main() {
   const srv = await serve(ROOT, PORT);
-  const browser = await launchChromium({ requireChromium: true });   // strict: throw if the pinned build is missing
+  const browser = await launchChromium({ requireChromium: true });   // strict: throw if chromium is missing
   const page = await browser.newPage();
   const pageErrors = capturePageErrors(page);
 

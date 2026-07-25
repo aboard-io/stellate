@@ -52,6 +52,12 @@ fi
 echo "== rsync =="
 rsync -a --delete --delay-updates --info=stats1 \
   --exclude '.git' --exclude '.gitmodules' \
+  --exclude '/.claude/' \
+  --exclude '/.claude*' \
+  --exclude '/.venv-sing/' \
+  --exclude '/node_modules/' \
+  --exclude '/tools/node_modules/' \
+  --exclude '/*.mp3' --exclude '/*.wav' --exclude '/*.state.json' \
   --exclude 'found/midi/' \
   --exclude 'found/*.ogg' \
   --exclude 'found/video/lib/' \

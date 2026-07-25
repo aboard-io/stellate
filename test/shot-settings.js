@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // shot-settings.js — screenshot the ⚙ settings popup (needs playback for the panel
-// to render). NODE_PATH=/home/ford/ftrain-2025/node_modules node test/shot-settings.js
+// to render). node test/shot-settings.js
 "use strict";
 const path = require("path");
 const { serve, launchChromium } = require("./probe-harness.js");

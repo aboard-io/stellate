@@ -96,8 +96,7 @@ organ re-inits per utterance:
 ```sh
 node vendor/espeak-ng/prove.js                      # node: synthesis, hashes,
                                                     # determinism model, timings
-NODE_PATH=/home/ford/ftrain-2025/node_modules \
-  node vendor/espeak-ng/prove-browser.js            # headless chromium, served
+node vendor/espeak-ng/prove-browser.js              # headless chromium, served
                                                     # with COOP/COEP require-corp
 ```
 

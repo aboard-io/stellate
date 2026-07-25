@@ -4,7 +4,7 @@
 # engine smoke test comes from the committed Faust wasm in engine/faust/dist/.
 #
 # What this proves: pipeline structure and non-silence — matrix diagonal
-# dominance (178/178), kernel determinism/vocabulary gates, real Faust presses.
+# dominance (274/274), kernel determinism/vocabulary gates, real Faust presses.
 # What it can't prove: how the found layer sounds. Local ./verify.sh over real
 # fetched media stays the pre-ship gate (machines verify structure, human ears
 # verify taste).

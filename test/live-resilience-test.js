@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // faust/live-resilience-test.js — the WAV-FIRST DECODE-THEN-RENDER gate (iOS pitched-voice bug).
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node faust/live-resilience-test.js
+//   node faust/live-resilience-test.js
 //
 // Reproduces + guards THE core-experience bug (Paul, iPhone device tests): the NEW wav engine
 // survives backgrounding but plays only drums+bass — the sampled melody/pad/lead voices are

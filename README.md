@@ -112,10 +112,15 @@ The tree is organized `app/` · `engine/` (core + `engine/faust/` WASM engine) �
 ```bash
 (cd engine/faust && npm ci)            # the WASM engine's deps
 tools/fetch-found-samples.sh           # one-time: SoundFont/GM + breaks + speech
-tools/fetch-found-sound.sh; tools/fetch-found-video.sh   # one-time: found audio/video layers
+tools/fetch-found-sound.sh; tools/fetch-found-bbc.sh; tools/fetch-found-video.sh
+                                       # one-time: found audio/video layers (BBC = RemArc licence, see SOURCES.md)
 ./serve.sh                             # http://localhost:8777/  (needs http, not file://)
 git submodule update --init            # optional: verifier-catalog reference data + MCP tool (skip freely)
 ```
+
+No media fetched yet (or none wanted)? `node tools/ci-standin-media.js`
+synthesizes quiet stand-ins at every path the gates check (~1s, no network) —
+it's how CI runs the full suite on a bare clone; it never overwrites a real file.
 
 Verify / render:
 
@@ -126,9 +131,12 @@ node engine/validate-genres.js --quick # determinism / vocabulary / coverage gat
 node engine/genre-kernel.js track budstep --seed 7 --render   # one track -> mp3
 ```
 
-Needs `node`, `ffmpeg`, `curl` — no `csound` (the founding `royal-road.csd` and
-its renderer live on the `legacy-csound` branch). Headless browser gates live in
-`test/*-test*.js` (need the pinned playwright).
+Needs `node`, `ffmpeg`, `curl`, `python3` (the dev server + sample classifier) —
+no `csound` (the founding `royal-road.csd` and its renderer live on the
+`legacy-csound` branch). Headless browser gates live in `test/*-test*.js`; set
+up their pinned playwright once with `npm install && npm run setup:browser`,
+then run them plain (`node test/explorer-ui-test.js`). Cold-start walkthrough,
+production headers, and how to add your own audio: `docs/SETUP.md`.
 
 ## More
 

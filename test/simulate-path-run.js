@@ -23,7 +23,7 @@
 //      the wall-clock field (same seed twice = same journey, same audits).
 // Pace 64 (the transit gate's pace): ~4s of virtual riding per run — the whole
 // gate is well under a minute.
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/simulate-path-run.js
+//   node test/simulate-path-run.js
 "use strict";
 const { spawnSync } = require("child_process");
 const path = require("path");

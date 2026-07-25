@@ -13,7 +13,7 @@
 //   3. real audio (maxRms > 0.0008, the explorer-ui-test G1 floor);
 //   4. zero console/page errors.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/speech-live-run.js
+//   node test/speech-live-run.js
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");

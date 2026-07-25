@@ -78,7 +78,7 @@
     // item license basis) + 5 synthesized tech elegies. Recovery recipe + exact
     // fetch URLs live in genre-specs/MATERIALS.md and SOURCES.md; url:"" here where
     // the bed is synthesized or awaiting the fetch-found-sound.sh recipe bump.
-    whale_song:      { label:"NOAA/PMEL humpback whale song (US-gov PUBLIC DOMAIN)", url:"found/whale_song.mp3" },   // whalejazz — trading fours with the humpback
+    whale_song:      { label:"NPS humpback whale song (US-gov PUBLIC DOMAIN)", url:"found/whale_song.mp3" },   // whalejazz — trading fours with the humpback (US National Park Service — ledger row in SOURCES.md)
     hydrophone:      { label:"NOAA hydrophone ocean-column ambience (PUBLIC DOMAIN)", url:"found/hydrophone.mp3" },   // atlantidrone — the water column
     crickets:        { label:"Snowy tree cricket / katydid night chorus (PD nature)", url:"found/crickets.mp3" },   // crickettempo — Dolbear's Law
     ferment_bubble:  { label:"Sourdough starter fermenting (+15dB) — food-bed", url:"found/ferment_bubble.mp3" },          // sourdough — a starter is alive
@@ -184,6 +184,49 @@
     bridge_vlf:          { label:"Railway VLF", url:"https://archive.org/download/aporee_62035_71384/UnderBR1railway20231108114318.mp3" },   // CC BY-SA ⚠ SA
     power_em:            { label:"Power-Station Electromagnetics", url:"https://archive.org/download/aporee_39991_45685/antaliepteshespriezor2.mp3" },   // PD Mark
     harbour_interference:{ label:"Harbour Radio Interference", url:"https://archive.org/download/aporee_28537_32885/RadioInterferenceBallsHead.mp3" },   // CC BY-SA ⚠ SA
+    // ---- BBC Sound Effects crate (2026-07-25) — 36 beds curated from
+    // sound-effects.bbcrewind.co.uk across the ten pool classes. ALL RemArc
+    // licence (personal/educational/research, NON-COMMERCIAL) — tier 2:
+    // fetch-only via tools/fetch-found-bbc.sh, local url (same-origin under
+    // COEP; the BBC CDN sends no CORP), never redistributed. Ledger with BBC
+    // catalogue ids: SOURCES.md "BBC Sound Effects". 4 chime one-shots from
+    // the same crate live in SAMPLES (bbc_lutine_bell &c).
+    bbc_petticoat_market_76:{ label:"London street market, 1976 (BBC)", url:"found/bbc_petticoat_market_76.mp3" },
+    bbc_arcade_85:          { label:"Amusement arcade, 1985 (BBC)", url:"found/bbc_arcade_85.mp3" },
+    bbc_istanbul_bazaar:    { label:"Istanbul covered bazaar (BBC)", url:"found/bbc_istanbul_bazaar.mp3" },
+    bbc_termini_platform:   { label:"Rome Termini platform (BBC)", url:"found/bbc_termini_platform.mp3" },
+    bbc_m1_drone:           { label:"M1 motorway, mid-distant (BBC)", url:"found/bbc_m1_drone.mp3" },
+    bbc_italian_steam:      { label:"Italian steam train, interior (BBC)", url:"found/bbc_italian_steam.mp3" },
+    bbc_blackpool_tram:     { label:"Blackpool tram, interior (BBC)", url:"found/bbc_blackpool_tram.mp3" },
+    bbc_container_engineroom:{ label:"Container-ship engine room (BBC)", url:"found/bbc_container_engineroom.mp3" },
+    bbc_hand_loom:          { label:"Hand loom weaving (BBC)", url:"found/bbc_hand_loom.mp3" },
+    bbc_water_mill:         { label:"Water mill, interior (BBC)", url:"found/bbc_water_mill.mp3" },
+    bbc_centurion_press:    { label:"Centurion printing press (BBC)", url:"found/bbc_centurion_press.mp3" },
+    bbc_beam_engine:        { label:"Victorian beam engine (BBC)", url:"found/bbc_beam_engine.mp3" },
+    bbc_concert_hall_murmur:{ label:"Audience murmur, BBC Concert Hall", url:"found/bbc_concert_hall_murmur.mp3" },
+    bbc_playground_1971:    { label:"Birmingham playground, 1971 (BBC)", url:"found/bbc_playground_1971.mp3" },
+    bbc_shoshu_chant:       { label:"Nichiren Shoshu evening chant (BBC)", url:"found/bbc_shoshu_chant.mp3" },
+    bbc_versailles_market:  { label:"Versailles Sunday market (BBC)", url:"found/bbc_versailles_market.mp3" },
+    bbc_nz_cicada_shimmer:  { label:"Massed cicadas, New Zealand (BBC)", url:"found/bbc_nz_cicada_shimmer.mp3" },
+    bbc_kakamega_night:     { label:"Kakamega Forest night (BBC NHU)", url:"found/bbc_kakamega_night.mp3" },
+    bbc_ranomafana_frognight:{ label:"Ranomafana frog night (BBC NHU)", url:"found/bbc_ranomafana_frognight.mp3" },
+    bbc_berenty_treegroan:  { label:"Groaning tamarinds, Berenty (BBC NHU)", url:"found/bbc_berenty_treegroan.mp3" },
+    bbc_underwater_river:   { label:"Underwater river (BBC)", url:"found/bbc_underwater_river.mp3" },
+    bbc_anchor_locker:      { label:"Anchor-locker seawash, Dover ferry (BBC)", url:"found/bbc_anchor_locker.mp3" },
+    bbc_loch_lapping:       { label:"Loch Broom shore, lapping (BBC)", url:"found/bbc_loch_lapping.mp3" },
+    bbc_skye_stream:        { label:"Mountain stream, Isle of Skye (BBC)", url:"found/bbc_skye_stream.mp3" },
+    bbc_clock_room:         { label:"A room full of ticking clocks (BBC)", url:"found/bbc_clock_room.mp3" },
+    bbc_grandfather_1680:   { label:"Grandfather clock, 1680 (BBC)", url:"found/bbc_grandfather_1680.mp3" },
+    bbc_fridge_hum:         { label:"Domestic refrigerator hum (BBC)", url:"found/bbc_fridge_hum.mp3" },
+    bbc_brewery_boiler:     { label:"Boiler room, Courage Brewery (BBC)", url:"found/bbc_brewery_boiler.mp3" },
+    bbc_wire_song:          { label:"Wind through wires (BBC)", url:"found/bbc_wire_song.mp3" },
+    bbc_hail_umbrella:      { label:"Hail on an umbrella (BBC)", url:"found/bbc_hail_umbrella.mp3" },
+    bbc_blizzard_shutters:  { label:"Blizzard, banging shutters (BBC)", url:"found/bbc_blizzard_shutters.mp3" },
+    bbc_yacht_cabin_gale:   { label:"Gale from a yacht cabin (BBC)", url:"found/bbc_yacht_cabin_gale.mp3" },
+    bbc_kilndown_peal:      { label:"Village peal of six, Kilndown (BBC)", url:"found/bbc_kilndown_peal.mp3" },
+    bbc_forge_shoeing:      { label:"Blacksmith shoeing a horse (BBC)", url:"found/bbc_forge_shoeing.mp3" },
+    bbc_cart_ride:          { label:"Horse and cart, from the cart (BBC)", url:"found/bbc_cart_ride.mp3" },
+    bbc_perigord_square:    { label:"Village square, Périgord (BBC)", url:"found/bbc_perigord_square.mp3" },
   };
   // ---------- SOURCE POOLS (the repertoire law, 2026-07-10) ----------
   // Paul: "not lock one bit of found sound into one genre." A sources list may
@@ -201,24 +244,37 @@
     // (berlin_dawn_fox / kruger_dawn / mull_night) are registered in SOURCES
     // but join NO general pool (the bird-rarity law: birds are for canadians /
     // dawn-chorus wiring only — like iriomote, benched from every pool).
+    // wave 4 (2026-07-25): +36 BBC Sound Effects beds (tools/fetch-found-bbc.sh,
+    // RemArc — SOURCES.md "BBC Sound Effects"), four per class below plus four
+    // chime one-shots in the chime pool. All insect/wind-led on the nature
+    // side — the bird-rarity law holds.
     city:     ["tokyo_station","shibuya","tw_stationhall","tw_platform",
                "empress_market","xanthi_bazaar","tunis_souk","marrakesh_forge","brighton_arcade","vegas_casino",
-               "nyc_subway","bart_last_train","budapest_escalator","schoolyard_break","playground_amsterdam","keelung_fishmarket"],
+               "nyc_subway","bart_last_train","budapest_escalator","schoolyard_break","playground_amsterdam","keelung_fishmarket",
+               "bbc_petticoat_market_76","bbc_arcade_85","bbc_istanbul_bazaar","bbc_termini_platform"],
     road:     ["highway_night","tw_intrain","tw_trains",
-               "beitou_night_traffic","morning_traffic_ny","cairo_traffic_jam","blizzard_freight","snow_highway","porto_tram","bratislava_trainyard"],
+               "beitou_night_traffic","morning_traffic_ny","cairo_traffic_jam","blizzard_freight","snow_highway","porto_tram","bratislava_trainyard",
+               "bbc_m1_drone","bbc_italian_steam","bbc_blackpool_tram","bbc_container_engineroom"],
     industry: ["factory",
-               "coldharbour_mill","litho_press","zaandam_sawmill","hydro_turbine","wind_turbine_motor","grinding_plant","pumping_station","ice_machine","silo_resonance"],
+               "coldharbour_mill","litho_press","zaandam_sawmill","hydro_turbine","wind_turbine_motor","grinding_plant","pumping_station","ice_machine","silo_resonance",
+               "bbc_hand_loom","bbc_water_mill","bbc_centurion_press","bbc_beam_engine"],
     voices:   ["vx_apollo","vx_timelady","vx_wwvh","vx_conet_swedish","vx_conet_poacher",
-               "pulkovo_pa","kaohsiung_pa","leeds_terrace","celtic_fans","nevsky_choir","oslo_ferry_pa"],
+               "pulkovo_pa","kaohsiung_pa","leeds_terrace","celtic_fans","nevsky_choir","oslo_ferry_pa",
+               "bbc_concert_hall_murmur","bbc_playground_1971","bbc_shoshu_chant","bbc_versailles_market"],
     nature:   ["frogs","crickets",
-               "coyote_prairie","tepoztlan_cricket","nj_owls","mugla_cicadas","ibis_evening"],
+               "coyote_prairie","tepoztlan_cricket","nj_owls","mugla_cicadas","ibis_evening",
+               "bbc_nz_cicada_shimmer","bbc_kakamega_night","bbc_ranomafana_frognight","bbc_berenty_treegroan"],
     water:    ["hydrophone",
-               "swamp_underwater","underwater_mechanica","weir_underwater","glacier_melt","pebble_surf","winter_surf","night_beach","sealion_traffic"],
+               "swamp_underwater","underwater_mechanica","weir_underwater","glacier_melt","pebble_surf","winter_surf","night_beach","sealion_traffic",
+               "bbc_underwater_river","bbc_anchor_locker","bbc_loch_lapping","bbc_skye_stream"],
     room:     ["hvac_hum",
-               "office_predawn","kitchen_fridge","oil_boiler","maat_boiler","seedvault_tunnel","platform_vent","mills_elevator"],
+               "office_predawn","kitchen_fridge","oil_boiler","maat_boiler","seedvault_tunnel","platform_vent","mills_elevator",
+               "bbc_clock_room","bbc_grandfather_1680","bbc_fridge_hum","bbc_brewery_boiler"],
     // the three NEW classes (wave 3) — all members from the expansion crate
-    weather:  ["krabi_thunder","geres_thunder","queens_thunder","istanbul_storm","kielce_rain","queens_blizzard","shetland_storm","lighthouse_storm","grenoble_wind"],
-    smalltown:["cordes_bells","brugge_bells","stjosef_bells","sunday_bell","calgary_noon","brocante_bells","tongluo_market","taranto_storm_bells"],
+    weather:  ["krabi_thunder","geres_thunder","queens_thunder","istanbul_storm","kielce_rain","queens_blizzard","shetland_storm","lighthouse_storm","grenoble_wind",
+               "bbc_wire_song","bbc_hail_umbrella","bbc_blizzard_shutters","bbc_yacht_cabin_gale"],
+    smalltown:["cordes_bells","brugge_bells","stjosef_bells","sunday_bell","calgary_noon","brocante_bells","tongluo_market","taranto_storm_bells",
+               "bbc_kilndown_peal","bbc_forge_shoeing","bbc_cart_ride","bbc_perigord_square"],
     shortwave:["kintai_shortwave","wendover_shortwave","bridge_vlf","power_em","harbour_interference"],
     // --- one-shot classes (repertoire wave 3, 2026-07-10) — for hits.sources.
     // Members are SAMPLES ids (fetch-hits-expansion.sh + fetch-found-samples.sh).
@@ -228,7 +284,8 @@
     // none of those anchors take a chime token; tw_ding rides IN the chime pool
     // for everyone else.
     vocal_stab: ["vox_a","vox_b","vox_c","vox_d","vox_e","vox_f","caruso_78","laughs_78"],
-    chime:      ["tw_ding","handbell","timer_ding","chime_tub_hi","chime_tub_lo","chime_hand","chime_glock"],
+    chime:      ["tw_ding","handbell","timer_ding","chime_tub_hi","chime_tub_lo","chime_hand","chime_glock",
+                 "bbc_lutine_bell","bbc_electro_gong","bbc_tram_bell","bbc_dingdong_door"],
     // horn_stab is SHELLAC-ONLY (era law): bb_horn_a/b are the bigbeat wing's
     // rave-brass identity and stay raw ids in their anchors — mixing them in
     // would flash a rave horn into tango/jazz on unlucky seeds.
@@ -653,6 +710,12 @@
     chime_tub_lo:{ file:"hits/chime_tub_lo.wav", kind:"hit", durSec:6.0, note:"E3" },
     chime_hand:  { file:"hits/chime_hand.wav",   kind:"hit", durSec:5.0, note:"A4" },
     chime_glock: { file:"hits/chime_glock.wav",  kind:"hit", durSec:4.0, note:"C6" },
+    // BBC Sound Effects chimes (RemArc — fetch-only, tools/fetch-found-bbc.sh;
+    // ledger: SOURCES.md "BBC Sound Effects"). durSec measured post-trim.
+    bbc_lutine_bell:  { file:"bbc/lutine_bell.wav",   kind:"hit", durSec:9.7 },    // the Lutine bell, Lloyd's of London
+    bbc_electro_gong: { file:"bbc/electro_gong.wav",  kind:"hit", durSec:3.8 },    // BBC-created electronic gong
+    bbc_tram_bell:    { file:"bbc/tram_bell.wav",     kind:"hit", durSec:5.6 },    // Blackpool tram stop-bell
+    bbc_dingdong_door:{ file:"bbc/dingdong_door.wav", kind:"hit", durSec:6.4 },    // suburban two-note doorbell
     // orchestral percussion one-shots: VCSL (CC0)
     perc_timpani:{ file:"hits/perc_timpani.wav", kind:"hit", durSec:4.0 },
     perc_gong:   { file:"hits/perc_gong.wav",    kind:"hit", durSec:6.0 },

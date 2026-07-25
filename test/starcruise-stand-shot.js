@@ -3,7 +3,7 @@
 // FEET ON THE GROUND (faces visible), for the feet-plant fix. Reuses starcruise-shot.js's
 // drive-to-DANCE, but frames a WIDE, front-on, slightly-elevated view (no aggressive close
 // dolly) so the whole band + the little planet surface under their feet is in frame.
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/starcruise-stand-shot.js
+//   node test/starcruise-stand-shot.js
 // Writes scratch/shots/stand-<genre>.png.
 "use strict";
 const path = require("path");

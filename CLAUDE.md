@@ -66,11 +66,11 @@ node engine/genre-kernel.js track jungle --seed 7 --render   # one track -> mp3 
 node tools/render-sample-video.js         # sample.mp4: song + video layer, cuts on section downbeats
 node engine/genre-kernel.js journey path.json --hours 4 --out journey/ --render --video
                                # explorer path -> mp3s + genre-affine videos + gapless journey (GENRE-SPACE.md)
-# headless browser gates (need the pinned playwright):
-NODE_PATH=/home/ford/ftrain-2025/node_modules node test/explorer-ui-test.js   # (+ genre-viz / demo-layer / live-test-run / wavout-test-run / live-resilience / bg-survival)
-NODE_PATH=/home/ford/ftrain-2025/node_modules node test/blend-arrival-run.js  # live-blend ARRIVAL contract: drums ≤3 bars, kit/lead identity ≤7
-NODE_PATH=/home/ford/ftrain-2025/node_modules node test/speech-live-run.js    # speech organ live: espeak WASM synthesizes + feeds the found pipeline
-NODE_PATH=/home/ford/ftrain-2025/node_modules node test/mp3-bed-decode-run.js # HOSTING §3 diet: MP3 beds fetch 200 + decodeAudioData in a real browser
+# headless browser gates (need `npm install && npm run setup:browser` at the repo root, once):
+node test/explorer-ui-test.js   # (+ genre-viz / demo-layer / live-test-run / wavout-test-run / live-resilience / bg-survival)
+node test/blend-arrival-run.js  # live-blend ARRIVAL contract: drums ≤3 bars, kit/lead identity ≤7
+node test/speech-live-run.js    # speech organ live: espeak WASM synthesizes + feeds the found pipeline
+node test/mp3-bed-decode-run.js # HOSTING §3 diet: MP3 beds fetch 200 + decodeAudioData in a real browser
 ```
 
 Ship: `tools/ship.sh` = gates → `git push` → deploy to stellate.app (refuses a

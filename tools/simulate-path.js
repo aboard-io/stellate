@@ -94,7 +94,7 @@
 //   - genre list: waypoints placed ON those stars via __X.POS.
 //   Exit 0 = simulated + contract PASS, 1 = contract FAIL or crash, 2 = usage.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node tools/simulate-path.js default --seed 43 --pace 64
+//   node tools/simulate-path.js default --seed 43 --pace 64
 "use strict";
 const fs = require("fs");
 const path = require("path");

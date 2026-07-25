@@ -6,7 +6,7 @@
 // the scheduler re-runs the same failing bar forever: barCount stalls, RMS
 // collapses to silence (WEDGE). With the fix it logs the bad voice and keeps
 // playing (SURVIVE).
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node faust/wedge-demo-run.js
+//   node faust/wedge-demo-run.js
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");

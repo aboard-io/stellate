@@ -13,7 +13,7 @@
 //   * BACKGROUND-TAB: assert recording is REFUSED while the tab is hidden.
 // MediaRecorder + canvas.captureStream are desktop-Chromium-shaped; what still needs
 // a REAL browser/device is listed at the bottom of this file.
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/video-export-probe.js
+//   node test/video-export-probe.js
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");

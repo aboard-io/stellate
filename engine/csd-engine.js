@@ -28,7 +28,7 @@
   // rather than throwing (never die over an expression organ).
   const CsdTheoryRef=(typeof module!=="undefined"&&module.exports)?require("./theory.js"):root.CsdTheory;
   const CsdPipesRef =(typeof module!=="undefined"&&module.exports)?require("./pipes.js") :root.CsdPipes;
-  // COLUMNAR EVENTS (vector-kernel STEP 1 — docs/NEXT.md §5b): the groove +
+  // COLUMNAR EVENTS (vector-kernel STEP 1 — docs/history/NEXT.md §5b): the groove +
   // voice-dynamics passes run their arithmetic on struct-of-arrays compute
   // views (engine/columns.js) while writing results back into the same event
   // objects — BYTE-IDENTICAL to the scalar loops (test/columns.test.js proves

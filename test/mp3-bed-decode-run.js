@@ -12,7 +12,7 @@
 // This proves fetch + decodeAudioData of the converted MP3 beds in a real
 // chromium, same-origin under COOP/COEP, exactly like production nginx.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/mp3-bed-decode-run.js
+//   node test/mp3-bed-decode-run.js
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");

@@ -45,8 +45,8 @@ MCP tool, nothing in the app or the gates imports it. A plain clone without
 `./verify.sh` green:
 
 - **matrix** — the symbolic confusion matrix must stay
-  **diagonal-dominant: N/N (273 as of 2026-07)**. Every genre must still sound most like
-  itself, symbolically. This is the big one: it's what makes 273 genres a
+  **diagonal-dominant: N/N (274 as of 2026-07)**. Every genre must still sound most like
+  itself, symbolically. This is the big one: it's what makes 274 genres a
   space instead of a soup.
 - **validate** — the kernel gate suite: **determinism** (same state, same
   seed → byte-identical events), **vocabulary** (genres draw from the

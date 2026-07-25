@@ -1,7 +1,7 @@
 # ROADMAP — the plan for what's next (for Opus to implement)
 
 *Authored 2026-07-11 (Fable capstone session) from a fan-out analysis of the whole
-system. This is the forward plan; `docs/NEXT.md` is the short live backlog and now
+system. This is the forward plan; `docs/history/NEXT.md` is the short live backlog and now
 points here. Read `CLAUDE.md` and `docs/GENRE-SPACE.md` for context first.*
 
 **How to use this doc.** Six workstreams, each self-contained. Workstream 1 (the
@@ -335,7 +335,7 @@ lines 1664–6388).
    BYTE-EQUAL / drift. Turns the scariest invariant into a one-command green check for
    nervous contributors.
 3. **[REMAINING]** **Fix the `NODE_PATH` clean-clone blocker.** The browser test battery hard-codes
-   `NODE_PATH=/home/ford/ftrain-2025/node_modules` (NEXT.md:115, `test/*`), so half the
+   a personal `NODE_PATH` (NEXT.md:115, `test/*`), so half the
    gates are un-runnable on a fresh clone. Add a local `test/package.json` (or reuse
    `engine/faust/node_modules`), drop the absolute path, document it.
 4. **[DONE — boot smoke landed as `test/boot-smoke.js`; CONTRIBUTING section updated]** **CONTRIBUTING.md: an "engine load order & the global namespace" section** (the rules
@@ -387,7 +387,7 @@ move `app/*.js` or `engine/*.js` file locations — they're pinned in `index.htm
 `README.md` (×2), `CLAUDE.md` (line 3, 119), `CONTRIBUTING.md` (44–47, 70),
 `docs/GENRE-SPACE.md` (38, 52, 145), `docs/MUSICALITY.md`, `docs/MUSIC-MIND.md` (12, 94,
 159), `docs/INVARIANTS.md` (36, 144–150, 181 — also re-derive `228×227/2` → `249×248/2`),
-`docs/NEXT.md:117` (`240/240` → `249/249`). **Recommendation:** make the anchor count a
+`docs/history/NEXT.md:117` (`240/240` → `249/249`). **Recommendation:** make the anchor count a
 single computed value (or a generated snippet) to stop the recurring drift. *Leave
 `docs/history/*` counts alone — they are point-in-time records.*
 

@@ -12,8 +12,8 @@
 // OFFLINE / READ-ONLY: only reads K.GENRES and calls K.track / V.features / V.TARGETS.
 // DETERMINISTIC: fixed seed (default 1), no Date.now()/Math.random().
 
-const K = require('/home/ford/stellate/engine/genre-kernel.js');
-const V = require('/home/ford/stellate/engine/genre-verifier.js');
+const K = require('../engine/genre-kernel.js');
+const V = require('../engine/genre-verifier.js');
 
 const DEFAULT_SEED = 1;
 

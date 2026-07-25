@@ -2,9 +2,8 @@
 // faust/probe-harness.js — shared headless-probe plumbing for the live/press
 // verification probes (live-test-run.js + probe-*.js). One static file server +
 // one chromium-borrow + one page-error tap, so the probes don't each re-carry
-// the same ~30 lines. Playwright + chromium are borrowed the same way as always
-// (NODE_PATH=/home/ford/ftrain-2025/node_modules, the pinned ms-playwright
-// chromium-1217 build).
+// the same ~30 lines. Playwright + chromium come from the repo-root install
+// (`npm install && npm run setup:browser`).
 "use strict";
 const http = require("http");
 const fs = require("fs");
@@ -34,18 +33,16 @@ function serve(root, port) {
   });
 }
 
-// launch the pinned headless chromium (autoplay allowed, no sandbox).
-// opts.requireChromium: when TRUE (live-test-run's strict gate), THROW if the
-// pinned build is missing; when false/omitted (the probes), fall back to
-// playwright's bundled browser instead.
+// launch headless chromium (autoplay allowed, no sandbox) via playwright's
+// own executable resolution. Throws with install instructions when the
+// browser is missing.
 async function launchChromium(opts) {
   opts = opts || {};
   const { chromium } = require("playwright");
-  const exe = path.join(process.env.HOME, ".cache/ms-playwright/chromium-1217/chrome-linux64/chrome");
-  const launchOpts = { headless: true, args: ["--autoplay-policy=no-user-gesture-required", "--no-sandbox"] };
-  if (fs.existsSync(exe)) launchOpts.executablePath = exe;
-  else if (opts.requireChromium) throw new Error("chromium-1217 not found at " + exe);
-  return chromium.launch(launchOpts);
+  const exe = chromium.executablePath();
+  if (!exe || !fs.existsSync(exe))
+    throw new Error("playwright chromium not found — run `npm install && npm run setup:browser` at the repo root");
+  return chromium.launch({ headless: true, args: ["--autoplay-policy=no-user-gesture-required", "--no-sandbox"] });
 }
 
 // wire pageerror + console-error capture; returns the growing errors array.

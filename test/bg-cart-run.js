@@ -4,7 +4,7 @@
 // rotator), and the alternator must STAND DOWN while the star-cruise runs
 // (there the cart is PLANET-KEYED by starcruise ensureSurface).
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/bg-cart-run.js
+//   node test/bg-cart-run.js
 //
 // Gates:
 //   A. mode 2 rotates: with bg-mode 2 restored from localStorage and the

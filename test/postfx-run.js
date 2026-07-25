@@ -13,7 +13,7 @@
 //   D. DITHER present: the quantised frame still shows >1 exact colour (not a
 //      single posterised block), i.e. the pass ran and produced varied output.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/postfx-run.js
+//   node test/postfx-run.js
 "use strict";
 const path = require("path");
 const { serve } = require("./probe-harness.js");

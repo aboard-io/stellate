@@ -28,8 +28,8 @@
 //   pick even when A==B — but its endpoints still equal the anchor and t=0 is
 //   quiet.)
 
-const K = require('/home/ford/stellate/engine/genre-kernel.js');
-const V = require('/home/ford/stellate/engine/genre-verifier.js');
+const K = require('../engine/genre-kernel.js');
+const V = require('../engine/genre-verifier.js');
 
 const DEFAULT_SEED = 1;
 const DEFAULT_STEPS = 40; // 41 samples, t = 0, 1/40, ..., 1

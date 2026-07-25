@@ -11,7 +11,7 @@
 //   3. real ctx.suspend() while "visible" -> the onstatechange handler must
 //      mute, poke resume, and self-heal audio without any visibility event
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node faust/bg-survival-run.js
+//   node faust/bg-survival-run.js
 //
 // This drives the DESKTOP ring path (?wavOut=0) — the survival machinery lives there;
 // the WAV-FIRST mobile path is no-op-for-audio on hidden by design (WAV-FIRST.md).

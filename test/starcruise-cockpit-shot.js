@@ -4,7 +4,7 @@
 // the space/cockpit state (planet receding below, genre console lit) and grab a
 // PNG of the display canvas. Reuses only the documented __STARCRUISE probe hooks.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/starcruise-cockpit-shot.js
+//   node test/starcruise-cockpit-shot.js
 "use strict";
 const path = require("path");
 const fs = require("fs");

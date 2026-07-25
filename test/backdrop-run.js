@@ -12,7 +12,7 @@
 //      different seed -> a different layout (seed truly threads through).
 //   E. NO console/page errors; update(dt) steps without throwing.
 //
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node test/backdrop-run.js
+//   node test/backdrop-run.js
 "use strict";
 const path = require("path");
 const { serve, capturePageErrors, installOfflineRoute } = require("./probe-harness.js");

@@ -4,7 +4,7 @@
 // Drives explorer.html headless, snaps the cursor blues -> tango -> neoclassical
 // (the sampler->sampler->sampler lead ride), and traces per-bar RMS, the live
 // error array, the voice pools, S.playing lead identity, and the flip queue.
-//   NODE_PATH=/home/ford/ftrain-2025/node_modules node faust/journey-crash-run.js
+//   node faust/journey-crash-run.js
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");
