@@ -56,6 +56,50 @@
   const XFADE_MS = 400;                                // equal-power state-change crossfade
   const PRIME_SEC = 2.0, BRIDGE_PRIME_SEC = 1.2;       // fill before a stream is "primed"
   const WORKER_RUNWAY = 8;                             // worker self-backpressure ceiling (> TARGET; live.js is the limiter)
+  // health floor for the RENDERED (ring) runway — see the load reporter. A bar sits
+  // fed-but-unrendered for its whole render time, so the ring legitimately BREATHES
+  // between roughly one bar and the feed target: measured on a 4-core box at 1.5×
+  // oversubscription (house/dub/jungle, 120 s), rendered runway p50 4.14 s, p10 2.52 s,
+  // p1 1.44 s, min 0.94 s while the FEED ledger sat at 5.0-5.3 s throughout — that gap
+  // is the phantom. The floor is what a single main-thread/worker stall (measured up to
+  // 585-623 ms) could swallow: below it, a hiccup is an audible hole.
+  const RING_FLOOR_SEC = 0.5;
+
+  // ── MEDIA-SESSION IDENTITY (2026-07-25) ────────────────────────────────────
+  // THE ENGINE DOES NOT OWN WHAT THE LOCK SCREEN SAYS. It has no access to the
+  // kernel's display labels or the star map's cluster names, so it must not
+  // pretend to: both blocks below used to hardcode the project's PRE-RENAME
+  // identity — Paul's lock screen showed the 2026-07 name and a dead domain
+  // (the strings are gone from this repo; grep is the gate) — and, because those
+  // blocks fire AFTER the app's own (correct)
+  // updateMediaSession and the wavOut one re-asserts every second, the engine
+  // CLOBBERED the app. So the HOST supplies the strings: opts.mediaMeta() is a
+  // callback returning { title, artist, album, artwork? } (app/live.js composes
+  // the current genre's label + its cluster). With no callback the engine never
+  // overwrites metadata a host has already set, and fills the slot only when it
+  // is empty — with something at least TRUE.
+  const MEDIA_FALLBACK = { title: "STELLATE", artist: "stellate.app", album: "the genre space" };
+  // returns the new signature (the caller keeps it so a 1 Hz poll doesn't re-mint
+  // an identical MediaMetadata — some UAs flicker/renotify on every assignment).
+  function setMediaMeta(MS, root, opts, last, sink) {
+    if (!MS || typeof root.MediaMetadata === "undefined") return last;
+    const cb = opts && typeof opts.mediaMeta === "function" ? opts.mediaMeta : null;
+    let m = null;
+    if (cb) { try { m = cb(); } catch (e) { m = null; } }
+    if (!m) {
+      if (MS.metadata) return last;   // the host owns this slot — leave it alone
+      m = MEDIA_FALLBACK;
+    }
+    const meta = { title: String(m.title || MEDIA_FALLBACK.title),
+      artist: String(m.artist || MEDIA_FALLBACK.artist),
+      album: String(m.album || MEDIA_FALLBACK.album) };
+    if (m.artwork && m.artwork.length) meta.artwork = m.artwork;
+    const sig = meta.title + " | " + meta.artist + " | " + meta.album;
+    if (sig === last) return last;
+    try { MS.metadata = new root.MediaMetadata(meta); } catch (e) {}
+    if (sink) sink(meta);
+    return sig;
+  }
 
   // tiny browser-safe silent-WAV data URI — used to UNLOCK the background <audio>
   // element inside the play gesture, so a later programmatic play() (fired from
@@ -120,6 +164,12 @@
         }
       }
     }
+    // burst memo state (see BURST MEMO in stepWalk): valid only for the duration of
+    // one synchronous run — the microtask below clears it before any timer, event or
+    // await can hand the app a chance to mutate the state object it was derived from.
+    let memoSt = null, memoSec = null, memoFill = null, memoSweep = null;
+    let memoUnits = null, memoFx = null, memoArmed = false;
+    const clearMemo = () => { memoSt = null; memoSec = null; memoUnits = null; memoFx = null; memoArmed = false; };
     function grooveSec(st) {
       const score = (s) => (s.pads ? 1 : 0) + (s.bass && s.bass !== "off" ? 1 : 0) +
         (s.drums && s.drums !== "off" ? 2 : 0) + (s.melody && s.melody !== "off" ? 1 : 0);
@@ -213,9 +263,31 @@
       // main-thread walk over a long loop doesn't block the UI for seconds and get
       // the page killed. Same per-bar seed/section walk => identical MIDI.
       if (opts && opts.midiOnly) { const rl = { one, spb, lo, hi, meta, musicalSec: (hi - lo) * spb, ev }; advance(); return rl; }
-      const units = SE.voiceUnits(E, one);
+      // ── BURST MEMO (audit tier 4: "stepWalk renders the full chord cycle every bar
+      // and keeps 1/nch of it"). buildEvents can't be windowed from here (whole-section
+      // context + the per-bar reseed), but voiceUnits + fxParams are 22-40% of the walk
+      // body and are provably blind to everything the walk varies per bar: measured over
+      // all 274 genres x seeds 1/4/7 x 8 bars (822 states), NEITHER output changes when
+      // only the per-bar seed / _liveEdge / _voiceRun move — instrument identity rides
+      // instrumentSeed by design. What they DO read is the live state, which the app
+      // mutates IN PLACE while gliding (app/targeting.js glideStep walks bpm, sends,
+      // dx7 params…), so a lasting cache would go stale and change what is heard.
+      // The memo is therefore scoped to ONE SYNCHRONOUS BURST: a microtask invalidates
+      // it, and nothing can mutate the state without first yielding the thread. So it
+      // only ever fires inside a single pumpOnce/priming loop (up to 24 bars back to
+      // back — exactly the burst the finding is about) and is a provable no-op in
+      // steady state, where one bar is produced per pump tick.
+      const memoKey = cur0 === memoSec && sec.fill === memoFill && sec.sweep === memoSweep && st === memoSt;
+      let units, fxParams;
+      if (memoKey && memoUnits) { units = memoUnits; fxParams = memoFx; }
+      else {
+        units = SE.voiceUnits(E, one);
+        fxParams = SE.fxParams(one);
+        memoSt = st; memoSec = cur0; memoFill = sec.fill; memoSweep = sec.sweep;
+        memoUnits = units; memoFx = fxParams;
+        if (!memoArmed) { memoArmed = true; Promise.resolve().then(clearMemo); }
+      }
       const m = SE.mapEvents(E, one, ev, { lo, hi, units });
-      const fxParams = SE.fxParams(one);
       const barLenFrames = Math.max(BS, Math.round((hi - lo) * spb * SR / BS) * BS);
       const r = { one, units, sig: sigOf(units), spb, lo, hi, events: m.events, fxParams,
         sweepsRaw: m.sweeps, found: m.found, foundSources: one.foundSources || [], meta,
@@ -436,7 +508,27 @@
     limiter.threshold.value = -1.5; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.002; limiter.release.value = 0.12;
     ringNode.connect(masterGain);
     masterGain.connect(busComp); busComp.connect(makeup); makeup.connect(limiter);
-    limiter.connect(analyser);
+    // ── THE BRICKWALL (2026-07-25, docs/TIMING-AUDIT-2026-07 "the master output
+    // clips"). A DynamicsCompressor is not a limiter: at threshold −1.5 dB / ratio 20
+    // its 2 ms ATTACK passes a transient's first ~90 samples at full gain, so the
+    // output went over full scale (and was hard-clipped by the browser) in 15.7% of
+    // loud 100 ms windows, peak 1.166. dsp/master_limit.dsp is a real lookahead
+    // limiter — 2 ms of lookahead, gain from the peak about to arrive, sliding-min so
+    // the ramp is complete when it lands. Below the ceiling it is bit-transparent, so
+    // the compressor above still does all the audible gain riding and this only
+    // catches what escaped it. Wired at the END of the chain (analyser, clickmon,
+    // vapor and userGain all hang off its output = the listener's actual signal).
+    // If it can't be built, the chain falls back to exactly the previous topology.
+    let masterLimit = null;
+    try {
+      const fw = await import(BASE + "node_modules/@grame/faustwasm/dist/esm/index.js");
+      const fac = await fw.FaustWasmInstantiator.loadDSPFactory(
+        BASE + "dist/master_limit-module.wasm", BASE + "dist/master_limit-meta.json");
+      masterLimit = await new fw.FaustMonoDspGenerator().createNode(ctx, "master_limit", fac);
+    } catch (e) { errors.push("master_limit: " + (e && e.message || e)); masterLimit = null; }
+    const masterOut = masterLimit || limiter;   // the last node of the master chain
+    if (masterLimit) limiter.connect(masterLimit);
+    masterOut.connect(analyser);
     // VAPOR (C.1, live-only): a global "walking through a mall" EQ on the master —
     // a high-shelf that rolls the top off + a short reverb wash, both scaled by
     // vapor 0..1. Sits AFTER the analyser (the RMS meters stay pre-vapor/pre-volume)
@@ -513,9 +605,9 @@
       // dropout (299 ms of digital silence, edges of 0.923/0.884 AT THE OUTPUT)
       // divided back through the makeup read ≈0.35 at that tap, under the detector's
       // 0.5 bar: `clicks` counted 0 through a total dropout. Tap the LISTENER'S
-      // signal instead — the limiter output is exactly what the analyser (and the
-      // ear) gets — so the 0.5 threshold means 0.5 of full scale, as documented.
-      limiter.connect(cm);
+      // signal instead — the master chain's output is exactly what the analyser (and
+      // the ear) gets — so the 0.5 threshold means 0.5 of full scale, as documented.
+      masterOut.connect(cm);
       const cmSink = ctx.createGain(); cmSink.gain.value = 0;
       cm.connect(cmSink); cmSink.connect(ctx.destination);
       clickMonState = { node: cm, latest: { clicks: 0, peakjump: 0, rms: 0, gaps: 0 } };
@@ -1025,6 +1117,12 @@
     }
 
     // ── feed pump: keep the feed-target runway filled to TARGET, gated on playback ──
+    // NOTE (audit 2026-07-25, "the phantom runway"): this is the FEED ledger — frames
+    // POSTED to the producer worker, not frames the producer has actually RENDERED into
+    // the ring. It is the right quantity to gate the pump on (don't over-produce), and
+    // the WRONG quantity to report as health: it reads full straight through producer
+    // starvation, which is why loadRatio sat at 1.00 through a measured 299 ms dropout.
+    // The honest sensor is ringRunwayFrames() below.
     function feedRunwayFrames() {
       if (phase === "bridging" && br) return br.fedFrames;   // bridge not active yet (played 0)
       // BAR-ALIGNED fades wait for the anchor downbeat (up to a bar): the audible
@@ -1037,6 +1135,33 @@
       if (!cur) return 0;
       const played = cur.startGlobal != null ? Math.max(0, read53() - cur.startGlobal) : 0;
       return cur.fedFrames - played;
+    }
+    // ── THE HONEST RUNWAY (docs/ENGINE-AUDIT-2026-07 / TIMING-AUDIT "the phantom
+    // runway"). Frames of audio that ACTUALLY EXIST in the ring ahead of the read
+    // cursor, along the real playback path — R_WRITE is published by the producer
+    // only AFTER the samples are in the SAB (stream-worker.js), so this is exactly
+    // what the worklet can still read. A bar can sit fed-but-unrendered for its
+    // whole render time, so this is normally SMALLER than the feed ledger; that gap
+    // IS the producer's backlog, and it is the thing that goes to zero in a dropout.
+    const ringWritten = (stream) => Atomics.load(ctrl, C_RING0 + stream.ring * RING_STRIDE + R_WRITE);
+    function ringRunwayFrames() {
+      if (!cur) return 0;
+      const pg = read53();
+      // ring frame f of a stream sounds at global frame startGlobal + f
+      const aheadA = cur.startGlobal != null ? cur.startGlobal + ringWritten(cur) - pg : ringWritten(cur);
+      if (phase === "fading" && br && br.startGlobal != null) {
+        const toAnchor = br.startGlobal - pg;
+        // before the anchor the OUTGOING ring carries the ramp: a hole there is a hole
+        // (this is the dry-ramp failure the tail exists to prevent — it must READ as one)
+        if (toAnchor > 0 && aheadA < toAnchor) return Math.max(0, aheadA);
+        return Math.max(0, br.startGlobal + ringWritten(br) - pg);
+      }
+      // bridging: the old ring is still the audible one and the bridge's primed frames
+      // will follow it at a bar boundary we haven't picked yet, so the ready audio is
+      // the union — but only while the audible ring still HAS something (aheadA<=0 now
+      // means the listener is hearing silence no matter how well the bridge is doing).
+      if (phase === "bridging" && br) return aheadA <= 0 ? 0 : aheadA + ringWritten(br);
+      return Math.max(0, aheadA);
     }
     let pumpTimer = 0;
     // deeper feed target while hidden (background timer throttling; see HIDDEN_TARGET_SEC)
@@ -1194,13 +1319,21 @@
     }
 
     // ── onLoad reporter (~250ms): r = runway health, e = 0 (eco deleted) ──
+    // HEALTH IS MEASURED ON THE RING, NOT ON THE FEED LEDGER (audit: "the phantom
+    // runway"). loadRatio used to be feedRunwayFrames()/TARGET_SEC — frames posted to
+    // the worker — so it read 1.00 while the producer was starving and the ring was
+    // running dry. It now reads the RENDERED runway against RING_FLOOR_SEC, the depth
+    // below which a single long task (measured: up to 585 ms on a bare page, 623 ms in
+    // the app) can empty the ring: 1.00 = at least a floor of real audio is in the SAB,
+    // 0.00 = the ring is dry NOW. The feed ledger is still what the pump is gated on,
+    // and is still reported separately by handle.__runway().
     let loadTimer = 0, loadRatio = 1;
     function startLoadReporter() {
       if (loadTimer) return;
       loadTimer = setInterval(() => {
         if (abort) return;
-        const runSec = Math.max(0, feedRunwayFrames()) / SR;
-        loadRatio = Math.min(1, runSec / TARGET_SEC);
+        const runSec = Math.max(0, ringRunwayFrames()) / SR;
+        loadRatio = Math.min(1, runSec / RING_FLOOR_SEC);
         if (opts.onLoad) try { opts.onLoad(loadRatio, 0); } catch (e) {}
       }, 250);
     }
@@ -1443,19 +1576,15 @@
     } catch (e) {}
 
     // ── MediaSession: show WHAT is playing on the iOS lock screen during handoff and
-    // wire transport. explorer.html ALREADY owns the action handlers (play→goLive /
-    // pause→stopLive) and a richer blend title, so — to NOT regress the deployed app —
-    // live.js here only MAINTAINS metadata/playbackState (a host that reasserts a nicer
-    // title simply wins, since it fires after) and registers its own play/pause handlers
-    // ONLY when explicitly asked (opts.mediaSession) for standalone hosts. Guarded. ──
+    // wire transport. The APP owns the identity (app/live.js updateMediaSession) and
+    // hands it here through opts.mediaMeta — see setMediaMeta above; with no callback
+    // this never overwrites what the host already set. The play/pause action handlers
+    // are registered ONLY when explicitly asked (opts.mediaSession) for standalone
+    // hosts, since the app registers its own. Guarded. ──
     const MS = (typeof navigator !== "undefined" && navigator.mediaSession) ? navigator.mediaSession : null;
     function bgSetPlaybackState(s) { if (MS) try { MS.playbackState = s; } catch (e) {} }
-    function bgSetMetadata() {
-      if (!MS || typeof root.MediaMetadata === "undefined") return;
-      let title = "Royal Road";
-      try { const st = getState(); if (st) title = st.genre || st.name || (st.genreMeta && st.genreMeta.form) || title; } catch (e) {}
-      try { MS.metadata = new root.MediaMetadata({ title: String(title), artist: "Royal Road / aboardresearch", album: "the genre space" }); } catch (e) {}
-    }
+    let msSig = "", msLastMeta = null;
+    function bgSetMetadata() { msSig = setMediaMeta(MS, root, opts, msSig, (m) => { msLastMeta = m; }); }
     if (MS) {
       bgSetMetadata(); bgSetPlaybackState("playing");
       if (opts.mediaSession) {
@@ -1598,7 +1727,25 @@
         return read53() - Atomics.load(ctrl, C_RING0 + a * RING_STRIDE + R_READ)
           - ((cur && cur.startGlobal != null) ? cur.startGlobal : 0);
       },
-      runwaySec: () => Math.max(0, feedRunwayFrames()) / SR,
+      // runwaySec = the RENDERED runway (what is actually in the ring ahead of the
+      // read cursor). The feed ledger — frames merely POSTED to the producer — is
+      // reported alongside it by __runway(); it is the pump's gate, never health.
+      runwaySec: () => Math.max(0, ringRunwayFrames()) / SR,
+      // the last MediaMetadata this engine actually set (null = it never set one,
+      // i.e. the host owns the lock screen). The identity gate reads this.
+      __mediaMeta: () => (msLastMeta ? Object.assign({}, msLastMeta) : null),
+      // ── RUNWAY TRUTH (audit: "the phantom runway"). Both ledgers plus their gap
+      // (the producer's unrendered backlog) and the per-ring cursors, so a probe can
+      // tell "the conductor stopped feeding" from "the producer stopped rendering".
+      __runway: () => {
+        const pg = read53(), a = Atomics.load(ctrl, C_ACTIVE) & 1;
+        const rd = (r, off) => Atomics.load(ctrl, C_RING0 + r * RING_STRIDE + off);
+        return { ringSec: +(Math.max(0, ringRunwayFrames()) / SR).toFixed(3),
+          fedSec: +(Math.max(0, feedRunwayFrames()) / SR).toFixed(3),
+          backlogSec: +(Math.max(0, (cur ? cur.fedFrames - ringWritten(cur) : 0)) / SR).toFixed(3),
+          phase, active: a, readFrames: pg,
+          rings: [0, 1].map((r) => ({ w: rd(r, R_WRITE), r: rd(r, R_READ) })) };
+      },
       readCursor: () => read53(),
       rms() { return analyserRms(); },
       balance() {
@@ -2117,11 +2264,16 @@
       if (m.type === "openfail") { errors.push("openfail gen" + m.gen + ": " + m.error); return; }
       if (m.type === "pcmseg") {
         if (!useMp3) return;   // route demoted to segAB mid-flight — drop stale PCM flushes
+        // a flush from a gen the encoder has already bridged PAST can never be
+        // forwarded (pumpEncoder only ever moves forward), so drop it at the door
+        // instead of parking it in a queue that only the NEXT bridge would clear.
+        if (encGen >= 0 && m.gen < encGen) return;
         // v3: a clean PCM flush → queue it for the encoder feed (timeline-ordered).
         mark("firstFlush");
         receivedSegs++;
         if (m.gen === curGen) { curGenReceived++; producedSinceOpen += m.durSec; }
-        receivedPcmSec += m.durSec || 0;
+        // NOTE: receivedPcmSec is counted in forwardPcm(), NOT here — see the comment
+        // there. Counting arrivals leaked every skipped gen's seconds into the runway.
         putPcm({ gen: m.gen, idx: m.idx, L: m.L, R: m.R, n: m.n, durSec: m.durSec, barMap: m.barMap || [] });
         pumpEncoder();
         return;
@@ -2179,7 +2331,7 @@
     let pendingInit = null, initAppended = false, appendingInit = false;   // v4: fMP4 init segment (ftyp+moov)
     let mmsWants = !isMMS;                 // plain MSE: append proactively; MMS: only when asked
     const appendQ = [];                   // Uint8Array media chunks (mp3 frames | fMP4 fragments) awaiting appendBuffer
-    let appendedChunks = 0, appendedSec = 0, receivedPcmSec = 0;
+    let appendedChunks = 0, appendedSec = 0, receivedPcmSec = 0, pcmPendingSec = 0;
     let retryTimer = 0, mp3FirstAppend = false, mp3Waiting = 0;
     let retiering = false;                // guards the codec step-down teardown/reopen against re-entry
     // ── failure diagnostics (v4.1 item 4): captured from the encoder's mp4init + first
@@ -2279,13 +2431,41 @@
         (parts.length ? "; " + parts.join("; ") : "");
     }
 
-    function putPcm(s) { let q = pcmQueues.get(s.gen); if (!q) { q = []; pcmQueues.set(s.gen, q); } q[s.idx] = s; }
-    function mp3AheadSec() { const t = mp3El ? (mp3El.currentTime || 0) : 0; return Math.max(0, receivedPcmSec - t); }
+    function putPcm(s) {
+      let q = pcmQueues.get(s.gen); if (!q) { q = []; pcmQueues.set(s.gen, q); }
+      if (q[s.idx]) pcmPendingSec -= q[s.idx].durSec || 0;   // (never seen; keeps the ledger exact)
+      q[s.idx] = s; pcmPendingSec += s.durSec || 0;
+    }
+    // drop a gen's un-forwarded flushes and release their seconds from the ledger.
+    function dropPcmGen(gen) {
+      const q = pcmQueues.get(gen);
+      if (q) for (const s of q) if (s) pcmPendingSec -= s.durSec || 0;
+      pcmQueues.delete(gen);
+    }
+    function clearPcmQueues() { pcmQueues.clear(); pcmPendingSec = 0; }
+    // THE FORWARD RUNWAY: seconds handed to the encoder (which will be appended) plus
+    // seconds queued for it, minus what the element has played. The queued term is
+    // what keeps the pump bounded while the encoder is still opening; it is exact
+    // rather than leaky because a superseded gen's queue is SUBTRACTED when dropped.
+    function mp3AheadSec() { const t = mp3El ? (mp3El.currentTime || 0) : 0; return Math.max(0, receivedPcmSec + pcmPendingSec - t); }
 
     // forward one queued PCM flush to the encoder (transferring its buffers onward).
+    // THE FEED-RUNWAY LEDGER LIVES HERE (audit 2026-07-25: "mp3 route counts
+    // skipped-gen PCM as buffered"). receivedPcmSec used to be incremented on every
+    // pcmseg ARRIVAL, but pumpEncoder bridges to the NEWEST ready gen and deletes the
+    // intermediate gens' queues — those never-forwarded seconds (a rapid steer leaks
+    // ~2-6 s per superseded gen) stayed in the counter forever. mp3AheadSec() =
+    // receivedPcmSec − currentTime is the pump's ONLY runway term, so once the leak
+    // reached FEED_CAP_MP3 (5 s) feedRoom pinned false, stepWalk was never called
+    // again, and the element played out into permanent silence with the frozen
+    // watchdog classifying it as a benign starve forever. Counting here makes the
+    // ledger mean what stepDownCodec's own comment says it means: seconds actually
+    // handed to the encoder.
     function forwardPcm(gen, idx, flags) {
       const q = pcmQueues.get(gen); const s = q && q[idx]; if (!s) return false;
       q[idx] = null;
+      pcmPendingSec -= s.durSec || 0;
+      receivedPcmSec += s.durSec || 0;
       try { encWorker.postMessage({ type: "mp3pcm", gen, L: s.L, R: s.R, n: s.n,
         bridge: !!flags.bridge, boot: !!flags.boot, barMap: s.barMap }, [s.L, s.R]); }
       catch (e) { errors.push("mp3 forward: " + (e && e.message || e)); }
@@ -2307,7 +2487,7 @@
           let g = -1; for (const gen of pcmQueues.keys()) { const qq = pcmQueues.get(gen); if (gen > encGen && qq[0] && gen > g) g = gen; }
           if (g >= 0) {
             forwardPcm(g, 0, { bridge: true });
-            for (const gen of [...pcmQueues.keys()]) if (gen < g) pcmQueues.delete(gen);   // drop skipped/old gens
+            for (const gen of [...pcmQueues.keys()]) if (gen < g) dropPcmGen(gen);   // drop skipped/old gens (releasing their queued seconds)
             encGen = g; encIdx = 1; continue;
           }
         }
@@ -2421,7 +2601,7 @@
       mmsWants = !isMMS;
       // halt producers + drop stale PCM so the new codec re-encodes from a clean gen open.
       for (const w of workers) if (w) { try { w.postMessage({ type: "stop" }); } catch (e) {} }
-      pcmQueues.clear(); genDone.clear(); encGen = -1; encIdx = 0; encOpened = false;
+      clearPcmQueues(); genDone.clear(); encGen = -1; encIdx = 0; encOpened = false;
       // RESET the absolute append-timeline accounting: the new codec re-encodes from scratch
       // on a fresh MediaSource whose currentTime restarts at 0. Leaving receivedPcmSec stale
       // pins mp3AheadSec above FEED_CAP (the element never advances), so the feed pump would
@@ -2603,7 +2783,7 @@
       mp3El = null; mediaSrc = null; srcBuf = null; sbOpen = false; appendQ.length = 0;
       pendingInit = null; initAppended = false; appendingInit = false; msOpened = false;
       if (encWorker) { try { encWorker.postMessage({ type: "mp3close" }); } catch (e) {} try { encWorker.terminate(); } catch (e) {} encWorker = null; }
-      pcmQueues.clear(); genDone.clear(); encGen = -1; encIdx = 0;
+      clearPcmQueues(); genDone.clear(); encGen = -1; encIdx = 0;
       // FLIP the route (all read sites are live off these `let`s).
       useMp3 = false; isMMS = false; isFmp4 = false; codec = null; codecFinalized = false; outRoute = "segAB";
       // re-open the CURRENT gen via the normal open machinery — now on the segAB path.
@@ -2790,13 +2970,26 @@
     }
 
     // ── MediaSession (metadata/playbackState only, as WAV-FIRST specifies) ──
+    // This is the path Paul's phone is on. The identity comes from the HOST
+    // (opts.mediaMeta — see setMediaMeta at the top of this file); the 1 Hz refresh
+    // below picks up a steer within a second, and re-mints nothing when the strings
+    // haven't changed. With no callback it leaves the host's own metadata alone
+    // instead of stamping the engine's guess over it every second.
     const MS = (typeof navigator !== "undefined" && navigator.mediaSession) ? navigator.mediaSession : null;
     function msState(s) { if (MS) try { MS.playbackState = s; } catch (e) {} }
+    let msSig = "", msLastMeta = null;
     function msMeta() {
-      if (!MS || typeof root.MediaMetadata === "undefined") return;
-      let title = "Royal Road";
-      try { const st = getState(); if (st) title = st.genre || st.name || (st.genreMeta && st.genreMeta.form) || title; } catch (e) {}
-      try { MS.metadata = new root.MediaMetadata({ title: String(title), artist: "Royal Road / aboardresearch", album: "the genre space" }); } catch (e) {}
+      msSig = setMediaMeta(MS, root, opts, msSig, (m) => { msLastMeta = m; });
+      // AN ENDLESS STREAM HAS NO END (Paul's lock screen: "−0:05" counting down
+      // against 11:09 elapsed). We never set a duration, but the UA derives one
+      // from the media element's buffered range, so the transport draws a track
+      // that is always about to finish. Declare the truth instead: an infinite
+      // duration is the spec's "live stream" signal and drops the countdown.
+      // Guarded — a UA that rejects Infinity simply keeps its own guess.
+      if (MS && MS.setPositionState) {
+        const el = useMp3 ? mp3El : curEl;
+        try { MS.setPositionState({ duration: Infinity, position: el ? (el.currentTime || 0) : 0, playbackRate: 1 }); } catch (e) {}
+      }
     }
     function msPlaying() { msMeta(); msState("playing"); }
     let metaTimer = 0;
@@ -2895,6 +3088,8 @@
       stemStats: () => null, journal: () => [], sentinel: () => null, renderCapacity: () => null,
       clickMon: () => null, clickMonThr: () => {},
       underruns: () => (useMp3 ? mp3Waiting : 0),
+      // the last MediaMetadata this engine actually set (null = the host owns it)
+      __mediaMeta: () => (msLastMeta ? Object.assign({}, msLastMeta) : null),
       underrunFlag: () => 0,
       runwaySec: () => aheadSec(),
       readCursor: () => { const e = useMp3 ? mp3El : curEl; return e ? Math.floor((e.currentTime || 0) * SR) : 0; },
@@ -2908,6 +3103,10 @@
           return { gens: [...pcmQueues.keys()], encGen, curGen, curGenReceived, curGenPlayed,
             received: receivedSegs, appendedChunks, queued: appendQ.length, awaiting: false,
             zeroPlayable: mp3Waiting, singleEl: true, aheadSec: aheadSec(), curSection,
+            // the forward-runway ledger, split (audit: "counts skipped-gen PCM as
+            // buffered") — forwarded to the encoder vs still queued for it. A probe
+            // can now see the pump's runway drift away from the element's reality.
+            forwardedSec: +receivedPcmSec.toFixed(2), pendingSec: +pcmPendingSec.toFixed(2),
             bufferedSec: Math.max(0, bufEnd - bufStart), currentTime: t };
         }
         let queued = 0; for (const q of segQueues.values()) for (const s of q) if (s && s.url) queued++;

@@ -253,7 +253,7 @@ export async function goLive(){
     // EXPERIMENT: ?allSampled=1 — enrich every state the engine polls (survives
     // retargets/glides since it wraps the getState boundary, not a one-time set).
     if(ALLSAMPLED){ const raw=getState; getState=()=>{ const st=raw(); return st?K.applySampledOnly(st):st; }; }
-    faustHandle=await FaustLive.exploreLive(getState, m=>{set({status:m}); bootStatus(m);}, { forceClassicOut:FORCE_CLASSIC, forceMediaEl:FORCE_MEDIAEL, wavOut:WAVOUT, segAB:SEGAB, codec:CODEC, startBar:S.startBar||0, masterVol:S.masterVol, vapor:S.vapor, onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
+    faustHandle=await FaustLive.exploreLive(getState, m=>{set({status:m}); bootStatus(m);}, { forceClassicOut:FORCE_CLASSIC, forceMediaEl:FORCE_MEDIAEL, wavOut:WAVOUT, segAB:SEGAB, codec:CODEC, startBar:S.startBar||0, masterVol:S.masterVol, vapor:S.vapor, mediaMeta:mediaMetaNow, onLoad:(r,e)=>{S.load=r; S.eco=e||0;}, onBar:(info)=>{
       bootBar();   // first bar scheduled -> advance the warm-up bar, then it waits on real RMS
       set({barInfo:info,barCount:S.barCount+1});
       urlTick();   // the address bar carries the measure — copying it bookmarks THIS moment
@@ -264,6 +264,7 @@ export async function goLive(){
       if(window.DemoLayer&&DemoLayer.pulse)DemoLayer.pulse(info);      // demoscene: surge the effect's clock on the bar
       updateMediaSession();   // reflect the current genre/blend on the lock screen (updates across a swap)
     }});
+    msLoadClusters();   // the album line wants the constellation name (lazy: first ▶ only)
     if(MSESSION){ try{ MSESSION.playbackState="playing"; }catch(e){} updateMediaSession(true); }
     startWavDebug();   // ?wavDebug=1 overlay (inert otherwise)
   }catch(e){ set({live:false,status:"live failed: "+e.message}); bootAbort(); console.error(e); }
@@ -314,6 +315,26 @@ setInterval(()=>{ if(!S.live&&S.playing&&S.target){ set({barCount:S.barCount+1})
 const MSESSION = (typeof navigator!=="undefined" && "mediaSession" in navigator) ? navigator.mediaSession : null;
 const ORIG_TITLE = (typeof document!=="undefined" && document.title) || "STELLATE";
 const msLbl=g=>(K.GENRES[g]&&K.GENRES[g].label)||g;   // the lock screen speaks the fiction too
+// CLUSTER (the alien constellation this genre belongs to — "Anvil Choir",
+// "Hadal Shelf", "Salon of Slow Hours"…). The table is star-cruise data, so it
+// is imported LAZILY on first live start: the lock screen is never on the
+// critical boot path, and a normal session that never opens the cruise pays
+// nothing until ▶. Until it lands, album falls back to the parent genre.
+let CLUSTERS=null, CLUSTER_IDX=null;
+function msLoadClusters(){
+  if(CLUSTERS||msLoadClusters._busy) return;
+  msLoadClusters._busy=true;
+  import("./starcruise/genre-clusters.js")
+    .then(m=>{ CLUSTERS=m.GENRE_CLUSTERS; CLUSTER_IDX=m.CLUSTER_OF; updateMediaSession(true); })
+    .catch(()=>{});
+}
+function msCluster(){
+  const ws=(S.weights||[]).filter(w=>w&&w.w>0.001);
+  const g=ws.length?ws[0].g:null;
+  if(!g||!CLUSTERS||!CLUSTER_IDX) return null;
+  const c=CLUSTERS[CLUSTER_IDX[g]];
+  return (c&&c.label)||null;
+}
 // ALBUM = the PARENT genre you're anchored to (the dominant weight in the blend).
 function msParentGenre(){
   const ws=(S.weights||[]).filter(w=>w&&w.w>0.001);
@@ -326,9 +347,23 @@ function msClosestGenre(){
   const b=S.best;
   return (b && b!=="…") ? msLbl(b) : msParentGenre();
 }
+// THE identity, composed in ONE place (Paul's lock screen read "wave / Royal
+// Road / aboardresearch" — the pre-rename name and a dead domain — because the
+// ENGINE had its own hardcoded copy and, on the mobile route, re-asserted it
+// every second over this one. The engine now asks for these strings instead).
+export function mediaMetaNow(){
+  const ws=(S.weights||[]).filter(w=>w&&w.w>0.001).slice().sort((a,b)=>b.w-a.w);
+  let title=msClosestGenre();
+  if(ws.length>1 && ws[1].w>=0.35){
+    const b=msLbl(ws[1].g);
+    if(b && b!==title) title=title+" + "+b;
+  }
+  return { title, artist:"stellate.app", album: msCluster()||msParentGenre() };
+}
 let msLastTitle="", msLastAlbum="";
 function updateMediaSession(force){
-  const title=msClosestGenre(), album=msParentGenre();
+  const m=mediaMetaNow();
+  const title=m.title, album=m.album;
   if(!force && title===msLastTitle && album===msLastAlbum) return;
   msLastTitle=title; msLastAlbum=album;
   // Drive the document title too, so a streaming/lock-screen display that falls
@@ -336,7 +371,7 @@ function updateMediaSession(force){
   try{ document.title = (S.live ? title+" · STELLATE" : ORIG_TITLE); }catch(e){}
   if(!MSESSION || typeof MediaMetadata==="undefined") return;
   // artist = the project; album = parent genre; song/title = current closest genre.
-  try{ MSESSION.metadata=new MediaMetadata({ title, artist:"stellate.app", album }); }catch(e){}
+  try{ MSESSION.metadata=new MediaMetadata(m); }catch(e){}
 }
 if(MSESSION){ try{
   MSESSION.setActionHandler("play", ()=>{ if(!S.live) goLive(); });

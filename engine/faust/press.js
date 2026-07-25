@@ -33,6 +33,7 @@ const WAV = require(path.join(__dirname, "wav.js"));
 const RC = require(path.join(__dirname, "render-core.js"));
 
 const SR = 44100, BS = 64;
+const SPAN = RC.SPAN_MAX;   // batched change-free render span (see render-core.js)
 const FOUND_CAP_SEC = 180; // bound decode memory; offsets are fractions of what we load
 
 // ---------------------------------------------------------------- helpers
@@ -300,10 +301,13 @@ async function assemble(state, sched, env, opts) {
           const IR = "/" + rootOf(eff.module) + "/";
           for (const [k, pv] of Object.entries(eff.params)) ip.setParamValue(IR + k, pv);
           if (eff.barSec) ip.setParamValue(IR + "barSec", 4 * spb); // tempo-synced LFO
-          for (let s = 0; s < TOTAL; s += BS) {
-            const len = Math.min(BS, TOTAL - s);
-            const o = ip.render([ubuf.subarray(s, s + len)], len)[0];
-            for (let i = 0; i < len; i++) ubuf[s + i] = o[i];
+          // BATCHED SPAN (ENGINE-AUDIT Tier 4, see render-core SPAN_MAX): fixed
+          // params for the whole song, so the per-64 walk is one change-free run
+          // — faustwasm chunks the compute at BS internally either way.
+          for (let s = 0; s < TOTAL; s += SPAN) {
+            const span = Math.min(SPAN, TOTAL - s);
+            const o = ip.render([ubuf.subarray(s, s + span)], span)[0];
+            for (let i = 0; i < span; i++) ubuf[s + i] = o[i];
           }
         }
         const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
@@ -360,10 +364,10 @@ async function assemble(state, sched, env, opts) {
     const bfx = SE.fxParams(state);
     for (const k of ["dtime", "dfb", "dcut", "dgain", "pptime", "ppfb", "pptone"])
       bp.setParamValue("/rev_bleed/" + k, bfx[k]);
-    for (let s = 0; s < TOTAL; s += BS) {
-      const len = Math.min(BS, TOTAL - s);
-      const o = bp.render([del.subarray(s, s + len), pp.subarray(s, s + len)], len);
-      bleed.set(o[0].subarray(0, len), s);
+    for (let s = 0; s < TOTAL; s += SPAN) {
+      const span = Math.min(SPAN, TOTAL - s);
+      const o = bp.render([del.subarray(s, s + span), pp.subarray(s, s + span)], span);
+      bleed.set(o[0].subarray(0, span), s);
     }
     const revColorIn = new Float32Array(TOTAL);
     for (let i = 0; i < TOTAL; i++) revColorIn[i] = rev[i] + bleed[i];
@@ -373,10 +377,10 @@ async function assemble(state, sched, env, opts) {
     rp.setParamValue(RR + "rgain", rc.rgain);
     rp.setParamValue(RR + "rtone", rc.rtone);
     wetL = new Float32Array(TOTAL); wetR = new Float32Array(TOTAL);
-    for (let s = 0; s < TOTAL; s += BS) {
-      const len = Math.min(BS, TOTAL - s);
-      const o = rp.render([revColorIn.subarray(s, s + len), revColorIn.subarray(s, s + len)], len);
-      wetL.set(o[0].subarray(0, len), s); wetR.set((o[1] || o[0]).subarray(0, len), s);
+    for (let s = 0; s < TOTAL; s += SPAN) {
+      const span = Math.min(SPAN, TOTAL - s);
+      const o = rp.render([revColorIn.subarray(s, s + span), revColorIn.subarray(s, s + span)], span);
+      wetL.set(o[0].subarray(0, span), s); wetR.set((o[1] || o[0]).subarray(0, span), s);
     }
     let be = 0; for (let i = 0; i < TOTAL; i++) be += bleed[i] * bleed[i];
     console.log(`  reverb color: ${rc.name} -> ${rc.module}, rgain=${rc.rgain.toFixed(2)} rtone=${rc.rtone}` +
@@ -391,12 +395,26 @@ async function assemble(state, sched, env, opts) {
   const sweeps = sched.sweeps.map(sw => ({ t0: sw.beat * spb, t1: (sw.beat + sw.durB) * spb, from: sw.from, to: sw.to }))
     .sort((a, b) => a.t0 - b.t0);
   const L = new Float32Array(TOTAL), Rr = new Float32Array(TOTAL);
-  const zero = new Float32Array(BS);
   // fx_bus dry L/R inputs: mono dry duplicated, plus the stereo voices' width
   // AND the reverb-color wet (folded into dry so it rides the master chain).
   const dryL = (wL || wetL) ? (() => { const b = new Float32Array(TOTAL); for (let i = 0; i < TOTAL; i++) b[i] = dry[i] + (wL ? wL[i] : 0) + (wetL ? wetL[i] : 0); return b; })() : dry;
   const dryRch = (wR || wetR) ? (() => { const b = new Float32Array(TOTAL); for (let i = 0; i < TOTAL; i++) b[i] = dry[i] + (wR ? wR[i] : 0) + (wetR ? wetR[i] : 0); return b; })() : dry;
+  // BATCHED SPAN (ENGINE-AUDIT Tier 4): the mcut walk still runs per BLOCK, but
+  // consecutive blocks that set the SAME mcut (i.e. every block outside a live
+  // sweep — and every block at all when a state has no sweeps) render in one
+  // call. setParamValue with an unchanged value is a no-op write, so the DSP
+  // state sequence — and the output — is identical to the per-64 loop. The
+  // 6th (unused) fx_bus input is omitted: faustwasm zero-fills a missing input.
   let mcut = 21000, swi = 0; const activeSw = [];
+  let spanStart = 0, lastSet = null;
+  const fxFlush = (end) => {
+    if (end <= spanStart) return;
+    const s = spanStart, span = end - s;
+    const o = fx.render([dryL.subarray(s, s + span), dryRch.subarray(s, s + span),
+      rev.subarray(s, s + span), del.subarray(s, s + span), pp.subarray(s, s + span)], span);
+    L.set(o[0], s); Rr.set(o[1], s);
+    spanStart = end;
+  };
   for (let s = 0; s < TOTAL; s += BS) {
     const len = Math.min(BS, TOTAL - s), t = s / SR;
     if (sweeps.length) {
@@ -407,12 +425,12 @@ async function assemble(state, sched, env, opts) {
         const x = (t - sw.t0) / Math.max(1e-6, sw.t1 - sw.t0);
         mcut = sw.from * Math.pow(sw.to / sw.from, x);
       }
-      fx.setParamValue("/fx_bus/mcut", Math.min(21000, Math.max(180, mcut)));
+      const mv = Math.min(21000, Math.max(180, mcut));
+      if (lastSet === null || mv !== lastSet) { fxFlush(s); fx.setParamValue("/fx_bus/mcut", mv); lastSet = mv; }
     }
-    const o = fx.render([dryL.subarray(s, s + len), dryRch.subarray(s, s + len),
-      rev.subarray(s, s + len), del.subarray(s, s + len), pp.subarray(s, s + len), zero.subarray(0, len)], len);
-    L.set(o[0], s); Rr.set(o[1], s);
+    if (s + len - spanStart >= SPAN) fxFlush(s + len);
   }
+  fxFlush(TOTAL);
 
   // ---- MULTIBAND MASTER COMP (fx wings stage 4): opt-in post-pass over the
   // fx_bus output (state.masterComp > 0, e.g. disco). Genres without it never
@@ -423,10 +441,10 @@ async function assemble(state, sched, env, opts) {
   if (mb) {
     const mp = await mkProc(mb.module);
     mp.setParamValue("/" + rootOf(mb.module) + "/mbdrive", mb.mbdrive);
-    for (let s = 0; s < TOTAL; s += BS) {
-      const len = Math.min(BS, TOTAL - s);
-      const o = mp.render([L.subarray(s, s + len), Rr.subarray(s, s + len)], len);
-      L.set(o[0].subarray(0, len), s); Rr.set(o[1].subarray(0, len), s);
+    for (let s = 0; s < TOTAL; s += SPAN) {
+      const span = Math.min(SPAN, TOTAL - s);
+      const o = mp.render([L.subarray(s, s + span), Rr.subarray(s, s + span)], span);
+      L.set(o[0].subarray(0, span), s); Rr.set(o[1].subarray(0, span), s);
     }
     console.log(`  master mb: ${mb.module}, mbdrive=${mb.mbdrive.toFixed(2)}`);
   }

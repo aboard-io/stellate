@@ -186,6 +186,7 @@
     rubatoDepth:{ lo:0, hi:0.2, src:"buildEvents dep=Math.min(0.2,rb.depth) AND applyMacros feel clamp(...,0,0.2) — monotonic warp needs depth<1; 0.2 is the engine's own cap" },
     rubatoPeriod:{ lo:1, hi:16, src:"buildEvents P=max(4,periodBars*4) beats; anchors declare 2–4 bars; 16 bars is the ambient sweep ceiling" },
     pushPull:  { lo:-0.25, hi:0.25, src:"a push beyond a 16th (0.25 beat) is displacement, not feel; anchors declare ±0.015 (applyGroove adds it raw — the hull is the closure)" },
+    pushPullMs:{ lo:-40, hi:40, src:"the TEMPO-HONEST twin (csd-engine resolvePushPull folds it to beats at state.bpm). Past ~40 ms the ear stops hearing a pocket and starts hearing a flam; 40 ms at the catalogue's fastest tempo (209 bpm) is 0.139 beat, so even summed with the largest declared beat-pushPull (0.08) the fold stays inside the ±0.25 pushPull hull" },
     transformsRate:{ lo:0, hi:1, src:"applyMacros density/energy: transforms.rate clamp(...,0,1); buildEvents fires per-bar at rng()<rate" },
     chordEvery:{ lo:2, hi:64, src:"buildEvents CBEATS=max(2,round(chordEvery)); 64 = twice the longest declared plateau (ambient 32)" },
     autoTune:  { lo:0, hi:1, src:"applyMacros vocal: autoTune clamp(...,0,1)" },
@@ -360,12 +361,13 @@
     }
     // -- the neoclassical/deep-pass scalar specs + dominant-parent scalars
     {
-      let rd=null, rp=null, tp=null, ta=null, ppl=null, tr=null, ce=[8,8], spp=null, at=null, mc=null, bn=null, loct=null;
+      let rd=null, rp=null, tp=null, ta=null, ppl=null, ppm=null, tr=null, ce=[8,8], spp=null, at=null, mc=null, bn=null, loct=null;
       for (const n of names) {
         const g = G[n];
         if (g.rubato) { rd = hull(rd, asIv(g.rubato.depth || [0.02, 0.04])); rp = hull(rp, asIv(g.rubato.periodBars || [2, 4])); }
         if (g.thunk) { tp = hull(tp, asIv(g.thunk.prob || [0.2, 0.35])); ta = hull(ta, asIv(g.thunk.amp || [0.026, 0.038])); }
         if (g.timeFeel && g.timeFeel.pushPull) for (const v of Object.values(g.timeFeel.pushPull)) ppl = hull(ppl, asIv(v));
+        if (g.timeFeel && g.timeFeel.pushPullMs) for (const v of Object.values(g.timeFeel.pushPullMs)) ppm = hull(ppm, asIv(v));
         if (g.transforms) tr = hull(tr, asIv(g.transforms.rate != null ? g.transforms.rate : 0.25));
         if (g.chordEvery) ce = hull(ce, asIv(g.chordEvery));
         if (g.snarePP != null) spp = hull(spp, asIv(g.snarePP));
@@ -379,6 +381,7 @@
       if (tp) addRow("thunk.prob", tp, "prob");
       if (ta) addRow("thunk.amp", ta, "prob", { note: "whisper-level amp — bounded like a probability (≈ -30dB region)" });
       if (ppl) addRow("timeFeel.pushPull", ppl, "pushPull");
+      if (ppm) addRow("timeFeel.pushPullMs", ppm, "pushPullMs");
       if (tr) addRow("transforms.rate", hull(tr, [0.25, 0.25]), "transformsRate", { note: "0.25 = the engine default rate folded in" });
       addRow("chordEvery", hull(ce, [6, 6]), "chordEvery", { note: "meter default 6 folded in; constrain snaps meter blends to multiples of 6" });
       if (spp) addRow("snarePP", hull(spp, [0, 0]), "snarePP");

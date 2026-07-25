@@ -43,6 +43,17 @@
     return { l: Math.SQRT2 * Math.cos(th), r: Math.SQRT2 * Math.sin(th) };
   }
 
+  // BATCHED RENDER SPAN (ENGINE-AUDIT 2026-07 Tier 4) — faustwasm's offline
+  // render() allocates a fresh Float32Array per output PER CALL and then chunks
+  // its compute at exactly fBufferSize (= BS) internally, slicing the inputs the
+  // same way. So render(ins, k*BS) executes the identical compute sequence as k
+  // successive render(ins, BS) calls (start()/stop() only toggle a processing
+  // flag — no state reset): batching a run of blocks over which NOTHING changes
+  // is byte-identical and pays one allocation instead of k. SPAN_MAX bounds the
+  // per-call output allocation (~256 KB/output) so a whole-song pass doesn't
+  // trade 600k small allocations for a 35 MB one.
+  const SPAN_MAX = 64 * 1024;
+
   // merge [start,end] intervals (a voice renders only its merged active spans)
   function mergeIvals(ivals) {
     ivals.sort((a, b) => a[0] - b[0]);
@@ -149,28 +160,53 @@
         else if (c[1] === "@pp") curPP = c[2];
         else v.proc.setParamValue(c[1], c[2]);
       };
+      // SEGMENT OVERLAP CLAMP (ENGINE-AUDIT 2026-07 Tier 2): the block walk
+      // renders past a segment's `to` up to the next BS boundary (len clamps to
+      // TOTAL, not to `to`), while the NEXT segment's start is block-aligned
+      // DOWN — so a 1..63-sample gap between two merged intervals landing inside
+      // one 64-block made that block render TWICE (doubled output accumulated
+      // into the buses AND the voice's DSP state advanced 64 extra samples: a
+      // ~1.4 ms doubled-amplitude splice, confirmed on floppycore seed 1).
+      // renderedEnd is the first sample this proc has NOT rendered; clamping
+      // `from` up to it makes overlap impossible. Byte-identical for every state
+      // without an intra-block gap (blocks stay BS-aligned, changes stay in
+      // order — a change inside a skipped block was already applied by the
+      // previous segment's walk, which is unchanged).
+      let renderedEnd = 0;
       for (const [a, b] of segs) {
-        const from = Math.max(0, Math.floor(a / BS) * BS), to = Math.min(TOTAL, b);
+        const from = Math.max(0, Math.floor(a / BS) * BS, renderedEnd), to = Math.min(TOTAL, b);
         // apply any changes that fell before this segment (kept in order)
         while (ci < v.changes.length && v.changes[ci][0] < from) { applyChange(v.changes[ci]); ci++; }
-        for (let s = from; s < to; s += BS) {
+        let s = from, ns = from;
+        while (s < to) {
           const len = Math.min(BS, TOTAL - s);
           while (ci < v.changes.length && v.changes[ci][0] < s + len) { applyChange(v.changes[ci]); ci++; }
-          const ins = u.vocoder && speech ? [speech.subarray(s, s + len)] : (u.vocoder ? [new Float32Array(len)] : []);
-          const oo = v.proc.render(ins, len);
+          // extend over following blocks that apply no change (see SPAN_MAX)
+          let end = s + len;
+          ns = s + BS;
+          while (ns < to && end - s + BS <= SPAN_MAX) {
+            const l2 = Math.min(BS, TOTAL - ns);
+            if (ci < v.changes.length && v.changes[ci][0] < ns + l2) break;
+            end = ns + l2; ns += BS;
+          }
+          const span = end - s;
+          // faustwasm zero-fills a missing input, so the vocoder-without-speech
+          // case needs no zero array of its own (identical compute).
+          const ins = u.vocoder && speech ? [speech.subarray(s, s + span)] : [];
+          const oo = v.proc.render(ins, span);
           const o = oo[0];
           if (ubuf) {
             // pre-insert: only per-note out gain applies (matches live, where
             // the voice's out GainNode feeds the chain); sends come after.
             // (stereo voices are folded to channel 0 through the mono insert
             // chain — graceful; the wired stereo genres carry no inserts.)
-            for (let i = 0; i < len; i++) ubuf[s + i] += o[i] * curOut;
+            for (let i = 0; i < span; i++) ubuf[s + i] += o[i] * curOut;
           } else if (u.stereo && wL) {
             // STEREO voice: [0]->L, [1]->R for the dry width; sends use the mono sum
             const o1 = oo[1] || o;
             const dg = (u.dry != null ? u.dry : 1) * curOut, rg = (u.rev || 0) * curOut,
                   lg = (u.del || 0) * curOut, pg = curPP * curOut;
-            for (let i = 0; i < len; i++) {
+            for (let i = 0; i < span; i++) {
               const l = o[i], r = o1[i], mono = (l + r) * 0.5;
               wL[s + i] += l * dg; wR[s + i] += r * dg;
               rev[s + i] += mono * rg; del[s + i] += mono * lg;
@@ -179,7 +215,7 @@
           } else {
             const dg = (u.dry != null ? u.dry : 1) * curOut, rg = (u.rev || 0) * curOut,
                   lg = (u.del || 0) * curOut, pg = curPP * curOut;
-            for (let i = 0; i < len; i++) {
+            for (let i = 0; i < span; i++) {
               const x = o[i];
               if (pg2) { const xd = x * dg; wL[s + i] += xd * pg2.l; wR[s + i] += xd * pg2.r; }
               else dry[s + i] += x * dg;
@@ -187,8 +223,10 @@
               if (pg) pp[s + i] += x * pg;
             }
           }
-          rendered += len;
+          rendered += span;
+          s = ns;
         }
+        renderedEnd = Math.max(renderedEnd, ns);
       }
     }
     if (ubuf) {
@@ -197,10 +235,14 @@
         const IR = "/" + rootOf(eff.module) + "/";
         for (const [k, pv] of Object.entries(eff.params)) ip.setParamValue(IR + k, pv);
         if (eff.barSec) ip.setParamValue(IR + "barSec", 4 * spb); // tempo-synced LFO
-        for (let s = 0; s < TOTAL; s += BS) {
-          const len = Math.min(BS, TOTAL - s);
-          const o = ip.render([ubuf.subarray(s, s + len)], len)[0];
-          for (let i = 0; i < len; i++) ubuf[s + i] = o[i];
+        // fixed params for the whole song => one change-free span (SPAN_MAX
+        // blocks at a time). The in-place ubuf read/write stays safe: a span's
+        // input slices are all read before any of it is written back, and no
+        // block ever reads a range a previous block wrote.
+        for (let s = 0; s < TOTAL; s += SPAN_MAX) {
+          const span = Math.min(SPAN_MAX, TOTAL - s);
+          const o = ip.render([ubuf.subarray(s, s + span)], span)[0];
+          for (let i = 0; i < span; i++) ubuf[s + i] = o[i];
         }
       }
       const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
@@ -214,5 +256,5 @@
     return { pool: P, rendered };
   }
 
-  return { mergeIvals, renderUnit, panLR };
+  return { mergeIvals, renderUnit, panLR, SPAN_MAX };
 });

@@ -363,7 +363,19 @@
       const s0 = Math.max(0, Math.floor(f.tSec * sr));
       const n = Math.min(total - s0, Math.max(1, Math.floor(f.durSec * sr)));
       if (n <= 0) continue;
-      const seg = new Float32Array(n);
+      // WINDOW TRUNCATION (ENGINE-AUDIT 2026-07 Tier 4): under a `win` the event's
+      // FULL segment used to be built — for a bed that is grains + lp24 over the
+      // whole multi-bar drone (a chordEvery-32 bed is ~77 s ≈ 0.9 s of work) — and
+      // then all but the one-bar slice was thrown away. Everything here is CAUSAL
+      // (grain overlap-add writes forward, lp24 is an IIR run forward, the envelope
+      // is per-sample and still keyed on the FULL n), so building only up to the
+      // window's end computes the written samples with the identical arithmetic:
+      // byte-identical output, ~nch× less work for a bed that starts in this bar.
+      // (A window that starts LATER than the event still builds from the segment
+      // start — the filter state demands it — but stops at the window end.)
+      const nEff = win ? Math.max(0, Math.min(n, winBase + busLen - s0)) : n;
+      if (nEff <= 0) continue;
+      const seg = new Float32Array(nEff);
       const atPitch = tunedPitch(f, src, sr);   // AUTO-TUNE bend (== f.pitch when no autoTune)
 
       if (f.type === "bed") {
@@ -372,13 +384,13 @@
         lp24(seg, f.cutoff, sr);
         // env: linsegr 0,1.5,amp, p3-3, amp, 1.5, 0
         const aN = Math.min(Math.floor(1.5 * sr), n >> 1);
-        for (let i = 0; i < n; i++) {
+        for (let i = 0; i < nEff; i++) {
           let e = f.amp;
           if (i < aN) e *= i / aN;
           else if (i > n - aN) e *= (n - i) / aN;
           seg[i] *= e;
         }
-        for (let i = 0; i < n; i++) {
+        for (let i = 0; i < nEff; i++) {
           const j = s0 + i - winBase;
           if (j < 0) continue; if (j >= busLen) break;
           const v = seg[i];
@@ -395,16 +407,16 @@
           // small `span` of the buffer, so the chop plays fwd/back/fwd = a scratch.
           // Opt-in via f.scratch => byte-identical when absent (the else path below).
           const span = (f.scratchSpan || 0.05) * src.length, cyc = Math.max(1, f.scratchCycles || 4);
-          for (let i = 0; i < n; i++) { const x = cyc * i / n, t = x - (x | 0), tri = t < 0.5 ? 4 * t - 1 : 3 - 4 * t;
+          for (let i = 0; i < nEff; i++) { const x = cyc * i / n, t = x - (x | 0), tri = t < 0.5 ? 4 * t - 1 : 3 - 4 * t;
             seg[i] = readLerp(src, start + span * tri); }
         } else {
-          for (let i = 0; i < n; i++) seg[i] = readLerp(src, start + i * atPitch);
+          for (let i = 0; i < nEff; i++) seg[i] = readLerp(src, start + i * atPitch);
         }
         lp24(seg, f.cutoff, sr);
         const fadeN = f.fade > 0 ? Math.min(Math.floor(f.fade * sr), n >> 1) : 0;
         const aN = fadeN || Math.min(Math.floor(0.006 * sr), n >> 1);
         const rN = fadeN || Math.min(Math.floor(0.03 * sr), n >> 1);
-        for (let i = 0; i < n; i++) {
+        for (let i = 0; i < nEff; i++) {
           let e = f.amp;
           if (!fadeN && i > aN) e *= 0.85 + 0.15 * (1 - (i - aN) / Math.max(1, n - aN)); // sag to 0.85 like linsegr
           if (i < aN) e *= i / Math.max(1, aN);
@@ -413,12 +425,12 @@
         }
         if (f.sqDepth > 0) { // square-LFO amplitude gate (station-name texture)
           const per = sr / Math.max(0.1, f.sqRate);
-          for (let i = 0; i < n; i++) {
+          for (let i = 0; i < nEff; i++) {
             const hi = (i % per) < per / 2;
             seg[i] *= hi ? 1 : (1 - f.sqDepth);
           }
         }
-        for (let i = 0; i < n; i++) {
+        for (let i = 0; i < nEff; i++) {
           const j = s0 + i - winBase;
           if (j < 0) continue; if (j >= busLen) break;
           const v = seg[i];

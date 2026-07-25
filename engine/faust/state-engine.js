@@ -418,6 +418,22 @@
     for (const k of kit) { const u = units[k]; if (u && u.lvl != null) u.lvl *= scale; }
     return scale;
   }
+  // KICK TRIM (Paul 2026-07-25: "the kick tends to be pretty enormous — it can
+  // grate. Sometimes is nice but it should come down 15 to 25% from where it is
+  // most of the time."). A flat -20% on the kick UNIT level, applied after
+  // drumBalance so it composes with the hot-kit pull rather than fighting it.
+  // Deliberately NOT a per-genre edit: the complaint is catalogue-wide, and one
+  // named constant is the honest lever. Genres whose kick IS the identity keep
+  // their relative weight — everything moves together, so a gabber kick is still
+  // a gabber kick, just less punishing. Pure function of resolved units, zero
+  // rng: determinism-safe like the pan/carve/budget/balance passes above.
+  const KICK_TRIM = 0.80;
+  function kickTrim(units) {
+    const u = units.kick;
+    if (!u || u.lvl == null) return 1;
+    u.lvl *= KICK_TRIM;
+    return KICK_TRIM;
+  }
   // friendly reverb-character names for the fxLabels roster (viz metadata).
   const REVERB_LABELS = { dattorro: "plate", greyhole: "hall", fdn: "room", spring: "spring", shimmer: "shimmer" };
   const revLabel = (state) => REVERB_LABELS[state && state.reverbColor] || "reverb";
@@ -1583,7 +1599,7 @@
     // resolved units (zero rng — determinism-gated like everything here).
     applyMasterPan(units);
     collisionCarve(units);
-    drumBalance(units);   // gentle hot-kit level pull so voices sit up (Paul's "drums are hot")
+    drumBalance(units); kickTrim(units);   // gentle hot-kit level pull so voices sit up (Paul's "drums are hot")
     const out = trimToBudget(units, state);
     // fxLabels (viz roster metadata; computed post-trim so labels reflect the
     // final shed state). Pure metadata — ignored by every render loop.

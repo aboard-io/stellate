@@ -142,6 +142,127 @@ present either way. Byte drift is confined to states that actually pool
 state.rhythm = { complexity: 0..1 }   // absent = byte-identical
 ```
 
+### 4. Micro-timing: `timeFeel.pushPullMs` (2026-07-25)
+
+`docs/TIMING-AUDIT-2026-07.md §Groove` measured the space and found every genre
+sitting on essentially one rhythmic feel, tempo aside: **247 of 274 had no
+per-lane push/pull at all** — bass on the kick to within 0.31 ms — and the 26
+that did declared it in **beats**, which is tempo-*relative*. The same `0.015`
+is 4.3 ms at 209 bpm and 18.8 ms at 48 bpm, so one number could not mean one
+feel across a 48–209 bpm catalogue.
+
+Human micro-timing is a **millisecond** quantity: a laid-back snare is ~15 ms
+late whether the tune is a ballad or a burner. So anchors may now declare
+
+```js
+timeFeel: { pushPullMs: { bass: 13, snare: 7, hat: -4 } }   // + = behind, - = ahead
+```
+
+folded to beats against the state's own `bpm` at one choke point
+(`csd-engine resolvePushPull`, shared by press and the live walk). Lanes are the
+event's `voice || drum`: `bass` `melody` `pad` / `kick` `snare` `hat` `ride`
+`rim` `clap` `perc` `tom`.
+
+- **Both units may coexist**: they are the same physical quantity, so they are
+  **summed per lane** after the ms side converts. `jazz` uses this — the walking
+  upright keeps its original beat-declared drag, the ride and snare are
+  tempo-honest.
+- **Absent ⇒ byte-identical** (verified: 274 genres × 2 seeds, zero drift).
+- Blends union-and-lerp the two maps independently and the engine sums them at
+  the blend's own bpm — which is the whole point of the unit.
+- **Budget**: the audit measured the confusion matrix blind to per-lane offsets
+  up to **0.02 beat** (Δ self-score 0 across 18 probed genres; the verifier reads
+  `timeFeel` nowhere and derives only `ev.drums`). Every declaration stays inside
+  0.02 beat *at its genre's fastest bpm* — the catalogue max is **0.0178** (dub).
+
+**The families**, all grounded in named performance practice. Machine-tight
+families get **nothing**: techno, gabber, hardstyle, trance, edm, psytrance,
+industrial, minimal, chiptune, synthwave, vaporwave — flat grid is their
+identity and vaporwave's verifier row explicitly fences on machine time. The
+classical, ambient and drone wings get nothing for the same reason; `rubato` is
+already their expressive organ.
+
+| family | genres | feel |
+|---|---|---|
+| one-drop | reggae, dub | bass +13, skank/rim/snare +7…+8 — the whole band in the basement |
+| swing | jazz, bebop, bigband, whalejazz | ride −4…−6 **on top of** a snare and walking bass at +3…+11 |
+| funk / soul | funk, newjack, rnb, gospel, lowglide | bass −4…−5 **ahead**, backbeat +5…+10 behind it |
+| breaks | jungle, dnb, footwork | bass −5, placed early so it *pulls* the break |
+| 808 | trap, phonk, witchhouse | long-attack sub +6…+12 behind, hat rolls −3 on top |
+| latin / african | salsa, samba, afrobeat | anticipated tumbao −5; caixa −5; the Tony Allen snare +7 under hats −4 |
+| country | bluegrass, honkytonk, altcountry, desertblues | bluegrass *drives* (−4…−5); the barroom *leans back* (+6…+7) |
+| house / garage | house, deephouse, garage, amapiano, disco | hats −3…−4 on top; the dub/log-drum bass +5…+6 behind |
+| boom-bap | boombap, spokenword, crateflip | the Dilla drag — bass +8…+9, hats −4 |
+| skank-forward | ska | pad −5, bass −4 — the *same* offbeat chop as reggae, opposite sign |
+| pit band | urchinmatinee, klezmer | the shuffle leans back; the wedding band accelerates |
+
+Realised displacement was measured **in rendered audio** by
+difference-of-differences (press the same state at lane offsets 0, d, 2d; the
+unmoved voices cancel exactly, so the two difference signals are one waveform
+shifted by d). 14 lane measurements across 11 genres, 72–175 bpm: every one
+landed on its declaration to ±0.01 ms, correlation 1.00.
+
+**Swing was deliberately left alone.** The obvious move — raise `state.swing`
+for the genres that really swing — measures as wrong. In every jazz genre the
+**`ride` lane plays only on the beat** (jazz 276 events, all at f=0; bebop 416;
+blues 384), so the knob cannot touch the one instrument whose swing *defines*
+the music; meanwhile it *would* swing 41–68 % of the walking bass, which is
+where swing does not belong, and `swing` is read raw by `genre-verifier.js`
+(unlike `pushPull`), with several genre rows explicitly fenced on swing bands.
+Wrong lanes, missed lane, matrix risk. The real fix is a ride pattern with a
+swung skip — the `shuffle` kit already places one at `beat + 2/3` scaled by
+`state.swing` — applied to the `ride` lane. That is a KITS change, matrix-visible
+through `variation`/`hatDensity`, and is the recommended next step.
+
+### 5. The voice repeat governor (2026-07-25)
+
+> "No vocal or textural sample should repeat more than five times in 64 bars. We
+> end up with speech synthesized phrases looping ad nauseum. Space them." — Paul
+
+A voice sample is an **utterance**, not a groove element. No single scheduler can
+see this: each section role, the hits layer and every `sampleEvents` spec places
+its own shots from its own rng, and several can land on one id — measured, 140 of
+822 genre×seed rows had a voice id firing over the cap, worst **31×** in 64 bars
+(`sp_pressure`), with min gaps under one bar. So the rule is enforced at the one
+place that sees the whole found stream: `governVoiceRepeats`, called in
+`buildEvents` after every found push and before the rubato warp.
+
+- **Scope** — the voice classes only: `vb_*` voxbank, `sp_*`/`hp_*`/`wd_*` speech,
+  `vox_*`, and the `vx_*` voice shelf. **Not** breaks or chops (a break repeating
+  *is* the genre), **not** sustained beds, and **not** `kind:"hit"` — the rave
+  hoover, the bigbeat stab and the horn section are musical hits whose repetition
+  is the idiom, the same argument that exempts breaks. Within the voice classes
+  only a **head-of-clip** one-shot counts: a granular chop at offset .42 is a
+  different piece of the clip, and a glitch retrigger belongs to the utterance it
+  decorates (it follows its parent's fate, so no orphan stutter tails).
+- **Space, don't just cap.** At the limit the governor first **rotates** to a
+  sibling in the same curated family (`vb_junglist_03` → `vb_junglist`,
+  `sp_st_akiba` → `sp_st`); only an exhausted family drops the event. A min gap
+  of 6.4 bars keeps five uses spread instead of clumped into eight.
+- Rotation is restricted to **homogeneous** families (three-token pool ids, plus
+  the `hp_`/`wd_` single-topic casts). The flat two-token shelves are not
+  substitutable — `sp_` holds mall announcements next to rave MC shouts, `vx_`
+  holds Blake next to the telephone time lady — so those are capped and spaced
+  but never swapped. Audited: 396 substitutions, every one inside its family.
+- Deterministic (one dedicated stream, seed+31337) and matrix-invisible by
+  construction — `genre-verifier.js` derives features from `ev.drums` and reads
+  `breakUse`/`chopUse`/`bedUse` off `state.sections`, never off found events.
+
+Result across 274 genres × 3 seeds: rows over cap **140 → 0**, catalogue worst
+**31× → 5×**. Total found/sfx stream **−2.8 %** (the voice-utterance layer −38 %,
+concentrated exactly where it was looping). Where a pool exists rotation absorbs
+the excess with no loss at all (`budstep` 83 → 83 utterances over 16 ids); where
+a genre resolved a **single** voice id — 451 of 592 resolved families — there is
+nowhere to rotate and thinning is the arithmetic meaning of capping a 31× loop.
+Widening those genres' `hits.sources` voice pools (documented matrix-safe in
+CLAUDE.md) is the follow-up that turns the remaining thinning into spreading.
+
+**Live caveat**: `faust/live.js` regenerates a collapsed section each chord bar,
+so `buildEvents` sees 16–72 beats at a time (measured: mallsoft 72, transitwave
+40, auctioncore 16, dmvstep 40). The cap binds *within* each generation — where
+the worst clumping lives — but the 64-bar accounting cannot span generations.
+Press/export get the full guarantee.
+
 ## The vector space grows new axes
 
 Anchors gain (all optional; blending via the existing `wRange`/pool rules):

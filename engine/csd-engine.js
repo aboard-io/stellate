@@ -1234,6 +1234,35 @@
     "16th":    { at:(f)=>Math.abs(f-0.25)<0.001||Math.abs(f-0.75)<0.001, push:0.08 },
     "triplet": { at:(f)=>Math.abs(f-0.5)<0.001, push:(2/3-0.5) },   // full swing lands the "&" on 2/3
   };
+  // ---- PUSH-PULL IN MILLISECONDS (docs/TIMING-AUDIT-2026-07 §Groove P1) -------
+  // `timeFeel.pushPull` is declared in BEATS, which makes it tempo-RELATIVE: the
+  // same 0.015 is 5.4 ms at 168 bpm and 18.8 ms at 48 bpm, so one number cannot
+  // mean one feel across a catalogue spanning 48-209 bpm (the audit measured the
+  // doom family's 0.08 landing at a hundred milliseconds — past "behind the beat"
+  // into "wrong"). Human micro-timing is a MILLISECOND quantity: a drummer's
+  // laid-back snare is ~15 ms late whether the tune is a ballad or a burner.
+  // `timeFeel.pushPullMs` declares it that way and folds to beats HERE, against
+  // this state's own bpm — the one choke point both the press and the live walk
+  // already share.
+  //   INTERACTION (both present): the two are SUMMED per lane, after the ms side
+  //   is converted. They are the same physical quantity in different units, so
+  //   summing is the only composable reading; it also means an anchor that wants
+  //   a deliberately tempo-SCALING component (pushPull) plus a tempo-honest one
+  //   (pushPullMs) can say so. Lanes present in only one map pass through.
+  //   ABSENT pushPullMs => the expression is the historical one, term for term:
+  //   no new object, no new key order => byte-identical (base-hash gate).
+  // Note the section-stage rubato warp runs AFTER this, so under rubato the
+  // realised offset breathes with the local tempo — correct, and the same thing
+  // that happens to a real band.
+  function resolvePushPull(tf, bpm){
+    const pp=(tf.pushPull&&Object.keys(tf.pushPull).length)?tf.pushPull:null;
+    const ms=(tf.pushPullMs&&Object.keys(tf.pushPullMs).length)?tf.pushPullMs:null;
+    if(!ms) return pp;
+    const bpMs=(bpm>0?bpm:120)/60000;            // beats per millisecond at this tempo
+    const out={}; if(pp) for(const k in pp) out[k]=pp[k];
+    for(const k in ms) out[k]=(out[k]||0)+ms[k]*bpMs;
+    return out;
+  }
   function resolveTimeFeel(state){
     const tf=state.timeFeel||{};
     const hz=state.humanize||0;
@@ -1241,7 +1270,7 @@
     return {
       swing:{ amount:state.swing||0, grid:(tf.grid&&SWING_GRIDS[tf.grid])?tf.grid:"8th" },
       humanize:{ timing:hum&&hum.timing!=null?hum.timing:hz, level:hum&&hum.level!=null?hum.level:hz },
-      pushPull:(tf.pushPull&&Object.keys(tf.pushPull).length)?tf.pushPull:null,   // { voice|drum : ±beats } — laid-back bass / on-top hats
+      pushPull:resolvePushPull(tf, state.bpm),   // { voice|drum : ±beats } — laid-back bass / on-top hats (+ ms lanes folded at state.bpm)
       rubato:(state.rubato&&state.rubato.depth>0)?state.rubato:null,
     };
   }
@@ -1318,6 +1347,134 @@
       e.beat=Math.max(0,b);
       if(stamp) e.beat0=Math.max(0,nb);
     }
+  }
+
+  // ---------- VOICE REPEAT GOVERNOR (2026-07-25) ------------------------------
+  // Paul: "No vocal or textural sample should repeat more than five times in 64
+  // bars. We end up with speech synthesized phrases looping ad nauseum. Space
+  // them." A voice sample is an UTTERANCE, not a groove element: hearing
+  // "Platform nine has been reassigned to grief" twice in a minute is a world;
+  // eight times is a bug. No single scheduler can see this — each section role,
+  // the hits layer and every sampleEvents spec places its own shots from its own
+  // rng, and several of them can land on one id — so the rule is enforced HERE,
+  // the one place that sees the whole found stream.
+  //
+  // SCOPE, deliberately narrow. Only the VOICE classes: the voxbank `vb_*`, the
+  // espeak/speech shelf `sp_*`/`hp_*`/`wd_*`, `vox_*`, and the SOURCES voice
+  // shelf `vx_*`. NOT breaks or chops (a break repeating IS the genre), NOT
+  // sustained beds (continuous by nature), and NOT `kind:"hit"` — the rave
+  // hoover, the bigbeat stab and the horn section are MUSICAL hits whose
+  // repetition is the idiom, which is the same argument that exempts breaks.
+  // Within the voice classes only a HEAD-OF-CLIP one-shot counts as an
+  // utterance: a granular chop at offset .42 is a different piece of the clip,
+  // and a glitch retrigger is part of the utterance it decorates (it follows its
+  // parent's fate below, so no orphan stutter tail of a phrase that never played).
+  //
+  // SPACE, don't just cap — going silent at the limit is a worse artefact than
+  // the repetition. An id at its limit first ROTATES to a sibling voice from the
+  // same family that is under its own limit (the pools exist precisely for this,
+  // and the family is read off the id, so a station name can only ever be
+  // replaced by another station name); only a genuinely exhausted family drops
+  // the event. MIN_GAP additionally forbids two uses of one id inside 6.4 bars,
+  // so five uses spread across the window instead of clumping into eight.
+  //
+  // Deterministic: one dedicated stream (seed+31337) fixes each family's rotation
+  // order once, and everything else is a time-ordered walk. No wall clock, no
+  // Math.random. A state already inside the limits is returned untouched, so
+  // every genre that was not looping presses byte-identically.
+  //
+  // KNOWN LIMIT — the live path gets the rule PER GENERATION, not per session.
+  // faust/live.js regenerates a collapsed section every chord bar, so buildEvents
+  // sees 16-72 beats (4-18 bars) at a time, not the whole song: MEASURED
+  // mallsoft 72, transitwave 40, auctioncore 16, dmvstep 40. The cap therefore
+  // binds inside each generation — which is where the worst clumping lives, since
+  // a `buried` spec drops a name under every measure of one section — but the
+  // 64-bar accounting cannot span generations. Press/export (download, journeys,
+  // sample.mp4) get the full guarantee. Closing the live gap means threading a
+  // small per-session use-history in through the state; deliberately NOT built
+  // here, because it needs a matching change in faust/live.js's walk.
+  const GOV_CAP=5, GOV_WIN_BARS=64, GOV_MINGAP_BARS=6.4, GOV_GLUE=2;
+  const GOV_VOICE_RE=/^(vb|sp|hp|wd|vox|vx)_/;
+  // A family is the id's curated sub-pool: `vb_junglist_03` -> `vb_junglist`,
+  // `sp_st_akiba` -> `sp_st`, `sp_auction_2` -> `sp_auction` — exactly the
+  // SOURCE_POOLS naming, so a station name can only ever become another station
+  // name and an auctioneer another auctioneer.
+  const govFamily=(id)=>{ const t=id.split("_"); return t.length>=3 ? t[0]+"_"+t[1] : t[0]; };
+  // ROTATABLE families only. A three-token id belongs to a curated pool whose
+  // members are interchangeable by construction; `hp_`/`wd_` are single-topic
+  // casts (the 24-voice school roster, the strain list) and are equally safe.
+  // The FLAT two-token shelves are NOT: `sp_` holds mall announcements next to
+  // rave MC shouts and `vx_` holds Blake next to the telephone time lady, so
+  // rotating inside them would swap register ("REWIND!" in a dead mall). Those
+  // ids are capped and spaced but never substituted — a thinner line is a much
+  // smaller artefact than the wrong voice.
+  const govRotatable=(fam)=>fam.indexOf("_")>0 || fam==="hp" || fam==="wd";
+  function govIsVoice(id, src){
+    if(!GOV_VOICE_RE.test(id)) return false;
+    const k=src&&src.kind;                       // a voice-prefixed id declared break/chop/hit is not an utterance
+    return !(k==="break"||k==="chop"||k==="hit");
+  }
+  function governVoiceRepeats(found, srcById, state){
+    if(!found||!found.length||!srcById) return found;
+    const byNum={}; let any=false;
+    for(const id in srcById){ const s=srcById[id];
+      if(s && govIsVoice(id,s)){ byNum[s.tableNum]={id,src:s}; any=true; } }
+    if(!any) return found;
+    const barBeats=(state.meter&&state.meter.beats)?state.meter.beats:4;
+    const WIN=GOV_WIN_BARS*barBeats, GAP=GOV_MINGAP_BARS*barBeats;
+    // family -> the tableNums resolved in THIS state, in one seeded order (fixed
+    // once, so rotation spreads deterministically instead of always picking the
+    // lowest-numbered sibling)
+    const fam={};
+    for(const num in byNum){ const f=govFamily(byNum[num].id); (fam[f]=fam[f]||[]).push(+num); }
+    const grng=mulberry32((((state.seed??1)>>>0)+31337)>>>0);
+    for(const f in fam){ const a=fam[f]; a.sort((x,y)=>x-y);
+      for(let i=a.length-1;i>0;i--){ const j=Math.floor(grng()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } }
+    const isUtterance=(e)=>e.chop===1 && (e.offset==null||e.offset<0.02);
+    const utt=[], tails=[];
+    for(let i=0;i<found.length;i++){ const e=found[i]; if(!byNum[e.tableNum]) continue;
+      (isUtterance(e)?utt:tails).push(i); }
+    if(!utt.length) return found;
+    utt.sort((a,b)=>found[a].beat-found[b].beat||a-b);
+    const used={};                                  // tableNum -> accepted beats, ascending
+    const ok=(num,beat)=>{ const u=used[num]; if(!u||!u.length) return true;
+      if(beat-u[u.length-1]<GAP) return false;      // MIN_GAP: never two inside 6.4 bars
+      let c=0; for(let i=u.length-1;i>=0&&beat-u[i]<WIN;i--) c++;
+      return c<GOV_CAP; };                          // trailing-window greedy => no window ever holds >CAP
+    const drop=new Set(), moveTo=new Map();
+    for(const i of utt){
+      const e=found[i], num=e.tableNum;
+      if(ok(num,e.beat)){ (used[num]=used[num]||[]).push(e.beat); continue; }
+      const f=govFamily(byNum[num].id);
+      let pick=-1;
+      if(govRotatable(f)) for(const s of (fam[f]||[])) if(s!==num && ok(s,e.beat)){ pick=s; break; }
+      if(pick>=0){ moveTo.set(i,pick); (used[pick]=used[pick]||[]).push(e.beat); }
+      else drop.add(i);
+    }
+    if(!drop.size && !moveTo.size) return found;    // already inside the limits => untouched
+    // a glitch retrigger follows the utterance it decorates: same source, within
+    // GOV_GLUE beats after it (the nearest preceding utterance wins)
+    for(const t of tails){
+      const e=found[t]; let best=-1, bb=-Infinity;
+      for(const i of utt){ const u=found[i];
+        if(u.tableNum!==e.tableNum) continue;
+        if(u.beat<=e.beat && e.beat-u.beat<=GOV_GLUE && u.beat>bb){ bb=u.beat; best=i; } }
+      if(best<0) continue;
+      if(drop.has(best)) drop.add(t);
+      else if(moveTo.has(best)) moveTo.set(t, moveTo.get(best));
+    }
+    const out=[];
+    for(let i=0;i<found.length;i++){
+      if(drop.has(i)) continue;
+      const e=found[i], to=moveTo.get(i);
+      if(to!=null){ const ns=byNum[to].src;
+        e.tableNum=to;
+        if(ns.cutoff!=null && e.cutoff!=null) e.cutoff=Math.min(e.cutoff, ns.cutoff*1.6);
+        if(ns.durSec && e.dur) e.dur=Math.min(e.dur, Math.max(0.25, ns.durSec*state.bpm/60));
+      }
+      out.push(e);
+    }
+    return out;
   }
 
   // break-chop slice sequences: 16 8th-slots per chord, slice index 0-7 or -1 rest
@@ -2372,6 +2529,13 @@
       applyGroove(percArr, tfeel, mulberry32(((state.seed??1)+61454)>>>0), seamWin);
       for(const e of percArr) drums.push(e);
     }
+    // ---- VOICE REPEAT GOVERNOR — the anti-loop pass (see governVoiceRepeats) --
+    // Runs here because this is the first point at which the found stream is
+    // COMPLETE (section roles + hits + vox + vocal + every sampleEvents spec have
+    // all pushed) and still UNWARPED, so the 64-bar window is honest bar
+    // arithmetic rather than rubato-stretched beats. Returns the same array
+    // object when nothing is over the limit.
+    found=governVoiceRepeats(found, srcById, state);
     // ---- RUBATO — the SECTION stage of the unified time-feel (Phase 3) ----
     // (state.rubato = {depth, periodBars, phase}; resolved into tfeel.rubato)
     // Deterministic slow breathing of tempo, implemented ONCE here as a
@@ -2737,6 +2901,7 @@
     sectionTag,   // form-graph typed-node classifier (Phase 5)
     PROGRESSIONS, getProgression, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS,
     PERC_PATTERNS, PERC_VOICES, PERC_NOTE,
+    resolvePushPull,   // (timeFeel, bpm) -> {lane:±beats}|null — the ONE fold of pushPull+pushPullMs (seamwalk gate reads it rather than re-deriving)
     isModel, SOURCE_CLASS, sourceClassOf, pchAdd, pchToMidi };
   if(typeof module!=="undefined" && module.exports) module.exports=api;
   else root.CsdEngine=api;

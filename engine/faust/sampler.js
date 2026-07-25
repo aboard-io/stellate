@@ -141,6 +141,7 @@
         mix: clampS(f.mix != null ? f.mix : 0.3, 0, 1), base: sr * 0.0006, swing: sr * 0.005 };
     }
     S.trim = strip.trim != null ? strip.trim : 1;
+    S.step = kernelFor(S);   // fused per-shape strip kernel (see stripStep)
     return S;
   }
 
@@ -173,8 +174,16 @@
     return Math.min(STRIP_TAIL_REPEATS * ds, Math.floor(STRIP_TAIL_MAX_SEC * sr));
   }
 
-  // process one sample through the per-note strip. `t` = GLOBAL song seconds.
-  function stripStep(S, x, t) {
+  // REFERENCE STEPPER (and CSP fallback): the guarded, un-fused strip — the
+  // exact code the fused kernel's stage bodies were lifted from, kept because
+  // (a) a page served under a strict CSP without 'unsafe-eval' cannot build a
+  //     Function from source (HOSTING.md §4 proposes exactly such a policy),
+  //     and the strip must still run there, and
+  // (b) it is the DRIFT GATE: test/strip-fuzz-test.js requires the fused kernel
+  //     and this reference to agree BIT-FOR-BIT on every shipped profile and
+  //     every synthetic extreme, so an edit to one that misses the other fails
+  //     the gate instead of moving pressed bytes.
+  function stripStepRef(S, x, t) {
     if (S.hp) x = biq(S.hp, x);
     if (S.lp) x = biq(S.lp, x);
     if (S.eq) x = biq(S.eq, x);
@@ -250,6 +259,134 @@
     return x * S.trim;
   }
 
+  // ---- FUSED STRIP KERNEL (ENGINE-AUDIT 2026-07 Tier 4) -------------------
+  // stripStep runs PER SAMPLE PER NOTE and used to re-test all eleven `if (S.x)`
+  // feature flags on every one of them: measured at ~24% of the live stream
+  // render loop and ~30-35% of a whole press — the audit's biggest single engine
+  // cost. The stage math itself is irreducible; the waste was dispatch (eleven
+  // guards + polymorphic property loads per sample per note).
+  //
+  // So the stage BODIES live below as source text — verbatim the arithmetic the
+  // guarded blocks used to hold — and kernelFor() fuses the ones a given strip
+  // actually has into ONE generated function, cached by shape key. A strip with
+  // hp+eq+sat+comp+chorus+leslie runs exactly those six bodies back to back, in
+  // this order, with no feature tests at all.
+  //
+  // BYTE LAW: same source text, same order, same per-note state => the float
+  // operation sequence is unchanged => output is byte-identical (gated by press
+  // sha256 + faust/segment-parity-test.js + strip-fuzz). Anyone editing a stage
+  // edits it HERE — this is the only copy. (A per-stage closure ARRAY was tried
+  // first and is 6% SLOWER: the win is fusion into one body, not indirection.)
+  const STAGE_SRC = {
+    hp: "x = biq(S.hp, x);",
+    lp: "x = biq(S.lp, x);",
+    eq: "x = biq(S.eq, x);",
+    eq2: "x = biq(S.eq2, x);",
+    sat: "{ const s = Math.tanh(x * S.satG) / S.satG; x += S.satMix * (s - x); }",
+    comp: `{
+  const ax = x < 0 ? -x : x;
+  S.cEnv = ax > S.cEnv ? S.cAtk * S.cEnv + (1 - S.cAtk) * ax : S.cRel * S.cEnv + (1 - S.cRel) * ax;
+  if (S.cEnv > S.cThresh) x *= Math.pow(S.cThresh / S.cEnv, S.cSlope);
+  x *= S.cMakeup;
+}`,
+    ch: `{
+  const ch = S.ch, lfo = Math.sin(2 * Math.PI * ch.rate * t);
+  // clamp the read delay to the delay-line span and wrap the read pointer
+  // robustly. A \`d\` larger than ch.n (only reachable with pathological chorus
+  // base/depthMs, never the shipped STRIP_PROFILES) left rp NEGATIVE after a
+  // single \`+= ch.n\`, indexing ch.buf out of bounds -> \`undefined\` -> NaN, which
+  // then poisons ch.buf and every downstream sample of the whole bar (a
+  // permanently-muted / garbled voice — Paul's "random muting"). For shipped
+  // profiles d < ch.n-2 so this is byte-identical (clamp + while both no-op).
+  const dmax = ch.n - 2;
+  let d = ch.base + ch.depth * (0.5 + 0.5 * lfo); if (d > dmax) d = dmax; else if (d < 0) d = 0;
+  let rp = ch.w - d; while (rp < 0) rp += ch.n;
+  const i0 = rp | 0, fr = rp - i0, i1 = (i0 + 1) % ch.n;
+  let wet = ch.buf[i0] + fr * (ch.buf[i1] - ch.buf[i0]);
+  if (ch.two) {
+    const lfo2 = Math.sin(2 * Math.PI * ch.rate * 0.8 * t + 2.1);
+    let d2 = ch.base + ch.depth * (0.5 + 0.5 * lfo2); if (d2 > dmax) d2 = dmax; else if (d2 < 0) d2 = 0;
+    let rp2 = ch.w - d2; while (rp2 < 0) rp2 += ch.n;
+    const j0 = rp2 | 0, f2 = rp2 - j0, j1 = (j0 + 1) % ch.n;
+    wet = 0.5 * (wet + ch.buf[j0] + f2 * (ch.buf[j1] - ch.buf[j0]));
+  }
+  ch.buf[ch.w] = x; ch.w = (ch.w + 1) % ch.n;
+  x = (1 - ch.mix) * x + ch.mix * wet;
+}`,
+    ph: `{
+  const ph = S.ph, l = 0.5 + 0.5 * Math.sin(2 * Math.PI * ph.rate * t);
+  const fc = ph.lo * Math.pow(ph.hi / ph.lo, l), tn = Math.tan(Math.PI * clampS(fc, 20, S.sr * 0.45) / S.sr);
+  const a = (1 - tn) / (1 + tn);
+  let s = x + ph.fb * ph.last;
+  for (let k = 0; k < ph.ns; k++) { const xin = s, y = -a * xin + ph.xp[k] + a * ph.yp[k]; ph.xp[k] = xin; ph.yp[k] = y; s = y; }
+  ph.last = s;
+  x = (1 - ph.mix) * x + ph.mix * s;
+}`,
+    les: `{
+  const L = S.les, hs = Math.sin(2 * Math.PI * L.hRate * t), ds = Math.sin(2 * Math.PI * L.dRate * t);
+  L.lp += L.lpA * (x - L.lp); const low = L.lp, high = x - low;
+  L.buf[L.w] = high;
+  let d = L.base + L.swing * L.depth * hs; if (d < 0) d = 0; else if (d > L.n - 2) d = L.n - 2;
+  let rp = L.w - d; while (rp < 0) rp += L.n;
+  const i0 = rp | 0, fr = rp - i0, i1 = (i0 + 1) % L.n;
+  const hd = L.buf[i0] + fr * (L.buf[i1] - L.buf[i0]);
+  L.w = (L.w + 1) % L.n;
+  const wet = (hd * (1 + L.depth * 0.5 * hs) + low * (1 + L.depth * 0.28 * ds)) * 0.9;
+  x = (1 - L.mix) * x + L.mix * wet;
+}`,
+    dly: `{
+  const D = S.dly; let rp = D.w - D.ds; if (rp < 0) rp += D.n;
+  let echo = D.buf[rp];
+  D.lp += D.lpA * (echo - D.lp); echo = D.lp;   // tone lowpass in the loop
+  D.buf[D.w] = x + D.fb * echo; D.w = (D.w + 1) % D.n;
+  x = (1 - D.mix) * x + D.mix * echo;
+}`,
+    fla: `{
+  const F = S.fla, lfo = 0.5 - 0.5 * Math.cos(2 * Math.PI * F.rate * t);
+  let d = F.base + F.swing * F.depth * lfo; if (d < 1) d = 1; else if (d > F.n - 2) d = F.n - 2;
+  let rp = F.w - d; while (rp < 0) rp += F.n;
+  const i0 = rp | 0, fr = rp - i0, i1 = (i0 + 1) % F.n;
+  const del = F.buf[i0] + fr * (F.buf[i1] - F.buf[i0]);
+  F.buf[F.w] = x + F.fb * del; F.w = (F.w + 1) % F.n;
+  x = (1 - F.mix) * x + F.mix * del;
+}`,
+  };
+  // presence test per stage — the SAME condition the old per-sample guard used
+  const STAGE_ON = {
+    hp: (S) => S.hp,
+    lp: (S) => S.lp,
+    eq: (S) => S.eq,
+    eq2: (S) => S.eq2,
+    sat: (S) => S.satG,
+    comp: (S) => S.cEnv !== undefined,
+    ch: (S) => S.ch,
+    ph: (S) => S.ph,
+    les: (S) => S.les,
+    dly: (S) => S.dly,
+    fla: (S) => S.fla,
+  };
+  const STAGE_ORDER = ["hp", "lp", "eq", "eq2", "sat", "comp", "ch", "ph", "les", "dly", "fla"];
+  const KERNELS = new Map();
+  function kernelFor(S) {
+    const on = STAGE_ORDER.filter((k) => STAGE_ON[k](S));
+    const key = on.join(",");
+    let f = KERNELS.get(key);
+    if (!f) {
+      try {
+        f = new Function("biq", "clampS",
+          "return function stripKernel(S, x, t) {\n" + on.map((k) => STAGE_SRC[k]).join("\n") +
+          "\nreturn x * S.trim;\n};")(biq, clampS);
+      } catch (e) { f = stripStepRef; }   // no string-eval (CSP): guarded stepper
+      KERNELS.set(key, f);
+    }
+    return f;
+  }
+
+  // process one sample through the per-note strip. `t` = GLOBAL song seconds.
+  // (makeStrip bakes S.step; the lazy build covers a hand-assembled S.)
+  function stripStep(S, x, t) {
+    return (S.step || (S.step = kernelFor(S)))(S, x, t);
+  }
   // ---- SELECTION VELOCITY (ENGINE-AUDIT 2026-07 Tier 2) -------------------
   // The ONE formula both engines use to pick a velocity layer. It takes the
   // MUSICAL amplitude — buildEvents' note amp, carried on the event as `e.amp`
@@ -392,6 +529,20 @@
 
   function mixPCM(notes, buffers, sr, into, sends, win, meter) {
     const winBase = win ? win.base : 0;
+    // WINDOW RESUME (ENGINE-AUDIT 2026-07 Tier 4). Without it, a note spanning P
+    // windows is rendered from i=0 in every one of them and everything before the
+    // window is thrown away — O(P²) work for a P-window pad, measured at 8-35% of
+    // the whole stream/wavOut render path. With `win.resume`, the note's complete
+    // mutable state (sample index, rate accumulator, head-EQ memory, the per-note
+    // strip object, and the ring-out cursor) is parked on the note and picked up
+    // in the next window, so each sample is computed EXACTLY ONCE — the same
+    // float-op sequence in the same order, hence byte-identical (gated by
+    // faust/segment-parity-test.js).
+    // It is guarded, not assumed: the parked record carries the absolute sample
+    // it stopped at, and is only honoured when this window starts there. Any
+    // out-of-order/repeat/mid-song-start window silently falls back to the full
+    // re-render from i=0, so correctness never depends on the caller's discipline.
+    const resumeOn = !!(win && win.resume);
     const busLen = win ? win.len : into.dry.length;
     const total = win ? win.total : into.dry.length;
     const dg = sends.dry != null ? sends.dry : 1, rg = sends.rev || 0, lg = sends.del || 0;
@@ -427,6 +578,9 @@
       }
       const rate = rateFor(z, midi);
       const s0 = Math.max(0, Math.floor(n.tSec * sr));
+      // parked state from the previous window (see WINDOW RESUME above)
+      const RS = resumeOn && n._rs && n._rs.next === winBase ? n._rs : null;
+      if (resumeOn && n._rs && !RS) n._rs = null;   // stale (out-of-order window)
       const atkN = Math.max(8, Math.floor((n.atk || 0.01) * sr));
       const relN = Math.max(32, Math.floor((n.rel || 0.09) * sr));
       const holdN = Math.max(atkN, Math.floor(n.durSec * sr));
@@ -445,8 +599,11 @@
       const loop = z.loop && loopEnd > z.loopStart + 8;
       const loopLen = loop ? loopEnd - z.loopStart : 0;
       const g = (n.gain != null ? n.gain : 0.5) * GAIN;
-      // per-note channel strip (fresh state each note -> window-independent).
-      const S = strip ? makeStrip(strip, sr) : null;
+      // per-note channel strip (fresh state each note -> window-independent;
+      // under WINDOW RESUME the note's own live state carries over instead).
+      const S = RS ? RS.S : (strip ? makeStrip(strip, sr) : null);
+      const park = (rec) => { if (!resumeOn) return; rec.S = S; n._rs = rec; };
+      const unpark = () => { if (resumeOn) n._rs = null; };
       // MASTERING pan (see the header note above): null => the old mono write
       const pan = (n.pan != null ? n.pan : basePan) || 0;
       const pg = (pan && into.dryL && into.dryR) ? panLR(pan) : null;
@@ -456,8 +613,8 @@
       // out. Same write/clip rules as the note body, so a windowed render sees
       // exactly the slice that lands in its window. The quiet counter is a pure
       // function of the strip state (window-independent) — parity-safe.
-      const ringOut = (from) => {
-        if (!S || !tailN) return;
+      const ringOut = (from, resume) => {
+        if (!S || !tailN) { unpark(); return; }
         // stop early only once the delay LINE is provably empty: a full delay
         // period of silent output means every sample the read pointer can still
         // reach is zero. (A shorter run would cut the FIRST echo of a note
@@ -469,16 +626,24 @@
         // of vanishing at the seam — that is the difference between a -47 dBFS
         // and a -66 dBFS residual step, for 4% of the tail's samples.
         const handoverN = Math.min(tailN, Math.ceil(0.06 * sr));
-        let quiet = 0;
-        for (let i = from; i < from + tailN; i++) {
+        // RESUME: the tail can cross a window edge just like the body — park the
+        // cursor + the quiet counter (both pure state, no re-derivation) so the
+        // next window continues the same decay instead of re-running it from the
+        // note's start. The window-edge test sits ABOVE the strip step so the
+        // parked state has NOT consumed the sample the next window will render.
+        let quiet = resume ? resume.quiet : 0;
+        for (let i = resume ? resume.ti : from; i < from + tailN; i++) {
           if (s0 + i >= total) break;
-          const v = i - from < handoverN ? stripStep(S, 0, (s0 + i) / sr) : stripTailStep(S, (s0 + i) / sr);
           const j = s0 + i - winBase;
-          if (j >= busLen) break;
+          if (j >= busLen) { park({ next: s0 + i, phase: "tail", from, ti: i, quiet }); return; }
+          const v = i - from < handoverN ? stripStep(S, 0, (s0 + i) / sr) : stripTailStep(S, (s0 + i) / sr);
           if (j >= 0) { const vd = v * dg; if (pg) { into.dryL[j] += vd * pg.l; into.dryR[j] += vd * pg.r; } else into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; }
           if (v > -1e-7 && v < 1e-7) { if (++quiet > quietMax) break; } else quiet = 0;
         }
+        unpark();
       };
+      // a note resuming INSIDE its ring-out skips the body entirely
+      if (RS && RS.phase === "tail") { ringOut(RS.from, RS); continue; }
       // blue-note bend: start bendFrom semitones off target, linear-in-rate
       // glide over bendMs (matches live's linearRampToValueAtTime), then the
       // fixed target rate. pos accumulates ONLY on the bend path so unbent
@@ -500,8 +665,10 @@
         const outNm = Math.min(total - s0, effHold + relN);
         // head-EQ: gentle one-pole lowpass (dulled highs of the playback head)
         const fc = 9000 - (M.headEq || 0) * 6500, aLp = (M.headEq || 0) > 0 ? 1 - Math.exp(-2 * Math.PI * fc / sr) : 0;
-        let lp = 0, posAccM = 0, iEnd = outNm, pastWin = false;
-        for (let i = 0; i < outNm; i++) {
+        let lp = RS ? RS.lp : 0, posAccM = RS ? RS.posAcc : 0, iEnd = outNm, pastWin = false;
+        for (let i = RS ? RS.i : 0; i < outNm; i++) {
+          const j = s0 + i - winBase;
+          if (j >= busLen) { park({ next: s0 + i, phase: "body", i, posAcc: posAccM, lp }); iEnd = i; pastWin = true; break; }
           const t = (s0 + i) / sr;
           let pm = Math.pow(2, (wowD * Math.sin(2 * Math.PI * wowR * t) + flD * Math.sin(2 * Math.PI * flR * t)) / 12);
           if (i > effHold) pm *= 1 - 0.03 * ((i - effHold) / relN);   // tape-runout pitch sag (~½ semitone)
@@ -515,8 +682,6 @@
           if (i < atkN) { const a = i / atkN; v *= n.swell ? a * a : a; }
           if (i > effHold) v *= Math.max(0, 1 - (i - effHold) / relN);   // tape-runout release
           if (S) v = stripStep(S, v, (s0 + i) / sr);
-          const j = s0 + i - winBase;
-          if (j >= busLen) { iEnd = i; pastWin = true; break; }
           if (j >= 0) { const vd = v * dg; if (pg) { into.dryL[j] += vd * pg.l; into.dryR[j] += vd * pg.r; } else into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; }
         }
         if (!pastWin) ringOut(iEnd);
@@ -534,7 +699,9 @@
         const han = grainHann(Gn);
         const wrap = (p) => (loop && p >= loopEnd) ? z.loopStart + ((p - z.loopStart) % loopLen) : p;
         let iEnd = outN, pastWin = false;
-        for (let i = 0; i < outN; i++) {
+        for (let i = RS ? RS.i : 0; i < outN; i++) {
+          const j = s0 + i - winBase;
+          if (j >= busLen) { park({ next: s0 + i, phase: "body", i, posAcc: 0 }); iEnd = i; pastWin = true; break; }
           let vv = 0;
           const kLo = Math.max(0, Math.ceil((i - Gn + 1) / Hn)), kHi = (i / Hn) | 0;
           for (let k = kLo; k <= kHi; k++) {
@@ -549,14 +716,18 @@
           if (i < atkN) { const a = i / atkN; v *= n.swell ? a * a : a; }
           if (i > holdN) v *= Math.max(0, 1 - (i - holdN) / relN);
           if (S) v = stripStep(S, v, (s0 + i) / sr);
-          const j = s0 + i - winBase;
-          if (j >= busLen) { iEnd = i; pastWin = true; break; }
           if (j >= 0) { const vd = v * dg; if (pg) { into.dryL[j] += vd * pg.l; into.dryR[j] += vd * pg.r; } else into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; } }
         if (!pastWin) ringOut(iEnd);
         continue;
       }
-      let posAcc = 0, iEnd = outN, pastWin = false;
-      for (let i = 0; i < outN; i++) {
+      let posAcc = RS ? RS.posAcc : 0, iEnd = outN, pastWin = false;
+      for (let i = RS ? RS.i : 0; i < outN; i++) {
+        // WINDOW EDGE first (see WINDOW RESUME): the old order computed the
+        // sample, then discovered it was past the window and threw it away —
+        // which would leave parked state one sample ahead of the next window.
+        // Output is unchanged (that sample was never written).
+        const j = s0 + i - winBase;
+        if (j >= busLen) { park({ next: s0 + i, phase: "body", i, posAcc }); iEnd = i; pastWin = true; break; }
         let pos;
         if (bendN) { pos = posAcc; posAcc += i < bendN ? r0 + (rate - r0) * (i / bendN) : rate; }
         else pos = i * rate;
@@ -570,8 +741,6 @@
         if (i < atkN) { const a = i / atkN; v *= n.swell ? a * a : a; }
         if (i > holdN) v *= Math.max(0, 1 - (i - holdN) / relN); // release ramp
         if (S) v = stripStep(S, v, (s0 + i) / sr);
-        const j = s0 + i - winBase;
-        if (j >= busLen) { iEnd = i; pastWin = true; break; }
         if (j >= 0) { const vd = v * dg; if (pg) { into.dryL[j] += vd * pg.l; into.dryR[j] += vd * pg.r; } else into.dry[j] += vd; if (rg) into.rev[j] += v * rg; if (lg) into.del[j] += v * lg; if (meter) meter.e += vd * vd; }
       }
       if (!pastWin) ringOut(iEnd);
@@ -1049,5 +1218,5 @@
     // it; the stream renderer must add it to each note's window-filter end).
     selVel, selVelOf, stripTailN, VEL_DEFAULT,
     zoneCacheInfo,   // ENGINE-AUDIT Tier 2: bounded zone-cache telemetry (?wavDebug/tests)
-    __test: { makeStrip, stripStep, rbjCoefs } };   // faust/strip-fuzz-test.js hooks
+    __test: { makeStrip, stripStep, stripStepRef, kernelFor, rbjCoefs } };   // faust/strip-fuzz-test.js hooks
 });

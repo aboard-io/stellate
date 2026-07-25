@@ -86,7 +86,7 @@
         if (dxParams)
           for (const [sfx, v] of Object.entries(dxParams))
             proc.setParamValue(sfx.slice(0, 4) === "/DX7" ? sfx : "/DX7" + sfx, v);
-        procs.push({ proc, R, pending: [], ivals: [], busyUntil: -1, lastOff: null, curOut: 1, curPP: 0 });
+        procs.push({ proc, R, pending: [], ivals: [], busyUntil: -1, lastOff: null, curOut: 1, curPP: 0, renderedEnd: 0 });
       }
       return { module: u.module, u, procs, chain: await mkChain(u.inserts), chainBarSet: false };
     }
@@ -204,8 +204,14 @@
           else if (c[1] === "@pp") v.curPP = c[2];
           else v.proc.setParamValue(c[1], c[2]);
         };
+        // SEGMENT OVERLAP CLAMP — render-core's fix, mirrored (parity): the walk
+        // renders whole BS blocks past a segment's end while the next segment's
+        // start rounds DOWN to a block, so a 1..63-sample gap inside one block
+        // used to render that block twice. v.renderedEnd (persisted across
+        // windows; chunk bases are BS-aligned) is the first sample this proc has
+        // not rendered. Byte-identical wherever no such gap exists.
         for (const [a, b] of renderSegs) {
-          const from = Math.max(0, Math.floor(a / BS) * BS), to = Math.min(barEnd, b);
+          const from = Math.max(0, Math.floor(a / BS) * BS, v.renderedEnd), to = Math.min(barEnd, b);
           while (ci < ch.length && ch[ci][0] < from) { applyChange(ch[ci]); ci++; }
           for (let s2 = from; s2 < to; s2 += BS) {
             const len = Math.min(BS, barEnd - s2);
@@ -238,6 +244,7 @@
                 if (meter) { const xd = x * dg; meter.e += xd * xd; }
               }
             }
+            v.renderedEnd = s2 + BS;
           }
         }
         v.pending = ch.slice(ci);
@@ -610,6 +617,12 @@
       }
       const LEN = end - base;
 
+      // NOTE-RESUME (ENGINE-AUDIT 2026-07 Tier 4): the sampler bakes below pass
+      // `resume: true`, so a note spanning several chord-bar windows continues
+      // its own state into the next one instead of being re-rendered from sample
+      // 0 in each (the old O(P²) walk). Windows are pulled strictly in order
+      // (ST.cursor enforces it), and the resume record is keyed on the absolute
+      // sample it stopped at, so anything else falls back to the full re-render.
       // combined bus set for this window (press's accumulator, one bar wide)
       const dry = new Float32Array(LEN), rev = new Float32Array(LEN),
             del = new Float32Array(LEN), pp = new Float32Array(LEN);
@@ -646,7 +659,7 @@
             // POST-chain (that is the dry energy that actually reaches the mix).
             const ubuf = new Float32Array(LEN);
             if (win.length) SP.mixPCM(win, ST.buffers, SR, { dry: ubuf, rev: ubuf, del: ubuf },
-              { dry: 1, rev: 0, del: 0, strip: su.sends.strip, granularOverSt: su.sends.granularOverSt, grainSec: su.sends.grainSec }, { base, len: LEN, total: TOTAL }, meter);
+              { dry: 1, rev: 0, del: 0, strip: su.sends.strip, granularOverSt: su.sends.granularOverSt, grainSec: su.sends.grainSec }, { base, len: LEN, total: TOTAL, resume: true }, meter);
             runChain(su, ubuf, LEN, spb);
             const dg = su.sends.dry != null ? su.sends.dry : 1, rg = su.sends.rev || 0, lg = su.sends.del || 0;
             // MASTERING pan (press's insert-path law: unit-level pan post-chain)
@@ -659,7 +672,7 @@
               rev[i] += x * rg; del[i] += x * lg;
               const xd = x * dg; meter.e += xd * xd;
             }
-          } else if (win.length) SP.mixPCM(win, ST.buffers, SR, { dry, rev, del, dryL: wL, dryR: wR }, su.sends, { base, len: LEN, total: TOTAL }, meter);
+          } else if (win.length) SP.mixPCM(win, ST.buffers, SR, { dry, rev, del, dryL: wL, dryR: wR }, su.sends, { base, len: LEN, total: TOTAL, resume: true }, meter);
           const notes = expect ? (expect[key] || 0) : win.filter((nt) => nt._s0 >= base && nt._s0 < end).length;
           auditVoice(voices, key, su.role || auditRole(null, key), notes, meter.e, LEN, meter.missing);
         } else {

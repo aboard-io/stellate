@@ -1339,6 +1339,7 @@
       stab:["offbeat","offbeat","rave","sparse"], hits:{sources:["pool:vocal_stab*1","pool:rave_stab*1","sp_system","sp_energy"], pattern:"sparse", prob:.5},
       form:"dj" },
     house: { label:"Congregation Furnace", info:"a four-on-floor congregation: claps and open-hat offbeats, warm organ stabs, piano color, min7 sevenths — the kick is the sermon and everyone is welcome",   // sample-mid: chops present, synths carry
+      timeFeel:{ pushPullMs:{ hat:-4 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — HOUSE: the open-hat offbeat rides on top of the four. Hats only — the kick IS the sermon and must not move
       reverbColor:"dattorro",   // fx wings: clean plate on the stabs
       masterComp:0.3,   // effects audit B6: the SSL-buss pump-and-glue on the four-on-floor — the bus-comp argument that earned disco its masterComp applies most directly to Chicago house. Zero rng, dominant-parent
       bpm:[120,126], swing:[.08,.15], humanize:[.05,.18],
@@ -1353,6 +1354,7 @@
       stab:["rave","offbeat"], hits:{sources:["pool:rave_stab*2","pool:vocal_stab*1","sp_rhythm","stml_hit_01","stml_hit_03"], pattern:"offbeat", prob:.55},
       form:"dj" },
     jungle: { label:"Barometric Stampede", info:"chopped breaks ricocheting under sub pressure, rhythm as the melody, echo hung like humidity — the floor is a long way down",   // SAMPLE-FORWARD: the amen IS the track
+      timeFeel:{ pushPullMs:{ bass:-5 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — JUNGLE: the sub placed ahead of the break so it PULLS — the break's own internal timing is sacred, so only the bass moves
       bpm:[158,172], swing:[0,.08], humanize:[.1,.25],
       progressions:["deep_two","drone_min","minor_run"], kits:["jungle","breaks"], fills:["break fill","break fill","reverse","off"],
       euclid:{kick:[3,16]},   // E(3,16) tresillo kicks rotating under the amen — breakbeat kick science
@@ -1619,10 +1621,11 @@
       found:{role:"bed", vol:[.05,.12], pitch:[.8,1], stretch:[.45,.6], cutoff:[1500,2600], sources:["vx_ginsberg_mexcityblues","vx_kupferberg_fugs87","pool:city*2","vx_ginsberg","vx_ginsberg_class"]},
       rubato:{depth:[.008,.018], periodBars:[2,3], prob:.35},   // the light option: a third of seeds get a subtle combo-breathing (never as deep as neoclassical)
       blueNote:0.32,   // the SAX SCOOP: when the lead resolves to a sampled sax/guitar, ~32% of held notes gain a blue-note bend (slide up into the b3/b7), mirroring csd-engine's blues pattern. A separate seeded stream => other events byte-identical; only SAMPLER voices render the slide (VOICES.md), and `bend` is not a verifier feature (matrix-invisible)
-      timeFeel:{ pushPull:{ bass:0.015 } },   // Phase 3: the upright WALKS behind the beat — bass onsets pushed ~7ms late (a per-voice offset, no verifier feature reads bass timing, so pure feel). HALVED 2026-07-04 (Paul: went a little too far on timing feel)
+      timeFeel:{ pushPull:{ bass:0.015 }, pushPullMs:{ ride:-5, snare:4 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — SWING: the ride rides ON TOP of a backbeat that leans back; the two maps SUM per lane, so the walking upright keeps its original tempo-RELATIVE drag while the new lanes are tempo-honest. Phase 3: the upright WALKS behind the beat — bass onsets pushed ~7ms late (a per-voice offset, no verifier feature reads bass timing, so pure feel). HALVED 2026-07-04 (Paul: went a little too far on timing feel)
       stab:["off"], hits:{sources:["pool:vb_jazz_blues*1","pool:horn_stab*1","pool:vocal_stab*1"], pattern:"sparse", prob:.35},
       form:"aaba" },
     dub: { label:"Echo Ministry", info:"the one-drop with the delay promoted to lead instrument: sub pressure, wet offbeat skanks, every hit fed back until the tail outlives the song",   // SAMPLE-FORWARD: wet vox hits + Burroughs in the smoke
+      timeFeel:{ pushPullMs:{ bass:13, snare:8, rim:8 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — ONE-DROP: reggae's pocket with the delay promoted to lead. No pad lane — dub's pad is a sustained 8-beat block, not a chop, so moving it would drag the drone, not the skank
       reverbColor:"spring",   // effects audit A2: the spring tank (King Tubby's AKG BX20 "splash") IS dub's ROOM — additive to and distinct from the runaway echo (delayFb .5-.7); surfrock already proves the module. Zero rng, dominant-parent
       bpm:[68,82], swing:[.02,.1], humanize:[.1,.3],
       progressions:["dub_vamp","dub_vamp","deep_two","drone_min"], kits:["halftime","boombap"], fills:["off","downlift","reverse"],   // MIDI-trove calibration 2026-07-14: real dub is triadic i-iv on the tonic-subdominant axis (corpus seventh .08 median vs renders 1.0 — mine-midi.js, 108 files) — dub_vamp is the mined progression, weighted to half the pool; deep_two (i-VI) + drone_min keep the old colors
@@ -1650,6 +1653,7 @@
       stab:["off","sparse"], hits:{sources:["pool:rave_stab*1","sp_energy","pool:vocal_stab*1"], pattern:"offbeat", prob:.4},
       form:"drop" },
     disco: { label:"Mirrorball Panopticon", info:"four-on-floor under the mirrorball: octave bass, organ glitter, min7 vamps, horns off a worn 78 — Saturday night run like a factory of joy",   // sample-mid: the horns are dressing
+      timeFeel:{ pushPullMs:{ hat:-3 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — DISCO: a live drummer riding hats slightly on top of a four-on-the-floor. Small — disco's identity is the metronomic kick
       reverbColor:"dattorro",   // effects audit A1: the EMT-140 PLATE (Sigma Sound) IS the Salsoul/Philly-International disco-string room — the lush strings/horns rode a bright plate, not the generic hall (citypop/house/mallsoft already share it; zero rng, dominant-parent)
       bpm:[110,122], swing:[.05,.12], humanize:[.1,.25],
       progressions:["funk_vamp","house_min7","pop_1625"], kits:["four","open"], fills:["hat rush","drum fill","riser"],
@@ -1700,7 +1704,7 @@
       bpm:[128,136], swing:[.2,.3], humanize:[.1,.25],
       progressions:["house_min7","deep_two","lofi"], kits:["breaks","house"], fills:["off","hat rush","cut","break fill"],
       euclid:{hat:[7,16]},   // E(7,16) skippy 2-step hats, rotation per chord (swing rides on top)
-      timeFeel:{ grid:"16th" },   // Phase 3: the 2-STEP shuffle is a 16th swing — the e/a offbeats slide late (grid "16th"), not the 8th "&"; this is what makes garage skip where house merely bounces
+      timeFeel:{ grid:"16th", pushPullMs:{ hat:-4, bass:5 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — 2-STEP: hats on top of a sub that lags; the SKIP itself is the 16th swing below, this is the pocket underneath it. Phase 3: the 2-STEP shuffle is a 16th swing — the e/a offbeats slide late (grid "16th"), not the 8th "&"; this is what makes garage skip where house merely bounces
       bass:{patterns:["sub","dub","stab"], recipe:{model:["sub"],cutoff:[300,500],res:[.05,.18],level:[1.15,1.35],send:[0,.06],dsend:[0,.05]}},
       lead:{patterns:["double","sparse","pentaup"], recipe:{model:["pluck","fm"],wave:"sine",voices:[1,2],spread:[.002,.005],cutoff:[2200,3200],level:[.36,.48],send:[.3,.45],dsend:[.25,.4],attack:.004,release:[.05,.09],sustain:[.55,.65],fenv:[.4,.7]}},
       pads:{prob:.4, recipe:{model:["organ","fm"],wave:"saw",cutoff:[700,1100],detune:[.004,.009],attack:[.2,.6],level:[.34,.46],send:[.25,.4],dsend:[.1,.25]}},   // dark chord stabs, often absent
@@ -1772,6 +1776,7 @@
       stab:["offbeat","sparse"], hits:{sources:["pool:vb_industrial_machine*1","sp_system","sp_pressure","pool:rave_stab*1"], pattern:"dub", prob:.55},
       form:"dj" },
     spokenword: { label:"Dial Tone Prophet", info:"poets narrating through the dust: a quiet head-nod beat, piano color, the human voice as the lead instrument — every prophecy read from a napkin",   // SAMPLE-FORWARD: the VOICE leads
+      timeFeel:{ pushPullMs:{ bass:8, hat:-4 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — DILLA DRAG under a voice: the beat must never crowd the speaker
       bpm:[72,96], swing:[.05,.14], humanize:[.2,.4],
       progressions:["ii_v_i","neosoul","mode_dorian"], kits:["boombap"], fills:["off","off","drum fill"],
       bass:{patterns:["walking","dub","simple"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sampler","piano"],cutoff:[350,650],res:[.05,.12],level:[.85,1.05],send:[.05,.15],dsend:[0,.05],attack:.005,release:[.08,.14]}},   // STRONG-SAMPLE (2026-07 boopy-fix): the real upright now walks 2/3 under the poets (no sub target — matrix-invisible)
@@ -1901,6 +1906,7 @@
       stab:["offbeat","sparse"], hits:{sources:["pool:vocal_stab*2","sp_energy","stml_hit_01","stml_hit_b3"], pattern:"offbeat", prob:.7},
       form:"vamp" },
     phonk: { label:"Cowbell Exorcism", info:"tape menace from a glovebox: dark cowbell-plucks over 808s, drowned in hiss, pitched-down voices circling in the smoke",   // SAMPLE-FORWARD: the dusty vox hits + tape filth
+      timeFeel:{ pushPullMs:{ bass:6, hat:-3 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — 808 through a tape hiss — the same two-speed feel, dirtier
       bpm:[126,142], swing:[0,.1], humanize:[.1,.25],
       progressions:["deep_two","drone_min","mode_phrygian"], kits:["trap","boombap"], fills:["cut","off","downlift"],
       bass:{patterns:["sub","dub","stab"], recipe:{model:["sub","reese"],cutoff:[240,420],res:[.05,.18],level:[1.2,1.45],send:[0,.06],dsend:[0,.08]},
@@ -1914,6 +1920,7 @@
       stab:["off","sparse"], hits:{sources:["blues_vox_78","pool:vocal_stab*1","sp_slowdown"], pattern:"dub", prob:.7, wet:true},
       form:"pop" },
     witchhouse: { label:"Chandelier Drowning", info:"the party slowed to a crawl and cursed: 808s at half speed, pitched-down voices, choirs echoing in a cathedral that is not on any map",   // SAMPLE-FORWARD: the slowed voice is the ghost
+      timeFeel:{ pushPullMs:{ bass:12, snare:8 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — 808 at half speed and cursed: 68bpm buys a 15.8 ms budget and the genre's whole claim is DRAG
       reverbColor:"greyhole",   // fx wings: the cathedral-of-reverb smear
       bpm:[60,76], swing:[0,.08], humanize:[.1,.3],
       progressions:["drone_min","drone_min","deep_two","mode_phrygian"], kits:["trap","halftime"], fills:["downlift","off","reverse"],   // 2026-07 wash-trio deep pass: DRONE-DOMINANT (was deep_two/mode_phrygian/drone_min) — the slowed 808 crawls over a single held minor-7 the length of the cathedral (motion collapses to ~0), with the phrygian menace the rare tension. This is the occult-drone identity that fences witchhouse off downtempo (which now REQUIRES moving harmony, motion floor .4/w2) while its DRENCHED wash (.46-.51) fences it off the DRY dub (wash ceiling .34)
@@ -1996,6 +2003,7 @@
       stab:["off","sparse"], hits:{sources:["sp_system"], pattern:"sparse", prob:.25},
       form:"dj" },
     deephouse: { label:"Benthic Concierge", info:"after midnight with the lights low: subby bass, dusky seventh-chord pads, the pump turned down to a slow breath — the floor half empty and better for it",   // SYNTH-FORWARD sibling of house
+      timeFeel:{ pushPullMs:{ hat:-4, bass:6 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — DEEP HOUSE: hats on top, the dub bass sunk behind — the pump turned down to a slow breath
       bpm:[118,124], swing:[.08,.16], humanize:[.05,.18],
       progressions:["deep_two","house_min7","neosoul"], kits:["four","house"], fills:["off","hat rush","riser"],
       bass:{patterns:["rolling","rolling","dub","syncopated"], recipe:{model:["sub"],cutoff:[280,450],res:[.05,.15],level:[1.1,1.3],send:[0,.06],dsend:[0,.05]}},
@@ -2047,6 +2055,7 @@
       stab:["off"], hits:{sources:["sp_herenow","pool:vocal_stab*1"], pattern:"sparse", prob:.25},
       form:"dj" },
     newjack: { label:"Chrome Cotillion", info:"the bounce in a pressed suit: swinging kicks under HUGE claps, FM synth-bass, every element grinning at the camera",   // SYNTH-FORWARD: the drum program is the producer's signature
+      timeFeel:{ pushPullMs:{ bass:-4, snare:6, clap:6 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — FUNK/swingbeat: FM bass on top, those HUGE claps landing fat and late
       bpm:[100,115], swing:[.16,.28], humanize:[.1,.25],
       progressions:["house_min7","funk_vamp","neosoul"], kits:["newjack"], fills:["drum fill","hat rush","riser","snare roll"],
       bass:{patterns:["stab","melodic","dub","syncopated"], patchPool:["SYN-BASS 2","BASS    2"], samplerPool:["fretless_bass"], recipe:{model:["dx7","saw","sampler"],cutoff:[400,540],res:[.1,.2],level:[1.05,1.25],send:[0,.06],dsend:[0,.06]},   // the DX7 SYN-BASS pair (alg 17 both -> morphable) — Teddy Riley's engine room
@@ -2150,6 +2159,7 @@
       stab:["off"], hits:{sources:["pool:horn_stab*1","blues_vox_78"], pattern:"sparse", prob:.35},
       form:"pop" },
     afrobeat: { label:"Polyrhythm Senate", info:"the long groove in session: interlocking euclid percussion, organ stabs on a dorian vamp, horn-section hits — one chord held until it means something",   // groove-FORWARD: Fela's arithmetic
+      timeFeel:{ pushPullMs:{ snare:7, hat:-4, perc:-3 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — AFROBEAT: the Tony Allen split — a snare well behind the beat under hats and interlocking percussion that are fractionally ahead of it
       bpm:[100,114], swing:[.04,.12], humanize:[.15,.3],   // below disco's 106-124 core
       progressions:["funk_vamp","mode_dorian","house_min"], kits:["tribal","house"], fills:["drum fill","hat rush","off"],
       euclid:{kick:[3,16],hat:[11,16]},   // tresillo kicks INTERLOCKING with E(11,16) shekere hats — two clocks arguing politely
@@ -2164,6 +2174,7 @@
       stab:["off","sparse"], hits:{sources:["pool:horn_stab*1","sp_rhythm","pool:vocal_stab*1"], pattern:"offbeat", prob:.7},   // the 78rpm horns finally play a section part
       form:"vamp" },
     desertblues: { label:"Dune Recursion", info:"guitar hypnosis at a camel's lope: pentatonic loops that refuse to resolve, handclap air, the top end worn away by sand and tape",   // guitar-FORWARD: one riff, circling
+      timeFeel:{ pushPullMs:{ bass:7, snare:6 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — THE CAMEL LOPE: hypnosis needs a bass that never quite arrives — pentatonic loops that refuse to resolve over a backbeat that refuses to hurry
       bpm:[84,104], swing:[.06,.16], humanize:[.2,.4],
       progressions:["funk_vamp","mode_dorian","deep_two"], kits:["shuffle","halftime","boombap"], fills:["off","off","drum fill"],   // the triplet shuffle lopes 1/3 of seeds
       bass:{patterns:["simple","dub","root"], recipe:{model:["sub"],cutoff:[300,520],res:[.05,.12],level:[1,1.2],send:[.03,.08],dsend:[0,.05]}},
@@ -2262,6 +2273,7 @@
     // 14 canonical additions, uptempo-biased (10 at/above ~140 BPM). Each fenced
     // in genre-verifier.js so the confusion matrix stays diagonal-dominant.
     dnb: { label:"Silken Reentry", info:"a rolling programmed two-step at 174: warm sub, smooth Rhodes pads, no rough chops — the old break polished until it reflects the ceiling lights",   // UPTEMPO. distinct from jungle: NO break role (smooth bed), higher wash
+      timeFeel:{ pushPullMs:{ bass:-5 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — D&B: same pull, applied to the polished rolling two-step
       bpm:[170,176], swing:[0,.04], humanize:[.05,.14],
       progressions:["neosoul","deep_two","minor_run","dream"], kits:["breaks","jungle"], fills:["off","drum fill","riser","downlift"],
       bass:{patterns:["sub","rolling"], recipe:{model:["sub","reese"],cutoff:[280,520],res:[.05,.2],level:[1.15,1.4],send:[0,.05],dsend:[0,0]}},   // reese stays synth (signature) — the smooth dnb sub
@@ -2273,6 +2285,7 @@
       stab:["off","sparse"], hits:{sources:["pool:vb_junglist*1","pool:vocal_stab*1","pool:rave_stab*1","sp_pressure"], pattern:"sparse", prob:.4},
       form:"dj" },
     footwork: { label:"Ankle Velocity", info:"the battle-circle tempo: an 808 sub triplet, machine-gun toms and a chopped vocal stutter at 160 — dancers negotiating with gravity and winning on points",   // UPTEMPO
+      timeFeel:{ pushPullMs:{ bass:-5 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — FOOTWORK: the 808 triplet sub arrives ahead of the toms — dancers negotiate with the bass, not the kit
       bpm:[155,162], swing:[.06,.16], humanize:[0,.08],
       progressions:["deep_two","drone_min","neosoul"], kits:["trap","electro"], fills:["off","stutter","cut","hat rush"],
       bass:{patterns:["sub","stab"], recipe:{model:["sub","reese"],cutoff:[240,420],res:[.05,.2],level:[1.2,1.45],send:[0,.05],dsend:[0,.05]}},
@@ -2336,6 +2349,7 @@
       stab:["rave","offbeat"], hits:{sources:["pool:vb_junglist*1","pool:vocal_stab*1","pool:rave_stab*1","sp_energy"], pattern:"dub", prob:.6},
       form:"dj" },
     bebop: { label:"Mercury Interrogation", info:"frantic changes at 220: a walking upright bass, a brushed ride and a sampled sax/trumpet head tearing through the ii-Vs — a conversation held at a dead sprint",   // UPTEMPO. jazz's fast acoustic cousin — bpm floor fences it off jazz's [96,148]
+      timeFeel:{ pushPullMs:{ ride:-4, snare:3, bass:4 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — SWING at a dead sprint — 220bpm leaves a 5.5 ms budget for 0.02 beat, so the same gesture as jazz at a third the size
       bpm:[196,220], swing:[.28,.5], humanize:[.25,.5],
       progressions:["ii_v_i","neosoul","blues_12","blues_16"], kits:["shuffle","shuffle","boombap"], fills:["off","drum fill","kit fill"],
       bass:{patterns:["walking","walking","root"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sub"],cutoff:[400,700],res:[.05,.15],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
@@ -2347,6 +2361,7 @@
       stab:["off"], hits:{sources:["pool:vb_jazz_blues*1","pool:horn_stab*1","bb_horn_a","bb_stab_a"], pattern:"response", prob:.4},
       form:"aaba" },
     bluegrass: { label:"Centrifugal Hymnal", info:"high-lonesome drive at 165: rolling banjo, a fiddle break, a walking doghouse bass under brushes — a string band doing the work of a locomotive, all major key, no brakes",   // UPTEMPO. banjo+fiddle acoustic; bpm floor fences it off surfrock, straight-major seventh fences it off bebop
+      timeFeel:{ pushPullMs:{ bass:-5, hat:-4 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — BLUEGRASS DRIVE: the high-lonesome push — the whole string band leans forward; nothing in this music is ever late
       bpm:[156,170], swing:[.04,.14], humanize:[.15,.4],
       progressions:["four_chords","doo_wop","uplift"], kits:["shuffle","boombap"], fills:["off","drum fill","kit fill"],
       strum:"country",   // STRUM: the boom-chick steel-string strum under the banjo roll (taste-pending Paul)
@@ -2359,6 +2374,7 @@
       stab:["off"], hits:{sources:["pool:vb_folk_pastoral*1","blues_vox_78","bb_horn_a"], pattern:"sparse", prob:.2},
       form:"pop" },
     ska: { label:"Checkerboard Escapement", info:"the upstroke engine at 152: choppy offbeat guitar, a walking bass, a punchy brass-section riff — the skank on every & and a suit that fits",   // UPTEMPO. brass acoustic + offbeat skank; bpm band sits between surfrock and bluegrass
+      timeFeel:{ pushPullMs:{ pad:-5, bass:-4 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — SKA DRIVES where reggae DRAGS — the identical offbeat chop (pad under strum:"skank"), opposite sign. This pair is the clearest demonstration in the catalogue that feel is a direction, not a magnitude
       bpm:[146,156], swing:[.04,.14], humanize:[.1,.3],
       progressions:["doo_wop","four_chords","ii_v_i"], kits:["shuffle","four"], fills:["off","drum fill","kit fill"],
       strum:"skank",   // STRUM: the clean-guitar upstroke on every & IS ska — the skank chop on the pad voice (taste-pending Paul)
@@ -2371,6 +2387,7 @@
       stab:["offbeat","rave"], hits:{sources:["bb_horn_a","bb_horn_b","bb_stab_a"], pattern:"offbeat", prob:.6},
       form:"pop" },
     klezmer: { label:"Wedding Comet", info:"the wedding-band frenzy at 140: a wailing clarinet over a freygish (hijaz) mode, a boom-chick accordion, a driving 2-beat — grief and joy holding hands and spinning",   // UPTEMPO. clarinet acoustic + hijaz; bpm floor fences it off arabpop's slower hijaz
+      timeFeel:{ pushPullMs:{ bass:-5, snare:4 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — WEDDING FRENZY: the klezmer band ACCELERATES into you — bass ahead, the boom-chick answering behind it
       bpm:[132,144], swing:[.04,.16], humanize:[.15,.4],
       progressions:["hijaz","andalusian","minor_run"], kits:["shuffle","four"], fills:["off","drum fill","kit fill"],
       bass:{patterns:["root","walking","octaves"], samplerPool:["acoustic_bass","tuba"], recipe:{model:["sampler","sub"],cutoff:[400,700],res:[.05,.15],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
@@ -2382,6 +2399,7 @@
       stab:["off"], hits:{sources:["bb_horn_a","bb_stab_a"], pattern:"sparse", prob:.25},
       form:"pop" },
     funk: { label:"Downbeat Notary", info:"everything lands on the one at 108: a wah clavinet riff, a syncopated popping bass, tight horn stabs, a busy 16th hi-hat — a pocket so deep it earns interest",   // clavinet acoustic + horn CHOPS (fences four-on-floor disco, which forbids chops)
+      timeFeel:{ pushPullMs:{ bass:-5, snare:5, clap:5 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — FUNK: the bass pops AHEAD of the one while the backbeat answers from behind — the tension that makes a pocket 'deep' rather than merely tight
       bpm:[102,114], swing:[.04,.14], humanize:[.1,.3],
       progressions:["funk_vamp","neosoul","ii_v_i"], kits:["newjack","house","four"], fills:["off","drum fill","kit fill"],
       bass:{patterns:["syncopated","melodic","stab"], samplerPool:["slap_bass","finger_bass"], recipe:{model:["sampler","saw"],cutoff:[500,850],res:[.1,.25],level:[1.05,1.28],send:[.03,.1],dsend:[0,.05]},
@@ -2394,6 +2412,7 @@
       stab:["offbeat","rave"], hits:{sources:["bb_horn_a","bb_horn_b","bb_stab_a","bb_stab_b"], pattern:"offbeat", prob:.55},
       form:"duet" },
     boombap: { label:"Milk Crate Scripture", info:"the golden era at 92: a hard dusty break, a chopped soul loop, a fat sampled bass and smoky Rhodes stabs — head-nod verses dug out of a milk crate",   // hard SNARE-forward break at 90+, bright (softTop 0) — fences the slower, tape-dark lofi/triphop
+      timeFeel:{ pushPullMs:{ bass:9, hat:-4, snare:5 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — DILLA DRAG: the genre the template is NAMED after had no push-pull at all — fat sampled bass behind the knock, hats on top, snare a hair late
       bpm:[88,96], swing:[.1,.24], humanize:[.15,.35],
       progressions:["neosoul","lofi","ii_v_i","pop_1625"], kits:["boombap","breaks"], fills:["off","drum fill","downlift"],
       bass:{patterns:["simple","dub","root"], samplerPool:["acoustic_bass","finger_bass"], recipe:{model:["sub","sampler"],cutoff:[350,600],res:[.05,.15],level:[1,1.2],send:[.05,.12],dsend:[0,.05]}},
@@ -2406,6 +2425,7 @@
       stab:["off"], hits:{sources:["pool:vb_jazz_blues*1","pool:vocal_stab*2","sp_rewind"], pattern:"sparse", prob:.4},
       form:"pop" },
     amapiano: { label:"Log Drum Diplomacy", info:"a deep log-drum bassline at 112: plush Rhodes chords, wide shakers, a spacious swung groove — patient and social, the drum that speaks last and says the most",   // sub log-drum + jazzy sevenths + fast shaker hats at 112; bpm cap fences it under deephouse
+      timeFeel:{ pushPullMs:{ hat:-4, bass:6 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — AMAPIANO: the log-drum bass is a plucked, late instrument; the shakers ride ahead of it
       bpm:[108,116], swing:[.08,.2], humanize:[.05,.2],
       progressions:["deep_two","house_min7","neosoul"], kits:["house","four"], fills:["off","hat rush","riser"],
       bass:{patterns:["stab","syncopated","rolling"], recipe:{model:["sub","sub"],cutoff:[260,440],res:[.05,.15],level:[1.15,1.4],send:[0,.06],dsend:[0,.05]}},
@@ -2417,6 +2437,7 @@
       stab:["offbeat","off"], hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"offbeat", prob:.4},
       form:"dj" },
     reggae: { label:"Third Beat Gravity", info:"the one-drop at 75: an offbeat organ-and-guitar skank, a round melodic bass, the kick landing on beat three — unhurried and completely certain",   // the SONG to dub's dubbed-out instrumental: real harmonic motion + skank organ, vs dub's static drone
+      timeFeel:{ pushPullMs:{ bass:13, pad:8, snare:7, rim:7 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — ONE-DROP: the whole band in the basement — the bass roundest and latest, the offbeat organ/guitar skank (pad, 100% offbeat under strum:"skank") lazy behind it, the rim-click on 3 fat
       bpm:[70,80], swing:[.04,.14], humanize:[.1,.3],
       strum:"skank",   // STRUM: the offbeat organ-and-guitar skank IS reggae — the & chop on the pad voice (percussive_organ pad = the bubble), taste-pending Paul
       progressions:["deep_two","neosoul","four_chords","minor_run"], kits:["onedrop"], fills:["off","downlift","drum fill"],   // MUSICALITY balance loop 1 (2026-07): the card says ONE DROP — kick+cross-stick on beat 3, beat 1 empty. The old kick/halftime/four pool put the kick on 1 (Paul: "NONE of that is happening" — MEASURED 2-5% kick-on-3). Single-kit pool like bossa/electro/newjack: onedrop IS reggae's kit; variety lives in the kit's own ghost/open draws, and kickOn:[3] is now a written PROMISE (musicality.js) the pool must keep on every seed (a mixed pool drew halftime on 3 of 5 seeds — measured)
@@ -2564,6 +2585,7 @@
     /* /genre-tool:crtwave:genres */
     /* genre-tool:whalejazz:genres */
     whalejazz: { label:"Leviathan Turnaround", info:"slow modal jazz where the tenor sax trades fours with a humpback whale — long, patient phrases over a brushed upright, the whale's rising moan answered by a blue note, ii-V-I stretched across the North Pacific; the loneliest quartet",
+      timeFeel:{ pushPullMs:{ ride:-6, snare:8, bass:11 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — SWING at 66 — the slowest jazz in the space, so the widest budget: long patient phrases over a ride that still sits on top
       bpm:[60,72],
       swing:[0.12,0.2],
       humanize:[0.1,0.22],
@@ -5160,6 +5182,7 @@
     /* /genre-tool:greasepaintoompah:genres */
     /* genre-tool:urchinmatinee:genres */
     urchinmatinee: { label:"Extinction Matinee", info:"the big number at 120: walking upright bass and a pit-band shuffle under bright doo-wop changes, brass section and piccolo carrying a hero tune you can hum on the way out, snare rolls into every chorus, strings swelling for the key-change feeling — jazz hands, footlights, an orphan chorus asking for more",
+      timeFeel:{ pushPullMs:{ bass:6, snare:5 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — PIT-BAND SHUFFLE: walking upright and a matchstick backbeat, both leaning back into the big number
       bpm:[115,124],
       swing:[0.15,0.3],
       humanize:[0.25,0.45],
@@ -5601,6 +5624,7 @@
     /* /genre-tool:permafrostveil:genres */
     /* genre-tool:crateflip:genres */
     crateflip: { label:"Shellac Excavation", info:"crate archaeology at 98: a dusty soul 78 chopped eight ways over the knock, an upright bass walking underneath, borrowed horn stabs from somebody else's record — the flip is the whole art",
+      timeFeel:{ pushPullMs:{ bass:8, hat:-4 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — DILLA DRAG: the upright walking under a chopped 78 sits behind the knock
       bpm:[94,102],
       swing:[0.08,0.18],
       humanize:[0.12,0.3],
@@ -5622,6 +5646,7 @@
     /* /genre-tool:crateflip:genres */
     /* genre-tool:lowglide:genres */
     lowglide: { label:"Hydraulic Mirage", info:"slow-rolling west-coast funk at 92: a whining high synth lead gliding between notes over a fat sub bass, a dusty backbeat, strings in the sun — windows down, six inches off the ground",
+      timeFeel:{ pushPullMs:{ bass:-5, snare:7, hat:-3 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — WEST-COAST FUNK: the g-funk pocket — sub on top, snare dragged, hats riding ahead
       bpm:[88,96],
       swing:[0.06,0.16],
       humanize:[0.1,0.25],
@@ -5920,6 +5945,7 @@
     /* /genre-tool:vespers:genres */
     /* genre-tool:rnb:genres */
     rnb: { label:"Quiet Storm Advisory", info:"slow-jam quiet-storm soul ~72bpm — Rhodes and electric piano, a breathy solo-vocal lead, fingered bass, drum-machine snap, warm string pads, lush maj7/min9 harmony. Influences: Sade, D'Angelo, Anita Baker, neo-soul",
+      timeFeel:{ pushPullMs:{ bass:-4, snare:10 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — QUIET STORM: the most laid-back backbeat in the catalogue (10 ms at 72bpm) over a fingered bass that still leads — the slow-jam signature
       bpm:[62,82],
       swing:[0.05,0.12],
       humanize:[0.15,0.35],
@@ -5942,6 +5968,7 @@
     /* /genre-tool:rnb:genres */
     /* genre-tool:gospel:genres */
     gospel: { label:"Rapture Logistics", info:"hand-clap church gospel ~92bpm — Hammond organ and gospel piano, a massed choir on the hook, walking bass, a big driving backbeat, wide reverb, major IV-V-I cadences. Influences: Mahalia Jackson, Kirk Franklin, Sunday-morning choir",
+      timeFeel:{ pushPullMs:{ bass:5, snare:7 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — CHURCH POCKET: unlike funk, gospel leans the WHOLE rhythm section back — the choir breathes and the band waits for it
       bpm:[84,102],
       swing:[0.06,0.14],
       humanize:[0.15,0.3],
@@ -5964,6 +5991,7 @@
     /* /genre-tool:gospel:genres */
     /* genre-tool:altcountry:genres */
     altcountry: { label:"Tumbleweed Perihelion", info:"dusty alt-country / Americana ~96bpm — jangly clean and steel-string guitars with a seam of fuzz, Rhodes haze, wide roomy reverb, tape crackle, straight-eighth melancholy under the twang. Influences: Wilco, Uncle Tupelo, Son Volt",
+      timeFeel:{ pushPullMs:{ bass:6, hat:-4 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — AMERICANA: dusty lay-back on the bass, brushed hats a touch on top
       bpm:[88,104],
       swing:[0.02,0.07],
       humanize:[0.2,0.4],
@@ -6008,6 +6036,7 @@
     /* /genre-tool:yachtrock:genres */
     /* genre-tool:honkytonk:genres */
     honkytonk: { label:"Last Call Cosmology", info:"barroom honky-tonk country ~116bpm — twangy steel-string guitar, crying fiddle, harmonica, tack piano, walking upright bass, a loping brushed shuffle, dry spring reverb, three chords and the truth. Influences: Hank Williams, Buck Owens, Bakersfield",
+      timeFeel:{ pushPullMs:{ bass:6, snare:6 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — BARROOM SHUFFLE: the opposite of bluegrass — last call, and the band leans back into it
       bpm:[100,114],
       swing:[0.13,0.19],
       humanize:[0.15,0.35],
@@ -6416,6 +6445,7 @@
     /* /genre-tool:hazebunker:genres */
     /* genre-tool:salsa:genres */
     salsa: { label:"Clave Reactor", info:"Latin salsa as a genre: a blazing brass section (trumpets + trombones) trading montuno stabs over a syncopated son/tresillo acoustic-bass tumbao and a busy clave-driven percussion kit, up-tempo and bright and dry — the New York/Cuban dancefloor mambo",
+      timeFeel:{ pushPullMs:{ bass:-5, snare:3 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — TUMBAO: the salsa bass ANTICIPATES — it is the one instrument in the band that is supposed to arrive early
       bpm:[158,190],
       swing:[0,0.06],
       humanize:[0.08,0.2],
@@ -6439,6 +6469,7 @@
     /* /genre-tool:salsa:genres */
     /* genre-tool:samba:genres */
     samba: { label:"Surdo Swarm Theory", info:"Brazilian samba as a genre: a fast surdo-and-agogo carnival percussion engine under a syncopated acoustic-bass groove and bright nylon-guitar/cavaquinho comping, chromatic bossa-adjacent harmony but hot and driving, not cool — the Rio street batucada",
+      timeFeel:{ pushPullMs:{ bass:-4, hat:-5 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — SAMBA: the caixa/agogo sit ahead of the surdo (the documented systematic 16th displacement); the bass rides with them
       bpm:[96,112],
       swing:[0.04,0.14],
       humanize:[0.08,0.2],
@@ -6531,6 +6562,7 @@
     /* /genre-tool:celtic:genres */
     /* genre-tool:trap:genres */
     trap: { label:"Locust Arithmetic", info:"Trap as a genre: booming 808 sub-bass glides and rattling triplet hi-hat rolls under a half-time kick-snare, sparse minor bell and synth-brass hooks, dark and spacious — the Atlanta hip-hop blueprint",
+      timeFeel:{ pushPullMs:{ bass:6, hat:-3 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — 808: the long-attack sub lands behind the kick while the triplet hat rolls ride on top — the two-speed feel that reads as 'trap' before any note does
       bpm:[128,152],
       swing:[0,0.04],
       humanize:[0.03,0.1],
@@ -6554,6 +6586,7 @@
     /* /genre-tool:trap:genres */
     /* genre-tool:bigband:genres */
     bigband: { label:"Ballroom Leviathan", info:"Jazz big band as a genre: a full brass-and-reed section (trumpets, trombones, saxes) trading shout-chorus riffs over a walking upright bass and a swung ride-cymbal kit, ii-V-I and blues changes, bright and hot — the Basie/Ellington swing-era orchestra",
+      timeFeel:{ pushPullMs:{ hat:-4, snare:4, bass:4 } },   // GROOVE 2026-07 (docs/MUSIC-MIND.md §Micro-timing) — SWING: the shout-chorus pocket. hat, not ride — bigband runs the jungle kit, which has no ride lane
       bpm:[122,178],
       swing:[0.12,0.24],
       humanize:[0.08,0.2],
@@ -7222,14 +7255,23 @@
         const tfl={};
         const gdom=ordered.find(c=>c.f.grid);   // grid: dominant declaring parent (structural enum, no lerp)
         if(gdom) tfl.grid=gdom.f.grid;
-        const ppc=fcands.filter(c=>c.f.pushPull);
-        if(ppc.length){
-          const ppw=ppc.reduce((s,c)=>s+c.w,0), pp={};
-          for(const c of ordered) for(const v of Object.keys(c.f.pushPull||{})) if(!(v in pp)) pp[v]=0;
-          for(const c of ppc) for(const v of Object.keys(c.f.pushPull)) pp[v]+=c.f.pushPull[v]*c.w;
-          for(const v of Object.keys(pp)) pp[v]=round(pp[v]/ppw,4);
-          tfl.pushPull=pp;
-        }
+        // pushPull (BEATS) and pushPullMs (MILLISECONDS, tempo-honest — see
+        // csd-engine resolvePushPull) blend the SAME way and independently: union
+        // the lanes over declaring parents, value-LERP by weight. They stay in
+        // separate maps through the blend because they carry different units; the
+        // engine sums them at the choke point against the blend's own bpm. Lerping
+        // a ms lane is exactly right for a blend — the resulting mixed tempo folds
+        // the mixed millisecond value, which is the whole point of the unit.
+        const ppBlend=(key)=>{
+          const cs=fcands.filter(c=>c.f[key]);
+          if(!cs.length) return;
+          const w=cs.reduce((s,c)=>s+c.w,0), pp={};
+          for(const c of ordered) for(const v of Object.keys(c.f[key]||{})) if(!(v in pp)) pp[v]=0;
+          for(const c of cs) for(const v of Object.keys(c.f[key])) pp[v]+=c.f[key][v]*c.w;
+          for(const v of Object.keys(pp)) pp[v]=round(pp[v]/w, key==="pushPullMs"?2:4);
+          tfl[key]=pp;
+        };
+        ppBlend("pushPull"); ppBlend("pushPullMs");
         if(Object.keys(tfl).length) choice.timeFeel=tfl;
       }
     }

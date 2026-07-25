@@ -397,6 +397,13 @@ exposes `underruns()` but not the per-ring cursors. **Recommend a
 `handle.ringDeficit()` = `read53() − R_READ(active)` readout** — it is two
 `Atomics.load`s and it turns an unfalsifiable worry into a number.
 
+> **DONE (2026-07-25, correctness pass).** `handle.ringDeficit()` exists and read 0
+> across every ride since. The same pass also fixed the sensor this section leans on:
+> `runwaySec`/`loadRatio` were reading the FEED ledger (frames posted to the producer),
+> which is why they read 3.4–27.7 s and 1.00 through the dropout above. They now read
+> the ring's own write cursor, and `handle.__runway()` exposes both plus the producer's
+> unrendered backlog. See ENGINE-AUDIT-2026-07 "THE PHANTOM RUNWAY".
+
 ---
 
 ## Main-thread jank — is 3 s of runway enough?
@@ -676,6 +683,13 @@ are hard-clipped by the browser. The limiter is a `DynamicsCompressor`
 (threshold −1.5 dB, ratio 20, **attack 2 ms**) — not a brickwall, so transients
 walk straight through it. This is a plausible contributor to a "something's a
 bit fizzy" impression that is easy to mistake for a timing artefact.
+
+> **FIXED (2026-07-25, correctness pass).** `engine/faust/dsp/master_limit.dsp` — a true
+> 2 ms lookahead brickwall (sliding-minimum gain over the lookahead window, so the ramp
+> is complete when the peak lands; bit-transparent below the ceiling) now sits at the end
+> of the live master chain. Live A/B on the same box: loud windows over 1.0
+> **14.34% → 0.00%**, peak 1.107 → 0.983, samples over 1.0 784 → 0, integrated level
+> −9.94 → −10.04 dBFS (i.e. nothing squashed), octave bands 40 Hz–5 kHz within ±0.52 dB.
 
 ### The always-on click detector cannot see the clicks it exists to catch
 

@@ -81,7 +81,11 @@ function grooveBounds(st) {
   const tf = st.timeFeel || {};
   const hum = tf.humanize || null;
   const ht = hum && hum.timing != null ? hum.timing : (st.humanize || 0);
-  return { jit: ht * 0.04, pp: (tf.pushPull && Object.keys(tf.pushPull).length) ? tf.pushPull : null };
+  // push-pull may be declared in beats (tf.pushPull), in milliseconds
+  // (tf.pushPullMs, folded at the state's own bpm), or both — E.resolvePushPull
+  // IS the engine's fold, read here rather than re-derived so the gate can never
+  // drift from applyGroove's actual offset.
+  return { jit: ht * 0.04, pp: E.resolvePushPull(tf, st.bpm) };
 }
 const laneOf = (e) => e.drum || e.voice;
 // the ornament tags CsdPipes stamps on the copies it makes (pipes.js) + solo lines

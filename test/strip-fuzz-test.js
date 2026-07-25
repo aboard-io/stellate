@@ -113,6 +113,26 @@ function main() {
     }
   }
 
+  // FUSED-KERNEL DRIFT GATE (ENGINE-AUDIT 2026-07 Tier 4): sampler.js now runs a
+  // GENERATED per-shape strip kernel (STAGE_SRC fused into one function) with the
+  // guarded stripStepRef kept as the CSP fallback. The two must stay bit-identical
+  // — pressed bytes depend on it — so every case above is replayed through both.
+  if (SP.__test.stripStepRef) {
+    let drift = 0;
+    for (const [label, strip] of cases) {
+      for (const [signame, sig] of Object.entries(SIGNALS)) {
+        const A = SP.__test.makeStrip(strip, SR);
+        const B = SP.__test.makeStrip(strip, SR); B.step = SP.__test.stripStepRef;
+        for (let i = 0; i < 4000; i++) {
+          const x = sig(i), t = 123.456 + i / SR;
+          const a = SP.__test.stripStep(A, x, t), b = SP.__test.stripStepRef(B, x, t);
+          if (!Object.is(a, b)) { fails.push(`${label} × ${signame}: fused kernel != stripStepRef at sample ${i} (${a} vs ${b})`); drift++; break; }
+        }
+      }
+    }
+    console.log(`fused-kernel drift: ${cases.length * Object.keys(SIGNALS).length} strip×signal replays vs stripStepRef — ${drift ? drift + " MISMATCH" : "bit-identical"}`);
+  }
+
   console.log(`strip fuzz: ${runs} runs over ${cases.length} strips × ${Object.keys(SIGNALS).length} signals × ${tOffsets.length} time-phases (N=${N})`);
   if (fails.length) {
     console.log("FAILURES:\n  - " + fails.slice(0, 40).join("\n  - "));
