@@ -358,6 +358,25 @@ beds fetched 200 + decoded, maxRms 0.207, zero errors
     wavOut `<audio>` path), plus video background toggle (no-cors `<video>`
     same-origin under require-corp).
 
+### Content types for the open-web layer (applied 2026-07-25)
+
+nginx 1.24's `mime.types` knows neither `.webmanifest` nor `application/rss+xml`,
+and `.xml` is already mapped to `text/xml` — so `default_type` alone is ignored
+for the feeds. **An empty `types {}` block is required to clear the map first:**
+
+```nginx
+location = /manifest.webmanifest { default_type application/manifest+json; add_header Cache-Control "no-cache"; }
+location = /feed.xml          { types {} default_type application/rss+xml;   add_header Cache-Control "no-cache"; }
+location = /feed-archive.xml  { types {} default_type application/rss+xml;   add_header Cache-Control "no-cache"; }
+location = /feed.json         { types {} default_type application/feed+json; add_header Cache-Control "no-cache"; }
+location = /feed-archive.json { types {} default_type application/feed+json; add_header Cache-Control "no-cache"; }
+location = /sitemap.xml       { types {} default_type application/xml;       add_header Cache-Control "no-cache"; }
+```
+
+(The manifest needs no `types {}` — `.webmanifest` has no mapping at all, so
+`default_type` applies. Symptom without this: the PWA install prompt is refused
+because the manifest arrives as `application/octet-stream`.)
+
 ## Analytics (2026-07-25): self-hosted GoatCounter, cookie-free
 
 Only the most basic aggregate stats (pageviews/visits/referrers/countries) —
