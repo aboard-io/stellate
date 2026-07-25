@@ -771,7 +771,14 @@ async function main() {
       `GX1. SUNS: one colored labeled sun per cluster AT its star coord (${gx.sunCount} suns vs ${gx.clusterCount} GENRE_CLUSTERS, markers == worldOfCoord(cluster.star), colors + labels match)`);
     ok(gx.shipMeshes === 0,
       `GX2. NO 3D ship/cockpit — the obstructing shell is gone (ship+cockpit draw ${gx.shipMeshes} meshes)`);
-    ok(gx.hud.mounted && gx.hud.label === String(gx.hudExpect).toUpperCase(),
+    // the HUD renders the cluster name in the session's ALIEN ALPHABET
+    // (app/glyphs.js) — compare de-glyphed, as GX1's label check does.
+    const deg = t => String(t||"").replace(/[ΛΔ∀ßЬϹƇÐƎΣ€ϜǤĦǀƗϏŁϺИͶØ⊙◉ÞϷҨЯƦ§Ϩ†⊤Ʊ∪∨Ш✕ΨƵ]/gu, m => ({
+      "Λ":"A","Δ":"A","∀":"A","ß":"B","Ь":"B","Ϲ":"C","Ƈ":"C","Ð":"D","Ǝ":"E","Σ":"E","€":"E",
+      "Ϝ":"F","Ǥ":"G","Ħ":"H","ǀ":"I","Ɨ":"I","Ϗ":"K","Ł":"L","Ϻ":"M","И":"N","Ͷ":"N",
+      "Ø":"O","⊙":"O","◉":"O","Þ":"P","Ϸ":"P","Ҩ":"Q","Я":"R","Ʀ":"R","§":"S","Ϩ":"S",
+      "†":"T","⊤":"T","Ʊ":"U","∪":"U","∨":"V","Ш":"W","✕":"X","Ψ":"Y","Ƶ":"Z" }[m] || m));
+    ok(gx.hud.mounted && deg(gx.hud.label) === deg(String(gx.hudExpect).toUpperCase()),
       `GX3. 2D cockpit HUD shows the current STAR/cluster label (hud="${gx.hud.label}" == ${String(gx.hudExpect).toUpperCase()})`);
     ok(!gx.transitLanded && gx.maxDelta < 0.08,
       `GX4. SMOOTH transit camera — no per-frame jitter/bobbing once settled (max frame move ${gx.maxDelta} < 0.08, in-transit)`);

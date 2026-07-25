@@ -24,6 +24,7 @@
 // (labels + colors + star coords) and the genre->cluster index. Safe to static-import;
 // this does NOT couple the lazy Three load (those stay behind the dynamic import()).
 import { CLUSTER_OF, GENRE_CLUSTERS } from "./starcruise/genre-clusters.js";
+import { alienize } from "./glyphs.js";   // alien alphabet for cluster/genre labels
 // FLOATING GLYPHS — the same faint alien idents that backfloat on the 2D star map,
 // as camera-facing sprites drifting in the cruise atmosphere (pure THREE, no engine
 // coupling; textures baked once — no per-frame upload, per the post-planet static fix).
@@ -887,13 +888,13 @@ let spaceActiveGenre = null;
 function genreLabels() {
   try {
     const G = window.GenreKernel && window.GenreKernel.GENRES;
-    if (G) return Object.keys(G).map((g) => (G[g] && G[g].label) || g);
+    if (G) return Object.keys(G).map((g) => alienize((G[g] && G[g].label) || g));
   } catch (e) {}
   return ["vaporwave", "ambient", "techno"];
 }
 function genreLabelOf(g) {
   if (!g) return null;
-  try { const G = window.GenreKernel && window.GenreKernel.GENRES; return (G && G[g] && G[g].label) || g; } catch (e) { return g; }
+  try { const G = window.GenreKernel && window.GenreKernel.GENRES; return alienize((G && G[g] && G[g].label) || g); } catch (e) { return g; }
 }
 
 // ---- GENRE STAR-MAP FIELD -------------------------------------------------------
@@ -1361,7 +1362,7 @@ function unmountHUD() {
 function updateHUD(genre) {
   if (!hudEl) return;
   const cl = clusterOfGenre(genre);
-  const label = cl ? String(cl.label).toUpperCase() : "DEEP SPACE";
+  const label = cl ? alienize(String(cl.label)).toUpperCase() : "DEEP SPACE";
   const glabel = genre ? genreLabelOf(genre) : "cruising";
   if (label === _hudLabel && hudEl._g === glabel) return;
   _hudLabel = label; hudEl._g = glabel;

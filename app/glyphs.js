@@ -197,3 +197,74 @@ export function makeGlyphAtmosphere(THREE, opts) {
     },
   };
 }
+
+// ---------------------------------------------------------------------------
+// ALIEN TRANSLITERATION (Paul 2026-07-25: "add a function that adds random
+// glyphs to the names of genres, replacing letters. One or two per genre/
+// cluster name. It should be different every time.")
+//
+// Substitutes 1-2 letters per name with a visually-adjacent glyph, so the
+// catalogue reads as the same words rendered in someone else's alphabet —
+// legible, but not ours. The map is homoglyphic on purpose: swapping O for Ø
+// keeps the word scannable where a random rune would just be noise.
+//
+// "Different every time" = different every SESSION, not every frame. The star
+// map measures label widths to decide which names it can draw without
+// overlapping (the LOD cull), so a name that re-rolled between frames would
+// make labels flicker in and out. One roll per page load, memoized here: each
+// visit is a different alphabet, and within a visit the chart holds still.
+const HOMOGLYPH = {
+  a:"ΛΔ∀", b:"ßЬ", c:"ϹƇ", d:"Ð", e:"ƎΣ€", f:"Ϝ", g:"Ǥ", h:"Ħ", i:"ǀƗ", j:"ĵ",
+  k:"Ϗ", l:"Ł", m:"Ϻ", n:"ИͶ", o:"Ø⊙◉", p:"ÞϷ", q:"Ҩ", r:"ЯƦ", s:"§Ϩ", t:"†⊤",
+  u:"Ʊ∪", v:"∨", w:"Ш", x:"✕", y:"Ψ", z:"Ƶ"
+};
+const glyphMemo = new Map();
+// one shared roll per session — reseeded on load, never during it
+const seedRoll = Math.floor(Math.random() * 0x7fffffff);
+function hashStr(str){ let h=2166136261>>>0;
+  for(const ch of String(str)) h=Math.imul(h^ch.charCodeAt(0),16777619);
+  return h>>>0; }
+export function alienize(name){
+  if(!name) return name;
+  if(glyphMemo.has(name)) return glyphMemo.get(name);
+  const chars=[...String(name)];
+  // candidate positions: letters we have a glyph for, never the first character
+  // of the whole name (the eye needs one true letter to latch onto)
+  const cand=[];
+  for(let i=1;i<chars.length;i++){
+    const lower=chars[i].toLowerCase();
+    if(HOMOGLYPH[lower] && chars[i]!==" ") cand.push(i);
+  }
+  let out=name;
+  if(cand.length){
+    const r=hashStr(name+":"+seedRoll);
+    const n=cand.length>4 ? 1+(r%2) : 1;                 // 1-2 swaps; short names get one
+    const picked=new Set();
+    for(let k=0;k<n;k++){
+      const idx=cand[(r>>>(k*5+3))%cand.length];
+      if(picked.has(idx)) continue;
+      picked.add(idx);
+      const set=HOMOGLYPH[chars[idx].toLowerCase()];
+      chars[idx]=set[(r>>>(k*7+11))%set.length];
+    }
+    out=chars.join("");
+  }
+  glyphMemo.set(name,out);
+  return out;
+}
+
+// The inverse, for anything that needs to match a drawn label back to its real
+// name — the headless gates do (a test asserting "this genre's name is drawn"
+// cannot know which letters this session swapped). Exposed on window for them.
+const PLAIN = (() => { const m = {};
+  for (const [letter, set] of Object.entries(HOMOGLYPH))
+    for (const g of set) m[g] = letter;
+  return m; })();
+export function deglyph(str){
+  return String(str||"").replace(/./gu, ch => {
+    const lower = PLAIN[ch];
+    if (!lower) return ch;
+    return lower;                       // case is lost; compare case-insensitively
+  });
+}
+try { window.__GLYPHS = { alienize, deglyph }; } catch(e){}

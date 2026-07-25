@@ -184,7 +184,12 @@ async function main() {
     const shown = new Set(drawn.map(d => d.name));
     const glabel = g => (GenreKernel.GENRES[g] && GenreKernel.GENRES[g].label) || g;
     const active = __S.weights.filter(w => w.w > 0.01).map(w => w.g);
-    const activeUnlabelled = active.filter(g => !shown.has(glabel(g)));
+    // labels are drawn in the session's ALIEN ALPHABET (app/glyphs.js alienize:
+    // 1-2 homoglyph swaps per name, re-rolled each load) — so match on the
+    // de-glyphed, case-folded form, never the raw literal.
+    const plain = t => (window.__GLYPHS ? window.__GLYPHS.deglyph(t) : t).toLowerCase();
+    const shownPlain = new Set([...shown].map(plain));
+    const activeUnlabelled = active.filter(g => !shownPlain.has(plain(glabel(g))));
     // fugue nearest-neighbour rank (by dot distance)
     const near = t => Object.keys(P).filter(g => g !== t).map(g => ({ g, d: Math.hypot(P[t][0] - P[g][0], P[t][1] - P[g][1]) }))
       .sort((a, b) => a.d - b.d).slice(0, 4).map(x => x.g);

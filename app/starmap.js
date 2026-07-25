@@ -3,6 +3,7 @@
 // pointer-gesture state machine, waypoint editing (add/insert/delete), and the
 // deterministic genre LAYOUT (computeGenreLayout / seedDefaultLoop / autoPath).
 import { S, set, K, subs } from "./state.js";
+import { alienize } from "./glyphs.js";
 import { POS, WORLD_W, WORLD_H, MAP_CENTER, WORLD_MARGIN, recomputeWorld } from "./world.js";
 import { retarget } from "./targeting.js";
 import { urlTick, legMetrics, paceSpeed, baseDuration, durMult, loopDuration, fmtDuration, fmtMult } from "./share.js";   // scrubbing the playhead: rewrite the bookmark's measure using the SAME constant-pace distance math as travelForBar/goLive; the dur* family feeds the node-drag duration tooltip
@@ -110,7 +111,10 @@ export function drawMap(){
   // THE MAP SPEAKS THE FICTION (Paul 2026-07-10: "still a lot of old school
   // genre names like chiptune and idm all over the place"): every star draws
   // its kernel LABEL, never the id — culling measures the label too.
-  const glabel=g=>(K.GENRES[g]&&K.GENRES[g].label)||g;
+  // labels wear the alien alphabet (app/glyphs.js alienize): 1-2 letters per
+  // name swapped for a homoglyph, re-rolled once per session. Memoized there,
+  // so the width the LOD cull measures below is stable within a load.
+  const glabel=g=>alienize((K.GENRES[g]&&K.GENRES[g].label)||g);
   const ent=Object.entries(POS).map(([g,[x,y]])=>({g,label:glabel(g),w:wmap[g]||0,cx:X(x),cy:Y(y)}));
   const lbox=e=>{ lctx.font=fpx(e)+"px VT323, monospace"; const tw=lctx.measureText(e.label).width, lx=e.cx+9*fs;
     return {l:lx-3, r:lx+tw+3, t:e.cy+4*fs-fpx(e)*0.92, b:e.cy+4*fs+fpx(e)*0.28}; };
