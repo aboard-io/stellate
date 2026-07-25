@@ -100,7 +100,10 @@
   // TV GRADE (Paul 2026-07-25: "darken the visualizer a bit more and blue it and
   // make it more of a TV"): sepia first paints a warm base the hue-rotate then
   // swings to a cold CRT blue-cyan; brightness .8 -> .55 sinks it into the murk.
-  const GRADE = "saturate(.75) contrast(1.15) brightness(.55) sepia(.35) hue-rotate(175deg) blur(.35px)";
+  // blur 0.35px -> 4px (Paul 2026-07-25: "always blur the demoscene visualization
+  // in the background") — the carts dissolve into soft phosphor color fields;
+  // CSS-side only, so the gates' getImageData reads of the raw canvas are untouched.
+  const GRADE = "saturate(.75) contrast(1.15) brightness(.55) sepia(.35) hue-rotate(175deg) blur(4px)";
   // heavier grain than the footage layer's vhs tier (.13) — the carts want more
   // tooth to knock the digital sheen off (Paul: "a little danker").
   const GRAIN_OPACITY = 0.17;
