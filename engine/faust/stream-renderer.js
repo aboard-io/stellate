@@ -725,6 +725,15 @@
       // gate is untouched — only a turned-up vapor adds processing.
       applyVapor(L, R, LEN);
 
+      // AUDIT 2026-07 (tier 1): release consumed live-feed state. A bar spec is
+      // read exactly once (order enforced by ST.cursor), so NULL the slot — never
+      // splice: feedBar's returned index and ST.bars.length are load-bearing.
+      // Consumed sweeps below ST.swi are pruned periodically (ST.activeSw holds
+      // its own refs; resetting swi to 0 after the splice preserves the walk).
+      if (ST.live) {
+        ST.bars[n] = null;
+        if (ST.swi > 32) { ST.sweeps.splice(0, ST.swi); ST.swi = 0; }
+      }
       ST.cursor = n + 1;
       return { L, R, startSample: base, length: LEN, audit: ST.lastAudit };
     }

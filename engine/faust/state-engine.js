@@ -1654,9 +1654,19 @@
       comp: clamp(state.comp || 0, 0, 1),
       lowcut: clamp((state.tone && state.tone.lowcut) || 10, 10, 400),
       highcut: (state.tone && state.tone.highcut) ? clamp(state.tone.highcut, 1000, 20500) : 20500,
+      // MASTER AIR SHELF (Paul 2026-07-25: "the high end of the spectrum is
+      // VERY loud in general on good headphones — adjust the final mix with an
+      // EQ to bring it down a bit"): a constant gentle high-shelf CUT above
+      // ~8 kHz in fx_bus, applied unconditionally right after the genre tone
+      // tilt (lowcut/highcut) — a SHELF, not a lowpass, so the air dims
+      // instead of vanishing. Uniform across the catalog (a constant, so
+      // relative genre identity is untouched) and shared by press + live +
+      // wavOut via this one fxParams choke point.
+      shelf: MASTER_AIR_SHELF_DB,
       mcut: 21000, scmix: 0,
     };
   }
+  const MASTER_AIR_SHELF_DB = -3;   // dB above the fx_bus AIR_FC (8 kHz) — the headphone ask
 
   // ---- MULTIBAND MASTER COMP (fx wings stage 4) — an OPT-IN external node ----
   // Returns {module:"master_mb", mbdrive} or null. NOT baked into fx_bus: the

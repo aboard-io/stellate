@@ -76,6 +76,8 @@
 <script src="engine/faust/live.js"></script>
 <!-- THE APP: native ES modules under app/ (no bundler). type=module defers, so it
      runs after the classic engine scripts above and after the DOM is parsed. -->
+<script src="app/analytics.js"></script>
+<script data-goatcounter="/gc/count" async src="vendor/goatcounter/count.js"></script>
 <script type="module" src="app/main.js"></script>
 <!-- ALIENS (star-cruise): the 3D genre-flythrough, now the 4th VIEW in the ✦ cycle
      (app/panels.js drives it via window.__STARCRUISE). Side-effecting module that

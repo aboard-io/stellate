@@ -310,14 +310,29 @@
   // dst.length so the tail grains overlap the head: the loop-clean cloud.
   function mixGrains(dst, src, atPitch, advance, sr, gFrom, gTo, wrap) {
     const n = dst.length, gLen = Math.floor(GRAIN_SEC * sr), hop = sr / GRAIN_HZ;
+    // ENGINE-AUDIT 2026-07 Tier 3 (~3x, bit-identical — verified sample-for-
+    // sample): (a) the hann window is identical for every grain of a call, so
+    // compute it ONCE into a Float64Array (Float64 keeps the exact doubles the
+    // inline expression produced; Float32 would not); (b) the read pointer is
+    // in-range almost always, so skip readLerp's two modulos when
+    // 0 <= idx < N-1 (there idx % N === idx and (i0+1) % N === i0+1 — the
+    // same loads, same arithmetic, same doubles), falling back to the
+    // wrapping readLerp at the edges.
+    const hann = new Float64Array(gLen);
+    for (let i = 0; i < gLen; i++) hann[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / gLen);
+    const N = src.length, NF = N - 1;
     let pointer = gFrom * advance;
     for (let g = gFrom; g < gTo; g++) {
       const gs = Math.floor(g * hop);
       if (gs >= n && !wrap) break;
       const gn = wrap ? gLen : Math.min(gLen, n - gs);
       for (let i = 0; i < gn; i++) {
-        const w = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / gLen); // hann
-        const v = readLerp(src, pointer + i * atPitch) * w;
+        const idx = pointer + i * atPitch;
+        let v;
+        if (idx >= 0 && idx < NF) {
+          const i0 = idx | 0, fr = idx - i0;
+          v = (src[i0] + fr * (src[i0 + 1] - src[i0])) * hann[i];
+        } else v = readLerp(src, idx) * hann[i];
         if (wrap) dst[(gs + i) % n] += v; else dst[gs + i] += v;
       }
       pointer += advance;
@@ -575,25 +590,49 @@
         console.warn("[found] no local cache for", url, "— streaming archive.org");
       }
       if (!pick) {
-      let bytes = FOUND_CHUNK_BYTES;
+      // ENGINE-AUDIT 2026-07 Tier 1: the lead-in escalation used to refetch the
+      // prefix from byte 0 each round (1+4+8 = 13MB moved for an 8MB budget),
+      // and BOTH fallbacks (fetch error, partial-decode failure) pulled the
+      // whole file un-Ranged — a 100MB+ archive.org derivative on a phone.
+      // Now: grow() transfers only the missing tail (Range bytes=<have>-…) and
+      // concatenates, so the decoded prefix is byte-identical to the old
+      // full-prefix fetch; every fallback stays Range-capped at
+      // FOUND_MAX_BYTES — a container that won't decode from the full budget
+      // fails over to skip, not to an unbounded download. (A server that
+      // ignores Range returns 200 with the whole file; that response replaces
+      // the prefix and ends escalation, as before.)
       const fetchUrl = url;
-      for (;;) {
-        let buf, partial = false;
+      let bytes = FOUND_CHUNK_BYTES, have = null, partial = false;
+      const cat = (a, b) => {
+        const o = new Uint8Array(a.byteLength + b.byteLength);
+        o.set(new Uint8Array(a), 0); o.set(new Uint8Array(b), a.byteLength);
+        return o.buffer;
+      };
+      const grow = async (target) => {
+        if (have && (have.byteLength >= target || !partial)) return;
+        const from = have ? have.byteLength : 0;
         try {
-          const r = await fetch(fetchUrl, { mode: "cors", headers: { Range: "bytes=0-" + (bytes - 1) } });
+          const r = await fetch(fetchUrl, { mode: "cors", headers: { Range: "bytes=" + from + "-" + (target - 1) } });
           if (!(r.status === 206 || r.ok)) throw new Error("fetch " + r.status);
-          buf = await r.arrayBuffer(); partial = r.status === 206;
+          const buf = await r.arrayBuffer();
+          if (r.status === 206) { have = have ? cat(have, buf) : buf; partial = true; }
+          else { have = buf; partial = false; }   // server ignored Range: whole file
         } catch (e) {
-          const r2 = await fetch(fetchUrl, { mode: "cors" });
+          if (have) throw e;   // escalation blip with a prefix in hand — decode what we have
+          const r2 = await fetch(fetchUrl, { mode: "cors", headers: { Range: "bytes=0-" + (FOUND_MAX_BYTES - 1) } });
           if (!r2.ok) throw new Error("fetch " + r2.status + " for " + fetchUrl);
-          buf = await r2.arrayBuffer();
+          have = await r2.arrayBuffer(); partial = r2.status === 206;
         }
-        try { audio = await ctx.decodeAudioData(buf.slice(0)); }
+      };
+      for (;;) {
+        try { await grow(bytes); } catch (e) { if (!have) throw e; }
+        try { audio = await ctx.decodeAudioData(have.slice(0)); }
         catch (e) {
-          if (!partial) throw e;
-          const r = await fetch(fetchUrl, { mode: "cors" });
-          audio = await ctx.decodeAudioData(await r.arrayBuffer());
-          partial = false;
+          // partial prefix that won't decode: one escalation to the FULL byte
+          // budget (tail-only transfer), then decode-or-skip — never uncapped.
+          if (!partial || have.byteLength >= FOUND_MAX_BYTES) throw e;
+          await grow(FOUND_MAX_BYTES); bytes = FOUND_MAX_BYTES;
+          audio = await ctx.decodeAudioData(have.slice(0));
         }
         mono = new Float32Array(audio.length);
         for (let c = 0; c < audio.numberOfChannels; c++) {
@@ -762,12 +801,16 @@
       const dry = ctx.createGain(); dry.gain.value = 1; tail.connect(dry); dry.connect(dests.dry);
       const rev = ctx.createGain(); rev.gain.value = f.rsend; tail.connect(rev); rev.connect(dests.rev);
       const del = ctx.createGain(); del.gain.value = f.dsend; tail.connect(del); del.connect(dests.del);
-      if (f.ppsend && dests.pp) { const pp = ctx.createGain(); pp.gain.value = f.ppsend; tail.connect(pp); pp.connect(dests.pp); }
+      // ENGINE-AUDIT 2026-07 Tier 1: keep the pp send in scope so onended can
+      // disconnect it like its dry/rev/del siblings — every ppsend chop used to
+      // leave a GainNode attached to dests.pp until GC (vocal-lane node leak).
+      let pp = null;
+      if (f.ppsend && dests.pp) { pp = ctx.createGain(); pp.gain.value = f.ppsend; tail.connect(pp); pp.connect(dests.pp); }
       srcN.start(when, f.scratch ? 0 : (f.offset % 1) * buffer.duration);   // scratch seg is pre-rendered from offset => start at 0
       srcN.stop(when + durSec + 0.05);
       srcN._ampParam = g;   // the amplitude envelope — live.fadeAll ramps it down when the mix leaves this genre
       live.active.add(srcN);
-      srcN.onended = () => { live.active.delete(srcN); try { dry.disconnect(); rev.disconnect(); del.disconnect(); } catch (e) {} };
+      srcN.onended = () => { live.active.delete(srcN); try { dry.disconnect(); rev.disconnect(); del.disconnect(); if (pp) pp.disconnect(); } catch (e) {} };
     };
 
     // instr 3 — the granular bed, ZERO-STATIC Stage 2.4 (R6). The bed's grain
@@ -871,7 +914,12 @@
         setTimeout(() => { try { out.disconnect(); } catch (e) {} live.beds.delete(handle); }, (s + 0.15) * 1000);
       } };
       live.beds.add(handle);
-      setTimeout(() => live.beds.delete(handle), (when - ctx.currentTime + durSec + 1) * 1000);
+      // ENGINE-AUDIT 2026-07 Tier 1: a bed that plays to natural completion
+      // used to only delete its handle here — out/dry/rev stayed attached to
+      // the dests until GC. Run the same graph teardown stop() does (minus the
+      // source stop; the envelope has already closed by now).
+      setTimeout(() => { try { out.disconnect(); } catch (e) {} live.beds.delete(handle); },
+        (when - ctx.currentTime + durSec + 1) * 1000);
 
       if (FP._legacyBed) { startScheduler(); return handle; }
 

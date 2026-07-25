@@ -7,10 +7,22 @@ import { S, set, K, E, QSFLAGS } from "./state.js";
 import { retarget, rebuildQueue, travelStep, glideStep } from "./targeting.js";
 import { bgBarTick } from "./background.js";
 import { scheduleBarNotes, clearNoteTimers } from "./inside.js";
-import { urlTick, travelForBar, pointOnPath } from "./share.js";   // the bookmarkable measure: per-bar URL refresh + measure->path math
+import { urlTick, travelForBar, pointOnPath, legMetrics, paceSpeed } from "./share.js";   // the bookmarkable measure: per-bar URL refresh + measure<->path math (legMetrics/paceSpeed: the constant-pace inverse for the resume measure)
 
 // ---------- live engine ----------
 export let faustHandle=null;
+// THE PLAYHEAD IS THE SOURCE OF TRUTH for the resume measure. The constant-pace
+// inverse of share.js travelForBar: the traveler's {seg,t} -> its measure
+// (distance along the perimeter / speed). Same distance math starmap.js
+// dragPlayhead uses to label a scrubbed measure, so a stop resumes exactly at
+// the visible playhead — including after a LIVE playhead drag (the engine's bar
+// serial doesn't move when you drag, but the traveler does).
+function barForTravel(travel){
+  const { legs }=legMetrics();
+  let d=0; for(let i=0;i<travel.seg;i++) d+=legs[i]||0;
+  d+=travel.t*(legs[travel.seg]||0);
+  return Math.max(0, Math.round(d/Math.max(1e-6, paceSpeed())));
+}
 // USER MASTER VOLUME — persisted; applied live to whichever engine handle is up.
 export function setMasterVol(v){
   const g=Math.max(0,Math.min(1.5,+v||0));
@@ -267,14 +279,24 @@ export function stopLive(){
     return;
   }
   // remember WHERE we stopped: the next play (and the shareable URL) resumes at
-  // this measure instead of rewinding to the path start.
-  if(S.barInfo) S.startBar=S.barInfo.serial+1;
+  // this measure instead of rewinding to the path start. Derive it from the
+  // TRAVELER'S current position (S.travel), NOT the engine's bar serial — a live
+  // playhead DRAG moves the traveler but never the engine serial, so the old
+  // `barInfo.serial+1` silently reverted a drag→stop→play back to the pre-drag
+  // spot (Paul's "move the playhead and then play, it just reverts"). For a
+  // normal undragged ride travel-measure == serial+1 exactly (travelStep and the
+  // engine advance in lockstep from the same startBar), so this is behaviour-
+  // identical there and only fixes the dragged case. No path (free-roam) has no
+  // traveler, so fall back to the engine serial.
+  if(S.waypoints.length>=2) S.startBar=barForTravel(S.travel);
+  else if(S.barInfo) S.startBar=S.barInfo.serial+1;
   set({live:false, queue:[]});   // queue cleared: the next run must not inherit this run's glide flips
   clearNoteTimers();   // drop any pending demoscene note onsets so none fire after ■
   bootAbort();   // stopped before sound? clear the warm-up bar
   if(faustHandle){ try{faustHandle.stop();}catch(e){} faustHandle=null; }
   if(MSESSION){ try{ MSESSION.playbackState="paused"; }catch(e){} }
   try{ document.title=ORIG_TITLE; }catch(e){}   // restore the tab title when idle
+  urlTick();   // the address bar's ?m= now reflects the true resume measure (idle buildShareUrl reads startBar) so a refresh keeps the dragged spot
   set({status:"stopped"}); }
 setInterval(()=>{ if(!S.live&&S.playing&&S.target){ set({barCount:S.barCount+1}); glideStep(); } },1400);
 

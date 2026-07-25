@@ -651,6 +651,11 @@
     const workerReady = [false, false];
     const workerReadyProm = [null, null];
     const readyResolve = [null, null];
+    // AUDIT 2026-07 (tier 1): a failed worker init must SETTLE ensureWorker (with
+    // this flag set) — the promise used to resolve only on 'ready', so an initfail
+    // (network blip on the ~9 dynamic imports) left boot awaiting forever at the
+    // spinner and openStream queueing preFeed forever. Callers check the flag.
+    const workerFailed = [null, null];
     function ensureWorker(wi) {
       if (workerReadyProm[wi]) return workerReadyProm[wi];
       workerReadyProm[wi] = new Promise((resolve) => {
@@ -658,7 +663,12 @@
         const w = new Worker(BASE + "stream-worker.js", { type: "module" });
         workers[wi] = w;
         w.onmessage = (e) => onMsg(wi, e.data);
-        w.onerror = (e) => errors.push("worker" + wi + " error: " + ((e && e.message) || e));
+        w.onerror = (e) => {
+          const msg = "worker" + wi + " error: " + ((e && e.message) || e);
+          errors.push(msg);
+          // a worker that errors BEFORE 'ready' never becomes ready — settle the boot await
+          if (!workerReady[wi]) { if (!workerFailed[wi]) workerFailed[wi] = msg; if (readyResolve[wi]) readyResolve[wi](); }
+        };
         w.postMessage({ type: "init" });
       });
       return workerReadyProm[wi];
@@ -709,7 +719,17 @@
         if (speechCache[src.id] !== undefined) return go(speechCache[src.id]);   // decoded or failed(null)
         kickSpeech(src).then((sp) => go(sp || null));
       };
-      if (workerReady[stream.wi]) proceed(); else ensureWorker(stream.wi).then(proceed);
+      if (workerReady[stream.wi]) proceed();
+      else ensureWorker(stream.wi).then(() => {
+        // failed worker init: bail via the openfail path instead of posting the
+        // open / queueing preFeed forever (the worker's engine will never exist).
+        if (workerFailed[stream.wi]) {
+          errors.push("openfail (worker init) gen? ring" + stream.ring + ": " + workerFailed[stream.wi]);
+          if (stream === cur && !running) status("engine error: " + workerFailed[stream.wi]);
+          return;
+        }
+        proceed();
+      });
     }
     function feed(stream, r) {
       // stream-absolute sweep mapping (sweeps are rare — only section open/close)
@@ -829,7 +849,14 @@
     function onMsg(wi, m) {
       if (!m || !m.type) return;
       if (m.type === "ready") { workerReady[wi] = true; if (readyResolve[wi]) readyResolve[wi](); return; }
-      if (m.type === "initfail") { errors.push("worker" + wi + " initfail: " + m.error); return; }
+      if (m.type === "initfail") {
+        // settle the pending ensureWorker with the failure flag set (never a
+        // silent forever-hang at 'loading engine…' — boot/openStream check it).
+        errors.push("worker" + wi + " initfail: " + m.error);
+        if (!workerFailed[wi]) workerFailed[wi] = "worker" + wi + " initfail: " + m.error;
+        if (readyResolve[wi]) readyResolve[wi]();
+        return;
+      }
       // worker metronome (stream-worker posts ~4Hz per live open): dedicated-worker
       // timers are NOT throttled in hidden tabs, so this keeps the feed pump and the
       // bar scheduler alive when the page's own timers clamp to >=1s (tab in the
@@ -1260,7 +1287,20 @@
       bgSetMetadata(); bgSetPlaybackState("playing");
       if (opts.mediaSession) {
         try {
-          MS.setActionHandler("play", () => goVisible());
+          // AUDIT 2026-07 (tier 1): play used to be goVisible() alone, whose
+          // `!survivalMuted && !bgActive` guard returned before restoring — the
+          // pause below mutes at source WITHOUT setting survivalMuted, so a
+          // foreground pause was permanent (transport play did nothing). Give
+          // play a dedicated un-pause that unconditionally restores C_STATE +
+          // masterGain; the survival-mute/bg-handoff cases keep goVisible's path.
+          MS.setActionHandler("play", () => {
+            if (survivalMuted || bgActive) { goVisible(); return; }
+            resumeCtx();
+            try { Atomics.store(ctrl, C_STATE, 1); } catch (e) {}   // resume from the frozen cursor
+            try { const t = ctx.currentTime; masterGain.gain.cancelScheduledValues(t); masterGain.gain.setValueAtTime(0, t); masterGain.gain.linearRampToValueAtTime(1, t + 0.02); } catch (e) {}
+            try { pumpOnce(); } catch (e) {}
+            bgSetPlaybackState("playing");
+          });
           MS.setActionHandler("pause", () => {
             try { Atomics.store(ctrl, C_STATE, 2); masterGain.gain.value = 0; } catch (e) {}
             if (bgActive && bgAudio) { try { bgAudio.pause(); } catch (e) {} bgActive = false; }
@@ -1272,6 +1312,13 @@
 
     // ── boot: init worker0, then let the pump fill the runway; RUN on primed ──
     await ensureWorker(0);
+    if (workerFailed[0]) {
+      // fail LOUDLY (goLive catches and shows it) instead of hanging at the spinner.
+      abort = true;
+      try { if (workers[0]) workers[0].terminate(); } catch (e) {}
+      status("engine error: " + workerFailed[0]);
+      throw new Error("FaustLive: engine worker failed to initialize — " + workerFailed[0]);
+    }
     status("priming…");
     pump();
 
@@ -1627,6 +1674,9 @@
     const DECODE_THEN_RENDER = opts.decodeThenRender !== false;
     const workers = [null, null], workerReady = [false, false];
     const workerReadyProm = [null, null], readyResolve = [null, null];
+    // AUDIT 2026-07 (tier 1): a failed worker init must SETTLE ensureWorker (with
+    // this flag set) so the boot await fails loudly instead of hanging forever.
+    const workerFailed = [null, null];
     function ensureWorker(k) {
       if (workerReadyProm[k]) return workerReadyProm[k];
       workerReadyProm[k] = new Promise((resolve) => {
@@ -1634,7 +1684,12 @@
         const w = new Worker(BASE + "stream-worker.js", { type: "module" });
         workers[k] = w;
         w.onmessage = (e) => onMsg(e.data, k);
-        w.onerror = (e) => errors.push("wavworker" + k + " error: " + ((e && e.message) || e));
+        w.onerror = (e) => {
+          const msg = "wavworker" + k + " error: " + ((e && e.message) || e);
+          errors.push(msg);
+          // a worker that errors BEFORE 'ready' never becomes ready — settle the boot await
+          if (!workerReady[k]) { if (!workerFailed[k]) workerFailed[k] = msg; if (readyResolve[k]) readyResolve[k](); }
+        };
         w.postMessage({ type: "init" });
       });
       return workerReadyProm[k];
@@ -1860,7 +1915,13 @@
     function onMsg(m, k) {
       if (!m || !m.type) return;
       if (m.type === "ready") { workerReady[k] = true; if (readyResolve[k]) readyResolve[k](); return; }
-      if (m.type === "initfail") { errors.push("wavworker" + k + " initfail: " + m.error); return; }
+      if (m.type === "initfail") {
+        // settle the pending ensureWorker with the failure flag set (boot checks it).
+        errors.push("wavworker" + k + " initfail: " + m.error);
+        if (!workerFailed[k]) workerFailed[k] = "wavworker" + k + " initfail: " + m.error;
+        if (readyResolve[k]) readyResolve[k]();
+        return;
+      }
       if (m.type === "openfail") { errors.push("openfail gen" + m.gen + ": " + m.error); return; }
       if (m.type === "pcmseg") {
         if (!useMp3) return;   // route demoted to segAB mid-flight — drop stale PCM flushes
@@ -2580,6 +2641,15 @@
       } catch (e) { errors.push("mp3 worker spawn: " + (e && e.message || e)); }
     }
     await ensureWorker(0);
+    if (workerFailed[0]) {
+      // fail LOUDLY (goLive catches and shows it) instead of hanging at the spinner.
+      abort = true;
+      try { if (workers[0]) workers[0].terminate(); } catch (e) {}
+      if (encWorker) { try { encWorker.terminate(); } catch (e) {} encWorker = null; }
+      if (metaTimer) { try { clearInterval(metaTimer); } catch (e) {} metaTimer = 0; }
+      status("engine error: " + workerFailed[0]);
+      throw new Error("FaustLiveWav: engine worker failed to initialize — " + workerFailed[0]);
+    }
     mark("workerInit");
     ensureWorker(1);
     status("priming…");

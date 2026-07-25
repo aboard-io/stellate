@@ -24,6 +24,10 @@
 // (labels + colors + star coords) and the genre->cluster index. Safe to static-import;
 // this does NOT couple the lazy Three load (those stay behind the dynamic import()).
 import { CLUSTER_OF, GENRE_CLUSTERS } from "./starcruise/genre-clusters.js";
+// FLOATING GLYPHS — the same faint alien idents that backfloat on the 2D star map,
+// as camera-facing sprites drifting in the cruise atmosphere (pure THREE, no engine
+// coupling; textures baked once — no per-frame upload, per the post-planet static fix).
+import { makeGlyphAtmosphere } from "./glyphs.js";
 
 // LIVE STORE ACCESS — read the app's store LAZILY off the window global that
 // app/state.js publishes (window.__S). We deliberately do NOT static-import
@@ -129,6 +133,7 @@ let planet = null;           // { group, update, setPalette } — the planet you
 let sun = null;              // the shadow-casting KEY light (module-scoped for the frustum + probes)
 let stageSpots = [];         // sweeping colored concert SPOTLIGHTS over the stage (animated)
 let starfield = null;        // persistent THREE.Points deep-space (whole-session)
+let glyphSky = null;         // persistent floating-glyph atmosphere (sprites follow the camera)
 let planetField = null;      // persistent InstancedMesh: ONE planet per genre AT its GENRE_COORDS
 let sunField = null;         // persistent InstancedMesh: ONE colored SUN per CLUSTER at its star coord
 let sunGlowField = null;     // persistent InstancedMesh: an ADDITIVE corona/halo shell per sun (the glow)
@@ -1203,6 +1208,14 @@ export async function start() {
     scene.add(starfield);
   }
 
+  // persistent FLOATING GLYPHS — the alien idents drift through the atmosphere for the
+  // whole session (a shell that follows the camera each frame; see glyphs.js). Cheap:
+  // ~8-12 additive sprites, textures baked once. Guarded so a hiccup never kills start.
+  try {
+    glyphSky = makeGlyphAtmosphere(THREE, { coarse: isCoarse() });
+    scene.add(glyphSky.group);
+  } catch (e) { glyphSky = null; }
+
   // persistent GENRE STAR-MAP — ONE glowing planet per genre AT its GENRE_COORDS
   // (the same projection the flight camera flies through), so flying == traversing the
   // genre space and NEARBY planets == similar-sounding genres. A single InstancedMesh
@@ -1847,6 +1860,8 @@ export function update(dt) {
   }
   if (backdrop) backdrop.update(dt);
   if (skyDome) skyDome.update(dt);
+  if (glyphSky) glyphSky.update(dt, camera);   // atmosphere glyphs follow the camera + breathe
+
   if (ship) ship.update(dt, st.phase, st.landProgress);
   if (!_skipRender) ps1.render(scene, camera);   // _skipRender: headless state-only stepping
 }
@@ -1933,6 +1948,7 @@ export function stop() {
   despawnBand();                                   // disposes band + dancers + stage + backdrop + ship
   despawnSpaceRig();                               // disposes cockpit + planet (if in transit)
   if (starfield) { scene.remove(starfield); disposeObj(starfield); starfield = null; }
+  if (glyphSky) { try { glyphSky.dispose(); } catch (e) {} glyphSky = null; }
   if (planetField) { scene.remove(planetField); disposeObj(planetField); planetField = null; }
   if (sunGlowField) { scene.remove(sunGlowField); disposeObj(sunGlowField); sunGlowField = null; }
   if (sunField) { scene.remove(sunField); disposeObj(sunField); sunField = null; sunIndex = null; sunBaseR = null; }

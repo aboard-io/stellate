@@ -7,10 +7,20 @@
 (function (root) {
   "use strict";
 
-  function parsePch(s){ const [o,ss]=String(s).split("."); return parseInt(o,10)*12+parseInt(ss,10); }
-  function toPch(abs){ const o=Math.floor(abs/12), ss=abs%12; return o+"."+String(ss).padStart(2,"0"); }
+  // Pitch-string memos (ENGINE-AUDIT 2026-07 Tier 3): events carry pitch as
+  // "8.04" strings and every pass re-split/re-parsed them (~5% of buildEvents).
+  // The pch vocabulary is tiny (a few dozen distinct strings per song), so a
+  // Map memo returns the IDENTICAL integers/strings — byte-identical output.
+  // pchToMidi(s) == parsePch(s)-36 exactly ((o-3)*12+ss = o*12+ss-36, small ints).
+  const _pchParse=new Map(), _pchStr=new Map();
+  function parsePch(s){ s=String(s); let v=_pchParse.get(s);
+    if(v===undefined){ const [o,ss]=s.split("."); v=parseInt(o,10)*12+parseInt(ss,10); _pchParse.set(s,v); }
+    return v; }
+  function toPch(abs){ let v=_pchStr.get(abs);
+    if(v===undefined){ const o=Math.floor(abs/12), ss=abs%12; v=o+"."+String(ss).padStart(2,"0"); _pchStr.set(abs,v); }
+    return v; }
   function pchAdd(s,semis){ return toPch(parsePch(s)+(semis|0)); }
-  function pchToMidi(s){ const [o,ss]=String(s).split("."); return (parseInt(o,10)-3)*12+parseInt(ss,10); }
+  function pchToMidi(s){ return parsePch(s)-36; }
   function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
   // blues call-and-response: one seeded stream per GLOBAL chord bar, shared by
   // the "blues" lead generator and the hits placer (pattern "response") so
@@ -1425,10 +1435,20 @@
       if(!on[i]){ i++; continue; }
       let j = i; while(j+1 < on.length && on[j+1]) j++;       // run of active sections [i..j]
       let runBars = 0; for(let s=i;s<=j;s++) runBars += barsOf(s);
+      // ENGINE-AUDIT 2026-07 Tier 3: rampScalar computes rb with this exact
+      // formula and returns 1 for every INTERIOR bar (barInRun >= rb AND
+      // fromEnd >= rb — both fade conditions false regardless of the floors),
+      // so skipping the callback there is byte-identical and drops the
+      // O(bars x events) full-array sweeps to the few edge bars of each run.
+      const rb = Math.min(DYN_RAMP_BARS, Math.floor(runBars/2));
       let barBase = 0;
       for(let s=i;s<=j;s++){
         const secBars = barsOf(s), start = spans[s].start;
-        for(let b=0;b<secBars;b++) ramp(barBase + b, runBars, start + b, b);
+        for(let b=0;b<secBars;b++){
+          const bir = barBase + b;
+          if(bir >= rb && runBars - 1 - bir >= rb) continue;  // interior: scalar==1, provably no-op
+          ramp(bir, runBars, start + b, b);
+        }
         barBase += secBars;
       }
       i = j + 1;
@@ -2541,10 +2561,29 @@
         const nbars=Math.max(1,Math.round(sp.beats/BARLEN));
         let M=MACHINE_KIT[sp.kit]?0.78:0.28;
         M=cl(M-Math.min(0.45,hz/0.12*0.22+sw/0.35*0.22),0.05,0.95);
+        // ENGINE-AUDIT 2026-07 Tier 3: the per-bar double full-array filter was
+        // O(bars x drums) — 40-53% of buildEvents. Bucket THIS span's snares/
+        // hats in ONE O(drums) pass instead: same inBar predicate (tried on the
+        // float-neighbor bar indices, so membership is decided by the exact
+        // original test), drums-array order preserved, dropD applied at
+        // consumption time. Buckets are rebuilt per span, so an overhang bar's
+        // events (round() lets a span's last bar spill past sp.beats) are
+        // re-read AFTER the previous span's mutations — exactly the old
+        // per-bar rescan semantics. Beat mutations inside vSnare/vHat are
+        // in-bar by construction, so bucket membership never goes stale.
+        const snB=new Array(nbars), haB=new Array(nbars);
+        for(let bi=0;bi<nbars;bi++){ snB[bi]=[]; haB[bi]=[]; }
+        for(const d of drums){
+          const lane=d.drum==="snare"?snB:d.drum==="hat"?haB:null;
+          if(!lane) continue;
+          const g=Math.floor((d.beat-sp.start)/BARLEN);
+          for(let c=g-1;c<=g+1;c++)
+            if(c>=0&&c<nbars&&inBar(d.beat,sp.start+c*BARLEN)){ lane[c].push(d); break; }
+        }
         for(let bi=0;bi<nbars;bi++){
           const b0=sp.start+bi*BARLEN;
-          const sn=drums.filter(d=>d.drum==="snare"&&!dropD.has(d)&&inBar(d.beat,b0));
-          const ha=drums.filter(d=>d.drum==="hat"  &&!dropD.has(d)&&inBar(d.beat,b0));
+          const sn=snB[bi].filter(d=>!dropD.has(d));
+          const ha=haB[bi].filter(d=>!dropD.has(d));
           let sSig=sn.length?snSig(sn,b0):null, hSig=ha.length?haSig(ha,b0):null;
           if(sSig!=null && sSig===s1 && s1===s2) sSig=snSig(vSnare(sn,b0,M),b0);
           if(hSig!=null && hSig===h1 && h1===h2) hSig=haSig(vHat(ha,b0),b0);

@@ -10,6 +10,7 @@ import { retarget, weightsAt, travelStep, rescore, forceRetarget } from "./targe
 import { clampZoom, zoomAround, seedDefaultLoop, insertWaypoint, computeGenreLayout, computeRegions, centerView } from "./starmap.js";
 import { renderInside } from "./inside.js";
 import { goLive, stopLive, faustHandle } from "./live.js";
+import { initGlyphMap } from "./glyphs.js";   // floating alien-ident glyphs backfloating on the star map
 import { playheadTick } from "./readouts.js";
 import "./background.js";   // side effects: demoscene chip + cart rotation + subs.push(applyBg)
 import "./panels.js";       // side effects: control panel + chips/modals + store render subs
@@ -52,6 +53,7 @@ function boot(){
       if(p&&p.params) K.DX7_PATCHES[name]={algorithm:p.alg, params:p.params};
     forceRetarget();
   }).catch(()=>{});
+  initGlyphMap();   // the floating glyph layer drifts behind the map for the whole session (ambient, seizure-safe)
   if(window.DemoLayer)DemoLayer.init().then(()=>set({}));     // MicroW8 demoscene background (off until toggled)
   registerSW(); precacheSoon();   // offline-where-possible: the SW caches by class; warm the route's samples ahead of the traveler
   // re-warm on path/seed changes (the sub fires on every store write; precacheSoon
@@ -69,3 +71,25 @@ function boot(){
 const cssLink=document.querySelector('link[rel="stylesheet"][href*="app.css"]');
 if(cssLink && !cssLink.sheet) cssLink.addEventListener("load", boot, {once:true});
 else boot();
+
+// SPACEBAR TRANSPORT: space toggles play/stop (same as the ▶ playChip). Global, but
+// yields to text/interactive targets (so it never eats a keypress in a field or a
+// button's own activation), to an OPEN settings/about dialog, and to the 3D star-
+// cruise (where space is the thrust-up flight control). preventDefault stops the
+// page from scrolling on the tap.
+addEventListener("keydown",e=>{
+  if(e.code!=="Space" && e.key!==" ") return;
+  if(e.repeat) return;                                  // hold = one toggle, not a strobe
+  const t=e.target;
+  if(t){
+    const tag=(t.tagName||"").toLowerCase();
+    if(tag==="input"||tag==="select"||tag==="textarea"||tag==="button"||t.isContentEditable) return;
+  }
+  // a true dialog is open (settings ⚙ / about ?) — let space belong to it, not transport.
+  const panel=document.getElementById("panelWrap"), about=document.getElementById("aboutWrap");
+  if((panel&&panel.classList.contains("open"))||(about&&about.classList.contains("open"))) return;
+  // the 3D cruise owns space (thrust up) — its own handler runs; don't double-fire transport.
+  if(document.body.classList.contains("view-starcruise")) return;
+  e.preventDefault();
+  S.live?stopLive():goLive();
+});

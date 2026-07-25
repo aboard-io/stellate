@@ -627,7 +627,7 @@ const GROOVE_EVERY=3;      // force a reachable groove anchor at least this ofte
 // so the regions are byte-stable every load, exactly like the star positions.
 const REGION_K=10;
 // energy-ordered (mellow wash .. hardest banger); rank r gets NAMES[r]. Goofy in
-// the house style ("Marble Escalator", "Kerosene Twelve") — evocative, invented.
+// the house style ("Food Court Eternity", "Kerosene Twelve") — evocative, invented.
 const REGION_NAMES=["Fathom Parish","The Drone Pastures","Vapor Sanatorium","Cardigan Hollow",
   "Dust Cul-de-sac","The Escalator Riviera","Sequin Junction","The Boogie Reservoir",
   "Piston Prairie","The Kickdrum Quarry"];

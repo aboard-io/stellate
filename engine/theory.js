@@ -174,6 +174,15 @@
   const FUNC_NEXT={T:{T:0.15,S:0.50,D:0.35}, S:{S:0.15,D:0.60,T:0.25}, D:{D:0.10,T:0.75,S:0.15}};
   const POOL7={T:[[0,0.60],[5,0.25],[2,0.15]], S:[[3,0.60],[1,0.40]], D:[[4,0.75],[6,0.25]]};
   const POOL5={T:[[0,1]],                      S:[[1,0.5],[3,0.5]],   D:[[2,0.6],[4,0.4]]};
+  // APPLIED_DOM_FLOOR — the floor of the D.2 applied-dominant tier in progress()
+  // (was 0.10). 2026-07-25, Paul: "did we get slightly more atonal everywhere?
+  // bring it a little bit back." MEASURED: this floor tier adds a uniform ~25% of
+  // all secondary dominants across every adventure bucket — the "everywhere"
+  // tonicization creep. Halving the floor (0.10→0.05, onset/slope unchanged)
+  // removes ~42% of the LOW-adventure (0.25-0.40) floor tonicizations while the
+  // HIGH wing (jazz/bebop, 0.55-0.70) keeps ~90% of its spice — a proportional
+  // pullback biased to the mild genres, not a revert. (scratch floor.js sweep.)
+  const APPLIED_DOM_FLOOR = 0.05;
   // ---- MINED-TABLES BEGIN (tools/mine-theory.js — do not hand-edit) ----
   // Corpus-fit FUNC_NEXT/POOL (MIDIMAN trove via corpus-db, 2026-07-14): 57165+29136
   // deduped files, 3065897+1352325 diatonic root transitions. Held-out mean
@@ -247,11 +256,12 @@
         // single pass, so it aims at the next bar's pre-substitution root)
         chords[i]=mk(chords[i+1].rootPc+7,QUAL.dom7,"D",chords[i].degree);
       }
-      else if(adv>0.32&&b<0.1+(adv-0.32)*1.2&&chords[i+1]&&mod12(chords[i+1].rootPc-key)!==0){
+      else if(adv>0.32&&b<APPLIED_DOM_FLOOR+(adv-0.32)*1.2&&chords[i+1]&&mod12(chords[i+1].rootPc-key)!==0){
         // BACH-MINUET applied dominant (D.2, Paul: "just a little"): tonicize the
         // NEXT chord whenever it isn't the tonic — a V7/x, the leading-tone
-        // accidental of the classical cadence. A low ~10% floor so a little
-        // chromatic color appears even in mild genres, scaling with adventure
+        // accidental of the classical cadence. A low ~5% floor (APPLIED_DOM_FLOOR,
+        // trimmed from 10% on 2026-07-25 — see its comment) so a LITTLE chromatic
+        // color still appears in mild genres, scaling with adventure
         // (monotone; REUSES `b`, no new draw so the fixed-4-per-bar design holds).
         // The exotic mediant/tritone-sub tiers still own high adventure above.
         chords[i]=mk(chords[i+1].rootPc+7,QUAL.dom7,"D",chords[i].degree);

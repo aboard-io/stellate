@@ -7,9 +7,9 @@ draw a path, or drift, and the music continuously morphs through whatever the
 traveler crosses — tempo, harmony, groove, instrumentation, and effects all
 blending between neighbours. 274 genres, all generated live in the browser.
 The catalog is a work of mathematical fiction: every genre wears an invented
-display name — the anchor id `techno` appears on the map as "Concrete
-Metronome", `jazz` as "Smoke Arithmetic", `fugue` as "The Patient Chase", and
-`salondawdle` (a brushed 3/4 salon waltz — the space carries real odd meters)
+display name — the anchor id `techno` appears on the map as "Unblinking
+Interval", `jazz` as "Smoke Arithmetic", `fugue` as "The Patient Chase", and
+`salondawdle`, "Ottoman Heat Death" (a brushed 3/4 salon waltz — the space carries real odd meters)
 was born fictional — while the ids underneath stay stable and load-bearing
 for paths, presets, and the verifier matrix.
 

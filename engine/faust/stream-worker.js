@@ -61,6 +61,18 @@ let liveSpeech = null;
 // tells the pump the caller is done (drain then close). Reset per openLive.
 let liveBars = [], liveEos = false;
 
+// AUDIT 2026-07 (tier 1): release a retired/finished pump's feed globals. Cleared
+// ONLY when this pump is still the latest open (token === activeToken) — a newer
+// open has already re-pointed liveBars/liveBuffers/liveSpeech to its own gen's
+// data, and clobbering those would break the newer stream. Called on the eos/
+// segeos exits too (a wavOut worker retired at gen cutover gets feedEos, never
+// 'stop' — the decoded-PCM table would otherwise stay pinned here for the whole
+// life of the next gen).
+function clearFeedGlobals(token) {
+  if (token !== activeToken) return;
+  liveBuffers = {}; liveSpeech = null; liveBars = []; activeGen = -1;
+}
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ── conductor metronome (ring path only) ────────────────────────────────────
@@ -170,7 +182,9 @@ async function runPump(msg, token) {
   const alive = () => token === activeToken && !stopReq;
   // superseded before we even started (a newer open landed while queued): bail
   // WITHOUT resetting the ring or opening — the newer open owns this ring now.
-  if (!alive()) { self.postMessage({ type: "stopped", cursor: 0, gen }); return; }
+  // eng.close() drops any ST a previous pump left (opChain serializes pumps, so
+  // the newer open's ST cannot exist yet — close is always safe at a pump exit).
+  if (!alive()) { eng.close(); self.postMessage({ type: "stopped", cursor: 0, gen }); return; }
 
   const ringIndex = msg.ringIndex | 0;
   const ctrl = new Int32Array(msg.ctrlSab);
@@ -189,7 +203,7 @@ async function runPump(msg, token) {
 
   const info = await eng.open(msg.state, { buffers: msg.buffers || {}, speech: msg.speech || null,
     opts: msg.durSec ? { dur: msg.durSec } : undefined });
-  if (!alive()) { self.postMessage({ type: "stopped", cursor: 0, gen }); return; }   // superseded during ingest
+  if (!alive()) { eng.close(); self.postMessage({ type: "stopped", cursor: 0, gen }); return; }   // superseded during ingest
   self.postMessage({ type: "opened", info, gen });
 
   // largest chunk (chord-bar) — the ring must always have room for one whole chunk
@@ -228,7 +242,10 @@ async function runPump(msg, token) {
     Atomics.store(ctrl, r0c, 1);                  // stream fully written (natural EOS)
     self.postMessage({ type: "eos", cursor, gen });
   } else {
-    // stopped early (retired / superseded): abandon the not-yet-written chunks.
+    // stopped early (retired / superseded): abandon the not-yet-written chunks and
+    // free the engine's ST (proc fleet + buffer table) — a retired gen's whole
+    // decoded-PCM table otherwise stays pinned until the NEXT open on this worker.
+    eng.close();
     self.postMessage({ type: "stopped", cursor, gen });
   }
 }
@@ -242,7 +259,11 @@ async function runPump(msg, token) {
 async function runLivePump(msg, token) {
   const gen = msg.gen | 0;
   const alive = () => token === activeToken && !stopReq;
-  if (!alive()) { self.postMessage({ type: "stopped", cursor: 0, gen }); return; }
+  if (!alive()) { eng.close(); self.postMessage({ type: "stopped", cursor: 0, gen }); return; }
+  // this open's bar queue — a newer open re-points the module global to ITS array,
+  // so all reads/releases below go through this capture and can never touch a
+  // successor's queue (the alive() checks retire this pump promptly anyway).
+  const bars = liveBars;
 
   const ringIndex = msg.ringIndex | 0;
   const ctrl = new Int32Array(msg.ctrlSab);
@@ -260,7 +281,7 @@ async function runLivePump(msg, token) {
   Atomics.store(ctrl, r0c, 0);
 
   const info = await eng.openLive(msg.state, { buffers: msg.buffers || {}, speech: msg.speech || null });
-  if (!alive()) { self.postMessage({ type: "stopped", cursor: 0, gen }); return; }
+  if (!alive()) { eng.close(); self.postMessage({ type: "stopped", cursor: 0, gen }); return; }
   self.postMessage({ type: "openedLive", info, gen });
 
   const runway = runwaySec * SR;
@@ -269,12 +290,12 @@ async function runLivePump(msg, token) {
 
   while (alive()) {
     // wait for the caller to feed the next bar (never spin the ring dry on the writer)
-    while (alive() && cursor >= liveBars.length && !liveEos) await sleep(4);
+    while (alive() && cursor >= bars.length && !liveEos) await sleep(4);
     if (!alive()) break;
-    if (cursor >= liveBars.length) break;   // liveEos and drained
+    if (cursor >= bars.length) break;   // liveEos and drained
 
     // ingest is cheap (no ring write) — do it, learn the bar length, THEN backpressure
-    const fb = await eng.feedBar(liveBars[cursor]);
+    const fb = await eng.feedBar(bars[cursor]);
     maxChunk = Math.max(maxChunk, fb.length);
     if (maxChunk > cap) { self.postMessage({ type: "openfail", error: `chunk ${maxChunk} > ring ${cap}`, gen }); return; }
     while (alive() && (filled() + fb.length > cap || filled() >= runway)) await sleep(10);
@@ -284,6 +305,7 @@ async function runLivePump(msg, token) {
     let w = Atomics.load(ctrl, r0w);
     for (let i = 0; i < c.length; i++) { const b = ((w + i) % cap) * 2; ring[b] = c.L[i]; ring[b + 1] = c.R[i]; }
     Atomics.store(ctrl, r0w, w + c.length);   // publish AFTER the samples are written
+    bars[cursor] = null;   // release the consumed bar spec (never re-read; NULL, never splice — indexing/.length are load-bearing)
     cursor++;
 
     const fl = filled();
@@ -291,12 +313,18 @@ async function runLivePump(msg, token) {
     const now = (typeof performance !== "undefined" ? performance.now() : Date.now());
     if (now - lastStatus > 500) {
       lastStatus = now;
-      self.postMessage({ type: "status", cursor, nChunks: liveBars.length, filledSec: +(fl / SR).toFixed(2),
+      self.postMessage({ type: "status", cursor, nChunks: bars.length, filledSec: +(fl / SR).toFixed(2),
         underruns: Atomics.load(ctrl, C_UNDER_CNT), primed, gen, ringIndex, live: true });
     }
   }
-  if (liveEos && cursor >= liveBars.length) { Atomics.store(ctrl, r0c, 1); self.postMessage({ type: "eos", cursor, gen }); }
-  else self.postMessage({ type: "stopped", cursor, gen });
+  if (liveEos && cursor >= bars.length) { Atomics.store(ctrl, r0c, 1); clearFeedGlobals(token); self.postMessage({ type: "eos", cursor, gen }); }
+  else {
+    // retired (commitFade posts 'stop', never feedEos, so THIS is the ring path's
+    // cutover exit): free the engine's ST + this gen's feed globals — otherwise the
+    // retired ring's proc fleet stays pinned until the next-next crossfade.
+    eng.close(); clearFeedGlobals(token);
+    self.postMessage({ type: "stopped", cursor, gen });
+  }
 }
 
 // runBarAccumPump: the shared skeleton for both WAV-FIRST sinks (see WAV-FIRST.md).
@@ -309,7 +337,10 @@ async function runLivePump(msg, token) {
 async function runBarAccumPump(msg, token, segDefault, firstDefault, sink) {
   const gen = msg.gen | 0;
   const alive = () => token === activeToken && !stopReq;
-  if (!alive()) { self.postMessage({ type: "segstopped", gen }); return; }
+  if (!alive()) { eng.close(); self.postMessage({ type: "segstopped", gen }); return; }
+  // this open's bar queue (see runLivePump): reads/releases below can never touch
+  // a newer open's re-pointed module global.
+  const bars = liveBars;
   const segTarget = (msg.segSec > 0 ? msg.segSec : segDefault) * SR;
   const firstTarget = (msg.firstSegSec > 0 ? msg.firstSegSec : firstDefault) * SR;
 
@@ -335,12 +366,13 @@ async function runBarAccumPump(msg, token, segDefault, firstDefault, sink) {
   };
 
   while (alive()) {
-    while (alive() && cursor >= liveBars.length && !liveEos) await sleep(4);
+    while (alive() && cursor >= bars.length && !liveEos) await sleep(4);
     if (!alive()) break;
-    if (cursor >= liveBars.length) break;   // liveEos and drained
-    const barSpec = liveBars[cursor];
+    if (cursor >= bars.length) break;   // liveEos and drained
+    const barSpec = bars[cursor];
     await eng.feedBar(barSpec);
     const c = eng.renderChunk(cursor);
+    bars[cursor] = null;   // release the consumed bar spec (never re-read; NULL, never splice — indexing/.length are load-bearing)
     // AUDIT-TRUTH: ride the per-bar expected-vs-actual audit through on the bar's meta
     // (opaque to the seg/pcm sinks, mp3-worker and mp3-stream — meta passes verbatim),
     // so the conductor sees it alongside serial/section at onBar time.
@@ -352,8 +384,11 @@ async function runBarAccumPump(msg, token, segDefault, firstDefault, sink) {
     if (accFrames >= (segIdx === 0 ? firstTarget : segTarget)) emit();
     if ((cursor & 7) === 0) await sleep(0);   // yield: never hog the worker thread
   }
-  if (liveEos && cursor >= liveBars.length) { emit(); eng.close(); self.postMessage({ type: "segeos", gen, cursor }); }
-  else self.postMessage({ type: "segstopped", gen, cursor });
+  // segeos is the wavOut gen-cutover exit (the retired worker gets feedEos, never
+  // 'stop'), so the feed globals — liveBuffers IS this gen's whole decoded-PCM
+  // table (same object as ST.buffers) — must be released here, not just on 'stop'.
+  if (liveEos && cursor >= bars.length) { emit(); eng.close(); clearFeedGlobals(token); self.postMessage({ type: "segeos", gen, cursor }); }
+  else { eng.close(); clearFeedGlobals(token); self.postMessage({ type: "segstopped", gen, cursor }); }
 }
 
 // segsSink (WAV-FIRST v2 A/B-element route): bakes a CROSSFADE OVERLAP so the conductor's
@@ -493,5 +528,13 @@ self.onmessage = async (e) => {
   }
   if (msg.type === "feedBar") { liveBars.push(msg.bar); return; }
   if (msg.type === "feedEos") { liveEos = true; return; }
-  if (msg.type === "stop") { stopReq = true; stopTicks(); return; }   // retire the current pump (+ metronome)
+  if (msg.type === "stop") {
+    // retire the current pump (+ metronome) and drop this open's feed globals NOW
+    // (the retiring pump's exit also clears them — this covers the no-pump case).
+    // The pumps only touch their captured `bars` reference, so re-pointing the
+    // module globals here is safe mid-pump.
+    stopReq = true; stopTicks();
+    liveBuffers = {}; liveSpeech = null; liveBars = []; activeGen = -1;
+    return;
+  }
 };

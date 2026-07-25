@@ -10,6 +10,19 @@
     user-select:none;-webkit-user-select:none}
   #map text{pointer-events:none}
   #map .cur{pointer-events:none}  /* the traveler is display-only: it never steals a waypoint grab */
+  /* FLOATING GLYPHS (app/glyphs.js): faint alien station idents backfloating on the
+     star map. z-index:0 sits ABOVE the demoscene/video canvases (z-index:-1) and
+     BELOW the map SVG (#map, z-index:1) + all UI, so they drift behind the stars.
+     Blurred + screen-blended for a soft watermark; each glyph's slow drift + fade
+     is driven by compositor-only CSS transitions set inline (no flicker). */
+  #glyphmap{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;
+    filter:blur(1.3px);mix-blend-mode:screen}
+  #glyphmap .glyph{position:absolute;left:50%;top:50%;opacity:0;white-space:nowrap;line-height:1;
+    will-change:transform,opacity;transform:translate(-50%,-50%);
+    font-family:'VT323',ui-monospace,monospace;color:rgba(210,255,250,.72);
+    text-shadow:0 0 16px rgba(120,255,255,.5)}
+  /* the 3D star-cruise hides the map layers; the glyphs there are THREE.Sprites. */
+  body.view-starcruise #glyphmap{display:none}
   .brand{position:fixed;top:.7rem;left:1rem;z-index:3;font-family:Orbitron,sans-serif;font-size:1.02rem;letter-spacing:.05em;margin:0;
     background:linear-gradient(90deg,var(--amber),var(--pink) 52%,var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .help{font-size:.7rem;padding:.1rem .5rem;border-radius:99px;vertical-align:middle;margin-left:.5rem;

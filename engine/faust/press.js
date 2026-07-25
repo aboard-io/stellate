@@ -18,7 +18,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
-const { execFileSync } = require("child_process");
+const { execFileSync, execFile, spawnSync } = require("child_process");
 
 const ROOT = path.join(__dirname, "..");            // engine/ — kernel modules live here
 const SITE = path.join(__dirname, "..", "..");      // repo root — found/ + samplePath assets live here
@@ -43,13 +43,39 @@ function ffdecode(file) {
   x.set(new Float32Array(raw.buffer, raw.byteOffset, x.length));
   return x;
 }
+// Async twin for the decode POOL (ENGINE-AUDIT 2026-07 Tier 1/3): identical
+// ffmpeg invocation, so the PCM per file is byte-identical to ffdecode's —
+// only the spawn scheduling changes (process startup ~130ms dominates small
+// zone wavs; measured ~3x on a 25-source state decoded 8-wide).
+function ffdecodeAsync(file) {
+  return new Promise((resolve, reject) => {
+    execFile("ffmpeg", ["-v", "error", "-i", file, "-ac", "1", "-ar", String(SR),
+      "-t", String(FOUND_CAP_SEC), "-f", "f32le", "-"],
+      { maxBuffer: 1 << 30, encoding: "buffer" }, (err, stdout) => {
+        if (err) return reject(err);
+        const x = new Float32Array(stdout.length >> 2);
+        x.set(new Float32Array(stdout.buffer, stdout.byteOffset, x.length));
+        resolve(x);
+      });
+  });
+}
+const DECODE_POOL = 8;
 function writeWav(file, L, R) {
-  const n = L.length, data = Buffer.alloc(n * 4);
+  // ENGINE-AUDIT 2026-07 Tier 3: one upfront allocation + Int16Array stores
+  // replace 2 bounds-checked writeInt16LE calls per frame plus a full
+  // Buffer.concat re-copy (~0.3-0.9s per press). Same WAV.toInt16(x,"trunc")
+  // quantizer — press TRUNCATES (`*32767|0`), see faust/wav.js note — and
+  // typed-array stores are little-endian on every supported platform, so the
+  // written bytes are identical. (Buffer.alloc is never pooled: byteOffset 0,
+  // and the 44-byte header keeps the sample view 2-byte aligned.)
+  const n = L.length, buf = Buffer.alloc(44 + n * 4);
+  WAV.header(SR, 2, n * 4).copy(buf, 0);
+  const v = new Int16Array(buf.buffer, buf.byteOffset + 44, n * 2);
   for (let i = 0; i < n; i++) {
-    data.writeInt16LE(WAV.toInt16(L[i], "trunc"), i * 4);   // press TRUNCATES (`*32767|0`) — see faust/wav.js note
-    data.writeInt16LE(WAV.toInt16(R[i], "trunc"), i * 4 + 2);
+    v[2 * i] = WAV.toInt16(L[i], "trunc");
+    v[2 * i + 1] = WAV.toInt16(R[i], "trunc");
   }
-  fs.writeFileSync(file, Buffer.concat([WAV.header(SR, 2, data.length), data]));
+  fs.writeFileSync(file, buf);
 }
 
 // state.dx7 contract: any algorithm 1..32 may be requested; only the ones a
@@ -144,6 +170,7 @@ async function decodeInputs(state, sched, opts) {
   for (const u of Object.values(sched.units))
     if (u && u.sampler) for (const z of u.sampler.zones) usedSrc.add(z.srcId);
   const buffers = {};
+  const fileSrcs = [];   // ffmpeg-decoded sources, gathered for the pool below
   for (const s of state.foundSources || []) {
     if (!usedSrc.has(s.id)) continue;
     if (s.synthText) {   // SPEECH organ: synthesize instead of ffmpeg-decoding a file
@@ -154,9 +181,31 @@ async function decodeInputs(state, sched, opts) {
       } catch (e) { console.warn(`  found: cannot synth ${s.id} (${String(e.message).slice(0, 80)}) — skipping`); }
       continue;
     }
-    const p = s.fsPath || (s.samplePath ? path.join(SITE, s.samplePath) : bedPath(s.id));
-    try { buffers[s.id] = ffdecode(p); }
-    catch (e) { console.warn(`  found: cannot decode ${p} (${String(e.message).slice(0, 80)}) — skipping ${s.id}`); }
+    fileSrcs.push({ id: s.id, p: s.fsPath || (s.samplePath ? path.join(SITE, s.samplePath) : bedPath(s.id)) });
+  }
+  // ENGINE-AUDIT 2026-07 Tier 1/3: file sources decode through an async ffmpeg
+  // POOL (8-wide) instead of one execFileSync at a time — process startup
+  // dominates the small drum/GM-zone wavs (audit measured 4.0s -> 1.35s on a
+  // 25-source state). PCM per file is identical (same ffmpeg args), buffers
+  // stay keyed by srcId and are assigned in the original source order, and the
+  // downstream mixing order is untouched — pressed bytes do not move.
+  {
+    const results = new Array(fileSrcs.length);
+    let next = 0;
+    const worker = async () => {
+      for (;;) {
+        const i = next++;
+        if (i >= fileSrcs.length) return;
+        try { results[i] = { pcm: await ffdecodeAsync(fileSrcs[i].p) }; }
+        catch (e) { results[i] = { err: e }; }
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(DECODE_POOL, fileSrcs.length) }, worker));
+    for (let i = 0; i < fileSrcs.length; i++) {
+      const r = results[i];
+      if (r && r.pcm) buffers[fileSrcs[i].id] = r.pcm;
+      else console.warn(`  found: cannot decode ${fileSrcs[i].p} (${String(r && r.err && r.err.message).slice(0, 80)}) — skipping ${fileSrcs[i].id}`);
+    }
   }
   // ---- vocoder speech input (robot_choir has 1 audio input) ----
   let speech = null;
@@ -439,10 +488,15 @@ async function press(state, outPath, opts) {
   let sq = 0; for (let i = 0; i < TOTAL; i++) sq += L[i] * L[i];
   const rmsDb = 20 * Math.log10(Math.max(Math.sqrt(sq / TOTAL), 1e-9));
   console.log(`wrote ${outPath}: ${(TOTAL / SR).toFixed(1)}s, L-RMS ${rmsDb.toFixed(1)} dB, ${(Date.now() - t0) / 1000 | 0}s to render`);
+  // ENGINE-AUDIT 2026-07 Tier 1: ONE spawnSync whose .stderr is readable on
+  // success AND failure — the old execFileSync pair could only see stderr via
+  // its catch path (volumedetect prints to stderr, ffmpeg exits 0), so the
+  // first full-decode pass was always discarded and re-run via sh -c 2>&1.
   let vd = "";
-  try { execFileSync("ffmpeg", ["-i", outPath, "-af", "volumedetect", "-f", "null", "-"],
-    { stdio: ["ignore", "ignore", "pipe"] }); } catch (e) { vd = String(e.stderr || ""); }
-  if (!vd) { try { vd = execFileSync("sh", ["-c", `ffmpeg -i ${JSON.stringify(outPath)} -af volumedetect -f null - 2>&1`]).toString(); } catch (e) { vd = String(e.stdout || ""); } }
+  try {
+    const r = spawnSync("ffmpeg", ["-i", outPath, "-af", "volumedetect", "-f", "null", "-"], { encoding: "utf8" });
+    vd = String(r.stderr || "") + String(r.stdout || "");
+  } catch (e) { vd = ""; }
   const m = vd.match(/mean_volume: ([-\d.]+) dB[\s\S]*?max_volume: ([-\d.]+) dB/);
   const meanDb = m ? parseFloat(m[1]) : null;
   if (m) console.log(`volumedetect: mean ${m[1]} dB, max ${m[2]} dB`);

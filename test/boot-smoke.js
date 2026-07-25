@@ -42,6 +42,9 @@ const EXPECTED = {
   "engine/faust/found-player.js": "FoundPlayer",
   "engine/faust/sampler.js": "FaustSampler",
   "engine/faust/live.js": "FaustLive",
+  // analytics (2026-07-25): the settings shim publishes window.goatcounter.
+  // (The vendored counter itself is async — excluded from the ordered walk.)
+  "app/analytics.js": "goatcounter",
 };
 
 // --- parse index.html for the ORDERED classic script srcs (skip type=module) -
@@ -52,6 +55,7 @@ function parseScripts(html) {
   while ((m = re.exec(html))) {
     const attrs = m[1];
     if (/\btype\s*=\s*["']module["']/i.test(attrs)) continue; // app/ ES modules
+    if (/\basync\b/i.test(attrs)) continue; // async scripts have no load-order contract (goatcounter counter, 2026-07-25)
     const src = /\bsrc\s*=\s*["']([^"']+)["']/i.exec(attrs);
     if (src) out.push(src[1]);
   }

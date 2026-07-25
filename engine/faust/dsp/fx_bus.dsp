@@ -36,6 +36,16 @@ grit    = hslider("grit", 0, 0, 1, 0.01);
 comp    = hslider("comp", 0, 0, 1, 0.01);
 lowcut  = hslider("lowcut", 10, 10, 400, 1);
 highcut = hslider("highcut", 20500, 1000, 20500, 1);
+// MASTER AIR SHELF (Paul 2026-07-25: "the high end of the spectrum is VERY
+// loud in general on good headphones — adjust the final mix with an EQ to
+// bring it down a bit"): a gentle high-shelf CUT in dB above AIR_FC — a
+// SHELF, not a lowpass, so the air dims instead of vanishing. Applied
+// unconditionally right after the genre tone tilt; the value comes from
+// state-engine fxParams (MASTER_AIR_SHELF_DB, -3 dB) on every path (press,
+// live ring, wavOut stream). Default mirrors that constant so a host that
+// never sets params hears the same master.
+shelf   = hslider("shelf", -3, -12, 0, 0.1);
+AIR_FC  = 7000;   // shelf corner: midpoint of the cut — puts the >=8 kHz band at ~-3 dB
 
 MAXD = 131072;   // ~3 s at 44.1k
 
@@ -71,6 +81,7 @@ master(sc, l, r) = l, r
   : (*(makeup), *(makeup))
   : (fi.highpass(2, lowcut), fi.highpass(2, lowcut))
   : (fi.lowpass(2, highcut), fi.lowpass(2, highcut))
+  : (fi.high_shelf(shelf, AIR_FC), fi.high_shelf(shelf, AIR_FC))   // master AIR shelf (see hslider above)
   : (clip, clip)
 with {
   duck = 1 - pump*duckenv(sc);

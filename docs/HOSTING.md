@@ -357,3 +357,24 @@ beds fetched 200 + decoded, maxRms 0.207, zero errors
 10. **Smoke — mobile:** Media Session lock-screen check on a phone (the
     wavOut `<audio>` path), plus video background toggle (no-cors `<video>`
     same-origin under require-corp).
+
+## Analytics (2026-07-25): self-hosted GoatCounter, cookie-free
+
+Only the most basic aggregate stats (pageviews/visits/referrers/countries) —
+no cookies, no persistent identifiers, no consent surface needed, nothing
+third-party. Open source (GoatCounter, single Go binary + SQLite).
+
+- **Droplet**: `/usr/local/bin/goatcounter` (v2.6.0) as the `goatcounter`
+  user, systemd unit `goatcounter.service`, SQLite at
+  `/var/lib/goatcounter/`, listening on **127.0.0.1:8081 only**.
+- **nginx**: only `location = /gc/count` proxies through (the beacon); every
+  other `/gc/` path 404s — the dashboard/UI (incl. `/user/new`) is never
+  publicly reachable. Block lives in sites-enabled/stellate.
+- **Client**: `app/analytics.js` (settings shim: pathname only — the query
+  string carries seeds/paths, i.e. someone's saved musical location, and
+  never leaves the page) + vendored `vendor/goatcounter/count.js` (ISC).
+  sw.js passes `/gc/` through uncached.
+- **Dashboard is not public**: `ssh -L 8081:127.0.0.1:8081 root@stellate.app`
+  then http://localhost:8081 (Host: stellate.app). Password reset:
+  `goatcounter db update-user -email ford@ftrain.com -password ... -db
+  sqlite3+/var/lib/goatcounter/goatcounter.sqlite3` on the droplet.

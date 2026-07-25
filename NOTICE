@@ -99,6 +99,13 @@ the star-cruise 3D video mode (`app/starcruise/`).
 MIT license (`vendor/simplex-noise/LICENSE`). Used by the star-cruise mode's
 procedural motion.
 
+## GoatCounter count.js — vendored (ISC)
+
+`vendor/goatcounter/count.js` is GoatCounter's browser counter (v4), © Martin
+Tournoij, ISC license (header of the file). Served same-origin; it talks to a
+self-hosted GoatCounter instance at `/gc/` — cookie-free, no persistent
+identifiers, basic aggregate stats only (docs/HOSTING.md "Analytics").
+
 ## Fonts and UI libraries — loaded from CDNs, not redistributed
 
 - Orbitron and VT323 (SIL OFL 1.1) are loaded from Google Fonts.
