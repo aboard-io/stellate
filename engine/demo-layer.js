@@ -179,6 +179,8 @@
 
   // ---- DOM ----
   let wrap = null, canvas = null, ctx = null, imgData = null, imgU32 = null;
+  let fadeCanvas = null, fadeCtx = null, dissolveTimer = 0;
+  const DISSOLVE_MS = 1400;              // cart-swap crossfade (freeze-frame dissolve)
   let opacity = DEFAULT_OPACITY, blend = DEFAULT_BLEND;
   // analog effect stack (overlay nodes owned by DemoLayer, children of #demolayer)
   let fxVeil = null, fxScan = null, fxGrain = null, fxSvg = null, fxStyle = null;
@@ -262,6 +264,9 @@
     if (!ready && !platform) return;
     cur = ((i % CARTS.length) + CARTS.length) % CARTS.length;
     const name = CARTS[cur].name;
+    // snapshot the OUTGOING frame before the runtime is torn down, so the
+    // dissolve has something to fade from (no-op on first load / when hidden).
+    beginDissolve();
     const wasm = await decodeCart(name);
     // re-instantiate the platform per cart swap: a fresh runtime memory means a
     // new cart never inherits the previous effect's framebuffer/heap garbage.
@@ -351,6 +356,19 @@
     imgData = ctx.createImageData(320, 240);
     imgU32 = new Uint32Array(imgData.data.buffer);
     wrap.appendChild(canvas);
+    // DISSOLVE CANVAS (Paul 2026-07-25: "could you fade between demoscene
+    // transitions, it's very sudden"). Cart swaps used to hard-cut. This holds a
+    // FROZEN copy of the outgoing cart's last frame, stacked over the live one
+    // and faded out by CSS — a freeze-frame dissolve. Chosen over running two
+    // carts through the fade because the layer is heavily blurred and drifts at
+    // 0.03x: a still is indistinguishable from a live outgoing frame, and it
+    // costs one drawImage instead of doubling the runtime's CPU.
+    fadeCanvas = document.createElement("canvas");
+    fadeCanvas.width = 320; fadeCanvas.height = 240;
+    fadeCanvas.style.cssText = canvas.style.cssText +
+      ";opacity:0;transition:opacity " + DISSOLVE_MS + "ms linear;pointer-events:none";
+    fadeCtx = fadeCanvas.getContext("2d", { alpha: true });
+    wrap.appendChild(fadeCanvas);
     makeFx();              // the analog overlay stack sits OVER the graded canvas
     document.body.appendChild(wrap);
     document.addEventListener("visibilitychange", () => {
@@ -515,6 +533,25 @@
     // the background program has requested so far — no localStorage self-restore.
     setEnabled(on);
     return true;
+  }
+
+  // freeze the current frame onto the dissolve canvas at full opacity, then let
+  // CSS fade it out over DISSOLVE_MS while the incoming cart draws underneath.
+  function beginDissolve() {
+    if (!fadeCanvas || !fadeCtx || !canvas || !on || !ready) return;
+    if (reduced) return;                 // prefers-reduced-motion: hard cut, no animation
+    try { fadeCtx.clearRect(0, 0, 320, 240); fadeCtx.drawImage(canvas, 0, 0); } catch (e) { return; }
+    clearTimeout(dissolveTimer);
+    fadeCanvas.style.transition = "none";
+    fadeCanvas.style.opacity = "1";
+    // next frame: re-arm the transition and drop to 0 (a same-frame change would
+    // not animate — the browser coalesces it into the "none" above)
+    requestAnimationFrame(() => { requestAnimationFrame(() => {
+      if (!fadeCanvas) return;
+      fadeCanvas.style.transition = "opacity " + DISSOLVE_MS + "ms linear";
+      fadeCanvas.style.opacity = "0";
+    }); });
+    dissolveTimer = setTimeout(() => { if (fadeCtx) fadeCtx.clearRect(0, 0, 320, 240); }, DISSOLVE_MS + 200);
   }
 
   async function setCart(i) {
