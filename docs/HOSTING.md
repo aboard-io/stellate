@@ -393,10 +393,24 @@ third-party. Open source (GoatCounter, single Go binary + SQLite).
   string carries seeds/paths, i.e. someone's saved musical location, and
   never leaves the page) + vendored `vendor/goatcounter/count.js` (ISC).
   sw.js passes `/gc/` through uncached.
-- **Dashboard is not public**: `ssh -L 8081:127.0.0.1:8081 root@stellate.app`
-  then http://localhost:8081 (Host: stellate.app). Password reset:
-  `goatcounter db update-user -email ford@ftrain.com -password ... -db
-  sqlite3+/var/lib/goatcounter/goatcounter.sqlite3` on the droplet.
+- **Dashboard IS public, behind GoatCounter's own login**:
+  **https://stellate.app/stats/**. The service runs with `-base-path /stats`
+  (systemd `ExecStart`), so every link and asset it emits already carries the
+  prefix — no `sub_filter` rewriting, no subdomain, no second certificate. The
+  nginx block proxies `location /stats` to 127.0.0.1:8081 with
+  `Host: stellate.app` (GoatCounter matches its site by vhost) and
+  `Cache-Control: no-store`.
+- **⚠ THE TRAP** (cost ~2 minutes of dead analytics on 2026-07-25): `-base-path`
+  moves the COLLECTION endpoint too. The beacon proxy must point at
+  **`/stats/count`**, not `/count`. If hits stop arriving while the dashboard
+  works, this is why.
+- Password reset on the droplet:
+  `sudo -u goatcounter goatcounter db update user -find ford@ftrain.com
+  -password '...' -db sqlite3+/var/lib/goatcounter/goatcounter.sqlite3`
+  (note: `db update user`, not `db update-user`).
+- A localhost-only shim also exists at `/etc/nginx/sites-enabled/goatcounter-tunnel`
+  (127.0.0.1:8082, rewrites Host) for `ssh -L 8082:127.0.0.1:8082` access when
+  the public route is down. Never reachable from the internet.
 
 ## Embedding (2026-07-25): `embed.html`, oEmbed, and the nginx bits
 
