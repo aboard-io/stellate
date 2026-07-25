@@ -26,6 +26,7 @@ import { POS, WORLD_W, WORLD_H, MAP_CENTER } from "./world.js";
 import { retarget } from "./targeting.js";
 import { clampZoom, drawMap } from "./starmap.js";
 import { goLive, stopLive } from "./live.js";
+import { buildShareUrl } from "./share.js";
 
 const overlay = document.getElementById("embedPlay");
 
@@ -142,6 +143,26 @@ let tries=0;
   if(tries++ > 600) return;                      // ~10s at 60fps, then give up quietly
   requestAnimationFrame(ready);
 })();
+
+// ---------- the way out -----------------------------------------------------
+// The wordmark and the credit's "play the full map" both open the FULL
+// instrument, carrying WHAT IS PLAYING HERE — seed, path, measure, speed,
+// soundfont — via the same share grammar the ⚙ copy-link button uses. Kept in
+// sync on every store change (cheap: two href writes), and rewritten to the
+// canonical origin so an embed served from aboardresearch.com still sends the
+// listener to stellate.app. Falls back to the plain front door if anything
+// throws — a broken link out is worse than a generic one.
+const CANON="https://stellate.app/";
+function syncOut(){
+  let href=CANON;
+  try{ const u=new URL(buildShareUrl(), location.href);
+       href=CANON+(u.search||""); }catch(e){}
+  for(const id of ["brandOut","fullOut"]){
+    const a=document.getElementById(id);
+    if(a && a.getAttribute("href")!==href) a.setAttribute("href",href);
+  }
+}
+subs.push(syncOut); syncOut();
 
 // headless gate + host debugging hook
 window.__EMBED={ genre:()=>genreApplied, overlay:()=>!!(overlay&&!overlay.classList.contains("gone")),

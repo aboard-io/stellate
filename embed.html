@@ -63,7 +63,12 @@
 <link rel="stylesheet" href="app/app.css">
 </head>
 <body class="embed">
-<h1 class="brand">STELLATE<button class="help" id="helpChip" title="about stellate" aria-label="About stellate">?</button></h1>
+<!-- THE WAY OUT. In an embed the wordmark is the door back to the instrument:
+     it opens the FULL map in a new tab, carrying whatever mix is playing here
+     (embed.js keeps the href in sync with the current seed/path/font). A
+     listener who likes what they hear must always be able to reach the thing
+     that made it. -->
+<h1 class="brand"><a id="brandOut" href="https://stellate.app/" target="_blank" rel="noopener" title="open this mix on stellate.app">STELLATE</a><button class="help" id="helpChip" title="about stellate" aria-label="About stellate">?</button></h1>
 <a class="embed-open" href="https://stellate.app/" target="_blank" rel="noopener">open ↗</a>
 <svg id="map"></svg>
 <!-- present-but-hidden: app/panels.js binds these at load (see the note above) -->
@@ -84,7 +89,7 @@
     <span class="ep-s">draw a path through genre space — tap to play</span>
   </span>
 </button>
-<p class="credit">made by <a href="https://www.ftrain.com/" target="_blank" rel="noopener">Paul Ford</a> at <a href="https://aboard.com" target="_blank" rel="noopener">Aboard</a></p>
+<p class="credit">made by <a href="https://www.ftrain.com/" target="_blank" rel="noopener">Paul Ford</a> at <a href="https://aboard.com" target="_blank" rel="noopener">Aboard</a> · <a id="fullOut" href="https://stellate.app/" target="_blank" rel="noopener">play the full map &#8599;</a></p>
 <!-- ENGINE: the same ordered classic globals index.html loads (theory/pipes
      BEFORE csd-engine; every global BEFORE app/main.js). -->
 <script src="engine/theory.js"></script>
