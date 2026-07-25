@@ -6,7 +6,8 @@
 //   2. Genres laid out DYNAMICALLY at load (computeGenreLayout, deterministic) —
 //      every K.GENRES genre placed, no two stars within a comfortable on-screen
 //      distance AND no two NAME LABELS overlap at the default zoom; zoomable.
-//   3. the DEMOSCENE background DEFAULTS OFF.
+//   3. the DEMOSCENE background is ALWAYS ON as ambient wallpaper (the ▢/▦
+//      chip retired 2026-07-25; ?bg=off is the escape hatch).
 // Drives explorer.html headless and asserts (all must PASS):
 //   A. exactly 3 default waypoints on a fresh load;
 //   B. waypoint[0] sits at the computed map centre (within ~1 logical px);
@@ -19,11 +20,11 @@
 //      overlap at the default zoom (boxes measured in real px); fugue lands near
 //      prelude, afrobeat gets a sensible spot (the two genres derived at load);
 //   E. zoom in (k up to 4) and back to fit; k stays in range, k===1 recentres;
-//   F. DemoLayer.enabled() === false on load;
+//   F. DemoLayer up on load with NO interaction (mode 2, enabled);
 //   G. no console/page errors on load, nor after starting playback (a short
 //      live ride: engine boots, real audio comes out, then STOP).
-//   H. the ▢/▦ background chip toggles the demoscene program on/off and the
-//      cart rotates on the musical clock + the wall-clock backstop.
+//   H. the demoscene wallpaper: on at boot, cart rotates on the musical clock
+//      + the wall-clock backstop, #bgChip is GONE, ?bg=off boots it off.
 //   node faust/explorer-ui-test.js
 "use strict";
 const path = require("path");
@@ -181,14 +182,16 @@ async function main() {
   ok(zoom.zout.k === 1 && zoom.zout.ox === 0 && zoom.zout.oy === 0, `E2: zoom-out to fit left k=${zoom.zout.k} ox=${zoom.zout.ox} oy=${zoom.zout.oy} (want 1/0/0)`);
   console.log(`\n=== ZOOM ===\n  zoomIn k=${zoom.zin.k}  zoomOut k=${zoom.zout.k} ox=${zoom.zout.ox} oy=${zoom.zout.oy}`);
 
-  // ---- F: demoscene background default OFF ----
+  // ---- F: demoscene background ALWAYS ON (ambient wallpaper, 2026-07-25) ----
+  // no interaction: the layer must come up on its own (init is async — wait for it)
+  await page.waitForFunction(() => window.DemoLayer && DemoLayer.enabled(), { timeout: 15000 }).catch(() => {});
   const bg = await page.evaluate(() => ({
     present: !!window.DemoLayer,
     enabled: window.DemoLayer ? DemoLayer.enabled() : null,
     mode: window.__BGALT ? window.__BGALT.state().mode : null,
   }));
-  ok(bg.enabled === false, `F: DemoLayer.enabled() === ${bg.enabled} on load (want false)`);
-  ok(bg.mode === 0, `F: background mode ${bg.mode} on load (want 0 = off)`);
+  ok(bg.enabled === true, `F: DemoLayer.enabled() === ${bg.enabled} on load (want true — ambient wallpaper)`);
+  ok(bg.mode === 2, `F: background mode ${bg.mode} on load (want 2 = demoscene)`);
   console.log(`\n=== BACKGROUND ===\n  present=${bg.present} enabled=${bg.enabled} mode=${bg.mode}`);
 
   // ---- F2: the ? chip opens the ABOUT layer (what/how-to-play/provenance) ----
@@ -268,16 +271,13 @@ async function main() {
   console.log(`  maxRms=${maxRms.toFixed(5)}  realRideErrors=${realRide.length}  envFoundSoundErrors=${envRide.length}  engineErrors=${engineErrs.length}`);
   if (realRide.length) console.log(`  REAL:\n   ${realRide.slice(0, 20).join("\n   ")}`);
 
-  // ---- H: the ▢/▦ background chip — demoscene-only program (the laserdisc
-  // video layer + the ⤓ download cluster were removed 2026-07-25 — branch
-  // legacy-download-video; the chip now toggles off → demoscene). Page loaded
-  // with ?bgAltMs=1200 so the idle wall-clock backstop rotates fast. Assert:
-  // the chip reaches mode 2, the demo layer comes up (enabled + DOM visible),
-  // DemoLayer.next() cycles the cart, the idle backstop rotates the cart on
-  // its own, the chip glyph tracks the mode, and the chip toggles back off.
+  // ---- H: the demoscene background — ALWAYS ON as ambient wallpaper (the
+  // ▢/▦ chip retired 2026-07-25; ?bg=off is the escape hatch, probed in H6).
+  // Page loaded with ?bgAltMs=1200 so the idle wall-clock backstop rotates
+  // fast. Assert: the layer is up at BOOT with no interaction (mode 2,
+  // enabled + DOM visible), DemoLayer.next() cycles the cart, the idle
+  // backstop rotates the cart on its own, and #bgChip is GONE from the DOM.
   const alt = await page.evaluate(async () => {
-    const chip = document.getElementById("bgChip");
-    let g = 0; while (window.__BGALT.state().mode !== 2 && g++ < 3) chip.click();
     const startMode = window.__BGALT.state().mode;
     // wait for the layer to materialize (setEnabled pre-ready is recorded by init)
     for (let i = 0; i < 100 && !(window.DemoLayer && DemoLayer.enabled()); i++) await new Promise(r => setTimeout(r, 100));
@@ -289,25 +289,20 @@ async function main() {
     // alternation test used (40 × 150ms)
     const seen = new Set([n1]);
     for (let i = 0; i < 40; i++) { await new Promise(r => setTimeout(r, 150)); seen.add(DemoLayer.currentName()); }
-    const chipGlyph = chip.textContent;
-    let h = 0; while (window.__BGALT.state().mode !== 0 && h++ < 3) chip.click();
-    const endMode = window.__BGALT.state().mode, endEnabled = DemoLayer.enabled();
-    return { startMode, up, domUp, cartCycles: n0 !== n1, rotations: seen.size - 1, chipGlyph, endMode, endEnabled };
+    const chipGone = !document.getElementById("bgChip");
+    return { startMode, up, domUp, cartCycles: n0 !== n1, rotations: seen.size - 1, chipGone };
   });
-  ok(alt.startMode === 2, `H0: bg chip reaches demoscene mode (got ${alt.startMode})`);
-  ok(alt.up && alt.domUp, `H1: demo layer up while on (enabled=${alt.up} visible=${alt.domUp})`);
+  ok(alt.startMode === 2, `H0: demoscene mode at boot with no interaction (got ${alt.startMode})`);
+  ok(alt.up && alt.domUp, `H1: demo layer up at boot (enabled=${alt.up} visible=${alt.domUp})`);
   ok(alt.cartCycles, `H2: DemoLayer.next() changes the cart`);
   ok(alt.rotations >= 1, `H3: idle backstop rotates the cart (fresh carts seen=${alt.rotations})`);
-  ok(alt.chipGlyph === "▦", `H5: chip glyph shows ▦ while demoscene is on (got "${alt.chipGlyph}")`);
-  ok(alt.endMode === 0 && !alt.endEnabled, `H6: chip toggles back off (mode=${alt.endMode} enabled=${alt.endEnabled})`);
-  console.log(`\n=== BACKGROUND CHIP ===`);
-  console.log(`  mode=${alt.startMode} cartCycles=${alt.cartCycles} backstopRotations=${alt.rotations} endMode=${alt.endMode}`);
+  ok(alt.chipGone, `H5: #bgChip is gone from the DOM (chip retired 2026-07-25)`);
+  console.log(`\n=== BACKGROUND WALLPAPER ===`);
+  console.log(`  mode=${alt.startMode} cartCycles=${alt.cartCycles} backstopRotations=${alt.rotations} chipGone=${alt.chipGone}`);
 
   // H4: the MUSICAL driver counts beats, not chord-bar ticks — 8 measures = 32
   // beats. With cbeats=8 (2 measures/bar) the rotation must land on tick 4, not 8.
   const beat = await page.evaluate(() => {
-    const chip = document.getElementById("bgChip");
-    let g = 0; while (window.__BGALT.state().mode !== 2 && g++ < 3) chip.click();
     const wasLive = window.__S.live; window.__S.live = true;
     window.__BGALT.flip();   // reset the beat counter to a known 0 (also rotates the cart)
     const c0 = window.DemoLayer.currentName && DemoLayer.currentName();
@@ -317,7 +312,6 @@ async function main() {
       if ((DemoLayer.currentName && DemoLayer.currentName()) !== c0) firstFlip = i;
     }
     window.__S.live = wasLive;
-    let h = 0; while (window.__BGALT.state().mode !== 0 && h++ < 3) chip.click();  // back to off
     return { firstFlip };
   });
   ok(beat.firstFlip === 4, `H4: musical rotation lands after 32 beats = 4 two-measure bars (got tick ${beat.firstFlip})`);
@@ -335,6 +329,18 @@ async function main() {
   ok(wheel.kUp > wheel.k0, `I1: wheel up zooms IN (k ${wheel.k0.toFixed(2)}→${wheel.kUp.toFixed(2)})`);
   ok(wheel.kDn < wheel.kUp, `I2: wheel down zooms OUT (k ${wheel.kUp.toFixed(2)}→${wheel.kDn.toFixed(2)})`);
   console.log(`  wheel-zoom: ${wheel.k0.toFixed(2)} →in ${wheel.kUp.toFixed(2)} →out ${wheel.kDn.toFixed(2)}`);
+
+  // ---- H6: ?bg=off is the escape hatch — a FRESH load boots mode 0, layer
+  // disabled (goes last: it navigates away from the main probe page).
+  await page.goto(`http://localhost:${PORT}/index.html?bg=off`);
+  await page.waitForFunction(() => window.__BGALT && window.DemoLayer, { timeout: 20000 });
+  await page.waitForTimeout(1200);   // past init — the layer must STAY off
+  const off = await page.evaluate(() => ({
+    mode: window.__BGALT.state().mode,
+    enabled: window.DemoLayer ? DemoLayer.enabled() : null,
+  }));
+  ok(off.mode === 0 && off.enabled === false, `H6: ?bg=off boots off (mode=${off.mode} enabled=${off.enabled} — want 0/false)`);
+  console.log(`  ?bg=off: mode=${off.mode} enabled=${off.enabled}`);
 
   await browser.close(); srv.close();
 

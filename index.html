@@ -10,7 +10,7 @@
 </head>
 <body>
 <a class="a11y-skip" href="access.html">Screen-reader users: open the accessible text version</a>
-<h1 class="brand">STELLATE<button class="help" id="helpChip" title="about stellate">?</button></h1>
+<h1 class="brand">STELLATE<button class="help" id="helpChip" title="about stellate" aria-label="About stellate">?</button></h1>
 <svg id="map"></svg>
 <div class="modal" id="panelWrap"><div class="card" id="panel"></div></div>
 <div class="modal" id="insideWrap"><div id="inside" class="card"></div></div>
@@ -49,14 +49,13 @@
 <!-- (the ⚡ CPU meter box lived here 2026-07-06..09 — removed on Paul's ask;
      the engine load/eco readouts survive in the chyron tech line) -->
 <div id="chips">
-  <button class="chip" id="playChip" title="LIVE / STOP">▶</button>
+  <button class="chip" id="playChip" title="LIVE / STOP" aria-label="Play live / stop">▶</button>
   <!-- ONE view button (Paul 2026-07-10): cycles the three 100% views —
        starmap ✦ → infoviz ⓘ → aliens 👾 — icon shows the CURRENT view;
        a spinner rides it while the next view warms. -->
-  <button class="chip" id="viewChip" title="view: star map → info → aliens (tap to cycle)">✦</button>
+  <button class="chip" id="viewChip" title="view: star map → info → aliens (tap to cycle)" aria-label="Cycle view: star map, inside the sound, star cruise">✦</button>
   <!-- the background chip: ▢ off ↔ ▦ MicroW8 demoscene backdrop (app/background.js) -->
-  <button class="chip" id="bgChip" title="background: demoscene on/off">▢</button>
-  <button class="chip" id="cfgChip" title="controls">⚙</button>
+  <button class="chip" id="cfgChip" title="controls" aria-label="Controls">⚙</button>
 </div>
 <!-- ENGINE: classic global scripts (window.CsdEngine / GenreKernel / … / FaustLive).
      These must load and execute BEFORE app/main.js, which reads them as globals.

@@ -79,8 +79,8 @@ async function main() {
   ok(!mix.chip, `B1: #mixChip still exists`);
   ok(!mix.modal, `B2: #mixWrap modal still exists`);
   ok(!mix.glyph, `B3: mixer glyph 𝄚 still on the chip row`);
-  ok(mix.chipRow.length === 4 && mix.chipRow.join(",") === "playChip,viewChip,bgChip,cfgChip",
-    `B4: chip row is [${mix.chipRow.join(", ")}] (want play,view,bg,cfg — the ONE view button 2026-07-10 + the ▢/▦ background chip 2026-07-25)`);
+  ok(mix.chipRow.length === 3 && mix.chipRow.join(",") === "playChip,viewChip,cfgChip",
+    `B4: chip row is [${mix.chipRow.join(", ")}] (want play,view,cfg — the ONE view button 2026-07-10; the ▢/▦ background chip retired 2026-07-25)`);
   console.log(`\n=== MIXER REMOVED ===\n  mixChip=${mix.chip} mixWrap=${mix.modal} glyph=${mix.glyph}  chips=[${mix.chipRow.join(", ")}]`);
 
   // ---- open the ⓘ tool ----

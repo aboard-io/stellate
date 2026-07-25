@@ -253,6 +253,27 @@ let dragging = false, lastPX = 0, lastPY = 0;
 let pinchDist = 0;                // last two-finger distance (touch dolly)
 const LANDED_PHASES = { LAND: 1, OPEN: 1, GREET: 1, DANCE: 1 };
 
+// ---- AUDIO RUNWAY GUARD -----------------------------------------------------------
+// The cruise is the app's one heavy-GL surface: three.js import + first-render shader
+// compile at entry, per-landing surface builds (planet bake + band spawn + cart swap),
+// and the dispose+GC storm at exit. Any of those can stall the main thread — which is
+// ALSO the live engine's feed path (its pump, worker messages, and bar scheduler all
+// run on the page's event loop) — or starve the render worker of CPU, past the live
+// engine's short (~3s) feed runway. The ring then underruns: audible static/dropouts
+// "after visiting the 3d planet" (measured: C_UNDER_CNT bursts exactly across cruise
+// enter/exit, zero in a no-cruise control). While the cruise is up we set
+// FaustLive.deepRunway so the engine keeps its deep hidden-tab runway (survival over
+// steering latency, same trade as a backgrounded tab); cleared a grace period after
+// stop() so the teardown GC is still covered. Benign if no engine is live.
+function setDeepRunway(on) {
+  try { if (window.FaustLive) window.FaustLive.deepRunway = !!on; } catch (e) {}
+}
+let _runwayClearT = 0;
+const RUNWAY_CLEAR_MS = 20000;   // post-exit grace: teardown disposal + GC settle window
+                                 // (measured: a multi-second GC stall can land ~10s after
+                                 // stop(); the deep runway also drains over ~5s after the
+                                 // clear, so 20s covers ~25s of post-exit turbulence)
+
 // lazy-load Three + the sub-modules exactly once.
 async function ensureLoaded() {
   if (loaded) return;
@@ -786,7 +807,8 @@ function makeSkyDome() {
   mesh.renderOrder = 1;                    // after opaque: additive glow only in open-sky pixels
   mesh.visible = false;
   mesh.name = "sky-atmosphere";
-  let tex = null, texSrc = null;
+  let tex = null, texSrc = null, texAcc = 1;   // >= interval so the first bound frame uploads
+  const TEX_HZ = 12;                           // sky upload throttle (see below)
   return {
     mesh,
     update(dt) {
@@ -805,7 +827,13 @@ function makeSkyDome() {
             mat.map = tex; mat.color.setHex(0xffffff); mat.needsUpdate = true;
             texSrc = src;
           }
-          if (tex) tex.needsUpdate = true;      // canvas: refresh each frame
+          // THROTTLED canvas refresh (~12Hz, was every frame): the dome texture is the
+          // cruise's only recurring full-frame GPU upload (near-native RGBA every RAF),
+          // a steady main-thread + GPU tax that eats into the live engine's feed
+          // runway (the static mechanism). The demo cart drifts slowly under the
+          // additive atmosphere — 12Hz is visually indistinguishable there.
+          texAcc += (dt || 0);
+          if (tex && texAcc >= 1 / TEX_HZ) { tex.needsUpdate = true; texAcc = 0; }
           mesh.visible = true;
         } else {
           mesh.visible = false;
@@ -1085,6 +1113,10 @@ function disposeObj(obj) {
 // ---- lifecycle ------------------------------------------------------------------
 export async function start() {
   if (running) return;
+  // deepen the live-audio runway BEFORE the heavy loads begin (the await below yields,
+  // so the engine's pump gets a tick to top up ahead of the three.js import/compile).
+  if (_runwayClearT) { clearTimeout(_runwayClearT); _runwayClearT = 0; }
+  setDeepRunway(true);
   await ensureLoaded();
   running = true;
 
@@ -1923,6 +1955,10 @@ export function stop() {
   curTraits = null; curDominant = null; curRenderStyle = null;
   eventPlan = null; eventPlanKey = null; _localBar = 0; _lastBarPhase = 0; _curBarIdx = 0;
   document.body.classList.remove("view-starcruise");
+  // keep the deep audio runway through the teardown GC window, then restore the
+  // responsive default (unless the cruise restarted in the meantime).
+  if (_runwayClearT) clearTimeout(_runwayClearT);
+  _runwayClearT = setTimeout(() => { _runwayClearT = 0; if (!running) setDeepRunway(false); }, RUNWAY_CLEAR_MS);
   window.__STARCRUISE && (window.__STARCRUISE.running = false);
 }
 

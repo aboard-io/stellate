@@ -884,8 +884,14 @@
     }
     let pumpTimer = 0;
     // deeper feed target while hidden (background timer throttling; see HIDDEN_TARGET_SEC)
-    const targetFrames = () => (typeof document !== "undefined" && document.visibilityState === "hidden")
-      ? HIDDEN_TARGET_FRAMES : TARGET_FRAMES;
+    // deep-runway ALSO while a heavy-GL view is up — FaustLive.deepRunway is the
+    // app's hint (set by app/starcruise.js across the cruise + its teardown-GC
+    // window) that main-thread stalls / worker CPU contention are expected:
+    // survival over steering latency, the same trade as the hidden-tab case.
+    // (The post-planet static fix, 2026-07-25: entry shader compile + dispose-GC
+    // stalls breached the 3s runway and the ring zero-filled = audible static.)
+    const targetFrames = () => ((typeof document !== "undefined" && document.visibilityState === "hidden")
+      || (root.FaustLive && root.FaustLive.deepRunway)) ? HIDDEN_TARGET_FRAMES : TARGET_FRAMES;
     // pumpOnce: one idempotent top-up, safe to call from ANY clock (the page timer,
     // the worker tick, goVisible) — never (re)schedules, so no timer chains accumulate.
     function pumpOnce() {

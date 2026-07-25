@@ -203,6 +203,27 @@ function tick(){
   b.textContent = S.live ? "■ Stop" : "▶ Play";
   b.setAttribute("aria-pressed", S.live?"true":"false");
   b.classList.toggle("live", !!S.live);
+  // one-time PLAYING narration (blind-test fix 2026-07-25: the log's last line
+  // stayed "loading engine…" through real playback — S.status only moves on
+  // boot/flips/errors, so a screen reader never heard that music had started)
+  if(S.live && !tick._saidPlaying){ tick._saidPlaying=true;
+    const g=(S.playing&&S.playing.genreMeta&&S.playing.genreMeta.label)||"";
+    logEvent(`playing${g?" — "+g:""} · narration follows the sections`); }
+  if(!S.live) tick._saidPlaying=false;
+  // journey ARRIVAL narration (blind-test fix #3, 2026-07-25): when the traveler
+  // crosses into a new dominant genre mid-journey, say so ASSERTIVELY — travel
+  // should feel like travel, not a form. Majority (>50%) = the arrival moment;
+  // dominance flips are minutes apart so the interrupt is earned, and the same
+  // line lands in the polite log for history.
+  const dom=(S.weights&&S.weights[0]&&S.weights[0].w>0.5)?S.weights[0].g:null;
+  if(S.live && S.waypoints.length>=2 && dom && tick._dom && dom!==tick._dom){
+    const msg=`Now crossing into ${label(dom)}.`;
+    logEvent(msg);
+    const a=$("announce"); a.textContent="";
+    requestAnimationFrame(()=>{ a.textContent=msg; });
+  }
+  if(dom) tick._dom=dom;
+  if(!S.live) tick._dom=null;
   // narrate meaningful status changes into the polite log (deduped + throttled)
   const s=S.status||"";
   if(s && s!==lastStatus){

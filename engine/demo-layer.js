@@ -97,7 +97,10 @@
   // to crush the shadows, a touch LESS saturation (the 256-colour palettes run
   // hot — pulling them back reads more analog), a warmer sepia .18 + magenta
   // hue-lean, and a hair of blur to soften the pixel grid into VHS softness.
-  const GRADE = "saturate(1.4) contrast(1.32) brightness(.8) sepia(.18) hue-rotate(-6deg) blur(.35px)";
+  // TV GRADE (Paul 2026-07-25: "darken the visualizer a bit more and blue it and
+  // make it more of a TV"): sepia first paints a warm base the hue-rotate then
+  // swings to a cold CRT blue-cyan; brightness .8 -> .55 sinks it into the murk.
+  const GRADE = "saturate(.75) contrast(1.15) brightness(.55) sepia(.35) hue-rotate(175deg) blur(.35px)";
   // heavier grain than the footage layer's vhs tier (.13) — the carts want more
   // tooth to knock the digital sheen off (Paul: "a little danker").
   const GRAIN_OPACITY = 0.17;
@@ -182,7 +185,7 @@
   // ---- clock / reactivity ----
   let rafId = 0, lastTs = 0, acc = 0;
   let virtualTime = 0;                   // ms fed to the cart's TIME register
-  let speed = 0.3;                       // steady time multiplier — slowed (Paul 2026-07-10: "animate MUCH more slowly", demoscene-only). Cosmetic: only the steady clock; the beat-synced `kick` (pulse/note) is untouched so downbeats still punch.
+  let speed = 0.03;                      // steady time multiplier — slowed 10x again (Paul 2026-07-25: "all the 2D things move like 10x too fast"; was 0.3 from the 2026-07-10 slowdown). The music-reactive kick is retired with the flash (seizure-safety pass below), so this IS the clock.
   let kick = 0;                          // decaying speed bump from pulse()/note()
   let frameCount = 0;
   // Note-reactivity levers. These are CART-AGNOSTIC: `kick` surges the shared
@@ -380,8 +383,16 @@
     // the murk (the "danker" ask): darker at top/bottom, lighter through the mid.
     fxVeil = document.createElement("div");
     fxVeil.className = "dm-veil";
+    // deepened + blued 2026-07-25 (the TV ask) — a cold phosphor wash
     fxVeil.style.cssText = "position:absolute;inset:0;pointer-events:none;" +
-      "background:linear-gradient(rgba(8,7,18,.34),rgba(8,7,18,.16) 32%,rgba(8,7,18,.42))";
+      "background:linear-gradient(rgba(5,10,30,.5),rgba(5,10,30,.28) 32%,rgba(5,10,30,.56))";
+    // TUBE VIGNETTE (new, same ask): darkened corners pull the flat canvas into
+    // a CRT's curved face; compositor-only, sits under the scan stack.
+    const fxVign = document.createElement("div");
+    fxVign.className = "dm-vignette";
+    fxVign.style.cssText = "position:absolute;inset:0;pointer-events:none;" +
+      "background:radial-gradient(ellipse 72% 62% at 50% 48%,transparent 52%,rgba(2,4,16,.38) 78%,rgba(2,4,16,.72) 100%)";
+    wrap.appendChild(fxVign);
     // analog vertical-blanking hum + near-subliminal scanlines (video-layer's
     // scanBand/scanLines, trimmed to 2 drifting bands for a background layer).
     fxScan = document.createElement("div");
@@ -514,8 +525,10 @@
   // We DON'T touch per-cart palette layout (fragile) — we speed the shared TIME
   // clock, which every time-driven effect reads, so the demo throbs on the beat.
   function pulse(info) {
-    const energy = (info && typeof info.energy === "number") ? info.energy : 0.6;
-    kick = Math.max(kick, 0.3 + energy * 0.6);   // brief speed surge, decays in renderFrame (gentle — no lurch)
+    // SEIZURE-SAFETY PASS (Paul 2026-07-25: "the way it responds to the music
+    // makes it too flashy for seizure-prone users — just get rid of the
+    // flashing"): music-reactivity retired. The bar-level speed surge is gone;
+    // the layer drifts on its own slow clock. API kept for callers/gates.
   }
 
   // Per-NOTE reactivity. Called on every note ONSET during live playback with
@@ -526,39 +539,12 @@
   // surges the shared TIME clock, `flash` brightens via the blit LUT, `hueShift`
   // rotates the palette by pitch class. Different roles pull different levers.
   function note(ev) {
-    if (!on || !ready || !ev) return;
-    const vel = (typeof ev.vel === "number") ? (ev.vel < 0 ? 0 : ev.vel > 1 ? 1 : ev.vel) : 0.8;
-    const role = ev.role || "";
-    const pc = (((ev.midi | 0) % 12) + 12) % 12;     // pitch class 0..11
-    // pitch-class colour: low notes barely rotate, high notes rotate more
-    const hue = (pc - 5.5) * (2 + vel * 4);
-    // NOTE reaction is a SUBTLE pulse, not a strobe (Paul: "flashing way too much…
-    // impossible to see the visualizations"). Small flash adds + a low ceiling keep
-    // the underlying effect visible; the movement reads as a breath, not a flicker.
-    if (role === "bass") {
-      // slow low-frequency swell of the whole effect (mostly clock, little flash)
-      kick = Math.max(kick, 0.3 + vel * 0.6);
-      flash = Math.min(MAX_FLASH, flash + 0.015 + vel * 0.04);
-    } else if (role === "drums" || role === "break" || role === "chops") {
-      // sharp but small kick jolt + a faint brightness tick
-      kick = Math.max(kick, 0.3 + vel * 0.4);
-      flash = Math.min(MAX_FLASH, flash + 0.05 + vel * 0.08);
-    } else if (role === "lead") {
-      // gentle brightness + pitch-class hue drift
-      flash = Math.min(MAX_FLASH, flash + 0.05 + vel * 0.08);
-      hueShift += hue * 0.5;
-      kick = Math.max(kick, 0.15 + vel * 0.3);
-    } else if (role === "pad") {
-      // soft glow + slow hue drift
-      flash = Math.min(MAX_FLASH, flash + 0.025 + vel * 0.04);
-      hueShift += hue * 0.35;
-    } else {
-      // bed / sample / narration / unknown — modest all-round nudge
-      flash = Math.min(MAX_FLASH, flash + 0.025 + vel * 0.05);
-      hueShift += hue * 0.4;
-      kick = Math.max(kick, 0.15 + vel * 0.4);
-    }
-    if (hueShift > 255) hueShift = 255; else if (hueShift < -255) hueShift = -255;
+    // SEIZURE-SAFETY PASS (2026-07-25): the per-note flash/hue/kick reactions
+    // are RETIRED — even the previous "subtle pulse" tuning strobed at dense
+    // passages (a jungle break fires many onsets/second, each one a luminance
+    // step). The layer no longer reacts to notes at all: flash/hueShift/kick
+    // stay 0, which also keeps the blit on its fast path permanently. The
+    // function survives because inside.js's note feed and the gates call it.
   }
 
   function setOpacity(o) {

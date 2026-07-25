@@ -7,9 +7,9 @@
 //   node test/bg-cart-run.js
 //
 // Gates:
-//   A. mode 2 rotates: with bg-mode 2 restored from localStorage and the
-//      backstop shortened (?bgAltMs=1200), DemoLayer.current() advances
-//      within ~6s of idle wall-clock.
+//   A. mode 2 rotates: the layer is ALWAYS ON at boot (mode fixed 2 since the
+//      chip retired 2026-07-25); with the backstop shortened (?bgAltMs=1200),
+//      DemoLayer.current() advances within ~6s of idle wall-clock.
 //   B. cruise guard: with a fake __STARCRUISE running, __BGALT.flip() leaves
 //      the cart untouched (the planet owns its sky).
 //   C. zero page errors throughout.
@@ -24,7 +24,6 @@ const H = require(path.join(__dirname, "probe-harness.js"));
   const page = await browser.newPage();
   const errs = H.capturePageErrors(page);
   await H.installOfflineRoute(page, PORT);
-  await page.addInitScript(() => { try { localStorage.setItem("vaporwave-bg-mode", "2"); } catch (e) {} });
 
   const fails = [];
   const ok = (cond, msg) => { console.log((cond ? "PASS  " : "FAIL  ") + msg); if (!cond) fails.push(msg); return cond; };

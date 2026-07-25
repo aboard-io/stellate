@@ -10,8 +10,9 @@
 //   3. the cart list is the LARGER set (>= MIN_CARTS; logs the count)
 //   4. after setEnabled(true) the surface is ANIMATING (frame-hash changes)
 //   5. next() cycles through several carts, each of which animates
-//   6. DemoLayer.note(...) measurably perturbs the animation vs a no-note
-//      baseline (bigger frame-hash drift when notes fire)
+//   6. DemoLayer.note(...) is a deliberate NO-OP (seizure-safety 2026-07-25):
+//      firing notes leaves the flash/hue/kick levers at rest — brightness
+//      stays at baseline while the frames keep animating
 //   7. setEnabled(false) hides the surface / stops the loop
 //   8. zero console / page errors
 // Prints "DEMO-LAYER GATE: PASS" + the cart count on success; exits non-zero on
@@ -106,13 +107,13 @@ function fail(msg) { console.error("DEMO-LAYER GATE: FAIL —", msg); process.ex
     }
     if (new Set(seenNames).size < 3) fail("next() did not cycle distinct carts: " + JSON.stringify(seenNames));
 
-    // 6. note() measurably perturbs the animation vs a no-note baseline. We
-    //    isolate the reactivity from the cart's own motion by two signals over a
-    //    fixed window on ONE pinned cart: (a) mean brightness — the flash lever
-    //    brightens ANY cart toward white, so firing notes must raise the average
-    //    luminance; (b) frame-hash drift — the note stream must also produce a
-    //    set of frames distinct from the quiet baseline. (a) is the primary,
-    //    lever-isolating assertion; (b) confirms the pixels actually move.
+    // 6. note() is a deliberate NO-OP (SEIZURE-SAFETY, 2026-07-25: the per-note
+    //    flash/hue/kick reactions strobed at dense passages and are RETIRED —
+    //    do NOT "fix" this back). Two signals over a fixed window on ONE pinned
+    //    cart: (a) mean brightness — the old flash lever brightened ANY cart
+    //    toward white (>=3% lift asserted then; MAX_FLASH implied far more), so
+    //    firing notes must now leave average luminance at baseline; (b) frame-
+    //    hash drift — the layer must still be animating while notes fire.
     await page.evaluate(() => DemoLayer.setCart(0));   // pin a deterministic cart
     await page.waitForTimeout(400);                    // let levers decay to rest
     function window_(withNotes) {
@@ -134,12 +135,13 @@ function fail(msg) { console.error("DEMO-LAYER GATE: FAIL —", msg); process.ex
       }, withNotes);
     }
     const base = await window_(false);
-    await page.waitForTimeout(400);                    // decay again before the noted pass
+    await page.waitForTimeout(400);
     const noted = await window_(true);
-    // flash must lift brightness; and frames must still be animating during notes
-    if (!(noted.luma > base.luma * 1.03)) {
-      fail("note() did not perturb brightness (baseline luma=" + base.luma.toFixed(0) +
-           ", with-notes=" + noted.luma.toFixed(0) + ")");
+    // the levers must stay at rest: brightness within the cart's own drift band
+    // (the retired flash lifted luma far past the old 3% floor)
+    if (!(noted.luma < base.luma * 1.10 && noted.luma > base.luma * 0.90)) {
+      fail("note() perturbed brightness — the no-op contract is broken (baseline luma=" +
+           base.luma.toFixed(0) + ", with-notes=" + noted.luma.toFixed(0) + ")");
     }
     if (noted.frames < 2) fail("no animation while notes firing (distinct frames=" + noted.frames + ")");
 
@@ -237,7 +239,7 @@ function fail(msg) { console.error("DEMO-LAYER GATE: FAIL —", msg); process.ex
     console.log("DEMO-LAYER GATE: PASS (carts=" + cartCount +
       ", animating h1=" + h1 + " h2=" + h2 +
       ", cycled=" + JSON.stringify(seenNames) +
-      ", note-perturb luma base=" + base.luma.toFixed(0) + " notes=" + noted.luma.toFixed(0) +
+      ", note no-op luma base=" + base.luma.toFixed(0) + " notes=" + noted.luma.toFixed(0) +
       ", analog-stack grade+grain+scan over canvas, burst dur=" + Math.round(burstDur) + "ms decays" +
       ", hides, no errors)");
   } finally {

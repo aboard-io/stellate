@@ -1,24 +1,16 @@
-// background.js — the background layer program: the MicroW8 demoscene layer and
-// the ▢→▦ chip that toggles it off → demoscene. (The laserdisc video layer and
-// the 8-bar video↔demo alternation were removed 2026-07-25 — preserved on
-// branch legacy-download-video.) While the demoscene is on, the cart ROTATES:
+// background.js — the background layer program: the MicroW8 demoscene layer,
+// ALWAYS ON as ambient wallpaper (Paul 2026-07-25: "get rid of the 2d visualizer
+// button but leave it in the background"). The ▢/▦ chip is gone; ?bg=off is the
+// escape hatch (and the gates' off-state probe). While on, the cart ROTATES:
 // every 8 MEASURES on the musical clock while live (cut on the beat by onBar),
 // with a wall-clock backstop that only runs when the music isn't.
+// (The laserdisc video layer + chip cycle: removed 2026-07-25, branch
+// legacy-download-video; the chip itself retired later the same day.)
 import { S, set, subs, QSFLAGS } from "./state.js";
 
-// ---------- background chip: off → demoscene ----------
-// bgMode is the ONE persisted background preference (the layer no longer remembers
-// its own on/off — a localStorage self-restore used to re-enable it at init behind
-// the mode program's back). Restored per load, applied by applyBg once the layer
-// comes up (setEnabled pre-ready is recorded and materialized by DemoLayer.init).
-// Mode numbers keep their historical values (0 off · 2 demoscene) so saved prefs
-// and the bg-cart gate stay valid; a legacy saved 1 (the retired video+demos
-// program) restores as demoscene.
-const bgChip=document.getElementById("bgChip");
-const BG_LS="vaporwave-bg-mode";
-let bgMode=0;   // 0 off · 2 demoscene
-try{ const m=parseInt(localStorage.getItem(BG_LS)||"0",10); if(m===1||m===2) bgMode=2; }catch(e){}
-const bgSave=()=>{ try{ localStorage.setItem(BG_LS,String(bgMode)); }catch(e){} };
+// bgMode is fixed at boot: 2 (demoscene) unless ?bg=off. Mode numbers keep their
+// historical values (0 off · 2 demoscene) so the __BGALT gate contract holds.
+const bgMode = QSFLAGS.get("bg")==="off" ? 0 : 2;
 // CART ROTATION: a fresh MicroW8 cart every 8 MEASURES, flipped inside onBar so
 // the cut lands ON THE BEAT (a chord-bar boundary). onBar ticks per chord-bar
 // (info.cbeats beats, default 8 = two 4/4 measures) so we count BEATS, not ticks.
@@ -35,8 +27,7 @@ function bgWant(){
   if(window.__STARCRUISE && window.__STARCRUISE.isRunning && window.__STARCRUISE.isRunning())
     return { d:true };
   // THE VIZ VIEW SUPPRESSES the background layer entirely (exclusive views,
-  // Paul 2026-07-10) — bgMode is REMEMBERED, so leaving the viz returns to
-  // whatever background state you were in.
+  // Paul 2026-07-10) — leaving the viz returns to the ambient wallpaper.
   if(S.vizView) return { d:false };
   return { d:bgMode===2 };
 }
@@ -55,11 +46,6 @@ function applyBg(){
   if(viewChip&&viewChip.textContent!==icon) viewChip.textContent=icon;
   if(viewChip){ viewChip.classList.toggle("live",S.vizView||aliensOn);
     if(!aliensOn) viewChip.classList.remove("spin"); }   // aliens keeps its own spin until up
-  // the background chip mirrors the MODE (not the imposed layer state, which the
-  // viz view / star-cruise legitimately override): ▢ off · ▦ demoscene.
-  if(bgChip){ const glyph=bgMode===2?"▦":"▢";
-    if(bgChip.textContent!==glyph) bgChip.textContent=glyph;
-    bgChip.classList.toggle("live",bgMode===2); }
   // THE VIEW CLASSES: body.view-viz hides the star map under the full-screen viz.
   // applyBg runs on every render + the 1Hz backstop, so it can never drift.
   document.body.classList.toggle("view-viz", !!S.vizView);
@@ -99,15 +85,5 @@ function bgAltClock(){
 // setEnabled call from outside the program (console, stray future code) is
 // steamrolled within ~1s.
 function startBgAltClock(){ if(!bgAltTimer) bgAltTimer=setInterval(()=>{ if(bgMode===2) bgAltClock(); applyBg(); },1000); }
-// THE CHIP: ▢ off ↔ ▦ demoscene. Double duty while on: another tap turns it off;
-// the cart itself rotates on the musical clock / backstop above.
-export function bgToggle(){
-  bgMode = bgMode===2 ? 0 : 2;
-  bgAlt.beats=0; bgAlt.lastFlip=Date.now();
-  bgSave(); applyBg(); startBgAltClock();
-  set({status:"background: "+(bgMode===2?"demoscene":"off")});
-  return bgMode===2;
-}
-if(bgChip) bgChip.onclick=()=>bgToggle();
-window.__BGALT={ state:()=>({mode:bgMode,beats:bgAlt.beats}), tick:bgBarTick, flip:bgFlip, toggle:bgToggle };   // headless gate hook
+window.__BGALT={ state:()=>({mode:bgMode,beats:bgAlt.beats}), tick:bgBarTick, flip:bgFlip };   // headless gate hook (toggle retired with the chip)
 subs.push(applyBg); applyBg(); startBgAltClock();
