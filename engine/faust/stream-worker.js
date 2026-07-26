@@ -159,7 +159,10 @@ async function initDeps() {
     FaustWasmInstantiator.loadDSPFactory(BASE + `dist/${mod}-module.wasm`, BASE + `dist/${mod}-meta.json`)
       .then((f) => { if (!f) throw new Error("no factory for " + mod); resolved[mod] = f; return f; }));
   const mkProc = async (mod) => gen.createOfflineProcessor(SR, BS, await factory(mod));
-  const rootOf = (mod) => JSON.parse(resolved[mod].json).name;
+  // PARAM ROOT off the UI tree, not the declared name (render-core.paramRoot):
+  // dx7.lib's top-level "DX7" group renames the path root; every other module
+  // is unchanged. Was the Pure-FM drone — see the paramRoot comment.
+  const rootOf = (mod) => self.FaustRenderCore.paramRoot(resolved[mod].json);
 
   let dx7Presets = {};
   try { dx7Presets = await (await fetch(BASE + "dx7-presets.json")).json(); } catch (e) {}

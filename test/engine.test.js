@@ -78,6 +78,68 @@ function press(name, state) {
     presses.push(Promise.resolve({ ok, line: `${ok ? "PASS" : "FAIL"}  ${"render_core_wired".padEnd(22)} press.js drives faust/render-core.js` }));
   }
 
+  // 0b) PARAM-ROOT ADDRESSABILITY (2026-07-26, the Pure-FM drone). Every host
+  // addresses a module's params as "/" + rootOf(module) + "/" + name. rootOf
+  // used to return the DECLARED name, which silently diverges from the real UI
+  // path root whenever a dsp wraps its interface in a top-level group — as
+  // dx7.lib's dx.algorithm() does ("/DX7/freq", not "/dx7_alg22/freq"). Every
+  // freq/gate write for every FM voice went to a path faustwasm does not know
+  // and was dropped, for as long as the dx7 modules have existed. Structural,
+  // pure JSON, milliseconds: for each compiled artifact, the root render-core
+  // derives must actually prefix that module's addresses.
+  {
+    const RC = require("../engine/faust/render-core.js");
+    const dist = path.join(HERE, "..", "engine", "faust", "dist");
+    const addressesOf = (node, out) => {
+      if (!node) return out;
+      if (node.address) out.push(node.address);
+      for (const it of (node.items || [])) addressesOf(it, out);
+      return out;
+    };
+    const bad = [];
+    let checked = 0;
+    for (const f of fs.readdirSync(dist).filter((x) => x.endsWith("-meta.json"))) {
+      const json = fs.readFileSync(path.join(dist, f), "utf8");
+      const addrs = addressesOf({ items: JSON.parse(json).ui || [] }, []);
+      if (!addrs.length) continue;   // paramless module
+      const pre = "/" + RC.paramRoot(json) + "/";
+      const off = addrs.filter((a) => a.indexOf(pre) !== 0);
+      checked++;
+      if (off.length) bad.push(`${f}: root ${pre} misses ${off[0]}`);
+    }
+    const ok = checked > 0 && !bad.length;
+    presses.push(Promise.resolve({ ok, line: `${ok ? "PASS" : "FAIL"}  ${"param_root_addressable".padEnd(22)} ${checked} dist modules, ${bad.length} unaddressable${bad.length ? " (" + bad[0] + ")" : ""}` }));
+  }
+
+  // 0c) FM VOICES ANSWER TO PITCH. The structural gate above proves the root is
+  // right on paper; this proves the write lands: one dx7 proc, gated at two
+  // different freqs through the real mkProc/rootOf pair, must produce DIFFERENT
+  // audio. Under the drone both renders were bit-identical (the freq write was
+  // dropped and the ungated EG sat at its instantiation tail).
+  presses.push((async () => {
+    const name = "dx7_pitch_answers";
+    try {
+      const PRESS = require("../engine/faust/press.js");
+      const mk = async (freq) => {   // mkProc first: rootOf reads the cached factory
+        const proc = await PRESS.mkProc("dx7_alg5");
+        const pre = "/" + PRESS.rootOf("dx7_alg5") + "/";
+        proc.setParamValue(pre + "freq", freq);
+        proc.setParamValue(pre + "gate", 1);
+        let e = 0;
+        const out = [];
+        for (let i = 0; i < 300; i++) { const o = proc.render([], 64)[0]; for (let q = 0; q < 64; q++) { e += o[q] * o[q]; out.push(o[q]); } }
+        return { rms: Math.sqrt(e / out.length), pcm: out };
+      };
+      const a = await mk(220), b = await mk(660);
+      let diff = 0;
+      for (let i = 0; i < a.pcm.length; i++) diff = Math.max(diff, Math.abs(a.pcm[i] - b.pcm[i]));
+      const ok = a.rms > 0.01 && b.rms > 0.01 && diff > 1e-3;
+      return { ok, line: `${ok ? "PASS" : "FAIL"}  ${name.padEnd(22)} gated rms ${a.rms.toFixed(3)}/${b.rms.toFixed(3)}, A220-vs-A660 maxΔ ${diff.toExponential(1)}` };
+    } catch (err) {
+      return { ok: false, line: `FAIL  ${name.padEnd(22)} ${String(err && err.message || err).slice(0, 120)}` };
+    }
+  })());
+
   // 1) the committed default song (royal road, tokyo bed) — engine's own state
   {
     const s = E.defaultState();   // ids tokyo/tsukiji/asakusa all map to the one real local wav

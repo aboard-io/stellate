@@ -73,7 +73,13 @@ genre, its drums are playing within 3 bars and its kit/lead identity within 7
 sound** (a live per-voice timeline — always 8 cells, folded for long bars —
 with plain-language character descriptions, sustained bed ribbons, and the
 MUSIC-MIND meters), a background toggle (off → MicroW8 demoscene, the cart
-rotating every eight bars, cutting on the beat), and ⚙ controls.
+rotating every eight bars, cutting on the beat), and ⚙ controls — seed, speed,
+±bpm, an embed snippet, and **⤓ midi**: a Standard MIDI File of the song
+playing right now, built by `engine/midi-export.js` from the same
+`buildEvents()` walk the audio uses, from the same state, seed and point on the
+path the ↗ share link hands out (`test/midi-export-run.js` holds it to that).
+Audio downloads are not offered — the music is regenerable from its URL, which
+is the whole point.
 
 ## The genesis parable (why the source is the artifact)
 

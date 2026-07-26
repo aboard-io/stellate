@@ -1,8 +1,10 @@
 // panels.js — the ⚙ panel (Paul 2026-07-10 redesign: seed + ⧉ share, pace and
 // a live ±BPM delta — NOTHING else: the transport lives on ▶, the views on the
 // ONE view chip, and the old LIVE/STOP/MORE/VIDEO buttons, mode lock, DIMS
-// detail sliders, preset/path/reset plumbing and the ⤓ download cluster are
-// gone) plus the chip↔view wiring.
+// detail sliders and preset/path/reset plumbing are gone) plus the chip↔view
+// wiring. The ⤓ download cluster went with them 2026-07-25 and ONE button came
+// back 2026-07-26 (Paul: "I want midi back") — ⤓ midi only; wav/mp3/video stay
+// on branch legacy-download-video.
 import { S, set, subs, html, render } from "./state.js";
 import { BARS_PER_SEG } from "./world.js";
 import { goLive, stopLive, setMasterVol, setVapor } from "./live.js";
@@ -10,6 +12,7 @@ import { fontManifest, setSoundfont } from "./fonts.js";
 import { renderInside } from "./inside.js";
 import { drawMap, startPulse } from "./starmap.js";
 import { copyShareUrl, buildShareUrl, loopBars, loopDuration, baseDuration, durMult, fmtDuration, fmtMult, MULT_MIN, MULT_MAX } from "./share.js";
+import { downloadMidi, midiFileName } from "./export.js";   // ⤓ midi (restored 2026-07-26; MIDI only)
 
 // ---------- EMBED: the paste-into-your-blog snippet -------------------------
 // (2026-07-25) The ↗ share button hands out a LINK; this hands out the same mix
@@ -116,6 +119,13 @@ function Panel(){
         <input type="range" min="-64" max="64" step="1" value=${dl}
           onInput=${e=>setBpmDelta(e.target.value)} />
         <output>${bpm} bpm${dl?" ("+(dl>0?"+":"")+dl+")":""}</output></div>
+    </div>
+
+    <div class="psec"><div class="ptitle">download</div>
+      <div class="row"><label title="a Standard MIDI File of the song playing right now — pads, bass, melody and GM drums, at this tempo and key">midi</label>
+        <button class="mini" disabled=${!S.playing}
+          title=${"save “"+midiFileName()+"” — the same notes you are hearing, from this seed at this point on the path"}
+          onclick=${()=>downloadMidi()}>⤓ midi</button></div>
     </div>
 
     <div class="psec"><div class="ptitle">embed</div>

@@ -100,7 +100,8 @@
   Drag the <b>pink playhead</b> to scrub; drag waypoints to reshape; right-click erases.
   <b>Pinch</b> (or ctrl+scroll) zooms the chart. <b>Stop twice</b> rewinds to the top.
   ▶ plays · ✦ cycles the three views (star map, inside-the-sound, aliens) · ▦ toggles the
-  demoscene backdrop · ⚙ seed, duration and ±bpm. The address bar carries your seed, path and measure —
+  demoscene backdrop · ⚙ seed, duration, ±bpm, an embed snippet and <b>⤓ midi</b> (the song you're
+  hearing as a Standard MIDI File). The address bar carries your seed, path and measure —
   a bookmark or a shared link reopens exactly this music, right here.</p>
   <!-- a real button-sized target (the bare inline link was unreliable to tap on
        iOS — Paul 2026-07-10: "tapping accessible text version goes nowhere");
@@ -143,6 +144,7 @@
 <script src="engine/genre-kernel.js"></script>
 <script src="engine/genre-verifier.js"></script>
 <script src="engine/namebank.js"></script>
+<script src="engine/midi-export.js"></script><!-- SMF builder for the ⚙ panel's ⤓ midi download (app/export.js); reads CsdEngine at load, so AFTER csd-engine.js -->
 <script src="engine/speech.js"></script><!-- SPEECH organ (lazy: the espeak wasm loads only when a synthText source arms) -->
 
 <script src="engine/demo-layer.js"></script>

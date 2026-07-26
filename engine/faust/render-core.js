@@ -65,6 +65,41 @@
     return out;
   }
 
+  // THE PARAM ROOT (2026-07-26, the Pure-FM drone). Every host (press.js,
+  // stream-worker.js, stem-worker.js) injects a `rootOf(module)` used to address
+  // a module's params as "/<root>/<name>". That root was read off the compiled
+  // artifact's DECLARED NAME (`declare name "dx7_alg22"` -> meta json .name),
+  // which is right only when the dsp has no top-level UI group: Faust names the
+  // path root after the GROUP when there is one, and dx7.lib's dx.algorithm()
+  // wraps its whole interface in hgroup "DX7". So every dx7_algN module answers
+  // to "/DX7/freq" and "/DX7/gate" while the engine was writing "/dx7_algN/freq"
+  // — a path faustwasm's fPathTable does not know, so the write went to index
+  // `undefined` and was silently dropped. Result: no dx7 voice ever received a
+  // pitch or a gate; each proc emitted its instantiation transient and then sat
+  // near-silent forever (the "high pitched mono tone that never changes" under
+  // sf=dx7, where the font makes EVERY melodic voice an FM voice). The cartridge
+  // patches were unaffected — those are written as absolute "/DX7/..." paths.
+  //
+  // The root therefore comes off the UI TREE, which is the truth. Verified over
+  // every module in dist/: the UI root equals the declared name for all of them
+  // except dx7_alg1..32, so no non-dx7 render moves a byte.
+  function paramRoot(metaJson) {
+    let d;
+    try { d = typeof metaJson === "string" ? JSON.parse(metaJson) : metaJson; } catch (e) { return null; }
+    if (!d) return null;
+    const firstAddress = (node) => {
+      if (!node) return null;
+      if (node.address) return node.address;
+      for (const it of (node.items || [])) { const a = firstAddress(it); if (a) return a; }
+      return null;
+    };
+    for (const g of (d.ui || [])) {
+      const a = firstAddress(g);
+      if (a && a.charAt(0) === "/") { const seg = a.split("/")[1]; if (seg) return seg; }
+    }
+    return d.name;   // paramless module (or an unexpected shape): the old law
+  }
+
   // Render ONE unit's events through its Faust voice pool into env.buses.
   // `u` is a state-engine unit (module/pool/params/inserts/…), `events` its
   // schedule slice (already filtered to the render window by the caller).
@@ -256,5 +291,5 @@
     return { pool: P, rendered };
   }
 
-  return { mergeIvals, renderUnit, panLR, SPAN_MAX };
+  return { mergeIvals, renderUnit, panLR, paramRoot, SPAN_MAX };
 });

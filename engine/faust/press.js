@@ -118,7 +118,9 @@ async function mkProc(mod) {
   }
   return _gen.createOfflineProcessor(SR, BS, await factory(mod));
 }
-const rootOf = (mod) => JSON.parse(_factories[mod].json).name;
+// PARAM ROOT off the UI tree, not the declared name — see render-core.paramRoot
+// (dx7.lib's top-level "DX7" group renames the path root; everything else matches).
+const rootOf = (mod) => RC.paramRoot(_factories[mod].json);
 
 // dx7 cartridge presets (node fs). Shared by press + the segment-parity gate.
 function loadDx7Presets() {

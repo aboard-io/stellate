@@ -310,7 +310,9 @@ export function glideStep(){
   // CONTINUOUS patch morphing: when both ends carry the SAME FM topology on a
   // voice, lerp the ~144-dim dx7 param vector at the same ease — standing
   // mid-journey is a continuously morphing instrument (the live engine
-  // re-applies changed dx7 params per bar; see faust/live.js applyDx7).
+  // re-applies changed dx7 params per bar — faust/stream-renderer.js feedBar,
+  // "DX7 CARTRIDGE GLIDE"; the old faust/live.js applyDx7 went away when the
+  // render moved into the worker, and the morph was dead until 2026-07-26).
   // Different algorithm or one side missing stays a discrete "voice" flip.
   for(const vk of ["melody","pad","bass"]){
     const cd=(c.instruments[vk]||{}).dx7, td=(t.instruments[vk]||{}).dx7;

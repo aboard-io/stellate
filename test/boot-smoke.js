@@ -36,6 +36,9 @@ const EXPECTED = {
   "engine/genre-kernel.js": "GenreKernel",
   "engine/genre-verifier.js": "GenreVerifier",
   "engine/namebank.js": "NameBank",
+  // the SMF writer: node-side gate dependency AND (again, 2026-07-26) the
+  // browser's ⤓ midi download — it reads window.CsdEngine at load.
+  "engine/midi-export.js": "MidiExport",
   "engine/speech.js": "CsdSpeech",
   "engine/demo-layer.js": "DemoLayer",
   "engine/faust/state-engine.js": "FaustStateEngine",
@@ -124,6 +127,12 @@ function checkOrder(html, classicScripts) {
       problems.push(`${dep} must load BEFORE engine/csd-engine.js`);
     }
   }
+  // csd-engine BEFORE midi-export.js (it captures CsdEngine at load — misordered,
+  // its Eng is null and every ⤓ midi download throws).
+  if (idx("engine/midi-export.js") !== -1 && idx("engine/csd-engine.js") !== -1 &&
+      idx("engine/midi-export.js") < idx("engine/csd-engine.js")) {
+    problems.push("engine/midi-export.js must load AFTER engine/csd-engine.js");
+  }
   // EVERY classic engine script BEFORE app/main.js (the type=module app entry).
   // module scripts always defer, so measure by position in the raw html.
   const mainPos = html.search(/<script\b[^>]*\bsrc\s*=\s*["'][^"']*app\/main\.js["'][^>]*>/i);
@@ -201,7 +210,7 @@ function main() {
     for (const p of orderProblems) console.log(`  ✗ ORDER: ${p}`);
     failed += orderProblems.length;
   } else {
-    console.log("  ✓ ORDER: theory/pipes before csd-engine; all engine globals before app/main.js");
+    console.log("  ✓ ORDER: theory/pipes before csd-engine; csd-engine before midi-export; all engine globals before app/main.js");
   }
 
   console.log("");

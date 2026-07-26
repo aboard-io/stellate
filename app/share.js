@@ -121,6 +121,21 @@ export function barForTravel(travel){
   return Math.max(0, Math.round(d/Math.max(1e-6, paceSpeed())));
 }
 
+// THE MEASURE (1-based) — where "here" is, for anything that has to name this
+// moment: the share URL's ?m, and the ⤓ midi filename (app/export.js), so a
+// copied link and a downloaded file agree about which measure they are.
+// LIVE = wherever the PLAYHEAD is (barForTravel), not the engine's bar serial:
+// a mid-live playhead drag moves the traveler and leaves the serial running, so
+// the serial-based answer used to name a measure the user is no longer at.
+// Reading the traveler makes the copied link agree with the visible playhead
+// AND with stopLive's resume measure (same inverse). It also means the measure
+// wraps with the loop, exactly as a stop→play does. No path (a single point)
+// has no traveler, so it falls back to the serial; idle = the resume point.
+export function currentMeasure(){
+  return S.live?(S.waypoints.length>=2?barForTravel(S.travel)+1:(S.barInfo?S.barInfo.serial+1:1))
+               :((S.startBar||0)+1);
+}
+
 export function buildShareUrl(){
   const q=new URLSearchParams();
   q.set("seed", String(S.seed));
@@ -129,16 +144,7 @@ export function buildShareUrl(){
   if(Math.abs(durMult()-1)>1e-9) q.set("xdur", String(durMult()));   // the duration MULTIPLE rides the URL (×1 omitted)
   if(S.modeLock!=="auto") q.set("mode", S.modeLock);
   if(S.soundfont && S.soundfont!=="fluidr3") q.set("sf", S.soundfont);   // the chosen soundfont rides the URL (Paul)
-  // 1-based measure. LIVE = wherever the PLAYHEAD is (barForTravel), not the
-  // engine's bar serial: a mid-live playhead drag moves the traveler and leaves
-  // the serial running, so the serial-based URL used to bookmark a measure the
-  // user is no longer at. Reading the traveler makes the copied link agree with
-  // the visible playhead AND with stopLive's resume measure (same inverse). It
-  // also means the measure wraps with the loop, exactly as a stop→play does.
-  // No path (a single point) has no traveler, so it falls back to the serial;
-  // idle = the resume point.
-  const m=S.live?(S.waypoints.length>=2?barForTravel(S.travel)+1:(S.barInfo?S.barInfo.serial+1:1))
-                :((S.startBar||0)+1);
+  const m=currentMeasure();   // 1-based; the one law, above
   if(m>1) q.set("m", String(m));
   return location.origin+location.pathname+"?"+q.toString();
 }

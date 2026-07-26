@@ -69,6 +69,7 @@ node test/explorer-ui-test.js   # (+ genre-viz / demo-layer / live-test-run / wa
 node test/blend-arrival-run.js  # live-blend ARRIVAL contract: drums ≤3 bars, kit/lead identity ≤7
 node test/speech-live-run.js    # speech organ live: espeak WASM synthesizes + feeds the found pipeline
 node test/mp3-bed-decode-run.js # HOSTING §3 diet: MP3 beds fetch 200 + decodeAudioData in a real browser
+node test/midi-export-run.js    # ⤓ midi: clicks the button, parses the downloaded SMF, matches it to buildEvents
 ```
 
 Ship: `tools/ship.sh` = gates → `git push` → deploy to stellate.app (refuses a
@@ -222,11 +223,17 @@ docs in `docs/`.
   - `background.js` — the MicroW8 demoscene background program + the ▢→▦ chip
     that toggles off → demoscene; cart rotates every 8 bars on the musical
     clock with a wall-clock backstop (the laserdisc video layer + the ⤓
-    download/export cluster were removed 2026-07-25 — branch legacy-download-video)
+    download/export cluster were removed 2026-07-25 — branch legacy-download-video;
+    ⤓ midi came back 2026-07-26, see `export.js`)
   - `live.js` — the live engine: owns `faustHandle` + `goLive`/`stopLive`, the
     honest boot-progress hairline, `?wavDebug` overlay, `?clicktest` bed, Media Session
-  - `panels.js` — the ⚙ controls (preact-rendered) + chip↔modal plumbing;
-    registers the store render subs
+  - `panels.js` — the ⚙ controls (preact-rendered) + chip↔modal plumbing incl.
+    the ⧉ embed snippet and the ⤓ midi button; registers the store render subs
+  - `export.js` — ⤓ midi ONLY (restored 2026-07-26): `engine/midi-export.js`
+    fed `S.playing` — the same state/seed/path position the ↗ share URL names,
+    so the file is the music on screen — named `stellate-<genre>-seed<n>-m<bar>.mid`
+    (ASCII). The wav/mp3 offline press and the whole-path journey walk stay
+    excised (branch `legacy-download-video`). Gate: `test/midi-export-run.js`
   - `readouts.js` — the playhead/chyron lower-third (self-ticking; the ⚡ CPU
     meter box was removed 2026-07-09 — load/eco still reads out in the chyron
     tech line)
@@ -255,6 +262,10 @@ docs in `docs/`.
   - `namebank.js` — invents band/album/roster identities for the chyron
   - `demo-layer.js` — MicroW8 demoscene background carts (off until toggled)
   - `song-verifier.js` — `analyzeSong`/`improveSong`: the verifier half of the loop
+  - `midi-export.js` — Standard MIDI File from the same buildEvents walk; TWO
+    callers: the browser's ⤓ midi download (`app/export.js`; loads AFTER
+    csd-engine, boot-smoke enforces it) and the MIDI-corpus gates' reference
+    SMF writer (`test/midi-mine.test.js`, `test/corpus-db.test.js`)
   - `faust/` — THE engine (see docs `history/FAUST-PORT.md`, `engine/faust/VOICES.md`):
     - `dsp/` + `dist/` — one precompiled WASM AudioWorklet per synthesis model
       (`node engine/faust/build.js` rebuilds); DX7 family decodes real cartridge banks
@@ -291,7 +302,9 @@ docs in `docs/`.
   `genre-viz-test.js`/`demo-layer-test.js` and the live/wavout/resilience/
   bg-survival runs plus `blend-arrival-run.js` (the live-blend arrival
   contract), `speech-live-run.js` (espeak WASM live), `mp3-bed-decode-run.js`
-  (the MP3 diet decode proof) — they `goto /index.html` and read the
+  (the MP3 diet decode proof), `midi-export-run.js` (the ⤓ midi download:
+  captures the real file, parses the SMF from the spec, matches every note-on
+  to `buildEvents`) — they `goto /index.html` and read the
   `window.__` debug hooks; `probe-harness.js` (shared static server + chromium)
 - `tools/audio-verifier.py` — EMPIRICAL gate: Essentia Discogs-EffNet genre model on
   rendered audio. Setup: `python3 -m venv .venv-verify && .venv-verify/bin/pip

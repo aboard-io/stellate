@@ -471,7 +471,7 @@
       ST = { live: true, state, spb: spb0, TOTAL: LIVE_TOTAL, buffers: io.buffers || {},
         bakeNative: !!io.bakeNative,   // wavOut segs path: bake native found+sampler here (no live graph)
         foundAcc: null, samplerUnits: new Map(), units: new Map(), unitOrder: [],
-        unitParams: new Map(), unitsSpec, speech: io.speech || null,
+        unitParams: new Map(), unitDx7: new Map(), unitsSpec, speech: io.speech || null,
         anyStereo, fx, fxp: { ...fxp }, revBleed, revColor, rc, master, mb,
         sweeps: [], S: null, bars: [], liveWriteEnd: 0,
         vapor: 0, vaporTgt: Math.max(0, Math.min(1, +(state && state.vapor) || 0)), vaporSt: null,
@@ -525,6 +525,7 @@
           ST.units.set(key, us);
           ST.unitOrder.push({ key, kind: "faust" });
           ST.unitParams.set(key, { ...(u.params || {}) });
+          ST.unitDx7.set(key, { ...(u.dx7Params || {}) });
         }
         ingestUnitEvents(us, byUnit[key], spb, ST.TOTAL, { beatLo: lo, baseSample: base });
       }
@@ -540,6 +541,25 @@
           for (const [k, v] of Object.entries(u.params))
             if (prev[k] !== v) for (const vc of us.procs) vc.proc.setParamValue(vc.R + k, v);
           ST.unitParams.set(key, { ...prev, ...u.params });
+        }
+        // DX7 CARTRIDGE GLIDE. app/targeting.js lerps the ~144-dim dx7 patch
+        // vector voice-by-voice on a live steer, and its comment pointed at a
+        // `faust/live.js applyDx7` that has not existed since the render moved
+        // into the worker — so a same-algorithm patch morph never reached the
+        // running procs and the timbre froze at whatever the stream opened with.
+        // (An ALGORITHM change flips the unit signature, so it already gets a new
+        // stream + fresh procs.) Changed keys only, absolute "/DX7/..." paths —
+        // the same addressing ensureUnit uses.
+        for (const [key, u] of Object.entries(bar.units)) {
+          const us = ST.units.get(key);
+          if (!us || !u || !u.dx7Params) continue;
+          const prevD = ST.unitDx7.get(key) || {};
+          for (const [sfx, v] of Object.entries(u.dx7Params)) {
+            if (prevD[sfx] === v) continue;
+            const addr = sfx.slice(0, 4) === "/DX7" ? sfx : "/DX7" + sfx;
+            for (const vc of us.procs) vc.proc.setParamValue(addr, v);
+          }
+          ST.unitDx7.set(key, { ...prevD, ...u.dx7Params });
         }
       }
 

@@ -50,7 +50,7 @@ async function mkProc(mod) {
   }
   return _gen.createOfflineProcessor(SR, BS, await factory(mod));
 }
-const rootOf = (mod) => JSON.parse(_factories[mod].json).name;
+const rootOf = (mod) => RC.paramRoot(_factories[mod].json);   // UI-tree root (render-core.paramRoot), not the declared name
 const dx7Presets = fs.existsSync(path.join(__dirname, "..", "engine", "faust", "dx7-presets.json"))
   ? JSON.parse(fs.readFileSync(path.join(__dirname, "..", "engine", "faust", "dx7-presets.json"), "utf8")) : {};
 
