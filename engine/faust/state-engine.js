@@ -427,6 +427,47 @@
   // their relative weight — everything moves together, so a gabber kick is still
   // a gabber kick, just less punishing. Pure function of resolved units, zero
   // rng: determinism-safe like the pan/carve/budget/balance passes above.
+  // SYNTH-FONT LEVEL MATCH (Paul 2026-07-26: "the FM seems a little distorted/
+  // saturated… switching soundfonts feels like a huge jump in tonality — like
+  // they're not related"). He is hearing LEVEL, not notes: the score is
+  // byte-identical across fonts (pitched + drum hashes match exactly), but
+  // measured LIVE master RMS was fluidr3 -16.4 dB, minimoog -13.5, dx7 -11.5 —
+  // a 4.9 dB jump on the FM font, which also drove the master brickwall into
+  // audible saturation. PRESS hid it: the press stage auto-normalises every
+  // render toward -6 dBFS, so all three measured within a decibel there.
+  // These bring the synth fonts back into family with the sampled default.
+  // Applied to the MELODIC units only (the kit is font-independent), after
+  // drumBalance/kickTrim, as a pure function of resolved units — zero rng.
+  // dx7 0.50 = -6 dB, measured: it put vaporwave within 1.6 dB and synthwave
+  // within 0.4 dB of the sampled default (both were ~5 dB hot, which is what
+  // drove the master brickwall into the saturation Paul heard). citypop is
+  // unaffected either way — its peak is drum-led, and dx7 actually runs ~5 dB
+  // QUIET there, so font level is genre-dependent and a single constant can
+  // only fix the hot end. minimoog is 1.0 = A DELIBERATE NO-OP: its gain does
+  // NOT flow through extGainPerAmp (verified — trimming it changes nothing),
+  // so matching it needs the kernel-side levelMul mechanism instead. Left
+  // honest rather than shipping a constant that does nothing.
+  const SYNTH_FONT_TRIM = { dx7: 0.50, minimoog: 1.00 };
+  function synthFontOf(state) {
+    const lib = state && state.sampledOnly && state.samplerLib;
+    if (!lib) return null;
+    for (const k in lib) { const sp = lib[k]; if (sp && sp.synth) return sp.synth; }
+    return null;
+  }
+  function fontTrim(units, state) {
+    const f = synthFontOf(state), t = f && SYNTH_FONT_TRIM[f];
+    if (!t) return 1;
+    for (const k of ["melody", "pad", "bass", "lead", "counter", "lick", "stab", "pad2"]) {
+      const u = units[k]; if (!u) continue;
+      if (u.lvl != null) u.lvl *= t;
+      // synth-font voices bake their gain into extGainPerAmp at unit-creation
+      // time (pitchedUnit), BEFORE this pass runs — scaling lvl alone is a
+      // no-op for them, which is exactly the trap this comment exists to stop
+      // the next person falling into. Scale the baked coefficient too.
+      if (u.extGainPerAmp != null) u.extGainPerAmp *= t;
+    }
+    return t;
+  }
   const KICK_TRIM = 0.80;
   function kickTrim(units) {
     const u = units.kick;
@@ -1605,7 +1646,7 @@
     // resolved units (zero rng — determinism-gated like everything here).
     applyMasterPan(units);
     collisionCarve(units);
-    drumBalance(units); kickTrim(units);   // gentle hot-kit level pull so voices sit up (Paul's "drums are hot")
+    drumBalance(units); kickTrim(units); fontTrim(units, state);   // gentle hot-kit level pull so voices sit up (Paul's "drums are hot")
     const out = trimToBudget(units, state);
     // fxLabels (viz roster metadata; computed post-trim so labels reflect the
     // final shed state). Pure metadata — ignored by every render loop.
