@@ -1795,12 +1795,27 @@
     const scrng=mulberry32((((state.seed??1)>>>0)+7333)>>>0);
     let pitched=[], drums=[];
     let found=[], sfx=[];   // let: CsdPipes may hand back filtered arrays
-    // FOUND-AT-90% (Paul 2026-07-11): the vocal/sampled-chop + found-sound-bed
-    // layer only plays when a genre is DOMINANT (top blend weight >= 90%, i.e.
-    // genreMeta.t <= 0.1) — so the weird found textures land when you're AT a
-    // genre, not smeared across every transition. Single-genre states (t=0) and
-    // states with no genreMeta keep the found layer => byte-identical (fixtures).
-    const foundOK = !state.genreMeta || (state.genreMeta.t || 0) <= 0.1 + 1e-9;
+    // FOUND FADE (was FOUND-AT-90%, a hard cliff): the vocal/sampled-chop +
+    // found-sound-bed layer belongs to the genre you are AT, so it THINS with
+    // blend distance instead of vanishing one notch past dominance — the cliff
+    // left ~89% of a crossfade (and 75% of playlist tracks) with no found layer
+    // at all. Full amplitude out to FOUND_FULL_T, linear to silence by
+    // FOUND_FADE_T. Single-genre states (t=0) and states with no genreMeta sit
+    // in the full band => gain exactly 1 => byte-identical (fixtures, matrix).
+    // The scale is applied at the choke point AFTER every found draw, so no rng
+    // stream moves; events scaled under FOUND_MIN_AMP are dropped rather than
+    // scheduled as inaudible voices.
+    // genreMeta.t is the raw blend position (0=A, 1=B), NOT distance from the
+    // nearest anchor, so read it as min(t,1-t): t=0.9 is 90% B and belongs in
+    // the full band exactly as t=0.1 is 90% A. The old cliff tested t alone and
+    // so dropped the layer across the whole second half of every crossfade,
+    // including near-pure B — which its own "top blend weight >= 90%" comment
+    // says should have kept it.
+    const FOUND_FULL_T=0.1, FOUND_FADE_T=0.5, FOUND_MIN_AMP=0.012;
+    const rawT = state.genreMeta ? (state.genreMeta.t || 0) : 0;
+    const foundT = Math.min(rawT, 1 - rawT);
+    const foundGain = foundT <= FOUND_FULL_T + 1e-9 ? 1
+      : Math.max(0, 1 - (foundT - FOUND_FULL_T) / (FOUND_FADE_T - FOUND_FULL_T));
     const spans=[];   // spans: section extents for the per-bar transform pool
     let cur=0, narrOffset=0;   // narration plays through the clip across sections (always playing)
     for(const sec of state.sections){
@@ -2840,7 +2855,10 @@
     // composed accent, not the faded loudness (a fade already varies the bars, so
     // pattern-identical bars under it are not ad-nauseam).
     applyVoiceDynamics(pitched, drums, state, spans, CBEATS);
-    if(!foundOK) found=[];   // FOUND-AT-90%: drop the found layer in blends below the 90% threshold
+    if(foundGain<1){   // FOUND FADE: thin the layer with blend distance (gain 1 => untouched)
+      if(foundGain<=0) found=[];
+      else { for(const e of found) e.amp=(e.amp||0)*foundGain; found=found.filter(e=>e.amp>=FOUND_MIN_AMP); }
+    }
     // ---- SEAM LAW, the honesty clamp (live walk only) ----------------------
     // beat0 is the DRAWLESS twin of beat, and it is only a legitimate ownership
     // address while the *draw* is all that separates them. Plenty of later passes
