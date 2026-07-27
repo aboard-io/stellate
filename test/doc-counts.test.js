@@ -17,6 +17,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const { execFileSync } = require("child_process");
 
 const ROOT = path.join(__dirname, "..");
 global.window = global;
@@ -37,21 +38,14 @@ const pass = (msg) => console.log("PASS  " + msg);
 if (GENRES !== TARGETS) fail(`kernel/verifier disagree: ${GENRES} GENRES vs ${TARGETS} TARGETS`);
 else pass(`catalogs agree — ${GENRES} anchors, ${GENRES} verifier target rows`);
 
-// walk tracked markdown, skipping the places history is allowed to live
+// TRACKED markdown only, straight from git. Walking the filesystem instead
+// swept in a nested worktree someone had left in the tree and failed on ITS
+// copies of the docs — a checkout that is not part of this commit cannot make
+// this commit wrong.
 const SKIP = [/^docs\/history\//, /^docs\/TODO\.md$/, /^docs\/MUSICALITY\.md$/,
-              /^docs\/ENGINE-AUDIT-/, /^docs\/TIMING-AUDIT-/, /^verifier-catalog\//,
-              /^node_modules\//, /^found\//];
-function walk(dir, out) {
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (e.name === ".git" || e.name === "node_modules" || e.name === "found") continue;
-    const p = path.join(dir, e.name);
-    const rel = path.relative(ROOT, p);
-    if (e.isDirectory()) walk(p, out);
-    else if (e.name.endsWith(".md") && !SKIP.some((r) => r.test(rel))) out.push(rel);
-  }
-  return out;
-}
-const files = walk(ROOT, []);
+              /^docs\/ENGINE-AUDIT-/, /^docs\/TIMING-AUDIT-/];
+const files = execFileSync("git", ["-C", ROOT, "ls-files", "*.md"], { encoding: "utf8" })
+  .split("\n").filter(Boolean).filter((rel) => !SKIP.some((r) => r.test(rel)));
 
 // A line dates itself if it says so. "178 at the expansion's dawn", "249 as of
 // 2026-07-11" and "(the space's size when this was written)" are all fine.
