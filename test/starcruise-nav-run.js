@@ -59,9 +59,14 @@ async function main() {
   await page.evaluate(() => window.__STARCRUISE.__pauseLoop());
 
   // ==== 1. GALAXY SPREAD + EMISSIVE SUNS ==========================================
-  const spread = await page.evaluate(() => {
+  // COUNT DERIVED FROM THE DATA, never a literal: one sun and one core per
+  // cluster, however many clusters the clusterer emits. A hardcoded tally goes
+  // stale the moment the kernel grows a cluster, and then reports a healthy
+  // galaxy as a failure (this gate asserted 33 against a 34-cluster field).
+  const spread = await page.evaluate(async () => {
     const SC = window.__STARCRUISE;
-    const suns = SC.suns(64).suns;                         // ALL 31 sun markers
+    const cm = await import("/app/starcruise/genre-clusters.js");
+    const suns = SC.suns(64).suns;                         // every sun marker
     let min = Infinity, minPair = null;
     for (let i = 0; i < suns.length; i++) for (let j = i + 1; j < suns.length; j++) {
       const a = suns[i].marker, b = suns[j].marker;
@@ -70,17 +75,18 @@ async function main() {
     }
     // planet spread too — the whole field extent.
     const pf = SC.planetField(["ambient", "gabber"]);
-    return { count: suns.length, minSunDist: +min.toFixed(2), minPair,
+    return { count: suns.length, clusterCount: cm.GENRE_CLUSTERS.length,
+      minSunDist: +min.toFixed(2), minPair,
       fieldScale: pf.field.scale, glow: SC.sunGlow() };
   });
   console.log("       spread:", JSON.stringify(spread));
   const maxCoreR = spread.glow.coreR ? Math.max.apply(null, spread.glow.coreR) : 8;
-  ok(spread.count === 33 && spread.minSunDist > 15 && spread.minSunDist > 2 * maxCoreR,
-    `1A. galaxy SPREAD WAY OUT — closest two suns ${spread.minSunDist} apart (>15 and > 2x the ${maxCoreR} core radius: real empty space, NOT piled)`);
+  ok(spread.count === spread.clusterCount && spread.minSunDist > 15 && spread.minSunDist > 2 * maxCoreR,
+    `1A. galaxy SPREAD WAY OUT — ${spread.count} suns vs ${spread.clusterCount} clusters; closest two ${spread.minSunDist} apart (>15 and > 2x the ${maxCoreR} core radius: real empty space, NOT piled)`);
   ok(spread.fieldScale >= 2.5,
     `1B. the layout is blown up (FIELD.scale=${spread.fieldScale}, was 0.55 — ~${(spread.fieldScale / 0.55).toFixed(1)}x larger)`);
-  ok(spread.glow && spread.glow.cores === 33,
-    `1C. one flaming star CORE per cluster (${spread.glow && spread.glow.cores} cores == 33 clusters)`);
+  ok(spread.glow && spread.glow.cores === spread.clusterCount,
+    `1C. one flaming star CORE per cluster (${spread.glow && spread.glow.cores} cores vs ${spread.clusterCount} clusters)`);
   ok(spread.glow && spread.glow.glowMesh === false && spread.glow.glows === 0,
     `1D. NO HALO — each star is just its flaming plasma core, no corona shell (glowMesh=${spread.glow && spread.glow.glowMesh}, ${spread.glow && spread.glow.glows} halos)`);
 

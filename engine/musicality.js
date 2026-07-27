@@ -429,8 +429,16 @@
     if (!G || !G.info) return { warnings };
     if (!states || !states.length) states = [1, 2].map((s) => K.track(genre, { seed: s }));   // standalone call: mix a couple seeds
     const card = String(G.info), cap = cardCap(states, G);
+    // A NEGATED NOUN IS NOT A PROMISE. chamber's card says "NO piano and NO
+    // drums" — it is promising the ABSENCE of the instrument, and a plain noun
+    // scan reads that as a claim and then fails the genre for being explicit
+    // about what it leaves out. Blank the negator and the few words it governs
+    // (stopping at the next clause boundary) before the claim scan runs, so a
+    // card is never punished for saying what it is not.
+    const positive = card.replace(
+      /\b(?:no|never|without|sans)\b(?:\s+(?:and\s+)?[A-Za-z0-9_'’-]+){0,3}/gi, " ");
     for (const [name, re, has, skipRe] of CARD_CLAIMS) {
-      if (!re.test(card)) continue;
+      if (!re.test(positive)) continue;
       if (skipRe && skipRe.test(card)) continue;   // the card means a DIFFERENT thing (electric piano, guitar "strings")
       let ok = false; try { ok = !!has(cap); } catch (e) { ok = true; }   // a predicate bug must never fail a genre
       if (!ok) warnings.push({ promise: "card:" + name, what: `card claims "${name}" but no recipe realizes it (STATE-MISSING)` });
