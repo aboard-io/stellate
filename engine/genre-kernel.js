@@ -5970,7 +5970,7 @@
       fills:["drum fill","kit fill"],
       bass:{patterns:["walking","root","simple"], samplerPool:["finger_bass","acoustic_bass"], recipe:{model:["sampler","sub"], cutoff:[400,700], res:[0.05,0.14], level:[0.85,1.05], send:[0.1,0.2], dsend:[0.04,0.12]}},
       lead:{patterns:["composed","updown","wander"], samplerPool:["ahh_choir","ohh_voices","church_organ"], recipe:{model:["sampler"], wave:"sine", voices:[1,2], spread:[0.004,0.009], cutoff:[2200,3200], level:[0.5,0.66], send:[0.44,0.64], dsend:[0.16,0.3], attack:[0.05,0.2]}},
-      pads:{prob:1, samplerPool:["church_organ","rock_organ","strings"], recipe:{model:["sampler","strings"], wave:"saw", cutoff:[1000,1700], detune:[0.004,0.009], attack:[0.4,1.4], level:[0.52,0.68], send:[0.46,0.66], dsend:[0.14,0.3]}},
+      pads:{prob:1, samplerPool:["church_organ","rock_organ","strings","bright_yamaha_grand"], recipe:{model:["sampler","strings"], wave:"saw", cutoff:[1000,1700], detune:[0.004,0.009], attack:[0.4,1.4], level:[0.52,0.68], send:[0.46,0.66], dsend:[0.14,0.3]}},   // GOSPEL PIANO: the card names Hammond organ AND gospel piano as the two keyboard comps, so the comp pool carries both. A bright grand, not felt/upright — gospel piano is percussive and forward. The massed-choir hook stays on lead, untouched
       drums:{kickModel:["boom"], snareModel:["clap","noise"], hatModel:["noise"], kick:[0.72,0.98], snare:[0.7,0.92], hat:[0.62,0.9], tune:[0.95,1.05], send:[0.14,0.26], dsend:[0.05,0.14]},
       fx:{reverb:[0.62,0.8], delayBeats:[0.5,0.75], delayFb:[0.24,0.4], delayCut:[2200,3200], pump:[0,0.05], crackle:[0.02,0.08], lowcut:[20,40], highcut:[0,0], comp:[0.18,0.36]},
       found:{role:"bed", vol:[0.06,0.13], pitch:[0.9,1], stretch:[0.45,0.6], cutoff:[2000,3000], sources:["nevsky_choir","celtic_fans"]},
@@ -6015,7 +6015,7 @@
       fills:["drum fill","tom fill"],
       bass:{patterns:["walking","root","simple"], samplerPool:["fretless_bass","finger_bass"], recipe:{model:["sampler","sampler"], cutoff:[400,700], res:[0.05,0.14], level:[0.85,1.05], send:[0.06,0.14], dsend:[0.02,0.08]}},
       lead:{patterns:["composed","wander","updown"], samplerPool:["alto_sax","tenor_sax","rhodes_ep","electric_piano"], recipe:{model:["sampler"], wave:"sine", voices:[1,1], spread:[0.003,0.007], cutoff:[2600,3600], level:[0.5,0.64], send:[0.22,0.36], dsend:[0.08,0.18], vibrato:[0.008,0.016]}},
-      pads:{prob:0.85, samplerPool:["rhodes_ep","electric_piano","strings"], recipe:{model:["sampler","strings"], wave:"saw", cutoff:[1100,1800], detune:[0.004,0.009], attack:[0.6,1.8], level:[0.42,0.58], send:[0.22,0.4], dsend:[0.06,0.16]}},
+      pads:{prob:0.85, samplerPool:["rhodes_ep","electric_piano","strings","clean_guitar"], recipe:{model:["sampler","strings"], wave:"saw", cutoff:[1100,1800], detune:[0.004,0.009], attack:[0.6,1.8], level:[0.42,0.58], send:[0.22,0.4], dsend:[0.06,0.16]}},   // CLEAN ELECTRIC GUITAR: the card pairs it with the Rhodes as the comp texture, so both sit in the comp pool. The lyrical alto-sax hook stays on lead, untouched
       drums:{kickModel:["boom"], snareModel:["noise","clap"], hatModel:["noise"], kick:[0.55,0.82], snare:[0.5,0.72], hat:[0.5,0.78], tune:[0.95,1.05], send:[0.08,0.18], dsend:[0.03,0.1]},
       fx:{reverb:[0.3,0.44], delayBeats:[0.375,0.5], delayFb:[0.12,0.24], delayCut:[2600,3600], pump:[0,0.02], crackle:[0.02,0.06], lowcut:[30,50], highcut:[0,0], comp:[0.2,0.4]},
       found:{role:"bed", vol:[0.05,0.1], pitch:[0.9,1], stretch:[0.45,0.6], cutoff:[2400,3400], sources:["oslo_ferry_pa","tokyo_station"]},
