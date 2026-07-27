@@ -33,17 +33,33 @@ echo "== media manifest (local) =="
 # tw_vocal.mp3 excluded too: sing.py RE-SINGS it on every offline render
 # (per-render lyrics/key under a fixed name) — mutable by nature, served
 # no-cache by the same nginx exception as the manifests.
-# engine/faust/dist/ left OUT of the manifest (2026-07-10): compiled wasm is
+# engine/faust/dist/ left OUT of the manifest: compiled wasm is
 # CODE — it changes under the same name whenever a .dsp recompiles (the
 # synthesis-depth program proved it). It deploys like JS: no-cache, not
 # immutable. Only found/ media is versioned-by-name.
-# found/midi/ excluded (2026-07-16): the MIDI trove must never deploy
-# (SOURCES.md "never redistributed") — it lives on the external drive now;
-# this exclusion is the belt in case a fetch ever lands there again.
-# found/video/ excluded (2026-07-25): the laserdisc video layer was removed
-# (legacy-download-video) — any locally cached clips must not deploy.
-# .gitignore excluded (2026-07-25): config, not media — it changes under its
-# name legitimately (the video-exception removal tripped the invariant).
+# found/midi/ excluded: the MIDI trove must never deploy (SOURCES.md "never
+# redistributed") — it lives on the external drive; this exclusion is the belt
+# in case a fetch ever lands there again.
+# found/video/ excluded: there is no video layer any more, and any locally
+# cached clips must not deploy.
+# .gitignore excluded: config, not media — it changes under its own name
+# legitimately, which would otherwise trip the immutability invariant.
+#
+# TWO THINGS DELIBERATELY NOT DEPLOYED (the rsync filters below):
+#   zones.json / _gm-extract-summary.json — 134 files, 544 KB of EXTRACTOR
+#     OUTPUT. Nothing fetches them: the browser reads zone geometry from
+#     K.SAMPLERS, and faust/sf2.js says it outright ("no audio path reads
+#     zones.json at render time"). They only ever described the wavs beside them.
+#   engine/faust/node_modules/@grame — the tree is 28 MB and the web needs
+#     exactly ONE file of it, dist/esm/index.js (194 KB), from which live.js /
+#     stream-worker.js / stem-worker.js import FaustWasmInstantiator and
+#     FaustMonoDspGenerator to instantiate PRECOMPILED factories. The rest is
+#     the Faust COMPILER (libfaust-wasm, 5.4 MB), the cjs/bundle builds
+#     (16.4 MB), tests, assets and a 466 KB source map — all build-time only.
+#     The include list below is anchored per-directory because rsync cannot
+#     descend into a directory it has already excluded. The smoke check at the
+#     end fetches that one file, so a filter typo fails the deploy loudly
+#     instead of silently breaking the engine on first play.
 find found -type f ! -name '*.ogg' ! -name '*.json' ! -name '.gitignore' ! -name 'tw_vocal.mp3' ! -path 'found/video/*' ! -path 'found/midi/*' \
   -print0 | sort -z | xargs -0 sha256sum > /tmp/MEDIA_MANIFEST.new
 
@@ -77,9 +93,15 @@ rsync -a --delete --delay-updates --info=stats1 \
   --exclude 'models/' \
   --exclude 'scratch/' \
   --exclude '.venv-verify/' \
+  --exclude 'found/samples/**/zones.json' \
+  --exclude 'found/samples/**/_gm-extract-summary.json' \
+  --include 'engine/faust/node_modules/' \
   --include 'engine/faust/node_modules/@grame/' \
-  --include 'engine/faust/node_modules/@grame/faustwasm/***' \
-  --exclude 'engine/faust/node_modules/*' \
+  --include 'engine/faust/node_modules/@grame/faustwasm/' \
+  --include 'engine/faust/node_modules/@grame/faustwasm/dist/' \
+  --include 'engine/faust/node_modules/@grame/faustwasm/dist/esm/' \
+  --include 'engine/faust/node_modules/@grame/faustwasm/dist/esm/index.js' \
+  --exclude 'engine/faust/node_modules/**' \
   ./ "$HOST:$ROOT/"
 
 echo "== push manifest last =="
@@ -92,6 +114,12 @@ for u in / /engine/faust/stream-worker.js /found/found-manifest.json; do
     | sed 's/^2$/isolation OK/;s/^[01]$/MISSING ISOLATION HEADERS/'
 done
 curl -s -o /dev/null -w 'how.html %{http_code}\n' https://stellate.app/how.html
+# THE ENGINE'S ONE VENDORED MODULE. The rsync ships a single file out of the
+# 28 MB @grame tree, so a filter typo would strand the engine with no audio and
+# no page error until someone pressed play. Must be 200.
+printf '%-34s' "faustwasm dist/esm/index.js"
+curl -s -o /dev/null -w '%{http_code}\n' \
+  https://stellate.app/engine/faust/node_modules/@grame/faustwasm/dist/esm/index.js
 # the open-web layer: every one of these must answer 200 (a 404 on
 # .well-known/security.txt usually means a blanket dotfile deny in nginx —
 # docs/HOSTING.md "The open-web layer" §3)
