@@ -21,8 +21,7 @@
 models/
 
 # Scratch states from `genre-kernel.js track <genre>` land in the root —
-# derived, regenerable. The intentional demo sets live in playlist/ and mix/,
-# which the leading slash leaves tracked.
+# derived, regenerable, never committed.
 /*.state.json
 /node_modules/
 engine/faust/node_modules/
