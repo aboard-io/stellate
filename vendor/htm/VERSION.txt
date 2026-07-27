@@ -1,0 +1,31 @@
+htm
+===
+
+Package:  htm
+Version:  3.1.1
+License:  Apache-2.0 (see ./LICENSE)
+Author:   Jason Miller <https://github.com/developit/htm>
+Source:   https://esm.sh/htm@3.1.1/es2022/htm.mjs
+Vendored: 2026-07-27
+
+WHY VENDORED
+------------
+Same reason as ../preact: it was imported from esm.sh at runtime, which broke
+offline boot (sw.js never caches cross-origin), tripped the page's COEP
+require-corp posture, and put a third party in the path of every visit.
+
+EXPORTS USED
+------------
+  default        (app/state.js: export const html = htm.bind(h))
+
+htm is the tagged-template layer over preact's h() — it is what lets the ⚙
+panel be written as html`<div>...</div>` with no build step and no JSX
+transform. That "no bundler" property is the reason this project uses it, so
+vendoring it costs 1.2 KB and keeps the property.
+
+ONE MODIFICATION — the trailing `//# sourceMappingURL=htm.mjs.map` line was
+removed, for the reason given in ../preact/VERSION.txt: we ship no .map files,
+so the reference only sent devtools hunting for a file that is not there.
+
+Otherwise the esm.sh es2022 build byte-for-byte. Self-contained: imports
+nothing.

@@ -73,7 +73,7 @@
   "codeRepository": "https://github.com/aboard-io/stellate"
 }
 </script>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=VT323&display=swap" rel="stylesheet">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link rel="stylesheet" href="app/app.css">
 </head>
 <body>
@@ -87,6 +87,12 @@
      shared chip↔modal plumbing (backdrop tap / esc / ? all close it). -->
 <div class="modal" id="aboutWrap"><div class="card" id="about">
   <h2>Stellate</h2>
+  <!-- ATTRIBUTION: the page says who made it, up top where it reads first, and
+       again in the JSON-LD/OG head. The author link is a mailto — the point is
+       to hear from people, not to route them to a bio. -->
+  <p class="ab-foot">Made by <a href="mailto:paul.ford@aboard.com?subject=I%20have%20a%20strong%20opinion%20about%20Stellate.app">Paul Ford</a> at
+  <a href="https://aboard.com">Aboard</a> ·
+  <a href="https://github.com/aboard-io/stellate">open source</a> · MIT</p>
   <p class="ab-what">A generative instrument you play by moving through a
   <b>274-genre</b> space. Every song is rendered live in your browser and
   is fully deterministic from a seed — the same seed always plays the same music.
@@ -108,17 +114,7 @@
        panels.js also force-navigates modal links on click as a belt. -->
   <a class="ab-how ab-a11y" href="access.html">Accessible text version &rarr;
     <span style="display:block;font-size:.72rem;opacity:.75">screen-reader- and keyboard-first, no visuals required</span></a>
-  <!-- ATTRIBUTION (Paul's ask, 2026-07-25): the page must SAY who made it and
-       link to aboard.com — here in the human-readable about layer, again in the
-       always-visible .credit line below, and once more in the JSON-LD/OG head. -->
-  <p class="ab-foot">made by <a href="https://www.ftrain.com/">Paul Ford</a> at
-  <a href="https://aboard.com">Aboard</a> ·
-  <a href="https://github.com/aboard-io/stellate">open source</a> · MIT</p>
 </div></div>
-<!-- the standing credit: small, dim, never in the way, always readable without
-     opening anything. Only the links take pointer events, so the star map keeps
-     the whole viewport to drag on. -->
-<p class="credit">made by <a href="https://www.ftrain.com/">Paul Ford</a> at <a href="https://aboard.com">Aboard</a></p>
 <!-- boot progress: a pixel-locked hairline at the very top edge, shown while the
      live engine warms up (module load -> voices -> first bar -> first audio),
      faded on the first real RMS. Honest: stalls shimmer, never fake 100%. -->
