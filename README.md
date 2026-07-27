@@ -60,7 +60,7 @@ the thing that checks it live in the same repo and argue with each other.
 **Pocket-proof mobile.** On phones the audible path is a real media element fed
 a continuously-rendered, encoded stream (the WAV-FIRST pipeline), so playback
 survives screen-lock and backgrounding where a live WebAudio graph would be
-frozen. See `docs/history/WAV-FIRST.md`. On desktop, a hidden tab just keeps
+frozen. See `docs/WAV-FIRST.md`. On desktop, a hidden tab just keeps
 playing — the live ring rides through tab switches (the bg-survival gate's
 contract).
 
@@ -169,6 +169,6 @@ production headers, and how to add your own audio: `docs/SETUP.md`.
 - **`SOURCES.md`** — every found-sound, sample, and vendored-code credit.
 - **`docs/HOSTING.md`** — the stellate.app hosting plan (droplet + nginx,
   same-origin media, COOP/COEP for the SAB ring engine).
-- **`docs/history/`** — the design/planning trail (WAV-FIRST, kernel, etc.).
+- **`docs/history/`** — planning records that live code still cites by section.
 - The pre-Faust csound era (the `builder.html` song builder, `play.html` player)
   lives fully working on branch **`legacy-csound`**.

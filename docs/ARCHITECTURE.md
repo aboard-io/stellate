@@ -81,7 +81,7 @@ live so the mix is the same.
   the background-WAV survival producer).
 - **WAV-FIRST** (mobile) — pocket-proof iOS/mobile audio: rolling WAV segments
   played through a real `<audio>` element (no live graph). See
-  `docs/history/WAV-FIRST.md`.
+  `docs/WAV-FIRST.md`.
 
 ### The verifier (a parallel, offline coordinate system)
 `engine/genre-verifier.js` extracts a **23-symbolic-feature** vector from

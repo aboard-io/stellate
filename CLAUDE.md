@@ -272,7 +272,7 @@ docs in `docs/`.
       ring (`ring-player.js`, `stream-worker.js`, `stream-renderer.js`) and a
       hidden desktop tab KEEPS PLAYING (bg-survival-run's contract); mobile
       takes the **WAV-FIRST** path — a real `<audio>` element fed rendered media
-      segments so audio survives pocket/lock (`docs/history/WAV-FIRST.md`)
+      segments so audio survives pocket/lock (`docs/WAV-FIRST.md`)
     - `found-player.js` — native found sound: granular bed + slice chopper on
       `AudioBufferSourceNode`s; `decodeUrlToBuffer` skips recording lead-in and
       boost-normalizes quiet speech (the spokenword fix)
@@ -309,11 +309,19 @@ docs in `docs/`.
   `discogs-effnet-bs64-1.pb` (essentia.upf.edu/models/feature-extractors/discogs-effnet/)
   and `genre_discogs400-discogs-effnet-1.{pb,json}` (…/classification-heads/genre_discogs400/).
   Use via `node engine/genre-kernel.js track jungle --render --audio-verify`.
-- `docs/history/` — retired planning/verification records kept for the
-  architecture trail (esp. `WAV-FIRST.md` — the mobile-audio design; also
-  `KERNEL-V4.md`, `ZERO-STATIC.md`, `ab-report.md`, `EVALUATION.md`,
-  `VALIDATION.md`, `NEXT.md`). The old csound-WASM pages (`builder.html` song
-  builder, `play.html` player) live fully working on branch `legacy-csound`.
+- `docs/WAV-FIRST.md` — the mobile-audio design. Promoted out of `history/`
+  because it describes shipped behaviour and four live docs cite it.
+- `docs/history/` — planning records that live CODE still points at, so they
+  are references rather than archaeology: `NEXT.md` (§5b columnar events,
+  §5d mastering, §5f break pools — cited from `engine/columns.js`,
+  `csd-engine.js`, `live.js`, `state-engine.js` and three tests),
+  `ab-report.md` (the csound A/B `state-engine.js` was tuned against),
+  `VALIDATION.md` (the gate policy `validate-genres.js` implements),
+  `KERNEL-V4.md` (cited by `test/fixtures.js` and `tools/genre-tool.js`),
+  `MATERIALS.md` (the commission brief SOURCES.md and two fetch scripts cite)
+  and `ZERO-STATIC.md` (the ring/zombie-worklet law). The old csound-WASM pages
+  (`builder.html` song builder, `play.html` player) live fully working on
+  branch `legacy-csound`.
 - `found/` — the fetched found-sound layer (gitignored except `.gitignore`;
   recipes: `fetch-found-sound.sh` and friends, credits in SOURCES.md)
 - `LICENSE` (MIT, © 2026 Paul Ford) + `NOTICE` (third-party carve-outs:

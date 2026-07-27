@@ -496,7 +496,7 @@ The load order is real and documented: `theory`+`pipes` → `csd-engine` →
 | `docs/ROADMAP.md` | 423 lines | 38 items `[DONE]`; its own ground-truth block says 249. References four docs that never existed. Superseded by this file. → `history/` or delete. |
 | `docs/history/`: `KERNEL-V4`, `NEXT`, `EVALUATION`, `VALIDATION`, `ab-report`, `MATERIALS` | ~1,044 lines | Reviewed a 61-anchor/1,859-line kernel; 15/15 matrices; csound parity tables. **Before deleting MATERIALS.md, fix `SOURCES.md:632`**, which cites it at an already-broken path. |
 
-**Do NOT delete** `docs/history/WAV-FIRST.md` — **promote it to `docs/WAV-FIRST.md`**.
+**Do NOT delete** `docs/WAV-FIRST.md` — **promote it to `docs/WAV-FIRST.md`**.
 It's cited from four live places (`README.md:63`, `CLAUDE.md:281`,
 `docs/ARCHITECTURE.md:84`) and describes shipped behavior. Keep `ZERO-STATIC.md`
 (the only written rationale for the ring/zombie-worklet law `live.js retirePool`

@@ -128,7 +128,7 @@ embed `SharedArrayBuffer` is undefined and the ring engine throws.
 
 The app detects that and takes the **WAV-FIRST** route instead — a real
 `<audio>` element fed rendered media segments, originally built so audio would
-survive a phone going in a pocket (`docs/history/WAV-FIRST.md`). It needs no
+survive a phone going in a pocket (`docs/WAV-FIRST.md`). It needs no
 `SharedArrayBuffer` at all. The switch is automatic (`app/live.js`, the
 NO-ISOLATION FALLBACK block); an explicit `?wavOut=0/1` still overrides it.
 
