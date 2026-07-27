@@ -4,14 +4,14 @@ A genre is added by writing a small JSON **spec**, then letting
 `tools/genre-tool.js` measure it, derive its verifier target row, and splice it
 into the kernel — never by hand-editing the `GENRES` literal. This keeps the two
 hard laws intact: **byte-identical renders** (your anchor draws its rng LAST and
-consumes none when absent) and the **matrix stays 249/249 diagonal-dominant**
+consumes none when absent) and the **matrix stays 274/274 diagonal-dominant**
 (the tool auto-tightens the target row until no existing genre is knocked off
 its own diagonal). Full field reference: `docs/GENRE-SPEC-SCHEMA.md`.
 
 ## Your first genre in ~5 commands
 
 ```bash
-# 1. Copy the nearest existing spec as a starting point (102 live in genre-specs/).
+# 1. Copy the nearest existing spec as a starting point (135 live in genre-specs/).
 cp genre-specs/aldente.json genre-specs/mygenre.json
 $EDITOR genre-specs/mygenre.json        # set name, label, info, anchor dims, pos
 
@@ -23,7 +23,7 @@ node tools/genre-tool.js create genre-specs/mygenre.json --dry-run
 node tools/genre-tool.js create genre-specs/mygenre.json
 
 # 4. Confirm the confusion matrix still holds (the tool runs this, but re-check):
-node engine/genre-verifier.js matrix --no-cache        # → 249/249 (now 250/250)
+node engine/genre-verifier.js matrix --no-cache        # → 274/274 (now 275/275)
 
 # 5. Listen. Machines proved it's distinct; only Paul's ears say it's good.
 node engine/genre-kernel.js track mygenre --seed 7 --render

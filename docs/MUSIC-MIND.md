@@ -2,14 +2,14 @@
 
 *2026-07-09. The question: what would make richer, more interesting, more
 complex music across all 178 genres (the space's size when this was written;
-249 as of 2026-07-11, and the laws below hold at 249) — applying music theory
+274 today, and the laws below hold at 274) — applying music theory
 automatically, exploring rhythmic and chromatic ideas, more polyphony where it
 earns its place — while keeping the listener locked in?*
 
 The answer is three new organs and a set of new genre-space axes, all behind
 the two standing laws: **determinism** (same seed → byte-identical events;
 absent knob → byte-identical output) and the **matrix** (every genre
-diagonal-dominant after every change — 249/249 today).
+diagonal-dominant after every change — 274/274 today).
 
 ## The diagnosis
 
@@ -91,7 +91,7 @@ voice's model exposes the param** (per-model whitelist; silently dropped
 otherwise). The verifier reads none of these fields — expression is
 matrix-neutral by construction. Musical pipes (harmonize, echoCanon…) do
 shift features; genres opt in and the matrix is retuned to stay
-diagonal-dominant (249/249 today).
+diagonal-dominant (274/274 today).
 
 Live caveat: live builds one chord-bar per call; pipes therefore never emit
 outside the build's own `[0, totalBeats)` window (echo/canon delays cap at
@@ -328,11 +328,11 @@ catalog state carrying both `callResponse` and `jux > 0` drifts on the
 3. **Space**: genre-kernel resolves + emits the new axes; anchor derivation
    + curation.
 4. **Gate + tune**: `./verify.sh --full`, matrix back to fully
-   diagonal-dominant (178/178 then; 249/249 now), fixture refresh, docs.
+   diagonal-dominant (274/274), fixture refresh, docs.
 
 ## Verification
 
 `node test/theory.test.js` · `node test/pipes.test.js` · gate 1 determinism
 (absent knobs byte-identical **and** present knobs seed-stable) ·
-`node engine/genre-verifier.js matrix --no-cache` → 249/249 ·
+`node engine/genre-verifier.js matrix --no-cache` → 274/274 ·
 `node test/engine.test.js --quick` non-silent presses · ears via the live app.

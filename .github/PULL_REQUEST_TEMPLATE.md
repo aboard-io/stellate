@@ -12,7 +12,7 @@
 - [ ] I listened to it (what, and how it sounded):
 
 **Matrix status:** `node engine/genre-verifier.js matrix --no-cache` prints
-`diagonal dominant: 178/178` → <!-- yes / n/a (no kernel/engine change) -->
+`diagonal dominant: 274/274` → <!-- yes / n/a (no kernel/engine change) -->
 
 ## Media policy attestation
 

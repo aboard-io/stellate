@@ -69,7 +69,7 @@ same role, or to `hits.sources` (always safe). NEVER add a `found:{role:…}`
 block to a genre that lacks one, change a role, or touch bpm/scored fields —
 that shifts the confusion matrix for everyone. After every batch:
 `node engine/genre-verifier.js matrix --no-cache` must still print
-`diagonal dominant: N/N — 249/249 as of 2026-07`.
+`diagonal dominant: N/N — 274/274 as of 2026-07`.
 
 **A new pipe** (event transform). Register it in `CsdPipes.REGISTRY`
 (`engine/pipes.js`) with its **own seeded rng stream** — never share or reuse
@@ -115,7 +115,7 @@ determinism; byte-identity of old states is the part you must verify yourself
 ## Engine load order & the global namespace
 
 The app has **no bundler**. `index.html` loads the engine as an ordered list of
-classic `<script>` tags (see the block at `index.html:59-80`), and the browser
+classic `<script>` tags (see the block at `index.html:141-159`), and the browser
 executes them top-to-bottom before the app runs. That order is a contract, not
 decoration. The rules:
 

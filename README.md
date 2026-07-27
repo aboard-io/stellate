@@ -110,8 +110,11 @@ policy and the full attribution ledger live in `SOURCES.md`.
 
 ## Run
 
-The tree is organized `app/` · `engine/` (core + `engine/faust/` WASM engine) ·
-`tools/` (Node CLIs) · `test/` (gates) · `docs/`; `index.html` at root is the app.
+The tree is organized `app/` (the UI, ES modules) · `engine/` (the deterministic
+core + `engine/faust/` WASM engine, classic scripts) · `tools/` (Node CLIs) ·
+`test/` (gates) · `docs/` · `vendor/` (third-party, all served locally) ·
+`genre-specs/` (genre authoring input) · `found/` (fetched audio, gitignored);
+`index.html` at root is the app.
 
 ```bash
 (cd engine/faust && npm ci)            # the WASM engine's deps
@@ -136,9 +139,10 @@ node engine/genre-kernel.js track budstep --seed 7 --render   # one track -> mp3
 
 Needs `node`, `ffmpeg`, `curl`, `python3` (the dev server + sample classifier) —
 no `csound` (the founding `royal-road.csd` and its renderer live on the
-`legacy-csound` branch). Headless browser gates live in `test/*-test*.js`; set
-up their pinned playwright once with `npm install && npm run setup:browser`,
-then run them plain (`node test/explorer-ui-test.js`). Cold-start walkthrough,
+`legacy-csound` branch). Headless browser gates are mostly `test/*-run.js` (43 of them, plus a handful
+named `*-test.js`); set up their pinned playwright once with
+`npm install && npm run setup:browser`, then run them plain
+(`node test/explorer-ui-test.js`). Cold-start walkthrough,
 production headers, and how to add your own audio: `docs/SETUP.md`.
 
 ## More

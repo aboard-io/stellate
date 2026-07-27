@@ -4,7 +4,7 @@ A spec is the human-authored input to `tools/genre-tool.js create` (see
 `docs/ADDING-A-GENRE.md`). It is NOT the anchor itself — the tool measures it,
 derives the verifier target row, and splices a serialized anchor into the
 kernel. This reference is cross-checked against `tools/genre-tool.js`
-(`validateSpec` / `serializeAnchor` / `FIELD_ORDER`) and the 102 live specs.
+(`validateSpec` / `serializeAnchor` / `FIELD_ORDER`) and the 135 live specs.
 
 > The schema is **derived, never hardcoded.** `validateSpec` builds its
 > vocabulary by scraping the live engine registries and its dimension key-set
@@ -37,7 +37,7 @@ Values follow three conventions, all resolved seeded by `resolveMulti`:
   Every id must exist in the live registry or validation fails.
 - **Nested block** — a voice/fx/found object grouping ranges + pools.
 
-### The required core (present in all 102 specs)
+### The required core (present in all 135 specs)
 `validateSpec` treats a dimension as required when every existing anchor
 declares it. Today that is: **`bpm`, `swing`, `humanize`, `progressions`,
 `kits`, `fills`, `bass`, `lead`, `pads`, `drums`, `fx`, `found`, `hits`,
@@ -127,4 +127,4 @@ discriminators until no existing genre is knocked off its diagonal.
 - `docs/ADDING-A-GENRE.md` — the create workflow and matrix-safe wiring.
 - `docs/GENRE-SPACE.md` — the conceptual model.
 - `engine/faust/VOICES.md` — how `recipe` params map to Faust voice params.
-- `genre-specs/*.json` — 102 worked examples; `aldente.json` is a compact one.
+- `genre-specs/*.json` — 135 worked examples (127 flat + 8 under `invented/`); `aldente.json` is a compact one.
