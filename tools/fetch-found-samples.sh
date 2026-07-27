@@ -756,4 +756,15 @@ for sub, cls in (("breaks","break"),("hits","hit"),("vox","vox"),("speech","spee
 json.dump(out, open(os.path.join(root,"manifest.json"),"w"), indent=1)
 print(f"manifest: {len(out)} samples")
 PYEOF
+
+# --- instrument zones: WAV -> MP3 (the sampled-layer diet) ---
+# Everything above extracts zones as wav; the browser must not download 100MB of
+# them. transcode-samples.js converts every SAMPLERS zone to mono 22.05k 48kbps
+# mp3 (~14x smaller, measurably HIGHER SNR than 64k/44.1k on this material — the
+# zones carry 0.25% of their energy above 11kHz), verifies each decode, and
+# re-bakes ls/le/len/sr in engine/genre-kernel.js. Idempotent: a sampler already
+# on mp3 is skipped, and a re-fetch scales loop points off the METADATA's rate,
+# so the committed indices survive re-running this unchanged.
+node tools/transcode-samples.js
+
 echo "Done."

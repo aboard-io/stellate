@@ -1292,6 +1292,15 @@
         // dry 1 / sends 0 here; the unit-level gains tap the chain output.
         const chained = !!ent.chain;
         const zsr = u.sampler.sr || 44100;
+        // MP3 DECODER LEAD-IN (sampler.js zoneLeadIn): WebKit hands back the
+        // encoder's priming samples, so the buffer's head is 25 ms of padding
+        // and every index baked from the source wav is early by that much.
+        // Cached per decoded buffer (not per note); 0 on every other decoder,
+        // and 0 for a zone without a known length. Seconds are BUFFER seconds
+        // (decodeAudioData resampled to the ctx rate) while the loop points are
+        // zone seconds — both ends shift together so the loop keeps its length.
+        const lead = SP.zoneLeadIn ? SP.zoneLeadIn(buf, z, buf.sampleRate, zsr) : 0;   // guard: a stale sw-cached sampler.js
+        const leadSec = lead ? lead / (buf.sampleRate || zsr) : 0;
         ent.player.note(buf, at(e.beat), { rate: SP.rateFor(z, midi), durSec: e.durB * spb,
           gain: (u.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
           atk: u.sampler.atk, rel: u.sampler.rel, swell: !!u.sampler.swell, mello: u.sampler.mello || null,
@@ -1300,7 +1309,8 @@
           dry: chained ? 1 : (u.dry != null ? u.dry : 1),
           rsend: chained ? 0 : (u.rev || 0), dsend: chained ? 0 : (u.del || 0),
           bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,
-          loop: !!z.loop, loopStartSec: (z.loopStart || 0) / zsr, loopEndSec: (z.loopEnd || 0) / zsr });
+          offsetSec: leadSec,
+          loop: !!z.loop, loopStartSec: (z.loopStart || 0) / zsr + leadSec, loopEndSec: (z.loopEnd || 0) / zsr + leadSec });
       }
       // found chops + beds (bed re-anchored at bar start of chord 0)
       for (const f of (b.found || [])) {

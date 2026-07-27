@@ -495,6 +495,43 @@
   const MAX_STRETCH_UP_ST = 16;
   const rateFor = (z, midi) => Math.pow(2, (Math.min(midi, z.root + MAX_STRETCH_UP_ST) - z.root) / 12);
 
+  // ---- MP3 DECODER LEAD-IN ------------------------------------------------
+  // Zone media is MP3 now, and an MP3 frame grid can't start mid-sample: the
+  // encoder pads the head with priming samples and records the pad in the
+  // Xing/LAME tag. Chromium and Firefox read that tag and hand back the exact
+  // original sample count; WebKit does NOT — it returns the padding as audio,
+  // a CONSTANT 1105-sample (25 ms) head offset (measured, every zone, every
+  // rate). Uncorrected, every absolute index baked from the source wav — the
+  // loop points above all — lands 25 ms early: an audible click at every loop
+  // wrap on 90% of zones.
+  // Detection is by LENGTH, never by user agent: `z.len` is the true decoded
+  // sample count at `z.sr`, so a decoder that padded is simply longer than it
+  // should be. A UA sniff would hardcode today's engine roster and rot on the
+  // next release (in either direction — a fixed WebKit would then be double-
+  // corrected); the length tells the truth about the decoder actually running.
+  // No z.len (pre-transcode wav zones, node/ffmpeg decodes which are
+  // sample-exact) => 0 => every index untouched.
+  const MP3_LEAD_IN = 1105;         // samples at the zone's own rate
+  const _leadIn = new WeakMap();    // decoded buffer -> lead-in, computed ONCE (not per note)
+  // zsr: the zone file's rate when the zone object itself doesn't carry one
+  // (live reads it off the sampler spec).
+  function zoneLeadIn(buf, z, bufSr, zsr) {
+    if (!buf || !z || !z.len) return 0;
+    const zr = zsr || z.sr || 44100;
+    // one decoded buffer serves exactly one zone file, so this is a per-buffer
+    // constant — but the entry carries what it was derived from, so a buffer
+    // reused under different geometry can never inherit a stale answer.
+    const hit = _leadIn.get(buf);
+    if (hit && hit.len === z.len && hit.zr === zr && hit.sr === bufSr) return hit.n;
+    // decodeAudioData resamples to the context rate, so both the expected
+    // length and the lead-in scale by it. The +8 slack absorbs resampler
+    // rounding; a real pad (1105*scale) clears it by two orders of magnitude.
+    const scale = (bufSr || buf.sampleRate || 0) / zr || 1;
+    const n = buf.length > z.len * scale + 8 ? Math.round(MP3_LEAD_IN * scale) : 0;
+    _leadIn.set(buf, { len: z.len, zr, sr: bufSr, n });
+    return n;
+  }
+
   // ---- (a) press path: notes -> Float32Array buses -----------------------
   // notes: [{tSec, durSec, freq, amp, atk, rel, zones, sr(zoneFileRate)}]
   // buffers: {srcId: Float32Array mono at engine sr}
@@ -595,9 +632,20 @@
       // the Montego font, 19 broken zones). Clamp the wrap point inside the
       // buffer so it always fires first. Byte-identical for the default font
       // (every valid loop already has loopEnd < len — a strict no-op there).
-      const loopEnd = Math.min(z.loopEnd, src.length - 1);
-      const loop = z.loop && loopEnd > z.loopStart + 8;
-      const loopLen = loop ? loopEnd - z.loopStart : 0;
+      // ZONE GEOMETRY -> BUFFER INDICES. z.loopStart/loopEnd are absolute sample
+      // indices in the zone FILE (at z.sr); `src` is decoded at the engine rate
+      // `sr`, so they scale by zk — and both ends shift by the decoder lead-in
+      // together (correcting one end alone would change the loop LENGTH, i.e.
+      // detune the sustain, which is worse than a constant offset). Zone rate
+      // unknown or equal to the engine rate => zk 1; no lead-in => +0: the exact
+      // old arithmetic, bit-identical.
+      const zsr = z.sr || n.sr || sr;
+      const zk = zsr && zsr !== sr ? sr / zsr : 1;
+      const lead = zoneLeadIn(src, z, sr, zsr);
+      const loopEnd = Math.min(z.loopEnd * zk + lead, src.length - 1);
+      const loopStart = z.loopStart * zk + lead;
+      const loop = z.loop && loopEnd > loopStart + 8;
+      const loopLen = loop ? loopEnd - loopStart : 0;
       const g = (n.gain != null ? n.gain : 0.5) * GAIN;
       // per-note channel strip (fresh state each note -> window-independent;
       // under WINDOW RESUME the note's own live state carries over instead).
@@ -665,7 +713,7 @@
         const outNm = Math.min(total - s0, effHold + relN);
         // head-EQ: gentle one-pole lowpass (dulled highs of the playback head)
         const fc = 9000 - (M.headEq || 0) * 6500, aLp = (M.headEq || 0) > 0 ? 1 - Math.exp(-2 * Math.PI * fc / sr) : 0;
-        let lp = RS ? RS.lp : 0, posAccM = RS ? RS.posAcc : 0, iEnd = outNm, pastWin = false;
+        let lp = RS ? RS.lp : 0, posAccM = RS ? RS.posAcc : lead, iEnd = outNm, pastWin = false;
         for (let i = RS ? RS.i : 0; i < outNm; i++) {
           const j = s0 + i - winBase;
           if (j >= busLen) { park({ next: s0 + i, phase: "body", i, posAcc: posAccM, lp }); iEnd = i; pastWin = true; break; }
@@ -674,7 +722,7 @@
           if (i > effHold) pm *= 1 - 0.03 * ((i - effHold) / relN);   // tape-runout pitch sag (~½ semitone)
           const baseR = bendN ? (i < bendN ? r0 + (rate - r0) * (i / bendN) : rate) : rate;
           let pos = posAccM; posAccM += baseR * pm;
-          if (loop && pos >= loopEnd) pos = z.loopStart + ((pos - z.loopStart) % loopLen);
+          if (loop && pos >= loopEnd) pos = loopStart + ((pos - loopStart) % loopLen);
           if (pos >= src.length - 1) { iEnd = i; break; }
           const i0 = pos | 0, fr = pos - i0;
           let v = (src[i0] + fr * (src[i0 + 1] - src[i0])) * g;
@@ -697,16 +745,16 @@
       if (n.granular || (granOverSt != null && rate > 0 && Math.abs(12 * Math.log2(rate)) >= granOverSt)) {
         const Gn = Math.max(128, Math.floor((n.grainSec || granSec) * sr)), Hn = Math.max(1, Gn >> 1);
         const han = grainHann(Gn);
-        const wrap = (p) => (loop && p >= loopEnd) ? z.loopStart + ((p - z.loopStart) % loopLen) : p;
+        const wrap = (p) => (loop && p >= loopEnd) ? loopStart + ((p - loopStart) % loopLen) : p;
         let iEnd = outN, pastWin = false;
         for (let i = RS ? RS.i : 0; i < outN; i++) {
           const j = s0 + i - winBase;
-          if (j >= busLen) { park({ next: s0 + i, phase: "body", i, posAcc: 0 }); iEnd = i; pastWin = true; break; }
+          if (j >= busLen) { park({ next: s0 + i, phase: "body", i, posAcc: lead }); iEnd = i; pastWin = true; break; }
           let vv = 0;
           const kLo = Math.max(0, Math.ceil((i - Gn + 1) / Hn)), kHi = (i / Hn) | 0;
           for (let k = kLo; k <= kHi; k++) {
             const gi = i - k * Hn;                       // within-grain output index [0,Gn)
-            let sp = wrap(k * Hn) + gi * rate;           // grain start (output-rate) + pitched read
+            let sp = wrap(lead + k * Hn) + gi * rate;    // grain start (output-rate, past the lead-in) + pitched read
             if (loop) sp = wrap(sp);
             if (sp >= src.length - 1) continue;
             const i0 = sp | 0, fr = sp - i0;
@@ -720,7 +768,7 @@
         if (!pastWin) ringOut(iEnd);
         continue;
       }
-      let posAcc = RS ? RS.posAcc : 0, iEnd = outN, pastWin = false;
+      let posAcc = RS ? RS.posAcc : lead, iEnd = outN, pastWin = false;
       for (let i = RS ? RS.i : 0; i < outN; i++) {
         // WINDOW EDGE first (see WINDOW RESUME): the old order computed the
         // sample, then discovered it was past the window and threw it away —
@@ -730,8 +778,8 @@
         if (j >= busLen) { park({ next: s0 + i, phase: "body", i, posAcc }); iEnd = i; pastWin = true; break; }
         let pos;
         if (bendN) { pos = posAcc; posAcc += i < bendN ? r0 + (rate - r0) * (i / bendN) : rate; }
-        else pos = i * rate;
-        if (loop && pos >= loopEnd) pos = z.loopStart + ((pos - z.loopStart) % loopLen);
+        else pos = lead + i * rate;
+        if (loop && pos >= loopEnd) pos = loopStart + ((pos - loopStart) % loopLen);
         if (pos >= src.length - 1) { iEnd = i; break; }       // unlooped: natural end
         const i0 = pos | 0, fr = pos - i0;
         let v = (src[i0] + fr * (src[i0 + 1] - src[i0])) * g;
@@ -1135,6 +1183,7 @@
     const live = { active: new Set() };
     // buffer: AudioBuffer (raw-decoded); f: {rate, when, durSec, amp(gain),
     // atk, rel, rsend, dsend, loop, loopStartSec, loopEndSec,
+    // offsetSec (decoder lead-in — see zoneLeadIn; absent/0 = start at the head),
     // bendFrom (semitones, negative = start under pitch), bendMs}
     live.note = function (buffer, when, f) {
       const src = ctx.createBufferSource();
@@ -1199,7 +1248,10 @@
       const dry = ctx.createGain(); dry.gain.value = f.dry != null ? f.dry : 1; post.connect(dry); dry.connect(dests.dry);
       const rev = ctx.createGain(); rev.gain.value = f.rsend || 0; post.connect(rev); rev.connect(dests.rev);
       const del = ctx.createGain(); del.gain.value = f.dsend || 0; post.connect(del); del.connect(dests.del);
-      src.start(when);
+      // offsetSec skips the decoder's lead-in so the attack starts on the real
+      // first sample — the loop points above are shifted by the same amount, so
+      // head and loop stay in phase. 0 => start(when, 0) === start(when).
+      src.start(when, f.offsetSec || 0);
       src.stop(when + hold + rel + 0.05);
       live.active.add(src);
       const teardown = () => { try { dry.disconnect(); rev.disconnect(); del.disconnect(); if (headBiq) headBiq.disconnect(); if (striph) { for (const o of striph.oscs) { try { o.stop(); } catch (e) {} live.active.delete(o); } for (const nd of striph.nodes) try { nd.disconnect(); } catch (e) {} } } catch (e) {} };
@@ -1212,7 +1264,7 @@
     return live;
   }
 
-  return { midiOfFreq, zoneFor, rateFor, mixPCM, decodeUrlRaw, SamplerLive, buildInsertNodes, GAIN,
+  return { midiOfFreq, zoneFor, rateFor, zoneLeadIn, mixPCM, decodeUrlRaw, SamplerLive, buildInsertNodes, GAIN,
     // ENGINE-AUDIT 2026-07 Tier 2: the ONE selection-velocity formula (press +
     // live must both call it) and the delay-strip tail length (mixPCM renders
     // it; the stream renderer must add it to each note's window-filter end).
