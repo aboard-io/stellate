@@ -7,22 +7,41 @@ audio/video/model binary is ever committed; `verify.sh` and CI enforce it
 (`.github/workflows/verify.yml`). What IS committed: fetch recipes, manifests,
 cue catalogs (JSON timestamps/tags), decoded parameter data, and this ledger.
 
-Three bright-line tiers for the material the recipes touch:
+## What this project actually does with it
+
+**Stated plainly, because an inaccurate ledger is worse than an awkward one:
+the fetched media is served from the public web.** `tools/deploy-stellate.sh`
+rsyncs `found/` to stellate.app, so every sample the engine can play is
+fetchable by anyone who knows the URL, and the site's renders are public
+playback. Earlier versions of this file promised the opposite for some of the
+material below. They were wrong about the deploy, so the promise is gone rather
+than the deploy.
+
+That does **not** relax anybody's licence. The per-item terms in the tables are
+unchanged and still bind; where the deploy and the terms disagree, the terms
+win and the exposure is real and knowing. The tiers below therefore describe
+**what a licence permits**, not what this repo abstains from:
 
 1. **PD / CC0 / MIT-licensed** (NASA, LibriVox, PD-marked aporee items,
    FluidR3 GM/GS, locally synthesized ffmpeg/espeak material) — free to fetch,
-   remix, and include in anything. We still keep it fetch-only to keep the
-   repo small.
+   remix, serve, and include in anything. No conflict.
 2. **Attribution / ShareAlike / NonCommercial / NoDerivs CC material** (most
-   aporee recordings, Naropa readings, OTRR wrappers, SRAA shortwave) —
-   **fetch-only, personal playback**. Any *distributed render* inherits the
-   per-item obligations flagged in the tables below (attribute, SA
-   inheritance, NC, no ND derivatives) and needs a human release decision.
-3. **Unlicensed commercial material** (the LaserDisc demo discs, Video Drug
-   volumes, the "Skip to My Loops" sample CD, the unrecovered lib reels) —
-   **never redistributed, in any form**: never committed, never in a packaged
-   build, never in a distributed render. Stream/local-cache for personal
-   viewing only; point people at the archive.org item and the recipe instead.
+   aporee recordings, Naropa readings, OTRR wrappers, SRAA shortwave) — carries
+   real obligations: attribute, SA inheritance, NC, no ND derivatives. Serving
+   these publicly is compatible with BY and SA if credit rides along (it does,
+   here); it is **in tension with NC and ND**, which is a live and deliberate
+   risk, not an oversight.
+3. **Unlicensed commercial material** (the "Skip to My Loops" and "Danger 1"
+   sample CDs, the proprietary OEM soundfonts, the Amen cuts, the 1946 78) —
+   **no licence chain exists to comply with.** Serving it publicly is an
+   accepted risk taken with open eyes. If a rights holder objects, the remedy
+   is to pull the item and re-point the genre at a licensed substitute; the
+   recipe scripts make that a one-line change.
+
+**If you fork this, that risk does not transfer with the code.** Decide for
+yourself before deploying: the tier-3 rows are the ones to look at first, and
+`--exclude 'found/samples/stml/'`-style rsync filters in
+`tools/deploy-stellate.sh` are where you would enforce a stricter policy.
 
 This file is the canonical attribution ledger (every item, every license,
 every flag). The third-party CODE credits and license carve-outs live in
@@ -183,8 +202,8 @@ silent, check downmix cancellation first.
 archive](https://sound-effects.bbcrewind.co.uk/), curated one wing per
 `SOURCE_POOLS` class. **All under the BBC’s RemArc licence: personal,
 educational or research use only, NON-COMMERCIAL, no redistribution** — tier 2
-in the policy above, leaning strict: fetch-only, local-cache, never committed,
-never mirrored, never in a packaged build or distributed render. The recipe
+in the policy above. Nothing here is committed, but it does deploy with
+`found/` and is publicly fetchable from stellate.app. The recipe
 downloads straight from the BBC’s own CDN, so every user’s copy is their own
 fetch under that licence. © BBC — the catalogue numbers below are the
 permanent references (browse: sound-effects.bbcrewind.co.uk/search?q=<id>).
@@ -397,7 +416,7 @@ item is Creative Commons **Attribution-NonCommercial-NoDerivatives** — the
 archaic `by-nd-nc/1.0` slug, functionally **CC BY-NC-ND 1.0**. **⚠ ND = No
 Derivatives**: folding a trimmed reading into generative music is a
 derivative/remix use, so this is **tier 2** — the audio is fetched to gitignored
-`found/`, NON-COMMERCIAL, never redistributed; `fetch-found-naropa.sh` is the
+`found/`, NON-COMMERCIAL by its licence but served publicly; `fetch-found-naropa.sh` is the
 committed deliverable and every runner downloads from the Archive directly.
 Credit **Naropa Poetics Audio Archive** in any non-commercial use. **⚠ Flag:**
 `vx_waldman_crack` (item ID **ND012**) is **UNDATED** (no decade anchor).
@@ -483,14 +502,14 @@ a brand.
 |---|---|---|
 | **FluidR3 GM (default)** | FluidR3 GM/GS, Frank Wen | **MIT** — open, named honestly (see the sampled-instruments table above) |
 | **SGM Pro 15** | SGM (Shan's General MIDI) | permissive/open — named honestly |
-| **Seattle Glass Factory** | the Microsoft GM font shipped with Windows | ⚠ proprietary OEM font — **fetch-only, never committed, never redistributed** (tier 3); the extracted zones are gitignored like all media |
-| **Hamamatsu Three Forks** | a Yamaha XG-family font | ⚠ proprietary — tier 3, fetch-only |
-| **Oliphant Canvas** | a Roland SC-55 (Sound Canvas) sample set | ⚠ proprietary — tier 3, fetch-only |
-| **Terrapin Strand** | a Turtle Beach Montego font | ⚠ proprietary — tier 3, fetch-only |
-| **Gravitas Oversound** | the Gravis Ultrasound patch set | ⚠ legacy/abandonware, no clear grant — tier 3, fetch-only |
-| **Rossum's Robots** | an E-mu APS font | ⚠ proprietary — tier 3, fetch-only |
-| **Pocket Lad Forward** | a Game Boy Advance GM rip | ⚠ proprietary rip — tier 3, fetch-only |
-| **Thumbfruit** | a BlackBerry handset GM font | ⚠ proprietary — tier 3, fetch-only |
+| **Seattle Glass Factory** | the Microsoft GM font shipped with Windows | ⚠ proprietary OEM font — **tier 3**, no licence to rely on; the extracted zones are gitignored but do deploy |
+| **Hamamatsu Three Forks** | a Yamaha XG-family font | ⚠ proprietary — tier 3, no licence to rely on |
+| **Oliphant Canvas** | a Roland SC-55 (Sound Canvas) sample set | ⚠ proprietary — tier 3, no licence to rely on |
+| **Terrapin Strand** | a Turtle Beach Montego font | ⚠ proprietary — tier 3, no licence to rely on |
+| **Gravitas Oversound** | the Gravis Ultrasound patch set | ⚠ legacy/abandonware, no clear grant — tier 3 |
+| **Rossum's Robots** | an E-mu APS font | ⚠ proprietary — tier 3, no licence to rely on |
+| **Pocket Lad Forward** | a Game Boy Advance GM rip | ⚠ proprietary rip — tier 3, no licence to rely on |
+| **Thumbfruit** | a BlackBerry handset GM font | ⚠ proprietary — tier 3, no licence to rely on |
 | **Pure Analog** / **Pure FM** | this project's own synth voices (Minimoog-style analog model; DX7 ROM patch data) | in-house synthesis — see the DX7 patch-bank note below |
 
 **The rule this table encodes:** every ⚠ row is tier 3 in the media policy —
@@ -527,8 +546,8 @@ committed, recoverable deliverable. Workflow documented in CLAUDE.md
 
 | local dir / prefix | source | content | license |
 |---|---|---|---|
-| `stml/` (`stml_*` ids) | **Fatboy Slim / Norman Cook — "Skip to My Loops"** sample CD, [`fatboy-slim-skip-to-my-loops`](https://archive.org/details/fatboy-slim-skip-to-my-loops) on archive.org (single zip, 79 generically-named WAVs) | funky breakbeat **loops** (bpm recovered by the classifier), plus a handful of vocal/funk **chops** and one-shot **hits**. Big-beat DNA — wired into `bigbeat` (+ breakcore/jungle/boombap/triphop and the invented *break* genres), the *house*/*funk* chops pools, and the bigbeat/house/gabber/electro/miamibass/disco hit pools. | unauthorized rip of an out-of-print commercial sample CD; no license chain (the CD's own user license was of doubtful validity) — tier 3: never redistributed in any form, never in a distributed render |
-| `hits/bb_*.wav`, `hits/rave_a..d.wav` (`bb_horn_a/b`, `rave_a`…`rave_d` ids — recipe in `fetch-found-samples.sh`, silence-split from CD tracks) | **Dangerous CD Company — "Danger 1"** sample CD, [`dangerous-cd-company-danger-1-sample-cd`](https://archive.org/details/dangerous-cd-company-danger-1-sample-cd) on archive.org | early-90s rave brass stabs + hoover/stab one-shots — the bigbeat wing's rave-horn identity and the seed of the `rave_stab` pool | unauthorized rip of a commercial sample CD, no license chain — **tier 3**: never redistributed in any form, never in a distributed render *(ledger row added 2026-07-25; the fetch predates it)* |
+| `stml/` (`stml_*` ids) | **Fatboy Slim / Norman Cook — "Skip to My Loops"** sample CD, [`fatboy-slim-skip-to-my-loops`](https://archive.org/details/fatboy-slim-skip-to-my-loops) on archive.org (single zip, 79 generically-named WAVs) | funky breakbeat **loops** (bpm recovered by the classifier), plus a handful of vocal/funk **chops** and one-shot **hits**. Big-beat DNA — wired into `bigbeat` (+ breakcore/jungle/boombap/triphop and the invented *break* genres), the *house*/*funk* chops pools, and the bigbeat/house/gabber/electro/miamibass/disco hit pools. | unauthorized rip of an out-of-print commercial sample CD; no license chain (the CD's own user license was of doubtful validity) — tier 3: no licence chain; served publicly anyway (see the media policy) |
+| `hits/bb_*.wav`, `hits/rave_a..d.wav` (`bb_horn_a/b`, `rave_a`…`rave_d` ids — recipe in `fetch-found-samples.sh`, silence-split from CD tracks) | **Dangerous CD Company — "Danger 1"** sample CD, [`dangerous-cd-company-danger-1-sample-cd`](https://archive.org/details/dangerous-cd-company-danger-1-sample-cd) on archive.org | early-90s rave brass stabs + hoover/stab one-shots — the bigbeat wing's rave-horn identity and the seed of the `rave_stab` pool | unauthorized rip of a commercial sample CD, no license chain — **tier 3**: no licence chain; served publicly anyway (see the media policy) *(ledger row added 2026-07-25; the fetch predates it)* |
 
 ## MIDI trove (external drive: /mnt/sources/relocated/stellate-midi-corpus/rips — tools/fetch-midi-trove.sh, 2026-07)
 
@@ -567,9 +586,9 @@ in) the ledger; rows added after the 2026-07-25 release review. Two are
 
 | local files / ids | source | content | license |
 |---|---|---|---|
-| `breaks/amen_*.wav` (`amen_165`/`amen_170`/`amen_172`/`amen_175`) | [`amen-breaks`](https://archive.org/details/amen-breaks) on archive.org (`cw_amen*.wav` cuts) | four tempo-cuts of **the Amen break** — The Winstons, "Amen, Brother" (1969 B-side), the most-sampled drum recording in history; the `break_155_175` pool and the jungle/breakcore identity | never formally licensed for sampling by anyone in 50 years; no license chain — **tier 3**: fetch-only, never committed, never redistributed; any distributed render that includes it needs a human release decision |
-| `hits/goal_horn.wav` (`ca_horn`) | [`washingtoncapitalsgoalhorn`](https://archive.org/details/washingtoncapitalsgoalhorn) on archive.org | a real NHL goal horn (Washington Capitals) — canawave's goal-horn identity hit | ⚠ no license stated on the item, arena-horn recording of unknown provenance — treat as **tier 3**: fetch-only, never redistributed |
-| `78s/blues_vox_78.wav` (`blues_vox_78`) | [`78_after-youve-gone…gbia0262239b`](https://archive.org/details/78_after-youve-gone_pee-wee-hunt-and-his-orchestra-crammer-layton_gbia0262239b) (George Blood rip) | Pee Wee Hunt and his Orchestra, "After You've Gone" — vocal-band 78 | **NOT PD by age** (previously misfiled as a pre-1923 78): a c.1946 recording is protected in the US until c.2047 under the Music Modernization Act — treat as **tier 3**: fetch-only, never redistributed |
+| `breaks/amen_*.wav` (`amen_165`/`amen_170`/`amen_172`/`amen_175`) | [`amen-breaks`](https://archive.org/details/amen-breaks) on archive.org (`cw_amen*.wav` cuts) | four tempo-cuts of **the Amen break** — The Winstons, "Amen, Brother" (1969 B-side), the most-sampled drum recording in history; the `break_155_175` pool and the jungle/breakcore identity | never formally licensed for sampling by anyone in 50 years; no license chain — **tier 3**: no licence chain; committed to nothing, but served publicly like the rest of `found/` |
+| `hits/goal_horn.wav` (`ca_horn`) | [`washingtoncapitalsgoalhorn`](https://archive.org/details/washingtoncapitalsgoalhorn) on archive.org | a real NHL goal horn (Washington Capitals) — canawave's goal-horn identity hit | ⚠ no license stated on the item, arena-horn recording of unknown provenance — treat as **tier 3**: served publicly like the rest of `found/` |
+| `78s/blues_vox_78.wav` (`blues_vox_78`) | [`78_after-youve-gone…gbia0262239b`](https://archive.org/details/78_after-youve-gone_pee-wee-hunt-and-his-orchestra-crammer-layton_gbia0262239b) (George Blood rip) | Pee Wee Hunt and his Orchestra, "After You've Gone" — vocal-band 78 | **NOT PD by age** (previously misfiled as a pre-1923 78): a c.1946 recording is protected in the US until c.2047 under the Music Modernization Act — treat as **tier 3**: served publicly like the rest of `found/` |
 | `78s/horns_78.wav` (`horns_78`) | [`Europes_Society_Orch-Castle_Rag`](https://archive.org/details/Europes_Society_Orch-Castle_Rag) | Europe's Society Orchestra, "Castle House Rag" (Victor 35372, **1914**) — brass tutti window, the third shellac `horn_stab` | published pre-1923 → **US public domain by age** |
 
 ## Repertoire wave 3 — hits + breaks expansion (found/samples/ — tools/fetch-hits-expansion.sh, 2026-07)
