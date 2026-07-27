@@ -1,5 +1,5 @@
 {
- "_comment": "Runtime local-cache map for found sounds. Key = the exact archive.org URL a foundSource carries (genre-kernel.js SOURCES[id].url, passed verbatim to found-player decodeUrlToBuffer); value = the processed local file press.js uses (found/<id>.mp3). found-player.js prefers the local file and only falls back to archive.org when it is absent. Regenerate: see genre-kernel.js SOURCES + fetch-found-*.sh.",
+ "_comment": "OVERRIDE map for found sounds whose local file does not follow the found/<id>.mp3 convention. Key = the exact archive.org URL a foundSource carries (genre-kernel.js SOURCES[id].url, passed verbatim to found-player decodeUrlToBuffer); value = the processed local file press.js uses. Since found-player resolves SOURCES url -> id -> found/<id>.mp3 by convention, a new source needs NO row here; the browser never fetches found sound off-origin, so an unresolvable url is a hard error, not an archive.org stream. Gate: test/no-remote-sources.test.js. Regenerate: see genre-kernel.js SOURCES + fetch-found-*.sh.",
  "byUrl": {
   "https://archive.org/download/aporee_20938_24294/nov19tokyostation1934.ogg": "found/tokyo_station.mp3",
   "https://archive.org/download/aporee_44512_50607/soundmap201905198.mp3": "found/highway_night.mp3",

@@ -22,9 +22,10 @@
 //     FP._legacyBed A/B path.
 //
 // The decode helper reimplements the approach of the legacy engine's
-// decodeUrlToWav (wasm-audio.js, branch legacy-csound: Range-limited fetch ->
+// decodeUrlToWav (wasm-audio.js, branch legacy-csound: fetch ->
 // decodeAudioData -> mono trim) but keeps an AudioBuffer (we feed buffer
-// sources, not csound tables) and skips the IndexedDB layer.
+// sources, not csound tables) and skips the IndexedDB layer. It fetches
+// SAME-ORIGIN ONLY: every found source resolves to a file under found/.
 (function (root, factory) {
   if (typeof module !== "undefined" && module.exports) module.exports = factory();
   else root.FoundPlayer = factory();
@@ -445,18 +446,19 @@
   }
 
   // ---------------------------------------------------------------- decode
-  // browser-only. Range-limited fetch + decodeAudioData, returning a mono
+  // browser-only. Same-origin fetch + decodeAudioData, returning a mono
   // AudioBuffer (trimmed to maxSeconds).
   //
   // LEAD-IN SKIP + SPEECH BOOST (the spokenword fix): archive.org readings
   // open with 1.5-3.5 MINUTES of tape hiss before the poet speaks, and even
   // the speech sits at -28..-38 dBFS. Naively keeping "the first 90 s of the
   // file" therefore granulated pure hiss — the beds fired, the grains fired,
-  // and nothing audible came out. So: analyze 0.5 s RMS windows, start the
-  // kept region at the first SUSTAINED active audio, and if a chunk is all
-  // lead-in (< -45 dBFS peak window) progressively fetch a larger prefix of
-  // the file before giving up. Quiet sources get a boost-only normalization
-  // toward -20 dBFS active RMS (never attenuates, never clips).
+  // and nothing audible came out. So: analyze 0.5 s RMS windows and start the
+  // kept region at the first SUSTAINED active audio. (The files we serve are
+  // the already-trimmed, loudnorm'ed local transfers, so there is no ranged
+  // "reach deeper into the file" ladder any more — see localUrlFor.) Quiet
+  // sources get a boost-only normalization toward -20 dBFS active RMS (never
+  // attenuates, never clips).
   //
   // ...but ONLY when the material actually reads as SPEECH (the loon fix).
   // The boost was built so faint poets read clearly; applied blind, it hauled
@@ -466,7 +468,7 @@
   // rather than zeroed, because a mild cap still rescues near-digital-silence
   // transfers (the beds granulate SOMETHING) while +6 dB cannot move a lake
   // bird into the lead-vocal seat the way the old +24 dB ceiling could.
-  const FOUND_MAX_SECONDS = 90, FOUND_CHUNK_BYTES = 1024 * 1024, FOUND_MAX_BYTES = 8 * 1024 * 1024;
+  const FOUND_MAX_SECONDS = 90;
   const ACTIVE_FLOOR_DB = -45,   // a chunk whose loudest window is below this is lead-in
         ACTIVE_REL_DB = 14,      // active = within this of the chunk's peak window
         TARGET_RMS = 0.15,       // boost-only normalization target (~-16.5 dBFS)
@@ -501,12 +503,19 @@
     return { found: true, startSample: start * win, gain };
   }
 
-  // ---- LOCAL-CACHE resolver (stop the LIVE app depending on archive.org) ----
-  // Every foundSource carries the archive.org URL it was fetched from, but the
-  // very same audio is already on disk as found/<id>.mp3 (the processed, trimmed
-  // mono 44.1k file the offline press.js loads). found-manifest.json maps the
-  // exact archive URL -> that local file. Prefer the local file at runtime;
-  // fall back to archive.org (with a warning) ONLY for assets not cached.
+  // ---- LOCAL-ONLY resolver (the browser NEVER fetches found sound off-origin) --
+  // Every archive-backed foundSource carries the archive.org URL it was fetched
+  // from, but the very same audio is already on disk as found/<id>.mp3 (the
+  // processed, trimmed mono 44.1k file the offline press.js loads). Two ways to
+  // get from the one to the other:
+  //   1. found-manifest.json byUrl — the explicit map;
+  //   2. CONVENTION — SOURCES url -> id -> found/<id>.mp3, read off the kernel
+  //      registry itself.
+  // (2) is what makes the whole class of bug impossible: a new SOURCES row is
+  // local by construction, with no manifest edit to forget. That matters because
+  // sw.js can't cache a cross-origin response, so a source that missed the map
+  // used to re-stream megabytes from archive.org for every listener, every
+  // session. There is no remote path left — an unresolvable url fails loudly.
   let _manifestPromise = null;
   // site root derived from THIS script's URL (found-player.js lives in faust/):
   // a document-relative fetch only works when the page sits at the site root
@@ -533,14 +542,39 @@
     })();
     return _manifestPromise;
   }
-  // The local cache file for this URL (found/<id>.mp3), or null when the source
-  // is not archive-backed or has no cache mapping. No existence PROBE here — a
+  const ABS_URL = /^[a-z][a-z0-9+.-]*:/i;
+  const ORIGIN = (typeof location !== "undefined" && location && location.origin) || "";
+  // url -> site-relative local path, or null when nothing on disk can serve it.
+  // PURE (map in, string out) so the node gate can assert the whole SOURCES
+  // table resolves locally without a browser — test/no-remote-sources.test.js.
+  function localPathFor(url, map, sources) {
+    if (!url) return null;
+    if (!ABS_URL.test(url)) return url.replace(/^\.?\//, "");   // already site-relative (found/<id>.mp3)
+    if (map && map[url]) return map[url];                       // explicit manifest row
+    const idOf = sourceIndex(sources);                          // convention: SOURCES id -> found/<id>.mp3
+    const id = idOf && idOf.get(url);
+    return id ? "found/" + id + ".mp3" : null;
+  }
+  // url -> source id, memoized on the SOURCES object identity (the kernel script
+  // may not have run yet when found-player loads, so never cache an empty index).
+  let _srcIdx = null, _srcIdxOf = null;
+  function sourceIndex(sources) {
+    const K = (typeof globalThis !== "undefined" && globalThis.GenreKernel) || null;
+    const S = sources || (K && K.SOURCES) || null;
+    if (!S) return null;
+    if (_srcIdxOf !== S) {
+      _srcIdx = new Map(); _srcIdxOf = S;
+      for (const id of Object.keys(S)) if (S[id] && S[id].url) _srcIdx.set(S[id].url, id);
+    }
+    return _srcIdx;
+  }
+  // Resolve to a FETCHABLE same-origin url, or null. No existence PROBE here — a
   // HEAD/Range probe races the flood of decodes at ride start and flakily aborts;
-  // instead the decoder simply TRIES the local file and falls back on failure.
-  async function localCacheFor(url) {
-    if (!/\barchive\.org/i.test(url)) return null;   // already local / non-archive
-    const map = await loadFoundManifest();
-    return map[url] ? SITE_ROOT + map[url] : null;   // manifest values are site-root-relative (found/<id>.mp3)
+  // the decoder simply TRIES the file and fails loudly if it isn't there.
+  async function localUrlFor(url) {
+    if (ORIGIN && url.slice(0, ORIGIN.length + 1) === ORIGIN + "/") return url;   // samplePath, already site-resolved
+    const p = localPathFor(url, await loadFoundManifest());
+    return p ? SITE_ROOT + p : null;
   }
 
   // ---- decoded-buffer cache: LRU with a SAMPLE budget -------------------
@@ -659,87 +693,27 @@
     if (hit) return hit;
     const job = (async () => {
       const maxSec = maxSeconds || FOUND_MAX_SECONDS;
-      const local = await localCacheFor(url);
-      let audio = null, mono = null, pick = null;
-      // LOCAL FIRST: prefer the already-downloaded cache file so the live app
-      // never touches archive.org for anything we have on disk. Fall back to the
-      // archive stream only if the local fetch/decode genuinely fails.
-      if (local) {
-        try {
-          // the cache file is already trimmed + normalized and small (mono
-          // 44.1k). Fetch it WHOLE — the ranged lead-in probe below is tuned for
-          // compressed archive streams and would truncate an uncompressed WAV.
-          const r = await fetch(local, { cache: "force-cache" });
-          if (!r.ok) throw new Error("status " + r.status);
-          audio = await ctx.decodeAudioData(await r.arrayBuffer());
-          mono = new Float32Array(audio.length);
-          for (let c = 0; c < audio.numberOfChannels; c++) {
-            const s = audio.getChannelData(c);
-            for (let i = 0; i < mono.length; i++) mono[i] += s[i] / audio.numberOfChannels;
-          }
-          pick = analyzeActive(mono, audio.sampleRate);
-        } catch (e) {
-          console.warn("[found] local cache", local, "failed (" + (e && e.message) + ") — streaming archive.org for", url);
-          audio = mono = pick = null;
-        }
-      } else if (/\barchive\.org/i.test(url)) {
-        console.warn("[found] no local cache for", url, "— streaming archive.org");
+      const local = await localUrlFor(url);
+      // LOCAL ONLY: a source that resolves to no file under found/ is a registry
+      // bug, not a reason to reach the public internet. Fail loudly and let the
+      // scheduling sites do what they already do with an undecodable source —
+      // skip it silently — rather than re-streaming megabytes cross-origin,
+      // uncacheable by sw.js, for every listener on every session.
+      if (!local) {
+        console.error("[found] no local file for", url, "— register found/<id>.mp3 or a found-manifest byUrl row");
+        throw new Error("no local found file for " + url);
       }
-      if (!pick) {
-      // ENGINE-AUDIT 2026-07 Tier 1: the lead-in escalation used to refetch the
-      // prefix from byte 0 each round (1+4+8 = 13MB moved for an 8MB budget),
-      // and BOTH fallbacks (fetch error, partial-decode failure) pulled the
-      // whole file un-Ranged — a 100MB+ archive.org derivative on a phone.
-      // Now: grow() transfers only the missing tail (Range bytes=<have>-…) and
-      // concatenates, so the decoded prefix is byte-identical to the old
-      // full-prefix fetch; every fallback stays Range-capped at
-      // FOUND_MAX_BYTES — a container that won't decode from the full budget
-      // fails over to skip, not to an unbounded download. (A server that
-      // ignores Range returns 200 with the whole file; that response replaces
-      // the prefix and ends escalation, as before.)
-      const fetchUrl = url;
-      let bytes = FOUND_CHUNK_BYTES, have = null, partial = false;
-      const cat = (a, b) => {
-        const o = new Uint8Array(a.byteLength + b.byteLength);
-        o.set(new Uint8Array(a), 0); o.set(new Uint8Array(b), a.byteLength);
-        return o.buffer;
-      };
-      const grow = async (target) => {
-        if (have && (have.byteLength >= target || !partial)) return;
-        const from = have ? have.byteLength : 0;
-        try {
-          const r = await fetch(fetchUrl, { mode: "cors", headers: { Range: "bytes=" + from + "-" + (target - 1) } });
-          if (!(r.status === 206 || r.ok)) throw new Error("fetch " + r.status);
-          const buf = await r.arrayBuffer();
-          if (r.status === 206) { have = have ? cat(have, buf) : buf; partial = true; }
-          else { have = buf; partial = false; }   // server ignored Range: whole file
-        } catch (e) {
-          if (have) throw e;   // escalation blip with a prefix in hand — decode what we have
-          const r2 = await fetch(fetchUrl, { mode: "cors", headers: { Range: "bytes=0-" + (FOUND_MAX_BYTES - 1) } });
-          if (!r2.ok) throw new Error("fetch " + r2.status + " for " + fetchUrl);
-          have = await r2.arrayBuffer(); partial = r2.status === 206;
-        }
-      };
-      for (;;) {
-        try { await grow(bytes); } catch (e) { if (!have) throw e; }
-        try { audio = await ctx.decodeAudioData(have.slice(0)); }
-        catch (e) {
-          // partial prefix that won't decode: one escalation to the FULL byte
-          // budget (tail-only transfer), then decode-or-skip — never uncapped.
-          if (!partial || have.byteLength >= FOUND_MAX_BYTES) throw e;
-          await grow(FOUND_MAX_BYTES); bytes = FOUND_MAX_BYTES;
-          audio = await ctx.decodeAudioData(have.slice(0));
-        }
-        mono = new Float32Array(audio.length);
-        for (let c = 0; c < audio.numberOfChannels; c++) {
-          const s = audio.getChannelData(c);
-          for (let i = 0; i < mono.length; i++) mono[i] += s[i] / audio.numberOfChannels;
-        }
-        pick = analyzeActive(mono, audio.sampleRate);
-        if (pick.found || !partial || bytes >= FOUND_MAX_BYTES) break;
-        bytes = Math.min(FOUND_MAX_BYTES, bytes * 4);   // all lead-in — reach deeper into the file
+      // the cache file is already trimmed + normalized and small (mono 44.1k):
+      // fetch it WHOLE.
+      const r = await fetch(local, { cache: "force-cache" });
+      if (!r.ok) throw new Error("[found] " + local + " -> HTTP " + r.status);
+      const audio = await ctx.decodeAudioData(await r.arrayBuffer());
+      const mono = new Float32Array(audio.length);
+      for (let c = 0; c < audio.numberOfChannels; c++) {
+        const s = audio.getChannelData(c);
+        for (let i = 0; i < mono.length; i++) mono[i] += s[i] / audio.numberOfChannels;
       }
-      }
+      const pick = analyzeActive(mono, audio.sampleRate);
       const s0 = pick.found ? pick.startSample : 0;
       const n = Math.max(1, Math.min(mono.length - s0, Math.floor(audio.sampleRate * maxSec)));
       const out = ctx.createBuffer(1, n, audio.sampleRate);
@@ -1066,6 +1040,9 @@
     // loon fix: the F0 profile + classifiers behind the boost gate and the
     // auto-tune purity ceiling, exposed for direct tests (the _mixGrains pattern).
     f0Profile, _isWhistle: isWhistle, _isSpeechLike: isSpeechLike, _analyzeActive: analyzeActive,
+    // the local-only resolver, exposed so test/no-remote-sources.test.js can
+    // prove in pure node that no SOURCES row can resolve off-origin.
+    _localPathFor: localPathFor,
     // ZERO-STATIC 2.4: A/B flag (true = grain scheduler only, no loop render)
     // + the loop machinery exposed for direct tests.
     _legacyBed: false,
