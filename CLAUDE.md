@@ -38,6 +38,7 @@ in `tools/`; gates/harnesses in `test/`; docs in `docs/`.
 ```bash
 tools/fetch-found-sound.sh     # one-time: Internet Archive field recordings -> found/
 tools/fetch-found-samples.sh   # one-time: SoundFont GM + breaks/one-shots/vox -> found/samples/
+node tools/transcode-samples.js  # REQUIRED after a zone fetch: wav -> mp3 + re-bake SAMPLERS
 ./serve.sh                     # http://localhost:8777/  (serves index.html; needs http, not file://)
 ./verify.sh                    # orchestrator: matrix + validate + engine smoke
 node test/engine.test.js       # faust-press smoke: states render, gated on non-silence
@@ -256,7 +257,16 @@ docs in `docs/`.
     - `state-engine.js` — state → voice units + param/event mapping (shared by live + press)
     - `sampler.js` + `sf2.js` + `extract-gm.js` — the sampled layer (default):
       full General MIDI extracted from a FluidR3-class SoundFont, played back
-      through per-voice Faust effect chains; synths are the fallback/color
+      through per-voice Faust effect chains; synths are the fallback/color.
+      Zones ship as **mono 22.05 kHz 48 kbps MP3** (`tools/transcode-samples.js`,
+      ~14× smaller than the extracted wav at a higher measured SNR — instrument
+      zones hold 0.254% of their energy above 11 kHz). The zone metadata in
+      `K.SAMPLERS` rides with the format: `ls`/`le` are absolute sample indices
+      at `sr`, and `len` is the expected decoded length — WebKit prepends a
+      constant 1105-sample MP3 lead-in that the player detects by comparing the
+      decoded length to `len × (ctxRate / sr)`; Chromium and Firefox decode
+      sample-exact. `zones.json` is extractor output only; the browser reads
+      `K.SAMPLERS`
     - `live.js` — `FaustLive.exploreLive`: chord-bar JIT scheduler on the WebAudio
       clock, voice pools, eco-mode load shedding. Desktop rides a SharedArrayBuffer
       ring (`ring-player.js`, `stream-worker.js`, `stream-renderer.js`) and a
@@ -268,6 +278,9 @@ docs in `docs/`.
       boost-normalizes quiet speech (the spokenword fix)
     - `press.js` — offline render (faustwasm offline processors + PCM found mix)
 - `tools/` — Node CLIs + shell recipes: `fetch-found-*.sh`,
+  `transcode-samples.js` (the instrument-zone MP3 diet: converts in place and
+  re-bakes the `SAMPLERS` block — `--dry` measures without writing, a sampler
+  with any failed zone rolls back whole so one instrument is never half-rate),
   `make-mix-page.js` (mix/index.html + mix.m3u from a
   rendered playlist dir), etc. (All rendering is Faust-press now; the csound
   `render.sh` is on `legacy-csound`.)

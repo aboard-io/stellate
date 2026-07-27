@@ -22,6 +22,7 @@ git clone https://github.com/aboard-io/stellate && cd stellate
 tools/fetch-found-samples.sh         # SoundFont GM + breaks/one-shots/vox  → found/samples/
 tools/fetch-found-sound.sh           # field-recording beds                 → found/
 tools/fetch-found-bbc.sh             # BBC Sound Effects beds + chimes      → found/  (RemArc licence — see SOURCES.md)
+node tools/transcode-samples.js      # REQUIRED last step: instrument zones → mp3
 ./serve.sh                           # → http://localhost:8777/
 ```
 
@@ -29,6 +30,19 @@ The fetches are one-time and resumable; they pull from archive.org and the
 BBC's public CDN into gitignored directories. The app **runs without them** —
 sampled instruments fall back to synths, beds simply don't play — but the
 point of the thing is the sampled + found layer, so fetch before judging.
+
+**Don't skip the transcode.** `fetch-found-samples.sh` extracts the instrument
+zones from the SoundFont as 44.1 kHz WAVs (~102 MB); the committed `SAMPLERS`
+metadata in `engine/genre-kernel.js` names **mp3** files at 22.05 kHz, so
+without this step the sampler 404s on every zone and falls back to synths.
+`tools/transcode-samples.js` converts each zone (mono, 22.05 kHz, 48 kbps,
+gapless-tagged) and re-bakes the metadata that rides with it — `ls`/`le` are
+absolute sample indices and halve with the rate, and `len` is the expected
+decoded length that lets the player detect and cancel WebKit's constant
+1105-sample MP3 lead-in. It is idempotent (already-converted samplers are
+skipped), `--dry` encodes to a temp dir and reports the ratio without touching
+anything, and a sampler with any failed zone is rolled back whole rather than
+left half-converted. Rationale and measurements: [HOSTING.md §3](HOSTING.md).
 
 Optional extras:
 

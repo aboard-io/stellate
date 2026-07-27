@@ -84,9 +84,9 @@ never fetches** (facts-media §1). What ships to the droplet vs stays local:
 |---|---|---|---|---|
 | Beds | `found/*.wav` (53) | 270 MB | **MP3, ~40-50 MB** | Safe to compress: bed paths carry **no sample-aligned metadata** — no loop points, no slice grids — so MP3's ~26 ms encoder-delay prefix just becomes part of the ambience. (Not because the lead-in re-derivation absorbs it: `analyzeActive` works in 0.5 s RMS windows and does not recompute the prefix away.) Mono V2 lands ~100-130 kbps, ~5.5-6.5:1 |
 | Speech | `found/samples/speech/` (244) | 47 MB | **MP3, ~8 MB** | Same reason: the vocoder carrier routes through `FP.decodeUrlToBuffer` (`engine/faust/live.js:378-379`) and carries **no loop/slice metadata that depends on sample alignment** — the encoder-delay prefix is inert here too |
-| Instrument zones | `found/samples/instruments/` | 87 MB | **WAV** | Loop points are **absolute sample indices** into the decoded buffer (`sampler.js:308,327,494-496`); MP3/AAC encoder delay + browser-varying gapless trim shifts alignment → looped sustains click/detune (facts-media §4). Regenerable from the SF2 anyway |
-| Drum kits + perc | `found/samples/drums/`, `perc/` | 13.5 MB | **WAV** | Same extraction, same sample-index metadata |
-| Breaks / stml chops / hits / vox / 78s | `found/samples/…` | ~37 MB | **WAV** | Slice boundaries computed as time fractions of bpm/duration; MP3's ~26 ms lead ≈ half a 16th at 165-175 bpm → audibly sloppy chops (facts-media §4) |
+| Instrument zones | `found/samples/instruments/` | 102 MB WAV (measured) | **MP3, mono 22.05 kHz 48 kbps** — `tools/transcode-samples.js`; ~8 MB projected at the measured 14× | The loop-point objection was real and is now **solved, not ignored** — see "MP3 for the zones" below. Zones carry only 0.254% of their energy above 11 kHz, so 48k/22.05k measures a *higher* SNR (24.7 dB) than 64k/44.1k at 25% fewer bytes. Regenerable from the SF2 anyway |
+| Drum kits + perc | `found/samples/drums/`, `perc/` | 13.5 MB | **WAV** | Not in `K.SAMPLERS`, so the zone transcoder never sees them and they carry no baked `len` to correct against. Small enough that the diet isn't worth the second metadata path |
+| Breaks / stml chops / hits / vox / 78s | `found/samples/…` | ~37 MB | **WAV** | Slice boundaries computed as time fractions of bpm/duration; MP3's ~26 ms lead ≈ half a 16th at 165-175 bpm → audibly sloppy chops (facts-media §4). The zone correction below *would* transfer here, but only after these paths grow the same baked expected-length metadata |
 | Video clips | `found/video/*.mp4` (231) | ~275 MB | **as-is** | Already MP4, pre-cut loops |
 | Faust WASM | `engine/faust/dist/` | 4.1 MB | as-is | |
 | Manifests + app + vendor | | ~few MB | as-is | |
@@ -94,16 +94,71 @@ never fetches** (facts-media §1). What ships to the droplet vs stays local:
 | Video source reels | `found/video/lib/` | 443 MB | **stays local** | Crate source only; video-layer reads `clips.json`, never `lib/` |
 | Essentia models | `models/` | 20 MB | **stays local** | Offline python verifier only (`tools/audio-verifier.py`) |
 
-**Net server media ≈ 500 MB** (≈ 460 MB by the table, headroom to 500 —
-the plan's estimate; the deployed payload measured **608 MB** after the
-2026-07-09 diet, §7).
+**Net server media:** the plan estimated ≈ 500 MB and the deployed payload
+measured **608 MB** after the 2026-07-09 bed/speech diet (§7). Both numbers are
+historical: `found/video/` (~275 MB) stopped deploying when the laserdisc layer
+was removed, and the instrument crate goes 102 MB → ~8 MB with the zone diet.
+The payload is now a few hundred MB smaller than that record; the only
+authoritative figure is `du -sh /srv/stellate` on the droplet, so measure rather
+than quote this line.
+
+**What a listener actually downloads** (measured ratio, projected totals —
+confirm in devtools before quoting): one path leg is `BARS_PER_SEG` = 256 bars
+(`app/world.js:149`), about 8.5 minutes, so a ten-minute session is 3-5 genres.
+That was roughly 15 MB of zone WAVs; on MP3 zones it is ~3.4 MB. Shell, WASM and
+manifests are unchanged and cached across sessions.
 
 **Why MP3 and not OGG:** facts-media §4 leans Vorbis/Opus (sample-accurate),
 but **Safari cannot `decodeAudioData` OGG** — Safari 18.4's Ogg support is
 `<audio>`-element playback only; Web Audio decode of Ogg buffers still fails,
 and older Safari has zero Ogg support (facts-hosting §6). MP3 is the only
 universally decodable compressed choice for the `fetch`+`decodeAudioData`
-paths. MP3's alignment slop is exactly why zones/breaks stay WAV.
+paths — which is why the alignment question below had to be answered rather
+than avoided.
+
+### MP3 for the zones: the objection, and how it fell
+
+The objection was sound: zone loop points are **absolute sample indices** into
+the decoded buffer (`sampler.js:308,327,494-496`), 552 of 614 zones loop, and
+MP3's encoder delay shifts a decoded buffer by ~26 ms — so a looped sustain
+would click or drift. What was assumed and never checked is that the shift is
+*unknowable*. Measured, it is neither large nor variable:
+
+- **The encode carries a gapless tag.** `ffmpeg -ac 1 -ar 22050 -c:a libmp3lame
+  -b:a 48k -write_xing 1` writes the Xing/LAME frame that says how much to trim.
+  ffmpeg's own decode is then **sample-exact at the head**: a 79,360-sample
+  44.1 kHz zone is 39,680 samples at 22.05 kHz and decodes to exactly 39,680.
+  (A few zones decode a handful of samples long at the *tail*, where ffmpeg's
+  LAME tag understates the final frame's padding — inaudible trailing silence,
+  and `len` is always the measured decode, so nothing is estimated.) The node
+  press path needs no correction at all.
+- **Chromium and Firefox honour the tag too** — decoded length exact, signal
+  onset delta **0** at a 22,050 Hz context.
+- **WebKit does not.** It prepends a **constant 1105-sample (25 ms) lead-in**
+  and pads the tail; the decoded buffer is 1216 samples long, not 1105. Those
+  two numbers differ because the padding is at both ends: you **detect** with
+  the length and **correct** with the onset constant.
+
+25 ms is an audible seam on a loop, so it is corrected, not tolerated. The
+correction is arithmetic with no probing:
+
+```js
+const scale  = buf.sampleRate / zone.sr;                    // decodeAudioData resamples to the ctx rate
+const leadIn = buf.length > zone.len * scale + 8 ? Math.round(1105 * scale) : 0;
+```
+
+Two metadata consequences, both baked by `tools/transcode-samples.js`:
+
+- `ls`/`le` ride the same 2:1 rate change as the audio (44100 → 22050); leaving
+  them alone would detune every loop.
+- **`len` is new** — the expected decoded length per zone. Without it there is
+  nothing to compare `buf.length` against, and the WebKit lead-in is
+  undetectable. `sr` moves per *sampler*, not per zone, so a sampler converts
+  all-or-nothing; one failed zone leaves that whole instrument on WAV.
+
+The browser reads all of this from the `SAMPLERS` block baked into
+`engine/genre-kernel.js`; `found/samples/instruments/*/zones.json` is never
+fetched at runtime and need not deploy.
 
 **Code-change surface for MP3 beds/speech** — decode needs **nothing**
 (`decodeAudioData` is format-agnostic, and node's press decodes via ffmpeg —
@@ -134,6 +189,12 @@ This list is a snapshot, not the law. The true surface is
 `grep -rn 'found/.*\.wav' engine/ tools/ test/` — run it before converting and
 again after, and chase every hit to zero.
 
+The zone diet has almost no such surface, because zone paths are not literals
+anywhere: `K.SAMPLERS[id].zones[].file` *is* the data, and
+`tools/transcode-samples.js` re-bakes it (file, `ls`, `le`, `len`, `sr`) in the
+same pass that converts the audio. `tools/ci-standin-media.js` derives its path
+list from `K.SAMPLERS`, so CI follows the rename with no edit.
+
 Convert in the repo, not on the server — local tree and droplet stay twins.
 
 ## 4. Why not blob-packing / slicing
@@ -156,18 +217,22 @@ layer on top of a decode path that deliberately decodes each zone verbatim
 `sampler.js:345-349`), and the URL-keyed caches lose their keying.
 
 **If request overhead ever shows up in the field:** the first optimization is
-**per-instrument zone packs** — one GET per instrument directory (~20 files
-instead of ~600), unpacked at the zone boundary where `zones.json` metadata
-already lives. Noted; not built.
+**per-instrument zone packs** — one GET per instrument directory (~108 requests
+instead of ~614), unpacked at the zone boundary where the `SAMPLERS` metadata
+already lives. Noted; not built. The MP3 zone diet cut the *bytes*, not the
+request count, so this option is unchanged by it.
 
 ## 5. The droplet recipe
 
 **Size: $6/mo Basic** (1 GiB RAM / 25 GiB disk / 1 TiB transfer). The $4 tier's
-10 GiB disk technically fits today's ~500 MB media + OS, but leaves no room for
-media growth, logs, journal, and staged deploys — $2/mo buys 2.5× disk and 2×
-transfer (facts-hosting §3). Transfer overage is $0.01/GiB; a heavy fresh
-session is roughly 100-300 MB, so 1 TiB ≈ 3,500-10,000 heavy first visits a
-month before §6 matters.
+10 GiB disk fits the media + OS with room to spare now that video is gone and
+the zones are MP3, but leaves none for media growth, logs, journal, and staged
+deploys — $2/mo buys 2.5× disk and 2× transfer (facts-hosting §3). Transfer
+overage is $0.01/GiB; the 100-300 MB "heavy fresh session" figure dates from the
+video era and is now far too high — a ten-minute session is projected at a few
+MB (§3) — so 1 TiB buys many multiples of the old 3,500-10,000 first visits a
+month before §6 matters. Read real numbers off the access log before acting on
+either estimate.
 
 **nginx** (sketch — the two isolation headers are the load-bearing part;
 remember `add_header` does **not** inherit into a `location` that sets its
@@ -333,6 +398,10 @@ were correctly excluded from the immutable set — .json never belonged in it).
 Production-verified: headless chromium rode vaporwave on stellate.app, MP3
 beds fetched 200 + decoded, maxRms 0.207, zero errors
 (test/mp3-bed-decode-run.js is the committed local twin of that probe).
+The **instrument-zone** diet (102 MB → ~8 MB projected, §3) came later and lands
+by `tools/transcode-samples.js`; it needs no server change beyond re-running the
+rsync and MEDIA_MANIFEST steps, since the filenames change and the immutable
+invariant only forbids content changing *under an unchanged name*.
 
 **Launch checklist:**
 
@@ -345,7 +414,8 @@ beds fetched 200 + decoded, maxRms 0.207, zero errors
    on a `found/` media response (`curl -sI`), **and** on a worker script —
    `curl -sI https://stellate.app/engine/faust/stream-worker.js` — so
    worker-script COEP is pinned.
-6. Run the MP3 bed/speech conversion + touchpoint renames (§3) in the repo;
+6. Run the MP3 bed/speech conversion + touchpoint renames (§3) in the repo, and
+   `node tools/transcode-samples.js` for the zones (re-bakes `SAMPLERS`);
    re-bake determinism fixtures; commit.
 7. rsync deploy with the deny-list; generate + push MEDIA_MANIFEST.
 8. **Smoke — SAB path:** run the live-resilience browser gate against staging.
@@ -354,7 +424,10 @@ beds fetched 200 + decoded, maxRms 0.207, zero errors
    `crossOriginIsolated === true` in devtools and ride a genre on the desktop
    ring engine (which throws loudly if isolation is missing, `live.js:269`).
 9. **Smoke — Safari:** play a bed-heavy genre (MP3 `decodeAudioData` path) and
-   a sampled genre (WAV zones) in Safari.
+   a sampled genre with long looped sustains (strings, organ, pads) in Safari —
+   WebKit is the one engine that prepends the 1105-sample lead-in (§3), so a
+   clicking or detuned loop there means the `len`-based correction is missing or
+   mis-scaled, not that MP3 zones don't work.
 10. **Smoke — mobile:** Media Session lock-screen check on a phone (the
     wavOut `<audio>` path), plus video background toggle (no-cors `<video>`
     same-origin under require-corp).
