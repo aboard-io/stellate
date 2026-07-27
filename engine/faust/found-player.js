@@ -553,7 +553,11 @@
     if (map && map[url]) return map[url];                       // explicit manifest row
     const idOf = sourceIndex(sources);                          // convention: SOURCES id -> found/<id>.mp3
     const id = idOf && idOf.get(url);
-    return id ? "found/" + id + ".mp3" : null;
+    // Beds live at found/<id>.64.mp3 — the bitrate rides in the NAME because
+    // found/ is immutable-by-name (nginx one-year immutable, the SW media cache
+    // never revalidates, the deploy aborts on a changed hash under an unchanged
+    // name). Re-encode the beds and you mint new names; old ones simply go.
+    return id ? "found/" + id + ".64.mp3" : null;
   }
   // url -> source id, memoized on the SOURCES object identity (the kernel script
   // may not have run yet when found-player loads, so never cache an empty index).

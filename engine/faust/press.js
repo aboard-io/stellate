@@ -13,7 +13,7 @@
 //     pump/crackle/grit/comp/tone/mcut sweeps), fed [dryL,dryR,rev,del,pp,0].
 //
 // Found sources decode via ffmpeg (f32le mono 44100), resolved from the state's
-// fsPath || samplePath || found/<id>.mp3 (then .wav) relative to the repo root.
+// fsPath || samplePath || found/<id>.64.mp3 (then .mp3, .wav) relative to the repo root.
 // Verify output: ffmpeg volumedetect (printed at the end).
 "use strict";
 const fs = require("fs");
@@ -164,8 +164,14 @@ async function decodeInputs(state, sched, opts) {
   // top-level beds ship as MP3 since the payload diet (HOSTING.md §3); prefer
   // found/<id>.mp3 and keep the .wav fallback for any not-yet-converted tree
   const bedPath = (id) => {
-    const mp3 = path.join(SITE, "found", id + ".mp3");
-    return fs.existsSync(mp3) ? mp3 : path.join(SITE, "found", id + ".wav");
+    // beds carry their bitrate in the name (immutable-by-name; see
+    // tools/transcode-beds.js). Try the current encode, then the pre-rename
+    // name, then wav, so a partially-converted tree still renders.
+    for (const ext of [".64.mp3", ".mp3", ".wav"]) {
+      const p = path.join(SITE, "found", id + ext);
+      if (fs.existsSync(p)) return p;
+    }
+    return path.join(SITE, "found", id + ".mp3");
   };
   // ---- found layer sources ----
   const usedSrc = new Set(sched.found.map(f => f.srcId));

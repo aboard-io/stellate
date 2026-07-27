@@ -25,7 +25,11 @@ const DUR = QUICK ? 8 : 24;   // seconds pressed per state — enough for drums+
 function resolvePaths(state) {
   for (const s of state.foundSources) {
     if (s.synthText) continue;   // SPEECH organ source: no file — press.js synthesizes it
-    s.fsPath = s.fsPath || (s.samplePath ? path.join(HERE, "..", s.samplePath) : path.join(HERE, "..", "found", s.id + ".mp3"));
+    // beds carry the bitrate in the name; fall back through the pre-rename
+    // names so a partially-converted found/ tree still renders.
+    s.fsPath = s.fsPath || (s.samplePath ? path.join(HERE, "..", s.samplePath)
+      : [".64.mp3", ".mp3", ".wav"].map(e => path.join(HERE, "..", "found", s.id + e)).find(fs.existsSync)
+        || path.join(HERE, "..", "found", s.id + ".64.mp3"));
     if (!fs.existsSync(s.fsPath)) {
       console.error(`missing ${s.fsPath} — run ./fetch-found-sound.sh / ./fetch-found-samples.sh`);
       process.exit(2);
@@ -143,7 +147,7 @@ function press(name, state) {
   // 1) the committed default song (royal road, tokyo bed) — engine's own state
   {
     const s = E.defaultState();   // ids tokyo/tsukiji/asakusa all map to the one real local wav
-    s.foundSources.forEach((f) => { f.fsPath = path.join(HERE, "..", "found", "tokyo_station.mp3"); });
+    s.foundSources.forEach((f) => { f.fsPath = path.join(HERE, "..", "found", "tokyo_station.64.mp3"); });
     presses.push(press("default_song", s));
   }
 

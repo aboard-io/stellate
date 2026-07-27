@@ -24,7 +24,7 @@
 //   - every GenreKernel SAMPLERS zone     -> found/samples/instruments/<dir>/<file>
 //   - foundSources of E.defaultState() and K.track(<every genre>, seeds 1..3)
 //     (catches drum-kit / perc-bank paths, which aren't exported directly)
-//   - found/tokyo_station.mp3 + found/tw_vocal.mp3 (engine.test remaps/strips)
+//   - found/tokyo_station.64.mp3 + found/tw_vocal.mp3 (engine.test remaps/strips)
 //
 // NEVER overwrites: any path that already exists on disk (real fetched media,
 // or a previous stand-in) is skipped, so running this on a dev machine with a
@@ -49,7 +49,7 @@ const addState = (st) => {
   }
 };
 
-for (const id of Object.keys(K.SOURCES)) paths.add("found/" + id + ".mp3");
+for (const id of Object.keys(K.SOURCES)) paths.add("found/" + id + ".64.mp3");   // beds carry the bitrate in the name (immutable-by-name)
 for (const s of Object.values(K.SAMPLES)) paths.add("found/samples/" + s.file);
 for (const S of Object.values(K.SAMPLERS))
   for (const z of S.zones) paths.add("found/samples/instruments/" + S.dir + "/" + z.file);
@@ -58,7 +58,7 @@ addState(E.defaultState());
 for (const g of Object.keys(K.GENRES))
   for (const seed of [1, 2, 3]) addState(K.track(g, { seed }));
 
-paths.add("found/tokyo_station.mp3");   // engine.test maps the default song's bed here
+paths.add("found/tokyo_station.64.mp3");   // engine.test maps the default song's bed here
 paths.add("found/tw_vocal.mp3");        // stripped by engine.test, used by full presses
 
 // ---- deterministic quiet noise, 1s PCM16 mono 44.1k (~86KB per file) ----
