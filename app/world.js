@@ -3,10 +3,10 @@
 // blend/space constants (SNAP/CUTOFF/BARS_PER_SEG) + progression vocabulary.
 // No app imports: this is the geometric/constant foundation everything builds on.
 export const POS={
-  ragtime:[760,14640],
+  ragtime:[753,14638],
   romanticism:[980,1650], chamber:[600,2050], impressionism:[470,1150], postminimal:[1280,950], symphony:[1330,4300],
   punk:[1450,7400], grunge:[1236,7959], indie:[1620,7700], postrock:[1200,8600],
-  cryptvespers:[1058,12288], nocturnesmash:[1396,10084], glacialgabber:[1956,15254], breakbop:[1206,17294], atticlament:[1145,12729], hazebunker:[998,8830], salsa:[262,12820], samba:[674,12142], reggaeton:[337,12820], raga:[241,16927], celtic:[2045,5870], flamenco:[1065,16152], trap:[1504,8654], bigband:[814,14181],
+  cryptvespers:[1058,12288], nocturnesmash:[1396,10084], glacialgabber:[1956,15254], breakbop:[1206,17294], atticlament:[1145,12729], hazebunker:[998,8830], salsa:[253,12820], samba:[674,12142], reggaeton:[347,12820], raga:[241,16927], celtic:[2045,5870], flamenco:[1065,16152], trap:[1504,8654], bigband:[814,14181],
   runwaystomp:[1264,22031],
   octanerush:[2097,4038],
   halogloss:[1965,3320],
@@ -42,7 +42,7 @@ export const POS={
   aldente:[2001,24486], umpirehouse:[1735,12741], pigeonstep:[1052,17952], dmvstep:[1014,17387],
   towncrier:[1026,13988], chickadeecore:[1355,18505], floppycore:[1681,19828], cerealwave:[1913,14117],
   laundrycore:[1556,19248], auctioncore:[1647,15288], dialupgabber:[1423,11742], afrobeat:[1237,17573],
-  // fugue hand-nudged into the classical corner after the 228-genre re-bake (explorer gate D2e: fugue's 3 nearest must include prelude; the relaxation packed it out toward newage/picnicswing — grid-searched under the gate's own constraints to a spot whose 3 nearest are prelude/cloisterloom/submarinelullaby, min sep 700). breakcore/budstep/patchcordmirage each nudged ~120 units off their bake spots: the relaxation left them 86-89.5 from ebm/idm/dub, under MIN_SEP_FLOOR 90 (min pair after nudges: 106.6, funk/octopusminuet).
+  // fugue hand-nudged into the classical corner after the 228-genre re-bake (explorer gate D2e: fugue's 3 nearest must include prelude; the relaxation packed it out toward newage/picnicswing — grid-searched under the gate's own constraints to a spot whose 3 nearest are prelude/cloisterloom/submarinelullaby, min sep 700). breakcore/budstep/patchcordmirage each nudged ~120 units off their bake spots: the relaxation left them 86-89.5 from ebm/idm/dub, under MIN_SEP_FLOOR 90. Later arrivals re-crowded the field, so salsa/reggaeton (75.0) and ragtime/reedrush (80.0) were pushed apart along their own axis with the midpoint held — the smallest move that clears the floor, and it leaves all four genres' 3-nearest lists identical. Min pair now 93.1, flamenco/hexagonstampede.
   fugue:[196,90], dnb:[1376,19860], footwork:[1838,21125], happyhardcore:[1992,10036],
   hardstyle:[1369,9731], eurodance:[2026,9339], singeli:[1267,16846], bebop:[694,14061],
   bluegrass:[1618,5199], ska:[1560,2064], klezmer:[113,13376], funk:[1030,7806],
@@ -62,7 +62,7 @@ export const POS={
   brinedub:[942,12636], attichouse:[636,14739], driftrot:[587,8616], ceilingfanchop:[467,15416],
   strawdub:[1004,21288], wickershimmy:[1247,14807], shellacsplice:[1678,5888], gourdscuttle:[1536,3401],
   auroragallop:[696,16784], atticfanthrashsplice:[794,11310], obelisktrot:[312,12441], oakdublilt:[1007,22664],
-  duststrut:[1255,20605], reedrush:[838,14658], hearthsway:[370,6712], graingroove:[426,9354],
+  duststrut:[1255,20605], reedrush:[845,14660], hearthsway:[370,6712], graingroove:[426,9354],
   hvacbop:[322,14708], moldcore:[588,16087], hydracore:[1706,10048], ashfunk:[496,14713],
   steamdub:[830,7917], seraphswing:[1438,1394], androidlament:[1653,10719], lasertemple:[1164,12307],
   oscillatorminuet:[1016,6498], cometwhistle:[1706,11390], chromepiston:[740,16094], patchcordmirage:[2077,23742],
