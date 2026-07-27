@@ -1,7 +1,7 @@
 # TODO — the running queue
 
 Short, durable list of asked-for-but-not-yet-built work. Anything with a real
-design behind it graduates to `docs/ROADMAP.md`; anything shipped leaves here.
+design behind it lands here in full; anything shipped moves to the DONE list.
 
 ## DONE 2026-07-27 — shipped to stellate.app
 

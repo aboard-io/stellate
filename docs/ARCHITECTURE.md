@@ -2,7 +2,7 @@
 
 One pass through the system: how a genre (a *point in space*) becomes sound, and
 which laws keep every backend hearing the same music. Read `docs/GENRE-SPACE.md`
-for the conceptual model and `docs/KERNEL-MAP.md` for the kernel's internal
+for the conceptual model and the kernel source itself for its internal
 layout; this doc is the wiring diagram between files.
 
 ## The pipeline
@@ -39,7 +39,7 @@ layout; this doc is the wiring diagram between files.
 
 ### 1. `engine/genre-kernel.js` — the space
 A genre is a bundle of ~25 typed dimensions (scalar ranges, enum pools, recipe
-bundles) stored as an object literal in `GENRES` (249 anchors). `resolveMulti`
+bundles) stored as an object literal in `GENRES` (274 anchors). `resolveMulti`
 takes a weight vector over existing anchor names, filters to `GENRES[g] && w>0`,
 renormalizes, and produces ONE resolved state: scalars are convex combinations
 (`Σ wᵢ·loᵢ … Σ wᵢ·hiᵢ`, then one seeded sample inside); pools DRAW members with
@@ -86,8 +86,8 @@ live so the mix is the same.
 ### The verifier (a parallel, offline coordinate system)
 `engine/genre-verifier.js` extracts a **23-symbolic-feature** vector from
 `buildEvents` output and scores any state against per-genre `TARGETS` boxes.
-`matrix` builds the 249×249 confusion matrix; the kernel is tuned until every
-genre scores highest as itself (**249/249 diagonal-dominant**). This is the
+`matrix` builds the 274×274 confusion matrix; the kernel is tuned until every
+genre scores highest as itself (**274/274 diagonal-dominant**). This is the
 falsifiable "does this actually sound like jungle?" gate — and the one genuine
 measured embedding in the system (`docs/GENRE-SPACE.md`, and the Workstream-1
 genre-intelligence tooling built on top of it).
@@ -99,7 +99,7 @@ genre-intelligence tooling built on top of it).
    dimension is **drawn LAST in `resolveMulti` and consumes ZERO rng when
    absent** — that is how the space grows without regressing fixtures.
 2. **The matrix stays diagonal-dominant.** Every genre/kernel change re-runs
-   `node engine/genre-verifier.js matrix --no-cache` → must stay 249/249.
+   `node engine/genre-verifier.js matrix --no-cache` → must stay 274/274.
 3. **Plain-script load model.** `index.html` loads `engine/*.js` + `app/*.js` as
    ordered plain `<script>` tags (see the load order below); `engine/` stays
    classic globals (no ES modules, no bundler). `app/` *is* ES modules.
@@ -112,10 +112,15 @@ genre-intelligence tooling built on top of it).
 ```
 engine/theory.js → engine/pipes.js → engine/csd-engine.js →
 engine/genre-kernel.js → engine/genre-verifier.js → engine/namebank.js →
-engine/speech.js →
-engine/demo-layer.js → engine/faust/state-engine.js →
-engine/faust/found-player.js → engine/faust/sampler.js →
-engine/faust/live.js → app/main.js  (ES-module entry for the app/ tree)
+engine/midi-export.js → engine/speech.js → engine/demo-layer.js →
+engine/faust/state-engine.js → engine/faust/found-player.js →
+engine/faust/sampler.js → engine/faust/live.js →
+app/analytics.js → vendor/goatcounter/count.js →
+app/main.js  (ES-module entry for the app/ tree)
+
+`test/boot-smoke.js` is the gate: it parses this list out of index.html, replays
+it in a sandbox, and fails if a script moves, disappears or stops publishing its
+global. access.html and embed.html hand-maintain their own shorter lists.
 ```
 
 Each `engine/*.js` publishes one global (`CsdTheory`, `CsdPipes`, `CsdEngine`,
@@ -123,7 +128,6 @@ Each `engine/*.js` publishes one global (`CsdTheory`, `CsdPipes`, `CsdEngine`,
 wrapper, so the same files run under Node (`require`) for the CLI and gates.
 
 ## Where to go next
-- `docs/KERNEL-MAP.md` — inside the kernel.
 - `docs/ADDING-A-GENRE.md` — add an anchor without breaking the laws.
 - `docs/INVARIANTS.md` — what is *proven* about the blend algebra.
 - `engine/faust/VOICES.md` — the recipe→param voice mappings (stage 3 detail).

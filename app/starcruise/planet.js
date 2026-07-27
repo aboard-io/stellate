@@ -1,6 +1,6 @@
 // planet.js — DETERMINISTIC PROCEDURAL PLANET for the 🛸 star-cruise 3D mode.
 //
-// THE STRUCTURAL FIX (see docs/STARCRUISE-LIBS.md): the galaxy star-field and the
+// THE STRUCTURAL FIX: the galaxy star-field and the
 // landing surface used to be SEPARATE coordinate regions, so touching down swapped
 // scenes = a hard CUT. This module builds ONE real planet body whose ground height
 // is analytically CPU-samplable, so the surface/band + alien feet can sit EXACTLY on

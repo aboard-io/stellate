@@ -13,11 +13,10 @@ Everything is **procedural** — no external art / model / texture assets. Low-r
 is fine (it's the look). Aesthetic: low-res framebuffer upscaled nearest,
 vertex-snapping, affine warp, dithering, flat/vertex-lit low-poly.
 
-Status: **SCAFFOLD** (this commit). The controller, the five module contracts, the
-vendored engine, the button, the real hooks, and a headless render proof are in
-place. `traits/alien/backdrop/postfx/flight` are **stubs** that satisfy the
-contracts and render a colored-placeholder scene end-to-end; the Build phase
-replaces each stub's body behind the same contract.
+Status: **BUILT**. The five modules the scaffold sketched are real —
+`app/starcruise/` is ~7,300 lines across ten files, with `alien.js` alone at
+~2,500. The contracts below are what shipped, not what was planned; the
+placeholder scene they originally rendered is long gone.
 
 ---
 
