@@ -44,7 +44,9 @@
     text-transform:uppercase;color:var(--dim);margin:0 0 .35rem}
   #about .ab-play{margin:0 0 .8rem;color:var(--dim);font-size:.8rem;line-height:1.55}
   #about .ab-play b{color:var(--ink)}
-  #about .ab-foot{margin:0;padding-top:.6rem;border-top:1px solid var(--line);
+  /* attribution: sits directly under the h2, so it wears a bottom rule as a
+     header underline — not the top rule it had when it was the card's footer */
+  #about .ab-foot{margin:0 0 .7rem;padding-bottom:.6rem;border-bottom:1px solid var(--line);
     color:var(--dim);font-size:.76rem}
   .card h2{cursor:pointer;user-select:none}
   .card.min{padding:.45rem .9rem}
@@ -132,7 +134,7 @@
   .vz-g i{width:9px;height:9px;border-radius:2px;display:inline-block}
   .vz-g b{color:var(--mint);font-weight:400}
   .vz-info{margin-top:.42rem;font:14px VT323,monospace;color:var(--dim);line-height:1.4}
-  .radar{display:block;margin:.25rem auto 0;max-width:340px}
+  .radar{display:block;margin:.25rem auto 0;max-width:400px}   /* 340 * 260/220 — holds the rose's on-screen size against the widened label bleed */
   .radar .rax{font:11px VT323,monospace;fill:var(--dim);letter-spacing:.04em}
   .vz-feelnums{text-align:center;font:14px VT323,monospace;color:var(--mint);opacity:.92;margin-top:.15rem}
   .vz-feelnums b{color:var(--dim);font-weight:400}

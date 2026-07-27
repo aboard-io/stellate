@@ -87,7 +87,7 @@ export function drawMap(){
       svg.appendChild(el("circle",{cx,cy,r:rad.toFixed(1),fill:rg.color,opacity:.055}));   // soft territory wash
       const t=el("text",{x:cx,y:cy,"text-anchor":"middle","class":"region"});
       t.style.fontSize=(30*rfs).toFixed(1)+"px"; t.style.fill=rg.color;
-      t.textContent=rg.label; svg.appendChild(t);
+      t.textContent=alienize(rg.label); svg.appendChild(t);
     }
   }
   if(S.waypoints.length>1){

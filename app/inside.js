@@ -568,7 +568,7 @@ export function scheduleBarNotes(info){
 // neon value polygon. Small element count; rebuilt only while the modal is open.
 function radarSVG(feel){
   if(!feel.length) return "";
-  const cx=110, cy=106, R=72, n=feel.length;   // a touch more label air for the 11-axis rose
+  const cx=110, cy=106, R=72, n=feel.length;
   const ang=i=>-Math.PI/2+i*2*Math.PI/n, pt=(i,r)=>[cx+Math.cos(ang(i))*R*r, cy+Math.sin(ang(i))*R*r];
   const ring=r=>feel.map((_,i)=>pt(i,r).map(v=>v.toFixed(1)).join(",")).join(" ");
   let grid="";
@@ -579,7 +579,13 @@ function radarSVG(feel){
   const vpts=feel.map(([,v],i)=>pt(i,Math.max(0.02,v)).map(x=>x.toFixed(1)).join(",")).join(" ");
   const dots=feel.map(([,v],i)=>{ const [vx,vy]=pt(i,Math.max(0.02,v)); return `<circle cx="${vx.toFixed(1)}" cy="${vy.toFixed(1)}" r="2.2" fill="var(--cyan)"/>`; }).join("");
   const poly=`<polygon points="${vpts}" fill="rgba(255,110,199,.18)" stroke="var(--pink)" stroke-width="1.7"/>`;
-  return `<svg viewBox="0 0 220 220" class="radar" preserveAspectRatio="xMidYMid meet">${grid}${poly}${dots}</svg>`;
+  // The box is WIDER than the rose (which lives in 0..220) because the axis
+  // labels sit at r=1.26 and are centred on the spoke: the two horizontal
+  // extremes stick out furthest, and the longest name — "adventure", at exactly
+  // 180 degrees — ran 7px past x=0 and lost its first letter. 20px of bleed each
+  // side clears it and leaves room for a longer axis name later. Keep .radar's
+  // max-width in step with this width or the rose shrinks on screen.
+  return `<svg viewBox="-20 0 260 220" class="radar" preserveAspectRatio="xMidYMid meet">${grid}${poly}${dots}</svg>`;
 }
 // the VOICE TIMELINE as HTML: a lane per voice, note events drawn as absolutely
 // positioned blocks in a beat-gridded roll. x = onset (beat/cbeats), width =

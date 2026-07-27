@@ -8,7 +8,7 @@
 #
 # The whole thing is readable: https://github.com/aboard-io/stellate
 
-Contact: mailto:ford@ftrain.com
+Contact: mailto:paul.ford@aboard.com
 Contact: https://github.com/aboard-io/stellate/issues
 Expires: 2027-07-25T00:00:00.000Z
 Preferred-Languages: en
