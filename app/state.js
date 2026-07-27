@@ -2,8 +2,8 @@
 // threads state through here (S / set / subs), instead of leaning on accidental
 // globals. Also home to the preact/htm render helpers, the K/V/E engine aliases,
 // esc/deep micro-helpers, and the URLSearchParams the ?query flags read from.
-import { h, render } from "../vendor/preact/preact.mjs";
-import htm from "../vendor/htm/htm.mjs";
+import { h, render } from "../vendor/preact/preact.js";
+import htm from "../vendor/htm/htm.js";
 export { render };
 export const html = htm.bind(h);
 export const K=GenreKernel, V=GenreVerifier, E=CsdEngine;

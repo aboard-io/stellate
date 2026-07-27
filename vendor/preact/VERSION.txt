@@ -30,7 +30,7 @@ Nothing else in the tree imports preact directly. app/starcruise.js is
 deliberately kept off this module graph for its own reasons (Three.js must stay
 off the boot path) — see the header comment there.
 
-ONE MODIFICATION — the trailing `//# sourceMappingURL=preact.mjs.map` line was
+ONE MODIFICATION — the trailing `//# sourceMappingURL=preact.js.map` line was
 removed. It is a relative name, but the browser resolves it against the module's
 own url, and with the file served from here devtools went looking for a map we
 do not ship; while the module still came from esm.sh it resolved there and the
@@ -39,3 +39,12 @@ files (LOFO), so the reference had nothing to point at either way.
 
 Otherwise the esm.sh es2022 build byte-for-byte. Self-contained: it imports
 nothing, so there is no second-hop fetch to vendor.
+
+RENAMED .mjs -> .js
+-------------------
+Upstream ships preact.mjs; we serve preact.js. nginx's stock mime.types has no
+entry for .mjs, so it served the module as application/octet-stream and every
+browser refused it — strict MIME checking applies to ES modules, so the import
+threw and app/main.js's whole graph died. .js is already mapped to
+text/javascript everywhere, which makes this work on any host with no server
+config to remember. Same rename, same reason, in ../htm.

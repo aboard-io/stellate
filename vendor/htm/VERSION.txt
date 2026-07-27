@@ -23,9 +23,15 @@ panel be written as html`<div>...</div>` with no build step and no JSX
 transform. That "no bundler" property is the reason this project uses it, so
 vendoring it costs 1.2 KB and keeps the property.
 
-ONE MODIFICATION — the trailing `//# sourceMappingURL=htm.mjs.map` line was
+ONE MODIFICATION — the trailing `//# sourceMappingURL=htm.js.map` line was
 removed, for the reason given in ../preact/VERSION.txt: we ship no .map files,
 so the reference only sent devtools hunting for a file that is not there.
 
 Otherwise the esm.sh es2022 build byte-for-byte. Self-contained: imports
 nothing.
+
+RENAMED .mjs -> .js
+-------------------
+Upstream ships htm.mjs; we serve htm.js, because nginx does not map .mjs and
+served it as application/octet-stream, which a browser will not accept as a
+module. See ../preact/VERSION.txt.
