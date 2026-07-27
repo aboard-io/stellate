@@ -1,67 +1,108 @@
-// sw.js — OFFLINE, WHERE POSSIBLE (Paul 2026-07-10: "we need it to work
-// offline — where possible. For example precache samples for instruments
-// along a route.")
+// sw.js — OFFLINE, WHERE POSSIBLE: the samples the engine fetches become the
+// offline set just by playing, and the route precacher (app/precache.js) warms
+// them ahead of the traveler.
 //
-// Two honest strategies, split by the repo's own immutability law:
-//   CACHE-FIRST for /found/** and /engine/faust/dist/** — the deploy invariant
-//     already enforces that these classes are IMMUTABLE (a media file or a
-//     compiled wasm never changes in place; it is added or renamed). So a
-//     cached copy is correct forever, and every sample the engine ever fetches
-//     becomes part of the offline set just by playing — plus the route
-//     precacher (app/precache.js) warms them ahead of the traveler.
-//   NETWORK-FIRST (cache fallback) for every other same-origin GET — app code
-//     and engine JS update on deploy, so the network wins when you're online,
-//     and the last-seen version still boots the site when you're not.
-// Cross-origin (esm.sh preact, archive.org beds) is left untouched: those
-// requests carry their own CORS/CORP story and the crossOriginIsolated page
-// needs their original headers verbatim.
+// TWO caches, because the two classes have different lifetimes:
 //
+//   MEDIA — /found/** only, NEVER version-bumped. Media is versioned-by-name (a
+//     file is added or renamed, never edited in place) and the deploy serves it
+//     with immutable headers, so a cached copy is correct forever. CACHE-FIRST,
+//     and a hit never revalidates. Held apart from the app cache because a
+//     warmed route is ~100MB per user: shipping a new app version must not
+//     throw that away (it used to, and sw.js ships several times a day).
+//
+//   APP — everything else same-origin, bumped every deploy. App/engine code
+//     changes under its own name, so it rides STALE-WHILE-REVALIDATE: the
+//     cached copy paints instantly (the origin sends no-cache, so pre-SW every
+//     visit revalidated ~20 files serially) while a background fetch refreshes
+//     the copy for the NEXT load — a deploy lands one reload later, which the
+//     ship flow tolerates. engine/faust/dist/** belongs HERE, not in media:
+//     compiled wasm is CODE, a .dsp recompile changes the bytes under an
+//     unchanged filename, and the deploy deliberately does not mark it
+//     immutable — cache-first served those recompiles stale until the next bump.
+//
+// Cross-origin requests are passed through untouched, but as of 2026-07 there
+// are none left to speak of: preact/htm and the two webfonts are vendored, and
+// found sound resolves only to local files. Everything the app needs to boot is
+// same-origin and therefore cacheable, which is what makes offline boot work at
+// all — a cross-origin dependency here would be uncacheable and fatal.
 // Cached Response objects keep their original headers, so COOP/COEP isolation
 // (SharedArrayBuffer for the render worker) survives offline replay.
-const VERSION = "stellate-v40";  // v40 (2026-07-26): FM LEVEL MATCH. With pitch finally landing (v39), the FM font measured ~5 dB hotter than the sampled default on the genres that lean on it, which drove the master brickwall into audible saturation - Paul: "the FM seems a little distorted/saturated... switching soundfonts feels like a huge jump in tonality". A -6 dB trim on dx7 melodic voices brings vaporwave within 1.6 dB and synthwave within 0.4 dB of fluidr3. PROVEN SEPARATELY: switching fonts does NOT change the music - pitched-event and drum hashes are byte-identical across fluidr3/minimoog/dx7 for every genre tested; only the voice model differs. BUMP purges the old cache. (prior v39:)  // v39 (2026-07-26): THE FM FONT HAS NEVER PLAYED A NOTE. dx7.lib wraps its interface in an hgroup, so Faust roots every param path at the GROUP (/DX7/freq, /DX7/gate) while every render host addressed the DECLARED module name (/dx7_alg22/freq). faustwasm has no such key, so setParamValue resolved to undefined and EVERY pitch and gate write was silently dropped - the procs emitted their instantiation transient and then droned at ~1e-5 forever, which the master makeup lifted into "a high pitched mono tone that never changes". Fixed by deriving the param root from the UI tree; only the 32 dx7 modules of 87 were affected, so no other render moves a byte. The DX7 gain lift shipped yesterday was fitted against silence and is void (remeasured to a trim). Live patch-morphing reconnected. Two new gates, both proven to fail against the old code. ALSO: the MIDI download is back (audio exports stay gone) with a 36-check gate that parses the real SMF bytes. BUMP purges the old cache. (prior v38:)  // v38 (2026-07-25): GROOVE + HONEST SENSORS + REAL HEADROOM. pushPullMs — per-lane micro-timing declared in MILLISECONDS (the old beat unit meant 4ms at 209bpm and 19ms at 48bpm) — wired into 35 genres from named performance practice (one-drop, swing, funk-soul, 808, boom-bap...), measured in the RENDERED AUDIO to +/-0.01ms; the machine-time wing left flat on purpose. VOICE REPEAT GOVERNOR: no vocal/textural sample more than 5x per 64 bars, rotating to pool siblings instead of falling silent (worst offender 31x -> 5x). KICK -20% (it grated). MASTER BRICKWALL: loud windows clipping past full scale 14.3% -> 0.00%, no dulling. THE PHANTOM RUNWAY: the health sensor counted frames POSTED, not frames written, so it read 1.00 through a real dropout — it reads the ring now. LOCK SCREEN says stellate.app + the genre + its constellation (it said "Royal Road / aboardresearch", the pre-rename name and a dead domain, because the engine re-asserted its own hardcoded copy every second). SPEEDUPS, all byte-identical: live render loop -25 to -45%, realtime ratio 2.4-5.1x -> 3.8-6.8x. BUMP purges the old cache. (prior v37:)  // v37 (2026-07-25): THE TIMING PASS. Paul was right to be paranoid. (1) The live walk was DROPPING ~27% of chord-bar seam events and doubling ~24% — each bar regenerated with its own seed and events were binned by their POST-humanize beat, so a note on a bar line was a coin flip. Events are now binned by their pre-jitter position and still PLAY jittered: 0% lost, 0% doubled, press byte-identical. (2) Every crossfade played 400ms of DRY RING (measured: 299ms of exact zeros while loud) and delivered the new genre ~450ms late, every swap. The outgoing stream now renders a real decay tail under the ramp, the anchor publishes before the ramp, and the equal-power ramp moved into the worklet: 3437 -> 311 underruns, 19 late bars -> 0, 0 gaps. (3) The native lane (92.6% of notes) had ZERO lookahead while visible — notes were being start()ed in the past ~1/bar. Now armed 0.25s ahead: 0.0% late. (4) clickmon read 0 through a full-scale dropout; tap moved to the limiter output. Plus: 64-bar demoscene rotation with a real two-runtime 8-bar crossfade, 30x slower motion, and the star-map REGIONS renamed. BUMP purges the old cache. (prior v36:)  // v36 (2026-07-25): THE ALIEN ALPHABET — the 34 galaxy clusters get real names (Anvil Choir, Hadal Shelf, Salon of Slow Hours, The Long Questionnaire...) instead of raw medoid genre ids, and every genre/cluster label is transliterated: 1-2 letters per name swapped for a homoglyph, re-rolled ONCE PER SESSION (per-frame re-rolling would flicker the label LOD cull). Gates learned to compare de-glyphed. BUMP purges the old cache. (prior v35:)  // v35 (2026-07-25): the demoscene cart swap DISSOLVES instead of hard-cutting (Paul: "could you fade between demoscene transitions it's very sudden") - a frozen copy of the outgoing frame fades out over 1.4s while the incoming cart draws underneath; prefers-reduced-motion still hard-cuts. BUMP purges the old cache. (prior v34:)  // v34 (2026-07-25): LURCH FIX + a visible background. The master tape WOBBLE is disabled: it was a modulated delay (bus state) and fx_bus is instantiated per stream open(), so every steer on a travelling path restarted its LFO at phase 0 while the outgoing stream sat elsewhere — the master delay time jumped at each crossfade and the blended pair was time-offset ("definitely lurching… esp drums"). Tape SATURATION and the global REVERB bleed stay (memoryless / already-crossfading). Also: the demoscene was over-darkened yesterday (four stacked reductions took it to ~12% signal) — brightness/opacity restored, blue TV grade + blur kept. BUMP purges the old cache. (prior v33:)  // v33 (2026-07-25): THE OPEN-WEB PASS — Open Graph + Twitter cards + JSON-LD (made by Paul Ford, published by Aboard/aboard.com), a generated 1200x630 social card + real favicons (tools/gen-og-card.js), an EMBEDDABLE player (embed.html + oEmbed + a copy-embed button in the settings modal) that FALLS BACK to the WAV audio path when a cross-origin iframe denies SharedArrayBuffer (proven by test/embed-audio-run.js), plus the web-citizen set: release feed, PWA manifest, robots/sitemap (crawlers welcome, pointed at the GitHub repo), security.txt, colophon, 404. Also: the tape master (wow/flutter + saturation + a global reverb bleed), DX7 font +3.5dB, velocity layers reaching their loud zones, tape-delay tails ringing out, bounded decode caches. BUMP purges the old cache. (prior v32:)  // v32 (2026-07-25): THE VOICE LAYER — 25 Naropa Poetics Archive readings join the vx_ shelf (Corso x4, Orlovsky, di Prima, Kyger, Waldman, Snyder, Whalen, McClure, Baraka, Cage's chance phonemes; CC BY-NC-ND tier 2, fetch-only) + a 360-clip SYNTHESIZED VOICE BANK (tools/gen-voice-bank.js — deterministic espeak-ng, 14 voices, 100-212wpm, 12 genre-family phrase banks in tools/voxbank-phrases.json; every clip FFT/loudness-gated so no pure tone can ever enter a pool again — the electro-gong law). 12 new vb_* one-shot pools wired matrix-safely into 81 genre hits blocks. BUMP purges the old cache. (prior v31:) // v31 (2026-07-25, the overnight batch): THE RENAME WAVE (252 of 274 display names rewritten — eldritch/ridiculous/scientific; "Food Court Eternity", "Rail Replacement Rapture", "Ottoman Heat Death"); the GLYPHS return (alien station idents drifting behind the map + baked sprites in the 3D atmosphere, flicker-free); SPACEBAR transport; PLAYHEAD drag no longer reverts on play (resume derives from the traveler, not the engine serial); ATONALITY pullback (APPLIED_DOM_FLOOR halved — mild genres lose 42% of uninvited secondary dominants, jazz keeps its spice); MASTER AIR SHELF -3dB@8k+ (the headphone ask); PURE FM font audible (flute/reed alg16 remaps, +18/+21dB); ring-path Tier-1 LEAK FIXES (retired gens close + bar specs released; initfail fails loudly; MediaSession un-pause works); byte-identical SPEEDUPS (builds 1.5x, long-form 3x, press 1.22x); GoatCounter cookie-free analytics (same-origin /gc/count beacon only). BUMP purges the old cache. (prior v30:) // v30 (2026-07-25): THE QUIET TV LANDS FOR REAL — v29's shell stayed cached because c3bf3d0 (bg chip removed, always-on blurred demoscene, seizure-safe no-flash, galaxy zoom, ⓘ vectors, arrival narration) shipped WITHOUT an sw bump, so clients kept the old index.html with the ▢ chip. Lesson repeated so it sticks: ANY index.html/app/engine-classic-script change needs a VERSION bump or nobody sees it. Also in this bump: the demoscene grade gains a permanent 4px blur (soft phosphor fields). BUMP purges the old cache. (prior v29:) // v29 (2026-07-25): DOWNLOAD/EXPORT + LASERDISC VIDEO REMOVED — the ⤓ download cluster (midi/wav/mp3/video capture), engine/midi-export.js, engine/video-layer.js and the app export/journey modules are gone (preserved on branch legacy-download-video); the background chip now toggles off → MicroW8 demoscene only. BUMP purges the old cache. (prior v28:) // v28 (2026-07-13): DEMOSCENE SKY + 3 VIEWS + DRUMMER + HUD. (1) The planet ATMOSPHERE now projects the WASM DEMOSCENE (DemoLayer canvas, generative, same-origin) instead of the found-video, falling back to a local video clip if no demo is running. (2) VIDEO MODE REMOVED — the ✦ chip cycles THREE views now: map → viz → aliens (the standalone footage view is gone). (3) DRUMMERS get a REAL SECOND DRUM and their two hands beat at DIFFERENT paces (the primary strikes the note onsets; the second hand keeps its own steady cross-rhythm). (4) The star-cruise HUD moved to the TOP-RIGHT. (5) Repo tidy: sing.py/audio-verifier.py/night-drive-preset.json moved out of the root into tools/ (refs updated). BUMP purges the old cache. (prior v27:) // v27 (2026-07-13): VIDEO AS ATMOSPHERE. The sky-video (v26) is no longer a flat screen behind the band — it's now wrapped AROUND THE PLANET like a glowing atmosphere (Paul): a big BackSide sphere concentric with the ground planet, the found-video as a live texture, ADDITIVE + depth-tested so it reads as luminous atmosphere in the open sky while the near band/planet stay clear (depth test keeps it off the foreground); slow atmospheric drift. LOCAL clips only (remote streams would taint WebGL). BUMP purges the old cache. (prior v26:) // v26 (2026-07-13): FIVE FIXES. (1) VIDEO IN THE SKY — the found-video layer is now projected onto a big yaw-billboard screen high in the night sky BEHIND the 3D band (local clips only; remote archive.org streams skipped to avoid WebGL taint; background.js keeps the layer streaming while the cruise runs). (2) STREAMING METADATA — lock-screen/Bluetooth now shows artist "stellate.app", album = the PARENT (dominant) genre, song = the CURRENT CLOSEST genre (verifier's nearest), and the document title tracks it so a fallback never shows the bare hostname ("aboardresearch"). (3) SETTINGS IN 3D — the ⚙ settings + about modals now ride ABOVE the star-cruise canvas/VHS/HUD (z 60) so they actually appear in aliens view. (4) VAPOR IN THE ACCESSIBLE VIEW — the live-only mall-haze master-EQ slider is now on access.html too (parity with the map). (5) DOWNLOADS — only the MIDI export shows for now (wav/mp3/video hidden behind a flag). BUMP purges the old cache. (prior v25:) // v25 (2026-07-13): GENRE BUILD-OUT 250 -> 273 + ACCESSIBLE COMBOBOX. Filled the hollow regions via genre-tool delta-scaffolding (matrix-refereed): 5 classical (romanticism/chamber/impressionism/postminimal/symphony), 4 rock (punk/indie/grunge/postrock), 8 world/latin/jazz/hiphop (salsa/samba/reggaeton/raga/celtic/flamenco/trap/bigband), and 6 INVENTED lerp genres filling feature-space holes (cryptvespers/nocturnesmash/glacialgabber/breakbop/atticlament/hazebunker). New authoring tools: tools/lerp-genre.js (invent a genre by interpolating two anchors) + tools/rm-genre.js. Recalibrated two stale verifier fences (surfrock, phonk) that excluded their own output. Star-map POS + 3D coords + clusters re-baked (33 stars). ACCESSIBLE VIEW (access.html): the three 273-row genre <select>s became native type-to-filter comboboxes (shared <datalist> + <input list>), genre count is now dynamic, and the stale "pace" copy is now "duration". All gates green (matrix 273/273, verify.sh, full-boot, starcruise 79/79 + nav, access-ui 12/12). BUMP purges the old cache. (prior v24:) // v24 (2026-07-13): DOCS + OPEN-SOURCE READINESS. Fixed the stale genre count everywhere (228/249 -> 250; matrix prints 250/250), refreshed the in-app about panel + how.html + README/CLAUDE/CONTRIBUTING, and added a root package.json declaring the one browser-test dep (playwright) so a fresh clone runs the headless gates with NO hardcoded NODE_PATH (the clean-clone blocker). No app-behaviour change. BUMP purges the old cache. (prior v23:) // v23 (2026-07-13): STAR-CRUISE big pass. ALIENS ARE A VIEW now — the ✦ chip cycles map→viz→video→ALIENS→map; the standalone 🛸 chip + ✕ EXIT button are gone; a glitchy VHS scanline overlay sits in front of the 3D view. SCENE: band spaced much wider on a bare little planet (backdrop trees/objects removed), dancers touch the ground, stars have NO halo, and DRAMATIC sweeping colored SPOTLIGHTS replace the flat high-noon lighting. CREATURES read as recognizable Earth animals by genre — dog / dino / gator / robot / human — with alien touches; and their mesh count was cut ~1083→384 (≈35/creature) so it stays mobile-cheap. BUMP purges the old cache. (prior v22:) // v22 (2026-07-13): VAPOR IS NOW BAKED (Paul: "can't vapor take effect over time? like BPM?"). Was a desktop-only live output-graph effect — silent on the pocket-proof mobile WAV path. Now baked into the full-mix stream in stream-renderer.renderChunk (muffle lowpass + 3-comb mall wash + dry duck, filter/reverb state carried across chunk seams), so it rides BOTH the desktop ring AND the mobile WAV segments, and lands OVER TIME like a BPM change (eases in from the next fed bar). Byte-IDENTICAL at vapor 0 (bypassed) so segment-parity/fixtures are untouched (14/14 byte-equal); verified muffle at >0 (highs -> 60%). Live output-graph vapor kept at bypass to avoid double-apply. BUMP purges the old cache. (prior v21:) // v21 (2026-07-12): DURATION slider (the loop's travel time is now dialed directly — 8 min … 24 h, log, default 30 min — replacing bars-per-leg "pace"; speed derives so the WHOLE loop takes that long regardless of path size; URL carries `dur`, legacy `pace` auto-converts). VOID-BLEND: the genre mix keeps evolving across sparse map regions instead of pinning one genre at 100% for hours (the ?path that sat on canawave for 20 min now crosses ~58 genres over a 30-min loop). ADD/REMOVE NODES FIXED: the double-tap-to-add/remove was measured in LOGICAL units (~0.4 screen px on the huge map) so no finger could trigger it — now screen-px (28px, 440ms). BUMP purges the old cache. (prior v20:) // v20 (2026-07-12): star-cruise camera round 2 — FREE-LOOK now PERSISTS while flying (removed the 3.5s auto-recenter that snapped you back — "can't change my view"); landed auto-cam pulled back HARD (closeups dist 7->11, drummer 6.8->10.5, through 9->12 w/ almost no push, minDist 3.6->5) so you always see the WHOLE alien, never "inside" them; and a TOP-DOWN ARRIVAL — the descent looks straight DOWN at the little planet from above, decelerates onto the pad (cubic ease-out), holding the down-gaze then swinging to face the band right at touchdown. BUMP purges the old cache. (prior v19:) // v19 (2026-07-12): star-cruise camera — the landed auto-cam no longer ZOOMS IN so far; closeups/drummer/through pull back to a whole-body FRONT framing (dist 3.6->7.0, minDist 2.2->3.6) so you always see the entire alien, feet to horns. BUMP purges the old cache. (prior v18:) // v18 (2026-07-12): star-cruise — CONTINUOUS space flight (dead-reckon the galaxy->surface ZOOM, not just the pan: per-bar speed spike 5.9x->1.27x, the "moves every 8 bars" lurch gone), FREE-LOOK in transit (drag turns your head while the flight flies the path; gentle recenter) + longer landed look-hold, PLANETS are real little worlds (procedural continents/oceans/ice-caps/atmosphere, one instanced draw call) not colored blobs, SUNS are darker FLAMING stars (churning plasma + sunspots + limb darkening + warm corona), CREATURE-COLLECTION morphology (body.archetype: draconic/quadruped/biped/bot/mollusk/jelly + horns/wings/tails/ears/crests — heavymetal=winged dragons, jazz=eared beasts, vaporwave=glass jellies), genre MATERIALS (fur/rock/wax/chrome/glass), distinct INSTRUMENT shapes (conch/veil/lyre/bell/hanging-bars), and tentacles no longer CLIP the torso (interior FABRIK joints clamped outside the keep-out shell). BUMP purges the old cache. (prior v17:) // v17 (2026-07-12): alien band polish — CUTE VISIBLE FACES (big eyes proud of the body, not buried), JOINTED limbs with visible shoulder/hip + elbow/knee joints, DISTINCT body silhouettes per genre + per-alien (not uniform blobs), FEET PLANTED on the curved ground (were floating 0.3-0.7u; now rest at y~0 casting grounding shadows), real planet SURFACE relief + right-sized foliage. Render-only star-cruise files; no engine touched. BUMP purges the old cache. (prior v16:)  // v16 (2026-07-12): THE LITTLE PRINCE landing — land on a small CURVED procedural planet (9 genre-keyed terrain types) with the city/landscape wrapped on its surface + the band standing ON the little world; SPACE is true BLACK; organic MARCHING-CUBES alien bodies (fused blobs) + hinged-jaw dark-cavity mouths + two-tentacle drummers + no black-circle shadow; and the camera now GLIDES continuously (dead-reckoning ramp — no 8-bar lurch). BUMP purges the old cache. (prior v15:)  // v15 (2026-07-12): UNIFIED scene + continuous camera — the galaxy and the planet surface are now ONE scene, so flying to a planet genuinely DESCENDS onto the band (no more cut); the camera is a critically-damped spring aimed at the continuous weight-blend centroid (no more 8-bar lurch); a real procedural planet (vendored simplex-noise, deterministic) is the ground and feet plant on it. BUMP purges the old cache. (prior v14:)  // v14 (2026-07-12): alien polish — limbs no longer clip through the torso (roots seated on the surface + IK keep-out shell), instruments in bold complementary colours that pop off the body, auto-cam no longer shoots up-from-the-floor (all shots >= eye level), stale flight-run assertion fixed. BUMP purges the old cache. (prior v13:)  // v13 (2026-07-12): nav FEEL rework — galaxy spread ~6.4x with glowing emissive stars + corona (no more pile), critically-damped camera (kills the 8-measure lurch — moves LEAST at each blend update), and a real continuous Google-Maps zoom-land (unified regions, monotonic descent/ascent, no teleport). BUMP purges the old cache. (prior v12:)  // v12 (2026-07-12): expressive puppet FACES — rigged jaw/brows/eyelids/eyes; pupils dart+track, blinks, brows react; the lead vocalist LIP-SYNCS to its onsets, drummer grimaces on hard hits, bass stays closed; per-alien personality. BUMP purges the old cache. (prior v11:)  // v11 (2026-07-12): star-cruise SMOOTH GALAXY — clusters=stars (31 labeled colored suns) + genres=planets, no-bobbing camera, ship removed (2D HUD), floor clamp, flyover/through-city + drummer-on-fills, wider spacing, optional/desynced dancers, contiguous aliens, per-alien colour, superquadric/FABRIK geometry, simplified readable shaders; + folk-coord fix + coords/POS/full-boot gates. BUMP purges the old cache on activate so a deploy lands
-                                 // in ONE load, not two (the v2 stale-while-revalidate served a load-behind copy —
-                                 // Paul saw none of the synth-font/video/vapor batch until a second reload). Bump
-                                 // this string every deploy that must reach users immediately.
-                                 // (2026-07-10): app code goes STALE-WHILE-REVALIDATE — the origin serves
-// cache-control:no-cache, so pre-SW every visit revalidated ~20 files serially (one RTT each — Paul: "it
-// loads very slowly now" on a phone) and v1's network-first made that a hard wait. Now a repeat visit
-// paints from cache INSTANTLY while a background fetch refreshes the copy for the NEXT load — a deploy
-// lands one reload later, which the ship flow tolerates (hard-reload busts when it matters).
-const IMMUTABLE = /^\/(found\/|engine\/faust\/dist\/)/;
+
+const VERSION = "v41";                       // bump every deploy that must reach users
+const APP_PREFIX = "stellate-app-";
+const APP_CACHE = APP_PREFIX + VERSION;
+const MEDIA_CACHE = "stellate-media-v1";     // NOT tied to VERSION — see above
+const LEGACY = /^stellate-v\d+$/;            // the pre-split single cache (app + media together)
+
+// Media is versioned-by-name, so it may live in a cache no deploy ever sweeps.
+// Two exceptions inside found/ are NOT versioned-by-name and must stay
+// refreshable — nginx serves both no-cache for the same reason (HOSTING.md §5):
+// every *.json manifest, and tw_vocal.mp3, which tools/sing.py re-sings under a
+// fixed name. Anything matching MUTABLE rides the app cache's revalidation
+// instead; putting it in MEDIA_CACHE would freeze it on every client forever.
+const IMMUTABLE = /^\/found\//;
+const MUTABLE = /^\/found\/(?:.*\.json|tw_vocal\.mp3)$/;
+const reroot = (p) => p.replace(/^.*?(?=\/(found|engine|app|vendor|test|how|index|access|embed|assets|oembed|colophon|feed|manifest)\b)/, "");   // tolerate a sub-path deploy
+const isMedia = (p) => {
+  const q = IMMUTABLE.test(p) ? p : reroot(p);
+  return IMMUTABLE.test(q) && !MUTABLE.test(q);
+};
 
 self.addEventListener("install", (e) => { self.skipWaiting(); });
 self.addEventListener("activate", (e) => {
   e.waitUntil((async () => {
-    for (const k of await caches.keys()) if (k !== VERSION) await caches.delete(k);
     await self.clients.claim();
+    for (const k of await caches.keys()) {
+      if (k === APP_CACHE || k === MEDIA_CACHE) continue;
+      const legacy = LEGACY.test(k);
+      if (!legacy && !k.startsWith(APP_PREFIX)) continue;   // not one of ours: leave it alone
+      if (legacy) await salvage(k);
+      await caches.delete(k);
+    }
   })());
 });
+
+// One-time migration: the pre-split cache held media and app code together, so
+// dropping it wholesale would make the deploy that FIXES the wipe perform one
+// last wipe. Lift its /found/ entries across first.
+async function salvage(key) {
+  try {
+    const old = await caches.open(key), media = await caches.open(MEDIA_CACHE);
+    for (const req of await old.keys()) {
+      if (!isMedia(new URL(req.url).pathname)) continue;
+      if (await media.match(req)) continue;
+      const res = await old.match(req);
+      if (res && res.status === 200) await media.put(req, res);
+    }
+  } catch (err) { /* quota, or a concurrent activate already took it: media re-warms by playing */ }
+}
 
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;            // same-origin only
-  if (url.pathname.startsWith("/gc/")) return;           // analytics beacons: network-only, never cached (GoatCounter, 2026-07-25)
-  const path = url.pathname.replace(/^.*?(?=\/(found|engine|app|test|how|index|access|embed|assets|oembed|colophon|feed|manifest)\b)/, "");   // tolerate a sub-path deploy
-  if (IMMUTABLE.test(url.pathname) || IMMUTABLE.test(path)) {
+  if (url.pathname.startsWith("/gc/")) return;           // analytics beacons: network-only, never cached
+  if (isMedia(url.pathname)) {
     e.respondWith((async () => {
-      const cache = await caches.open(VERSION);
+      const cache = await caches.open(MEDIA_CACHE);
       const hit = await cache.match(req);
-      if (hit) return hit;
+      if (hit) return hit;                               // immutable: a hit never revalidates
       const res = await fetch(req);
-      if (res && res.ok) cache.put(req, res.clone());
+      // 206 is illegal in Cache Storage (an <audio> Range request) and a partial
+      // body would be a broken hit anyway — store whole 200s only.
+      if (res && res.status === 200) cache.put(req, res.clone()).catch(() => {});
       return res;
     })());
   } else {
     // STALE-WHILE-REVALIDATE: cached copy NOW, fresh copy in the background.
     e.respondWith((async () => {
-      const cache = await caches.open(VERSION);
+      const cache = await caches.open(APP_CACHE);
       const hit = await cache.match(req, { ignoreSearch: url.pathname.endsWith(".html") || url.pathname === "/" });
-      const refresh = fetch(req).then((res) => { if (res && res.ok) cache.put(req, res.clone()); return res; });
+      const refresh = fetch(req).then((res) => { if (res && res.status === 200) cache.put(req, res.clone()).catch(() => {}); return res; });
       if (hit) { e.waitUntil(refresh.catch(() => {})); return hit; }
-      try { return await refresh; }
-      catch (err) { throw err; }
+      return await refresh;
     })());
   }
 });
