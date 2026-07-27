@@ -4,7 +4,7 @@
 // This is the gate: a music-theory + arrangement heuristic that scores a song
 // on banger-relevant dimensions and returns actionable feedback (the
 // feedback_path). It is NOT a learned model — genre/"banger" is irreducibly
-// taste (catalog verifiers 12.33 genre-conformance, 17.43 no-formal-verifier).
+// taste: genre-conformance is scored, overall "goodness" deliberately is not.
 // A trained discriminator would be the next rung; this is the honest, runnable
 // gate that catches the obvious ways an arrangement fails to land.
 //

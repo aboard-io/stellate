@@ -7,10 +7,10 @@ anchors — `state.meter`) over one score brain
 (`engine/theory.js` + `engine/pipes.js` — docs/MUSIC-MIND.md), **sampled by
 default** (full General MIDI via `engine/faust/extract-gm.js`, with per-voice
 Faust effect chains) and played by a single **Faust WASM engine** (`engine/faust/` — live in the browser and
-offline "press" in node), verified symbolically and empirically. Extracted from the
-verifier-catalog repo in 2026-06 with full history; it is a worked example of
-that catalog's generator → verifier → feedback-loop thesis. (Named "Royal Road
-vaporwave" through 2026-07; renamed **stellate** at export.)
+offline "press" in node), verified symbolically and empirically. It is a worked
+example of a generator → verifier → feedback loop: the thing that makes the
+music and the thing that checks it live side by side and argue. (Named "Royal
+Road vaporwave" through 2026-07; renamed **stellate** at export.)
 
 Since 2026-07 (FAUST-PORT phase 3) Faust is the **only** backend on main; the
 entire csound era — `buildCsd` codegen, `wasm-audio.js`, the `builder.html`
@@ -28,22 +28,6 @@ legacy-csound` away).
 because we once kept the renders and lost the generator — the founding
 `royal-road.csd` — see the README genesis parable. That `.csd` now lives safe on
 `legacy-csound`.)
-
-## The catalog submodule
-
-`verifier-catalog/` is a git submodule (`git submodule update --init` after
-clone). Two roles:
-
-- **Reference data**: `verifier-catalog/gen_data/k_music.py` holds the
-  `generate_symbolic_music` generator whose vaporwave/city-pop `domain_notes`
-  this project implements. `song-verifier.js` cites catalog verifiers 12.33
-  (genre-conformance) and 17.43 (no-formal-verifier).
-- **MCP reference tool**: `.mcp.json` launches the catalog's stdio MCP server
-  from the submodule (`search_methods`, `get_method`, `neighbors`,
-  `plan_architecture`). Needs `uv` on PATH; self-provisions on first use.
-
-Don't edit anything inside `verifier-catalog/` from this repo — make catalog
-changes in the catalog's own checkout and bump the submodule pointer.
 
 ## Run / test
 

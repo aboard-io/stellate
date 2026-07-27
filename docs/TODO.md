@@ -3,7 +3,7 @@
 Short, durable list of asked-for-but-not-yet-built work. Anything with a real
 design behind it graduates to `docs/ROADMAP.md`; anything shipped leaves here.
 
-## DONE 2026-07-27 (uncommitted; gates green)
+## DONE 2026-07-27 — shipped to stellate.app
 
 - **security.txt** contact → `paul.ford@aboard.com`.
 - **Attribution** moved to the top of the About card, capitalized, mailto link;
@@ -49,7 +49,19 @@ Gates: `matrix --no-cache` **274/274**, `verify.sh` all 9 PASS, `meter.test.js`
 byte-identity green, `boot-smoke` 14/14 in order, `explorer-ui-test` PASS,
 `mp3-bed-decode-run` PASS, `no-remote-sources` 6/6.
 
+- **`verifier-catalog` submodule removed** along with `.gitmodules` and
+  `.mcp.json`. Nothing in the app or the gates imported it and CI never checked
+  it out, but at 4.9 GB it was the worst thing a new cloner could trip over.
+- **Repo made public.** History swept first: no media, no keys, no `.env` ever
+  committed (the one rule held), largest blob 2.1 MB of vendored JS.
+
 Review: 12 findings raised, 5 survived adversarial refutation, all 5 fixed.
+
+**Shipped as 9 commits + the vendor `.js` rename.** One production break and
+fix: nginx has no `.mjs` MIME mapping, so the first deploy served the vendored
+modules as `application/octet-stream` and browsers refused them as modules.
+Renamed to `.js` rather than patching nginx — `.js` is mapped everywhere, so it
+cannot regress on a new host, and it fixes aboardresearch.com at the same time.
 
 ---
 
@@ -608,14 +620,13 @@ Extract to a linked stylesheet. And move `how.html`'s inline `<script>` out — 
 is the **sole** reason the CSP still needs `script-src 'unsafe-inline'`
 (`docs/HOSTING.md:632`), so that one edit lets the CSP tighten for 1.0.
 
-**`verifier-catalog/` stays at root.** Moving it into `vendor/` is a bad trade:
-it is **4.9 GB** (larger than the rest of the repo and all media combined),
-it is first-party (`aboard-io/verifier-catalog`), and `vendor/` means
-"third-party bytes we copied in and must credit" — every current member has a
-LICENSE and a NOTICE paragraph. The real risk: `deploy-stellate.sh:80`'s
-`--exclude 'verifier-catalog/'` currently reads as obviously correct; bury it a
-level deeper and a missed edit rsyncs 4.9 GB to the droplet. `vendor/` itself is
-in excellent shape — every dir used, versioned, and credited. Leave both alone.
+**`verifier-catalog/` is GONE (done 2026-07-27).** Paul: *"get rid of the
+verifiers dependency, it'll just confuse people."* The submodule, `.gitmodules`
+and `.mcp.json` are removed and every reference updated. Nothing in the app or
+the gates ever imported it, CI never checked it out, and at 4.9 GB it was the
+single most confusing thing a new cloner could hit. The earlier idea of moving
+it into `vendor/` is moot. `vendor/` itself is in excellent shape — every dir
+used, versioned, and credited. Leave it alone.
 
 ### Stage E — the genre data
 

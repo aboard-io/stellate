@@ -54,8 +54,8 @@ Reese/wobble basses, the vocoder — which stay synth on purpose.
 that must stay diagonal-dominant (`node engine/genre-verifier.js matrix`), determinism,
 vocabulary, per-voice expected-vs-actual audio truth — so a change can't
 silently break a genre. Human ears check taste, in the live app. This is a
-worked example of the generator → verifier → feedback-loop thesis from the
-`verifier-catalog` submodule it was extracted from.
+worked example of a generator → verifier → feedback loop: the generator and
+the thing that checks it live in the same repo and argue with each other.
 
 **Pocket-proof mobile.** On phones the audible path is a real media element fed
 a continuously-rendered, encoded stream (the WAV-FIRST pipeline), so playback
@@ -119,7 +119,6 @@ tools/fetch-found-samples.sh           # one-time: SoundFont/GM + breaks + speec
 tools/fetch-found-sound.sh; tools/fetch-found-bbc.sh
                                        # one-time: found audio layers (BBC = RemArc licence, see SOURCES.md)
 ./serve.sh                             # http://localhost:8777/  (needs http, not file://)
-git submodule update --init            # optional: verifier-catalog reference data + MCP tool (skip freely)
 ```
 
 No media fetched yet (or none wanted)? `node tools/ci-standin-media.js`

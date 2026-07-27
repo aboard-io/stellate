@@ -35,10 +35,6 @@ found-sound/sample layers (you do, for listening): `tools/fetch-found-sound.sh`
 and `tools/fetch-found-samples.sh` fetch them from the Internet Archive into
 the gitignored `found/` tree.
 
-The `verifier-catalog/` git submodule is **optional** — reference data and an
-MCP tool, nothing in the app or the gates imports it. A plain clone without
-`--recurse-submodules` runs everything above.
-
 ## The gate philosophy
 
 **Machines verify structure; human ears verify taste.** A PR must keep

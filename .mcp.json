@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "methods-catalog": {
-      "type": "stdio",
-      "command": "uv",
-      "args": ["run", "--directory", "${CLAUDE_PROJECT_DIR:-.}/verifier-catalog", "python", "mcp_server.py"]
-    }
-  }
-}

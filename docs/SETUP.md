@@ -33,7 +33,6 @@ point of the thing is the sampled + found layer, so fetch before judging.
 Optional extras:
 
 ```bash
-git submodule update --init          # verifier-catalog: reference data + MCP tool (skip freely)
 python3 -m venv .venv-verify && .venv-verify/bin/pip install essentia-tensorflow
                                      # only for the empirical audio verifier (tools/audio-verifier.py)
 ```

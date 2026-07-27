@@ -1,3 +1,0 @@
-[submodule "verifier-catalog"]
-	path = verifier-catalog
-	url = https://github.com/aboard-io/verifier-catalog.git

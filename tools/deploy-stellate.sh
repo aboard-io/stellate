@@ -77,7 +77,6 @@ rsync -a --delete --delay-updates --info=stats1 \
   --exclude 'models/' \
   --exclude 'scratch/' \
   --exclude '.venv-verify/' \
-  --exclude 'verifier-catalog/' \
   --include 'engine/faust/node_modules/@grame/' \
   --include 'engine/faust/node_modules/@grame/faustwasm/***' \
   --exclude 'engine/faust/node_modules/*' \
