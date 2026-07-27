@@ -316,8 +316,9 @@ base URLs, set the Transform Rules, smoke §7 again.
 | Transfer overage (if ever) | $0.01/GiB past 1 TiB |
 | R2 growth path | $0 to ~1 GB (free tier: 10 GB storage, free egress) |
 
-**Deployed 2026-07-09:** droplet `stellate-app` (nyc3, s-1vcpu-1gb,
-159.89.38.37), DO DNS zone (A @ + www CNAME), Let's Encrypt cert,
+**Deployed 2026-07-09:** droplet `stellate-app` (nyc3, s-1vcpu-1gb; the address
+is whatever `dig +short stellate.app` says), DO DNS zone (A @ + www CNAME),
+Let's Encrypt cert,
 the §5 nginx config live, payload rsynced from the aboardresearch box
 (datacenter-local). `tools/deploy-stellate.sh` is the repeatable deploy —
 manifest check → rsync deny-list → manifest push → header smoke.
