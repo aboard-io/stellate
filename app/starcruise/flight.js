@@ -389,7 +389,7 @@ export function makeFlight({ getTravel, getBeat } = {}) {
       const ext = fieldExtent();
       const gpos = { x: pw.x + hx * ext * 0.38, y: pw.y + ext * 0.18, z: pw.z + hz * ext * 0.38 };
       const glook = { x: pw.x, y: pw.y, z: pw.z };
-      // ARRIVAL CHOREOGRAPHY (Paul): descend LOOKING DOWN from high above the landing pad,
+      // ARRIVAL CHOREOGRAPHY: descend LOOKING DOWN from high above the landing pad,
       // ease slowly onto the planet, THEN swing to look AT the band right at touchdown.
       //   Phase A (t 0..TA): fall from the galaxy vantage down to a pose HIGH OVER the pad,
       //     the look tilting to straight DOWN at the surface (a top-down descent).

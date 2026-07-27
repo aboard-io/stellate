@@ -1,6 +1,6 @@
 // gen-font.js — extract an ALTERNATE soundfont into a parallel instrument set
-// for the runtime SOUNDFONT SWITCHER (Paul: "let me switch soundfonts in the
-// settings"). For every kernel SAMPLERS slug it finds the matching GM preset in
+// for the runtime SOUNDFONT SWITCHER in the settings panel.
+// For every kernel SAMPLERS slug it finds the matching GM preset in
 // <font>, full-captures its zones (all key-zones + all velocity layers, via
 // sf2.js), writes the wavs to found/samples/instruments-<key>/<slug>/, and emits
 // engine/faust/font-<key>.json = { key, label, base, instr:{ slug:{sr,zones} } }.

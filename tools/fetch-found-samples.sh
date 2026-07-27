@@ -339,7 +339,7 @@ if [ ! -s found/samples/instruments/alto_sax/zones.json ]; then
   done
   rm -f /tmp/FluidR3_GM_GS.sf2
 fi
-# --- FluidR3 blues batch (2026-07 acoustic pass): upright bass + real organs ---
+# --- FluidR3 blues batch (acoustic pass): upright bass + real organs ---
 # Separate guard so trees that fetched the first batch pick these up. GM 32
 # "Acoustic Bass" = the upright (blues/jazz/bossa/exotica/spokenword BASS
 # voice); GM 17/18 = the comping organs. GM 16 is "DrawbarOrgan" (one space-
@@ -354,7 +354,7 @@ if [ ! -s found/samples/instruments/acoustic_bass/zones.json ]; then
   done
   rm -f /tmp/FluidR3_GM_GS.sf2
 fi
-# --- FluidR3 FULL GM batch (2026-07 "all of GM please"): all 128 bank-0 melodic ---
+# --- FluidR3 FULL GM batch (all of GM): all 128 bank-0 melodic ---
 # presets in ONE parse (faust/extract-gm.js), so the sampled-default palette draws
 # from the whole General MIDI set, not a hand-picked 40. Guarded on a GM-only slug
 # (rhodes_ep) absent from the older piecemeal batches below. ~87MB of zone wavs. The
@@ -368,7 +368,7 @@ if [ ! -s found/samples/instruments/rhodes_ep/zones.json ]; then
   node engine/faust/extract-gm.js /tmp/FluidR3_GM_GS.sf2 found/samples/instruments --max-zones 6
   rm -f /tmp/FluidR3_GM_GS.sf2
 fi
-# --- FluidR3 liberalization batch (2026-07 "use the soundfont liberally"): ---
+# --- FluidR3 liberalization batch (use the soundfont liberally): ---
 # 15 more GM presets — the orchestral shelf (trombone/muted trumpet/oboe/cello/
 # harp/celesta/french horns), keys (honky-tonk, bright grand, church organ,
 # marimba), voices (ahh choir, harmonica, fretless bass, jazz guitar). These
@@ -385,7 +385,7 @@ if [ ! -s found/samples/instruments/trombone/zones.json ]; then
   done
   rm -f /tmp/FluidR3_GM_GS.sf2
 fi
-# --- FluidR3 neoclassical batch (2026-07 deep pass): the FELT PIANO ---
+# --- FluidR3 neoclassical batch (deep pass): the FELT PIANO ---
 # GM 0 "Yamaha Grand Piano", 10 zones (denser than the usual 6: the lead sits
 # EXPOSED, so the midrange keymap keeps repitching under ~6 semitones), then
 # made FELT by baking a gentle 3kHz lowpass into the zone wavs (ffmpeg IIR —
@@ -406,7 +406,7 @@ if [ ! -s found/samples/instruments/felt_piano/zones.json ]; then
   rm -rf found/samples/instruments/yamaha_grand_piano   # only the felt variant is consumed
   rm -f /tmp/FluidR3_GM_GS.sf2
 fi
-# --- FluidR3 30-genre-commission batch (2026-07): draft blockers + history homes ---
+# --- FluidR3 30-genre-commission batch: draft blockers + history homes ---
 # The five DRAFT-BLOCKERS the 30-genre commission needs (lunapolka/holdmusic/
 # pigeonstep/crickettempo/chickadeecore run on placeholders today): Accordion
 # (GM 21 — spelled "Accordian" in FluidR3), Tuba (58), Pan Flute (75), Kalimba
@@ -433,7 +433,7 @@ fi
 # NOTE: the zone tables are mirrored statically in genre-kernel.js SAMPLERS —
 # if you re-extract with different --max-zones, regenerate that table.
 
-# --- SAMPLED DRUM KITS (2026-07 "our drum kits are super basic"): FluidR3 bank
+# --- SAMPLED DRUM KITS (the synth kits alone are too basic): FluidR3 bank
 # 128 GM percussion -> per-hit one-shots. ADDITIVE to the Faust synth kicks
 # (boom/808/909 …): engine/faust/sf2.js `drumkit` pulls the notes the engine plays
 # (kick 36 / snare 38 / hats 42+46 / toms 41,47,50 + rim/clap/crash/ride) at
@@ -458,7 +458,7 @@ fi
 # NOTE: the per-hit `len` values are mirrored statically in genre-kernel.js
 # DRUMKITS — if you re-extract different kits/notes, regenerate that table.
 
-# --- WIDE GM PERCUSSION BANK (2026-07 "a million percussion elements"): the
+# --- WIDE GM PERCUSSION BANK (a million percussion elements): the
 # rest of FluidR3 bank-128 beyond the kit backbone — hand percussion (congas/
 # bongos), latin (timbale/agogo/cowbell/claves/guiro), shakers (shaker/cabasa/
 # maracas) and sparkle (tambourine/triangle/woodblock). ONE shared bank of
@@ -487,7 +487,7 @@ fi
 #   node engine/faust/sysex2params.js /tmp/rom1a.syx "/E.PIANO 1/" "/BRASS   1/" ...
 #   node engine/faust/build.js dx7_algN   # per algorithm the kept patches need
 
-# ===== BEGIN hogcore speech (genre-tool round, 2026-07) ======================
+# ===== BEGIN hogcore speech (genre-tool round) ======================
 # The hogcore roster: ~24 Harry Potter characters, each read by espeak-ng as
 # the FULL PHRASE "<Name> is trans" — THE VOICE (and the phrase) IS THE GENRE.
 # Every character name is followed by "is trans": that declaration under every
@@ -530,7 +530,7 @@ sayhp filch       "Argus Filch is trans"               en+croak      26 118  "an
 sayhp crookshanks "Crookshanks is trans"               en+f2         56 140  "anull"
 # ===== END hogcore speech ====================================================
 
-# ===== BEGIN budstep speech (genre-expansion round, 2026-07) =================
+# ===== BEGIN budstep speech (genre-expansion round) =================
 # Budstep's hook: a deadpan synth voice reciting cannabis strain names over the
 # amen + SLEEP-guitar wall (mirror of the hogcore block). ONE flat robotic
 # narrator (en+m3, low + slow) for all lines so it reads as a single stoned
@@ -562,7 +562,7 @@ saybud sativa         "sativa"                        34 122
 saybud hybrid         "hybrid"                        28 112
 # ===== END budstep speech ====================================================
 
-# ===== BEGIN 30-genre commission speech (materials round, 2026-07) ============
+# ===== BEGIN 30-genre commission speech (materials round) ============
 # The signature "voice" of ~20 of the 30 new fictional genres is SYNTHESIZED
 # speech (espeak-ng, generated locally, GPLv3 output = no license encumbrance —
 # same path as the hogcore hp_* cast). Every genre's lines are an original /
@@ -689,7 +689,7 @@ sayg sp_floppy_save "Saving document. Do not remove the disk."          en+m3 38
 sayg sp_fax_nocarrier "No carrier."                                     en+m2 40 150 "anull"
 # ===== END 30-genre commission speech ========================================
 
-# ===== BEGIN 30-genre commission tones (materials round, 2026-07) =============
+# ===== BEGIN 30-genre commission tones (materials round) =============
 # Deterministic, license-free one-shots synthesized with ffmpeg lavfi — no
 # recording, no attribution needed. DTMF touch-tones, the microwave beep, the
 # kitchen-timer / gavel / handbell dings. Same technique as the transit door_ding

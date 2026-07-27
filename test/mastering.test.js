@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// test/mastering.test.js — THE MASTERING STAGE gate (2026-07-10).
+// test/mastering.test.js — THE MASTERING STAGE gate.
 //
 //   node test/mastering.test.js
 //

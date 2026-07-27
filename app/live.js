@@ -1,8 +1,7 @@
 // live.js — the live playback machinery. Owns the Faust engine handle
 // (faustHandle) and the goLive()/stopLive() lifecycle, plus the honest boot
 // progress hairline, the ?wavDebug overlay, the ?clicktest bed, and the mobile
-// lock-screen Media Session. The per-voice Faust engine is THE engine
-// (FAUST-PORT.md phase 3; the csound WASM path lives on branch legacy-csound).
+// lock-screen Media Session. The per-voice Faust engine is THE engine.
 import { S, set, K, E, QSFLAGS } from "./state.js";
 import { retarget, rebuildQueue, travelStep, glideStep } from "./targeting.js";
 import { bgBarTick } from "./background.js";
@@ -89,7 +88,7 @@ const FORCE_CLASSIC=QSFLAGS.get("forceClassicOut")==="1";
 const FORCE_MEDIAEL=QSFLAGS.get("forceMediaEl")==="1";
 // ?wavOut=1 force the WAV-FIRST mobile audible path anywhere (desktop test hatch);
 // ?wavOut=0 escape back to the ring/worklet path; unset = auto (on when isMobile).
-// ── NO-ISOLATION FALLBACK (2026-07-25, the EMBED blocker) ───────────────────
+// ── NO-ISOLATION FALLBACK (the EMBED blocker) ──────────────────────────────
 // The ring/worklet path is built on a SharedArrayBuffer, and a SAB only exists on
 // a CROSS-ORIGIN ISOLATED page (COOP:same-origin + COEP:require-corp all the way
 // up the frame chain). Our own origin sends those headers, but a cross-origin
@@ -127,8 +126,8 @@ function startWavDebug(){
   const wrap=document.createElement("div");
   wrap.style.cssText="position:fixed;left:8px;bottom:8px;z-index:9999;background:rgba(0,0,20,.92);color:#8ef;font:10px/1.5 monospace;padding:6px 8px;border:1px solid #345;border-radius:4px;max-width:92vw;width:340px";
   const stats=document.createElement("div"); stats.style.cssText="white-space:pre-wrap;overflow:hidden;margin-bottom:4px";
-  // the shareable EVENT LOG (Paul: "log events in a text field + a copy button so I
-  // can share analytics from safari iOS"): status changes, new errors, decode
+  // the shareable EVENT LOG — a text field plus a copy button, so analytics can
+  // be shared off Safari iOS: status changes, new errors, decode
   // failures, route/demotion changes, and a 5s telemetry snapshot — timestamped.
   const ta=document.createElement("textarea");
   ta.readOnly=true; ta.spellcheck=false;
@@ -197,7 +196,7 @@ function startWavDebug(){
   },500);
 }
 // ---- CLICK TEST BED (?clicktest=N) — a SILENT diagnostic "genre" -------------
-// Paul's idea for hunting the sub-0.5 clicks the clickmon tripwire misses: strip
+// For hunting the sub-0.5 clicks the clickmon tripwire misses: strip
 // the mix down to ONE soft, STEADY pad and silence everything else, then let the
 // engine churn around it. There is no musical content to mask a glitch, so any
 // tick you hear IS a seam/switch artifact (butt-splice, crossfade, or reset).
@@ -270,9 +269,9 @@ export async function goLive(){
   }catch(e){ set({live:false,status:"live failed: "+e.message}); bootAbort(); console.error(e); }
 }
 export function stopLive(){
-  // STOP TWICE = REWIND (Paul 2026-07-10: "When I hit stop and start keep
-  // playing at the playhead. If I click stop TWICE, then reset to the
-  // beginning."): a stop while already stopped clears the resume measure and
+  // STOP TWICE = REWIND. Stop then start keeps playing at the playhead; stop
+  // TWICE resets to the beginning —
+  // a stop while already stopped clears the resume measure and
   // parks the traveler back at the path start — ▶ then opens from measure 1.
   if(!S.live){
     S.startBar=0;
@@ -287,7 +286,7 @@ export function stopLive(){
   // TRAVELER'S current position (S.travel), NOT the engine's bar serial — a live
   // playhead DRAG moves the traveler but never the engine serial, so the old
   // `barInfo.serial+1` silently reverted a drag→stop→play back to the pre-drag
-  // spot (Paul's "move the playhead and then play, it just reverts"). For a
+  // spot — otherwise you move the playhead, press play, and it reverts. For a
   // normal undragged ride travel-measure == serial+1 exactly (travelStep and the
   // engine advance in lockstep from the same startBar), so this is behaviour-
   // identical there and only fixes the dragged case. No path (free-roam) has no
@@ -347,10 +346,9 @@ function msClosestGenre(){
   const b=S.best;
   return (b && b!=="…") ? msLbl(b) : msParentGenre();
 }
-// THE identity, composed in ONE place (Paul's lock screen read "wave / Royal
-// Road / aboardresearch" — the pre-rename name and a dead domain — because the
-// ENGINE had its own hardcoded copy and, on the mobile route, re-asserted it
-// every second over this one. The engine now asks for these strings instead).
+// THE identity, composed in ONE place. When the ENGINE carries its own
+// hardcoded copy it re-asserts a stale name and a dead domain over this one
+// every second on the mobile route, so the engine asks for these strings.
 export function mediaMetaNow(){
   const ws=(S.weights||[]).filter(w=>w&&w.w>0.001).slice().sort((a,b)=>b.w-a.w);
   let title=msClosestGenre();

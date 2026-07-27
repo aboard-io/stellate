@@ -48,7 +48,7 @@ for rec in "${recordings[@]}"; do
   echo "  prepared found/${name}.mp3 (${dur}s mono 44.1k)"
 done
 
-# ===== BEGIN 30-genre commission beds (materials round, 2026-07) ==============
+# ===== BEGIN 30-genre commission beds (materials round) =======================
 # New found-sound beds for the 30 fictional genres. Two kinds:
 #  (a) archive.org fetches — PD/CC only, credited in SOURCES.md, boost-normalized;
 #  (b) SYNTHESIZED tech-elegy drones (crt_whine, fax_tone, modem_handshake,

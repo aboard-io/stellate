@@ -1,22 +1,17 @@
 // glyphs.js — the FLOATING GLYPHS: faint alien "station idents" that drift behind
 // the star map (2D DOM layer) and through the star-cruise atmosphere (3D sprites).
 //
-// ARCHAEOLOGY. These are a rebuild of the roaming glyphs that lived in the old
-// laserdisc video-layer chaos deck (engine/video-layer.js, removed with the found-
-// video layer 2026-07-25; see git 0c62df5 "bigger/livelier glyphs" + 9433eee
-// "glyphs fade in and out"). Back then they were station idents composited THROUGH
-// the footage: a fixed set of box-drawing / braille / rune / I-Ching / geometric
-// clusters, teleported to random spots at wild sizes, drifting dust-mote slow with
-// gentle rotation + scale breathing, born at opacity 0 and fading in/out. The old
-// version ALSO random-flickered (opacity blinks); this rebuild DROPS the flicker to
-// obey today's seizure/taste laws (the 2D layer was just slowed 10x + de-flashed):
-// pure smooth fade-in / hold / fade-out, drift measured in single-digit px/sec.
+// A fixed set of box-drawing / braille / rune / I-Ching / geometric clusters,
+// teleported to random spots at wild sizes, drifting dust-mote slow with gentle
+// rotation + scale breathing, born at opacity 0 and fading in and out. NO
+// flicker (opacity blinks) — the seizure/taste laws rule that out: pure smooth
+// fade-in / hold / fade-out, drift measured in single-digit px/sec.
 //
-// This is a standalone lightweight layer — no dependency on the (departed) video
-// layer. main.js calls initGlyphMap() for the star map; starcruise.js calls
+// A standalone lightweight layer with no other dependencies. main.js calls
+// initGlyphMap() for the star map; starcruise.js calls
 // makeGlyphAtmosphere(THREE, …) for the 3D view.
 
-// THE SET — fleeting alien station idents (verbatim from the old video-layer GLYPHS):
+// THE SET — fleeting alien station idents:
 // box-drawing, braille, runes, I-Ching trigrams, geometric + technical symbols. The
 // E̸R̷R̸ cluster keeps its combining strike-throughs (a broadcast glitch ident).
 export const GLYPHS = ["╬╪▚▞", "⠺⠵⣿⠋", "▟▙◈▛", "◭◮⊗⊘", "⋔⋕⊞⊟", "↯⇶↯↺", "ᛝᚦᛟᚱ",
@@ -199,9 +194,8 @@ export function makeGlyphAtmosphere(THREE, opts) {
 }
 
 // ---------------------------------------------------------------------------
-// ALIEN TRANSLITERATION (Paul 2026-07-25: "add a function that adds random
-// glyphs to the names of genres, replacing letters. One or two per genre/
-// cluster name. It should be different every time.")
+// ALIEN TRANSLITERATION: swap one or two letters of each genre/cluster name for
+// a random glyph, differently every time.
 //
 // Substitutes 1-2 letters per name with a visually-adjacent glyph, so the
 // catalogue reads as the same words rendered in someone else's alphabet —

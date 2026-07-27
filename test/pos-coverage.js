@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // pos-coverage.js — the STAR-MAP POS COMPLETENESS gate. Plain-node, no browser.
 //
-// THE BUG THIS CATCHES (prod outage 2026-07-11): a genre added to the kernel
+// THE BUG THIS CATCHES (a production outage): a genre added to the kernel
 // (GenreKernel.GENRES) but NOT to app/world.js POS. app/main.js boot() runs
 // app/starmap.js computeGenreLayout(), which EARLY-RETURNS only when POS already
 // covers every GENRES key; a single missing genre drops it into the O(N²)·N·40

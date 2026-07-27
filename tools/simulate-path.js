@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// tools/simulate-path.js — THE PATH SIMULATOR (Paul: "are you able to fully
-// simulate a path?"). A VIRTUAL ride of a whole journey at the STATE level —
+// tools/simulate-path.js — THE PATH SIMULATOR: fully simulate a path.
+// A VIRTUAL ride of a whole journey at the STATE level —
 // the fast middle layer between the pure glide math and a realtime headless
 // ride with audio:
 //
@@ -38,7 +38,7 @@
 // ARRIVAL SEMANTICS (measured, then chosen deliberately): arrival is judged
 // against the INSTANTANEOUS target, over [enter-2 .. enter+8] — the pre-window
 // because the tier-0 identity flip often lands ON the dominance boundary (the
-// bar before w0 crosses 0.5). What the pre-window does NOT forgive is Paul's
+// bar before w0 crosses 0.5). What the pre-window does NOT forgive is the
 // dnb bug (a stale lead NEVER matching the new genre) — that still reads
 // "never". Separately, the target's own identity picks can CHURN as the blend
 // sharpens (K.mix re-picks lead at w=0.5 vs w=0.96). The re-queued revision
@@ -61,7 +61,7 @@
 // VISITED segment (dwell > CONTRACT_BARS) that never arrives still FAILS.
 //
 // KNOWN REAL DEFECT CLASS (transit chimera, found by this tool and KEPT
-// failing — press evidence in the 2026-07-10 queue-work round): the "form"
+// failing — press evidence from the queue-work round): the "form"
 // flip adopts the target's sections wholesale, including their found
 // sourceIds, but the CRATE arrives only with the separate "sample" flip
 // (hash-ranked later). Between the two, the settled state declares a found

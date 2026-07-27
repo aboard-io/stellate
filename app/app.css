@@ -58,12 +58,10 @@
      chips (playChip/npChip/cfgChip) float; each surface opens as a modal over
      the plane and closes on backdrop tap / its chip / esc. */
   .modal{position:fixed;inset:0;z-index:5;display:none;background:rgba(6,5,14,.44)}
-  /* THREE FULL-SCREEN VIEWS (Paul 2026-07-10: "star map, video, and viz are
-     three different 100% views. when video is on turn off star map"). A body
-     class names the active view; the star map hides outside its own; the video
-     view carries NO veil (see video-layer) and no map over it. The ⚙ settings
-     modal (z-index 7 below) rides on top of every view; chips (z 6) stay on the
-     bottom in all three. */
+  /* EXCLUSIVE FULL-SCREEN VIEWS: each is its own 100% view, and turning one on
+     turns the star map off. A body class names the active view and the star map
+     hides outside its own. The ⚙ settings modal (z-index 7 below) rides on top
+     of every view; chips (z 6) stay on the bottom in all of them. */
   body.view-video #map, body.view-viz #map{display:none}
   /* the viz as a 100% VIEW: the modal wrap loses its dim backdrop and the card
      expands to the whole viewport (chips clearance at the bottom). */
@@ -79,7 +77,7 @@
   #aboutWrap{z-index:7}
   .modal.open{display:block}
   /* the ⚙ panel pops up RIGHT-ALIGNED ABOVE the settings button (the chips row
-     sits at bottom:.7rem, 48px tall), not at the top of the screen (Paul). It
+     sits at bottom:.7rem, 48px tall), not at the top of the screen. It
      grows upward and scrolls if it ever gets tall. */
   #panel{position:absolute;bottom:4.2rem;right:.7rem;width:330px;max-height:calc(100vh - 5.6rem);overflow:auto}
   body.dragging{user-select:none;-webkit-user-select:none;cursor:crosshair}
@@ -96,7 +94,6 @@
      over bright footage, and they sit faint so the constellation reads on top. */
   .region{font-family:VT323,monospace;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
     opacity:.5;paint-order:stroke;stroke:rgba(6,4,20,.6);stroke-width:3px;stroke-linejoin:round}
-  /* (CPU meter chrome removed 2026-07-09 — Paul's ask) */
   /* the chips: the ONLY floating affordances (with the brand) */
   #chips{position:fixed;right:.7rem;bottom:.7rem;z-index:6;display:flex;gap:.5rem}
   /* ALIENS VIEW: the 3D canvas is a full-screen overlay (z 40) — float the chips ABOVE it
@@ -147,7 +144,7 @@
   .vz-mrow b{flex:0 0 26px;text-align:right;color:var(--mint);font-weight:400}
   .vz-mmoves{font:14px VT323,monospace;color:var(--dim);margin-top:.12rem;line-height:1.45}
   .vz-mmoves b{color:var(--cyan);font-weight:400}
-  /* the meter badge (visibility wave 2026-07-25) — floats over the radar corner */
+  /* the meter badge — floats over the radar corner */
   .vz-meter{float:right;font:16px VT323,monospace;letter-spacing:.1em;color:var(--cyan);
     border:1px solid var(--cyan);border-radius:4px;padding:.05rem .45rem;opacity:.85}
   .vz-in{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;font:16px VT323,monospace;margin:.16rem 0}
@@ -169,7 +166,7 @@
   .vz-ruler{position:relative;height:13px;margin:0 0 .1rem;
     border-radius:4px 4px 0 0;background-color:rgba(255,255,255,.02)}
   .vz-ruler span{position:absolute;top:0;font:11px VT323,monospace;color:var(--dim);opacity:.7;padding-left:2px}
-  /* TITLE ABOVE THE ROLL (Paul 2026-07-10): each lane is a header row (name+role)
+  /* TITLE ABOVE THE ROLL: each lane is a header row (name+role)
      ABOVE a full-width piano-roll, with its fx caption beneath; extra vertical
      breathing room between lanes. */
   .vz-tlrow{display:flex;flex-direction:column;gap:.24rem;margin:1.45rem 0}
@@ -183,7 +180,7 @@
     border:1px solid var(--line);background-color:rgba(255,255,255,.03);overflow:hidden}
   /* THE UNIT IS ALWAYS 8: longer chord bars PAGE — one row per lane whose window
      slides to the next 8 beats when the live beat crosses a page edge (the old
-     stacked fold rows read as duplicated bars — Paul 2026-07). The pager strip
+     stacked fold rows read as duplicated bars). The pager strip
      is clipped by the roll; a flip is a fast slide, never a scroll. */
   .vz-pager{position:absolute;inset:0;display:flex;transition:transform .14s ease-out}
   .vz-page{position:relative;flex:0 0 auto;height:100%}
@@ -196,8 +193,8 @@
   .vz-ph{position:absolute;top:0;bottom:0;left:0;right:0;pointer-events:none;display:none}
   .vz-ph.on{display:block}
   /* the playhead lights ONE ruler cell at a time and steps cell to cell — no
-     stripe, no sweep (Paul 2026-07-10: "each BAR should light up as it
-     progresses"; "the playhead vertical stripe should go"). width set inline. */
+     stripe, no sweep: each BAR lights up as it progresses, and there is no
+     vertical playhead stripe. Width set inline. */
   .vz-ph i{position:absolute;top:0;bottom:0;background:rgba(255,110,199,.17);
     box-shadow:inset 0 0 12px rgba(255,110,199,.2);opacity:.95}
   /* quiet page indicator: ·1/2 in the ruler's EMPTY left gutter (over the lane-
@@ -218,9 +215,9 @@
     padding:0 .28rem;margin-left:.3rem;letter-spacing:.04em;text-transform:uppercase}
   /* MIXING NODE GRAPH — the signal-flow topology beneath the rolls: voice boxes +
      insert chain → send curves (width/opacity = level) → reverb/delay bus → master
-     → out. Replaces the master effects TEXT line (Paul 2026-07-10). */
+     → out. Replaces the master effects TEXT line. */
   .vz-graph{display:block;width:100%;max-width:470px;margin:.15rem auto 0;height:auto;overflow:visible}
-  .vz-graph .gnode{fill:rgba(28,24,56,.42);stroke:var(--line2);stroke-width:1}   /* translucent — read the send curves beneath (Paul 2026-07-11) */
+  .vz-graph .gnode{fill:rgba(28,24,56,.42);stroke:var(--line2);stroke-width:1}   /* translucent — read the send curves beneath */
   .vz-graph .gins{fill:rgba(69,224,255,.07);stroke:rgba(69,224,255,.42);stroke-width:1}
   .vz-graph .grev{fill:rgba(69,224,255,.07);stroke:var(--cyan);stroke-width:1.2}
   .vz-graph .gdel{fill:rgba(255,216,107,.07);stroke:var(--amber);stroke-width:1.2}
@@ -243,8 +240,7 @@
   .chy-join{color:var(--amber);margin-top:.15rem}
   .chy-tech{margin-top:.4rem;color:var(--mint);opacity:.8;font-size:12px;line-height:1.45}
   .chy-status{margin-top:.25rem;color:var(--cyan);font-size:12px}
-  /* SETTINGS PANEL (redesigned 2026-07-11): grouped sections, aligned rows, no
-     wrapping value labels, uniform export buttons, an export progress bar. */
+  /* SETTINGS PANEL: grouped sections, aligned rows, no wrapping value labels. */
   .psec{margin:.2rem 0 .5rem;padding:.15rem 0 .45rem;border-bottom:1px solid var(--line)}
   .psec:last-of-type{border-bottom:none}
   .ptitle{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);opacity:.7;margin:.1rem 0 .28rem}
@@ -326,7 +322,7 @@
 .chip.spin{animation:chipspin 1s linear infinite}
 @keyframes chipspin{to{transform:rotate(360deg)}}
 
-/* ── THE STANDING CREDIT (2026-07-25, Paul's attribution ask) ────────────────
+/* ── THE STANDING CREDIT ────────────────────────────────────────────────────
    "made by Paul Ford at Aboard", always on screen, never in the way: bottom-LEFT
    (the chips own bottom-right, #playhead owns bottom-centre), dim VT323, and
    pointer-events only on the two links so the star map keeps the whole viewport

@@ -3,7 +3,7 @@
 //
 //   node faust/live-resilience-test.js
 //
-// Reproduces + guards THE core-experience bug (Paul, iPhone device tests): the NEW wav engine
+// Reproduces + guards THE core-experience bug (found on iPhone device tests): the wav engine
 // survives backgrounding but plays only drums+bass — the sampled melody/pad/lead voices are
 // SILENT — and stalls. Root cause: the v3.1 wav producer opened with EMPTY sample buffers and
 // baked bars IMMEDIATELY, relying on an addBuffers "pop-in" to fill FUTURE bars. But the

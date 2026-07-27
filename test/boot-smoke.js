@@ -36,8 +36,8 @@ const EXPECTED = {
   "engine/genre-kernel.js": "GenreKernel",
   "engine/genre-verifier.js": "GenreVerifier",
   "engine/namebank.js": "NameBank",
-  // the SMF writer: node-side gate dependency AND (again, 2026-07-26) the
-  // browser's ⤓ midi download — it reads window.CsdEngine at load.
+  // the SMF writer: a node-side gate dependency AND the browser's ⤓ midi
+  // download — it reads window.CsdEngine at load.
   "engine/midi-export.js": "MidiExport",
   "engine/speech.js": "CsdSpeech",
   "engine/demo-layer.js": "DemoLayer",
@@ -45,7 +45,7 @@ const EXPECTED = {
   "engine/faust/found-player.js": "FoundPlayer",
   "engine/faust/sampler.js": "FaustSampler",
   "engine/faust/live.js": "FaustLive",
-  // analytics (2026-07-25): the settings shim publishes window.goatcounter.
+  // analytics: the settings shim publishes window.goatcounter.
   // (The vendored counter itself is async — excluded from the ordered walk.)
   "app/analytics.js": "goatcounter",
 };
@@ -58,7 +58,7 @@ function parseScripts(html) {
   while ((m = re.exec(html))) {
     const attrs = m[1];
     if (/\btype\s*=\s*["']module["']/i.test(attrs)) continue; // app/ ES modules
-    if (/\basync\b/i.test(attrs)) continue; // async scripts have no load-order contract (goatcounter counter, 2026-07-25)
+    if (/\basync\b/i.test(attrs)) continue; // async scripts have no load-order contract (the goatcounter counter)
     const src = /\bsrc\s*=\s*["']([^"']+)["']/i.exec(attrs);
     if (src) out.push(src[1]);
   }

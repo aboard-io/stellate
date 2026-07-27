@@ -1,11 +1,9 @@
 // background.js — the background layer program: the MicroW8 demoscene layer,
-// ALWAYS ON as ambient wallpaper (Paul 2026-07-25: "get rid of the 2d visualizer
-// button but leave it in the background"). The ▢/▦ chip is gone; ?bg=off is the
-// escape hatch (and the gates' off-state probe). While on, the cart ROTATES:
-// every 8 MEASURES on the musical clock while live (cut on the beat by onBar),
-// with a wall-clock backstop that only runs when the music isn't.
-// (The laserdisc video layer + chip cycle: removed 2026-07-25, branch
-// legacy-download-video; the chip itself retired later the same day.)
+// ALWAYS ON as ambient wallpaper: no visualizer button, just the background.
+// ?bg=off is the escape hatch (and the gates' off-state probe). While on, the
+// cart ROTATES: every 8 MEASURES on the musical clock while live (cut on the
+// beat by onBar), with a wall-clock backstop that only runs when the music
+// isn't. There is no laserdisc video layer and no ▢/▦ chip cycle.
 import { S, set, subs, QSFLAGS } from "./state.js";
 
 // bgMode is fixed at boot: 2 (demoscene) unless ?bg=off. Mode numbers keep their
@@ -15,8 +13,8 @@ const bgMode = QSFLAGS.get("bg")==="off" ? 0 : 2;
 // the cut lands ON THE BEAT (a chord-bar boundary). onBar ticks per chord-bar
 // (info.cbeats beats, default 8 = two 4/4 measures) so we count BEATS, not ticks.
 // Idle = the wall-clock backstop cycles it.
-// ROTATION PERIOD (Paul 2026-07-25: "leave the demoscene running behind the star
-// map for much longer. Just change it every 32 bars or slower"): 64 BARS — at
+// ROTATION PERIOD: the demoscene runs behind the star map for a long stretch —
+// 64 BARS, well past the 32-bar floor where the swapping starts to nag. At
 // 60-160bpm that is roughly 1.5-4 minutes per cart. The new cart fades IN over
 // the LAST 8 BARS of that window as a true two-runtime crossfade, so the swap
 // is a slow morph rather than an event.
@@ -27,14 +25,14 @@ const BG_ALT_MS=+(QSFLAGS.get("bgAltMs"))||90000;   // idle wall-clock backstop 
 const bgAlt={beats:0, lastFlip:0, lastBar:0};
 function bgWant(){
   // STAR-CRUISE (aliens view) wraps the WASM DEMOSCENE around the planet as its
-  // atmosphere (Paul: "project the wasm demoscene to the sky"), so it wants the
+  // atmosphere — the wasm demoscene is projected to the sky — so it wants the
   // demo layer running — even though the 2D canvas hides under the 3D view. The
   // authority model (applyBg imposes bgWant on every render) starts it on entry
   // and restores the prior state on exit — no manual save/restore needed.
   if(window.__STARCRUISE && window.__STARCRUISE.isRunning && window.__STARCRUISE.isRunning())
     return { d:true };
-  // THE VIZ VIEW SUPPRESSES the background layer entirely (exclusive views,
-  // Paul 2026-07-10) — leaving the viz returns to the ambient wallpaper.
+  // THE VIZ VIEW SUPPRESSES the background layer entirely (the views are
+  // exclusive) — leaving the viz returns to the ambient wallpaper.
   if(S.vizView) return { d:false };
   return { d:bgMode===2 };
 }

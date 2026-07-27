@@ -18,7 +18,7 @@
 //   node validate-genres.js [--seeds N] [--quick] [--json] [--audio]
 //                           [--serial] [--jobs N] [--no-cache]
 //
-// Speed round (2026-07): the per-(genre,seed) state/feature/determinism builds
+// Speed: the per-(genre,seed) state/feature/determinism builds
 // are sharded across CPU cores (verify-lib fork workers; gates then consume
 // the pooled cache) and gate 5's blends run in the parent WHILE workers build.
 // --serial keeps the single-process path; both print byte-identical reports.
@@ -293,8 +293,7 @@ function gateVocabulary() {
   const engineSrc = fs.readFileSync(require.resolve("./csd-engine.js"), "utf8");
   const kernelSrc = fs.readFileSync(require.resolve("./genre-kernel.js"), "utf8");
   // synthesis-model vocabulary now lives in the Faust engine's state mapping
-  // (faust/state-engine.js pitchedUnit switch + the drum module maps); the
-  // csound codegen this used to scrape is on branch legacy-csound.
+  // (faust/state-engine.js pitchedUnit switch + the drum module maps).
   const stateEngineSrc = fs.readFileSync(require.resolve("./faust/state-engine.js"), "utf8");
   const scrape = (src, re, seedSet) => {
     const s = new Set(seedSet || []);
@@ -322,7 +321,7 @@ function gateVocabulary() {
   const sampleIds = new Set(Object.keys(K.SAMPLES));
   const sourceIds = new Set([...Object.keys(K.SOURCES), ...sampleIds]);
   const inSet = (set) => (v) => set.has(v);
-  // THE POOL LAW (repertoire wave 3, 2026-07-10): sources lists may carry
+  // THE POOL LAW (repertoire wave 3): sources lists may carry
   // "pool:<class>" / "pool:<class>*N" tokens (genre-kernel SOURCE_POOLS,
   // expanded per-(seed,class) by K.expandPools). A token is valid when the
   // class exists, is non-empty, and EVERY member passes the same registry
@@ -358,7 +357,7 @@ function gateVocabulary() {
       check(g, "found.sources", A.found.sources, orPool(inSet(sourceIds)), "not in SOURCES/SAMPLES registry");
     }
     if (A.hits) {
-      // 2026-07-03: toState resolves hits from SAMPLES or SOURCES (remote
+      // toState resolves hits from SAMPLES or SOURCES (remote
       // material as stabs, e.g. Radio Moscow) — validate against the union.
       check(g, "hits.sources", A.hits.sources, orPool(inSet(sourceIds)), "not in SAMPLES/SOURCES registry");
       check(g, "hits.pattern", A.hits.pattern, inSet(hitPats), "unknown HIT_PATTERNS key");
@@ -375,7 +374,7 @@ function gateVocabulary() {
     if (!V.TARGETS[g]) warnings.push({ genre: g, field: "TARGETS", note: "anchor has no genre-verifier target ranges — unverifiable, excluded from gates 2-5" });
   }
   for (const t of Object.keys(V.TARGETS)) if (!K.GENRES[t]) warnings.push({ genre: t, field: "GENRES", note: "verifier target with no kernel anchor" });
-  // PERC LANE (2026-07): every genre perc style must name a real engine perc
+  // PERC LANE: every genre perc style must name a real engine perc
   // pattern (E.PERC_PATTERNS) and, when a lane pins a GM element, a real one
   // (K.PERC_ELEMENTS). The perc voices themselves (clap/rim/ride/crash/perc) are
   // engine drum types (E.PERC_VOICES) mapped in faust/state-engine.
@@ -456,7 +455,7 @@ function gateAudio() {
 // docs/MUSICALITY.md phase 2: the symbolic laws (BLOOM / REGISTER / PROMISES /
 // MOTION) score every anchor so the number exists in every verify run. Gate
 // posture is SOFT — this gate NEVER fails the suite; a law goes hard only
-// after its top-offender list and Paul's ear agree twice (the graduation
+// after its top-offender list and the ear agree twice (the graduation
 // rule). Prints the 5 worst scorecards worst-first: the balance loop's
 // standing worklist.
 function gateMusicality() {

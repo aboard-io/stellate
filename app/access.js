@@ -32,8 +32,7 @@ let lastJourneyKey = "";           // resume law: the SAME journey resumes at th
 let single = GENRES.includes("vaporwave") ? "vaporwave" : GENRES[0];
 let journey = [];                  // ordered list of genre keys
 
-// (the eight "shape" macro sliders lived here until 2026-07-10 — Paul: "get
-// rid of all macros")
+// (there are no "shape" macro sliders — the instrument has no macros)
 
 // ---------- populate the genre menus ----------
 // The three genre pickers are native type-to-filter comboboxes (<input list>
@@ -58,7 +57,7 @@ function resolveGenre(raw){
     || GENRES.find(g=>g.toLowerCase().startsWith(lc)||label(g).toLowerCase().startsWith(lc))
     || "";
 }
-// bookmarkable, here too (Paul: "the entire site"): ?seed=N&genre=g&blend=g2&amt=30
+// bookmarkable, here too — the ENTIRE site: ?seed=N&genre=g&blend=g2&amt=30
 // restores the accessible page's choices; changes update the URL in place.
 function accUrlRestore(){
   const q=new URLSearchParams(location.search);
@@ -203,14 +202,14 @@ function tick(){
   b.textContent = S.live ? "■ Stop" : "▶ Play";
   b.setAttribute("aria-pressed", S.live?"true":"false");
   b.classList.toggle("live", !!S.live);
-  // one-time PLAYING narration (blind-test fix 2026-07-25: the log's last line
-  // stayed "loading engine…" through real playback — S.status only moves on
-  // boot/flips/errors, so a screen reader never heard that music had started)
+  // one-time PLAYING narration. Without it the log's last line stays "loading
+  // engine…" through real playback — S.status only moves on boot/flips/errors,
+  // so a screen reader never hears that the music started.
   if(S.live && !tick._saidPlaying){ tick._saidPlaying=true;
     const g=(S.playing&&S.playing.genreMeta&&S.playing.genreMeta.label)||"";
     logEvent(`playing${g?" — "+g:""} · narration follows the sections`); }
   if(!S.live) tick._saidPlaying=false;
-  // journey ARRIVAL narration (blind-test fix #3, 2026-07-25): when the traveler
+  // journey ARRIVAL narration: when the traveler
   // crosses into a new dominant genre mid-journey, say so ASSERTIVELY — travel
   // should feel like travel, not a form. Majority (>50%) = the arrival moment;
   // dominance flips are minutes apart so the interrupt is earned, and the same

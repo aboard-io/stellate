@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// test/midi-export-run.js — THE ⤓ MIDI GATE (restored 2026-07-26, Paul: "I want
-// midi back"). The download cluster was excised 2026-07-25; the MIDI half came
-// back and this gate holds it to a hard contract: not "a file appeared" but
+// test/midi-export-run.js — THE ⤓ MIDI GATE. ⤓ midi is the one survivor of a
+// larger download cluster, and this gate holds it to a hard contract: not
+// "a file appeared" but
 // "the bytes are a real Standard MIDI File AND they are the music on screen".
 //
 // It drives index.html headless, opens the ⚙ modal, CLICKS the ⤓ midi button

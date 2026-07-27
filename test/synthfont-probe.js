@@ -53,7 +53,7 @@ async function main() {
   ok(noSampler, `B3: a voice is still a sampler under the synth font: ${JSON.stringify(st)}`);
 
   // (B4 — the pressed-WAV audio capture — went with the in-browser ⤓ export
-  // path, removed 2026-07-25; playback survival is asserted below instead.)
+  // path; playback survival is asserted below instead.)
   const playAlive = await page.evaluate(() => !!window.__S.playing && !!window.__S.live);
   ok(playAlive, "B4: playback died after the font switch");
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# fetch-bed-expansion.sh — the bed-pool expansion (repertoire wave 3, 2026-07-10).
+# fetch-bed-expansion.sh — the bed-pool expansion (repertoire wave 3).
 # 79 new found-sound beds across ten character classes (city air / road hum /
 # machine room / voices on tape / night air / deep water / room tone + NEW:
 # weather / smalltown / shortwave-static). Every item license-verified against

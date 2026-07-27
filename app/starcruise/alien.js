@@ -2109,7 +2109,7 @@ export function makeAlien(THREE, traits, member, seed) {
 
     // SECOND drumming hand — strikes its OWN drum at its OWN pace (a steady
     // cross-rhythm off `clock`, independent of the primary hand's note onsets),
-    // so the two hands visibly move at DIFFERENT rates (Paul). Animates drum 2.
+    // so the two hands visibly move at DIFFERENT rates. Animates drum 2.
     if (drumSecondIdx >= 0) {
       const a2 = arms[drumSecondIdx];
       if (energyActive > 0.001) {

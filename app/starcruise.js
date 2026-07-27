@@ -560,8 +560,8 @@ function ensureSurface(genreOrWeights, dominant, seed) {
   if (dominant && dominant === curSpawnDom && band.length) return;   // already up for this planet
   spawnFor(genreOrWeights, seed);
   curSpawnDom = dominant || null;
-  // SKY CART IS PLANET-KEYED (Paul 2026-07-16: "the wasm background is sticking
-  // — the same, not shifting on the planets"): the cruise forces the demo layer
+  // SKY CART IS PLANET-KEYED. Otherwise the wasm background sticks — the same
+  // cart on every planet: the cruise forces the demo layer
   // up via bgWant() but the background alternator only rotates carts in bgMode
   // 1, so the same cart wrapped every planet forever. Each dominant genre now
   // OWNS a cart, picked deterministically (FNV-1a of the name) at the
@@ -599,7 +599,7 @@ function spawnFor(genreOrWeights, seed) {
   // world's radius can be sized to hold the whole ensemble around the landing pole.
   const members = rosterFor(traits.band);
   const n = members.length;
-  const spread = n > 1 ? Math.max(5.0, Math.min(7.0, 4.2 + 8 / n)) : 0;   // WIDE arc — Paul: space the band much further apart (was 3.2-4.2)
+  const spread = n > 1 ? Math.max(5.0, Math.min(7.0, 4.2 + 8 / n)) : 0;   // WIDE arc — the band is spaced well apart
   const bandHalfW = n > 1 ? ((n - 1) / 2) * spread : 2;
   const energy = (traits.groove && traits.groove.energy) || 0;
   const DANCER_ENERGY_GATE = 0.34;         // below this the planet is band-only
@@ -645,7 +645,7 @@ function spawnFor(genreOrWeights, seed) {
     }
   } catch (e) { groundPlanet = null; groundH0 = 0; groundRadius = 0; smallWorldGround = false; }
 
-  // BACKDROP — REMOVED for now (Paul: "get rid of the trees and background objects"). The
+  // BACKDROP — deliberately empty: no trees, no background objects. The
   // planet's bare terrain is the whole stage; no procedural city/farm/foliage. We keep an
   // EMPTY backdrop object so the spawn/despawn + update lifecycle (and hasBackdrop) are
   // unchanged — nothing is drawn, nothing clutters the little world.
@@ -716,7 +716,7 @@ function spawnFor(genreOrWeights, seed) {
     plantOnSurface(ped, px, pz, faceYaw);
     // scale the PEDESTAL (about the surface-contact point), not the alien inside it — scaling
     // the inner group shrank each dancer about its own centre and lifted its FEET off the
-    // ground (Paul: "the dancers don't touch the ground"). Scaling the planted pedestal keeps
+    // ground — otherwise the dancers float. Scaling the planted pedestal keeps
     // the feet on the surface while still giving the crowd size variety.
     ped.scale.setScalar(0.85 + seedR() * 0.25);
     d.stage = ped;
@@ -789,11 +789,11 @@ function countCasters() {
   band.forEach(scan); dancers.forEach(scan);
   return n;
 }
-// SKY DOME — wrap the visuals AROUND THE PLANET like a glowing atmosphere (Paul:
-// "mapped around the planet like its atmosphere"). A big BackSide sphere
+// SKY DOME — wrap the visuals AROUND THE PLANET like a glowing atmosphere,
+// mapped on as if it were the planet's own air. A big BackSide sphere
 // concentric with the ground planet. It projects the WASM DEMOSCENE canvas
-// (DemoLayer, same-origin, generative — the only source since the found-video
-// layer's 2026-07-25 removal; no demo running = no dome).
+// (DemoLayer, same-origin, generative — the only source there is; no demo
+// running = no dome).
 // ADDITIVE + depth-tested so it reads as luminous atmosphere in the OPEN SKY only
 // — the depth test keeps it off the near band/planet (those are closer, so the
 // dome fails depth there) while it glows over the far stars. background.js's
@@ -1045,7 +1045,7 @@ function buildSunField() {
   sunField = new THREE.InstancedMesh(geo, mat, suns.length);
   sunField.frustumCulled = false;
   sunField.name = "sunField";
-  // NO HALO (Paul: "give the stars no halo"). The additive corona/glow shell is removed —
+  // NO HALO on the stars. There is no additive corona/glow shell —
   // each star is JUST its flaming plasma core, no bloom bubble around it. sunGlowField stays
   // null (dispose + probes already guard for null).
   sunGlowField = null;
@@ -1094,10 +1094,10 @@ function highlightPlanet(genre) {
   planetField.instanceMatrix.needsUpdate = true;
 }
 
-// makeShip() — REMOVED per the SMOOTH+LEGIBLE brief. The old low-poly saucer sat in
-// front of / behind the band and OBSTRUCTED the view. There is no 3D ship anymore.
-// This returns an EMPTY group + a no-op update so the surface-scene lifecycle
-// (spawn/despawn, hasShip) is unchanged — nothing is drawn, nothing blocks the band.
+// makeShip() — deliberately draws NOTHING. A low-poly saucer sits in front of or
+// behind the band and obstructs the view, so there is no 3D ship: this returns an
+// EMPTY group + a no-op update, keeping the surface-scene lifecycle
+// (spawn/despawn, hasShip) intact while nothing is drawn and nothing blocks.
 function makeShip(traits, seed) {
   const g = new THREE.Object3D();
   g.name = "ship-empty";   // no children — the 3D ship shell is gone (HUD-only cockpit)
@@ -1151,8 +1151,8 @@ export async function start() {
   // and let a strong KEY directional light MODEL the forms with a clear light-to-dark
   // falloff + cast shadows. A soft back/rim fill keeps the shadow side reading colour
   // so it's not murky. (linear->sRGB output fix lives in postfx.js.)
-  // DRAMATIC STAGE LIGHTING (Paul: "spotlights sweeping over the stage" — everything was lit
-  // like high noon). A DARK ambient/hemisphere base so the little world sits in near-night, a
+  // DRAMATIC STAGE LIGHTING — spotlights sweeping over the stage, not everything lit
+  // like high noon. A DARK ambient/hemisphere base so the little world sits in near-night, a
   // low warm KEY that still models the forms + casts the grounding shadows, and THREE saturated
   // SPOTLIGHTS that SWEEP across the band on slow offset cycles (animated in update()) — moving
   // pools of magenta / cyan / amber, like a little concert on the planet.
@@ -1289,7 +1289,7 @@ export async function start() {
 }
 
 // ---- VHS SCANLINE OVERLAY (in front of the 3D view) -----------------------------
-// Paul: "put the same glitchy VHS scanline filters in front of the 3D views." A DOM
+// The same glitchy VHS scanline filters sit in front of the 3D views. A DOM
 // overlay above the canvas (z 44, below the raised chips at 50) — pure CSS, pointer-
 // events:none so it never eats taps: fine horizontal scanlines, a slow VHS tracking
 // ROLL bar drifting down the screen, and a soft vignette. On top of the PS1 post pass
@@ -1338,7 +1338,7 @@ function mountHUD() {
   hudEl.id = "starcruise-hud";
   hudEl.style.cssText = [
     "position:fixed", "top:max(14px,env(safe-area-inset-top))",
-    "right:max(14px,env(safe-area-inset-right))", "z-index:55",   // top-RIGHT (Paul)
+    "right:max(14px,env(safe-area-inset-right))", "z-index:55",   // top-RIGHT
     "text-align:right",
     "pointer-events:none", "user-select:none",
     "font:600 13px/1.3 system-ui,sans-serif", "letter-spacing:.08em",
@@ -1982,8 +1982,8 @@ export function stop() {
 export function toggle() { return running ? (stop(), false) : (start(), true); }
 export function isRunning() { return running; }
 
-// The star-cruise is now ONE of the app's VIEWS (Paul: "make the aliens just one more view
-// along with star map, video, and viz"), cycled by the ✦ view chip in app/panels.js via
+// The star-cruise is ONE of the app's VIEWS — the aliens are just one more view
+// alongside the star map and the viz — cycled by the ✦ view chip in app/panels.js via
 // window.__STARCRUISE.start()/stop()/isRunning(). It no longer injects its own 🛸 chip and
 // has no ✕ EXIT button — you switch away with the view chip like any other view.
 

@@ -43,7 +43,7 @@
     return { l: Math.SQRT2 * Math.cos(th), r: Math.SQRT2 * Math.sin(th) };
   }
 
-  // BATCHED RENDER SPAN (ENGINE-AUDIT 2026-07 Tier 4) — faustwasm's offline
+  // BATCHED RENDER SPAN (ENGINE-AUDIT Tier 4) — faustwasm's offline
   // render() allocates a fresh Float32Array per output PER CALL and then chunks
   // its compute at exactly fBufferSize (= BS) internally, slicing the inputs the
   // same way. So render(ins, k*BS) executes the identical compute sequence as k
@@ -65,7 +65,7 @@
     return out;
   }
 
-  // THE PARAM ROOT (2026-07-26, the Pure-FM drone). Every host (press.js,
+  // THE PARAM ROOT (the Pure-FM drone). Every host (press.js,
   // stream-worker.js, stem-worker.js) injects a `rootOf(module)` used to address
   // a module's params as "/<root>/<name>". That root was read off the compiled
   // artifact's DECLARED NAME (`declare name "dx7_alg22"` -> meta json .name),
@@ -195,7 +195,7 @@
         else if (c[1] === "@pp") curPP = c[2];
         else v.proc.setParamValue(c[1], c[2]);
       };
-      // SEGMENT OVERLAP CLAMP (ENGINE-AUDIT 2026-07 Tier 2): the block walk
+      // SEGMENT OVERLAP CLAMP (ENGINE-AUDIT Tier 2): the block walk
       // renders past a segment's `to` up to the next BS boundary (len clamps to
       // TOTAL, not to `to`), while the NEXT segment's start is block-aligned
       // DOWN — so a 1..63-sample gap between two merged intervals landing inside

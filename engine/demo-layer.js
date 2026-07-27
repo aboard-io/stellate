@@ -17,7 +17,7 @@
 //     omits audio entirely: the cart's `snd`/`sndGes` is never called, so the
 //     demo runs instantly with no gesture and no sound conflict.
 //   * Real blend control. We own the <canvas>, so mix-blend-mode:screen +
-//     tunable opacity composite the demo THROUGH the video (Paul: "mix them").
+//     tunable opacity composite the demo THROUGH the video, mixing the two.
 //   * Music-reactivity. We drive the cart's TIME register ourselves, so a
 //     musical bar can nudge the effect's speed (see pulse()).
 //
@@ -65,17 +65,17 @@
     } catch (e) {}
     return "vendor/microw8/";
   })();
-  // NO localStorage self-restore of on/off (2026-07-09): the old "vaporwave-demo-on"
-  // key let this layer re-enable itself at init, bypassing app/background.js's mode
-  // program — one of the ways video + demos ended up STACKED. The controller owns
+  // NO localStorage self-restore of on/off. A persisted "on" key lets this layer
+  // re-enable itself at init, bypassing app/background.js's mode
+  // program — one of the ways layers end up STACKED. The controller owns
   // enabled state now; only the cart CHOICE is remembered here.
   const LS_CART = "vaporwave-demo-cart";
   const MOBILE = /Mobi|iPhone|iPad|Android/.test(navigator.userAgent) ||
                  (navigator.hardwareConcurrency || 8) <= 4;
   const FPS = MOBILE ? 24 : 32;          // cap — a background layer must stay cheap
   const FRAME_MS = 1000 / FPS;
-  // "A little danker" (Paul 2026-07-08): the demo used to GLOW on top of the
-  // footage at .55; drop it to .45 so the carts sit INSIDE the murk with the
+  // A LITTLE DANKER: at .55 the demo GLOWS on top of the
+  // footage; .45 sits the carts INSIDE the murk with the
   // analog stack (grade + grain + scan + bursts) layered over them, matching the
   // found-footage layer's treatment rather than floating above it.
   const DEFAULT_OPACITY = 0.72;          // present but never drowns the footage; sits in the murk
@@ -84,9 +84,9 @@
 
   // -------------------------------------------------------------------------
   // ANALOG TREATMENT — ported from video-layer.js so the demoscene carts wear
-  // the SAME found-footage grade as the laserdisc layer (Paul 2026-07-08: "add
-  // lots of the same video effects on top of the webassembly demos… make it a
-  // little danker"). A small CSS/SVG effect stack owned by DemoLayer, attached
+  // the SAME found-footage grade the video layer wore: lots of video effects
+  // stacked on top of the webassembly demos, to make them a little danker.
+  // A small CSS/SVG effect stack owned by DemoLayer, attached
   // to its own #demolayer container, cheap (compositor-only — no canvas readback
   // beyond the gate hooks that already exist). Everything is a decoration OVER
   // the raw canvas: the getImageData()-based gate assertions read the untouched
@@ -97,15 +97,14 @@
   // to crush the shadows, a touch LESS saturation (the 256-colour palettes run
   // hot — pulling them back reads more analog), a warmer sepia .18 + magenta
   // hue-lean, and a hair of blur to soften the pixel grid into VHS softness.
-  // TV GRADE (Paul 2026-07-25: "darken the visualizer a bit more and blue it and
-  // make it more of a TV"): sepia first paints a warm base the hue-rotate then
-  // swings to a cold CRT blue-cyan; brightness .8 -> .55 sinks it into the murk.
-  // blur 0.35px -> 4px (Paul 2026-07-25: "always blur the demoscene visualization
-  // in the background") — the carts dissolve into soft phosphor color fields;
+  // TV GRADE — darker, bluer, more of a TV: sepia first paints a warm base the
+  // hue-rotate then swings to a cold CRT blue-cyan; brightness .8 -> .55 sinks
+  // it into the murk. The demoscene is ALWAYS blurred in the background
+  // (0.35px -> 4px) — the carts dissolve into soft phosphor color fields;
   // CSS-side only, so the gates' getImageData reads of the raw canvas are untouched.
   const GRADE = "saturate(.8) contrast(1.1) brightness(1.0) sepia(.32) hue-rotate(175deg) blur(4px)";
   // heavier grain than the footage layer's vhs tier (.13) — the carts want more
-  // tooth to knock the digital sheen off (Paul: "a little danker").
+  // tooth to knock the digital sheen off — a little danker.
   const GRAIN_OPACITY = 0.17;
   // same SVG-turbulence grain recipe as video-layer's NOISE_URI, jittered by a
   // steps() animation (identical fractalNoise tile).
@@ -192,7 +191,7 @@
   // ---- clock / reactivity ----
   let rafId = 0, lastTs = 0, acc = 0;
   let virtualTime = 0;                   // ms fed to the cart's TIME register
-  let speed = 0.010;                      // steady time multiplier — slowed AGAIN 2026-07-25 ("Slowwwwwwwwwwwwer"): 0.3 -> 0.03 -> 0.010, i.e. 30x slower than the 07-10 setting. This IS the clock; the music-reactive kick is retired (seizure pass). The music-reactive kick is retired with the flash (seizure-safety pass below), so this IS the clock.
+  let speed = 0.010;                      // steady time multiplier — deliberately very slow (0.3 -> 0.03 -> 0.010). The music-reactive kick is retired with the flash (seizure-safety pass below), so this IS the clock.
   let kick = 0;                          // decaying speed bump from pulse()/note()
   let frameCount = 0;
   // Note-reactivity levers. These are CART-AGNOSTIC: `kick` surges the shared
@@ -403,8 +402,8 @@
     imgData = ctx.createImageData(320, 240);
     imgU32 = new Uint32Array(imgData.data.buffer);
     wrap.appendChild(canvas);
-    // DISSOLVE CANVAS (Paul 2026-07-25: "could you fade between demoscene
-    // transitions, it's very sudden"). Cart swaps used to hard-cut. This holds a
+    // DISSOLVE CANVAS: a hard cut between demoscene carts is very sudden, so
+    // the transitions fade. This holds a
     // FROZEN copy of the outgoing cart's last frame, stacked over the live one
     // and faded out by CSS — a freeze-frame dissolve. Chosen over running two
     // carts through the fade because the layer is heavily blurred and drifts at
@@ -453,7 +452,7 @@
     // the murk (the "danker" ask): darker at top/bottom, lighter through the mid.
     fxVeil = document.createElement("div");
     fxVeil.className = "dm-veil";
-    // deepened + blued 2026-07-25 (the TV ask) — a cold phosphor wash
+    // deepened + blued for the TV grade — a cold phosphor wash
     fxVeil.style.cssText = "position:absolute;inset:0;pointer-events:none;" +
       "background:linear-gradient(rgba(5,10,30,.28),rgba(5,10,30,.12) 32%,rgba(5,10,30,.32))";
     // TUBE VIGNETTE (new, same ask): darkened corners pull the flat canvas into
@@ -584,8 +583,8 @@
     return true;
   }
 
-  // START A LIVE CROSSFADE to cart `i` over `ms` (Paul 2026-07-25: "change it
-  // every 32 bars or slower. Fade the new one in over the last eight bars").
+  // START A LIVE CROSSFADE to cart `i` over `ms`: the cart changes every 32
+  // bars or slower, with the new one fading in over the last eight bars.
   // The incoming cart gets its OWN runtime and animates into the fade canvas
   // while the outgoing one keeps animating in the main canvas; at the end the
   // incoming rig is promoted and the fade canvas resets. A freeze-frame was
@@ -631,9 +630,9 @@
   // We DON'T touch per-cart palette layout (fragile) — we speed the shared TIME
   // clock, which every time-driven effect reads, so the demo throbs on the beat.
   function pulse(info) {
-    // SEIZURE-SAFETY PASS (Paul 2026-07-25: "the way it responds to the music
-    // makes it too flashy for seizure-prone users — just get rid of the
-    // flashing"): music-reactivity retired. The bar-level speed surge is gone;
+    // SEIZURE-SAFETY PASS: responding to the music makes this layer too flashy
+    // for seizure-prone users, so there is no flashing at all and
+    // music-reactivity is retired. The bar-level speed surge is gone;
     // the layer drifts on its own slow clock. API kept for callers/gates.
   }
 
@@ -645,8 +644,8 @@
   // surges the shared TIME clock, `flash` brightens via the blit LUT, `hueShift`
   // rotates the palette by pitch class. Different roles pull different levers.
   function note(ev) {
-    // SEIZURE-SAFETY PASS (2026-07-25): the per-note flash/hue/kick reactions
-    // are RETIRED — even the previous "subtle pulse" tuning strobed at dense
+    // SEIZURE-SAFETY PASS: the per-note flash/hue/kick reactions
+    // are RETIRED — even a "subtle pulse" tuning strobes at dense
     // passages (a jungle break fires many onsets/second, each one a luminance
     // step). The layer no longer reacts to notes at all: flash/hueShift/kick
     // stay 0, which also keeps the blit on its fast path permanently. The

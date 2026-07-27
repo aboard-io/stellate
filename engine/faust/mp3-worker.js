@@ -102,7 +102,7 @@ function drainFragment(final) {
     const descPresent = !!(descBytes && descBytes.length);
     // ASC/config bytes preference: (1) the encoder's decoderConfig.description — for AAC
     // normalized through extractAsc (iOS hands back a ~39-byte ES_Descriptor, not the bare
-    // 2-byte ASC; embedding it verbatim killed the mms-aac SourceBuffer, device 2026-07-08);
+    // 2-byte ASC; embedding it verbatim kills the mms-aac SourceBuffer on device);
     // (2) for AAC with no description, synthesize the ASC from the parsed ADTS header when
     // we saw one, else from the configured rate/channels; (3) Opus always ships its dOps
     // from the OpusHead description, so an absent one falls through to the muxer default.

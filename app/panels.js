@@ -1,10 +1,7 @@
-// panels.js — the ⚙ panel (Paul 2026-07-10 redesign: seed + ⧉ share, pace and
-// a live ±BPM delta — NOTHING else: the transport lives on ▶, the views on the
-// ONE view chip, and the old LIVE/STOP/MORE/VIDEO buttons, mode lock, DIMS
-// detail sliders and preset/path/reset plumbing are gone) plus the chip↔view
-// wiring. The ⤓ download cluster went with them 2026-07-25 and ONE button came
-// back 2026-07-26 (Paul: "I want midi back") — ⤓ midi only; wav/mp3/video stay
-// on branch legacy-download-video.
+// panels.js — the ⚙ panel (seed + ⧉ share, pace and a live ±BPM delta, and
+// NOTHING else: the transport lives on ▶ and the views on the ONE view chip)
+// plus the chip↔view wiring. Of the old ⤓ download cluster only ⤓ midi
+// survives; there is no wav/mp3/video export.
 import { S, set, subs, html, render } from "./state.js";
 import { BARS_PER_SEG } from "./world.js";
 import { goLive, stopLive, setMasterVol, setVapor } from "./live.js";
@@ -12,10 +9,10 @@ import { fontManifest, setSoundfont } from "./fonts.js";
 import { renderInside } from "./inside.js";
 import { drawMap, startPulse } from "./starmap.js";
 import { copyShareUrl, buildShareUrl, loopBars, loopDuration, baseDuration, durMult, fmtDuration, fmtMult, MULT_MIN, MULT_MAX } from "./share.js";
-import { downloadMidi, midiFileName } from "./export.js";   // ⤓ midi (restored 2026-07-26; MIDI only)
+import { downloadMidi, midiFileName } from "./export.js";   // ⤓ midi — MIDI only
 
 // ---------- EMBED: the paste-into-your-blog snippet -------------------------
-// (2026-07-25) The ↗ share button hands out a LINK; this hands out the same mix
+// The ↗ share button hands out a LINK; this hands out the same mix
 // as an <iframe>. It is built from buildShareUrl() — one URL grammar, so an
 // embed carries whatever the map is showing right now: seed, path, measure,
 // speed multiple, soundfont. Only the FILE changes (index → embed.html), which
@@ -59,7 +56,7 @@ function copyEmbed(){
 }
 
 // ---------- Preact panel ----------
-// SPEED SLIDER (Paul 2026-07-16): a LOG MULTIPLE of the path's own distance-
+// SPEED SLIDER: a LOG MULTIPLE of the path's own distance-
 // derived default duration — ×0.01 (100× faster, left) … ×1,000,000 (a million
 // times longer, right), ×1 at the marked center. The slider is a 0..1000
 // integer over the 8 decades; the ×1 detent sits at v=250. The base time is
@@ -71,8 +68,8 @@ const sliderToMult = v => {
   const raw = MULT_MIN * Math.pow(10, MULT_DECADES * Math.max(0, Math.min(DUR_STEPS, +v || 0)) / DUR_STEPS);
   return Math.abs(raw - 1) < 0.06 ? 1 : raw;   // soft ×1 detent at center
 };
-// ±BPM DELTA (Paul: "an overall delta, so that I can subtract or add 64 BPM to
-// whatever is currently playing"). The slider shifts playing+target NOW, and
+// ±BPM DELTA — an overall delta, so you can add or subtract 64 BPM from
+// whatever is currently playing. The slider shifts playing+target NOW, and
 // retargetWeights re-applies S.bpmDelta to every future target, so the offset
 // survives travel/glides until moved back to 0.
 function setBpmDelta(v){
@@ -153,7 +150,7 @@ function toggleModal(which,force){
   el.classList.toggle("open",open);
   document.getElementById(CHIP_OF[which]).classList.toggle("on",open);
   if(which==="inside"){
-    // the viz is a 100% VIEW now (Paul 2026-07-10: three exclusive views) —
+    // the viz is a 100% VIEW — one of three exclusive views —
     // S.vizView drives the body class + background suppression via applyBg;
     // the wrap keeps its "open" class so the ticker/gates read as before.
     set({vizView:open});
@@ -168,7 +165,7 @@ document.getElementById("cfgChip").onclick=()=>toggleModal("panel");
 document.getElementById("viewChip").onclick=()=>{
   const chip=document.getElementById("viewChip");
   const SC=window.__STARCRUISE;
-  // THREE views (Paul: "get rid of video mode"): map -> viz -> aliens -> map.
+  // THREE views, no video mode: map -> viz -> aliens -> map.
   if(SC&&SC.isRunning()){           // aliens -> map
     SC.stop(); chip.classList.remove("spin");
   } else if(S.vizView){             // viz -> ALIENS
@@ -185,7 +182,7 @@ subs.push(()=>{ if(MODALS.inside.classList.contains("open")) renderInside(); });
 for(const [k,el] of Object.entries(MODALS)){
   el.addEventListener("pointerdown",e=>{ if(e.target===el) toggleModal(k,false); });   // tap outside = dismiss
   // BELT: force-navigate links inside modals. On iOS a plain <a> tap inside the
-  // about card sometimes never navigated (Paul 2026-07-10) — the exact
+  // about card sometimes never navigated — the exact
   // interceptor is Safari-side and unreproducible in chromium, so navigate
   // explicitly on click; harmless where native navigation already works
   // (location.assign to the same href is idempotent mid-navigation).

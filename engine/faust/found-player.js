@@ -21,10 +21,9 @@
 //     the old scheduler survives as the first-play head start and the
 //     FP._legacyBed A/B path.
 //
-// The decode helper reimplements the approach of the legacy engine's
-// decodeUrlToWav (wasm-audio.js, branch legacy-csound: fetch ->
-// decodeAudioData -> mono trim) but keeps an AudioBuffer (we feed buffer
-// sources, not csound tables) and skips the IndexedDB layer. It fetches
+// The decode helper is the familiar fetch -> decodeAudioData -> mono trim, but
+// it keeps an AudioBuffer (we feed buffer sources, not tables) and skips the
+// IndexedDB layer. It fetches
 // SAME-ORIGIN ONLY: every found source resolves to a file under found/.
 (function (root, factory) {
   if (typeof module !== "undefined" && module.exports) module.exports = factory();
@@ -40,7 +39,7 @@
   // loop cache itself.
   const _stats = { decodeOk: 0, decodeFail: 0, beds: 0, chops: 0, grains: 0,
     bedLoopRenders: 0, bedLoopHits: 0,
-    // ENGINE-AUDIT 2026-07 Tier 2/3: decode-cache evictions + idle F0 pre-warms
+    // ENGINE-AUDIT Tier 2/3: decode-cache evictions + idle F0 pre-warms
     bufEvicted: 0, f0Warm: 0 };
 
   // hann grain window for the LIVE grain scheduler (parity with mixPCM's
@@ -313,7 +312,7 @@
   // dst.length so the tail grains overlap the head: the loop-clean cloud.
   function mixGrains(dst, src, atPitch, advance, sr, gFrom, gTo, wrap) {
     const n = dst.length, gLen = Math.floor(GRAIN_SEC * sr), hop = sr / GRAIN_HZ;
-    // ENGINE-AUDIT 2026-07 Tier 3 (~3x, bit-identical — verified sample-for-
+    // ENGINE-AUDIT Tier 3 (~3x, bit-identical — verified sample-for-
     // sample): (a) the hann window is identical for every grain of a call, so
     // compute it ONCE into a Float64Array (Float64 keeps the exact doubles the
     // inline expression produced; Float32 would not); (b) the read pointer is
@@ -364,7 +363,7 @@
       const s0 = Math.max(0, Math.floor(f.tSec * sr));
       const n = Math.min(total - s0, Math.max(1, Math.floor(f.durSec * sr)));
       if (n <= 0) continue;
-      // WINDOW TRUNCATION (ENGINE-AUDIT 2026-07 Tier 4): under a `win` the event's
+      // WINDOW TRUNCATION (ENGINE-AUDIT Tier 4): under a `win` the event's
       // FULL segment used to be built — for a bed that is grains + lp24 over the
       // whole multi-bar drone (a chordEvery-32 bed is ~77 s ≈ 0.9 s of work) — and
       // then all but the one-bar slice was thrown away. Everything here is CAUSAL
@@ -402,7 +401,7 @@
         // chopper: full-buffer phasor at rate pitch from fractional offset, wraps
         const start = f.offset * src.length;
         if (f.scratch) {
-          // SCRATCH (Paul 2026-07-11: "scratching on samples from time to time"):
+          // SCRATCH — scratching on samples from time to time:
           // the read position oscillates forward↔reverse like a hand on vinyl — a
           // TRIANGLE wave (constant rate each direction) over `cyc` passes across a
           // small `span` of the buffer, so the chop plays fwd/back/fwd = a scratch.
@@ -582,7 +581,7 @@
   }
 
   // ---- decoded-buffer cache: LRU with a SAMPLE budget -------------------
-  // ENGINE-AUDIT 2026-07 Tier 2: this map used to grow for the life of the page
+  // ENGINE-AUDIT Tier 2: this map used to grow for the life of the page
   // (deletes only on decode FAILURE), so every found bed/break/chop/narration
   // and every synthesized utterance a ride touched stayed pinned — up to
   // FOUND_MAX_SECONDS (90 s) of mono float32 ≈ 15.9 MB each, hundreds of MB
@@ -633,7 +632,7 @@
     _bufSize.set(key, n); _bufSamples += n;
     bufCacheEvict();
   }
-  // ---- F0 PRE-WARM (ENGINE-AUDIT 2026-07 Tier 3) -------------------------
+  // ---- F0 PRE-WARM (ENGINE-AUDIT Tier 3) -------------------------
   // tunedPitch's f0Profile is a 67-204 ms synchronous scan. Cold, it used to run
   // inside fireBar/scheduleNative — on the main thread at the bar's playback
   // instant — for every autoTune'd source's first bed/chop. decodeUrlToBuffer's
@@ -879,7 +878,7 @@
       const dry = ctx.createGain(); dry.gain.value = 1; tail.connect(dry); dry.connect(dests.dry);
       const rev = ctx.createGain(); rev.gain.value = f.rsend; tail.connect(rev); rev.connect(dests.rev);
       const del = ctx.createGain(); del.gain.value = f.dsend; tail.connect(del); del.connect(dests.del);
-      // ENGINE-AUDIT 2026-07 Tier 1: keep the pp send in scope so onended can
+      // ENGINE-AUDIT Tier 1: keep the pp send in scope so onended can
       // disconnect it like its dry/rev/del siblings — every ppsend chop used to
       // leave a GainNode attached to dests.pp until GC (vocal-lane node leak).
       let pp = null;
@@ -992,7 +991,7 @@
         setTimeout(() => { try { out.disconnect(); } catch (e) {} live.beds.delete(handle); }, (s + 0.15) * 1000);
       } };
       live.beds.add(handle);
-      // ENGINE-AUDIT 2026-07 Tier 1: a bed that plays to natural completion
+      // ENGINE-AUDIT Tier 1: a bed that plays to natural completion
       // used to only delete its handle here — out/dry/rev stayed attached to
       // the dests until GC. Run the same graph teardown stop() does (minus the
       // source stop; the envelope has already closed by now).
@@ -1052,7 +1051,7 @@
     _legacyBed: false,
     _mixGrains: mixGrains, _renderBedLoopPCM: renderBedLoopPCM,
     _bedLoopEntry: bedLoopEntry, _bedLoopCache,
-    // ENGINE-AUDIT 2026-07 Tier 2/3: the bounded decode cache + F0 pre-warm,
+    // ENGINE-AUDIT Tier 2/3: the bounded decode cache + F0 pre-warm,
     // exposed for the browser gates (?wavDebug) and direct tests.
     _bufCache, _bufCacheInfo: () => ({ entries: _bufCache.size, samples: _bufSamples,
       mb: +(_bufSamples * 4 / 1048576).toFixed(1), evicted: _stats.bufEvicted, max: BUF_CACHE_MAX_SAMPLES }),

@@ -2,8 +2,8 @@
 // faust/bg-survival-run.js — headless probe for the background-survival state machine
 // (faust/live.js onVisChange/goHidden/goVisible/onstatechange). Chromium can't
 // reproduce the iOS "interrupted" state, but it CAN drive the same code paths:
-//   1. fake visibility hidden  -> DESKTOP KEEPS PLAYING (Paul, 2026-07: "switching
-//      tabs stops the audio" — a hidden desktop tab must NOT mute the live stream;
+//   1. fake visibility hidden  -> DESKTOP KEEPS PLAYING. Switching tabs must not
+//      stop the audio: a hidden desktop tab must NOT mute the live stream;
 //      the runway must stay fed). The preemptive mute-at-source is MOBILE-only now
 //      (bg-handoff-test.js covers it under an iPhone UA).
 //   2. fake visibility visible -> still audible, and the refocus resume() poke

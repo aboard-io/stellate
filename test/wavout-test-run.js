@@ -23,7 +23,7 @@ const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js
 const ROOT = path.join(__dirname, "..");
 const PORT = 8794;
 
-// ── REALTIME MARGIN vs THE MACHINE (2026-07-25 triage) ───────────────────────
+// ── REALTIME MARGIN vs THE MACHINE ──────────────────────────────────────────
 // Two of this gate's assertions measure a REALTIME MARGIN, not a behaviour:
 //   noStall  — the <audio> element never fires 'waiting' at the buffer edge, i.e.
 //              the render+encode pipeline stayed ahead of the playhead;
@@ -36,7 +36,7 @@ const PORT = 8794;
 // ranged 3.0s -> 14.9s across runs of the SAME code. That is the machine, not a
 // regression — the standing mp3-route starvation defect is already tracked as an
 // open Tier 2 finding in docs/ENGINE-AUDIT-2026-07.md ("mp3 route counts
-// skipped-gen PCM as buffered", plus its own 2026-07-25 gate-observation note).
+// skipped-gen PCM as buffered", plus its own gate-observation note).
 // So when the box is OVERSUBSCRIBED at gate start, those two checks report a loud
 // NOTICE instead of failing. Everything that is a real behaviour — route, audible
 // continuity, section boundary, steer, single element, bounded buffer, zero errors

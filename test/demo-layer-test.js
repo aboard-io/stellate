@@ -10,7 +10,7 @@
 //   3. the cart list is the LARGER set (>= MIN_CARTS; logs the count)
 //   4. after setEnabled(true) the surface is ANIMATING (frame-hash changes)
 //   5. next() cycles through several carts, each of which animates
-//   6. DemoLayer.note(...) is a deliberate NO-OP (seizure-safety 2026-07-25):
+//   6. DemoLayer.note(...) is a deliberate NO-OP (seizure-safety):
 //      firing notes leaves the flash/hue/kick levers at rest — brightness
 //      stays at baseline while the frames keep animating
 //   7. setEnabled(false) hides the surface / stops the loop
@@ -92,8 +92,8 @@ function fail(msg) { console.error("DEMO-LAYER GATE: FAIL —", msg); process.ex
     for (let k = 0; k < CYCLE; k++) {
       const name = await page.evaluate(() => DemoLayer.currentName());
       seenNames.push(name);
-      // 2.5s window, not 400ms: the layer's steady clock is 0.010 (2026-07-25,
-      // "Slowwwwwwwwwwwwer") — 1s of wall time is 10ms of cart time, so a short
+      // 2.5s window, not 400ms: the layer's steady clock is a deliberately very
+      // slow 0.010 — 1s of wall time is 10ms of cart time, so a short
       // sample legitimately sees an unchanged frame. The contract is that it
       // MOVES, not that it moves fast.
       const a = await page.evaluate(() => DemoLayer._frameHash());
@@ -111,7 +111,7 @@ function fail(msg) { console.error("DEMO-LAYER GATE: FAIL —", msg); process.ex
     }
     if (new Set(seenNames).size < 3) fail("next() did not cycle distinct carts: " + JSON.stringify(seenNames));
 
-    // 6. note() is a deliberate NO-OP (SEIZURE-SAFETY, 2026-07-25: the per-note
+    // 6. note() is a deliberate NO-OP (SEIZURE-SAFETY: the per-note
     //    flash/hue/kick reactions strobed at dense passages and are RETIRED —
     //    do NOT "fix" this back). Two signals over a fixed window on ONE pinned
     //    cart: (a) mean brightness — the old flash lever brightened ANY cart

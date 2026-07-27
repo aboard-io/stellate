@@ -63,7 +63,7 @@ async function main() {
   else fail("genre picker is not wired to the datalist");
   if (menu.blendOpts === kernelGenres) ok(`blend combobox list = all ${kernelGenres} genres (empty = none)`);
   else fail(`blend list ${menu.blendOpts} != ${kernelGenres}`);
-  // (the "8 shape sliders" check retired with the macros — Paul 2026-07-10)
+  // (no "8 shape sliders" check — the instrument has no macros)
   if (menu.playing) ok("S.playing seeded before Play"); else fail("S.playing null before Play");
 
   // deterministic seed for the rest

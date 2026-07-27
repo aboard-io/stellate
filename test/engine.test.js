@@ -1,10 +1,9 @@
 // engine.test.js — faust-press smoke test: real offline renders, non-silence gates.
 //   node engine.test.js [--quick]
 //
-// The old csound render matrix (every progression/key/melody through the csound
-// CLI) lives on branch legacy-csound. Post FAUST-PORT phase 3 this verifies the
-// one true render path — faust/press.js over the same buildEvents states — by
-// pressing three very different states and asserting real audio came out.
+// This verifies the one true render path — faust/press.js over the same
+// buildEvents states — by pressing three very different states and asserting
+// real audio came out.
 // The three presses run CONCURRENTLY (independent child processes, one core
 // each); result lines print in a fixed order once all land. --quick presses
 // 8s instead of 24s — enough for the kit and bed to prove non-silence — and is
@@ -82,7 +81,7 @@ function press(name, state) {
     presses.push(Promise.resolve({ ok, line: `${ok ? "PASS" : "FAIL"}  ${"render_core_wired".padEnd(22)} press.js drives faust/render-core.js` }));
   }
 
-  // 0b) PARAM-ROOT ADDRESSABILITY (2026-07-26, the Pure-FM drone). Every host
+  // 0b) PARAM-ROOT ADDRESSABILITY (the Pure-FM drone). Every host
   // addresses a module's params as "/" + rootOf(module) + "/" + name. rootOf
   // used to return the DECLARED name, which silently diverges from the real UI
   // path root whenever a dsp wraps its interface in a top-level group — as

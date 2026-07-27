@@ -11,7 +11,7 @@
 //     width/height/alt) — Slack/Discord/Facebook/LinkedIn read these
 //   - the Twitter card (summary_large_image + title/description/image/creator)
 //   - the oEmbed discovery <link> (Mastodon/WordPress/Discourse/Notion read it)
-//   - the JSON-LD block PARSES and carries the attribution Paul asked for:
+//   - the JSON-LD block PARSES and carries the required attribution:
 //     author Person "Paul Ford", creator/publisher Organization "Aboard" at
 //     aboard.com, MIT license, applicationCategory MusicApplication
 //   - every referenced local asset (icons, og-card) EXISTS on disk — an og:image

@@ -1,5 +1,5 @@
-// fonts.js — the SOUNDFONT SWITCHER (Paul 2026-07-10: "let me switch soundfonts
-// in the settings"). The default sampled instruments are FluidR3 (baked into the
+// fonts.js — the SOUNDFONT SWITCHER, in the settings panel.
+// The default sampled instruments are FluidR3 (baked into the
 // kernel). Alternate fonts, extracted by tools/gen-font.js into
 // found/samples/instruments-<key>/ + engine/faust/font-<key>.json, register with
 // the kernel at runtime; picking one re-voices every sampled instrument it

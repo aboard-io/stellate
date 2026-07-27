@@ -13,7 +13,7 @@
 //            mean sat ~0.15 and jungle onsets at |delta| ~0.7 beat the 0.5
 //            floor, ~600/leg), and even a fast-attack τ0.25s follower left
 //            acidhouse's isolated kick/accent onsets firing ~200/leg (both
-//            measured, soak 2026-07-06). Peak hold makes it a NOVELTY
+//            measured over a soak). Peak hold makes it a NOVELTY
 //            detector: the FIRST edgy block of a phrase is judged against
 //            the OLD bar (a genuinely isolated discontinuity in smooth
 //            program still counts), every repeat inside the ~4s release
@@ -33,8 +33,8 @@
 //   peak   — running |sample| max (clip forensics come free).
 // Every ~1s it posts {clicks, gaps, peak} on the port and resets. Per-sample
 // work is a handful of compares + one multiply-add (the RMS EMA); nothing
-// allocates in process(). Clicks/peak scan every channel (the 2026-07-04
-// hard-left bug taught us mono taps lie); the gap/RMS detector reads ch 0
+// allocates in process(). Clicks/peak scan every channel — mono taps lie, as a
+// hard-left bug will demonstrate; the gap/RMS detector reads ch 0
 // (a dropout starves all channels together).
 class GlitchSentinel extends AudioWorkletProcessor {
   constructor() {

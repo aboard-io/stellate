@@ -88,7 +88,7 @@ PIDS+=($!)
 # poscover: the STAR-MAP POS COMPLETENESS gate (test/pos-coverage.js) — every
 # runtime genre (GenreKernel.GENRES) MUST have an app/world.js POS entry, else
 # app boot drops into computeGenreLayout's relaxation and crashes the renderer
-# (the 2026-07-11 blank-app outage). Plain node, no browser — CI-safe.
+# (a missing entry is a blank-app outage). Plain node, no browser — CI-safe.
 run "poscover" node test/pos-coverage.js &
 PIDS+=($!)
 # coordscover: the STAR-CRUISE COORD/CLUSTER COMPLETENESS gate
@@ -100,9 +100,9 @@ run "coordscover" node test/coords-coverage.js &
 PIDS+=($!)
 # seamwalk: THE SEAM GATE (test/live-walk-parity.test.js) — replays the real
 # faust/live.js makeWalk in node and asserts every event on a chord-bar boundary
-# fires EXACTLY ONCE across the join. The hole that let finding 1 of
-# docs/TIMING-AUDIT-2026-07 live for a year: every existing gate tests inside a
-# unit, never across it. Plain node, no browser, ~2s — CI-safe.
+# fires EXACTLY ONCE across the join. This closes the hole every other gate
+# leaves open: they all test inside a unit, never across one. Plain node, no
+# browser, ~2s — CI-safe.
 run "seamwalk" node test/live-walk-parity.test.js &
 PIDS+=($!)
 # bootsmoke: THE LOAD-ORDER GATE (test/boot-smoke.js) — parses index.html, replays
@@ -128,9 +128,9 @@ declare -A DONE
 # `jobs -rp`: that lists only jobs still RUNNING, so any suite that finishes
 # before the count is taken goes unrecorded, the loop exits early, and the EXIT
 # trap wipes $TMP under the suites still writing — which surfaces as a random
-# green gate reported FAIL. (Hardcoding a tally has the same failure and was the
-# 2026-07-25 version of this bug; adding a gate must not require editing a
-# number.) Every `run ... &` above is followed by PIDS+=($!).
+# green gate reported FAIL. (Hardcoding a tally has the same failure mode, and
+# adding a gate must not require editing a number.) Every `run ... &` above is
+# followed by PIDS+=($!).
 for _ in "${PIDS[@]}"; do
   wait -n
   for f in "$TMP"/*.res; do

@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-// vapor-probe.js — verifies C.1 (VAPOR slider, live-only master EQ).
-// (Formerly vapor-loopexport-probe.js; the F.3 whole-path loop-export half went
-// with the ⤓ download cluster, removed 2026-07-25 — legacy-download-video.)
+// vapor-probe.js — verifies the VAPOR slider (a live-only master EQ).
 //   node test/vapor-probe.js
 "use strict";
 const path = require("path");

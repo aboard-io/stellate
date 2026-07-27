@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fetch + extract the INSTRUMENT-LIBRARY UPGRADE, wave 1 (2026-07-10): real
+# Fetch + extract the INSTRUMENT-LIBRARY UPGRADE, wave 1: real
 # crunch for the guitars, real breath for the tenor sax, a living-room upright
 # for the intimate-piano genres, and palm-mute power-chord one-shots. Samples
 # are NOT committed (gitignored); this recipe IS. Licenses verified at source —

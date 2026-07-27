@@ -1,11 +1,9 @@
 // export.js — ⤓ download the CURRENT song as a Standard MIDI File.
 //
-// RESTORED 2026-07-26 (Paul: "I want midi back"). The 2026-07-25 excision
-// (commit 3dce7b9, branch legacy-download-video) took the whole ⤓ cluster out;
-// this brings back the MIDI half ONLY. Deliberately NOT restored: the offline
-// in-browser press (wav/mp3), the lamejs encode path, the stream-worker
-// renderWav/renderLoop plumbing and the whole-path journey walk — that
-// machinery is the reason the cluster was heavy, and it stays on the branch.
+// This is the MIDI half of a larger ⤓ cluster that was cut back to one button.
+// Deliberately absent: the offline in-browser press (wav/mp3), the lamejs
+// encode path, the stream-worker renderWav/renderLoop plumbing and the
+// whole-path journey walk — that machinery is why the cluster was heavy.
 //
 // WHAT THE FILE IS. engine/midi-export.js builds the SMF from the SAME
 // buildEvents() walk the audio path uses (pads ch1 / bass ch2 / melody ch3 /
@@ -24,8 +22,8 @@ import { S, K, set, deep } from "./state.js";
 import { currentMeasure } from "./share.js";   // the ONE measure law (buildShareUrl reads it too)
 
 // ---------- naming ----------
-// ASCII-safe slug: the genre LABEL is display copy (renamed 2026-07-25 to
-// things like "Food Court Eternity") and may carry punctuation or non-ASCII,
+// ASCII-safe slug: the genre LABEL is display copy (things like "Food Court
+// Eternity") and may carry punctuation or non-ASCII,
 // so fold to [a-z0-9-] and fall back to the genre id, then to "stellate".
 function slug(s) {
   return String(s || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "")

@@ -3,8 +3,8 @@
 // the old 'settled-smoothness' probes MISSED):
 //
 //   1. SPREAD + LOOK — the galaxy is blown WAY OUT (min sun-sun distance large, not a
-//      pile) and the suns render as flaming star CORES (one per cluster, no halo — Paul:
-//      "give the stars no halo"), distinct from the smaller genre planets.
+//      pile) and the suns render as flaming star CORES (one per cluster, no halo),
+//      distinct from the smaller genre planets.
 //   2. CONTINUOUS CAMERA (no 8-measure lurch) — across an injected blend/DOMINANT change
 //      the per-frame camera move NEVER spikes at the update: it starts ~0 (a spring, not
 //      a step) and ramps, so the cruise glides.
@@ -82,7 +82,7 @@ async function main() {
   ok(spread.glow && spread.glow.cores === 33,
     `1C. one flaming star CORE per cluster (${spread.glow && spread.glow.cores} cores == 33 clusters)`);
   ok(spread.glow && spread.glow.glowMesh === false && spread.glow.glows === 0,
-    `1D. NO HALO (Paul: "give the stars no halo") — each star is just its flaming plasma core, no corona shell (glowMesh=${spread.glow && spread.glow.glowMesh}, ${spread.glow && spread.glow.glows} halos)`);
+    `1D. NO HALO — each star is just its flaming plasma core, no corona shell (glowMesh=${spread.glow && spread.glow.glowMesh}, ${spread.glow && spread.glow.glows} halos)`);
 
   // ==== 2. CONTINUOUS CAMERA — no spike at a blend/dominant update =================
   // Settle an even (deep-space) blend dominated by GEN, then SWITCH the dominant to a FAR

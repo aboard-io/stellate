@@ -9,7 +9,7 @@
 // event stream over a boundary. The gate tests inside a unit, never across the
 // join."
 //
-// WHAT WENT WRONG (measured, 2026-07-25). faust/live.js makeWalk regenerates the
+// WHAT GOES WRONG (measured). faust/live.js makeWalk regenerates the
 // WHOLE collapsed section every chord bar with a DIFFERENT seed and slices one
 // half-open beat window out of it, while faust/state-engine.mapEvents windowed on
 // the POST-groove beat. An event sitting ON a chord-bar boundary therefore lived in

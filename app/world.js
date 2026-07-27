@@ -77,7 +77,7 @@ export const POS={
   mirrorseven:[234,9946], sundialsyrup:[191,7990], sequinfreight:[1231,7273], rollerlacquer:[1289,2784],
   longshipwhip:[576,3328], bogironwallow:[767,6563], barrowwake:[1705,13421], ravensquall:[1544,9204],
   runeromp:[466,9962], meadhallbellow:[461,14061], valkyrieswoop:[549,6571], permafrostveil:[1635,14120],
-  // international/modal batch 2026-07-11: placed by a LABEL-BOX search (the gate's
+  // international/modal batch: placed by a LABEL-BOX search (the gate's
   // own box math at boot k=2.8, tall-world Y-compression accounted for) into open
   // space with 41-60px clearance — not just dot-distance, which missed that wide
   // labels to the LEFT overlap a star below them. A COMPLETE 243-POS hits
@@ -85,11 +85,11 @@ export const POS={
   // spots above stay exact. taqsim/vespers sit by their kin (arabpop/atlantidrone);
   // silkmist's pentatonic-calm corner was full, so it took the nearest open slot.
   silkmist:[2335,12923], taqsim:[121,16807], vespers:[2374,14021],
-  // Western/known batch 2026-07-11 (label-box search, 42-61px clearance): the
+  // Western/known batch (label-box search, 42-61px clearance): the
   // soul/country family. Same complete-POS fast-path rule as the line above.
   yachtrock:[2296,6531], rnb:[90,8181], gospel:[172,7086], honkytonk:[2178,5049], countrypop:[2384,5538], altcountry:[796,22032], folk:[1850,5750]
 };
-// SCREEN-SEPARATION NUDGES, 2026-07-25 (explorer gate D). The world is ~2.5k wide
+// SCREEN-SEPARATION NUDGES (explorer gate D). The world is ~2.5k wide
 // and ~25k tall, so drawMap's independent per-axis fit COMPRESSES Y ~14x against X
 // at the default zoom: a pair 170 logical units apart in Y is 16px apart on screen.
 // Six stars added by hand after the bake had been placed by LOGICAL distance and
@@ -147,10 +147,9 @@ recomputeWorld();
 // they scale with the coordinate space — bumped ~2.45x alongside the respread so
 // the same handful of neighbours blend and being on a star still reads as pure.
 export const SNAP=64, CUTOFF=430, BARS_PER_SEG=256;   // one path leg ≈ 256 bars — genres evolve slowly, almost imperceptibly
-// (128 -> 256 on 2026-07-10: the blend-arrival fix made flips actually LAND —
-// drums in 3 bars, identity in 7 — so the old pace suddenly read as "way too
-// fast" (Paul). The default doubles and the pace slider now reaches 4096 for
-// hours-long, nearly-geological journeys.)
+// (Once the blend-arrival fix made flips actually LAND — drums in 3 bars,
+// identity in 7 — a 128-bar leg read as far too fast. Hence 256, with the pace
+// slider reaching 4096 for hours-long, nearly-geological journeys.)
 export const KEYS=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 export const PROG_MODE={ royal_road:[0,"major · royal road"], four_chords:[0,"major"], sad_pop:[9,"minor"],
   doo_wop:[0,"major"], ii_v_i:[0,"major · ii-V-I"], pop_1625:[0,"major"], synthwave:[9,"minor"],

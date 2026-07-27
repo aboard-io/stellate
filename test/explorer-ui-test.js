@@ -1,13 +1,12 @@
 #!/usr/bin/env node
-// faust/explorer-ui-test.js — headless UI gate for the 2026-07-08 explorer
-// product changes (Paul):
+// explorer-ui-test.js — headless UI gate for three explorer product laws:
 //   1. DEFAULT 3-STEP CLOSED LOOP (a triangle), waypoint 1 always at the map
-//      centre (2026-07-10: 4 -> 3; the two outer stars stay deterministic).
+//      centre (the two outer stars stay deterministic).
 //   2. Genres laid out DYNAMICALLY at load (computeGenreLayout, deterministic) —
 //      every K.GENRES genre placed, no two stars within a comfortable on-screen
 //      distance AND no two NAME LABELS overlap at the default zoom; zoomable.
-//   3. the DEMOSCENE background is ALWAYS ON as ambient wallpaper (the ▢/▦
-//      chip retired 2026-07-25; ?bg=off is the escape hatch).
+//   3. the DEMOSCENE background is ALWAYS ON as ambient wallpaper (there is no
+//      ▢/▦ chip; ?bg=off is the escape hatch).
 // Drives explorer.html headless and asserts (all must PASS):
 //   A. exactly 3 default waypoints on a fresh load;
 //   B. waypoint[0] sits at the computed map centre (within ~1 logical px);
@@ -81,7 +80,7 @@ async function main() {
   });
   const nWp = seed.n;
   ok(poly.pts === nWp + 1, `C1: constellation polyline has ${poly.pts} points (want n+1=${nWp + 1} — closing leg drawn)`);
-  // drive travelStep deterministically (no audio). CONSTANT PACE (2026-07-11):
+  // drive travelStep deterministically (no audio). CONSTANT PACE:
   // every bar advances the SAME distance (paceSpeed units) along the perimeter,
   // regardless of leg length — so we no longer land on waypoints at fixed step
   // counts. Instead drive one full loop (loopBars) plus a little, and prove the
@@ -115,7 +114,7 @@ async function main() {
   console.log(`  polylinePoints=${poly.pts} (n+1=${nWp + 1})  loopBars=${wrap.loop}  speed=${wrap.v.toFixed(2)}px/bar  segSequence sample=[${wrap.segs.slice(0, 12).join(",")}…]`);
   console.log(`  visitedAllLegs=${sawAllLegs}  wrappedTo0=${wrapped}  maxStep=${wrap.maxStep.toFixed(2)}px (<= speed => no teleport)`);
 
-  // ---- D: min pairwise SCREEN separation at the DEFAULT zoom (what Paul sees) ----
+  // ---- D: min pairwise SCREEN separation at the DEFAULT zoom (what you see) ----
   // Projected at k = default zoom; overlap/separation is pan-invariant so offsets
   // are ignored. Both axes scale independently (X uses width/WORLD_W, Y height/H).
   const sep = await page.evaluate(() => {
@@ -135,10 +134,10 @@ async function main() {
   console.log(`  ${sep.count} stars  minScreenDist=${sep.mn.toFixed(1)}px (${sep.pr})  minLogicalDist=${sep.logical.toFixed(1)}`);
 
   // ---- D2: EVERY genre present + NO DRAWN NAME LABEL overlaps another ----
-  // The core of the 2026-07-08 dynamic-layout change (Paul: "genre names still
-  // overlap and are unreadable").
+  // The core of the dynamic-layout change: genre names must not overlap into
+  // unreadability.
   //
-  // 2026-07-25 — WHAT THIS MEASURES, AND WHY IT CHANGED. D2c used to build a
+  // WHAT THIS MEASURES. D2c must NOT build a
   // hypothetical box for ALL 274 genre IDS and assert none of the 37,401 pairs
   // intersect. That is unsatisfiable BY ARITHMETIC, not by layout: at the default
   // zoom the label font is 28.8px, so 274 name boxes need ~2.4 MILLION px² of a
@@ -224,7 +223,7 @@ async function main() {
   ok(zoom.zout.k === 1 && zoom.zout.ox === 0 && zoom.zout.oy === 0, `E2: zoom-out to fit left k=${zoom.zout.k} ox=${zoom.zout.ox} oy=${zoom.zout.oy} (want 1/0/0)`);
   console.log(`\n=== ZOOM ===\n  zoomIn k=${zoom.zin.k}  zoomOut k=${zoom.zout.k} ox=${zoom.zout.ox} oy=${zoom.zout.oy}`);
 
-  // ---- F: demoscene background ALWAYS ON (ambient wallpaper, 2026-07-25) ----
+  // ---- F: demoscene background ALWAYS ON (ambient wallpaper) ----
   // no interaction: the layer must come up on its own (init is async — wait for it)
   await page.waitForFunction(() => window.DemoLayer && DemoLayer.enabled(), { timeout: 15000 }).catch(() => {});
   const bg = await page.evaluate(() => ({
@@ -237,7 +236,7 @@ async function main() {
   console.log(`\n=== BACKGROUND ===\n  present=${bg.present} enabled=${bg.enabled} mode=${bg.mode}`);
 
   // ---- F2: the ? chip opens the ABOUT layer (what/how-to-play/provenance) ----
-  // The 2026-07-09 rename+about change: ? is a real modal on the shared chip
+  // ? is a real modal on the shared chip
   // plumbing, holding links to how.html (the pipeline explainer), the GitHub
   // repo, and Aboard. Open it, assert visibility + links, close via Escape.
   const about = await page.evaluate(() => {
@@ -256,13 +255,13 @@ async function main() {
   ok(about.open, `F2b: clicking ? did not open the about layer (#aboutWrap.open)`);
   const hasLink = s => (about.hrefs || []).some(h => h && h.includes(s));
   ok(hasLink("how.html"), `F2c: about layer has no link to how.html (links: ${(about.hrefs || []).join(", ")})`);
-  // F2d asserts the SOURCE link exists, not a specific owner — the repo moved
-  // ftrain/ -> aboard-io/ on 2026-07-25 and the old literal outlived the fact
+  // F2d asserts the SOURCE link exists, not a specific owner — the repo has
+  // moved owners before and a hardcoded literal outlives the fact
   // (same stale-literal class as GX1 and F2e).
   ok(hasLink("github.com/") && hasLink("/stellate"), `F2d: about layer has no link to the GitHub source repo`);
-  // ATTRIBUTION, not a domain (2026-07-25): the about layer's credit line was
-  // "made by Aboard" (aboardresearch.com) and is now "made by Paul Ford at Aboard"
-  // (ftrain.com + aboard.com). What the gate is for is that the page CREDITS its
+  // ATTRIBUTION, not a domain: the about layer's credit line names an author
+  // and a publisher, and both the names and the domains have changed before.
+  // What the gate is for is that the page CREDITS its
   // author/publisher with a live outbound link — assert that, so the next rebrand
   // doesn't strand the gate on a dead literal.
   ok(hasLink("ftrain.com") || hasLink("aboard.com") || hasLink("aboardresearch.com"),
@@ -323,7 +322,7 @@ async function main() {
   if (realRide.length) console.log(`  REAL:\n   ${realRide.slice(0, 20).join("\n   ")}`);
 
   // ---- H: the demoscene background — ALWAYS ON as ambient wallpaper (the
-  // ▢/▦ chip retired 2026-07-25; ?bg=off is the escape hatch, probed in H6).
+  // there is no ▢/▦ chip; ?bg=off is the escape hatch, probed in H6).
   // Page loaded with ?bgAltMs=1200 so the idle wall-clock backstop rotates
   // fast. Assert: the layer is up at BOOT with no interaction (mode 2,
   // enabled + DOM visible), DemoLayer.next() cycles the cart, the idle
@@ -347,12 +346,12 @@ async function main() {
   ok(alt.up && alt.domUp, `H1: demo layer up at boot (enabled=${alt.up} visible=${alt.domUp})`);
   ok(alt.cartCycles, `H2: DemoLayer.next() changes the cart`);
   ok(alt.rotations >= 1, `H3: idle backstop rotates the cart (fresh carts seen=${alt.rotations})`);
-  ok(alt.chipGone, `H5: #bgChip is gone from the DOM (chip retired 2026-07-25)`);
+  ok(alt.chipGone, `H5: #bgChip is gone from the DOM (there is no background chip)`);
   console.log(`\n=== BACKGROUND WALLPAPER ===`);
   console.log(`  mode=${alt.startMode} cartCycles=${alt.cartCycles} backstopRotations=${alt.rotations} chipGone=${alt.chipGone}`);
 
   // H4: the MUSICAL driver counts BEATS, not chord-bar ticks. The period is now
-  // 64 BARS (2026-07-25, "leave it running much longer") = 256 beats, and the
+  // 64 BARS = 256 beats, and the
   // incoming cart CROSSFADES IN over the last 8 bars (32 beats) — so the FADE
   // starts at beat 224 (tick 28 at cbeats=8) and the cart only becomes current
   // when the fade completes. We assert the fade START, which is the musical
@@ -371,7 +370,7 @@ async function main() {
   });
   ok(beat.fadeTick === 28, `H4: the 8-bar crossfade arms at beat 224 of a 64-bar period = tick 28 at cbeats 8 (got tick ${beat.fadeTick})`);
 
-  // I: plain mouse-wheel zooms the map (desktop), no ctrl needed (Paul 2026-07-09).
+  // I: plain mouse-wheel zooms the map (desktop), no ctrl needed.
   const wheel = await page.evaluate(() => {
     const svg = document.getElementById("map"), r = svg.getBoundingClientRect();
     const k0 = window.__ZOOM.k;

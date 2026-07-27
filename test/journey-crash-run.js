@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// faust/journey-crash-run.js — REPRO + GATE for Paul's blues->tango->neoclassical
-// crash ("one half measure of guitar then silence, then it crashes out").
+// journey-crash-run.js — REPRO + GATE for the blues->tango->neoclassical crash:
+// one half measure of guitar, then silence, then the engine crashes out.
 // Drives explorer.html headless, snaps the cursor blues -> tango -> neoclassical
 // (the sampler->sampler->sampler lead ride), and traces per-bar RMS, the live
 // error array, the voice pools, S.playing lead identity, and the flip queue.
@@ -46,7 +46,7 @@ async function main() {
   await page.waitForFunction(() => window.__X && window.__S);
   await page.waitForTimeout(500);   // let the boot random-journey settle before we overwrite it
 
-  // Draw the EXACT path Paul walked: blues -> tango -> neoclassical, and travel
+  // Draw the EXACT path that broke: blues -> tango -> neoclassical, and travel
   // it continuously (travelStep, not cursor snaps) so weightsAt returns blends
   // and the discrete flip queue fires as the traveler crosses each star. Seed
   // 12345: the lead is a SAMPLER across the whole ride (blues harmonica -> the
@@ -107,7 +107,7 @@ async function main() {
   const sawFeltPiano = trace.some(t => /felt_piano/.test(t.lead));
 
   // HOLD-RULE check: for each held voice, list the bars where its instrument
-  // CHANGED and the min gap between changes. Paul's rule = a newly introduced
+  // CHANGED and the min gap between changes. The rule: a newly introduced
   // instrument lasts >= a few measures; with HOLD_BARS=4 a held voice must not
   // flip more often than that (arrivals may override, so we report, not hard-fail
   // on a single arrival-driven close pair).

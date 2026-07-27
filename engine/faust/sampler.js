@@ -49,7 +49,7 @@
 
   // ======================= PER-VOICE CHANNEL STRIP =========================
   // A band-appropriate channel strip for the NATIVE sampled voices (the sampled
-  // instruments are the default sound since 2026-07, and dry multisamples need a
+  // instruments are the default sound, and dry multisamples need a
   // channel to breathe). Chain, applied POST-envelope so sends carry the finished
   // voice: HPF -> (LPF) -> peaking EQ -> soft saturation -> gentle compressor ->
   // chorus/phaser -> (leslie/delay/flanger voice-FX) -> trim. The `strip` spec is
@@ -145,7 +145,7 @@
     return S;
   }
 
-  // ---- STRIP TAIL (ENGINE-AUDIT 2026-07 Tier 2) ---------------------------
+  // ---- STRIP TAIL (ENGINE-AUDIT Tier 2) ---------------------------
   // The per-note tape delay (S.dly) still holds near-full-level echo when the
   // note's render loop ends at holdN+relN: press measured a -24 dBFS SINGLE-
   // SAMPLE step (an audible tick) at the end of every sustained delay-strip
@@ -202,7 +202,7 @@
       // base/depthMs, never the shipped STRIP_PROFILES) left rp NEGATIVE after a
       // single `+= ch.n`, indexing ch.buf out of bounds -> `undefined` -> NaN, which
       // then poisons ch.buf and every downstream sample of the whole bar (a
-      // permanently-muted / garbled voice — Paul's "random muting"). For shipped
+      // permanently-muted / garbled voice, heard as random muting). For shipped
       // profiles d < ch.n-2 so this is byte-identical (clamp + while both no-op).
       const dmax = ch.n - 2;
       let d = ch.base + ch.depth * (0.5 + 0.5 * lfo); if (d > dmax) d = dmax; else if (d < 0) d = 0;
@@ -259,7 +259,7 @@
     return x * S.trim;
   }
 
-  // ---- FUSED STRIP KERNEL (ENGINE-AUDIT 2026-07 Tier 4) -------------------
+  // ---- FUSED STRIP KERNEL (ENGINE-AUDIT Tier 4) -------------------
   // stripStep runs PER SAMPLE PER NOTE and used to re-test all eleven `if (S.x)`
   // feature flags on every one of them: measured at ~24% of the live stream
   // render loop and ~30-35% of a whole press — the audit's biggest single engine
@@ -296,7 +296,7 @@
   // base/depthMs, never the shipped STRIP_PROFILES) left rp NEGATIVE after a
   // single \`+= ch.n\`, indexing ch.buf out of bounds -> \`undefined\` -> NaN, which
   // then poisons ch.buf and every downstream sample of the whole bar (a
-  // permanently-muted / garbled voice — Paul's "random muting"). For shipped
+  // permanently-muted / garbled voice, heard as random muting). For shipped
   // profiles d < ch.n-2 so this is byte-identical (clamp + while both no-op).
   const dmax = ch.n - 2;
   let d = ch.base + ch.depth * (0.5 + 0.5 * lfo); if (d > dmax) d = dmax; else if (d < 0) d = 0;
@@ -387,7 +387,7 @@
   function stripStep(S, x, t) {
     return (S.step || (S.step = kernelFor(S)))(S, x, t);
   }
-  // ---- SELECTION VELOCITY (ENGINE-AUDIT 2026-07 Tier 2) -------------------
+  // ---- SELECTION VELOCITY (ENGINE-AUDIT Tier 2) -------------------
   // The ONE formula both engines use to pick a velocity layer. It takes the
   // MUSICAL amplitude — buildEvents' note amp, carried on the event as `e.amp`
   // (state-engine mapEvents) — never a mix gain.
@@ -484,7 +484,7 @@
     for (const x of zones) if (Math.abs(midi - x.root) < Math.abs(midi - z.root)) z = x;
     return z;
   }
-  // INSTRUMENT-REGISTER LAW backstop (2026-07 audio-quality pass): a zone is
+  // INSTRUMENT-REGISTER LAW backstop: a zone is
   // never rate-stretched more than +16 st above its root, whatever the caller
   // asks. The mapping layer (state-engine mapEvents) already octave-folds
   // pitched sampler notes into the instrument's honest window (top root +6 st /
@@ -566,7 +566,7 @@
 
   function mixPCM(notes, buffers, sr, into, sends, win, meter) {
     const winBase = win ? win.base : 0;
-    // WINDOW RESUME (ENGINE-AUDIT 2026-07 Tier 4). Without it, a note spanning P
+    // WINDOW RESUME (ENGINE-AUDIT Tier 4). Without it, a note spanning P
     // windows is rendered from i=0 in every one of them and everything before the
     // window is thrown away — O(P²) work for a P-window pad, measured at 8-35% of
     // the whole stream/wavOut render path. With `win.resume`, the note's complete
@@ -623,14 +623,13 @@
       const holdN = Math.max(atkN, Math.floor(n.durSec * sr));
       const outN = Math.min(total - s0, holdN + relN);
       if (outN <= 0) continue;
-      // LOOP-END CLAMP (2026-07-10, the "Turtle Beach" fix). A soundfont-importer
+      // LOOP-END CLAMP (the "Turtle Beach" off-by-one). A soundfont-importer
       // off-by-one (gen-font.js wrote loopEnd = sampleLen+1 on some switcher fonts
-      // — montego/blackberry/diet_candy) put the loop end AT or PAST the trimmed
-      // buffer, so the `pos >= src.length-1` guard below fired BEFORE the wrap
-      // could — the note one-shot instead of sustaining ("short envelopes, no
-      // ring-out, sweeping strings die after a bar" — Paul, on Turtle Beach =
-      // the Montego font, 19 broken zones). Clamp the wrap point inside the
-      // buffer so it always fires first. Byte-identical for the default font
+      // — montego/blackberry/diet_candy, 19 broken zones in montego) puts the loop
+      // end AT or PAST the trimmed buffer, so the `pos >= src.length-1` guard below
+      // fires BEFORE the wrap can — the note one-shots instead of sustaining (short
+      // envelopes, no ring-out, sweeping strings dying after a bar). Clamp the wrap
+      // point inside the buffer so it always fires first. Byte-identical for the default font
       // (every valid loop already has loopEnd < len — a strict no-op there).
       // ZONE GEOMETRY -> BUFFER INDICES. z.loopStart/loopEnd are absolute sample
       // indices in the zone FILE (at z.sr); `src` is decoded at the engine rate
@@ -735,8 +734,7 @@
         if (!pastWin) ringOut(iEnd);
         continue;
       }
-      // GRANULAR REPITCH (Pass 1 of the Faust-fun program, Paul 2026-07-11: "I
-      // really miss granular repitching when it made sense"). Opt-in via n.granular:
+      // GRANULAR REPITCH. Opt-in via n.granular:
       // decouple PITCH from DURATION — the grain START advances at the OUTPUT rate
       // (so the note keeps its length + formants) while each Hann grain reads the
       // source at `rate` (the pitch). A sample pushed far from its zone root then
@@ -800,7 +798,7 @@
   // found-player's decodeUrlToBuffer skips "lead-in" and boosts quiet audio —
   // both would break instrument zones (soft attacks cut, loop offsets shifted,
   // level calibration destroyed). Zones decode verbatim.
-  // ENGINE-AUDIT 2026-07 Tier 2: this cache used to be unbounded (deletes only
+  // ENGINE-AUDIT Tier 2: this cache used to be unbounded (deletes only
   // on fetch/decode FAILURE) and, being module-scoped, survived stopLive/goLive
   // — so every zone of every instrument of every genre a session visited stayed
   // pinned, plus a disjoint keyspace per switcher font (11 shipped). The default
@@ -1237,11 +1235,10 @@
       srcOut.connect(env);
       // per-note channel strip (band-appropriate filter/EQ/comp + saturation +
       // chorus/phaser air). Sends tap POST-strip, like the JS path.
-      // DELAY-STRIP RING-OUT (ENGINE-AUDIT 2026-07 Tier 2, the live twin of
-      // mixPCM's ringOut): a delay-bearing strip used to have its feedback loop
-      // disconnected at note end + 50 ms, truncating the echoes exactly like
-      // press did. Keep the chain (and its LFOs) alive for the same tail the
-      // baked path renders, then tear down.
+      // DELAY-STRIP RING-OUT (ENGINE-AUDIT Tier 2, the live twin of
+      // mixPCM's ringOut): tearing a delay-bearing strip's feedback loop down at
+      // note end + 50 ms truncates the echoes. Keep the chain (and its LFOs)
+      // alive for the same tail the baked path renders, then tear down.
       const tailSec = f.strip ? stripTailN(f.strip, ctx.sampleRate || 44100) / (ctx.sampleRate || 44100) : 0;
       let post = env, striph = null;
       if (f.strip) { striph = buildStripNodes(ctx, f.strip, when, hold + rel + tailSec); env.connect(striph.input); post = striph.output; for (const o of striph.oscs) live.active.add(o); }
@@ -1265,7 +1262,7 @@
   }
 
   return { midiOfFreq, zoneFor, rateFor, zoneLeadIn, mixPCM, decodeUrlRaw, SamplerLive, buildInsertNodes, GAIN,
-    // ENGINE-AUDIT 2026-07 Tier 2: the ONE selection-velocity formula (press +
+    // ENGINE-AUDIT Tier 2: the ONE selection-velocity formula (press +
     // live must both call it) and the delay-strip tail length (mixPCM renders
     // it; the stream renderer must add it to each note's window-filter end).
     selVel, selVelOf, stripTailN, VEL_DEFAULT,

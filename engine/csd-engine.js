@@ -1,13 +1,12 @@
 // csd-engine.js — the score brain: pure event generator for the genre space.
 // buildEvents(state) -> {pitched, drums, found, sfx, bpm, totalBeats}
 // Every backend (the Faust engine in faust/, MIDI export) derives from
-// buildEvents so they never drift. The csound codegen that used to live here
-// (buildCsd/orchestra) is preserved on branch legacy-csound.
+// buildEvents so they never drift.
 
 (function (root) {
   "use strict";
 
-  // Pitch-string memos (ENGINE-AUDIT 2026-07 Tier 3): events carry pitch as
+  // Pitch-string memos (ENGINE AUDIT): events carry pitch as
   // "8.04" strings and every pass re-split/re-parsed them (~5% of buildEvents).
   // The pch vocabulary is tiny (a few dozen distinct strings per song), so a
   // Map memo returns the IDENTICAL integers/strings — byte-identical output.
@@ -52,7 +51,7 @@
   function columnsRef(){ return SCALAR_PASSES?null:(CsdColumnsRef||root.CsdColumns||null); }
 
   const NOTE={C:0,"C#":1,Db:1,D:2,"D#":3,Eb:3,E:4,F:5,"F#":6,Gb:6,G:7,"G#":8,Ab:8,A:9,"A#":10,Bb:10,B:11};
-  const QUAL={maj:[0,4,7],min:[0,3,7],maj7:[0,4,7,11],min7:[0,3,7,10],dom7:[0,4,7,10],m7b5:[0,3,6,10],sus4:[0,5,7],aug:[0,4,8]};   // aug added 2026-07-10 (REPERTOIRE wave 3): the whole_tone progression's planing triad — additive, no existing progression names it
+  const QUAL={maj:[0,4,7],min:[0,3,7],maj7:[0,4,7,11],min7:[0,3,7,10],dom7:[0,4,7,10],m7b5:[0,3,6,10],sus4:[0,5,7],aug:[0,4,8]};   // aug (REPERTOIRE wave 3): the whole_tone progression's planing triad — additive, no existing progression names it
   // build a chord voicing from root name + quality (consistent with the hand ones)
   function voicing(rootName, quality){
     const r=NOTE[rootName]||0;
@@ -122,14 +121,14 @@
     // the verifier's "seventh" feature needs a 0-seventh minor home) + phrygian
     // DOMINANT (arab pop's hijaz color: MAJOR tonic against bII)
     frost:      prog("Frost (i-VI-III-VII triads)", [["A","min"],["F","maj"],["C","maj"],["G","maj"]]),
-    // MIDI-trove mined (2026-07-14, tools/mine-midi.js on the MIDIMAN dub rip,
+    // MIDI-trove mined (tools/mine-midi.js on the MIDIMAN dub rip,
     // 108 files): real dub harmony is TRIADIC (seventh-bar fraction .08 median
     // vs the engine's all-7ths pools) and lives on the tonic-subdominant axis —
     // root movement of a 4th/5th outnumbers everything else 2:1, chord roots
     // sit on 1^ (6908 bars) and 4^ (3679) far ahead of 5^ (1898). The i-iv
     // plain-triad vamp is that measurement as vocabulary.
     dub_vamp:   prog("Dub vamp (i-iv triads)",   [["A","min"],["D","min"]]),
-    // MIDI-trove mined (2026-07-14, MIDIMAN ragtime rip, 236 files, 82% major):
+    // MIDI-trove mined (MIDIMAN ragtime rip, 236 files, 82% major):
     // ascending-4th root movement dominates (4788 vs 2789 for 5ths-down-the-
     // other-way), roots concentrate on 1^/5^/2^/6^ — the classic rag circle,
     // secondary dominants chaining home (VI7->II7->V7->I). Corpus seventh-bar
@@ -139,7 +138,7 @@
     blues_12:   prog("12-bar blues (all dom7)",  [["C","dom7"],["C","dom7"],["C","dom7"],["C","dom7"],
                                                   ["F","dom7"],["F","dom7"],["C","dom7"],["C","dom7"],
                                                   ["G","dom7"],["F","dom7"],["C","dom7"],["G","dom7"]]),
-    // REPERTOIRE wave 3 (2026-07-10) — the author-wishlist de-clone additions
+    // REPERTOIRE wave 3 — the author-wishlist de-clone additions
     // (minor_run carried 79 genres, deep_two 67; these give the catalog real
     // harmonic alternatives). Each has a distinct character no existing entry
     // covers; wiring into anchors is a per-genre card judgment (genre-kernel).
@@ -167,7 +166,7 @@
 
   const CHORD_BEATS=8;
   const WAVES=["sine","saw","square","pulse"];
-  // ODD-METER vocabulary (2026-07): oompahpah/waltzroot (3-beat cells),
+  // ODD-METER vocabulary:oompahpah/waltzroot (3-beat cells),
   // siciliana (6-beat), kits waltz/waltzswing (3) + sixeight (6), melody
   // waltz/lilt6 — meant for state.meter genres (3/4, 6/8). Harmless additions
   // otherwise: a 4/4 state that requests them just gets the short cell tiled
@@ -198,14 +197,14 @@
   }
   const SFX_NUM={riser:1,sweep:2,downlift:3,impact:4,reverse:5,noise:6};
   // the ⚡ transition control: what happens at the end of a section, into the next
-  // (2026-07: + "snare roll" march-crescendo, "stutter" last-half-bar gate,
+  // (+ "snare roll" march-crescendo, "stutter" last-half-bar gate,
   //  "dropout" kick-drop silence beat — see buildEvents transition chain)
-  // (2026-07 MUSICAL-transition round: + "micro lick" — a 1-2 bar seeded
+  // (MUSICAL-transition round: + "micro lick" — a 1-2 bar seeded
   //  sax/trombone/flute/piano pickup phrase into the next downbeat, voiced by
   //  state.lickVoice; + "kit fill" — a half-bar mini-fill that QUOTES the
   //  section's own drum pattern. The noise/sweep/riser SFX are demoted -8dB
   //  and rationed by the kernel's auto-transition pass.)
-  // (2026-07 VARIETY pass: + a batch of new named fills — "flam roll" (grace-note
+  // (VARIETY pass: + a batch of new named fills — "flam roll" (grace-note
   //  snare roll), "tom cascade" (melodic hi->lo tom run), "crash choke" (a hard
   //  choked stop-crash off a two-tom pickup), "tape stop" (a decelerating,
   //  pitch-dropping retrigger = a tape halt), "reverse crash" (reverse-cymbal
@@ -213,7 +212,7 @@
   //  rush), "build drop" (snare-roll+riser crescendo then a final-beat drop-out).
   //  All new options: a genre that does not pool them is byte-identical.)
   const TRANSITIONS=["off","drum fill","tom fill","break fill","hat rush","cut","riser","sweep","downlift","impact","reverse","noise","snare roll","stutter","dropout","micro lick","kit fill","flam roll","tom cascade","crash choke","tape stop","reverse crash","filter riser","build drop"];
-  // ---------- PERCUSSION LANE (2026-07 "use the percussion" pass) ----------
+  // ---------- PERCUSSION LANE ----------
   // Decorative percussion layered OVER the kick/snare/hat/tom kit: the real
   // recorded clap/rim/ride/crash (kit samples) + the wide GM perc bank
   // (congas/shaker/cowbell/tambourine/agogo/guiro/claves/woodblock/triangle).
@@ -269,7 +268,7 @@
     model==="choir"||model==="bell"||model==="brass"||model==="fm"||model==="rhodes"||
     model==="pluck"||model==="kpluck"||model==="fuzz"||model==="guitar"||model==="vocoder"||
     model==="modeld"||   // Minimoog-Model-D mono voice (dsp/modeld.dsp)
-    // synth fleet (2026-07): nine classic-synth Faust voices (faust/dsp/*.dsp)
+    // synth fleet:nine classic-synth Faust voices (faust/dsp/*.dsp)
     model==="juno60"||model==="tb303"||model==="solina"||model==="hammond"||model==="synclead"||
     model==="casiocz"||model==="oberheim"||model==="ppg"||model==="vp330"||
     model==="hoover"||   // Alpha-Juno rave stab (SIGNATURE synth; supersaw voice with hoover defaults — state-engine)
@@ -337,7 +336,7 @@
     };
   }
   // (KERNEL-V4 §3.7 deletion) the STYLES whole-song presets AND generateSong
-  // (the 2026-05 builder's whole-song codegen) are gone — the FORM GRAMMAR in
+  // (the old builder's whole-song codegen) are gone — the FORM GRAMMAR in
   // genre-kernel.js (buildSections/buildForm) is the one composer now. The only
   // survivor was defaultState's demo section list; it is inlined below as a
   // static royal-road pop song (value-identical to the old
@@ -394,7 +393,7 @@
       case "rolling":    L=[]; for(let i=0;i<8;i++)  L.push([i+0.5,0.4,r5]);  break;   // offbeat 8ths — house/techno roll
       case "sub":        L=[[0,3.8,pchAdd(r5,-12)],[4,3.8,pchAdd(r5,-12)]];   break;   // long sub pressure — jungle/dub
       case "sludge":     // SUNN O)))/SLEEP DOUBLED sub: the root AND an octave below it,
-        // held long, twice per bar — big, thick and relentless (Paul: "big and doubled").
+        // held long, twice per bar — big, doubled, thick and relentless.
         L=[[0,3.9,pchAdd(r5,-12)],[0,3.9,r5],[4,3.9,pchAdd(r5,-12)],[4,3.9,r5]]; break;
       case "stab":       L=[[0,0.3,r5],[1.5,0.3,r6],[3,0.3,r5],[4.5,0.3,r6],[6,0.3,r5],[7,0.3,f6]]; break;   // syncopated stabs
       case "melodic": {  // generative: walks chord tones with approach/passing notes — never the same bar twice
@@ -422,7 +421,7 @@
         L=[[0,2.3,r5],[2.5,1.4,r6],[4,2.3,r5],[6.5,1.4,r6]]; break;
       case "syncopated": // push-pull funk line: downbeat anchor, then off-beat pushes that land early
         L=[[0,0.7,r5],[1.5,0.45,r5],[2.5,0.7,r6],[3.75,0.45,r5],[4.5,0.7,r5],[5.75,0.45,f6],[6.5,0.7,r6],[7.25,0.45,r5]]; break;
-      // ---- ODD-METER cells (2026-07; see BASS_CELL_LEN above) ----
+      // ---- ODD-METER cells (see BASS_CELL_LEN above) ----
       case "oompahpah":  // OOM-pah-pah ×2 (a 6-beat cell = two 3/4 measures): tuba root on 1,
         // chord "chicks" on 2+3; the second measure OOMs the fifth BELOW — the
         // classic alternating cabaret/polka tuba. Fits chordEvery 6/12 exactly.
@@ -597,7 +596,7 @@
       {d:"snare",alt:[[[3.75,.16]],[[7.25,.16]]]},                  // ghost clap skips around
       {d:"hat",grid:{n:16,amps:[.12,.07],sp:.8}},                   // hats drop pulses — the skip
       {d:"hat",alt:[[[2.5,.16,.3]],[[6.5,.16,.3]]]} ]},
-    // ---- ODD-METER kits (2026-07). Kit flag cell:N — the kit's own tiling
+    // ---- ODD-METER kits. Kit flag cell:N — the kit's own tiling
     // period in beats (default CHORD_BEATS=8, the 4/4 law): drumEvents strides
     // the op loop by `cell`, so a 3-beat waltz cell fills a 6- or 12-beat
     // chord bar measure-by-measure. turn:false throughout — the end-of-cycle
@@ -820,7 +819,7 @@
     while(o<2){ s(o,a); a=Math.min(0.4,a+0.03); o+=(r()<0.4?0.125:0.25); }
     return out;
   }
-  // ---------- VARIETY-PASS FILLS (2026-07) — all new named ⚡ options ----------
+  // ---------- VARIETY-PASS FILLS — all new named ⚡ options ----------
   // FLAM ROLL — a snappy 2-beat snare roll where each main hit carries a tight
   // grace-note "flam" (a quiet hit ~1/32 ahead), the whole thing crescendoing.
   function flamRollEvents(S,rng){
@@ -881,7 +880,7 @@
     // held notes, octave-leap payoff, space. A/B alternate per chord for variation.
     anthem:  [[0,1.5,0,0],[1.5,.5,1,0],[2,1.5,3,0],[3.5,.5,2,0],[4,2,3,1],[6,1.5,0,1],[7.5,.5,2,0]],
     anthem2: [[0,2,2,0],[2,1,3,0],[3,1,2,0],[4,1.5,0,1],[5.5,.5,1,0],[6,2,3,0]],
-    // MIDI-trove MINED cells (tools/mine-melody.js, 2026-07-15): each is the
+    // MIDI-trove MINED cells (tools/mine-melody.js): each is the
     // MEDOID real phrase of its corpus's MODAL 8-beat rhythm (typicality
     // selects against hooks; the 8-slot voicing quantization keeps it a
     // contour, not a quotation — SOURCES.md). A/B pairs alternate per chord
@@ -906,7 +905,7 @@
     dubline2:  [[5.5,.25,0,0],[6,.25,3,1],[6.25,.25,1,1],[6.5,.25,0,0]]
   };
   // ---- MINED-WEAVE BEGIN (tools/mine-weave.js — do not hand-edit) ----
-  // The mined melody ORGAN (2026-07-15): per-family Markov walks in the engine's
+  // The mined melody ORGAN: per-family Markov walks in the engine's
   // own alphabet — pitch over the 8-slot voicing ladder (idx 0..3 × oct 0..1),
   // rhythm over quantized IOIs. Fit on the trove corpus, held-out-gated
   // against the wander baseline (the tool refuses a losing family). Opt-in
@@ -924,7 +923,7 @@
     { on:[0,1.5,3,4,5.5,7],         du:[1.4,1.4,0.9,1.4,1.4,0.9] },              // tresillo ×2 (3-3-2 at the 8th grid)
     { on:[0,3,6],                   du:[2.8,2.8,1.8] },                          // 3-3-2 in whole beats — per-bar it tiles to 3-3-2-3-3-2 across two bars
   ];
-  // ODD-METER cell families (2026-07): measure-length grids the retime pass
+  // ODD-METER cell families:measure-length grids the retime pass
   // uses INSTEAD of the 8-beat MM_CELLS when state.meter is present (same
   // single rng draw per fired bar — the meterless path is untouched). Cells
   // are ONE MEASURE long; mmTile tiles them to the chord bar so chordEvery
@@ -1349,10 +1348,10 @@
     }
   }
 
-  // ---------- VOICE REPEAT GOVERNOR (2026-07-25) ------------------------------
-  // Paul: "No vocal or textural sample should repeat more than five times in 64
-  // bars. We end up with speech synthesized phrases looping ad nauseum. Space
-  // them." A voice sample is an UTTERANCE, not a groove element: hearing
+  // ---------- VOICE REPEAT GOVERNOR ------------------------------------------
+  // No vocal or textural sample may repeat more than five times in 64 bars.
+  // Without the cap, synthesized speech phrases loop ad nauseum.
+  // A voice sample is an UTTERANCE, not a groove element: hearing
   // "Platform nine has been reassigned to grief" twice in a minute is a world;
   // eight times is a bug. No single scheduler can see this — each section role,
   // the hits layer and every sampleEvents spec places its own shots from its own
@@ -1484,7 +1483,7 @@
     [0,2,1,3,4,4,6,7,0,2,1,3,7,6,5,4],
     [0,-1,2,-1,4,5,-1,7,0,-1,2,3,-1,5,6,7],
   ];
-  // (2026-07 VARIETY pass: + fourfloor (a chord stab on every beat — disco/EDM),
+  // (VARIETY pass: + fourfloor (a chord stab on every beat — disco/EDM),
   //  charleston (the syncopated dotted-quarter/eighth chord punch — disco/funk),
   //  gallop (triple 16th bursts — metal/energetic), clave (3-2 son rhythm as
   //  stabs), pushpull (anticipated pairs), stax (the backbeat 2-&-4 horn punch).
@@ -1492,7 +1491,7 @@
   const STAB_PATTERNS={ offbeat:[1.5,3.5,5.5,7.5], rave:[0,1.5,3,4.5,6,7], sparse:[3.5,7],
     fourfloor:[0,2,4,6], charleston:[0,1.5,4,5.5], gallop:[0,0.5,0.75,4,4.5,4.75],
     clave:[0,1.5,3,4,6], pushpull:[1.5,2,5.5,6], stax:[2,6] };
-  // ---------- STRUM / RHYTHM-GUITAR COMP (2026-07 variety pass) ----------
+  // ---------- STRUM / RHYTHM-GUITAR COMP ----------
   // Opt-in via state.strum (a pattern NAME, or {pattern,spread}). When present,
   // a chord's pad is no longer a dead-flat 8-beat block held once: it is STRUCK
   // rhythmically. Each strum-hit RAKES the chord's notes in rapid succession —
@@ -1586,8 +1585,8 @@
   // ends an exit at. floorIn===1 means NO entrance ramp (the voice slams in). Pads
   // lowest — a swell from near-silence is their idiom; bass/melody stay present.
   const DYN_FLOOR = { pad: [0.12, 0.12], bass: [0.35, 0.35], melody: [0.30, 0.30] };
-  // DRUMS get variable dynamics per voice (Paul: "different drum voices can have
-  // variable dynamics"). The BACKBONE (kick/snare/clap/rim) slams in — floorIn 1
+  // DRUMS get variable dynamics per voice — different drum voices carry
+  // different dynamics. The BACKBONE (kick/snare/clap/rim) slams in — floorIn 1
   // so a drop stays slammed — but still fades on the way OUT (into a breakdown).
   // The COLOR voices (hats/rides/toms/perc/shaker…) swell in AND out, so a kit's
   // texture breathes at its edges while the beat's spine keeps its punch. Fills
@@ -1620,7 +1619,7 @@
       if(!on[i]){ i++; continue; }
       let j = i; while(j+1 < on.length && on[j+1]) j++;       // run of active sections [i..j]
       let runBars = 0; for(let s=i;s<=j;s++) runBars += barsOf(s);
-      // ENGINE-AUDIT 2026-07 Tier 3: rampScalar computes rb with this exact
+      // ENGINE AUDIT: rampScalar computes rb with this exact
       // formula and returns 1 for every INTERIOR bar (barInRun >= rb AND
       // fromEnd >= rb — both fade conditions false regardless of the floors),
       // so skipping the callback there is byte-identical and drops the
@@ -1745,7 +1744,7 @@
         tables:th.tables,   // "corpus" opts into the MINED trove tables (theory.js)
         seed:(((state.seed??1)>>>0)+40961)>>>0 }));
     }
-    // ---- ODD METER (2026-07): state.meter = {beats:3|6, unit:4|8} ----
+    // ---- ODD METER:state.meter = {beats:3|6, unit:4|8} ----
     // 3/4 (beats:3, unit:4 — the engine beat is the quarter) and compound 6/8
     // (beats:6, unit:8 — the engine beat is the EIGHTH; the pulse is the
     // dotted quarter). The meter's ONLY structural job here is the chordEvery
@@ -2193,11 +2192,11 @@
       } else if(SFX_NUM[tr]){
         const hit=(tr==="impact"||tr==="noise");
         const sbeat = hit ? cur+secBeats : cur+secBeats-4;   // hit on next downbeat; build in final bar
-        // 2026-07: the sweep family is DEMOTED (-8dB; the loud noise build was
-        // "very loud, very disruptive, overused") — impact keeps its slam.
-        // 2026-07-04 human-calibrated law: "if you're going to use a filter
-        // sweep over noise it must be much quieter and the filter must cut
-        // very deeply" — a further ~-9dB here (0.16->0.055, 0.2->0.07) plus
+        // The sweep family is DEMOTED (-8dB): the loud noise build is very
+        // loud, very disruptive and overused — impact keeps its slam.
+        // The human-calibrated law: a filter sweep over noise must be much
+        // quieter and the filter must cut very deeply — hence a further ~-9dB
+        // here (0.16->0.055, 0.2->0.07) plus
         // the deep resonant filter ranges in faust/dsp/sfx.dsp.
         const amp = tr==="impact"?0.4 : (tr==="reverse"||tr==="downlift")?0.07 : 0.055;
         sfx.push({beat:Math.max(0,sbeat), dur:hit?1.5:4, type:SFX_NUM[tr], amp});
@@ -2250,8 +2249,8 @@
     // melody alternates sides, pads scatter; kick/snare/bass stay center (the
     // low end never leaves the middle).
     //
-    // HONEST STATUS (audit 2026-07-25 — do not restore the old claim that "the
-    // Faust engine reads it"): NO backend consumes event.pan today. Faust
+    // HONEST STATUS — do not write that the Faust engine reads this:
+    // NO backend consumes event.pan. Faust
     // state-engine.mapEvents translates only cutoffMul/vib/pw; every per-note
     // pan in press/stream/live/sampler comes from SE.notePan(unit,freq), i.e.
     // the UNIT pan (MASTER_PAN + pad panSpread). So state.jux currently widens
@@ -2494,7 +2493,7 @@
         }
       }
     }
-    // ---- PERCUSSION LANE (2026-07) — decorative perc OVER the kit ----
+    // ---- PERCUSSION LANE — decorative perc OVER the kit ----
     // Lays the genre's state.perc.lanes across every span that HAS a kit
     // (kit!=="off"): claps on 2&4, ride/rim for swing, crash on section downbeats,
     // congas/shaker/cowbell/… from the GM bank. Own rng stream (seed+61453) so an
@@ -2503,7 +2502,7 @@
     // kit (isolated rng), then pushed into `drums` so the rubato warp below keeps
     // it sample-locked. NEW event types (clap/rim/ride/crash/perc) are ignored by
     // the snare-law (snare/hat only) and by the verifier (core-kit fabric only).
-    // METER / chordEvery AWARENESS (audit 2026-07-25): the pass used to tile at
+    // METER / chordEvery AWARENESS: a naive pass tiles at
     // a hardcoded 8-beat stride with nbars=round(sp.beats/8) whatever the chord
     // bar was, so a span whose length is not a multiple of 8 (a 3-chord
     // progression on a 12-beat bar: 36 beats -> round(4.5)=5 bars) ran its last
@@ -2601,7 +2600,7 @@
     // wind/guitar/choir owns a LOWER window (zone roots -12..+6 st, the
     // mirror of faust/state-engine SAMPLER_FLOOR_ST/SAMPLER_STRETCH_ST), so
     // the same line that sits perfectly under a saw lead asks a tenor sax
-    // for midi 88 (audit 2026-07: 54 genres, one template convention). The
+    // for midi 88 (54 genres share the one template convention). The
     // mapping layer's per-note render fold saved the ear but bent phrase
     // contours — the climax note folded down an octave. This pass moves the
     // register decision into the SCORE, zero-rng, per RESOLVED instrument
@@ -2692,8 +2691,8 @@
       }
     }
     // ---------- SNARE-LAW (kernel default: no bar repeats thrice) ----------
-    // Paul's mandate: "snare patterns repeat ad nauseum ... nothing should repeat
-    // exactly the same more than twice." A kernel-wide DEFAULT over every genre's
+    // Snare patterns repeat ad nauseum unless something stops them: nothing may
+    // repeat exactly the same more than twice. A kernel-wide DEFAULT over every genre's
     // drum fabric — not an opt-in dimension. Runs DEAD LAST (after sampleEvents
     // AND the rubato warp) on its OWN isolated stream (seed+5150): it consumes no
     // other stream's draws, so a bar the law never touches renders exactly as
@@ -2813,7 +2812,7 @@
         const nbars=Math.max(1,Math.round(sp.beats/BARLEN));
         let M=MACHINE_KIT[sp.kit]?0.78:0.28;
         M=cl(M-Math.min(0.45,hz/0.12*0.22+sw/0.35*0.22),0.05,0.95);
-        // ENGINE-AUDIT 2026-07 Tier 3: the per-bar double full-array filter was
+        // ENGINE AUDIT: the per-bar double full-array filter was
         // O(bars x drums) — 40-53% of buildEvents. Bucket THIS span's snares/
         // hats in ONE O(drums) pass instead: same inBar predicate (tried on the
         // float-neighbor bar indices, so membership is decided by the exact
@@ -2885,9 +2884,8 @@
   }
 
   // ---------- solo voices (deterministic per-section recipes) ----------
-  // (The csound orchestra/codegen that used to live here — waveRHS through
-  //  buildCsd/liveParts — is preserved on branch legacy-csound. The Faust
-  //  engine consumes buildEvents + these solo-voice assignments directly.)
+  // (The Faust engine consumes buildEvents + these solo-voice assignments
+  //  directly.)
   // Per-section solo voices: any section with a `solo` recipe gets its own melody
   // instrument (instr 7,8,…) so different "dinosaurs" / a fuzz guitar can each take
   // a section. Deterministic from state.sections so codegen + score routing agree.

@@ -18,7 +18,7 @@
 //      phrase whose interval character (stepFrac/upFrac/range) sits closest to
 //      the corpus fingerprint — mapped onto the 8 available voicing slots
 //      (leadIndex 0..3 × octave 0..1). NOT a per-slot average: the median of a
-//      thousand melodies is a monotone (measured, 2026-07-15). Typicality also
+//      thousand melodies is a monotone (measured). Typicality also
 //      selects AGAINST distinctive hooks, and the 8-slot voicing quantization
 //      keeps the cell a contour, not a quotation (SOURCES.md policy),
 //   5. durations are the medoid's own, capped at the inter-onset gap.

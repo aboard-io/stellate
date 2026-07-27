@@ -637,7 +637,7 @@
       }
       const LEN = end - base;
 
-      // NOTE-RESUME (ENGINE-AUDIT 2026-07 Tier 4): the sampler bakes below pass
+      // NOTE-RESUME (ENGINE-AUDIT Tier 4): the sampler bakes below pass
       // `resume: true`, so a note spanning several chord-bar windows continues
       // its own state into the next one instead of being re-rendered from sample
       // 0 in each (the old O(P²) walk). Windows are pulled strictly in order
@@ -757,7 +757,7 @@
         }
       }
 
-      // ── BAKED VAPOR (Paul: "can't vapor take effect over time? like BPM?") ──────────
+      // ── BAKED VAPOR — vapor takes effect OVER TIME, the way a BPM change does ───────
       // The "walking through an empty mall" master EQ, baked into the FULL-MIX stream so it
       // rides BOTH the desktop ring AND the mobile WAV segments (the old live-graph version
       // only existed on the desktop output graph). It lands OVER TIME like a BPM change: the
@@ -767,7 +767,7 @@
       // gate is untouched — only a turned-up vapor adds processing.
       applyVapor(L, R, LEN);
 
-      // AUDIT 2026-07 (tier 1): release consumed live-feed state. A bar spec is
+      // release consumed live-feed state. A bar spec is
       // read exactly once (order enforced by ST.cursor), so NULL the slot — never
       // splice: feedBar's returned index and ST.bars.length are load-bearing.
       // Consumed sweeps below ST.swi are pruned periodically (ST.activeSw holds

@@ -100,7 +100,7 @@
   // AudioSpecificConfig the esds wants. iOS/WebKit hands back a full MPEG-4
   // ES_Descriptor (~39 bytes, CoreAudio magic-cookie style) instead of the 2-byte
   // ASC; embedding it verbatim makes a malformed esds and the SourceBuffer errors
-  // on the init segment (device log 2026-07-08: desc=present:39B → mms-aac dead).
+  // on the init segment (measured on device: desc=present:39B → mms-aac dead).
   //   bare ASC (short, plausible AOT)   → use as-is
   //   descriptor chain (tags 03/04/05)  → walk to DecSpecificInfo(0x05), take payload
   //   anything unparseable              → synthesize from the known rate/channels

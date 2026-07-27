@@ -14,7 +14,7 @@
 # IS the committed deliverable, and everyone who runs it downloads from the
 # Internet Archive directly. Credit "Naropa Poetics Audio Archive" in any
 # non-commercial use. Full ledger + per-item links: SOURCES.md "Naropa
-# expansion (2026-07-25)". NOTE: vx_waldman_crack (item ID "ND012") is UNDATED.
+# expansion". NOTE: vx_waldman_crack (item ID "ND012") is UNDATED.
 #
 #   tools/fetch-found-naropa.sh
 #

@@ -27,8 +27,7 @@
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number(v) || 0));
   const cpspch = (p) => { p = parseFloat(p); const o = Math.floor(p), st = Math.round((p - o) * 100); return 261.625565 * Math.pow(2, (o - 8) + st / 12); };
 
-  // ---- SHRIEK GUARD (2026-07 audio-quality pass, Paul: "think about filtering
-  // very high tones — things shriek a little when we're not being careful") ----
+  // ---- SHRIEK GUARD: very high tones shriek when nothing filters them ------
   // A GLOBAL taste ceiling at the mapping layer (like LEAD_FX_LIFT / BASS_TRIM:
   // pure + deterministic, state untouched, so verifier features — which read
   // ONLY state fields — and the confusion matrix cannot move). Two mechanisms:
@@ -42,8 +41,8 @@
   //     either guard — anchors are disciplined — so this is byte-identical
   //     insurance for the blend/macro/pipes space where interpolation can land
   //     cutoff+res combinations no anchor declares.
-  // (2) INSTRUMENT-REGISTER LAW (Paul: "you're playing a lot of instruments an
-  //     octave or two high and they lose all of their characteristics"): the
+  // (2) INSTRUMENT-REGISTER LAW: an instrument played an octave or two above
+  //     its natural register loses all of its character. The
   //     score brain's octave choices (9.xx lead voicings, soloOctave +12, arps)
   //     were tuned for synths, but zoneFor's top zone covers hi=127, so a
   //     sampled note far above the zone's root plays the sample at 2-6x rate —
@@ -74,7 +73,7 @@
   const SHRIEK_RES_FLOOR = 0.35, SHRIEK_RES_TOP = 0.95;
   const SAMPLER_STRETCH_ST = 6;   // max semitones a zone plays ABOVE its top root (rate ~1.41)
   const SAMPLER_FLOOR_ST = 12;    // max semitones BELOW the bottom root (rate ~0.5)
-  // INSTRUMENT-REGISTER LAW (D.1, Paul: "make good octave choices, avoid shrieks").
+  // INSTRUMENT-REGISTER LAW, second tier: good octave choices, no shrieks.
   // A MUSICAL playing range per instrument, in MIDI notes (C4 = 60), sitting ON TOP
   // of the sampler's technical zone fold: a note outside the range octave-FOLDS into
   // it (whole octaves → same pitch class → stays in key), so a flute never climbs
@@ -157,19 +156,18 @@
   // saturation -> compressor -> chorus/phaser "air". Realized on the NATIVE path
   // (faust/sampler.js: makeStrip/stripStep in press + the wavOut stream, PER NOTE
   // so it stays window-independent and segment-parity byte-equal; buildStripNodes
-  // in live). This table IS the tuning surface — Paul's knobs:
+  // in live). This table IS the tuning surface:
   //   hpf/lpf  Hz (0/undef = none)          eq {f,gain(dB),q}  one peaking band
   //   sat 0..1 tanh drive + satMix wet      comp {thresh(lin),ratio,atk,rel,makeup}
   //   chorus {rate,baseMs,depthMs,mix,two}  phase {rate,lo,hi,stages,fb,mix}
   //   trim  output gain — gain-staging: keep the strip ~loudness-neutral (the
   //         master soft-clip at 0.95 is the backstop, but we must not lean on it).
-  // Increments, not transforms (Paul: "a little more"). All saturation is tanh —
-  // it REDUCES peaks, so it doubles as clip insurance.
-  // GRIT PASS (2026-07, Paul: "you're being very conservative … we need more grit
-  // across the board"). The default channel strips carry MORE saturation now —
-  // dry multisamples read as timid, so every sampled voice gets audible tanh
-  // drive (still peak-reducing = clip insurance). Aggressive genres go far past
-  // this via the heavy strip (heavyDriveOf/aggressiveStrip below).
+  // Increments, not transforms. All saturation is tanh — it REDUCES peaks, so it
+  // doubles as clip insurance.
+  // GRIT: the saturation here is deliberately not conservative. Dry multisamples
+  // read as timid, so every sampled voice gets audible tanh drive (still
+  // peak-reducing = clip insurance). Aggressive genres go far past this via the
+  // heavy strip (heavyDriveOf/aggressiveStrip below).
   const STRIP_PROFILES = {
     // BASS — kill subsonics (30 Hz HPF), gentle 5 kHz top roll, low-mid warmth,
     //   slow glue comp; NO air (bass stays centered + tight).
@@ -250,7 +248,7 @@
   }
   const stripFor = (role, id, state, m, hasNativeInserts) => {
     const drive = role === "drum" ? 0 : heavyDriveOf(m);
-    // INSERTS-ON-SAMPLED-VOICES (2026-07): when the unit carries its declared
+    // INSERTS-ON-SAMPLED-VOICES: when the unit carries its declared
     // insert chain NATIVELY (samplerUnit below), the hashed voiceFxStage extra
     // is skipped — the genre's own declared choice wins over the house default
     // (same law as defaultInserts: "a non-empty kernel array overrides").
@@ -279,10 +277,9 @@
   // and drums unaffected. Clamped like every send.
   const AIR_REV = { pad: 1.15, melody: 1.1, solo: 1.1 };
 
-  // ==== THE MASTERING STAGE (2026-07-10, Paul: "a final mixing/balancing/
-  // panning/gainstage/compression stage that does what a good DJ or live sound
-  // engineer does. The sound of the fugue is very muddy in the final mix. We
-  // may be using too much reverb overall.") ==================================
+  // ==== THE MASTERING STAGE =================================================
+  // The final mixing/balancing/panning/gainstage/compression stage — what a good
+  // DJ or live sound engineer does to a mix that is muddy and over-reverbed.
   // Three renderer-level mechanisms, all MATRIX-BLIND by construction (they
   // live on the resolved UNITS / master fx params; the symbolic verifier and
   // the confusion matrix read only state fields, which are untouched):
@@ -309,7 +306,7 @@
   //      catalog (seed 3): 11/228 genres trim (all reverb >= 0.7, all
   //      beat-carrying: dinosynth 0.67, vaporwave 0.74 … hvacbop 0.95);
   //      ambient/fugue/techno/gabber/jazz all scale 1.0 exactly.
-  // Tunables (conservative defaults — Paul's knobs):
+  // Tunables (conservative defaults):
   const MASTER_PAN = {
     melody: 0.10,   // lead a touch right
     pad: -0.08,     // pad counterweights left (+ per-note spread below)
@@ -322,16 +319,15 @@
   const CARVE_HPF = 300;                              // Hz — accompaniment high-pass
   const CARVE_DIP = { f: 450, gain: -4, q: 0.9 };     // the 300-600 mud-band dip
   const REV_BUDGET = { capHi: 2.2, slope: 1.9, floor: 0.55 };
-  // DRUM BALANCE (2026-07-10, Paul: "drums in the louder genres to the bottom
-  // right are very hot — a limiter/compressor strategy to balance voices
-  // everywhere"). The hottest kits (kick/snare lvl up to ~1.65 in thrash/metal/
+  // DRUM BALANCE. Drums in the loudest genres run very hot and need a
+  // limiter/compressor strategy that balances the voices. The hottest kits (kick/snare lvl up to ~1.65 in thrash/metal/
   // gabber) dominate the sum and slam the live master limiter, ducking the
   // melodic voices. A gentle KIT-LEVEL pull toward `target` lets the voices sit
   // up without flattening the kit's character — only the OVERAGE above target is
   // trimmed, and only partway (`keep` = fraction of the overage retained). Kits
   // already at/under target are untouched => byte-identical there. Shared unit
   // choke point => press + stream + live-bake all inherit it (everywhere). Tune
-  // here; Paul's ears are the calibration.
+  // here; ears are the calibration.
   const DRUM_BAL = { target: 1.1, keep: 0.6, floor: 0.72 };
 
   // constant-power pan gains, ×√2 so center ≈ the old dup-to-both-channels
@@ -418,20 +414,19 @@
     for (const k of kit) { const u = units[k]; if (u && u.lvl != null) u.lvl *= scale; }
     return scale;
   }
-  // KICK TRIM (Paul 2026-07-25: "the kick tends to be pretty enormous — it can
-  // grate. Sometimes is nice but it should come down 15 to 25% from where it is
-  // most of the time."). A flat -20% on the kick UNIT level, applied after
-  // drumBalance so it composes with the hot-kit pull rather than fighting it.
+  // KICK TRIM. The kick tends to be enormous and grates over a whole session; a
+  // flat -20% on the kick UNIT level, applied after drumBalance so it composes
+  // with the hot-kit pull rather than fighting it.
   // Deliberately NOT a per-genre edit: the complaint is catalogue-wide, and one
   // named constant is the honest lever. Genres whose kick IS the identity keep
   // their relative weight — everything moves together, so a gabber kick is still
   // a gabber kick, just less punishing. Pure function of resolved units, zero
   // rng: determinism-safe like the pan/carve/budget/balance passes above.
-  // SYNTH-FONT LEVEL MATCH (Paul 2026-07-26: "the FM seems a little distorted/
-  // saturated… switching soundfonts feels like a huge jump in tonality — like
-  // they're not related"). He is hearing LEVEL, not notes: the score is
-  // byte-identical across fonts (pitched + drum hashes match exactly), but
-  // measured LIVE master RMS was fluidr3 -16.4 dB, minimoog -13.5, dx7 -11.5 —
+  // SYNTH-FONT LEVEL MATCH. Switching soundfonts used to feel like a jump in
+  // tonality — the FM font read as distorted and unrelated to the others. That
+  // is LEVEL, not notes: the score is byte-identical across fonts (pitched +
+  // drum hashes match exactly), but measured LIVE master RMS was
+  // fluidr3 -16.4 dB, minimoog -13.5, dx7 -11.5 —
   // a 4.9 dB jump on the FM font, which also drove the master brickwall into
   // audible saturation. PRESS hid it: the press stage auto-normalises every
   // render toward -6 dBFS, so all three measured within a decibel there.
@@ -440,7 +435,7 @@
   // drumBalance/kickTrim, as a pure function of resolved units — zero rng.
   // dx7 0.50 = -6 dB, measured: it put vaporwave within 1.6 dB and synthwave
   // within 0.4 dB of the sampled default (both were ~5 dB hot, which is what
-  // drove the master brickwall into the saturation Paul heard). citypop is
+  // drove the master brickwall into the audible saturation). citypop is
   // unaffected either way — its peak is drum-led, and dx7 actually runs ~5 dB
   // QUIET there, so font level is genre-dependent and a single constant can
   // only fix the hot end. minimoog is 1.0 = A DELIBERATE NO-OP: its gain does
@@ -537,14 +532,14 @@
   // in bars, and filtersweep lo/hi are OCTAVES RELATIVE TO THE VOICE'S CUTOFF —
   // converted to Hz here (cutoffHz arg).
   //
-  // TWO-PER-VOICE HOUSE STYLE (2026-07): when a recipe carries NO inserts (an
+  // TWO-PER-VOICE HOUSE STYLE: when a recipe carries NO inserts (an
   // EMPTY or absent array) AND role/state are supplied, defaultInserts()
   // deterministically picks TWO role/model-appropriate inserts (hashed on
   // instrumentSeed — stable per song, NOT per bar, like the instrument pick).
   // A NON-EMPTY kernel array overrides the default entirely (the genre's own
   // choice wins). NOTE: csd-engine.defaultInstruments bakes `inserts:[]` onto
   // every voice, so an empty array is the framework "unset" — it CANNOT be told
-  // apart from a deliberate opt-out, and Paul's directive is pervasive two-per-
+  // apart from a deliberate opt-out, and the house style is pervasive two-per-
   // voice FX, so empty => house-style default. A voice that must stay bone-dry
   // opts out downstream (solina overrides `inserts:[]` in pitchedUnit). Signature
   // synths get a restrained pool (a subtle delay — never a granulator/leslie/
@@ -697,7 +692,7 @@
   // sludgemetal into easy listening (fenv stays sheddable seasoning).
   const IDENTITY_INSERTS = new Set(["tremolo", "leslie", "granular", "higain"]);
 
-  // ---- DEFAULT TWO-INSERT POLICY (2026-07 "two per voice" house style) --------
+  // ---- DEFAULT TWO-INSERT POLICY (the "two per voice" house style) -----------
   // When a recipe carries no explicit `inserts`, pick TWO role/model-appropriate
   // inserts DETERMINISTICALLY (hashed on role/model/instrumentSeed — stable per
   // song like the instrument pick, NOT per bar). Returns recipe-style objects
@@ -754,22 +749,15 @@
   // dx7.lib has no output gain: the engine scales every FM note externally as
   // @out = min(dx7OutCeil||1, extGainPerAmp*amp), extGainPerAmp = <coef>*level.
   //
-  // THE 2026-07-25 CALIBRATION IS VOID — it measured a voice that was not
-  // playing. Every dx7_algN module answers to "/DX7/freq" and "/DX7/gate" (the
-  // dx7.lib top-level group renames the Faust path root), but the renderers
-  // addressed "/dx7_algN/…" off the declared name, so no FM voice ever received
-  // a pitch or a gate: each proc emitted its instantiation transient and then
-  // sat ~-90 dB forever. That is the "high pitched mono tone that never
-  // changes" Paul heard under sf=dx7, and it is what the melody-only A/B
-  // presses were comparing against sampled parity — hence a "font 15 dB under"
-  // reading and a +3.5 dB makeup (2.0) with the per-note ceiling opened to 1.8.
-  // The root fix is render-core.paramRoot (read the root off the UI tree);
-  // these two numbers are re-measured on the now-audible voice.
+  // These numbers are measured against an AUDIBLE voice — the params only bind
+  // through render-core.paramRoot, since dx7.lib's top-level group renames the
+  // Faust path root to "/DX7/…" and addressing the declared module name instead
+  // leaves every FM voice ungated (a pure instantiation transient, then silence).
   //
-  // RE-MEASURED (2026-07-26): with the paths fixed, coef 2.0 pressed vaporwave
-  // at -12.5 dB L-RMS against fluidr3 -24.4 and minimoog -22.5 — 10-12 dB hot,
-  // riding the brickwall. Sweeping the coefficient (20s presses, seed 7, same
-  // genre for all three fonts) lands the font on its siblings at 0.7:
+  // At coefficient 2.0 the font pressed vaporwave at -12.5 dB L-RMS against
+  // fluidr3 -24.4 and minimoog -22.5 — 10-12 dB hot, riding the brickwall.
+  // Sweeping the coefficient (20s presses, seed 7, same genre for all three
+  // fonts) lands the font on its siblings at 0.7:
   //   jungle    dx7 -17.7  minimoog -17.7  fluidr3 -18.2
   //   vaporwave dx7 -22.0  minimoog -21.1  fluidr3 -20.9
   //   citypop   dx7 -31.3  minimoog -30.6  fluidr3 -31.2
@@ -780,13 +768,12 @@
   // amp<=~0.2 => <=0.14), so the opened ceiling has nothing left to do and goes
   // back to the historical clamp. Per-family trim, if ever wanted, still
   // belongs in the kernel's dx7VoiceFor as `levelMul` (the minimoog mechanism).
-  // FONT-GATED as before: a genre that authors model "dx7" as its own signature
-  // colour keeps the historical 1.333 coefficient. (That number was fitted on
-  // the same silent voice, but nothing in the 274-genre kernel reaches it —
-  // sampled-by-default resolves every pitched voice to a sampler — so it is
-  // left alone rather than churned on a path with no listener.)
-  const DX7_MAKEUP   = 0.7;   // was 2.0 (fitted against the silent voice); pre-font law 1.333
-  const DX7_OUT_CEIL = 1.0;   // was 1.8 to let that makeup survive; the trim never reaches the clamp
+  // FONT-GATED: a genre that authors model "dx7" as its own signature colour
+  // keeps the 1.333 coefficient. Nothing in the 274-genre kernel reaches that
+  // path — sampled-by-default resolves every pitched voice to a sampler — so it
+  // is left alone rather than churned with no listener.
+  const DX7_MAKEUP   = 0.7;   // synth-font trim; 1.333 on the signature-colour path
+  const DX7_OUT_CEIL = 1.0;   // the trim never reaches the clamp
   // is the dx7 SYNTH FONT the active font for this state? applySampledOnly fills
   // samplerLib with {synth:"dx7", dx7:patch} specs for EVERY instrument under a
   // synth font (zone specs under fluidr3/file fonts), so one entry settles it.
@@ -826,7 +813,7 @@
     return u;
   }
 
-  // ---- SYNTHESIS-DEPTH unified filter-envelope surface (2026-07) -----------
+  // ---- SYNTHESIS-DEPTH unified filter-envelope surface ----------------------
   // Recipe keys `fenvAmount` (cutoff env depth, OCTAVES, signed) /
   // `fenvAttack` / `fenvDecay` (seconds) drive the model's filter envelope
   // whatever its internal spelling: models with a NATIVE env keep their own
@@ -882,16 +869,16 @@
     // param-reader: clamp(m[k]!=null?m[k]:d,lo,hi) — the null-coalescing default
     // idiom. NOT for `m.x||d` sites (0-is-falsy glide/drive/vibrato keep that).
     const mp = (k, d, lo, hi) => clamp(m[k] != null ? m[k] : d, lo, hi);
-    // BASS_TRIM — Paul 2026-07-04, global mix decision: "lower the bass 25%
-    // everywhere by default." Applied at the SINGLE realization point (the bass
+    // BASS_TRIM — a global mix decision: the bass runs 25% down everywhere by
+    // default. Applied at the SINGLE realization point (the bass
     // level), so it hits all genres identically in both press and live and
     // preserves every anchor's RELATIVE bass level (the per-anchor `level`
     // ranges are untouched — this is a uniform scalar on top).
     const BASS_TRIM = 0.75;
     const L = (m.level != null ? m.level : 0.6) * (role === "bass" ? BASS_TRIM : 1);
     const lvl = clamp(L, 0.001, 1);
-    // LEAD_FX_LIFT — Paul 2026-07-07, on-device mix note: "a little more delay and
-    // reverb for leads." Applied at the SINGLE mapping point for the melody voice
+    // LEAD_FX_LIFT — an on-device mix note: leads want a little more delay and
+    // reverb. Applied at the SINGLE mapping point for the melody voice
     // and its solos (which inherit the melody recipe), as a uniform scalar on both
     // sends — so every genre's RELATIVE lead wetness is preserved exactly (the 32
     // per-genre send/dsend vectors are untouched). Modest (+18%); the (0,6) clamp
@@ -958,8 +945,8 @@
       // Absent => no `mello` field => sampler renders the exact pre-mellotron
       // path (regression-gated bit-identity).
       const mello = m.mellotron ? {
-        wowDepth: mp("wowDepth", 0.035, 0, 0.5),        // semitones (slow undulation) — HALVED 2026-07-04 (Paul: tape wobble went too far); was 0.07
-        flutterDepth: mp("flutterDepth", 0.0175, 0, 0.5),  // semitones (fast micro-variation) — HALVED 2026-07-04; was 0.035
+        wowDepth: mp("wowDepth", 0.035, 0, 0.5),        // semitones (slow undulation) — deliberately half of a convincing tape wobble
+        flutterDepth: mp("flutterDepth", 0.0175, 0, 0.5),  // semitones (fast micro-variation) — same halving
         wowRate: mp("wowRate", 0.7, 0.1, 3),
         flutterRate: mp("flutterRate", 7, 3, 12),
         tapeCap: m.tapeCap === false ? 0 : clamp(m.tapeCap === true || m.tapeCap == null ? 8 : m.tapeCap, 0, 8),
@@ -967,8 +954,7 @@
       } : null;
       // AIR: modest reverb-send lift on sampled pad/lead (breathe), bass untouched.
       const airRev = clamp(base.rev * (AIR_REV[role] || 1), 0, 6);
-      // INSERTS-ON-SAMPLED-VOICES (2026-07, the cb766a5 §blues-organ follow-up):
-      // a genre's EXPLICIT resolved insert chain (the kernel's inserts axis,
+      // INSERTS-ON-SAMPLED-VOICES: a genre's EXPLICIT resolved insert chain (the kernel's inserts axis,
       // state.instruments.<voice>.inserts — prob already fired kernel-side) is
       // HONORED on the native PCM lane. The unit carries the normalized chain
       // (insertChain clamps, same modules synth units run); press/stream process
@@ -989,10 +975,9 @@
       // bottomRoot - SAMPLER_FLOOR_ST octave-fold UP (mapEvents).
       const declared = Array.isArray(m.inserts)
         ? m.inserts.filter((i) => i && i.type && i.type !== "distort") : [];
-      // FILTER-ENV ON SAMPLES (2026-07-10, Paul: "filter envelopes on samples are
-      // great esp when you want resonance and to mess with dynamics"). The recipe
-      // `fenv` key was inert on the native sampler lane — only synth models read it
-      // (FENV_MAP / the plucky path). Wire it to the amp-follower filter-env INSERT
+      // FILTER-ENV ON SAMPLES — resonance that messes with dynamics. The recipe
+      // `fenv` key is inert on the native sampler lane by itself: only synth models
+      // read it (FENV_MAP / the plucky path). Wire it to the amp-follower INSERT
       // (insert_fenv, already built for BOTH press and live): louder notes swing a
       // resonant ladder up to ~`fenv` octaves above the voice cutoff, then it
       // settles back — movement + resonance that tracks dynamics, WITHOUT dulling
@@ -1120,7 +1105,7 @@
         ...(plucky ? { attack: clamp(m.attack != null ? m.attack : 0.05, 0.001, 5), sustain: sus, release: rel, fenv: fev } : {}) } };
       case "guitar":  return { ...base, module: "lead_guitar", params: { ...base.params, cutoff: clamp(c || 4500, 200, 14000), pluckPos: 0.75 } };
       case "vocoder": return { ...base, module: "robot_choir", vocoder: true, params: { ...base.params, cutoff: clamp(isPad ? Math.min(9000, c * 2) : c, 200, 14000), res, makeup: 5 } };
-      // ---- synth fleet (2026-07): nine classic-synth voices (dsp/*.dsp) ----
+      // ---- synth fleet: nine classic-synth voices (dsp/*.dsp) ----
       // juno60 — Roland Juno-60 poly pad/keys, STEREO (BBD chorus is the width).
       // One shared ADSR drives VCF+VCA (authentic); SIGNED envAmount (Juno
       // polarity); chorus 0..2 (off->I->II). chorusSpread is the stereo width
@@ -1281,7 +1266,7 @@
     }
   }
 
-  // ---- CPU COST MODEL (2026-07-04, FEEL+CPU-BUDGET round) ----------------------
+  // ---- CPU COST MODEL -----------------------------------------------------
   // Per-module render cost, MEASURED on this machine via an 8s offline-render
   // timing probe (faust/bench.js is the live cousin; the probe instantiated one
   // OfflineProcessor per module, gated a note / fed noise, timed min-of-3 passes),
@@ -1290,8 +1275,7 @@
   // 6-operator FM voice costs ~6.4x pad_saw, so a genre that stacks a dx7 melody
   // + dx7 solo licks (dinosynth) is by far the heaviest citizen in the space.
   // sfx (the riser/sweep synth) and fx_bus (always-on master) are the other big
-  // ones. These doubles double as future-optimization targets (see the burn
-  // table in the round's report).
+  // ones. These doubles double as future-optimization targets.
   const COST = {
     // fleet pads
     pad_saw: 1, juno60: 1.76, vp330: 1.96, solina: 1.18, oberheim: 0.72, ppg: 1.32,
@@ -1310,7 +1294,7 @@
     // inserts
     insert_distort: 1.01, insert_phaser: 0.62, insert_chorus: 0.18, insert_wah: 0.69,
     insert_tremolo: 0.51, insert_filtersweep: 1.47,
-    // inserts (2026-07 expanded FX round — measured vs pad_saw, min-of-3 8s render)
+    // more inserts (measured vs pad_saw, min-of-3 8s render)
     insert_leslie: 0.35, insert_flanger: 0.28, insert_delay: 0.42, insert_ringmod: 0.2, insert_granular: 0.5,
     // SYNTHESIS-DEPTH inserts (measured min-of-3 8s vs insert_distort=1.01):
     // higain is the heaviest insert (3 always-computed shaper taps + 6 EQ
@@ -1354,7 +1338,7 @@
     return total;
   }
 
-  // ---- DETERMINISTIC TRIM-TO-BUDGET (2026-07-04) --------------------------------
+  // ---- DETERMINISTIC TRIM-TO-BUDGET ----------------------------------------
   // A zero-rng guard, applied at unit-build time (so press + live shed identically).
   // BUDGET is a mobile-safety ceiling in cost units: the heaviest NORMAL genre
   // (house ~38, then newjack ~37, transitwave ~32 — the historical heaviest) sits
@@ -1424,9 +1408,9 @@
     return units;
   }
 
-  // ==== SAMPLED MODE (state.sampledOnly — DEFAULT ON since 2026-07) ============
-  // "I want anything to go here and be sampled by default. It's much better."
-  // (Paul, 2026-07). genre-kernel toState now applies applySampledOnly to EVERY
+  // ==== SAMPLED MODE (state.sampledOnly — ON BY DEFAULT) ======================
+  // Anything that can be sampled is sampled: it sounds much better than the
+  // synth path. genre-kernel toState applies applySampledOnly to EVERY
   // emitted state unless the caller opts out (opts.synth / opts.sampledOnly:false
   // -> pure-synth path, byte-for-byte the old default). When state.sampledOnly is
   // set (and state.samplerLib is present — applySampledOnly injects it + rides
@@ -1438,8 +1422,8 @@
   // the genres were tuned for survives. Drums are forced onto the sampled kits by
   // genre-kernel (D.*Sampler overlays -> the existing drumSamp path below).
   //
-  // ONLY the pitched instrument SOURCE changes. Sampled mode is now the normal
-  // FULL MIX — Paul: "I want the round[=found] layer and speech back":
+  // ONLY the pitched instrument SOURCE changes. Sampled mode is the normal
+  // FULL MIX — the found layer and the speech layer both stay in:
   //   • found beds / chops            -> PLAY as usual (the genre's foundSource)
   //   • speech / vocoder layer         -> PLAYS (vocoder is signature-exempt below,
   //     so it stays a real vocoder and its live speech carrier is heard)
@@ -1449,8 +1433,8 @@
   // them would be absurd (a moving filter / detune-beat / LFO wobble / hard-sync
   // sweep / live speech carrier no static multisample can reproduce). forceSampled
   // leaves these as pure synth even though sampled is the default. Keyed by the
-  // RECIPE model string (state.instruments.<role>.model). TIGHT by design — Paul
-  // wants sampling pervasive; prune/extend this ONE set to taste.
+  // RECIPE model string (state.instruments.<role>.model). TIGHT by design —
+  // sampling is meant to be pervasive; prune/extend this ONE set to taste.
   const SIGNATURE_MODELS = new Set([
     "tb303",    // Roland TB-303 acid line — the whole point of acid house / psytrance acid
     "acid",     // bass_acid: resonant filter-swept squelch bass (acid house / EBM / gabber)
@@ -1459,9 +1443,9 @@
     "synclead", // hard-sync tearing lead: the envelope-driven sync sweep is the sound
     "modeld",   // Minimoog Model-D mono-legato hero: portamento/legato is performance, not a pitch
     "vocoder",  // robot_choir vocoder — needs the LIVE speech carrier (keeps "speech back")
-    "hammond",  // B-3 tonewheel + SPINNING LESLIE (2026-07 audio-quality pass; Paul on
-                // blues: "I don't hear ensemble or phaser on the organ. It's reedy and
-                // distant."). Anchors that ask for hammond configure real drawbar
+    "hammond",  // B-3 tonewheel + SPINNING LESLIE. Sampled, a blues organ reads as
+                // reedy and distant, with no ensemble or phaser on it at all.
+                // Anchors that ask for hammond configure real drawbar
                 // registrations + leslie speed + 3rd-harm percussion (blues comps
                 // 888868468 with leslie .85-.95) — synthesis params no static GM zone
                 // honors; the sampled remap was landing them on reed_organ / church_organ
@@ -1472,18 +1456,17 @@
     "hoover",   // the Alpha-Juno rave stab (gabber/happyhardcore/hardcore lineage) —
                 // an octave-layered detuned-saw swirl whose PWM-beat motion is the
                 // sound; the sampled remap was landing it on a wind/sampler fallback
-                // and the card's "hoover stabs" never sounded (card-truth wave
-                // 2026-07-10, NEXT.md §5 — the tb303/hammond law).
+                // and the card's "hoover stabs" never sounded (the tb303/hammond law).
   ]);
   // Candidate pools per role/timbre-family, drawn from the FULL General MIDI set
-  // (all 128 bank-0 FluidR3 presets extracted 2026-07, "all of GM please" — see
+  // (all 128 bank-0 FluidR3 presets extracted — see
   // faust/extract-gm.js). Only multi-zone (playable) presets are listed; the 24
   // single-zone GM presets (SFX, one-note synth pads) are excluded — they pitch
   // badly across a keymap. pickFrom hashes (role, model, seed) into these, so a
   // wider pool = more instrument variety across the genre space (deterministic per
   // seed). Kept musically sane per family (no bagpipe/shenai in the default lead).
-  // GM VARIETY (Paul: "use way more General MIDI — where are marimbas?? see how
-  // often we fall back on samples"). We have 108 sampled instruments; the fallback
+  // GM VARIETY: use much more of General MIDI, and stop falling back on the same
+  // few instruments. We have 108 sampled instruments; the fallback
   // (a synth-model voice remapped to a sample under sampledOnly) used to funnel
   // almost everything to reedy WINDS. These pools are wide, and — crucially — an
   // UNMAPPED generic synth (saw/fm/stack/sub/…: the majority of leads) now draws a
@@ -1542,9 +1525,9 @@
     const lib = state.samplerLib || {};
     // INSTRUMENT IDENTITY IS PER-SONG, NOT PER-BAR: the live walk reseeds each bar
     // (seed + serial*7919) for PATTERN variety, but feeding that churned seed into
-    // the instrument pick made every voice swap instruments EVERY BAR (device audit
-    // 2026-07-09: pad = french_horns→synth_strings→ohh_voices bar to bar — heard as
-    // "two tracks at once", viz/name mismatches, and per-bar decode churn on iOS).
+    // the instrument pick made every voice swap instruments EVERY BAR (a pad going
+    // french_horns→synth_strings→ohh_voices bar to bar — heard as two tracks at
+    // once, with viz/name mismatches and per-bar decode churn on iOS).
     // The walk stashes the pre-churn seed as instrumentSeed; the pick uses it, so
     // the band stays the band for the whole song. Fallback state.seed = unchanged
     // behavior for whole-song (press) states, which never churn.
@@ -1557,10 +1540,10 @@
     if (spec.synth) {
       const v = (role === "pad" && spec.padSynth) ? { voice: spec.padSynth, params: spec.padParams, dx7: spec.padDx7 }
                                                   : { voice: spec.synth, params: spec.params, dx7: spec.dx7 };
-      // levelMul (2026-07-16 sf-dropout fix): a per-family MAKEUP GAIN that
-      // multiplies the genre's own level instead of replacing it — the modeld
-      // pluck lead measured 4-5x under the sampled equivalent in the live mix
-      // (heard as "the guitar dropped out" on sf=minimoog). Genre balance is
+      // levelMul — the synth-font dropout fix: a per-family MAKEUP GAIN that
+      // multiplies the genre's own level instead of replacing it. The modeld
+      // pluck lead measured 4-5x under the sampled equivalent in the live mix,
+      // which reads as the guitar dropping out under sf=minimoog. Genre balance is
       // preserved; only the synth voice's loudness deficit is compensated.
       const out = { ...m, ...v.params, model: v.voice, sampler: null, dx7: v.voice === "dx7" ? v.dx7 : null };
       if (v.params && v.params.levelMul) { out.level = (m.level != null ? m.level : 0.5) * v.params.levelMul; delete out.levelMul; }
@@ -1580,8 +1563,8 @@
     for (const v of (E.soloVoices ? E.soloVoices(state, I.melody) : []))
       units["solo:" + v.key] = pitchedUnit("solo", so ? forceSampled("solo", v.recipe, state) : v.recipe, state);
     const D = I.drums;
-    // DRUM_FX_LIFT — Paul 2026-07-07, on-device mix note: "a little more delay and
-    // reverb for ... drums." Uniform scalar on every drum voice's reverb+delay
+    // DRUM_FX_LIFT — the on-device mix note that leads want more delay and reverb
+    // applies to drums too. Uniform scalar on every drum voice's reverb+delay
     // send. All genres derive their drum sends from the single D.send/D.dsend
     // scalars via these fixed per-drum ratios (kick .35, hat .3/.5, tom 1.4 …), so
     // one multiplier preserves the RELATIVE drum wetness across all 32 genres
@@ -1616,7 +1599,7 @@
     drumSamp(units.snare, D.snareSampler);
     drumSamp(units.hat, D.hatSampler);
     drumSamp(units.tom, D.tomSampler);
-    // PERCUSSION LANE voices (2026-07) — clap/rim/ride/crash + the shared GM perc
+    // PERCUSSION LANE voices — clap/rim/ride/crash + the shared GM perc
     // bank, additive to kick/snare/hat/tom. ONLY built when the genre carries
     // state.perc (genre-kernel PERC_STYLES) so every non-perc genre's unit set,
     // cost and trim-to-budget stay byte-identical to baseline. Sampled from the
@@ -1646,7 +1629,7 @@
     // resolved units (zero rng — determinism-gated like everything here).
     applyMasterPan(units);
     collisionCarve(units);
-    drumBalance(units); kickTrim(units); fontTrim(units, state);   // gentle hot-kit level pull so voices sit up (Paul's "drums are hot")
+    drumBalance(units); kickTrim(units); fontTrim(units, state);   // gentle hot-kit level pull so the voices sit up
     const out = trimToBudget(units, state);
     // fxLabels (viz roster metadata; computed post-trim so labels reflect the
     // final shed state). Pure metadata — ignored by every render loop.
@@ -1750,15 +1733,15 @@
       // pre-clamp scale would never reach them — the budget scales the actual
       // RETURN.
       rgain: colored ? 0 : clamp((state.reverb != null ? state.reverb : 0.7) * 3.2, 0, 2) * reverbScale(state), dgain: 1,
-      // SHIMMER LEAN — Paul 2026-07-07, on-device: "a little more shimmer reverb
-      // would be good." The internal zita tail is lowpassed at rtone; opening it
+      // SHIMMER LEAN — an on-device note that the mix wants more shimmer reverb.
+      // The internal zita tail is lowpassed at rtone; opening it
       // from the legacy-dark 2 kHz to 2.6 kHz lets more HF air through the tail,
       // reading as shimmer. Uniform across every uncolored genre (a constant, so
       // relative identity is untouched) and shared by press + live via fxParams.
       // Colored genres already ride brighter plates (dattorro 5200, fdn 6000) and
-      // keep their own tone. TRUE octave-up pitch-shift shimmer is future work
-      // (see report: needs new DSP + live.js send wiring, and live.js is off-limits
-      // to this workstream). live eco-3 still dulls rtone under load.
+      // keep their own tone. TRUE octave-up pitch-shift shimmer is future work —
+      // it needs new DSP plus live.js send wiring. live eco-3 still dulls rtone
+      // under load.
       rtone: 2600,
 
       dtime: clamp((dl.beats || 0.75) * spb, 0.02, 1.9),
@@ -1772,9 +1755,9 @@
       comp: clamp(state.comp || 0, 0, 1),
       lowcut: clamp((state.tone && state.tone.lowcut) || 10, 10, 400),
       highcut: (state.tone && state.tone.highcut) ? clamp(state.tone.highcut, 1000, 20500) : 20500,
-      // MASTER AIR SHELF (Paul 2026-07-25: "the high end of the spectrum is
-      // VERY loud in general on good headphones — adjust the final mix with an
-      // EQ to bring it down a bit"): a constant gentle high-shelf CUT above
+      // MASTER AIR SHELF. On good headphones the high end reads as VERY loud
+      // across the whole catalogue, so the final mix carries an EQ that brings
+      // it down: a constant gentle high-shelf CUT above
       // ~8 kHz in fx_bus, applied unconditionally right after the genre tone
       // tilt (lowcut/highcut) — a SHELF, not a lowpass, so the air dims
       // instead of vanishing. Uniform across the catalog (a constant, so
@@ -1896,13 +1879,12 @@
       // playing the sample at chipmunk/rumble rate. The window is >= 18 st
       // wide, so the folds never fight. Fixed-rate sampled drums never come
       // here (their branch is in the drums loop below).
-      // (2026-07-16 sf-dropout fix: this used to HARD-CLAMP to freqMax — every
-      // note above the module's compiled range played AT the ceiling, e.g. any
-      // lead note over MIDI ~83 hit the dx7's 1000Hz cap in a register where
-      // the patch's operator scaling is ~zero: Paul's "present-but-silent"
-      // bars. The octave FOLD below replaces the clamp.)
+      // A HARD CLAMP to freqMax will not do here: every note above the module's
+      // compiled range then plays AT the ceiling, e.g. any lead note over MIDI
+      // ~83 hits the dx7's 1000 Hz cap in a register where the patch's operator
+      // scaling is ~zero, giving present-but-silent bars. Hence the octave FOLD.
       let noteHz = clamp(cpspch(p.pch), 20, 1e9);
-      // INSTRUMENT-REGISTER LAW (D.1): fold the note into the instrument's MUSICAL
+      // INSTRUMENT-REGISTER LAW: fold the note into the instrument's MUSICAL
       // range first (a flute out of its top drops an octave, staying in key), THEN
       // the sampler's technical zone fold runs as the safety net. Keyed by the GM
       // sampler id; unlisted instruments (pianos/harp/synths) pass through.
@@ -1915,11 +1897,11 @@
         while (noteHz > u.sampler.stretchMaxHz && noteHz > 40) noteHz /= 2;
         while (noteHz < u.sampler.stretchMinHz && noteHz < 8000) noteHz *= 2;
       }
-      // SYNTH REGISTER FOLD (2026-07-16 sf-dropout fix): freqMax finally gets
-      // its consumer. The dx7.lib freq slider is COMPILED [50,1000]Hz — a note
-      // above it runs the FM operators off their tables and flushes to zero
-      // (Paul's sf=dx7 lead: chords voicing above MIDI ~83 measured
-      // present-but-silent in the live audit while lower bars sounded).
+      // SYNTH REGISTER FOLD — the consumer for freqMax, and the synth-font
+      // dropout fix. The dx7.lib freq slider is COMPILED [50,1000]Hz: a note
+      // above it runs the FM operators off their tables and flushes to zero, so
+      // an sf=dx7 lead voicing chords above MIDI ~83 measures present-but-silent
+      // while its lower bars sound.
       // Octave-fold into the unit's declared range — the drop a real player
       // makes — instead of feeding the module a pitch it cannot say.
       if (u.freqMax) {
@@ -1972,8 +1954,8 @@
       out.push({ unit: key, beat: p.beat, durB, sets, amp: p.amp,
         ...(p.bend ? { bend: p.bend } : {}) });
     }
-    // SELF-CHOKE lanes (Paul 2026-07-10: "snares stumbling on top of each other —
-    // it's not timing, it's the samples not cutting off fast enough"): a sampled
+    // SELF-CHOKE lanes. Snares that stumble on top of each other are not a timing
+    // fault — it is the samples not cutting off fast enough. A sampled
     // drum one-shot rings its full oneShotSec (~1s), so at fast tempos consecutive
     // hits on the same piece stack 3-4 deep into a smear (bebop's 220bpm ghost
     // snares). Real membranes re-damp when restruck; cymbals ring. So kick/snare/
@@ -2053,8 +2035,8 @@
     for (const f of ev.found) {
       const src = srcOf[f.tableNum]; if (!src) continue;
       const tuned = at && !src.bpm ? { autoTune: at } : {};
-      // SPEECH INTELLIGIBILITY (2026-07, Paul: "you're pitching the synth voice
-      // too high to be intelligible wherever you use it"). espeak's robotic voice
+      // SPEECH INTELLIGIBILITY: pitched too high, the synth voice stops being
+      // intelligible anywhere it is used. espeak's robotic voice already
       // sits high, and several placements play it at rate >= 1 (name-stab hits,
       // up-pitched hogcore) — the words blur. CAP the playback rate of any
       // kind:"speech" source to SPEECH_RATE_CAP so it always reads in a natural

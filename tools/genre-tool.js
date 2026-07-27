@@ -140,7 +140,7 @@ function deriveSchema() {
   // label/info are supplied at spec top level, not inside spec.anchor.
   // theory/pipes/rhythm are AUTO-DERIVED at kernel load (deriveMind attaches
   // them to every anchor), so counts[k]===anchors.length lies about them being
-  // author-required — a spec correctly omits them (MUSIC-MIND 2026-07-09).
+  // author-required — a spec correctly omits them (MUSIC-MIND).
   const DERIVED = new Set(["theory", "pipes", "rhythm"]);
   const required = [...all].filter(k => counts[k] === anchors.length && k !== "label" && k !== "info" && !DERIVED.has(k));
   return { known: all, required };
@@ -297,18 +297,18 @@ function spliceBlock(file, terminator, blockText, tag) {
   fs.writeFileSync(file, src);
 }
 const TERM = {
-  genres: "\n  };\n\n  // ---------- MUSIC-MIND anchor axes",   // the section that follows the GENRES close (was transition micro-lick soloists before the 2026-07 MUSIC-MIND insert)
+  genres: "\n  };\n\n  // ---------- MUSIC-MIND anchor axes",   // the section that follows the GENRES close
   targets: "\n  };\n\n  // the piecewise-linear target-row scorer",
 };
 
 // star-chart position -> explorer.html's POS table, inside the shared
-// /* genre-tool:positions */ block (added 2026-07-04 when hogcore/prelude
-// turned out to exist, play, and verify — but have no star). spec.pos is
+// /* genre-tool:positions */ block — without it a genre can exist, play and
+// verify while having no star on the map (hogcore/prelude did). spec.pos is
 // REQUIRED: [x,y] in the chart's logical px. Validates spacing against every
 // existing star (the arabpop/triphop lesson: crowded stars blur blends);
 // idempotent per-genre line replace inside the block.
 function splicePosition(name, pos) {
-  // POS moved to app/world.js in the 2026-07 folder reorg (a BAKED cache of
+  // POS lives in app/world.js (a BAKED cache of
   // computeGenreLayout — world.js:52-72). spec.pos is now OPTIONAL: a genre
   // missing from POS gets a derived spot at first boot (starmap.js fast-path
   // miss -> similarity-seeded relaxation) and the batch re-bake pastes
@@ -365,7 +365,7 @@ function cmdCreate() {
 
   const anchor = Object.assign({ label: spec.label || name, info: spec.info || "" }, spec.anchor);
   K.GENRES[name] = anchor;                              // inject in-memory for measurement
-  // MUSIC-MIND (2026-07-09): the kernel attaches theory/pipes/rhythm to every
+  // MUSIC-MIND: the kernel attaches theory/pipes/rhythm to every
   // anchor at LOAD — an anchor injected after load must get the same pass or
   // resolveMulti crashes on g.theory.adventure. deriveMind is guarded
   // (if(!g.theory) etc.), so re-running it on a splice-marked anchor is a no-op.

@@ -1,6 +1,6 @@
-// share.js — THE BOOKMARKABLE MIX (Paul 2026-07-10: "make the positions of the
-// nodes and the seed update in a query string so the entire site is bookmarkable.
-// Update it with measure numbers so we can drop in on any part of the mix.")
+// share.js — THE BOOKMARKABLE MIX. The node positions and the seed live in the
+// query string, so the entire site is bookmarkable; measure numbers ride along
+// too, so a link can drop in on any part of the mix.
 //
 // The URL is the whole session: seed + the path's waypoints + pace + mode + the
 // CURRENT MEASURE. It updates in place (history.replaceState — no history spam)
@@ -17,9 +17,9 @@
 import { S, set } from "./state.js";
 import { BARS_PER_SEG, POS } from "./world.js";
 
-// ── CONSTANT-PACE TRAVEL (Paul 2026-07-11: "the playhead should always move at a
-// constant pace; distance between nodes shouldn't matter"). The old model gave
-// EVERY leg exactly `pace` bars, so the traveler raced across long legs and
+// ── CONSTANT-PACE TRAVEL: the playhead always moves at a constant pace and the
+// distance between nodes doesn't matter. Giving EVERY leg exactly `pace` bars
+// instead makes the traveler race across long legs and
 // crawled short ones. Now the traveler moves at a constant SPEED — PACE_REF/pace
 // world-units per bar — so a leg's bar-count is proportional to its LENGTH and a
 // whole loop's duration depends only on the total path length, not the number or
@@ -33,7 +33,7 @@ export function legMetrics(){
     const d=Math.hypot(b.x-a.x,b.y-a.y); legs.push(d); perim+=d; }
   return { n, legs, perim };
 }
-// TARGET LOOP DURATION (Paul): the traveler's speed is dialed as a TIME — how long the
+// TARGET LOOP DURATION: the traveler's speed is dialed as a TIME — how long the
 // WHOLE loop should take (8 min .. 24 h, log slider, default 30 min) — not an abstract
 // bars-per-leg "pace". Speed = perimeter × NOMINAL_SPB / duration, so the loop lasts
 // ~`duration` regardless of the path's SIZE (a big path just moves faster; a small one
@@ -43,10 +43,10 @@ export const NOMINAL_SPB = 4;          // reference seconds per bar for the dura
 export const MIN_DURATION = 480;       // (legacy-URL conversion only)
 export const MAX_DURATION = 86400;     // (legacy-URL conversion only)
 export const DEFAULT_DURATION = 1800;  // 30 minutes — the ×1 reference (see BASE_SPW)
-// ── DISTANCE-DERIVED DURATION × A LOG MULTIPLE (Paul 2026-07-16: "change the
-// duration slider to a logarithmic duration multiple, faster to slower, 100×
-// speed to a million times longer; measure the full distance as nodes are
-// added and come up with a reasonable default; play at the default rate
+// ── DISTANCE-DERIVED DURATION × A LOG MULTIPLE. The duration slider is a
+// logarithmic duration multiple, faster to slower, 100×
+// speed to a million times longer; the full distance is measured as nodes are
+// added to reach a reasonable default; playing at the default rate
 // adjusted by the multiple"). The path's own length now sets the BASE time —
 // BASE_SPW seconds per world-unit, tuned so the seeded default triangle
 // (~1500 wu perimeter) plays its historical ~30 minutes at ×1 — and the dial
@@ -87,11 +87,10 @@ export function paceSpeed(){
   if (perim > 1e-6) return Math.max(1e-3, perim * NOMINAL_SPB / loopDuration());
   return PACE_REF / BARS_PER_SEG;
 }
-// LOOP-LENGTH SAFETY CAP (2026-07-11 crash fix, kept after the 2026-07-25
-// export removal): a constant-pace loop over a large-coordinate path can be
-// tens of thousands of bars (perim/speed) — anything that MATERIALIZES the
-// loop bar-by-bar would OOM (the old whole-path walk did, Paul's ?m=787 URL,
-// perim ~63k → ~32k bars). The live playhead is UNAFFECTED (travelStep steps
+// LOOP-LENGTH SAFETY CAP: a constant-pace loop over a large-coordinate path can
+// be tens of thousands of bars (perim/speed) — anything that MATERIALIZES the
+// loop bar-by-bar OOMs (a whole-path walk over perim ~63k is ~32k bars, and it
+// did). The live playhead is UNAFFECTED (travelStep steps
 // one bar at a time and travelForBar wraps at the perimeter); loopBars() is
 // the bounded loop-length everything else reads.
 export const MAX_LOOP_BARS = 2048;
@@ -143,7 +142,7 @@ export function buildShareUrl(){
     q.set("path", S.waypoints.map(w=>Math.round(w.x)+"."+Math.round(w.y)).join(","));
   if(Math.abs(durMult()-1)>1e-9) q.set("xdur", String(durMult()));   // the duration MULTIPLE rides the URL (×1 omitted)
   if(S.modeLock!=="auto") q.set("mode", S.modeLock);
-  if(S.soundfont && S.soundfont!=="fluidr3") q.set("sf", S.soundfont);   // the chosen soundfont rides the URL (Paul)
+  if(S.soundfont && S.soundfont!=="fluidr3") q.set("sf", S.soundfont);   // the chosen soundfont rides the URL
   const m=currentMeasure();   // 1-based; the one law, above
   if(m>1) q.set("m", String(m));
   return location.origin+location.pathname+"?"+q.toString();

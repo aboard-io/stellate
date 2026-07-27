@@ -13,10 +13,10 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/jav
   ".json": "application/json", ".css": "text/css", ".wasm": "application/wasm",
   ".wav": "audio/wav", ".ogg": "audio/ogg", ".mp3": "audio/mpeg", ".woff2": "font/woff2" };
   // ".mjs"/".woff2" added when preact/htm and the two webfonts were vendored
-  // (2026-07-27). A module served application/octet-stream fails strict
+  // A module served application/octet-stream fails strict
   // module-MIME checking and aborts app/main.js's whole graph — the failure
   // looks like "the app never booted", with no console error to point at it.
-  // ".css" added for the app/ CSS split (2026-07-08): index.html now loads app/app.css
+  // ".css" for the app/ CSS split: index.html loads app/app.css
   // via <link rel=stylesheet>. Chromium (standards mode) refuses a stylesheet served
   // as application/octet-stream, which would leave #map unsized and break the layout
   // gate. Real nginx serves .css as text/css already; this mirrors it for the probes.

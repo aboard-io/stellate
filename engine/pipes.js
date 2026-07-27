@@ -68,7 +68,7 @@
   // ---------- the launch library ----------
   // Every pipe: fn(ev, state, rng, p) -> mutates ev in place. Registry-
   // extensible: consumers may add {id:{fn,doc}} entries before apply().
-  // MIDI-trove MINED accent profiles (tools/mine-groove.js, 2026-07-15): mean
+  // MIDI-trove MINED accent profiles (tools/mine-groove.js): mean
   // melody velocity per 16th slot of a 4-beat bar, normalized to mean 1,
   // clamped ±30%. Only corpora with real signal ship a profile — jazz and
   // folk measured FLAT (±2%: 90s MIDI velocities are normalized away; the
@@ -125,8 +125,8 @@
       }},
 
     strum:{ doc:"rolls each pad chord by a few ms per voice (offsets < 0.1 beat), direction alternating low-first/high-first per chord — humanity on pads; deterministic, no rng",
-      // GROUPING NOTE (audit 2026-07-25 — the pipe was dead vocabulary): pads
-      // were grouped on e.beat.toFixed(6), an EXACT-onset key, but apply() runs
+      // GROUPING NOTE — get this wrong and the pipe is dead vocabulary. Pads
+      // grouped on e.beat.toFixed(6), an EXACT-onset key, never match: apply() runs
       // after applyGroove's humanize pass has nudged every event by its own
       // ±ht·0.04-beat draw (and after the rubato warp). With any humanize>0 no
       // two chord-mates shared a 6-dp beat, every group had size 1, and the
@@ -195,9 +195,9 @@
             e.pch=pchAdd(e.pch,12*oct);                    // register flip
             // pan mirror in the ENGINE'S SIGNED convention: pan lives in [-1,1]
             // with 0 = centre (csd-engine's jux pass, faust panGains), so the
-            // mirror of an existing pan is -pan. (Until 2026-07-25 this read
-            // 1-e.pan, a 0..1-convention mirror, which sent every response note
-            // hard right the moment a jux state stamped a negative pan.)
+            // mirror of an existing pan is -pan. (1-e.pan, a 0..1-convention
+            // mirror, sends every response note hard right the moment a jux
+            // state stamps a negative pan.)
             e.pan=e.pan==null?(p.pan!=null?p.pan:0.72):+((-e.pan).toFixed(4)); // pan mirror
             e.amp=A(e.amp*lvl);                            // level flip (softer answer)
           }

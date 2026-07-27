@@ -84,7 +84,7 @@ function main() {
   for (const s of vis) {
     ok(s.churnBars <= CHURN_MAX,
       `5a: ${s.genre} (enter bar ${s.enter}) identity churn ${s.churnBars} bars (allowance <=${CHURN_MAX}) — the revision re-tier regressed`);
-    // 5b CONSTANT PACE (2026-07-11): on a long leg the traveler now CREEPS through
+    // 5b CONSTANT PACE: on a long leg the traveler CREEPS through
     // the neighborhood at constant speed, so the target micro-re-picks every few
     // bars (churn 1-2) and never reaches an EXACT stationary re-converge — benign
     // tracking, not the re-tier thrash 5b was written for (churn 12, no landing;

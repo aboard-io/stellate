@@ -94,8 +94,8 @@
           const kr = gens[43] != null ? gens[43] : 0x7f00;
           const vr = gens[44] != null ? gens[44] : 0x7f00;
           const vLo = vr & 0xff, vHi = (vr >> 8) & 0xff;
-          // FULL CAPTURE (Paul 2026-07-10: "re-extract fully, capture everything"):
-          // keep EVERY velocity layer, not just the forte one — the sampler picks
+          // FULL CAPTURE — extract everything:
+          // keep EVERY velocity layer, not just the forte one, so the sampler picks
           // the layer by note velocity, so a soft note plays a softly-recorded
           // sample instead of a loud one turned down.
           const modes = gens[54] != null ? gens[54] : 0;
@@ -198,7 +198,7 @@ if (typeof module !== "undefined" && require.main === module) {
       // what makes a FULL CAPTURE multi-velocity extraction actually playable —
       // a zones.json carrying only velLo/velHi looks single-layer to zoneFor, so
       // its forte samples were unreachable no matter what velocity was fed in
-      // (ENGINE-AUDIT 2026-07 Tier 2, the velocity-layer finding). JSON-only
+      // (ENGINE-AUDIT Tier 2, the velocity-layer finding). JSON-only
       // change: no audio path reads zones.json at render time.
       meta.zones.push({ file, root: Math.round(rootEff * 100) / 100, lo: z.keyLo, hi: z.keyHi,
         velLo: z.velLo, velHi: z.velHi, vlo: z.velLo, vhi: z.velHi,
@@ -265,7 +265,7 @@ if (typeof module !== "undefined" && require.main === module) {
     fs.writeFileSync(path.join(dir, "kit.json"), JSON.stringify(meta, null, 1));
     console.log(`✓ ${dir}: ${Object.keys(meta.hits).length} hits (${P.name} -> ${slug})`);
   } else if (cmd === "percbank") {
-    // WIDE GM PERCUSSION bank — the "million percussion elements" ask (2026-07).
+    // WIDE GM PERCUSSION bank — a million percussion elements.
     // `drumkit` pulls the kit backbone (kick/snare/hats/toms + clap/crash/ride/
     // rim); this pulls the rest of the GM bank-128 percussion map (hand
     // percussion, latin, sparkle) as ONE shared bank of natural-pitch one-shots

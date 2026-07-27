@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// test/blend-arrival-run.js — THE LIVE-BLEND ARRIVAL GATE (Paul, 2026-07-09:
-// "99% reggae from fugue = still harpsichord, slow, out of sync, NO DRUMS").
+// test/blend-arrival-run.js — THE LIVE-BLEND ARRIVAL GATE. Arriving at 99%
+// reggae from fugue must not leave a harpsichord playing slow, out of sync,
+// with NO DRUMS.
 //
 // The repro that caught it: goLive parked on FUGUE (an all-drums-off genre),
 // ride a few bars, then re-park the path on REGGAE and listen. Four mechanisms
@@ -109,7 +110,7 @@ async function main() {
   }
   const fugueNotesOk = fuguePitched > 0;   // the harpsichord actually sounded (sampled voice notes reached the graph)
 
-  // ── PHASE 2: RE-PARK on reggae (Paul's move — drag the loop onto the star) ──
+  // ── PHASE 2: RE-PARK on reggae (drag the loop onto the star) ──
   const park = await page.evaluate(() => {
     const r = __X.POS.reggae;
     __S.waypoints = [{ x: r[0], y: r[1] }, { x: r[0] + 1, y: r[1] + 1 }];

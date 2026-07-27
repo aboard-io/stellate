@@ -13,7 +13,7 @@ import { MAP_CENTER, BARS_PER_SEG } from "./world.js";
 const _masterVol=(()=>{ try{ const v=parseFloat(localStorage.getItem("vaporwave-master-vol")); return (v>=0&&v<=1.5)?v:1; }catch(e){ return 1; } })();
 const _vapor=(()=>{ try{ const v=parseFloat(localStorage.getItem("vaporwave-vapor")); return (v>=0&&v<=1)?v:0; }catch(e){ return 0; } })();   // VAPOR master-EQ amount (C.1)
 // the chosen soundfont (the switcher); "fluidr3" = the baked default. A shared
-// URL's ?sf= wins over localStorage so a link restores its font (Paul).
+// URL's ?sf= wins over localStorage so a link restores its font.
 const _soundfont=(()=>{ try{ return new URLSearchParams(location.search).get("sf") || localStorage.getItem("vaporwave-soundfont") || "fluidr3"; }catch(e){ return "fluidr3"; } })();
 
 // ---------- store ----------
@@ -21,16 +21,15 @@ export const S={ cursor:{x:MAP_CENTER.x,y:MAP_CENTER.y}, waypoints:[], travel:{s
   target:null, playing:null, queue:[], holdUntil:{}, barCount:0, barInfo:null, live:false, masterVol:_masterVol, vapor:_vapor, soundfont:_soundfont,
   seed:Math.floor(Math.random()*99999)+1, modeLock:"auto", pace:BARS_PER_SEG, durMult:1, more:false, load:1, eco:0, scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
   pool:"", beatLine:"▶ press LIVE",
-  // THE EXCLUSIVE VIEWS (Paul 2026-07-10): star map / viz (+ the 3D star-cruise).
+  // THE EXCLUSIVE VIEWS: star map / viz (+ the 3D star-cruise).
   // vizView=true shows the full-screen viz (map off; background suppressed via
   // background.js applyBg); else the map.
   vizView:false,
-  // ±BPM DELTA (Paul 2026-07-10): a global offset on whatever plays, re-applied
+  // ±BPM DELTA: a global offset on whatever plays, re-applied
   // to every retarget target so it survives travel until dialed back to 0.
   bpmDelta:0 };
-// (the eight MACRO axes lived here 2026-07-06..10 — removed on Paul's "get rid
-// of all macros"; the kernel's applyMacros machinery survives unused, and
-// absent macros = byte-identical resolution, so nothing musical moved.)
+// (There are no MACRO axes. The kernel's applyMacros machinery survives unused;
+// absent macros resolve byte-identically, so nothing musical rides on it.)
 export const subs=[];
 window.__S=S;   // debug/probe access (headless verification)
 let _raf=0;

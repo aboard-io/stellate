@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // full-boot-run.js — the REAL FULL-APP BOOT smoke gate (browser battery).
 //
-// THE BUG THIS CATCHES (prod outage 2026-07-11): the star-cruise headless probes
+// THE BUG THIS CATCHES (a production outage): the star-cruise headless probes
 // serve app/main.js as an INERT stub (installOfflineRoute neutralizeMain:true) so
 // they never pay the real full-app boot — meaning a boot-time crash (e.g. a genre
 // missing from app/world.js POS sending computeGenreLayout into its relaxation and
@@ -13,7 +13,7 @@
 //   - ZERO console/page errors (capturePageErrors)
 //   - window.GenreKernel + window.__S + window.__STARCRUISE are defined
 //   - the ✦ view chip is present (aliens is now a VIEW, not a separate 🛸 chip)
-//   - 3 chips in #chips (play / view / cfg — the ▢/▦ bg chip retired 2026-07-25)
+//   - 3 chips in #chips (play / view / cfg — there is no ▢/▦ bg chip)
 //   - the starmap rendered (an svg/canvas exists)
 // Exits nonzero on ANY failure.
 //

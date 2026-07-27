@@ -22,11 +22,11 @@
 // already purely B), so the read of B continues with no cursor discontinuity and
 // the outgoing ring is left retired for the conductor to reuse.
 //
-// ───────────────────────────────────────────── SAMPLE-EXACT FADE (2026-07-25)
-// The ramp used to be driven from the MAIN THREAD: a 5 ms setInterval that
-// polled the read cursor, then wrote C_XFADE 0→10000 off `performance.now()`.
+// ────────────────────────────────────────────────────── SAMPLE-EXACT FADE
+// The ramp must NOT be driven from the MAIN THREAD (a setInterval polling the
+// read cursor, then writing C_XFADE 0→10000 off `performance.now()`).
 // Two measured consequences (docs/TIMING-AUDIT-2026-07 finding 2): the ramp's
-// start could slip by however long the main thread was blocked — and a genre
+// start slips by however long the main thread was blocked — and a genre
 // swap measures up to 585 ms of long task — so ring B's frame 0 (the incoming
 // genre's downbeat) landed late against the native drum lanes, which the
 // conductor anchors on the ring cursor; and nothing could be scheduled AHEAD of

@@ -15,8 +15,8 @@ export function weightsAt(pt){
   let ws=ds.map(({g,d})=>({g,w:Math.max(0,1/(d*d+80)-base)})).filter(x=>x.w>0).slice(0,4);
   // VOID BLEND (was: hold the single NEAREST genre at 100% whenever fewer than two stars
   // clear the CUTOFF). Across a wide void that pinned ONE genre for the whole crossing — a
-  // path drawn through empty space then played the SAME genre with no evolution (Paul's ?path
-  // that sat on one genre for 20 min). Instead, when <2 stars are in range, keep at least the
+  // path drawn through empty space then played the SAME genre with no evolution for twenty
+  // minutes at a stretch. Instead, when <2 stars are in range, keep at least the
   // nearest TWO (three) weighted by inverse-square with NO cutoff, so the APPROACHING star's
   // share grows continuously as you cross and the mix keeps shifting toward it. Only affects
   // sparse regions — a dense in-cloud path (the default loop) always has >=2 in range, so this
@@ -81,7 +81,7 @@ export function retargetWeights(weights, pt, snap){
   if(pt) patch.cursor=pt;
   // before LIVE (or after STOP) the cursor PLACES you — the playing state IS the
   // target. Only mid-performance do we glide instead of jump. EXCEPT `snap` (a
-  // playhead SCRUB, Paul: "move it and that's where things play") which jumps the
+  // playhead SCRUB — move it and that is where things play) which jumps the
   // audio to the scrubbed spot immediately, so it doesn't slow-glide back.
   if(!S.playing||!S.live||snap){ patch.playing=deep(target); patch.queue=[]; }
   set(patch);
@@ -94,9 +94,9 @@ export function retargetWeights(weights, pt, snap){
   // latest target).
   if(S.live&&faustHandle&&faustHandle.prepare){ try{ faustHandle.prepare(target); }catch(e){} }
 }
-// (setMacro/resetMacros lived here until 2026-07-10 — Paul: "get rid of all
-// macros". The kernel's applyMacros machinery stays; no caller passes
-// opts.macros now, and absent macros = byte-identical resolution.)
+// (There are no macros and no setMacro/resetMacros. The kernel's applyMacros
+// machinery stays; no caller passes opts.macros, and absent macros resolve
+// byte-identically.)
 
 // ---------- glide ----------
 const PATHS=["swing","humanize","reverb","pump","crackle","comp","delay.beats","delay.feedback","delay.cutoff",
@@ -141,7 +141,7 @@ const DISCRETE=[
   // Meta-only identity let the "form" flip (which copies genreMeta.kit) erase
   // this flip's diff while the PLAYING kit still held the old genre's samplers —
   // pointed at srcIds the crate no longer carried, so every drum note skipped
-  // silently (Paul's fugue->reggae: NO DRUMS, 0/233 note() calls in the probe).
+  // silently (a fugue->reggae flip measured NO DRUMS — 0/233 note() calls).
   ["drum kit",c=>{const D=c.instruments.drums||{};
     return [c.genreMeta.kit,...Object.keys(D).filter(k=>/Sampler$/.test(k)).sort().map(k=>D[k]&&D[k].id)];},
    (c,t)=>{c.genreMeta.kit=t.genreMeta.kit;
@@ -179,8 +179,8 @@ const DISCRETE=[
       // KEEP the sampler-zone wavs the CURRENT voices still reference: replacing
       // foundSources wholesale otherwise stripped the zones out from under a
       // just-introduced lead/pad/bass sampler, so ensureSamplerBufs found no
-      // source, cached null forever, and the instrument went silent (Paul's
-      // guitar dropping out after half a measure). Carry any missing zone source
+      // source, cached null forever, and the instrument went silent — the
+      // guitar dropping out after half a measure. Carry any missing zone source
       // over from the previous crate (or the target's).
       const have=new Set(c.foundSources.map(s=>s.id));
       const carry=(sp)=>{ if(!sp)return;
@@ -200,8 +200,8 @@ const DISCRETE=[
         if(ts&&ts.hits)s.hits=deep(ts.hits); else delete s.hits;});}],
   ["form",c=>c.genreMeta.form,(c,t)=>{c.sections=deep(t.sections);Object.assign(c.genreMeta,{form:t.genreMeta.form,kit:t.genreMeta.kit});}],
 ];
-// INSTRUMENT-INTRODUCTION HOLD (Paul: "if you introduce an instrument it lasts
-// for a few measures at least"). A discrete flip that swaps a VOICE'S TIMBRE
+// INSTRUMENT-INTRODUCTION HOLD: an instrument that gets introduced lasts for at
+// least a few measures. A discrete flip that swaps a VOICE'S TIMBRE
 // (its model / sampler / dx7 algorithm, or a drum piece's model) LOCKS that
 // slot for HOLD_BARS measures before another discrete flip may replace it. Near
 // two close stars the continuous blend weights used to re-pick the dominant
@@ -245,8 +245,8 @@ let appliedFlips=new Map();   // flip name -> the TARGET's value signature when 
 // the flips a listener IDENTIFIES a genre by — first-timers among these lead
 // the queue so a parked destination reads as itself within a few measures
 const LEAD_FLIPS=new Set(["form","drum kit","lead voice"]);
-// TRANSIT RE-TIER (Paul's "we hit dnb — it's loaded but the promised
-// instruments don't show up; only the flute we had earlier"): appliedFlips is
+// TRANSIT RE-TIER. Crossing into a genre whose instruments are loaded but never
+// show up — you keep the flute you already had — happens because appliedFlips is
 // journey-scoped and a TRAVELING journey never converges, so ~24 bars in every
 // dimension was tier 2 and the queue degenerated to one FIXED per-seed hash
 // order. A crossed neighborhood's dwell (dnb: ~10 of 256 bars on the
@@ -311,8 +311,8 @@ export function glideStep(){
   // voice, lerp the ~144-dim dx7 param vector at the same ease — standing
   // mid-journey is a continuously morphing instrument (the live engine
   // re-applies changed dx7 params per bar — faust/stream-renderer.js feedBar,
-  // "DX7 CARTRIDGE GLIDE"; the old faust/live.js applyDx7 went away when the
-  // render moved into the worker, and the morph was dead until 2026-07-26).
+  // "DX7 CARTRIDGE GLIDE"; the render lives in the worker, so that is the only
+  // place the morph can land).
   // Different algorithm or one side missing stays a discrete "voice" flip.
   for(const vk of ["melody","pad","bass"]){
     const cd=(c.instruments[vk]||{}).dx7, td=(t.instruments[vk]||{}).dx7;
@@ -355,8 +355,8 @@ export function travelStep(){
   const { n, legs }=legMetrics();
   if(n<2)return;
   let {seg,t}=S.travel; seg=((seg%n)+n)%n;
-  // CONSTANT PACE (Paul 2026-07-11: "the playhead should always move at a constant
-  // pace; distance between nodes shouldn't matter"). Advance a fixed DISTANCE —
+  // CONSTANT PACE: the playhead always moves at a constant pace, and the
+  // distance between nodes doesn't matter. Advance a fixed DISTANCE —
   // paceSpeed() world-units (= PACE_REF/pace) — along the perimeter each bar, not
   // a fixed FRACTION of the leg, so long and short legs are crossed at the same
   // speed and a loop's duration tracks only its total length. Carry across leg

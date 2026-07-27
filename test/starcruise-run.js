@@ -386,7 +386,7 @@ async function main() {
   const minUpDot = lp.band ? Math.min.apply(null, lp.band.map((m) => m.upDotN)) : 0;
   ok(bandOK,
     `LP2. the BAND stands ON the curved surface oriented to the NORMAL (${lp.band && lp.band.length} members at r≈${lp.small && lp.small.radius}, every local +Y·normal >= ${minUpDot.toFixed(3)} > 0.9)`);
-  // LP3: the backdrop is REMOVED (Paul: "get rid of the trees and background objects for now").
+  // LP3: there is no backdrop — no trees, no background objects.
   // The bare planet is the whole stage — no city/landscape instances on the world.
   ok(lp.city && lp.city.count === 0,
     `LP3. no backdrop trees/objects on the world — bare planet stage (${lp.city ? lp.city.count : "n/a"} instances)`);
@@ -763,8 +763,8 @@ async function main() {
     console.log("       galaxy.floor:", JSON.stringify(gx.camFloor));
     console.log("       galaxy.drummer:", JSON.stringify({ fill: gx.dsFill, after: gx.dsAfter }));
     console.log("       galaxy.dancers:", JSON.stringify({ ambient: gx.ambDancers, gen: gx.genDancers }));
-    // COUNT DERIVED FROM THE DATA (2026-07-25): this asserted a literal 33 and went
-    // stale the moment the clusterer emitted a 34th cluster. GENRE_CLUSTERS.length is
+    // COUNT DERIVED FROM THE DATA: a literal count here goes stale the moment
+    // the clusterer emits one more cluster. GENRE_CLUSTERS.length is
     // the only truth — one sun per cluster, however many clusters there are.
     ok(gx.sunCount === gx.clusterCount && gx.sunChecks.length === gx.clusterCount
        && gx.sunChecks.every((c) => c.err < 0.05 && c.colOk && c.labelOk),

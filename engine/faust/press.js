@@ -44,7 +44,7 @@ function ffdecode(file) {
   x.set(new Float32Array(raw.buffer, raw.byteOffset, x.length));
   return x;
 }
-// Async twin for the decode POOL (ENGINE-AUDIT 2026-07 Tier 1/3): identical
+// Async twin for the decode POOL (ENGINE-AUDIT Tier 1/3): identical
 // ffmpeg invocation, so the PCM per file is byte-identical to ffdecode's —
 // only the spawn scheduling changes (process startup ~130ms dominates small
 // zone wavs; measured ~3x on a 25-source state decoded 8-wide).
@@ -62,7 +62,7 @@ function ffdecodeAsync(file) {
 }
 const DECODE_POOL = 8;
 function writeWav(file, L, R) {
-  // ENGINE-AUDIT 2026-07 Tier 3: one upfront allocation + Int16Array stores
+  // ENGINE-AUDIT Tier 3: one upfront allocation + Int16Array stores
   // replace 2 bounds-checked writeInt16LE calls per frame plus a full
   // Buffer.concat re-copy (~0.3-0.9s per press). Same WAV.toInt16(x,"trunc")
   // quantizer — press TRUNCATES (`*32767|0`), see faust/wav.js note — and
@@ -192,7 +192,7 @@ async function decodeInputs(state, sched, opts) {
     }
     fileSrcs.push({ id: s.id, p: s.fsPath || (s.samplePath ? path.join(SITE, s.samplePath) : bedPath(s.id)) });
   }
-  // ENGINE-AUDIT 2026-07 Tier 1/3: file sources decode through an async ffmpeg
+  // ENGINE-AUDIT Tier 1/3: file sources decode through an async ffmpeg
   // POOL (8-wide) instead of one execFileSync at a time — process startup
   // dominates the small drum/GM-zone wavs (audit measured 4.0s -> 1.35s on a
   // 25-source state). PCM per file is identical (same ffmpeg args), buffers
@@ -284,7 +284,7 @@ async function assemble(state, sched, env, opts) {
         gain: (u.lvl || 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
         // VELOCITY-LAYER selection runs off the MUSICAL amp (e.amp), not this
         // mix gain — SP.selVel is the one formula live.js uses too
-        // (ENGINE-AUDIT 2026-07 Tier 2).
+        // (ENGINE-AUDIT Tier 2).
         vel: SP.selVelOf(e),
         atk: u.sampler.atk, rel: u.sampler.rel, zones: u.sampler.zones,
         swell: !!u.sampler.swell,
@@ -461,7 +461,7 @@ async function assemble(state, sched, env, opts) {
 }
 
 // ---------------------------------------------------------------- makeup gain
-// MASTERING STAGE §4 (2026-07-10): per-press GAIN STAGING. The catalog norm
+// MASTERING STAGE §4: per-press GAIN STAGING. The catalog norm
 // peaks at -3..-5 dBFS but quiet genres (fugue seed 3: max -22 dB) pressed
 // badly under-gained. computeMakeup is the whole law: a press whose float
 // master peaks BELOW the target window is lifted toward MASTER_TARGET_PEAK
@@ -518,7 +518,7 @@ async function press(state, outPath, opts) {
   let sq = 0; for (let i = 0; i < TOTAL; i++) sq += L[i] * L[i];
   const rmsDb = 20 * Math.log10(Math.max(Math.sqrt(sq / TOTAL), 1e-9));
   console.log(`wrote ${outPath}: ${(TOTAL / SR).toFixed(1)}s, L-RMS ${rmsDb.toFixed(1)} dB, ${(Date.now() - t0) / 1000 | 0}s to render`);
-  // ENGINE-AUDIT 2026-07 Tier 1: ONE spawnSync whose .stderr is readable on
+  // ENGINE-AUDIT Tier 1: ONE spawnSync whose .stderr is readable on
   // success AND failure — the old execFileSync pair could only see stderr via
   // its catch path (volumedetect prints to stderr, ffmpeg exits 0), so the
   // first full-decode pass was always discarded and re-run via sh -c 2>&1.

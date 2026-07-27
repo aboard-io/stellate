@@ -61,7 +61,7 @@ let liveSpeech = null;
 // tells the pump the caller is done (drain then close). Reset per openLive.
 let liveBars = [], liveEos = false;
 
-// AUDIT 2026-07 (tier 1): release a retired/finished pump's feed globals. Cleared
+// release a retired/finished pump's feed globals. Cleared
 // ONLY when this pump is still the latest open (token === activeToken) — a newer
 // open has already re-pointed liveBars/liveBuffers/liveSpeech to its own gen's
 // data, and clobbering those would break the newer stream. Called on the eos/
@@ -115,8 +115,7 @@ function encodeWavPCM(L, R, sr) {
 // then encodes to WAV. Caller: the iOS background-WAV producer (faust/live.js) —
 // NO msg.buffers → found is not baked, matching the live faust mix; deterministic +
 // loop-tolerant survival loop. (msg.buffers/msg.speech let a caller ship decoded
-// found/sampler PCM for a full-mix press; the in-browser ⤓ export that used this
-// was removed 2026-07-25 — legacy-download-video.) Progress posts as {wavprog}.
+// found/sampler PCM for a full-mix press.) Progress posts as {wavprog}.
 // Supersede-aware (activeToken) so a newer target during a long render bails promptly.
 async function renderWav(msg, token) {
   const gen = msg.gen | 0;
@@ -161,7 +160,7 @@ async function initDeps() {
   const mkProc = async (mod) => gen.createOfflineProcessor(SR, BS, await factory(mod));
   // PARAM ROOT off the UI tree, not the declared name (render-core.paramRoot):
   // dx7.lib's top-level "DX7" group renames the path root; every other module
-  // is unchanged. Was the Pure-FM drone — see the paramRoot comment.
+  // is unchanged; the wrong root leaves DX7 a pure-FM drone (params never bind).
   const rootOf = (mod) => self.FaustRenderCore.paramRoot(resolved[mod].json);
 
   let dx7Presets = {};

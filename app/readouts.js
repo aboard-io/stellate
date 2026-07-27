@@ -1,8 +1,7 @@
 // readouts.js — the self-scheduling status readout: the playhead/chyron
 // lower-third (an MTV-style band card via namebank.js), ticking on its own
-// timer, independent of the store's render subs. (The ⚡ CPU meter box lived
-// here until 2026-07-09 — Paul: "get rid of the CPU monitor box"; the engine's
-// load/eco machinery is untouched and still surfaces in the chyron tech line.)
+// timer, independent of the store's render subs. (There is no CPU meter box;
+// the engine's load/eco machinery surfaces in the chyron tech line instead.)
 import { S, esc, K } from "./state.js";
 import { KEYS, PROG_MODE } from "./world.js";
 import { faustHandle } from "./live.js";
@@ -30,7 +29,7 @@ function chyron(){
   return { id:chyId, roster, join:(Date.now()-joinAt<7000)?joinLine:"" };
 }
 export async function playheadTick(){
-  if(!document.getElementById("playhead")) return;   // now-playing modal removed — feature retired
+  if(!document.getElementById("playhead")) return;   // no now-playing modal on this page
   if(S.playing&&window.NameBank){
     let line1="▶ press LIVE — the band is warming up";
     if(S.live&&S.barInfo){

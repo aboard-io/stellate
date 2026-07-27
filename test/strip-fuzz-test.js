@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// faust/strip-fuzz-test.js — the STRIP NaN/MUTE fuzz gate (Paul: "tracks are muted /
-// it's random when a track plays"). A NaN or Infinity produced anywhere in the per-note
+// strip-fuzz-test.js — the STRIP NaN/MUTE fuzz gate, for tracks that are muted
+// or play only at random. A NaN or Infinity produced anywhere in the per-note
 // channel strip (faust/sampler.js makeStrip/stripStep) poisons into.dry for every
 // downstream sample of the whole bar → a silent-or-garbled voice, indistinguishable
 // from "the track didn't play". This gate drives the strip DIRECTLY over:
@@ -42,7 +42,7 @@ function synthStrips() {
                        comp: { thresh: 2, ratio: 1e6, atk: 10, rel: 10, makeup: 0 } },
     "chorusOverflow":{ hpf: 30, chorus: { rate: 0.4, baseMs: 80, depthMs: 80, mix: 0.5, two: true } },
     "phaserWide":    { phase: { rate: 5, lo: 1, hi: SR * 0.6, stages: 12, fb: 0.9, mix: 1 } },
-    // NEW voice-FX strip stages (2026-07 expanded FX): rotary/echo/flanger extremes
+    // the voice-FX strip stages: rotary/echo/flanger extremes
     "leslieMax":     { leslie: { speed: 1, depth: 1, mix: 1 } },
     "leslieSlow":    { leslie: { speed: 0, depth: 1, mix: 1 } },
     "delayRunaway":  { delay: { timeSec: 0.5, feedback: 0.9, tone: 12000, mix: 1 } },
@@ -113,7 +113,7 @@ function main() {
     }
   }
 
-  // FUSED-KERNEL DRIFT GATE (ENGINE-AUDIT 2026-07 Tier 4): sampler.js now runs a
+  // FUSED-KERNEL DRIFT GATE: sampler.js runs a
   // GENERATED per-shape strip kernel (STAGE_SRC fused into one function) with the
   // guarded stripStepRef kept as the CSP fallback. The two must stay bit-identical
   // — pressed bytes depend on it — so every case above is replayed through both.

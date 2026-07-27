@@ -4,9 +4,8 @@
 // Drums (ch10, GM percussion). buildMidi(state) -> Uint8Array.
 //
 // TWO CALLERS. (1) The browser: index.html loads it as a classic global
-// (window.MidiExport) for the ⚙ panel's ⤓ midi download — removed 2026-07-25
-// with the rest of the export cluster, restored 2026-07-26 (app/export.js;
-// gate test/midi-export-run.js). It reads window.CsdEngine at load, so it must
+// (window.MidiExport) for the ⚙ panel's ⤓ midi download (app/export.js; gate
+// test/midi-export-run.js). It reads window.CsdEngine at load, so it must
 // come AFTER engine/csd-engine.js in the page (boot-smoke enforces the order).
 // (2) Node: the MIDI-corpus gates use it as the reference SMF WRITER —
 // test/midi-mine.test.js round-trips the mine-midi parser against it, and

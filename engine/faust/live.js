@@ -13,7 +13,7 @@
 // SharedArrayBuffer ring; the faust/ring-player.js AudioWorklet reads it one sample
 // per output sample. There are no per-bar AudioBufferSourceNode seams to click.
 //
-// THE MODEL (Paul's): write audio into a buffer, read from it continuously; when the
+// THE MODEL: write audio into a buffer, read from it continuously; when the
 // TIMBRE/PARAMS change, GLIDE within the one stream (per-bar feedBar into never-reset
 // persistent procs — the DSP's own si.smooth ramps every change); when the TOPOLOGY
 // changes (genre / model swap / unit add-remove), render the new state into a SECOND
@@ -40,7 +40,7 @@
   const C_STATE = 0, C_XFADE = 1, C_ACTIVE = 2, C_READ_LO = 3, C_READ_HI = 4,
         C_UNDERRUN = 5, C_UNDER_CNT = 6;
   const C_RING0 = 8, RING_STRIDE = 4, R_WRITE = 0, R_READ = 1;
-  // ARMED crossfade (2026-07-25): the conductor writes the output frame the ramp
+  // ARMED crossfade: the conductor writes the output frame the ramp
   // starts on + its length ONCE and ring-player.js runs the equal-power ramp off
   // its own sample clock. See ring-player.js "SAMPLE-EXACT FADE".
   const C_FADE_AT_LO = 16, C_FADE_AT_HI = 17, C_FADE_LEN = 18, CTRL_INTS = 24;
@@ -65,15 +65,12 @@
   // 585-623 ms) could swallow: below it, a hiccup is an audible hole.
   const RING_FLOOR_SEC = 0.5;
 
-  // ── MEDIA-SESSION IDENTITY (2026-07-25) ────────────────────────────────────
+  // ── MEDIA-SESSION IDENTITY ─────────────────────────────────────────────────
   // THE ENGINE DOES NOT OWN WHAT THE LOCK SCREEN SAYS. It has no access to the
   // kernel's display labels or the star map's cluster names, so it must not
-  // pretend to: both blocks below used to hardcode the project's PRE-RENAME
-  // identity — Paul's lock screen showed the 2026-07 name and a dead domain
-  // (the strings are gone from this repo; grep is the gate) — and, because those
-  // blocks fire AFTER the app's own (correct)
-  // updateMediaSession and the wavOut one re-asserts every second, the engine
-  // CLOBBERED the app. So the HOST supplies the strings: opts.mediaMeta() is a
+  // pretend to: hardcoding identity here CLOBBERS the app, because these blocks
+  // fire AFTER the app's own updateMediaSession and the wavOut one re-asserts
+  // every second. So the HOST supplies the strings: opts.mediaMeta() is a
   // callback returning { title, artist, album, artwork? } (app/live.js composes
   // the current genre's label + its cluster). With no callback the engine never
   // overwrites metadata a host has already set, and fills the slot only when it
@@ -144,7 +141,7 @@
     // finished (so it's an ESTABLISHED voice, not a first appearance); dynSuppressIn
     // = suppress the entrance swell for the current run. See the voiceRun block below.
     const dynPrevOn = {}, dynEnded = {}, dynSuppressIn = {};
-    // DROP-IN (the bookmarkable measure, 2026-07-10): startBar>0 fast-forwards
+    // DROP-IN (the bookmarkable measure): startBar>0 fast-forwards
     // the walk's indices as if that many bars had already played — same
     // per-bar seed law ((seed + serial*7919)), same section arithmetic, so
     // measure N sounds byte-identical to having reached it live. Uses the
@@ -214,13 +211,12 @@
       const secBarsOf = s => Math.max(1, (s.cycles || 1) * nch);
       const voiceRun = {};
       for (const v of ["pad", "bass", "melody", "drums"]) {
-        // ENDLESS-LOOP entrance law (Paul: pads "should not suddenly go quiet ...
-        // every sixteen measures"). The entrance swell — a voice rising from its
+        // ENDLESS-LOOP entrance law. The entrance swell — a voice rising from its
         // floor over the first bars of its run — is a REAL beginning only ONCE, at
         // the voice's first appearance in the session. In press that's the whole
         // story (one play-through has a real start), but the live/journey walk loops
         // the form forever, so re-swelling from the floor every time the voice
-        // re-enters (after each breakdown/outro that drops it) is the reported dip.
+        // re-enters (after each breakdown/outro that drops it) is an audible dip.
         // So: an ESTABLISHED voice (one whose run has ended at least once) returns at
         // FULL — only its EXIT fade into the next silence remains. dynSuppressIn is
         // latched at the off→on edge and persists (covering a run that WRAPS the loop
@@ -250,14 +246,14 @@
         instrumentSeed: st.instrumentSeed != null ? st.instrumentSeed : (st.seed || 1),   // instrument identity rides the SONG seed, not the per-bar reseed
         _liveEdge: liveEdge, _voiceRun: voiceRun, _seamWin: true });
       const spb = 60 / st.bpm;
-      const CBEATS = Math.max(2, Math.round(st.chordEvery || (st.meter ? 6 : 8)));   // meter default mirrors buildEvents (kernel states carry explicit chordEvery; this covers hand states — ODD-METER 2026-07-09)
+      const CBEATS = Math.max(2, Math.round(st.chordEvery || (st.meter ? 6 : 8)));   // meter default mirrors buildEvents (kernel states carry explicit chordEvery; this covers hand states — odd meter)
       const lo = ci * CBEATS, hi = lo + CBEATS;
       const ev = E.buildEvents(one);
       const meta = { serial, ci, nch, spb, cbeats: CBEATS, chord: (prg.chords[ci] || {}).name || "",
         section: sec.name, absBeatLo: absBeat, lo };
       const advance = () => { absBeat += CBEATS; ci++; serial++;
         if (ci >= nch) { ci = 0; cycIdx++; if (cycIdx >= (secs[secIdx].cycles || 1)) { cycIdx = 0; secIdx = (secIdx + 1) % secs.length; } } };
-      // LIGHT MIDI WALK (2026-07-11 crash fix): the whole-path MIDI export only
+      // LIGHT MIDI WALK (crash fix): the whole-path MIDI export only
       // needs the note events (ev) + timing; skip voiceUnits/mapEvents/fxParams (the
       // expensive AUDIO mapping + the big unit objects) so buildLoopMidi's SYNCHRONOUS
       // main-thread walk over a long loop doesn't block the UI for seconds and get
@@ -447,7 +443,7 @@
     // mix ready (rendered OFF the ring by a dedicated stream-worker) and, on background,
     // hand off to a hidden looping <audio> playing it while the live worklet is muted at
     // source; on foreground we hand back. Gated to the SAME mobile/Safari predicate as
-    // the media-element route. DESKTOP no longer runs goHidden on a mere tab-hide (the
+    // the media-element route. DESKTOP does not run goHidden on a mere tab-hide (the
     // live stream keeps playing — see onVisChange); on desktop Safari this producer is
     // kept as the FALLBACK carrier for a REAL ctx suspension (onstatechange → goHidden).
     // Desktop Chrome et al: wantBg stays false, nothing here runs.
@@ -486,17 +482,17 @@
         processorOptions: { ctrlSab, ring0Sab: ringSabs[0], ring1Sab: ringSabs[1], cap: RING_FRAMES } });
     const masterGain = ctx.createGain(); masterGain.gain.value = 1;
     const analyser = ctx.createAnalyser(); analyser.fftSize = 2048;
-    // USER MASTER VOLUME (Paul): a dedicated monitor gain AFTER the analyser, so
+    // USER MASTER VOLUME: a dedicated monitor gain AFTER the analyser, so
     // the listener's volume never collides with the engine's fade/mute automation
     // on masterGain, and the RMS meters read PRE-volume (stable). setMasterVol()
     // rides this node; range is the UI's business (0..~1.5).
     const userGain = ctx.createGain();
     userGain.gain.value = (opts.masterVol != null ? Math.max(0, Math.min(4, opts.masterVol)) : 1);
-    // MASTER BUS (Paul: "everything sounds very muted"): the live ring mix used to
-    // hit a UNITY masterGain with no glue and no makeup — the mastering the PRESS
-    // path bakes (fx_bus comp/drive + up to +18 dB peak-normalizing makeup, see
-    // press.js computeMakeup) never ran live, so the sampled voices (the default
-    // sound) played dry and quiet (~−22 dBFS peak straight to output). This causal
+    // MASTER BUS: into a UNITY masterGain with no glue and no makeup, the live ring
+    // mix is unmastered — the mastering the PRESS path bakes (fx_bus comp/drive +
+    // up to +18 dB peak-normalizing makeup, see press.js computeMakeup) never runs
+    // live, so the sampled voices (the default sound) play dry and quiet
+    // (~−22 dBFS peak straight to output). This causal
     // master bus restores it: a gentle glue compressor → a makeup lift → a
     // brickwall limiter for peak safety, all on the SUM so it lifts the native
     // sampled/found voices too. Live-only (main-thread graph); the baked export
@@ -508,7 +504,7 @@
     limiter.threshold.value = -1.5; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.002; limiter.release.value = 0.12;
     ringNode.connect(masterGain);
     masterGain.connect(busComp); busComp.connect(makeup); makeup.connect(limiter);
-    // ── THE BRICKWALL (2026-07-25, docs/TIMING-AUDIT-2026-07 "the master output
+    // ── THE BRICKWALL (docs/TIMING-AUDIT-2026-07 "the master output
     // clips"). A DynamicsCompressor is not a limiter: at threshold −1.5 dB / ratio 20
     // its 2 ms ATTACK passes a transient's first ~90 samples at full gain, so the
     // output went over full scale (and was hard-clipped by the browser) in 15.7% of
@@ -587,7 +583,7 @@
     const foundVox = FP.FoundLive(ctx, foundDests);
     const VOXISH = /^(sp_|vx_|vox_|tw_)/;
 
-    // ── ALWAYS-ON Faust CLICK MONITOR (Paul's production detector) ──
+    // ── ALWAYS-ON Faust CLICK MONITOR (the production detector) ──
     // dsp/clickmon.dsp tapped off master (passthrough → hard-muted terminal so the
     // browser keeps scheduling it). Its bargraphs (out-param port messages) carry
     // monotonic click/gap counters. This is the acceptance-gate detector, so it is
@@ -599,9 +595,9 @@
       const gen = new FaustMonoDspGenerator();
       const fac = await FaustWasmInstantiator.loadDSPFactory(BASE + "dist/clickmon-module.wasm", BASE + "dist/clickmon-meta.json");
       const cm = await gen.createNode(ctx, "clickmon", fac);
-      // TAP POINT (2026-07-25, docs/TIMING-AUDIT-2026-07 "the always-on click
-      // detector cannot see the clicks it exists to catch"): this used to hang off
-      // masterGain — BEFORE the ×2.6 makeup and the limiter. A measured full-scale
+      // TAP POINT (docs/TIMING-AUDIT-2026-07 "the always-on click detector cannot
+      // see the clicks it exists to catch"): tapping masterGain instead —
+      // BEFORE the ×2.6 makeup and the limiter — blinds it. A measured full-scale
       // dropout (299 ms of digital silence, edges of 0.923/0.884 AT THE OUTPUT)
       // divided back through the makeup read ≈0.35 at that tap, under the detector's
       // 0.5 bar: `clicks` counted 0 through a total dropout. Tap the LISTENER'S
@@ -647,11 +643,11 @@
     function kickSamplerBuf(srcId, foundSources) {
       if (!SP || samplerBufs[srcId] !== undefined) return;
       const src = (foundSources || []).find((s) => s.id === srcId);
-      // ABSENT-SOURCE UN-PIN (the fugue->reggae total drum silence): a zone whose
-      // SOURCE isn't in THIS bar's foundSources used to cache null here — and the
-      // `!== undefined` guard above made that null PERMANENT, so when a later
-      // glide flip finally carried the source into the crate the decode was never
-      // re-attempted and scheduleNative skipped the voice silently forever
+      // ABSENT-SOURCE UN-PIN (the fugue->reggae total drum silence): caching null
+      // for a zone whose SOURCE isn't in THIS bar's foundSources is PERMANENT —
+      // the `!== undefined` guard above means that when a later glide flip finally
+      // carries the source into the crate the decode is never re-attempted and
+      // scheduleNative skips the voice silently forever
       // (probe: 233 fed drum events, 0 note() calls). Leave the slot UNDEFINED so
       // the first bar whose foundSources DO carry the src kicks the decode.
       if (!src) return;
@@ -764,10 +760,10 @@
     const workerReady = [false, false];
     const workerReadyProm = [null, null];
     const readyResolve = [null, null];
-    // AUDIT 2026-07 (tier 1): a failed worker init must SETTLE ensureWorker (with
-    // this flag set) — the promise used to resolve only on 'ready', so an initfail
-    // (network blip on the ~9 dynamic imports) left boot awaiting forever at the
-    // spinner and openStream queueing preFeed forever. Callers check the flag.
+    // a failed worker init must SETTLE ensureWorker (with this flag set) —
+    // resolving only on 'ready' means an initfail (network blip on the ~9 dynamic
+    // imports) leaves boot awaiting forever at the spinner and openStream queueing
+    // preFeed forever. Callers check the flag.
     const workerFailed = [null, null];
     function ensureWorker(wi) {
       if (workerReadyProm[wi]) return workerReadyProm[wi];
@@ -880,16 +876,16 @@
       stream.pendingBars = [];
     }
 
-    // ── THE TAIL (2026-07-25 — docs/TIMING-AUDIT-2026-07 finding 2) ────────────
+    // ── THE TAIL (docs/TIMING-AUDIT-2026-07 finding 2) ─────────────────────────
     // The outgoing stream is never fed again once a bridge opens, so its ring
     // ended at its last fed bar — and the fade anchors on a BAR BOUNDARY, which
     // when the play queue is empty (measured: most of the time by the moment the
-    // bridge primes) IS that end. Result, measured on every steer: the old ring
-    // was DRY for the entire 400 ms ramp — 3437 underrun quanta over a 19-swap
-    // ride, 100% of them inside a crossfade window, 16 of 19 landing on exactly
+    // bridge primes) IS that end. Without a tail the old ring is DRY for the
+    // entire 400 ms ramp — measured 3437 underrun quanta over a 19-swap ride,
+    // 100% of them inside a crossfade window, 16 of 19 landing on exactly
     // 138 quanta = one full ramp of nothing, with the runway reading 3.4–27 s and
-    // loadRatio 1.00 the whole time. The engine was never behind; it had nothing
-    // left to play from the old stream.
+    // loadRatio 1.00 the whole time: not behind, just nothing left to play from
+    // the old stream.
     //
     // A tail window is a fed bar with NO EVENTS: the renderer's procs are
     // persistent, so it renders exactly the outgoing genre's own decay — reverb,
@@ -959,10 +955,10 @@
     }
     function startFade() {
       phase = "fading";
-      // BAR-ALIGNED CROSSFADE (Paul's "out of sync"): the fade used to anchor at
-      // read53() — an arbitrary sample INSIDE the old bar — so the incoming
-      // stream's bar 0 began mid-bar while already-scheduled NATIVE notes
-      // (drums/samplers/found ride the OLD grid) rang across the new downbeat.
+      // BAR-ALIGNED CROSSFADE: anchoring the fade at read53() — an arbitrary
+      // sample INSIDE the old bar — starts the incoming stream's bar 0 mid-bar
+      // while already-scheduled NATIVE notes (drums/samplers/found ride the OLD
+      // grid) ring across the new downbeat.
       // Anchor at the old grid's NEXT BAR BOUNDARY instead: the first bar in the
       // queue we can still disown; an empty queue means the old stream is inside
       // its last fed bar, whose END (startGlobal+musicFrames, a bar boundary) is
@@ -984,12 +980,12 @@
       // of the new stream's bar 0 during the ramp (double drums for a bar).
       for (let i = playQueue.length - 1; i >= 0; i--)
         if (playQueue[i].globalStart >= fadeStartCursor && playQueue[i].nativeAt == null) playQueue.splice(i, 1);
-      // THE INCOMING GRID, ON TIME (docs/TIMING-AUDIT-2026-07 finding 2b). This
-      // used to happen in commitFade — AFTER the whole 400 ms ramp had run — so
-      // the bridge's bar 0 was published onto an anchor already ~450 ms in the
-      // past and drainDueBars fired it instantly: every native note of the
-      // incoming genre's first half-second got start(when-in-the-past) and
-      // clumped at `now` instead of landing on its grid. MEASURED: 19 bars over
+      // THE INCOMING GRID, ON TIME (docs/TIMING-AUDIT-2026-07 finding 2b). Doing
+      // this in commitFade — AFTER the whole 400 ms ramp has run — publishes
+      // the bridge's bar 0 onto an anchor already ~450 ms in the
+      // past and drainDueBars fires it instantly: every native note of the
+      // incoming genre's first half-second gets start(when-in-the-past) and
+      // clumps at `now` instead of landing on its grid. MEASURED: 19 bars over
       // 300 ms late across 19 swaps, one per crossfade, every time. That is the
       // lurch. Publish the anchor HERE, before the ramp, so the bar is scheduled
       // ahead of its instant like any other.
@@ -1117,7 +1113,7 @@
     }
 
     // ── feed pump: keep the feed-target runway filled to TARGET, gated on playback ──
-    // NOTE (audit 2026-07-25, "the phantom runway"): this is the FEED ledger — frames
+    // NOTE (the phantom runway): this is the FEED ledger — frames
     // POSTED to the producer worker, not frames the producer has actually RENDERED into
     // the ring. It is the right quantity to gate the pump on (don't over-produce), and
     // the WRONG quantity to report as health: it reads full straight through producer
@@ -1169,8 +1165,8 @@
     // app's hint (set by app/starcruise.js across the cruise + its teardown-GC
     // window) that main-thread stalls / worker CPU contention are expected:
     // survival over steering latency, the same trade as the hidden-tab case.
-    // (The post-planet static fix, 2026-07-25: entry shader compile + dispose-GC
-    // stalls breached the 3s runway and the ring zero-filled = audible static.)
+    // (The post-planet static fix: entry shader compile + dispose-GC stalls
+    // breach the 3s runway and the ring zero-fills = audible static.)
     const targetFrames = () => ((typeof document !== "undefined" && document.visibilityState === "hidden")
       || (root.FaustLive && root.FaustLive.deepRunway)) ? HIDDEN_TARGET_FRAMES : TARGET_FRAMES;
     // pumpOnce: one idempotent top-up, safe to call from ANY clock (the page timer,
@@ -1202,16 +1198,15 @@
     // `when`, so early scheduling is sample-accurate; only the (invisible) onBar
     // UI callback leads.
     //
-    // VISIBLE LOOKAHEAD (2026-07-25 — docs/TIMING-AUDIT-2026-07 finding 3). The
-    // visible path used a horizon of ZERO, so a bar was only DISCOVERED when the
-    // 30 ms poll next ran, and 92.6% of all note events (every sampled voice, every
+    // VISIBLE LOOKAHEAD (docs/TIMING-AUDIT-2026-07 finding 3). With a horizon of
+    // ZERO on the visible path a bar is only DISCOVERED when the
+    // 30 ms poll next runs, and 92.6% of all note events (every sampled voice, every
     // found sound — 254 of 274 genres have a fully sampled kit) are scheduled from
     // here on the main thread. MEASURED anchor lateness `ctx.currentTime - when`:
     // bare engine page p50 17 ms; the real app, whose 7.7% main-thread occupancy
     // the drum scheduler shares, p50 41 ms / p90 80 ms — re-randomised every bar.
-    // 5–7% of start() calls landed in the PAST (the downbeat cluster). The comment
-    // here used to claim "visible drains stay exact"; measured, they were not, and
-    // the HIDDEN path was strictly the more accurate one.
+    // 5–7% of start() calls landed in the PAST (the downbeat cluster): visible
+    // drains are NOT exact, and the HIDDEN path is strictly the more accurate one.
     //
     // So the NATIVE lane now gets a real lookahead while visible too. `when` is
     // absolute and start(future) is sample-accurate, so scheduling a bar early
@@ -1265,8 +1260,8 @@
     function scheduleNative(b, when) {
       // GENRE MOVED ON: fade the departing genre's live vocal/chop found voices
       // so a long narration/vox LOOP (e.g. termswave's terms&conditions read)
-      // doesn't keep blaring at full volume after the mix has left it (Paul,
-      // 2026-07-10). Live-only — the baked press mix is a separate path, so the
+      // doesn't keep blaring at full volume after the mix has left it.
+      // Live-only — the baked press mix is a separate path, so the
       // byte-identity gates are untouched. Beds keep their own durSec envelope
       // for ambient continuity; only the loud one-shot/vocal lanes fade here.
       if (b.genre && b.genre !== lastFoundGenre) {
@@ -1281,10 +1276,10 @@
         const u = b.units[e.unit]; if (!u || !u.sampler) continue;
         const ent = samplerOf(e.unit, u, spb);
         const midi = SP.midiOfFreq(e.sets.freq);
-        // VELOCITY LAYER: the same SP.selVel(e.amp) press feeds mixPCM — this
-        // used to be round(e.sets.gain*127), a mix gain AND a different formula
-        // from press's, so the two engines could pick different velocity layers
-        // for the same note (ENGINE-AUDIT 2026-07 Tier 2).
+        // VELOCITY LAYER: the same SP.selVel(e.amp) press feeds mixPCM. Anything
+        // else here (e.g. round(e.sets.gain*127), a mix gain and a different
+        // formula from press's) lets the two engines pick different velocity
+        // layers for the same note (ENGINE-AUDIT Tier 2).
         const z = SP.zoneFor(u.sampler.zones, midi, SP.selVelOf(e));
         const buf = z && samplerBufs[z.srcId];
         if (!ent || !buf) continue;
@@ -1329,10 +1324,10 @@
     }
 
     // ── onLoad reporter (~250ms): r = runway health, e = 0 (eco deleted) ──
-    // HEALTH IS MEASURED ON THE RING, NOT ON THE FEED LEDGER (audit: "the phantom
-    // runway"). loadRatio used to be feedRunwayFrames()/TARGET_SEC — frames posted to
-    // the worker — so it read 1.00 while the producer was starving and the ring was
-    // running dry. It now reads the RENDERED runway against RING_FLOOR_SEC, the depth
+    // HEALTH IS MEASURED ON THE RING, NOT ON THE FEED LEDGER (the phantom
+    // runway). feedRunwayFrames()/TARGET_SEC — frames posted to the worker —
+    // reads 1.00 while the producer starves and the ring runs dry, so loadRatio
+    // reads the RENDERED runway against RING_FLOOR_SEC, the depth
     // below which a single long task (measured: up to 585 ms on a bare page, 623 ms in
     // the app) can empty the ring: 1.00 = at least a floor of real audio is in the SAB,
     // 0.00 = the ring is dry NOW. The feed ledger is still what the pump is gated on,
@@ -1511,7 +1506,7 @@
     };
     const goVisible = () => {
       if (abort) return;
-      resumeCtx();   // unconditional — covers iOS/Safari "interrupted" AND "suspended" (goVisible used to gate on "suspended" and never resumed after an app switch); no-op while running
+      resumeCtx();   // unconditional — covers iOS/Safari "interrupted" AND "suspended" (gating on "suspended" alone never resumes after an app switch); no-op while running
       // never survival-muted (desktop tab switch / plain window refocus): the live
       // stream never stopped — the resume poke above is all a refocus needs. Running
       // the restore machinery would dip masterGain (0→1 ramp) on every focus event.
@@ -1542,12 +1537,12 @@
       }, 400);
       bgSetPlaybackState("playing");
     };
-    // ── visibility routing: THE DESKTOP TAB-SWITCH FIX (Paul: "switching tabs stops
-    // the audio" in desktop Safari). Hiding the tab used to run goHidden EVERYWHERE,
-    // muting the live worklet at source; desktop then depended on the bg-WAV <audio>
-    // handoff (Safari) or just went silent (Chrome et al). But every modern desktop
+    // ── visibility routing: THE DESKTOP TAB-SWITCH FIX (a tab switch stopped the
+    // audio in desktop Safari). Running goHidden on EVERY hide mutes the live
+    // worklet at source; desktop then depends on the bg-WAV <audio>
+    // handoff (Safari) or just goes silent (Chrome et al). But every modern desktop
     // engine — including Safari >= 15.4 (webkit.org/b/231105) — keeps a RUNNING
-    // AudioContext alive in a hidden tab. So on desktop we now KEEP PLAYING: no mute,
+    // AudioContext alive in a hidden tab. So on desktop we KEEP PLAYING: no mute,
     // no handoff; just top the runway before background timer throttling sets in
     // (the worker tick carries the feed from there). The preemptive mute remains for
     // MOBILE, where the ctx genuinely suspends ("interrupted") on backgrounding. If a
@@ -1599,12 +1594,12 @@
       bgSetMetadata(); bgSetPlaybackState("playing");
       if (opts.mediaSession) {
         try {
-          // AUDIT 2026-07 (tier 1): play used to be goVisible() alone, whose
-          // `!survivalMuted && !bgActive` guard returned before restoring — the
-          // pause below mutes at source WITHOUT setting survivalMuted, so a
-          // foreground pause was permanent (transport play did nothing). Give
-          // play a dedicated un-pause that unconditionally restores C_STATE +
-          // masterGain; the survival-mute/bg-handoff cases keep goVisible's path.
+          // play cannot be goVisible() alone: its `!survivalMuted && !bgActive`
+          // guard returns before restoring, and the pause below mutes at source
+          // WITHOUT setting survivalMuted, so a foreground pause would be
+          // permanent. play gets a dedicated un-pause that unconditionally
+          // restores C_STATE + masterGain; the survival-mute/bg-handoff cases
+          // keep goVisible's path.
           MS.setActionHandler("play", () => {
             if (survivalMuted || bgActive) { goVisible(); return; }
             resumeCtx();
@@ -1643,7 +1638,7 @@
       // video exporter muxes via MediaRecorder. On the mobile route msDest already
       // exists; on DESKTOP there is no msDest (userGain → destination directly), so
       // lazily tap userGain into a dedicated capture destination — otherwise the
-      // recorded video had NO AUDIO (Paul). POST vapor + volume (userGain is last).
+      // recorded video has NO AUDIO. POST vapor + volume (userGain is last).
       audioStream: () => {
         if (msDest) return msDest.stream;
         try { if (!_capDest) { _capDest = ctx.createMediaStreamDestination(); userGain.connect(_capDest); } return _capDest.stream; }
@@ -1884,8 +1879,8 @@
     // walk can't see a steer past). KEEP_BEHIND bounds the played tail. FWD_CAP caps the
     // appended-ahead so the buffered range stays bounded even if a producer bursts.
     // heard-lag = render backlog (FEED_CAP_MP3) + appended-ahead (FWD_CAP): keep the
-    // sum tight — it is ALSO the steering/UI latency (device feedback 2026-07-07:
-    // 8+14 read as "the scheduler is off"). Cushion still >=5s for pocket CPU dips.
+    // sum tight — it is ALSO the steering/UI latency (8+14 s reads on device as a
+    // scheduler that is simply off). Cushion still >=5s for pocket CPU dips.
     const KEEP_BEHIND = 12, FWD_CAP = 10, FEED_CAP_MP3 = 5;
 
     // AudioContext for DECODE ONLY (44100 so decoded PCM is 1:1 with the render rate).
@@ -1907,8 +1902,8 @@
     const urlOf = (s) => s && (s.url || (s.samplePath ? new URL(s.samplePath, SITE).href : null));
     // decode-failure telemetry: on-device (iOS decodeAudioData is strict) a failed or
     // empty decode is SILENT sample-lessness — count outcomes + keep the first reasons
-    // so ?wavDebug=1 shows exactly why a layer is missing (device report 2026-07-07:
-    // "no soundfont or samples at all really").
+    // so ?wavDebug=1 shows exactly why a layer is missing (on device the symptom is
+    // no soundfont/samples at all).
     const decFails = [];
     const noteFail = (kind, id, e) => { if (decFails.length < 8) decFails.push(kind + ":" + id + " " + String((e && e.message) || e || "null")); };
     // ── decode CONCURRENCY GATE + bounded RETRY (WAV-FIRST resilience). The sampled-by-
@@ -2003,8 +1998,8 @@
     // so every instrument-handoff reopen pulls the next downbeat OV early. At the
     // segAB tier 120ms is right — it masks real element-swap gaps. In continuous
     // PCM there is no gap to mask, only a click to guard: 15ms keeps the splice
-    // clean and makes the time-theft imperceptible (device log 2026-07-08: groove
-    // "lurching" every ~7s on mms-aac with drift pinned at 0 — the bridges were it).
+    // clean and makes the time-theft imperceptible (at 120ms the groove lurches
+    // every ~7s on mms-aac with drift pinned at 0 — the bridges are the cause).
     const BRIDGE_OV_SEC = opts.bridgeOverlapSec > 0 ? opts.bridgeOverlapSec : 0.015;
     // ── DECODE-THEN-RENDER caps (the iOS pitched-voice fix — see reopen()) ──
     // The producer WAITS for this gen's found/sampler PCM to decode (through the shared
@@ -2013,7 +2008,7 @@
     // against ST.buffers AT bake time — a buffer that lands after its bar is baked is lost
     // for that bar; the ring path never showed the bug because it decodes JIT per bar and
     // won't render a bar until its buffers are ready). The wait is capped so it never hangs:
-    // BOOT waits longer (nothing is playing yet — completeness over instant start, Paul), a
+    // BOOT waits longer (nothing is playing yet — completeness over instant start), a
     // GEN cutover waits less (the OLD gen keeps playing over the wait, so a long stall would
     // gap it). Past the cap, stragglers still stream in via addBuffers (the safety net) and
     // pop into LATER bars — correctness no longer DEPENDS on that pop-in.
@@ -2023,8 +2018,8 @@
     const DECODE_THEN_RENDER = opts.decodeThenRender !== false;
     const workers = [null, null], workerReady = [false, false];
     const workerReadyProm = [null, null], readyResolve = [null, null];
-    // AUDIT 2026-07 (tier 1): a failed worker init must SETTLE ensureWorker (with
-    // this flag set) so the boot await fails loudly instead of hanging forever.
+    // a failed worker init must SETTLE ensureWorker (with this flag set) so the
+    // boot await fails loudly instead of hanging forever.
     const workerFailed = [null, null];
     function ensureWorker(k) {
       if (workerReadyProm[k]) return workerReadyProm[k];
@@ -2209,9 +2204,9 @@
     // instrument swap WITHIN a gen (holdUntil churn: sampler→sampler keeps the
     // topology sig, so no reopen — and only reopen decoded buffers) leaves bars
     // referencing zones the worker was never shipped; those bars BAKE silent for
-    // that voice. Device audit 2026-07-09 caught it exactly: pad[ins_church_organ_*,
-    // ins_ohh_voices_*…] missing on the bars right after "new hands on the pads",
-    // decode count frozen — the decodes were never requested. So: before feeding a
+    // that voice. On device: pad[ins_church_organ_*, ins_ohh_voices_*…] missing on
+    // the bars right after an instrument swap, decode count frozen — the decodes
+    // were never requested. So: before feeding a
     // bar, kick any missing PCM through the decode gate and HOLD that bar briefly
     // until it lands (the 5-8s forward runway absorbs the hold inaudibly); past the
     // cap, feed anyway (addBuffers pop-in + the audit catch the residual). ──
@@ -2368,8 +2363,8 @@
     const gBars = [];                     // { tSec, meta } sorted by tSec; onBar walks it
     let barCursor = 0;
 
-    // ── AUDIT-TRUTH ring (Paul: "track when a node is expected to produce sound and
-    // doesn't; give me data to download"). The renderer measures each voice's ACTUAL
+    // ── AUDIT-TRUTH ring: track when a node is expected to produce sound and
+    // doesn't. The renderer measures each voice's ACTUAL
     // per-bar RMS + missing srcIds and rides it on the bar meta (meta.audit); here we
     // capture, at the moment a bar is HEARD (fireBar), the anomalies + playback context
     // (route/gen/currentTime/buffered). Downloadable JSON + a compact clipboard summary
@@ -2460,14 +2455,14 @@
     function mp3AheadSec() { const t = mp3El ? (mp3El.currentTime || 0) : 0; return Math.max(0, receivedPcmSec + pcmPendingSec - t); }
 
     // forward one queued PCM flush to the encoder (transferring its buffers onward).
-    // THE FEED-RUNWAY LEDGER LIVES HERE (audit 2026-07-25: "mp3 route counts
-    // skipped-gen PCM as buffered"). receivedPcmSec used to be incremented on every
-    // pcmseg ARRIVAL, but pumpEncoder bridges to the NEWEST ready gen and deletes the
+    // THE FEED-RUNWAY LEDGER LIVES HERE (the mp3 route must not count skipped-gen
+    // PCM as buffered). Incrementing receivedPcmSec on every pcmseg ARRIVAL leaks:
+    // pumpEncoder bridges to the NEWEST ready gen and deletes the
     // intermediate gens' queues — those never-forwarded seconds (a rapid steer leaks
-    // ~2-6 s per superseded gen) stayed in the counter forever. mp3AheadSec() =
+    // ~2-6 s per superseded gen) stay in the counter forever. mp3AheadSec() =
     // receivedPcmSec − currentTime is the pump's ONLY runway term, so once the leak
-    // reached FEED_CAP_MP3 (5 s) feedRoom pinned false, stepWalk was never called
-    // again, and the element played out into permanent silence with the frozen
+    // reaches FEED_CAP_MP3 (5 s) feedRoom pins false, stepWalk is never called
+    // again, and the element plays out into permanent silence with the frozen
     // watchdog classifying it as a benign starve forever. Counting here makes the
     // ledger mean what stepDownCodec's own comment says it means: seconds actually
     // handed to the encoder.
@@ -2640,7 +2635,7 @@
         mp3El = mkHiddenAudio();
         // ManagedMediaSource REQUIRES AirPlay disabled on the element BEFORE attach
         // (iOS 17.1+): without it sourceopen NEVER fires — the boot hangs silently at
-        // "scheduling the first bar" with zero errors (device-found 2026-07-07).
+        // "scheduling the first bar" with zero errors.
         try { mp3El.disableRemotePlayback = true; } catch (e) {}
         try { mp3El.setAttribute("x-webkit-airplay", "deny"); } catch (e) {}
         // count only GENUINE mid-stream underruns (playhead at the buffer edge), not the
@@ -2980,7 +2975,7 @@
     }
 
     // ── MediaSession (metadata/playbackState only, as WAV-FIRST specifies) ──
-    // This is the path Paul's phone is on. The identity comes from the HOST
+    // This is the path a phone is on. The identity comes from the HOST
     // (opts.mediaMeta — see setMediaMeta at the top of this file); the 1 Hz refresh
     // below picks up a steer within a second, and re-mints nothing when the strings
     // haven't changed. With no callback it leaves the host's own metadata alone
@@ -2990,10 +2985,10 @@
     let msSig = "", msLastMeta = null;
     function msMeta() {
       msSig = setMediaMeta(MS, root, opts, msSig, (m) => { msLastMeta = m; });
-      // AN ENDLESS STREAM HAS NO END (Paul's lock screen: "−0:05" counting down
-      // against 11:09 elapsed). We never set a duration, but the UA derives one
-      // from the media element's buffered range, so the transport draws a track
-      // that is always about to finish. Declare the truth instead: an infinite
+      // AN ENDLESS STREAM HAS NO END. We never set a duration, but the UA derives
+      // one from the media element's buffered range, so the lock-screen transport
+      // counts down against a fake one (−0:05 against 11:09 elapsed) and draws a
+      // track that is always about to finish. Declare the truth instead: an infinite
       // duration is the spec's "live stream" signal and drops the countdown.
       // Guarded — a UA that rejects Infinity simply keeps its own guess.
       if (MS && MS.setPositionState) {
@@ -3147,8 +3142,8 @@
           zeroPlayable: zeroPlayableEvents, aheadSec: aheadSec(), outputRoute: outRoute, demoted, demoteReason,
           audibleElements: audibleNow, audibleMax, doublePlayAnoms, auditAnoms: auditAnomTotal, auditBars: auditRing.length,
           curSeg: curSeg ? { gen: curSeg.gen, idx: curSeg.idx, durSec: curSeg.durSec } : null,
-          // decode forensics on the FALLBACK route too — the 2026-07-07 device log ran
-          // segAB and showed dec=null, hiding the missing-samples answer.
+          // decode forensics on the FALLBACK route too — a segAB device log with
+          // dec=null hides the missing-samples answer.
           decode: decodeStats() };
       },
       __segCount: () => receivedSegs,

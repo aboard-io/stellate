@@ -2,7 +2,7 @@
 // coords-coverage.js — the STAR-CRUISE COORD/CLUSTER COMPLETENESS gate.
 // Plain-node, no browser. Sibling of test/pos-coverage.js.
 //
-// THE BUG THIS CATCHES (same class as the folk POS outage, 2026-07-11): a genre
+// THE BUG THIS CATCHES (same class as the folk POS outage): a genre
 // added to the kernel (GenreKernel.GENRES) but NOT regenerated into the
 // star-cruise DATA modules. app/starcruise/genre-coords.js (GENRE_COORDS) places
 // one planet per genre and derives blend weights from the camera's distance to

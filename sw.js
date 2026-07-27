@@ -21,8 +21,8 @@
 //     unchanged filename, and the deploy deliberately does not mark it
 //     immutable — cache-first served those recompiles stale until the next bump.
 //
-// Cross-origin requests are passed through untouched, but as of 2026-07 there
-// are none left to speak of: preact/htm and the two webfonts are vendored, and
+// Cross-origin requests are passed through untouched, but there are none left
+// to speak of: preact/htm and the two webfonts are vendored, and
 // found sound resolves only to local files. Everything the app needs to boot is
 // same-origin and therefore cacheable, which is what makes offline boot work at
 // all — a cross-origin dependency here would be uncacheable and fatal.

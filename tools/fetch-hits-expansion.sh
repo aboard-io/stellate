@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # fetch-hits-expansion.sh — THE REPERTOIRE PROGRAM's hits + breaks wave
-# (docs/history/NEXT.md 5f, 2026-07-10). The census proved the one-shot vocabulary is
+# (docs/history/NEXT.md 5f). The census proved the one-shot vocabulary is
 # four samples deep (vox_a in 55 genres, tw_ding in 32, four amens carrying 79
 # break slots); this recipe fetches the EXPANSION that fills the SOURCE_POOLS
 # classes (vocal_stab / chime / horn_stab / rave_stab / perc_hit + the

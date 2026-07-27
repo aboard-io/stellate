@@ -8,8 +8,7 @@ import { POS, WORLD_W, WORLD_H, MAP_CENTER, WORLD_MARGIN, recomputeWorld } from 
 import { retarget } from "./targeting.js";
 import { urlTick, legMetrics, paceSpeed, baseDuration, durMult, loopDuration, fmtDuration, fmtMult } from "./share.js";   // scrubbing the playhead: rewrite the bookmark's measure using the SAME constant-pace distance math as travelForBar/goLive; the dur* family feeds the node-drag duration tooltip
 
-// ---------- node-drag DURATION TOOLTIP (Paul 2026-07-16: "put that duration up
-// as a tooltip when people move nodes") ----------
+// ---------- node-drag DURATION TOOLTIP ----------
 // While a waypoint is dragged, a small floating readout follows the pointer with
 // the loop's distance-derived time at ×1 (share.js baseDuration — live, since
 // the drag is changing the perimeter under it), plus the dialed multiple's
@@ -108,9 +107,9 @@ export function drawMap(){
   // default zoom the baked layout already clears all 178, so nothing is culled.
   const lctx=(drawMap._lc||(drawMap._lc=document.createElement("canvas").getContext("2d")));
   const fpx=e=>(e.w>0.01?12:11)*fs;
-  // THE MAP SPEAKS THE FICTION (Paul 2026-07-10: "still a lot of old school
-  // genre names like chiptune and idm all over the place"): every star draws
-  // its kernel LABEL, never the id — culling measures the label too.
+  // THE MAP SPEAKS THE FICTION — no old-school genre ids like chiptune or idm
+  // on the surface: every star draws its kernel LABEL, never the id, and the
+  // culling measures the label too.
   // labels wear the alien alphabet (app/glyphs.js alienize): 1-2 letters per
   // name swapped for a homoglyph, re-rolled once per session. Memoized there,
   // so the width the LOD cull measures below is stable within a load.
@@ -179,8 +178,8 @@ addEventListener("resize",()=>{ centerView(); set({}); });
 // screen = logical*base*k + o; toXY inverts, so waypoints/drags stay correct
 // at any zoom. k clamped 1..4; at 1x the offsets snap home.
 // DEFAULT_ZOOM > 1 so the spread-out star field OVERFLOWS the screen and the
-// genres read as widely separated on load (Paul: "spread out a lot… fine if they
-// exceed the screen"). At k=1 the whole world fits the viewport (the zoom-out
+// genres read as widely separated on load — spread out a lot, and it is fine
+// for them to exceed the screen. At k=1 the whole world fits the viewport (the zoom-out
 // floor / fit-to-extents); the default starts zoomed in and centered, pannable.
 const DEFAULT_ZOOM=2.8;
 const ZOOM={k:DEFAULT_ZOOM,ox:0,oy:0};
@@ -190,8 +189,8 @@ window.__ZOOM=ZOOM;   // debug/probe access
 function centerView(){ const r=svg.getBoundingClientRect(); if(!r.width) return;
   ZOOM.ox=r.width*(1-ZOOM.k)/2; ZOOM.oy=r.height*(1-ZOOM.k)/2; clampZoom(); }
 // pan padding = how far, in SCREEN space, the world may overscroll past each
-// viewport edge. THE BUG (Paul: "edges impossible to reach when zoomed in"):
-// the old 0.18 let an edge star sit at most 18% of the viewport in from the
+// viewport edge. Get this wrong and the edges are impossible to reach when
+// zoomed in: a pad of 0.18 lets an edge star sit at most 18% of the viewport in from the
 // rim — nowhere near the thumb-friendly CENTER — so corner genres (desertblues,
 // breakcore, darksynth…) stayed pinned to the edge at every zoom. The reach is
 // governed purely by the pad's SIZE, not k: after maximal pan, the left/top
@@ -203,8 +202,8 @@ function centerView(){ const r=svg.getBoundingClientRect(); if(!r.width) return;
 // on purpose: 0.55·width brings the edge to center whether k is 1.5 or 4. Only
 // bites when zoomed (at k===1 offsets snap 0).
 const PAN_PAD=0.55;
-// GALAXY FLOOR (Paul 2026-07-25: "zoomed out and the top is cut off… let me zoom
-// way out so that the genres are small like a galaxy"). k may now go BELOW the
+// GALAXY FLOOR: you can zoom way out until the genres are small, like a galaxy,
+// without the top being cut off. k may go BELOW the
 // fit point: at k<=1 the world is centered with symmetric screen margins on all
 // sides (which also fixes the top clip — at exact fit the tall ribbon's first
 // stars sat ~0.4% from the viewport top and their labels drew off-screen).
@@ -246,8 +245,8 @@ function hitWp(e){
   });
   return best;
 }
-// THE DRAGGABLE PLAYHEAD (Paul 2026-07-10: "let me drag the playhead along the
-// mix line"). With a path, the traveler IS the playhead — grabbing it and
+// THE DRAGGABLE PLAYHEAD: the playhead drags along the mix line.
+// With a path, the traveler IS the playhead — grabbing it and
 // sliding projects the pointer onto the nearest leg, sets S.travel there, and
 // retargets the mix (a glide while live, a place while stopped). While stopped
 // it also sets S.startBar so ▶ resumes — and the shared URL bookmarks — that
@@ -273,10 +272,10 @@ function projectOnPath(pt){
 }
 function dragPlayhead(e){
   const p=projectOnPath(toXY(e));
-  // CONSTANT PACE (2026-07-11 fix): the measure at a scrubbed point is its DISTANCE
-  // along the perimeter ÷ the constant speed — the exact inverse of travelForBar —
-  // NOT (seg+t)*pace. With the old formula the scrubbed measure and goLive's
-  // distance-based drop-in disagreed, so hitting ▶ jumped back to where it was (Paul).
+  // CONSTANT PACE: the measure at a scrubbed point is its DISTANCE along the
+  // perimeter ÷ the constant speed — the exact inverse of travelForBar — NOT
+  // (seg+t)*pace. Under that other formula the scrubbed measure and goLive's
+  // distance-based drop-in disagree, so ▶ jumps back to where it was.
   const { legs }=legMetrics();
   let d=0; for(let i=0;i<p.seg;i++) d+=legs[i]||0; d+=p.t*(legs[p.seg]||0);
   const bar=Math.round(d/Math.max(1e-6,paceSpeed()));
@@ -298,8 +297,8 @@ function deleteWaypoint(i){
   S.startBar=0;   // the path changed — the old bookmark/resume measure no longer maps to it
   const w=[...S.waypoints]; w.splice(i,1);
   const len=w.length;
-  // erased down toward nothing: re-seed the default centred loop (Paul: "always
-  // a loop"; "re-seed sensibly" below 2 points — a 1-point path can't loop).
+  // erased down toward nothing: re-seed the default centred loop. There is
+  // ALWAYS a loop — below 2 points a path can't be one, so re-seed sensibly.
   if(len<2){ seedDefaultLoop(); return; }
   // closed loop has `len` segments (seg n-1 is the closing leg), so a live seg
   // can validly index up to len-1 now — clamp there, not len-2.
@@ -319,9 +318,9 @@ function nearestSeg(pt,wps){ const n=wps.length; if(n<2) return n;
   let best=0, bd=Infinity;
   for(let i=0;i<n;i++){ const d=distToSeg(pt,wps[i],wps[(i+1)%n]); if(d<bd){bd=d;best=i;} }
   return best+1; }
-// ADD a waypoint by double-tap: INSERT it into the nearest leg (Paul: splice
+// ADD a waypoint by double-tap: INSERT it into the nearest leg — splice
 // between the two adjacent waypoints whose connecting segment is closest to the
-// tap — never append to the end of the chain). The loop stays closed (drawMap
+// tap, never append to the end of the chain. The loop stays closed (drawMap
 // repeats waypoint[0]; travelStep wraps seg mod n). Returns the insert index.
 export function insertWaypoint(pt){
   S.startBar=0;   // the path changed — the old bookmark/resume measure no longer maps to it
@@ -455,8 +454,8 @@ const endPtr=e=>{ ptrs.delete(e.pointerId); if(ptrs.size<2) pinch=null;
     // with a path the traveler owns the cursor, so a tap stays inert as before)
     if(!panMoved && S.waypoints.length<2 && panStart) retarget(panStart.pt);
     panMoved=false; panStart=null; }
-  // PLAYHEAD SCRUB release: SNAP the audio to where you dropped it (Paul: "move it
-  // and that's where things play"), so it doesn't slow-glide back toward the old spot.
+  // PLAYHEAD SCRUB release: SNAP the audio to where you dropped it — move it and
+  // that is where things play — so it doesn't slow-glide back to the old spot.
   else if(gestureMode==="travel" && S.live) retarget({x:S.cursor.x,y:S.cursor.y}, true);
   gestureMode="none"; dragWpI=-1; document.body.classList.remove("dragging"); durTipHide(); };
 addEventListener("pointerup",endPtr);
@@ -476,8 +475,8 @@ svg.addEventListener("wheel",e=>{
 addEventListener("wheel",e=>{ if(e.ctrlKey) e.preventDefault(); },{passive:false});
 for(const t of ["gesturestart","gesturechange","gestureend"])
   addEventListener(t,e=>e.preventDefault(),{passive:false});
-// iOS PINCH CONTAINMENT (Paul 2026-07-11: "when I hit max zoom-out and keep going
-// in iOS that's how I get to my browser tabs"). Once the app's own pinch (map or
+// iOS PINCH CONTAINMENT. On iOS, hitting max zoom-out and pinching further is
+// how you reach the browser tabs. Once the app's own pinch (map or
 // viz) bottoms out at k===1, Safari lets the leftover pinch fall THROUGH to the
 // page — native page-zoom / the tab-overview gesture. The app must own the pinch
 // entirely: kill the default on ANY multi-touch move, everywhere. Paired with the
@@ -494,8 +493,7 @@ svg.addEventListener("contextmenu",e=>{
 });
 
 // ---------- VIZ zoom: the ⓘ "inside the sound" view's OWN transform ----------
-// Paul 2026-07-11: "Let me zoom in on the viz but don't let it affect the other
-// modes' zoom state — otherwise I can really zoom out." The map's ZOOM (above)
+// Zooming the viz must not touch the other modes' zoom state. The map's ZOOM (above)
 // and this VIZ state are FULLY SEPARATE objects: pinching/scrolling the viz never
 // touches ZOOM and vice-versa, so zooming one can't strand the other zoomed-out.
 // Each view keeps its own transform across view switches (both objects live in
@@ -600,15 +598,14 @@ if(inside){
 // Presentational only (Math.random), so every load draws a fresh tour; nothing
 // persists, so a cleared/redrawn path is never re-imposed. window.__TOUR reports
 // the max leg length + genre names for the headless gate.
-// 2026-07-06 (Paul): 8 waypoints (down from 10-16), and each hop reaches half
-// as far (MAXLEG 90->45) — a tighter, more local grand tour of shorter steps.
-const TOUR_MINLEG=12;   // half the old 24; still >= the closest star pair, so no degenerate near-duplicate hop
-const TOUR_MAXLEG=45;   // half the old 90 — each step reaches half as far across the chart
+// 8 waypoints, each hop reaching a short distance: a tight, local grand tour.
+const TOUR_MINLEG=12;   // still >= the closest star pair, so no degenerate near-duplicate hop
+const TOUR_MAXLEG=45;   // how far one step may reach across the chart
 // ENERGY: a 0..1 "how danceable" score per genre, derived straight from the
-// kernel's own vocabulary rather than a hand-curated genre list (dance-balance
-// census, 2026-07-06: the unweighted tour landed ~1/3 of its stops on wash/
-// low-energy anchors — the 2026-07 fictional-genre expansion piled 29 new
-// stars into the low-energy half of the map). Two signals, both already on
+// kernel's own vocabulary rather than a hand-curated genre list. Measured: an
+// unweighted tour lands ~1/3 of its stops on wash/low-energy anchors, since the
+// fictional-genre expansion piled 29 new stars into the low-energy half of the
+// map. Two signals, both already on
 // every K.GENRES anchor:
 //   - bpm: the anchor's [lo,hi] tempo range, midpoint normalized 50-190bpm
 //   - kits: fraction of the anchor's kit pool that ISN'T "off" (no drums) —
@@ -634,8 +631,8 @@ const GROOVE_ANCHOR=0.6;   // ENERGY at/above this = "groove anchor" (dance-floo
 const GROOVE_EVERY=3;      // force a reachable groove anchor at least this often, for contrast without monotony
 
 // ---------- REGIONS: the map divided into colored, goofily-named territories ----------
-// Paul 2026-07-10: "the starmap is now so large that we should be dividing it
-// into regions by color with big textual labels." The layout already clusters
+// The star map is large enough that it wants dividing into regions by color,
+// with big textual labels. The layout already clusters
 // similar genres (computeGenreLayout's similarity springs), so a deterministic
 // k-means over the FINAL POS carves the field into spatially- AND musically-
 // coherent territories. Each region is named + colored by its ENERGY rank
@@ -645,9 +642,9 @@ const GROOVE_EVERY=3;      // force a reachable groove anchor at least this ofte
 const REGION_K=10;
 // energy-ordered (mellow wash .. hardest banger); rank r gets NAMES[r]. Goofy in
 // the house style ("Food Court Eternity", "Kerosene Twelve") — evocative, invented.
-// Renamed 2026-07-25 (Paul: "Sequin Junction is pretty pedestrian… think cosmic
-// weirdness, a mix of eldritch and ridiculous and scientific") — the same brief
-// the 274 genre names and the 34 clusters were rewritten to. Still energy-ordered
+// The brief — the same one the 274 genre names and the 34 clusters answer to —
+// is cosmic weirdness: a mix of eldritch, ridiculous and scientific, never
+// pedestrian. Still energy-ordered
 // (rank 0 = mellow wash … rank 9 = hardest banger), so the name has to land on
 // the vibe as well as the register.
 const REGION_NAMES=["The Sleeping Instrument","Cathedral of Slow Decay","Hypnagogic Shelf","Wool Gravity Well",
@@ -741,9 +738,9 @@ function autoPath(){
   const gp=names.map(g=>POS[g]);
   // WAYPOINTS = midpoints between consecutive anchors, so every waypoint (and
   // the numbered dot on it) sits in the GAP between two genres, and every leg
-  // runs through inter-genre BLEND space — never on top of a star (Paul: "I
-  // wanted the LINES to pass between genres... start in between multiple
-  // genres"). weightsAt() at a midpoint blends the 2-3 nearest anchors, so the
+  // runs through inter-genre BLEND space — never on top of a star. The LINES
+  // pass BETWEEN genres, and the tour starts in between several of them.
+  // weightsAt() at a midpoint blends the 2-3 nearest anchors, so the
   // traveler is always mixing several genres, starting between the first pair.
   // (Triangle inequality: each midpoint→midpoint leg is <= the anchor hop cap,
   // so legs stay short — see TOUR_MAXLEG.)
@@ -758,8 +755,8 @@ function autoPath(){
       "… — ▶ LIVE to travel (✕ path to roam free)"});
   retarget(pts[0]);
 }
-// DEFAULT CLOSED LOOP (Paul 2026-07-08: "step 1 always centred; always a
-// loop"; 2026-07-10: THREE waypoints — the default is a triangle). Seeds
+// DEFAULT CLOSED LOOP: step 1 is always centred, and there is always a loop —
+// THREE waypoints, so the default is a triangle. Seeds
 // exactly 3 waypoints: waypoint[0] pinned to the MAP CENTRE (which sits in
 // disco's neighborhood — the blend snap makes the centre read ~pure disco),
 // plus 2 real genre stars, so the constellation line is an immediate closed

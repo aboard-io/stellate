@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// faust/audit-gate-test.js — the AUDIT-TRUTH instrument gate (Paul: "track when a node
-// is expected to produce sound and doesn't; give me data to download"). Proves the new
-// per-voice expected-vs-actual audit actually CATCHES a silenced voice: we drive the
+// audit-gate-test.js — the AUDIT-TRUTH instrument gate: track when a node is
+// expected to produce sound and doesn't. Proves the per-voice
+// expected-vs-actual audit actually CATCHES a silenced voice: we drive the
 // real live WAV path (mp3 route, one continuous timeline) on a sampler-heavy genre and
 // PERMANENTLY drop a deterministic fraction of the sampler sample decodes. A bar baked
 // without its sample buffer is expected-but-silent; the renderer measures RMS≈0 for that

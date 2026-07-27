@@ -17,7 +17,7 @@
 //   node engine/musicality.js audit <genre|all> [--seeds 1,2,3] [--rank] [--json]
 //
 // Gate posture: SOFT FIRST (validate-genres gate 8 is WARN-level; a law goes
-// hard only when its offender list and Paul's ear agree twice). Deterministic:
+// hard only when its offender list and the ear agree twice). Deterministic:
 // same seed, same scorecard. Scores are [0,1] with NAMED failures — defect
 // classes, not preferences (the doc's "what this is not").
 //
@@ -35,7 +35,7 @@
 
   // ---------------------------------------------------------------- BLOOM
   // First-onset bounds in BEATS per FORM per part — v1.1, recalibrated
-  // (balance loop 1, 2026-07). The v1 numbers were tighter than the FORM
+  // (balance loop 1). The first numbers were tighter than the FORM
   // GRAPHS' own design: pop's graph places the hook at the chorus (natural
   // beat 96 — the old melody:64 was unsatisfiable by construction), and the
   // duration solver legitimately stretches short forms toward the 180s
@@ -222,11 +222,11 @@
   }
 
   // ---------------------------------------------------------------- law: PROMISES
-  // Seed promises (Paul-blessed truth only, each VERIFIED against renders
-  // before being written — MUSICALITY.md rollout §6):
+  // Seed promises (blessed truth only, each VERIFIED against renders before
+  // being written — MUSICALITY.md rollout §6):
   //   reggae      — the skank chops the offbeat eighths (verified: 100% of
   //                 stab-layer onsets on off-eighths, seeds 1-3), and — balance
-  //                 loop 1, 2026-07 — kickOn:[3]: the ONE DROP is real now.
+  //                 loop 1 — kickOn:[3]: the ONE DROP is real.
   //                 The csd-engine `onedrop` kit (kick + cross-stick TOGETHER
   //                 on beat 3 of each measure, beat 1 empty, skank off-eighth
   //                 hats) is reggae's whole kit pool; measured 100% of kitted
@@ -323,7 +323,7 @@
   }
 
   // ------------------------------------------------ card-parse PROMISES (auto)
-  // The hand PROMISES table above encodes Paul-blessed STRUCTURED claims. This
+  // The hand PROMISES table above encodes blessed STRUCTURED claims. This
   // reads the CARD itself as a falsifiable contract, automatically: parse the
   // genre's `info` blurb for concrete instrument/voice NOUNS and check each
   // against what the genre's recipe can realize (capability from the spec pools —

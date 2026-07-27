@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// faust/hold-verify-run.js — verify the INSTRUMENT-INTRODUCTION HOLD (Paul: "if
-// you introduce an instrument it lasts for a few measures at least"). We drive a
+// hold-verify-run.js — verify the INSTRUMENT-INTRODUCTION HOLD: an instrument
+// that gets introduced lasts for at least a few measures. We drive a
 // FAST drag that alternates the dominant genre (blues <-> tango) every ~bar so
 // the lead timbre wants to flip every bar; the hold must cap that to <= once per
 // HOLD window (4 bars). Then we snap to PURE neoclassical (an ARRIVAL) and check

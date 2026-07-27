@@ -1,8 +1,8 @@
 // faust/all-sampled-test.js — SAMPLED-DEFAULT gate: the sampled render path.
 //   node faust/all-sampled-test.js
 //
-// Sampled mode is now the DEFAULT (Paul, 2026-07: "I want anything to go here and
-// be sampled by default. It's much better."). toState applies applySampledOnly to
+// Sampled mode is the DEFAULT: anything that can be sampled is, because it
+// sounds much better. toState applies applySampledOnly to
 // every emitted state; the PITCHED voices render from the SF2-derived sample
 // library, but ONLY the pitched instrument source changes — the found layer,
 // speech/vocoder and synth sfx/stab all play in the full mix. Signature synths

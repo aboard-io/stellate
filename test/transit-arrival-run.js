@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// test/transit-arrival-run.js — THE TRANSIT-ARRIVAL GATE (Paul, 2026-07-10:
-// "Moving from blues to industrial we hit dnb. It's loaded but the promised
-// instruments don't show up and play. Only the flute we had earlier.")
+// test/transit-arrival-run.js — THE TRANSIT-ARRIVAL GATE. Moving from blues to
+// industrial the ride crosses dnb: it loads, but the promised instruments never
+// show up and play — you keep the flute you had earlier.
 //
 // The transit cousin of blend-arrival-run.js: that gate PARKS on a destination;
 // this one rides a path THROUGH a genre's neighborhood and asserts the crossed
@@ -16,12 +16,12 @@
 //   few flips of that fixed order — dimensions ranked late ("lead voice" is
 //   rank 10 of 12 for seed 43) NEVER fired again for the rest of the journey,
 //   at ANY pace: the dwell scales with pace but so does the approach, so the
-//   same head-of-order flips win every neighborhood. Paul's flute (the lead
-//   installed in the FIRST neighborhood) survived every later genre.
+//   same head-of-order flips win every neighborhood. The flute (the lead
+//   installed in the FIRST neighborhood) survives every later genre.
 //
 // Geometry (computed from POS + weightsAt, logged live): the test leg is the
 // blues->industrial line's t=0.30..0.50 slice at pace 64 — same neighborhoods
-// as Paul's full ride (amapiano -> dnb -> chromeufo -> glosspump), dnb's weight
+// as the full ride (amapiano -> dnb -> chromeufo -> glosspump), dnb's weight
 // peaks at 1.00 and stays dominant ~13 bars. At the real pace 256 the full leg
 // gives dnb the same ~4% share (~10 bars): the contract must scale with
 // bars-in-neighborhood, i.e. identity flips re-tiered per dominant genre, not
@@ -29,14 +29,14 @@
 //
 // Seed 43 (deterministic, chosen by sweep): dnb lead = rhodes_ep SAMPLER with
 // 3/8 melody-on sections; the tier-2 hash order puts "lead voice" 10th and
-// "drum kit" 11th — the exact starvation shape Paul heard.
+// "drum kit" 11th — the exact starvation shape the bug produces.
 //
 // Asserts, while dnb's weight is dominant (>=0.5, first-ranked):
 //   (a) the PLAYING lead identity becomes dnb's lead (rhodes_ep) within
 //       LEAD_BARS of dominance and holds >= STICK_BARS consecutive bars;
 //   (b) the PLAYING kit becomes dnb's ("breaks") within KIT_BARS;
 //   (c) the new lead actually SOUNDS: after the flip lands we PARK inside the
-//       neighborhood (Paul's move when the card he wants comes up) and ride
+//       neighborhood (what a listener does when the card they want comes up) and ride
 //       until the section walk reaches a melody-on section — SamplerLive
 //       note() calls whose zone srcId is ins_rhodes_ep_* (tapped via
 //       FaustSampler.rateFor, only evaluated for notes that reach the graph)

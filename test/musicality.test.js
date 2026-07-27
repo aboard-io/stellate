@@ -284,8 +284,8 @@ gate("smoke: auditAll --rank completes over the whole catalog, one row per ancho
 
 // ---------- PROMISES: card-parse (the card-truth standing guard) ----------
 gate("card-parse: flags a real missing instrument (synthetic hoover lie)", () => {
-  // gabber's real hoover lie was FIXED 2026-07-10 (model "hoover" is a SIGNATURE
-  // synth now), so the flagging mechanism is pinned synthetically: a card that
+  // gabber's real hoover lie is FIXED (model "hoover" is a SIGNATURE synth),
+  // so the flagging mechanism is pinned synthetically: a card that
   // promises a hoover over a hooverless recipe must still WARN.
   const G = K.GENRES.minimal, info0 = G.info;
   G.info = "hoover stabs over the dry room";
@@ -294,7 +294,7 @@ gate("card-parse: flags a real missing instrument (synthetic hoover lie)", () =>
     assert(w.some((p) => /hoover/.test(p)), "a card promising a hoover no recipe realizes must WARN");
   } finally { G.info = info0; }
 });
-gate("card-parse: the 2026-07-10 card-truth fixes hold (hoover/piano/break/guitar)", () => {
+gate("card-parse: the card-truth fixes hold (hoover/piano/break/guitar)", () => {
   // gabber + happyhardcore: model "hoover" (SIGNATURE — never sampled away);
   // happyhardcore: bright-grand rave piano draw + the amen cadence roll;
   // ska: the clean-guitar skank in the pad pool. Each promise must stay KEPT.
@@ -317,7 +317,7 @@ gate("card-parse: a card with no instrument nouns is never penalised", () => {
 gate("card-parse: catalog card-lie count within the regression tripwire", () => {
   let n = 0; for (const g of Object.keys(K.GENRES)) n += M.checkCardClaims(g).warnings.length;
   console.log("      card-lie WARNs across catalog: " + n + " (hybrid capability; the honest remainder)");
-  // After the 2026-07-10 wave + the hybrid-capability precision pass + the
+  // After the card-truth wave + the hybrid-capability precision pass + the
   // card-truth fix wave (hoover as a SIGNATURE model for gabber/happyhardcore,
   // happyhardcore's rave piano + amen cadence roll, ska's clean-guitar skank),
   // EVERY card promise is realized: the honest remainder is ZERO. Any new

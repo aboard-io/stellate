@@ -16,7 +16,7 @@ import { faustHandle } from "./live.js";
 //      the SAME sampled-by-default mapping the engine uses (FaustStateEngine
 //      .pickSampledId → K.SAMPLERS[id].label), signature synths named as
 //      themselves, plus the drum kit.
-// ---------- listener-facing DESCRIPTIONS (Paul 2026-07: "stop naming the source").
+// ---------- listener-facing DESCRIPTIONS — never name the source.
 // Roster text describes ROLE + CHARACTER — never provenance. No "sampler"/"DX7"/
 // soundfont/library names, no raw source ids, no real-vs-synth tells: the listener
 // gets "round upright bass", not "sampler: acoustic_bass (FluidR3)". Resolution
@@ -88,10 +88,10 @@ const KIT_CHAR={ acoustic:"acoustic drum kit", brush:"brushed jazz drums", jazz:
 const kitChar=kit=>KIT_CHAR[kit]||(titleCase(kit).toLowerCase()+" drums");
 // found sources -> texture character by KIND only (never the recording's name/id).
 const FOUND_CHAR={ speech:"cut-up announcer voice", vox:"vocal fragments", break:"chopped drum breaks", hit:"sampled stabs" };
-// bed CHARACTER by id-class (Paul 2026-07-10: "you use tape atmosphere all over
-// the place" — it was the one fallback label for 48 different beds; name what
-// KIND of air it is, still never the source — the J1/J2 provenance law holds).
-const BED_CHAR=[   // ordered: specific tokens fire before the broad city/road/water nets (bed-pool expansion rows, 2026-07-10)
+// bed CHARACTER by id-class. "Tape atmosphere" was once the single fallback
+// label for 48 different beds; name what KIND of air it is instead — still
+// never the source, so the provenance law holds.
+const BED_CHAR=[   // ordered: specific tokens fire before the broad city/road/water nets
   [/factory|industr|machine|furnace|mill\b|_press|turbine|grinding|pumping|silo/i, "machine room"],
   [/shortwave|vlf|_em$|interference|static/i,  "shortwave"],
   [/bell|village|brocante|carillon|calgary|tongluo/i, "smalltown"],
@@ -157,14 +157,14 @@ function feelAxes(st){
   const feelAx=clamp01((st.humanize||0)/0.6);
   // RUBATO: the breathing — state.rubato beat-warp depth (0.045 = the deepest
   // neoclassical setting), weighted by prob where the blend still carries one.
-  // Visibility wave 2026-07-25: it was the most FELT invisible axis.
+  // The most FELT of the axes, and the easiest one to leave invisible.
   const rb=st.rubato||null;
   const rbDepth=rb?(Array.isArray(rb.depth)?(((+rb.depth[0]||0)+(+rb.depth[1]||0))/2):(+rb.depth||0)):0;
   const rubato=clamp01((rbDepth/0.045)*(rb&&rb.prob!=null?clamp01(+rb.prob||0):1));
   const axes=[["tempo",tempo],["swing",swing],["feel",feelAx],["rubato",rubato],["bright",bright],
     ["space",space],["dust",dust],["drive",drive],["density",density]];
-  // the MUSIC-MIND axes join the SAME radar (Paul 2026-07-10: "why are adventure
-  // color motion different than the other vectors" — they aren't, anymore).
+  // the MUSIC-MIND axes join the SAME radar: adventure/color/motion are not
+  // different in kind from the other vectors, so they don't get their own display.
   // num1 handles the range-shaped fields exactly as mindData does.
   const th=st.theory||{};
   axes.push(["adventure",th.adventure!=null?num1(th.adventure):0]);
@@ -212,10 +212,9 @@ function noteRole(unit, isDrum){
   if(unit.indexOf("solo:")===0) return "solo";
   if(unit==="pad"||unit==="bass") return unit;
   if(unit==="stab"||unit==="sfx") return "sfx";
-  // EVERY drum-flagged unit is the drums lane (Paul 2026-07-10: "synthesized
-  // samples and other samples don't show up in the viz" — the sampled kits'
-  // clap/rim/ride/crash/perc pieces fell through this map and matched no lane,
-  // so half of every sampled kit was invisible).
+  // EVERY drum-flagged unit is the drums lane. Without this the sampled kits'
+  // clap/rim/ride/crash/perc pieces fall through the map and match no lane, so
+  // half of every sampled kit goes missing from the viz.
   if(isDrum||unit==="kick"||unit==="snare"||unit==="hat"||unit==="tom") return "drums";
   return unit;
 }
@@ -243,7 +242,7 @@ function barVoiceEvents(st, bar){
     // engine schedules the bed once at ci=0 for its full duration; see faust/
     // live.js scheduleNative). Ask for all beds, then CLIP each to this bar.
     let m=SE.mapEvents(E,one,ev,{lo,hi,units,bedAll:true});
-    // MID-FLIP DIVERGENCE (Paul: "the viz just drops when a transition starts"):
+    // MID-FLIP DIVERGENCE — why the viz drops when a transition starts:
     // live bars are scheduled a runway AHEAD of playback, so a glide flip that
     // rewrites progression/sections lands BETWEEN a bar's scheduling and its
     // sounding. The stale barInfo.ci — legal under the OLD harmony (say 8
@@ -264,7 +263,7 @@ function barVoiceEvents(st, bar){
         midi:freqToMidi(freq), freq, vel:clamp01(vel), drum:!!e.drum });
     }
     // kind map: srcId -> the source's KIND, so spoken/vocal chops get their
-    // own track (Paul 2026-07-10: "you're not showing all tracks").
+    // own track rather than disappearing into another lane.
     const kindOf={}; for(const src of (one.foundSources||[])) if(src&&src.id) kindOf[src.id]=src.kind||"";
     for(const f of (m.found||[])){
       if(f.type==="chop"){   // chops are onsets — real hits, in-window already
@@ -288,8 +287,8 @@ function barVoiceEvents(st, bar){
 // A lane shows whenever the instrument is voiced (roster) OR it has notes this bar.
 function timelineLanes(st, roster, found, bar, audit){
   const by={}; roster.forEach(r=>by[r.role]=r);
-  // ALL TRACKS (Paul 2026-07-10 "you're not showing all tracks"): stabs/hits
-  // and spoken/vocal layers are their own lanes now, not folded into lead/found.
+  // ALL TRACKS: stabs/hits and spoken/vocal layers are their own lanes, not
+  // folded into lead/found — every track that plays is a track you can see.
   const specs=[
     {key:"pad",    from:"pad",  label:"pad",     col:"--purple", roles:["pad"]},
     {key:"bass",   from:"bass", label:"bass",    col:"--cyan",   roles:["bass"]},
@@ -324,8 +323,8 @@ function timelineLanes(st, roster, found, bar, audit){
   return lanes;
 }
 // ---------- MIXING NODE GRAPH: the signal-flow topology under the rolls --------
-// Paul 2026-07-10: "the effects being text isn't working for me — render the full
-// mixing node graph ... showing how effects are invoked and what levels are." A
+// Effects as text do not read. This renders the full mixing node graph instead,
+// showing how effects are invoked and at what levels — a
 // visual replacement for the master effects TEXT line: each voice unit → its
 // per-voice INSERT chain (in order, type + mix) → its DRY/REV/DEL sends (send
 // LEVEL = line width + opacity) → the shared REVERB (color) + DELAY + MASTER bus
@@ -346,9 +345,9 @@ function graphData(st, U, bar){
   // a voice's chips = its FULL processing chain (channel strip + inserts — the
   // same roster the old per-lane line showed, voiceFx→fxLabels), MINUS the
   // reverb/delay SENDS (those are the shared bus nodes + the send curves, so they
-  // must not double-draw as per-voice chips). Paul 2026-07-11: "tons of effects
-  // listed and none in the nodes" — the graph was only drawing u.inserts (<=2),
-  // dropping the real strip DSP (HPF/LPF/EQ/comp/saturate/chorus…).
+  // must not double-draw as per-voice chips). Drawing only u.inserts (<=2) leaves
+  // effects listed everywhere and none of them in the nodes, because it drops
+  // the real strip DSP (HPF/LPF/EQ/comp/saturate/chorus…).
   const dropSend=l=> l==="delay" || /^(plate|hall|room|spring|shimmer|reverb)\s+\d+%$/.test(l);
   const mkVoice=(name,col,key)=>{
     const u=U[key]; if(!u||u.__meta) return null;
@@ -402,7 +401,7 @@ function graphSVG(g){
   const nameH=26, chipH=21, chipRowH=26, cgap=7, vGap=14;
   // pack a voice's fx chips into rows within innerW — variable width per label
   // (~6.4px/monospace char at 11px + padding), wrapping when a row is full. This
-  // is what makes the FULL chain (strip + inserts) fit on a phone (Paul 2026-07-11).
+  // is what makes the FULL chain (strip + inserts) fit on a phone.
   const packChips=(labels)=>{ const out=[]; let x=0,row=0;
     for(const raw of (labels||[])){ const l=String(raw); const w=Math.min(innerW, Math.round(l.length*7.1)+18);
       if(x>0 && x+w>innerW){ row++; x=0; }
@@ -411,8 +410,8 @@ function graphSVG(g){
   const V=g.voices.map(v=>{ const p=packChips(v.chain); return { v, chips:p.chips, h:nameH+(p.rows?p.rows*chipRowH+3:0) }; });
   let y=28; const vy=[]; for(const it of V){ vy.push(y); y+=it.h+vGap; }
   const voicesBottom=y-vGap+4;
-  // ── bus STACK: delay feeds reverb (Paul: "delay should come before reverb"),
-  // which is also the engine truth — rev_bleed(del,pp) bleeds into the reverb
+  // ── bus STACK: delay feeds reverb — delay comes before reverb, which is also
+  // the engine truth — rev_bleed(del,pp) bleeds into the reverb
   // color, then reverb → master. Stacked vertically (delay above reverb).
   const on=g.delay.on, busW=204, busX=(W-busW)/2, busH=28;
   const delTop=on?voicesBottom+30:0, delCy=delTop+busH/2;
@@ -440,8 +439,8 @@ function graphSVG(g){
   cn+=`<path d="${dcurve(cx,mBottom,cx,oTop)}" fill="none" stroke="var(--mint)" stroke-width="3" opacity="0.8" marker-end="url(#garr)"/>`;
   // ---- node layer: each voice = a full-width name box + its fx chain drawn as
   // CONNECTED, directed nodes (voice → fx1 → fx2 → … → sends), so the signal flow
-  // through the series is legible, not a floating chip list (Paul 2026-07-11: "I
-  // can't see how they're connected"). Arrowheads (url(#garr)) show direction.
+  // through the series is legible. A floating chip list shows no connections at
+  // all; here arrowheads (url(#garr)) show direction.
   const arr=(x1,y1,x2,y2)=>`<path d="M${x1.toFixed(1)} ${y1.toFixed(1)} L${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="var(--dim)" stroke-width="1.1" opacity="0.62" marker-end="url(#garr)"/>`;
   let nd="";
   V.forEach((it,i)=>{ const v=it.v, y0=vy[i];
@@ -517,7 +516,7 @@ export function vizData(){
   const timeline={cbeats:bar.cbeats, view:VIEW, pages:Math.max(1,Math.ceil(bar.cbeats/VIEW)),
     spb:bar.spb, bpm:bar.bpm, lanes:timelineLanes(st, roster, found, bar, auditSilent), audit:auditSilent};
   let graph=null; try{ graph=graphData(st, U, bar); }catch(e){}
-  // meter badge (visibility wave 2026-07-25): always shown — the timeline's
+  // meter badge: always shown — the timeline's
   // 8-cell fold visually erases a waltz grid, so the meter must say itself.
   const meter=st.meter?`${st.meter.beats}/${st.meter.unit}`:"4/4";
   return {blend, feel:feelAxes(st), roster, found, info, master:masterFx(st), timeline, graph, mind:mindData(st), meter};
@@ -537,8 +536,8 @@ function mindData(st){
   if(!th&&!pipes.length&&cx<=0) return null;
   return { adventure:th?num1(th.adventure):0, color:th?num1(th.color):0, complexity:cx,
     voicing:th?String(th.voicing||""):"", pipes,
-    // visibility wave 2026-07-25: the TABLES LAW and the reharm walk were the
-    // biggest hidden switches (201/274 genres ride corpus tables) — surface both.
+    // the TABLES LAW and the reharm walk are the biggest hidden switches in the
+    // engine (201/274 genres ride corpus tables) — surface both.
     reharm:!!(th&&th.reharm), tables:th?String(th.tables||"hand"):"" };
 }
 window.__VIZ={ data:()=>vizData() };   // headless gate: read the live viz content
@@ -592,15 +591,15 @@ function radarSVG(feel){
 // duration; melodic lanes map PITCH to y (high notes ride high), drum/found lanes
 // stack each hit type on its own row. Block opacity = velocity. All CSS/HTML (no
 // SVG) so it stays crisp, responsive and cheap to rebuild every frame.
-const DRUM_ROW={ crash:0.02, hat:0.10, ride:0.20, shaker:0.27, tom:0.34, clap:0.44, snare:0.52, rim:0.60, stick:0.60, perc:0.68, kick:0.76, cowbell:0.30, found:0.5, voices:0.5, stab:0.5, bed:0.18 };   // every sampled-kit piece gets its own row (2026-07-10)
-// THE UNIT IS ALWAYS 8 (Paul 2026-07): the visible roll is a constant 8-cell
+const DRUM_ROW={ crash:0.02, hat:0.10, ride:0.20, shaker:0.27, tom:0.34, clap:0.44, snare:0.52, rim:0.60, stick:0.60, perc:0.68, kick:0.76, cowbell:0.30, found:0.5, voices:0.5, stab:0.5, bed:0.18 };   // every sampled-kit piece gets its own row
+// THE UNIT IS ALWAYS 8: the visible roll is a constant 8-cell
 // window whatever the genre's harmonic rhythm. chordEvery=16/32 structures PAGE
-// (Paul 2026-07: the old stacked fold rows read as "double bars for each" —
-// duplication, not continuation). ONE 8-cell row per lane; while live the
+// (stacked fold rows read as double bars for each lane — duplication, not
+// continuation). ONE 8-cell row per lane; while live the
 // window slides to the next 8 beats when the beat crosses a page edge. Idle
 // shows page 1. A bed spanning the chord bar lands a clipped slice on EVERY page.
 const VIEW=8;
-const MEAS_BEATS=1;   // the playhead lights ONE ruler cell at a time (Paul 2026-07-10: "each BAR should light up as it progresses, not four bars at a time")
+const MEAS_BEATS=1;   // the playhead lights ONE ruler cell at a time: each BAR lights as it progresses, not four bars at once
 // split one note into its per-PAGE segments: {page, left%, w%} — left/w are
 // percentages of the 8-beat page window, so a block draws identically whichever
 // page carries it (and a long bed gets one slice per page it overlaps).
@@ -671,13 +670,13 @@ function timelineHTML(tl){
   // lane we can, skip (and console.warn) the one that throws.
   const rows=tl.lanes.map(L=>{
    try{
-    // EFFECTS ARE NODES NOW (Paul 2026-07-11: "don't list them under the piano
-    // rolls — they should be nodes in the graph"). The per-lane fx caption is
-    // gone; the mixing node graph beneath the rolls (graphSVG) is the fx surface.
+    // EFFECTS ARE NODES: they are not listed under the piano rolls, they are
+    // nodes in the graph. There is no per-lane fx caption; the mixing node graph
+    // beneath the rolls (graphSVG) is the fx surface.
     // AUDIT-TRUTH silent-lane paint: red-hatched roll + a ✕ badge naming the reason.
     const silBadge=L.silent?`<span class="vz-silbadge" title="${esc(L.silReason==="missing"?("missing samples: "+(L.silMissing||[]).join(", ")):(L.silReason==="nan"?"render NaN (blown-up filter/strip)":"buffers present but silent — render-side mute"))}">✕ ${esc(L.silReason||"silent")}</span>`:"";
-    // TITLE ABOVE THE ROLL (Paul 2026-07-10): the lane's name+role is its own
-    // full-width header ABOVE the piano-roll (was a fixed 128px column beside it),
+    // TITLE ABOVE THE ROLL: the lane's name+role is its own full-width header
+    // ABOVE the piano-roll rather than a fixed column beside it,
     // so every roll spans the full width and the lanes breathe vertically. The tiny
     // fx caption still rides BENEATH the roll.
     // the roll: ONE 8-cell row per lane, always. Longer chord bars ride a pager
@@ -696,7 +695,7 @@ function timelineHTML(tl){
   }).join("");
   // ONE shared playhead spanning every lane (they share the beat grid) —
   // rendered dormant when idle; the ~10Hz ticker lights it while live. It is a
-  // MEASURE BLOCK, not a sweep line (Paul 2026-07-10): the active measure
+  // MEASURE BLOCK, not a sweep line: the active measure
   // (MEAS_BEATS beats) lights up and STEPS to the next, so you read "we are in
   // measure 2 of this bar" at a glance. Clamped to the window edge mid-flip.
   const measW=Math.min(100,MEAS_BEATS/VIEW*100);
@@ -706,8 +705,6 @@ function timelineHTML(tl){
   return `<div class="vz-ruler" style="background-image:${grid}">${ruler}${pgind}</div>`+
     `<div class="vz-tl" data-pages="${pages}" data-page="${page}">${rows}${ph}</div>`;
 }
-// (the MIND meter block lived here until 2026-07-10 — adventure/color/motion
-// are radar axes now, the moves line rides under the radar in renderInside.)
 // ---------- live playhead ticker: the beat cursor + the page flips ----------
 // ~10Hz, ONLY while the ⓘ modal is open AND we're live; it cancels itself the
 // first frame either stops being true (zero cost closed/idle). Between full
@@ -752,18 +749,17 @@ export function renderInside(){
   const d=vizData();
   const seg=d.blend.filter(b=>b.pct>0).map(b=>`<div style="width:${b.pct}%;background:${genreCol(b.g)}" title="${esc(b.label)} ${b.pct}%"></div>`).join("");
   const legend=d.blend.filter(b=>b.pct>0).map(b=>`<span class="vz-g"><i style="background:${genreCol(b.g)}"></i>${esc(b.label)} <b>${b.pct}%</b></span>`).join("");
-  // the MASTER effects text line is replaced by the visual MIXING NODE GRAPH
-  // (Paul 2026-07-10: "the effects being text isn't working for me"). Guarded like
-  // the timeline — a graph hiccup must never blank the whole panel.
+  // the MASTER effects text line is replaced by the visual MIXING NODE GRAPH.
+  // Guarded like the timeline — a graph hiccup must never blank the whole panel.
   let graphHtml=""; try{ if(d.graph){ const svg=graphSVG(d.graph);
     if(svg) graphHtml=`<div class="vz-sec"><div class="vz-lbl">signal flow — how effects are invoked</div>${svg}</div>`; } }
   catch(e){ try{console.warn("inside: graph render skipped:",e);}catch(_){}}
   // the mind's MOVES (voicing + active pipes) ride as one quiet text line under
-  // the radar — the adventure/color/motion NUMBERS are radar axes now (Paul
-  // 2026-07-10: no numeric readouts, one unified vector display).
+  // the radar — the adventure/color/motion NUMBERS are radar axes: no numeric
+  // readouts anywhere, one unified vector display.
   const mv=[]; if(d.mind&&d.mind.voicing) mv.push(`voicing <b>${esc(d.mind.voicing)}</b>`);
   if(d.mind&&d.mind.pipes.length) mv.push(`moves <b>${d.mind.pipes.map(esc).join(" · ")}</b>`);
-  // harmony provenance (visibility wave 2026-07-25): reharm walk + which tables
+  // harmony provenance: the reharm walk + which tables it walks
   if(d.mind&&(d.mind.reharm||d.mind.tables)){ const hm=[];
     if(d.mind.reharm) hm.push("reharm");
     if(d.mind.tables) hm.push(esc(d.mind.tables)+" tables");

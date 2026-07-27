@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // faust/genre-viz-test.js — headless gate for the "INSIDE THE SOUND" info tool.
-// Two changes this gate guards (Paul, 2026-07): the busted WAV-engine MIXER is
+// Two changes this gate guards: the busted WAV-engine MIXER is
 // GONE, and the flat voice roster became an intelligent VOICE TIMELINE — a per-bar
 // piano-roll computed deterministically from CsdEngine.buildEvents(S.playing).
 //
@@ -17,14 +17,14 @@
 //      installed on window.DemoLayer before going live; call count must be > 0),
 //      and the payload has the contract shape {role,midi,freq,vel,durSec,section}.
 //   F. zero console/page errors throughout.
-//   H. THE UNIT IS ALWAYS 8 (Paul 2026-07): the roll is a constant 8-cell window
+//   H. THE UNIT IS ALWAYS 8: the roll is a constant 8-cell window
 //      for every genre; chordEvery=16 (prelude) PAGES — ONE 8-cell row per lane
-//      (no stacked fold rows: Paul read those as "double bars", i.e. duplication)
+//      (no stacked fold rows: those read as double bars, i.e. duplication)
 //      with a quiet ·1/2 page indicator; idle shows page 1 (beats 1..8).
 //   K. LIVE PLAYHEAD: parked on prelude, ONE shared beat cursor sweeps the roll
 //      (beat monotonic within a bar) and DRIVES the paging — the window flips to
 //      page 2 when the beat crosses 8; the cursor goes dark after ■.
-//   L. TRANSITION LIVENESS (Paul: "the viz just drops when a transition starts"):
+//   L. TRANSITION LIVENESS — the viz must not drop when a transition starts:
 //      live bars are scheduled a runway ahead of playback, so a glide flip that
 //      rewrites progression/sections mid-flight leaves barInfo.ci pointing past
 //      the new progression's chord count — the viz's [lo,hi) window then missed
@@ -63,7 +63,7 @@ async function main() {
   const blendSum = load.blend.reduce((s, b) => s + b.pct, 0);
   ok(Array.isArray(load.blend) && load.blend.length >= 1, `A1: blend has ${load.blend.length} genres (want >=1)`);
   ok(blendSum >= 97 && blendSum <= 103, `A2: blend %s sum to ${blendSum} (want ~100)`);
-  ok(load.feel.length >= 11 && load.feel.every(([n, v]) => typeof n === "string" && v >= 0 && v <= 1), `A3: >=11 feel axes in [0,1] (got ${load.feel.length}; 2026-07-10 the mind axes joined the radar)`);
+  ok(load.feel.length >= 11 && load.feel.every(([n, v]) => typeof n === "string" && v >= 0 && v <= 1), `A3: >=11 feel axes in [0,1] (got ${load.feel.length}; the mind axes are radar axes too)`);
   ok(load.timeline && Array.isArray(load.timeline.lanes) && load.timeline.cbeats >= 2, `A4: timeline object present (cbeats=${load.timeline && load.timeline.cbeats})`);
   console.log(`\n=== LOAD ===`);
   console.log(`  blend=[${load.blend.map(b => b.label + " " + b.pct + "%").join(" · ")}]  sum=${blendSum}`);
@@ -80,7 +80,7 @@ async function main() {
   ok(!mix.modal, `B2: #mixWrap modal still exists`);
   ok(!mix.glyph, `B3: mixer glyph 𝄚 still on the chip row`);
   ok(mix.chipRow.length === 3 && mix.chipRow.join(",") === "playChip,viewChip,cfgChip",
-    `B4: chip row is [${mix.chipRow.join(", ")}] (want play,view,cfg — the ONE view button 2026-07-10; the ▢/▦ background chip retired 2026-07-25)`);
+    `B4: chip row is [${mix.chipRow.join(", ")}] (want play,view,cfg — the ONE view button; there is no ▢/▦ background chip)`);
   console.log(`\n=== MIXER REMOVED ===\n  mixChip=${mix.chip} mixWrap=${mix.modal} glyph=${mix.glyph}  chips=[${mix.chipRow.join(", ")}]`);
 
   // ---- open the ⓘ tool ----
@@ -97,7 +97,7 @@ async function main() {
   ok(shell.open, `preopen: ⓘ modal did not open`);
   ok(shell.hasBar, `preopen: blend bar missing`);
   ok(shell.hasRadar, `preopen: feel radar missing`);
-  ok(shell.hasRoll, `preopen: timeline roll missing`);   // (the "timeline —" header label retired 2026-07-10)
+  ok(shell.hasRoll, `preopen: timeline roll missing`);   // (there is no "timeline —" header label)
   ok(shell.vizView && shell.mapHidden, `preopen: viz must be a 100% VIEW (body.view-viz=${shell.vizView}, map hidden=${shell.mapHidden})`);
 
   // ---- D: LIVE proof — retarget to two very different regions, timeline changes ----
@@ -143,8 +143,8 @@ async function main() {
     tl = await page.evaluate(() => {
       const box = document.getElementById("inside");
       const rows = [...box.querySelectorAll(".vz-tlrow")];
-      // EFFECTS ARE NODES NOW (Paul 2026-07-11: "don't list them under the piano
-      // rolls — they should be nodes in the graph"). The per-lane .vz-fxline is
+      // EFFECTS ARE NODES: not listed under the piano rolls, but nodes in the
+      // graph. The per-lane .vz-fxline is
       // gone; the mixing node graph (.vz-graph) under the rolls is the fx surface.
       const graph = box.querySelector(".vz-graph");
       const fxNodes = graph ? graph.querySelectorAll(".gins,.grev,.gdel,.gmaster").length : 0;
@@ -210,10 +210,10 @@ async function main() {
   ok(settled === afterStop, `E3: ${settled - afterStop} note(s) fired AFTER stop (pending onsets not cleared)`);
   console.log(`  after stop: ${afterStop} → ${settled} (no new onsets)`);
 
-  // ---- H: THE UNIT IS ALWAYS 8 (Paul 2026-07). The visible roll is a constant
+  // ---- H: THE UNIT IS ALWAYS 8. The visible roll is a constant
   // 8-cell window whatever the genre's chordEvery; longer chord bars PAGE — ONE
-  // 8-cell row per lane, NEVER a stacked fold (Paul read the stack as "double
-  // bars for each": duplication, not continuation). prelude (chordEvery:16) must
+  // 8-cell row per lane, NEVER a stacked fold (a stack reads as double bars for
+  // each lane: duplication, not continuation). prelude (chordEvery:16) must
   // page (2 pages, a quiet ·1/2 indicator, idle on page 1 = beats 1..8); house
   // (chordEvery 8) must show the SAME 8-unit ruler with no indicator.
   const H = await page.evaluate(() => {
@@ -265,7 +265,7 @@ async function main() {
       if (d.mind && (d.mind.pipes.length || d.mind.adventure > 0 || d.mind.complexity > 0)) { mindGenre = g; mind = d.mind; break; }
     }
     if (mindGenre) { window.__X.renderInside();
-      // 2026-07-10: the mind meters are RADAR AXES now (one unified vector rose,
+      // the mind meters are RADAR AXES (one unified vector rose,
       // no numeric readouts) — assert the axes render on the radar + the moves line
       const axes = [...box.querySelectorAll("svg.radar text.rax")].map(e => e.textContent);
       mindDom = { axes,
@@ -344,8 +344,8 @@ async function main() {
   const dark = await page.evaluate(() => !document.querySelector("#inside .vz-ph.on"));
   ok(dark, `K6: playhead still lit after stop (ticker did not cancel)`);
 
-  // ---- L: TRANSITION LIVENESS (Paul: "the viz just drops when a transition
-  // starts"). PURE regression first — the exact divergence, deterministic: a
+  // ---- L: TRANSITION LIVENESS — the viz must not drop when a transition
+  // starts. PURE regression first — the exact divergence, deterministic: a
   // bar whose meta was scheduled under the OLD harmony (section name gone, ci
   // past the new progression's chord count) must still draw notes against the
   // freshly-flipped state (pre-fix this was 0 notes = a dead panel for 10+s).
@@ -407,7 +407,7 @@ async function main() {
   await page.evaluate(() => window.__X.stopLive());
   await page.waitForTimeout(400);
 
-  // ---- I: FOUND-LANE LIVENESS (Paul: "found audio plays but the viz shows nothing").
+  // ---- I: FOUND-LANE LIVENESS — found audio plays, so the viz must show it.
   // Beds emit ONE event at section start and sustain across the whole cycle; every
   // bar with ci>0 used to show a dead found lane. First the pure path: a ci=1 bar
   // of vaporwave (bed-heavy) must carry a sustained bed ribbon. Then the live path:

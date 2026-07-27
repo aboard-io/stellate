@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // font-coverage.js — FULL-COVERAGE audit of the soundfont system by comparing
-// data structures (Paul 2026-07-16: sf=minimoog dropped bass+guitar; "make
-// sure we have full coverage using the power of comparing data structures").
+// data structures. sf=minimoog once dropped bass+guitar entirely; comparing the
+// structures is what proves full coverage.
 //
 //   node tools/font-coverage.js            # structural audit (fast, no audio)
 //   node tools/font-coverage.js --dx7-rms  # + render every DX7 patch, flag silent
@@ -35,7 +35,7 @@ const bad = (msg) => { console.log("  !! " + msg); fails++; };
 // (instrFamily isn't exported; recover each id's family through the minimoog
 // voiceFor result — bass family is the only modeld voice with glide 16, etc.
 // Simpler: re-derive by asking the kernel for the sampledOnly spec per id.)
-const familyOf = K.instrFamily;   // the kernel's OWN classifier (exported 2026-07-16) — no hand-synced copy to drift
+const familyOf = K.instrFamily;   // the kernel's OWN classifier — no hand-synced copy to drift
 const RULES = [
   [/guitar/, "pluck"], [/^bassoon$/, "reed"], [/_bass$|^bass_|acoustic_bass|fretless|contrabass/, (f) => f === "bass" || f === "string"],
   [/sax$|clarinet|oboe/, "reed"], [/piano|grand/, (f) => f === "key" || f === "pluck"], [/organ/, "organ"],

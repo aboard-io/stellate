@@ -1,5 +1,5 @@
 // invariants.js — FORMAL VERIFICATION over the genre kernel (docs/INVARIANTS.md).
-// Paul: "What can you do with the kernel using formal or verifiable methods?"
+// What can be established about the kernel by formal or verifiable methods?
 //
 // The centerpiece is a real PROOF, not a sample: every scalar dimension a
 // blend can emit is a CONVEX COMBINATION of anchor values —

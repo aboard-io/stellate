@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// test/share-url-run.js — THE BOOKMARKABLE-MIX GATE (Paul 2026-07-10: seed +
-// node positions + the current measure ride the query string; loading such a
-// URL drops in at that measure; the playhead is draggable along the path).
+// test/share-url-run.js — THE BOOKMARKABLE-MIX GATE: seed + node positions +
+// the current measure ride the query string; loading such a URL drops in at
+// that measure; the playhead is draggable along the path.
 // Asserts:
 //   (a) a URL with seed/path/pace/m RESTORES: seed set, waypoints match, the
 //       default loop is NOT seeded over them, travel sits at the m measure;
@@ -40,7 +40,7 @@ async function main() {
   if (st.seed === 42) ok("seed restored"); else fail(`seed ${st.seed}`);
   if (st.wps === PATH) ok("waypoints restored verbatim (default loop skipped)"); else fail(`waypoints ${st.wps}`);
   if (st.startBar === 96) ok("startBar = m-1"); else fail(`startBar ${st.startBar}`);
-  // CONSTANT PACE (2026-07-11): bar 96 = distance 96×(500/64)=750 units along the
+  // CONSTANT PACE: bar 96 = distance 96×(500/64)=750 units along the
   // perimeter; leg 0 (len ~1369) contains it, so seg 0, t ~0.548 (was seg 1, t 0.5
   // under the old fixed-bars-per-leg model — distance between nodes no longer
   // changes the traveler's speed, so the measure maps by arc-length now).
@@ -101,8 +101,8 @@ async function main() {
     ok("stop twice rewinds to the top (startBar 0, travel 0/0, URL m dropped)");
   else fail(`double-stop did not rewind: ${JSON.stringify(tr.afterDouble)}`);
 
-  // (f) THE LIVE URL FOLLOWS THE PLAYHEAD (2026-07-25). buildShareUrl's live
-  // branch used to read the ENGINE's bar serial, so copying the URL after a
+  // (f) THE LIVE URL FOLLOWS THE PLAYHEAD. If buildShareUrl's live
+  // branch reads the ENGINE's bar serial, copying the URL after a
   // mid-live playhead drag bookmarked a measure the user was no longer at (the
   // traveler had moved; the serial had not). It now reads barForTravel(S.travel)
   // — the same inverse stopLive uses — so the copied link, the visible playhead

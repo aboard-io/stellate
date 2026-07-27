@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-// bg-cart-run.js — headless gate for the 2026-07-16 "wasm background sticking"
-// fix: the demoscene cart must ROTATE in mode 2 (demos-only — it had NO
-// rotator), and the alternator must STAND DOWN while the star-cruise runs
+// bg-cart-run.js — headless gate against a STICKING wasm background: the
+// demoscene cart must ROTATE in mode 2 (demos-only), and the alternator must
+// STAND DOWN while the star-cruise runs
 // (there the cart is PLANET-KEYED by starcruise ensureSurface).
 //
 //   node test/bg-cart-run.js
 //
 // Gates:
 //   A. mode 2 rotates: the layer is ALWAYS ON at boot (mode fixed 2 since the
-//      chip retired 2026-07-25); with the backstop shortened (?bgAltMs=1200),
+//      there is no chip); with the backstop shortened (?bgAltMs=1200),
 //      DemoLayer.current() advances within ~6s of idle wall-clock.
 //   B. cruise guard: with a fake __STARCRUISE running, __BGALT.flip() leaves
 //      the cart untouched (the planet owns its sky).

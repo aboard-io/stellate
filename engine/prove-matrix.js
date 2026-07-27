@@ -1,7 +1,6 @@
-// prove-matrix.js — THE OFFLINE MATRIX PROVER (2026-07-10, Paul's ask: "the
-// kernel can be simplified and rebuilt in terms of lists of vectors run through
-// streaming transformations… think about ways to increase the verifiability and
-// expressiveness of the musical kernel" → "implement the offline prover").
+// prove-matrix.js — THE OFFLINE MATRIX PROVER. The kernel can be rebuilt in
+// terms of lists of vectors run through streaming transformations, which is
+// what makes it verifiable rather than merely expressive.
 //
 // This is the first concrete piece of that reformulation: the anchor catalog AS
 // A MATRIX. Every numeric spec dimension becomes two G-vectors over the 228

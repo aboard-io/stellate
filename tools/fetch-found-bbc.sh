@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fetch + prepare the BBC Sound Effects layer (sound-effects.bbcrewind.co.uk).
-# 36 ambience beds + 4 chime one-shots, curated 2026-07 across the SOURCE_POOLS
+# 36 ambience beds + 4 chime one-shots, curated across the SOURCE_POOLS
 # classes (city/road/industry/voices/nature/water/room/weather/smalltown/chime).
 #
 # LICENSE: everything here is BBC archive material under the RemArc licence —
