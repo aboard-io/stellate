@@ -9,6 +9,7 @@
 #   social      node test/social-meta.test.js              (OG/JSON-LD/icons/oembed contract)
 #   matproof    node test/prove-matrix.test.js             (offline matrix prover, cross-checked)
 #   poscover    node test/pos-coverage.js                  (every genre has a star-map POS)
+#   kerneldata  node test/kernel-data-identity.test.js     (genre data byte-identical vs HEAD)
 #   coordscover node test/coords-coverage.js               (every genre has a 3D coord + cluster)
 #   seamwalk    node test/live-walk-parity.test.js         (chord-bar seam fires exactly once)
 #   bootsmoke   node test/boot-smoke.js                    (script load order + window globals)
@@ -84,6 +85,15 @@ PIDS+=($!)
 # cross-checked against `prove` (two independent implementations must agree)
 # plus a seeded Monte-Carlo witness through the real K.mix.
 run "matproof" node test/prove-matrix.test.js &
+PIDS+=($!)
+# kerneldata: THE GENRE-DATA IDENTITY gate (test/kernel-data-identity.test.js) —
+# GENRES + the registries, byte-for-byte against HEAD, plus the genre key ORDER
+# and a handful of resolved tracks. Stage E1 moves ~810 KB of this data into
+# generated files, and the data is what every seeded render and the whole matrix
+# are downstream of; a generator that silently reorders a key or reprints 0.3 as
+# 0.30000000000000004 would be invisible everywhere else. Self-heals on commit,
+# like meter.test's head_byte_identity. Plain node, no browser — CI-safe.
+run "kerneldata" node test/kernel-data-identity.test.js &
 PIDS+=($!)
 # poscover: the STAR-MAP POS COMPLETENESS gate (test/pos-coverage.js) — every
 # runtime genre (GenreKernel.GENRES) MUST have an app/world.js POS entry, else
