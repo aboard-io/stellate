@@ -1,7 +1,7 @@
 {
   "name": "raga",
   "label": "Tanpura Nebula",
-  "info": "Indian classical raga as a genre: a singing sitar tracing microtonal meend over a tonic tanpura drone and a sparse tabla-like pulse, slow rubato alap opening into a gat, Phrygian/hijaz modal colour with no Western functional harmony — patient, hypnotic, acoustic",
+  "info": "A tribal kit at 64-92. Contrabass under strings, with a sitar. A two-chord minor drone, straight time, rubato, one chord every 16 beats.",
   "pos": [241, 17320],
   "anchor": {
     "bpm": [64, 92],

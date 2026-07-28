@@ -1,7 +1,7 @@
 {
   "name": "ragtime",
   "label": "Perforated Afterlife",
-  "info": "The rag cycle measured off 236 archive rolls: syncopated right hand over a striding octave left, secondary dominants chaining home (I-VI7-II7-V7), ~100 on the metronome, no kit, no rubato — the first pop music, straight off the roll. The first stellate anchor authored from a corpus (tools/mine-midi.js on the MIDIMAN ragtime rip) rather than by hand.",
+  "info": "Beatless at 104-126. A piano with a honky tonk on both pad and lead. The rag cycle, a light shuffle, rubato.",
   "pos": [753, 14457],
   "anchor": {
     "bpm": [104, 126],
