@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // tools/rm-genre.js — remove a genre-tool-authored genre by stripping its marked
-// blocks from genre-kernel.js (anchor+clips) and genre-verifier.js (target row).
+// blocks from genres-data.js (anchor+clips) and genre-verifier.js (target row).
 // Does NOT touch app/world.js POS or the coords/clusters — re-bake those after.
 //   node tools/rm-genre.js <name> [<name>...]
 "use strict";
@@ -16,8 +16,8 @@ function strip(file, tag) {
   return false;
 }
 for (const name of process.argv.slice(2)) {
-  const g = strip("genre-kernel.js", name + ":genres");
-  const c = strip("genre-kernel.js", name + ":clips");
+  const g = strip("genres-data.js", name + ":genres");     // anchors moved out of the kernel in Stage E1
+  const c = strip("genres-data.js", name + ":clips");
   const t = strip("genre-verifier.js", name + ":targets");
   console.log(`${name}: genres=${g} clips=${c} target=${t}`);
 }

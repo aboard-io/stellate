@@ -134,6 +134,12 @@
 <script src="engine/theory.js"></script>
 <script src="engine/pipes.js"></script>
 <script src="engine/csd-engine.js"></script>
+<!-- THE GENRE DATA: generated classic scripts (Stage E1). MUST precede
+     genre-kernel.js — it reads window.__GENRES / window.__REGISTRY at load,
+     synchronously, the same way app/access.js and app/starmap.js read the
+     kernel at module top level. Not JSON-over-fetch for exactly that reason. -->
+<script src="engine/genres-data.js"></script>
+<script src="engine/registry-data.js"></script>
 <script src="engine/genre-kernel.js"></script>
 <script src="engine/genre-verifier.js"></script>
 <script src="engine/namebank.js"></script>

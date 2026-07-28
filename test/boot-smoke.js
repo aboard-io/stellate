@@ -33,6 +33,11 @@ const EXPECTED = {
   "engine/theory.js": "CsdTheory",
   "engine/pipes.js": "CsdPipes",
   "engine/csd-engine.js": "CsdEngine",
+  // the genre data (Stage E1), generated classic scripts that MUST load before
+  // the kernel: it reads these globals synchronously at load, so an order slip
+  // here is a blank app, not a warning.
+  "engine/genres-data.js": "__GENRES",
+  "engine/registry-data.js": "__REGISTRY",
   "engine/genre-kernel.js": "GenreKernel",
   "engine/genre-verifier.js": "GenreVerifier",
   "engine/namebank.js": "NameBank",

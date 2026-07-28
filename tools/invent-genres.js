@@ -17,7 +17,7 @@
 //                               [--write] [--specs] [--verbose] [--json]
 //
 //   (default) dry run: embed -> gaps -> invent -> name -> gate -> REPORT accept/reject
-//   --write   splice the accepted anchors into engine/genre-kernel.js (GENRES)
+//   --write   splice the accepted anchors into engine/genres-data.js (GENRES)
 //             and their target rows into engine/genre-verifier.js
 //   --specs   also dump each accepted genre's spec.json under genre-specs/invented/
 //
@@ -340,7 +340,7 @@ function run() {
 
 // ================================================================= WRITE
 function writeAccepted(accepted) {
-  const kernelFile = path.join(ROOT, "engine", "genre-kernel.js");
+  const kernelFile = path.join(ROOT, "engine", "genres-data.js");   // the anchors live here since Stage E1
   const verifierFile = path.join(ROOT, "engine", "genre-verifier.js");
   for (const a of accepted) {
     T.spliceBlock(kernelFile, T.TERM.genres, T.serializeAnchor(a.name, a.anchor), a.name + ":genres");
@@ -384,7 +384,7 @@ function report({ gaps, accepted, rejected }) {
     for (const r of rejected) console.log(`✗ ${r.name} (near ${r.nn}, gap ${r.gap}): ${r.reason}`);
     console.log("");
   }
-  if (has("write")) console.log(`WROTE ${accepted.length} genres → engine/genre-kernel.js + engine/genre-verifier.js. Now run: node engine/genre-verifier.js matrix --no-cache`);
+  if (has("write")) console.log(`WROTE ${accepted.length} genres → engine/genres-data.js + engine/genre-verifier.js. Now run: node engine/genre-verifier.js matrix --no-cache`);
   else console.log(`(dry run — re-run with --write to splice the ${accepted.length} accepted genres into the kernel + verifier)`);
 }
 

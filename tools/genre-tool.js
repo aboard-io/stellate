@@ -297,7 +297,10 @@ function spliceBlock(file, terminator, blockText, tag) {
   fs.writeFileSync(file, src);
 }
 const TERM = {
-  genres: "\n  };\n\n  // ---------- MUSIC-MIND anchor axes",   // the section that follows the GENRES close
+  // GENRES lives in engine/genres-data.js since Stage E1, so the terminator is
+  // the data module's own footer rather than the kernel section that used to
+  // follow the literal.
+  genres: "\n  };\n  if (typeof module !== \"undefined\" && module.exports)",
   targets: "\n  };\n\n  // the piecewise-linear target-row scorer",
 };
 
@@ -360,7 +363,7 @@ function cmdCreate() {
   const errs = validateSpec(spec, vocab, schema);
   if (errs.length) { console.error(`✗ ${name}: spec invalid`); errs.forEach(e => console.error("  - " + e)); process.exit(1); }
   const exists = !!K.GENRES[name];
-  const toolMarked = fs.readFileSync(path.join(ROOT, "genre-kernel.js"), "utf8").includes(`/* genre-tool:${name}:genres */`);
+  const toolMarked = fs.readFileSync(path.join(ROOT, "genres-data.js"), "utf8").includes(`/* genre-tool:${name}:genres */`);
   if (exists && !toolMarked && !has("force")) die(`genre "${name}" already exists as a hand-written anchor — pass --force to overwrite (won't; refuse)`);
 
   const anchor = Object.assign({ label: spec.label || name, info: spec.info || "" }, spec.anchor);
@@ -399,10 +402,10 @@ function cmdCreate() {
   if (has("dry-run")) { console.log("\n(dry-run: no files written)"); return; }
 
   // ---- write: anchor -> GENRES, targets -> verifier
-  spliceBlock(path.join(ROOT, "genre-kernel.js"), TERM.genres, serializeAnchor(name, anchor), name + ":genres");
+  spliceBlock(path.join(ROOT, "genres-data.js"), TERM.genres, serializeAnchor(name, anchor), name + ":genres");
   spliceBlock(path.join(ROOT, "genre-verifier.js"), TERM.targets, serializeTarget(name, row), name + ":targets");
   splicePosition(name, spec.pos);   // star-chart coordinates (the hogcore lesson: a genre without a star is invisible-but-audible)
-  console.log(`\n✓ wrote ${name}: anchor -> genre-kernel.js, target row -> genre-verifier.js, star -> explorer.html`);
+  console.log(`\n✓ wrote ${name}: anchor -> genres-data.js, target row -> genre-verifier.js, star -> explorer.html`);
 
   // ---- gates
   if (has("skip-gates")) { console.log("\n(--skip-gates: run ./verify.sh and `node genre-verifier.js matrix` yourself)"); return; }
