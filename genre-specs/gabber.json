@@ -1,0 +1,175 @@
+{
+  "name": "gabber",
+  "label": "Jackhammer Communion",
+  "info": "the hammer: a distorted 909 four at 150-185, hoover stabs, zero swing, maximum grit — tenderness expressed at a hundred decibels",
+  "pos": [1809, 17533],
+  "anchor": {
+    "bpm": [155, 185],
+    "swing": [0, 0.03],
+    "humanize": [0, 0.08],
+    "progressions": ["drone_min", "deep_two", "mode_phrygian"],
+    "kits": ["four", "techno"],
+    "fills": ["impact", "cut", "riser", "hat rush", "stutter", "stutter"],
+    "bass": {
+      "patterns": ["stab", "drive", "rolling"],
+      "recipe": {
+        "model": ["acid", "reese"],
+        "cutoff": [420, 700],
+        "res": [0.25, 0.4],
+        "level": [1.2, 1.4],
+        "send": [0, 0.06],
+        "dsend": [0, 0.08]
+      },
+      "inserts": {
+        "prob": 0.8,
+        "max": 1,
+        "pool": [
+          [
+            "distort",
+            {
+              "drive": [0.5, 0.9],
+              "mix": [0.8, 1]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": ["double", "off", "arpup"],
+      "recipe": {
+        "model": ["hoover"],
+        "wave": "saw",
+        "voices": [3, 5],
+        "spread": [0.008, 0.015],
+        "cutoff": [2200, 3200],
+        "res": [0.3, 0.45],
+        "level": [0.46, 0.58],
+        "send": [0.2, 0.35],
+        "dsend": [0.2, 0.35],
+        "attack": 0.003,
+        "release": [0.06, 0.1],
+        "sustain": [0.5, 0.62],
+        "fenv": [0.7, 1.2]
+      },
+      "inserts": {
+        "prob": 0.7,
+        "max": 2,
+        "pool": [
+          [
+            "phaser",
+            {
+              "rate": [0.15, 0.4],
+              "depth": [0.5, 0.7],
+              "mix": [0.35, 0.55]
+            }
+          ],
+          [
+            "distort",
+            {
+              "drive": [0.5, 0.85],
+              "mix": [0.7, 1]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.2,
+      "recipe": {
+        "model": ["saw"],
+        "wave": "saw",
+        "cutoff": [600, 1000],
+        "detune": [0.008, 0.016],
+        "attack": [0.5, 1.5],
+        "level": [0.3, 0.42],
+        "send": [0.25, 0.4],
+        "dsend": [0.1, 0.25]
+      }
+    },
+    "drums": {
+      "kickModel": ["909"],
+      "snareModel": ["clap", "crack"],
+      "hatModel": ["metal", "noise"],
+      "kick": [1.5, 1.8],
+      "snare": [0.7, 0.95],
+      "hat": [0.6, 0.9],
+      "tune": [1.05, 1.2],
+      "send": [0.05, 0.12],
+      "dsend": [0.05, 0.15]
+    },
+    "fx": {
+      "reverb": [0.25, 0.4],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.25, 0.4],
+      "delayCut": [2200, 3400],
+      "pump": [0.4, 0.7],
+      "crackle": [0, 0.05],
+      "lowcut": [30, 45],
+      "highcut": [0, 0],
+      "comp": [0.6, 0.85],
+      "grit": [0.7, 0.95],
+      "jux": [0.15, 0.35]
+    },
+    "found": {
+      "role": "chops",
+      "vol": [0.1, 0.18],
+      "pitch": [0.9, 1.1],
+      "stretch": [0.4, 0.6],
+      "cutoff": [2200, 3600],
+      "sources": ["factory", "vx_xminusone"]
+    },
+    "hits": {
+      "sources": [
+        "pool:vb_rave_hardcore*1",
+        "pool:rave_stab*2",
+        "bb_stab_a",
+        "sp_energy",
+        "stml_hit_01",
+        "stml_hit_b3"
+      ],
+      "pattern": "offbeat",
+      "prob": 0.8
+    },
+    "stab": ["rave", "offbeat"],
+    "form": "dj",
+    "introMode": "off"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.067, 0.133],
+      "color": [0.167, 0.35],
+      "voicing": "open",
+      "reharm": false
+    },
+    "pipes": [
+      {
+        "id": "octavePump",
+        "w": 0.5,
+        "prob": 0.4
+      },
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      }
+    ],
+    "rhythm": [0.1, 0.25]
+  },
+  "targets": {
+    "bpm": [150, 190, 3],
+    "offgrid": [0, 0.2, 2],
+    "breakUse": [0, 0.08, 2],
+    "comp": [0.5, 1, 2],
+    "swing": [0, 0.05, 2],
+    "pump": [0.3, 0.8, 1],
+    "crackle": [0, 0.08, 1],
+    "drumDensity": [1.8, 4.5, 1],
+    "chopUse": [0.2, 1, 1]
+  }
+}

@@ -1,0 +1,161 @@
+{
+  "name": "industrial",
+  "label": "Annealing Ritual",
+  "info": "detuned machine music: metal hats, phrygian drones, the metallurgy plant promoted to soloist — the third shift keeps the time",
+  "pos": [1603, 15842],
+  "anchor": {
+    "bpm": [100, 126],
+    "swing": [0, 0.05],
+    "humanize": [0, 0.15],
+    "progressions": ["mode_phrygian", "drone_min", "deep_two"],
+    "kits": ["techno", "pulse"],
+    "fills": ["cut", "impact", "noise", "hat rush", "stutter"],
+    "euclid": {
+      "hat": [11, 16]
+    },
+    "bass": {
+      "patterns": ["stab", "rolling", "drive"],
+      "recipe": {
+        "model": ["reese", "acid"],
+        "cutoff": [300, 520],
+        "res": [0.25, 0.4],
+        "level": [1.1, 1.3],
+        "send": [0, 0.08],
+        "dsend": [0, 0.1]
+      },
+      "inserts": {
+        "prob": 0.7,
+        "max": 2,
+        "pool": [
+          [
+            "distort",
+            {
+              "drive": [0.4, 0.7],
+              "mix": [0.7, 1]
+            }
+          ],
+          [
+            "filtersweep",
+            {
+              "rateBars": [2, 4],
+              "lo": [-1, -0.4],
+              "hi": [0.6, 1.2],
+              "res": [0.3, 0.5]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": ["double", "sparse", "off"],
+      "recipe": {
+        "model": ["fuzz", "stack", "vocoder"],
+        "wave": "saw",
+        "voices": [1, 2],
+        "spread": [0.003, 0.008],
+        "cutoff": [1600, 2600],
+        "res": [0.3, 0.45],
+        "level": [0.38, 0.5],
+        "send": [0.2, 0.35],
+        "dsend": [0.3, 0.5],
+        "attack": 0.004,
+        "release": [0.06, 0.1],
+        "sustain": [0.5, 0.62],
+        "fenv": [0.6, 1]
+      }
+    },
+    "pads": {
+      "prob": 0.3,
+      "recipe": {
+        "model": ["organ", "saw"],
+        "wave": "saw",
+        "cutoff": [550, 900],
+        "detune": [0.006, 0.012],
+        "attack": [0.8, 2],
+        "level": [0.3, 0.42],
+        "send": [0.25, 0.4],
+        "dsend": [0.15, 0.3]
+      }
+    },
+    "drums": {
+      "kickModel": ["909", "808"],
+      "snareModel": ["crack", "clap"],
+      "hatModel": ["metal"],
+      "kick": [1.3, 1.55],
+      "snare": [0.7, 0.95],
+      "hat": [0.8, 1.15],
+      "tune": [0.8, 0.9],
+      "send": [0.1, 0.2],
+      "dsend": [0.15, 0.35]
+    },
+    "fx": {
+      "reverb": [0.45, 0.65],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.35, 0.5],
+      "delayCut": [1800, 2800],
+      "pump": [0.1, 0.3],
+      "crackle": [0, 0.08],
+      "lowcut": [35, 50],
+      "highcut": [0, 0],
+      "comp": [0.5, 0.7],
+      "grit": [0.5, 0.8],
+      "jux": [0.3, 0.55]
+    },
+    "found": {
+      "role": "chops",
+      "vol": [0.16, 0.26],
+      "pitch": [0.85, 1],
+      "stretch": [0.4, 0.6],
+      "cutoff": [2500, 4000],
+      "sources": ["factory", "factory", "vx_conet_poacher"]
+    },
+    "vocSource": "vx_conet_poacher",
+    "hits": {
+      "sources": ["pool:vb_industrial_machine*1", "sp_system", "sp_pressure", "pool:rave_stab*1"],
+      "pattern": "dub",
+      "prob": 0.55
+    },
+    "stab": ["offbeat", "sparse"],
+    "form": "dj"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.067, 0.133],
+      "color": [0.167, 0.35],
+      "voicing": "open",
+      "reharm": false
+    },
+    "pipes": [
+      {
+        "id": "octavePump",
+        "w": 0.5,
+        "prob": 0.4
+      },
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      }
+    ],
+    "rhythm": [0.16, 0.33]
+  },
+  "targets": {
+    "bpm": [96, 128, 3],
+    "chopUse": [0.25, 1, 2],
+    "pump": [0, 0.35, 2],
+    "comp": [0.4, 0.85, 1],
+    "motion": [0, 0.7, 2],
+    "sub": [0.5, 1, 1],
+    "swing": [0, 0.06, 1],
+    "crackle": [0, 0.12, 1],
+    "snareBalance": [0, 0.7, 1],
+    "hatDensity": [0.8, 2.6, 1],
+    "humanize": [0, 0.18, 2]
+  }
+}

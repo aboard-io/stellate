@@ -1,28 +1,145 @@
 {
   "name": "crimsoncourt",
-  "label": "Crimson Court",
+  "label": "Non Euclidean Court",
   "info": "angular dread in the throne room: metallic FM stabs land just off the grid, a snarling reese coils in hemiola under phrygian ground, tape-choir clouds gather at the ceiling — everything is precise, nothing is safe",
+  "pos": [1109, 13089],
   "anchor": {
     "bpm": [106, 118],
     "swing": [0, 0.04],
     "humanize": [0.05, 0.18],
-    "progressions": ["mode_phrygian", "frost", "hijaz", "minor_run"],
+    "progressions": ["mode_phrygian", "frost", "hijaz", "minor_run", "quartal"],
     "kits": ["breaks", "halftime", "electro"],
     "fills": ["cut", "impact", "stutter", "noise"],
-    "euclid": { "kick": [5, 16], "hat": [11, 16] },
-    "bass": { "patterns": ["stab", "syncopated", "hemiola"], "recipe": { "model": ["reese", "saw"], "cutoff": [350, 650], "res": [0.15, 0.3], "level": [1.1, 1.3], "send": [0, 0.08], "dsend": [0, 0.08] }, "inserts": { "prob": 0.5, "max": 1, "pool": [["distort", { "drive": [0.4, 0.7], "mix": [0.6, 0.85] }]] } },
-    "lead": { "patterns": ["sparse", "double", "composed"], "recipe": { "model": ["metal", "fm", "ringmod"], "wave": "saw", "voices": [1, 2], "spread": [0.002, 0.006], "cutoff": [2000, 3200], "res": [0.2, 0.35], "level": [0.46, 0.58], "send": [0.25, 0.4], "dsend": [0.2, 0.35], "attack": 0.004, "release": [0.08, 0.18], "sustain": [0.4, 0.6] } },
-    "pads": { "prob": 0.5, "samplerPool": ["ohh_voices", "cello"], "recipe": { "model": ["sampler", "strings", "choir"], "wave": "saw", "cutoff": [700, 1300], "detune": [0.008, 0.016], "attack": [1.5, 3.5], "mellotron": true, "level": [0.4, 0.55], "send": [0.4, 0.6], "dsend": [0.1, 0.25] } },
-    "drums": { "kickModel": ["909", "boom"], "snareModel": ["crack", "noise"], "hatModel": ["metal", "noise"], "kick": [1.15, 1.4], "snare": [0.8, 1.05], "hat": [0.5, 0.8], "tune": [0.9, 1.05], "send": [0.1, 0.2], "dsend": [0.08, 0.2] },
-    "fx": { "reverb": [0.3, 0.45], "delayBeats": [0.375, 0.75], "delayFb": [0.2, 0.35], "delayCut": [2000, 3000], "pump": [0, 0.1], "crackle": [0.05, 0.18], "lowcut": [25, 40], "highcut": [0, 0], "comp": [0.35, 0.55], "grit": [0.3, 0.55], "jux": [0.15, 0.35] },
-    "found": { "role": "bed", "vol": [0.1, 0.2], "pitch": [0.7, 0.9], "stretch": [0.45, 0.6], "cutoff": [1600, 2800], "sources": ["factory", "vx_conet_swedish", "vx_suspense"] },
-    "hits": { "sources": ["sp_pressure", "vx_conet_poacher"], "pattern": "offbeat", "prob": 0.4 },
+    "euclid": {
+      "kick": [5, 16],
+      "hat": [11, 16]
+    },
+    "bass": {
+      "patterns": ["stab", "syncopated", "hemiola"],
+      "recipe": {
+        "model": ["reese", "saw"],
+        "cutoff": [350, 650],
+        "res": [0.15, 0.3],
+        "level": [1.1, 1.3],
+        "send": [0, 0.08],
+        "dsend": [0, 0.08]
+      },
+      "inserts": {
+        "prob": 0.5,
+        "max": 1,
+        "pool": [
+          [
+            "distort",
+            {
+              "drive": [0.4, 0.7],
+              "mix": [0.6, 0.85]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": ["sparse", "double", "composed"],
+      "recipe": {
+        "model": ["metal", "fm", "ringmod"],
+        "wave": "saw",
+        "voices": [1, 2],
+        "spread": [0.002, 0.006],
+        "cutoff": [2000, 3200],
+        "res": [0.2, 0.35],
+        "level": [0.46, 0.58],
+        "send": [0.25, 0.4],
+        "dsend": [0.2, 0.35],
+        "attack": 0.004,
+        "release": [0.08, 0.18],
+        "sustain": [0.4, 0.6]
+      }
+    },
+    "pads": {
+      "prob": 0.5,
+      "samplerPool": ["ohh_voices", "cello"],
+      "recipe": {
+        "model": ["sampler", "strings", "choir"],
+        "wave": "saw",
+        "cutoff": [700, 1300],
+        "detune": [0.008, 0.016],
+        "attack": [1.5, 3.5],
+        "mellotron": true,
+        "level": [0.4, 0.55],
+        "send": [0.4, 0.6],
+        "dsend": [0.1, 0.25]
+      }
+    },
+    "drums": {
+      "kickModel": ["909", "boom"],
+      "snareModel": ["crack", "noise"],
+      "hatModel": ["metal", "noise"],
+      "kick": [1.15, 1.4],
+      "snare": [0.8, 1.05],
+      "hat": [0.5, 0.8],
+      "tune": [0.9, 1.05],
+      "send": [0.1, 0.2],
+      "dsend": [0.08, 0.2]
+    },
+    "fx": {
+      "reverb": [0.3, 0.45],
+      "delayBeats": [0.375, 0.75],
+      "delayFb": [0.2, 0.35],
+      "delayCut": [2000, 3000],
+      "pump": [0, 0.1],
+      "crackle": [0.05, 0.18],
+      "lowcut": [25, 40],
+      "highcut": [0, 0],
+      "comp": [0.35, 0.55],
+      "grit": [0.3, 0.55],
+      "jux": [0.15, 0.35]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.1, 0.2],
+      "pitch": [0.7, 0.9],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1600, 2800],
+      "sources": ["pool:industry*1", "pool:voices*1", "vx_suspense"]
+    },
+    "hits": {
+      "sources": ["sp_pressure", "vx_conet_poacher"],
+      "pattern": "offbeat",
+      "prob": 0.4
+    },
     "stab": ["sparse", "offbeat"],
     "form": "wave"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": { "bpm": 3, "drumDensity": 2, "variation": 2, "wash": 1, "motion": 1, "sub": 1, "bedUse": 2 }
+  "mind": {
+    "theory": {
+      "adventure": [0.15, 0.255],
+      "color": [0.188, 0.338],
+      "voicing": "quartal",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      }
+    ],
+    "rhythm": [0.377, 0.613]
+  },
+  "targets": {
+    "bpm": [99, 126, 3],
+    "drumDensity": [0.104, 1.096, 2],
+    "variation": [0.88, 1, 2],
+    "wash": [0.008, 0.252, 1],
+    "motion": [0.487, 1, 1],
+    "sub": [0.41, 1, 1],
+    "bedUse": [0.88, 1, 2]
   }
 }

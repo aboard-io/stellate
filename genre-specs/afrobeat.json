@@ -1,0 +1,176 @@
+{
+  "name": "afrobeat",
+  "label": "Polyrhythm Senate",
+  "info": "the long groove in session: interlocking euclid percussion, organ stabs on a dorian vamp, horn-section hits — one chord held until it means something",
+  "pos": [1237, 17819],
+  "anchor": {
+    "bpm": [100, 114],
+    "swing": [0.04, 0.12],
+    "humanize": [0.15, 0.3],
+    "progressions": ["funk_vamp", "mode_dorian", "house_min"],
+    "kits": ["tribal", "house"],
+    "fills": ["drum fill", "hat rush", "off"],
+    "euclid": {
+      "kick": [3, 16],
+      "hat": [11, 16]
+    },
+    "bass": {
+      "patterns": ["melodic", "dub", "stab", "syncopated", "tresillo", "son"],
+      "recipe": {
+        "model": ["saw", "sub"],
+        "cutoff": [500, 850],
+        "res": [0.08, 0.16],
+        "level": [1.05, 1.25],
+        "send": [0.03, 0.08],
+        "dsend": [0, 0.05]
+      },
+      "inserts": {
+        "prob": 0.4,
+        "max": 1,
+        "pool": [
+          [
+            "wah",
+            {
+              "sens": [0.5, 0.72],
+              "base": [260, 400],
+              "range": [1.8, 2.6],
+              "q": [4, 6.5],
+              "mix": [0.7, 0.9]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": ["double", "pentaup", "sparse"],
+      "samplerPool": ["trumpet", "tenor_sax", "trombone"],
+      "recipe": {
+        "model": ["sampler", "sampler", "sampler"],
+        "wave": "saw",
+        "voices": [1, 2],
+        "spread": [0.002, 0.005],
+        "cutoff": [2800, 3800],
+        "level": [0.5, 0.62],
+        "send": [0.25, 0.4],
+        "dsend": [0.1, 0.2],
+        "attack": 0.01
+      }
+    },
+    "pads": {
+      "prob": 0.9,
+      "patchPool": ["MARIMBA", "LOG DRUM"],
+      "recipe": {
+        "model": ["organ", "organ", "dx7"],
+        "wave": "saw",
+        "cutoff": [1100, 1700],
+        "detune": [0.003, 0.008],
+        "attack": [0.1, 0.4],
+        "level": [0.46, 0.6],
+        "send": [0.2, 0.35],
+        "dsend": [0.05, 0.12]
+      },
+      "inserts": {
+        "prob": 0.4,
+        "max": 1,
+        "pool": [
+          [
+            "phaser",
+            {
+              "rate": [0.1, 0.3],
+              "depth": [0.5, 0.7],
+              "mix": [0.35, 0.55]
+            }
+          ]
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom", "808"],
+      "snareModel": ["noise", "crack"],
+      "hatModel": ["noise"],
+      "kick": [1.05, 1.25],
+      "snare": [0.6, 0.85],
+      "hat": [1, 1.3],
+      "tune": [1, 1.1],
+      "send": [0.08, 0.16],
+      "dsend": [0.05, 0.12]
+    },
+    "fx": {
+      "reverb": [0.3, 0.45],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.2, 0.35],
+      "delayCut": [2600, 3800],
+      "pump": [0, 0.1],
+      "crackle": [0.1, 0.25],
+      "lowcut": [25, 40],
+      "highcut": [0, 0],
+      "comp": [0.3, 0.5]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.1, 0.18],
+      "pitch": [0.9, 1.05],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2200, 3400],
+      "sources": ["pool:road*1", "pool:city*1"]
+    },
+    "hits": {
+      "sources": ["pool:horn_stab*1", "sp_rhythm", "pool:vocal_stab*1"],
+      "pattern": "offbeat",
+      "prob": 0.7
+    },
+    "stab": ["off", "sparse"],
+    "form": "vamp",
+    "timeFeel": {
+      "pushPullMs": {
+        "snare": 7,
+        "hat": -4,
+        "perc": -3
+      }
+    }
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.117, 0.233],
+      "color": [0.267, 0.45],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [],
+    "rhythm": [0.4, 0.6]
+  },
+  "perc": {
+    "lanes": [
+      {
+        "p": "shaker16",
+        "lvl": 0.15
+      },
+      {
+        "p": "conga",
+        "lvl": 0.24
+      },
+      {
+        "p": "agogo",
+        "lvl": 0.13
+      },
+      {
+        "p": "clave",
+        "lvl": 0.12
+      }
+    ]
+  },
+  "targets": {
+    "bpm": [96, 118, 2],
+    "acoustic": [0.4, 0.8, 2],
+    "swing": [0.02, 0.14, 2],
+    "hatDensity": [1.3, 2.6, 2],
+    "drumDensity": [1.8, 3.4, 1],
+    "seventh": [0.7, 1, 1],
+    "crackle": [0.05, 0.3, 1],
+    "comp": [0.25, 0.55, 1],
+    "pump": [0, 0.12, 2],
+    "snareBalance": [0.2, 0.9, 1],
+    "interlock": [0.3, 1, 3]
+  }
+}

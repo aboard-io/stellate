@@ -1,0 +1,144 @@
+{
+  "name": "sludgemetal",
+  "label": "Molasses Avalanche",
+  "info": "downtuned fuzz crawling at 60: halftime stomp, a BIG backbeat, the amplifier one song from death and playing like it knows",
+  "pos": [1337, 9352],
+  "anchor": {
+    "bpm": [52, 70],
+    "swing": [0, 0.06],
+    "humanize": [0.1, 0.3],
+    "progressions": ["mode_phrygian", "drone_min", "deep_two"],
+    "kits": ["halftime", "kick"],
+    "fills": ["impact", "off", "downlift", "tape stop"],
+    "bass": {
+      "patterns": ["root", "sub", "dub"],
+      "recipe": {
+        "model": ["reese", "sub"],
+        "cutoff": [200, 360],
+        "res": [0.05, 0.15],
+        "level": [1.25, 1.5],
+        "send": [0.05, 0.12],
+        "dsend": [0, 0.06]
+      },
+      "inserts": {
+        "prob": 0.85,
+        "max": 1,
+        "pool": [
+          [
+            "higain",
+            {
+              "gate": [0.05, 0.18],
+              "drive": [0.8, 0.95],
+              "stages": 3,
+              "low": 0.7,
+              "mid": 0.55,
+              "high": 0.35,
+              "presence": [0.2, 0.35],
+              "mix": [0.9, 1]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": ["double", "blues", "sparse"],
+      "samplerPool": ["crunch_guitar"],
+      "recipe": {
+        "model": ["fuzz", "fuzz", "sampler"],
+        "wave": "saw",
+        "voices": [1, 2],
+        "spread": [0.003, 0.008],
+        "cutoff": [1400, 2200],
+        "res": [0.25, 0.4],
+        "drive": [0.7, 1],
+        "level": [0.5, 0.62],
+        "send": [0.3, 0.45],
+        "dsend": [0.15, 0.3],
+        "attack": 0.01,
+        "release": [0.2, 0.35],
+        "sustain": [0.8, 0.95]
+      }
+    },
+    "pads": {
+      "prob": 0.3,
+      "recipe": {
+        "model": ["saw"],
+        "wave": "saw",
+        "cutoff": [420, 760],
+        "detune": [0.01, 0.02],
+        "attack": [2.5, 4.5],
+        "level": [0.34, 0.46],
+        "send": [0.28, 0.42],
+        "dsend": [0.1, 0.25]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom", "808"],
+      "snareModel": ["noise", "crack"],
+      "hatModel": ["noise"],
+      "kick": [1.35, 1.6],
+      "snare": [0.9, 1.15],
+      "hat": [0.4, 0.7],
+      "tune": [0.75, 0.9],
+      "send": [0.15, 0.28],
+      "dsend": [0.05, 0.15]
+    },
+    "fx": {
+      "reverb": [0.4, 0.6],
+      "delayBeats": [0.75, 1],
+      "delayFb": [0.25, 0.4],
+      "delayCut": [1600, 2600],
+      "pump": [0, 0.1],
+      "crackle": [0.05, 0.2],
+      "lowcut": [0, 25],
+      "highcut": [0, 0],
+      "comp": [0.5, 0.75],
+      "grit": [0.65, 0.95]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.15, 0.25],
+      "pitch": [0.55, 0.7],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1400, 2400],
+      "sources": ["pool:industry*1", "pool:road*1"]
+    },
+    "hits": {
+      "sources": ["sp_pressure", "pool:vocal_stab*1"],
+      "pattern": "sparse",
+      "prob": 0.3
+    },
+    "stab": ["off"],
+    "form": "vamp",
+    "timeFeel": {
+      "pushPull": {
+        "kick": 0.03,
+        "snare": 0.045,
+        "bass": 0.055
+      }
+    },
+    "reverbColor": "greyhole"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.067, 0.133],
+      "color": [0.167, 0.35],
+      "voicing": "open",
+      "reharm": false
+    },
+    "pipes": [],
+    "rhythm": [0.05, 0.2]
+  },
+  "targets": {
+    "bpm": [48, 72, 3],
+    "snareBalance": [0.4, 1.2, 2],
+    "drumDensity": [0.8, 2, 2],
+    "comp": [0.4, 0.8, 2],
+    "wash": [0, 0.35, 2],
+    "sub": [0.6, 1, 1],
+    "swing": [0, 0.07, 1],
+    "crackle": [0, 0.25, 1],
+    "pump": [0, 0.1, 1],
+    "motion": [0, 0.7, 1]
+  }
+}

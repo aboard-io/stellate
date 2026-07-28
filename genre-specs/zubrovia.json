@@ -1,302 +1,136 @@
 {
   "name": "zubrovia",
-  "label": "Anthem of Zubrovia",
-  "info": "the national music of a made-up Balkan micro-nation: a proud brass anthem in a phrygian-dominant hijaz mode, a choir singing in an invented language, and the state dance \u2014 the Kolo-Skronk, three steps and a shrug \u2014 broadcast nightly before the weather",
-  "clips": [
-    "ca_canada",
-    "dc_skyline",
-    "earth_orbit",
-    "cs_manhatta"
-  ],
-  "materials": "espeak invented-language anthem (sp_zubrovia_*, MATERIALS \u2014 original nonsense syllables) + french-horn/DX7 brass; the folk ACCORDION (GM 21) fronts the state-anthem alongside french-horn/trumpet brass",
-  "pos": [
-    620,
-    290
-  ],
+  "label": "Zubrovian Irredenta",
+  "info": "the national music of a made-up Balkan micro-nation: a proud brass anthem in a phrygian-dominant hijaz mode, a choir singing in an invented language, and the state dance — the Kolo-Skronk, three steps and a shrug — broadcast nightly before the weather",
+  "pos": [364, 17761],
   "anchor": {
-    "bpm": [
-      112,
-      126
-    ],
-    "swing": [
-      0,
-      0.06
-    ],
-    "humanize": [
-      0.05,
-      0.14
-    ],
-    "progressions": [
-      "hijaz",
-      "andalusian",
-      "epic_min"
-    ],
-    "kits": [
-      "tribal",
-      "full"
-    ],
-    "fills": [
-      "tom fill",
-      "kit fill",
-      "impact"
-    ],
+    "bpm": [112, 126],
+    "swing": [0, 0.06],
+    "humanize": [0.05, 0.14],
+    "progressions": ["hijaz", "andalusian", "epic_min"],
+    "kits": ["tribal", "full"],
+    "fills": ["tom fill", "kit fill", "impact"],
     "bass": {
-      "patterns": [
-        "root",
-        "octaves",
-        "walking"
-      ],
+      "patterns": ["root", "octaves", "walking"],
       "recipe": {
-        "model": [
-          "brass",
-          "sampler",
-          "dx7"
-        ],
-        "samplerPool": [
-          "acoustic_bass"
-        ],
-        "patchPool": [
-          "BASS    2"
-        ],
-        "cutoff": [
-          600,
-          1000
-        ],
-        "level": [
-          0.6,
-          0.82
-        ],
-        "send": [
-          0.1,
-          0.3
-        ],
-        "dsend": [
-          0,
-          0.08
-        ]
+        "model": ["brass", "sampler", "dx7"],
+        "samplerPool": ["acoustic_bass"],
+        "patchPool": ["BASS    2"],
+        "cutoff": [600, 1000],
+        "level": [0.6, 0.82],
+        "send": [0.1, 0.3],
+        "dsend": [0, 0.08]
       }
     },
     "lead": {
-      "patterns": [
-        "anthem",
-        "hero",
-        "wander"
-      ],
+      "patterns": ["anthem", "hero", "wander"],
       "recipe": {
-        "model": [
-          "sampler",
-          "sampler",
-          "brass"
-        ],
-        "samplerPool": [
-          "accordion",
-          "french_horns",
-          "trumpet"
-        ],
-        "patchPool": [
-          "BRASS   1"
-        ],
+        "model": ["sampler", "sampler", "brass"],
+        "samplerPool": ["accordion", "french_horns", "trumpet"],
+        "patchPool": ["BRASS   1"],
         "wave": "sine",
-        "voices": [
-          1,
-          2
-        ],
-        "cutoff": [
-          2200,
-          3400
-        ],
-        "level": [
-          0.44,
-          0.58
-        ],
-        "send": [
-          0.3,
-          0.5
-        ],
-        "dsend": [
-          0.1,
-          0.25
-        ],
-        "vibrato": [
-          0.003,
-          0.008
-        ]
+        "voices": [1, 2],
+        "cutoff": [2200, 3400],
+        "level": [0.44, 0.58],
+        "send": [0.3, 0.5],
+        "dsend": [0.1, 0.25],
+        "vibrato": [0.003, 0.008]
       }
     },
     "pads": {
       "prob": 0.7,
       "recipe": {
-        "model": [
-          "sampler",
-          "choir",
-          "strings"
-        ],
-        "samplerPool": [
-          "ahh_choir",
-          "strings"
-        ],
+        "model": ["sampler", "choir", "strings"],
+        "samplerPool": ["ahh_choir", "strings"],
         "wave": "saw",
-        "cutoff": [
-          900,
-          1600
-        ],
-        "detune": [
-          0.005,
-          0.012
-        ],
-        "attack": [
-          1,
-          2.5
-        ],
-        "level": [
-          0.45,
-          0.62
-        ],
-        "send": [
-          0.4,
-          0.6
-        ],
-        "dsend": [
-          0.1,
-          0.2
-        ],
+        "cutoff": [900, 1600],
+        "detune": [0.005, 0.012],
+        "attack": [1, 2.5],
+        "level": [0.45, 0.62],
+        "send": [0.4, 0.6],
+        "dsend": [0.1, 0.2],
         "mellotron": true
       }
     },
     "drums": {
-      "kickModel": [
-        "boom"
-      ],
-      "snareModel": [
-        "crack",
-        "noise"
-      ],
-      "hatModel": [
-        "noise",
-        "metal"
-      ],
-      "kick": [
-        0.8,
-        1.1
-      ],
-      "snare": [
-        0.5,
-        0.75
-      ],
-      "hat": [
-        0.4,
-        0.65
-      ],
-      "tune": [
-        0.94,
-        1.06
-      ],
-      "send": [
-        0.15,
-        0.35
-      ],
-      "dsend": [
-        0.05,
-        0.15
-      ]
+      "kickModel": ["boom"],
+      "snareModel": ["crack", "noise"],
+      "hatModel": ["noise", "metal"],
+      "kick": [0.8, 1.1],
+      "snare": [0.5, 0.75],
+      "hat": [0.4, 0.65],
+      "tune": [0.94, 1.06],
+      "send": [0.15, 0.35],
+      "dsend": [0.05, 0.15]
     },
     "fx": {
-      "reverb": [
-        0.4,
-        0.6
-      ],
-      "delayBeats": [
-        0.5,
-        0.9
-      ],
-      "delayFb": [
-        0.12,
-        0.28
-      ],
-      "delayCut": [
-        2400,
-        3400
-      ],
-      "pump": [
-        0,
-        0.1
-      ],
-      "crackle": [
-        0,
-        0.12
-      ],
-      "lowcut": [
-        0,
-        0
-      ],
-      "highcut": [
-        0,
-        0
-      ],
-      "comp": [
-        0.2,
-        0.4
-      ]
+      "reverb": [0.4, 0.6],
+      "delayBeats": [0.5, 0.9],
+      "delayFb": [0.12, 0.28],
+      "delayCut": [2400, 3400],
+      "pump": [0, 0.1],
+      "crackle": [0, 0.12],
+      "lowcut": [0, 0],
+      "highcut": [0, 0],
+      "comp": [0.2, 0.4]
     },
     "found": {
       "role": "bed",
-      "vol": [
-        0.1,
-        0.2
-      ],
-      "pitch": [
-        0.92,
-        1.05
-      ],
-      "stretch": [
-        0.5,
-        0.7
-      ],
-      "cutoff": [
-        2400,
-        3800
-      ],
-      "sources": [
-        "vx_sv_choir",
-        "vx_sv_march"
-      ]
-    },
-    "hits": {
-      "sources": [
-        "horns_78",
-        "bb_horn_a"
-      ],
-      "pattern": "response",
-      "prob": 0.3
+      "vol": [0.1, 0.2],
+      "pitch": [0.92, 1.05],
+      "stretch": [0.5, 0.7],
+      "cutoff": [2400, 3800],
+      "sources": ["vx_sv_choir", "vx_sv_march"]
     },
     "sampleEvents": [
       {
-        "pool": [
-          "vx_sv_choir",
-          "vx_sv_march"
-        ],
+        "pool": ["vx_sv_choir", "vx_sv_march"],
         "placement": "opener",
         "sections": "all",
         "treatment": {
           "cutoff": 3600,
           "vol": 0.4
         }
+      },
+      {
+        "pool": ["sp_zubrovia_1", "sp_zubrovia_2", "sp_zubrovia_3"],
+        "placement": "buried",
+        "sections": "all",
+        "treatment": {
+          "cutoff": 4000,
+          "vol": 0.4,
+          "every": 4,
+          "maxDur": 14,
+          "rsend": 0.16,
+          "dsend": 0.12
+        }
       }
     ],
-    "stab": [
-      "off"
-    ],
+    "hits": {
+      "sources": ["pool:horn_stab*1", "bb_horn_a"],
+      "pattern": "response",
+      "prob": 0.3
+    },
+    "stab": ["off"],
     "form": "anthem"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": {
-      "bpm": 3,
-      "bedUse": 3,
-      "pump": 3,
-      "swing": 2,
-      "wash": 2
-    }
+  "mind": {
+    "theory": {
+      "adventure": [0.15, 0.267],
+      "color": [0.167, 0.333],
+      "voicing": "quartal",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [],
+    "rhythm": [0.235, 0.45]
+  },
+  "targets": {
+    "bpm": [105, 134, 3],
+    "bedUse": [0.71, 0.95, 3],
+    "pump": [0, 0.159, 3],
+    "swing": [0, 0.091, 2],
+    "wash": [0.05, 0.346, 2],
+    "acoustic": [0, 0.12, 3]
   }
 }

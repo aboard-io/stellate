@@ -1,0 +1,145 @@
+{
+  "name": "spokenword",
+  "label": "Dial Tone Prophet",
+  "info": "poets narrating through the dust: a quiet head-nod beat, piano color, the human voice as the lead instrument — every prophecy read from a napkin",
+  "pos": [196, 11743],
+  "anchor": {
+    "bpm": [72, 96],
+    "swing": [0.05, 0.14],
+    "humanize": [0.2, 0.4],
+    "progressions": ["ii_v_i", "neosoul", "mode_dorian"],
+    "kits": ["boombap"],
+    "fills": ["off", "off", "drum fill"],
+    "bass": {
+      "patterns": ["walking", "dub", "simple"],
+      "samplerPool": ["acoustic_bass"],
+      "recipe": {
+        "model": ["sampler", "sampler", "piano"],
+        "cutoff": [350, 650],
+        "res": [0.05, 0.12],
+        "level": [0.85, 1.05],
+        "send": [0.05, 0.15],
+        "dsend": [0, 0.05],
+        "attack": 0.005,
+        "release": [0.08, 0.14]
+      }
+    },
+    "lead": {
+      "patterns": ["sparse", "wander", "off"],
+      "samplerPool": ["tenor_sax", "felt_piano", "upright_piano"],
+      "recipe": {
+        "model": ["piano", "sampler"],
+        "wave": "sine",
+        "voices": [1, 1],
+        "spread": [0.001, 0.003],
+        "cutoff": [2400, 3400],
+        "level": [0.45, 0.55],
+        "send": [0.35, 0.5],
+        "dsend": [0.1, 0.25]
+      }
+    },
+    "pads": {
+      "prob": 0.8,
+      "recipe": {
+        "model": ["piano", "fm"],
+        "wave": "sine",
+        "cutoff": [900, 1500],
+        "detune": [0.002, 0.006],
+        "attack": [0.3, 0.9],
+        "level": [0.4, 0.55],
+        "send": [0.35, 0.5],
+        "dsend": [0.05, 0.15]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom", "808"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.95, 1.2],
+      "snare": [0.35, 0.55],
+      "hat": [0.5, 0.8],
+      "tune": [0.9, 1],
+      "send": [0.15, 0.3],
+      "dsend": [0, 0.1]
+    },
+    "fx": {
+      "reverb": [0.45, 0.6],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.2, 0.35],
+      "delayCut": [2200, 3200],
+      "pump": [0, 0],
+      "crackle": [0.3, 0.5],
+      "lowcut": [0, 0],
+      "highcut": [0, 0],
+      "comp": [0.1, 0.3],
+      "grit": [0, 0]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.3, 0.42],
+      "pitch": [0.95, 1],
+      "stretch": [0.45, 0.6],
+      "cutoff": [3200, 4600],
+      "sources": [
+        "vx_corso_history75",
+        "vx_ginsberg_mexcityblues",
+        "vx_burroughs_lecture76",
+        "vx_diprima_1987",
+        "vx_waldman_crack",
+        "vx_baraka_revpoetry94",
+        "vx_whalen_reading80",
+        "vx_snyder_reading83",
+        "vx_burroughs",
+        "vx_ginsberg",
+        "vx_waldman",
+        "vx_dickinson",
+        "leacock1",
+        "leacock4",
+        "vx_ginsberg_class"
+      ]
+    },
+    "hits": {
+      "sources": ["pool:vb_spoken_poetic*1", "sp_herenow", "sp_slowdown", "sp_rewind"],
+      "pattern": "sparse",
+      "prob": 0.6
+    },
+    "stab": ["off"],
+    "form": "duet",
+    "timeFeel": {
+      "pushPullMs": {
+        "bass": 8,
+        "hat": -4
+      }
+    },
+    "autoTune": 0
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.317, 0.5],
+      "color": [0.467, 0.7],
+      "voicing": "drop2",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "ghost",
+        "w": 0.55,
+        "prob": 0.35
+      }
+    ],
+    "rhythm": [0.3, 0.5]
+  },
+  "targets": {
+    "bpm": [68, 100, 3],
+    "crackle": [0.25, 0.55, 2],
+    "acoustic": [0.4, 1, 3],
+    "swing": [0, 0.16, 2],
+    "snareBalance": [0, 0.5, 2],
+    "softTop": [0, 0, 2],
+    "bedUse": [0.4, 1, 2],
+    "seventh": [0.8, 1, 1],
+    "pump": [0, 0.05, 1],
+    "drumDensity": [0.8, 2.6, 2]
+  }
+}

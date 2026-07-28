@@ -1,0 +1,184 @@
+{
+  "name": "downtempo",
+  "label": "Benthic Patience",
+  "info": "the head-nod at low tide: a slow swung beat under long warm pads — harbor-town patience, but there is always a BEAT",
+  "pos": [586, 10667],
+  "anchor": {
+    "bpm": [62, 80],
+    "swing": [0.1, 0.22],
+    "humanize": [0.15, 0.35],
+    "progressions": ["neosoul", "dream", "deep_two", "mode_mixo"],
+    "kits": ["boombap", "halftime", "kick"],
+    "fills": ["off", "downlift", "riser"],
+    "bass": {
+      "patterns": ["simple", "dub", "sub"],
+      "samplerPool": ["acoustic_bass"],
+      "recipe": {
+        "model": ["sub", "sub", "sampler"],
+        "cutoff": [300, 550],
+        "res": [0.05, 0.15],
+        "level": [0.95, 1.15],
+        "send": [0.05, 0.12],
+        "dsend": [0, 0.05]
+      },
+      "inserts": {
+        "prob": 0.45,
+        "max": 1,
+        "pool": [
+          [
+            "distort",
+            {
+              "drive": [0.09, 0.18],
+              "mix": [0.3, 0.5]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": ["sparse", "off", "wander"],
+      "patchPool": ["E.PIANO 3", "E.PIANO 4"],
+      "samplerPool": ["flute", "muted_trumpet", "felt_piano"],
+      "recipe": {
+        "model": ["fm", "sampler", "sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.002, 0.005],
+        "cutoff": [2000, 3000],
+        "level": [0.4, 0.5],
+        "send": [0.45, 0.65],
+        "dsend": [0.3, 0.45],
+        "vibrato": [0.003, 0.008],
+        "octave": 0.1,
+        "attack": 0.04,
+        "release": [0.28, 0.4],
+        "sustain": [0.8, 0.9],
+        "fenv": [0.1, 0.25]
+      }
+    },
+    "pads": {
+      "prob": 1,
+      "samplerPool": ["strings"],
+      "recipe": {
+        "model": ["organ", "saw", "sampler"],
+        "wave": "saw",
+        "cutoff": [800, 1400],
+        "detune": [0.005, 0.011],
+        "attack": [2, 4],
+        "level": [0.6, 0.78],
+        "send": [0.5, 0.7],
+        "dsend": [0.15, 0.3]
+      },
+      "inserts": {
+        "prob": 0.3,
+        "max": 1,
+        "pool": [
+          [
+            "phaser",
+            {
+              "rate": [0.05, 0.15],
+              "depth": [0.4, 0.6],
+              "mix": [0.3, 0.5]
+            }
+          ]
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": ["808", "boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.95, 1.2],
+      "snare": [0.5, 0.75],
+      "hat": [0.45, 0.75],
+      "tune": [0.85, 1],
+      "send": [0.2, 0.35],
+      "dsend": [0.05, 0.2]
+    },
+    "fx": {
+      "reverb": [0.72, 0.88],
+      "delayBeats": [0.75, 1.5],
+      "delayFb": [0.3, 0.5],
+      "delayCut": [1800, 2800],
+      "pump": [0, 0.15],
+      "crackle": [0.1, 0.3],
+      "lowcut": [0, 25],
+      "highcut": [0, 0],
+      "comp": [0.15, 0.3]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.14, 0.24],
+      "pitch": [0.7, 0.9],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1800, 2800],
+      "sources": ["pool:city*1", "pool:road*1", "pool:voices*1"]
+    },
+    "snarePP": 0.66,
+    "hits": {
+      "sources": ["pool:vocal_stab*1", "sp_herenow"],
+      "pattern": "sparse",
+      "prob": 0.2
+    },
+    "stab": ["off"],
+    "form": "pop",
+    "timeFeel": {
+      "pushPull": {
+        "bass": 0.011,
+        "hat": -0.007
+      }
+    }
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.175, 0.31],
+      "color": [0.375, 0.6],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "ghost",
+        "w": 0.55,
+        "prob": 0.35
+      },
+      {
+        "id": "throwFx",
+        "w": 0.55,
+        "prob": 0.6
+      },
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      }
+    ],
+    "rhythm": [0.167, 0.333]
+  },
+  "perc": {
+    "lanes": [
+      {
+        "p": "shaker8",
+        "lvl": 0.1
+      },
+      {
+        "p": "triangle",
+        "lvl": 0.08
+      }
+    ]
+  },
+  "targets": {
+    "bpm": [60, 82, 3],
+    "wash": [0.28, 0.8, 2],
+    "drumDensity": [0.35, 2.2, 3],
+    "motion": [0.4, 1, 2],
+    "comp": [0, 0.4, 1],
+    "snareBalance": [0, 0.8, 1],
+    "bedUse": [0.4, 1, 1],
+    "sub": [0.5, 1, 2],
+    "seventh": [0.5, 1, 1],
+    "swing": [0.06, 0.28, 2],
+    "crackle": [0.08, 0.6, 1]
+  }
+}

@@ -1,272 +1,120 @@
 {
   "name": "chickadeecore",
-  "label": "Chickadeecore",
+  "label": "Fee Bee Augury",
   "info": "the black-capped chickadee's \"fee-bee\" — a descending minor third — is every melody in the genre, transposed, stacked, and glockenspiel-bright; a tiny, relentless two-note optimism at 144 BPM, more dee's meaning more danger",
-  "clips": [
-    "rainbow_rings",
-    "cgi_bird",
-    "night_lights",
-    "kaleido"
-  ],
-  "materials": "archive.org black-capped chickadee \"fee-bee\" recording — MATERIALS; the descending-m3 interval stated by the real GLOCKENSPIEL sampler (GM 9) + celesta over the chickadee bed",
-  "pos": [
-    430,
-    495
-  ],
+  "pos": [1355, 18686],
   "anchor": {
-    "bpm": [
-      140,
-      150
-    ],
-    "swing": [
-      0,
-      0.05
-    ],
-    "humanize": [
-      0.03,
-      0.1
-    ],
-    "progressions": [
-      "four_chords",
-      "dream",
-      "pop_1625"
-    ],
-    "kits": [
-      "trap",
-      "pulse"
-    ],
-    "fills": [
-      "riser",
-      "impact",
-      "cut"
-    ],
+    "bpm": [140, 150],
+    "swing": [0, 0.05],
+    "humanize": [0.03, 0.1],
+    "progressions": ["four_chords", "dream", "pop_1625"],
+    "kits": ["trap", "pulse"],
+    "fills": ["riser", "impact", "cut"],
     "bass": {
-      "patterns": [
-        "octaves",
-        "root",
-        "drive"
-      ],
+      "patterns": ["octaves", "root", "drive"],
       "recipe": {
-        "model": [
-          "saw",
-          "sub"
-        ],
-        "cutoff": [
-          600,
-          1000
-        ],
-        "res": [
-          0.1,
-          0.2
-        ],
-        "level": [
-          1,
-          1.2
-        ],
-        "send": [
-          0,
-          0.06
-        ],
-        "dsend": [
-          0.05,
-          0.12
-        ]
+        "model": ["saw", "sub"],
+        "cutoff": [600, 1000],
+        "res": [0.1, 0.2],
+        "level": [1, 1.2],
+        "send": [0, 0.06],
+        "dsend": [0.05, 0.12]
       }
     },
     "lead": {
-      "patterns": [
-        "double",
-        "updown",
-        "pentaup"
-      ],
+      "patterns": ["double", "updown", "pentaup"],
       "recipe": {
-        "model": [
-          "sampler",
-          "bell",
-          "synclead"
-        ],
-        "samplerPool": [
-          "glockenspiel",
-          "celesta"
-        ],
+        "model": ["sampler", "bell", "synclead"],
+        "samplerPool": ["glockenspiel", "celesta"],
         "wave": "sine",
-        "voices": [
-          1,
-          2
-        ],
-        "cutoff": [
-          3000,
-          4200
-        ],
-        "level": [
-          0.44,
-          0.58
-        ],
-        "send": [
-          0.25,
-          0.45
-        ],
-        "dsend": [
-          0.1,
-          0.25
-        ]
+        "voices": [1, 2],
+        "cutoff": [3000, 4200],
+        "level": [0.44, 0.58],
+        "send": [0.25, 0.45],
+        "dsend": [0.1, 0.25]
       }
     },
     "pads": {
       "prob": 0.45,
       "recipe": {
-        "model": [
-          "juno60",
-          "saw"
-        ],
+        "model": ["juno60", "saw"],
         "wave": "saw",
-        "cutoff": [
-          1400,
-          2200
-        ],
-        "detune": [
-          0.008,
-          0.016
-        ],
-        "attack": [
-          0.3,
-          0.9
-        ],
-        "level": [
-          0.4,
-          0.55
-        ],
-        "send": [
-          0.3,
-          0.5
-        ],
-        "dsend": [
-          0.1,
-          0.2
-        ]
+        "cutoff": [1400, 2200],
+        "detune": [0.008, 0.016],
+        "attack": [0.3, 0.9],
+        "level": [0.4, 0.55],
+        "send": [0.3, 0.5],
+        "dsend": [0.1, 0.2]
       }
     },
     "drums": {
-      "kickModel": [
-        "909",
-        "808"
-      ],
-      "snareModel": [
-        "clap",
-        "crack"
-      ],
-      "hatModel": [
-        "metal",
-        "noise"
-      ],
-      "kick": [
-        1.1,
-        1.35
-      ],
-      "snare": [
-        0.6,
-        0.85
-      ],
-      "hat": [
-        0.7,
-        1.05
-      ],
-      "tune": [
-        1,
-        1.15
-      ],
-      "send": [
-        0.08,
-        0.2
-      ],
-      "dsend": [
-        0.05,
-        0.15
-      ]
+      "kickModel": ["909", "808"],
+      "snareModel": ["clap", "crack"],
+      "hatModel": ["metal", "noise"],
+      "kick": [1.1, 1.35],
+      "snare": [0.6, 0.85],
+      "hat": [0.7, 1.05],
+      "tune": [1, 1.15],
+      "send": [0.08, 0.2],
+      "dsend": [0.05, 0.15]
     },
     "fx": {
-      "reverb": [
-        0.3,
-        0.48
-      ],
-      "delayBeats": [
-        0.375,
-        0.5
-      ],
-      "delayFb": [
-        0.2,
-        0.35
-      ],
-      "delayCut": [
-        3500,
-        5000
-      ],
-      "pump": [
-        0.3,
-        0.5
-      ],
-      "crackle": [
-        0,
-        0
-      ],
-      "lowcut": [
-        30,
-        45
-      ],
-      "highcut": [
-        0,
-        0
-      ],
-      "comp": [
-        0.35,
-        0.55
-      ]
+      "reverb": [0.3, 0.48],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.2, 0.35],
+      "delayCut": [3500, 5000],
+      "pump": [0.3, 0.5],
+      "crackle": [0, 0],
+      "lowcut": [30, 45],
+      "highcut": [0, 0],
+      "comp": [0.35, 0.55]
     },
     "found": {
       "role": "bed",
-      "vol": [
-        0.06,
-        0.14
-      ],
-      "pitch": [
-        1.1,
-        1.4
-      ],
-      "stretch": [
-        0.4,
-        0.6
-      ],
-      "cutoff": [
-        4000,
-        7000
-      ],
-      "sources": [
-        "frogs",
-        "loon"
-      ]
+      "vol": [0.06, 0.14],
+      "pitch": [1.1, 1.4],
+      "stretch": [0.4, 0.6],
+      "cutoff": [4000, 7000],
+      "sources": ["chickadee", "pool:city*1"]
     },
     "hits": {
-      "sources": [
-        "tw_ding"
-      ],
+      "sources": ["tw_ding"],
       "pattern": "sparse",
       "prob": 0.2
     },
-    "stab": [
-      "off"
-    ],
-    "form": "pop"
+    "stab": ["off"],
+    "form": "duet"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": {
-      "bpm": 3,
-      "hatDensity": 2,
-      "snareBalance": 2,
-      "seventh": 1,
-      "motion": 1,
-      "pump": 1
-    }
+  "mind": {
+    "theory": {
+      "adventure": [0.117, 0.233],
+      "color": [0.317, 0.517],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      },
+      {
+        "id": "vibratoSwell",
+        "w": 0.4,
+        "depth": 0.25
+      }
+    ],
+    "rhythm": [0.215, 0.41]
+  },
+  "targets": {
+    "bpm": [134, 157, 3],
+    "hatDensity": [0.235, 1.935, 2],
+    "snareBalance": [0.12, 0.88, 2],
+    "seventh": [0, 1, 1],
+    "motion": [0.85, 1, 1],
+    "pump": [0.188, 0.615, 1],
+    "crackle": [0, 0.1, 3]
   }
 }

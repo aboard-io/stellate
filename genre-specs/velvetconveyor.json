@@ -1,7 +1,8 @@
 {
   "name": "velvetconveyor",
-  "label": "Velvetconveyor",
+  "label": "Assembly Line Rapture",
   "info": "the hit factory at 118: snare and tambourine slam on ALL FOUR beats while an impossible bass walks melodies underneath — vibes and trumpet trade the tune, strings and choir ride the belt, a 78rpm voice calls and the horns answer",
+  "pos": [1926, 5290],
   "anchor": {
     "bpm": [114, 122],
     "swing": [0.05, 0.11],
@@ -9,15 +10,123 @@
     "progressions": ["pop_1625", "doo_wop", "four_chords"],
     "kits": ["four", "open"],
     "fills": ["drum fill", "tom fill", "off"],
-    "timeFeel": { "pushPull": { "bass": 0.011 } },
-    "bass": { "patterns": ["walking", "melodic", "octaves"], "samplerPool": ["finger_bass", "picked_bass"], "recipe": { "model": ["sampler", "sampler", "sub"], "cutoff": [450, 800], "res": [0.05, 0.15], "level": [1.0, 1.2], "send": [0.08, 0.16], "dsend": [0, 0.05], "attack": 0.005, "release": [0.08, 0.14] } },
-    "lead": { "patterns": ["pentaup", "wander", "double"], "samplerPool": ["vibraphone", "trumpet", "electric_piano"], "recipe": { "model": ["sampler", "sampler", "piano"], "wave": "sine", "voices": [1, 2], "spread": [0.001, 0.004], "cutoff": [2200, 3400], "level": [0.46, 0.58], "send": [0.3, 0.45], "dsend": [0.1, 0.22], "attack": 0.005, "release": [0.1, 0.18], "sustain": [0.6, 0.72] } },
-    "pads": { "prob": 0.85, "samplerPool": ["strings", "ahh_choir", "slow_strings"], "recipe": { "model": ["sampler", "sampler", "piano"], "wave": "sine", "cutoff": [1000, 1600], "detune": [0.003, 0.007], "attack": [0.2, 0.6], "level": [0.42, 0.56], "send": [0.3, 0.45], "dsend": [0.05, 0.15] } },
-    "drums": { "kickModel": ["boom"], "snareModel": ["noise", "crack"], "hatModel": ["noise"], "kick": [0.95, 1.15], "snare": [1.0, 1.25], "hat": [0.55, 0.85], "tune": [0.9, 1.05], "send": [0.15, 0.28], "dsend": [0.03, 0.1], "kit": "room" },
-    "fx": { "reverb": [0.35, 0.5], "delayBeats": [0.5, 0.75], "delayFb": [0.1, 0.2], "delayCut": [2200, 3200], "pump": [0, 0], "crackle": [0.2, 0.4], "lowcut": [0, 30], "highcut": [9000, 13000], "comp": [0.25, 0.45] },
-    "found": { "role": "bed", "vol": [0.05, 0.1], "pitch": [0.85, 1], "stretch": [0.45, 0.6], "cutoff": [1600, 2600], "sources": ["factory", "shibuya", "tokyo_station"] },
+    "bass": {
+      "patterns": ["walking", "melodic", "octaves"],
+      "samplerPool": ["finger_bass", "picked_bass"],
+      "recipe": {
+        "model": ["sampler", "sampler", "sub"],
+        "cutoff": [450, 800],
+        "res": [0.05, 0.15],
+        "level": [1, 1.2],
+        "send": [0.08, 0.16],
+        "dsend": [0, 0.05],
+        "attack": 0.005,
+        "release": [0.08, 0.14]
+      }
+    },
+    "lead": {
+      "patterns": ["pentaup", "wander", "double"],
+      "samplerPool": ["vibraphone", "trumpet", "electric_piano"],
+      "recipe": {
+        "model": ["sampler", "sampler", "piano"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.001, 0.004],
+        "cutoff": [2200, 3400],
+        "level": [0.46, 0.58],
+        "send": [0.3, 0.45],
+        "dsend": [0.1, 0.22],
+        "attack": 0.005,
+        "release": [0.1, 0.18],
+        "sustain": [0.6, 0.72]
+      }
+    },
+    "pads": {
+      "prob": 0.85,
+      "samplerPool": ["strings", "ahh_choir", "slow_strings"],
+      "recipe": {
+        "model": ["sampler", "sampler", "piano"],
+        "wave": "sine",
+        "cutoff": [1000, 1600],
+        "detune": [0.003, 0.007],
+        "attack": [0.2, 0.6],
+        "level": [0.42, 0.56],
+        "send": [0.3, 0.45],
+        "dsend": [0.05, 0.15]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise", "crack"],
+      "hatModel": ["noise"],
+      "kick": [0.95, 1.15],
+      "snare": [1, 1.25],
+      "hat": [0.55, 0.85],
+      "tune": [0.9, 1.05],
+      "send": [0.15, 0.28],
+      "dsend": [0.03, 0.1],
+      "kit": "room"
+    },
+    "fx": {
+      "reverb": [0.35, 0.5],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.1, 0.2],
+      "delayCut": [2200, 3200],
+      "pump": [0, 0],
+      "crackle": [0.2, 0.4],
+      "lowcut": [0, 30],
+      "highcut": [9000, 13000],
+      "comp": [0.25, 0.45]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.05, 0.1],
+      "pitch": [0.85, 1],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1600, 2600],
+      "sources": ["pool:industry*1", "pool:city*2"]
+    },
+    "hits": {
+      "sources": ["pool:vb_mallsoft_vapor*1", "pool:horn_stab*2", "blues_vox_78"],
+      "pattern": "response",
+      "prob": 0.6
+    },
     "stab": ["off"],
-    "hits": { "sources": ["horns_78", "blues_vox_78", "horns_78"], "pattern": "response", "prob": 0.6 },
-    "form": "pop"
+    "form": "pop",
+    "timeFeel": {
+      "pushPull": {
+        "bass": 0.011
+      }
+    }
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.1, 0.207],
+      "color": [0.233, 0.417],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      }
+    ],
+    "rhythm": [0.09, 0.235]
+  },
+  "targets": {
+    "bpm": [109, 128, 3],
+    "drumDensity": [0.74, 1.81, 2],
+    "wash": [0, 0.262, 1],
+    "pump": [0, 0.1, 1],
+    "swing": [0.004, 0.138, 2],
+    "seventh": [0, 1, 1],
+    "acoustic": [0.68, 1, 2],
+    "crackle": [0.123, 0.481, 1],
+    "sub": [0.05, 1, 1],
+    "motion": [0.85, 1, 1],
+    "bedUse": [0.51, 0.75, 1]
   }
 }

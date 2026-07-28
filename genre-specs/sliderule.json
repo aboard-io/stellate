@@ -1,7 +1,8 @@
 {
   "name": "sliderule",
-  "label": "Slide Rule",
+  "label": "Logarithm Drill",
   "info": "precision drive: a growling synth-bass locked to a tight, busy kit, twin-voice leads counting in threes over mixolydian ground, hats clattering in elevens — engineered exhilaration, every measure machined to tolerance",
+  "pos": [1180, 3731],
   "anchor": {
     "bpm": [140, 152],
     "swing": [0, 0.03],
@@ -9,21 +10,125 @@
     "progressions": ["mode_mixo", "epic_min", "uplift"],
     "kits": ["breaks", "full", "four"],
     "fills": ["tom fill", "hat rush", "snare roll", "riser"],
-    "euclid": { "hat": [11, 16] },
-    "bass": { "patterns": ["syncopated", "sixteenths", "melodic"], "recipe": { "model": ["modeld", "reese"], "cutoff": [450, 800], "res": [0.15, 0.3], "level": [1.15, 1.35], "send": [0, 0.08], "dsend": [0, 0.06], "glide": [10, 25], "envAmount": [0.6, 1.2], "envDecay": [0.15, 0.3] } },
-    "lead": { "patterns": ["motorik23", "hero", "anthem", "updown"], "recipe": { "model": ["oberheim", "stack", "synclead"], "wave": "saw", "voices": [2, 3], "spread": [0.004, 0.01], "cutoff": [2800, 4000], "level": [0.48, 0.62], "send": [0.25, 0.4], "dsend": [0.2, 0.35], "attack": 0.004, "release": [0.08, 0.15], "sustain": [0.55, 0.7] } },
-    "pads": { "prob": 0.7, "recipe": { "model": ["oberheim", "juno60", "saw"], "wave": "saw", "cutoff": [1200, 2000], "detune": [0.006, 0.012], "attack": [0.4, 1.2], "level": [0.44, 0.58], "send": [0.3, 0.45], "dsend": [0.1, 0.2] } },
-    "drums": { "kickModel": ["909", "boom"], "snareModel": ["crack", "noise"], "hatModel": ["metal", "noise"], "kick": [1.2, 1.45], "snare": [0.85, 1.1], "hat": [0.8, 1.15], "tune": [0.95, 1.1], "send": [0.12, 0.24], "dsend": [0.05, 0.15] },
-    "fx": { "reverb": [0.3, 0.45], "delayBeats": [0.375, 0.5], "delayFb": [0.2, 0.35], "delayCut": [2800, 4000], "pump": [0, 0.12], "crackle": [0, 0.08], "lowcut": [28, 42], "highcut": [0, 0], "comp": [0.4, 0.6] },
-    "found": { "role": "bed", "vol": [0.05, 0.12], "pitch": [0.85, 1], "stretch": [0.45, 0.6], "cutoff": [2000, 3200], "sources": ["highway_night", "hvac_hum"] },
-    "timeFeel": { "pushPull": { "hat": -0.005 } },
-    "hits": { "sources": ["vox_a", "sp_energy"], "pattern": "sparse", "prob": 0.25 },
+    "euclid": {
+      "hat": [11, 16]
+    },
+    "bass": {
+      "patterns": ["syncopated", "sixteenths", "melodic"],
+      "recipe": {
+        "model": ["modeld", "reese"],
+        "cutoff": [450, 800],
+        "res": [0.15, 0.3],
+        "level": [1.15, 1.35],
+        "send": [0, 0.08],
+        "dsend": [0, 0.06],
+        "glide": [10, 25],
+        "envAmount": [0.6, 1.2],
+        "envDecay": [0.15, 0.3]
+      }
+    },
+    "lead": {
+      "patterns": ["motorik23", "hero", "anthem", "updown"],
+      "recipe": {
+        "model": ["oberheim", "stack", "synclead"],
+        "wave": "saw",
+        "voices": [2, 3],
+        "spread": [0.004, 0.01],
+        "cutoff": [2800, 4000],
+        "level": [0.48, 0.62],
+        "send": [0.25, 0.4],
+        "dsend": [0.2, 0.35],
+        "attack": 0.004,
+        "release": [0.08, 0.15],
+        "sustain": [0.55, 0.7]
+      }
+    },
+    "pads": {
+      "prob": 0.7,
+      "recipe": {
+        "model": ["oberheim", "juno60", "saw"],
+        "wave": "saw",
+        "cutoff": [1200, 2000],
+        "detune": [0.006, 0.012],
+        "attack": [0.4, 1.2],
+        "level": [0.44, 0.58],
+        "send": [0.3, 0.45],
+        "dsend": [0.1, 0.2]
+      }
+    },
+    "drums": {
+      "kickModel": ["909", "boom"],
+      "snareModel": ["crack", "noise"],
+      "hatModel": ["metal", "noise"],
+      "kick": [1.2, 1.45],
+      "snare": [0.85, 1.1],
+      "hat": [0.8, 1.15],
+      "tune": [0.95, 1.1],
+      "send": [0.12, 0.24],
+      "dsend": [0.05, 0.15]
+    },
+    "fx": {
+      "reverb": [0.3, 0.45],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.2, 0.35],
+      "delayCut": [2800, 4000],
+      "pump": [0, 0.12],
+      "crackle": [0, 0.08],
+      "lowcut": [28, 42],
+      "highcut": [0, 0],
+      "comp": [0.4, 0.6]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.05, 0.12],
+      "pitch": [0.85, 1],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2000, 3200],
+      "sources": ["pool:road*1", "pool:room*1"]
+    },
+    "hits": {
+      "sources": ["pool:vocal_stab*1", "sp_energy"],
+      "pattern": "sparse",
+      "prob": 0.25
+    },
     "stab": ["off"],
-    "form": "pop"
+    "form": "suite",
+    "timeFeel": {
+      "pushPull": {
+        "hat": -0.005
+      }
+    }
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": { "bpm": 3, "drumDensity": 2, "sub": 2, "motion": 1, "swing": 1, "comp": 1, "crackle": 2 }
+  "mind": {
+    "theory": {
+      "adventure": [0.133, 0.25],
+      "color": [0.167, 0.367],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      },
+      {
+        "id": "vibratoSwell",
+        "w": 0.4,
+        "depth": 0.25
+      }
+    ],
+    "rhythm": [0.293, 0.503]
+  },
+  "targets": {
+    "bpm": [133, 160, 3],
+    "drumDensity": [1.096, 2.184, 2],
+    "sub": [0, 1, 2],
+    "motion": [0.52, 0.82, 1],
+    "swing": [0, 0.071, 1],
+    "comp": [0.266, 0.713, 1],
+    "crackle": [0, 0.182, 2]
   }
 }

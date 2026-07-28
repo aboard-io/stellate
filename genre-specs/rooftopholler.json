@@ -1,7 +1,8 @@
 {
   "name": "rooftopholler",
-  "label": "Rooftopholler",
+  "label": "Fire Escape Psalm",
   "info": "January soul played five storeys up: an electric-piano vamp with real fingers on it, melodic bass singing its own tune, a backbeat in overcoats, call-and-response shouts thrown down into the street, traffic answering from below — the band leans back, the city leans in, somebody phones the police",
+  "pos": [1275, 6627],
   "anchor": {
     "bpm": [100, 110],
     "swing": [0.08, 0.16],
@@ -9,7 +10,6 @@
     "progressions": ["funk_vamp", "mode_mixo", "blues_12"],
     "kits": ["full", "open"],
     "fills": ["drum fill", "kit fill", "off"],
-    "timeFeel": { "pushPull": { "bass": 0.012 } },
     "bass": {
       "patterns": ["melodic", "walking", "syncopated"],
       "samplerPool": ["finger_bass", "picked_bass"],
@@ -85,14 +85,54 @@
       "pitch": [0.95, 1.05],
       "stretch": [0.45, 0.6],
       "cutoff": [2200, 3400],
-      "sources": ["highway_night", "tw_platform"]
+      "sources": ["pool:road*1", "pool:city*1"]
     },
     "hits": {
-      "sources": ["vox_a", "sp_rhythm"],
+      "sources": ["pool:vocal_stab*1", "sp_rhythm"],
       "pattern": "response",
       "prob": 0.4
     },
     "stab": ["off"],
-    "form": "pop"
+    "form": "pop",
+    "timeFeel": {
+      "pushPull": {
+        "bass": 0.012
+      }
+    }
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.2, 0.35],
+      "color": [0.333, 0.533],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "callResponse",
+        "w": 0.5,
+        "level": 0.85
+      },
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      }
+    ],
+    "rhythm": [0.11, 0.275]
+  },
+  "targets": {
+    "bpm": [95, 116, 3],
+    "drumDensity": [0.78, 1.71, 2],
+    "wash": [0, 0.218, 1],
+    "pump": [0, 0.192, 1],
+    "swing": [0.036, 0.18, 2],
+    "seventh": [0.85, 1, 1],
+    "acoustic": [0.48, 0.92, 2],
+    "crackle": [0.01, 0.3, 1],
+    "sub": [0.05, 0.35, 1],
+    "motion": [0.18, 0.82, 1],
+    "bedUse": [0.51, 0.75, 1]
   }
 }

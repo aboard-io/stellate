@@ -1,0 +1,149 @@
+{
+  "name": "strawdub",
+  "label": "Threshing Vespers",
+  "info": "invented (gap-found): a slow-tempo, acoustic-forward genre in the empty region near subwooferbalm × house/umpirehouse/crickettempo — acoustic~0.64, softTop~0.56, variation~0.56 [seed 23]",
+  "pos": [1004, 21279],
+  "anchor": {
+    "bpm": [79, 87],
+    "swing": [0, 0.049],
+    "humanize": [0.148, 0.238],
+    "progressions": ["blues_12"],
+    "kits": ["house", "four"],
+    "fills": ["cut", "riser", "impact"],
+    "chordEvery": 16,
+    "bass": {
+      "patterns": ["root", "simple", "walking"],
+      "recipe": {
+        "model": ["sub", "sampler"],
+        "samplerPool": ["acoustic_bass"],
+        "cutoff": [500, 900],
+        "level": [0.55, 0.75],
+        "send": [0.15, 0.3],
+        "dsend": [0, 0.08]
+      }
+    },
+    "lead": {
+      "patterns": ["double", "arpup", "pentaup", "updown"],
+      "recipe": {
+        "model": ["piano", "fm"],
+        "wave": "pulse",
+        "voices": [1, 3],
+        "spread": [0.003, 0.008],
+        "cutoff": [2200, 3400],
+        "level": [0.4, 0.52],
+        "send": [0.25, 0.4],
+        "dsend": [0.2, 0.35],
+        "octave": 0.05,
+        "attack": 0.004,
+        "release": [0.07, 0.12],
+        "sustain": [0.6, 0.72],
+        "fenv": [0.4, 0.7]
+      },
+      "inserts": {
+        "prob": 0.4,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [0.6, 1.2],
+              "depth": [0.4, 0.6],
+              "mix": [0.35, 0.55]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.9,
+      "patchPool": ["E.ORGAN 1", "SYNORGAN 1"],
+      "samplerPool": ["percussive_organ"],
+      "recipe": {
+        "model": ["juno60", "juno60", "hammond", "hammond", "organ", "dx7", "sampler"],
+        "wave": "saw",
+        "cutoff": [1000, 1600],
+        "detune": [0.004, 0.009],
+        "attack": [0.15, 0.4],
+        "chorus": [1, 1.4],
+        "chorusSpread": [0.8, 1],
+        "bar513": 8,
+        "bar4": 0,
+        "bar1": 4,
+        "leslie": [0.8, 0.9],
+        "perc": [0.5, 0.7],
+        "level": [0.5, 0.65],
+        "send": [0.25, 0.4],
+        "dsend": [0.1, 0.25]
+      }
+    },
+    "drums": {
+      "kickModel": ["909"],
+      "snareModel": ["clap", "crack"],
+      "hatModel": ["noise", "metal"],
+      "kick": [1.1, 1.35],
+      "snare": [0.6, 0.85],
+      "hat": [0.6, 0.9],
+      "tune": [0.98, 1.1],
+      "send": [0.1, 0.25],
+      "dsend": [0.05, 0.15]
+    },
+    "fx": {
+      "reverb": [0.87, 1],
+      "delayBeats": [0.75, 1.5],
+      "delayFb": [0.15, 0.3],
+      "delayCut": [2000, 3000],
+      "pump": [0, 0.12],
+      "crackle": [0.02, 0.18],
+      "lowcut": [0, 0],
+      "highcut": [2600, 3400],
+      "comp": [0.21, 0.43]
+    },
+    "found": {
+      "role": "narration",
+      "vol": [0.35, 0.55],
+      "pitch": [0.98, 1.05],
+      "stretch": [0.9, 1.05],
+      "cutoff": [2600, 3600],
+      "sources": ["vx_apollo"]
+    },
+    "hits": {
+      "sources": ["sp_system", "pool:chime*1"],
+      "pattern": "sparse",
+      "prob": 0.15
+    },
+    "stab": ["off"],
+    "form": "wave",
+    "reverbColor": "greyhole"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.35, 0.55],
+      "color": [0.4, 0.6],
+      "voicing": "drop2",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "callResponse",
+        "w": 0.5,
+        "level": 0.85
+      },
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      }
+    ],
+    "rhythm": [0.1, 0.26]
+  },
+  "targets": {
+    "bpm": [73, 94, 3],
+    "acoustic": [0.432, 1, 3],
+    "softTop": [1, 1, 3],
+    "variation": [0.79, 1, 2],
+    "drumDensity": [0, 2.34, 2],
+    "wash": [0.069, 0.374, 1],
+    "swing": [0, 0.084, 1]
+  }
+}

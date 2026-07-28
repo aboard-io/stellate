@@ -500,6 +500,110 @@ function loadTemplate(near) {
   return { source: "kernel-anchor", spec };
 }
 
+// ============================================================ export
+// A genre is SEVEN things — anchor, mind override, verifier target row, star
+// position, percussion style, name/blurb, and how it was invented. The spec
+// folder described one and a half of them, for half the catalogue, in one
+// direction only: genre-tool wrote specs, every later edit happened by hand in
+// the kernel, and nothing was ever written back. So 135 files covered 274
+// genres, 115 had drifted from what ships, and all 135 labels were stale.
+//
+// export is the direction that was missing. It reads the LIVE anchor and emits
+// the spec that would produce it, which makes the format bidirectional and the
+// folder true. Four top-level keys are dropped on the way out because nothing
+// reads them any more: clips (GENRE_CLIPS is gone), materials, invented, damp.
+//
+// Three keys are NEW, and they are the ones that close the authorability gap
+// the plan measured (the kernel uses 289 anchor paths; specs could express 184):
+//   mind     the derived theory/pipes/rhythm axes. Written for READING and for
+//            overriding; deriveMind recomputes them at load, so a spec that
+//            carries them is describing, not dictating.
+//   perc     PERC_STYLES[genre] — keyed by genre NAME in the kernel, so it was
+//            never an anchor key and never authorable.
+//   targets  the verifier row. It lives in genre-verifier.js and is the single
+//            biggest thing a spec could not say about its own genre.
+function specFor(name) {
+  const g = K.GENRES[name];
+  if (!g) die(`unknown genre "${name}"`);
+  const DERIVED = new Set(["theory", "pipes", "rhythm"]);   // deriveMind attaches these at load
+  const anchor = {};
+  for (const k of Object.keys(g)) {
+    if (k === "label" || k === "info" || DERIVED.has(k)) continue;
+    anchor[k] = g[k];
+  }
+  const ordered = {};
+  for (const k of FIELD_ORDER) if (k in anchor) ordered[k] = anchor[k];
+  for (const k of Object.keys(anchor)) if (!(k in ordered)) ordered[k] = anchor[k];   // anything FIELD_ORDER has not learned yet
+
+  const out = { name, label: g.label || name, info: g.info || "" };
+  const pos = POS_TABLE[name];
+  if (pos) out.pos = pos;
+  out.anchor = ordered;
+  const mind = {};
+  if (g.theory) mind.theory = g.theory;
+  if (g.pipes) mind.pipes = g.pipes;
+  if (g.rhythm != null) mind.rhythm = g.rhythm;
+  if (Object.keys(mind).length) out.mind = mind;
+  if (K.PERC_STYLES && K.PERC_STYLES[name]) out.perc = K.PERC_STYLES[name];
+  const V = require(path.join(ROOT, "genre-verifier.js"));
+  if (V.TARGETS && V.TARGETS[name]) out.targets = V.TARGETS[name];
+  return out;
+}
+
+// The star positions live in app/world.js as a baked ES-module literal; parse
+// rather than import so this stays a plain CJS tool.
+const POS_TABLE = (() => {
+  try {
+    const src = fs.readFileSync(path.join(__dirname, "..", "app", "world.js"), "utf8");
+    const b = src.match(/export const POS=\{([\s\S]*?)\n\};/);
+    const out = {};
+    if (b) for (const m of b[1].matchAll(/(\w+):\s*\[\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\]/g))
+      out[m[1]] = [+m[2], +m[3]];
+    return out;
+  } catch (e) { return {}; }
+})();
+
+// Pretty-print with SHORT PRIMITIVE ARRAYS INLINE. Plain JSON.stringify(x,null,2)
+// puts every element of [104,126] on its own line, which turns a 40-line spec
+// into 400 and makes the folder unreadable — the opposite of the point. Ranges,
+// pools and target rows stay on one line; objects and long arrays still break.
+function pretty(v, indent = "") {
+  const pad = indent + "  ";
+  if (Array.isArray(v)) {
+    if (!v.length) return "[]";
+    const flat = v.every((x) => x === null || typeof x !== "object");
+    if (flat) {
+      const one = "[" + v.map((x) => JSON.stringify(x)).join(", ") + "]";
+      if (one.length + indent.length <= 96) return one;
+    }
+    return "[\n" + v.map((x) => pad + pretty(x, pad)).join(",\n") + "\n" + indent + "]";
+  }
+  if (v && typeof v === "object") {
+    const ks = Object.keys(v);
+    if (!ks.length) return "{}";
+    return "{\n" + ks.map((k) => pad + JSON.stringify(k) + ": " + pretty(v[k], pad)).join(",\n") + "\n" + indent + "}";
+  }
+  return JSON.stringify(v);
+}
+
+function cmdExport() {
+  const all = has("all");
+  const which = all ? Object.keys(K.GENRES) : posArgs;
+  if (!which.length) die("usage: genre-tool.js export <genre> | --all [--dry-run]");
+  let wrote = 0, same = 0;
+  for (const name of which) {
+    const spec = specFor(name);
+    const file = path.join(SPECS_DIR, name + ".json");
+    const text = pretty(spec) + "\n";
+    const prev = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
+    if (prev === text) { same++; continue; }
+    if (!has("dry-run")) fs.writeFileSync(file, text);
+    wrote++;
+    if (!all) console.log(`${prev === null ? "created" : "updated"} genre-specs/${name}.json`);
+  }
+  console.log(`export: ${wrote} ${has("dry-run") ? "would change" : "written"}, ${same} already current (${which.length} genres)`);
+}
+
 function cmdInit() {
   const name = posArgs[0];
   if (!name) die("usage: genre-tool.js init <name> [--near <genre>]");
@@ -556,5 +660,6 @@ if (require.main === module) {
   if (cmd === "create") cmdCreate();
   else if (cmd === "check") cmdCheck();
   else if (cmd === "init") cmdInit();
-  else { console.log("usage:\n  node genre-tool.js init   <name> [--near <genre>] [--force]\n  node genre-tool.js create <spec.json> [--dry-run] [--skip-gates] [--seeds N] [--engine] [--force]\n  node genre-tool.js check  <name> [--seeds N]"); process.exit(cmd ? 1 : 0); }
+  else if (cmd === "export") cmdExport();
+  else { console.log("usage:\n  node genre-tool.js init   <name> [--near <genre>] [--force]\n  node genre-tool.js create <spec.json> [--dry-run] [--skip-gates] [--seeds N] [--engine] [--force]\n  node genre-tool.js check  <name> [--seeds N]\n  node genre-tool.js export <genre> | --all [--dry-run]"); process.exit(cmd ? 1 : 0); }
 }

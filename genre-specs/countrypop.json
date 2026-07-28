@@ -1,8 +1,8 @@
 {
   "name": "countrypop",
-  "label": "Country Pop",
+  "label": "Rhinestone Singularity",
   "info": "stadium Nashville country-pop ~136bpm — bright clean and steel-string guitars, banjo roll, fiddle sweetening, punchy picked bass, a big straight arena backbeat, dry polished mix, four-chord major hooks. Influences: Shania Twain, Keith Urban, modern CMA radio",
-  "clips": ["ca_street", "bt_hootenanny", "dc_skyline"],
+  "pos": [2310, 5538],
   "anchor": {
     "bpm": [128, 146],
     "swing": [0.02, 0.06],
@@ -10,19 +10,112 @@
     "progressions": ["four_chords", "uplift"],
     "kits": ["full", "open"],
     "fills": ["drum fill", "riser", "tom fill"],
-    "bass": { "patterns": ["root", "simple"], "samplerPool": ["pop_bass", "picked_bass", "finger_bass"],
-      "recipe": { "model": ["sampler", "sub"], "cutoff": [420, 720], "res": [0.05, 0.14], "level": [0.9, 1.1], "send": [0.05, 0.12], "dsend": [0.02, 0.08] } },
-    "lead": { "patterns": ["composed", "updown", "wander"], "samplerPool": ["clean_guitar", "steel_string_guitar", "banjo"],
-      "recipe": { "model": ["sampler"], "wave": "sine", "voices": [1, 1], "spread": [0.002, 0.006], "cutoff": [2800, 3800], "level": [0.5, 0.64], "send": [0.16, 0.3], "dsend": [0.06, 0.16], "vibrato": [0.008, 0.016] } },
-    "pads": { "prob": 0.8, "samplerPool": ["strings", "slow_strings"],
-      "recipe": { "model": ["sampler", "strings"], "wave": "saw", "cutoff": [1200, 1900], "detune": [0.004, 0.009], "attack": [0.3, 1.2], "level": [0.4, 0.55], "send": [0.24, 0.4], "dsend": [0.06, 0.16] } },
-    "drums": { "kickModel": ["boom", "909"], "snareModel": ["clap", "noise"], "hatModel": ["noise"], "kick": [0.74, 1], "snare": [0.7, 0.94], "hat": [0.62, 0.9], "tune": [0.95, 1.05], "send": [0.1, 0.22], "dsend": [0.04, 0.12] },
-    "fx": { "reverb": [0.3, 0.44], "delayBeats": [0.375, 0.5], "delayFb": [0.12, 0.24], "delayCut": [2800, 3800], "pump": [0, 0.06], "crackle": [0.02, 0.06], "lowcut": [30, 50], "highcut": [0, 0], "comp": [0.24, 0.44] },
-    "reverbColor": "dattorro",
-    "found": { "role": "bed", "vol": [0.05, 0.1], "pitch": [0.9, 1], "stretch": [0.45, 0.6], "cutoff": [2400, 3400], "sources": ["coyote_prairie", "leeds_terrace"] },
-    "hits": { "sources": ["tw_ding"], "pattern": "sparse", "prob": 0.1 },
+    "bass": {
+      "patterns": ["root", "simple"],
+      "samplerPool": ["pop_bass", "picked_bass", "finger_bass"],
+      "recipe": {
+        "model": ["sampler", "sub"],
+        "cutoff": [420, 720],
+        "res": [0.05, 0.14],
+        "level": [0.9, 1.1],
+        "send": [0.05, 0.12],
+        "dsend": [0.02, 0.08]
+      }
+    },
+    "lead": {
+      "patterns": ["composed", "updown", "wander"],
+      "samplerPool": ["clean_guitar", "steel_string_guitar", "banjo"],
+      "recipe": {
+        "model": ["sampler"],
+        "wave": "sine",
+        "voices": [1, 1],
+        "spread": [0.002, 0.006],
+        "cutoff": [2800, 3800],
+        "level": [0.5, 0.64],
+        "send": [0.16, 0.3],
+        "dsend": [0.06, 0.16],
+        "vibrato": [0.008, 0.016]
+      }
+    },
+    "pads": {
+      "prob": 0.8,
+      "samplerPool": ["strings", "slow_strings"],
+      "recipe": {
+        "model": ["sampler", "strings"],
+        "wave": "saw",
+        "cutoff": [1200, 1900],
+        "detune": [0.004, 0.009],
+        "attack": [0.3, 1.2],
+        "level": [0.4, 0.55],
+        "send": [0.24, 0.4],
+        "dsend": [0.06, 0.16]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom", "909"],
+      "snareModel": ["clap", "noise"],
+      "hatModel": ["noise"],
+      "kick": [0.74, 1],
+      "snare": [0.7, 0.94],
+      "hat": [0.62, 0.9],
+      "tune": [0.95, 1.05],
+      "send": [0.1, 0.22],
+      "dsend": [0.04, 0.12]
+    },
+    "fx": {
+      "reverb": [0.3, 0.44],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.12, 0.24],
+      "delayCut": [2800, 3800],
+      "pump": [0, 0.06],
+      "crackle": [0.02, 0.06],
+      "lowcut": [30, 50],
+      "highcut": [0, 0],
+      "comp": [0.24, 0.44]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.05, 0.1],
+      "pitch": [0.9, 1],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2400, 3400],
+      "sources": ["coyote_prairie", "leeds_terrace"]
+    },
+    "hits": {
+      "sources": ["pool:vb_folk_pastoral*1", "tw_ding"],
+      "pattern": "sparse",
+      "prob": 0.1
+    },
     "stab": ["off", "sparse"],
-    "form": "pop"
+    "form": "pop",
+    "reverbColor": "dattorro"
   },
-  "verify": { "seeds": 6, "widen": 0.1, "features": { "bpm": 3, "drumDensity": 3, "acoustic": 1, "motion": 2, "seventh": 1, "swing": 1 } }
+  "mind": {
+    "theory": {
+      "adventure": [0.1, 0.2],
+      "color": [0.125, 0.3],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      }
+    ],
+    "rhythm": [0.11, 0.275]
+  },
+  "targets": {
+    "bpm": [122, 153, 3],
+    "drumDensity": [0.811, 2.079, 3],
+    "acoustic": [0.68, 0.92, 1],
+    "motion": [0.487, 1, 2],
+    "seventh": [0, 0.975, 1],
+    "swing": [0, 0.097, 1],
+    "crackle": [0, 0.166, 3],
+    "comp": [0.17, 0.563, 3],
+    "pump": [0, 0.165, 3]
+  }
 }

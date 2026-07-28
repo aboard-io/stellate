@@ -1,0 +1,156 @@
+{
+  "name": "hearthsway",
+  "label": "The Warm Room",
+  "info": "invented (gap-found): a slow-tempo, acoustic-forward genre in the empty region near bramblestep × reggae/crickettempo/downtempo — softTop~0.46, breakUse~0.24, snareBalance~1.18 [seed 41]",
+  "pos": [371, 6712],
+  "anchor": {
+    "bpm": [66, 74],
+    "swing": [0.107, 0.157],
+    "humanize": [0.218, 0.308],
+    "progressions": ["deep_two", "neosoul", "four_chords", "minor_run"],
+    "kits": ["boombap", "halftime", "kick"],
+    "fills": ["off", "downlift", "riser"],
+    "bass": {
+      "patterns": ["root", "simple", "walking"],
+      "recipe": {
+        "model": ["sub", "sampler"],
+        "samplerPool": ["acoustic_bass"],
+        "cutoff": [500, 900],
+        "level": [0.55, 0.75],
+        "send": [0.15, 0.3],
+        "dsend": [0, 0.08]
+      }
+    },
+    "lead": {
+      "patterns": ["pentaup", "sparse", "wander"],
+      "patchPool": ["E.PIANO 1", "E.PIANO 3"],
+      "samplerPool": ["alto_sax", "felt_piano", "jazz_guitar"],
+      "recipe": {
+        "model": ["fm", "pluck", "sampler", "sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 3],
+        "spread": [0.002, 0.005],
+        "cutoff": [1800, 2800],
+        "level": [0.4, 0.52],
+        "send": [0.35, 0.5],
+        "dsend": [0.2, 0.35],
+        "vibrato": [0.005, 0.012],
+        "octave": 0.06,
+        "attack": 0.025,
+        "release": [0.12, 0.2],
+        "sustain": [0.66, 0.78],
+        "fenv": [0.15, 0.3]
+      },
+      "inserts": {
+        "prob": 0.4,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [0.3, 0.8],
+              "depth": [0.5, 0.8],
+              "mix": [0.35, 0.55]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.9,
+      "recipe": {
+        "model": ["fm"],
+        "wave": "sine",
+        "cutoff": [900, 1500],
+        "detune": [0.003, 0.008],
+        "attack": [0.8, 1.8],
+        "level": [0.5, 0.68],
+        "send": [0.35, 0.55],
+        "dsend": [0.1, 0.2]
+      }
+    },
+    "drums": {
+      "kickModel": ["808", "boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.95, 1.2],
+      "snare": [0.5, 0.75],
+      "hat": [0.45, 0.75],
+      "tune": [0.85, 1],
+      "send": [0.2, 0.35],
+      "dsend": [0.05, 0.2]
+    },
+    "fx": {
+      "reverb": [0.84, 1],
+      "delayBeats": [0.75, 1.5],
+      "delayFb": [0.3, 0.5],
+      "delayCut": [1800, 2800],
+      "pump": [0, 0.17],
+      "crackle": [0.2, 0.36],
+      "lowcut": [0, 25],
+      "highcut": [0, 0],
+      "comp": [0.13, 0.35]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.14, 0.24],
+      "pitch": [0.7, 0.9],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1800, 2800],
+      "sources": ["pool:city*1", "pool:road*1", "pool:voices*1"]
+    },
+    "snarePP": 0.66,
+    "hits": {
+      "sources": ["pool:vocal_stab*1", "sp_herenow"],
+      "pattern": "sparse",
+      "prob": 0.2
+    },
+    "stab": ["off"],
+    "form": "pop",
+    "timeFeel": {
+      "pushPull": {
+        "bass": 0.011,
+        "hat": -0.007
+      }
+    }
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.137, 0.258],
+      "color": [0.25, 0.438],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "ghost",
+        "w": 0.55,
+        "prob": 0.35
+      },
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      },
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      }
+    ],
+    "rhythm": [0.167, 0.333]
+  },
+  "targets": {
+    "bpm": [60, 81, 3],
+    "softTop": [0, 0, 3],
+    "breakUse": [0, 0.08, 3],
+    "snareBalance": [0, 0.924, 2],
+    "rubato": [0, 0.008, 2],
+    "wash": [0.166, 0.538, 1],
+    "acoustic": [0, 1, 1],
+    "swing": [0.058, 0.192, 1],
+    "bedUse": [0.372, 0.698, 3],
+    "motion": [0.85, 1, 3]
+  }
+}

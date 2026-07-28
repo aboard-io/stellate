@@ -1,0 +1,162 @@
+{
+  "name": "techno",
+  "label": "Unblinking Interval",
+  "info": "rhythm over harmony: drones over a machine four that never blinks, DJ plateaus long as weather fronts — the building dances and nobody remembers who pressed start",
+  "pos": [1956, 22436],
+  "anchor": {
+    "bpm": [124, 140],
+    "swing": [0, 0.06],
+    "humanize": [0, 0.15],
+    "progressions": ["drone_min", "deep_two"],
+    "kits": ["techno", "pulse"],
+    "fills": ["off", "riser", "cut", "hat rush"],
+    "euclid": {
+      "hat": [7, 16]
+    },
+    "bass": {
+      "patterns": ["rolling", "stab", "sixteenths", "pedal"],
+      "recipe": {
+        "model": ["acid", "saw", "reese"],
+        "cutoff": [450, 800],
+        "res": [0.2, 0.35],
+        "level": [1, 1.2],
+        "send": [0, 0.08],
+        "dsend": [0, 0.1]
+      },
+      "inserts": {
+        "prob": 0.45,
+        "max": 2,
+        "pool": [
+          [
+            "filtersweep",
+            {
+              "rateBars": [2, 4],
+              "lo": [-1.2, -0.6],
+              "hi": [0.8, 1.4],
+              "res": [0.25, 0.45]
+            }
+          ],
+          [
+            "distort",
+            {
+              "drive": [0.15, 0.35],
+              "mix": [0.5, 0.8]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": ["double", "double", "arpup", "off"],
+      "recipe": {
+        "model": ["pluck", "stack"],
+        "wave": "square",
+        "voices": [1, 2],
+        "spread": [0.002, 0.006],
+        "cutoff": [1500, 2600],
+        "level": [0.3, 0.42],
+        "send": [0.15, 0.3],
+        "dsend": [0.2, 0.4],
+        "vibrato": [0, 0.002],
+        "octave": 0,
+        "attack": 0.003,
+        "release": [0.04, 0.07],
+        "sustain": [0.45, 0.55],
+        "fenv": [0.8, 1.2],
+        "res": [0.28, 0.4]
+      }
+    },
+    "pads": {
+      "prob": 0.3,
+      "recipe": {
+        "model": ["organ", "saw"],
+        "wave": "saw",
+        "cutoff": [550, 900],
+        "detune": [0.004, 0.01],
+        "attack": [1.5, 3],
+        "level": [0.3, 0.45],
+        "send": [0.3, 0.5],
+        "dsend": [0.1, 0.2]
+      }
+    },
+    "drums": {
+      "kickModel": ["909"],
+      "snareModel": ["clap", "crack"],
+      "hatModel": ["metal", "noise"],
+      "kick": [1.25, 1.5],
+      "snare": [0.55, 0.8],
+      "hat": [0.7, 1],
+      "tune": [0.95, 1.1],
+      "send": [0.05, 0.15],
+      "dsend": [0.1, 0.25]
+    },
+    "fx": {
+      "reverb": [0.35, 0.55],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.3, 0.45],
+      "delayCut": [2000, 3500],
+      "pump": [0.4, 0.65],
+      "crackle": [0, 0.1],
+      "lowcut": [35, 50],
+      "highcut": [0, 0],
+      "comp": [0.5, 0.7],
+      "grit": [0.2, 0.45],
+      "jux": [0.15, 0.35]
+    },
+    "found": {
+      "role": "chops",
+      "vol": [0.1, 0.18],
+      "pitch": [0.9, 1.1],
+      "stretch": [0.4, 0.6],
+      "cutoff": [1800, 3200],
+      "sources": ["factory", "shibuya", "vx_wwvh", "stml_chop_c4", "stml_chop_d"]
+    },
+    "hits": {
+      "sources": ["pool:vocal_stab*1", "pool:rave_stab*1", "sp_system", "sp_energy"],
+      "pattern": "sparse",
+      "prob": 0.5
+    },
+    "stab": ["offbeat", "offbeat", "rave", "sparse"],
+    "form": "dj"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0, 0.05],
+      "color": [0.1, 0.25],
+      "voicing": "close",
+      "reharm": false
+    },
+    "pipes": [
+      {
+        "id": "octavePump",
+        "w": 0.55,
+        "prob": 0.4
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.5,
+        "lo": 0.7,
+        "hi": 2
+      },
+      {
+        "id": "densityArc",
+        "w": 0.45,
+        "floor": 0.6
+      }
+    ],
+    "rhythm": [0.1, 0.25]
+  },
+  "targets": {
+    "bpm": [120, 145, 3],
+    "offgrid": [0, 0.3, 1],
+    "snareBalance": [0, 0.6, 2],
+    "wash": [0, 0.32, 2],
+    "motion": [0, 0.4, 2],
+    "pump": [0.3, 1, 2],
+    "comp": [0.4, 1, 1],
+    "drumDensity": [1.4, 4.5, 1],
+    "breakUse": [0, 0.15, 1],
+    "variation": [0.3, 1, 1],
+    "swing": [0, 0.07, 2]
+  }
+}

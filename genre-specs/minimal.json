@@ -1,0 +1,146 @@
+{
+  "name": "minimal",
+  "label": "Anechoic Census",
+  "info": "the air let out on purpose: a kick, five tiny percs, a dry room — every event audible, every absence load-bearing",
+  "pos": [1923, 21823],
+  "anchor": {
+    "bpm": [120, 128],
+    "swing": [0, 0.05],
+    "humanize": [0, 0.1],
+    "progressions": ["drone_min", "drone_min", "deep_two"],
+    "kits": ["kick", "kick", "pulse"],
+    "fills": ["off", "cut", "hat rush"],
+    "euclid": {
+      "hat": [5, 16]
+    },
+    "bass": {
+      "patterns": ["rolling", "stab", "root"],
+      "recipe": {
+        "model": ["sub", "saw"],
+        "cutoff": [300, 520],
+        "res": [0.1, 0.2],
+        "level": [1, 1.2],
+        "send": [0, 0.05],
+        "dsend": [0, 0.08]
+      },
+      "inserts": {
+        "prob": 0.4,
+        "max": 1,
+        "pool": [
+          [
+            "filtersweep",
+            {
+              "rateBars": [4, 8],
+              "lo": [-0.6, -0.2],
+              "hi": [0.3, 0.7],
+              "res": [0.15, 0.3]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": ["off", "off", "sparse"],
+      "recipe": {
+        "model": ["pluck"],
+        "wave": "sine",
+        "voices": [1, 1],
+        "spread": [0.001, 0.003],
+        "cutoff": [2000, 3000],
+        "level": [0.3, 0.4],
+        "send": [0.2, 0.35],
+        "dsend": [0.3, 0.5],
+        "attack": 0.003,
+        "release": [0.04, 0.08],
+        "sustain": [0.4, 0.55],
+        "fenv": [0.4, 0.7]
+      }
+    },
+    "pads": {
+      "prob": 0.25,
+      "recipe": {
+        "model": ["saw", "organ"],
+        "wave": "saw",
+        "cutoff": [600, 1000],
+        "detune": [0.004, 0.009],
+        "attack": [1.5, 3],
+        "level": [0.3, 0.42],
+        "send": [0.2, 0.35],
+        "dsend": [0.1, 0.2]
+      }
+    },
+    "drums": {
+      "kickModel": ["909"],
+      "snareModel": ["noise"],
+      "hatModel": ["metal", "noise"],
+      "kick": [1.2, 1.4],
+      "snare": [0.35, 0.55],
+      "hat": [0.6, 0.9],
+      "tune": [1, 1.1],
+      "send": [0.03, 0.1],
+      "dsend": [0.1, 0.25]
+    },
+    "fx": {
+      "reverb": [0.2, 0.35],
+      "delayBeats": [0.75, 0.75],
+      "delayFb": [0.35, 0.5],
+      "delayCut": [2400, 3600],
+      "pump": [0.08, 0.22],
+      "crackle": [0, 0.08],
+      "lowcut": [35, 50],
+      "highcut": [0, 0],
+      "comp": [0.25, 0.4],
+      "grit": [0.05, 0.2],
+      "jux": [0.2, 0.4]
+    },
+    "found": {
+      "role": "chops",
+      "vol": [0.06, 0.12],
+      "pitch": [0.95, 1.1],
+      "stretch": [0.4, 0.6],
+      "cutoff": [2200, 3600],
+      "sources": ["tokyo_station", "vx_wwvh"]
+    },
+    "hits": {
+      "sources": ["sp_system"],
+      "pattern": "sparse",
+      "prob": 0.25
+    },
+    "stab": ["off", "sparse"],
+    "form": "dj",
+    "transforms": {
+      "pool": ["rev", "degrade", "rest", "rot"],
+      "schedule": "everyN",
+      "everyN": 8,
+      "rate": 0.5
+    }
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0, 0.03],
+      "color": [0.1, 0.25],
+      "voicing": "close",
+      "reharm": false
+    },
+    "pipes": [
+      {
+        "id": "densityArc",
+        "w": 0.7,
+        "floor": 0.65
+      }
+    ],
+    "rhythm": [0.05, 0.2]
+  },
+  "targets": {
+    "bpm": [117, 131, 3],
+    "drumDensity": [0.5, 2.2, 2],
+    "wash": [0, 0.2, 3],
+    "motion": [0, 0.4, 2],
+    "snareBalance": [0, 0.65, 2],
+    "pump": [0.05, 0.3, 1],
+    "swing": [0, 0.05, 1],
+    "hatDensity": [0.3, 1.2, 1],
+    "crackle": [0, 0.1, 1],
+    "comp": [0.2, 0.5, 1]
+  }
+}

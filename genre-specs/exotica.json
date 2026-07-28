@@ -1,0 +1,183 @@
+{
+  "name": "exotica",
+  "label": "Plastic Volcano",
+  "info": "cocktail-hour scenery that never left the hotel: swung brushes, piano + organ trading pleasantries, the birds hired as the percussion section",
+  "pos": [396, 11740],
+  "anchor": {
+    "bpm": [85, 105],
+    "swing": [0.12, 0.22],
+    "humanize": [0.25, 0.45],
+    "progressions": ["ii_v_i", "lofi", "neosoul"],
+    "kits": ["halftime", "boombap"],
+    "fills": ["off", "drum fill"],
+    "bass": {
+      "patterns": ["walking", "simple", "root"],
+      "samplerPool": ["acoustic_bass"],
+      "recipe": {
+        "model": ["sampler", "sampler", "piano"],
+        "cutoff": [500, 900],
+        "res": [0.05, 0.12],
+        "level": [0.9, 1.1],
+        "send": [0.1, 0.2],
+        "dsend": [0, 0.05],
+        "attack": 0.005,
+        "release": [0.08, 0.14]
+      }
+    },
+    "lead": {
+      "patterns": ["wander", "pentaup", "sparse"],
+      "patchPool": ["VIBE    1", "MARIMBA", "SAX BC"],
+      "samplerPool": ["tenor_sax", "vibraphone", "marimba", "steel_drums", "sitar"],
+      "recipe": {
+        "model": ["sampler", "sampler", "sampler", "sampler", "piano"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.001, 0.004],
+        "cutoff": [2400, 3600],
+        "level": [0.45, 0.58],
+        "send": [0.35, 0.55],
+        "dsend": [0.1, 0.25],
+        "vibrato": [0.008, 0.014]
+      },
+      "inserts": {
+        "prob": 0.45,
+        "max": 1,
+        "pool": [
+          [
+            "tremolo",
+            {
+              "rate": [3, 4.5],
+              "depth": [0.4, 0.65],
+              "shape": [0, 0],
+              "wobble": [0.3, 0.6],
+              "mix": [0.5, 0.75]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.85,
+      "samplerPool": ["vibraphone", "marimba"],
+      "recipe": {
+        "model": ["organ", "piano", "sampler"],
+        "wave": "sine",
+        "cutoff": [1000, 1600],
+        "detune": [0.002, 0.006],
+        "attack": [0.3, 0.9],
+        "level": [0.42, 0.56],
+        "send": [0.35, 0.5],
+        "dsend": [0.05, 0.15]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom", "808"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.9, 1.15],
+      "snare": [0.45, 0.66],
+      "hat": [0.6, 0.9],
+      "tune": [0.9, 1.05],
+      "send": [0.2, 0.35],
+      "dsend": [0.05, 0.2],
+      "kit": "jazz"
+    },
+    "fx": {
+      "reverb": [0.55, 0.7],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.2, 0.35],
+      "delayCut": [2200, 3200],
+      "pump": [0, 0],
+      "crackle": [0, 0.15],
+      "lowcut": [0, 25],
+      "highcut": [0, 0],
+      "comp": [0.1, 0.3],
+      "grit": [0, 0]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.2, 0.32],
+      "pitch": [0.9, 1.05],
+      "stretch": [0.45, 0.6],
+      "cutoff": [3500, 5200],
+      "sources": ["pool:water*1", "pool:city*1", "pool:voices*1"]
+    },
+    "sampleEvents": [
+      {
+        "pool": ["whale_song", "vx_timelady"],
+        "placement": "response",
+        "sections": "verse|chorus|bridge|hook",
+        "prob": 0.4,
+        "gain": 0.5,
+        "treatment": {
+          "pitch": 1.15,
+          "cutoff": 6000,
+          "rsend": 0.35,
+          "dsend": 0.12
+        }
+      }
+    ],
+    "hits": {
+      "sources": ["pool:horn_stab*1", "pool:vocal_stab*1"],
+      "pattern": "sparse",
+      "prob": 0.35
+    },
+    "stab": ["off"],
+    "form": "pop"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.367, 0.55],
+      "color": [0.533, 0.783],
+      "voicing": "drop2",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "ghost",
+        "w": 0.55,
+        "prob": 0.35
+      },
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      }
+    ],
+    "rhythm": [0.225, 0.425]
+  },
+  "perc": {
+    "lanes": [
+      {
+        "p": "conga",
+        "lvl": 0.2
+      },
+      {
+        "p": "shaker8",
+        "lvl": 0.12
+      },
+      {
+        "p": "woodblock",
+        "lvl": 0.11
+      },
+      {
+        "p": "rideq",
+        "lvl": 0.1
+      }
+    ]
+  },
+  "targets": {
+    "bpm": [82, 108, 3],
+    "swing": [0.1, 0.26, 2],
+    "acoustic": [0.4, 1, 2],
+    "seventh": [0.8, 1, 1],
+    "bedUse": [0.4, 1, 1],
+    "crackle": [0, 0.2, 1],
+    "drumDensity": [0.65, 1.3, 2],
+    "snareBalance": [0, 0.8, 1],
+    "softTop": [0, 0, 1],
+    "motion": [0.5, 1, 1],
+    "wash": [0, 0.3, 2]
+  }
+}

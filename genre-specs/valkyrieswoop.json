@@ -1,315 +1,157 @@
 {
   "name": "valkyrieswoop",
-  "label": "Valkyrieswoop",
+  "label": "Soprano Ballistics",
   "info": "symphonic metal diving out of the aurora: a string section riding double-kick thunder, an operatic lead soaring over the iron wall, the whole sky scored for strings and steel",
-  "damp": "verify.features += swing:2 (2026-07-10): validate named surfrock 'loses to perukelotto' but that was a rounded 97-97 tie-win runner-up — scored directly, the argmax on surfrock seed-2 was THIS row (94.02 vs its own 93.04). The swoop is a dead-straight gallop (swing .002-.019); surf shuffles at .11, outside even the padded fence.",
+  "pos": [549, 6571],
   "anchor": {
-    "bpm": [
-      144,
-      156
-    ],
-    "swing": [
-      0,
-      0.03
-    ],
-    "humanize": [
-      0.03,
-      0.12
-    ],
-    "progressions": [
-      "epic_min",
-      "canon",
-      "minor_run"
-    ],
-    "kits": [
-      "four",
-      "pulse"
-    ],
-    "fills": [
-      "impact",
-      "riser",
-      "tom fill"
-    ],
+    "bpm": [144, 156],
+    "swing": [0, 0.03],
+    "humanize": [0.03, 0.12],
+    "progressions": ["epic_min", "canon", "minor_run"],
+    "kits": ["four", "pulse"],
+    "fills": ["impact", "riser", "tom fill"],
     "euclid": {
-      "kick": [
-        7,
-        16
-      ]
+      "kick": [7, 16]
     },
-    "reverbColor": "dattorro",
-    "masterComp": 0.35,
     "bass": {
-      "patterns": [
-        "drive",
-        "pedal",
-        "sixteenths"
-      ],
-      "samplerPool": [
-        "picked_bass"
-      ],
+      "patterns": ["drive", "pedal", "sixteenths"],
+      "samplerPool": ["picked_bass"],
       "recipe": {
-        "model": [
-          "sampler",
-          "saw"
-        ],
-        "cutoff": [
-          500,
-          850
-        ],
-        "res": [
-          0.1,
-          0.22
-        ],
-        "level": [
-          1.2,
-          1.4
-        ],
-        "send": [
-          0,
-          0.06
-        ],
-        "dsend": [
-          0,
-          0.05
-        ]
+        "model": ["sampler", "saw"],
+        "cutoff": [500, 850],
+        "res": [0.1, 0.22],
+        "level": [1.2, 1.4],
+        "send": [0, 0.06],
+        "dsend": [0, 0.05]
       },
       "inserts": {
         "prob": 0.9,
         "max": 1,
         "pool": [
           [
-            "distort",
+            "higain",
             {
-              "drive": [
-                0.5,
-                0.75
-              ],
-              "mix": [
-                0.7,
-                0.95
-              ]
+              "gate": [0.4, 0.55],
+              "drive": [0.55, 0.75],
+              "stages": 2,
+              "low": 0.6,
+              "mid": 0.5,
+              "high": 0.55,
+              "presence": [0.5, 0.65]
             }
           ]
         ]
       }
     },
     "lead": {
-      "patterns": [
-        "hero",
-        "anthem",
-        "updown"
-      ],
-      "samplerPool": [
-        "solo_vox",
-        "violin"
-      ],
+      "patterns": ["hero", "anthem", "updown"],
+      "samplerPool": ["solo_vox", "violin"],
       "recipe": {
-        "model": [
-          "sampler",
-          "sampler",
-          "stack"
-        ],
+        "model": ["sampler", "sampler", "stack"],
         "wave": "saw",
-        "voices": [
-          1,
-          2
-        ],
-        "spread": [
-          0.003,
-          0.008
-        ],
-        "cutoff": [
-          2600,
-          3800
-        ],
-        "level": [
-          0.52,
-          0.66
-        ],
-        "send": [
-          0.35,
-          0.5
-        ],
-        "dsend": [
-          0.15,
-          0.3
-        ],
-        "vibrato": [
-          0.006,
-          0.012
-        ]
+        "voices": [1, 2],
+        "spread": [0.003, 0.008],
+        "cutoff": [2600, 3800],
+        "level": [0.52, 0.66],
+        "send": [0.35, 0.5],
+        "dsend": [0.15, 0.3],
+        "vibrato": [0.006, 0.012]
       }
     },
     "pads": {
       "prob": 1,
-      "samplerPool": [
-        "slow_strings",
-        "strings"
-      ],
+      "samplerPool": ["slow_strings", "strings"],
       "recipe": {
-        "model": [
-          "strings",
-          "strings",
-          "solina",
-          "sampler"
-        ],
+        "model": ["strings", "strings", "solina", "sampler"],
         "wave": "saw",
-        "cutoff": [
-          900,
-          1600
-        ],
-        "detune": [
-          0.005,
-          0.012
-        ],
-        "attack": [
-          0.6,
-          1.8
-        ],
-        "ensemble": [
-          0.7,
-          0.9
-        ],
-        "level": [
-          0.55,
-          0.72
-        ],
-        "send": [
-          0.4,
-          0.6
-        ],
-        "dsend": [
-          0.1,
-          0.2
-        ]
+        "cutoff": [900, 1600],
+        "detune": [0.005, 0.012],
+        "attack": [0.6, 1.8],
+        "ensemble": [0.7, 0.9],
+        "level": [0.55, 0.72],
+        "send": [0.4, 0.6],
+        "dsend": [0.1, 0.2]
       }
     },
     "drums": {
-      "kickModel": [
-        "boom",
-        "909"
-      ],
-      "snareModel": [
-        "crack",
-        "noise"
-      ],
-      "hatModel": [
-        "metal",
-        "noise"
-      ],
-      "kick": [
-        1.4,
-        1.65
-      ],
-      "snare": [
-        0.85,
-        1.1
-      ],
-      "hat": [
-        0.6,
-        0.9
-      ],
-      "tune": [
-        0.95,
-        1.1
-      ],
-      "send": [
-        0.2,
-        0.35
-      ],
-      "dsend": [
-        0.08,
-        0.2
-      ]
+      "kickModel": ["boom", "909"],
+      "snareModel": ["crack", "noise"],
+      "hatModel": ["metal", "noise"],
+      "kick": [1.4, 1.65],
+      "snare": [0.85, 1.1],
+      "hat": [0.6, 0.9],
+      "tune": [0.95, 1.1],
+      "send": [0.2, 0.35],
+      "dsend": [0.08, 0.2]
     },
     "fx": {
-      "reverb": [
-        0.55,
-        0.72
-      ],
-      "delayBeats": [
-        0.375,
-        0.5
-      ],
-      "delayFb": [
-        0.2,
-        0.35
-      ],
-      "delayCut": [
-        2200,
-        3400
-      ],
-      "pump": [
-        0,
-        0.1
-      ],
-      "crackle": [
-        0,
-        0.05
-      ],
-      "lowcut": [
-        28,
-        42
-      ],
-      "highcut": [
-        0,
-        0
-      ],
-      "comp": [
-        0.55,
-        0.8
-      ],
-      "grit": [
-        0.45,
-        0.7
-      ]
+      "reverb": [0.55, 0.72],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.2, 0.35],
+      "delayCut": [2200, 3400],
+      "pump": [0, 0.1],
+      "crackle": [0, 0.05],
+      "lowcut": [28, 42],
+      "highcut": [0, 0],
+      "comp": [0.55, 0.8],
+      "grit": [0.45, 0.7]
     },
     "found": {
       "role": "bed",
-      "vol": [
-        0.05,
-        0.12
-      ],
-      "pitch": [
-        0.8,
-        0.95
-      ],
-      "stretch": [
-        0.4,
-        0.6
-      ],
-      "cutoff": [
-        2000,
-        3200
-      ],
-      "sources": [
-        "tw_stationhall",
-        "highway_night"
-      ]
+      "vol": [0.05, 0.12],
+      "pitch": [0.8, 0.95],
+      "stretch": [0.4, 0.6],
+      "cutoff": [2000, 3200],
+      "sources": ["pool:city*1", "pool:road*1"]
     },
-    "stab": [
-      "off"
-    ],
     "hits": {
-      "sources": [
-        "vox_b",
-        "sp_pressure"
-      ],
+      "sources": ["pool:vocal_stab*1", "sp_pressure"],
       "pattern": "sparse",
       "prob": 0.25
     },
-    "form": "pop"
+    "stab": ["off"],
+    "form": "pop",
+    "reverbColor": "dattorro",
+    "masterComp": 0.35
   },
-  "verify": {
-    "seeds": 6,
-    "features": {
-      "bpm": 3,
-      "drumDensity": 2,
-      "acoustic": 2,
-      "wash": 2,
-      "comp": 1,
-      "crackle": 1,
-      "swing": 2
-    }
+  "mind": {
+    "theory": {
+      "adventure": [0.117, 0.24],
+      "color": [0.183, 0.367],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      },
+      {
+        "id": "vibratoSwell",
+        "w": 0.4,
+        "depth": 0.25
+      }
+    ],
+    "rhythm": [0.14, 0.3]
+  },
+  "targets": {
+    "bpm": [139, 162, 3],
+    "drumDensity": [1.11, 2.83, 2],
+    "acoustic": [0, 0.92, 2],
+    "wash": [0.131, 0.38, 2],
+    "comp": [0.459, 0.896, 1],
+    "crackle": [0, 0.1, 1],
+    "swing": [0, 0.069, 2],
+    "pump": [0, 0.2, 3],
+    "leadVoices": [1, 3, 3],
+    "sub": [0.05, 0.35, 3]
   }
 }

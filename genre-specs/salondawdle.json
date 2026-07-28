@@ -1,38 +1,141 @@
 {
   "name": "salondawdle",
-  "label": "Salondawdle",
+  "label": "Ottoman Heat Death",
   "info": "furniture music at 61: bare piano chords placed one per bar and left to dawdle, a melody of maybe five unhurried notes, no drums, the tempo leaning forward and back like someone forgetting why they entered the room — dusty, white-suited, deliberately unimportant",
+  "pos": [781, 3854],
   "anchor": {
     "bpm": [57, 65],
     "swing": [0, 0.06],
     "humanize": [0.35, 0.6],
-    "meter": { "beats": 3, "unit": 4 },
     "progressions": ["dream", "ii_v_i", "neosoul"],
     "kits": ["waltz", "waltzswing"],
     "fills": ["off"],
     "chordEvery": 12,
     "bass": {
       "patterns": ["waltzroot"],
-      "samplerPool": ["felt_piano", "yamaha_grand_piano"],
-      "recipe": { "model": ["sampler", "sampler", "piano"], "cutoff": [700, 1400], "res": [0.05, 0.1], "level": [0.5, 0.68], "send": [0.25, 0.45], "dsend": [0, 0.08], "attack": [0.01, 0.03], "release": [0.35, 0.7] }
+      "samplerPool": ["felt_piano", "upright_piano"],
+      "recipe": {
+        "model": ["sampler", "sampler", "piano"],
+        "cutoff": [700, 1400],
+        "res": [0.05, 0.1],
+        "level": [0.5, 0.68],
+        "send": [0.25, 0.45],
+        "dsend": [0, 0.08],
+        "attack": [0.01, 0.03],
+        "release": [0.35, 0.7]
+      }
     },
     "lead": {
       "patterns": ["waltz", "sparse", "composed"],
-      "samplerPool": ["felt_piano", "felt_piano", "yamaha_grand_piano"],
-      "recipe": { "model": ["sampler", "sampler", "piano"], "wave": "sine", "voices": [1, 1], "spread": [0.001, 0.002], "cutoff": [2200, 3400], "level": [0.42, 0.55], "send": [0.3, 0.5], "dsend": [0.05, 0.15], "attack": [0.01, 0.03], "release": [0.4, 0.8] }
+      "samplerPool": ["felt_piano", "felt_piano", "upright_piano"],
+      "recipe": {
+        "model": ["sampler", "sampler", "piano"],
+        "wave": "sine",
+        "voices": [1, 1],
+        "spread": [0.001, 0.002],
+        "cutoff": [2200, 3400],
+        "level": [0.42, 0.55],
+        "send": [0.3, 0.5],
+        "dsend": [0.05, 0.15],
+        "attack": [0.01, 0.03],
+        "release": [0.4, 0.8]
+      }
     },
     "pads": {
       "prob": 0.3,
       "samplerPool": ["slow_strings"],
-      "recipe": { "model": ["sampler", "strings"], "wave": "sine", "cutoff": [800, 1500], "detune": [0.002, 0.004], "attack": [1.2, 2.8], "release": [1.8, 3.5], "swell": 1, "level": [0.28, 0.4], "send": [0.4, 0.6], "dsend": [0, 0.08] }
+      "recipe": {
+        "model": ["sampler", "strings"],
+        "wave": "sine",
+        "cutoff": [800, 1500],
+        "detune": [0.002, 0.004],
+        "attack": [1.2, 2.8],
+        "release": [1.8, 3.5],
+        "swell": 1,
+        "level": [0.28, 0.4],
+        "send": [0.4, 0.6],
+        "dsend": [0, 0.08]
+      }
     },
-    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.4, 0.6], "snare": [0.3, 0.5], "hat": [0.2, 0.4], "tune": [0.9, 1], "send": [0.15, 0.35], "dsend": [0, 0] },
-    "fx": { "reverb": [0.45, 0.62], "delayBeats": [1, 1.5], "delayFb": [0.1, 0.22], "delayCut": [2000, 3000], "pump": [0, 0], "crackle": [0.1, 0.4], "lowcut": [0, 0], "highcut": [0, 0], "comp": [0, 0.12] },
-    "found": { "role": "bed", "vol": [0.05, 0.12], "pitch": [0.7, 0.9], "stretch": [0.45, 0.6], "cutoff": [1800, 2800], "sources": ["tw_stationhall", "crickets"] },
-    "rubato": { "depth": [0.035, 0.06], "periodBars": [2, 4], "prob": 1 },
-    "thunk": { "prob": [0.3, 0.5], "amp": [0.03, 0.045] },
-    "hits": { "sources": ["sp_herenow"], "pattern": "sparse", "prob": 0.05 },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.4, 0.6],
+      "snare": [0.3, 0.5],
+      "hat": [0.2, 0.4],
+      "tune": [0.9, 1],
+      "send": [0.15, 0.35],
+      "dsend": [0, 0]
+    },
+    "fx": {
+      "reverb": [0.45, 0.62],
+      "delayBeats": [1, 1.5],
+      "delayFb": [0.1, 0.22],
+      "delayCut": [2000, 3000],
+      "pump": [0, 0],
+      "crackle": [0.1, 0.4],
+      "lowcut": [0, 0],
+      "highcut": [0, 0],
+      "comp": [0, 0.12]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.05, 0.12],
+      "pitch": [0.7, 0.9],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1800, 2800],
+      "sources": ["pool:city*1", "pool:nature*1"]
+    },
+    "rubato": {
+      "depth": [0.035, 0.06],
+      "periodBars": [2, 4],
+      "prob": 1
+    },
+    "thunk": {
+      "prob": [0.3, 0.5],
+      "amp": [0.03, 0.045]
+    },
+    "hits": {
+      "sources": ["sp_herenow"],
+      "pattern": "sparse",
+      "prob": 0.05
+    },
     "stab": ["off"],
-    "form": "wave"
+    "form": "wave",
+    "meter": {
+      "beats": 3,
+      "unit": 4
+    }
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.3, 0.477],
+      "color": [0.533, 0.783],
+      "voicing": "drop2",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      }
+    ],
+    "rhythm": [0.1, 0.3]
+  },
+  "targets": {
+    "bpm": [52, 71, 3],
+    "drumDensity": [0.12, 1.23, 2],
+    "wash": [0.059, 0.373, 1],
+    "pump": [0, 0.1, 1],
+    "swing": [0, 0.088, 2],
+    "seventh": [0.85, 1, 1],
+    "acoustic": [0.88, 1, 2],
+    "crackle": [0.012, 0.479, 1],
+    "sub": [0.05, 0.35, 1],
+    "motion": [0.52, 1, 1],
+    "bedUse": [0.88, 1, 1]
   }
 }

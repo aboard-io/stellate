@@ -1,0 +1,180 @@
+{
+  "name": "tarbreak",
+  "label": "Pitch Drop Panic",
+  "info": "invented (gap-found): a fast-tempo, sub-forward genre in the empty region near sepiadrive × garage/triphop/trance — softTop~0.5, bedUse~0.48, chopUse~0.31 [seed 5]",
+  "pos": [1707, 8387],
+  "anchor": {
+    "bpm": [145, 153],
+    "swing": [0.004, 0.054],
+    "humanize": [0.098, 0.188],
+    "progressions": ["uplift", "epic_min", "sad_pop", "synthwave"],
+    "kits": ["tribal", "breaks"],
+    "fills": ["drum fill", "tom fill", "off"],
+    "euclid": {
+      "kick": [5, 16]
+    },
+    "bass": {
+      "patterns": ["dub", "simple", "sub"],
+      "samplerPool": ["acoustic_bass"],
+      "recipe": {
+        "model": ["sub", "saw", "sampler"],
+        "cutoff": [300, 600],
+        "res": [0.05, 0.2],
+        "level": [1, 1.25],
+        "send": [0.05, 0.12],
+        "dsend": [0, 0.1]
+      },
+      "inserts": {
+        "prob": 0.5,
+        "max": 1,
+        "pool": [
+          [
+            "distort",
+            {
+              "drive": [0.1, 0.22],
+              "mix": [0.35, 0.6]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": ["composed", "composed2", "arpup", "wander"],
+      "patchPool": ["E.PIANO 1", "TUB BELLS", "E.PIANO 4", "SHIMMER"],
+      "samplerPool": ["alto_sax", "tenor_sax"],
+      "recipe": {
+        "model": ["stack", "stack", "dx7", "sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 3],
+        "spread": [0.003, 0.006],
+        "cutoff": [2800, 4000],
+        "level": [0.4, 0.52],
+        "send": [0.4, 0.6],
+        "dsend": [0.2, 0.4],
+        "vibrato": [0.004, 0.009],
+        "octave": 0.2,
+        "attack": 0.08,
+        "release": [0.45, 0.6],
+        "sustain": [0.85, 0.95]
+      },
+      "inserts": {
+        "prob": 0.5,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [0.5, 1.1],
+              "depth": [0.5, 0.7],
+              "mix": [0.4, 0.6]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 1,
+      "samplerPool": ["ahh_choir", "strings"],
+      "recipe": {
+        "model": ["saw", "choir", "strings", "sampler"],
+        "wave": "saw",
+        "cutoff": [1100, 1800],
+        "detune": [0.004, 0.009],
+        "attack": [1.2, 2.4],
+        "mellotron": true,
+        "level": [0.6, 0.8],
+        "send": [0.5, 0.7],
+        "dsend": [0.1, 0.25]
+      },
+      "inserts": {
+        "prob": 0.55,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [0.2, 0.5],
+              "depth": [0.5, 0.75],
+              "mix": [0.4, 0.6]
+            }
+          ]
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": ["808", "boom"],
+      "snareModel": ["crack"],
+      "hatModel": ["noise"],
+      "kick": [1.1, 1.3],
+      "snare": [0.7, 0.95],
+      "hat": [0.9, 1.2],
+      "tune": [1.05, 1.2],
+      "send": [0.1, 0.2],
+      "dsend": [0.1, 0.25]
+    },
+    "fx": {
+      "reverb": [0.69, 0.87],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.25, 0.4],
+      "delayCut": [2200, 3400],
+      "pump": [0.09, 0.31],
+      "crackle": [0.03, 0.19],
+      "lowcut": [25, 40],
+      "highcut": [2600, 3400],
+      "comp": [0.4, 0.62]
+    },
+    "found": {
+      "role": "chops",
+      "vol": [0.1, 0.18],
+      "pitch": [0.95, 1.15],
+      "stretch": [0.4, 0.6],
+      "cutoff": [2500, 4000],
+      "sources": ["shibuya", "tokyo_station", "vx_suspense"]
+    },
+    "hits": {
+      "sources": ["pool:vocal_stab*1", "sp_rhythm"],
+      "pattern": "sparse",
+      "prob": 0.4
+    },
+    "stab": ["off"],
+    "form": "pop"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.1, 0.2],
+      "color": [0.112, 0.3],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      },
+      {
+        "id": "vibratoSwell",
+        "w": 0.4,
+        "depth": 0.25
+      }
+    ],
+    "rhythm": [0.485, 0.755]
+  },
+  "targets": {
+    "bpm": [139, 160, 3],
+    "softTop": [1, 1, 3],
+    "bedUse": [0.01, 0.25, 3],
+    "chopUse": [0.4, 0.6, 2],
+    "hatDensity": [0.228, 1.152, 2],
+    "wash": [0.14, 0.482, 1],
+    "acoustic": [0, 1, 1],
+    "swing": [0, 0.089, 1]
+  }
+}

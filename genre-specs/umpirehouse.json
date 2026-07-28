@@ -1,285 +1,133 @@
 {
   "name": "umpirehouse",
-  "label": "Umpire House",
+  "label": "Full Count Judgment",
   "info": "ballpark-organ house where the vocal hook is the umpire: \"STEE-RIKE THREE, you're OUT\" — the charge riff on a real Hammond, a seventh-inning stretch that never ends, the crack of the bat quantized to the clap; safe at the drop",
-  "clips": [
-    "kaleido",
-    "rainbow_rings",
-    "cs_manhatta",
-    "night_lights"
-  ],
-  "materials": "espeak umpire calls (sp_ump_*, MATERIALS) + the ballpark organ (rock_organ sampler) charge riff; draft uses the goal-horn (ca_horn) as the stadium blast",
-  "pos": [
-    685,
-    110
-  ],
+  "pos": [1735, 12588],
   "anchor": {
-    "bpm": [
-      122,
-      128
-    ],
-    "swing": [
-      0.02,
-      0.08
-    ],
-    "humanize": [
-      0.03,
-      0.12
-    ],
-    "progressions": [
-      "house_min7",
-      "pop_1625",
-      "doo_wop"
-    ],
-    "kits": [
-      "house",
-      "four"
-    ],
-    "fills": [
-      "cut",
-      "riser",
-      "impact"
-    ],
+    "bpm": [122, 128],
+    "swing": [0.02, 0.08],
+    "humanize": [0.03, 0.12],
+    "progressions": ["house_min7", "pop_1625", "doo_wop"],
+    "kits": ["house", "four"],
+    "fills": ["cut", "riser", "impact"],
     "bass": {
-      "patterns": [
-        "rolling",
-        "octaves",
-        "stab"
-      ],
+      "patterns": ["rolling", "octaves", "stab"],
       "recipe": {
-        "model": [
-          "saw",
-          "reese"
-        ],
-        "cutoff": [
-          500,
-          900
-        ],
-        "res": [
-          0.12,
-          0.24
-        ],
-        "level": [
-          1,
-          1.2
-        ],
-        "send": [
-          0,
-          0.06
-        ],
-        "dsend": [
-          0.05,
-          0.12
-        ]
+        "model": ["saw", "reese"],
+        "cutoff": [500, 900],
+        "res": [0.12, 0.24],
+        "level": [1, 1.2],
+        "send": [0, 0.06],
+        "dsend": [0.05, 0.12]
       }
     },
     "lead": {
-      "patterns": [
-        "hero",
-        "double",
-        "anthem"
-      ],
+      "patterns": ["hero", "double", "anthem"],
       "recipe": {
-        "model": [
-          "sampler",
-          "hammond",
-          "dx7"
-        ],
-        "samplerPool": [
-          "rock_organ",
-          "percussive_organ"
-        ],
-        "patchPool": [
-          "60-S ORGAN"
-        ],
+        "model": ["sampler", "hammond", "dx7"],
+        "samplerPool": ["rock_organ", "percussive_organ"],
+        "patchPool": ["60-S ORGAN"],
         "wave": "saw",
-        "voices": [
-          1,
-          2
-        ],
-        "cutoff": [
-          2400,
-          3600
-        ],
-        "leslie": [
-          0.8,
-          0.95
-        ],
-        "level": [
-          0.44,
-          0.58
-        ],
-        "send": [
-          0.25,
-          0.45
-        ],
-        "dsend": [
-          0.1,
-          0.25
-        ]
+        "voices": [1, 2],
+        "cutoff": [2400, 3600],
+        "leslie": [0.8, 0.95],
+        "level": [0.44, 0.58],
+        "send": [0.25, 0.45],
+        "dsend": [0.1, 0.25]
       }
     },
     "pads": {
       "prob": 0.5,
       "recipe": {
-        "model": [
-          "hammond",
-          "organ",
-          "juno60"
-        ],
+        "model": ["hammond", "organ", "juno60"],
         "wave": "saw",
-        "cutoff": [
-          1000,
-          1700
-        ],
-        "detune": [
-          0.005,
-          0.011
-        ],
-        "attack": [
-          0.3,
-          0.9
-        ],
-        "leslie": [
-          0.8,
-          0.9
-        ],
-        "level": [
-          0.42,
-          0.58
-        ],
-        "send": [
-          0.3,
-          0.5
-        ],
-        "dsend": [
-          0.1,
-          0.2
-        ]
+        "cutoff": [1000, 1700],
+        "detune": [0.005, 0.011],
+        "attack": [0.3, 0.9],
+        "leslie": [0.8, 0.9],
+        "level": [0.42, 0.58],
+        "send": [0.3, 0.5],
+        "dsend": [0.1, 0.2]
       }
     },
     "drums": {
-      "kickModel": [
-        "909"
-      ],
-      "snareModel": [
-        "clap",
-        "crack"
-      ],
-      "hatModel": [
-        "noise",
-        "metal"
-      ],
-      "kick": [
-        1.1,
-        1.35
-      ],
-      "snare": [
-        0.6,
-        0.85
-      ],
-      "hat": [
-        0.6,
-        0.9
-      ],
-      "tune": [
-        0.98,
-        1.1
-      ],
-      "send": [
-        0.1,
-        0.25
-      ],
-      "dsend": [
-        0.05,
-        0.15
-      ]
+      "kickModel": ["909"],
+      "snareModel": ["clap", "crack"],
+      "hatModel": ["noise", "metal"],
+      "kick": [1.1, 1.35],
+      "snare": [0.6, 0.85],
+      "hat": [0.6, 0.9],
+      "tune": [0.98, 1.1],
+      "send": [0.1, 0.25],
+      "dsend": [0.05, 0.15]
     },
     "fx": {
-      "reverb": [
-        0.3,
-        0.5
-      ],
-      "delayBeats": [
-        0.375,
-        0.5
-      ],
-      "delayFb": [
-        0.2,
-        0.35
-      ],
-      "delayCut": [
-        3000,
-        4500
-      ],
-      "pump": [
-        0.4,
-        0.62
-      ],
-      "crackle": [
-        0,
-        0.06
-      ],
-      "lowcut": [
-        30,
-        45
-      ],
-      "highcut": [
-        0,
-        0
-      ],
-      "comp": [
-        0.35,
-        0.55
-      ]
+      "reverb": [0.3, 0.5],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.2, 0.35],
+      "delayCut": [3000, 4500],
+      "pump": [0.4, 0.62],
+      "crackle": [0, 0.06],
+      "lowcut": [30, 45],
+      "highcut": [0, 0],
+      "comp": [0.35, 0.55]
     },
-    "reverbColor": "spring",
     "found": {
       "role": "chops",
-      "vol": [
-        0.12,
-        0.22
-      ],
-      "pitch": [
-        1,
-        1.3
-      ],
-      "stretch": [
-        0.35,
-        0.55
-      ],
-      "cutoff": [
-        3500,
-        6000
-      ],
-      "sources": [
-        "ca_horn",
-        "rave_a"
-      ]
+      "vol": [0.12, 0.22],
+      "pitch": [1, 1.3],
+      "stretch": [0.35, 0.55],
+      "cutoff": [3500, 6000],
+      "sources": ["ca_horn", "rave_a"]
     },
+    "sampleEvents": [
+      {
+        "pool": ["sp_ump_1", "sp_ump_2", "sp_ump_3", "sp_ump_4"],
+        "placement": "buried",
+        "sections": "all",
+        "treatment": {
+          "cutoff": 4600,
+          "vol": 0.44,
+          "every": 2,
+          "maxDur": 8,
+          "rsend": 0.15,
+          "dsend": 0.12
+        }
+      }
+    ],
     "hits": {
-      "sources": [
-        "ca_horn",
-        "bb_horn_a"
-      ],
+      "sources": ["ca_horn", "bb_horn_a"],
       "pattern": "offbeat",
       "prob": 0.4
     },
-    "stab": [
-      "offbeat"
-    ],
-    "form": "pop"
+    "stab": ["offbeat"],
+    "form": "duet",
+    "reverbColor": "spring"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": {
-      "bpm": 3,
-      "pump": 2,
-      "motion": 2,
-      "chopUse": 2,
-      "snareBalance": 1,
-      "seventh": 1
-    }
+  "mind": {
+    "theory": {
+      "adventure": [0.107, 0.223],
+      "color": [0.333, 0.533],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      }
+    ],
+    "rhythm": [0.1, 0.26]
+  },
+  "targets": {
+    "bpm": [116, 135, 3],
+    "pump": [0.355, 0.724, 2],
+    "motion": [0.487, 1, 2],
+    "chopUse": [0.4, 0.6, 2],
+    "snareBalance": [0.114, 0.586, 1],
+    "seventh": [0, 1, 1]
   }
 }

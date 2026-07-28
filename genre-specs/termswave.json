@@ -1,266 +1,131 @@
 {
   "name": "termswave",
-  "label": "Terms & Conditions Wave",
-  "info": "a flat, unbroken monotone reading the End User License Agreement over a warm ambient bed \u2014 clause after clause, \"you agree to arbitration,\" \"we may update these terms at any time\" \u2014 the drone of consent you scroll past; nobody has ever finished a track",
-  "clips": [
-    "earth_orbit",
-    "spacewalk",
-    "green_nebula",
-    "tv_room"
-  ],
-  "materials": "espeak EULA scroll (sp_eula_* \u2014 original parodic legalese, MATERIALS); draft reuses vx_burroughs narration as placeholder monotone",
-  "pos": [
-    620,
-    50
-  ],
+  "label": "Hereinafter Forever",
+  "info": "a flat, unbroken monotone reading the End User License Agreement over a warm ambient bed — clause after clause, \"you agree to arbitration,\" \"we may update these terms at any time\" — the drone of consent you scroll past; nobody has ever finished a track",
+  "pos": [2129, 10846],
   "anchor": {
-    "bpm": [
-      60,
-      74
-    ],
-    "swing": [
-      0,
-      0.03
-    ],
-    "humanize": [
-      0.05,
-      0.15
-    ],
-    "progressions": [
-      "drone_min",
-      "deep_two",
-      "dream"
-    ],
-    "kits": [
-      "off"
-    ],
-    "fills": [
-      "off"
-    ],
+    "bpm": [60, 74],
+    "swing": [0, 0.03],
+    "humanize": [0.05, 0.15],
+    "progressions": ["drone_min", "deep_two", "dream"],
+    "kits": ["off"],
+    "fills": ["off"],
     "chordEvery": 16,
     "bass": {
-      "patterns": [
-        "root",
-        "pedal",
-        "sub"
-      ],
+      "patterns": ["root", "pedal", "sub"],
       "recipe": {
-        "model": [
-          "sub",
-          "saw"
-        ],
-        "cutoff": [
-          400,
-          700
-        ],
-        "res": [
-          0.05,
-          0.12
-        ],
-        "level": [
-          0.6,
-          0.8
-        ],
-        "send": [
-          0.2,
-          0.4
-        ],
-        "dsend": [
-          0,
-          0.06
-        ]
+        "model": ["sub", "saw"],
+        "cutoff": [400, 700],
+        "res": [0.05, 0.12],
+        "level": [0.6, 0.8],
+        "send": [0.2, 0.4],
+        "dsend": [0, 0.06]
       }
     },
     "lead": {
-      "patterns": [
-        "off",
-        "sparse"
-      ],
+      "patterns": ["off", "sparse"],
       "recipe": {
-        "model": [
-          "sine",
-          "fm"
-        ],
+        "model": ["sine", "fm"],
         "wave": "sine",
-        "voices": [
-          1,
-          1
-        ],
-        "cutoff": [
-          1600,
-          2400
-        ],
-        "level": [
-          0.28,
-          0.4
-        ],
-        "send": [
-          0.4,
-          0.6
-        ],
-        "dsend": [
-          0.1,
-          0.25
-        ]
+        "voices": [1, 1],
+        "cutoff": [1600, 2400],
+        "level": [0.28, 0.4],
+        "send": [0.4, 0.6],
+        "dsend": [0.1, 0.25]
       }
     },
     "pads": {
       "prob": 0.95,
       "recipe": {
-        "model": [
-          "vp330",
-          "solina",
-          "strings"
-        ],
+        "model": ["vp330", "solina", "strings"],
         "wave": "saw",
-        "cutoff": [
-          800,
-          1400
-        ],
-        "detune": [
-          0.006,
-          0.014
-        ],
-        "attack": [
-          2,
-          4.5
-        ],
-        "level": [
-          0.5,
-          0.68
-        ],
-        "send": [
-          0.5,
-          0.72
-        ],
-        "dsend": [
-          0.1,
-          0.25
-        ],
+        "cutoff": [800, 1400],
+        "detune": [0.006, 0.014],
+        "attack": [2, 4.5],
+        "level": [0.5, 0.68],
+        "send": [0.5, 0.72],
+        "dsend": [0.1, 0.25],
         "mellotron": true
       }
     },
     "drums": {
-      "kickModel": [
-        "boom"
-      ],
-      "snareModel": [
-        "noise"
-      ],
-      "hatModel": [
-        "noise"
-      ],
-      "kick": [
-        0.3,
-        0.5
-      ],
-      "snare": [
-        0.2,
-        0.4
-      ],
-      "hat": [
-        0.2,
-        0.4
-      ],
-      "tune": [
-        0.9,
-        1
-      ],
-      "send": [
-        0.2,
-        0.4
-      ],
-      "dsend": [
-        0,
-        0
-      ]
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.3, 0.5],
+      "snare": [0.2, 0.4],
+      "hat": [0.2, 0.4],
+      "tune": [0.9, 1],
+      "send": [0.2, 0.4],
+      "dsend": [0, 0]
     },
     "fx": {
-      "reverb": [
-        0.5,
-        0.7
-      ],
-      "delayBeats": [
-        0.75,
-        1.5
-      ],
-      "delayFb": [
-        0.15,
-        0.3
-      ],
-      "delayCut": [
-        2000,
-        2800
-      ],
-      "pump": [
-        0,
-        0
-      ],
-      "crackle": [
-        0,
-        0.08
-      ],
-      "lowcut": [
-        0,
-        0
-      ],
-      "highcut": [
-        0,
-        0
-      ],
-      "comp": [
-        0,
-        0.15
-      ]
+      "reverb": [0.5, 0.7],
+      "delayBeats": [0.75, 1.5],
+      "delayFb": [0.15, 0.3],
+      "delayCut": [2000, 2800],
+      "pump": [0, 0],
+      "crackle": [0, 0.08],
+      "lowcut": [0, 0],
+      "highcut": [0, 0],
+      "comp": [0, 0.15]
     },
-    "reverbColor": "greyhole",
     "found": {
       "role": "narration",
-      "vol": [
-        0.4,
-        0.6
-      ],
-      "pitch": [
-        0.98,
-        1.04
-      ],
-      "stretch": [
-        0.9,
-        1.05
-      ],
-      "cutoff": [
-        3200,
-        4200
-      ],
-      "sources": [
-        "vx_burroughs",
-        "vx_whitman"
-      ]
+      "vol": [0.4, 0.6],
+      "pitch": [0.98, 1.04],
+      "stretch": [0.9, 1.05],
+      "cutoff": [3200, 4200],
+      "sources": ["vx_burroughs", "vx_whitman", "vx_ginsberg_class"]
     },
+    "sampleEvents": [
+      {
+        "pool": ["sp_eula_1", "sp_eula_2", "sp_eula_3"],
+        "placement": "buried",
+        "sections": "all",
+        "treatment": {
+          "cutoff": 3800,
+          "vol": 0.42,
+          "every": 2,
+          "maxDur": 8,
+          "rsend": 0.15,
+          "dsend": 0.12
+        }
+      }
+    ],
     "hits": {
-      "sources": [
-        "sp_system"
-      ],
+      "sources": ["pool:vb_spoken_poetic*1", "sp_system"],
       "pattern": "sparse",
       "prob": 0.05
     },
-    "stab": [
-      "off"
-    ],
-    "form": "wave"
+    "stab": ["off"],
+    "form": "wave",
+    "reverbColor": "greyhole"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": {
-      "bpm": 3,
-      "drumDensity": 3,
-      "motion": 2,
-      "wash": 2,
-      "sub": 1,
-      "acoustic": 1,
-      "humanize": 1,
-      "bedUse": 3
-    }
+  "mind": {
+    "theory": {
+      "adventure": [0.05, 0.127],
+      "color": [0.25, 0.467],
+      "voicing": "open",
+      "reharm": false
+    },
+    "pipes": [
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      }
+    ],
+    "rhythm": [0, 0.08]
+  },
+  "targets": {
+    "bpm": [53, 82, 3],
+    "drumDensity": [0, 0.4, 3],
+    "motion": [0, 1, 2],
+    "wash": [0.122, 0.487, 2],
+    "sub": [0, 1, 1],
+    "acoustic": [0, 0.12, 1],
+    "humanize": [0, 0.229, 1],
+    "bedUse": [0.88, 1, 3]
   }
 }

@@ -1,8 +1,8 @@
 {
   "name": "symphony",
-  "label": "Brass & Timpani Sunrise",
+  "label": "Timpani Cosmogenesis",
   "info": "Romantic-orchestral symphony as a genre: a full ensemble — soaring violins doubled by a brass section over a deep contrabass/tuba foundation and swelling string beds — driving heroic, epic tonal harmony at a dramatic allegro, richer and louder and brassier than the intimate string quartet, the Beethoven/Dvořák/Sibelius orchestral tutti",
-  "clips": ["earth_orbit", "spacewalk", "dc_village", "blue_dinner", "bamboo"],
+  "pos": [1330, 4150],
   "anchor": {
     "bpm": [76, 122],
     "swing": [0, 0.03],
@@ -11,20 +11,120 @@
     "kits": ["off"],
     "fills": ["off"],
     "chordEvery": 8,
-    "bass": { "patterns": ["octaves", "walking", "pedal"], "samplerPool": ["contrabass", "tuba"], "recipe": { "model": ["sampler", "sampler"], "cutoff": [500, 1300], "res": [0.05, 0.1], "level": [0.52, 0.74], "send": [0.2, 0.4], "dsend": [0, 0.06], "attack": [0.02, 0.06], "release": [0.4, 1] } },
-    "lead": { "patterns": ["hero", "anthem", "updown"], "samplerPool": ["violin", "brass_section"], "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "voices": [2, 3], "spread": [0.002, 0.006], "cutoff": [2400, 4200], "level": [0.44, 0.66], "send": [0.24, 0.46], "dsend": [0.02, 0.12], "attack": [0.02, 0.07], "release": [0.35, 0.9] } },
-    "pads": { "prob": 0.7, "samplerPool": ["strings", "brass_section"], "recipe": { "model": ["sampler", "strings"], "wave": "sine", "cutoff": [1000, 1900], "detune": [0.002, 0.006], "attack": [0.8, 2.2], "release": [1.5, 3.5], "swell": 1, "level": [0.34, 0.54], "send": [0.34, 0.56], "dsend": [0, 0.08] } },
-    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.5, 0.7], "snare": [0.4, 0.6], "hat": [0.3, 0.5], "tune": [0.9, 1], "send": [0.15, 0.35], "dsend": [0, 0] },
-    "fx": { "reverb": [0.45, 0.68], "delayBeats": [0.75, 1.5], "delayFb": [0.1, 0.24], "delayCut": [2000, 3000], "pump": [0, 0], "crackle": [0, 0.06], "lowcut": [0, 0], "highcut": [0, 0], "comp": [0, 0.1] },
-    "found": { "role": "bed", "vol": [0.03, 0.09], "pitch": [0.7, 0.9], "stretch": [0.45, 0.6], "cutoff": [1800, 2800], "sources": ["iriomote", "tokyo_station"] },
-    "rubato": { "depth": [0.008, 0.025], "periodBars": [2, 4], "prob": 0.6 },
-    "hits": { "sources": ["sp_herenow"], "pattern": "sparse", "prob": 0.03 },
+    "bass": {
+      "patterns": ["octaves", "walking", "pedal"],
+      "samplerPool": ["contrabass", "tuba"],
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "cutoff": [500, 1300],
+        "res": [0.05, 0.1],
+        "level": [0.52, 0.74],
+        "send": [0.2, 0.4],
+        "dsend": [0, 0.06],
+        "attack": [0.02, 0.06],
+        "release": [0.4, 1]
+      }
+    },
+    "lead": {
+      "patterns": ["hero", "anthem", "updown"],
+      "samplerPool": ["violin", "brass_section"],
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "sine",
+        "voices": [2, 3],
+        "spread": [0.002, 0.006],
+        "cutoff": [2400, 4200],
+        "level": [0.44, 0.66],
+        "send": [0.24, 0.46],
+        "dsend": [0.02, 0.12],
+        "attack": [0.02, 0.07],
+        "release": [0.35, 0.9]
+      }
+    },
+    "pads": {
+      "prob": 0.7,
+      "samplerPool": ["strings", "brass_section"],
+      "recipe": {
+        "model": ["sampler", "strings"],
+        "wave": "sine",
+        "cutoff": [1000, 1900],
+        "detune": [0.002, 0.006],
+        "attack": [0.8, 2.2],
+        "release": [1.5, 3.5],
+        "swell": 1,
+        "level": [0.34, 0.54],
+        "send": [0.34, 0.56],
+        "dsend": [0, 0.08]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.5, 0.7],
+      "snare": [0.4, 0.6],
+      "hat": [0.3, 0.5],
+      "tune": [0.9, 1],
+      "send": [0.15, 0.35],
+      "dsend": [0, 0]
+    },
+    "fx": {
+      "reverb": [0.45, 0.68],
+      "delayBeats": [0.75, 1.5],
+      "delayFb": [0.1, 0.24],
+      "delayCut": [2000, 3000],
+      "pump": [0, 0],
+      "crackle": [0, 0.06],
+      "lowcut": [0, 0],
+      "highcut": [0, 0],
+      "comp": [0, 0.1]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.03, 0.09],
+      "pitch": [0.7, 0.9],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1800, 2800],
+      "sources": ["iriomote", "tokyo_station"]
+    },
+    "rubato": {
+      "depth": [0.008, 0.025],
+      "periodBars": [2, 4],
+      "prob": 0.6
+    },
+    "hits": {
+      "sources": ["pool:vb_classical_chamber*1", "sp_herenow"],
+      "pattern": "sparse",
+      "prob": 0.03
+    },
     "stab": ["off"],
     "form": "wave"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": { "acoustic": 3, "bpm": 3, "seventh": 2, "drumDensity": 3, "wash": 2, "motion": 2, "leadVoices": 2, "humanize": 1 }
+  "mind": {
+    "theory": {
+      "adventure": [0.1, 0.2],
+      "color": [0.113, 0.3],
+      "voicing": "open",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      }
+    ],
+    "rhythm": [0, 0.08]
+  },
+  "targets": {
+    "acoustic": [0.68, 0.92, 3],
+    "bpm": [69, 132, 3],
+    "seventh": [0, 0.975, 2],
+    "drumDensity": [0, 0.4, 3],
+    "wash": [0.033, 0.398, 2],
+    "motion": [0.487, 1, 2],
+    "leadVoices": [1, 5, 2],
+    "humanize": [0, 0.257, 1]
   }
 }

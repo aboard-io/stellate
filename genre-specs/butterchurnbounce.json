@@ -1,0 +1,152 @@
+{
+  "name": "butterchurnbounce",
+  "label": "Buttermilk Cyclotron",
+  "info": "invented (gap-found): a drive-tempo, acoustic-forward genre in the empty region near cedarskank × rosinamblelilt/klezmer — variation~0.55, softTop~0.56, hatDensity~0.32 [seed 11]",
+  "pos": [90, 11299],
+  "anchor": {
+    "bpm": [117, 125],
+    "swing": [0.2, 0.25],
+    "humanize": [0.257, 0.347],
+    "progressions": ["hijaz", "andalusian", "minor_run"],
+    "kits": ["off", "kick"],
+    "fills": ["off"],
+    "bass": {
+      "patterns": ["walking", "walking", "melodic"],
+      "samplerPool": ["acoustic_bass"],
+      "recipe": {
+        "model": ["sampler", "sampler", "piano"],
+        "cutoff": [500, 1000],
+        "res": [0.05, 0.15],
+        "level": [0.9, 1.1],
+        "send": [0.1, 0.2],
+        "dsend": [0, 0.05],
+        "attack": 0.005,
+        "release": [0.08, 0.14]
+      }
+    },
+    "lead": {
+      "patterns": ["pentaup", "sparse", "wander"],
+      "patchPool": ["E.PIANO 1", "E.PIANO 3"],
+      "samplerPool": ["alto_sax", "felt_piano", "jazz_guitar"],
+      "recipe": {
+        "model": ["fm", "pluck", "sampler", "sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 3],
+        "spread": [0.002, 0.005],
+        "cutoff": [1800, 2800],
+        "level": [0.52, 0.64],
+        "send": [0.35, 0.5],
+        "dsend": [0.2, 0.35],
+        "vibrato": [0.005, 0.012],
+        "octave": 0.06,
+        "attack": 0.025,
+        "release": [0.12, 0.2],
+        "sustain": [0.66, 0.78],
+        "fenv": [0.15, 0.3]
+      },
+      "inserts": {
+        "prob": 0.4,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [0.3, 0.8],
+              "depth": [0.5, 0.8],
+              "mix": [0.35, 0.55]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.9,
+      "recipe": {
+        "model": ["fm"],
+        "wave": "sine",
+        "cutoff": [900, 1500],
+        "detune": [0.003, 0.008],
+        "attack": [0.8, 1.8],
+        "level": [0.5, 0.68],
+        "send": [0.35, 0.55],
+        "dsend": [0.1, 0.2]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom", "808"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [1.3, 1.6],
+      "snare": [0.4, 0.6],
+      "hat": [0.3, 0.5],
+      "tune": [0.78, 0.9],
+      "send": [0.3, 0.5],
+      "dsend": [0.1, 0.3]
+    },
+    "fx": {
+      "reverb": [0.38, 0.56],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.1, 0.25],
+      "delayCut": [2000, 3000],
+      "pump": [0.06, 0.28],
+      "crackle": [0.16, 0.32],
+      "lowcut": [0, 30],
+      "highcut": [2600, 3400],
+      "comp": [0.13, 0.35]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.05, 0.12],
+      "pitch": [0.8, 1],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1500, 2500],
+      "sources": ["pool:city*2", "vx_whitman"]
+    },
+    "hits": {
+      "sources": ["blues_vox_78", "blues_vox_78", "pool:horn_stab*1"],
+      "pattern": "response",
+      "prob": 0.75
+    },
+    "stab": ["off"],
+    "form": "pop",
+    "reverbColor": "fdn",
+    "timeFeel": {
+      "pushPull": {
+        "bass": 0.015,
+        "snare": 0.01
+      }
+    }
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.15, 0.273],
+      "color": [0.183, 0.333],
+      "voicing": "open",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      },
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      }
+    ],
+    "rhythm": [0.025, 0.115]
+  },
+  "targets": {
+    "bpm": [111, 132, 3],
+    "softTop": [1, 1, 3],
+    "variation": [0, 1, 3],
+    "hatDensity": [0, 0.557, 2],
+    "drumDensity": [0, 0.904, 2],
+    "wash": [0.06, 0.343, 1],
+    "acoustic": [0, 1, 1],
+    "swing": [0.151, 0.285, 1]
+  }
+}

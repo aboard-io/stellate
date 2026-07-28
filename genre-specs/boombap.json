@@ -1,0 +1,154 @@
+{
+  "name": "boombap",
+  "label": "Milk Crate Scripture",
+  "info": "the golden era at 92: a hard dusty break, a chopped soul loop, a fat sampled bass and smoky Rhodes stabs — head-nod verses dug out of a milk crate",
+  "pos": [205, 10395],
+  "anchor": {
+    "bpm": [88, 96],
+    "swing": [0.1, 0.24],
+    "humanize": [0.15, 0.35],
+    "progressions": ["neosoul", "lofi", "ii_v_i", "pop_1625"],
+    "kits": ["boombap", "breaks"],
+    "fills": ["off", "drum fill", "downlift"],
+    "bass": {
+      "patterns": ["simple", "dub", "root"],
+      "samplerPool": ["acoustic_bass", "finger_bass"],
+      "recipe": {
+        "model": ["sub", "sampler"],
+        "cutoff": [350, 600],
+        "res": [0.05, 0.15],
+        "level": [1, 1.2],
+        "send": [0.05, 0.12],
+        "dsend": [0, 0.05]
+      }
+    },
+    "lead": {
+      "patterns": ["sparse", "pentaup", "wander"],
+      "samplerPool": ["rhodes_ep", "electric_piano", "jazz_guitar"],
+      "recipe": {
+        "model": ["fm", "sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.002, 0.005],
+        "cutoff": [1800, 2800],
+        "level": [0.4, 0.52],
+        "send": [0.3, 0.45],
+        "dsend": [0.15, 0.3],
+        "attack": 0.02,
+        "release": [0.12, 0.2],
+        "sustain": [0.66, 0.78]
+      }
+    },
+    "pads": {
+      "prob": 0.7,
+      "samplerPool": ["strings"],
+      "recipe": {
+        "model": ["fm", "sampler"],
+        "wave": "sine",
+        "cutoff": [900, 1500],
+        "detune": [0.003, 0.008],
+        "attack": [0.8, 1.8],
+        "level": [0.5, 0.66],
+        "send": [0.3, 0.5],
+        "dsend": [0.1, 0.2]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom", "808"],
+      "snareModel": ["crack", "noise"],
+      "hatModel": ["noise"],
+      "kick": [1.1, 1.35],
+      "snare": [0.8, 1.05],
+      "hat": [0.6, 0.9],
+      "tune": [0.9, 1.05],
+      "send": [0.12, 0.25],
+      "dsend": [0.05, 0.15],
+      "kit": "room"
+    },
+    "fx": {
+      "reverb": [0.4, 0.58],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.2, 0.35],
+      "delayCut": [1800, 2800],
+      "pump": [0, 0.1],
+      "crackle": [0.2, 0.45],
+      "lowcut": [0, 25],
+      "highcut": [0, 0],
+      "comp": [0.25, 0.45]
+    },
+    "found": {
+      "role": "break",
+      "scratch": 0.5,
+      "vol": [0.2, 0.32],
+      "pitch": [1, 1],
+      "stretch": [0.5, 0.5],
+      "cutoff": [4000, 6000],
+      "sources": [
+        "amen_165",
+        "amen_170",
+        "stml_loop_86a",
+        "stml_loop_89a",
+        "stml_loop_92a",
+        "stml_loop_94a"
+      ]
+    },
+    "snarePP": 0.5,
+    "hits": {
+      "sources": ["pool:vb_jazz_blues*1", "pool:vocal_stab*2", "sp_rewind"],
+      "pattern": "sparse",
+      "prob": 0.4
+    },
+    "stab": ["off"],
+    "form": "pop",
+    "timeFeel": {
+      "pushPullMs": {
+        "bass": 9,
+        "hat": -4,
+        "snare": 5
+      }
+    }
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.3, 0.467],
+      "color": [0.475, 0.713],
+      "voicing": "drop2",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "ghost",
+        "w": 0.55,
+        "prob": 0.35
+      },
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      }
+    ],
+    "rhythm": [0.4, 0.625]
+  },
+  "perc": {
+    "lanes": [
+      {
+        "p": "clap24",
+        "lvl": 0.26
+      }
+    ]
+  },
+  "targets": {
+    "bpm": [86, 98, 3],
+    "breakUse": [0.3, 0.8, 2],
+    "snareBalance": [0.55, 1.2, 2],
+    "crackle": [0.2, 0.5, 2],
+    "swing": [0.08, 0.28, 1],
+    "seventh": [0.5, 1, 1],
+    "sub": [0.5, 1, 1],
+    "softTop": [0, 0, 1],
+    "drumDensity": [0.8, 1.8, 1],
+    "wash": [0.08, 0.3, 1],
+    "motion": [0.4, 1, 1]
+  }
+}

@@ -1,81 +1,25 @@
 {
   "name": "flannelburst",
-  "label": "Flannel Burst",
-  "info": "a power trio in a flannel wall: whispered verse, detonation chorus \u2014 drop-tuned fuzz-wall guitars over a room-mic kit, a bass with teeth, the loud parts twice as loud as the law allows",
-  "pos": [
-    1560,
-    14330
-  ],
-  "clips": [
-    "ind_furnace",
-    "dark_face",
-    "tv_room",
-    "night_lines"
-  ],
+  "label": "Thrift Store Supernova",
+  "info": "a power trio in a flannel wall: whispered verse, detonation chorus — drop-tuned fuzz-wall guitars over a room-mic kit, a bass with teeth, the loud parts twice as loud as the law allows",
+  "pos": [1926, 15931],
   "anchor": {
-    "bpm": [
-      114,
-      124
-    ],
-    "swing": [
-      0,
-      0.05
-    ],
-    "humanize": [
-      0.12,
-      0.3
-    ],
-    "progressions": [
-      "minor_run",
-      "sad_pop",
-      "epic_min",
-      "four_chords"
-    ],
-    "kits": [
-      "four",
-      "open",
-      "halftime"
-    ],
-    "fills": [
-      "impact",
-      "drum fill",
-      "riser",
-      "cut"
-    ],
+    "bpm": [114, 124],
+    "swing": [0, 0.05],
+    "humanize": [0.12, 0.3],
+    "progressions": ["minor_run", "sad_pop", "epic_min", "four_chords", "interchange"],
+    "kits": ["four", "open", "halftime"],
+    "fills": ["impact", "drum fill", "riser", "cut"],
     "bass": {
-      "patterns": [
-        "drive",
-        "root",
-        "simple"
-      ],
-      "samplerPool": [
-        "picked_bass"
-      ],
+      "patterns": ["drive", "root", "simple"],
+      "samplerPool": ["picked_bass"],
       "recipe": {
-        "model": [
-          "sampler",
-          "saw"
-        ],
-        "cutoff": [
-          420,
-          750
-        ],
-        "res": [
-          0.1,
-          0.22
-        ],
-        "level": [
-          1.15,
-          1.4
-        ],
-        "send": [
-          0,
-          0.06
-        ],
-        "dsend": [
-          0,
-          0.05
-        ]
+        "model": ["sampler", "saw"],
+        "cutoff": [420, 750],
+        "res": [0.1, 0.22],
+        "level": [1.15, 1.4],
+        "send": [0, 0.06],
+        "dsend": [0, 0.05]
       },
       "inserts": {
         "prob": 1,
@@ -84,69 +28,28 @@
           [
             "distort",
             {
-              "drive": [
-                0.45,
-                0.7
-              ],
-              "mix": [
-                0.7,
-                0.9
-              ]
+              "drive": [0.45, 0.7],
+              "mix": [0.7, 0.9]
             }
           ]
         ]
       }
     },
     "lead": {
-      "patterns": [
-        "blues",
-        "anthem",
-        "double",
-        "hero"
-      ],
-      "samplerPool": [
-        "distortion_guitar",
-        "overdrive_guitar"
-      ],
+      "patterns": ["blues", "anthem", "double", "hero"],
+      "samplerPool": ["distortion_guitar", "overdrive_guitar"],
       "recipe": {
-        "model": [
-          "sampler",
-          "sampler"
-        ],
+        "model": ["sampler", "sampler"],
         "wave": "saw",
-        "voices": [
-          1,
-          2
-        ],
-        "spread": [
-          0.003,
-          0.008
-        ],
-        "cutoff": [
-          2400,
-          3600
-        ],
-        "level": [
-          0.54,
-          0.7
-        ],
-        "send": [
-          0.2,
-          0.34
-        ],
-        "dsend": [
-          0.1,
-          0.22
-        ],
+        "voices": [1, 2],
+        "spread": [0.003, 0.008],
+        "cutoff": [2400, 3600],
+        "level": [0.54, 0.7],
+        "send": [0.28, 0.42],
+        "dsend": [0.1, 0.22],
         "attack": 0.006,
-        "release": [
-          0.12,
-          0.22
-        ],
-        "sustain": [
-          0.6,
-          0.75
-        ]
+        "release": [0.2, 0.4],
+        "sustain": [0.7, 0.85]
       },
       "inserts": {
         "prob": 1,
@@ -155,14 +58,8 @@
           [
             "distort",
             {
-              "drive": [
-                0.55,
-                0.8
-              ],
-              "mix": [
-                0.8,
-                1
-              ]
+              "drive": [0.55, 0.8],
+              "mix": [0.8, 1]
             }
           ]
         ]
@@ -170,44 +67,17 @@
     },
     "pads": {
       "prob": 0.75,
-      "samplerPool": [
-        "distortion_guitar",
-        "palm_muted_guitar"
-      ],
+      "samplerPool": ["distortion_guitar", "palm_muted_guitar"],
       "recipe": {
-        "model": [
-          "sampler",
-          "sampler"
-        ],
+        "model": ["sampler", "sampler"],
         "wave": "saw",
-        "cutoff": [
-          800,
-          1400
-        ],
-        "detune": [
-          0.004,
-          0.01
-        ],
-        "attack": [
-          0.02,
-          0.1
-        ],
-        "release": [
-          0.15,
-          0.35
-        ],
-        "level": [
-          0.5,
-          0.66
-        ],
-        "send": [
-          0.18,
-          0.32
-        ],
-        "dsend": [
-          0.06,
-          0.16
-        ]
+        "cutoff": [800, 1400],
+        "detune": [0.004, 0.01],
+        "attack": [0.02, 0.1],
+        "release": [0.25, 0.5],
+        "level": [0.5, 0.66],
+        "send": [0.24, 0.38],
+        "dsend": [0.06, 0.16]
       },
       "inserts": {
         "prob": 1,
@@ -216,145 +86,91 @@
           [
             "distort",
             {
-              "drive": [
-                0.5,
-                0.75
-              ],
-              "mix": [
-                0.7,
-                0.95
-              ]
+              "drive": [0.5, 0.75],
+              "mix": [0.7, 0.95]
             }
           ]
         ]
       }
     },
     "drums": {
-      "kickModel": [
-        "boom"
-      ],
-      "snareModel": [
-        "crack",
-        "noise"
-      ],
-      "hatModel": [
-        "noise"
-      ],
-      "kick": [
-        1.2,
-        1.45
-      ],
-      "snare": [
-        1,
-        1.3
-      ],
-      "hat": [
-        0.5,
-        0.8
-      ],
-      "tune": [
-        0.95,
-        1.08
-      ],
-      "send": [
-        0.15,
-        0.3
-      ],
-      "dsend": [
-        0.05,
-        0.15
-      ],
+      "kickModel": ["boom"],
+      "snareModel": ["crack", "noise"],
+      "hatModel": ["noise"],
+      "kick": [1.2, 1.45],
+      "snare": [1, 1.3],
+      "hat": [0.5, 0.8],
+      "tune": [0.95, 1.08],
+      "send": [0.15, 0.3],
+      "dsend": [0.05, 0.15],
       "kit": "room"
     },
     "fx": {
-      "reverb": [
-        0.3,
-        0.45
-      ],
-      "delayBeats": [
-        0.375,
-        0.5
-      ],
-      "delayFb": [
-        0.15,
-        0.28
-      ],
-      "delayCut": [
-        2200,
-        3400
-      ],
-      "pump": [
-        0,
-        0.08
-      ],
-      "crackle": [
-        0.05,
-        0.2
-      ],
-      "lowcut": [
-        25,
-        40
-      ],
-      "highcut": [
-        0,
-        0
-      ],
-      "comp": [
-        0.45,
-        0.7
-      ],
-      "grit": [
-        0.3,
-        0.55
-      ]
+      "reverb": [0.36, 0.5],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.15, 0.28],
+      "delayCut": [2200, 3400],
+      "pump": [0, 0.08],
+      "crackle": [0.05, 0.2],
+      "lowcut": [25, 40],
+      "highcut": [0, 0],
+      "comp": [0.45, 0.7],
+      "grit": [0.3, 0.55]
     },
     "found": {
       "role": "bed",
-      "vol": [
-        0.04,
-        0.1
-      ],
-      "pitch": [
-        0.85,
-        1
-      ],
-      "stretch": [
-        0.4,
-        0.6
-      ],
-      "cutoff": [
-        1800,
-        3000
-      ],
-      "sources": [
-        "factory",
-        "highway_night"
-      ]
+      "vol": [0.04, 0.1],
+      "pitch": [0.85, 1],
+      "stretch": [0.4, 0.6],
+      "cutoff": [1800, 3000],
+      "sources": ["pool:industry*1", "pool:road*1"]
     },
-    "stab": [
-      "off"
-    ],
     "hits": {
-      "sources": [
-        "vox_b",
-        "sp_pressure"
-      ],
+      "sources": ["pool:vocal_stab*1", "sp_pressure"],
       "pattern": "sparse",
       "prob": 0.2
     },
+    "stab": ["off"],
     "form": "anthem"
   },
-  "verify": {
-    "seeds": 6,
-    "features": {
-      "bpm": 3,
-      "acoustic": 2,
-      "drumDensity": 2,
-      "swing": 2,
-      "comp": 2,
-      "crackle": 1,
-      "pump": 1,
-      "humanize": 1
-    }
+  "mind": {
+    "theory": {
+      "adventure": [0.1, 0.205],
+      "color": [0.138, 0.3],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "callResponse",
+        "w": 0.5,
+        "level": 0.85
+      },
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      }
+    ],
+    "rhythm": [0.11, 0.273]
+  },
+  "perc": {
+    "lanes": [
+      {
+        "p": "crashDown",
+        "lvl": 0.4
+      }
+    ]
+  },
+  "targets": {
+    "bpm": [109, 130, 3],
+    "acoustic": [0.68, 0.92, 2],
+    "drumDensity": [0.65, 2.19, 2],
+    "swing": [0, 0.082, 2],
+    "comp": [0.331, 0.787, 2],
+    "crackle": [0, 0.293, 1],
+    "pump": [0, 0.167, 1],
+    "humanize": [0.021, 0.35, 1]
   }
 }

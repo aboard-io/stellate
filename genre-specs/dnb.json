@@ -1,0 +1,140 @@
+{
+  "name": "dnb",
+  "label": "Silken Reentry",
+  "info": "a rolling programmed two-step at 174: warm sub, smooth Rhodes pads, no rough chops — the old break polished until it reflects the ceiling lights",
+  "pos": [1376, 19565],
+  "anchor": {
+    "bpm": [170, 176],
+    "swing": [0, 0.04],
+    "humanize": [0.05, 0.14],
+    "progressions": ["neosoul", "deep_two", "minor_run", "dream"],
+    "kits": ["breaks", "jungle"],
+    "fills": ["off", "drum fill", "riser", "downlift"],
+    "bass": {
+      "patterns": ["sub", "rolling"],
+      "recipe": {
+        "model": ["sub", "reese"],
+        "cutoff": [280, 520],
+        "res": [0.05, 0.2],
+        "level": [1.15, 1.4],
+        "send": [0, 0.05],
+        "dsend": [0, 0]
+      }
+    },
+    "lead": {
+      "patterns": ["sparse", "off", "pentaup"],
+      "patchPool": ["E.PIANO 2"],
+      "samplerPool": ["rhodes_ep", "electric_piano"],
+      "recipe": {
+        "model": ["fm", "sampler"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.002, 0.005],
+        "cutoff": [1800, 3000],
+        "level": [0.34, 0.46],
+        "send": [0.35, 0.55],
+        "dsend": [0.25, 0.4],
+        "octave": 0.05,
+        "attack": 0.03,
+        "release": [0.2, 0.35],
+        "sustain": [0.7, 0.82]
+      }
+    },
+    "pads": {
+      "prob": 0.85,
+      "samplerPool": ["strings"],
+      "recipe": {
+        "model": ["fm", "strings", "sampler"],
+        "wave": "saw",
+        "cutoff": [900, 1500],
+        "detune": [0.004, 0.01],
+        "attack": [1.5, 3],
+        "level": [0.5, 0.68],
+        "send": [0.5, 0.7],
+        "dsend": [0.15, 0.3]
+      }
+    },
+    "drums": {
+      "kickModel": ["808"],
+      "snareModel": ["crack", "noise"],
+      "hatModel": ["noise"],
+      "kick": [1.05, 1.3],
+      "snare": [0.55, 0.8],
+      "hat": [0.5, 0.85],
+      "tune": [1, 1.12],
+      "send": [0.1, 0.2],
+      "dsend": [0.2, 0.4]
+    },
+    "fx": {
+      "reverb": [0.5, 0.68],
+      "delayBeats": [0.75, 1.5],
+      "delayFb": [0.3, 0.5],
+      "delayCut": [2000, 3200],
+      "pump": [0, 0.15],
+      "crackle": [0, 0.1],
+      "lowcut": [25, 40],
+      "highcut": [0, 0],
+      "comp": [0.3, 0.5]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.1, 0.18],
+      "pitch": [0.85, 1],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2000, 3200],
+      "sources": ["pool:road*1", "pool:city*1", "pool:voices*1"]
+    },
+    "hits": {
+      "sources": ["pool:vb_junglist*1", "pool:vocal_stab*1", "pool:rave_stab*1", "sp_pressure"],
+      "pattern": "sparse",
+      "prob": 0.4
+    },
+    "stab": ["off", "sparse"],
+    "form": "dj",
+    "timeFeel": {
+      "pushPullMs": {
+        "bass": -5
+      }
+    }
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.15, 0.278],
+      "color": [0.338, 0.55],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "octavePump",
+        "w": 0.5,
+        "prob": 0.4
+      },
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      }
+    ],
+    "rhythm": [0.525, 0.775]
+  },
+  "targets": {
+    "bpm": [168, 178, 3],
+    "sub": [0.6, 1, 2],
+    "breakUse": [0, 0.12, 2],
+    "wash": [0.18, 0.34, 2],
+    "hatDensity": [0.7, 1.25, 1],
+    "drumDensity": [1.6, 2.6, 1],
+    "snareBalance": [0.3, 1, 1],
+    "comp": [0.25, 0.55, 1],
+    "swing": [0, 0.06, 1],
+    "pump": [0, 0.2, 1]
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "name": "ska",
+  "label": "Checkerboard Escapement",
+  "info": "the upstroke engine at 152: choppy offbeat guitar, a walking bass, a punchy brass-section riff — the skank on every & and a suit that fits",
+  "pos": [1560, 2064],
+  "anchor": {
+    "bpm": [146, 156],
+    "swing": [0.04, 0.14],
+    "humanize": [0.1, 0.3],
+    "progressions": ["doo_wop", "four_chords", "ii_v_i"],
+    "kits": ["shuffle", "four"],
+    "fills": ["off", "drum fill", "kit fill"],
+    "bass": {
+      "patterns": ["walking", "octaves", "root"],
+      "samplerPool": ["finger_bass", "acoustic_bass"],
+      "recipe": {
+        "model": ["sampler", "saw"],
+        "cutoff": [450, 750],
+        "res": [0.1, 0.2],
+        "level": [1, 1.2],
+        "send": [0.05, 0.12],
+        "dsend": [0, 0.05]
+      }
+    },
+    "lead": {
+      "patterns": ["anthem", "double", "hero"],
+      "samplerPool": ["brass_section", "trumpet", "trombone"],
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.002, 0.005],
+        "cutoff": [2200, 3400],
+        "level": [0.44, 0.56],
+        "send": [0.25, 0.4],
+        "dsend": [0.1, 0.25],
+        "attack": 0.01,
+        "release": [0.1, 0.2],
+        "sustain": [0.6, 0.72]
+      }
+    },
+    "pads": {
+      "prob": 0.6,
+      "patchPool": ["E.ORGAN 1"],
+      "samplerPool": ["clean_guitar", "clean_guitar", "percussive_organ", "rock_organ"],
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "saw",
+        "cutoff": [1000, 1700],
+        "detune": [0.003, 0.008],
+        "attack": [0.1, 0.4],
+        "level": [0.44, 0.58],
+        "send": [0.25, 0.4],
+        "dsend": [0.08, 0.2]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise", "crack"],
+      "hatModel": ["noise"],
+      "kick": [0.9, 1.15],
+      "snare": [0.65, 0.9],
+      "hat": [0.7, 1],
+      "tune": [0.95, 1.1],
+      "send": [0.12, 0.24],
+      "dsend": [0.05, 0.15],
+      "kit": "acoustic"
+    },
+    "fx": {
+      "reverb": [0.35, 0.52],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.15, 0.3],
+      "delayCut": [2200, 3400],
+      "pump": [0, 0.1],
+      "crackle": [0.05, 0.25],
+      "lowcut": [20, 35],
+      "highcut": [0, 0],
+      "comp": [0.25, 0.45]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.05, 0.12],
+      "pitch": [0.9, 1.05],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2200, 3400],
+      "sources": ["blues_vox_78", "pool:city*1"]
+    },
+    "hits": {
+      "sources": ["bb_horn_a", "bb_horn_b", "bb_stab_a"],
+      "pattern": "offbeat",
+      "prob": 0.6
+    },
+    "stab": ["offbeat", "rave"],
+    "form": "pop",
+    "timeFeel": {
+      "pushPullMs": {
+        "pad": -5,
+        "bass": -4
+      }
+    },
+    "strum": "skank"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.2, 0.333],
+      "color": [0.317, 0.517],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [],
+    "rhythm": [0.165, 0.335]
+  },
+  "perc": {
+    "lanes": [
+      {
+        "p": "clap24",
+        "lvl": 0.2
+      },
+      {
+        "p": "woodblock",
+        "lvl": 0.16
+      },
+      {
+        "p": "crashDown",
+        "lvl": 0.34
+      }
+    ]
+  },
+  "targets": {
+    "bpm": [146, 158, 3],
+    "acoustic": [0.5, 0.95, 3],
+    "swing": [0.03, 0.16, 2],
+    "seventh": [0, 0.85, 1],
+    "drumDensity": [0.9, 1.9, 2],
+    "hatDensity": [0.35, 1, 1],
+    "crackle": [0.05, 0.3, 1],
+    "motion": [0.5, 1, 1],
+    "pump": [0, 0.12, 1],
+    "leadVoices": [1, 3, 1]
+  }
+}

@@ -1,7 +1,8 @@
 {
   "name": "chalkvespers",
-  "label": "Chalkvespers",
+  "label": "Antiphon Decay",
   "info": "plainchant at 50: a single unaccompanied voice-line drifting over a drone that never resolves, one chord every two bars, no drums at all, phrygian half-steps and a stone-nave reverb so long the phrase ends before the echo does — a bell struck maybe once a minute",
+  "pos": [1727, 16539],
   "anchor": {
     "bpm": [46, 55],
     "swing": [0, 0.02],
@@ -13,25 +14,116 @@
     "bass": {
       "patterns": ["pedal", "off", "root"],
       "samplerPool": ["church_organ", "contrabass"],
-      "recipe": { "model": ["sampler", "sampler"], "cutoff": [500, 1000], "res": [0.05, 0.1], "level": [0.4, 0.6], "send": [0.3, 0.5], "dsend": [0, 0.08], "attack": [0.05, 0.15], "release": [0.6, 1.2] }
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "cutoff": [500, 1000],
+        "res": [0.05, 0.1],
+        "level": [0.4, 0.6],
+        "send": [0.3, 0.5],
+        "dsend": [0, 0.08],
+        "attack": [0.05, 0.15],
+        "release": [0.6, 1.2]
+      }
     },
     "lead": {
       "patterns": ["wander", "sparse", "composed"],
       "samplerPool": ["ahh_choir", "ahh_choir", "ohh_voices"],
-      "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "voices": [1, 1], "spread": [0.001, 0.002], "cutoff": [1800, 2800], "level": [0.5, 0.62], "send": [0.5, 0.7], "dsend": [0, 0.1], "attack": [0.08, 0.2], "release": [0.5, 1] }
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 1],
+        "spread": [0.001, 0.002],
+        "cutoff": [1800, 2800],
+        "level": [0.5, 0.62],
+        "send": [0.5, 0.7],
+        "dsend": [0, 0.1],
+        "attack": [0.08, 0.2],
+        "release": [0.5, 1]
+      }
     },
     "pads": {
       "prob": 0.4,
       "samplerPool": ["church_organ"],
-      "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "cutoff": [700, 1300], "detune": [0.001, 0.003], "attack": [1.5, 3], "release": [2, 4], "swell": 1, "level": [0.3, 0.42], "send": [0.45, 0.65], "dsend": [0, 0.08] }
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "sine",
+        "cutoff": [700, 1300],
+        "detune": [0.001, 0.003],
+        "attack": [1.5, 3],
+        "release": [2, 4],
+        "swell": 1,
+        "level": [0.3, 0.42],
+        "send": [0.45, 0.65],
+        "dsend": [0, 0.08]
+      }
     },
-    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.4, 0.6], "snare": [0.3, 0.5], "hat": [0.2, 0.4], "tune": [0.9, 1], "send": [0.2, 0.4], "dsend": [0, 0] },
-    "fx": { "reverb": [0.65, 0.85], "delayBeats": [1, 2], "delayFb": [0.1, 0.22], "delayCut": [1800, 2600], "pump": [0, 0], "crackle": [0, 0.15], "lowcut": [0, 0], "highcut": [0, 0], "comp": [0, 0.1] },
-    "found": { "role": "bed", "vol": [0.05, 0.11], "pitch": [0.6, 0.8], "stretch": [0.5, 0.65], "cutoff": [1500, 2400], "sources": ["tw_stationhall", "vx_sv_choir"] },
-    "rubato": { "depth": [0.03, 0.05], "periodBars": [4, 8], "prob": 1 },
-    "reverbColor": "fdn",
-    "hits": { "sources": ["handbell"], "pattern": "sparse", "prob": 0.15 },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.4, 0.6],
+      "snare": [0.3, 0.5],
+      "hat": [0.2, 0.4],
+      "tune": [0.9, 1],
+      "send": [0.2, 0.4],
+      "dsend": [0, 0]
+    },
+    "fx": {
+      "reverb": [0.65, 0.85],
+      "delayBeats": [1, 2],
+      "delayFb": [0.1, 0.22],
+      "delayCut": [1800, 2600],
+      "pump": [0, 0],
+      "crackle": [0, 0.15],
+      "lowcut": [0, 0],
+      "highcut": [0, 0],
+      "comp": [0, 0.1]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.05, 0.11],
+      "pitch": [0.6, 0.8],
+      "stretch": [0.5, 0.65],
+      "cutoff": [1500, 2400],
+      "sources": ["pool:city*1", "vx_sv_choir"]
+    },
+    "rubato": {
+      "depth": [0.03, 0.05],
+      "periodBars": [4, 8],
+      "prob": 1
+    },
+    "hits": {
+      "sources": ["pool:chime*1"],
+      "pattern": "sparse",
+      "prob": 0.15
+    },
     "stab": ["off"],
-    "form": "ritual"
+    "form": "ritual",
+    "leadOctave": -2,
+    "reverbColor": "fdn"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.133, 0.23],
+      "color": [0.217, 0.4],
+      "voicing": "open",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [],
+    "rhythm": [0, 0.08]
+  },
+  "targets": {
+    "bpm": [41, 61, 3],
+    "drumDensity": [0, 0.4, 2],
+    "wash": [0.161, 0.518, 1],
+    "pump": [0, 0.1, 1],
+    "swing": [0, 0.063, 2],
+    "seventh": [0.35, 1, 1],
+    "acoustic": [0.68, 0.92, 2],
+    "crackle": [0, 0.239, 1],
+    "sub": [0.05, 0.35, 1],
+    "motion": [0, 0.82, 1],
+    "bedUse": [0.71, 1, 1]
   }
 }

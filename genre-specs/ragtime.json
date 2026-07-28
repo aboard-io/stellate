@@ -1,25 +1,13 @@
 {
   "name": "ragtime",
-  "label": "Player Piano",
+  "label": "Perforated Afterlife",
   "info": "The rag cycle measured off 236 archive rolls: syncopated right hand over a striding octave left, secondary dominants chaining home (I-VI7-II7-V7), ~100 on the metronome, no kit, no rubato — the first pop music, straight off the roll. The first stellate anchor authored from a corpus (tools/mine-midi.js on the MIDIMAN ragtime rip) rather than by hand.",
-  "pos": [760, 14640],
-  "clips": [
-    "earth_orbit",
-    "spacewalk",
-    "blue_dinner",
-    "dc_village",
-    "bamboo"
-  ],
+  "pos": [753, 14457],
   "anchor": {
     "bpm": [104, 126],
     "swing": [0, 0.06],
     "humanize": [0.04, 0.12],
-    "progressions": [
-      "rag_cycle",
-      "rag_cycle",
-      "doo_wop",
-      "canon"
-    ],
+    "progressions": ["rag_cycle", "rag_cycle", "doo_wop", "canon"],
     "kits": ["off"],
     "fills": ["off"],
     "chordEvery": 4,
@@ -106,18 +94,32 @@
     "stab": ["off"],
     "form": "aaba"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": {
-      "bpm": 2,
-      "drumDensity": 3,
-      "acoustic": 3,
-      "swing": 3,
-      "crackle": 2,
-      "seventh": 2,
-      "motion": 2,
-      "humanize": 1
-    }
+  "mind": {
+    "theory": {
+      "adventure": [0.113, 0.225],
+      "color": [0.238, 0.438],
+      "voicing": "open",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "echoCanon",
+        "w": 0.55,
+        "prob": 0.45,
+        "delay": 2
+      }
+    ],
+    "rhythm": [0, 0.08]
+  },
+  "targets": {
+    "bpm": [98, 133, 2],
+    "drumDensity": [0, 0.4, 3],
+    "acoustic": [0.66, 1, 3],
+    "swing": [0, 0.091, 3],
+    "crackle": [0.185, 0.602, 2],
+    "seventh": [0, 0.975, 2],
+    "motion": [0.85, 1, 2],
+    "humanize": [0, 0.204, 1]
   }
 }

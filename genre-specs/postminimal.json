@@ -1,8 +1,8 @@
 {
   "name": "postminimal",
-  "label": "Phase Cathedral",
+  "label": "Tessellation Vigil",
   "info": "Contemporary post-minimalist classical as a genre: Glass/Reich/Pärt/Richter — steady interlocking arpeggios of felt piano and celesta over a static pedal, harmony that changes only every few bars (chordEvery:16), NO rubato and near-zero humanize so the pulse is machine-even and hypnotic, drums off, acoustic and patient — repetition as the whole architecture",
-  "clips": ["earth_orbit", "spacewalk", "blue_dinner", "dc_village", "bamboo"],
+  "pos": [1280, 950],
   "anchor": {
     "bpm": [80, 108],
     "swing": [0, 0.02],
@@ -11,20 +11,120 @@
     "kits": ["off"],
     "fills": ["off"],
     "chordEvery": 16,
-    "bass": { "patterns": ["pedal", "root", "octaves"], "samplerPool": ["felt_piano", "cello"], "recipe": { "model": ["sampler", "sampler"], "cutoff": [600, 1300], "res": [0.05, 0.1], "level": [0.44, 0.62], "send": [0.24, 0.44], "dsend": [0, 0.06], "attack": [0.006, 0.02], "release": [0.4, 0.9] } },
-    "lead": { "patterns": ["arp16", "arpup", "updown"], "samplerPool": ["celesta", "felt_piano"], "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "voices": [1, 2], "spread": [0.001, 0.003], "cutoff": [2600, 4000], "level": [0.4, 0.56], "send": [0.28, 0.48], "dsend": [0.02, 0.12], "attack": [0.003, 0.012], "release": [0.15, 0.4] } },
-    "pads": { "prob": 0.45, "samplerPool": ["slow_strings", "strings"], "recipe": { "model": ["sampler", "strings"], "wave": "sine", "cutoff": [900, 1700], "detune": [0.002, 0.005], "attack": [1.5, 3.5], "release": [2.5, 5], "swell": 1, "level": [0.28, 0.44], "send": [0.4, 0.6], "dsend": [0, 0.08] } },
-    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.5, 0.7], "snare": [0.4, 0.6], "hat": [0.3, 0.5], "tune": [0.9, 1], "send": [0.15, 0.35], "dsend": [0, 0] },
-    "fx": { "reverb": [0.5, 0.72], "delayBeats": [0.5, 1], "delayFb": [0.1, 0.24], "delayCut": [2200, 3200], "pump": [0, 0], "crackle": [0, 0.06], "lowcut": [0, 0], "highcut": [0, 0], "comp": [0, 0.08] },
-    "found": { "role": "bed", "vol": [0.03, 0.09], "pitch": [0.7, 0.9], "stretch": [0.45, 0.6], "cutoff": [1800, 2800], "sources": ["iriomote", "tokyo_station"] },
-    "rubato": { "depth": [0, 0.005], "periodBars": [4, 8], "prob": 0.1 },
-    "hits": { "sources": ["sp_herenow"], "pattern": "sparse", "prob": 0.02 },
+    "bass": {
+      "patterns": ["pedal", "root", "octaves"],
+      "samplerPool": ["felt_piano", "cello"],
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "cutoff": [600, 1300],
+        "res": [0.05, 0.1],
+        "level": [0.44, 0.62],
+        "send": [0.24, 0.44],
+        "dsend": [0, 0.06],
+        "attack": [0.006, 0.02],
+        "release": [0.4, 0.9]
+      }
+    },
+    "lead": {
+      "patterns": ["arp16", "arpup", "updown"],
+      "samplerPool": ["celesta", "felt_piano"],
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.001, 0.003],
+        "cutoff": [2600, 4000],
+        "level": [0.4, 0.56],
+        "send": [0.28, 0.48],
+        "dsend": [0.02, 0.12],
+        "attack": [0.003, 0.012],
+        "release": [0.15, 0.4]
+      }
+    },
+    "pads": {
+      "prob": 0.45,
+      "samplerPool": ["slow_strings", "strings"],
+      "recipe": {
+        "model": ["sampler", "strings"],
+        "wave": "sine",
+        "cutoff": [900, 1700],
+        "detune": [0.002, 0.005],
+        "attack": [1.5, 3.5],
+        "release": [2.5, 5],
+        "swell": 1,
+        "level": [0.28, 0.44],
+        "send": [0.4, 0.6],
+        "dsend": [0, 0.08]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.5, 0.7],
+      "snare": [0.4, 0.6],
+      "hat": [0.3, 0.5],
+      "tune": [0.9, 1],
+      "send": [0.15, 0.35],
+      "dsend": [0, 0]
+    },
+    "fx": {
+      "reverb": [0.5, 0.72],
+      "delayBeats": [0.5, 1],
+      "delayFb": [0.1, 0.24],
+      "delayCut": [2200, 3200],
+      "pump": [0, 0],
+      "crackle": [0, 0.06],
+      "lowcut": [0, 0],
+      "highcut": [0, 0],
+      "comp": [0, 0.08]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.03, 0.09],
+      "pitch": [0.7, 0.9],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1800, 2800],
+      "sources": ["iriomote", "tokyo_station"]
+    },
+    "rubato": {
+      "depth": [0, 0.005],
+      "periodBars": [4, 8],
+      "prob": 0.1
+    },
+    "hits": {
+      "sources": ["sp_herenow"],
+      "pattern": "sparse",
+      "prob": 0.02
+    },
     "stab": ["off"],
     "form": "wave"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": { "motion": 3, "rubato": 3, "acoustic": 3, "humanize": 2, "drumDensity": 3, "bpm": 2, "wash": 1, "variation": 2 }
+  "mind": {
+    "theory": {
+      "adventure": [0.113, 0.223],
+      "color": [0.213, 0.4],
+      "voicing": "open",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      }
+    ],
+    "rhythm": [0, 0.08]
+  },
+  "targets": {
+    "motion": [0, 1, 3],
+    "rubato": [0, 0.008, 3],
+    "acoustic": [0.66, 1, 3],
+    "humanize": [0, 0.167, 2],
+    "drumDensity": [0, 0.4, 3],
+    "bpm": [73, 116, 2],
+    "wash": [0.063, 0.431, 1],
+    "variation": [0, 0.12, 2]
   }
 }

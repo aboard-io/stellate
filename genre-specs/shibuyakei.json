@@ -1,0 +1,151 @@
+{
+  "name": "shibuyakei",
+  "label": "Parfait Cosmonaut",
+  "info": "twee 60s-pop futurism: bells + plucks skipping over doo-wop changes, a real swing, sunshine bright",
+  "pos": [1832, 7062],
+  "anchor": {
+    "bpm": [116, 128],
+    "swing": [0.14, 0.24],
+    "humanize": [0.1, 0.25],
+    "progressions": ["doo_wop", "doo_wop", "pop_1625"],
+    "kits": ["open", "full"],
+    "fills": ["drum fill", "hat rush", "riser"],
+    "bass": {
+      "patterns": ["walking", "octaves", "melodic"],
+      "recipe": {
+        "model": ["saw"],
+        "cutoff": [700, 1100],
+        "res": [0.08, 0.16],
+        "level": [0.95, 1.15],
+        "send": [0.03, 0.08],
+        "dsend": [0, 0.05]
+      }
+    },
+    "lead": {
+      "patterns": ["updown", "pentaup", "wander", "composed"],
+      "patchPool": ["TUB BELLS", "E.PIANO 1"],
+      "samplerPool": ["glockenspiel", "vibraphone", "flute"],
+      "recipe": {
+        "model": ["bell", "sampler", "sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.001, 0.004],
+        "cutoff": [3000, 4200],
+        "level": [0.48, 0.6],
+        "send": [0.25, 0.4],
+        "dsend": [0.2, 0.35],
+        "attack": 0.004,
+        "release": [0.08, 0.14],
+        "sustain": [0.55, 0.68],
+        "fenv": [0.2, 0.4]
+      },
+      "inserts": {
+        "prob": 0.6,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [0.6, 1.2],
+              "depth": [0.4, 0.6],
+              "mix": [0.4, 0.6]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.9,
+      "recipe": {
+        "model": ["strings"],
+        "wave": "saw",
+        "cutoff": [1400, 2000],
+        "detune": [0.003, 0.008],
+        "attack": [0.3, 0.8],
+        "level": [0.42, 0.56],
+        "send": [0.2, 0.35],
+        "dsend": [0.05, 0.15]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise", "clap"],
+      "hatModel": ["noise"],
+      "kick": [0.95, 1.15],
+      "snare": [0.7, 0.95],
+      "hat": [1, 1.3],
+      "tune": [1, 1.15],
+      "send": [0.15, 0.25],
+      "dsend": [0.05, 0.12]
+    },
+    "fx": {
+      "reverb": [0.35, 0.5],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.15, 0.3],
+      "delayCut": [3000, 4200],
+      "pump": [0, 0.08],
+      "crackle": [0, 0.08],
+      "lowcut": [20, 35],
+      "highcut": [0, 0],
+      "comp": [0.15, 0.35],
+      "grit": [0, 0]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.06, 0.12],
+      "pitch": [0.95, 1.05],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2200, 3400],
+      "sources": ["shibuya", "pool:city*1", "pool:voices*1"]
+    },
+    "hits": {
+      "sources": ["pool:vb_mallsoft_vapor*1", "sp_shopping", "pool:vocal_stab*1", "pool:rave_stab*1"],
+      "pattern": "sparse",
+      "prob": 0.4
+    },
+    "stab": ["off"],
+    "form": "aaba",
+    "reverbColor": "dattorro"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.1, 0.207],
+      "color": [0.267, 0.467],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      }
+    ],
+    "rhythm": [0.11, 0.275]
+  },
+  "perc": {
+    "lanes": [
+      {
+        "p": "tambourine",
+        "lvl": 0.15
+      },
+      {
+        "p": "shaker16",
+        "lvl": 0.1
+      }
+    ]
+  },
+  "targets": {
+    "bpm": [112, 130, 3],
+    "swing": [0.12, 0.26, 3],
+    "crackle": [0, 0.1, 2],
+    "acoustic": [0, 0.85, 1],
+    "leadVoices": [1, 3, 1],
+    "motion": [0.6, 1, 1],
+    "pump": [0, 0.1, 1],
+    "wash": [0, 0.25, 1],
+    "snareBalance": [0.3, 1.1, 1],
+    "breakUse": [0, 0.05, 1]
+  }
+}

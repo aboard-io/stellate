@@ -1,0 +1,169 @@
+{
+  "name": "cairntrot",
+  "label": "Barrow Ledger",
+  "info": "invented (gap-found): a mid-tempo, drone-forward genre in the empty region near vendingmachinethump × eurodance/jazz/vaporwave — softTop~0.45, pump~0.36, seventh~0.64 [seed 17]",
+  "pos": [1931, 8010],
+  "anchor": {
+    "bpm": [105, 113],
+    "swing": [0.087, 0.137],
+    "humanize": [0.111, 0.201],
+    "progressions": ["four_chords", "uplift", "pop_1625", "doo_wop"],
+    "kits": ["kick", "off"],
+    "fills": ["off", "downlift"],
+    "bass": {
+      "patterns": ["walking", "melodic", "dub"],
+      "samplerPool": ["acoustic_bass"],
+      "recipe": {
+        "model": ["sampler", "sampler", "piano"],
+        "cutoff": [400, 800],
+        "res": [0.05, 0.12],
+        "level": [0.95, 1.15],
+        "send": [0.1, 0.2],
+        "dsend": [0, 0.05],
+        "attack": 0.005,
+        "release": [0.08, 0.14]
+      }
+    },
+    "lead": {
+      "patterns": ["composed", "composed2", "arpup", "wander"],
+      "patchPool": ["E.PIANO 1", "TUB BELLS", "E.PIANO 4", "SHIMMER"],
+      "samplerPool": ["alto_sax", "tenor_sax"],
+      "recipe": {
+        "model": ["stack", "stack", "dx7", "sampler", "sampler"],
+        "wave": "sine",
+        "voices": [3, 5],
+        "spread": [0.003, 0.006],
+        "cutoff": [2800, 4000],
+        "level": [0.4, 0.52],
+        "send": [0.4, 0.6],
+        "dsend": [0.2, 0.4],
+        "vibrato": [0.004, 0.009],
+        "octave": 0.2,
+        "attack": 0.08,
+        "release": [0.45, 0.6],
+        "sustain": [0.85, 0.95]
+      },
+      "inserts": {
+        "prob": 0.5,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [0.5, 1.1],
+              "depth": [0.5, 0.7],
+              "mix": [0.4, 0.6]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 1,
+      "samplerPool": ["ahh_choir", "strings"],
+      "recipe": {
+        "model": ["saw", "choir", "strings", "sampler"],
+        "wave": "saw",
+        "cutoff": [1100, 1800],
+        "detune": [0.004, 0.009],
+        "attack": [1.2, 2.4],
+        "mellotron": true,
+        "level": [0.6, 0.8],
+        "send": [0.5, 0.7],
+        "dsend": [0.1, 0.25]
+      },
+      "inserts": {
+        "prob": 0.55,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [0.2, 0.5],
+              "depth": [0.5, 0.75],
+              "mix": [0.4, 0.6]
+            }
+          ]
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.6, 0.85],
+      "snare": [0.4, 0.6],
+      "hat": [0.3, 0.5],
+      "tune": [0.95, 1.1],
+      "send": [0.1, 0.2],
+      "dsend": [0, 0.05]
+    },
+    "fx": {
+      "reverb": [0.77, 0.95],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.2, 0.32],
+      "delayCut": [2800, 4000],
+      "pump": [0.26, 0.48],
+      "crackle": [0, 0.1],
+      "lowcut": [25, 40],
+      "highcut": [0, 0],
+      "comp": [0.3, 0.52],
+      "grit": [0, 0]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.07, 0.13],
+      "pitch": [0.9, 1],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1800, 2800],
+      "sources": ["pool:city*2", "pool:road*1"]
+    },
+    "hits": {
+      "sources": ["sp_nightdrive", "pool:vocal_stab*1"],
+      "pattern": "sparse",
+      "prob": 0.3
+    },
+    "stab": ["off"],
+    "form": "pop",
+    "reverbColor": "dattorro"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.1, 0.205],
+      "color": [0.2, 0.388],
+      "voicing": "open",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      },
+      {
+        "id": "vibratoSwell",
+        "w": 0.4,
+        "depth": 0.25
+      }
+    ],
+    "rhythm": [0.025, 0.115]
+  },
+  "targets": {
+    "bpm": [99, 120, 3],
+    "softTop": [0, 0, 3],
+    "pump": [0.145, 0.588, 3],
+    "seventh": [0, 1, 2],
+    "wash": [0.188, 0.523, 2],
+    "acoustic": [0, 1, 1],
+    "swing": [0.038, 0.172, 1],
+    "drumDensity": [0, 0.87, 3],
+    "bedUse": [0.51, 0.75, 3]
+  }
+}

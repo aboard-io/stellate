@@ -1,285 +1,143 @@
 {
   "name": "octanerush",
-  "label": "Octane Rush",
-  "info": "octave-bass euphoria at 138: sixteenth-note bass pistons, one arpeggio climbing all night, snare rolls into every chorus \u2014 the mirrored floor, the lights, the rush, the whole glorious sweat of it",
-  "pos": [
-    1900,
-    4900
-  ],
-  "clips": [
-    "rainbow_rings",
-    "kaleido",
-    "sun_riders",
-    "night_lights",
-    "pl_motorama"
-  ],
+  "label": "Redline Ascension",
+  "info": "octave-bass euphoria at 138: sixteenth-note bass pistons, one arpeggio climbing all night, snare rolls into every chorus — the mirrored floor, the lights, the rush, the whole glorious sweat of it",
+  "pos": [2097, 4038],
   "anchor": {
-    "bpm": [
-      136,
-      142
-    ],
-    "swing": [
-      0,
-      0.03
-    ],
-    "humanize": [
-      0,
-      0.02
-    ],
-    "progressions": [
-      "minor_run",
-      "synthwave",
-      "epic_min",
-      "sad_pop"
-    ],
-    "kits": [
-      "four",
-      "pulse"
-    ],
-    "fills": [
-      "riser",
-      "snare roll",
-      "hat rush",
-      "impact"
-    ],
+    "bpm": [136, 142],
+    "swing": [0, 0.03],
+    "humanize": [0, 0.02],
+    "progressions": ["minor_run", "synthwave", "epic_min", "sad_pop"],
+    "kits": ["four", "pulse"],
+    "fills": ["riser", "snare roll", "hat rush", "impact"],
     "bass": {
-      "patterns": [
-        "octaves",
-        "sixteenths",
-        "drive"
-      ],
+      "patterns": ["octaves", "sixteenths", "drive"],
       "recipe": {
-        "model": [
-          "saw"
-        ],
-        "cutoff": [
-          620,
-          1000
-        ],
-        "res": [
-          0.12,
-          0.25
-        ],
-        "level": [
-          1.15,
-          1.35
-        ],
-        "send": [
-          0,
-          0.06
-        ],
-        "dsend": [
-          0,
-          0.05
-        ]
+        "model": ["saw"],
+        "cutoff": [620, 1000],
+        "res": [0.12, 0.25],
+        "level": [1.15, 1.35],
+        "send": [0, 0.06],
+        "dsend": [0, 0.05]
       }
     },
     "lead": {
-      "patterns": [
-        "arp16",
-        "arpup",
-        "updown",
-        "hero"
-      ],
+      "patterns": ["arp16", "arpup", "updown", "hero"],
       "recipe": {
-        "model": [
-          "saw",
-          "stack"
-        ],
+        "model": ["saw", "stack"],
         "wave": "saw",
-        "voices": [
-          2,
-          4
-        ],
-        "spread": [
-          0.005,
-          0.011
-        ],
-        "cutoff": [
-          2800,
-          4000
-        ],
-        "level": [
-          0.46,
-          0.6
-        ],
-        "send": [
-          0.3,
-          0.48
-        ],
-        "dsend": [
-          0.18,
-          0.32
-        ],
+        "voices": [2, 4],
+        "spread": [0.005, 0.011],
+        "cutoff": [2800, 4000],
+        "level": [0.46, 0.6],
+        "send": [0.3, 0.48],
+        "dsend": [0.18, 0.32],
         "attack": 0.005,
-        "release": [
-          0.12,
-          0.2
-        ],
-        "sustain": [
-          0.68,
-          0.8
-        ]
+        "release": [0.12, 0.2],
+        "sustain": [0.68, 0.8]
       }
     },
     "pads": {
       "prob": 0.8,
       "recipe": {
-        "model": [
-          "saw",
-          "strings"
-        ],
+        "model": ["saw", "strings"],
         "wave": "saw",
-        "cutoff": [
-          1200,
-          2000
-        ],
-        "detune": [
-          0.007,
-          0.014
-        ],
-        "attack": [
-          0.5,
-          1.4
-        ],
-        "level": [
-          0.5,
-          0.66
-        ],
-        "send": [
-          0.35,
-          0.55
-        ],
-        "dsend": [
-          0.1,
-          0.25
-        ]
+        "cutoff": [1200, 2000],
+        "detune": [0.007, 0.014],
+        "attack": [0.5, 1.4],
+        "level": [0.5, 0.66],
+        "send": [0.35, 0.55],
+        "dsend": [0.1, 0.25]
       }
     },
     "drums": {
-      "kickModel": [
-        "909"
-      ],
-      "snareModel": [
-        "clap",
-        "noise"
-      ],
-      "hatModel": [
-        "noise"
-      ],
-      "kick": [
-        1.2,
-        1.45
-      ],
-      "snare": [
-        0.85,
-        1.1
-      ],
-      "hat": [
-        1,
-        1.3
-      ],
-      "tune": [
-        0.95,
-        1.1
-      ],
-      "send": [
-        0.15,
-        0.3
-      ],
-      "dsend": [
-        0.05,
-        0.15
-      ]
+      "kickModel": ["909"],
+      "snareModel": ["clap", "noise"],
+      "hatModel": ["noise"],
+      "kick": [1.2, 1.45],
+      "snare": [0.85, 1.1],
+      "hat": [1, 1.3],
+      "tune": [0.95, 1.1],
+      "send": [0.15, 0.3],
+      "dsend": [0.05, 0.15]
     },
     "fx": {
-      "reverb": [
-        0.35,
-        0.5
-      ],
-      "delayBeats": [
-        0.375,
-        0.5
-      ],
-      "delayFb": [
-        0.2,
-        0.35
-      ],
-      "delayCut": [
-        2600,
-        4000
-      ],
-      "pump": [
-        0.25,
-        0.45
-      ],
-      "crackle": [
-        0,
-        0.08
-      ],
-      "lowcut": [
-        28,
-        42
-      ],
-      "highcut": [
-        0,
-        0
-      ],
-      "comp": [
-        0.35,
-        0.55
-      ]
+      "reverb": [0.35, 0.5],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.2, 0.35],
+      "delayCut": [2600, 4000],
+      "pump": [0.25, 0.45],
+      "crackle": [0, 0.08],
+      "lowcut": [28, 42],
+      "highcut": [0, 0],
+      "comp": [0.35, 0.55]
     },
     "found": {
       "role": "bed",
-      "vol": [
-        0.04,
-        0.1
-      ],
-      "pitch": [
-        0.9,
-        1.05
-      ],
-      "stretch": [
-        0.45,
-        0.6
-      ],
-      "cutoff": [
-        2200,
-        3400
-      ],
-      "sources": [
-        "shibuya",
-        "highway_night"
-      ]
+      "vol": [0.04, 0.1],
+      "pitch": [0.9, 1.05],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2200, 3400],
+      "sources": ["pool:city*1", "pool:road*1"]
     },
-    "stab": [
-      "offbeat",
-      "sparse"
-    ],
     "hits": {
-      "sources": [
-        "rave_b",
-        "vox_a",
-        "sp_energy"
-      ],
+      "sources": ["pool:rave_stab*1", "pool:vocal_stab*1", "sp_energy"],
       "pattern": "offbeat",
       "prob": 0.5
     },
+    "stab": ["offbeat", "sparse"],
     "form": "dj"
   },
-  "verify": {
-    "seeds": 6,
-    "features": {
-      "bpm": 3,
-      "leadVoices": 2,
-      "pump": 2,
-      "swing": 2,
-      "hatDensity": 1,
-      "sub": 1,
-      "crackle": 1,
-      "motion": 1,
-      "humanize": 2
-    }
+  "mind": {
+    "theory": {
+      "adventure": [0.1, 0.205],
+      "color": [0.125, 0.3],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      },
+      {
+        "id": "vibratoSwell",
+        "w": 0.4,
+        "depth": 0.25
+      }
+    ],
+    "rhythm": [0.08, 0.22]
+  },
+  "perc": {
+    "lanes": [
+      {
+        "p": "clap24",
+        "lvl": 0.28
+      },
+      {
+        "p": "crashDown",
+        "lvl": 0.38
+      }
+    ]
+  },
+  "targets": {
+    "bpm": [131, 148, 3],
+    "leadVoices": [1, 5, 2],
+    "pump": [0.153, 0.534, 2],
+    "swing": [0, 0.069, 2],
+    "hatDensity": [0.38, 2.02, 1],
+    "sub": [0.05, 0.35, 1],
+    "crackle": [0, 0.167, 1],
+    "motion": [0.52, 1, 1],
+    "humanize": [0, 0.114, 2],
+    "acoustic": [0, 0.12, 3]
   }
 }

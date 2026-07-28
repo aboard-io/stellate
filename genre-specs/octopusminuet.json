@@ -1,7 +1,8 @@
 {
   "name": "octopusminuet",
-  "label": "Octopusminuet",
+  "label": "Cephalopod Gavotte",
   "info": "baroque pop in a walled garden: harpsichord figuration and a celesta answering it, a string quartet holding the middle, cello walking the bassline, brushes barely touching the kit — a canon that thinks it is a single, powdered wigs and pop hooks, pigeons in the courtyard",
+  "pos": [1126, 7643],
   "anchor": {
     "bpm": [90, 100],
     "swing": [0, 0.06],
@@ -9,8 +10,6 @@
     "progressions": ["canon", "sad_pop", "ii_v_i"],
     "kits": ["open", "halftime"],
     "fills": ["off", "micro lick"],
-    "rubato": { "depth": [0.008, 0.02], "periodBars": [2, 4], "prob": 0.5 },
-    "counterpoint": { "prob": 0.5 },
     "bass": {
       "patterns": ["walking", "melodic", "pedal"],
       "samplerPool": ["cello", "acoustic_bass"],
@@ -79,21 +78,70 @@
       "comp": [0.1, 0.24],
       "grit": [0, 0]
     },
-    "reverbColor": "dattorro",
     "found": {
       "role": "bed",
       "vol": [0.05, 0.1],
       "pitch": [0.95, 1.05],
       "stretch": [0.45, 0.6],
       "cutoff": [2200, 3400],
-      "sources": ["pigeon_coo", "tw_stationhall"]
+      "sources": ["pigeon_coo", "pool:city*1"]
+    },
+    "rubato": {
+      "depth": [0.008, 0.02],
+      "periodBars": [2, 4],
+      "prob": 0.5
+    },
+    "counterpoint": {
+      "prob": 0.5
     },
     "hits": {
-      "sources": ["handbell", "tw_ding"],
+      "sources": ["pool:chime*2"],
       "pattern": "sparse",
       "prob": 0.2
     },
     "stab": ["off"],
-    "form": "pop"
+    "form": "aaba",
+    "reverbColor": "dattorro"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.217, 0.367],
+      "color": [0.333, 0.533],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "echoCanon",
+        "w": 0.55,
+        "prob": 0.45,
+        "delay": 2
+      },
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      },
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      }
+    ],
+    "rhythm": [0.125, 0.3]
+  },
+  "targets": {
+    "bpm": [85, 106, 3],
+    "drumDensity": [0.29, 1.71, 2],
+    "wash": [0.038, 0.286, 1],
+    "pump": [0, 0.1, 1],
+    "swing": [0, 0.088, 2],
+    "seventh": [0, 1, 1],
+    "acoustic": [0, 0.92, 2],
+    "crackle": [0.012, 0.325, 1],
+    "sub": [0.05, 0.35, 1],
+    "motion": [0.52, 1, 1],
+    "bedUse": [0.51, 0.75, 1]
   }
 }

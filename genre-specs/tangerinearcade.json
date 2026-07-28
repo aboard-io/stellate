@@ -1,7 +1,8 @@
 {
   "name": "tangerinearcade",
-  "label": "Tangerinearcade",
+  "label": "Spare Room Nebula",
   "info": "the solo-era synth coda: one ex-mop-top alone in a home studio with a drum machine and a wall of polysynths, chrome arpeggios over a pumping octave bass, hooks the old band would have sung now played by machines that almost smile — 1980 fluorescent, cheerfully heartbroken, coins ready at the cabinet",
+  "pos": [1856, 3876],
   "anchor": {
     "bpm": [122, 132],
     "swing": [0, 0.05],
@@ -40,7 +41,14 @@
         "prob": 0.5,
         "max": 1,
         "pool": [
-          ["chorus", { "rate": [0.5, 1], "depth": [0.35, 0.55], "mix": [0.35, 0.55] }]
+          [
+            "chorus",
+            {
+              "rate": [0.5, 1],
+              "depth": [0.35, 0.55],
+              "mix": [0.35, 0.55]
+            }
+          ]
         ]
       }
     },
@@ -87,14 +95,55 @@
       "pitch": [0.95, 1.05],
       "stretch": [0.45, 0.6],
       "cutoff": [2400, 3600],
-      "sources": ["highway_night", "crt_whine"]
+      "sources": ["pool:road*1", "crt_whine"]
     },
     "hits": {
-      "sources": ["vox_a", "sp_nightdrive"],
+      "sources": ["pool:vocal_stab*1", "sp_nightdrive"],
       "pattern": "sparse",
       "prob": 0.3
     },
     "stab": ["off", "sparse"],
     "form": "pop"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.1, 0.207],
+      "color": [0.183, 0.367],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      },
+      {
+        "id": "vibratoSwell",
+        "w": 0.4,
+        "depth": 0.25
+      }
+    ],
+    "rhythm": [0.153, 0.313]
+  },
+  "targets": {
+    "bpm": [117, 138, 3],
+    "drumDensity": [0.77, 2.49, 2],
+    "wash": [0, 0.229, 1],
+    "pump": [0.217, 0.567, 1],
+    "swing": [0, 0.082, 2],
+    "seventh": [0, 1, 1],
+    "acoustic": [0, 0.12, 2],
+    "crackle": [0, 0.176, 1],
+    "sub": [0.05, 1, 1],
+    "motion": [0.85, 1, 1],
+    "bedUse": [0.51, 0.75, 1]
   }
 }

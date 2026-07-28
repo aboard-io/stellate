@@ -1,0 +1,221 @@
+{
+  "name": "budstep",
+  "label": "Amen Monolith",
+  "info": "amen breaks under a relentless SUNN O)))/SLEEP wall of DOUBLED distorted-guitar SLUDGE CHORDS — power chords, massive, anthemic, drowned in deep reverb — while a deadpan synth voice recites cannabis strain names: Blue Dream, Northern Lights, Purple Haze",
+  "pos": [1089, 13532],
+  "anchor": {
+    "bpm": [138, 146],
+    "swing": [0, 0.06],
+    "humanize": [0.05, 0.18],
+    "progressions": ["mode_phrygian", "minor_run", "drone_min", "epic_min"],
+    "kits": ["jungle", "breaks"],
+    "fills": ["break fill", "reverse", "off", "break fill"],
+    "bass": {
+      "patterns": ["sludge", "sludge", "sub"],
+      "recipe": {
+        "model": ["sub", "reese"],
+        "cutoff": [240, 440],
+        "res": [0.05, 0.2],
+        "level": [1.35, 1.6],
+        "send": [0, 0.05],
+        "dsend": [0, 0.05]
+      },
+      "inserts": {
+        "prob": 1,
+        "max": 1,
+        "pool": [
+          [
+            "distort",
+            {
+              "drive": [0.7, 0.95],
+              "mix": [0.8, 1]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": ["sludge", "sludge", "blues"],
+      "samplerPool": ["distortion_guitar", "overdrive_guitar", "distortion_guitar"],
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "saw",
+        "voices": [1, 2],
+        "spread": [0.003, 0.008],
+        "cutoff": [1600, 2600],
+        "level": [0.58, 0.74],
+        "send": [0.36, 0.56],
+        "dsend": [0.2, 0.35],
+        "attack": 0.01,
+        "release": [0.5, 0.9],
+        "sustain": [0.88, 0.96]
+      },
+      "inserts": {
+        "prob": 1,
+        "max": 1,
+        "pool": [
+          [
+            "distort",
+            {
+              "drive": [0.65, 0.9],
+              "mix": [0.75, 1]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.85,
+      "samplerPool": ["distortion_guitar"],
+      "recipe": {
+        "model": ["sampler", "saw"],
+        "wave": "saw",
+        "cutoff": [700, 1300],
+        "detune": [0.006, 0.014],
+        "attack": [0.1, 0.5],
+        "release": [1.8, 3.4],
+        "sustain": [0.88, 0.96],
+        "level": [0.56, 0.72],
+        "send": [0.4, 0.6],
+        "dsend": [0.1, 0.25]
+      },
+      "inserts": {
+        "prob": 1,
+        "max": 2,
+        "pool": [
+          [
+            "distort",
+            {
+              "drive": [0.6, 0.85],
+              "mix": [0.7, 0.95]
+            }
+          ],
+          [
+            "phaser",
+            {
+              "rate": [0.2, 0.5],
+              "depth": [0.5, 0.7],
+              "mix": [0.4, 0.6]
+            }
+          ]
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": ["808"],
+      "snareModel": ["crack", "noise"],
+      "hatModel": ["noise"],
+      "kick": [1.15, 1.4],
+      "snare": [0.6, 0.85],
+      "hat": [0.4, 0.7],
+      "tune": [1, 1.12],
+      "send": [0.14, 0.26],
+      "dsend": [0.2, 0.4]
+    },
+    "fx": {
+      "reverb": [0.56, 0.74],
+      "delayBeats": [0.75, 1.5],
+      "delayFb": [0.3, 0.5],
+      "delayCut": [1800, 3000],
+      "pump": [0, 0.2],
+      "crackle": [0.05, 0.2],
+      "lowcut": [20, 35],
+      "highcut": [0, 0],
+      "comp": [0.5, 0.85],
+      "grit": [0.55, 0.82]
+    },
+    "found": {
+      "role": "break",
+      "vol": [0.28, 0.42],
+      "pitch": [1, 1],
+      "stretch": [0.5, 0.5],
+      "cutoff": [5000, 8000],
+      "sources": ["amen_170", "amen_172", "amen_175"]
+    },
+    "sampleEvents": [
+      {
+        "pool": [
+          "wd_bluedream",
+          "wd_northernlights",
+          "wd_purplehaze",
+          "wd_sourdiesel",
+          "wd_whitewidow",
+          "wd_granddaddy",
+          "wd_jackherer",
+          "wd_pineapple",
+          "wd_mauiwowie",
+          "wd_acapulco",
+          "wd_durban",
+          "wd_weddingcake",
+          "wd_zkittlez",
+          "wd_indica",
+          "wd_sativa",
+          "wd_hybrid"
+        ],
+        "placement": "buried",
+        "sections": "all",
+        "treatment": {
+          "cutoff": 4200,
+          "vol": 0.42,
+          "glitch": true,
+          "every": 2,
+          "maxDur": 8
+        }
+      }
+    ],
+    "hits": {
+      "sources": ["wd_bluedream", "wd_sourdiesel", "wd_indica", "wd_sativa"],
+      "pattern": "dub",
+      "prob": 0.6
+    },
+    "stab": ["off"],
+    "form": "dj",
+    "reverbColor": "greyhole"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.1, 0.19],
+      "color": [0.15, 0.325],
+      "voicing": "close",
+      "reharm": false
+    },
+    "pipes": [
+      {
+        "id": "callResponse",
+        "w": 0.5,
+        "level": 0.85
+      },
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      },
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      }
+    ],
+    "rhythm": [0.525, 0.775]
+  },
+  "perc": {
+    "lanes": [
+      {
+        "p": "crashDown",
+        "lvl": 0.36
+      }
+    ]
+  },
+  "targets": {
+    "bpm": [136, 148, 3],
+    "breakUse": [0.35, 0.9, 3],
+    "acoustic": [0.5, 0.95, 2],
+    "sub": [0.5, 1, 2],
+    "comp": [0.4, 0.9, 1],
+    "drumDensity": [1.4, 3, 1],
+    "crackle": [0, 0.28, 1],
+    "swing": [0, 0.12, 1],
+    "wash": [0.08, 0.32, 1],
+    "seventh": [0.3, 1, 1]
+  }
+}

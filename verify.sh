@@ -10,6 +10,7 @@
 #   matproof    node test/prove-matrix.test.js             (offline matrix prover, cross-checked)
 #   poscover    node test/pos-coverage.js                  (every genre has a star-map POS)
 #   kerneldata  node test/kernel-data-identity.test.js     (genre data byte-identical vs HEAD)
+#   specs       node test/genre-specs.test.js              (every genre has a spec; specs round-trip)
 #   coordscover node test/coords-coverage.js               (every genre has a 3D coord + cluster)
 #   seamwalk    node test/live-walk-parity.test.js         (chord-bar seam fires exactly once)
 #   bootsmoke   node test/boot-smoke.js                    (script load order + window globals)
@@ -94,6 +95,13 @@ PIDS+=($!)
 # 0.30000000000000004 would be invisible everywhere else. Self-heals on commit,
 # like meter.test's head_byte_identity. Plain node, no browser — CI-safe.
 run "kerneldata" node test/kernel-data-identity.test.js &
+PIDS+=($!)
+# specs: THE GENRE-SPEC ROUND-TRIP gate (test/genre-specs.test.js) — genre-specs/
+# was one-directional and rotted to 135 files for 274 genres, 115 of them drifted
+# and every label stale. `genre-tool.js export` is the missing direction; this
+# holds the folder to it, so an anchor edited without a re-export fails here with
+# the genre named instead of quietly becoming another stale receipt.
+run "specs" node test/genre-specs.test.js &
 PIDS+=($!)
 # poscover: the STAR-MAP POS COMPLETENESS gate (test/pos-coverage.js) — every
 # runtime genre (GenreKernel.GENRES) MUST have an app/world.js POS entry, else

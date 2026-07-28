@@ -1,7 +1,8 @@
 {
   "name": "bogironwallow",
-  "label": "Bogironwallow",
+  "label": "Sphagnum Requiem",
   "info": "doom at the speed of peat: downtuned fuzz sinking a half-step at a time, mourning strings behind the stomp, every backbeat a stone dropped into the bog and never heard landing",
+  "pos": [767, 6563],
   "anchor": {
     "bpm": [47, 57],
     "swing": [0, 0.05],
@@ -9,17 +10,139 @@
     "progressions": ["minor_run", "epic_min", "drone_min"],
     "kits": ["halftime", "kick"],
     "fills": ["off", "downlift", "impact"],
-    "timeFeel": { "pushPull": { "kick": 0.04, "snare": 0.06, "bass": 0.07 } },
-    "reverbColor": "greyhole",
-    "bass": { "patterns": ["root", "sub", "pedal"], "recipe": { "model": ["reese", "sub"], "cutoff": [180, 330], "res": [0.05, 0.15], "level": [1.25, 1.5], "send": [0.05, 0.12], "dsend": [0, 0.06] }, "inserts": { "prob": 0.9, "max": 1, "pool": [["distort", { "drive": [0.65, 1], "mix": [0.8, 1] }]] } },
-    "lead": { "patterns": ["sparse", "double", "blues"], "recipe": { "model": ["fuzz"], "wave": "saw", "voices": [1, 2], "spread": [0.003, 0.008], "cutoff": [1200, 2000], "res": [0.2, 0.35], "drive": [0.7, 1], "level": [0.5, 0.62], "send": [0.35, 0.5], "dsend": [0.15, 0.3], "attack": [0.02, 0.06], "release": [0.4, 0.7], "sustain": [0.85, 0.95] } },
-    "pads": { "prob": 0.55, "samplerPool": ["cello", "slow_strings"], "recipe": { "model": ["strings", "sampler", "sampler"], "wave": "saw", "cutoff": [500, 950], "detune": [0.007, 0.015], "attack": [3, 5], "mellotron": true, "level": [0.45, 0.6], "send": [0.5, 0.7], "dsend": [0.1, 0.25] } },
-    "drums": { "kickModel": ["boom", "808"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [1.35, 1.6], "snare": [0.7, 0.95], "hat": [0.3, 0.55], "tune": [0.72, 0.88], "send": [0.2, 0.35], "dsend": [0.05, 0.18] },
-    "fx": { "reverb": [0.55, 0.72], "delayBeats": [0.75, 1.5], "delayFb": [0.3, 0.45], "delayCut": [1400, 2400], "pump": [0, 0.05], "crackle": [0.05, 0.18], "lowcut": [0, 20], "highcut": [0, 0], "comp": [0.45, 0.7], "grit": [0.6, 0.9] },
-    "found": { "role": "bed", "vol": [0.16, 0.28], "pitch": [0.5, 0.65], "stretch": [0.45, 0.6], "cutoff": [1400, 2400], "sources": ["frogs", "factory"] },
+    "bass": {
+      "patterns": ["root", "sub", "pedal"],
+      "recipe": {
+        "model": ["reese", "sub"],
+        "cutoff": [180, 330],
+        "res": [0.05, 0.15],
+        "level": [1.25, 1.5],
+        "send": [0.05, 0.12],
+        "dsend": [0, 0.06]
+      },
+      "inserts": {
+        "prob": 0.9,
+        "max": 1,
+        "pool": [
+          [
+            "higain",
+            {
+              "gate": [0.05, 0.15],
+              "drive": [0.8, 0.95],
+              "stages": 3,
+              "low": 0.75,
+              "mid": 0.5,
+              "high": 0.3,
+              "presence": [0.15, 0.3]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": ["sparse", "double", "blues"],
+      "recipe": {
+        "model": ["fuzz"],
+        "wave": "saw",
+        "voices": [1, 2],
+        "spread": [0.003, 0.008],
+        "cutoff": [1200, 2000],
+        "res": [0.2, 0.35],
+        "drive": [0.7, 1],
+        "level": [0.5, 0.62],
+        "send": [0.35, 0.5],
+        "dsend": [0.15, 0.3],
+        "attack": [0.02, 0.06],
+        "release": [0.4, 0.7],
+        "sustain": [0.85, 0.95]
+      }
+    },
+    "pads": {
+      "prob": 0.55,
+      "samplerPool": ["cello", "slow_strings"],
+      "recipe": {
+        "model": ["strings", "sampler", "sampler"],
+        "wave": "saw",
+        "cutoff": [500, 950],
+        "detune": [0.007, 0.015],
+        "attack": [3, 5],
+        "mellotron": true,
+        "level": [0.45, 0.6],
+        "send": [0.5, 0.7],
+        "dsend": [0.1, 0.25]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom", "808"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [1.35, 1.6],
+      "snare": [0.7, 0.95],
+      "hat": [0.3, 0.55],
+      "tune": [0.72, 0.88],
+      "send": [0.2, 0.35],
+      "dsend": [0.05, 0.18]
+    },
+    "fx": {
+      "reverb": [0.55, 0.72],
+      "delayBeats": [0.75, 1.5],
+      "delayFb": [0.3, 0.45],
+      "delayCut": [1400, 2400],
+      "pump": [0, 0.05],
+      "crackle": [0.05, 0.18],
+      "lowcut": [0, 20],
+      "highcut": [0, 0],
+      "comp": [0.45, 0.7],
+      "grit": [0.6, 0.9]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.16, 0.28],
+      "pitch": [0.5, 0.65],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1400, 2400],
+      "sources": ["frogs", "pool:industry*1"]
+    },
+    "hits": {
+      "sources": ["pool:vocal_stab*1", "sp_pressure"],
+      "pattern": "sparse",
+      "prob": 0.2
+    },
     "stab": ["off"],
-    "hits": { "sources": ["vox_c", "sp_pressure"], "pattern": "sparse", "prob": 0.2 },
-    "form": "pop"
+    "form": "storm",
+    "timeFeel": {
+      "pushPull": {
+        "kick": 0.04,
+        "snare": 0.06,
+        "bass": 0.07
+      }
+    },
+    "reverbColor": "greyhole"
   },
-  "verify": { "seeds": 6, "features": { "bpm": 3, "drumDensity": 2, "wash": 2, "acoustic": 1, "crackle": 1, "sub": 1, "comp": 1 } }
+  "mind": {
+    "theory": {
+      "adventure": [0.067, 0.153],
+      "color": [0.117, 0.3],
+      "voicing": "close",
+      "reharm": false
+    },
+    "pipes": [
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      }
+    ],
+    "rhythm": [0.1, 0.25]
+  },
+  "targets": {
+    "bpm": [42, 63, 3],
+    "drumDensity": [0.17, 1.57, 2],
+    "wash": [0.134, 0.447, 2],
+    "acoustic": [0, 0.72, 1],
+    "crackle": [0, 0.267, 1],
+    "sub": [0.85, 1, 1],
+    "comp": [0.35, 0.704, 1]
+  }
 }

@@ -1,8 +1,8 @@
 {
   "name": "yachtrock",
-  "label": "Yacht Rock",
+  "label": "Isobar Regatta",
   "info": "smooth West-Coast soft rock ~112bpm — Rhodes and clean electric guitar, a lyrical alto-sax hook, fretless bass, dry polished mix, lush maj7/min7 harmony. Influences: Steely Dan, Doobie Brothers, Toto, Michael McDonald",
-  "clips": ["cs_liner", "disc_sunset", "blue_dinner", "dh_bigband"],
+  "pos": [2296, 6531],
   "anchor": {
     "bpm": [104, 120],
     "swing": [0.02, 0.06],
@@ -10,19 +10,112 @@
     "progressions": ["neosoul", "ii_v_i"],
     "kits": ["full", "open"],
     "fills": ["drum fill", "tom fill"],
-    "bass": { "patterns": ["walking", "root", "simple"], "samplerPool": ["fretless_bass", "finger_bass"],
-      "recipe": { "model": ["sampler", "sampler"], "cutoff": [400, 700], "res": [0.05, 0.14], "level": [0.85, 1.05], "send": [0.06, 0.14], "dsend": [0.02, 0.08] } },
-    "lead": { "patterns": ["composed", "wander", "updown"], "samplerPool": ["alto_sax", "tenor_sax", "rhodes_ep", "electric_piano"],
-      "recipe": { "model": ["sampler"], "wave": "sine", "voices": [1, 1], "spread": [0.003, 0.007], "cutoff": [2600, 3600], "level": [0.5, 0.64], "send": [0.22, 0.36], "dsend": [0.08, 0.18], "vibrato": [0.008, 0.016] } },
-    "pads": { "prob": 0.85, "samplerPool": ["rhodes_ep", "electric_piano", "strings"],
-      "recipe": { "model": ["sampler", "strings"], "wave": "saw", "cutoff": [1100, 1800], "detune": [0.004, 0.009], "attack": [0.6, 1.8], "level": [0.42, 0.58], "send": [0.22, 0.4], "dsend": [0.06, 0.16] } },
-    "drums": { "kickModel": ["boom"], "snareModel": ["noise", "clap"], "hatModel": ["noise"], "kick": [0.55, 0.82], "snare": [0.5, 0.72], "hat": [0.5, 0.78], "tune": [0.95, 1.05], "send": [0.08, 0.18], "dsend": [0.03, 0.1] },
-    "fx": { "reverb": [0.3, 0.44], "delayBeats": [0.375, 0.5], "delayFb": [0.12, 0.24], "delayCut": [2600, 3600], "pump": [0, 0.02], "crackle": [0.02, 0.06], "lowcut": [30, 50], "highcut": [0, 0], "comp": [0.2, 0.4] },
-    "reverbColor": "dattorro",
-    "found": { "role": "bed", "vol": [0.05, 0.1], "pitch": [0.9, 1], "stretch": [0.45, 0.6], "cutoff": [2400, 3400], "sources": ["oslo_ferry_pa", "tokyo_station"] },
-    "hits": { "sources": ["tw_ding"], "pattern": "sparse", "prob": 0.1 },
+    "bass": {
+      "patterns": ["walking", "root", "simple"],
+      "samplerPool": ["fretless_bass", "finger_bass"],
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "cutoff": [400, 700],
+        "res": [0.05, 0.14],
+        "level": [0.85, 1.05],
+        "send": [0.06, 0.14],
+        "dsend": [0.02, 0.08]
+      }
+    },
+    "lead": {
+      "patterns": ["composed", "wander", "updown"],
+      "samplerPool": ["alto_sax", "tenor_sax", "rhodes_ep", "electric_piano"],
+      "recipe": {
+        "model": ["sampler"],
+        "wave": "sine",
+        "voices": [1, 1],
+        "spread": [0.003, 0.007],
+        "cutoff": [2600, 3600],
+        "level": [0.5, 0.64],
+        "send": [0.22, 0.36],
+        "dsend": [0.08, 0.18],
+        "vibrato": [0.008, 0.016]
+      }
+    },
+    "pads": {
+      "prob": 0.85,
+      "samplerPool": ["rhodes_ep", "electric_piano", "strings", "clean_guitar"],
+      "recipe": {
+        "model": ["sampler", "strings"],
+        "wave": "saw",
+        "cutoff": [1100, 1800],
+        "detune": [0.004, 0.009],
+        "attack": [0.6, 1.8],
+        "level": [0.42, 0.58],
+        "send": [0.22, 0.4],
+        "dsend": [0.06, 0.16]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise", "clap"],
+      "hatModel": ["noise"],
+      "kick": [0.55, 0.82],
+      "snare": [0.5, 0.72],
+      "hat": [0.5, 0.78],
+      "tune": [0.95, 1.05],
+      "send": [0.08, 0.18],
+      "dsend": [0.03, 0.1]
+    },
+    "fx": {
+      "reverb": [0.3, 0.44],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.12, 0.24],
+      "delayCut": [2600, 3600],
+      "pump": [0, 0.02],
+      "crackle": [0.02, 0.06],
+      "lowcut": [30, 50],
+      "highcut": [0, 0],
+      "comp": [0.2, 0.4]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.05, 0.1],
+      "pitch": [0.9, 1],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2400, 3400],
+      "sources": ["oslo_ferry_pa", "tokyo_station"]
+    },
+    "hits": {
+      "sources": ["tw_ding"],
+      "pattern": "sparse",
+      "prob": 0.1
+    },
     "stab": ["off", "sparse"],
-    "form": "pop"
+    "form": "pop",
+    "reverbColor": "dattorro"
   },
-  "verify": { "seeds": 6, "widen": 0.08, "features": { "bpm": 2, "seventh": 3, "sub": 3, "pump": 2, "wash": 2, "acoustic": 1, "motion": 1, "drumDensity": 1 } }
+  "mind": {
+    "theory": {
+      "adventure": [0.375, 0.575],
+      "color": [0.55, 0.8],
+      "voicing": "drop2",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      }
+    ],
+    "rhythm": [0.11, 0.275]
+  },
+  "targets": {
+    "bpm": [97, 127, 2],
+    "seventh": [0.85, 1, 3],
+    "sub": [0.018, 0.782, 3],
+    "pump": [0, 0.1, 2],
+    "wash": [0, 0.216, 2],
+    "acoustic": [0.68, 0.92, 1],
+    "motion": [0.494, 1, 1],
+    "drumDensity": [0.965, 1.985, 1],
+    "softTop": [0, 0, 3]
+  }
 }

@@ -1,8 +1,8 @@
 {
   "name": "indie",
-  "label": "Jangle Pop Bedroom",
+  "label": "Duvet Cosmonaut",
   "info": "Bright melodic indie / jangle-pop as a genre: chiming clean and steel-string electric guitars ringing arpeggiated chords over a melodic picked bass and a light backbeat kit, mid tempo, warm and lightly reverbed, hooky major-key progressions — the R.E.M./Smiths/Sarah-Records jangle, guitars but gentle, not distorted",
-  "clips": ["dc_village", "blue_dinner", "earth_orbit", "spacewalk", "bamboo"],
+  "pos": [1620, 7432],
   "anchor": {
     "bpm": [104, 134],
     "swing": [0, 0.03],
@@ -11,20 +11,130 @@
     "kits": ["full", "boombap"],
     "fills": ["off", "drum fill", "hat rush"],
     "chordEvery": 4,
-    "bass": { "patterns": ["root", "walking", "melodic"], "samplerPool": ["picked_bass", "fretless_bass"], "recipe": { "model": ["sampler", "sampler"], "cutoff": [600, 1300], "res": [0.05, 0.12], "level": [0.44, 0.64], "send": [0.1, 0.24], "dsend": [0, 0.05], "attack": [0.006, 0.02], "release": [0.2, 0.5] } },
-    "lead": { "patterns": ["arpup", "updown", "canon"], "samplerPool": ["clean_guitar", "steel_string_guitar"], "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "voices": [1, 2], "spread": [0.002, 0.005], "cutoff": [2600, 4400], "level": [0.4, 0.58], "send": [0.14, 0.32], "dsend": [0.02, 0.12], "attack": [0.004, 0.016], "release": [0.2, 0.5] } },
-    "pads": { "prob": 0.4, "samplerPool": ["jazz_guitar", "rock_organ"], "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "cutoff": [1200, 2200], "detune": [0.002, 0.006], "attack": [0.2, 0.8], "release": [0.8, 2], "swell": 1, "level": [0.24, 0.42], "send": [0.2, 0.4], "dsend": [0, 0.08] } },
-    "drums": { "kickModel": ["boom", "909"], "snareModel": ["crack", "clap"], "hatModel": ["metal", "noise"], "kick": [0.56, 0.78], "snare": [0.46, 0.68], "hat": [0.34, 0.56], "tune": [0.94, 1.03], "send": [0.1, 0.26], "dsend": [0, 0.05] },
-    "fx": { "reverb": [0.18, 0.38], "delayBeats": [0.5, 1], "delayFb": [0.08, 0.2], "delayCut": [2200, 3200], "pump": [0, 0.08], "crackle": [0, 0.08], "lowcut": [0, 0], "highcut": [0, 0], "comp": [0.1, 0.3] },
-    "found": { "role": "bed", "vol": [0.02, 0.07], "pitch": [0.8, 1], "stretch": [0.35, 0.5], "cutoff": [1800, 2800], "sources": ["tokyo_station", "iriomote"] },
-    "rubato": { "depth": [0.004, 0.014], "periodBars": [2, 4], "prob": 0.3 },
-    "hits": { "sources": ["sp_herenow"], "pattern": "sparse", "prob": 0.03 },
+    "bass": {
+      "patterns": ["root", "walking", "melodic"],
+      "samplerPool": ["picked_bass", "fretless_bass"],
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "cutoff": [600, 1300],
+        "res": [0.05, 0.12],
+        "level": [0.44, 0.64],
+        "send": [0.1, 0.24],
+        "dsend": [0, 0.05],
+        "attack": [0.006, 0.02],
+        "release": [0.2, 0.5]
+      }
+    },
+    "lead": {
+      "patterns": ["arpup", "updown", "canon"],
+      "samplerPool": ["clean_guitar", "steel_string_guitar"],
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.002, 0.005],
+        "cutoff": [2600, 4400],
+        "level": [0.4, 0.58],
+        "send": [0.14, 0.32],
+        "dsend": [0.02, 0.12],
+        "attack": [0.004, 0.016],
+        "release": [0.2, 0.5]
+      }
+    },
+    "pads": {
+      "prob": 0.4,
+      "samplerPool": ["jazz_guitar", "rock_organ"],
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "sine",
+        "cutoff": [1200, 2200],
+        "detune": [0.002, 0.006],
+        "attack": [0.2, 0.8],
+        "release": [0.8, 2],
+        "swell": 1,
+        "level": [0.24, 0.42],
+        "send": [0.2, 0.4],
+        "dsend": [0, 0.08]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom", "909"],
+      "snareModel": ["crack", "clap"],
+      "hatModel": ["metal", "noise"],
+      "kick": [0.56, 0.78],
+      "snare": [0.46, 0.68],
+      "hat": [0.34, 0.56],
+      "tune": [0.94, 1.03],
+      "send": [0.1, 0.26],
+      "dsend": [0, 0.05]
+    },
+    "fx": {
+      "reverb": [0.18, 0.38],
+      "delayBeats": [0.5, 1],
+      "delayFb": [0.08, 0.2],
+      "delayCut": [2200, 3200],
+      "pump": [0, 0.08],
+      "crackle": [0, 0.08],
+      "lowcut": [0, 0],
+      "highcut": [0, 0],
+      "comp": [0.1, 0.3]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.02, 0.07],
+      "pitch": [0.8, 1],
+      "stretch": [0.35, 0.5],
+      "cutoff": [1800, 2800],
+      "sources": ["tokyo_station", "iriomote"]
+    },
+    "rubato": {
+      "depth": [0.004, 0.014],
+      "periodBars": [2, 4],
+      "prob": 0.3
+    },
+    "hits": {
+      "sources": ["sp_herenow"],
+      "pattern": "sparse",
+      "prob": 0.03
+    },
     "stab": ["off"],
     "form": "wave"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": { "bpm": 2, "drumDensity": 3, "acoustic": 3, "bright": 2, "seventh": 2, "wash": 2, "motion": 2, "humanize": 1 }
+  "mind": {
+    "theory": {
+      "adventure": [0.175, 0.318],
+      "color": [0.388, 0.6],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "ghost",
+        "w": 0.55,
+        "prob": 0.35
+      },
+      {
+        "id": "echoCanon",
+        "w": 0.55,
+        "prob": 0.45,
+        "delay": 2
+      },
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      }
+    ],
+    "rhythm": [0.21, 0.4]
+  },
+  "targets": {
+    "bpm": [98, 142, 2],
+    "drumDensity": [0.162, 1.058, 3],
+    "acoustic": [0.68, 0.92, 3],
+    "seventh": [0.85, 1, 2],
+    "wash": [0, 0.219, 2],
+    "motion": [0.85, 1, 2],
+    "humanize": [0, 0.239, 1]
   }
 }

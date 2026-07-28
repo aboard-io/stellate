@@ -1,7 +1,8 @@
 {
   "name": "polygonforge",
-  "label": "Polygon Forge",
+  "label": "Anvil Theorem",
   "info": "the chug quantized to geometry: palm-muted low strings hammering a rotating seven-against-sixteen, glassy major-seventh atmospherics floating far above the anvil, a halftime slam snare — heavy industry with a draftsman's pencil",
+  "pos": [1468, 12128],
   "anchor": {
     "bpm": [154, 166],
     "swing": [0, 0.03],
@@ -9,20 +10,150 @@
     "progressions": ["mode_phrygian", "royal_road", "drone_min"],
     "kits": ["halftime", "electro"],
     "fills": ["impact", "cut", "stutter", "dropout"],
-    "euclid": { "kick": [7, 16] },
-    "bass": { "patterns": ["sludge", "stab", "sixteenths"], "samplerPool": ["picked_bass"], "recipe": { "model": ["sampler", "reese"], "cutoff": [300, 550], "res": [0.1, 0.25], "level": [1.2, 1.4], "send": [0, 0.06], "dsend": [0, 0.05] }, "inserts": { "prob": 1, "max": 1, "pool": [["distort", { "drive": [0.6, 0.9], "mix": [0.8, 1] }]] } },
-    "lead": { "patterns": ["sludge", "double", "sparse"], "samplerPool": ["palm_muted_guitar", "distortion_guitar"], "recipe": { "model": ["sampler", "sampler", "fuzz"], "wave": "saw", "voices": [1, 2], "spread": [0.002, 0.006], "cutoff": [1800, 2800], "level": [0.5, 0.64], "send": [0.15, 0.3], "dsend": [0.1, 0.25], "attack": 0.003, "release": [0.06, 0.12], "sustain": [0.5, 0.65] }, "inserts": { "prob": 1, "max": 1, "pool": [["distort", { "drive": [0.55, 0.85], "mix": [0.7, 0.95] }]] } },
-    "pads": { "prob": 0.45, "samplerPool": ["atmosphere", "bowed_glass"], "recipe": { "model": ["sampler", "ppg", "saw"], "wave": "sine", "cutoff": [1400, 2400], "detune": [0.004, 0.01], "attack": [1, 2.5], "level": [0.36, 0.5], "send": [0.4, 0.6], "dsend": [0.1, 0.25] } },
-    "drums": { "kickModel": ["909", "808"], "snareModel": ["crack", "clap"], "hatModel": ["metal"], "kick": [1.35, 1.6], "snare": [0.95, 1.2], "hat": [0.5, 0.85], "tune": [0.9, 1.05], "send": [0.08, 0.18], "dsend": [0.08, 0.2] },
-    "fx": { "reverb": [0.25, 0.4], "delayBeats": [0.375, 0.5], "delayFb": [0.15, 0.3], "delayCut": [2200, 3200], "pump": [0.05, 0.2], "crackle": [0, 0.06], "lowcut": [30, 45], "highcut": [0, 0], "comp": [0.55, 0.8], "grit": [0.5, 0.75] },
-    "found": { "role": "bed", "vol": [0.06, 0.14], "pitch": [0.7, 0.85], "stretch": [0.45, 0.6], "cutoff": [1600, 2800], "sources": ["factory", "crt_whine"] },
-    "hits": { "sources": ["sp_system", "sp_pressure"], "pattern": "dub", "prob": 0.4 },
+    "euclid": {
+      "kick": [7, 16]
+    },
+    "bass": {
+      "patterns": ["sludge", "stab", "sixteenths"],
+      "samplerPool": ["picked_bass"],
+      "recipe": {
+        "model": ["sampler", "reese"],
+        "cutoff": [300, 550],
+        "res": [0.1, 0.25],
+        "level": [1.2, 1.4],
+        "send": [0, 0.06],
+        "dsend": [0, 0.05]
+      },
+      "inserts": {
+        "prob": 1,
+        "max": 1,
+        "pool": [
+          [
+            "distort",
+            {
+              "drive": [0.6, 0.9],
+              "mix": [0.8, 1]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": ["sludge", "double", "sparse"],
+      "samplerPool": ["palm_muted_guitar", "distortion_guitar"],
+      "recipe": {
+        "model": ["sampler", "sampler", "fuzz"],
+        "wave": "saw",
+        "voices": [1, 2],
+        "spread": [0.002, 0.006],
+        "cutoff": [1800, 2800],
+        "level": [0.5, 0.64],
+        "send": [0.15, 0.3],
+        "dsend": [0.1, 0.25],
+        "attack": 0.003,
+        "release": [0.06, 0.12],
+        "sustain": [0.5, 0.65]
+      },
+      "inserts": {
+        "prob": 1,
+        "max": 1,
+        "pool": [
+          [
+            "distort",
+            {
+              "drive": [0.55, 0.85],
+              "mix": [0.7, 0.95]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.45,
+      "samplerPool": ["atmosphere", "bowed_glass"],
+      "recipe": {
+        "model": ["sampler", "ppg", "saw"],
+        "wave": "sine",
+        "cutoff": [1400, 2400],
+        "detune": [0.004, 0.01],
+        "attack": [1, 2.5],
+        "level": [0.36, 0.5],
+        "send": [0.4, 0.6],
+        "dsend": [0.1, 0.25]
+      }
+    },
+    "drums": {
+      "kickModel": ["909", "808"],
+      "snareModel": ["crack", "clap"],
+      "hatModel": ["metal"],
+      "kick": [1.35, 1.6],
+      "snare": [0.95, 1.2],
+      "hat": [0.5, 0.85],
+      "tune": [0.9, 1.05],
+      "send": [0.08, 0.18],
+      "dsend": [0.08, 0.2]
+    },
+    "fx": {
+      "reverb": [0.25, 0.4],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.15, 0.3],
+      "delayCut": [2200, 3200],
+      "pump": [0.05, 0.2],
+      "crackle": [0, 0.06],
+      "lowcut": [30, 45],
+      "highcut": [0, 0],
+      "comp": [0.55, 0.8],
+      "grit": [0.5, 0.75]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.06, 0.14],
+      "pitch": [0.7, 0.85],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1600, 2800],
+      "sources": ["pool:industry*1", "crt_whine"]
+    },
+    "hits": {
+      "sources": ["sp_system", "sp_pressure"],
+      "pattern": "dub",
+      "prob": 0.4
+    },
     "stab": ["off", "sparse"],
     "form": "drop"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": { "bpm": 3, "drumDensity": 2, "seventh": 2, "variation": 2, "comp": 1, "sub": 1, "crackle": 2 }
+  "mind": {
+    "theory": {
+      "adventure": [0.117, 0.213],
+      "color": [0.3, 0.5],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      }
+    ],
+    "rhythm": [0.285, 0.505]
+  },
+  "targets": {
+    "bpm": [147, 174, 3],
+    "drumDensity": [0.848, 2.632, 2],
+    "seventh": [0.3, 1, 2],
+    "variation": [0.858, 1, 2],
+    "comp": [0.418, 0.924, 1],
+    "sub": [0.41, 1, 1],
+    "crackle": [0, 0.155, 2],
+    "breakUse": [0, 0.08, 3],
+    "pump": [0, 0.301, 3],
+    "chopUse": [0, 0.1, 3]
   }
 }

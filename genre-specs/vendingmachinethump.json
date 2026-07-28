@@ -1,0 +1,148 @@
+{
+  "name": "vendingmachinethump",
+  "label": "Coin Return Ritual",
+  "info": "invented (gap-found): a drive-tempo, bright-forward genre in the empty region near citypop × house/tango — variation~0.45, softTop~0.45, chopUse~0.22 [seed 11]",
+  "pos": [1721, 6616],
+  "anchor": {
+    "bpm": [119, 127],
+    "swing": [0, 0.048],
+    "humanize": [0.035, 0.125],
+    "progressions": ["royal_road", "pop_1625", "neosoul"],
+    "kits": ["kick", "off"],
+    "fills": ["off", "downlift"],
+    "bass": {
+      "patterns": ["rolling", "stab", "melodic", "syncopated"],
+      "patchPool": ["SYN-BASS 2"],
+      "recipe": {
+        "model": ["saw", "sub", "dx7"],
+        "cutoff": [380, 700],
+        "res": [0.15, 0.3],
+        "level": [1, 1.2],
+        "send": [0, 0.08],
+        "dsend": [0, 0.05]
+      }
+    },
+    "lead": {
+      "patterns": ["composed", "composed2", "updown", "arpup"],
+      "patchPool": ["E.PIANO 1", "E.PIANO 3"],
+      "samplerPool": ["jazz_guitar", "bright_yamaha_grand", "alto_sax"],
+      "recipe": {
+        "model": ["dx7", "dx7", "sampler", "sampler"],
+        "wave": "sine",
+        "voices": [2, 4],
+        "spread": [0.002, 0.005],
+        "cutoff": [2800, 3800],
+        "level": [0.46, 0.58],
+        "send": [0.25, 0.4],
+        "dsend": [0.15, 0.3],
+        "vibrato": [0.003, 0.007],
+        "attack": 0.01,
+        "release": [0.12, 0.2],
+        "sustain": [0.7, 0.8],
+        "fenv": [0.1, 0.25]
+      },
+      "inserts": {
+        "prob": 0.7,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [0.5, 1],
+              "depth": [0.4, 0.6],
+              "mix": [0.45, 0.65]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 1,
+      "recipe": {
+        "model": ["juno60", "juno60", "juno60", "strings", "saw"],
+        "wave": "saw",
+        "cutoff": [1400, 2100],
+        "detune": [0.004, 0.009],
+        "attack": [0.5, 1.2],
+        "chorus": [1, 1.4],
+        "chorusSpread": [0.8, 1],
+        "level": [0.45, 0.6],
+        "send": [0.2, 0.35],
+        "dsend": [0.05, 0.15]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.6, 0.85],
+      "snare": [0.4, 0.6],
+      "hat": [0.3, 0.5],
+      "tune": [0.95, 1.1],
+      "send": [0.1, 0.2],
+      "dsend": [0, 0.05]
+    },
+    "fx": {
+      "reverb": [0.58, 0.76],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.2, 0.32],
+      "delayCut": [2800, 4000],
+      "pump": [0, 0.22],
+      "crackle": [0.01, 0.17],
+      "lowcut": [25, 40],
+      "highcut": [0, 0],
+      "comp": [0.15, 0.37],
+      "grit": [0, 0]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.07, 0.13],
+      "pitch": [0.9, 1],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1800, 2800],
+      "sources": ["pool:city*2", "pool:road*1"]
+    },
+    "hits": {
+      "sources": ["sp_nightdrive", "pool:vocal_stab*1"],
+      "pattern": "sparse",
+      "prob": 0.3
+    },
+    "stab": ["off"],
+    "form": "pop",
+    "reverbColor": "dattorro"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.2, 0.357],
+      "color": [0.467, 0.7],
+      "voicing": "open",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      },
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      }
+    ],
+    "rhythm": [0.025, 0.115]
+  },
+  "targets": {
+    "bpm": [113, 134, 3],
+    "variation": [0, 1, 3],
+    "softTop": [0, 0, 3],
+    "chopUse": [0, 0.1, 2],
+    "sub": [0.002, 0.798, 2],
+    "wash": [0.008, 0.299, 1],
+    "acoustic": [0, 1, 1],
+    "swing": [0, 0.083, 1],
+    "drumDensity": [0, 0.904, 3],
+    "humanize": [0, 0.208, 3]
+  }
+}

@@ -1,8 +1,8 @@
 {
   "name": "velourregatta",
-  "label": "Velour Regatta",
+  "label": "Marina Heat Death",
   "info": "adult-contemporary chrome at 104: glassy FM marimba and tine-piano hooks over a swung machine groove, the gated snare detonating in a marble atrium, tom fills rolling down the chorus like surf — soul run through a rack of menus, sincere anyway",
-  "clips": ["sun_riders", "sharpest_city", "blue_dinner", "night_lights", "pl_dreamcar"],
+  "pos": [1493, 6647],
   "anchor": {
     "bpm": [100, 108],
     "swing": [0.04, 0.1],
@@ -10,20 +10,144 @@
     "progressions": ["uplift", "neosoul", "pop_1625"],
     "kits": ["full", "open", "four"],
     "fills": ["tom fill", "tom fill", "drum fill"],
-    "bass": { "patterns": ["syncopated", "root", "simple"], "patchPool": ["BASS    1", "E.BASS  2"], "recipe": { "model": ["dx7", "saw"], "cutoff": [600, 950], "res": [0.08, 0.18], "level": [1, 1.2], "send": [0.02, 0.08], "dsend": [0, 0.05] } },
-    "lead": { "patterns": ["pentaup", "composed", "hero", "sparse"], "patchPool": ["MARIMBA", "E.PIANO 1", "VIBE    1"], "recipe": { "model": ["dx7", "dx7", "dx7", "rhodes", "stack"], "wave": "sine", "voices": [1, 2], "spread": [0.002, 0.006], "cutoff": [2800, 4000], "level": [0.46, 0.58], "send": [0.35, 0.5], "dsend": [0.2, 0.35], "vibrato": [0, 0.004], "attack": 0.005, "release": [0.15, 0.3], "sustain": [0.7, 0.82] }, "inserts": { "prob": 0.4, "max": 1, "pool": [["chorus", { "rate": [0.5, 1], "depth": [0.4, 0.6], "mix": [0.35, 0.5] }]] } },
-    "pads": { "prob": 0.9, "patchPool": ["SYN-VOX", "STRG ENS 1", "E.PIANO 2"], "recipe": { "model": ["dx7", "juno60", "rhodes"], "wave": "saw", "cutoff": [1200, 2000], "detune": [0.006, 0.012], "attack": [0.8, 1.8], "chorus": [1.2, 1.6], "chorusSpread": [0.8, 1], "level": [0.5, 0.65], "send": [0.35, 0.5], "dsend": [0.1, 0.2] } },
-    "drums": { "kickModel": ["909", "boom"], "snareModel": ["noise", "clap"], "hatModel": ["noise"], "kick": [1.1, 1.3], "snare": [1, 1.25], "hat": [0.6, 0.9], "tune": [0.9, 1.05], "send": [0.45, 0.65], "dsend": [0.05, 0.15] },
-    "fx": { "reverb": [0.55, 0.7], "delayBeats": [0.375, 0.5], "delayFb": [0.15, 0.3], "delayCut": [3200, 4500], "pump": [0.08, 0.22], "crackle": [0, 0.08], "lowcut": [35, 50], "highcut": [0, 0], "comp": [0.35, 0.55] },
-    "reverbColor": "dattorro",
-    "found": { "role": "bed", "vol": [0.04, 0.09], "pitch": [0.85, 1], "stretch": [0.45, 0.55], "cutoff": [2000, 3200], "sources": ["shibuya", "highway_night"] },
-    "hits": { "sources": ["vox_a", "sp_herenow"], "pattern": "sparse", "prob": 0.3 },
+    "bass": {
+      "patterns": ["syncopated", "root", "simple"],
+      "patchPool": ["BASS    1", "E.BASS  2"],
+      "recipe": {
+        "model": ["dx7", "saw"],
+        "cutoff": [600, 950],
+        "res": [0.08, 0.18],
+        "level": [1, 1.2],
+        "send": [0.02, 0.08],
+        "dsend": [0, 0.05]
+      }
+    },
+    "lead": {
+      "patterns": ["pentaup", "composed", "hero", "sparse"],
+      "patchPool": ["MARIMBA", "E.PIANO 1", "VIBE    1"],
+      "recipe": {
+        "model": ["dx7", "dx7", "dx7", "rhodes", "stack"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.002, 0.006],
+        "cutoff": [2800, 4000],
+        "level": [0.46, 0.58],
+        "send": [0.35, 0.5],
+        "dsend": [0.2, 0.35],
+        "vibrato": [0, 0.004],
+        "attack": 0.005,
+        "release": [0.15, 0.3],
+        "sustain": [0.7, 0.82]
+      },
+      "inserts": {
+        "prob": 0.4,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [0.5, 1],
+              "depth": [0.4, 0.6],
+              "mix": [0.35, 0.5]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.9,
+      "patchPool": ["SYN-VOX", "STRG ENS 1", "E.PIANO 2"],
+      "recipe": {
+        "model": ["dx7", "juno60", "rhodes"],
+        "wave": "saw",
+        "cutoff": [1200, 2000],
+        "detune": [0.006, 0.012],
+        "attack": [0.8, 1.8],
+        "chorus": [1.2, 1.6],
+        "chorusSpread": [0.8, 1],
+        "level": [0.5, 0.65],
+        "send": [0.35, 0.5],
+        "dsend": [0.1, 0.2]
+      }
+    },
+    "drums": {
+      "kickModel": ["909", "boom"],
+      "snareModel": ["noise", "clap"],
+      "hatModel": ["noise"],
+      "kick": [1.1, 1.3],
+      "snare": [1, 1.25],
+      "hat": [0.6, 0.9],
+      "tune": [0.9, 1.05],
+      "send": [0.45, 0.65],
+      "dsend": [0.05, 0.15]
+    },
+    "fx": {
+      "reverb": [0.55, 0.7],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.15, 0.3],
+      "delayCut": [3200, 4500],
+      "pump": [0.08, 0.22],
+      "crackle": [0, 0.08],
+      "lowcut": [35, 50],
+      "highcut": [0, 0],
+      "comp": [0.35, 0.55]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.04, 0.09],
+      "pitch": [0.85, 1],
+      "stretch": [0.45, 0.55],
+      "cutoff": [2000, 3200],
+      "sources": ["pool:city*1", "pool:road*1"]
+    },
+    "hits": {
+      "sources": ["pool:vocal_stab*1", "sp_herenow"],
+      "pattern": "sparse",
+      "prob": 0.3
+    },
     "stab": ["off", "sparse"],
-    "form": "pop"
+    "form": "aaba",
+    "reverbColor": "dattorro"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": { "bpm": 3, "swing": 2, "snareBalance": 2, "drumDensity": 1, "pump": 1, "wash": 1 }
+  "mind": {
+    "theory": {
+      "adventure": [0.183, 0.323],
+      "color": [0.317, 0.533],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      },
+      {
+        "id": "vibratoSwell",
+        "w": 0.4,
+        "depth": 0.25
+      }
+    ],
+    "rhythm": [0.1, 0.257]
+  },
+  "targets": {
+    "bpm": [94, 115, 3],
+    "swing": [0, 0.131, 2],
+    "snareBalance": [0.31, 1.07, 2],
+    "drumDensity": [0.665, 1.765, 1],
+    "pump": [0, 0.317, 1],
+    "wash": [0.137, 0.48, 1],
+    "seventh": [0.575, 1, 3],
+    "softTop": [0, 0, 3],
+    "leadVoices": [1, 4, 3],
+    "sub": [0.05, 0.35, 3],
+    "comp": [0.216, 0.663, 3]
   }
 }

@@ -1,7 +1,8 @@
 {
   "name": "strawberryfog",
-  "label": "Strawberryfog",
+  "label": "Doppler Orchard",
   "info": "1967 through a tape machine running slow: mellotron flutes and choir smeared into fog, a sitar wandering one droning chord, backwards fills, runaway tape echo, shortwave numbers and a loon calling under everything — nothing is real, and the orchard gate is open",
+  "pos": [1895, 13440],
   "anchor": {
     "bpm": [76, 90],
     "swing": [0.02, 0.1],
@@ -40,7 +41,14 @@
         "prob": 0.55,
         "max": 1,
         "pool": [
-          ["phaser", { "rate": [0.08, 0.25], "depth": [0.5, 0.8], "mix": [0.4, 0.6] }]
+          [
+            "phaser",
+            {
+              "rate": [0.08, 0.25],
+              "depth": [0.5, 0.8],
+              "mix": [0.4, 0.6]
+            }
+          ]
         ]
       }
     },
@@ -82,21 +90,62 @@
       "comp": [0.15, 0.32],
       "grit": [0.05, 0.18]
     },
-    "reverbColor": "greyhole",
     "found": {
       "role": "bed",
       "vol": [0.15, 0.25],
       "pitch": [0.75, 0.95],
       "stretch": [0.5, 0.65],
       "cutoff": [2000, 3200],
-      "sources": ["vx_conet_swedish", "vx_wwvh", "loon", "tw_intrain"]
+      "sources": ["pool:voices*2", "loon", "pool:road*1"]
     },
     "hits": {
-      "sources": ["sp_rewind", "vox_b"],
+      "sources": ["sp_rewind", "pool:vocal_stab*1"],
       "pattern": "sparse",
       "prob": 0.3
     },
     "stab": ["off"],
-    "form": "wave"
+    "form": "wave",
+    "reverbColor": "greyhole"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.117, 0.223],
+      "color": [0.3, 0.517],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "throwFx",
+        "w": 0.55,
+        "prob": 0.6
+      },
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      },
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      }
+    ],
+    "rhythm": [0.125, 0.3]
+  },
+  "targets": {
+    "bpm": [71, 96, 3],
+    "drumDensity": [0, 0.95, 2],
+    "wash": [0.11, 0.358, 1],
+    "pump": [0, 0.18, 1],
+    "swing": [0, 0.12, 2],
+    "seventh": [0.85, 1, 1],
+    "acoustic": [0, 0.92, 2],
+    "crackle": [0.052, 0.388, 1],
+    "sub": [0.05, 1, 1],
+    "motion": [0, 1, 1],
+    "bedUse": [0.88, 1, 1],
+    "softTop": [1, 1, 3]
   }
 }

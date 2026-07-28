@@ -1,92 +1,27 @@
 {
   "name": "nocturnesmash",
-  "label": "Nocturne Breakcore",
+  "label": "Chandelier Shrapnel",
   "info": "invented lerp — breakcore's chopped fury meets Romantic concert-grand rubato; shattered piano over broken beats",
-  "clips": [
-    "dark_face",
-    "phuture_red",
-    "green_nebula",
-    "ab_balletmec",
-    "tw_subway"
-  ],
+  "pos": [1398, 10243],
   "anchor": {
-    "bpm": [
-      114,
-      141
-    ],
-    "swing": [
-      0,
-      0.05
-    ],
-    "humanize": [
-      0.17,
-      0.35
-    ],
+    "bpm": [114, 141],
+    "swing": [0, 0.05],
+    "humanize": [0.17, 0.35],
+    "progressions": ["royal_road", "mediant", "sad_pop", "neosoul"],
+    "kits": ["off", "jungle", "breaks"],
+    "fills": ["off", "break fill", "impact", "cut"],
     "chordEvery": 8,
-    "progressions": [
-      "royal_road",
-      "mediant",
-      "sad_pop",
-      "neosoul"
-    ],
-    "kits": [
-      "off",
-      "jungle",
-      "breaks"
-    ],
-    "fills": [
-      "off",
-      "break fill",
-      "impact",
-      "cut"
-    ],
-    "form": "wave",
-    "stab": [
-      "off",
-      "rave",
-      "offbeat"
-    ],
     "bass": {
-      "patterns": [
-        "octaves",
-        "pedal",
-        "melodic",
-        "walking"
-      ],
+      "patterns": ["octaves", "pedal", "melodic", "walking"],
       "recipe": {
-        "model": [
-          "sampler",
-          "sub",
-          "reese"
-        ],
-        "cutoff": [
-          420,
-          920
-        ],
-        "res": [
-          0.075,
-          0.175
-        ],
-        "level": [
-          0.85,
-          1.095
-        ],
-        "send": [
-          0.14,
-          0.275
-        ],
-        "dsend": [
-          0,
-          0.08
-        ],
-        "attack": [
-          0.008,
-          0.03
-        ],
-        "release": [
-          0.6,
-          1.4
-        ]
+        "model": ["sampler", "sub", "reese"],
+        "cutoff": [420, 920],
+        "res": [0.075, 0.175],
+        "level": [0.85, 1.095],
+        "send": [0.14, 0.275],
+        "dsend": [0, 0.08],
+        "attack": [0.008, 0.03],
+        "release": [0.6, 1.4]
       },
       "inserts": {
         "prob": 0.5,
@@ -95,270 +30,131 @@
           [
             "distort",
             {
-              "drive": [
-                0.4,
-                0.8
-              ],
-              "mix": [
-                0.6,
-                0.9
-              ]
+              "drive": [0.4, 0.8],
+              "mix": [0.6, 0.9]
             }
           ]
         ]
       },
-      "samplerPool": [
-        "yamaha_grand_piano",
-        "bright_yamaha_grand"
-      ]
+      "samplerPool": ["yamaha_grand_piano", "bright_yamaha_grand"]
     },
     "lead": {
-      "patterns": [
-        "arpup",
-        "updown",
-        "canon",
-        "off"
-      ],
+      "patterns": ["arpup", "updown", "canon", "off"],
       "recipe": {
-        "model": [
-          "sampler",
-          "pluck",
-          "fuzz"
-        ],
+        "model": ["sampler", "pluck", "fuzz"],
         "wave": "sine",
-        "voices": [
-          1,
-          2
-        ],
-        "spread": [
-          0.002,
-          0.006
-        ],
-        "cutoff": [
-          2400,
-          3900
-        ],
-        "res": [
-          0.2,
-          0.35
-        ],
-        "level": [
-          0.4,
-          0.59
-        ],
-        "send": [
-          0.275,
-          0.475
-        ],
-        "dsend": [
-          0.17,
-          0.33
-        ],
-        "attack": [
-          0.006,
-          0.03
-        ],
-        "release": [
-          0.275,
-          0.595
-        ],
-        "sustain": [
-          0.5,
-          0.62
-        ],
-        "fenv": [
-          0.5,
-          0.9
-        ]
+        "voices": [1, 2],
+        "spread": [0.002, 0.006],
+        "cutoff": [2400, 3900],
+        "res": [0.2, 0.35],
+        "level": [0.4, 0.59],
+        "send": [0.275, 0.475],
+        "dsend": [0.17, 0.33],
+        "attack": [0.006, 0.03],
+        "release": [0.275, 0.595],
+        "sustain": [0.5, 0.62],
+        "fenv": [0.5, 0.9]
       },
-      "samplerPool": [
-        "yamaha_grand_piano",
-        "bright_yamaha_grand"
-      ]
+      "samplerPool": ["yamaha_grand_piano", "bright_yamaha_grand"]
     },
     "pads": {
       "prob": 0.325,
       "recipe": {
-        "model": [
-          "sampler",
-          "strings",
-          "saw"
-        ],
+        "model": ["sampler", "strings", "saw"],
         "wave": "sine",
-        "cutoff": [
-          750,
-          1400
-        ],
-        "detune": [
-          0.005,
-          0.011
-        ],
-        "attack": [
-          1.1,
-          2.75
-        ],
-        "level": [
-          0.3,
-          0.46
-        ],
-        "send": [
-          0.375,
-          0.56
-        ],
-        "dsend": [
-          0.075,
-          0.2
-        ],
-        "release": [
-          2,
-          4
-        ],
+        "cutoff": [750, 1400],
+        "detune": [0.005, 0.011],
+        "attack": [1.1, 2.75],
+        "level": [0.3, 0.46],
+        "send": [0.375, 0.56],
+        "dsend": [0.075, 0.2],
+        "release": [2, 4],
         "swell": 1
       },
-      "samplerPool": [
-        "strings",
-        "slow_strings"
-      ]
+      "samplerPool": ["strings", "slow_strings"]
     },
     "drums": {
-      "kickModel": [
-        "boom",
-        "909",
-        "808"
-      ],
-      "snareModel": [
-        "noise",
-        "crack"
-      ],
-      "hatModel": [
-        "noise",
-        "metal"
-      ],
-      "kick": [
-        0.9,
-        1.125
-      ],
-      "snare": [
-        0.6,
-        0.825
-      ],
-      "hat": [
-        0.4,
-        0.65
-      ],
-      "tune": [
-        0.975,
-        1.1
-      ],
-      "send": [
-        0.1,
-        0.235
-      ],
-      "dsend": [
-        0.075,
-        0.175
-      ]
+      "kickModel": ["boom", "909", "808"],
+      "snareModel": ["noise", "crack"],
+      "hatModel": ["noise", "metal"],
+      "kick": [0.9, 1.125],
+      "snare": [0.6, 0.825],
+      "hat": [0.4, 0.65],
+      "tune": [0.975, 1.1],
+      "send": [0.1, 0.235],
+      "dsend": [0.075, 0.175]
     },
     "fx": {
-      "reverb": [
-        0.4,
-        0.61
-      ],
-      "delayBeats": [
-        0.6875,
-        1.375
-      ],
-      "delayFb": [
-        0.235,
-        0.38
-      ],
-      "delayCut": [
-        2000,
-        3100
-      ],
-      "pump": [
-        0.025,
-        0.125
-      ],
-      "crackle": [
-        0,
-        0.115
-      ],
-      "lowcut": [
-        13,
-        20
-      ],
-      "highcut": [
-        0,
-        0
-      ],
-      "comp": [
-        0.275,
-        0.45
-      ],
-      "grit": [
-        0.4,
-        0.7
-      ],
-      "jux": [
-        0.45,
-        0.75
-      ]
+      "reverb": [0.4, 0.61],
+      "delayBeats": [0.6875, 1.375],
+      "delayFb": [0.235, 0.38],
+      "delayCut": [2000, 3100],
+      "pump": [0.025, 0.125],
+      "crackle": [0, 0.115],
+      "lowcut": [13, 20],
+      "highcut": [0, 0],
+      "comp": [0.275, 0.45],
+      "grit": [0.4, 0.7],
+      "jux": [0.45, 0.75]
     },
     "found": {
       "role": "bed",
-      "vol": [
-        0.175,
-        0.27
-      ],
-      "pitch": [
-        0.85,
-        0.95
-      ],
-      "stretch": [
-        0.475,
-        0.55
-      ],
-      "cutoff": [
-        3900,
-        5900
-      ],
-      "sources": [
-        "iriomote",
-        "tokyo_station"
-      ]
+      "vol": [0.175, 0.27],
+      "pitch": [0.85, 0.95],
+      "stretch": [0.475, 0.55],
+      "cutoff": [3900, 5900],
+      "sources": ["iriomote", "tokyo_station"]
     },
     "rubato": {
-      "depth": [
-        0.03,
-        0.07
-      ],
-      "periodBars": [
-        1,
-        3
-      ],
+      "depth": [0.03, 0.07],
+      "periodBars": [1, 3],
       "prob": 1
     },
     "hits": {
-      "sources": [
-        "sp_herenow"
-      ],
+      "sources": ["sp_herenow"],
       "pattern": "sparse",
       "prob": 0.12
-    }
+    },
+    "stab": ["off", "rave", "offbeat"],
+    "form": "wave"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.12,
-    "features": {
-      "acoustic": 3,
-      "bpm": 2,
-      "drumDensity": 3,
-      "wash": 2,
-      "motion": 2,
-      "seventh": 2,
-      "rubato": 1,
-      "humanize": 1
-    }
+  "mind": {
+    "theory": {
+      "adventure": [0.188, 0.338],
+      "color": [0.338, 0.55],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "echoCanon",
+        "w": 0.55,
+        "prob": 0.45,
+        "delay": 2
+      },
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      }
+    ],
+    "rhythm": [0.35, 0.543]
+  },
+  "targets": {
+    "acoustic": [0, 1, 3],
+    "bpm": [107, 149, 2],
+    "drumDensity": [0, 1.024, 3],
+    "wash": [0.033, 0.338, 2],
+    "motion": [0.48, 1, 2],
+    "seventh": [0, 1, 2],
+    "rubato": [0.022, 0.068, 1],
+    "humanize": [0.056, 0.415, 1]
   }
 }

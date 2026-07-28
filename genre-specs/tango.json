@@ -1,0 +1,151 @@
+{
+  "name": "tango",
+  "label": "Habanera Tribunal",
+  "info": "the habanera cell as law: bandoneon and nylon guitar over staccato piano, dry marcato strings, 78rpm dust — a dance with the manners of a duel, silence used like a blade",
+  "pos": [139, 12607],
+  "anchor": {
+    "bpm": [100, 124],
+    "swing": [0, 0.06],
+    "humanize": [0.3, 0.55],
+    "progressions": ["andalusian", "andalusian", "minor_run"],
+    "kits": ["kick", "off"],
+    "fills": ["off", "downlift"],
+    "bass": {
+      "patterns": ["habanera"],
+      "samplerPool": ["acoustic_bass"],
+      "recipe": {
+        "model": ["sampler", "sampler", "piano"],
+        "cutoff": [700, 1200],
+        "res": [0.05, 0.12],
+        "level": [1, 1.2],
+        "send": [0.06, 0.12],
+        "dsend": [0, 0.05]
+      }
+    },
+    "lead": {
+      "patterns": ["canon", "wander", "sparse"],
+      "samplerPool": ["bandoneon", "bandoneon", "nylon_string_guitar"],
+      "recipe": {
+        "model": ["sampler"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.001, 0.003],
+        "cutoff": [2600, 3800],
+        "level": [0.55, 0.68],
+        "send": [0.22, 0.34],
+        "dsend": [0.02, 0.08],
+        "attack": 0.006,
+        "release": [0.06, 0.11],
+        "sustain": [0.5, 0.62]
+      }
+    },
+    "pads": {
+      "prob": 0.3,
+      "samplerPool": ["pizzicato_strings", "strings", "nylon_string_guitar"],
+      "recipe": {
+        "model": ["sampler", "strings"],
+        "wave": "saw",
+        "cutoff": [1100, 1700],
+        "detune": [0.003, 0.008],
+        "attack": [0.1, 0.3],
+        "level": [0.28, 0.38],
+        "send": [0.18, 0.3],
+        "dsend": [0.03, 0.1]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.6, 0.85],
+      "snare": [0.4, 0.6],
+      "hat": [0.3, 0.5],
+      "tune": [0.95, 1.1],
+      "send": [0.1, 0.2],
+      "dsend": [0, 0.05]
+    },
+    "fx": {
+      "reverb": [0.3, 0.42],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.08, 0.16],
+      "delayCut": [2200, 3200],
+      "pump": [0, 0],
+      "crackle": [0.15, 0.35],
+      "lowcut": [0, 25],
+      "highcut": [0, 0],
+      "comp": [0.1, 0.3]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.06, 0.12],
+      "pitch": [0.8, 0.95],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1800, 2800],
+      "sources": ["vx_suspense", "pool:city*1"]
+    },
+    "rubato": {
+      "depth": [0.02, 0.035],
+      "periodBars": [2, 4],
+      "prob": 0.5
+    },
+    "hits": {
+      "sources": ["pool:horn_stab*1", "blues_vox_78"],
+      "pattern": "sparse",
+      "prob": 0.35
+    },
+    "stab": ["off"],
+    "form": "pop",
+    "reverbColor": "fdn",
+    "transforms": {
+      "pool": ["rest"],
+      "rate": 0.05
+    }
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.133, 0.273],
+      "color": [0.15, 0.3],
+      "voicing": "open",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "echoCanon",
+        "w": 0.55,
+        "prob": 0.45,
+        "delay": 2
+      },
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      }
+    ],
+    "rhythm": [0.025, 0.115]
+  },
+  "perc": {
+    "lanes": [
+      {
+        "p": "rim34",
+        "lvl": 0.2
+      },
+      {
+        "p": "clave",
+        "lvl": 0.12
+      }
+    ]
+  },
+  "targets": {
+    "bpm": [96, 126, 2],
+    "acoustic": [0.7, 1, 2],
+    "humanize": [0.28, 0.6, 2],
+    "drumDensity": [0, 0.8, 3],
+    "crackle": [0.1, 0.4, 2],
+    "seventh": [0.3, 1, 1],
+    "motion": [0.5, 1, 1],
+    "swing": [0, 0.08, 1],
+    "pump": [0, 0.05, 1],
+    "wash": [0, 0.3, 1]
+  }
+}

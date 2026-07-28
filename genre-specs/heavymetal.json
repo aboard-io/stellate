@@ -1,0 +1,195 @@
+{
+  "name": "heavymetal",
+  "label": "Molten Horsepower",
+  "info": "a HUGE wall of distorted electric-guitar power chords doubled to the sub-octave at 140: a screaming lead over a galloping double-kick, deep room reverb — turn it up",
+  "pos": [430, 3999],
+  "anchor": {
+    "bpm": [130, 148],
+    "swing": [0, 0.04],
+    "humanize": [0.03, 0.12],
+    "progressions": ["epic_min", "minor_run", "andalusian", "mode_phrygian"],
+    "kits": ["four", "pulse", "electro"],
+    "fills": ["impact", "cut", "riser", "tom fill", "crash choke"],
+    "bass": {
+      "patterns": ["drive", "octaves", "pedal"],
+      "samplerPool": ["picked_bass"],
+      "recipe": {
+        "model": ["sampler", "saw"],
+        "cutoff": [500, 850],
+        "res": [0.1, 0.25],
+        "level": [1.2, 1.45],
+        "send": [0, 0.06],
+        "dsend": [0, 0.05]
+      },
+      "inserts": {
+        "prob": 1,
+        "max": 1,
+        "pool": [
+          [
+            "higain",
+            {
+              "gate": [0.35, 0.5],
+              "drive": [0.6, 0.8],
+              "stages": 2,
+              "low": 0.6,
+              "mid": 0.5,
+              "high": 0.55,
+              "presence": [0.45, 0.6]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": ["hero", "anthem", "blues", "double"],
+      "samplerPool": ["crunch_guitar", "crunch_guitar", "distortion_guitar", "overdrive_guitar", "di_guitar"],
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "saw",
+        "voices": [1, 2],
+        "spread": [0.003, 0.008],
+        "cutoff": [2800, 4000],
+        "level": [0.56, 0.72],
+        "send": [0.3, 0.48],
+        "dsend": [0.2, 0.35],
+        "attack": 0.005,
+        "release": [0.1, 0.2],
+        "sustain": [0.6, 0.75]
+      },
+      "inserts": {
+        "prob": 1,
+        "max": 1,
+        "pool": [
+          [
+            "higain",
+            {
+              "gate": [0.4, 0.55],
+              "drive": [0.65, 0.85],
+              "stages": 3,
+              "low": 0.5,
+              "mid": 0.45,
+              "high": 0.6,
+              "presence": [0.55, 0.7]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 0.75,
+      "samplerPool": ["distortion_guitar"],
+      "recipe": {
+        "model": ["sampler", "saw"],
+        "wave": "saw",
+        "cutoff": [1000, 1800],
+        "detune": [0.006, 0.014],
+        "attack": [0.05, 0.3],
+        "level": [0.52, 0.68],
+        "send": [0.3, 0.5],
+        "dsend": [0.1, 0.25]
+      },
+      "inserts": {
+        "prob": 1,
+        "max": 1,
+        "pool": [
+          [
+            "higain",
+            {
+              "gate": [0.35, 0.5],
+              "drive": [0.65, 0.85],
+              "stages": 2,
+              "low": 0.65,
+              "mid": 0.5,
+              "high": 0.55,
+              "presence": [0.5, 0.65]
+            }
+          ]
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom", "909"],
+      "snareModel": ["crack", "noise"],
+      "hatModel": ["metal", "noise"],
+      "kick": [1.45, 1.7],
+      "snare": [0.9, 1.15],
+      "hat": [0.7, 1],
+      "tune": [1, 1.1],
+      "send": [0.2, 0.34],
+      "dsend": [0.1, 0.22]
+    },
+    "fx": {
+      "reverb": [0.46, 0.64],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.2, 0.35],
+      "delayCut": [2400, 3600],
+      "pump": [0.05, 0.25],
+      "crackle": [0, 0.06],
+      "lowcut": [30, 45],
+      "highcut": [0, 0],
+      "comp": [0.55, 0.9],
+      "grit": [0.55, 0.82]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.05, 0.12],
+      "pitch": [0.85, 1],
+      "stretch": [0.4, 0.6],
+      "cutoff": [2000, 3200],
+      "sources": ["pool:industry*1", "pool:road*1"]
+    },
+    "hits": {
+      "sources": ["pool:rave_stab*1", "sp_energy"],
+      "pattern": "sparse",
+      "prob": 0.3
+    },
+    "stab": ["off", "rave"],
+    "form": "pop",
+    "reverbColor": "fdn",
+    "padDouble": true
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.138, 0.255],
+      "color": [0.163, 0.325],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "callResponse",
+        "w": 0.5,
+        "level": 0.85
+      },
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      }
+    ],
+    "rhythm": [0.153, 0.313]
+  },
+  "perc": {
+    "lanes": [
+      {
+        "p": "crashDown",
+        "lvl": 0.44
+      }
+    ]
+  },
+  "targets": {
+    "bpm": [128, 150, 3],
+    "acoustic": [0.5, 0.95, 3],
+    "comp": [0.45, 0.9, 2],
+    "breakUse": [0, 0.15, 2],
+    "drumDensity": [1, 2.4, 1],
+    "snareBalance": [0.25, 1.1, 1],
+    "crackle": [0, 0.12, 1],
+    "motion": [0.4, 1, 1],
+    "seventh": [0.3, 1, 1],
+    "swing": [0, 0.06, 1],
+    "pump": [0, 0.35, 1],
+    "sub": [0.1, 1, 1]
+  }
+}

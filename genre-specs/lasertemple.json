@@ -1,8 +1,8 @@
 {
   "name": "lasertemple",
-  "label": "Laser Temple",
+  "label": "Collimated Chapel",
   "info": "arpeggio architecture at 112: phase-torn arps stacked into vaulted columns, string-machine clouds on the ceiling, a time-station voice counting under the floor — the cathedral is made of oscillators and every pillar is a sequence",
-  "clips": ["sp_lander", "night_lights", "jm_axis", "kaleido", "pl_futurama", "sp_eva"],
+  "pos": [1161, 12218],
   "anchor": {
     "bpm": [108, 116],
     "swing": [0, 0.04],
@@ -10,20 +10,139 @@
     "progressions": ["minor_run", "epic_min", "sad_pop"],
     "kits": ["pulse", "four", "electro"],
     "fills": ["sweep", "riser", "off"],
-    "bass": { "patterns": ["sixteenths", "octaves", "drive"], "recipe": { "model": ["saw", "modeld"], "cutoff": [650, 1000], "res": [0.15, 0.3], "level": [1.05, 1.25], "send": [0, 0.08], "dsend": [0, 0.05], "glide": [10, 25], "envAmount": [1, 2], "envDecay": [0.08, 0.15], "oscMix": [0.2, 0.5], "drift": [2, 6] } },
-    "lead": { "patterns": ["arpup", "arp16", "arpdown", "updown"], "recipe": { "model": ["casiocz", "casiocz", "stack", "ppg"], "wave": "saw", "voices": [2, 4], "spread": [0.005, 0.01], "cutoff": [2800, 4000], "level": [0.46, 0.58], "send": [0.35, 0.5], "dsend": [0.3, 0.45], "attack": 0.005, "release": [0.1, 0.18], "sustain": [0.6, 0.72], "fenv": [0.3, 0.5], "envDecay": [0.1, 0.2] }, "inserts": { "prob": 0.5, "max": 1, "pool": [["phaser", { "rate": [0.15, 0.4], "depth": [0.5, 0.8], "mix": [0.4, 0.6] }]] } },
-    "pads": { "prob": 1, "recipe": { "model": ["solina", "solina", "ppg", "saw"], "wave": "saw", "cutoff": [1200, 2000], "detune": [0.008, 0.015], "attack": [1, 2.2], "ensemble": [0.7, 0.9], "octave": [0.4, 0.6], "level": [0.55, 0.72], "send": [0.45, 0.6], "dsend": [0.15, 0.3] } },
-    "drums": { "kickModel": ["909", "boom"], "snareModel": ["noise", "clap"], "hatModel": ["metal", "noise"], "kick": [1.05, 1.25], "snare": [0.6, 0.85], "hat": [0.7, 1], "tune": [0.95, 1.1], "send": [0.3, 0.45], "dsend": [0.05, 0.15] },
-    "fx": { "reverb": [0.6, 0.75], "delayBeats": [0.375, 0.75], "delayFb": [0.3, 0.45], "delayCut": [2500, 3800], "pump": [0.08, 0.2], "crackle": [0, 0.1], "lowcut": [30, 45], "highcut": [0, 0], "comp": [0.25, 0.4] },
-    "reverbColor": "dattorro",
-    "found": { "role": "bed", "vol": [0.08, 0.15], "pitch": [0.7, 0.9], "stretch": [0.45, 0.6], "cutoff": [1800, 3000], "sources": ["vx_wwvh", "vx_conet_swedish", "vx_apollo"] },
-    "hits": { "sources": ["vx_wwvh", "rave_b"], "pattern": "sparse", "prob": 0.25 },
+    "bass": {
+      "patterns": ["sixteenths", "octaves", "drive"],
+      "recipe": {
+        "model": ["saw", "modeld"],
+        "cutoff": [650, 1000],
+        "res": [0.15, 0.3],
+        "level": [1.05, 1.25],
+        "send": [0, 0.08],
+        "dsend": [0, 0.05],
+        "glide": [10, 25],
+        "envAmount": [1, 2],
+        "envDecay": [0.08, 0.15],
+        "oscMix": [0.2, 0.5],
+        "drift": [2, 6]
+      }
+    },
+    "lead": {
+      "patterns": ["arpup", "arp16", "arpdown", "updown"],
+      "recipe": {
+        "model": ["casiocz", "casiocz", "stack", "ppg"],
+        "wave": "saw",
+        "voices": [2, 4],
+        "spread": [0.005, 0.01],
+        "cutoff": [2800, 4000],
+        "level": [0.46, 0.58],
+        "send": [0.35, 0.5],
+        "dsend": [0.3, 0.45],
+        "attack": 0.005,
+        "release": [0.1, 0.18],
+        "sustain": [0.6, 0.72],
+        "fenv": [0.3, 0.5],
+        "envDecay": [0.1, 0.2]
+      },
+      "inserts": {
+        "prob": 0.5,
+        "max": 1,
+        "pool": [
+          [
+            "phaser",
+            {
+              "rate": [0.15, 0.4],
+              "depth": [0.5, 0.8],
+              "mix": [0.4, 0.6]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 1,
+      "recipe": {
+        "model": ["solina", "solina", "ppg", "saw"],
+        "wave": "saw",
+        "cutoff": [1200, 2000],
+        "detune": [0.008, 0.015],
+        "attack": [1, 2.2],
+        "ensemble": [0.7, 0.9],
+        "octave": [0.4, 0.6],
+        "level": [0.55, 0.72],
+        "send": [0.45, 0.6],
+        "dsend": [0.15, 0.3]
+      }
+    },
+    "drums": {
+      "kickModel": ["909", "boom"],
+      "snareModel": ["noise", "clap"],
+      "hatModel": ["metal", "noise"],
+      "kick": [1.05, 1.25],
+      "snare": [0.6, 0.85],
+      "hat": [0.7, 1],
+      "tune": [0.95, 1.1],
+      "send": [0.3, 0.45],
+      "dsend": [0.05, 0.15]
+    },
+    "fx": {
+      "reverb": [0.6, 0.75],
+      "delayBeats": [0.375, 0.75],
+      "delayFb": [0.3, 0.45],
+      "delayCut": [2500, 3800],
+      "pump": [0.08, 0.2],
+      "crackle": [0, 0.1],
+      "lowcut": [30, 45],
+      "highcut": [0, 0],
+      "comp": [0.25, 0.4]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.08, 0.15],
+      "pitch": [0.7, 0.9],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1800, 3000],
+      "sources": ["vx_wwvh", "pool:voices*2"]
+    },
+    "hits": {
+      "sources": ["pool:vb_cosmic_space*1", "vx_wwvh", "pool:rave_stab*1"],
+      "pattern": "sparse",
+      "prob": 0.25
+    },
     "stab": ["off", "sparse"],
-    "form": "ritual"
+    "form": "ritual",
+    "reverbColor": "dattorro"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": { "bpm": 3, "hatDensity": 2, "drumDensity": 2, "wash": 1, "pump": 1, "motion": 1 }
+  "mind": {
+    "theory": {
+      "adventure": [0.1, 0.207],
+      "color": [0.133, 0.3],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      },
+      {
+        "id": "vibratoSwell",
+        "w": 0.4,
+        "depth": 0.25
+      }
+    ],
+    "rhythm": [0.153, 0.313]
+  },
+  "targets": {
+    "bpm": [102, 123, 3],
+    "hatDensity": [0.3, 2.18, 2],
+    "drumDensity": [1.118, 3.142, 2],
+    "wash": [0.142, 0.458, 1],
+    "pump": [0.002, 0.3, 1],
+    "motion": [0.487, 1, 1],
+    "acoustic": [0, 0.12, 3],
+    "bedUse": [0.71, 0.95, 3]
   }
 }

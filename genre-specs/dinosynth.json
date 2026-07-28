@@ -1,0 +1,170 @@
+{
+  "name": "dinosynth",
+  "label": "Cretaceous Vespers",
+  "info": "dinosaur-themed dungeon synth: dark-ambient drones, medieval choir, tribal log-drums, primordial swamp",
+  "pos": [289, 13893],
+  "anchor": {
+    "bpm": [72, 96],
+    "swing": [0, 0.05],
+    "humanize": [0.15, 0.35],
+    "progressions": ["primeval", "epic_min", "andalusian", "minor_run", "mode_phrygian"],
+    "kits": ["tribal"],
+    "fills": ["off", "off", "downlift"],
+    "bass": {
+      "patterns": ["root", "sub", "off"],
+      "recipe": {
+        "model": ["sub", "reese"],
+        "cutoff": [240, 460],
+        "res": [0.05, 0.18],
+        "level": [0.85, 1.1],
+        "send": [0.15, 0.35],
+        "dsend": [0, 0.1]
+      }
+    },
+    "lead": {
+      "patterns": ["wander", "updown", "pentaup"],
+      "patchPool": ["HORNS", "BRASSHORNS"],
+      "samplerPool": ["french_horns"],
+      "recipe": {
+        "model": ["brass", "dx7", "sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.002, 0.005],
+        "cutoff": [1500, 2600],
+        "level": [0.36, 0.5],
+        "send": [0.55, 0.78],
+        "dsend": [0.3, 0.5],
+        "vibrato": [0.004, 0.01]
+      }
+    },
+    "pads": {
+      "prob": 1,
+      "samplerPool": ["ahh_choir"],
+      "recipe": {
+        "model": ["vp330", "vp330", "vp330", "choir", "strings", "sampler"],
+        "wave": "saw",
+        "cutoff": [700, 1300],
+        "detune": [0.006, 0.014],
+        "attack": [2.5, 4.5],
+        "vowel": [0.4, 0.5],
+        "ensemble": [0.9, 1],
+        "mellotron": true,
+        "level": [0.62, 0.82],
+        "send": [0.6, 0.82],
+        "dsend": [0.15, 0.3]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom", "808"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [1.3, 1.6],
+      "snare": [0.5, 0.72],
+      "hat": [0.55, 0.85],
+      "tune": [0.78, 0.95],
+      "send": [0.25, 0.45],
+      "dsend": [0.3, 0.55]
+    },
+    "fx": {
+      "reverb": [0.82, 0.94],
+      "delayBeats": [0.75, 1.5],
+      "delayFb": [0.5, 0.68],
+      "delayCut": [1500, 2500],
+      "pump": [0, 0.05],
+      "crackle": [0.04, 0.12],
+      "lowcut": [0, 25],
+      "highcut": [8000, 13000],
+      "comp": [0.4, 0.62],
+      "grit": [0.25, 0.5]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.18, 0.3],
+      "pitch": [0.6, 0.78],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1800, 3000],
+      "sources": ["pool:water*1", "pool:road*1", "pool:city*1", "pool:industry*1"]
+    },
+    "vox": {
+      "sources": [
+        "sp_paleo_welcome",
+        "sp_paleo_mesozoic",
+        "sp_paleo_sauropod",
+        "sp_paleo_rex",
+        "sp_paleo_bones",
+        "sp_paleo_skies"
+      ],
+      "vol": 0.5,
+      "pitch": 0.96,
+      "cutoff": 6500
+    },
+    "sampleEvents": [
+      {
+        "pool": ["sp_paleo_skies", "sp_paleo_bones"],
+        "placement": "response",
+        "sections": "theme|finale",
+        "gain": 0.5,
+        "prob": 0.4,
+        "treatment": {
+          "pitch": 0.9,
+          "cutoff": 3200,
+          "rsend": 0.4,
+          "dsend": 0.3,
+          "glitch": true
+        }
+      }
+    ],
+    "hits": {
+      "sources": ["sp_herenow", "pool:vocal_stab*1"],
+      "pattern": "sparse",
+      "prob": 0.15
+    },
+    "stab": ["off"],
+    "form": "ritual",
+    "reverbColor": "greyhole"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.13, 0.244],
+      "color": [0.15, 0.32],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      }
+    ],
+    "rhythm": [0.35, 0.6]
+  },
+  "perc": {
+    "lanes": [
+      {
+        "p": "crashDown",
+        "lvl": 0.38
+      }
+    ]
+  },
+  "targets": {
+    "bpm": [68, 98, 2],
+    "drumDensity": [1.6, 3.3, 3],
+    "hatDensity": [1.2, 2.3, 2],
+    "snareBalance": [0, 0.45, 2],
+    "swing": [0, 0.07, 2],
+    "motion": [0.5, 1, 1],
+    "wash": [0.4, 0.78, 2],
+    "crackle": [0, 0.2, 1],
+    "bedUse": [0.5, 1, 2],
+    "comp": [0.35, 0.72, 3],
+    "pump": [0, 0.08, 1]
+  }
+}

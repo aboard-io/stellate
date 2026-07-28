@@ -1,7 +1,8 @@
 {
   "name": "moptoprattle",
-  "label": "Moptoprattle",
+  "label": "Tea Chest Poltergeist",
   "info": "washboard-and-tea-chest beat music at 150: a matchstick backbeat brushed hard, walking upright bass under I-vi-IV-V changes, two bright guitars trading two-bar hooks, a harmonica wheeze, call-and-response shouts off a 78 — four haircuts counting in a cellar, all rattle and grin",
+  "pos": [1587, 2733],
   "anchor": {
     "bpm": [142, 156],
     "swing": [0.05, 0.12],
@@ -84,11 +85,47 @@
       "sources": ["leacock1", "leacock2"]
     },
     "hits": {
-      "sources": ["blues_vox_78", "horns_78"],
+      "sources": ["blues_vox_78", "pool:horn_stab*1"],
       "pattern": "response",
       "prob": 0.4
     },
     "stab": ["off"],
-    "form": "pop"
+    "form": "aaba"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.163, 0.288],
+      "color": [0.263, 0.45],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "callResponse",
+        "w": 0.5,
+        "level": 0.85
+      },
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      }
+    ],
+    "rhythm": [0.165, 0.335]
+  },
+  "targets": {
+    "bpm": [137, 162, 3],
+    "drumDensity": [0.85, 2.34, 2],
+    "wash": [0, 0.196, 1],
+    "pump": [0, 0.1, 1],
+    "swing": [0.005, 0.144, 2],
+    "seventh": [0, 1, 1],
+    "acoustic": [0.48, 0.92, 2],
+    "crackle": [0.203, 0.584, 1],
+    "sub": [0.05, 1, 1],
+    "motion": [0.52, 1, 1],
+    "bedUse": [0.28, 0.75, 1],
+    "softTop": [1, 1, 3]
   }
 }

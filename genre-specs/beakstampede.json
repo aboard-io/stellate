@@ -1,7 +1,8 @@
 {
   "name": "beakstampede",
-  "label": "Beakstampede",
+  "label": "Theropod Liturgy",
   "info": "the sacrificial dance at 161: a tribal kit hammering lopsided euclidean accents, bassoon and english horn shrieking over primeval bVII-bIII changes, contrabass stabs landing in hemiola against the kick, tremolo strings and horns bracing for each impact — spring breaking the ground open, the whole flock stamping in masks",
+  "pos": [776, 10446],
   "anchor": {
     "bpm": [154, 168],
     "swing": [0, 0.02],
@@ -9,29 +10,124 @@
     "progressions": ["primeval", "mode_phrygian", "minor_run"],
     "kits": ["tribal", "breaks", "four"],
     "fills": ["impact", "tom fill", "break fill", "cut"],
-    "euclid": { "kick": [5, 16] },
+    "euclid": {
+      "kick": [5, 16]
+    },
     "bass": {
       "patterns": ["stab", "syncopated", "hemiola"],
       "samplerPool": ["contrabass", "bassoon"],
-      "recipe": { "model": ["sampler", "sampler", "sub"], "cutoff": [450, 900], "res": [0.08, 0.18], "level": [1, 1.2], "send": [0.05, 0.15], "dsend": [0, 0.05], "attack": [0.005, 0.02], "release": [0.1, 0.25] }
+      "recipe": {
+        "model": ["sampler", "sampler", "sub"],
+        "cutoff": [450, 900],
+        "res": [0.08, 0.18],
+        "level": [1, 1.2],
+        "send": [0.05, 0.15],
+        "dsend": [0, 0.05],
+        "attack": [0.005, 0.02],
+        "release": [0.1, 0.25]
+      }
     },
     "lead": {
       "patterns": ["roar", "sparse", "wander"],
       "samplerPool": ["bassoon", "english_horn", "piccolo", "pizzicato_strings"],
-      "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "voices": [1, 2], "spread": [0.002, 0.005], "cutoff": [2400, 3600], "level": [0.44, 0.58], "send": [0.2, 0.38], "dsend": [0.08, 0.2], "vibrato": [0.004, 0.01], "attack": [0.01, 0.04], "release": [0.1, 0.25] }
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.002, 0.005],
+        "cutoff": [2400, 3600],
+        "level": [0.44, 0.58],
+        "send": [0.2, 0.38],
+        "dsend": [0.08, 0.2],
+        "vibrato": [0.004, 0.01],
+        "attack": [0.01, 0.04],
+        "release": [0.1, 0.25]
+      }
     },
     "pads": {
       "prob": 0.6,
       "samplerPool": ["tremolo", "strings", "french_horns"],
-      "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "cutoff": [1000, 1900], "detune": [0.003, 0.006], "attack": [0.3, 1], "release": [0.6, 1.5], "swell": 1, "level": [0.36, 0.5], "send": [0.3, 0.48], "dsend": [0, 0.12] }
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "sine",
+        "cutoff": [1000, 1900],
+        "detune": [0.003, 0.006],
+        "attack": [0.3, 1],
+        "release": [0.6, 1.5],
+        "swell": 1,
+        "level": [0.36, 0.5],
+        "send": [0.3, 0.48],
+        "dsend": [0, 0.12]
+      }
     },
-    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [1.1, 1.4], "snare": [0.7, 1], "hat": [0.4, 0.7], "tune": [0.8, 0.95], "send": [0.1, 0.28], "dsend": [0, 0.08], "kit": "power" },
-    "fx": { "reverb": [0.3, 0.45], "delayBeats": [0.375, 0.75], "delayFb": [0.1, 0.22], "delayCut": [2200, 3200], "pump": [0, 0.1], "crackle": [0, 0.2], "lowcut": [25, 40], "highcut": [0, 0], "comp": [0.3, 0.5] },
-    "found": { "role": "bed", "vol": [0.06, 0.13], "pitch": [0.8, 1], "stretch": [0.45, 0.6], "cutoff": [2000, 3200], "sources": ["frogs", "iriomote"] },
-    "timeFeel": { "pushPull": { "bass": 0.012, "snare": 0.014 } },
-    "masterComp": 0.35,
-    "hits": { "sources": ["gavel"], "pattern": "offbeat", "prob": 0.35 },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [1.1, 1.4],
+      "snare": [0.7, 1],
+      "hat": [0.4, 0.7],
+      "tune": [0.8, 0.95],
+      "send": [0.1, 0.28],
+      "dsend": [0, 0.08],
+      "kit": "power"
+    },
+    "fx": {
+      "reverb": [0.3, 0.45],
+      "delayBeats": [0.375, 0.75],
+      "delayFb": [0.1, 0.22],
+      "delayCut": [2200, 3200],
+      "pump": [0, 0.1],
+      "crackle": [0, 0.2],
+      "lowcut": [25, 40],
+      "highcut": [0, 0],
+      "comp": [0.3, 0.5]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.06, 0.13],
+      "pitch": [0.8, 1],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2000, 3200],
+      "sources": ["frogs", "iriomote"]
+    },
+    "hits": {
+      "sources": ["gavel"],
+      "pattern": "offbeat",
+      "prob": 0.35
+    },
     "stab": ["offbeat", "sparse"],
-    "form": "ritual"
+    "form": "ritual",
+    "timeFeel": {
+      "pushPull": {
+        "bass": 0.012,
+        "snare": 0.014
+      }
+    },
+    "masterComp": 0.35
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.133, 0.24],
+      "color": [0.167, 0.333],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [],
+    "rhythm": [0.37, 0.603]
+  },
+  "targets": {
+    "bpm": [149, 174, 3],
+    "drumDensity": [1.25, 2.53, 2],
+    "wash": [0, 0.251, 1],
+    "pump": [0, 0.193, 1],
+    "swing": [0, 0.063, 2],
+    "seventh": [0.35, 1, 1],
+    "acoustic": [0.68, 0.92, 2],
+    "crackle": [0, 0.274, 1],
+    "sub": [0.05, 1, 1],
+    "motion": [0.52, 1, 1],
+    "bedUse": [0.71, 0.95, 1]
   }
 }

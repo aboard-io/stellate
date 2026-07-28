@@ -1,0 +1,180 @@
+{
+  "name": "earthmoversplice",
+  "label": "Overburden Hymn",
+  "info": "invented (gap-found): a drive-tempo, sub-forward genre in the empty region near sepiadrive × breakcore/triphop/bigbeat — chopUse~0.16, breakUse~0.25, humanize~0.21 [seed 11]",
+  "pos": [829, 11705],
+  "anchor": {
+    "bpm": [115, 123],
+    "swing": [0.029, 0.079],
+    "humanize": [0.173, 0.263],
+    "progressions": ["minor_run", "house_min", "deep_two"],
+    "kits": ["tribal", "breaks"],
+    "fills": ["drum fill", "tom fill", "off"],
+    "euclid": {
+      "kick": [5, 16]
+    },
+    "bass": {
+      "patterns": ["dub", "simple", "sub"],
+      "samplerPool": ["acoustic_bass"],
+      "recipe": {
+        "model": ["sub", "saw", "sampler"],
+        "cutoff": [300, 600],
+        "res": [0.05, 0.2],
+        "level": [1, 1.25],
+        "send": [0.05, 0.12],
+        "dsend": [0, 0.1]
+      },
+      "inserts": {
+        "prob": 0.5,
+        "max": 1,
+        "pool": [
+          [
+            "distort",
+            {
+              "drive": [0.1, 0.22],
+              "mix": [0.35, 0.6]
+            }
+          ]
+        ]
+      }
+    },
+    "lead": {
+      "patterns": ["composed", "composed2", "arpup", "wander"],
+      "patchPool": ["E.PIANO 1", "TUB BELLS", "E.PIANO 4", "SHIMMER"],
+      "samplerPool": ["alto_sax", "tenor_sax"],
+      "recipe": {
+        "model": ["stack", "stack", "dx7", "sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.003, 0.006],
+        "cutoff": [2800, 4000],
+        "level": [0.4, 0.52],
+        "send": [0.4, 0.6],
+        "dsend": [0.2, 0.4],
+        "vibrato": [0.004, 0.009],
+        "octave": 0.2,
+        "attack": 0.08,
+        "release": [0.45, 0.6],
+        "sustain": [0.85, 0.95]
+      },
+      "inserts": {
+        "prob": 0.5,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [0.5, 1.1],
+              "depth": [0.5, 0.7],
+              "mix": [0.4, 0.6]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 1,
+      "samplerPool": ["ahh_choir", "strings"],
+      "recipe": {
+        "model": ["saw", "choir", "strings", "sampler"],
+        "wave": "saw",
+        "cutoff": [1100, 1800],
+        "detune": [0.004, 0.009],
+        "attack": [1.2, 2.4],
+        "mellotron": true,
+        "level": [0.6, 0.8],
+        "send": [0.5, 0.7],
+        "dsend": [0.1, 0.25]
+      },
+      "inserts": {
+        "prob": 0.55,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [0.2, 0.5],
+              "depth": [0.5, 0.75],
+              "mix": [0.4, 0.6]
+            }
+          ]
+        ]
+      }
+    },
+    "drums": {
+      "kickModel": ["808", "boom"],
+      "snareModel": ["crack"],
+      "hatModel": ["noise"],
+      "kick": [1.1, 1.3],
+      "snare": [0.7, 0.95],
+      "hat": [0.9, 1.2],
+      "tune": [1.05, 1.2],
+      "send": [0.1, 0.2],
+      "dsend": [0.1, 0.25]
+    },
+    "fx": {
+      "reverb": [0.22, 0.4],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.25, 0.4],
+      "delayCut": [2200, 3400],
+      "pump": [0, 0.21],
+      "crackle": [0.12, 0.28],
+      "lowcut": [25, 40],
+      "highcut": [2600, 3400],
+      "comp": [0.12, 0.34]
+    },
+    "found": {
+      "role": "break",
+      "vol": [0.32, 0.45],
+      "pitch": [1, 1],
+      "stretch": [0.5, 0.5],
+      "cutoff": [6000, 9000],
+      "sources": ["amen_165", "amen_170", "amen_172", "amen_175"]
+    },
+    "hits": {
+      "sources": ["pool:vb_transit*1", "pool:vocal_stab*1", "sp_rhythm"],
+      "pattern": "sparse",
+      "prob": 0.4
+    },
+    "stab": ["off"],
+    "form": "pop"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.067, 0.16],
+      "color": [0.167, 0.333],
+      "voicing": "close",
+      "reharm": false
+    },
+    "pipes": [
+      {
+        "id": "harmonize",
+        "w": 0.45,
+        "prob": 0.35
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      },
+      {
+        "id": "vibratoSwell",
+        "w": 0.4,
+        "depth": 0.25
+      }
+    ],
+    "rhythm": [0.485, 0.755]
+  },
+  "targets": {
+    "bpm": [109, 130, 3],
+    "chopUse": [0, 0.1, 3],
+    "breakUse": [0.42, 0.58, 3],
+    "humanize": [0.065, 0.346, 2],
+    "seventh": [0.57, 1, 2],
+    "wash": [0, 0.276, 1],
+    "acoustic": [0, 1, 1],
+    "swing": [0, 0.114, 1],
+    "softTop": [1, 1, 3]
+  }
+}

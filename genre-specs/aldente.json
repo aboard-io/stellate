@@ -1,259 +1,88 @@
 {
   "name": "aldente",
-  "label": "Al Dente Techno",
-  "info": "pasta-timer minimal techno: the eleven-minute boil is one long DJ plateau, a single hi-hat rolling like a low simmer, and the kitchen timer's ding lands on the one to tell you it's ready \u2014 remove from heat, do not rinse; served firm to the tooth",
-  "clips": [
-    "pl_modelcity",
-    "night_lines",
-    "phuture_red",
-    "ab_diagonale"
-  ],
-  "materials": "synthesized/archived kitchen-timer ding (the cadence marker) \u2014 MATERIALS; draft uses tw_ding; minimal-techno skeleton, near-drone",
-  "pos": [
-    250,
-    495
-  ],
+  "label": "Rolling Boil Plateau",
+  "info": "pasta-timer minimal techno: the eleven-minute boil is one long DJ plateau, a single hi-hat rolling like a low simmer, and the kitchen timer's ding lands on the one to tell you it's ready — remove from heat, do not rinse; served firm to the tooth",
+  "pos": [2001, 24486],
   "anchor": {
-    "bpm": [
-      122,
-      128
-    ],
-    "swing": [
-      0,
-      0.04
-    ],
-    "humanize": [
-      0,
-      0.08
-    ],
-    "progressions": [
-      "drone_min",
-      "deep_two"
-    ],
-    "kits": [
-      "techno",
-      "pulse"
-    ],
-    "fills": [
-      "off",
-      "cut",
-      "dropout"
-    ],
-    "chordEvery": 16,
+    "bpm": [122, 128],
+    "swing": [0, 0.04],
+    "humanize": [0, 0.08],
+    "progressions": ["drone_min", "deep_two"],
+    "kits": ["techno", "pulse"],
+    "fills": ["off", "cut", "dropout"],
     "euclid": {
-      "hat": [
-        11,
-        16
-      ]
+      "hat": [11, 16]
     },
+    "chordEvery": 16,
     "bass": {
-      "patterns": [
-        "rolling",
-        "pedal",
-        "sub"
-      ],
+      "patterns": ["rolling", "pedal", "sub"],
       "recipe": {
-        "model": [
-          "sub",
-          "acid"
-        ],
-        "cutoff": [
-          400,
-          700
-        ],
-        "res": [
-          0.18,
-          0.3
-        ],
-        "level": [
-          1,
-          1.2
-        ],
-        "send": [
-          0,
-          0.06
-        ],
-        "dsend": [
-          0.05,
-          0.12
-        ]
+        "model": ["sub", "acid"],
+        "cutoff": [400, 700],
+        "res": [0.18, 0.3],
+        "level": [1, 1.2],
+        "send": [0, 0.06],
+        "dsend": [0.05, 0.12]
       }
     },
     "lead": {
-      "patterns": [
-        "off",
-        "double"
-      ],
+      "patterns": ["off", "double"],
       "recipe": {
-        "model": [
-          "pluck",
-          "organ"
-        ],
+        "model": ["pluck", "organ"],
         "wave": "square",
-        "voices": [
-          1,
-          1
-        ],
-        "cutoff": [
-          1400,
-          2200
-        ],
-        "level": [
-          0.28,
-          0.4
-        ],
-        "send": [
-          0.2,
-          0.35
-        ],
-        "dsend": [
-          0.15,
-          0.3
-        ]
+        "voices": [1, 1],
+        "cutoff": [1400, 2200],
+        "level": [0.28, 0.4],
+        "send": [0.2, 0.35],
+        "dsend": [0.15, 0.3]
       }
     },
     "pads": {
       "prob": 0.35,
       "recipe": {
-        "model": [
-          "organ",
-          "solina"
-        ],
+        "model": ["organ", "solina"],
         "wave": "saw",
-        "cutoff": [
-          700,
-          1200
-        ],
-        "detune": [
-          0.004,
-          0.01
-        ],
-        "attack": [
-          2,
-          4
-        ],
-        "level": [
-          0.35,
-          0.5
-        ],
-        "send": [
-          0.35,
-          0.55
-        ],
-        "dsend": [
-          0.1,
-          0.2
-        ]
+        "cutoff": [700, 1200],
+        "detune": [0.004, 0.01],
+        "attack": [2, 4],
+        "level": [0.35, 0.5],
+        "send": [0.35, 0.55],
+        "dsend": [0.1, 0.2]
       }
     },
     "drums": {
-      "kickModel": [
-        "909"
-      ],
-      "snareModel": [
-        "clap"
-      ],
-      "hatModel": [
-        "metal"
-      ],
-      "kick": [
-        1.1,
-        1.35
-      ],
-      "snare": [
-        0.45,
-        0.7
-      ],
-      "hat": [
-        0.7,
-        1
-      ],
-      "tune": [
-        0.98,
-        1.08
-      ],
-      "send": [
-        0.05,
-        0.15
-      ],
-      "dsend": [
-        0.1,
-        0.2
-      ]
+      "kickModel": ["909"],
+      "snareModel": ["clap"],
+      "hatModel": ["metal"],
+      "kick": [1.1, 1.35],
+      "snare": [0.45, 0.7],
+      "hat": [0.7, 1],
+      "tune": [0.98, 1.08],
+      "send": [0.05, 0.15],
+      "dsend": [0.1, 0.2]
     },
     "fx": {
-      "reverb": [
-        0.3,
-        0.5
-      ],
-      "delayBeats": [
-        0.5,
-        0.75
-      ],
-      "delayFb": [
-        0.25,
-        0.4
-      ],
-      "delayCut": [
-        2400,
-        3600
-      ],
-      "pump": [
-        0.4,
-        0.62
-      ],
-      "crackle": [
-        0,
-        0.08
-      ],
-      "lowcut": [
-        35,
-        50
-      ],
-      "highcut": [
-        0,
-        0
-      ],
-      "comp": [
-        0.45,
-        0.65
-      ]
+      "reverb": [0.3, 0.5],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.25, 0.4],
+      "delayCut": [2400, 3600],
+      "pump": [0.4, 0.62],
+      "crackle": [0, 0.08],
+      "lowcut": [35, 50],
+      "highcut": [0, 0],
+      "comp": [0.45, 0.65]
     },
     "found": {
       "role": "bed",
-      "vol": [
-        0.06,
-        0.14
-      ],
-      "pitch": [
-        0.95,
-        1.1
-      ],
-      "stretch": [
-        0.5,
-        0.7
-      ],
-      "cutoff": [
-        2200,
-        3400
-      ],
-      "sources": [
-        "factory",
-        "iriomote"
-      ]
-    },
-    "hits": {
-      "sources": [
-        "tw_ding"
-      ],
-      "pattern": "sparse",
-      "prob": 0.2
+      "vol": [0.06, 0.14],
+      "pitch": [0.95, 1.1],
+      "stretch": [0.5, 0.7],
+      "cutoff": [2200, 3400],
+      "sources": ["pool:industry*1", "ferment_bubble"]
     },
     "sampleEvents": [
       {
-        "pool": [
-          "tw_ding"
-        ],
+        "pool": ["tw_ding"],
         "placement": "cadence",
         "sections": "all",
         "treatment": {
@@ -262,22 +91,49 @@
         }
       }
     ],
-    "stab": [
-      "off"
-    ],
+    "hits": {
+      "sources": ["tw_ding"],
+      "pattern": "sparse",
+      "prob": 0.2
+    },
+    "stab": ["off"],
     "form": "dj"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": {
-      "bpm": 3,
-      "motion": 3,
-      "pump": 3,
-      "snareBalance": 2,
-      "swing": 2,
-      "chopUse": 2,
-      "bedUse": 1
-    }
+  "mind": {
+    "theory": {
+      "adventure": [0, 0.05],
+      "color": [0.125, 0.325],
+      "voicing": "open",
+      "reharm": false
+    },
+    "pipes": [
+      {
+        "id": "octavePump",
+        "w": 0.5,
+        "prob": 0.4
+      },
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      },
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      }
+    ],
+    "rhythm": [0.16, 0.33]
+  },
+  "targets": {
+    "bpm": [116, 135, 3],
+    "motion": [0, 0.513, 3],
+    "pump": [0.322, 0.715, 3],
+    "snareBalance": [0, 0.544, 2],
+    "swing": [0, 0.077, 2],
+    "chopUse": [0, 0.1, 2],
+    "bedUse": [0.63, 0.87, 1],
+    "drumDensity": [1.32, 2.6, 3]
   }
 }

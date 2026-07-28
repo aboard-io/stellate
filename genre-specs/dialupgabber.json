@@ -1,76 +1,24 @@
 {
   "name": "dialupgabber",
-  "label": "Dial-Up Gabber",
+  "label": "Carrier Lost",
   "info": "the 56k handshake weaponized: that screaming modem negotiation — the ping, the hiss, the two-tone war — distorted into gabber kicks at 185 BPM, the connection drop as the breakdown, a genre that ties up the phone line so nobody can call",
-  "clips": [
-    "phuture_red",
-    "dark_face",
-    "green_nebula",
-    "night_lines"
-  ],
-  "materials": "archive.org 56k dial-up handshake recording (the riff/drop) — MATERIALS; draft uses rave one-shots + distorted kick until the modem is fetched",
-  "pos": [
-    555,
-    230
-  ],
+  "pos": [1423, 11686],
   "anchor": {
-    "bpm": [
-      180,
-      190
-    ],
-    "swing": [
-      0,
-      0.04
-    ],
-    "humanize": [
-      0,
-      0.06
-    ],
-    "progressions": [
-      "drone_min",
-      "minor_run"
-    ],
-    "kits": [
-      "four",
-      "pulse"
-    ],
-    "fills": [
-      "riser",
-      "impact",
-      "cut",
-      "reverse"
-    ],
+    "bpm": [180, 190],
+    "swing": [0, 0.04],
+    "humanize": [0, 0.06],
+    "progressions": ["drone_min", "minor_run"],
+    "kits": ["four", "pulse"],
+    "fills": ["riser", "impact", "cut", "reverse"],
     "bass": {
-      "patterns": [
-        "stab",
-        "drive",
-        "root"
-      ],
+      "patterns": ["stab", "drive", "root"],
       "recipe": {
-        "model": [
-          "fuzz",
-          "reese"
-        ],
-        "cutoff": [
-          500,
-          900
-        ],
-        "res": [
-          0.15,
-          0.3
-        ],
-        "level": [
-          1.1,
-          1.3
-        ],
-        "send": [
-          0,
-          0.06
-        ],
-        "dsend": [
-          0.05,
-          0.12
-        ],
+        "model": ["fuzz", "reese"],
+        "cutoff": [500, 900],
+        "res": [0.15, 0.3],
+        "level": [1.1, 1.3],
+        "send": [0, 0.06],
+        "dsend": [0.05, 0.12],
         "inserts": {
           "prob": 0.6,
           "max": 1,
@@ -78,14 +26,8 @@
             [
               "distort",
               {
-                "drive": [
-                  0.3,
-                  0.6
-                ],
-                "mix": [
-                  0.6,
-                  0.9
-                ]
+                "drive": [0.3, 0.6],
+                "mix": [0.6, 0.9]
               }
             ]
           ]
@@ -93,200 +35,112 @@
       }
     },
     "lead": {
-      "patterns": [
-        "double",
-        "off",
-        "hero"
-      ],
+      "patterns": ["double", "off", "hero"],
       "recipe": {
-        "model": [
-          "fuzz",
-          "synclead"
-        ],
+        "model": ["fuzz", "synclead"],
         "wave": "square",
-        "voices": [
-          1,
-          2
-        ],
-        "cutoff": [
-          2000,
-          3200
-        ],
-        "level": [
-          0.34,
-          0.48
-        ],
-        "send": [
-          0.2,
-          0.35
-        ],
-        "dsend": [
-          0.15,
-          0.3
-        ]
+        "voices": [1, 2],
+        "cutoff": [2000, 3200],
+        "level": [0.34, 0.48],
+        "send": [0.2, 0.35],
+        "dsend": [0.15, 0.3]
       }
     },
     "pads": {
       "prob": 0.3,
       "recipe": {
-        "model": [
-          "oberheim",
-          "saw"
-        ],
+        "model": ["oberheim", "saw"],
         "wave": "saw",
-        "cutoff": [
-          900,
-          1600
-        ],
-        "detune": [
-          0.008,
-          0.016
-        ],
-        "attack": [
-          0.3,
-          0.9
-        ],
-        "level": [
-          0.35,
-          0.5
-        ],
-        "send": [
-          0.25,
-          0.45
-        ],
-        "dsend": [
-          0.1,
-          0.2
-        ]
+        "cutoff": [900, 1600],
+        "detune": [0.008, 0.016],
+        "attack": [0.3, 0.9],
+        "level": [0.35, 0.5],
+        "send": [0.25, 0.45],
+        "dsend": [0.1, 0.2]
       }
     },
     "drums": {
-      "kickModel": [
-        "boom",
-        "909"
-      ],
-      "snareModel": [
-        "crack",
-        "clap"
-      ],
-      "hatModel": [
-        "metal",
-        "noise"
-      ],
-      "kick": [
-        1.35,
-        1.6
-      ],
-      "snare": [
-        0.6,
-        0.85
-      ],
-      "hat": [
-        0.6,
-        0.95
-      ],
-      "tune": [
-        0.95,
-        1.1
-      ],
-      "send": [
-        0.05,
-        0.15
-      ],
-      "dsend": [
-        0.05,
-        0.15
-      ]
+      "kickModel": ["boom", "909"],
+      "snareModel": ["crack", "clap"],
+      "hatModel": ["metal", "noise"],
+      "kick": [1.35, 1.6],
+      "snare": [0.6, 0.85],
+      "hat": [0.6, 0.95],
+      "tune": [0.95, 1.1],
+      "send": [0.05, 0.15],
+      "dsend": [0.05, 0.15]
     },
     "fx": {
-      "reverb": [
-        0.25,
-        0.42
-      ],
-      "delayBeats": [
-        0.375,
-        0.5
-      ],
-      "delayFb": [
-        0.2,
-        0.35
-      ],
-      "delayCut": [
-        3000,
-        4500
-      ],
-      "pump": [
-        0.55,
-        0.8
-      ],
-      "crackle": [
-        0.1,
-        0.3
-      ],
-      "lowcut": [
-        35,
-        50
-      ],
-      "highcut": [
-        0,
-        0
-      ],
-      "comp": [
-        0.5,
-        0.7
-      ],
-      "grit": [
-        0.3,
-        0.6
-      ]
+      "reverb": [0.25, 0.42],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.2, 0.35],
+      "delayCut": [3000, 4500],
+      "pump": [0.55, 0.8],
+      "crackle": [0.1, 0.3],
+      "lowcut": [35, 50],
+      "highcut": [0, 0],
+      "comp": [0.5, 0.7],
+      "grit": [0.3, 0.6]
     },
     "found": {
       "role": "chops",
-      "vol": [
-        0.16,
-        0.28
-      ],
-      "pitch": [
-        1,
-        1.4
-      ],
-      "stretch": [
-        0.35,
-        0.5
-      ],
-      "cutoff": [
-        3500,
-        6500
-      ],
-      "sources": [
-        "rave_c",
-        "rave_d"
-      ]
+      "vol": [0.16, 0.28],
+      "pitch": [1, 1.4],
+      "stretch": [0.35, 0.5],
+      "cutoff": [3500, 6500],
+      "sources": ["rave_c", "rave_d"]
     },
+    "sampleEvents": [
+      {
+        "pool": ["modem_handshake"],
+        "placement": "opener",
+        "sections": "all",
+        "gain": 0.7,
+        "treatment": {
+          "maxDur": 16,
+          "cutoff": 4600,
+          "vol": 0.5,
+          "rsend": 0.12,
+          "dsend": 0.1
+        }
+      }
+    ],
     "hits": {
-      "sources": [
-        "rave_c",
-        "rave_d",
-        "bb_stab_a"
-      ],
+      "sources": ["pool:vb_rave_hardcore*1", "pool:rave_stab*2", "bb_stab_a"],
       "pattern": "offbeat",
       "prob": 0.5
     },
-    "stab": [
-      "rave"
-    ],
+    "stab": ["rave"],
     "form": "drop"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": {
-      "bpm": 3,
-      "pump": 3,
-      "crackle": 2,
-      "chopUse": 2,
-      "snareBalance": 1,
-      "hatDensity": 1
-    }
+  "mind": {
+    "theory": {
+      "adventure": [0.05, 0.13],
+      "color": [0.125, 0.3],
+      "voicing": "open",
+      "reharm": false
+    },
+    "pipes": [
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      },
+      {
+        "id": "vibratoSwell",
+        "w": 0.4,
+        "depth": 0.25
+      }
+    ],
+    "rhythm": [0.08, 0.22]
+  },
+  "targets": {
+    "bpm": [174, 197, 3],
+    "pump": [0.476, 0.895, 3],
+    "crackle": [0.039, 0.404, 2],
+    "chopUse": [0.47, 0.67, 2],
+    "snareBalance": [0.017, 0.813, 1],
+    "hatDensity": [0, 1.291, 1]
   }
 }

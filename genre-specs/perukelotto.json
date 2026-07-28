@@ -1,7 +1,8 @@
 {
   "name": "perukelotto",
-  "label": "Perukelotto",
+  "label": "Aleatoric Wig",
   "info": "the dice-thrown divertimento at 146: harpsichord and bright grand rolling Alberti figures over changes drawn from a hat — canon one round, turnaround the next — a flute or violin taking the tune whenever its number comes up, phrases jump-cut mid-cadence, a little bell when the dice land; powdered, precise, and different every single time",
+  "pos": [1871, 10710],
   "anchor": {
     "bpm": [141, 151],
     "swing": [0, 0.03],
@@ -12,23 +13,126 @@
     "bass": {
       "patterns": ["simple", "octaves", "walking", "root"],
       "samplerPool": ["harpsichord", "contrabass"],
-      "recipe": { "model": ["sampler", "sampler"], "cutoff": [600, 1300], "res": [0.05, 0.1], "level": [0.55, 0.75], "send": [0.15, 0.32], "dsend": [0, 0.08], "attack": [0.005, 0.02], "release": [0.15, 0.35] }
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "cutoff": [600, 1300],
+        "res": [0.05, 0.1],
+        "level": [0.55, 0.75],
+        "send": [0.15, 0.32],
+        "dsend": [0, 0.08],
+        "attack": [0.005, 0.02],
+        "release": [0.15, 0.35]
+      }
     },
     "lead": {
       "patterns": ["updown", "arpdown", "double", "pentaup", "canon", "arp16"],
       "samplerPool": ["harpsichord", "bright_yamaha_grand", "flute", "violin"],
-      "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "voices": [1, 2], "spread": [0.001, 0.003], "cutoff": [2600, 3800], "level": [0.44, 0.56], "send": [0.2, 0.38], "dsend": [0.05, 0.18], "attack": [0.005, 0.02], "release": [0.12, 0.3] }
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.001, 0.003],
+        "cutoff": [2600, 3800],
+        "level": [0.44, 0.56],
+        "send": [0.2, 0.38],
+        "dsend": [0.05, 0.18],
+        "attack": [0.005, 0.02],
+        "release": [0.12, 0.3]
+      }
     },
     "pads": {
       "prob": 0.5,
       "samplerPool": ["strings", "harpsichord"],
-      "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "cutoff": [1100, 2000], "detune": [0.002, 0.004], "attack": [0.3, 1], "release": [0.6, 1.5], "level": [0.34, 0.48], "send": [0.25, 0.45], "dsend": [0, 0.1] }
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "sine",
+        "cutoff": [1100, 2000],
+        "detune": [0.002, 0.004],
+        "attack": [0.3, 1],
+        "release": [0.6, 1.5],
+        "level": [0.34, 0.48],
+        "send": [0.25, 0.45],
+        "dsend": [0, 0.1]
+      }
     },
-    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.45, 0.7], "snare": [0.4, 0.65], "hat": [0.35, 0.6], "tune": [0.95, 1.05], "send": [0.15, 0.3], "dsend": [0, 0.05], "kit": "acoustic" },
-    "fx": { "reverb": [0.35, 0.5], "delayBeats": [0.5, 1], "delayFb": [0.1, 0.2], "delayCut": [2400, 3400], "pump": [0, 0], "crackle": [0, 0.25], "lowcut": [0, 0], "highcut": [0, 0], "comp": [0.05, 0.2] },
-    "found": { "role": "bed", "vol": [0.04, 0.1], "pitch": [0.8, 0.95], "stretch": [0.45, 0.6], "cutoff": [1800, 2800], "sources": ["tw_stationhall", "tokyo_station"] },
-    "hits": { "sources": ["timer_ding", "handbell"], "pattern": "sparse", "prob": 0.15 },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.45, 0.7],
+      "snare": [0.4, 0.65],
+      "hat": [0.35, 0.6],
+      "tune": [0.95, 1.05],
+      "send": [0.15, 0.3],
+      "dsend": [0, 0.05],
+      "kit": "acoustic"
+    },
+    "fx": {
+      "reverb": [0.35, 0.5],
+      "delayBeats": [0.5, 1],
+      "delayFb": [0.1, 0.2],
+      "delayCut": [2400, 3400],
+      "pump": [0, 0],
+      "crackle": [0, 0.25],
+      "lowcut": [0, 0],
+      "highcut": [0, 0],
+      "comp": [0.05, 0.2]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.04, 0.1],
+      "pitch": [0.8, 0.95],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1800, 2800],
+      "sources": ["pool:city*2"]
+    },
+    "hits": {
+      "sources": ["pool:chime*2"],
+      "pattern": "sparse",
+      "prob": 0.15
+    },
     "stab": ["off"],
-    "form": "dj"
+    "form": "suite"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.17, 0.304],
+      "color": [0.31, 0.51],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "echoCanon",
+        "w": 0.55,
+        "prob": 0.45,
+        "delay": 2
+      },
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      },
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      }
+    ],
+    "rhythm": [0.05, 0.16]
+  },
+  "targets": {
+    "bpm": [136, 157, 3],
+    "drumDensity": [0, 2.34, 2],
+    "wash": [0, 0.261, 1],
+    "pump": [0, 0.1, 1],
+    "swing": [0, 0.069, 2],
+    "seventh": [0, 1, 1],
+    "acoustic": [0.68, 0.92, 2],
+    "crackle": [0, 0.326, 1],
+    "sub": [0.05, 0.35, 1],
+    "motion": [0.52, 1, 1],
+    "bedUse": [0.63, 0.87, 1]
   }
 }

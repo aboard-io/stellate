@@ -1,290 +1,149 @@
 {
   "name": "whalejazz",
-  "label": "Humpback Jazz",
-  "info": "slow modal jazz where the tenor sax trades fours with a humpback whale \u2014 long, patient phrases over a brushed upright, the whale's rising moan answered by a blue note, ii-V-I stretched across the North Pacific; the loneliest quartet",
-  "clips": [
-    "earth_orbit",
-    "blue_dinner",
-    "ns_waterfall",
-    "spacewalk"
-  ],
-  "materials": "archive.org NOAA/PD humpback whalesong (the call-and-response partner) \u2014 MATERIALS; draft carries the mood with tenor_sax + iriomote water bed",
-  "pos": [
-    620,
-    350
-  ],
+  "label": "Leviathan Turnaround",
+  "info": "slow modal jazz where the tenor sax trades fours with a humpback whale — long, patient phrases over a brushed upright, the whale's rising moan answered by a blue note, ii-V-I stretched across the North Pacific; the loneliest quartet",
+  "pos": [430, 7497],
   "anchor": {
-    "bpm": [
-      60,
-      72
-    ],
-    "swing": [
-      0.12,
-      0.2
-    ],
-    "humanize": [
-      0.1,
-      0.22
-    ],
-    "progressions": [
-      "ii_v_i",
-      "neosoul",
-      "mode_dorian"
-    ],
-    "kits": [
-      "bossa",
-      "off"
-    ],
-    "fills": [
-      "micro lick",
-      "off"
-    ],
-    "rubato": {
-      "depth": [
-        0.01,
-        0.025
-      ],
-      "periodBars": [
-        2,
-        4
-      ],
-      "prob": 0.5
-    },
+    "bpm": [60, 72],
+    "swing": [0.12, 0.2],
+    "humanize": [0.1, 0.22],
+    "progressions": ["ii_v_i", "neosoul", "mode_dorian"],
+    "kits": ["bossa", "off"],
+    "fills": ["micro lick", "off"],
     "bass": {
-      "patterns": [
-        "walking",
-        "root",
-        "melodic"
-      ],
+      "patterns": ["walking", "root", "melodic"],
       "recipe": {
-        "model": [
-          "sampler"
-        ],
-        "samplerPool": [
-          "acoustic_bass"
-        ],
-        "cutoff": [
-          600,
-          1000
-        ],
-        "level": [
-          0.55,
-          0.72
-        ],
-        "send": [
-          0.2,
-          0.35
-        ],
-        "dsend": [
-          0,
-          0.08
-        ]
+        "model": ["sampler"],
+        "samplerPool": ["acoustic_bass"],
+        "cutoff": [600, 1000],
+        "level": [0.55, 0.72],
+        "send": [0.2, 0.35],
+        "dsend": [0, 0.08]
       }
     },
     "lead": {
-      "patterns": [
-        "sparse",
-        "wander",
-        "blues"
-      ],
+      "patterns": ["sparse", "wander", "blues"],
       "recipe": {
-        "model": [
-          "sampler",
-          "dx7"
-        ],
-        "samplerPool": [
-          "tenor_sax",
-          "muted_trumpet"
-        ],
-        "patchPool": [
-          "SAX BC"
-        ],
+        "model": ["sampler", "dx7"],
+        "samplerPool": ["tenor_sax", "muted_trumpet"],
+        "patchPool": ["SAX BC"],
         "wave": "sine",
-        "voices": [
-          1,
-          1
-        ],
-        "cutoff": [
-          2000,
-          3200
-        ],
-        "level": [
-          0.42,
-          0.56
-        ],
-        "send": [
-          0.4,
-          0.6
-        ],
-        "dsend": [
-          0.1,
-          0.25
-        ],
-        "vibrato": [
-          0.004,
-          0.01
-        ]
+        "voices": [1, 1],
+        "cutoff": [2000, 3200],
+        "level": [0.42, 0.56],
+        "send": [0.4, 0.6],
+        "dsend": [0.1, 0.25],
+        "vibrato": [0.004, 0.01]
       }
     },
     "pads": {
       "prob": 0.5,
       "recipe": {
-        "model": [
-          "rhodes",
-          "strings",
-          "sampler"
-        ],
-        "samplerPool": [
-          "strings"
-        ],
+        "model": ["rhodes", "strings", "sampler"],
+        "samplerPool": ["strings"],
         "wave": "sine",
-        "cutoff": [
-          900,
-          1500
-        ],
-        "detune": [
-          0.003,
-          0.008
-        ],
-        "attack": [
-          1.5,
-          3
-        ],
-        "level": [
-          0.38,
-          0.52
-        ],
-        "send": [
-          0.45,
-          0.65
-        ],
-        "dsend": [
-          0.1,
-          0.2
-        ],
+        "cutoff": [900, 1500],
+        "detune": [0.003, 0.008],
+        "attack": [1.5, 3],
+        "level": [0.38, 0.52],
+        "send": [0.45, 0.65],
+        "dsend": [0.1, 0.2],
         "mellotron": true
       }
     },
     "drums": {
-      "kickModel": [
-        "boom"
-      ],
-      "snareModel": [
-        "noise"
-      ],
-      "hatModel": [
-        "noise"
-      ],
-      "kick": [
-        0.45,
-        0.65
-      ],
-      "snare": [
-        0.3,
-        0.5
-      ],
-      "hat": [
-        0.35,
-        0.55
-      ],
-      "tune": [
-        0.9,
-        1
-      ],
-      "send": [
-        0.25,
-        0.45
-      ],
-      "dsend": [
-        0,
-        0.1
-      ]
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.45, 0.65],
+      "snare": [0.3, 0.5],
+      "hat": [0.35, 0.55],
+      "tune": [0.9, 1],
+      "send": [0.25, 0.45],
+      "dsend": [0, 0.1],
+      "kit": "brush"
     },
     "fx": {
-      "reverb": [
-        0.5,
-        0.7
-      ],
-      "delayBeats": [
-        0.75,
-        1.5
-      ],
-      "delayFb": [
-        0.12,
-        0.26
-      ],
-      "delayCut": [
-        2000,
-        3000
-      ],
-      "pump": [
-        0,
-        0
-      ],
-      "crackle": [
-        0,
-        0.12
-      ],
-      "lowcut": [
-        0,
-        0
-      ],
-      "highcut": [
-        0,
-        0
-      ],
-      "comp": [
-        0.1,
-        0.3
-      ]
+      "reverb": [0.5, 0.7],
+      "delayBeats": [0.75, 1.5],
+      "delayFb": [0.12, 0.26],
+      "delayCut": [2000, 3000],
+      "pump": [0, 0],
+      "crackle": [0, 0.12],
+      "lowcut": [0, 0],
+      "highcut": [0, 0],
+      "comp": [0.1, 0.3]
     },
-    "reverbColor": "dattorro",
     "found": {
       "role": "bed",
-      "vol": [
-        0.1,
-        0.2
-      ],
-      "pitch": [
-        0.8,
-        0.95
-      ],
-      "stretch": [
-        0.55,
-        0.7
-      ],
-      "cutoff": [
-        1800,
-        2800
-      ],
-      "sources": [
-        "iriomote",
-        "frogs"
-      ]
+      "vol": [0.1, 0.2],
+      "pitch": [0.8, 0.95],
+      "stretch": [0.55, 0.7],
+      "cutoff": [1800, 2800],
+      "sources": ["whale_song", "hydrophone"]
+    },
+    "rubato": {
+      "depth": [0.01, 0.025],
+      "periodBars": [2, 4],
+      "prob": 0.5
     },
     "hits": {
-      "sources": [
-        "sp_herenow"
-      ],
+      "sources": ["sp_herenow"],
       "pattern": "sparse",
       "prob": 0.08
     },
-    "stab": [
-      "off"
-    ],
-    "form": "wave"
+    "stab": ["off"],
+    "form": "wave",
+    "timeFeel": {
+      "pushPullMs": {
+        "ride": -6,
+        "snare": 8,
+        "bass": 11
+      }
+    },
+    "reverbColor": "dattorro"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": {
-      "bpm": 3,
-      "acoustic": 3,
-      "swing": 2,
-      "seventh": 2,
-      "drumDensity": 1,
-      "wash": 1,
-      "bedUse": 3
-    }
+  "mind": {
+    "theory": {
+      "adventure": [0.317, 0.5],
+      "color": [0.467, 0.7],
+      "voicing": "drop2",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "callResponse",
+        "w": 0.5,
+        "level": 0.85
+      },
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      }
+    ],
+    "rhythm": [0.1, 0.24]
+  },
+  "perc": {
+    "lanes": [
+      {
+        "p": "ride8",
+        "lvl": 0.16
+      },
+      {
+        "p": "rim34",
+        "lvl": 0.12
+      }
+    ]
+  },
+  "targets": {
+    "bpm": [53, 80, 3],
+    "acoustic": [0, 0.78, 3],
+    "swing": [0.072, 0.224, 2],
+    "seventh": [0.85, 1, 2],
+    "drumDensity": [0, 1.144, 1],
+    "wash": [0.114, 0.459, 1],
+    "bedUse": [0.88, 1, 3]
   }
 }

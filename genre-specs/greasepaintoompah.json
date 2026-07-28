@@ -1,36 +1,133 @@
 {
   "name": "greasepaintoompah",
-  "label": "Greasepaintoompah",
+  "label": "Actuarial Cabaret",
   "info": "threepenny cabaret at 107: a tuba oompah under sour minor changes, muted trumpet and clarinet trading a crooked tune, accordion and harmonium wheezing the harmony, a pit drummer dragging the snare just behind the beat — smeared lipstick, stale smoke, shellac hiss, the band grinning like it knows something",
+  "pos": [1106, 10559],
   "anchor": {
     "bpm": [103, 112],
     "swing": [0.05, 0.13],
     "humanize": [0.3, 0.5],
-    "meter": { "beats": 3, "unit": 4 },
     "progressions": ["minor_run", "doo_wop", "sad_pop"],
     "kits": ["waltz"],
     "fills": ["off", "drum fill", "kit fill"],
     "bass": {
       "patterns": ["oompahpah"],
       "samplerPool": ["tuba", "acoustic_bass"],
-      "recipe": { "model": ["sampler", "sampler", "sub"], "cutoff": [400, 800], "res": [0.05, 0.15], "level": [0.85, 1.05], "send": [0.05, 0.15], "dsend": [0, 0.05], "attack": [0.01, 0.03], "release": [0.15, 0.35] }
+      "recipe": {
+        "model": ["sampler", "sampler", "sub"],
+        "cutoff": [400, 800],
+        "res": [0.05, 0.15],
+        "level": [0.85, 1.05],
+        "send": [0.05, 0.15],
+        "dsend": [0, 0.05],
+        "attack": [0.01, 0.03],
+        "release": [0.15, 0.35]
+      }
     },
     "lead": {
       "patterns": ["composed", "wander", "double"],
       "samplerPool": ["muted_trumpet", "clarinet", "trombone"],
-      "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "voices": [1, 2], "spread": [0.002, 0.005], "cutoff": [2200, 3400], "level": [0.44, 0.56], "send": [0.25, 0.4], "dsend": [0.1, 0.25], "vibrato": [0.008, 0.014], "attack": [0.02, 0.05], "release": [0.15, 0.3], "sustain": [0.6, 0.72] }
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.002, 0.005],
+        "cutoff": [2200, 3400],
+        "level": [0.44, 0.56],
+        "send": [0.25, 0.4],
+        "dsend": [0.1, 0.25],
+        "vibrato": [0.008, 0.014],
+        "attack": [0.02, 0.05],
+        "release": [0.15, 0.3],
+        "sustain": [0.6, 0.72]
+      }
     },
     "pads": {
       "prob": 0.55,
       "samplerPool": ["accordion", "reed_organ", "honky_tonk"],
-      "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "cutoff": [1200, 2200], "detune": [0.003, 0.007], "attack": [0.05, 0.25], "release": [0.3, 0.7], "level": [0.38, 0.52], "send": [0.2, 0.38], "dsend": [0.05, 0.15] }
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "sine",
+        "cutoff": [1200, 2200],
+        "detune": [0.003, 0.007],
+        "attack": [0.05, 0.25],
+        "release": [0.3, 0.7],
+        "level": [0.38, 0.52],
+        "send": [0.2, 0.38],
+        "dsend": [0.05, 0.15]
+      }
     },
-    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.6, 0.9], "snare": [0.6, 0.9], "hat": [0.5, 0.8], "tune": [0.9, 1.05], "send": [0.15, 0.35], "dsend": [0, 0.08], "kit": "room" },
-    "fx": { "reverb": [0.3, 0.45], "delayBeats": [0.75, 1], "delayFb": [0.1, 0.22], "delayCut": [2200, 3200], "pump": [0, 0.05], "crackle": [0.3, 0.58], "lowcut": [0, 30], "highcut": [0, 0], "comp": [0.15, 0.35] },
-    "found": { "role": "bed", "vol": [0.06, 0.13], "pitch": [0.85, 1], "stretch": [0.45, 0.6], "cutoff": [2000, 3200], "sources": ["horns_78", "vx_burroughs"] },
-    "timeFeel": { "pushPull": { "bass": -0.01, "snare": 0.012 } },
-    "hits": { "sources": ["horns_78"], "pattern": "response", "prob": 0.3 },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.6, 0.9],
+      "snare": [0.6, 0.9],
+      "hat": [0.5, 0.8],
+      "tune": [0.9, 1.05],
+      "send": [0.15, 0.35],
+      "dsend": [0, 0.08],
+      "kit": "room"
+    },
+    "fx": {
+      "reverb": [0.3, 0.45],
+      "delayBeats": [0.75, 1],
+      "delayFb": [0.1, 0.22],
+      "delayCut": [2200, 3200],
+      "pump": [0, 0.05],
+      "crackle": [0.3, 0.58],
+      "lowcut": [0, 30],
+      "highcut": [0, 0],
+      "comp": [0.15, 0.35]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.06, 0.13],
+      "pitch": [0.85, 1],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2000, 3200],
+      "sources": ["horns_78", "vx_burroughs"]
+    },
+    "hits": {
+      "sources": ["pool:horn_stab*1"],
+      "pattern": "response",
+      "prob": 0.3
+    },
     "stab": ["off"],
-    "form": "pop"
+    "form": "aaba",
+    "meter": {
+      "beats": 3,
+      "unit": 4
+    },
+    "timeFeel": {
+      "pushPull": {
+        "bass": -0.01,
+        "snare": 0.012
+      }
+    }
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.1, 0.207],
+      "color": [0.183, 0.35],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [],
+    "rhythm": [0.1, 0.3]
+  },
+  "targets": {
+    "bpm": [98, 118, 3],
+    "drumDensity": [1.47, 2.43, 2],
+    "wash": [0, 0.242, 1],
+    "pump": [0, 0.1, 1],
+    "swing": [0.006, 0.15, 2],
+    "seventh": [0, 1, 1],
+    "acoustic": [0.68, 0.92, 2],
+    "crackle": [0.201, 0.643, 1],
+    "sub": [0.05, 1, 1],
+    "motion": [0.85, 1, 1],
+    "bedUse": [0.51, 0.75, 1]
   }
 }

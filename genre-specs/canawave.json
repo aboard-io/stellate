@@ -1,0 +1,183 @@
+{
+  "name": "canawave",
+  "label": "Loon Referendum",
+  "info": "proud Canadiana pop: bright major anthem, arpeggiated guitar, toms + hi-hats, loon calls and the national news",
+  "pos": [1505, 3720],
+  "anchor": {
+    "bpm": [108, 114],
+    "swing": [0, 0.06],
+    "humanize": [0.08, 0.2],
+    "progressions": ["four_chords", "doo_wop", "sad_pop"],
+    "kits": ["four", "full"],
+    "fills": ["tom fill", "tom fill", "riser"],
+    "bass": {
+      "patterns": ["walking"],
+      "recipe": {
+        "model": ["saw"],
+        "cutoff": [600, 900],
+        "res": [0.1, 0.18],
+        "level": [0.6, 0.75],
+        "send": [0.03, 0.07],
+        "dsend": [0, 0.04]
+      }
+    },
+    "lead": {
+      "patterns": ["arp16"],
+      "recipe": {
+        "model": ["kpluck"],
+        "wave": "saw",
+        "drive": 0.45,
+        "cutoff": [3000, 3800],
+        "level": [0.62, 0.74],
+        "send": [0.16, 0.26],
+        "dsend": [0.46, 0.56]
+      },
+      "inserts": {
+        "prob": 0.8,
+        "max": 1,
+        "pool": [
+          [
+            "chorus",
+            {
+              "rate": [0.7, 1.1],
+              "depth": [0.45, 0.65],
+              "mix": [0.45, 0.6]
+            }
+          ]
+        ]
+      }
+    },
+    "pads": {
+      "prob": 1,
+      "samplerPool": ["church_organ"],
+      "recipe": {
+        "model": ["organ", "organ", "sampler"],
+        "wave": "saw",
+        "cutoff": [1500, 2200],
+        "detune": [0.004, 0.008],
+        "attack": [0.3, 0.7],
+        "level": [0.4, 0.52],
+        "send": [0.16, 0.26],
+        "dsend": [0, 0.06]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom", "909"],
+      "snareModel": ["noise", "clap"],
+      "hatModel": ["noise"],
+      "kick": [1.1, 1.3],
+      "snare": [0.95, 1.15],
+      "hat": [1.3, 1.6],
+      "tom": [0.85, 1.05],
+      "tune": [0.95, 1.1],
+      "send": [0.12, 0.2],
+      "dsend": [0.03, 0.07]
+    },
+    "fx": {
+      "reverb": [0.28, 0.4],
+      "delayBeats": [0.6667, 0.6667],
+      "delayFb": [0.3, 0.4],
+      "delayCut": [3200, 4600],
+      "pump": [0, 0.12],
+      "crackle": [0, 0],
+      "lowcut": [30, 45],
+      "highcut": [0, 0],
+      "comp": [0.25, 0.4],
+      "grit": [0, 0]
+    },
+    "found": {
+      "role": "narration",
+      "vol": [0.28, 0.38],
+      "pitch": [0.95, 0.98],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2600, 3800],
+      "sources": ["leacock1", "leacock2", "leacock3", "leacock4"]
+    },
+    "vox": {
+      "sources": [
+        "sp_ca_hockey",
+        "sp_ca_hnic",
+        "sp_ca_cup",
+        "sp_ca_topshelf",
+        "sp_ca_fivehole",
+        "sp_ca_gretzky",
+        "sp_ca_save",
+        "sp_ca_overtime",
+        "sp_ca_news",
+        "sp_ca_justwatchme"
+      ],
+      "vol": 0.5,
+      "pitch": 1,
+      "cutoff": 8000,
+      "clean": true
+    },
+    "voxPoem": "sp_ca_cities",
+    "sampleEvents": [
+      {
+        "pool": ["ca_horn"],
+        "placement": "opener",
+        "gain": 1.8,
+        "treatment": {
+          "cutoff": 6000,
+          "vol": 0.42,
+          "rsend": 0.6,
+          "dsend": 0.45
+        }
+      },
+      {
+        "pool": ["sp_ca_maple", "sp_ca_gold", "sp_ca_lights", "sp_ca_rockies", "sp_ca_sorry"],
+        "placement": "buried",
+        "sections": "all",
+        "treatment": {
+          "cutoff": 4400,
+          "vol": 0.36,
+          "every": 4,
+          "maxDur": 14,
+          "rsend": 0.16,
+          "dsend": 0.12
+        }
+      }
+    ],
+    "hits": {
+      "sources": ["ca_loon"],
+      "pattern": "sparse",
+      "prob": 1,
+      "wet": true,
+      "glitch": true,
+      "vol": 0.035
+    },
+    "stab": ["off"],
+    "form": "anthem"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.1, 0.2],
+      "color": [0.183, 0.35],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      }
+    ],
+    "rhythm": [0.1, 0.26]
+  },
+  "targets": {
+    "bpm": [102, 118, 2],
+    "motion": [0.5, 1, 2],
+    "leadVoices": [1, 3, 2],
+    "bedUse": [0.3, 1, 2],
+    "hatDensity": [1, 2.4, 2],
+    "snareBalance": [0.3, 1.1, 1],
+    "wash": [0.15, 0.55, 2],
+    "crackle": [0, 0.15, 1],
+    "comp": [0.2, 0.5, 1],
+    "drumDensity": [1.2, 3.3, 1],
+    "swing": [0, 0.12, 1],
+    "acoustic": [0.4, 0.85, 2]
+  }
+}

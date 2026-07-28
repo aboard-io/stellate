@@ -1,279 +1,133 @@
 {
   "name": "towncrier",
-  "label": "Town Crier Dubstep",
+  "label": "Oyez Oblivion",
   "info": "\"OYEZ, OYEZ — HEAR YE\" and then the drop: a handbell and a medieval proclamation collide with a half-time wobble at 140, the royal decree read over a filthy sub, the scroll unfurled and immediately crushed — God save the bass",
-  "clips": [
-    "dark_face",
-    "phuture_red",
-    "night_lines",
-    "green_nebula"
-  ],
-  "materials": "espeak medieval proclamation (sp_crier_*, MATERIALS) + handbell (DX7 BELLS patch); draft carries the bell via DX7 BELLS + tw_ding, wobble is the modeld/wobble bass",
-  "pos": [
-    685,
-    170
-  ],
+  "pos": [1026, 13988],
   "anchor": {
-    "bpm": [
-      138,
-      146
-    ],
-    "swing": [
-      0,
-      0.06
-    ],
-    "humanize": [
-      0.02,
-      0.1
-    ],
-    "progressions": [
-      "minor_run",
-      "drone_min",
-      "epic_min"
-    ],
-    "kits": [
-      "halftime",
-      "trap"
-    ],
-    "fills": [
-      "riser",
-      "impact",
-      "cut",
-      "dropout"
-    ],
+    "bpm": [138, 146],
+    "swing": [0, 0.06],
+    "humanize": [0.02, 0.1],
+    "progressions": ["minor_run", "drone_min", "epic_min"],
+    "kits": ["halftime", "trap"],
+    "fills": ["riser", "impact", "cut", "dropout"],
     "bass": {
-      "patterns": [
-        "dub",
-        "stab",
-        "sub"
-      ],
+      "patterns": ["dub", "stab", "sub"],
       "recipe": {
-        "model": [
-          "wobble",
-          "reese",
-          "sub"
-        ],
-        "cutoff": [
-          400,
-          900
-        ],
-        "res": [
-          0.2,
-          0.4
-        ],
-        "level": [
-          1.05,
-          1.28
-        ],
-        "send": [
-          0,
-          0.06
-        ],
-        "dsend": [
-          0.05,
-          0.12
-        ]
+        "model": ["wobble", "reese", "sub"],
+        "cutoff": [400, 900],
+        "res": [0.2, 0.4],
+        "level": [1.05, 1.28],
+        "send": [0, 0.06],
+        "dsend": [0.05, 0.12]
       }
     },
     "lead": {
-      "patterns": [
-        "sparse",
-        "double",
-        "anthem"
-      ],
+      "patterns": ["sparse", "double", "anthem"],
       "recipe": {
-        "model": [
-          "dx7",
-          "bell"
-        ],
-        "patchPool": [
-          "BELLS",
-          "TUB BELLS"
-        ],
+        "model": ["dx7", "bell"],
+        "patchPool": ["BELLS", "TUB BELLS"],
         "wave": "sine",
-        "voices": [
-          1,
-          2
-        ],
-        "cutoff": [
-          2400,
-          3600
-        ],
-        "level": [
-          0.4,
-          0.54
-        ],
-        "send": [
-          0.3,
-          0.5
-        ],
-        "dsend": [
-          0.15,
-          0.3
-        ]
+        "voices": [1, 2],
+        "cutoff": [2400, 3600],
+        "level": [0.4, 0.54],
+        "send": [0.3, 0.5],
+        "dsend": [0.15, 0.3]
       }
     },
     "pads": {
       "prob": 0.4,
       "recipe": {
-        "model": [
-          "oberheim",
-          "choir",
-          "strings"
-        ],
+        "model": ["oberheim", "choir", "strings"],
         "wave": "saw",
-        "cutoff": [
-          900,
-          1600
-        ],
-        "detune": [
-          0.006,
-          0.014
-        ],
-        "attack": [
-          0.5,
-          1.5
-        ],
-        "level": [
-          0.38,
-          0.54
-        ],
-        "send": [
-          0.35,
-          0.55
-        ],
-        "dsend": [
-          0.1,
-          0.2
-        ]
+        "cutoff": [900, 1600],
+        "detune": [0.006, 0.014],
+        "attack": [0.5, 1.5],
+        "level": [0.38, 0.54],
+        "send": [0.35, 0.55],
+        "dsend": [0.1, 0.2]
       }
     },
     "drums": {
-      "kickModel": [
-        "808",
-        "boom"
-      ],
-      "snareModel": [
-        "crack",
-        "clap"
-      ],
-      "hatModel": [
-        "metal",
-        "noise"
-      ],
-      "kick": [
-        1.15,
-        1.45
-      ],
-      "snare": [
-        0.6,
-        0.85
-      ],
-      "hat": [
-        0.5,
-        0.85
-      ],
-      "tune": [
-        0.98,
-        1.1
-      ],
-      "send": [
-        0.08,
-        0.2
-      ],
-      "dsend": [
-        0.1,
-        0.25
-      ]
+      "kickModel": ["808", "boom"],
+      "snareModel": ["crack", "clap"],
+      "hatModel": ["metal", "noise"],
+      "kick": [1.15, 1.45],
+      "snare": [0.6, 0.85],
+      "hat": [0.5, 0.85],
+      "tune": [0.98, 1.1],
+      "send": [0.08, 0.2],
+      "dsend": [0.1, 0.25]
     },
     "fx": {
-      "reverb": [
-        0.3,
-        0.5
-      ],
-      "delayBeats": [
-        0.375,
-        0.5
-      ],
-      "delayFb": [
-        0.2,
-        0.35
-      ],
-      "delayCut": [
-        2800,
-        4200
-      ],
-      "pump": [
-        0.4,
-        0.62
-      ],
-      "crackle": [
-        0,
-        0.06
-      ],
-      "lowcut": [
-        35,
-        50
-      ],
-      "highcut": [
-        0,
-        0
-      ],
-      "comp": [
-        0.45,
-        0.65
-      ],
-      "grit": [
-        0.2,
-        0.5
-      ]
+      "reverb": [0.3, 0.5],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.2, 0.35],
+      "delayCut": [2800, 4200],
+      "pump": [0.4, 0.62],
+      "crackle": [0, 0.06],
+      "lowcut": [35, 50],
+      "highcut": [0, 0],
+      "comp": [0.45, 0.65],
+      "grit": [0.2, 0.5]
     },
     "found": {
       "role": "chops",
-      "vol": [
-        0.12,
-        0.22
-      ],
-      "pitch": [
-        0.9,
-        1.2
-      ],
-      "stretch": [
-        0.35,
-        0.55
-      ],
-      "cutoff": [
-        3000,
-        5500
-      ],
-      "sources": [
-        "tw_ding",
-        "horns_78"
-      ]
+      "vol": [0.12, 0.22],
+      "pitch": [0.9, 1.2],
+      "stretch": [0.35, 0.55],
+      "cutoff": [3000, 5500],
+      "sources": ["tw_ding", "horns_78"]
     },
+    "sampleEvents": [
+      {
+        "pool": ["sp_crier_1", "sp_crier_2", "sp_crier_3"],
+        "placement": "buried",
+        "sections": "all",
+        "treatment": {
+          "cutoff": 4200,
+          "vol": 0.42,
+          "every": 4,
+          "maxDur": 10,
+          "rsend": 0.16,
+          "dsend": 0.12
+        }
+      }
+    ],
     "hits": {
-      "sources": [
-        "tw_ding",
-        "bb_horn_a"
-      ],
+      "sources": ["tw_ding", "bb_horn_a"],
       "pattern": "response",
       "prob": 0.4
     },
-    "stab": [
-      "off"
-    ],
+    "stab": ["off"],
     "form": "drop"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": {
-      "bpm": 3,
-      "sub": 2,
-      "snareBalance": 2,
-      "pump": 2,
-      "motion": 1,
-      "hatDensity": 1
-    }
+  "mind": {
+    "theory": {
+      "adventure": [0.067, 0.153],
+      "color": [0.117, 0.3],
+      "voicing": "close",
+      "reharm": false
+    },
+    "pipes": [
+      {
+        "id": "sweepArc",
+        "w": 0.45,
+        "lo": 0.7,
+        "hi": 2
+      }
+    ],
+    "rhythm": [0.25, 0.475]
+  },
+  "targets": {
+    "bpm": [132, 153, 3],
+    "sub": [0, 1, 2],
+    "snareBalance": [0.04, 1.28, 2],
+    "pump": [0.287, 0.736, 2],
+    "motion": [0, 1, 1],
+    "hatDensity": [0, 1.662, 1],
+    "chopUse": [0.47, 0.67, 3],
+    "acoustic": [0, 0.12, 3],
+    "swing": [0, 0.091, 3],
+    "leadVoices": [1, 4, 3]
   }
 }

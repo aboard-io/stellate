@@ -1,7 +1,8 @@
 {
   "name": "candlegauze",
-  "label": "Candlegauze",
+  "label": "Moonmilk Prism",
   "info": "moonlight impressionism at 71: harp and soft piano arpeggios rippling through lydian maj7 washes, string swells rising like water under a window, no drums, the pulse bending gently — everything seen through gauze and a single candle flame",
+  "pos": [1097, 2798],
   "anchor": {
     "bpm": [69, 76],
     "swing": [0, 0.02],
@@ -13,24 +14,125 @@
     "bass": {
       "patterns": ["root", "pedal", "simple"],
       "samplerPool": ["felt_piano", "harp"],
-      "recipe": { "model": ["sampler", "sampler", "piano"], "cutoff": [700, 1400], "res": [0.05, 0.1], "level": [0.5, 0.68], "send": [0.25, 0.45], "dsend": [0, 0.08], "attack": [0.01, 0.03], "release": [0.35, 0.7] }
+      "recipe": {
+        "model": ["sampler", "sampler", "piano"],
+        "cutoff": [700, 1400],
+        "res": [0.05, 0.1],
+        "level": [0.5, 0.68],
+        "send": [0.25, 0.45],
+        "dsend": [0, 0.08],
+        "attack": [0.01, 0.03],
+        "release": [0.35, 0.7]
+      }
     },
     "lead": {
       "patterns": ["arpup", "updown", "arpup"],
       "samplerPool": ["harp", "felt_piano", "celesta"],
-      "recipe": { "model": ["sampler", "sampler"], "wave": "sine", "voices": [1, 2], "spread": [0.001, 0.003], "cutoff": [2400, 3600], "level": [0.42, 0.55], "send": [0.45, 0.6], "dsend": [0.05, 0.2], "attack": [0.008, 0.025], "release": [0.35, 0.7] }
+      "recipe": {
+        "model": ["sampler", "sampler"],
+        "wave": "sine",
+        "voices": [1, 2],
+        "spread": [0.001, 0.003],
+        "cutoff": [2400, 3600],
+        "level": [0.42, 0.55],
+        "send": [0.45, 0.6],
+        "dsend": [0.05, 0.2],
+        "attack": [0.008, 0.025],
+        "release": [0.35, 0.7]
+      }
     },
     "pads": {
       "prob": 0.85,
       "samplerPool": ["strings", "slow_strings"],
-      "recipe": { "model": ["sampler", "sampler", "strings"], "wave": "sine", "cutoff": [900, 1700], "detune": [0.002, 0.005], "attack": [1, 2.5], "release": [1.8, 3.5], "swell": 1, "level": [0.36, 0.5], "send": [0.5, 0.68], "dsend": [0, 0.1] }
+      "recipe": {
+        "model": ["sampler", "sampler", "strings"],
+        "wave": "sine",
+        "cutoff": [900, 1700],
+        "detune": [0.002, 0.005],
+        "attack": [1, 2.5],
+        "release": [1.8, 3.5],
+        "swell": 1,
+        "level": [0.36, 0.5],
+        "send": [0.5, 0.68],
+        "dsend": [0, 0.1]
+      }
     },
-    "drums": { "kickModel": ["boom"], "snareModel": ["noise"], "hatModel": ["noise"], "kick": [0.4, 0.6], "snare": [0.3, 0.5], "hat": [0.2, 0.4], "tune": [0.9, 1], "send": [0.15, 0.35], "dsend": [0, 0] },
-    "fx": { "reverb": [0.68, 0.82], "delayBeats": [0.75, 1.5], "delayFb": [0.15, 0.28], "delayCut": [2200, 3200], "pump": [0, 0], "crackle": [0.15, 0.4], "lowcut": [0, 0], "highcut": [0, 0], "comp": [0, 0.12] },
-    "found": { "role": "bed", "vol": [0.05, 0.12], "pitch": [0.7, 0.9], "stretch": [0.45, 0.6], "cutoff": [1800, 2800], "sources": ["tw_stationhall", "hydrophone"] },
-    "rubato": { "depth": [0.025, 0.045], "periodBars": [2, 4], "prob": 1 },
-    "hits": { "sources": ["handbell"], "pattern": "sparse", "prob": 0.08 },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise"],
+      "hatModel": ["noise"],
+      "kick": [0.4, 0.6],
+      "snare": [0.3, 0.5],
+      "hat": [0.2, 0.4],
+      "tune": [0.9, 1],
+      "send": [0.15, 0.35],
+      "dsend": [0, 0]
+    },
+    "fx": {
+      "reverb": [0.68, 0.82],
+      "delayBeats": [0.75, 1.5],
+      "delayFb": [0.15, 0.28],
+      "delayCut": [2200, 3200],
+      "pump": [0, 0],
+      "crackle": [0.15, 0.4],
+      "lowcut": [0, 0],
+      "highcut": [0, 0],
+      "comp": [0, 0.12]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.05, 0.12],
+      "pitch": [0.7, 0.9],
+      "stretch": [0.45, 0.6],
+      "cutoff": [1800, 2800],
+      "sources": ["pool:city*1", "pool:water*1"]
+    },
+    "rubato": {
+      "depth": [0.025, 0.045],
+      "periodBars": [2, 4],
+      "prob": 1
+    },
+    "hits": {
+      "sources": ["pool:chime*1"],
+      "pattern": "sparse",
+      "prob": 0.08
+    },
     "stab": ["off"],
     "form": "wave"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.167, 0.31],
+      "color": [0.45, 0.683],
+      "voicing": "open",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      },
+      {
+        "id": "densityArc",
+        "w": 0.4,
+        "floor": 0.6
+      }
+    ],
+    "rhythm": [0, 0.08]
+  },
+  "targets": {
+    "bpm": [64, 82, 3],
+    "drumDensity": [0, 0.4, 2],
+    "wash": [0.172, 0.5, 1],
+    "pump": [0, 0.1, 1],
+    "swing": [0, 0.063, 2],
+    "seventh": [0.85, 1, 1],
+    "acoustic": [0.68, 1, 2],
+    "crackle": [0.06, 0.482, 1],
+    "sub": [0.05, 0.35, 1],
+    "motion": [0.18, 1, 1],
+    "bedUse": [0.88, 1, 1]
   }
 }

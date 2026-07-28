@@ -1,0 +1,122 @@
+{
+  "name": "chiptune",
+  "label": "Sprite Metabolism",
+  "info": "square-wave arpeggios at player-two speed: bright triads, bone-dry mix, zero dust — four channels and nothing to hide",
+  "pos": [1336, 7630],
+  "anchor": {
+    "bpm": [140, 148],
+    "swing": [0, 0.02],
+    "humanize": [0, 0.05],
+    "progressions": ["four_chords", "sad_pop", "minor_run"],
+    "kits": ["four", "pulse"],
+    "fills": ["hat rush", "cut", "riser"],
+    "bass": {
+      "patterns": ["octaves", "sixteenths", "drive"],
+      "recipe": {
+        "model": ["saw"],
+        "cutoff": [900, 1500],
+        "res": [0.1, 0.2],
+        "level": [1, 1.2],
+        "send": [0, 0.05],
+        "dsend": [0, 0.05]
+      }
+    },
+    "lead": {
+      "patterns": ["arpup", "arpdown", "double", "hero"],
+      "recipe": {
+        "model": ["casiocz", "casiocz", "casiocz", "casiocz", "pluck"],
+        "wave": "square",
+        "voices": [1, 2],
+        "spread": [0.001, 0.003],
+        "cutoff": [3500, 5000],
+        "czWave": [0.75, 1],
+        "dcwAmount": [0.5, 0.8],
+        "dcwDecay": [0.05, 0.15],
+        "czDetune": [2, 8],
+        "level": [0.5, 0.62],
+        "send": [0.15, 0.3],
+        "dsend": [0.15, 0.3],
+        "vibrato": [0, 0.002],
+        "attack": 0.002,
+        "release": [0.03, 0.06],
+        "sustain": [0.5, 0.6],
+        "octave": 0
+      }
+    },
+    "pads": {
+      "prob": 0.5,
+      "recipe": {
+        "model": ["saw"],
+        "wave": "square",
+        "cutoff": [1500, 2500],
+        "detune": [0.003, 0.007],
+        "attack": [0.1, 0.4],
+        "level": [0.35, 0.48],
+        "send": [0.15, 0.3],
+        "dsend": [0.05, 0.15]
+      }
+    },
+    "drums": {
+      "kickModel": ["909"],
+      "snareModel": ["noise", "clap"],
+      "hatModel": ["noise"],
+      "kick": [1.1, 1.35],
+      "snare": [0.7, 0.95],
+      "hat": [0.8, 1.15],
+      "tune": [1, 1.15],
+      "send": [0.05, 0.12],
+      "dsend": [0, 0.1]
+    },
+    "fx": {
+      "reverb": [0.3, 0.45],
+      "delayBeats": [0.375, 0.5],
+      "delayFb": [0.15, 0.3],
+      "delayCut": [3000, 4500],
+      "pump": [0, 0.15],
+      "crackle": [0, 0],
+      "lowcut": [0, 0],
+      "highcut": [0, 0],
+      "comp": [0.3, 0.5],
+      "grit": [0.15, 0.35],
+      "jux": [0.25, 0.45]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.04, 0.08],
+      "pitch": [0.9, 1.05],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2000, 3200],
+      "sources": ["pool:city*1", "vx_xminusone"]
+    },
+    "hits": {
+      "sources": ["pool:rave_stab*1", "sp_energy"],
+      "pattern": "offbeat",
+      "prob": 0.4
+    },
+    "stab": ["off", "sparse"],
+    "form": "pop"
+  },
+  "mind": {
+    "theory": {
+      "adventure": [0.1, 0.207],
+      "color": [0.15, 0.3],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [],
+    "rhythm": [0.08, 0.22]
+  },
+  "targets": {
+    "bpm": [136, 152, 3],
+    "crackle": [0, 0.05, 2],
+    "wash": [0, 0.28, 2],
+    "leadVoices": [1, 2, 2],
+    "sub": [0, 0.5, 2],
+    "breakUse": [0, 0.05, 1],
+    "swing": [0, 0.04, 2],
+    "drumDensity": [1.6, 4, 1],
+    "motion": [0.5, 1, 1],
+    "pump": [0, 0.2, 1]
+  }
+}

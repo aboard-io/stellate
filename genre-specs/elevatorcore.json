@@ -1,277 +1,128 @@
 {
   "name": "elevatorcore",
-  "label": "Muzak Ascending",
-  "info": "literal elevator Muzak that modulates up a semitone on every floor \u2014 vibraphone and a beige Rhodes, a woodblock ding as the doors open, \"going up: third floor, ladies' outerwear\" \u2014 a genre with no destination, only floors, forever ascending",
-  "clips": [
-    "pl_kitchen",
-    "pl_supermarket",
-    "blue_dinner",
-    "tv_room"
-  ],
-  "materials": "espeak floor announcer (sp_floor_* \u2014 MATERIALS); the per-floor key-thunk uses the mall/plaza espeak reuse in draft",
-  "pos": [
-    620,
-    110
-  ],
+  "label": "Mezzanine Ascension",
+  "info": "literal elevator Muzak that modulates up a semitone on every floor — vibraphone and a beige Rhodes, a woodblock ding as the doors open, \"going up: third floor, ladies' outerwear\" — a genre with no destination, only floors, forever ascending",
+  "pos": [618, 10017],
   "anchor": {
-    "bpm": [
-      100,
-      112
-    ],
-    "swing": [
-      0.1,
-      0.16
-    ],
-    "humanize": [
-      0.08,
-      0.18
-    ],
-    "progressions": [
-      "lofi",
-      "neosoul",
-      "doo_wop"
-    ],
-    "kits": [
-      "shuffle",
-      "bossa"
-    ],
-    "fills": [
-      "micro lick",
-      "kit fill"
-    ],
-    "thunk": {
-      "prob": 0.6
-    },
+    "bpm": [100, 112],
+    "swing": [0.1, 0.16],
+    "humanize": [0.08, 0.18],
+    "progressions": ["lofi", "neosoul", "doo_wop"],
+    "kits": ["shuffle", "bossa"],
+    "fills": ["micro lick", "kit fill"],
     "bass": {
-      "patterns": [
-        "walking",
-        "root",
-        "simple"
-      ],
+      "patterns": ["walking", "root", "simple"],
       "recipe": {
-        "model": [
-          "sampler",
-          "rhodes"
-        ],
-        "samplerPool": [
-          "acoustic_bass"
-        ],
-        "cutoff": [
-          600,
-          1000
-        ],
-        "level": [
-          0.55,
-          0.72
-        ],
-        "send": [
-          0.15,
-          0.3
-        ],
-        "dsend": [
-          0,
-          0.08
-        ]
+        "model": ["sampler", "rhodes"],
+        "samplerPool": ["acoustic_bass"],
+        "cutoff": [600, 1000],
+        "level": [0.55, 0.72],
+        "send": [0.15, 0.3],
+        "dsend": [0, 0.08]
       }
     },
     "lead": {
-      "patterns": [
-        "composed",
-        "sparse",
-        "wander"
-      ],
+      "patterns": ["composed", "sparse", "wander"],
       "recipe": {
-        "model": [
-          "sampler",
-          "rhodes",
-          "dx7"
-        ],
-        "samplerPool": [
-          "vibraphone",
-          "celesta"
-        ],
-        "patchPool": [
-          "VIBE    1"
-        ],
+        "model": ["sampler", "rhodes", "dx7"],
+        "samplerPool": ["vibraphone", "celesta"],
+        "patchPool": ["VIBE    1"],
         "wave": "sine",
-        "voices": [
-          1,
-          2
-        ],
-        "cutoff": [
-          2400,
-          3600
-        ],
-        "level": [
-          0.42,
-          0.55
-        ],
-        "send": [
-          0.3,
-          0.5
-        ],
-        "dsend": [
-          0.1,
-          0.25
-        ]
+        "voices": [1, 2],
+        "cutoff": [2400, 3600],
+        "level": [0.42, 0.55],
+        "send": [0.3, 0.5],
+        "dsend": [0.1, 0.25]
       }
     },
     "pads": {
       "prob": 0.6,
       "recipe": {
-        "model": [
-          "rhodes",
-          "juno60"
-        ],
+        "model": ["rhodes", "juno60"],
         "wave": "saw",
-        "cutoff": [
-          1000,
-          1600
-        ],
-        "detune": [
-          0.004,
-          0.009
-        ],
-        "attack": [
-          0.5,
-          1.2
-        ],
-        "level": [
-          0.4,
-          0.55
-        ],
-        "send": [
-          0.35,
-          0.55
-        ],
-        "dsend": [
-          0.1,
-          0.2
-        ]
+        "cutoff": [1000, 1600],
+        "detune": [0.004, 0.009],
+        "attack": [0.5, 1.2],
+        "level": [0.4, 0.55],
+        "send": [0.35, 0.55],
+        "dsend": [0.1, 0.2]
       }
     },
     "drums": {
-      "kickModel": [
-        "boom"
-      ],
-      "snareModel": [
-        "noise",
-        "clap"
-      ],
-      "hatModel": [
-        "noise"
-      ],
-      "kick": [
-        0.6,
-        0.85
-      ],
-      "snare": [
-        0.4,
-        0.6
-      ],
-      "hat": [
-        0.4,
-        0.6
-      ],
-      "tune": [
-        0.92,
-        1.02
-      ],
-      "send": [
-        0.15,
-        0.35
-      ],
-      "dsend": [
-        0,
-        0.1
-      ]
+      "kickModel": ["boom"],
+      "snareModel": ["noise", "clap"],
+      "hatModel": ["noise"],
+      "kick": [0.6, 0.85],
+      "snare": [0.4, 0.6],
+      "hat": [0.4, 0.6],
+      "tune": [0.92, 1.02],
+      "send": [0.15, 0.35],
+      "dsend": [0, 0.1]
     },
     "fx": {
-      "reverb": [
-        0.35,
-        0.55
-      ],
-      "delayBeats": [
-        0.5,
-        0.75
-      ],
-      "delayFb": [
-        0.12,
-        0.28
-      ],
-      "delayCut": [
-        2600,
-        3600
-      ],
-      "pump": [
-        0,
-        0
-      ],
-      "crackle": [
-        0,
-        0.1
-      ],
-      "lowcut": [
-        0,
-        0
-      ],
-      "highcut": [
-        0,
-        0
-      ],
-      "comp": [
-        0.2,
-        0.4
-      ]
+      "reverb": [0.35, 0.55],
+      "delayBeats": [0.5, 0.75],
+      "delayFb": [0.12, 0.28],
+      "delayCut": [2600, 3600],
+      "pump": [0, 0],
+      "crackle": [0, 0.1],
+      "lowcut": [0, 0],
+      "highcut": [0, 0],
+      "comp": [0.2, 0.4]
     },
-    "reverbColor": "spring",
     "found": {
       "role": "bed",
-      "vol": [
-        0.05,
-        0.12
-      ],
-      "pitch": [
-        0.95,
-        1.08
-      ],
-      "stretch": [
-        0.4,
-        0.6
-      ],
-      "cutoff": [
-        2400,
-        3400
-      ],
-      "sources": [
-        "shibuya",
-        "tokyo_station"
-      ]
+      "vol": [0.05, 0.12],
+      "pitch": [0.95, 1.08],
+      "stretch": [0.4, 0.6],
+      "cutoff": [2400, 3400],
+      "sources": ["pool:city*2"]
     },
+    "thunk": {
+      "prob": 0.6
+    },
+    "sampleEvents": [
+      {
+        "pool": ["sp_floor_1", "sp_floor_2", "sp_floor_3", "sp_floor_4", "sp_floor_5", "sp_floor_6"],
+        "placement": "buried",
+        "sections": "all",
+        "treatment": {
+          "cutoff": 4300,
+          "vol": 0.42,
+          "every": 2,
+          "maxDur": 9,
+          "rsend": 0.15,
+          "dsend": 0.12
+        }
+      }
+    ],
     "hits": {
-      "sources": [
-        "tw_ding",
-        "sp_shopping"
-      ],
+      "sources": ["tw_ding", "sp_shopping"],
       "pattern": "sparse",
       "prob": 0.3
     },
-    "stab": [
-      "off"
-    ],
-    "form": "pop"
+    "stab": ["off"],
+    "form": "throughline",
+    "reverbColor": "spring"
   },
-  "verify": {
-    "seeds": 6,
-    "widen": 0.1,
-    "features": {
-      "bpm": 3,
-      "swing": 2,
-      "acoustic": 3,
-      "seventh": 2,
-      "motion": 2,
-      "drumDensity": 1,
-      "bedUse": 3
-    }
+  "mind": {
+    "theory": {
+      "adventure": [0.267, 0.417],
+      "color": [0.433, 0.667],
+      "voicing": "drop2",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [],
+    "rhythm": [0.225, 0.425]
+  },
+  "targets": {
+    "bpm": [93, 120, 3],
+    "swing": [0.051, 0.191, 2],
+    "acoustic": [0, 0.12, 3],
+    "seventh": [0, 1, 2],
+    "motion": [0.85, 1, 2],
+    "drumDensity": [0.857, 2.053, 1],
+    "bedUse": [0.51, 0.75, 3]
   }
 }

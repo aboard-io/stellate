@@ -1,8 +1,8 @@
 {
   "name": "altcountry",
-  "label": "Alt-Country",
+  "label": "Tumbleweed Perihelion",
   "info": "dusty alt-country / Americana ~96bpm — jangly clean and steel-string guitars with a seam of fuzz, Rhodes haze, wide roomy reverb, tape crackle, straight-eighth melancholy under the twang. Influences: Wilco, Uncle Tupelo, Son Volt",
-  "clips": ["bt_folksinger", "ca_street", "dark_face"],
+  "pos": [795, 22032],
   "anchor": {
     "bpm": [88, 104],
     "swing": [0.02, 0.07],
@@ -10,19 +10,121 @@
     "progressions": ["four_chords", "lofi", "mediant"],
     "kits": ["boombap", "open"],
     "fills": ["off", "drum fill"],
-    "bass": { "patterns": ["root", "simple", "walking"], "samplerPool": ["finger_bass", "picked_bass"],
-      "recipe": { "model": ["sampler", "sub"], "cutoff": [360, 640], "res": [0.05, 0.14], "level": [0.85, 1.05], "send": [0.08, 0.18], "dsend": [0.04, 0.12] } },
-    "lead": { "patterns": ["composed", "wander", "sparse"], "samplerPool": ["clean_guitar", "steel_string_guitar", "di_guitar"],
-      "recipe": { "model": ["sampler"], "wave": "sine", "voices": [1, 1], "spread": [0.003, 0.008], "cutoff": [2400, 3400], "level": [0.5, 0.64], "send": [0.34, 0.52], "dsend": [0.16, 0.32], "vibrato": [0.008, 0.018] } },
-    "pads": { "prob": 0.75, "samplerPool": ["rhodes_ep", "strings", "slow_strings"],
-      "recipe": { "model": ["sampler", "strings"], "wave": "saw", "cutoff": [1000, 1600], "detune": [0.005, 0.011], "attack": [0.8, 2.2], "level": [0.42, 0.58], "send": [0.42, 0.62], "dsend": [0.16, 0.32] } },
-    "drums": { "kickModel": ["boom"], "snareModel": ["noise", "crack"], "hatModel": ["noise"], "kick": [0.5, 0.76], "snare": [0.5, 0.72], "hat": [0.42, 0.68], "tune": [0.95, 1.05], "send": [0.12, 0.24], "dsend": [0.06, 0.16] },
-    "fx": { "reverb": [0.56, 0.72], "delayBeats": [0.75, 1], "delayFb": [0.26, 0.42], "delayCut": [2000, 3000], "pump": [0, 0.04], "crackle": [0.1, 0.22], "lowcut": [25, 45], "highcut": [0, 0], "comp": [0.14, 0.32] },
-    "reverbColor": "spring",
-    "found": { "role": "bed", "vol": [0.07, 0.14], "pitch": [0.85, 1], "stretch": [0.45, 0.6], "cutoff": [2000, 3000], "sources": ["coyote_prairie", "nj_owls"] },
-    "hits": { "sources": ["tw_ding"], "pattern": "sparse", "prob": 0.12 },
+    "bass": {
+      "patterns": ["root", "simple", "walking"],
+      "samplerPool": ["finger_bass", "picked_bass"],
+      "recipe": {
+        "model": ["sampler", "sub"],
+        "cutoff": [360, 640],
+        "res": [0.05, 0.14],
+        "level": [0.85, 1.05],
+        "send": [0.08, 0.18],
+        "dsend": [0.04, 0.12]
+      }
+    },
+    "lead": {
+      "patterns": ["composed", "wander", "sparse"],
+      "samplerPool": ["clean_guitar", "steel_string_guitar", "di_guitar"],
+      "recipe": {
+        "model": ["sampler"],
+        "wave": "sine",
+        "voices": [1, 1],
+        "spread": [0.003, 0.008],
+        "cutoff": [2400, 3400],
+        "level": [0.5, 0.64],
+        "send": [0.34, 0.52],
+        "dsend": [0.16, 0.32],
+        "vibrato": [0.008, 0.018]
+      }
+    },
+    "pads": {
+      "prob": 0.75,
+      "samplerPool": ["rhodes_ep", "strings", "slow_strings"],
+      "recipe": {
+        "model": ["sampler", "strings"],
+        "wave": "saw",
+        "cutoff": [1000, 1600],
+        "detune": [0.005, 0.011],
+        "attack": [0.8, 2.2],
+        "level": [0.42, 0.58],
+        "send": [0.42, 0.62],
+        "dsend": [0.16, 0.32]
+      }
+    },
+    "drums": {
+      "kickModel": ["boom"],
+      "snareModel": ["noise", "crack"],
+      "hatModel": ["noise"],
+      "kick": [0.5, 0.76],
+      "snare": [0.5, 0.72],
+      "hat": [0.42, 0.68],
+      "tune": [0.95, 1.05],
+      "send": [0.12, 0.24],
+      "dsend": [0.06, 0.16]
+    },
+    "fx": {
+      "reverb": [0.56, 0.72],
+      "delayBeats": [0.75, 1],
+      "delayFb": [0.26, 0.42],
+      "delayCut": [2000, 3000],
+      "pump": [0, 0.04],
+      "crackle": [0.1, 0.22],
+      "lowcut": [25, 45],
+      "highcut": [0, 0],
+      "comp": [0.14, 0.32]
+    },
+    "found": {
+      "role": "bed",
+      "vol": [0.07, 0.14],
+      "pitch": [0.85, 1],
+      "stretch": [0.45, 0.6],
+      "cutoff": [2000, 3000],
+      "sources": ["coyote_prairie", "nj_owls"]
+    },
+    "hits": {
+      "sources": ["pool:vb_folk_pastoral*1", "tw_ding"],
+      "pattern": "sparse",
+      "prob": 0.12
+    },
     "stab": ["off"],
-    "form": "pop"
+    "form": "pop",
+    "timeFeel": {
+      "pushPullMs": {
+        "bass": 6,
+        "hat": -4
+      }
+    },
+    "reverbColor": "spring"
   },
-  "verify": { "seeds": 6, "widen": 0.1, "features": { "bpm": 3, "wash": 3, "acoustic": 2, "seventh": 1, "motion": 1, "swing": 1 } }
+  "mind": {
+    "theory": {
+      "adventure": [0.2, 0.333],
+      "color": [0.25, 0.45],
+      "voicing": "close",
+      "reharm": true,
+      "tables": "corpus"
+    },
+    "pipes": [
+      {
+        "id": "ghost",
+        "w": 0.55,
+        "prob": 0.35
+      },
+      {
+        "id": "strum",
+        "w": 0.55,
+        "step": 0.02
+      }
+    ],
+    "rhythm": [0.2, 0.375]
+  },
+  "targets": {
+    "bpm": [81, 111, 3],
+    "wash": [0.116, 0.39, 3],
+    "acoustic": [0.68, 0.92, 2],
+    "seventh": [0, 1, 1],
+    "motion": [0.487, 1, 1],
+    "swing": [0, 0.105, 1],
+    "snareBalance": [0.567, 1.723, 3]
+  }
 }
