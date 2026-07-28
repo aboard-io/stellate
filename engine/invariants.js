@@ -80,7 +80,7 @@
     const fs = require("fs"), path = require("path");
     try { SRC.kernel = fs.readFileSync(path.join(__dirname, "genre-kernel.js"), "utf8"); } catch (e) {}
     try { SRC.engine = fs.readFileSync(path.join(__dirname, "csd-engine.js"), "utf8"); } catch (e) {}
-    try { SRC.stateEngine = fs.readFileSync(path.join(__dirname, "faust", "state-engine.js"), "utf8"); } catch (e) {}
+    try { SRC.stateEngine = fs.readFileSync(path.join(__dirname, "faust", "voices", "state-engine.js"), "utf8"); } catch (e) {}
   }
   // bracket-match the {...} / [...] / (...) literal at the first opener after
   // `marker`, tracking ALL bracket kinds + strings + comments

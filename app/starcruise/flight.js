@@ -331,7 +331,7 @@ export function makeFlight({ getTravel, getBeat } = {}) {
     const planetWorld = worldOfCoord(planetCoord);
     // DEAD-RECKON "where we are" so the followed target advances EVERY FRAME (not just when
     // the discrete blend steps). The app advances travel + re-targets S.weights ONCE PER BAR
-    // (app/live.js onBar -> travelStep), so the update interval IS one bar: barDur = sec/beat
+    // (app/audio/live.js onBar -> travelStep), so the update interval IS one bar: barDur = sec/beat
     // * beats. On each discrete centroid change we latch a fresh LINEAR ramp from the value
     // we're displaying NOW to the new target, spanning barDur, so the goal glides at ~constant
     // velocity and reaches the new centroid just as the NEXT per-bar update lands — a seamless

@@ -5,11 +5,11 @@
 //
 // TWO CALLERS. (1) The browser: index.html loads it as a classic global
 // (window.MidiExport) for the ⚙ panel's ⤓ midi download (app/export.js; gate
-// test/midi-export-run.js). It reads window.CsdEngine at load, so it must
+// test/browser/midi-export.test.js). It reads window.CsdEngine at load, so it must
 // come AFTER engine/csd-engine.js in the page (boot-smoke enforces the order).
 // (2) Node: the MIDI-corpus gates use it as the reference SMF WRITER —
-// test/midi-mine.test.js round-trips the mine-midi parser against it, and
-// test/corpus-db.test.js builds fixture SMFs with it.
+// test/unit/midi-mine.test.js round-trips the mine-midi parser against it, and
+// test/unit/corpus-db.test.js builds fixture SMFs with it.
 
 (function (root) {
   "use strict";

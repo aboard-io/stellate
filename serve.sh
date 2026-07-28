@@ -24,7 +24,7 @@ class H(SimpleHTTPRequestHandler):
         # require-corp (not credentialless): Safari isolates reliably under require-corp
         # so the ring-engine's SharedArrayBuffer works. Safe because the only cross-origin
         # subresources are esm.sh preact/htm (CORS, ACAO:*) and Google Fonts (sends CORP),
-        # and all found audio/video is now local (same-origin). See engine/faust/live.js.
+        # and all found audio/video is now local (same-origin). See engine/faust/live/live.js.
         self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
         self.send_header("Cache-Control", "no-cache")
         super().end_headers()

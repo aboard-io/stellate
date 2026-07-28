@@ -105,7 +105,7 @@ New mode `wavOut` in `FaustLive.exploreLive`:
    (new-gen segments arrive and play), zero console errors.
 4. **Render keeps up:** segment render time < 1/3 segment duration on the dev
    box (log the rate; phones are slower — headroom is the budget).
-5. **Existing gates stay green:** `engine.test.js`, `faust/live-test-run.js`
+5. **Existing gates stay green:** `engine.test.js`, `test/browser/live.test.js`
    (desktop ring path), `validate-genres.js --quick`, and the bg-survival probe
    (desktop survival machinery unchanged).
 

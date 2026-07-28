@@ -19,10 +19,10 @@ No csound, no bundler, no framework, no build step for the app itself.
 ```bash
 git clone https://github.com/aboard-io/stellate && cd stellate
 (cd engine/faust && npm ci)          # the WASM engine's node deps (press + tools)
-tools/fetch-found-samples.sh         # SoundFont GM + breaks/one-shots/vox  → found/samples/
-tools/fetch-found-sound.sh           # field-recording beds                 → found/
-tools/fetch-found-bbc.sh             # BBC Sound Effects beds + chimes      → found/  (RemArc licence — see SOURCES.md)
-node tools/transcode-samples.js      # REQUIRED last step: instrument zones → mp3
+tools/fetch/fetch-found-samples.sh         # SoundFont GM + breaks/one-shots/vox  → found/samples/
+tools/fetch/fetch-found-sound.sh           # field-recording beds                 → found/
+tools/fetch/fetch-found-bbc.sh             # BBC Sound Effects beds + chimes      → found/  (RemArc licence — see SOURCES.md)
+node tools/build/transcode-samples.js      # REQUIRED last step: instrument zones → mp3
 ./serve.sh                           # → http://localhost:8777/
 ```
 
@@ -35,7 +35,7 @@ point of the thing is the sampled + found layer, so fetch before judging.
 zones from the SoundFont as 44.1 kHz WAVs (~102 MB); the committed `SAMPLERS`
 metadata in `engine/genre-kernel.js` names **mp3** files at 22.05 kHz, so
 without this step the sampler 404s on every zone and falls back to synths.
-`tools/transcode-samples.js` converts each zone (mono, 22.05 kHz, 48 kbps,
+`tools/build/transcode-samples.js` converts each zone (mono, 22.05 kHz, 48 kbps,
 gapless-tagged) and re-bakes the metadata that rides with it — `ls`/`le` are
 absolute sample indices and halve with the rate, and `len` is the expected
 decoded length that lets the player detect and cancel WebKit's constant
@@ -48,7 +48,7 @@ Optional extras:
 
 ```bash
 python3 -m venv .venv-verify && .venv-verify/bin/pip install essentia-tensorflow
-                                     # only for the empirical audio verifier (tools/audio-verifier.py)
+                                     # only for the empirical audio verifier (tools/audit/audio-verifier.py)
 ```
 
 **Why `serve.sh` and not `file://` or any old static server:** the page must be
@@ -60,7 +60,7 @@ plain `python3 -m http.server` don't, and the ring engine won't boot.
 Smoke-check a working stand:
 
 ```bash
-node test/engine.test.js                     # offline press renders, non-silent
+node test/gates/engine.test.js                     # offline press renders, non-silent
 node engine/genre-verifier.js matrix         # 274/274 diagonal-dominant
 node tools/kernel-cli.js track jungle --seed 7 --render   # one mp3, ears-ready
 ```
@@ -85,7 +85,7 @@ never boot; mobile's WAV-first path still works. Keep all media **same-origin**
 cross-origin `<video>`/audio needs `Cross-Origin-Resource-Policy` headers most
 media hosts won't send.
 
-`tools/ship.sh` is the reference deploy: gates → push → rsync. It refuses a
+`tools/deploy/ship.sh` is the reference deploy: gates → push → rsync. It refuses a
 dirty tree, because deployed must mean committed.
 
 ## 3. Adding audio files
@@ -98,8 +98,8 @@ generator.)
 
 ### a. A found-sound bed (ambience under a genre)
 
-1. **Recipe** — add a fetch line to `tools/fetch-found-sound.sh` (or a new
-   `tools/fetch-*.sh`): download, trim a usable window, normalize to mono
+1. **Recipe** — add a fetch line to `tools/fetch/fetch-found-sound.sh` (or a new
+   `tools/fetch/fetch-*.sh`): download, trim a usable window, normalize to mono
    44.1 kHz MP3 at `found/<id>.mp3`. The `getbed` helper in that script is the
    pattern (ffmpeg `-ss`/`-t` + `loudnorm=I=-18:TP=-1.5`).
 2. **Registry** — add the id to `SOURCES` in `engine/genre-kernel.js` with a
@@ -119,7 +119,7 @@ generator.)
    tier 1; anything NC/ND/SA (or the BBC's RemArc terms) is tier 2:
    fetch-only, flagged, never redistributed in a packaged build.
 6. **Gate it** — `node engine/genre-verifier.js matrix --no-cache` must still
-   print `diagonal dominant: 274/274`; `node test/engine.test.js` must stay
+   print `diagonal dominant: 274/274`; `node test/gates/engine.test.js` must stay
    non-silent. Then listen in the app (`?genre=<something that pools it>`).
 
 House taste rules you will hit: **the bird-rarity law** (bird-forward
@@ -137,8 +137,8 @@ or a genre's `hits.sources` (always matrix-safe).
 ### c. A whole sample CD
 
 There's a dedicated pipeline for archive.org sample CDs (a zip of WAVs, even
-generically named): `tools/fetch-sample-cd.sh` downloads/trims, and
-`tools/classify-sample-cd.py` recovers pitch/BPM/class per sample and emits a
+generically named): `tools/fetch/fetch-sample-cd.sh` downloads/trims, and
+`tools/fetch/classify-sample-cd.py` recovers pitch/BPM/class per sample and emits a
 ready-to-paste `SAMPLES` snippet. Full walkthrough in
 [CLAUDE.md § Incorporating a sample CD](../CLAUDE.md).
 

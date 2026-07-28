@@ -2,19 +2,19 @@
 # verify.sh — one-shot verification orchestrator. Runs every gate suite
 # CONCURRENTLY and streams a compact PASS/FAIL row as each one lands:
 #
-#   matrix      node engine/genre-verifier.js matrix       (symbolic confusion matrix)
-#   validate    node engine/validate-genres.js --quick     (kernel differentiation gates)
-#   engine      node test/engine.test.js --quick           (real faust renders, 8s)
-#   prove       node engine/invariants.js prove            (interval proofs + property sweeps)
-#   social      node test/social-meta.test.js              (OG/JSON-LD/icons/oembed contract)
-#   matproof    node test/prove-matrix.test.js             (offline matrix prover, cross-checked)
-#   poscover    node test/pos-coverage.js                  (every genre has a star-map POS)
-#   kerneldata  node test/kernel-data-identity.test.js     (genre data byte-identical vs HEAD)
-#   specs       node test/genre-specs.test.js              (every genre has a spec; specs round-trip)
-#   coordscover node test/coords-coverage.js               (every genre has a 3D coord + cluster)
-#   seamwalk    node test/live-walk-parity.test.js         (chord-bar seam fires exactly once)
-#   bootsmoke   node test/boot-smoke.js                    (script load order + window globals)
-#   doccounts   node test/doc-counts.test.js                (docs state the real anchor count)
+#   matrix      node engine/genre-verifier.js matrix          (symbolic confusion matrix)
+#   validate    node engine/validate-genres.js --quick        (kernel differentiation gates)
+#   engine      node test/gates/engine.test.js --quick        (real faust renders, 8s)
+#   prove       node engine/invariants.js prove               (interval proofs + property sweeps)
+#   social      node test/gates/social-meta.test.js           (OG/JSON-LD/icons/oembed contract)
+#   matproof    node test/gates/prove-matrix.test.js          (offline matrix prover, cross-checked)
+#   poscover    node test/gates/pos-coverage.test.js          (every genre has a star-map POS)
+#   kerneldata  node test/gates/kernel-data-identity.test.js  (genre data byte-identical vs HEAD)
+#   specs       node test/gates/genre-specs.test.js           (every genre has a spec; specs round-trip)
+#   coordscover node test/gates/coords-coverage.test.js       (every genre has a 3D coord + cluster)
+#   seamwalk    node test/gates/live-walk-parity.test.js      (chord-bar seam fires exactly once)
+#   bootsmoke   node test/gates/boot-smoke.test.js            (script load order + window globals)
+#   doccounts   node test/gates/doc-counts.test.js            (docs state the real anchor count)
 #
 # The rows are not a fixed list — adding a `run` line below is all it takes; the
 # wait loop counts jobs rather than a hardcoded tally.
@@ -74,62 +74,62 @@ run "matrix  " node engine/genre-verifier.js matrix ${PASS_ARGS[@]+"${PASS_ARGS[
 PIDS+=($!)
 run "validate" node engine/validate-genres.js ${VAL_ARGS[@]+"${VAL_ARGS[@]}"} ${PASS_ARGS[@]+"${PASS_ARGS[@]}"} &
 PIDS+=($!)
-run "engine  " node test/engine.test.js ${ENG_ARGS[@]+"${ENG_ARGS[@]}"} &
+run "engine  " node test/gates/engine.test.js ${ENG_ARGS[@]+"${ENG_ARGS[@]}"} &
 PIDS+=($!)
 run "prove   " node engine/invariants.js prove &
 PIDS+=($!)
 # social: the OG/JSON-LD/icons/oembed contract (pure node, ~10ms)
-run "social  " node test/social-meta.test.js &
+run "social  " node test/gates/social-meta.test.js &
 PIDS+=($!)
 # matproof: the OFFLINE MATRIX PROVER (engine/prove-matrix.js) — the anchor
 # catalog as LO/HI vectors, the blend hull as a reduction, DIFFERENTIALLY
 # cross-checked against `prove` (two independent implementations must agree)
 # plus a seeded Monte-Carlo witness through the real K.mix.
-run "matproof" node test/prove-matrix.test.js &
+run "matproof" node test/gates/prove-matrix.test.js &
 PIDS+=($!)
-# kerneldata: THE GENRE-DATA IDENTITY gate (test/kernel-data-identity.test.js) —
+# kerneldata: THE GENRE-DATA IDENTITY gate (test/gates/kernel-data-identity.test.js) —
 # GENRES + the registries, byte-for-byte against HEAD, plus the genre key ORDER
 # and a handful of resolved tracks. Stage E1 moves ~810 KB of this data into
 # generated files, and the data is what every seeded render and the whole matrix
 # are downstream of; a generator that silently reorders a key or reprints 0.3 as
 # 0.30000000000000004 would be invisible everywhere else. Self-heals on commit,
 # like meter.test's head_byte_identity. Plain node, no browser — CI-safe.
-run "kerneldata" node test/kernel-data-identity.test.js &
+run "kerneldata" node test/gates/kernel-data-identity.test.js &
 PIDS+=($!)
-# specs: THE GENRE-SPEC ROUND-TRIP gate (test/genre-specs.test.js) — genre-specs/
+# specs: THE GENRE-SPEC ROUND-TRIP gate (test/gates/genre-specs.test.js) — genre-specs/
 # was one-directional and rotted to 135 files for 274 genres, 115 of them drifted
 # and every label stale. `genre-tool.js export` is the missing direction; this
 # holds the folder to it, so an anchor edited without a re-export fails here with
 # the genre named instead of quietly becoming another stale receipt.
-run "specs" node test/genre-specs.test.js &
+run "specs" node test/gates/genre-specs.test.js &
 PIDS+=($!)
-# poscover: the STAR-MAP POS COMPLETENESS gate (test/pos-coverage.js) — every
-# runtime genre (GenreKernel.GENRES) MUST have an app/world.js POS entry, else
+# poscover: the STAR-MAP POS COMPLETENESS gate (test/gates/pos-coverage.test.js) — every
+# runtime genre (GenreKernel.GENRES) MUST have an app/core/world.js POS entry, else
 # app boot drops into computeGenreLayout's relaxation and crashes the renderer
 # (a missing entry is a blank-app outage). Plain node, no browser — CI-safe.
-run "poscover" node test/pos-coverage.js &
+run "poscover" node test/gates/pos-coverage.test.js &
 PIDS+=($!)
 # coordscover: the STAR-CRUISE COORD/CLUSTER COMPLETENESS gate
-# (test/coords-coverage.js) — every runtime genre (GenreKernel.GENRES) MUST have
+# (test/gates/coords-coverage.test.js) — every runtime genre (GenreKernel.GENRES) MUST have
 # a planet in app/starcruise/genre-coords.js GENRE_COORDS AND a star in
 # genre-clusters.js CLUSTER_OF, else the 3D flight mode can't see that genre (the
 # same class as the folk POS outage). Plain node, no browser — CI-safe.
-run "coordscover" node test/coords-coverage.js &
+run "coordscover" node test/gates/coords-coverage.test.js &
 PIDS+=($!)
-# seamwalk: THE SEAM GATE (test/live-walk-parity.test.js) — replays the real
+# seamwalk: THE SEAM GATE (test/gates/live-walk-parity.test.js) — replays the real
 # faust/live.js makeWalk in node and asserts every event on a chord-bar boundary
 # fires EXACTLY ONCE across the join. This closes the hole every other gate
 # leaves open: they all test inside a unit, never across one. Plain node, no
 # browser, ~2s — CI-safe.
-run "seamwalk" node test/live-walk-parity.test.js &
+run "seamwalk" node test/gates/live-walk-parity.test.js &
 PIDS+=($!)
-# bootsmoke: THE LOAD-ORDER GATE (test/boot-smoke.js) — parses index.html, replays
+# bootsmoke: THE LOAD-ORDER GATE (test/gates/boot-smoke.test.js) — parses index.html, replays
 # its classic <script> block in a vm sandbox, and fails if a script goes missing,
 # moves, loads out of order, or stops publishing its window global. It is the gate
 # that makes moving engine files survivable; it lived only in `npm run test:pure`,
 # which CI never calls, so the reorg it protects was running unprotected. Plain
 # node, no browser, ~1s — CI-safe.
-run "bootsmoke" node test/boot-smoke.js &
+run "bootsmoke" node test/gates/boot-smoke.test.js &
 PIDS+=($!)
 # doccounts: the docs must not lie about the size of the space. The anchor count
 # has been wrong in the docs three times over and drifts silently because nothing
@@ -137,7 +137,7 @@ PIDS+=($!)
 # PR template asked contributors to confirm a matrix size that had not existed in
 # months. Reads the real count from the kernel; lines that date themselves are
 # exempt. Plain node, no browser, ~1s — CI-safe.
-run "doccounts" node test/doc-counts.test.js &
+run "doccounts" node test/gates/doc-counts.test.js &
 PIDS+=($!)
 
 FAILED=0

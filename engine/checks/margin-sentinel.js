@@ -6,7 +6,7 @@
 // still WIN every seed (matrix stays 249/249) while its margin quietly erodes
 // toward the tie line — the exact failure the aggregate win-rate gate can't see
 // until it's too late. This module freezes a COMMITTED baseline of those
-// margins (test/margin-baseline.json) and WARNs when any margin regresses
+// margins (test/lib/margin-baseline.json) and WARNs when any margin regresses
 // beyond a delta versus the baseline, catching the erosion one edit at a time.
 //
 //   node margin-sentinel.js check              recompute + diff vs baseline
@@ -33,7 +33,7 @@ const K = require("../genre-kernel.js");
 const V = require("../genre-verifier.js");
 const L = require("../verify-lib.js");
 
-const BASELINE = path.join(__dirname, "..", "..", "test", "margin-baseline.json");
+const BASELINE = path.join(__dirname, "..", "..", "test", "lib", "margin-baseline.json");
 const DEFAULT_SEEDS = [1, 2, 3];
 const DEFAULT_DELTA = 1.0;   // points a margin may drop before it WARNs
 
@@ -87,7 +87,7 @@ function computeMargins(opts) {
 }
 
 // Capture (or re-capture) the committed baseline. Deterministic; mirrors
-// test/fixtures.js capture. Writes { seeds, delta, count, margins }.
+// test/lib/fixtures.js capture. Writes { seeds, delta, count, margins }.
 function captureBaseline(opts) {
   opts = opts || {};
   const seeds = opts.seeds || DEFAULT_SEEDS;

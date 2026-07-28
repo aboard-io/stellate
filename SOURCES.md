@@ -1,7 +1,7 @@
 # The media policy
 
 **This repo ships recipes, not media.** Source is committed; audio, video, and
-models are derived — fetched by the committed recipe scripts (`tools/fetch-*.sh`)
+models are derived — fetched by the committed recipe scripts (`tools/fetch/fetch-*.sh`)
 into gitignored directories (`found/`, `models/`) and fully regenerable. No
 audio/video/model binary is ever committed; `verify.sh` and CI enforce it
 (`.github/workflows/verify.yml`). What IS committed: fetch recipes, manifests,
@@ -10,7 +10,7 @@ cue catalogs (JSON timestamps/tags), decoded parameter data, and this ledger.
 ## What this project actually does with it
 
 **Stated plainly, because an inaccurate ledger is worse than an awkward one:
-the fetched media is served from the public web.** `tools/deploy-stellate.sh`
+the fetched media is served from the public web.** `tools/deploy/deploy-stellate.sh`
 rsyncs `found/` to stellate.app, so every sample the engine can play is
 fetchable by anyone who knows the URL, and the site's renders are public
 playback. Earlier versions of this file promised the opposite for some of the
@@ -41,7 +41,7 @@ win and the exposure is real and knowing. The tiers below therefore describe
 **If you fork this, that risk does not transfer with the code.** Decide for
 yourself before deploying: the tier-3 rows are the ones to look at first, and
 `--exclude 'found/samples/stml/'`-style rsync filters in
-`tools/deploy-stellate.sh` are where you would enforce a stricter policy.
+`tools/deploy/deploy-stellate.sh` are where you would enforce a stricter policy.
 
 This file is the canonical attribution ledger (every item, every license,
 every flag). The third-party CODE credits and license carve-outs live in
@@ -61,7 +61,7 @@ CurlyWas and compiled with the MicroW8 `uw8` tool. All public domain (Unlicense)
 The found-sound layer is **field recordings from [radio aporee ::: maps](https://aporee.org/maps/)**,
 mirrored on the **Internet Archive**. The audio files themselves are **not committed** —
 `fetch-found-sound.sh` downloads them and the engine's found-sound layer
-(`engine/faust/found-player.js`) granular-processes them at play time
+(`engine/faust/voices/found-player.js`) granular-processes them at play time
 (time-stretched, pitched down, sent to the reverb).
 
 aporee field recordings are generally licensed **CC BY-NC-SA**. Respect that for any
@@ -100,7 +100,7 @@ is **synthesized** with `espeak-ng` through a telephone-band filter — see the
 
 79 field-recording beds from radio aporee ::: maps (archive.org mirrors),
 curated into ten character classes for the bed-POOL law (`genre-kernel.js`
-`SOURCE_POOLS`; recipe: `tools/fetch-bed-expansion.sh`). **Permissive licenses
+`SOURCE_POOLS`; recipe: `tools/fetch/fetch-bed-expansion.sh`). **Permissive licenses
 only** (PD Mark / BY / BY-SA), each verified against its item's live
 archive.org `licenseurl` metadata on 2026-07-10 — stricter than the original
 corpus above (zero NC, zero ND). **Flag for the human release decision:** BY
@@ -196,7 +196,7 @@ a plain `-ac 1` downmix cancels to −57 dB. The fetch script's `getbed1` takes
 channel 0 instead (verified −18 LUFS out). If any other bed ever comes out
 silent, check downmix cancellation first.
 
-## BBC Sound Effects (2026-07-25) — tools/fetch-found-bbc.sh
+## BBC Sound Effects (2026-07-25) — tools/fetch/fetch-found-bbc.sh
 
 40 recordings (36 pool beds + 4 chime one-shots) from the [BBC Sound Effects
 archive](https://sound-effects.bbcrewind.co.uk/), curated one wing per
@@ -405,7 +405,7 @@ sketches but flag a human decision before any release that chops/pitches them.
 | `vx_sv_radio` | [`sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977`](https://archive.org/details/sraa-radio-moscow-salyut-6-space-station-coverage-december-10-1977) | Radio Moscow English service, Soyuz 26 launch, Dec 10 1977 — Shortwave Radio Audio Archive (sovietwave) | **CC BY-NC 3.0** (derivatives OK, non-commercial) |
 
 
-## Naropa expansion (2026-07-25) — tools/fetch-found-naropa.sh
+## Naropa expansion (2026-07-25) — tools/fetch/fetch-found-naropa.sh
 
 25 more readings from the **Naropa Poetics Audio Archive** (the Jack Kerouac
 School of Disembodied Poetics, Naropa University; `collection:naropa` on the
@@ -451,13 +451,13 @@ found pools, never the general voices pool.
 | `vx_burroughs_lecture76` | [`naropa_william_s_burroughs2`](https://archive.org/details/naropa_william_s_burroughs2) | William S. Burroughs lecture (Part 1), Naropa 1976 — William S. Burroughs | **CC BY-NC-ND 1.0** (⚠ ND) |
 | `vx_burroughs_giorno79` | [`William_S_Burroughs_Sr_and_John_Giorno_reading_August_1979_79P104`](https://archive.org/details/William_S_Burroughs_Sr_and_John_Giorno_reading_August_1979_79P104) | Burroughs & Giorno reading, Naropa 1979 — William S. Burroughs | **CC BY-NC-ND 1.0** (⚠ ND) |
 
-## Synthesized voice bank (found/samples/voxbank/ — tools/gen-voice-bank.js, 2026-07-25)
+## Synthesized voice bank (found/samples/voxbank/ — tools/build/gen-voice-bank.js, 2026-07-25)
 
 A deterministic bank of **360 synthesized voice clips** — 12 families × 30
 phrases — generated locally with **espeak-ng** (v1.51). Voice variant, speed and
 pitch are derived from an fnv1a hash of `(family + text)` honouring each phrase's
 `{gender, pace, tone}` tags, so the same inputs always yield byte-stable params.
-The phrase text lives committed at **`tools/voxbank-phrases.json`** (the source
+The phrase text lives committed at **`tools/build/voxbank-phrases.json`** (the source
 text IS the recipe); the wavs are derived and **gitignored** under
 `found/samples/voxbank/<family>/vb_<family>_NN.wav`. Each family registers as a
 `SOURCE_POOLS.vb_<family>` pool and rides genres' `hits.sources` (matrix-safe:
@@ -485,11 +485,11 @@ the font itself is never committed or shipped).
 | **the full General MIDI set** — all 128 bank-0 FluidR3 melodic presets (`faust/extract-gm.js`, 2026-07 "all of GM"): the acoustic families above plus `rhodes_ep` `legend_ep_2` `electric_piano` `yamaha_grand_piano` `violin` `viola` `contrabass` `slow_strings` `tremolo` `timpani` `ohh_voices` `solo_vox` `orchestra_hit` `clean_guitar` `palm_muted_guitar` `overdrive_guitar` `distortion_guitar` `guitar_harmonics` `soprano_sax` `baritone_sax` `english_horn` `bassoon` `piccolo` `recorder` `ocarina` `banjo` `koto` `shamisen` `fiddle` `dulcimer` `music_box` `xylophone` `tubular_bells` `tinker_bell` `picked_bass` `pop_bass` `slap_bass` `reed_organ` `brass_section` `bowed_glass` `space_voice` … | **FluidR3 GM/GS** (same font/item as above) | 105 usable multi-zone keymaps (6 zones each). The 24 single-zone presets (SFX, one-note synth pads, DrawbarOrgan) extract but are one-shot color only. Now the default sound: `state.sampledOnly` on by default, signature synths (tb303 etc.) exempt. | **MIT** (Frank Wen, as above) |
 | `felt_piano` | **FluidR3 GM/GS** GM 0 "Yamaha Grand Piano" (same font/item as above) | 10-zone keymap (dense midrange — the neoclassical lead is exposed), made *felt* by baking a 3 kHz lowpass into the zone wavs at extraction (fetch-found-samples.sh; sample counts unchanged, SF2 loop points preserved). A derivative work of the FluidR3 samples, not a new recording. Chosen over external "felt piano" sample sets: no CC0/PD felt piano with verifiable provenance and per-note loop data was found (the well-known felt libraries — e.g. Spitfire LABS Soft Piano — are EULA-restricted, not redistributable). | **MIT** (Frank Wen, as above) |
 | `drums/acoustic` `drums/room` `drums/power` `drums/electronic` `drums/jazz` `drums/brush` | **FluidR3 GM/GS** GM **bank 128** percussion (Standard / Room / Power / Electronic / Jazz / Brush kits; same font/item as above) | SAMPLED DRUM KITS — per-hit one-shots (kick/snare/hi-hats/toms + rim/clap/crash/ride), one recorded GM drum note each, at natural pitch (`faust/sf2.js drumkit`). Additive to the Faust synth kicks; genres opt in via `drums.kit` (genre-kernel `DRUMKITS`). Wavs gitignored/derived, `len` mirrored in `DRUMKITS`. | **MIT** (Frank Wen, as above) |
-| `crunch_guitar` `di_guitar` | **FreePats "FSBS Electric Guitar"** (roberto@zenvoid.org, version 2022-09-11) — [freepats.zenvoid.org/ElectricGuitar/](https://freepats.zenvoid.org/ElectricGuitar/distorted-electric-guitar.html); SF2 variants fetched by `tools/fetch-guitar-samples.sh`, zones extracted by `faust/extract-gm.js` | a real Fender, bridge pickups: **dist #2** re-amped through an amplifier + effects rack (distorted, 10–33 s natural sustains, trimmed to 8 s + fade at fetch) → `crunch_guitar`; **direct** = the raw DI pickup signal (~-27 dB RMS by design) meant to feed the engine's staged `insert_higain` amp → `di_guitar`. New ids; the polite GM guitar dirs stay. | **CC0 1.0** — `cc0.txt` ships inside every archive; the site states it; `readme.txt` repeats it |
-| `tenor_sax` (REPLACEMENT of the FluidR3 extract, same id) | **FreePats Tenor Saxophone** (VCSL samples by Versilian Studios LLC, re-edited with infinite sustain loops by roberto@zenvoid.org, version 2020-07-17) — [freepats.zenvoid.org/Reed/saxophone.html](https://freepats.zenvoid.org/Reed/saxophone.html); fetched by `tools/fetch-guitar-samples.sh` | 8-zone looped tenor-sax keymap (every zone carries a sustain loop — real reed breath that holds under a solo note) | **CC0 1.0** (`readme.txt` in the archive; VCSL itself is CC0) |
-| `upright_piano` | **FreePats Upright Piano KW** (a Kawai upright in a living room; recorded by Gonzalo & Roberto, January 2017) — [freepats.zenvoid.org/Piano/acoustic-grand-piano.html#UprightKW](https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html#UprightKW); fetched by `tools/fetch-guitar-samples.sh` | 10-zone upright-piano keymap, full 21–108 span, bass-note sustain loops, top octaves natural decay — the intimate/domestic piano voice (NEW id; the GM grand + felt_piano stay) | **CC0 1.0** (`cc0.txt` + `readme.txt` in the archive) |
+| `crunch_guitar` `di_guitar` | **FreePats "FSBS Electric Guitar"** (roberto@zenvoid.org, version 2022-09-11) — [freepats.zenvoid.org/ElectricGuitar/](https://freepats.zenvoid.org/ElectricGuitar/distorted-electric-guitar.html); SF2 variants fetched by `tools/fetch/fetch-guitar-samples.sh`, zones extracted by `faust/extract-gm.js` | a real Fender, bridge pickups: **dist #2** re-amped through an amplifier + effects rack (distorted, 10–33 s natural sustains, trimmed to 8 s + fade at fetch) → `crunch_guitar`; **direct** = the raw DI pickup signal (~-27 dB RMS by design) meant to feed the engine's staged `insert_higain` amp → `di_guitar`. New ids; the polite GM guitar dirs stay. | **CC0 1.0** — `cc0.txt` ships inside every archive; the site states it; `readme.txt` repeats it |
+| `tenor_sax` (REPLACEMENT of the FluidR3 extract, same id) | **FreePats Tenor Saxophone** (VCSL samples by Versilian Studios LLC, re-edited with infinite sustain loops by roberto@zenvoid.org, version 2020-07-17) — [freepats.zenvoid.org/Reed/saxophone.html](https://freepats.zenvoid.org/Reed/saxophone.html); fetched by `tools/fetch/fetch-guitar-samples.sh` | 8-zone looped tenor-sax keymap (every zone carries a sustain loop — real reed breath that holds under a solo note) | **CC0 1.0** (`readme.txt` in the archive; VCSL itself is CC0) |
+| `upright_piano` | **FreePats Upright Piano KW** (a Kawai upright in a living room; recorded by Gonzalo & Roberto, January 2017) — [freepats.zenvoid.org/Piano/acoustic-grand-piano.html#UprightKW](https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html#UprightKW); fetched by `tools/fetch/fetch-guitar-samples.sh` | 10-zone upright-piano keymap, full 21–108 span, bass-note sustain loops, top octaves natural decay — the intimate/domestic piano voice (NEW id; the GM grand + felt_piano stay) | **CC0 1.0** (`cc0.txt` + `readme.txt` in the archive) |
 
-## Alternate soundfont shelf (`engine/faust/font-*.json` + `found/samples/instruments-<key>/` — `tools/gen-font.js`)
+## Alternate soundfont shelf (`engine/faust/data/font-*.json` + `found/samples/instruments-<key>/` — `tools/build/gen-font.js`)
 
 The runtime soundfont switcher plays alternate GM fonts alongside the default
 FluidR3. **The in-app names are jokes, not trade names** (Paul 2026-07-25:
@@ -534,10 +534,10 @@ Philharmonia samples (their terms prohibit redistribution "as is… as a sampler
 instrument" — exactly what this engine does); Shreddage-free / DSK-class /
 Spitfire-LABS-class freeware (EULA: free to use, never to redistribute).
 
-## Sample CDs (found/samples/<prefix>/ — tools/fetch-sample-cd.sh)
+## Sample CDs (found/samples/<prefix>/ — tools/fetch/fetch-sample-cd.sh)
 
 Break/loop/one-shot crates ingested from archive.org sample-CD items by the
-reusable pipeline `tools/fetch-sample-cd.sh` + `tools/classify-sample-cd.py`
+reusable pipeline `tools/fetch/fetch-sample-cd.sh` + `tools/fetch/classify-sample-cd.py`
 (download → mono/trim → classify pitch/bpm/class → register). The audio is
 **not committed** (gitignored under `found/samples/`); the fetch recipe, the
 per-crate `manifest.json`, and the `genre-kernel.js` `SAMPLES` entries are the
@@ -549,12 +549,12 @@ committed, recoverable deliverable. Workflow documented in CLAUDE.md
 | `stml/` (`stml_*` ids) | **Fatboy Slim / Norman Cook — "Skip to My Loops"** sample CD, [`fatboy-slim-skip-to-my-loops`](https://archive.org/details/fatboy-slim-skip-to-my-loops) on archive.org (single zip, 79 generically-named WAVs) | funky breakbeat **loops** (bpm recovered by the classifier), plus a handful of vocal/funk **chops** and one-shot **hits**. Big-beat DNA — wired into `bigbeat` (+ breakcore/jungle/boombap/triphop and the invented *break* genres), the *house*/*funk* chops pools, and the bigbeat/house/gabber/electro/miamibass/disco hit pools. | unauthorized rip of an out-of-print commercial sample CD; no license chain (the CD's own user license was of doubtful validity) — tier 3: no licence chain; served publicly anyway (see the media policy) |
 | `hits/bb_*.wav`, `hits/rave_a..d.wav` (`bb_horn_a/b`, `rave_a`…`rave_d` ids — recipe in `fetch-found-samples.sh`, silence-split from CD tracks) | **Dangerous CD Company — "Danger 1"** sample CD, [`dangerous-cd-company-danger-1-sample-cd`](https://archive.org/details/dangerous-cd-company-danger-1-sample-cd) on archive.org | early-90s rave brass stabs + hoover/stab one-shots — the bigbeat wing's rave-horn identity and the seed of the `rave_stab` pool | unauthorized rip of a commercial sample CD, no license chain — **tier 3**: no licence chain; served publicly anyway (see the media policy) *(ledger row added 2026-07-25; the fetch predates it)* |
 
-## MIDI trove (external drive: /mnt/sources/relocated/stellate-midi-corpus/rips — tools/fetch-midi-trove.sh, 2026-07)
+## MIDI trove (external drive: /mnt/sources/relocated/stellate-midi-corpus/rips — tools/fetch/fetch-midi-trove.sh, 2026-07)
 
 Genre-labeled MIDI rips from the **MIDIMAN Melody Kit 1.0**
 ([`midiman_melody_kit_1.0_2015-06`](https://archive.org/details/midiman_melody_kit_1.0_2015-06)
 on archive.org — ~130k files crawled from ~200 sites in 2015, deduped and
-repackaged by Jason Scott, 2022). Used by `tools/mine-midi.js` for **verifier
+repackaged by Jason Scott, 2022). Used by `tools/mine/mine-midi.js` for **verifier
 calibration** (real symbolic distributions vs anchor renders — the first
 external check on `genre-verifier.js` targets) and vocabulary/harmony mining.
 The MIDI files are **never committed** and live OFF-REPO on the external drive (they briefly sat under found/midi and DEPLOYED on 2026-07-15 — ship.sh rsyncs found/; caught by the deploy invariant 2026-07-16, scrubbed from the droplet, relocated) and
@@ -572,13 +572,13 @@ sources (pdmusic.org folk, ragtime, classical).
 | `classical_piano/` | `Classical_Piano_piano-midi.de_MIDIRip.zip` | classical piano (key-detection ground truth) | PD compositions; piano-midi.de rips are CC BY-SA — statistics only |
 | `classical_greats/` `classical_guitar/` `classical_violin/` `classical_mfiles/` `classical_midiworld/` | the trove's five other classical rips (~53MB) | classical expansion — the corpus-db melody test bed (solo/chamber lines, strong key signatures) | PD compositions; transcriber rights per-site — statistics only |
 
-The corpus also lives as a **derived SQLite database** (`tools/corpus-db.js` —
+The corpus also lives as a **derived SQLite database** (`tools/mine/corpus-db.js` —
 note blobs + extracted melody lines + feature vectors) at
 `/mnt/sources/relocated/stellate-midi-corpus/corpus.db`, deliberately OFF-repo:
-`found/` is rsynced to the droplet by `tools/ship.sh`, so multi-GB derived
+`found/` is rsynced to the droplet by `tools/deploy/ship.sh`, so multi-GB derived
 artifacts must never land under it. Rebuildable from the rips at any time.
 
-## Breaks & one-shots from the original fetch (tools/fetch-found-samples.sh) — ledger completed 2026-07-25
+## Breaks & one-shots from the original fetch (tools/fetch/fetch-found-samples.sh) — ledger completed 2026-07-25
 
 These predate the wave-3 discipline below and were missing from (or misfiled
 in) the ledger; rows added after the 2026-07-25 release review. Two are
@@ -591,7 +591,7 @@ in) the ledger; rows added after the 2026-07-25 release review. Two are
 | `78s/blues_vox_78.wav` (`blues_vox_78`) | [`78_after-youve-gone…gbia0262239b`](https://archive.org/details/78_after-youve-gone_pee-wee-hunt-and-his-orchestra-crammer-layton_gbia0262239b) (George Blood rip) | Pee Wee Hunt and his Orchestra, "After You've Gone" — vocal-band 78 | **NOT PD by age** (previously misfiled as a pre-1923 78): a c.1946 recording is protected in the US until c.2047 under the Music Modernization Act — treat as **tier 3**: served publicly like the rest of `found/` |
 | `78s/horns_78.wav` (`horns_78`) | [`Europes_Society_Orch-Castle_Rag`](https://archive.org/details/Europes_Society_Orch-Castle_Rag) | Europe's Society Orchestra, "Castle House Rag" (Victor 35372, **1914**) — brass tutti window, the third shellac `horn_stab` | published pre-1923 → **US public domain by age** |
 
-## Repertoire wave 3 — hits + breaks expansion (found/samples/ — tools/fetch-hits-expansion.sh, 2026-07)
+## Repertoire wave 3 — hits + breaks expansion (found/samples/ — tools/fetch/fetch-hits-expansion.sh, 2026-07)
 
 The one-shot/break vocabulary expansion that fills the `SOURCE_POOLS` classes
 (`vocal_stab` / `chime` / `horn_stab` / `rave_stab` / `perc_hit` + the
@@ -600,7 +600,7 @@ per item (metadata, not search index) — this wave is deliberately tier-1-only:
 
 | local files / ids | source | content | license |
 |---|---|---|---|
-| `breaks/dl_*.wav` (`dl_82_10` … `dl_140_07`, 12 breaks) | **drumloops113** — [`drumloops113`](https://archive.org/details/drumloops113) on archive.org: "13 drum loops I made by recording and choping live drumming and by playing with virtual drum machines" (uploader = author) | live/machine funk breaks, 82–140 bpm (bpm measured by `tools/classify-sample-cd.py`, pinned in the fetch script) — the `break_75_95`…`break_135_150` pool bands | **CC BY 2.5** (author-granted; attribute "jeremy@agitprop.ca, drumloops 1-13, archive.org") |
+| `breaks/dl_*.wav` (`dl_82_10` … `dl_140_07`, 12 breaks) | **drumloops113** — [`drumloops113`](https://archive.org/details/drumloops113) on archive.org: "13 drum loops I made by recording and choping live drumming and by playing with virtual drum machines" (uploader = author) | live/machine funk breaks, 82–140 bpm (bpm measured by `tools/fetch/classify-sample-cd.py`, pinned in the fetch script) — the `break_75_95`…`break_135_150` pool bands | **CC BY 2.5** (author-granted; attribute "jeremy@agitprop.ca, drumloops 1-13, archive.org") |
 | `hits/chime_*.wav`, `hits/perc_*.wav` (4 chimes + 7 percussion one-shots) | **VCSL — Versilian Community Sample Library** ([github.com/sgossner/VCSL](https://github.com/sgossner/VCSL)) | tubular bells C4/E3, hand chime A4, glockenspiel C6; timpani hit, gong, anvil, woodblock, slapstick, agogo, cowbell — the `chime` + `perc_hit` pools | **CC0-1.0** (repo LICENSE, verified via GitHub license API) |
 | `78s/horns_ne_78.wav`, `78s/horns_ll_78.wav` | George Blood 78rpm digitizations: [`78_national-emblem…gbia0426619a`](https://archive.org/details/78_national-emblem_manhattan-military-band-e-e-bagley_gbia0426619a) (1922), [`78_liberty-loan-march…gbia0440191a`](https://archive.org/details/78_liberty-loan-march_paramount-military-band-sousa_gbia0440191a) (1918) | military-band brass tuttis cut at the loudest window — the shellac `horn_stab` pool (with the existing `horns_78`) | published pre-1923 → **US public domain by age** (Music Modernization Act; item `date` metadata verified) |
 | `78s/caruso_78.wav`, `78s/laughs_78.wav` | [`78_tosca---e-lucevan-le-stelle…gbia0012566a`](https://archive.org/details/78_tosca---e-lucevan-le-stelle-the-stars-were-shining_enrico-caruso-puccini-victor-o_gbia0012566a) (Caruso, 1909), [`78_some-laughs_gbia0395185a`](https://archive.org/details/78_some-laughs_gbia0395185a) (1920 laughing record) | the Tosca climax + a laughing-record burst as vocal stabs — `vocal_stab` pool spice | published pre-1923 → **US public domain by age** |

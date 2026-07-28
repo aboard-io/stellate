@@ -24,6 +24,7 @@
 <meta property="og:description" content="Made of: one score brain, a Faust WASM engine, 274 invented genres, field recordings that are fetched and never redistributed, and a rule about never losing the generator again.">
 <meta property="og:url" content="https://stellate.app/colophon.html">
 <meta property="og:image" content="https://stellate.app/assets/og-card.png">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE — draw a path through genre space.">
@@ -31,103 +32,12 @@
 <meta name="twitter:title" content="STELLATE — colophon">
 <meta name="twitter:description" content="What STELLATE is made of, and whose work is in it.">
 <meta name="twitter:image" content="https://stellate.app/assets/og-card.png">
-<meta name="twitter:creator" content="@ftrain">
+<meta name="twitter:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE.">
+<meta name="twitter:creator" content="@aboard">
+<meta name="twitter:site" content="@aboard">
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
-<style>
-/* colophon.html — what the thing is made of. Self-contained, zero JavaScript,
-   the app's palette and faces. Dark by default (the instrument's own register);
-   a light-preference reader gets a parchment inversion of the same system, so
-   the page is legible in a bright room without becoming a different site. */
-:root{
-  --bg:#0c0a1a;--panel:rgba(18,15,38,.62);--line:#2c2750;--line2:#3b3568;
-  --ink:#ece9ff;--dim:#9b93c6;--pink:#ff6ec7;--cyan:#45e0ff;--mint:#4dffb0;
-  --amber:#ffd86b;--purple:#a06bff;--star:rgba(236,233,255,.55);
-}
-@media (prefers-color-scheme: light){
-  :root{
-    --bg:#f7f5ef;--panel:#fffdf7;--line:#d9d3c4;--line2:#c3bba6;
-    --ink:#1d1a2e;--dim:#5c5570;--pink:#b2237c;--cyan:#0d6f8c;--mint:#136b4c;
-    --amber:#8a5a06;--purple:#5b34a6;--star:rgba(29,26,46,.16);
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#0c0a1a;--panel:rgba(18,15,38,.62);--line:#2c2750;--line2:#3b3568;
-  --ink:#ece9ff;--dim:#9b93c6;--pink:#ff6ec7;--cyan:#45e0ff;--mint:#4dffb0;
-  --amber:#ffd86b;--purple:#a06bff;--star:rgba(236,233,255,.55);
-}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--ink);
-  font:20px/1.55 VT323,monospace;letter-spacing:.01em;overflow-x:hidden;
-  /* the star field, drawn in CSS: four seeded-looking gradient layers, no JS,
-     no images, no requests. It does not twinkle — a colophon should sit still. */
-  background-image:
-    radial-gradient(1.4px 1.4px at 18% 12%, var(--star), transparent 60%),
-    radial-gradient(1.1px 1.1px at 73% 7%, var(--star), transparent 60%),
-    radial-gradient(1.6px 1.6px at 41% 34%, var(--star), transparent 60%),
-    radial-gradient(1.2px 1.2px at 88% 46%, var(--star), transparent 60%),
-    radial-gradient(1.3px 1.3px at 8% 62%, var(--star), transparent 60%),
-    radial-gradient(1.1px 1.1px at 57% 78%, var(--star), transparent 60%),
-    radial-gradient(1.5px 1.5px at 31% 91%, var(--star), transparent 60%),
-    radial-gradient(1.2px 1.2px at 94% 88%, var(--star), transparent 60%);
-  background-attachment:fixed;
-}
-a{color:var(--cyan)}
-a:hover{color:var(--mint)}
-a:focus-visible{outline:2px solid var(--pink);outline-offset:2px;border-radius:4px}
-::selection{background:var(--pink);color:var(--bg)}
-.wrap{max-width:760px;margin:0 auto;padding:0 1.2rem 4rem}
-header{padding:4.5rem 0 2.4rem}
-.backlink{font:16px VT323,monospace;color:var(--dim);text-decoration:none;letter-spacing:.06em}
-.backlink:hover{color:var(--cyan)}
-h1{font-family:Orbitron,sans-serif;font-weight:700;font-size:clamp(2rem,7vw,3.4rem);
-  letter-spacing:.08em;margin:.6rem 0 .2rem;
-  background:linear-gradient(90deg,var(--amber),var(--pink) 52%,var(--cyan));
-  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.kicker{font-family:Orbitron,sans-serif;font-size:.72rem;letter-spacing:.32em;
-  text-transform:uppercase;color:var(--amber);margin:0}
-.tag{color:var(--dim);font-size:22px;max-width:54ch;margin:.4rem 0 0}
-.tag b{color:var(--ink);font-weight:400}
-h2{font-family:Orbitron,sans-serif;font-size:.82rem;letter-spacing:.2em;text-transform:uppercase;
-  color:var(--ink);margin:3.4rem 0 .2rem;scroll-margin-top:1rem}
-h2 .n{color:var(--pink);margin-right:.55rem}
-h3{font-family:Orbitron,sans-serif;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;
-  color:var(--cyan);margin:1.6rem 0 .2rem}
-p{margin:.7rem 0;max-width:64ch}
-p b{color:var(--amber);font-weight:400}
-p em{color:var(--cyan);font-style:normal}
-.dim{color:var(--dim)}
-blockquote{margin:1.2rem 0;padding:.2rem 0 .2rem 1.1rem;border-left:2px solid var(--pink);
-  color:var(--ink);max-width:62ch}
-blockquote p{margin:.35rem 0}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
-  padding:1rem 1.2rem;margin:1.4rem 0}
-.card h3{margin-top:0}
-.law{border-color:var(--line2)}
-.law b{color:var(--mint);font-weight:400}
-dl{margin:.8rem 0;max-width:66ch}
-dt{font-family:Orbitron,sans-serif;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--amber);margin:1.1rem 0 .1rem}
-dd{margin:0 0 .1rem;color:var(--ink)}
-dd .lic{color:var(--dim)}
-.tier{display:inline-block;font:14px VT323,monospace;letter-spacing:.06em;
-  border:1px solid var(--line2);border-radius:999px;padding:0 .5rem;color:var(--dim);
-  margin-left:.35rem;vertical-align:1px}
-.tier.t1{color:var(--mint);border-color:var(--mint)}
-.tier.t2{color:var(--amber);border-color:var(--amber)}
-.tier.t3{color:var(--pink);border-color:var(--pink)}
-ul{max-width:64ch;padding-left:1.1rem}
-li{margin:.3rem 0}
-code{font:17px VT323,monospace;color:var(--mint);letter-spacing:.03em}
-.h-card{margin:1.2rem 0}
-.h-card .p-name{color:var(--ink)}
-footer{margin-top:4.5rem;padding-top:1.6rem;border-top:1px solid var(--line);
-  font:17px VT323,monospace;color:var(--dim);letter-spacing:.03em}
-footer .sig{color:var(--cyan);font-size:19px;margin-bottom:.6rem}
-footer nav{display:flex;flex-wrap:wrap;gap:.4rem 1.4rem}
-@media(max-width:560px){ body{font-size:18px} header{padding-top:3rem} }
-@media(prefers-reduced-motion:reduce){ html{scroll-behavior:auto} }
-</style>
+<link rel="stylesheet" href="app/pages.css">
+<link rel="stylesheet" href="app/colophon.css">
 </head>
 <body>
 <div class="wrap">

@@ -24,16 +24,16 @@ be held from prod by the auto-guard until his word: A.1, D.1, D.2, F.2.
   `matrix.json`); the 1.2 static checks WIRED into `validate-genres.js` as **advisory
   WARN gates 9–13** (near-duplicate, margin sentinel, resolveMulti determinism fuzz,
   feature-level blend monotonicity, dead-axis) via `gateAdvisory` — never hard-fail,
-  SKIP-degrading; plus `tools/target-lint.js`, `tools/feature-pca.js`,
-  `tools/leak-attribution.js`; and the 1.3/1.4 offline CLI tools (`target-blend`,
+  SKIP-degrading; plus `tools/genre/target-lint.js`, `tools/genre/feature-pca.js`,
+  `tools/genre/leak-attribution.js`; and the 1.3/1.4 offline CLI tools (`target-blend`,
   `genre-math`, `surprise`, `empty-space`, `mutate`, `feature-layout`, `neighbors`,
   `genome-diff`, `lesson`, `coverage`, `cross-metric-audit`), each with a `test/*-run.js`.
   **Proof:** `verify.sh` GREEN (matrix+validate+engine+prove+matproof); matrix
   **249/249**; `fixtures.js` 3726 hashes byte-stable (zero drift); segment-parity ALL
   byte-equal. **Remaining:** commit the batch; the two app-UI halves (starmap layout
   toggle + explorer neighbors hover); `docs/GENRE-VECTORS.md`; taste review of WARNs.
-  Also landed: W3 quick wins (`docs/KERNEL-MAP.md`, `tools/render-diff.sh`,
-  `test/boot-smoke.js`), W4 docs (ARCHITECTURE / ADDING-A-GENRE / GENRE-SPEC-SCHEMA /
+  Also landed: W3 quick wins (`docs/KERNEL-MAP.md`, `tools/genre/render-diff.sh`,
+  `test/gates/boot-smoke.test.js`), W4 docs (ARCHITECTURE / ADDING-A-GENRE / GENRE-SPEC-SCHEMA /
   VIDEO-EXPORT), and the 228/240→249 count-drift + stale-claim doc fixes. ROADMAP §1/§3/§4.
 
 ## What's genuinely open (pick from ROADMAP)
@@ -54,18 +54,18 @@ be held from prod by the auto-guard until his word: A.1, D.1, D.2, F.2.
   (intl genres, descriptions, node coloring, sample sourcing). ROADMAP §6.
 
 ## GATES / SHIP LAW
-`tools/ship.sh` = verify.sh (matrix/validate/engine/prove/matproof) + theory/pipes/speech
+`tools/deploy/ship.sh` = verify.sh (matrix/validate/engine/prove/matproof) + theory/pipes/speech
 → git push → deploy-stellate.sh (rsync to droplet). Refuses a dirty tree. For app/engine
 changes ALSO the browser battery (explorer-ui, genre-viz, share-url, simulate-path,
 blend-arrival, sampler-inserts-live, wavout, segment-parity, **full-boot-run**;
 needs `npm install && npm run setup:browser` at the repo root once — ROADMAP §3.1).
-Recapture `node test/fixtures.js capture` after intentional recipe drift (name the cause).
+Recapture `node test/lib/fixtures.js capture` after intentional recipe drift (name the cause).
 - **POS COMPLETENESS (2026-07-11 outage law):** ADDING A GENRE requires updating
   `app/world.js` POS (see `docs/ADDING-A-GENRE.md`) — a genre in `GenreKernel.GENRES`
   but missing from POS drops app boot into `computeGenreLayout`'s relaxation and CRASHES
-  the WebGL renderer (blank app, no 🛸). Two gates guard this class: `test/pos-coverage.js`
+  the WebGL renderer (blank app, no 🛸). Two gates guard this class: `test/gates/pos-coverage.test.js`
   (plain node, in verify.sh's `poscover` row — CI-safe, catches the exact bug symbolically)
-  and `test/full-boot-run.js` (browser battery — loads the REAL index.html/app/main.js boot,
+  and `test/browser/full-boot.test.js` (browser battery — loads the REAL index.html/app/main.js boot,
   asserts no crash + 🛸 present + starmap rendered; the star-cruise probes stub main.js so
   ONLY this gate catches a real-boot crash).
 segment-parity BYTE-EQUAL. matrix diagonal-dominant (**249/249**). Machines verify

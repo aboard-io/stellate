@@ -8,11 +8,11 @@
   "type": "commonjs",
   "scripts": {
     "verify": "./verify.sh",
-    "test:pure": "node test/theory.test.js && node test/pipes.test.js && node test/boot-smoke.js",
-    "test:browser": "for t in test/*-run.js; do echo \"== $t ==\"; node \"$t\" || exit 1; done",
+    "test:pure": "node test/gates/theory.test.js && node test/gates/pipes.test.js && node test/gates/boot-smoke.test.js",
+    "test:browser": "for t in test/browser/*.test.js test/starcruise/*.test.js; do echo \"== $t ==\"; node \"$t\" || exit 1; done",
     "setup:browser": "playwright install chromium"
   },
-  "//": "The MATRIX/VALIDATE/ENGINE gates (verify.sh) and the pure-node tests need NO deps beyond Node. The BROWSER gates (test/*-run.js — real WebGL/WebAudio via Playwright) need this one devDependency: run `npm install` then `npm run setup:browser`, after which `node test/<name>-run.js` works with no NODE_PATH. Faust's own build dep installs separately under engine/faust (see CONTRIBUTING).",
+  "//": "Every gate is named <name>.test.js and the FOLDER says what it needs: test/gates (the verify.sh suite), test/unit (pure node), test/browser + test/starcruise (real WebGL/WebAudio via Playwright), test/probes (hand-run instruments, *.probe.js), test/lib (shared harnesses, not gates). The MATRIX/VALIDATE/ENGINE gates (verify.sh) and everything under test/gates + test/unit need NO deps beyond Node. test:browser globs exactly the two browser folders; they need this one devDependency: run `npm install` then `npm run setup:browser`, after which `node test/browser/<name>.test.js` works with no NODE_PATH. Faust's own build dep installs separately under engine/faust (see CONTRIBUTING).",
   "devDependencies": {
     "playwright": "^1.57.0"
   }

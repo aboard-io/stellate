@@ -17,22 +17,23 @@ Everything below is a corollary.
 ```bash
 git clone <this repo> && cd stellate
 cd engine/faust && npm ci && cd ../..   # Faust's build dep (faustwasm)
-node tools/ci-standin-media.js          # synthesize stand-in media (no network, ~1s)
+node tools/build/ci-standin-media.js          # synthesize stand-in media (no network, ~1s)
 ./verify.sh                             # matrix + validate + engine smoke, concurrent
-node test/theory.test.js && node test/pipes.test.js
+node test/gates/theory.test.js && node test/gates/pipes.test.js
 ./serve.sh                              # the app at http://localhost:8777/
 
 # OPTIONAL — the headless BROWSER gates (real WebGL/WebAudio via Playwright):
 npm install                             # the one browser-test dep (playwright)
 npm run setup:browser                   # download the Chromium build (npx playwright install chromium)
-node test/starcruise-run.js             # then any test/*-run.js runs with NO NODE_PATH
+npm run test:browser                    # test/browser/*.test.js + test/starcruise/*.test.js (33 gates)
+node test/starcruise/starcruise.test.js  # ...or any one of them, plain, with NO NODE_PATH
 ```
 
 Requires `node` (20+) and `ffmpeg`. The stand-in step exists because a fresh
 clone has recipes but no media — it writes a second of quiet noise at every
 path the gates check, and never overwrites a real file. If you want the real
-found-sound/sample layers (you do, for listening): `tools/fetch-found-sound.sh`
-and `tools/fetch-found-samples.sh` fetch them from the Internet Archive into
+found-sound/sample layers (you do, for listening): `tools/fetch/fetch-found-sound.sh`
+and `tools/fetch/fetch-found-samples.sh` fetch them from the Internet Archive into
 the gitignored `found/` tree.
 
 ## The gate philosophy
@@ -50,10 +51,11 @@ the gitignored `found/` tree.
 - **engine** — real Faust presses of three very different states, gated on
   non-silence. Structure, not beauty.
 
-Plus `node test/theory.test.js` and `node test/pipes.test.js` (pure node,
+Plus `node test/gates/theory.test.js` and `node test/gates/pipes.test.js` (pure node,
 sub-second). If your change touches the app UI or the 3D star-cruise, run the
-headless browser gates (`test/*-run.js`) after the one-time `npm install` +
-`npm run setup:browser` above — they need no `NODE_PATH`.
+headless browser gates (`npm run test:browser` — the glob is exactly
+`test/browser/*.test.js` + `test/starcruise/*.test.js`) after the one-time
+`npm install` + `npm run setup:browser` above — they need no `NODE_PATH`.
 
 What the gates don't check — whether it sounds *good* — is checked by playing
 it. Say in the PR what you listened to. No gate will ever be added for taste,
@@ -74,14 +76,14 @@ that shifts the confusion matrix for everyone. After every batch:
 **A new pipe** (event transform). Register it in `CsdPipes.REGISTRY`
 (`engine/pipes.js`) with its **own seeded rng stream** — never share or reuse
 another pipe's stream, and never touch events when your knob is absent. Add
-cases to `test/pipes.test.js`.
+cases to `test/gates/pipes.test.js`.
 
 **New theory** (modes, progressions, voice-leading). `engine/theory.js`, with
-cases in `test/theory.test.js`. Theory feeds buildEvents through
+cases in `test/gates/theory.test.js`. Theory feeds buildEvents through
 `state.theory.reharm`, so the determinism law below applies in full.
 
 **A new synth voice.** A Faust source in `engine/faust/dsp/`, compiled with
-`node engine/faust/build.js` (the wasm in `engine/faust/dist/` IS committed —
+`node engine/faust/build/build.js` (the wasm in `engine/faust/dist/` IS committed —
 the one blessed binary class), documented in `engine/faust/VOICES.md`, and
 wired through `state-engine.js`. Beware the Faust voice-library traps noted in
 VOICES.md before reaching for a stock library effect.
@@ -135,10 +137,10 @@ decoration. The rules:
   | `engine/namebank.js` | `NameBank` |
   | `engine/speech.js` | `CsdSpeech` |
   | `engine/demo-layer.js` | `DemoLayer` |
-  | `engine/faust/state-engine.js` | `FaustStateEngine` |
-  | `engine/faust/found-player.js` | `FoundPlayer` |
-  | `engine/faust/sampler.js` | `FaustSampler` |
-  | `engine/faust/live.js` | `FaustLive` |
+  | `engine/faust/voices/state-engine.js` | `FaustStateEngine` |
+  | `engine/faust/voices/found-player.js` | `FoundPlayer` |
+  | `engine/faust/voices/sampler.js` | `FaustSampler` |
+  | `engine/faust/live/live.js` | `FaustLive` |
 
 - **`theory.js` and `pipes.js` MUST load before `csd-engine.js`.** csd-engine
   reads `window.CsdTheory` / `window.CsdPipes` **at load time** (the MUSIC-MIND
@@ -155,7 +157,7 @@ decoration. The rules:
   `live.js`) are browser-only — they close over `window` directly and cannot
   `require()` in node; that's fine, the gate loads them in a sandbox.
 
-The gate: **`node test/boot-smoke.js`**. It parses `index.html` for the ordered
+The gate: **`node test/gates/boot-smoke.test.js`**. It parses `index.html` for the ordered
 classic script list, runs each script in load order inside one browser-like
 sandbox (exercising the UMD *browser* branch, exactly as the page does), and
 asserts (a) each script publishes its expected global, (b) theory/pipes precede

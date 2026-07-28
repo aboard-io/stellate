@@ -1,7 +1,7 @@
 # ADDING A GENRE — spec → anchor → matrix-safe wiring
 
 A genre is added by writing a small JSON **spec**, then letting
-`tools/genre-tool.js` measure it, derive its verifier target row, and splice it
+`tools/genre/genre-tool.js` measure it, derive its verifier target row, and splice it
 into the kernel — never by hand-editing the `GENRES` literal. This keeps the two
 hard laws intact: **byte-identical renders** (your anchor draws its rng LAST and
 consumes none when absent) and the **matrix stays 274/274 diagonal-dominant**
@@ -16,11 +16,11 @@ cp genre-specs/aldente.json genre-specs/mygenre.json
 $EDITOR genre-specs/mygenre.json        # set name, label, info, anchor dims, pos
 
 # 2. Dry-run: measure + derive the target row + report neighbours, write NOTHING.
-node tools/genre-tool.js create genre-specs/mygenre.json --dry-run
+node tools/genre/genre-tool.js create genre-specs/mygenre.json --dry-run
 
 # 3. For real: splice anchor → genre-kernel.js, target row → genre-verifier.js,
-#    star → app/world.js POS, then run the gates.
-node tools/genre-tool.js create genre-specs/mygenre.json
+#    star → app/core/world.js POS, then run the gates.
+node tools/genre/genre-tool.js create genre-specs/mygenre.json
 
 # 4. Confirm the confusion matrix still holds (the tool runs this, but re-check):
 node engine/genre-verifier.js matrix --no-cache        # → 274/274 (now 275/275)
@@ -58,7 +58,7 @@ node engine/genre-kernel.js track mygenre --seed 7 --render
    - anchor → `GENRES` literal in `engine/genre-kernel.js`
      (`/* genre-tool:<name>:genres */` markers, at the `TERM.genres` point).
    - target row → `TARGETS` in `engine/genre-verifier.js`.
-   - star position → `POS` in `app/world.js` (see below).
+   - star position → `POS` in `app/core/world.js` (see below).
    Re-running `create` replaces the prior tool insertion in place (idempotent),
    so iterating on a spec never duplicates or corrupts the block.
 5. **Gates** — `matrix --no-cache` must stay diagonal-dominant; `./verify.sh`
@@ -66,23 +66,23 @@ node engine/genre-kernel.js track mygenre --seed 7 --render
    (a new anchor alone should not drift existing fixtures — it draws last and is
    absent from every existing state).
 
-## Re-baking `app/world.js` POS (the star map)
+## Re-baking `app/core/world.js` POS (the star map)
 
-`POS` is a **baked cache** of `computeGenreLayout` (`app/world.js`). `spec.pos`
+`POS` is a **baked cache** of `computeGenreLayout` (`app/core/world.js`). `spec.pos`
 is `[x,y]` in the chart's logical px and is now **optional**:
 
 - **Give `pos`** and the tool splices it directly (validated ≥55px from every
   existing star — crowded stars blur blends, the arabpop/triphop lesson) so boot
   stays on the fast path.
 - **Omit `pos`** and boot derives a spot near the genre's musical family
-  (`app/starmap.js` similarity-seeded relaxation). After a batch of additions,
+  (`app/map/starmap.js` similarity-seeded relaxation). After a batch of additions,
   re-bake the cache: open the app, read `window.__X.POS`, and paste it back into
-  `app/world.js`'s `POS` table (the batch re-bake pastes the full relaxed layout
+  `app/core/world.js`'s `POS` table (the batch re-bake pastes the full relaxed layout
   back). A genre missing from `POS` is worse than *invisible-but-audible* — under
   the **real** app boot the missing-genre relaxation collapses the layout and
   CRASHES the WebGL renderer (blank app, no 🛸 — the 2026-07-11 folk outage) — so
-  don't skip the re-bake. **`test/pos-coverage.js` (verify.sh `poscover` row)
-  hard-fails on any GENRES key missing from POS**, and `test/full-boot-run.js`
+  don't skip the re-bake. **`test/gates/pos-coverage.test.js` (verify.sh `poscover` row)
+  hard-fails on any GENRES key missing from POS**, and `test/browser/full-boot.test.js`
   (browser battery) asserts the real boot actually comes up; run both after adding.
 
 ## Guardrails
@@ -96,4 +96,4 @@ is `[x,y]` in the chart's logical px and is now **optional**:
   distinguishing dimension (tempo, swing, kit, sub, motion), don't fight the
   target row.
 - **Taste is Paul's.** The gates prove distinct + well-formed; shipping is
-  ear-gated (`tools/ship.sh`).
+  ear-gated (`tools/deploy/ship.sh`).

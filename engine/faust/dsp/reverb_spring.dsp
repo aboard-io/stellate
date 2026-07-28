@@ -18,7 +18,7 @@ disp = ap(149, 0.62) : ap(211, 0.60) : ap(97, 0.58) : ap(263, 0.56) : ap(181, 0.
 spring(baseDel, lfoHz, g) =
   (+ ~ (de.fdelay(8192, baseDel + os.osc(lfoHz) * 6.0) : fi.lowpass(2, 4200) : disp : *(g)));
 
-// TRIM equalizes tail energy to the fx_bus zita default (probe-reverb.js).
+// TRIM equalizes tail energy to the fx_bus zita default (test/probes/reverb.probe.js).
 w = fi.lowpass(1, rtone) : *(rgain * 0.52);
 // sum to mono, split to two slightly detuned tanks (stereo spring pair)
 process = _, _ :> *(0.5) <: (spring(1367, 0.70, 0.80) : w), (spring(1523, 0.53, 0.80) : w);

@@ -87,8 +87,8 @@
   // sample layer: local files under found/samples/ (kind: break|hit|vox)
   const SAMPLES = DATA.SAMPLES;
   // ---------- THE SYNTHESIZED VOICE BANK (voxbank) ----------
-  // 12 families x 30 espeak-ng phrases (tools/voxbank-phrases.json — the committed
-  // source text; tools/gen-voice-bank.js renders them deterministically). The wavs
+  // 12 families x 30 espeak-ng phrases (tools/build/voxbank-phrases.json — the committed
+  // source text; tools/build/gen-voice-bank.js renders them deterministically). The wavs
   // live gitignored under found/samples/voxbank/<family>/vb_<family>_NN.wav; only
   // the per-clip `dur` is mirrored here (baked from the manifest, exactly the way
   // DRUMKITS mirrors `len` and SAMPLERS mirrors zones — committed source, derived
@@ -122,12 +122,12 @@
   // contract the Faust engine consumes.
   const DX7_PATCHES=(()=>{
     let raw={};
-    if(isNode){ try{ raw=require("./faust/dx7-presets.json"); }catch(e){} }
+    if(isNode){ try{ raw=require("./faust/data/dx7-presets.json"); }catch(e){} }
     else if(root.DX7_PRESETS) raw=root.DX7_PRESETS;   // browser: page may inline the presets
     const reg={};
     for(const [name,p] of Object.entries(raw||{}))
       if(p&&p.params) reg[name]={algorithm:p.alg, params:p.params};
-    // SILENT-ROM REMAP (measured by tools/font-coverage.js
+    // SILENT-ROM REMAP (measured by tools/audit/font-coverage.js
     // --dx7-rms): 8 of the 114 converted ROM patches render < -60 dBFS — dead
     // conversions, and "TUB BELLS" alone was wired into 23 anchors' patchPools
     // as a silently-dead voice option. Each remaps to its nearest AUDIBLE
@@ -187,7 +187,7 @@
 
   // ---------- SOUNDFONT SWITCHER ----------
   // The default sampled instruments above are FluidR3 (baked). Alternate fonts —
-  // extracted by tools/gen-font.js into found/samples/instruments-<key>/ + a
+  // extracted by tools/build/gen-font.js into found/samples/instruments-<key>/ + a
   // font-<key>.json {base, instr:{slug:{sr,zones}}} — register at runtime; the
   // active font re-voices every sampled instrument it covers, falling back to
   // FluidR3 per-instrument for anything the font lacks. Presentational: default
@@ -211,7 +211,7 @@
   // (modeld: 3 osc + ladder + filter-env + glide) voice — cutoff/res/env/attack/
   // sustain/drive/oscMix/drift are the analog palette.
   function instrFamily(id){
-    // ORDER + WORD-SHAPE MATTER (gated by test/font-coverage.test.js):
+    // ORDER + WORD-SHAPE MATTER (gated by test/unit/font-coverage.test.js):
     // "nylon_STRING_guitar" matches the string rule before the pluck rule if
     // string comes first — guitars then land on the slow-attack juno60 pad
     // voice and lead lines all but vanish. And a bare /bass/ swallows
@@ -281,7 +281,7 @@
   // dx7's per-note @out is already
   // clamped to 1.0 (render-core/stream-renderer), so a gain makeup can't lift
   // them — the quietness is intrinsic to those two patches. Remapped to the
-  // loudest SAME-TIMBRE siblings the sweep found (tools/font-coverage.js
+  // loudest SAME-TIMBRE siblings the sweep found (tools/audit/font-coverage.js
   // --dx7-rms + candidate sweep): flute -> "FLUTE   2" (alg18, -23.5, +18 dB),
   // reed -> "CLARINET" (alg17, -23.5, +21 dB) — both now at sampled parity.
   // The remaining families (string/mallet/key ~6-9 dB under, brass/organ/voice/

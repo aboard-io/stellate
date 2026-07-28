@@ -24,7 +24,7 @@ placeholder scene they originally rendered is long gone.
 
 ```
 index.html
-  └─ app/main.js → app/panels.js → app/starcruise-load.js   (~1 KB; the ✦ cycle)
+  └─ app/main.js → app/panels/panels.js → app/starcruise-load.js   (~1 KB; the ✦ cycle)
        └─ dynamic import() on FIRST ENTRY to the aliens view:
             app/starcruise.js   (side-effecting: publishes window.__STARCRUISE)
        │  lazy import() on FIRST start():
@@ -62,21 +62,21 @@ explorer already uses, and syncs dance to the **same** audio beat. The controlle
 supplies two reader shims to `makeFlight({ getTravel, getBeat })`:
 
 ### `getTravel()` — the explorer's current travel state
-Reads the shared store (`app/state.js` `S`) — the exact blend the star map + live
+Reads the shared store (`app/core/state.js` `S`) — the exact blend the star map + live
 audio already maintain. **No forked travel logic.**
 | field | source |
 |---|---|
 | `weights` | `S.weights` (`[{g,w}]`), filtered `w>0`, sorted desc |
 | `dominant` | top-weight genre name |
-| `position` | `pointOnPath(S.travel)` from `app/share.js` — world coords along the **drawn path** |
+| `position` | `pointOnPath(S.travel)` from `app/core/share.js` — world coords along the **drawn path** |
 | `live` | `S.live` |
 | `seed` | `S.seed` |
 
 `S.travel` (`{seg,t}`) and `S.weights` are advanced every bar by `travelStep()` /
-the glide in `app/live.js`'s `onBar`. We only read them.
+the glide in `app/audio/live.js`'s `onBar`. We only read them.
 
 ### `getBeat()` — the real audio beat
-`onBar` (`app/live.js`) writes `S.barInfo` every bar with
+`onBar` (`app/audio/live.js`) writes `S.barInfo` every bar with
 `{ serial, ci, nch, when, spb, cbeats, chord, section }`; `S.playing.bpm` is the
 tempo. The shim derives a smooth `beatPhase` (0..1 within a beat) from a local
 clock that **resets on each new bar `serial`**, so dance hits stay locked to the
@@ -93,7 +93,7 @@ bar grid without touching the engine.
 **Shim honesty / Integrate-phase upgrade:** the local `performance.now()` clock is
 intentionally dependency-free for the scaffold. The Integrate phase can make hits
 sample-accurate by reading the `AudioContext` clock + `info.when` off
-`faustHandle` (`app/live.js`) instead of wall time — same `getBeat` shape, tighter
+`faustHandle` (`app/audio/live.js`) instead of wall time — same `getBeat` shape, tighter
 lock.
 
 ---
@@ -101,10 +101,10 @@ lock.
 ## The button
 
 There is **no separate 🛸 chip**: aliens is the third view in the ✦ cycle
-(map → viz → aliens → map), driven by `app/panels.js`.
+(map → viz → aliens → map), driven by `app/panels/panels.js`.
 
 The controller is **not on the boot path**. `index.html` does not load
-`app/starcruise.js`; `app/panels.js` imports the ~1 KB `app/starcruise-load.js`,
+`app/starcruise.js`; `app/panels/panels.js` imports the ~1 KB `app/starcruise-load.js`,
 whose `ensureStarcruise()` dynamic-imports the controller — single-flight, cached
 after the first success, cache cleared on failure so a later attempt retries — the
 first time the cycle reaches the view. A session that never opens aliens fetches
@@ -113,7 +113,7 @@ it static-imports; Three.js remains one step further out, on first `start()`.
 
 The loader also publishes `window.__ensureStarcruise` so headless gates can arm
 the import deterministically instead of racing a ✦ click
-(`test/probe-harness.js ensureStarcruise(page)`).
+(`test/lib/probe-harness.js ensureStarcruise(page)`).
 
 ---
 
@@ -207,9 +207,9 @@ makeFlight({ getTravel, getBeat }) -> { update(dt) -> STATE, events }
 
 ## Headless proof
 
-`test/starcruise-run.js` (playwright, SwiftShader WebGL):
+`test/starcruise/starcruise.test.js` (playwright, SwiftShader WebGL):
 ```
-node test/starcruise-run.js
+node test/starcruise/starcruise.test.js
 ```
 Asserts: off-by-default (Three unloaded, no canvas) → `start()` lazy-loads Three +
 mounts the canvas + spawns a band → a **non-blank** frame renders (low-res target

@@ -14,13 +14,21 @@
 // can retry rather than latching the view dead.
 //
 // TWO CALLERS
-//   - app/panels.js, from the ✦ view cycle (the only production trigger).
+//   - app/panels/panels.js, from the ✦ view cycle (the only production trigger).
 //   - the headless gates, which await window.__ensureStarcruise() instead of
-//     racing a click or polling for window.__STARCRUISE (test/probe-harness.js
+//     racing a click or polling for window.__STARCRUISE (test/lib/probe-harness.js
 //     ensureStarcruise(page) wraps it; gates that neutralise app/main.js never
 //     evaluate panels.js, so they import THIS module directly).
 // It deliberately imports nothing from the app (no state.js, hence no
 // preact/htm) so it stays loadable in a bare headless page.
+//
+// THE SANCTIONED SEAM. The app and the aliens view talk through window globals
+// and nothing else: __STARCRUISE (the controller, published by app/starcruise.js),
+// __ensureStarcruise (this module's hook, below) and __S (the store, published by
+// app/core/state.js and read lazily by the controller). Everywhere else in app/ a
+// window.__ reach-through is a bug to be promoted to an import; here it is the
+// point. A static import in either direction puts preact/htm and Three.js on each
+// other's load path, and this loader exists so neither view pays for the other.
 //
 // embed.html never reaches the aliens view (its ✦ chip is hidden and inert), so
 // an embed still never fetches a byte of the controller.

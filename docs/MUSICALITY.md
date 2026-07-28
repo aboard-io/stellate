@@ -107,7 +107,7 @@ Symbolic laws read `buildEvents`; acoustic laws read cheap stem renders
 
 ## Status — phase 2 shipped (2026-07-10)
 
-`engine/musicality.js` (symbolic laws + CLI) + `test/musicality.test.js`
+`engine/musicality.js` (symbolic laws + CLI) + `test/unit/musicality.test.js`
 (15 gates, green) + validate-genres **gate 8** (WARN-only, prints the 5
 worst scorecards every verify run). `./verify.sh` green; matrix untouched.
 

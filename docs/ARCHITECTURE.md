@@ -20,7 +20,7 @@ layout; this doc is the wiring diagram between files.
             │   pure + deterministic: same state → byte-identical events
             │   consumes engine/theory.js + engine/pipes.js when present
             ▼
-  engine/faust/state-engine.js    "voices + fx"
+  engine/faust/voices/state-engine.js    "voices + fx"
     mapEvents / buildSchedule → Faust voice plan + per-note param sets
             │   (dist/ WASM voice modules; register-fold; recipe→param map)
             ▼
@@ -60,7 +60,7 @@ harmonize, echoCanon, densityArc, …) when `state.theory` / `state.pipes` are
 present. The snare-law pass runs dead last on the final timeline. Absent knobs →
 byte-identical to the pre-organ output.
 
-### 3. `engine/faust/state-engine.js` — voices + fx
+### 3. `engine/faust/voices/state-engine.js` — voices + fx
 Pure mapping, no audio. `CsdEngine.buildEvents(state)` gives the events; this
 maps each onto a `dist/` Faust voice module + per-note param sets, using the
 recipe→param mappings in `engine/faust/VOICES.md`. It also enforces the
@@ -69,15 +69,15 @@ natural zone window) and pins `state.regHome`. Consumed identically by press and
 live so the mix is the same.
 
 ### 4. The three playback paths
-- **LIVE** (`engine/faust/live.js`) — the browser AudioWorklet engine. Two
+- **LIVE** (`engine/faust/live/live.js`) — the browser AudioWorklet engine. Two
   `stream-worker.js` producers ping-pong on ring buffers (click-free by
   construction); `exploreLive` is the facade the explorer drives. Live-only
   taste (master bus, `userGain`, the Vapor EQ) rides the main-thread graph
   *after* `masterGain`, so it never touches the baked mix.
-- **PRESS** (`engine/faust/press.js`, node) — full-length offline "pressing" of
+- **PRESS** (`engine/faust/press/press.js`, node) — full-length offline "pressing" of
   a state: the same `dist/` modules via faustwasm OFFLINE processors, plus the
   native found-sound layer mixed as PCM in JS (`found-player.js mixPCM`). The
-  browser reuses the same core via `engine/faust/stream-worker.js` (`renderWav`,
+  browser reuses the same core via `engine/faust/live/stream-worker.js` (`renderWav`,
   the background-WAV survival producer).
 - **WAV-FIRST** (mobile) — pocket-proof iOS/mobile audio: rolling WAV segments
   played through a real `<audio>` element (no live graph). See
@@ -95,7 +95,7 @@ genre-intelligence tooling built on top of it).
 ## The laws that hold it together
 
 1. **Byte-identical renders.** Same `state` → byte-identical `buildEvents`.
-   Gated by `test/fixtures.js` + the `segment-parity` gate. Every new optional
+   Gated by `test/lib/fixtures.js` + the `segment-parity` gate. Every new optional
    dimension is **drawn LAST in `resolveMulti` and consumes ZERO rng when
    absent** — that is how the space grows without regressing fixtures.
 2. **The matrix stays diagonal-dominant.** Every genre/kernel change re-runs
@@ -113,12 +113,12 @@ genre-intelligence tooling built on top of it).
 engine/theory.js → engine/pipes.js → engine/csd-engine.js →
 engine/genre-kernel.js → engine/genre-verifier.js → engine/namebank.js →
 engine/midi-export.js → engine/speech.js → engine/demo-layer.js →
-engine/faust/state-engine.js → engine/faust/found-player.js →
-engine/faust/sampler.js → engine/faust/live.js →
-app/analytics.js → vendor/goatcounter/count.js →
+engine/faust/voices/state-engine.js → engine/faust/voices/found-player.js →
+engine/faust/voices/sampler.js → engine/faust/live/live.js →
+app/entries/analytics.js → vendor/goatcounter/count.js →
 app/main.js  (ES-module entry for the app/ tree)
 
-`test/boot-smoke.js` is the gate: it parses this list out of index.html, replays
+`test/gates/boot-smoke.test.js` is the gate: it parses this list out of index.html, replays
 it in a sandbox, and fails if a script moves, disappears or stops publishing its
 global. access.html and embed.html hand-maintain their own shorter lists.
 ```

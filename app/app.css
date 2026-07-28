@@ -10,7 +10,7 @@
     user-select:none;-webkit-user-select:none}
   #map text{pointer-events:none}
   #map .cur{pointer-events:none}  /* the traveler is display-only: it never steals a waypoint grab */
-  /* FLOATING GLYPHS (app/glyphs.js): faint alien station idents backfloating on the
+  /* FLOATING GLYPHS (app/map/glyphs.js): faint alien station idents backfloating on the
      star map. z-index:0 sits ABOVE the demoscene/video canvases (z-index:-1) and
      BELOW the map SVG (#map, z-index:1) + all UI, so they drift behind the stars.
      Blurred + screen-blended for a soft watermark; each glyph's slow drift + fade

@@ -1,6 +1,6 @@
 // registry-data.js — the found-sound, sample, instrument and percussion registries
 //
-// GENERATED ONCE by tools/split-kernel-data.js, and hand-edited ever since:
+// GENERATED ONCE by tools/build/split-kernel-data.js, and hand-edited ever since:
 // this file is the SOURCE OF TRUTH for the data below, not a build artifact.
 // genre-tool.js / invent-genres.js / rm-genre.js splice into it by the same
 // /* genre-tool:<name>:genres */ markers they always used.
@@ -10,7 +10,7 @@
 // Classic script on purpose, NOT JSON-over-fetch: app/access.js and
 // app/starmap.js read the kernel synchronously at module top level, so the data
 // has to be present the moment genre-kernel.js runs. Loaded immediately BEFORE
-// it in index.html / embed.html / access.html (boot-smoke.js enforces order).
+// it in index.html / embed.html / access.html (test/gates/boot-smoke.test.js enforces order).
 (function (root) {
   "use strict";
   const D = {};
@@ -62,7 +62,7 @@
     // ---- NAROPA POETICS AUDIO ARCHIVE expansion — 25 readings from
     // the Beat / New American Poetry circle at the Jack Kerouac School (collection:
     // naropa). Joins the vx_* voice shelf. Every item is CC BY-NC-ND (the archaic
-    // "by-nd-nc/1.0" slug) — TIER 2: fetch-only via tools/fetch-found-naropa.sh,
+    // "by-nd-nc/1.0" slug) — TIER 2: fetch-only via tools/fetch/fetch-found-naropa.sh,
     // NON-COMMERCIAL, never redistributed; local url falls back to archive.org.
     // Credit "Naropa Poetics Audio Archive". Ledger: SOURCES.md "Naropa expansion".
     // vx_waldman_crack (ND012) is UNDATED. vx_cage_studio79 = chance
@@ -112,7 +112,7 @@
     modem_handshake: { label:"56k modem handshake negotiation, synthesized — license-free", url:"found/modem_handshake.64.mp3" },   // dialupgabber — the drop (url must be non-empty: an empty url is unfetchable even when the file is on disk)
     crt_whine:       { label:"CRT flyback whine at the true 15734Hz NTSC line, synthesized", url:"found/crt_whine.64.mp3" },   // crtwave — the high drone
     // ---- bed-pool expansion (repertoire wave 3) — 79 radio-aporee beds,
-    // ten character classes, fetched by tools/fetch-bed-expansion.sh. Licenses
+    // ten character classes, fetched by tools/fetch/fetch-bed-expansion.sh. Licenses
     // verified per item (ledger: SOURCES.md "Bed-pool expansion");
     // permissive-only slate: PD Mark / CC BY (⚠ attribution) / CC BY-SA (⚠ SA).
     // city air
@@ -207,7 +207,7 @@
     // ---- BBC Sound Effects crate — 36 beds curated from
     // sound-effects.bbcrewind.co.uk across the ten pool classes. ALL RemArc
     // licence (personal/educational/research, NON-COMMERCIAL) — tier 2:
-    // fetch-only via tools/fetch-found-bbc.sh, local url (same-origin under
+    // fetch-only via tools/fetch/fetch-found-bbc.sh, local url (same-origin under
     // COEP; the BBC CDN sends no CORP), never redistributed. Ledger with BBC
     // catalogue ids: SOURCES.md "BBC Sound Effects". 4 chime one-shots from
     // the same crate live in SAMPLES (bbc_lutine_bell &c).
@@ -249,12 +249,12 @@
     bbc_perigord_square:    { label:"Village square, Périgord (BBC)", url:"found/bbc_perigord_square.64.mp3" },
   };
   D.SOURCE_POOLS = {
-    // wave 3: +79-bed expansion (tools/fetch-bed-expansion.sh) —
+    // wave 3: +79-bed expansion (tools/fetch/fetch-bed-expansion.sh) —
     // 76 join the pools below; the three bird-forward night beds
     // (berlin_dawn_fox / kruger_dawn / mull_night) are registered in SOURCES
     // but join NO general pool (the bird-rarity law: birds are for canadians /
     // dawn-chorus wiring only — like iriomote, benched from every pool).
-    // wave 4: +36 BBC Sound Effects beds (tools/fetch-found-bbc.sh,
+    // wave 4: +36 BBC Sound Effects beds (tools/fetch/fetch-found-bbc.sh,
     // RemArc — SOURCES.md "BBC Sound Effects"), four per class below plus four
     // chime one-shots in the chime pool. All insect/wind-led on the nature
     // side — the bird-rarity law holds.
@@ -660,7 +660,7 @@
     sp_zubrovia_2:{ file:"speech/sp_zubrovia_2.mp3", kind:"speech", synthText:{text:"Zubróvya, Zubróvya, ho zna vímu tra la!",voice:"en",variant:"m5",pitch:40,speed:110}, durSec:5.557 },
     sp_zubrovia_3:{ file:"speech/sp_zubrovia_3.mp3", kind:"speech", synthText:{text:"Volo dobra, tra la, Zubróvya svo boda!",voice:"en",variant:"f2",pitch:52,speed:108}, durSec:5.767 },
     // --- Skip to My Loops (Fatboy Slim sample CD, archive.org fatboy-slim-skip-to-my-loops) ---
-    // 79 generically-named WAVs recovered by tools/classify-sample-cd.py (pitch/bpm/class).
+    // 79 generically-named WAVs recovered by tools/fetch/classify-sample-cd.py (pitch/bpm/class).
     // Curated crate below; full manifest at found/samples/stml/manifest.json. LOOPS = funky
     // breakbeats (bpm detected); CHOPS = vocal/funk stabs; HITS = one-shots.
     stml_loop_81a:{ file:"stml/loop_81_53.wav", kind:"break", bpm:81, durSec:7.873 },
@@ -708,13 +708,13 @@
     // --- Ax_Grinder power chords (freesound pack 14939, CC BY 3.0 — SOURCES.md
     // attribution row REQUIRED in any distributed render). Drop-D power chords,
     // Jackson Warrior -> Line6 POD XT: open ~10s wall + palm-muted chugs. Fetched
-    // by tools/fetch-guitar-samples.sh (keyless HQ previews). Claimable by the
+    // by tools/fetch/fetch-guitar-samples.sh (keyless HQ previews). Claimable by the
     // grunge/metal wave (no anchor references them yet — pool for wave 2).
     pc_ds2_open:{ file:"hits/pc_ds2_open.wav", kind:"hit", durSec:10.02, note:"D#2" },
     pc_ds2_pm:  { file:"hits/pc_ds2_pm.wav",   kind:"hit", durSec:0.26,  note:"D#2" },
     pc_ds2_pm2: { file:"hits/pc_ds2_pm2.wav",  kind:"hit", durSec:0.5,   note:"D#2" },
     pc_as2_open:{ file:"hits/pc_as2_open.wav", kind:"hit", durSec:12.49, note:"A#2" },
-    // --- REPERTOIRE WAVE 3 (tools/fetch-hits-expansion.sh) ---
+    // --- REPERTOIRE WAVE 3 (tools/fetch/fetch-hits-expansion.sh) ---
     // the hits+breaks expansion that fills the SOURCE_POOLS one-shot classes;
     // every source license-verified (SOURCES.md): drumloops113 CC BY 2.5,
     // VCSL CC0, pre-1923 78s PD by age, NASA PD, or synthesized in-house.
@@ -745,7 +745,7 @@
     chime_tub_lo:{ file:"hits/chime_tub_lo.wav", kind:"hit", durSec:6.0, note:"E3" },
     chime_hand:  { file:"hits/chime_hand.wav",   kind:"hit", durSec:5.0, note:"A4" },
     chime_glock: { file:"hits/chime_glock.wav",  kind:"hit", durSec:4.0, note:"C6" },
-    // BBC Sound Effects chimes (RemArc — fetch-only, tools/fetch-found-bbc.sh;
+    // BBC Sound Effects chimes (RemArc — fetch-only, tools/fetch/fetch-found-bbc.sh;
     // ledger: SOURCES.md "BBC Sound Effects"). durSec measured post-trim.
     bbc_lutine_bell:  { file:"bbc/lutine_bell.wav",   kind:"hit", durSec:9.7 },    // the Lutine bell, Lloyd's of London
     bbc_electro_gong: { file:"bbc/electro_gong.wav",  kind:"hit", durSec:3.8 },    // BBC-created electronic gong
@@ -798,7 +798,7 @@
     // VCSL samples re-edited with infinite sustain loops by roberto@zenvoid.org).
     // 8 zones, ALL looped — real reed breath that holds under a solo note. Same id,
     // so every bebop/jazz/whalejazz anchor picks it up with zero edits. Fetched by
-    // tools/fetch-guitar-samples.sh (which replaces the FluidR3 GM extract).
+    // tools/fetch/fetch-guitar-samples.sh (which replaces the FluidR3 GM extract).
     // tenor_sax dir RENAMED tenor_sax -> tenor_sax_fp (deploy immutability law: replacement zones must not change files under old names — clients cache found/ forever; the FluidR3 originals stay deployed under the old dir)
     tenor_sax: { label:"Tenor Sax (FreePats/VCSL, CC0)", dir:"tenor_sax_fp", sr:44100, zones:[{file:"z00_r44.wav",root:44,lo:0,hi:45,loop:1,ls:52296,le:270193},{file:"z01_r50.wav",root:50,lo:50,hi:51,loop:1,ls:78429,le:300053},{file:"z02_r56.wav",root:56,lo:56,hi:57,loop:1,ls:226197,le:413085},{file:"z03_r62.wav",root:62,lo:62,hi:63,loop:1,ls:40301,le:247709},{file:"z04_r70.wav",root:70,lo:70,hi:71,loop:1,ls:36429,le:296771},{file:"z05_r76.wav",root:76,lo:76,hi:77,loop:1,ls:46254,le:293483},{file:"z06_r82.wav",root:82,lo:82,hi:83,loop:1,ls:20619,le:241538},{file:"z07_r88.wav",root:88,lo:88,hi:127,loop:1,ls:27924,le:179881}] },
     // INSTRUMENT-LIBRARY UPGRADE — the crunch tier: FreePats FSBS

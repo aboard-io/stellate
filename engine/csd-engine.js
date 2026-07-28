@@ -40,7 +40,7 @@
   // COLUMNAR EVENTS (vector-kernel STEP 1 — docs/history/NEXT.md §5b): the groove +
   // voice-dynamics passes run their arithmetic on struct-of-arrays compute
   // views (engine/columns.js) while writing results back into the same event
-  // objects — BYTE-IDENTICAL to the scalar loops (test/columns.test.js proves
+  // objects — BYTE-IDENTICAL to the scalar loops (test/unit/columns.test.js proves
   // it across all genres x seeds). Node requires the module; a browser reads
   // root.CsdColumns LAZILY at call time (loaders that don't ship columns.js
   // yet fall back to the identical scalar path — no load-order trap, no
@@ -121,7 +121,7 @@
     // the verifier's "seventh" feature needs a 0-seventh minor home) + phrygian
     // DOMINANT (arab pop's hijaz color: MAJOR tonic against bII)
     frost:      prog("Frost (i-VI-III-VII triads)", [["A","min"],["F","maj"],["C","maj"],["G","maj"]]),
-    // MIDI-trove mined (tools/mine-midi.js on the MIDIMAN dub rip,
+    // MIDI-trove mined (tools/mine/mine-midi.js on the MIDIMAN dub rip,
     // 108 files): real dub harmony is TRIADIC (seventh-bar fraction .08 median
     // vs the engine's all-7ths pools) and lives on the tonic-subdominant axis —
     // root movement of a 4th/5th outnumbers everything else 2:1, chord roots
@@ -880,7 +880,7 @@
     // held notes, octave-leap payoff, space. A/B alternate per chord for variation.
     anthem:  [[0,1.5,0,0],[1.5,.5,1,0],[2,1.5,3,0],[3.5,.5,2,0],[4,2,3,1],[6,1.5,0,1],[7.5,.5,2,0]],
     anthem2: [[0,2,2,0],[2,1,3,0],[3,1,2,0],[4,1.5,0,1],[5.5,.5,1,0],[6,2,3,0]],
-    // MIDI-trove MINED cells (tools/mine-melody.js): each is the
+    // MIDI-trove MINED cells (tools/mine/mine-melody.js): each is the
     // MEDOID real phrase of its corpus's MODAL 8-beat rhythm (typicality
     // selects against hooks; the 8-slot voicing quantization keeps it a
     // contour, not a quotation — SOURCES.md). A/B pairs alternate per chord
@@ -904,7 +904,7 @@
     dubline:   [[0,.25,1,1],[.5,.25,3,1],[1,.25,3,1],[1.5,.25,3,1],[2,.25,3,1],[2.5,.25,3,1],[3,.25,3,1],[4.5,.25,0,1],[5,.25,0,0],[5.5,.25,0,1],[6,1,0,0]],
     dubline2:  [[5.5,.25,0,0],[6,.25,3,1],[6.25,.25,1,1],[6.5,.25,0,0]]
   };
-  // ---- MINED-WEAVE BEGIN (tools/mine-weave.js — do not hand-edit) ----
+  // ---- MINED-WEAVE BEGIN (tools/mine/mine-weave.js — do not hand-edit) ----
   // The mined melody ORGAN: per-family Markov walks in the engine's
   // own alphabet — pitch over the 8-slot voicing ladder (idx 0..3 × oct 0..1),
   // rhythm over quantized IOIs. Fit on the trove corpus, held-out-gated
@@ -1162,7 +1162,7 @@
         return; }
       const wv=MINED_WEAVE[gen];
       if(wv){
-        // the mined melody ORGAN (tools/mine-weave.js): two Markov walks on
+        // the mined melody ORGAN (tools/mine/mine-weave.js): two Markov walks on
         // the shared stream — rhythm over quantized IOIs, pitch over the
         // voicing ladder (idx 0..3 × oct 0..1: chord-safe by construction,
         // like wander but corpus-fit; wander scored WORSE THAN UNIFORM on

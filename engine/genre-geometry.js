@@ -19,7 +19,7 @@
 // engine/validate-genres.js gateGeometry (lines ~195-238): population sd with a
 // ||1 zero-guard, mean over ALL points, centroid = mean of z-scored vectors,
 // dims in feature-object insertion order. Feed the same point set and the
-// centroids are identical (proven in test/genre-geometry-run.js).
+// centroids are identical (proven in test/unit/genre-geometry.test.js).
 //
 //   centroids()        -> { genre: [23 z-scored means] }
 //   zstats()           -> { feature: {mean, sd} }

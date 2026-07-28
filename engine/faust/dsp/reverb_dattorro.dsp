@@ -6,7 +6,7 @@ declare name "reverb_dattorro";
 import("stdfaust.lib");
 rgain = hslider("rgain", 1, 0, 3.5, 0.01);
 rtone = hslider("rtone", 5200, 500, 12000, 1) : si.smoo;
-// TRIM equalizes tail energy to the fx_bus zita default (probe-reverb.js) so
+// TRIM equalizes tail energy to the fx_bus zita default (test/probes/reverb.probe.js) so
 // a given per-genre `reverb` scalar gives comparable wetness across colors.
 w = fi.lowpass(1, rtone) : *(rgain * 0.71);
 // dattorro_rev(pre_delay, bw, i_diff1, i_diff2, decay, d_diff1, d_diff2, damping)

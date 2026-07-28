@@ -22,7 +22,7 @@ shim noted in its header), a pure-JS rewrite of LAME
 (https://lame.sourceforge.net). It is licensed under the **GNU LGPL v3.0**
 (https://www.gnu.org/licenses/lgpl-3.0.html) and is explicitly EXCLUDED from
 the MIT grant. It is used as a separate, unmodified, replaceable module
-(loaded by `engine/faust/mp3-worker.js`) and served as source alongside this
+(loaded by `engine/faust/codec/mp3-worker.js`) and served as source alongside this
 repository, which satisfies the LGPL for scripting-language use. Source and
 license text: the linked upstream repository and npm package.
 
@@ -71,13 +71,13 @@ MIT license, with thanks to the Faust project.
 The sampled instrument, drum-kit, and percussion layers are extracted at fetch
 time from the FluidR3 GM/GS SoundFont by Frank Wen (2000–2002, 2008), released
 under the MIT license. The SoundFont and the extracted sample WAVs are fetched
-by recipe (`tools/fetch-found-samples.sh`) and are never committed to this
+by recipe (`tools/fetch/fetch-found-samples.sh`) and are never committed to this
 repository. Credit and thanks to Frank Wen.
 
 ## Yamaha DX7 factory patch data — provenance note
 
-`engine/faust/dx7-presets.json` holds 113 presets decoded
-(`engine/faust/sysex2params.js`) from the eight Yamaha DX7 factory ROM
+`engine/faust/data/dx7-presets.json` holds 113 presets decoded
+(`engine/faust/build/sysex2params.js`) from the eight Yamaha DX7 factory ROM
 cartridges (ROM1A "Master" … ROM4B, 1983), fetched from the
 yamahablackboxes.com sysex mirrors. These banks have been freely redistributed
 by Yamaha-adjacent archives, synth museums, and every DX7 editor project for

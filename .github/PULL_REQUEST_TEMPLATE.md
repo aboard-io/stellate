@@ -7,7 +7,7 @@
 <!-- Machines verify structure; human ears verify taste. -->
 
 - [ ] `./verify.sh` green
-- [ ] `node test/theory.test.js && node test/pipes.test.js` green
+- [ ] `node test/gates/theory.test.js && node test/gates/pipes.test.js` green
 - [ ] Browser gates (only if the UI changed — see CLAUDE.md)
 - [ ] I listened to it (what, and how it sounded):
 

@@ -10,7 +10,7 @@
      aboardresearch.com/projects/stellate/, where an absolute /assets/… would
      404; (2) og:image / canonical / JSON-LD urls are ABSOLUTE, because a card
      crawler resolves nothing and every unfurl must point at the canonical home,
-     stellate.app. The card + icons are DERIVED art: `node tools/gen-og-card.js`
+     stellate.app. The card + icons are DERIVED art: `node tools/build/gen-og-card.js`
      regenerates them from a committed recipe (the images themselves are the one
      committed binary exception — a crawler can't run a generator). -->
 <meta name="description" content="STELLATE is a generative music instrument: draw a path across a star map of 274 genres and hear the music of wherever you are — rendered live in your browser, deterministic from a seed.">
@@ -23,7 +23,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
 <!-- RELEASE NOTES. Generated from the git log at deploy time
-     (tools/gen-feed.js, run by tools/deploy-stellate.sh before the rsync);
+     (tools/build/gen-feed.js, run by tools/deploy/deploy-stellate.sh before the rsync);
      every entry links to a mix that plays what changed. feed.xml is the
      latest 50, feed-archive.xml the whole history back to 2026-06-06. -->
 <link rel="alternate" type="application/rss+xml" title="STELLATE — release notes" href="feed.xml">
@@ -136,29 +136,29 @@
 <script src="engine/csd-engine.js"></script>
 <!-- THE GENRE DATA: generated classic scripts (Stage E1). MUST precede
      genre-kernel.js — it reads window.__GENRES / window.__REGISTRY at load,
-     synchronously, the same way app/access.js and app/starmap.js read the
+     synchronously, the same way app/entries/access.js and app/map/starmap.js read the
      kernel at module top level. Not JSON-over-fetch for exactly that reason. -->
 <script src="engine/genres-data.js"></script>
 <script src="engine/registry-data.js"></script>
 <script src="engine/genre-kernel.js"></script>
 <script src="engine/genre-verifier.js"></script>
 <script src="engine/namebank.js"></script>
-<script src="engine/midi-export.js"></script><!-- SMF builder for the ⚙ panel's ⤓ midi download (app/export.js); reads CsdEngine at load, so AFTER csd-engine.js -->
+<script src="engine/midi-export.js"></script><!-- SMF builder for the ⚙ panel's ⤓ midi download (app/audio/export.js); reads CsdEngine at load, so AFTER csd-engine.js -->
 <script src="engine/speech.js"></script><!-- SPEECH organ (lazy: the espeak wasm loads only when a synthText source arms) -->
 
 <script src="engine/demo-layer.js"></script>
-<script src="engine/faust/state-engine.js"></script>
-<script src="engine/faust/found-player.js"></script>
-<script src="engine/faust/sampler.js"></script>
-<script src="engine/faust/live.js"></script>
+<script src="engine/faust/voices/state-engine.js"></script>
+<script src="engine/faust/voices/found-player.js"></script>
+<script src="engine/faust/voices/sampler.js"></script>
+<script src="engine/faust/live/live.js"></script>
 <!-- THE APP: native ES modules under app/ (no bundler). type=module defers, so it
      runs after the classic engine scripts above and after the DOM is parsed. -->
-<script src="app/analytics.js"></script>
+<script src="app/entries/analytics.js"></script>
 <script data-goatcounter="/gc/count" async src="vendor/goatcounter/count.js"></script>
 <script type="module" src="app/main.js"></script>
 <!-- ALIENS (star-cruise): the 3D genre-flythrough, the third VIEW in the ✦ cycle.
      NOT loaded here. app/starcruise.js is ~48 KB gzipped (plus ~9 KB of cluster
-     data) and only that view needs it, so app/panels.js dynamic-imports it via
+     data) and only that view needs it, so app/panels/panels.js dynamic-imports it via
      app/starcruise-load.js the first time the cycle reaches the view — which is
      also where the vendored Three.js load already hung. A session that never
      opens the aliens view fetches none of it. -->

@@ -10,4 +10,4 @@ Rebuild a cart with the MicroW8 `uw8` tool (from the v0.4.1 release):
 
 The browser host (`demo-layer.js`) loads only the packed `../carts/*.uw8`; it
 cannot compile CurlyWas, so these sources are kept purely for regenerability.
-Verify a rebuilt cart animates before shipping it (see faust/demo-layer-test.js).
+Verify a rebuilt cart animates before shipping it (see test/browser/demo-layer.test.js).

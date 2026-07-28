@@ -16,7 +16,18 @@
 /* 404.html — the empty-space page. Zero JavaScript, zero images: it has to be
    the most reliable page on the site, because it is the one that renders when
    something has already gone wrong. Paths are RELATIVE so it works at both
-   mounts (stellate.app and aboardresearch.com/projects/stellate/). */
+   mounts (stellate.app and aboardresearch.com/projects/stellate/).
+
+   THIS CSS STAYS INLINE — it is the one page that did not move to a linked
+   stylesheet when access/how/colophon did. nginx renders it from
+   `error_page 404 /404.html` with `internal` (docs/HOSTING.md §5), which is an
+   INTERNAL redirect: the browser's address bar keeps the URL that missed. A
+   relative <link href="app/pages.css"> would therefore resolve against
+   /whatever/deep/path/ and 404 in turn, and the page that exists to report a
+   failure would render unstyled. An absolute /app/… href would break the
+   /projects/stellate/ mount instead. So: no subresource this page cannot do
+   without. The webfont <link> above is the one exception and it is cosmetic —
+   the stack falls back to monospace. ~48 lines is the price of that. */
 :root{--bg:#0c0a1a;--panel:rgba(18,15,38,.62);--line:#2c2750;--ink:#ece9ff;
   --dim:#9b93c6;--pink:#ff6ec7;--cyan:#45e0ff;--mint:#4dffb0;--amber:#ffd86b;
   --star:rgba(236,233,255,.5)}

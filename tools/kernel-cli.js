@@ -14,9 +14,10 @@
 "use strict";
 const fs = require("fs"), path = require("path"), { execFileSync } = require("child_process");
 
-const ROOT = path.join(__dirname, "..");     // repo root: found/, .venv-*, sing.py, audio-verifier.py
+const ROOT = path.join(__dirname, "..");     // repo root: found/, .venv-* live here
 const ENGINE = path.join(ROOT, "engine");    // what __dirname meant while this lived in engine/
-const WAV = require(path.join(ENGINE, "faust", "wav.js"));
+const TOOLS = __dirname;                     // sing.py -> tools/build/, audio-verifier.py -> tools/audit/
+const WAV = require(path.join(ENGINE, "faust", "codec", "wav.js"));
 const E = require(path.join(ENGINE, "csd-engine.js"));
 const K = require(path.join(ENGINE, "genre-kernel.js"));
 const { GENRES, track, blend, mix, playlist, journey } = K;
@@ -31,7 +32,7 @@ function resolvePaths(state){
     s.fsPath=s.samplePath?path.join(ROOT,s.samplePath)
       :([".64.mp3",".mp3",".wav"].map(e=>path.join(ROOT,"found",s.id+e)).find(p=>fs.existsSync(p))
         ||path.join(ROOT,"found",s.id+".64.mp3"));
-    if(!fs.existsSync(s.fsPath)){ console.error("✗ missing "+s.fsPath+" — run ./fetch-found-sound.sh and ./fetch-found-samples.sh"); process.exit(1); }
+    if(!fs.existsSync(s.fsPath)){ console.error("✗ missing "+s.fsPath+" — run tools/fetch/fetch-found-sound.sh and tools/fetch/fetch-found-samples.sh"); process.exit(1); }
   }
 }
 const songBeats=(st)=>st.sections.reduce((n,s)=>n+(s.cycles||1)*E.getProgression(st.progression).chords.length*(st.chordEvery||8),0)+8;
@@ -42,7 +43,7 @@ function pressState(state, wavPath){
   const vsrc=state.foundSources.find(s=>s.id==="tw_vocal");
   if(vsrc){
     const vpath=path.join(ROOT,vsrc.samplePath), svpy=path.join(ROOT,".venv-sing","bin","python");
-    try{ execFileSync(svpy,[path.join(ROOT,"sing.py"),"--bpm",String(state.bpm),"--transpose",String((state.keyOffset|0)-12),"--out",vpath],{stdio:["ignore","ignore","inherit"]}); }
+    try{ execFileSync(svpy,[path.join(TOOLS,"build","sing.py"),"--bpm",String(state.bpm),"--transpose",String((state.keyOffset|0)-12),"--out",vpath],{stdio:["ignore","ignore","inherit"]}); }
     catch(e){ console.error("  (sung chorus skipped — .venv-sing/sing.py unavailable)");
       state.foundSources=state.foundSources.filter(s=>s.id!=="tw_vocal");
       state.sections.forEach(s=>{ if(s.vocal) delete s.vocal; }); }
@@ -51,7 +52,7 @@ function pressState(state, wavPath){
   // the press runs on the Faust engine
   const sj=wavPath+".state.json";
   fs.writeFileSync(sj,JSON.stringify(state));
-  execFileSync("node",[path.join(ENGINE,"faust","press.js"),sj,wavPath],{stdio:["ignore","ignore","inherit"]});
+  execFileSync("node",[path.join(ENGINE,"faust","press","press.js"),sj,wavPath],{stdio:["ignore","ignore","inherit"]});
   try{ fs.unlinkSync(sj); }catch(e){}
 }
 // encode a pressed WAV to a per-track mp3 with a natural fade-out ending
@@ -194,12 +195,12 @@ if(cmd==="anchors"){
   const base=cmd==="track"?`${args[1]}-s${seed}`:`${args[1]}-${args[2]}-${args[3]||"0.5"}-s${seed}`;
   fs.writeFileSync(base+".state.json",JSON.stringify(state,null,2));
   console.log("✓ "+base+".state.json  ("+JSON.stringify(state.genreMeta)+")");
-  if(has("verify")){ const V=require("./genre-verifier.js"); console.log(V.report(state)); }
+  if(has("verify")){ const V=require(path.join(ENGINE,"genre-verifier.js")); console.log(V.report(state)); }
   if(has("render")) renderState(state,base);
   if(has("audio-verify")){
     // empirical gate: Discogs-EffNet on the rendered audio (see audio-verifier.py)
     const py=path.join(ROOT,".venv-verify","bin","python");
-    try{ execFileSync(py,[path.join(ROOT,"audio-verifier.py"),base+".mp3","--expect",args[1]],{stdio:"inherit"}); }
+    try{ execFileSync(py,[path.join(TOOLS,"audit","audio-verifier.py"),base+".mp3","--expect",args[1]],{stdio:"inherit"}); }
     catch(e){ console.error("audio verify: expected genre not in top 3"); }
   }
 } else if(cmd==="playlist"){
@@ -217,7 +218,7 @@ if(cmd==="anchors"){
   if(has("render")){
     // full render -> DJ-mixed journey.mp3 + mix page (like journey)
     renderAndMix(dir, pl, pl.map(t=>path.join(dir,"track-"+String(t.i+1).padStart(2,"0"))));
-    try{ execFileSync("node",[path.join(ROOT,"tools","make-mix-page.js"),dir],{stdio:"inherit"}); }catch(e){}
+    try{ execFileSync("node",[path.join(TOOLS,"build","make-mix-page.js"),dir],{stdio:"inherit"}); }catch(e){}
   } else {
     const rf=+flag("render-first",0);
     for(let i=0;i<rf&&i<pl.length;i++) renderState(pl[i].state, path.join(dir,"track-"+String(i+1).padStart(2,"0")));
@@ -253,7 +254,7 @@ if(cmd==="anchors"){
     // per-track mp3s + one continuous DJ-mixed journey.mp3 (beat-aligned seams)
     renderAndMix(dir, pl, bases);
     // mix page LAST so it links whatever exists (journey.mp3, tracks)
-    try{ execFileSync("node",[path.join(ROOT,"tools","make-mix-page.js"),dir],{stdio:"inherit"}); }catch(e){}
+    try{ execFileSync("node",[path.join(TOOLS,"build","make-mix-page.js"),dir],{stdio:"inherit"}); }catch(e){}
   }
 } else {
   console.log("usage: kernel-cli.js anchors | track <genre> | blend <a> <b> <t> | playlist <a> <b> ... | journey <path.json|genres...> [--hours H --tracks N --out DIR --render]");

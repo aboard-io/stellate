@@ -45,18 +45,18 @@ e62dada  E1 complete: CLI -> tools/kernel-cli.js; kernel 966KB -> 180KB
 
 ### New machinery worth knowing about
 
-- `test/kernel-data-identity.test.js` (gate `kerneldata`) — GENRES + registries
+- `test/gates/kernel-data-identity.test.js` (gate `kerneldata`) — GENRES + registries
   byte-for-byte vs HEAD, plus genre ORDER and 5 resolved tracks (the only reach
   into module-private VOXBANK/PERCBANK). Self-heals on commit.
-- `test/genre-specs.test.js` (gate `specs`) — every genre has a spec and every
-  spec round-trips. Fix when it fails: `node tools/genre-tool.js export --all`.
-- `test/comment-only.js` — proves a diff touched comments only. Not in verify.sh;
+- `test/gates/genre-specs.test.js` (gate `specs`) — every genre has a spec and every
+  spec round-trips. Fix when it fails: `node tools/genre/genre-tool.js export --all`.
+- `test/lib/comment-only.js` — proves a diff touched comments only. Not in verify.sh;
   it is a tool for whoever is doing a strip.
-- `tools/gen-genre-info.js --write` — regenerates all 274 `info` blurbs from the
+- `tools/genre/gen-genre-info.js --write` — regenerates all 274 `info` blurbs from the
   anchors. The descriptions are DERIVED now; do not hand-edit them.
-- `tools/relayout-map.js --write --capacity 400` — re-bakes `app/world.js` POS as
+- `tools/build/relayout-map.js --write --capacity 400` — re-bakes `app/world.js` POS as
   a label-box packing. Re-run when the catalogue grows.
-- `tools/speech-to-live.js`, `tools/split-kernel-data.js`, `tools/kernel-cli.js`.
+- `tools/build/speech-to-live.js`, `tools/build/split-kernel-data.js`, `tools/kernel-cli.js`.
 
 ### FOUR TRAPS THIS SESSION FELL INTO — do not repeat them
 
@@ -79,7 +79,7 @@ already know, before trusting what it says about a case you don't.**
 
 ### OPEN DECISIONS — these need Paul, not more work
 
-1. **Deploy.** 7 commits are undeployed. `tools/ship.sh` runs gates → push →
+1. **Deploy.** 7 commits are undeployed. `tools/deploy/ship.sh` runs gates → push →
    deploy. The rsync now uses `--delete-excluded`, so an exclude genuinely
    removes from the droplet; the first run after adding one will delete.
 2. **The derived speech tier.** 41 dj/drop/vamp genres now announce themselves
@@ -111,7 +111,7 @@ already know, before trusting what it says about a case you don't.**
   - It is **3** requests on a desktop session, not 4: `app/main.js` at boot plus
     one per stream-worker instance. `stem-worker.js` has a fetch site but
     nothing in `live.js` spawns that worker any more (it survives only in
-    `test/stem-parity-test.js`, in node), and `engine/faust/engine.js`'s
+    `test/unit/stem-parity.test.js`, in node), and `engine/faust/live/engine.js`'s
     `dx7Load` is lazy and off the boot path.
   - The redundant fetches were never worth ~224 KB. `no-cache` means
     store-and-revalidate, so requests 2 and 3 already went out **conditional**
@@ -158,7 +158,7 @@ signal there is — but a move is a finding, not a veto.
   (`found/<id>.mp3`); the Range/escalate ladder, `FOUND_MAX_BYTES` and both
   `mode:"cors"` fetches are gone. All 192 sources verified to resolve locally;
   the 79 unmapped ones all followed the convention, so **zero** manifest rows
-  were needed. New gate `test/no-remote-sources.test.js` makes it permanent.
+  were needed. New gate `test/unit/no-remote-sources.test.js` makes it permanent.
 - **SW cache split** — `stellate-app-v41` (SWR, swept) + `stellate-media-v1`
   (cache-first, never swept), with one-time salvage of `/found/` out of the old
   v40 cache so this deploy doesn't cost users their media. `engine/faust/dist/`
@@ -183,7 +183,7 @@ signal there is — but a move is a finding, not a veto.
   fact that **the PWA could not boot offline** — `sw.js` never caches
   cross-origin, so esm.sh was a hard runtime dependency. `colophon.html`
   updated; it advertised the CDN as a fact.
-- **`test/probe-harness.js`**: added `.mjs` and `.woff2` MIME types. Without
+- **`test/lib/probe-harness.js`**: added `.mjs` and `.woff2` MIME types. Without
   `.mjs` the vendored modules served as `application/octet-stream`, strict
   module-MIME checking aborted the whole graph, and the app silently never
   booted with an empty console.
@@ -227,10 +227,10 @@ minute session."*
 | Droplet headroom | 1 TiB/mo ÷ 69 MB ≈ **~510 sessions/day** |
 
 The good news first: loading is **already genuinely on-demand** — per fed bar,
-not per genre or per manifest (`engine/faust/live.js:873-875`), memoised by
+not per genre or per manifest (`engine/faust/live/live.js:873-875`), memoised by
 srcId through a 4-wide decode gate (`live.js:333-357`, `:627`). No SoundFont
 blob is ever served; the 151 MB FluidR3 is exploded at build time into
-per-preset zone slices (`engine/faust/extract-gm.js:20,35-39`) and no `.sf2`
+per-preset zone slices (`engine/faust/build/extract-gm.js:20,35-39`) and no `.sf2`
 reaches the wire. There is no over-fetch to fix. **The problem is purely that
 the bytes are uncompressed PCM.**
 
@@ -294,8 +294,8 @@ const scale  = buf.sampleRate / z.sr;
 const leadIn = (buf.length > z.len * scale) ? 1105 * scale : 0;
 ```
 
-Apply at `engine/faust/sampler.js:598-600` (PCM path) and
-`engine/faust/live.js:1303` (live `loopStartSec`).
+Apply at `engine/faust/voices/sampler.js:598-600` (PCM path) and
+`engine/faust/live/live.js:1303` (live `loopStartSec`).
 
 **Byte-addressability works — verified bit-exact in all three engines.** Encode
 each zone separately (own Xing tag, no ID3), concatenate into a per-preset
@@ -355,7 +355,7 @@ measurements below are what changed the answer.**
 
 **DONE (uncommitted) — 28.30 MB off the deploy, 270 fewer files** (rsync
 `--dry-run --stats`: 526.18 MB / 9,591 files → 497.88 MB / 9,303). Both are
-`tools/deploy-stellate.sh` filter changes only; no app code moved.
+`tools/deploy/deploy-stellate.sh` filter changes only; no app code moved.
 
 - **`zones.json` + `_gm-extract-summary.json` dropped** — 134 files, 544 KB of
   extractor output. Nothing fetches them: the browser reads zone geometry from
@@ -384,7 +384,7 @@ audio path's init sequence costs more than it buys.
 
 What WAS done is the cheap route, and it takes the count from **3 requests to
 1** (measured cold, headless, production headers mirrored): one nginx
-`location = /engine/faust/dx7-presets.json` with `private, max-age=300`. Note
+`location = /engine/faust/data/dx7-presets.json` with `private, max-age=300`. Note
 the diagnosis in the original plan was wrong twice over — the HOSTING §5
 mutable-JSON carve-out is nested inside `location /found/` and never touched
 this file (the server-wide `add_header` did), and `sw.js`'s `MUTABLE` regex is
@@ -418,7 +418,7 @@ droplet and in the aboardresearch alias.
    without the R2 work sketched at `HOSTING.md:269-306`.
 3. **Fix the SW/server immutability skew**: `sw.js:30` treats
    `engine/faust/dist/` as immutable but the deploy deliberately does not
-   (`tools/deploy-stellate.sh:36-39`) — a recompiled `.dsp` under an unchanged
+   (`tools/deploy/deploy-stellate.sh:36-39`) — a recompiled `.dsp` under an unchanged
    name serves stale until the next SW bump. Content-hash it or drop it from
    `IMMUTABLE`.
 4. **`app/precache.js` is dead code** — it reads `s.file` and
@@ -472,7 +472,7 @@ places (about layer, standing credit line, JSON-LD/OG head) — update that comm
 to match, since the standing line is going away. The JSON-LD/OG head attribution
 (`index.html:34`, `index.html:71-72`) stays.
 
-**Test:** `node test/explorer-ui-test.js` (boot smoke — make sure removing
+**Test:** `node test/browser/explorer-ui.test.js` (boot smoke — make sure removing
 `.credit` doesn't trip a selector), plus eyeball the ? layer at
 `http://localhost:8777/` via `./serve.sh`.
 
@@ -553,7 +553,7 @@ media bytes.
 
 **Test:** `./verify.sh`; `node engine/genre-verifier.js matrix --no-cache` must
 still print `diagonal dominant: 274/274` (it should be untouched);
-`node test/meter.test.js` head_byte_identity must NOT trip (t=0 unchanged);
+`node test/unit/meter.test.js` head_byte_identity must NOT trip (t=0 unchanged);
 then ears on a star-map glide.
 
 ---
@@ -664,13 +664,13 @@ Surveyed by five agents against the real tree. **Everything below is measured.**
 
 > Landed. boot-smoke is in verify.sh and covers 16 scripts across index/access/embed.
 
-**`test/boot-smoke.js` does not run in CI.** It parses `index.html`, replays the
+**`test/gates/boot-smoke.test.js` does not run in CI.** It parses `index.html`, replays the
 classic `<script>` block in a `vm` sandbox, and fails if a new engine script
-appears that isn't in its `EXPECTED` registry (`test/boot-smoke.js:32-50`). It
+appears that isn't in its `EXPECTED` registry (`test/gates/boot-smoke.test.js:32-50`). It
 is the single most important structural gate for this whole plan and it only
 lives in `npm run test:pure`, which `.github/workflows/verify.yml` never calls.
 
-- Add `boot-smoke.js` to `verify.sh`.
+- Add `test/gates/boot-smoke.test.js` to `verify.sh`.
 - **Extend it to `access.html` and `embed.html`.** Both hand-maintain their own
   11-script lists (`access.html:279-289`, `embed.html:95-105`) with **no gate at
   all**, and both omit `engine/midi-export.js` + `engine/demo-layer.js`. Three
@@ -684,17 +684,17 @@ The load order is real and documented: `theory`+`pipes` → `csd-engine` →
 
 ### Stage B — deletions — DONE
 
-> Landed (`0d0fea6`). NOTE: `tools/make-mix-page.js` was NOT dead and survives —
+> Landed (`0d0fea6`). NOTE: `tools/build/make-mix-page.js` was NOT dead and survives —
 > the journey CLI calls it at the end of a render.
 
 | Target | Size | Evidence |
 |---|---|---|
 | `playlist/` | 31 files, 140 KB | Untouched since 2026-06-11; no code reads it; **currently deploying to stellate.app** (the `/*.state.json` exclude is root-anchored so `playlist/track-*.state.json` isn't matched). Committed derived output — violates the one rule. |
-| `tools/fetch-found-voice.sh` | 104 lines | Zero hits repo-wide. Superseded by `fetch-found-naropa.sh` + `gen-voice-bank.js`. |
-| `tools/make-mix-page.js` | 104 lines | Zero references. Its output dir is `playlist/`. |
+| `tools/fetch/fetch-found-voice.sh` | 104 lines | Zero hits repo-wide. Superseded by `fetch-found-naropa.sh` + `gen-voice-bank.js`. |
+| `tools/build/make-mix-page.js` | 104 lines | Zero references. Its output dir is `playlist/`. |
 | `test/probe-*.js` (13 files) | 1,864 lines | Unreferenced DSP-tuning instruments, not gates. Move to `test/probes/` with a README, or delete. Keep `probe-harness.js` — 42 files require it. |
 | `test/starcruise-*shot.js` + `shot-settings.js` | 451 lines | Produce PNGs, assert nothing. Belong in `tools/`, not `test/`. |
-| `engine/checks/` (5 files) | 899 lines | Zero CI reach. `test/margin-baseline.json` (260 lines) is written by nothing. Either promote into `verify.sh` as advisory or retire. |
+| `engine/checks/` (5 files) | 899 lines | Zero CI reach. `test/lib/margin-baseline.json` (260 lines) is written by nothing. Either promote into `verify.sh` as advisory or retire. |
 | `docs/KERNEL-MAP.md` | 66 lines | **All 13 line numbers wrong** (`GENRES` doc 1663 → real 1327; `toState` 7908 → 8198). Keep only its regeneration grep, fold into CLAUDE.md. |
 | `docs/STARCRUISE-LIBS.md` | 103 lines | Adoption plan; 2 of 5 picks shipped, 3 never existed. |
 | `docs/ROADMAP.md` | 423 lines | 38 items `[DONE]`; its own ground-truth block says 249. References four docs that never existed. Superseded by this file. → `history/` or delete. |
@@ -737,7 +737,7 @@ legacy-csound"* duplication (CLAUDE.md says it once).
 - The WebKit bug reference in `faust/live.js` (`webkit.org/b/231105`, fixed in
   r291267) — an external fact with a real date.
 
-**Proof.** `node test/comment-only.js HEAD` reports **88 files comment-only, 5
+**Proof.** `node test/lib/comment-only.js HEAD` reports **88 files comment-only, 5
 with code changes**. All 5 are message text that nothing branches on: four test
 diagnostic strings (`explorer-ui-test` H5, `genre-viz-test` A3/B4,
 `starcruise-nav-run` 1D, `musicality.test` gate label) and one comment living
@@ -761,8 +761,8 @@ from this pass, and still open:**
 
 - `musicality.test.js` — "card-lie count 3 > 0": three genre cards promise an
   instrument their recipe can't realize. Run `M.checkCardClaims` per genre.
-- `starcruise-nav-run.js` 1A + 1C — 1C is *exactly* the stale-literal trap
-  `starcruise-run.js` warns about in its own comment: the gate hardcodes 33
+- `test/starcruise/starcruise-nav.test.js` 1A + 1C — 1C is *exactly* the stale-literal trap
+  `test/starcruise/starcruise.test.js` warns about in its own comment: the gate hardcodes 33
   clusters and the clusterer now emits 34.
 
 ---
@@ -785,8 +785,8 @@ provenance:
   `validate-genres.js:297`) — say it **once**, in CLAUDE.md.
   `app/inside.js` carries the same two quotes **twice each**.
 - Delete `app/glyphs.js:4-18`, a 15-line block headed `// ARCHAEOLOGY.`
-- Fix 4 stale self-references: `test/audit-gate-test.js`, `hold-verify-run.js`,
-  `journey-crash-run.js`, `strip-fuzz-test.js` all still head themselves
+- Fix 4 stale self-references: `test/browser/audit-gate.test.js`, `test/browser/hold-verify.test.js`,
+  `test/browser/journey-crash.test.js`, `test/unit/strip-fuzz.test.js` all still head themselves
   `// faust/…` from before they moved into `test/`.
 
 **`sw.js:21` is the worst single site in the repo** — the `VERSION` constant is
@@ -845,7 +845,7 @@ engine/faust/
   dsp/ dist/   (unchanged)
 ```
 
-Cost: 4 `<script src>` paths × 3 HTML files + `boot-smoke.js`'s registry.
+Cost: 4 `<script src>` paths × 3 HTML files + `test/gates/boot-smoke.test.js`'s registry.
 
 **`tools/`** → `fetch/` (12) · `mine/` (6) · `genre/` (21) · `build/` (6) ·
 `deploy/` (2) · `audit/` (4). Note the `genre/` cohort: **16 tools / ~3,100
@@ -853,11 +853,26 @@ lines reachable only through ROADMAP prose**, all single-commit 2026-07-11.
 They read as first-class tooling and aren't — give the folder a README saying
 "analysis, run by hand," or retire them.
 
-**`test/`** → `gates/` (the 9 `verify.sh` jobs + theory/pipes/boot-smoke/speech)
-· `unit/` (~40 pure-node) · `browser/` (~42) · `starcruise/` (~12) · `probes/`
-(15) · `lib/`. And **settle the naming**: 18 `*.test.js`, 14 `*-test.js`, 43
-`*-run.js` for the same thing. `npm run test:browser` loops over `*-run.js` but
-**14 of those 43 need no browser**.
+**`test/` — DONE 2026-07-28.** Planned as `gates/` (the 9 `verify.sh` jobs +
+theory/pipes/boot-smoke/speech) · `unit/` (~40) · `browser/` (~42) ·
+`starcruise/` (~12) · `probes/` (15) · `lib/`. **The real counts, measured
+against the folder rather than the tally:** `gates/` **13** (verify.sh runs
+**10** jobs out of `test/`, not 9 — `engine` `social-meta` `prove-matrix`
+`kernel-data-identity` `genre-specs` `pos-coverage` `coords-coverage`
+`live-walk-parity` `boot-smoke` `doc-counts` — plus theory/pipes/speech) ·
+`unit/` **36** · `browser/` **25** · `starcruise/` **8** · `probes/` **7** ·
+`lib/` **4**. The `browser/~42` and `probes/15` estimates were both high: only
+**33** files in the whole folder launch chromium (checked by whether they use
+`probe-harness.js`, not by name), and only 7 are probe instruments.
+
+**The naming is settled: one suffix, `<name>.test.js`, and the FOLDER carries
+the mechanism.** The old three-way split (18 `*.test.js`, 14 `*-test.js`, 43
+`*-run.js`) encoded nothing — `-run` was 29 browser + 14 pure — which is exactly
+why `npm run test:browser`'s `test/*-run.js` glob was lying. It now globs
+`test/browser/*.test.js test/starcruise/*.test.js`, which is **exactly** the 33
+chromium gates and nothing else; `test/starcruise/`'s three PURE proofs
+(`flight`/`planet`/`traits`) moved to `unit/` to keep that true. Hand-run
+instruments are `test/probes/<name>.probe.js` — in no glob, in no npm script.
 
 **Top-level HTML: leave the URLs alone.** Moving `how/access/colophon/embed/404`
 into a folder is a bad trade and there is already a standing decision against it
@@ -869,11 +884,60 @@ on the droplet; `manifest.webmanifest` PWA shortcuts are baked into installed
 users' launchers; `feed-archive.xml` (726 KB) holds hundreds of published
 `colophon.html` links; plus 6 gates and 2 deploy smoke checks.
 
-**Do this instead** — same benefit, zero production risk: those six pages
-duplicate **~110 lines of social-meta head and ~314 lines of inline `<style>`**.
-Extract to a linked stylesheet. And move `how.html`'s inline `<script>` out — it
-is the **sole** reason the CSP still needs `script-src 'unsafe-inline'`
-(`docs/HOSTING.md:632`), so that one edit lets the CSP tighten for 1.0.
+**Done instead — Stage D, 2026-07-28.** Same benefit, zero production risk. Not
+one URL moved. Measured, not estimated: the inline `<style>` was **314 lines**
+across four pages (`access` 76, `colophon` 95, `how` 93, `404` 50, tags
+included) and the social head was **150 `<meta>`/`<link>` tags** across six.
+
+- **CSS → linked stylesheets, three files.** `app/pages.css` is the shared
+  chrome of the two prose pages (palette, reset, links, `.backlink`, the `h1`
+  gradient, footer, the two shared media queries); `app/how.css` and
+  `app/colophon.css` carry only what actually differed. `app/access.css` stands
+  **alone on purpose** — that page is a different design system (system-ui
+  faces, role-named accessibility palette) and shares no rule; folding it in
+  would have meant an override per line. Cascade trap found and fixed by the
+  check, not by eye: a page file restating the `header{padding:…}` shorthand
+  silently undid `app/pages.css`'s narrow-viewport `header{padding-top:3rem}`,
+  so the page files set `padding-bottom` only.
+- **`404.html` keeps its ~48 lines INLINE, deliberately.** `error_page 404
+  /404.html` is an *internal* redirect: the address bar keeps the URL that
+  missed, so a relative `<link href="app/pages.css">` resolves against
+  `/whatever/deep/path/` and 404s in turn. The page that renders when something
+  has already gone wrong must fetch nothing.
+- **Proof of no visual change**: a scratch playwright run diffed
+  `getComputedStyle` over 55 properties + `::before`/`::after` + bounding boxes
+  for every element of the before and after pages, at 1200 px and 380 px, in
+  light and dark, with and without `prefers-reduced-motion` — **24 comparisons,
+  0 diffs** (access 111 elements, colophon 171, how 839).
+- **Social head: kept duplicated, made consistent, gated.** HTML has no include
+  and there is no build step for HTML; a generator that rewrites committed
+  markup is a worse failure mode than duplication. So the drift is now a gate:
+  `test/gates/social-meta.test.js` gained `colophon.html` (4 → 5 pages), a
+  `SITE_WIDE` list whose values must be byte-identical everywhere, and
+  `og:image:type` / `twitter:image:alt` / `twitter:site` as required tags.
+  Drift it found: `colophon.html` said `twitter:creator @ftrain` while the other
+  four said `@aboard`; `og:image:type` existed on 2 of 5 pages,
+  `twitter:image:alt` and `twitter:site` on 1 of 5; `how.html` had no manifest
+  link, no feed autodiscovery and no `color-scheme`.
+- **THE CSP WIN.** `how.html`'s inline `<script>` — the seeded starfield + the
+  matrix diagram — is now `app/entries/how.js`, moved verbatim. It was the sole
+  reason the policy needed `script-src 'unsafe-inline'`, and the token is out of
+  `docs/HOSTING.md` §4. Two stale tokens went with it: `https://esm.sh` and the
+  Google-Fonts hosts, dead since preact/htm/the webfonts were vendored. The
+  policy is now `script-src 'self' 'wasm-unsafe-eval'` with **no cross-origin
+  script or font host at all**. `style-src 'unsafe-inline'` still stands (the
+  `style="…"` attributes and the keyframes `app/starcruise.js` /
+  `engine/demo-layer.js` inject), but not because of the page styles any more.
+  The same gate now enforces the invariant — zero inline `<script>`, zero `on*=`
+  attributes, zero `javascript:` URLs in the six pages — because a violation
+  only ever shows up in production; the dev server sends no CSP.
+
+**Paul, two open calls.** (1) Per the Twitter card spec `twitter:site` is the
+publisher and `twitter:creator` the author, which would make creator `@ftrain`
+everywhere and site `@aboard`. The five pages now all say `@aboard` for both,
+which matches what `index.html` has been publishing all along — flip it in
+`SITE_WIDE`'s five pages if you want the spec reading. (2) `docs/ROADMAP.md`,
+cited above as the home of the standing decision, **does not exist in the tree**.
 
 **`verifier-catalog/` is GONE (done 2026-07-27).** Paul: *"get rid of the
 verifiers dependency, it'll just confuse people."* The submodule, `.gitmodules`
@@ -911,7 +975,7 @@ check on the serialized `GENRES` before/after. That gate does not exist today.
 - **115 of the 135 have already drifted** from the anchor that ships. 20 are
   byte-identical; **all 135 labels are stale** (commit `fc5183f` renamed every
   label and never touched the specs); 40 of 42 `pos` values stale.
-- **The folder is one-directional.** Only `tools/genre-tool.js` reads specs;
+- **The folder is one-directional.** Only `tools/genre/genre-tool.js` reads specs;
   every later edit happens in the kernel by hand and is never written back.
   Nothing at runtime reads `genre-specs/` at all.
 - **`invented/` is a red herring** — confirmed: **68 of 274 anchors are
@@ -1096,7 +1160,7 @@ Four reasons this must go before 1.0, beyond the console noise:
   the starcruise↔app `window.__` seam can be reconsidered (see the reorg plan's
   Stage D) — though the Three.js-off-the-boot-path reason still stands.
 
-**Test:** `node test/explorer-ui-test.js` and `node test/boot-smoke.js`; then
+**Test:** `node test/browser/explorer-ui.test.js` and `node test/gates/boot-smoke.test.js`; then
 load the page with the network throttled to offline after a warm cache and
 confirm it still boots — which it cannot do today.
 
@@ -1123,6 +1187,6 @@ feeds the headless gates — it must keep emitting **real** labels, exactly like
 the `PLAIN` inverse map exists so gates can match drawn genre labels back
 (`app/glyphs.js:258+`). Alienize at draw time only, never in the data.
 
-**Test:** `node test/explorer-ui-test.js` (it measures `.region` watermark
-rects at `test/explorer-ui-test.js:171`), plus eyeball at zoom-out where the
+**Test:** `node test/browser/explorer-ui.test.js` (it measures `.region` watermark
+rects at `test/browser/explorer-ui.test.js:171`), plus eyeball at zoom-out where the
 region names are largest.

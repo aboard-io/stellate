@@ -1,0 +1,69 @@
+/* app/pages.css — THE SHARED CHROME OF THE STATIC PAGES (how.html, colophon.html).
+   =========================================================================
+   These two pages are prose, not the instrument: no engine, no modules, one
+   column, the app's palette and faces. They used to carry two hand-kept copies
+   of the same palette and the same footer/backlink/h1 chrome, which is exactly
+   how a palette drifts. Everything here is BYTE-IDENTICAL between them; every
+   value that differed stays in the page's own file.
+
+   LOAD ORDER IS LOAD-BEARING: link this FIRST, then the page file
+   (app/how.css / app/colophon.css). The page files finish declarations this
+   one deliberately leaves open (h1 margin, body line-height, footer margin-top,
+   the --panel token) and colophon's light/dark palettes redefine tokens set
+   here — equal specificity, so later must win.
+
+   NOT here on purpose:
+   - index.html / embed.html use app/app.css (the instrument's own stylesheet).
+   - access.html has its own design system entirely (app/access.css): system-ui
+     faces, an accessibility-first palette, zero shared rules. Forcing it in
+     here would mean an override for every line.
+   - 404.html keeps its CSS INLINE. nginx renders it from `error_page 404
+     /404.html` with `internal`, so the browser's URL stays the address that
+     missed — a relative <link href="app/pages.css"> would resolve against
+     /whatever/deep/path/ and 404 in turn, leaving the error page unstyled. The
+     one page that renders when something has already gone wrong must need
+     nothing but itself. Its ~48 lines are the price. */
+
+/* ── palette: the tokens whose values are identical on both pages ────────── */
+:root{
+  --bg:#0c0a1a;--line:#2c2750;--line2:#3b3568;
+  --ink:#ece9ff;--dim:#9b93c6;--pink:#ff6ec7;--cyan:#45e0ff;--mint:#4dffb0;
+  --amber:#ffd86b;--purple:#a06bff;
+}
+/* --panel differs (colophon is translucent over its star field, how is solid),
+   --panel2 is how-only and --star is colophon-only: see the page files. */
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:VT323,monospace;font-size:20px;letter-spacing:.01em;
+  overflow-x:hidden}
+a{color:var(--cyan)}
+a:hover{color:var(--mint)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--pink);outline-offset:2px;border-radius:4px}
+::selection{background:var(--pink);color:var(--bg)}
+
+/* ── the one column ─────────────────────────────────────────────────────── */
+.wrap{max-width:760px;margin:0 auto;padding:0 1.2rem 4rem}
+/* the page files set only header's padding-BOTTOM (2.4rem vs 3rem). They must
+   not restate the `padding` shorthand: they load after this file, and the
+   shorthand would reset the narrow-viewport padding-top below. */
+header{padding:4.5rem 0 0}
+.backlink{font:16px VT323,monospace;color:var(--dim);text-decoration:none;letter-spacing:.06em}
+.backlink:hover{color:var(--cyan)}
+h1{font-family:Orbitron,sans-serif;font-weight:700;font-size:clamp(2rem,7vw,3.4rem);
+  letter-spacing:.08em;
+  background:linear-gradient(90deg,var(--amber),var(--pink) 52%,var(--cyan));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.tag{color:var(--dim);font-size:22px}
+.tag b{color:var(--ink);font-weight:400}
+.dim{color:var(--dim)}
+
+/* ── footer ─────────────────────────────────────────────────────────────── */
+footer{padding-top:1.6rem;border-top:1px solid var(--line);
+  font:17px VT323,monospace;color:var(--dim);letter-spacing:.03em}
+footer .sig{color:var(--cyan);font-size:19px;margin-bottom:.6rem}
+footer nav{display:flex;flex-wrap:wrap;gap:.4rem 1.4rem}
+
+@media(max-width:560px){ body{font-size:18px} header{padding-top:3rem} }
+@media(prefers-reduced-motion:reduce){ html{scroll-behavior:auto} }

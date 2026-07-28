@@ -168,7 +168,7 @@
     const job = _q.then(() => synthOnce(text, n));
     _q = job.then(() => undefined, () => undefined);
     return job.then((r) => {
-      // headless-verification hook: the browser gate (test/speech-live-run.js)
+      // headless-verification hook: the browser gate (test/browser/speech-live.test.js)
       // reads window.__SPEECH to prove a synthText source really synthesized.
       if (typeof window !== "undefined") {
         const S = window.__SPEECH || (window.__SPEECH = { synths: 0, keys: [] });

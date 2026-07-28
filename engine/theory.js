@@ -183,12 +183,12 @@
   // HIGH wing (jazz/bebop, 0.55-0.70) keeps ~90% of its spice — a proportional
   // pullback biased to the mild genres, not a revert. (scratch floor.js sweep.)
   const APPLIED_DOM_FLOOR = 0.05;
-  // ---- MINED-TABLES BEGIN (tools/mine-theory.js — do not hand-edit) ----
+  // ---- MINED-TABLES BEGIN (tools/mine/mine-theory.js — do not hand-edit) ----
   // Corpus-fit FUNC_NEXT/POOL (MIDIMAN trove via corpus-db): 57165+29136
   // deduped files, 3065897+1352325 diatonic root transitions. Held-out mean
   // log-lik (mined vs hand): major -1.6681 vs -1.7982, minor -1.7685 vs -1.9721.
   // OPT-IN via progress({tables:"corpus"}) / state.theory.tables — absent, the
-  // hand tables above run byte-identically (test/theory-tables.test.js).
+  // hand tables above run byte-identically (test/unit/theory-tables.test.js).
   const MINED={"major":{"FUNC_NEXT":{"T":{"T":0.3021,"S":0.4017,"D":0.2962},"S":{"T":0.5782,"S":0.1031,"D":0.3187},"D":{"T":0.7399,"S":0.2142,"D":0.046}},"POOL":{"T":[[0,0.6037],[2,0.1687],[5,0.2276]],"S":[[1,0.4022],[3,0.5978]],"D":[[4,0.8986],[6,0.1014]]}},"minor":{"FUNC_NEXT":{"T":{"T":0.3975,"S":0.2659,"D":0.3366},"S":{"T":0.6073,"S":0.0591,"D":0.3336},"D":{"T":0.7573,"S":0.1614,"D":0.0813}},"POOL":{"T":[[0,0.5349],[2,0.2219],[5,0.2432]],"S":[[1,0.243],[3,0.757]],"D":[[4,0.5941],[6,0.4059]]}}};
   // ---- MINED-TABLES END ----
   function wpick(pairs,r){ let acc=0; for(const [v,w] of pairs){ acc+=w; if(r<acc) return v; } return pairs[pairs.length-1][0]; }

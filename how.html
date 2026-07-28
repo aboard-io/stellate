@@ -9,16 +9,25 @@
 <meta name="description" content="How STELLATE turns a point on a star map into music: genre vector → engine state → score → Faust/sampled synthesis → the sound in your browser.">
 <meta name="author" content="Paul Ford">
 <meta name="theme-color" content="#0c0a1a">
+<meta name="color-scheme" content="dark">
 <link rel="canonical" href="https://stellate.app/how.html">
 <link rel="icon" href="assets/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<!-- RELEASE NOTES. Generated from the git log at deploy time
+     (tools/build/gen-feed.js, run by tools/deploy/deploy-stellate.sh before the rsync);
+     every entry links to a mix that plays what changed. feed.xml is the
+     latest 50, feed-archive.xml the whole history back to 2026-06-06. -->
+<link rel="alternate" type="application/rss+xml" title="STELLATE — release notes" href="feed.xml">
+<link rel="alternate" type="application/feed+json" title="STELLATE — release notes (JSON Feed)" href="feed.json">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="STELLATE">
 <meta property="og:title" content="STELLATE — how a song is made">
 <meta property="og:description" content="The whole pipeline, drawn: a point in a 274-genre vector space becomes an engine state, a score, and finally sound — live in your browser.">
 <meta property="og:url" content="https://stellate.app/how.html">
 <meta property="og:image" content="https://stellate.app/assets/og-card.png">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE — draw a path through genre space.">
@@ -26,101 +35,12 @@
 <meta name="twitter:title" content="STELLATE — how a song is made">
 <meta name="twitter:description" content="The whole pipeline, drawn: a point in genre space becomes an engine state, a score, and finally sound.">
 <meta name="twitter:image" content="https://stellate.app/assets/og-card.png">
+<meta name="twitter:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE.">
 <meta name="twitter:creator" content="@aboard">
+<meta name="twitter:site" content="@aboard">
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
-<style>
-/* how.html — the pipeline explainer. Self-contained: the app's own palette and
-   faces, a constellation rail down the left (the page is a drawn path through
-   the pipeline — the path IS the explanation), hand-authored SVG diagrams. */
-:root{--bg:#0c0a1a;--panel:#15122c;--panel2:#1c1838;--line:#2c2750;--line2:#3b3568;
-  --ink:#ece9ff;--dim:#9b93c6;--pink:#ff6ec7;--cyan:#45e0ff;--mint:#4dffb0;--amber:#ffd86b;--purple:#a06bff}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--ink);
-  font:20px/1.5 VT323,monospace;letter-spacing:.01em;
-  overflow-x:hidden}
-a{color:var(--cyan)}
-a:hover{color:var(--mint)}
-a:focus-visible,button:focus-visible{outline:2px solid var(--pink);outline-offset:2px;border-radius:4px}
-::selection{background:var(--pink);color:var(--bg)}
-/* the seeded starfield behind everything (inline JS, mulberry32 — the same
-   PRNG family the engine draws every note from) */
-#sky{position:absolute;top:0;left:0;width:100%;z-index:0;pointer-events:none}
-#sky circle{animation:tw 4s ease-in-out infinite}
-@keyframes tw{0%,100%{opacity:var(--o,.5)}50%{opacity:calc(var(--o,.5)*.35)}}
-@media(prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}
-  #sky circle{animation:none}
-}
-.wrap{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:0 1.2rem 4rem}
-/* ---- hero ---- */
-header{padding:4.5rem 0 3rem;text-align:left}
-.backlink{font:16px VT323,monospace;color:var(--dim);text-decoration:none;letter-spacing:.06em}
-.backlink:hover{color:var(--cyan)}
-h1{font-family:Orbitron,sans-serif;font-weight:700;font-size:clamp(2rem,7vw,3.4rem);
-  letter-spacing:.08em;margin:.6rem 0 .4rem;
-  background:linear-gradient(90deg,var(--amber),var(--pink) 52%,var(--cyan));
-  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.tag{color:var(--dim);font-size:22px;max-width:52ch;margin:0}
-.tag b{color:var(--ink);font-weight:400}
-/* ---- part titles ---- */
-.part{font-family:Orbitron,sans-serif;font-size:.78rem;letter-spacing:.32em;text-transform:uppercase;
-  color:var(--amber);margin:4.2rem 0 .4rem;padding-top:1rem}
-.part.cyan{color:var(--cyan)}
-.part.mint{color:var(--mint)}
-.partsub{color:var(--dim);margin:0 0 2.2rem;max-width:56ch}
-/* ---- THE RAIL: stages are stars on a drawn constellation path ---- */
-.rail{position:relative;padding-left:2.1rem}
-.rail::before{content:"";position:absolute;left:8px;top:14px;bottom:14px;width:2px;
-  background:linear-gradient(180deg,var(--pink),var(--purple) 45%,var(--cyan));
-  box-shadow:0 0 9px rgba(255,110,199,.45);opacity:.55}
-.stage{position:relative;margin:0 0 3.4rem;scroll-margin-top:2rem}
-.stage::before{content:"";position:absolute;left:calc(-2.1rem + 3px);top:8px;width:12px;height:12px;
-  border-radius:50%;background:var(--bg);border:2px solid var(--pink);
-  box-shadow:0 0 10px var(--pink),0 0 22px rgba(255,110,199,.35)}
-.stage:nth-child(even)::before{border-color:var(--cyan);box-shadow:0 0 10px var(--cyan),0 0 22px rgba(69,224,255,.35)}
-.stage h2{font-family:Orbitron,sans-serif;font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;
-  color:var(--ink);margin:0 0 .15rem}
-.stage h2 .n{color:var(--pink);margin-right:.55rem}
-.stage:nth-child(even) h2 .n{color:var(--cyan)}
-.stage .fn{font:15px VT323,monospace;color:var(--mint);letter-spacing:.05em;margin:0 0 .8rem;opacity:.85}
-.stage p{margin:.7rem 0;max-width:62ch;color:var(--ink)}
-.stage p b{color:var(--amber);font-weight:400}
-.stage p em{color:var(--cyan);font-style:normal}
-.dim{color:var(--dim)}
-/* diagrams: cards in the app's chrome */
-figure{margin:1rem 0;background:rgba(18,15,38,.62);border:1px solid var(--line);border-radius:12px;
-  padding:.7rem .8rem .4rem;overflow-x:auto}
-figure svg{display:block;width:100%;height:auto;max-width:640px;margin:0 auto}
-figcaption{font:14px VT323,monospace;color:var(--dim);letter-spacing:.05em;padding:.3rem .2rem .4rem;text-align:center}
-/* ordered inner list for buildEvents */
-ol.stages{list-style:none;counter-reset:st;margin:1rem 0;padding:0;max-width:62ch}
-ol.stages li{counter-increment:st;position:relative;padding:.42rem 0 .42rem 2.4rem;border-top:1px solid var(--line)}
-ol.stages li:last-child{border-bottom:1px solid var(--line)}
-ol.stages li::before{content:counter(st);position:absolute;left:.2rem;top:.5rem;
-  font-family:Orbitron,sans-serif;font-size:.7rem;color:var(--pink);letter-spacing:.05em}
-ol.stages b{color:var(--amber);font-weight:400}
-ol.stages .s{font-size:15px;color:var(--mint);opacity:.8}
-/* laws card */
-.laws{background:rgba(18,15,38,.62);border:1px solid var(--line2);border-radius:12px;
-  padding:1rem 1.2rem;margin:2.2rem 0}
-.laws h3{font-family:Orbitron,sans-serif;font-size:.68rem;letter-spacing:.26em;text-transform:uppercase;
-  color:var(--amber);margin:0 0 .5rem}
-.laws p{margin:.35rem 0;max-width:60ch}
-.laws b{color:var(--mint);font-weight:400}
-/* footer */
-footer{margin-top:5rem;padding-top:1.6rem;border-top:1px solid var(--line);
-  font:17px VT323,monospace;color:var(--dim);letter-spacing:.03em}
-footer .sig{color:var(--cyan);font-size:19px;margin-bottom:.6rem}
-footer nav{display:flex;flex-wrap:wrap;gap:.4rem 1.4rem}
-@media(max-width:560px){
-  body{font-size:18px}
-  figure svg{min-width:520px}
-  .rail{padding-left:1.6rem}
-  .stage::before{left:calc(-1.6rem + 3px)}
-  header{padding-top:3rem}
-}
-</style>
+<link rel="stylesheet" href="app/pages.css">
+<link rel="stylesheet" href="app/how.css">
 </head>
 <body>
 <svg id="sky" aria-hidden="true"></svg>
@@ -145,7 +65,7 @@ the same music.</p>
 <!-- ================= STAGE 1 ================= -->
 <section class="stage" id="point">
   <h2><span class="n">01</span>The point becomes weights</h2>
-  <p class="fn">app/targeting.js · weightsAt</p>
+  <p class="fn">app/audio/targeting.js · weightsAt</p>
   <figure>
   <svg viewBox="0 0 640 230" role="img" aria-label="A cursor point among genre stars, dashed lines to the four nearest anchors with blend weights">
     <g font-family="VT323,monospace" font-size="15">
@@ -369,7 +289,7 @@ the same music.</p>
 <!-- ================= STAGE 5 ================= -->
 <section class="stage" id="mapevents">
   <h2><span class="n">05</span>mapEvents — notes into knobs</h2>
-  <p class="fn">engine/faust/state-engine.js · mapEvents</p>
+  <p class="fn">engine/faust/voices/state-engine.js · mapEvents</p>
   <figure>
   <svg viewBox="0 0 640 170" role="img" aria-label="An event with pipe annotations mapped through a whitelist onto real DSP sliders">
     <g font-family="VT323,monospace" font-size="15">
@@ -411,7 +331,7 @@ the same music.</p>
 <!-- ================= STAGE 6 ================= -->
 <section class="stage" id="voices">
   <h2><span class="n">06</span>Faust WASM voices</h2>
-  <p class="fn">engine/faust/state-engine.js · voiceUnits</p>
+  <p class="fn">engine/faust/voices/state-engine.js · voiceUnits</p>
   <figure>
   <svg viewBox="0 0 640 210" role="img" aria-label="Voice modules with insert chains feeding sends and a master effects bus">
     <g font-family="VT323,monospace" font-size="14" text-anchor="middle">
@@ -453,7 +373,7 @@ the same music.</p>
 <!-- ================= STAGE 7 ================= -->
 <section class="stage" id="live">
   <h2><span class="n">07</span>The live chord-bar scheduler</h2>
-  <p class="fn">engine/faust/live.js · makeWalk</p>
+  <p class="fn">engine/faust/live/live.js · makeWalk</p>
   <figure>
   <svg viewBox="0 0 640 150" role="img" aria-label="A timeline of chord bars, each reseeded, with an equal-power crossfade bridging a voice change">
     <g font-family="VT323,monospace" font-size="14">
@@ -539,7 +459,7 @@ is seeded.</p>
   And arrival is a contract, not a hope: genre-identity flips (form, kit, lead)
   are queued first, so parked on a new genre its drums are playing <b>within 3
   bars</b> and its kit/lead identity lands <b>within 7</b> — gated by
-  test/blend-arrival-run.js.</p>
+  test/browser/blend-arrival.test.js.</p>
   <p><b>Journeys.</b> Waypoints are genre names or drawn points; weight vectors
   lerp leg by leg. Per track, the <b>key walks the circle of fifths</b> (+7 or
   +5 semitones mod 12), and a <b>novelty memory</b> remembers the last 2 tracks'
@@ -595,50 +515,6 @@ is seeded.</p>
 
 </div><!-- /wrap -->
 
-<script>
-// the starfield + the matrix diagonal, both drawn by mulberry32 — the same
-// PRNG family every note in the engine comes from. Deterministic from a seed.
-(function(){
-  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;
-    var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;
-    return((t^t>>>14)>>>0)/4294967296}}
-  var NS="http://www.w3.org/2000/svg";
-  // sky: 140 seeded stars
-  var sky=document.getElementById("sky"),r=mulberry32(178);
-  function sizeSky(){
-    sky.style.height="0px";   // absolute sky adds to scrollHeight — exclude itself from the measure
-    var w=innerWidth,h=Math.max(innerHeight,document.body.scrollHeight);
-    sky.setAttribute("viewBox","0 0 "+w+" "+h);
-    sky.style.height=h+"px";
-    while(sky.firstChild)sky.removeChild(sky.firstChild);
-    var rr=mulberry32(178);
-    for(var i=0;i<140;i++){
-      var c=document.createElementNS(NS,"circle");
-      c.setAttribute("cx",(rr()*w).toFixed(1));
-      c.setAttribute("cy",(rr()*h).toFixed(1));
-      c.setAttribute("r",(rr()*1.3+.4).toFixed(2));
-      var o=(rr()*.5+.15).toFixed(2);
-      c.setAttribute("fill",["#ece9ff","#45e0ff","#ff6ec7","#ffd86b"][i%4]);
-      c.style.setProperty("--o",o);c.setAttribute("opacity",o);
-      c.style.animationDelay=(rr()*4).toFixed(2)+"s";
-      sky.appendChild(c);
-    }
-  }
-  sizeSky();addEventListener("resize",sizeSky);
-  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(sizeSky); // web fonts reflow the page after first measure
-  // the matrix: an 18x18 downsample of the 249x249 grid, bright diagonal
-  var mx=document.getElementById("mx");
-  if(mx){var N=18,S=11,g=mulberry32(23);
-    for(var y=0;y<N;y++)for(var x=0;x<N;x++){
-      var q=document.createElementNS(NS,"rect");
-      q.setAttribute("x",x*(S+2));q.setAttribute("y",y*(S+2));
-      q.setAttribute("width",S);q.setAttribute("height",S);q.setAttribute("rx",2);
-      if(x===y){q.setAttribute("fill","#4dffb0");q.setAttribute("opacity",".95")}
-      else{q.setAttribute("fill","#2c2750");q.setAttribute("opacity",(0.25+g()*0.45).toFixed(2))}
-      mx.appendChild(q);
-    }
-  }
-})();
-</script>
+<script src="app/entries/how.js"></script>
 </body>
 </html>

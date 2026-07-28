@@ -15,7 +15,7 @@ discharged by algebra instead of enumeration.
 ```bash
 node engine/invariants.js prove            # quick: proof + reduced sweep (~30s)
 node engine/invariants.js prove --full     # exhaustive state-level lattice (~2.5 min)
-node test/invariants.test.js               # the gates (incl. falsifiability of the checkers)
+node test/unit/invariants.test.js               # the gates (incl. falsifiability of the checkers)
 ```
 
 ## The theorem that makes it possible

@@ -68,7 +68,7 @@
   // ---------- the launch library ----------
   // Every pipe: fn(ev, state, rng, p) -> mutates ev in place. Registry-
   // extensible: consumers may add {id:{fn,doc}} entries before apply().
-  // MIDI-trove MINED accent profiles (tools/mine-groove.js): mean
+  // MIDI-trove MINED accent profiles (tools/mine/mine-groove.js): mean
   // melody velocity per 16th slot of a 4-beat bar, normalized to mean 1,
   // clamped ±30%. Only corpora with real signal ship a profile — jazz and
   // folk measured FLAT (±2%: 90s MIDI velocities are normalized away; the

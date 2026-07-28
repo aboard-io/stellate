@@ -54,7 +54,7 @@ const DET_SEEDS = QUICK ? [1] : [1, SEEDS[SEEDS.length - 1]];
 // the run-report cache key covers the 3 core capability files plus these:
 // gate logic lives here, gate 6 scrapes the faust state mapping, gate 8 runs
 // the musicality law library.
-const RUN_EXTRAS = ["validate-genres.js", "faust/state-engine.js", "musicality.js",
+const RUN_EXTRAS = ["validate-genres.js", "faust/voices/state-engine.js", "musicality.js",
   // gates 9-13 (advisory offline battery) — cache-key on the check modules + the
   // shared geometry lib so editing any of them invalidates a cached run report.
   "genre-geometry.js", "checks/near-duplicate.js", "checks/margin-sentinel.js",
@@ -294,7 +294,7 @@ function gateVocabulary() {
   const kernelSrc = fs.readFileSync(require.resolve("./genre-kernel.js"), "utf8");
   // synthesis-model vocabulary now lives in the Faust engine's state mapping
   // (faust/state-engine.js pitchedUnit switch + the drum module maps).
-  const stateEngineSrc = fs.readFileSync(require.resolve("./faust/state-engine.js"), "utf8");
+  const stateEngineSrc = fs.readFileSync(require.resolve("./faust/voices/state-engine.js"), "utf8");
   const scrape = (src, re, seedSet) => {
     const s = new Set(seedSet || []);
     for (const m of src.matchAll(re)) s.add(m[1]);
@@ -431,11 +431,11 @@ function gateAudio() {
       if (missing) { results.push({ genre: g, status: "skip", note: "found-sound files not fetched" }); continue; }
       const wav = path.join(tmp, g + ".wav"), mp3 = path.join(tmp, g + ".mp3"), sjP = path.join(tmp, g + ".state.json");
       fs.writeFileSync(sjP, JSON.stringify(state));
-      execFileSync("node", [path.join(__dirname, "faust", "press.js"), sjP, wav], { stdio: "ignore" });
+      execFileSync("node", [path.join(__dirname, "faust", "press", "press.js"), sjP, wav], { stdio: "ignore" });
       // classifier probe: the middle ~45s, where the full arrangement plays
       execFileSync("ffmpeg", ["-y", "-v", "error", "-ss", "30", "-t", "45", "-i", wav, "-codec:a", "libmp3lame", "-b:a", "160k", mp3]);
       try {
-        const out = execFileSync(py, [path.join(__dirname, "..", "tools", "audio-verifier.py"), mp3, "--expect", g], { encoding: "utf8" });
+        const out = execFileSync(py, [path.join(__dirname, "..", "tools", "audit", "audio-verifier.py"), mp3, "--expect", g], { encoding: "utf8" });
         results.push({ genre: g, status: "pass", output: out.trim().split("\n").slice(-3).join(" | ") });
       } catch (e) {
         results.push({ genre: g, status: "miss", note: "expected genre not in classifier top ranks",

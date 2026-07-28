@@ -23,7 +23,7 @@ shimFB = _ <: *(0.62), (shift : *(0.38)) :> _;
 // allpass diffusion + the modest shimmer blend keep the octave-up feedback stable.
 tank(baseDel, g) = (+ ~ (de.fdelay(16384, baseDel) : fi.lowpass(2, 6500) : diff : shimFB : *(g)));
 
-// TRIM equalizes tail energy to the fx_bus zita reference (probe-reverb.js);
+// TRIM equalizes tail energy to the fx_bus zita reference (test/probes/reverb.probe.js);
 // set from the probe measurement so `reverb` means the same wetness as the
 // other colors.
 TRIM = 0.64;

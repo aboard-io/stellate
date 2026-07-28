@@ -108,12 +108,12 @@ build, nothing to keep in sync. It differs in exactly three ways:
 1. **`<body class="embed">`** — see the *EMBED MODE* block in `app/app.css`.
    The settings/about/viz/aliens surfaces are suppressed; the brand, the ▶ chip
    and the credit line shrink. The modal DOM still exists (because
-   `app/panels.js` binds to it at load) and is simply never openable.
-2. **`app/embed.js`** — the play affordance, `?genre=`, and the `postMessage`
+   `app/panels/panels.js` binds to it at load) and is simply never openable.
+2. **`app/entries/embed.js`** — the play affordance, `?genre=`, and the `postMessage`
    plumbing. Nothing else.
 3. **Three omissions**, each guarded at every call site so nothing breaks:
    `engine/demo-layer.js` (the MicroW8 demoscene backdrop — real CPU inside
-   someone else's page), `app/analytics.js` + the GoatCounter beacon (we do not
+   someone else's page), `app/entries/analytics.js` + the GoatCounter beacon (we do not
    fire a beacon from a third party's page), and `app/starcruise.js` (the 3D
    view is unreachable here anyway).
 
@@ -129,13 +129,13 @@ embed `SharedArrayBuffer` is undefined and the ring engine throws.
 The app detects that and takes the **WAV-FIRST** route instead — a real
 `<audio>` element fed rendered media segments, originally built so audio would
 survive a phone going in a pocket (`docs/WAV-FIRST.md`). It needs no
-`SharedArrayBuffer` at all. The switch is automatic (`app/live.js`, the
+`SharedArrayBuffer` at all. The switch is automatic (`app/audio/live.js`, the
 NO-ISOLATION FALLBACK block); an explicit `?wavOut=0/1` still overrides it.
 
 This is gated, because an embed that ships mute is worse than no embed:
 
 ```bash
-node test/embed-audio-run.js
+node test/browser/embed-audio.test.js
 ```
 
 Two servers on two origins — a bare host page with **no** COOP/COEP framing the
@@ -150,9 +150,9 @@ mobile route.
 | path | what |
 |---|---|
 | `embed.html` | the embed entry |
-| `app/embed.js` | play affordance, `?genre=`, postMessage |
+| `app/entries/embed.js` | play affordance, `?genre=`, postMessage |
 | `app/app.css` → *EMBED MODE* | everything visual |
 | `oembed.json` | the static oEmbed document |
-| `app/panels.js` → `embedSnippet()` | the ⚙ panel's copy-embed snippet builder |
-| `test/embed-audio-run.js` | the gate that says the embed makes sound |
+| `app/panels/panels.js` → `embedSnippet()` | the ⚙ panel's copy-embed snippet builder |
+| `test/browser/embed-audio.test.js` | the gate that says the embed makes sound |
 | `docs/HOSTING.md § Embedding` | nginx: what must not be added, and the parameterized-oEmbed snippet |

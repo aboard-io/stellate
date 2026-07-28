@@ -19,7 +19,7 @@ with its own blend rule:
 | **rhythm** | pool of kits | four-on-floor, pulse, breaks, jungle chop, boombap, none | weighted pool union |
 | **rhythm representation** (KERNEL-V4 Phase 1) | data lanes | every kit is a pulse-set lane table (`CsdEngine.KITS`) rendered by one interpreter; a state `euclid` spec is lane *notation* that replaces the matching lane, not an overlay | kits stay a pool; lane tables are the shared vocabulary the verifier/blends can read |
 | **harmonic rhythm** (KERNEL-V4 Phase 1) | scalar `chordEvery` | beats per chord bar; default 8 (the legacy CHORD_BEATS). An anchor may declare 4 (jazz-speed changes) or 16/32 (drone plateaus); kit/bass cells tile, melody phrases breathe | parent pick by weight, drawn LAST (zero draws when absent — byte-stable) |
-| **meter** (ODD-METER 2026-07) | enum `meter:{beats,unit}` | 4/4 (absent — the default, byte-identical), 3/4 waltz `{beats:3,unit:4}`, compound 6/8 `{beats:6,unit:8}` (the engine beat is the 8th; the pulse is the dotted quarter) | parent-pick by weight, drawn LAST, ZERO draws when no parent declares it. Meters don't lerp — a bar holds an integer beat count, so a blend keeps ONE parent's bar line and a journey crosses an audible meter-FLIP, not a smear. A meter anchor defaults `chordEvery` to 6 (two 3/4 measures / one 6/8 measure) and pools the meter vocabulary: kits `waltz`/`waltzswing`/`sixeight`, bass `oompahpah`/`waltzroot`/`siciliana`, melody `waltz`/`lilt6`. First production anchors: `salondawdle` + `greasepaintoompah` (both 3/4; 6/8 is engine-proven — `test/meter.test.js` — awaiting its first anchor) |
+| **meter** (ODD-METER 2026-07) | enum `meter:{beats,unit}` | 4/4 (absent — the default, byte-identical), 3/4 waltz `{beats:3,unit:4}`, compound 6/8 `{beats:6,unit:8}` (the engine beat is the 8th; the pulse is the dotted quarter) | parent-pick by weight, drawn LAST, ZERO draws when no parent declares it. Meters don't lerp — a bar holds an integer beat count, so a blend keeps ONE parent's bar line and a journey crosses an audible meter-FLIP, not a smear. A meter anchor defaults `chordEvery` to 6 (two 3/4 measures / one 6/8 measure) and pools the meter vocabulary: kits `waltz`/`waltzswing`/`sixeight`, bass `oompahpah`/`waltzroot`/`siciliana`, melody `waltz`/`lilt6`. First production anchors: `salondawdle` + `greasepaintoompah` (both 3/4; 6/8 is engine-proven — `test/unit/meter.test.js` — awaiting its first anchor) |
 | **harmonic motion** | scalar + pool | techno ≈ 0 (drone), city pop ≈ 1 (changes every 2 bars) | lerp rate, pick progression from pooled candidates compatible with rate |
 | **harmonic color** | pool | maj7/9 (vapor, lofi), minor triads (synthwave), single minor drone (techno) | pool union |
 | **key** | offset + mode bias | jungle/techno favor minor; vapor favors major-ish IVΔ | walked, not blended (see playlist) |
@@ -188,7 +188,7 @@ was removed 2026-07-25 — legacy-download-video.)
 
 Three fidelity levels, fastest first — pick by the question you're asking:
 
-1. **Virtual ride** — `node tools/simulate-path.js <default|path.json|genreA,genreB,…>
+1. **Virtual ride** — `node tools/audit/simulate-path.js <default|path.json|genreA,genreB,…>
    [--seed N] [--pace 256] [--bars auto|N] [--json]`. Drives the REAL app
    headless (the explorer's own `travelStep()`/`glideStep()`, no forked logic)
    but with **no audio clock**: a bar is an iteration, so a full pace-256
@@ -199,9 +199,9 @@ Three fidelity levels, fastest first — pick by the question you're asking:
    the musicality audit on the segment's most-settled state. Answers: *does
    this path's every crossing actually arrive and hold musical law, at the
    state level?* Cannot answer anything about sound. Gated by
-   `test/simulate-path-run.js` (default loop, deterministic per seed).
-2. **Headless live gates** — `test/transit-arrival-run.js`,
-   `test/explorer-ui-test.js`'s ride, `test/blend-arrival-run.js`: the real
+   `test/unit/simulate-path.test.js` (default loop, deterministic per seed).
+2. **Headless live gates** — `test/browser/transit-arrival.test.js`,
+   `test/browser/explorer-ui.test.js`'s ride, `test/browser/blend-arrival.test.js`: the real
    Faust engine in headless chromium, realtime, real RMS and real
    `note()` scheduling. Answers: *does it SOUND — do the promised instruments
    reach the graph?* Minutes per ride, so used on pinned slices.

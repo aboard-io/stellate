@@ -1,0 +1,86 @@
+#!/usr/bin/env node
+// test/browser/bg-survival.test.js — headless probe for the background-survival state machine
+// (faust/live.js onVisChange/goHidden/goVisible/onstatechange). Chromium can't
+// reproduce the iOS "interrupted" state, but it CAN drive the same code paths:
+//   1. fake visibility hidden  -> DESKTOP KEEPS PLAYING. Switching tabs must not
+//      stop the audio: a hidden desktop tab must NOT mute the live stream;
+//      the runway must stay fed). The preemptive mute-at-source is MOBILE-only now
+//      (test/browser/bg-handoff.test.js covers it under an iPhone UA).
+//   2. fake visibility visible -> still audible, and the refocus resume() poke
+//      must not dip the master (no restore machinery when nothing was muted)
+//   3. real ctx.suspend() while "visible" -> the onstatechange handler must
+//      mute, poke resume, and self-heal audio without any visibility event
+//
+//   node test/browser/bg-survival.test.js
+//
+// This drives the DESKTOP ring path (?wavOut=0) — the survival machinery lives there;
+// the WAV-FIRST mobile path is no-op-for-audio on hidden by design (WAV-FIRST.md).
+"use strict";
+const path = require("path");
+const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
+
+const ROOT = path.join(__dirname, "..", "..");
+const PORT = 8793;
+
+const rmsN = (page, n, gapMs) => page.evaluate(async ({ n, gapMs }) => {
+  const out = [];
+  for (let i = 0; i < n; i++) { out.push(window.handle.rms()); await new Promise(r => setTimeout(r, gapMs)); }
+  return out;
+}, { n, gapMs });
+
+async function main() {
+  const srv = await serve(ROOT, PORT);
+  const browser = await launchChromium({ requireChromium: true });
+  const page = await browser.newPage();
+  const pageErrors = capturePageErrors(page);
+
+  // force the ring path (?wavOut=0) so the survival machinery under test is exercised
+  await page.goto(`http://localhost:${PORT}/test/browser/live-test.html?wavOut=0`);
+  await page.evaluate(() => goLive("jungle", 3));
+  await page.waitForTimeout(10000);
+
+  const baseline = await rmsN(page, 6, 300);
+  console.log("baseline RMS:", baseline.map(v => v.toFixed(3)).join(" "));
+
+  // ── 1. fake hidden: the desktop tab must KEEP PLAYING (no mute-at-source) and
+  // the feed runway must stay healthy (worker tick + hidden-deepened target) ──
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", { get: () => window.__vis || "hidden", configurable: true });
+    window.__vis = "hidden";
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page.waitForTimeout(1500);
+  const hiddenRms = await rmsN(page, 5, 300);
+  const hiddenRunway = await page.evaluate(() => window.handle.runwaySec());
+  console.log("hidden RMS:  ", hiddenRms.map(v => v.toFixed(4)).join(" "), "runwaySec:", hiddenRunway.toFixed(2));
+
+  // ── 2. fake visible again: still audible (refocus resume() is a no-op poke) ──
+  await page.evaluate(() => { window.__vis = "visible"; document.dispatchEvent(new Event("visibilitychange")); });
+  await page.waitForTimeout(3000);
+  const backRms = await rmsN(page, 6, 300);
+  console.log("return RMS:  ", backRms.map(v => v.toFixed(3)).join(" "));
+
+  // ── 3. interruption: suspend the ctx with NO visibility event; the statechange
+  // handler must mute + resume + restore on its own ──
+  await page.evaluate(() => { window.handle.ctx.suspend(); });
+  await page.waitForTimeout(4000);
+  const healRms = await rmsN(page, 6, 300);
+  const ctxState = await page.evaluate(() => window.handle.ctx.state);
+  console.log("post-interruption RMS:", healRms.map(v => v.toFixed(3)).join(" "), "ctx.state:", ctxState);
+
+  const T = await page.evaluate(() => stopLive());
+  await browser.close();
+  srv.close();
+
+  const errs = [...T.errors, ...pageErrors];
+  const basOk = baseline.filter(v => v > 0.001).length >= 4;
+  const hidOk = hiddenRms.filter(v => v > 0.001).length >= 4 && hiddenRunway > 1.0;   // hidden desktop tab KEEPS PLAYING, runway fed
+  const retOk = backRms.filter(v => v > 0.001).length >= 4;
+  const healOk = healRms.filter(v => v > 0.001).length >= 4 && ctxState === "running";
+  console.log(`baseline audible: ${basOk}, hidden keeps playing: ${hidOk}, return audible: ${retOk}, interruption self-heal: ${healOk}, errors: ${errs.length}`);
+  if (errs.length) console.log("  " + errs.slice(0, 6).join("\n  "));
+  const pass = basOk && hidOk && retOk && healOk && errs.length === 0;
+  console.log(pass ? "BG-SURVIVAL PROBE: PASS" : "BG-SURVIVAL PROBE: FAIL");
+  process.exit(pass ? 0 : 1);
+}
+main().catch((e) => { console.error(e); process.exit(1); });

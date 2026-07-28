@@ -10,25 +10,25 @@
      app/ modules as index.html, in the same order, and differs only in (a) the
      DOM it hands them, (b) `class="embed"` on <body> — see app/app.css "EMBED
      MODE", which suppresses the settings/about/viz surfaces that make no sense
-     in a 400px box — and (c) app/embed.js, which adds the play affordance and
+     in a 400px box — and (c) app/entries/embed.js, which adds the play affordance and
      the ?genre= entry point. The modal wrappers below are PRESENT BUT NEVER
-     OPENABLE: app/panels.js binds to #panel/#panelWrap/#insideWrap/#aboutWrap
+     OPENABLE: app/panels/panels.js binds to #panel/#panelWrap/#insideWrap/#aboutWrap
      and the four chips at module load, so they must exist; embed CSS hides them
      and removes every way to open them.
 
      TWO deliberate omissions from index.html's script list, both guarded at
      every call site so nothing breaks: engine/demo-layer.js (the MicroW8
      demoscene backdrop — real CPU inside someone else's page) and
-     app/analytics.js + the GoatCounter beacon (we do not fire a beacon from a
+     app/entries/analytics.js + the GoatCounter beacon (we do not fire a beacon from a
      third party's page). The aliens view (app/starcruise.js) never loads here
      either — it is a dynamic import armed only by the ✦ view cycle, and the
      embed's ✦ chip is hidden and inert.
 
      AUDIO IN A CROSS-ORIGIN FRAME: an embedded page is NOT cross-origin
      isolated, so SharedArrayBuffer is undefined and the ring/worklet engine
-     cannot run. app/live.js detects that and routes to the WAV-FIRST path
+     cannot run. app/audio/live.js detects that and routes to the WAV-FIRST path
      automatically (see its NO-ISOLATION FALLBACK block) — no query flag needed.
-     Gate: test/embed-audio-run.js plays this page inside a genuinely
+     Gate: test/browser/embed-audio.test.js plays this page inside a genuinely
      cross-origin parent frame and asserts real RMS.
 
      NEVER AUTOPLAY. #embedPlay covers the box until a real user gesture; that
@@ -51,6 +51,7 @@
 <meta property="og:description" content="A generative music instrument. Draw a path across a star map of 274 genres and hear the music of wherever you are. By Paul Ford at Aboard.">
 <meta property="og:url" content="https://stellate.app/">
 <meta property="og:image" content="https://stellate.app/assets/og-card.png">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE — draw a path through genre space.">
@@ -58,7 +59,9 @@
 <meta name="twitter:title" content="STELLATE — draw a path through genre space">
 <meta name="twitter:description" content="Draw a path across a star map of 274 genres and hear the music of wherever you are.">
 <meta name="twitter:image" content="https://stellate.app/assets/og-card.png">
+<meta name="twitter:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE.">
 <meta name="twitter:creator" content="@aboard">
+<meta name="twitter:site" content="@aboard">
 <link rel="alternate" type="application/json+oembed" href="https://stellate.app/oembed.json" title="STELLATE">
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link rel="stylesheet" href="app/app.css">
@@ -72,7 +75,7 @@
 <h1 class="brand"><a id="brandOut" href="https://stellate.app/" target="_blank" rel="noopener" title="open this mix on stellate.app">STELLATE</a><button class="help" id="helpChip" title="about stellate" aria-label="About stellate">?</button></h1>
 <a class="embed-open" href="https://stellate.app/" target="_blank" rel="noopener">open ↗</a>
 <svg id="map"></svg>
-<!-- present-but-hidden: app/panels.js binds these at load (see the note above) -->
+<!-- present-but-hidden: app/panels/panels.js binds these at load (see the note above) -->
 <div class="modal" id="panelWrap"><div class="card" id="panel"></div></div>
 <div class="modal" id="insideWrap"><div id="inside" class="card"></div></div>
 <div class="modal" id="aboutWrap"><div class="card" id="about"></div></div>
@@ -98,7 +101,7 @@
 <script src="engine/csd-engine.js"></script>
 <!-- THE GENRE DATA: generated classic scripts (Stage E1). MUST precede
      genre-kernel.js — it reads window.__GENRES / window.__REGISTRY at load,
-     synchronously, the same way app/access.js and app/starmap.js read the
+     synchronously, the same way app/entries/access.js and app/map/starmap.js read the
      kernel at module top level. Not JSON-over-fetch for exactly that reason. -->
 <script src="engine/genres-data.js"></script>
 <script src="engine/registry-data.js"></script>
@@ -106,11 +109,11 @@
 <script src="engine/genre-verifier.js"></script>
 <script src="engine/namebank.js"></script>
 <script src="engine/speech.js"></script>
-<script src="engine/faust/state-engine.js"></script>
-<script src="engine/faust/found-player.js"></script>
-<script src="engine/faust/sampler.js"></script>
-<script src="engine/faust/live.js"></script>
+<script src="engine/faust/voices/state-engine.js"></script>
+<script src="engine/faust/voices/found-player.js"></script>
+<script src="engine/faust/voices/sampler.js"></script>
+<script src="engine/faust/live/live.js"></script>
 <script type="module" src="app/main.js"></script>
-<script type="module" src="app/embed.js"></script>
+<script type="module" src="app/entries/embed.js"></script>
 </body>
 </html>

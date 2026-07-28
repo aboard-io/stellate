@@ -365,7 +365,7 @@
   const pick = (r, a) => a[Math.floor(r() * a.length)];
   const irnd = (r, n) => Math.floor(r() * n);
 
-  // ---- the algorithmic GENRE namer (used by tools/invent-genres.js) ----
+  // ---- the algorithmic GENRE namer (used by tools/genre/invent-genres.js) ----
   // A ridiculous-but-legible name that CORRELATES to a feature vector: a
   // TEXTURE/MOOD prefix (the dominant non-tempo trait) fused with a TEMPO/RHYTHM
   // suffix. Deterministic from (traits, seed). Two registers: "elemental" and

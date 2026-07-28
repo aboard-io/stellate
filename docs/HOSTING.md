@@ -27,7 +27,7 @@ ever outgrows the droplet allowance (§6). Facts backing every claim:
 ## 1. Requirements: cross-origin isolation, and what it does to media
 
 The desktop ring engine **requires** `SharedArrayBuffer` — the page throws
-without it (`engine/faust/live.js:269-270`), and SAB requires the page to be
+without it (`engine/faust/live/live.js:269-270`), and SAB requires the page to be
 cross-origin isolated:
 
 ```
@@ -45,7 +45,7 @@ subresources anyway (facts-media §3).
 **What require-corp means for media origins** (facts-media §3, bottom line):
 
 - Audio goes through `fetch(mode:"cors")` + `decodeAudioData`
-  (`engine/faust/sampler.js:354`, `found-player.js:543`) → a cross-origin
+  (`engine/faust/voices/sampler.js:354`, `found-player.js:543`) → a cross-origin
   media host must send a valid `Access-Control-Allow-Origin`.
 - The `<video>` elements are **deliberately no-cors** — no `crossorigin`
   attribute (`engine/video-layer.js:195-204`), because archive.org's redirect
@@ -83,16 +83,16 @@ never fetches** (facts-media §1). What ships to the droplet vs stays local:
 | Category | Path | Now | Ships as | Why |
 |---|---|---|---|---|
 | Beds | `found/*.wav` (53) | 270 MB | **MP3, ~40-50 MB** | Safe to compress: bed paths carry **no sample-aligned metadata** — no loop points, no slice grids — so MP3's ~26 ms encoder-delay prefix just becomes part of the ambience. (Not because the lead-in re-derivation absorbs it: `analyzeActive` works in 0.5 s RMS windows and does not recompute the prefix away.) Mono V2 lands ~100-130 kbps, ~5.5-6.5:1 |
-| Speech | `found/samples/speech/` (244) | 47 MB | **MP3, ~8 MB** | Same reason: the vocoder carrier routes through `FP.decodeUrlToBuffer` (`engine/faust/live.js:378-379`) and carries **no loop/slice metadata that depends on sample alignment** — the encoder-delay prefix is inert here too |
-| Instrument zones | `found/samples/instruments/` | 102 MB WAV (measured) | **MP3, mono 22.05 kHz 48 kbps** — `tools/transcode-samples.js`; ~8 MB projected at the measured 14× | The loop-point objection was real and is now **solved, not ignored** — see "MP3 for the zones" below. Zones carry only 0.254% of their energy above 11 kHz, so 48k/22.05k measures a *higher* SNR (24.7 dB) than 64k/44.1k at 25% fewer bytes. Regenerable from the SF2 anyway |
+| Speech | `found/samples/speech/` (244) | 47 MB | **MP3, ~8 MB** | Same reason: the vocoder carrier routes through `FP.decodeUrlToBuffer` (`engine/faust/live/live.js:378-379`) and carries **no loop/slice metadata that depends on sample alignment** — the encoder-delay prefix is inert here too |
+| Instrument zones | `found/samples/instruments/` | 102 MB WAV (measured) | **MP3, mono 22.05 kHz 48 kbps** — `tools/build/transcode-samples.js`; ~8 MB projected at the measured 14× | The loop-point objection was real and is now **solved, not ignored** — see "MP3 for the zones" below. Zones carry only 0.254% of their energy above 11 kHz, so 48k/22.05k measures a *higher* SNR (24.7 dB) than 64k/44.1k at 25% fewer bytes. Regenerable from the SF2 anyway |
 | Drum kits + perc | `found/samples/drums/`, `perc/` | 13.5 MB | **WAV** | Not in `K.SAMPLERS`, so the zone transcoder never sees them and they carry no baked `len` to correct against. Small enough that the diet isn't worth the second metadata path |
 | Breaks / stml chops / hits / vox / 78s | `found/samples/…` | ~37 MB | **WAV** | Slice boundaries computed as time fractions of bpm/duration; MP3's ~26 ms lead ≈ half a 16th at 165-175 bpm → audibly sloppy chops (facts-media §4). The zone correction below *would* transfer here, but only after these paths grow the same baked expected-length metadata |
 | Video clips | `found/video/*.mp4` (231) | ~275 MB | **as-is** | Already MP4, pre-cut loops |
 | Faust WASM | `engine/faust/dist/` | 4.1 MB | as-is | |
 | Manifests + app + vendor | | ~few MB | as-is | |
-| Bed originals | `found/*.ogg` (38) | 211 MB | **stays local** | Raw archive.org downloads; never fetched at runtime — the `.wav` is the runtime twin (`tools/fetch-found-sound.sh:46-48`) |
+| Bed originals | `found/*.ogg` (38) | 211 MB | **stays local** | Raw archive.org downloads; never fetched at runtime — the `.wav` is the runtime twin (`tools/fetch/fetch-found-sound.sh:46-48`) |
 | Video source reels | `found/video/lib/` | 443 MB | **stays local** | Crate source only; video-layer reads `clips.json`, never `lib/` |
-| Essentia models | `models/` | 20 MB | **stays local** | Offline python verifier only (`tools/audio-verifier.py`) |
+| Essentia models | `models/` | 20 MB | **stays local** | Offline python verifier only (`tools/audit/audio-verifier.py`) |
 
 **Net server media:** the plan estimated ≈ 500 MB and the deployed payload
 measured **608 MB** after the 2026-07-09 bed/speech diet (§7). Both numbers are
@@ -104,7 +104,7 @@ than quote this line.
 
 **What a listener actually downloads** (measured ratio, projected totals —
 confirm in devtools before quoting): one path leg is `BARS_PER_SEG` = 256 bars
-(`app/world.js:149`), about 8.5 minutes, so a ten-minute session is 3-5 genres.
+(`app/core/world.js:149`), about 8.5 minutes, so a ten-minute session is 3-5 genres.
 That was roughly 15 MB of zone WAVs; on MP3 zones it is ~3.4 MB. Shell, WASM and
 manifests are unchanged and cached across sessions.
 
@@ -147,7 +147,7 @@ const scale  = buf.sampleRate / zone.sr;                    // decodeAudioData r
 const leadIn = buf.length > zone.len * scale + 8 ? Math.round(1105 * scale) : 0;
 ```
 
-Two metadata consequences, both baked by `tools/transcode-samples.js`:
+Two metadata consequences, both baked by `tools/build/transcode-samples.js`:
 
 - `ls`/`le` ride the same 2:1 rate change as the audio (44100 → 22050); leaving
   them alone would detune every loop.
@@ -166,13 +166,13 @@ facts-media §4), but the `.wav` names are data, so the data changes:
 
 1. `found/found-manifest.json` — every `byUrl` value `found/<id>.wav` →
    `found/<id>.mp3` (keys are archive URLs, untouched).
-2. `tools/fetch-found-sound.sh` — the ffmpeg output steps (`:46-48` and the
+2. `tools/fetch/fetch-found-sound.sh` — the ffmpeg output steps (`:46-48` and the
    `getbed` helper) write `found/<name>.mp3` instead of `.wav`
    (`-codec:a libmp3lame -q:a 2`, keep `-ac 1 -ar 44100`).
 3. `engine/genre-kernel.js` — the speech/vox sample entries carry literal
    `file:"speech/<name>.wav"` strings (`genre-kernel.js:115-123`, assembled
    into `samplePath` at `:5516`) → `.mp3`.
-4. `tools/fetch-found-samples.sh` — the espeak speech recipes write
+4. `tools/fetch/fetch-found-samples.sh` — the espeak speech recipes write
    `found/samples/speech/<name>.wav` (`:127-208`, `:490-531`) → `.mp3`.
 5. **Re-bake determinism fixtures once.** Node press renders from these same
    files; lossy re-encode changes rendered bytes, so segment-parity /
@@ -180,7 +180,7 @@ facts-media §4), but the `.wav` names are data, so the data changes:
 6. `engine/genre-kernel.js:5530` — the tw_vocal bed carries a literal
    `samplePath:"found/tw_vocal.wav"` with `url:""` — there is no fallback, so
    after conversion it would 404 silently → `.mp3`.
-7. `engine/faust/press.js:117,128` — node press falls back to
+7. `engine/faust/press/press.js:117,128` — node press falls back to
    `path.join(SITE,"found", s.id+".wav")` when a source has no
    `fsPath`/`samplePath` — hardcoded `.wav`; make it try `.mp3` then `.wav`
    at conversion time.
@@ -191,8 +191,8 @@ again after, and chase every hit to zero.
 
 The zone diet has almost no such surface, because zone paths are not literals
 anywhere: `K.SAMPLERS[id].zones[].file` *is* the data, and
-`tools/transcode-samples.js` re-bakes it (file, `ls`, `le`, `len`, `sr`) in the
-same pass that converts the audio. `tools/ci-standin-media.js` derives its path
+`tools/build/transcode-samples.js` re-bakes it (file, `ls`, `le`, `len`, `sr`) in the
+same pass that converts the audio. `tools/build/ci-standin-media.js` derives its path
 list from `K.SAMPLERS`, so CI follows the rename with no edit.
 
 Convert in the repo, not on the server — local tree and droplet stay twins.
@@ -204,7 +204,7 @@ slice client-side — is rejected. The request profile (facts-media §2): boot i
 3-4 JSON manifests; the first genre is **40-80 GETs**, each genre switch ~30-60
 more, files mostly 50 KB–2 MB. Over HTTP/2 that is one connection and cheap
 multiplexed streams; the decode side is already paced by the shared **4-wide,
-3-retry decode gate** (`engine/faust/live.js:143-144`), so request count is not
+3-retry decode gate** (`engine/faust/live/live.js:143-144`), so request count is not
 the bottleneck — decode concurrency is, and it's governed. Every cache is
 URL-keyed (`sampler.js:349` promise cache, found-player's `_bufCache`), so
 repeats are free in-session, and `immutable` media (§5) makes revisits free
@@ -251,8 +251,8 @@ server {
   gzip_types application/javascript application/json application/wasm;
   # (brotli is better still if the module is installed; same types)
 
-  # cross-origin isolation — SAB ring engine (engine/faust/live.js:269)
-  # NOTE: worker scripts (engine/faust/stream-worker.js, stem-worker.js) must
+  # cross-origin isolation — SAB ring engine (engine/faust/live/live.js:269)
+  # NOTE: worker scripts (engine/faust/live/stream-worker.js, stem-worker.js) must
   # receive the COEP header on their OWN responses — the server-wide add_header
   # covers them here, but keep it in mind if locations are ever split.
   add_header Cross-Origin-Opener-Policy  "same-origin" always;
@@ -269,7 +269,7 @@ server {
   # change reaches every client inside the window. `private` because gzip_vary
   # is off, so no shared proxy should store one encoding of it (turning
   # `gzip_vary on;` on server-wide would allow `public` here).
-  location = /engine/faust/dx7-presets.json {
+  location = /engine/faust/data/dx7-presets.json {
     add_header Cross-Origin-Opener-Policy  "same-origin" always;
     add_header Cross-Origin-Embedder-Policy "require-corp" always;
     add_header Cache-Control "private, max-age=300";
@@ -306,14 +306,14 @@ Notes:
   (`found-player.js:521`), manifests fetch `cache:"no-cache"`
   (`found-player.js:488`, `video-layer.js:1092-1093`).
 - **The mutable class** (learned when the invariant fired for real,
-  2026-07-09): manifests (`*.json`) AND `found/tw_vocal.mp3` — tools/sing.py
+  2026-07-09): manifests (`*.json`) AND `found/tw_vocal.mp3` — tools/build/sing.py
   re-sings the transitwave vocal on every offline render under a fixed
   name — are mutable by design: excluded from MEDIA_MANIFEST and served
   `no-cache` (dedicated nginx `location =` block). Everything else under
   `found/` is versioned-by-name and immutable.
 - **The mutable class is `found/`-scoped.** It is easy to misread the `*.json`
   carve-out above as "every JSON is mutable"; it is nested inside
-  `location /found/` and reaches nothing else. `engine/faust/dx7-presets.json`
+  `location /found/` and reaches nothing else. `engine/faust/data/dx7-presets.json`
   (and every other JSON outside `found/`) is `no-cache` because of the
   **server-wide** `add_header Cache-Control "no-cache"`, which is a default for
   code, not a statement about that file. `sw.js`'s `MUTABLE` regex mirrors the
@@ -324,10 +324,10 @@ Notes:
   is the source of truth for what a human must paste there. The `dx7-presets`
   location has to be added by hand in **both** places — and in the
   `aboardresearch.com/projects/stellate/` alias the path is
-  `location = /projects/stellate/engine/faust/dx7-presets.json`. After pasting:
+  `location = /projects/stellate/engine/faust/data/dx7-presets.json`. After pasting:
   `nginx -t && systemctl reload nginx`, then
-  `curl -sI https://stellate.app/engine/faust/dx7-presets.json | grep -i cache`
-  must show `max-age`. `tools/deploy-stellate.sh`'s smoke step checks this and
+  `curl -sI https://stellate.app/engine/faust/data/dx7-presets.json | grep -i cache`
+  must show `max-age`. `tools/deploy/deploy-stellate.sh`'s smoke step checks this and
   prints a reminder while it is missing.
 
 **TLS: Let's Encrypt, mandatory before anything else.** `.app` is
@@ -361,7 +361,7 @@ so a mid-deploy visitor never sees a half-updated tree (a release-dir +
 symlink flip is the fully atomic upgrade if this ever matters).
 
 The node_modules carve-out: only faustwasm's ESM entry is imported at runtime
-(`engine/faust/stem-worker.js:419`); the other 28 MB of node_modules is dev
+(`engine/faust/live/stem-worker.js:419`); the other 28 MB of node_modules is dev
 tooling. If the include/exclude dance ever bites, shipping all of
 node_modules is 28 MB of harmless slack — prefer boring over clever.
 
@@ -387,7 +387,7 @@ custom-domain bucket (facts-hosting §4).
 **Code changes — the media base URL has three choke points** (facts-media §2):
 
 1. **Sampler/speech/most audio:** `urlOf = s.url || new URL(s.samplePath, SITE)`
-   (`engine/faust/live.js:1120`; `SITE` derived from the script's own URL at
+   (`engine/faust/live/live.js:1120`; `SITE` derived from the script's own URL at
    `live.js:36`). Point `SITE` at the media base, or emit absolute
    `samplePath` values — `new URL(abs, base)` ignores the base, so absolute
    URLs work through the existing funnel unchanged.
@@ -419,9 +419,9 @@ base URLs, set the Transform Rules, smoke §7 again.
 is whatever `dig +short stellate.app` says), DO DNS zone (A @ + www CNAME),
 Let's Encrypt cert,
 the §5 nginx config live, payload rsynced from the aboardresearch box
-(datacenter-local). `tools/deploy-stellate.sh` is the repeatable deploy —
+(datacenter-local). `tools/deploy/deploy-stellate.sh` is the repeatable deploy —
 manifest check → rsync deny-list → manifest push → header smoke.
-**`tools/ship.sh` is the one deploy command** — clean-tree check (the rsync
+**`tools/deploy/ship.sh` is the one deploy command** — clean-tree check (the rsync
 ships the working tree, so deployed must mean committed) → gates (verify.sh +
 theory/pipes/speech) → `git push` → deploy-stellate.sh. aboardresearch.com
 needs no deploy step: the working tree is its web root, saves are live. The MP3
@@ -431,9 +431,9 @@ MEDIA_MANIFEST invariant for real (renames pass; the two mutable *manifests*
 were correctly excluded from the immutable set — .json never belonged in it).
 Production-verified: headless chromium rode vaporwave on stellate.app, MP3
 beds fetched 200 + decoded, maxRms 0.207, zero errors
-(test/mp3-bed-decode-run.js is the committed local twin of that probe).
+(test/browser/mp3-bed-decode.test.js is the committed local twin of that probe).
 The **instrument-zone** diet (102 MB → ~8 MB projected, §3) came later and lands
-by `tools/transcode-samples.js`; it needs no server change beyond re-running the
+by `tools/build/transcode-samples.js`; it needs no server change beyond re-running the
 rsync and MEDIA_MANIFEST steps, since the filenames change and the immutable
 invariant only forbids content changing *under an unchanged name*.
 
@@ -446,14 +446,14 @@ invariant only forbids content changing *under an unchanged name*.
    nothing loads until TLS works (§5).
 5. Apply the nginx config (§5); confirm both isolation headers on `/` **and**
    on a `found/` media response (`curl -sI`), **and** on a worker script —
-   `curl -sI https://stellate.app/engine/faust/stream-worker.js` — so
+   `curl -sI https://stellate.app/engine/faust/live/stream-worker.js` — so
    worker-script COEP is pinned.
 6. Run the MP3 bed/speech conversion + touchpoint renames (§3) in the repo, and
-   `node tools/transcode-samples.js` for the zones (re-bakes `SAMPLERS`);
+   `node tools/build/transcode-samples.js` for the zones (re-bakes `SAMPLERS`);
    re-bake determinism fixtures; commit.
 7. rsync deploy with the deny-list; generate + push MEDIA_MANIFEST.
 8. **Smoke — SAB path:** run the live-resilience browser gate against staging.
-   Its base URL is localhost-hardcoded (`test/live-resilience-test.js:240`) —
+   Its base URL is localhost-hardcoded (`test/browser/live-resilience.test.js:240`) —
    point it at `https://stellate.app` for the run, or at minimum confirm
    `crossOriginIsolated === true` in devtools and ride a genre on the desktop
    ring engine (which throws loudly if isolation is missing, `live.js:269`).
@@ -497,7 +497,7 @@ third-party. Open source (GoatCounter, single Go binary + SQLite).
 - **nginx**: only `location = /gc/count` proxies through (the beacon); every
   other `/gc/` path 404s — the dashboard/UI (incl. `/user/new`) is never
   publicly reachable. Block lives in sites-enabled/stellate.
-- **Client**: `app/analytics.js` (settings shim: pathname only — the query
+- **Client**: `app/entries/analytics.js` (settings shim: pathname only — the query
   string carries seeds/paths, i.e. someone's saved musical location, and
   never leaves the page) + vendored `vendor/goatcounter/count.js` (ISC).
   sw.js passes `/gc/` through uncached.
@@ -539,8 +539,8 @@ iframe; COEP only constrains our own subresources, which are same-origin. The
 one real consequence is that a framed page is **not cross-origin isolated**
 (isolation needs the whole ancestor chain), so `SharedArrayBuffer` is undefined
 inside the embed and the ring engine cannot run there. That is handled in the
-app, not the server: `app/live.js`'s NO-ISOLATION FALLBACK routes to the
-WAV-FIRST path automatically. Gate: `node test/embed-audio-run.js`.
+app, not the server: `app/audio/live.js`'s NO-ISOLATION FALLBACK routes to the
+WAV-FIRST path automatically. Gate: `node test/browser/embed-audio.test.js`.
 
 ### 2. oEmbed: we ship a STATIC document, deliberately
 
@@ -618,15 +618,15 @@ Caveats, all of them load-bearing:
 - It answers for `/embed.html?…` URLs too, since those match the whitelist.
 - If this lands, **change the discovery `<link>` in `index.html`,
   `embed.html` and `access.html` to `…/oembed?url=…&format=json`**, and update
-  `test/social-meta.test.js`, which asserts the static document exists.
+  `test/gates/social-meta.test.js`, which asserts the static document exists.
 
 ### 4. Deploy checklist additions
 
 - `assets/` (og-card.png, icon-32.png, icon-180.png, favicon.ico), `embed.html`,
-  `oembed.json` and `app/embed.js` must all be in the rsync — they are tracked
+  `oembed.json` and `app/entries/embed.js` must all be in the rsync — they are tracked
   files in the working tree, so the existing `ship.sh` rsync carries them.
 - `tools/.font-cache/` is gitignored *and* must not deploy (it is only input to
-  `tools/gen-og-card.js`); confirm the rsync excludes ignored files.
+  `tools/build/gen-og-card.js`); confirm the rsync excludes ignored files.
 - After a deploy that changes any of the above, **bump `sw.js` `VERSION`** or
   returning visitors keep the cached shell (the standing lesson in that file).
 
@@ -641,7 +641,7 @@ of nginx lines. Nothing here needs a runtime, a database or a third party.
 
 | Path | What it is | Committed? |
 |---|---|---|
-| `tools/gen-feed.js` | the release-notes generator: `git log` → RSS 2.0 + JSON Feed, one **playable** link per entry | yes (the recipe) |
+| `tools/build/gen-feed.js` | the release-notes generator: `git log` → RSS 2.0 + JSON Feed, one **playable** link per entry | yes (the recipe) |
 | `feed.xml` / `feed.json` | the live feed, latest 50 releases | **no — derived, gitignored** |
 | `feed-archive.xml` / `feed-archive.json` | the complete history, back to the first commit (2026-06-06) | **no — derived, gitignored** |
 | `manifest.webmanifest` | PWA manifest (installable, standalone, theme `#0c0a1a`) | yes |
@@ -650,11 +650,11 @@ of nginx lines. Nothing here needs a runtime, a database or a third party.
 | `.well-known/security.txt` | RFC 9116 contact/expiry/policy | yes |
 | `colophon.html` | what the thing is made of, and whose work is in it (zero JS) | yes |
 | `404.html` | the empty-space page: the map + six genres to fall into (zero JS) | yes |
-| `test/feed-links-run.js` | gate: the feeds validate AND a sample of showcase URLs really lands on the named genre in a real browser | yes |
+| `test/browser/feed-links.test.js` | gate: the feeds validate AND a sample of showcase URLs really lands on the named genre in a real browser | yes |
 
 ### 2. The feed is generated ON THE WAY OUT (and why it is gitignored)
 
-`tools/deploy-stellate.sh` runs `node tools/gen-feed.js --historic` immediately
+`tools/deploy/deploy-stellate.sh` runs `node tools/build/gen-feed.js --historic` immediately
 before the rsync, so every deploy publishes notes that include the commit being
 deployed. The feeds are **derived artifacts** — the git log is their source — so
 they obey the one rule and stay gitignored (`/feed.xml`, `/feed.json`,
@@ -667,7 +667,7 @@ they obey the one rule and stay gitignored (`/feed.xml`, `/feed.json`,
 - **A feed is never one commit stale.** Because the artifact is written after
   `git push`, the newest entry is the deploy you are doing.
 - **CI and clean clones have no feed** — nothing gates on its presence. Run
-  `node tools/gen-feed.js --historic` locally any time; `--dry` prints without
+  `node tools/build/gen-feed.js --historic` locally any time; `--dry` prints without
   writing, `--show 10` dumps rendered entries as text for eyeballing the prose.
 
 Everything under `found/` and the feeds are the only files nginx serves that
@@ -724,7 +724,7 @@ instrument.
 
 ```nginx
   # REPORT-ONLY first — violations print to the console and nothing breaks.
-  add_header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob: data: https://archive.org https://*.archive.org; connect-src 'self' https://archive.org https://*.archive.org; worker-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors *" always;
+  add_header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: data: https://archive.org https://*.archive.org; connect-src 'self' https://archive.org https://*.archive.org; worker-src 'self'; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors *" always;
 
   # …then, once it is quiet, the identical policy as the enforcing header:
   # add_header Content-Security-Policy "…same string…" always;
@@ -734,15 +734,14 @@ Per-directive, with the evidence and how sure we are:
 
 | Directive | Why | Confidence |
 |---|---|---|
-| `default-src 'self'` | everything the app loads is same-origin except the two hosts below | **high** |
-| `script-src 'self' https://esm.sh` | `app/state.js` imports preact + htm from `https://esm.sh` on *every* page; all other scripts are same-origin | **high** |
-| `script-src 'wasm-unsafe-eval'` | Faust DSP modules, the espeak build and MicroW8 carts all `WebAssembly.compile()` **fetched bytes**, on the main thread *and* inside module workers (workers inherit the document policy). No string eval anywhere, so plain `'unsafe-eval'` is **not** needed | **high** |
-| `script-src 'unsafe-inline'` | `how.html` carries the site's only inline `<script>` (the starfield + matrix diagram). Two better endings: move it to `app/how.js`, or pin its hash — `printf '%s' "$(sed -n '/<script>/,/<\/script>/p' how.html)"` is not good enough, use the browser's own console message, which prints the exact `'sha256-…'` to allow. Once it is gone, delete this token | **medium — remove it when how.html's script moves out** |
-| `style-src 'unsafe-inline'` | inline `<style>` blocks in `access.html`, `how.html`, `colophon.html`, `404.html`; `style="…"` attributes in the HTML; injected `<style>` text in `app/starcruise.js` and `engine/demo-layer.js`. (Element-level `el.style.x = …` is CSSOM and unaffected.) No practical nonce path for the injected keyframes | **high — required** |
-| `style-src https://fonts.googleapis.com` + `font-src https://fonts.gstatic.com` | the Orbitron/VT323 `<link>` on every page; the CSS it returns fetches the woff2 from gstatic | **high** |
+| `default-src 'self'` | **everything the app loads is same-origin** except the archive.org media fallback below. preact + htm are vendored (`vendor/preact`, `vendor/htm`) and Orbitron + VT323 are self-hosted (`vendor/fonts`), so the policy no longer names `esm.sh`, `fonts.googleapis.com` or `fonts.gstatic.com` at all | **high** |
+| `script-src 'wasm-unsafe-eval'` | Faust DSP modules, the espeak build and MicroW8 carts all `WebAssembly.compile()` **fetched bytes**, on the main thread *and* inside module workers (workers inherit the document policy) | **high** |
+| **no** `script-src 'unsafe-eval'` | There *is* one string-eval in browser code — `kernelFor()` in `engine/faust/voices/sampler.js` builds the per-note effect strip with `new Function(…)` — but it is **wrapped in a try/catch that falls back to `stripStepRef`, the guarded stepper**, precisely so a CSP may kill it. Blocking it costs speed, not correctness or sound. (`engine/invariants.js` also uses `new Function`; it is node-only and never loads in a page. Nothing under `vendor/`, and not the one deployed `@grame/faustwasm` file, evals a string.) So: withhold the token deliberately, and know what you are trading | **high — verified by grep over `app/`, `engine/`, `vendor/`, `sw.js`** |
+| ~~`script-src 'unsafe-inline'`~~ | **GONE (2026-07-28).** `how.html` carried the site's only inline `<script>` — the starfield + matrix diagram — and it is now `app/entries/how.js`. Every committed page loads script only by `src`. The one remaining `<script>` without a `src` is `index.html`/`access.html`'s `application/ld+json`, which is **data**: CSP never executes it and `script-src` does not apply. `test/gates/social-meta.test.js` gates the invariant (zero inline `<script>`, zero `on*=` handler attributes, zero `javascript:` URLs across the six pages), because a violation would only ever show up in production — the dev server sends no CSP | **high — keep it out** |
+| `style-src 'unsafe-inline'` | STILL REQUIRED, but for less: the inline `<style>` blocks are down to **one** (`404.html`, which must stay self-sufficient — see below); `access.html`/`how.html`/`colophon.html` moved to `app/access.css`, `app/pages.css` + `app/how.css`, `app/pages.css` + `app/colophon.css`. What keeps the token: the handful of `style="…"` attributes in `index.html`/`access.html`/`how.html`, and the injected `<style>` text in `app/starcruise.js` and `engine/demo-layer.js`. (Element-level `el.style.x = …` is CSSOM and unaffected.) No practical nonce path for the injected keyframes | **high — required** |
 | `img-src 'self' data:` | `engine/demo-layer.js` uses a `data:image/svg+xml` turbulence texture as a CSS background. `blob:` is precautionary (canvas snapshots in the 3D view) and costs nothing | **high / medium on `blob:`** |
 | `media-src 'self' blob: data:` | the WAV-first mobile path plays `URL.createObjectURL(new Blob([wav]))` through a real `<audio>`; a silent `data:` WAV primes the element; found media is same-origin | **high** |
-| `media-src`/`connect-src` `https://archive.org https://*.archive.org` | `engine/faust/found-player.js` falls back to streaming the original archive.org item when a local `found/` cache file is missing. Production ships all media same-origin (§3), so this should never fire — but omitting it turns a rare degraded case into a hard failure, and archive.org redirects through `ia*.us.archive.org`, which is why the wildcard is there | **medium — keep unless the fallback is deliberately retired** |
+| `media-src`/`connect-src` `https://archive.org https://*.archive.org` | `engine/faust/voices/found-player.js` falls back to streaming the original archive.org item when a local `found/` cache file is missing. Production ships all media same-origin (§3), so this should never fire — but omitting it turns a rare degraded case into a hard failure, and archive.org redirects through `ia*.us.archive.org`, which is why the wildcard is there | **medium — keep unless the fallback is deliberately retired** |
 | `connect-src 'self'` | every other fetch is same-origin: manifests, `dist/*.wasm`, found media, and the cookie-free GoatCounter beacon at `/gc/count` (same origin, `sendBeacon`) | **high** |
 | `worker-src 'self'` | `new Worker(BASE + "stream-worker.js", {type:"module"})`, the mp3 worker, `audioWorklet.addModule(BASE + "ring-player.js")`, `navigator.serviceWorker.register("sw.js")` — all same-origin paths, no blob workers | **high** |
 | `manifest-src 'self'` | the new `manifest.webmanifest` | **high** |
@@ -755,14 +754,27 @@ Notes:
 - **No `report-uri`/`report-to`.** There is no collector and no wish to run one;
   report-only mode prints to the console, which is where a one-person deploy
   actually reads it.
-- **CSP does not replace COOP/COEP** and does not interact with them. The
-  cross-origin subresources (esm.sh, Google Fonts) already satisfy
-  `require-corp` today; CSP only decides whether they are *allowed*, not
-  whether they are *embeddable*.
+- **CSP does not replace COOP/COEP** and does not interact with them. There are
+  no cross-origin subresources left to satisfy `require-corp` — the vendoring of
+  preact/htm/the webfonts removed the last of them — so the two policies now
+  have nothing to argue about.
+- **Two committed HTML files are NOT site pages and would break under this
+  policy if opened directly**: `vendor/microw8/microw8.html` (upstream's own
+  demo page, one big inline `type=module` script — the app never loads it,
+  `engine/demo-layer.js` canvas-embeds MicroW8 instead, see its header) and
+  `test/browser/live-test.html` (a hand-run probe instrument). Nothing links to
+  either, no gate loads them as pages, and the vendored one must not be edited.
+  If that ever becomes a problem the fix is an nginx carve-out, not a looser
+  site-wide policy.
+- **`404.html` keeps its CSS inline on purpose** and that is *not* what holds
+  `style-src 'unsafe-inline'` up (the `style="…"` attributes and the injected
+  keyframes are). `error_page 404 /404.html` is an internal redirect, so the
+  address bar keeps the URL that missed and a relative `<link>` would resolve
+  against the wrong directory. The page that reports a failure fetches nothing.
 - **The service worker inherits nothing.** `sw.js` is fetched under
   `worker-src 'self'`, and requests it makes on the page's behalf are governed
   by the page's policy.
-- **Test the embed path explicitly.** `node test/embed-audio-run.js` plays
+- **Test the embed path explicitly.** `node test/browser/embed-audio.test.js` plays
   `embed.html` inside a genuinely cross-origin parent — the one gate that would
   catch a `frame-ancestors` mistake.
 

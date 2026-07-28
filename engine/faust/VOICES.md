@@ -67,7 +67,7 @@ Conventions shared by all voice modules:
 | fuzz | `lead_fuzz` | cutoff, res, drive, vibrato, attack/sustain/release, fenv | pure tanh drive (ef.cubicnl added even harmonics the csound fuzz lacks — A/B'd out); res-loss trim restores moogladder passband droop |
 | brass / strings / choir / bell / piano / fm | shared modules above | | |
 | guitar | `lead_guitar` | cutoff, pluckPos | **substitution** — pm.lib waveguide replaces the CLI-only TimGM6mb.sf2 sfplay (samples can't ship to the browser). Darker than the sf2 steel guitar (A/B CHECK, intended) |
-| vocoder | `robot_choir` | cutoff, res, makeup | ve.vocoder 32-band channel vocoder; speech is an AUDIO INPUT (in 0). Envelope-correlation verified (vocoder-test.js) + A/B PASS |
+| vocoder | `robot_choir` | cutoff, res, makeup | ve.vocoder 32-band channel vocoder; speech is an AUDIO INPUT (in 0). Envelope-correlation verified (test/unit/vocoder.test.js) + A/B PASS |
 
 ## modeld — the Minimoog-Model-D-class MONO voice (2026-07)
 
@@ -106,7 +106,7 @@ node 0, per-note freq/params are set before gate-on (the module slews), and a
 note whose `tOn` is within `legatoSec` of the previous note's gate-off HOLDS
 the gate (the pending gate-off is cancelled, no new gate-on) so envelopes
 single-trigger. `pool._monoOff` carries the pending gate-off across bars.
-Verified by `faust/probe-modeld.js`: nodes 3→1, all notes on node0, envelope
+Verified by `test/probes/modeld.probe.js`: nodes 3→1, all notes on node0, envelope
 re-attacks many→1, glide active. (This live fix is what tb303 slide and
 synclead legato also ride.)
 
@@ -140,7 +140,7 @@ when a state requests them.
 | phaser | `insert_phaser` | rate, depth, mix | hand-rolled 4-stage tf1 allpass (shared coeff), fb 0.5, 180–3200 Hz exponential sweep |
 | chorus | `insert_chorus` | rate, depth, mix | modulated fdelay 15 ms ±9 ms·depth (6–24 ms) |
 | filtersweep | `insert_filtersweep` | rateBars, lo, hi, res, **barSec** | moog_vcf_2bn, raised-cosine LFO starting at lo; the ENGINE sets `barSec` (= 4·spb) from state.bpm and re-sets it on glides — full-wet by design |
-| wah | `insert_wah` | sens, base, range, q, mix | fx wings stage 3: crybaby/Mutron AUTO-WAH — an amp-follower (6 ms/140 ms) drives a resonant `fi.resonbp` exponentially `base → base·2^range`; sens = envelope drive, q = the vowel. No clock needed. Homes: disco/newjack/afrobeat BASS pools (probe-wah.js: steady loud opens 1720 Hz vs quiet 709 Hz; the sampler-bass constraint drops it like every insert) |
+| wah | `insert_wah` | sens, base, range, q, mix | fx wings stage 3: crybaby/Mutron AUTO-WAH — an amp-follower (6 ms/140 ms) drives a resonant `fi.resonbp` exponentially `base → base·2^range`; sens = envelope drive, q = the vowel. No clock needed. Homes: disco/newjack/afrobeat BASS pools (test/probes/wah.probe.js: steady loud opens 1720 Hz vs quiet 709 Hz; the sampler-bass constraint drops it like every insert) |
 | higain | `insert_higain` | gate, drive, stages(1-3), tone{low,mid,high}, presence, level, mix | SYNTHESIS-DEPTH: the STAGED heavy amp (see section below) — tightness gate → 3 cascaded hand-rolled shapers w/ inter-stage HP → 3-band tone stack → fixed 4x12 cab → level comp + dcblocker. IDENTITY insert (never shed). NOT excluded on samplers (unlike distort — but a genre declaring higain must not also declare heavy strip distortion) |
 | fenv | `insert_fenv` | sens, amount(oct ±), attack, decay, base, res, mix | SYNTHESIS-DEPTH: note-triggered FILTER ENVELOPE for SAMPLED voices — amp-follower contour sweeps a moog_vcf_2bn ±`amount` octaves around `base` (defaults to the voice cutoff; top fenced by cutMaxForRes). Negative amount = reverse squelch. Synth models use the fenv* params instead |
 
@@ -170,7 +170,7 @@ Inputs: `0 dryL, 1 dryR, 2 reverb send, 3 delay send, 4 ping-pong send,
 | pump | phasor duck `1-pump·e^(-6φ)` blendable with an.amp_follower on input 5 | `pump bps scmix` |
 | grit | tanh drive w/ dry-blend bypass at 0 | `grit` |
 | comp (dam) | co.compressor_stereo + makeup | `comp` (ratio/thresh derived like dam) |
-| 3-band glue (fx wings stage 4) | **`master_mb` — a separate OPT-IN module AFTER fx_bus**, not baked in: 2nd-order splits at 250 Hz / 2.5 kHz, mid derived by subtraction (sums exactly flat), per-band co.compressor_stereo + wet-only makeup | `mbdrive` ← `state.masterComp` (kernel dim, dominant-parent zero-rng; disco 0.35). Baking it into fx_bus cost EVERY genre ~0.01 live load even at drive 0 (both Faust select paths compute) — live gate 0.977/0.973 PASS → 0.969/0.967 FAIL, so it was extracted (probe-mbcomp.js). Press post-passes L/R; live series-inserts fx→master_mb→master under a crossfade against the `fxDirect` unity path; genres without masterComp keep committed fx_bus bytes and never build the node |
+| 3-band glue (fx wings stage 4) | **`master_mb` — a separate OPT-IN module AFTER fx_bus**, not baked in: 2nd-order splits at 250 Hz / 2.5 kHz, mid derived by subtraction (sums exactly flat), per-band co.compressor_stereo + wet-only makeup | `mbdrive` ← `state.masterComp` (kernel dim, dominant-parent zero-rng; disco 0.35). Baking it into fx_bus cost EVERY genre ~0.01 live load even at drive 0 (both Faust select paths compute) — live gate 0.977/0.973 PASS → 0.969/0.967 FAIL, so it was extracted (test/probes/mbcomp.probe.js). Press post-passes L/R; live series-inserts fx→master_mb→master under a crossfade against the `fxDirect` unity path; genres without masterComp keep committed fx_bus bytes and never build the node |
 | tone tilt | butterworth high/lowpass | `lowcut highcut` |
 | instr 96 sweep + clip | lowpass `mcut` → Bram-de-Jong soft clip (limit 0.95, knee 0.5 — exact csound `clip` method 0, caps at 0.7125 = -2.9 dB) | `mcut` |
 
@@ -241,7 +241,7 @@ Adopted substitutions and available upgrades:
 ## SAMPLER voice model + the expanded DX7 bank (2026-07 variety round)
 
 - **sampler** (model `"sampler"`): real sampled instruments through the NATIVE
-  buffer path (faust/sampler.js — AudioBufferSourceNode live, PCM mix in
+  buffer path (faust/voices/sampler.js — AudioBufferSourceNode live, PCM mix in
   press), not a Faust module. Contract: `instruments.<voice>.sampler = {id,
   sr, zones:[{srcId, root, lo, hi, loop, loopStart, loopEnd}]}`; zone wavs
   ride `foundSources` at vol 0 (both engines decode through existing paths;
@@ -250,7 +250,7 @@ Adopted substitutions and available upgrades:
   fine-tune); looped zones sustain under the gate, attack/release from the
   recipe declick. Kernel: `samplerPool` per voice, resolved like patchPool;
   registry + zone tables in genre-kernel.js `SAMPLERS`. Zones are extracted
-  from FluidR3_GM (MIT) by **faust/sf2.js** at fetch time — that is also the
+  from FluidR3_GM (MIT) by **faust/build/sf2.js** at fetch time — that is also the
   answer to "can Faust play soundfonts": Faust's `soundfile` can't read SF2,
   the engine's native sampler plays extracted zones instead. Instruments:
   alto/tenor sax, trumpet, flute, clarinet, vibraphone, string ensemble,
@@ -269,7 +269,7 @@ Adopted substitutions and available upgrades:
   declared inserts renders byte-identically to the pre-insert engine. When a
   declared chain is honored, the hashed voiceFxStage extra strip stage is
   skipped (the genre's own choice wins). Gate: segment-parity trance_s1 /
-  citypop_s2 (byte-equal press↔stream), test/sampler-inserts-live-run.js.
+  citypop_s2 (byte-equal press↔stream), test/browser/sampler-inserts-live.test.js.
   The BASS voice is sampler-capable too (kernel `bass.samplerPool` →
   `instruments.bass.sampler`, same contract; state-engine resolves model
   "sampler" for every role, with a shorter default attack/release on bass so
@@ -402,7 +402,7 @@ A color names an EXTERNAL module that REPLACES the internal zita for that genre.
 - **Uniform interface**: every color is 2-in/2-out with `rgain` (= `reverb*3.2`,
   the same A/B calibration as the default, capped 3.5) + `rtone` (return LP). A
   baked per-module `TRIM` equalizes tail energy to the zita reference
-  (probe-reverb.js measured E≈3.6e-5) so a genre's `reverb` scalar means the
+  (test/probes/reverb.probe.js measured E≈3.6e-5) so a genre's `reverb` scalar means the
   same wetness across colors. Trims: dattorro 0.71, greyhole 0.26, fdn 0.055,
   spring 0.52.
 - **state-engine** (`reverbColor(state)` + `REVERB_COLORS`): returns
@@ -421,7 +421,7 @@ A color names an EXTERNAL module that REPLACES the internal zita for that genre.
   musical choice byte-for-byte, only gaining the field; a blend inherits its
   dominant parent's color). Untouched genres never declare it → zita default →
   byte-identical (39 untouched genre×seed states verified identical).
-- **Gates**: `faust/probe-reverb.js` (non-silent + measurably distinct RT/
+- **Gates**: `test/probes/reverb.probe.js` (non-silent + measurably distinct RT/
   centroid across the family); verify.sh 63/63; live smoke exercises the
   dattorro build+swap (jungle→house) with 0 errors.
 - **BLEED TAP-OUT** (2026-07 reverb-color round): the delay/ping-pong bleed into
@@ -441,7 +441,7 @@ A color names an EXTERNAL module that REPLACES the internal zita for that genre.
   zita reference (probe-reverb tail energies unchanged at ~3.6e-5). Audibly the
   glue is subtle (A/B mallsoft dattorro: ~-25 dB below signal, echo-locked on the
   reverb tail; strongest on the bright dattorro plate, negligible on greyhole's
-  wash and low-delay genres like surfrock). probe-reverb.js gates the bleed
+  wash and low-delay genres like surfrock). test/probes/reverb.probe.js gates the bleed
   (silence pre-delay, an echo at ~dtime). Minor live/press divergence: fx_bus's
   1-pole `fi.lowpass` in the delay loop vs a 2-pole biquad in live.
 
@@ -472,7 +472,7 @@ UNIFIED deterministic clip-snap lives in found-player.js:
   never tune the poets — carries through blends it dominates). Wired: hogcore
   0.7 (the name chops snap hard — hyperpop coherence), vaporwave 0.25 (gentle),
   spokenword 0 (explicit off). Everyone else: no field, byte-identical.
-- **Gates**: `faust/probe-autotune.js` — synthetic mechanism (off-scale sine:
+- **Gates**: `test/probes/autotune.probe.js` — synthetic mechanism (off-scale sine:
   62¢→0¢ at strength 1, unchanged at 0, strength-0 bit-identity, determinism)
   + real hogcore clips (mean |cents-to-scale| 45.9 → 13.8 at 0.7). Press
   byte-identity for untouched genres (techno s1 + jungle s7 HEAD vs tree);

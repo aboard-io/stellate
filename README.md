@@ -26,7 +26,7 @@ One idea, one pipeline:
 2. **`csd-engine.js buildEvents(state)` — the score brain.** A resolved point
    becomes a deterministic list of note / drum / found-sound / fx events. Same
    state + seed → the same score, always. Every backend derives from this.
-3. **`engine/faust/state-engine.js` — voices & effects.** Events map to voice units
+3. **`engine/faust/voices/state-engine.js` — voices & effects.** Events map to voice units
    with a per-voice channel strip and a two-effect chain (filter, EQ,
    compression, saturation, plus chorus / Leslie / flanger / delay / granular /
    reverb from the Faust module fleet).
@@ -45,7 +45,7 @@ MIDI all hear the same music. Every genre carries its own settings for these
 as axes in the space; blends interpolate them. See `docs/MUSIC-MIND.md`.
 
 **Sampled by default.** The full General MIDI set is extracted from a
-FluidR3-class SoundFont (`engine/faust/extract-gm.js`) and is the default sound; most
+FluidR3-class SoundFont (`engine/faust/build/extract-gm.js`) and is the default sound; most
 pitched voices are real sampled instruments through Faust effect chains. Synths
 remain for the genres whose synthesis *is* the identity — the acid `tb303`, the
 Reese/wobble basses, the vocoder — which stay synth on purpose.
@@ -69,7 +69,7 @@ contract).
 The whole UI is the star map. Drag it, mouse-wheel to zoom, double-tap to drop
 path waypoints and travel the loop — and travel *arrives*: parked on a new
 genre, its drums are playing within 3 bars and its kit/lead identity within 7
-(a committed gate, `test/blend-arrival-run.js`). Chips: ▶ live, ⓘ **inside the
+(a committed gate, `test/browser/blend-arrival.test.js`). Chips: ▶ live, ⓘ **inside the
 sound** (a live per-voice timeline — always 8 cells, folded for long bars —
 with plain-language character descriptions, sustained bed ribbons, and the
 MUSIC-MIND meters), a background toggle (off → MicroW8 demoscene, the cart
@@ -77,7 +77,7 @@ rotating every eight bars, cutting on the beat), and ⚙ controls — seed, spee
 ±bpm, an embed snippet, and **⤓ midi**: a Standard MIDI File of the song
 playing right now, built by `engine/midi-export.js` from the same
 `buildEvents()` walk the audio uses, from the same state, seed and point on the
-path the ↗ share link hands out (`test/midi-export-run.js` holds it to that).
+path the ↗ share link hands out (`test/browser/midi-export.test.js` holds it to that).
 Audio downloads are not offered — the music is regenerable from its URL, which
 is the whole point.
 
@@ -118,20 +118,20 @@ core + `engine/faust/` WASM engine, classic scripts) · `tools/` (Node CLIs) ·
 
 ```bash
 (cd engine/faust && npm ci)            # the WASM engine's deps
-tools/fetch-found-samples.sh           # one-time: SoundFont/GM + breaks + speech
-tools/fetch-found-sound.sh; tools/fetch-found-bbc.sh
+tools/fetch/fetch-found-samples.sh           # one-time: SoundFont/GM + breaks + speech
+tools/fetch/fetch-found-sound.sh; tools/fetch/fetch-found-bbc.sh
                                        # one-time: found audio layers (BBC = RemArc licence, see SOURCES.md)
 ./serve.sh                             # http://localhost:8777/  (needs http, not file://)
 ```
 
-No media fetched yet (or none wanted)? `node tools/ci-standin-media.js`
+No media fetched yet (or none wanted)? `node tools/build/ci-standin-media.js`
 synthesizes quiet stand-ins at every path the gates check (~1s, no network) —
 it's how CI runs the full suite on a bare clone; it never overwrites a real file.
 
 Verify / render:
 
 ```bash
-node test/engine.test.js               # offline-render smoke, gated on non-silence
+node test/gates/engine.test.js               # offline-render smoke, gated on non-silence
 node engine/genre-verifier.js matrix   # genre confusion matrix — must stay diagonal
 node engine/validate-genres.js --quick # determinism / vocabulary / coverage gates
 node tools/kernel-cli.js track budstep --seed 7 --render   # one track -> mp3
@@ -139,10 +139,13 @@ node tools/kernel-cli.js track budstep --seed 7 --render   # one track -> mp3
 
 Needs `node`, `ffmpeg`, `curl`, `python3` (the dev server + sample classifier) —
 no `csound` (the founding `royal-road.csd` and its renderer live on the
-`legacy-csound` branch). Headless browser gates are mostly `test/*-run.js` (43 of them, plus a handful
-named `*-test.js`); set up their pinned playwright once with
+`legacy-csound` branch). Every gate is named `<name>.test.js` and its folder says what it needs:
+`test/gates/` (the verify.sh suite) · `test/unit/` (pure node) ·
+`test/browser/` + `test/starcruise/` (33 headless-chromium gates, exactly what
+`npm run test:browser` globs) · `test/probes/` (hand-run `*.probe.js`) ·
+`test/lib/`. Set up the pinned playwright once with
 `npm install && npm run setup:browser`, then run them plain
-(`node test/explorer-ui-test.js`). Cold-start walkthrough,
+(`node test/browser/explorer-ui.test.js`). Cold-start walkthrough,
 production headers, and how to add your own audio: `docs/SETUP.md`.
 
 ## More
@@ -153,10 +156,10 @@ production headers, and how to add your own audio: `docs/SETUP.md`.
 - **The release feed** — [`feed.xml`](https://stellate.app/feed.xml) (RSS, latest
   50) · [`feed.json`](https://stellate.app/feed.json) (JSON Feed) ·
   [`feed-archive.xml`](https://stellate.app/feed-archive.xml) (the complete
-  history). Generated from this git log by `tools/gen-feed.js` at deploy time,
+  history). Generated from this git log by `tools/build/gen-feed.js` at deploy time,
   and **every entry links to a mix that plays what changed** — found-sound work
   links a bed-heavy genre, harmony work links the jazziest one. Derived, so it's
-  gitignored: `node tools/gen-feed.js --historic` writes all four,
+  gitignored: `node tools/build/gen-feed.js --historic` writes all four,
   `--show 10` prints them as text.
 - **`CLAUDE.md`** — the full layout and working notes.
 - **`docs/GENRE-SPACE.md`** — how the vector space and journeys are designed.

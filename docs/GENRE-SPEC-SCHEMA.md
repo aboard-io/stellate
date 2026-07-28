@@ -1,15 +1,15 @@
 # GENRE-SPEC-SCHEMA — the `genre-specs/*.json` field reference
 
-A spec is the human-authored input to `tools/genre-tool.js create` (see
+A spec is the human-authored input to `tools/genre/genre-tool.js create` (see
 `docs/ADDING-A-GENRE.md`). It is NOT the anchor itself — the tool measures it,
 derives the verifier target row, and splices a serialized anchor into the
-kernel. This reference is cross-checked against `tools/genre-tool.js`
+kernel. This reference is cross-checked against `tools/genre/genre-tool.js`
 (`validateSpec` / `serializeAnchor` / `FIELD_ORDER`) and the 135 live specs.
 
 > The schema is **derived, never hardcoded.** `validateSpec` builds its
 > vocabulary by scraping the live engine registries and its dimension key-set
 > from the keys existing anchors actually use, so this doc can drift from the
-> code — when in doubt, `node tools/genre-tool.js create <spec> --dry-run` is
+> code — when in doubt, `node tools/genre/genre-tool.js create <spec> --dry-run` is
 > the authority (it prints every validation error).
 
 ## Top-level fields
@@ -21,7 +21,7 @@ kernel. This reference is cross-checked against `tools/genre-tool.js`
 | `info` | rec. | string | the genre card prose (one paragraph); defaults to `""` |
 | `anchor` | **yes** | object | the dimension bundle — see below |
 | `clips` | no | string[] | ignored since 2026-07-25 (the found-video layer + `GENRE_CLIPS` were removed; legacy specs may still carry it) |
-| `pos` | no | `[x,y]` | star-map coordinate (logical px); validated ≥55px from every existing star. Omit to let boot derive one, then re-bake `app/world.js` POS |
+| `pos` | no | `[x,y]` | star-map coordinate (logical px); validated ≥55px from every existing star. Omit to let boot derive one, then re-bake `app/core/world.js` POS |
 | `verify` | no | object | controls target-row derivation — see "The verify block" |
 | `materials` | no | string | provenance note for sourcing (MATERIALS-style); **informational only**, not consumed by the kernel |
 | `damp` | no | (rare) | seen in 4 specs; a niche production hint |

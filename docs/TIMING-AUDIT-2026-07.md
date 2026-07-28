@@ -29,7 +29,7 @@ This is the biggest thing found and it was not previously known.
 
 ### The mechanism (INFERRED from code, then MEASURED)
 
-`makeWalk` (`/home/ford/stellate/engine/faust/live.js:133-215`) regenerates the
+`makeWalk` (`/home/ford/stellate/engine/faust/live/live.js:133-215`) regenerates the
 **whole collapsed section** every chord bar, with a **different seed each bar**:
 
 ```js
@@ -41,7 +41,7 @@ const m = SE.mapEvents(E, one, ev, { lo, hi, units });  // live.js:205
 ```
 
 `mapEvents` windows **half-open on the post-groove beat**
-(`/home/ford/stellate/engine/faust/state-engine.js:1795`):
+(`/home/ford/stellate/engine/faust/voices/state-engine.js:1795`):
 
 ```js
 const win = (b) => b >= lo && b < hi;
@@ -120,7 +120,7 @@ generation, no windows, no seam. So:
 
 ### The gate hole
 
-`test/segment-parity-test.js` proves worker-rendered segments equal the press
+`test/unit/segment-parity.test.js` proves worker-rendered segments equal the press
 bytes **within one generation**. Nothing anywhere compares the *live per-bar
 walk's event stream* to the *press event stream* over a boundary. This is the
 same shape of hole as the crossfade one that let the tape-wobble lurch through:
@@ -149,7 +149,7 @@ first:
    maximum groove displacement. Cheapest, but `pushPull` is legal to ±0.25 beat
    (`engine/invariants.js:188`), so `G` cannot be a constant.
 
-Option 1 is the one to price. It will trip `test/meter.test.js`
+Option 1 is the one to price. It will trip `test/unit/meter.test.js`
 `head_byte_identity` (live-side only; press bytes unchanged) and wants a
 `genre-verifier.js matrix --no-cache` re-run even though the verifier reads the
 press path.
@@ -244,7 +244,7 @@ overdue-bar bunching is new.
 
 ### The gate hole
 
-`test/live-test-run.js` does one swap and asserts RMS non-zero and
+`test/browser/live.test.js` does one swap and asserts RMS non-zero and
 `loadRatio >= 0.97`. Both of those pass through *all* of the above — the runway
 is healthy during the dropout, and 300 ms of silence does not move a 500 ms-poll
 RMS average enough to fail. There is no gate on: `C_UNDER_CNT`, output zero-runs,
@@ -410,7 +410,7 @@ exposes `underruns()` but not the per-ring cursors. **Recommend a
 
 **MEASURED**, `PerformanceObserver('longtask')`.
 
-Engine-only page (`test/live-test.html`, **no UI at all**), 8 min, 19 swaps:
+Engine-only page (`test/browser/live-test.html`, **no UI at all**), 8 min, 19 swaps:
 
 | | value |
 |---|---|

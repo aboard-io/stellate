@@ -1,6 +1,6 @@
 // genres-data.js — the 274 genre anchors
 //
-// GENERATED ONCE by tools/split-kernel-data.js, and hand-edited ever since:
+// GENERATED ONCE by tools/build/split-kernel-data.js, and hand-edited ever since:
 // this file is the SOURCE OF TRUTH for the data below, not a build artifact.
 // genre-tool.js / invent-genres.js / rm-genre.js splice into it by the same
 // /* genre-tool:<name>:genres */ markers they always used.
@@ -10,7 +10,7 @@
 // Classic script on purpose, NOT JSON-over-fetch: app/access.js and
 // app/starmap.js read the kernel synchronously at module top level, so the data
 // has to be present the moment genre-kernel.js runs. Loaded immediately BEFORE
-// it in index.html / embed.html / access.html (boot-smoke.js enforces order).
+// it in index.html / embed.html / access.html (test/gates/boot-smoke.test.js enforces order).
 (function (root) {
   "use strict";
   const D = {};

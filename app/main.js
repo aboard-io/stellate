@@ -4,19 +4,19 @@
 // are ready. Importing the feature modules wires their event listeners, store
 // subs and window.__ debug hooks; this file assembles window.__X and runs the
 // one-shot boot sequence (layout → default loop → centre → first score → tickers).
-import { POS, MAP_CENTER, WORLD_W, WORLD_H } from "./world.js";
-import { S, K, set, subs } from "./state.js";
-import { retarget, weightsAt, travelStep, rescore, forceRetarget } from "./targeting.js";
-import { clampZoom, zoomAround, seedDefaultLoop, insertWaypoint, computeGenreLayout, computeRegions, centerView } from "./starmap.js";
-import { renderInside } from "./inside.js";
-import { goLive, stopLive, faustHandle } from "./live.js";
-import { initGlyphMap } from "./glyphs.js";   // floating alien-ident glyphs backfloating on the star map
-import { playheadTick } from "./readouts.js";
-import "./background.js";   // side effects: demoscene chip + cart rotation + subs.push(applyBg)
-import "./panels.js";       // side effects: control panel + chips/modals + store render subs
-import { applyUrlState, buildShareUrl, paceSpeed, loopBars } from "./share.js";   // the bookmarkable mix (seed+path+measure in the query string) + constant-pace travel
-import { loadFonts } from "./fonts.js";   // the soundfont switcher: register + apply the saved font
-import { registerSW, precacheSoon } from "./precache.js";    // offline-where-possible + route-ahead sample warming
+import { POS, MAP_CENTER, WORLD_W, WORLD_H, MIN_SEP } from "./core/world.js";
+import { S, K, set, subs } from "./core/state.js";
+import { retarget, weightsAt, travelStep, rescore, forceRetarget } from "./audio/targeting.js";
+import { clampZoom, zoomAround, seedDefaultLoop, insertWaypoint, computeGenreLayout, computeRegions, centerView } from "./map/starmap.js";
+import { renderInside } from "./panels/inside.js";
+import { goLive, stopLive, faustHandle } from "./audio/live.js";
+import { initGlyphMap } from "./map/glyphs.js";   // floating alien-ident glyphs backfloating on the star map
+import { playheadTick } from "./panels/readouts.js";
+import "./panels/background.js";   // side effects: demoscene chip + cart rotation + subs.push(applyBg)
+import "./panels/panels.js";       // side effects: control panel + chips/modals + store render subs
+import { applyUrlState, buildShareUrl, paceSpeed, loopBars } from "./core/share.js";   // the bookmarkable mix (seed+path+measure in the query string) + constant-pace travel
+import { loadFonts } from "./audio/fonts.js";   // the soundfont switcher: register + apply the saved font
+import { registerSW, precacheSoon } from "./audio/precache.js";    // offline-where-possible + route-ahead sample warming
 
 window.__X={retarget:(...a)=>retarget(...a), goLive:(...a)=>goLive(...a), stopLive:(...a)=>stopLive(...a), weightsAt:(...a)=>weightsAt(...a),
   handle:()=>faustHandle,   // live handle (audit ring / probe access) — headless gates
@@ -24,10 +24,15 @@ window.__X={retarget:(...a)=>retarget(...a), goLive:(...a)=>goLive(...a), stopLi
   clampZoom:()=>clampZoom(), zoomAround:(...a)=>zoomAround(...a), POS,
   // loop/spread introspection for the headless UI gate (additive):
   seedLoop:()=>seedDefaultLoop(), mapCenter:()=>({...MAP_CENTER}), world:()=>({w:WORLD_W,h:WORLD_H}),
-  minPairDist:()=>window.__MINSEP, pathClosed:()=>S.waypoints.length>=2,
+  minPairDist:()=>MIN_SEP, pathClosed:()=>S.waypoints.length>=2,   // live binding: recomputeWorld rewrites it after the layout relaxes
   travelStep:()=>travelStep(), insertWaypoint:(...a)=>insertWaypoint(...a),
   paceSpeed:()=>paceSpeed(), loopBars:()=>loopBars(),   // constant-pace travel probes (units/bar, bars/loop)
   shareUrl:()=>buildShareUrl()};   // headless stop→path→LIVE + corner-reach probe + loop-wrap probe + mid-chain insert + the bookmarkable-URL probe
+
+// BOOTED — has the one-shot boot below run? entries/embed.js layers its own
+// framing on top of this app and must not apply it before the layout, the
+// default loop and the first score exist. A real export, not a window sniff.
+export let booted=false;
 
 // ---------- boot ----------
 function boot(){
@@ -48,7 +53,7 @@ function boot(){
   // supplies the bank (genre-kernel snapshots window.DX7_PRESETS at load, which
   // no page sets) — so no explorer journey ever drew a dx7 voice. Populate the
   // exported registry in place and re-resolve the current target.
-  fetch("engine/faust/dx7-presets.json").then(r=>r.json()).then(raw=>{
+  fetch("engine/faust/data/dx7-presets.json").then(r=>r.json()).then(raw=>{
     for(const [name,p] of Object.entries(raw||{}))
       if(p&&p.params) K.DX7_PATCHES[name]={algorithm:p.alg, params:p.params};
     forceRetarget();
@@ -59,6 +64,7 @@ function boot(){
   // re-warm on path/seed changes (the sub fires on every store write; precacheSoon
   // debounces + keys on (seed, waypoints) so it only actually walks on a change)
   subs.push(()=>precacheSoon());
+  booted=true;
 }
 // GATE BOOT ON THE STYLESHEET: computeGenreLayout measures the live viewport via
 // svg.getBoundingClientRect() and relaxes the genre positions against it. When

@@ -124,7 +124,7 @@
   const FB_PIXELS = 320 * 240;           // 76800
 
   // Demoscene carts — all confirmed full-frame animating in this host (node +
-  // headless probe, see faust/demo-layer-test.js) and public domain. Eight are
+  // headless probe, see test/browser/demo-layer.test.js) and public domain. Eight are
   // MicroW8's own example prods (exoticorn, Unlicense); the rest are classic
   // size-coding effects authored for this project and compiled with the MicroW8
   // `uw8` tool (also Unlicense). See SOURCES.md.

@@ -319,8 +319,8 @@ catalog state carrying both `callResponse` and `jux > 0` drifts on the
 
 ## Phases
 
-1. **Organs** (parallel, new files): `theory.js` + `test/theory.test.js`;
-   `pipes.js` + `test/pipes.test.js`. Pure-node tests.
+1. **Organs** (parallel, new files): `theory.js` + `test/gates/theory.test.js`;
+   `pipes.js` + `test/gates/pipes.test.js`. Pure-node tests.
 2. **Wiring** (one agent on shared files): csd-engine consumes
    `state.theory`/`state.pipes`/`state.rhythm` (+ bass/melody cells);
    state-engine maps annotation fields; index.html loads the organs before
@@ -332,7 +332,7 @@ catalog state carrying both `callResponse` and `jux > 0` drifts on the
 
 ## Verification
 
-`node test/theory.test.js` · `node test/pipes.test.js` · gate 1 determinism
+`node test/gates/theory.test.js` · `node test/gates/pipes.test.js` · gate 1 determinism
 (absent knobs byte-identical **and** present knobs seed-stable) ·
 `node engine/genre-verifier.js matrix --no-cache` → 274/274 ·
-`node test/engine.test.js --quick` non-silent presses · ears via the live app.
+`node test/gates/engine.test.js --quick` non-silent presses · ears via the live app.
