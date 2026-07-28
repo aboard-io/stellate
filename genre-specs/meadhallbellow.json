@@ -1,7 +1,7 @@
 {
   "name": "meadhallbellow",
   "label": "Diaphragm Muster",
-  "info": "A tribal kit at 86-102. Sub bass under ahh choir, with ohh voices. Epic minor changes, a light shuffle.",
+  "info": "Hand drums and toms at 86-102. A sub bass under a wordless choir, with wordless voices. Epic minor changes, a touch of swing.",
   "pos": [461, 14316],
   "anchor": {
     "bpm": [86, 102],
@@ -125,7 +125,7 @@
     "rhythm": [0.25, 0.475]
   },
   "targets": {
-    "bpm": [81, 107, 3],
+    "bpm": [86, 107, 3],
     "drumDensity": [0.68, 3.28, 2],
     "bedUse": [0.71, 0.95, 2],
     "snareBalance": [0.04, 1.34, 1],

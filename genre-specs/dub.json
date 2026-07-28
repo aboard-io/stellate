@@ -1,7 +1,7 @@
 {
   "name": "dub",
   "label": "Echo Ministry",
-  "info": "A half-time kit at 68-82. Sub bass under an organ, with a harmonica. A dub vamp, a light shuffle.",
+  "info": "A half-time beat at 68-82. A sub bass under an organ, with a harmonica. A dub vamp, a light shuffle.",
   "pos": [1887, 23815],
   "anchor": {
     "bpm": [68, 82],
@@ -161,7 +161,7 @@
     "motion": [0, 0.4, 2],
     "crackle": [0, 0.1, 2],
     "swing": [0, 0.12, 2],
-    "snareBalance": [0.4, 1.4, 1],
+    "snareBalance": [0.4, 2, 1],
     "breakUse": [0, 0.1, 1],
     "drumDensity": [0.5, 2.4, 1],
     "pump": [0, 0.15, 1],

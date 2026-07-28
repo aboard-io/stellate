@@ -1,7 +1,7 @@
 {
   "name": "raga",
   "label": "Tanpura Nebula",
-  "info": "A tribal kit at 64-92. Contrabass under strings, with a sitar. A two-chord minor drone, straight time, rubato, one chord every 16 beats.",
+  "info": "Hand drums and toms at 64-92. A sitar over strings and a double bass. A two-chord minor drone, straight time, rubato and a chord change every four bars.",
   "pos": [241, 17320],
   "anchor": {
     "bpm": [64, 92],

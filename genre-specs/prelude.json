@@ -1,7 +1,7 @@
 {
   "name": "prelude",
   "label": "The Turning Stair",
-  "info": "Beatless at 62-80. A harpsichord under strings, with a harpsichord. A canon, rubato, one chord every 16 beats.",
+  "info": "An easy 62-80 with no kit under it. A harpsichord on bass and lead, under strings. A canon, rubato and a chord change every four bars.",
   "pos": [896, 90],
   "anchor": {
     "bpm": [62, 80],

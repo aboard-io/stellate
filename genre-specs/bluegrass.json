@@ -1,7 +1,7 @@
 {
   "name": "bluegrass",
   "label": "Centrifugal Hymnal",
-  "info": "A shuffle at 156-170. Acoustic bass under a steel string guitar, with a banjo. Four-chord changes, swung.",
+  "info": "A shuffle at 156-170. A banjo over a steel-string guitar and a walking upright bass. Four-chord changes, swung.",
   "pos": [1618, 5296],
   "anchor": {
     "bpm": [156, 170],

@@ -1,7 +1,7 @@
 {
   "name": "fugue",
   "label": "The Patient Chase",
-  "info": "Beatless at 90-106. A church organ under strings, with a harpsichord. A canon.",
+  "info": "A steady 90-106 with no kit under it. A harpsichord over strings and a church organ. A canon.",
   "pos": [196, 90],
   "anchor": {
     "bpm": [90, 106],

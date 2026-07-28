@@ -1,7 +1,7 @@
 {
   "name": "postminimal",
   "label": "Tessellation Vigil",
-  "info": "Beatless at 80-108. A felt piano under slow strings, with a celesta. Four-chord changes, rubato, one chord every 16 beats.",
+  "info": "An easy 80-108 with no kit under it. A celesta over slow strings and a felt piano. Four-chord changes, rubato and a chord change every four bars.",
   "pos": [1280, 950],
   "anchor": {
     "bpm": [80, 108],

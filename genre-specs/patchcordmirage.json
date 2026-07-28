@@ -1,7 +1,7 @@
 {
   "name": "patchcordmirage",
   "label": "Zeno's Corridor",
-  "info": "A pulse kit at 94-102. Minimoog lead bass under choir, with a Minimoog lead. A two-chord minor drone, straight time, one chord every 16 beats.",
+  "info": "A driving four at 94-102. A sixteenth-note Minimoog bass under a choir, with a Minimoog lead. A two-chord minor drone, straight time and a chord change every four bars.",
   "pos": [2077, 23742],
   "anchor": {
     "bpm": [94, 102],

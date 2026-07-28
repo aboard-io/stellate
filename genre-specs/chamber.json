@@ -1,7 +1,7 @@
 {
   "name": "chamber",
   "label": "Rosin Seance",
-  "info": "Beatless at 72-100. A cello under strings, with a violin. A canon, rubato.",
+  "info": "An easy 72-100 with no kit under it. A violin over strings and a walking cello. A canon, rubato.",
   "pos": [600, 2169],
   "anchor": {
     "bpm": [72, 100],

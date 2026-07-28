@@ -1,7 +1,7 @@
 {
   "name": "chiptune",
   "label": "Sprite Metabolism",
-  "info": "A four-on-the-floor at 140-148. Saw synth bass under a saw synth pad, with a phase-distortion lead. Four-chord changes, straight time, quantized tight.",
+  "info": "A four-on-the-floor at 140-148. A saw bass under saw pads, with a phase-distortion lead. Four-chord changes, straight time and tight to the grid.",
   "pos": [1336, 7630],
   "anchor": {
     "bpm": [140, 148],

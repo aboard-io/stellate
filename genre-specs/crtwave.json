@@ -1,7 +1,7 @@
 {
   "name": "crtwave",
   "label": "Phosphor Persistence",
-  "info": "A bare kick at 60-72. Sub bass under a string machine pad, with a sine tones lead. A two-chord minor drone, straight time, one chord every 16 beats.",
+  "info": "A bare kick at 60-72. A sub bass under a string machine, with a sine lead. A two-chord minor drone, straight time and a chord change every four bars.",
   "pos": [2067, 11314],
   "anchor": {
     "bpm": [60, 72],
