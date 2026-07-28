@@ -1,7 +1,7 @@
 {
   "name": "wintersynth",
   "label": "Permafrost Liturgy",
-  "info": "dungeon synth's snowfield: icy choir + tub bells over frost triads, a slow march through the pines",
+  "info": "Dungeon synth's snowfield: icy choir + tub bells over frost triads, a slow march through the pines",
   "pos": [1411, 15400],
   "anchor": {
     "bpm": [64, 84],
