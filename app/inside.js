@@ -505,6 +505,15 @@ export function vizData(){
   const bar=barVoiceEvents(st, S.barInfo);
   // AUDIT-TRUTH: pull the measured expected-vs-actual audit for the bar currently heard
   // (keyed by serial) and reduce it to a role→{reason,missing} map for silent-lane paint.
+  //
+  // ROUTE-LIMITED, and the `faustHandle.auditFor &&` guard below is doing more
+  // work than it looks: the audit ring is built by the WAV/media-element route
+  // (faust/live.js, the handle that owns mediaEl) and NOT by the desktop
+  // SharedArrayBuffer ring route. On desktop auditFor is simply undefined, so
+  // auditSilent stays null and the red-hatched silent-lane paint never appears
+  // there — it is a mobile/no-isolation feature. Measured, not assumed: the
+  // desktop handle exposes only { layers, rms } of this family. Do not read the
+  // absence of hatching on desktop as "no voice was silent".
   let auditSilent=null;
   try{
     if(faustHandle&&faustHandle.auditFor&&S.barInfo&&S.barInfo.serial!=null){
