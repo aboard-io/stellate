@@ -87,4 +87,4 @@ getbbchit 07032001 0 6.1 tram_bell             # Blackpool tram stop-bell, singl
 getbbchit 07042240 0 6.7 dingdong_door         # electric doorbell, the suburban two-note ding-dong
 
 echo "Done. BBC layer ready: 36 beds in found/bbc_*.mp3, 4 hits in found/samples/bbc/."
-echo "Hear one:  node engine/genre-kernel.js track ambient --seed 7 --render"
+echo "Hear one:  node tools/kernel-cli.js track ambient --seed 7 --render"

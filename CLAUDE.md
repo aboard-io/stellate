@@ -46,8 +46,8 @@ node test/theory.test.js && node test/pipes.test.js   # MUSIC-MIND organs (pure 
 node test/meter.test.js        # ODD-METER gates: 3/4 + 6/8 grids, meter-safety stress, non-silent press (pure node)
 node engine/validate-genres.js --quick   # symbolic gates (all genres); --audio adds Discogs-EffNet
 node engine/genre-verifier.js matrix      # genre confusion matrix — must stay diagonal-dominant
-node engine/genre-kernel.js track jungle --seed 7 --render   # one track -> mp3 via engine/faust/press.js
-node engine/genre-kernel.js journey path.json --hours 4 --out journey/ --render
+node tools/kernel-cli.js track jungle --seed 7 --render   # one track -> mp3 via engine/faust/press.js
+node tools/kernel-cli.js journey path.json --hours 4 --out journey/ --render
                                # explorer path -> mp3s + gapless journey mix (GENRE-SPACE.md)
 # headless browser gates (need `npm install && npm run setup:browser` at the repo root, once):
 node test/explorer-ui-test.js   # (+ genre-viz / demo-layer / live-test-run / wavout-test-run / live-resilience / bg-survival)
@@ -308,7 +308,7 @@ docs in `docs/`.
   install essentia-tensorflow`, then download to `models/`:
   `discogs-effnet-bs64-1.pb` (essentia.upf.edu/models/feature-extractors/discogs-effnet/)
   and `genre_discogs400-discogs-effnet-1.{pb,json}` (…/classification-heads/genre_discogs400/).
-  Use via `node engine/genre-kernel.js track jungle --render --audio-verify`.
+  Use via `node tools/kernel-cli.js track jungle --render --audio-verify`.
 - `docs/WAV-FIRST.md` — the mobile-audio design. Promoted out of `history/`
   because it describes shipped behaviour and four live docs cite it.
 - `docs/history/` — planning records that live CODE still points at, so they

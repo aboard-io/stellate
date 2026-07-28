@@ -161,13 +161,13 @@ existing renders.
 ## CLI
 
 ```bash
-node engine/genre-kernel.js anchors                        # list genres + dimensions
-node engine/genre-kernel.js track jungle --seed 7          # one track state -> json
-node engine/genre-kernel.js blend techno vaporwave 0.5     # a midpoint state
-node engine/genre-kernel.js playlist techno vaporwave synthwave jungle \
+node tools/kernel-cli.js anchors                        # list genres + dimensions
+node tools/kernel-cli.js track jungle --seed 7          # one track state -> json
+node tools/kernel-cli.js blend techno vaporwave 0.5     # a midpoint state
+node tools/kernel-cli.js playlist techno vaporwave synthwave jungle \
      --tracks 30 --hours 6 --out /tmp/journey/      # the full journey (json)
-node engine/genre-kernel.js track jungle --seed 7 --render # faust press + ffmpeg -> mp3
-node engine/genre-kernel.js journey genre-space-path.json \
+node tools/kernel-cli.js track jungle --seed 7 --render # faust press + ffmpeg -> mp3
+node tools/kernel-cli.js journey genre-space-path.json \
      --hours 4 --out journey/ --render              # a DRAWN path -> hours of
                                                     # mp3s + journey.mp3 + mix page
 ```
@@ -205,7 +205,7 @@ Three fidelity levels, fastest first — pick by the question you're asking:
    Faust engine in headless chromium, realtime, real RMS and real
    `note()` scheduling. Answers: *does it SOUND — do the promised instruments
    reach the graph?* Minutes per ride, so used on pinned slices.
-3. **Journey CLI full render** — `node engine/genre-kernel.js journey
+3. **Journey CLI full render** — `node tools/kernel-cli.js journey
    <path.json> --hours 4 --render`: the offline press. Answers:
    *ship it* — hours of mp3 for human ears.
 

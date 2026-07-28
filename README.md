@@ -134,7 +134,7 @@ Verify / render:
 node test/engine.test.js               # offline-render smoke, gated on non-silence
 node engine/genre-verifier.js matrix   # genre confusion matrix — must stay diagonal
 node engine/validate-genres.js --quick # determinism / vocabulary / coverage gates
-node engine/genre-kernel.js track budstep --seed 7 --render   # one track -> mp3
+node tools/kernel-cli.js track budstep --seed 7 --render   # one track -> mp3
 ```
 
 Needs `node`, `ffmpeg`, `curl`, `python3` (the dev server + sample classifier) —

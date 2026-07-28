@@ -72,4 +72,4 @@ get "naropa_william_s_burroughs2" "naropa_william_s_burroughs2_64kb.mp3" 100 75 
 get "William_S_Burroughs_Sr_and_John_Giorno_reading_August_1979_79P104" "William_S_Burroughs_Sr_and_John_Giorno_reading_August_1979_79P104_64kb.mp3" 90 85 vx_burroughs_giorno79   # William S. Burroughs — & Giorno reading (Burroughs opens), 1979
 
 echo "Done. Naropa voice shelf ready: 25 readings in found/vx_*.mp3 (gitignored)."
-echo "Hear one:  node engine/genre-kernel.js track spokenword --seed 7 --render"
+echo "Hear one:  node tools/kernel-cli.js track spokenword --seed 7 --render"

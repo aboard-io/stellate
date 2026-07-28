@@ -141,4 +141,4 @@ if [ ! -s found/vx_ginsberg_class.mp3 ]; then
 fi
 
 echo "Done. Found sound ready in found/ — render via engine/faust press, e.g.:"
-echo "  node engine/genre-kernel.js track jungle --seed 7 --render"
+echo "  node tools/kernel-cli.js track jungle --seed 7 --render"

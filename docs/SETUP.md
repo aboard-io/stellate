@@ -62,7 +62,7 @@ Smoke-check a working stand:
 ```bash
 node test/engine.test.js                     # offline press renders, non-silent
 node engine/genre-verifier.js matrix         # 274/274 diagonal-dominant
-node engine/genre-kernel.js track jungle --seed 7 --render   # one mp3, ears-ready
+node tools/kernel-cli.js track jungle --seed 7 --render   # one mp3, ears-ready
 ```
 
 ## 2. Publish it

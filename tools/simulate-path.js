@@ -7,7 +7,7 @@
 //   1. simulate-path.js        — this: the real app, headless, NO audio clock.
 //   2. headless live gates     — transit-arrival-run.js etc: real engine, real
 //                                RMS, realtime (slow, sound-true).
-//   3. journey CLI full render — node engine/genre-kernel.js journey … --render.
+//   3. journey CLI full render — node tools/kernel-cli.js journey … --render.
 //
 // HOW IT WORKS (no forked logic — the app's own modules do the riding):
 //   - serve the repo + boot index.html in the pinned headless chromium

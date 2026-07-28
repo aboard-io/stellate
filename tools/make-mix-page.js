@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // make-mix-page.js — build mix/index.html + mix/mix.m3u from a rendered
-// playlist directory (genre-kernel.js playlist ... --out mix --render-first N).
+// playlist directory (kernel-cli.js playlist ... --out mix --render-first N).
 //   node make-mix-page.js [dir] [baseUrl]
 "use strict";
 const fs = require("fs");
@@ -48,7 +48,7 @@ const rows = tracks.map(t => {
       <audio controls preload="none" src="${f}"></audio>
     </div>`;
 }).join("\n");
-// long-form artifacts (genre-kernel.js journey --render)
+// long-form artifacts (kernel-cli.js journey --render)
 const longLinks = [
   fs.existsSync(path.join(dir, "journey.mp3")) ? `<a class="m3u" href="journey.mp3">▶ journey.mp3 — the whole ride, one file</a>` : "",
 ].filter(Boolean).join("\n  ");
