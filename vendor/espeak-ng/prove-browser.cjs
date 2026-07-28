@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// prove-browser.js — headless-chromium proof that the trimmed espeak-ng
+// prove-browser.cjs — headless-chromium proof that the trimmed espeak-ng
 // artifact loads and synthesizes in a real browser page served with the
 // production COOP/COEP headers (require-corp; see serve.sh / docs/HOSTING.md).
 //
-//   node vendor/espeak-ng/prove-browser.js
+//   node vendor/espeak-ng/prove-browser.cjs
 //
 // Serves the repo root same-origin (so espeak-ng.data needs no CORP/ACAO),
 // dynamically imports the ES-module glue, synthesizes the same phrase as
