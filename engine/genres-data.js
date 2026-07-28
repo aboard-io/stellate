@@ -15,7 +15,7 @@
   "use strict";
   const D = {};
   D.GENRES = {
-    techno: { label:"Unblinking Interval", info:"A machine four at 124-140. Acid bass under an organ, with a pluck lead. A two-chord minor drone, a light shuffle, euclidean hats.",   // SYNTH-FORWARD: samples are texture, not the hook
+    techno: { label:"Unblinking Interval", info:"A machine four at 124-140. A rolling acid bass under an organ, with a pluck lead. A two-chord minor drone, seven hats spread across the bar and a touch of swing.",   // SYNTH-FORWARD: samples are texture, not the hook
       bpm:[124,140], swing:[0,0.06], humanize:[0,0.15],
       progressions:["drone_min","deep_two"], kits:["techno","pulse"], fills:["off","riser","cut","hat rush"],
       euclid:{hat:[7,16]},   // E(7,16) rotating closed-hat undergrid beneath the machine four (opens survive)
@@ -28,7 +28,7 @@
       found:{role:"chops", vol:[.1,.18], pitch:[.9,1.1], stretch:[.4,.6], cutoff:[1800,3200], sources:["factory","shibuya","vx_wwvh","stml_chop_c4","stml_chop_d"]},
       stab:["offbeat","offbeat","rave","sparse"], hits:{sources:["pool:vocal_stab*1","pool:rave_stab*1","sp_system","sp_energy"], pattern:"sparse", prob:.5},
       form:"dj" },
-    house: { label:"Congregation Furnace", info:"A four-on-the-floor at 120-126. Saw synth bass under a percussive organ, with a piano. A min7 house vamp, swung.",   // sample-mid: chops present, synths carry
+    house: { label:"Congregation Furnace", info:"A four-on-the-floor with claps at 120-126. A rolling saw bass under a percussive organ, with a piano. A min7 house vamp, swung.",   // sample-mid: chops present, synths carry
       timeFeel:{ pushPullMs:{ hat:-4 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — HOUSE: the open-hat offbeat rides on top of the four. Hats only — the kick IS the sermon and must not move
       reverbColor:"dattorro",   // fx wings: clean plate on the stabs
       masterComp:0.3,   // effects audit B6: the SSL-buss pump-and-glue on the four-on-floor — the bus-comp argument that earned disco its masterComp applies most directly to Chicago house. Zero rng, dominant-parent
@@ -43,7 +43,7 @@
       found:{role:"chops", vol:[.1,.18], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["shibuya","tokyo_station","vx_timelady","stml_chop_a","stml_chop_b","stml_chop_c4"]},
       stab:["rave","offbeat"], hits:{sources:["pool:rave_stab*2","pool:vocal_stab*1","sp_rhythm","stml_hit_01","stml_hit_03"], pattern:"offbeat", prob:.55},
       form:"dj" },
-    jungle: { label:"Barometric Stampede", info:"A jungle kit at 158-172. Sub bass under a saw synth pad, with a pluck lead. A two-chord vamp, a light shuffle, euclidean hats.",   // SAMPLE-FORWARD: the amen IS the track
+    jungle: { label:"Barometric Stampede", info:"A chopped jungle kit at 158-172. A sub bass under saw pads, with a pluck lead. A two-chord vamp, three kicks spread across the bar and a touch of swing.",   // SAMPLE-FORWARD: the amen IS the track
       timeFeel:{ pushPullMs:{ bass:-5 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — JUNGLE: the sub placed ahead of the break so it PULLS — the break's own internal timing is sacred, so only the bass moves
       bpm:[158,172], swing:[0,.08], humanize:[.1,.25],
       progressions:["deep_two","drone_min","minor_run"], kits:["jungle","breaks"], fills:["break fill","break fill","reverse","off"],
@@ -58,7 +58,7 @@
       found:{role:"break", scratch:0.45, vol:[.3,.45], pitch:[1,1], stretch:[.5,.5], cutoff:[6000,9000], sources:["amen_165","amen_170","amen_172","amen_175","stml_loop_148a","stml_loop_157a","stml_loop_157b","stml_loop_167a"]},   // the BREAK DOMINATES: loud + wide open, real sampled drums not "light FM"; scratch on the stutter ornament
       stab:["off","sparse"], hits:{sources:["pool:vb_junglist*1","pool:vocal_stab*1","pool:rave_stab*1","sp_rewind","sp_pressure"], pattern:"dub", prob:.75},
       form:"dj" },
-    triphop: { label:"Inclement Surveillance", info:"A boom-bap kit at 72-92. Acoustic bass under strings, with a muted trumpet. Neo-soul changes, hard swing, loose timing.",   // SAMPLE-FORWARD
+    triphop: { label:"Inclement Surveillance", info:"A boom-bap beat at 72-92. A muted trumpet over strings and an upright bass. Neo-soul changes, swung hard and loose timing.",   // SAMPLE-FORWARD
       bpm:[72,92], swing:[.15,.3], humanize:[.2,.45],
       progressions:["neosoul","lofi","minor_run","mode_dorian"], kits:["boombap","breaks","halftime"], fills:["off","drum fill","downlift"],
       bass:{patterns:["dub","simple","sub"], samplerPool:["acoustic_bass"], recipe:{model:["sub","saw","sampler"],cutoff:[300,600],res:[.05,.2],level:[1.0,1.25],send:[.05,.12],dsend:[0,.1]},
@@ -73,7 +73,7 @@
       found:{role:"break", vol:[.18,.3], pitch:[1,1], stretch:[.5,.5], cutoff:[3800,5500], sources:["amen_165","amen_170","stml_loop_81a","stml_loop_85a","stml_loop_89b"]},
       stab:["off"], hits:{sources:["pool:vocal_stab*1","blues_vox_78","sp_slowdown"], pattern:"sparse", prob:.55},
       form:"pop" },
-    vaporwave: { label:"Food Court Eternity", info:"A full kit at 62-88. Saw synth bass under ahh choir, with an alto sax. Royal-road changes, a light shuffle.",   // SAMPLE-FORWARD: the bed is the place
+    vaporwave: { label:"Food Court Eternity", info:"A straight backbeat at 62-88. A saw bass under a wordless choir, with an alto sax. Royal-road changes, a light shuffle.",   // SAMPLE-FORWARD: the bed is the place
       bpm:[62,88], swing:[0,.12], humanize:[.05,.25],
       progressions:["royal_road","dream","pop_1625","neosoul"], kits:["full","open","halftime"], fills:["drum fill","riser","downlift","off"],
       bass:{patterns:["simple","walking","root"], recipe:{model:["saw"],cutoff:[500,900],res:[.1,.25],level:[.9,1.1],send:[.05,.15],dsend:[0,.1]}},
@@ -87,7 +87,7 @@
       stab:["off"], hits:{sources:["pool:vb_mallsoft_vapor*1","sp_plaza","sp_shopping","pool:vocal_stab*1"], pattern:"sparse", prob:.5},
       autoTune:0.25,   // fx wings stage 2: a GENTLE bend of the slowed mall bed toward the maj7 key — subtle, not hyperpop
       form:"pop" },
-    synthwave: { label:"Highway Heat Death", info:"A pulse kit at 88-116. Saw synth bass under a Juno pad, with a stacked saws lead. Synthwave changes, a light shuffle.",   // SYNTH-FORWARD: beds distant
+    synthwave: { label:"Highway Heat Death", info:"A driving four at 88-116. A driving saw bass under Juno pads, with a stacked-saw lead. Synthwave changes, a touch of swing.",   // SYNTH-FORWARD: beds distant
       bpm:[88,116], swing:[0,.05], humanize:[.05,.15],
       progressions:["synthwave","epic_min","andalusian","minor_run"], kits:["pulse","four","open"], fills:["tom fill","tom fill","riser","off"],
       bass:{patterns:["drive","octaves","sixteenths","pedal"], recipe:{model:["saw","reese"],cutoff:[550,900],res:[.15,.3],level:[1.1,1.3],send:[0,.08],dsend:[0,0]}},
@@ -100,7 +100,7 @@
       found:{role:"bed", vol:[.08,.14], pitch:[.65,.8], stretch:[.45,.6], cutoff:[1000,1800], sources:["pool:road*1","pool:industry*1","pool:voices*1"]},
       stab:["off","sparse"], hits:{sources:["pool:vocal_stab*1","sp_nightdrive"], pattern:"sparse", prob:.3},
       form:"pop" },
-    lofi: { label:"Dust Census", info:"A boom-bap kit at 72-88. Acoustic bass under an FM lead pad, with an alto sax. Lo-fi changes, hard swing, loose timing.",   // SAMPLE-FORWARD
+    lofi: { label:"Dust Census", info:"A boom-bap beat at 72-88. An alto sax over an FM pad and an upright bass. Lo-fi changes, swung hard and loose timing.",   // SAMPLE-FORWARD
       bpm:[72,88], swing:[.18,.32], humanize:[.25,.5],
       progressions:["lofi","neosoul","ii_v_i","pop_1625"], kits:["boombap","halftime"], fills:["off","off","drum fill"],
       bass:{patterns:["simple","dub","root"], samplerPool:["acoustic_bass"], recipe:{model:["sub","saw","sampler"],cutoff:[350,650],res:[.05,.15],level:[.9,1.1],send:[.05,.12],dsend:[0,.05]},
@@ -115,7 +115,7 @@
       found:{role:"bed", vol:[.14,.22], pitch:[.75,.9], stretch:[.4,.55], cutoff:[1600,2600], sources:["pool:city*2","vx_dday"]},
       stab:["off"], hits:{sources:["pool:vocal_stab*1","sp_slowdown"], pattern:"sparse", prob:.35},
       form:"pop" },
-    downtempo: { label:"Benthic Patience", info:"A boom-bap kit at 62-80. Acoustic bass under strings, with a flute. Neo-soul changes, swung.",   // wash-trio deep pass: the BEAT one. Its identity claim ambient/newage can't share is a real swung backbeat (drumDensity + swing floors), leaned laid-back
+    downtempo: { label:"Benthic Patience", info:"A boom-bap beat at 62-80. A flute over strings and an upright bass. Neo-soul changes, swung.",   // wash-trio deep pass: the BEAT one. Its identity claim ambient/newage can't share is a real swung backbeat (drumDensity + swing floors), leaned laid-back
       bpm:[62,80], swing:[.1,.22], humanize:[.15,.35],   // bpm ceiling 84->80 keeps downtempo clearly SLOWER than exotica's tiki-lounge floor (82) — the swung-acoustic-lounge collision was pre-existing (downtempo's flute lead reads acoustic); the bpm fence breaks it. swing FLOOR up .05->.10 — the groove is never straight, and clearly ABOVE vaporwave's machine-time (renders .03-.08): the two-way fence — downtempo scores off vaporwave's diagonal (vaporwave row caps swing .08) AND the straight-time wash cluster scores off downtempo's (row swing floor .06)
       timeFeel:{ pushPull:{ bass:.011, hat:-.007 } },   // the Bristol lean made structural (drawless per-voice offset) — bass drags behind the grid, hats ride a touch on top: the head-nod that says trip-hop, not machine-time vaporwave. Deliberately half-strength: at double these offsets the timing feel overshoots.
       progressions:["neosoul","dream","deep_two","mode_mixo"], kits:["boombap","halftime","kick"], fills:["off","downlift","riser"],
@@ -130,7 +130,7 @@
       found:{role:"bed", vol:[.14,.24], pitch:[.7,.9], stretch:[.45,.6], cutoff:[1800,2800], sources:["pool:city*1","pool:road*1","pool:voices*1"]},
       stab:["off"], hits:{sources:["pool:vocal_stab*1","sp_herenow"], pattern:"sparse", prob:.2},
       form:"pop" },
-    ambient: { label:"Stationary Weather", info:"Beatless at 58-72. Sub bass under ahh choir, with a harp. A two-chord minor drone, one chord every 32 beats.",   // wash-trio deep pass: the STATIC one. Its identity claim the wash trio can't share is ZERO harmonic motion + ZERO kit + the longest plateau
+    ambient: { label:"Stationary Weather", info:"A slow 58-72 with no kit under it. A sub bass under a wordless choir, with a harp. A two-chord minor drone, a chord change every eight bars.",   // wash-trio deep pass: the STATIC one. Its identity claim the wash trio can't share is ZERO harmonic motion + ZERO kit + the longest plateau
       bpm:[58,72], swing:[0,0], humanize:[.1,.3],
       progressions:["drone_min","drone_min","deep_two"], kits:["off"], fills:["off"],   // DRONE-ONLY (was dream/deep_two/drone_min/mode_lydian) — motion collapses to 0 (deep_two the rare 2-chord breath, .33); and NO kit EVER (was off/off/kick) — drumDensity strictly 0. This is the structural fence vs downtempo (which now REQUIRES a beat) and newage (which now REQUIRES motion+rubato)
       chordEvery:32,   // the LONGEST harmonic plateau in the catalog (4 bars per chord — twice mallsoft's 16) — the drone holds the length of the room; nothing changes
@@ -143,7 +143,7 @@
       found:{role:"bed", vol:[.2,.32], pitch:[.6,.8], stretch:[.45,.6], cutoff:[2000,3400], sources:["pool:road*2","pool:city*1","pool:voices*2"]},
       stab:["off"], hits:{sources:["pool:vocal_stab*1","sp_herenow"], pattern:"sparse", prob:.15},
       form:"wave" },
-    dinosynth: { label:"Cretaceous Vespers", info:"A tribal kit at 72-96. Sub bass under ahh choir, with french horns. Primeval fifths, a light shuffle.",
+    dinosynth: { label:"Cretaceous Vespers", info:"Hand drums and toms at 72-96. A sub bass under a wordless choir, with French horns. Primeval fifths, a touch of swing.",
       reverbColor:"greyhole",   // fx wings: the diffuse dark-ambient smear (primordial swamp)
       bpm:[72,96], swing:[0,.05], humanize:[.15,.35],
       progressions:["primeval","epic_min","andalusian","minor_run","mode_phrygian"],   // cinematic, moving — no static drone
@@ -164,7 +164,7 @@
       sampleEvents:[{ pool:["sp_paleo_skies","sp_paleo_bones"], placement:"response", sections:"theme|finale",
         gain:.5, prob:.4, treatment:{pitch:.9, cutoff:3200, rsend:.4, dsend:.3, glitch:true} }],
       form:"ritual" },   // creature solos + fuzz solo + glitched VO (see buildSections)
-    canawave: { label:"Loon Referendum", info:"A four-on-the-floor at 108-114. Saw synth bass under a church organ, with a plucked string lead. Four-chord changes, a light shuffle.",
+    canawave: { label:"Loon Referendum", info:"A four-on-the-floor at 108-114. A walking saw bass under a church organ, with a plucked string. Four-chord changes, a touch of swing.",
       bpm:[108,114], swing:[0,.06], humanize:[.08,.2],
       progressions:["four_chords","doo_wop","sad_pop"],   // anthemic TRIADIC pop — pop_1625's seventh color read as disco (validate-genres gate 2)
       kits:["four","full"], fills:["tom fill","tom fill","riser"],   // toms into every lift, steady bright hats — NOT "open" (open-hat offbeats read as disco; validate-genres gate 2 caught canawave losing its own diagonal on open-kit seeds)
@@ -188,7 +188,7 @@
         { pool:["sp_ca_maple","sp_ca_gold","sp_ca_lights","sp_ca_rockies","sp_ca_sorry"], placement:"buried", sections:"all", treatment:{cutoff:4400, vol:0.36, every:4, maxDur:14, rsend:0.16, dsend:0.12} }],
       stab:["off"],
       form:"anthem" },   // pop structure; grand brass swell at the bridge (see buildSections)
-    transitwave: { label:"Rail Replacement Rapture", info:"A pulse kit at 110-118. Saw synth bass under strings, with a stacked saws lead. Synthwave changes, swung, quantized tight.",
+    transitwave: { label:"Rail Replacement Rapture", info:"A driving four at 110-118. A saw bass under strings, with a stacked-saw lead. Synthwave changes, swung and tight to the grid.",
       bpm:[110,118], swing:[.1,.16], humanize:[.02,.08],   // chugging choo-choo shuffle (the drums chug; the arp stays mostly tight)
       progressions:["synthwave","minor_run","deep_two"],   // hypnotic minor/modal — Trans-Europe Express (motion + the occasional 2-chord vamp)
       kits:["pulse","four"], fills:["tom fill","drum fill","riser","hat rush","impact","break fill","downlift"],   // straight driving kit = clickety-clack; a real spread of fills (see transit form)
@@ -219,7 +219,7 @@
         { pool:["tw_ding"], placement:"cadence", sections:"platform|board|interchange|terminus", treatment:{maxDur:2.2, cutoff:2400, vol:0.28, rsend:0.26, dsend:0.04, ppsend:0.7} }],
       stab:["off"],
       form:"transit" },   // a commuter journey: platform -> board -> transit -> interchange -> SOLO -> express -> terminus (see buildSections)
-    neoclassical: { label:"Requiem Appendix", info:"Beatless at 58-82. A felt piano under strings, with a felt piano. A canon, a light shuffle, loose timing, rubato.",
+    neoclassical: { label:"Requiem Appendix", info:"An easy 58-82 with no kit under it. A felt piano on bass and lead, under strings. A canon, a light shuffle, loose timing and rubato.",
       // deep pass: the genre's VOICE is now a real sampled felt piano
       // (FluidR3 Yamaha Grand, lowpassed at extraction — SAMPLERS.felt_piano):
       // lead AND bass 2/3+ sampled piano, soft velocity, slightly slow attack,
@@ -243,7 +243,7 @@
       thunk:{prob:[.2,.35], amp:[.026,.038]},   // soft key/pedal noise on that fraction of lead notes, ~-30dB
       stab:["off"], hits:{sources:["pool:vb_classical_chamber*1","sp_herenow"], pattern:"sparse", prob:.1},
       form:"wave" },
-    dancepop: { label:"Confetti Escape Velocity", info:"A four-on-the-floor at 116-128. Saw synth bass under strings, with brass. Four-chord changes, a light shuffle.",   // SYNTH-FORWARD
+    dancepop: { label:"Confetti Escape Velocity", info:"A four-on-the-floor at 116-128. A saw bass under strings, with brass. Four-chord changes, a light shuffle.",   // SYNTH-FORWARD
       bpm:[116,128], swing:[0,.1], humanize:[.05,.2],
       progressions:["four_chords","sad_pop","doo_wop"], kits:["four","pulse","open"], fills:["drum fill","tom fill","riser","snare roll"],
       bass:{patterns:["octaves","melodic","drive","syncopated"], patchPool:["SYN-BASS 2","BASS    2"], recipe:{model:["saw","saw","dx7"],cutoff:[900,1500],res:[.1,.25],level:[1.05,1.25],send:[.05,.15],dsend:[0,.1]}},   // ~1/3 the DX7 synth-bass pair (alg 17 both -> morphable) — the New Order hook machine
@@ -255,7 +255,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.8,1], stretch:[.45,.6], cutoff:[1500,2500], sources:["pool:city*1","pool:road*1"]},
       stab:["off","sparse"], hits:{sources:["pool:rave_stab*1","pool:vocal_stab*1"], pattern:"sparse", prob:.3},
       form:"pop" },
-    edm: { label:"Fireworks Budget", info:"A four-on-the-floor at 124-132. Saw synth bass under a saw synth pad, with a hard-sync lead. Epic minor changes, a light shuffle, quantized tight.",   // SYNTH-FORWARD
+    edm: { label:"Fireworks Budget", info:"A four-on-the-floor at 124-132. A rolling saw bass under saw pads, with a hard-sync lead. Epic minor changes, a touch of swing and tight to the grid.",   // SYNTH-FORWARD
       bpm:[124,132], swing:[0,.05], humanize:[0,.1],
       progressions:["epic_min","minor_run","sad_pop","drone_min"], kits:["four","pulse"], fills:["riser","riser","impact","cut","dropout"],
       bass:{patterns:["rolling","drive","stab"], recipe:{model:["saw","reese","modeld"],cutoff:[500,900],res:[.2,.35],level:[1.15,1.35],send:[0,.08],dsend:[0,0],
@@ -269,7 +269,7 @@
       found:{role:"chops", vol:[.08,.15], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2500,4000], sources:["shibuya","factory","vx_xminusone"]},
       stab:["rave","offbeat"], hits:{sources:["pool:rave_stab*2","sp_energy"], pattern:"offbeat", prob:.6},
       form:"drop" },
-    dubstep: { label:"Seismic Ultimatum", info:"A half-time kit at 136-146. Wobble bass under a saw synth pad, with a pluck lead. A two-chord minor drone, a light shuffle, euclidean hats.",
+    dubstep: { label:"Seismic Ultimatum", info:"A half-time beat at 136-146. A wobble bass under saw pads, with a pluck lead. A two-chord minor drone, five hats spread across the bar and a touch of swing.",
       bpm:[136,146], swing:[0,.08], humanize:[.05,.2],
       progressions:["drone_min","deep_two","minor_run"], kits:["halftime","breaks"], fills:["break fill","riser","impact","off","dropout"],
       euclid:{hat:[5,16]},   // E(5,16) sparse uneven hats rotating over the halftime frame
@@ -286,7 +286,7 @@
       found:{role:"chops", vol:[.1,.18], pitch:[.85,1.1], stretch:[.4,.6], cutoff:[2000,3500], sources:["factory","highway_night"]},
       stab:["off","sparse"], hits:{sources:["pool:vocal_stab*1","sp_pressure","pool:rave_stab*1"], pattern:"dub", prob:.55},
       form:"drop" },
-    blues: { label:"Crossroads Paperwork", info:"A shuffle at 78-100. Acoustic bass under a percussive organ, with a steel string guitar. A twelve-bar blues, hard swing, loose timing.",   // ACOUSTIC-forward (deep pass: "the whole thing is acoustic")
+    blues: { label:"Crossroads Paperwork", info:"A shuffle at 78-100. A steel-string guitar over a percussive organ and a walking upright bass. A twelve-bar blues, swung hard and loose timing.",   // ACOUSTIC-forward (deep pass: "the whole thing is acoustic")
       reverbColor:"fdn",   // fx wings: a dry juke-joint room, not a wash
       timeFeel:{ pushPull:{ bass:.015, snare:.01 } },   // effects audit B7: behind-the-beat by definition — the lazy shuffle. jazz got the walking-upright bass push; blues wants the lazier version, the snare offset kept tiny so offgrid doesn't move. Zero-rng dominant-parent. Deliberately half-strength: at double these offsets the timing feel overshoots.
       bpm:[78,100], swing:[.24,.42], humanize:[.3,.55],
@@ -299,7 +299,7 @@
       found:{role:"bed", vol:[.05,.12], pitch:[.8,1], stretch:[.45,.6], cutoff:[1500,2500], sources:["pool:city*2","vx_whitman"]},
       stab:["off"], hits:{sources:["pool:vb_jazz_blues*1","blues_vox_78","blues_vox_78","pool:horn_stab*1"], pattern:"response", prob:.75},   // the 78rpm singer takes the response bars the guitar rests — and gets answered
       form:"pop" },
-    jazz: { label:"Smoke Arithmetic", info:"A breaks kit at 96-144. Acoustic bass under a bright yamaha grand, with an alto sax. ii-V-I, hard swing, loose timing, rubato.",
+    jazz: { label:"Smoke Arithmetic", info:"A broken beat at 96-144. An alto sax over a bright grand piano and a walking upright bass. ii-V-I, swung hard, loose timing and rubato.",
       reverbColor:"dattorro",   // effects audit C: the Rudy Van Gelder / Blue Note plate (EMT-140) — the sound of the sessions; zero rng, dominant-parent
       bpm:[96,144], swing:[.28,.48], humanize:[.35,.6],
       progressions:["ii_v_i","neosoul","lofi","mode_dorian"], kits:["breaks","boombap"], fills:["off","drum fill"],
@@ -314,7 +314,7 @@
       timeFeel:{ pushPull:{ bass:0.015 }, pushPullMs:{ ride:-5, snare:4 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — SWING: the ride rides ON TOP of a backbeat that leans back; the two maps SUM per lane, so the walking upright keeps its original tempo-RELATIVE drag while the new lanes are tempo-honest. Phase 3: the upright WALKS behind the beat — bass onsets pushed ~7ms late (a per-voice offset, no verifier feature reads bass timing, so pure feel). Deliberately half-strength: at double these offsets the timing feel overshoots.
       stab:["off"], hits:{sources:["pool:vb_jazz_blues*1","pool:horn_stab*1","pool:vocal_stab*1"], pattern:"sparse", prob:.35},
       form:"aaba" },
-    dub: { label:"Echo Ministry", info:"A half-time kit at 68-82. Sub bass under an organ, with a harmonica. A dub vamp, a light shuffle.",   // SAMPLE-FORWARD: wet vox hits + Burroughs in the smoke
+    dub: { label:"Echo Ministry", info:"A half-time beat at 68-82. A sub bass under an organ, with a harmonica. A dub vamp, a light shuffle.",   // SAMPLE-FORWARD: wet vox hits + Burroughs in the smoke
       timeFeel:{ pushPullMs:{ bass:13, snare:8, rim:8 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — ONE-DROP: reggae's pocket with the delay promoted to lead. No pad lane — dub's pad is a sustained 8-beat block, not a chop, so moving it would drag the drone, not the skank
       reverbColor:"spring",   // effects audit A2: the spring tank (King Tubby's AKG BX20 "splash") IS dub's ROOM — additive to and distinct from the runaway echo (delayFb .5-.7); surfrock already proves the module. Zero rng, dominant-parent
       bpm:[68,82], swing:[.02,.1], humanize:[.1,.3],
@@ -328,7 +328,7 @@
       found:{role:"bed", vol:[.18,.3], pitch:[.7,.85], stretch:[.45,.6], cutoff:[1800,3000], sources:["pool:city*1","pool:road*1","vx_burroughs"]},
       stab:["off","sparse"], hits:{sources:["pool:vocal_stab*2","sp_rewind","sp_pressure"], pattern:"dub", prob:.75, wet:true},
       form:"dj" },
-    trance: { label:"Sunrise Protocol", info:"A four-on-the-floor at 132-142. Saw synth bass under a saw synth pad, with a stacked saws lead. An uplifting cadence, straight time, quantized tight.",   // SYNTH-FORWARD: beds distant
+    trance: { label:"Sunrise Protocol", info:"A four-on-the-floor at 132-142. A rolling saw bass under saw pads, with a stacked-saw lead. An uplifting cadence, straight time and tight to the grid.",   // SYNTH-FORWARD: beds distant
       bpm:[132,142], swing:[0,.04], humanize:[0,.1],
       progressions:["uplift","epic_min","sad_pop","synthwave"], kits:["four","pulse"], fills:["riser","riser","impact","cut","dropout"],
       bass:{patterns:["rolling","sixteenths","drive","pedal"], recipe:{model:["saw"],cutoff:[520,850],res:[.15,.3],level:[1.1,1.3],send:[0,.08],dsend:[0,.05]},
@@ -342,7 +342,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.7,.9], stretch:[.45,.6], cutoff:[1500,2500], sources:["pool:road*1","pool:city*1","pool:voices*1"]},
       stab:["off","sparse"], hits:{sources:["pool:rave_stab*1","sp_energy","pool:vocal_stab*1"], pattern:"offbeat", prob:.4},
       form:"drop" },
-    disco: { label:"Mirrorball Panopticon", info:"A four-on-the-floor at 110-122. Saw synth bass under strings, with an FM lead. A funk vamp, swung.",   // sample-mid: the horns are dressing
+    disco: { label:"Mirrorball Panopticon", info:"A four-on-the-floor at 110-122. A saw bass under strings, with an FM lead. A funk vamp, swung.",   // sample-mid: the horns are dressing
       timeFeel:{ pushPullMs:{ hat:-3 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — DISCO: a live drummer riding hats slightly on top of a four-on-the-floor. Small — disco's identity is the metronomic kick
       reverbColor:"dattorro",   // effects audit A1: the EMT-140 PLATE (Sigma Sound) IS the Salsoul/Philly-International disco-string room — the lush strings/horns rode a bright plate, not the generic hall (citypop/house/mallsoft already share it; zero rng, dominant-parent)
       bpm:[110,122], swing:[.05,.12], humanize:[.1,.25],
@@ -359,7 +359,7 @@
       stab:["off","sparse","charleston"], hits:{sources:["pool:horn_stab*1","sp_rhythm","pool:vocal_stab*1","stml_hit_b3"], pattern:"offbeat", prob:.5},   // VARIETY: + charleston (the syncopated disco/funk chord-stab rhythm — the mirrorball glitter punch)
       masterComp:0.35,   // fx wings stage 4: gentle 3-band glue on the four-on-floor — the disco mix cohered (zero rng, dominant-parent inherited)
       form:"vamp" },
-    italo: { label:"Espresso Laser", info:"A pulse kit at 108-120. Saw synth bass under a Juno pad, with a hard-sync lead. A minor pop cycle, a light shuffle.",   // SYNTH-FORWARD
+    italo: { label:"Espresso Laser", info:"A driving four at 108-120. A saw bass under Juno pads, with a hard-sync lead. A minor pop cycle, a touch of swing.",   // SYNTH-FORWARD
       bpm:[108,120], swing:[0,.08], humanize:[.02,.12],
       progressions:["sad_pop","synthwave","doo_wop"], kits:["pulse","four"], fills:["tom fill","riser","drum fill"],
       bass:{patterns:["octaves","sixteenths","pedal"], recipe:{model:["saw","modeld"],cutoff:[750,1150],res:[.12,.22],level:[1.05,1.25],send:[.03,.08],dsend:[0,.05],
@@ -373,7 +373,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.8,.95], stretch:[.45,.6], cutoff:[1500,2500], sources:["pool:city*1","pool:road*1","vx_xminusone"]},
       stab:["off","offbeat"], hits:{sources:["pool:rave_stab*1","pool:vocal_stab*1","sp_nightdrive"], pattern:"sparse", prob:.4},
       form:"pop" },
-    bigbeat: { label:"Airhorn Apocrypha", info:"A breaks kit at 118-136. Acid bass under an organ, with a stacked saws lead. A descending minor run, a light shuffle.",   // SAMPLE-FORWARD: the break + the sample-CD arsenal
+    bigbeat: { label:"Airhorn Apocrypha", info:"A broken beat at 118-136. An acid bass under an organ, with a stacked-saw lead. A descending minor run, a light shuffle.",   // SAMPLE-FORWARD: the break + the sample-CD arsenal
       bpm:[118,136], swing:[0,.1], humanize:[.05,.2],
       progressions:["minor_run","house_min","deep_two"], kits:["breaks","house"], fills:["break fill","riser","impact","cut","snare roll"],
       bass:{patterns:["stab","rolling","drive","syncopated"], recipe:{model:["acid"],cutoff:[420,700],res:[.3,.45],level:[1.1,1.3],send:[0,.08],dsend:[0,.1]},
@@ -390,7 +390,7 @@
       // break/hits handlers are untouched; only bigbeat's own fixtures drift.
       sampleEvents:[{ pool:["bb_horn_a","bb_horn_b"], placement:"opener", gain:.6, treatment:{cutoff:7000, dsend:.3} }],
       form:"drop" },
-    garage: { label:"Numbers Station Shuffle", info:"A breaks kit at 128-136. Sub bass under an organ, with a pluck lead. A min7 house vamp, hard swing, euclidean hats.",   // sample-mid: vox chops as percussion
+    garage: { label:"Numbers Station Shuffle", info:"A broken beat at 128-136. A sub bass under an organ, with a pluck lead. A min7 house vamp, seven hats spread across the bar and swung hard.",   // sample-mid: vox chops as percussion
       bpm:[128,136], swing:[.2,.3], humanize:[.1,.25],
       progressions:["house_min7","deep_two","lofi"], kits:["breaks","house"], fills:["off","hat rush","cut","break fill"],
       euclid:{hat:[7,16]},   // E(7,16) skippy 2-step hats, rotation per chord (swing rides on top)
@@ -403,7 +403,7 @@
       found:{role:"chops", vol:[.1,.18], pitch:[.95,1.15], stretch:[.4,.6], cutoff:[2500,4000], sources:["shibuya","tokyo_station","vx_suspense"]},
       stab:["off","sparse"], hits:{sources:["pool:vocal_stab*2","sp_rhythm"], pattern:"offbeat", prob:.65},
       form:"pop" },
-    doomdrone: { label:"Subduction Hymnal", info:"A bare kick at 48-62. Sub bass under a church organ, with a fuzz lead. A two-chord minor drone, straight time.",   // SYNTH-FORWARD (the bed is dread, not hook)
+    doomdrone: { label:"Subduction Hymnal", info:"A bare kick at 48-62. A sub bass under a church organ, with a fuzz lead. A two-chord minor drone, straight time.",   // SYNTH-FORWARD (the bed is dread, not hook)
       bpm:[48,62], swing:[0,.04], humanize:[.1,.3],
       progressions:["drone_min","deep_two","mode_phrygian"], kits:["off","kick"], fills:["off"],
       reverbColor:"greyhole",   // GRIT PASS: the diffuse abyssal smear — the drone drowns in the cavern
@@ -417,7 +417,7 @@
       found:{role:"bed", vol:[.2,.32], pitch:[.5,.65], stretch:[.45,.6], cutoff:[1200,2200], sources:["vx_cage_studio79","factory","pool:road*1","vx_blake","vx_conet_swedish"]},   // the factory WAY down + tyger tyger + the haunted music box
       stab:["off"], hits:{sources:["sp_pressure","pool:vocal_stab*1"], pattern:"sparse", prob:.2},
       form:"wave" },
-    newage: { label:"Chlorophyll Cathedral", info:"Beatless at 58-76. Sub bass under a harp, with a flute. Dream changes, a light shuffle, loose timing, rubato.",   // wash-trio deep pass: the MELODIC one. Its identity claim ambient/downtempo can't share is a PRESENT melody over MOVING harmony that BREATHES — the only wash-cluster genre with rubato
+    newage: { label:"Chlorophyll Cathedral", info:"A slow 58-76 with no kit under it. A sub bass under a harp, with a flute. Dream changes, a touch of swing, loose timing and rubato.",   // wash-trio deep pass: the MELODIC one. Its identity claim ambient/downtempo can't share is a PRESENT melody over MOVING harmony that BREATHES — the only wash-cluster genre with rubato
       bpm:[58,76], swing:[0,.06], humanize:[.2,.4],
       rubato:{depth:[.008,.02], periodBars:[3,5], prob:1},   // the melody ALWAYS breathes (state.rubato beat-warp) — gentler than neoclassical (.02-.04) and slower-period (3-5 bars): a devotional new-age drift, not a Romantic-piano rubato. This is the structural fence — every other wash-cluster genre renders rubato 0 (machine/drone time); newage is the one that sways
       progressions:["dream","canon","neosoul"], kits:["off"], fills:["off"],   // MOVING major-7 changes only (was dream/mode_lydian/canon) — dropped mode_lydian (motion .33) so newage renders motion 1 always: the melodic harmony that ambient (drone, motion 0) can never reach
@@ -430,7 +430,7 @@
       found:{role:"bed", vol:[.16,.26], pitch:[.75,.9], stretch:[.45,.6], cutoff:[2400,3800], sources:["frogs","pool:water*1","vx_whitman"]},
       stab:["off"], hits:{sources:["sp_herenow"], pattern:"sparse", prob:.15},
       form:"wave" },
-    exotica: { label:"Plastic Volcano", info:"A half-time kit at 85-105. Acoustic bass under a vibraphone, with a tenor sax. ii-V-I, swung, loose timing.",   // SAMPLE-FORWARD: the aviary up front
+    exotica: { label:"Plastic Volcano", info:"A half-time beat at 85-105. A tenor sax over a vibraphone and a walking upright bass. ii-V-I, swung and loose timing.",   // SAMPLE-FORWARD: the aviary up front
       bpm:[85,105], swing:[.12,.22], humanize:[.25,.45],
       progressions:["ii_v_i","lofi","neosoul"], kits:["halftime","boombap"], fills:["off","drum fill"],
       bass:{patterns:["walking","simple","root"], samplerPool:["acoustic_bass"], recipe:{model:["sampler","sampler","piano"],cutoff:[500,900],res:[.05,.12],level:[.9,1.1],send:[.1,.2],dsend:[0,.05],attack:.005,release:[.08,.14]}},   // STRONG-SAMPLE: the real upright now anchors the tiki combo 2/3 of seeds (no sub target — matrix-invisible)
@@ -451,7 +451,7 @@
       // feature moves; only exotica's own fixtures drift.
       sampleEvents:[{ pool:["whale_song","vx_timelady"], placement:"response", sections:"verse|chorus|bridge|hook", prob:.4, gain:.5, treatment:{pitch:1.15, cutoff:6000, rsend:.35, dsend:.12} }],
       form:"pop" },
-    industrial: { label:"Annealing Ritual", info:"A machine four at 100-126. Reese bass under an organ, with a fuzz lead. Phrygian, a light shuffle, euclidean hats.",   // SAMPLE-FORWARD: the factory IS the hook (chops role)
+    industrial: { label:"Annealing Ritual", info:"A machine four at 100-126. A reese bass under an organ, with a fuzz lead. Phrygian, eleven hats spread across the bar and a touch of swing.",   // SAMPLE-FORWARD: the factory IS the hook (chops role)
       bpm:[100,126], swing:[0,.05], humanize:[0,.15],
       progressions:["mode_phrygian","drone_min","deep_two"], kits:["techno","pulse"], fills:["cut","impact","noise","hat rush","stutter"],
       euclid:{hat:[11,16]},   // E(11,16) relentless uneven metal-hat clatter — the machine's gait
@@ -465,7 +465,7 @@
       found:{role:"chops", vol:[.16,.26], pitch:[.85,1], stretch:[.4,.6], cutoff:[2500,4000], sources:["factory","factory","vx_conet_poacher"]},   // siderurgia, sliced; the numbers station cuts through
       stab:["offbeat","sparse"], hits:{sources:["pool:vb_industrial_machine*1","sp_system","sp_pressure","pool:rave_stab*1"], pattern:"dub", prob:.55},
       form:"dj" },
-    spokenword: { label:"Dial Tone Prophet", info:"A boom-bap kit at 72-96. Acoustic bass under a piano, with a tenor sax. ii-V-I, swung, loose timing.",   // SAMPLE-FORWARD: the VOICE leads
+    spokenword: { label:"Dial Tone Prophet", info:"A boom-bap beat at 72-96. A tenor sax over a piano and a walking upright bass. ii-V-I, swung and loose timing.",   // SAMPLE-FORWARD: the VOICE leads
       timeFeel:{ pushPullMs:{ bass:8, hat:-4 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — DILLA DRAG under a voice: the beat must never crowd the speaker
       bpm:[72,96], swing:[.05,.14], humanize:[.2,.4],
       progressions:["ii_v_i","neosoul","mode_dorian"], kits:["boombap"], fills:["off","off","drum fill"],
@@ -478,7 +478,7 @@
       stab:["off"], hits:{sources:["pool:vb_spoken_poetic*1","sp_herenow","sp_slowdown","sp_rewind"], pattern:"sparse", prob:.6},
       autoTune:0,   // fx wings stage 2: EXPLICITLY off — never pitch-correct the poets; a spokenword-dominant blend inherits this 0
       form:"duet" },
-    chiptune: { label:"Sprite Metabolism", info:"A four-on-the-floor at 140-148. Saw synth bass under a saw synth pad, with a phase-distortion lead. Four-chord changes, straight time, quantized tight.",   // SYNTH-FORWARD: no samples to speak of
+    chiptune: { label:"Sprite Metabolism", info:"A four-on-the-floor at 140-148. A saw bass under saw pads, with a phase-distortion lead. Four-chord changes, straight time and tight to the grid.",   // SYNTH-FORWARD: no samples to speak of
       bpm:[140,148], swing:[0,.02], humanize:[0,.05],   // pinned under 150 — the engine forces a jungle kit above that
       progressions:["four_chords","sad_pop","minor_run"], kits:["four","pulse"], fills:["hat rush","cut","riser"],
       bass:{patterns:["octaves","sixteenths","drive"], recipe:{model:["saw"],cutoff:[900,1500],res:[.1,.2],level:[1,1.2],send:[0,.05],dsend:[0,.05]}},
@@ -489,7 +489,7 @@
       found:{role:"bed", vol:[.04,.08], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2000,3200], sources:["pool:city*1","vx_xminusone"]},
       stab:["off","sparse"], hits:{sources:["pool:rave_stab*1","sp_energy"], pattern:"offbeat", prob:.4},
       form:"pop" },
-    chinawave: { label:"Harvest Quota Anthem", info:"A four-on-the-floor at 96-118. Saw synth bass under choir, with a trumpet. Four-chord changes, straight time.",   // SAMPLE-FORWARD: the massed chorus IS the bed
+    chinawave: { label:"Harvest Quota Anthem", info:"A four-on-the-floor at 96-118. A saw bass under a choir, with a trumpet. Four-chord changes, straight time.",   // SAMPLE-FORWARD: the massed chorus IS the bed
       bpm:[96,118], swing:[0,.04], humanize:[.05,.18],
       progressions:["four_chords","doo_wop","canon"], kits:["four","pulse"], fills:["drum fill","tom fill","riser","snare roll","snare roll"],   // the march-snare crescendo IS this genre's fill
       bass:{patterns:["root","walking","octaves"], recipe:{model:["saw"],cutoff:[500,850],res:[.08,.16],level:[.85,1.05],send:[.05,.12],dsend:[0,.05]}},
@@ -501,7 +501,7 @@
       vocSource:"vx_cn_speech",   // Radio Peking through the vocoder
       stab:["off"], hits:{sources:["vx_cn_opera","vx_cn_march"], pattern:"sparse", prob:.5},
       form:"pop" },
-    sovietwave: { label:"Cosmodrome Lullaby", info:"A pulse kit at 90-112. Saw synth bass under a vocoder choir pad, with a trumpet. Epic minor changes, a light shuffle.",   // SAMPLE-FORWARD: choir + speeches + Radio Moscow
+    sovietwave: { label:"Cosmodrome Lullaby", info:"A driving four at 90-112. A driving saw bass under a vocoder choir, with a trumpet. Epic minor changes, a touch of swing.",   // SAMPLE-FORWARD: choir + speeches + Radio Moscow
       bpm:[90,112], swing:[0,.06], humanize:[.05,.2],
       progressions:["epic_min","minor_run","uplift"], kits:["pulse","four"], fills:["riser","tom fill","downlift"],
       bass:{patterns:["drive","octaves"], recipe:{model:["saw"],cutoff:[550,900],res:[.12,.22],level:[1,1.2],send:[0,.08],dsend:[0,.05]}},
@@ -516,7 +516,7 @@
       stab:["off","sparse"], hits:{sources:["vx_sv_march","vx_sv_radio"], pattern:"sparse", prob:.5},
       form:"suite" },
     // ================= ROUND 3 — the big expansion =================
-    citypop: { label:"Neon Fiscal Year", info:"A full kit at 92-106. Finger bass under a Juno pad, with a jazz guitar. Royal-road changes, swung.",   // SYNTH-FORWARD: vaporwave before the slowdown — city lights, not mall haze
+    citypop: { label:"Neon Fiscal Year", info:"A straight backbeat at 92-106. A jazz guitar over Juno pads and a walking finger bass. Royal-road changes, swung.",   // SYNTH-FORWARD: vaporwave before the slowdown — city lights, not mall haze
       reverbColor:"dattorro",   // fx wings: clean plate gloss on the maj7 boogie
       bpm:[92,106], swing:[.05,.12], humanize:[.08,.2],   // UNDER transitwave/italo tempo — the boogie sits at 100
       progressions:["royal_road","pop_1625","neosoul"], kits:["full","open"], fills:["drum fill","tom fill","riser"],
@@ -530,7 +530,7 @@
       found:{role:"bed", vol:[.07,.13], pitch:[.9,1], stretch:[.45,.6], cutoff:[1800,2800], sources:["shibuya","tokyo_station","pool:road*1"]},   // the city at NATURAL pitch, way back
       stab:["off"], hits:{sources:["pool:vb_mallsoft_vapor*1","sp_nightdrive","pool:vocal_stab*1"], pattern:"sparse", prob:.3},
       form:"pop" },
-    shibuyakei: { label:"Parfait Cosmonaut", info:"AN open kit at 116-128. Saw synth bass under strings, with a glockenspiel. Doo-wop changes, hard swing.",   // SYNTH-FORWARD: toy orchestration, zero dust
+    shibuyakei: { label:"Parfait Cosmonaut", info:"An open backbeat at 116-128. A walking saw bass under strings, with a glockenspiel. Doo-wop changes, swung hard.",   // SYNTH-FORWARD: toy orchestration, zero dust
       reverbColor:"dattorro",   // effects audit C: the bright 60s sunshine-pop plate (EMT-140) over the twee bells — the Pizzicato-Five gloss; zero rng, dominant-parent
       bpm:[116,128], swing:[.14,.24], humanize:[.1,.25],
       progressions:["doo_wop","doo_wop","pop_1625"], kits:["open","full"], fills:["drum fill","hat rush","riser"],
@@ -543,7 +543,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.95,1.05], stretch:[.45,.6], cutoff:[2200,3400], sources:["shibuya","pool:city*1","pool:voices*1"]},
       stab:["off"], hits:{sources:["pool:vb_mallsoft_vapor*1","sp_shopping","pool:vocal_stab*1","pool:rave_stab*1"], pattern:"sparse", prob:.4},
       form:"aaba" },
-    bossanova: { label:"Saudade Observatory", info:"A bossa kit at 84-100. Acoustic bass with a nylon string guitar on both pad and lead. ii-V-I, swung, loose timing.",   // acoustic-leaning: the guitar IS the song
+    bossanova: { label:"Saudade Observatory", info:"A soft bossa clave at 84-100. An upright bass under a nylon-string guitar on both pad and lead. ii-V-I, swung and loose timing.",   // acoustic-leaning: the guitar IS the song
       timeFeel:{ pushPull:{ bass:.01 } },   // effects audit C: a subtle behind-the-beat sway on the bass (the nylon guitar leans back) — swing .08-.18 already carries most of it, this is the gentlest structural nudge. Zero-rng dominant-parent, bass timing unread. Deliberately half-strength: at double these offsets the timing feel overshoots.
       bpm:[84,100], swing:[.08,.18], humanize:[.25,.45],
       progressions:["ii_v_i","neosoul","lofi"], kits:["bossa"], fills:["off","off","drum fill"],
@@ -556,7 +556,7 @@
       found:{role:"bed", vol:[.08,.16], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["pool:city*2","vx_dickinson"]},
       stab:["off"], hits:{sources:["pool:vb_jazz_blues*1","pool:horn_stab*1","pool:vocal_stab*1"], pattern:"sparse", prob:.25},
       form:"aaba" },
-    idm: { label:"Solder Ballet", info:"A breaks kit at 88-116. Sub bass with a PPG pad on both pad and lead. A two-chord vamp, a light shuffle, loose timing, euclidean hats.",   // SYNTH-FORWARD: the PATTERN is the artist
+    idm: { label:"Solder Ballet", info:"A broken beat at 88-116. A sub bass under PPG pads, with a PPG lead. A two-chord vamp, five kicks and eleven hats spread across the bar, a touch of swing and loose timing.",   // SYNTH-FORWARD: the PATTERN is the artist
       bpm:[88,116], swing:[0,.05], humanize:[.3,.5],
       progressions:["deep_two","mode_lydian","neosoul","drone_min","quartal"], kits:["breaks","techno","boombap"], fills:["cut","noise","reverse","off","stutter"],
       euclid:{kick:[5,16],hat:[11,16]},   // E(5,16) against E(11,16), both rotating — the tangle
@@ -570,7 +570,7 @@
       found:{role:"chops", vol:[.1,.18], pitch:[.85,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["vx_cage_studio79","factory","vx_wwvh","vx_conet_poacher"]},
       stab:["off","sparse"], hits:{sources:["sp_system","sp_rewind","pool:vocal_stab*1"], pattern:"sparse", prob:.45},
       form:"pop" },
-    electro: { label:"Vocoder Ambassador", info:"AN electro kit at 118-130. Saw synth bass under a saw synth pad, with a phase-distortion lead. A funk vamp, a light shuffle, quantized tight, euclidean hats.",   // SYNTH-FORWARD: the drum machine is the lead instrument
+    electro: { label:"Vocoder Ambassador", info:"An 808 electro beat at 118-130. A saw bass under saw pads, with a phase-distortion lead. A funk vamp, three snare hits spread across the bar, a touch of swing and tight to the grid.",   // SYNTH-FORWARD: the drum machine is the lead instrument
       bpm:[118,130], swing:[0,.06], humanize:[0,.12],
       progressions:["funk_vamp","deep_two","minor_run"], kits:["electro"], fills:["cut","hat rush","impact","off"],
       euclid:{snare:[3,16]},   // E(3,16) tresillo CLAPS rotating per chord over the boom-bap frame
@@ -584,7 +584,7 @@
       found:{role:"chops", vol:[.08,.15], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2400,3800], sources:["factory","vx_apollo","vx_wwvh","stml_chop_a","stml_chop_c4"]},
       stab:["offbeat","sparse"], hits:{sources:["sp_system","sp_energy","pool:rave_stab*1","stml_hit_03"], pattern:"offbeat", prob:.6},
       form:"dj" },   // dominance fix: pop->dj — the 1982 electro record is a 12" CLUB SINGLE (warmup/build/main/peak plateau), not verse-chorus pop. MEASURED: pop's 3 drumless sections (intro/bridge/outro) diluted whole-track hatDensity to 1.16-1.28 vs electro's own [1.5,2.8] floor (active sections render 1.9/beat) — the self-score sat at 98-99 every seed, inside reach of any 99 rival (heavymetal/hotsaucecore/italo each took a seed). dj's near-full plateau restores the crisp 16th machine hats the kit already plays
-    miamibass: { label:"Richter Scale Cookout", info:"A trap kit at 100-128. Sub bass under a saw synth pad, with a pluck lead. A funk vamp, a light shuffle, quantized tight.",   // SYNTH-FORWARD: the 808 sub is the hook
+    miamibass: { label:"Richter Scale Cookout", info:"Trap kicks and rolling hats at 100-128. A sub bass under saw pads, with a pluck lead. A funk vamp, a touch of swing and tight to the grid.",   // SYNTH-FORWARD: the 808 sub is the hook
       bpm:[100,128], swing:[0,.08], humanize:[0,.12],
       progressions:["funk_vamp","deep_two","house_min7"], kits:["trap","electro"], fills:["hat rush","cut","impact"],
       bass:{patterns:["sub","stab","dub"], recipe:{model:["sub"],cutoff:[250,420],res:[.05,.15],level:[1.3,1.5],send:[0,.05],dsend:[0,.05]}},   // the 808 sub LOUD
@@ -595,7 +595,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[1800,3000], sources:["pool:road*1","pool:city*1"]},
       stab:["offbeat","sparse"], hits:{sources:["pool:vocal_stab*2","sp_energy","stml_hit_01","stml_hit_b3"], pattern:"offbeat", prob:.7},
       form:"vamp" },
-    phonk: { label:"Cowbell Exorcism", info:"A trap kit at 126-142. Sub bass under an FM lead pad, with a phase-distortion lead. A two-chord vamp, a light shuffle.",   // SAMPLE-FORWARD: the dusty vox hits + tape filth
+    phonk: { label:"Cowbell Exorcism", info:"Trap kicks and rolling hats at 126-142. A sub bass under an FM pad, with a phase-distortion lead. A two-chord vamp, a light shuffle.",   // SAMPLE-FORWARD: the dusty vox hits + tape filth
       timeFeel:{ pushPullMs:{ bass:6, hat:-3 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — 808 through a tape hiss — the same two-speed feel, dirtier
       bpm:[126,142], swing:[0,.1], humanize:[.1,.25],
       progressions:["deep_two","drone_min","mode_phrygian"], kits:["trap","boombap"], fills:["cut","off","downlift"],
@@ -609,7 +609,7 @@
       found:{role:"bed", vol:[.1,.18], pitch:[.7,.82], stretch:[.45,.6], cutoff:[1600,2600], sources:["vx_suspense","pool:road*1","pool:industry*1"]},   // pitched-DOWN radio voices — the Memphis tape ghost
       stab:["off","sparse"], hits:{sources:["blues_vox_78","pool:vocal_stab*1","sp_slowdown"], pattern:"dub", prob:.7, wet:true},
       form:"pop" },
-    witchhouse: { label:"Chandelier Drowning", info:"A trap kit at 60-76. Sub bass under ahh choir, with a PPG pad lead. A two-chord minor drone, a light shuffle.",   // SAMPLE-FORWARD: the slowed voice is the ghost
+    witchhouse: { label:"Chandelier Drowning", info:"Trap kicks and rolling hats at 60-76. A sub bass under a wordless choir, with a PPG lead. A two-chord minor drone, a touch of swing.",   // SAMPLE-FORWARD: the slowed voice is the ghost
       timeFeel:{ pushPullMs:{ bass:12, snare:8 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — 808 at half speed and cursed: 68bpm buys a 15.8 ms budget and the genre's whole claim is DRAG
       reverbColor:"greyhole",   // fx wings: the cathedral-of-reverb smear
       bpm:[60,76], swing:[0,.08], humanize:[.1,.3],
@@ -624,7 +624,7 @@
       sampleEvents:[{ pool:["vx_blake","vx_conet_swedish"], placement:"response", gain:.42, treatment:{pitch:.42, cutoff:1700, rsend:.62, dsend:.42} }],   // wash-trio deep pass (KERNEL-V4 Phase-4 role): THE GHOST IN THE CATHEDRAL — the pitched-DOWN voice (tyger-tyger / the numbers-station music box dragged to .42, below even the bed's .55 crawl, lowpassed to a moan and drenched) ANSWERS on the back half of each drone bar. This is witchhouse's bespoke identity claim — the slowed voice IS the genre (the audit's "needs pitched-down vox"), now a real sample-event layer, not just a bed
       stab:["off"], hits:{sources:["pool:vb_spoken_poetic*1","pool:vocal_stab*1","sp_pressure"], pattern:"dub", prob:.5, wet:true},
       form:"pop" },
-    mallsoft: { label:"Atrium Standing Wave", info:"A half-time kit at 44-56. Saw synth bass under ahh choir, with an alto sax. Royal-road changes, a light shuffle, one chord every 16 beats.",   // SAMPLE-FORWARD: the WASH is the architecture
+    mallsoft: { label:"Atrium Standing Wave", info:"A half-time beat at 44-56. A saw bass under a wordless choir, with an alto sax. Royal-road changes, a light shuffle and a chord change every four bars.",   // SAMPLE-FORWARD: the WASH is the architecture
       reverbColor:"dattorro",   // fx wings: DELIBERATE — the bright tiled-atrium PLATE (a big diffuse hall of hard surfaces), NOT dinosynth/doomdrone's greyhole dark-swamp smear. The mall is reverberant and bright, not murky
       bpm:[44,56], swing:[0,.1], humanize:[.05,.2],   // FURTHER below vaporwave's floor — the escalator has fully stopped (was 48-60)
       chordEvery:16,   // slow harmonic drift — one chord every FOUR bars (muzak, half vaporwave's rate), like walking the length of the concourse before the pad changes
@@ -639,7 +639,7 @@
       sampleEvents:[{ pool:["vx_timelady","vx_wwvh","sp_plaza"], placement:"buried", gain:.5, treatment:{cutoff:1300, rsend:.55, dsend:.3} }],   // the PA litany BURIED under every measure — announcements muffled through two storefronts (lowpassed 1.3k, drenched), the "heard from two stores away" made literal
       stab:["off"], hits:{sources:["pool:vb_mallsoft_vapor*1","sp_plaza","sp_shopping"], pattern:"sparse", prob:.5},
       form:"wave" },   // WAVE form (was pop) — arrive/drift/swell/recede/depart, drifting past storefronts, no verse/chorus band structure
-    wintersynth: { label:"Permafrost Liturgy", info:"A half-time kit at 64-84. Sub bass under an Oberheim pad, with bells. Bare triads, a light shuffle.",   // SYNTH-FORWARD: cold pads carry it
+    wintersynth: { label:"Permafrost Liturgy", info:"A half-time beat at 64-84. A sub bass under Oberheim pads, with bells. Bare triads, a touch of swing.",   // SYNTH-FORWARD: cold pads carry it
       bpm:[64,84], swing:[0,.05], humanize:[.15,.35],
       progressions:["frost","frost","frost","mode_phrygian"], kits:["halftime","halftime","kick"], fills:["off","downlift"],   // frost triads DOMINANT — seventh≈0 is the fence vs vaporwave/newage
       bass:{patterns:["root","sub","simple"], recipe:{model:["sub"],cutoff:[240,420],res:[.05,.15],level:[.85,1.05],send:[.15,.3],dsend:[0,.08]}},
@@ -651,7 +651,7 @@
       found:{role:"bed", vol:[.12,.22], pitch:[.6,.78], stretch:[.45,.6], cutoff:[1800,3000], sources:["pool:road*1","pool:room*1","pool:voices*1"]},   // pitched-down wind stand-ins
       stab:["off"], hits:{sources:["sp_herenow"], pattern:"sparse", prob:.15},
       form:"wave" },
-    gabber: { label:"Jackhammer Communion", info:"A four-on-the-floor at 155-185. Acid bass under a saw synth pad, with a hoover stabs lead. A two-chord minor drone, straight time, quantized tight.",   // SYNTH-FORWARD: the KICK is the genre
+    gabber: { label:"Jackhammer Communion", info:"A four-on-the-floor at 155-185. An acid bass under saw pads, with hoover stabs. A two-chord minor drone, straight time and tight to the grid.",   // SYNTH-FORWARD: the KICK is the genre
       bpm:[155,185], swing:[0,.03], humanize:[0,.08],
       progressions:["drone_min","deep_two","mode_phrygian"], kits:["four","techno"], fills:["impact","cut","riser","hat rush","stutter","stutter"],   // BRUTAL: the stutter-gate is very gabber
       bass:{patterns:["stab","drive","rolling"], recipe:{model:["acid","reese"],cutoff:[420,700],res:[.25,.4],level:[1.2,1.4],send:[0,.06],dsend:[0,.08]},
@@ -665,7 +665,7 @@
       stab:["rave","offbeat"], hits:{sources:["pool:vb_rave_hardcore*1","pool:rave_stab*2","bb_stab_a","sp_energy","stml_hit_01","stml_hit_b3"], pattern:"offbeat", prob:.8},
       introMode:"off",   // optional-intro: gabber is brutality — it opens COLD on the machine (drops the dj "warmup" ground node; the solver regrows the groove to still land ~180s). Margin 19 absorbs the bedUse/density shift; matrix-gated.
       form:"dj" },
-    psytrance: { label:"Third Eye Turbine", info:"A four-on-the-floor at 140-148. 303 line bass under a saw synth pad, with a sitar. Phrygian, straight time, quantized tight.",   // SYNTH-FORWARD: the bassline is the drug
+    psytrance: { label:"Third Eye Turbine", info:"A four-on-the-floor at 140-148. A rolling 303 bass under saw pads, with a sitar. Phrygian, straight time and tight to the grid.",   // SYNTH-FORWARD: the bassline is the drug
       bpm:[140,148], swing:[0,.03], humanize:[0,.08],
       progressions:["mode_phrygian","drone_min","deep_two"], kits:["four","pulse"], fills:["riser","cut","impact","hat rush"],
       bass:{patterns:["rolling","sixteenths"], recipe:{model:["tb303","tb303","tb303","tb303","acid"],cutoff:[380,650],res:[.25,.4],envmod:[.55,.8],decay:[.3,.5],waveform:[0,.2],level:[1.2,1.4],send:[0,.05],dsend:[0,.06],release:[.06,.1],fenv:[.8,1.4]},
@@ -678,7 +678,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.75,.9], stretch:[.45,.6], cutoff:[1800,3000], sources:["pool:road*1","pool:industry*1"]},   // the night road + the generator behind the rig
       stab:["off","sparse"], hits:{sources:["pool:rave_stab*1","sp_energy"], pattern:"sparse", prob:.35},
       form:"dj" },
-    minimal: { label:"Anechoic Census", info:"A bare kick at 120-128. Sub bass under a saw synth pad, with a pluck lead. A two-chord minor drone, a light shuffle, quantized tight, euclidean hats.",   // SYNTH-FORWARD: subtraction as composition
+    minimal: { label:"Anechoic Census", info:"A bare kick at 120-128. A rolling sub bass under saw pads, with a pluck lead. A two-chord minor drone, five hats spread across the bar, a touch of swing and tight to the grid.",   // SYNTH-FORWARD: subtraction as composition
       bpm:[120,128], swing:[0,.05], humanize:[0,.1],
       progressions:["drone_min","drone_min","deep_two"], kits:["kick","kick","pulse"], fills:["off","cut","hat rush"],
       euclid:{hat:[5,16]},   // E(5,16) tiny rotating percs — the whole topography
@@ -692,7 +692,7 @@
       found:{role:"chops", vol:[.06,.12], pitch:[.95,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["tokyo_station","vx_wwvh"]},
       stab:["off","sparse"], hits:{sources:["sp_system"], pattern:"sparse", prob:.25},
       form:"dj" },
-    deephouse: { label:"Benthic Concierge", info:"A four-on-the-floor at 118-124. Sub bass under an FM lead pad, with a muted trumpet. A two-chord vamp, swung.",   // SYNTH-FORWARD sibling of house
+    deephouse: { label:"Benthic Concierge", info:"A four-on-the-floor at 118-124. A rolling sub bass under an FM pad, with a muted trumpet. A two-chord vamp, swung.",   // SYNTH-FORWARD sibling of house
       timeFeel:{ pushPullMs:{ hat:-4, bass:6 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — DEEP HOUSE: hats on top, the dub bass sunk behind — the pump turned down to a slow breath
       bpm:[118,124], swing:[.08,.16], humanize:[.05,.18],
       progressions:["deep_two","house_min7","neosoul"], kits:["four","house"], fills:["off","hat rush","riser"],
@@ -705,7 +705,7 @@
       found:{role:"bed", vol:[.07,.13], pitch:[.85,1], stretch:[.45,.6], cutoff:[1800,2800], sources:["pool:city*2","pool:voices*1"]},
       stab:["off","sparse"], hits:{sources:["pool:vocal_stab*1","sp_herenow"], pattern:"sparse", prob:.35},
       form:"dj" },
-    coldwave: { label:"Unheated Archive", info:"A pulse kit at 100-118. PPG pad bass under a PPG pad, with a stacked saws lead. Bare triads, a light shuffle.",   // SYNTH-FORWARD: dry = the aesthetic
+    coldwave: { label:"Unheated Archive", info:"A driving four at 100-118. A driving PPG bass under PPG pads, with a stacked-saw lead. Bare triads, a touch of swing.",   // SYNTH-FORWARD: dry = the aesthetic
       bpm:[100,118], swing:[0,.06], humanize:[.1,.25],
       progressions:["frost","sad_pop"], kits:["pulse","four"], fills:["drum fill","cut","off"],
       transforms:{ pool:["rest","degrade"], rate:.12 },   // deep pass — MINIMAL-WAVE AUSTERITY: the cheap drum machine is machine-tight (no swing/humanize warp), but ~1/8 of bars the melody sits out (rest) or the hats thin hard (degrade) — the stark subtraction of French coldwave, the arm's-length gap. NOT idm's tangle (no rot/stutter/rev that scramble the grid): coldwave stays rigid and just occasionally goes silent
@@ -718,7 +718,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.8,.95], stretch:[.45,.6], cutoff:[1500,2500], sources:["pool:industry*1","pool:road*1"]},
       stab:["off"], hits:{sources:["sp_pressure","pool:vocal_stab*1"], pattern:"sparse", prob:.3},
       form:"pop" },
-    ebm: { label:"Piston Catechism", info:"A pulse kit at 118-130. Reese bass under a saw synth pad, with a stacked saws lead. A two-chord vamp, straight time, quantized tight.",   // SYNTH-FORWARD: the sequencer is the muscle
+    ebm: { label:"Piston Catechism", info:"A driving four at 118-130. A sixteenth-note reese bass under saw pads, with a stacked-saw lead. A two-chord vamp, straight time and tight to the grid.",   // SYNTH-FORWARD: the sequencer is the muscle
       bpm:[118,130], swing:[0,.04], humanize:[0,.1],
       progressions:["deep_two","mode_phrygian","drone_min"], kits:["pulse","techno"], fills:["cut","impact","hat rush","stutter"],
       bass:{patterns:["sixteenths","stab","drive","pedal"], recipe:{model:["reese","acid"],cutoff:[350,560],res:[.2,.35],level:[1.2,1.4],send:[0,.06],dsend:[0,.08],release:[.05,.09],fenv:[.5,.9]},
@@ -731,7 +731,7 @@
       found:{role:"bed", vol:[.08,.15], pitch:[.75,.9], stretch:[.45,.6], cutoff:[1800,3000], sources:["pool:industry*1","pool:voices*1"]},   // the plant hums BEHIND (industrial owns the chops)
       stab:["offbeat","sparse"], hits:{sources:["pool:vb_industrial_machine*1","sp_pressure","sp_system","pool:rave_stab*1"], pattern:"dub", prob:.6},
       form:"dj" },
-    krautrock: { label:"Eternal Merge Lane", info:"A pulse kit at 102-118. Saw synth bass under a church organ, with a stacked saws lead. A funk vamp, a light shuffle.",   // SYNTH-FORWARD: repetition is the destination
+    krautrock: { label:"Eternal Merge Lane", info:"A driving four at 102-118. A driving saw bass under a church organ, with a stacked-saw lead. A funk vamp, a touch of swing.",   // SYNTH-FORWARD: repetition is the destination
       bpm:[102,118], swing:[0,.05], humanize:[.05,.18],
       progressions:["funk_vamp","deep_two","mode_mixo"], kits:["pulse","four"], fills:["off","drum fill","riser"],
       bass:{patterns:["drive","root","pedal"], recipe:{model:["saw","modeld"],cutoff:[600,950],res:[.1,.18],level:[1.05,1.25],send:[.03,.08],dsend:[0,.05],
@@ -744,7 +744,7 @@
       found:{role:"bed", vol:[.15,.25], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["highway_night","pool:industry*1"]},   // the autobahn ITSELF, near natural pitch
       stab:["off"], hits:{sources:["sp_herenow","pool:vocal_stab*1"], pattern:"sparse", prob:.25},
       form:"dj" },
-    newjack: { label:"Chrome Cotillion", info:"A swingbeat kit at 100-115. Fretless bass under an organ, with a clavinet. A min7 house vamp, hard swing.",   // SYNTH-FORWARD: the drum program is the producer's signature
+    newjack: { label:"Chrome Cotillion", info:"A swingbeat at 100-115. A clavinet over an organ and a fretless bass. A min7 house vamp, swung hard.",   // SYNTH-FORWARD: the drum program is the producer's signature
       timeFeel:{ pushPullMs:{ bass:-4, snare:6, clap:6 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — FUNK/swingbeat: FM bass on top, those HUGE claps landing fat and late
       bpm:[100,115], swing:[.16,.28], humanize:[.1,.25],
       progressions:["house_min7","funk_vamp","neosoul"], kits:["newjack"], fills:["drum fill","hat rush","riser","snare roll"],
@@ -758,7 +758,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[1800,2800], sources:["pool:city*1","pool:voices*1"]},
       stab:["off","sparse"], hits:{sources:["pool:vocal_stab*1","sp_rhythm","pool:rave_stab*1"], pattern:"offbeat", prob:.6},
       form:"vamp" },
-    breakcore: { label:"Shrapnel Lullaby", info:"A jungle kit at 172-198. Sub bass under a saw synth pad, with a pluck lead. A descending minor run, a light shuffle, loose timing, euclidean hats.",   // SAMPLE-FORWARD: the break, weaponized
+    breakcore: { label:"Shrapnel Lullaby", info:"A chopped jungle kit at 172-198. A sub bass under saw pads, with a pluck lead. A descending minor run, five kicks spread across the bar, a touch of swing and loose timing.",   // SAMPLE-FORWARD: the break, weaponized
       bpm:[172,198], swing:[0,.06], humanize:[.2,.4],
       progressions:["minor_run","mode_phrygian","deep_two"], kits:["jungle","breaks"], fills:["break fill","impact","cut","noise","stutter"],
       euclid:{kick:[5,16]},   // E(5,16) kicks punching THROUGH the amen
@@ -773,7 +773,7 @@
       stab:["rave","offbeat"], hits:{sources:["pool:vb_junglist*1","pool:rave_stab*2","bb_stab_b","sp_rewind"], pattern:"dub", prob:.85},
       introMode:"off",   // optional-intro (drop form): no wind-up — the amen slams in cold (drops the drop "intro" ground node; solver regrows the drops to hold ~180s). Margin +6.2 vs jungle absorbs the -0.2 shift; matrix-gated.
       form:"drop" },
-    acidhouse: { label:"Titration Rapture", info:"A four-on-the-floor at 118-126. 303 line bass under an organ, with a 303 line lead. A min7 house vamp, a light shuffle.",   // SYNTH-FORWARD: one machine, misused, forever
+    acidhouse: { label:"Titration Rapture", info:"A four-on-the-floor with claps at 118-126. A sixteenth-note 303 bass under an organ, with a 303 line. A min7 house vamp, a touch of swing.",   // SYNTH-FORWARD: one machine, misused, forever
       bpm:[118,126], swing:[0,.08], humanize:[.05,.15],
       progressions:["house_min7","drone_min","funk_vamp"], kits:["house","four"], fills:["hat rush","riser","cut"],
       bass:{patterns:["sixteenths","rolling","sixteenths","stab"], recipe:{model:["tb303"],cutoff:[420,700],res:[.55,.75],envmod:[.55,.85],decay:[.35,.6],waveform:[0,.15],level:[1.15,1.35],send:[0,.06],dsend:[0,.1],release:[.08,.14],fenv:[1,2]},
@@ -785,7 +785,7 @@
       found:{role:"bed", vol:[.06,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[1800,2800], sources:["pool:city*2"]},
       stab:["rave","offbeat"], hits:{sources:["pool:rave_stab*2","sp_rhythm"], pattern:"offbeat", prob:.7},
       form:"dj" },
-    surfrock: { label:"Undertow Sock Hop", info:"AN open kit at 126-144. Saw synth bass under an organ, with a steel string guitar. Doo-wop changes, swung.",   // guitar-FORWARD: the spring tank is the room
+    surfrock: { label:"Undertow Sock Hop", info:"An open backbeat at 126-144. A walking saw bass under an organ, with a steel-string guitar. Doo-wop changes, swung.",   // guitar-FORWARD: the spring tank is the room
       reverbColor:"spring",   // fx wings: the boing/flutter spring tank IS surf rock's room
       bpm:[126,144], swing:[.06,.14], humanize:[.15,.35],
       progressions:["doo_wop","sad_pop","andalusian"], kits:["open","four"], fills:["drum fill","tom fill","tom cascade","hat rush"],   // VARIETY: + tom cascade (surf drumming loves the hi->lo tom run down the kit)
@@ -799,7 +799,7 @@
       found:{role:"bed", vol:[.1,.18], pitch:[.9,1], stretch:[.45,.6], cutoff:[2400,3800], sources:["pool:water*1","pool:road*1"]},   // water column + highway wash read as surf, near natural pitch
       stab:["off"], hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"sparse", prob:.4},
       form:"pop" },
-    spacelounge: { label:"Martini Parallax", info:"A bare kick at 86-100. Sub bass under an organ, with a clarinet. Dream changes, swung, loose timing.",   // sample-mid: mission audio as furniture
+    spacelounge: { label:"Martini Parallax", info:"A bare kick at 86-100. A sub bass under an organ, with a clarinet. Dream changes, swung and loose timing.",   // sample-mid: mission audio as furniture
       reverbColor:"dattorro",   // effects audit B9: space-age bachelor-pad pop (Esquivel, Les Baxter) is drenched in a BRIGHT plate/chamber — the martini cosmos, not a dark generic hall. Zero rng, dominant-parent
       bpm:[86,100], swing:[.1,.2], humanize:[.2,.4],   // above downtempo's 60-90 core
       progressions:["dream","mode_lydian","ii_v_i"], kits:["kick","kick","halftime"], fills:["off","downlift"],
@@ -821,7 +821,7 @@
       sampleEvents:[{ pool:["vx_apollo","vx_wwvh"], placement:"response", sections:"verse|chorus|bridge|hook", prob:.3, gain:.4, treatment:{pitch:1, cutoff:1600, rsend:.5, dsend:.3} }],
       form:"pop" },
     // ---- world cluster (honest interpretations; source-shelf gaps noted per anchor) ----
-    arabpop: { label:"Sirocco Telemetry", info:"A tribal kit at 95-115. Saw synth bass under strings, with an oboe. A hijaz maqam, a light shuffle, euclidean hats.",   // INTERPRETATION: no oud/qanun models — brass+fm ornaments carry the maqam flavor
+    arabpop: { label:"Sirocco Telemetry", info:"Hand drums and toms at 95-115. A saw bass under strings, with an oboe. A hijaz maqam, five kicks spread across the bar and a light shuffle.",   // INTERPRETATION: no oud/qanun models — brass+fm ornaments carry the maqam flavor
       bpm:[95,115], swing:[.02,.1], humanize:[.15,.3],
       progressions:["hijaz","hijaz","andalusian","mode_phrygian"], kits:["tribal","breaks"], fills:["drum fill","tom fill","off"],
       euclid:{kick:[5,16]},   // E(5,16) dum-tek placement rotating under the hand drums
@@ -833,7 +833,7 @@
       found:{role:"bed", vol:[.08,.15], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2000,3200], sources:["pool:city*1","pool:road*1"]},   // HONESTY: no Arab-world recording on the shelf yet — generic city/night beds sit far back
       stab:["off"], hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"sparse", prob:.4},
       form:"pop" },
-    tango: { label:"Habanera Tribunal", info:"A bare kick at 100-124. Acoustic bass under pizzicato strings, with a bandoneon. An andalusian cadence, a light shuffle, loose timing, rubato.",   // acoustic-FORWARD: ear-fix — the SYNTH voices are out of the front line
+    tango: { label:"Habanera Tribunal", info:"A bare kick at 100-124. A bandoneon over pizzicato strings and a habanera upright bass. An andalusian cadence, a touch of swing, loose timing and rubato.",   // acoustic-FORWARD: ear-fix — the SYNTH voices are out of the front line
       reverbColor:"fdn",   // fx wings: a dry room (freeverb), not a wash — the salon
       bpm:[100,124], swing:[0,.06], humanize:[.3,.55],
       progressions:["andalusian","andalusian","minor_run"],   // STRICTLY minor. frost PURGED (it was the verifier's triad fence, but it read as wintersynth pads by ear — the human heard it)
@@ -848,7 +848,7 @@
       transforms:{ pool:["rest"], rate:0.05 },   // Phase 2: "dramatic silence" as law — very rarely (5%) the bandoneon line drops out for a bar; the habanera bass carries it
       stab:["off"], hits:{sources:["pool:horn_stab*1","blues_vox_78"], pattern:"sparse", prob:.35},
       form:"pop" },
-    afrobeat: { label:"Polyrhythm Senate", info:"A tribal kit at 100-114. Saw synth bass under an organ, with a trumpet. A funk vamp, swung, euclidean hats.",   // groove-FORWARD: Fela's arithmetic
+    afrobeat: { label:"Polyrhythm Senate", info:"Hand drums and toms at 100-114. A saw bass under an organ, with a trumpet. A funk vamp, three kicks and eleven hats spread across the bar and swung.",   // groove-FORWARD: Fela's arithmetic
       timeFeel:{ pushPullMs:{ snare:7, hat:-4, perc:-3 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — AFROBEAT: the Tony Allen split — a snare well behind the beat under hats and interlocking percussion that are fractionally ahead of it
       bpm:[100,114], swing:[.04,.12], humanize:[.15,.3],   // below disco's 106-124 core
       progressions:["funk_vamp","mode_dorian","house_min"], kits:["tribal","house"], fills:["drum fill","hat rush","off"],
@@ -863,7 +863,7 @@
       found:{role:"bed", vol:[.1,.18], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2200,3400], sources:["pool:road*1","pool:city*1"]},   // HONESTY: no Lagos shelf — night traffic + street stand in quietly
       stab:["off","sparse"], hits:{sources:["pool:horn_stab*1","sp_rhythm","pool:vocal_stab*1"], pattern:"offbeat", prob:.7},   // the 78rpm horns finally play a section part
       form:"vamp" },
-    desertblues: { label:"Dune Recursion", info:"A shuffle at 84-104. Sub bass under an organ, with a steel string guitar. A funk vamp, swung, loose timing.",   // guitar-FORWARD: one riff, circling
+    desertblues: { label:"Dune Recursion", info:"A shuffle at 84-104. A sub bass under an organ, with a steel-string guitar. A funk vamp, swung and loose timing.",   // guitar-FORWARD: one riff, circling
       timeFeel:{ pushPullMs:{ bass:7, snare:6 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — THE CAMEL LOPE: hypnosis needs a bass that never quite arrives — pentatonic loops that refuse to resolve over a backbeat that refuses to hurry
       bpm:[84,104], swing:[.06,.16], humanize:[.2,.4],
       progressions:["funk_vamp","mode_dorian","deep_two"], kits:["shuffle","halftime","boombap"], fills:["off","off","drum fill"],   // the triplet shuffle lopes 1/3 of seeds
@@ -877,7 +877,7 @@
       stab:["off"], hits:{sources:["pool:vb_jazz_blues*1","blues_vox_78","pool:vocal_stab*1"], pattern:"sparse", prob:.4},
       form:"vamp" },
     // ---- harder cluster (fuzz/grit the engine can voice HONESTLY — riffs, not fake shredding) ----
-    sludgemetal: { label:"Molasses Avalanche", info:"A half-time kit at 52-70. Reese bass under a saw synth pad, with a crunch guitar. Phrygian, a light shuffle.",   // fuzz-FORWARD: the riff exhales, the room shakes
+    sludgemetal: { label:"Molasses Avalanche", info:"A half-time beat at 52-70. A reese bass under saw pads, with a crunchy guitar. Phrygian, a touch of swing.",   // fuzz-FORWARD: the riff exhales, the room shakes
       bpm:[52,70], swing:[0,.06], humanize:[.1,.3],
       timeFeel:{ pushPull:{ kick:.03, snare:.045, bass:.055 } },   // deep pass — THE DOOM DRAG: the whole band plays BEHIND the beat, the bass draggiest (the amp about to die pulls the riff late). A per-voice offset drawn from timeFeel (pure feel — no verifier feature reads onset timing, so byte-stable to the matrix), it's the crawling lurch that half-time bpm alone can't give: the riff EXHALES between the stomps
       progressions:["mode_phrygian","drone_min","deep_two"], kits:["halftime","kick"], fills:["impact","off","downlift","tape stop"],   // VARIETY: + tape stop (the decelerating pitch-drop drag suits the amp-one-song-from-death crawl)
@@ -891,7 +891,7 @@
       found:{role:"bed", vol:[.15,.25], pitch:[.55,.7], stretch:[.45,.6], cutoff:[1400,2400], sources:["pool:industry*1","pool:road*1"]},   // the plant, pitched into the swamp
       stab:["off"], hits:{sources:["sp_pressure","pool:vocal_stab*1"], pattern:"sparse", prob:.3},
       form:"vamp" },
-    industrialmetal: { label:"Hydraulic Tantrum", info:"A half-time kit at 100-126. Reese bass under a saw synth pad, with a crunch guitar. Phrygian, a light shuffle, quantized tight.",   // fuzz-FORWARD sibling of EBM: SLAM where EBM pistons
+    industrialmetal: { label:"Hydraulic Tantrum", info:"A half-time beat at 100-126. A reese bass under saw pads, with a crunchy guitar. Phrygian, a touch of swing and tight to the grid.",   // fuzz-FORWARD sibling of EBM: SLAM where EBM pistons
       bpm:[100,126], swing:[0,.05], humanize:[0,.12],
       progressions:["mode_phrygian","minor_run","drone_min"], kits:["halftime","breaks"], fills:["impact","cut","noise"],
       reverbColor:"fdn",   // GRIT PASS: a big hard-surfaced industrial slam room behind the machine
@@ -904,7 +904,7 @@
       found:{role:"bed", vol:[.12,.2], pitch:[.7,.85], stretch:[.45,.6], cutoff:[1600,2800], sources:["pool:industry*1","pool:voices*1"]},
       stab:["off","sparse"], hits:{sources:["pool:vb_industrial_machine*1","sp_system","sp_pressure","pool:rave_stab*1"], pattern:"dub", prob:.6},
       form:"pop" },
-    darksynth: { label:"Apex Curfew", info:"A pulse kit at 122-136. Reese bass under an Oberheim pad, with a hard-sync lead. Phrygian, a light shuffle, quantized tight.",   // SYNTH-FORWARD: the night drive turned hostile
+    darksynth: { label:"Apex Curfew", info:"A driving four at 122-136. A driving reese bass under Oberheim pads, with a hard-sync lead. Phrygian, a touch of swing and tight to the grid.",   // SYNTH-FORWARD: the night drive turned hostile
       bpm:[122,136], swing:[0,.05], humanize:[0,.12],   // UNDER dubstep's 133-148 core — chase-scene tempo, not halftime wobble
       progressions:["mode_phrygian","andalusian","epic_min"], kits:["pulse","four"], fills:["impact","riser","tom fill","cut"],
       transforms:{ pool:["stutter","rot"], rate:.16 },   // deep pass (v4 transform dimension): the RELENTLESS pulse is machine-tight, but ~1/6 of bars snap into a gated 16th-stutter or a displaced-hat lurch — the John-Carpenter/Perturbator horror gate. Distinct from dubstep's halftime (which mutates via the wobble, not the grid); keeps the drive (low rate, no rev/rest that would open holes)
@@ -921,7 +921,7 @@
       stab:["off","sparse"], hits:{sources:["sp_pressure","pool:rave_stab*1","pool:vocal_stab*1"], pattern:"sparse", prob:.4},
       form:"drop" },
     /* genre-tool:prelude:genres */
-    prelude: { label:"The Turning Stair", info:"Beatless at 62-80. A harpsichord under strings, with a harpsichord. A canon, rubato, one chord every 16 beats.",
+    prelude: { label:"The Turning Stair", info:"An easy 62-80 with no kit under it. A harpsichord on bass and lead, under strings. A canon, rubato and a chord change every four bars.",
       reverbColor:"fdn",   // fx wings: a dry recital room, not a wash — the close felt-piano
       introMode:"off",   // MUSICALITY balance loop 1 (BLOOM): the WTC prelude opens ON the figuration — bar 1, no curtain. The wave "arrive" node (pads-only) held the first keyboard note out 37-101s at prelude's giant cycles (chordEvery:16 -> 48-128-beat sections); dropping it opens every seed on the drift figuration at 0s, strings swelling UNDER the line, the bass continuo joining at the swell (36-101s). Unhurried stays (the cycles are still long) — DEAD goes. MEASURED across seeds 1-5: every declared part sounds inside a 3-minute listen (worst bass 101s, was 202s on the canon seed)
       bpm:[62,80],
@@ -942,7 +942,7 @@
       stab:["off"],
       form:"wave" },
     /* /genre-tool:prelude:genres */
-    fugue: { label:"The Patient Chase", info:"Beatless at 90-106. A church organ under strings, with a harpsichord. A canon.",
+    fugue: { label:"The Patient Chase", info:"A steady 90-106 with no kit under it. A harpsichord over strings and a church organ. A canon.",
       reverbColor:"fdn",   // fx wings: a dry chapel/recital room, not a wash — the close harpsichord+organ
       bpm:[90,106],
       swing:[0,0.02],
@@ -962,7 +962,7 @@
     // ======== GENRE-EXPANSION ========
     // 14 canonical additions, uptempo-biased (10 at/above ~140 BPM). Each fenced
     // in genre-verifier.js so the confusion matrix stays diagonal-dominant.
-    dnb: { label:"Silken Reentry", info:"A breaks kit at 170-176. Sub bass under strings, with a rhodes ep. Neo-soul changes, straight time.",   // UPTEMPO. distinct from jungle: NO break role (smooth bed), higher wash
+    dnb: { label:"Silken Reentry", info:"A broken beat at 170-176. A sub bass under strings, with Rhodes. Neo-soul changes, straight time.",   // UPTEMPO. distinct from jungle: NO break role (smooth bed), higher wash
       timeFeel:{ pushPullMs:{ bass:-5 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — D&B: same pull, applied to the polished rolling two-step
       bpm:[170,176], swing:[0,.04], humanize:[.05,.14],
       progressions:["neosoul","deep_two","minor_run","dream"], kits:["breaks","jungle"], fills:["off","drum fill","riser","downlift"],
@@ -974,7 +974,7 @@
       found:{role:"bed", vol:[.1,.18], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["pool:road*1","pool:city*1","pool:voices*1"]},   // BED not break — this is dnb's whole distinction from jungle
       stab:["off","sparse"], hits:{sources:["pool:vb_junglist*1","pool:vocal_stab*1","pool:rave_stab*1","sp_pressure"], pattern:"sparse", prob:.4},
       form:"dj" },
-    footwork: { label:"Ankle Velocity", info:"A trap kit at 155-162. Sub bass under a saw synth pad, with a pluck lead. A two-chord vamp, swung, quantized tight.",   // UPTEMPO
+    footwork: { label:"Ankle Velocity", info:"Trap kicks and rolling hats at 155-162. A sub bass under saw pads, with a pluck lead. A two-chord vamp, swung and tight to the grid.",   // UPTEMPO
       timeFeel:{ pushPullMs:{ bass:-5 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — FOOTWORK: the 808 triplet sub arrives ahead of the toms — dancers negotiate with the bass, not the kit
       bpm:[155,162], swing:[.06,.16], humanize:[0,.08],
       progressions:["deep_two","drone_min","neosoul"], kits:["trap","electro"], fills:["off","stutter","cut","hat rush"],
@@ -986,7 +986,7 @@
       found:{role:"chops", vol:[.15,.28], pitch:[.9,1.15], stretch:[.35,.55], cutoff:[2000,3600], sources:["shibuya","vx_wwvh","vox_a"]},   // the chopped vocal stutter IS footwork
       stab:["off","sparse"], hits:{sources:["pool:vb_junglist*1","pool:vocal_stab*2","sp_rhythm"], pattern:"dub", prob:.6},
       form:"dj" },
-    happyhardcore: { label:"Serotonin Stampede", info:"A four-on-the-floor at 168-176. Saw synth bass under a saw synth pad, with a bright yamaha grand. An uplifting cadence, a light shuffle.",   // UPTEMPO
+    happyhardcore: { label:"Serotonin Stampede", info:"A four-on-the-floor at 168-176. A driving saw bass under saw pads, with a bright grand piano. An uplifting cadence, a touch of swing.",   // UPTEMPO
       bpm:[168,176], swing:[0,.05], humanize:[.03,.12],
       progressions:["uplift","four_chords","pop_1625","doo_wop","epic_maj"], kits:["four","pulse"], fills:["riser","impact","hat rush","drum fill"],
       bass:{patterns:["drive","octaves","rolling"], recipe:{model:["saw","reese"],cutoff:[500,850],res:[.15,.3],level:[1.1,1.3],send:[0,.08],dsend:[0,0]}},
@@ -1004,7 +1004,7 @@
       sampleEvents:[{pool:["amen_170","amen_172","amen_175"], placement:"cadence", sections:"all", treatment:{cutoff:6000, vol:0.34, maxDur:4}}],
       stab:["rave","offbeat"], hits:{sources:["pool:vb_rave_hardcore*1","pool:rave_stab*3","sp_energy"], pattern:"offbeat", prob:.7},
       form:"dj" },
-    hardstyle: { label:"Anvil Euphoria", info:"A four-on-the-floor at 148-156. Reese bass under a saw synth pad, with a stacked saws lead. Epic minor changes, straight time, quantized tight.",   // UPTEMPO
+    hardstyle: { label:"Anvil Euphoria", info:"A four-on-the-floor at 148-156. A reese bass under saw pads, with a stacked-saw lead. Epic minor changes, straight time and tight to the grid.",   // UPTEMPO
       bpm:[148,156], swing:[0,.03], humanize:[0,.08],
       progressions:["epic_min","minor_run","andalusian"], kits:["four","pulse"], fills:["impact","riser","cut","hat rush"],
       bass:{patterns:["stab","drive","rolling"], recipe:{model:["reese","acid"],cutoff:[420,720],res:[.2,.4],level:[1.2,1.4],send:[0,.06],dsend:[0,.06]},
@@ -1016,7 +1016,7 @@
       found:{role:"bed", vol:[.05,.12], pitch:[.85,1], stretch:[.4,.6], cutoff:[2000,3200], sources:["rave_c","sp_energy","pool:industry*1"]},
       stab:["rave","offbeat"], hits:{sources:["pool:vb_rave_hardcore*1","pool:rave_stab*2","sp_energy"], pattern:"offbeat", prob:.55},
       form:"dj" },
-    eurodance: { label:"Chartbuster Esperanto", info:"A four-on-the-floor at 138-145. Saw synth bass under an electric piano, with a stacked saws lead. Four-chord changes, a light shuffle.",   // UPTEMPO. acoustic = the M1 house-piano/organ pad (all-synth trance/edm can't reach it); pump LOW (a pop track, not a trance gate)
+    eurodance: { label:"Chartbuster Esperanto", info:"A four-on-the-floor at 138-145. A saw bass under an electric piano, with a stacked-saw lead. Four-chord changes, a touch of swing.",   // UPTEMPO. acoustic = the M1 house-piano/organ pad (all-synth trance/edm can't reach it); pump LOW (a pop track, not a trance gate)
       bpm:[138,145], swing:[0,.05], humanize:[.03,.1],
       progressions:["four_chords","uplift","pop_1625","doo_wop"], kits:["four","pulse"], fills:["riser","hat rush","impact","drum fill"],
       bass:{patterns:["octaves","drive","rolling"], recipe:{model:["saw","reese"],cutoff:[500,820],res:[.15,.3],level:[1.05,1.28],send:[0,.08],dsend:[0,0]}},
@@ -1027,7 +1027,7 @@
       found:{role:"bed", vol:[.05,.12], pitch:[.9,1.05], stretch:[.4,.6], cutoff:[2400,3600], sources:["rave_b","sp_energy","pool:city*1"]},
       stab:["rave","offbeat"], hits:{sources:["pool:rave_stab*2","pool:vocal_stab*1"], pattern:"offbeat", prob:.6},
       form:"dj" },
-    singeli: { label:"Hummingbird Overclock", info:"AN electro kit at 200-214. Saw synth bass under a saw synth pad, with a pluck lead. A hijaz maqam, a light shuffle, quantized tight.",   // UPTEMPO (fastest in the catalog)
+    singeli: { label:"Hummingbird Overclock", info:"An 808 electro beat at 200-214. A saw bass under saw pads, with a pluck lead. A hijaz maqam, a touch of swing and tight to the grid.",   // UPTEMPO (fastest in the catalog)
       bpm:[200,214], swing:[0,.05], humanize:[0,.1],
       progressions:["hijaz","mode_phrygian","minor_run"], kits:["electro","four"], fills:["hat rush","cut","stutter","impact"],
       bass:{patterns:["stab","rolling","drive"], recipe:{model:["saw","acid"],cutoff:[400,700],res:[.2,.35],level:[1.1,1.35],send:[0,.06],dsend:[0,.06]}},
@@ -1038,7 +1038,7 @@
       found:{role:"chops", vol:[.12,.22], pitch:[.9,1.15], stretch:[.35,.55], cutoff:[2200,3600], sources:["shibuya","vx_wwvh","vox_a"]},
       stab:["rave","offbeat"], hits:{sources:["pool:vb_junglist*1","pool:vocal_stab*1","pool:rave_stab*1","sp_energy"], pattern:"dub", prob:.6},
       form:"dj" },
-    bebop: { label:"Mercury Interrogation", info:"A shuffle at 196-220. Acoustic bass under a bright yamaha grand, with an alto sax. ii-V-I, hard swing, loose timing.",   // UPTEMPO. jazz's fast acoustic cousin — bpm floor fences it off jazz's [96,148]
+    bebop: { label:"Mercury Interrogation", info:"A shuffle at 196-220. An alto sax over a bright grand piano and a walking upright bass. ii-V-I, swung hard and loose timing.",   // UPTEMPO. jazz's fast acoustic cousin — bpm floor fences it off jazz's [96,148]
       timeFeel:{ pushPullMs:{ ride:-4, snare:3, bass:4 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — SWING at a dead sprint — 220bpm leaves a 5.5 ms budget for 0.02 beat, so the same gesture as jazz at a third the size
       bpm:[196,220], swing:[.28,.5], humanize:[.25,.5],
       progressions:["ii_v_i","neosoul","blues_12","blues_16"], kits:["shuffle","shuffle","boombap"], fills:["off","drum fill","kit fill"],
@@ -1050,7 +1050,7 @@
       found:{role:"bed", vol:[.06,.14], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2000,3200], sources:["vx_baraka_ortiz84","blues_vox_78","horns_78","pool:city*1"]},
       stab:["off"], hits:{sources:["pool:vb_jazz_blues*1","pool:horn_stab*1","bb_horn_a","bb_stab_a"], pattern:"response", prob:.4},
       form:"aaba" },
-    bluegrass: { label:"Centrifugal Hymnal", info:"A shuffle at 156-170. Acoustic bass under a steel string guitar, with a banjo. Four-chord changes, swung.",   // UPTEMPO. banjo+fiddle acoustic; bpm floor fences it off surfrock, straight-major seventh fences it off bebop
+    bluegrass: { label:"Centrifugal Hymnal", info:"A shuffle at 156-170. A banjo over a steel-string guitar and a walking upright bass. Four-chord changes, swung.",   // UPTEMPO. banjo+fiddle acoustic; bpm floor fences it off surfrock, straight-major seventh fences it off bebop
       timeFeel:{ pushPullMs:{ bass:-5, hat:-4 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — BLUEGRASS DRIVE: the high-lonesome push — the whole string band leans forward; nothing in this music is ever late
       bpm:[156,170], swing:[.04,.14], humanize:[.15,.4],
       progressions:["four_chords","doo_wop","uplift"], kits:["shuffle","boombap"], fills:["off","drum fill","kit fill"],
@@ -1063,7 +1063,7 @@
       found:{role:"bed", vol:[.06,.14], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2000,3200], sources:["blues_vox_78","pool:city*1"]},
       stab:["off"], hits:{sources:["pool:vb_folk_pastoral*1","blues_vox_78","bb_horn_a"], pattern:"sparse", prob:.2},
       form:"pop" },
-    ska: { label:"Checkerboard Escapement", info:"A shuffle at 146-156. Finger bass under a clean guitar, with a brass section. Doo-wop changes, swung.",   // UPTEMPO. brass acoustic + offbeat skank; bpm band sits between surfrock and bluegrass
+    ska: { label:"Checkerboard Escapement", info:"A shuffle at 146-156. A brass section over a clean guitar and a walking finger bass. Doo-wop changes, swung.",   // UPTEMPO. brass acoustic + offbeat skank; bpm band sits between surfrock and bluegrass
       timeFeel:{ pushPullMs:{ pad:-5, bass:-4 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — SKA DRIVES where reggae DRAGS — the identical offbeat chop (pad under strum:"skank"), opposite sign. This pair is the clearest demonstration in the catalogue that feel is a direction, not a magnitude
       bpm:[146,156], swing:[.04,.14], humanize:[.1,.3],
       progressions:["doo_wop","four_chords","ii_v_i"], kits:["shuffle","four"], fills:["off","drum fill","kit fill"],
@@ -1076,7 +1076,7 @@
       found:{role:"bed", vol:[.05,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2200,3400], sources:["blues_vox_78","pool:city*1"]},
       stab:["offbeat","rave"], hits:{sources:["bb_horn_a","bb_horn_b","bb_stab_a"], pattern:"offbeat", prob:.6},
       form:"pop" },
-    klezmer: { label:"Wedding Comet", info:"A shuffle at 132-144. Acoustic bass under an accordion, with a clarinet. A hijaz maqam, swung.",   // UPTEMPO. clarinet acoustic + hijaz; bpm floor fences it off arabpop's slower hijaz
+    klezmer: { label:"Wedding Comet", info:"A shuffle at 132-144. A clarinet over an accordion and an upright bass. A hijaz maqam, swung.",   // UPTEMPO. clarinet acoustic + hijaz; bpm floor fences it off arabpop's slower hijaz
       timeFeel:{ pushPullMs:{ bass:-5, snare:4 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — WEDDING FRENZY: the klezmer band ACCELERATES into you — bass ahead, the boom-chick answering behind it
       bpm:[132,144], swing:[.04,.16], humanize:[.15,.4],
       progressions:["hijaz","andalusian","minor_run"], kits:["shuffle","four"], fills:["off","drum fill","kit fill"],
@@ -1088,7 +1088,7 @@
       found:{role:"bed", vol:[.05,.12], pitch:[.9,1.05], stretch:[.45,.6], cutoff:[2200,3400], sources:["blues_vox_78","pool:city*1"]},
       stab:["off"], hits:{sources:["bb_horn_a","bb_stab_a"], pattern:"sparse", prob:.25},
       form:"pop" },
-    funk: { label:"Downbeat Notary", info:"A swingbeat kit at 102-114. Slap bass under a percussive organ, with a clavinet. A funk vamp, swung.",   // clavinet acoustic + horn CHOPS (fences four-on-floor disco, which forbids chops)
+    funk: { label:"Downbeat Notary", info:"A swingbeat at 102-114. A clavinet over a percussive organ and a syncopated slap bass. A funk vamp, swung.",   // clavinet acoustic + horn CHOPS (fences four-on-floor disco, which forbids chops)
       timeFeel:{ pushPullMs:{ bass:-5, snare:5, clap:5 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — FUNK: the bass pops AHEAD of the one while the backbeat answers from behind — the tension that makes a pocket 'deep' rather than merely tight
       bpm:[102,114], swing:[.04,.14], humanize:[.1,.3],
       progressions:["funk_vamp","neosoul","ii_v_i"], kits:["newjack","house","four"], fills:["off","drum fill","kit fill"],
@@ -1101,7 +1101,7 @@
       found:{role:"chops", vol:[.08,.16], pitch:[.9,1.1], stretch:[.4,.6], cutoff:[2200,3600], sources:["bb_horn_a","shibuya","stml_chop_a","stml_chop_c","stml_chop_b"]},
       stab:["offbeat","rave"], hits:{sources:["bb_horn_a","bb_horn_b","bb_stab_a","bb_stab_b"], pattern:"offbeat", prob:.55},
       form:"duet" },
-    boombap: { label:"Milk Crate Scripture", info:"A boom-bap kit at 88-96. Acoustic bass under strings, with a rhodes ep. Neo-soul changes, swung.",   // hard SNARE-forward break at 90+, bright (softTop 0) — fences the slower, tape-dark lofi/triphop
+    boombap: { label:"Milk Crate Scripture", info:"A boom-bap beat at 88-96. Rhodes over strings and an upright bass. Neo-soul changes, swung.",   // hard SNARE-forward break at 90+, bright (softTop 0) — fences the slower, tape-dark lofi/triphop
       timeFeel:{ pushPullMs:{ bass:9, hat:-4, snare:5 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — DILLA DRAG: the genre the template is NAMED after had no push-pull at all — fat sampled bass behind the knock, hats on top, snare a hair late
       bpm:[88,96], swing:[.1,.24], humanize:[.15,.35],
       progressions:["neosoul","lofi","ii_v_i","pop_1625"], kits:["boombap","breaks"], fills:["off","drum fill","downlift"],
@@ -1114,7 +1114,7 @@
       found:{role:"break", scratch:0.5, vol:[.2,.32], pitch:[1,1], stretch:[.5,.5], cutoff:[4000,6000], sources:["amen_165","amen_170","stml_loop_86a","stml_loop_89a","stml_loop_92a","stml_loop_94a"]},   // scratch rides only the ~7% stutter ornament (~3.5% of slices) — flourish, not groove-loss
       stab:["off"], hits:{sources:["pool:vb_jazz_blues*1","pool:vocal_stab*2","sp_rewind"], pattern:"sparse", prob:.4},
       form:"pop" },
-    amapiano: { label:"Log Drum Diplomacy", info:"A four-on-the-floor at 108-116. Sub bass with a rhodes ep on both pad and lead. A two-chord vamp, swung.",   // sub log-drum + jazzy sevenths + fast shaker hats at 112; bpm cap fences it under deephouse
+    amapiano: { label:"Log Drum Diplomacy", info:"A four-on-the-floor with claps at 108-116. A sub bass under Rhodes on both pad and lead. A two-chord vamp, swung.",   // sub log-drum + jazzy sevenths + fast shaker hats at 112; bpm cap fences it under deephouse
       timeFeel:{ pushPullMs:{ hat:-4, bass:6 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — AMAPIANO: the log-drum bass is a plucked, late instrument; the shakers ride ahead of it
       bpm:[108,116], swing:[.08,.2], humanize:[.05,.2],
       progressions:["deep_two","house_min7","neosoul"], kits:["house","four"], fills:["off","hat rush","riser"],
@@ -1126,7 +1126,7 @@
       found:{role:"bed", vol:[.06,.14], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["pool:city*2"]},
       stab:["offbeat","off"], hits:{sources:["pool:vocal_stab*1","sp_rhythm"], pattern:"offbeat", prob:.4},
       form:"dj" },
-    reggae: { label:"Third Beat Gravity", info:"A one-drop at 70-80. Finger bass under a percussive organ, with a clean guitar. A two-chord vamp, swung.",   // the SONG to dub's dubbed-out instrumental: real harmonic motion + skank organ, vs dub's static drone
+    reggae: { label:"Third Beat Gravity", info:"A one-drop at 70-80. A clean guitar over a percussive organ and a finger bass. A two-chord vamp, swung.",   // the SONG to dub's dubbed-out instrumental: real harmonic motion + skank organ, vs dub's static drone
       timeFeel:{ pushPullMs:{ bass:13, pad:8, snare:7, rim:7 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — ONE-DROP: the whole band in the basement — the bass roundest and latest, the offbeat organ/guitar skank (pad, 100% offbeat under strum:"skank") lazy behind it, the rim-click on 3 fat
       bpm:[70,80], swing:[.04,.14], humanize:[.1,.3],
       strum:"skank",   // STRUM: the offbeat organ-and-guitar skank IS reggae — the & chop on the pad voice (percussive_organ pad = the bubble)
@@ -1139,7 +1139,7 @@
       found:{role:"bed", vol:[.08,.16], pitch:[.85,1], stretch:[.45,.6], cutoff:[2000,3200], sources:["blues_vox_78","pool:city*1"]},
       stab:["offbeat"], hits:{sources:["pool:vocal_stab*1","sp_herenow"], pattern:"offbeat", prob:.5},
       form:"pop" },
-    heavymetal: { label:"Molten Horsepower", info:"A four-on-the-floor at 130-148. Picked bass under a distortion guitar, with a crunch guitar. Epic minor changes, straight time.",   // distorted guitars front and center; comp+drumDensity+bpm fence it off the halftime industrialmetal, the slow sludgemetal, the clean surfrock
+    heavymetal: { label:"Molten Horsepower", info:"A four-on-the-floor at 130-148. A crunchy guitar over a distorted guitar and a driving picked bass. Epic minor changes, straight time.",   // distorted guitars front and center; comp+drumDensity+bpm fence it off the halftime industrialmetal, the slow sludgemetal, the clean surfrock
       bpm:[130,148], swing:[0,.04], humanize:[.03,.12],
       progressions:["epic_min","minor_run","andalusian","mode_phrygian"], kits:["four","pulse","electro"], fills:["impact","cut","riser","tom fill","crash choke"],   // VARIETY: + crash choke (the choked stop-crash accent off a two-tom pickup)
       reverbColor:"fdn",   // GRIT PASS: a big bright drum ROOM behind the kit + guitars — "a lot of deep reverb, classic metal effects"
@@ -1155,7 +1155,7 @@
       found:{role:"bed", vol:[.05,.12], pitch:[.85,1], stretch:[.4,.6], cutoff:[2000,3200], sources:["pool:industry*1","pool:road*1"]},
       stab:["off","rave"], hits:{sources:["pool:rave_stab*1","sp_energy"], pattern:"sparse", prob:.3},
       form:"pop" },
-    budstep: { label:"Amen Monolith", info:"A jungle kit at 138-146. Sub bass with a distortion guitar on both pad and lead. Phrygian, a light shuffle.",   // the amen (breakUse) + the doubled sludge-chord wall + the doubled sub drone: a triple no other break/bass genre carries
+    budstep: { label:"Amen Monolith", info:"A chopped jungle kit at 138-146. A sludgy sub bass under a distorted guitar on both pad and lead. Phrygian, a touch of swing.",   // the amen (breakUse) + the doubled sludge-chord wall + the doubled sub drone: a triple no other break/bass genre carries
       bpm:[138,146], swing:[0,.06], humanize:[.05,.18],
       progressions:["mode_phrygian","minor_run","drone_min","epic_min"], kits:["jungle","breaks"], fills:["break fill","reverse","off","break fill"],
       reverbColor:"greyhole",   // SUNN O))) cathedral: the diffuse cavernous hall the wall drowns in — deep reverb
@@ -1173,7 +1173,7 @@
       hits:{sources:["wd_bluedream","wd_sourdiesel","wd_indica","wd_sativa"], pattern:"dub", prob:.6},
       stab:["off"],
       form:"dj" },
-    pixiewave: { label:"Whisper Ordnance", info:"A four-on-the-floor at 131-137. Saw synth bass with a Juno pad on both pad and lead. A descending minor run, a light shuffle.",   // fenced on the juno voice-count (2-4, NOT synthwave's supersaw choir) + a wet chorus-verb + a 130s indie tempo ABOVE dancepop's cap; the LOUDquietLOUD is the anthem-form section dynamic
+    pixiewave: { label:"Whisper Ordnance", info:"A four-on-the-floor at 131-137. A driving saw bass under Juno pads, with a Juno lead. A descending minor run, a touch of swing.",   // fenced on the juno voice-count (2-4, NOT synthwave's supersaw choir) + a wet chorus-verb + a 130s indie tempo ABOVE dancepop's cap; the LOUDquietLOUD is the anthem-form section dynamic
       bpm:[131,137], swing:[0,.06], humanize:[.05,.18],
       progressions:["minor_run","epic_min","sad_pop","four_chords","interchange"], kits:["four","open","pulse"], fills:["impact","riser","drum fill","downlift"],
       bass:{patterns:["drive","root","octaves"], recipe:{model:["saw","sub"],cutoff:[450,780],res:[.12,.26],level:[1.05,1.3],send:[0,.08],dsend:[0,.05]}},
@@ -1186,7 +1186,7 @@
       stab:["off","sparse"], hits:{sources:["pool:vocal_stab*1","sp_nightdrive"], pattern:"sparse", prob:.35},
       form:"anthem" },
     /* genre-tool:hogcore:genres */
-    hogcore: { label:"Perihelion Squeal", info:"A four-on-the-floor at 150-164. Saw synth bass under a saw synth pad, with a stacked saws lead. Four-chord changes, straight time, quantized tight.",
+    hogcore: { label:"Perihelion Squeal", info:"A four-on-the-floor at 150-164. A saw bass under saw pads, with a stacked-saw lead. Four-chord changes, straight time and tight to the grid.",
       bpm:[150,164],
       swing:[0,0.03],
       humanize:[0,0.1],
@@ -1214,7 +1214,7 @@
       form:"drop" },
     /* /genre-tool:hogcore:genres */
     /* genre-tool:atlantidrone:genres */
-    atlantidrone: { label:"Hadal Vespers", info:"Beatless at 52-62. Sub bass under ahh choir, with a church organ. A two-chord minor drone, one chord every 32 beats.",
+    atlantidrone: { label:"Hadal Vespers", info:"A slow 52-62 with no kit under it. A sub bass under a wordless choir, with a church organ. A two-chord minor drone, a chord change every eight bars.",
       bpm:[52,62],
       swing:[0,0.03],
       humanize:[0.05,0.14],
@@ -1234,7 +1234,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:atlantidrone:genres */
     /* genre-tool:sourdough:genres */
-    sourdough: { label:"Mother Culture Vigil", info:"Beatless at 55-64. Sub bass under a vocoder choir pad, with a sine tones lead. A two-chord minor drone, one chord every 32 beats.",
+    sourdough: { label:"Mother Culture Vigil", info:"A slow 55-64 with no kit under it. A sub bass under a vocoder choir, with a sine lead. A two-chord minor drone, a chord change every eight bars.",
       bpm:[55,64],
       swing:[0,0.03],
       humanize:[0.05,0.14],
@@ -1254,7 +1254,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:sourdough:genres */
     /* genre-tool:crtwave:genres */
-    crtwave: { label:"Phosphor Persistence", info:"A bare kick at 60-72. Sub bass under a string machine pad, with a sine tones lead. A two-chord minor drone, straight time, one chord every 16 beats.",
+    crtwave: { label:"Phosphor Persistence", info:"A bare kick at 60-72. A sub bass under a string machine, with a sine lead. A two-chord minor drone, straight time and a chord change every four bars.",
       bpm:[60,72],
       swing:[0,0.03],
       humanize:[0.04,0.12],
@@ -1274,7 +1274,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:crtwave:genres */
     /* genre-tool:whalejazz:genres */
-    whalejazz: { label:"Leviathan Turnaround", info:"A bossa kit at 60-72. Acoustic bass under strings, with a tenor sax. ii-V-I, swung, rubato.",
+    whalejazz: { label:"Leviathan Turnaround", info:"A soft bossa clave at 60-72. A tenor sax over strings and a walking upright bass. ii-V-I, swung and rubato.",
       timeFeel:{ pushPullMs:{ ride:-6, snare:8, bass:11 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — SWING at 66 — the slowest jazz in the space, so the widest budget: long patient phrases over a ride that still sits on top
       bpm:[60,72],
       swing:[0.12,0.2],
@@ -1295,7 +1295,7 @@
       reverbColor:"dattorro" },
     /* /genre-tool:whalejazz:genres */
     /* genre-tool:termswave:genres */
-    termswave: { label:"Hereinafter Forever", info:"Beatless at 60-74. Sub bass under a vocoder choir pad, with a sine tones lead. A two-chord minor drone, one chord every 16 beats.",
+    termswave: { label:"Hereinafter Forever", info:"A slow 60-74 with no kit under it. A sub bass under a vocoder choir, with a sine lead. A two-chord minor drone, a chord change every four bars.",
       bpm:[60,74],
       swing:[0,0.03],
       humanize:[0.05,0.15],
@@ -1319,7 +1319,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:termswave:genres */
     /* genre-tool:microwave:genres */
-    microwave: { label:"Magnetron Benediction", info:"Beatless at 66-78. A church organ under ahh choir, with a church organ. A canon.",
+    microwave: { label:"Magnetron Benediction", info:"An easy 66-78 with no kit under it. A church organ on bass and lead, under a wordless choir. A canon.",
       bpm:[66,78],
       swing:[0,0.04],
       humanize:[0.06,0.16],
@@ -1344,7 +1344,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:microwave:genres */
     /* genre-tool:airtrafficdrone:genres */
-    airtrafficdrone: { label:"Squawk Ineffable", info:"A bare kick at 70-84. Sub bass under a vocoder choir pad, with a sine tones lead. A two-chord minor drone, straight time, one chord every 16 beats.",
+    airtrafficdrone: { label:"Squawk Ineffable", info:"A bare kick at 70-84. A sub bass under a vocoder choir, with a sine lead. A two-chord minor drone, straight time and a chord change every four bars.",
       bpm:[70,84],
       swing:[0,0.04],
       humanize:[0.04,0.12],
@@ -1368,7 +1368,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:airtrafficdrone:genres */
     /* genre-tool:faxbossa:genres */
-    faxbossa: { label:"Thermal Paper Saudade", info:"A bossa kit at 74-86. Acoustic bass under a string machine pad, with a nylon string guitar. ii-V-I, swung, rubato.",
+    faxbossa: { label:"Thermal Paper Saudade", info:"A soft bossa clave at 74-86. A nylon-string guitar over a string machine and a walking upright bass. ii-V-I, swung and rubato.",
       bpm:[74,86],
       swing:[0.08,0.16],
       humanize:[0.08,0.18],
@@ -1392,7 +1392,7 @@
       reverbColor:"spring" },
     /* /genre-tool:faxbossa:genres */
     /* genre-tool:crickettempo:genres */
-    crickettempo: { label:"Chirp Thermometry", info:"A half-time kit at 76-90. Acoustic bass under a vocoder choir pad, with a kalimba. Neo-soul changes, a light shuffle.",
+    crickettempo: { label:"Chirp Thermometry", info:"A half-time beat at 76-90. A kalimba over a vocoder choir and an upright bass. Neo-soul changes, a light shuffle.",
       bpm:[76,90],
       swing:[0.04,0.1],
       humanize:[0.08,0.18],
@@ -1410,7 +1410,7 @@
       form:"wave" },
     /* /genre-tool:crickettempo:genres */
     /* genre-tool:thermostatwave:genres */
-    thermostatwave: { label:"Setpoint Schism", info:"A bare kick at 84-96. Sub bass under a string machine pad, with a sine tones lead. A two-chord minor drone, a light shuffle, one chord every 16 beats.",
+    thermostatwave: { label:"Setpoint Schism", info:"A bare kick at 84-96. A sub bass under a string machine, with a sine lead. A two-chord minor drone, a touch of swing and a chord change every four bars.",
       bpm:[84,96],
       swing:[0,0.05],
       humanize:[0.03,0.1],
@@ -1434,7 +1434,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:thermostatwave:genres */
     /* genre-tool:holdmusic:genres */
-    holdmusic: { label:"Unresolved In Perpetuity", info:"A shuffle at 96-108. Acoustic bass under Rhodes, with a pan flute. ii-V-I, swung.",
+    holdmusic: { label:"Unresolved In Perpetuity", info:"A shuffle at 96-108. A pan flute over Rhodes and an upright bass. ii-V-I, swung.",
       bpm:[96,108],
       swing:[0.08,0.14],
       humanize:[0.1,0.2],
@@ -1459,7 +1459,7 @@
       reverbColor:"spring" },
     /* /genre-tool:holdmusic:genres */
     /* genre-tool:lunapolka:genres */
-    lunapolka: { label:"Regolith Oompah", info:"A half-time kit at 96-108. A tuba under an Oberheim pad, with an accordion. Doo-wop changes, swung.",
+    lunapolka: { label:"Regolith Oompah", info:"A half-time beat at 96-108. An accordion over Oberheim pads and a tuba. Doo-wop changes, swung.",
       bpm:[96,108],
       swing:[0.08,0.16],
       humanize:[0.08,0.2],
@@ -1482,7 +1482,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:lunapolka:genres */
     /* genre-tool:elevatorcore:genres */
-    elevatorcore: { label:"Mezzanine Ascension", info:"A shuffle at 100-112. Acoustic bass under Rhodes, with a vibraphone. Lo-fi changes, swung.",
+    elevatorcore: { label:"Mezzanine Ascension", info:"A shuffle at 100-112. A vibraphone over Rhodes and a walking upright bass. Lo-fi changes, swung.",
       bpm:[100,112],
       swing:[0.1,0.16],
       humanize:[0.08,0.18],
@@ -1506,7 +1506,7 @@
       reverbColor:"spring" },
     /* /genre-tool:elevatorcore:genres */
     /* genre-tool:hotsaucecore:genres */
-    hotsaucecore: { label:"Capsaicin Ordeal", info:"A tribal kit at 100-116. 303 line bass under an Oberheim pad, with a trumpet. A funk vamp, a light shuffle.",
+    hotsaucecore: { label:"Capsaicin Ordeal", info:"Hand drums and toms at 100-116. A syncopated 303 bass under Oberheim pads, with a trumpet. A funk vamp, a light shuffle.",
       bpm:[100,116],
       swing:[0.02,0.1],
       humanize:[0.05,0.14],
@@ -1528,7 +1528,7 @@
       form:"throughline" },
     /* /genre-tool:hotsaucecore:genres */
     /* genre-tool:ikeacore:genres */
-    ikeacore: { label:"Dowel Not Included", info:"AN electro kit at 116-124. Minimoog lead bass under an Oberheim pad, with a phase-distortion lead. A two-chord minor drone, straight time, quantized tight, euclidean hats.",
+    ikeacore: { label:"Dowel Not Included", info:"An 808 electro beat at 116-124. A Minimoog bass under Oberheim pads, with a phase-distortion lead. A two-chord minor drone, five hats spread across the bar, straight time and tight to the grid.",
       bpm:[116,124],
       swing:[0,0.04],
       humanize:[0,0.08],
@@ -1551,7 +1551,7 @@
       form:"dj" },
     /* /genre-tool:ikeacore:genres */
     /* genre-tool:zubrovia:genres */
-    zubrovia: { label:"Zubrovian Irredenta", info:"A tribal kit at 112-126. Acoustic bass under ahh choir, with an accordion. A hijaz maqam, a light shuffle.",
+    zubrovia: { label:"Zubrovian Irredenta", info:"Hand drums and toms at 112-126. An accordion over a wordless choir and an upright bass. A hijaz maqam, a touch of swing.",
       bpm:[112,126],
       swing:[0,0.06],
       humanize:[0.05,0.14],
@@ -1574,7 +1574,7 @@
       form:"anthem" },
     /* /genre-tool:zubrovia:genres */
     /* genre-tool:dishwasherwave:genres */
-    dishwasherwave: { label:"Heated Dry Eternity", info:"A machine four at 120-126. Sub bass with an organ on both pad and lead. A two-chord minor drone, a light shuffle, quantized tight, euclidean hats.",
+    dishwasherwave: { label:"Heated Dry Eternity", info:"A machine four at 120-126. A rolling sub bass under an organ on both pad and lead. A two-chord minor drone, nine hats spread across the bar, a touch of swing and tight to the grid.",
       bpm:[120,126],
       swing:[0,0.05],
       humanize:[0,0.1],
@@ -1597,7 +1597,7 @@
       form:"dj" },
     /* /genre-tool:dishwasherwave:genres */
     /* genre-tool:surveywave:genres */
-    surveywave: { label:"Ten Being Highest", info:"A four-on-the-floor at 118-126. Juno pad bass under a Juno pad, with a hard-sync lead. Four-chord changes, a light shuffle.",
+    surveywave: { label:"Ten Being Highest", info:"A four-on-the-floor at 118-126. A Juno bass under Juno pads, with a hard-sync lead. Four-chord changes, a touch of swing.",
       bpm:[118,126],
       swing:[0,0.05],
       humanize:[0.03,0.12],
@@ -1620,7 +1620,7 @@
       form:"duet" },
     /* /genre-tool:surveywave:genres */
     /* genre-tool:aldente:genres */
-    aldente: { label:"Rolling Boil Plateau", info:"A machine four at 122-128. Sub bass under an organ, with a pluck lead. A two-chord minor drone, straight time, quantized tight, euclidean hats, one chord every 16 beats.",
+    aldente: { label:"Rolling Boil Plateau", info:"A machine four at 122-128. A rolling sub bass under an organ, with a pluck lead. A two-chord minor drone, eleven hats spread across the bar, straight time, tight to the grid and a chord change every four bars.",
       bpm:[122,128],
       swing:[0,0.04],
       humanize:[0,0.08],
@@ -1641,7 +1641,7 @@
       form:"dj" },
     /* /genre-tool:aldente:genres */
     /* genre-tool:umpirehouse:genres */
-    umpirehouse: { label:"Full Count Judgment", info:"A four-on-the-floor at 122-128. Saw synth bass under a Hammond, with a rock organ. A min7 house vamp, a light shuffle.",
+    umpirehouse: { label:"Full Count Judgment", info:"A four-on-the-floor with claps at 122-128. A rolling saw bass under a Hammond, with a rock organ. A min7 house vamp, a light shuffle.",
       bpm:[122,128],
       swing:[0.02,0.08],
       humanize:[0.03,0.12],
@@ -1664,7 +1664,7 @@
       reverbColor:"spring" },
     /* /genre-tool:umpirehouse:genres */
     /* genre-tool:pigeonstep:genres */
-    pigeonstep: { label:"Rock Dove Doctrine", info:"A four-on-the-floor at 128-134. Sub bass under a Juno pad, with a pan flute. A min7 house vamp, swung.",
+    pigeonstep: { label:"Rock Dove Doctrine", info:"A four-on-the-floor with claps at 128-134. A sub bass under Juno pads, with a pan flute. A min7 house vamp, swung.",
       bpm:[128,134],
       swing:[0.12,0.18],
       humanize:[0.05,0.12],
@@ -1682,7 +1682,7 @@
       form:"duet" },
     /* /genre-tool:pigeonstep:genres */
     /* genre-tool:dmvstep:genres */
-    dmvstep: { label:"Now Serving Infinity", info:"A four-on-the-floor at 130-136. Sub bass under a Juno pad, with a phase-distortion lead. A min7 house vamp, swung.",
+    dmvstep: { label:"Now Serving Infinity", info:"A four-on-the-floor with claps at 130-136. A sub bass under Juno pads, with a phase-distortion lead. A min7 house vamp, swung.",
       bpm:[130,136],
       swing:[0.14,0.2],
       humanize:[0.05,0.12],
@@ -1705,7 +1705,7 @@
       form:"duet" },
     /* /genre-tool:dmvstep:genres */
     /* genre-tool:towncrier:genres */
-    towncrier: { label:"Oyez Oblivion", info:"A half-time kit at 138-146. Wobble bass under an Oberheim pad, with an FM lead. A descending minor run, a light shuffle.",
+    towncrier: { label:"Oyez Oblivion", info:"A half-time beat at 138-146. A wobble bass under Oberheim pads, with an FM lead. A descending minor run, a touch of swing.",
       bpm:[138,146],
       swing:[0,0.06],
       humanize:[0.02,0.1],
@@ -1727,7 +1727,7 @@
       form:"drop" },
     /* /genre-tool:towncrier:genres */
     /* genre-tool:chickadeecore:genres */
-    chickadeecore: { label:"Fee Bee Augury", info:"A trap kit at 140-150. Saw synth bass under a Juno pad, with a glockenspiel. Four-chord changes, a light shuffle.",
+    chickadeecore: { label:"Fee Bee Augury", info:"Trap kicks and rolling hats at 140-150. A saw bass under Juno pads, with a glockenspiel. Four-chord changes, a touch of swing.",
       bpm:[140,150],
       swing:[0,0.05],
       humanize:[0.03,0.1],
@@ -1745,7 +1745,7 @@
       form:"duet" },
     /* /genre-tool:chickadeecore:genres */
     /* genre-tool:floppycore:genres */
-    floppycore: { label:"Abort Retry Fail", info:"A breaks kit at 142-158. Reese bass under a PPG pad, with a plucked string lead. A descending minor run, a light shuffle.",
+    floppycore: { label:"Abort Retry Fail", info:"A broken beat at 142-158. A reese bass under PPG pads, with a plucked string. A descending minor run, a touch of swing.",
       bpm:[142,158],
       swing:[0,0.06],
       humanize:[0.02,0.1],
@@ -1772,7 +1772,7 @@
       form:"dj" },
     /* /genre-tool:floppycore:genres */
     /* genre-tool:cerealwave:genres */
-    cerealwave: { label:"Riboflavin Rapture", info:"A four-on-the-floor at 155-165. Saw synth bass under a Juno pad, with a hard-sync lead. Four-chord changes, straight time, quantized tight.",
+    cerealwave: { label:"Riboflavin Rapture", info:"A four-on-the-floor at 155-165. A saw bass under Juno pads, with a hard-sync lead. Four-chord changes, straight time and tight to the grid.",
       bpm:[155,165],
       swing:[0,0.04],
       humanize:[0,0.08],
@@ -1794,7 +1794,7 @@
       form:"drop" },
     /* /genre-tool:cerealwave:genres */
     /* genre-tool:laundrycore:genres */
-    laundrycore: { label:"Unbalanced Load", info:"A jungle kit at 168-174. Sub bass under a vocoder choir pad, with a pluck lead. A two-chord minor drone, a light shuffle.",
+    laundrycore: { label:"Unbalanced Load", info:"A chopped jungle kit at 168-174. A sub bass under a vocoder choir, with a pluck lead. A two-chord minor drone, a touch of swing.",
       bpm:[168,174],
       swing:[0,0.06],
       humanize:[0.02,0.1],
@@ -1820,7 +1820,7 @@
       form:"drop" },
     /* /genre-tool:laundrycore:genres */
     /* genre-tool:auctioncore:genres */
-    auctioncore: { label:"Going Going Gone", info:"A breaks kit at 168-178. Reese bass under an Oberheim pad, with a fuzz lead. A descending minor run, a light shuffle.",
+    auctioncore: { label:"Going Going Gone", info:"A broken beat at 168-178. A reese bass under Oberheim pads, with a fuzz lead. A descending minor run, a touch of swing.",
       bpm:[168,178],
       swing:[0,0.05],
       humanize:[0.02,0.1],
@@ -1845,7 +1845,7 @@
       form:"drop" },
     /* /genre-tool:auctioncore:genres */
     /* genre-tool:dialupgabber:genres */
-    dialupgabber: { label:"Carrier Lost", info:"A four-on-the-floor at 180-190. Fuzz lead bass under an Oberheim pad, with a fuzz lead. A two-chord minor drone, straight time, quantized tight.",
+    dialupgabber: { label:"Carrier Lost", info:"A four-on-the-floor at 180-190. A fuzz bass under Oberheim pads, with a fuzz lead. A two-chord minor drone, straight time and tight to the grid.",
       bpm:[180,190],
       swing:[0,0.04],
       humanize:[0,0.06],
@@ -1867,7 +1867,7 @@
       form:"drop" },
     /* /genre-tool:dialupgabber:genres */
     /* genre-tool:picnicswing:genres */
-    picnicswing: { label:"Gingham Event Horizon", info:"A shuffle at 145-153. Fretless bass under strings, with a muted trumpet. A min7 house vamp, hard swing, loose timing.",
+    picnicswing: { label:"Gingham Event Horizon", info:"A shuffle at 145-153. A muted trumpet over strings and a fretless bass. A min7 house vamp, swung hard and loose timing.",
       bpm:[145,153],
       swing:[0.21,0.26],
       humanize:[0.25,0.34],
@@ -1885,7 +1885,7 @@
       form:"vamp" },
     /* /genre-tool:picnicswing:genres */
     /* genre-tool:cerealboxwave:genres */
-    cerealboxwave: { label:"Prize Inside", info:"Beatless at 104-112. A church organ under a church organ, with a plucked string lead. A descending minor run, a light shuffle.",
+    cerealboxwave: { label:"Prize Inside", info:"A steady 104-112 with no kit under it. A church organ on bass and pad, with a plucked string. A descending minor run, a touch of swing.",
       bpm:[104,112],
       swing:[0,0.044],
       humanize:[0.056,0.146],
@@ -1904,7 +1904,7 @@
       reverbColor:"fdn" },
     /* /genre-tool:cerealboxwave:genres */
     /* genre-tool:rosinamblelilt:genres */
-    rosinamblelilt: { label:"Rosin Parallax", info:"A bare kick at 94-102. Saw synth bass under an organ, with a clarinet. A canon, hard swing, loose timing, rubato.",
+    rosinamblelilt: { label:"Rosin Parallax", info:"A bare kick at 94-102. A saw bass under an organ, with a clarinet. A canon, swung hard, loose timing and rubato.",
       bpm:[94,102],
       swing:[0.17,0.22],
       humanize:[0.323,0.413],
@@ -1925,7 +1925,7 @@
       reverbColor:"dattorro" },
     /* /genre-tool:rosinamblelilt:genres */
     /* genre-tool:subwooferbalm:genres */
-    subwooferbalm: { label:"Infrasound Poultice", info:"A four-on-the-floor at 76-84. Sub bass under ahh choir, with an alto sax. A twelve-bar blues, a light shuffle, one chord every 16 beats.",
+    subwooferbalm: { label:"Infrasound Poultice", info:"A four-on-the-floor with claps at 76-84. A sub bass under a wordless choir, with an alto sax. A twelve-bar blues, a touch of swing and a chord change every four bars.",
       bpm:[76,84],
       swing:[0,0.049],
       humanize:[0.128,0.218],
@@ -1945,7 +1945,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:subwooferbalm:genres */
     /* genre-tool:sepiadrive:genres */
-    sepiadrive: { label:"Caravan Redshift", info:"A tribal kit at 132-140. Saw synth bass under ahh choir, with an alto sax. A hijaz maqam, a light shuffle, euclidean hats.",
+    sepiadrive: { label:"Caravan Redshift", info:"Hand drums and toms at 132-140. A saw bass under a wordless choir, with an alto sax. A hijaz maqam, five kicks spread across the bar and a light shuffle.",
       bpm:[132,140],
       swing:[0.043,0.093],
       humanize:[0.029,0.119],
@@ -1964,7 +1964,7 @@
       form:"pop" },
     /* /genre-tool:sepiadrive:genres */
     /* genre-tool:sparkbreak:genres */
-    sparkbreak: { label:"Arc Flash Jubilee", info:"A four-on-the-floor at 127-135. Acid bass under a saw synth pad, with a pluck lead. A descending minor run, a light shuffle, quantized tight.",
+    sparkbreak: { label:"Arc Flash Jubilee", info:"A four-on-the-floor at 127-135. An acid bass under saw pads, with a pluck lead. A descending minor run, a touch of swing and tight to the grid.",
       bpm:[127,135],
       swing:[0.001,0.051],
       humanize:[0.001,0.091],
@@ -1983,7 +1983,7 @@
       form:"drop" },
     /* /genre-tool:sparkbreak:genres */
     /* genre-tool:hopscotchwave:genres */
-    hopscotchwave: { label:"Hopscotch Cosmology", info:"A four-on-the-floor at 103-111. Acid bass under a saw synth pad, with a pluck lead. Epic minor changes, a light shuffle.",
+    hopscotchwave: { label:"Hopscotch Cosmology", info:"A four-on-the-floor at 103-111. An acid bass under saw pads, with a pluck lead. Epic minor changes, a light shuffle.",
       bpm:[103,111],
       swing:[0.033,0.083],
       humanize:[0.095,0.185],
@@ -2003,7 +2003,7 @@
       masterComp:0.35 },
     /* /genre-tool:hopscotchwave:genres */
     /* genre-tool:moltenhouse:genres */
-    moltenhouse: { label:"Mantle Plume", info:"A four-on-the-floor at 115-123. Sub bass under an FM lead pad, with an alto sax. A two-chord vamp, a light shuffle.",
+    moltenhouse: { label:"Mantle Plume", info:"A four-on-the-floor with claps at 115-123. A sub bass under an FM pad, with an alto sax. A two-chord vamp, a light shuffle.",
       bpm:[115,123],
       swing:[0.04,0.09],
       humanize:[0.06,0.15],
@@ -2022,7 +2022,7 @@
       reverbColor:"spring" },
     /* /genre-tool:moltenhouse:genres */
     /* genre-tool:magmastrut:genres */
-    magmastrut: { label:"Basalt Swagger", info:"A bare kick at 97-105. Sub bass under ahh choir, with an alto sax. A two-chord vamp, a light shuffle, one chord every 16 beats.",
+    magmastrut: { label:"Basalt Swagger", info:"A bare kick at 97-105. A sub bass under a wordless choir, with an alto sax. A two-chord vamp, a light shuffle and a chord change every four bars.",
       bpm:[97,105],
       swing:[0.022,0.072],
       humanize:[0.037,0.127],
@@ -2042,7 +2042,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:magmastrut:genres */
     /* genre-tool:hammerhouse:genres */
-    hammerhouse: { label:"Percussive Maintenance", info:"A boom-bap kit at 119-127. Acid bass under a Hammond, with a rock organ. A min7 house vamp, a light shuffle, rubato.",
+    hammerhouse: { label:"Percussive Maintenance", info:"A boom-bap beat at 119-127. An acid bass under a Hammond, with a rock organ. A min7 house vamp, a touch of swing and rubato.",
       bpm:[119,127],
       swing:[0.009,0.059],
       humanize:[0.16,0.25],
@@ -2062,7 +2062,7 @@
       reverbColor:"spring" },
     /* /genre-tool:hammerhouse:genres */
     /* genre-tool:zestgallop:genres */
-    zestgallop: { label:"Perihelion Sprint", info:"A boom-bap kit at 140-148. Saw synth bass under strings, with a rhodes ep. Epic minor changes, hard swing.",
+    zestgallop: { label:"Perihelion Sprint", info:"A boom-bap beat at 140-148. A rolling saw bass under strings, with Rhodes. Epic minor changes, swung hard.",
       bpm:[140,148],
       swing:[0.156,0.206],
       humanize:[0.201,0.291],
@@ -2081,7 +2081,7 @@
       form:"pop" },
     /* /genre-tool:zestgallop:genres */
     /* genre-tool:whittlertrot:genres */
-    whittlertrot: { label:"Lagrange Lathe", info:"A bare kick at 95-103. Saw synth bass under an organ, with a clarinet. Dream changes, a light shuffle, rubato.",
+    whittlertrot: { label:"Lagrange Lathe", info:"A bare kick at 95-103. A rolling saw bass under an organ, with a clarinet. Dream changes, a touch of swing and rubato.",
       bpm:[95,103],
       swing:[0.016,0.066],
       humanize:[0.194,0.284],
@@ -2102,7 +2102,7 @@
       reverbColor:"dattorro" },
     /* /genre-tool:whittlertrot:genres */
     /* genre-tool:bunkerthump:genres */
-    bunkerthump: { label:"Blast Door Liturgy", info:"A pulse kit at 123-131. Sub bass under ahh choir, with an alto sax. A two-chord vamp, a light shuffle.",
+    bunkerthump: { label:"Blast Door Liturgy", info:"A driving four at 123-131. A sub bass under a wordless choir, with an alto sax. A two-chord vamp, a touch of swing.",
       bpm:[123,131],
       swing:[0.013,0.063],
       humanize:[0.091,0.181],
@@ -2121,7 +2121,7 @@
       form:"dj" },
     /* /genre-tool:bunkerthump:genres */
     /* genre-tool:gumballdrive:genres */
-    gumballdrive: { label:"Sucrose Centrifuge", info:"A half-time kit at 119-127. Acoustic bass under a Hammond, with a rock organ. A min7 house vamp, a light shuffle.",
+    gumballdrive: { label:"Sucrose Centrifuge", info:"A half-time beat at 119-127. A rock organ over a Hammond and an upright bass. A min7 house vamp, a light shuffle.",
       bpm:[119,127],
       swing:[0.04,0.09],
       humanize:[0.103,0.193],
@@ -2140,7 +2140,7 @@
       reverbColor:"spring" },
     /* /genre-tool:gumballdrive:genres */
     /* genre-tool:kettlefunk:genres */
-    kettlefunk: { label:"Samovar Nebula", info:"A bare kick at 100-108. Saw synth bass under ahh choir, with french horns. Doo-wop changes, hard swing, loose timing.",
+    kettlefunk: { label:"Samovar Nebula", info:"A bare kick at 100-108. A saw bass under a wordless choir, with French horns. Doo-wop changes, swung hard and loose timing.",
       bpm:[100,108],
       swing:[0.179,0.229],
       humanize:[0.304,0.394],
@@ -2160,7 +2160,7 @@
       reverbColor:"dattorro" },
     /* /genre-tool:kettlefunk:genres */
     /* genre-tool:glosspump:genres */
-    glosspump: { label:"Lacquer Piston", info:"A jungle kit at 124-132. Sub bass under ahh choir, with an alto sax. A two-chord minor drone, a light shuffle.",
+    glosspump: { label:"Lacquer Piston", info:"A chopped jungle kit at 124-132. A sub bass under a wordless choir, with an alto sax. A two-chord minor drone, a light shuffle.",
       bpm:[124,132],
       swing:[0.031,0.081],
       humanize:[0.137,0.227],
@@ -2178,7 +2178,7 @@
       form:"drop" },
     /* /genre-tool:glosspump:genres */
     /* genre-tool:refrigeratorfunk:genres */
-    refrigeratorfunk: { label:"Freon Devotional", info:"Beatless at 104-112. Acoustic bass under a harp, with a flute. A minor pop cycle, a light shuffle.",
+    refrigeratorfunk: { label:"Freon Devotional", info:"A steady 104-112 with no kit under it. A flute over a harp and an upright bass. A minor pop cycle, a touch of swing.",
       bpm:[104,112],
       swing:[0.003,0.053],
       humanize:[0.142,0.232],
@@ -2196,7 +2196,7 @@
       form:"wave" },
     /* /genre-tool:refrigeratorfunk:genres */
     /* genre-tool:sherbetchop:genres */
-    sherbetchop: { label:"Sorbet Guillotine", info:"A boom-bap kit at 133-141. Saw synth bass under a saw synth pad, with a pluck lead. Epic minor changes, swung.",
+    sherbetchop: { label:"Sorbet Guillotine", info:"A boom-bap beat at 133-141. A saw bass under saw pads, with a pluck lead. Epic minor changes, swung.",
       bpm:[133,141],
       swing:[0.099,0.149],
       humanize:[0.123,0.213],
@@ -2215,7 +2215,7 @@
       form:"pop" },
     /* /genre-tool:sherbetchop:genres */
     /* genre-tool:pinballchop:genres */
-    pinballchop: { label:"Solenoid Rapture", info:"A four-on-the-floor at 109-117. Saw synth bass under an organ, with a pluck lead. A funk vamp, a light shuffle.",
+    pinballchop: { label:"Solenoid Rapture", info:"A four-on-the-floor at 109-117. A rolling saw bass under an organ, with a pluck lead. A funk vamp, a light shuffle.",
       bpm:[109,117],
       swing:[0.03,0.08],
       humanize:[0.017,0.107],
@@ -2235,7 +2235,7 @@
       masterComp:0.35 },
     /* /genre-tool:pinballchop:genres */
     /* genre-tool:idlingsplice:genres */
-    idlingsplice: { label:"Standby Leviathan", info:"A four-on-the-floor at 90-98. Acoustic bass under ahh choir, with french horns. A two-chord vamp, a light shuffle.",
+    idlingsplice: { label:"Standby Leviathan", info:"A four-on-the-floor at 90-98. French horns over a wordless choir and an upright bass. A two-chord vamp, a light shuffle.",
       bpm:[90,98],
       swing:[0.022,0.072],
       humanize:[0.082,0.172],
@@ -2253,7 +2253,7 @@
       form:"dj" },
     /* /genre-tool:idlingsplice:genres */
     /* genre-tool:trenchsway:genres */
-    trenchsway: { label:"Thermocline Cradle", info:"A four-on-the-floor at 75-83. Sub bass under ahh choir, with french horns. A canon, a light shuffle, one chord every 16 beats.",
+    trenchsway: { label:"Thermocline Cradle", info:"A four-on-the-floor with claps at 75-83. A sub bass under a wordless choir, with French horns. A canon, a touch of swing and a chord change every four bars.",
       bpm:[75,83],
       swing:[0.006,0.056],
       humanize:[0.22,0.31],
@@ -2273,7 +2273,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:trenchsway:genres */
     /* genre-tool:tarbreak:genres */
-    tarbreak: { label:"Pitch Drop Panic", info:"A tribal kit at 145-153. Acoustic bass under ahh choir, with an alto sax. An uplifting cadence, a light shuffle, euclidean hats.",
+    tarbreak: { label:"Pitch Drop Panic", info:"Hand drums and toms at 145-153. An alto sax over a wordless choir and an upright bass. An uplifting cadence, five kicks spread across the bar and a touch of swing.",
       bpm:[145,153],
       swing:[0.004,0.054],
       humanize:[0.098,0.188],
@@ -2292,7 +2292,7 @@
       form:"pop" },
     /* /genre-tool:tarbreak:genres */
     /* genre-tool:cedarskank:genres */
-    cedarskank: { label:"Dendrochronology Skank", info:"A shuffle at 118-126. Acoustic bass under an FM lead pad, with an alto sax. Doo-wop changes, hard swing, loose timing.",
+    cedarskank: { label:"Dendrochronology Skank", info:"A shuffle at 118-126. An alto sax over an FM pad and a walking upright bass. Doo-wop changes, swung hard and loose timing.",
       bpm:[118,126],
       swing:[0.197,0.247],
       humanize:[0.282,0.372],
@@ -2312,7 +2312,7 @@
       timeFeel:{pushPull:{bass:0.015, snare:0.01}} },
     /* /genre-tool:cedarskank:genres */
     /* genre-tool:bramblestep:genres */
-    bramblestep: { label:"Hedge Maze Vespers", info:"A boom-bap kit at 74-82. Saw synth bass under an FM lead pad, with an alto sax. Neo-soul changes, hard swing.",
+    bramblestep: { label:"Hedge Maze Vespers", info:"A boom-bap beat at 74-82. A rolling saw bass under an FM pad, with an alto sax. Neo-soul changes, swung hard.",
       bpm:[74,82],
       swing:[0.17,0.22],
       humanize:[0.188,0.278],
@@ -2332,7 +2332,7 @@
       timeFeel:{pushPull:{bass:0.011, hat:-0.007}} },
     /* /genre-tool:bramblestep:genres */
     /* genre-tool:toastercore:genres */
-    toastercore: { label:"Nichrome Panic", info:"A tribal kit at 187-195. Saw synth bass under an FM lead pad, with an alto sax. An uplifting cadence, swung, euclidean hats.",
+    toastercore: { label:"Nichrome Panic", info:"Hand drums and toms at 187-195. A rolling saw bass under an FM pad, with an alto sax. An uplifting cadence, five kicks spread across the bar and swung.",
       bpm:[187,195],
       swing:[0.085,0.135],
       humanize:[0.169,0.259],
@@ -2351,7 +2351,7 @@
       form:"pop" },
     /* /genre-tool:toastercore:genres */
     /* genre-tool:vendingmachinethump:genres */
-    vendingmachinethump: { label:"Coin Return Ritual", info:"A bare kick at 119-127. Saw synth bass under a Juno pad, with a jazz guitar. Royal-road changes, a light shuffle.",
+    vendingmachinethump: { label:"Coin Return Ritual", info:"A bare kick at 119-127. A rolling saw bass under Juno pads, with a jazz guitar. Royal-road changes, a touch of swing.",
       bpm:[119,127],
       swing:[0,0.048],
       humanize:[0.035,0.125],
@@ -2370,7 +2370,7 @@
       reverbColor:"dattorro" },
     /* /genre-tool:vendingmachinethump:genres */
     /* genre-tool:boilercreep:genres */
-    boilercreep: { label:"Pressure Vessel Psalm", info:"A bare kick at 65-73. Sub bass under a church organ, with a plucked string lead. A min7 house vamp, a light shuffle, one chord every 16 beats.",
+    boilercreep: { label:"Pressure Vessel Psalm", info:"A bare kick at 65-73. A sub bass under a church organ, with a plucked string. A min7 house vamp, a light shuffle and a chord change every four bars.",
       bpm:[65,73],
       swing:[0.038,0.088],
       humanize:[0.201,0.291],
@@ -2390,7 +2390,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:boilercreep:genres */
     /* genre-tool:fluorescentstrut:genres */
-    fluorescentstrut: { label:"Argon Catwalk", info:"A pulse kit at 109-117. Saw synth bass under a saw synth pad, with a pluck lead. Phrygian, a light shuffle.",
+    fluorescentstrut: { label:"Argon Catwalk", info:"A driving four at 109-117. A rolling saw bass under saw pads, with a pluck lead. Phrygian, a touch of swing.",
       bpm:[109,117],
       swing:[0.004,0.054],
       humanize:[0.082,0.172],
@@ -2409,7 +2409,7 @@
       transforms:{pool:["stutter","rot"], rate:0.16} },
     /* /genre-tool:fluorescentstrut:genres */
     /* genre-tool:dialtonehaze:genres */
-    dialtonehaze: { label:"Busy Signal Limbo", info:"A bare kick at 69-77. Sub bass under a saw synth pad, with a pluck lead. A two-chord minor drone, swung, one chord every 16 beats.",
+    dialtonehaze: { label:"Busy Signal Limbo", info:"A bare kick at 69-77. A sub bass under saw pads, with a pluck lead. A two-chord minor drone, swung and a chord change every four bars.",
       bpm:[69,77],
       swing:[0.09,0.14],
       humanize:[0.148,0.238],
@@ -2429,7 +2429,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:dialtonehaze:genres */
     /* genre-tool:breadboxmince:genres */
-    breadboxmince: { label:"Crouton Taxonomy", info:"A shuffle at 100-108. Saw synth bass under an organ, with a clarinet. Neo-soul changes, swung.",
+    breadboxmince: { label:"Crouton Taxonomy", info:"A shuffle at 100-108. A rolling saw bass under an organ, with a clarinet. Neo-soul changes, swung.",
       bpm:[100,108],
       swing:[0.056,0.106],
       humanize:[0.213,0.303],
@@ -2449,7 +2449,7 @@
       reverbColor:"dattorro" },
     /* /genre-tool:breadboxmince:genres */
     /* genre-tool:earthmoversplice:genres */
-    earthmoversplice: { label:"Overburden Hymn", info:"A tribal kit at 115-123. Acoustic bass under ahh choir, with an alto sax. A descending minor run, a light shuffle, euclidean hats.",
+    earthmoversplice: { label:"Overburden Hymn", info:"Hand drums and toms at 115-123. An alto sax over a wordless choir and an upright bass. A descending minor run, five kicks spread across the bar and a light shuffle.",
       bpm:[115,123],
       swing:[0.029,0.079],
       humanize:[0.173,0.263],
@@ -2468,7 +2468,7 @@
       form:"pop" },
     /* /genre-tool:earthmoversplice:genres */
     /* genre-tool:butterchurnbounce:genres */
-    butterchurnbounce: { label:"Buttermilk Cyclotron", info:"A bare kick at 117-125. Acoustic bass under an FM lead pad, with an alto sax. A hijaz maqam, hard swing, loose timing.",
+    butterchurnbounce: { label:"Buttermilk Cyclotron", info:"A bare kick at 117-125. An alto sax over an FM pad and a walking upright bass. A hijaz maqam, swung hard and loose timing.",
       bpm:[117,125],
       swing:[0.2,0.25],
       humanize:[0.257,0.347],
@@ -2488,7 +2488,7 @@
       timeFeel:{pushPull:{bass:0.015, snare:0.01}} },
     /* /genre-tool:butterchurnbounce:genres */
     /* genre-tool:furnacestrut:genres */
-    furnacestrut: { label:"Slag Promenade", info:"A half-time kit at 92-100. Sub bass under ahh choir, with french horns. Epic minor changes, a light shuffle, one chord every 16 beats.",
+    furnacestrut: { label:"Slag Promenade", info:"A half-time beat at 92-100. A sub bass under a wordless choir, with French horns. Epic minor changes, a touch of swing and a chord change every four bars.",
       bpm:[92,100],
       swing:[0.012,0.062],
       humanize:[0.176,0.266],
@@ -2508,7 +2508,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:furnacestrut:genres */
     /* genre-tool:tectonicdash:genres */
-    tectonicdash: { label:"Subduction Stampede", info:"A shuffle at 138-146. Sub bass under strings, with a muted trumpet. A min7 house vamp, hard swing.",
+    tectonicdash: { label:"Subduction Stampede", info:"A shuffle at 138-146. A sub bass under strings, with a muted trumpet. A min7 house vamp, swung hard.",
       bpm:[138,146],
       swing:[0.236,0.286],
       humanize:[0.183,0.273],
@@ -2526,7 +2526,7 @@
       form:"pop" },
     /* /genre-tool:tectonicdash:genres */
     /* genre-tool:tundradoom:genres */
-    tundradoom: { label:"Permafrost Choir", info:"A shuffle at 51-59. Saw synth bass under an FM lead pad, with an alto sax. Doo-wop changes, a light shuffle, rubato.",
+    tundradoom: { label:"Permafrost Choir", info:"A shuffle at 51-59. A rolling saw bass under an FM pad, with an alto sax. Doo-wop changes, a light shuffle and rubato.",
       bpm:[51,59],
       swing:[0.023,0.073],
       humanize:[0.181,0.271],
@@ -2548,7 +2548,7 @@
       reverbColor:"spring" },
     /* /genre-tool:tundradoom:genres */
     /* genre-tool:sodabop:genres */
-    sodabop: { label:"Fizz Quorum", info:"A bare kick at 88-96. Acid bass under an organ, with a steel string guitar. A funk vamp, a light shuffle.",
+    sodabop: { label:"Fizz Quorum", info:"A bare kick at 88-96. An acid bass under an organ, with a steel-string guitar. A funk vamp, a touch of swing.",
       bpm:[88,96],
       swing:[0,0.048],
       humanize:[0.063,0.153],
@@ -2568,7 +2568,7 @@
       masterComp:0.35 },
     /* /genre-tool:sodabop:genres */
     /* genre-tool:citrushaze:genres */
-    citrushaze: { label:"Grapefruit Ionosphere", info:"A bare kick at 84-92. Sub bass under a saw synth pad, with a pluck lead. A two-chord minor drone, a light shuffle, one chord every 16 beats.",
+    citrushaze: { label:"Grapefruit Ionosphere", info:"A bare kick at 84-92. A sub bass under saw pads, with a pluck lead. A two-chord minor drone, a touch of swing and a chord change every four bars.",
       bpm:[84,92],
       swing:[0.012,0.062],
       humanize:[0.105,0.195],
@@ -2588,7 +2588,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:citrushaze:genres */
     /* genre-tool:confettililt:genres */
-    confettililt: { label:"Ticker Tape Seance", info:"A bossa kit at 88-96. Acoustic bass under a string machine pad, with a nylon string guitar. A descending minor run, swung, loose timing.",
+    confettililt: { label:"Ticker Tape Seance", info:"A soft bossa clave at 88-96. A nylon-string guitar over a string machine and a walking upright bass. A descending minor run, swung and loose timing.",
       bpm:[88,96],
       swing:[0.144,0.194],
       humanize:[0.278,0.368],
@@ -2607,7 +2607,7 @@
       reverbColor:"spring" },
     /* /genre-tool:confettililt:genres */
     /* genre-tool:willowmarch:genres */
-    willowmarch: { label:"Catkin Procession", info:"A shuffle at 117-125. Saw synth bass under an FM lead pad, with an alto sax. Neo-soul changes, hard swing.",
+    willowmarch: { label:"Catkin Procession", info:"A shuffle at 117-125. A rolling saw bass under an FM pad, with an alto sax. Neo-soul changes, swung hard.",
       bpm:[117,125],
       swing:[0.159,0.209],
       humanize:[0.226,0.316],
@@ -2627,7 +2627,7 @@
       reverbColor:"dattorro" },
     /* /genre-tool:willowmarch:genres */
     /* genre-tool:standbylightdrive:genres */
-    standbylightdrive: { label:"Diode Vigil", info:"Beatless at 130-138. Acid bass under a saw synth pad, with a pluck lead. A descending minor run, a light shuffle.",
+    standbylightdrive: { label:"Diode Vigil", info:"A brisk 130-138 with no kit under it. An acid bass under saw pads, with a pluck lead. A descending minor run, a touch of swing.",
       bpm:[130,138],
       swing:[0,0.047],
       humanize:[0.029,0.119],
@@ -2646,7 +2646,7 @@
       reverbColor:"fdn" },
     /* /genre-tool:standbylightdrive:genres */
     /* genre-tool:cairntrot:genres */
-    cairntrot: { label:"Barrow Ledger", info:"A bare kick at 105-113. Acoustic bass under ahh choir, with an alto sax. Four-chord changes, swung.",
+    cairntrot: { label:"Barrow Ledger", info:"A bare kick at 105-113. An alto sax over a wordless choir and a walking upright bass. Four-chord changes, swung.",
       bpm:[105,113],
       swing:[0.087,0.137],
       humanize:[0.111,0.201],
@@ -2665,7 +2665,7 @@
       reverbColor:"dattorro" },
     /* /genre-tool:cairntrot:genres */
     /* genre-tool:dumptruckdub:genres */
-    dumptruckdub: { label:"Gross Tonnage Dub", info:"A boom-bap kit at 82-90. Acoustic bass under strings, with a muted trumpet. Neo-soul changes, a light shuffle.",
+    dumptruckdub: { label:"Gross Tonnage Dub", info:"A boom-bap beat at 82-90. A muted trumpet over strings and an upright bass. Neo-soul changes, a light shuffle.",
       bpm:[82,90],
       swing:[0.035,0.085],
       humanize:[0.066,0.156],
@@ -2685,7 +2685,7 @@
       timeFeel:{pushPull:{bass:0.011, hat:-0.007}} },
     /* /genre-tool:dumptruckdub:genres */
     /* genre-tool:tallowtrot:genres */
-    tallowtrot: { label:"Tallow Bureau", info:"A pulse kit at 112-120. Acid bass under a vocoder choir pad, with a trumpet. A descending minor run, a light shuffle.",
+    tallowtrot: { label:"Tallow Bureau", info:"A driving four at 112-120. A rolling acid bass under a vocoder choir, with a trumpet. A descending minor run, a touch of swing.",
       bpm:[112,120],
       swing:[0.012,0.062],
       humanize:[0.08,0.17],
@@ -2704,7 +2704,7 @@
       form:"pop" },
     /* /genre-tool:tallowtrot:genres */
     /* genre-tool:fathomarch:genres */
-    fathomarch: { label:"Benthic Parade", info:"A trap kit at 131-139. Sub bass under a saw synth pad, with a pluck lead. A funk vamp, a light shuffle.",
+    fathomarch: { label:"Benthic Parade", info:"Trap kicks and rolling hats at 131-139. A sub bass under saw pads, with a pluck lead. A funk vamp, a light shuffle.",
       bpm:[131,139],
       swing:[0.02,0.07],
       humanize:[0.162,0.252],
@@ -2722,7 +2722,7 @@
       form:"pop" },
     /* /genre-tool:fathomarch:genres */
     /* genre-tool:masonshuffle:genres */
-    masonshuffle: { label:"Mortar Assignation", info:"A bare kick at 95-103. Acoustic bass under pizzicato strings, with a bandoneon. An andalusian cadence, hard swing, loose timing, rubato.",
+    masonshuffle: { label:"Mortar Assignation", info:"A bare kick at 95-103. A bandoneon over pizzicato strings and a habanera upright bass. An andalusian cadence, swung hard, loose timing and rubato.",
       bpm:[95,103],
       swing:[0.155,0.205],
       humanize:[0.235,0.325],
@@ -2743,7 +2743,7 @@
       transforms:{pool:["rest"], rate:0.05} },
     /* /genre-tool:masonshuffle:genres */
     /* genre-tool:boilerroomstomp:genres */
-    boilerroomstomp: { label:"Gasket Inquisition", info:"A pulse kit at 124-132. Reese bass under ahh choir, with an alto sax. A descending minor run, a light shuffle.",
+    boilerroomstomp: { label:"Gasket Inquisition", info:"A driving four at 124-132. A sixteenth-note reese bass under a wordless choir, with an alto sax. A descending minor run, a touch of swing.",
       bpm:[124,132],
       swing:[0,0.049],
       humanize:[0.105,0.195],
@@ -2762,7 +2762,7 @@
       form:"dj" },
     /* /genre-tool:boilerroomstomp:genres */
     /* genre-tool:brinedub:genres */
-    brinedub: { label:"Saltwater Reliquary", info:"A bare kick at 81-89. Acid bass under an organ, with a pluck lead. A descending minor run, straight time.",
+    brinedub: { label:"Saltwater Reliquary", info:"A bare kick at 81-89. An acid bass under an organ, with a pluck lead. A descending minor run, straight time.",
       bpm:[81,89],
       swing:[0,0.014],
       humanize:[0.075,0.165],
@@ -2782,7 +2782,7 @@
       masterComp:0.35 },
     /* /genre-tool:brinedub:genres */
     /* genre-tool:attichouse:genres */
-    attichouse: { label:"Dust Mote Discotheque", info:"A pulse kit at 116-124. Acid bass under a vocoder choir pad, with a trumpet. A hijaz maqam, a light shuffle.",
+    attichouse: { label:"Dust Mote Discotheque", info:"A driving four at 116-124. A rolling acid bass under a vocoder choir, with a trumpet. A hijaz maqam, a touch of swing.",
       bpm:[116,124],
       swing:[0.007,0.057],
       humanize:[0.076,0.166],
@@ -2801,7 +2801,7 @@
       form:"pop" },
     /* /genre-tool:attichouse:genres */
     /* genre-tool:driftrot:genres */
-    driftrot: { label:"Mycelial Almanac", info:"A boom-bap kit at 89-97. Saw synth bass under a saw synth pad, with a pluck lead. Neo-soul changes, swung.",
+    driftrot: { label:"Mycelial Almanac", info:"A boom-bap beat at 89-97. A rolling saw bass under saw pads, with a pluck lead. Neo-soul changes, swung.",
       bpm:[89,97],
       swing:[0.079,0.129],
       humanize:[0.094,0.184],
@@ -2821,7 +2821,7 @@
       timeFeel:{pushPull:{bass:0.011, hat:-0.007}} },
     /* /genre-tool:driftrot:genres */
     /* genre-tool:ceilingfanchop:genres */
-    ceilingfanchop: { label:"Blade Pass Frequency", info:"A half-time kit at 159-167. Saw synth bass under a Juno pad, with a glockenspiel. A hijaz maqam, straight time.",
+    ceilingfanchop: { label:"Blade Pass Frequency", info:"A half-time beat at 159-167. A saw bass under Juno pads, with a glockenspiel. A hijaz maqam, straight time.",
       bpm:[159,167],
       swing:[0,0.026],
       humanize:[0.061,0.151],
@@ -2839,7 +2839,7 @@
       form:"pop" },
     /* /genre-tool:ceilingfanchop:genres */
     /* genre-tool:strawdub:genres */
-    strawdub: { label:"Threshing Vespers", info:"A four-on-the-floor at 79-87. Acoustic bass under a percussive organ, with a piano. A twelve-bar blues, a light shuffle, one chord every 16 beats.",
+    strawdub: { label:"Threshing Vespers", info:"A four-on-the-floor with claps at 79-87. An upright bass under a percussive organ, with a piano. A twelve-bar blues, a touch of swing and a chord change every four bars.",
       bpm:[79,87],
       swing:[0,0.049],
       humanize:[0.148,0.238],
@@ -2859,7 +2859,7 @@
       reverbColor:"greyhole" },
     /* /genre-tool:strawdub:genres */
     /* genre-tool:wickershimmy:genres */
-    wickershimmy: { label:"Seance Cakewalk", info:"A four-on-the-floor at 116-124. Saw synth bass under a percussive organ, with a steel string guitar. A funk vamp, a light shuffle.",
+    wickershimmy: { label:"Seance Cakewalk", info:"A four-on-the-floor at 116-124. A saw bass under a percussive organ, with a steel-string guitar. A funk vamp, a touch of swing.",
       bpm:[116,124],
       swing:[0,0.044],
       humanize:[0.068,0.158],
@@ -2879,7 +2879,7 @@
       masterComp:0.35 },
     /* /genre-tool:wickershimmy:genres */
     /* genre-tool:shellacsplice:genres */
-    shellacsplice: { label:"Lacquer Autopsy", info:"A boom-bap kit at 123-131. Sub bass under ahh choir, with an alto sax. A minor pop cycle, swung.",
+    shellacsplice: { label:"Lacquer Autopsy", info:"A boom-bap beat at 123-131. A sub bass under a wordless choir, with an alto sax. A minor pop cycle, swung.",
       bpm:[123,131],
       swing:[0.086,0.136],
       humanize:[0.1,0.19],
@@ -2898,7 +2898,7 @@
       form:"pop" },
     /* /genre-tool:shellacsplice:genres */
     /* genre-tool:gourdscuttle:genres */
-    gourdscuttle: { label:"Scarab Two Step", info:"A shuffle at 157-165. Saw synth bass under strings, with a muted trumpet. Doo-wop changes, a light shuffle.",
+    gourdscuttle: { label:"Scarab Two Step", info:"A shuffle at 157-165. A rolling saw bass under strings, with a muted trumpet. Doo-wop changes, a light shuffle.",
       bpm:[157,165],
       swing:[0.051,0.101],
       humanize:[0.209,0.299],
@@ -2916,7 +2916,7 @@
       form:"pop" },
     /* /genre-tool:gourdscuttle:genres */
     /* genre-tool:auroragallop:genres */
-    auroragallop: { label:"Magnetotail Stampede", info:"A pulse kit at 144-152. Acid bass under a vocoder choir pad, with a trumpet. A funk vamp, a light shuffle.",
+    auroragallop: { label:"Magnetotail Stampede", info:"A driving four at 144-152. A rolling acid bass under a vocoder choir, with a trumpet. A funk vamp, a touch of swing.",
       bpm:[144,152],
       swing:[0.003,0.053],
       humanize:[0.035,0.125],
@@ -2935,7 +2935,7 @@
       form:"throughline" },
     /* /genre-tool:auroragallop:genres */
     /* genre-tool:atticfanthrashsplice:genres */
-    atticfanthrashsplice: { label:"Centrifuge Tantrum", info:"A tribal kit at 151-159. Saw synth bass under ahh choir, with french horns. A descending minor run, swung, loose timing, euclidean hats.",
+    atticfanthrashsplice: { label:"Centrifuge Tantrum", info:"Hand drums and toms at 151-159. A rolling saw bass under a wordless choir, with French horns. A descending minor run, five kicks spread across the bar, swung and loose timing.",
       bpm:[151,159],
       swing:[0.121,0.171],
       humanize:[0.244,0.334],
@@ -2954,7 +2954,7 @@
       form:"pop" },
     /* /genre-tool:atticfanthrashsplice:genres */
     /* genre-tool:obelisktrot:genres */
-    obelisktrot: { label:"Monolith Errand", info:"A bare kick at 105-113. Acoustic bass under a saw synth pad, with a pluck lead. Epic minor changes, swung.",
+    obelisktrot: { label:"Monolith Errand", info:"A bare kick at 105-113. An upright bass under saw pads, with a pluck lead. Epic minor changes, swung.",
       bpm:[105,113],
       swing:[0.118,0.168],
       humanize:[0.176,0.266],
@@ -2974,7 +2974,7 @@
       masterComp:0.35 },
     /* /genre-tool:obelisktrot:genres */
     /* genre-tool:oakdublilt:genres */
-    oakdublilt: { label:"Xylem Vigil", info:"A shuffle at 80-88. Acoustic bass under a percussive organ, with a steel string guitar. A twelve-bar blues, hard swing, loose timing, rubato.",
+    oakdublilt: { label:"Xylem Vigil", info:"A shuffle at 80-88. A steel-string guitar over a percussive organ and a walking upright bass. A twelve-bar blues, swung hard, loose timing and rubato.",
       bpm:[80,88],
       swing:[0.17,0.22],
       humanize:[0.365,0.455],
@@ -2995,7 +2995,7 @@
       timeFeel:{pushPull:{bass:0.015, snare:0.01}} },
     /* /genre-tool:oakdublilt:genres */
     /* genre-tool:duststrut:genres */
-    duststrut: { label:"Particulate Strut", info:"A boom-bap kit at 96-104. Saw synth bass under a saw synth pad, with a pluck lead. Epic minor changes, hard swing.",
+    duststrut: { label:"Particulate Strut", info:"A boom-bap beat at 96-104. A saw bass under saw pads, with a pluck lead. Epic minor changes, swung hard.",
       bpm:[96,104],
       swing:[0.164,0.214],
       humanize:[0.161,0.251],
@@ -3014,7 +3014,7 @@
       form:"pop" },
     /* /genre-tool:duststrut:genres */
     /* genre-tool:reedrush:genres */
-    reedrush: { label:"Bulrush Cyclotron", info:"A swingbeat kit at 141-149. Acoustic bass under a church organ, with a plucked string lead. A funk vamp, swung.",
+    reedrush: { label:"Bulrush Cyclotron", info:"A swingbeat at 141-149. A walking upright bass under a church organ, with a plucked string. A funk vamp, swung.",
       bpm:[141,149],
       swing:[0.092,0.142],
       humanize:[0.19,0.28],
@@ -3032,7 +3032,7 @@
       form:"pop" },
     /* /genre-tool:reedrush:genres */
     /* genre-tool:hearthsway:genres */
-    hearthsway: { label:"The Warm Room", info:"A boom-bap kit at 66-74. Acoustic bass under an FM lead pad, with an alto sax. A two-chord vamp, swung.",
+    hearthsway: { label:"The Warm Room", info:"A boom-bap beat at 66-74. An alto sax over an FM pad and an upright bass. A two-chord vamp, swung.",
       bpm:[66,74],
       swing:[0.107,0.157],
       humanize:[0.218,0.308],
@@ -3052,7 +3052,7 @@
       timeFeel:{pushPull:{bass:0.011, hat:-0.007}} },
     /* /genre-tool:hearthsway:genres */
     /* genre-tool:graingroove:genres */
-    graingroove: { label:"Emulsion Shuffle", info:"A bossa kit at 96-104. Acoustic bass under an FM lead pad, with an alto sax. A descending minor run, swung.",
+    graingroove: { label:"Emulsion Shuffle", info:"A soft bossa clave at 96-104. An alto sax over an FM pad and an upright bass. A descending minor run, swung.",
       bpm:[96,104],
       swing:[0.117,0.167],
       humanize:[0.172,0.262],
@@ -3071,7 +3071,7 @@
       reverbColor:"spring" },
     /* /genre-tool:graingroove:genres */
     /* genre-tool:hvacbop:genres */
-    hvacbop: { label:"Plenum Bop", info:"A bare kick at 102-110. Acoustic bass under ahh choir, with french horns. Epic minor changes, swung.",
+    hvacbop: { label:"Plenum Bop", info:"A bare kick at 102-110. French horns over a wordless choir and an upright bass. Epic minor changes, swung.",
       bpm:[102,110],
       swing:[0.075,0.125],
       humanize:[0.148,0.238],
@@ -3091,7 +3091,7 @@
       masterComp:0.35 },
     /* /genre-tool:hvacbop:genres */
     /* genre-tool:moldcore:genres */
-    moldcore: { label:"Hyphal Blitz", info:"A pulse kit at 157-165. Acid bass under a vocoder choir pad, with a trumpet. A hijaz maqam, swung.",
+    moldcore: { label:"Hyphal Blitz", info:"A driving four at 157-165. A rolling acid bass under a vocoder choir, with a trumpet. A hijaz maqam, swung.",
       bpm:[157,165],
       swing:[0.084,0.134],
       humanize:[0.153,0.243],
@@ -3110,7 +3110,7 @@
       form:"pop" },
     /* /genre-tool:moldcore:genres */
     /* genre-tool:hydracore:genres */
-    hydracore: { label:"Headcount Error", info:"A tribal kit at 174-182. Saw synth bass under a saw synth pad, with a pluck lead. An uplifting cadence, a light shuffle, quantized tight, euclidean hats.",
+    hydracore: { label:"Headcount Error", info:"Hand drums and toms at 174-182. A saw bass under saw pads, with a pluck lead. An uplifting cadence, five kicks spread across the bar, a light shuffle and tight to the grid.",
       bpm:[174,182],
       swing:[0.022,0.072],
       humanize:[0.009,0.099],
@@ -3129,7 +3129,7 @@
       form:"throughline" },
     /* /genre-tool:hydracore:genres */
     /* genre-tool:ashfunk:genres */
-    ashfunk: { label:"Pyroclastic Slink", info:"A tribal kit at 95-103. Saw synth bass under a saw synth pad, with a pluck lead. A hijaz maqam, swung, euclidean hats.",
+    ashfunk: { label:"Pyroclastic Slink", info:"Hand drums and toms at 95-103. A saw bass under saw pads, with a pluck lead. A hijaz maqam, five kicks spread across the bar and swung.",
       bpm:[95,103],
       swing:[0.107,0.157],
       humanize:[0.195,0.285],
@@ -3148,7 +3148,7 @@
       form:"pop" },
     /* /genre-tool:ashfunk:genres */
     /* genre-tool:steamdub:genres */
-    steamdub: { label:"Autoclave Lullaby", info:"A pulse kit at 78-86. Sub bass under ahh choir, with french horns. A descending minor run, a light shuffle.",
+    steamdub: { label:"Autoclave Lullaby", info:"A driving four at 78-86. A sub bass under a wordless choir, with French horns. A descending minor run, a light shuffle.",
       bpm:[78,86],
       swing:[0.033,0.083],
       humanize:[0.194,0.284],
@@ -3167,7 +3167,7 @@
       form:"pop" },
     /* /genre-tool:steamdub:genres */
     /* genre-tool:seraphswing:genres */
-    seraphswing: { label:"Ophanim Jitterbug", info:"A shuffle at 165-173. Saw synth bass under strings, with a muted trumpet. A descending minor run, hard swing.",
+    seraphswing: { label:"Ophanim Jitterbug", info:"A shuffle at 165-173. A rolling saw bass under strings, with a muted trumpet. A descending minor run, swung hard.",
       bpm:[165,173],
       swing:[0.178,0.228],
       humanize:[0.124,0.214],
@@ -3185,7 +3185,7 @@
       form:"pop" },
     /* /genre-tool:seraphswing:genres */
     /* genre-tool:androidlament:genres */
-    androidlament: { label:"Decommission Hymn", info:"A bare kick at 58-70. Sub bass with brass on both pad and lead. Dream changes, straight time, rubato.",
+    androidlament: { label:"Decommission Hymn", info:"A bare kick at 58-70. A sub bass under brass on both pad and lead. Dream changes, straight time and rubato.",
       bpm:[58,70],
       swing:[0,0.03],
       humanize:[0.15,0.3],
@@ -3208,7 +3208,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"harmonize", w:0.45, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
     /* /genre-tool:androidlament:genres */
     /* genre-tool:lasertemple:genres */
-    lasertemple: { label:"Collimated Chapel", info:"A pulse kit at 108-116. Saw synth bass under a string machine pad, with a phase-distortion lead. A descending minor run, straight time.",
+    lasertemple: { label:"Collimated Chapel", info:"A driving four at 108-116. A sixteenth-note saw bass under a string machine, with a phase-distortion lead. A descending minor run, straight time.",
       bpm:[108,116],
       swing:[0,0.04],
       humanize:[0.03,0.1],
@@ -3230,7 +3230,7 @@
       pipes:[{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
     /* /genre-tool:lasertemple:genres */
     /* genre-tool:oscillatorminuet:genres */
-    oscillatorminuet: { label:"Voltage Curtsy", info:"A bare kick at 84-92. Minimoog lead bass under strings, with a Minimoog lead. A canon, straight time, rubato.",
+    oscillatorminuet: { label:"Voltage Curtsy", info:"A bare kick at 84-92. A walking Minimoog bass under strings, with a Minimoog lead. A canon, straight time and rubato.",
       bpm:[84,92],
       swing:[0,0.03],
       humanize:[0.06,0.15],
@@ -3253,7 +3253,7 @@
       pipes:[{id:"echoCanon", w:0.55, prob:0.45, delay:2},{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
     /* /genre-tool:oscillatorminuet:genres */
     /* genre-tool:cometwhistle:genres */
-    cometwhistle: { label:"Perihelion Aria", info:"AN open kit at 72-82. Sub bass under strings, with a Minimoog lead. Dream changes, straight time, rubato.",
+    cometwhistle: { label:"Perihelion Aria", info:"An open backbeat at 72-82. A sub bass under strings, with a Minimoog lead. Dream changes, straight time and rubato.",
       bpm:[72,82],
       swing:[0,0.04],
       humanize:[0.12,0.25],
@@ -3275,7 +3275,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"harmonize", w:0.45, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
     /* /genre-tool:cometwhistle:genres */
     /* genre-tool:chromepiston:genres */
-    chromepiston: { label:"Camshaft Litany", info:"A four-on-the-floor at 118-126. Minimoog lead bass under an Oberheim pad, with a Minimoog lead. A two-chord vamp, straight time, quantized tight.",
+    chromepiston: { label:"Camshaft Litany", info:"A four-on-the-floor at 118-126. A Minimoog bass under Oberheim pads, with a Minimoog lead. A two-chord vamp, straight time and tight to the grid.",
       bpm:[118,126],
       swing:[0,0.03],
       humanize:[0,0.08],
@@ -3297,7 +3297,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
     /* /genre-tool:chromepiston:genres */
     /* genre-tool:patchcordmirage:genres */
-    patchcordmirage: { label:"Zeno's Corridor", info:"A pulse kit at 94-102. Minimoog lead bass under choir, with a Minimoog lead. A two-chord minor drone, straight time, one chord every 16 beats.",
+    patchcordmirage: { label:"Zeno's Corridor", info:"A driving four at 94-102. A sixteenth-note Minimoog bass under a choir, with a Minimoog lead. A two-chord minor drone, straight time and a chord change every four bars.",
       bpm:[94,102],
       swing:[0,0.03],
       humanize:[0.02,0.1],
@@ -3319,7 +3319,7 @@
       pipes:[{id:"octavePump", w:0.5, prob:0.4},{id:"densityArc", w:0.4, floor:0.6},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
     /* /genre-tool:patchcordmirage:genres */
     /* genre-tool:velourregatta:genres */
-    velourregatta: { label:"Marina Heat Death", info:"A full kit at 100-108. FM lead bass with an FM lead on both pad and lead. An uplifting cadence, a light shuffle.",
+    velourregatta: { label:"Marina Heat Death", info:"A straight backbeat at 100-108. A syncopated FM bass under an FM pad, with an FM lead. An uplifting cadence, a light shuffle.",
       bpm:[100,108],
       swing:[0.04,0.1],
       humanize:[0.05,0.15],
@@ -3341,7 +3341,7 @@
       pipes:[{id:"harmonize", w:0.45, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
     /* /genre-tool:velourregatta:genres */
     /* genre-tool:sorcerercape:genres */
-    sorcerercape: { label:"Grimoire Cadenza", info:"A full kit at 138-148. Minimoog lead bass with a Hammond on both pad and lead. Royal-road changes, a light shuffle.",
+    sorcerercape: { label:"Grimoire Cadenza", info:"A straight backbeat at 138-148. A driving Minimoog bass under a Hammond on both pad and lead. Royal-road changes, a touch of swing.",
       bpm:[138,148],
       swing:[0,0.06],
       humanize:[0.08,0.2],
@@ -3362,7 +3362,7 @@
       pipes:[{id:"echoCanon", w:0.55, prob:0.45, delay:2},{id:"harmonize", w:0.45, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
     /* /genre-tool:sorcerercape:genres */
     /* genre-tool:wizardcape:genres */
-    wizardcape: { label:"Lydian Apotheosis", info:"A breaks kit at 120-130. Picked bass under a church organ, with an overdrive guitar. Lydian, a light shuffle, euclidean hats.",
+    wizardcape: { label:"Lydian Apotheosis", info:"A broken beat at 120-130. An overdriven guitar over a church organ and a picked bass. Lydian, nine hats spread across the bar and a touch of swing.",
       bpm:[120,130],
       swing:[0,0.06],
       humanize:[0.1,0.25],
@@ -3385,7 +3385,7 @@
       pipes:[{id:"echoCanon", w:0.55, prob:0.45, delay:2},{id:"strum", w:0.55, step:0.02},{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:wizardcape:genres */
     /* genre-tool:meadowmellotron:genres */
-    meadowmellotron: { label:"Pollen Archive", info:"AN open kit at 82-94. Fretless bass under a flute, with a steel string guitar. Dorian, a light shuffle, loose timing, rubato.",
+    meadowmellotron: { label:"Pollen Archive", info:"An open backbeat at 82-94. A steel-string guitar over a flute and a fretless bass. Dorian, a touch of swing, loose timing and rubato.",
       bpm:[82,94],
       swing:[0,0.08],
       humanize:[0.2,0.4],
@@ -3408,7 +3408,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02},{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:meadowmellotron:genres */
     /* genre-tool:hexagonstampede:genres */
-    hexagonstampede: { label:"Benzene Cavalry", info:"A full kit at 130-136. Minimoog lead bass under a rock organ, with a Hammond. A descending minor run, a light shuffle, euclidean hats.",
+    hexagonstampede: { label:"Benzene Cavalry", info:"A straight backbeat at 130-136. A driving Minimoog bass under a rock organ, with a Hammond. A descending minor run, five kicks spread across the bar and a touch of swing.",
       bpm:[130,136],
       swing:[0,0.05],
       humanize:[0.08,0.2],
@@ -3430,7 +3430,7 @@
       pipes:[{id:"echoCanon", w:0.55, prob:0.45, delay:2},{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
     /* /genre-tool:hexagonstampede:genres */
     /* genre-tool:crimsoncourt:genres */
-    crimsoncourt: { label:"Non Euclidean Court", info:"A breaks kit at 106-118. Reese bass under ohh voices, with a distorted lead. Phrygian, straight time, euclidean hats.",
+    crimsoncourt: { label:"Non Euclidean Court", info:"A broken beat at 106-118. A reese bass under wordless voices, with a distorted lead. Phrygian, five kicks and eleven hats spread across the bar and straight time.",
       bpm:[106,118],
       swing:[0,0.04],
       humanize:[0.05,0.18],
@@ -3452,7 +3452,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
     /* /genre-tool:crimsoncourt:genres */
     /* genre-tool:moonlagoon:genres */
-    moonlagoon: { label:"Tidal Locking", info:"A half-time kit at 66-78. Fretless bass under slow strings, with an overdrive guitar. Dream changes, a light shuffle, rubato.",
+    moonlagoon: { label:"Tidal Locking", info:"A half-time beat at 66-78. An overdriven guitar over slow strings and a fretless bass. Dream changes, a touch of swing and rubato.",
       bpm:[66,78],
       swing:[0,0.06],
       humanize:[0.15,0.35],
@@ -3477,7 +3477,7 @@
       pipes:[{id:"callResponse", w:0.5, level:0.85},{id:"strum", w:0.55, step:0.02},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:moonlagoon:genres */
     /* genre-tool:sliderule:genres */
-    sliderule: { label:"Logarithm Drill", info:"A breaks kit at 140-152. Minimoog lead bass with an Oberheim pad on both pad and lead. Mixolydian, straight time, quantized tight, euclidean hats.",
+    sliderule: { label:"Logarithm Drill", info:"A broken beat at 140-152. A syncopated Minimoog bass under Oberheim pads, with an Oberheim lead. Mixolydian, eleven hats spread across the bar, straight time and tight to the grid.",
       bpm:[140,152],
       swing:[0,0.03],
       humanize:[0,0.1],
@@ -3500,7 +3500,7 @@
       pipes:[{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
     /* /genre-tool:sliderule:genres */
     /* genre-tool:crumpetwhirl:genres */
-    crumpetwhirl: { label:"Teatime Anomaly", info:"A breaks kit at 96-108. Fretless bass under a rhodes ep, with a flute. ii-V-I, hard swing, loose timing, rubato.",
+    crumpetwhirl: { label:"Teatime Anomaly", info:"A broken beat at 96-108. A flute over Rhodes and a fretless bass. ii-V-I, swung hard, loose timing and rubato.",
       bpm:[96,108],
       swing:[0.18,0.32],
       humanize:[0.25,0.45],
@@ -3523,7 +3523,7 @@
       pipes:[{id:"echoCanon", w:0.55, prob:0.45, delay:2}] },
     /* /genre-tool:crumpetwhirl:genres */
     /* genre-tool:polygonforge:genres */
-    polygonforge: { label:"Anvil Theorem", info:"A half-time kit at 154-166. Picked bass under an atmosphere, with a palm muted guitar. Phrygian, straight time, quantized tight, euclidean hats.",
+    polygonforge: { label:"Anvil Theorem", info:"A half-time beat at 154-166. A palm-muted guitar over an atmosphere pad and a sludgy picked bass. Phrygian, seven kicks spread across the bar, straight time and tight to the grid.",
       bpm:[154,166],
       swing:[0,0.03],
       humanize:[0,0.08],
@@ -3545,7 +3545,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
     /* /genre-tool:polygonforge:genres */
     /* genre-tool:moptoprattle:genres */
-    moptoprattle: { label:"Tea Chest Poltergeist", info:"A shuffle at 142-156. Acoustic bass under a harmonica, with a steel string guitar. Doo-wop changes, swung, loose timing.",
+    moptoprattle: { label:"Tea Chest Poltergeist", info:"A shuffle at 142-156. A steel-string guitar over a harmonica and a walking upright bass. Doo-wop changes, swung and loose timing.",
       bpm:[142,156],
       swing:[0.05,0.12],
       humanize:[0.2,0.42],
@@ -3566,7 +3566,7 @@
       pipes:[{id:"callResponse", w:0.5, level:0.85},{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:moptoprattle:genres */
     /* genre-tool:meadowjangle:genres */
-    meadowjangle: { label:"Tambourine Equinox", info:"AN open kit at 112-124. Finger bass under a percussive organ, with a steel string guitar. A I-vi-ii-V turn, swung, loose timing.",
+    meadowjangle: { label:"Tambourine Equinox", info:"An open backbeat at 112-124. A steel-string guitar over a percussive organ and a finger bass. A I-vi-ii-V turn, swung and loose timing.",
       bpm:[112,124],
       swing:[0.08,0.16],
       humanize:[0.18,0.38],
@@ -3587,7 +3587,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:meadowjangle:genres */
     /* genre-tool:strawberryfog:genres */
-    strawberryfog: { label:"Doppler Orchard", info:"A half-time kit at 76-90. Saw synth bass under a flute, with a sitar. A two-chord minor drone, a light shuffle.",
+    strawberryfog: { label:"Doppler Orchard", info:"A half-time beat at 76-90. A saw bass under a flute, with a sitar. A two-chord minor drone, a light shuffle.",
       bpm:[76,90],
       swing:[0.02,0.1],
       humanize:[0.15,0.32],
@@ -3609,7 +3609,7 @@
       pipes:[{id:"throwFx", w:0.55, prob:0.6},{id:"densityArc", w:0.4, floor:0.6},{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:strawberryfog:genres */
     /* genre-tool:octopusminuet:genres */
-    octopusminuet: { label:"Cephalopod Gavotte", info:"AN open kit at 90-100. A cello under strings, with a harpsichord. A canon, a light shuffle, rubato.",
+    octopusminuet: { label:"Cephalopod Gavotte", info:"An open backbeat at 90-100. A harpsichord over strings and a walking cello. A canon, a touch of swing and rubato.",
       bpm:[90,100],
       swing:[0,0.06],
       humanize:[0.12,0.26],
@@ -3633,7 +3633,7 @@
       pipes:[{id:"echoCanon", w:0.55, prob:0.45, delay:2},{id:"strum", w:0.55, step:0.02},{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:octopusminuet:genres */
     /* genre-tool:walrusfuzz:genres */
-    walrusfuzz: { label:"Pinniped Overload", info:"A full kit at 131-138. Picked bass under a rock organ, with a distortion guitar. A twelve-bar blues, a light shuffle.",
+    walrusfuzz: { label:"Pinniped Overload", info:"A straight backbeat at 131-138. A distorted guitar over a rock organ and a driving picked bass. A twelve-bar blues, a light shuffle.",
       bpm:[131,138],
       swing:[0.03,0.09],
       humanize:[0.15,0.3],
@@ -3655,7 +3655,7 @@
       pipes:[{id:"callResponse", w:0.5, level:0.85},{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:walrusfuzz:genres */
     /* genre-tool:rooftopholler:genres */
-    rooftopholler: { label:"Fire Escape Psalm", info:"A full kit at 100-110. Finger bass under a rock organ, with a rhodes ep. A funk vamp, swung.",
+    rooftopholler: { label:"Fire Escape Psalm", info:"A straight backbeat at 100-110. Rhodes over a rock organ and a finger bass. A funk vamp, swung.",
       bpm:[100,110],
       swing:[0.08,0.16],
       humanize:[0.15,0.32],
@@ -3677,7 +3677,7 @@
       pipes:[{id:"callResponse", w:0.5, level:0.85},{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:rooftopholler:genres */
     /* genre-tool:submarinelullaby:genres */
-    submarinelullaby: { label:"Hadal Hushabye", info:"A half-time kit at 58-70. Contrabass under strings, with a felt piano. A minor pop cycle, a light shuffle, rubato.",
+    submarinelullaby: { label:"Hadal Hushabye", info:"A half-time beat at 58-70. A felt piano over strings and a double bass. A minor pop cycle, a touch of swing and rubato.",
       bpm:[58,70],
       swing:[0,0.06],
       humanize:[0.15,0.3],
@@ -3701,7 +3701,7 @@
       pipes:[{id:"echoCanon", w:0.55, prob:0.45, delay:2},{id:"densityArc", w:0.4, floor:0.6},{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:submarinelullaby:genres */
     /* genre-tool:tangerinearcade:genres */
-    tangerinearcade: { label:"Spare Room Nebula", info:"AN electro kit at 122-132. Saw synth bass under a Juno pad, with an FM lead. Synthwave changes, a light shuffle.",
+    tangerinearcade: { label:"Spare Room Nebula", info:"An 808 electro beat at 122-132. A saw bass under Juno pads, with an FM lead. Synthwave changes, a touch of swing.",
       bpm:[122,132],
       swing:[0,0.05],
       humanize:[0.04,0.12],
@@ -3722,7 +3722,7 @@
       pipes:[{id:"harmonize", w:0.45, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
     /* /genre-tool:tangerinearcade:genres */
     /* genre-tool:chalkvespers:genres */
-    chalkvespers: { label:"Antiphon Decay", info:"Beatless at 46-55. A church organ under a church organ, with ahh choir. A two-chord minor drone, loose timing, rubato, one chord every 32 beats.",
+    chalkvespers: { label:"Antiphon Decay", info:"A slow 46-55 with no kit under it. A church organ on bass and pad, with a wordless choir. A two-chord minor drone, loose timing, rubato and a chord change every eight bars.",
       bpm:[46,55],
       swing:[0,0.02],
       humanize:[0.3,0.5],
@@ -3747,7 +3747,7 @@
       pipes:[] },
     /* /genre-tool:chalkvespers:genres */
     /* genre-tool:salondawdle:genres */
-    salondawdle: { label:"Ottoman Heat Death", info:"A waltz kit at 57-65 in 3/4. A felt piano under slow strings, with a felt piano. Dream changes, a light shuffle, loose timing, rubato.",
+    salondawdle: { label:"Ottoman Heat Death", info:"A boom-chick-chick waltz at 57-65 in 3/4. A felt piano on bass and lead, under slow strings. Dream changes, a touch of swing, loose timing and rubato.",
       bpm:[57,65],
       swing:[0,0.06],
       humanize:[0.35,0.6],
@@ -3772,7 +3772,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:salondawdle:genres */
     /* genre-tool:candlegauze:genres */
-    candlegauze: { label:"Moonmilk Prism", info:"Beatless at 69-76. A felt piano under strings, with a harp. Dream changes, rubato.",
+    candlegauze: { label:"Moonmilk Prism", info:"An easy 69-76 with no kit under it. A harp over strings and a felt piano. Dream changes, rubato.",
       bpm:[69,76],
       swing:[0,0.02],
       humanize:[0.12,0.26],
@@ -3795,7 +3795,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:candlegauze:genres */
     /* genre-tool:cloisterloom:genres */
-    cloisterloom: { label:"Swarm Motet", info:"Beatless at 78-87. A church organ with ahh choir on both pad and lead. A canon, rubato.",
+    cloisterloom: { label:"Swarm Motet", info:"An easy 78-87 with no kit under it. A church organ under a wordless choir on both pad and lead. A canon, rubato.",
       bpm:[78,87],
       swing:[0,0.02],
       humanize:[0.15,0.35],
@@ -3820,7 +3820,7 @@
       pipes:[{id:"echoCanon", w:0.55, prob:0.45, delay:2},{id:"densityArc", w:0.4, floor:0.6},{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:cloisterloom:genres */
     /* genre-tool:miasmarow:genres */
-    miasmarow: { label:"Planchette Drift", info:"A bare kick at 89-98. A cello under a tremolo, with a clarinet. Bare triads, straight time, loose timing, rubato.",
+    miasmarow: { label:"Planchette Drift", info:"A bare kick at 89-98. A clarinet over a tremolo pad and a cello. Bare triads, straight time, loose timing and rubato.",
       bpm:[89,98],
       swing:[0,0.04],
       humanize:[0.2,0.4],
@@ -3844,7 +3844,7 @@
       pipes:[] },
     /* /genre-tool:miasmarow:genres */
     /* genre-tool:greasepaintoompah:genres */
-    greasepaintoompah: { label:"Actuarial Cabaret", info:"A waltz kit at 103-112 in 3/4. A tuba under an accordion, with a muted trumpet. A descending minor run, swung, loose timing.",
+    greasepaintoompah: { label:"Actuarial Cabaret", info:"A boom-chick-chick waltz at 103-112 in 3/4. A muted trumpet over an accordion and an oom-pah tuba. A descending minor run, swung and loose timing.",
       bpm:[103,112],
       swing:[0.05,0.13],
       humanize:[0.3,0.5],
@@ -3867,7 +3867,7 @@
       pipes:[] },
     /* /genre-tool:greasepaintoompah:genres */
     /* genre-tool:urchinmatinee:genres */
-    urchinmatinee: { label:"Extinction Matinee", info:"A shuffle at 115-124. Acoustic bass under strings, with a brass section. Doo-wop changes, hard swing, loose timing.",
+    urchinmatinee: { label:"Extinction Matinee", info:"A shuffle at 115-124. A brass section over strings and a walking upright bass. Doo-wop changes, swung hard and loose timing.",
       timeFeel:{ pushPullMs:{ bass:6, snare:5 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — PIT-BAND SHUFFLE: walking upright and a matchstick backbeat, both leaning back into the big number
       bpm:[115,124],
       swing:[0.15,0.3],
@@ -3890,7 +3890,7 @@
       pipes:[] },
     /* /genre-tool:urchinmatinee:genres */
     /* genre-tool:marblefury:genres */
-    marblefury: { label:"Tectonic Tantrum", info:"A bare kick at 127-138. A cello with strings on both pad and lead. Epic minor changes, straight time.",
+    marblefury: { label:"Tectonic Tantrum", info:"A bare kick at 127-138. A cello under strings on both pad and lead. Epic minor changes, straight time.",
       bpm:[127,138],
       swing:[0,0.04],
       humanize:[0.15,0.35],
@@ -3911,7 +3911,7 @@
       pipes:[] },
     /* /genre-tool:marblefury:genres */
     /* genre-tool:perukelotto:genres */
-    perukelotto: { label:"Aleatoric Wig", info:"AN open kit at 141-151. A harpsichord under strings, with a harpsichord. A canon, straight time.",
+    perukelotto: { label:"Aleatoric Wig", info:"An open backbeat at 141-151. A harpsichord on bass and lead, under strings. A canon, straight time.",
       bpm:[141,151],
       swing:[0,0.03],
       humanize:[0.1,0.25],
@@ -3932,7 +3932,7 @@
       pipes:[{id:"echoCanon", w:0.55, prob:0.45, delay:2},{id:"strum", w:0.55, step:0.02},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:perukelotto:genres */
     /* genre-tool:beakstampede:genres */
-    beakstampede: { label:"Theropod Liturgy", info:"A tribal kit at 154-168. Contrabass under a tremolo, with a bassoon. Primeval fifths, straight time, euclidean hats.",
+    beakstampede: { label:"Theropod Liturgy", info:"Hand drums and toms at 154-168. A bassoon over a tremolo pad and a double bass. Primeval fifths, five kicks spread across the bar and straight time.",
       bpm:[154,168],
       swing:[0,0.02],
       humanize:[0.1,0.3],
@@ -3956,7 +3956,7 @@
       pipes:[] },
     /* /genre-tool:beakstampede:genres */
     /* genre-tool:velvetconveyor:genres */
-    velvetconveyor: { label:"Assembly Line Rapture", info:"A four-on-the-floor at 114-122. Finger bass under strings, with a vibraphone. A I-vi-ii-V turn, swung.",
+    velvetconveyor: { label:"Assembly Line Rapture", info:"A four-on-the-floor at 114-122. A vibraphone over strings and a walking finger bass. A I-vi-ii-V turn, swung.",
       bpm:[114,122],
       swing:[0.05,0.11],
       humanize:[0.15,0.32],
@@ -3978,7 +3978,7 @@
       pipes:[{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:velvetconveyor:genres */
     /* genre-tool:talcumcasino:genres */
-    talcumcasino: { label:"Centrifuge Ballroom", info:"A four-on-the-floor at 126-136. Picked bass under strings, with a trumpet. A descending minor run, a light shuffle.",
+    talcumcasino: { label:"Centrifuge Ballroom", info:"A four-on-the-floor at 126-136. A trumpet over strings and a picked bass. A descending minor run, a light shuffle.",
       bpm:[126,136],
       swing:[0.03,0.09],
       humanize:[0.12,0.28],
@@ -3999,7 +3999,7 @@
       pipes:[{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:talcumcasino:genres */
     /* genre-tool:capesnap:genres */
-    capesnap: { label:"Mantle Snap", info:"A four-on-the-floor at 101-108. Slap bass under a brass section, with a clean guitar. A funk vamp, a light shuffle.",
+    capesnap: { label:"Mantle Snap", info:"A four-on-the-floor with claps at 101-108. A clean guitar over a brass section and a syncopated slap bass. A funk vamp, a light shuffle.",
       bpm:[101,108],
       swing:[0.04,0.09],
       humanize:[0.15,0.35],
@@ -4021,7 +4021,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:capesnap:genres */
     /* genre-tool:chromeufo:genres */
-    chromeufo: { label:"Saucer Diplomacy", info:"A boom-bap kit at 90-98. Minimoog lead bass under ahh choir, with an overdrive guitar. A funk vamp, swung, loose timing.",
+    chromeufo: { label:"Saucer Diplomacy", info:"A boom-bap beat at 90-98. A syncopated Minimoog bass under a wordless choir, with an overdriven guitar. A funk vamp, swung and loose timing.",
       bpm:[90,98],
       swing:[0.09,0.17],
       humanize:[0.3,0.5],
@@ -4042,7 +4042,7 @@
       pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"callResponse", w:0.5, level:0.85},{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:chromeufo:genres */
     /* genre-tool:mirrorseven:genres */
-    mirrorseven: { label:"Heptagram Vamp", info:"A four-on-the-floor at 96-103. Minimoog lead bass under a rhodes ep, with a clavinet. Neo-soul changes, swung.",
+    mirrorseven: { label:"Heptagram Vamp", info:"A four-on-the-floor with claps at 96-103. A syncopated Minimoog bass under Rhodes, with a clavinet. Neo-soul changes, swung.",
       bpm:[96,103],
       swing:[0.12,0.2],
       humanize:[0.18,0.35],
@@ -4064,7 +4064,7 @@
       pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
     /* /genre-tool:mirrorseven:genres */
     /* genre-tool:sundialsyrup:genres */
-    sundialsyrup: { label:"Honeyed Entropy", info:"A half-time kit at 66-78. Finger bass under a rhodes ep, with a harmonica. Neo-soul changes, swung, loose timing.",
+    sundialsyrup: { label:"Honeyed Entropy", info:"A half-time beat at 66-78. A harmonica over Rhodes and a finger bass. Neo-soul changes, swung and loose timing.",
       bpm:[66,78],
       swing:[0.1,0.2],
       humanize:[0.3,0.5],
@@ -4086,7 +4086,7 @@
       pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"callResponse", w:0.5, level:0.85},{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:sundialsyrup:genres */
     /* genre-tool:sequinfreight:genres */
-    sequinfreight: { label:"Mirrorball Tonnage", info:"A four-on-the-floor at 106-114. Slap bass under strings, with a brass section. A funk vamp, swung.",
+    sequinfreight: { label:"Mirrorball Tonnage", info:"A four-on-the-floor at 106-114. A brass section over strings and a slap bass. A funk vamp, swung.",
       bpm:[106,114],
       swing:[0.06,0.12],
       humanize:[0.12,0.28],
@@ -4107,7 +4107,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
     /* /genre-tool:sequinfreight:genres */
     /* genre-tool:rollerlacquer:genres */
-    rollerlacquer: { label:"Lacquered Orbit", info:"AN electro kit at 110-118. FM lead bass under a Juno pad, with an FM lead. A funk vamp, swung.",
+    rollerlacquer: { label:"Lacquered Orbit", info:"An 808 electro beat at 110-118. An FM bass under Juno pads, with an FM lead. A funk vamp, swung.",
       bpm:[110,118],
       swing:[0.08,0.15],
       humanize:[0.05,0.18],
@@ -4128,7 +4128,7 @@
       pipes:[{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
     /* /genre-tool:rollerlacquer:genres */
     /* genre-tool:longshipwhip:genres */
-    longshipwhip: { label:"Maelstrom Rowing Club", info:"A four-on-the-floor at 175-190. Picked bass under a palm muted guitar, with a crunch guitar. Phrygian, straight time, quantized tight, euclidean hats.",
+    longshipwhip: { label:"Maelstrom Rowing Club", info:"A four-on-the-floor at 175-190. A crunchy guitar over a palm-muted guitar and a sixteenth-note picked bass. Phrygian, seven kicks spread across the bar, straight time and tight to the grid.",
       bpm:[175,190],
       swing:[0,0.02],
       humanize:[0,0.1],
@@ -4151,7 +4151,7 @@
       rhythm:[0.14,0.3] },
     /* /genre-tool:longshipwhip:genres */
     /* genre-tool:bogironwallow:genres */
-    bogironwallow: { label:"Sphagnum Requiem", info:"A half-time kit at 47-57. Reese bass under a cello, with a fuzz lead. A descending minor run, a light shuffle.",
+    bogironwallow: { label:"Sphagnum Requiem", info:"A half-time beat at 47-57. A reese bass under a cello, with a fuzz lead. A descending minor run, a touch of swing.",
       bpm:[47,57],
       swing:[0,0.05],
       humanize:[0.1,0.28],
@@ -4174,7 +4174,7 @@
       rhythm:[0.1,0.25] },
     /* /genre-tool:bogironwallow:genres */
     /* genre-tool:barrowwake:genres */
-    barrowwake: { label:"Cairn Respiration", info:"A bare kick at 40-48. Sub bass under a church organ, with bells. A two-chord vamp, straight time.",
+    barrowwake: { label:"Cairn Respiration", info:"A bare kick at 40-48. A sub bass under a church organ, with bells. A two-chord vamp, straight time.",
       bpm:[40,48],
       swing:[0,0.03],
       humanize:[0.1,0.3],
@@ -4197,7 +4197,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
     /* /genre-tool:barrowwake:genres */
     /* genre-tool:ravensquall:genres */
-    ravensquall: { label:"Whiteout Psalter", info:"A pulse kit at 160-174. Reese bass under a saw synth pad, with a fuzz lead. Bare triads, straight time, quantized tight.",
+    ravensquall: { label:"Whiteout Psalter", info:"A driving four at 160-174. A driving reese bass under saw pads, with a fuzz lead. Bare triads, straight time and tight to the grid.",
       bpm:[160,174],
       swing:[0,0.02],
       humanize:[0,0.12],
@@ -4219,7 +4219,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
     /* /genre-tool:ravensquall:genres */
     /* genre-tool:runeromp:genres */
-    runeromp: { label:"Wolf Winter Ceilidh", info:"A tribal kit at 100-118. Sub bass under strings, with a fiddle. Primeval fifths, a light shuffle.",
+    runeromp: { label:"Wolf Winter Ceilidh", info:"Hand drums and toms at 100-118. A sludgy sub bass under strings, with a fiddle. Primeval fifths, a light shuffle.",
       bpm:[100,118],
       swing:[0.02,0.08],
       humanize:[0.15,0.3],
@@ -4240,7 +4240,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:runeromp:genres */
     /* genre-tool:meadhallbellow:genres */
-    meadhallbellow: { label:"Diaphragm Muster", info:"A tribal kit at 86-102. Sub bass under ahh choir, with ohh voices. Epic minor changes, a light shuffle.",
+    meadhallbellow: { label:"Diaphragm Muster", info:"Hand drums and toms at 86-102. A sub bass under a wordless choir, with wordless voices. Epic minor changes, a touch of swing.",
       bpm:[86,102],
       swing:[0,0.05],
       humanize:[0.1,0.25],
@@ -4262,7 +4262,7 @@
       pipes:[{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:meadhallbellow:genres */
     /* genre-tool:valkyrieswoop:genres */
-    valkyrieswoop: { label:"Soprano Ballistics", info:"A four-on-the-floor at 144-156. Picked bass under slow strings, with a solo vox. Epic minor changes, straight time, euclidean hats.",
+    valkyrieswoop: { label:"Soprano Ballistics", info:"A four-on-the-floor at 144-156. A solo voice over slow strings and a driving picked bass. Epic minor changes, seven kicks spread across the bar and straight time.",
       bpm:[144,156],
       swing:[0,0.03],
       humanize:[0.03,0.12],
@@ -4286,7 +4286,7 @@
       pipes:[{id:"harmonize", w:0.45, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
     /* /genre-tool:valkyrieswoop:genres */
     /* genre-tool:permafrostveil:genres */
-    permafrostveil: { label:"Glacial Reliquary", info:"Beatless at 54-68. Sub bass under bowed glass, with a music box. Bare triads.",
+    permafrostveil: { label:"Glacial Reliquary", info:"A slow 54-68 with no kit under it. A sub bass under bowed glass, with a music box. Bare triads.",
       bpm:[54,68],
       swing:[0,0.03],
       humanize:[0.1,0.3],
@@ -4309,7 +4309,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:permafrostveil:genres */
     /* genre-tool:crateflip:genres */
-    crateflip: { label:"Shellac Excavation", info:"A boom-bap kit at 94-102. Acoustic bass under strings, with a rhodes ep. Neo-soul changes, swung.",
+    crateflip: { label:"Shellac Excavation", info:"A boom-bap beat at 94-102. Rhodes over strings and an upright bass. Neo-soul changes, swung.",
       timeFeel:{ pushPullMs:{ bass:8, hat:-4 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — DILLA DRAG: the upright walking under a chopped 78 sits behind the knock
       bpm:[94,102],
       swing:[0.08,0.18],
@@ -4331,7 +4331,7 @@
       pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:crateflip:genres */
     /* genre-tool:lowglide:genres */
-    lowglide: { label:"Hydraulic Mirage", info:"A boom-bap kit at 88-96. Sub bass under strings, with a saw synth lead. A funk vamp, swung.",
+    lowglide: { label:"Hydraulic Mirage", info:"A boom-bap beat at 88-96. A syncopated sub bass under strings, with a saw lead. A funk vamp, swung.",
       timeFeel:{ pushPullMs:{ bass:-5, snare:7, hat:-3 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — WEST-COAST FUNK: the g-funk pocket — sub on top, snare dragged, hats riding ahead
       bpm:[88,96],
       swing:[0.06,0.16],
@@ -4353,7 +4353,7 @@
       pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
     /* /genre-tool:lowglide:genres */
     /* genre-tool:subrattle:genres */
-    subrattle: { label:"Infrasound Omen", info:"A trap kit at 136-144. Sub bass under strings, with a kalimba. A two-chord minor drone, straight time.",
+    subrattle: { label:"Infrasound Omen", info:"Trap kicks and rolling hats at 136-144. A sub bass under strings, with a kalimba. A two-chord minor drone, straight time.",
       bpm:[136,144],
       swing:[0,0.04],
       humanize:[0.03,0.12],
@@ -4374,7 +4374,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:subrattle:genres */
     /* genre-tool:hollerknock:genres */
-    hollerknock: { label:"Trunk Poltergeist", info:"A trap kit at 74-82. Sub bass under a saw synth pad, with brass. Phrygian, a light shuffle.",
+    hollerknock: { label:"Trunk Poltergeist", info:"Trap kicks and rolling hats at 74-82. A sub bass under saw pads, with brass. Phrygian, a touch of swing.",
       bpm:[74,82],
       swing:[0,0.06],
       humanize:[0.04,0.14],
@@ -4395,7 +4395,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:hollerknock:genres */
     /* genre-tool:flannelburst:genres */
-    flannelburst: { label:"Thrift Store Supernova", info:"A four-on-the-floor at 114-124. Picked bass with a distortion guitar on both pad and lead. A descending minor run, a light shuffle.",
+    flannelburst: { label:"Thrift Store Supernova", info:"A four-on-the-floor at 114-124. A driving picked bass under a distorted guitar on both pad and lead. A descending minor run, a touch of swing.",
       bpm:[114,124],
       swing:[0,0.05],
       humanize:[0.12,0.3],
@@ -4416,7 +4416,7 @@
       pipes:[{id:"callResponse", w:0.5, level:0.85},{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:flannelburst:genres */
     /* genre-tool:drywire:genres */
-    drywire: { label:"Ohmic Grievance", info:"A four-on-the-floor at 100-112. Picked bass with an overdrive guitar on both pad and lead. A descending minor run, straight time.",
+    drywire: { label:"Ohmic Grievance", info:"A four-on-the-floor at 100-112. A driving picked bass under an overdriven guitar on both pad and lead. A descending minor run, straight time.",
       bpm:[100,112],
       swing:[0,0.04],
       humanize:[0.1,0.25],
@@ -4437,7 +4437,7 @@
       pipes:[{id:"callResponse", w:0.5, level:0.85},{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:drywire:genres */
     /* genre-tool:heartsprint:genres */
-    heartsprint: { label:"Tachycardia Anthem", info:"A four-on-the-floor at 158-170. Picked bass under a palm muted guitar, with an overdrive guitar. Four-chord changes, straight time.",
+    heartsprint: { label:"Tachycardia Anthem", info:"A four-on-the-floor at 158-170. An overdriven guitar over a palm-muted guitar and a driving picked bass. Four-chord changes, straight time.",
       bpm:[158,170],
       swing:[0,0.03],
       humanize:[0.05,0.15],
@@ -4458,7 +4458,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:heartsprint:genres */
     /* genre-tool:bouffantbeat:genres */
-    bouffantbeat: { label:"Beehive Antenna", info:"A four-on-the-floor at 116-124. Picked bass under a percussive organ, with a clean guitar. Doo-wop changes, a light shuffle.",
+    bouffantbeat: { label:"Beehive Antenna", info:"A four-on-the-floor at 116-124. A clean guitar over a percussive organ and a picked bass. Doo-wop changes, a light shuffle.",
       bpm:[116,124],
       swing:[0.02,0.1],
       humanize:[0.15,0.3],
@@ -4479,7 +4479,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02},{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:bouffantbeat:genres */
     /* genre-tool:chantcircuit:genres */
-    chantcircuit: { label:"Agitprop Oscillator", info:"AN electro kit at 122-130. Saw synth bass with a saw synth on both pad and lead. A descending minor run, a light shuffle.",
+    chantcircuit: { label:"Agitprop Oscillator", info:"An 808 electro beat at 122-130. A driving saw bass under saw pads, with a saw lead. A descending minor run, a touch of swing.",
       bpm:[122,130],
       swing:[0,0.05],
       humanize:[0.03,0.12],
@@ -4501,7 +4501,7 @@
       pipes:[] },
     /* /genre-tool:chantcircuit:genres */
     /* genre-tool:halogloss:genres */
-    halogloss: { label:"Gated Seraphim", info:"A four-on-the-floor at 116-124. FM lead bass under strings, with brass. Neo-soul changes, a light shuffle.",
+    halogloss: { label:"Gated Seraphim", info:"A four-on-the-floor at 116-124. An FM bass under strings, with brass. Neo-soul changes, a touch of swing.",
       bpm:[116,124],
       swing:[0,0.06],
       humanize:[0.05,0.15],
@@ -4522,7 +4522,7 @@
       pipes:[{id:"harmonize", w:0.45, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
     /* /genre-tool:halogloss:genres */
     /* genre-tool:octanerush:genres */
-    octanerush: { label:"Redline Ascension", info:"A four-on-the-floor at 136-142. Saw synth bass with a saw synth on both pad and lead. A descending minor run, straight time, quantized tight.",
+    octanerush: { label:"Redline Ascension", info:"A four-on-the-floor at 136-142. A saw bass under saw pads, with a saw lead. A descending minor run, straight time and tight to the grid.",
       bpm:[136,142],
       swing:[0,0.03],
       humanize:[0,0.02],
@@ -4543,7 +4543,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
     /* /genre-tool:octanerush:genres */
     /* genre-tool:runwaystomp:genres */
-    runwaystomp: { label:"Taxonomy Strut", info:"A four-on-the-floor at 124-130. Saw synth bass under strings, with an orchestra hit. A minor house vamp, a light shuffle.",
+    runwaystomp: { label:"Taxonomy Strut", info:"A four-on-the-floor with claps at 124-130. A saw bass under strings, with orchestra hits. A minor house vamp, a light shuffle.",
       bpm:[124,130],
       swing:[0.02,0.1],
       humanize:[0.03,0.12],
@@ -4564,7 +4564,7 @@
       pipes:[{id:"octavePump", w:0.5, prob:0.4},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:runwaystomp:genres */
     /* genre-tool:silkmist:genres */
-    silkmist: { label:"Jade Vapor Archive", info:"A bare kick at 68-88. Acoustic bass under strings, with a koto. Mixolydian, a light shuffle.",
+    silkmist: { label:"Jade Vapor Archive", info:"A bare kick at 68-88. A koto over strings and an upright bass. Mixolydian, a touch of swing.",
       bpm:[68,88],
       swing:[0,0.06],
       humanize:[0.15,0.35],
@@ -4586,7 +4586,7 @@
       pipes:[{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:silkmist:genres */
     /* genre-tool:taqsim:genres */
-    taqsim: { label:"Sirocco Sermon", info:"A tribal kit at 66-90. Acoustic bass under strings, with a sitar. A hijaz maqam, a light shuffle, loose timing.",
+    taqsim: { label:"Sirocco Sermon", info:"Hand drums and toms at 66-90. A sitar over strings and an upright bass. A hijaz maqam, a light shuffle and loose timing.",
       bpm:[66,90],
       swing:[0.02,0.1],
       humanize:[0.2,0.4],
@@ -4608,7 +4608,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:taqsim:genres */
     /* genre-tool:vespers:genres */
-    vespers: { label:"Basalt Antiphon", info:"Beatless at 48-70. Contrabass with ahh choir on both pad and lead. A two-chord minor drone.",
+    vespers: { label:"Basalt Antiphon", info:"A slow 48-70 with no kit under it. A double bass under a wordless choir on both pad and lead. A two-chord minor drone.",
       bpm:[48,70],
       swing:[0,0.04],
       humanize:[0.1,0.3],
@@ -4630,7 +4630,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6},{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:vespers:genres */
     /* genre-tool:rnb:genres */
-    rnb: { label:"Quiet Storm Advisory", info:"A swingbeat kit at 62-82. Finger bass under strings, with a solo vox. Neo-soul changes, swung.",
+    rnb: { label:"Quiet Storm Advisory", info:"A swingbeat at 62-82. A solo voice over strings and a finger bass. Neo-soul changes, swung.",
       timeFeel:{ pushPullMs:{ bass:-4, snare:10 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — QUIET STORM: the most laid-back backbeat in the catalogue (10 ms at 72bpm) over a fingered bass that still leads — the slow-jam signature
       bpm:[62,82],
       swing:[0.05,0.12],
@@ -4653,7 +4653,7 @@
       pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:rnb:genres */
     /* genre-tool:gospel:genres */
-    gospel: { label:"Rapture Logistics", info:"A full kit at 84-102. Finger bass under a church organ, with ahh choir. Doo-wop changes, swung.",
+    gospel: { label:"Rapture Logistics", info:"A straight backbeat at 84-102. A wordless choir over a church organ and a walking finger bass. Doo-wop changes, swung.",
       timeFeel:{ pushPullMs:{ bass:5, snare:7 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — CHURCH POCKET: unlike funk, gospel leans the WHOLE rhythm section back — the choir breathes and the band waits for it
       bpm:[84,102],
       swing:[0.06,0.14],
@@ -4676,7 +4676,7 @@
       pipes:[{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:gospel:genres */
     /* genre-tool:altcountry:genres */
-    altcountry: { label:"Tumbleweed Perihelion", info:"A boom-bap kit at 88-104. Finger bass under a rhodes ep, with a clean guitar. Four-chord changes, a light shuffle, loose timing.",
+    altcountry: { label:"Tumbleweed Perihelion", info:"A boom-bap beat at 88-104. A clean guitar over Rhodes and a finger bass. Four-chord changes, a light shuffle and loose timing.",
       timeFeel:{ pushPullMs:{ bass:6, hat:-4 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — AMERICANA: dusty lay-back on the bass, brushed hats a touch on top
       bpm:[88,104],
       swing:[0.02,0.07],
@@ -4699,7 +4699,7 @@
       pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:altcountry:genres */
     /* genre-tool:yachtrock:genres */
-    yachtrock: { label:"Isobar Regatta", info:"A full kit at 104-120. Fretless bass under a rhodes ep, with an alto sax. Neo-soul changes, a light shuffle.",
+    yachtrock: { label:"Isobar Regatta", info:"A straight backbeat at 104-120. An alto sax over Rhodes and a walking fretless bass. Neo-soul changes, a touch of swing.",
       bpm:[104,120],
       swing:[0.02,0.06],
       humanize:[0.08,0.2],
@@ -4721,7 +4721,7 @@
       pipes:[{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:yachtrock:genres */
     /* genre-tool:honkytonk:genres */
-    honkytonk: { label:"Last Call Cosmology", info:"A shuffle at 100-114. Acoustic bass under a honky tonk, with a steel string guitar. Four-chord changes, swung.",
+    honkytonk: { label:"Last Call Cosmology", info:"A shuffle at 100-114. A steel-string guitar over a honky-tonk piano and a walking upright bass. Four-chord changes, swung.",
       timeFeel:{ pushPullMs:{ bass:6, snare:6 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — BARROOM SHUFFLE: the opposite of bluegrass — last call, and the band leans back into it
       bpm:[100,114],
       swing:[0.13,0.19],
@@ -4744,7 +4744,7 @@
       pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"callResponse", w:0.5, level:0.85},{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:honkytonk:genres */
     /* genre-tool:countrypop:genres */
-    countrypop: { label:"Rhinestone Singularity", info:"A full kit at 128-146. Pop bass under strings, with a clean guitar. Four-chord changes, a light shuffle.",
+    countrypop: { label:"Rhinestone Singularity", info:"A straight backbeat at 128-146. A clean guitar over strings and a pop bass. Four-chord changes, a touch of swing.",
       bpm:[128,146],
       swing:[0.02,0.06],
       humanize:[0.08,0.2],
@@ -4766,7 +4766,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:countrypop:genres */
     /* genre-tool:folk:genres */
-    folk: { label:"Kettle Eschaton", info:"Beatless at 98-116. Acoustic bass under a nylon string guitar, with a steel string guitar. Four-chord changes, a light shuffle, loose timing.",
+    folk: { label:"Kettle Eschaton", info:"A steady 98-116 with no kit under it. A steel-string guitar over a nylon-string guitar and an upright bass. Four-chord changes, a touch of swing and loose timing.",
       bpm:[98,116],
       swing:[0.02,0.06],
       humanize:[0.18,0.4],
@@ -4789,7 +4789,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02},{id:"harmonize", w:0.45, prob:0.35}] },
     /* /genre-tool:folk:genres */
     /* genre-tool:romanticism:genres */
-    romanticism: { label:"Candelabra Anomaly", info:"Beatless at 56-84. A yamaha grand piano under strings, with a yamaha grand piano. Royal-road changes, rubato.",
+    romanticism: { label:"Candelabra Anomaly", info:"An easy 56-84 with no kit under it. A grand piano on bass and lead, under strings. Royal-road changes, rubato.",
       bpm:[56,84],
       swing:[0,0.04],
       humanize:[0.14,0.3],
@@ -4812,7 +4812,7 @@
       pipes:[{id:"echoCanon", w:0.55, prob:0.45, delay:2},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:romanticism:genres */
     /* genre-tool:chamber:genres */
-    chamber: { label:"Rosin Seance", info:"Beatless at 72-100. A cello under strings, with a violin. A canon, rubato.",
+    chamber: { label:"Rosin Seance", info:"An easy 72-100 with no kit under it. A violin over strings and a walking cello. A canon, rubato.",
       bpm:[72,100],
       swing:[0,0.03],
       humanize:[0.06,0.16],
@@ -4835,7 +4835,7 @@
       pipes:[{id:"echoCanon", w:0.55, prob:0.45, delay:2},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:chamber:genres */
     /* genre-tool:impressionism:genres */
-    impressionism: { label:"Lavender Uncertainty", info:"Beatless at 58-86. A harp under slow strings, with a celesta. Whole-tone planing, rubato.",
+    impressionism: { label:"Lavender Uncertainty", info:"An easy 58-86 with no kit under it. A celesta over slow strings and a harp. Whole-tone planing, rubato.",
       bpm:[58,86],
       swing:[0,0.04],
       humanize:[0.08,0.2],
@@ -4858,7 +4858,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:impressionism:genres */
     /* genre-tool:postminimal:genres */
-    postminimal: { label:"Tessellation Vigil", info:"Beatless at 80-108. A felt piano under slow strings, with a celesta. Four-chord changes, rubato, one chord every 16 beats.",
+    postminimal: { label:"Tessellation Vigil", info:"An easy 80-108 with no kit under it. A celesta over slow strings and a felt piano. Four-chord changes, rubato and a chord change every four bars.",
       bpm:[80,108],
       swing:[0,0.02],
       humanize:[0.02,0.08],
@@ -4881,7 +4881,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:postminimal:genres */
     /* genre-tool:symphony:genres */
-    symphony: { label:"Timpani Cosmogenesis", info:"Beatless at 76-122. Contrabass under strings, with a violin. Epic minor changes, rubato.",
+    symphony: { label:"Timpani Cosmogenesis", info:"A steady 76-122 with no kit under it. A violin over strings and a double bass. Epic minor changes, rubato.",
       bpm:[76,122],
       swing:[0,0.03],
       humanize:[0.07,0.18],
@@ -4904,7 +4904,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:symphony:genres */
     /* genre-tool:punk:genres */
-    punk: { label:"Particle Tantrum", info:"A full kit at 156-192. Picked bass under a rock organ, with a distortion guitar. Four-chord changes, straight time, rubato.",
+    punk: { label:"Particle Tantrum", info:"A straight backbeat at 156-192. A distorted guitar over a rock organ and a picked bass. Four-chord changes, straight time and rubato.",
       bpm:[156,192],
       swing:[0,0.02],
       humanize:[0.03,0.1],
@@ -4927,7 +4927,7 @@
       pipes:[{id:"callResponse", w:0.5, level:0.85},{id:"strum", w:0.55, step:0.02},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:punk:genres */
     /* genre-tool:indie:genres */
-    indie: { label:"Duvet Cosmonaut", info:"A full kit at 104-134. Picked bass under a jazz guitar, with a clean guitar. Four-chord changes, straight time, rubato.",
+    indie: { label:"Duvet Cosmonaut", info:"A straight backbeat at 104-134. A clean guitar over a jazz guitar and a picked bass. Four-chord changes, straight time and rubato.",
       bpm:[104,134],
       swing:[0,0.03],
       humanize:[0.06,0.16],
@@ -4950,7 +4950,7 @@
       pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"echoCanon", w:0.55, prob:0.45, delay:2},{id:"strum", w:0.55, step:0.02}] },
     /* /genre-tool:indie:genres */
     /* genre-tool:grunge:genres */
-    grunge: { label:"Flannel Abyss", info:"A full kit at 92-128. Picked bass under a rock organ, with an overdrive guitar. Four-chord changes, straight time, rubato.",
+    grunge: { label:"Flannel Abyss", info:"A straight backbeat at 92-128. An overdriven guitar over a rock organ and a picked bass. Four-chord changes, straight time and rubato.",
       bpm:[92,128],
       swing:[0,0.04],
       humanize:[0.05,0.14],
@@ -4973,7 +4973,7 @@
       pipes:[{id:"callResponse", w:0.5, level:0.85},{id:"strum", w:0.55, step:0.02},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:grunge:genres */
     /* genre-tool:postrock:genres */
-    postrock: { label:"Slow Dawn Array", info:"A full kit at 72-106. Fretless bass under strings, with a clean guitar. Four-chord changes, straight time, rubato.",
+    postrock: { label:"Slow Dawn Array", info:"A straight backbeat at 72-106. A clean guitar over strings and a fretless bass. Four-chord changes, straight time and rubato.",
       bpm:[72,106],
       swing:[0,0.04],
       humanize:[0.05,0.14],
@@ -4996,7 +4996,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:postrock:genres */
     /* genre-tool:cryptvespers:genres */
-    cryptvespers: { label:"Reliquary Smoke", info:"A boom-bap kit at 59-74. A church organ under a church organ, with ahh choir. A two-chord minor drone, swung, loose timing, rubato, one chord every 32 beats.",
+    cryptvespers: { label:"Reliquary Smoke", info:"A boom-bap beat at 59-74. A church organ on bass and pad, with a wordless choir. A two-chord minor drone, swung, loose timing, rubato and a chord change every eight bars.",
       bpm:[59,74],
       swing:[0.075,0.16],
       humanize:[0.25,0.475],
@@ -5019,7 +5019,7 @@
       pipes:[{id:"ghost", w:0.55, prob:0.35}] },
     /* /genre-tool:cryptvespers:genres */
     /* genre-tool:nocturnesmash:genres */
-    nocturnesmash: { label:"Chandelier Shrapnel", info:"A jungle kit at 114-141. A yamaha grand piano under strings, with a yamaha grand piano. Royal-road changes, a light shuffle, rubato.",
+    nocturnesmash: { label:"Chandelier Shrapnel", info:"A chopped jungle kit at 114-141. A grand piano on bass and lead, under strings. Royal-road changes, a touch of swing and rubato.",
       bpm:[114,141],
       swing:[0,0.05],
       humanize:[0.17,0.35],
@@ -5042,7 +5042,7 @@
       pipes:[{id:"echoCanon", w:0.55, prob:0.45, delay:2},{id:"densityArc", w:0.4, floor:0.6},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
     /* /genre-tool:nocturnesmash:genres */
     /* genre-tool:glacialgabber:genres */
-    glacialgabber: { label:"Permafrost Bludgeon", info:"A four-on-the-floor at 107-129. Acid bass under ahh choir, with a harp. A two-chord minor drone, straight time, one chord every 32 beats.",
+    glacialgabber: { label:"Permafrost Bludgeon", info:"A four-on-the-floor at 107-129. An acid bass under a wordless choir, with a harp. A two-chord minor drone, straight time and a chord change every eight bars.",
       bpm:[107,129],
       swing:[0,0.015],
       humanize:[0.05,0.19],
@@ -5064,7 +5064,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02},{id:"octavePump", w:0.5, prob:0.4},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:glacialgabber:genres */
     /* genre-tool:breakbop:genres */
-    breakbop: { label:"Amen Hypotenuse", info:"A shuffle at 177-196. Acoustic bass under a bright yamaha grand, with an alto sax. ii-V-I, hard swing.",
+    breakbop: { label:"Amen Hypotenuse", info:"A shuffle at 177-196. An alto sax over a bright grand piano and a walking upright bass. ii-V-I, swung hard.",
       bpm:[177,196],
       swing:[0.14,0.29],
       humanize:[0.175,0.375],
@@ -5085,7 +5085,7 @@
       pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"callResponse", w:0.5, level:0.85},{id:"throwFx", w:0.55, prob:0.6}] },
     /* /genre-tool:breakbop:genres */
     /* genre-tool:atticlament:genres */
-    atticlament: { label:"Servo Elegy", info:"A bare kick at 87-97. Sub bass under brass, with a trumpet. Dream changes, a light shuffle, rubato.",
+    atticlament: { label:"Servo Elegy", info:"A bare kick at 87-97. A sub bass under brass, with a trumpet. Dream changes, a touch of swing and rubato.",
       bpm:[87,97],
       swing:[0.0035,0.0435],
       humanize:[0.113,0.233],
@@ -5107,7 +5107,7 @@
       pipes:[{id:"harmonize", w:0.45, prob:0.35},{id:"sweepArc", w:0.45, lo:0.7, hi:2},{id:"vibratoSwell", w:0.4, depth:0.25}] },
     /* /genre-tool:atticlament:genres */
     /* genre-tool:hazebunker:genres */
-    hazebunker: { label:"Fallout Watercolor", info:"A pulse kit at 91-109. A harp under slow strings, with a celesta. Whole-tone planing, a light shuffle, rubato.",
+    hazebunker: { label:"Fallout Watercolor", info:"A driving four at 91-109. A celesta over slow strings and a harp. Whole-tone planing, a touch of swing and rubato.",
       bpm:[91,109],
       swing:[0.0065,0.0515],
       humanize:[0.0855,0.1905],
@@ -5130,7 +5130,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02},{id:"densityArc", w:0.4, floor:0.6},{id:"sweepArc", w:0.45, lo:0.7, hi:2}] },
     /* /genre-tool:hazebunker:genres */
     /* genre-tool:salsa:genres */
-    salsa: { label:"Clave Reactor", info:"A full kit at 158-190. Acoustic bass under an electric piano, with a brass section. ii-V-I, a light shuffle, rubato.",
+    salsa: { label:"Clave Reactor", info:"A straight backbeat at 158-190. A brass section over an electric piano and an upright bass. ii-V-I, a touch of swing and rubato.",
       timeFeel:{ pushPullMs:{ bass:-5, snare:3 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — TUMBAO: the salsa bass ANTICIPATES — it is the one instrument in the band that is supposed to arrive early
       bpm:[158,190],
       swing:[0,0.06],
@@ -5154,7 +5154,7 @@
       pipes:[{id:"callResponse", w:0.5, level:0.85},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:salsa:genres */
     /* genre-tool:samba:genres */
-    samba: { label:"Surdo Swarm Theory", info:"A tribal kit at 96-112. Acoustic bass with a nylon string guitar on both pad and lead. ii-V-I, swung, rubato.",
+    samba: { label:"Surdo Swarm Theory", info:"Hand drums and toms at 96-112. An upright bass under a nylon-string guitar on both pad and lead. ii-V-I, swung and rubato.",
       timeFeel:{ pushPullMs:{ bass:-4, hat:-5 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — SAMBA: the caixa/agogo sit ahead of the surdo (the documented systematic 16th displacement); the bass rides with them
       bpm:[96,112],
       swing:[0.04,0.14],
@@ -5178,7 +5178,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:samba:genres */
     /* genre-tool:reggaeton:genres */
-    reggaeton: { label:"Dembow Tectonics", info:"A full kit at 88-100. A synth bass 1 with a synth brass 1 on both pad and lead. A descending minor run, a light shuffle, rubato.",
+    reggaeton: { label:"Dembow Tectonics", info:"A straight backbeat at 88-100. A synth bass under synth brass on both pad and lead. A descending minor run, a touch of swing and rubato.",
       bpm:[88,100],
       swing:[0,0.05],
       humanize:[0.04,0.12],
@@ -5201,7 +5201,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:reggaeton:genres */
     /* genre-tool:raga:genres */
-    raga: { label:"Tanpura Nebula", info:"A tribal kit at 64-92. Contrabass under strings, with a sitar. A two-chord minor drone, straight time, rubato, one chord every 16 beats.",
+    raga: { label:"Tanpura Nebula", info:"Hand drums and toms at 64-92. A sitar over strings and a double bass. A two-chord minor drone, straight time, rubato and a chord change every four bars.",
       bpm:[64,92],
       swing:[0,0.04],
       humanize:[0.1,0.26],
@@ -5224,7 +5224,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:raga:genres */
     /* genre-tool:celtic:genres */
-    celtic: { label:"Peat Bog Orrery", info:"A 6/8 kit at 108-134. Acoustic bass under strings, with a fiddle. Dorian, a light shuffle, rubato.",
+    celtic: { label:"Peat Bog Orrery", info:"A 6/8 lilt at 108-134. A fiddle over strings and an upright bass. Dorian, a light shuffle and rubato.",
       bpm:[108,134],
       swing:[0.02,0.1],
       humanize:[0.08,0.2],
@@ -5247,7 +5247,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:celtic:genres */
     /* genre-tool:trap:genres */
-    trap: { label:"Locust Arithmetic", info:"A trap kit at 128-152. A synth bass 1 under a synth brass 1, with a celesta. A descending minor run, straight time, rubato.",
+    trap: { label:"Locust Arithmetic", info:"Trap kicks and rolling hats at 128-152. A celesta over synth brass and a synth bass. A descending minor run, straight time and rubato.",
       timeFeel:{ pushPullMs:{ bass:6, hat:-3 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — 808: the long-attack sub lands behind the kick while the triplet hat rolls ride on top — the two-speed feel that reads as 'trap' before any note does
       bpm:[128,152],
       swing:[0,0.04],
@@ -5271,7 +5271,7 @@
       pipes:[{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:trap:genres */
     /* genre-tool:bigband:genres */
-    bigband: { label:"Ballroom Leviathan", info:"A shuffle at 122-178. Acoustic bass with a brass section on both pad and lead. ii-V-I, hard swing, rubato.",
+    bigband: { label:"Ballroom Leviathan", info:"A shuffle at 122-178. A walking upright bass under a brass section on both pad and lead. ii-V-I, swung hard and rubato.",
       timeFeel:{ pushPullMs:{ hat:-4, snare:4, bass:4 } },   // GROOVE (docs/MUSIC-MIND.md §Micro-timing) — SWING: the shout-chorus pocket. hat, not ride — bigband runs the jungle kit, which has no ride lane
       bpm:[122,178],
       swing:[0.12,0.24],
@@ -5295,7 +5295,7 @@
       pipes:[{id:"ghost", w:0.55, prob:0.35},{id:"callResponse", w:0.5, level:0.85},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:bigband:genres */
     /* genre-tool:flamenco:genres */
-    flamenco: { label:"Duende Combustion", info:"A tribal kit at 120-176. A nylon string guitar with a nylon string guitar on both pad and lead. An andalusian cadence, a light shuffle, rubato.",
+    flamenco: { label:"Duende Combustion", info:"Hand drums and toms at 120-176. A nylon-string guitar and nothing else. An andalusian cadence, a touch of swing and rubato.",
       bpm:[120,176],
       swing:[0,0.06],
       humanize:[0.1,0.26],
@@ -5318,7 +5318,7 @@
       pipes:[{id:"strum", w:0.55, step:0.02},{id:"densityArc", w:0.4, floor:0.6}] },
     /* /genre-tool:flamenco:genres */
     /* genre-tool:ragtime:genres */
-    ragtime: { label:"Perforated Afterlife", info:"Beatless at 104-126. A piano with a honky tonk on both pad and lead. The rag cycle, a light shuffle, rubato.",
+    ragtime: { label:"Perforated Afterlife", info:"A steady 104-126 with no kit under it. A piano under a honky-tonk piano on both pad and lead. The rag cycle, a touch of swing and rubato.",
       bpm:[104,126],
       swing:[0,0.06],
       humanize:[0.04,0.12],

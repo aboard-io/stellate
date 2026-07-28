@@ -1398,7 +1398,13 @@
   // `sp_st_akiba` -> `sp_st`, `sp_auction_2` -> `sp_auction` — exactly the
   // SOURCE_POOLS naming, so a station name can only ever become another station
   // name and an auctioneer another auctioneer.
-  const govFamily=(id)=>{ const t=id.split("_"); return t.length>=3 ? t[0]+"_"+t[1] : t[0]; };
+  // A DECLARED family (src.fam, from the registry's VOICE_FAMILIES) wins over the
+  // id shape: it is how a flat two-token id that belongs to a curated cast — the
+  // Naropa readings, `vx_burroughs`/`vx_waldman`/… — names its cast, since its id
+  // cannot. Without it those ids fall to the `vx` shelf and get DROPPED where a
+  // three-token id would be substituted.
+  const govFamily=(id, src)=>{ if(src&&src.fam) return src.fam;
+    const t=id.split("_"); return t.length>=3 ? t[0]+"_"+t[1] : t[0]; };
   // ROTATABLE families only. A three-token id belongs to a curated pool whose
   // members are interchangeable by construction; `hp_`/`wd_` are single-topic
   // casts (the 24-voice school roster, the strain list) and are equally safe.
@@ -1407,7 +1413,9 @@
   // rotating inside them would swap register ("REWIND!" in a dead mall). Those
   // ids are capped and spaced but never substituted — a thinner line is a much
   // smaller artefact than the wrong voice.
-  const govRotatable=(fam)=>fam.indexOf("_")>0 || fam==="hp" || fam==="wd";
+  // (a DECLARED family is rotatable by definition — declaring it IS the curation;
+  // `declared` carries the ones resolved in this state.)
+  const govRotatable=(fam, declared)=>fam.indexOf("_")>0 || fam==="hp" || fam==="wd" || (declared&&declared.has(fam));
   function govIsVoice(id, src){
     if(!GOV_VOICE_RE.test(id)) return false;
     const k=src&&src.kind;                       // a voice-prefixed id declared break/chop/hit is not an utterance
@@ -1415,9 +1423,9 @@
   }
   function governVoiceRepeats(found, srcById, state){
     if(!found||!found.length||!srcById) return found;
-    const byNum={}; let any=false;
+    const byNum={}; let any=false; const declared=new Set();
     for(const id in srcById){ const s=srcById[id];
-      if(s && govIsVoice(id,s)){ byNum[s.tableNum]={id,src:s}; any=true; } }
+      if(s && govIsVoice(id,s)){ byNum[s.tableNum]={id,src:s}; any=true; if(s.fam) declared.add(s.fam); } }
     if(!any) return found;
     const barBeats=(state.meter&&state.meter.beats)?state.meter.beats:4;
     const WIN=GOV_WIN_BARS*barBeats, GAP=GOV_MINGAP_BARS*barBeats;
@@ -1425,7 +1433,7 @@
     // once, so rotation spreads deterministically instead of always picking the
     // lowest-numbered sibling)
     const fam={};
-    for(const num in byNum){ const f=govFamily(byNum[num].id); (fam[f]=fam[f]||[]).push(+num); }
+    for(const num in byNum){ const f=govFamily(byNum[num].id, byNum[num].src); (fam[f]=fam[f]||[]).push(+num); }
     const grng=mulberry32((((state.seed??1)>>>0)+31337)>>>0);
     for(const f in fam){ const a=fam[f]; a.sort((x,y)=>x-y);
       for(let i=a.length-1;i>0;i--){ const j=Math.floor(grng()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } }
@@ -1444,9 +1452,9 @@
     for(const i of utt){
       const e=found[i], num=e.tableNum;
       if(ok(num,e.beat)){ (used[num]=used[num]||[]).push(e.beat); continue; }
-      const f=govFamily(byNum[num].id);
+      const f=govFamily(byNum[num].id, byNum[num].src);
       let pick=-1;
-      if(govRotatable(f)) for(const s of (fam[f]||[])) if(s!==num && ok(s,e.beat)){ pick=s; break; }
+      if(govRotatable(f,declared)) for(const s of (fam[f]||[])) if(s!==num && ok(s,e.beat)){ pick=s; break; }
       if(pick>=0){ moveTo.set(i,pick); (used[pick]=used[pick]||[]).push(e.beat); }
       else drop.add(i);
     }
@@ -1515,6 +1523,12 @@
     flamenco:{cell:2, hits:[[0,1,1],[0.66,-1,0.7],[1.33,1,0.85]]},                                      // rasgueado triplet feel
     waltz3:  {cell:3, hits:[[0,1,1],[1,-1,0.7],[2,-1,0.72]]} };                                         // 3/4 down-up-up (meter genres)
   const HIT_PATTERNS={ sparse:[0], offbeat:[3.5], dub:[2.5,6.5], response:[4] };   // response: the vox takes the blues response bars the lead rests (crStream)
+  // per-slot skip for the one-shot layer: hits are events, not loops. The kernel's
+  // HITS_LIFT hands ~2.3x as many tracks the layer at all; this thins each of them
+  // by the matching factor (0.55 kept -> 0.25) so the mean one-shots per track
+  // barely moves. A "response" genre skips on the blues coin above instead and is
+  // not thinned; 6% of the tracks that carry the layer now draw no slot at all.
+  const HIT_SLOT_SKIP=0.75;
 
   // ---------- pattern-transform algebra (KERNEL-V4 Phase 2) ----------
   // The Strudel per-cycle transform pass is now a genre-addressable DIMENSION
@@ -1763,7 +1777,7 @@
     const CBEATS=Math.max(2,Math.round(state.chordEvery||(meter?6:CHORD_BEATS)));
     const chords=prg.chords, k0=state.keyOffset|0, cycleBeats=chords.length*CBEATS;
     const srcById={};
-    state.foundSources.forEach((s,i)=>{ const o={id:s.id,kind:s.kind,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".mp3"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec,wet:!!s.wet,glitch:!!s.glitch,distant:!!s.distant}; if(s.scratch) o.scratch=s.scratch; srcById[s.id]=o; });
+    state.foundSources.forEach((s,i)=>{ const o={id:s.id,kind:s.kind,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".mp3"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec,wet:!!s.wet,glitch:!!s.glitch,distant:!!s.distant}; if(s.scratch) o.scratch=s.scratch; if(s.fam) o.fam=s.fam; srcById[s.id]=o; });
     const rng=mulberry32((state.seed??1)>>>0);
     // MUSIC-MIND rhythm knob (state.rhythm={complexity:0..1}): two DEDICATED
     // streams — bass-cell mutation (+52100) and melody rhythm cells (+52200) —
@@ -1906,7 +1920,7 @@
               // response slotting: the singer ONLY takes the response bars the
               // blues lead rests (crStream draw #1 — the same seeded coin)
               if(crStream(state.seed,Math.round((cur+cb*CBEATS)/CBEATS))()>=0.42) continue;
-            } else if(rng()<0.45) continue;                          // hits are events, not loops
+            } else if(rng()<HIT_SLOT_SKIP) continue;
             const ev={chop:1,beat:cur+cb*CBEATS+o,dur:hdur,amp:(hsrc.vol||0.2)*1.8,
               tableNum:hsrc.tableNum,pitch:1+(rng()*0.06-0.03),offset:0,cutoff:hsrc.cutoff||4500};
             if(hsrc.distant){ ev.amp*=0.32; ev.rsend=0.9; ev.dsend=0.72; ev.fade=0.4; }  // across the lake: way down, drenched, muffled

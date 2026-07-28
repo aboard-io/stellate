@@ -5,7 +5,7 @@
 // genre-tool.js / invent-genres.js / rm-genre.js splice into it by the same
 // /* genre-tool:<name>:genres */ markers they always used.
 //
-// SOURCES / SOURCE_POOLS / SAMPLES / VOXBANK / SAMPLERS / PERCBANK — the ids the fetch recipes write and the engine resolves.
+// SOURCES / SOURCE_POOLS / VOICE_FAMILIES / SAMPLES / VOXBANK / SAMPLERS / PERCBANK — the ids the fetch recipes write and the engine resolves.
 //
 // Classic script on purpose, NOT JSON-over-fetch: app/access.js and
 // app/starmap.js read the kernel synchronously at module top level, so the data
@@ -274,7 +274,13 @@
     voices:   ["vx_timelady","vx_wwvh","vx_conet_swedish","vx_conet_poacher",
                "pulkovo_pa","kaohsiung_pa","leeds_terrace","celtic_fans","nevsky_choir","oslo_ferry_pa",
                "bbc_concert_hall_murmur","bbc_playground_1971","bbc_shoshu_chant","bbc_versailles_market",
-               "vx_snyder_reading83","vx_diprima_1987","vx_kyger_1989","vx_orlovsky_dumb81"],   // Naropa: the 4 texturally-neutral solo readings (measured, single-voice)
+               // Naropa: SOLO readings only (single voice, no panel/duo) — the
+               // curation is texture, not archive completeness. Six more of the
+               // 29 join the original four: 4-of-18 put a reading in ~7% of
+               // tracks, which is not "spread all over".
+               "vx_snyder_reading83","vx_diprima_1987","vx_kyger_1989","vx_orlovsky_dumb81",
+               "vx_ginsberg_mexcityblues","vx_ginsberg_sincerity","vx_waldman_crack",
+               "vx_corso_history75","vx_burroughs","vx_waldman"],
     nature:   ["frogs","crickets",
                "coyote_prairie","tepoztlan_cricket","nj_owls","mugla_cicadas","ibis_evening",
                "bbc_nz_cicada_shimmer","bbc_kakamega_night","bbc_ranomafana_frognight","bbc_berenty_treegroan"],
@@ -325,6 +331,28 @@
     break_115_135:["dl_120_13","dl_126_02","dl_133_11","stml_loop_115a","stml_loop_117a","stml_loop_117b","stml_loop_120a","stml_loop_126a","stml_loop_129a","stml_loop_129b","stml_loop_133a","stml_loop_133b"],
     break_135_150:["dl_140_06","dl_140_07","stml_loop_136a","stml_loop_140a","stml_loop_144a","stml_loop_148a","stml_loop_148b"],
     break_155_175:["amen_165","amen_170","amen_172","amen_175","stml_loop_157a","stml_loop_157b","stml_loop_161a","stml_loop_167a"],
+  };
+  // VOICE FAMILIES — declared rotation groups for the repeat governor
+  // (csd-engine governVoiceRepeats). The governor normally reads a family out of
+  // the id: `vb_junglist_03` -> `vb_junglist`, `sp_st_akiba` -> `sp_st`. A FLAT
+  // two-token id has no family in its name, and the `vx_` shelf as a whole is
+  // not rotatable (it holds Blake next to the telephone time lady), so an
+  // over-repeating flat id was DROPPED where a three-token id would have been
+  // substituted. A group listed here is a curated single-register cast whose
+  // members ARE interchangeable, so its ids get the substitution instead of the
+  // drop. The tag rides into `foundSources.fam` only for listed ids, so every
+  // other state is byte-identical.
+  D.VOICE_FAMILIES = {
+    // the Naropa/Jack Kerouac School readings: one cast, one register (a poet
+    // at a microphone in a small room, 1975-2003), safe to swap for each other.
+    naropa:["vx_burroughs","vx_ginsberg","vx_waldman","vx_ginsberg_class",
+            "vx_corso_history75","vx_corso_class77","vx_corso_workshop81","vx_corso_class81",
+            "vx_orlovsky_dumb81","vx_diprima_1987","vx_diprima_1994","vx_kyger_1989","vx_kyger_1993",
+            "vx_waldman_crack","vx_snyder_reading83","vx_whalen_reading80","vx_whalen_lecture87",
+            "vx_mcclure_perf99","vx_snyder_songs83","vx_cage_studio79","vx_baraka_ortiz84",
+            "vx_kupferberg_fugs87","vx_baraka_revpoetry94","vx_sanders_panel03",
+            "vx_ginsberg_mexcityblues","vx_ginsberg_sincerity","vx_ginsberg_kerouacconf",
+            "vx_burroughs_lecture76","vx_burroughs_giorno79"],
   };
   D.SAMPLES = {
     amen_165:{ file:"breaks/amen_165_02.wav", kind:"break", bpm:165 },

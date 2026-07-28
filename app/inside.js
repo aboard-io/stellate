@@ -2,6 +2,52 @@
 // state the engine is voicing (blend / feel radar / voice timeline), plus the
 // note feed that fires DemoLayer.note(ev) at each note onset. All pure/read-only
 // (no Math.random) so it's identical in the headless gate and to the audio.
+//
+// ---------- WHICH SOURCE OF TRUTH — settled; do not re-litigate ------------
+// The view exists to tell the truth about what is PLAYING. Two candidate
+// sources disagree constantly, so the split is stated once, here:
+//
+//   THE RESOLVED STATE (state.progression / .sections / .timeFeel /
+//   sec.found.role / genreMeta.*) is authored fact the ear cannot recover from
+//   one bar of events. Read it wherever the view was otherwise guessing or
+//   silent. Note it is the RESOLVED state, never `GENRES[g].anchor`: the anchor
+//   holds POOLS (progressions[], kits[], fills[], found.sources[]) and the blend
+//   already drew one member per pool at this seed. The pool is intent; the draw
+//   is what sounds. Reading the pool would name three progressions where one is
+//   playing.
+//
+//   THE RE-SIMULATED BAR (barVoiceEvents → buildEvents + mapEvents) wins
+//   wherever it is downstream of the state, because every generator between the
+//   anchor and the speaker has already run: pipes transforms, the snare-law, the
+//   reharm walk, euclid expansion, humanize. Where an authored field is a
+//   GENERATOR whose whole output the roll draws at higher resolution, the roll
+//   is strictly more informative and the field stays unread.
+//
+//   Field by field:
+//     progressions → STATE. state.progression is the drawn skeleton; under
+//       theory.reharm (most of the catalogue) CsdTheory rewalks it per bar, so
+//       the sounding chords are resolved here the same way buildEvents does and
+//       the skeleton rides along only as a caption (resolveHarmony).
+//     found.role   → STATE (sec.found.role, falling back to genreMeta). Role
+//       NAMES the layer; event shape still DRAWS it. bed-vs-chop was inferred
+//       from event shape, which cannot separate a sliced drum break from a
+//       sliced vocal loop from a spoken section — all three are chop events.
+//     form         → STATE, but the RESOLVED `state.sections`, not the anchor's
+//       form label: evolutions/key shifts/cold opens rewrite the arc after the
+//       form template picks it. genreMeta.form rides as a caption word.
+//     timeFeel.pushPull → STATE. Per-lane micro-timing of a few milliseconds is
+//       far below the roll's cell resolution and has no radar axis; unread it is
+//       simply invisible. Folded through the engine's own resolvePushPull so the
+//       ms and beats lanes combine exactly once.
+//     fills        → NEITHER, deliberately. A fill is a per-section event, not a
+//       property of this bar; when one fires its notes are already in the roll.
+//       (Known divergence: this module re-simulates the section at cycles:1, so
+//       the roll shows the fill on every cycle where the live walk gates it to
+//       the last. Fixing that needs the walk's cycle index in S.barInfo.)
+//     hits.pattern, stab, euclid → NEITHER. Each is a table of beat offsets that
+//       the roll already draws as literal onsets, at higher resolution and after
+//       swing/humanize/pipes have moved them. Printing "E(3,8)" would also break
+//       this panel's standing no-numeric-readouts rule.
 import { S, K, esc } from "./state.js";
 import { faustHandle } from "./live.js";
 
@@ -106,6 +152,18 @@ const BED_CHAR=[   // ordered: specific tokens fire before the broad city/road/w
 const foundChar=s=>{ if(FOUND_CHAR[s&&s.kind]) return FOUND_CHAR[s.kind];
   const id=(s&&s.id)||""; for(const [re,c] of BED_CHAR) if(re.test(id)) return c;
   return "tape atmosphere"; };
+// FOUND ROLE — the authored job of the found layer, read off the state instead
+// of inferred from event shape. `bed` keeps the per-source texture character
+// (the id-class read above is genuinely more specific than the word "bed");
+// the three CHOPPING roles all emit identical chop events and are only
+// distinguishable by role, which is exactly why the inference was wrong.
+const FOUND_ROLES={bed:1,break:1,chops:1,narration:1};
+const FOUND_ROLE_CHAR={ break:"chopped drum breaks", chops:"chopped sample slices",
+  narration:"spoken narration" };                                    // bed → absent: the texture character wins
+const FOUND_ROLE_LABEL={ break:"breaks", chops:"chops", narration:"narration", bed:"found" };
+// a role token that is not one of the four is dropped, never printed — the found
+// SOURCE id is never a legal readout (the provenance law).
+const roleOf=t=>FOUND_ROLES[t]?t:"";
 const clamp01=v=>v<0?0:v>1?1:v;
 // a stable neon hue per genre name (FNV hash → 0..360): a genre reads the same
 // colour in the blend bar, the radar accents and the on-map glyph.
@@ -218,12 +276,44 @@ function noteRole(unit, isDrum){
   if(isDrum||unit==="kick"||unit==="snare"||unit==="hat"||unit==="tom") return "drums";
   return unit;
 }
+// ---------- HARMONY: the chord cycle actually sounding under this bar --------
+// `state.progression` names the skeleton the blend drew from the anchor's
+// progressions pool. For a genre carrying `theory.reharm` that skeleton is ONLY
+// a seed: buildEvents hands it to CsdTheory.reharmonize on the +40961 stream,
+// keyed off the per-bar seed, so the chords change bar to bar and the named
+// progression is not what is sounding. Resolve it here exactly as buildEvents
+// does — same table, same reharm call, same stream offset, off the SAME per-bar
+// `one` state the roll was built from — and keep the skeleton as a caption.
+// Never throws: a view that dies on an odd state is worse than a missing line.
+function resolveHarmony(one, chordIdx){
+  const E=window.CsdEngine;
+  if(!E||!E.PROGRESSIONS||!one||!one.progression) return null;
+  let prg=E.PROGRESSIONS[one.progression];
+  if(!prg||!prg.chords||!prg.chords.length) return null;
+  let reharm=false;
+  const th=one.theory;
+  if(th&&th.reharm&&window.CsdTheory&&CsdTheory.reharmonize){
+    try{
+      prg=Object.assign({},prg,CsdTheory.reharmonize(prg,{ adventure:th.adventure, color:th.color,
+        voicing:th.voicing, tables:th.tables, seed:((((one.seed==null?1:one.seed)>>>0)+40961)>>>0) }));
+      reharm=true;
+    }catch(e){}
+  }
+  const chords=(prg.chords||[]).map(c=>String((c&&c.name)||"")).filter(Boolean);
+  if(!chords.length) return null;
+  // the progression labels carry an em-dash gloss naming the genres they came
+  // from ("… — city pop / vaporwave"); that gloss can contradict the blend on
+  // screen, so only the harmonic half is shown.
+  const skeleton=String(prg.label||one.progression||"").replace(/\s*—.*$/,"").trim();
+  const n=chords.length, at=((Math.round(chordIdx||0)%n)+n)%n;
+  return { skeleton, reharm, chords, at };
+}
 let _barMemo={st:null,ci:-1,serial:-1,sec:"",val:null};
 function barVoiceEvents(st, bar){
   const E=window.CsdEngine, SE=window.FaustStateEngine;
   const CBEATS=Math.max(2,Math.round((st&&st.chordEvery)||8));
   const spb=60/((st&&st.bpm)||110);
-  if(!E||!SE||!st) return {cbeats:CBEATS, spb, bpm:(st&&st.bpm)||110, notes:[]};
+  if(!E||!SE||!st) return {cbeats:CBEATS, spb, bpm:(st&&st.bpm)||110, notes:[], foundRole:"", harmony:null, section:""};
   const ci=(bar&&bar.ci!=null)?bar.ci:0, serial=(bar&&bar.serial!=null)?bar.serial:0;
   const secName=(bar&&bar.section)||"";
   if(_barMemo.st===st&&_barMemo.ci===ci&&_barMemo.serial===serial&&_barMemo.sec===secName) return _barMemo.val;
@@ -231,9 +321,16 @@ function barVoiceEvents(st, bar){
     instrumentSeed: st.instrumentSeed!=null?st.instrumentSeed:(st.seed||1),   // mirror live.js makeWalk: instrument identity = song seed
     _seamWin:true });   // …and its SEAM LAW: window on the drawless beat0, so the readout owns the same events the conductor plays
   const secs=(st.sections&&st.sections.length)?st.sections:null;
-  if(secs){ const sec=(secName&&secs.find(s=>s.name===secName))||secs[0];
-    one.sections=[Object.assign({},sec,{cycles:1})]; }
-  let lo=ci*CBEATS, hi=lo+CBEATS; const notes=[];
+  let activeSec=null;
+  if(secs){ activeSec=(secName&&secs.find(s=>s.name===secName))||secs[0];
+    one.sections=[Object.assign({},activeSec,{cycles:1})]; }
+  // FOUND ROLE off the state: the SECTION's own role first (a form may hand one
+  // section a bed where the track's role is chops), then the track-level role
+  // the blend resolved (genreMeta.found = "<sourceId>/<role>" — only the role
+  // token is ever read, the source id never reaches the screen).
+  const foundRole=roleOf(activeSec&&activeSec.found&&activeSec.found.role)
+    || roleOf(String((st.genreMeta&&st.genreMeta.found)||"").split("/").pop());
+  let lo=ci*CBEATS, hi=lo+CBEATS, winCi=ci; const notes=[];
   try{
     const ev=E.buildEvents(one), units=SE.voiceUnits(E,one);
     // bedAll: beds emit ONE event at section start (beat 0) and SUSTAIN across the
@@ -253,7 +350,7 @@ function barVoiceEvents(st, bar){
     // chord-bar: an honest picture of the state now sounding — the engine
     // re-syncs the meta on the next bar.
     if(ci>0&&!m.events.length&&!(m.found||[]).some(f=>f.type==="chop")){
-      lo=0; hi=CBEATS;
+      lo=0; hi=CBEATS; winCi=0;   // the harmony readout follows the window, not the stale meta
       m=SE.mapEvents(E,one,ev,{lo,hi,units,bedAll:true});
     }
     for(const e of m.events){
@@ -278,7 +375,9 @@ function barVoiceEvents(st, bar){
       }
     }
   }catch(e){}
-  const val={cbeats:CBEATS, spb, bpm:one.bpm, notes};
+  let harmony=null; try{ harmony=resolveHarmony(one, winCi); }catch(e){}
+  const val={cbeats:CBEATS, spb, bpm:one.bpm, notes, foundRole, harmony,
+    section:(activeSec&&activeSec.name)||secName||""};
   _barMemo={st, ci, serial, sec:secName, val};
   return val;
 }
@@ -308,15 +407,19 @@ function timelineLanes(st, roster, found, bar, audit){
     const has=(sp.key==="solo"||sp.key==="stabs"||sp.key==="voices")?notes.length
       :(r||notes.length||(sp.key==="found"&&found.length));
     if(!has) continue;
+    // the found lane is NAMED by its state role (a break, a chop, a narration
+    // and a bed are indistinguishable as events); a bed keeps the per-source
+    // texture character, which says more than the word "bed".
     const name=r?r.name:
-      sp.key==="found"?(found[0]||"tape atmosphere"):
+      sp.key==="found"?(FOUND_ROLE_CHAR[bar.foundRole]||found[0]||"tape atmosphere"):
       sp.key==="voices"?((notes[0]&&notes[0].kind==="speech")?"cut-up announcer voice":"vocal fragments"):
       sp.key==="stabs"?"synth stabs":sp.label;   // the sfx/stab lane is the SYNTH stab voice (stab.dsp); the SAMPLED one-shot stabs render in the found lane as FOUND_CHAR.hit ("sampled stabs")
     // AUDIT-TRUTH: this lane's role was EXPECTED-BUT-SILENT in the measured audit for
     // this bar (not just the score) → paint it red/hatched with the probable reason.
     let sil=null;
     if(audit) for(const rl of sp.roles){ if(audit[rl]){ sil=audit[rl]; break; } }
-    lanes.push({ key:sp.key, label:sp.label, name, col:sp.col, fx:r?(r.fx||[]):[],
+    const label=(sp.key==="found"&&FOUND_ROLE_LABEL[bar.foundRole])||sp.label;
+    lanes.push({ key:sp.key, label, name, col:sp.col, fx:r?(r.fx||[]):[],
       notes, drumLane:sp.key==="drums"||sp.key==="found"||sp.key==="voices"||sp.key==="stabs",
       silent:!!sil, silReason:sil?sil.reason:null, silMissing:sil?(sil.missing||[]):[] });
   }
@@ -487,6 +590,7 @@ export function vizData(){
   const blend=(S.weights||[]).slice().sort((a,b)=>b.w-a.w).slice(0,4)
     .map(w=>({g:w.g, label:(K.GENRES[w.g]&&K.GENRES[w.g].label)||titleCase(w.g), pct:Math.round(w.w*100), w:w.w}));
   if(!st) return {blend, feel:[], roster:[], found:[], info:"", master:[], mind:null,
+    harmony:null, structure:null, timing:[],
     timeline:{cbeats:8,view:VIEW,pages:1,spb:0.5,bpm:110,lanes:[]}};
   const I=st.instruments||{}, roster=[];
   // build the voice units so we can read each instrument's resolved fx chain
@@ -506,19 +610,30 @@ export function vizData(){
   // AUDIT-TRUTH: pull the measured expected-vs-actual audit for the bar currently heard
   // (keyed by serial) and reduce it to a role→{reason,missing} map for silent-lane paint.
   //
-  // ROUTE-LIMITED, and the `faustHandle.auditFor &&` guard below is doing more
-  // work than it looks: the audit ring is built by the WAV/media-element route
-  // (faust/live.js, the handle that owns mediaEl) and NOT by the desktop
-  // SharedArrayBuffer ring route. On desktop auditFor is simply undefined, so
-  // auditSilent stays null and the red-hatched silent-lane paint never appears
-  // there — it is a mobile/no-isolation feature. Measured, not assumed: the
-  // desktop handle exposes only { layers, rms } of this family. Do not read the
-  // absence of hatching on desktop as "no voice was silent".
+  // BOTH ROUTES measure this now (faust/live.js AUDIT-TRUTH). The WAV/media-element
+  // route reads the renderer's per-voice RMS off the baked segment; the desktop
+  // SharedArrayBuffer ring route gets the same measurement posted per bar by the
+  // producer worker for the STREAM voices, plus a native-lane count (notes scheduled
+  // vs notes dropped for an undecoded buffer) for the sampler/found voices the ring
+  // route plays outside the stream. What hatching means is therefore precise: a lane
+  // is painted only when a measurement for THAT bar says it made no sound.
+  // The `auditFor &&` guard still matters — a handle with no audit (an older engine,
+  // or a bar whose measurement never arrived) paints nothing rather than guessing.
+  // Absence of hatching is "not flagged", never "verified audible".
   let auditSilent=null;
   try{
     if(faustHandle&&faustHandle.auditFor&&S.barInfo&&S.barInfo.serial!=null){
       const a=faustHandle.auditFor(S.barInfo.serial);
-      if(a&&a.anomalies&&a.anomalies.length){ auditSilent={};
+      // silentRoles is the engine's LANE rollup: a role appears only when every voice
+      // in it that expected notes measured silent. Prefer it — a per-voice anomaly
+      // list would paint the whole drum row for one dead kit piece. An engine that
+      // provides it and reports NONE is a bar with nothing to paint, so do not fall
+      // through to the anomaly list; that fallback is for a handle without the rollup.
+      if(a&&a.silentRoles){
+        const rs=Object.keys(a.silentRoles);
+        if(rs.length){ auditSilent={};
+          for(const r of rs) auditSilent[r]={reason:a.silentRoles[r].reason,missing:a.silentRoles[r].missing||[]}; }
+      }else if(a&&a.anomalies&&a.anomalies.length){ auditSilent={};
         for(const an of a.anomalies) if(!auditSilent[an.role]) auditSilent[an.role]={reason:an.reason,missing:an.missing||[]}; }
     }
   }catch(e){}
@@ -528,7 +643,8 @@ export function vizData(){
   // meter badge: always shown — the timeline's
   // 8-cell fold visually erases a waltz grid, so the meter must say itself.
   const meter=st.meter?`${st.meter.beats}/${st.meter.unit}`:"4/4";
-  return {blend, feel:feelAxes(st), roster, found, info, master:masterFx(st), timeline, graph, mind:mindData(st), meter};
+  return {blend, feel:feelAxes(st), roster, found, info, master:masterFx(st), timeline, graph,
+    mind:mindData(st), meter, harmony:bar.harmony||null, structure:structureData(st,bar), timing:timingData(st)};
 }
 // ---------- MIND: the MUSIC-MIND axes the state actually carries ----------
 // state.theory (adventure/color/voicing — the harmony brain), state.pipes (the
@@ -537,8 +653,57 @@ export function vizData(){
 // section simply doesn't render (progressive disclosure — mobile stays uncrowded).
 const PIPE_CHAR={ harmonize:"harmonized thirds", echoCanon:"echo canon", strum:"strummed chords",
   ghost:"ghost notes", callResponse:"call & response", densityArc:"density arc", sweepArc:"filter arc",
-  vibratoSwell:"vibrato swells", throwFx:"dub throws", octavePump:"octave pump" };
+  vibratoSwell:"vibrato swells", throwFx:"dub throws", octavePump:"octave pump",
+  accentProfile:"accented groove" };   // every CsdPipes.REGISTRY id needs a phrase here or its raw id leaks into the readout
 const num1=v=>Array.isArray(v)?clamp01(((+v[0]||0)+(+v[1]||0))/2):clamp01(+v||0);
+// ---------- FORM: the arc this bar sits in --------------------------------
+// The anchor authors a form NAME; the blend expands it into `state.sections` and
+// then the evolution pass rewrites that arc (extra cycles, key shifts, a cold
+// open). The sections array is therefore the sounding structure and the form
+// name is only its provenance — so the strip is built from sections and the
+// name rides as one word. `at` is the section the roll is currently drawing
+// (barVoiceEvents falls back to sections[0] when nothing is playing, so the
+// highlight and the roll can never disagree).
+function structureData(st, bar){
+  const form=(st.genreMeta&&st.genreMeta.form)?String(st.genreMeta.form):"";
+  const secs=(st.sections&&st.sections.length)?st.sections:null;
+  if(!secs) return form?{form, sections:[], at:-1}:null;
+  const names=secs.map(s=>String((s&&s.name)||"")).filter(Boolean);
+  if(!names.length) return form?{form, sections:[], at:-1}:null;
+  const cur=(bar&&bar.section)||"";
+  const at=cur?names.indexOf(cur):0;
+  return {form, sections:names, at};
+}
+// ---------- TIME FEEL: the micro-timing no other read can show -------------
+// `timeFeel.pushPull` (beats) + `pushPullMs` (milliseconds) place individual
+// lanes a few thousandths of a bar off the grid — a laid-back bass, hats on top.
+// It is the most FELT thing in the state and the least visible: the roll's cell
+// is a whole beat wide and the radar carries swing amount, not lane placement.
+// Folded through the engine's own resolvePushPull so the two unit systems sum
+// exactly once, at this state's bpm, the way buildEvents sums them.
+// Words, not numbers — this panel states its vectors on the radar and nowhere
+// else, and a signed millisecond count reads as debug output, not as feel.
+const LANE_WORD={ hat:"hats", hihat:"hats", snare:"snare", kick:"kick", ride:"ride", rim:"rim",
+  clap:"claps", tom:"toms", perc:"percussion", shaker:"shaker", cowbell:"cowbell",
+  bass:"bass", melody:"lead", pad:"pad", solo:"counter", stab:"stabs" };
+function timingData(st){
+  const E=window.CsdEngine, tf=st.timeFeel, out=[];
+  if((st.swing||0)>0.01&&tf&&tf.grid){
+    if(tf.grid==="16th") out.push("sixteenth-note swing");
+    else if(tf.grid==="triplet") out.push("triplet swing");
+  }
+  if(tf&&E&&E.resolvePushPull){
+    let pp=null; try{ pp=E.resolvePushPull(tf, st.bpm); }catch(e){}
+    const late=[], early=[];
+    for(const k in (pp||{})){
+      const v=+pp[k]; if(!(Math.abs(v)>0.0005)) continue;
+      (v>0?late:early).push(LANE_WORD[k]||titleCase(k).toLowerCase());
+    }
+    if(late.length) out.push(late.join(" & ")+" behind the beat");
+    if(early.length) out.push(early.join(" & ")+" on top of the beat");
+  }
+  return out;
+}
 function mindData(st){
   const th=st.theory||null, cx=st.rhythm?num1(st.rhythm.complexity):0;
   const pipes=[]; for(const p of (st.pipes||[])){ const n=PIPE_CHAR[p.id]||titleCase(p.id).toLowerCase(); if(!pipes.includes(n)) pipes.push(n); }
@@ -773,7 +938,30 @@ export function renderInside(){
     if(d.mind.reharm) hm.push("reharm");
     if(d.mind.tables) hm.push(esc(d.mind.tables)+" tables");
     mv.push(`harmony <b>${hm.join(" · ")}</b>`); }
+  // the micro-timing the roll cannot draw (see timingData)
+  if(d.timing&&d.timing.length) mv.push(`timing <b>${d.timing.map(esc).join(" · ")}</b>`);
   const moves=mv.length?`<div class="vz-mmoves">${mv.join(" &nbsp; ")}</div>`:"";
+  // HARMONY + FORM: the two authored facts the readout used to hide. Chips in
+  // cycle order with the sounding one lit, so the panel says WHERE the bar sits
+  // both harmonically and structurally. Guarded like every other section.
+  // No new stylesheet classes: this reuses the blend legend's chip styling
+  // (.vz-leg/.vz-g), and the roll/ruler selectors the timeline gates count are
+  // deliberately untouched here.
+  let hfHtml=""; try{
+    const chip=(txt,on,col)=>`<span class="vz-g" style="${on?`color:var(${col});opacity:1`:"opacity:.45"}">`+
+      `<i style="background:var(${col});opacity:${on?1:.3}"></i>${esc(txt)}</span>`;
+    const rows=[];
+    if(d.harmony) rows.push(`<div class="vz-leg">${d.harmony.chords.map((c,i)=>chip(c,i===d.harmony.at,"--pink")).join("")}</div>`);
+    if(d.structure&&d.structure.sections.length)
+      rows.push(`<div class="vz-leg">${d.structure.sections.map((s,i)=>chip(s,i===d.structure.at,"--mint")).join("")}</div>`);
+    if(rows.length){
+      const cap=[];
+      if(d.harmony&&d.harmony.skeleton) cap.push(d.harmony.reharm?("reharmonized from "+d.harmony.skeleton):d.harmony.skeleton);
+      if(d.structure&&d.structure.form) cap.push(d.structure.form+" arc");
+      hfHtml=`<div class="vz-sec"><div class="vz-lbl">harmony &amp; form — where this bar sits</div>`+
+        rows.join("")+(cap.length?`<div class="vz-info">${esc(cap.join(" · "))}</div>`:"")+`</div>`;
+    }
+  }catch(e){ try{console.warn("inside: harmony/form section skipped:",e);}catch(_){}}
   // transition hardening: a timeline hiccup must never blank the whole panel —
   // blend/feel still render; the roll announces itself instead of dying.
   let tlHtml; try{ tlHtml=timelineHTML(d.timeline); }
@@ -785,6 +973,7 @@ export function renderInside(){
       `<div class="vz-bar">${seg}</div><div class="vz-leg">${legend}</div>`+
       (d.info?`<div class="vz-info">${esc(d.info)}</div>`:"")+`</div>`+
     `<div class="vz-sec"><span class="vz-meter" title="meter — beats per bar / beat unit">${esc(d.meter||"4/4")}</span>${radarSVG(d.feel)}${moves}</div>`+
+    hfHtml+
     `<div class="vz-sec">${tlHtml}</div>`+
     graphHtml;
   // arm the playhead ticker only when it has work (live + modal open); it stops itself.

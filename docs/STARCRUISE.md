@@ -24,7 +24,9 @@ placeholder scene they originally rendered is long gone.
 
 ```
 index.html
-  └─ <script type=module app/starcruise.js>   (side-effecting; injects the 🛸 chip)
+  └─ app/main.js → app/panels.js → app/starcruise-load.js   (~1 KB; the ✦ cycle)
+       └─ dynamic import() on FIRST ENTRY to the aliens view:
+            app/starcruise.js   (side-effecting: publishes window.__STARCRUISE)
        │  lazy import() on FIRST start():
        ├─ vendor/three/three.module.min.js     (r160 ESM, MIT — NOT in initial load)
        └─ app/starcruise/
@@ -98,13 +100,20 @@ lock.
 
 ## The button
 
-`app/starcruise.js` **injects its own chip** (`#cruiseChip`, glyph 🛸) into the
-existing `#chips` row on module load — the same visual pattern as the ✦ view chip
-and ⚙ config chip (`.chip` / `.chip.on` styles already exist in `app/app.css`).
-Tapping toggles `start()` / `stop()`. Wiring point: **`index.html`** loads
-`app/starcruise.js` as a side-effecting `<script type="module">` immediately after
-`app/main.js` (one line). The chip is decoupled from `panels.js`/`background.js`
-so the mode is fully self-contained.
+There is **no separate 🛸 chip**: aliens is the third view in the ✦ cycle
+(map → viz → aliens → map), driven by `app/panels.js`.
+
+The controller is **not on the boot path**. `index.html` does not load
+`app/starcruise.js`; `app/panels.js` imports the ~1 KB `app/starcruise-load.js`,
+whose `ensureStarcruise()` dynamic-imports the controller — single-flight, cached
+after the first success, cache cleared on failure so a later attempt retries — the
+first time the cycle reaches the view. A session that never opens aliens fetches
+none of the ~48 KB gz controller nor the ~9 KB gz `starcruise/genre-clusters.js`
+it static-imports; Three.js remains one step further out, on first `start()`.
+
+The loader also publishes `window.__ensureStarcruise` so headless gates can arm
+the import deterministically instead of racing a ✦ click
+(`test/probe-harness.js ensureStarcruise(page)`).
 
 ---
 

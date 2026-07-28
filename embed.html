@@ -20,8 +20,9 @@
      every call site so nothing breaks: engine/demo-layer.js (the MicroW8
      demoscene backdrop — real CPU inside someone else's page) and
      app/analytics.js + the GoatCounter beacon (we do not fire a beacon from a
-     third party's page). app/starcruise.js is omitted too: the aliens view is
-     unreachable here.
+     third party's page). The aliens view (app/starcruise.js) never loads here
+     either — it is a dynamic import armed only by the ✦ view cycle, and the
+     embed's ✦ chip is hidden and inert.
 
      AUDIO IN A CROSS-ORIGIN FRAME: an embedded page is NOT cross-origin
      isolated, so SharedArrayBuffer is undefined and the ring/worklet engine

@@ -6,7 +6,7 @@
 // — measured 0.254% of their energy above 11kHz — so mono/22.05k/48kbps mp3
 // measures a HIGHER SNR (24.7dB) than 64k at 44.1k while being 25% smaller than
 // that, and ~14x smaller than the wav. This tool converts in place and re-bakes
-// the SAMPLERS metadata in engine/genre-kernel.js to match.
+// the SAMPLERS metadata in engine/registry-data.js to match.
 //
 // Three things make the rebake load-bearing, not cosmetic:
 //   * ls/le are ABSOLUTE SAMPLE INDICES at `sr`. Halving the rate without
@@ -28,7 +28,12 @@ const fs = require("fs"), path = require("path"), os = require("os");
 const { execFile } = require("child_process");
 
 const ROOT = path.resolve(__dirname, "..");
+// SAMPLERS is READ through genre-kernel (which re-exports DATA.SAMPLERS) but
+// SPLICED into registry-data, where the literal actually lives since the
+// kernel/data split. Reading through the kernel keeps this tool honest about
+// what the engine sees; writing to the kernel would find no literal at all.
 const KERNEL = path.join(ROOT, "engine", "genre-kernel.js");
+const REGISTRY = path.join(ROOT, "engine", "registry-data.js");
 const BASE = path.join(ROOT, "found", "samples", "instruments");
 const SR_OUT = 22050, BITRATE = "48k";
 // A tag-honouring decoder (ffmpeg, chromium, firefox) reproduces the source
@@ -156,7 +161,7 @@ async function main() {
   // deleting sources per-sampler while the splice ran once at the very end left
   // an interrupt window with the media gone and nothing describing what replaced
   // it. Splice first; unlink only what the splice committed to.
-  if (!DRY && Object.keys(done).length) spliceKernel(done);
+  if (!DRY && Object.keys(done).length) spliceRegistry(done);
   if (!DRY && !KEEP) retire.forEach(f => { try { fs.unlinkSync(f); } catch {} });
 
   const pct = bIn ? (100 * bOut / bIn) : 0;
@@ -176,11 +181,11 @@ async function main() {
 // Rewrite the SAMPLERS block in place. Each sampler is ONE line in house style;
 // we edit only its `sr:` and `zones:[…]` so every comment, label, dir and the key
 // order around them survive byte-identical.
-function spliceKernel(done) {
-  const src = fs.readFileSync(KERNEL, "utf8");
+function spliceRegistry(done) {
+  const src = fs.readFileSync(REGISTRY, "utf8");
   const lines = src.split("\n");
-  const start = lines.findIndex(l => /^\s*const SAMPLERS=\{/.test(l));
-  if (start < 0) throw new Error("SAMPLERS block not found");
+  const start = lines.findIndex(l => /^\s*D\.SAMPLERS\s*=\s*\{/.test(l));
+  if (start < 0) throw new Error("SAMPLERS block not found in " + path.basename(REGISTRY));
   const end = lines.findIndex((l, i) => i > start && /^\s{2}\};\s*$/.test(l));
   if (end < 0) throw new Error("SAMPLERS block end not found");
 
@@ -206,8 +211,8 @@ function spliceKernel(done) {
     hit++;
   }
   if (hit !== Object.keys(done).length) throw new Error(`spliced ${hit} of ${Object.keys(done).length} samplers`);
-  fs.writeFileSync(KERNEL, lines.join("\n"));
-  console.log(`spliced ${hit} samplers into engine/genre-kernel.js`);
+  fs.writeFileSync(REGISTRY, lines.join("\n"));
+  console.log(`spliced ${hit} samplers into engine/registry-data.js`);
 }
 
 main().catch(e => { console.error(e.message); process.exit(1); });

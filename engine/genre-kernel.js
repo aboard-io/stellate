@@ -46,20 +46,44 @@
   // keeps birds out of the general pools). Wave 3 fills these classes from the
   // bed-curation register (scratch/bed-curation/BEDS.md, 79 verified beds).
   const SOURCE_POOLS = DATA.SOURCE_POOLS;
+  // id -> declared voice family (registry VOICE_FAMILIES). Stamped onto the
+  // foundSources entry so the repeat governor can substitute inside a curated
+  // cast whose family is not spelled in the id; absent for every other id.
+  const VOICE_FAM = (()=>{ const m={}; const F=DATA.VOICE_FAMILIES||{};
+    for(const f in F) for(const id of F[f]) m[id]=f; return m; })();
   const fnv1a = (str)=>{ let h=2166136261>>>0; for(const ch of String(str)) h=Math.imul(h^ch.charCodeAt(0),16777619); return h>>>0; };
-  function expandPools(list, seed){
+  // `widen` adds members to every pool token without changing the ones already
+  // there: the dedicated stream draws in a fixed order, so the first N ids of a
+  // widened expansion are byte-identical to the unwidened one and only the TAIL
+  // is new. Used by the bed rotation (foundPool) alone — foundSource / voxPool /
+  // hits expand unwidened, so the primary source a genre opens on never moves.
+  function expandPools(list, seed, widen){
     if(!Array.isArray(list) || !list.some(x=>typeof x==="string" && x.slice(0,5)==="pool:")) return list;
     const out=[];
     for(const m of list){
       const mm=typeof m==="string" ? /^pool:([a-z][a-z0-9_]*)(?:\*(\d))?$/.exec(m) : null;
       if(!mm){ out.push(m); continue; }
       const pool=(SOURCE_POOLS[mm[1]]||[]).slice();
-      const n=Math.min(pool.length, +(mm[2]||3));
+      const n=Math.min(pool.length, +(mm[2]||3)+(widen||0));
       const r=mulberry32((((seed??1)>>>0) ^ fnv1a(mm[1]) ^ 0x9E00D5) >>> 0);   // dedicated stream: the shared rng never moves
       for(let i=0;i<n && pool.length;i++) out.push(pool.splice(Math.floor(r()*pool.length),1)[0]);
     }
     return out;
   }
+  const FOUND_POOL_WIDEN=3, FOUND_POOL_CAP=12;
+  // the one-shot layer is an ALL-OR-NOTHING coin per track (`hits` below), and the
+  // authored probabilities average 0.34 — most tracks got no one-shots whatsoever,
+  // which is also why the sp_* speech ids parked in hits.sources rarely fired.
+  // HITS_LIFT reshapes the coin: 1-(1-p)^k keeps the endpoints and the per-genre
+  // ordering (a rare-hits genre stays the rarest) while lifting the mean to ~0.75.
+  // The density that a track WITH the layer gets is thinned to match in
+  // csd-engine.js (HIT_SLOT_SKIP): across 274 genres x 8 seeds the share of
+  // tracks carrying the layer goes 30% -> 70% while the mean one-shots per track
+  // moves only 2.4 -> 3.0 (8.0 -> 4.3 on the tracks that have it). The same
+  // amount of material, spread across the catalog instead of pooled in a third
+  // of it — which is the point: a thin layer everywhere reads better than a
+  // dense layer in one track out of three and silence in the other two.
+  const HITS_LIFT=5, hitsProb=p=>1-Math.pow(1-p,HITS_LIFT);
   // sample layer: local files under found/samples/ (kind: break|hit|vox)
   const SAMPLES = DATA.SAMPLES;
   // ---------- THE SYNTHESIZED VOICE BANK (voxbank) ----------
@@ -889,7 +913,20 @@
       foundScratch: foundSide.found.scratch != null ? foundSide.found.scratch
         : (foundSide.found.role === "chops" ? 0.14 : 0),
       foundSource: pick(rng, expandPools(foundSide.found.sources, seed)),
-      foundPool: (()=>{ const a=expandPools(foundSide.found.sources, seed).slice(), o=[], n=Math.min(6,a.length);   // distinct beds/narration chunks to rotate (kills the one-loop repeat)
+      // distinct beds/narration chunks to rotate (kills the one-loop repeat).
+      // Cap and widen answer two symptoms at once: 202 of 259
+      // `pool:x*N` tokens ask for a single member, so a class pool's minority
+      // crates (the 4 BBC ids in a pool of 14-20, the Naropa readings in
+      // `voices`) reached only ~17% of tracks and the sections that did have a
+      // bed kept repeating the same two. Widening the expansion and raising the
+      // cap rotates a real slice of the crate across the sections; sources are
+      // decoded per-event (live.js kicks a buffer only when an event names it),
+      // so the media cost tracks the SECTION count, not the pool size.
+      // ONLY the roles that rotate: break/chops lock to the single tempo-matched
+      // foundSource (toState's bedPool), so widening their pool would move their
+      // rng stream for no audible gain — they keep the old width exactly.
+      foundPool: (()=>{ const rot=foundSide.found.role==="bed"||foundSide.found.role==="narration";
+        const a=expandPools(foundSide.found.sources, seed, rot?FOUND_POOL_WIDEN:0).slice(), o=[], n=Math.min(rot?FOUND_POOL_CAP:6,a.length);
         while(o.length<n&&a.length) o.push(a.splice(Math.floor(rng()*a.length),1)[0]); return o; })(),
       voxPool: (voxSide.vox ? (()=>{ const a=expandPools(voxSide.vox.sources, seed).slice(), o=[], n=Math.min(3,a.length);   // VO lines to rotate across sections
         while(o.length<n&&a.length) o.push(a.splice(Math.floor(rng()*a.length),1)[0]); return o; })() : []),
@@ -902,7 +939,7 @@
       realHats: !!extraSide.realHats,
       foundRecipe: blendRecipe(g=>({vol:g.found.vol,pitch:g.found.pitch,stretch:g.found.stretch,cutoff:g.found.cutoff})),
       stab: pick(rng, side().stab),
-      hits: rng()<hitsSide.hits.prob ? {source:pick(rng,expandPools(hitsSide.hits.sources, seed)), pattern:hitsSide.hits.pattern, wet:hitsSide.hits.wet, glitch:hitsSide.hits.glitch, vol:hitsSide.hits.vol, cut:hitsSide.hits.cut} : null,
+      hits: rng()<hitsProb(hitsSide.hits.prob) ? {source:pick(rng,expandPools(hitsSide.hits.sources, seed)), pattern:hitsSide.hits.pattern, wet:hitsSide.hits.wet, glitch:hitsSide.hits.glitch, vol:hitsSide.hits.vol, cut:hitsSide.hits.cut} : null,
       form: side().form,
       rng,
     };
@@ -1976,8 +2013,10 @@
     if(opts.macros) applyMacros(c, opts.macros);
     const {secs, cycleBeats, evolutions, coldOpen}=buildSections(c, opts);
     const foundSources=[];
-    // bed role rotates through up to 3 sources (each pitched a hair differently so it
-    // reads as a different place); break/chops keep the single tempo-locked source.
+    // bed role rotates through the whole foundPool (each pitched a hair differently
+    // so it reads as a different place); break/chops keep the single tempo-locked
+    // source. A section that carries a bed takes the next pool entry, so the number
+    // of DISTINCT beds a track actually decodes is min(bed sections, pool length).
     // The rotation's STARTING index is seeded (see sections below) so the intro
     // isn't always foundPool[0] — every genre used to open on the same bed.
     const bedPool=((c.foundRole==="bed"||c.foundRole==="narration")&&c.foundPool&&c.foundPool.length>1)?c.foundPool:[c.foundSource];
@@ -2241,7 +2280,9 @@
       // over their own NameBank identity. That is the idiom those forms already
       // live in (the pirate-radio drop, the DJ tag), so it is characterful
       // rather than generic, and it is picked by a structural property of the
-      // genre rather than by me choosing 41 names out of a hat.
+      // genre rather than by a hand-picked list: 65 genres carry one of those
+      // three forms, three of which the bespoke cast above already claims, so
+      // 62 speak an ident.
       //
       // The VOICE is hashed from the genre name, so every station sounds like a
       // different station, and it is stable: the same genre always gets the same
@@ -2249,6 +2290,39 @@
       // rng on the resolve stream.
       const IDENT_FORMS=new Set(["dj","drop","vamp"]);
       const D_VARIANT=["m1","m2","m3","m4","m5","f1","f2","f3","f4","f5","croak","whisper"];
+      // THE LINES. An announcer says a FRAMED sentence — a verb, an address,
+      // a hand-off. Two earlier forms had no frame at all ("<label>. <album>."
+      // and "<artist>, <title>.") and read as a discography entry recited, not
+      // an ident; they also owned every defect in the realized corpus:
+      //   · "<label>. <album>." put the label sentence-final, and two imprints
+      //     already end in a period, so it said "Laserdisc Ltd..";
+      //   · the album slot recites catalogue furniture — "(Deluxe Reissue)",
+      //     "Greatest Hits Vol. 4", "Self Titled", "Untitled";
+      //   · NameBank.identity upper-cases `title`, so "<artist>, <title>." was
+      //     the only ALL-CAPS text this tier fed espeak;
+      //   · title and band are drawn from the same per-genre bank, so they
+      //     collide on their own key word ("Pirate Signal, PIRATE RADIO
+      //     SKYLINE", "Velvet Sub Club, VELVET PRESSURE") — a name said twice.
+      // Cut. The back-announce below replaces both: it is the station move the
+      // set was missing, and it stays grammatical under every name in the bank.
+      // Two imprints in the pool END in a period ("Laserdisc Ltd."), so any
+      // frame that puts the label last has to drop the sentence stop or it
+      // doubles — the exact defect the cut forms shipped.
+      const stop=(s)=>String(s).replace(/\.$/,"")+".";
+      const IDENT_SAY=[
+        (w)=>"You're listening to "+stop(w.artist),
+        (w)=>"That was "+w.artist+", right here on "+stop(w.label),
+        (w)=>"Next up: "+stop(w.artist),
+        (w)=>"This is "+w.label+" radio.",
+      ];
+      // Most ident genres have no per-genre bank in NameBank, so their act is
+      // one of the eight GENERIC bands — Cassette, Analog, Half Light, The
+      // Drift. Those are too thin to BE a station: "You're listening to
+      // Analog." is a placeholder read aloud. The imprint pool is hand-written
+      // and always specific, so a bankless genre gets the LABEL-led frames
+      // only; the generic act still speaks, in the supporting slot where a
+      // vague name is unremarkable.
+      const IDENT_SAY_GENERIC=[IDENT_SAY[1],IDENT_SAY[3]];
       function derivedSpeaker(g){
         const A=GENRES[g]; if(!A||!IDENT_FORMS.has(A.form||"pop")) return null;
         const NBx=isNode?require("./namebank.js"):root.NameBank; if(!NBx) return null;
@@ -2257,17 +2331,10 @@
         // goes negative and drags the modulo with it — jungle came out at pitch
         // -4 and house at speed 69, which espeak either clamps or refuses.
         // Ranges are espeak's usable middle: pitch 25-74 of 0-99, speed 130-199.
+        const lines=NBx.NAMEBANK&&NBx.NAMEBANK[g]?IDENT_SAY:IDENT_SAY_GENERIC;
         return { tag:"IDENT", variant:D_VARIANT[h%D_VARIANT.length],
           pitch:25+((h>>>4)%50), speed:130+((h>>>9)%70),
-          say:(w,hh)=>{
-            switch(hh%5){
-              case 0: return "You're listening to "+w.artist+".";
-              case 1: return w.label+". "+w.album+".";
-              case 2: return w.artist+", "+w.title+".";
-              case 3: return "Next up: "+w.artist+".";
-              default: return "This is "+w.label+" radio.";
-            }
-          } };
+          say:(w,hh)=>lines[hh%lines.length](w) };
       }
       const speakerFor=(g)=>SPEAKERS[g]||derivedSpeaker(g);      // a bespoke voice always beats an ident
       let sp=null, spW=0, spName=null;
@@ -2312,6 +2379,9 @@
     for(const s of foundSources){
       const reg=SAMPLES[s.id]||SOURCES[s.id];
       if(reg&&reg.synthText&&!s.synthText) s.synthText=reg.synthText;
+      // declared rotation cast (registry VOICE_FAMILIES) — same "carry it once,
+      // after every push" reason as synthText. Key absent for unlisted ids.
+      if(VOICE_FAM[s.id] && !s.fam) s.fam=VOICE_FAM[s.id];
     }
     const state={
       ...(lickVoice?{lickVoice}:{}),

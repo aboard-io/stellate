@@ -3,8 +3,10 @@
 // (app/starcruise.js + app/starcruise/*, vendored Three.js). Drives index.html in
 // headless chromium (WebGL via SwiftShader) and asserts the scaffold's contract:
 //
-//   A. the mode is OFF by default — the 🛸 chip exists but Three is NOT loaded and
-//      no starcruise canvas is in the DOM (zero-cost until tapped);
+//   A. the mode is OFF by default — the controller is not even on the BOOT PATH
+//      (window.__STARCRUISE undefined until the deferred import is armed), and
+//      once armed Three is still NOT loaded and no starcruise canvas is in the
+//      DOM (zero-cost until tapped);
 //   B. start() lazy-loads Three (window.__STARCRUISE.hasThree() true) and a
 //      #starcruise-canvas is mounted;
 //   C. a NON-BLANK frame renders — the low-res target has real colour spread and a
@@ -17,7 +19,7 @@
 //   node test/starcruise-run.js
 "use strict";
 const path = require("path");
-const { serve, capturePageErrors, installOfflineRoute } = require("./probe-harness.js");
+const { serve, capturePageErrors, installOfflineRoute, ensureStarcruise } = require("./probe-harness.js");
 const ROOT = path.join(__dirname, ".."), PORT = process.env.SC_PORT ? +process.env.SC_PORT : 8811;
 
 // launch chromium with WebGL forced on for headless (SwiftShader/ANGLE) — the
@@ -50,10 +52,10 @@ async function main() {
   // waitUntil:"commit" — don't block on the 'load' event: the full app boot runs
   // app/starmap.js computeGenreLayout(), which relaxes the whole genre field and,
   // under headless SwiftShader with a zero-size <svg> viewport, is very slow. We
-  // gate on the real readiness signal (window.__STARCRUISE + the chip) instead,
-  // with a generous timeout that absorbs that boot.
+  // gate on the real readiness signal (the chip row) instead, with a generous
+  // timeout that absorbs that boot.
   await page.goto(`http://localhost:${PORT}/index.html`, { waitUntil: "commit" });
-  await page.waitForFunction(() => window.__STARCRUISE && window.__STARCRUISE.start && document.getElementById("chips"), { timeout: 120000 });
+  await page.waitForFunction(() => !!document.getElementById("chips"), null, { timeout: 120000 });
   await page.waitForTimeout(300);
 
   // SEED THE LIVE STORE. window.__S is normally published by app/main.js's boot();
@@ -69,6 +71,12 @@ async function main() {
   });
 
   // ---- A: OFF by default ----
+  // A0 first, BEFORE arming anything: the controller is not on the boot path at
+  // all. index.html no longer loads app/starcruise.js — app/starcruise-load.js
+  // imports it on first entry to the view — so nothing has defined the global yet.
+  const cold = await page.evaluate(() => typeof window.__STARCRUISE);
+  ok(cold === "undefined", `A0. controller NOT on the boot path (window.__STARCRUISE is ${cold} until armed)`);
+  await ensureStarcruise(page);   // the deterministic hook, not a simulated chip click
   const before = await page.evaluate(() => ({
     ready: !!(window.__STARCRUISE && window.__STARCRUISE.start),
     hasThree: window.__STARCRUISE.hasThree(),

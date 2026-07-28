@@ -22,7 +22,7 @@
 //   node test/starcruise-barcadence-run.js
 "use strict";
 const path = require("path");
-const { serve, capturePageErrors, installOfflineRoute } = require("./probe-harness.js");
+const { serve, capturePageErrors, installOfflineRoute, ensureStarcruise } = require("./probe-harness.js");
 const ROOT = path.join(__dirname, ".."), PORT = process.env.SC_PORT ? +process.env.SC_PORT : 8815;
 
 async function launchGL() {
@@ -56,7 +56,10 @@ async function main() {
   const ok = (cond, msg) => { console.log((cond ? "  PASS  " : "  FAIL  ") + msg); if (!cond) fails.push(msg); return cond; };
 
   await page.goto(`http://localhost:${PORT}/index.html`, { waitUntil: "commit" });
-  await page.waitForFunction(() => window.__STARCRUISE && window.__STARCRUISE.start, { timeout: 120000 });
+  await page.waitForFunction(() => !!document.getElementById("chips"), null, { timeout: 120000 });
+  // the aliens controller is a DEFERRED import (index.html no longer loads it) —
+  // arm it through the loader hook rather than polling for the global.
+  await ensureStarcruise(page);
   await page.waitForTimeout(300);
 
   const GEN = await page.evaluate(() => {

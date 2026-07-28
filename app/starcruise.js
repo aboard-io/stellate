@@ -6,14 +6,18 @@
 // procedural (no external art) and derived from each genre's 23-float feature
 // vector.
 //
-// LOAD LAW: Three.js is NOT in index.html's initial load. This controller
-// dynamic-`import()`s vendor/three/three.module.min.js ONLY on the first start(),
-// so the zero-dependency initial page weight + mobile bundle are untouched until
-// the 🛸 chip is tapped. The mode is OPT-IN / OFF by default; when off the app
-// behaves exactly as before.
+// LOAD LAW, TWO LAYERS. (1) THIS FILE is not on the boot path either: index.html
+// does not load it, and app/panels.js dynamic-imports it through
+// app/starcruise-load.js the first time the ✦ cycle reaches the aliens view —
+// so a session that never opens the view pays none of its ~48 KB gzipped (nor
+// the ~9 KB of genre-clusters data it static-imports below). (2) Three.js is one
+// step further out still: this controller dynamic-`import()`s
+// vendor/three/three.module.min.js ONLY on the first start(). The mode is
+// OPT-IN / OFF by default; when off the app behaves exactly as before.
 //
-// This file is loaded as a side-effecting ES module (see index.html) that INJECTS
-// its own chip into #chips and wires start()/stop(). It owns the renderer, the
+// It is a side-effecting module — evaluating it publishes window.__STARCRUISE,
+// which is how app/background.js and the gates find it (the gates arm the import
+// with window.__ensureStarcruise(), never by racing a click). It owns the renderer, the
 // low-res render target, the cockpit camera, the scene, and the RAF loop; it wires
 // flight + traits + alien + backdrop + postfx (currently STUBS — the Build phase
 // replaces them behind these same contracts). It reads the app's REAL travel +

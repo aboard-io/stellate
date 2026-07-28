@@ -265,8 +265,13 @@
     // AUDIT-TRUTH — a voice's role label for the per-bar audit (matches explorer's
     // noteRole so the ⓘ timeline can key lanes by it): drums fold to one lane, solo
     // units to "solo", stab/sfx to "sfx".
+    const DRUM_KEYS = { kick: 1, snare: 1, hat: 1, tom: 1, clap: 1, rim: 1, ride: 1, crash: 1, perc: 1 };
     function auditRole(u, key) {
-      if (key === "kick" || key === "snare" || key === "hat" || key === "tom") return "drums";
+      // EVERY kit piece is the drums lane. The sampled kits' clap/rim/ride/crash/perc
+      // units carry no `role` at all, so without them here they were labelled with
+      // their own key, matched no ⓘ lane, and could never paint — the same hole
+      // app/inside.js noteRole documents.
+      if (DRUM_KEYS[key]) return "drums";
       if (key.indexOf("solo:") === 0) return "solo";
       if (u && u.role && u.role !== "drums") return u.role;
       if (key === "melody" || key === "pad" || key === "bass") return key;

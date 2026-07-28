@@ -259,6 +259,22 @@ server {
   add_header Cross-Origin-Embedder-Policy "require-corp" always;
   add_header Cache-Control "no-cache";          # HTML/JS/JSON — same as today
 
+  # GENERATED DATA, not a manifest and not code: the DX7 cartridge bank is
+  # fetched once by app/main.js and once more per stream-worker instance — 3
+  # requests on a measured desktop session — and only changes when
+  # sysex2params.js re-decodes the banks. Under the blanket no-cache above the
+  # 2 redundant requests revalidate to 304, so they cost round trips rather
+  # than the 74.7 KB gzipped body; a short max-age turns them into HTTP-cache
+  # hits and makes the file free on a revisit, without freezing it: a bank
+  # change reaches every client inside the window. `private` because gzip_vary
+  # is off, so no shared proxy should store one encoding of it (turning
+  # `gzip_vary on;` on server-wide would allow `public` here).
+  location = /engine/faust/dx7-presets.json {
+    add_header Cross-Origin-Opener-Policy  "same-origin" always;
+    add_header Cross-Origin-Embedder-Policy "require-corp" always;
+    add_header Cache-Control "private, max-age=300";
+  }
+
   location /found/ {
     add_header Cross-Origin-Opener-Policy  "same-origin" always;
     add_header Cross-Origin-Embedder-Policy "require-corp" always;
@@ -295,6 +311,24 @@ Notes:
   name — are mutable by design: excluded from MEDIA_MANIFEST and served
   `no-cache` (dedicated nginx `location =` block). Everything else under
   `found/` is versioned-by-name and immutable.
+- **The mutable class is `found/`-scoped.** It is easy to misread the `*.json`
+  carve-out above as "every JSON is mutable"; it is nested inside
+  `location /found/` and reaches nothing else. `engine/faust/dx7-presets.json`
+  (and every other JSON outside `found/`) is `no-cache` because of the
+  **server-wide** `add_header Cache-Control "no-cache"`, which is a default for
+  code, not a statement about that file. `sw.js`'s `MUTABLE` regex mirrors the
+  same `found/`-only scope, so the service worker needs no change either: files
+  outside `found/` already ride the app cache's stale-while-revalidate.
+- **THIS CONFIG IS NOT IN THE REPO.** `/etc/nginx/sites-enabled/*` lives only on
+  the droplet (and, for the alias, on the aboardresearch box); the block above
+  is the source of truth for what a human must paste there. The `dx7-presets`
+  location has to be added by hand in **both** places — and in the
+  `aboardresearch.com/projects/stellate/` alias the path is
+  `location = /projects/stellate/engine/faust/dx7-presets.json`. After pasting:
+  `nginx -t && systemctl reload nginx`, then
+  `curl -sI https://stellate.app/engine/faust/dx7-presets.json | grep -i cache`
+  must show `max-age`. `tools/deploy-stellate.sh`'s smoke step checks this and
+  prints a reminder while it is missing.
 
 **TLS: Let's Encrypt, mandatory before anything else.** `.app` is
 **HSTS-preloaded at the TLD level** in every browser — plain HTTP will not

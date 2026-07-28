@@ -297,6 +297,10 @@ async function runLivePump(msg, token) {
     if (cursor >= bars.length) break;   // liveEos and drained
 
     // ingest is cheap (no ring write) — do it, learn the bar length, THEN backpressure
+    // (AUDIT-TRUTH: keep only the bar's SERIAL, never the spec itself — a live
+    // binding to the spec would pin one bar's units/events past bars[cursor]=null,
+    // across the wait for the next bar.)
+    const barSerial = bars[cursor] && bars[cursor].serial != null ? bars[cursor].serial : null;
     const fb = await eng.feedBar(bars[cursor]);
     maxChunk = Math.max(maxChunk, fb.length);
     if (maxChunk > cap) { self.postMessage({ type: "openfail", error: `chunk ${maxChunk} > ring ${cap}`, gen }); return; }
@@ -309,6 +313,16 @@ async function runLivePump(msg, token) {
     Atomics.store(ctrl, r0w, w + c.length);   // publish AFTER the samples are written
     bars[cursor] = null;   // release the consumed bar spec (never re-read; NULL, never splice — indexing/.length are load-bearing)
     cursor++;
+    // AUDIT-TRUTH (ring route): renderChunk has ALREADY measured every faust voice's
+    // actual dry-send energy for this window against the notes fed into it, so the
+    // audit costs one small message per chord-bar here — nothing in the reader
+    // worklet, nothing in a render callback. The conductor keys it by the bar's
+    // serial (postFeed rides it on the bar spec; tail windows carry none, and an
+    // oversized bar split into sub-windows posts one table per window for the
+    // conductor to merge). The sampler/found layers are NOT in this stream on the
+    // ring route — live.js plays them natively and audits them there.
+    if (c.audit && barSerial != null)
+      self.postMessage({ type: "baraudit", gen, serial: barSerial, voices: c.audit.voices });
 
     const fl = filled();
     if (!primed && fl >= primeAt) { primed = true; self.postMessage({ type: "primed", filled: fl, gen }); }

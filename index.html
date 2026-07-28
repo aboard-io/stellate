@@ -156,10 +156,11 @@
 <script src="app/analytics.js"></script>
 <script data-goatcounter="/gc/count" async src="vendor/goatcounter/count.js"></script>
 <script type="module" src="app/main.js"></script>
-<!-- ALIENS (star-cruise): the 3D genre-flythrough, now the 4th VIEW in the ✦ cycle
-     (app/panels.js drives it via window.__STARCRUISE). Side-effecting module that
-     lazy-imports vendored Three.js ONLY when you switch to the aliens view, so the
-     initial zero-dependency page load stays untouched. -->
-<script type="module" src="app/starcruise.js"></script>
+<!-- ALIENS (star-cruise): the 3D genre-flythrough, the third VIEW in the ✦ cycle.
+     NOT loaded here. app/starcruise.js is ~48 KB gzipped (plus ~9 KB of cluster
+     data) and only that view needs it, so app/panels.js dynamic-imports it via
+     app/starcruise-load.js the first time the cycle reaches the view — which is
+     also where the vendored Three.js load already hung. A session that never
+     opens the aliens view fetches none of it. -->
 </body>
 </html>

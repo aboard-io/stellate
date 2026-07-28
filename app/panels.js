@@ -10,6 +10,7 @@ import { renderInside } from "./inside.js";
 import { drawMap, startPulse } from "./starmap.js";
 import { copyShareUrl, buildShareUrl, loopBars, loopDuration, baseDuration, durMult, fmtDuration, fmtMult, MULT_MIN, MULT_MAX } from "./share.js";
 import { downloadMidi, midiFileName } from "./export.js";   // ⤓ midi — MIDI only
+import { ensureStarcruise, starcruiseLoaded } from "./starcruise-load.js";   // the aliens view, imported on first entry (not at boot)
 
 // ---------- EMBED: the paste-into-your-blog snippet -------------------------
 // The ↗ share button hands out a LINK; this hands out the same mix
@@ -162,15 +163,31 @@ document.getElementById("cfgChip").onclick=()=>toggleModal("panel");
 // The chip's icon tracks the CURRENT view (background.js applyBg). Aliens = the 3D
 // star-cruise (window.__STARCRUISE), started/stopped like any other view — no separate
 // chip, no ✕ EXIT button; the ✦ chip cycles right out of it.
-document.getElementById("viewChip").onclick=()=>{
+//
+// The controller is NOT on the boot path: ensureStarcruise() dynamic-imports it
+// (single-flight) the first time this cycle reaches the aliens view, so a session
+// that never opens the view never fetches its ~57 KB. The exit leg reads the
+// global directly — if the module isn't resident the view cannot be running.
+//
+// ARMING IS NOT INSTANT, so the leg is re-entrancy guarded: start() only latches
+// its own `running` flag AFTER awaiting the Three load, and the deferred import
+// widens that window further, so a second tap mid-arm would take the viz leg
+// again and mount a second canvas. aliensArming closes it.
+let aliensArming=false;
+document.getElementById("viewChip").onclick=async()=>{
   const chip=document.getElementById("viewChip");
-  const SC=window.__STARCRUISE;
+  if(aliensArming) return;          // a tap during the import/Three load is a no-op
   // THREE views, no video mode: map -> viz -> aliens -> map.
-  if(SC&&SC.isRunning()){           // aliens -> map
-    SC.stop(); chip.classList.remove("spin");
+  if(starcruiseLoaded()&&window.__STARCRUISE.isRunning()){   // aliens -> map
+    window.__STARCRUISE.stop(); chip.classList.remove("spin");
   } else if(S.vizView){             // viz -> ALIENS
     toggleModal("inside",false);
-    if(SC){ chip.classList.add("spin"); Promise.resolve(SC.start()).then(()=>chip.classList.remove("spin")); }
+    chip.classList.add("spin");     // spins through the import AND the Three load
+    aliensArming=true;
+    try{
+      const SC=await ensureStarcruise();
+      if(SC) await Promise.resolve(SC.start());
+    } finally { aliensArming=false; chip.classList.remove("spin"); }
   } else {                          // map -> viz
     toggleModal("inside",true);
   }

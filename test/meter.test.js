@@ -118,7 +118,11 @@ function handState(meter, kit, bass, melody, seed, chordEvery) {
   try {
     headDir = fs.mkdtempSync(path.join(os.tmpdir(), "meter-head-"));
     fs.mkdirSync(path.join(headDir, "engine", "faust"), { recursive: true });
-    const files = ["csd-engine.js", "columns.js", "genre-kernel.js", "theory.js", "pipes.js", "namebank.js", "speech.js"];   // columns.js: csd-engine requires it since vector-kernel STEP 1 (b6b6a3f)
+    // columns.js: csd-engine requires it. genres-data/registry-data: genre-kernel
+    // requires them since the data split, and a missing one throws MODULE_NOT_FOUND
+    // from the require below — outside this try — aborting the whole run.
+    const files = ["csd-engine.js", "columns.js", "genre-kernel.js", "theory.js", "pipes.js", "namebank.js", "speech.js",
+                   "genres-data.js", "registry-data.js"];
     for (const f of files)
       fs.writeFileSync(path.join(headDir, "engine", f),
         execFileSync("git", ["show", "HEAD:engine/" + f], { cwd: path.join(HERE, ".."), maxBuffer: 64 * 1024 * 1024 }));
@@ -128,16 +132,24 @@ function handState(meter, kit, bass, melody, seed, chordEvery) {
   if (!headDir) {
     console.log("SKIP  head_byte_identity  (git/HEAD unavailable)");
   } else {
-    const E0 = require(path.join(headDir, "engine", "csd-engine.js"));
-    const K0 = require(path.join(headDir, "engine", "genre-kernel.js"));
-    let ok = J(E0.buildEvents(E0.defaultState())) === J(E.buildEvents(E.defaultState()));
-    const tracks = [["jungle", 2], ["prelude", 3], ["blues", 1]];
-    for (const [g, seed] of tracks) {
-      const s0 = K0.track(g, { seed }), s1 = K.track(g, { seed });
-      if (J(s0) !== J(s1)) { ok = false; console.log(`  state drift: ${g}/s${seed}`); }
-      else if (J(E0.buildEvents(s0)) !== J(E.buildEvents(s1))) { ok = false; console.log(`  event drift: ${g}/s${seed}`); }
+    let E0, K0;
+    try {
+      E0 = require(path.join(headDir, "engine", "csd-engine.js"));
+      K0 = require(path.join(headDir, "engine", "genre-kernel.js"));
+    } catch (e) {
+      console.log(`FAIL  head_byte_identity  (HEAD copy will not load: ${e.code || e.message})`);
+      fails++; E0 = null;
     }
-    gate("head_byte_identity", ok, "defaultState + 3 kernel tracks, state+events JSON vs HEAD");
+    if (E0) {
+      let ok = J(E0.buildEvents(E0.defaultState())) === J(E.buildEvents(E.defaultState()));
+      const tracks = [["jungle", 2], ["prelude", 3], ["blues", 1]];
+      for (const [g, seed] of tracks) {
+        const s0 = K0.track(g, { seed }), s1 = K.track(g, { seed });
+        if (J(s0) !== J(s1)) { ok = false; console.log(`  state drift: ${g}/s${seed}`); }
+        else if (J(E0.buildEvents(s0)) !== J(E.buildEvents(s1))) { ok = false; console.log(`  event drift: ${g}/s${seed}`); }
+      }
+      gate("head_byte_identity", ok, "defaultState + 3 kernel tracks, state+events JSON vs HEAD");
+    }
   }
 }
 

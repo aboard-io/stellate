@@ -815,7 +815,11 @@
     function postFeed(stream, r) {
       workers[stream.wi].postMessage({ type: "feedBar", bar: {
         units: r.units, events: r.events, fxParams: r.fxParams, spb: r.spb, lo: r.lo, hi: r.hi,
-        barStartSec: r._base, sweeps: r._sweeps, vapor: curVapor } });
+        barStartSec: r._base, sweeps: r._sweeps, vapor: curVapor,
+        // AUDIT-TRUTH: the bar's serial rides along so the producer can key its
+        // per-voice measurement back to this bar. A TAIL window has no meta and so
+        // no serial — it is decay, not a bar, and is never audited.
+        serial: r.meta ? r.meta.serial : null } });
     }
     function openStream(stream, one, primeSec) {
       const go = (speech) => {
@@ -1080,6 +1084,10 @@
       if (m.type === "tick") { pollSwap(); pumpOnce(); drainDueBars(); return; }
       const stream = (cur && cur.gen === m.gen) ? cur : (br && br.gen === m.gen) ? br : null;
       if (!stream) return;   // superseded open — ignore
+      // AUDIT-TRUTH: the producer's per-bar voice measurement, parked by serial until
+      // that bar is HEARD (fireBar). A superseded gen never reaches this line, so a
+      // discarded bridge's measurements can never be attributed to what plays.
+      if (m.type === "baraudit") { takeAudit(m.serial, m.voices); return; }
       if (m.type === "primed") {
         if (stream === cur && !running) startRun();
         else if (stream === br && phase === "bridging" && !br.primed) { br.primed = true; startFade(); }
@@ -1185,6 +1193,141 @@
       pumpTimer = setTimeout(pump, 25);
     }
 
+    // ── AUDIT-TRUTH ring (ring route) ─────────────────────────────────────────
+    // "Expected but silent": a voice the bar has notes for that produced no sound.
+    // The ⓘ timeline paints such a lane red, so the measurement has to exist on THIS
+    // route too — a paint that can only fire on the mobile route is a readout lying
+    // about what it checked. Both halves ride structures that already run once per
+    // chord-bar; nothing is added to the audio path (the ring-player worklet) or to
+    // any render callback:
+    //   • FAUST voices are measured inside the producer's renderChunk (each unit's
+    //     dry-send energy → RMS, against the notes fed into that window) and posted
+    //     back as {type:"baraudit"} keyed by serial — see stream-worker runLivePump.
+    //   • SAMPLED + FOUND voices are not in the stream on this route (the live graph
+    //     plays them natively), so the producer cannot see them; they are audited in
+    //     scheduleNative, which already walks every note — it counts the notes dropped
+    //     because their buffer had not decoded yet, which is exactly the failure the
+    //     lane paint exists for (the decode race). rms is null there: the native lane
+    //     measures whether a note reached the audio thread, not its amplitude.
+    // Both are folded together and recorded at fireBar — the instant the bar is
+    // HEARD — mirroring the WAV route's ring, and a bar with NO measurement records
+    // nothing at all (no entry ⇒ no paint ⇒ no claim).
+    const AUDIT_CAP = 200, AUDIT_PENDING_CAP = 256;
+    const auditRing = [];
+    const auditBySerial = new Map();     // serial -> ring entry (the ⓘ timeline's lookup)
+    const auditPending = new Map();      // serial -> merged producer table, awaiting playback
+    let auditAnomTotal = 0;
+    // a voice key's ⓘ lane role — mirrors app/inside.js noteRole (and the renderer's
+    // auditRole) so the native half and the producer half land in the same lanes.
+    // isDrum is the mapped event's own flag: the sampled kits' clap/rim/ride/crash/
+    // perc units carry no `role`, so nothing else identifies them as kit pieces.
+    function natRole(key, u, isDrum) {
+      if (isDrum || key === "kick" || key === "snare" || key === "hat" || key === "tom") return "drums";
+      if (key.indexOf("solo:") === 0) return "solo";
+      if (u && u.role && u.role !== "drums") return u.role;
+      if (key === "melody" || key === "pad" || key === "bass") return key;
+      if (key === "stab" || key === "sfx") return "sfx";
+      return (u && u.role) || key;
+    }
+    // merge one sub-window's table into the bar's accumulator. A bar split by
+    // splitFeedWindows is rendered as several chunks: a voice is silent FOR THE BAR
+    // only if every window that expected notes measured silent (nan poisons the bar
+    // outright — a blown-up filter is not fixed by a later clean window).
+    function takeAudit(serial, voices) {
+      if (serial == null || !voices) return;
+      let acc = auditPending.get(serial);
+      if (!acc) {
+        acc = {};
+        auditPending.set(serial, acc);
+        while (auditPending.size > AUDIT_PENDING_CAP) auditPending.delete(auditPending.keys().next().value);
+      }
+      for (const key of Object.keys(voices)) {
+        const v = voices[key];
+        let p = acc[key];
+        if (!p) p = acc[key] = { role: v.role, notes: 0, rms: null, missing: [], nWin: 0, sWin: 0, nan: false };
+        p.notes += v.notes || 0;
+        if (v.rms != null && (p.rms == null || v.rms > p.rms)) p.rms = v.rms;
+        for (const m of (v.missing || [])) if (p.missing.indexOf(m) < 0) p.missing.push(m);
+        if (v.reason === "nan") p.nan = true;
+        if (v.notes > 0) { p.nWin++; if (v.silent) { p.sWin++; if (!p.reason) p.reason = v.reason; } }
+      }
+    }
+    function recordAudit(b) {
+      const serial = b.meta.serial;
+      const pend = auditPending.get(serial);
+      if (pend) auditPending.delete(serial);
+      const nat = b.nativeAudit || null;
+      if (!pend && !nat) return;   // measured nothing this bar — claim nothing
+      const voices = {};
+      if (pend) for (const key of Object.keys(pend)) {
+        const p = pend[key];
+        const silent = p.nan || (p.nWin > 0 && p.sWin === p.nWin);
+        voices[key] = { role: p.role, notes: p.notes, rms: p.rms, missing: p.missing,
+          silent, reason: silent ? (p.nan ? "nan" : p.reason || "present-but-silent") : null, lane: "stream" };
+      }
+      if (nat) for (const key of Object.keys(nat)) {
+        const n = nat[key];
+        const silent = n.notes > 0 && n.played === 0;
+        voices[key] = { role: n.role, notes: n.notes, played: n.played, rms: null, missing: n.missing,
+          silent, reason: silent ? (n.missing.length ? "missing" : "present-but-silent") : null, lane: "native" };
+      }
+      const anomalies = [];
+      for (const key of Object.keys(voices)) {
+        const v = voices[key];
+        if (v.silent) anomalies.push({ key, role: v.role, notes: v.notes, rms: v.rms, reason: v.reason, missing: v.missing });
+      }
+      auditAnomTotal += anomalies.length;
+      // LANE ROLLUP for the ⓘ paint. The timeline draws one row per ROLE, and several
+      // voices share a role (a kit is kick+snare+hat+clap+…). A lane may only be
+      // painted silent when EVERY voice in it that expected notes measured silent —
+      // a dead kick under a live hat is a real anomaly (it is in `voices` and in the
+      // summary) but painting the whole drum row red while the hats play is a lie.
+      const laneExp = {}, laneSil = {}, laneWhy = {};
+      for (const key of Object.keys(voices)) {
+        const v = voices[key];
+        if (!(v.notes > 0)) continue;
+        laneExp[v.role] = (laneExp[v.role] || 0) + 1;
+        if (v.silent) {
+          laneSil[v.role] = (laneSil[v.role] || 0) + 1;
+          if (!laneWhy[v.role]) laneWhy[v.role] = { reason: v.reason, missing: (v.missing || []).slice() };
+        }
+      }
+      const silentRoles = {};
+      for (const role of Object.keys(laneExp)) if (laneSil[role] === laneExp[role]) silentRoles[role] = laneWhy[role];
+      const entry = { serial, section: b.meta.section || null, ci: b.meta.ci,
+        t: +ctx.currentTime.toFixed(3), route: "ring", gen: (cur && cur.gen) || null,
+        runwaySec: +(Math.max(0, ringRunwayFrames()) / SR).toFixed(2),
+        underruns: Atomics.load(ctrl, C_UNDER_CNT),
+        covered: (pend ? "stream" : "") + (pend && nat ? "+" : "") + (nat ? "native" : ""),
+        anomalies, silentRoles, voices };
+      auditRing.push(entry);
+      auditBySerial.set(serial, entry);
+      while (auditRing.length > AUDIT_CAP) {
+        const old = auditRing.shift();
+        if (old && auditBySerial.get(old.serial) === old) auditBySerial.delete(old.serial);
+      }
+    }
+    // compact one-line summary (same shape the WAV route logs, so the ?wavDebug
+    // clipboard line reads identically on either route).
+    function auditSummary() {
+      const total = auditRing.length;
+      let anomBars = 0; const roleMiss = {};
+      for (const e of auditRing) {
+        if (!e.anomalies.length) continue;
+        anomBars++;
+        for (const a of e.anomalies) {
+          const tag = a.reason === "missing" ? (a.role + "[" + (a.missing || []).join(",") + "]") : (a.role + "(" + a.reason + ")");
+          (roleMiss[tag] = roleMiss[tag] || []).push(e.serial);
+        }
+      }
+      const parts = Object.keys(roleMiss).slice(0, 8).map((k) => {
+        const ss = roleMiss[k]; const lo = ss[0], hi = ss[ss.length - 1];
+        return k + " bars " + (lo === hi ? lo : lo + "-" + hi);
+      });
+      return "AUDIT: " + auditAnomTotal + " anomalies over " + anomBars + "/" + total + " bars" +
+        (parts.length ? "; " + parts.join("; ") : "");
+    }
+
     // ── onBar scheduler: fire opts.onBar (+ schedule native found/sampler) at each
     // bar's PLAYBACK instant, derived from the ring-player read cursor → ctx clock. ──
     let barTimer = 0;
@@ -1250,6 +1393,7 @@
       if (b.nativeAt == null) armNative(b, pg);
       const when = b.nativeAt;   // the instant the native lane was anchored on
       lastPlayedLayers = new Set([...Object.keys(b.units)].map(LAYER_OF_UNIT));
+      recordAudit(b);            // AUDIT-TRUTH: this bar is being heard now — file what was measured
       if (opts.onBar) try {
         opts.onBar({ serial: b.meta.serial, ci: b.meta.ci, nch: b.meta.nch, when: when,
           spb: b.meta.spb, cbeats: b.meta.cbeats, chord: b.meta.chord, section: b.meta.section });
@@ -1271,9 +1415,17 @@
       const spb = b.spb, lo = b.lo;
       const at = (beat) => when + (beat - lo) * spb;
       const beatAbs = (beat) => b.meta.absBeatLo + (beat - lo);
+      // AUDIT-TRUTH (native half): expected vs actually-scheduled, per lane. Every
+      // `continue` below is a note that will not be heard; counting them here is the
+      // only place on this route the sampler/found layers can be audited at all.
+      const nat = b.nativeAudit || (b.nativeAudit = {});
+      const natOf = (key, role) => nat[key] || (nat[key] = { role, notes: 0, played: 0, missing: [] });
+      const natMiss = (na, id) => { if (id && na.missing.indexOf(id) < 0) na.missing.push(id); };
       // sampler notes (native BufferSource, like found)
       if (SP) for (const e of (b.events || [])) {
         const u = b.units[e.unit]; if (!u || !u.sampler) continue;
+        const na = natOf(e.unit, natRole(e.unit, u, !!e.drum));
+        na.notes++;
         const ent = samplerOf(e.unit, u, spb);
         const midi = SP.midiOfFreq(e.sets.freq);
         // VELOCITY LAYER: the same SP.selVel(e.amp) press feeds mixPCM. Anything
@@ -1282,7 +1434,8 @@
         // layers for the same note (ENGINE-AUDIT Tier 2).
         const z = SP.zoneFor(u.sampler.zones, midi, SP.selVelOf(e));
         const buf = z && samplerBufs[z.srcId];
-        if (!ent || !buf) continue;
+        if (!ent || !buf) { natMiss(na, z ? z.srcId : null); continue; }
+        na.played++;
         // chained unit (declared inserts): notes enter the chain PRE-SEND —
         // dry 1 / sends 0 here; the unit-level gains tap the chain output.
         const chained = !!ent.chain;
@@ -1308,9 +1461,24 @@
           loop: !!z.loop, loopStartSec: (z.loopStart || 0) / zsr + leadSec, loopEndSec: (z.loopEnd || 0) / zsr + leadSec });
       }
       // found chops + beds (bed re-anchored at bar start of chord 0)
+      // AUDIT lane for a found event — mirrors the ⓘ timeline's own split (a spoken/
+      // vocal CHOP is the "voices" lane, everything else the "found" lane).
+      const kindOf = {};
+      if (b.found && b.found.length) for (const s of (b.foundSources || [])) if (s && s.id) kindOf[s.id] = s.kind || "";
+      const foundRole = (f) => {
+        const k = kindOf[f.srcId] || "";
+        return (f.type === "chop" && (k === "speech" || k === "vox")) ? "voices" : "found";
+      };
       for (const f of (b.found || [])) {
         const buf = bufCache[f.srcId];
-        if (!buf) continue;
+        // A chop is expected on every bar it fires; a BED only on the bar it is
+        // (re-)anchored (ci 0) — on the bars it sustains through it is already
+        // ringing, so it is neither expected nor missing there.
+        const fr = foundRole(f);
+        const na = (f.type === "chop" || b.meta.ci === 0) ? natOf(fr, fr) : null;
+        if (na) na.notes++;
+        if (!buf) { if (na) natMiss(na, f.srcId); continue; }
+        if (na) na.played++;
         if (f.type === "chop") {
           const lane = VOXISH.test(f.srcId) ? foundVox : foundChops;
           lane.chop(buf, at(f.beat), { durSec: f.durB * spb, amp: f.amp, pitch: f.pitch, offset: f.offset,
@@ -1719,6 +1887,13 @@
       // audio sits past the anchor (must exceed the ramp — that is finding 2), how
       // much of that is tail, and the underrun counter either side of the ramp. ──
       __fades: () => fadeLog.slice(),
+      // ── AUDIT-TRUTH surface (same shape as the WAV route's, so the ⓘ timeline's
+      // silent-lane paint and the ?wavDebug download/summary work identically on
+      // both routes): the rolling ring, per-serial lookup, and the counters. ──
+      audit: () => auditRing.slice(),
+      auditFor: (serial) => auditBySerial.get(serial) || null,
+      auditSummary,
+      auditStats: () => ({ bars: auditRing.length, anomalies: auditAnomTotal, pending: auditPending.size }),
       // ── NATIVE-LANE ANCHOR LATENESS (finding 3). ctx.currentTime - when at the
       // moment the bar's sampler/found notes were scheduled: <=0 means the whole
       // bar was handed to the audio thread ahead of its instant (sample-accurate).

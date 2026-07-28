@@ -98,4 +98,24 @@ async function installOfflineRoute(page, port, opts) {
   });
 }
 
-module.exports = { MIME, serve, launchChromium, capturePageErrors, installOfflineRoute };
+// ensureStarcruise(page) — ARM THE DEFERRED ALIENS CONTROLLER, deterministically.
+// app/starcruise.js is no longer a <script> in index.html: app/starcruise-load.js
+// owns a single-flight dynamic import and publishes window.__ensureStarcruise.
+// So a gate can no longer just poll for window.__STARCRUISE — nothing would ever
+// define it — and must not simulate a ✦ chip click either (that races the view
+// cycle's viz leg). It calls the hook and waits for the controller instead.
+// Gates that neutralise app/main.js never evaluate app/panels.js, so the loader
+// module may not be resident: import it directly in that case (same module URL,
+// therefore the same single-flight promise as the app's own import).
+async function ensureStarcruise(page, timeoutMs) {
+  await page.evaluate(async () => {
+    const ens = window.__ensureStarcruise || (await import("/app/starcruise-load.js")).ensureStarcruise;
+    await ens();
+    return !!(window.__STARCRUISE && window.__STARCRUISE.start);   // keep the return serialisable
+  });
+  // 3-ARG FORM: playwright's signature is (pageFunction, arg, options) — passing
+  // the options object second makes it the ARG and silently keeps the 30 s default.
+  await page.waitForFunction(() => !!(window.__STARCRUISE && window.__STARCRUISE.start), null, { timeout: timeoutMs || 60000 });
+}
+
+module.exports = { MIME, serve, launchChromium, capturePageErrors, installOfflineRoute, ensureStarcruise };

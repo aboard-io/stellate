@@ -138,4 +138,15 @@ for u in /feed.xml /feed.json /feed-archive.xml /manifest.webmanifest /robots.tx
   printf '%-34s' "$u"
   curl -s -o /dev/null -w '%{http_code}\n' "https://stellate.app$u"
 done
+# THE DX7 BANK'S CACHE HEADER (docs/HOSTING.md §5). The bank is fetched once by
+# app/main.js and once per stream-worker instance; under the server-wide
+# no-cache the redundant fetches revalidate every time. The fix is one nginx
+# location block that must be pasted BY HAND — the nginx config is not in this
+# repo — so this check is a reminder, never an abort.
+printf '%-34s' "dx7-presets cache-control"
+if curl -sI https://stellate.app/engine/faust/dx7-presets.json | grep -qiE 'cache-control:.*max-age'; then
+  echo "cached OK"
+else
+  echo "no-cache — paste the HOSTING.md §5 dx7-presets location block on the droplet"
+fi
 echo "deployed."
