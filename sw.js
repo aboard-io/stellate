@@ -1,5 +1,5 @@
 // sw.js — OFFLINE, WHERE POSSIBLE: the samples the engine fetches become the
-// offline set just by playing, and the route precacher (app/precache.js) warms
+// offline set just by playing, and the route precacher (app/audio/precache.js) warms
 // them ahead of the traveler.
 //
 // TWO caches, because the two classes have different lifetimes:
@@ -29,7 +29,7 @@
 // Cached Response objects keep their original headers, so COOP/COEP isolation
 // (SharedArrayBuffer for the render worker) survives offline replay.
 
-const VERSION = "v43";                       // bump every deploy that must reach users
+const VERSION = "v44";                       // bump every deploy that must reach users
 const APP_PREFIX = "stellate-app-";
 const APP_CACHE = APP_PREFIX + VERSION;
 const MEDIA_CACHE = "stellate-media-v1";     // NOT tied to VERSION — see above
@@ -38,7 +38,7 @@ const LEGACY = /^stellate-v\d+$/;            // the pre-split single cache (app 
 // Media is versioned-by-name, so it may live in a cache no deploy ever sweeps.
 // Two exceptions inside found/ are NOT versioned-by-name and must stay
 // refreshable — nginx serves both no-cache for the same reason (HOSTING.md §5):
-// every *.json manifest, and tw_vocal.mp3, which tools/sing.py re-sings under a
+// every *.json manifest, and tw_vocal.mp3, which tools/build/sing.py re-sings under a
 // fixed name. Anything matching MUTABLE rides the app cache's revalidation
 // instead; putting it in MEDIA_CACHE would freeze it on every client forever.
 const IMMUTABLE = /^\/found\//;
