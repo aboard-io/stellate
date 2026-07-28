@@ -6,9 +6,10 @@
 
 <!-- Machines verify structure; human ears verify taste. -->
 
-- [ ] `./verify.sh` green
-- [ ] `node test/gates/theory.test.js && node test/gates/pipes.test.js` green
-- [ ] Browser gates (only if the UI changed — see CLAUDE.md)
+- [ ] `./verify.sh` green (the 13 gate suites, concurrent)
+- [ ] `npm run test:pure` green (theory + pipes + boot-smoke)
+- [ ] `npm run test:browser` (only if the UI or the star-cruise changed — see
+      CONTRIBUTING.md for the one-time Playwright setup)
 - [ ] I listened to it (what, and how it sounded):
 
 **Matrix status:** `node engine/genre-verifier.js matrix --no-cache` prints

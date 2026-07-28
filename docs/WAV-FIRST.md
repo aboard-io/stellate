@@ -19,13 +19,13 @@ in the audible path.
 
 ## Facts this design stands on (verified 2026-07-07)
 
-- `faust/stream-renderer.js` mixes the **full press-parity mix** when PCM buffers
+- `engine/faust/live/stream-renderer.js` mixes the **full press-parity mix** when PCM buffers
   are supplied: found via `FP.mixPCM` (whole-song accumulators, ~line 254) and
   sampler via windowed `SP.mixPCM` **even in the live-bar path** (~line 498).
-- The current background-WAV producer (`renderWav` in `faust/stream-worker.js`)
+- The current background-WAV producer (`renderWav` in `engine/faust/live/stream-worker.js`)
   ships `buffers:{}, speech:null` — today's bg WAV is **synth-only** (no found,
   no sampled kits, no vocoder). It must not be the model for this feature.
-- The live conductor (`faust/live.js`) already decodes every found source and
+- The live conductor (`engine/faust/live/live.js`) already decodes every found source and
   sampler zone on the main thread (`bufCache`, `samplerBufs`, `speechCache`) for
   native scheduling — the PCM the worker needs already exists there.
 - The ring conductor's bar-walk (`feed`/`postFeed` + `openLive`) preserves musical
@@ -105,7 +105,7 @@ New mode `wavOut` in `FaustLive.exploreLive`:
    (new-gen segments arrive and play), zero console errors.
 4. **Render keeps up:** segment render time < 1/3 segment duration on the dev
    box (log the rate; phones are slower — headroom is the budget).
-5. **Existing gates stay green:** `engine.test.js`, `test/browser/live.test.js`
+5. **Existing gates stay green:** `test/gates/engine.test.js`, `test/browser/live.test.js`
    (desktop ring path), `validate-genres.js --quick`, and the bg-survival probe
    (desktop survival machinery unchanged).
 
@@ -157,7 +157,7 @@ deleted.
 
 - **Codec:** source buffers reject PCM/WAV, so the worker encodes **MP3**
   (vendored pure-JS encoder — self-contained, no CDN, deterministic; commit the
-  vendored source under `faust/vendor/`). ONE encoder instance per stream
+  vendored source under `engine/faust/vendor/`). ONE encoder instance per stream
   lifetime feeding `audio/mpeg` in `mode="sequence"` — continuous frames, no
   per-chunk encoder-delay gaps by construction. Feature-detect
   `isTypeSupported("audio/mpeg")`; if absent, fall back (fMP4/AAC via WebCodecs
@@ -233,7 +233,7 @@ buffered.end) measures exactly this on-device. The structural cure is fMP4,
 where every sample block carries an EXPLICIT baseMediaDecodeTime — nothing is
 inferred, nothing can drift.
 
-1. **Muxer:** hand-rolled audio-only fragmented-MP4 muxer (`faust/fmp4.js`,
+1. **Muxer:** hand-rolled audio-only fragmented-MP4 muxer (`engine/faust/codec/fmp4.js`,
    env-agnostic UMD like mp3-stream.js): init segment (ftyp + moov with mp4a
    esds / Opus dOps), then one moof+mdat per encoded batch with tfdt
    baseMediaDecodeTime in media timescale (= sample rate), monotonic by

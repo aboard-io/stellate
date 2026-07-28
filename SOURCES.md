@@ -268,10 +268,22 @@ sources in `engine/genre-kernel.js`, and re-render.
 
 # Found-video sources & attribution
 
-> **REMOVED 2026-07-25:** the laserdisc video layer was removed from the app —
-> clips are no longer fetched or played; the recipes, catalog, and layer code
-> are preserved on branch `legacy-download-video`. The sections below stay as
-> the attribution ledger for the era the layer shipped.
+> **THE VIDEO LAYER IS GONE — THE LEDGER STAYS, DELIBERATELY.** No video is
+> fetched, cached, played or deployed: nothing in the app holds a `<video>`
+> element, and `tools/deploy/deploy-stellate.sh` excludes `found/video/`
+> outright. Every video section in this file (this one, the *library* section,
+> and "Streaming found-video sources" near the end) is retained as the
+> **attribution record of material this project did serve publicly**.
+>
+> Deleting the rows would not undo that. Most of them are tier-2 and tier-3 by
+> the ladder at the top of this file — "none stated" licences on LaserDisc rips
+> are precisely the tier-3 case where **no licence chain exists to comply
+> with** — and the ledger is the only place the obligation and the exposure are
+> written down. It is also what makes the remedy possible: a rights holder who
+> objects can be answered from these rows. An attribution ledger that shrinks
+> when the code changes is not a ledger.
+>
+> Read what follows in the past tense. It describes an era, not the app.
 
 The background video layer (`video-layer.js`) plays short clips from **LaserDisc
 rips on the Internet Archive**. Since 2026-07 the LIVE layer **streams** them
@@ -473,7 +485,7 @@ committable/usable. Families: `mallsoft_vapor`, `transit`, `rave_hardcore`,
 subtle telephone band (highpass 280 / lowpass 3600) — the `saytransit` PA
 precedent; every other clip is dry.
 
-## Sampled instruments (found/samples/instruments/ — fetch-found-samples.sh + fetch-guitar-samples.sh, faust/sf2.js + faust/extract-gm.js)
+## Sampled instruments (found/samples/instruments/ — fetch-found-samples.sh + fetch-guitar-samples.sh, engine/faust/build/sf2.js + engine/faust/build/extract-gm.js)
 
 The SAMPLER voice model plays real instrument zones extracted from a SoundFont
 at fetch time (SF2 → wav zones + zones.json with root keys and loop points;
@@ -607,9 +619,9 @@ per item (metadata, not search index) — this wave is deliberately tier-1-only:
 | `vox/apollo_d..f.wav` (`vox_d`/`vox_e`/`vox_f`) | [`Apollo11Audio`](https://archive.org/details/Apollo11Audio) (NASA JSC Houston Audio Control Room tapes 11-03302/11-03306/11-03308) | three more capcom one-liners for the `vocal_stab` pool (joins `vox_a..c`) | NASA radio traffic — **public domain** (PD mark on item) |
 | `hits/hoover_a.wav` `hoover_b` `stab_organ` `stab_saw` | synthesized in-house (ffmpeg `aevalsrc`, recipe in the fetch script — the `tw_ding`/`timer_ding` precedent) | two hoover/mentasm stabs + an M1-ish organ chord + a sus4 saw chord — the `rave_stab` pool (joins the dcc `rave_a..d`) | pure synthesis, **license-free** |
 
-## DX7 patch bank (faust/dx7-presets.json — committed source, not audio)
+## DX7 patch bank (engine/faust/data/dx7-presets.json — committed source, not audio)
 
-113 presets decoded (faust/sysex2params.js) from the eight **Yamaha DX7
+114 presets decoded (engine/faust/build/sysex2params.js) from the eight **Yamaha DX7
 factory ROM cartridges** (ROM1A "Master" … ROM4B, 1983), fetched from the
 [yamahablackboxes.com](https://yamahablackboxes.com/synth-diy/yamaha-dx7-keyboard/) sysex
 mirrors (`patches/dx7/factory/rom{1a..4b}.syx`). These banks have been freely
@@ -617,7 +629,7 @@ redistributed by Yamaha-adjacent archives, synth museums, and every DX7
 editor project for four decades (Dexed ships them; bwhitman/learnfm's 31k-patch
 corpus contains them); Yamaha has never asserted rights over the patch DATA —
 PD-adjacent by long convention, noted here rather than claimed as a formal
-grant. Curation: all 113 decoded patches render non-silent (scratch audit,
+grant. Curation: all 114 decoded patches render non-silent (scratch audit,
 2026-07); SFX novelties (TRAIN, EXPLOSION, LASER GUN…) were not decoded.
 
 ## Vendored code (committed source, not audio)
@@ -628,10 +640,10 @@ grant. Curation: all 113 decoded patches render non-silent (scratch audit,
   browser. GPL, not LGPL: the app as served with this module is a GPL-3.0
   combined work — see NOTICE. (The 244 canned speech recipes below are
   espeak *output* and stay unrestricted regardless.)
-- `faust/vendor/lamejs.min.js` — **lamejs 1.2.1** MP3 encoder
+- `engine/faust/vendor/lamejs.min.js` — **lamejs 1.2.1** MP3 encoder
   ([github.com/zhuker/lamejs](https://github.com/zhuker/lamejs), the npm
   `lamejs@1.2.1` single-file minified build, verbatim + a small UMD shim),
-  **LGPL-3.0**. Used by the WAV-FIRST v3 mobile output path (faust/mp3-worker.js)
+  **LGPL-3.0**. Used by the WAV-FIRST v3 mobile output path (engine/faust/codec/mp3-worker.js)
   to encode the continuous `audio/mpeg` append stream; served as unmodified
   source alongside this repo, which satisfies LGPL for a scripting-language use.
 
@@ -648,7 +660,7 @@ not copyrightable; the audio itself is machine-generated on this machine
 
 ## 30-genre commission signature crates (materials round, 2026-07)
 
-Phase B of the 30 fictional-genre commission (`genre-specs/MATERIALS.md`). Three
+Phase B of the 30 fictional-genre commission (`docs/history/MATERIALS.md`). Three
 kinds of new material, all recoverable from the committed recipes:
 
 ### (a) Synthesized speech — `found/samples/speech/sp_*.wav` (generated, no external source)
@@ -712,6 +724,10 @@ the spokenword-fix path). **Flag for the human release decision:** `pigeon_coo` 
 | `dryer_spin` | [`aporee_8942_14632`](https://archive.org/details/aporee_8942_14632) | `berlinOhlauerWaschsalonContact111204c.mp3` | contact-mic tumble-dryer spin, Berlin Ohlauer Str. waschsalon (aporee) | **CC BY-SA 3.0** (⚠ ShareAlike) | laundrycore |
 
 ## Streaming found-video sources (avant-garde + early 3D/CG) — 2026-07
+
+> Part of the removed video layer — see the header on "Found-video sources &
+> attribution" above. Retained as the attribution record, not as live
+> behaviour. Nothing below is fetched or served now.
 
 A **streaming** video layer: 26 archive.org items cued directly over HTTP Range
 requests (no local download), 97 short muted transformed windows written to

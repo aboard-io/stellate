@@ -106,13 +106,26 @@ Tournoij, ISC license (header of the file). Served same-origin; it talks to a
 self-hosted GoatCounter instance at `/gc/` — cookie-free, no persistent
 identifiers, basic aggregate stats only (docs/HOSTING.md "Analytics").
 
-## Fonts and UI libraries — loaded from CDNs, not redistributed
+## Fonts and UI libraries — vendored (self-hosted, no CDN)
 
-- Orbitron and VT323 (SIL OFL 1.1) are loaded from Google Fonts.
-- preact (MIT) and htm (Apache-2.0) are imported at runtime from esm.sh.
+The app loads nothing from a third-party origin. These four were the last
+cross-origin subresources and are now committed here, each with its upstream
+license text alongside it:
 
-None of these are contained in this repository; no redistribution obligations
-attach. If any are ever vendored, their license texts must ride along.
+- `vendor/fonts/` — **Orbitron** (v35, © The Orbitron Project Authors) and
+  **VT323** (v18, © The VT323 Project Authors), both under the **SIL Open Font
+  License 1.1** (`vendor/fonts/LICENSE`), served as woff2 by
+  `vendor/fonts/fonts.css`. The OFL permits redistribution of the font files;
+  the Reserved Font Names ("Orbitron", "VT323") mean a *modified* copy must be
+  renamed. These are unmodified.
+- `vendor/preact/` — **preact 10.19.3** © Jason Miller, **MIT**
+  (`vendor/preact/LICENSE`).
+- `vendor/htm/` — **htm 3.1.1** © Jason Miller, **Apache-2.0**
+  (`vendor/htm/LICENSE`).
+
+Vendoring them is what lets the production Content-Security-Policy say
+`default-src 'self'` and what removes the last COEP/CORP question from a
+third-party origin (docs/HOSTING.md §1 and "The open-web layer" §4).
 
 ## "Harry Potter" character names — nominal use
 

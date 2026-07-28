@@ -8,9 +8,9 @@
 #   prove       node engine/invariants.js prove               (interval proofs + property sweeps)
 #   social      node test/gates/social-meta.test.js           (OG/JSON-LD/icons/oembed contract)
 #   matproof    node test/gates/prove-matrix.test.js          (offline matrix prover, cross-checked)
-#   poscover    node test/gates/pos-coverage.test.js          (every genre has a star-map POS)
 #   kerneldata  node test/gates/kernel-data-identity.test.js  (genre data byte-identical vs HEAD)
 #   specs       node test/gates/genre-specs.test.js           (every genre has a spec; specs round-trip)
+#   poscover    node test/gates/pos-coverage.test.js          (every genre has a star-map POS)
 #   coordscover node test/gates/coords-coverage.test.js       (every genre has a 3D coord + cluster)
 #   seamwalk    node test/gates/live-walk-parity.test.js      (chord-bar seam fires exactly once)
 #   bootsmoke   node test/gates/boot-smoke.test.js            (script load order + window globals)
@@ -117,7 +117,7 @@ PIDS+=($!)
 run "coordscover" node test/gates/coords-coverage.test.js &
 PIDS+=($!)
 # seamwalk: THE SEAM GATE (test/gates/live-walk-parity.test.js) — replays the real
-# faust/live.js makeWalk in node and asserts every event on a chord-bar boundary
+# engine/faust/live/live.js makeWalk in node and asserts every event on a chord-bar boundary
 # fires EXACTLY ONCE across the join. This closes the hole every other gate
 # leaves open: they all test inside a unit, never across one. Plain node, no
 # browser, ~2s — CI-safe.

@@ -10,24 +10,35 @@ afternoon, not the project.
 **The decision (made; this doc is the execution plan):** stellate.app on a
 small DigitalOcean droplet running nginx, **all media same-origin**. Cloudflare
 R2 + Transform Rules is the documented scale-out path if outbound transfer
-ever outgrows the droplet allowance (§6). Facts backing every claim:
-`scratchpad/facts-media.md` + `scratchpad/facts-hosting.md` (2026-07-09), or
-`file:line` in this tree.
+ever outgrows the droplet allowance (§6).
 
-> **2026-07-25:** the laserdisc found-video layer (`engine/video-layer.js`,
-> `found/video/`, the `<video>` no-cors streaming tier) was **removed from the
-> app** — preserved on branch `legacy-download-video`. Every video-specific
-> passage below (no-cors `<video>` loads, `stream-catalog.json` bases, the
-> found/video payload rows, `deploy-stellate.sh` video excludes) is
-> point-in-time record of the era the layer shipped, not current behavior;
-> `found/video/` no longer deploys at all.
+**On the "facts-media §N" / "facts-hosting §N" citations below.** They point at
+two research scratchpads that were never committed and are not on disk
+anywhere; they are unreadable and will stay that way. Eighteen citations to
+them survive because they honestly mark *which* claims came from that research
+rather than from this tree — treat each one as "measured once, off-repo,
+unverifiable now." Anything load-bearing should be re-measured before you act
+on it, and the numbers most worth distrusting are called out in place. Claims
+that name a file or a symbol in this tree are checkable, and those are the ones
+to lean on.
+
+> **There is no video layer.** The laserdisc found-video layer — its module,
+> `found/video/`, and the `<video>` no-cors streaming tier — is gone. No
+> committed HTML or JS holds a `<video>` element or creates one, and
+> `tools/deploy/deploy-stellate.sh` carries `--exclude 'found/video/'`, so
+> nothing under that directory deploys. Every video-specific passage below
+> (no-cors `<video>` loads, `stream-catalog.json` bases, the found/video
+> payload rows) is point-in-time record of the era the layer shipped, not a
+> description of what runs now. It is kept because the *reasoning* still
+> explains why the media architecture is what it is.
 
 ---
 
 ## 1. Requirements: cross-origin isolation, and what it does to media
 
 The desktop ring engine **requires** `SharedArrayBuffer` — the page throws
-without it (`engine/faust/live/live.js:269-270`), and SAB requires the page to be
+without it (`engine/faust/live/live.js`, the `typeof SharedArrayBuffer ===
+"undefined"` throw in `exploreLive`), and SAB requires the page to be
 cross-origin isolated:
 
 ```
@@ -38,32 +49,40 @@ Cross-Origin-Embedder-Policy: require-corp
 `require-corp`, not `credentialless`: **Safari has never shipped
 `credentialless`** (no WebKit support, open standards-position, no plan —
 facts-hosting recap). `require-corp` works in Safari and is what `serve.sh`
-already sends (`serve.sh:23-28`); production must mirror it. The mobile wavOut
-path builds no SABs, but it runs on the same page, so COEP constrains its
-subresources anyway (facts-media §3).
+already sends (its `send_header` pair); production must mirror it. The mobile
+wavOut path builds no SABs, but it runs on the same page, so COEP constrains
+its subresources anyway (facts-media §3).
 
 **What require-corp means for media origins** (facts-media §3, bottom line):
 
-- Audio goes through `fetch(mode:"cors")` + `decodeAudioData`
-  (`engine/faust/voices/sampler.js:354`, `found-player.js:543`) → a cross-origin
-  media host must send a valid `Access-Control-Allow-Origin`.
-- The `<video>` elements are **deliberately no-cors** — no `crossorigin`
-  attribute (`engine/video-layer.js:195-204`), because archive.org's redirect
-  hops are not CORS-clean (`video-layer.js:9-13`). Under require-corp, no-cors
-  media is **blocked unless every response, including every redirect hop,
-  carries `Cross-Origin-Resource-Policy: cross-origin`**.
+- Audio goes through `fetch(mode:"cors")` + `decodeAudioData` — `decodeUrlRaw`
+  in `engine/faust/voices/sampler.js`, `decodeUrlToBuffer` in
+  `found-player.js` → a cross-origin media host must send a valid
+  `Access-Control-Allow-Origin`.
 - **Same-origin media needs none of this.** A path under stellate.app is
   exempt from the whole CORP/ACAO question.
+- *Historically* the sharpest constraint was the `<video>` tier: those elements
+  were **deliberately no-cors** (no `crossorigin` attribute) because
+  archive.org's redirect hops are not CORS-clean, and under require-corp
+  no-cors media is **blocked unless every response, including every redirect
+  hop, carries `Cross-Origin-Resource-Policy: cross-origin`**. That is the
+  requirement that disqualified DO Spaces in §2. With the video layer gone
+  nothing in the app loads no-cors any more, so a host that can send ACAO but
+  not CORP would now technically qualify.
 
-That bottom line is the whole architecture: any media host that cannot send
-CORP is disqualified by the `<video>` tags alone.
+The bottom line survives the video layer that motivated it: everything
+same-origin, because then neither CORP nor ACAO is a question at all.
 
 ## 2. The recommendation and why
 
 **Droplet + nginx, everything same-origin.** Adapted from the facts-hosting
 cross-cutting table:
 
-| Option | COOP/COEP on HTML | CORP on media (the `<video>` requirement) | Verdict |
+(The middle column was decided under the video layer's no-cors constraint —
+see §1. The verdicts are unchanged by its removal: same-origin was already the
+choice, and the alternatives are still ruled out or still merely queued.)
+
+| Option | COOP/COEP on HTML | CORP on media (the then-live `<video>` requirement) | Verdict |
 |---|---|---|---|
 | **Droplet + nginx** | Yes (`add_header`) | **Moot — same-origin** | **This.** Proven model: the current aboardresearch.com deploy is exactly this (CLAUDE.md Deployment) |
 | DO Spaces (+CDN) | n/a (media only) | **No** — only the standard S3 header set; arbitrary headers is an open feature request | **Disqualified.** Bucket CORS covers the `fetch()` paths but not the no-cors `<video>` loads |
@@ -71,9 +90,9 @@ cross-cutting table:
 | Cloudflare R2 + custom domain | via Transform Rules | Yes (Transform Rules) | Qualified — held as the **growth path** (§6), not the launch: it adds an account/zone/rules surface the launch doesn't need |
 
 Same-origin also keeps the local/remote code paths identical: the app already
-prefers local files everywhere (`found-player.js:464-469` local-first beds,
-`video-layer.js:944-949` local tier first), so a droplet serving the working
-tree is byte-for-byte the dev topology with two headers added.
+prefers local files everywhere (`found-player.js`'s `localUrlFor` resolves a
+bed to its local cache before any remote fetch), so a droplet serving the
+working tree is byte-for-byte the dev topology with two headers added.
 
 ## 3. The runtime payload diet
 
@@ -83,15 +102,15 @@ never fetches** (facts-media §1). What ships to the droplet vs stays local:
 | Category | Path | Now | Ships as | Why |
 |---|---|---|---|---|
 | Beds | `found/*.wav` (53) | 270 MB | **MP3, ~40-50 MB** | Safe to compress: bed paths carry **no sample-aligned metadata** — no loop points, no slice grids — so MP3's ~26 ms encoder-delay prefix just becomes part of the ambience. (Not because the lead-in re-derivation absorbs it: `analyzeActive` works in 0.5 s RMS windows and does not recompute the prefix away.) Mono V2 lands ~100-130 kbps, ~5.5-6.5:1 |
-| Speech | `found/samples/speech/` (244) | 47 MB | **MP3, ~8 MB** | Same reason: the vocoder carrier routes through `FP.decodeUrlToBuffer` (`engine/faust/live/live.js:378-379`) and carries **no loop/slice metadata that depends on sample alignment** — the encoder-delay prefix is inert here too |
+| Speech | `found/samples/speech/` (244) | 47 MB | **MP3, ~8 MB** | Same reason: the vocoder carrier routes through `FP.decodeUrlToBuffer` (`FP` is `found-player.js` as `live.js` imports it) and carries **no loop/slice metadata that depends on sample alignment** — the encoder-delay prefix is inert here too |
 | Instrument zones | `found/samples/instruments/` | 102 MB WAV (measured) | **MP3, mono 22.05 kHz 48 kbps** — `tools/build/transcode-samples.js`; ~8 MB projected at the measured 14× | The loop-point objection was real and is now **solved, not ignored** — see "MP3 for the zones" below. Zones carry only 0.254% of their energy above 11 kHz, so 48k/22.05k measures a *higher* SNR (24.7 dB) than 64k/44.1k at 25% fewer bytes. Regenerable from the SF2 anyway |
 | Drum kits + perc | `found/samples/drums/`, `perc/` | 13.5 MB | **WAV** | Not in `K.SAMPLERS`, so the zone transcoder never sees them and they carry no baked `len` to correct against. Small enough that the diet isn't worth the second metadata path |
 | Breaks / stml chops / hits / vox / 78s | `found/samples/…` | ~37 MB | **WAV** | Slice boundaries computed as time fractions of bpm/duration; MP3's ~26 ms lead ≈ half a 16th at 165-175 bpm → audibly sloppy chops (facts-media §4). The zone correction below *would* transfer here, but only after these paths grow the same baked expected-length metadata |
 | Video clips | `found/video/*.mp4` (231) | ~275 MB | **as-is** | Already MP4, pre-cut loops |
 | Faust WASM | `engine/faust/dist/` | 4.1 MB | as-is | |
 | Manifests + app + vendor | | ~few MB | as-is | |
-| Bed originals | `found/*.ogg` (38) | 211 MB | **stays local** | Raw archive.org downloads; never fetched at runtime — the `.wav` is the runtime twin (`tools/fetch/fetch-found-sound.sh:46-48`) |
-| Video source reels | `found/video/lib/` | 443 MB | **stays local** | Crate source only; video-layer reads `clips.json`, never `lib/` |
+| Bed originals | `found/*.ogg` (38) | 211 MB | **stays local** | Raw archive.org downloads; never fetched at runtime — the `.wav` is the runtime twin (`tools/fetch/fetch-found-sound.sh`, the `getbed` ffmpeg step) |
+| Video source reels | `found/video/lib/` | 443 MB | **stays local** | Crate source only; the layer read `clips.json`, never `lib/`. Moot — the whole of `found/video/` is now `--exclude`d from the deploy |
 | Essentia models | `models/` | 20 MB | **stays local** | Offline python verifier only (`tools/audit/audio-verifier.py`) |
 
 **Net server media:** the plan estimated ≈ 500 MB and the deployed payload
@@ -104,7 +123,7 @@ than quote this line.
 
 **What a listener actually downloads** (measured ratio, projected totals —
 confirm in devtools before quoting): one path leg is `BARS_PER_SEG` = 256 bars
-(`app/core/world.js:149`), about 8.5 minutes, so a ten-minute session is 3-5 genres.
+(`BARS_PER_SEG` in `app/core/world.js`), about 8.5 minutes, so a ten-minute session is 3-5 genres.
 That was roughly 15 MB of zone WAVs; on MP3 zones it is ~3.4 MB. Shell, WASM and
 manifests are unchanged and cached across sessions.
 
@@ -119,7 +138,7 @@ than avoided.
 ### MP3 for the zones: the objection, and how it fell
 
 The objection was sound: zone loop points are **absolute sample indices** into
-the decoded buffer (`sampler.js:308,327,494-496`), 552 of 614 zones loop, and
+the decoded buffer (`zoneFor`/`zoneLeadIn` and the note builder in `sampler.js`), 552 of 614 zones loop, and
 MP3's encoder delay shifts a decoded buffer by ~26 ms — so a looped sustain
 would click or drift. What was assumed and never checked is that the shift is
 *unknowable*. Measured, it is neither large nor variable:
@@ -160,34 +179,40 @@ The browser reads all of this from the `SAMPLERS` block baked into
 `engine/genre-kernel.js`; `found/samples/instruments/*/zones.json` is never
 fetched at runtime and need not deploy.
 
-**Code-change surface for MP3 beds/speech** — decode needs **nothing**
+**Code-change surface for MP3 beds/speech — this conversion is DONE** (§7); the
+list is kept as the map of where format lives, because the same seven places
+are what a *future* format change has to touch. Decode needed **nothing**
 (`decodeAudioData` is format-agnostic, and node's press decodes via ffmpeg —
-facts-media §4), but the `.wav` names are data, so the data changes:
+facts-media §4), but the `.wav` names are data, so the data changed:
 
 1. `found/found-manifest.json` — every `byUrl` value `found/<id>.wav` →
-   `found/<id>.mp3` (keys are archive URLs, untouched).
-2. `tools/fetch/fetch-found-sound.sh` — the ffmpeg output steps (`:46-48` and the
-   `getbed` helper) write `found/<name>.mp3` instead of `.wav`
-   (`-codec:a libmp3lame -q:a 2`, keep `-ac 1 -ar 44100`).
-3. `engine/genre-kernel.js` — the speech/vox sample entries carry literal
-   `file:"speech/<name>.wav"` strings (`genre-kernel.js:115-123`, assembled
-   into `samplePath` at `:5516`) → `.mp3`.
+   `found/<id>.mp3` (keys are archive URLs, untouched). All 64 values are
+   `.mp3` today.
+2. `tools/fetch/fetch-found-sound.sh` — the ffmpeg output steps and the
+   `getbed` helper write `found/<name>.mp3`
+   (`-codec:a libmp3lame -q:a 2`, `-ac 1 -ar 44100`).
+3. `engine/genre-kernel.js` — the speech/vox sample entries carried literal
+   `file:"speech/<name>.wav"` strings, assembled into `samplePath`. No
+   `file:"speech/….wav"` literal remains.
 4. `tools/fetch/fetch-found-samples.sh` — the espeak speech recipes write
-   `found/samples/speech/<name>.wav` (`:127-208`, `:490-531`) → `.mp3`.
+   `found/samples/speech/<name>.mp3` (see the `sayca`-family helpers).
 5. **Re-bake determinism fixtures once.** Node press renders from these same
    files; lossy re-encode changes rendered bytes, so segment-parity /
-   verify.sh fixtures need one re-bake after conversion (facts-media §4).
-6. `engine/genre-kernel.js:5530` — the tw_vocal bed carries a literal
-   `samplePath:"found/tw_vocal.wav"` with `url:""` — there is no fallback, so
-   after conversion it would 404 silently → `.mp3`.
-7. `engine/faust/press/press.js:117,128` — node press falls back to
-   `path.join(SITE,"found", s.id+".wav")` when a source has no
-   `fsPath`/`samplePath` — hardcoded `.wav`; make it try `.mp3` then `.wav`
-   at conversion time.
+   verify.sh fixtures needed one re-bake after conversion (facts-media §4).
+6. `engine/genre-kernel.js` — the tw_vocal bed carries a literal `samplePath`
+   with `url:""`, so there is no fallback and a stale extension would 404
+   silently. It reads `samplePath:"found/tw_vocal.mp3"`.
+7. `engine/faust/press/press.js` — node press falls back to a path built from
+   `s.id` when a source has no `fsPath`/`samplePath`. It now tries
+   `.64.mp3`, then `.mp3`, then `.wav`.
 
 This list is a snapshot, not the law. The true surface is
-`grep -rn 'found/.*\.wav' engine/ tools/ test/` — run it before converting and
-again after, and chase every hit to zero.
+`grep -rn 'found/.*\.wav' engine/ tools/ test/`. It is not zero and must not
+be: the ~33 remaining hits are the classes the table above keeps as **WAV** on
+purpose (breaks, hits, vox, 78s, perc, drum kits, extracted zones pre-diet)
+plus prose in comments. What must stay zero is `.wav` on a *bed* or *speech*
+path — run the grep before and after any future conversion and read it, don't
+just count it.
 
 The zone diet has almost no such surface, because zone paths are not literals
 anywhere: `K.SAMPLERS[id].zones[].file` *is* the data, and
@@ -204,9 +229,9 @@ slice client-side — is rejected. The request profile (facts-media §2): boot i
 3-4 JSON manifests; the first genre is **40-80 GETs**, each genre switch ~30-60
 more, files mostly 50 KB–2 MB. Over HTTP/2 that is one connection and cheap
 multiplexed streams; the decode side is already paced by the shared **4-wide,
-3-retry decode gate** (`engine/faust/live/live.js:143-144`), so request count is not
+3-retry decode gate** (`makeDecGate` in `engine/faust/live/live.js`), so request count is not
 the bottleneck — decode concurrency is, and it's governed. Every cache is
-URL-keyed (`sampler.js:349` promise cache, found-player's `_bufCache`), so
+URL-keyed (`decodeUrlRaw`'s LRU promise cache in `sampler.js`, found-player's `_bufCache`), so
 repeats are free in-session, and `immutable` media (§5) makes revisits free
 across sessions.
 
@@ -214,7 +239,7 @@ Packing would buy little and cost real structure: cache invalidation couples
 (one changed zone re-fetches the pack), the sampler grows an unpack/offset
 layer on top of a decode path that deliberately decodes each zone verbatim
 (`decodeUrlRaw` exists precisely to protect zone integrity —
-`sampler.js:345-349`), and the URL-keyed caches lose their keying.
+`decodeUrlRaw` in `sampler.js`), and the URL-keyed caches lose their keying.
 
 **If request overhead ever shows up in the field:** the first optimization is
 **per-instrument zone packs** — one GET per instrument directory (~108 requests
@@ -234,9 +259,21 @@ MB (§3) — so 1 TiB buys many multiples of the old 3,500-10,000 first visits a
 month before §6 matters. Read real numbers off the access log before acting on
 either estimate.
 
-**nginx** (sketch — the two isolation headers are the load-bearing part;
-remember `add_header` does **not** inherit into a `location` that sets its
-own, so repeat them or use an `include`):
+**nginx.** The two isolation headers are the load-bearing part, and
+`add_header` does **not** inherit into a `location` that sets its own. The
+droplet therefore keeps them in one snippet and `include`s it in every block
+that sets any header of its own:
+
+```nginx
+# /etc/nginx/snippets/stellate-isolation.conf
+add_header Cross-Origin-Opener-Policy  "same-origin" always;
+add_header Cross-Origin-Embedder-Policy "require-corp" always;
+```
+
+**Use the `include`, not two inline `add_header` lines.** Mixing the two forms
+is how an isolation header goes quietly missing on one path: the failure is
+invisible until a visitor's `crossOriginIsolated` is false and the ring engine
+throws for them alone. The sketch below is written in the deployed form.
 
 ```nginx
 server {
@@ -251,12 +288,11 @@ server {
   gzip_types application/javascript application/json application/wasm;
   # (brotli is better still if the module is installed; same types)
 
-  # cross-origin isolation — SAB ring engine (engine/faust/live/live.js:269)
+  # cross-origin isolation — SAB ring engine
   # NOTE: worker scripts (engine/faust/live/stream-worker.js, stem-worker.js) must
-  # receive the COEP header on their OWN responses — the server-wide add_header
+  # receive the COEP header on their OWN responses — the server-wide include
   # covers them here, but keep it in mind if locations are ever split.
-  add_header Cross-Origin-Opener-Policy  "same-origin" always;
-  add_header Cross-Origin-Embedder-Policy "require-corp" always;
+  include /etc/nginx/snippets/stellate-isolation.conf;
   add_header Cache-Control "no-cache";          # HTML/JS/JSON — same as today
 
   # GENERATED DATA, not a manifest and not code: the DX7 cartridge bank is
@@ -270,20 +306,27 @@ server {
   # is off, so no shared proxy should store one encoding of it (turning
   # `gzip_vary on;` on server-wide would allow `public` here).
   location = /engine/faust/data/dx7-presets.json {
-    add_header Cross-Origin-Opener-Policy  "same-origin" always;
-    add_header Cross-Origin-Embedder-Policy "require-corp" always;
+    include /etc/nginx/snippets/stellate-isolation.conf;
     add_header Cache-Control "private, max-age=300";
   }
 
   location /found/ {
-    add_header Cross-Origin-Opener-Policy  "same-origin" always;
-    add_header Cross-Origin-Embedder-Policy "require-corp" always;
+    include /etc/nginx/snippets/stellate-isolation.conf;
     add_header Cache-Control "public, max-age=31536000, immutable";
-    location ~* \.json$ {                       # manifests map names — never immutable
-      add_header Cross-Origin-Opener-Policy  "same-origin" always;
-      add_header Cross-Origin-Embedder-Policy "require-corp" always;
+    location = /found/tw_vocal.mp3 {            # re-sung under a fixed name — mutable
+      include /etc/nginx/snippets/stellate-isolation.conf;
       add_header Cache-Control "no-cache";
     }
+    location ~* \.json$ {                       # manifests map names — never immutable
+      include /etc/nginx/snippets/stellate-isolation.conf;
+      add_header Cache-Control "no-cache";
+    }
+  }
+
+  # dist wasm is CODE (it recompiles under the same name) — no-cache like JS
+  location /engine/faust/dist/ {
+    include /etc/nginx/snippets/stellate-isolation.conf;
+    add_header Cache-Control "no-cache";
   }
 }
 ```
@@ -302,9 +345,9 @@ Notes:
   rsync it last. It makes drift auditable (`rsync -c` spot-checks) and is a
   ready object inventory for the §6 migration. A changed hash under an
   unchanged name is a deploy bug.
-- Client behavior already matches: beds fetch `cache:"force-cache"`
-  (`found-player.js:521`), manifests fetch `cache:"no-cache"`
-  (`found-player.js:488`, `video-layer.js:1092-1093`).
+- Client behavior already matches: beds fetch `cache:"force-cache"` and
+  `found-manifest.json` fetches `cache:"no-cache"` — both in
+  `engine/faust/voices/found-player.js`.
 - **The mutable class** (learned when the invariant fired for real,
   2026-07-09): manifests (`*.json`) AND `found/tw_vocal.mp3` — tools/build/sing.py
   re-sings the transitwave vocal on every offline render under a fixed
@@ -313,22 +356,30 @@ Notes:
   `found/` is versioned-by-name and immutable.
 - **The mutable class is `found/`-scoped.** It is easy to misread the `*.json`
   carve-out above as "every JSON is mutable"; it is nested inside
-  `location /found/` and reaches nothing else. `engine/faust/data/dx7-presets.json`
-  (and every other JSON outside `found/`) is `no-cache` because of the
-  **server-wide** `add_header Cache-Control "no-cache"`, which is a default for
-  code, not a statement about that file. `sw.js`'s `MUTABLE` regex mirrors the
+  `location /found/` and reaches nothing else. Every JSON outside `found/`
+  inherits the **server-wide** `add_header Cache-Control "no-cache"`, which is
+  a default for code, not a statement about any one file — and
+  `engine/faust/data/dx7-presets.json` is the one file that overrides it, from
+  its own `location =` block above. `sw.js`'s `MUTABLE` regex mirrors the
   same `found/`-only scope, so the service worker needs no change either: files
   outside `found/` already ride the app cache's stale-while-revalidate.
 - **THIS CONFIG IS NOT IN THE REPO.** `/etc/nginx/sites-enabled/*` lives only on
   the droplet (and, for the alias, on the aboardresearch box); the block above
-  is the source of truth for what a human must paste there. The `dx7-presets`
-  location has to be added by hand in **both** places — and in the
-  `aboardresearch.com/projects/stellate/` alias the path is
-  `location = /projects/stellate/engine/faust/data/dx7-presets.json`. After pasting:
-  `nginx -t && systemctl reload nginx`, then
-  `curl -sI https://stellate.app/engine/faust/data/dx7-presets.json | grep -i cache`
-  must show `max-age`. `tools/deploy/deploy-stellate.sh`'s smoke step checks this and
-  prints a reminder while it is missing.
+  is the source of truth for what a human must paste there. Every such block
+  has to be pasted by hand in **both** places — and in the
+  `aboardresearch.com/projects/stellate/` alias each path carries the prefix,
+  e.g. `location = /projects/stellate/engine/faust/data/dx7-presets.json`.
+  After pasting: `nginx -t && systemctl reload nginx`.
+- **The `dx7-presets` cache block is applied on stellate.app.**
+  `curl -sI https://stellate.app/engine/faust/data/dx7-presets.json` returns
+  `cache-control: private, max-age=300` alongside both isolation headers, and
+  `tools/deploy/deploy-stellate.sh`'s smoke step prints
+  `dx7-presets cache-control  cached OK`. If that line ever reads
+  `no-cache — paste the HOSTING.md §5 dx7-presets location block on the
+  droplet` instead, the block has been lost from the droplet config and the
+  bank is paying a revalidation round trip on every redundant fetch. The check
+  is a reminder, never an abort. It is **not** applied on the aboardresearch
+  alias, which has no `dx7-presets` location of its own.
 
 **TLS: Let's Encrypt, mandatory before anything else.** `.app` is
 **HSTS-preloaded at the TLD level** in every browser — plain HTTP will not
@@ -361,7 +412,7 @@ so a mid-deploy visitor never sees a half-updated tree (a release-dir +
 symlink flip is the fully atomic upgrade if this ever matters).
 
 The node_modules carve-out: only faustwasm's ESM entry is imported at runtime
-(`engine/faust/live/stem-worker.js:419`); the other 28 MB of node_modules is dev
+(the dynamic `import()` of `@grame/faustwasm/dist/esm/index.js` in `engine/faust/live/stem-worker.js`); the other 28 MB of node_modules is dev
 tooling. If the include/exclude dance ever bites, shipping all of
 node_modules is 28 MB of harmless slack — prefer boring over clever.
 
@@ -375,30 +426,30 @@ custom-domain bucket (facts-hosting §4).
 
 **Transform Rules to set on the media hostname:**
 
-- `Cross-Origin-Resource-Policy: cross-origin` — on **every** media response;
-  this is what admits the no-cors `<video>` loads under require-corp. R2
-  custom domains serve 200-direct, so there are no header-less redirect hops
-  (the exact archive.org failure mode, `video-layer.js:9-13`).
+- `Cross-Origin-Resource-Policy: cross-origin` — on **every** media response.
+  This was what admitted the no-cors `<video>` loads under require-corp; with
+  the video layer gone nothing in the app loads no-cors, so CORP is now
+  belt-and-braces rather than load-bearing. Set it anyway: it costs one rule
+  and it is the header that would be missing if a no-cors load ever returns.
+  R2 custom domains serve 200-direct, so there are no header-less redirect
+  hops (the exact archive.org failure mode).
 - `Access-Control-Allow-Origin: https://stellate.app` — covers the
   `mode:"cors"` fetch+decode audio paths (bucket CORS policy also works;
   Transform Rule is one fewer moving part).
 - `Cache-Control: public, max-age=31536000, immutable` — same contract as §5.
 
-**Code changes — the media base URL has three choke points** (facts-media §2):
+**Code changes — the media base URL has two choke points** (facts-media §2;
+it was three before the video layer went away):
 
 1. **Sampler/speech/most audio:** `urlOf = s.url || new URL(s.samplePath, SITE)`
-   (`engine/faust/live/live.js:1120`; `SITE` derived from the script's own URL at
-   `live.js:36`). Point `SITE` at the media base, or emit absolute
-   `samplePath` values — `new URL(abs, base)` ignores the base, so absolute
-   URLs work through the existing funnel unchanged.
+   in `engine/faust/live/live.js`, with `SITE` derived from the script's own
+   URL near the top of that file. Point `SITE` at the media base, or emit
+   absolute `samplePath` values — `new URL(abs, base)` ignores the base, so
+   absolute URLs work through the existing funnel unchanged.
 2. **Beds:** `found-manifest.json` values are site-root-relative and
-   string-concatenated to `SITE_ROOT` (`found-player.js:503`) — either make
-   the values absolute (needs the small concat change) or give found-player
-   its own base constant.
-3. **Video:** the remote tier is **already manifest-driven** —
-   `stream-catalog.json` carries `base` (`video-layer.js:94`, read at
-   `:1095`); the **local tier is hardcoded** `"found/video/" + name + ".mp4"`
-   (`video-layer.js:946`) and needs the same base prefix.
+   string-concatenated to `SITE_ROOT` in `found-player.js` — either make the
+   values absolute (needs the small concat change) or give found-player its
+   own base constant.
 
 **Cost: $0 at this scale.** R2 free tier is 10 GB storage + free egress on
 every path, no expiry; ~1 GB of stellate media never leaves the free tier
@@ -456,7 +507,7 @@ invariant only forbids content changing *under an unchanged name*.
    Its base URL is localhost-hardcoded (`test/browser/live-resilience.test.js:240`) —
    point it at `https://stellate.app` for the run, or at minimum confirm
    `crossOriginIsolated === true` in devtools and ride a genre on the desktop
-   ring engine (which throws loudly if isolation is missing, `live.js:269`).
+   ring engine (which throws loudly if isolation is missing, the `typeof SharedArrayBuffer === "undefined"` throw in `live.js`).
 9. **Smoke — Safari:** play a bed-heavy genre (MP3 `decodeAudioData` path) and
    a sampled genre with long looped sustains (strings, organ, pads) in Safari —
    WebKit is the one engine that prepends the 1105-sample lead-in (§3), so a
@@ -624,7 +675,8 @@ Caveats, all of them load-bearing:
 
 - `assets/` (og-card.png, icon-32.png, icon-180.png, favicon.ico), `embed.html`,
   `oembed.json` and `app/entries/embed.js` must all be in the rsync — they are tracked
-  files in the working tree, so the existing `ship.sh` rsync carries them.
+  files in the working tree, so the existing `tools/deploy/ship.sh` rsync
+  carries them.
 - `tools/.font-cache/` is gitignored *and* must not deploy (it is only input to
   `tools/build/gen-og-card.js`); confirm the rsync excludes ignored files.
 - After a deploy that changes any of the above, **bump `sw.js` `VERSION`** or
@@ -737,7 +789,7 @@ Per-directive, with the evidence and how sure we are:
 | `default-src 'self'` | **everything the app loads is same-origin** except the archive.org media fallback below. preact + htm are vendored (`vendor/preact`, `vendor/htm`) and Orbitron + VT323 are self-hosted (`vendor/fonts`), so the policy no longer names `esm.sh`, `fonts.googleapis.com` or `fonts.gstatic.com` at all | **high** |
 | `script-src 'wasm-unsafe-eval'` | Faust DSP modules, the espeak build and MicroW8 carts all `WebAssembly.compile()` **fetched bytes**, on the main thread *and* inside module workers (workers inherit the document policy) | **high** |
 | **no** `script-src 'unsafe-eval'` | There *is* one string-eval in browser code — `kernelFor()` in `engine/faust/voices/sampler.js` builds the per-note effect strip with `new Function(…)` — but it is **wrapped in a try/catch that falls back to `stripStepRef`, the guarded stepper**, precisely so a CSP may kill it. Blocking it costs speed, not correctness or sound. (`engine/invariants.js` also uses `new Function`; it is node-only and never loads in a page. Nothing under `vendor/`, and not the one deployed `@grame/faustwasm` file, evals a string.) So: withhold the token deliberately, and know what you are trading | **high — verified by grep over `app/`, `engine/`, `vendor/`, `sw.js`** |
-| ~~`script-src 'unsafe-inline'`~~ | **GONE (2026-07-28).** `how.html` carried the site's only inline `<script>` — the starfield + matrix diagram — and it is now `app/entries/how.js`. Every committed page loads script only by `src`. The one remaining `<script>` without a `src` is `index.html`/`access.html`'s `application/ld+json`, which is **data**: CSP never executes it and `script-src` does not apply. `test/gates/social-meta.test.js` gates the invariant (zero inline `<script>`, zero `on*=` handler attributes, zero `javascript:` URLs across the six pages), because a violation would only ever show up in production — the dev server sends no CSP | **high — keep it out** |
+| ~~`script-src 'unsafe-inline'`~~ | **GONE — the policy ships without it.** `how.html` carried the site's only inline `<script>` (the starfield + matrix diagram); it is now `app/entries/how.js`, loaded by `src` like every other page's. Measured across all nine committed `.html` files: the only `<script>` without a `src` on a site page is `index.html`/`access.html`'s `application/ld+json`, which is **data** — CSP never executes it and `script-src` does not apply — and there is **not one** `on*=` handler attribute or `javascript:` URL in any committed HTML, site page or not. `test/gates/social-meta.test.js` gates the invariant across the six site pages, because a violation would only ever show up in production — the dev server sends no CSP | **high — keep it out** |
 | `style-src 'unsafe-inline'` | STILL REQUIRED, but for less: the inline `<style>` blocks are down to **one** (`404.html`, which must stay self-sufficient — see below); `access.html`/`how.html`/`colophon.html` moved to `app/access.css`, `app/pages.css` + `app/how.css`, `app/pages.css` + `app/colophon.css`. What keeps the token: the handful of `style="…"` attributes in `index.html`/`access.html`/`how.html`, and the injected `<style>` text in `app/starcruise.js` and `engine/demo-layer.js`. (Element-level `el.style.x = …` is CSSOM and unaffected.) No practical nonce path for the injected keyframes | **high — required** |
 | `img-src 'self' data:` | `engine/demo-layer.js` uses a `data:image/svg+xml` turbulence texture as a CSS background. `blob:` is precautionary (canvas snapshots in the 3D view) and costs nothing | **high / medium on `blob:`** |
 | `media-src 'self' blob: data:` | the WAV-first mobile path plays `URL.createObjectURL(new Blob([wav]))` through a real `<audio>`; a silent `data:` WAV primes the element; found media is same-origin | **high** |
@@ -758,14 +810,17 @@ Notes:
   no cross-origin subresources left to satisfy `require-corp` — the vendoring of
   preact/htm/the webfonts removed the last of them — so the two policies now
   have nothing to argue about.
-- **Two committed HTML files are NOT site pages and would break under this
-  policy if opened directly**: `vendor/microw8/microw8.html` (upstream's own
-  demo page, one big inline `type=module` script — the app never loads it,
-  `engine/demo-layer.js` canvas-embeds MicroW8 instead, see its header) and
-  `test/browser/live-test.html` (a hand-run probe instrument). Nothing links to
-  either, no gate loads them as pages, and the vendored one must not be edited.
-  If that ever becomes a problem the fix is an nginx carve-out, not a looser
-  site-wide policy.
+- **Three committed HTML files are NOT site pages and would break under this
+  policy if opened directly**, all of them carrying inline `<script>`:
+  `vendor/microw8/microw8.html` (upstream's own demo page, one big inline
+  `type=module` script — the app never loads it, `engine/demo-layer.js`
+  canvas-embeds MicroW8 instead, see its header),
+  `vendor/microw8/_harness.html` (a throwaway host page that
+  `test/browser/demo-layer.test.js` drives) and `test/browser/live-test.html`
+  (a hand-run probe instrument). Nothing links to any of them, no gate loads
+  them as *pages*, and the vendored upstream one must not be edited. If that
+  ever becomes a problem the fix is an nginx carve-out, not a looser site-wide
+  policy.
 - **`404.html` keeps its CSS inline on purpose** and that is *not* what holds
   `style-src 'unsafe-inline'` up (the `style="…"` attributes and the injected
   keyframes are). `error_page 404 /404.html` is an internal redirect, so the

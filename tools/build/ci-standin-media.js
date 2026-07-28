@@ -9,7 +9,7 @@
 // means a fresh clone has recipes but no media — and test/gates/engine.test.js
 // hard-exits if any state foundSource path is missing on disk. This script
 // fills every such path with 1 second of quiet, deterministic PCM16 noise
-// (44.1k mono, ~86KB each; 1023 paths / ~86MB / ~4s total on a clean clone):
+// (44.1k mono, ~86KB each; 1716 paths / ~145MB total on a clean clone):
 // enough to satisfy the existence check, the ffmpeg
 // decode, and the non-silence RMS gates. The SIGNAL in a CI press comes from
 // the committed Faust wasm voices (engine/faust/dist/); the found/sampler

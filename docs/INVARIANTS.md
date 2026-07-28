@@ -1,9 +1,8 @@
 # INVARIANTS — what the machine can PROVE about the kernel
 
-*2026-07-10. Paul: "What can you do with the kernel using formal or
-verifiable methods?" Answer: more than gates. The kernel's blend algebra has
-a mathematical shape — convexity — and where a system has a shape, you can
-prove things about ALL of its outputs, not just the ones you sampled.*
+*What formal methods buy on a kernel like this: more than gates. The blend
+algebra has a mathematical shape — convexity — and where a system has a shape,
+you can prove things about ALL of its outputs, not just the ones you sampled.*
 
 `engine/invariants.js` is the formal wing of the verification house. It sits
 beside the confusion matrix (distinctness), the musicality laws (goodness),
@@ -13,8 +12,8 @@ blend positions, weight vectors, and macro settings, with the quantifier
 discharged by algebra instead of enumeration.
 
 ```bash
-node engine/invariants.js prove            # quick: proof + reduced sweep (~30s)
-node engine/invariants.js prove --full     # exhaustive state-level lattice (~2.5 min)
+node engine/invariants.js prove            # quick: proof + reduced sweep (under a minute)
+node engine/invariants.js prove --full     # exhaustive state-level lattice (minutes; prints its own elapsed time)
 node test/unit/invariants.test.js               # the gates (incl. falsifiability of the checkers)
 ```
 
@@ -65,32 +64,32 @@ none is waved away:
    extremes is transcribed into a second, macro-extended interval per
    dimension (the `macro` column). Where the macro's own clamp closes the
    bound, the row is CLOSED; where it pushes past SAFE but a **realization
-   clamp** in `faust/state-engine.js` catches it, the row is CLAMPED with
+   clamp** in `engine/faust/voices/state-engine.js` catches it, the row is CLAMPED with
    the clamp cited; where nothing closes it, the row is OPEN — a finding.
 3. **Pool draws** are member sets — enumeration, above.
 
 ## The SAFE table
 
 Every bound names its consumer — a SAFE bound without a source is a fudge.
-Representative rows (the full ~105-row table prints from the CLI):
+Representative rows (the full 107-row table prints from the CLI):
 
 | dimension | proven hull (all blends) | macro-extended | SAFE | source of the bound | status |
 |---|---|---|---|---|---|
 | bpm | [40, 220] | [36, 238] | [40, 225] | **no hard consumer clamp exists** — spb=60/bpm only needs > 0; applyMacros energy scales ±8% UNCLAMPED | **OPEN** (finding) |
 | swing | [0, .5] | [0, .6] | [0, .6] | applyMacros feel clamp(0,.6); drumEvents skip saturates at sw/.3 | CLOSED |
-| fx.reverb | [.11, 1] | [.044, .99] | [0, 1] | state-engine rgain = clamp(rv×3.2, 0, 3.5) — 1.0 is legal full wash | CLOSED |
-| fx.delayFb | [.08, .7] | [.052, .85] | [0, .85] | applyMacros space clamp; feedback < 1 = stability | CLOSED |
+| fx.reverb | [.08, 1] | [.032, .99] | [0, 1] | state-engine rgain = clamp(rv×3.2, 0, 3.5) — 1.0 is legal full wash | CLOSED |
+| fx.delayFb | [.02, .7] | [.013, .85] | [0, .85] | applyMacros space clamp; feedback < 1 = stability | CLOSED |
 | fx.lowcut | [0, 220] | — | [0, 400] | state-engine tone lowcut = clamp(·, 10, 400) | CLOSED |
 | bass.cutoff | [160, 1600] | [80, 3200] | [60, 6000] | NOTE_PARAMS bass_* DSP slider [60, 6000] | CLOSED |
 | lead.cutoff | [1200, 5000] | [600, 10000] | [60, 18000] | NOTE_PARAMS lead union [60(modeld), 18000(supersaw)] | CLOSED |
 | \*.level | ≤ 1.6 | — | (0, 2] | state-engine lvl=clamp(L,.001,1), gmul=max(1,L), gain=clamp(amp×gmul,0,2) — with sweep-proven amp ≤ 1 | CLOSED |
 | \*.send | ≤ .92 | ≤ 1 | [0, 1] | applyMacros space clamp; realization clamp(send/lvl, 0, 6) | CLOSED |
-| lead.voices | [1, 8] | [1, 7] | [1, 7] | state-engine clamp(voices,1,7) | **CLAMPED** (edm asks 8, renders 7) |
-| pad.release | [.08, 4] | — | [.01, 3] | state-engine rel=clamp(·,.01,3) | **CLAMPED** (6 anchors ask 3.5–4) |
+| lead.voices | [1, 8] | [1, 7] | [1, 7] | state-engine clamp(voices,1,7) | **CLAMPED** (edm asks [6,8], renders 7) |
+| pad.release | [.1, 5] | — | [.01, 3] | state-engine rel=clamp(·,.01,3) | **CLAMPED** (16 anchors' pads ask past 3s, up to 5) |
 | theory.adventure | [0, .75] | — | [0, .75] | constrain min(.75,·) — proven on the live constrain | CLOSED |
 | rhythm.complexity | [0, .8] | — | [0, 1] | buildEvents rcx clamp; constrain ≤ .4 above 165 bpm | CLOSED |
-| found.stretch | [.35, 1.05] | — | [0, 2] | found-player syncgrain scan RATE (>1 legal — not a 0..1 blend) | CLOSED |
-| rubato.depth | [.006, .06] | [0, .108] | [0, .2] | buildEvents min(.2,·) + applyMacros feel clamp | CLOSED |
+| found.stretch | [.3, 1.05] | — | [0, 2] | found-player syncgrain scan RATE (>1 legal — not a 0..1 blend) | CLOSED |
+| rubato.depth | [0, .07] | [0, .126] | [0, .2] | buildEvents min(.2,·) + applyMacros feel clamp | CLOSED |
 
 Statuses mean exactly what they say:
 
@@ -141,24 +140,31 @@ byte-for-byte (gate 9 of the test).
    allowance cites the engine behavior that earns it).
 
 **Scale, honestly.** A build (state → events) costs ~12–17 ms, so building
-all 249×248/2 pairs × 3 t-values × 2 seeds (~185k) would take ~42 minutes.
-The full mode therefore runs the **entire 185k lattice at the state level**
-— where the convexity proof lives, and where idempotence + hull membership
-are checked on every single resolution (~0.5 ms each) — and samples the
-event level: all 274 anchors × seeds 1–5 built in full, plus a seeded
+all 274×273/2 pairs × 3 t-values × 2 seeds (224,406) would take roughly an
+hour. The full mode therefore runs the **entire 224k lattice at the state
+level** — where the convexity proof lives, and where idempotence + hull
+membership are checked on every single resolution (~0.5 ms each) — and samples
+the event level: all 274 anchors × seeds 1–5 built in full, plus a seeded
 4,000-combination pair-build subsample for the behavioral laws. Quick mode
 shrinks both (274×2 anchors, 3,000 resolutions, 300 pair builds) to stay
 under a minute. The split is printed in every run's report; it is a design
 decision, not a hidden shortcut.
 
-First full run (2026-07-10, 153s): 105 interval dimensions — 100 CLOSED,
-4 CLAMPED, 1 OPEN, 0 violated; 23 pools — 21 CLOSED, 2 DEAD; all 155,268
-lattice resolutions idempotent and inside the proven hulls; 1,140 anchor
-builds + 4,000 pair builds total — snare-law clean, 49,048 harmonize notes
-clash-free (17 densityArc-ordered states skipped and counted), durations
-4,624 in-band / 183 cycle-coarse floored / 5 identity-exempt / 334
-video-locked; 20 continuity paths, 14,277 comparisons, 214 declared flips,
-zero hidden jumps.
+**What a full run reports.** 107 interval dimensions — 102 CLOSED, 4 CLAMPED,
+1 OPEN, 0 violated; 23 pools — 22 CLOSED, 1 DEAD; every one of the 224,406
+lattice resolutions idempotent and inside the proven hulls; 1,370 anchor builds
++ 4,000 pair builds + 42 meter states — snare-law clean, 49,742 harmonize notes
+clash-free (23 densityArc-ordered states skipped and counted), durations 4,773
+in-band / 193 cycle-coarse floored / 5 identity-exempt / 403 video-locked;
+20 continuity paths, 13,411 comparisons, 227 declared flips, zero hidden jumps.
+
+Two duration **hard failures** survive at the event level, both on blended
+pairs rather than anchors: `prelude×runeromp@0.5/s1` renders 162 s and
+`blues×barrowwake@0.75/s2` renders 296 s against the 180 s ±10% target, with
+neither qualifying for the cycle-coarse exemption. `prove --full` exits nonzero
+on them. The gate (`test/unit/invariants.test.js`) runs the quick sweep, whose
+smaller pair sample does not reach either combination, so it is green — the two
+are open findings, not a hidden gate failure.
 
 ## The epistemic ladder
 
@@ -198,29 +204,30 @@ every run:
   with no clamp. The actual closure is the anchor envelope [40, 220] —
   fine today, but a future anchor at bpm 300 would sail through every
   layer. If a hard rail is ever wanted, it belongs in constrain.
-- **dubstep's granular stutter cloud can never fire.** The anchor declares
-  `["granular", {...}]` in its lead insert pool; `resolveMulti.insertsFor`
-  guards on `INSERT_DEFAULTS[t]` and silently drops unknown types — and
-  INSERT_DEFAULTS has no granular entry, even though state-engine ships a
-  working `insert_granular` module. Verified: 0 of 60 seeds ever resolve
-  it. One INSERT_DEFAULTS entry away from real.
+- **The granular stutter cloud fires now.** It was the suite's first scalp:
+  dubstep declared `["granular", {...}]` in its lead insert pool while
+  `resolveMulti.insertsFor` silently dropped any type missing from
+  `INSERT_DEFAULTS`, so 0 of 60 seeds ever resolved it. `INSERT_DEFAULTS` now
+  carries a `granular` entry and the clouds render; what remains is suite lag,
+  reported every run — `granular`, `delay`, `higain` and `fenv` are live insert
+  types with no `INSERT_SAFE` authoring bounds yet, so the prover cannot bound
+  their params.
 - **crimsoncourt's `ringmod` lead model is a silent fallback.** 16 of 60
   seeds draw it; `isModel` rejects it, so the synth path renders the
   default timbre instead of ring-mod clangor (state-engine knows ringmod
   only as an insert effect, not a pitched voice).
 - **Clamped asks** (safe but dead range, trimmed at realization): edm asks
-  8 lead voices, renders 7; six anchors (moonlagoon, chalkvespers,
-  salondawdle, candlegauze, cloisterloom, miasmarow) ask pad release
-  3.5–4s against the 3s cap; a few anchors declare attack 0.002–0.003
-  under the 0.005 floor.
+  `[6,8]` lead voices and renders 7; 16 anchors' pads ask past the 3 s release
+  cap (impressionism, postminimal, hazebunker and raga reach 5 s); 13 voices
+  across 11 anchors declare attack 0.002–0.004 under the 0.005 floor.
 - **The continuity discontinuities are real and designed**: toState's
   gating thresholds (highcut ≤ 1000 → 0 etc.) make a blend crossing the
   gate jump — measured (cairntrot→butterchurnbounce at t=.35 jumps
   highcut 0→1007) — and chordEvery flips whole (reedrush→thermostatwave
   jumps 8→16 mid-path: harmonic rhythm is parent-picked, never lerped).
   Both classified as declared flips, documented here.
-- **Found amps legally exceed 1.** The full 155k-lattice sweep caught
-  glosspump×trenchsway@.5/s2 emitting a break chop at amp 1.022: buildEvents
+- **Found amps legally exceed 1.** The full lattice sweep catches break chops
+  emitting past 1.0 on blended pairs (glosspump×trenchsway@.5/s2 at 1.022): buildEvents
   scales break-chop amps ×2.1 over the resolved found vol, so the honest
   ceiling is the PROVEN vol hull (≤ .6) × 2.1 = 1.26 — derived from the
   interval proof, not assumed. Pitched (max .24 measured) and drums (max

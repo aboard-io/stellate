@@ -420,7 +420,9 @@ function cmdCreate() {
   console.log((gv.ok ? "PASS " : "FAIL ") + vres);
   if (!gv.ok) gv.out.split("\n").filter(l => /\[FAIL\]|\bx /.test(l)).slice(0, 8).forEach(l => console.log("      " + l.trim()));
   if (has("engine")) {
-    const ge = runNode(["engine.test.js", "--quick"], "engine", 300000);
+    // runNode's cwd is ROOT (=<repo>/engine), so the gate has to reach back out —
+    // it has never run as "engine.test.js", which resolved to engine/engine.test.js.
+    const ge = runNode([path.join("..", "test", "gates", "engine.test.js"), "--quick"], "engine", 300000);
     console.log((ge.ok ? "PASS " : "FAIL ") + "engine.test");
     if (!ge.ok) ge.out.split("\n").slice(-8).forEach(l => console.log("      " + l.trim()));
   }

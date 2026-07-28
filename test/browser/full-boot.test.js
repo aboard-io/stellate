@@ -28,10 +28,13 @@
 // exercises the real boot, so it lives in the this-box browser battery, not CI.
 "use strict";
 const { serve, launchChromium, capturePageErrors, installOfflineRoute, ensureStarcruise } = require("../lib/probe-harness.js");
+// __dirname-relative, like every other browser gate: rooting the static server at
+// process.cwd() passes from the repo root and 404s everything from anywhere else.
+const ROOT = require("path").join(__dirname, "..", "..");
 const PORT = 8795;
 
 (async () => {
-  const srv = await serve(process.cwd(), PORT);
+  const srv = await serve(ROOT, PORT);
   const browser = await launchChromium({ requireChromium: true });
   const page = await browser.newPage();
   const errs = capturePageErrors(page);

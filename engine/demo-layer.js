@@ -36,7 +36,7 @@
 //
 //   DemoLayer.init()          -> Promise<boolean> (runtime + carts available?)
 //   DemoLayer.setEnabled(on)  -> show/hide (idempotent; state is OWNED by the
-//                                background program in app/background.js — the
+//                                background program in app/panels/background.js — the
 //                                layer never re-enables itself)
 //   DemoLayer.enabled()       -> currently on AND ready
 //   DemoLayer.available()     -> runtime loaded?
@@ -66,7 +66,7 @@
     return "vendor/microw8/";
   })();
   // NO localStorage self-restore of on/off. A persisted "on" key lets this layer
-  // re-enable itself at init, bypassing app/background.js's mode
+  // re-enable itself at init, bypassing app/panels/background.js's mode
   // program — one of the ways layers end up STACKED. The controller owns
   // enabled state now; only the cart CHOICE is remembered here.
   const LS_CART = "vaporwave-demo-cart";

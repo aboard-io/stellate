@@ -61,9 +61,10 @@
 <link rel="stylesheet" href="app/access.css">
 </head>
 <body>
-<!-- inert stubs: the engine warm-up hairline (#boot) and the map's background
-     toggle (#bgChip, imported transitively by live.js). Kept minimal + aria-hidden
-     so the imported modules don't throw and screen readers ignore them. -->
+<!-- inert stubs: the engine warm-up hairline (#boot), and #bgChip, kept for the
+     legacy id alone — the star map has no background toggle any more, the
+     demoscene layer just runs. Both are minimal + aria-hidden so the imported
+     modules don't throw and screen readers ignore them. -->
 <div id="boot" aria-hidden="true"><div class="btrack"><div class="bfill"></div></div><div class="blabel"></div></div>
 <button id="bgChip" class="sr-only" tabindex="-1" aria-hidden="true"></button>
 
@@ -71,7 +72,7 @@
   <header>
     <h1>STELLATE <span class="tag">· accessible text version</span></h1>
     <p class="intro">A generative instrument you play by moving through a space of
-    <span id="genreCount">273</span> musical genres. Every song is rendered live in
+    <span id="genreCount">274</span> musical genres. Every song is rendered live in
     your browser and is fully deterministic from a seed — the same seed always plays
     the same music. This version needs no vision: pick a genre or build a journey, and
     read what's playing as text. Your choices ride the address bar, so bookmarking or
@@ -120,7 +121,7 @@
       <div id="holdPanel">
         <label for="genreSel">Genre</label>
         <input type="text" id="genreSel" list="genreList" autocomplete="off" spellcheck="false"
-               aria-describedby="genreInfo comboHint" placeholder="Type to search 273 genres…">
+               aria-describedby="genreInfo comboHint" placeholder="Type to search 274 genres…">
         <p class="hint" id="comboHint">Start typing a genre name (e.g. “salsa”, “raga”, “techno”) and pick from the list.</p>
         <p class="hint" id="genreInfo"></p>
 
@@ -153,14 +154,15 @@
           <input type="range" id="paceRange" min="0" max="100" value="50" step="1" aria-describedby="paceOut paceHint">
           <output id="paceOut"></output>
         </div>
-        <p class="hint" id="paceHint">Total time to travel the whole loop — from 8 minutes to 24 hours. Larger = slower, more gradual morphing between stops.</p>
+        <p class="hint" id="paceHint">How long to take over the whole loop, as a multiple of the path's own travel time — from ×0.01 (a hundred times faster) to ×1,000,000. Larger = slower, more gradual morphing between stops; the readout gives both the multiple and the resulting duration.</p>
       </div>
     </div>
     <!-- shared type-to-filter option list for all three genre comboboxes -->
     <datalist id="genreList"></datalist>
   </section>
 
-  <!-- ADVANCED (there are no macro sliders — the instrument has no macros) -->
+  <!-- ADVANCED. The kernel's eight macro axes are deliberately NOT surfaced
+       here; vapor below is the live master EQ, not a macro. -->
   <section aria-labelledby="h-adv">
     <h2 id="h-adv">Seed &amp; musical mode</h2>
     <div class="card">

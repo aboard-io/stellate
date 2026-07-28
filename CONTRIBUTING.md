@@ -17,23 +17,25 @@ Everything below is a corollary.
 ```bash
 git clone <this repo> && cd stellate
 cd engine/faust && npm ci && cd ../..   # Faust's build dep (faustwasm)
-node tools/build/ci-standin-media.js          # synthesize stand-in media (no network, ~1s)
-./verify.sh                             # matrix + validate + engine smoke, concurrent
-node test/gates/theory.test.js && node test/gates/pipes.test.js
+node tools/build/ci-standin-media.js     # synthesize stand-in media (no network, ~12s)
+./verify.sh                             # the 13 gate suites, concurrent (~2.5 min from cold)
+npm run test:pure                       # theory + pipes + boot-smoke (pure node, sub-second)
 ./serve.sh                              # the app at http://localhost:8777/
 
 # OPTIONAL — the headless BROWSER gates (real WebGL/WebAudio via Playwright):
 npm install                             # the one browser-test dep (playwright)
-npm run setup:browser                   # download the Chromium build (npx playwright install chromium)
+npm run setup:browser                   # download the Chromium build (playwright install chromium)
 npm run test:browser                    # test/browser/*.test.js + test/starcruise/*.test.js (33 gates)
 node test/starcruise/starcruise.test.js  # ...or any one of them, plain, with NO NODE_PATH
 ```
 
 Requires `node` (20+) and `ffmpeg`. The stand-in step exists because a fresh
 clone has recipes but no media — it writes a second of quiet noise at every
-path the gates check, and never overwrites a real file. If you want the real
-found-sound/sample layers (you do, for listening): `tools/fetch/fetch-found-sound.sh`
-and `tools/fetch/fetch-found-samples.sh` fetch them from the Internet Archive into
+path the gates check (1,716 files, ~145 MB, enumerated from the kernel's own
+registries) and never overwrites a real file, so re-running it on a populated
+tree is a no-op. If you want the real found-sound/sample layers (you do, for
+listening): `tools/fetch/fetch-found-sound.sh` and
+`tools/fetch/fetch-found-samples.sh` fetch them from the Internet Archive into
 the gitignored `found/` tree.
 
 ## The gate philosophy
@@ -41,19 +43,27 @@ the gitignored `found/` tree.
 **Machines verify structure; human ears verify taste.** A PR must keep
 `./verify.sh` green:
 
-- **matrix** — the symbolic confusion matrix must stay
-  **diagonal-dominant: N/N (274 as of 2026-07)**. Every genre must still sound most like
-  itself, symbolically. This is the big one: it's what makes 274 genres a
-  space instead of a soup.
+- **matrix** — the symbolic confusion matrix must stay diagonal-dominant.
+  `node engine/genre-verifier.js matrix` prints **`diagonal dominant: 274/274`**
+  and every genre must still sound most like itself, symbolically. This is the
+  big one: it's what makes 274 genres a space instead of a soup.
 - **validate** — the kernel gate suite: **determinism** (same state, same
   seed → byte-identical events), **vocabulary** (genres draw from the
   engine's actual progressions/kits/patterns), coverage, differentiation.
 - **engine** — real Faust presses of three very different states, gated on
   non-silence. Structure, not beauty.
 
-Plus `node test/gates/theory.test.js` and `node test/gates/pipes.test.js` (pure node,
-sub-second). If your change touches the app UI or the 3D star-cruise, run the
-headless browser gates (`npm run test:browser` — the glob is exactly
+Those three are the headline; `./verify.sh` runs ten more alongside them, each
+one line in the script and each named in its header comment — interval proofs
+(`prove`), an independent offline matrix prover (`matproof`), the social/meta
+contract, star-map POS and 3D-coord coverage, genre-spec round-trips, the
+genre-data byte-identity check, the chord-bar seam walk, the script-order
+boot smoke, and `doccounts`, which reads the anchor count out of the kernel
+and fails any tracked markdown — this file included — that states a stale one.
+
+Plus `npm run test:pure` (`test/gates/theory.test.js`, `pipes.test.js`,
+`boot-smoke.test.js` — pure node, sub-second, no dependencies). If your change
+touches the app UI or the 3D star-cruise, run the headless browser gates (`npm run test:browser` — the glob is exactly
 `test/browser/*.test.js` + `test/starcruise/*.test.js`) after the one-time
 `npm install` + `npm run setup:browser` above — they need no `NODE_PATH`.
 
@@ -71,7 +81,7 @@ same role, or to `hits.sources` (always safe). NEVER add a `found:{role:…}`
 block to a genre that lacks one, change a role, or touch bpm/scored fields —
 that shifts the confusion matrix for everyone. After every batch:
 `node engine/genre-verifier.js matrix --no-cache` must still print
-`diagonal dominant: N/N — 274/274 as of 2026-07`.
+`diagonal dominant: 274/274`.
 
 **A new pipe** (event transform). Register it in `CsdPipes.REGISTRY`
 (`engine/pipes.js`) with its **own seeded rng stream** — never share or reuse
@@ -117,34 +127,47 @@ determinism; byte-identity of old states is the part you must verify yourself
 ## Engine load order & the global namespace
 
 The app has **no bundler**. `index.html` loads the engine as an ordered list of
-classic `<script>` tags (see the block at `index.html:141-159`), and the browser
-executes them top-to-bottom before the app runs. That order is a contract, not
-decoration. The rules:
+classic `<script>` tags — the block under the `<!-- ENGINE: classic global
+scripts -->` comment, `index.html:130-158` — and the browser executes them
+top-to-bottom before the app runs. That order is a contract, not decoration.
+The rules:
 
 - **`engine/` is classic-global / UMD; `app/` is native ES modules.** Every
   engine file wraps itself in a UMD shim that publishes exactly one `window`
   global (its node branch does `module.exports`, its browser branch does
   `root.<Name> = …`). **Do not convert an engine file to an ES module** and do
-  not add a second global from one file. The public symbols are:
+  not add a second global from one file. The public symbols, in load order —
+  the same sixteen the boot-smoke gate holds you to:
 
   | script | global |
   | --- | --- |
   | `engine/theory.js` | `CsdTheory` |
   | `engine/pipes.js` | `CsdPipes` |
   | `engine/csd-engine.js` | `CsdEngine` |
+  | `engine/genres-data.js` | `__GENRES` |
+  | `engine/registry-data.js` | `__REGISTRY` |
   | `engine/genre-kernel.js` | `GenreKernel` |
   | `engine/genre-verifier.js` | `GenreVerifier` |
   | `engine/namebank.js` | `NameBank` |
+  | `engine/midi-export.js` | `MidiExport` |
   | `engine/speech.js` | `CsdSpeech` |
   | `engine/demo-layer.js` | `DemoLayer` |
   | `engine/faust/voices/state-engine.js` | `FaustStateEngine` |
   | `engine/faust/voices/found-player.js` | `FoundPlayer` |
   | `engine/faust/voices/sampler.js` | `FaustSampler` |
   | `engine/faust/live/live.js` | `FaustLive` |
+  | `app/entries/analytics.js` | `goatcounter` |
+
+  (The last row is the app's one classic script — the cookie-free GoatCounter
+  settings shim, which must publish before the vendored counter runs.)
 
 - **`theory.js` and `pipes.js` MUST load before `csd-engine.js`.** csd-engine
   reads `window.CsdTheory` / `window.CsdPipes` **at load time** (the MUSIC-MIND
-  organs); load it first and its theory/pipes references are dead.
+  organs); load it first and its theory/pipes references are dead. The same
+  law binds two more pairs: the generated data scripts (`genres-data.js`,
+  `registry-data.js`) before `genre-kernel.js`, which reads `window.__GENRES`
+  / `window.__REGISTRY` synchronously at load, and `csd-engine.js` before
+  `midi-export.js`, which captures `CsdEngine` at load.
 
 - **Every engine global MUST be published before `app/main.js`.** `app/main.js`
   is the `type="module"` entry point; it reads the engine off `window` as
@@ -161,10 +184,13 @@ The gate: **`node test/gates/boot-smoke.test.js`**. It parses `index.html` for t
 classic script list, runs each script in load order inside one browser-like
 sandbox (exercising the UMD *browser* branch, exactly as the page does), and
 asserts (a) each script publishes its expected global, (b) theory/pipes precede
-csd-engine, and (c) all engine globals precede `app/main.js`. A new classic
+csd-engine and csd-engine precedes midi-export, and (c) all engine globals
+precede `app/main.js`. It prints `boot-smoke: PASS — 16/16 engine scripts
+loaded in order and published their window global`. A new classic
 engine script that index.html loads but the gate doesn't know about **fails**
 the gate — so you can't add a global without declaring it. Sub-second, pure
-node; run it alongside `theory.test.js` / `pipes.test.js`.
+node; it is the third gate in `npm run test:pure`, and `./verify.sh` runs it
+too.
 
 ## Housekeeping
 

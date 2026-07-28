@@ -40,6 +40,9 @@
 const http = require("http");
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
 
+// __dirname-relative, like every other browser gate: rooting the static server at
+// process.cwd() passes from the repo root and 404s everything from anywhere else.
+const ROOT = require("path").join(__dirname, "..", "..");
 const CHILD_PORT = 8802, PARENT_PORT = 8801;
 const CHILD_ORIGIN = `http://localhost:${CHILD_PORT}`;
 const PARENT_ORIGIN = `http://127.0.0.1:${PARENT_PORT}`;
@@ -95,7 +98,7 @@ async function frameEval(frame, fn, arg) {
 }
 
 (async () => {
-  const childSrv = await serve(process.cwd(), CHILD_PORT);
+  const childSrv = await serve(ROOT, CHILD_PORT);
   const parentSrv = await serveParent(PARENT_PORT);
   const browser = await launchChromium({ requireChromium: true });
   const fails = [], notes = [];

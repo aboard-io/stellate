@@ -1,7 +1,8 @@
 # CLAUDE.md — stellate
 
 A self-contained generative genre-space instrument: a **274-genre**
-deterministic vector space (`genre-kernel.js`, incl. real 3/4 odd-meter
+deterministic vector space (`engine/genre-kernel.js` is the algebra; the anchors
+themselves live beside it in `engine/genres-data.js`, incl. real 3/4 odd-meter
 anchors — `state.meter`) over one score brain
 (`engine/csd-engine.js buildEvents`) with a generative harmony/pipes layer
 (`engine/theory.js` + `engine/pipes.js` — docs/MUSIC-MIND.md), **sampled by
@@ -9,16 +10,16 @@ default** (full General MIDI via `engine/faust/build/extract-gm.js`, with per-vo
 Faust effect chains) and played by a single **Faust WASM engine** (`engine/faust/` — live in the browser and
 offline "press" in node), verified symbolically and empirically. It is a worked
 example of a generator → verifier → feedback loop: the thing that makes the
-music and the thing that checks it live side by side and argue. (Named "Royal
-Road vaporwave" through 2026-07; renamed **stellate** at export.)
+music and the thing that checks it live side by side and argue. (Older
+references call it "Royal Road vaporwave"; it was renamed **stellate** at
+export.)
 
-Since 2026-07 (FAUST-PORT phase 3) Faust is the **only** backend on main; the
-entire csound era — `buildCsd` codegen, `wasm-audio.js`, the `builder.html`
-song builder, `play.html` player, the founding `royal-road.csd`, its
-`render.sh`, engine A/B tools — is preserved fully working on branch
-**`legacy-csound`**. Main is **csound-free**: no `.csd`, no `csound` binary
-anywhere in the toolchain (removed 2026-07-09; the archive is one `git switch
-legacy-csound` away).
+Faust is the **only** backend on main, which is **csound-free**: no `.csd`, no
+`csound` binary anywhere in the toolchain. The entire csound era — `buildCsd`
+codegen, `wasm-audio.js`, the `builder.html` song builder, `play.html` player,
+the founding `royal-road.csd`, its `render.sh`, the engine A/B tools — is
+preserved fully working one `git switch legacy-csound` away
+(docs/history/FAUST-PORT.md).
 
 ## The one rule
 
@@ -29,18 +30,61 @@ because we once kept the renders and lost the generator — the founding
 `royal-road.csd` — see the README genesis parable. That `.csd` now lives safe on
 `legacy-csound`.)
 
+## Where the genre data lives
+
+`engine/genre-kernel.js` is the ALGEBRA — `resolveMulti`/`blend`/`mix`/`track`/
+`journey`/`deriveMind`, ~2,700 lines and ~190 KB, all of it code. The inert
+literals it used to carry sit in two sibling files, lifted out by a one-time
+migration (`tools/build/split-kernel-data.js`, kept as the record of how, not as
+something to re-run):
+
+- `engine/genres-data.js` (~5,300 lines, ~645 KB) — `GENRES`, the 274 anchors.
+  `Object.keys` order is load-bearing: it drives the confusion-matrix row order
+  and the star layout. Append, never reorder.
+- `engine/registry-data.js` (~950 lines, ~155 KB) — `SOURCES` / `SOURCE_POOLS` /
+  `VOICE_FAMILIES` / `SAMPLES` / `VOXBANK` / `SAMPLERS` / `PERCBANK`: the ids the
+  fetch recipes write and the engine resolves.
+
+They are **the source of truth**, not build output. `genres-data.js` is written
+both by hand and by the pipeline tools — `genre-tool.js` / `invent-genres.js` /
+`rm-genre.js` splice it (and `genre-verifier.js`) through
+`/* genre-tool:<name>:genres */` and `:clips` markers.
+`registry-data.js` has no automated writer at all: it is edited by hand, by the
+sample-CD and found-sound recipes. Both are **classic scripts on purpose, not
+JSON-over-fetch**: `engine/genre-kernel.js` merges `window.__GENRES` +
+`window.__REGISTRY` at load, and `app/core/state.js` re-exports the kernel as `K`
+at module top level, which `app/entries/access.js` (`Object.keys(K.GENRES)`) and
+`app/map/layout.js` read synchronously while their modules evaluate. A fetch
+would not have resolved yet. So both files load immediately BEFORE
+`genre-kernel.js` in `index.html` / `embed.html` / `access.html`, and
+`test/gates/boot-smoke.test.js` enforces that order.
+
+`test/gates/kernel-data-identity.test.js` (`verify.sh` row `kerneldata`) holds
+them byte-for-byte against HEAD — including key order and float printing, since
+every seeded render and the whole matrix are downstream of those exact bytes. It
+self-heals on commit, so it flags unintended drift rather than forbidding edits.
+
+**One thing in there is generated and must not be hand-edited: the `info`
+blurbs.** `tools/genre/gen-genre-info.js --write` derives all 274 descriptions
+from the anchors that ship, so a card cannot promise an instrument the recipe
+cannot play (`musicality.checkCardClaims` fails the genre if it does). Every word
+comes from a TABLE keyed on an engine value — kit id, synthesis model, sampler
+id, bass pattern — never a per-genre string, and there are deliberately no
+per-genre overrides. Change the anchor and re-run; the prose follows. Hand-written
+blurbs beside live data are what rotted the descriptions the first time.
+
 ## Run / test
 
-Paths reflect the 2026-07 folder reorg: browser entry `index.html` at root;
-deterministic core + WASM engine in `engine/` (incl. `engine/faust/`); Node CLIs
-in `tools/`; gates/harnesses in `test/`; docs in `docs/`.
+Browser entry `index.html` at the root; deterministic core + WASM engine in
+`engine/` (incl. `engine/faust/`); Node CLIs in `tools/`; gates and harnesses in
+`test/`; docs in `docs/`. Every command below runs verbatim from the repo root.
 
 ```bash
 tools/fetch/fetch-found-sound.sh     # one-time: Internet Archive field recordings -> found/
 tools/fetch/fetch-found-samples.sh   # one-time: SoundFont GM + breaks/one-shots/vox -> found/samples/
 node tools/build/transcode-samples.js  # REQUIRED after a zone fetch: wav -> mp3 + re-bake SAMPLERS
 ./serve.sh                     # http://localhost:8777/  (serves index.html; needs http, not file://)
-./verify.sh                    # orchestrator: matrix + validate + engine smoke
+./verify.sh                    # orchestrator: forks 13 gate rows concurrently (list below)
 node test/gates/engine.test.js       # faust-press smoke: states render, gated on non-silence
 node test/gates/theory.test.js && node test/gates/pipes.test.js   # MUSIC-MIND organs (pure node)
 node test/unit/meter.test.js        # ODD-METER gates: 3/4 + 6/8 grids, meter-safety stress, non-silent press (pure node)
@@ -57,6 +101,14 @@ node test/browser/speech-live.test.js    # speech organ live: espeak WASM synthe
 node test/browser/mp3-bed-decode.test.js # HOSTING §3 diet: MP3 beds fetch 200 + decodeAudioData in a real browser
 node test/browser/midi-export.test.js    # ⤓ midi: clicks the button, parses the downloaded SMF, matches it to buildEvents
 ```
+
+`./verify.sh` forks **13** rows concurrently and prints one PASS/FAIL line each.
+Three come out of `engine/` — `matrix` (`genre-verifier.js matrix`), `validate`
+(`validate-genres.js --quick`), `prove` (`invariants.js prove`). Ten are gates
+under `test/gates/` — `engine` `social` `matproof` `kerneldata` `specs`
+`poscover` `coordscover` `seamwalk` `bootsmoke` `doccounts`. The row list is not
+hardcoded anywhere: adding a `run` line to `verify.sh` adds a row, and the wait
+loop counts launched jobs rather than a tally.
 
 Ship: `tools/deploy/ship.sh` = gates → `git push` → deploy to stellate.app (refuses a
 dirty tree — the deploy rsyncs the working tree, so deployed must mean
@@ -93,10 +145,11 @@ tools/fetch/fetch-sample-cd.sh fatboy-slim-skip-to-my-loops \
    `stml/hit_07.wav`) → `found/samples/<prefix>/manifest.json` + a **ready-to-paste
    `SAMPLES` snippet** (loop→`kind:"break"`+bpm, tonal→`kind:"hit"`+note, oneshot→
    `kind:"hit"`, chop→`kind:"chop"`).
-4. **register**: paste the curated snippet into `engine/genre-kernel.js` `SAMPLES`
-   (grouped under a `// --- <CD name> ---` comment); append the crate entries to
-   `found/samples/manifest.json`.
-5. **wire into genres** — MATRIX-SAFE ONLY: add ids to a genre's **existing**
+4. **register**: paste the curated snippet into `engine/registry-data.js`
+   `SAMPLES` (grouped under a `// --- <CD name> ---` comment); append the crate
+   entries to `found/samples/manifest.json`.
+5. **wire into genres** (`engine/genres-data.js`) — MATRIX-SAFE ONLY: add ids to
+   a genre's **existing**
    `found.sources` pool (same role: loops→`role:"break"` genres, chops→`role:"chops"`
    genres) or to `hits.sources` (always safe). NEVER add a `found:{role:…}` block to
    a genre lacking one, change a role, or touch bpm/scored fields — that shifts the
@@ -136,9 +189,10 @@ the DB (dedup first, diatonic bigrams, train/test split) and `--splice`
 regenerates the MINED block in `engine/theory.js` ONLY when the mined tables
 beat the hand tables on held-out log-likelihood in both modes. The tables are
 opt-in per state (`state.theory.tables:"corpus"`) — absent, theory output is
-byte-identical (gates: `node test/unit/theory-tables.test.js`). Since 2026-07-15
-the TABLES LAW in `deriveMind` wires every reharm genre (201/274) to the
-corpus tables; an anchor opts out with `tables:"hand"`. NOTE the verifier is
+byte-identical (gates: `node test/unit/theory-tables.test.js`). The TABLES LAW in
+`deriveMind` wires every reharm genre to the corpus tables — 201 of 274 anchors
+reharm across seeds, and all 201 draw `tables:"corpus"`; an anchor opts out with
+`tables:"hand"`. NOTE the verifier is
 blind to the reharm walk (motion/seventh read the SKELETON progression), so
 the matrix can't gate table changes — the gates that matter are the held-out
 likelihood (mine-theory refuses a losing splice), the theory invariants, and
@@ -166,9 +220,10 @@ never committed, statistics always committable, verbatim vocabulary only from
 PD-composition rips. Known instrument caveats (velocity-as-amp, swing
 estimator counts 16th syncopation, chord estimation not ground truth) are
 documented at the top of `mine-midi.js` — read them before trusting a
-divergence. First fruits (2026-07-14): the jazz hatDensity fence recalibration,
-the mined `dub_vamp`/`rag_cycle` progressions, and the `ragtime` anchor — the
-first anchor authored from a measured corpus (`genre-specs/ragtime.json`).
+divergence. What the corpus has actually changed in the shipping kernel: the
+jazz hatDensity fence, the mined `dub_vamp`/`rag_cycle` progressions, and the
+`ragtime` anchor — the first anchor authored from a measured corpus
+(`genre-specs/ragtime.json`).
 
 ## Layout
 
@@ -202,10 +257,13 @@ docs in `docs/`.
 - `app/` — THE app (no framework, no bundler; native `<script type=module>` +
   one stylesheet). Shared state threaded via imports, NOT accidental globals.
   Foldered by job — `core/` (state/world/share), `audio/` (live/targeting/fonts/
-  precache/export/notefeed), `map/` (starmap/glyphs), `panels/` (panels/inside/
-  readouts/background), `entries/` (access/embed/how/analytics — one per HTML page),
-  `starcruise/` (the 3D view's own modules) — with `main.js`, the aliens
-  controller `starcruise.js` and its `starcruise-load.js` at the top:
+  precache/export/notefeed), `map/` (starmap + its five pieces + glyphs),
+  `panels/` (panels/inside/readouts/background, plus `inside/`'s five surfaces),
+  `entries/` (`access.js` `embed.js` `how.js` for those three pages, and
+  `analytics.js`, the goatcounter shim `index.html` loads as a classic script —
+  `index.html`'s own entry is `main.js`), `starcruise/` (the 3D view's own
+  modules) — with `main.js`, the aliens controller `starcruise.js` and its
+  `starcruise-load.js` at the top:
   - `app/app.css` — all of the former inline `<style>` (the whole UI stylesheet);
     `index.html` and `embed.html` link it. The static pages have their own:
     `app/pages.css` (chrome shared by how + colophon) + `app/how.css` /
@@ -222,21 +280,35 @@ docs in `docs/`.
     bounds (`WORLD_W/H`/`MAP_CENTER`/`recomputeWorld`), blend/space constants
   - `audio/targeting.js` — `weightsAt`/`retarget` (point → genre blend → engine state)
     + the glide engine (`glideStep`/`rebuildQueue`) + path `travelStep`
-  - `map/starmap.js` — imperative SVG map (`drawMap`), traveler pulse, zoom/pan +
-    pointer gestures, waypoint editing, deterministic `computeGenreLayout`/
-    `seedDefaultLoop`. Measures **monospace** for the layout so it's byte-identical
-    every load (the visible labels use the VT323 webfont; the layout must not race it)
-  - `panels/inside.js` — the ⓘ "inside the sound" readout (blend/feel radar/voice
-    timeline — always 8 cells, chordEvery-16/32 genres fold into stacked rows;
-    role/character descriptions that never name a source; beds render as
-    sustained ribbons; a compact "mind" section shows the MUSIC-MIND meters +
-    active pipes; `vizData`/`renderInside`). The per-bar event reconstruction
-    and the DemoLayer note feed live in `audio/notefeed.js` — see below
+  - `map/starmap.js` — the map's PUBLIC API and nothing else: 23 lines of
+    re-exports over five modules beside it, so `main.js` / `panels/panels.js` /
+    `entries/embed.js` import this and never reach below it. `viewport.js` (the
+    `#map` svg handle + the zoom transform) ← `layout.js` (ENERGY, REGIONS,
+    `computeGenreLayout`, `autoPath`, `seedDefaultLoop` — geometry, no input, no
+    drawing) ← `draw.js` (`drawMap`, the imperative SVG rebuild + the traveler
+    pulse rAF) ← `gestures.js` (drag/pan/pinch/scrub + waypoint editing), plus
+    `viz-zoom.js` (the ⓘ panel's own transform). The graph is acyclic and
+    one-way, which fixes evaluation order. `map/glyphs.js` is separate.
+    `layout.js` measures **monospace** for the relaxation so it's byte-identical
+    every load (the visible labels use the VT323 webfont; the layout must not
+    race it — and the split's extra module fetches made that race winnable, so
+    the font is pinned there explicitly)
+  - `panels/inside.js` — the ⓘ "inside the sound" readout: the PANEL SHELL that
+    assembles the data (`vizData`) and the page (`renderInside`) and owns the
+    audit-truth read. Each surface it draws is its own module in `panels/inside/`
+    — `describe.js` (the NAMING layer: every word the panel may say about a
+    sound, the provenance law that never names a source, the genre hue),
+    `feel.js` (the feel radar), `timeline.js` (voice lanes, piano roll, pages,
+    playhead — always 8 cells, chordEvery-16/32 genres fold into stacked rows),
+    `graph.js` (per-voice/master fx as a node graph, not captions),
+    `captions.js` (the word lines: harmony/form chips, the mind's moves, the
+    micro-timing). The per-bar event reconstruction and the DemoLayer note feed
+    live in `audio/notefeed.js` — see below — so `audio/` never imports the panel
   - `panels/background.js` — the MicroW8 demoscene background program + the ▢→▦ chip
     that toggles off → demoscene; cart rotates every 8 bars on the musical
-    clock with a wall-clock backstop (the laserdisc video layer + the ⤓
-    download/export cluster were removed 2026-07-25 — branch legacy-download-video;
-    ⤓ midi came back 2026-07-26, see `export.js`)
+    clock with a wall-clock backstop. There is no laserdisc video layer and no
+    wav/mp3 download cluster here; both live on branch `legacy-download-video`.
+    The one export that survives is ⤓ midi — see `audio/export.js`
   - `audio/live.js` — the live engine: owns `faustHandle` + `goLive`/`stopLive`, the
     honest boot-progress hairline, `?wavDebug` overlay, `?clicktest` bed, Media Session
   - `audio/notefeed.js` — `barVoiceEvents` (one chord-bar of engine events,
@@ -246,14 +318,23 @@ docs in `docs/`.
     not in the panel: the playing path must not depend on a readout panel
   - `panels/panels.js` — the ⚙ controls (preact-rendered) + chip↔modal plumbing incl.
     the ⧉ embed snippet and the ⤓ midi button; registers the store render subs
-  - `audio/export.js` — ⤓ midi ONLY (restored 2026-07-26): `engine/midi-export.js`
+  - `audio/export.js` — ⤓ midi ONLY: `engine/midi-export.js`
     fed `S.playing` — the same state/seed/path position the ↗ share URL names,
     so the file is the music on screen — named `stellate-<genre>-seed<n>-m<bar>.mid`
     (ASCII). The wav/mp3 offline press and the whole-path journey walk stay
     excised (branch `legacy-download-video`). Gate: `test/browser/midi-export.test.js`
-  - `panels/readouts.js` — the playhead/chyron lower-third (self-ticking; the ⚡ CPU
-    meter box was removed 2026-07-09 — load/eco still reads out in the chyron
-    tech line)
+  - `panels/readouts.js` — the playhead/chyron lower-third (self-ticking; there is
+    no separate ⚡ CPU meter box — load/eco reads out in the chyron tech line)
+  - `starcruise.js` + `starcruise-load.js` + `starcruise/` (14 modules:
+    scene/camera/flight/ship/planet/alien/backdrop/postfx/geom/traits/bridge/probes
+    + the generated `genre-coords.js` / `genre-clusters.js`) — the 🛸 star-cruise
+    3D flythrough (docs/STARCRUISE.md). NOT on the boot path: `index.html` never
+    loads it; `panels/panels.js` dynamic-imports it through `starcruise-load.js`
+    the first time the ✦ cycle reaches the aliens view, and the controller
+    dynamic-imports three.js only on the first `start()`. Evaluating it publishes
+    `window.__STARCRUISE`, which is how `panels/background.js` and the gates find
+    it — the gates arm it with `window.__ensureStarcruise()`, never by racing a
+    click
 - `engine/` — the deterministic core + WASM engine (classic global scripts; NOT
   modules — the app reads them off `window`):
   - `csd-engine.js` — the score brain: `buildEvents(state)` → pitched/drums/found/
@@ -271,11 +352,38 @@ docs in `docs/`.
     per-note expression annotations) run on `state.pipes` at the buildEvents
     choke point, before the snare-law (`node test/gates/pipes.test.js`)
   - `genre-kernel.js` — genre as a point in multidimensional space; blend/track/
-    playlist/journey generators emitting engine states (design: docs GENRE-SPACE.md)
+    playlist/journey generators emitting engine states (design: docs GENRE-SPACE.md).
+    The ALGEBRA only — see "Where the genre data lives" above
+  - `genres-data.js` + `registry-data.js` — the anchors and the registries, as
+    classic scripts publishing `window.__GENRES` / `window.__REGISTRY`. They load
+    BEFORE `genre-kernel.js`, which merges them at load
+  - `speech.js` — `CsdSpeech`, the SPEECH organ: deterministic espeak-ng WASM
+    text-to-speech (`vendor/espeak-ng/`, loaded lazily by dynamic `import()`, so
+    the ~1.7 MB costs nothing until a `synthText` source arms). Every spoken line
+    is **synthesized, never fetched** — 230 `SAMPLES` entries declare `synthText`
+    and the kernel carries the field onto any state that draws one, and on top of
+    that the namebank IDENT organ speaks a station ident for every anchor whose
+    `form` is dj/drop/vamp (65 of 274) plus the bespoke `SPEAKERS` genres
+    (transitwave's PA, airtrafficdrone's ATC…). Between the two, 166 of 274
+    genres say something at seeds 1/5/7. A fresh wasm instance per utterance is
+    the LAW of the artifact, not an optimization: espeak's wavegen consumes
+    libc `rand()`, so only a fresh instance replaying the same call sequence is
+    byte-identical — which is why node press and the browser hear the same take
   - `genre-verifier.js` — symbolic genre-conformance scoring + confusion matrix
-    (`node engine/genre-verifier.js matrix` must stay diagonal-dominant)
+    (`node engine/genre-verifier.js matrix` must stay diagonal-dominant); the
+    23 features are listed by `validate-genres.js`'s dead-axis gate
   - `validate-genres.js` — the gate suite (determinism, vocabulary, coverage…;
-    `--audio` renders probes via faust press for the classifier)
+    `--audio` renders probes via faust press for the classifier), with the
+    individual checks factored into `engine/checks/` (`blend-monotonicity`
+    `dead-axis` `determinism-fuzz` `margin-sentinel` `near-duplicate`)
+  - `invariants.js` (`verify.sh` row `prove`) + `prove-matrix.js` — the formal
+    half: interval proofs / property sweeps (docs/INVARIANTS.md) and the offline
+    matrix prover, differentially cross-checked against each other
+  - `verify-lib.js` — the shared caching + fork-sharding plumbing behind matrix /
+    validate / verify.sh (cache under `engine/scratch/.verify-cache/`)
+  - `columns.js` (columnar events), `musicality.js` (docs/MUSICALITY.md — proving
+    genres GOOD, not just distinct), `genre-geometry.js` + `genre-sim.js` (the
+    shared feature-space geometry and the node-safe star-map similarity)
   - `namebank.js` — invents band/album/roster identities for the chyron
   - `demo-layer.js` — MicroW8 demoscene background carts (off until toggled)
   - `song-verifier.js` — `analyzeSong`/`improveSong`: the verifier half of the loop
@@ -284,14 +392,15 @@ docs in `docs/`.
     csd-engine, boot-smoke enforces it) and the MIDI-corpus gates' reference
     SMF writer (`test/unit/midi-mine.test.js`, `test/unit/corpus-db.test.js`)
   - `faust/` — THE engine (see docs `history/FAUST-PORT.md`, `engine/faust/VOICES.md`).
-    Split by JOB since 2026-07-28 — `live/` (the realtime runtime: `live.js`
+    Split by JOB — `live/` (the realtime runtime: `live.js`
     `ring-player.js` `sentinel-processor.js` `stream-worker.js` `stream-renderer.js`
     `stem-worker.js` `engine.js`) · `press/` (offline: `press.js` `render-core.js`
     `offline-render.js`) · `voices/` (`state-engine.js` `sampler.js` `found-player.js`) ·
     `codec/` (`fmp4.js` `mp3-stream.js` `mp3-worker.js` `wav.js`) · `build/` (one-shots:
     `build.js` `make-fixture.js` `extract-gm.js` `sf2.js` `sysex2params.js`) · `data/`
     (~1.3 MB of JSON: `dx7-presets.json` `fonts.json` `font-*.json` `fixture.json`) ·
-    `dsp/` `dist/` `vendor/` `patches/` `node_modules/` unmoved. The three-deep
+    `dsp/` `dist/` `vendor/` `patches/` `node_modules/` sit unfoldered beside them.
+    The three-deep
     paths are LOAD-BEARING: `<script src>` in index/embed/access/test-live-test,
     `new Worker()`/`addModule()` URL strings, the nginx `location =` block for
     `data/dx7-presets.json` (HOSTING.md §5) and `test/gates/boot-smoke.test.js`'s registry:
@@ -321,8 +430,8 @@ docs in `docs/`.
       `AudioBufferSourceNode`s; `decodeUrlToBuffer` skips recording lead-in and
       boost-normalizes quiet speech (the spokenword fix)
     - `press/press.js` — offline render (faustwasm offline processors + PCM found mix)
-- `tools/` — Node CLIs + shell recipes, split by JOB since 2026-07-28 (the one
-  flat folder had grown to 60 files). `tools/kernel-cli.js` stays at the top
+- `tools/` — Node CLIs + shell recipes, split by JOB (one flat folder had grown
+  to 63 files). `tools/kernel-cli.js` stays at the top
   level — it is the project's front-door command — and everything else lives in
   one of six folders:
   - `tools/fetch/` (12) — the media recipes: `fetch-found-*.sh`,
@@ -332,11 +441,14 @@ docs in `docs/`.
     `cd`s to the repo root first; the audio lands gitignored under `found/`.
   - `tools/mine/` (6) — the MIDI corpus: `corpus-db.js` and
     `mine-{midi,theory,melody,groove,weave}.js`.
-  - `tools/genre/` (21) — everything that authors, edits or interrogates a
-    genre. Five are pipeline (`genre-tool.js` `invent-genres.js` `lerp-genre.js`
-    `rm-genre.js` `gen-genre-info.js`); sixteen are hand-run analysis reachable
-    only from ROADMAP prose. **`tools/genre/README.md` says which is which** —
-    read it before assuming a tool there is wired into anything.
+  - `tools/genre/` (21 + `README.md`) — everything that authors, edits or
+    interrogates a genre. Five are pipeline (`genre-tool.js` `invent-genres.js`
+    `lerp-genre.js` `rm-genre.js` `gen-genre-info.js`) — they write the committed
+    kernel or are invoked by a gate. Sixteen are hand-run analysis with NO
+    caller: nothing in the app, the engine, `verify.sh` or the deploy path runs
+    them, and their headers cite section numbers in a `docs/ROADMAP.md` that no
+    longer exists. **`tools/genre/README.md` says which is which** — read it
+    before assuming a tool there is wired into anything.
   - `tools/build/` (14 + `voxbank-phrases.json`) — the generators of committed
     or derived artifacts: `gen-{feed,font,og-card,voice-bank}.js`,
     `cluster-genres.js` + `feature-layout3d.js` (they emit
@@ -357,17 +469,22 @@ docs in `docs/`.
   - `tools/genre/genre-tool.js` — author a genre anchor from a `genre-specs/*.json` spec:
     validates against the live engine vocabulary, MEASURES verifier targets
     from real renders (auto-tightened so no existing diagonal falls), splices
-    kernel + verifier in house style, runs the gates. Notes: `spec.pos` is
+    `genres-data.js` + `genre-verifier.js` in house style, runs the gates.
+    `genre-specs/` is BIDIRECTIONAL and complete — 274 specs for 274 anchors, one
+    each — because `genre-tool.js export --all` writes the specs back out from
+    the live kernel. `test/gates/genre-specs.test.js` (`verify.sh` row `specs`)
+    runs `export --all --dry-run` and fails, naming the genre, on any anchor
+    edited without a re-export. It went one-directional once and rotted to 135
+    stale files; the round-trip gate is what stops that recurring. Notes: `spec.pos` is
     OPTIONAL (omit it and boot derives a star near the genre's musical family
     — re-bake `app/core/world.js` POS after the batch); the tool applies
     `K.deriveMind` to the injected anchor so create-time measurement matches
-    load; and `MIND_OVERRIDES` is applied INSIDE `deriveMind` (since
-    2026-07-10), so overrides beat derivation identically at measurement,
-    serialization, and load.
-- `test/` — every gate is `<name>.test.js` and **the folder says what it needs**
-  (2026-07-28 reorg; the old `*-run.js`/`*-test.js`/`*.test.js` three-way split
-  encoded nothing — 14 of the 43 `*-run.js` needed no browser, so the
-  `npm run test:browser` glob was lying). Six folders:
+    load; and `MIND_OVERRIDES` is applied INSIDE `deriveMind`, so overrides beat
+    derivation identically at measurement, serialization, and load.
+- `test/` — every gate is `<name>.test.js` and **the folder says what it needs**.
+  One naming convention, six folders; a filename suffix never encodes the
+  runtime, because the last scheme that tried it left a third of the browser
+  glob pointing at pure-node files:
   - `test/gates/` (13) — the release suite: the 10 jobs `verify.sh` runs out of
     `test/` (`engine` `social-meta` `prove-matrix` `kernel-data-identity`
     `genre-specs` `pos-coverage` `coords-coverage` `live-walk-parity`
@@ -421,8 +538,8 @@ docs in `docs/`.
 ## Deployment
 
 The working tree **is** the web root: nginx serves it at
-`https://aboardresearch.com/projects/stellate/` (renamed from "vaporwave"
-2026-07-09; `/projects/vaporwave/` 301-redirects here — alias block in
+`https://aboardresearch.com/projects/stellate/` (the older
+`/projects/vaporwave/` 301-redirects here — alias block in
 `/etc/nginx/sites-enabled/aboardresearch`, `Cache-Control: no-cache`). File
 moves/renames here are production changes; gitignored-but-present files
 (`found/`, `engine/faust/node_modules`) are required for the live

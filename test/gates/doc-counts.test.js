@@ -42,14 +42,25 @@ else pass(`catalogs agree — ${GENRES} anchors, ${GENRES} verifier target rows`
 // swept in a nested worktree someone had left in the tree and failed on ITS
 // copies of the docs — a checkout that is not part of this commit cannot make
 // this commit wrong.
+// Every exemption below is about the file's JOB, not about it being
+// inconvenient: docs/history/ holds planning records, of their time;
+// docs/MUSICALITY.md and docs/TIMING-AUDIT-* are logs of measurement runs whose
+// numbers ("205 genres × 24 bars") record what a run actually measured and
+// would become lies if rewritten to today's count; docs/TODO.md is a queue that
+// quotes the very drift this gate exists to stop. Everything else is covered —
+// including docs/ENGINE-AUDIT-*, which used to be exempt for no stated reason
+// and passes without one.
 const SKIP = [/^docs\/history\//, /^docs\/TODO\.md$/, /^docs\/MUSICALITY\.md$/,
-              /^docs\/ENGINE-AUDIT-/, /^docs\/TIMING-AUDIT-/];
+              /^docs\/TIMING-AUDIT-/];
 const files = execFileSync("git", ["-C", ROOT, "ls-files", "*.md"], { encoding: "utf8" })
   .split("\n").filter(Boolean).filter((rel) => !SKIP.some((r) => r.test(rel)));
 
-// A line dates itself if it says so. "178 at the expansion's dawn", "249 as of
-// 2026-07-11" and "(the space's size when this was written)" are all fine.
-const DATED = /\bas of\b|\bwhen this was written\b|\bthen\b|\bat the (expansion|time)|\bdawn\b|\bwas\b|\b20\d\d-\d\d/i;
+// A line dates itself if it says so. "178 at the expansion's dawn" and "249 as
+// of 2026-07-11" are fine. NOT on this list: a bare "was" or "then", which used
+// to exempt any sentence containing either word — that is most sentences, and
+// it is how "then consider groove. 247 genres…" walked straight through. A
+// claim earns the exemption by naming its date, not by using a past tense.
+const DATED = /\bas of\b|\bwhen this was written\b|\bat the (expansion|time)|\bdawn\b|\b20\d\d-\d\d/i;
 
 // "N/N" next to diagonal/dominant/matrix language. Both halves must be the real
 // count; "201/274 of the reharm genres" is a SUBSET ratio and never appears with
@@ -61,7 +72,15 @@ const MATRIX_PRE = /(diagonal[- ]dominant|diagonal dominant|confusion matrix)[^\
 // Not matched, on purpose: "1,140 anchor resolutions" and "822 genre×seed rows"
 // (singular, and counts of something else), and any number glued to a digit or
 // comma, which is how a grouped thousand leaked in as a false hit.
-const ANCHORS = /(?<![\d,])(\d{2,4})-genres?\b|(?<![\d,])(\d{2,4})\s+(?:anchors|genres)\b/gi;
+const ANCHORS = /(?<![\d,])(\d{2,4})-genres?\b|(?<![\d,])(\d{2,4})\s+(?:anchors|genres|specs|target rows|verifier rows)\b/gi;
+// The PAIR LATTICE: "274×273/2 pairs". This is a catalog-size claim wearing a
+// different hat, and it is exactly the form that survived three sweeps of the
+// prose ("249×248/2" outlived 249 by two expansions) because no rule looked for
+// a number times another number. Both halves are checked: N and N-1.
+const PAIRS = /(?<![\d,])(\d{2,4})\s*[×x*]\s*(\d{2,4})\s*\/\s*2\b/g;
+// "N of M genres" — the DENOMINATOR is the catalog claim; the numerator is a
+// subset ("247 of 274 had no push/pull") and is nobody's business here.
+const OF_N = /(?<![\d,])\d{2,4}\s+(?:of|out of)\s+(?<![\d,])(\d{2,4})\s+(?:genres|anchors)\b/gi;
 
 const bad = [];
 for (const rel of files) {
@@ -78,6 +97,22 @@ for (const rel of files) {
             bad.push(`${rel}:${i + 1}  matrix size ${n} (real ${GENRES}) — ${line.trim().slice(0, 90)}`);
           }
         }
+      }
+    }
+    PAIRS.lastIndex = 0;
+    let p;
+    while ((p = PAIRS.exec(line))) {
+      const lo = Number(p[1]), hi = Number(p[2]);
+      if (lo >= 100 && lo <= 999 && (lo !== GENRES || hi !== GENRES - 1)) {
+        bad.push(`${rel}:${i + 1}  pair lattice ${lo}×${hi}/2 (real ${GENRES}×${GENRES - 1}/2) — ${line.trim().slice(0, 90)}`);
+      }
+    }
+    OF_N.lastIndex = 0;
+    let o;
+    while ((o = OF_N.exec(line))) {
+      const n = Number(o[1]);
+      if (n && n !== GENRES && n >= 100 && n <= 999) {
+        bad.push(`${rel}:${i + 1}  catalog total ${n} (real ${GENRES}) — ${line.trim().slice(0, 90)}`);
       }
     }
     ANCHORS.lastIndex = 0;

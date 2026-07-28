@@ -7,8 +7,8 @@
 //
 // Object.keys order is load-bearing: it drives the confusion-matrix row order and the star layout. Append, never reorder.
 //
-// Classic script on purpose, NOT JSON-over-fetch: app/access.js and
-// app/starmap.js read the kernel synchronously at module top level, so the data
+// Classic script on purpose, NOT JSON-over-fetch: app/entries/access.js and
+// app/map/starmap.js read the kernel synchronously at module top level, so the data
 // has to be present the moment genre-kernel.js runs. Loaded immediately BEFORE
 // it in index.html / embed.html / access.html (test/gates/boot-smoke.test.js enforces order).
 (function (root) {

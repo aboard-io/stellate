@@ -4,7 +4,7 @@ Every synthesis model the kernel can emit, ported to a precompiled WASM module
 in `dist/` (source in `dsp/`). Verified by the per-voice A/B harness against the
 legacy csound engine — both the harness (`ab-render.js`) and the csound codegen
 live on branch `legacy-csound` — see `../docs/history/ab-report.md` (**40 PASS /
-2 CHECK**, both CHECKs are deliberate substitutions). Rebuild with `node build.js`;
+2 CHECK**, both CHECKs are deliberate substitutions). Rebuild with `node build/build.js`;
 `dist/manifest.json` lists every module's IO count + param addresses for the
 Phase-2 engine.
 
@@ -195,7 +195,7 @@ Adopted substitutions and available upgrades:
   (full `/DX7/...` addresses also accepted). press.js generates + compiles a
   missing `dsp/dx7_alg<N>.dsp` on first use (per-algorithm builds — the
   runtime 32-algo switch OOMs libfaust-wasm); live loads only what's in
-  `dist/`, so press once (or `node build.js dx7_algN`) to materialize new
+  `dist/`, so press once (or `node build/build.js dx7_algN`) to materialize new
   algorithms for the browser.
 
 ## Known gaps / Phase-2 notes

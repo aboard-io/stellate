@@ -1,10 +1,16 @@
 # GENRE-SPEC-SCHEMA — the `genre-specs/*.json` field reference
 
-A spec is the human-authored input to `tools/genre/genre-tool.js create` (see
-`docs/ADDING-A-GENRE.md`). It is NOT the anchor itself — the tool measures it,
-derives the verifier target row, and splices a serialized anchor into the
-kernel. This reference is cross-checked against `tools/genre/genre-tool.js`
-(`validateSpec` / `serializeAnchor` / `FIELD_ORDER`) and the 135 live specs.
+A spec is both the human-authored input to `tools/genre/genre-tool.js create`
+(see `docs/ADDING-A-GENRE.md`) and the **exported description** of a genre that
+already ships. The folder is bidirectional: `genre-tool.js export --all` re-derives
+every spec from the live kernel, and `test/gates/genre-specs.test.js` (verify.sh
+`specs` row) fails unless the folder ALREADY matches, byte for byte. One spec per
+genre, 274 files, no orphans.
+
+A spec is not the anchor. `create` measures it, derives the verifier target row,
+and splices a serialized anchor into `engine/genres-data.js`. This reference is
+cross-checked against `validateSpec` / `specFor` / `serializeAnchor` /
+`FIELD_ORDER` in `tools/genre/genre-tool.js` and against the 274 live specs.
 
 > The schema is **derived, never hardcoded.** `validateSpec` builds its
 > vocabulary by scraping the live engine registries and its dimension key-set
@@ -14,17 +20,22 @@ kernel. This reference is cross-checked against `tools/genre/genre-tool.js`
 
 ## Top-level fields
 
-| Field | Req? | Type | Notes |
-|---|---|---|---|
-| `name` | **yes** | string | must match `^[a-z][a-z0-9]*$` (lower-case alnum, no separators); becomes the anchor key |
-| `label` | rec. | string | display name (the band-card genre name); defaults to `name` |
-| `info` | rec. | string | the genre card prose (one paragraph); defaults to `""` |
-| `anchor` | **yes** | object | the dimension bundle — see below |
-| `clips` | no | string[] | ignored since 2026-07-25 (the found-video layer + `GENRE_CLIPS` were removed; legacy specs may still carry it) |
-| `pos` | no | `[x,y]` | star-map coordinate (logical px); validated ≥55px from every existing star. Omit to let boot derive one, then re-bake `app/core/world.js` POS |
-| `verify` | no | object | controls target-row derivation — see "The verify block" |
-| `materials` | no | string | provenance note for sourcing (MATERIALS-style); **informational only**, not consumed by the kernel |
-| `damp` | no | (rare) | seen in 4 specs; a niche production hint |
+| Field | Req? | Written by `export` | Read by `create` | Notes |
+|---|---|---|---|---|
+| `name` | **yes** | yes | yes | must match `^[a-z][a-z0-9]*$` (lower-case alnum, no separators); becomes the anchor key, and must equal the filename |
+| `label` | **yes** | yes | yes | display name (the band-card genre name); defaults to `name` |
+| `info` | **yes** | yes | yes | the genre-card prose (one paragraph); defaults to `""` |
+| `anchor` | **yes** | yes | yes | the dimension bundle — see below |
+| `pos` | no | yes (when the genre has a star) | yes | `[x,y]` star-map coordinate in logical px, validated ≥55px from every existing star. **Optional**: omit it and boot derives one, then re-bake `app/core/world.js` POS |
+| `mind` | no | yes | **no** | the derived `theory`/`pipes`/`rhythm` axes, written for READING. `deriveMind` recomputes them at load; to override, put `theory`/`pipes`/`rhythm` inside `anchor` or add a `MIND_OVERRIDES[name]` entry in the kernel |
+| `perc` | no | yes (52 genres) | **no** | `PERC_STYLES[genre]`, which the kernel keys by genre NAME rather than by anchor key. Descriptive only |
+| `targets` | no | yes | **no** | the genre's `TARGETS` row from `genre-verifier.js`. `create` MEASURES this row from real renders; it never reads one from a spec |
+| `verify` | no | **no** | yes | tuning knobs for that measurement (`seeds` / `features` / `widen`) — see "The verify block". No shipped spec carries one, and one left in a file fails the round-trip gate |
+
+Four keys are **retired** and the gate rejects them outright: `clips` (the
+found-video layer and `GENRE_CLIPS` are gone), `materials`, `invented`, `damp`.
+Nothing reads them, so a spec carrying one describes machinery that does not
+exist.
 
 ## The anchor object
 
@@ -37,7 +48,7 @@ Values follow three conventions, all resolved seeded by `resolveMulti`:
   Every id must exist in the live registry or validation fails.
 - **Nested block** — a voice/fx/found object grouping ranges + pools.
 
-### The required core (present in all 135 specs)
+### The required core (present in all 274 anchors)
 `validateSpec` treats a dimension as required when every existing anchor
 declares it. Today that is: **`bpm`, `swing`, `humanize`, `progressions`,
 `kits`, `fills`, `bass`, `lead`, `pads`, `drums`, `fx`, `found`, `hits`,
@@ -48,8 +59,8 @@ declares it. Today that is: **`bpm`, `swing`, `humanize`, `progressions`,
 | `bpm` | `[lo,hi]` | tempo range |
 | `swing` | `[lo,hi]` | swing amount (0–~0.5) |
 | `humanize` | `[lo,hi]` | timing/velocity jitter |
-| `progressions` | pool | `PROGRESSIONS` ids (harmony skeleton) |
-| `kits` | pool | `DRUM_PATTERNS` ids |
+| `progressions` | pool | `PROGRESSIONS` ids (harmony skeleton; 36 tables) |
+| `kits` | pool | `DRUM_PATTERNS` ids (22) |
 | `fills` | pool | `TRANSITIONS` ids (incl. `"off"`) |
 | `bass` / `lead` / `pads` | voice block | `{ patterns|prob, recipe:{…} }` — see below |
 | `drums` | block | `{ kickModel, snareModel, hatModel (pools), kick, snare, hat, tune, send, dsend (ranges) }` |
@@ -57,7 +68,7 @@ declares it. Today that is: **`bpm`, `swing`, `humanize`, `progressions`,
 | `found` | block | `{ role, vol, pitch, stretch, cutoff, sources[] }` — found-sound layer |
 | `hits` | block | `{ sources[], pattern, prob }` — one-shot punctuation |
 | `stab` | pool | `STAB_PATTERNS` ids (offbeat stabs; `["off"]` to disable) |
-| `form` | string | one of `K.FORM_NAMES` (`pop`, `wave`, `dj`, `drop`, `ritual`, `anthem`, `transit`, …); unknown → warns, falls back to `pop` |
+| `form` | string | one of `K.FORM_NAMES`: `dj`, `drop`, `wave`, `ritual`, `anthem`, `transit`, `pop`, `aaba`, `vamp`, `storm`, `throughline`, `duet`, `suite` |
 
 ### Voice blocks (`bass` / `lead` / `pads`)
 ```jsonc
@@ -81,23 +92,51 @@ declares it. Today that is: **`bpm`, `swing`, `humanize`, `progressions`,
 }
 ```
 
-### Optional dimensions (seen across specs)
-`chordEvery` (harmonic-rhythm bars), `euclid` (`{hat:[k,n], …}` euclidean lanes),
-`rubato` (expressive timing range), `counterpoint`, `thunk`, `sampleEvents`
-(`[{pool[], placement, sections, treatment:{cutoff, vol}}]`), `reverbColor`,
-`timeFeel`, `masterComp`, `meter`, `blueNote`, and the vocal family (`vox`,
-`voxPoem`, `voxClean`, `vocal`, `vocalVol`, `vocSource`, `snarePP`, `realHats`).
-All optional dimensions **draw their rng LAST and consume none when absent** —
+### Source pools (`found.sources`, `hits.sources`, `vox.sources`)
+A sources list may name a raw `SOURCES`/`SAMPLES` id, or a **class token**
+`"pool:<class>"` / `"pool:<class>*N"` — `expandPools` swaps the token for N
+members of `SOURCE_POOLS[class]` (32 classes: `city`, `road`, `industry`,
+`voices`, `nature`, `water`, `room`, `weather`, …) drawn on a dedicated
+per-(seed, class) rng stream, so a genre without a token stays byte-identical.
+228 of the 274 shipped specs carry such tokens.
+
+> **Known gap, and it is a big one:** `validateSpec` checks source ids against
+> `SOURCES` + `SAMPLES` only, so it rejects `pool:` tokens as unknown ids —
+> `found.sources: "pool:industry*1" not in registry`. Export and the round-trip
+> gate are happy; `create` is not. Re-running `create` on any of those 228
+> exported specs fails validation even though the anchor it describes is exactly
+> what ships, and `init --near <most genres>` scaffolds a spec that cannot be
+> created. Until the tool's vocabulary learns the token form, replace pool
+> tokens with raw source ids in a spec you intend to `create`.
+
+### Optional dimensions
+Everything else is optional and draws its rng LAST, consuming none when absent —
 that is the byte-identity law that lets the space grow without regressing
-fixtures.
+fixtures. In use today, by anchor count:
+
+`reverbColor` (95), `timeFeel` (60), `chordEvery` (51), `rubato` (48),
+`sampleEvents` (41), `euclid` (29), `snarePP` (16), `vocSource` (14),
+`masterComp` (13), `transforms` (8), `strum` (5), `counterpoint` (5),
+`thunk` (4), `introMode` (3), `vox` (3), `autoTune` (3), `voxPoem` (2),
+`meter` (2), `padDouble` (2), `blueNote` (2), `leadOctave` (1), `vocal` (1),
+`vocalVol` (1).
+
+A key no anchor uses is an **error**, not a warning — `validateSpec` treats it
+as a typo. The accepted key-set is the union of the keys live anchors declare
+and the anchor properties the kernel source reads (`GENRES[x].dim`, `g.dim`,
+`A.dim`), so a declared-but-not-yet-used dimension is recognised. Two names that
+survive in `FIELD_ORDER` — `voxClean` and `realHats` — belong to no anchor and
+are rejected on sight.
 
 > **`theory` / `pipes` / `rhythm` are NOT authored here.** The kernel's
-> `deriveMind` attaches them to every anchor at load. Declare them in the spec
-> (or add a `MIND_OVERRIDES[name]` entry in the kernel) only to override the
-> heuristic — otherwise omit them.
+> `deriveMind` attaches them to every anchor at load, and `export` writes them
+> back out under the top-level `mind` key. Declare them inside `anchor` (or add
+> a `MIND_OVERRIDES[name]` entry in the kernel) only to override the heuristic —
+> otherwise omit them.
 
 ## The `verify` block
-Controls `deriveTargets` (the auto-tightened confusion-matrix target row):
+Controls `deriveTargets` (the auto-tightened confusion-matrix target row) when
+you run `create`:
 
 ```jsonc
 "verify": {
@@ -110,21 +149,28 @@ Controls `deriveTargets` (the auto-tightened confusion-matrix target row):
 }
 ```
 If omitted, the tool uses a default feature set and still auto-adds
-discriminators until no existing genre is knocked off its diagonal.
+discriminators until no existing genre is knocked off its diagonal. `export`
+does not emit `verify`, so re-export the spec once the genre is in — otherwise
+the round-trip gate reports the file as drifted.
 
 ## Validation rules (`validateSpec`, enforced at `create`)
 1. `name` matches `^[a-z][a-z0-9]*$`; `anchor` is an object.
-2. **Unknown dimension key** (not used by any existing anchor) → error (typo).
+2. **Unknown dimension key** (not used by any existing anchor, not read by the
+   kernel source) → error (typo).
 3. **Missing required dimension** (see the required core) → error.
 4. **Registry membership** — every id in `progressions`, `kits`, `fills`,
    `bass/lead.patterns`, `recipe.model`, `samplerPool`, `patchPool`,
    `drums.*Model`, `found.role`/`found.sources`, `hits.sources`/`hits.pattern`,
-   `vox.sources`, `sampleEvents[].pool`, `stab` is checked against the live
-   engine registries; a miss is a named error.
-5. `form` not in `K.FORM_NAMES` → warning (falls back to `pop`).
+   `vox.sources`, `voxPoem`, `vocSource`, `sampleEvents[].pool`, `stab` is
+   checked against the live engine registries; a miss is a named error.
+5. `form` not in `K.FORM_NAMES` → **error** (the message mentions the `pop`
+   fallback, but the spec is rejected before anything is written).
+
+Errors abort `create` before a byte is written; unknown TOP-level keys are
+ignored by the validator and caught later by the spec-shape gate.
 
 ## See also
 - `docs/ADDING-A-GENRE.md` — the create workflow and matrix-safe wiring.
 - `docs/GENRE-SPACE.md` — the conceptual model.
 - `engine/faust/VOICES.md` — how `recipe` params map to Faust voice params.
-- `genre-specs/*.json` — 135 worked examples (127 flat + 8 under `invented/`); `aldente.json` is a compact one.
+- `genre-specs/*.json` — 274 worked examples; `aldente.json` is a compact one.

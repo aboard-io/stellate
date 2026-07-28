@@ -2206,7 +2206,7 @@
     // through CsdSpeech — byte-identical PCM by the artifact's fresh-instance
     // guarantee) plus one appended sampleEvents opener spec. The text derives
     // PURELY from (seed, genre) via NameBank.hash/identity — the chyron
-    // derivation (app/readouts.js), ZERO rng draws on the resolve stream, so
+    // derivation (app/panels/readouts.js), ZERO rng draws on the resolve stream, so
     // every other seeded choice is untouched (the bed-rotation-start
     // precedent). The spec APPENDS after the anchor's own sampleEvents, so on
     // the shared seed+9091 stream every earlier spec's draws are byte-

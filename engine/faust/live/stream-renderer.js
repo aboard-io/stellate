@@ -270,7 +270,7 @@
       // EVERY kit piece is the drums lane. The sampled kits' clap/rim/ride/crash/perc
       // units carry no `role` at all, so without them here they were labelled with
       // their own key, matched no ⓘ lane, and could never paint — the same hole
-      // app/inside.js noteRole documents.
+      // app/panels/inside.js noteRole documents.
       if (DRUM_KEYS[key]) return "drums";
       if (key.indexOf("solo:") === 0) return "solo";
       if (u && u.role && u.role !== "drums") return u.role;
@@ -547,7 +547,7 @@
             if (prev[k] !== v) for (const vc of us.procs) vc.proc.setParamValue(vc.R + k, v);
           ST.unitParams.set(key, { ...prev, ...u.params });
         }
-        // DX7 CARTRIDGE GLIDE. app/targeting.js lerps the ~144-dim dx7 patch
+        // DX7 CARTRIDGE GLIDE. app/audio/targeting.js lerps the ~144-dim dx7 patch
         // vector voice-by-voice on a live steer, and its comment pointed at a
         // `faust/live.js applyDx7` that has not existed since the render moved
         // into the worker — so a same-algorithm patch morph never reached the

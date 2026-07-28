@@ -1,10 +1,9 @@
 # MUSIC-MIND — the music-intelligence program
 
-*2026-07-09. The question: what would make richer, more interesting, more
-complex music across all 178 genres (the space's size when this was written;
-274 today, and the laws below hold at 274) — applying music theory
-automatically, exploring rhythmic and chromatic ideas, more polyphony where it
-earns its place — while keeping the listener locked in?*
+*The question this program answers: what makes richer, more interesting, more
+complex music across all 274 genres — applying music theory automatically,
+exploring rhythmic and chromatic ideas, more polyphony where it earns its place
+— while keeping the listener locked in?*
 
 The answer is three new organs and a set of new genre-space axes, all behind
 the two standing laws: **determinism** (same seed → byte-identical events;
@@ -15,8 +14,8 @@ diagonal-dominant after every change — 274/274 today).
 
 `buildEvents` is one brain with three limitations found by reading it whole:
 
-1. **Harmony is table-lookup.** `PROGRESSIONS` are 28 hand-voiced static
-   tables. No Key/Scale abstraction, no voice-leading engine, no runtime
+1. **Harmony is table-lookup.** `PROGRESSIONS` are hand-voiced static tables
+   (36 of them today). No Key/Scale abstraction, no voice-leading engine, no runtime
    borrowed chords or secondary dominants — chromatic color is frozen per
    progression name. Every jazz track walks the same ii-V-I voicings forever.
 2. **Events flow one way.** Generation stages are hard-wired; there is no
@@ -83,6 +82,7 @@ Launch library (each ~20–40 lines, registry-extensible):
 | `vibratoSwell` | long notes get `vib` depth ramping in | singing sustains |
 | `throwFx` | last note of a phrase gets a `rsendMul`/`dsendMul` throw | dub punctuation |
 | `octavePump` | duplicates bass notes an octave up on weak beats (prob) | drive without new notes |
+| `accentProfile` | scales melody+bass amps by a MINED per-16th velocity profile (`profile`, `amount`); pads untouched, drawless | the genre's loudness fingerprint as groove |
 
 Expression pipes write **annotation fields** on pitched events
 (`cutoffMul, vib:{depth,rate}, rsendMul, dsendMul, pw`) which
@@ -145,11 +145,11 @@ state.rhythm = { complexity: 0..1 }   // absent = byte-identical
 ### 4. Micro-timing: `timeFeel.pushPullMs` (2026-07-25)
 
 `docs/TIMING-AUDIT-2026-07.md §Groove` measured the space and found every genre
-sitting on essentially one rhythmic feel, tempo aside: **247 of 274 had no
-per-lane push/pull at all** — bass on the kick to within 0.31 ms — and the 26
-that did declared it in **beats**, which is tempo-*relative*. The same `0.015`
-is 4.3 ms at 209 bpm and 18.8 ms at 48 bpm, so one number could not mean one
-feel across a 48–209 bpm catalogue.
+sitting on essentially one rhythmic feel, tempo aside: almost nothing declared
+per-lane push/pull at all — bass on the kick to within 0.31 ms — and the 26
+genres that did declared it in **beats**, which is tempo-*relative*. The same
+`0.015` is 4.3 ms at 209 bpm and 18.8 ms at 48 bpm, so one number could not mean
+one feel across a 48–209 bpm catalogue.
 
 Human micro-timing is a **millisecond** quantity: a laid-back snare is ~15 ms
 late whether the tune is a ballad or a burner. So anchors may now declare
@@ -164,9 +164,11 @@ event's `voice || drum`: `bass` `melody` `pad` / `kick` `snare` `hat` `ride`
 `rim` `clap` `perc` `tom`.
 
 - **Both units may coexist**: they are the same physical quantity, so they are
-  **summed per lane** after the ms side converts. `jazz` uses this — the walking
-  upright keeps its original beat-declared drag, the ride and snare are
-  tempo-honest.
+  **summed per lane** after the ms side converts. `jazz` is the one anchor that
+  uses both — the walking upright keeps its original beat-declared drag
+  (`pushPull:{bass:0.015}`), the ride and snare are tempo-honest
+  (`pushPullMs:{ride:-5,snare:4}`).
+- 60 anchors declare a `timeFeel` today: 35 in milliseconds, 26 in beats.
 - **Absent ⇒ byte-identical** (verified: 274 genres × 2 seeds, zero drift).
 - Blends union-and-lerp the two maps independently and the engine sums them at
   the blend's own bpm — which is the whole point of the unit.
@@ -216,8 +218,9 @@ through `variation`/`hatDensity`, and is the recommended next step.
 
 ### 5. The voice repeat governor (2026-07-25)
 
-> "No vocal or textural sample should repeat more than five times in 64 bars. We
-> end up with speech synthesized phrases looping ad nauseum. Space them." — Paul
+The standing rule: no vocal or textural sample repeats more than five times in
+64 bars, because synthesized speech phrases otherwise loop ad nauseam. Space
+them.
 
 A voice sample is an **utterance**, not a groove element. No single scheduler can
 see this: each section role, the hits layer and every `sampleEvents` spec places
@@ -257,7 +260,7 @@ nowhere to rotate and thinning is the arithmetic meaning of capping a 31× loop.
 Widening those genres' `hits.sources` voice pools (documented matrix-safe in
 CLAUDE.md) is the follow-up that turns the remaining thinning into spreading.
 
-**Live caveat**: `faust/live.js` regenerates a collapsed section each chord bar,
+**Live caveat**: `engine/faust/live/live.js` regenerates a collapsed section each chord bar,
 so `buildEvents` sees 16–72 beats at a time (measured: mallsoft 72, transitwave
 40, auctioncore 16, dmvstep 40). The cap binds *within* each generation — where
 the worst clumping lives — but the 64-bar accounting cannot span generations.

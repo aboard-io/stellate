@@ -126,32 +126,50 @@ formal verifier exists).</p>
 by listening.</p>
 
 <h2><span class="n">05</span>What the sound is made of</h2>
-<p>Nearly all of the raw audio here is other people's work, fetched at build
-time by committed recipes and cached locally. None of it is redistributed, and
-none of it is in the repository. The full ledger — every item, URL and licence —
-lives in <code>SOURCES.md</code>; this is the honest summary, with the policy
-tier each layer sits in.</p>
+<p>Nearly all of the raw audio here is other people's work, fetched by committed
+recipes into a directory git ignores. <b>None of it is in the repository — but it
+does ship.</b> The deploy copies that directory to the server, so anything the
+engine can play is fetchable by anyone who knows the URL. Saying otherwise would
+be more comfortable and less true. That does not relax a single licence: where
+the deploy and the terms disagree, the terms win and the exposure is real and
+knowing, and the remedy for an objection is to pull the item and re-point the
+genre at a licensed substitute — a one-line change in a recipe. The tiers below
+describe <em>what each licence permits</em>, not what this project abstains
+from. The full ledger — every item, URL and licence — lives in
+<code>SOURCES.md</code>.</p>
 <dl>
   <dt>Field recordings <span class="tier t1">tier 1 · permissive</span></dt>
   <dd>Seventy-nine beds from <b>radio aporee ::: maps</b>, mirrored on the
   <b>Internet Archive</b> — city air, road hum, machine rooms, night air, deep
   water, room tone, weather, shortwave. <span class="lic">Permissive licences
-  only: Public Domain Mark, CC BY, CC BY-SA. No non-commercial, no
-  no-derivatives.</span></dd>
+  only: Public Domain Mark, CC BY, CC BY-SA, each verified against the item's
+  own metadata. No non-commercial, no no-derivatives. BY items want attribution
+  in any distributed render; BY-SA items also inherit ShareAlike.</span></dd>
+
+  <dt>The earlier aporee beds <span class="tier t2">tier 2 · mixed, some unverified</span></dt>
+  <dd>A smaller first wave of aporee recordings, fetched before per-item licence
+  verification became the rule — a Tokyo platform, a Chilean smelter, a frog
+  chorus, a night highway. <span class="lic">CC-family, but the mix includes NC
+  and ND terms and several grants were never verified item by item. The ledger
+  flags each one; verify before any distributed render that includes
+  them.</span></dd>
 
   <dt>BBC Sound Effects <span class="tier t2">tier 2 · non-commercial</span></dt>
-  <dd>Forty recordings from the <b>BBC Sound Effects</b> archive, © BBC.
+  <dd>Forty recordings — thirty-six beds and four chimes — from the <b>BBC Sound
+  Effects</b> archive, © BBC. The recipe downloads straight from the BBC's own
+  CDN, so every user's copy is their own fetch.
   <span class="lic">RemArc licence: personal, educational or research use only,
-  non-commercial, no redistribution. Fetch-only, local cache, never committed,
-  never mirrored.</span></dd>
+  non-commercial, no redistribution. Never committed; serving it here is in
+  tension with those terms and is a knowing risk.</span></dd>
 
   <dt>Naropa poetry readings <span class="tier t2">tier 2 · non-commercial, no derivatives</span></dt>
   <dd>Readings from the <b>Naropa Poetics Audio Archive</b> — Burroughs,
   Ginsberg, Waldman, Corso, Orlovsky, di Prima, Kyger, Snyder, Whalen, McClure,
   Baraka, Ortiz, Kupferberg, Sanders, and John Cage's chance-ordered phonemes.
-  <span class="lic">CC BY-NC-ND: folding a reading into generative music is a
-  derivative use, so this is handled strictly — non-commercial, never
-  redistributed, credit the archive.</span></dd>
+  <span class="lic">CC BY-NC-ND: folding a reading into generative music is
+  itself a derivative use, so the NC and ND terms are in live tension with a
+  free public site. Credit rides with every item; the tension is deliberate and
+  documented, not overlooked.</span></dd>
 
   <dt>The sampled instruments <span class="tier t1">tier 1 · MIT</span></dt>
   <dd>The full General MIDI set — all 128 melodic presets plus drum kits —
@@ -165,11 +183,13 @@ tier each layer sits in.</p>
   pool. <span class="lic">No recording, no third party: licence-free
   output.</span></dd>
 
-  <dt>Sample CDs <span class="tier t3">tier 3 · never redistributed</span></dt>
+  <dt>Sample CDs <span class="tier t3">tier 3 · no licence chain</span></dt>
   <dd>Two out-of-print commercial sample CDs, classified from generically-named
   WAVs by a committed pipeline (pitch, tempo and class are <em>recovered</em>,
-  not read from metadata). <span class="lic">No licence chain: local use only,
-  never redistributed in any form.</span></dd>
+  not read from metadata). <span class="lic">No licence chain exists to comply
+  with, and these ship with everything else. An accepted risk taken with open
+  eyes; if you fork this, the risk does not come with the code — decide for
+  yourself before you deploy.</span></dd>
 
   <dt>The MIDI corpus <span class="tier t3">tier 3 · statistics only</span></dt>
   <dd>Genre-labelled MIDI rips, parsed once into a derived corpus that lives off
@@ -202,8 +222,10 @@ version of this list.</p>
   <li><b>GoatCounter</b>'s counter script — ISC, self-hosted, cookie-free,
   same-origin, pathname only. No third-party analytics, no cookies, no
   cross-site anything.</li>
-  <li><b>Yamaha DX7</b> factory patch data — 113 presets from 1983 cartridges,
-  public-domain-adjacent by long convention, noted rather than claimed.</li>
+  <li><b>Yamaha DX7</b> factory patch data — 114 distinct presets decoded from
+  the eight 1983 factory ROM cartridges, public-domain-adjacent by long
+  convention, noted rather than claimed. Only the decoded parameters are kept;
+  the cartridge files themselves are not.</li>
 </ul>
 
 <h2><span class="n">07</span>Accessible on purpose</h2>

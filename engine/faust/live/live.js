@@ -76,7 +76,7 @@
   // pretend to: hardcoding identity here CLOBBERS the app, because these blocks
   // fire AFTER the app's own updateMediaSession and the wavOut one re-asserts
   // every second. So the HOST supplies the strings: opts.mediaMeta() is a
-  // callback returning { title, artist, album, artwork? } (app/live.js composes
+  // callback returning { title, artist, album, artwork? } (app/audio/live.js composes
   // the current genre's label + its cluster). With no callback the engine never
   // overwrites metadata a host has already set, and fills the slot only when it
   // is empty — with something at least TRUE.
@@ -271,7 +271,7 @@
       // all 274 genres x seeds 1/4/7 x 8 bars (822 states), NEITHER output changes when
       // only the per-bar seed / _liveEdge / _voiceRun move — instrument identity rides
       // instrumentSeed by design. What they DO read is the live state, which the app
-      // mutates IN PLACE while gliding (app/targeting.js glideStep walks bpm, sends,
+      // mutates IN PLACE while gliding (app/audio/targeting.js glideStep walks bpm, sends,
       // dx7 params…), so a lasting cache would go stale and change what is heard.
       // The memo is therefore scoped to ONE SYNCHRONOUS BURST: a microtask invalidates
       // it, and nothing can mutate the state without first yielding the thread. So it
@@ -1222,7 +1222,7 @@
     const auditBySerial = new Map();     // serial -> ring entry (the ⓘ timeline's lookup)
     const auditPending = new Map();      // serial -> merged producer table, awaiting playback
     let auditAnomTotal = 0;
-    // a voice key's ⓘ lane role — mirrors app/inside.js noteRole (and the renderer's
+    // a voice key's ⓘ lane role — mirrors app/panels/inside.js noteRole (and the renderer's
     // auditRole) so the native half and the producer half land in the same lanes.
     // isDrum is the mapped event's own flag: the sampled kits' clap/rim/ride/crash/
     // perc units carry no `role`, so nothing else identifies them as kit pieces.
@@ -1754,7 +1754,7 @@
     } catch (e) {}
 
     // ── MediaSession: show WHAT is playing on the iOS lock screen during handoff and
-    // wire transport. The APP owns the identity (app/live.js updateMediaSession) and
+    // wire transport. The APP owns the identity (app/audio/live.js updateMediaSession) and
     // hands it here through opts.mediaMeta — see setMediaMeta above; with no callback
     // this never overwrites what the host already set. The play/pause action handlers
     // are registered ONLY when explicitly asked (opts.mediaSession) for standalone

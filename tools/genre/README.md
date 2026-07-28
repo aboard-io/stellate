@@ -3,14 +3,12 @@
 Twenty-one tools live here. Five are **pipeline**: the project's docs and gates
 invoke them, and changing one changes what ships. Sixteen are **hand-run
 analysis**: nothing in the app, the engine, `verify.sh` or the deploy path calls
-them, and most of them cite `docs/ROADMAP.md`, a document that was **deleted on
-2026-07-27** (`bd94b1e`, "three docs that were actively misleading") for
-asserting things that were no longer true. The ROADMAP section numbers in their
-headers — §1.2.1, §1.3.4, §1.4.6 — now point at nothing.
+them, and most of them cite `docs/ROADMAP.md`, a document that no longer exists —
+it was deleted for asserting things that were no longer true. The ROADMAP section
+numbers in their headers — §1.2.1, §1.3.4, §1.4.6 — now point at nothing.
 
 This README exists because those sixteen read as first-class tooling and are
-not. They landed in one commit (`ab8f3fe`, 2026-07-11, "Genre-intelligence
-layer") — about 3,100 lines in a single afternoon — and have been essentially
+not. They arrived together — about 3,100 lines — and have been essentially
 untouched since. **They are not being retired.** They work, they are read-only,
 and several are genuinely good. But before you rely on one, know that no gate is
 watching it.
@@ -33,10 +31,13 @@ tool here can do. Run them deliberately, and run the gates afterwards.
 
 ## Hand-run analysis — no caller, run by a human
 
-Eight of these have a library-level probe under `test/` that `npm run
-test:browser` picks up (it globs `test/*-run.js`). A probe is not the same as a
-gate in `verify.sh`: it proves the module still loads and computes, not that
-anything depends on the answer.
+Eight of these have a library-level probe under `test/unit/` — empty-space,
+feature-layout, feature-pca, genre-math, mutate, surprise, target-blend,
+target-lint. Note that NOTHING runs them automatically: `npm run test:browser`
+globs `test/browser/` and `test/starcruise/` only, and `verify.sh` does not fork
+them. They are run by hand, like the tools they cover. A probe is not the same as
+a gate: it proves the module still loads and computes, not that anything depends
+on the answer.
 
 | tool | what it answers | probe |
 | --- | --- | --- |

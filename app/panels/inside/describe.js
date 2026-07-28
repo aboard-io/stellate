@@ -48,6 +48,20 @@ function charOf(label){
   for(const [re,phrase] of VOICE_CHAR) if(re.test(l)) return phrase;
   return l.replace(/_/g," ")||"synth voice";
 }
+// A SAMPLED VOICE SAYS ITS OWN NAME. The instrument is a General MIDI program and
+// "Fretless Bass" is both what it is and what a musician would call it — the
+// character phrase ("singing fretless bass") was the readout paraphrasing a fact it
+// already had. Character phrases still carry the voices that have no GM name: the
+// signature synths, the FM patches, the bare models.
+// The lane-name gate forbids dx7/fluidr3/sampler/sf2 and underscores, so this must
+// read SAMPLERS[id].label (the program name) and never the catalog id, and the
+// cleaner strips the parenthetical/dB/em-dash tails the labels carry for humans.
+const GM_STOP=/dx7|fluidr3|soundfont|\bsf2\b|sampler|_/i;
+function gmName(label){
+  const clean=cleanLabel(label);
+  if(!clean||GM_STOP.test(clean)) return charOf(label);   // never leak a source name
+  return clean.toLowerCase();
+}
 // FM patch names -> character (never say the hardware); default "glassy keys".
 const DX7_CHAR=[
   [/piano|rhodes|\bep\b/,"glassy electric piano"],[/bell|tub|celest|glock|chime/,"glass bells"],
@@ -121,10 +135,10 @@ export const genreCol=(g,l)=>`hsl(${genreHue(g)} 78% ${l==null?62:l}%)`;
 export function voiceName(role,m,st){
   m=m||{};
   if(m.model&&SIG_SYNTH[m.model]) return SIG_SYNTH[m.model];
-  if(m.model==="sampler"&&m.sampler&&K.SAMPLERS[m.sampler.id]) return charOf(K.SAMPLERS[m.sampler.id].label);
+  if(m.model==="sampler"&&m.sampler&&K.SAMPLERS[m.sampler.id]) return gmName(K.SAMPLERS[m.sampler.id].label);
   if(st.sampledOnly&&st.samplerLib&&window.FaustStateEngine&&FaustStateEngine.pickSampledId){
     try{ const id=FaustStateEngine.pickSampledId(role,m.model,st.seed);
-      if(K.SAMPLERS[id]) return charOf(K.SAMPLERS[id].label); }catch(e){}
+      if(K.SAMPLERS[id]) return gmName(K.SAMPLERS[id].label); }catch(e){}
   }
   if(m.dx7) return dx7Char(m.dx7.name);
   return MODEL_CHAR[m.model]||ROLE_GENERIC[role]||titleCase(role).toLowerCase();

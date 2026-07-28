@@ -1,4 +1,4 @@
-// genre-sim.js — node-safe port of app/starmap.js:_genreSim (the anchor-material
+// genre-sim.js — node-safe port of app/map/starmap.js:_genreSim (the anchor-material
 // similarity used to lay out the star map). Weighted Jaccard over harmonic
 // progressions + synth/sampler material (samplerPool + recipe.model per
 // lead/bass/pads) + drum kits, plus a form-match term and bpm proximity.

@@ -4,7 +4,7 @@
 // Drums (ch10, GM percussion). buildMidi(state) -> Uint8Array.
 //
 // TWO CALLERS. (1) The browser: index.html loads it as a classic global
-// (window.MidiExport) for the ⚙ panel's ⤓ midi download (app/export.js; gate
+// (window.MidiExport) for the ⚙ panel's ⤓ midi download (app/audio/export.js; gate
 // test/browser/midi-export.test.js). It reads window.CsdEngine at load, so it must
 // come AFTER engine/csd-engine.js in the page (boot-smoke enforces the order).
 // (2) Node: the MIDI-corpus gates use it as the reference SMF WRITER —
@@ -86,10 +86,15 @@
     return new Uint8Array(out);
   }
 
-  // WHOLE-PATH MIDI (the Faithful export): concatenate the per-bar note events
-  // the offline loop-walk produced (app/journey.js), each already carrying its
+  // WHOLE-PATH MIDI: concatenate per-bar note events, each already carrying its
   // absolute startBeat + bpm, into ONE Standard MIDI File with a tempo map.
   // bars: [{ ev:{pitched,drums}, startBeat, bpm }].
+  //
+  // NOTHING IN THIS TREE CALLS THIS. Its caller was the offline loop-walk that
+  // went to branch legacy-download-video with the rest of the whole-path export;
+  // the ⤓ midi button uses buildMidi, which renders the bar on screen. Kept
+  // because it is exported API and the walk is one branch away, not because it
+  // is reachable — check for a caller before assuming a change here is tested.
   function buildMidiJourney(bars){
     const pads=[], bass=[], mel=[], drums=[], tempos=[];
     let lastBpm=null;

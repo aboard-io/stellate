@@ -1,6 +1,8 @@
 # verify.yml — the PR gate: the full ./verify.sh suite in a clean clone with
 # ZERO fetched media. tools/build/ci-standin-media.js synthesizes quiet-noise
-# stand-ins at every path the gates check (~4s, ~86MB, no network); the signal in the
+# stand-ins at every path the gates check — 1,716 files, ~145MB, ~12s, no
+# network, enumerated from the kernel's own registries so a PR that adds
+# genres or samples is covered without editing this file. The signal in the
 # engine smoke test comes from the committed Faust wasm in engine/faust/dist/.
 #
 # What this proves: pipeline structure and non-silence — matrix diagonal
@@ -63,13 +65,11 @@ jobs:
         working-directory: engine/faust
         run: npm ci
 
-      - name: stand-in media (~4s, ~86MB, no network)
+      - name: stand-in media (1,716 files, ~145MB, ~12s, no network)
         run: node tools/build/ci-standin-media.js
 
-      - name: verify.sh — matrix + validate + engine smoke
+      - name: verify.sh — the 13 gate suites, concurrent
         run: ./verify.sh
 
-      - name: theory + pipes gates
-        run: |
-          node test/gates/theory.test.js
-          node test/gates/pipes.test.js
+      - name: theory + pipes + boot-smoke gates
+        run: npm run test:pure

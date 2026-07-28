@@ -96,19 +96,21 @@
   <p class="ab-what">A generative instrument you play by moving through a
   <b>274-genre</b> space. Every song is rendered live in your browser and
   is fully deterministic from a seed — the same seed always plays the same music.
-  Every genre is verified by a genre-confusion matrix: all 273 must sound most
+  Every genre is verified by a genre-confusion matrix: all 274 must sound most
   like themselves after every change.</p>
   <a class="ab-how" href="how.html">How a song is made &rarr;</a>
   <h3 class="ab-h">How to play</h3>
   <p class="ab-play"><b>Drag</b> anywhere to set a destination — the song journeys there, never jumps.
   <b>Double-click</b> to drop path waypoints: a constellation line connects them and a traveler
   walks the path, morphing the music through every genre it crosses — the path <em>is</em> the mix.
-  Drag the <b>pink playhead</b> to scrub; drag waypoints to reshape; right-click erases.
-  <b>Pinch</b> (or ctrl+scroll) zooms the chart. <b>Stop twice</b> rewinds to the top.
-  ▶ plays · ✦ cycles the three views (star map, inside-the-sound, aliens) · ▦ toggles the
-  demoscene backdrop · ⚙ seed, duration, ±bpm, an embed snippet and <b>⤓ midi</b> (the song you're
-  hearing as a Standard MIDI File). The address bar carries your seed, path and measure —
-  a bookmark or a shared link reopens exactly this music, right here.</p>
+  Drag the <b>pink playhead</b> to scrub; drag waypoints to reshape; right-click a waypoint erases it.
+  <b>Scroll or pinch</b> zooms the chart. <b>Stop twice</b> rewinds to the top.
+  ▶ plays · ✦ cycles the three views (star map, inside-the-sound, aliens) ·
+  ⚙ opens the controls — volume, vapor, soundfont, seed, speed, ±bpm, an embed snippet
+  and <b>⤓ midi</b> (the song you're hearing as a Standard MIDI File). The demoscene
+  backdrop runs by itself and swaps carts on the beat. The address bar carries your
+  seed, path and measure — a bookmark or a shared link reopens exactly this music,
+  right here.</p>
   <!-- a real button-sized target: a bare inline link is unreliable to tap on iOS
        and goes nowhere. panels.js also force-navigates modal links as a belt. -->
   <a class="ab-how ab-a11y" href="access.html">Accessible text version &rarr;
@@ -134,10 +136,10 @@
 <script src="engine/theory.js"></script>
 <script src="engine/pipes.js"></script>
 <script src="engine/csd-engine.js"></script>
-<!-- THE GENRE DATA: generated classic scripts (Stage E1). MUST precede
-     genre-kernel.js — it reads window.__GENRES / window.__REGISTRY at load,
-     synchronously, the same way app/entries/access.js and app/map/starmap.js read the
-     kernel at module top level. Not JSON-over-fetch for exactly that reason. -->
+<!-- THE GENRE DATA: the anchors and the registries as classic scripts. MUST
+     precede genre-kernel.js — it reads window.__GENRES / window.__REGISTRY at
+     load, synchronously, the same way app/entries/access.js and app/map/layout.js
+     read the kernel at module top level. Not JSON-over-fetch for that reason. -->
 <script src="engine/genres-data.js"></script>
 <script src="engine/registry-data.js"></script>
 <script src="engine/genre-kernel.js"></script>
