@@ -2261,6 +2261,18 @@
           treatment:{maxDur:10,cutoff:3800,vol:0.5,rsend:0.25,dsend:0.35}};
       }
     }
+    // LIVE SPEECH CARRY. A registry entry with synthText is SAID by the engine
+    // (engine/speech.js) instead of fetched — all 230 espeak clips are declared
+    // that way now. The per-source constructors above each build an explicit
+    // object literal and pick fields by hand, so every one of them dropped it
+    // silently: the registry said "synthesize me" and the state never mentioned
+    // it. Carry it once, here, after every push, rather than threading the same
+    // line through six constructors that will drift apart.
+    // The PA organ sets its own synthText and is left alone (!s.synthText).
+    for(const s of foundSources){
+      const reg=SAMPLES[s.id]||SOURCES[s.id];
+      if(reg&&reg.synthText&&!s.synthText) s.synthText=reg.synthText;
+    }
     const state={
       ...(lickVoice?{lickVoice}:{}),
       vocoderSourceId: vocId||undefined,
