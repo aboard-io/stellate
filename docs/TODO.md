@@ -471,6 +471,22 @@ always." Land it, listen, then decide whether 2-4 are still needed.
 
 ---
 
+### VERDICT (Paul, after listening)
+
+- **Phase 1 — the fade: KEEP AS SHIPPED.** `FOUND_FULL_T=0.1`,
+  `FOUND_FADE_T=0.5`. Full strength within 10% of a star, linear down, silent
+  only at the precise 50/50 midpoint. No change. The item is closed.
+- **Phase 4 — the speech organ: DONE, and widened deliberately.** The brief was
+  "go to town, lots of voices" — the organ went from **1 producer to 12**, each
+  with its own espeak voice rather than one narrator in twelve hats. See
+  `SPEAKERS` in `genre-kernel.js`.
+- **Phases 2 and 3 remain OPEN and unjudged.** Both are matrix-risky and both
+  were conditional on the Phase 1 verdict. Phase 1 was accepted as-is, so
+  neither is obviously needed; they want their own listen before anyone spends
+  the matrix risk on them.
+
+---
+
 ## PLAN — Source cleanup for 1.0
 
 **Asked 2026-07-27 (Paul):** go file by file, strip extraneous comments and

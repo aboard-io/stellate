@@ -2177,21 +2177,79 @@
     let paSpec=null;
     {
       const NB=isNode?require("./namebank.js"):root.NameBank;
-      const twW=(c.genres||[]).reduce((a,g,i)=>a+(g==="transitwave"?(c.weights?c.weights[i]:1):0),0);
-      if(NB&&twW>=0.35){
-        const h=NB.hash(c.seed,"transitwave","pa");
-        const who=NB.identity("transitwave",h);
-        const text=(h&1)
-          ? "Now arriving: "+who.artist+"."
-          : who.artist+", with service to "+who.album+".";
-        foundSources.push({id:"sp_pa_namebank",label:"PA: "+text,url:"",kind:"speech",
-          synthText:{text,voice:"en-us",variant:"f3",pitch:60,speed:165},   // the (feminine) PA register, a hair up + measured
+      // ---------- THE SPEECH ORGAN'S CAST ----------
+      // engine/speech.js synthesizes these live (espeak WASM in the browser,
+      // the same artifact in press) — no file, no fetch, no licence. For a long
+      // time it had exactly ONE producer, so the organ was effectively unwired
+      // and everything that SOUNDED like espeak was a pre-rendered mp3.
+      //
+      // Every genre below already carried the vocabulary in its own card: the
+      // ATC read-back, the OYEZ, the livestock chant, "now serving". The text
+      // is what the card always promised; the voice is what makes them
+      // different people rather than one narrator in twelve hats — variant,
+      // pitch and speed are chosen per speaker (m1 grave, f2/f3 bright, croak
+      // for the ones that should sound wrong).
+      //
+      // THE LAWS THIS KEEPS, all inherited from the transit PA it generalizes:
+      //   · text derives PURELY from (seed, genre) through NameBank.hash /
+      //     identity — the chyron derivation. ZERO rng draws on the resolve
+      //     stream, so every other seeded choice is untouched.
+      //   · the spec APPENDS after the anchor's own sampleEvents, so on the
+      //     shared seed+9091 stream every earlier spec's draws stay identical.
+      //   · a genre NOT in this table gets no field at all => byte-identical.
+      //   · the 0.35 weight floor is the standing "real presence" threshold, so
+      //     a light blend never puts words in a genre's mouth.
+      //   · csd-engine's voice-repeat governor (GOV_CAP 5 per 64 bars) caps the
+      //     density from above, so a speaker cannot become a loop.
+      const SPEAKERS={
+        transitwave:    {tag:"PA",       variant:"f3",    pitch:60, speed:165,
+          say:(w,h)=>(h&1)?"Now arriving: "+w.artist+"." : w.artist+", with service to "+w.album+"."},
+        airtrafficdrone:{tag:"ATC",      variant:"m3",    pitch:30, speed:190,
+          say:(w,h)=>(h&1)?w.artist+", descend and maintain flight level "+(180+(h%9)*10)+"." : w.artist+", cleared to land, runway "+(1+h%36)+"."},
+        towncrier:      {tag:"CRIER",    variant:"m1",    pitch:15, speed:120,
+          say:(w,h)=>(h&1)?"Oyez! Oyez! "+w.album+", this "+(1+h%28)+"th day!" : "Hear ye! "+w.artist+" proclaims "+w.title+"!"},
+        auctioncore:    {tag:"AUCTION",  variant:"m2",    pitch:70, speed:260,
+          say:(w,h)=>(h&1)?"Do I hear "+(20+h%60)+", "+(20+h%60)+", now "+(30+h%60)+"?" : "Sold! To "+w.artist+" for "+(40+h%200)+" dollars!"},
+        dmvstep:        {tag:"COUNTER",  variant:"f2",    pitch:45, speed:150,
+          say:(w,h)=>(h&1)?"Now serving ticket "+(100+h%800)+" at window "+(1+h%12)+"." : "Ticket "+(100+h%800)+". Window "+(1+h%12)+". Thank you."},
+        elevatorcore:   {tag:"LIFT",     variant:"f1",    pitch:55, speed:155,
+          say:(w,h)=>(h&1)?"Floor "+(2+h%30)+". Going up." : "Mezzanine. Doors opening."},
+        holdmusic:      {tag:"HOLD",     variant:"f2",    pitch:50, speed:145,
+          say:(w,h)=>(h&1)?"Your call is important to us. Please continue to hold." : "All of our agents are currently assisting other customers."},
+        microwave:      {tag:"KITCHEN",  variant:"m4",    pitch:40, speed:135,
+          say:(w,h)=>(h&1)?"For that which we are about to reheat, let us be thankful." : "Two minutes. On high. Amen."},
+        thermostatwave: {tag:"DOMESTIC", variant:"m5",    pitch:48, speed:150,
+          say:(w,h)=>(h&1)?"The setpoint is "+(64+h%12)+" degrees. It was not agreed." : "Someone has changed the thermostat again."},
+        dishwasherwave: {tag:"CYCLE",    variant:"croak", pitch:35, speed:140,
+          say:(w,h)=>(h&1)?"Heated dry. Cycle complete." : "Rinse. Hold. Rinse. Hold."},
+        garage:         {tag:"NUMBERS",  variant:"f5",    pitch:52, speed:170,
+          say:(w,h)=>{const d=[];for(let i=0;i<5;i++)d.push((h>>(i*3))%10);return "Group "+(10+h%89)+". "+d.join(" ")+".";}},
+        mallsoft:       {tag:"MALL",     variant:"f4",    pitch:58, speed:150,
+          say:(w,h)=>(h&1)?"Attention shoppers. "+w.label+" closes in "+(5+h%25)+" minutes." : "The owner of a "+w.artist+" sedan, your lights are on."},
+      };
+      // Pick the DOMINANT speaking genre rather than the first one found, so a
+      // blend of two speakers gets one voice (the louder) instead of two people
+      // talking over each other.
+      let sp=null, spW=0, spName=null;
+      (c.genres||[]).forEach((g,i)=>{
+        const w=c.weights?c.weights[i]:1;
+        if(SPEAKERS[g] && w>=0.35 && w>spW){ sp=SPEAKERS[g]; spW=w; spName=g; }
+      });
+      if(NB&&sp){
+        const h=NB.hash(c.seed,spName,"pa");
+        const who=NB.identity(spName,h);
+        const text=sp.say(who,h);
+        foundSources.push({id:"sp_pa_namebank",label:sp.tag+": "+text,url:"",kind:"speech",
+          synthText:{text,voice:"en-us",variant:sp.variant,pitch:sp.pitch,speed:sp.speed},
           // deterministic HEARD-length estimate: espeak at rate 165 measures
           // ~0.42s + 0.049s/char (fit slightly UNDER so the chop never wraps),
-          // then /0.82 because kind:"speech" plays at SPEECH_RATE_CAP (state-
-          // engine) — durSec only sizes the chop event, so it must cover the
-          // stretched utterance or the band name loses its last syllable.
-          durSec:round((0.42+0.049*text.length)/0.82,2),
+          // SCALED by 165/speed because the speakers below run 120 (the crier,
+          // slow and grand) to 260 (the auctioneer) — an estimate pinned to 165
+          // would cut the crier off mid-word. Then /0.82 because kind:"speech"
+          // plays at SPEECH_RATE_CAP (state-engine) — durSec only sizes the chop
+          // event, so it must cover the stretched utterance or the line loses
+          // its last syllable.
+          durSec:round((0.42+0.049*text.length*(165/sp.speed))/0.82,2),
           vol:0.5,pitch:1,stretch:0.5,cutoff:3800});
         // opener = the always-safe slot: ONE shot at the first matching
         // section's downbeat (live rebuilds per-section, so it recurs at

@@ -18,6 +18,7 @@
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("./probe-harness.js");
 const ROOT = path.join(__dirname, ".."), PORT = 8937;
+const GEN = process.argv[2] || "transitwave";   // which member of the cast to prove
 
 async function main() {
   const srv = await serve(ROOT, PORT);
@@ -32,18 +33,22 @@ async function main() {
   await page.waitForFunction(() => window.__X && window.__S && window.__LOOP, { timeout: 20000 });
   await page.waitForTimeout(500);
 
-  // park the whole travel path ON transitwave — goLive snaps to waypoints[0],
-  // so replacing the waypoints is what actually rides the genre (the
-  // mp3-bed-decode-run parking approach)
-  const target = await page.evaluate(() => {
-    const p = __X.POS.transitwave;
+  // park the whole travel path ON the target genre — goLive snaps to
+  // waypoints[0], so replacing the waypoints is what actually rides the genre
+  // (the mp3-bed-decode-run parking approach). The organ has a CAST now
+  // (genre-kernel SPEAKERS), so the genre is an argument and defaults to the
+  // transit PA this gate was written against:
+  //   node test/speech-live-run.js [genre]
+  const target = await page.evaluate((GEN) => {
+    const p = __X.POS[GEN];
+    if (!p) throw new Error("no star for genre: " + GEN);
     __S.waypoints = [{ x: p[0], y: p[1] }, { x: p[0] + 30, y: p[1] + 30 }];
     __X.retarget({ x: p[0], y: p[1] });
     const w = __X.weightsAt({ x: p[0], y: p[1] });
     const top = (Array.isArray(w) ? w : []).map((e) => e.g + ":" + (e.w && e.w.toFixed ? e.w.toFixed(2) : e.w)).slice(0, 3);
     return { pos: p, top };
-  });
-  console.log(`parked loop on transitwave @ (${target.pos[0]},${target.pos[1]}) — weights: ${target.top.join(", ")}`);
+  }, GEN);
+  console.log(`parked loop on ${GEN} @ (${target.pos[0]},${target.pos[1]}) — weights: ${target.top.join(", ")}`);
 
   // LIVE: ride >= 6 bars, sampling RMS + the organ's __SPEECH hook
   await page.evaluate(() => __X.goLive());
