@@ -3,6 +3,127 @@
 Short, durable list of asked-for-but-not-yet-built work. Anything with a real
 design behind it lands here in full; anything shipped moves to the DONE list.
 
+---
+
+## WHERE THINGS STAND — read this first
+
+**18 commits landed since `0d0fea6`, all pushed. `verify.sh` is 13/13.**
+**7 of them are NOT deployed — stellate.app is running `76c905e`.**
+
+| | |
+|---|---|
+| Stage A, B, C | done |
+| Stage E1, E2, E4 | done |
+| **Stage D — the reorganization** | **not started; the big one left** |
+| **Stage F — docs** | **not started, and now the MOST stale thing in the repo** |
+| Stage E3 | open design question, not a task |
+| Found layer 2-3 | needs Paul's ears |
+| LOFO leftovers | deferred with measurements below |
+
+### What landed (commit → what it was)
+
+```
+4e0f650  Stage C: strip dates/attributions/branches from 93 files
+b96a25b  LOFO free cuts: zones.json + @grame 28MB -> 194KB
+76c905e  deploy: --delete-excluded (the 28MB had never left the droplet)
+a649959  SOURCES: stop promising what the deploy does not do
+d52b8ed  gates: negation is not a promise; 33 was never the cluster count
+2a69608  gospel gets its piano, yachtrock its guitar (card-lie 3 -> 0)
+bebf85b  E1 step 1: kernel-data-identity gate, BEFORE anything moved
+8508e00  E1: 810 KB of data out of the kernel, byte for byte
+e62dada  E1 complete: CLI -> tools/kernel-cli.js; kernel 966KB -> 180KB
+5f6aa3b  espeak is an ES module; speech gate green, ship.sh unblocked
+4807f98  speech organ: 1 producer -> 12 bespoke voices
+700d9f9  speech: 230 pre-rendered clips -> live synthesis (12 -> 58 genres)
+422eb07  speech: station idents for dj/drop/vamp forms (58 -> 99 genres)
+43ffe4d  star map re-baked: all 274 labels @1920, headroom for 400
+712cceb  Stage E2: 274 specs + export + round-trip gate
+465d377  the ⓘ piano roll is telling the truth; audit hatching is not
+277d89e  E4 safe half: 241 descriptions capitalised
+85352d0  E4: all 274 descriptions GENERATED from the anchor
+```
+
+### New machinery worth knowing about
+
+- `test/kernel-data-identity.test.js` (gate `kerneldata`) — GENRES + registries
+  byte-for-byte vs HEAD, plus genre ORDER and 5 resolved tracks (the only reach
+  into module-private VOXBANK/PERCBANK). Self-heals on commit.
+- `test/genre-specs.test.js` (gate `specs`) — every genre has a spec and every
+  spec round-trips. Fix when it fails: `node tools/genre-tool.js export --all`.
+- `test/comment-only.js` — proves a diff touched comments only. Not in verify.sh;
+  it is a tool for whoever is doing a strip.
+- `tools/gen-genre-info.js --write` — regenerates all 274 `info` blurbs from the
+  anchors. The descriptions are DERIVED now; do not hand-edit them.
+- `tools/relayout-map.js --write --capacity 400` — re-bakes `app/world.js` POS as
+  a label-box packing. Re-run when the catalogue grows.
+- `tools/speech-to-live.js`, `tools/split-kernel-data.js`, `tools/kernel-cli.js`.
+
+### FOUR TRAPS THIS SESSION FELL INTO — do not repeat them
+
+Every one looked like a confident result and was wrong. The shared cause: the
+probe and the conclusion were built in one step, so nothing independent
+contradicted them. **Validate an instrument against a case whose answer you
+already know, before trusting what it says about a case you don't.**
+
+1. **Label matching** — compared alienized labels after stripping non-ASCII,
+   which deletes the homoglyphs `alienize()` inserts. Reported 0/12 speech
+   genres labelled; the truth was 11/12.
+2. **Star projection** — guessed `WORLD_W` instead of reading `__X.world()`.
+   Reported all 12 speakers unlabelled; they were on screen.
+3. **The ⓘ "reproduction"** — sampled 19 s of a 92 bpm chordEvery-8 track (about
+   three chord bars) and called a correct intro a frozen view. Told Paul it was
+   reproduced. It was not.
+4. **The map font scale** — modelled labels at `FS=1` when `drawMap` uses
+   `fs = k^0.85` = **2.4** at default zoom. Reported 3% occupancy and "nothing to
+   do" while the browser was culling 20 names.
+
+### OPEN DECISIONS — these need Paul, not more work
+
+1. **Deploy.** 7 commits are undeployed. `tools/ship.sh` runs gates → push →
+   deploy. The rsync now uses `--delete-excluded`, so an exclude genuinely
+   removes from the droplet; the first run after adding one will delete.
+2. **The derived speech tier.** 41 dj/drop/vamp genres now announce themselves
+   ("You're listening to The Breakbeat Kru"). Great or naff is taste. If wrong,
+   it is one `IDENT_FORMS` set in `genre-kernel.js` to narrow.
+3. **The generated descriptions.** Accurate but plainer than the hand-written
+   ones. `jazz` says "a breaks kit" where a person would say "brushed"; `ragtime`
+   says "Beatless" because its kit is `off`. Both honest readings of the data.
+   If you want a human touch, add per-genre overrides IN THE GENERATOR — do not
+   go back to hand-written strings, that is what rotted last time.
+4. **Found layer Phases 2-3.** Still unjudged, still matrix-risky, still
+   conditional on a listen. Phase 1 was accepted as shipped.
+5. **Stage E3.** Does the ⓘ view read the anchor, or do we stop pretending the
+   spec drives it? `progressions` is authored in all 274 specs and never appears
+   in the readout.
+6. **The ⓘ audit hatching is dead on desktop.** The audit ring is built by the
+   WAV/media-element route, not the SharedArrayBuffer ring route. So
+   `faustHandle.auditFor` is undefined on the primary path and the red-hatched
+   "expected but silent" paint can never appear there. Wiring an audit into the
+   ring route is real work. Recorded in `app/inside.js`.
+
+### DEFERRED, with the measurements that decided it
+
+- **`dx7-presets.json` 4x fetch** — the plan said 671 KB; the live server sends
+  it **gzipped at 74.7 KB** (`curl -H 'Accept-Encoding: gzip'`). So the cut is
+  worth ~224 KB, not ~2 MB. Still ~6% of a 3.37 MB session. Try the cheap route
+  FIRST: it is served `cache-control: no-cache` under the HOSTING §5 mutable-JSON
+  carve-out, but it is generated and changes only when the cartridge banks do —
+  narrowing that rule caches three of the four fetches for zero code change.
+- **The eager shell** — `engine/genre-verifier.js` CANNOT lazy-load:
+  `app/state.js` binds `export const V=GenreVerifier` at module top level and
+  `rescore()` runs during boot. `app/starcruise.js` genuinely can (48 KB gz), but
+  it registers `window.__STARCRUISE` as a side-effecting module and ~12 browser
+  gates reach that global after page load.
+- **Two stars never labelled at any zoom** — `crimsoncourt` and `folk` before the
+  re-layout. Re-check after `43ffe4d`; the re-bake may have fixed them.
+
+### A STANDING CONSTRAINT PAUL SET
+
+The matrix is **allowed to move**, and share-URL compatibility **does not
+matter** ("no one knows this exists"). Do not spend effort protecting either.
+Still RUN `matrix --no-cache` after kernel changes — it is the best structural
+signal there is — but a move is a finding, not a veto.
+
 ## DONE 2026-07-27 — shipped to stellate.app
 
 - **security.txt** contact → `paul.ford@aboard.com`.
@@ -507,7 +628,9 @@ Surveyed by five agents against the real tree. **Everything below is measured.**
 
 ---
 
-### Stage A — protect the reorg (do this first, nothing else before it)
+### Stage A — protect the reorg — DONE
+
+> Landed. boot-smoke is in verify.sh and covers 16 scripts across index/access/embed.
 
 **`test/boot-smoke.js` does not run in CI.** It parses `index.html`, replays the
 classic `<script>` block in a `vm` sandbox, and fails if a new engine script
@@ -527,7 +650,10 @@ The load order is real and documented: `theory`+`pipes` → `csd-engine` →
 `state-engine` → `found-player` → `sampler` → `live`. `genre-kernel.js:20` reads
 `root.CsdEngine` **at load time**, not call time.
 
-### Stage B — deletions (all verified zero-reference)
+### Stage B — deletions — DONE
+
+> Landed (`0d0fea6`). NOTE: `tools/make-mix-page.js` was NOT dead and survives —
+> the journey CLI calls it at the end of a render.
 
 | Target | Size | Evidence |
 |---|---|---|
@@ -556,7 +682,7 @@ still enforces) and `FAUST-PORT.md` (43 lines, cited by CLAUDE.md).
 alive); `opts.elRecycleSec`; flags `--witness`, `--full`, `--expect`, and three
 of four `--json`.
 
-### Stage C — the text strip
+### Stage C — the text strip — DONE (`4e0f650`)
 
 **DONE (uncommitted working tree).** 93 files. Every `Paul …`, quoted session
 line, git SHA, branch-name narration and bare date is out of `app/`, `engine/`,
@@ -725,7 +851,7 @@ single most confusing thing a new cloner could hit. The earlier idea of moving
 it into `vendor/` is moot. `vendor/` itself is in excellent shape — every dir
 used, versioned, and credited. Leave it alone.
 
-### Stage E — the genre data
+### Stage E — the genre data — E1/E2/E4 DONE, E3 OPEN
 
 **E1. Split the kernel.** `engine/genre-kernel.js` is 8,977 lines / 996 KB and
 **82% inert data** — `GENRES` alone is 664 KB (66.6%). It also ships a
@@ -806,7 +932,21 @@ instrumentation first, no punchline. Example —
 > **after:** `Machine four-on-the-floor at 128-140. Drone chords that never
 > reharmonize, long DJ plateaus instead of verses and choruses.`
 
-### Stage F — docs, README, HTML prose (last)
+### Stage F — docs, README, HTML prose — NOT STARTED, AND NOW THE MOST STALE
+
+> Tonight moved a lot of ground under these docs. Known-wrong already:
+>   · CLAUDE.md describes a 996 KB genre-kernel.js with an embedded CLI —
+>     it is 180 KB and the CLI is tools/kernel-cli.js
+>   · CLAUDE.md's run list still says `node engine/genre-kernel.js track ...`
+>     (repointed in the recipes, but check every doc)
+>   · engine/genres-data.js + engine/registry-data.js are undocumented
+>   · the verify.sh row list is now 13, with kerneldata + specs new
+>   · genre-specs is 274 files and bidirectional, not 135 and one-way
+>   · descriptions are GENERATED — say so, or someone will hand-edit them
+>   · speech reaches 99 genres and is synthesized live, not fetched
+> Doing F before D means writing some of it twice; leaving it wrong while
+> everything else moved is worse.
+
 
 **The count drift is worse than it looks.** `docs/MUSIC-MIND.md` says 274 in
 three places and 249 in five — *in the same file*. `CONTRIBUTING.md` says 274 at
