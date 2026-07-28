@@ -79,7 +79,17 @@ else
 fi
 
 echo "== rsync =="
-rsync -a --delete --delay-updates --info=stats1 \
+# --delete-excluded, NOT bare --delete. Plain --delete only removes receiver
+# files that are absent from the SOURCE; it deliberately PROTECTS anything
+# matching an --exclude, on the theory that you might be excluding files you
+# want left alone on the far end. That is the opposite of what every exclude
+# in this list means: each one names something that must not be on a public
+# web root. Without this flag, adding an exclude shrinks the transfer and
+# leaves the old bytes served forever — which is exactly what happened when
+# the 28 MB @grame tree was narrowed to one file and stayed fetchable, and
+# it is the same shape as the found/midi leak that had to be scrubbed by
+# hand. Excluded means gone from the droplet, not merely unsent.
+rsync -a --delete --delete-excluded --delay-updates --info=stats1 \
   --exclude '.git' --exclude '.gitmodules' \
   --exclude '/.claude/' \
   --exclude '/.claude*' \
