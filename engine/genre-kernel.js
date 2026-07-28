@@ -2230,10 +2230,50 @@
       // Pick the DOMINANT speaking genre rather than the first one found, so a
       // blend of two speakers gets one voice (the louder) instead of two people
       // talking over each other.
+      // ---------- THE DERIVED TIER ----------
+      // The bespoke cast above is twelve genres that had a voice waiting in
+      // their own card — the OYEZ, the ATC read-back, the auction chant. That
+      // does not scale: writing 90 more idioms by hand is 90 chances to write a
+      // bad one, and most genres have no such line in them.
+      //
+      // So genres whose FORM is a mix — dj, drop, vamp: the ones built to be
+      // beat-matched and announced over — get a STATION IDENT instead, spoken
+      // over their own NameBank identity. That is the idiom those forms already
+      // live in (the pirate-radio drop, the DJ tag), so it is characterful
+      // rather than generic, and it is picked by a structural property of the
+      // genre rather than by me choosing 41 names out of a hat.
+      //
+      // The VOICE is hashed from the genre name, so every station sounds like a
+      // different station, and it is stable: the same genre always gets the same
+      // announcer. Deterministic like everything else here — NameBank.hash, no
+      // rng on the resolve stream.
+      const IDENT_FORMS=new Set(["dj","drop","vamp"]);
+      const D_VARIANT=["m1","m2","m3","m4","m5","f1","f2","f3","f4","f5","croak","whisper"];
+      function derivedSpeaker(g){
+        const A=GENRES[g]; if(!A||!IDENT_FORMS.has(A.form||"pop")) return null;
+        const NBx=isNode?require("./namebank.js"):root.NameBank; if(!NBx) return null;
+        const h=NBx.hash(0,g,"voice")>>>0;                       // seed 0: the voice is the GENRE's, not the track's
+        // UNSIGNED shifts: `>>` is a SIGNED 32-bit op, so any hash above 2^31
+        // goes negative and drags the modulo with it — jungle came out at pitch
+        // -4 and house at speed 69, which espeak either clamps or refuses.
+        // Ranges are espeak's usable middle: pitch 25-74 of 0-99, speed 130-199.
+        return { tag:"IDENT", variant:D_VARIANT[h%D_VARIANT.length],
+          pitch:25+((h>>>4)%50), speed:130+((h>>>9)%70),
+          say:(w,hh)=>{
+            switch(hh%5){
+              case 0: return "You're listening to "+w.artist+".";
+              case 1: return w.label+". "+w.album+".";
+              case 2: return w.artist+", "+w.title+".";
+              case 3: return "Next up: "+w.artist+".";
+              default: return "This is "+w.label+" radio.";
+            }
+          } };
+      }
+      const speakerFor=(g)=>SPEAKERS[g]||derivedSpeaker(g);      // a bespoke voice always beats an ident
       let sp=null, spW=0, spName=null;
       (c.genres||[]).forEach((g,i)=>{
         const w=c.weights?c.weights[i]:1;
-        if(SPEAKERS[g] && w>=0.35 && w>spW){ sp=SPEAKERS[g]; spW=w; spName=g; }
+        if(w>=0.35 && w>spW){ const s=speakerFor(g); if(s){ sp=s; spW=w; spName=g; } }
       });
       if(NB&&sp){
         const h=NB.hash(c.seed,spName,"pa");
