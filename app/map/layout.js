@@ -317,7 +317,15 @@ export function computeGenreLayout(){
 export function seedDefaultLoop(){
   S.startBar=0;   // a fresh loop starts fresh — no inherited resume measure
   const c={x:MAP_CENTER.x,y:MAP_CENTER.y};
-  const rad=0.34*Math.min(WORLD_W,WORLD_H)/2;
+  // LOOP SPREAD. The world is far taller than it is wide, so min(W,H) is the
+  // WIDTH and a radius scaled off it keeps the opening loop inside a narrow
+  // sliver of a very tall map. The measured spread does not scale with this
+  // number — the two outer points snap to the nearest genre, so the triangle
+  // saturates — which is why this is 3x rather than the 2-3x it buys:
+  // perimeter 1853 -> 4523 (2.4x), legs 414/911/529 -> 1251/2087/1185.
+  // Loop DURATION is unaffected: paceSpeed scales with the perimeter, so the
+  // traveler simply moves faster and crosses more genres in the same wall time.
+  const rad=3*0.34*Math.min(WORLD_W,WORLD_H)/2;
   const gs=Object.keys(POS);
   const used=new Set(), outer=[];
   for(const ang of [-Math.PI/2, -Math.PI/2+2*Math.PI/3]){   // top, lower-right (centre itself is node 1 — a 3-point triangle)
