@@ -191,10 +191,37 @@
     lead: { hpf: 200, eq: { f: 3000, gain: 3, q: 0.8 },
             sat: 0.3, satMix: 0.44, comp: { thresh: 0.25, ratio: 3, atk: 0.008, rel: 0.12, makeup: 1.04 },
             chorus: { rate: 0.8, baseMs: 11, depthMs: 4, mix: 0.18 }, trim: 0.95 },
+    // BASS, BORROWED — for an instrument that is NOT a bass sitting in the bass
+    //   chair. The widened SAMPLED_BASSES seats pianos, harps, guitars, organs,
+    //   dulcimers and tuned drums down there, and the profile above is written for
+    //   a bass GUITAR: at lpf 5200 a bass guitar has almost nothing left up there
+    //   anyway, but a piano or a dulcimer keeps a full upper-mid, so it stops
+    //   reading as the bottom of the mix and starts covering everything above it.
+    //   Same story with the transient — comp atk 20 ms is slower than a struck
+    //   string's attack, so the peak goes straight through, which is heard as a
+    //   tick on every note.
+    //   So: roll the top off hard (1800 Hz — a bass part's job is the fundamental
+    //   and the first harmonics), trim 4 dB, and catch the attack (atk 4 ms,
+    //   ratio 4). Real basses are untouched — they keep the profile above.
+    bassBorrowed: { hpf: 30, lpf: 1800, eq: { f: 110, gain: 2.5, q: 0.9 },
+            sat: 0.28, satMix: 0.36, comp: { thresh: 0.18, ratio: 4, atk: 0.004, rel: 0.16, makeup: 1.0 }, trim: 0.62 },
     // DRUMS — TRANSIENT-PRESERVING: a subsonic HPF + a whisper of glue saturation
     //   only. NO compressor and no dulling filters (keep the attack/punch).
     drum: { hpf: 28, sat: 0.15, satMix: 0.22, trim: 1.0 },
   };
+  // THE REAL BASSES — the ones the bass-guitar strip was written for. Everything
+  // else that reaches the bass chair is BORROWED, stated as the small closed list
+  // rather than the open one so widening SAMPLED_BASSES again never silently
+  // grants a new instrument the treatment it was not designed for.
+  //
+  // GM's SYNTH BASSES ARE NOT ON IT, deliberately. `Synth Bass 1/2` and
+  // `Bass & Lead` are sampled synth PATCHES — recorded hot and full-range, with
+  // far more upper-mid energy than a plucked bass — and on the bass-guitar strip
+  // (lpf 5200, trim 0.98) they walk over the whole mix. They are basses by
+  // register but not by spectrum, which is what this list is actually about.
+  const TRUE_BASSES = new Set(["acoustic_bass", "finger_bass", "fretless_bass", "picked_bass",
+    "pop_bass", "slap_bass", "contrabass"]);
+  const BORROWED_BASS = (id) => !!id && !TRUE_BASSES.has(id);
   // ---- AGGRESSIVE (heavy) channel strip for sampled voices --------------------
   // Sampled voices DROP their Faust inserts (native PCM path). So a genre that
   // declares a distort insert on a sampled guitar/bass/pad — heavymetal, budstep,
@@ -242,7 +269,52 @@
   // NOT per bar). Pads already carry chorus+phaser (two air stages); bass/drums
   // stay tight (no leslie/delay mud). LFOs ride global song time -> segment-parity
   // byte-equal, strip-fuzz finite.
+  // Instruments that are STRUCK OR PLUCKED AND ARE NOT BASSES. Every one of these
+  // reached the bass chair when SAMPLED_BASSES was widened; a real bass (acoustic,
+  // fingered, picked, slap, fretless, contrabass, the synth basses) is deliberately
+  // absent — a plucked upright playing whole notes is the sound, not a problem.
+  const STRUCK_NON_BASS = new Set(["dulcimer", "marimba", "timpani", "taiko_drum", "melodic_tom",
+    "koto", "shamisen", "harp", "clavinet", "harpsichord", "pizzicato_strings",
+    "upright_piano", "yamaha_grand_piano", "honky_tonk", "rhodes_ep", "jazz_guitar",
+    "nylon_string_guitar", "palm_muted_guitar", "di_guitar"]);
+  // bass patterns by measured density (see the note in defaultInserts): how much
+  // echo the line wants, 0 = none, 1 = the sparsest.
+  const BASS_SPARSE = { root: 1, sub: 0.9, waltzroot: 0.8, sludge: 0.6, dub: 0.55 };
+  const BASS_HALF   = { son: 0.3, stab: 0.3, simple: 0.3, tresillo: 0.3, melodic: 0.25 };
+  function bassEchoAmount(id, state) {
+    if (!id || !STRUCK_NON_BASS.has(id)) return 0;
+    let best = 0, seen = false;
+    for (const sec of ((state && state.sections) || [])) {
+      const b = sec && sec.bass; if (!b || b === "off") continue;
+      seen = true;
+      const v = BASS_SPARSE[b] != null ? BASS_SPARSE[b] : (BASS_HALF[b] != null ? BASS_HALF[b] : 0);
+      if (v > best) best = v;
+    }
+    return seen ? best : 0;
+  }
   function voiceFxStage(role, id, state) {
+    // BASS EARNS ITS ECHO, it is not given one. The rule above is "bass/drums stay
+    // tight (no leslie/delay mud)" and that stays true for basses. But the bass
+    // chair now seats instruments that were never basses, and a dulcimer or a
+    // marimba playing one root per bar reads as a hammer hitting a string with
+    // silence after it — there is no sustain to fill the gap the way an upright
+    // fills it. A beat-synced tape delay is what a player reaches for there: it
+    // makes the gap part of the part.
+    //
+    // BOTH conditions, or this muddies the catalogue. Struck/plucked NON-basses
+    // only (a fingered electric on `root` is a canonical sound, left alone), and
+    // SPARSE lines only — measured mean notes-per-beat by bass pattern over 274
+    // genres x 2 seeds, the vocabulary separates cleanly: root 0.13, sub 0.23,
+    // waltzroot 0.30, sludge 0.43, dub 0.47, then a jump to stab/simple/melodic
+    // 0.72-0.82 and walking/sixteenths/pedal/drive 1.4-1.9. The first group gets
+    // the echo, the second a light one, the dense end nothing at all.
+    if (role === "bass") {
+      const sp = bassEchoAmount(id, state);
+      if (!(sp > 0)) return null;
+      const spb0 = 60 / (state && state.bpm ? state.bpm : 120);
+      return { delay: { timeSec: clamp(0.75 * spb0, 0.05, 1.4),   // dotted 8th — rhythmic, off the grid
+        feedback: 0.2 + 0.1 * sp, tone: 2600, mix: +(0.10 + 0.13 * sp).toFixed(3) } };
+    }
     if (role !== "melody" && role !== "solo") return null;
     const fam = samplerFamily(id);
     const seed = state && state.instrumentSeed != null ? state.instrumentSeed : ((state && state.seed) || 0);
@@ -267,7 +339,7 @@
       const extra = hasNativeInserts ? null : voiceFxStage(role, id, state);   // leads keep their delay/leslie air on top
       return extra ? { ...heavy, ...extra } : heavy;
     }
-    const base = role === "bass" ? STRIP_PROFILES.bass
+    const base = role === "bass" ? (BORROWED_BASS(id) ? STRIP_PROFILES.bassBorrowed : STRIP_PROFILES.bass)
       : role === "pad" ? STRIP_PROFILES.pad
       : (role === "melody" || role === "solo") ? STRIP_PROFILES.lead
       : STRIP_PROFILES.drum;
@@ -449,7 +521,12 @@
   // NOT flow through extGainPerAmp (verified — trimming it changes nothing),
   // so matching it needs the kernel-side levelMul mechanism instead. Left
   // honest rather than shipping a constant that does nothing.
-  const SYNTH_FONT_TRIM = { dx7: 0.50, minimoog: 1.00 };
+  // keyed by FONT KEY. `analog` was called `minimoog` until it was renamed for
+  // being an analog-style voice rather than a Model D; the old key is kept here
+  // too so a state built by an older cached kernel still trims the same. (Both
+  // are 1.00 — a deliberate no-op — so this is belt and braces, but a silent
+  // undefined here would be a gain change nobody could trace.)
+  const SYNTH_FONT_TRIM = { dx7: 0.50, analog: 1.00, minimoog: 1.00 };
   function synthFontOf(state) {
     const lib = state && state.sampledOnly && state.samplerLib;
     if (!lib) return null;
@@ -892,6 +969,21 @@
     // still guards. pad/bass are unaffected (lift = 1).
     const LEAD_FX_LIFT = (role === "melody" || role === "solo") ? 1.18 : 1;
     const sends = { rev: clamp((m.send || 0) / lvl * LEAD_FX_LIFT, 0, 6), del: clamp((m.dsend || 0) / lvl * LEAD_FX_LIFT, 0, 6) };
+    // BASS SEND FLOOR — the bass was not tight, it was ABSENT from the buses.
+    // "never mud / bass stays centered" is right in principle and had been taken
+    // all the way to dry: measured over 274 genres x 2 seeds, mean reverb send
+    // 0.203 against the pad's 1.02 and the lead's 0.98, and mean DELAY send 0.032
+    // against the lead's 0.663 — twenty times less. On a SYNTH bass it was worse
+    // still, 0.069 and 0.031, which is inaudible: the voice sat in a different,
+    // roomless space from everything above it and read as stuck to the speaker.
+    // A floor, not a lift: a genre that already sends more keeps its own value, so
+    // no existing balance moves — this only raises the ones that were at nothing.
+    // Still well under the pad/lead (a bass in a big room IS mud); enough to put it
+    // in the same room.
+    if (role === "bass") {
+      sends.rev = Math.max(sends.rev, 0.34);
+      sends.del = Math.max(sends.del, 0.12);
+    }
     const c = m.cutoff || 2000, res = clamp(m.res != null ? m.res : 0.15, 0, 0.95);
     const base = { role, pool: role === "pad" ? 4 : role === "bass" ? 2 : 3,
       dry: 1, ...sends, lvl, gmul: Math.max(1, L), params: { level: lvl },

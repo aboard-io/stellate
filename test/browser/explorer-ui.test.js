@@ -127,12 +127,21 @@ async function main() {
   console.log(`  polylinePoints=${poly.pts} (n+1=${nWp + 1})  loopBars=${wrap.loop}  speed=${wrap.v.toFixed(2)}px/bar  segSequence sample=[${wrap.segs.slice(0, 12).join(",")}…]`);
   console.log(`  visitedAllLegs=${sawAllLegs}  wrappedTo0=${wrapped}  maxStep=${wrap.maxStep.toFixed(2)}px (<= speed => no teleport)`);
 
-  // ---- D: min pairwise SCREEN separation at the DEFAULT zoom (what you see) ----
-  // Projected at k = default zoom; overlap/separation is pan-invariant so offsets
-  // are ignored. Both axes scale independently (X uses width/WORLD_W, Y height/H).
-  const sep = await page.evaluate(() => {
+  // ---- D: min pairwise SCREEN separation at the READING zoom ----
+  // What this protects is the LAYOUT relaxation (computeGenreLayout keeps 274 name
+  // labels from colliding), so it projects at DEFAULT_ZOOM — the zoom the map is
+  // meant to be read at and what a zoom-in settles on. It used to read
+  // window.__ZOOM.k, which coupled it to whatever the BOOT frame happens to be:
+  // when the opening view changed to fully-zoomed-out (k=1, so the whole path is
+  // on screen from the first frame — app/map/viewport.js zoomToFitAll) the same
+  // untouched layout measured 16px instead of 46 and this failed, reporting a
+  // product decision about the opening frame as a layout regression.
+  // Overlap/separation is pan-invariant, so offsets are ignored. Both axes scale
+  // independently (X uses width/WORLD_W, Y height/H).
+  const sep = await page.evaluate(async () => {
+    const V = await import("./app/map/viewport.js");
     const svg = document.getElementById("map"), r = svg.getBoundingClientRect();
-    const W = __X.world().w, H = __X.world().h, P = __X.POS, k = window.__ZOOM.k;
+    const W = __X.world().w, H = __X.world().h, P = __X.POS, k = V.DEFAULT_ZOOM;
     const gs = Object.keys(P);
     const S = gs.map(g => ({ g, x: (P[g][0] * r.width / W) * k, y: (P[g][1] * r.height / H) * k }));
     let mn = Infinity, pr = "";

@@ -4,7 +4,7 @@
   "label": "FluidR3 GM (default)"
  },
  {
-  "key": "minimoog",
+  "key": "analog",
   "label": "Pure Analog",
   "synth": true
  },

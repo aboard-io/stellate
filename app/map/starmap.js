@@ -16,7 +16,7 @@
 // listeners, window.__ZOOM/__VIZZOOM, the ENERGY table, the viz store sub); only
 // the ENERGY table and window.__ZOOM now build a few statements earlier, and
 // nothing reads either during evaluation.
-export { ZOOM, clampZoom, zoomAround, centerView } from "./viewport.js";
+export { ZOOM, clampZoom, zoomAround, centerView, zoomToFitAll } from "./viewport.js";
 export { drawMap, startPulse } from "./draw.js";
 export { insertWaypoint } from "./gestures.js";
 export { REGIONS, REGION_OF, computeRegions, computeGenreLayout, seedDefaultLoop, autoPath } from "./layout.js";

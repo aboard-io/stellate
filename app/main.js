@@ -7,7 +7,7 @@
 import { POS, MAP_CENTER, WORLD_W, WORLD_H, MIN_SEP } from "./core/world.js";
 import { S, K, set, subs } from "./core/state.js";
 import { retarget, weightsAt, travelStep, rescore, forceRetarget } from "./audio/targeting.js";
-import { clampZoom, zoomAround, seedDefaultLoop, insertWaypoint, computeGenreLayout, computeRegions, centerView } from "./map/starmap.js";
+import { clampZoom, zoomAround, seedDefaultLoop, insertWaypoint, computeGenreLayout, computeRegions, centerView, zoomToFitAll } from "./map/starmap.js";
 import { renderInside } from "./panels/inside.js";
 import { goLive, stopLive, faustHandle } from "./audio/live.js";
 import { initGlyphMap } from "./map/glyphs.js";   // floating alien-ident glyphs backfloating on the star map
@@ -40,7 +40,11 @@ function boot(){
   // default loop would overwrite them; a restored path skips seedDefaultLoop.
   const fromUrl=applyUrlState();
   const urlBar=S.startBar||0;   // seedDefaultLoop clears startBar (fresh-loop law) — the URL's m survives boot
-  computeGenreLayout(); computeRegions(); if(!fromUrl) seedDefaultLoop(); centerView();
+  computeGenreLayout(); computeRegions(); if(!fromUrl) seedDefaultLoop();
+  // OPEN FULLY ZOOMED OUT so the whole path is on screen — see viewport.js
+  // zoomToFitAll. Booting at DEFAULT_ZOOM left a shared link's journey mostly off
+  // the edges of a world ~10x taller than it is wide.
+  if(!zoomToFitAll()) centerView();
   loadFonts();   // register + apply the saved soundfont (async; default plays until an alt font's zones land)
   S.startBar=urlBar;
   if(fromUrl && S.waypoints.length>=2){

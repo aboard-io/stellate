@@ -56,7 +56,7 @@ async function main() {
   });
   ok(cyc.cycle.length >= 4, `A1: cycle has ${cyc.cycle.length} steps: ${cyc.cycle.join(" → ")}`);
   ok(cyc.bars === 32, `A2: rotates every ${cyc.bars} bars`);
-  const analog = cyc.cycle.filter((f) => f === "minimoog").length;
+  const analog = cyc.cycle.filter((f) => f === "analog").length;
   ok(analog >= cyc.cycle.length / 2, `A3: the analog font is ${analog} of ${cyc.cycle.length} steps — it keeps coming back`);
   ok(cyc.stable, `A4: the font is constant WITHIN a 32-bar step and changes at the boundary`);
   ok(cyc.sample[0] === cyc.sample[6], `A5: the cycle closes (bar 0 and bar 256 are the same font)`);

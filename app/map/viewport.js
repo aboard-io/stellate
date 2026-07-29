@@ -51,6 +51,19 @@ export function clampZoom(){
   ZOOM.ox=Math.max(r.width*(1-ZOOM.k)-padX,Math.min(padX,ZOOM.ox));
   ZOOM.oy=Math.max(r.height*(1-ZOOM.k)-padY,Math.min(padY,ZOOM.oy));
 }
+// OPEN FULLY ZOOMED OUT. The first view has one job: show the whole journey, and
+// the only way to be certain of that is to show the whole world. Framing the
+// waypoints was tried and is worse — fitting a path zooms IN (measured k 2.4 on a
+// shared link, 3.7 on the default loop), so everything outside the path leaves the
+// screen and a drag in any direction immediately loses it. k=1 is the exact fit
+// point where the world maps to the viewport, and clampZoom centres it there with
+// symmetric margins, so the whole path is on screen by construction whatever its
+// shape. (centerView() alone did NOT do this: it centres at whatever k is, and k
+// booted at DEFAULT_ZOOM 2.8.)
+export function zoomToFitAll(){
+  const r=svg.getBoundingClientRect(); if(!r.width) return false;
+  ZOOM.k=1; clampZoom(); return true;
+}
 export function zoomAround(cx,cy,k2){ // keep the screen point (cx,cy) fixed while scaling
   const r=svg.getBoundingClientRect(), sx=cx-r.left, sy=cy-r.top;
   const k1=ZOOM.k; k2=Math.max(MIN_ZOOM,Math.min(6,k2));

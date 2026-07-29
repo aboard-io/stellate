@@ -16,7 +16,7 @@ export function fontManifest() { return manifest; }
 
 async function ensureFont(key) {
   if (registered.has(key)) return true;
-  // SYNTH FONTS (B: MiniMoog/DX7) are built into the kernel — no assets to fetch;
+  // SYNTH FONTS (analog/FM) are built into the kernel — no assets to fetch;
   // K.setFont already knows them. The manifest flags them with `synth:true`.
   const entry = manifest.find(f => f.key === key);
   if (entry && entry.synth) { registered.add(key); return true; }
@@ -62,7 +62,7 @@ export async function loadFonts() {
 // SEAMLESS BETWEEN SAMPLED FONTS, CROSSFADED AROUND THE SYNTH ONES. faust/live.js
 // sigOf() — the stream-topology signature that decides whether the ring has to
 // reopen — ignores sampler units entirely, so fluidr3 → sgm → windows never
-// reopens anything. minimoog and dx7 are SYNTH fonts: they replace instruments
+// reopens anything. analog and dx7 are SYNTH fonts: they replace instruments
 // with synthesised voices, which does move the signature, so those two edges take
 // the engine's designed crossfade rather than the voice-by-voice walk. Different
 // character, still no gap.
@@ -73,13 +73,13 @@ export async function loadFonts() {
 export const ROTATE_BARS = 32;
 export const FONT_CYCLE = [
   "fluidr3",   // the default the genres are authored against
-  "minimoog",  // Pure Analog
+  "analog",    // Pure Analog
   "sgm",       // SGM Pro 15
-  "minimoog",
+  "analog",
   "windows",   // Seattle Glass Factory
-  "minimoog",
+  "analog",
   "dx7",       // Pure FM
-  "minimoog",
+  "analog",
 ];
 // DETERMINISTIC FROM THE BAR, so a shared link reproduces the instruments as well
 // as the notes: the URL already carries the measure (?m=), and the rotation is a

@@ -195,7 +195,7 @@
   let ACTIVE_FONT="fluidr3";
   const FONTS=Object.create(null);
   function registerFont(key,data){ if(key && data && data.instr) FONTS[key]={base:data.base||("instruments-"+key), instr:data.instr}; }
-  function setFont(key){ ACTIVE_FONT=(key && FONTS[key])?key:"fluidr3"; }
+  function setFont(key){ const k=(key&&FONT_ALIAS[key])||key; ACTIVE_FONT=(k && FONTS[k])?k:"fluidr3"; }
   function activeFont(){ return ACTIVE_FONT; }
   function fontList(){ return ["fluidr3", ...Object.keys(FONTS)]; }
 
@@ -302,11 +302,17 @@
   // the synth-font registry (built-in; registered into FONTS at init so setFont +
   // fontList see them). kind:"synth" flips the instrument resolvers to the synth
   // path; voiceFor(id, role) -> {voice, params[, dx7]}.
+  // NAMED FOR WHAT IT IS, NOT FOR A MACHINE IT ISN'T. The key was "minimoog";
+  // this is an analog-style subtractive voice, not a Model D, and calling it after
+  // a specific instrument claims something untrue about it. The key is `analog`.
+  // "minimoog" stays as a LEGACY ALIAS so every ?sf=minimoog link ever shared
+  // keeps working — setFont resolves it below.
   const SYNTH_FONTS={
-    minimoog: { label:"Pure Analog", voiceFor:minimoogVoiceFor },
-    dx7:      { label:"Pure FM",     voiceFor:dx7VoiceFor },
+    analog: { label:"Pure Analog", voiceFor:minimoogVoiceFor },
+    dx7:    { label:"Pure FM",     voiceFor:dx7VoiceFor },
   };
   for(const k of Object.keys(SYNTH_FONTS)) FONTS[k]={ kind:"synth", voiceFor:SYNTH_FONTS[k].voiceFor };
+  const FONT_ALIAS={ minimoog:"analog" };
   function activeSynthFont(){ const F=FONTS[ACTIVE_FONT]; return (F&&F.kind==="synth")?F:null; }
   // resolve an instrument's {sr, zones (raw font shape: file/root/lo/hi/vlo/vhi/
   // loop/ls/le), base sample dir} for the ACTIVE font, per-instrument fallback.
