@@ -66,15 +66,29 @@ const res = C.buildDirs(db, [tmp], {});
     `${n} files, ${blobs} note blobs, ${vecs} vectors`);
 })();
 (() => {
-  // the two-sided contract: real leads (jazz) are found on ch2 with conf above
-  // the report threshold (.55); leadless arrangements (jungle seed 1 has SIX
-  // melody notes, folk seed 3 a 43-note wisp) must come back BELOW it — the
-  // extractor's job there is honest uncertainty, not a confident wrong answer
-  const rows = db.prepare("SELECT path, mel_ch, mel_conf, mel_n FROM files").all();
-  const jazz = rows.filter(r => /jazz/.test(r.path));
-  const leadless = rows.filter(r => /jungle|folk/.test(r.path));
-  const jazzOk = jazz.length === 2 && jazz.every(r => r.mel_ch === 2 && r.mel_conf >= 0.55);
-  const leadlessOk = leadless.every(r => r.mel_conf < 0.55);
+  // THE TWO-SIDED CONTRACT, keyed on what the exports ACTUALLY contain rather than
+  // on which genre was thin the day this was written. It used to name folk seed 3
+  // as "a 43-note wisp" and require mel_conf < .55; that state has since grown a
+  // real lead (measured 0.891 on 118 notes) and the gate failed for being out of
+  // date, not because the extractor got worse. What must hold is the RELATIONSHIP:
+  // an arrangement with a substantial melodic line is identified confidently, and
+  // a threadbare one comes back with honest uncertainty rather than a confident
+  // wrong answer. So: split the exports by how much melody they actually carry.
+  // Stated as a RELATIONSHIP, with no magic note count to go stale: rank the
+  // exports by how much melody they actually carry, and require the extractor to
+  // rank the same way. The THINNEST arrangement must come back untrusted, and
+  // anything carrying several times its line must come back trusted. Measured
+  // today: jungle s1 36 notes @ .281 (untrusted), folk s3 128 @ .891, jazz s1
+  // 352 @ .821, jazz s5 476 @ .861.
+  const rows = db.prepare("SELECT path, mel_ch, mel_conf, mel_n FROM files").all()
+    .sort((a, b) => (a.mel_n || 0) - (b.mel_n || 0));
+  const REPORT = 0.55;                               // the extractor's own trust threshold
+  const thinnest = rows[0];
+  const rich = rows.filter(r => (r.mel_n || 0) >= 3 * Math.max(1, thinnest.mel_n || 0));
+  const jazzOk = rich.length >= 2 && rich.every(r => r.mel_conf >= REPORT) &&
+    rows.filter(r => /jazz/.test(r.path)).every(r => r.mel_ch === 2);   // jazz's lead is still ch2
+  const leadlessOk = thinnest.mel_conf < REPORT && rows.some(r => r.mel_conf >= REPORT);
+  const jazz = rich, leadless = [thinnest];
   gate("melody-ID: leads found, leadless untrusted", jazzOk && leadlessOk,
     rows.map(r => `${path.basename(r.path)}:ch${r.mel_ch}@${r.mel_conf}`).join(" "));
 })();

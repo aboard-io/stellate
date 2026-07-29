@@ -1,19 +1,26 @@
 # TODO — the running queue
 
-Short, durable list of asked-for-but-not-yet-built work. The queue this file
-carried through Stages A–F is finished, and the history of it is in git rather
-than here. What follows is only what is still open, with the measurements that
-make each item decidable.
+Short, durable list of asked-for-but-not-yet-built work, plus the findings behind
+the decisions already taken — the measurements are kept so nobody re-derives them
+and nobody re-litigates a settled call. The queue this file carried through
+Stages A–F is finished, and the history of it is in git rather than here.
+
+**What is actually still open** is short: whether to register any of the 26
+extracted-but-unregistered instruments (a taste call, under "The instrument
+palette"), and the standing note about pinning a bed-count definition before
+quoting one again (under "The media budget"). Everything else below is a record.
 
 `verify.sh` is 13/13. `node engine/genre-verifier.js matrix --no-cache` prints
-`diagonal dominant: 274/274`.
+`diagonal dominant: 274/274`. **Every gate in the repository passes** — the
+release suite, the browser cohort, the starcruise cohort and `test/unit/`,
+including `corpus-db` where the external MIDI drive is mounted.
 
 ---
 
-## Open: gates that do not pass
+## The gates: green, and why they were not
 
-Known-red, and none of them regressions — each fails identically on an older
-tree. Listed so nobody rediscovers them as surprises.
+This section was a list of known-red gates. It is now the record of what they
+turned out to be, kept because the pattern will recur.
 
 **All green as of 2026-07-29.** `starcruise-barcadence` was the only one of the
 nine that turned out to be a REAL defect rather than a stale gate, and it is worth
@@ -45,7 +52,37 @@ The lesson worth keeping: **a gate should ask the engine, not repeat it.** Every
 one of these would have stayed green through the change that broke it if it had
 read the value instead of restating it.
 
-`corpus-db` still needs the external MIDI drive and is skipped without it.
+`corpus-db` needs the external MIDI drive and is skipped without it; with the
+drive mounted it passes. Its melody-ID gate had rotted the same way as the rest —
+it named folk seed 3 as "a 43-note wisp" that must come back UNTRUSTED, and that
+state has since grown a real 128-note lead at confidence 0.891. It now states the
+RELATIONSHIP with no magic note count: rank the exports by how much melody they
+carry, require the thinnest to come back untrusted and anything carrying several
+times its line to come back trusted.
+
+**`simulate-path` check 5a was the one other real bug in the set**, and it took
+changing the measurement to see it. The gate counted TOTAL mismatched bars across
+a segment, which accumulates every later re-pick over the whole dwell — sitting in
+a genre for 100 bars scored worse than sitting in an identical one for 20. On the
+LONGEST UNBROKEN run instead, the picture separated: most segments 1-3 bars, but
+`sequinfreight` genuinely spent 17 consecutive bars playing something its target
+did not want, with an EMPTY flip queue.
+
+The cause: `retargetWeights` rebuilt the queue only when the weight blend changed,
+quantized to 5% buckets — but `K.mix` draws a fresh target every bar from the
+full-precision weights, so it can re-pick a lead, a kit or a form while the
+quantized blend sits still. Traced at seed 43: entering sequinfreight the target's
+lead went `brass_section` → `fm` at bar 311 with `queue.length === 0`, and the
+playing lead stayed put for 17 bars until the blend finally moved 5%. The
+signature is now the target's OWN discrete dims — exactly what `rebuildQueue`
+diffs — plus the dominant genre. Sequinfreight's longest run went 17 → 1.
+
+What remains is the anti-flicker hold doing its job, and the gate now says so:
+`HOLD_BARS` 4 locks a timbre that just walked on stage, flips apply every other
+bar, and up to three identity dims (form / drum kit / lead voice) queue to walk on
+one at a time — so a run of a few bars is correct. The allowance is the ARRIVAL
+contract itself (8), on the principle that a revision should land in the same
+window an arrival must; measured worst is 7.
 
 `simulate-path` has been narrowed since: everything it gates passes except check
 5a, post-arrival identity churn. On the old centre-anchored loop the worst
@@ -97,7 +134,7 @@ anomaly ceiling.
 
 ---
 
-## Open: the instrument palette — measured 2026-07-29
+## The instrument palette — measured and widened 2026-07-29
 
 Three questions, answered by walking every genre × 10 seeds through the app's own
 resolver (`K.mix`) and then through `SE.voiceUnits`, which is where
@@ -145,15 +182,73 @@ effectively ten, with one upright on nearly a quarter of all tracks. That is the
 first place to widen if the catalogue is ever going to sound less same-y from the
 bottom up, and it is a bigger lever than registering the 26 extras.
 
-**Still to decide (needs an ear, not a number):** whether to widen the pools at
-all. Registering the unregistered 26 changes nothing on its own — an instrument
-only sounds once a genre's pool names it, and wiring pools shifts what every
-affected genre sounds like. That is a taste call about the instrument, so it is
-not made here.
+**Widened, 2026-07-29.** The lever is `pickSampledId`'s three lists in
+`faust/voices/state-engine.js`, and it is free: that function runs in
+`forceSampled`, not `buildEvents`, so the SCORE is untouched — matrix, fixtures
+and segment-parity are byte-identical and only what you hear changes.
+
+**The bass chair is no longer restricted to basses.** Nine ids cannot carry 274
+genres, and all nine were literally basses, so every genre's bottom came off the
+same small shelf. The list is now "what can HOLD DOWN THE BOTTOM": a tuba is the
+bass of a brass band, a bari sax the bass of a ska horn line, a cello and a
+bassoon are bass instruments with other names, an organ's pedals ARE its bass, a
+left hand on a piano or clav is a bass part, and a distorted guitar doubling the
+root is how half of metal does it. Two existing passes make this safe at any
+register — csd-engine's REGISTER HOME moves the whole line by octaves to fit the
+sampler's own zone roots (contour intact), and mapEvents' per-note
+`INSTRUMENT_RANGE` fold is the net under that. Anything that cannot reach the
+bass register at all is deliberately absent: koto was tried and cut when it
+measured a mean played midi of 56.
+
+| | before | after |
+|---|---|---|
+| bass distinct / effective | 21 / **10.4** | 41 / **25.4** |
+| pad distinct / effective | 45 / 21.9 | 54 / 35.3 |
+| library reached | 102 of 108 | **106 of 108** |
+| overall effective instruments | 62.1 | **79.1** |
+| top 10 share of sampled voices | 35.5% | **25.1%** |
+
+The most common bass went from `acoustic_bass` at 22% of every sampled bass in
+the catalogue to `finger_bass` at 9%. Only `ocarina` and `synth_drum` are now
+unreached.
+
+**And the genre now rides the pick key, which is where most of the real gain is.**
+`pickFrom` hashed `(role, model, seed)`, so every genre sharing a bass model drew
+the SAME instrument in a given session — and the anchors share models heavily. The
+catalogue-wide entropy above looked healthy only because it averages over seeds,
+and nobody listens across seeds: a JOURNEY is ONE seed crossing many genres, and
+that is the number that has to be large. It wasn't.
+
+| within ONE session, across all 274 genres | before | after |
+|---|---|---|
+| seed 1 — distinct bass / effective | 22 / **8.1** | 40 / **30.8** |
+| seed 1 — most common | yamaha_grand_piano 31%, shamisen 28% | acoustic_bass 12% |
+| seed 7 — distinct bass / effective | 20 / **6.0** | 39 / **29.4** |
+| seed 7 — most common | picked_bass 40%, bassoon 30% | acoustic_bass 11% |
+
+Keyed on the genre as well, crossing into a new neighbourhood can change the
+instrument even where the underlying model is identical — which is what a listener
+calls a new band. Still per-SONG stable (genre and instrumentSeed both hold for a
+song), so the instrument-identity law is intact, and identity churn did not move. Verified: matrix 274/274, `all-sampled` / `segment-parity` /
+`stem-parity` / `musicality` / `snare-law` all pass, and identity churn did not
+move (the widened pools do not make the flip queue work harder).
+
+Two naming defects surfaced with it, both in the ⓘ. General MIDI numbers its
+variants — "Synth Bass 2", "Synth Strings 1" — and an index is the one part of a
+program name that is not what a musician would call it; and GM programs 97-104 /
+122-127 are FX and sound-effect SLOTS ("Goblins", "Seashore", "Echoes"), which
+the widened shelves made reachable. Both now take the character-phrase path the
+naming layer already had answers for.
+
+**Still open (needs an ear, not a number):** the 26 extracted-but-unregistered
+instruments. Registering them changes nothing on its own — an instrument only
+sounds once a pool names it — and several are the GM sound-effects bank, which
+belongs nowhere. `shakuhachi`, `warm_pad`, `halo_pad`, `metal_pad`, `polysynth`,
+`soundtrack`, `taiko_drum` and `woodblock` are the real candidates.
 
 ---
 
-## Open: the media budget
+## The media budget — settled 2026-07-29
 
 The found-layer widening roughly doubled how much audio a session pulls:
 **distinct remote beds decoded per track went 1.34 → 2.75** (max 5 → 7). That was

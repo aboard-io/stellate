@@ -41,7 +41,7 @@ const VOICE_CHAR=[
   [/cello/,"singing cello"],[/fiddle|violin/,"reeling fiddle"],[/strings|orchestra/,"sweeping strings"],
   [/harp/,"rippling harp"],[/choir|voice|ahh|ohh/,"hovering voices"],[/sitar/,"droning sitar"],
   [/koto/,"plucked koto"],[/shamisen|banjo/,"twanging strings"],[/dulcimer/,"hammered strings"],
-  [/atmosphere|fantasia|halo|sweep|soundtrack|new age|warm pad|polysynth|bowed glass|crystal|echo drops|ice rain|goblin|metal pad|charang|chiffer|fifth|square|sawtooth/,"glowing synth pad"],
+  [/atmosphere|fantasia|halo|sweep|soundtrack|new age|warm pad|polysynth|bowed glass|crystal|echo drops|ice rain|goblin|metal pad|charang|chiffer|fifth|square|sawtooth|sea ?shore|star theme|brightness|sci-?fi/,"glowing synth pad"],
 ];
 function charOf(label){
   const l=cleanLabel(label).toLowerCase();
@@ -68,9 +68,18 @@ function charOf(label){
 // "punchy brass section", "glassy electric piano"). Interior digits are left
 // alone: "Roland TR-808" is a name, " 2" is a shelf position.
 const GM_STOP=/dx7|fluidr3|soundfont|\bsf2\b|sampler|_|\s\d+$/i;
+// …and where the GM "program" is not an instrument at all. Programs 97-104 are
+// FX slots (Rain, Soundtrack, Crystal, Atmosphere, Brightness, Goblins, Echoes,
+// Sci-Fi) and 122-127 are sound effects (Seashore, Bird Tweet, Telephone…);
+// "Bass & Lead" is a synth patch. Saying "goblin" or "sea shore" as the name of a
+// voice is reading a preset list aloud, and it got louder when these became
+// reachable — the widened pad and bass shelves draw several of them. VOICE_CHAR
+// already answers all of them ("glowing synth pad", "punchy synth bass"); this
+// just sends them down that path.
+const GM_PRESET=/^(sea ?shore|goblins?|star theme|echo drops|ice rain|crystal|atmosphere|fantasia|brightness|bass ?& ?lead|sci-?fi|soundtrack|warm pad|halo pad|metal pad|sweep pad|polysynth|charang|chiffer|fifth|saw ?wave|square lead|bottle chiff|calliope)\b/i;
 function gmName(label){
   const clean=cleanLabel(label);
-  if(!clean||GM_STOP.test(clean)) return charOf(label);   // never leak a source name or a catalog index
+  if(!clean||GM_STOP.test(clean)||GM_PRESET.test(clean)) return charOf(label);   // never leak a source name, a catalog index, or a preset slot
   return clean.toLowerCase();
 }
 // FM patch names -> character (never say the hardware); default "glassy keys".
@@ -148,7 +157,10 @@ export function voiceName(role,m,st){
   if(m.model&&SIG_SYNTH[m.model]) return SIG_SYNTH[m.model];
   if(m.model==="sampler"&&m.sampler&&K.SAMPLERS[m.sampler.id]) return gmName(K.SAMPLERS[m.sampler.id].label);
   if(st.sampledOnly&&st.samplerLib&&window.FaustStateEngine&&FaustStateEngine.pickSampledId){
-    try{ const id=FaustStateEngine.pickSampledId(role,m.model,st.seed);
+    // the GENRE rides the key (state-engine pickSampledId) — pass it, or the panel
+    // names a different instrument than the one sounding.
+    try{ const id=FaustStateEngine.pickSampledId(role,m.model,st.seed,
+        (FaustStateEngine.genreTagOf?FaustStateEngine.genreTagOf(st):((st.genreMeta&&st.genreMeta.genres)||[])[0]||""));
       if(K.SAMPLERS[id]) return gmName(K.SAMPLERS[id].label); }catch(e){}
   }
   if(m.dx7) return dx7Char(m.dx7.name);

@@ -108,12 +108,13 @@ const CHUNK = 200;          // virtual bars per page.evaluate (keeps each call s
 
 // ---------- CLI ----------
 function parseArgs(argv) {
-  const a = { input: "default", seed: 43, pace: 256, bars: "auto", json: false, trace: false };
+  const a = { input: "default", seed: 43, pace: 256, bars: "auto", json: false, trace: false, rows: false };
   const rest = [];
   for (let i = 0; i < argv.length; i++) {
     const v = argv[i];
     if (v === "--json") a.json = true;
     else if (v === "--trace") a.trace = true;
+    else if (v === "--rows") a.rows = true;   // --json: include the per-bar rows (identity churn diagnosis)
     else if (v === "--seed") a.seed = parseInt(argv[++i], 10);
     else if (v === "--pace") a.pace = parseInt(argv[++i], 10);
     else if (v === "--bars") a.bars = argv[++i];
@@ -267,12 +268,20 @@ async function main() {
       const lag = arriveBar >= 0 ? Math.max(0, arriveBar - s.enter) : -1;
       // IDENTITY CHURN (reported, not gated): bars AFTER arrival where the
       // target re-picked and playing no longer matches; when it re-converged.
-      let churnBars = 0, reconvergeBar = -1;
+      // churnBars is the TOTAL mismatched bars after arrival; churnRun is the
+      // LONGEST UNBROKEN one. The contract is "when the target re-picks, the
+      // revision lands in a few bars", and only churnRun measures that: the total
+      // accumulates every later re-pick across the whole dwell, so a segment the
+      // traveler sits in for 100 bars scores worse than an identical one it sits
+      // in for 20 purely for having been there longer. Measured on the default
+      // loop, punk re-converges 3 bars after arrival and then contributes 6 more
+      // scattered single bars over the remaining ~95 — 9 "churn", longest run 2.
+      let churnBars = 0, churnRun = 0, reconvergeBar = -1;
       if (arriveBar >= 0) {
-        let diverged = false;
+        let diverged = false, run = 0;
         for (let b = Math.max(arriveBar + 1, s.enter); b <= s.end; b++) {
-          if (!match(b)) { churnBars++; diverged = true; }
-          else if (diverged && reconvergeBar < 0) reconvergeBar = b;
+          if (!match(b)) { churnBars++; diverged = true; run++; if (run > churnRun) churnRun = run; }
+          else { run = 0; if (diverged && reconvergeBar < 0) reconvergeBar = b; }
         }
         if (diverged && reconvergeBar < 0) reconvergeBar = -1; else if (!diverged) reconvergeBar = arriveBar;
       }
@@ -297,7 +306,7 @@ async function main() {
       // classified and reported but not judged.
       out.push({ genre: s.genre, enter: s.enter, end: s.end, dwell, peakW: s.peakW, peakBar: s.peakBar,
         snapBar: s.snapBar, minQueue: s.minQ,
-        arriveBar, lag, churnBars, reconvergeBar, visited: dwell > CONTRACT_BARS, audit });
+        arriveBar, lag, churnBars, churnRun, reconvergeBar, visited: dwell > CONTRACT_BARS, audit });
     }
     const blendBars = rows.filter((r) => !r.dom).length;
     const flipsSeen = rows.filter((r, i) => i && r.q < rows[i - 1].q).length;   // queue shrank = a flip landed
@@ -325,7 +334,8 @@ async function main() {
     bars: analysis.bars, legs: setup.legs, loopGenres: setup.loopGenres, contractBars: CONTRACT_BARS,
     segments: segs, blendBars: analysis.blendBars, flipsLanded: analysis.flipsSeen,
     worstArrival: worst && worst.lag !== Infinity ? worst : (worst ? { lag: null, genre: worst.genre, never: true } : null),
-    pass, verdict, pageErrors: errs.slice(0, 10), runtimeMs };
+    pass, verdict, pageErrors: errs.slice(0, 10), runtimeMs,
+    ...(args.rows ? { rows: analysis.rows } : {}) };
   if (args.trace) report.rows = analysis.rows;
 
   if (args.json) { console.log(JSON.stringify(report, null, 2)); }
@@ -339,7 +349,7 @@ async function main() {
       const gate = s.visited ? (s.lag >= 0 && s.lag <= CONTRACT_BARS ? " ok" : " LATE") : " (brushed)";
       const prom = s.audit.promisesDeclared ? `${s.audit.promisesKept}/${s.audit.promisesDeclared} kept${s.audit.promiseFailures.length ? " — " + s.audit.promiseFailures[0] : ""}` : "none declared";
       console.log(`  ${pad(s.genre, 18)} ${pad(s.enter, 6, 1)} ${pad(s.dwell, 6, 1)} ${pad(s.peakW.toFixed(2), 6, 1)} ${pad(arr, 11, 1)}${gate}  ${pad(s.audit.verdict + " " + s.audit.overall.toFixed(2), 12)} ${prom}`);
-      if (s.churnBars > 0) console.log(`  ${pad("", 18)} └ identity churn: target re-picked after arrival — ${s.churnBars} mismatched bars, ${s.reconvergeBar >= 0 ? "re-converged at bar " + s.reconvergeBar : "NOT re-converged within the segment"} (gated on visited segments by test/unit/simulate-path.test.js)`);
+      if (s.churnBars > 0) console.log(`  ${pad("", 18)} └ identity churn: target re-picked after arrival — ${s.churnBars} mismatched bars total, longest unbroken run ${s.churnRun}, ${s.reconvergeBar >= 0 ? "re-converged at bar " + s.reconvergeBar : "NOT re-converged within the segment"} (the RUN is what test/unit/simulate-path.test.js gates)`);
       if (s.audit.worst) console.log(`  ${pad("", 18)} └ ${s.audit.worst}`);
     }
     console.log(`\n  blend bars (no dominant genre): ${analysis.blendBars}/${analysis.bars}   flips landed: ${analysis.flipsSeen}   page errors: ${errs.length}`);

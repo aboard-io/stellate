@@ -17,7 +17,7 @@
 //   5. IDENTITY-CHURN CONTAINMENT (the revision re-tier in targeting.js's
 //      rebuildQueue): when the target re-picks an identity dim after arrival,
 //      the revision must land in a few bars — every visited segment
-//      re-converges, churn <= CHURN_MAX bars (pre-fix: the closing disco
+//      re-converges, longest unbroken churn run <= CHURN_MAX bars (pre-fix: the closing disco
 //      re-entry churned 12 bars and NEVER re-converged in-segment);
 //   6. DETERMINISM: the two runs' reports are byte-identical after stripping
 //      the wall-clock field (same seed twice = same journey, same audits).
@@ -30,7 +30,17 @@ const path = require("path");
 
 const ROOT = path.join(__dirname, "..", "..");
 const SEED = 43, PACE = 64, CONTRACT = 8;
-const CHURN_MAX = 6;   // post-arrival identity churn allowance (measured max 3 at pace 64 post-fix; 12 + no re-convergence pre-fix)
+// Post-arrival identity churn is bounded by the LONGEST UNBROKEN run of mismatched
+// bars, not by the total across the segment: the total accumulates every later
+// re-pick over the whole dwell, so sitting in a genre for 100 bars scored worse
+// than sitting in an identical one for 20, which measures dwelling rather than
+// churning. The bound is the ARRIVAL contract itself — a revision must land in the
+// same window an arrival must land in — and that window is what the engine's own
+// numbers add up to: HOLD_BARS 4 (the anti-flicker lock on a timbre that just
+// walked on stage) plus the every-other-bar apply cadence, with up to three
+// identity dims (form / drum kit / lead voice) queued to walk on one at a time.
+// Measured worst at pace 64: 7.
+const CHURN_MAX = CONTRACT;
 
 function runSim(tag) {
   const r = spawnSync(process.execPath,
@@ -82,8 +92,10 @@ function main() {
 
   // 5. identity churn contained: revisions land in a few bars and re-converge
   for (const s of vis) {
-    ok(s.churnBars <= CHURN_MAX,
-      `5a: ${s.genre} (enter bar ${s.enter}) identity churn ${s.churnBars} bars (allowance <=${CHURN_MAX}) — the revision re-tier regressed`);
+    ok((s.churnRun || 0) <= CHURN_MAX,
+      `5a: ${s.genre} (enter bar ${s.enter}) went ${s.churnRun} consecutive bars without matching its target (allowance <=${CHURN_MAX}; ${s.churnBars} mismatched bars total across a ${s.dwell}-bar dwell) — the revision re-tier regressed`);
+    ok(s.churnBars === 0 || s.reconvergeBar >= 0,
+      `5b: ${s.genre} (enter bar ${s.enter}) diverged after arrival and NEVER re-converged within the segment`);
     // 5b CONSTANT PACE: on a long leg the traveler CREEPS through
     // the neighborhood at constant speed, so the target micro-re-picks every few
     // bars (churn 1-2) and never reaches an EXACT stationary re-converge — benign

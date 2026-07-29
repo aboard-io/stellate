@@ -106,6 +106,12 @@
     accordion:[41,89], bandoneon:[41,86], church_organ:[36,96], rock_organ:[36,96],
     percussive_organ:[36,96], reed_organ:[41,89], ahh_choir:[48,84], ohh_voices:[48,84],
     solo_vox:[50,84],
+    // — tuned percussion + plucked world instruments that now take BASS chairs
+    //   (SAMPLED_BASSES). Declaring their windows here means the per-note fold is
+    //   explicit rather than leaving them to the sampler's zone stretch alone: a
+    //   timpani asked for the top of a bass line should answer at F3, not squeal.
+    timpani:[36,57], koto:[50,84], shamisen:[43,84], dulcimer:[43,88], harp:[24,103],
+    clavinet:[36,84], harpsichord:[29,89],
   };
   // fold a MIDI note into [lo,hi] by whole octaves (same pitch class); if the range
   // is narrower than an octave the nearest in-range octave wins.
@@ -1474,8 +1480,62 @@
   // koto, dulcimer, vibraphone, accordion &c actually appear. RENDER-only
   // (pickSampledId runs in forceSampled, not buildEvents) => fixtures/matrix/
   // segment-parity byte-identical; the instrument HEARD changes, the score doesn't.
-  const SAMPLED_BASSES = ["acoustic_bass", "fretless_bass", "finger_bass", "picked_bass", "pop_bass", "slap_bass", "contrabass", "synth_bass_1", "synth_bass_2"];
-  const SAMPLED_PADS   = ["strings", "slow_strings", "ahh_choir", "ohh_voices", "church_organ", "french_horns", "cello", "bowed_glass", "synth_strings_1", "synth_strings_2", "space_voice", "atmosphere", "fantasia", "crystal", "ice_rain"];
+  // THE BASS CHAIR IS NOT RESTRICTED TO BASSES. Measured over the whole catalog the
+  // bass was the narrowest voice by a distance — 21 distinct instruments, an
+  // EFFECTIVE 10.4 (2^entropy), with one upright on 22% of every sampled bass in
+  // the catalog — while the lead ran 81 distinct / 54.5 effective. Nine ids cannot
+  // carry 274 genres, and the nine were all literally basses, so every genre's
+  // bottom end came from the same small shelf and the catalog sounded same-y from
+  // the floor up.
+  //
+  // So the list below is "what can HOLD DOWN THE BOTTOM", not "what is sold as a
+  // bass". A tuba is the bass of a brass band, a bari sax is the bass of a ska
+  // horn line, a cello and a bassoon are bass instruments with different names, an
+  // organ's pedals ARE its bass, a left hand on a piano or a clav is a bass part,
+  // and a distorted guitar doubling the root is how half of metal does it.
+  //
+  // WHY THIS IS SAFE AT ANY REGISTER: two passes already guarantee the line lands
+  // where the instrument lives. csd-engine's REGISTER HOME moves the whole line by
+  // octaves to fit the sampler's own ZONE ROOTS (contour intact — so a bari sax
+  // takes the part up an octave rather than growling below its horn), and
+  // mapEvents' per-note INSTRUMENT_RANGE fold is the net under that. Bass lines
+  // measure midi 9..90, mean 36.5, so the fold is doing real work either way.
+  // Anything whose bottom cannot reach the bass register at all — piccolo, flute,
+  // glockenspiel, kalimba — is deliberately absent: the fold would just transpose
+  // it up and you would hear a second lead, not a bass.
+  //
+  // MATRIX-NEUTRAL BY CONSTRUCTION: pickSampledId runs in forceSampled, not
+  // buildEvents (see the note above), so the SCORE is untouched — the confusion
+  // matrix, the fixtures and segment-parity are byte-identical. Only what you hear
+  // changes, which is the entire point.
+  const SAMPLED_BASSES = [
+    // the basses proper
+    "acoustic_bass", "fretless_bass", "finger_bass", "picked_bass", "pop_bass", "slap_bass",
+    "contrabass", "synth_bass_1", "synth_bass_2", "bass_lead",
+    // low brass + low reeds — the bass of every band that has no bass player
+    "tuba", "trombone", "bassoon", "baritone_sax", "french_horns",
+    // bowed + plucked strings in their bottom octaves
+    "cello", "pizzicato_strings", "harp",
+    // pedals and left hands
+    "church_organ", "rock_organ", "percussive_organ", "reed_organ", "accordion",
+    "clavinet", "upright_piano", "yamaha_grand_piano", "honky_tonk", "rhodes_ep", "harpsichord",
+    // guitars doubling the root, and the low end of the world shelf. (Koto was
+    // tried and cut: its lowest string is around D3, so the register law had it
+    // playing a "bass" at a measured mean midi 56 — a second lead, not a bottom.)
+    "palm_muted_guitar", "jazz_guitar", "nylon_string_guitar", "di_guitar", "distortion_guitar",
+    "shamisen", "dulcimer", "marimba",
+    // a tuned drum on the root — dramatic, and the reason timpani existed unused
+    "timpani",
+  ];
+  // PADS widened the same way (was 15, effective 21.9 of 45 reached): the wash
+  // shelf gains the string desks it never used, the free reeds, and the GM
+  // atmospheres that had been registered but unreachable (goblin, sea_shore,
+  // star_theme, echo_drops).
+  const SAMPLED_PADS   = ["strings", "slow_strings", "ahh_choir", "ohh_voices", "church_organ", "french_horns",
+    "cello", "bowed_glass", "synth_strings_1", "synth_strings_2", "space_voice", "atmosphere", "fantasia",
+    "crystal", "ice_rain", "tremolo", "viola", "violin", "harp", "solo_vox", "synth_voice",
+    "brass_section", "reed_organ", "rock_organ", "percussive_organ", "accordion", "bandoneon",
+    "goblin", "sea_shore", "star_theme", "echo_drops"];
   const SAMPLED_LEAD = {
     keys:   ["felt_piano", "yamaha_grand_piano", "bright_yamaha_grand", "honky_tonk", "rhodes_ep", "legend_ep_2", "electric_piano", "harpsichord", "clavinet", "celesta"],
     mallet: ["vibraphone", "glockenspiel", "marimba", "celesta", "xylophone", "music_box", "kalimba", "dulcimer", "tinker_bell", "tubular_bells", "steel_drums"],
@@ -1500,17 +1560,35 @@
     pluck: "guitar", kpluck: "guitar", brass: "brass", organ: "organ", hammond: "organ",
     choir: "voice", vocoder: "voice", vp330: "voice", solina: "voice", strings: "voice" };
   const famHash = (str) => { let h = 2166136261 >>> 0; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
-  const pickFrom = (list, seed, role, model) => list[famHash(role + "|" + model + "|" + (seed >>> 0)) % list.length];
-  // (role, model, seed) -> a sampled-instrument id. Pure + deterministic.
-  function pickSampledId(role, model, seed) {
-    if (role === "bass") return pickFrom(SAMPLED_BASSES, seed, role, model || "");
-    if (role === "pad")  return pickFrom(SAMPLED_PADS, seed, role, model || "");
+  // THE GENRE IS PART OF THE KEY. Without it the hash is (role, model, seed), so
+  // every genre sharing a bass model draws the SAME instrument in a given session
+  // — and the anchors share models heavily. Measured on the widened list before
+  // this: across all 274 genres at seed 1 the bass collapsed to an effective 8.1
+  // instruments with yamaha_grand_piano on 31% of genres and shamisen on 28%; at
+  // seed 7, an effective 6.0 with picked_bass on 40% and bassoon on 30%. The
+  // catalogue-wide entropy looked healthy only because it averaged over seeds —
+  // but nobody listens across seeds. A JOURNEY is one seed crossing many genres,
+  // and that is the number that has to be large. Keying on the genre too means
+  // crossing into a new neighbourhood can change the instrument even when the
+  // underlying model is identical, which is what a listener calls "a new band".
+  // Still per-SONG stable (the genre and instrumentSeed both hold for a song), so
+  // the identity law above is intact.
+  const pickFrom = (list, seed, role, model, tag) =>
+    list[famHash(role + "|" + model + "|" + (tag || "") + "|" + (seed >>> 0)) % list.length];
+  // (role, model, seed, tag) -> a sampled-instrument id. Pure + deterministic.
+  // `tag` is the dominant genre; absent (a hand state) it degrades to the old key.
+  function pickSampledId(role, model, seed, tag) {
+    if (role === "bass") return pickFrom(SAMPLED_BASSES, seed, role, model || "", tag);
+    if (role === "pad")  return pickFrom(SAMPLED_PADS, seed, role, model || "", tag);
     // mapped model → its family; UNMAPPED generic synth → a family drawn PER SONG
     // from the whole palette (was always "wind"), so the lead instrument varies.
     let fam = LEAD_FAMILY[model];
-    if (!fam) fam = LEAD_FALLBACK_FAMS[famHash("leadfam|" + (model || "") + "|" + (seed >>> 0)) % LEAD_FALLBACK_FAMS.length];
-    return pickFrom(SAMPLED_LEAD[fam], seed, role, model || "");
+    if (!fam) fam = LEAD_FALLBACK_FAMS[famHash("leadfam|" + (model || "") + "|" + (tag || "") + "|" + (seed >>> 0)) % LEAD_FALLBACK_FAMS.length];
+    return pickFrom(SAMPLED_LEAD[fam], seed, role, model || "", tag);
   }
+  // the dominant genre a state resolved from — the `tag` above. Blends name their
+  // members in genreMeta.genres, weight-sorted, so [0] is what the ear calls it.
+  const genreTagOf = (state) => ((state && state.genreMeta && state.genreMeta.genres) || [])[0] || "";
   // rewrite a pitched recipe into a sampler recipe (model "sampler" + zone spec)
   // so pitchedUnit's `case "sampler"` builds a native sampler unit. Register/
   // level/sends/cutoff/attack/release ride through the ...m spread. A recipe that
@@ -1531,7 +1609,7 @@
     // The walk stashes the pre-churn seed as instrumentSeed; the pick uses it, so
     // the band stays the band for the whole song. Fallback state.seed = unchanged
     // behavior for whole-song (press) states, which never churn.
-    const spec = lib[pickSampledId(role, m.model, state.instrumentSeed != null ? state.instrumentSeed : state.seed)];
+    const spec = lib[pickSampledId(role, m.model, state.instrumentSeed != null ? state.instrumentSeed : state.seed, genreTagOf(state))];
     if (!spec) return m;
     // SYNTH FONT (B): the picked instrument resolved to a synth voice, not zones —
     // merge its analog params over the recipe and route to the modeld/dx7/juno60
@@ -2068,7 +2146,7 @@
     return mapEvents(E, state, ev, { bedAll: true });
   }
 
-  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, fxLabels, reverbColor, REVERB_COLORS, autoTune, masterMb, mapEvents, buildSchedule, COST, unitCost, stateCost, effectivePool, BUDGET, trimToBudget, stemClass, STEM_COST_MIN, pickSampledId, STRIP_PROFILES,
+  return { WAVES, clamp, cpspch, mergedInstruments, insertChain, pitchedUnit, voiceUnits, fxParams, fxLabels, reverbColor, REVERB_COLORS, autoTune, masterMb, mapEvents, buildSchedule, COST, unitCost, stateCost, effectivePool, BUDGET, trimToBudget, stemClass, STEM_COST_MIN, pickSampledId, genreTagOf, STRIP_PROFILES,
     // MASTERING STAGE surface (renderers + test/unit/mastering.test.js)
     panGains, notePan, reverbScale, collisionCarve, MASTER_PAN };
 });

@@ -85,7 +85,23 @@ export function retargetWeights(weights, pt, snap){
   // audio to the scrubbed spot immediately, so it doesn't slow-glide back.
   if(!S.playing||!S.live||snap){ patch.playing=deep(target); patch.queue=[]; }
   set(patch);
-  const sig=JSON.stringify(weights.map(w=>w.g+Math.round(w.w*20)))+S.modeLock;
+  // REBUILD ON WHAT THE QUEUE IS ABOUT, not on a proxy for it. This keyed the
+  // rebuild on the WEIGHT BLEND quantized to 5% buckets — but K.mix draws a fresh
+  // target every bar from the FULL-PRECISION weights, so it can re-pick a lead,
+  // a kit or a form while the quantized blend sits still. When that happened the
+  // queue was never rebuilt: it drained to empty, `S.queue.length` read 0, and
+  // the app believed it had converged while the target wanted something else.
+  // Traced on the default loop at seed 43: entering sequinfreight the target's
+  // lead went brass_section -> fm at bar 311 with an EMPTY queue, and the playing
+  // lead stayed brass_section for the next 17 bars until the blend finally moved
+  // 5% — the whole of that segment's identity churn, and the reason
+  // test/unit/simulate-path.test.js check 5a never converged.
+  // The signature is now the target's OWN discrete dims (exactly what rebuildQueue
+  // diffs) plus the dominant genre, whose change resets appliedFlips. Same
+  // coalescing intent, no blind spot: a target that re-picks anything the queue
+  // can act on always enqueues it.
+  const sig=DISCRETE.map(([n,get])=>flipSig(get,target)).join("|")+"|"+
+    ((weights[0]&&weights[0].g)||"")+"|"+S.modeLock;
   if(sig!==lastSig){ lastSig=sig; rebuildQueue(); }
   // 1.6: pre-voice the TARGET while the glide is still in flight — the engine
   // builds the destination's worklets through its airlock (stopped, stashed)
