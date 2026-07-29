@@ -3,6 +3,8 @@
 "use strict";
 const assert = require("assert");
 const ND = require("../../engine/checks/near-duplicate.js");
+const K = require("../../engine/genre-kernel.js");
+const ANCHORS = Object.keys(K.GENRES).length;   // read, never spelled — see below
 
 let pass = 0;
 function ok(name, cond) {
@@ -17,7 +19,11 @@ const r2 = ND.check();
 ok("returns pairs + findings arrays", Array.isArray(r1.pairs) && Array.isArray(r1.findings));
 ok("deterministic across calls (byte-identical JSON)",
    JSON.stringify(r1) === JSON.stringify(r2));
-ok("scored == 249 anchors", r1.scored === 249);
+// The count comes FROM THE KERNEL. Spelled as a literal it said 249 and had been
+// failing ever since the catalog passed it — the same rot doc-counts polices in
+// the prose. What is under test is that the check scores EVERY anchor, not how
+// many there are.
+ok(`scored every anchor (${ANCHORS})`, r1.scored === ANCHORS);
 
 // 2. pairs are sorted ascending by distance
 let sorted = true;

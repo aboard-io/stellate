@@ -56,10 +56,21 @@ function charOf(label){
 // The lane-name gate forbids dx7/fluidr3/sampler/sf2 and underscores, so this must
 // read SAMPLERS[id].label (the program name) and never the catalog id, and the
 // cleaner strips the parenthetical/dB/em-dash tails the labels carry for humans.
-const GM_STOP=/dx7|fluidr3|soundfont|\bsf2\b|sampler|_/i;
+// …EXCEPT WHERE THE GM NAME IS A CATALOG SLOT. General MIDI numbers its variants
+// — programs 38/39 are "Synth Bass 1"/"Synth Bass 2", 50/51 "Synth Strings 1/2" —
+// and a number is the one part of a program name that is NOT what a musician
+// would call it: nobody says "the synth bass two". Seven labels end in a bare
+// index (the two synth basses, the two synth brasses, the two synth strings, and
+// Legend EP 2), and the panel was reading them out as written, so the bass lane
+// said "synth bass 2" where every other lane said an instrument. A trailing index
+// sends the label down the SAME character-phrase path as a leaked source name —
+// VOICE_CHAR already answers all seven ("punchy synth bass", "sweeping strings",
+// "punchy brass section", "glassy electric piano"). Interior digits are left
+// alone: "Roland TR-808" is a name, " 2" is a shelf position.
+const GM_STOP=/dx7|fluidr3|soundfont|\bsf2\b|sampler|_|\s\d+$/i;
 function gmName(label){
   const clean=cleanLabel(label);
-  if(!clean||GM_STOP.test(clean)) return charOf(label);   // never leak a source name
+  if(!clean||GM_STOP.test(clean)) return charOf(label);   // never leak a source name or a catalog index
   return clean.toLowerCase();
 }
 // FM patch names -> character (never say the hardware); default "glassy keys".

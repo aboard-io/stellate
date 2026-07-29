@@ -149,7 +149,10 @@ export function vizData(){
 // compares what this panel would print against CsdEngine.resolveProgression
 // rather than against a second copy of the walk.
 window.__VIZ={ data:()=>vizData(),
-  harmonyFor:(st)=>{ try{ return barVoiceEvents(st,{ci:0,serial:0,section:""}).harmony; }catch(e){ return null; } } };
+  harmonyFor:(st)=>{ try{ return barVoiceEvents(st,{ci:0,serial:0,section:""}).harmony; }catch(e){ return null; } },
+  // …and what the panel WOULD call any sampler in the library, so the gate can
+  // sweep all of them rather than only the handful a live blend happens to voice.
+  nameOf:(samplerId)=>{ try{ return voiceName("melody",{model:"sampler",sampler:{id:samplerId}},{}); }catch(e){ return null; } } };
 export function renderInside(){
   const box=document.getElementById("inside"); if(!box) return;
   const d=vizData();

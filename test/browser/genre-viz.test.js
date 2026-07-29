@@ -306,10 +306,27 @@ async function main() {
         hasMindAxes: ["adventure", "color", "motion"].every(a => axes.includes(a)),
         numerals: /\b(adventure|color|motion|tempo|swing)\b\s*\d/.test(box.textContent),   // no "axis 73"-style numbers anywhere
         moves: (box.querySelector(".vz-mmoves") || { textContent: "" }).textContent.trim() }; }
-    return { names, bad: names.filter(n => /dx7|fluidr3|sampler|\bsf2\b|_/i.test(n)), provenance, mindGenre, mind, mindDom };
+    // A LANE NAME IS AN INSTRUMENT, NOT A SHELF POSITION. Alongside the source-id
+    // leak, sweep every sampled voice the catalog can resolve through the panel's
+    // own naming layer: General MIDI numbers its variants ("Synth Bass 2",
+    // "Synth Strings 1"), and the readout was reading those indices out loud
+    // where every other lane said an instrument.
+    const numbered = [];
+    try {
+      const K = window.GenreKernel, D = window.__VIZ.nameOf;
+      if (D) for (const id of Object.keys(K.SAMPLERS || {})) {
+        const said = D(id);
+        if (said && /\s\d+$/.test(said)) numbered.push(id + " -> " + said);
+      }
+    } catch (e) { numbered.push("naming layer threw: " + e.message); }
+    return { names, bad: names.filter(n => /dx7|fluidr3|sampler|\bsf2\b|_/i.test(n)),
+      provenance, mindGenre, mind, mindDom, numbered };
   });
   ok(J.bad.length === 0, `J1: lane names leak source/provenance: [${J.bad.join(", ")}]`);
   ok(!J.provenance, `J2: modal text mentions soundfont/hardware provenance`);
+  ok(J.numbered.length === 0,
+    `J2b: ${J.numbered.length} sampler name(s) read out a General MIDI catalog index instead of an instrument: ${J.numbered.slice(0, 4).join(", ")}`);
+  console.log(`  naming sweep: every sampler in the library named without a catalog index`);
   ok(!!J.mindGenre, `J3: no genre in POS yields a MIND readout (theory/pipes/rhythm all absent everywhere?)`);
   ok(J.mindDom && J.mindDom.hasMindAxes && J.mindDom.axes.length >= 11,
     `J4: radar must carry ALL vectors incl. adventure/color/motion (axes=[${J.mindDom && J.mindDom.axes.join(",")}])`);

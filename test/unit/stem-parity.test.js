@@ -214,12 +214,38 @@ async function runState(name, st) {
 }
 
 (async () => {
-  const cases = [
-    ["citypop_s7 (dx7 pad, stereo juno60)", K.track("citypop", { seed: 7 })],
-    ["vaporwave_s7 (mono pad_saw)", K.track("vaporwave", { seed: 7 })],
-    ["mallsoft_s42 (cached dx7 LEAD)", K.track("mallsoft", { seed: 42 })],
-    ["newage_s7 (cached supersaw LEAD)", K.track("newage", { seed: 7 })],
-  ];
+  // THE CASES ARE DISCOVERED, NOT SPELLED. This list used to name four states by
+  // hand — citypop_s7 "dx7 pad", vaporwave_s7 "mono pad_saw", mallsoft_s42,
+  // newage_s7 — chosen because they had worker-CACHED (non-sampler) units. The
+  // sampled-by-default shift then moved those voices onto samplers, so the very
+  // first case had no cached unit left and the gate died on `no cached units —
+  // pick another state` rather than testing anything. Only 36 of 822 states carry
+  // a cached unit at all now, across three (role:module) shapes, so a hand-picked
+  // list is guaranteed to rot again.
+  //
+  // Scan instead, in a fixed order (kernel key order x a fixed seed list = fully
+  // deterministic), and keep the FIRST state for each distinct cached
+  // role:module — that is the thing under test: one stem per stem-class shape.
+  function discoverCases(limit) {
+    const seen = new Map();
+    for (const g of Object.keys(K.GENRES)) {
+      for (const seed of [1, 7, 42]) {
+        let st, units, cls;
+        try { st = K.track(g, { seed }); units = SE.voiceUnits(E, st); cls = SE.stemClass(units); } catch (e) { continue; }
+        if (!cls.cached.length) continue;
+        for (const k of cls.cached) {
+          const shape = (k.indexOf("solo:") === 0 ? "solo" : k) + ":" + (units[k].module || "?");
+          if (seen.has(shape)) continue;
+          seen.set(shape, [`${g}_s${seed} (cached ${shape})`, st]);
+          if (seen.size >= limit) return [...seen.values()];
+        }
+      }
+    }
+    return [...seen.values()];
+  }
+  const cases = discoverCases(4);
+  if (!cases.length) { console.error("STEM PARITY: no state in the catalog has a worker-cached unit — nothing to compare"); process.exit(1); }
+  console.log(`discovered ${cases.length} cached stem shape(s): ${cases.map((c) => c[0]).join(", ")}`);
   let all = true;
   const summary = [];
   for (const [name, st] of cases) {

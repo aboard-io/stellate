@@ -11,8 +11,9 @@
 //             beat, always cutting to the drummer on a fill — until the user drags,
 //             pinches or WASDs, which suspends it for AUTO_IDLE seconds.
 //   ARRIVAL   the ease between them: touchdown seeds the orbit from the LIVE descent
-//             pose and critically-eases into the establishing wide, so the landing
-//             reads as one continuous move rather than a cut.
+//             pose and SMOOTHSTEPS into the establishing wide, so the landing reads
+//             as one continuous move rather than a cut — velocity zero at both ends,
+//             which matters because the descent arrives at rest.
 //
 // It owns no scene objects and never touches the renderer; it frames the band by
 // reading ./scene.js's live roster + centroid, and takes the camera itself, the
@@ -94,9 +95,9 @@ export const autoCam = { active: false, shot: 0, shotT: 0, cuts: 0, forceCut: tr
 // ESTABLISH EASE — on touchdown the landed camera used to SNAP to the front establishing
 // wide shot (a hard cut from the descent pose = the "lurch/cut" at landing). Instead we
 // SEED the orbit from the live descent pose (continuous — the camera stays exactly where
-// the flight left it) and critically-EASE it into that establishing shot over ESTAB_DUR
+// the flight left it) and SMOOTHSTEP it into that establishing shot over ESTAB_DUR
 // seconds; runAutoCam (roam + beat cuts) takes over once the ease completes. Deterministic.
-const establish = { active: false, t: 0 };
+const establish = { active: false, t: 0, from: null };
 const ESTAB_DUR = 0.75;
 let autoShotList = [];            // per-land cinematic shot list (band closeups + wides)
 let _vclock = 0;                  // virtual clock (accumulated dt) — the auto-cam timebase
@@ -212,25 +213,48 @@ function seedOrbitFromLiveCamera() {
   orbit.pitch = Math.max(orbit.minPitch, Math.min(orbit.maxPitch, Math.asin(Math.max(-0.999, Math.min(0.999, dy / d)))));
   orbit.fov = camera.fov || orbit.fov;
 }
-// runEstablish(dt) — critically-ease the orbit from the seeded arrival pose into the front
+// runEstablish(dt) — ease the orbit from the seeded arrival pose into the front
 // establishing wide shot (autoShotList[0]), then hand off to the roaming auto-cam. One smooth
 // pull-back reveal instead of a hard cut — the touchdown reads as an arrival, not a jump.
+//
+// SMOOTHSTEP FROM A LATCHED START, not an exponential follow. This ran
+// `k = 1 - exp(-dt/0.32)` toward the shot, which at 10 fps moves 27% of the WHOLE
+// distance on its first frame — the same front-loaded step flight.js replaced its
+// smoothDampS zoom with a dead-reckoned ramp to kill. It mattered here more than
+// anywhere: the descent is built to arrive at SURFACE_POSE at essentially ZERO
+// velocity (measured 0.0036 units on the last transit frame), so the follow's first
+// frame was a 5.36-unit jump — 6.9x the local median, and the one thing
+// starcruise-barcadence had been failing on. You settled gently onto the band and
+// were then yanked back to the wide. A smoothstep over ESTAB_DUR has zero velocity
+// at BOTH ends, so the reveal starts as slowly as the descent finished and arrives
+// without a stop. Deterministic (only dt), and the duration is unchanged.
 function runEstablish(dt) {
   const sh = autoShotList[0];
   if (!sh || !orbit.target) { establish.active = false; return; }
-  const k = 1 - Math.exp(-(dt > 0 ? dt : 0) / 0.32);
   const shDist = Math.max(orbit.minDist, Math.min(orbit.maxDist, sh.dist));
-  orbit.target.x += (sh.target.x - orbit.target.x) * k;
-  orbit.target.y += (sh.target.y - orbit.target.y) * k;
-  orbit.target.z += (sh.target.z - orbit.target.z) * k;
-  orbit.dist += (shDist - orbit.dist) * k;
-  orbit.yaw += (sh.yaw - orbit.yaw) * k;
-  orbit.pitch += (sh.pitch - orbit.pitch) * k;
-  orbit.fov += (sh.fov - orbit.fov) * k;
+  if (!establish.from) {
+    establish.from = { tx: orbit.target.x, ty: orbit.target.y, tz: orbit.target.z,
+      dist: orbit.dist, yaw: orbit.yaw, pitch: orbit.pitch, fov: orbit.fov };
+  }
   establish.t += (dt > 0 ? dt : 0);
+  const u = ESTAB_DUR > 1e-6 ? Math.max(0, Math.min(1, establish.t / ESTAB_DUR)) : 1;
+  const e = u * u * (3 - 2 * u);                       // smoothstep: v(0) = v(1) = 0
+  const f = establish.from;
+  // yaw is an ANGLE — interpolate the SHORT way round, or a shot just past ±pi
+  // spins the camera the long way through the whole scene.
+  let dyaw = sh.yaw - f.yaw;
+  while (dyaw > Math.PI) dyaw -= 2 * Math.PI;
+  while (dyaw < -Math.PI) dyaw += 2 * Math.PI;
+  orbit.target.x = f.tx + (sh.target.x - f.tx) * e;
+  orbit.target.y = f.ty + (sh.target.y - f.ty) * e;
+  orbit.target.z = f.tz + (sh.target.z - f.tz) * e;
+  orbit.dist = f.dist + (shDist - f.dist) * e;
+  orbit.yaw = f.yaw + dyaw * e;
+  orbit.pitch = f.pitch + (sh.pitch - f.pitch) * e;
+  orbit.fov = f.fov + (sh.fov - f.fov) * e;
   if (establish.t >= ESTAB_DUR) {
     // done — resume the music-video roam on shot 0 (drift, no re-snap).
-    establish.active = false;
+    establish.active = false; establish.from = null;
     autoCam.shot = 0; autoCam.shotT = 0; autoCam.forceCut = false; autoCam.active = true;
     autoCam._yawRate = sh.yawRate; autoCam._dolly = sh.dolly || 0;
   }
@@ -450,13 +474,13 @@ export function landedFrame(dt, st, fresh) {
     buildAutoShots();
     seedOrbitFromLiveCamera();
     transitLook.yaw = 0; transitLook.pitch = 0;   // clear any in-flight look so the landed framing is clean
-    establish.active = true; establish.t = 0;
+    establish.active = true; establish.t = 0; establish.from = null;   // latch the start pose on the first eased frame
     autoCam.shot = 0; autoCam.shotT = 0; autoCam.cuts = 0; autoCam.forceCut = false; autoCam.active = false;
     _lastInputT = -1e9;                 // a fresh land starts in auto-camera (no stale input)
   }
   if (userActive()) {
     // MANUAL override: the user drives the orbit directly.
-    autoCam.active = false; autoCam.forceCut = true; establish.active = false;   // cancel the ease
+    autoCam.active = false; autoCam.forceCut = true; establish.active = false; establish.from = null;   // cancel the ease
     applyKeyPan(dt);
   } else if (establish.active) {
     // ARRIVAL EASE: glide from the descent pose into the establishing shot (no hard cut).
@@ -529,7 +553,7 @@ function onKeyUp(e) {
 export function resetCamera() {
   autoShotList = []; autoCam.active = false; autoCam.shot = 0; autoCam.shotT = 0; autoCam.cuts = 0; autoCam.forceCut = true;
   autoCam.onDrummer = false; autoCam.drummerShot = -1;
-  establish.active = false; establish.t = 0;
+  establish.active = false; establish.t = 0; establish.from = null;
   camFollow.init = false; _wasTransit = false;
   _vclock = 0; _lastInputT = -1e9;
 }

@@ -15,9 +15,14 @@ const z = mutate('techno', { dim: 'bpm', delta: 0, mode: 'add', seed: 3 });
 ok(z.byteIdentical === true, 'zero perturbation (bpm +0) -> byte-identical track');
 ok(z.restore.ok === true, 'zero perturbation -> restore CLEAN');
 
-// 2) restore proof: keys unchanged (length 249, same order) AFTER running
+// 2) restore proof: the catalog is unchanged AFTER running — same length, same
+// order. The count is READ FROM THE KERNEL, never spelled here: this line said
+// 249 and had been failing since the catalog passed it, which is the same rot
+// test/gates/doc-counts.test.js polices in the prose and nothing policed in the
+// gates. What is under test is that mutate() puts the catalog back, not how big
+// the catalog is.
 const keys1 = Object.keys(K.GENRES);
-ok(keys1.length === 249, `Object.keys(K.GENRES).length === 249 (got ${keys1.length})`);
+ok(keys1.length === keys0.length, `catalog size unchanged across a mutate run (${keys0.length} -> ${keys1.length})`);
 ok(keys1.length === keys0.length && keys0.every((k, i) => k === keys1[i]),
   'Object.keys(K.GENRES) unchanged (same length + same order) after run');
 ok(z.restore.referenceOk && z.restore.orderOk && z.restore.roundTripByteEqual,
@@ -40,6 +45,7 @@ ok(n.restore.ok === true, 'swing perturbation -> restore CLEAN');
 let threw = false;
 try { mutate('techno', { dim: 'kits', delta: 1 }); } catch (e) { threw = /only perturbs a scalar|not declared/.test(e.message); }
 ok(threw, 'non-numeric dimension (kits) rejected with an honest error');
-ok(Object.keys(K.GENRES).length === 249, 'catalog still 249 after the rejected perturbation');
+ok(Object.keys(K.GENRES).length === keys0.length,
+  `catalog intact after the rejected perturbation (${keys0.length})`);
 
 console.log(`\nPASS ${pass}/${pass}`);

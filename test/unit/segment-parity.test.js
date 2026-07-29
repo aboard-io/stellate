@@ -25,6 +25,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const { resolveFoundPaths, foundFile } = require("../lib/found-path.js");
 
 const ROOT = path.join(__dirname, "..", "..");
 const E = require(path.join(ROOT, "engine", "csd-engine.js"));
@@ -63,15 +64,11 @@ const bytesEqual = (a, b) => { for (let i = 0; i < a.length; i++) if (a[i] !== b
 function prep(name, state) {
   state.foundSources = (state.foundSources || []).filter((s) => s.id !== "tw_vocal");
   (state.sections || []).forEach((s) => { if (s.vocal) delete s.vocal; });
-  for (const s of state.foundSources) {
-    s.fsPath = s.fsPath || (s.samplePath ? path.join(ROOT, s.samplePath)
-      : [".64.mp3", ".mp3", ".wav"].map(e => path.join(ROOT, "found", s.id + e)).find(fs.existsSync)
-        || path.join(ROOT, "found", s.id + ".64.mp3"));
-    if (!fs.existsSync(s.fsPath)) {
-      console.error(`missing ${s.fsPath} — run ./fetch-found-sound.sh / ./fetch-found-samples.sh`);
-      process.exit(2);
-    }
-  }
+  // test/lib/found-path.js owns the convention (found/<id>.64.mp3) and the
+  // synthText carve-out — a speech source has no file and is dropped here rather
+  // than reported as unfetched media.
+  try { resolveFoundPaths(state); }
+  catch (e) { console.error(e.message); process.exit(2); }
   return state;
 }
 
@@ -130,7 +127,9 @@ async function runState(name, state) {
   const cases = [
     // found/ ships MP3 since the payload diet (HOSTING.md §3) — the old .wav is
     // gone; ffdecode is format-agnostic, engine.test.js points at the same file.
-    ["default_song", (() => { const s = E.defaultState(); s.foundSources.forEach((f) => { f.fsPath = path.join(ROOT, "found", "tokyo_station.mp3"); }); return s; })()],
+    ["default_song", (() => { const s = E.defaultState(); const tokyo = foundFile("tokyo_station");
+      if (!tokyo) { console.error("missing found/tokyo_station.* — run tools/fetch/fetch-found-sound.sh"); process.exit(2); }
+      s.foundSources.forEach((f) => { f.fsPath = tokyo; }); return s; })()],
     ["jungle_s2 (sampler trombone)", K.track("jungle", { seed: 2 })],
     ["spokenword_s3 (bed + felt_piano/sax samplers)", K.track("spokenword", { seed: 3 })],
     ["acidhouse_s7 (tb303 MONO-LEGATO/acid — R1)", K.track("acidhouse", { seed: 7 })],

@@ -11,10 +11,13 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const { foundFile } = require("../lib/found-path.js");
 const { execFileSync } = require("child_process");
 
 const SR = 44100, BS = 64, SECS = 8, TOTAL = SR * SECS;
-const speechWav = process.argv[2] || path.join(__dirname, "..", "..", "found", "vx_fdr.mp3");
+// found/ names carry the bitrate (found/<id>.64.mp3) — see test/lib/found-path.js.
+// Spelling ".mp3" here is what made this gate look like it needed a fetch.
+const speechWav = process.argv[2] || foundFile("vx_fdr") || foundFile("vx_dday");
 
 async function main() {
   const raw = execFileSync("ffmpeg", ["-v", "error", "-i", speechWav, "-ac", "1", "-ar", String(SR),

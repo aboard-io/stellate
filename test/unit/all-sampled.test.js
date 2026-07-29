@@ -27,6 +27,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const { resolveFoundPaths } = require("../lib/found-path.js");
 const E = require("../../engine/csd-engine.js");
 const SE = require("../../engine/faust/voices/state-engine.js");
 const K = require("../../engine/genre-kernel.js");
@@ -89,11 +90,13 @@ for (const [genre, seed] of [["jungle", 2], ["citypop", 7]]) {
 }
 
 // ---- B + C. audio + determinism ------------------------------------------
+// Path resolution + the synthText carve-out live in test/lib/found-path.js: the
+// engine names fetched media `found/<id>.64.mp3` and a synthText source has no
+// file at all. This gate used to spell `found/<id>.mp3` itself and exit(2) on the
+// speech organ's `sp_pa_namebank`, reporting an unfetched tree on a fetched one.
 function resolvePaths(state) {
-  for (const s of state.foundSources) {
-    s.fsPath = s.samplePath ? path.join(ROOT, s.samplePath) : path.join(ROOT, "found", s.id + ".mp3");
-    if (!fs.existsSync(s.fsPath)) { console.error(`missing ${s.fsPath} — run ./fetch-found-samples.sh`); process.exit(2); }
-  }
+  try { resolveFoundPaths(state); }
+  catch (e) { console.error(e.message); process.exit(2); }
 }
 function press(name, state) {
   state.foundSources = state.foundSources.filter((s) => s.id !== "tw_vocal");

@@ -165,13 +165,21 @@ async function main() {
   const leg = await page.evaluate(([t0, t1, pace]) => {
     const B = __X.POS.blues, I = __X.POS.industrial;
     const L = (t) => ({ x: B[0] + (I[0] - B[0]) * t, y: B[1] + (I[1] - B[1]) * t });
-    __S.pace = pace;
     __S.waypoints = [L(t0), L(t1)];
     __S.travel = { seg: 0, t: 0 };
+    // PACE IS A DURATION MULTIPLE NOW, not a bars-per-leg field. This used to set
+    // `__S.pace = 64`; nothing reads that any more (core/share.js: the path's own
+    // LENGTH sets a base duration and S.durMult scales it), so the traveler crawled
+    // at the default pace, never left the first neighbourhood inside the sampling
+    // window, and the gate failed with "dwell 0, peak w=0" — a control that no
+    // longer exists, not a transit bug. loopBars() is bars-per-loop at the current
+    // multiple and scales linearly with it, so one measurement calibrates the rest.
+    const at1 = Math.max(1, __X.loopBars());
+    __S.durMult = Math.max(0.01, pace / at1);
     window.__LOG.length = 0;
-    return { startBar: __S.barCount, A: L(t0), B: L(t1) };
+    return { startBar: __S.barCount, A: L(t0), B: L(t1), loopBars: __X.loopBars(), durMult: __S.durMult };
   }, [T0, T1, PACE]);
-  console.log(`TRANSIT: pace ${PACE}, leg (${leg.A.x.toFixed(0)},${leg.A.y.toFixed(0)}) -> (${leg.B.x.toFixed(0)},${leg.B.y.toFixed(0)}), start bar ${leg.startBar}`);
+  console.log(`TRANSIT: target ${PACE} bars/loop -> durMult ${leg.durMult.toFixed(3)} (loopBars now ${leg.loopBars}), leg (${leg.A.x.toFixed(0)},${leg.A.y.toFixed(0)}) -> (${leg.B.x.toFixed(0)},${leg.B.y.toFixed(0)}), start bar ${leg.startBar}`);
 
   // ── PHASE 3: ride the crossing IN TRANSIT; per-bar evidence from the page
   // recorder. The arrival contract (lead/kit within N bars of dominance) must

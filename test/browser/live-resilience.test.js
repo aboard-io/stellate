@@ -35,7 +35,7 @@
 //     than OFF; the conductor CAPS decode concurrency and RETRIES transient drops (zero
 //     permanently-failed voices); audio is continuous across a genre STEER (no permanent voice
 //     loss); zero console errors.
-//   STALL — electro seed1 (vocoder + sp_system speech carrier): the carrier decodes SLOWLY
+//   STALL — a DISCOVERED vocoder state with a FETCHED speech carrier: the carrier decodes SLOWLY
 //     (9 s) but the open must NOT block on it (found/sampler decode-then-render never waits on
 //     the ONE carrier). ASSERT first sound arrives well before the carrier, the carrier folds
 //     in, and there is no long silent run.
@@ -204,8 +204,29 @@ async function stallPass(browser, base) {
   // sound arrives FAR below 9 s and the carrier folds in later via setSpeech.
   await page.evaluate(installFault, { latMin: 150, latMax: 500, slowPct: 0, slowLatMin: 0, slowLatMax: 0,
     speechLat: 9000, failPct: 0, failAttempts: 1 });
-  console.log(`\n[${label}] electro seed1 (vocoder, sp_system carrier) with a 9 s speech decode…`);
-  await page.evaluate(() => goLive("electro", 1));
+  // THE STATE IS DISCOVERED, NOT NAMED. This said electro/seed1 "(vocoder,
+  // sp_system carrier)", and that state stopped running a vocoder at all — so no
+  // carrier was ever requested, `decode.speech.ok` stayed 0, and the gate failed
+  // on an assertion about a decode that had nothing to decode. The carrier gate is
+  // still real; only the example rotted. Ask the engine which states voice a
+  // vocoder AND draw a carrier that is FETCHED (a synthText carrier synthesizes
+  // in-process — nothing to delay, so it cannot exercise a slow decode), and take
+  // the first in kernel order.
+  const pick = await page.evaluate(() => {
+    const E = window.CsdEngine, K = window.GenreKernel, SE = window.FaustStateEngine;
+    for (const g of Object.keys(K.GENRES)) for (const seed of [1, 2, 3, 4, 5]) {
+      let st, u; try { st = K.track(g, { seed }); u = SE.voiceUnits(E, st); } catch (e) { continue; }
+      if (!Object.keys(u).some((k) => u[k] && u[k].vocoder)) continue;
+      const fs = st.foundSources || [];
+      const c = fs.find((x) => x.id === st.vocoderSourceId) || fs.find((x) => /^(sp_|vx_|vox_)/.test(x.id || ""));
+      if (!c || c.synthText || !(c.url || c.samplePath)) continue;
+      return { g, seed, carrier: c.id };
+    }
+    return null;
+  });
+  if (!pick) { console.log(`[${label}] no state voices a vocoder with a FETCHED carrier — nothing to stall`); await page.close(); return false; }
+  console.log(`\n[${label}] ${pick.g} seed${pick.seed} (vocoder, ${pick.carrier} carrier) with a 9 s speech decode…`);
+  await page.evaluate((p) => goLive(p.g, p.seed), pick);
   await page.waitForTimeout(2000);
   const at2s = await page.evaluate(() => { try { return window.handle.rms(); } catch (e) { return -1; } });
   const rows = await sample(page, 200, 100);   // ~20 s (crosses the 9 s carrier landing)

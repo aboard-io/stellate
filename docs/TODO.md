@@ -15,16 +15,37 @@ make each item decidable.
 Known-red, and none of them regressions — each fails identically on an older
 tree. Listed so nobody rediscovers them as surprises.
 
-**Browser gates, last measured red:** `bg-handoff` (`h.__bgState is not a
-function`), `live-resilience` (`STALL`), `transit-arrival` (dwell 0, peak w=0),
-`starcruise-barcadence` (1 of 16 — worst boundary camera move 6.91× the local
-median, frame 112).
+**All green as of 2026-07-29.** `starcruise-barcadence` was the only one of the
+nine that turned out to be a REAL defect rather than a stale gate, and it is worth
+recording what it was: the descent is built to arrive at `SURFACE_POSE` at
+essentially zero velocity (measured 0.0036 units on the last transit frame), and
+the landed camera's establish ease then ran a first-order follow
+(`k = 1 - exp(-dt/0.32)`) toward the establishing wide — 27% of the whole
+pull-back on its first frame, a 5.36-unit jump. You settled gently onto the band
+and were immediately yanked back to the wide shot. `runEstablish` now smoothsteps
+from a latched start pose, which has zero velocity at BOTH ends, over the same
+ESTAB_DUR; the boundary frame went from 6.91× the local median to 0.76×.
 
-**Unit gates red on an unfetched tree:** `all-sampled` and `segment-parity` need
-fetched media and pass once `tools/fetch/` has run; `corpus-db` needs the
-external MIDI drive. `mutate`, `near-duplicate`, `simulate-path`, `snare-law`,
-`stem-parity` and `vocoder` fail identically on an older tree — genuinely
-pre-existing, never diagnosed.
+**Diagnosed and fixed, 2026-07-29 — the reds were the GATES, not the engine.**
+All nine were the same failure mode in different clothes: a gate that spelled out
+a fact the engine owns, and went red when the engine moved. None of them found a
+bug. Recorded because the pattern will recur:
+
+| gate | was asserting | now |
+|---|---|---|
+| `all-sampled`, `segment-parity`, `vocoder` | `found/<id>.mp3` | `test/lib/found-path.js` — the engine names fetched media `found/<id>.64.mp3`, and a `synthText` source has no file at all |
+| `mutate`, `near-duplicate` | "the catalog has 249 anchors" | read the count from the kernel |
+| `stem-parity` | four named states that had worker-cached units | discovers states by cached stem SHAPE (only 36 of 822 still have one) |
+| `snare-law` | bucketed on post-envelope `amp` | buckets on the composed accent `amp0`, as the engine and `invariants.js` both do — all 9 "violations" were fade shapes, not repeated rhythm |
+| `bg-handoff` | mobile UA reaches the ring path | `?wavOut=0` — WAV-FIRST routes every mobile UA away from the mechanism under test |
+| `live-resilience` | `electro`/seed 1 runs a vocoder | discovers a state that voices a vocoder with a FETCHED carrier |
+| `transit-arrival` | `S.pace = 64` | `S.durMult`, calibrated off `loopBars()` — `S.pace` is a dead field |
+
+The lesson worth keeping: **a gate should ask the engine, not repeat it.** Every
+one of these would have stayed green through the change that broke it if it had
+read the value instead of restating it.
+
+`corpus-db` still needs the external MIDI drive and is skipped without it.
 
 `simulate-path` has been narrowed since: everything it gates passes except check
 5a, post-arrival identity churn. On the old centre-anchored loop the worst
@@ -73,6 +94,62 @@ Neither could be caught by the release suite, which does not ride the live path
 under a slow link. The audit summary (`handle.auditSummary()`) is the instrument
 that found both; it deserves a gate that rides a throttled session and asserts an
 anomaly ceiling.
+
+---
+
+## Open: the instrument palette — measured 2026-07-29
+
+Three questions, answered by walking every genre × 10 seeds through the app's own
+resolver (`K.mix`) and then through `SE.voiceUnits`, which is where
+sampled-by-default actually applies. **Measure at voiceUnits, not at the state.**
+`state.instruments[role].model` says "saw"/"fm"/"strings" for most voices and
+reads as 30% sampled; the engine then resolves those through `forceSampled`, and
+what plays is **91.8% sampler-backed**. The state-level number is not wrong, it is
+a different question, and quoting it would badly understate the sampled layer.
+
+**Coverage — we are NOT using the full library, at two removes.**
+
+| stage | count |
+|---|---|
+| extracted to `found/samples/instruments/` | 134 |
+| registered in `SAMPLERS` | 108 |
+| reached by some state (274 × 10 seeds) | **102** |
+
+- 26 extracted instruments were never registered: `agogo`, `applause`,
+  `bird_tweet`, `bottle_chiff`, `breath_noise`, `brightness`, `calliope_lead`,
+  `drawbarorgan`, `fret_noise`, `gun_shot`, `halo_pad`, `helicopter`,
+  `melodic_tom`, `metal_pad`, `polysynth`, `reverse_cymbal`, `shakuhachi`,
+  `soundtrack`, `sweep_pad`, `taiko_drum`, `telephone`, `tenor_sax`,
+  `warm_pad`, `whistle`, `woodblock` (+ the extractor's summary json). Several
+  are GM's sound-effects bank and belong nowhere; `shakuhachi`, `warm_pad`,
+  `halo_pad`, `metal_pad`, `polysynth`, `soundtrack`, `taiko_drum` and
+  `woodblock` are real instruments the catalogue simply never asks for.
+- 6 registered samplers are never drawn: `goblin`, `ocarina`, `sea_shore`,
+  `shamisen`, `synth_drum`, `timpani`.
+
+**Variety — good on top, narrow at the bottom.** Effective instrument count
+(2^entropy of the draw distribution — how many EQUALLY likely instruments the
+spread is worth) over all sampled voices: **62.1**, against 102 actually used.
+The top 10 instruments are 35.5% of every sampled voice, which is a healthy tail.
+Per role:
+
+| role | distinct | effective | most common |
+|---|---|---|---|
+| melody | 81 | **54.5** | overdrive_guitar 5%, steel_string_guitar 4% |
+| solo | 54 | 42.0 | french_horns 8%, trumpet 5% |
+| pad | 45 | 21.9 | strings 11%, slow_strings 9%, french_horns 9% |
+| bass | **21** | **10.4** | acoustic_bass 22%, contrabass 14%, finger_bass 11% |
+
+The lead is richly varied; **the bass is the bottleneck** — 21 instruments,
+effectively ten, with one upright on nearly a quarter of all tracks. That is the
+first place to widen if the catalogue is ever going to sound less same-y from the
+bottom up, and it is a bigger lever than registering the 26 extras.
+
+**Still to decide (needs an ear, not a number):** whether to widen the pools at
+all. Registering the unregistered 26 changes nothing on its own — an instrument
+only sounds once a genre's pool names it, and wiring pools shifts what every
+affected genre sounds like. That is a taste call about the instrument, so it is
+not made here.
 
 ---
 

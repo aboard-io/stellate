@@ -6,8 +6,10 @@
 // Verifies the WIRING of faust/live.js's iOS background-audio handoff (real iOS
 // background playback can only be confirmed by a human on a device — this proves
 // the state machine + the WAV blob, headlessly):
-//   1. loads explorer.html?clicktest=1 through the live ring-engine under a MOBILE
-//      user-agent (so the mobile/Safari-gated background path is active), goLive;
+//   1. loads index.html?clicktest=1&wavOut=0 through the live RING engine under a
+//      MOBILE user-agent (mobile UA arms `wantBg`; wavOut=0 keeps us on the ring
+//      path, since WAV-FIRST otherwise routes every mobile UA to exploreLiveWav,
+//      which has no background-WAV handoff to test), goLive;
 //   2. waits for the rolling background-WAV producer to have a blob ready
 //      (handle.__bgWavReady());
 //   3. asserts the blob is a VALID WAV — RIFF/WAVE header + nonzero audio (so the
@@ -62,7 +64,17 @@ function coiServe(root, port) {
   page.on("pageerror", (e) => errs.push("PAGEERR: " + e.message));
   const fails = [];
 
-  await page.goto(`http://localhost:${PORT}/index.html?clicktest=1`, { waitUntil: "domcontentloaded" });
+  // …AND FORCE THE RING PATH (?wavOut=0). A mobile user-agent alone no longer
+  // reaches the mechanism this gate exists for: WAV-FIRST (docs/WAV-FIRST.md) made
+  // wavOutWanted() true for every mobile UA, so exploreLive returns exploreLiveWav
+  // before the ring conductor's `wantBg` block is ever constructed, and the handle
+  // it hands back has no __bgState/__bgWavReady — which is exactly the
+  // `h.__bgState is not a function` this gate had been dying on. The rolling
+  // background-WAV handoff is still LIVE code, just not on mobile: the ring path
+  // arms it for `forceMediaEl || forceBgWav || isMobile || isSafari`, so desktop
+  // Safari ships it. wavOut=0 is how you reach the ring path deliberately, and it
+  // keeps the mobile UA so the isMobile arm of `wantBg` is the one under test.
+  await page.goto(`http://localhost:${PORT}/index.html?clicktest=1&wavOut=0`, { waitUntil: "domcontentloaded" });
 
   const isolated = await page.evaluate(() => crossOriginIsolated);
   if (!isolated) fails.push("crossOriginIsolated=false — SharedArrayBuffer unavailable");

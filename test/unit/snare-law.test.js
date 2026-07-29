@@ -28,8 +28,18 @@ const CHORD_BEATS = 8; // the kit-cell measure — the period the law enforces a
 
 const q = (o) => Math.round(o * 2) / 2;
 const bk = (a) => (a < 0.14 ? 0 : a < 0.34 ? 1 : 2);
-const snSig = (l) => l.map((d) => q(d.beat - l.b0) + ":" + bk(d.amp)).sort().join("|");
-const haSig = (l) => l.map((d) => q(d.beat - l.b0) + ":" + bk(d.amp) + (d.open ? "o" : "")).sort().join("|");
+// Bucket on the COMPOSED accent (amp0), not the post-envelope loudness — the same
+// `av` engine/invariants.js uses, and for the reason csd-engine states where it
+// orders MUSICAL DYNAMICS after the law: the snare-law is a no-ad-nauseam PATTERN
+// promise, the dynamics envelope is applied afterwards and stashes each drum's
+// pre-envelope amp as amp0, and a fade already varies bar loudness, so
+// pattern-identical bars under one are not a repeat. Reading d.amp here made this
+// gate assert a law the engine deliberately does not implement, and it reported 9
+// violations that were swell/fade shapes rather than repeated rhythm. amp0 is
+// absent on any bar the envelope never touched, so this is identical there.
+const av = (d) => (d.amp0 != null ? d.amp0 : d.amp);
+const snSig = (l) => l.map((d) => q(d.beat - l.b0) + ":" + bk(av(d))).sort().join("|");
+const haSig = (l) => l.map((d) => q(d.beat - l.b0) + ":" + bk(av(d)) + (d.open ? "o" : "")).sort().join("|");
 
 // group a lane's events into consecutive CB-beat bars keyed by bar index; a bar
 // with no events on the lane is a gap (undefined) that resets the run. CB is the
