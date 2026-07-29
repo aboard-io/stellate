@@ -82,3 +82,12 @@ output{ color:var(--muted); }
 #boot .blabel{ position:fixed; left:.6rem; top:.4rem; font-size:.7rem; color:var(--muted); }
 @keyframes shimmer{ 0%{opacity:.4}50%{opacity:1}100%{opacity:.4} }
 @media (prefers-reduced-motion: reduce){ *{ transition:none!important; animation:none!important; } }
+
+/* the Announce button's "speak it aloud" option. The announcement target
+   (#announce) is sr-only, so with no screen reader running the button had no
+   perceivable effect at all — it looked broken. Speech synthesis is the default
+   and this is the way back to the screen-reader-only behaviour, so an AT user
+   never hears the page talking over their own reader. */
+.speakopt{ display:flex; align-items:center; gap:.4rem; flex-wrap:wrap;
+  font-size:.95rem; color:var(--muted); }
+.speakopt input{ width:1.05rem; height:1.05rem; }

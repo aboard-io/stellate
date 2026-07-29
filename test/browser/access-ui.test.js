@@ -140,6 +140,51 @@ async function main() {
     ok(`determinism: page mix == kernel mix (bpm ${direct.bpm}, ${direct.progression})`);
   else fail(`determinism mismatch: page ${pageMix.bpm}/${pageMix.prog} vs kernel ${direct.bpm}/${direct.progression}`);
 
+  // (g) ANNOUNCE actually announces. #announce is sr-only, so with no screen
+  // reader running the "🔊 Announce what's playing" button had no perceivable
+  // effect at all — a labelled speaker button that does nothing reads as broken,
+  // and this is the page whose whole job is not being that. Contract: exactly ONE
+  // channel carries it (speech synthesis when the box is ticked, the assertive
+  // live region when it is not — never both, so an AT user never gets the page
+  // talking over their reader), pressing twice announces twice, and the choice
+  // persists. The synthesiser is stubbed: headless Chromium has one that accepts
+  // speak() and makes no sound, which would pass vacuously.
+  const ann = await page.evaluate(async () => {
+    const out = {};
+    const $ = (id) => document.getElementById(id);
+    const press = () => $("announceBtn").click();
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    Object.defineProperty(window, "speechSynthesis", { configurable: true,
+      get: () => ({ speak: (u) => window.__spoken.push(u.text), cancel: () => {}, speaking: false }) });
+    window.__spoken = [];
+    $("speakAloud").checked = true;
+    $("announce").textContent = "";
+    press(); await wait(260);
+    out.spokeOnce = window.__spoken.length;
+    out.spokenText = (window.__spoken[0] || "").slice(0, 24);
+    out.liveRegionQuietWhileSpeaking = $("announce").textContent.length === 0;
+    out.logUntouched = ($("events").lastElementChild || {}).textContent !== window.__spoken[0];
+    press(); await wait(260);
+    out.spokeTwice = window.__spoken.length;
+    // speech OFF -> the live region carries it, and nothing is spoken
+    $("speakAloud").checked = false; $("speakAloud").dispatchEvent(new Event("change"));
+    window.__spoken = []; $("announce").textContent = "";
+    press(); await wait(400);
+    out.silentWhenOff = window.__spoken.length === 0;
+    out.liveRegionCarriesIt = $("announce").textContent.length > 20;
+    return out;
+  });
+  if (ann.spokeOnce === 1 && ann.spokenText.length > 4) ok(`announce speaks aloud ("${ann.spokenText}…")`);
+  else fail(`announce did not speak (spoke ${ann.spokeOnce}x)`);
+  if (ann.liveRegionQuietWhileSpeaking) ok("speaking does NOT also fire the live region (no double-announce for AT)");
+  else fail("both channels fired — an AT user would hear it twice");
+  if (ann.logUntouched) ok("the announcement does NOT also enter the polite log (that would be a second spoken copy)");
+  else fail("the announcement was copied into #events, which is aria-live=polite — AT hears it twice");
+  if (ann.spokeTwice === 2) ok("pressing twice announces twice");
+  else fail(`second press announced ${ann.spokeTwice - 1} more time(s)`);
+  if (ann.silentWhenOff && ann.liveRegionCarriesIt) ok("speech off -> the assertive live region carries it instead");
+  else fail(`speech-off fallback broken (spoken=${!ann.silentWhenOff}, region=${ann.liveRegionCarriesIt})`);
+
   // (a) errors
   if (errs.length === 0) ok("zero page errors");
   else fail(`page errors: ${JSON.stringify(errs.slice(0, 5))}`);

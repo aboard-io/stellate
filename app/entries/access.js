@@ -245,11 +245,46 @@ function logEvent(msg){
   while(box.children.length>40) box.removeChild(box.firstChild);
   box.scrollTop=box.scrollHeight;
 }
-// on-demand full announcement (assertive) — re-toggle so pressing twice re-reads
+// ---------- on-demand full announcement ----------
+// TWO CHANNELS, NEVER BOTH. #announce is `sr-only` + role=alert, so its only
+// effect is a screen reader speaking it — which means that with no screen reader
+// running, "🔊 Announce what's playing" did nothing anyone could see or hear.
+// A labelled button with a speaker on it that has no perceivable effect reads as
+// broken, and this is the page whose whole job is not being that.
+//
+// So: SPEAK it with the platform's own synthesiser by default, and fall back to
+// the live region when speech is off or unavailable. Exactly one of the two
+// runs, because an AT user must never get the page talking over their reader —
+// the checkbox is how they turn synthesis off and get the old behaviour back,
+// and the choice persists.
+//
+// The live-region path also no longer clears-and-sets inside one
+// requestAnimationFrame: rAF fires before paint, so both mutations could
+// coalesce into a single accessibility-tree update and an unchanged snapshot
+// would be announced ZERO times rather than twice — the "I pressed it again and
+// nothing happened" case. A real timeout gives the tree two distinct changes.
+const SPEAK_KEY="stellate-access-speak";
+function speakAloudOn(){ const c=$("speakAloud"); return !!(c && c.checked); }
 function announceNow(){
+  const text=nowSnapshot();
   const a=$("announce");
   a.textContent="";
-  requestAnimationFrame(()=>{ a.textContent=nowSnapshot(); });
+  // NOT logged into #events: that region is aria-live="polite", so writing the
+  // announcement there would be a SECOND spoken copy for anyone running a screen
+  // reader, in either configuration. The visible evidence already exists and is
+  // permanent — #nowDetail (aria-live="off") shows the same snapshot the whole
+  // time — so the button's job is only ever to speak it on demand.
+  const synth=(typeof window!=="undefined" && window.speechSynthesis) || null;
+  if(speakAloudOn() && synth && typeof SpeechSynthesisUtterance!=="undefined"){
+    try{
+      synth.cancel();                       // a second press replaces, never queues
+      const u=new SpeechSynthesisUtterance(text);
+      u.rate=1.0; u.lang=document.documentElement.lang||"en";
+      synth.speak(u);
+      return;
+    }catch(e){ /* fall through to the live region */ }
+  }
+  setTimeout(()=>{ a.textContent=text; }, 120);
 }
 
 // ---------- duration slider: log scale 8 min .. 24 h (loop travel time) ----------
@@ -314,6 +349,15 @@ function wire(){
     else logEvent("Copy failed — the link is the address bar.");
   });
   $("announceBtn").addEventListener("click", announceNow);
+  // remember the speak-aloud choice (a screen-reader user turns it off once)
+  const sp=$("speakAloud");
+  if(sp){
+    try{ const v=localStorage.getItem(SPEAK_KEY); if(v!==null) sp.checked=(v==="1"); }catch(e){}
+    sp.addEventListener("change",()=>{
+      try{ localStorage.setItem(SPEAK_KEY, sp.checked?"1":"0"); }catch(e){}
+      if(!sp.checked && window.speechSynthesis){ try{ speechSynthesis.cancel(); }catch(e){} }
+    });
+  }
 
   // mode switch (radio group)
   document.querySelectorAll('input[name="mode"]').forEach(r=>{
