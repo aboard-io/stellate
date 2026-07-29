@@ -97,29 +97,24 @@ kept so nobody re-derives them:
   the 92 kbps once assumed.
 
 What landed instead is on the demand side: the route precache no longer warms the
-whole journey, only **ten minutes of play ahead of the traveler**, the horizon
+whole journey, only the next stretch of play ahead of the traveler, the horizon
 moving as you travel. On a long path that is the larger saving, and it bounds the
 bed cost by what is actually listened to.
 
-Still worth deciding: whether 2.75 beds/track is the right resting point, or
-whether the bed pools should cap lower now that precache is bounded.
+**Decided.** The bed count stays where it is — the reach it buys is the point, and
+both levers that would pay for it cost more than they save. The horizon is the
+lever that was actually cheap, so it is **halved: `HORIZON_MIN` 10 → 5**
+(`app/audio/precache.js`). Everything downstream is derived from it — the distance
+comes from `paceSpeed()` and the sounding bar's duration — so the per-run fences,
+the moving horizon and the resume behaviour are unchanged; a session simply pays
+for five minutes ahead instead of ten.
 
----
-
-## Open: small and specific
-
-- **42 of the 62 ident genres have no per-genre NameBank bank.** The speech ident
-  tier works; those 42 fall back to label-led frames. Pure data work.
-- **`pool:voices` is bed-role only.** The utterance governor's family-substitution
-  fix (`VOICE_FAMILIES`) is correct and costs nothing, but it moves no number
-  until a curated reading reaches a hits/vox pool, because bed events never reach
-  the governor. Candidates for the next declared cast, with drop counts over
-  1,370 tracks: `sp_system` 346, `sp_pressure` 328, `vox_d` 274, `sp_herenow`
-  199, `sp_rhythm` 197, `sp_rewind` 187. Curation call.
-- **5.9% of hits-layer-carrying tracks fire zero hits.** A layer that draws
-  nothing is indistinguishable from no layer. If that reads badly by ear, the fix
-  is a floor of one kept slot per section rather than a lower skip probability.
-  That one is a taste call and needs a listen, not another number.
+One loose end for whoever revisits this: **pin the definition before quoting the
+number again.** The 2.75 beds/track above is not reproducible from the tree as
+written — counting distinct section-level bed `sourceId`s over 274 genres × 5
+seeds gives 3.44 (max 6), with BBC reach 38.5% rather than 35.3%. The
+disagreement is method, not drift, and it is the sort of thing that turns into a
+false regression later.
 
 ---
 
@@ -153,6 +148,42 @@ whether the bed pools should cap lower now that precache is bounded.
   under test: `flight` parked for 4.0s against 3.0s of choreography plus a spring
   lag, and its fake world handed the machine a filler weight larger than the genre
   it was aiming at, so "approaching" read as receding. Both fixed in the test.)
+- **The hits layer's zero-hit tracks are ACCEPTED.** Re-measured at 5.6% (106 of
+  1,905 hits-carrying track states over 274 genres × 10 seeds; it concentrates in
+  the sparse genres — `bogironwallow` 5 seeds of 10, `lofi` 4, `downtempo` 4).
+  `HIT_SLOT_SKIP` stays at 0.75 and no per-section floor is added: the variation
+  reads fine, and a floor would push the mean one-shot count back up, which is
+  the thing the thinner exists to hold down.
+- **Every ident genre now has a NameBank bank — 45 written, 65 of 65 covered.**
+  A bankless genre fell back to GENERIC (*Cassette*, *Analog*, *Half Light*),
+  which is too thin to be a station, so `derivedSpeaker` restricted those genres
+  to the two LABEL-led ident frames. All 62 ident-speaking genres now reach the
+  ARTIST-led frames as well: 372 ident utterances across seeds 1–13, 282 distinct
+  lines, zero doubled stops and zero shouted names. Two defects fixed on the way:
+  a band name may not also be a title or album inside its own bank (72 of those
+  in the new banks, plus 19 title==album pairs — the pre-existing 48 banks have
+  none, so that is the house rule), and the LABELS pool's first imprint was
+  `"ROYAL ROAD"` in caps — the one shouted string in a tier that is read aloud by
+  a speech synthesiser. `test/gates/speech.test.js` now gates all of this.
+  (Known cosmetic nit, deliberately left alone: 7 of the original 48 banks reuse
+  a band name as a title — `canawave`, `dinosynth`, `synthwave`, `vaporwave`,
+  `triphop`. Those are hand-written names and not mine to rewrite.)
+- **`pool:voices` / VOICE_FAMILIES: the flat shelves are now cast, and the
+  remaining drops are structural, not a curation gap.** Every family-less voice id
+  is declared: `apollo` (the six Apollo slices), `timesignal`, `otr_drama`,
+  `pd_poem`, `war_radio`, and the synthesized announcer lines split FOUR ways by
+  what the line is doing (`sp_hype`/`sp_machine`/`sp_retail`/`sp_calm`) — one `sp`
+  family would have licensed "rewind. selecta" standing in for "you are here now",
+  which one genre's pool really does put side by side.
+  Measured over 1,370 track states: substitutions 852 → 918, drops 3,431 → 3,413.
+  That is small, and the reason is worth recording so nobody re-opens this as a
+  curation problem. **A family can only rotate among members the state actually
+  resolved, and the pools draw one member per slot** — 102 genres draw
+  `pool:vocal_stab*1`, 11 draw `*2`, and across all 1,370 states exactly ZERO ever
+  hold two Apollo sources, so the largest cast can never fire. Where siblings do
+  co-occur the mechanism works well (`sp_auction_1/2/3`: ~100 substitutions).
+  Moving the number further means changing pool DRAW COUNTS, which buys variety
+  with fetched media — the opposite of the direction the budget was just set in.
 - **The ⓘ chord chips cannot drift from the audio any more.** `csd-engine.js`
   exports `resolveProgression(state)` — the skeleton→reharm walk, one copy —
   and `buildEvents` and `notefeed.js resolveHarmony` both call it. The event

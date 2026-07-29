@@ -353,6 +353,50 @@
             "vx_kupferberg_fugs87","vx_baraka_revpoetry94","vx_sanders_panel03",
             "vx_ginsberg_mexcityblues","vx_ginsberg_sincerity","vx_ginsberg_kerouacconf",
             "vx_burroughs_lecture76","vx_burroughs_giorno79"],
+    // ---- the rest of the flat shelves, cast by REGISTER ----------------------
+    // Declaring a family IS the curation, so the test each group below has to
+    // pass is the one the governor's comment sets: could a listener hear one
+    // member where another was written and not notice a change of room? Where
+    // the answer is no, the ids stay flat and keep the DROP — a thinner line is
+    // a much smaller artefact than the wrong voice. Two properties make this
+    // safer than it sounds: substitution only ever picks a sibling THIS STATE
+    // already resolved (so a group can never import a voice a genre did not
+    // ask for), and an id in no group is untouched, so every state that was not
+    // over-repeating is byte-identical.
+    //
+    // Apollo 11 mission audio, sliced six ways — literally one recording, so
+    // this is the safest cast in the registry and by far the largest lever:
+    // `pool:vocal_stab` expands to vox_a/vox_d/vox_f and 113 genres draw it, so
+    // those three sat together in most of the catalogue with no way to stand in
+    // for each other. (vx_apollo is the same mission but is NOT listed: the beep
+    // audit benched it from the general pool, and a family is a two-way street —
+    // listing it would let the others be replaced BY it.)
+    apollo:["vox_a","vox_b","vox_c","vox_d","vox_e","vox_f"],
+    // a voice reading the time over a carrier — the telephone speaking clock and
+    // the WWVH station announcer. The `voices` pool already lists them side by
+    // side, which is the curation made once already.
+    timesignal:["vx_timelady","vx_wwvh"],
+    // mid-century radio DRAMA narration: Suspense (CBS 1942) and X Minus One
+    // (NBC 1956) are the same announcer's-booth register a generation apart.
+    otr_drama:["vx_suspense","vx_xminusone"],
+    // LibriVox public-domain POETRY: a volunteer reading verse into a home
+    // microphone. Blake, Dickinson and Whitman are one another's substitutes in
+    // register even though they are not in period.
+    pd_poem:["vx_blake","vx_dickinson","vx_whitman"],
+    // 1940s American war radio: FDR's fireside chat and the CBS D-Day bulletins.
+    // One room, one crisis, one delivery.
+    war_radio:["vx_fdr","vx_dday"],
+    // ---- the synthesized announcer lines (`sp_` flat ids) --------------------
+    // These are all ONE espeak voice at different pitch/speed, so the risk here
+    // is never the wrong VOICE — it is the wrong CONTENT for the room. Grouped
+    // by what the line is doing, which is why there are four groups and not one:
+    // genre pools really do mix these registers (one genre carries "you are here
+    // now" beside "rewind. selecta"), and a single `sp` family would license
+    // exactly that swap.
+    sp_hype:["sp_energy","sp_pressure","sp_rewind","sp_rhythm"],        // dancefloor calls
+    sp_machine:["sp_system","sp_nightdrive"],                            // a system reporting itself
+    sp_retail:["sp_plaza","sp_shopping"],                                // the shop-floor PA
+    sp_calm:["sp_herenow","sp_slowdown"],                                // the meditation tape
   };
   D.SAMPLES = {
     amen_165:{ file:"breaks/amen_165_02.wav", kind:"break", bpm:165 },

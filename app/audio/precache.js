@@ -22,7 +22,7 @@
 // (paceSpeed is distance-per-bar) and the current bar duration, so it tracks the
 // tempo and the path length instead of assuming either. The horizon MOVES with
 // the traveler, so a long journey still arrives warm — it just pays for the next
-// ten minutes rather than for all of it up front.
+// few minutes rather than for all of it up front.
 import { S, K, E } from "../core/state.js";
 import { weightsAt } from "./targeting.js";
 import { legMetrics, paceSpeed } from "../core/share.js";
@@ -54,8 +54,8 @@ function genreFiles(g){
 
 const MOBILE=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 const RUN_FILES=MOBILE?60:160, RUN_BYTES=MOBILE?2e6:6e6;   // per-run fences (phones get the lighter pair)
-const HORIZON_MIN=10;        // minutes of PLAY kept warm ahead of the traveler
-// How far along the path ten minutes of music reaches. paceSpeed() is distance
+const HORIZON_MIN=5;         // minutes of PLAY kept warm ahead of the traveler
+// How far along the path HORIZON_MIN minutes of music reaches. paceSpeed() is distance
 // per BAR, so this needs the bar's duration: beats x 60 / bpm, read off the
 // state that is actually sounding (meter-aware — a 3/4 bar is shorter than a
 // 4/4 one at the same tempo). The fallbacks are the defaults buildEvents uses
@@ -84,7 +84,7 @@ export async function precacheRoute(){
   // TWO keys, because the horizon moves. The PATH key (seed + waypoints) invalidates
   // what has been walked — a redrawn path is a different journey. The SEGMENT key
   // only un-latches `routeDone`, so when the traveler crosses into a new leg the
-  // next ten minutes get warmed without re-walking the genres already done (their
+  // next horizon gets warmed without re-walking the genres already done (their
   // files are in `warmed`, so re-walking would cost a buildSchedule per genre for
   // an empty fetch list).
   const key=S.seed+"|"+wps.map(w=>Math.round(w.x)+","+Math.round(w.y)).join(";");
@@ -96,7 +96,7 @@ export async function precacheRoute(){
   try{
     // genres within the HORIZON: walk forward from the traveler's exact position
     // (seg + t, not the segment start) sampling every SAMPLE_STEP of distance, and
-    // stop once ten minutes of play is covered. Sampling by DISTANCE rather than by
+    // stop once the horizon's worth of play is covered. Sampling by DISTANCE rather than by
     // a fixed count per leg means a long leg is sampled more than a short one, so a
     // genre cannot be missed just because it sits in the middle of a long crossing.
     const genres=new Set();

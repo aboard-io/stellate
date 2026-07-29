@@ -96,13 +96,47 @@ const sha = (f32) => crypto.createHash("sha256")
     assert(pa(5).synthText.text !== pa(6).synthText.text || pa(5).synthText.text !== pa(7).synthText.text,
       "text never varies with seed");
     assert(!a.samplePath && !a.url, "synthText source must carry no file path/url");
-    // absent = byte-identical law: no other genre grows the field
-    for (const g of ["techno", "vaporwave", "spokenword"]) {
+    // ABSENT = BYTE-IDENTICAL law: a genre that asks for no speech grows no
+    // synthText source. The controls used to be techno/vaporwave/spokenword,
+    // which stopped being silent when the IDENT tier shipped and stopped being
+    // a fair test of this law: techno's form is `dj`, so it now speaks a station
+    // ident by design, and vaporwave draws `sp_plaza`/`sp_shopping` — synthesized
+    // one-shots — into its hits pool. Neither is a defect; the gate was asserting
+    // a law the engine had deliberately superseded, and it has been failing on
+    // techno ever since. The controls are now genres that genuinely say nothing
+    // at any seed (108 of the 274 do): a pop/aaba form, no ident form, no
+    // bespoke SPEAKERS entry, no spoken source in any pool they draw.
+    for (const g of ["blues", "jazz", "bossanova"]) {
       const st = K.track(g, { seed: 5 });
       assert(!st.foundSources.some((s) => s.synthText), g + " grew a synthText source");
       assert(!(st.sampleEvents || []).some((e) => (e.pool || []).includes("sp_pa_namebank")),
         g + " grew the PA sample-event");
     }
+    // …and the POSITIVE half, which is what `sp_pa_namebank` actually is: one
+    // shared id for every spoken identity, bespoke speaker or derived ident (the
+    // name is historical — it began as transitwave's PA). An ident-form genre
+    // must grow it, and the line must be one of the four station FRAMES rather
+    // than a discography entry recited. Every ident genre reaches an ARTIST-led
+    // frame now that all 65 have a NameBank bank; before, a bankless genre was
+    // restricted to the two label-led ones.
+    const FRAME = /^(You're listening to .+\.|That was .+, right here on .+\.|Next up: .+\.|This is .+ radio\.)$/;
+    let identGenres = 0, artistLed = 0;
+    for (const g of Object.keys(K.GENRES)) {
+      if (!["dj", "drop", "vamp"].includes(K.GENRES[g].form || "pop")) continue;
+      for (const seed of [1, 3, 5, 7, 11, 13]) {
+        const src = K.track(g, { seed }).foundSources.find((s) => s.id === "sp_pa_namebank");
+        const t = src && src.synthText && src.synthText.text;
+        if (!t || !FRAME.test(t)) continue;          // bespoke SPEAKERS genres say their own thing
+        identGenres++;
+        if (/^(You're listening to|That was |Next up: )/.test(t)) artistLed++;
+        assert(!/\.\./.test(t), g + ": doubled sentence stop in " + JSON.stringify(t));
+        assert(!/[A-Z]{4,}/.test(t.replace(/^(You're listening to|That was |Next up: |This is )/, "")),
+          g + ": shouted name in a spoken frame — " + JSON.stringify(t));
+        break;
+      }
+    }
+    assert(identGenres >= 55, "only " + identGenres + " ident genres speak a station frame (want >=55)");
+    assert(artistLed >= 40, "only " + artistLed + " ident genres reached an ARTIST-led frame (want >=40)");
   });
 
   console.log(fails ? "\nFAILURES" : "\nALL PASS");
