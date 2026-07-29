@@ -6,6 +6,7 @@ import { S, set, K, E, QSFLAGS } from "../core/state.js";
 import { retarget, rebuildQueue, travelStep, glideStep } from "./targeting.js";
 import { bgBarTick } from "../panels/background.js";
 import { scheduleBarNotes, clearNoteTimers } from "./notefeed.js";   // the demoscene note feed (lifted out of the ⓘ panel so audio/ owns its own cycle)
+import { fontRotateTick } from "./fonts.js";   // the 32-bar soundfont rotation (the cycle lives in fonts.js FONT_CYCLE)
 import { urlTick, travelForBar, pointOnPath, barForTravel } from "../core/share.js";   // the bookmarkable measure: per-bar URL refresh + measure<->path math (barForTravel: THE PLAYHEAD IS THE SOURCE OF TRUTH — the constant-pace inverse now lives beside travelForBar in share.js, shared with buildShareUrl so a copied link and a stop→play agree)
 
 // ---------- live engine ----------
@@ -263,6 +264,7 @@ export async function goLive(){
       if(S.waypoints.length>=2) travelStep();
       glideStep();
       bgBarTick(info);   // demoscene 8-measure cart rotation (live only), cut on the beat
+      fontRotateTick(S.barCount);   // the set changes instruments every 32 bars; a pinned font makes this a no-op
       if(window.DemoLayer&&DemoLayer.pulse)DemoLayer.pulse(info);      // demoscene: surge the effect's clock on the bar
       updateMediaSession();   // reflect the current genre/blend on the lock screen (updates across a swap)
     }});

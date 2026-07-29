@@ -692,16 +692,23 @@
     // rather than once a bar. Falls back to the bar's own units if the schedule
     // cannot be built (a transitional state mid-flip), which is never worse than
     // the per-bar kick already covering them.
-    let _warmKey = null, _warmList = [];
+    let _warmKey = null, _warmList = [], _warmLib = null;
     function warmSetFor(r) {
       // the WHOLE-FORM state: `one` is collapsed to a single section, so reading it
       // would see only the instruments THIS bar voices — and the late arrival is
       // exactly the case the warm-ahead exists for.
       const one = (r && (r.song || r.one)) || null; if (!one) return [];
-      const key = (one.instruments || 0) + "|" + ((one.genreMeta && one.genreMeta.genres) || [])[0] +
+      // Key on the samplerLib OBJECT IDENTITY, not on a string built from
+      // `one.instruments` — that stringified to "[object Object]", so the key was
+      // really just genre+seed and the set never invalidated when the instruments
+      // changed. It has to now: the 32-bar SOUNDFONT ROTATION replaces samplerLib
+      // wholesale (app/audio/targeting.js "sample" flip), and a stale warm set
+      // would keep pre-fetching the OLD font's zones while the new font's arrived
+      // one bar late apiece.
+      const key = ((one.genreMeta && one.genreMeta.genres) || [])[0] +
         "|" + (one.instrumentSeed != null ? one.instrumentSeed : one.seed);
-      if (key === _warmKey) return _warmList;
-      _warmKey = key;
+      if (key === _warmKey && one.samplerLib === _warmLib) return _warmList;
+      _warmKey = key; _warmLib = one.samplerLib;
       const ids = [], seen = new Set();
       const take = (units) => { for (const u of Object.values(units || {}))
         if (u && u.sampler) for (const z of (u.sampler.zones || []))

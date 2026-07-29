@@ -310,6 +310,25 @@
   function activeSynthFont(){ const F=FONTS[ACTIVE_FONT]; return (F&&F.kind==="synth")?F:null; }
   // resolve an instrument's {sr, zones (raw font shape: file/root/lo/hi/vlo/vhi/
   // loop/ls/le), base sample dir} for the ACTIVE font, per-instrument fallback.
+  // A ZONE'S SRC ID IS QUALIFIED BY THE FILE IT CAME FROM. Every font reuses the
+  // same instrument names, so `ins_alto_sax_0` meant a DIFFERENT recording under
+  // each one — measured on a single state, 591 ids shared between fluidr3 and
+  // sgm and 522 of them resolving to different audio. The live engine caches
+  // decoded PCM BY THIS ID (faust/live.js samplerBufs, found-player bufCache), so
+  // two fonts could never be in memory at once and switching had to stop the
+  // engine and restart it — a hard cut, which is exactly what made the font
+  // picker break the sound. Qualifying the id lets both fonts' buffers coexist,
+  // which is the whole basis of GLIDING between them (app/audio/fonts.js).
+  //
+  // Keyed on the resolved BASE, not on the active font, because fontInstr falls
+  // back per instrument: a font that does not cover an instrument serves the
+  // default file, and that must keep the default id or the same bytes would be
+  // fetched and cached twice under two names. The default base therefore keeps
+  // the bare `ins_<instr>_<i>` form exactly as before, so every determinism gate,
+  // every fixture and every seeded render on the default font is byte-identical.
+  const zoneSrcId=(base,id,i)=> (base==="instruments")
+    ? "ins_"+id+"_"+i
+    : "ins_"+String(base).replace(/^instruments-/,"")+"__"+id+"_"+i;
   function fontInstr(id){
     const F=ACTIVE_FONT!=="fluidr3" && FONTS[ACTIVE_FONT];
     if(F && F.instr && F.instr[id]) return { sr:F.instr[id].sr, zones:F.instr[id].zones, base:F.base, dir:id };   // gen-font.js writes to <base>/<slug>/ (SYNTH fonts have no .instr — fall through to default samples for any residual sample callers)
@@ -2089,7 +2108,7 @@
       // (press.js always decodes 44100) must scale by sr, and the decoder-padding
       // correction needs len to spot a padded buffer. Both are undefined for wav
       // zones, which is exactly when no correction should happen.
-      return { id, sr:S.sr, zones:S.zones.map((z,i)=>({srcId:"ins_"+id+"_"+i, root:z.root, lo:z.lo, hi:z.hi,
+      return { id, sr:S.sr, zones:S.zones.map((z,i)=>({srcId:zoneSrcId(S.base,id,i), root:z.root, lo:z.lo, hi:z.hi,
         vlo:z.vlo, vhi:z.vhi, loop:!!z.loop, loopStart:z.ls, loopEnd:z.le, len:z.len, sr:S.sr })) };
     };
     // SYNTH FONT (B): the recipe fragment to MERGE for a resolved sampler instrument.
@@ -2169,7 +2188,7 @@
     if(c.form==="transit") samplerIds.push("crunch_guitar");   // the transit form's metal-solo section (R_TW_METAL) rides the crunch sampler
     for(const id of new Set(samplerIds)){
       const S=fontInstr(id); if(!S) continue;
-      S.zones.forEach((z,i)=>foundSources.push({id:"ins_"+id+"_"+i,label:(SAMPLERS[id]&&SAMPLERS[id].label)||id,url:"",
+      S.zones.forEach((z,i)=>foundSources.push({id:zoneSrcId(S.base,id,i),label:(SAMPLERS[id]&&SAMPLERS[id].label)||id,url:"",
         samplePath:"found/samples/"+S.base+"/"+S.dir+"/"+z.file, vol:0, pitch:1, stretch:0.5, cutoff:18000}));
     }
     // sampled drum kit: resolve the genre's drums.kit and ride each hit wav into
@@ -2618,7 +2637,7 @@
       return { id, synth:lead.voice, params:lead.params, dx7:lead.dx7,
         padSynth:pad.voice, padParams:pad.params, padDx7:pad.dx7 }; }
     const S=fontInstr(id); if(!S) return null;
-    return { id, sr:S.sr, zones:S.zones.map((z,i)=>({srcId:"ins_"+id+"_"+i, root:z.root, lo:z.lo, hi:z.hi,
+    return { id, sr:S.sr, zones:S.zones.map((z,i)=>({srcId:zoneSrcId(S.base,id,i), root:z.root, lo:z.lo, hi:z.hi,
       vlo:z.vlo, vhi:z.vhi, loop:!!z.loop, loopStart:z.ls, loopEnd:z.le, len:z.len, sr:S.sr })) };
   };
   // mirrors toState's inner drumKitSpec (kept separate so toState stays byte-exact)
@@ -2650,7 +2669,7 @@
       lib[id]=_sampledOnlySpec(id);
       if(synthFont) continue;   // SYNTH FONT: pure synth voices, no zone wavs to inject
       const S=fontInstr(id); if(!S) continue;
-      S.zones.forEach((z,i)=>{ const sid="ins_"+id+"_"+i; if(have.has(sid)) return; have.add(sid);
+      S.zones.forEach((z,i)=>{ const sid=zoneSrcId(S.base,id,i); if(have.has(sid)) return; have.add(sid);
         state.foundSources.push({id:sid,label:(SAMPLERS[id]&&SAMPLERS[id].label)||id,url:"",samplePath:"found/samples/"+S.base+"/"+S.dir+"/"+z.file,vol:0,pitch:1,stretch:0.5,cutoff:18000}); });
     }
     state.samplerLib=lib;

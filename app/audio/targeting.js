@@ -189,9 +189,21 @@ const DISCRETE=[
     (c,t)=>{const m=(t.sections.find(s=>s.melody&&s.melody!=="off")||{}).melody;
       if(m)c.sections.forEach(s=>{if(s.melody&&s.melody!=="off")s.melody=m;});}],
   ["harmony",c=>c.progression,(c,t)=>c.progression=t.progression],
-  ["sample",c=>c.foundSources.map(s=>s.id).join(),
+  // THE CRATE — and the INDEX INTO IT. `samplerLib` is the map forceSampled
+  // resolves a voice through when the voice carries no state-level sampler of its
+  // own (state-engine: lib[pickSampledId(role, model, seed, genre)]), and it was
+  // in no flip at all. That did not show while every state was built under the
+  // same soundfont, because the lib was always equivalent. Under the 32-bar font
+  // ROTATION it is the whole difference: the target's lib holds the new font's
+  // zones and the playing state kept the old one, so the set changed fonts and
+  // the audio did not — measured, identical voiced units across fluidr3, sgm and
+  // minimoog. The crate and the index into it belong to the same flip, so it
+  // rides here, and the signature covers both.
+  ["sample",c=>c.foundSources.map(s=>s.id).join()+"|"+Object.keys(c.samplerLib||{}).length+"|"+
+    ((Object.values(c.samplerLib||{})[0]||{}).zones||[{}])[0].srcId,
     (c,t)=>{const prev=c.foundSources;
       c.foundSources=deep(t.foundSources);
+      if(t.samplerLib) c.samplerLib=deep(t.samplerLib);
       // KEEP the sampler-zone wavs the CURRENT voices still reference: replacing
       // foundSources wholesale otherwise stripped the zones out from under a
       // just-introduced lead/pad/bass sampler, so ensureSamplerBufs found no

@@ -5,7 +5,8 @@ the decisions already taken — the measurements are kept so nobody re-derives t
 and nobody re-litigates a settled call. The queue this file carried through
 Stages A–F is finished, and the history of it is in git rather than here.
 
-**Nothing is open.** Every gate in the repository passes, the instrument palette
+**Nothing is open.** The soundfont ROTATION shipped 2026-07-29 (below); every gate
+in the repository passes, the instrument palette
 is widened and the last 15 real instruments are registered and wired, and the
 media budget has a pinned, reproducible definition (`tools/audit/bed-budget.js`).
 What follows is the record of how each was decided, kept so nobody re-derives the
@@ -132,6 +133,51 @@ Neither could be caught by the release suite, which does not ride the live path
 under a slow link. The audit summary (`handle.auditSummary()`) is the instrument
 that found both; it deserves a gate that rides a throttled session and asserts an
 anomaly ceiling.
+
+---
+
+## The soundfont rotation — shipped 2026-07-29
+
+The set changes instruments every **32 bars** and keeps coming home to the analog
+one: `fluidr3 → Pure Analog → SGM Pro 15 → Pure Analog → Seattle Glass Factory →
+Pure Analog → Pure FM → Pure Analog`, a full tour every 256 bars with analog on
+four of the eight steps. `app/audio/fonts.js` `FONT_CYCLE`.
+
+**The blocker was that zone ids were not font-qualified.** Every font reused the
+same `ins_<instr>_<n>` id pointing at a different file — measured on one citypop
+state, 591 ids shared between fluidr3 and sgm and **522 of them resolving to
+different audio**. The engine caches decoded PCM by that id, so two fonts could
+never be in memory at once, which is why the font picker had to `stopLive()` →
+rebuild → `goLive()`: a hard cut. `zoneSrcId` now qualifies the id by the file it
+came from, keyed on the resolved BASE so a font that doesn't cover an instrument
+keeps the default id and the same bytes are never cached twice. The default font
+keeps the bare form, so every determinism gate is byte-identical.
+
+**The gentle part needed nothing new.** Set the font, re-target, and the flip queue
+walks the voices over one at a time — one flip per two bars, `HOLD_BARS` apart,
+identity dims first. Measured: the analog voices land ~4 bars after the boundary,
+the SGM samples ~4 bars after theirs. `sigOf()` ignores sampler units, so
+sampled→sampled never reopens the stream at all; the two synth fonts do move the
+topology and take the engine's designed crossfade.
+
+**One thing was genuinely missing: `state.samplerLib` was in no flip.** It is the
+map `forceSampled` resolves a voice through when the voice carries no sampler of
+its own, and while every state was built under one font it never mattered. Under
+the rotation it is the entire difference — the first working version changed the
+font key and voiced *identical samples throughout*. It now rides with the crate in
+the "sample" flip, where it belongs.
+
+A hand-picked font from the ⚙ panel **pins** it (the rotation stops); `?sf=` and
+`?fonts=off` pin it too. The cycle is a pure function of the bar, so a shared link
+still reproduces the instruments as well as the notes.
+
+`test/browser/font-rotation.test.js` gates it. Note what that gate does NOT use:
+`handle.rms()` is an instantaneous meter, and the quietest bar of four identical
+rides came out 0.0025, 0.1617, 0.0264 and 0.1047 — no threshold over it is
+anything but a coin flip. It asserts on `handle.auditSummary()` instead, which
+measures voices that were expected to sound and did not, and it asserts about the
+BOUNDARIES specifically, since a live ride throws the odd present-but-silent bar
+with the rotation off too.
 
 ---
 
