@@ -21,7 +21,7 @@
 //     body, not only in metadata (the whole point of the ask)
 //   - /oembed.json is valid JSON with the required oEmbed 1.0 fields
 //
-// Since Stage D (2026-07-28) it also carries two cross-page contracts, because
+// It also carries two cross-page contracts, because
 // there is nowhere better and it is the gate that already reads every page:
 //   - NO DRIFT. The head is duplicated on all five pages on purpose (no build
 //     step for HTML). The tags that describe the SITE rather than the page
@@ -48,7 +48,7 @@ const OG = ["og:title", "og:description", "og:type", "og:url", "og:image", "og:i
 const TW = ["twitter:card", "twitter:title", "twitter:description", "twitter:image", "twitter:image:alt", "twitter:creator", "twitter:site"];
 const NAMED = ["description", "author", "theme-color"];
 
-// THE DE-DUPLICATION CONTRACT (Stage D, 2026-07-28). HTML has no include and
+// THE DE-DUPLICATION CONTRACT. HTML has no include and
 // this project has no build step for HTML, so the social head is DUPLICATED on
 // purpose across five pages — the alternative was a generator that rewrites
 // committed markup, which is a worse failure mode (edit the page, forget the
@@ -139,7 +139,7 @@ for (const f of PAGES) {
 // ── THE CSP INVARIANT: no inline script anywhere in the committed pages ─────
 // how.html's inline <script> was the SOLE reason the Content-Security-Policy
 // still had to carry `script-src 'unsafe-inline'` (docs/HOSTING.md §4). It
-// moved to app/entries/how.js on 2026-07-28 and the token came out of the
+// lives in app/entries/how.js and the token came out of the
 // policy. One inline <script>, one on*= attribute or one javascript: URL added
 // back here silently breaks that page IN PRODUCTION ONLY — the dev server sends
 // no CSP, so nothing local would ever catch it. Hence this gate.

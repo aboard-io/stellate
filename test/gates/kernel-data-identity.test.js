@@ -77,7 +77,7 @@ try {
         execFileSync("git", ["show", "HEAD:engine/" + f], { cwd: ROOT, maxBuffer: 64 * 1024 * 1024, stdio: ["ignore", "pipe", "ignore"] }));
     } catch (e) { /* not in HEAD — fine */ }
   }
-  // dx7-presets.json moved to engine/faust/data/ (2026-07-28 faust reorg). HEAD may
+  // dx7-presets.json lives at engine/faust/data/. An older HEAD may
   // predate the move, and the HEAD copy of genre-kernel.js requires whichever path
   // HEAD's tree used — so read from either and materialize BOTH.
   for (const rel of ["engine/faust/data/dx7-presets.json", "engine/faust/dx7-presets.json"]) {

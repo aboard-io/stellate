@@ -126,7 +126,7 @@ function handState(meter, kit, bass, melody, seed, chordEvery) {
     for (const f of files)
       fs.writeFileSync(path.join(headDir, "engine", f),
         execFileSync("git", ["show", "HEAD:engine/" + f], { cwd: path.join(HERE, "..", ".."), maxBuffer: 64 * 1024 * 1024 }));
-    // dx7-presets.json moved to engine/faust/data/ (2026-07-28 faust reorg). HEAD may
+    // dx7-presets.json lives at engine/faust/data/. An older HEAD may
     // predate the move, and the HEAD copy of genre-kernel.js requires whichever path
     // HEAD's tree used — so read from either and materialize BOTH.
     let presets = null;

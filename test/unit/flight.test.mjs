@@ -14,6 +14,13 @@
 //
 //   node test/unit/flight.test.js        (from /home/ford/stellate — no WebGL needed)
 
+// ESM (it dynamic-imports the app's ES modules) under a commonjs package, so the
+// CJS builtins have to be recreated rather than assumed.
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+const require = createRequire(import.meta.url);
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
+
 const path = require("path");
 
 // ---- scripted fake world -------------------------------------------------------
