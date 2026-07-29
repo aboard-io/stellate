@@ -110,7 +110,8 @@
     //   (SAMPLED_BASSES). Declaring their windows here means the per-note fold is
     //   explicit rather than leaving them to the sampler's zone stretch alone: a
     //   timpani asked for the top of a bass line should answer at F3, not squeal.
-    timpani:[36,57], koto:[50,84], shamisen:[43,84], dulcimer:[43,88], harp:[24,103],
+    timpani:[36,57], taiko_drum:[36,60], melodic_tom:[36,72], woodblock:[60,84], agogo:[60,84],
+    shakuhachi:[53,84], whistle:[60,96], koto:[50,84], shamisen:[43,84], dulcimer:[43,88], harp:[24,103],
     clavinet:[36,84], harpsichord:[29,89],
   };
   // fold a MIDI note into [lo,hi] by whole octaves (same pitch class); if the range
@@ -1524,8 +1525,8 @@
     // playing a "bass" at a measured mean midi 56 — a second lead, not a bottom.)
     "palm_muted_guitar", "jazz_guitar", "nylon_string_guitar", "di_guitar", "distortion_guitar",
     "shamisen", "dulcimer", "marimba",
-    // a tuned drum on the root — dramatic, and the reason timpani existed unused
-    "timpani",
+    // tuned drums on the root — dramatic, and the reason timpani sat unused
+    "timpani", "taiko_drum", "melodic_tom",
   ];
   // PADS widened the same way (was 15, effective 21.9 of 45 reached): the wash
   // shelf gains the string desks it never used, the free reeds, and the GM
@@ -1535,20 +1536,23 @@
     "cello", "bowed_glass", "synth_strings_1", "synth_strings_2", "space_voice", "atmosphere", "fantasia",
     "crystal", "ice_rain", "tremolo", "viola", "violin", "harp", "solo_vox", "synth_voice",
     "brass_section", "reed_organ", "rock_organ", "percussive_organ", "accordion", "bandoneon",
-    "goblin", "sea_shore", "star_theme", "echo_drops"];
+    "goblin", "sea_shore", "star_theme", "echo_drops",
+    // newly registered (registry-data "the rest of the melodic bank"): GM's pad
+    // bank was half-missing from the shelf that is literally the pad shelf.
+    "warm_pad", "halo_pad", "metal_pad", "polysynth", "soundtrack", "brightness"];
   const SAMPLED_LEAD = {
     keys:   ["felt_piano", "yamaha_grand_piano", "bright_yamaha_grand", "honky_tonk", "rhodes_ep", "legend_ep_2", "electric_piano", "harpsichord", "clavinet", "celesta"],
-    mallet: ["vibraphone", "glockenspiel", "marimba", "celesta", "xylophone", "music_box", "kalimba", "dulcimer", "tinker_bell", "tubular_bells", "steel_drums"],
+    mallet: ["vibraphone", "glockenspiel", "marimba", "celesta", "xylophone", "music_box", "kalimba", "dulcimer", "tinker_bell", "tubular_bells", "steel_drums", "woodblock", "agogo", "melodic_tom"],
     guitar: ["nylon_string_guitar", "steel_string_guitar", "jazz_guitar", "clean_guitar", "palm_muted_guitar", "overdrive_guitar", "guitar_harmonics", "banjo"],
     brass:  ["trumpet", "muted_trumpet", "trombone", "tuba", "french_horns", "brass_section", "synth_brass_1", "synth_brass_2"],
-    organ:  ["rock_organ", "percussive_organ", "church_organ", "reed_organ", "harmonica", "accordion"],
+    organ:  ["rock_organ", "percussive_organ", "church_organ", "reed_organ", "harmonica", "accordion", "drawbarorgan"],
     voice:  ["ahh_choir", "ohh_voices", "strings", "solo_vox", "synth_voice", "space_voice"],
-    wind:   ["alto_sax", "tenor_sax", "soprano_sax", "baritone_sax", "flute", "clarinet", "oboe", "english_horn", "bassoon", "piccolo", "recorder", "pan_flute", "harmonica", "ocarina", "shenai"],
-    world:  ["koto", "sitar", "shamisen", "dulcimer", "harp", "banjo", "bagpipe", "accordion", "bandoneon", "kalimba", "shenai", "pan_flute"],   // plucked/free-reed/world color
-    synth:  ["saw_wave", "square_lead", "charang", "chiffer_lead", "fifth_sawtooth_wave", "bass_lead", "star_theme", "fantasia", "crystal", "echo_drops"],   // sampled GM synth-leads/FX
+    wind:   ["alto_sax", "tenor_sax", "soprano_sax", "baritone_sax", "flute", "clarinet", "oboe", "english_horn", "bassoon", "piccolo", "recorder", "pan_flute", "harmonica", "ocarina", "shenai", "shakuhachi", "whistle", "bottle_chiff"],
+    world:  ["koto", "sitar", "shamisen", "dulcimer", "harp", "banjo", "bagpipe", "accordion", "bandoneon", "kalimba", "shenai", "pan_flute", "shakuhachi", "taiko_drum", "agogo"],   // plucked/free-reed/world color
+    synth:  ["saw_wave", "square_lead", "charang", "chiffer_lead", "fifth_sawtooth_wave", "bass_lead", "star_theme", "fantasia", "crystal", "echo_drops", "calliope_lead", "polysynth", "brightness"],   // sampled GM synth-leads/FX
     // MELODIC = the broad, coherent lead palette an unmapped generic synth draws
     // from (winds + mallets + world + a keyboard/plucked touch) — spice, not chaos.
-    melodic:["flute", "clarinet", "oboe", "alto_sax", "soprano_sax", "pan_flute", "recorder", "ocarina", "harmonica",
+    melodic:["flute", "clarinet", "oboe", "alto_sax", "soprano_sax", "pan_flute", "recorder", "ocarina", "harmonica", "shakuhachi", "whistle", "woodblock",
              "vibraphone", "marimba", "glockenspiel", "celesta", "kalimba", "music_box", "xylophone",
              "koto", "sitar", "shamisen", "dulcimer", "harp", "banjo", "accordion", "bandoneon", "shenai"],
   };

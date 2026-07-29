@@ -299,9 +299,12 @@
       }
       const m = SE.mapEvents(E, one, ev, { lo, hi, units });
       const barLenFrames = Math.max(BS, Math.round((hi - lo) * spb * SR / BS) * BS);
-      const r = { one, units, sig: sigOf(units), spb, lo, hi, events: m.events, fxParams,
+      const r = { one, song: st, units, sig: sigOf(units), spb, lo, hi, events: m.events, fxParams,
         sweepsRaw: m.sweeps, found: m.found, foundSources: one.foundSources || [], meta,
         barLenFrames, musicalSec: (hi - lo) * spb, ev };   // ev = note-level buildEvents (this bar's collapsed section) for the offline MIDI exporter
+      // `song` is the WHOLE-FORM state this bar was collapsed from — `one` carries
+      // sections:[sec], so anything asking "what can this song voice across all
+      // its sections" (the decode warm set) has to read `song`, not `one`.
       advance();
       return r;
     };
@@ -684,6 +687,30 @@
         .then(({ v }) => { samplerBufs[srcId] = v || null; samplerBufJobs.delete(srcId); });
       return true;
     }
+    // WARM SET — the sampler zone srcIds this SONG can voice, across every
+    // section, memoised so buildSchedule runs once per real instrument change
+    // rather than once a bar. Falls back to the bar's own units if the schedule
+    // cannot be built (a transitional state mid-flip), which is never worse than
+    // the per-bar kick already covering them.
+    let _warmKey = null, _warmList = [];
+    function warmSetFor(r) {
+      // the WHOLE-FORM state: `one` is collapsed to a single section, so reading it
+      // would see only the instruments THIS bar voices — and the late arrival is
+      // exactly the case the warm-ahead exists for.
+      const one = (r && (r.song || r.one)) || null; if (!one) return [];
+      const key = (one.instruments || 0) + "|" + ((one.genreMeta && one.genreMeta.genres) || [])[0] +
+        "|" + (one.instrumentSeed != null ? one.instrumentSeed : one.seed);
+      if (key === _warmKey) return _warmList;
+      _warmKey = key;
+      const ids = [], seen = new Set();
+      const take = (units) => { for (const u of Object.values(units || {}))
+        if (u && u.sampler) for (const z of (u.sampler.zones || []))
+          if (z.srcId && !seen.has(z.srcId)) { seen.add(z.srcId); ids.push(z.srcId); } };
+      try { take(SE.buildSchedule(E, one).units); } catch (e) { take(r.units); }
+      if (!ids.length) take(r.units);
+      _warmList = ids;
+      return ids;
+    }
     // ── sampler players, one per unit key. INSERTS-ON-SAMPLED-VOICES (ring
     // path): a sampled unit whose resolved state declares an insert chain gets
     // ONE long-lived Web Audio twin chain (SP.buildInsertNodes) between its
@@ -925,8 +952,18 @@
       // burst after every genre flip too, and it still buys ~16 bars of head start.
       // (An `inFlight === 0` idle gate was tried first and almost never came up
       // true — it delayed the warm to bar 26 of 29, i.e. to no effect.)
-      for (const s of (r.foundSources || []))
-        if (s && s.id && s.id.slice(0, 4) === "ins_" && kickSamplerBuf(s.id, r.foundSources)) break;
+      // SCOPE: the zones THIS SONG can voice, not every `ins_` row in
+      // foundSources. The sampled-by-default pass injects the WHOLE candidate
+      // library there so any pick is playable — measured, 629 zone rows / 123
+      // instruments / ~105 MB on a single state — so trickling over foundSources
+      // would slowly fetch the entire instrument library over a long ride. What
+      // the song can actually voice is what buildSchedule resolves across all its
+      // sections (the same enumeration the WAV-FIRST route decodes up front), and
+      // that is a handful of instruments, including the ones a LATER section
+      // brings on — which is the whole point, since the transit form's metal solo
+      // is exactly such a late arrival. Memoised on the instruments object +
+      // genre, so it is one buildSchedule per genuine instrument change.
+      for (const id of warmSetFor(r)) if (kickSamplerBuf(id, r.foundSources)) break;
       for (const p of pieces) { if (stream.readyToFeed) postFeed(stream, p); else stream.preFeed.push(p); }
     }
     function flushPending(stream) {

@@ -852,6 +852,33 @@
     // measured dist2 A2: rms -11.6dB crest 11.6dB (vs GM overdrive crest 14.7 —
     // sustained grind, not decay). di_guitar is the raw pickup signal (-27dB RMS by
     // design): ONLY claim it behind an insert_higain staged amp — the real amp chain.
+    // ---- the rest of the melodic bank ------------------------------------
+    // 134 GM presets were extracted; 108 were registered, so 26 real instruments
+    // sat on disk that no genre could ever ask for. These 15 are the ones that
+    // are INSTRUMENTS: the pad shelf's missing atmospheres (warm/halo/metal pad,
+    // polysynth, soundtrack, brightness), a shakuhachi, a taiko, tuned
+    // percussion (woodblock, melodic tom, agogo) and the leads GM keeps in its
+    // synth bank (calliope, bottle chiff, whistle, drawbar organ). The other 11
+    // are GM's SOUND-EFFECTS bank — applause, gun shot, helicopter, telephone,
+    // bird tweet, sea shore's siblings, fret/breath noise, reverse cymbal — which
+    // are not instruments and are deliberately still unregistered, plus a GM
+    // tenor_sax the FreePats one already beats. Zone metadata is verbatim
+    // extractor output (faust/build/extract-gm.js zones.json).
+    shakuhachi: { label:"Shakuhachi (FluidR3, MIT)", dir:"shakuhachi", sr:44100, zones:[{file:"z00_r72.wav",root:72,lo:0,hi:127,loop:1,ls:31772,le:69493}] },
+    warm_pad: { label:"Warm Pad (FluidR3, MIT)", dir:"warm_pad", sr:44100, zones:[{file:"z00_r84.wav",root:84,lo:0,hi:108,loop:1,ls:36638,le:51214}] },
+    halo_pad: { label:"Halo Pad (FluidR3, MIT)", dir:"halo_pad", sr:44100, zones:[{file:"z00_r84.wav",root:84,lo:0,hi:127,loop:1,ls:19277,le:45867}] },
+    metal_pad: { label:"Metal Pad (FluidR3, MIT)", dir:"metal_pad", sr:44100, zones:[{file:"z00_r84.wav",root:84,lo:0,hi:108,loop:1,ls:37282,le:73229}] },
+    polysynth: { label:"Polysynth (FluidR3, MIT)", dir:"polysynth", sr:44100, zones:[{file:"z00_r84.wav",root:84,lo:0,hi:127,loop:1,ls:19277,le:45867}] },
+    soundtrack: { label:"Soundtrack (FluidR3, MIT)", dir:"soundtrack", sr:44100, zones:[{file:"z00_r84.wav",root:84,lo:0,hi:108,loop:1,ls:36638,le:51214}] },
+    taiko_drum: { label:"Taiko Drum (FluidR3, MIT)", dir:"taiko_drum", sr:44100, zones:[{file:"z00_r60.wav",root:60,lo:0,hi:127,loop:0,ls:8,le:44792}] },
+    woodblock: { label:"Woodblock (FluidR3, MIT)", dir:"woodblock", sr:44100, zones:[{file:"z00_r60.wav",root:60,lo:0,hi:127,loop:0,ls:8,le:13368}] },
+    brightness: { label:"Brightness (FluidR3, MIT)", dir:"brightness", sr:44100, zones:[{file:"z00_r84.wav",root:84,lo:0,hi:127,loop:1,ls:68964,le:94892}] },
+    bottle_chiff: { label:"Bottle Chiff (FluidR3, MIT)", dir:"bottle_chiff", sr:44100, zones:[{file:"z00_r84.wav",root:84,lo:0,hi:127,loop:1,ls:8008,le:26234}] },
+    calliope_lead: { label:"Calliope Lead (FluidR3, MIT)", dir:"calliope_lead", sr:44100, zones:[{file:"z00_r84.wav",root:84,lo:0,hi:108,loop:1,ls:24827,le:63742}] },
+    whistle: { label:"Whistle (FluidR3, MIT)", dir:"whistle", sr:44100, zones:[{file:"z00_r96.wav",root:96,lo:0,hi:127,loop:1,ls:16015,le:16434}] },
+    drawbarorgan: { label:"Drawbar Organ (FluidR3, MIT)", dir:"drawbarorgan", sr:44100, zones:[{file:"z00_r72.wav",root:96,lo:0,hi:127,loop:1,ls:15569,le:67826}] },
+    melodic_tom: { label:"Melodic Tom (FluidR3, MIT)", dir:"melodic_tom", sr:44100, zones:[{file:"z00_r52.wav",root:53.23,lo:0,hi:127,loop:0,ls:8,le:44265}] },
+    agogo: { label:"Agogo (FluidR3, MIT)", dir:"agogo", sr:44100, zones:[{file:"z00_r78.wav",root:78,lo:0,hi:108,loop:0,ls:8,le:12387}] },
     crunch_guitar: { label:"Crunch Guitar (FreePats FSBS dist2, CC0)", dir:"crunch_guitar", sr:44100, zones:[{file:"z00_r36.wav",root:36,lo:0,hi:38,loop:0,ls:0,le:0},{file:"z01_r45.wav",root:45,lo:43,hi:46,loop:0,ls:0,le:0},{file:"z02_r50.wav",root:50,lo:50,hi:51,loop:0,ls:0,le:0},{file:"z03_r59.wav",root:59,lo:57,hi:59,loop:0,ls:0,le:0},{file:"z04_r64.wav",root:64,lo:63,hi:65,loop:0,ls:0,le:0},{file:"z05_r72.wav",root:72,lo:72,hi:72,loop:0,ls:0,le:0},{file:"z06_r77.wav",root:77,lo:76,hi:78,loop:0,ls:0,le:0},{file:"z07_r85.wav",root:85,lo:84,hi:127,loop:0,ls:0,le:0}] },
     di_guitar: { label:"DI Electric Guitar (FreePats FSBS direct, CC0)", dir:"di_guitar", sr:44100, zones:[{file:"z00_r36.wav",root:36,lo:0,hi:38,loop:0,ls:0,le:0},{file:"z01_r45.wav",root:45,lo:43,hi:46,loop:0,ls:0,le:0},{file:"z02_r50.wav",root:50,lo:50,hi:51,loop:0,ls:0,le:0},{file:"z03_r59.wav",root:59,lo:57,hi:59,loop:0,ls:0,le:0},{file:"z04_r64.wav",root:64,lo:63,hi:65,loop:0,ls:0,le:0},{file:"z05_r72.wav",root:72,lo:72,hi:72,loop:0,ls:0,le:0},{file:"z06_r77.wav",root:77,lo:76,hi:78,loop:0,ls:0,le:0},{file:"z07_r85.wav",root:85,lo:84,hi:127,loop:0,ls:0,le:0}] },
     // FreePats Upright Piano KW (CC0 1.0; a Kawai upright in a living room, 2017) —

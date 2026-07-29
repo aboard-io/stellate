@@ -5,10 +5,11 @@ the decisions already taken — the measurements are kept so nobody re-derives t
 and nobody re-litigates a settled call. The queue this file carried through
 Stages A–F is finished, and the history of it is in git rather than here.
 
-**What is actually still open** is short: whether to register any of the 26
-extracted-but-unregistered instruments (a taste call, under "The instrument
-palette"), and the standing note about pinning a bed-count definition before
-quoting one again (under "The media budget"). Everything else below is a record.
+**Nothing is open.** Every gate in the repository passes, the instrument palette
+is widened and the last 15 real instruments are registered and wired, and the
+media budget has a pinned, reproducible definition (`tools/audit/bed-budget.js`).
+What follows is the record of how each was decided, kept so nobody re-derives the
+measurements and nobody re-litigates a settled call.
 
 `verify.sh` is 13/13. `node engine/genre-verifier.js matrix --no-cache` prints
 `diagonal dominant: 274/274`. **Every gate in the repository passes** — the
@@ -240,11 +241,33 @@ program name that is not what a musician would call it; and GM programs 97-104 /
 the widened shelves made reachable. Both now take the character-phrase path the
 naming layer already had answers for.
 
-**Still open (needs an ear, not a number):** the 26 extracted-but-unregistered
-instruments. Registering them changes nothing on its own — an instrument only
-sounds once a pool names it — and several are the GM sound-effects bank, which
-belongs nowhere. `shakuhachi`, `warm_pad`, `halo_pad`, `metal_pad`, `polysynth`,
-`soundtrack`, `taiko_drum` and `woodblock` are the real candidates.
+**And the missing 15 are registered and wired.** Of the 26 extracted-but-unregistered
+presets, 15 are INSTRUMENTS and are now in `SAMPLERS` with their extractor zone
+metadata, and named in the pools that should have had them: the pad shelf gains
+GM's actual pad bank (`warm_pad`, `halo_pad`, `metal_pad`, `polysynth`,
+`soundtrack`, `brightness`), the bass chair gains two more tuned drums
+(`taiko_drum`, `melodic_tom`) beside the timpani, and the lead families gain
+`shakuhachi`, `whistle`, `bottle_chiff`, `calliope_lead`, `drawbarorgan`,
+`woodblock` and `agogo`. The remaining 11 are GM's SOUND-EFFECTS bank —
+applause, gun shot, helicopter, telephone, bird tweet, fret/breath noise,
+reverse cymbal — which are not instruments and stay unregistered on purpose,
+plus a GM `tenor_sax` the FreePats one already beats.
+
+| | at the start of the day | now |
+|---|---|---|
+| registered in `SAMPLERS` | 108 | **123** |
+| reached by some state | 102 | **122** (only `synth_drum`, an unpitched GM drum patch, is unused) |
+| overall effective instruments | 62.1 | **95.0** |
+| bass distinct / effective | 21 / 10.4 | **43 / 35.9** |
+| pad distinct / effective | 45 / 21.9 | **60 / 43.6** |
+| melody distinct / effective | 81 / 54.5 | **98 / 69.6** |
+
+Checked: 825,424 pitched sampler notes across the catalogue, every one resolving
+to a real zone; every registered zone file present on disk; matrix 274/274. The
+state drift is purely additive — zero removals, `samplerLib` gains exactly the 15,
+and the rest of every resolved state is byte-identical.
+
+**Nothing is left open here.**
 
 ---
 
@@ -281,12 +304,32 @@ comes from `paceSpeed()` and the sounding bar's duration — so the per-run fenc
 the moving horizon and the resume behaviour are unchanged; a session simply pays
 for five minutes ahead instead of ten.
 
-One loose end for whoever revisits this: **pin the definition before quoting the
-number again.** The 2.75 beds/track above is not reproducible from the tree as
-written — counting distinct section-level bed `sourceId`s over 274 genres × 5
-seeds gives 3.44 (max 6), with BBC reach 38.5% rather than 35.3%. The
-disagreement is method, not drift, and it is the sort of thing that turns into a
-false regression later.
+**The definition is pinned: `tools/audit/bed-budget.js`.** The 2.75 above was not
+reproducible from the tree — counting section-level bed `sourceId`s gave 3.44,
+counting every fetched found source gave 5.56, and neither matched. A budget
+number nobody can re-derive becomes a false regression the first time someone
+measures it differently, so that tool IS the definition now, and it reports all
+three counts side by side instead of picking one:
+
+```
+bed budget — 1370 states (274 genres x seeds 1,3,5,7,9)
+  BEDS        3.44 per track (max 6), 1.31 MB   BBC reach 38.5%
+  FOUND       3.98 per track, 1.51 MB   (beds + breaks + chops + hits + vox)
+  INSTRUMENT  23 zones per track, 3.21 MB   (what the song can VOICE)
+  a track's fetched media: 4.72 MB
+```
+
+The INSTRUMENT line matters most and was never counted before. A state's
+`foundSources` carries the WHOLE candidate sampler library — measured 629 zone
+rows, ~105 MB — because the sampled-by-default pass injects it so any pick is
+playable. What a song can actually voice is `buildSchedule`'s units: 23 zones,
+3.21 MB. Counting the injected list would overstate a track's cost 33×, and
+**something already was**: the warm-ahead trickle added this round walked
+`foundSources` directly, so on a long ride it would have slowly fetched the entire
+instrument library. It is now scoped to the schedule, and warms from the
+whole-form state rather than the collapsed per-bar one so a late-arriving
+instrument still gets its runway (the transit metal solo: first requested bar 10,
+needed at bar 29).
 
 ---
 
