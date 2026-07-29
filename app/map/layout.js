@@ -317,19 +317,35 @@ export function computeGenreLayout(){
 export function seedDefaultLoop(){
   S.startBar=0;   // a fresh loop starts fresh — no inherited resume measure
   const c={x:MAP_CENTER.x,y:MAP_CENTER.y};
-  // LOOP SPREAD. The world is far taller than it is wide, so min(W,H) is the
-  // WIDTH and a radius scaled off it keeps the opening loop inside a narrow
-  // sliver of a very tall map. The measured spread does not scale with this
-  // number — the two outer points snap to the nearest genre, so the triangle
-  // saturates — which is why this is 3x rather than the 2-3x it buys:
-  // perimeter 1853 -> 4523 (2.4x), legs 414/911/529 -> 1251/2087/1185.
-  // Loop DURATION is unaffected: paceSpeed scales with the perimeter, so the
-  // traveler simply moves faster and crosses more genres in the same wall time.
-  const rad=3*0.34*Math.min(WORLD_W,WORLD_H)/2;
+  // LOOP SPREAD, PER AXIS. drawMap fits each axis to the viewport independently
+  // (draw.js: X = x·width/WORLD_W, Y = y·height/WORLD_H), and the world is ~10x
+  // taller than it is wide, so one world unit is ~18x more screen pixels across
+  // than down. A CIRCULAR radius in world units therefore draws as a nearly flat
+  // ellipse on screen: the "straight up" waypoint moved ~100px while its
+  // neighbour moved ~1800, which is why two of the three dots overlapped no
+  // matter how far the radius was pushed.
+  //
+  // Scaling each radius by ITS OWN world extent cancels the distortion — a world
+  // ellipse of the same proportions as the world renders as a circle scaled to
+  // the viewport. LOOP_SPREAD is that radius as a fraction of each extent, so it
+  // reads the same on any screen and at any zoom.
+  //
+  // Loop DURATION is unaffected: paceSpeed scales with the perimeter and
+  // loopDuration does not, so a wider loop crosses more genres in the same wall
+  // time rather than taking longer.
+  const LOOP_SPREAD=0.16;
+  const radX=LOOP_SPREAD*WORLD_W, radY=LOOP_SPREAD*WORLD_H;
   const gs=Object.keys(POS);
   const used=new Set(), outer=[];
-  for(const ang of [-Math.PI/2, -Math.PI/2+2*Math.PI/3]){   // top, lower-right (centre itself is node 1 — a 3-point triangle)
-    const tx=c.x+rad*Math.cos(ang), ty=c.y+rad*Math.sin(ang);
+  // The two LOWER vertices of the same equilateral triangle (30 deg and 150 deg),
+  // not the top one. The dropped vertex sat straight up, which is the expensive
+  // direction: 200px of screen separation costs 138 world units across but 2506
+  // down, and world distance is what the traveler has to walk. Rotating off the
+  // vertical buys the separation an order of magnitude cheaper — measured, this
+  // shape reaches a 380px minimum gap for a 4432 perimeter, where the vertical
+  // one needed 11954 for the same gap and then could not finish the loop.
+  for(const ang of [-Math.PI/2+2*Math.PI/3, -Math.PI/2+4*Math.PI/3]){
+    const tx=c.x+radX*Math.cos(ang), ty=c.y+radY*Math.sin(ang);
     let best=null, bd=Infinity;
     for(const g of gs){ if(used.has(g))continue;
       const d=Math.hypot(POS[g][0]-tx,POS[g][1]-ty); if(d<bd){bd=d;best=g;} }
