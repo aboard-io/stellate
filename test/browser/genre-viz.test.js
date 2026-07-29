@@ -252,6 +252,40 @@ async function main() {
   console.log(`  prelude cbeats=${H.cbeats} view=${H.view} ruler=${H.spans} pages=${H.pages} rolls=${H.rolls}/${H.lanes} ind="${H.ind}"`);
   console.log(`  house   cbeats=${H2.cbeats} view=${H2.view} ruler=${H2.spans} pages=${H2.pages}`);
 
+  // ---- M: THE CHORD CHIPS ARE THE SOUNDING CHORDS. The ⓘ used to re-derive the
+  // reharm walk itself — its own CsdTheory.reharmonize call on its own copy of the
+  // +40961 stream offset — so the chips matched the audio only while two
+  // implementations stayed in step, and nothing checked that they did. Both sides
+  // now call CsdEngine.resolveProgression; this binds them: over every genre whose
+  // state carries theory.reharm (where a drift would actually show), the panel's
+  // chip list must equal the engine's resolved chord names for the same state.
+  const M = await page.evaluate(() => {
+    const E = window.CsdEngine, K = window.GenreKernel;
+    if (!E || !E.resolveProgression) return { skip: "no resolveProgression on the engine" };
+    const out = { checked: 0, reharmed: 0, mismatch: [], skeletonSame: 0 };
+    for (const g of Object.keys(window.__X.POS).slice(0, 40)) {
+      let st; try { st = K.track(g, { seed: 7 }); } catch (e) { continue; }
+      if (!(st.theory && st.theory.reharm)) continue;
+      const viz = window.__VIZ.harmonyFor ? window.__VIZ.harmonyFor(st) : null;
+      const eng = E.resolveProgression(st);
+      const engNames = (eng.chords || []).map((c) => String((c && c.name) || "")).filter(Boolean);
+      out.checked++;
+      if (!viz) { out.mismatch.push(g + ": panel produced no harmony"); continue; }
+      if (JSON.stringify(viz.chords) !== JSON.stringify(engNames)) out.mismatch.push(g + ": " + viz.chords.join(",") + " vs " + engNames.join(","));
+      const sk = (E.getProgression(st.progression).chords || []).map((c) => c.name);
+      if (JSON.stringify(sk) === JSON.stringify(engNames)) out.skeletonSame++; else out.reharmed++;
+    }
+    return out;
+  });
+  if (M.skip) { ok(false, `M1: ${M.skip}`); }
+  else {
+    ok(M.checked >= 5, `M1: only ${M.checked} reharm genres checked (want >=5)`);
+    ok(M.mismatch.length === 0, `M2: ${M.mismatch.length} chord-chip mismatches vs the engine: ${M.mismatch.slice(0, 3).join(" | ")}`);
+    ok(M.reharmed >= 1, `M3: none of the ${M.checked} checked genres actually reharmonized — the check would pass vacuously`);
+    console.log(`\n=== CHORD CHIPS == ENGINE ===`);
+    console.log(`  ${M.checked} reharm genres checked, ${M.reharmed} genuinely reharmonized, ${M.mismatch.length} mismatches`);
+  }
+
   // ---- J: descriptions never name the source (no sampler/DX7/soundfont/raw ids),
   // and the MIND readout renders for a genre whose state carries the MUSIC-MIND axes.
   const J = await page.evaluate(() => {

@@ -1740,24 +1740,35 @@
     });
   }
 
+  // THE CHORDS THIS STATE ACTUALLY SOUNDS — the one place the skeleton→reharm
+  // resolution happens, so nothing can hold a different answer.
+  //
+  // MUSIC-MIND organ #1 (state.theory): when `reharm` is set the named
+  // progression is only the SKELETON (key/mode/length inferred from it) —
+  // CsdTheory regenerates the chords per song on its OWN stream (seed+40961,
+  // the MUSIC-MIND contract), so the functional walk never touches the master
+  // rng and a state WITHOUT the knob stays byte-identical. Object.assign over
+  // the skeleton carries its non-chord fields (composed/composed2/label…)
+  // so the hand melody tables still resolve against the reharmonized song.
+  // Organ absent (a context that never loaded theory.js): fall back to the
+  // plain progression — never throw over an expression organ.
+  //
+  // EXPORTED because buildEvents was not the only caller: the ⓘ readout
+  // (app/audio/notefeed.js resolveHarmony) re-derived the same walk — same
+  // table, same +40961 offset — to label the chord chips, so the panel and the
+  // audio agreed only as long as two copies of this stayed in step, and no gate
+  // bound them. One function, called by both, is the binding.
+  function resolveProgression(state){
+    const base=getProgression(state.progression);
+    if(!(state.theory&&state.theory.reharm&&CsdTheoryRef&&CsdTheoryRef.reharmonize)) return base;
+    const th=state.theory;
+    return Object.assign({},base,CsdTheoryRef.reharmonize(base,{
+      adventure:th.adventure, color:th.color, voicing:th.voicing,
+      tables:th.tables,   // "corpus" opts into the MINED trove tables (theory.js)
+      seed:(((state.seed??1)>>>0)+40961)>>>0 }));
+  }
   function buildEvents(state){
-    let prg=getProgression(state.progression);
-    // MUSIC-MIND organ #1 (state.theory): when `reharm` is set the named
-    // progression is only the SKELETON (key/mode/length inferred from it) —
-    // CsdTheory regenerates the chords per song on its OWN stream (seed+40961,
-    // the MUSIC-MIND contract), so the functional walk never touches the master
-    // rng and a state WITHOUT the knob stays byte-identical. Object.assign over
-    // the skeleton carries its non-chord fields (composed/composed2/label…)
-    // so the hand melody tables still resolve against the reharmonized song.
-    // Organ absent (a context that never loaded theory.js): fall back to the
-    // plain progression — never throw over an expression organ.
-    if(state.theory&&state.theory.reharm&&CsdTheoryRef&&CsdTheoryRef.reharmonize){
-      const th=state.theory;
-      prg=Object.assign({},prg,CsdTheoryRef.reharmonize(prg,{
-        adventure:th.adventure, color:th.color, voicing:th.voicing,
-        tables:th.tables,   // "corpus" opts into the MINED trove tables (theory.js)
-        seed:(((state.seed??1)>>>0)+40961)>>>0 }));
-    }
+    let prg=resolveProgression(state);
     // ---- ODD METER:state.meter = {beats:3|6, unit:4|8} ----
     // 3/4 (beats:3, unit:4 — the engine beat is the quarter) and compound 6/8
     // (beats:6, unit:8 — the engine beat is the EIGHTH; the pulse is the
@@ -2929,7 +2940,7 @@
   const api={ buildEvents, defaultState, defaultInstruments, voicing, soloVoices, euclidBeats,
     KITS,   // pulse-set kit lanes (KERNEL-V4 Phase 1): kits are data; drumEvents is the one interpreter
     sectionTag,   // form-graph typed-node classifier (Phase 5)
-    PROGRESSIONS, getProgression, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS,
+    PROGRESSIONS, getProgression, resolveProgression, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS,
     PERC_PATTERNS, PERC_VOICES, PERC_NOTE,
     resolvePushPull,   // (timeFeel, bpm) -> {lane:±beats}|null — the ONE fold of pushPull+pushPullMs (seamwalk gate reads it rather than re-deriving)
     isModel, SOURCE_CLASS, sourceClassOf, pchAdd, pchToMidi };

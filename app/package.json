@@ -1,0 +1,6 @@
+{
+  "//": "NOT a package — a MODULE-TYPE MARKER, and nothing else. Everything under app/ is a native browser ES module, but the repo root declares \"type\": \"commonjs\" (every tool and gate in tools/ and test/ is CommonJS). Node resolves module type from the NEAREST package.json, so without this file node loads app/**/*.js as CommonJS and throws on the first `export` — which is exactly what stopped the three pure-node starcruise proofs (test/unit/{traits,flight,planet}.test.mjs) from running at all. One file scopes ESM to app/ without renaming a single module, touching an importer, or converting the root package. The browser never reads it; no build step consumes it; do not add dependencies here.",
+  "name": "stellate-app",
+  "private": true,
+  "type": "module"
+}

@@ -15,20 +15,6 @@ make each item decidable.
 Known-red, and none of them regressions — each fails identically on an older
 tree. Listed so nobody rediscovers them as surprises.
 
-**Three pure-node starcruise probes cannot run at all.**
-`test/unit/{traits,flight,planet}.test.mjs`. The root cause is not the tests: it
-is that `app/starcruise/*.js` are ES modules living in a `type: commonjs`
-package, so node loads them as CommonJS and throws on the first `export`. The
-tests were also mixing `require` with `import`; that part is fixed, so the error
-now names the real cause instead of hiding it behind a syntax error in the test.
-
-Fixing it properly is a package-type decision, not a patch. Either the app
-modules become `.mjs` — touching every importer and the HTML `<script
-type=module>` tags, which is a live-site change — or `package.json` declares
-`"type": "module"` and every CommonJS tool and gate in the repo converts with it.
-Neither is small. The code these probes cover *is* exercised in a real browser by
-the starcruise gates, so what is lost is a fast pure-node check, not coverage.
-
 **Browser gates, last measured red:** `bg-handoff` (`h.__bgState is not a
 function`), `live-resilience` (`STALL`), `transit-arrival` (dwell 0, peak w=0),
 `starcruise-barcadence` (1 of 16 — worst boundary camera move 6.91× the local
@@ -39,6 +25,54 @@ fetched media and pass once `tools/fetch/` has run; `corpus-db` needs the
 external MIDI drive. `mutate`, `near-duplicate`, `simulate-path`, `snare-law`,
 `stem-parity` and `vocoder` fail identically on an older tree — genuinely
 pre-existing, never diagnosed.
+
+`simulate-path` has been narrowed since: everything it gates passes except check
+5a, post-arrival identity churn. On the old centre-anchored loop the worst
+segment churned 57 bars against an allowance of 6; the citypop loop's worst is
+21. Same failure, less of it — the re-tier in `targeting.js rebuildQueue` still
+does not converge for some arrivals, and that is the thing to diagnose.
+
+---
+
+## Fixed from the field — the two reports that started this round
+
+Kept because both were invisible to `verify.sh`, and the reason each was
+invisible is the useful part.
+
+**"All the tracks are playing but only two show notes in the ⓘ."**
+(`?seed=196&path=1236.12625,1107.11381,2335.13068&m=55`) The live walk picks its
+section BY INDEX (`secs[secIdx]`); the name is a label. A bar is scheduled a
+runway ahead of sounding, so a glide across a genre boundary could replace
+`S.playing.sections` with a differently-named form in between — and the readout,
+which looked the section up BY NAME, found nothing and fell back to
+`sections[0]`, the sparse opener. Reproduced exactly: at bar 61 the panel drew
+pad + one found ribbon while the audio played a full outro. `barInfo` now carries
+`secIdx`/`nsec` and the section object the walk actually rendered, and
+`notefeed.js` resolves name → that object → index, never "take the first one".
+
+**"crunch guitar says it is missing."**
+(`?seed=91681&path=1923.12003,1177.9207,2042.7423&m=314`) Two real defects, one
+of them not the reported one:
+
+- The ring (desktop) route kicked a sampler zone's decode on the first bar that
+  SOUNDED it. The transit form's metal solo is the catalogue's worst case —
+  crunch_guitar is 8 zones / ~4.7 MB that nothing touches until the "solo"
+  section, ~29 bars in — so it got a one-bar runway and lost it on any slow link.
+  Now one not-yet-needed zone of the state's declared instruments is warmed per
+  bar. The rate was measured, not guessed: warming ALL of them at bar 1 fixed the
+  solo and cost the opening (anomalies 1 → 2, the station-voice decode losing the
+  race); one per bar starts at bar 6, has all eight queued by ~13, and leaves the
+  opening's anomaly count exactly where it was.
+- `kickSamplerBuf`/`kickBuffer` marked in-flight decodes by writing `undefined`,
+  which is the same value their "never asked" guard reads — so every later bar
+  re-requested a file already being fetched. Measured 16 requests for 8 zones,
+  i.e. a 4.7 MB instrument pulled twice while the next bars waited. Both now
+  track in-flight ids in a set, as the WAV-FIRST route always did.
+
+Neither could be caught by the release suite, which does not ride the live path
+under a slow link. The audit summary (`handle.auditSummary()`) is the instrument
+that found both; it deserves a gate that rides a throttled session and asserts an
+anomaly ceiling.
 
 ---
 
@@ -85,10 +119,7 @@ whether the bed pools should cap lower now that precache is bounded.
 - **5.9% of hits-layer-carrying tracks fire zero hits.** A layer that draws
   nothing is indistinguishable from no layer. If that reads badly by ear, the fix
   is a floor of one kept slot per section rather than a lower skip probability.
-- **`resolveHarmony` duplicates `buildEvents`' reharm call** — same table, same
-  `+40961` stream offset — so the ⓘ chord chips can silently drift from the audio
-  if that call site changes. No gate binds them. The durable shape is for
-  `buildEvents` to return its resolved chord list, which is an engine change.
+  That one is a taste call and needs a listen, not another number.
 
 ---
 
@@ -111,3 +142,21 @@ whether the bed pools should cap lower now that precache is bounded.
 - **`SOURCES.md`'s tier-3 rows for the removed video layer are retained
   deliberately.** The layer is gone; the ledger is the record that obligations are
   held on the material. Do not delete them.
+- **The pure-node starcruise probes needed a package-type MARKER, not a
+  package-type decision.** `test/unit/{traits,flight,planet}.test.mjs` could not
+  run because node resolves module type from the NEAREST `package.json` and the
+  only one above them said `type: commonjs`. Three four-line marker files —
+  `app/`, `vendor/simplex-noise/`, `vendor/three/`, matching the one
+  `vendor/espeak-ng/` already had — scope ESM to the directories that are ESM,
+  with no renames, no importer edits and no root-package conversion. All three
+  probes pass. (Two of them then failed on their own harnesses, not on the code
+  under test: `flight` parked for 4.0s against 3.0s of choreography plus a spring
+  lag, and its fake world handed the machine a filler weight larger than the genre
+  it was aiming at, so "approaching" read as receding. Both fixed in the test.)
+- **The ⓘ chord chips cannot drift from the audio any more.** `csd-engine.js`
+  exports `resolveProgression(state)` — the skeleton→reharm walk, one copy —
+  and `buildEvents` and `notefeed.js resolveHarmony` both call it. The event
+  bundle's shape is unchanged (so no fixture hash moved), and
+  `test/browser/genre-viz.test.js` check M binds them: over every reharm genre in
+  its sample the panel's chip list must equal the engine's resolved chord names
+  (29 genres, 29 genuinely reharmonized, 0 mismatches).

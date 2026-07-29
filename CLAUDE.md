@@ -256,6 +256,12 @@ docs in `docs/`.
   one exemption.)
 - `app/` — THE app (no framework, no bundler; native `<script type=module>` +
   one stylesheet). Shared state threaded via imports, NOT accidental globals.
+  `app/package.json` is NOT a package — it is a four-line `"type": "module"`
+  MARKER, so node (which resolves module type from the nearest `package.json`,
+  and would otherwise hit the root's `"type": "commonjs"`) can load these files
+  for the pure-node probes. `vendor/espeak-ng/`, `vendor/simplex-noise/` and
+  `vendor/three/` carry the same marker for the same reason. Never add
+  dependencies to them; the browser never reads them.
   Foldered by job — `core/` (state/world/share), `audio/` (live/targeting/fonts/
   precache/export/notefeed), `map/` (starmap + its five pieces + glyphs),
   `panels/` (panels/inside/readouts/background, plus `inside/`'s five surfaces),

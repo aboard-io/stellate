@@ -54,21 +54,34 @@ async function main() {
   await page.waitForTimeout(500);
   const loadErrs = errs.slice();
 
-  // ---- A/B: 3 waypoints, waypoint[0] at the map centre ----
+  // ---- A/B: 3 waypoints, waypoint[0] ON THE SPAWN STAR ----
+  // The loop used to open on the geometric centre of the chart — a point that
+  // names nothing. It now spawns on a named genre (__LOOP.spawn, its POS entry),
+  // so the first sound has a name; the assertion moved with it rather than being
+  // dropped, and the fallback case (spawn genre absent from POS → the old centre)
+  // is still accepted.
   const seed = await page.evaluate(() => ({
     n: __S.waypoints.length,
     wp0: { x: __S.waypoints[0].x, y: __S.waypoints[0].y },
     center: __X.mapCenter(),
     loop: window.__LOOP,
+    spawnPos: window.__LOOP && __X.POS[window.__LOOP.spawn] ? __X.POS[window.__LOOP.spawn] : null,
     world: __X.world(),
     closed: __X.pathClosed(),
   }));
   ok(seed.n === 3, `A: default waypoints = ${seed.n} (want exactly 3 — the default triangle)`);
-  const cErr = Math.hypot(seed.wp0.x - seed.center.x, seed.wp0.y - seed.center.y);
-  ok(cErr <= 2, `B: waypoint[0] off map centre by ${cErr.toFixed(2)} logical px (want <=2)`);
+  const anchor = seed.spawnPos ? { x: seed.spawnPos[0], y: seed.spawnPos[1] } : seed.center;
+  const cErr = Math.hypot(seed.wp0.x - anchor.x, seed.wp0.y - anchor.y);
+  ok(cErr <= 2, `B: waypoint[0] off the spawn (${seed.loop.spawn || "centre"}) by ${cErr.toFixed(2)} logical px (want <=2)`);
+  // …and the loop CLIMBS: each named stop is at least as danceable as the one
+  // before, which is the whole point of opening on a song and travelling toward a
+  // groove. __LOOP.energy is [spawn, …outer] in visiting order.
+  const en = (seed.loop && seed.loop.energy) || [];
+  const climbs = en.length >= 2 && en.every((e, i) => i === 0 || e >= en[i - 1] - 1e-9);
+  ok(climbs, `B2: default loop energy [${en.join(", ")}] does not rise monotonically`);
   console.log(`\n=== SEED ===`);
-  console.log(`  waypoints=${seed.n}  loop.genres=[${(seed.loop.genres||[]).join(", ")}]`);
-  console.log(`  centre=(${seed.center.x.toFixed(0)},${seed.center.y.toFixed(0)})  wp0=(${seed.wp0.x.toFixed(0)},${seed.wp0.y.toFixed(0)})  offBy=${cErr.toFixed(2)}px`);
+  console.log(`  waypoints=${seed.n}  spawn=${seed.loop.spawn}  loop.genres=[${(seed.loop.genres||[]).join(", ")}]  energy=[${en.join(", ")}]`);
+  console.log(`  anchor=(${anchor.x.toFixed(0)},${anchor.y.toFixed(0)})  wp0=(${seed.wp0.x.toFixed(0)},${seed.wp0.y.toFixed(0)})  offBy=${cErr.toFixed(2)}px`);
   console.log(`  world=${seed.world.w}x${seed.world.h}  loop.closed=${seed.loop.closed}`);
 
   // ---- C: closed-loop rendering + travelStep wrap ----

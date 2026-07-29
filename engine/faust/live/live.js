@@ -254,8 +254,17 @@
       const CBEATS = Math.max(2, Math.round(st.chordEvery || (st.meter ? 6 : 8)));   // meter default mirrors buildEvents (kernel states carry explicit chordEvery; this covers hand states — odd meter)
       const lo = ci * CBEATS, hi = lo + CBEATS;
       const ev = E.buildEvents(one);
+      // SECTION IDENTITY IS THE INDEX, NOT THE NAME. This walk selects secs[secIdx]
+      // — the name is only a label — and the app mutates the playing state under it
+      // (a glide across a genre boundary replaces st.sections wholesale with a form
+      // that names its parts differently). A bar scheduled a runway ahead therefore
+      // fires with a section NAME that no longer occurs in the state the ⓘ readout
+      // then reads, and a name-keyed lookup there silently fell back to sections[0]
+      // — the sparse opener — so the timeline drew one or two lanes while a full
+      // arrangement was sounding. Carry the index so a reader can resolve the same
+      // section this walk did (app/audio/notefeed.js).
       const meta = { serial, ci, nch, spb, cbeats: CBEATS, chord: (prg.chords[ci] || {}).name || "",
-        section: sec.name, absBeatLo: absBeat, lo };
+        section: sec.name, secIdx, nsec: secs.length, sec, absBeatLo: absBeat, lo };
       const advance = () => { absBeat += CBEATS; ci++; serial++;
         if (ci >= nch) { ci = 0; cycIdx++; if (cycIdx >= (secs[secIdx].cycles || 1)) { cycIdx = 0; secIdx = (secIdx + 1) % secs.length; } } };
       // LIGHT MIDI WALK (crash fix): the whole-path MIDI export only
@@ -628,25 +637,37 @@
     const decGate = makeDecGate(opts.decodeConcurrency, opts.decodeRetries, opts.decodeRetryMs);
     const bufCache = {};       // srcId -> AudioBuffer | null | undefined
     const bufFail = new Set();
+    const bufJobs = new Set();   // in flight — see samplerBufJobs below for why undefined won't do
     function kickBuffer(src) {
-      if (!src || bufCache[src.id] !== undefined) return;
+      if (!src || bufCache[src.id] !== undefined || bufJobs.has(src.id)) return;
       // SPEECH organ: a synthText source synthesizes (lazy wasm, url-keyed
       // cache inside FP.synthToBuffer via CsdSpeech.key) instead of fetching.
       if (src.synthText) {
-        bufCache[src.id] = undefined;
+        bufJobs.add(src.id);
         decGate.run(() => FP.synthToBuffer(ctx, src.synthText), (b) => !!(b && b.length), () => !abort)
-          .then(({ v }) => { bufCache[src.id] = (v && v.length) ? v : null; });
+          .then(({ v }) => { bufCache[src.id] = (v && v.length) ? v : null; bufJobs.delete(src.id); });
         return;
       }
       const url = src.url || (src.samplePath ? new URL(src.samplePath, SITE).href : null);
       if (!url || bufFail.has(url)) { bufCache[src.id] = null; return; }
-      bufCache[src.id] = undefined;
+      bufJobs.add(src.id);
       decGate.run(() => FP.decodeUrlToBuffer(ctx, url), (b) => !!(b && b.length), () => !abort)
-        .then(({ v }) => { if (v && v.length) bufCache[src.id] = v; else { bufFail.add(url); bufCache[src.id] = null; } });
+        .then(({ v }) => { if (v && v.length) bufCache[src.id] = v; else { bufFail.add(url); bufCache[src.id] = null; } bufJobs.delete(src.id); });
     }
     const samplerBufs = {};    // srcId -> AudioBuffer | null (RAW, sampler; null = REAL decode failure only)
+    // IN-FLIGHT SET. `samplerBufs[id] = undefined` below does not mark anything —
+    // undefined is the same value the guard reads as "never asked" — so a zone
+    // still decoding was re-kicked by EVERY later bar that referenced it, and each
+    // kick issued its own fetch + decode of the same file. Measured on a throttled
+    // ride: 16 requests for 8 zones, i.e. every byte of a 4.7 MB instrument pulled
+    // twice, competing with the decodes the next bars actually needed. This set is
+    // what "in flight" means; the stream route has always had its own (samplerJobs).
+    // A srcId is added only when a decode really starts, so the ABSENT-SOURCE UN-PIN
+    // below is untouched: a bar whose foundSources lack the src still records
+    // nothing and a later bar that carries it still kicks.
+    const samplerBufJobs = new Set();
     function kickSamplerBuf(srcId, foundSources) {
-      if (!SP || samplerBufs[srcId] !== undefined) return;
+      if (!SP || samplerBufs[srcId] !== undefined || samplerBufJobs.has(srcId)) return false;
       const src = (foundSources || []).find((s) => s.id === srcId);
       // ABSENT-SOURCE UN-PIN (the fugue->reggae total drum silence): caching null
       // for a zone whose SOURCE isn't in THIS bar's foundSources is PERMANENT —
@@ -655,12 +676,13 @@
       // scheduleNative skips the voice silently forever
       // (probe: 233 fed drum events, 0 note() calls). Leave the slot UNDEFINED so
       // the first bar whose foundSources DO carry the src kicks the decode.
-      if (!src) return;
+      if (!src) return false;
       const url = src.url || (src.samplePath ? new URL(src.samplePath, SITE).href : null);
-      if (!url) { samplerBufs[srcId] = null; return; }   // a present-but-urlless src is genuinely unplayable
-      samplerBufs[srcId] = undefined;
+      if (!url) { samplerBufs[srcId] = null; return false; }   // a present-but-urlless src is genuinely unplayable
+      samplerBufJobs.add(srcId);
       decGate.run(() => SP.decodeUrlRaw(ctx, url), (b) => !!b, () => !abort)
-        .then(({ v }) => { samplerBufs[srcId] = v || null; });
+        .then(({ v }) => { samplerBufs[srcId] = v || null; samplerBufJobs.delete(srcId); });
+      return true;
     }
     // ── sampler players, one per unit key. INSERTS-ON-SAMPLED-VOICES (ring
     // path): a sampled unit whose resolved state declares an insert chain gets
@@ -878,6 +900,33 @@
       // decode-ahead any found/sampler sources this bar needs (ready by playback)
       for (const f of (r.found || [])) kickBuffer((r.foundSources || []).find((s) => s.id === f.srcId));
       for (const e of (r.events || [])) { const u = r.units[e.unit]; if (u && u.sampler) for (const z of (u.sampler.zones || [])) kickSamplerBuf(z.srcId, r.foundSources); }
+      // …AND ONE MORE instrument zone the STATE declares but no bar has asked for
+      // yet — a trickle, exactly one per bar.
+      //
+      // The line above kicks a zone on the first bar that SOUNDS it, which leaves
+      // only the runway to fetch and decode it: fine for the lead that enters in
+      // bar 1, hopeless for an instrument that arrives mid-form. The transit form's
+      // metal solo is the worst case in the catalogue — crunch_guitar is 8 zones /
+      // ~4.7 MB that no bar touches until the "solo" section ~29 bars in, so it got
+      // a ONE-BAR runway, and on a slow link its first bars measure
+      // `melody[ins_crunch_guitar_*]`: the ⓘ paints the lane "✕ missing" and the
+      // solo really is silent. toState pushes every zone of every declared sampler
+      // into foundSources at vol 0 for exactly this kind of warming.
+      //
+      // ONE PER BAR, not all of them, and the number was measured rather than
+      // guessed. Over the same throttled transitwave ride (~2 Mbps, solo at bar 29),
+      // counting audit anomalies and the bar the crunch zones were first requested:
+      //   no warm-ahead      1 anomaly   · first request bar 28 (one bar of runway)
+      //   warm all, per bar  2 anomalies · bar 1  — the opening's own station-voice
+      //                                   decode lost the race to 4.7 MB of guitar
+      //   ONE per bar        1 anomaly   · bar 6  — all 8 queued by ~bar 13
+      // The trickle is self-throttling: it can never queue more than one extra
+      // decode against the bars about to play, it stays that gentle through the
+      // burst after every genre flip too, and it still buys ~16 bars of head start.
+      // (An `inFlight === 0` idle gate was tried first and almost never came up
+      // true — it delayed the warm to bar 26 of 29, i.e. to no effect.)
+      for (const s of (r.foundSources || []))
+        if (s && s.id && s.id.slice(0, 4) === "ins_" && kickSamplerBuf(s.id, r.foundSources)) break;
       for (const p of pieces) { if (stream.readyToFeed) postFeed(stream, p); else stream.preFeed.push(p); }
     }
     function flushPending(stream) {
@@ -1401,7 +1450,8 @@
       recordAudit(b);            // AUDIT-TRUTH: this bar is being heard now — file what was measured
       if (opts.onBar) try {
         opts.onBar({ serial: b.meta.serial, ci: b.meta.ci, nch: b.meta.nch, when: when,
-          spb: b.meta.spb, cbeats: b.meta.cbeats, chord: b.meta.chord, section: b.meta.section });
+          spb: b.meta.spb, cbeats: b.meta.cbeats, chord: b.meta.chord,
+          section: b.meta.section, secIdx: b.meta.secIdx, nsec: b.meta.nsec, sec: b.meta.sec });
       } catch (e) {}
     }
     // native found (bed/chop/vox) + sampler at playback — the same fabric the old
@@ -3091,7 +3141,8 @@
       if (!opts.onBar) return;
       try {
         opts.onBar({ serial: meta.serial, ci: meta.ci, nch: meta.nch, when: ctx.currentTime,
-          spb: meta.spb, cbeats: meta.cbeats, chord: meta.chord, section: meta.section });
+          spb: meta.spb, cbeats: meta.cbeats, chord: meta.chord,
+          section: meta.section, secIdx: meta.secIdx, nsec: meta.nsec, sec: meta.sec });
       } catch (e) {}
     }
     function startBarPoll() {

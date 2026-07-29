@@ -314,9 +314,17 @@ export function computeGenreLayout(){
   recomputeWorld();
   S.cursor={x:MAP_CENTER.x, y:MAP_CENTER.y};
 }
+// THE SPAWN POINT is a GENRE, not the geometric middle of the chart. The loop
+// used to open on MAP_CENTER — a point that names nothing, whose sound is
+// whatever three-way blend happens to sit at the centroid of a 274-star cloud.
+// Opening ON a star means the first thing anyone hears is a genre with a name,
+// and city pop is the one this instrument was built out of (the Royal Road
+// changes the whole space is spun from). Absent from POS (a genre can be
+// retired) it falls back to the old centre, so this never hard-fails.
+const SPAWN="citypop";
 export function seedDefaultLoop(){
   S.startBar=0;   // a fresh loop starts fresh — no inherited resume measure
-  const c={x:MAP_CENTER.x,y:MAP_CENTER.y};
+  const c=POS[SPAWN]?{x:POS[SPAWN][0],y:POS[SPAWN][1]}:{x:MAP_CENTER.x,y:MAP_CENTER.y};
   // LOOP SPREAD, PER AXIS. drawMap fits each axis to the viewport independently
   // (draw.js: X = x·width/WORLD_W, Y = y·height/WORLD_H), and the world is ~10x
   // taller than it is wide, so one world unit is ~18x more screen pixels across
@@ -336,7 +344,7 @@ export function seedDefaultLoop(){
   const LOOP_SPREAD=0.16;
   const radX=LOOP_SPREAD*WORLD_W, radY=LOOP_SPREAD*WORLD_H;
   const gs=Object.keys(POS);
-  const used=new Set(), outer=[];
+  const used=new Set([SPAWN]), outer=[];
   // The two LOWER vertices of the same equilateral triangle (30 deg and 150 deg),
   // not the top one. The dropped vertex sat straight up, which is the expensive
   // direction: 200px of screen separation costs 138 world units across but 2506
@@ -344,16 +352,41 @@ export function seedDefaultLoop(){
   // vertical buys the separation an order of magnitude cheaper — measured, this
   // shape reaches a 380px minimum gap for a 4432 perimeter, where the vertical
   // one needed 11954 for the same gap and then could not finish the loop.
+  //
+  // WHICH star at each vertex: not simply the NEAREST one. The opening loop is
+  // also the opening ARGUMENT — it should get more rhythmic as it goes, so the
+  // first minutes travel from a song into a groove rather than wandering. Two
+  // rules do that, and neither invents a curated list: candidates must be at
+  // least as danceable as the spawn (ENERGY, the same 0..1 score autoPath uses),
+  // and among those the pick maximizes energy less a distance penalty in
+  // ELLIPSE-NORMALIZED units — normalized, because a world unit down is worth ~10x
+  // a world unit across and an unnormalized penalty would just re-pick the
+  // nearest star. ENERGY_PULL is that penalty's weight: at 0.9 a star 30% of the
+  // way off its vertex must be ~0.27 more danceable to win it. If nothing near a
+  // vertex clears the spawn's own energy the filter drops (a sparse corner still
+  // gets a star, just not a climb).
+  const ENERGY_PULL=0.9;
+  const spawnE=ENERGY[SPAWN]!=null?ENERGY[SPAWN]:0;
   for(const ang of [-Math.PI/2+2*Math.PI/3, -Math.PI/2+4*Math.PI/3]){
     const tx=c.x+radX*Math.cos(ang), ty=c.y+radY*Math.sin(ang);
-    let best=null, bd=Infinity;
-    for(const g of gs){ if(used.has(g))continue;
-      const d=Math.hypot(POS[g][0]-tx,POS[g][1]-ty); if(d<bd){bd=d;best=g;} }
-    if(best){ used.add(best); outer.push({g:best,x:POS[best][0],y:POS[best][1]}); }
+    const cands=gs.filter(g=>!used.has(g)).map(g=>({ g,
+      nd:Math.hypot((POS[g][0]-tx)/radX,(POS[g][1]-ty)/radY), e:ENERGY[g]||0 }));
+    const climbing=cands.filter(x=>x.e>=spawnE);
+    const pool=climbing.length?climbing:cands;
+    let best=null, bs=-Infinity;
+    for(const x of pool){ const s=x.e-ENERGY_PULL*x.nd; if(s>bs){bs=s;best=x;} }
+    if(best){ used.add(best.g); outer.push({g:best.g,e:best.e,x:POS[best.g][0],y:POS[best.g][1]}); }
   }
+  // …and the loop is ORDERED by that climb: the calmer vertex first, the groove
+  // anchor last, so leg 1 warms up and leg 2 arrives. (Leg 3 is the ride home —
+  // the loop is closed, so the descent back into city pop is the rest before it
+  // all starts again.)
+  outer.sort((a,b)=>a.e-b.e);
   const wps=[{x:c.x,y:c.y}, ...outer.map(o=>({x:o.x,y:o.y}))];
-  window.__LOOP={center:{...c}, genres:outer.map(o=>o.g), count:wps.length, closed:true};
+  const named=POS[SPAWN]?SPAWN:"centre";
+  window.__LOOP={center:{...c}, spawn:named, genres:outer.map(o=>o.g), count:wps.length, closed:true,
+    energy:[spawnE, ...outer.map(o=>o.e)].map(e=>+e.toFixed(3))};
   set({waypoints:wps, travel:{seg:0,t:0}, queue:[],
-    status:"default loop: centre → "+outer.map(o=>o.g).join(" → ")+" → centre — ▶ LIVE to travel the loop"});
+    status:"default loop: "+named+" → "+outer.map(o=>o.g).join(" → ")+" → "+named+" — ▶ LIVE to travel the loop"});
   retarget(wps[0]);
 }

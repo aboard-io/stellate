@@ -31,14 +31,25 @@ function makeWorld() {
   return {
     w,
     // point the blend at ONE genre with a given nearness (top weight); the rest of
-    // the mass is spread onto a filler "other" so sum-normalisation is realistic.
+    // the mass is spread onto filler genres so sum-normalisation is realistic.
     aim(genre, nearness) { w.dominant = genre; w.nearness = nearness; },
     getTravel() {
       if (!w.dominant) return { weights: [], dominant: null, position: w.position, live: true };
       const top = w.nearness;
       const rest = Math.max(0, 1 - top);
       const weights = [{ g: w.dominant, w: top }];
-      if (rest > 1e-6) weights.push({ g: "__transit__", w: rest });
+      // ENOUGH FILLERS THAT THE AIMED GENRE IS ACTUALLY THE TOP WEIGHT. flight.js
+      // reads nearness as nearnessOf() = max(w)/sum(w), so a single filler holding
+      // the remainder BECOMES the top weight for any aim below 0.5 — aiming at 0.25
+      // fed the machine 0.75 and the descent ran BACKWARDS as the script "approached"
+      // (landProgress 0.686 falling to 0.518 while nearness rose 0.25 -> 0.60). That
+      // is the fake world contradicting itself, not a flight bug. Splitting the
+      // remainder across ceil(rest/top) fillers keeps every other weight strictly
+      // under the aim, so nearnessOf returns the number this helper promises.
+      if (rest > 1e-6) {
+        const k = Math.max(1, Math.ceil(rest / Math.max(top, 1e-6)));
+        for (let i = 0; i < k; i++) weights.push({ g: "__transit" + i + "__", w: rest / k });
+      }
       return { weights, dominant: top >= 0.5 ? w.dominant : null, position: w.position, live: true };
     },
   };
@@ -81,17 +92,28 @@ async function runScenario(makeFlight) {
   };
 
   // SCRIPT (each tick = 0.1s):
-  //  seconds 0.0 .. 2.0  cruise toward "techno" (nearness climbing 0 -> ~0.5): FLY
-  //  seconds 2.0 .. 4.0  resolve techno out of the blend (0.6 -> 1.0): APPROACH->LAND
-  //  seconds 4.0 .. 8.0  hold ON techno (nearness 1): LAND->OPEN->GREET->DANCE
-  //  seconds 8.0         blend jumps toward "ambient": DEPART
-  //  seconds 8.0 .. 12   cruise + resolve ambient: FLY->APPROACH->LAND->...->DANCE
-  for (let i = 0; i < 150; i++) {
+  //  seconds  0 ..  2  cruise toward "techno" (nearness climbing 0 -> ~0.55): FLY
+  //  seconds  2 ..  4  resolve techno out of the blend (0.6 -> 1.0): APPROACH->LAND
+  //  seconds  4 .. 14  hold ON techno (nearness 1): LAND->OPEN->GREET->DANCE
+  //  second  14        blend jumps toward "ambient": DEPART
+  //  seconds 14 .. 30  cruise + resolve ambient: FLY->APPROACH->LAND->...->DANCE
+  //
+  // THE PARKED HOLD MUST OUTLAST THE CHOREOGRAPHY. flight.js walks the parked
+  // phases on a clock — DUR.LAND 0.8 + DUR.OPEN 1.0 + DUR.GREET 1.2 = 3.0s of
+  // dwell before DANCE — and LAND itself only fires once the SMOOTHED descent
+  // (landProgress, a 0.38s spring) crosses LAND_ZOOM, which is a second or so
+  // after the raw weight resolves. The original script parked for 4.0s, which
+  // left under a second of margin and in practice departed during OPEN: the
+  // proof failed on its own stopwatch, not on the phase machine. A real listener
+  // parks on a genre for minutes, so the hold is 10s here — the contract under
+  // test is the ORDER of the phases, and the script should not be the thing that
+  // decides whether the last two are reached.
+  for (let i = 0; i < 300; i++) {
     const sec = i * DT;
     if (sec < 2.0) world.aim("techno", 0.25 + (sec / 2.0) * 0.30);      // 0.25 -> 0.55
     else if (sec < 4.0) world.aim("techno", 0.60 + ((sec - 2.0) / 2.0) * 0.40); // 0.60 -> 1.0
-    else if (sec < 8.0) world.aim("techno", 1.0);
-    else if (sec < 10.0) world.aim("ambient", 0.60 + ((sec - 8.0) / 2.0) * 0.40); // resolve ambient
+    else if (sec < 14.0) world.aim("techno", 1.0);
+    else if (sec < 16.0) world.aim("ambient", 0.60 + ((sec - 14.0) / 2.0) * 0.40); // resolve ambient
     else world.aim("ambient", 1.0);
     step();
   }

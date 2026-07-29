@@ -51,17 +51,17 @@ function noteRole(unit, isDrum){
 function resolveHarmony(one, chordIdx){
   const E=window.CsdEngine;
   if(!E||!E.PROGRESSIONS||!one||!one.progression) return null;
-  let prg=E.PROGRESSIONS[one.progression];
-  if(!prg||!prg.chords||!prg.chords.length) return null;
-  let reharm=false;
+  // ONE resolver, shared with the audio. This used to re-implement the reharm
+  // walk here — same table, same +40961 stream offset — so the chips agreed with
+  // the sounding chords only for as long as two copies stayed in step, and no
+  // gate bound them. csd-engine's resolveProgression is now the single call
+  // buildEvents makes too. (Guarded: an older cached engine without it falls back
+  // to the skeleton rather than throwing — a missing chip beats a dead panel.)
+  let prg=null, reharm=false;
   const th=one.theory;
-  if(th&&th.reharm&&window.CsdTheory&&CsdTheory.reharmonize){
-    try{
-      prg=Object.assign({},prg,CsdTheory.reharmonize(prg,{ adventure:th.adventure, color:th.color,
-        voicing:th.voicing, tables:th.tables, seed:((((one.seed==null?1:one.seed)>>>0)+40961)>>>0) }));
-      reharm=true;
-    }catch(e){}
-  }
+  if(E.resolveProgression){ try{ prg=E.resolveProgression(one); reharm=!!(th&&th.reharm); }catch(e){ prg=null; } }
+  if(!prg) prg=E.PROGRESSIONS[one.progression];
+  if(!prg||!prg.chords||!prg.chords.length) return null;
   const chords=(prg.chords||[]).map(c=>String((c&&c.name)||"")).filter(Boolean);
   if(!chords.length) return null;
   // the progression labels carry an em-dash gloss naming the genres they came
@@ -85,7 +85,27 @@ export function barVoiceEvents(st, bar){
     _seamWin:true });   // …and its SEAM LAW: window on the drawless beat0, so the readout owns the same events the conductor plays
   const secs=(st.sections&&st.sections.length)?st.sections:null;
   let activeSec=null;
-  if(secs){ activeSec=(secName&&secs.find(s=>s.name===secName))||secs[0];
+  if(secs){
+    // SECTION RESOLUTION — by NAME, then by INDEX, and never by "give up and take
+    // the first one". The live walk selects its section by INDEX (faust/live.js
+    // stepWalk: secs[secIdx]); the name is a label. A bar is scheduled a runway
+    // ahead of sounding, so a glide across a genre boundary can replace
+    // st.sections with a differently-named form in between — the fired bar then
+    // names a section this state does not contain. Falling back to sections[0]
+    // meant the readout drew the SPARSE OPENER (often pad alone) while a full
+    // arrangement played: "every track is playing but only two show notes".
+    // barInfo.secIdx is the walk's own cursor, so index-resolving reproduces the
+    // walk's choice against the new form (wrapped exactly as the walk wraps it).
+    // Three resolutions, most-faithful first: the state's own section of that
+    // name; else the SECTION OBJECT the walk actually rendered (barInfo.sec — the
+    // exact form of the bar being heard, which is the honest answer when the
+    // state has moved on); else the walk's index into whatever form the state
+    // carries now.
+    activeSec=(secName&&secs.find(s=>s.name===secName))||null;
+    if(!activeSec&&bar&&bar.sec&&bar.sec.name) activeSec=bar.sec;
+    if(!activeSec&&bar&&bar.secIdx!=null&&bar.secIdx>=0)
+      activeSec=secs[((Math.round(bar.secIdx)%secs.length)+secs.length)%secs.length];
+    if(!activeSec) activeSec=secs[0];
     one.sections=[Object.assign({},activeSec,{cycles:1})]; }
   // FOUND ROLE off the state: the SECTION's own role first (a form may hand one
   // section a bed where the track's role is chops), then the track-level role

@@ -144,7 +144,12 @@ export function vizData(){
   return {blend, feel:feelAxes(st), roster, found, info, master:masterFx(st), timeline, graph,
     mind:mindData(st), meter, harmony:bar.harmony||null, structure:structureData(st,bar), timing:timingData(st)};
 }
-window.__VIZ={ data:()=>vizData() };   // headless gate: read the live viz content
+// headless gate: read the live viz content, and — for the chord-chip binding
+// check — resolve ANY state's harmony through the panel's own path, so the gate
+// compares what this panel would print against CsdEngine.resolveProgression
+// rather than against a second copy of the walk.
+window.__VIZ={ data:()=>vizData(),
+  harmonyFor:(st)=>{ try{ return barVoiceEvents(st,{ci:0,serial:0,section:""}).harmony; }catch(e){ return null; } } };
 export function renderInside(){
   const box=document.getElementById("inside"); if(!box) return;
   const d=vizData();
