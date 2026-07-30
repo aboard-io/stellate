@@ -23,13 +23,14 @@ const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
 
 const ROOT = path.resolve(__dirname, "..", "..");   // repo root
-const PORT = 8231;
+let PORT = 8231;
 const MIN_CARTS = 30;                          // the "many many many more" bar (32 shipped)
 
 function fail(msg) { console.error("DEMO-LAYER GATE: FAIL —", msg); process.exit(1); }
 
 (async () => {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium();
   let errors = [];
   try {

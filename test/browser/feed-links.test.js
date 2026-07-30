@@ -28,7 +28,7 @@ const os = require("os");
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..", "..");
-const PORT = 8961;
+let PORT = 8961;
 const SAMPLE = 6;                 // browser loads are ~4s each; a sample proves the contract
 const fail = (m) => { console.error("FAIL:", m); process.exitCode = 1; };
 let checks = 0; const ok = (m) => { checks++; console.log("  ok:", m); };
@@ -84,6 +84,8 @@ async function main() {
     picks.push(arch.items[i]);
 
   const srv = await serve(ROOT, PORT);
+
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const page = await browser.newPage();
   const errs = capturePageErrors(page);

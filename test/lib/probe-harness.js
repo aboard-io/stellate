@@ -22,8 +22,17 @@ const MIME = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/jav
   // gate. Real nginx serves .css as text/css already; this mirrors it for the probes.
 
 // static file server rooted at `root`, listening on `port`; resolves the server.
+// serve(root, port) — a static server on `port`, or the next free port after it.
+//
+// THE PORT IS A PREFERENCE, NOT A CLAIM. Each gate names a port and they were chosen
+// not to collide with each other — but the machine is not ours alone. `./serve.sh`
+// is a python http.server on 8791 and someone reasonably leaves it running all day,
+// which is exactly the port test/browser/live.test.js asks for: the gate then dies on
+// EADDRINUSE, which reads as a product failure and is not one. So a busy port is
+// walked past rather than fatal, and the server carries the port it actually got.
+// Callers must build their URLs from `srv.port`, never from the number they passed.
 function serve(root, port) {
-  return new Promise((res) => {
+  return new Promise((res, rej) => {
     const srv = http.createServer((req, rsp) => {
       if (req.url === "/favicon.ico") { rsp.writeHead(204); return rsp.end(); }
       const p = path.normalize(path.join(root, decodeURIComponent(req.url.split("?")[0])));
@@ -34,7 +43,19 @@ function serve(root, port) {
         "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Embedder-Policy": "require-corp" });
       fs.createReadStream(p).pipe(rsp);
     });
-    srv.listen(port, () => res(srv));
+    let attempt = 0;
+    srv.on("error", (e) => {
+      if (e && e.code === "EADDRINUSE" && attempt < 40) {
+        attempt++;
+        setTimeout(() => srv.listen(port + attempt), 0);   // walk up to the next free one
+      } else rej(e);
+    });
+    srv.on("listening", () => {
+      srv.port = srv.address().port;
+      if (srv.port !== port) console.log(`probe-harness: port ${port} busy — serving on ${srv.port}`);
+      res(srv);
+    });
+    srv.listen(port);
   });
 }
 

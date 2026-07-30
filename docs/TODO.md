@@ -136,6 +136,54 @@ anomaly ceiling.
 
 ---
 
+## The verification layers — measured and made concurrent, 2026-07-30
+
+**The question was whether we need all of them. We do; they were just queued.**
+
+Five folders, 87 files, and they answer genuinely different questions: `test/gates`
+(13, the release suite `verify.sh` forks), `test/unit` (33, pure node), `test/browser`
+(26) + `test/starcruise` (8) (real chromium, WebGL), `test/probes` (7, hand-run
+instruments, in no script by design). Nothing in that list duplicates anything else.
+
+**What was actually wrong was the wall clock.** `verify.sh` has forked its 13 rows
+concurrently for a long time and finishes in ~40 s. The browser suite was a serial
+for-loop, and its slow members are not cheap:
+
+    font-rotation 236s   journey-crash 232s   blend-arrival 202s   hold-verify 200s
+    starcruise    177s   transit-arrival 149s wavout        145s   crossfade-seam 132s
+
+That is most of an hour for one pass — so it does not get run, and regressions are
+found by deploying, which is exactly what happened twice this week. And `test/unit`
+was worse: **33 gates that no runner globbed at all**, which only ever ran if somebody
+typed the filename.
+
+`test/run.js` runs a folder concurrently with a CPU-derived cap. Measured on a 4-core
+box: unit went 1085 s serial → 449 s (2.4×), and it now runs at all.
+
+**What made concurrency safe was a bug fix that was needed anyway.** Every gate stands
+up a static server on a port it names; serially fine, concurrently a collision.
+`probe-harness serve()` now treats the port as a PREFERENCE — walks past a busy one and
+reports what it got as `srv.port`, which all 33 gates read. That independently fixes
+`live.test.js`, which had been dying on EADDRINUSE because `./serve.sh` holds 8791 all
+day. Proven by occupying 8791 deliberately: `port 8791 busy — serving on 8792`, gate
+passes.
+
+**Gates that measure THROUGHPUT run alone**, held back to the end (`wavout`,
+`wavout-seam`, `stem-parity`). Concurrency is the one thing guaranteed to break a
+realtime budget: wavout-seam reports render+encode at 57.3% against a 33% budget with
+two neighbours, and passes comfortably by itself. Letting that fail would have been the
+worst outcome available — a suite that goes red for want of CPU is a suite people learn
+to ignore.
+
+**Also fixed: `audit-gate` was flaky under load.** It rode a fixed 24 s wall clock and
+treated the engine's codec demote as a console error. But a demote is the resilience
+path working as designed (`live-resilience.test.js` is what proves it), and this gate is
+about AUDIT TRUTH, which is route-independent. It now waits for BARS rather than
+seconds and does not count a demote as a defect. Caught for real: a `ship.sh --prod`
+running alongside the sweep starved the boot and turned a green run red.
+
+---
+
 ## The soundfont rotation — shipped and REMOVED, 2026-07-29
 
 Shipped in the morning, out by the evening. The set changed instruments every 32

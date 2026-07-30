@@ -52,7 +52,7 @@ const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harne
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..", "..");
-const PORT = 8946;
+let PORT = 8946;
 const SEED = 43;        // dnb lead = rhodes_ep sampler; "lead voice" ranks 10/12 in tier-2 hash order
 const PACE = 64;        // bars per leg on the test slice (dnb dwell ~13 bars, mirrors pace-256 reality)
 const T0 = 0.30, T1 = 0.50;   // blues->industrial line slice: amapiano > dnb > chromeufo > glosspump
@@ -68,6 +68,7 @@ const DNB_KIT = "breaks";
 
 async function main() {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const page = await browser.newPage();
   const errs = capturePageErrors(page);

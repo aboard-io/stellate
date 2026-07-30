@@ -14,7 +14,8 @@
 "use strict";
 const path = require("path");
 const { serve, installOfflineRoute } = require("../lib/probe-harness.js");
-const ROOT = path.join(__dirname, "..", ".."), PORT = 8815;
+const ROOT = path.join(__dirname, "..", "..");
+let PORT = 8815;
 
 async function launchGL() {
   const fs = require("fs");
@@ -161,6 +162,7 @@ async function inPage() {
 
 async function main() {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchGL();
   const page = await browser.newPage();
   // OFFLINE: stub Google-Fonts + esm.sh and neutralise the full-app boot (this

@@ -29,7 +29,7 @@ const path = require("path");
 const { launchChromium, MIME } = require("../lib/probe-harness.js");
 
 const ROOT = path.join(__dirname, "..", "..");
-const PORT = 8813;
+let PORT = 8813;
 // an iPhone UA so live.js's isMobile predicate is true → wantBg (background path) on.
 const IPHONE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
 
@@ -51,12 +51,19 @@ function coiServe(root, port) {
       });
       fs.createReadStream(p).pipe(rsp);
     });
-    srv.listen(port, () => res(srv));
+    // same port-is-a-preference rule as probe-harness serve(): this gate carries its
+    // own server, so it needs its own walk or it reintroduces the collision the shared
+    // harness just fixed.
+    let attempt = 0;
+    srv.on("error", (e) => { if (e && e.code === "EADDRINUSE" && attempt < 40) { attempt++; setTimeout(() => srv.listen(port + attempt), 0); } });
+    srv.on("listening", () => { srv.port = srv.address().port; res(srv); });
+    srv.listen(port);
   });
 }
 
 (async () => {
   const srv = await coiServe(ROOT, PORT);
+  PORT = srv.port;   // the server may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const context = await browser.newContext({ userAgent: IPHONE_UA });
   const page = await context.newPage();

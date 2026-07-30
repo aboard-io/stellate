@@ -18,7 +18,7 @@ const path = require("path");
 const H = require(path.join(__dirname, "..", "lib", "probe-harness.js"));
 
 (async () => {
-  const PORT = 8793;
+  let PORT = 8793;
   const srv = await H.serve(path.join(__dirname, "..", ".."), PORT);
   const browser = await H.launchChromium();
   const page = await browser.newPage();

@@ -22,7 +22,7 @@ const path = require("path");
 const K = require("../../engine/genre-kernel.js");
 
 const ROOT = path.join(__dirname, "..", "..");
-const PORT = 8951;
+let PORT = 8951;
 const RMS_FLOOR = 0.0008;
 
 const fail = m => { console.error("FAIL:", m); process.exitCode = 1; };
@@ -38,6 +38,7 @@ async function waitAudio(page, bars) {
 
 async function main() {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const page = await browser.newPage();
   const errs = capturePageErrors(page);

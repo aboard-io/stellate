@@ -20,7 +20,8 @@
 "use strict";
 const path = require("path");
 const { serve, capturePageErrors, installOfflineRoute, ensureStarcruise } = require("../lib/probe-harness.js");
-const ROOT = path.join(__dirname, "..", ".."), PORT = process.env.SC_PORT ? +process.env.SC_PORT : 8811;
+const ROOT = path.join(__dirname, "..", "..");
+let PORT = process.env.SC_PORT ? +process.env.SC_PORT : 8811;
 
 // launch chromium with WebGL forced on for headless (SwiftShader/ANGLE) — the
 // probe-harness launcher omits these, and the star-cruise mode needs a real GL
@@ -39,6 +40,7 @@ async function launchGL() {
 
 async function main() {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchGL();
   const page = await browser.newPage();
   await page.setViewportSize({ width: 800, height: 600 });

@@ -33,7 +33,7 @@ const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harne
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..", "..");
-const PORT = 8944;
+let PORT = 8944;
 const DRUM_BARS = 12;     // drums must SOUND within this many bars of the re-park
 const ARRIVE_BARS = 12;   // kit/lead/bpm must MATCH the target within this many bars
 const RIDE_BARS = 16;     // how long we ride the parked destination
@@ -41,6 +41,7 @@ const RMS_FLOOR = 0.0008; // "real sound" (same floor the boot meter trusts)
 
 async function main() {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const page = await browser.newPage();
   const errs = capturePageErrors(page);

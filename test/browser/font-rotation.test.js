@@ -30,13 +30,15 @@
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
-const ROOT = path.join(__dirname, "..", ".."), PORT = 8817;
+const ROOT = path.join(__dirname, "..", "..");
+let PORT = 8817;
 const START_BAR = 60;        // 4 bars before a boundary, so the ride crosses several
 const RIDE_TO = 108;         // far enough for two more boundaries (64, 96)
 const RMS_FLOOR = 0.05;      // only a "did this ride make sound at all" sanity floor
 
 async function main() {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const page = await browser.newPage();
   const errs = capturePageErrors(page);

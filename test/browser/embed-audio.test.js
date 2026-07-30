@@ -18,7 +18,7 @@
 //
 // WHY IT IS A HONEST TEST OF "CROSS-ORIGIN". Two servers, two origins:
 //   PARENT  http://127.0.0.1:8801  — a bare host page, NO COOP/COEP headers
-//   CHILD   http://localhost:8802  — the real repo, COOP/COEP exactly as nginx
+//   CHILD   the harness origin (see srv.port) — the real repo, COOP/COEP exactly as nginx
 //                                    sends them (probe-harness serve())
 // Different scheme-host-port => a genuine cross-origin frame. The parent is not
 // isolated, so the child frame is not isolated either, no matter what headers the
@@ -43,9 +43,12 @@ const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harne
 // __dirname-relative, like every other browser gate: rooting the static server at
 // process.cwd() passes from the repo root and 404s everything from anywhere else.
 const ROOT = require("path").join(__dirname, "..", "..");
-const CHILD_PORT = 8802, PARENT_PORT = 8801;
-const CHILD_ORIGIN = `http://localhost:${CHILD_PORT}`;
-const PARENT_ORIGIN = `http://127.0.0.1:${PARENT_PORT}`;
+let CHILD_PORT = 8802, PARENT_PORT = 8801;
+// Both origins are resolved AFTER their servers bind — the harness walks past a busy
+// port, and this gate's whole premise is that the two origins differ, so the strings
+// have to describe the sockets we actually got rather than the ones we asked for.
+let CHILD_ORIGIN = `http://localhost:${CHILD_PORT}`;
+let PARENT_ORIGIN = `http://127.0.0.1:${PARENT_PORT}`;
 const EMBED_QS = "?genre=jungle&seed=7";
 const RMS_FLOOR = 0.0008;          // the same threshold app/audio/live.js calls "real sound"
 const PLAY_TIMEOUT_MS = 75000;     // the WAV route renders + encodes before it plays
@@ -70,6 +73,8 @@ function serveParent(port) {
       rsp.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
       rsp.end(parentHtml());
     });
+    let attempt = 0;
+    srv.on("error", (e) => { if (e && e.code === "EADDRINUSE" && attempt < 40) { attempt++; setTimeout(() => srv.listen(port + attempt), 0); } });
     srv.listen(port, () => res(srv));
   });
 }
@@ -99,7 +104,11 @@ async function frameEval(frame, fn, arg) {
 
 (async () => {
   const childSrv = await serve(ROOT, CHILD_PORT);
+  CHILD_PORT = childSrv.port;                        // the harness may have walked past a busy port
+  CHILD_ORIGIN = `http://localhost:${CHILD_PORT}`;
   const parentSrv = await serveParent(PARENT_PORT);
+  PARENT_PORT = parentSrv.address().port;
+  PARENT_ORIGIN = `http://127.0.0.1:${PARENT_PORT}`;
   const browser = await launchChromium({ requireChromium: true });
   const fails = [], notes = [];
 

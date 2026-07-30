@@ -17,10 +17,11 @@ const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
 
 const ROOT = path.join(__dirname, "..", "..");
-const PORT = 8797;
+let PORT = 8797;
 
 async function main() {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const page = await browser.newPage();
   const pageErrors = capturePageErrors(page);

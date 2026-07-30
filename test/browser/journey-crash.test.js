@@ -8,7 +8,8 @@
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
-const ROOT = path.join(__dirname, "..", ".."), PORT = 8796;
+const ROOT = path.join(__dirname, "..", "..");
+let PORT = 8796;
 
 const snap = () => `(() => {
   const h = window.FaustLive && FaustLive.lastHandle;
@@ -36,6 +37,7 @@ const snap = () => `(() => {
 
 async function main() {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const page = await browser.newPage();
   const errs = capturePageErrors(page);

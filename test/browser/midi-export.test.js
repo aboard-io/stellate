@@ -27,7 +27,7 @@ const path = require("path");
 const fs = require("fs");
 
 const ROOT = path.join(__dirname, "..", "..");
-const PORT = 8963;
+let PORT = 8963;
 const SEED = 4242;
 const PATH_Q = "1691.4502,1826.3140,1101.20620";
 const fail = (m) => { console.error("FAIL:", m); process.exitCode = 1; };
@@ -130,6 +130,7 @@ async function grabMidi(page, dir, tag) {
 
 async function main() {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const ctx = await browser.newContext({ acceptDownloads: true });
   const page = await ctx.newPage();

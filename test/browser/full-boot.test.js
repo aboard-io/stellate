@@ -31,10 +31,11 @@ const { serve, launchChromium, capturePageErrors, installOfflineRoute, ensureSta
 // __dirname-relative, like every other browser gate: rooting the static server at
 // process.cwd() passes from the repo root and 404s everything from anywhere else.
 const ROOT = require("path").join(__dirname, "..", "..");
-const PORT = 8795;
+let PORT = 8795;
 
 (async () => {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const page = await browser.newPage();
   const errs = capturePageErrors(page);

@@ -18,12 +18,13 @@ const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harne
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..", "..");
-const PORT = 8957;
+let PORT = 8957;
 const fail = (m) => { console.error("FAIL:", m); process.exitCode = 1; };
 let checks = 0; const ok = (m) => { checks++; console.log("  ok:", m); };
 
 async function main() {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const page = await browser.newPage();
   const errs = capturePageErrors(page);

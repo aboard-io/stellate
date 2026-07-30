@@ -29,7 +29,8 @@
 "use strict";
 const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
-const ROOT = path.join(__dirname, "..", ".."), PORT = 8799;
+const ROOT = path.join(__dirname, "..", "..");
+let PORT = 8799;
 
 const SCREEN_SEP_MIN = 40;   // px between any two stars at DEFAULT zoom (1200x850 viewport); the
                              // computed layout enforces a hard 72px dot floor (computeGenreLayout
@@ -42,6 +43,7 @@ const LABELS_DRAWN_MIN = 90; // names actually drawn at the default zoom. 274 la
 
 async function main() {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const page = await browser.newPage();
   await page.setViewportSize({ width: 1200, height: 850 });

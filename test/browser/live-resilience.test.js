@@ -44,7 +44,7 @@ const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
 
 const ROOT = path.join(__dirname, "..", "..");
-const PORT = 8796;
+let PORT = 8796;
 
 // the fault injector, installed IN-PAGE before goLive (after the modules load). Wraps the two
 // decode entry points the conductor calls; adds latency + transient failures + tracks the live
@@ -257,6 +257,7 @@ async function stallPass(browser, base) {
 
 async function main() {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const base = `http://localhost:${PORT}/test/browser/live-test.html?wavOut=1&segSec=4&firstSegSec=3`;
   const a = await pitchedPass(browser, base);

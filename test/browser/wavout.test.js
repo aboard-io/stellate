@@ -21,7 +21,7 @@ const os = require("os");
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
 
 const ROOT = path.join(__dirname, "..", "..");
-const PORT = 8794;
+let PORT = 8794;
 
 // ── REALTIME MARGIN vs THE MACHINE ──────────────────────────────────────────
 // Two of this gate's assertions measure a REALTIME MARGIN, not a behaviour:
@@ -268,6 +268,7 @@ async function main() {
     (LOADED ? "OVERSUBSCRIBED: the two realtime-margin checks (noStall, firstSound) report as NOTICES; everything else is enforced."
             : "idle enough: every check enforced."));
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const base = `http://localhost:${PORT}/test/browser/live-test.html?wavOut=1&segSec=4&firstSegSec=3`;
 

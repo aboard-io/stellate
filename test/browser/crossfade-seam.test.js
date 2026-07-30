@@ -32,7 +32,7 @@ const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
 
 const ROOT = path.join(__dirname, "..", "..");
-const PORT = 8947;
+let PORT = 8947;
 const GENRES = ["jungle", "house", "dub", "ambient", "jazz", "vaporwave", "techno", "bossanova", "citypop"];
 const HOLD_SEC = 14;          // ride each genre this long (>= one bridge + a couple of bars)
 const SWAPS = 8;              // steers per run
@@ -99,6 +99,7 @@ const q = (a, p) => { if (!a.length) return NaN; const s = a.slice().sort((x, y)
 
 async function main() {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const page = await browser.newPage();
   const pageErrors = capturePageErrors(page);

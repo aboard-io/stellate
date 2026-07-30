@@ -19,7 +19,7 @@ const path = require("path");
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
 
 const ROOT = path.join(__dirname, "..", "..");
-const PORT = 8802;
+let PORT = 8802;
 
 // In-page fault: PERMANENTLY reject a deterministic fraction of the pitched-sampler AND
 // sampled-drum decodes (both the FaustSampler and the FoundPlayer entry points the
@@ -88,7 +88,19 @@ async function runMode(browser, base, dropPct) {
   // sampled pitched instruments — every audited voice depends on a decoded buffer.
   await page.evaluate(() => goLive("jazz", 3));
   // let the stream boot + play long enough that many segments of bars flow through the ring
-  await page.waitForTimeout(24000);
+  // RIDE UNTIL THE RING HAS BARS, not for a fixed wall clock. 24 s is plenty on an idle
+  // box and not always enough on a busy one — the audit ring needs BARS, and bars come
+  // at the tempo the engine manages, so wait for the thing actually being measured and
+  // keep the fixed timeout only as the ceiling.
+  await page.waitForFunction(() => {
+    try {
+      const h = window.__X && window.__X.handle && window.__X.handle();
+      const s = h && h.auditSummary && h.auditSummary();
+      const m = /over \d+\/(\d+) bars/.exec(s || "");
+      return !!m && +m[1] >= 6;
+    } catch (e) { return false; }
+  }, null, { timeout: 45000 }).catch(() => {});
+  await page.waitForTimeout(1500);
   const data = await pull(page);
   const T = await page.evaluate(() => stopLive());
   await page.waitForTimeout(200); await page.close();
@@ -98,6 +110,7 @@ async function runMode(browser, base, dropPct) {
 
 async function main() {
   const srv = await serve(ROOT, PORT);
+  PORT = srv.port;   // the harness may have walked past a busy port
   const browser = await launchChromium({ requireChromium: true });
   const base = `http://localhost:${PORT}/test/browser/live-test.html?wavOut=1&segSec=4&firstSegSec=3`;
 
@@ -133,7 +146,13 @@ async function main() {
   // (5) no double-playback leak in either run; no NaN blowups; zero console errors.
   ok((ON.doublePlay || 0) === 0 && (OFF.doublePlay || 0) === 0, `double-playback anomalies: ON ${ON.doublePlay} OFF ${OFF.doublePlay}`);
   ok(ON.nanAnoms === 0 && OFF.nanAnoms === 0, `NaN anomalies present (ON ${ON.nanAnoms} OFF ${OFF.nanAnoms})`);
-  const realErr = (m) => m.errors.filter((e) => !/archive\.org|CORS|ERR_FAILED|Failed to load resource|net::|autoplay|injected permanent decode drop|audit-gate/i.test(e));
+  // A CODEC DEMOTE IS NOT A DEFECT. When the box is loaded the mp3 route can miss its
+  // first-append watchdog and the engine steps down to segAB — that is the resilience
+  // path working exactly as designed (live-resilience.test.js is what proves it). This
+  // gate is about AUDIT TRUTH, which is route-independent, so a demote must not read as
+  // a console error here. Seen for real: a full `ship.sh --prod` running alongside this
+  // gate starved the boot and turned a green run red with nothing wrong in the code.
+  const realErr = (m) => m.errors.filter((e) => !/archive\.org|CORS|ERR_FAILED|Failed to load resource|net::|autoplay|injected permanent decode drop|audit-gate|demote->segAB|codec ladder/i.test(e));
   ok(realErr(ON).length === 0 && realErr(OFF).length === 0, `console errors: ON [${realErr(ON).slice(0, 3)}] OFF [${realErr(OFF).slice(0, 3)}]`);
 
   console.log(`\n=== AUDIT GATE ===`);

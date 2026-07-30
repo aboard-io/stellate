@@ -94,7 +94,9 @@ node tools/kernel-cli.js track jungle --seed 7 --render   # one track -> mp3 via
 node tools/kernel-cli.js journey path.json --hours 4 --out journey/ --render
                                # explorer path -> mp3s + gapless journey mix (GENRE-SPACE.md)
 # headless browser gates (need `npm install && npm run setup:browser` at the repo root, once):
-npm run test:browser                     # every browser gate: test/browser/*.test.js + test/starcruise/*.test.js
+npm run test:browser                     # every browser gate, CONCURRENTLY (test/run.js)
+npm run test:unit                        # the 33 pure-node gates in test/unit — nothing else runs them
+npm run test:all                         # unit + browser
 node test/browser/explorer-ui.test.js   # (+ genre-viz / demo-layer / live / wavout / live-resilience / bg-survival)
 node test/browser/blend-arrival.test.js  # live-blend ARRIVAL contract: drums ≤3 bars, kit/lead identity ≤7
 node test/browser/speech-live.test.js    # speech organ live: espeak WASM synthesizes + feeds the found pipeline
@@ -109,6 +111,21 @@ under `test/gates/` — `engine` `social` `matproof` `kerneldata` `specs`
 `poscover` `coordscover` `seamwalk` `bootsmoke` `doccounts`. The row list is not
 hardcoded anywhere: adding a `run` line to `verify.sh` adds a row, and the wait
 loop counts launched jobs rather than a tally.
+
+**THE SUITES RUN CONCURRENTLY, and that is the whole performance story.** `verify.sh`
+forks its 13 rows and finishes in ~40 s. The browser suite used to be a serial
+for-loop over 34 gates whose slow members cost 130–240 s each — the better part of an
+hour for one pass, which in practice means it is not run and regressions are found by
+deploying. `test/run.js` runs them with a CPU-derived cap instead. What made that safe
+is `probe-harness serve()`: a gate's port is now a PREFERENCE, walked past if busy and
+reported back as `srv.port`, which every gate reads. That was needed anyway — `./serve.sh`
+sits on 8791 all day and used to kill `live.test.js` with EADDRINUSE. Gates that assert
+WALL-CLOCK throughput (`wavout`, `wavout-seam`, `stem-parity`) are held back and run
+alone at the end, because concurrency is precisely what breaks a realtime budget:
+measured, wavout-seam reports 57.3% against a 33% budget with two neighbours and passes
+comfortably by itself. **No layer was removed** — the four are genuinely different
+questions (symbolic/matrix, pure node, real browser, WebGL), and none of them was
+redundant. They were just queued.
 
 Ship: `tools/deploy/ship.sh` = gates → `git push` → deploy to **test.stellate.app**
 (refuses a dirty tree — the deploy rsyncs the working tree, so deployed must mean
@@ -511,7 +528,9 @@ docs in `docs/`.
   - `test/unit/` (36) — pure-node gates outside the release suite
     (`meter` `invariants` `musicality` `melody-cells` `melody-weave`
     `theory-tables` `midi-mine` `corpus-db` `snare-law` `strip-fuzz` …).
-    No runner globs these; name the file.
+    `npm run test:unit` runs them (concurrently, via `test/run.js`); before that
+    runner existed nothing globbed them at all and 33 gates only ever ran if
+    somebody named the file.
   - `test/browser/` (25) + `test/starcruise/` (8) — the gates that launch real
     chromium via `test/lib/probe-harness.js`. `npm run test:browser` globs
     exactly these two folders and nothing else. They `goto /index.html` (or
