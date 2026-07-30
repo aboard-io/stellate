@@ -33,6 +33,7 @@ index.html
             ├─ traits.js    genre 23-vector → TRAITS (band, body, face, groove, backdrop) [pure]
             ├─ alien.js     TRAITS + member  → { group, update(dt, ctx) } — plays the score [pure]
             ├─ backdrop.js  TRAITS           → { group, update(dt) }  (instanced city/farm) [pure]
+            ├─ props.js     the gig: signage (NameBank), stage kit, terrain landmark, sky [pure]
             ├─ planet.js    the procedural planet you land on (heightAt, ground, sky)
             ├─ ship.js      the cockpit interior + the console genre display
             ├─ scene.js     the scene graph: what is added/removed in its two lifetimes
@@ -238,6 +239,14 @@ makeAlien(THREE, traits, member, seed) -> { group:THREE.Object3D, update(dt, ctx
 //   onsets ({t,pitch,dur,vel}) for its voice this bar, from bridge.js's
 //   buildEvents plan, so a limb strikes where the score has a note and the
 //   instrument lowers during rests. Also builds background DANCERS.
+
+// props.js — everything on the planet that is not a creature, the terrain or
+// the skyline. plant(x,z,yaw) is the caller's curved-surface placement seam.
+makeSignage(THREE, ident, traits, seed, plant, opts) -> { group, update(dt) }
+makeStageKit(THREE, traits, seed, plant, opts)       -> { group, update(dt) }
+makeLandmark(THREE, terrainType, traits, seed, plant)-> { group, update(dt) } | null
+makeSkyBodies(THREE, traits, seed, radius)           -> { group, update(dt) }
+//   ident = NameBank.identity(genre, seed) — the band whose name is on the banner
 
 // backdrop.js
 makeBackdrop(THREE, traits, seed, opts) -> { group:THREE.Object3D, update(dt) }

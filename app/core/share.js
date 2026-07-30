@@ -142,7 +142,11 @@ export function buildShareUrl(){
     q.set("path", S.waypoints.map(w=>Math.round(w.x)+"."+Math.round(w.y)).join(","));
   if(Math.abs(durMult()-1)>1e-9) q.set("xdur", String(durMult()));   // the duration MULTIPLE rides the URL (×1 omitted)
   if(S.modeLock!=="auto") q.set("mode", S.modeLock);
-  if(S.soundfont && S.soundfont!=="fluidr3") q.set("sf", S.soundfont);   // the chosen soundfont rides the URL
+  // Only a PICKED font rides the URL. S.soundfont also tracks whatever the rotation
+  // is currently sounding, and stamping THAT would pin the rotation off for whoever
+  // opens the link — the rotation is already reproducible from ?m= (fontAt is a pure
+  // function of the bar).
+  if(S.fontPinned && S.soundfont && S.soundfont!=="fluidr3") q.set("sf", S.soundfont);
   const m=currentMeasure();   // 1-based; the one law, above
   if(m>1) q.set("m", String(m));
   return location.origin+location.pathname+"?"+q.toString();

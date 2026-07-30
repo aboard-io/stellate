@@ -2,8 +2,15 @@
 # ship.sh — the one deploy command: gates, push, deploy, in that order, so
 # "deployed" always implies "committed and green".
 #
-#   tools/deploy/ship.sh            # clean tree -> gates -> git push -> stellate.app
+#   tools/deploy/ship.sh            # clean tree -> gates -> git push -> test.stellate.app
+#   tools/deploy/ship.sh --prod     # ...and to stellate.app, the real site
 #   tools/deploy/ship.sh --dirty    # skip the clean-tree check (you know why)
+#
+# STAGING IS THE DEFAULT TARGET (2026-07-29). Deploys land on test.stellate.app —
+# same droplet, second vhost, /srv/stellate-test, sharing prod's found/ media —
+# so changes can be looked at and listened to before the public site moves.
+# stellate.app only ever updates when --prod is passed explicitly. Both paths run
+# the same gates first; the difference is which web root the rsync writes.
 #
 # The clean-tree check exists because deploy-stellate.sh rsyncs the WORKING
 # TREE, not a git ref — without it, uncommitted work ships silently and
@@ -12,7 +19,17 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
-if [[ "${1:-}" != "--dirty" ]]; then
+PROD=0
+DIRTY=0
+for a in "$@"; do
+  case "$a" in
+    --prod)  PROD=1 ;;
+    --dirty) DIRTY=1 ;;
+    *) echo "ship: unknown argument '$a' (expected --prod and/or --dirty)" >&2; exit 2 ;;
+  esac
+done
+
+if [[ $DIRTY -eq 0 ]]; then
   if [[ -n "$(git status --porcelain)" ]]; then
     echo "ship: working tree is dirty — commit first (or --dirty to override):" >&2
     git status --short >&2
@@ -34,5 +51,11 @@ node tools/build/gen-feed.js --dry >/dev/null && echo "  feed       PASS"
 echo "== push =="
 git push
 
-echo "== deploy =="
-tools/deploy/deploy-stellate.sh "${DEPLOY_HOST:-root@stellate.app}"
+if [[ $PROD -eq 1 ]]; then
+  echo "== deploy: PRODUCTION (stellate.app) =="
+  tools/deploy/deploy-stellate.sh "${DEPLOY_HOST:-root@stellate.app}"
+else
+  echo "== deploy: staging (test.stellate.app) =="
+  echo "   (pass --prod to also update the public site)"
+  tools/deploy/deploy-staging.sh "${DEPLOY_HOST:-root@stellate.app}"
+fi

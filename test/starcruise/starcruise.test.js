@@ -394,10 +394,23 @@ async function main() {
   const minUpDot = lp.band ? Math.min.apply(null, lp.band.map((m) => m.upDotN)) : 0;
   ok(bandOK,
     `LP2. the BAND stands ON the curved surface oriented to the NORMAL (${lp.band && lp.band.length} members at r≈${lp.small && lp.small.radius}, every local +Y·normal >= ${minUpDot.toFixed(3)} > 0.9)`);
-  // LP3: there is no backdrop — no trees, no background objects.
-  // The bare planet is the whole stage — no city/landscape instances on the world.
-  ok(lp.city && lp.city.count === 0,
-    `LP3. no backdrop trees/objects on the world — bare planet stage (${lp.city ? lp.city.count : "n/a"} instances)`);
+  // LP3: THE BACKDROP IS OVER THE HORIZON, not on the stage.
+  //
+  // This used to assert count === 0 — the "bare planet" law, which left 1,300 lines of
+  // tested city/farm shape-grammar drawing nothing and every landed horizon empty. The
+  // backdrop is back, so the law it was really protecting has to be stated properly:
+  // clutter must not reach the band. Three parts, all of them the actual worry:
+  //   a) it EXISTS (a genre with a city/farm draws instances at all),
+  //   b) every instance foot-plants ON the sphere (the curved-placement seam works —
+  //      a broken tangent frame parks the whole layout at the origin or off the world),
+  //   c) it starts BEYOND the stage: the nearest instance is >= 25 degrees off the
+  //      landing pole. The band arc spans ~15 degrees at these radii, so 25 leaves the
+  //      players and their gear in clear ground, and the skyline comes up over the curve.
+  // Plus: nothing in it casts a shadow — its shadows fall over the horizon where they
+  // cannot be seen, and rendering them cost ~20% of the landed frame (scene.js).
+  const c3 = lp.city || {};
+  ok(c3.count > 0 && c3.onSphere === c3.count && c3.casters === 0 && c3.minPoleDeg >= 25,
+    `LP3. backdrop sits BEYOND the stage, on the sphere, shadowless (${c3.count} instances, ${c3.onSphere} on-sphere, ${c3.casters} casters, nearest ${c3.minPoleDeg}° off the landing pole >= 25°)`);
   // LP4: SPACE IS TRUE BLACK — the scene background + renderer clear colour are 0x000000.
   ok(lp.bg && lp.bg.scene === 0x000000 && lp.bg.clear === 0x000000,
     `LP4. SPACE IS TRUE BLACK — scene background + clear colour are 0x000000 (was dark purple) (scene=${lp.bg && lp.bg.scene}, clear=${lp.bg && lp.bg.clear})`);

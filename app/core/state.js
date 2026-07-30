@@ -12,13 +12,26 @@ import { MAP_CENTER, BARS_PER_SEG } from "./world.js";
 // user master volume persists across sessions (localStorage; 0..1.5, 1 = unity)
 const _masterVol=(()=>{ try{ const v=parseFloat(localStorage.getItem("vaporwave-master-vol")); return (v>=0&&v<=1.5)?v:1; }catch(e){ return 1; } })();
 const _vapor=(()=>{ try{ const v=parseFloat(localStorage.getItem("vaporwave-vapor")); return (v>=0&&v<=1)?v:0; }catch(e){ return 0; } })();   // VAPOR master-EQ amount (C.1)
+// MASTER TOP — the global tone CEILING in Hz (20000 = off). Defaults to 12 kHz rather
+// than off: 83% of the catalogue carries no master lowpass of its own (measured), so the
+// bleeps in the field recordings and the highest pads have nothing above them at all.
+// ?top=<hz> or ?top=off overrides for a session; the ⚙ slider persists a choice.
+const _top=(()=>{
+  try{
+    const q=new URLSearchParams(location.search).get("top");
+    if(q==="off") return 20000;
+    if(q&&parseFloat(q)>0) return Math.max(1200,Math.min(20000,parseFloat(q)));
+    const v=parseFloat(localStorage.getItem("vaporwave-top"));
+    return (v>=1200&&v<=20000)?v:12000;
+  }catch(e){ return 12000; }
+})();
 // the chosen soundfont (the switcher); "fluidr3" = the baked default. A shared
 // URL's ?sf= wins over localStorage so a link restores its font.
 const _soundfont=(()=>{ try{ return new URLSearchParams(location.search).get("sf") || localStorage.getItem("vaporwave-soundfont") || "fluidr3"; }catch(e){ return "fluidr3"; } })();
 
 // ---------- store ----------
 export const S={ cursor:{x:MAP_CENTER.x,y:MAP_CENTER.y}, waypoints:[], travel:{seg:0,t:0}, weights:[],
-  target:null, playing:null, queue:[], holdUntil:{}, barCount:0, barInfo:null, live:false, masterVol:_masterVol, vapor:_vapor, soundfont:_soundfont,
+  target:null, playing:null, queue:[], holdUntil:{}, barCount:0, barInfo:null, live:false, masterVol:_masterVol, vapor:_vapor, top:_top, soundfont:_soundfont, fontPinned:false,
   seed:Math.floor(Math.random()*99999)+1, modeLock:"auto", pace:BARS_PER_SEG, durMult:1, more:false, load:1, eco:0, scores:[], best:"…", status:"ready — drag, dbl-click a path, then ▶ LIVE",
   pool:"", beatLine:"▶ press LIVE",
   // THE EXCLUSIVE VIEWS: star map / viz (+ the 3D star-cruise).

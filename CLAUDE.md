@@ -110,9 +110,12 @@ under `test/gates/` — `engine` `social` `matproof` `kerneldata` `specs`
 hardcoded anywhere: adding a `run` line to `verify.sh` adds a row, and the wait
 loop counts launched jobs rather than a tally.
 
-Ship: `tools/deploy/ship.sh` = gates → `git push` → deploy to stellate.app (refuses a
-dirty tree — the deploy rsyncs the working tree, so deployed must mean
-committed; docs/HOSTING.md). aboardresearch.com is this tree served directly.
+Ship: `tools/deploy/ship.sh` = gates → `git push` → deploy to **test.stellate.app**
+(refuses a dirty tree — the deploy rsyncs the working tree, so deployed must mean
+committed; docs/HOSTING.md). `ship.sh --prod` is the only thing that moves the
+public stellate.app. Staging is the same droplet — a second nginx vhost over
+`/srv/stellate-test`, noindexed, with `/found/` aliased at prod's media so the
+~900 MB layer is never duplicated. aboardresearch.com is this tree served directly.
 
 CI: `.github/workflows/verify.yml` runs the media guard + the full `./verify.sh`
 suite on every PR/push in a clean clone with ZERO fetched media —
@@ -331,8 +334,8 @@ docs in `docs/`.
     excised (branch `legacy-download-video`). Gate: `test/browser/midi-export.test.js`
   - `panels/readouts.js` — the playhead/chyron lower-third (self-ticking; there is
     no separate ⚡ CPU meter box — load/eco reads out in the chyron tech line)
-  - `starcruise.js` + `starcruise-load.js` + `starcruise/` (14 modules:
-    scene/camera/flight/ship/planet/alien/backdrop/postfx/geom/traits/bridge/probes
+  - `starcruise.js` + `starcruise-load.js` + `starcruise/` (15 modules:
+    scene/camera/flight/ship/planet/alien/backdrop/props/postfx/geom/traits/bridge/probes
     + the generated `genre-coords.js` / `genre-clusters.js`) — the 🛸 star-cruise
     3D flythrough (docs/STARCRUISE.md). NOT on the boot path: `index.html` never
     loads it; `panels/panels.js` dynamic-imports it through `starcruise-load.js`
@@ -416,15 +419,22 @@ docs in `docs/`.
     - `voices/sampler.js` + `build/sf2.js` + `build/extract-gm.js` — the sampled layer (default):
       full General MIDI extracted from a FluidR3-class SoundFont, played back
       through per-voice Faust effect chains; synths are the fallback/color.
-      Zones ship as **mono 22.05 kHz 48 kbps MP3** (`tools/build/transcode-samples.js`,
-      ~14× smaller than the extracted wav at a higher measured SNR — instrument
-      zones hold 0.254% of their energy above 11 kHz). The zone metadata in
-      `K.SAMPLERS` rides with the format: `ls`/`le` are absolute sample indices
-      at `sr`, and `len` is the expected decoded length — WebKit prepends a
-      constant 1105-sample MP3 lead-in that the player detects by comparing the
-      decoded length to `len × (ctxRate / sr)`; Chromium and Firefox decode
-      sample-exact. `zones.json` is extractor output only; the browser reads
-      `K.SAMPLERS`
+      **Zones are WAV at 44.1 kHz and the MP3 diet has NOT been applied to them** —
+      measured on the committed registry: 629 of 629 zones `.wav`, every sampler
+      `sr: 44100`, zero carrying `len`. Beds and speech DID get the diet (244 mp3s
+      under `found/samples/`, gated by `test/browser/mp3-bed-decode.test.js`, whose
+      own header states the split: "beds + speech ship as MP3; zones/breaks stay
+      WAV"). Zones are the hard case because they LOOP: `ls`/`le` are absolute
+      sample indices at `sr`, and WebKit hands back a constant 1105-sample MP3
+      lead-in as audio, which lands every baked index 25 ms early — an audible click
+      at every loop wrap on the 552 of 614 zones that loop. Both halves of the fix
+      are WRITTEN — `tools/build/transcode-samples.js` bakes `len`, and
+      `sampler.js zoneLeadIn()` detects the pad by comparing decoded length to
+      `len × (ctxRate / sr)` rather than sniffing the UA — and **neither has ever
+      run against a real mp3 zone**, because none exist. Treat the zone diet as an
+      untested path, not a shipped one: prove the loop-wrap alignment on a handful
+      of zones across all three decoders before converting 1372 files.
+      `zones.json` is extractor output only; the browser reads `K.SAMPLERS`
     - `live/live.js` — `FaustLive.exploreLive`: chord-bar JIT scheduler on the WebAudio
       clock, voice pools, eco-mode load shedding. Desktop rides a SharedArrayBuffer
       ring (`ring-player.js`, `stream-worker.js`, `stream-renderer.js`) and a
@@ -466,7 +476,9 @@ docs in `docs/`.
     re-bakes the `SAMPLERS` block — `--dry` measures without writing, a sampler
     with any failed zone rolls back whole so one instrument is never half-rate)
     + `transcode-beds.js`.
-  - `tools/deploy/` (2) — `ship.sh` and `deploy-stellate.sh`.
+  - `tools/deploy/` (3) — `ship.sh`, `deploy-staging.sh` and `deploy-stellate.sh`.
+    **STAGING IS THE DEFAULT TARGET**: bare `ship.sh` deploys to
+    test.stellate.app; the public site moves only on `ship.sh --prod`.
   - `tools/audit/` (4) — read-only measurement: `audio-verifier.py`,
     `font-coverage.js`, `measure-loop-cap.js`, `simulate-path.js`.
 

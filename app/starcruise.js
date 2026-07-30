@@ -338,8 +338,16 @@ export function update(dt) {
   for (const d of Scene.getDancers()) {
     d.update(dt, { barPhase, loudness: loud, playing: true, level: 1, valueOf() { return barPhase; } });
   }
+  // EXTRAS (the roadie, the audience-of-one) groove on the same beat-only ctx but are
+  // kept off the dancers list — see scene.js: `dancers` means the crowd the genre's
+  // energy earned, and the energy gate reads it.
+  for (const e of Scene.getExtras()) {
+    e.update(dt, { barPhase, loudness: loud, playing: true, level: 1, valueOf() { return barPhase; } });
+  }
   const backdrop = Scene.getBackdrop();
   if (backdrop) backdrop.update(dt);
+  // props: the banner breathes, the amp grilles pulse, the lava glows, the moons turn.
+  for (const p of Scene.getProps()) { if (p.update) p.update(dt); }
   const skyDome = Scene.getSkyDome();
   if (skyDome) skyDome.update(dt);
   Scene.updateGlyphSky(dt, camera);   // atmosphere glyphs follow the camera + breathe

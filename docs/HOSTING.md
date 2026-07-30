@@ -416,6 +416,48 @@ The node_modules carve-out: only faustwasm's ESM entry is imported at runtime
 tooling. If the include/exclude dance ever bites, shipping all of
 node_modules is 28 MB of harmless slack — prefer boring over clever.
 
+## 5b. Staging: test.stellate.app (2026-07-29)
+
+**Deploys go to staging by default.** `tools/deploy/ship.sh` runs the gates,
+pushes, and rsyncs to **test.stellate.app**; the public site moves only on
+`ship.sh --prod`. The reason is taste: most of what changes here is heard or
+looked at rather than asserted, and there needs to be somewhere to hear and look
+at it that is not the front page.
+
+It is the SAME droplet — a second nginx vhost, a second web root, one shared
+media tree:
+
+| | prod | staging |
+|---|---|---|
+| host | `stellate.app` | `test.stellate.app` |
+| root | `/srv/stellate` | `/srv/stellate-test` |
+| deploy | `tools/deploy/deploy-stellate.sh` | `tools/deploy/deploy-staging.sh` |
+| `found/` | its own ~900 MB | **aliased at prod's** |
+| indexable | yes | never |
+| analytics | GoatCounter | `/gc/count` returns 204 |
+
+**Media is shared, not copied.** `found/` is immutable-by-name and identical on
+both sites, so the staging vhost `alias`es `/found/` at `/srv/stellate/found/`
+and `deploy-staging.sh` excludes the whole tree. This halves the droplet's disk
+and removes a whole class of drift. The consequence to remember: **a change
+needing NEW media has to reach prod's `found/` before staging can serve it** —
+staging is not a place to test a fetch recipe.
+
+**Staging must never be indexed.** It serves the same content as the real site
+under a different name, which is a duplicate-content problem and, worse, an
+opportunity for a half-finished build to be the one someone finds. Two belts:
+`X-Robots-Tag: noindex, nofollow` on every response (folded into the headers
+snippet, because `add_header` does not inherit into a location that sets its
+own), and a `location = /robots.txt` that returns `Disallow: /` ahead of the
+deployed tree's own robots.txt. `deploy-staging.sh` smoke-tests both.
+
+DNS is a plain A record on the same droplet IP
+(`doctl compute domain records create stellate.app --record-type A --record-name test`),
+TLS is its own certbot certificate for the single name, and the config lives at
+`/etc/nginx/sites-available/stellate-test` + `/etc/nginx/snippets/stellate-test-headers.conf`.
+Like the prod config, **it is not in the repo** — this section is the record it
+can be rebuilt from.
+
 ## 6. The growth path: Cloudflare R2 + Transform Rules
 
 If transfer outgrows the droplet's 1 TiB, media moves to R2 behind a custom

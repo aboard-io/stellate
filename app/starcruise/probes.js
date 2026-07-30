@@ -300,19 +300,31 @@ export function makeProbes(deps) {
       const c = new T.Vector3(0, gp.position.y, 0);
       const M = new T.Matrix4(), P = new T.Vector3(), Q = new T.Quaternion(), S = new T.Vector3();
       bd.group.updateMatrixWorld(true);
-      let cnt = 0, onSphere = 0, minR = 1e9, maxR = 0;
+      let cnt = 0, onSphere = 0, minR = 1e9, maxR = 0, casters = 0, minPoleDeg = 180;
+      // the LANDING POLE direction — the band stands around it, so the angle between an
+      // instance and this vector is "how far over the horizon the backdrop starts".
+      const up = (gp.field && gp.field.up) || [0, 1, 0];
+      const U = new T.Vector3(up[0] || 0, up[1] || 0, up[2] || 0).normalize();
+      const D = new T.Vector3();
       bd.group.traverse((o) => {
         if (!o.isInstancedMesh) return;
+        if (o.castShadow) casters++;
         if (o.name === "orbs" || o.name === "beacons") return;   // point-lights; radius irrelevant
         for (let i = 0; i < o.count; i++) {
           o.getMatrixAt(i, M); M.premultiply(o.matrixWorld); M.decompose(P, Q, S);
           const r = P.distanceTo(c);
           cnt++; if (r < minR) minR = r; if (r > maxR) maxR = r;
           if (r > groundRadius - 5) onSphere++;
+          D.copy(P).sub(c);
+          if (D.lengthSq() > 1e-9) {
+            const deg = Math.acos(Math.max(-1, Math.min(1, D.normalize().dot(U)))) * 180 / Math.PI;
+            if (deg < minPoleDeg) minPoleDeg = deg;
+          }
         }
       });
       return { curved: !!(bd.group.userData && bd.group.userData.scOnSurface),
-        count: cnt, onSphere, minR: +minR.toFixed(2), maxR: +maxR.toFixed(2), radius: +groundRadius.toFixed(2) };
+        count: cnt, onSphere, casters, minPoleDeg: +minPoleDeg.toFixed(2),
+        minR: +minR.toFixed(2), maxR: +maxR.toFixed(2), radius: +groundRadius.toFixed(2) };
     },
     // bg(): the scene background + renderer clear colour hex — proves SPACE IS TRUE BLACK.
     bg: () => { const sc = scene(), r = renderer();
@@ -320,6 +332,27 @@ export function makeProbes(deps) {
         scene: sc && sc.background && sc.background.isColor ? sc.background.getHex() : null,
         clear: r ? r.getClearColor(new (three()).Color()).getHex() : null,
       }; },
+    // __sceneStats(): every drawable in the live scene as {name, tris, inst, transparent},
+    // heaviest first, plus the totals. The frame-cost instrument — sceneChildren() only
+    // counts top-level nodes, which says nothing about which subtree is drawing 400k
+    // triangles. Headless-proof, read-only, and harmless in production (nothing calls it).
+    __sceneStats: (limit) => {
+      const sc = scene(); if (!sc) return null;
+      const rows = [];
+      let tris = 0, draws = 0;
+      sc.traverse((o) => {
+        const geo = o.geometry;
+        if (!geo || !geo.attributes || !geo.attributes.position) return;
+        const verts = geo.index ? geo.index.count : geo.attributes.position.count;
+        const inst = o.isInstancedMesh ? o.count : 1;
+        const t = Math.round(verts / 3) * inst;
+        tris += t; draws++;
+        rows.push({ name: o.name || o.type, tris: t, inst,
+          cast: !!o.castShadow, transparent: !!(o.material && o.material.transparent) });
+      });
+      rows.sort((a, b) => b.tris - a.tris);
+      return { tris, draws, top: rows.slice(0, limit || 14) };
+    },
     hasShip: () => !!Scene.getShip(),
     hasCockpit: () => !!Scene.getCockpit(),
     hasPlanet: () => !!Scene.getPlanet(),

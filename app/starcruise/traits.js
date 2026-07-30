@@ -205,8 +205,16 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
     else if (nSwing > 0.28 || nSoft > 0.55 || nHum > 0.5) surface = "fur"; // soft/swing -> furry
     else surface = "soft";                                 // plain matte flesh
   } else if (skin === "glass") surface = "glass";          // translucent jelly
-  else if (skin === "chrome") surface = "chrome";          // polished mirror metal
-  else surface = "plastic";                                // matte plastic shell
+  else if (skin === "matte") surface = "plastic";          // matte plastic shell
+  // ELECTRONIC SKINS, SPLIT. `skin` collapses every non-washy, non-crackly electronic
+  // genre to "chrome", which put 384 of 822 measured draws (47%) on one mirror finish —
+  // techno, house, trance, garage, footwork and half the synth catalog all identically
+  // polished. The chrome read is right for the HARD, pumping, interlocked end; the
+  // softer/harmonic end gets plastic and the busy motion end gets glass, so the
+  // electronic half of the catalog stops looking like one bot factory.
+  else if (nPump > 0.45 || nIl > 0.45 || nDrum > 0.6) surface = "chrome";
+  else if (nMotion > 0.52 || nWash > 0.42) surface = "glass";
+  else surface = "plastic";
 
   // ---- BODY ------------------------------------------------------------
   // A genuinely-alien, feature-driven morphology. The five original fields are
@@ -322,13 +330,22 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
   tentacles = Math.max(0, Math.min(8, tentacles));
   if (arms + tentacles === 0) arms = 2;   // guarantee at least one PLAYING appendage
   // FACE FAMILY — ridiculous to menacing: one giant eye, a ring of eyes, a no-face
-  // maw, or insect mandibles. Reads the eye count + plan + character.
+  // maw, or insect mandibles. Reads the CHARACTER first, the eye count last.
+  //
+  // ORDER IS THE WHOLE POINT HERE. This used to open on `body.eyes >= 4`, and
+  // body.eyes = 1 + round(nVar*2 + nSeventh) tops out at exactly 4 — so any genre with
+  // middling variation AND a seventh landed on the ceiling and took the first branch.
+  // Measured across 274 genres x seeds 1/5/7: eyes==4 for 600 of 822 draws, so 73% of
+  // the catalog wore ONE face and the five branches below it were decoration. The eye
+  // count is the WEAKEST signal of the six (it saturates); it now goes last, and the
+  // character tests — insect, heavy, swinging, glitchy — get first refusal.
   let faceFamily;
-  if (body.eyes >= 4) faceFamily = "eye-ring";
-  else if (plan === "insectoid") faceFamily = "mandibles";
-  else if (body.eyes === 1) faceFamily = (nSub > 0.55 || nDrum > 0.7) ? "cyclops-maw" : "cyclops";
-  else if (organic && nSwing > 0.3) faceFamily = "beak-cluster";
-  else if (!organic && (nChop > 0.35 || nCrackle > 0.4)) faceFamily = "sensor-array";
+  if (plan === "insectoid" || (organic && nSwing > 0.34 && nHat > 0.42)) faceFamily = "mandibles";
+  else if (nSub > 0.60 && nDrum > 0.55) faceFamily = "cyclops-maw";      // heavy: one eye over a jaw
+  else if (organic && nSwing > 0.26) faceFamily = "beak-cluster";        // swing: a cluster of beaks
+  else if (!organic && (nChop > 0.30 || nCrackle > 0.34)) faceFamily = "sensor-array";
+  else if (body.eyes >= 4 && nVar > 0.55) faceFamily = "eye-ring";       // genuinely restless -> a ring
+  else if (body.eyes === 1) faceFamily = "cyclops";
   else faceFamily = "maw";
   body.plan = plan;
   body.symmetry = symmetry;
@@ -366,7 +383,11 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
     biped: (height > 2.4 ? 0.7 : 0) + nSoft * 0.55 + (leadVoices >= 3 ? 0.5 : 0) + nSeventh * 0.28 + (organic ? 0.18 : 0.08) - nDrum * 0.3 - nSub * 0.2,
     bot: (organic ? 0 : 0.68) + nChop * 0.7 + nCrackle * 0.5 + nIl * 0.42 - nWash * 0.45,
     mollusk: nMotion * 0.9 + nWash * 0.45 + (organic ? 0 : 0.12) + nSwing * 0.2 - nDrum * 0.25 - (nWash > 0.55 && nDrum < 0.4 ? 0 : 0.15),
-    jelly: nWash * 1.05 + nSoft * 0.5 + (1 - nDrum) * 0.7 + (nDrum < 0.2 ? 0.6 : 0) + (organic ? 0.1 : 0.2),
+    // `(1-nDrum)` used to carry 0.7 here, which handed a large free score to every
+    // sparse-kit genre and made jelly the runaway winner once the alien handicap came
+    // down. A jelly should be an AMBIENT read (washy AND soft AND kitless), not the
+    // default for anything quiet.
+    jelly: nWash * 1.05 + nSoft * 0.5 + (1 - nDrum) * 0.4 + (nDrum < 0.2 ? 0.5 : 0) + (organic ? 0.1 : 0.2),
     star: nIl * 1.0 + nHat * 0.5 + nPump * 0.4 + (organic ? 0 : 0.28),
     crawler: nSwing * 0.55 + (organic ? 0.48 : 0) + nHat * 0.4 + nDrum * 0.45,
     blobby: nSub * 0.85 + nDrum * 0.45 + (1 - nVar) * 0.32 + (1 - nBpm) * 0.35,
@@ -398,11 +419,34 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
   };
   let archetype = "human", archBest = -Infinity;
   for (const a of Object.keys(earthScores)) if (earthScores[a] > archBest) { archBest = earthScores[a]; archetype = a; }
-  // legacy alien archetypes only win when they clearly BEAT the best earth animal (fallback).
-  for (const a of Object.keys(archScores)) if (archScores[a] - 0.85 > archBest) { archBest = archScores[a] - 0.85; archetype = a; }
+  // THE ALIEN ARCHETYPES GET TO COMPETE. They are still handicapped — the earth animals
+  // are the readable, charming default and should hold the middle of the catalog — but
+  // the handicap was 0.85, which is larger than the entire spread of archScores. Measured
+  // over 274 genres x seeds 1/5/7: seven of the nine (bot, star, mollusk, crawler, blobby,
+  // biped, crystalline) won ZERO draws, quadruped won 2, draconic 10. Their geometry in
+  // alien.js — the N-fold star, the crystal stack, the winged dragon — was unreachable
+  // outside forced-plan tests. 0.45 keeps the earth animals dominant (they still take
+  // ~59% of the catalogue) while letting each alien form win the corner of the space it
+  // was written for. Measured after: 12 archetypes appear, the largest holds 22%.
+  const ALIEN_HANDICAP = 0.45;
+  for (const a of Object.keys(archScores)) if (archScores[a] - ALIEN_HANDICAP > archBest) { archBest = archScores[a] - ALIEN_HANDICAP; archetype = a; }
+  // HOME PLAN — the low-level silhouette each archetype stands on. The earth animals pin
+  // to a canonical upright STALK / horizontal INSECTOID so the stance reads right. The
+  // alien archetypes pin too, which is what returns `radial` and `crystalline` to the
+  // catalog: they were only ever reachable as the planScores argmax, and the earth pin
+  // above overwrote that for 91% of genres. (A forced-plan test sets body.plan directly
+  // and never reaches here, so alien.js's plan-forced builds still fall through.)
   const EARTH_HOME = { dog: "insectoid", gator: "insectoid", dino: "stalk", human: "stalk", robot: "stalk" };
+  const ALIEN_HOME = { star: "radial", bot: "crystalline", jelly: "floating-gas",
+    mollusk: "cephalopod", blobby: "amorphous", crawler: "insectoid", biped: "stalk",
+    quadruped: "insectoid", draconic: "amorphous" };
   body.archetype = archetype;
-  if (EARTH_HOME[archetype]) body.plan = EARTH_HOME[archetype];   // pin the home plan (stance reads right; plan stays canonical)
+  if (EARTH_HOME[archetype]) body.plan = EARTH_HOME[archetype];
+  // An alien archetype whose planScores argmax ALREADY landed on one of the two rare,
+  // strongly-shaped plans keeps it — pinning unconditionally would erase `crystalline`
+  // from the catalog again, since no archetype homes there (the glitch corner resolves
+  // to `robot`, which needs its own stalk build).
+  else if (ALIEN_HOME[archetype] && plan !== "radial" && plan !== "crystalline") body.plan = ALIEN_HOME[archetype];
   // a small feature-derived GEAR budget the rig reads (0..1 knobs; no rng draw):
   body.horniness = +clamp01(nSub * 0.5 + nSeventh * 0.4 + (archetype === "draconic" ? 0.4 : 0)).toFixed(3);
   body.winged = archetype === "draconic" || (archetype === "mollusk" && nMotion > 0.6);
@@ -557,7 +601,11 @@ export function traitsFromGenre(K, V, genreOrWeights, seed) {
   // band AND genuinely low overall energy (folk ballads, sparse country), so
   // metal, bebop and other high-energy acoustic genres stay in the city. Glow
   // tracks wash + crackle neon.
-  const backdrop = organic && groove.energy < 0.45 ? "farm" : "city";
+  // The farm gate wanted BOTH an acoustic band and low energy, which only 53 of 822
+  // measured draws cleared — 94% of the catalog landed in the same city. Either signal
+  // now qualifies: an acoustic band that isn't pounding, OR any genuinely hushed genre
+  // (a drone with no kit gets a quiet farm, which is funnier than another skyline).
+  const backdrop = (organic && groove.energy < 0.56) || groove.energy < 0.34 ? "farm" : "city";
   const glow = clamp01(nWash * 0.7 + nCrackle * 0.3 + (organic ? 0 : 0.15));
 
   // ---- DANCERS (OPTIONAL, energy/kit-GATED) ----------------------------

@@ -34,6 +34,11 @@ import { CLUSTER_OF, GENRE_CLUSTERS } from "./genre-clusters.js";
 // as camera-facing sprites drifting in the cruise atmosphere (pure THREE, no engine
 // coupling; textures baked once — no per-frame upload, per the post-planet static fix).
 import { makeGlyphAtmosphere } from "../map/glyphs.js";
+// THE PROPS — signage / stage gear / terrain landmark / sky bodies. Pure builders that
+// take THREE as an argument (no top-level Three import), so a static import here does
+// not pull three.js onto the boot path: scene.js is itself only reached through the
+// controller's lazy import().
+import { makeSignage, makeStageKit, makeLandmark, makeSkyBodies } from "./props.js";
 import { getS, K, V, buildEventPlan, rosterFor, genreLabels, genreLabelOf } from "./bridge.js";
 
 // ---- bound handles --------------------------------------------------------------
@@ -151,6 +156,9 @@ let sunField = null;         // persistent InstancedMesh: ONE colored SUN per CL
 let sunGlowField = null;     // persistent InstancedMesh: an ADDITIVE corona/halo shell per sun (the glow)
 const planetIndex = Object.create(null);   // genre -> instance index (dominant highlight)
 let planetBaseR = null;      // per-instance base radius (to restore the dominant highlight)
+let planetSquash = null;     // per-instance OBLATENESS (y scale) — kept so the highlight
+                             // restore doesn't round a flattened world back into a ball
+let planetRingField = null;  // persistent InstancedMesh: a RING around ~a quarter of the worlds
 let _hiIdx = -1;             // currently-highlighted (dominant) instance index
 let sunIndex = null;         // [{id,label,color,x,y,z}] parallel to instance indices
 let sunBaseR = null;         // per-sun core radius (for the glow-shell scale + probes)
@@ -280,21 +288,57 @@ function buildPlanetField() {
   planetField.frustumCulled = false;
   planetField.name = "planetField";
   planetBaseR = new Float32Array(worlds.length);
+  planetSquash = new Float32Array(worlds.length);
+  const ringed = [];
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), col = new THREE.Color();
   for (let i = 0; i < worlds.length; i++) {
     const w = worlds[i];
     let hh = 0; for (let k = 0; k < w.g.length; k++) hh = (hh * 131 + w.g.charCodeAt(k)) >>> 0;
-    const r = 1.4 + (hh % 100) / 100 * 1.9;   // per-genre radius 1.4..3.3
+    // RADIUS + SQUASH. The field was 274 spheres over a 1.4..3.3 spread, which from any
+    // cruising distance is 274 identical dots. A wider range and a per-genre OBLATENESS
+    // (a gas giant flattened by its own spin vs a round little rock) costs nothing — it
+    // is the same instance matrix — and gives the galaxy silhouettes instead of dots.
+    const r = 1.15 + (hh % 100) / 100 * 2.75;   // per-genre radius 1.15..3.9
+    const squash = 0.62 + ((hh >>> 7) % 100) / 100 * 0.38;   // 0.62 (flattened) .. 1.0 (round)
     planetBaseR[i] = r;
+    planetSquash[i] = squash;
     seeds[i] = (hh % 997) / 997 * 1.0;        // deterministic per-genre terrain seed
-    p.set(w.x, w.y, w.z); s.set(r, r, r);
+    p.set(w.x, w.y, w.z); s.set(r, r * squash, r);
+    // a per-genre axial TILT, so the flattened ones don't all lie in the same plane
+    q.setFromEuler(new THREE.Euler(((hh >>> 11) % 100) / 100 * 1.1 - 0.55, 0, ((hh >>> 17) % 100) / 100 * 1.1 - 0.55));
     m4.compose(p, q, s); planetField.setMatrixAt(i, m4);
     col.setHSL(hueOf(w.g), 0.66, 0.55); planetField.setColorAt(i, col);
     planetIndex[w.g] = i;
+    // RINGS for about a quarter of the catalog — one extra InstancedMesh for the whole
+    // galaxy, built below. A ringed world in the middle distance is the single cheapest
+    // thing that makes a star field look like somewhere worth flying to.
+    if ((hh >>> 23) % 100 < 26) ringed.push({ i, r, q: q.clone(), p: p.clone(), hue: hueOf(w.g) });
   }
   planetField.instanceMatrix.needsUpdate = true;
   if (planetField.instanceColor) planetField.instanceColor.needsUpdate = true;
   scene.add(planetField);
+
+  if (ringed.length) {
+    const rgeo = new THREE.RingGeometry(1.45, 2.35, 30);
+    const rmat = new THREE.MeshBasicMaterial({
+      side: THREE.DoubleSide, transparent: true, opacity: 0.5,
+      depthWrite: false, toneMapped: false, vertexColors: false });
+    planetRingField = new THREE.InstancedMesh(rgeo, rmat, ringed.length);
+    planetRingField.frustumCulled = false;
+    planetRingField.name = "planetRingField";
+    const tilt = new THREE.Quaternion(), flat = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
+    for (let k = 0; k < ringed.length; k++) {
+      const R = ringed[k];
+      tilt.copy(R.q).multiply(flat);                 // the ring lies in the planet's own equator
+      s.set(R.r, R.r, R.r);
+      m4.compose(R.p, tilt, s);
+      planetRingField.setMatrixAt(k, m4);
+      col.setHSL(R.hue, 0.4, 0.72); planetRingField.setColorAt(k, col);
+    }
+    planetRingField.instanceMatrix.needsUpdate = true;
+    if (planetRingField.instanceColor) planetRingField.instanceColor.needsUpdate = true;
+    scene.add(planetRingField);
+  }
 }
 // buildSunField() — the STARS of the two-level galaxy: ONE glowing colored SUN per
 // CLUSTER at its star coord (worldOfCoord of cluster.star), tinted the cluster's own
@@ -355,11 +399,12 @@ export function disposeGalaxy() {
   if (starfield) { scene.remove(starfield); disposeObj(starfield); starfield = null; }
   if (glyphSky) { try { glyphSky.dispose(); } catch (e) {} glyphSky = null; }
   if (planetField) { scene.remove(planetField); disposeObj(planetField); planetField = null; }
+  if (planetRingField) { scene.remove(planetRingField); disposeObj(planetRingField); planetRingField = null; }
   if (sunGlowField) { scene.remove(sunGlowField); disposeObj(sunGlowField); sunGlowField = null; }
   if (sunField) { scene.remove(sunField); disposeObj(sunField); sunField = null; sunIndex = null; sunBaseR = null; }
   _sunShader = null;   // shader is captured on compile; a fresh start rebuilds it
   for (const g in planetIndex) delete planetIndex[g];
-  planetBaseR = null; _hiIdx = -1;
+  planetBaseR = null; planetSquash = null; _hiIdx = -1;
 }
 // FLAMING SUNS: advance the star-surface plasma churn off the deterministic clock
 // (a headless snapshot at dt=0 stays byte-stable).
@@ -389,8 +434,12 @@ export function highlightPlanet(genre) {
   const idx = genre != null ? planetIndex[genre] : null;
   if ((idx == null ? -1 : idx) === _hiIdx) return;
   const m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3();
-  if (_hiIdx >= 0) { planetField.getMatrixAt(_hiIdx, m4); m4.decompose(p, q, s); const r = planetBaseR[_hiIdx]; s.set(r, r, r); m4.compose(p, q, s); planetField.setMatrixAt(_hiIdx, m4); }
-  if (idx != null) { planetField.getMatrixAt(idx, m4); m4.decompose(p, q, s); const r = planetBaseR[idx] * 2.0; s.set(r, r, r); m4.compose(p, q, s); planetField.setMatrixAt(idx, m4); }
+  // restore/apply the highlight scale keeping each world's own OBLATENESS — a plain
+  // s.set(r,r,r) would quietly round every flattened planet back into a ball the first
+  // time it became (or stopped being) the dominant one.
+  const sq = (k) => (planetSquash && planetSquash[k]) || 1;
+  if (_hiIdx >= 0) { planetField.getMatrixAt(_hiIdx, m4); m4.decompose(p, q, s); const r = planetBaseR[_hiIdx]; s.set(r, r * sq(_hiIdx), r); m4.compose(p, q, s); planetField.setMatrixAt(_hiIdx, m4); }
+  if (idx != null) { planetField.getMatrixAt(idx, m4); m4.decompose(p, q, s); const r = planetBaseR[idx] * 2.0; s.set(r, r * sq(idx), r); m4.compose(p, q, s); planetField.setMatrixAt(idx, m4); }
   _hiIdx = idx == null ? -1 : idx;
   planetField.instanceMatrix.needsUpdate = true;
 }
@@ -398,6 +447,13 @@ export function highlightPlanet(genre) {
 // ---- PART 3: THE SURFACE (per landing) ------------------------------------------
 let band = [];               // [{group, update}]
 let dancers = [];            // [{group, update}] — extra background dancer-aliens (no instrument)
+// EXTRAS — creatures that are on the planet but are NOT the dance floor: the roadie
+// and the audience-of-one. Deliberately NOT in `dancers`: that list means "the crowd
+// this genre's energy earned", it is read by the energy gate in
+// test/starcruise/starcruise.test.js GX7, and a hushed genre must still report ZERO
+// dancers even though a roadie is standing by the amps. They animate identically
+// (the controller ticks both lists with the same ctx).
+let extras = [];
 let stage = null;            // shadow-RECEIVING stage disc under the band
 let groundPlanet = null;     // the PROCEDURAL PLANET the band stands on (planet.js; heightAt foot-plant)
 let groundH0 = 0;            // heightAt(0,0) of the ground planet (so its pole sits at y=0)
@@ -405,6 +461,7 @@ let groundRadius = 0;        // the ACTUAL base radius of the current ground pla
 let smallWorldGround = false;// true when the ground is the LITTLE-PRINCE small curved world
 const GROUND_R = 110;        // legacy flat-fallback ground-planet radius (only if the small build fails)
 let backdrop = null;         // {group, update}
+let props = [];              // [{group, update}] — signage / stage kit / landmark / sky bodies
 let skyDome = null;          // {mesh, update, dispose} — footage wrapped around the planet as a glowing atmosphere
 let ship = null;             // { group, update(dt, phase, landProgress) } — the greet-craft saucer
 let curTraits = null;        // TRAITS of the currently-spawned band (headless-probe visibility)
@@ -510,12 +567,95 @@ function spawnFor(genreOrWeights, seed) {
     }
   } catch (e) { groundPlanet = null; groundH0 = 0; groundRadius = 0; smallWorldGround = false; }
 
-  // BACKDROP — deliberately empty: no trees, no background objects. The
-  // planet's bare terrain is the whole stage; no procedural city/farm/foliage. We keep an
-  // EMPTY backdrop object so the spawn/despawn + update lifecycle (and hasBackdrop) are
-  // unchanged — nothing is drawn, nothing clutters the little world.
-  backdrop = { group: new THREE.Object3D(), update() {} };
-  backdrop.group.name = "backdrop-empty";
+  // ---- THE WORLD AROUND THE GIG -------------------------------------------------
+  // plantFor(x, z, yaw) — the ONE placement seam every prop builder takes: a flat
+  // landing-patch offset in, a world position + orientation on the curved terrain out.
+  // Same math as plantOnSurface (which places the band), exposed as a callback so
+  // props.js can foot-plant without importing anything from here.
+  const plantFor = (x, z, yaw) => {
+    const tmp = new THREE.Object3D();
+    plantOnSurface(tmp, x, z, yaw || 0);
+    return { position: tmp.position, quaternion: tmp.quaternion };
+  };
+  // BACKDROP — the procedural city / farm, BACK ON. It had been replaced with an empty
+  // Object3D ("nothing clutters the little world"), which left 1,300 lines of tested
+  // shape-grammar skyline, silos, crops, foliage and blinking beacons drawing nothing,
+  // and every landed horizon bare. It draws again, mapped onto the curved surface
+  // through backdrop.js's own opts.surface seam so the skyline wraps over the little
+  // planet's horizon — six towers falling away around a sphere you can see the far
+  // side of is a better joke than a skyline ever was flat.
+  //
+  // THE TANGENT SWAP: planet.field's landing basis is tangentX=+Z / tangentZ=+X (a
+  // cross-product handedness detail plantOnSurface already compensates for by feeding
+  // (z,x)). We hand the backdrop a frame with the two swapped so ITS flat x lands on
+  // world X — otherwise the city would build sideways relative to the band.
+  backdrop = null;
+  try {
+    // GETTING THE CITY OFF THE STAGE. The backdrop lays itself out for a big flat scene:
+    // its nearest lots sit a few units behind the players, which on a 20-unit world put a
+    // skyline wall right behind the drummer. Two transforms, and only the second one
+    // actually solves it:
+    //
+    //   SPREAD lengthens the tangent basis. composeAt builds its direction as
+    //   up*R + tX*x + tZ*z, so a longer basis multiplies every (x,z) the layout was ever
+    //   going to use and the whole thing fans out around the sphere. Heights are lifted
+    //   along the surface NORMAL and are not scaled, so the buildings keep their real
+    //   size — this moves the city away, it does not shrink it.
+    //
+    //   PUSH is the one that clears the stage. Scaling is proportional, so the nearest lot
+    //   stays the nearest lot: at SPREAD 2.6 the closest instance still landed 13.07° off
+    //   the landing pole, inside the band arc (measured by the LP3 gate, which is why that
+    //   gate now states the law as an ANGLE). PUSH instead rotates every direction away
+    //   from the pole by a constant, so there is a guaranteed empty cap around the players
+    //   no matter how the layout is scaled. Applied inside surfacePoint/upAt — the only two
+    //   places the backdrop turns a direction into a world pose — so position and
+    //   orientation are remapped together and buildings still stand up straight.
+    const SPREAD = traits.backdrop === "farm" ? 1.5 : 1.9;
+    const PUSH = 24 * Math.PI / 180;      // the empty cap the band + its gear live in
+    const scal = (v, k) => [(v[0] || 0) * k, (v[1] || 0) * k, (v[2] || 0) * k];
+    const _U = new THREE.Vector3(), _V = new THREE.Vector3(), _T = new THREE.Vector3();
+    const pushed = (d) => {
+      // accept Vector3 | [x,y,z] | {x,y,z} (backdrop.js's own contract) -> a pushed Vector3
+      if (Array.isArray(d)) _V.set(d[0], d[1], d[2]); else _V.set(d.x || 0, d.y || 0, d.z || 0);
+      if (_V.lengthSq() < 1e-12) return _V.set(0, 1, 0);
+      _V.normalize();
+      const cos = Math.max(-1, Math.min(1, _V.dot(_U)));
+      const th = Math.acos(cos);
+      // tangential component: the direction "away from the pole" that this point lies in.
+      _T.copy(_V).addScaledVector(_U, -cos);
+      if (_T.lengthSq() < 1e-12) return _V;              // exactly at the pole: nothing to push along
+      _T.normalize();
+      const th2 = Math.min(Math.PI * 0.93, th + PUSH);   // never wrap past the far pole
+      return _V.copy(_U).multiplyScalar(Math.cos(th2)).addScaledVector(_T, Math.sin(th2));
+    };
+    const surf = (groundPlanet && groundPlanet.field && smallWorldGround) ? {
+      radius: groundPlanet.field.radius,
+      up: groundPlanet.field.up,
+      // ...and swapped, because planet.field's landing basis is tangentX=+Z / tangentZ=+X
+      tangentX: scal(groundPlanet.field.tangentZ, SPREAD),
+      tangentZ: scal(groundPlanet.field.tangentX, SPREAD),
+      surfacePoint: (d) => groundPlanet.field.surfacePoint(pushed(d)),
+      upAt: (d) => groundPlanet.field.upAt(pushed(d)),
+    } : null;
+    if (surf) {
+      const u = groundPlanet.field.up;
+      _U.set(u[0] || 0, u[1] || 0, u[2] || 0).normalize();
+    }
+    backdrop = mods.makeBackdrop(THREE, traits, useSeed, surf ? { surface: surf } : {});
+    // the surface helpers are PLANET-LOCAL; the planet sits at -groundH0, so the whole
+    // backdrop rides with it (exactly how plantOnSurface adds groundPlanet.position).
+    if (surf) backdrop.group.position.copy(groundPlanet.position);
+    // NO SHADOWS FROM THE HORIZON. The backdrop flags its own solid forms as shadow
+    // casters + receivers, which is right for the big flat scene it was written for and
+    // wasted here: hundreds of instanced crops/foliage/towers, spread across the whole
+    // sphere, re-rendered every frame into the key light's shadow map for shadows that
+    // fall over the horizon where nobody can see them. Median landed frame under
+    // software GL, backdrop shadows off vs on: bluegrass 19.4 vs 23.8 ms, jungle 18.4 vs
+    // 23.6 — ~20% of the frame for nothing visible. The BAND still casts (that is the
+    // shadow that matters — it grounds the players on the terrain).
+    backdrop.group.traverse((o) => { if (o.isMesh || o.isInstancedMesh) { o.castShadow = false; o.receiveShadow = false; } });
+  } catch (e) { backdrop = null; }
+  if (!backdrop) { backdrop = { group: new THREE.Object3D(), update() {} }; backdrop.group.name = "backdrop-empty"; }
   scene.add(backdrop.group);
   skyDome = makeSkyDome();       // wrap the demoscene canvas around the planet as its atmosphere
   scene.add(skyDome.mesh);
@@ -539,18 +679,35 @@ function spawnFor(genreOrWeights, seed) {
   // pose). The alien reparents UNDER the pedestal and animates (bob/sway) in the pedestal's
   // local frame, so its own +Y is the surface normal (its per-frame group.position.y /
   // group.rotation writes ride the tangent frame instead of fighting it).
+  //
+  // ROLE SCALE + THE ONE WHO IS NOT PAYING ATTENTION. Every member used to be the same
+  // species at the same scale, evenly spaced, all yawed politely toward the pilot — six
+  // identical creatures in a row, which reads as a chorus line rather than a band. Two
+  // deterministic tweaks fix it without touching the rig: SCALE by role (the drummer is
+  // small behind a big kit, the bass player is the largest thing on the planet, the pad
+  // player is a tall wisp) and, on bands of four or more, ONE member picked off the seed
+  // is turned the wrong way. The scale rides the PEDESTAL, not the alien group, so the
+  // feet stay planted on the terrain (the same reason the dancers scale their pedestal).
+  const ROLE_SCALE = { drum: 0.80, perc: 0.78, bass: 1.26, lead: 1.0, pad: 1.12, found: 0.92 };
+  const wrongWay = n >= 4 ? (Math.floor(mulberry(useSeed * 7717)() * n) % n) : -1;
   let cx = 0, cz = 0;
   band = members.map((member, i) => {
     const a = mods.makeAlien(THREE, traits, member, useSeed + i * 101);
     a._voice = member.voice || member.role;   // the engine voice this alien plays (score-bridge lookup)
     a._role = member.role;
     const off = (i - (n - 1) / 2);             // centered index, e.g. -2,-1,0,1,2
-    const fx = off * spread;
-    const fz = 2.0 - Math.abs(off) * 0.85;     // deeper arc: center forward, wings back
+    const rr = mulberry(useSeed * 31 + i * 613);
+    const fx = off * spread + (rr() - 0.5) * 0.9;             // nobody stands on their mark
+    const fz = 2.0 - Math.abs(off) * 0.85 + (rr() - 0.5) * 0.8;
     const ped = new THREE.Object3D();
     ped.name = "band-pedestal";
     ped.add(a.group);
-    plantOnSurface(ped, fx, fz, -off * 0.13);  // yaw toward the pilot at the arc center
+    // the drummer sits BACK behind the line, as drummers do
+    const dz = member.role === "drum" ? -1.9 : member.role === "perc" ? -1.2 : 0;
+    const yaw = -off * 0.13 + (i === wrongWay ? 2.1 + rr() * 0.8 : (rr() - 0.5) * 0.16);
+    plantOnSurface(ped, fx, fz + dz, yaw);     // yaw toward the pilot at the arc center
+    const sc = ROLE_SCALE[member.role] || 1;
+    ped.scale.setScalar(sc * (0.94 + rr() * 0.12));
     a.stage = ped;                             // the WORLD-staging node (probes/framing read this)
     enableShadows(ped);                        // the players CAST shadows onto the terrain
     scene.add(ped);
@@ -567,6 +724,7 @@ function spawnFor(genreOrWeights, seed) {
   // BAND. Louder genres get a crowd ringed AROUND/BEHIND the band, each also PLANTED ON the
   // curved surface facing the band. Mobile-capped so the draw-calls stay bounded.
   dancers = [];
+  extras = [];
   for (let i = 0; i < nd; i++) {
     const d = mods.makeAlien(THREE, traits, { role: "dancer" }, useSeed + 4200 + i * 37);
     const seedR = mulberry(useSeed * 131 + i * 977);
@@ -591,6 +749,93 @@ function spawnFor(genreOrWeights, seed) {
     scene.add(ped);
     dancers.push(d);
   }
+
+  // THE ROADIE. One creature with no instrument and no dance, standing at the amp line
+  // with its back half-turned, doing nothing whatsoever. Spawned on EVERY planet — even
+  // the drumless, dancerless, hushed ones, which is exactly where it lands best: an
+  // ambient drone genre plays to an empty world with one guy standing by the amps.
+  {
+    const road = mods.makeAlien(THREE, traits, { role: "dancer" }, useSeed + 9001);
+    const rr = mulberry(useSeed * 577 + 13);
+    const side = rr() < 0.5 ? -1 : 1;
+    const ped = new THREE.Object3D();
+    ped.name = "roadie-pedestal";
+    ped.add(road.group);
+    plantOnSurface(ped, side * (bandHalfW * 0.72 + 2.2), -3.4 - rr(), Math.PI * 0.5 * side + rr() * 0.6);
+    ped.scale.setScalar(0.92 + rr() * 0.1);
+    road.stage = ped;
+    road._roadie = true;
+    ped.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = true; } });
+    scene.add(ped);
+    extras.push(road);
+  }
+
+  // AN AUDIENCE OF ONE. When the energy gate produced no dance floor at all, put a
+  // single spectator way out on the terrain, facing the band from a polite distance.
+  // The empty planet was already the joke; one attendee is the punchline.
+  if (nd === 0) {
+    const fan = mods.makeAlien(THREE, traits, { role: "dancer" }, useSeed + 9101);
+    const rr = mulberry(useSeed * 881 + 29);
+    const ang = (rr() - 0.5) * 1.2;
+    const rad = 11 + rr() * 3;
+    const px = Math.sin(ang) * rad, pz = 3.5 + Math.cos(ang) * rad;
+    const ped = new THREE.Object3D();
+    ped.name = "audience-pedestal";
+    ped.add(fan.group);
+    plantOnSurface(ped, px, pz, Math.atan2(bandCentroid.x - px, bandCentroid.z - pz));
+    ped.scale.setScalar(0.9);
+    fan.stage = ped;
+    fan._audience = true;
+    ped.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = true; } });
+    scene.add(ped);
+    extras.push(fan);
+  }
+
+  // ---- PROPS: the signage, the gear, the landmark, the sky -------------------------
+  // Built LAST so they can size themselves to the resolved ensemble (bandHalfW) and
+  // plant through the same curved-surface seam the band uses. Every one is guarded
+  // individually: a prop that throws must never take the landing down.
+  props = [];
+  const addProp = (fn) => { try { const p = fn(); if (p && p.group) { scene.add(p.group); props.push(p); } } catch (e) {} };
+  // THE BAND HAS A NAME. NameBank has been inventing artist/album/year/label per
+  // (genre, seed) for the 2D chyron this whole time; star-cruise never asked it for
+  // one, so you could land on 274 planets and never learn who was playing.
+  const ident = identityFor(genreOrWeights, useSeed);
+  // the board cycles more than the record sleeve: the PLAYERS get named too, one per
+  // sounding voice, so a sign you watch for a while tells you who is on stage.
+  const roster = rosterNames(members, useSeed);
+  addProp(() => makeSignage(THREE, ident, traits, useSeed, plantFor, {
+    width: Math.max(7, Math.min(14, bandHalfW * 1.5)), back: -6.5 - bandHalfW * 0.15,
+    words: roster }));
+  addProp(() => makeStageKit(THREE, traits, useSeed, plantFor, { halfW: bandHalfW }));
+  addProp(() => makeLandmark(THREE, groundPlanet && groundPlanet.userData && groundPlanet.userData.terrainType, traits, useSeed, plantFor));
+  addProp(() => makeSkyBodies(THREE, traits, useSeed, groundRadius || 20));
+}
+// identityFor(genreOrWeights, seed) — the invented band identity for this landing, via
+// the engine's NameBank global (loaded by index.html before the app). Blends resolve on
+// their DOMINANT genre so a mix still plays under one band's banner. Guarded: NameBank
+// absent (a bare headless harness) just means an unsigned gig.
+// rosterNames(members, seed) — one invented musician per sounding voice, via the same
+// NameBank the chyron uses. The name is keyed on (role, instrument family, seed), so it
+// is stable for a landing and changes when the instrument does. Guarded: no NameBank
+// (a bare headless harness) just means the board cycles the record sleeve alone.
+function rosterNames(members, seed) {
+  try {
+    const NB = window.NameBank;
+    if (!NB || !NB.musician) return [];
+    return (members || []).slice(0, 4).map((m) =>
+      NB.musician(m.voice || m.role, (m.instrument && m.instrument.family) || m.role, seed | 0));
+  } catch (e) { return []; }
+}
+function identityFor(genreOrWeights, seed) {
+  try {
+    const NB = window.NameBank;
+    if (!NB || !NB.identity) return null;
+    let g = genreOrWeights;
+    if (Array.isArray(g) && g.length) g = g.reduce((a, b) => ((b.w || 0) > (a.w || 0) ? b : a)).g;
+    if (typeof g !== "string") return null;
+    return NB.identity(g, seed | 0);
+  } catch (e) { return null; }
 }
 // surfaceQuat(nm, yaw) — a quaternion that rotates local +Y onto the outward surface normal
 // `nm` and then spins `yaw` about that normal. The little-prince upright-on-a-sphere pose.
@@ -636,7 +881,7 @@ export function groundYAt(x, z) {
 export function countCasters() {
   let n = 0;
   const scan = (a) => { const g = a && (a.stage || a.group); if (g) g.traverse((o) => { if (o.isMesh && o.castShadow) n++; }); };
-  band.forEach(scan); dancers.forEach(scan);
+  band.forEach(scan); dancers.forEach(scan); extras.forEach(scan);
   return n;
 }
 // SKY DOME — wrap the visuals AROUND THE PLANET like a glowing atmosphere,
@@ -714,9 +959,13 @@ export function despawnBand() {
   band = [];
   for (const d of dancers) { const g = d.stage || d.group; scene.remove(g); disposeObj(g); }
   dancers = [];
+  for (const e of extras) { const g = e.stage || e.group; scene.remove(g); disposeObj(g); }
+  extras = [];
   if (stage) { scene.remove(stage); disposeObj(stage); stage = null; }
   if (groundPlanet) { scene.remove(groundPlanet); disposeObj(groundPlanet); groundPlanet = null; groundH0 = 0; groundRadius = 0; smallWorldGround = false; }
   if (backdrop) { scene.remove(backdrop.group); disposeObj(backdrop.group); backdrop = null; }
+  for (const p of props) { try { scene.remove(p.group); disposeObj(p.group); } catch (e) {} }
+  props = [];
   if (skyDome) { skyDome.dispose(); skyDome = null; }
   if (ship) { scene.remove(ship.group); disposeObj(ship.group); ship = null; }
   curTraits = null;
@@ -761,6 +1010,8 @@ export function getBand() { return band; }
 export function getDancers() { return dancers; }
 export function getStage() { return stage; }
 export function getBackdrop() { return backdrop; }
+export function getProps() { return props; }
+export function getExtras() { return extras; }
 export function getSkyDome() { return skyDome; }
 export function getShip() { return ship; }
 export function getCockpit() { return cockpit; }

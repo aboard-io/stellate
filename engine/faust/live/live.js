@@ -42,6 +42,9 @@
 
   // ── ring control-block layout (must match ring-player.js / stream-worker.js) ──
   const SR = 44100, BS = 64;
+  // MASTER TOP: the "off" corner. At/above this the master ceiling filter is
+  // transparent (nyquist is 22.05k, so a 2-pole at 20k does nothing audible).
+  const TOP_OFF = 20000;
   const C_STATE = 0, C_XFADE = 1, C_ACTIVE = 2, C_READ_LO = 3, C_READ_HI = 4,
         C_UNDERRUN = 5, C_UNDER_CNT = 6;
   const C_RING0 = 8, RING_STRIDE = 4, R_WRITE = 0, R_READ = 1;
@@ -519,7 +522,21 @@
     const makeup = ctx.createGain(); makeup.gain.value = 2.6;   // ~+8 dB — the loudness the causal live path was missing
     const limiter = ctx.createDynamicsCompressor();
     limiter.threshold.value = -1.5; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.002; limiter.release.value = 0.12;
-    ringNode.connect(masterGain);
+    // VOICE DUCK — a gain between the RING and the master, so the engine can pull the
+    // instruments down without touching anything else. The ring carries every Faust
+    // voice (sampled + synth); the FOUND layer joins at masterGain further down and is
+    // deliberately NOT behind this, so a duck lowers the band and leaves the beds and
+    // speech holding the room.
+    //
+    // The point of doing it here rather than in JS scheduling: this is an AudioParam
+    // ramp, so it runs on the audio thread. A soundfont swap costs the main thread
+    // ~1.9 s of work in chunks up to 233 ms (measured, cold sgm swap on a live
+    // engine) — anything JS has to schedule per bar stutters through that, and a gain
+    // ramp does not. The duck is smooth even while the thread is busy, which is the
+    // whole reason a fade can cover a swap at all.
+    const voiceGain = ctx.createGain(); voiceGain.gain.value = 1;
+    ringNode.connect(voiceGain);
+    voiceGain.connect(masterGain);
     masterGain.connect(busComp); busComp.connect(makeup); makeup.connect(limiter);
     // ── THE BRICKWALL (docs/TIMING-AUDIT-2026-07 "the master output
     // clips"). A DynamicsCompressor is not a limiter: at threshold −1.5 dB / ratio 20
@@ -565,7 +582,29 @@
       const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 3000;
       vaporPre.connect(d); d.connect(lp); lp.connect(g); g.connect(d); d.connect(vaporWet);
     });
-    analyser.connect(vaporLP);
+    // MASTER TOP — a global CEILING over the whole master, independent of vapor.
+    //
+    // "We lost the LPF over everything; the high bleeps and the extremely high pads are
+    // back." Measured before building this: no LPF was lost. The only per-genre master
+    // lowpass is state.tone.highcut, and across 274 genres x seeds 1/5/7 it is ABSENT on
+    // 681 of 822 draws (82.8%) — identical at every revision back through d09417e, so
+    // nothing recent removed it. 83% of the catalogue has simply never had a ceiling, and
+    // the only global tone control in the chain is MASTER_AIR_SHELF_DB, a -3 dB SHELF at
+    // 7 kHz, which by construction dims the air rather than stopping anything.
+    //
+    // So this is the missing thing rather than a restored one: one lowpass across the
+    // FINAL master — after the limiter, after the found submix, so it catches the field
+    // recordings' bleeps and the pads alike — with a gentle default and a slider, because
+    // the right corner frequency is an ears question, not a measurement.
+    const topLP = ctx.createBiquadFilter(); topLP.type = "lowpass"; topLP.Q.value = 0.5;
+    topLP.frequency.value = TOP_OFF;
+    const applyTop = (hz) => {
+      const f = (+hz > 0 ? +hz : TOP_OFF);
+      try { topLP.frequency.setTargetAtTime(Math.max(1200, Math.min(TOP_OFF, f)), ctx.currentTime, 0.08); } catch (e) {}
+    };
+    applyTop(opts.top);
+    analyser.connect(topLP);
+    topLP.connect(vaporLP);
     vaporLP.connect(vaporDry); vaporDry.connect(userGain);
     vaporLP.connect(vaporPre); vaporWet.connect(userGain);
     const _expLerp = (a, b, t) => a * Math.pow(b / a, t);
@@ -1944,6 +1983,35 @@
       // amount; the next fed bar carries it into the stream (see postFeed). The live-graph node
       // stays at bypass, so this no longer touches it.
       setVapor(v) { curVapor = Math.max(0, Math.min(1, +v || 0)); },
+      // MASTER TOP — the global ceiling (Hz). >= TOP_OFF is transparent. Rides the live
+      // output graph, so a slider move is heard immediately with no rebuild and no retarget.
+      setTop(hz) { applyTop(hz); },
+      // DUCK THE INSTRUMENTS (not the beds) — `to` 0..1, reached over `sec`. An
+      // AudioParam ramp on the audio thread, so it stays smooth through main-thread
+      // jank; that is what lets a fade cover a soundfont swap. Returns the deadline so
+      // a caller can await the ramp rather than guess at it.
+      duckVoices(to, sec) {
+        const t = Math.max(0.01, +sec || 0.5);
+        const v = Math.max(0, Math.min(1, +to));
+        try {
+          const now = ctx.currentTime;
+          voiceGain.gain.cancelScheduledValues(now);
+          voiceGain.gain.setValueAtTime(voiceGain.gain.value, now);
+          voiceGain.gain.linearRampToValueAtTime(v, now + t);
+        } catch (e) {}
+        return t;
+      },
+      voiceLevel() { try { return voiceGain.gain.value; } catch (e) { return 1; } },
+      // how many sampler zones have decoded — the readiness signal a font swap waits
+      // on, so the fade-in is driven by the new instruments actually being there
+      // rather than by a fixed guess at how long a font takes. (The WAV-first route
+      // has its own richer decodeStats(); this is the classic path's zone count, which
+      // is all the swap needs: a number that stops climbing.)
+      decodeStats() {
+        let ok = 0, fail = 0;
+        for (const k in samplerBufs) { const v = samplerBufs[k]; if (v === null) fail++; else if (v) ok++; }
+        return { sampler: { ok, fail }, inFlight: samplerBufJobs ? samplerBufJobs.size : 0 };
+      },
       // real proxy: runway health ("am I keeping up"); the rest are stubs (deleted machinery)
       loadRatio: () => loadRatio,
       ecoLevel: () => 0,
@@ -3331,6 +3399,15 @@
       setMasterVol(v) { wavMasterVol = Math.max(0, Math.min(1, +v || 0)); applyWavVol(); },
       // VAPOR — baked into the WAV segments via the fed bars (finally works on mobile).
       setVapor(v) { curVaporWav = Math.max(0, Math.min(1, +v || 0)); },
+      // MASTER TOP — no-op on the WAV-first mobile route: it plays a plain <audio>
+      // element with no WebAudio graph to hang a filter on (the same reason vapor had
+      // to be baked into the segments). Declared so callers can set it unconditionally.
+      setTop() {},
+      // DUCK — also a no-op here, and for once that is the right behaviour rather than
+      // a limitation: this route plays PRE-RENDERED segments, so a font swap does not
+      // reach the audio already in the queue. There is no seam at this end to cover.
+      duckVoices() { return 0; },
+      voiceLevel() { return 1; },
       // GETTERS so they reflect a runtime route demotion (mp3 → segAB), not the boot route.
       get mediaEl() { return useMp3 ? mp3El : els[0]; },
       get outputRoute() { return outRoute; },

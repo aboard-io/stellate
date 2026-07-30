@@ -243,11 +243,11 @@ h1{font-family:'Orbitron',sans-serif;font-weight:700;font-size:148px;line-height
   <div class="neb"></div>
   ${cardSky(W, H)}
   <div class="fg">
-    <div class="eyebrow">generative genre space</div>
+    <div class="eyebrow">a map of music</div>
     <h1>STELLATE</h1>
     <div class="rule"></div>
     <div class="tag">draw a path through genre space</div>
-    <div class="sub">274 genres &middot; generated live in your browser &middot; deterministic from a seed</div>
+    <div class="sub">274 kinds of music, played live in your browser</div>
   </div>
   <div class="credit">by Paul Ford &middot; Aboard &middot; stellate.app</div>
 </div></body></html>`;

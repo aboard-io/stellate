@@ -136,48 +136,56 @@ anomaly ceiling.
 
 ---
 
-## The soundfont rotation — shipped 2026-07-29
+## The soundfont rotation — shipped and REMOVED, 2026-07-29
 
-The set changes instruments every **32 bars** and keeps coming home to the analog
-one: `fluidr3 → Pure Analog → SGM Pro 15 → Pure Analog → Seattle Glass Factory →
-Pure Analog → Pure FM → Pure Analog`, a full tour every 256 bars with analog on
-four of the eight steps. `app/audio/fonts.js` `FONT_CYCLE`.
+Shipped in the morning, out by the evening. The set changed instruments every 32
+bars on an 8-step cycle; it is gone, and the soundfont now only ever changes when
+the listener picks one in ⚙. This section is why, because the idea is a good one
+and somebody will want it back.
 
-**The blocker was that zone ids were not font-qualified.** Every font reused the
-same `ins_<instr>_<n>` id pointing at a different file — measured on one citypop
-state, 591 ids shared between fluidr3 and sgm and **522 of them resolving to
-different audio**. The engine caches decoded PCM by that id, so two fonts could
-never be in memory at once, which is why the font picker had to `stopLive()` →
-rebuild → `goLive()`: a hard cut. `zoneSrcId` now qualifies the id by the file it
-came from, keyed on the resolved BASE so a font that doesn't cover an instrument
-keeps the default id and the same bytes are never cached twice. The default font
-keeps the bare form, so every determinism gate is byte-identical.
+**It stalls the music, and the cause is the media.** Zone ids are FONT-QUALIFIED
+(`ins_sgm__acoustic_bass_0`) so two fonts can sit in the decode caches at once —
+which is what made a gentle voice-by-voice swap possible, and also means every zone
+of an incoming SAMPLED font is a cache miss. Measured on one citypop/vaporwave
+blend:
 
-**The gentle part needed nothing new.** Set the font, re-target, and the flip queue
-walks the voices over one at a time — one flip per two bars, `HOLD_BARS` apart,
-identity dims first. Measured: the analog voices land ~4 bars after the boundary,
-the SGM samples ~4 bars after theirs. `sigOf()` ignores sampler units, so
-sampled→sampled never reopens the stream at all; the two synth fonts do move the
-topology and take the engine's designed crossfade.
+| font | zones | cold weight |
+|---|---|---|
+| fluidr3 | 629 | 100.7 MB (resident — fetched once at boot) |
+| sgm | 930 | **51.4 MB at the boundary** |
+| windows | 580 | **28.2 MB at the boundary** |
+| analog | 0 | 0 — synth font |
+| dx7 | 0 | 0 — synth font |
 
-**One thing was genuinely missing: `state.samplerLib` was in no flip.** It is the
-map `forceSampled` resolves a voice through when the voice carries no sampler of
-its own, and while every state was built under one font it never mattered. Under
-the rotation it is the entire difference — the first working version changed the
-font key and voiced *identical samples throughout*. It now rides with the crate in
-the "sample" flip, where it belongs.
+The swap logic is cheap: `setFont` 0 ms, `retargetWeights` 4–42 ms. It is entirely
+the media arriving at a bar boundary, and the bar scheduler runs on the main
+thread, so the stall IS a gap in the music.
 
-A hand-picked font from the ⚙ panel **pins** it (the rotation stops); `?sf=` and
-`?fonts=off` pin it too. The cycle is a pure function of the bar, so a shared link
-still reproduces the instruments as well as the notes.
+**Trimming the cycle to the free fonts is worse, measured.** Dropping sgm/windows
+leaves analog↔dx7 as most of the tour, and those two are the edges that move the
+stream topology and reopen the ring: the live ride then dropped a voice for four
+bars at a synth boundary. A gap traded for a stall.
 
-`test/browser/font-rotation.test.js` gates it. Note what that gate does NOT use:
+**What would bring it back:** the alternate fonts' zones on the same MP3 diet the
+default instruments were specced for (`tools/build/transcode-samples.js`, ~14× at a
+higher measured SNR) — 51.4 MB becomes about 3.7 MB. Nothing about the rotation
+logic needs to change; it needs its media to weigh what the default's does.
+
+**What was kept.** The font-qualified zone ids are a real improvement and stay —
+they are why two fonts can coexist at all, and why a hand pick no longer has to
+`stopLive()` → rebuild → `goLive()`. So is the `state.samplerLib` fix: it rides
+with the crate in the "sample" flip, where it belongs. A hand-picked font is
+remembered across sessions and `?sf=` still restores one from a link.
+
+`test/browser/font-hold.test.js` (was `font-rotation.test.js`) gates the new
+contract by inversion: the voiced ZONE — not the font key — must be identical
+across a 48-bar live ride, and no rotation surface (`FONT_CYCLE`, `fontAt`,
+`ROTATE_BARS`) may exist in fonts.js. Note what that gate does NOT use:
 `handle.rms()` is an instantaneous meter, and the quietest bar of four identical
-rides came out 0.0025, 0.1617, 0.0264 and 0.1047 — no threshold over it is
-anything but a coin flip. It asserts on `handle.auditSummary()` instead, which
-measures voices that were expected to sound and did not, and it asserts about the
-BOUNDARIES specifically, since a live ride throws the odd present-but-silent bar
-with the rotation off too.
+rides came out 0.0025, 0.1617, 0.0264 and 0.1047 — no threshold over it is anything
+but a coin flip. It asserts on `handle.auditSummary()` instead, which measures
+voices that were expected to sound and did not. Worth recording: with the rotation
+gone that ride reports **0 anomalous bars over 48**, where the rotating one left 2.
 
 ---
 

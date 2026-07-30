@@ -4,8 +4,8 @@
 // survives; there is no wav/mp3/video export.
 import { S, set, subs, html, render } from "../core/state.js";
 import { BARS_PER_SEG } from "../core/world.js";
-import { goLive, stopLive, setMasterVol, setVapor } from "../audio/live.js";
-import { fontManifest, setSoundfont } from "../audio/fonts.js";
+import { goLive, stopLive, setMasterVol, setVapor, setTop } from "../audio/live.js";
+import { fontManifest, setSoundfont, resumeFontRotation, pinCurrentFont } from "../audio/fonts.js";
 import { renderInside } from "./inside.js";
 import { drawMap, startPulse } from "../map/starmap.js";
 import { copyShareUrl, buildShareUrl, loopBars, loopDuration, baseDuration, durMult, fmtDuration, fmtMult, MULT_MIN, MULT_MAX } from "../core/share.js";
@@ -85,6 +85,7 @@ function setBpmDelta(v){
 function Panel(){
   if(!S.playing) return html`<div>…</div>`;
   const vol=Math.round((S.masterVol!=null?S.masterVol:1)*100), vap=Math.round((S.vapor||0)*100);
+  const top=Math.max(3000,Math.min(20000,S.top||20000));
   const bpm=S.playing?Math.round(S.playing.bpm):0, dl=S.bpmDelta||0;
   return html`
     <div class="psec"><div class="ptitle">mix</div>
@@ -96,10 +97,18 @@ function Panel(){
         <input type="range" min="0" max="100" step="1" value=${vap}
           onInput=${e=>setVapor((+e.target.value||0)/100)} />
         <output>${vap}%</output></div>
-      <div class="row"><label>soundfont</label>
-        <select class="sfsel" onChange=${e=>setSoundfont(e.target.value)}>
+      <div class="row"><label title="a ceiling over the WHOLE master — the one lowpass above every voice, the drums and the field recordings. 83% of the catalogue carries no master lowpass of its own, so without this the highest pads and the bleeps have nothing above them. Full right = off.">top</label>
+        <input type="range" min="3000" max="20000" step="250" value=${top}
+          onInput=${e=>setTop(+e.target.value||20000)} />
+        <output>${top >= 20000 ? "off" : (top / 1000).toFixed(1) + "k"}</output></div>
+      <div class="row"><label title="which instrument set is sounding. Changing it ducks the band, swaps underneath, and brings them back — and it stops the rotation, because you asked for that one.">soundfont</label>
+        <select class="sfsel" value=${S.soundfont||"fluidr3"} onChange=${e=>setSoundfont(e.target.value)}>
           ${fontManifest().map(f=>html`<option value=${f.key} selected=${(S.soundfont||"fluidr3")===f.key}>${f.label}</option>`)}
         </select></div>
+      <div class="row"><label title="let the set change itself every 32 bars, ducking under each swap. Picking a soundfont by hand turns this off.">rotate</label>
+        <input type="checkbox" checked=${!S.fontPinned}
+          onChange=${e=>e.target.checked?resumeFontRotation():pinCurrentFont()} />
+        <output>${S.fontPinned?"off — holding "+(S.soundfont||"fluidr3"):"every 32 bars"}</output></div>
     </div>
 
     <div class="psec"><div class="ptitle">structure</div>
