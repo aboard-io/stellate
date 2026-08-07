@@ -166,8 +166,12 @@ moves.
    `slot[8][8]` (Markov transitions over the voicing ladder) + `ioiStart[8]` +
    `ioi[8][8]` (rhythm chain) + `legato` + `step`. Not a melody — the
    *distribution* a melody is drawn from.
-   → **`state.melodyWeave`**, edited as a painted 8×8 heatmap. Brush toward the
-   diagonal for stepwise motion, toward the corners for leaps.
+   → **`state.melodyWeave`** — **SHIPPED 2026-08-07.** Edited as a painted 8×8
+   matrix over the ladder (click strengthens a transition, shift-click weakens it,
+   the row renormalises). `test/unit/melody-weave-daw.test.js` proves the painting
+   is not decorative by measuring it: a diagonal-heavy table yields a smaller mean
+   interval than a corner-heavy one on every seed tried, and one table still gives
+   a different tune per seed — a distribution, not a recording.
 3. **`wander`** — the fallback walk: rhythm pool `[1,0.5,0.5,1,1,2]`, ±1 step
    over chord tones, 0.18 octave-leap probability, 0..3 slot clamp, 0.92 legato.
    → **`state.melodyGen`** — **SHIPPED 2026-08-07.** Every one of those literals
@@ -180,9 +184,25 @@ moves.
    panel's DEFAULTS against the engine's literals — otherwise "revert to stock"
    would be a lie and every knob would carry a hidden offset.
 
-**The fitter.** `tools/mine/mine-weave.js` is 151 lines and its fitting core is
-transition-counting plus normalization — no real dependencies. Ported to the
-browser it closes the loop: *draw a few phrases → fit a weave organ from them →
+**The fitter — SHIPPED 2026-08-07.** `tools/mine/mine-weave.js`'s fitting core is
+transition-counting plus Laplace smoothing, and in the browser it is *simpler*
+than in the corpus: mine-weave has to recover ladder slots from raw MIDI
+(normalise each window's pitch range, drop polyphonic skylines, gate on
+`mel_conf`), whereas a drawn cell is ALREADY in ladder slots — that is what the
+phrase editor's y-axis is. So the fit is counting, smoothing, normalising, and
+nothing else.
+
+One honest difference is noted in the code rather than hidden: mine-weave measures
+`step` as the fraction of 1–2 **semitone** intervals in raw corpus lines; a ladder
+has no semitones, so the browser fitter uses the fraction of **adjacent-slot**
+moves. Same role (it gates the passing-tone connectors), genuinely a different
+measurement.
+
+The weave panel carries its own **scratch phrase grid**, because a weave-driven
+form has no phrase of its own to fit from — the gate caught the button appearing
+to work while writing nothing. The scratch cell is stored under a reserved name
+that no section can ever play, so it is inert as vocabulary and exists only to be
+fitted from. It closes the loop: *draw a few phrases → fit a weave organ from them →
 the generator writes the song → adjust the phrases or paint the matrix.*
 `mine-melody`/`mine-weave` as a live instrument, fitted on your phrases instead of
 a MIDI corpus. Carry over `mine-melody.js`'s medoid rule: from a handful of
@@ -351,9 +371,10 @@ humanized material reads approximately.
    **SHIPPED 2026-08-07.** `test/browser/daw-rack.test.js` proves the rack law
    ON SCREEN: moving a kit probability repaints the drums roll and leaves every
    other roll **pixel-identical** (canvas hash per row, before and after).
-5. **`state.melodyGen`** (the wander machine) and **`state.melodyCells`** (draw
-   phrases on the ladder grid) — both **SHIPPED 2026-08-07**. Next:
-   **`state.melodyWeave`** + the in-browser fitter, fed by the phrases you draw.
+5. **`state.melodyGen`**, **`state.melodyCells`** and **`state.melodyWeave`** +
+   the in-browser fitter — all **SHIPPED 2026-08-07**. The melody rack is done:
+   knobs on the walk, a ladder grid to draw phrases, a matrix to paint the
+   distribution, and FIT to turn drawn phrases into that matrix.
 6. **Bass op-table transcription** + its machine.
 7. Note-fx rack UI over `state.pipes` — mostly a renderer over an existing
    registry.

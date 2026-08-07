@@ -172,6 +172,24 @@ body {
 .dw-cell.on:hover { background: hsl(var(--hue), 62%, 66%); }
 .dw-cell:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: 1px; }
 
+/* the weave matrix — row = the slot the line is on, column = where it goes next */
+.dw-matrix {
+  display: grid;
+  grid-template-columns: 62px repeat(8, minmax(0, 1fr));
+  gap: 2px; margin: 4px 0 2px; max-width: 620px; align-items: center;
+}
+.dw-mhead {
+  font: 9px/1.2 ui-monospace, monospace; color: var(--dw-dim);
+  text-align: center; overflow: hidden; white-space: nowrap;
+}
+.dw-mcell {
+  height: 22px; min-width: 0; padding: 0; cursor: pointer; border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, .06);
+  background: hsla(var(--hue), 62%, 58%, calc(var(--p) * 2.2));
+}
+.dw-mcell:hover { border-color: var(--dw-accent); }
+.dw-mcell:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: 1px; }
+
 .dw-facts { display: grid; grid-template-columns: max-content 1fr; gap: 3px 14px; margin: 0; }
 .dw-facts dt { font: 600 10px/1.6 system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--dw-dim); }
 .dw-facts dd { margin: 0; font: 12px/1.6 ui-monospace, monospace; color: var(--dw-ink); }

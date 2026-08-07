@@ -996,7 +996,7 @@
   // melody phrases are 8-beat cells too; with chordEvery (cb) ≠ 8 the phrase
   // takes the front of the chord bar (long harmony breathes) or truncates.
   // cb=8 (every genre today) is byte-identical to the pre-lane engine.
-  function melodyEvents(style,base,prg,chords,k,rng,seed,cb,idiom,melGen,melCells){
+  function melodyEvents(style,base,prg,chords,k,rng,seed,cb,idiom,melGen,melCells,melWeave){
     const PH=n=>(melCells&&melCells[n])||MEL_PHRASES[n];
     cb=cb||CHORD_BEATS;
     const out=[], cycleBeats=chords.length*cb;
@@ -1176,7 +1176,14 @@
         const ph6=[[0,1.4,0,0],[1.5,0.45,1,0],[2,0.9,2,0],[3,1.4,3,0],[4.5,0.45,2,0],[5,0.9,1,0]];
         for(let m=0;m*6<cb;m++) ph6.forEach(([o,d,idx,oct])=>note(m*6+o,d,idx,oct));
         return; }
-      const wv=MINED_WEAVE[gen];
+      // WEAVE OVERRIDE (state.melodyWeave — docs/DAW.md stage 5c): a song's own
+      // weave organ shadows the mined table BY NAME, the same shape and the same
+      // shadowing rule as state.kits / state.melodyCells. A weave is not a phrase
+      // but the DISTRIBUTION a phrase is drawn from — two Markov chains, pitch
+      // over the voicing ladder and rhythm over quantized IOIs — so overriding one
+      // changes how the line MOVES, not which notes it plays.
+      // ABSENT => MINED_WEAVE[gen] exactly as before, byte-identical.
+      const wv=(melWeave&&melWeave[gen])||MINED_WEAVE[gen];
       if(wv){
         // the mined melody ORGAN (tools/mine/mine-weave.js): two Markov walks on
         // the shared stream — rhythm over quantized IOIs, pitch over the
@@ -2166,7 +2173,7 @@
           }
         });
         if(sec.melody&&sec.melody!=="off"){
-          const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,melR,state.seed,CBEATS,sec.soloIdiom,state.melodyGen,state.melodyCells);
+          const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,melR,state.seed,CBEATS,sec.soloIdiom,state.melodyGen,state.melodyCells,state.melodyWeave);
           // MUSIC-MIND melody rhythm cells (state.rhythm): per sounding bar, on
           // the DEDICATED mrng stream (seed+52200), fire ∝ complexity and snap
           // the bar's phrase onto a named cell grid (MM_CELLS — dotted pairs /
@@ -2217,7 +2224,7 @@
           mel.forEach(e=>pitched.push(e));
         }
         if(sec.counter&&sec.counter.pattern){              // countermelody layer (e.g. a brass section) over the main melody
-          const cm=melodyEvents(sec.counter.pattern,cycleBase,prg,chords,k,counterR,state.seed,CBEATS,null,state.melodyGen,state.melodyCells);
+          const cm=melodyEvents(sec.counter.pattern,cycleBase,prg,chords,k,counterR,state.seed,CBEATS,null,state.melodyGen,state.melodyCells,state.melodyWeave);
           cm.forEach(e=>{ e.solo=sec.counter.solo; if(sec.counter.octave) e.pch=pchAdd(e.pch,12*sec.counter.octave);
             if(sec.swell) e.amp *= 0.3 + 1.9*((e.beat-cur)/Math.max(1,secBeats)); });   // crescendo build across the section
           cm.forEach(e=>pitched.push(e));
@@ -3040,6 +3047,7 @@
     KITS,   // pulse-set kit lanes (KERNEL-V4 Phase 1): kits are data; drumEvents is the one interpreter
     sectionTag,   // form-graph typed-node classifier (Phase 5)
     PROGRESSIONS, getProgression, resolveProgression, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS,
+    MINED_WEAVE,   // READ-ONLY to callers: /daw's weave machine loads a mined organ as the starting point for a state.melodyWeave edit (app/daw/machines/weave.js)
     MEL_PHRASES,   // READ-ONLY to callers: /daw's phrase editor loads a shipped cell as the starting point for a state.melodyCells edit (app/daw/machines/cells.js)
     KITS,   // READ-ONLY to callers: /daw's kit machine loads a stock kit as the starting point for a state.kits edit (app/daw/machines/drums.js)
     PERC_PATTERNS, PERC_VOICES, PERC_NOTE,

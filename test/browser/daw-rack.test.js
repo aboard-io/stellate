@@ -273,6 +273,83 @@ async function main() {
     else ok(`the drawn phrase is in the document and the URL (melodyCells: ${doc.cells.join(", ")})`);
   }
 
+  // ---- H the WEAVE MACHINE + the fitter ----
+  // folk/7 runs `folkweave`, so the melody panel offers the transition matrix.
+  // Clicking a cell must steer the generator; "fit from my phrases" must build a
+  // table out of the song's own cells. Both must stay inside the melody row.
+  {
+    await page.evaluate(() => { window.__DAW.edit({ genre: "folk", seed: 7, patch: {} }); });
+    await page.waitForTimeout(240);
+    const m = await page.evaluate(() => {
+      const row = document.querySelector('.dw-row[data-track="melody"]');
+      if (!row.classList.contains("dw-open")) row.querySelector(".dw-strip").click();
+      return true;
+    });
+    await page.waitForTimeout(220);
+    const mx = await page.evaluate(() => {
+      const p = document.querySelector('.dw-row[data-track="melody"] .dw-panel');
+      return { cells: p ? p.querySelectorAll(".dw-mcell").length : 0,
+               fit: !!(p && [...p.querySelectorAll(".dw-mini")].find((b) => /fit/.test(b.textContent))),
+               heads: p ? [...p.querySelectorAll(".dw-mhead")].map((n) => n.textContent) : [] };
+    });
+    if (mx.cells !== 64) fail(`weave matrix should be 8x8, got ${mx.cells} cells`);
+    else ok(`weave matrix renders 8×8 over the ladder (${mx.heads.slice(0, 4).join("/")}…)`);
+    if (!mx.fit) fail("no fit-from-my-phrases control");
+    else ok("the fitter is offered on the weave panel");
+
+    const pre = await shot();
+    await page.evaluate(() => {
+      document.querySelector('.dw-row[data-track="melody"] .dw-mcell').click();
+    });
+    await page.waitForTimeout(260);
+    const post = await shot();
+    const moved = Object.keys(post).filter((k) => post[k] !== pre[k]);
+    if (moved.indexOf("melody") < 0) fail("painting the weave matrix did not change the melody");
+    else ok("painting a transition steers the melody");
+    const spill = moved.filter((k) => k !== "melody");
+    if (spill.length) fail("a weave edit moved other rolls: " + spill.join(", "));
+    else ok("...and left every other roll pixel-identical");
+
+    // THE LOOP: draw example notes in the weave panel's scratch grid, then FIT.
+    // (Pressing FIT with nothing drawn is what the gate caught first time — the
+    // button appeared to work and wrote nothing, because a weave-driven form has
+    // no phrase of its own to fit from. Hence the scratch grid.)
+    const drew = await page.evaluate(() => {
+      const p = document.querySelector('.dw-row[data-track="melody"] .dw-panel');
+      const cells = [...p.querySelectorAll(".dw-cell")];
+      if (!cells.length) return 0;
+      const cols = p.querySelectorAll(".dw-glabel").length ? 0 : 0;
+      // a rising figure: one note per column, walking up the ladder
+      let n = 0;
+      for (const step of [0, 1, 2, 3]) {
+        const target = cells.find((c) => +c.dataset.c === step * 4 && +c.dataset.r === 7 - step);
+        if (target) { target.click(); n++; }
+      }
+      return n;
+    });
+    if (!drew) fail("the weave panel has no scratch grid to draw examples in");
+    else ok(`drew a ${drew}-note example phrase in the weave scratch grid`);
+    await page.waitForTimeout(280);
+
+    const pre2 = await shot();
+    await page.evaluate(() => {
+      const p = document.querySelector('.dw-row[data-track="melody"] .dw-panel');
+      [...p.querySelectorAll(".dw-mini")].find((b) => /fit/.test(b.textContent)).click();
+    });
+    await page.waitForTimeout(280);
+    const fitDoc = await page.evaluate(() => ({
+      weaves: Object.keys((window.__DAW.SONG.patch.melodyWeave) || {}),
+      url: /[?&]p=/.test(location.href),
+    }));
+    const post2 = await shot();
+    if (!fitDoc.weaves.length) fail("the fitter did not write a weave into the document");
+    else ok(`the fitter wrote a generator into the document (${fitDoc.weaves.join(", ")})`);
+    if (!fitDoc.url) fail("the fitted weave did not reach the URL");
+    else ok("the fitted generator rides the URL");
+    if (post2.melody === pre2.melody) fail("fitting changed nothing in the melody roll");
+    else ok("fitting from the song's phrases rewrote the melody");
+  }
+
   await browser.close(); srv.close();
   if (process.exitCode) console.error(`\nDAW-RACK: FAIL`);
   else console.log(`\nDAW-RACK: PASS — ${checks} checks`);

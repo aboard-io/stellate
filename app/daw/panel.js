@@ -15,6 +15,7 @@ import { SONG, state, trackMachines } from "./song.js";
 import * as DRUMS from "./machines/drums.js";
 import * as MELODY from "./machines/melody.js";
 import * as CELLS from "./machines/cells.js";
+import * as WEAVE from "./machines/weave.js";
 
 const open = new Set();          // track ids whose panel is open
 export const isOpen = (id) => open.has(id);
@@ -105,7 +106,8 @@ function drumsPanel(host) {
 function melodyPanel(host, track) {
   for (const name of CELLS.melodyPatterns()) {
     if (name === "wander") continue;                       // the knobs, below
-    if (CELLS.isCell(name)) cellEditor(host, name);
+    if (WEAVE.isWeave(name)) weaveEditor(host, name);
+    else if (CELLS.isCell(name)) cellEditor(host, name);
     else host.appendChild(el("p", "dw-pnote",
       `“${name}” is a procedural generator (code, not a phrase table), so there is nothing to draw. ` +
       `Its shape lives in csd-engine's melodyEvents.`));
@@ -113,12 +115,69 @@ function melodyPanel(host, track) {
   wanderMachine(host, track);
 }
 
+// ---------- the weave machine ----------
+// A weave is the DISTRIBUTION a phrase is drawn from, so the editor is a matrix,
+// not a grid of notes: row = the slot the line is on, column = where it goes next.
+// Click to strengthen a move, shift-click to weaken it — brush toward the diagonal
+// for stepwise motion, toward the corners for leaps. And FIT turns the phrases you
+// drew into exactly this table (machines/weave.js) — the loop this DAW is for.
+function weaveEditor(host, name) {
+  const w = WEAVE.weaveOf(name);
+  const box = el("div", "dw-kit");
+  const head = el("div", "dw-kithead");
+  head.appendChild(el("span", "dw-kitname", name + " — weave"));
+  if (WEAVE.isEdited(name)) {
+    head.appendChild(el("span", "dw-badge", "edited"));
+    const rev = el("button", "dw-mini", "revert");
+    rev.title = "back to the mined organ";
+    rev.addEventListener("click", () => WEAVE.revert(name));
+    head.appendChild(rev);
+  }
+  const fitb = el("button", "dw-mini", "fit from my phrases");
+  fitb.title = "fit this generator from the phrases you have drawn";
+  fitb.addEventListener("click", () => { if (!WEAVE.fitFromSong(name)) fitb.textContent = "nothing to fit"; });
+  head.appendChild(fitb);
+  box.appendChild(head);
+
+  if (!w || !w.slot) { box.appendChild(el("p", "dw-pnote", "No weave table.")); host.appendChild(box); return; }
+
+  const g = el("div", "dw-matrix");
+  g.appendChild(el("span", "dw-glabel", "from \\ to"));
+  for (let c = 0; c < WEAVE.SLOTS; c++) g.appendChild(el("span", "dw-mhead", WEAVE.slotLabel(c)));
+  for (let r = 0; r < WEAVE.SLOTS; r++) {
+    g.appendChild(el("span", "dw-glabel", WEAVE.slotLabel(r)));
+    for (let c = 0; c < WEAVE.SLOTS; c++) {
+      const p = (w.slot[r] && w.slot[r][c]) || 0;
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "dw-mcell";
+      b.style.setProperty("--p", p.toFixed(3));
+      b.title = `${WEAVE.slotLabel(r)} → ${WEAVE.slotLabel(c)}: ${Math.round(p * 100)}% (click strengthens, shift-click weakens)`;
+      b.setAttribute("aria-label", b.title);
+      b.addEventListener("click", (e) => WEAVE.nudge(name, r, c, e.shiftKey ? -1 : 1));
+      g.appendChild(b);
+    }
+  }
+  box.appendChild(g);
+  box.appendChild(el("p", "dw-pnote",
+    `legato ${w.legato} · step ${w.step}` + (w._fit ? ` · fitted from ${w._fit.phrases} phrase(s), ${w._fit.notes} notes` : "") +
+    " — rows are where the line IS, columns where it goes next. This is a generator, not a melody: " +
+    "same table, different tune every seed."));
+  host.appendChild(box);
+
+  // THE SCRATCH GRID. A weave-driven form has no phrase of its own to fit from,
+  // so the loop needs somewhere to draw the examples: draw a phrase here, press
+  // FIT, and the table above becomes the distribution that phrase came from.
+  // Inert as vocabulary — nothing can ever play `__fit` (machines/weave.js).
+  cellEditor(host, WEAVE.SCRATCH, "example phrase — draw here, then FIT");
+}
+
 // ---------- the phrase editor ----------
-function cellEditor(host, name) {
+function cellEditor(host, name, titleOverride) {
   const cell = CELLS.cellOf(name) || [], nCols = CELLS.cols(), grid = CELLS.toGrid(cell);
   const box = el("div", "dw-kit");
   const head = el("div", "dw-kithead");
-  head.appendChild(el("span", "dw-kitname", name + " — phrase"));
+  head.appendChild(el("span", "dw-kitname", titleOverride || (name + " — phrase")));
   if (CELLS.isEdited(name)) {
     head.appendChild(el("span", "dw-badge", "edited"));
     const rev = el("button", "dw-mini", "revert");
