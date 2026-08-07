@@ -9,6 +9,8 @@ import { SONG, edit, subs, touch, genreLabel, encodePatch, decodePatch, state } 
 import { buildRack, paintRack, watchResize, TRACKS } from "./rack.js";
 import * as TRANSPORT from "./transport.js";
 import { buildFeel } from "./feelpanel.js";
+import { buildPipes } from "./pipepanel.js";
+import * as EXPORT from "./export.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -49,6 +51,25 @@ function wire() {
   });
   // ↗ link — act, then say so (the app's ↗ share / ⧉ copy-embed pattern). The URL
   // is already correct at all times; this only puts it on the clipboard.
+  // ⤓ EXPORTS. wav/mp3 render offline in a dedicated worker (no ring, so it can
+  // run flat out without touching playback); midi and xml are synchronous walks of
+  // the same buildEvents the rolls draw.
+  const exporter = (id, fn, label) => $(id).addEventListener("click", async () => {
+    const b = $(id), was = b.textContent;
+    b.disabled = true;
+    try {
+      await fn((p) => { b.textContent = label + " " + Math.round(p * 100) + "%"; });
+      b.textContent = "saved";
+    } catch (e) {
+      console.error(e); b.textContent = "failed";
+    }
+    setTimeout(() => { b.textContent = was; b.disabled = false; }, 1800);
+  });
+  exporter("dwWav", (p) => EXPORT.downloadWav(90, p), "wav");
+  exporter("dwMp3", (p) => EXPORT.downloadMp3(90, p), "mp3");
+  exporter("dwMid", () => Promise.resolve(EXPORT.downloadMidi()), "midi");
+  exporter("dwXml", () => EXPORT.downloadMusicXml(), "xml");
+
   $("dwShare").addEventListener("click", async () => {
     const btn = $("dwShare"), was = btn.textContent;
     try { await navigator.clipboard.writeText(location.href); btn.textContent = "copied"; }
@@ -73,6 +94,7 @@ function boot() {
   $("dwSeed").value = SONG.seed;
   wire();
   buildFeel($("dwFeel"));
+  buildPipes($("dwPipes"));
   buildRack($("dwRack"));
   subs.push(paintRack, syncControls, () => TRANSPORT.mountHeads());
   TRANSPORT.onChange(() => {

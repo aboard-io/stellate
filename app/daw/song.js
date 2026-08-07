@@ -80,6 +80,9 @@ export function events() {
 export const PATCH_KEYS = new Set([
   "kits",          // the kit machine (machines/drums.js)
   "feel",          // the feel vector: ONE NUMBER PER AXIS (machines/feel-core.js)
+  "pipes",         // the note-fx rack — an ordered list of {id,...params} (machines/pipes.js)
+  "bassCells",     // authored bass cells, in chord DEGREES (machines/bass.js)
+  "rhythm",        // the bass mutation knob (state.rhythm.complexity)
   "melodyGen",     // the wander walk's knobs        — stage 5
   "melodyCells",   // drawn phrase cells             — stage 5
   "melodyWeave",   // the painted Markov table       — stage 5

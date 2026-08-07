@@ -379,10 +379,29 @@
   // tiles a 6- or 12-beat chord bar measure-by-measure instead of assuming the
   // 8-beat 4/4 cell; patterns not in the map keep the 8-beat stride verbatim.
   const BASS_CELL_LEN={oompahpah:6,waltzroot:3,siciliana:6};
-  function bassEvents(kind,S,b,k,rng,cb){
+  // `cells` (state.bassCells — docs/DAW.md, the /daw bass machine): user-authored
+  // bass cells in a small DATA form, consulted BEFORE the switch below, the same
+  // shadowing rule as state.kits and state.melodyCells. A cell is a list of
+  // [beat, dur, tone, semis?] where `tone` names a chord degree the progression
+  // already carries — "r5" (root), "r6" (the octave root) or "f6" (the fifth) —
+  // and the optional `semis` shifts it. Degrees, not pitches: that is what makes a
+  // hand-written bass line follow the harmony instead of fighting it, exactly as a
+  // melody cell's leadIndex does.
+  //
+  // NOTE ON THE 23 STOCK CASES BELOW. They are still procedural. Transcribing them
+  // to this table is the move the kits already survived (hit-for-hit, draw-for-
+  // draw, byte-identity pinned by test/lib/fixtures.js) and it remains worth
+  // doing — but it is a large careful job whose only payoff is tidiness, because
+  // the OVERRIDE above is what actually lets a song author a bass part. Absent
+  // cells => the switch runs exactly as before, byte-identical.
+  function bassEvents(kind,S,b,k,rng,cb,cells){
     cb=cb||CHORD_BEATS;
     const r5=pchAdd(b.r5,k), r6=pchAdd(b.r6,k), f6=pchAdd(b.f6,k);
+    const TONE={r5,r6,f6};
+    const userCell=cells&&cells[kind];
     const cell=()=>{
+      if(userCell&&userCell.length)
+        return userCell.map(([o,d,tone,semis])=>[o,d,pchAdd(TONE[tone]||r5,(semis|0))]);
     let L;
     switch(kind){
       case "root":       L=[[0,7.5,r5]]; break;
@@ -2134,7 +2153,7 @@
             // wall with an octave-below root double. One extra low voice per chord.
             if(state.padDouble) pitched.push({voice:"pad",beat:Sp,dur:CBEATS,pch:pchAdd(chord.pads[0],k-12),amp:padAmp*0.9}); } }
           if(sec.bass&&sec.bass!=="off"){
-            const be=bassEvents(sec.bass,Sp,chord.bass,k,bassR,CBEATS);
+            const be=bassEvents(sec.bass,Sp,chord.bass,k,bassR,CBEATS,state.bassCells);
             const kept=brng?[]:null;   // rhythm knob only: collect survivors for the mutation pass (no draws, no byte drift)
             be.forEach(e=>{
               if(bassR()<0.05) e.pch=pchAdd(e.pch,12);                // octave pops

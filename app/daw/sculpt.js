@@ -16,6 +16,16 @@
 // MATCHING USES THE DRAGGABLE AXES ONLY. `density` is an indicator you cannot
 // set, so including it would match on a coordinate you have no way to steer —
 // the shape would drift toward whatever the last blend happened to be.
+//
+// AND THE AXES ARE NOT EQUAL. Uniform distance made tempo count exactly as much
+// as record-crackle, so dragging tempo to the top could hand back something that
+// was not faster — the first thing anyone notices. WEIGHTS below are ordered by
+// how much each axis DEFINES a genre rather than decorates one: tempo and swing
+// separate whole families (a shuffled 90bpm thing is not a straight 160bpm thing
+// however similar the rest reads), harmonic adventure separates jazz from pop,
+// and dust/human are production choices that sit on top of any genre. The gate
+// holds the consequence, not the numbers: shaping tempo high must actually
+// return a faster song than shaping it low.
 import { axesOf } from "./machines/feel-core.js";
 
 const K = window.GenreKernel;
@@ -28,6 +38,19 @@ export const onProgress = (fn) => listeners.push(fn);
 const ping = () => listeners.forEach((f) => { try { f(progress()); } catch (e) {} });
 export const progress = () => ({ built: index.length, total: ids ? ids.length : 0, done });
 export const isReady = () => index.length > 0;
+
+// how much each axis DEFINES a genre (see header). Anything absent scores 1.
+const WEIGHTS = {
+  tempo: 2.6,      // the single strongest identity signal in the space
+  swing: 1.8,      // straight vs shuffled splits whole families
+  adventure: 1.4,  // harmonic reach — jazz/bossa vs pop/techno
+  drive: 1.3,      // saturation + pump: a production posture that reads as genre
+  motion: 1.1,     // rhythmic mutation
+  bright: 1.0,     // timbral tilt
+  space: 0.9,      // reverb depth
+  dust: 0.7,       // record wear — a finish, not a family
+  feel: 0.6,       // timing looseness — the most decorative of them
+};
 
 // axes we match on = the ones you can actually drag (see header)
 let AXIS_IDS = null;
@@ -81,7 +104,11 @@ export function nearest(target, k) {
   const ids2 = AXIS_IDS || Object.keys(target);
   const scored = index.map((e) => {
     let s = 0;
-    for (const id of ids2) { const d = (target[id] == null ? 0 : target[id]) - (e.v[id] == null ? 0 : e.v[id]); s += d * d; }
+    for (const id of ids2) {
+      const d = (target[id] == null ? 0 : target[id]) - (e.v[id] == null ? 0 : e.v[id]);
+      const w = WEIGHTS[id] == null ? 1 : WEIGHTS[id];
+      s += w * d * d;                     // weighted Euclidean
+    }
     return { g: e.g, d: Math.sqrt(s) };
   });
   scored.sort((a, b) => a.d - b.d);
@@ -101,7 +128,7 @@ export function weightsFor(target, k) {
 export function resolveBlend(weights, seed) {
   return K.mix(weights.map((w) => ({ g: w.g, w: w.w })), { seed: seed });
 }
-window.__DAWSCULPT = { progress, isReady, nearest, weightsFor };
+window.__DAWSCULPT = { progress, isReady, nearest, weightsFor, WEIGHTS };
 export const label = (weights) => weights
   .map((w) => Math.round(w.w * 100) + "% " + ((K.GENRES[w.g] && K.GENRES[w.g].label) || w.g))
   .join(" · ");

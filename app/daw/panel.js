@@ -15,6 +15,7 @@ import { SONG, state, trackMachines } from "./song.js";
 import * as DRUMS from "./machines/drums.js";
 import * as MELODY from "./machines/melody.js";
 import * as CELLS from "./machines/cells.js";
+import * as BASS from "./machines/bass.js";
 import * as WEAVE from "./machines/weave.js";
 import { makeVector } from "./vector.js";
 
@@ -30,6 +31,7 @@ export function renderPanel(host, track) {
   host.hidden = false;
   if (track.kind === "drums") return drumsPanel(host);
   if (track.id === "melody") return melodyPanel(host, track);
+  if (track.id === "bass") return bassPanel(host, track);
   return readOnlyPanel(host, track);
 }
 
@@ -281,6 +283,70 @@ function wanderMachine(host, track) {
     ? `These knobs shape the WALK, not the notes — they survive a change of seed, tempo or form. This form runs wander in: ${runs.join(", ")}.`
     : "Nothing in this form runs the wander generator, so these knobs will not change what you hear — " +
       "set a section's melody to `wander`, or try a genre that uses it. Drawing actual phrases is the next machine (melodyCells)."));
+}
+
+// ---------- the bass machines ----------
+// Machine 1: the CELL editor, on chord DEGREES (root / octave / fifth) rather than
+// pitches — the same reason the melody grid is a ladder. Machine 2: the mutation
+// knob, which is the engine's own per-cycle cell breathing.
+function bassPanel(host, track) {
+  for (const name of BASS.bassPatterns()) {
+    const cell = BASS.cellOf(name);
+    const box = el("div", "dw-kit");
+    const head = el("div", "dw-kithead");
+    head.appendChild(el("span", "dw-kitname", name + " — cell"));
+    if (BASS.isEdited(name)) {
+      head.appendChild(el("span", "dw-badge", "edited"));
+      const rev = el("button", "dw-mini", "revert");
+      rev.addEventListener("click", () => BASS.revert(name));
+      head.appendChild(rev);
+    }
+    const clr = el("button", "dw-mini", "clear");
+    clr.addEventListener("click", () => BASS.clear(name));
+    head.appendChild(clr);
+    box.appendChild(head);
+
+    if (!cell) {
+      box.appendChild(el("p", "dw-pnote",
+        `“${name}” is one of the generative bass cases (it draws per bar), so there is no fixed bar to edit. ` +
+        `Authoring one here would replace it wholesale — use the mutation knob below instead.`));
+      host.appendChild(box); continue;
+    }
+    const g = el("div", "dw-grid");
+    g.style.setProperty("--cols", BASS.COLS);
+    const grid = BASS.toGrid(cell);
+    for (let r = 0; r < BASS.TONES.length; r++) {
+      g.appendChild(el("span", "dw-glabel", BASS.toneLabel[BASS.TONES[r]]));
+      for (let c = 0; c < BASS.COLS; c++) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "dw-cell" + (grid.get(c) === r ? " on" : "") + (c % 2 === 0 ? " beat" : "");
+        b.title = `beat ${(c * BASS.STEP).toFixed(1)} · ${BASS.toneLabel[BASS.TONES[r]]}`;
+        b.setAttribute("aria-label", b.title);
+        b.setAttribute("aria-pressed", grid.get(c) === r ? "true" : "false");
+        b.addEventListener("click", () => BASS.toggle(name, c, r));
+        g.appendChild(b);
+      }
+    }
+    box.appendChild(g);
+    box.appendChild(el("p", "dw-pnote",
+      "Rows are chord DEGREES, not pitches — root / octave / fifth of whatever chord is sounding. " +
+      "So an authored bar follows the harmony and survives a reharmonisation."));
+    host.appendChild(box);
+  }
+
+  // MACHINE 2 — mutation
+  const mbox = el("div", "dw-kit");
+  mbox.appendChild(el("div", "dw-kithead", "mutation — the cell breathes"));
+  const vh = el("div", "dw-opvec");
+  mbox.appendChild(vh);
+  const v = makeVector(vh, { size: 170, hue: 330,
+    onCommit: (id, val) => BASS.setComplexity(val) });
+  v.set([{ id: "complexity", label: "mutate", kind: "direct", v: BASS.complexity() }]);
+  mbox.appendChild(el("p", "dw-pnote",
+    "Per cycle the cell drops, anticipates or octave-flips a note on its own dedicated stream, " +
+    "capped at two moves a cycle. Zero draws nothing at all."));
+  host.appendChild(mbox);
 }
 
 // ---------- read-only, until each machine lands ----------

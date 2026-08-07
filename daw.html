@@ -52,6 +52,12 @@
     <button id="dwReseed" class="dw-btn" title="New random seed">⟳</button>
     <button id="dwShare" class="dw-btn" title="Copy a link to this song — genre, seed and every machine edit">↗ link</button>
     <button id="dwPlay" class="dw-btn dw-play" title="Play this song (edits land at the next bar)">▶ play</button>
+    <span class="dw-exp">
+      <button id="dwWav" class="dw-btn" title="Render this song to WAV">⤓ wav</button>
+      <button id="dwMp3" class="dw-btn" title="Render this song to MP3">⤓ mp3</button>
+      <button id="dwMid" class="dw-btn" title="Standard MIDI File of the notes">⤓ midi</button>
+      <button id="dwXml" class="dw-btn" title="MusicXML score — quantised to 16ths, swing not notated">⤓ xml</button>
+    </span>
     <span class="dw-read" id="dwRead">—</span>
   </div>
   <nav class="dw-nav"><a href="index.html">← star map</a></nav>
@@ -62,6 +68,11 @@
      several in their current ratio, and one is an indicator that refuses the drag
      because it cannot be inverted (app/daw/machines/feel.js says which and why). -->
 <section id="dwFeel" aria-label="Feel"></section>
+
+<!-- THE NOTE-FX RACK — state.pipes, rendered from the engine's own registry
+     (descriptions included). It sits below the generators because a pipe sees the
+     WHOLE bundle: that is why a cross-track machine has to be a pipe. -->
+<section id="dwPipes" aria-label="Note effects"></section>
 
 <!-- THE RACK. One row per track: the machine strip on the LEFT, that machine's
      own piano roll on the RIGHT. Built by app/daw/rack.js; every row's roll is a

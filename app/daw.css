@@ -61,6 +61,8 @@ body {
 }
 .dw-btn:hover { border-color: var(--dw-accent); color: var(--dw-accent); }
 .dw-btn.on { background: var(--dw-accent); color: var(--dw-bg); border-color: var(--dw-accent); }
+.dw-exp { display: inline-flex; gap: 4px; }
+.dw-exp .dw-btn { font-size: 12px; padding: 6px 8px; }
 .dw-read { font: 12px/1 ui-monospace, monospace; color: var(--dw-dim); }
 .dw-nav { margin-left: auto; }
 .dw-nav a { color: var(--dw-dim); text-decoration: none; font-size: 12px; }
@@ -132,6 +134,26 @@ body {
   font: 9px/1 system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase;
   color: var(--dw-dim); border: 1px solid var(--dw-line); border-radius: 3px; padding: 3px 5px;
 }
+
+/* ---------- the note-fx rack ---------- */
+#dwPipes { padding: 12px 16px 0; }
+.dw-pbody { background: var(--dw-panel); border: 1px solid var(--dw-line); border-radius: 5px; padding: 12px; }
+.dw-pchain { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.dw-pcard { background: #120f26; border: 1px solid var(--dw-line); border-radius: 4px; padding: 8px; }
+.dw-pcardhead { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.dw-pord {
+  font: 600 10px/1 system-ui, sans-serif; color: var(--dw-bg);
+  background: hsl(300,55%,64%); border-radius: 3px; padding: 3px 5px;
+}
+.dw-pname { font: 12px/1 ui-monospace, monospace; color: hsl(300,55%,76%); margin-right: auto; }
+.dw-pshelf { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.dw-pchip {
+  font: 11px/1 ui-monospace, monospace; color: var(--dw-dim); cursor: pointer;
+  background: var(--dw-panel-2); border: 1px solid var(--dw-line);
+  border-radius: 999px; padding: 7px 11px; min-height: 32px;
+}
+.dw-pchip:hover { border-color: hsl(300,55%,64%); color: var(--dw-ink); }
+.dw-pchip.on { background: hsl(300,55%,64%); color: var(--dw-bg); border-color: hsl(300,55%,64%); }
 
 /* ---------- the rack ---------- */
 #dwRack { padding: 12px 16px 0; }
@@ -297,7 +319,9 @@ body.dw-playing .dw-head { opacity: .9; }
   .dw-ctl input { width: 64px; }
   .dw-btn { padding: 10px 12px; min-height: 44px; }
   .dw-nav { margin-left: 0; }
-  #dwFeel, #dwRack { padding: 10px 10px 0; }
+  #dwFeel, #dwRack, #dwPipes { padding: 10px 10px 0; }
+  .dw-pchain { grid-template-columns: 1fr; }
+  .dw-pchip { min-height: 40px; padding: 10px 12px; }
 
   .dw-fbody { grid-template-columns: 1fr; gap: 12px; padding: 10px; }
   .dw-vec { max-width: min(88vw, 320px); }

@@ -499,6 +499,60 @@ Shape the genre and the instruments change; your brightness rides on top of
 whatever the new blend picked. The gate now asserts the patch stays under 400
 chars, so this cannot regress quietly.
 
+## The last four — SHIPPED 2026-08-07
+
+**Match weighting.** Uniform distance made tempo count as much as record-crackle,
+so dragging tempo to the top could hand back something that was not faster. The
+axes are now weighted by how much each DEFINES a genre (tempo 2.6, swing 1.8,
+harmonic adventure 1.4 … dust 0.7, human 0.6). The gate holds the CONSEQUENCE, not
+the numbers: shaping tempo low then high must return a faster song — measured
+**66 → 177 bpm**, landing on different anchors.
+
+**The note-fx rack** (`state.pipes`). An ordered chain you can add to, remove
+from and reorder, with each pipe's numeric params on their own small radar. Every
+word in the UI — including the tooltips — comes from `CsdPipes.REGISTRY`, which
+already carried a `doc` per entry. **Order is audible**, not a cosmetic sort: each
+pipe draws from a stream keyed on its INDEX, and a pipe that adds notes changes
+what the next one sees.
+
+**The export cluster.** WAV and MP3 through the machinery that was already on main
+(`renderWav` in a dedicated worker; the vendored lamejs), MIDI through the shipped
+`midi-export.js`, and MusicXML through a new ~150-line sibling.
+
+> **The bug the export gate caught.** `renderWav` without `buffers` renders the
+> FAUST mix only — and this project is **sampled by default**, so every pitched
+> voice is a sampler and the result was near-silence: a real RIFF/WAVE header,
+> 44.1k stereo, correct length, **peak 0.0015**. The fix is what `press.js`
+> `decodeInputs` does in node — the used set is every found event's `srcId` plus
+> every sampler zone's `srcId` (instrument zones ride `foundSources` at vol 0) —
+> decoded here with `fetch` + `decodeAudioData` and shipped to the worker. Peak is
+> now 0.092 and the gate fails a silent render.
+
+MusicXML uses no library, and the reason is recorded in the file: the JS ecosystem
+is renderers and parsers, not writers. It also states the two honest
+approximations — onsets quantise to 16ths (the tape's jitter and swing are
+performance, not spelling, so a swung part reads straight) and enharmonic spelling
+is sharps-unless-flat-key, since the engine stores pitch classes and has no answer
+to "A♯ or B♭". The gate checks **every measure sums to a full bar**, which is how a
+MusicXML file opens as garbage in MuseScore while looking fine as text.
+
+**The bass machines.** `state.bassCells` — authored cells in chord DEGREES
+(root / octave / fifth, plus an optional semitone shift), shadowing the running
+pattern by name exactly as `state.kits` and `state.melodyCells` do. Degrees rather
+than pitches for the same reason the melody grid is a ladder: an authored bar
+follows the harmony and survives a reharmonisation (gated — the root degree spans
+6 pitch classes across one progression). Plus the mutation machine
+(`rhythm.complexity`).
+
+**On the 23 procedural cases:** they are still procedural, deliberately.
+Transcribing them is the move the kits survived and it remains worth doing, but
+its only payoff is tidiness — the OVERRIDE is what actually lets a song author a
+bass part, and it is absent-byte-identical by construction. A handful of the
+static cases are mirrored app-side purely as editing STARTING POINTS, never used
+to play anything, so a drift there costs you a starting shape and not a render.
+The walker (a parametric generalisation of `walking`/`melodic`) is the one machine
+of the three still unbuilt.
+
 ## Open
 
 - Does `/screensaver` suppress chrome, or is it a plain alias to `/`? The nginx

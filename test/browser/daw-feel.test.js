@@ -225,6 +225,36 @@ async function main() {
   if (!kept.n) fail("the sculpted blend does not ride the URL — a shaped song would die on reload " + JSON.stringify(kept));
   else ok(`the sculpted blend rides the URL (${kept.n} anchors)`);
 
+  // ---- G MATCH WEIGHTING: the axis you drag has to actually move ----
+  // Uniform distance let tempo count as much as record-crackle, so dragging tempo
+  // to the top could hand back something that was not faster. This asserts the
+  // CONSEQUENCE rather than the weights: shape tempo low, read the bpm; shape it
+  // high, read it again; high must be faster. Same for swing.
+  const shapeAndRead = async (axis, frac) => {
+    await dragAxis(page, axis, frac);
+    await page.waitForTimeout(500);
+    return page.evaluate(() => {
+      const st = window.__DAWSTATE();
+      return { bpm: st.bpm, swing: st.swing || 0,
+               blend: (window.__DAW.SONG.weights || []).map((w) => w.g).join(",") };
+    });
+  };
+  await page.evaluate(() => window.__DAW.edit({ patch: {}, weights: null }));
+  await page.waitForTimeout(300);
+  const slow = await shapeAndRead("tempo", 0.12);
+  const fast = await shapeAndRead("tempo", 0.98);
+  if (!(fast.bpm > slow.bpm)) fail(`shaping tempo did not change the music's speed: slow ${slow.bpm} vs fast ${fast.bpm}`);
+  else ok(`shaping tempo moves the music: ${slow.bpm} → ${fast.bpm} bpm`);
+  if (slow.blend === fast.blend) fail("the two tempo extremes returned the SAME anchors — the match is ignoring tempo");
+  else ok("...and the two extremes land on different anchors");
+
+  await page.evaluate(() => window.__DAW.edit({ patch: {}, weights: null }));
+  await page.waitForTimeout(300);
+  const straight = await shapeAndRead("swing", 0.02);
+  const shuffled = await shapeAndRead("swing", 0.98);
+  if (!(shuffled.swing > straight.swing)) fail(`shaping swing did nothing: ${straight.swing} vs ${shuffled.swing}`);
+  else ok(`shaping swing moves the music: ${straight.swing} → ${shuffled.swing}`);
+
   if (errs.length) fail("page errors: " + errs.join(" | "));
   else ok("no page errors");
 
