@@ -202,10 +202,16 @@ founding constraint, already implemented.
 **Decision (Paul, 2026-08-07): drums and bass each get SEVERAL machines**, the way
 melody does — not one machine with a deep parameter set. Drums:
 
-1. **Kit machine** — a rack panel over the op vocabulary above: per-lane,
-   `alt`/`cyc`/`last` as a period selector, `p`/`sp` as probability sliders. User
-   kits ride in **`state.kits`**, merged exactly as `state.melodyCells` merges.
-   Highest fidelity for the least engine work on the whole plan.
+1. **Kit machine** — **SHIPPED 2026-08-07.** A rack panel over the op vocabulary
+   above: per-lane, `alt`/`cyc`/`last` as a period selector, `p`/`grid.sp` as
+   probability sliders. User kits ride in **`state.kits`**, which `drumEvents`
+   consults before the stock table — a user kit is ordinary vocabulary, not a
+   special case, which is the whole payoff of the kits having become data.
+   Copy-on-write: a song carries an override only for kits actually touched, and
+   every override is badged + revertible. "Always" is stored as the ABSENCE of
+   `p`, never as `p:1` — an op carrying `p:1` spends a draw deciding something
+   never in doubt, and draw counts are the currency the rack law spends
+   (`test/unit/kit-machine.test.js` gates exactly that).
 2. **Euclid machine** — `E(k,n,rot)` per lane. Already lane *notation* that
    replaces a matching kit lane inside the same interpreter (`csd-engine.js:625`),
    not an overlay fighting it. A genuinely different paradigm: onsets distributed
@@ -322,10 +328,15 @@ humanized material reads approximately.
    `test/unit/voice-streams.test.js` (147 checks, both directions).
    Verified absent-identical against HEAD over 30 builds (10 genres x 3 seeds);
    `./verify.sh` 13/13 and `npm run test:unit` 34/34.
-2. `/daw` shell + `songMode` transport + track strips with per-track rolls.
-3. Machine panels **read-only** — open a track, see its generator's parameters and
-   its roll. Proves the plumbing before anything is writable.
-4. **Drum machine** — UI over the existing op grammar + `state.kits`.
+2. `/daw` shell + track strips with per-track rolls — **SHIPPED 2026-08-07**
+   (the `songMode` transport is still to come; the rack draws, it does not yet play).
+3. ~~Machine panels read-only~~ **SHIPPED 2026-08-07** — the strip is a button;
+   opening a track shows its machine. Pitched tracks show a read-only summary
+   until their machines land.
+4. ~~**Drum machine** — UI over the existing op grammar + `state.kits`.~~
+   **SHIPPED 2026-08-07.** `test/browser/daw-rack.test.js` proves the rack law
+   ON SCREEN: moving a kit probability repaints the drums roll and leaves every
+   other roll **pixel-identical** (canvas hash per row, before and after).
 5. **`state.melodyGen`** → **`state.melodyCells`** (draw phrases) →
    **`state.melodyWeave`** + the in-browser fitter.
 6. **Bass op-table transcription** + its machine.
@@ -337,4 +348,11 @@ Steps 1–4 are already a usable instrument.
 
 ## Open
 
-- Does `/screensaver` suppress chrome, or is it a plain alias to `/`?
+- Does `/screensaver` suppress chrome, or is it a plain alias to `/`? The nginx
+  block in HOSTING.md currently assumes a plain alias.
+- **The document does not yet carry `patch` in the URL.** `?g`/`?seed` round-trip,
+  but a kit edit lives only in memory — so a tweaked kit is not shareable or
+  reloadable. Needs a compact encoding (the patch is small JSON; the obvious move
+  is base64 of the diff, the way the share URL already names a path).
+- The two extensionless routes need their nginx blocks on the droplet; until then
+  `/daw.html` serves and `/daw` 404s.

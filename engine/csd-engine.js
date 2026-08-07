@@ -641,7 +641,15 @@
   // cb = beats per chord bar (state.chordEvery; default CHORD_BEATS=8). Kits
   // are 8-beat cells: chordEvery>8 tiles the cell across the bar, <8 truncates
   // (draws still happen — determinism is draw-count law, emission is a filter).
-  function drumEvents(kind,S,ci,nc,rng,eu,sw,cb){
+  // `kits` (state.kits — docs/DAW.md "Drums", the /daw kit machine): a map of
+  // USER-AUTHORED kits in the exact op-vocabulary below, consulted BEFORE the
+  // built-in table so a song can carry its own kit — or shadow a stock one — as
+  // ordinary vocabulary, the same way state.melodyCells is meant to sit beside
+  // MEL_PHRASES. The interpreter is unchanged: a user kit is not a special case,
+  // it is the same data the 22 shipped kits are written in, which is the whole
+  // reason the kits became data. ABSENT/empty => KITS[kind] exactly as before,
+  // zero extra lookups, byte-identical (the standing law).
+  function drumEvents(kind,S,ci,nc,rng,eu,sw,cb,kits){
     cb=cb||CHORD_BEATS;
     // static kits never call R; conditional lanes vary per chord + seed. R takes
     // the LANE it is drawing for (state.voiceStreams routes it to that lane's own
@@ -653,7 +661,7 @@
     const s=(o,a)=>out.push({drum:"snare",beat:S+o,dur:0.30,amp:a});
     const h=(o,a,dur)=>out.push({drum:"hat",beat:S+o,dur:dur||0.10,amp:a,open:(dur||0)>0.2});
     const EM={kick:k,snare:s,hat:h};
-    const kit=KITS[kind];
+    const kit=(kits&&kits[kind])||KITS[kind];
     if(kit){
       const skip=0.5+(2/3-0.5)*Math.max(0,Math.min(1,(sw||0)/0.3));
       const CELL=kit.cell||CHORD_BEATS;   // odd-meter kits tile by their own period; legacy kits keep the 8-beat stride byte-identically
@@ -2102,7 +2110,7 @@
             }
           }
           if(sec.drums&&sec.drums!=="off"){
-            let de=drumEvents(sec.drums,Sp,ci,chords.length,drumR,state.euclid,state.swing,CBEATS);
+            let de=drumEvents(sec.drums,Sp,ci,chords.length,drumR,state.euclid,state.swing,CBEATS,state.kits);
             // humanity pass: hats drop out, levels breathe, ghost snares stay QUIET.
             // Each draw is tagged with the lane it decides for, so under
             // state.voiceStreams the hat dropout never re-times the kick.
@@ -2992,6 +3000,7 @@
     KITS,   // pulse-set kit lanes (KERNEL-V4 Phase 1): kits are data; drumEvents is the one interpreter
     sectionTag,   // form-graph typed-node classifier (Phase 5)
     PROGRESSIONS, getProgression, resolveProgression, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS,
+    KITS,   // READ-ONLY to callers: /daw's kit machine loads a stock kit as the starting point for a state.kits edit (app/daw/machines/drums.js)
     PERC_PATTERNS, PERC_VOICES, PERC_NOTE,
     resolvePushPull,   // (timeFeel, bpm) -> {lane:±beats}|null — the ONE fold of pushPull+pushPullMs (seamwalk gate reads it rather than re-deriving)
     isModel, SOURCE_CLASS, sourceClassOf, pchAdd, pchToMidi };

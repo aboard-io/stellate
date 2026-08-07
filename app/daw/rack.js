@@ -5,12 +5,13 @@
 // redraws pixels and rewrites a few strings, it never rebuilds the DOM. That is
 // what makes per-track live preview affordable at a keystroke.
 //
-// The strip is READ-ONLY in this stage — it shows which machine a track is running
-// and what the roll is made of. The editable machine panels (kit op grammar,
-// melody cells/weave, bass cells) are the next stage; this proves the plumbing
-// first, so a broken panel can never be confused with a broken read.
+// The strip is a BUTTON that opens that track's MACHINE (panel.js): the drums
+// panel edits the engine's own kit op grammar through state.kits; the pitched
+// tracks show a read-only machine summary until their machines land. Opening a
+// panel never rebuilds the rack — the row grows, the roll repaints in place.
 import { trackEvents, trackMachines, sectionSpans, events, state } from "./song.js";
 import { drawRoll } from "./roll.js";
+import { renderPanel, toggle, isOpen } from "./panel.js";
 
 // The tracks, in score order (pad under, melody over) — the order a rack reads.
 // `hue` is the row's identity colour, carried into the roll so a glance tells you
@@ -40,12 +41,17 @@ export function buildRack(root) {
     row.dataset.track = t.id;
     row.style.setProperty("--hue", t.hue);
 
-    const strip = document.createElement("div");
+    // the strip is a BUTTON: opening a track's machine is the primary gesture
+    // here, so it gets the whole strip rather than a disclosure triangle
+    const strip = document.createElement("button");
     strip.className = "dw-strip";
+    strip.type = "button";
+    strip.setAttribute("aria-expanded", "false");
     strip.innerHTML =
-      '<div class="dw-name">' + t.label + "</div>" +
+      '<div class="dw-name">' + t.label + '<span class="dw-caret">▸</span></div>' +
       '<div class="dw-machine"></div>' +
       '<div class="dw-count"></div>';
+    strip.addEventListener("click", () => { toggle(t.id); paintRack(); });
 
     const wrap = document.createElement("div");
     wrap.className = "dw-rollwrap";
@@ -54,9 +60,18 @@ export function buildRack(root) {
     cv.setAttribute("role", "img");
     wrap.appendChild(cv);
 
-    row.appendChild(strip); row.appendChild(wrap);
+    const main = document.createElement("div");
+    main.className = "dw-rowmain";
+    main.appendChild(strip); main.appendChild(wrap);
+
+    const panel = document.createElement("div");
+    panel.className = "dw-panel";
+    panel.hidden = true;
+
+    row.appendChild(main); row.appendChild(panel);
     root.appendChild(row);
-    rows.set(t.id, { el: row, cv, machineEl: strip.querySelector(".dw-machine"), countEl: strip.querySelector(".dw-count") });
+    rows.set(t.id, { el: row, cv, strip, panel,
+      machineEl: strip.querySelector(".dw-machine"), countEl: strip.querySelector(".dw-count") });
   }
   return root;
 }
@@ -91,6 +106,9 @@ export function paintRack() {
     r.machineEl.title = machines.length > 1 ? "this voice changes machine across the form" : "";
     r.countEl.textContent = evs.length ? evs.length + " notes" : "";
     r.cv.setAttribute("aria-label", `${t.label}: ${evs.length} notes, ${machines.join(", ") || "off"}`);
+    r.strip.setAttribute("aria-expanded", isOpen(t.id) ? "true" : "false");
+    r.el.classList.toggle("dw-open", isOpen(t.id));
+    renderPanel(r.panel, t);
     drawRoll(r.cv, evs, { totalBeats: total, spans, kind: t.kind, hue: t.hue });
   }
 
