@@ -424,11 +424,22 @@ well as a reader, in one of three honest kinds:
 cannot conjure one. It is dimmed, labelled "reports only", and rejects the
 pointer — a control that silently does nothing is worse than no control.
 
-**Two views, one state.** A radar is a picture, and a picture is a fine primary
-control but a terrible only one: no keyboard, nothing for a screen reader, and a
-precise value is easier to typed than dragged. So the panel renders the radar AND
-real `<input type=range>` rows from the same axis list; either writes through the
-same writer. Neither is the "accessible fallback".
+**NO SLIDERS ANYWHERE** (Paul, 2026-08-07). Not in the shape panel, not in the kit
+machine, not on the wander walk — `input[type=range]` count on `/daw` is zero, and
+the gate asserts it. The earlier design paired each radar with a column of range
+inputs as the keyboard/AT path; that was the wrong solution to a real problem. The
+radar now carries the accessibility itself: every handle is focusable, exposes
+`role="slider"` with `aria-valuenow`/`aria-valuetext`, and moves on arrow keys
+(shift = coarse, Home/End = ends). One control, reachable two ways.
+
+**IT DOES NOT SNAP BACK.** The first cut repainted every handle from the RESOLVED
+state after each drag, so shaping a genre made the spokes jump to whatever the new
+blend measured — you could not set anything, only nudge it and watch it leave.
+What you set is now authoritative: a spoke shows YOUR value when you have set one
+(`patch.feel`) and the resolved value when you have not. The engine's actual shape
+is still visible as the **ghost** behind yours, and the legend prints `got 62`
+beside any axis where the two differ by more than 4% — the gap is information, not
+an error to hide.
 
 **Mobile is a design constraint here, not a media query.** `touch-action: none` on
 the surface is the single line that makes a vertical drag *edit* instead of

@@ -63,15 +63,15 @@ async function main() {
     dots: document.querySelectorAll(".dw-vec .dw-vdot").length,
     inds: document.querySelectorAll(".dw-vec .dw-vdot.ind").length,
     hits: document.querySelectorAll(".dw-vec .dw-vhit").length,
-    rows: document.querySelectorAll(".dw-frow").length,
+    rows: document.querySelectorAll(".dw-fleg").length,
     labels: [...document.querySelectorAll(".dw-vec .dw-vlab")].map((t) => t.textContent),
   }));
   if (shape.spokes < 8 || shape.dots !== shape.spokes) fail("radar geometry wrong: " + JSON.stringify(shape));
   else ok(`radar draws ${shape.spokes} spokes (${shape.labels.slice(0, 5).join("/")}…)`);
   if (!shape.inds) fail("no indicator spoke is visually distinct — the lossy axes must LOOK different");
   else ok(`${shape.inds} indicator spoke(s) drawn distinctly`);
-  if (shape.rows !== shape.spokes) fail(`radar has ${shape.spokes} axes but the rows show ${shape.rows}`);
-  else ok("radar and slider rows render the same axis list");
+  if (shape.rows !== shape.spokes) fail(`radar has ${shape.spokes} axes but the legend shows ${shape.rows}`);
+  else ok("radar and legend render the same axis list");
   if (shape.hits !== shape.spokes) fail("wedge hit targets missing — a thumb needs the whole slice");
   else ok(`${shape.hits} wedge hit targets (thumb-sized, not 8px dots)`);
 
@@ -86,60 +86,56 @@ async function main() {
   if (wAfter === wBefore || wAfter === "null") fail("dragging the radar did not re-shape the genre blend");
   else ok("dragging the radar re-shapes the genre blend (it IS the picker)");
 
-  // ---- C the writers are honest — exercised through the SLIDER rows ----
-  const brightBefore = await page.evaluate(() => {
-    const S = window.__DAW.SONG;
-    const st = window.__DAWSTATE ? window.__DAWSTATE() : null;
-    if (!st) return null;
-    const I = st.instruments || {};
-    return { mel: (I.melody || {}).cutoff, pad: (I.pad || {}).cutoff };
-  });
-  await page.evaluate(() => {
-    const r = document.querySelector('.dw-frow[data-axis="bright"] .dw-fslider');
-    r.value = "0.95"; r.dispatchEvent(new Event("change", { bubbles: true }));
-  });
-  await page.waitForTimeout(280);
-  // read the RESOLVED state, not the patch: the patch stores one number per axis
-  // now, and the params it moves are re-derived on every build (feel-core.js)
-  const brightAfter = await page.evaluate(() => {
-    const st = window.__DAWSTATE(), I = st.instruments || {};
-    return { mel: (I.melody || {}).cutoff, pad: (I.pad || {}).cutoff,
-             patchIsSmall: JSON.stringify(window.__DAW.SONG.patch).length < 400 };
-  });
-  if (!brightBefore || brightAfter.mel == null || brightAfter.pad == null) fail("the bright row did not distribute across the cutoffs");
-  else {
-    ok(`bright spreads: lead ${Math.round(brightBefore.mel)}→${brightAfter.mel}Hz, pad ${Math.round(brightBefore.pad)}→${brightAfter.pad}Hz`);
-    const wasDarker = (brightBefore.pad || 0) < (brightBefore.mel || 0);
-    const stillDarker = brightAfter.pad < brightAfter.mel;
-    if (wasDarker && !stillDarker) fail("the spread writer inverted the lead/pad balance — it must preserve the ratio");
-    else ok("...preserving the lead/pad balance");
-    // the patch must stay SMALL: storing resolved params instead of axis values
-    // both blew the URL budget and pinned the instruments (feel-core.js header)
-    if (!brightAfter.patchIsSmall) fail("the patch ballooned — feel edits must store one number per axis, not resolved params");
-    else ok("the feel patch stays one number per axis");
-  }
+  // ---- C NO SLIDERS, and what you set is what you get ----
+  const anyRange = await page.evaluate(() => document.querySelectorAll('input[type="range"]').length);
+  if (anyRange) fail(`${anyRange} <input type=range> still on the page — the radar is the control`);
+  else ok("no range inputs anywhere on the page");
 
-  // the indicator must be inert in BOTH views: disabled row, and the radar
-  // refuses the pointer so it can never re-shape from a density drag either
-  const indRow = await page.evaluate(() => {
-    const r = document.querySelector('.dw-frow[data-axis="density"] .dw-fslider');
-    return { disabled: !!(r && r.disabled) };
+  const kbd = await page.evaluate(() => {
+    const d = document.querySelector('.dw-vec .dw-vdot[role="slider"]');
+    return d ? { tab: d.getAttribute("tabindex"), now: d.getAttribute("aria-valuenow"), lab: d.getAttribute("aria-label") } : null;
   });
-  if (!indRow.disabled) fail("the `density` row is editable — it cannot be inverted honestly");
-  else ok("the indicator row is disabled in the slider view");
+  if (!kbd || kbd.tab !== "0" || kbd.now == null) fail("radar handles are not keyboard/AT operable: " + JSON.stringify(kbd));
+  else ok(`handles carry the accessibility themselves (role=slider, tabindex=0, ${kbd.lab})`);
+
+  // THE NO-SNAP CONTRACT. Drag a spoke, then let the blend resolve; the handle
+  // must still be where you left it. This is the bug Paul reported: the panel used
+  // to repaint every handle from the resolved state, so shaping made the spokes
+  // jump and nothing could be set.
+  await dragAxis(page, "bright", 0.95);
+  await page.waitForTimeout(600);
+  const held = await page.evaluate(() => {
+    const set = window.__DAW.SONG.patch.feel || {};
+    const st = window.__DAWSTATE();
+    const dot = [...document.querySelectorAll('.dw-vec .dw-vdot[role="slider"]')]
+      .find((d) => d.getAttribute("aria-label") === "bright");
+    return { setV: set.bright, shown: dot ? +dot.getAttribute("aria-valuenow") : null,
+             patchLen: JSON.stringify(window.__DAW.SONG.patch).length,
+             cutoff: ((st.instruments || {}).melody || {}).cutoff };
+  });
+  if (held.setV == null) fail("dragging bright recorded nothing");
+  else if (Math.abs(held.shown - held.setV) > 0.01)
+    fail(`the handle SNAPPED: set ${held.setV}, showing ${held.shown} — it must stay where it was put`);
+  else ok(`the handle stays where it was put (set ${held.setV.toFixed(2)}, showing ${held.shown.toFixed(2)})`);
+  if (!(held.cutoff > 0)) fail("the set axis never reached the resolved state");
+  else ok(`the set axis reaches the engine (lead cutoff ${Math.round(held.cutoff)}Hz)`);
+  if (held.patchLen >= 400) fail("the patch ballooned — feel edits must store one number per axis, not resolved params");
+  else ok(`the feel patch stays one number per axis (${held.patchLen} chars)`);
+
   const wPre = await page.evaluate(() => JSON.stringify(window.__DAW.SONG.weights));
   await dragAxis(page, "density", 0.95);
   const wPost = await page.evaluate(() => JSON.stringify(window.__DAW.SONG.weights));
   if (wPre !== wPost) fail("dragging the `density` indicator re-shaped the genre — it must refuse the pointer");
   else ok("the indicator axis refuses the drag in the radar view too");
 
-  // ---- D two views, one state ----
-  const agree = await page.evaluate(() => {
-    const rows = [...document.querySelectorAll(".dw-frow")];
-    return { rows: rows.length, bad: rows.filter((r) => { const v = +r.querySelector(".dw-fslider").value; return !(v >= 0 && v <= 1); }).length };
-  });
-  if (agree.bad) fail(`${agree.bad} slider rows out of range`);
-  else ok(`all ${agree.rows} slider rows track the resolved state`);
+  // ---- D the ghost still reports what the engine actually did ----
+  const gap = await page.evaluate(() => ({
+    ghost: !!document.querySelector(".dw-vghost"),
+    got: document.querySelectorAll(".dw-fleggot").length,
+    legend: document.querySelectorAll(".dw-fleg").length,
+  }));
+  if (!gap.ghost) fail("no ghost — the resolved shape must stay visible behind the set one");
+  else ok(`the resolved shape is drawn as a ghost behind yours (${gap.legend} legend rows)`);
 
   // ---- E MOBILE ----
   await page.setViewportSize({ width: 390, height: 844 });
@@ -147,7 +143,7 @@ async function main() {
   const m = await page.evaluate(() => {
     const svg = document.querySelector(".dw-vec"), r = svg.getBoundingClientRect();
     const small = [];
-    for (const el of document.querySelectorAll(".dw-btn, .dw-fslider:not([disabled]), .dw-strip")) {
+    for (const el of document.querySelectorAll(".dw-btn, .dw-strip")) {
       const b = el.getBoundingClientRect();
       if (b.width > 0 && b.height > 0 && b.height < 40) small.push((el.className || "").split(" ")[0] + "@" + Math.round(b.height));
     }

@@ -16,6 +16,7 @@ import * as DRUMS from "./machines/drums.js";
 import * as MELODY from "./machines/melody.js";
 import * as CELLS from "./machines/cells.js";
 import * as WEAVE from "./machines/weave.js";
+import { makeVector } from "./vector.js";
 
 const open = new Set();          // track ids whose panel is open
 export const isOpen = (id) => open.has(id);
@@ -75,20 +76,25 @@ function drumsPanel(host) {
       per.addEventListener("change", (e) => DRUMS.setPeriod(name, i, e.target.value));
       row.appendChild(per);
 
-      // PROBABILITY — `p` (one draw per op) or `grid.sp` (one draw per step)
+      // PROBABILITY moved to the radar below — the row keeps the shape + period
       const prob = DRUMS.probOf(op);
-      const sl = document.createElement("input");
-      sl.type = "range"; sl.min = "0"; sl.max = "1"; sl.step = "0.05";
-      sl.value = String(prob); sl.className = "dw-opslider";
-      sl.disabled = !d.editable;
-      sl.title = op.grid ? "per-step chance this grid lane fires (grid.sp)" : "chance this whole op fires each bar (p)";
-      sl.setAttribute("aria-label", `${d.lane} probability`);
-      const val = el("span", "dw-opval", prob >= 0.999 ? "always" : Math.round(prob * 100) + "%");
-      sl.addEventListener("input", (e) => { const v = +e.target.value; val.textContent = v >= 0.999 ? "always" : Math.round(v * 100) + "%"; });
-      sl.addEventListener("change", (e) => DRUMS.setProb(name, i, +e.target.value));
-      row.appendChild(sl); row.appendChild(val);
-
+      row.appendChild(el("span", "dw-opval", prob >= 0.999 ? "always" : Math.round(prob * 100) + "%"));
       box.appendChild(row);
+    }
+
+    // THE KIT RADAR: one spoke per editable op, value = its probability. Same
+    // control as the shape panel, same reason — a column of sliders reads as
+    // settings, a shape reads as a kit.
+    const vhost = el("div", "dw-opvec");
+    box.appendChild(vhost);
+    const idx = kit.ops.map((op, i) => ({ op, i })).filter((x) => DRUMS.describeOp(x.op).editable);
+    if (idx.length) {
+      const v = makeVector(vhost, {
+        size: 220, hue: 45,
+        onCommit: (id, val) => { const j = +String(id).split(":")[1]; DRUMS.setProb(name, j, val); },
+      });
+      v.set(idx.map((x) => ({ id: "op:" + x.i, label: DRUMS.describeOp(x.op).lane.toLowerCase(),
+                              kind: "direct", v: DRUMS.probOf(x.op) })));
     }
     host.appendChild(box);
   }
@@ -247,22 +253,28 @@ function wanderMachine(host, track) {
   grow.appendChild(el("span", "dw-opval", gen.rhythm.length + " step" + (gen.rhythm.length === 1 ? "" : "s")));
   box.appendChild(grow);
 
+  // THE WALK RADAR — the wander knobs as one shape. Each axis is normalised to
+  // its own range on the way in and mapped back on the way out, so the display is
+  // a shape while the engine still gets step:1..4 and leap:0..1.
+  const vhost = el("div", "dw-opvec");
+  box.appendChild(vhost);
+  const wv = makeVector(vhost, {
+    size: 220, hue: 190,
+    onCommit: (id, v) => {
+      const k = MELODY.KNOBS.find((x) => x.id === id);
+      if (k) MELODY.setKnob(id, k.min + v * (k.max - k.min));
+    },
+  });
+  wv.set(MELODY.KNOBS.map((k) => ({ id: k.id, label: k.label, kind: "direct",
+    v: Math.max(0, Math.min(1, (gen[k.id] - k.min) / (k.max - k.min))) })));
+  const leg = el("div", "dw-flegend");
   for (const k of MELODY.KNOBS) {
-    const row = el("div", "dw-op");
-    row.appendChild(el("span", "dw-oplane", k.label));
-    row.appendChild(el("span", "dw-opshape", ""));
-    row.appendChild(el("span", "", ""));
-    const sl = document.createElement("input");
-    sl.type = "range"; sl.min = String(k.min); sl.max = String(k.max); sl.step = String(k.step);
-    sl.value = String(gen[k.id]); sl.className = "dw-opslider";
-    sl.title = k.doc; sl.setAttribute("aria-label", k.label);
-    sl.dataset.knob = k.id;
-    const val = el("span", "dw-opval", k.fmt(gen[k.id]));
-    sl.addEventListener("input", (e) => { val.textContent = k.fmt(+e.target.value); });
-    sl.addEventListener("change", (e) => MELODY.setKnob(k.id, +e.target.value));
-    row.appendChild(sl); row.appendChild(val);
-    box.appendChild(row);
+    const r = el("div", "dw-fleg");
+    r.innerHTML = `<span class="dw-flegname">${k.label}</span><span class="dw-flegval">${k.fmt(gen[k.id])}</span>`;
+    r.title = k.doc;
+    leg.appendChild(r);
   }
+  box.appendChild(leg);
   host.appendChild(box);
 
   host.appendChild(el("p", "dw-pnote", runs.length

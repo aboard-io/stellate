@@ -100,10 +100,10 @@ async function main() {
     const row = document.querySelector('.dw-row[data-track="drums"]');
     if (!row.classList.contains("dw-open")) row.querySelector(".dw-strip").click();
     await new Promise((r) => setTimeout(r, 300));
-    const sl = row.querySelector(".dw-opslider:not([disabled])");
-    if (!sl) return { err: "no slider" };
-    sl.value = "0.4";
-    sl.dispatchEvent(new Event("change", { bubbles: true }));
+    const d = row.querySelector('.dw-opvec .dw-vdot[role="slider"]');
+    if (!d) return { err: "no kit radar handle" };
+    d.focus();
+    d.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
     await new Promise((r) => setTimeout(r, 2500));
     return { before, after: window.__DAWTRANSPORT.beatNow(),
              stillPlaying: window.__DAWTRANSPORT.isPlaying(),

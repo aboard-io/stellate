@@ -135,21 +135,22 @@ async function main() {
   const panel = await page.evaluate(() => {
     const p = document.querySelector('.dw-row[data-track="drums"] .dw-panel');
     return { open: !!p && !p.hidden, ops: p ? p.querySelectorAll(".dw-op").length : 0,
-             sliders: p ? p.querySelectorAll(".dw-opslider:not([disabled])").length : 0,
+             spokes: p ? p.querySelectorAll(".dw-opvec .dw-vdot[role=slider]").length : 0,
              expanded: document.querySelector('.dw-row[data-track="drums"] .dw-strip').getAttribute("aria-expanded") };
   });
   if (!panel.open || !panel.ops) fail("drums panel did not open (" + JSON.stringify(panel) + ")");
-  else ok(`kit machine opens — ${panel.ops} ops, ${panel.sliders} live sliders, aria-expanded=${panel.expanded}`);
+  else ok(`kit machine opens — ${panel.ops} ops, ${panel.spokes} radar spokes, aria-expanded=${panel.expanded}`);
 
+  // The kit's probabilities are a RADAR now (no sliders anywhere), so drive it the
+  // way a keyboard user would: focus a handle and press Home to take it to zero.
   const edited = await page.evaluate(() => {
-    const sl = document.querySelector('.dw-row[data-track="drums"] .dw-opslider:not([disabled])');
-    if (!sl) return null;
-    sl.value = "0.5";
-    sl.dispatchEvent(new Event("input", { bubbles: true }));
-    sl.dispatchEvent(new Event("change", { bubbles: true }));
+    const d = document.querySelector('.dw-row[data-track="drums"] .dw-opvec .dw-vdot[role="slider"]');
+    if (!d) return null;
+    d.focus();
+    d.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
     return true;
   });
-  if (!edited) { fail("no enabled probability slider to drive"); }
+  if (!edited) { fail("no kit radar handle to drive"); }
   else {
     await page.waitForTimeout(240);
     const afterPix = await shot();
@@ -186,9 +187,11 @@ async function main() {
     await page.evaluate(() => { window.__DAW.edit({ genre: "techno", seed: 3, patch: {} }); });
     await page.waitForTimeout(200);
     await page.evaluate(() => {
-      const sl = document.querySelector('.dw-row[data-track="drums"] .dw-opslider:not([disabled])');
-      sl.value = "0.35";
-      sl.dispatchEvent(new Event("change", { bubbles: true }));
+      const d = document.querySelector('.dw-row[data-track="drums"] .dw-opvec .dw-vdot[role="slider"]');
+      d.focus();
+      // two coarse presses down from wherever it sits — enough to be a real edit
+      for (let i = 0; i < 2; i++)
+        d.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", shiftKey: true, bubbles: true }));
     });
     await page.waitForTimeout(240);
     const url = await page.evaluate(() => location.href);

@@ -17,6 +17,16 @@
 //   * Drag maps to RADIUS from the centre, not to vertical travel, so the gesture
 //     matches what you see and works at any rotation.
 //   * No hover affordances anywhere — a phone has no hover. Labels are always on.
+//
+// IT DOES NOT SNAP BACK. A handle stays exactly where you put it. The earlier cut
+// repainted the handles from the RESOLVED state after every drag, so shaping a
+// genre made every spoke jump to whatever the new blend happened to measure —
+// you could not set anything, only nudge it and watch it leave. What you set is
+// now authoritative; what the engine resolved is drawn behind it as the ghost.
+//
+// NO <input type=range> ANYWHERE, and the radar carries the accessibility itself
+// rather than delegating it to a slider twin: each handle is focusable and
+// exposes role="slider" with aria-valuenow/valuetext, and arrow keys move it.
 
 const TAU = Math.PI * 2;
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -69,8 +79,14 @@ export function makeVector(host, opts) {
     // handles + labels
     for (let i = 0; i < n; i++) {
       const a = axes[i], p = pt(i, n, Math.max(o.min, clamp01(a.v)));
-      parts.push(`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${a.kind === "indicator" ? 3 : 5}" ` +
-        `class="dw-vdot${a.kind === "indicator" ? " ind" : ""}${dragging === i ? " live" : ""}"/>`);
+      const ind = a.kind === "indicator";
+      // the handle IS the control: focusable, role=slider, arrow-key driven. That
+      // is what lets the sliders go away without taking keyboard access with them.
+      parts.push(`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${ind ? 3 : 5}" ` +
+        `class="dw-vdot${ind ? " ind" : ""}${dragging === i ? " live" : ""}" data-i="${i}" ` +
+        (ind ? `role="img" aria-label="${a.label}: ${Math.round(a.v * 100)}%, reports only"` :
+          `tabindex="0" role="slider" aria-label="${a.label}" aria-valuemin="0" aria-valuemax="1" ` +
+          `aria-valuenow="${a.v.toFixed(2)}" aria-valuetext="${Math.round(a.v * 100)}%"`) + `/>`);
       const lp = pt(i, n, 1.3), c = Math.cos(ang(i, n));
       parts.push(`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" class="dw-vlab${a.kind === "indicator" ? " ind" : ""}" ` +
         `text-anchor="${c > 0.3 ? "start" : c < -0.3 ? "end" : "middle"}">${a.label}</text>`);
@@ -124,8 +140,36 @@ export function makeVector(host, opts) {
   svg.addEventListener("pointerup", end);
   svg.addEventListener("pointercancel", end);
 
+  // ---------- keyboard ----------
+  // Arrows nudge, shift-arrows coarse, Home/End to the ends. Committing on each
+  // press (rather than on blur) keeps the behaviour identical to a drag release.
+  svg.addEventListener("keydown", (ev) => {
+    const t = ev.target;
+    if (!t || !t.dataset || t.dataset.i == null) return;
+    const i = +t.dataset.i, a = axes[i];
+    if (!a || a.kind === "indicator") return;
+    const step = ev.shiftKey ? 0.1 : 0.02;
+    let v = a.v;
+    if (ev.key === "ArrowRight" || ev.key === "ArrowUp") v += step;
+    else if (ev.key === "ArrowLeft" || ev.key === "ArrowDown") v -= step;
+    else if (ev.key === "Home") v = 0;
+    else if (ev.key === "End") v = 1;
+    else return;
+    ev.preventDefault();
+    a.v = clamp01(v);
+    draw();
+    // keep focus on the handle we just moved — draw() rebuilt the DOM under it
+    const again = svg.querySelector(`.dw-vdot[data-i="${i}"]`);
+    if (again && again.focus) again.focus();
+    o.onInput && o.onInput(a.id, a.v);
+    o.onCommit && o.onCommit(a.id, a.v);
+  });
+
   return {
     el: svg,
+    // `next` carries the value to DISPLAY per axis. The caller decides whether an
+    // axis shows what the user set or what the engine resolved (feelpanel.js) —
+    // this module never second-guesses it, which is what stops the snap-back.
     set(next) { if (dragging < 0) { axes = next.map((a) => Object.assign({}, a)); draw(); } },
     setGhost(vals) { ghost = vals ? vals.slice() : null; if (dragging < 0) draw(); },
     values() { return axes.map((a) => a.v); },
