@@ -214,16 +214,23 @@ async function main() {
     if (differ.length) fail("reload did not reproduce the same rolls: " + differ.join(", "));
     else ok("reload reproduces every roll pixel-for-pixel — the link IS the song");
 
-    // a link is untrusted input: keys the DAW never writes must not reach the state
-    const dropped = await p2.evaluate(() => {
-      const evil = window.__DAW.decodePatch(
-        btoa(JSON.stringify({ kits: {}, foundSources: [{ id: "x", fsPath: "https://evil.example/x.mp3" }], bpm: 999 }))
-          .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""));
-      return Object.keys(evil);
-    });
-    if (dropped.indexOf("foundSources") >= 0 || dropped.indexOf("bpm") >= 0)
-      fail("decodePatch let a non-whitelisted key through: " + dropped.join(", "));
-    else ok("a hostile patch is filtered to the whitelist (" + (dropped.join(", ") || "nothing") + ")");
+    // A link is untrusted input. The whitelist is a SECURITY boundary, so this
+    // asserts the PRINCIPLE rather than one example key: nothing that can point the
+    // engine at a resource may survive a decode. (An earlier cut asserted `bpm` was
+    // rejected; the feel editor later made bpm legitimately editable and the gate
+    // failed — correctly, but for a stale reason. Resource keys are the hazard;
+    // ordinary numbers the engine clamps are not.)
+    const RESOURCE_KEYS = ["foundSources", "samplerLib", "sampleEvents", "vocoderSourceId", "speech"];
+    const dropped = await p2.evaluate((keys) => {
+      const evil = { kits: {} };
+      for (const k of keys) evil[k] = [{ id: "x", fsPath: "https://evil.example/x.mp3" }];
+      const out = window.__DAW.decodePatch(
+        btoa(JSON.stringify(evil)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""));
+      return Object.keys(out);
+    }, RESOURCE_KEYS);
+    const leaked = RESOURCE_KEYS.filter((k) => dropped.indexOf(k) >= 0);
+    if (leaked.length) fail("decodePatch let RESOURCE-POINTING key(s) through: " + leaked.join(", "));
+    else ok("a hostile patch cannot smuggle a resource key (" + (dropped.join(", ") || "nothing") + " survived)");
     await p2.close();
   }
 

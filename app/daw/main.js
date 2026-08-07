@@ -8,6 +8,7 @@
 import { SONG, edit, subs, touch, genreIds, genreLabel, encodePatch, decodePatch } from "./song.js";
 import { buildRack, paintRack, watchResize, TRACKS } from "./rack.js";
 import * as TRANSPORT from "./transport.js";
+import { buildFeel } from "./feelpanel.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -82,6 +83,7 @@ function boot() {
   fillGenres();
   $("dwSeed").value = SONG.seed;
   wire();
+  buildFeel($("dwFeel"));
   buildRack($("dwRack"));
   subs.push(paintRack, syncControls, () => TRANSPORT.mountHeads());
   TRANSPORT.onChange(() => {

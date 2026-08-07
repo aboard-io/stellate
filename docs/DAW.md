@@ -397,6 +397,65 @@ Steps 1–5 and the transport are shipped: the rack plays, and every machine edi
 lands live. Remaining: the bass op-table transcription, the note-fx rack UI, and
 the export cluster.
 
+## The feel vector — an editable vector display (2026-08-07)
+
+**Decision (Paul):** the editors should not be columns of sliders; they should be
+the vector display, made editable. Same for the genre picker — "let me sculpt a
+genre". And it has to work on a phone.
+
+**The finding that shapes the whole thing: the radar is a LOSSY projection, so
+"editable radar" is an inverse problem, not a UI problem.**
+
+```
+bright = 0.55·cutN(mel.cutoff) + 0.25·cutN(pad.cutoff) + 0.20·cutN(highcut)
+```
+
+Drag that spoke to 0.8 and the reading does not say which of the three cutoffs to
+move. Every composite axis has this shape. So each axis declares a **writer** as
+well as a reader, in one of three honest kinds:
+
+| kind | meaning |
+|---|---|
+| **direct** | one param, exactly invertible — tempo→bpm, dust→crackle, human→humanize |
+| **spread** | several params moved together **in their current ratio**, so a pad already darker than the lead stays darker |
+| **indicator** | cannot be written without inventing musical decisions, so it is drawn and **refuses the drag** |
+
+`density` is the indicator: it counts whether a bass part *exists*, and a drag
+cannot conjure one. It is dimmed, labelled "reports only", and rejects the
+pointer — a control that silently does nothing is worse than no control.
+
+**Two views, one state.** A radar is a picture, and a picture is a fine primary
+control but a terrible only one: no keyboard, nothing for a screen reader, and a
+precise value is easier to typed than dragged. So the panel renders the radar AND
+real `<input type=range>` rows from the same axis list; either writes through the
+same writer. Neither is the "accessible fallback".
+
+**Mobile is a design constraint here, not a media query.** `touch-action: none` on
+the surface is the single line that makes a vertical drag *edit* instead of
+scrolling the page. The hit target is the whole 44px wedge, not an 8px handle, and
+the drag maps to RADIUS from the centre so the gesture matches what you see at any
+rotation. Pointer events only — one path for touch, pen and mouse — with
+`setPointerCapture` so a drag survives the finger leaving the small SVG. On a
+phone the rack strip stacks ABOVE its roll (190px of strip on a 360px screen
+leaves no roll at all) and the form ruler hides rather than becoming unreadable.
+
+`test/browser/daw-feel.test.js` drives it at 390×844 with a real
+`pointerType:"touch"` drag and fails on: a non-`none` touch-action, sideways
+overflow, a strip that has not stacked, any enabled control under 40px, a drag
+that writes an axis it was not on, a spread writer that inverts a ratio, and an
+indicator that moves. It caught two of my own bugs — 28px sliders I had called
+thumb-sized, and a stale whitelist assertion.
+
+## Still to build here
+
+- **The genre sculptor.** Same vector component, but dragging shapes a TARGET and
+  the kernel finds the anchors nearest it (`resolveMulti` already blends by
+  weight). The index it needs — a feel vector per anchor — costs one `K.track`
+  per genre: **measured at 1.75 s for all 274 in node**, so it must be built
+  lazily in idle chunks with the picker usable meanwhile, never at boot.
+- The per-machine panels still use sliders; the same vector component should
+  replace them once the axis-writer pattern is proven here.
+
 ## Open
 
 - Does `/screensaver` suppress chrome, or is it a plain alias to `/`? The nginx

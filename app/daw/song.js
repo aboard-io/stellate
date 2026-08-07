@@ -65,6 +65,12 @@ export const PATCH_KEYS = new Set([
   "melodyGen",     // the wander walk's knobs        — stage 5
   "melodyCells",   // drawn phrase cells             — stage 5
   "melodyWeave",   // the painted Markov table       — stage 5
+  // the FEEL vector editor (machines/feel.js FEEL_KEYS) — these are ordinary
+  // engine params rather than a machine's own dimension, so they are listed one
+  // by one rather than under a wrapper: the whitelist is a security boundary and
+  // a wildcard would defeat it.
+  "bpm", "swing", "humanize", "crackle", "theory", "rhythm", "instruments", "tone",
+  "reverb", "pump", "comp", "grit",
 ]);
 const MAX_PATCH = 6000;   // a URL nobody can paste is not persistence
 

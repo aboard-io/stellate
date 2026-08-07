@@ -60,6 +60,12 @@
   <nav class="dw-nav"><a href="index.html">← star map</a></nav>
 </header>
 
+<!-- THE FEEL VECTOR — the song's perceptual shape, as a display you DRAG rather
+     than a column of sliders. Some spokes write one param, some distribute across
+     several in their current ratio, and one is an indicator that refuses the drag
+     because it cannot be inverted (app/daw/machines/feel.js says which and why). -->
+<section id="dwFeel" aria-label="Feel"></section>
+
 <!-- THE RACK. One row per track: the machine strip on the LEFT, that machine's
      own piano roll on the RIGHT. Built by app/daw/rack.js; every row's roll is a
      canvas so a knob turn can repaint without touching the DOM. -->
