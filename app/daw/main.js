@@ -5,7 +5,7 @@
 // this file only has to assemble the UI, run one paint, and wire the transport.
 // PLAY re-reads the song every chord bar (transport.js), so an edit made while the
 // music runs lands at the next bar instead of restarting anything.
-import { SONG, edit, subs, touch, genreIds, genreLabel, encodePatch, decodePatch } from "./song.js";
+import { SONG, edit, subs, touch, genreLabel, encodePatch, decodePatch, state } from "./song.js";
 import { buildRack, paintRack, watchResize, TRACKS } from "./rack.js";
 import * as TRANSPORT from "./transport.js";
 import { buildFeel } from "./feelpanel.js";
@@ -22,7 +22,10 @@ function readQuery() {
   const g = QS.get("g"), s = parseInt(QS.get("seed"), 10);
   if (g && window.GenreKernel.GENRES[g]) SONG.genre = g;
   if (s >= 1 && s <= 99999) SONG.seed = s;
-  SONG.patch = decodePatch(QS.get("p"));
+  const p = decodePatch(QS.get("p"));
+  // the sculpted blend travels inside the patch payload (song.js encodePatch)
+  if (p.__w) { SONG.weights = p.__w; delete p.__w; }
+  SONG.patch = p;
 }
 function writeQuery() {
   const u = new URL(location.href);
@@ -33,19 +36,7 @@ function writeQuery() {
   history.replaceState(null, "", u);
 }
 
-function fillGenres() {
-  const sel = $("dwGenre");
-  const ids = genreIds().slice().sort((a, b) => genreLabel(a).localeCompare(genreLabel(b)));
-  for (const g of ids) {
-    const o = document.createElement("option");
-    o.value = g; o.textContent = genreLabel(g);
-    sel.appendChild(o);
-  }
-  sel.value = SONG.genre;
-}
-
 function wire() {
-  $("dwGenre").addEventListener("change", (e) => { TRANSPORT.songChanged(); edit({ genre: e.target.value }); });
   $("dwSeed").addEventListener("change", (e) => {
     const v = Math.max(1, Math.min(99999, parseInt(e.target.value, 10) || 1));
     e.target.value = v; TRANSPORT.songChanged(); edit({ seed: v });
@@ -72,15 +63,13 @@ function wire() {
 // (The gate caught this: driving edit() directly used to leave the URL stale,
 // because only the DOM handlers wrote it.)
 function syncControls() {
-  const sel = $("dwGenre"), seed = $("dwSeed");
-  if (sel.value !== SONG.genre) sel.value = SONG.genre;
+  const seed = $("dwSeed");
   if (+seed.value !== SONG.seed) seed.value = SONG.seed;
   writeQuery();
 }
 
 function boot() {
   readQuery();
-  fillGenres();
   $("dwSeed").value = SONG.seed;
   wire();
   buildFeel($("dwFeel"));
@@ -96,6 +85,7 @@ function boot() {
   paintRack();
   // headless probe hook (test/browser/daw-rack.test.js) — the same __ pattern the
   // app's gates read, so a gate never has to race a click to inspect state
+  window.__DAWSTATE = state;
   window.__DAW = { SONG, edit, touch, paintRack, TRACKS, encodePatch, decodePatch, TRANSPORT,
     rowCount: () => document.querySelectorAll(".dw-row").length };
 }

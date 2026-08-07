@@ -74,6 +74,11 @@ body {
   color: hsl(190, 62%, 68%);
 }
 .dw-fhint { font: 11px/1.3 system-ui, sans-serif; color: var(--dw-dim); }
+.dw-blend {
+  font: 12px/1.3 ui-monospace, monospace; color: hsl(190,62%,72%);
+  margin-left: auto; text-align: right;
+}
+.dw-blend.wait { color: var(--dw-dim); font-style: italic; }
 .dw-fbody {
   display: grid; grid-template-columns: 280px 1fr; gap: 18px; align-items: start;
   background: var(--dw-panel); border: 1px solid var(--dw-line);
@@ -88,6 +93,8 @@ body {
 .dw-vhit   { fill: transparent; cursor: grab; }
 .dw-vhit.ind { cursor: not-allowed; }
 .dw-vpoly  { fill: hsla(190,62%,58%,.20); stroke: hsl(190,62%,62%); stroke-width: 1.5; stroke-linejoin: round; }
+/* the GHOST is the shape you asked for; the solid one is what the space gave you */
+.dw-vghost { fill: none; stroke: var(--dw-accent); stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; }
 .dw-vdot   { fill: hsl(190,62%,66%); stroke: var(--dw-bg); stroke-width: 1.5; }
 .dw-vdot.live { fill: var(--dw-accent); r: 7; }
 .dw-vdot.ind { fill: var(--dw-dim); opacity: .55; }

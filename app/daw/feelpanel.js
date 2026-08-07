@@ -8,9 +8,10 @@
 // <input type=range> rows, either one writes through machines/feel.js, and both
 // re-read from the resolved state. Neither is the "accessible fallback"; they are
 // two views of the same nine numbers.
-import { subs } from "./song.js";
+import { SONG, subs, edit } from "./song.js";
 import { makeVector } from "./vector.js";
 import * as FEEL from "./machines/feel.js";
+import * as SCULPT from "./sculpt.js";
 
 let vec = null, rows = null, host = null;
 
@@ -20,8 +21,9 @@ export function buildFeel(root) {
 
   const head = document.createElement("div");
   head.className = "dw-fhead";
-  head.innerHTML = '<span class="dw-fname">feel</span>' +
-    '<span class="dw-fhint">drag the shape — dimmed spokes report, they do not set</span>';
+  head.innerHTML = '<span class="dw-fname">shape</span>' +
+    '<span class="dw-fhint">drag the shape to find the music — dimmed spokes report, they do not set</span>' +
+    '<span class="dw-blend" id="dwBlend">—</span>';
   const rev = document.createElement("button");
   rev.className = "dw-mini"; rev.textContent = "revert feel";
   rev.title = "drop every feel edit and go back to the genre's own shape";
@@ -38,11 +40,17 @@ export function buildFeel(root) {
   body.appendChild(left); body.appendChild(right);
   root.appendChild(body);
 
+  // THE RADAR IS THE PICKER. There is no genre list: dragging shapes a TARGET,
+  // and on release the kernel finds the anchors nearest that shape and blends
+  // them (sculpt.js). The slider rows below stay precise PARAM edits on top of
+  // whatever the blend resolved — shape to find the music, then fine-tune.
   vec = makeVector(left, {
     size: 260, hue: 190,
-    onInput: (id, v) => { syncRow(id, v); },              // live while dragging
-    onCommit: (id, v) => { FEEL.setAxis(id, v); },        // commit on release
+    onInput: (id, v) => { syncRow(id, v); },
+    onCommit: () => sculptFromShape(),
   });
+  SCULPT.onProgress(() => paintFeel());
+  SCULPT.buildIndex();
 
   rows = right;
   buildRows();
@@ -98,11 +106,35 @@ function syncRow(id, v) {
   setVal(row, v);
 }
 
+// Read the shape currently on the radar, ask the space what is nearest, and make
+// that the song. The seed is untouched: shaping changes WHICH music, not which
+// take of it.
+function sculptFromShape() {
+  if (!vec || !SCULPT.isReady()) return;
+  const ids = vec.ids(), vals = vec.values();
+  const target = {};
+  ids.forEach((id, i) => { if (FEEL.isDraggable(id)) target[id] = vals[i]; });
+  lastTarget = vals.slice();
+  const w = SCULPT.weightsFor(target, 3);
+  if (!w.length) return;
+  edit({ weights: w });
+}
+
+let lastTarget = null;
+
 export function paintFeel() {
   if (!vec) return;
   const axes = FEEL.axes();
   vec.set(axes);
+  vec.setGhost(lastTarget);
   for (const a of axes) syncRow(a.id, a.v);
   const h = host && host.querySelector(".dw-fname");
-  if (h) h.textContent = FEEL.isEdited() ? "feel · edited" : "feel";
+  if (h) h.textContent = FEEL.isEdited() ? "shape · tuned" : "shape";
+  const b = host && host.querySelector(".dw-blend");
+  if (b) {
+    const p = SCULPT.progress();
+    if (SONG.weights && SONG.weights.length) b.textContent = SCULPT.label(SONG.weights);
+    else b.textContent = p.done ? "drag to shape" : `learning the space… ${p.built}/${p.total || "?"}`;
+    b.classList.toggle("wait", !p.done);
+  }
 }

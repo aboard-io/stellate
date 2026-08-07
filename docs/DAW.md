@@ -446,15 +446,47 @@ that writes an axis it was not on, a spread writer that inverts a ratio, and an
 indicator that moves. It caught two of my own bugs — 28px sliders I had called
 thumb-sized, and a stale whitelist assertion.
 
-## Still to build here
+## The shape IS the picker — SHIPPED 2026-08-07
 
-- **The genre sculptor.** Same vector component, but dragging shapes a TARGET and
-  the kernel finds the anchors nearest it (`resolveMulti` already blends by
-  weight). The index it needs — a feel vector per anchor — costs one `K.track`
-  per genre: **measured at 1.75 s for all 274 in node**, so it must be built
-  lazily in idle chunks with the picker usable meanwhile, never at boot.
-- The per-machine panels still use sliders; the same vector component should
-  replace them once the axis-writer pattern is proven here.
+**Decision (Paul):** "no dropdown — you shape the genre and that fills in the
+tracks." So there is no genre list on `/daw` at all. You drag the shape; the
+kernel finds the anchors nearest it and blends them through **`K.mix`**, the same
+call the star map makes for a point between stars. A sculpted song and an explored
+one are the same kind of object.
+
+- **The index** is a feel vector per anchor, and a feel vector needs a RESOLVED
+  state. Measured: 274 anchors in ~1.75 s in node, so it builds in **idle slices**
+  with the sculptor usable throughout — matching against whatever is indexed so
+  far. A partial index gives a worse match, never a wrong one, and the readout says
+  "learning the space… n/274" while it fills.
+- **Matching uses the draggable axes only.** `density` is an indicator you cannot
+  set, so including it would match on a coordinate you have no way to steer.
+- **Three anchors, weighted ∝ 1/distance**, so a shape between genres gives you all
+  three in proportion instead of snapping to the closest. Ten would be mud.
+- **The ghost.** The dashed outline is the shape you asked for; the solid one is
+  what the space gave you. They differ because you are navigating real genres
+  rather than setting parameters, and showing both is the honest way to say so.
+- **Two jobs, cleanly split:** the radar shapes the genre; the slider rows tune
+  params on top of whatever blend resolved.
+
+### The bug that shaped the storage
+
+The first cut had the spread writers put their RESULT into the patch — which meant
+copying the whole resolved `instruments` object (sampler zone maps included) into
+the document. Two failures, one silent and one worse:
+
+1. it blew the 6000-char URL budget, so `encodePatch` returned `""` and the song
+   silently stopped persisting (the gate caught this as "the blend does not ride
+   the URL");
+2. it **pinned every instrument choice**, so re-shaping the genre could no longer
+   change what played it — which defeats the whole feature.
+
+So the document stores **one number per axis** in `patch.feel`, and those numbers
+are re-applied to each freshly resolved state (`machines/feel-core.js`, a pure
+module with no `song.js` dependency so `song.js` can call it without a cycle).
+Shape the genre and the instruments change; your brightness rides on top of
+whatever the new blend picked. The gate now asserts the patch stays under 400
+chars, so this cannot regress quietly.
 
 ## Open
 

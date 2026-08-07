@@ -23,7 +23,7 @@ const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 export function makeVector(host, opts) {
   const o = Object.assign({ size: 260, min: 0.06, hue: 190, onInput: null, onCommit: null }, opts || {});
-  let axes = [], dragging = -1;
+  let axes = [], ghost = null, dragging = -1;
 
   const NS = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(NS, "svg");
@@ -55,6 +55,13 @@ export function makeVector(host, opts) {
     for (let i = 0; i < n; i++) {
       const e = pt(i, n, 1);
       parts.push(`<line x1="${C}" y1="${C}" x2="${e[0].toFixed(1)}" y2="${e[1].toFixed(1)}" class="dw-vspoke"/>`);
+    }
+    // THE GHOST: the shape you asked for. The solid polygon is the shape the
+    // space actually gave you. They differ because you are navigating real
+    // genres, not setting parameters — showing both is the honest way to say so.
+    if (ghost && ghost.length === n) {
+      const gp = ghost.map((v, i) => pt(i, n, Math.max(o.min, clamp01(v))).map((x) => x.toFixed(1)).join(",")).join(" ");
+      parts.push(`<polygon points="${gp}" class="dw-vghost"/>`);
     }
     // the value polygon
     const poly = axes.map((a, i) => pt(i, n, Math.max(o.min, clamp01(a.v))).map((v) => v.toFixed(1)).join(",")).join(" ");
@@ -120,6 +127,9 @@ export function makeVector(host, opts) {
   return {
     el: svg,
     set(next) { if (dragging < 0) { axes = next.map((a) => Object.assign({}, a)); draw(); } },
+    setGhost(vals) { ghost = vals ? vals.slice() : null; if (dragging < 0) draw(); },
+    values() { return axes.map((a) => a.v); },
+    ids() { return axes.map((a) => a.id); },
     // keyboard/AT path: the radar is a picture, so the panel also renders real
     // inputs beside it (panel.js). This is here so both drive one code path.
     setAxis(id, v) { const a = axes.find((x) => x.id === id); if (a) { a.v = clamp01(v); draw(); } },
