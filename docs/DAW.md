@@ -299,14 +299,27 @@ Not a track: `theory` (the harmony brain + its `adventure` knob), `timeFeel`
 (swing/humanize/rubato as one resolved dimension), the fx bus, `chordEvery`,
 `keyOffset`, `meter`, `bpm`, `seed`.
 
-## Transport
+## Transport — SHIPPED 2026-08-07
 
-`FaustLive.exploreLive` (3,530 lines) is a *continuous explorer* — glide, blend,
-retarget. Single-song production needs play-from-bar-N, loop-a-range, per-voice
-mute/solo, and stop meaning stop. Add a **`songMode` option to the existing
-conductor** rather than forking it: it already takes `startBar`, and `makeWalk`
-(`faust/live/live.js:145`) is where section/bar selection lives. A fork would
-double the surface `test/browser/live*.test.js` has to cover.
+No `songMode` flag was needed after all, and no engine change: `exploreLive`
+already takes a getState **callback** and re-reads it every chord bar. Hand it the
+DAW's own state and that IS the workstation contract — an edit lands at the next
+bar while the music keeps playing (gated: a probability slider moved mid-playback,
+music uninterrupted). The star map's glide/blend/retarget machinery is simply not
+used here; the DAW plays one song and stays there. Changing genre or seed **stops**
+rather than pretending to glide, because it is a new song.
+
+**The playhead is not a canvas repaint.** The rolls are expensive enough that
+redrawing them 60×/sec to move a line would make every knob feel slow, so each
+roll carries one absolutely-positioned element that a single rAF moves by
+transform; the canvases repaint only when the MUSIC changes. The gate asserts both
+halves — the head advances, and the drums canvas is byte-identical across the same
+window.
+
+`test/browser/daw-transport.test.js` measures **actual audio** through the engine's
+own analyser (`handle.rms()`), not just that a button toggled: 35/39 samples
+nonzero, peak 0.45. A transport gate that skips this passes happily over a silent
+graph.
 
 ## The document
 
@@ -380,7 +393,9 @@ humanized material reads approximately.
    registry.
 8. Export cluster — WAV, MP3, MusicXML beside the shipped MIDI.
 
-Steps 1–4 are already a usable instrument.
+Steps 1–5 and the transport are shipped: the rack plays, and every machine edit
+lands live. Remaining: the bass op-table transcription, the note-fx rack UI, and
+the export cluster.
 
 ## Open
 

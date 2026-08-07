@@ -60,6 +60,7 @@ body {
   border-radius: 4px; padding: 6px 9px; cursor: pointer;
 }
 .dw-btn:hover { border-color: var(--dw-accent); color: var(--dw-accent); }
+.dw-btn.on { background: var(--dw-accent); color: var(--dw-bg); border-color: var(--dw-accent); }
 .dw-read { font: 12px/1 ui-monospace, monospace; color: var(--dw-dim); }
 .dw-nav { margin-left: auto; }
 .dw-nav a { color: var(--dw-dim); text-decoration: none; font-size: 12px; }
@@ -112,6 +113,14 @@ body {
 .dw-count { margin-top: auto; font: 11px/1 ui-monospace, monospace; color: var(--dw-dim); }
 
 .dw-rollwrap { flex: 1; min-width: 0; position: relative; }
+/* the playhead — one element per roll, moved by a single rAF transform so the
+   expensive canvases repaint only when the MUSIC changes, never to move a line */
+.dw-head {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 1px;
+  background: var(--dw-accent); box-shadow: 0 0 6px var(--dw-accent);
+  pointer-events: none; opacity: 0; transition: opacity .2s;
+}
+body.dw-playing .dw-head { opacity: .9; }
 .dw-roll { display: block; width: 100%; height: 100%; }
 
 /* ---------- the machine panel ---------- */

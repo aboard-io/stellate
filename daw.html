@@ -54,6 +54,7 @@
     </label>
     <button id="dwReseed" class="dw-btn" title="New random seed">⟳</button>
     <button id="dwShare" class="dw-btn" title="Copy a link to this song — genre, seed and every machine edit">↗ link</button>
+    <button id="dwPlay" class="dw-btn dw-play" title="Play this song (edits land at the next bar)">▶ play</button>
     <span class="dw-read" id="dwRead">—</span>
   </div>
   <nav class="dw-nav"><a href="index.html">← star map</a></nav>
@@ -84,6 +85,16 @@
 <script src="engine/registry-data.js"></script>
 <script src="engine/genre-kernel.js"></script>
 <script src="engine/midi-export.js"></script>
+<!-- THE LIVE ENGINE. Same ordered contract index.html carries: state-engine maps
+     a state to voices, found-player and sampler decode the sampled layers, and
+     live.js needs all three on the global before FaustLive.exploreLive runs.
+     speech.js is loaded for the states that carry a synthText source; its ~1.7 MB
+     wasm stays unfetched until one actually arms. -->
+<script src="engine/speech.js"></script>
+<script src="engine/faust/voices/state-engine.js"></script>
+<script src="engine/faust/voices/found-player.js"></script>
+<script src="engine/faust/voices/sampler.js"></script>
+<script src="engine/faust/live/live.js"></script>
 <script type="module" src="app/daw/main.js"></script>
 </body>
 </html>

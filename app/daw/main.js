@@ -2,11 +2,12 @@
 //
 // The boot order mirrors app/main.js's discipline — the engine globals are already
 // there (daw.html loads them as ordered classic scripts before this module), so
-// this file only has to assemble the UI and run one paint. No audio yet: the
-// transport is the next stage, and a rack that draws the truth is the thing that
-// has to be right first.
+// this file only has to assemble the UI, run one paint, and wire the transport.
+// PLAY re-reads the song every chord bar (transport.js), so an edit made while the
+// music runs lands at the next bar instead of restarting anything.
 import { SONG, edit, subs, touch, genreIds, genreLabel, encodePatch, decodePatch } from "./song.js";
 import { buildRack, paintRack, watchResize, TRACKS } from "./rack.js";
+import * as TRANSPORT from "./transport.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -43,12 +44,17 @@ function fillGenres() {
 }
 
 function wire() {
-  $("dwGenre").addEventListener("change", (e) => edit({ genre: e.target.value }));
+  $("dwGenre").addEventListener("change", (e) => { TRANSPORT.songChanged(); edit({ genre: e.target.value }); });
   $("dwSeed").addEventListener("change", (e) => {
     const v = Math.max(1, Math.min(99999, parseInt(e.target.value, 10) || 1));
-    e.target.value = v; edit({ seed: v });
+    e.target.value = v; TRANSPORT.songChanged(); edit({ seed: v });
   });
-  $("dwReseed").addEventListener("click", () => edit({ seed: Math.floor(Math.random() * 99999) + 1 }));
+  $("dwReseed").addEventListener("click", () => { TRANSPORT.songChanged(); edit({ seed: Math.floor(Math.random() * 99999) + 1 }); });
+  // ▶ / ■ — one button. Starting needs the user gesture (the AudioContext unlock
+  // rides this click), so it must be a real listener, never a programmatic call.
+  $("dwPlay").addEventListener("click", () => {
+    TRANSPORT.toggle((m) => { const r = $("dwRead"); if (r && !TRANSPORT.isPlaying()) r.textContent = m; });
+  });
   // ↗ link — act, then say so (the app's ↗ share / ⧉ copy-embed pattern). The URL
   // is already correct at all times; this only puts it on the clipboard.
   $("dwShare").addEventListener("click", async () => {
@@ -77,12 +83,18 @@ function boot() {
   $("dwSeed").value = SONG.seed;
   wire();
   buildRack($("dwRack"));
-  subs.push(paintRack, syncControls);
+  subs.push(paintRack, syncControls, () => TRANSPORT.mountHeads());
+  TRANSPORT.onChange(() => {
+    const b = $("dwPlay");
+    b.textContent = TRANSPORT.isPlaying() ? "■ stop" : "▶ play";
+    b.classList.toggle("on", TRANSPORT.isPlaying());
+    document.body.classList.toggle("dw-playing", TRANSPORT.isPlaying());
+  });
   watchResize();
   paintRack();
   // headless probe hook (test/browser/daw-rack.test.js) — the same __ pattern the
   // app's gates read, so a gate never has to race a click to inspect state
-  window.__DAW = { SONG, edit, touch, paintRack, TRACKS, encodePatch, decodePatch,
+  window.__DAW = { SONG, edit, touch, paintRack, TRACKS, encodePatch, decodePatch, TRANSPORT,
     rowCount: () => document.querySelectorAll(".dw-row").length };
 }
 
