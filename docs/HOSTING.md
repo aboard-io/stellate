@@ -786,6 +786,17 @@ normally.
     add_header Cache-Control "public, max-age=86400";
   }
 
+  # THE TWO FRONT DOORS (docs/DAW.md). `/` stays the star map. The DAW and the
+  # screensaver alias are EXTENSIONLESS on purpose — they are the two URLs meant
+  # to be typed and shared — but the tree has no build step, so they are plain
+  # internal rewrites onto committed files rather than renamed pages. Do NOT move
+  # daw.html into a folder: like every other top-level page its path is
+  # load-bearing (the canonical, og:url and the social-meta gate all name it).
+  # Until these blocks land, /daw.html works and /daw 404s — the page is deployed
+  # either way, so this is a routing nicety, never a broken ship.
+  location = /daw         { try_files /daw.html =404; }
+  location = /screensaver { try_files /index.html =404; }
+
   # correct content types (nginx 1.24's mime.types has neither)
   location = /manifest.webmanifest { default_type application/manifest+json;
                                      add_header Cache-Control "no-cache"; }

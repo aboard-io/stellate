@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STELLATE DAW — compose with the generator</title>
+<!-- ── SOCIAL / IDENTITY ──────────────────────────────────────────────────────
+     Same two rules as index.html: icon/manifest paths stay RELATIVE (this tree is
+     also served at aboardresearch.com/projects/stellate/), og:image + canonical
+     stay ABSOLUTE (a card crawler resolves nothing). The SITE-WIDE tags below are
+     byte-identical to the other pages on purpose — test/gates/social-meta.test.js
+     gates them against drift, since HTML has no include and this project has no
+     HTML build step. Per-page tags (title/description/url) are the only ones that
+     differ. NO INLINE SCRIPT ANYWHERE (not even in a comment — the CSP gate reads
+     the raw markup): production CSP has no 'unsafe-inline'. -->
+<meta name="description" content="Open the machines that write the music: a rack of per-track generators over the stellate kernel, each with its own piano roll. Author the generator, not the notes.">
+<meta name="author" content="Paul Ford">
+<meta name="theme-color" content="#0c0a1a">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://stellate.app/daw">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="STELLATE">
+<meta property="og:title" content="STELLATE DAW — compose with the generator">
+<meta property="og:description" content="A rack of per-track generator machines over the stellate kernel, each with its own piano roll. You author the generator; the generator writes the song.">
+<meta property="og:url" content="https://stellate.app/daw">
+<meta property="og:image" content="https://stellate.app/assets/og-card.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE — draw a path through genre space.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="STELLATE DAW — compose with the generator">
+<meta name="twitter:description" content="A rack of per-track generator machines over the stellate kernel, each with its own piano roll.">
+<meta name="twitter:image" content="https://stellate.app/assets/og-card.png">
+<meta name="twitter:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE.">
+<meta name="twitter:creator" content="@aboard">
+<meta name="twitter:site" content="@aboard">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
+<link rel="stylesheet" href="app/daw.css">
+</head>
+<body>
+<header id="dawbar">
+  <h1 class="dw-brand">STELLATE<span class="dw-tag">daw</span></h1>
+  <div class="dw-controls">
+    <label class="dw-ctl">genre
+      <select id="dwGenre" aria-label="Genre"></select>
+    </label>
+    <label class="dw-ctl">seed
+      <input id="dwSeed" type="number" min="1" max="99999" step="1" value="7" aria-label="Seed">
+    </label>
+    <button id="dwReseed" class="dw-btn" title="New random seed">⟳</button>
+    <span class="dw-read" id="dwRead">—</span>
+  </div>
+  <nav class="dw-nav"><a href="index.html">← star map</a></nav>
+</header>
+
+<!-- THE RACK. One row per track: the machine strip on the LEFT, that machine's
+     own piano roll on the RIGHT. Built by app/daw/rack.js; every row's roll is a
+     canvas so a knob turn can repaint without touching the DOM. -->
+<main id="dwRack" aria-label="Track rack"></main>
+
+<footer id="dwFoot">
+  <p>Made by <a href="mailto:paul.ford@aboard.com?subject=Stellate%20DAW">Paul Ford</a> at
+  <a href="https://aboard.com">Aboard</a> ·
+  <a href="https://github.com/aboard-io/stellate">open source</a> · MIT</p>
+  <p class="dw-note">You author the <b>generator</b>, never the notes — every surface here is a
+  rule (a phrase cell in chord tones, a probability gate, a cycle alternation), so it
+  survives a change of seed, tempo or form. See <code>docs/DAW.md</code>.</p>
+</footer>
+
+<!-- ENGINE — classic globals, ORDER MATTERS (the same contract index.html carries
+     and test/gates/boot-smoke.test.js enforces there): theory/pipes before
+     csd-engine (it reads them at load), the genre data before genre-kernel (it
+     merges them synchronously at load), everything before the module entry. -->
+<script src="engine/theory.js"></script>
+<script src="engine/pipes.js"></script>
+<script src="engine/csd-engine.js"></script>
+<script src="engine/genres-data.js"></script>
+<script src="engine/registry-data.js"></script>
+<script src="engine/genre-kernel.js"></script>
+<script src="engine/midi-export.js"></script>
+<script type="module" src="app/daw/main.js"></script>
+</body>
+</html>

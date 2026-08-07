@@ -1,0 +1,125 @@
+/* daw.css — the /daw workstation's own stylesheet.
+   Standing alone like app/access.css does, not extending app/app.css: the star map
+   is a dark room you look into, the DAW is a workbench you lean over. Different
+   density, different type (system-ui + ui-monospace for readable numbers rather
+   than the VT323 terminal face), same palette family so they read as one project. */
+
+:root {
+  --dw-bg: #0c0a1a;
+  --dw-panel: #15122a;
+  --dw-panel-2: #1b1733;
+  --dw-line: rgba(255, 255, 255, .10);
+  --dw-ink: #e8e6f3;
+  --dw-dim: #9c97b8;
+  --dw-accent: #ff5fa2;
+  --dw-row-h: 76px;
+  --dw-strip-w: 190px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--dw-bg);
+  color: var(--dw-ink);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- top bar ---------- */
+#dawbar {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  padding: 10px 16px;
+  background: var(--dw-panel);
+  border-bottom: 1px solid var(--dw-line);
+  position: sticky; top: 0; z-index: 10;
+}
+.dw-brand {
+  margin: 0; font: 700 18px/1 "VT323", ui-monospace, monospace;
+  letter-spacing: .14em; display: flex; align-items: baseline; gap: 8px;
+}
+.dw-tag {
+  font: 600 10px/1 system-ui, sans-serif; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--dw-bg); background: var(--dw-accent); padding: 3px 6px; border-radius: 3px;
+}
+.dw-controls { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.dw-ctl {
+  display: flex; align-items: center; gap: 6px;
+  font: 600 10px/1 system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--dw-dim);
+}
+.dw-ctl select, .dw-ctl input {
+  font: 13px/1 ui-monospace, monospace; color: var(--dw-ink);
+  background: var(--dw-panel-2); border: 1px solid var(--dw-line);
+  border-radius: 4px; padding: 5px 7px; text-transform: none; letter-spacing: 0;
+}
+.dw-ctl select { max-width: 210px; }
+.dw-ctl input { width: 82px; }
+.dw-btn {
+  font: 14px/1 ui-monospace, monospace; color: var(--dw-ink);
+  background: var(--dw-panel-2); border: 1px solid var(--dw-line);
+  border-radius: 4px; padding: 6px 9px; cursor: pointer;
+}
+.dw-btn:hover { border-color: var(--dw-accent); color: var(--dw-accent); }
+.dw-read { font: 12px/1 ui-monospace, monospace; color: var(--dw-dim); }
+.dw-nav { margin-left: auto; }
+.dw-nav a { color: var(--dw-dim); text-decoration: none; font-size: 12px; }
+.dw-nav a:hover { color: var(--dw-accent); }
+
+/* ---------- the rack ---------- */
+#dwRack { padding: 12px 16px 0; }
+
+.dw-ruler { display: flex; align-items: stretch; height: 24px; margin-bottom: 6px; }
+.dw-strip-head {
+  font: 600 10px/24px system-ui, sans-serif; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--dw-dim);
+  padding: 0 10px; border: 0; background: none;
+}
+.dw-spans { position: relative; flex: 1; border-left: 1px solid var(--dw-line); }
+.dw-span {
+  position: absolute; top: 0; height: 24px; overflow: hidden;
+  font: 10px/24px ui-monospace, monospace; color: var(--dw-dim);
+  padding-left: 5px; border-left: 1px solid var(--dw-line); white-space: nowrap;
+}
+
+.dw-row {
+  display: flex; align-items: stretch;
+  height: var(--dw-row-h); margin-bottom: 6px;
+  background: var(--dw-panel); border: 1px solid var(--dw-line); border-radius: 5px;
+  overflow: hidden;
+}
+.dw-row.dw-off { opacity: .42; }
+
+.dw-strip {
+  width: var(--dw-strip-w); flex: 0 0 var(--dw-strip-w);
+  padding: 8px 10px; background: var(--dw-panel-2);
+  border-right: 1px solid var(--dw-line);
+  display: flex; flex-direction: column; gap: 3px;
+}
+.dw-name {
+  font: 600 11px/1.2 system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase;
+  color: hsl(var(--hue), 62%, 68%);
+}
+.dw-machine {
+  font: 13px/1.25 ui-monospace, monospace; color: var(--dw-ink);
+  overflow: hidden; text-overflow: ellipsis;
+}
+.dw-count { margin-top: auto; font: 11px/1 ui-monospace, monospace; color: var(--dw-dim); }
+
+.dw-rollwrap { flex: 1; min-width: 0; position: relative; }
+.dw-roll { display: block; width: 100%; height: 100%; }
+
+/* ---------- footer ---------- */
+#dwFoot {
+  margin-top: 18px; padding: 14px 16px 26px;
+  border-top: 1px solid var(--dw-line); color: var(--dw-dim); font-size: 12px;
+}
+#dwFoot p { margin: 0 0 6px; }
+#dwFoot a { color: var(--dw-ink); }
+#dwFoot a:hover { color: var(--dw-accent); }
+.dw-note { max-width: 68ch; }
+#dwFoot code { font-family: ui-monospace, monospace; color: var(--dw-ink); }
+
+@media (max-width: 640px) {
+  :root { --dw-strip-w: 132px; --dw-row-h: 64px; }
+  .dw-ctl select { max-width: 150px; }
+}

@@ -1,0 +1,94 @@
+// song.js — THE DAW's DOCUMENT: a diff against the deterministic kernel.
+//
+// A song here is NOT a copy of a kernel state (those run ~200 KB, nearly all of it
+// resolved instruments + samplerLib). It is {genre, seed, patch} — the base the
+// kernel resolves plus the fields the rack has edited — so it fits in a URL, in
+// localStorage, and in a diff you can read. The fat resolved state is rebuilt from
+// the kernel on load, never stored (docs/DAW.md "The document").
+//
+// DELIBERATELY NOT importing app/core/state.js: that store is the star map's — it
+// pulls in world.js's POS seed, the map cursor, the traveler. The DAW is a second
+// front end over the SAME engine, not a feature of the map, so it reads the engine
+// globals directly and keeps its own store. The two share the kernel and nothing else.
+//
+// THE RACK LAW: every state this module resolves carries voiceStreams:true, so a
+// machine you tweak is the only thing that moves (csd-engine.js VOICE_STREAM;
+// gate test/unit/voice-streams.test.js). Without it, nudging the melody moves the
+// hi-hats and the per-track rolls lie about who owns what.
+const K = window.GenreKernel, E = window.CsdEngine;
+
+export const SONG = { genre: "citypop", seed: 7, patch: {} };
+export const subs = [];
+let raf = 0;
+export function touch() {            // coalesced repaint (the app/core/state.js `set` pattern)
+  if (raf) return;
+  raf = requestAnimationFrame(() => { raf = 0; subs.forEach((f) => { try { f(); } catch (e) { console.error(e); } }); });
+}
+export function edit(patch) { Object.assign(SONG, patch); invalidate(); touch(); }
+
+// ---------- resolution + the ONE build ----------
+// buildEvents is the same call the live walk makes every bar — milliseconds — so
+// the rack can rebuild on every knob turn with no caching layer beyond "did
+// anything actually change". The memo key is the document, not the resolved state:
+// resolving is the expensive half (the kernel picks instruments + sampler zones).
+let _key = null, _state = null, _events = null;
+function invalidate() { _key = null; }
+const keyOf = () => JSON.stringify([SONG.genre, SONG.seed, SONG.patch]);
+
+export function state() {
+  const k = keyOf();
+  if (k === _key && _state) return _state;
+  const t = K.track(SONG.genre, { seed: SONG.seed });
+  const s = JSON.parse(JSON.stringify(t.state || t));
+  Object.assign(s, SONG.patch || {});
+  s.voiceStreams = true;                       // THE RACK LAW (see header)
+  _key = k; _state = s; _events = null;
+  return s;
+}
+export function events() {
+  const s = state();
+  if (!_events) _events = E.buildEvents(s);
+  return _events;
+}
+
+// ---------- what the rack reads ----------
+export const genreIds = () => Object.keys(K.GENRES);
+export const genreLabel = (g) => (K.GENRES[g] && K.GENRES[g].label) || g;
+
+// The per-track note list, exactly as the DAW's roll draws it. `pitched` voices
+// filter by e.voice; the drums row hands back the whole kit and the roll lanes it.
+export function trackEvents(track) {
+  const ev = events();
+  if (track.kind === "drums") return ev.drums;
+  return ev.pitched.filter((e) => e.voice === track.id);
+}
+
+// The MACHINE a track is running, read off the form. A voice can carry a different
+// pattern per section (that IS the arrangement), so this reports the distinct set
+// in section order rather than pretending there is one answer.
+export function trackMachines(track) {
+  const s = state(), out = [];
+  for (const sec of s.sections || []) {
+    const v = sec[track.id];
+    const name = (v && typeof v === "object") ? (v.pattern || "") : (v || "");
+    if (name && name !== "off" && out.indexOf(name) < 0) out.push(name);
+  }
+  return out;
+}
+
+// Section spans in BEATS, for the ruler and the roll's section rules. Mirrors the
+// section math buildEvents walks (cycles x chords x chordEvery), so the boundaries
+// drawn are the boundaries heard.
+export function sectionSpans() {
+  const s = state(), E2 = window.CsdEngine;
+  const prg = (E2.resolveProgression ? E2.resolveProgression(s) : null) || E2.PROGRESSIONS[s.progression];
+  const nChords = (prg && prg.chords && prg.chords.length) || 4;
+  const cb = Math.max(2, Math.round(s.chordEvery || (s.meter ? 6 : 8)));
+  const out = []; let at = 0;
+  for (const sec of s.sections || []) {
+    const beats = Math.max(1, (sec.cycles || 1)) * nChords * cb;
+    out.push({ name: sec.name || "", start: at, beats, sec });
+    at += beats;
+  }
+  return out;
+}

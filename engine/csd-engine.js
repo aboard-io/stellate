@@ -643,7 +643,11 @@
   // (draws still happen — determinism is draw-count law, emission is a filter).
   function drumEvents(kind,S,ci,nc,rng,eu,sw,cb){
     cb=cb||CHORD_BEATS;
-    const R=rng||(()=>0.5);   // static kits never call R; conditional lanes vary per chord + seed
+    // static kits never call R; conditional lanes vary per chord + seed. R takes
+    // the LANE it is drawing for (state.voiceStreams routes it to that lane's own
+    // stream); the plain shared rng ignores the argument, so this is a no-op tag
+    // for every state without the flag.
+    const R=rng||(()=>0.5);
     const out=[];
     const k=(o,a)=>out.push({drum:"kick",beat:S+o,dur:0.35,amp:a});
     const s=(o,a)=>out.push({drum:"snare",beat:S+o,dur:0.30,amp:a});
@@ -655,7 +659,7 @@
       const CELL=kit.cell||CHORD_BEATS;   // odd-meter kits tile by their own period; legacy kits keep the 8-beat stride byte-identically
       for(let t0=0;t0<cb;t0+=CELL){
         for(const op of kit.ops){
-          if(op.p!=null && R()>=op.p) continue;                     // whole-op gate: exactly one draw
+          if(op.p!=null && R(op.d)>=op.p) continue;                 // whole-op gate: exactly one draw
           const em=EM[op.d];
           const put=(o,a,d)=>{ if(op.skip)o+=skip; if(t0+o<=cb) em(t0+o,a,d); };   // <=: legacy cells spill onto the next downbeat (techno opens end at o=8)
           if(op.ride){ const rd=op.ride;
@@ -664,7 +668,7 @@
             continue; }
           if(op.grid){ const g=op.grid, st=g.step!=null?g.step:0.5, fr=g.from||0;
             for(let i=0;i<g.n;i++){
-              if(g.sp!=null && R()>=g.sp) continue;                 // per-step gate: one draw per step
+              if(g.sp!=null && R(op.d)>=g.sp) continue;             // per-step gate: one draw per step
               const o=fr+i*st;
               if(g.open) put(o,g.amps[i%g.amps.length],g.open);
               else if(g.opens && g.opens.offs.indexOf(o)>=0) put(o,g.opens.a,g.opens.dur);
@@ -674,7 +678,7 @@
           const hs = op.alt ? op.alt[ci%2?0:1]
                    : op.cyc ? op.cyc[ci%op.cyc.length]
                    : op.last ? op.last[ci===nc-1?0:1]
-                   : op.pick ? op.pick[R()<0.5?0:1]
+                   : op.pick ? op.pick[R(op.d)<0.5?0:1]
                    : op.hits;
           for(const hh of hs) put(hh[0],hh[1],hh[2]);
         }
@@ -803,11 +807,14 @@
     for(const d of win){
       const pos=(d.beat-from)/2;
       d.amp=Math.min(1,d.amp*(1+0.32*pos));                      // crescendo the quote itself (gentle — the QUOTE is the fill)
-      if(rng()<0.6&&d.beat+0.25<endBeat)
+      // the echo draw is tagged with the lane it quotes: a kit fill QUOTES the
+      // kit, so more hats must mean more hat echoes — but under
+      // state.voiceStreams it must not also re-roll the kick/snare echoes.
+      if(rng(d.drum)<0.6&&d.beat+0.25<endBeat)
         out.push(Object.assign({},d,{beat:d.beat+0.25,dur:Math.min(d.dur,0.14),
           amp:Math.min(1,d.amp*(0.5+0.25*pos)),open:false}));    // the double-hit echo
     }
-    if(rng()<0.7) out.push({drum:"kick",beat:endBeat-0.25,dur:0.3,amp:0.42});  // pickup into the downbeat
+    if(rng("kick")<0.7) out.push({drum:"kick",beat:endBeat-0.25,dur:0.3,amp:0.42});  // pickup into the downbeat
     out.forEach(e=>drums.push(e));
   }
   // jungle-style chop fill — two beats of 32nd-flavored snare stutter
@@ -1318,7 +1325,8 @@
     }
     if(ht||hl){                 // THE TAPE: rng consumed positionally, same sequence as the loop
       const tD=new Float64Array(n), aD=new Float64Array(n);
-      for(let i=0;i<n;i++){ tD[i]=(rng()*2-1)*ht*0.04; if(ampM[i]) aD[i]=1+(rng()*2-1)*hl*0.25; }
+      for(let i=0;i<n;i++){ const vk=events[i].voice||events[i].drum;   // per-LANE tape under state.voiceStreams; ignored by a plain rng
+        tD[i]=(rng(vk)*2-1)*ht*0.04; if(ampM[i]) aD[i]=1+(rng(vk)*2-1)*hl*0.25; }
       C.shift(beat, tD);        // nom deliberately skips the tape — that IS the point
       C.scale(amp, aD, ampM);
       C.map(amp, a=>Math.max(0.01,a), ampM);
@@ -1341,7 +1349,8 @@
       const swd=(sw && grid.at(f))?sw*grid.push:0;
       let nb=stamp?((typeof e.beat0==="number"?e.beat0:b)+swd):0;   // the drawless twin (THE SEAM LAW)
       if(swd) b += swd;
-      if(ht||hl){ b += (rng()*2-1)*ht*0.04; if(e.amp!=null) e.amp=Math.max(0.01, e.amp*(1+(rng()*2-1)*hl*0.25)); }
+      if(ht||hl){ const vk=e.voice||e.drum;                            // per-LANE tape (mirrors the columnar twin exactly)
+        b += (rng(vk)*2-1)*ht*0.04; if(e.amp!=null) e.amp=Math.max(0.01, e.amp*(1+(rng(vk)*2-1)*hl*0.25)); }
       if(pp){ const o=pp[e.voice||e.drum]; if(o){ b+=o; if(stamp) nb+=o; } }
       e.beat=Math.max(0,b);
       if(stamp) e.beat0=Math.max(0,nb);
@@ -1790,6 +1799,39 @@
     const srcById={};
     state.foundSources.forEach((s,i)=>{ const o={id:s.id,kind:s.kind,tableNum:i+2,fsPath:s.fsPath||("found/"+s.id+".mp3"),pitch:s.pitch??0.78,stretch:s.stretch??0.45,vol:s.vol??0.22,cutoff:s.cutoff??2600,bpm:s.bpm,durSec:s.durSec,wet:!!s.wet,glitch:!!s.glitch,distant:!!s.distant}; if(s.scratch) o.scratch=s.scratch; if(s.fam) o.fam=s.fam; srcById[s.id]=o; });
     const rng=mulberry32((state.seed??1)>>>0);
+    // ---- VOICE STREAMS (state.voiceStreams — docs/DAW.md) ----
+    // THE RACK LAW. bass/drums/melody have always shared ONE rng, drawn in
+    // section order, so a change to any one voice's draw COUNT re-times every
+    // voice drawn after it: nudge a melody knob and the hi-hats move. That is
+    // fine for a generator you drive from a star map, and fatal for a rack of
+    // per-track machines you open and tweak one at a time — the more so once
+    // probability gates (op.p / grid.sp) are user-editable, where every slider
+    // twitch changes a draw count. So: truthy state.voiceStreams gives each
+    // VOICE — and each DRUM LANE — its own dedicated stream, and a machine you
+    // touch is the only thing that moves.
+    // Streams are built LAZILY and memoised for the whole build, so each one
+    // advances across the song exactly as the shared rng does (a per-section
+    // rebuild would re-loop the same numbers). ABSENT — every non-DAW state —
+    // leaves `vs` null and hands every call site the shared `rng` OBJECT
+    // itself: no extra streams, no extra draws, byte-identical. The standing law.
+    const VOICE_STREAM={bass:61100,drums:61200,melody:61300,counter:61400,lick:61500,
+                        kick:61210,snare:61220,hat:61230,tom:61240};
+    const vs=state.voiceStreams?{}:null;
+    // any key without a named offset (ride/crash/clap/rim/perc, and the "tape:"
+    // namespace below) gets a hashed one in its own reserved band. A hash
+    // collision costs nothing but shared entanglement between two lanes — the
+    // status quo for that pair, never a correctness break.
+    const vhash=s=>{ let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return 62000+(((h%977)+977)%977); };
+    const vstream=name=>vs[name]||(vs[name]=mulberry32((((state.seed??1)>>>0)
+      +(VOICE_STREAM[name]!=null?VOICE_STREAM[name]:vhash(name)))>>>0));
+    const bassR=vs?vstream("bass"):rng, melR=vs?vstream("melody"):rng,
+          counterR=vs?vstream("counter"):rng, lickR=vs?vstream("lick"):rng;
+    // The drum stream is LANE-AWARE: every drum draw passes the lane it belongs
+    // to, so a hat-density slider never re-times the kick. A lane with no stream
+    // of its own (and every lane-less call — the fills) falls back to the kit
+    // stream. When the flag is OFF this is the shared `rng`, which ignores the
+    // argument — so the lane tag costs nothing and changes nothing.
+    const drumR=vs?(lane=>vstream(lane||"drums")()):rng;
     // MUSIC-MIND rhythm knob (state.rhythm={complexity:0..1}): two DEDICATED
     // streams — bass-cell mutation (+52100) and melody rhythm cells (+52200) —
     // created only when the knob exists, so an absent knob draws ZERO numbers
@@ -2037,12 +2079,12 @@
             // wall with an octave-below root double. One extra low voice per chord.
             if(state.padDouble) pitched.push({voice:"pad",beat:Sp,dur:CBEATS,pch:pchAdd(chord.pads[0],k-12),amp:padAmp*0.9}); } }
           if(sec.bass&&sec.bass!=="off"){
-            const be=bassEvents(sec.bass,Sp,chord.bass,k,rng,CBEATS);
+            const be=bassEvents(sec.bass,Sp,chord.bass,k,bassR,CBEATS);
             const kept=brng?[]:null;   // rhythm knob only: collect survivors for the mutation pass (no draws, no byte drift)
             be.forEach(e=>{
-              if(rng()<0.05) e.pch=pchAdd(e.pch,12);                  // octave pops
-              if(rng()<0.06&&e.beat-Sp>0.4){ e.beat+=0.25; }          // lazy push
-              if(rng()<0.05) return;                                  // rest
+              if(bassR()<0.05) e.pch=pchAdd(e.pch,12);                // octave pops
+              if(bassR()<0.06&&e.beat-Sp>0.4){ e.beat+=0.25; }        // lazy push
+              if(bassR()<0.05) return;                                // rest
               pitched.push(e); if(kept) kept.push(e); });
             // MUSIC-MIND per-cycle bass-cell MUTATION (state.rhythm): the cell
             // breathes across cycles instead of looping — drop / anticipate /
@@ -2060,21 +2102,23 @@
             }
           }
           if(sec.drums&&sec.drums!=="off"){
-            let de=drumEvents(sec.drums,Sp,ci,chords.length,rng,state.euclid,state.swing,CBEATS);
-            // humanity pass: hats drop out, levels breathe, ghost snares stay QUIET
-            de=de.filter(e=>!(e.drum==="hat"&&rng()<0.09));
-            de.forEach(e=>{ if(rng()<0.25) e.amp=Math.max(0.03,e.amp*(0.85+rng()*0.3)); });
-            if(rng()<0.4) de.push({drum:"snare",beat:Sp+[1.75,3.25,5.75,6.75][Math.floor(rng()*4)],dur:0.15,amp:0.06+rng()*0.04});
+            let de=drumEvents(sec.drums,Sp,ci,chords.length,drumR,state.euclid,state.swing,CBEATS);
+            // humanity pass: hats drop out, levels breathe, ghost snares stay QUIET.
+            // Each draw is tagged with the lane it decides for, so under
+            // state.voiceStreams the hat dropout never re-times the kick.
+            de=de.filter(e=>!(e.drum==="hat"&&drumR("hat")<0.09));
+            de.forEach(e=>{ if(drumR(e.drum)<0.25) e.amp=Math.max(0.03,e.amp*(0.85+drumR(e.drum)*0.3)); });
+            if(drumR("snare")<0.4) de.push({drum:"snare",beat:Sp+[1.75,3.25,5.75,6.75][Math.floor(drumR("snare")*4)],dur:0.15,amp:0.06+drumR("snare")*0.04});
             // evolution: later cycles of a section get busier (density rises with c)
-            if(c>0&&rng()<Math.min(0.5,0.18*c)){
-              de.push({drum:"hat",beat:Sp+Math.floor(rng()*16)*0.5,dur:0.08,amp:0.07+rng()*0.05});
-              if(rng()<0.4) de.push({drum:"kick",beat:Sp+[3.5,7.5,5.75][Math.floor(rng()*3)],dur:0.3,amp:0.25+rng()*0.1});
+            if(c>0&&drumR()<Math.min(0.5,0.18*c)){
+              de.push({drum:"hat",beat:Sp+Math.floor(drumR("hat")*16)*0.5,dur:0.08,amp:0.07+drumR("hat")*0.05});
+              if(drumR("kick")<0.4) de.push({drum:"kick",beat:Sp+[3.5,7.5,5.75][Math.floor(drumR("kick")*3)],dur:0.3,amp:0.25+drumR("kick")*0.1});
             }
             de.forEach(e=>drums.push(e));
           }
         });
         if(sec.melody&&sec.melody!=="off"){
-          const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,rng,state.seed,CBEATS,sec.soloIdiom);
+          const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,melR,state.seed,CBEATS,sec.soloIdiom);
           // MUSIC-MIND melody rhythm cells (state.rhythm): per sounding bar, on
           // the DEDICATED mrng stream (seed+52200), fire ∝ complexity and snap
           // the bar's phrase onto a named cell grid (MM_CELLS — dotted pairs /
@@ -2125,7 +2169,7 @@
           mel.forEach(e=>pitched.push(e));
         }
         if(sec.counter&&sec.counter.pattern){              // countermelody layer (e.g. a brass section) over the main melody
-          const cm=melodyEvents(sec.counter.pattern,cycleBase,prg,chords,k,rng,state.seed,CBEATS);
+          const cm=melodyEvents(sec.counter.pattern,cycleBase,prg,chords,k,counterR,state.seed,CBEATS);
           cm.forEach(e=>{ e.solo=sec.counter.solo; if(sec.counter.octave) e.pch=pchAdd(e.pch,12*sec.counter.octave);
             if(sec.swell) e.amp *= 0.3 + 1.9*((e.beat-cur)/Math.max(1,secBeats)); });   // crescendo build across the section
           cm.forEach(e=>pitched.push(e));
@@ -2151,9 +2195,9 @@
       if(tr==="drum fill"){
         fillEvents(cur+secBeats-2).forEach(e=>drums.push(e));
       } else if(tr==="tom fill"){
-        bigFillEvents(cur+secBeats-4,rng).forEach(e=>drums.push(e));
+        bigFillEvents(cur+secBeats-4,drumR).forEach(e=>drums.push(e));
       } else if(tr==="break fill"){
-        breakFillEvents(cur+secBeats-2,rng).forEach(e=>drums.push(e));
+        breakFillEvents(cur+secBeats-2,drumR).forEach(e=>drums.push(e));
       } else if(tr==="hat rush"){
         let o=0,st=0.5;
         while(o<2){ drums.push({drum:"hat",beat:cur+secBeats-2+o,dur:0.08,amp:0.08+o*0.06}); o+=st; st=Math.max(0.125,st*0.8); }
@@ -2161,7 +2205,7 @@
         const cutFrom=cur+secBeats-2;        // the cut: drums vanish, the drop hits harder
         for(let i=drums.length-1;i>=0;i--) if(drums[i].beat>=cutFrom&&drums[i].beat<cur+secBeats) drums.splice(i,1);
       } else if(tr==="snare roll"){
-        snareRollEvents(cur+secBeats-4,rng).forEach(e=>drums.push(e));
+        snareRollEvents(cur+secBeats-4,drumR).forEach(e=>drums.push(e));
       } else if(tr==="stutter"){
         // stutter-gate the last half-bar: existing hits are replaced by a 16th-grid
         // retrigger of the loudest survivor, amp ramping up into the downbeat
@@ -2172,7 +2216,7 @@
           drums.splice(i,1);
         }
         const dr=proto?proto.drum:"snare";
-        for(let i=0;i<8;i++) drums.push({drum:dr,beat:from+i*0.25,dur:0.12,amp:0.14+i*0.045+rng()*0.02});
+        for(let i=0;i<8;i++) drums.push({drum:dr,beat:from+i*0.25,dur:0.12,amp:0.14+i*0.045+drumR(dr)*0.02});
       } else if(tr==="dropout"){
         // kick-drop silence: the final beat empties completely (drums AND any
         // pitched note that starts inside it) so the next downbeat slams
@@ -2183,18 +2227,18 @@
         // the tiny soloist takes the turn — resolve into the NEXT section's key
         const nx=state.sections[state.sections.indexOf(sec)+1];
         const kNext=k0+((nx?nx.keyShift:sec.keyShift)|0);
-        if(state.lickVoice) lickEvents(cur+secBeats, chords[0], kNext, rng, state.lickVoice).forEach(e=>pitched.push(e));
+        if(state.lickVoice) lickEvents(cur+secBeats, chords[0], kNext, lickR, state.lickVoice).forEach(e=>pitched.push(e));
         else fillEvents(cur+secBeats-2).forEach(e=>drums.push(e));   // no lick voice in state: degrade musically
       } else if(tr==="kit fill"){
-        miniFillEvents(drums, cur+secBeats, rng);
+        miniFillEvents(drums, cur+secBeats, drumR);
       } else if(tr==="flam roll"){
-        flamRollEvents(cur+secBeats-2,rng).forEach(e=>drums.push(e));
+        flamRollEvents(cur+secBeats-2,drumR).forEach(e=>drums.push(e));
       } else if(tr==="tom cascade"){
-        tomCascadeEvents(cur+secBeats-2,rng).forEach(e=>drums.push(e));
+        tomCascadeEvents(cur+secBeats-2,drumR).forEach(e=>drums.push(e));
       } else if(tr==="crash choke"){
-        crashChokeEvents(cur+secBeats-2,rng).forEach(e=>drums.push(e));
+        crashChokeEvents(cur+secBeats-2,drumR).forEach(e=>drums.push(e));
       } else if(tr==="tape stop"){
-        tapeStopEvents(cur+secBeats-2,rng).forEach(e=>drums.push(e));
+        tapeStopEvents(cur+secBeats-2,drumR).forEach(e=>drums.push(e));
       } else if(tr==="reverse crash"){
         // reverse-cymbal suck-in (quiet SFX build over the last bar) resolving to
         // a crash + impact slam on the next downbeat
@@ -2209,7 +2253,7 @@
       } else if(tr==="build drop"){
         // full-bar snare-roll crescendo + riser, THEN the final beat DROPS OUT
         // (drums + non-solo pitched cleared) so the next downbeat slams
-        snareRollEvents(cur+secBeats-4,rng).forEach(e=>drums.push(e));
+        snareRollEvents(cur+secBeats-4,drumR).forEach(e=>drums.push(e));
         sfx.push({beat:Math.max(0,cur+secBeats-4),dur:4,type:SFX_NUM.riser,amp:0.05});
         const dfrom=cur+secBeats-1, dupto=cur+secBeats;
         for(let i=drums.length-1;i>=0;i--) if(drums[i].beat>=dfrom&&drums[i].beat<dupto) drums.splice(i,1);
@@ -2301,8 +2345,15 @@
     }
     const grng=mulberry32(((state.seed??1)+777)>>>0);
     const tfeel=resolveTimeFeel(state);   // KERNEL-V4 Phase 3: one resolved time-feel spec for both stages
-    applyGroove(pitched, tfeel, grng, seamWin);
-    applyGroove(drums,   tfeel, grng, seamWin);
+    // THE TAPE is the last place voices entangle: it draws 1-2 numbers PER EVENT
+    // across the whole timeline (pitched, then drums, on one stream), so any
+    // voice's event count re-times every event drawn after it — the generator
+    // streams above buy nothing if the tape re-couples them here. Under
+    // state.voiceStreams each lane gets its OWN tape, in its own "tape:"
+    // namespace so a lane's tape never shares a stream with its generator.
+    const grooveR=vs?(vk=>vstream("tape:"+(vk||"x"))()):grng;
+    applyGroove(pitched, tfeel, grooveR, seamWin);
+    applyGroove(drums,   tfeel, grooveR, seamWin);
     // ---- MECHANICAL INTIMACY (state.thunk = {prob, amp}) ----
     // Soft key/pedal noise on a fraction of LEAD notes: a whisper-level tom
     // "thump" (pitch 90-160Hz, amp ~-30dB) exactly at the grooved note onset
