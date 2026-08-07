@@ -51,6 +51,47 @@ export function events() {
   return _events;
 }
 
+// ---------- the patch, as something you can keep ----------
+// THE WHITELIST IS A SECURITY BOUNDARY, not tidiness. The patch arrives from a
+// URL a stranger can write, and it is Object.assign'd into a kernel state that
+// then drives the engine. `foundSources` alone would let a link point the found
+// layer at a remote host — the exact thing test/unit/no-remote-sources.test.js
+// exists to prevent in the committed registry. So only keys the DAW's own
+// machines WRITE survive a decode; anything else is dropped silently.
+// EVERY NEW MACHINE ADDS ITS KEY HERE — a machine whose key is missing appears to
+// work and then loses its edit on reload, which is the worst of both.
+export const PATCH_KEYS = new Set([
+  "kits",          // the kit machine (machines/drums.js)
+  "melodyGen",     // the wander walk's knobs        — stage 5
+  "melodyCells",   // drawn phrase cells             — stage 5
+  "melodyWeave",   // the painted Markov table       — stage 5
+]);
+const MAX_PATCH = 6000;   // a URL nobody can paste is not persistence
+
+const b64u = {
+  enc: (s) => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""),
+  dec: (s) => decodeURIComponent(escape(atob(s.replace(/-/g, "+").replace(/_/g, "/")))),
+};
+export function encodePatch() {
+  const p = SONG.patch || {};
+  const keep = {};
+  for (const k of Object.keys(p)) if (PATCH_KEYS.has(k) && p[k] != null) keep[k] = p[k];
+  if (!Object.keys(keep).length) return "";
+  const s = b64u.enc(JSON.stringify(keep));
+  if (s.length > MAX_PATCH) { console.warn("daw: patch too large for the URL (" + s.length + " chars) — not encoded"); return ""; }
+  return s;
+}
+export function decodePatch(str) {
+  if (!str) return {};
+  try {
+    const o = JSON.parse(b64u.dec(str));
+    if (!o || typeof o !== "object" || Array.isArray(o)) return {};
+    const keep = {};
+    for (const k of Object.keys(o)) if (PATCH_KEYS.has(k)) keep[k] = o[k];
+    return keep;
+  } catch (e) { console.warn("daw: unreadable patch in the URL — ignored"); return {}; }
+}
+
 // ---------- what the rack reads ----------
 export const genreIds = () => Object.keys(K.GENRES);
 export const genreLabel = (g) => (K.GENRES[g] && K.GENRES[g].label) || g;

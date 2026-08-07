@@ -996,7 +996,7 @@
   // melody phrases are 8-beat cells too; with chordEvery (cb) ≠ 8 the phrase
   // takes the front of the chord bar (long harmony breathes) or truncates.
   // cb=8 (every genre today) is byte-identical to the pre-lane engine.
-  function melodyEvents(style,base,prg,chords,k,rng,seed,cb,idiom){
+  function melodyEvents(style,base,prg,chords,k,rng,seed,cb,idiom,melGen){
     cb=cb||CHORD_BEATS;
     const out=[], cycleBeats=chords.length*cb;
     const comp = style==="composed"?prg.composed : style==="composed2"?prg.composed2 : null;
@@ -1215,10 +1215,40 @@
       // the mined cells): a cell with a "<name>2" sibling alternates per chord
       const ph=(MEL_PHRASES[gen+"2"]&&ci%2)?MEL_PHRASES[gen+"2"]:MEL_PHRASES[gen];
       if(ph){ ph.forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
-      // wander: rhythmic random walk over chord tones, occasional octave leap
+      // wander: rhythmic random walk over chord tones, occasional octave leap.
+      //
+      // THE WANDER KNOBS (state.melodyGen — docs/DAW.md stage 5, the /daw melody
+      // machine). Every constant below used to be literal; each is now a knob with
+      // its literal as the DEFAULT, so an absent melodyGen produces the identical
+      // numbers in the identical draw order — byte-identical (the standing law).
+      // The knobs, and what each is worth turning for:
+      //   rhythm  the note-length pool, cycled in order   (the phrase's gait)
+      //   step    max slot move per note, ±step           (1 = stepwise, 3 = leapy)
+      //   leap    chance a note jumps an octave           (sparkle)
+      //   range   [lo,hi] slots of the chord voicing      (which part of the chord)
+      //   legato  duration as a fraction of the gap       (separation)
+      //   rest    chance a step is silence                (space — the one knob
+      //           that ADDS a draw, so it is guarded: 0/absent draws nothing)
+      // Draw-count law: step and leap keep exactly one draw each per note, and the
+      // opening slot keeps its single draw, so only `rest` can change the count —
+      // and only when it is non-zero.
+      const G=melGen||null;
       const span=Math.min(8,cb);
-      const rh=[1,0.5,0.5,1,1,2]; let t=0,i=0,prev=Math.floor(rng()*4);
-      while(t<span){ const d=rh[i%rh.length]; prev=Math.max(0,Math.min(3,prev+(Math.floor(rng()*3)-1))); note(t,Math.min(d,span-t)*0.92,prev,rng()<0.18?1:0); t+=d; i++; }
+      const rh=(G&&G.rhythm&&G.rhythm.length)?G.rhythm:[1,0.5,0.5,1,1,2];
+      const gStep=(G&&G.step>0)?Math.round(G.step):1;
+      const gLeap=(G&&G.leap!=null)?+G.leap:0.18;
+      const gLo=(G&&G.range&&G.range.length===2)?(G.range[0]|0):0;
+      const gHi=(G&&G.range&&G.range.length===2)?(G.range[1]|0):3;
+      const gLeg=(G&&G.legato>0)?+G.legato:0.92;
+      const gRest=(G&&G.rest>0)?+G.rest:0;
+      let t=0,i=0,prev=gLo+Math.floor(rng()*(gHi-gLo+1));
+      while(t<span){ const d=rh[i%rh.length];
+        prev=Math.max(gLo,Math.min(gHi,prev+(Math.floor(rng()*(2*gStep+1))-gStep)));
+        // the rest draw is the ONLY conditional one: absent/zero => zero draws
+        const silent=gRest>0&&rng()<gRest;
+        if(!silent) note(t,Math.min(d,span-t)*gLeg,prev,rng()<gLeap?1:0);
+        else rng();   // keep the leap draw so rest changes WHAT sounds, not the walk's stream
+        t+=d; i++; }
     });
     return out;
   }
@@ -2126,7 +2156,7 @@
           }
         });
         if(sec.melody&&sec.melody!=="off"){
-          const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,melR,state.seed,CBEATS,sec.soloIdiom);
+          const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,melR,state.seed,CBEATS,sec.soloIdiom,state.melodyGen);
           // MUSIC-MIND melody rhythm cells (state.rhythm): per sounding bar, on
           // the DEDICATED mrng stream (seed+52200), fire ∝ complexity and snap
           // the bar's phrase onto a named cell grid (MM_CELLS — dotted pairs /
@@ -2177,7 +2207,7 @@
           mel.forEach(e=>pitched.push(e));
         }
         if(sec.counter&&sec.counter.pattern){              // countermelody layer (e.g. a brass section) over the main melody
-          const cm=melodyEvents(sec.counter.pattern,cycleBase,prg,chords,k,counterR,state.seed,CBEATS);
+          const cm=melodyEvents(sec.counter.pattern,cycleBase,prg,chords,k,counterR,state.seed,CBEATS,null,state.melodyGen);
           cm.forEach(e=>{ e.solo=sec.counter.solo; if(sec.counter.octave) e.pch=pchAdd(e.pch,12*sec.counter.octave);
             if(sec.swell) e.amp *= 0.3 + 1.9*((e.beat-cur)/Math.max(1,secBeats)); });   // crescendo build across the section
           cm.forEach(e=>pitched.push(e));

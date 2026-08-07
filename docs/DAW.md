@@ -159,12 +159,17 @@ moves.
    *distribution* a melody is drawn from.
    → **`state.melodyWeave`**, edited as a painted 8×8 heatmap. Brush toward the
    diagonal for stepwise motion, toward the corners for leaps.
-3. **`wander`** — the fallback walk (`csd-engine.js:1204`): rhythm pool
-   `[1,0.5,0.5,1,1,2]`, ±1 step over chord tones, 0.18 octave-leap probability.
-   Four hardcoded constants.
-   → **`state.melodyGen`**: rhythm pool, step distribution, leap probability,
-   range clamp, rest density. Cheapest win on the list, and the one that feels
-   most like an instrument.
+3. **`wander`** — the fallback walk: rhythm pool `[1,0.5,0.5,1,1,2]`, ±1 step
+   over chord tones, 0.18 octave-leap probability, 0..3 slot clamp, 0.92 legato.
+   → **`state.melodyGen`** — **SHIPPED 2026-08-07.** Every one of those literals
+   is now a knob whose DEFAULT is the literal, so absent draws the identical
+   numbers in the identical order. Six knobs: gait (the rhythm pool, offered as
+   named characters — walking / even 8ths / quarters / long-short / gallop /
+   sparse), step, octave leap, rest, legato, range. `rest` is the only one that
+   can ADD an rng draw, so it is guarded: at 0 it draws nothing and the whole
+   catalogue is byte-identical. `test/unit/melody-gen.test.js` also holds the
+   panel's DEFAULTS against the engine's literals — otherwise "revert to stock"
+   would be a lie and every knob would carry a hidden offset.
 
 **The fitter.** `tools/mine/mine-weave.js` is 151 lines and its fitting core is
 transition-counting plus normalization — no real dependencies. Ported to the
@@ -337,7 +342,8 @@ humanized material reads approximately.
    **SHIPPED 2026-08-07.** `test/browser/daw-rack.test.js` proves the rack law
    ON SCREEN: moving a kit probability repaints the drums roll and leaves every
    other roll **pixel-identical** (canvas hash per row, before and after).
-5. **`state.melodyGen`** → **`state.melodyCells`** (draw phrases) →
+5. **`state.melodyGen`** — **SHIPPED 2026-08-07** (the wander machine). Next:
+   **`state.melodyCells`** (draw phrases on the ladder grid) →
    **`state.melodyWeave`** + the in-browser fitter.
 6. **Bass op-table transcription** + its machine.
 7. Note-fx rack UI over `state.pipes` — mostly a renderer over an existing
@@ -350,9 +356,13 @@ Steps 1–4 are already a usable instrument.
 
 - Does `/screensaver` suppress chrome, or is it a plain alias to `/`? The nginx
   block in HOSTING.md currently assumes a plain alias.
-- **The document does not yet carry `patch` in the URL.** `?g`/`?seed` round-trip,
-  but a kit edit lives only in memory — so a tweaked kit is not shareable or
-  reloadable. Needs a compact encoding (the patch is small JSON; the obvious move
-  is base64 of the diff, the way the share URL already names a path).
+- ~~The document does not yet carry `patch` in the URL.~~ **DONE 2026-08-07** —
+  `?p` is base64url JSON of the diff, capped at 6000 chars, and the ↗ link button
+  copies it. Decoding is **whitelisted** (`song.js PATCH_KEYS`), because a patch
+  arrives from a URL a stranger can write and is assigned into a state that drives
+  the engine: `foundSources` alone would let a link point the found layer at a
+  remote host, the exact thing `no-remote-sources.test.js` exists to prevent.
+  **Every new machine must add its key to that set** — a machine whose key is
+  missing appears to work and silently loses its edit on reload.
 - The two extensionless routes need their nginx blocks on the droplet; until then
   `/daw.html` serves and `/daw` 404s.

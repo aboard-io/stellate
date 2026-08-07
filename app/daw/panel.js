@@ -13,6 +13,7 @@
 // expose at all (every one of them changes a draw count).
 import { SONG, state, trackMachines } from "./song.js";
 import * as DRUMS from "./machines/drums.js";
+import * as MELODY from "./machines/melody.js";
 
 const open = new Set();          // track ids whose panel is open
 export const isOpen = (id) => open.has(id);
@@ -25,6 +26,7 @@ export function renderPanel(host, track) {
   if (!open.has(track.id)) { host.hidden = true; return; }
   host.hidden = false;
   if (track.kind === "drums") return drumsPanel(host);
+  if (track.id === "melody") return melodyPanel(host, track);
   return readOnlyPanel(host, track);
 }
 
@@ -91,6 +93,62 @@ function drumsPanel(host) {
   host.appendChild(el("p", "dw-pnote",
     "Probability and period are RULES, not edits to a bar — they survive a change of seed, tempo or form. " +
     "Moving one lane leaves the other rolls untouched (state.voiceStreams)."));
+}
+
+// ---------- the wander machine ----------
+function melodyPanel(host, track) {
+  const gen = MELODY.current(), runs = MELODY.wanderSections();
+  const box = el("div", "dw-kit");
+  const head = el("div", "dw-kithead");
+  head.appendChild(el("span", "dw-kitname", "wander — the walk"));
+  if (MELODY.isEdited()) {
+    head.appendChild(el("span", "dw-badge", "edited"));
+    const rev = el("button", "dw-mini", "revert");
+    rev.title = "back to the engine's own constants";
+    rev.addEventListener("click", () => MELODY.revert());
+    head.appendChild(rev);
+  }
+  box.appendChild(head);
+
+  // GAIT — the rhythm pool, as named characters rather than an array editor
+  const grow = el("div", "dw-op");
+  grow.appendChild(el("span", "dw-oplane", "gait"));
+  grow.appendChild(el("span", "dw-opshape", "[" + gen.rhythm.join(" ") + "]"));
+  const gsel = document.createElement("select");
+  gsel.className = "dw-opsel";
+  for (const g of MELODY.GAITS) { const o = document.createElement("option"); o.value = g.id; o.textContent = g.label; gsel.appendChild(o); }
+  const cur = MELODY.gaitOf(gen);
+  if (cur === "custom") { const o = document.createElement("option"); o.value = "custom"; o.textContent = "custom"; gsel.appendChild(o); }
+  gsel.value = cur;
+  gsel.title = "the note-length pool the walk cycles through — the phrase's gait";
+  gsel.addEventListener("change", (e) => MELODY.setGait(e.target.value));
+  grow.appendChild(gsel);
+  grow.appendChild(el("span", "", ""));
+  grow.appendChild(el("span", "dw-opval", gen.rhythm.length + " step" + (gen.rhythm.length === 1 ? "" : "s")));
+  box.appendChild(grow);
+
+  for (const k of MELODY.KNOBS) {
+    const row = el("div", "dw-op");
+    row.appendChild(el("span", "dw-oplane", k.label));
+    row.appendChild(el("span", "dw-opshape", ""));
+    row.appendChild(el("span", "", ""));
+    const sl = document.createElement("input");
+    sl.type = "range"; sl.min = String(k.min); sl.max = String(k.max); sl.step = String(k.step);
+    sl.value = String(gen[k.id]); sl.className = "dw-opslider";
+    sl.title = k.doc; sl.setAttribute("aria-label", k.label);
+    sl.dataset.knob = k.id;
+    const val = el("span", "dw-opval", k.fmt(gen[k.id]));
+    sl.addEventListener("input", (e) => { val.textContent = k.fmt(+e.target.value); });
+    sl.addEventListener("change", (e) => MELODY.setKnob(k.id, +e.target.value));
+    row.appendChild(sl); row.appendChild(val);
+    box.appendChild(row);
+  }
+  host.appendChild(box);
+
+  host.appendChild(el("p", "dw-pnote", runs.length
+    ? `These knobs shape the WALK, not the notes — they survive a change of seed, tempo or form. This form runs wander in: ${runs.join(", ")}.`
+    : "Nothing in this form runs the wander generator, so these knobs will not change what you hear — " +
+      "set a section's melody to `wander`, or try a genre that uses it. Drawing actual phrases is the next machine (melodyCells)."));
 }
 
 // ---------- read-only, until each machine lands ----------

@@ -179,6 +179,54 @@ async function main() {
     else ok("revert drops the override and restores the stock roll exactly");
   }
 
+  // ---- F the edit SURVIVES A RELOAD, and a hostile link cannot ----
+  // Persistence is only real if reloading the URL reproduces the same pixels.
+  // Re-make an edit, capture the URL, load it fresh in a NEW page, compare rolls.
+  {
+    await page.evaluate(() => { window.__DAW.edit({ genre: "techno", seed: 3, patch: {} }); });
+    await page.waitForTimeout(200);
+    await page.evaluate(() => {
+      const sl = document.querySelector('.dw-row[data-track="drums"] .dw-opslider:not([disabled])');
+      sl.value = "0.35";
+      sl.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await page.waitForTimeout(240);
+    const url = await page.evaluate(() => location.href);
+    const editedPix = await shot();
+    if (!/[?&]p=/.test(url)) fail("the patch never reached the URL: " + url);
+    else ok("the patch rides the URL (?p=" + (/[?&]p=([^&]+)/.exec(url)[1] || "").slice(0, 24) + "…)");
+
+    const p2 = await browser.newPage();
+    const errs2 = capturePageErrors(p2);
+    await p2.goto(url, { waitUntil: "load" });
+    await p2.waitForFunction(() => window.__DAW && window.__DAW.rowCount() > 0, null, { timeout: 20000 });
+    await p2.waitForTimeout(220);
+    const reloadPix = await p2.evaluate(() => {
+      const o = {};
+      for (const r of document.querySelectorAll(".dw-row")) o[r.dataset.track] = r.querySelector("canvas").toDataURL().length + ":" + r.querySelector("canvas").toDataURL().slice(-64);
+      return o;
+    });
+    const kitsBack = await p2.evaluate(() => Object.keys((window.__DAW.SONG.patch.kits) || {}));
+    if (errs2.length) fail("reloaded page errored: " + errs2.join(" | "));
+    if (!kitsBack.length) fail("reload lost the kit override");
+    else ok("reload restores the override (" + kitsBack.join(", ") + ")");
+    const differ = Object.keys(editedPix).filter((k) => editedPix[k] !== reloadPix[k]);
+    if (differ.length) fail("reload did not reproduce the same rolls: " + differ.join(", "));
+    else ok("reload reproduces every roll pixel-for-pixel — the link IS the song");
+
+    // a link is untrusted input: keys the DAW never writes must not reach the state
+    const dropped = await p2.evaluate(() => {
+      const evil = window.__DAW.decodePatch(
+        btoa(JSON.stringify({ kits: {}, foundSources: [{ id: "x", fsPath: "https://evil.example/x.mp3" }], bpm: 999 }))
+          .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""));
+      return Object.keys(evil);
+    });
+    if (dropped.indexOf("foundSources") >= 0 || dropped.indexOf("bpm") >= 0)
+      fail("decodePatch let a non-whitelisted key through: " + dropped.join(", "));
+    else ok("a hostile patch is filtered to the whitelist (" + (dropped.join(", ") || "nothing") + ")");
+    await p2.close();
+  }
+
   await browser.close(); srv.close();
   if (process.exitCode) console.error(`\nDAW-RACK: FAIL`);
   else console.log(`\nDAW-RACK: PASS — ${checks} checks`);

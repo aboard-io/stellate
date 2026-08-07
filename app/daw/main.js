@@ -5,23 +5,29 @@
 // this file only has to assemble the UI and run one paint. No audio yet: the
 // transport is the next stage, and a rack that draws the truth is the thing that
 // has to be right first.
-import { SONG, edit, subs, touch, genreIds, genreLabel } from "./song.js";
+import { SONG, edit, subs, touch, genreIds, genreLabel, encodePatch, decodePatch } from "./song.js";
 import { buildRack, paintRack, watchResize, TRACKS } from "./rack.js";
 
 const $ = (id) => document.getElementById(id);
 
-// ---------- the ?query contract: a DAW link restores its song ----------
-// Same idea as the app's ↗ share URL — the link names the music, not a session.
+// ---------- the ?query contract: a DAW link restores its SONG ----------
+// Same idea as the app's ↗ share URL — the link names the music, not a session —
+// but here it has to carry the EDITS too, or the page is a place where you make
+// something good and then lose it. ?g + ?seed name the base the kernel resolves;
+// ?p is the patch (base64url JSON, whitelisted on the way in — see song.js).
 const QS = new URLSearchParams(location.search);
 function readQuery() {
   const g = QS.get("g"), s = parseInt(QS.get("seed"), 10);
   if (g && window.GenreKernel.GENRES[g]) SONG.genre = g;
   if (s >= 1 && s <= 99999) SONG.seed = s;
+  SONG.patch = decodePatch(QS.get("p"));
 }
 function writeQuery() {
   const u = new URL(location.href);
   u.searchParams.set("g", SONG.genre);
   u.searchParams.set("seed", String(SONG.seed));
+  const p = encodePatch();
+  if (p) u.searchParams.set("p", p); else u.searchParams.delete("p");
   history.replaceState(null, "", u);
 }
 
@@ -43,6 +49,14 @@ function wire() {
     e.target.value = v; edit({ seed: v });
   });
   $("dwReseed").addEventListener("click", () => edit({ seed: Math.floor(Math.random() * 99999) + 1 }));
+  // ↗ link — act, then say so (the app's ↗ share / ⧉ copy-embed pattern). The URL
+  // is already correct at all times; this only puts it on the clipboard.
+  $("dwShare").addEventListener("click", async () => {
+    const btn = $("dwShare"), was = btn.textContent;
+    try { await navigator.clipboard.writeText(location.href); btn.textContent = "copied"; }
+    catch (e) { btn.textContent = "copy failed"; }
+    setTimeout(() => { btn.textContent = was; }, 1400);
+  });
 }
 
 // The controls are a VIEW of the document, not its owner. Re-reading them from
@@ -68,7 +82,7 @@ function boot() {
   paintRack();
   // headless probe hook (test/browser/daw-rack.test.js) — the same __ pattern the
   // app's gates read, so a gate never has to race a click to inspect state
-  window.__DAW = { SONG, edit, touch, paintRack, TRACKS,
+  window.__DAW = { SONG, edit, touch, paintRack, TRACKS, encodePatch, decodePatch,
     rowCount: () => document.querySelectorAll(".dw-row").length };
 }
 
