@@ -152,6 +152,26 @@ body {
 .dw-opslider { width: 100%; accent-color: hsl(var(--hue), 62%, 60%); }
 .dw-opslider:disabled { opacity: .35; }
 
+/* the phrase grid — y is the chord's voicing ladder, x a 16th grid */
+.dw-grid {
+  display: grid;
+  grid-template-columns: 58px repeat(var(--cols), minmax(0, 1fr));
+  gap: 2px; margin: 4px 0 2px; max-width: 900px;
+}
+.dw-glabel {
+  font: 10px/16px ui-monospace, monospace; color: var(--dw-dim);
+  text-align: right; padding-right: 6px; white-space: nowrap;
+}
+.dw-cell {
+  height: 16px; min-width: 0; padding: 0; cursor: pointer;
+  background: #1d1938; border: 1px solid transparent; border-radius: 2px;
+}
+.dw-cell.beat { border-left-color: rgba(255, 255, 255, .18); }
+.dw-cell:hover { background: #2a2450; }
+.dw-cell.on { background: hsl(var(--hue), 62%, 58%); }
+.dw-cell.on:hover { background: hsl(var(--hue), 62%, 66%); }
+.dw-cell:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: 1px; }
+
 .dw-facts { display: grid; grid-template-columns: max-content 1fr; gap: 3px 14px; margin: 0; }
 .dw-facts dt { font: 600 10px/1.6 system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--dw-dim); }
 .dw-facts dd { margin: 0; font: 12px/1.6 ui-monospace, monospace; color: var(--dw-ink); }

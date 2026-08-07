@@ -14,6 +14,7 @@
 import { SONG, state, trackMachines } from "./song.js";
 import * as DRUMS from "./machines/drums.js";
 import * as MELODY from "./machines/melody.js";
+import * as CELLS from "./machines/cells.js";
 
 const open = new Set();          // track ids whose panel is open
 export const isOpen = (id) => open.has(id);
@@ -95,8 +96,68 @@ function drumsPanel(host) {
     "Moving one lane leaves the other rolls untouched (state.voiceStreams)."));
 }
 
-// ---------- the wander machine ----------
+// ---------- the melody machines ----------
+// A form can run several melody patterns across its sections, and they are not
+// all the same KIND of machine: `wander` is a walk with knobs, a shipped phrase
+// cell is a drawable contour, and the procedural ones (fugue/motorik/canon) are
+// code rather than data. Show the right machine for each, and say plainly which
+// is which — an editor offered for something it cannot reach is worse than none.
 function melodyPanel(host, track) {
+  for (const name of CELLS.melodyPatterns()) {
+    if (name === "wander") continue;                       // the knobs, below
+    if (CELLS.isCell(name)) cellEditor(host, name);
+    else host.appendChild(el("p", "dw-pnote",
+      `“${name}” is a procedural generator (code, not a phrase table), so there is nothing to draw. ` +
+      `Its shape lives in csd-engine's melodyEvents.`));
+  }
+  wanderMachine(host, track);
+}
+
+// ---------- the phrase editor ----------
+function cellEditor(host, name) {
+  const cell = CELLS.cellOf(name) || [], nCols = CELLS.cols(), grid = CELLS.toGrid(cell);
+  const box = el("div", "dw-kit");
+  const head = el("div", "dw-kithead");
+  head.appendChild(el("span", "dw-kitname", name + " — phrase"));
+  if (CELLS.isEdited(name)) {
+    head.appendChild(el("span", "dw-badge", "edited"));
+    const rev = el("button", "dw-mini", "revert");
+    rev.title = "back to the shipped phrase";
+    rev.addEventListener("click", () => CELLS.revert(name));
+    head.appendChild(rev);
+  }
+  const clr = el("button", "dw-mini", "clear");
+  clr.title = "empty the phrase and start from silence";
+  clr.addEventListener("click", () => CELLS.clear(name));
+  head.appendChild(clr);
+  box.appendChild(head);
+
+  const g = el("div", "dw-grid");
+  g.style.setProperty("--cols", nCols);
+  for (let r = 0; r < CELLS.ROWS.length; r++) {
+    g.appendChild(el("span", "dw-glabel", CELLS.rowLabel(CELLS.ROWS[r])));
+    for (let c = 0; c < nCols; c++) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "dw-cell" + (grid.has(c + ":" + r) ? " on" : "") + (c % 4 === 0 ? " beat" : "");
+      b.dataset.c = c; b.dataset.r = r;
+      b.title = `beat ${(c * CELLS.STEP).toFixed(2)} · ${CELLS.rowLabel(CELLS.ROWS[r])}`;
+      b.setAttribute("aria-label", b.title);
+      b.setAttribute("aria-pressed", grid.has(c + ":" + r) ? "true" : "false");
+      b.addEventListener("click", () => CELLS.toggle(name, c, r));
+      g.appendChild(b);
+    }
+  }
+  box.appendChild(g);
+  box.appendChild(el("p", "dw-pnote",
+    "The vertical axis is the CHORD'S OWN VOICING — root / 3rd / 5th / top, and the same again an octave up — " +
+    "not a keyboard. So what you draw is a contour in chord tones: it follows the harmony, transposes with the key, " +
+    "and survives reharmonisation. Each note holds until the next one starts."));
+  host.appendChild(box);
+}
+
+// ---------- the wander machine ----------
+function wanderMachine(host, track) {
   const gen = MELODY.current(), runs = MELODY.wanderSections();
   const box = el("div", "dw-kit");
   const head = el("div", "dw-kithead");

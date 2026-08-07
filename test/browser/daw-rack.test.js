@@ -227,6 +227,52 @@ async function main() {
     await p2.close();
   }
 
+  // ---- G the PHRASE EDITOR: draw a note, hear it in the melody only ----
+  // techno/3 runs `arpup`, a shipped phrase cell, so the melody panel offers the
+  // ladder grid. Toggling a cell must repaint the melody roll, leave every other
+  // roll pixel-identical, and land in the document as state.melodyCells.
+  {
+    await page.evaluate(() => { window.__DAW.edit({ genre: "techno", seed: 3, patch: {} }); });
+    await page.waitForTimeout(220);
+    const melOpen = await page.evaluate(() => {
+      const s = document.querySelector('.dw-row[data-track="melody"] .dw-strip');
+      s.click(); return true;
+    });
+    await page.waitForTimeout(200);
+    const grid = await page.evaluate(() => {
+      const p = document.querySelector('.dw-row[data-track="melody"] .dw-panel');
+      return { cells: p ? p.querySelectorAll(".dw-cell").length : 0,
+               on: p ? p.querySelectorAll(".dw-cell.on").length : 0,
+               labels: p ? [...p.querySelectorAll(".dw-glabel")].map((n) => n.textContent) : [] };
+    });
+    if (!grid.cells) fail("no phrase grid for a form running a shipped cell");
+    else ok(`phrase grid renders — ${grid.cells} cells, ${grid.on} lit, ladder ${grid.labels.slice(0, 4).join("/")}…`);
+    if (grid.labels.some((l) => /root|3rd|5th|top/.test(l))) ok("the y-axis is the chord's voicing ladder, not a keyboard");
+    else fail("grid rows are not labelled as chord tones: " + grid.labels.join(","));
+
+    const pre = await shot();
+    await page.evaluate(() => {
+      const p = document.querySelector('.dw-row[data-track="melody"] .dw-panel');
+      const off = [...p.querySelectorAll(".dw-cell")].find((c) => !c.classList.contains("on"));
+      off.click();
+    });
+    await page.waitForTimeout(260);
+    const post = await shot();
+    const moved = Object.keys(post).filter((k) => post[k] !== pre[k]);
+    if (moved.indexOf("melody") < 0) fail("drawing a note did not repaint the melody roll");
+    else ok("drawing a note repaints the melody roll");
+    const spill = moved.filter((k) => k !== "melody");
+    if (spill.length) fail("a phrase edit moved other rolls: " + spill.join(", "));
+    else ok("...and left every other roll pixel-identical");
+
+    const doc = await page.evaluate(() => ({
+      cells: Object.keys((window.__DAW.SONG.patch.melodyCells) || {}),
+      url: /[?&]p=/.test(location.href),
+    }));
+    if (!doc.cells.length || !doc.url) fail("the phrase edit did not reach the document/URL: " + JSON.stringify(doc));
+    else ok(`the drawn phrase is in the document and the URL (melodyCells: ${doc.cells.join(", ")})`);
+  }
+
   await browser.close(); srv.close();
   if (process.exitCode) console.error(`\nDAW-RACK: FAIL`);
   else console.log(`\nDAW-RACK: PASS — ${checks} checks`);

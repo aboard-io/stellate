@@ -150,9 +150,18 @@ moves.
    *chord's lead voicing*, not a pitch. A cell follows the harmony and survives
    reharmonization. A cell with a `<name>2` sibling alternates per chord
    (`csd-engine.js:1201`) — A/B phrasing for free.
-   → **`state.melodyCells`**, merged as `MEL_PHRASES[gen] || state.melodyCells[gen]`.
-   The editor draws on a **ladder grid**: y-axis is voicing slots 0–3 + octave,
-   never a chromatic keyboard. The grid is the abstraction.
+   → **`state.melodyCells`** — **SHIPPED 2026-08-07.** A song's own cells shadow
+   the shipped table BY NAME (the same copy-on-write / badge / revert model as
+   `state.kits`), so drawing needs no change to the form. The editor is a **ladder
+   grid**: y is the chord's own voicing — root / 3rd / 5th / top, and the same
+   again an octave up — never a chromatic keyboard, and x is a 16th grid across
+   the chord bar. One note per column, because a cell is a LINE. Durations are
+   DERIVED on commit (each note holds until the next onset, capped at 2 beats),
+   which is what makes a drawn line legato instead of a row of staccato 16ths.
+   `test/unit/melody-cells-daw.test.js` measures the founding constraint rather
+   than asserting it: the same ladder slot resolves to **4 distinct pitch classes**
+   across one progression, and the phrase transposes whole under a key change — a
+   frozen clip could do neither.
 2. **Weave organs** — `MINED_WEAVE` (`csd-engine.js:913`). `start[8]` +
    `slot[8][8]` (Markov transitions over the voicing ladder) + `ioiStart[8]` +
    `ioi[8][8]` (rhythm chain) + `legato` + `step`. Not a melody — the
@@ -342,9 +351,9 @@ humanized material reads approximately.
    **SHIPPED 2026-08-07.** `test/browser/daw-rack.test.js` proves the rack law
    ON SCREEN: moving a kit probability repaints the drums roll and leaves every
    other roll **pixel-identical** (canvas hash per row, before and after).
-5. **`state.melodyGen`** — **SHIPPED 2026-08-07** (the wander machine). Next:
-   **`state.melodyCells`** (draw phrases on the ladder grid) →
-   **`state.melodyWeave`** + the in-browser fitter.
+5. **`state.melodyGen`** (the wander machine) and **`state.melodyCells`** (draw
+   phrases on the ladder grid) — both **SHIPPED 2026-08-07**. Next:
+   **`state.melodyWeave`** + the in-browser fitter, fed by the phrases you draw.
 6. **Bass op-table transcription** + its machine.
 7. Note-fx rack UI over `state.pipes` — mostly a renderer over an existing
    registry.

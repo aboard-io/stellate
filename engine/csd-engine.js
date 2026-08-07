@@ -996,7 +996,8 @@
   // melody phrases are 8-beat cells too; with chordEvery (cb) ≠ 8 the phrase
   // takes the front of the chord bar (long harmony breathes) or truncates.
   // cb=8 (every genre today) is byte-identical to the pre-lane engine.
-  function melodyEvents(style,base,prg,chords,k,rng,seed,cb,idiom,melGen){
+  function melodyEvents(style,base,prg,chords,k,rng,seed,cb,idiom,melGen,melCells){
+    const PH=n=>(melCells&&melCells[n])||MEL_PHRASES[n];
     cb=cb||CHORD_BEATS;
     const out=[], cycleBeats=chords.length*cb;
     const comp = style==="composed"?prg.composed : style==="composed2"?prg.composed2 : null;
@@ -1018,7 +1019,7 @@
       };
       if(gen==="canon"){
         // 2-voice counterpoint: the line + its echo two beats later, a chord tone lower
-        const ph=MEL_PHRASES.updown;
+        const ph=PH("updown");
         ph.forEach(([o,d,idx,oct])=>note(o,d,idx,oct));
         ph.forEach(([o,d,idx,oct])=>{ if(o+2+d<=8) note(o+2,d,Math.max(0,idx-1),(oct||0)-1); });
         return;
@@ -1095,8 +1096,8 @@
         }
         return;
       }
-      if(gen==="hero"){ (ci%2?MEL_PHRASES.hero2:MEL_PHRASES.hero).forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
-      if(gen==="anthem"){ (ci%2?MEL_PHRASES.anthem2:MEL_PHRASES.anthem).forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
+      if(gen==="hero"){ (ci%2?PH("hero2"):PH("hero")).forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
+      if(gen==="anthem"){ (ci%2?PH("anthem2"):PH("anthem")).forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       if(gen==="sparse"){ note(0,3,2,0); note(4,3,3,0);
         if(rng()<0.3) note(7,0.75,1,0);                               // occasional pickup into the next bar — sparse breathes across cycles
         return; }
@@ -1213,7 +1214,7 @@
       }
       // generic A/B twin rule (the hero/anthem alternation, generalized for
       // the mined cells): a cell with a "<name>2" sibling alternates per chord
-      const ph=(MEL_PHRASES[gen+"2"]&&ci%2)?MEL_PHRASES[gen+"2"]:MEL_PHRASES[gen];
+      const ph=(PH(gen+"2")&&ci%2)?PH(gen+"2"):PH(gen);
       if(ph){ ph.forEach(([o,d,idx,oct])=>note(o,d,idx,oct)); return; }
       // wander: rhythmic random walk over chord tones, occasional octave leap.
       //
@@ -1233,6 +1234,15 @@
       // opening slot keeps its single draw, so only `rest` can change the count —
       // and only when it is non-zero.
       const G=melGen||null;
+      // PHRASE-CELL OVERRIDE (state.melodyCells — docs/DAW.md stage 5, the /daw
+      // phrase editor). One resolver for every cell lookup below: a song's own
+      // cells shadow the shipped table BY NAME, exactly the way state.kits shadows
+      // KITS, so a drawn phrase is ordinary vocabulary rather than a special case
+      // and needs no change to the form to take effect. The cells stay in
+      // CHORD-TONE indices ([beat, dur, leadIndex, octShift]) — that is what makes
+      // a drawn phrase follow the harmony and survive reharmonisation, instead of
+      // being a frozen clip stranded the moment the progression moves.
+      // ABSENT => MEL_PHRASES[n] exactly as before, byte-identical.
       const span=Math.min(8,cb);
       const rh=(G&&G.rhythm&&G.rhythm.length)?G.rhythm:[1,0.5,0.5,1,1,2];
       const gStep=(G&&G.step>0)?Math.round(G.step):1;
@@ -2156,7 +2166,7 @@
           }
         });
         if(sec.melody&&sec.melody!=="off"){
-          const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,melR,state.seed,CBEATS,sec.soloIdiom,state.melodyGen);
+          const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,melR,state.seed,CBEATS,sec.soloIdiom,state.melodyGen,state.melodyCells);
           // MUSIC-MIND melody rhythm cells (state.rhythm): per sounding bar, on
           // the DEDICATED mrng stream (seed+52200), fire ∝ complexity and snap
           // the bar's phrase onto a named cell grid (MM_CELLS — dotted pairs /
@@ -2207,7 +2217,7 @@
           mel.forEach(e=>pitched.push(e));
         }
         if(sec.counter&&sec.counter.pattern){              // countermelody layer (e.g. a brass section) over the main melody
-          const cm=melodyEvents(sec.counter.pattern,cycleBase,prg,chords,k,counterR,state.seed,CBEATS,null,state.melodyGen);
+          const cm=melodyEvents(sec.counter.pattern,cycleBase,prg,chords,k,counterR,state.seed,CBEATS,null,state.melodyGen,state.melodyCells);
           cm.forEach(e=>{ e.solo=sec.counter.solo; if(sec.counter.octave) e.pch=pchAdd(e.pch,12*sec.counter.octave);
             if(sec.swell) e.amp *= 0.3 + 1.9*((e.beat-cur)/Math.max(1,secBeats)); });   // crescendo build across the section
           cm.forEach(e=>pitched.push(e));
@@ -3030,6 +3040,7 @@
     KITS,   // pulse-set kit lanes (KERNEL-V4 Phase 1): kits are data; drumEvents is the one interpreter
     sectionTag,   // form-graph typed-node classifier (Phase 5)
     PROGRESSIONS, getProgression, resolveProgression, WAVES, BASS_PATTERNS, MELODY_PATTERNS, DRUM_PATTERNS, TRANSITIONS,
+    MEL_PHRASES,   // READ-ONLY to callers: /daw's phrase editor loads a shipped cell as the starting point for a state.melodyCells edit (app/daw/machines/cells.js)
     KITS,   // READ-ONLY to callers: /daw's kit machine loads a stock kit as the starting point for a state.kits edit (app/daw/machines/drums.js)
     PERC_PATTERNS, PERC_VOICES, PERC_NOTE,
     resolvePushPull,   // (timeFeel, bpm) -> {lane:±beats}|null — the ONE fold of pushPull+pushPullMs (seamwalk gate reads it rather than re-deriving)
