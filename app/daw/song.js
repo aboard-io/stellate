@@ -92,7 +92,7 @@ export const PATCH_KEYS = new Set([
   "pipes",         // the note-fx rack — an ordered list of {id,...params} (machines/pipes.js)
   "bassCells",     // authored bass cells, in chord DEGREES (machines/bass.js)
   "rhythm",        // the bass mutation knob (state.rhythm.complexity)
-  "melodyGen",     // the wander walk's knobs        — stage 5
+  "melodyGen",     // the wander walk's knobs (now on the melody ring)
   "melodyCells",   // drawn phrase cells             — stage 5
   "melodyWeave",   // the painted Markov table       — stage 5
 ]);

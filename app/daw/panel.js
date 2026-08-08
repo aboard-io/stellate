@@ -18,6 +18,7 @@ import * as CELLS from "./machines/cells.js";
 import * as BASS from "./machines/bass.js";
 import * as WEAVE from "./machines/weave.js";
 import { makeVector } from "./vector.js";
+import * as PIPES from "./machines/pipes.js";
 
 const open = new Set();          // track ids whose panel is open
 export const isOpen = (id) => open.has(id);
@@ -45,6 +46,10 @@ export function renderRefiner(host, layerId, track) {
   if (layerId === "genre") { host.appendChild(el("p", "dw-pnote",
     "The centre ring shapes the music itself: drag it and the space finds the anchors nearest that shape, " +
     "then blends them. Everything outside is made INSIDE that choice.")); return; }
+  if (layerId === "notefx") { host.appendChild(el("p", "dw-pnote",
+    "Every registered transform is a spoke on this ring: turn one up from zero and it JOINS the chain, " +
+    "turn it to zero and it leaves. Order is audible — each pipe draws from a stream keyed on its index and " +
+    "sees what the last one left — so the chain order is below.")); return pipeOrder(host); }
   if (layerId === "samples") { host.appendChild(el("p", "dw-pnote",
     "The found layer is audio, not notes — level, wash and glitch are the whole surface it offers. " +
     "Which recordings a genre draws on is the genre's own business (the provenance law: the panel never names a source).")); return; }
@@ -100,20 +105,8 @@ function drumsPanel(host) {
       box.appendChild(row);
     }
 
-    // THE KIT RADAR: one spoke per editable op, value = its probability. Same
-    // control as the shape panel, same reason — a column of sliders reads as
-    // settings, a shape reads as a kit.
-    const vhost = el("div", "dw-opvec");
-    box.appendChild(vhost);
-    const idx = kit.ops.map((op, i) => ({ op, i })).filter((x) => DRUMS.describeOp(x.op).editable);
-    if (idx.length) {
-      const v = makeVector(vhost, {
-        size: 220, hue: 45,
-        onCommit: (id, val) => { const j = +String(id).split(":")[1]; DRUMS.setProb(name, j, val); },
-      });
-      v.set(idx.map((x) => ({ id: "op:" + x.i, label: DRUMS.describeOp(x.op).lane.toLowerCase(),
-                              kind: "direct", v: DRUMS.probOf(x.op) })));
-    }
+    // the op PROBABILITIES live on the drums ring now (layers.js); what stays here
+    // is the part a radius cannot say — each op's cycle PERIOD, which is a choice
     host.appendChild(box);
   }
   host.appendChild(el("p", "dw-pnote",
@@ -271,28 +264,8 @@ function wanderMachine(host, track) {
   grow.appendChild(el("span", "dw-opval", gen.rhythm.length + " step" + (gen.rhythm.length === 1 ? "" : "s")));
   box.appendChild(grow);
 
-  // THE WALK RADAR — the wander knobs as one shape. Each axis is normalised to
-  // its own range on the way in and mapped back on the way out, so the display is
-  // a shape while the engine still gets step:1..4 and leap:0..1.
-  const vhost = el("div", "dw-opvec");
-  box.appendChild(vhost);
-  const wv = makeVector(vhost, {
-    size: 220, hue: 190,
-    onCommit: (id, v) => {
-      const k = MELODY.KNOBS.find((x) => x.id === id);
-      if (k) MELODY.setKnob(id, k.min + v * (k.max - k.min));
-    },
-  });
-  wv.set(MELODY.KNOBS.map((k) => ({ id: k.id, label: k.label, kind: "direct",
-    v: Math.max(0, Math.min(1, (gen[k.id] - k.min) / (k.max - k.min))) })));
-  const leg = el("div", "dw-flegend");
-  for (const k of MELODY.KNOBS) {
-    const r = el("div", "dw-fleg");
-    r.innerHTML = `<span class="dw-flegname">${k.label}</span><span class="dw-flegval">${k.fmt(gen[k.id])}</span>`;
-    r.title = k.doc;
-    leg.appendChild(r);
-  }
-  box.appendChild(leg);
+  // step/leap/rest/legato live on the MELODY ring now (layers.js). What is left
+  // here is the gait — a named rhythm POOL, which is a choice and not an amount.
   host.appendChild(box);
 
   host.appendChild(el("p", "dw-pnote", runs.length
@@ -363,6 +336,27 @@ function bassPanel(host, track) {
     "Per cycle the cell drops, anticipates or octave-flips a note on its own dedicated stream, " +
     "capped at two moves a cycle. Zero draws nothing at all."));
   host.appendChild(mbox);
+}
+
+// The one thing about the note-fx chain a radius cannot carry: its ORDER.
+function pipeOrder(host) {
+  const list = (state().pipes || []);
+  if (!list.length) { host.appendChild(el("p", "dw-pnote", "Nothing in the chain — turn a spoke up to add one.")); return; }
+  const chain = el("div", "dw-pchain");
+  list.forEach((spec, i) => {
+    const card = el("div", "dw-pcard");
+    const h = el("div", "dw-pcardhead");
+    h.appendChild(el("span", "dw-pord", String(i + 1)));
+    h.appendChild(el("span", "dw-pname", spec.id));
+    const up = el("button", "dw-mini", "↑"); up.title = "earlier in the chain";
+    up.addEventListener("click", () => PIPES.move(spec.id, -1));
+    const dn = el("button", "dw-mini", "↓"); dn.title = "later in the chain";
+    dn.addEventListener("click", () => PIPES.move(spec.id, 1));
+    h.appendChild(up); h.appendChild(dn);
+    card.appendChild(h);
+    chain.appendChild(card);
+  });
+  host.appendChild(chain);
 }
 
 // ---------- read-only, until each machine lands ----------

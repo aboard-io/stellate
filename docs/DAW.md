@@ -555,10 +555,35 @@ of the three still unbuilt.
 
 ## THE ORBIT — one radar, seven layers (2026-08-07)
 
-**Decision (Paul):** everything in one multilayered radar — genre at the centre,
-then chords · pad · drums · bass · melody · samples outward — zooming in and out
-to reach the different track refiners. And the default song is **straight acid
-with drum and synth**.
+**Decision (Paul):** everything in one multilayered radar. *"Basically things fan
+out from the kernel."* Eight rings:
+
+```
+kernel · chords · pad · drums · bass · melody · samples · note fx
+```
+
+The centre is the kernel — the shape the whole song resolves from. Each ring
+outward is something the kernel fans out INTO: the harmony it picks, the voices it
+dresses, the samples it draws on, and finally the note transforms that run over
+the finished bundle. Reading outward is reading the pipeline; zooming is moving
+along it. The default song is **straight acid with drum and synth**.
+
+**EVERY numeric variable is a spoke** — not a curated handful. Each voice ring
+carries its whole synth surface (level, tone, bite, attack, detune, space, echo,
+width); the drums ring carries the kit mix *and every per-op probability*; the
+melody ring carries the wander walk's knobs; the note-fx ring carries one spoke
+per registered transform, where turning a spoke up from zero **adds** it to the
+chain and back to zero removes it. What stays out of the radar is only what a
+radius cannot honestly express: a choice (which kit, which progression), a contour
+in time (a phrase), or a matrix (a weave). Those are the refiner, and they are now
+the *only* things in it.
+
+**PINCH is the primary zoom**, implemented as a real two-pointer gesture — the
+distance ratio against the distance at gesture start, one layer per ~1.35×, with
+any in-flight drag cancelled the moment a second finger lands so a pinch never
+also writes a value. Spread goes outward toward the tracks, pinch goes in toward
+the kernel, which is the direction the picture already implies. Wheel, `+`/`−` and
+a tap on any ring remain.
 
 **Why nesting says something a tab bar cannot.** A song is not seven unrelated
 settings pages; it is a genre with things made out of it. The centre is what the

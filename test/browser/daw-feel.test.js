@@ -78,9 +78,12 @@ async function main() {
   if (zoom.after !== "drums") fail("zooming to a ring did not change focus: " + JSON.stringify(zoom));
   else ok(`zoom moves through the stack (${zoom.before} → ${zoom.after}, refiner follows)`);
   await page.evaluate(async () => { window.__DAWORBIT.focusLayer("genre"); await new Promise((r) => setTimeout(r, 250)); });
-  const rings = await page.evaluate(() => document.querySelectorAll(".dw-orbit .dw-oring").length);
-  if (rings < 7) fail(`the stack should show 7 layers, found ${rings} rings`);
-  else ok(`the stack draws ${rings} concentric layers, genre innermost`);
+  const rings = await page.evaluate(() => ({
+    n: document.querySelectorAll(".dw-orbit .dw-oring").length,
+    ids: window.__DAWORBIT.LAYERS,
+  }));
+  if (rings.n < 8) fail(`the stack should show 8 layers, found ${rings.n} rings`);
+  else ok(`the stack fans out from the kernel: ${rings.ids.join(" → ")}`);
   if (shape.hits !== shape.spokes) fail("wedge hit targets missing — a thumb needs the whole slice");
   else ok(`${shape.hits} wedge hit targets (thumb-sized, not 8px dots)`);
 
@@ -294,6 +297,39 @@ async function main() {
   else ok(`the edit lands as patch.layers.drums (${JSON.stringify(ring.layers.drums)})`);
   if (ring.len >= 400) fail("the layer patch ballooned — one number per axis, not resolved params");
   else ok(`the layer patch stays one number per axis (${ring.len} chars)`);
+
+  // ---- I PINCH ZOOM ----
+  // The gesture Paul reached for first. Two real touch pointers, spread apart:
+  // focus must move OUTWARD through the stack. (I claimed pinch in a code comment
+  // before implementing it — this is the check that keeps the claim honest.)
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(350);
+  const pinch = await page.evaluate(async () => {
+    const svg = document.querySelector(".dw-orbit"), r = svg.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    window.__DAWORBIT.setFocus(0);
+    await new Promise((z) => setTimeout(z, 200));
+    const before = window.__DAWORBIT.focus();
+    const send = (type, id, x, y) => svg.dispatchEvent(new PointerEvent(type, {
+      pointerId: id, pointerType: "touch", isPrimary: id === 1, bubbles: true, cancelable: true, clientX: x, clientY: y }));
+    send("pointerdown", 1, cx - 20, cy);
+    send("pointerdown", 2, cx + 20, cy);
+    // spread to ~4x the starting distance: several layers outward
+    for (const d of [40, 70, 110, 160]) { send("pointermove", 1, cx - d, cy); send("pointermove", 2, cx + d, cy); }
+    send("pointerup", 1, cx - 160, cy); send("pointerup", 2, cx + 160, cy);
+    await new Promise((z) => setTimeout(z, 250));
+    const spread = window.__DAWORBIT.focus();
+    // and back in
+    send("pointerdown", 3, cx - 160, cy); send("pointerdown", 4, cx + 160, cy);
+    for (const d of [110, 70, 40, 20]) { send("pointermove", 3, cx - d, cy); send("pointermove", 4, cx + d, cy); }
+    send("pointerup", 3, cx - 20, cy); send("pointerup", 4, cx + 20, cy);
+    await new Promise((z) => setTimeout(z, 250));
+    return { before, spread, pinched: window.__DAWORBIT.focus() };
+  });
+  if (pinch.spread === pinch.before) fail(`spreading two fingers did not zoom out through the stack (stuck on ${pinch.before})`);
+  else ok(`pinch works — spread ${pinch.before} → ${pinch.spread}`);
+  if (pinch.pinched === pinch.spread) fail(`pinching back in did not return toward the kernel (stuck on ${pinch.spread})`);
+  else ok(`...and back in: ${pinch.spread} → ${pinch.pinched}`);
 
   if (errs.length) fail("page errors: " + errs.join(" | "));
   else ok("no page errors");

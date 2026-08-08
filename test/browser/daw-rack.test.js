@@ -137,7 +137,7 @@ async function main() {
   const panel = await page.evaluate(() => {
     const p = document.querySelector(".dw-orefine");
     return { open: !!p && !p.hidden, ops: p ? p.querySelectorAll(".dw-op").length : 0,
-             spokes: p ? p.querySelectorAll(".dw-opvec .dw-vdot[role=slider]").length : 0,
+             spokes: document.querySelectorAll('.dw-orbit .dw-odot[role="slider"]').length,
              expanded: window.__DAWORBIT ? window.__DAWORBIT.focus() : null };
   });
   if (!panel.open || !panel.ops) fail("drums panel did not open (" + JSON.stringify(panel) + ")");
@@ -146,7 +146,11 @@ async function main() {
   // The kit's probabilities are a RADAR now (no sliders anywhere), so drive it the
   // way a keyboard user would: focus a handle and press Home to take it to zero.
   const edited = await page.evaluate(() => {
-    const d = document.querySelector('.dw-orefine .dw-opvec .dw-vdot[role="slider"]');
+    // the op probabilities live on the DRUMS RING now (layers.js) — their handles
+    // are the ones whose label ends in "?"
+    window.__DAWORBIT.focusLayer("drums");
+    const d = [...document.querySelectorAll('.dw-orbit .dw-odot[role="slider"]')]
+      .find((x) => /\?$/.test(x.getAttribute("aria-label") || ""));
     if (!d) return null;
     d.focus();
     d.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
@@ -164,18 +168,24 @@ async function main() {
     else ok("...and left every other roll pixel-identical (the rack law, on screen)");
 
     const patched = await page.evaluate(() => ({
-      kits: Object.keys((window.__DAW.SONG.patch.kits) || {}),
+      // a ring edit lands in patch.layers.drums as "op:<i>"; the period selector
+      // in the refiner is what writes patch.kits
+      kits: Object.keys(((window.__DAW.SONG.patch.layers || {}).drums) || {})
+        .filter((k) => k.indexOf("op:") === 0)
+        .concat(Object.keys((window.__DAW.SONG.patch.kits) || {})),
       badge: !!document.querySelector(".dw-orefine .dw-badge"),
       revert: !!document.querySelector(".dw-orefine .dw-mini"),
     }));
-    if (!patched.kits.length) fail("the edit did not land in SONG.patch.kits");
-    else ok(`edit landed in the document as state.kits (${patched.kits.join(", ")})`);
+    if (!patched.kits.length) fail("the edit did not land in the document");
+    else ok(`edit landed in the document (${patched.kits.join(", ")})`);
     if (!patched.badge || !patched.revert) fail("no edited badge / revert affordance after an override");
     else ok("the edited kit is badged and revertible");
 
     await page.click(".dw-orefine .dw-mini");
     await page.waitForTimeout(240);
-    const reverted = await page.evaluate(() => Object.keys((window.__DAW.SONG.patch.kits) || {}).length);
+    const reverted = await page.evaluate(() =>
+      Object.keys((window.__DAW.SONG.patch.kits) || {}).length +
+      Object.keys(((window.__DAW.SONG.patch.layers || {}).drums) || {}).filter((k) => k.indexOf("op:") === 0).length);
     const backPix = await shot();
     if (reverted !== 0) fail("revert left an override behind");
     else if (backPix.drums !== beforePix.drums) fail("revert did not restore the stock kit's roll");
@@ -189,9 +199,10 @@ async function main() {
     await page.evaluate(() => { window.__DAW.edit({ genre: "techno", seed: 3, patch: {} }); });
     await page.waitForTimeout(200);
     await page.evaluate(() => {
-      const d = document.querySelector('.dw-orefine .dw-opvec .dw-vdot[role="slider"]');
+      window.__DAWORBIT.focusLayer("drums");
+      const d = [...document.querySelectorAll('.dw-orbit .dw-odot[role="slider"]')]
+        .find((x) => /\?$/.test(x.getAttribute("aria-label") || ""));
       d.focus();
-      // two coarse presses down from wherever it sits — enough to be a real edit
       for (let i = 0; i < 2; i++)
         d.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", shiftKey: true, bubbles: true }));
     });
@@ -211,7 +222,9 @@ async function main() {
       for (const r of document.querySelectorAll(".dw-row")) o[r.dataset.track] = r.querySelector("canvas").toDataURL().length + ":" + r.querySelector("canvas").toDataURL().slice(-64);
       return o;
     });
-    const kitsBack = await p2.evaluate(() => Object.keys((window.__DAW.SONG.patch.kits) || {}));
+    const kitsBack = await p2.evaluate(() =>
+      Object.keys((window.__DAW.SONG.patch.kits) || {})
+        .concat(Object.keys(((window.__DAW.SONG.patch.layers || {}).drums) || {})));
     if (errs2.length) fail("reloaded page errored: " + errs2.join(" | "));
     if (!kitsBack.length) fail("reload lost the kit override");
     else ok("reload restores the override (" + kitsBack.join(", ") + ")");

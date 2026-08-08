@@ -11,8 +11,16 @@
 // THE FOCUS MODEL. Radius is shared out by weight: the focused ring takes most of
 // it and shows labelled, draggable handles; the rest compress to thin rings that
 // still draw their own shape, so you can see at a glance that the drums are busy
-// while you are editing the bass. Zoom is the wheel, a pinch, the +/− keys, or a
-// click/tap on any ring — four ways in because this has to work on a phone.
+// while you are editing the bass.
+//
+// ZOOM: PINCH first, then the wheel, the +/− keys, or a tap on any ring. Pinch is
+// the one that matters — on a phone the radar fills the screen and spreading two
+// fingers is what anyone will try before hunting for a control. It is implemented
+// as a real two-pointer gesture (pointer events, distance ratio against the
+// distance at gesture start, one layer per ~1.35x) rather than a wheel polyfill,
+// so it behaves like every other pinch on the device. A drag started with one
+// finger is CANCELLED the moment a second lands, or the pinch would also be
+// writing a value.
 //
 // Only the FOCUSED ring is interactive. A radar where every ring accepts a drag
 // would be unusable with a thumb, and would make "which layer am I editing?"
@@ -23,6 +31,8 @@ const c01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 export function makeOrbit(host, opts) {
   const o = Object.assign({ size: 460, onCommit: null, onFocus: null }, opts || {});
   let layers = [], focus = 0, dragging = -1, dragAxis = -1;
+  const pointers = new Map();          // active pointers, for the pinch
+  let pinchFrom = 0, pinchFocus = 0;
 
   const NS = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(NS, "svg");
@@ -121,7 +131,22 @@ export function makeOrbit(host, opts) {
     return c01((Math.hypot(x - C, y - C) - b.r0) / Math.max(1, b.r1 - b.r0));
   }
 
+  const dist = () => {
+    const p = [...pointers.values()];
+    return p.length < 2 ? 0 : Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+  };
+  function startPinch() {
+    // a pinch is not a drag: drop any in-flight value edit rather than writing a
+    // number the second finger never meant
+    dragging = -1; dragAxis = -1;
+    pinchFrom = dist(); pinchFocus = focus;
+    draw();
+  }
+
   svg.addEventListener("pointerdown", (ev) => {
+    pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (pointers.size === 2) { startPinch(); ev.preventDefault(); return; }
+    if (pointers.size > 2) return;
     const [x, y] = local(ev);
     const b = bands(), d = Math.hypot(x - C, y - C);
     // outside the focused band? treat it as ZOOM TO THAT RING, not a drag
@@ -140,12 +165,27 @@ export function makeOrbit(host, opts) {
     draw();
   });
   svg.addEventListener("pointermove", (ev) => {
+    if (pointers.has(ev.pointerId)) pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (pointers.size >= 2) {
+      // SPREAD = go outward through the stack (toward the tracks), PINCH = go in
+      // toward the genre. That direction is the one that matches the picture: the
+      // rings you are reaching for are literally further out.
+      const d = dist();
+      if (pinchFrom > 8 && d > 8) {
+        const steps = Math.round(Math.log(d / pinchFrom) / Math.log(1.35));
+        setFocus(pinchFocus + steps);
+      }
+      ev.preventDefault();
+      return;
+    }
     if (dragging < 0) return;
     const [x, y] = local(ev);
     layers[focus].axes[dragAxis].v = valueAt(x, y);
     draw(); ev.preventDefault();
   });
   const end = (ev) => {
+    pointers.delete(ev.pointerId);
+    if (pointers.size < 2) pinchFrom = 0;
     if (dragging < 0) return;
     const L = layers[focus], a = L.axes[dragAxis];
     dragging = -1; dragAxis = -1; draw();

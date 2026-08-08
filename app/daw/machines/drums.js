@@ -36,7 +36,13 @@ export function kitOf(name) {
   const k = (SONG.patch.kits && SONG.patch.kits[name]) || (E.KITS && E.KITS[name]);
   return k || null;
 }
-export const isEdited = (name) => !!(SONG.patch.kits && SONG.patch.kits[name]);
+// A kit counts as EDITED either way it can be touched: a whole-kit override in
+// patch.kits (the period selector writes one) or a per-op probability on the drums
+// RING, which lands in patch.layers.drums as "op:<i>". Checking only the first
+// left the badge and the revert missing after a ring edit — the gate caught it.
+const layerOps = () => (SONG.patch.layers && SONG.patch.layers.drums) || {};
+export const hasRingOps = () => Object.keys(layerOps()).some((k) => k.indexOf("op:") === 0);
+export const isEdited = (name) => !!(SONG.patch.kits && SONG.patch.kits[name]) || hasRingOps();
 
 // Deep-copy the stock kit into state.kits on FIRST edit, then mutate the copy.
 // Copy-on-write, so a song carries an override only for kits actually touched and
@@ -51,7 +57,18 @@ function commit(kits) { edit({ patch: Object.assign({}, SONG.patch, { kits }) })
 export function revert(name) {
   const kits = Object.assign({}, SONG.patch.kits || {});
   delete kits[name];
-  commit(Object.keys(kits).length ? kits : undefined);
+  // and drop the ring's per-op probabilities for this song, or "revert" would
+  // leave half the edit in place
+  const layers = Object.assign({}, SONG.patch.layers || {});
+  if (layers.drums) {
+    const d = Object.assign({}, layers.drums);
+    for (const k of Object.keys(d)) if (k.indexOf("op:") === 0) delete d[k];
+    if (Object.keys(d).length) layers.drums = d; else delete layers.drums;
+  }
+  const patch = Object.assign({}, SONG.patch, { layers });
+  if (Object.keys(kits).length) patch.kits = kits; else delete patch.kits;
+  if (!Object.keys(layers).length) delete patch.layers;
+  edit({ patch });
 }
 
 // ---------- the two dials ----------

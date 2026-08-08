@@ -99,8 +99,9 @@ async function main() {
     const before = window.__DAWTRANSPORT.beatNow();
     window.__DAWORBIT.focusLayer("drums");
     await new Promise((r) => setTimeout(r, 400));
-    const d = document.querySelector('.dw-orefine .dw-opvec .dw-vdot[role="slider"]');
-    if (!d) return { err: "no kit radar handle" };
+    const d = [...document.querySelectorAll('.dw-orbit .dw-odot[role="slider"]')]
+      .find((x) => /\?$/.test(x.getAttribute("aria-label") || ""));
+    if (!d) return { err: "no kit op handle on the drums ring" };
     d.focus();
     d.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
     await new Promise((r) => setTimeout(r, 2500));
