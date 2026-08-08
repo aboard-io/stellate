@@ -168,7 +168,7 @@ export function makeVector(host, opts) {
   return {
     el: svg,
     // `next` carries the value to DISPLAY per axis. The caller decides whether an
-    // axis shows what the user set or what the engine resolved (feelpanel.js) —
+    // axis shows what the user set or what the engine resolved (orbitpanel.js) —
     // this module never second-guesses it, which is what stops the snap-back.
     set(next) { if (dragging < 0) { axes = next.map((a) => Object.assign({}, a)); draw(); } },
     setGhost(vals) { ghost = vals ? vals.slice() : null; if (dragging < 0) draw(); },

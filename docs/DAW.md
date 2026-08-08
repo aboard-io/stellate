@@ -553,6 +553,43 @@ to play anything, so a drift there costs you a starting shape and not a render.
 The walker (a parametric generalisation of `walking`/`melodic`) is the one machine
 of the three still unbuilt.
 
+## THE ORBIT — one radar, seven layers (2026-08-07)
+
+**Decision (Paul):** everything in one multilayered radar — genre at the centre,
+then chords · pad · drums · bass · melody · samples outward — zooming in and out
+to reach the different track refiners. And the default song is **straight acid
+with drum and synth**.
+
+**Why nesting says something a tab bar cannot.** A song is not seven unrelated
+settings pages; it is a genre with things made out of it. The centre is what the
+music IS, and each ring outward is a decision made *inside* the one before it.
+Zooming never navigates AWAY — every other ring stays on screen, compressed but
+still drawing its own shape, so you can see the drums are busy while editing the
+bass, and you always know where you are in the stack.
+
+- **Focus by radius share.** The focused ring takes most of the radius and shows
+  labelled draggable handles; the rest compress to thin rings that still draw.
+- **Four ways to zoom** — wheel, +/− keys, a tap on any ring, or a click on the
+  matching rack strip (the rack is now the stack's table of contents). Four,
+  because this has to work with a thumb.
+- **Only the focused ring is interactive.** A radar where every ring took a drag
+  would be unusable on a phone and would make "which layer am I editing?"
+  ambiguous exactly when it matters.
+- **The refiner sits under the radar** and swaps with focus. A shape cannot carry
+  a phrase (a contour in time), a kit (a list of ops) or a weave (a transition
+  matrix) — forcing those into a radar would lose what makes them editable. So
+  the radar is navigation and coarse control; the refiner is the fine detail.
+- **`density` is gone from the editable ring** rather than dimmed. It cannot be
+  inverted, and the honest place for a reading is not a handle.
+- Storage follows the rule feel-core.js established the hard way: `patch.layers`
+  holds **one number per axis**, re-applied to each freshly resolved state, so
+  re-shaping the genre still changes the instruments. The gate asserts the patch
+  stays under 400 chars.
+
+**The default is `acidhouse`** — the catalogue's acid anchor at 126 bpm, tb303 on
+both bass and melody, a house kit — with the genre ring's `swing` pinned to 0 so
+it is straight rather than the anchor's slight 0.022 lean.
+
 ## Open
 
 - Does `/screensaver` suppress chrome, or is it a plain alias to `/`? The nginx

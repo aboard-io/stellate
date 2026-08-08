@@ -29,10 +29,26 @@ export function renderPanel(host, track) {
   host.textContent = "";
   if (!open.has(track.id)) { host.hidden = true; return; }
   host.hidden = false;
-  if (track.kind === "drums") return drumsPanel(host);
-  if (track.id === "melody") return melodyPanel(host, track);
-  if (track.id === "bass") return bassPanel(host, track);
-  return readOnlyPanel(host, track);
+  return renderRefiner(host, track.id, track);
+}
+
+// THE REFINER — the detail a shape cannot carry, for whichever layer the orbit is
+// focused on. A phrase is a contour in time, a kit is a list of ops, a weave is a
+// transition matrix: none of those is a radar, and forcing them into one would
+// lose the thing that makes them editable.
+export function renderRefiner(host, layerId, track) {
+  host.textContent = "";
+  const t = track || { id: layerId, kind: layerId === "drums" ? "drums" : "pitched" };
+  if (layerId === "drums") return drumsPanel(host);
+  if (layerId === "melody") return melodyPanel(host, t);
+  if (layerId === "bass") return bassPanel(host, t);
+  if (layerId === "genre") { host.appendChild(el("p", "dw-pnote",
+    "The centre ring shapes the music itself: drag it and the space finds the anchors nearest that shape, " +
+    "then blends them. Everything outside is made INSIDE that choice.")); return; }
+  if (layerId === "samples") { host.appendChild(el("p", "dw-pnote",
+    "The found layer is audio, not notes — level, wash and glitch are the whole surface it offers. " +
+    "Which recordings a genre draws on is the genre's own business (the provenance law: the panel never names a source).")); return; }
+  return readOnlyPanel(host, t);
 }
 
 // ---------- the kit machine ----------

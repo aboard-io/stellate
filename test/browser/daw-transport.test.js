@@ -97,10 +97,9 @@ async function main() {
   // ---- C an edit lands without stopping the music ----
   const live = await page.evaluate(async () => {
     const before = window.__DAWTRANSPORT.beatNow();
-    const row = document.querySelector('.dw-row[data-track="drums"]');
-    if (!row.classList.contains("dw-open")) row.querySelector(".dw-strip").click();
-    await new Promise((r) => setTimeout(r, 300));
-    const d = row.querySelector('.dw-opvec .dw-vdot[role="slider"]');
+    window.__DAWORBIT.focusLayer("drums");
+    await new Promise((r) => setTimeout(r, 400));
+    const d = document.querySelector('.dw-orefine .dw-opvec .dw-vdot[role="slider"]');
     if (!d) return { err: "no kit radar handle" };
     d.focus();
     d.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));

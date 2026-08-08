@@ -130,21 +130,23 @@ async function main() {
   await page.waitForTimeout(220);
   const beforePix = await shot();
 
+  // editing lives in the ORBIT now (orbitpanel.js): focusing a ring swaps the
+  // refiner under the radar. The rack strips are the stack's table of contents.
   await page.click('.dw-row[data-track="drums"] .dw-strip');
-  await page.waitForTimeout(160);
+  await page.waitForTimeout(220);
   const panel = await page.evaluate(() => {
-    const p = document.querySelector('.dw-row[data-track="drums"] .dw-panel');
+    const p = document.querySelector(".dw-orefine");
     return { open: !!p && !p.hidden, ops: p ? p.querySelectorAll(".dw-op").length : 0,
              spokes: p ? p.querySelectorAll(".dw-opvec .dw-vdot[role=slider]").length : 0,
-             expanded: document.querySelector('.dw-row[data-track="drums"] .dw-strip').getAttribute("aria-expanded") };
+             expanded: window.__DAWORBIT ? window.__DAWORBIT.focus() : null };
   });
   if (!panel.open || !panel.ops) fail("drums panel did not open (" + JSON.stringify(panel) + ")");
-  else ok(`kit machine opens — ${panel.ops} ops, ${panel.spokes} radar spokes, aria-expanded=${panel.expanded}`);
+  else ok(`kit machine opens in the refiner — ${panel.ops} ops, ${panel.spokes} radar spokes, focus=${panel.expanded}`);
 
   // The kit's probabilities are a RADAR now (no sliders anywhere), so drive it the
   // way a keyboard user would: focus a handle and press Home to take it to zero.
   const edited = await page.evaluate(() => {
-    const d = document.querySelector('.dw-row[data-track="drums"] .dw-opvec .dw-vdot[role="slider"]');
+    const d = document.querySelector('.dw-orefine .dw-opvec .dw-vdot[role="slider"]');
     if (!d) return null;
     d.focus();
     d.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
@@ -163,15 +165,15 @@ async function main() {
 
     const patched = await page.evaluate(() => ({
       kits: Object.keys((window.__DAW.SONG.patch.kits) || {}),
-      badge: !!document.querySelector('.dw-row[data-track="drums"] .dw-badge'),
-      revert: !!document.querySelector('.dw-row[data-track="drums"] .dw-mini'),
+      badge: !!document.querySelector(".dw-orefine .dw-badge"),
+      revert: !!document.querySelector(".dw-orefine .dw-mini"),
     }));
     if (!patched.kits.length) fail("the edit did not land in SONG.patch.kits");
     else ok(`edit landed in the document as state.kits (${patched.kits.join(", ")})`);
     if (!patched.badge || !patched.revert) fail("no edited badge / revert affordance after an override");
     else ok("the edited kit is badged and revertible");
 
-    await page.click('.dw-row[data-track="drums"] .dw-mini');
+    await page.click(".dw-orefine .dw-mini");
     await page.waitForTimeout(240);
     const reverted = await page.evaluate(() => Object.keys((window.__DAW.SONG.patch.kits) || {}).length);
     const backPix = await shot();
@@ -187,7 +189,7 @@ async function main() {
     await page.evaluate(() => { window.__DAW.edit({ genre: "techno", seed: 3, patch: {} }); });
     await page.waitForTimeout(200);
     await page.evaluate(() => {
-      const d = document.querySelector('.dw-row[data-track="drums"] .dw-opvec .dw-vdot[role="slider"]');
+      const d = document.querySelector('.dw-orefine .dw-opvec .dw-vdot[role="slider"]');
       d.focus();
       // two coarse presses down from wherever it sits — enough to be a real edit
       for (let i = 0; i < 2; i++)
@@ -244,13 +246,10 @@ async function main() {
   {
     await page.evaluate(() => { window.__DAW.edit({ genre: "techno", seed: 3, patch: {} }); });
     await page.waitForTimeout(220);
-    const melOpen = await page.evaluate(() => {
-      const s = document.querySelector('.dw-row[data-track="melody"] .dw-strip');
-      s.click(); return true;
-    });
+    const melOpen = await page.evaluate(() => { window.__DAWORBIT.focusLayer("melody"); return true; });
     await page.waitForTimeout(200);
     const grid = await page.evaluate(() => {
-      const p = document.querySelector('.dw-row[data-track="melody"] .dw-panel');
+      const p = document.querySelector(".dw-orefine");
       return { cells: p ? p.querySelectorAll(".dw-cell").length : 0,
                on: p ? p.querySelectorAll(".dw-cell.on").length : 0,
                labels: p ? [...p.querySelectorAll(".dw-glabel")].map((n) => n.textContent) : [] };
@@ -262,7 +261,7 @@ async function main() {
 
     const pre = await shot();
     await page.evaluate(() => {
-      const p = document.querySelector('.dw-row[data-track="melody"] .dw-panel');
+      const p = document.querySelector(".dw-orefine");
       const off = [...p.querySelectorAll(".dw-cell")].find((c) => !c.classList.contains("on"));
       off.click();
     });
@@ -291,13 +290,11 @@ async function main() {
     await page.evaluate(() => { window.__DAW.edit({ genre: "folk", seed: 7, patch: {} }); });
     await page.waitForTimeout(240);
     const m = await page.evaluate(() => {
-      const row = document.querySelector('.dw-row[data-track="melody"]');
-      if (!row.classList.contains("dw-open")) row.querySelector(".dw-strip").click();
-      return true;
+      window.__DAWORBIT.focusLayer("melody"); return true;
     });
     await page.waitForTimeout(220);
     const mx = await page.evaluate(() => {
-      const p = document.querySelector('.dw-row[data-track="melody"] .dw-panel');
+      const p = document.querySelector(".dw-orefine");
       return { cells: p ? p.querySelectorAll(".dw-mcell").length : 0,
                fit: !!(p && [...p.querySelectorAll(".dw-mini")].find((b) => /fit/.test(b.textContent))),
                heads: p ? [...p.querySelectorAll(".dw-mhead")].map((n) => n.textContent) : [] };
@@ -309,7 +306,7 @@ async function main() {
 
     const pre = await shot();
     await page.evaluate(() => {
-      document.querySelector('.dw-row[data-track="melody"] .dw-mcell').click();
+      document.querySelector(".dw-orefine .dw-mcell").click();
     });
     await page.waitForTimeout(260);
     const post = await shot();
@@ -325,7 +322,7 @@ async function main() {
     // button appeared to work and wrote nothing, because a weave-driven form has
     // no phrase of its own to fit from. Hence the scratch grid.)
     const drew = await page.evaluate(() => {
-      const p = document.querySelector('.dw-row[data-track="melody"] .dw-panel');
+      const p = document.querySelector(".dw-orefine");
       const cells = [...p.querySelectorAll(".dw-cell")];
       if (!cells.length) return 0;
       const cols = p.querySelectorAll(".dw-glabel").length ? 0 : 0;
@@ -343,7 +340,7 @@ async function main() {
 
     const pre2 = await shot();
     await page.evaluate(() => {
-      const p = document.querySelector('.dw-row[data-track="melody"] .dw-panel');
+      const p = document.querySelector(".dw-orefine");
       [...p.querySelectorAll(".dw-mini")].find((b) => /fit/.test(b.textContent)).click();
     });
     await page.waitForTimeout(280);

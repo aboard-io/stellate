@@ -16,6 +16,7 @@
 // gate test/unit/voice-streams.test.js). Without it, nudging the melody moves the
 // hi-hats and the per-track rolls lie about who owns what.
 import { applyFeel } from "./machines/feel-core.js";
+import { applyLayers } from "./layers.js";
 
 const K = window.GenreKernel, E = window.CsdEngine;
 
@@ -23,7 +24,12 @@ const K = window.GenreKernel, E = window.CsdEngine;
 // as the fallback when nothing has been sculpted yet (and as the readable name of
 // a single-anchor song), but a shaped song is a set of weights, because a point
 // between anchors is a real place rather than a menu item you missed.
-export const SONG = { genre: "citypop", seed: 7, patch: {}, weights: null };
+// THE DEFAULT SONG (Paul): straight acid with drum and synth. `acidhouse` is the
+// catalogue's acid anchor — 126 bpm, tb303 on BOTH bass and melody, a house kit —
+// and the feel axis pins swing to 0 so it is straight rather than the anchor's
+// slight 0.022 lean.
+export const SONG = { genre: "acidhouse", seed: 7, weights: null,
+  patch: { feel: { swing: 0 } } };
 export const subs = [];
 let raf = 0;
 export function touch() {            // coalesced repaint (the app/core/state.js `set` pattern)
@@ -53,11 +59,13 @@ export function state() {
   const s = JSON.parse(JSON.stringify(t.state || t));
   const patch = Object.assign({}, SONG.patch || {});
   const feel = patch.feel; delete patch.feel;
+  const layerSet = patch.layers; delete patch.layers;
   Object.assign(s, patch);
   // the feel axes are applied to the RESOLVED state, not stored as resolved
   // params — so a re-shaped genre brings its own instruments and your brightness
   // rides on top of them (feel-core.js says why that distinction matters)
   applyFeel(s, feel);
+  applyLayers(s, layerSet);      // the stack's per-layer axes, same one-number-per-axis rule
   s.voiceStreams = true;                       // THE RACK LAW (see header)
   _key = k; _state = s; _events = null;
   return s;
@@ -79,7 +87,8 @@ export function events() {
 // work and then loses its edit on reload, which is the worst of both.
 export const PATCH_KEYS = new Set([
   "kits",          // the kit machine (machines/drums.js)
-  "feel",          // the feel vector: ONE NUMBER PER AXIS (machines/feel-core.js)
+  "feel",          // the genre ring: ONE NUMBER PER AXIS (machines/feel-core.js)
+  "layers",        // the stack: {layerId:{axisId:v}} (layers.js) — same one-number rule
   "pipes",         // the note-fx rack — an ordered list of {id,...params} (machines/pipes.js)
   "bassCells",     // authored bass cells, in chord DEGREES (machines/bass.js)
   "rhythm",        // the bass mutation knob (state.rhythm.complexity)

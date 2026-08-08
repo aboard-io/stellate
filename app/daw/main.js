@@ -8,7 +8,7 @@
 import { SONG, edit, subs, touch, genreLabel, encodePatch, decodePatch, state } from "./song.js";
 import { buildRack, paintRack, watchResize, TRACKS } from "./rack.js";
 import * as TRANSPORT from "./transport.js";
-import { buildFeel } from "./feelpanel.js";
+import { buildOrbit } from "./orbitpanel.js";
 import { buildPipes } from "./pipepanel.js";
 import * as EXPORT from "./export.js";
 
@@ -93,7 +93,7 @@ function boot() {
   readQuery();
   $("dwSeed").value = SONG.seed;
   wire();
-  buildFeel($("dwFeel"));
+  buildOrbit($("dwFeel"));
   buildPipes($("dwPipes"));
   buildRack($("dwRack"));
   subs.push(paintRack, syncControls, () => TRANSPORT.mountHeads());

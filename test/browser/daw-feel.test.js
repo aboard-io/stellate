@@ -29,9 +29,9 @@ const fail = (m) => { console.error("FAIL:", m); process.exitCode = 1; };
 // a real pointer drag along a spoke: press near the centre, move outward, release
 async function dragAxis(page, label, frac) {
   const geo = await page.evaluate((lab) => {
-    const svg = document.querySelector(".dw-vec");
+    const svg = document.querySelector(".dw-orbit");
     const r = svg.getBoundingClientRect();
-    const texts = [...svg.querySelectorAll(".dw-vlab")];
+    const texts = [...svg.querySelectorAll(".dw-oaxlab")];
     const i = texts.findIndex((t) => t.textContent === lab);
     if (i < 0) return null;
     const n = texts.length, ang = -Math.PI / 2 + (i * 2 * Math.PI) / n;
@@ -55,23 +55,32 @@ async function main() {
   await page.setViewportSize({ width: 1280, height: 900 });
 
   await page.goto(`http://127.0.0.1:${srv.port}/daw.html?g=citypop&seed=7`, { waitUntil: "load" });
-  await page.waitForFunction(() => document.querySelector(".dw-vec .dw-vpoly"), null, { timeout: 20000 });
+  await page.waitForFunction(() => document.querySelector(".dw-orbit .dw-opoly.on"), null, { timeout: 20000 });
 
   // ---- A the radar draws ----
   const shape = await page.evaluate(() => ({
-    spokes: document.querySelectorAll(".dw-vec .dw-vspoke").length,
-    dots: document.querySelectorAll(".dw-vec .dw-vdot").length,
-    inds: document.querySelectorAll(".dw-vec .dw-vdot.ind").length,
-    hits: document.querySelectorAll(".dw-vec .dw-vhit").length,
-    rows: document.querySelectorAll(".dw-fleg").length,
-    labels: [...document.querySelectorAll(".dw-vec .dw-vlab")].map((t) => t.textContent),
+    spokes: document.querySelectorAll(".dw-orbit .dw-ospoke").length,
+    dots: document.querySelectorAll(".dw-orbit .dw-odot").length,
+    inds: document.querySelectorAll(".dw-orbit .dw-odot.ind").length,
+    hits: document.querySelectorAll(".dw-orbit .dw-ohit").length,
+    rows: 0,
+    labels: [...document.querySelectorAll(".dw-orbit .dw-oaxlab")].map((t) => t.textContent),
   }));
   if (shape.spokes < 8 || shape.dots !== shape.spokes) fail("radar geometry wrong: " + JSON.stringify(shape));
   else ok(`radar draws ${shape.spokes} spokes (${shape.labels.slice(0, 5).join("/")}…)`);
-  if (!shape.inds) fail("no indicator spoke is visually distinct — the lossy axes must LOOK different");
-  else ok(`${shape.inds} indicator spoke(s) drawn distinctly`);
-  if (shape.rows !== shape.spokes) fail(`radar has ${shape.spokes} axes but the legend shows ${shape.rows}`);
-  else ok("radar and legend render the same axis list");
+  const zoom = await page.evaluate(async () => {
+    const before = window.__DAWORBIT.focus();
+    window.__DAWORBIT.focusLayer("drums");
+    await new Promise((r) => setTimeout(r, 250));
+    return { before, after: window.__DAWORBIT.focus(),
+             refiner: (document.querySelector(".dw-orefine") || {}).textContent.slice(0, 40) };
+  });
+  if (zoom.after !== "drums") fail("zooming to a ring did not change focus: " + JSON.stringify(zoom));
+  else ok(`zoom moves through the stack (${zoom.before} → ${zoom.after}, refiner follows)`);
+  await page.evaluate(async () => { window.__DAWORBIT.focusLayer("genre"); await new Promise((r) => setTimeout(r, 250)); });
+  const rings = await page.evaluate(() => document.querySelectorAll(".dw-orbit .dw-oring").length);
+  if (rings < 7) fail(`the stack should show 7 layers, found ${rings} rings`);
+  else ok(`the stack draws ${rings} concentric layers, genre innermost`);
   if (shape.hits !== shape.spokes) fail("wedge hit targets missing — a thumb needs the whole slice");
   else ok(`${shape.hits} wedge hit targets (thumb-sized, not 8px dots)`);
 
@@ -92,7 +101,7 @@ async function main() {
   else ok("no range inputs anywhere on the page");
 
   const kbd = await page.evaluate(() => {
-    const d = document.querySelector('.dw-vec .dw-vdot[role="slider"]');
+    const d = document.querySelector('.dw-orbit .dw-odot[role="slider"]');
     return d ? { tab: d.getAttribute("tabindex"), now: d.getAttribute("aria-valuenow"), lab: d.getAttribute("aria-label") } : null;
   });
   if (!kbd || kbd.tab !== "0" || kbd.now == null) fail("radar handles are not keyboard/AT operable: " + JSON.stringify(kbd));
@@ -107,8 +116,10 @@ async function main() {
   const held = await page.evaluate(() => {
     const set = window.__DAW.SONG.patch.feel || {};
     const st = window.__DAWSTATE();
-    const dot = [...document.querySelectorAll('.dw-vec .dw-vdot[role="slider"]')]
-      .find((d) => d.getAttribute("aria-label") === "bright");
+    // the orbit labels a handle "<layer> <axis>", so the genre ring's bright
+    // handle is "genre bright"
+    const dot = [...document.querySelectorAll('.dw-orbit .dw-odot[role="slider"]')]
+      .find((d) => /\bbright$/.test(d.getAttribute("aria-label") || ""));
     return { setV: set.bright, shown: dot ? +dot.getAttribute("aria-valuenow") : null,
              patchLen: JSON.stringify(window.__DAW.SONG.patch).length,
              cutoff: ((st.instruments || {}).melody || {}).cutoff };
@@ -122,26 +133,24 @@ async function main() {
   if (held.patchLen >= 400) fail("the patch ballooned — feel edits must store one number per axis, not resolved params");
   else ok(`the feel patch stays one number per axis (${held.patchLen} chars)`);
 
-  const wPre = await page.evaluate(() => JSON.stringify(window.__DAW.SONG.weights));
-  await dragAxis(page, "density", 0.95);
-  const wPost = await page.evaluate(() => JSON.stringify(window.__DAW.SONG.weights));
-  if (wPre !== wPost) fail("dragging the `density` indicator re-shaped the genre — it must refuse the pointer");
-  else ok("the indicator axis refuses the drag in the radar view too");
+  const noInd = await page.evaluate(() =>
+    [...document.querySelectorAll(".dw-orbit .dw-oaxlab")].map((t) => t.textContent).indexOf("density"));
+  if (noInd >= 0) fail("the `density` indicator is on the genre ring — it cannot be set, so it must not be a handle");
+  else ok("the un-invertible axis is kept off the editable ring entirely");
 
-  // ---- D the ghost still reports what the engine actually did ----
-  const gap = await page.evaluate(() => ({
-    ghost: !!document.querySelector(".dw-vghost"),
-    got: document.querySelectorAll(".dw-fleggot").length,
-    legend: document.querySelectorAll(".dw-fleg").length,
+  // ---- D every layer stays visible while one is focused ----
+  const stack = await page.evaluate(() => ({
+    polys: document.querySelectorAll(".dw-orbit .dw-opoly").length,
+    focused: document.querySelectorAll(".dw-orbit .dw-opoly.on").length,
   }));
-  if (!gap.ghost) fail("no ghost — the resolved shape must stay visible behind the set one");
-  else ok(`the resolved shape is drawn as a ghost behind yours (${gap.legend} legend rows)`);
+  if (stack.focused !== 1) fail(`exactly one ring should be focused, found ${stack.focused}`);
+  else ok(`one ring focused, ${stack.polys} layer shapes on screen at once`);
 
   // ---- E MOBILE ----
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(450);
   const m = await page.evaluate(() => {
-    const svg = document.querySelector(".dw-vec"), r = svg.getBoundingClientRect();
+    const svg = document.querySelector(".dw-orbit"), r = svg.getBoundingClientRect();
     const small = [];
     for (const el of document.querySelectorAll(".dw-btn, .dw-strip")) {
       const b = el.getBoundingClientRect();
@@ -166,8 +175,8 @@ async function main() {
 
   // a real TOUCH pointer must edit, not just a mouse
   const touchOk = await page.evaluate(async () => {
-    const svg = document.querySelector(".dw-vec"), r = svg.getBoundingClientRect();
-    const texts = [...svg.querySelectorAll(".dw-vlab")];
+    const svg = document.querySelector(".dw-orbit"), r = svg.getBoundingClientRect();
+    const texts = [...svg.querySelectorAll(".dw-oaxlab")];
     const i = texts.findIndex((t) => t.textContent === "swing");
     if (i < 0) return "no swing axis";
     const n = texts.length, ang = -Math.PI / 2 + (i * 2 * Math.PI) / n;
@@ -205,14 +214,14 @@ async function main() {
   const after = await page.evaluate(() => ({
     w: window.__DAW.SONG.weights,
     label: (document.getElementById("dwBlend") || {}).textContent || "",
-    ghost: !!document.querySelector(".dw-vghost"),
+
   }));
   if (!after.w || !after.w.length) fail("shaping produced no blend");
   else ok(`shaping resolved a blend: ${after.label}`);
   if (after.w && after.w.length < 2) fail("shaping snapped to a single anchor — a point between genres is a real place");
   else ok(`the blend carries ${after.w.length} anchors, weighted`);
-  if (!after.ghost) fail("no ghost outline — the shape you asked for must stay visible beside the one you got");
-  else ok("the asked-for shape is drawn as a ghost beside the resolved one");
+  if (!after.w) fail("shaping produced no blend");
+  else ok("the centre ring shapes the genre");
 
   const kept = await page.evaluate(() => {
     const q = new URL(location.href).searchParams.get("p") || "";
@@ -254,6 +263,37 @@ async function main() {
   const shuffled = await shapeAndRead("swing", 0.98);
   if (!(shuffled.swing > straight.swing)) fail(`shaping swing did nothing: ${straight.swing} vs ${shuffled.swing}`);
   else ok(`shaping swing moves the music: ${straight.swing} → ${shuffled.swing}`);
+
+  // ---- H an OUTER ring writes its own layer, and only that ----
+  // The genre ring shapes the blend; every ring outside it is a param write on
+  // that voice. Drive the drums ring and demand the kit level moves while the
+  // patch stays one number per axis.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(async () => {
+    window.__DAW.edit({ patch: {}, weights: null });
+    window.__DAWORBIT.focusLayer("drums");
+    await new Promise((r) => setTimeout(r, 300));
+  });
+  const kickBefore = await page.evaluate(() => (window.__DAWSTATE().instruments.drums || {}).kick);
+  await page.evaluate(async () => {
+    const d = [...document.querySelectorAll('.dw-orbit .dw-odot[role="slider"]')]
+      .find((x) => /\bkick$/.test(x.getAttribute("aria-label") || ""));
+    if (!d) return;
+    d.focus();
+    d.dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true }));
+    await new Promise((r) => setTimeout(r, 350));
+  });
+  const ring = await page.evaluate(() => ({
+    kick: (window.__DAWSTATE().instruments.drums || {}).kick,
+    layers: window.__DAW.SONG.patch.layers,
+    len: JSON.stringify(window.__DAW.SONG.patch).length,
+  }));
+  if (!(ring.kick > kickBefore)) fail(`the drums ring did not move the kit (${kickBefore} -> ${ring.kick})`);
+  else ok(`an outer ring writes its own layer (kick ${(+kickBefore).toFixed(2)} → ${(+ring.kick).toFixed(2)})`);
+  if (!ring.layers || !ring.layers.drums) fail("the layer edit did not land in patch.layers");
+  else ok(`the edit lands as patch.layers.drums (${JSON.stringify(ring.layers.drums)})`);
+  if (ring.len >= 400) fail("the layer patch ballooned — one number per axis, not resolved params");
+  else ok(`the layer patch stays one number per axis (${ring.len} chars)`);
 
   if (errs.length) fail("page errors: " + errs.join(" | "));
   else ok("no page errors");

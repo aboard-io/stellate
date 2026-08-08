@@ -5,13 +5,13 @@
 // redraws pixels and rewrites a few strings, it never rebuilds the DOM. That is
 // what makes per-track live preview affordable at a keystroke.
 //
-// The strip is a BUTTON that opens that track's MACHINE (panel.js): the drums
-// panel edits the engine's own kit op grammar through state.kits; the pitched
-// tracks show a read-only machine summary until their machines land. Opening a
-// panel never rebuilds the rack — the row grows, the roll repaints in place.
+// The strips no longer open their own panels: since the ORBIT became the one
+// editing surface (orbitpanel.js), a row is what it always should have been —
+// this track's notes, drawn. Clicking a strip focuses that layer in the radar
+// above, so the rack is also the stack's table of contents.
 import { trackEvents, trackMachines, sectionSpans, events, state } from "./song.js";
 import { drawRoll } from "./roll.js";
-import { renderPanel, toggle, isOpen } from "./panel.js";
+
 
 // The tracks, in score order (pad under, melody over) — the order a rack reads.
 // `hue` is the row's identity colour, carried into the roll so a glance tells you
@@ -46,12 +46,16 @@ export function buildRack(root) {
     const strip = document.createElement("button");
     strip.className = "dw-strip";
     strip.type = "button";
-    strip.setAttribute("aria-expanded", "false");
+    strip.title = "focus this layer in the radar above";
+    strip.addEventListener("click", () => {
+      const O = window.__DAWORBIT;
+      if (O) O.focusLayer(t.id);
+    });
     strip.innerHTML =
-      '<div class="dw-name">' + t.label + '<span class="dw-caret">▸</span></div>' +
+      '<div class="dw-name">' + t.label + "</div>" +
       '<div class="dw-machine"></div>' +
       '<div class="dw-count"></div>';
-    strip.addEventListener("click", () => { toggle(t.id); paintRack(); });
+
 
     const wrap = document.createElement("div");
     wrap.className = "dw-rollwrap";
@@ -106,9 +110,7 @@ export function paintRack() {
     r.machineEl.title = machines.length > 1 ? "this voice changes machine across the form" : "";
     r.countEl.textContent = evs.length ? evs.length + " notes" : "";
     r.cv.setAttribute("aria-label", `${t.label}: ${evs.length} notes, ${machines.join(", ") || "off"}`);
-    r.strip.setAttribute("aria-expanded", isOpen(t.id) ? "true" : "false");
-    r.el.classList.toggle("dw-open", isOpen(t.id));
-    renderPanel(r.panel, t);
+    r.el.classList.toggle("dw-open", window.__DAWORBIT && window.__DAWORBIT.focus() === t.id);
     drawRoll(r.cv, evs, { totalBeats: total, spans, kind: t.kind, hue: t.hue });
   }
 
