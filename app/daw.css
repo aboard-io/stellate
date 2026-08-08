@@ -68,92 +68,80 @@ body {
 .dw-nav a { color: var(--dw-dim); text-decoration: none; font-size: 12px; }
 .dw-nav a:hover { color: var(--dw-accent); }
 
-/* ---------- the ORBIT: one radar, seven layers ---------- */
-.dw-obody {
-  display: grid; grid-template-columns: minmax(300px, 480px) 1fr; gap: 18px; align-items: start;
-  background: var(--dw-panel); border: 1px solid var(--dw-line); border-radius: 5px; padding: 12px;
-}
-.dw-ovec { display: flex; justify-content: center; }
-.dw-orbit { width: 100%; max-width: 470px; height: auto; touch-action: none; user-select: none; }
-.dw-oring { fill: none; stroke: rgba(255,255,255,.07); cursor: zoom-in; }
-.dw-oring.on { stroke: hsla(var(--hue), 60%, 60%, .45); cursor: default; }
-.dw-opoly { fill: hsla(var(--hue), 62%, 58%, .10); stroke: hsla(var(--hue), 62%, 62%, .5); stroke-width: 1; stroke-linejoin: round; }
-.dw-opoly.on { fill: hsla(var(--hue), 62%, 58%, .22); stroke: hsl(var(--hue), 62%, 66%); stroke-width: 1.6; }
-.dw-ospoke { stroke: rgba(255,255,255,.10); }
-.dw-ohit { fill: transparent; cursor: grab; }
-.dw-odot { fill: hsl(var(--hue), 62%, 68%); stroke: var(--dw-bg); stroke-width: 1.5; cursor: grab; }
-.dw-odot.live { fill: var(--dw-accent); }
-.dw-odot:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: 2px; }
-.dw-olab { font: 9px ui-monospace, monospace; fill: hsla(var(--hue), 50%, 70%, .75); dominant-baseline: middle; }
-.dw-oaxlab { font: 10px ui-monospace, monospace; fill: var(--dw-dim); dominant-baseline: middle; }
-.dw-orefine { min-width: 0; }
-
-/* ---------- the FEEL vector ---------- */
-#dwFeel { padding: 12px 16px 0; }
-.dw-fhead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
-.dw-fname {
-  font: 600 11px/1 system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase;
-  color: hsl(190, 62%, 68%);
-}
-.dw-fhint { font: 11px/1.3 system-ui, sans-serif; color: var(--dw-dim); }
-.dw-blend {
-  font: 12px/1.3 ui-monospace, monospace; color: hsl(190,62%,72%);
-  margin-left: auto; text-align: right;
-}
-.dw-blend.wait { color: var(--dw-dim); font-style: italic; }
-.dw-fbody {
-  display: grid; grid-template-columns: 280px 1fr; gap: 18px; align-items: start;
-  background: var(--dw-panel); border: 1px solid var(--dw-line);
-  border-radius: 5px; padding: 12px;
-}
-.dw-fvec { display: flex; justify-content: center; }
-/* touch-action:none is the single line that makes a drag EDIT instead of
-   scrolling the page on a phone. Without it the control is unusable on mobile. */
-.dw-vec { width: 100%; max-width: 280px; height: auto; touch-action: none; user-select: none; }
-.dw-vring  { fill: none; stroke: rgba(255,255,255,.07); }
-.dw-vspoke { stroke: rgba(255,255,255,.10); }
+/* ---------- the radar (one per strip) ----------
+   touch-action:none is the single line that makes a drag EDIT instead of
+   scrolling the page — on a deck you scroll, that matters more, not less.
+   LINES ARE THIN, LABELS ARE BIG: while scrolling, the label is what you read and
+   the ink is what you glance at. */
+.dw-vec { width: 100%; max-width: 320px; height: auto; touch-action: none; user-select: none; }
+.dw-vring  { fill: none; stroke: rgba(255,255,255,.07); stroke-width: .5; }
+.dw-vspoke { stroke: rgba(255,255,255,.09); stroke-width: .5; }
 .dw-vhit   { fill: transparent; cursor: grab; }
 .dw-vhit.ind { cursor: not-allowed; }
-.dw-vpoly  { fill: hsla(190,62%,58%,.20); stroke: hsl(190,62%,62%); stroke-width: 1.5; stroke-linejoin: round; }
-/* the GHOST is the shape you asked for; the solid one is what the space gave you */
-.dw-vghost { fill: none; stroke: var(--dw-accent); stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; }
-.dw-vdot   { fill: hsl(190,62%,66%); stroke: var(--dw-bg); stroke-width: 1.5; cursor: grab; }
+.dw-vpoly  { fill: hsla(var(--hue), 62%, 58%, .16); stroke: hsl(var(--hue), 62%, 64%); stroke-width: 1; stroke-linejoin: round; }
+.dw-vghost { fill: none; stroke: var(--dw-accent); stroke-width: .75; stroke-dasharray: 3 3; opacity: .6; }
+.dw-vdot   { fill: hsl(var(--hue), 62%, 68%); stroke: var(--dw-bg); stroke-width: 1.25; cursor: grab; }
+.dw-vdot.live { fill: var(--dw-accent); }
+.dw-vdot.ind  { fill: var(--dw-dim); opacity: .55; }
 .dw-vdot:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: 2px; }
-.dw-vdot.live { fill: var(--dw-accent); r: 7; }
-.dw-vdot.ind { fill: var(--dw-dim); opacity: .55; }
-.dw-vlab   { font: 10px ui-monospace, monospace; fill: var(--dw-dim); dominant-baseline: middle; }
+.dw-vlab   { font: 600 12px system-ui, -apple-system, sans-serif; fill: var(--dw-ink); dominant-baseline: middle; }
 .dw-vlab.ind { opacity: .5; font-style: italic; }
 
-.dw-flegend {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
-  gap: 4px 12px; align-content: start; min-width: 0;
-}
-.dw-fleg {
-  display: flex; align-items: baseline; gap: 6px; padding: 3px 0;
-  border-bottom: 1px solid rgba(255,255,255,.05);
-}
-.dw-fleg.ind { opacity: .5; }
-.dw-fleg.held .dw-flegval { color: hsl(190,62%,72%); font-weight: 600; }
-.dw-flegname { font: 11px/1 system-ui, sans-serif; color: var(--dw-dim); }
-.dw-flegval { font: 12px/1 ui-monospace, monospace; color: var(--dw-ink); margin-left: auto; }
-.dw-fleggot { font: 10px/1 ui-monospace, monospace; color: var(--dw-accent); opacity: .8; }
-.dw-opvec { display: flex; justify-content: center; padding: 6px 0 2px; }
-.dw-opvec .dw-vec { max-width: 240px; }
+/* ---------- THE DECK: one strip per layer, scrolled ---------- */
+#dwDeck { padding: 8px 16px 96px; max-width: 1180px; margin: 0 auto; }
+.dw-strip2 { --hue: 190; border-top: 1px solid var(--dw-line); padding: 14px 0 16px; }
+.dw-strip2:first-child { border-top: 0; }
+.dw-strip2.dw-off { opacity: .5; }
 
-.dw-frows { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.dw-frow {
-  display: grid; grid-template-columns: 76px 1fr 34px auto; align-items: center; gap: 10px;
-  padding: 3px 0;
+.dw-s2head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+.dw-s2name { margin: 0; font: 700 26px/1 system-ui, -apple-system, sans-serif;
+             letter-spacing: -.02em; color: hsl(var(--hue), 60%, 72%); }
+.dw-s2machine { font: 13px/1.2 ui-monospace, monospace; color: var(--dw-ink); }
+.dw-s2count { margin-left: auto; font: 12px/1.2 ui-monospace, monospace; color: var(--dw-dim); }
+
+.dw-tracts { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
+.dw-tract { position: relative; display: flex; align-items: center; gap: 8px; height: 30px; }
+.dw-tlab { flex: 0 0 68px; font: 600 11px/1 system-ui, sans-serif;
+           letter-spacing: .12em; text-transform: uppercase; color: var(--dw-dim); }
+.dw-tcanvas { flex: 1; height: 100%; display: block; min-width: 0; }
+
+.dw-rollwrap { position: relative; height: 84px; margin-bottom: 8px; }
+.dw-roll { width: 100%; height: 100%; display: block; }
+/* the playhead line — one element per lane, moved by a single rAF transform */
+.dw-head { position: absolute; top: 0; bottom: 0; left: 0; width: 1px;
+           background: var(--dw-accent); box-shadow: 0 0 6px var(--dw-accent);
+           pointer-events: none; opacity: 0; transition: opacity .2s; }
+body.dw-playing .dw-head { opacity: .9; }
+
+.dw-s2vec { display: flex; justify-content: flex-start; }
+.dw-s2refine { margin-top: 6px; }
+
+/* ---------- the playhead readout, bottom right (where the star map keeps its chips) */
+.dw-playhead {
+  position: fixed; right: .7rem; bottom: .7rem; z-index: 20;
+  display: flex; align-items: baseline; gap: 14px;
+  padding: 9px 14px; border-radius: 6px;
+  background: rgba(18,15,38,.92); border: 1px solid var(--dw-line);
+  backdrop-filter: blur(6px);
+  font: 600 20px/1 ui-monospace, monospace; color: var(--dw-dim);
 }
-.dw-frow.ind { opacity: .55; }
-.dw-flab { font: 11px/1 system-ui, sans-serif; color: var(--dw-ink); }
-.dw-fslider { width: 100%; accent-color: hsl(190,62%,60%); }
-.dw-fslider:disabled { opacity: .4; }
-.dw-fval { font: 11px/1 ui-monospace, monospace; color: var(--dw-dim); text-align: right; }
-.dw-fkind {
-  font: 9px/1 system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase;
-  color: var(--dw-dim); border: 1px solid var(--dw-line); border-radius: 3px; padding: 3px 5px;
-}
+.dw-playhead.on { color: var(--dw-ink); border-color: hsla(190,60%,60%,.5); }
+.dw-playhead small { display: block; font: 600 9px/1 system-ui, sans-serif; letter-spacing: .12em;
+                     text-transform: uppercase; color: var(--dw-dim); margin-top: 4px; }
+.dw-hstate { font-size: 14px; color: var(--dw-accent); }
+
+/* ---------- the download dropdown ---------- */
+.dw-dl { position: relative; }
+.dw-dl > summary { list-style: none; cursor: pointer; display: inline-block; }
+.dw-dl > summary::-webkit-details-marker { display: none; }
+.dw-dlmenu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
+  min-width: 210px; padding: 5px; background: var(--dw-panel-2);
+  border: 1px solid var(--dw-line); border-radius: 5px; box-shadow: 0 10px 28px rgba(0,0,0,.5); }
+.dw-dlitem { display: block; width: 100%; text-align: left; cursor: pointer;
+  background: none; border: 0; border-radius: 4px; padding: 11px 10px; min-height: 44px;
+  font: 600 14px/1.1 system-ui, sans-serif; color: var(--dw-ink); }
+.dw-dlitem small { display: block; margin-top: 3px; font: 400 11px/1.2 system-ui, sans-serif; color: var(--dw-dim); }
+.dw-dlitem:hover { background: #2a2450; }
 
 /* ---------- the note-fx rack ---------- */
 #dwPipes { padding: 12px 16px 0; }
@@ -175,64 +163,7 @@ body {
 .dw-pchip:hover { border-color: hsl(300,55%,64%); color: var(--dw-ink); }
 .dw-pchip.on { background: hsl(300,55%,64%); color: var(--dw-bg); border-color: hsl(300,55%,64%); }
 
-/* ---------- the rack ---------- */
-#dwRack { padding: 12px 16px 0; }
 
-.dw-ruler { display: flex; align-items: stretch; height: 24px; margin-bottom: 6px; }
-.dw-strip-head {
-  font: 600 10px/24px system-ui, sans-serif; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--dw-dim);
-  padding: 0 10px; border: 0; background: none;
-}
-.dw-spans { position: relative; flex: 1; border-left: 1px solid var(--dw-line); }
-.dw-span {
-  position: absolute; top: 0; height: 24px; overflow: hidden;
-  font: 10px/24px ui-monospace, monospace; color: var(--dw-dim);
-  padding-left: 5px; border-left: 1px solid var(--dw-line); white-space: nowrap;
-}
-
-.dw-row {
-  margin-bottom: 6px;
-  background: var(--dw-panel); border: 1px solid var(--dw-line); border-radius: 5px;
-  overflow: hidden;
-}
-.dw-row.dw-off { opacity: .42; }
-.dw-row.dw-open { border-color: hsla(var(--hue), 60%, 60%, .55); }
-.dw-rowmain { display: flex; align-items: stretch; height: var(--dw-row-h); }
-
-.dw-strip {
-  width: var(--dw-strip-w); flex: 0 0 var(--dw-strip-w);
-  padding: 8px 10px; background: var(--dw-panel-2);
-  border: 0; border-right: 1px solid var(--dw-line);
-  display: flex; flex-direction: column; gap: 3px;
-  text-align: left; font: inherit; color: inherit; cursor: pointer;
-}
-.dw-strip:hover { background: #201b3c; }
-.dw-strip:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: -2px; }
-.dw-caret { float: right; transition: transform .12s; display: inline-block; }
-.dw-row.dw-open .dw-caret { transform: rotate(90deg); }
-.dw-name {
-  font: 600 11px/1.2 system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase;
-  color: hsl(var(--hue), 62%, 68%);
-}
-.dw-machine {
-  font: 13px/1.25 ui-monospace, monospace; color: var(--dw-ink);
-  overflow: hidden; text-overflow: ellipsis;
-}
-.dw-count { margin-top: auto; font: 11px/1 ui-monospace, monospace; color: var(--dw-dim); }
-
-.dw-rollwrap { flex: 1; min-width: 0; position: relative; }
-/* the playhead — one element per roll, moved by a single rAF transform so the
-   expensive canvases repaint only when the MUSIC changes, never to move a line */
-.dw-head {
-  position: absolute; top: 0; bottom: 0; left: 0; width: 1px;
-  background: var(--dw-accent); box-shadow: 0 0 6px var(--dw-accent);
-  pointer-events: none; opacity: 0; transition: opacity .2s;
-}
-body.dw-playing .dw-head { opacity: .9; }
-.dw-roll { display: block; width: 100%; height: 100%; }
-
-/* ---------- the machine panel ---------- */
 .dw-panel {
   border-top: 1px solid var(--dw-line);
   background: #120f26; padding: 10px 12px 12px;
@@ -332,37 +263,25 @@ body.dw-playing .dw-head { opacity: .9; }
    (190px of strip on a 360px screen leaves no roll at all); every control clears
    44px; and the top bar wraps into two readable rows rather than scrolling. */
 @media (max-width: 720px) {
-  :root { --dw-strip-w: 100%; --dw-row-h: 56px; }
+  :root { --dw-row-h: 56px; }
   #dawbar { gap: 10px; padding: 8px 10px; }
   .dw-controls { gap: 8px; width: 100%; }
-  .dw-ctl select { max-width: 42vw; }
   .dw-ctl input { width: 64px; }
   .dw-btn { padding: 10px 12px; min-height: 44px; }
   .dw-nav { margin-left: 0; }
-  #dwFeel, #dwRack, #dwPipes { padding: 10px 10px 0; }
-  .dw-pchain { grid-template-columns: 1fr; }
-  .dw-pchip { min-height: 40px; padding: 10px 12px; }
-
-  .dw-fbody, .dw-obody { grid-template-columns: 1fr; gap: 12px; padding: 10px; }
-  .dw-orbit { max-width: min(92vw, 420px); }
-  .dw-vec { max-width: min(88vw, 320px); }
-  .dw-flegend { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 2px 10px; }
-
-  .dw-rowmain { flex-direction: column; height: auto; }
-  .dw-strip {
-    width: 100%; flex: none; flex-direction: row; align-items: center; gap: 10px;
-    border-right: 0; border-bottom: 1px solid var(--dw-line); min-height: 44px;
-  }
-  .dw-count { margin-top: 0; margin-left: auto; }
-  .dw-rollwrap { height: var(--dw-row-h); }
-  .dw-ruler { display: none; }            /* the section names need width to read */
-
+  #dwDeck { padding: 8px 10px 96px; }
+  .dw-s2name { font-size: 22px; }
+  .dw-tlab { flex-basis: 52px; }
+  .dw-s2vec .dw-vec { max-width: min(92vw, 340px); }
+  .dw-strip2 .dw-rollwrap { height: 68px; }
   .dw-op { grid-template-columns: 54px 1fr 46px; gap: 8px; row-gap: 4px; }
   .dw-opshape, .dw-opsel { grid-column: 1 / -1; }
-
   .dw-grid { grid-template-columns: 44px repeat(var(--cols), minmax(0, 1fr)); gap: 1px; }
-  .dw-cell { height: 22px; }              /* taller: a 16px row is not a touch target */
+  .dw-cell { height: 22px; }
   .dw-matrix { grid-template-columns: 48px repeat(8, minmax(0, 1fr)); }
   .dw-mcell { height: 30px; }
   .dw-mhead, .dw-glabel { font-size: 8px; }
+  .dw-pchain { grid-template-columns: 1fr; }
+  .dw-pchip { min-height: 40px; padding: 10px 12px; }
+  .dw-playhead { font-size: 17px; gap: 10px; padding: 7px 11px; }
 }

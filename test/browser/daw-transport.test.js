@@ -73,7 +73,7 @@ async function main() {
   const head = await page.evaluate(async () => {
     const h = document.querySelector(".dw-head");
     if (!h) return null;
-    const canvasBefore = document.querySelector('.dw-row[data-track="drums"] canvas').toDataURL().slice(-48);
+    const canvasBefore = document.querySelector('.dw-strip2[data-layer="drums"] canvas.dw-roll').toDataURL().slice(-48);
     const a = h.style.left;
     // The head now INTERPOLATES between bars, so a short window is enough — but
     // sample generously anyway: at a slow tempo a chord bar is several seconds,
@@ -81,7 +81,7 @@ async function main() {
     // that merely jumps (which is what it used to do).
     await new Promise((r) => setTimeout(r, 1200));
     const b = h.style.left;
-    const canvasAfter = document.querySelector('.dw-row[data-track="drums"] canvas').toDataURL().slice(-48);
+    const canvasAfter = document.querySelector('.dw-strip2[data-layer="drums"] canvas.dw-roll').toDataURL().slice(-48);
     return { a, b, mounted: document.querySelectorAll(".dw-head").length, repainted: canvasBefore !== canvasAfter };
   });
   if (!head) fail("no playhead element mounted");
@@ -97,11 +97,11 @@ async function main() {
   // ---- C an edit lands without stopping the music ----
   const live = await page.evaluate(async () => {
     const before = window.__DAWTRANSPORT.beatNow();
-    window.__DAWORBIT.focusLayer("drums");
-    await new Promise((r) => setTimeout(r, 400));
-    const d = [...document.querySelectorAll('.dw-orbit .dw-odot[role="slider"]')]
+    // the deck: every strip has its own radar, and the op probabilities are on the
+    // drums strip's
+    const d = [...document.querySelectorAll('.dw-strip2[data-layer="drums"] .dw-vdot[role="slider"]')]
       .find((x) => /\?$/.test(x.getAttribute("aria-label") || ""));
-    if (!d) return { err: "no kit op handle on the drums ring" };
+    if (!d) return { err: "no kit op handle on the drums strip" };
     d.focus();
     d.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
     await new Promise((r) => setTimeout(r, 2500));

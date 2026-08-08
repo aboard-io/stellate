@@ -6,10 +6,10 @@
 // PLAY re-reads the song every chord bar (transport.js), so an edit made while the
 // music runs lands at the next bar instead of restarting anything.
 import { SONG, edit, subs, touch, genreLabel, encodePatch, decodePatch, state } from "./song.js";
-import { buildRack, paintRack, watchResize, TRACKS } from "./rack.js";
+import { buildDeck, paintDeck, watchDeckResize } from "./deck.js";
 import * as TRANSPORT from "./transport.js";
-import { buildOrbit } from "./orbitpanel.js";
-import { buildPipes } from "./pipepanel.js";
+
+
 import * as EXPORT from "./export.js";
 
 const $ = (id) => document.getElementById(id);
@@ -65,10 +65,13 @@ function wire() {
     }
     setTimeout(() => { b.textContent = was; b.disabled = false; }, 1800);
   });
-  exporter("dwWav", (p) => EXPORT.downloadWav(90, p), "wav");
-  exporter("dwMp3", (p) => EXPORT.downloadMp3(90, p), "mp3");
-  exporter("dwMid", () => Promise.resolve(EXPORT.downloadMidi()), "midi");
-  exporter("dwXml", () => EXPORT.downloadMusicXml(), "xml");
+  // close the dropdown once a download starts — a menu left hanging over the
+  // deck is the classic details/summary mistake
+  const closeDl = () => { const d = $("dwDl"); if (d) d.open = false; };
+  exporter("dwWav", (p) => { closeDl(); return EXPORT.downloadWav(90, p); }, "wav");
+  exporter("dwMp3", (p) => { closeDl(); return EXPORT.downloadMp3(90, p); }, "mp3");
+  exporter("dwMid", () => { closeDl(); return Promise.resolve(EXPORT.downloadMidi()); }, "midi");
+  exporter("dwXml", () => { closeDl(); return EXPORT.downloadMusicXml(); }, "xml");
 
   $("dwShare").addEventListener("click", async () => {
     const btn = $("dwShare"), was = btn.textContent;
@@ -93,23 +96,24 @@ function boot() {
   readQuery();
   $("dwSeed").value = SONG.seed;
   wire();
-  buildOrbit($("dwFeel"));
-  buildPipes($("dwPipes"));
-  buildRack($("dwRack"));
-  subs.push(paintRack, syncControls, () => TRANSPORT.mountHeads());
+  buildDeck($("dwDeck"));
+  subs.push(paintDeck, syncControls, () => { TRANSPORT.mountHeads(); TRANSPORT.paintReadout(); });
   TRANSPORT.onChange(() => {
     const b = $("dwPlay");
     b.textContent = TRANSPORT.isPlaying() ? "■ stop" : "▶ play";
     b.classList.toggle("on", TRANSPORT.isPlaying());
     document.body.classList.toggle("dw-playing", TRANSPORT.isPlaying());
   });
-  watchResize();
-  paintRack();
+  watchDeckResize();
+  paintDeck();
+  TRANSPORT.mountHeads();
+  TRANSPORT.paintReadout();   // the bottom-right readout exists before the first play
   // headless probe hook (test/browser/daw-rack.test.js) — the same __ pattern the
   // app's gates read, so a gate never has to race a click to inspect state
   window.__DAWSTATE = state;
-  window.__DAW = { SONG, edit, touch, paintRack, TRACKS, encodePatch, decodePatch, TRANSPORT,
-    rowCount: () => document.querySelectorAll(".dw-row").length };
+  window.__DAW = { SONG, edit, touch, paintRack: paintDeck, encodePatch, decodePatch, TRANSPORT,
+    TRACKS: [{ id: "melody" }, { id: "bass" }, { id: "pad" }, { id: "drums" }],
+    rowCount: () => document.querySelectorAll(".dw-strip2").length };
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

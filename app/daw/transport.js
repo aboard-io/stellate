@@ -32,16 +32,35 @@ function tick() {
   const total = (events().totalBeats || 1);
   const pct = Math.max(0, Math.min(1, beatNow() / total)) * 100;
   for (const h of document.querySelectorAll(".dw-head")) h.style.left = pct + "%";
+  paintReadout();
   raf = requestAnimationFrame(tick);
 }
 
 export function mountHeads() {
-  for (const wrap of document.querySelectorAll(".dw-rollwrap")) {
+  for (const wrap of document.querySelectorAll(".dw-rollwrap, .dw-tract")) {
     if (wrap.querySelector(".dw-head")) continue;
     const i = document.createElement("i");
     i.className = "dw-head";
     wrap.appendChild(i);
   }
+}
+
+// THE READOUT, bottom-right — where the star map keeps its chips, so the two
+// front ends put the same information in the same corner. Bar and beat off the
+// same interpolated clock the playhead lines ride, so the number and the lines
+// can never disagree.
+export function paintReadout() {
+  const box = document.getElementById("dwHead");
+  if (!box) return;
+  const s = state();
+  const cb = Math.max(2, Math.round(s.chordEvery || (s.meter ? 6 : 8)));
+  const b = beatNow();
+  const bar = Math.floor(b / cb) + 1, beat = (b % cb);
+  box.classList.toggle("on", playing);
+  box.innerHTML = `<span class="dw-hstate">${playing ? "▶" : "■"}</span>` +
+    `<span class="dw-hbar">${playing ? bar : "—"}<small>bar</small></span>` +
+    `<span class="dw-hbeat">${playing ? (beat + 1).toFixed(1) : "—"}<small>beat</small></span>` +
+    `<span class="dw-hbpm">${Math.round(s.bpm || 0)}<small>bpm</small></span>`;
 }
 
 // ---------- start / stop ----------
@@ -86,6 +105,7 @@ export async function start(onStatus) {
 
 export function stop() {
   playing = false;
+  setTimeout(paintReadout, 0);
   if (raf) { cancelAnimationFrame(raf); raf = 0; }
   for (const h of document.querySelectorAll(".dw-head")) h.style.left = "0%";
   try { if (handle && handle.stop) handle.stop(); } catch (e) {}
@@ -103,5 +123,5 @@ export function songChanged() { if (playing) stop(); }
 // engine's OWN analyser tap (faust/live/live.js handle.rms) — a transport gate
 // that only checked "the button toggled" would pass over a silent graph, which is
 // exactly how this fails in practice.
-window.__DAWTRANSPORT = { isPlaying, start, stop, toggle, beatNow,
+window.__DAWTRANSPORT = { isPlaying, start, stop, toggle, beatNow, paintReadout,
   rms: () => { try { return handle && handle.rms ? handle.rms() : null; } catch (e) { return null; } } };

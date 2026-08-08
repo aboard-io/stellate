@@ -553,67 +553,45 @@ to play anything, so a drift there costs you a starting shape and not a render.
 The walker (a parametric generalisation of `walking`/`melodic`) is the one machine
 of the three still unbuilt.
 
-## THE ORBIT — one radar, seven layers (2026-08-07)
+## THE DECK — each radar under its own roll (2026-08-08)
 
-**Decision (Paul):** everything in one multilayered radar. *"Basically things fan
-out from the kernel."* Eight rings:
+**Decision (Paul):** break the single radar up and put each element **under its
+piano roll**; tempo and structure ride atop the kernel; one download dropdown;
+the playhead bottom-right like the screensaver; scroll up and down to tweak; thin
+lines, big labels.
+
+The zoomable orbit is gone, and it deserved to go. It answered "where am I in the
+stack" but made you zoom *past* the thing you were trying to hear — a roll and the
+knobs that shape it were never on screen together. Under-the-roll puts a cause
+next to its effect: turn a spoke, watch **that** roll redraw. The gate asserts
+exactly that, and that no other strip moves.
+
+**Like with like, top to bottom:**
 
 ```
-kernel · chords · pad · drums · bass · melody · samples · note fx
+kernel (tempo tract · structure tract · radar)
+chords · melody · bass · pad · drums · samples · note fx
 ```
 
-The centre is the kernel — the shape the whole song resolves from. Each ring
-outward is something the kernel fans out INTO: the harmony it picks, the voices it
-dresses, the samples it draws on, and finally the note transforms that run over
-the finished bundle. Reading outward is reading the pipeline; zooming is moving
-along it. The default song is **straight acid with drum and synth**.
+The whole song first, then the harmony, then the four voices, then the samples,
+then the transforms that run over all of it. Reading down is still reading the
+pipeline; **scrolling replaced zooming**, so the pinch gesture is gone with the
+orbit — there is no longer a gesture for it to drive.
 
-**EVERY numeric variable is a spoke** — not a curated handful. Each voice ring
-carries its whole synth surface (level, tone, bite, attack, detune, space, echo,
-width); the drums ring carries the kit mix *and every per-op probability*; the
-melody ring carries the wander walk's knobs; the note-fx ring carries one spoke
-per registered transform, where turning a spoke up from zero **adds** it to the
-chain and back to zero removes it. What stays out of the radar is only what a
-radius cannot honestly express: a choice (which kit, which progression), a contour
-in time (a phrase), or a matrix (a weave). Those are the refiner, and they are now
-the *only* things in it.
-
-**PINCH is the primary zoom**, implemented as a real two-pointer gesture — the
-distance ratio against the distance at gesture start, one layer per ~1.35×, with
-any in-flight drag cancelled the moment a second finger lands so a pinch never
-also writes a value. Spread goes outward toward the tracks, pinch goes in toward
-the kernel, which is the direction the picture already implies. Wheel, `+`/`−` and
-a tap on any ring remain.
-
-**Why nesting says something a tab bar cannot.** A song is not seven unrelated
-settings pages; it is a genre with things made out of it. The centre is what the
-music IS, and each ring outward is a decision made *inside* the one before it.
-Zooming never navigates AWAY — every other ring stays on screen, compressed but
-still drawing its own shape, so you can see the drums are busy while editing the
-bass, and you always know where you are in the stack.
-
-- **Focus by radius share.** The focused ring takes most of the radius and shows
-  labelled draggable handles; the rest compress to thin rings that still draw.
-- **Four ways to zoom** — wheel, +/− keys, a tap on any ring, or a click on the
-  matching rack strip (the rack is now the stack's table of contents). Four,
-  because this has to work with a thumb.
-- **Only the focused ring is interactive.** A radar where every ring took a drag
-  would be unusable on a phone and would make "which layer am I editing?"
-  ambiguous exactly when it matters.
-- **The refiner sits under the radar** and swaps with focus. A shape cannot carry
-  a phrase (a contour in time), a kit (a list of ops) or a weave (a transition
-  matrix) — forcing those into a radar would lose what makes them editable. So
-  the radar is navigation and coarse control; the refiner is the fine detail.
-- **`density` is gone from the editable ring** rather than dimmed. It cannot be
-  inverted, and the honest place for a reading is not a handle.
-- Storage follows the rule feel-core.js established the hard way: `patch.layers`
-  holds **one number per axis**, re-applied to each freshly resolved state, so
-  re-shaping the genre still changes the instruments. The gate asserts the patch
-  stays under 400 chars.
-
-**The default is `acidhouse`** — the catalogue's acid anchor at 126 bpm, tb303 on
-both bass and melody, a house kit — with the genre ring's `swing` pinned to 0 so
-it is straight rather than the anchor's slight 0.022 lean.
+- **Tempo and structure are tracts**, drawn above the kernel radar, because they
+  describe the whole song rather than any one voice.
+- **Chords and samples get lanes too** — chord blocks per bar, found placements
+  over time — so every layer that has something to show in time shows it.
+- **The playhead readout sits bottom-right**, the corner the star map keeps its
+  chips in, so the two front ends put the same information in the same place. Bar
+  and beat come off the same interpolated clock the playhead lines ride, so the
+  number and the lines cannot disagree.
+- **One download dropdown** (`details`/`summary`, not a `select` — a select that
+  performs an action is a lie about what it is) replacing four buttons.
+- **Thin lines, big labels**: every rule is a hairline, the strip name is 26px,
+  the axis labels are 12px semibold in the UI face rather than a monospace
+  whisper. While scrolling, the label is what you read and the ink is what you
+  glance at.
 
 ## Open
 
