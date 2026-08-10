@@ -10,7 +10,7 @@
 // enough to redraw that doing it 60x a second to move a line would make every knob
 // feel slow; instead each roll carries one absolutely-positioned <i> that a single
 // rAF moves with a transform. The canvases repaint only when the music changes.
-import { state, events, SONG } from "./song.js";
+import { state, SONG } from "./song.js";
 
 let handle = null, playing = false;
 let barBeat = 0, barAt = 0, spb = 0.5, raf = 0;
@@ -27,22 +27,18 @@ function beatNow() {
   const el = (performance.now() - barAt) / 1000;
   return barBeat + Math.max(0, el) / spb;
 }
+// THE HEADS. The grid's line moves piecewise — beat → (column, fraction of an
+// equal-width column) — and the song bar's proportionally; each surface owns
+// its own mapping and registers a placer here. Passing `null` hides a head.
+const headFns = [];
+export function onHead(fn) { headFns.push(fn); }
+const placeHeads = (b) => { for (const f of headFns) { try { f(b); } catch (e) {} } };
+
 function tick() {
   if (!playing) { raf = 0; return; }
-  const total = (events().totalBeats || 1);
-  const pct = Math.max(0, Math.min(1, beatNow() / total)) * 100;
-  for (const h of document.querySelectorAll(".dw-head")) h.style.left = pct + "%";
+  placeHeads(beatNow());
   paintReadout();
   raf = requestAnimationFrame(tick);
-}
-
-export function mountHeads() {
-  for (const wrap of document.querySelectorAll(".dw-rollwrap, .dw-tract")) {
-    if (wrap.querySelector(".dw-head")) continue;
-    const i = document.createElement("i");
-    i.className = "dw-head";
-    wrap.appendChild(i);
-  }
 }
 
 // THE READOUT, bottom-right — where the star map keeps its chips, so the two
@@ -98,7 +94,6 @@ export async function start(onStatus) {
     onStatus && onStatus("live failed: " + ((e && e.message) || e));
     return;
   }
-  mountHeads();
   if (!raf) raf = requestAnimationFrame(tick);
   fire();
 }
@@ -107,7 +102,7 @@ export function stop() {
   playing = false;
   setTimeout(paintReadout, 0);
   if (raf) { cancelAnimationFrame(raf); raf = 0; }
-  for (const h of document.querySelectorAll(".dw-head")) h.style.left = "0%";
+  placeHeads(null);
   try { if (handle && handle.stop) handle.stop(); } catch (e) {}
   handle = null;
   fire();

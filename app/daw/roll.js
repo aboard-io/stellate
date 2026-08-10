@@ -15,6 +15,19 @@ const E = window.CsdEngine;
 const DRUM_LANES = ["crash", "ride", "hat", "snare", "clap", "rim", "tom", "perc", "kick"];
 const PAD = { top: 6, bottom: 6 };
 
+// the midi span of a pitched event list — THE GRID ranges a whole ROW with this
+// and pins every cell to it via opts.range
+export function midiRange(evs) {
+  let lo = Infinity, hi = -Infinity;
+  for (const e of evs || []) {
+    const m = E.pchToMidi(e.pch);
+    if (m < lo) lo = m; if (m > hi) hi = m;
+  }
+  if (!isFinite(lo)) return null;
+  if (hi - lo < 11) { const c = (hi + lo) / 2; lo = c - 6; hi = c + 6; }
+  return { lo, hi };
+}
+
 export function drawRoll(cv, evs, opts) {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const w = cv.clientWidth || 600, h = cv.clientHeight || 64;
@@ -25,12 +38,20 @@ export function drawRoll(cv, evs, opts) {
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   g.clearRect(0, 0, w, h);
 
-  const total = Math.max(1, opts.totalBeats);
-  const x = (b) => (b / total) * w;
+  // ---- the WINDOW (THE GRID's cells): draw only [beatFrom, beatTo) ----
+  // Absent, the roll draws the whole song exactly as before. Events are
+  // filtered to the window (overlap counts), and x maps window-relative.
+  const from = opts.beatFrom != null ? opts.beatFrom : 0;
+  const to = opts.beatTo != null ? opts.beatTo : Math.max(1, opts.totalBeats);
+  const span = Math.max(0.001, to - from);
+  const x = (b) => ((b - from) / span) * w;
+  if (evs && (opts.beatFrom != null || opts.beatTo != null))
+    evs = evs.filter((e) => e.beat < to && (e.beat + (e.dur || 0.1)) > from);
 
   // ---- section rules first, so notes sit ON them ----
   g.strokeStyle = "rgba(255,255,255,.13)"; g.lineWidth = 1;
   for (const sp of opts.spans || []) {
+    if (sp.start <= from || sp.start >= to) continue;
     const px = Math.round(x(sp.start)) + 0.5;
     g.beginPath(); g.moveTo(px, 0); g.lineTo(px, h); g.stroke();
   }
@@ -69,6 +90,8 @@ export function drawRoll(cv, evs, opts) {
   }
 
   // ---- pitched: y = midi, auto-ranged to the notes present ----
+  // opts.range {lo,hi} pins the range instead — THE GRID auto-ranges per ROW,
+  // not per cell, so contours compare across sections.
   let lo = Infinity, hi = -Infinity;
   const midi = new Array(evs.length);
   for (let i = 0; i < evs.length; i++) {
@@ -76,6 +99,7 @@ export function drawRoll(cv, evs, opts) {
     midi[i] = m;
     if (m < lo) lo = m; if (m > hi) hi = m;
   }
+  if (opts.range && isFinite(opts.range.lo) && isFinite(opts.range.hi)) { lo = opts.range.lo; hi = opts.range.hi; }
   if (!isFinite(lo)) return;
   if (hi - lo < 11) { const c = (hi + lo) / 2; lo = c - 6; hi = c + 6; }   // never zoom a flat line to full height
   const y = (m) => PAD.top + inner - ((m - lo) / (hi - lo)) * inner;

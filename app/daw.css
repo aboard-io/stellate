@@ -1,8 +1,15 @@
-/* daw.css — the /daw workstation's own stylesheet.
+/* daw.css — the /daw workstation's own stylesheet: KERNEL → SONG → GRID → SHEET.
    Standing alone like app/access.css does, not extending app/app.css: the star map
    is a dark room you look into, the DAW is a workbench you lean over. Different
    density, different type (system-ui + ui-monospace for readable numbers rather
-   than the VT323 terminal face), same palette family so they read as one project. */
+   than the VT323 terminal face), same palette family so they read as one project.
+
+   THE CONTROL CLASSES ARE THE CONTRACT: every primitive and editor surface class
+   is defined HERE, in the foundation, so editor agents style nothing —
+   .dw-pad/.dw-tile/.dw-chip (controls.js), .dw-grid ladder + .dw-matrix weave
+   (kept from the machines era), .dw-ed sheet blocks, .dw-secchip song bar.
+   Hues per track: melody 200 · bass 330 · pad 280 · drums 45 · samples 120 ·
+   chords 265 · master 300 · kernel 190. Thin lines, big labels. */
 
 :root {
   --dw-bg: #0c0a1a;
@@ -12,8 +19,9 @@
   --dw-ink: #e8e6f3;
   --dw-dim: #9c97b8;
   --dw-accent: #ff5fa2;
-  --dw-row-h: 76px;
-  --dw-strip-w: 190px;
+  --dw-row-h: 56px;        /* one grid row */
+  --dw-headw: 88px;        /* the sticky row header */
+  --dw-secw: 96px;         /* one section column (min 72px on mobile) */
 }
 
 * { box-sizing: border-box; }
@@ -25,7 +33,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ---------- top bar ---------- */
+/* ---------- top bar (unchanged from the deck era) ---------- */
 #dawbar {
   display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
   padding: 10px 16px;
@@ -52,27 +60,36 @@ body {
   background: var(--dw-panel-2); border: 1px solid var(--dw-line);
   border-radius: 4px; padding: 5px 7px; text-transform: none; letter-spacing: 0;
 }
-.dw-ctl select { max-width: 210px; }
 .dw-ctl input { width: 82px; }
 .dw-btn {
   font: 14px/1 ui-monospace, monospace; color: var(--dw-ink);
   background: var(--dw-panel-2); border: 1px solid var(--dw-line);
   border-radius: 4px; padding: 6px 9px; cursor: pointer;
+  min-width: 44px;             /* the one-glyph ⟳ still clears a thumb */
 }
 .dw-btn:hover { border-color: var(--dw-accent); color: var(--dw-accent); }
 .dw-btn.on { background: var(--dw-accent); color: var(--dw-bg); border-color: var(--dw-accent); }
-.dw-exp { display: inline-flex; gap: 4px; }
-.dw-exp .dw-btn { font-size: 12px; padding: 6px 8px; }
 .dw-read { font: 12px/1 ui-monospace, monospace; color: var(--dw-dim); }
 .dw-nav { margin-left: auto; }
 .dw-nav a { color: var(--dw-dim); text-decoration: none; font-size: 12px; }
 .dw-nav a:hover { color: var(--dw-accent); }
 
-/* ---------- the radar (one per strip) ----------
+/* ---------- the download dropdown (unchanged) ---------- */
+.dw-dl { position: relative; }
+.dw-dl > summary { list-style: none; cursor: pointer; display: inline-block; }
+.dw-dl > summary::-webkit-details-marker { display: none; }
+.dw-dlmenu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
+  min-width: 210px; padding: 5px; background: var(--dw-panel-2);
+  border: 1px solid var(--dw-line); border-radius: 5px; box-shadow: 0 10px 28px rgba(0,0,0,.5); }
+.dw-dlitem { display: block; width: 100%; text-align: left; cursor: pointer;
+  background: none; border: 0; border-radius: 4px; padding: 11px 10px; min-height: 44px;
+  font: 600 14px/1.1 system-ui, sans-serif; color: var(--dw-ink); }
+.dw-dlitem small { display: block; margin-top: 3px; font: 400 11px/1.2 system-ui, sans-serif; color: var(--dw-dim); }
+.dw-dlitem:hover { background: #2a2450; }
+
+/* ---------- the radar (kernel sculptor only now) ----------
    touch-action:none is the single line that makes a drag EDIT instead of
-   scrolling the page — on a deck you scroll, that matters more, not less.
-   LINES ARE THIN, LABELS ARE BIG: while scrolling, the label is what you read and
-   the ink is what you glance at. */
+   scrolling the page. LINES ARE THIN, LABELS ARE BIG. (vector.js, verbatim) */
 .dw-vec { width: 100%; max-width: 320px; height: auto; touch-action: none; user-select: none; }
 .dw-vring  { fill: none; stroke: rgba(255,255,255,.07); stroke-width: .5; }
 .dw-vspoke { stroke: rgba(255,255,255,.09); stroke-width: .5; }
@@ -87,36 +104,109 @@ body {
 .dw-vlab   { font: 600 12px system-ui, -apple-system, sans-serif; fill: var(--dw-ink); dominant-baseline: middle; }
 .dw-vlab.ind { opacity: .5; font-style: italic; }
 
-/* ---------- THE DECK: one strip per layer, scrolled ---------- */
-#dwDeck { padding: 8px 16px 96px; max-width: 1180px; margin: 0 auto; }
-.dw-strip2 { --hue: 190; border-top: 1px solid var(--dw-line); padding: 14px 0 16px; }
-.dw-strip2:first-child { border-top: 0; }
-.dw-strip2.dw-off { opacity: .5; }
+/* ================= THE MAIN COLUMN ================= */
+#dwMain { max-width: 1180px; margin: 0 auto; padding: 10px 16px 96px; }
 
-.dw-s2head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
-.dw-s2name { margin: 0; font: 700 26px/1 system-ui, -apple-system, sans-serif;
-             letter-spacing: -.02em; color: hsl(var(--hue), 60%, 72%); }
-.dw-s2machine { font: 13px/1.2 ui-monospace, monospace; color: var(--dw-ink); }
-.dw-s2count { margin-left: auto; font: 12px/1.2 ui-monospace, monospace; color: var(--dw-dim); }
+/* ---------- the KERNEL card ---------- */
+.dw-kcard {
+  --hue: 190;
+  display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center;
+  background: var(--dw-panel); border: 1px solid var(--dw-line); border-radius: 8px;
+  padding: 8px 10px; margin-bottom: 10px;
+}
+.dw-krow {
+  display: flex; align-items: center; gap: 12px; min-height: 48px;
+  background: none; border: 0; color: var(--dw-ink); cursor: pointer;
+  text-align: left; padding: 4px; border-radius: 6px;
+}
+.dw-krow:focus-visible { outline: 2px solid var(--dw-accent); }
+.dw-kthumb { width: 40px; height: 40px; flex: 0 0 40px; }
+.dw-kthumbring { fill: none; stroke: rgba(255,255,255,.14); stroke-width: 1; }
+.dw-kthumbpoly { fill: hsla(var(--hue), 62%, 58%, .3); stroke: hsl(var(--hue), 62%, 66%); stroke-width: 1; }
+.dw-klabel { font: 600 14px/1.25 system-ui, sans-serif; color: hsl(var(--hue), 60%, 76%); }
+.dw-kseed {
+  font: 11px/1 ui-monospace, monospace; color: var(--dw-dim);
+  border: 1px solid var(--dw-line); border-radius: 999px; padding: 5px 9px; white-space: nowrap;
+}
+.dw-ktile { width: 120px; }
+.dw-ktile .dw-tile { min-height: 48px; }
+.dw-kexpand { grid-column: 1 / -1; display: none; }
+.dw-kcard.open .dw-kexpand { display: block; }
+.dw-kvec { display: flex; justify-content: center; }
+.dw-kprog[hidden] { display: none; }
 
-.dw-tracts { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
-.dw-tract { position: relative; display: flex; align-items: center; gap: 8px; height: 30px; }
-.dw-tlab { flex: 0 0 68px; font: 600 11px/1 system-ui, sans-serif;
-           letter-spacing: .12em; text-transform: uppercase; color: var(--dw-dim); }
-.dw-tcanvas { flex: 1; height: 100%; display: block; min-width: 0; }
+/* ---------- the SONG bar ---------- */
+#dwSong {
+  position: relative; display: flex; gap: 3px; margin-bottom: 8px; min-height: 44px;
+}
+.dw-secchip {
+  flex: 1 1 0; min-width: 44px; min-height: 44px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  gap: 2px; padding: 4px 8px; overflow: hidden;
+  background: var(--dw-panel-2); border: 1px solid var(--dw-line); border-radius: 5px;
+  color: var(--dw-ink);
+}
+.dw-secchip:hover, .dw-secchip:focus-visible { border-color: hsl(265, 55%, 64%); outline: none; }
+.dw-secchip.edited { border-color: hsl(265, 55%, 56%); box-shadow: inset 0 0 0 1px hsla(265, 55%, 56%, .5); }
+.dw-secname { font: 600 11px/1 system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase;
+              white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.dw-seccyc { font: 10px/1 ui-monospace, monospace; color: var(--dw-dim); }
+.dw-shead { position: absolute; top: 0; bottom: 0; width: 1px; left: 0;
+  background: var(--dw-accent); box-shadow: 0 0 6px var(--dw-accent);
+  pointer-events: none; opacity: 0; transition: opacity .2s; }
+body.dw-playing .dw-shead { opacity: .9; }
 
-.dw-rollwrap { position: relative; height: 84px; margin-bottom: 8px; }
-.dw-roll { width: 100%; height: 100%; display: block; }
-/* the playhead line — one element per lane, moved by a single rAF transform */
-.dw-head { position: absolute; top: 0; bottom: 0; left: 0; width: 1px;
-           background: var(--dw-accent); box-shadow: 0 0 6px var(--dw-accent);
-           pointer-events: none; opacity: 0; transition: opacity .2s; }
-body.dw-playing .dw-head { opacity: .9; }
+/* ---------- THE GRID ---------- */
+.dw-gridwrap { position: relative; overflow-x: auto; border: 1px solid var(--dw-line);
+  border-radius: 8px; background: var(--dw-panel); }
+.dw-gridinner {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--dw-headw) repeat(var(--cols), minmax(72px, 1fr));
+  gap: 1px; padding: 1px;
+  min-width: calc(var(--dw-headw) + var(--cols) * 72px);
+}
+.dw-rowhead {
+  position: sticky; left: 0; z-index: 3;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  gap: 2px; min-height: var(--dw-row-h); padding: 4px 8px; cursor: pointer;
+  background: var(--dw-panel-2); border: 0; border-left: 3px solid hsl(var(--hue), 62%, 58%);
+  color: var(--dw-ink); text-align: left;
+}
+.dw-rowhead:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: -2px; }
+.dw-rowname { font: 700 13px/1 system-ui, sans-serif; letter-spacing: .02em;
+              color: hsl(var(--hue), 60%, 74%); }
+.dw-rowinst { font: 10px/1.2 ui-monospace, monospace; color: var(--dw-dim);
+              white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.dw-cellbtn {
+  position: relative; min-height: var(--dw-row-h); padding: 0; cursor: pointer;
+  background: #120f26; border: 0; border-radius: 2px;
+}
+.dw-cellbtn:hover { background: #181236; }
+.dw-cellbtn:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: -2px; z-index: 2; }
+.dw-cellcv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.dw-cellbtn.off { opacity: .45; }
+.dw-cellbtn.off::after {
+  content: "∅"; position: absolute; inset: 0; display: grid; place-items: center;
+  font: 14px/1 ui-monospace, monospace; color: var(--dw-dim); pointer-events: none;
+}
+.dw-masterhead { min-height: 44px; }
+.dw-mastercell {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  min-height: 44px; padding: 6px 10px; cursor: pointer; text-align: left;
+  background: #120f26; border: 0; border-radius: 2px; color: var(--dw-ink);
+}
+.dw-mastercell:hover { background: #181236; }
+.dw-mastercell:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: -2px; }
+.dw-masterchain { font: 12px/1.3 ui-monospace, monospace; color: hsl(300, 55%, 76%); }
+.dw-masterfeel { font: 11px/1.3 ui-monospace, monospace; color: var(--dw-dim); margin-left: auto; }
+/* the grid playhead — one line, moved by a transform, never a canvas repaint */
+.dw-ghead { position: absolute; top: 0; bottom: 0; left: 0; width: 1px;
+  background: var(--dw-accent); box-shadow: 0 0 6px var(--dw-accent);
+  pointer-events: none; opacity: 0; transition: opacity .2s; z-index: 4; }
+body.dw-playing .dw-ghead { opacity: .9; }
 
-.dw-s2vec { display: flex; justify-content: flex-start; }
-.dw-s2refine { margin-top: 6px; }
-
-/* ---------- the playhead readout, bottom right (where the star map keeps its chips) */
+/* ---------- the playhead readout, bottom right (unchanged) ---------- */
 .dw-playhead {
   position: fixed; right: .7rem; bottom: .7rem; z-index: 20;
   display: flex; align-items: baseline; gap: 14px;
@@ -130,78 +220,167 @@ body.dw-playing .dw-head { opacity: .9; }
                      text-transform: uppercase; color: var(--dw-dim); margin-top: 4px; }
 .dw-hstate { font-size: 14px; color: var(--dw-accent); }
 
-/* ---------- the download dropdown ---------- */
-.dw-dl { position: relative; }
-.dw-dl > summary { list-style: none; cursor: pointer; display: inline-block; }
-.dw-dl > summary::-webkit-details-marker { display: none; }
-.dw-dlmenu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
-  min-width: 210px; padding: 5px; background: var(--dw-panel-2);
-  border: 1px solid var(--dw-line); border-radius: 5px; box-shadow: 0 10px 28px rgba(0,0,0,.5); }
-.dw-dlitem { display: block; width: 100%; text-align: left; cursor: pointer;
-  background: none; border: 0; border-radius: 4px; padding: 11px 10px; min-height: 44px;
-  font: 600 14px/1.1 system-ui, sans-serif; color: var(--dw-ink); }
-.dw-dlitem small { display: block; margin-top: 3px; font: 400 11px/1.2 system-ui, sans-serif; color: var(--dw-dim); }
-.dw-dlitem:hover { background: #2a2450; }
-
-/* ---------- the note-fx rack ---------- */
-#dwPipes { padding: 12px 16px 0; }
-.dw-pbody { background: var(--dw-panel); border: 1px solid var(--dw-line); border-radius: 5px; padding: 12px; }
-.dw-pchain { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
-.dw-pcard { background: #120f26; border: 1px solid var(--dw-line); border-radius: 4px; padding: 8px; }
-.dw-pcardhead { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
-.dw-pord {
-  font: 600 10px/1 system-ui, sans-serif; color: var(--dw-bg);
-  background: hsl(300,55%,64%); border-radius: 3px; padding: 3px 5px;
+/* ================= THE SHEET ================= */
+#dwSheet {
+  --hue: 200;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
+  max-height: 85vh; display: flex; flex-direction: column;
+  background: var(--dw-panel); border-top: 1px solid hsl(var(--hue), 40%, 40%);
+  border-radius: 14px 14px 0 0; box-shadow: 0 -14px 44px rgba(0,0,0,.55);
 }
-.dw-pname { font: 12px/1 ui-monospace, monospace; color: hsl(300,55%,76%); margin-right: auto; }
-.dw-pshelf { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-.dw-pchip {
-  font: 11px/1 ui-monospace, monospace; color: var(--dw-dim); cursor: pointer;
-  background: var(--dw-panel-2); border: 1px solid var(--dw-line);
-  border-radius: 999px; padding: 7px 11px; min-height: 32px;
+#dwSheet[hidden] { display: none; }
+.dw-sheethandle { flex: 0 0 auto; display: grid; place-items: center; min-height: 24px;
+  background: none; border: 0; cursor: pointer; padding: 8px 0 2px; }
+.dw-sheetgrab { width: 44px; height: 4px; border-radius: 2px; background: var(--dw-dim); opacity: .6; }
+.dw-sheethead { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; padding: 2px 14px 8px; }
+.dw-sheettitle { margin: 0; font: 700 18px/1.2 system-ui, sans-serif; letter-spacing: -.01em;
+                 color: hsl(var(--hue), 60%, 74%); }
+.dw-sheetecho { font: 12px/1 ui-monospace, monospace; color: var(--dw-accent); margin-left: auto; min-height: 1em; }
+.dw-sheetclose { flex: 0 0 auto; min-width: 44px; min-height: 44px; cursor: pointer;
+  background: none; border: 1px solid var(--dw-line); border-radius: 6px; color: var(--dw-dim); }
+.dw-sheetclose:hover { color: var(--dw-accent); border-color: var(--dw-accent); }
+.dw-sheetpin { flex: 0 0 auto; height: 64px; margin: 0 14px 8px; position: relative;
+  background: #120f26; border-radius: 6px; overflow: hidden; }
+.dw-sheetpin[hidden] { display: none; }
+.dw-pinroll { width: 100%; height: 100%; display: block; }
+.dw-sheettabs { flex: 0 0 auto; display: flex; gap: 6px; padding: 0 14px 8px; }
+.dw-sheettabs[hidden] { display: none; }
+.dw-sheettab {
+  min-height: 44px; padding: 8px 18px; cursor: pointer;
+  font: 600 12px/1 system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase;
+  background: var(--dw-panel-2); border: 1px solid var(--dw-line); border-radius: 999px;
+  color: var(--dw-dim);
 }
-.dw-pchip:hover { border-color: hsl(300,55%,64%); color: var(--dw-ink); }
-.dw-pchip.on { background: hsl(300,55%,64%); color: var(--dw-bg); border-color: hsl(300,55%,64%); }
-
-
-.dw-panel {
-  border-top: 1px solid var(--dw-line);
-  background: #120f26; padding: 10px 12px 12px;
+.dw-sheettab.on { background: hsl(var(--hue), 55%, 62%); color: var(--dw-bg); border-color: hsl(var(--hue), 55%, 62%); }
+.dw-sheetbody { flex: 1 1 auto; overflow-y: auto; padding: 4px 14px 24px; overscroll-behavior: contain; }
+/* wide screens: a right-side panel instead of a bottom sheet */
+@media (min-width: 1100px) {
+  #dwSheet { left: auto; top: 0; bottom: 0; width: 440px; max-height: none;
+    border-radius: 0; border-top: 0; border-left: 1px solid hsl(var(--hue), 40%, 40%); }
+  .dw-sheethandle { display: none; }
 }
-.dw-kit { margin-bottom: 10px; }
-.dw-kithead {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+
+/* ---------- sheet blocks (every editor renders into these) ---------- */
+.dw-ed { margin-bottom: 16px; }
+.dw-edhead {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
   font: 13px/1 ui-monospace, monospace; color: hsl(var(--hue), 62%, 70%);
 }
+.dw-edrow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,.05); }
+.dw-edlab { flex: 0 0 64px; font: 600 11px/1 system-ui, sans-serif; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--dw-ink); }
+.dw-edval { font: 11px/1 ui-monospace, monospace; color: var(--dw-dim); width: 100%; }
 .dw-badge {
   font: 600 9px/1 system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase;
   color: var(--dw-bg); background: hsl(var(--hue), 62%, 62%); padding: 3px 5px; border-radius: 3px;
 }
 .dw-mini {
-  font: 11px/1 system-ui, sans-serif; color: var(--dw-dim);
+  /* 44px like everything else — "mini" is the type size, never the target */
+  font: 11px/1 system-ui, sans-serif; color: var(--dw-dim); min-height: 44px; min-width: 44px;
   background: none; border: 1px solid var(--dw-line); border-radius: 3px;
-  padding: 3px 6px; cursor: pointer;
+  padding: 3px 10px; cursor: pointer;
 }
 .dw-mini:hover { color: var(--dw-accent); border-color: var(--dw-accent); }
+.dw-facts { display: grid; grid-template-columns: max-content 1fr; gap: 3px 14px; margin: 0; }
+.dw-facts dt { font: 600 10px/1.6 system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--dw-dim); }
+.dw-facts dd { margin: 0; font: 12px/1.6 ui-monospace, monospace; color: var(--dw-ink); }
+.dw-pnote { margin: 8px 0 0; max-width: 78ch; font-size: 11.5px; color: var(--dw-dim); }
+.dw-coming { font-style: italic; opacity: .8; }
 
-.dw-op {
-  display: grid; grid-template-columns: 62px 84px 118px 1fr 56px;
-  align-items: center; gap: 10px; padding: 4px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, .05);
+/* ---------- THE PRIMITIVES (controls.js) ---------- */
+/* PAD — fill height IS the probability. touch-action none: a vertical drag
+   SETS, it never scrolls. */
+.dw-pad {
+  position: relative; overflow: hidden; cursor: grab;
+  min-width: 44px; min-height: 44px; padding: 0;
+  background: #120f26; border: 1px solid var(--dw-line); border-radius: 6px;
+  touch-action: none; user-select: none; -webkit-user-select: none;
 }
-.dw-oplane { font: 600 11px/1 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--dw-ink); }
-.dw-opshape, .dw-opval { font: 11px/1 ui-monospace, monospace; color: var(--dw-dim); }
-.dw-opval { text-align: right; }
-.dw-opsel {
-  font: 12px/1 ui-monospace, monospace; color: var(--dw-ink);
-  background: var(--dw-panel-2); border: 1px solid var(--dw-line);
-  border-radius: 3px; padding: 4px 5px;
+.dw-padfill {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 0;
+  background: hsla(var(--hue), 62%, 58%, .55);
+  border-top: 1.5px solid hsl(var(--hue), 62%, 66%);
+  pointer-events: none; transition: height .04s linear;
 }
-.dw-opsel:disabled { opacity: .4; }
-.dw-opslider { width: 100%; accent-color: hsl(var(--hue), 62%, 60%); }
-.dw-opslider:disabled { opacity: .35; }
+.dw-pad.on { border-color: hsla(var(--hue), 62%, 58%, .8); }
+.dw-pad:not(.on) { opacity: .55; }
+.dw-padlab {
+  position: absolute; top: 4px; left: 6px; right: 4px; pointer-events: none;
+  font: 600 10px/1.1 system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--dw-ink); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dw-pad:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: 1px; }
+/* a wide pad (grid ops: the whole lane as one op — fill = sp) */
+.dw-pad.wide { width: 100%; }
+/* ghost tick on a wide pad: one step of the grid's shape. Cosmetic geometry —
+   only left/height are per-tick (JS-set); the pad underneath stays the control. */
+.dw-padtick {
+  position: absolute; bottom: 0; width: 2px; pointer-events: none;
+  background: hsla(var(--hue), 62%, 72%, .4);
+}
+/* the pad's row holder: fixed for a hit op, flexing for a wide grid op */
+.dw-padhold { flex: 0 0 auto; }
+.dw-padhold.wide { flex: 1 1 180px; }
 
-/* the phrase grid — y is the chord's voicing ladder, x a 16th grid */
+/* TILE — the Control-Center fill tile: label top-left, live value bottom-right */
+.dw-tile {
+  position: relative; overflow: hidden; cursor: grab;
+  width: 100%; min-height: 64px; padding: 0;
+  background: #120f26; border: 1px solid var(--dw-line); border-radius: 8px;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.dw-tilefill {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 0;
+  background: hsla(var(--hue), 62%, 58%, .38);
+  border-top: 1.5px solid hsla(var(--hue), 62%, 66%, .9);
+  pointer-events: none; transition: height .04s linear;
+}
+.dw-tilelab {
+  position: absolute; top: 6px; left: 8px; pointer-events: none;
+  font: 600 11px/1 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--dw-ink);
+}
+.dw-tileval {
+  position: absolute; bottom: 6px; right: 8px; pointer-events: none;
+  font: 12px/1 ui-monospace, monospace; color: var(--dw-dim);
+}
+.dw-tiledot {
+  position: absolute; top: 7px; right: 8px; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--dw-accent); pointer-events: none; display: none;
+}
+.dw-tile.edited .dw-tiledot { display: block; }
+.dw-tile:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: 1px; }
+.dw-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; margin: 8px 0; }
+/* a lone tile living inside an .dw-edrow (the crate's per-source level) —
+   .dw-tile is width:100%, so the holder does the row sizing */
+.dw-tilehold { flex: 1 1 132px; min-width: 116px; }
+
+/* CHIPS — segmented buttons; a choice is not an amount. min-width keeps a
+   one-glyph chip ("C", "↑") at the 44px touch floor. */
+.dw-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dw-chip {
+  min-height: 44px; min-width: 44px; padding: 8px 14px; cursor: pointer;
+  font: 12px/1 ui-monospace, monospace; color: var(--dw-dim);
+  background: var(--dw-panel-2); border: 1px solid var(--dw-line); border-radius: 999px;
+}
+.dw-chip:hover { border-color: hsl(var(--hue), 55%, 64%); color: var(--dw-ink); }
+.dw-chip.on { background: hsl(var(--hue), 55%, 62%); color: var(--dw-bg); border-color: hsl(var(--hue), 55%, 62%); }
+.dw-chip:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: 1px; }
+.dw-chip:disabled { opacity: .4; cursor: default; }
+.dw-chip:disabled:hover { border-color: var(--dw-line); color: var(--dw-dim); }
+
+/* BLOCKS — non-interactive chord-name blocks (chords sheet): read like chips,
+   sized like facts, never a control */
+.dw-blocks { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+.dw-block {
+  display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px;
+  font: 600 14px/1 ui-monospace, monospace; color: hsl(var(--hue), 60%, 78%);
+  background: hsla(var(--hue), 55%, 58%, .16); border: 1px solid hsla(var(--hue), 55%, 60%, .5);
+  border-radius: 6px;
+}
+
+/* ---------- the LADDER grid (phrase cells: y = the chord's voicing ladder) ---------- */
 .dw-grid {
   display: grid;
   grid-template-columns: 58px repeat(var(--cols), minmax(0, 1fr));
@@ -212,7 +391,7 @@ body.dw-playing .dw-head { opacity: .9; }
   text-align: right; padding-right: 6px; white-space: nowrap;
 }
 .dw-cell {
-  height: 16px; min-width: 0; padding: 0; cursor: pointer;
+  height: 22px; min-width: 0; padding: 0; cursor: pointer;
   background: #1d1938; border: 1px solid transparent; border-radius: 2px;
 }
 .dw-cell.beat { border-left-color: rgba(255, 255, 255, .18); }
@@ -221,7 +400,7 @@ body.dw-playing .dw-head { opacity: .9; }
 .dw-cell.on:hover { background: hsl(var(--hue), 62%, 66%); }
 .dw-cell:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: 1px; }
 
-/* the weave matrix — row = the slot the line is on, column = where it goes next */
+/* ---------- the WEAVE matrix (row = slot the line is on, col = where it goes) */
 .dw-matrix {
   display: grid;
   grid-template-columns: 62px repeat(8, minmax(0, 1fr));
@@ -232,18 +411,23 @@ body.dw-playing .dw-head { opacity: .9; }
   text-align: center; overflow: hidden; white-space: nowrap;
 }
 .dw-mcell {
-  height: 22px; min-width: 0; padding: 0; cursor: pointer; border-radius: 2px;
+  height: 26px; min-width: 0; padding: 0; cursor: pointer; border-radius: 2px;
   border: 1px solid rgba(255, 255, 255, .06);
   background: hsla(var(--hue), 62%, 58%, calc(var(--p) * 2.2));
 }
 .dw-mcell:hover { border-color: var(--dw-accent); }
 .dw-mcell:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: 1px; }
 
-.dw-facts { display: grid; grid-template-columns: max-content 1fr; gap: 3px 14px; margin: 0; }
-.dw-facts dt { font: 600 10px/1.6 system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--dw-dim); }
-.dw-facts dd { margin: 0; font: 12px/1.6 ui-monospace, monospace; color: var(--dw-ink); }
-
-.dw-pnote { margin: 8px 0 0; max-width: 78ch; font-size: 11.5px; color: var(--dw-dim); }
+/* ---------- the pipes chain cards (master sheet) ---------- */
+.dw-pchain { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.dw-pcard { background: #120f26; border: 1px solid var(--dw-line); border-radius: 4px; padding: 8px; }
+.dw-pcardhead { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.dw-pord {
+  font: 600 10px/1 system-ui, sans-serif; color: var(--dw-bg);
+  background: hsl(300,55%,64%); border-radius: 3px; padding: 3px 5px;
+}
+.dw-pname { font: 12px/1 ui-monospace, monospace; color: hsl(300,55%,76%); margin-right: auto; }
+.dw-pcap { margin: 2px 0 6px; font-size: 10.5px; color: var(--dw-dim); }
 
 /* ---------- footer ---------- */
 #dwFoot {
@@ -258,30 +442,37 @@ body.dw-playing .dw-head { opacity: .9; }
 
 /* ---------- MOBILE ----------
    A phone has no hover, a thumb is ~44px, and vertical drags belong to the page
-   unless a control claims them. So: the feel vector goes full width and stacks
-   above its rows; the rack strip sits ON TOP of its roll instead of beside it
-   (190px of strip on a 360px screen leaves no roll at all); every control clears
-   44px; and the top bar wraps into two readable rows rather than scrolling. */
+   unless a control claims them (touch-action:none on pads/tiles/radar). Row
+   headers ≤88px, sheet 85vh with the grab handle, everything ≥44px. */
 @media (max-width: 720px) {
-  :root { --dw-row-h: 56px; }
   #dawbar { gap: 10px; padding: 8px 10px; }
   .dw-controls { gap: 8px; width: 100%; }
   .dw-ctl input { width: 64px; }
   .dw-btn { padding: 10px 12px; min-height: 44px; }
   .dw-nav { margin-left: 0; }
-  #dwDeck { padding: 8px 10px 96px; }
-  .dw-s2name { font-size: 22px; }
-  .dw-tlab { flex-basis: 52px; }
-  .dw-s2vec .dw-vec { max-width: min(92vw, 340px); }
-  .dw-strip2 .dw-rollwrap { height: 68px; }
-  .dw-op { grid-template-columns: 54px 1fr 46px; gap: 8px; row-gap: 4px; }
-  .dw-opshape, .dw-opsel { grid-column: 1 / -1; }
-  .dw-grid { grid-template-columns: 44px repeat(var(--cols), minmax(0, 1fr)); gap: 1px; }
-  .dw-cell { height: 22px; }
+  #dwMain { padding: 8px 10px 96px; }
+  :root { --dw-headw: 80px; }
+  .dw-kcard { grid-template-columns: 1fr; }
+  .dw-ktile { width: 100%; }
+  .dw-kvec .dw-vec { max-width: min(92vw, 340px); }
+  .dw-secname { font-size: 10px; }
+  .dw-rowname { font-size: 12px; }
+  /* the ladder scrolls inside itself rather than starving: a 32-step phrase at
+     390px would give 9px columns, so columns keep a 24px floor and the label
+     column rides sticky-left over the scroll (mirroring the grid's row heads) */
+  .dw-grid { grid-template-columns: 44px repeat(var(--cols), minmax(24px, 1fr)); gap: 1px; overflow-x: auto; }
+  .dw-glabel { position: sticky; left: 0; z-index: 1; background: var(--dw-panel); }
   .dw-matrix { grid-template-columns: 48px repeat(8, minmax(0, 1fr)); }
-  .dw-mcell { height: 30px; }
+  /* the touch floor for the kept editors: ladder + matrix cells grow to a
+     thumb's height */
+  .dw-cell { height: 44px; }
+  .dw-glabel { line-height: 44px; }
+  .dw-mcell { height: 44px; }
+  /* the download menu: anchored right:0 it can hang past the left edge when
+     the wrapped header puts ⤓ near x=0 — pin it to the viewport instead */
+  .dw-dlmenu { position: fixed; left: 10px; right: 10px; top: auto; min-width: 0; }
   .dw-mhead, .dw-glabel { font-size: 8px; }
   .dw-pchain { grid-template-columns: 1fr; }
-  .dw-pchip { min-height: 40px; padding: 10px 12px; }
   .dw-playhead { font-size: 17px; gap: 10px; padding: 7px 11px; }
+  .dw-sheetbody { padding-bottom: 40px; }
 }

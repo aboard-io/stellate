@@ -174,8 +174,8 @@ export function makeVector(host, opts) {
     setGhost(vals) { ghost = vals ? vals.slice() : null; if (dragging < 0) draw(); },
     values() { return axes.map((a) => a.v); },
     ids() { return axes.map((a) => a.id); },
-    // keyboard/AT path: the radar is a picture, so the panel also renders real
-    // inputs beside it (panel.js). This is here so both drive one code path.
+    // keyboard/AT path: callers may drive one axis programmatically; this is
+    // here so pointer and programmatic writes share one code path.
     setAxis(id, v) { const a = axes.find((x) => x.id === id); if (a) { a.v = clamp01(v); draw(); } },
   };
 }

@@ -30,6 +30,27 @@ const K = window.GenreKernel, E = window.CsdEngine;
 // slight 0.022 lean.
 export const SONG = { genre: "acidhouse", seed: 7, weights: null,
   patch: { feel: { swing: 0 } } };
+
+// ---------- the GRID's track table ----------
+// One row per voice the grid draws, in reading order. The hues are the project's
+// fixed per-track hues (docs/DAW.md); `kind` picks the cell painter and the
+// trackEvents filter. Master is NOT a track — it is the row under the grid.
+export const TRACKS = [
+  { id: "chords",  kind: "chords",  label: "chords",  hue: 265 },
+  { id: "melody",  kind: "pitched", label: "melody",  hue: 200 },
+  { id: "bass",    kind: "pitched", label: "bass",    hue: 330 },
+  { id: "pad",     kind: "pitched", label: "pad",     hue: 280 },
+  { id: "drums",   kind: "drums",   label: "drums",   hue: 45 },
+  { id: "samples", kind: "found",   label: "samples", hue: 120 },
+];
+export const trackById = (id) => TRACKS.find((t) => t.id === id) || null;
+
+// ---------- section identity ----------
+// A section's id is index-qualified name — "0:intro", "3:chorus" — so two
+// sections sharing a name stay distinct and a secover entry addresses exactly
+// one column. A re-resolved form with different sections simply matches nothing:
+// stale overrides drop silently, never mis-land.
+export const secId = (i, sec) => i + ":" + ((sec && sec.name) || "");
 export const subs = [];
 let raf = 0;
 export function touch() {            // coalesced repaint (the app/core/state.js `set` pattern)
@@ -60,12 +81,19 @@ export function state() {
   const patch = Object.assign({}, SONG.patch || {});
   const feel = patch.feel; delete patch.feel;
   const layerSet = patch.layers; delete patch.layers;
+  // secover and sound are NEVER Object.assign'd onto the state: sections must
+  // not be replaceable wholesale from a URL, and an instrument override is a
+  // structured rewrite, not a key splat. Both apply AFTER resolve, below.
+  const secover = patch.secover; delete patch.secover;
+  const sound = patch.sound; delete patch.sound;
   Object.assign(s, patch);
   // the feel axes are applied to the RESOLVED state, not stored as resolved
   // params — so a re-shaped genre brings its own instruments and your brightness
   // rides on top of them (feel-core.js says why that distinction matters)
   applyFeel(s, feel);
   applyLayers(s, layerSet);      // the stack's per-layer axes, same one-number-per-axis rule
+  applySecover(s, secover);      // per-section overrides, BY ID (below)
+  applySound(s, sound);          // instrument overrides, K.SAMPLERS-validated (below)
   s.voiceStreams = true;                       // THE RACK LAW (see header)
   _key = k; _state = s; _events = null;
   return s;
@@ -74,6 +102,123 @@ export function events() {
   const s = state();
   if (!_events) _events = E.buildEvents(s);
   return _events;
+}
+
+// ---------- secover: per-section overrides, applied BY ID ----------
+// THE SECURITY SHAPE: the override is applied to the section the id names — the
+// state's own `sections` array is never replaced, extended or reordered from the
+// patch. Every field is whitelist-validated against the ENGINE's own vocabulary
+// (never a list this file maintains by hand), and anything that fails just
+// drops — silently, because a hostile URL deserves no diagnostics.
+const SEC_FIELDS = ["cycles", "melody", "bass", "drums", "pads"];
+const hasKey = (o, k) => !!o && Object.prototype.hasOwnProperty.call(o, k);
+function melodyNameOk(name, cells) {
+  if (name === "off") return true;
+  if ((E.MELODY_PATTERNS || []).indexOf(name) >= 0) return true;
+  // a user-drawn cell already in THIS patch is playable vocabulary — except the
+  // scratch phrase, which is inert by law (machines/weave.js SCRATCH)
+  return name !== "__fit" && hasKey(cells, name);
+}
+const bassNameOk = (name) => name === "off" || (E.BASS_PATTERNS || []).indexOf(name) >= 0;
+const drumsNameOk = (name, kits) => name === "off" || hasKey(E.KITS, name) || hasKey(kits, name);
+
+// structural sanitizer, shared by decodePatch (the URL door) and applySecover
+// (the choke point — edits can also arrive via edit() from a probe). `ctx`
+// carries the patch's OWN cells/kits — at decode time the incoming payload's,
+// at apply time SONG.patch's — so a user cell name validates against the patch
+// it travels with, never a stale one.
+export function sanitizeSecover(o, ctx) {
+  if (!o || typeof o !== "object" || Array.isArray(o)) return null;
+  const cells = (ctx && ctx.cells) || SONG.patch.melodyCells;
+  const kits = (ctx && ctx.kits) || SONG.patch.kits;
+  const out = {};
+  for (const id of Object.keys(o)) {
+    // a section id is ALWAYS "<index>:<name>" (secId above). The format gate
+    // both rejects junk keys and makes "__proto__" (the one magic plain-object
+    // key) unrepresentable. An id that parses but names no resolved section is
+    // structurally fine and INERT — applySecover matches nothing and drops it.
+    if (typeof id !== "string" || id.length > 48 || !/^\d{1,3}:/.test(id)) continue;
+    const ov = o[id];
+    if (!ov || typeof ov !== "object" || Array.isArray(ov)) continue;
+    const keep = {};
+    for (const f of SEC_FIELDS) {
+      if (!(f in ov)) continue;
+      const v = ov[f];
+      if (f === "cycles") { const c = Math.round(+v); if (c >= 1 && c <= 16) keep.cycles = c; }
+      else if (f === "pads") { if (typeof v === "boolean") keep.pads = v; }
+      else if (typeof v === "string" && v.length <= 32) {
+        if (f === "melody" && melodyNameOk(v, cells)) keep.melody = v;
+        else if (f === "bass" && bassNameOk(v)) keep.bass = v;
+        else if (f === "drums" && drumsNameOk(v, kits)) keep.drums = v;
+      }
+    }
+    if (Object.keys(keep).length) out[id] = keep;
+  }
+  return Object.keys(out).length ? out : null;
+}
+function applySecover(s, secover) {
+  const so = sanitizeSecover(secover);
+  if (!so) return;
+  const secs = s.sections || [];
+  for (let i = 0; i < secs.length; i++) {
+    const ov = so[secId(i, secs[i])];
+    if (!ov) continue;                               // an id not in the resolved form matches nothing
+    const sec = secs[i];
+    if (ov.cycles != null) sec.cycles = ov.cycles;
+    if (ov.melody != null) sec.melody = ov.melody;
+    if (ov.bass != null) sec.bass = ov.bass;
+    if (ov.drums != null) sec.drums = ov.drums;
+    if (ov.pads != null) sec.pads = ov.pads;
+  }
+}
+
+// ---------- sound: per-voice instrument override ----------
+// Rewrites st.instruments[voice] to a sampler recipe EXACTLY the way the kernel's
+// toState rewrites a pitched recipe (genre-kernel.js samplerSpec + instrMerge):
+// {model:"sampler", sampler:{id, sr, zones:[{srcId:"ins_<id>_<i>", …}]}, dx7:null}
+// merged over the existing recipe so level/sends/cutoff survive, plus every zone
+// wav pushed into foundSources at vol 0 so both engines decode it through the
+// existing found paths. state-engine's pitchedUnit `case "sampler"` then builds
+// the native sampler voice unit (verified: forceSampled/pitchedUnit require
+// m.model==="sampler" && m.sampler.zones.length). The id must be a key of
+// K.SAMPLERS — the committed registry — so a URL can only ever name audio the
+// project already ships (the no-remote-sources law).
+const SOUND_VOICES = ["melody", "bass", "pad"];
+export function sanitizeSound(o) {
+  if (!o || typeof o !== "object" || Array.isArray(o)) return null;
+  const out = {};
+  for (const voice of SOUND_VOICES) {
+    const spec = o[voice];
+    if (!spec || typeof spec !== "object" || Array.isArray(spec)) continue;
+    const id = spec.instrument;
+    if (typeof id !== "string") continue;
+    const S = K.SAMPLERS && Object.prototype.hasOwnProperty.call(K.SAMPLERS, id) && K.SAMPLERS[id];
+    if (!S || !Array.isArray(S.zones) || !S.zones.length) continue;
+    out[voice] = { instrument: id };
+  }
+  return Object.keys(out).length ? out : null;
+}
+function applySound(s, sound) {
+  const so = sanitizeSound(sound);
+  if (!so) return;
+  for (const voice of SOUND_VOICES) {
+    if (!so[voice]) continue;
+    const id = so[voice].instrument, S = K.SAMPLERS[id];
+    const zones = S.zones.map((z, i) => ({ srcId: "ins_" + id + "_" + i, root: z.root, lo: z.lo, hi: z.hi,
+      vlo: z.vlo, vhi: z.vhi, loop: !!z.loop, loopStart: z.ls, loopEnd: z.le, len: z.len, sr: S.sr }));
+    const I = s.instruments || (s.instruments = {});
+    I[voice] = Object.assign({}, I[voice] || {}, { model: "sampler", sampler: { id, sr: S.sr, zones }, dx7: null });
+    s.foundSources = s.foundSources || [];
+    const have = new Set(s.foundSources.map((x) => x.id));
+    S.zones.forEach((z, i) => {
+      const sid = "ins_" + id + "_" + i;
+      if (have.has(sid)) return;
+      have.add(sid);
+      s.foundSources.push({ id: sid, label: S.label || id, url: "",
+        samplePath: "found/samples/instruments/" + S.dir + "/" + z.file,
+        vol: 0, pitch: 1, stretch: 0.5, cutoff: 18000 });
+    });
+  }
 }
 
 // ---------- the patch, as something you can keep ----------
@@ -95,6 +240,8 @@ export const PATCH_KEYS = new Set([
   "melodyGen",     // the wander walk's knobs (now on the melody ring)
   "melodyCells",   // drawn phrase cells             — stage 5
   "melodyWeave",   // the painted Markov table       — stage 5
+  "secover",       // per-section overrides BY ID — sanitizeSecover (THE GRID)
+  "sound",         // per-voice instrument override — sanitizeSound (THE GRID)
 ]);
 const MAX_PATCH = 6000;   // a URL nobody can paste is not persistence
 
@@ -121,6 +268,10 @@ export function decodePatch(str) {
     if (!o || typeof o !== "object" || Array.isArray(o)) return {};
     const keep = {};
     for (const k of Object.keys(o)) if (PATCH_KEYS.has(k)) keep[k] = o[k];
+    // the two structured keys are sanitized AT THE DOOR as well as at apply time
+    // — a decoded patch should already be clean so encodePatch round-trips it
+    if ("secover" in keep) { const c = sanitizeSecover(keep.secover, { cells: keep.melodyCells, kits: keep.kits }); if (c) keep.secover = c; else delete keep.secover; }
+    if ("sound" in keep) { const c = sanitizeSound(keep.sound); if (c) keep.sound = c; else delete keep.sound; }
     // the blend is validated the same way everything else is: only real anchor ids
     // with sane weights survive, so a hand-edited link cannot inject a genre name
     if (Array.isArray(o.__w)) {
@@ -166,10 +317,52 @@ export function sectionSpans() {
   const nChords = (prg && prg.chords && prg.chords.length) || 4;
   const cb = Math.max(2, Math.round(s.chordEvery || (s.meter ? 6 : 8)));
   const out = []; let at = 0;
-  for (const sec of s.sections || []) {
+  const secs = s.sections || [];
+  for (let i = 0; i < secs.length; i++) {
+    const sec = secs[i];
     const beats = Math.max(1, (sec.cycles || 1)) * nChords * cb;
-    out.push({ name: sec.name || "", start: at, beats, sec });
+    out.push({ id: secId(i, sec), index: i, name: sec.name || "", start: at, beats, sec });
     at += beats;
   }
   return out;
+}
+
+// ---------- the one edit path for layer axes (tiles ride this) ----------
+// v01 in 0..1 writes patch.layers[layer][axis]; null DROPS the entry — back to
+// stock — which is what a tile's double-tap revert means. The same
+// one-number-per-axis law as ever: the document stores what you set, the
+// resolved state gets it re-applied every build (layers.js).
+export function editLayer(layer, axis, v01) {
+  const layers = Object.assign({}, SONG.patch.layers || {});
+  const set = Object.assign({}, layers[layer] || {});
+  if (v01 == null) delete set[axis];
+  else set[axis] = Math.max(0, Math.min(1, +v01));
+  if (Object.keys(set).length) layers[layer] = set; else delete layers[layer];
+  const patch = Object.assign({}, SONG.patch);
+  if (Object.keys(layers).length) patch.layers = layers; else delete patch.layers;
+  edit({ patch });
+}
+
+// secover writer — merges one section's override; null field drops it; a fully
+// empty override drops the section entry (structure.js's section sheet rides this)
+export function editSecover(sectionId, field, value) {
+  const so = Object.assign({}, SONG.patch.secover || {});
+  const ov = Object.assign({}, so[sectionId] || {});
+  if (value == null) delete ov[field]; else ov[field] = value;
+  if (Object.keys(ov).length) so[sectionId] = ov; else delete so[sectionId];
+  const patch = Object.assign({}, SONG.patch);
+  const clean = sanitizeSecover(so);
+  if (clean) patch.secover = clean; else delete patch.secover;
+  edit({ patch });
+}
+
+// sound writer — instrument override per voice; null = back to the genre's own
+export function editSound(voice, instrumentId) {
+  const so = Object.assign({}, SONG.patch.sound || {});
+  if (instrumentId == null) delete so[voice];
+  else so[voice] = { instrument: instrumentId };
+  const patch = Object.assign({}, SONG.patch);
+  const clean = sanitizeSound(so);
+  if (clean) patch.sound = clean; else delete patch.sound;
+  edit({ patch });
 }

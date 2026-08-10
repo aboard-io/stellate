@@ -66,11 +66,19 @@
   <nav class="dw-nav"><a href="index.html">← star map</a></nav>
 </header>
 
-<!-- THE DECK. One vertical scroll, one strip per layer: what it plays on top,
-     the knobs that make it underneath. The kernel strip carries the tempo and
-     structure tracts above its radar because those describe the whole song rather
-     than any one voice. Built by app/daw/deck.js. -->
-<main id="dwDeck" aria-label="Song layers"></main>
+<!-- KERNEL → SONG → GRID → SHEET. One screen, mobile-first: the kernel card
+     (tap to open the sculptor), the song bar (section chips = column headers),
+     THE GRID (tracks × sections, rows sticky-left, columns h-scroll) with the
+     master row under it, and the sheet that appears on tap. Built by
+     app/daw/{kernelcard,structure,grid,sheet}.js. -->
+<main id="dwMain" aria-label="Song">
+  <section id="dwKernel" aria-label="Kernel"></section>
+  <nav id="dwSong" aria-label="Song structure"></nav>
+  <section id="dwGrid" aria-label="Tracks by section"></section>
+</main>
+
+<!-- THE SHEET: bottom sheet on mobile, right panel wide. app/daw/sheet.js owns it. -->
+<aside id="dwSheet" hidden aria-label="Editor sheet"></aside>
 
 <!-- the playhead sits bottom-right, where the star map keeps its chips -->
 <aside id="dwHead" class="dw-playhead" aria-live="off"></aside>
