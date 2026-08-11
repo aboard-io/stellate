@@ -165,18 +165,32 @@
   // -------------------------------------------------------------------- lenses
   // One row, read five ways. Each returns vocabulary the engine already speaks.
 
-  // DRUMS — the run structure of the row IS the kit. A run's head is the impact,
-  // its interior is the ride, and a cell standing alone is the backbeat. Nothing
-  // here draws a random number: `hits` ops are static, so a CA kit costs the rng
-  // exactly nothing and the rack law holds for free.
+  // DRUMS — WHERE a hit lands picks the drum; the run structure picks whether it
+  // is an impact or a roll.
+  //
+  // THE FIRST CUT USED RUN STRUCTURE ALONE — isolated = snare, run head = kick,
+  // interior = hat — and it was wrong in a way only visible once the page drew
+  // the lanes. "Isolated" is a SUBSET of "run head" and it was tested first, so a
+  // lone cell could never be a kick: the most natural thing anyone taps, evenly
+  // spaced single hits, produced five snares and no kick at all. A lens that
+  // turns the most obvious input into nonsense is not minimal, it is broken.
+  //
+  // So POSITION carries the lane, which is what a bar is for: the downbeats of
+  // each measure (cells 0/4/8/12 — beats 1, 3, 5, 7) are kick, the backbeats
+  // (2/6/10/14 — beats 2, 4, 6, 8) are snare, the off-eighths between them are
+  // ticks, and anything INSIDE a run is a hat. Draw four on the floor, get four
+  // kicks; draw straight eighths, get a backbeat; draw a run and its head speaks
+  // while its tail becomes hats. Still a pure function of the row, still zero rng
+  // draws — `hits` ops are static, so a CA kit costs the engine nothing.
   function lensDrums(row) {
     const kick = [], snare = [], hat = [];
     for (let i = 0; i < N; i++) {
       if (!lin(row, i)) continue;
       const l = lin(row, i - 1), r = lin(row, i + 1), t = i * STEP;
-      if (!l && !r) snare.push([t, 0.46]);
-      else if (!l) kick.push([t, 0.62]);
-      else hat.push([t, l && r ? 0.16 : 0.11]);      // interior of a long run accents
+      if (l) hat.push([t, r ? 0.16 : 0.11]);         // inside a run: the roll
+      else if (i % 4 === 0) kick.push([t, 0.62]);    // run head on a downbeat
+      else if (i % 4 === 2) snare.push([t, 0.46]);   // run head on a backbeat
+      else hat.push([t, 0.13]);                      // run head off the eighth: a tick
     }
     const ops = [];
     if (kick.length) ops.push({ d: "kick", hits: kick });
@@ -188,12 +202,19 @@
   // BASS — onsets at RISING EDGES only, so a run is one held note rather than a
   // machine-gun. Run length picks the chord degree, which is why the line moves
   // when the rhythm moves. Degrees, not pitches: the bar follows the harmony.
+  // DURATION carries the run length, so the DEGREE is free to carry motion: short
+  // notes alternate root and fifth by onset ordinal — the most ordinary bass move
+  // there is — and any run of two or more lifts to the octave. Mapping the degree
+  // to run length alone (the first cut) gave a static root pedal on exactly the
+  // rows people draw first, for the same reason the drum lens did.
   function lensBass(row) {
     const out = [];
+    let k = 0;
     for (let i = 0; i < N; i++) {
       if (!lin(row, i) || lin(row, i - 1)) continue;
       let len = 1; while (i + len < N && lin(row, i + len)) len++;
-      out.push([i * STEP, Math.min(len * STEP, 4), len === 1 ? "r5" : len === 2 ? "f6" : "r6"]);
+      out.push([i * STEP, Math.min(len * STEP, 4), len >= 2 ? "r6" : (k % 2 ? "f6" : "r5")]);
+      k++;
     }
     return out;
   }

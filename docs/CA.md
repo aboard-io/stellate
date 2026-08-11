@@ -76,8 +76,8 @@ nothing here can desynchronise from `csd-engine`.
 
 | lens | reads | emits |
 |---|---|---|
-| **drums** | run structure: head = impact, interior = ride, alone = backbeat; both neighbours live = accent | a `state.kits` entry in the shipped op grammar |
-| **bass** | rising edges only; run length picks the degree | a `state.bassCells` entry in chord degrees |
+| **drums** | position picks the lane — downbeats kick, backbeats snare, off-eighths tick — and anything inside a run is a hat | a `state.kits` entry in the shipped op grammar |
+| **bass** | rising edges only; duration is the run length, degree alternates root/fifth and lifts an octave on a run of 2+ | a `state.bassCells` entry in chord degrees |
 | **melody** | the running count of live cells to the left, folded into the voicing | a `state.melodyCells` entry in ladder indices |
 | **harmony** | four nibbles → four popcounts mod 4 → a P·L·R word | a progression in the shape `voicing()` returns |
 | **form** | the orbit's own statistics | `state.sections` |
@@ -91,6 +91,18 @@ the first four notes are ladder 0,1,2,3 in order.
 
 **A CA kit spends zero rng draws.** Every op is a static `hits` list — no `p`, no
 `pick`, no `grid` — so the rack law holds for free and the kit is byte-stable.
+
+**And the lens the page caught.** Both rhythm lenses originally keyed everything
+on run structure alone: isolated = snare, run head = kick, run length = degree.
+It reads well and it was broken, in a way nothing revealed until the page drew
+the lanes under the row. "Isolated" is a *subset* of "run head" and was tested
+first, so a lone cell could never be a kick — which means **four on the floor, the
+most natural thing anyone taps, produced four snares and no kick at all**, over a
+static root pedal. Position now carries the drum lane and the onset ordinal
+carries the bass degree, and the gate asserts the specific case: four on the floor
+is four kicks, straight eighths is a backbeat, single hits alternate root and
+fifth. A lens that turns the most obvious input into nonsense is not minimal, it
+is broken — and an abstraction you cannot see is an abstraction that hides that.
 
 ## The harmony: why neo-Riemannian
 

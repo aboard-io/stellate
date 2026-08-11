@@ -60,9 +60,14 @@
 <div id="caShell">
   <main id="caMain">
     <section class="ca-block" aria-labelledby="caSeedH">
-      <h2 id="caSeedH" class="ca-h">the seed<small>sixteen cells · one bar · tap to draw</small></h2>
+      <h2 id="caSeedH" class="ca-h">the seed<small>one bar · draw with a finger · everything below is this row, read differently</small></h2>
       <div id="caSeed" class="ca-seedrow" role="group" aria-label="Seed row, sixteen cells"></div>
+      <div id="caBeats" class="ca-beats" aria-hidden="true"></div>
+      <!-- WHAT THE ROW TURNS INTO — the same sixteen columns, five lenses deep.
+           This is the page's answer to "I tapped some boxes, so what?" -->
+      <div id="caLanes" class="ca-lanes" aria-label="What the seed row produces"></div>
       <p class="ca-word" id="caWord"></p>
+      <div id="caTempo" class="ca-tempo"></div>
     </section>
 
     <section class="ca-block ca-grow" aria-labelledby="caOrbitH">
@@ -83,7 +88,12 @@
 
   <aside id="caRail" aria-label="Rules, harmony and sound">
     <section class="ca-block" aria-labelledby="caRulesH">
-      <h2 id="caRulesH" class="ca-h">the rule<small>256 futures for the row you drew</small></h2>
+      <h2 id="caRulesH" class="ca-h">the rule<small>how each cell decides to live</small></h2>
+      <!-- A RULE IS EIGHT YES/NO ANSWERS. Each switch is one situation a cell
+           can be in — left/self/right — and whether it lives next generation.
+           Flip them and the rule number follows; that is all a rule is. -->
+      <div id="caBits8" class="ca-nbrs" role="group" aria-label="The rule, as eight neighbourhood answers"></div>
+      <p class="ca-note ca-why">a cell looks at its neighbour, itself and its other neighbour — eight situations, eight answers</p>
       <canvas id="caRules" tabindex="0" role="application"
               aria-label="Rule browser: 256 rules as spacetime thumbnails. Arrow keys to move, Enter to pick."></canvas>
       <p class="ca-note" id="caRuleNote" aria-live="polite"></p>

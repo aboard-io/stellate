@@ -16,7 +16,12 @@
 // What both share is the ENGINE, and nothing else.
 const K = window.GenreKernel, E = window.CsdEngine, CA = window.CsdCA;
 
-export const DOC = { seed: 0x1249, rule: 110, key: 0, genre: "acidhouse" };
+// `bpm: null` means "the base genre's own", and null is stored rather than the
+// resolved number ON PURPOSE: writing 122 the moment the page loads would freeze
+// the tempo to whatever acidhouse happened to say, and switching to `jungle`
+// would then quietly stay at 122. Absent means following; a number means yours.
+export const DOC = { seed: 0x1249, rule: 110, key: 0, genre: "acidhouse", bpm: null };
+export const BPM_MIN = 50, BPM_MAX = 200;
 
 // The bases offered as chips. Any anchor works — `?g=` accepts all 274 and is
 // validated against K.GENRES — but a picker over 274 rows is the surface this
@@ -38,7 +43,7 @@ export function touch() {
 // here beyond "did anything actually change" — the orbit repaints on every cell
 // you tap and the cost is invisible.
 let _key = null, _res = null, _ev = null;
-const keyOf = () => DOC.seed + ":" + DOC.rule + ":" + DOC.key + ":" + DOC.genre;
+const keyOf = () => DOC.seed + ":" + DOC.rule + ":" + DOC.key + ":" + DOC.genre + ":" + DOC.bpm;
 
 export function edit(p) { Object.assign(DOC, p); _key = null; writeUrl(); touch(); }
 
@@ -48,6 +53,13 @@ export function resolved() {
   const t = K.track(DOC.genre, { seed: 7 });
   const base = JSON.parse(JSON.stringify(t.state || t));
   _res = CA.apply(base, { seed: DOC.seed, rule: DOC.rule, key: DOC.key, engine: E });
+  // TEMPO IS NOT ONE OF THE 24 BITS, and it is not part of the orchestra either
+  // — it is the third thing, alongside key: a property of the performance. It is
+  // applied AFTER the automaton, so it changes nothing the lenses produced (the
+  // kit's beat offsets, the cell durations and the form are all in BEATS, which
+  // is exactly why a tempo change cannot reshape the song).
+  if (DOC.bpm) _res.state.bpm = DOC.bpm;
+  _res.stockBpm = base.bpm;
   _key = k; _ev = null;
   return _res;
 }
@@ -66,6 +78,16 @@ export function setCell(i, on) {
   if (next !== DOC.seed) edit({ seed: next });
 }
 
+// ------------------------------------------------------------------ the tempo
+// `bpm()` is what is SOUNDING (yours, or the genre's); `bpmSet()` is whether you
+// have said anything. `bpmRevert()` deletes the override rather than writing the
+// stock number back — see the DOC comment above for why that distinction is the
+// whole design of this field.
+export const bpm = () => DOC.bpm || Math.round(resolved().stockBpm || 120);
+export const bpmSet = () => DOC.bpm != null;
+export const setBpm = (v) => edit({ bpm: Math.max(BPM_MIN, Math.min(BPM_MAX, Math.round(v))) });
+export const bpmRevert = () => edit({ bpm: null });
+
 // ----------------------------------------------------------------------- URL
 // ?s=<hex>&r=<0..255>&k=<0..11>&g=<anchor>. Every field is a NUMBER or a key of
 // the committed genre table, so a stranger's link cannot name anything the
@@ -81,6 +103,8 @@ export function readUrl() {
   if (k >= 0 && k <= 11) DOC.key = k | 0;
   const g = q.get("g");
   if (g && K.GENRES[g]) DOC.genre = g;
+  const b = parseInt(q.get("b"), 10);
+  if (b >= BPM_MIN && b <= BPM_MAX) DOC.bpm = b | 0;
   _key = null;
 }
 export function url() {
@@ -90,6 +114,7 @@ export function url() {
   u.searchParams.set("r", String(DOC.rule));
   if (DOC.key) u.searchParams.set("k", String(DOC.key));
   if (DOC.genre !== "acidhouse") u.searchParams.set("g", DOC.genre);
+  if (DOC.bpm) u.searchParams.set("b", String(DOC.bpm));
   return u.toString();
 }
 function writeUrl() { try { history.replaceState(null, "", url()); } catch (e) {} }

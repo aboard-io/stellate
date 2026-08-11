@@ -4,11 +4,15 @@
 // relax, no font race to win and no idle index to build — the document is 24
 // bits and everything downstream of it is a pure function that runs in
 // microseconds. That is not an optimisation; it is what the design is FOR.
-import { DOC, BASES, edit, readUrl, url, roll, resolved, touch, subs } from "./doc.js";
+import { DOC, BASES, BPM_MIN, BPM_MAX, edit, readUrl, url, roll, resolved, touch, subs,
+  bpm, bpmSet, setBpm, bpmRevert } from "./doc.js";
 import * as GRID from "./grid.js";
 import * as RULES from "./rules.js";
 import * as TON from "./tonnetz.js";
 import * as PLAY from "./play.js";
+import { makeTile } from "./tile.js";
+import * as LANES from "./lanes.js";
+import * as BITS from "./rulebits.js";
 
 const K = window.GenreKernel;
 const $ = (id) => document.getElementById(id);
@@ -17,9 +21,34 @@ readUrl();
 
 GRID.buildSeed($("caSeed"));
 GRID.buildOrbit($("caOrbit"), $("caWord"), $("caOrbitNote"), $("caBits"));
+LANES.build($("caLanes"));
+BITS.build($("caBits8"));
 RULES.build($("caRules"), $("caRuleNote"));
 TON.build($("caTonnetz"), $("caKey"));
 PLAY.build($("caCtl"));
+
+// THE TEMPO, beside the bar it counts. Tempo used to ride the base genre alone,
+// so "make it faster" meant "pick a different orchestra" — which is backwards:
+// how fast the bar goes is composition, the instruments playing it are not.
+// Absent = the genre's own, and double-tap gives that back (doc.js says why the
+// revert drops the field instead of writing the number).
+const tempoTile = makeTile({
+  label: "tempo", min: BPM_MIN, max: BPM_MAX, step: 1, big: 5,
+  get: bpm, set: setBpm, isSet: bpmSet, revert: bpmRevert,
+  fmt: (v) => Math.round(v) + " bpm",
+});
+$("caTempo").appendChild(tempoTile);
+subs.push(() => tempoTile.repaint());
+
+// the beat ruler under the row — sixteen cells is a BAR, and without this it is
+// sixteen anonymous boxes
+const beats = $("caBeats");
+for (let i = 0; i < 16; i++) {
+  const b = document.createElement("i");
+  b.textContent = i % 2 === 0 ? String(1 + i / 2) : "";
+  if (i % 2 === 0) b.className = "on";
+  beats.appendChild(b);
+}
 
 // the base chips. Twelve anchors spread across the space; `?g=` reaches all 274
 // (doc.js says why the picker is not a table).

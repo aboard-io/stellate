@@ -80,18 +80,32 @@ head("4. the lenses emit engine vocabulary");
   ok(kit.ops.every((o) => Array.isArray(o.hits) && o.hits.length), "every kit op is a non-empty static hit list");
   ok(kit.ops.every((o) => !("p" in o) && !("pick" in o) && !("grid" in o)),
     "a CA kit spends ZERO rng draws — no p/pick/grid ops");
-  // cells 3,4 are a run: 3 is the head (kick), 4 the interior (hat)
-  ok(lane("kick").some((h) => h[0] === 1.5), "a run head is a kick");
-  // cell 6 stands alone (5 and 7 dead) => snare
-  ok(lane("snare").some((h) => h[0] === 3), "an isolated cell is a backbeat snare");
-  // cells 9,10,11 are a run => 9 is the head, 10 and 11 are hats, and 10 (both
-  // neighbours live) accents while 11 (right neighbour dead) does not
+  // POSITION PICKS THE LANE. Cell 0 is a downbeat, so it is a kick; cell 6 is a
+  // backbeat, so it is a snare; cell 3 is an off-eighth tick.
+  ok(lane("kick").some((h) => h[0] === 0), "a run head on a downbeat is a kick");
+  ok(lane("snare").some((h) => h[0] === 3), "a run head on a backbeat is a snare");
+  ok(lane("hat").some((h) => h[0] === 1.5), "a run head off the eighth is a tick, not a kick");
+  // cells 9,10,11 are a run => 9 is the head, 10 and 11 are INSIDE it and become
+  // hats whatever position they are on; 10 (both neighbours live) accents
   ok(lane("hat").some((h) => h[0] === 5 && h[1] === 0.16), "a run interior with both neighbours live accents");
   ok(lane("hat").some((h) => h[0] === 5.5 && h[1] === 0.11), "a run's last cell is an unaccented hat");
-  // THE LINEAR READ, stated out loud: cell 15 is live and cell 0 is live, but the
-  // lens does not wrap them into one run — 15 is isolated (a snare), and a row
-  // whose cell 0 is a run head gives a downbeat kick.
-  ok(lane("snare").some((h) => h[0] === 7.5), "cell 15 does not wrap onto cell 0 — the lens reads linearly");
+  ok(!lane("snare").some((h) => h[0] === 5), "a cell inside a run is a hat even on a backbeat");
+  // THE LINEAR READ: cell 15 is live and so is cell 0, but the lens does not wrap
+  // them into one run — 15 stays a run head of its own.
+  ok(lane("hat").some((h) => h[0] === 7.5), "cell 15 does not wrap onto cell 0 — the lens reads linearly");
+
+  // THE REGRESSION THIS LENS EXISTS TO PREVENT. The first cut keyed the lane on
+  // run structure alone and tested "isolated" before "run head" — so the most
+  // natural thing anyone taps produced five snares and NO KICK. Four on the floor
+  // must be four kicks, and straight eighths must be a kit rather than a wall of
+  // one drum.
+  const four = CA.lensDrums(CA.fromCells([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]));
+  const fl = (k, d) => (k.ops.find((o) => o.d === d) || { hits: [] }).hits;
+  ok(fl(four, "kick").length === 4, "four on the floor is FOUR KICKS (got " + fl(four, "kick").length + ")");
+  ok(fl(four, "snare").length === 0 && fl(four, "hat").length === 0, "...and nothing else");
+  const eighths = CA.lensDrums(CA.fromCells(new Array(16).fill(0).map((_, i) => (i % 2 === 0 ? 1 : 0))));
+  ok(fl(eighths, "kick").length === 4 && fl(eighths, "snare").length === 4,
+    "straight eighths is a BACKBEAT — 4 kicks, 4 snares (got " + fl(eighths, "kick").length + "/" + fl(eighths, "snare").length + ")");
   ok(CA.lensDrums(CA.fromCells([1, 1])).ops.find((o) => o.d === "kick").hits[0][0] === 0,
     "a run starting at cell 0 is a downbeat kick");
   ok(kit.ops.every((o) => o.hits.every((h) => h[0] >= 0 && h[0] < CA.CELL_BEATS)),
@@ -104,7 +118,11 @@ head("4. the lenses emit engine vocabulary");
   ok(CA.pop(row) === 8 && bass.length < CA.pop(row), "the bass is sparser than the row is dense");
   ok(bass.every(([b, d, t]) => b >= 0 && b < CA.CELL_BEATS && d > 0 && ["r5", "r6", "f6"].indexOf(t) >= 0),
     "every bass note is [beat, dur, degree] in the engine's degree vocabulary");
-  ok(bass.some(([, , t]) => t === "r6"), "a run of 3+ reaches the octave degree");
+  ok(bass.some(([, , t]) => t === "r6"), "a run of 2+ lifts to the octave degree");
+  // and the short notes must MOVE rather than pedal the root — the same failure
+  // the drum lens had, in the bass: four on the floor used to be four roots.
+  const fourB = CA.lensBass(CA.fromCells([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]));
+  ok(fourB.map((b) => b[2]).join(" ") === "r5 f6 r5 f6", "single hits alternate root and fifth, not a root pedal");
 
   const mel = CA.lensMelody(row);
   ok(mel.length === CA.pop(row), "one melody note per live cell");
