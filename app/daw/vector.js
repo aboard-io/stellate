@@ -32,13 +32,20 @@ const TAU = Math.PI * 2;
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 export function makeVector(host, opts) {
-  const o = Object.assign({ size: 260, min: 0.06, hue: 190, onInput: null, onCommit: null }, opts || {});
+  const o = Object.assign({ size: 260, min: 0.06, hue: 190, labelPad: 0, onInput: null, onCommit: null }, opts || {});
   let axes = [], ghost = null, dragging = -1;
 
+  // LABELS LIVE OUTSIDE THE RING (at 1.3R), so at R = size/2 - 30 the outermost
+  // words fall past the viewBox edge and the svg clips its own axis names — the
+  // kernel card shipped reading "ve" and "br". `labelPad` widens the viewBox by a
+  // gutter on all four sides WITHOUT touching the geometry: the radar is drawn
+  // identically, it just stops being flush with the box. Default 0 = byte-identical
+  // for every existing caller.
+  const P = Math.max(0, +o.labelPad || 0);
   const NS = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(NS, "svg");
   svg.setAttribute("class", "dw-vec");
-  svg.setAttribute("viewBox", `0 0 ${o.size} ${o.size}`);
+  svg.setAttribute("viewBox", `${-P} ${-P} ${o.size + 2 * P} ${o.size + 2 * P}`);
   svg.setAttribute("role", "group");
   host.appendChild(svg);
 
@@ -87,8 +94,14 @@ export function makeVector(host, opts) {
         (ind ? `role="img" aria-label="${a.label}: ${Math.round(a.v * 100)}%, reports only"` :
           `tabindex="0" role="slider" aria-label="${a.label}" aria-valuemin="0" aria-valuemax="1" ` +
           `aria-valuenow="${a.v.toFixed(2)}" aria-valuetext="${Math.round(a.v * 100)}%"`) + `/>`);
-      const lp = pt(i, n, 1.3), c = Math.cos(ang(i, n));
-      parts.push(`<text x="${lp[0].toFixed(1)}" y="${lp[1].toFixed(1)}" class="dw-vlab${a.kind === "indicator" ? " ind" : ""}" ` +
+      // labels ride an ELLIPSE, not a circle: a word grows sideways, so the axes
+      // pointing left and right need their anchor pulled IN (1.06R) to leave the
+      // gutter room for the word, while the top and bottom ones can sit out at
+      // 1.3R where only line-height competes. A single 1.3R circle is what put
+      // "harmony" and "bright" half outside the box.
+      const th = ang(i, n), c = Math.cos(th);
+      const lx = C + c * R * 1.06, ly = C + Math.sin(th) * R * 1.3;
+      parts.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" class="dw-vlab${a.kind === "indicator" ? " ind" : ""}" ` +
         `text-anchor="${c > 0.3 ? "start" : c < -0.3 ? "end" : "middle"}">${a.label}</text>`);
     }
     svg.innerHTML = parts.join("");
@@ -105,7 +118,9 @@ export function makeVector(host, opts) {
   }
   function local(ev) {
     const r = svg.getBoundingClientRect();
-    return [((ev.clientX - r.left) / r.width) * o.size, ((ev.clientY - r.top) / r.height) * o.size];
+    const span = o.size + 2 * P;                       // the padded viewBox
+    return [-P + ((ev.clientX - r.left) / r.width) * span,
+            -P + ((ev.clientY - r.top) / r.height) * span];
   }
   function valueAt(x, y) {
     return clamp01(Math.hypot(x - C, y - C) / R);
@@ -167,6 +182,14 @@ export function makeVector(host, opts) {
 
   return {
     el: svg,
+    // the radar's real geometry in CLIENT pixels — centre and full-scale radius.
+    // Probes drag by angle and radius, and with a label gutter they can no longer
+    // infer the scale from the element's width; this hands it to them.
+    geom() {
+      const r = svg.getBoundingClientRect();
+      const k = r.width / (o.size + 2 * P);
+      return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, R: R * k, scale: k };
+    },
     // `next` carries the value to DISPLAY per axis. The caller decides whether an
     // axis shows what the user set or what the engine resolved (orbitpanel.js) —
     // this module never second-guesses it, which is what stops the snap-back.

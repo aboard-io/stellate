@@ -4,9 +4,20 @@
 //
 //   A shape          6 track rows × the RESOLVED section count; every cell has a
 //                    sized canvas; the SONG bar carries one chip per section
+//   A2 the shell     DAW LEFT, MANIPULATION RIGHT: at 1440 the flyout is a
+//                    PERMANENT rail beside the grid showing the kernel (it is
+//                    never empty); at 390 the same element is a bottom sheet
+//                    parked off-screen until something opens it, and it stacks
+//                    ON TOP of the controller rather than under it. sheet.js
+//                    knows none of this (its header says so out loud), so only
+//                    a gate that measures PIXELS at both viewports holds it.
 //   B routing        a real click on a cell opens the sheet FOR THAT TRACK
 //                    (title + tabs); row header = whole song; master row =
-//                    master sheet; a song-bar chip = the section sheet
+//                    master sheet; a song-bar chip = the section sheet; the
+//                    KERNEL row opens the kernel view (the radar's new home)
+//   B2 the stack     a picker is a PLACE YOU GO: drilling in pushes a view, ←
+//                    pops it, and backing out past the last one lands on the
+//                    kernel — the root of the stack
 //   C secover off    turning one section's voice off (patch.secover) dims
 //                    EXACTLY that cell (∅) and drops that voice's events in
 //                    that span — every other span keeps its notes
@@ -26,6 +37,31 @@ const fail = (m) => { console.error("FAIL:", m); process.exitCode = 1; };
 const TRACKS = ["chords", "melody", "bass", "pad", "drums", "samples"];
 const b64u = (o) => Buffer.from(JSON.stringify(o)).toString("base64")
   .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+// the bottom sheet slides (transform/visibility, .18s) and the grid repaints on
+// a debounced resize, so every viewport-flip read below waits for the STATE it
+// is about to assert instead of sleeping a guessed number of milliseconds. It
+// still fails if the state never arrives — it just stops failing because the
+// machine was busy running four other gates.
+const settle = (page, fn) => page.waitForFunction(fn, null, { timeout: 6000 }).catch(() => {});
+const PARKED = () => {
+  const s = document.getElementById("dwSheet"), r = s.getBoundingClientRect();
+  return !document.body.classList.contains("dw-sheet-open") &&
+    (getComputedStyle(s).visibility === "hidden" || r.top >= window.innerHeight - 1);
+};
+// RAISED MEANS ARRIVED, NOT MOVING. The sheet slides up under a .18s transform,
+// and a predicate that only watches the TOP edge goes true a third of the way
+// through the slide — at which point the floor is still hundreds of pixels below
+// the controller, and the "sheet parks on top of the controller" assertion below
+// fails on a number that is merely a frame early (785, 839, 888 — a different one
+// every run). So the raised test also demands the floor has landed where the CSS
+// puts it: at the controller's ceiling.
+const RAISED = () => {
+  const s = document.getElementById("dwSheet"), r = s.getBoundingClientRect();
+  const c = document.getElementById("dwCtl").getBoundingClientRect();
+  return getComputedStyle(s).visibility === "visible" && r.top < window.innerHeight * 0.6 &&
+    r.bottom <= c.top + 1;
+};
 
 const allHashes = (page) => page.evaluate((tracks) => {
   const o = {};
@@ -88,6 +124,114 @@ async function main() {
   if (!shape.sized) fail("a cell canvas is unsized"); else ok("every cell canvas is sized");
   if (shape.chips !== shape.cols) fail(`song bar has ${shape.chips} chips for ${shape.cols} sections`);
   else ok("the SONG bar carries one chip per section");
+  // the KERNEL row is the top of the pipeline and the MASTER row the bottom —
+  // both are grid furniture, NEITHER is a track: rows() stays 6 or the rack
+  // law's row accounting (and every hash in this file) is measuring the wrong
+  // thing.
+  const furniture = await page.evaluate(() => ({
+    kernelHeads: document.querySelectorAll(".dw-rowhead.dw-kernelhead").length,
+    kernelCells: document.querySelectorAll(".dw-kernelcell").length,
+    kernelText: (document.querySelector(".dw-kernelcell") || {}).textContent || "",
+    glyph: !!document.querySelector(".dw-kernelcell .dw-kthumb"),
+    trackHeads: document.querySelectorAll(".dw-rowhead[data-track]").length,
+  }));
+  if (furniture.kernelHeads !== 1 || furniture.kernelCells !== 1)
+    fail(`the kernel row is not on the grid (${furniture.kernelHeads} heads, ${furniture.kernelCells} cells)`);
+  else if (!furniture.glyph || !/seed \d+ · \d+ bpm/.test(furniture.kernelText))
+    fail("the kernel row does not read as the kernel: " + JSON.stringify(furniture.kernelText));
+  else ok(`the grid opens with a KERNEL row (glyph + "${furniture.kernelText.match(/seed \d+ · \d+ bpm/)[0]}")`);
+  if (furniture.trackHeads !== 6) fail(`${furniture.trackHeads} track row headers — the kernel/master rows are not tracks`);
+  else ok("kernel and master are furniture, not tracks (6 track rows)");
+
+  // ---- A2 the shell: rail at 1440, bottom sheet at 390 ----
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(400);
+  const rail = await page.evaluate(() => {
+    const s = document.getElementById("dwSheet"), m = document.getElementById("dwMain");
+    const r = s.getBoundingClientRect(), mr = m.getBoundingClientRect();
+    const de = document.documentElement;
+    return { hidden: !!s.hidden, vis: getComputedStyle(s).visibility,
+      w: Math.round(r.width), h: Math.round(r.height),
+      onScreen: r.right <= window.innerWidth + 1 && r.left < window.innerWidth - 100 &&
+                r.top < window.innerHeight - 100 && r.bottom > 100,
+      beside: mr.right <= r.left + 1 && mr.width > 300,
+      stack: window.__DAW.sheet.stack(), open: window.__DAW.sheet.isOpen(),
+      title: s.querySelector(".dw-sheettitle").textContent,
+      backHidden: s.querySelector(".dw-sheetback").hidden,
+      radar: !!s.querySelector(".dw-vec"),
+      handle: getComputedStyle(s.querySelector(".dw-sheethandle")).display,
+      close: getComputedStyle(s.querySelector(".dw-sheetclose")).display,
+      xover: de.scrollWidth - window.innerWidth,
+      pageScroll: de.scrollHeight - de.clientHeight };
+  });
+  if (rail.hidden || rail.vis !== "visible" || !rail.onScreen || rail.w < 300)
+    fail("the rail is not on screen at 1440: " + JSON.stringify(rail));
+  else if (!rail.beside)
+    fail("the rail sits OVER the DAW column rather than beside it: " + JSON.stringify(rail));
+  else ok(`the flyout is a permanent ${rail.w}px rail beside the DAW at 1440`);
+  if (rail.stack.join(",") !== "kernel" || !rail.radar || rail.title !== "kernel")
+    fail("the rail's root view is not the kernel: " + JSON.stringify(rail.stack) + " / " + rail.title);
+  else ok("the rail is never empty — its root view is the kernel, radar and all");
+  if (!rail.backHidden) fail("← shows at the root of the stack (there is nowhere back to)");
+  else ok("← is hidden at the root of the stack");
+  // NOTHING on a permanent rail may claim to close it. Both the ✕ and the grab
+  // handle DO something when clicked (close() resets the stack), which on the
+  // rail means "you are now somewhere else" dressed up as "put this away" — so
+  // both are off at ≥1000px. (The handle rule needs an id: a later
+  // `.dw-sheethandle{display:grid}` outranks a bare class in the cascade, and
+  // that is exactly how the handle survived on the desk for a while.)
+  if (rail.handle !== "none" || rail.close !== "none")
+    fail(`the rail carries a way to "close" itself (handle:${rail.handle} ✕:${rail.close}) — it cannot close, it can only go home`);
+  else ok("no grab handle and no ✕ on the permanent rail — ← is the whole navigation model");
+  if (rail.xover > 1) fail(`the page scrolls sideways by ${rail.xover}px at 1440`);
+  else if (rail.pageScroll > 2) fail(`the PAGE scrolls at 1440 (${rail.pageScroll}px) — the DAW column should`);
+  else ok("no page scroll at 1440: the viewport is the frame, the grid scrolls inside it");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await settle(page, PARKED);
+  const parked = await page.evaluate(() => {
+    const s = document.getElementById("dwSheet"), m = document.getElementById("dwMain");
+    const r = s.getBoundingClientRect();
+    return { open: document.body.classList.contains("dw-sheet-open"),
+      away: getComputedStyle(s).visibility === "hidden" || r.top >= window.innerHeight - 1,
+      mainW: Math.round(m.getBoundingClientRect().width), vw: window.innerWidth,
+      handle: getComputedStyle(document.querySelector(".dw-sheethandle")).display };
+  });
+  if (parked.open || !parked.away) fail("the bottom sheet is not parked at 390: " + JSON.stringify(parked));
+  else ok("at 390 the same element is a bottom sheet, parked until something opens it");
+  if (parked.mainW < parked.vw - 24) fail(`the grid is only ${parked.mainW}px of ${parked.vw} — the rail is still taking space`);
+  else ok("the grid gets the whole phone width");
+  await page.click('.dw-cellbtn[data-track="drums"][data-sec="0"]');
+  await settle(page, RAISED);
+  const sheeted = await page.evaluate(() => {
+    const s = document.getElementById("dwSheet"), c = document.getElementById("dwCtl");
+    const r = s.getBoundingClientRect(), cr = c.getBoundingClientRect();
+    return { vis: getComputedStyle(s).visibility, top: Math.round(r.top), bottom: Math.round(r.bottom),
+      ctlTop: Math.round(cr.top), vh: window.innerHeight,
+      handle: getComputedStyle(document.querySelector(".dw-sheethandle")).display,
+      title: s.querySelector(".dw-sheettitle").textContent };
+  });
+  if (sheeted.vis !== "visible" || sheeted.top > sheeted.vh * 0.6)
+    fail("tapping a cell did not raise the bottom sheet: " + JSON.stringify(sheeted));
+  else ok(`a cell tap raises the bottom sheet ("${sheeted.title}", top ${sheeted.top} of ${sheeted.vh})`);
+  if (sheeted.bottom > sheeted.ctlTop + 1)
+    fail(`the sheet's floor (${sheeted.bottom}) runs under the controller's ceiling (${sheeted.ctlTop})`);
+  else ok("the sheet stops at the controller's ceiling — nothing hides behind the transport");
+  if (sheeted.handle === "none") fail("no grab handle on the phone sheet");
+  else ok("the phone sheet carries its grab handle");
+  await page.click(".dw-sheethandle");
+  await settle(page, PARKED);
+  const reparked = await page.evaluate(() => {
+    const r = document.getElementById("dwSheet").getBoundingClientRect();
+    return { open: document.body.classList.contains("dw-sheet-open"),
+      away: getComputedStyle(document.getElementById("dwSheet")).visibility === "hidden" ||
+            r.top >= window.innerHeight - 1,
+      stack: window.__DAW.sheet.stack() };
+  });
+  if (reparked.open || !reparked.away) fail("the grab handle did not put the sheet away: " + JSON.stringify(reparked));
+  else ok("the grab handle parks it again (stack back at the " + reparked.stack.join(">") + " root)");
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.waitForTimeout(400);
 
   // ---- B routing: real clicks, then read the sheet ----
   const route = async (click, want) => {
@@ -114,6 +258,100 @@ async function main() {
   const secs = await route(`document.querySelector('#dwSong .dw-secchip').click()`);
   if (secs.hidden || !/^section/.test(secs.title)) fail("song-bar chip: " + JSON.stringify(secs));
   else ok(`a song-bar chip opens the section sheet ("${secs.title}")`);
+
+  // the kernel row is the DOOR TO THE RADAR now — the card that used to eat the
+  // top of the page is a VIEW, and the row that replaced it must reach it. Both
+  // halves (the row header and the wide cell) route there, and it lands at the
+  // ROOT of the stack, not on top of whatever was open.
+  for (const sel of [".dw-kernelcell", ".dw-rowhead.dw-kernelhead"]) {
+    const kern = await page.evaluate((s) => {
+      window.__DAW.sheet.open("melody");                 // something else first
+      document.querySelector(s).click();
+      const el = window.__DAW.sheet.el();
+      return { stack: window.__DAW.sheet.stack(), open: window.__DAW.sheet.isOpen(),
+        title: el.querySelector(".dw-sheettitle").textContent,
+        radar: !!el.querySelector(".dw-vec"),
+        dots: el.querySelectorAll('.dw-vdot[role="slider"]').length,
+        backHidden: el.querySelector(".dw-sheetback").hidden };
+    }, sel);
+    if (!kern.open || kern.stack.join(",") !== "kernel" || !kern.radar)
+      fail(`${sel} did not open the kernel view: ` + JSON.stringify(kern));
+    else if (!kern.backHidden)
+      fail(`${sel} left the kernel stacked on top of the melody sheet (← still showing)`);
+    else ok(`${sel} opens the kernel view at the root (${kern.dots} sculptor handles)`);
+  }
+  // …and open() must MEAN the same thing the row does. It did not: "kernel" is
+  // not a track, so viewForTarget built a tab-less view that rendered NOTHING —
+  // a sheet with the right title and an empty body, which reads as deliberate.
+  // Every caller that is not the grid row (the probe hook, a gate, a link) got
+  // the blank. Same for any unknown target: bottom out at the root, never blank.
+  const viaOpen = await page.evaluate(() => {
+    const out = {};
+    for (const t of ["kernel", "no-such-target"]) {
+      window.__DAW.sheet.open("melody");
+      window.__DAW.sheet.open(t);
+      const el = window.__DAW.sheet.el();
+      out[t] = { stack: window.__DAW.sheet.stack().join(","),
+        body: el.querySelector(".dw-sheetbody").children.length,
+        radar: !!el.querySelector(".dw-vec") };
+    }
+    return out;
+  });
+  for (const t of ["kernel", "no-such-target"]) {
+    const r = viaOpen[t];
+    if (r.stack !== "kernel" || !r.radar || !r.body)
+      fail(`sheet.open("${t}") did not land on the kernel view: ` + JSON.stringify(r));
+    else ok(`sheet.open("${t}") lands on the kernel view with a body (${r.body} blocks), never blank`);
+  }
+  await page.evaluate(() => window.__DAW.sheet.close());
+
+  // ---- B2 the view stack: drill in, back out ----
+  // The lozenge walls died because a picker became a PLACE YOU GO. That is only
+  // true if the stack really pushes and really pops — through the ← in the head,
+  // not through a probe call — and if backing out past the last view lands on
+  // the kernel instead of an empty rail.
+  await page.evaluate(() => document.querySelector('.dw-rowhead[data-track="drums"]').click());
+  await page.waitForTimeout(300);
+  const drill = await page.evaluate(() => {
+    const t = (window.__DAW.tables() || []).find((x) => x.label === "section");
+    if (!t) return { err: "the drums sheet has no per-section table to drill into" };
+    const before = { depth: window.__DAW.sheet.depth(), view: window.__DAW.sheet.view() };
+    const id = t.ids()[0];
+    t.rowEl(id).click();                                  // the row IS the door
+    const el = window.__DAW.sheet.el();
+    return { before, sections: t.count(),
+      depth: window.__DAW.sheet.depth(), stack: window.__DAW.sheet.stack(),
+      title: el.querySelector(".dw-sheettitle").textContent,
+      backHidden: el.querySelector(".dw-sheetback").hidden,
+      picked: id };
+  });
+  if (drill.err) fail(drill.err);
+  else if (drill.before.depth !== 1 || drill.depth !== 2)
+    fail(`drilling in did not push a view: depth ${drill.before.depth} → ${drill.depth}`);
+  else ok(`a section row drills into a picker view (${drill.sections} sections → "${drill.title}", depth 2)`);
+  if (!drill.err && drill.backHidden) fail("← is hidden inside a pushed view — there is no way back");
+  else if (!drill.err) ok("← shows as soon as the stack is deeper than its root");
+  if (!drill.err) {
+    await page.click("#dwSheet .dw-sheetback");
+    await page.waitForTimeout(250);
+    const popped = await page.evaluate(() => ({
+      depth: window.__DAW.sheet.depth(), view: window.__DAW.sheet.view(),
+      title: window.__DAW.sheet.el().querySelector(".dw-sheettitle").textContent }));
+    if (popped.depth !== 1 || popped.view.target !== "drums")
+      fail("← did not pop back to the drums sheet: " + JSON.stringify(popped));
+    else ok(`← pops back to where you were ("${popped.title}", depth 1)`);
+    await page.click("#dwSheet .dw-sheetback");
+    await page.waitForTimeout(250);
+    const rooted = await page.evaluate(() => ({
+      stack: window.__DAW.sheet.stack(), depth: window.__DAW.sheet.depth(),
+      backHidden: window.__DAW.sheet.el().querySelector(".dw-sheetback").hidden,
+      radar: !!window.__DAW.sheet.el().querySelector(".dw-vec") }));
+    if (rooted.stack.join(",") !== "kernel" || rooted.depth !== 1 || !rooted.radar)
+      fail("backing out past the last view did not land on the kernel: " + JSON.stringify(rooted));
+    else if (!rooted.backHidden) fail("← still shows at the root of the stack");
+    else ok("backing out past the last view bottoms out at the kernel — the rail is never empty");
+  }
+  await page.evaluate(() => window.__DAW.sheet.close());
 
   // ---- C secover: one section's voice off dims that cell + drops its events ----
   const target = await page.evaluate(() => {

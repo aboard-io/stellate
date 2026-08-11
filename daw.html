@@ -43,15 +43,14 @@
 <link rel="stylesheet" href="app/daw.css">
 </head>
 <body>
+<!-- THE HEADER IS PAGE FURNITURE ONLY: brand, the share link, the download menu
+     and the way back to the star map — ONE ROW even at 390px. Seed and ⟳ belong
+     to the kernel (they are in its view, in the rail); ▶ belongs to the
+     transport (it is in the controller). Both moved out of here. -->
 <header id="dawbar">
   <h1 class="dw-brand">STELLATE<span class="dw-tag">daw</span></h1>
   <div class="dw-controls">
-    <label class="dw-ctl">seed
-      <input id="dwSeed" type="number" min="1" max="99999" step="1" value="7" aria-label="Seed">
-    </label>
-    <button id="dwReseed" class="dw-btn" title="New random seed">⟳</button>
     <button id="dwShare" class="dw-btn" title="Copy a link to this song — genre, seed and every machine edit">↗ link</button>
-    <button id="dwPlay" class="dw-btn dw-play" title="Play this song (edits land at the next bar)">▶ play</button>
     <details class="dw-dl" id="dwDl">
       <summary class="dw-btn">⤓ download</summary>
       <div class="dw-dlmenu">
@@ -61,36 +60,38 @@
         <button id="dwXml" class="dw-dlitem">MusicXML<small>score — quantised to 16ths</small></button>
       </div>
     </details>
-    <span class="dw-read" id="dwRead">—</span>
+    <span class="dw-read" id="dwRead"></span>
   </div>
   <nav class="dw-nav"><a href="index.html">← star map</a></nav>
 </header>
 
-<!-- KERNEL → SONG → GRID → SHEET. One screen, mobile-first: the kernel card
-     (tap to open the sculptor), the song bar (section chips = column headers),
-     THE GRID (tracks × sections, rows sticky-left, columns h-scroll) with the
-     master row under it, and the sheet that appears on tap. Built by
-     app/daw/{kernelcard,structure,grid,sheet}.js. -->
-<main id="dwMain" aria-label="Song">
-  <section id="dwKernel" aria-label="Kernel"></section>
-  <nav id="dwSong" aria-label="Song structure"></nav>
-  <section id="dwGrid" aria-label="Tracks by section"></section>
-</main>
+<!-- THE SHELL: DAW LEFT, MANIPULATION RIGHT. At ≥1000px this is a two-column,
+     viewport-height layout with no page scroll — the grid scrolls inside itself
+     and the rail is always visible, showing the KERNEL when nothing else is
+     open. Below 1000px the same two elements stack: the grid is the page and
+     the rail becomes the bottom sheet. The difference is CSS; sheet.js only
+     knows about a view stack. -->
+<div id="dwShell">
+  <main id="dwMain" aria-label="Song">
+    <nav id="dwSong" aria-label="Song structure"></nav>
+    <section id="dwGrid" aria-label="Tracks by section"></section>
+    <footer id="dwFoot">
+      <p>Made by <a href="mailto:paul.ford@aboard.com?subject=Stellate%20DAW">Paul Ford</a> at
+      <a href="https://aboard.com">Aboard</a> ·
+      <a href="https://github.com/aboard-io/stellate">open source</a> · MIT</p>
+      <p class="dw-note">You author the <b>generator</b>, never the notes — every surface here is a
+      rule (a phrase cell in chord tones, a probability gate, a cycle alternation), so it
+      survives a change of seed, tempo or form. See <code>docs/DAW.md</code>.</p>
+    </footer>
+  </main>
 
-<!-- THE SHEET: bottom sheet on mobile, right panel wide. app/daw/sheet.js owns it. -->
-<aside id="dwSheet" hidden aria-label="Editor sheet"></aside>
+  <!-- THE FLYOUT: the right rail wide, the bottom sheet narrow. app/daw/sheet.js
+       owns it and never asks which one it is. -->
+  <aside id="dwSheet" aria-label="Editor panel"></aside>
+</div>
 
-<!-- the playhead sits bottom-right, where the star map keeps its chips -->
-<aside id="dwHead" class="dw-playhead" aria-live="off"></aside>
-
-<footer id="dwFoot">
-  <p>Made by <a href="mailto:paul.ford@aboard.com?subject=Stellate%20DAW">Paul Ford</a> at
-  <a href="https://aboard.com">Aboard</a> ·
-  <a href="https://github.com/aboard-io/stellate">open source</a> · MIT</p>
-  <p class="dw-note">You author the <b>generator</b>, never the notes — every surface here is a
-  rule (a phrase cell in chord tones, a probability gate, a cycle alternation), so it
-  survives a change of seed, tempo or form. See <code>docs/DAW.md</code>.</p>
-</footer>
+<!-- ONE TINY CONTROLLER: play · bar·beat · bpm · volume (app/daw/controller.js) -->
+<aside id="dwCtl" aria-label="Transport"></aside>
 
 <!-- ENGINE — classic globals, ORDER MATTERS (the same contract index.html carries
      and test/gates/boot-smoke.test.js enforces there): theory/pipes before

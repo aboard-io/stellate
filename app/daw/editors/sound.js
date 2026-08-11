@@ -1,12 +1,18 @@
 // editors/sound.js — the SHARED SOUND tab for melody / bass / pad / drums.
 //
 // Three blocks, per the DAW-GRID spec "sound tab":
-//   INSTRUMENT (melody/bass/pad only): a search-less TWO-LEVEL pick over the
-//     sampled library — family chips → instrument chips over Object.keys
-//     (K.SAMPLERS), grouped by the kernel's OWN instrFamily table (never a list
-//     this file maintains by hand). First chip = "genre's own": the ABSENCE of
-//     an override, ctx.song.editSound(voice, null). Picking an instrument
-//     writes SONG.patch.sound; song.js applySound performs the kernel-mirrored
+//   INSTRUMENT (melody/bass/pad only): ONE pick row that drills into ONE TABLE
+//     over the whole sampled library — rows = instrument, group headers off the
+//     kernel's OWN instrFamily table (never a list this file maintains by hand),
+//     meta column = family (it carries the group's word down the scroll, since
+//     the picker's scroller is the sheet body and the headers ride away with
+//     it), filter on, scrolled to the current row when it opens. It replaced
+//     11 family chips gating 100+ instrument chips: a
+//     picker is a PLACE YOU GO, not a wall you scroll past, and one row per
+//     option in aligned columns is the only way 123 instruments scan. The first
+//     row is "genre's own": the ABSENCE of an override,
+//     ctx.song.editSound(voice, null). Picking an instrument writes
+//     SONG.patch.sound; song.js applySound performs the kernel-mirrored
 //     pitched→sampler rewrite (K.SAMPLERS-validated), so the change repaints
 //     that row only and is audible next bar.
 //   MIX: tiles from layers.js TILE_SETS.voice (level/tone/bite/attack/width/
@@ -43,11 +49,30 @@ function families() {
   return FAMS;
 }
 const famOf = (id) => { const k = K(); return (k.instrFamily && k.instrFamily(id)) || "lead"; };
-// chip label: the registry label minus the license parenthetical ("Alto Sax")
+const famLabel = (id) => { const f = families().find((x) => x.id === id); return f ? f.label : id; };
+// row label: the registry label minus the license parenthetical ("Alto Sax")
 const nice = (id) => {
   const S = (K().SAMPLERS || {})[id];
   return ((S && S.label) || id).replace(/\s*\([^)]*\)\s*$/, "");
 };
+// what the voice ACTUALLY plays right now — a sampler id resolves to its label,
+// a synth voice to its model name ("fm"). Used by the pick button and by the
+// "genre's own" row, so the row tells you what dropping the override gets you.
+function playingLabel(st, voice) {
+  const I = (st.instruments || {})[voice] || {};
+  return (I.sampler && I.sampler.id) ? nice(I.sampler.id) : (I.model || "?");
+}
+// the instrument table, built once per open: [{label, rows}] over instrFamily,
+// with "genre's own" alone in a leading unlabelled group.
+function instGroups(ownMeta) {
+  return [{ label: null, rows: [{ id: "__own", cells: ["genre's own", ownMeta || "kernel"],
+    title: "drop the override — the kernel chooses this voice again" }] }]
+    .concat(families().map((f) => ({
+      label: f.label,
+      rows: f.instruments.map((id) => ({ id, cells: [nice(id), f.label],
+        title: (K().SAMPLERS[id] || {}).label || id })),
+    })));
+}
 
 // ---------- MIX tiles (EXPORTED — drums.js reuses this exact surface) ----------
 // mixTiles(host, ctx, layer, set?) — one tile per axis in `set` (default: the
@@ -114,67 +139,62 @@ export function render(host, ctx) {
   const box = el("div", "dw-ed");
   host.appendChild(box);
 
-  // ----- INSTRUMENT (the two-level pick; not for drums — the kit is the PART tab's) -----
-  let headVal = null, badge = null, factsDl = null;
+  // ----- INSTRUMENT (one pick row → one table; not for drums — the kit is the PART tab's) -----
+  let headVal = null, badge = null, factsDl = null, pickVal = null, pickId = null;
+  const override = () => (ctx.song.SONG.patch.sound || {})[voice] || null;
   const sync = () => {   // update-in-place after a pick (the body is never re-rendered per edit)
     const st = ctx.song.state();
-    if (headVal) {
-      const I = (st.instruments || {})[voice] || {};
-      headVal.textContent = "playing: " + ((I.sampler && I.sampler.id) ? nice(I.sampler.id) : (I.model || "?"));
-    }
-    if (badge) {
-      const ov = (ctx.song.SONG.patch.sound || {})[voice];
-      badge.textContent = ov ? "yours" : "genre's own";
-    }
+    const ov = override();
+    if (headVal) headVal.textContent = "playing: " + playingLabel(st, voice);
+    if (badge) badge.textContent = ov ? "yours" : "genre's own";
+    if (pickVal) pickVal.textContent = ov ? nice(ov.instrument) : "genre's own";
+    if (pickId) pickId.textContent = ov ? famLabel(famOf(ov.instrument)) : "the kernel's pick";
     if (factsDl) paintFacts(factsDl, st);
   };
 
   if (!isDrums) {
     box.appendChild(el("div", "dw-edhead", voice + " — instrument"));
+
+    // THE pick row: one line that says what is loaded and drills into the table.
+    const row = el("div", "dw-edrow");
+    row.appendChild(el("span", "dw-edlab", "instrument"));
+    const btn = el("button", "dw-pick");
+    btn.type = "button";
+    pickVal = el("span", "dw-pickval", "");
+    pickId = el("span", "dw-pickid", "");
+    btn.append(pickVal, pickId, el("span", "dw-pickmore", "›"));
+    btn.title = "choose the sampled instrument this voice plays";
+    btn.addEventListener("click", () => {
+      const ownMeta = playingLabel(ctx.song.state(), voice);
+      ctx.picker({
+        title: voice + " instrument", hue: ctx.hue, label: "instrument",
+        note: "one row per instrument, grouped by family. “genre's own” drops your pick and the kernel chooses again.",
+        columns: [{ id: "name", label: "instrument" },
+                  { id: "fam", label: "family", align: "right", w: "13ch" }],
+        groups: instGroups(ownMeta),
+        value: () => { const o = override(); return o ? o.instrument : "__own"; },
+        filter: true,
+        onPick: (id) => { ctx.song.editSound(voice, id === "__own" ? null : id); sync(); },
+      });
+      // the sheet body is the scroller in a picker view, so bring the current
+      // row to the middle of it once the table has laid out
+      requestAnimationFrame(() => {
+        const cur = document.querySelector(".dw-sheetbody .dw-trow.on");
+        if (cur) cur.scrollIntoView({ block: "center" });
+      });
+    });
+    row.appendChild(btn);
+    box.appendChild(row);
+
+    // the truth line, straight off the RESOLVED state: what the engine will
+    // actually play, and whose choice it was. Cause above, effect below.
     const head = el("div", "dw-edrow");
     headVal = el("span", "dw-edval", "");
     badge = el("span", "dw-badge", "");
     head.append(headVal, badge);
     box.appendChild(head);
-
-    const ov = (ctx.song.SONG.patch.sound || {})[voice];
-    const famRow = el("div", "dw-edrow");
-    famRow.appendChild(el("span", "dw-edlab", "family"));
-    box.appendChild(famRow);
-    const instRow = el("div", "dw-edrow");
-    box.appendChild(instRow);
-
-    // second level: the family's instrument chips. Rebuilt on family pick;
-    // value = the current override when it lives in this family.
-    const paintInst = (famId) => {
-      instRow.textContent = "";
-      if (!famId || famId === "__own") return;
-      const fam = families().find((f) => f.id === famId);
-      if (!fam) return;
-      instRow.appendChild(el("span", "dw-edlab", fam.label));
-      const cur = (ctx.song.SONG.patch.sound || {})[voice];
-      ctx.controls.makeChips(instRow, {
-        hue: ctx.hue,
-        options: fam.instruments.map((id) => ({ id, label: nice(id), title: (K().SAMPLERS[id] || {}).label })),
-        value: cur && fam.instruments.indexOf(cur.instrument) >= 0 ? cur.instrument : null,
-        onPick: (id) => { ctx.song.editSound(voice, id); sync(); },
-      });
-    };
-
-    const famChips = ctx.controls.makeChips(famRow, {
-      hue: ctx.hue,
-      options: [{ id: "__own", label: "genre's own", title: "drop the override — back to what the genre picked" }]
-        .concat(families().map((f) => ({ id: f.id, label: f.label }))),
-      value: ov ? famOf(ov.instrument) : "__own",
-      onPick: (famId) => {
-        if (famId === "__own") { ctx.song.editSound(voice, null); paintInst(null); sync(); return; }
-        paintInst(famId);   // browsing a family writes nothing — the instrument chip does
-      },
-    });
-    if (ov) paintInst(famOf(ov.instrument));
     box.appendChild(el("p", "dw-pnote",
-      "picking a family just opens its shelf — the instrument chip is the edit. “genre's own” drops your pick and the kernel chooses again."));
-    void famChips;
+      "the whole sampled library, one row per instrument. “genre's own” hands the choice back to the kernel."));
   } else {
     box.appendChild(el("div", "dw-edhead", "drums — sound"));
   }

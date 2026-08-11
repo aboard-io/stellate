@@ -4,11 +4,22 @@
 // to its true beat share (the grid's columns are equal-width for legibility;
 // the bar tells the truth about time — the spec's split). The cycles count is
 // printed on the chip. Tap a chip → the SECTION SHEET, the surface that writes
-// patch.secover: cycles chips, per-voice on/off chips, per-voice pattern chips
-// from the ENGINE's own vocabulary — deterministic rules, never diffs. That is
-// what makes the grid's cells editable per column.
-import { subs, state, sectionSpans, SONG, editSecover, events } from "./song.js";
-import { makeChips } from "./controls.js";
+// patch.secover: deterministic rules over the resolved form, never diffs. That
+// is what makes the grid's cells editable per column.
+//
+// THE SECTION SHEET IS A RULES TABLE. It used to be three walls of lozenges —
+// ~20 melody patterns + ~20 bass patterns + 22 kits, wrapped ragged and centred,
+// repeated for every one of eight sections. Nothing to scan along, and the
+// value in force was a highlighted pill you had to hunt for. Now it is FIVE
+// ROWS — cycles, melody, bass, drums, pads — with columns [rule, now, yours], so
+// what the section plays and what YOU said are two aligned columns you read
+// down. Each row drills into its own picker view (sheet.js pickerView): a place
+// you go, which is what kills the wall. Every picker's first row is "genre's
+// own" — dropping the override (editSecover(id, field, null)) — never a copied
+// value, and the vocabulary is always the ENGINE's own (E.MELODY_PATTERNS /
+// E.BASS_PATTERNS / E.KITS) plus whatever cells and kits THIS patch carries,
+// mirroring song.js sanitizeSecover exactly so nothing offered can drop silently.
+import { subs, sectionSpans, SONG, editSecover, events } from "./song.js";
 import { open as openSheet } from "./sheet.js";
 
 const E = window.CsdEngine;
@@ -54,8 +65,92 @@ export function placeHead(beat) {
 
 // ---------- the SECTION SHEET (writes patch.secover) ----------
 // Everything here is a RULE over the resolved form: cycles, per-voice on/off,
-// and the per-voice pattern from the engine's own tables. "genre's own" =
-// dropping the override (editSecover(id, field, null)) — never a copied value.
+// and the per-voice pattern from the engine's own tables.
+
+// how many hits a kit lays down per cycle — counted off the ENGINE's own table
+// (explicit hits plus a grid op's step count), never a list this file keeps.
+// Nearly every kit is kick·snare·hat, so naming the voices tells kits apart not
+// at all; the DENSITY does, and it spans 4 (kick) to 31 (techno).
+function kitDensity(name) {
+  const k = (E.KITS || {})[name];
+  const ops = (k && k.ops) || (Array.isArray(k) ? k : []);
+  let n = 0;
+  for (const op of ops) n += ((op && op.hits && op.hits.length) || 0) + ((op && op.grid && op.grid.n) || 0);
+  return n ? n + " hits" : "";
+}
+
+// the engine vocabulary each voice may be set to, tagged by where it came from
+// (patterns THIS patch drew are as playable as the engine's own — sanitizeSecover
+// validates against the patch the name travels with, so the table offers both).
+function vocabOf(field) {
+  const own = [];
+  let names = [];
+  if (field === "melody") {
+    names = (E.MELODY_PATTERNS || []).filter((n) => n !== "off");
+    for (const n of Object.keys(SONG.patch.melodyCells || {})) if (n !== "__fit") own.push(n);
+  } else if (field === "bass") {
+    names = (E.BASS_PATTERNS || []).filter((n) => n !== "off");
+  } else {
+    names = Object.keys(E.KITS || {});
+    for (const n of Object.keys(SONG.patch.kits || {})) own.push(n);
+  }
+  const meta = field === "drums" ? kitDensity : () => "";
+  const seen = new Set();
+  const rows = [];
+  for (const n of names) { if (seen.has(n)) continue; seen.add(n); rows.push({ id: n, cells: [n, meta(n)] }); }
+  for (const n of own) { if (seen.has(n)) continue; seen.add(n); rows.push({ id: n, cells: [n, "yours"] }); }
+  return rows;
+}
+
+const nowName = (sec, f) => (sec[f] && sec[f] !== "off" ? sec[f] : "off");
+
+// one drill-in per rule. Each picker commits through editSecover and pops back
+// to the rules table, where the "now" and "yours" columns have already moved.
+function pickPattern(ctx, id, sec, field) {
+  const what = field === "drums" ? "kit" : "pattern";
+  const rows = vocabOf(field);
+  ctx.picker({
+    title: field, hue: ctx.hue, label: field + " " + what,
+    note: "the " + what + " this section plays — \"genre's own\" hands it back to the genre.",
+    columns: [{ id: "name", label: what },
+              { id: "meta", label: field === "drums" ? "hits" : "", align: "right", w: "12ch" }],
+    rows: [{ id: "__own", cells: ["genre's own", nowName(sec, field)], title: "drop the override — the genre decides" },
+           { id: "off", cells: ["off", "silence"], title: "this voice sits out the section" }].concat(rows),
+    filter: rows.length > 14,
+    value: () => { const o = (SONG.patch.secover || {})[id] || {}; return o[field] != null ? o[field] : "__own"; },
+    onPick: (pick) => editSecover(id, field, pick === "__own" ? null : pick),
+  });
+}
+
+function pickCycles(ctx, id, section) {
+  const sec = section.sec;
+  const per = Math.max(1, Math.round(section.beats / Math.max(1, sec.cycles || 1)));
+  ctx.picker({
+    title: "cycles", hue: ctx.hue, label: "cycles",
+    note: "how many times the chord cycle turns before the next section — the column's width in time.",
+    columns: [{ id: "n", label: "cycles" }, { id: "beats", label: "beats", align: "right", w: "8ch" }],
+    rows: [{ id: "own", cells: ["genre's own", String(section.beats)], title: "drop the override — the genre decides" }]
+      .concat([1, 2, 3, 4, 6, 8].map((n) => ({ id: String(n), cells: [String(n), String(n * per)] }))),
+    filter: false,
+    value: () => { const o = (SONG.patch.secover || {})[id] || {}; return o.cycles != null ? String(o.cycles) : "own"; },
+    onPick: (v) => editSecover(id, "cycles", v === "own" ? null : +v),
+  });
+}
+
+function pickPads(ctx, id, sec) {
+  ctx.picker({
+    title: "pads", hue: ctx.hue, label: "pads",
+    note: "the chord bed under this section.",
+    columns: [{ id: "n", label: "pads" }, { id: "what", label: "", align: "right", w: "9ch" }],
+    rows: [{ id: "__own", cells: ["genre's own", sec.pads === false ? "off" : "on"], title: "drop the override — the genre decides" },
+           { id: "on", cells: ["on", "chords play"] },
+           { id: "off", cells: ["off", "no bed"] }],
+    filter: false,
+    value: () => { const o = (SONG.patch.secover || {})[id] || {}; return o.pads != null ? (o.pads ? "on" : "off") : "__own"; },
+    onPick: (pick) => editSecover(id, "pads", pick === "__own" ? null : pick === "on"),
+  });
+}
+
 export function renderSectionSheet(host, ctx) {
   host.textContent = "";
   const section = ctx.section;
@@ -65,45 +160,28 @@ export function renderSectionSheet(host, ctx) {
   const box = $el("div", "dw-ed");
   box.appendChild($el("div", "dw-edhead", (section.name || "section") + " — the column's rules"));
 
-  const row = (label) => { const r = $el("div", "dw-edrow"); r.appendChild($el("span", "dw-edlab", label)); box.appendChild(r); return r; };
-
-  // CYCLES — discrete, so chips (2/4/6/8; "own" restores the genre's count)
-  const cyc = row("cycles");
-  makeChips(cyc, {
-    hue: ctx.hue,
-    options: [{ id: "own", label: "genre's own" }].concat([2, 4, 6, 8].map((n) => ({ id: String(n), label: String(n) }))),
-    value: ov.cycles != null ? String(ov.cycles) : "own",
-    onPick: (v) => editSecover(id, "cycles", v === "own" ? null : +v),
-  });
-
-  // PER-VOICE on/off + pattern, from the ENGINE vocabulary. The valid sets here
-  // mirror song.js sanitizeSecover exactly — anything else would drop silently.
-  const voices = [
-    { f: "melody", names: (E.MELODY_PATTERNS || []).filter((n) => n !== "off")
-        .concat(Object.keys(SONG.patch.melodyCells || {}).filter((n) => n !== "__fit")) },
-    { f: "bass", names: (E.BASS_PATTERNS || []).filter((n) => n !== "off") },
-    { f: "drums", names: Object.keys(E.KITS || {}).concat(Object.keys(SONG.patch.kits || {})) },
+  // the five rules, as rows. "now" is what the section RESOLVES to (genre plus
+  // whatever you said); "yours" is the override alone, an em dash when there is
+  // none — so the two columns read as "playing" against "asked for".
+  const RULES = [
+    { id: "cycles", now: String(sec.cycles || 1), yours: ov.cycles != null ? String(ov.cycles) : "—",
+      open: () => pickCycles(ctx, id, section) },
+    { id: "melody", now: nowName(sec, "melody"), yours: ov.melody != null ? ov.melody : "—",
+      open: () => pickPattern(ctx, id, sec, "melody") },
+    { id: "bass", now: nowName(sec, "bass"), yours: ov.bass != null ? ov.bass : "—",
+      open: () => pickPattern(ctx, id, sec, "bass") },
+    { id: "drums", now: nowName(sec, "drums"), yours: ov.drums != null ? ov.drums : "—",
+      open: () => pickPattern(ctx, id, sec, "drums") },
+    { id: "pads", now: sec.pads === false ? "off" : "on",
+      yours: ov.pads != null ? (ov.pads ? "on" : "off") : "—", open: () => pickPads(ctx, id, sec) },
   ];
-  for (const v of voices) {
-    const r = row(v.f);
-    const curName = sec[v.f] && sec[v.f] !== "off" ? sec[v.f] : "off";
-    makeChips(r, {
-      hue: ctx.hue,
-      options: [{ id: "__own", label: "genre's own" }, { id: "off", label: "off" }]
-        .concat([...new Set(v.names)].map((n) => ({ id: n, label: n }))),
-      value: ov[v.f] != null ? ov[v.f] : "__own",
-      onPick: (pick) => editSecover(id, v.f, pick === "__own" ? null : pick),
-    });
-    r.appendChild($el("span", "dw-edval", "now: " + curName));
-  }
-
-  // PADS — a boolean, so two chips
-  const pr = row("pads");
-  makeChips(pr, {
-    hue: ctx.hue,
-    options: [{ id: "__own", label: "genre's own" }, { id: "on", label: "on" }, { id: "off", label: "off" }],
-    value: ov.pads != null ? (ov.pads ? "on" : "off") : "__own",
-    onPick: (pick) => editSecover(id, "pads", pick === "__own" ? null : pick === "on"),
+  ctx.controls.makeTable(box, {
+    hue: ctx.hue, label: "section rules", filter: false, max: 0, value: null,
+    columns: [{ id: "rule", label: "rule" }, { id: "now", label: "now" },
+              { id: "yours", label: "yours", align: "right" }, { id: "go", label: "", align: "right", w: 16 }],
+    rows: RULES.map((r) => ({ id: r.id, cells: [r.id, r.now, r.yours, "›"],
+      title: "choose the " + r.id + " rule for this section" })),
+    onPick: (rid) => { const r = RULES.find((x) => x.id === rid); if (r) r.open(); },
   });
 
   box.appendChild($el("p", "dw-pnote",

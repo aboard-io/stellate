@@ -22,7 +22,7 @@ const fire = () => subs.forEach((f) => { try { f(); } catch (e) {} });
 // ---------- the playhead ----------
 // Beat position is interpolated between onBar callbacks off the audio clock's own
 // tempo, so it tracks what is SOUNDING rather than what a wall clock thinks.
-function beatNow() {
+export function beatNow() {
   if (!playing) return 0;
   const el = (performance.now() - barAt) / 1000;
   return barBeat + Math.max(0, el) / spb;
@@ -37,26 +37,33 @@ const placeHeads = (b) => { for (const f of headFns) { try { f(b); } catch (e) {
 function tick() {
   if (!playing) { raf = 0; return; }
   placeHeads(beatNow());
-  paintReadout();
   raf = requestAnimationFrame(tick);
 }
 
-// THE READOUT, bottom-right — where the star map keeps its chips, so the two
-// front ends put the same information in the same corner. Bar and beat off the
-// same interpolated clock the playhead lines ride, so the number and the lines
-// can never disagree.
-export function paintReadout() {
-  const box = document.getElementById("dwHead");
-  if (!box) return;
-  const s = state();
-  const cb = Math.max(2, Math.round(s.chordEvery || (s.meter ? 6 : 8)));
-  const b = beatNow();
-  const bar = Math.floor(b / cb) + 1, beat = (b % cb);
-  box.classList.toggle("on", playing);
-  box.innerHTML = `<span class="dw-hstate">${playing ? "▶" : "■"}</span>` +
-    `<span class="dw-hbar">${playing ? bar : "—"}<small>bar</small></span>` +
-    `<span class="dw-hbeat">${playing ? (beat + 1).toFixed(1) : "—"}<small>beat</small></span>` +
-    `<span class="dw-hbpm">${Math.round(s.bpm || 0)}<small>bpm</small></span>`;
+// THE READOUT IS NOT HERE ANY MORE. Bar/beat/bpm are drawn by controller.js,
+// which registers with onHead() above — so the number and the lines are moved by
+// literally the same call, which was always the point of the law.
+
+// ---------- MASTER VOLUME ----------
+// Owned here rather than by the controller, because it has to survive the
+// controller: it is applied to the handle at START (a volume set while stopped
+// is honoured), pushed live through handle.setMasterVol while playing (it exists
+// on BOTH live paths — the ring engine and the WAV-first mobile one), and
+// remembered across visits. Clamped 0..1; a bad localStorage value is ignored.
+const VOL_KEY = "dw.vol";
+let vol = 1;
+try {
+  const raw = parseFloat(localStorage.getItem(VOL_KEY));
+  if (raw >= 0 && raw <= 1) vol = raw;
+} catch (e) {}
+export const volume = () => vol;
+export function setVolume(v) {
+  const nv = Math.max(0, Math.min(1, +v || 0));
+  if (nv === vol) return vol;
+  vol = nv;
+  try { localStorage.setItem(VOL_KEY, String(vol)); } catch (e) {}
+  try { if (handle && handle.setMasterVol) handle.setMasterVol(vol); } catch (e) {}
+  return vol;
 }
 
 // ---------- start / stop ----------
@@ -69,7 +76,7 @@ export async function start(onStatus) {
       () => state(),                      // THE CONTRACT: re-read every bar, so edits land live
       (m) => onStatus && onStatus(m),
       {
-        masterVol: 1,
+        masterVol: vol,
         onBar: (info) => {
           // serial counts chord bars from the start of the walk; chordEvery turns
           // that into the beat the roll is drawn in
@@ -95,12 +102,14 @@ export async function start(onStatus) {
     return;
   }
   if (!raf) raf = requestAnimationFrame(tick);
+  // belt and braces: the ring path takes masterVol at construction, the WAV-first
+  // path reads it later — set it explicitly once the handle exists either way.
+  try { if (handle && handle.setMasterVol) handle.setMasterVol(vol); } catch (e) {}
   fire();
 }
 
 export function stop() {
   playing = false;
-  setTimeout(paintReadout, 0);
   if (raf) { cancelAnimationFrame(raf); raf = 0; }
   placeHeads(null);
   try { if (handle && handle.stop) handle.stop(); } catch (e) {}
@@ -118,5 +127,5 @@ export function songChanged() { if (playing) stop(); }
 // engine's OWN analyser tap (faust/live/live.js handle.rms) — a transport gate
 // that only checked "the button toggled" would pass over a silent graph, which is
 // exactly how this fails in practice.
-window.__DAWTRANSPORT = { isPlaying, start, stop, toggle, beatNow, paintReadout,
+window.__DAWTRANSPORT = { isPlaying, start, stop, toggle, beatNow, volume, setVolume,
   rms: () => { try { return handle && handle.rms ? handle.rms() : null; } catch (e) { return null; } } };

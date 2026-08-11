@@ -9,7 +9,14 @@
 // pad (prob), and one tile per numeric param the pipe's spec already carries.
 // ORDER IS AUDIBLE — each pipe draws from a stream keyed on its INDEX and feeds
 // the next, so ↑↓ is a real edit, not a cosmetic sort (machines/pipes.js law).
-// Registry entries not in the chain are add-chips at the bottom.
+//
+// THE ADD LIST IS A TABLE. Registry entries not in the chain used to be ten "+
+// name" lozenges with the doc hidden in a title attribute — you had to hover
+// each pill, one at a time, to learn what any of them did, and on a phone there
+// is no hover at all. It is now two columns, [pipe, what it does], carrying the
+// registry's OWN doc (its head clause, the full line still on the row) — the
+// same words the chain cards caption themselves with. One row per pipe, tap to
+// add at the end of the chain.
 //
 // Contract: export render(host, ctx) — ctx per app/daw/sheet.js header.
 import { TILE_SETS, readLayer, fmtLayer } from "../layers.js";
@@ -19,6 +26,20 @@ const el = (t, c, x) => { const d = document.createElement(t); if (c) d.classNam
 
 // a numeric param shown in the pipe's own range (knobsOf carries raw), unitless
 const fmtRaw = (raw) => String(+(+raw).toFixed(2));
+
+// the doc's HEAD CLAUSE, for the add table's second column: everything up to the
+// registry's own em dash / semicolon (which is where each line turns from what
+// the pipe does into a caveat), capped at a word boundary. The whole line stays
+// on the row as its title — nothing is lost, it is just not all shouted at once.
+function gist(doc) {
+  let s = String(doc || "").split(" — ")[0].split("; ")[0].trim();
+  if (s.length > 76) {
+    const cut = s.slice(0, 76);
+    const sp = cut.lastIndexOf(" ");
+    s = (sp > 40 ? cut.slice(0, sp) : cut).replace(/[,(]$/, "") + "…";
+  }
+  return s;
+}
 
 // double-tap revert on a param tile: drop the KEY from the pipe's entry so the
 // engine's own default speaks again. machines/pipes.js has no removeParam, so
@@ -134,25 +155,22 @@ export function render(host, ctx) {
   });
   fx.appendChild(chain);
 
-  // add-chips: every registry pipe not in the chain, its doc as the tooltip.
-  // Momentary buttons (an add is an action, not a selection), joining at the END
-  // of the chain — where a new pipe hears everything before it.
+  // the ADD table: every registry pipe not in the chain, one row each, the
+  // registry's own doc as the second column. Picking is an ACTION (the pipe
+  // joins at the END of the chain, where it hears everything before it) — the
+  // sheet re-renders, so the row leaves the table and appears as a card above.
   const absent = PIPES.registry().filter((r) => !list.some((p) => p.id === r.id));
   if (absent.length) {
     const ar = el("div", "dw-edrow");
     ar.appendChild(el("span", "dw-edlab", "add"));
-    const chips = el("div", "dw-chips");
-    chips.style.setProperty("--hue", ctx.hue);
-    for (const r of absent) {
-      const b = el("button", "dw-chip", "+ " + r.id);
-      b.type = "button";
-      if (r.doc) b.title = r.doc;
-      b.setAttribute("aria-label", "add " + r.id + " to the chain");
-      b.addEventListener("click", () => { PIPES.toggle(r.id); ctx.rerender(); });
-      chips.appendChild(b);
-    }
-    ar.appendChild(chips);
+    ar.appendChild(el("span", "dw-edval", "tap a row to add it"));
     fx.appendChild(ar);
+    ctx.controls.makeTable(fx, {
+      hue: ctx.hue, label: "note fx to add", filter: false, max: 0, value: null,
+      columns: [{ id: "pipe", label: "pipe", w: "11ch" }, { id: "doc", label: "what it does" }],
+      rows: absent.map((r) => ({ id: r.id, cells: [r.id, gist(r.doc)], title: r.doc || r.id })),
+      onPick: (id) => { PIPES.toggle(id); ctx.rerender(); },
+    });
   }
   fx.appendChild(el("p", "dw-pnote",
     "order is audible — each pipe draws from a stream keyed on its position and feeds the next, so ↑↓ is a real edit. a new pipe joins at the end at 50% chance."));

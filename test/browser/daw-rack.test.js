@@ -53,7 +53,7 @@ async function main() {
     secs: window.__DAWSTATE().sections.length,
     sized: [...document.querySelectorAll(".dw-cellcv")].every((c) => c.width > 0),
     streams: window.__DAWSTATE().voiceStreams === true,
-    head: (document.getElementById("dwHead") || {}).textContent || "",
+    head: (document.getElementById("dwCtl") || {}).textContent || "",
   }));
   if (boot.rows.length !== 6 || boot.cols !== boot.secs || boot.cells !== 6 * boot.cols)
     fail(`grid shape: ${boot.rows.length} rows × ${boot.cols} cols (${boot.secs} sections), ${boot.cells} cells`);
@@ -61,16 +61,25 @@ async function main() {
   if (!boot.sized) fail("cell canvases not sized"); else ok("every cell canvas is sized");
   if (!boot.streams) fail("resolved state lost voiceStreams — the rack law is off");
   else ok("the resolved state carries voiceStreams:true");
-  if (!/bpm/.test(boot.head)) fail("the bottom-right playhead is empty");
-  else ok("the playhead readout sits bottom-right");
+  if (!/bpm/.test(boot.head)) fail("the transport controller is empty");
+  else ok("the unified controller carries the readout");
 
   // ---- B cause → effect: a real pointer drag on a drum op pad ----
   const pre = await allHashes(page);
+  const preFurn = await page.evaluate(() => ({
+    kernel: (document.querySelector(".dw-kernelcell") || {}).textContent || "",
+    master: (document.querySelector(".dw-mastercell") || {}).textContent || "",
+  }));
   await page.evaluate(() => window.__DAW.sheet.open("drums"));
   await page.waitForTimeout(300);
   const pad = await page.$(".dw-sheetbody .dw-pad");
   if (!pad) fail("no op pad in the drums sheet");
   else {
+    // the pad now lives in the RAIL, which is subscribed to the document: hold
+    // on to the node so the drag can prove the edit does not tear the control
+    // out from under the finger mid-gesture (sheet.js refreshes controls, it
+    // does not re-render the body — that is the whole reason it may).
+    await page.evaluate(() => { window.__gatePad = document.querySelector(".dw-sheetbody .dw-pad"); });
     const bb = await pad.boundingBox();
     await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2);
     await page.mouse.down();
@@ -87,6 +96,24 @@ async function main() {
   const spill = TRACKS.filter((t) => t !== "drums" && post[t] !== pre[t]);
   if (spill.length) fail("the edit also repainted: " + spill.join(", ") + " — the rack law is not holding");
   else ok("every other row hashed pixel-identical (the rack law)");
+  const survived = await page.evaluate(() => ({
+    same: !!window.__gatePad && document.contains(window.__gatePad) &&
+          window.__gatePad === document.querySelector(".dw-sheetbody .dw-pad"),
+    view: window.__DAW.sheet.view(), depth: window.__DAW.sheet.depth(),
+  }));
+  if (!survived.same || survived.depth !== 1 || (survived.view || {}).target !== "drums")
+    fail("the edit tore the flyout down under the gesture: " + JSON.stringify(survived));
+  else ok("the flyout stays put across the edit — the very pad you dragged is still the pad");
+  // the kernel and master rows are FURNITURE: a kit edit is not news to either,
+  // so an edit that rewrites them is an edit that rewrote the whole screen.
+  const postFurn = await page.evaluate(() => ({
+    kernel: (document.querySelector(".dw-kernelcell") || {}).textContent || "",
+    master: (document.querySelector(".dw-mastercell") || {}).textContent || "",
+  }));
+  if (postFurn.kernel !== preFurn.kernel || postFurn.master !== preFurn.master)
+    fail(`a kit edit rewrote the furniture rows: kernel "${preFurn.kernel}"→"${postFurn.kernel}", ` +
+         `master "${preFurn.master}"→"${postFurn.master}"`);
+  else ok("the kernel and master rows read the same after a kit edit");
   await page.evaluate(() => window.__DAW.sheet.close());
 
   // ---- C silence is drawn ----

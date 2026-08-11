@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 // test/browser/daw-sound.test.js — the INSTRUMENT PICK, door to speaker.
 //
-// The sound tab's two-level pick writes patch.sound; song.js applySound mirrors
+// The sound tab's instrument pick writes patch.sound; song.js applySound mirrors
 // the kernel's pitched→sampler rewrite; state-engine's voiceUnits builds the
-// native sampler unit from it. This gate walks that whole path THROUGH THE UI:
+// native sampler unit from it. This gate walks that whole path THROUGH THE UI —
+// which since 2026-08-11 is ONE TABLE in a drill-in picker view, not two rows of
+// chips (the lozenge wall is gone; a picker is a place you go):
 //
-//   A the pick       real clicks on family → instrument chips change the
-//                    RESOLVED st.instruments.melody to {model:"sampler",
-//                    sampler:{id}} — the id the chip named
+//   A the pick       clicking the pick row pushes the picker view; the table is
+//                    grouped by family with "genre's own" first, the filter
+//                    narrows it, and clicking a row changes the RESOLVED
+//                    st.instruments.melody to {model:"sampler", sampler:{id}} —
+//                    the id the row named — then pops back to the sound tab
 //   B rack law       the pick repaints ONLY the melody row's identity: every
 //                    other row hashes pixel-identical; the melody row header
 //                    names the new instrument
@@ -16,8 +20,12 @@
 //   D the engine     FaustStateEngine.voiceUnits maps the overridden voice to
 //                    a native sampler unit that still carries the zones — and
 //                    every zone source the rewrite injected is local, vol 0
-//   E genre's own    the first chip drops the override and the kernel chooses
-//                    again (patch.sound gone, baseline instrument back)
+//   E genre's own    the table's first row drops the override and the kernel
+//                    chooses again (patch.sound gone, baseline instrument back)
+//   F readable       124 rows is where a table stops being a table: a screen
+//                    down, the column head and the family header are STILL
+//                    pinned to the top of the sheet, and the last row sits above
+//                    the transport rather than behind it
 "use strict";
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
 const path = require("path");
@@ -52,31 +60,55 @@ async function main() {
   ok(`baseline melody: ${base.model}${base.id ? " (" + base.id + ")" : ""}`);
   const preHashes = await allHashes(page);
 
-  // ---- A: pick an instrument through the real chips ----
+  // ---- A: pick an instrument through the real table ----
   await page.evaluate(() => { window.__DAW.sheet.open("melody"); window.__DAW.sheet.tab("sound"); });
   await page.waitForTimeout(300);
+  const opened = await page.evaluate(() => {
+    const btn = document.querySelector(".dw-sheetbody .dw-pick");
+    if (!btn) return { err: "no pick row on the sound tab" };
+    btn.click();                                  // → the picker view
+    const t = (window.__DAW.tables() || [])[0];
+    if (!t) return { err: "the pick row opened no table" };
+    const short = [...document.querySelectorAll(".dw-sheetbody .dw-trow")]
+      .filter((r) => r.getBoundingClientRect().height < 44).length;
+    return { depth: window.__DAW.sheet.depth(), rows: t.count(),
+      first: t.ids()[0],
+      groups: document.querySelectorAll(".dw-sheetbody .dw-tgroup").length,
+      hasFilter: !!t.filterEl(), short,
+      ranges: document.querySelectorAll('input[type="range"]').length };
+  });
+  if (opened.err) fail(opened.err);
+  else if (opened.depth !== 2) fail("the pick row did not push a picker view (depth " + opened.depth + ")");
+  else ok(`the pick row pushes a picker view: ${opened.rows} rows in ${opened.groups} family groups`);
+  if (opened.first !== "__own") fail('the first row is not "genre\'s own": ' + opened.first);
+  else ok('"genre\'s own" is the first row');
+  if (!opened.hasFilter) fail("the instrument table has no filter box");
+  else ok("the table filters");
+  if (opened.short) fail(opened.short + " table rows are under 44px");
+  else ok("every row clears 44px");
+  if (opened.ranges) fail("a range input appeared: " + opened.ranges);
+  else ok("still zero range inputs");
+
   const picked = await page.evaluate(() => {
-    const body = document.querySelector(".dw-sheetbody");
-    const famBtns = [...body.querySelectorAll(".dw-chips")[0].querySelectorAll(".dw-chip")];
-    if (famBtns.length < 2) return { err: "no family chips" };
-    if (famBtns[0].textContent !== "genre's own") return { err: "first chip is not \"genre's own\"" };
+    const t = (window.__DAW.tables() || [])[0];
     const baseId = (() => { const I = window.__DAWSTATE().instruments.melody || {};
       return (I.sampler && I.sampler.id) || null; })();
-    for (let fi = 1; fi < famBtns.length; fi++) {
-      famBtns[fi].click();                       // browsing a family writes nothing
-      if ((window.__DAW.SONG.patch.sound || {}).melody) return { err: "browsing a family wrote an override" };
-      const rows = [...body.querySelectorAll(".dw-chips")];
-      const instBtns = rows[1] ? [...rows[1].querySelectorAll(".dw-chip")] : [];
-      for (const ib of instBtns) {
-        ib.click();
-        const id = ((window.__DAW.SONG.patch.sound || {}).melody || {}).instrument;
-        if (id && id !== baseId) return { id, chip: ib.textContent, family: famBtns[fi].textContent };
-      }
-    }
-    return { err: "no instrument chip produced a new override" };
+    t.filter("piano");                            // the filter narrows to a family's shelf
+    const vis = t.visibleIds().filter((id) => id !== "__own" && id !== baseId);
+    if (!vis.length) return { err: "the filter narrowed to nothing" };
+    const narrowed = vis.length;
+    const row = t.rowEl(vis[0]);
+    const chip = row.querySelector(".dw-tname").textContent;
+    const family = row.querySelector(".dw-tright").textContent;
+    row.click();                                  // the row IS the edit
+    const id = ((window.__DAW.SONG.patch.sound || {}).melody || {}).instrument;
+    if (!id || id === baseId) return { err: "clicking a row wrote no new override" };
+    return { id, chip, family, narrowed, depth: window.__DAW.sheet.depth() };
   });
   if (picked.err) fail(picked.err);
-  else ok(`clicked ${picked.family} → "${picked.chip}" (browsing wrote nothing; the instrument chip is the edit)`);
+  else ok(`filtered to ${picked.narrowed} rows, clicked "${picked.chip}" (${picked.family}) → ${picked.id}`);
+  if (!picked.err && picked.depth !== 1) fail("picking did not pop back to the sound tab (depth " + picked.depth + ")");
+  else if (!picked.err) ok("picking commits and pops back to the sound tab");
   await page.waitForTimeout(400);
 
   const resolved = await page.evaluate(() => {
@@ -167,14 +199,27 @@ async function main() {
   if (!unit.allSilent) fail("an injected zone source has vol > 0 — it would play as a bed");
   else ok("injected zone sources ride at vol 0 (instrument audio, never a bed)");
 
-  // ---- E: "genre's own" drops the override ----
+  // ---- E: "genre's own" drops the override (and the table opens ON the pick) ----
   await page.evaluate(() => { window.__DAW.sheet.open("melody"); window.__DAW.sheet.tab("sound"); });
   await page.waitForTimeout(300);
-  await page.evaluate(() => {
-    const body = document.querySelector(".dw-sheetbody");
-    [...body.querySelectorAll(".dw-chips")[0].querySelectorAll(".dw-chip")]
-      .find((b) => b.textContent === "genre's own").click();
+  const reopened = await page.evaluate(() => {
+    document.querySelector(".dw-sheetbody .dw-pick").click();
+    const t = (window.__DAW.tables() || [])[0];
+    return { value: t.value(), rows: t.count() };
   });
+  if (reopened.value !== picked.id)
+    fail(`the picker did not open on the current instrument: ${reopened.value} vs ${picked.id}`);
+  else ok(`the picker opens marked on the current instrument ("${reopened.value}" of ${reopened.rows})`);
+  await page.waitForTimeout(500);
+  const inView = await page.evaluate(() => {
+    const b = document.querySelector(".dw-sheetbody"), r = b.querySelector(".dw-trow.on");
+    if (!r) return false;
+    const br = b.getBoundingClientRect(), rr = r.getBoundingClientRect();
+    return rr.top >= br.top && rr.bottom <= br.bottom;
+  });
+  if (!inView) fail("the current row is not scrolled into view when the picker opens");
+  else ok("the current row is scrolled into view");
+  await page.evaluate(() => (window.__DAW.tables() || [])[0].rowEl("__own").click());
   await page.waitForTimeout(400);
   const own = await page.evaluate(() => {
     const st = window.__DAWSTATE();
@@ -187,6 +232,52 @@ async function main() {
   if (own.id !== base.id || own.model !== base.model)
     fail(`the kernel did not choose again: ${own.model}/${own.id} vs baseline ${base.model}/${base.id}`);
   else ok(`the genre's own instrument is back (${own.model}${own.id ? " " + own.id : ""})`);
+
+  // ---- F the picker is READABLE: sticky heads, and a floor above the transport
+  // 124 rows in a phone-sized sheet is exactly where a table stops being a table:
+  // scroll a screen down and the column head and the family header have to still
+  // be there, or you are looking at an unlabelled list of names — the failure the
+  // lozenge wall had. And the LAST row has to be reachable: the sheet's floor is
+  // the controller's ceiling, so nothing hides behind the transport bar.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(400);
+  await page.evaluate(() => { window.__DAW.sheet.open("melody"); window.__DAW.sheet.tab("sound"); });
+  await page.waitForTimeout(300);
+  const stuck = await page.evaluate(async () => {
+    document.querySelector(".dw-sheetbody .dw-pick").click();
+    const body = document.querySelector(".dw-sheetbody");
+    // the picker centres itself on the current row in a rAF (controls.js
+    // scrollToCur through the OUTER scroller) — let that land first, or the gate
+    // is racing the app for the same scrollTop.
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    body.scrollTop = 900;
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const br = body.getBoundingClientRect();
+    const th = document.querySelector(".dw-sheetbody .dw-table thead .dw-th");
+    const groups = [...document.querySelectorAll(".dw-sheetbody .dw-tgroup th")]
+      .map((g) => g.getBoundingClientRect()).filter((r) => r.bottom > br.top && r.top < br.bottom);
+    const rows = [...document.querySelectorAll(".dw-sheetbody .dw-trow")];
+    const last = rows[rows.length - 1].getBoundingClientRect();
+    const ctl = document.getElementById("dwCtl").getBoundingClientRect();
+    const hr = th ? th.getBoundingClientRect() : null;
+    return { scrolled: body.scrollTop,
+      headOff: hr ? Math.round(hr.top - br.top) : null,
+      headText: th ? th.textContent : null,
+      groupOff: groups.length ? Math.round(groups[0].top - br.top) : null,
+      groupSeen: groups.length, bodyBottom: Math.round(br.bottom),
+      lastBottom: Math.round(last.bottom), ctlTop: Math.round(ctl.top) };
+  });
+  if (!(stuck.scrolled > 400)) fail("the picker did not scroll — 124 rows in one screen?");
+  else if (stuck.headOff == null || stuck.headOff > 8 || stuck.headOff < -1)
+    fail(`the column head unstuck at scrollTop ${stuck.scrolled} (${stuck.headOff}px off the body top)`);
+  else ok(`the column head ("${stuck.headText}") stays pinned ${stuck.headOff}px under the sheet top at scrollTop ${stuck.scrolled}`);
+  if (!stuck.groupSeen || stuck.groupOff == null || stuck.groupOff > 48)
+    fail(`no family header pinned under it (${stuck.groupSeen} on screen, first at +${stuck.groupOff})`);
+  else ok(`a family header rides ${stuck.groupOff}px under it — you always know which shelf you are on`);
+  if (stuck.bodyBottom > stuck.ctlTop + 1)
+    fail(`the sheet body (${stuck.bodyBottom}) runs under the controller (${stuck.ctlTop}) — the last rows are unreachable`);
+  else ok("the picker's floor is the controller's ceiling — every row is reachable");
+  await page.evaluate(() => window.__DAW.sheet.close());
 
   if (errs.length) fail("page errors: " + errs.join(" | "));
   else ok("no page errors");

@@ -22,6 +22,10 @@
   --dw-row-h: 56px;        /* one grid row */
   --dw-headw: 88px;        /* the sticky row header */
   --dw-secw: 96px;         /* one section column (min 72px on mobile) */
+  --dw-railw: 420px;       /* the manipulation rail, ≥1000px */
+  --dw-ctlh: 56px;         /* the controller: the sheet parks ABOVE it */
+  --dw-labw: 88px;         /* an .dw-edlab's column — "INSTRUMENT" is the longest */
+  --dw-labgap: 96px;       /* …and the hanging indent everything else aligns to */
 }
 
 * { box-sizing: border-box; }
@@ -62,16 +66,23 @@ body {
 }
 .dw-ctl input { width: 82px; }
 .dw-btn {
+  display: inline-flex; align-items: center; justify-content: center;
   font: 14px/1 ui-monospace, monospace; color: var(--dw-ink);
   background: var(--dw-panel-2); border: 1px solid var(--dw-line);
-  border-radius: 4px; padding: 6px 9px; cursor: pointer;
-  min-width: 44px;             /* the one-glyph ⟳ still clears a thumb */
+  border-radius: 6px; padding: 6px 12px; cursor: pointer;
+  /* the thumb floor is not a phone rule — a header button is the same target
+     under a mouse, and a 28px pill next to a 44px one reads as an accident */
+  min-width: 44px; min-height: 44px;
 }
 .dw-btn:hover { border-color: var(--dw-accent); color: var(--dw-accent); }
 .dw-btn.on { background: var(--dw-accent); color: var(--dw-bg); border-color: var(--dw-accent); }
+/* the status whisper: it says nothing until the transport has something to say,
+   and an em-dash placeholder is not something to say */
 .dw-read { font: 12px/1 ui-monospace, monospace; color: var(--dw-dim); }
+.dw-read:empty { display: none; }
 .dw-nav { margin-left: auto; }
-.dw-nav a { color: var(--dw-dim); text-decoration: none; font-size: 12px; }
+.dw-nav a { display: inline-flex; align-items: center; min-height: 44px;
+  color: var(--dw-dim); text-decoration: none; font-size: 12px; }
 .dw-nav a:hover { color: var(--dw-accent); }
 
 /* ---------- the download dropdown (unchanged) ---------- */
@@ -104,40 +115,48 @@ body {
 .dw-vlab   { font: 600 12px system-ui, -apple-system, sans-serif; fill: var(--dw-ink); dominant-baseline: middle; }
 .dw-vlab.ind { opacity: .5; font-style: italic; }
 
-/* ================= THE MAIN COLUMN ================= */
+/* ================= THE SHELL: DAW LEFT, MANIPULATION RIGHT =================
+   Below 1000px this is one column and the page scrolls, exactly as before. At
+   1000px and up the viewport is the frame: the header is a fixed band, the DAW
+   column scrolls INSIDE itself, the rail is always there, and the page itself
+   never scrolls. sheet.js knows none of this — see its header. */
+#dwShell { display: block; }
 #dwMain { max-width: 1180px; margin: 0 auto; padding: 10px 16px 96px; }
 
-/* ---------- the KERNEL card ---------- */
-.dw-kcard {
-  --hue: 190;
-  display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center;
-  background: var(--dw-panel); border: 1px solid var(--dw-line); border-radius: 8px;
-  padding: 8px 10px; margin-bottom: 10px;
+@media (min-width: 1000px) {
+  html, body { height: 100%; }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+  #dawbar { position: static; flex: 0 0 auto; }
+  #dwShell { flex: 1 1 auto; display: flex; align-items: stretch; min-height: 0; }
+  #dwMain { flex: 1 1 auto; min-width: 0; max-width: none; margin: 0;
+            display: flex; flex-direction: column;
+            overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+            padding: 10px 16px 84px; }
+  /* the column is taller than the song: the colophon sits on the FLOOR of it
+     rather than floating in the middle of a field of empty panel */
+  #dwMain > #dwFoot { margin-top: auto; }
 }
-.dw-krow {
-  display: flex; align-items: center; gap: 12px; min-height: 48px;
-  background: none; border: 0; color: var(--dw-ink); cursor: pointer;
-  text-align: left; padding: 4px; border-radius: 6px;
-}
-.dw-krow:focus-visible { outline: 2px solid var(--dw-accent); }
+
+/* ---------- the KERNEL row (grid) + the kernel VIEW (rail) ---------- */
 .dw-kthumb { width: 40px; height: 40px; flex: 0 0 40px; }
 .dw-kthumbring { fill: none; stroke: rgba(255,255,255,.14); stroke-width: 1; }
 .dw-kthumbpoly { fill: hsla(var(--hue), 62%, 58%, .3); stroke: hsl(var(--hue), 62%, 66%); stroke-width: 1; }
-.dw-klabel { font: 600 14px/1.25 system-ui, sans-serif; color: hsl(var(--hue), 60%, 76%); }
-.dw-kseed {
-  font: 11px/1 ui-monospace, monospace; color: var(--dw-dim);
-  border: 1px solid var(--dw-line); border-radius: 999px; padding: 5px 9px; white-space: nowrap;
-}
-.dw-ktile { width: 120px; }
-.dw-ktile .dw-tile { min-height: 48px; }
-.dw-kexpand { grid-column: 1 / -1; display: none; }
-.dw-kcard.open .dw-kexpand { display: block; }
-.dw-kvec { display: flex; justify-content: center; }
+.dw-kview .dw-kvec { display: flex; justify-content: center; margin: 2px 0 0; }
+.dw-kview .dw-vec { width: 100%; max-width: 380px; }
+.dw-ktiles { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 10px 0 4px; }
+.dw-ktile { width: 100%; }
 .dw-kprog[hidden] { display: none; }
+.dw-seedinput {
+  width: 92px; min-height: 44px; padding: 6px 9px;
+  font: 14px/1 ui-monospace, monospace; color: var(--dw-ink);
+  background: var(--dw-panel-2); border: 1px solid var(--dw-line); border-radius: 6px;
+}
+.dw-seedinput:focus-visible { outline: 2px solid var(--dw-accent); }
 
 /* ---------- the SONG bar ---------- */
 #dwSong {
   position: relative; display: flex; gap: 3px; margin-bottom: 8px; min-height: 44px;
+  flex: 0 0 auto;
 }
 .dw-secchip {
   flex: 1 1 0; min-width: 44px; min-height: 44px; cursor: pointer;
@@ -157,6 +176,7 @@ body {
 body.dw-playing .dw-shead { opacity: .9; }
 
 /* ---------- THE GRID ---------- */
+#dwGrid { flex: 0 0 auto; }
 .dw-gridwrap { position: relative; overflow-x: auto; border: 1px solid var(--dw-line);
   border-radius: 8px; background: var(--dw-panel); }
 .dw-gridinner {
@@ -190,6 +210,25 @@ body.dw-playing .dw-shead { opacity: .9; }
   content: "∅"; position: absolute; inset: 0; display: grid; place-items: center;
   font: 14px/1 ui-monospace, monospace; color: var(--dw-dim); pointer-events: none;
 }
+/* OFF and SILENT are two different sentences and they were being printed on top
+   of each other: roll.js writes "— silent —" into an empty canvas, and a section
+   that turns the voice OFF is empty too, so the ∅ landed in the middle of the
+   word ("— silen∅ —"). A cell the form silenced says ∅ and nothing else; a cell
+   that merely happens to rest keeps "— silent —". */
+.dw-cellbtn.off .dw-cellcv { visibility: hidden; }
+/* the KERNEL row: the top of the pipeline, mirroring the master row's shape */
+.dw-kernelhead { min-height: 44px; }
+.dw-kernelcell {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 44px; padding: 4px 10px; cursor: pointer; text-align: left;
+  background: #120f26; border: 0; border-radius: 2px; color: var(--dw-ink);
+}
+.dw-kernelcell:hover { background: #181236; }
+.dw-kernelcell:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: -2px; }
+.dw-kernelcell .dw-kthumb { width: 34px; height: 34px; flex: 0 0 34px; pointer-events: none; }
+.dw-kernelname { font: 600 13px/1.2 system-ui, sans-serif; color: hsl(var(--hue), 60%, 76%);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dw-kernelmeta { margin-left: auto; font: 11px/1.3 ui-monospace, monospace; color: var(--dw-dim); white-space: nowrap; }
 .dw-masterhead { min-height: 44px; }
 .dw-mastercell {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
@@ -206,31 +245,119 @@ body.dw-playing .dw-shead { opacity: .9; }
   pointer-events: none; opacity: 0; transition: opacity .2s; z-index: 4; }
 body.dw-playing .dw-ghead { opacity: .9; }
 
-/* ---------- the playhead readout, bottom right (unchanged) ---------- */
-.dw-playhead {
-  position: fixed; right: .7rem; bottom: .7rem; z-index: 20;
-  display: flex; align-items: baseline; gap: 14px;
-  padding: 9px 14px; border-radius: 6px;
-  background: rgba(18,15,38,.92); border: 1px solid var(--dw-line);
+/* ================= THE CONTROLLER =================
+   ▶ · bar·beat · bpm · volume, in ONE box: the play button and the readout were
+   the same instrument split across two corners. 56px tall, every target ≥44px,
+   bottom-right of the DAW column on desktop (clear of the rail) and a full-width
+   bar above the safe area on a phone. */
+.dw-controller {
+  position: fixed; right: calc(var(--dw-railw) + .7rem); bottom: .7rem; z-index: 40;
+  display: flex; align-items: center; gap: 12px;
+  height: var(--dw-ctlh); padding: 0 10px; border-radius: 10px;
+  background: rgba(18,15,38,.94); border: 1px solid var(--dw-line);
+  box-shadow: 0 6px 22px rgba(0,0,0,.45);
   backdrop-filter: blur(6px);
-  font: 600 20px/1 ui-monospace, monospace; color: var(--dw-dim);
 }
-.dw-playhead.on { color: var(--dw-ink); border-color: hsla(190,60%,60%,.5); }
-.dw-playhead small { display: block; font: 600 9px/1 system-ui, sans-serif; letter-spacing: .12em;
-                     text-transform: uppercase; color: var(--dw-dim); margin-top: 4px; }
-.dw-hstate { font-size: 14px; color: var(--dw-accent); }
+.dw-controller.on { border-color: hsla(190,60%,60%,.5); }
+/* one hairline between the readouts: four things in a 56px box need a grid to
+   be read as four things rather than one crowded sentence */
+.dw-controller .dw-cnum + .dw-cnum { border-left: 1px solid var(--dw-line); padding-left: 12px; }
+.dw-cplay {
+  flex: 0 0 auto; width: 44px; height: 44px; min-width: 44px; cursor: pointer;
+  display: grid; place-items: center; padding: 0;
+  font: 15px/1 ui-monospace, monospace; color: var(--dw-accent);
+  background: var(--dw-panel-2); border: 1px solid var(--dw-line); border-radius: 8px;
+}
+.dw-cplay:hover { border-color: var(--dw-accent); }
+.dw-cplay.on { background: var(--dw-accent); color: var(--dw-bg); border-color: var(--dw-accent); }
+.dw-cplay:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: 2px; }
+.dw-cnum { display: flex; flex-direction: column; justify-content: center; min-width: 54px; }
+.dw-cnum b { font: 600 19px/1 ui-monospace, monospace; color: var(--dw-dim);
+  font-variant-numeric: tabular-nums; }
+.dw-controller.on .dw-cnum b { color: var(--dw-ink); }
+.dw-cnum small { font: 600 9px/1 system-ui, sans-serif; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--dw-dim); margin-top: 5px; }
+.dw-cpos b { min-width: 62px; display: inline-block; }
+/* VOLUME — the tile gesture laid sideways. Not a range input, by law. */
+.dw-cvol {
+  position: relative; overflow: hidden; flex: 0 0 auto;
+  width: 116px; height: 44px; border-radius: 8px; cursor: grab;
+  display: flex; align-items: center;
+  background: #120f26; border: 1px solid var(--dw-line);
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.dw-cvolfill {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 100%;
+  background: hsla(190, 62%, 58%, .34); border-right: 1.5px solid hsl(190, 62%, 66%);
+  pointer-events: none; transition: width .04s linear;
+}
+.dw-cvollab { position: relative; margin-left: 9px; pointer-events: none;
+  font: 600 10px/1 system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--dw-ink); }
+.dw-cvoltxt { position: relative; margin: 0 9px 0 auto; pointer-events: none;
+  font: 11px/1 ui-monospace, monospace; color: var(--dw-dim); }
+.dw-cvol:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: 2px; }
 
-/* ================= THE SHEET ================= */
+/* ================= THE FLYOUT: RAIL OR BOTTOM SHEET =================
+   Same element, same view stack; only these rules differ. ≥1000px it is the
+   permanent right rail (never hidden — the kernel is its root view); below that
+   it is the bottom sheet, parked off-screen until body.dw-sheet-open. */
 #dwSheet {
   --hue: 200;
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
-  max-height: 85vh; display: flex; flex-direction: column;
-  background: var(--dw-panel); border-top: 1px solid hsl(var(--hue), 40%, 40%);
-  border-radius: 14px 14px 0 0; box-shadow: 0 -14px 44px rgba(0,0,0,.55);
+  display: flex; flex-direction: column; min-height: 0;
+  background: var(--dw-panel);
 }
 #dwSheet[hidden] { display: none; }
-.dw-sheethandle { flex: 0 0 auto; display: grid; place-items: center; min-height: 24px;
-  background: none; border: 0; cursor: pointer; padding: 8px 0 2px; }
+@media (max-width: 999.98px) {
+  /* THE SHEET PARKS ON TOP OF THE CONTROLLER, NEVER UNDER IT. It used to be
+     bottom:0/88vh with the fixed controller floating over its last 64px, so the
+     bottom row of every picker — and the seed row in the kernel view — sat
+     behind the transport bar and could not be read or tapped. Padding cannot fix
+     that: the bar covers the SCROLLPORT, not just the end of the content. So the
+     sheet's floor is the controller's ceiling, and the two stack honestly. */
+  #dwSheet {
+    position: fixed; left: 0; right: 0; z-index: 25;
+    bottom: calc(var(--dw-ctlh) + 1rem + env(safe-area-inset-bottom, 0px));
+    height: 82vh;
+    max-height: calc(100vh - var(--dw-ctlh) - 2rem - env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid hsl(var(--hue), 40%, 40%);
+    border-radius: 14px 14px 0 0; box-shadow: 0 -14px 44px rgba(0,0,0,.55);
+    transform: translateY(calc(101% + var(--dw-ctlh) + 2rem)); visibility: hidden;
+    transition: transform .18s ease, visibility .18s;
+  }
+  body.dw-sheet-open #dwSheet { transform: none; visibility: visible; }
+  /* …and the 1rem of air between that floor and the controller is PAINTED, not
+     a window. Left transparent it showed one sheared line of whatever the page
+     had at that height — half of the footer's "every surface here is a rule" —
+     between the sheet and the transport, which reads as a rendering fault
+     rather than as space. It rides the sheet's own transform, so it is
+     off-screen whenever the sheet is. */
+  #dwSheet::after {
+    content: ""; position: absolute; left: 0; right: 0; top: 100%;
+    height: calc(1rem + env(safe-area-inset-bottom, 0px));
+    background: var(--dw-bg); pointer-events: none;
+  }
+}
+@media (min-width: 1000px) {
+  #dwSheet {
+    flex: 0 0 var(--dw-railw); width: var(--dw-railw); height: 100%;
+    border-left: 1px solid hsl(var(--hue), 40%, 40%);
+  }
+  /* THE ID IS LOAD-BEARING. `.dw-sheethandle` re-declares `display:grid` a few
+     lines BELOW this block, and at equal specificity the later rule wins — so a
+     bare `.dw-sheethandle{display:none}` here was dead, and the rail carried a
+     419×34 button labelled "close the sheet" across its top. It even worked:
+     close() resets the stack, so the one thing that looked like a grab handle
+     silently threw you back to the kernel. Same reasoning as the ✕ below. */
+  #dwSheet .dw-sheethandle { display: none; }
+  /* the rail is PERMANENT: there is nothing to close it to. ← is the whole
+     navigation model here, and an ✕ that silently means "home" is a lie. */
+  .dw-sheetclose { display: none; }
+}
+/* the grab handle is a real button (it closes the sheet), so it takes the same
+   44px floor as everything else — a 34px target that happens to be 390px wide
+   is still a 34px target for a thumb coming down on it */
+.dw-sheethandle { flex: 0 0 auto; display: grid; place-items: center; min-height: 44px;
+  background: none; border: 0; cursor: pointer; padding: 14px 0 8px; }
 .dw-sheetgrab { width: 44px; height: 4px; border-radius: 2px; background: var(--dw-dim); opacity: .6; }
 .dw-sheethead { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; padding: 2px 14px 8px; }
 .dw-sheettitle { margin: 0; font: 700 18px/1.2 system-ui, sans-serif; letter-spacing: -.01em;
@@ -252,13 +379,104 @@ body.dw-playing .dw-ghead { opacity: .9; }
   color: var(--dw-dim);
 }
 .dw-sheettab.on { background: hsl(var(--hue), 55%, 62%); color: var(--dw-bg); border-color: hsl(var(--hue), 55%, 62%); }
-.dw-sheetbody { flex: 1 1 auto; overflow-y: auto; padding: 4px 14px 24px; overscroll-behavior: contain; }
-/* wide screens: a right-side panel instead of a bottom sheet */
-@media (min-width: 1100px) {
-  #dwSheet { left: auto; top: 0; bottom: 0; width: 440px; max-height: none;
-    border-radius: 0; border-top: 0; border-left: 1px solid hsl(var(--hue), 40%, 40%); }
-  .dw-sheethandle { display: none; }
+/* NO TOP PADDING. The picker tables' sticky heads resolve `top: 0` against THIS
+   scrollport (.dw-tablewrap.grows creates none of its own), and a padding-top
+   parks them that many pixels down — a 4px sliver of scrolled rows kept showing
+   ABOVE the pinned "INSTRUMENT / FAMILY" head. The gap between head and body is
+   the block's own margin instead, which scrolls away like everything else. */
+.dw-sheetbody { flex: 1 1 auto; overflow-y: auto; padding: 0 14px 80px; overscroll-behavior: contain; }
+/* ← BACK: the whole navigation model of the view stack, in one 44px button.
+   Hidden at the root (the kernel), because there is nowhere behind it. */
+.dw-sheetback {
+  flex: 0 0 auto; min-width: 44px; min-height: 44px; cursor: pointer;
+  font: 15px/1 ui-monospace, monospace; color: var(--dw-dim);
+  background: none; border: 1px solid var(--dw-line); border-radius: 6px;
 }
+.dw-sheetback:hover { color: var(--dw-accent); border-color: var(--dw-accent); }
+.dw-sheetback[hidden] { display: none; }
+.dw-sheetback:focus-visible { outline: 2px solid var(--dw-accent); }
+
+/* ================= THE TABLE (controls.js makeTable) =================
+   Real columns, so the eye scans one — the answer to the lozenge walls. 44px
+   rows, a 28px marker column carrying the ✓, sticky group headers, one hairline
+   per row and no zebra. The filter is the vocabulary's ONE text control: a
+   search box, never a range. */
+.dw-tablewrap {
+  --hue: 200;
+  margin: 6px 0 12px; border: 1px solid var(--dw-line); border-radius: 8px;
+  background: #120f26; overflow: hidden;
+}
+/* A TABLE WITH NO max-height IS NOT A SCROLLER — and it must not pretend to be
+   one, or its sticky headers stick to a box that never moves while the SHEET
+   scrolls underneath them, and the column heads + family headers ride out of
+   view in exactly the 124-row picker that needs them most. `overflow: clip`
+   still clips to the radius but creates no scroll container, so `top: 0`
+   resolves against .dw-sheetbody, which is the thing actually scrolling. */
+.dw-tablewrap.grows { overflow: clip; }
+.dw-tablewrap.grows .dw-tablescroll { overflow: visible; }
+.dw-tfilterhold { padding: 6px; border-bottom: 1px solid var(--dw-line); }
+.dw-tfilter {
+  width: 100%; min-height: 44px; padding: 8px 10px;
+  font: 13px/1 ui-monospace, monospace; color: var(--dw-ink);
+  background: var(--dw-panel-2); border: 1px solid var(--dw-line); border-radius: 6px;
+  -webkit-appearance: none; appearance: none;
+}
+.dw-tfilter:focus-visible, .dw-tfilter:focus { outline: 2px solid var(--dw-accent); outline-offset: -1px; }
+.dw-tablescroll { position: relative; overflow-y: auto; overscroll-behavior: contain; }
+.dw-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.dw-th, th.dw-tmark {
+  position: sticky; top: 0; z-index: 3; background: var(--dw-panel-2);
+  font: 600 10px/1 system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--dw-dim); text-align: left; padding: 9px 10px;
+  border-bottom: 1px solid var(--dw-line);
+}
+.dw-tgroupth {
+  position: sticky; top: 0; z-index: 2; background: #191434;
+  font: 600 10px/1 system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase;
+  color: hsl(var(--hue), 55%, 74%); text-align: left; padding: 8px 10px;
+  border-top: 1px solid var(--dw-line); border-bottom: 1px solid var(--dw-line);
+}
+.dw-tablewrap.hashead .dw-tgroupth { top: 30px; }
+.dw-trow { cursor: pointer; }
+.dw-trow > td {
+  height: 44px; padding: 5px 10px; vertical-align: middle;
+  border-top: 1px solid rgba(255,255,255,.05);
+  font: 13px/1.25 system-ui, sans-serif; color: var(--dw-ink);
+}
+.dw-trow:hover > td { background: rgba(255,255,255,.045); }
+.dw-trow.on > td { background: hsla(var(--hue), 62%, 58%, .22); }
+.dw-trow.dim > td { opacity: .6; }
+.dw-trow:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: -2px; }
+td.dw-tmark, th.dw-tmark { width: 28px; text-align: center; padding-left: 4px; padding-right: 0; }
+td.dw-tmark { font: 12px/1 ui-monospace, monospace; color: hsl(var(--hue), 62%, 72%); }
+/* A DRILL-IN TABLE HAS NOTHING TO MARK. The section table, the section rules and
+   the master's ADD list are menus of doors, not a choice with a ✓ in it, so the
+   28px marker gutter would sit permanently blank and indent every name for no
+   reason. controls.js sets .nomark whenever the table carries no value. */
+.dw-tablewrap.nomark td.dw-tmark, .dw-tablewrap.nomark th.dw-tmark {
+  width: 0; padding-left: 10px; padding-right: 0;
+}
+.dw-tname { font-weight: 600; }
+.dw-tright { text-align: right; font: 11px/1.3 ui-monospace, monospace; color: var(--dw-dim); white-space: nowrap; }
+.dw-tempty td { padding: 14px 10px; color: var(--dw-dim); font-style: italic; }
+.dw-pickernote { margin: 2px 0 8px; }
+
+/* the row that OPENS a picker: name on the left, what it is now on the right */
+.dw-pick {
+  display: flex; align-items: center; gap: 8px; flex: 1 1 180px; min-width: 0;
+  min-height: 44px; padding: 6px 10px; cursor: pointer; text-align: left;
+  background: #120f26; border: 1px solid var(--dw-line); border-radius: 6px; color: var(--dw-ink);
+}
+.dw-pick:hover { border-color: hsl(var(--hue), 55%, 60%); }
+.dw-pick:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: 1px; }
+/* min-width:0 is what makes the ellipsis real: without it a flex item's floor is
+   its own text, so "Yamaha Grand Piano · keys + pluck" pushed the sheet sideways
+   on a 320px phone instead of truncating */
+.dw-pickval { min-width: 0; font: 600 13px/1.2 system-ui, sans-serif; color: hsl(var(--hue), 60%, 78%);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dw-pickid { min-width: 0; font: 11px/1 ui-monospace, monospace; color: var(--dw-dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dw-pickmore { margin-left: auto; font: 15px/1 ui-monospace, monospace; color: var(--dw-dim); }
 
 /* ---------- sheet blocks (every editor renders into these) ---------- */
 .dw-ed { margin-bottom: 16px; }
@@ -266,11 +484,25 @@ body.dw-playing .dw-ghead { opacity: .9; }
   display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
   font: 13px/1 ui-monospace, monospace; color: hsl(var(--hue), 62%, 70%);
 }
+/* THE HANGING INDENT is what stops these rows reading ragged. A row is
+   [label][control…] in a wrapping flex box, so the moment the controls wrapped —
+   a tile then three flag chips, a pad then four period chips — the second line
+   snapped back to x=0 and sat under the LABEL instead of under the control it
+   belongs to. The row now carries a left gutter and the label hangs back out of
+   it by exactly that much, so line 1 and line 2 start on the same rule. */
 .dw-edrow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 6px 0;
   border-bottom: 1px solid rgba(255,255,255,.05); }
-.dw-edlab { flex: 0 0 64px; font: 600 11px/1 system-ui, sans-serif; letter-spacing: .08em;
+.dw-edrow:has(> .dw-edlab) { padding-left: var(--dw-labgap); }
+.dw-edlab { flex: 0 0 var(--dw-labw); margin-left: calc(0px - var(--dw-labgap));
+  font: 600 11px/1.2 system-ui, sans-serif; letter-spacing: .08em;
   text-transform: uppercase; color: var(--dw-ink); }
-.dw-edval { font: 11px/1 ui-monospace, monospace; color: var(--dw-dim); width: 100%; }
+/* sized to its words, not to the row: a short fact belongs BESIDE its label,
+   not on a line of its own ("add · tap a row to add it") */
+.dw-edval { flex: 0 1 auto; min-width: 0; font: 11px/1.4 ui-monospace, monospace; color: var(--dw-dim); }
+/* a chip row inside a labelled row SHRINKS and wraps inside itself rather than
+   taking a whole flex line of its own — otherwise "RATE" and its five chips sit
+   on two lines at 390px for no reason */
+.dw-edrow > .dw-chips { flex: 1 1 160px; min-width: 0; }
 .dw-badge {
   font: 600 9px/1 system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase;
   color: var(--dw-bg); background: hsl(var(--hue), 62%, 62%); padding: 3px 5px; border-radius: 3px;
@@ -322,6 +554,10 @@ body.dw-playing .dw-ghead { opacity: .9; }
 /* the pad's row holder: fixed for a hit op, flexing for a wide grid op */
 .dw-padhold { flex: 0 0 auto; }
 .dw-padhold.wide { flex: 1 1 180px; }
+/* a LABELLED hit pad has to be wide enough to say its label: at the 44px floor
+   "4 hits" clipped to "4 H…" on every drum sheet. The floor is a minimum, not a
+   size. */
+.dw-pad:not(.wide):has(> .dw-padlab) { min-width: 62px; }
 
 /* TILE — the Control-Center fill tile: label top-left, live value bottom-right */
 .dw-tile {
@@ -342,8 +578,11 @@ body.dw-playing .dw-ghead { opacity: .9; }
   color: var(--dw-ink);
 }
 .dw-tileval {
+  /* the live value sits ON the fill, so it cannot be the dim grey the rest of
+     the readouts are — over a 62% fill "0.14" disappeared into it */
   position: absolute; bottom: 6px; right: 8px; pointer-events: none;
-  font: 12px/1 ui-monospace, monospace; color: var(--dw-dim);
+  font: 12px/1 ui-monospace, monospace; color: var(--dw-ink);
+  text-shadow: 0 1px 2px rgba(0,0,0,.55);
 }
 .dw-tiledot {
   position: absolute; top: 7px; right: 8px; width: 6px; height: 6px; border-radius: 50%;
@@ -351,15 +590,29 @@ body.dw-playing .dw-ghead { opacity: .9; }
 }
 .dw-tile.edited .dw-tiledot { display: block; }
 .dw-tile:focus-visible { outline: 2px solid var(--dw-accent); outline-offset: 1px; }
-.dw-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; margin: 8px 0; }
+/* auto-FIT, not auto-fill: two tiles in a three-tile rail should share the rail,
+   not huddle left of a phantom third column */
+.dw-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 8px; margin: 8px 0; }
 /* a lone tile living inside an .dw-edrow (the crate's per-source level) —
    .dw-tile is width:100%, so the holder does the row sizing */
 .dw-tilehold { flex: 1 1 132px; min-width: 116px; }
 
 /* CHIPS — segmented buttons; a choice is not an amount. min-width keeps a
-   one-glyph chip ("C", "↑") at the 44px touch floor. */
-.dw-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+   one-glyph chip ("C", "↑") at the 44px touch floor.
+   THE LINE MUST END FLUSH. Chips sized to their own words wrap into a ragged
+   right edge — twelve keys and a "genre's own" read as a lozenge spill rather
+   than a keyboard, which is the exact complaint the tables were built to
+   answer. `flex: 1 0 auto` keeps the wrap points (a chip never shrinks below
+   its label) but shares the leftover of each line out among the chips ON that
+   line, so every row of chips is a block with two straight sides. The 50% cap
+   is what stops the LAST line's orphan ("2", alone under four rate chips) from
+   inflating into a banner that reads as a different kind of thing. */
+.dw-chips { display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; }
 .dw-chip {
+  /* the cap never falls under 140px, so it can only ever trim a chip that grew —
+     it must not be able to squeeze a real label ("strengthen") into a wrap on a
+     320px phone, where half of the chip column is 100px */
+  flex: 1 0 auto; max-width: max(50%, 140px);
   min-height: 44px; min-width: 44px; padding: 8px 14px; cursor: pointer;
   font: 12px/1 ui-monospace, monospace; color: var(--dw-dim);
   background: var(--dw-panel-2); border: 1px solid var(--dw-line); border-radius: 999px;
@@ -444,17 +697,36 @@ body.dw-playing .dw-ghead { opacity: .9; }
    A phone has no hover, a thumb is ~44px, and vertical drags belong to the page
    unless a control claims them (touch-action:none on pads/tiles/radar). Row
    headers ≤88px, sheet 85vh with the grab handle, everything ≥44px. */
+@media (max-width: 999.98px) {
+  /* THE CONTROLLER goes full width above the safe area; the sheet parks on top
+     of it (see #dwSheet above), so nothing is ever hidden behind it. */
+  .dw-controller {
+    left: .5rem; right: .5rem; bottom: calc(.5rem + env(safe-area-inset-bottom, 0px));
+    justify-content: space-between;
+  }
+  .dw-cvol { width: 120px; }
+}
 @media (max-width: 720px) {
-  #dawbar { gap: 10px; padding: 8px 10px; }
-  .dw-controls { gap: 8px; width: 100%; }
-  .dw-ctl input { width: 64px; }
-  .dw-btn { padding: 10px 12px; min-height: 44px; }
-  .dw-nav { margin-left: 0; }
-  #dwMain { padding: 8px 10px 96px; }
-  :root { --dw-headw: 80px; }
-  .dw-kcard { grid-template-columns: 1fr; }
-  .dw-ktile { width: 100%; }
-  .dw-kvec .dw-vec { max-width: min(92vw, 340px); }
+  /* ONE HEADER ROW: brand · ↗ link · ⤓ download · ← star map. Seed/⟳ are in the
+     kernel view and ▶ is in the controller, which is what made the row fit. */
+  #dawbar { gap: 8px; padding: 8px 10px; flex-wrap: nowrap; }
+  .dw-controls { gap: 6px; width: auto; flex-wrap: nowrap; }
+  .dw-brand { font-size: 15px; gap: 5px; }
+  .dw-tag { padding: 3px 4px; letter-spacing: .12em; }
+  .dw-btn { padding: 10px 9px; min-height: 44px; min-width: 44px; font-size: 12px; }
+  .dw-read { display: none; }
+  .dw-nav { margin-left: auto; }
+  .dw-nav a { white-space: nowrap; }
+  #dwMain { padding: 8px 10px 84px; }
+  :root { --dw-headw: 80px; --dw-labw: 76px; --dw-labgap: 84px; }
+  /* THE SONG BAR SCROLLS instead of shrinking. Eight sections across 390px gave
+     each chip 45px, which truncated every name to three letters ("PRE-CHORUS" →
+     "PR…") — a bar of initials is not a song form. The chips keep a readable
+     width and the bar scrolls sideways, exactly as the grid under it does. */
+  #dwSong { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+  #dwSong::-webkit-scrollbar { height: 0; }
+  .dw-secchip { flex: 0 0 auto; min-width: 96px; }
+  .dw-kview .dw-vec { max-width: min(92vw, 340px); }
   .dw-secname { font-size: 10px; }
   .dw-rowname { font-size: 12px; }
   /* the ladder scrolls inside itself rather than starving: a 32-step phrase at
@@ -473,6 +745,19 @@ body.dw-playing .dw-ghead { opacity: .9; }
   .dw-dlmenu { position: fixed; left: 10px; right: 10px; top: auto; min-width: 0; }
   .dw-mhead, .dw-glabel { font-size: 8px; }
   .dw-pchain { grid-template-columns: 1fr; }
-  .dw-playhead { font-size: 17px; gap: 10px; padding: 7px 11px; }
-  .dw-sheetbody { padding-bottom: 40px; }
+  .dw-controller { gap: 8px; padding: 0 8px; }
+  .dw-controller .dw-cnum + .dw-cnum { padding-left: 8px; }
+  .dw-cnum b { font-size: 17px; }
+  /* the controller no longer overlaps the sheet, so the body only needs its own
+     breathing room at the end of a list */
+  .dw-sheetbody { padding-bottom: 28px; }
+}
+/* the narrowest phones: the header still refuses to wrap */
+@media (max-width: 420px) {
+  :root { --dw-labw: 64px; --dw-labgap: 72px; }
+  .dw-brand { font-size: 13px; letter-spacing: .1em; }
+  .dw-btn { padding: 10px 7px; font-size: 11px; }
+  .dw-nav a { font-size: 11px; }
+  .dw-cvol { width: 96px; }
+  .dw-cnum { min-width: 46px; }
 }

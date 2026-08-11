@@ -6,12 +6,13 @@
 // transport. PLAY re-reads the song every chord bar (transport.js), so an edit
 // made while the music runs lands at the next bar instead of restarting.
 import { SONG, edit, subs, touch, encodePatch, decodePatch, state, events, TRACKS } from "./song.js";
-import * as KERNELCARD from "./kernelcard.js";
+import * as KERNELVIEW from "./kernelview.js";
 import * as STRUCTURE from "./structure.js";
 import * as GRID from "./grid.js";
 import * as SHEET from "./sheet.js";
 import { registry } from "./controls.js";
 import * as TRANSPORT from "./transport.js";
+import * as CONTROLLER from "./controller.js";
 import * as EXPORT from "./export.js";
 
 const $ = (id) => document.getElementById(id);
@@ -55,16 +56,9 @@ function writeQuery() {
 }
 
 function wire() {
-  $("dwSeed").addEventListener("change", (e) => {
-    const v = Math.max(1, Math.min(99999, parseInt(e.target.value, 10) || 1));
-    e.target.value = v; TRANSPORT.songChanged(); edit({ seed: v });
-  });
-  $("dwReseed").addEventListener("click", () => { TRANSPORT.songChanged(); edit({ seed: Math.floor(Math.random() * 99999) + 1 }); });
-  // ▶ / ■ — one button. Starting needs the user gesture (the AudioContext unlock
-  // rides this click), so it must be a real listener, never a programmatic call.
-  $("dwPlay").addEventListener("click", () => {
-    TRANSPORT.toggle((m) => { const r = $("dwRead"); if (r && !TRANSPORT.isPlaying()) r.textContent = m; });
-  });
+  // SEED + ⟳ live in the kernel view now (kernelview.js) and ▶ in the controller
+  // (controller.js) — the header carries only what belongs to the PAGE.
+  //
   // ⤓ EXPORTS. wav/mp3 render offline in a dedicated worker (no ring, so it can
   // run flat out without touching playback); midi and xml are synchronous walks of
   // the same buildEvents the grid draws.
@@ -97,34 +91,30 @@ function wire() {
 // SONG on every change keeps an edit from anywhere (probe, preset, future undo)
 // consistent with the inputs and the URL.
 function syncControls() {
-  const seed = $("dwSeed");
-  if (+seed.value !== SONG.seed) seed.value = SONG.seed;
   writeQuery();
 }
 
 function boot() {
   readQuery();
-  $("dwSeed").value = SONG.seed;
   wire();
 
   SHEET.mount($("dwSheet"));          // before the grid — cell taps open it
-  KERNELCARD.build($("dwKernel"));
+  KERNELVIEW.init();                  // start learning the space; register subs
+  SHEET.setRoot(KERNELVIEW.view());   // the rail is never empty: kernel is home
   STRUCTURE.build($("dwSong"));
   GRID.build($("dwGrid"));
+  CONTROLLER.mount($("dwCtl"), {
+    onStatus: (m) => { const r = $("dwRead"); if (r && !TRANSPORT.isPlaying()) r.textContent = m; },
+  });
 
-  subs.push(syncControls, TRANSPORT.paintReadout);
+  subs.push(syncControls);
   TRANSPORT.onHead(GRID.placeHead);
   TRANSPORT.onHead(STRUCTURE.placeHead);
   TRANSPORT.onChange(() => {
-    const b = $("dwPlay");
-    b.textContent = TRANSPORT.isPlaying() ? "■ stop" : "▶ play";
-    b.classList.toggle("on", TRANSPORT.isPlaying());
     document.body.classList.toggle("dw-playing", TRANSPORT.isPlaying());
   });
   let rz = 0;
   window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { GRID.paint(); }, 120); });
-
-  TRANSPORT.paintReadout();           // the bottom-right readout exists before the first play
 
   // ---------- probe hooks (the gates' contract — DAW-GRID spec §Probe hooks) ----------
   window.__DAWSTATE = state;
@@ -132,8 +122,15 @@ function boot() {
     SONG, edit, touch, encodePatch, decodePatch, TRANSPORT, TRACKS,
     grid: { rows: GRID.rows, cols: GRID.cols, rowHash: GRID.rowHash,
             openCell: GRID.openCell, cellCount: GRID.cellCount },
-    sheet: { open: SHEET.open, close: SHEET.close, el: SHEET.el, tab: SHEET.tab },
+    sheet: { open: SHEET.open, close: SHEET.close, el: SHEET.el, tab: SHEET.tab,
+             push: SHEET.push, back: SHEET.back, root: SHEET.root,
+             stack: SHEET.stackIds, depth: SHEET.depth, view: SHEET.current,
+             picker: SHEET.pickerView, isOpen: SHEET.isOpen },
+    controller: { el: CONTROLLER.el, play: CONTROLLER.play, stop: CONTROLLER.stop,
+                  volume: CONTROLLER.volume, setVolume: CONTROLLER.setVolume,
+                  volEl: CONTROLLER.volEl_ },
     controls: { pads: () => registry.pads(), tiles: () => registry.tiles() },
+    tables: () => registry.tables(),
   };
 }
 

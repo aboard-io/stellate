@@ -15,14 +15,15 @@
 // THE PLAYHEAD IS NOT A REPAINT (the standing law): one absolutely-positioned
 // line, moved by the transport's rAF via the piecewise beat → (column,
 // fraction) mapping. Canvases never repaint for the head.
-import { TRACKS, trackById, state, events, trackEvents, sectionSpans, subs } from "./song.js";
+import { TRACKS, trackById, state, events, trackEvents, sectionSpans, subs, SONG } from "./song.js";
 import { drawRoll, midiRange } from "./roll.js";
-import { open as openSheet } from "./sheet.js";
+import { open as openSheet, root as openKernel } from "./sheet.js";
+import * as KERNELVIEW from "./kernelview.js";
 
 const E = window.CsdEngine;
 const $el = (t, c, x) => { const d = document.createElement(t); if (c) d.className = c; if (x != null) d.textContent = x; return d; };
 
-let root = null, inner = null, headEl = null, masterEl = null;
+let root = null, inner = null, headEl = null, masterEl = null, kernelEl = null;
 let colIds = [];                       // section ids, to detect structural change
 const cells = new Map();               // "trackId:i" -> {btn, cv}
 
@@ -41,6 +42,25 @@ function rebuild(spans) {
   colIds = spans.map((s) => s.id);
   inner = $el("div", "dw-gridinner");
   inner.style.setProperty("--cols", spans.length);
+
+  // KERNEL row — the top of the pipeline, mirroring the master row at the
+  // bottom, so reading the grid top to bottom is still reading the machine:
+  // kernel → chords → voices → samples → master. The ◇ glyph is the same shape
+  // the sculptor draws, at 40px and NON-interactive — the row is the button.
+  const kh = $el("button", "dw-rowhead dw-kernelhead");
+  kh.type = "button";
+  kh.style.setProperty("--hue", KERNELVIEW.HUE);
+  kh.appendChild($el("span", "dw-rowname", "kernel"));
+  kh.title = "open the kernel — the genre shape, tempo and seed";
+  kh.addEventListener("click", openKernel);
+  inner.appendChild(kh);
+  kernelEl = $el("button", "dw-kernelcell");
+  kernelEl.type = "button";
+  kernelEl.style.setProperty("--hue", KERNELVIEW.HUE);
+  kernelEl.style.gridColumn = "2 / -1";
+  kernelEl.title = "open the kernel";
+  kernelEl.addEventListener("click", openKernel);
+  inner.appendChild(kernelEl);
 
   for (const track of TRACKS) {
     const rh = $el("button", "dw-rowhead");
@@ -111,6 +131,18 @@ export function paint() {
         beatFrom: sp.start, beatTo: sp.start + sp.beats,
         kind: track.kind, hue: track.hue, range });
     }
+  }
+  if (kernelEl) {
+    kernelEl.textContent = "";
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    g.setAttribute("class", "dw-kthumb");
+    g.setAttribute("viewBox", "0 0 40 40");
+    g.setAttribute("aria-hidden", "true");
+    kernelEl.appendChild(g);
+    KERNELVIEW.paintGlyph(g);
+    kernelEl.appendChild($el("span", "dw-kernelname", KERNELVIEW.label()));
+    kernelEl.appendChild($el("span", "dw-kernelmeta",
+      `seed ${SONG.seed} · ${Math.round(st.bpm || 0)} bpm`));
   }
   if (masterEl) {
     const chain = (st.pipes || []).map((p) => p.id).join(" → ") || "no note fx";

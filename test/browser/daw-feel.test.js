@@ -2,11 +2,13 @@
 // test/browser/daw-feel.test.js — THE KERNEL SCULPTOR under THE GRID, on a phone.
 //
 // The deck's radar-per-layer is gone (DAW-GRID spec): ONE radar remains — the
-// kernel card's genre sculptor — and every other surface speaks pads / tiles /
-// chips. So this gate holds the sculptor's own contract at 390×844 touch:
+// genre sculptor — and every other surface speaks pads / tiles / chips. Since
+// the rail landed the sculptor lives in the FLYOUT's kernel view, opened from
+// the grid's kernel row, so this gate holds its contract at 390×844 touch:
 //
-//   A the card       collapsed row boots visible; tap expands to the sculptor;
-//                    the radar fits the phone and claims its drags (touch-action)
+//   A the kernel row the grid's kernel row opens the kernel VIEW with the
+//                    sculptor in it; the radar fits the phone, claims its drags
+//                    (touch-action) and prints its axis labels unclipped
 //   B no sliders     zero input[type=range] ON THE WHOLE PAGE — including with
 //                    the busiest sheet open (the standing gate law)
 //   C accessibility  handles are focusable role=slider; the ghost polygon rides
@@ -18,6 +20,9 @@
 //   F thumb floor    every pad/tile/chip/button in an open sheet ≥44px
 //                    (the ladder/matrix kept editors are row-height targets —
 //                    their cells hold the 44px height; columns stay fractional)
+//   G the desk       and at 1440 the same radar is the RAIL'S ROOT: on screen,
+//                    fully, with zero taps — which is what moving the card off
+//                    the page bought
 "use strict";
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
 const path = require("path");
@@ -31,7 +36,7 @@ const fail = (m) => { console.error("FAIL:", m); process.exitCode = 1; };
 // so dispatching on the svg with client coordinates is the real code path)
 async function touchDrag(page, label, frac) {
   return page.evaluate(async ({ lab, frac }) => {
-    const svg = document.querySelector(".dw-kcard .dw-vec");
+    const svg = document.querySelector("#dwSheet .dw-vec");
     if (!svg) return "no radar";
     svg.scrollIntoView({ block: "center" });
     const r = svg.getBoundingClientRect();
@@ -39,7 +44,10 @@ async function touchDrag(page, label, frac) {
     const i = texts.findIndex((t) => t.textContent === lab);
     if (i < 0) return "no axis " + lab;
     const n = texts.length, ang = -Math.PI / 2 + (i * 2 * Math.PI) / n;
-    const cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = r.width / 2 - 34;
+    // the viewBox carries a LABEL GUTTER now (vector.js labelPad), so the radar's
+    // radius is no longer half the element: read the box and scale it.
+    const vb = svg.viewBox.baseVal, size = vb.width + 2 * vb.x, scale = r.width / vb.width;
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = (size / 2 - 30) * scale;
     const mk = (t, x, y) => svg.dispatchEvent(new PointerEvent(t, {
       pointerId: 1, pointerType: "touch", isPrimary: true, bubbles: true,
       cancelable: true, clientX: x, clientY: y }));
@@ -63,19 +71,25 @@ async function main() {
     null, { timeout: 20000 });
   await page.waitForTimeout(300);
 
-  // ---- A the card ----
-  await page.click(".dw-krow");
+  // ---- A the kernel row opens the kernel view ----
+  await page.click(".dw-kernelcell");
+  await page.waitForTimeout(300);
   const card = await page.evaluate(() => {
-    const c = document.querySelector(".dw-kcard");
+    const c = document.getElementById("dwSheet");
     const svg = c.querySelector(".dw-vec");
     const r = svg ? svg.getBoundingClientRect() : { width: 0 };
-    return { open: c.classList.contains("open"), vec: !!svg,
+    const box = svg ? svg.getBoundingClientRect() : null;
+    const labs = svg ? [...svg.querySelectorAll(".dw-vlab")].map((t) => t.getBoundingClientRect()) : [];
+    return { open: window.__DAW.sheet.isOpen(), stack: window.__DAW.sheet.stack(), vec: !!svg,
       touchAction: svg ? getComputedStyle(svg).touchAction : "",
       vecW: Math.round(r.width), vw: window.innerWidth,
-      expanded: c.querySelector(".dw-krow").getAttribute("aria-expanded") };
+      clipped: box ? labs.filter((l) => l.left < box.left - 0.5 || l.right > box.right + 0.5).length : -1 };
   });
-  if (!card.open || !card.vec) fail("tapping the kernel row did not open the sculptor");
-  else ok("kernel card expands to the sculptor (aria-expanded=" + card.expanded + ")");
+  if (!card.open || !card.vec || card.stack[0] !== "kernel")
+    fail("tapping the grid's kernel row did not open the sculptor: " + JSON.stringify(card));
+  else ok("the kernel row opens the kernel view with the sculptor in it");
+  if (card.clipped) fail(card.clipped + " axis labels clipped by the radar's own box");
+  else ok("every axis label prints inside the radar's box (no \"ve\" / \"br\")");
   if (card.touchAction !== "none") fail(`radar touch-action "${card.touchAction}" — a drag will scroll`);
   else ok("touch-action:none — a drag edits rather than scrolling");
   if (card.vecW > card.vw - 16) fail(`radar ${card.vecW}px on a ${card.vw}px viewport`);
@@ -83,7 +97,7 @@ async function main() {
 
   // ---- C accessibility + the ghost ----
   const acc = await page.evaluate(() => {
-    const svg = document.querySelector(".dw-kcard .dw-vec");
+    const svg = document.querySelector("#dwSheet .dw-vec");
     const dots = [...svg.querySelectorAll('.dw-vdot[role="slider"]')];
     return { n: dots.length, tab: dots.length ? dots[0].getAttribute("tabindex") : null,
       labels: dots.map((d) => d.getAttribute("aria-label")),
@@ -102,7 +116,7 @@ async function main() {
   await page.waitForTimeout(500);
   const held = await page.evaluate(() => {
     const set = window.__DAW.SONG.patch.feel || {};
-    const dot = [...document.querySelectorAll('.dw-kcard .dw-vdot[role="slider"]')]
+    const dot = [...document.querySelectorAll('#dwSheet .dw-vdot[role="slider"]')]
       .find((d) => /bright/.test(d.getAttribute("aria-label") || ""));
     return { setV: set.bright, shown: dot ? +dot.getAttribute("aria-valuenow") : null,
       weights: (window.__DAW.SONG.weights || []).length,
@@ -151,6 +165,29 @@ async function main() {
   else ok("every pad/tile/chip in the sheet clears a thumb (≥44px)");
   if (floor.overflow > 1) fail(`the page scrolls sideways by ${floor.overflow}px`);
   else ok("no horizontal overflow at 390px");
+
+  // ---- G the desk: the sculptor is the rail's ROOT, so it costs zero taps ----
+  // On a phone the radar is a place you open. On a desk the rail is permanent and
+  // the kernel is its root view, which is the whole argument for moving the card
+  // off the page: nothing was lost, it just stopped eating the top of the screen.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.evaluate(() => window.__DAW.sheet.close());     // close = home, not gone
+  await page.waitForTimeout(400);
+  const desk = await page.evaluate(() => {
+    const s = document.getElementById("dwSheet"), svg = s.querySelector(".dw-vec");
+    const r = svg ? svg.getBoundingClientRect() : null;
+    return { stack: window.__DAW.sheet.stack(), vec: !!svg,
+      dots: s.querySelectorAll('.dw-vdot[role="slider"]').length,
+      inView: r ? (r.top >= 0 && r.bottom <= window.innerHeight && r.right <= window.innerWidth + 1 && r.width > 200) : false,
+      w: r ? Math.round(r.width) : 0,
+      ranges: document.querySelectorAll('input[type="range"]').length };
+  });
+  if (desk.stack.join(",") !== "kernel" || !desk.vec || desk.dots < 8)
+    fail("the desk rail does not show the sculptor with no taps: " + JSON.stringify(desk));
+  else if (!desk.inView) fail(`the rail's radar is not fully on screen at 1440 (${desk.w}px)`);
+  else ok(`at 1440 the sculptor is the rail's root — ${desk.dots} handles, ${desk.w}px, zero taps`);
+  if (desk.ranges) fail("a range input appeared on the desk layout: " + desk.ranges);
+  else ok("still zero range inputs at 1440");
 
   if (errs.length) fail("page errors: " + errs.join(" | "));
   else ok("no page errors");

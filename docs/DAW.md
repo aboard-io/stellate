@@ -745,3 +745,193 @@ will do.
   missing appears to work and silently loses its edit on reload.
 - The two extensionless routes need their nginx blocks on the droplet; until then
   `/daw.html` serves and `/daw` 404s.
+
+## TABLES, RAIL, CONTROLLER (2026-08-11)
+
+**Paul:** *"Tidy up the pickers — it's a bunch of lozenges and hard to scan.
+Organize it into tables. Move the radars into the flyout too. Make it DAW on the
+left and manipulation on the right or in the popup. Give me volume control and
+make the play head and beat counter into one unified tiny controller. Figure out
+how to make it work on a phone."*
+
+### What the shipped page measured
+
+Counted off the screenshots at 1440×900 and 390×844, because "hard to scan" is a
+number:
+
+- **176 lozenges in one scroll.** The drums PART tab repeated the *entire* kit
+  vocabulary — 22 chips — once **per section**, and the form has eight of them.
+  The section sheet did the same trick three more times over (~20 melody patterns
+  + ~20 bass patterns + 22 kits, per section). Wrapped ragged, centred text, no
+  columns: nothing to run your eye down, and the value in force was a highlighted
+  pill you had to hunt for.
+- **The 11 + 100 gate.** sound SOUND was eleven family pills that merely *unlocked*
+  a hundred-odd instrument pills — two lozenge fields stacked, where the question
+  ("which instrument?") has exactly one answer.
+- **The kernel card ate the top** of both viewports — half the desktop screen
+  before a single track — and it was too narrow for its own radar, which printed
+  the axes as **"ve"** and **"br"** instead of *drive* and *bright*.
+- **Three header rows on a phone**: seed/⟳/link/play, then download, then ← star
+  map, before any music was visible at all.
+- **The transport was split across two corners** — ▶ in the header, bar·beat·bpm in
+  a box bottom-right — and there was **no volume control anywhere on the page**.
+
+### The rail: DAW left, manipulation right
+
+At **≥1000px** the page is a two-column, viewport-height layout that does not
+scroll: `#dwShell` is a flex row, the DAW column (`#dwMain` — song bar, grid,
+footer) scrolls inside itself, and `#dwSheet` is a permanent **420px rail** on
+the right. Below 1000px the same two elements are the old shape: full-width grid,
+bottom sheet with its grab handle — 82vh, and its FLOOR is the controller's
+ceiling rather than the viewport's, because a fixed bar floating over a scrollport
+hides rows permanently and no amount of bottom padding fixes that. **That
+difference is CSS ONLY** — `sheet.js` never asks which one it is; all it does is add/remove
+`body.dw-sheet-open`, which is a STATE, not a layout.
+
+What made that possible is that the flyout became a **VIEW STACK** rather than a
+panel: `push(view)` / `back()` / `root()`, where a view is
+`{id, title, hue, render(host, ctx)}`. The **kernel is the root** — the rail is
+never empty — `open(target)` still resets the stack to a track/master/section
+view exactly as before, and the head carries a `←` that is hidden only at the
+root. Drilling in is the whole point: a picker is a PLACE YOU GO, not a field you
+scroll past.
+
+### Tables, not lozenge fields
+
+`controls.js` grew a fourth primitive beside pad/tile/chips: **`makeTable`**. A
+real `<table>` (so the columns are columns) carrying listbox semantics
+(`role="listbox"`, rows `role="option"` + `aria-selected`, ROVING tabindex,
+arrows to move, Enter/Space to pick), 44px rows, a 28px leading marker column for
+the ✓, sticky group headers, one hairline per row and no zebra. Above 24 rows it
+grows a filter — an `<input type="search">`, the vocabulary's one text control,
+and explicitly not the thing the no-slider law is about. `sheet.js` wraps it as
+`pickerView(...)`, which pushes a table view and pops on pick.
+
+The rule for which surfaces convert: **≤6 short options stay chips** (a 12-key
+row reads as a keyboard); anything longer becomes a table. Applied straight
+through:
+
+| surface | was | is |
+|---|---|---|
+| sound INSTRUMENT | 11 family pills gating 100+ instrument pills | ONE filterable table grouped by family, first row "genre's own", scrolled to what is loaded |
+| drums KIT per section | 22 pills × 8 sections | a section table (section · kit now · yours), each row drilling into ONE kit picker |
+| the section sheet | three pattern walls per section | a five-row rules table (cycles · melody · bass · drums · pads) over [rule, now, yours], each row a picker |
+| master ADD | ten "+ pipe" pills | a table, name against what the pipe does (the registry's own `doc`) |
+| kernel BASE GENRE | never offered | 274 anchors, one filterable table grouped by form |
+| gait, key, chord rate, on/off | chips | **still chips** |
+
+The vocabulary in every one of those tables is read from the ENGINE
+(`E.KITS`, `E.MELODY_PATTERNS`, `E.BASS_PATTERNS`, `K.SAMPLERS`, the pipe
+registry) plus whatever cells and kits THIS patch carries — the same set
+`song.js` sanitizes on the way in, so nothing a picker offers can drop silently
+on reload.
+
+### The radars moved into the flyout
+
+`kernelcard.js` → **`kernelview.js`**: the sculptor radar, the tempo tile, the
+seed + ⟳ and a base-genre picker (all 274 anchors as ONE filterable table grouped
+by form) now live in the rail's kernel view. The card is gone from the page and
+`#dwKernel` left the DOM. In its place the grid grew a **kernel ROW** at the top —
+blend label, seed, bpm and a tiny non-interactive ◇ glyph — mirroring the master
+row at the bottom, so reading the grid top to bottom is still reading the
+pipeline: kernel → chords → voices → samples → master.
+
+The clipped axis labels ("ve", "br") were the card's width, and the fix is in
+`vector.js`: labels now ride an ELLIPSE (1.06R sideways, 1.3R vertically, because
+a word grows sideways) inside a viewBox widened by an optional `labelPad` gutter.
+Default 0 = byte-identical for any other caller; the handle also exposes `geom()`
+so probes can drag by angle and radius without inferring the scale.
+
+### One tiny controller, with volume
+
+`controller.js` replaces BOTH the header's ▶ and the bottom-right `#dwHead`
+readout — they were one instrument split across two corners — and adds the volume
+control the page never had. 56px tall, every target ≥44px, bottom-right of the
+DAW column on desktop and a full-width bar above the safe area on a phone.
+▶/■ is a real click listener (the AudioContext unlock rides the gesture); bar·beat
+and bpm are painted from `transport.onHead()`, literally the same call that moves
+the playhead lines, so the number and the lines cannot disagree. **Volume is the
+tile gesture laid sideways** — relative drag, double-tap for 100%, `role="slider"`
+with arrow keys — writing through `TRANSPORT.setVolume` → `handle.setMasterVol`
+(both live paths), applied at start too and remembered in `localStorage` as
+`dw.vol`. Still zero `input[type=range]` on the page.
+
+With seed/⟳ in the kernel view and ▶ in the controller, the header slims to ONE
+row on a phone: brand · ↗ link · ⤓ download · ← star map.
+
+### What the stylesheet had to learn
+
+`app/daw.css` is still the whole contract — editors style nothing — and the
+conversion added five rules worth naming, because each one is a class of mistake
+rather than a one-off:
+
+- **A table with no `max-height` is not a scroller, and must not pretend to be
+  one.** `.dw-tablescroll` was always `overflow-y: auto`; in a picker view (`max:
+  0`) it never overflows, so `position: sticky` anchored to a box that never moves
+  while the SHEET scrolled underneath — the column heads and family headers rode
+  out of view in exactly the 124-row picker that needs them. `makeTable` now says
+  `.grows` when it has no max, and the wrap becomes `overflow: clip` (clips to the
+  radius, creates no scroll container) so `top: 0` resolves against
+  `.dw-sheetbody`, the thing actually scrolling.
+- **A drill-in table has nothing to mark.** `.nomark` (set whenever the table
+  carries no `value`) collapses the 28px ✓ gutter, so the section table, the
+  section rules and the master's ADD list stop indenting every name for a tick
+  that can never appear.
+- **The hanging indent.** `.dw-edrow` is a wrapping flex row, so the moment its
+  controls wrapped — a tile then three flag chips, a pad then four period chips —
+  line 2 snapped back to x=0 and sat under the LABEL. The row now carries a
+  `--dw-labgap` left gutter and `.dw-edlab` hangs back out of it by exactly that
+  much, so every line starts on the same rule.
+- **OFF and SILENT are two different sentences.** `roll.js` writes "— silent —"
+  into an empty canvas and the CSS `∅` marks a section that turned the voice off;
+  both are centred, so every off cell in the grid read "— silen∅ —". A cell the
+  form silenced now hides its canvas and says `∅` alone.
+- **The song bar scrolls rather than shrinking.** Eight proportional chips across
+  390px gave each 45px and truncated every name to three letters; the chips keep a
+  96px floor and the bar scrolls sideways, as the grid under it already did.
+- **Nothing on a permanent rail may claim to close it.** The ✕ was hidden at
+  ≥1000px on that reasoning, and `.dw-sheethandle { display: none }` was written
+  in the same block to match — but `.dw-sheethandle` re-declares `display: grid`
+  a few lines further down the file, and at equal specificity the later rule
+  wins. So the desk rail carried a 419×34 button labelled "close the sheet"
+  across its top, and it worked: `close()` resets the stack, so the one thing
+  that looked like a grab handle silently threw you back to the kernel. The rule
+  is now `#dwSheet .dw-sheethandle`, out of the cascade's reach, and `daw-grid`
+  measures both controls' computed `display` at 1440 so it cannot come back.
+
+Measured after: zero page errors and zero horizontal page overflow on every
+surface at 320 / 390 / 1024 / 1440, the phone header is one 44px row, and the grid
+is the tallest thing on the screen at all four.
+
+### Gates (updated in place — same filenames)
+
+The five gates that touch the reworked surfaces were extended, never relaxed;
+every contract they already held (the hostile `?p` trial build, the
+`secover`/`sound` round-trip, the rack law's row hashing, no-snap-back on the
+radar, the export formats) is still asserted verbatim.
+
+- **`daw-grid`** — the kernel ROW exists as grid FURNITURE (it is not a track: the
+  six-row accounting every hash in the suite depends on is checked out loud) and
+  both halves of it open the kernel VIEW at the root of the stack. Then the shell,
+  in pixels, because `sheet.js` deliberately does not know which one it is: at
+  1440 the flyout is a rail BESIDE the DAW column (not over it), showing the
+  kernel, with no page scroll and no way to "close" it; at 390 the same element
+  is parked off-screen until a cell tap raises it, stops at the controller's
+  ceiling, carries its grab handle, and parks again when that handle is tapped.
+  Finally the stack: a section row drills in (depth 2, ← appears), ← pops back to
+  the sheet you came from, and ← again bottoms out on the kernel.
+- **`daw-sound`** — picking is a TABLE row in a pushed picker view, and the gate
+  now also holds the thing that makes a 124-row table a table: scrolled a screen
+  down, the column head and the family header are still pinned to the top of the
+  sheet body, and the last row sits above the transport rather than behind it.
+- **`daw-feel`** — the sculptor is opened from the grid's kernel row on a phone
+  and its labels must print unclipped; at 1440 it is the rail's ROOT, fully on
+  screen at zero taps, which is what moving the card off the page bought.
+- **`daw-rack`** — the readout is read off the unified controller, and two new
+  facts: the edit does not tear the flyout down under the gesture (the very pad
+  you dragged is still the pad, the view is still where you were), and a kit edit
+  leaves the kernel and master rows reading exactly as they did.
+- **`daw-export`** — A–D still drive `__DAWEXPORT` straight, which proves the
+  formats and nothing about reaching them; section E opens the header's ⤓ menu
+  the way a hand does at 1280 and 390, and a real click on ⤓ MIDI writes the file
+  and closes the menu behind itself.
