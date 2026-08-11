@@ -66,7 +66,7 @@ const SITE_WIDE = [["og:site_name", "property"], ["og:image", "property"], ["og:
 
 // og:image variants are page-specific; embed.html is intentionally noindex and
 // canonicalises to the app root, so it is checked with the same tag set.
-const PAGES = ["index.html", "access.html", "embed.html", "how.html", "colophon.html", "daw.html"];
+const PAGES = ["index.html", "access.html", "embed.html", "how.html", "colophon.html", "daw.html", "ca.html"];
 const NEEDS_OEMBED = new Set(["index.html", "access.html", "embed.html"]);
 const NEEDS_JSONLD = new Set(["index.html", "access.html"]);
 

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STELLATE CA — a whole song in 24 bits</title>
+<!-- ── SOCIAL / IDENTITY ──────────────────────────────────────────────────────
+     Same two rules as index.html: icon/manifest paths stay RELATIVE (this tree is
+     also served at aboardresearch.com/projects/stellate/), og:image + canonical
+     stay ABSOLUTE (a card crawler resolves nothing). The SITE-WIDE tags below are
+     byte-identical to the other pages on purpose — test/gates/social-meta.test.js
+     gates them against drift, since HTML has no include and this project has no
+     HTML build step. Per-page tags (title/description/url) are the only ones that
+     differ. NO INLINE SCRIPT ANYWHERE (not even in a comment — the CSP gate reads
+     the raw markup): production CSP has no 'unsafe-inline'. -->
+<meta name="description" content="Tap sixteen cells, pick one of 256 cellular-automaton rules, and the orbit becomes the song — drums, bass, melody, a neo-Riemannian chord walk and the sections themselves, all derived from 24 bits.">
+<meta name="author" content="Paul Ford">
+<meta name="theme-color" content="#0c0a1a">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://stellate.app/ca">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="STELLATE">
+<meta property="og:title" content="STELLATE CA — a whole song in 24 bits">
+<meta property="og:description" content="One row, one rule. The automaton's orbit is the form: the tail is the intro, the cycle is the loop, and the row you tapped in is the chorus.">
+<meta property="og:url" content="https://stellate.app/ca">
+<meta property="og:image" content="https://stellate.app/assets/og-card.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE — draw a path through genre space.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="STELLATE CA — a whole song in 24 bits">
+<meta name="twitter:description" content="Tap sixteen cells, pick a rule, and the orbit becomes the song — sections and all.">
+<meta name="twitter:image" content="https://stellate.app/assets/og-card.png">
+<meta name="twitter:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE.">
+<meta name="twitter:creator" content="@aboard">
+<meta name="twitter:site" content="@aboard">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
+<link rel="stylesheet" href="app/ca.css">
+</head>
+<body>
+<header id="cabar">
+  <h1 class="ca-brand">STELLATE<span class="ca-tag">ca</span></h1>
+  <p class="ca-bits" id="caBits">— · —</p>
+  <div class="ca-controls">
+    <button id="caShare" class="ca-btn" title="Copy a link to these 24 bits">↗ link</button>
+    <button id="caDice" class="ca-btn" title="A new seed and rule">⤫ roll</button>
+  </div>
+  <nav class="ca-nav"><a href="daw.html">daw</a><a href="index.html">← star map</a></nav>
+</header>
+
+<!-- THE SHELL. Left: the seed you tap and the orbit it grows into — the song,
+     top to bottom. Right: the three things you can change about it (which rule,
+     which key, which sound). At ≥1000px the rail is permanent; below that it
+     stacks under the orbit. -->
+<div id="caShell">
+  <main id="caMain">
+    <section class="ca-block" aria-labelledby="caSeedH">
+      <h2 id="caSeedH" class="ca-h">the seed<small>sixteen cells · one bar · tap to draw</small></h2>
+      <div id="caSeed" class="ca-seedrow" role="group" aria-label="Seed row, sixteen cells"></div>
+      <p class="ca-word" id="caWord"></p>
+    </section>
+
+    <section class="ca-block ca-grow" aria-labelledby="caOrbitH">
+      <h2 id="caOrbitH" class="ca-h">the orbit<small>each row is a section · tap one to make it the seed</small></h2>
+      <div id="caOrbit" class="ca-orbit"></div>
+      <p class="ca-note" id="caOrbitNote"></p>
+    </section>
+
+    <footer id="caFoot">
+      <p>The document is <b>24 bits</b> — sixteen for the row, eight for the rule. Everything
+      else (kit, bass cell, melody cell, chord walk, and the sections) is a pure function of
+      those bits, read through a <b>lens</b> per track. You manipulate the rule system; the
+      sections are interpretations, never edits. See <code>docs/CA.md</code>.</p>
+      <p>Made by <a href="mailto:paul.ford@aboard.com?subject=Stellate%20CA">Paul Ford</a> at
+      <a href="https://aboard.com">Aboard</a> · <a href="https://github.com/aboard-io/stellate">open source</a> · MIT</p>
+    </footer>
+  </main>
+
+  <aside id="caRail" aria-label="Rules, harmony and sound">
+    <section class="ca-block" aria-labelledby="caRulesH">
+      <h2 id="caRulesH" class="ca-h">the rule<small>256 futures for the row you drew</small></h2>
+      <canvas id="caRules" tabindex="0" role="application"
+              aria-label="Rule browser: 256 rules as spacetime thumbnails. Arrow keys to move, Enter to pick."></canvas>
+      <p class="ca-note" id="caRuleNote" aria-live="polite"></p>
+    </section>
+
+    <section class="ca-block" aria-labelledby="caTonH">
+      <h2 id="caTonH" class="ca-h">the walk<small>the seed read as a P·L·R word</small></h2>
+      <div id="caTonnetz" class="ca-tonnetz"></div>
+      <div id="caKey" class="ca-chips" role="group" aria-label="Key"></div>
+    </section>
+
+    <section class="ca-block" aria-labelledby="caBaseH">
+      <h2 id="caBaseH" class="ca-h">the sound<small>which anchor lends its instruments</small></h2>
+      <div id="caBase" class="ca-chips" role="group" aria-label="Base genre"></div>
+    </section>
+  </aside>
+</div>
+
+<aside id="caCtl" aria-label="Transport"></aside>
+
+<!-- ENGINE — classic globals, ORDER MATTERS (the contract index.html and
+     daw.html carry, enforced by test/gates/boot-smoke.test.js): theory/pipes
+     before csd-engine (it reads them at load), the genre data before
+     genre-kernel (it merges them synchronously at load), ca.js after csd-engine
+     (it calls voicing() through the global), everything before the module entry. -->
+<script src="engine/theory.js"></script>
+<script src="engine/pipes.js"></script>
+<script src="engine/csd-engine.js"></script>
+<script src="engine/ca.js"></script>
+<script src="engine/genres-data.js"></script>
+<script src="engine/registry-data.js"></script>
+<script src="engine/genre-kernel.js"></script>
+<script src="engine/speech.js"></script>
+<script src="engine/faust/voices/state-engine.js"></script>
+<script src="engine/faust/voices/found-player.js"></script>
+<script src="engine/faust/voices/sampler.js"></script>
+<script src="engine/faust/live/live.js"></script>
+<script type="module" src="app/ca/main.js"></script>
+</body>
+</html>

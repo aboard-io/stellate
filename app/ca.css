@@ -1,0 +1,273 @@
+/* ca.css — the whole /ca contract. The modules style NOTHING; every rule lives
+   here, the way app/daw.css owns the DAW.
+
+   The page is a two-column desk at >=1000px (the song on the left, the three
+   things you can change about it on the right) and one scrolling column below
+   that. Same trick daw.css uses: the difference is CSS only, and no module ever
+   asks which one it is. */
+
+:root {
+  --bg: #0c0a1a;
+  --panel: #15122a;
+  --panel2: #1c1834;
+  --line: #2c2748;
+  --ink: #e8e3ff;
+  --dim: #9a92c4;
+  --hot: #ff5fa2;
+  --cool: #6de3ff;
+  --live: #8f7fd8;
+  --ctl: 60px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.45 "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+}
+a { color: var(--cool); }
+
+/* ------------------------------------------------------------------ header */
+#cabar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: nowrap;
+  padding: 8px 12px; min-height: 48px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+  position: sticky; top: 0; z-index: 30;
+}
+.ca-brand { font: 700 17px/1 "Inter", system-ui, sans-serif; letter-spacing: .13em; margin: 0; }
+.ca-tag {
+  font: 600 10px/1 "Inter", system-ui, sans-serif; letter-spacing: .18em;
+  color: var(--bg); background: var(--hot); border-radius: 3px;
+  padding: 3px 5px; margin-left: 7px; vertical-align: 2px;
+}
+/* THE BITS READOUT YIELDS; it never pushes. A flex row of brand + readout +
+   two buttons + two links is ~400px, so at 390 the header shoved the nav off the
+   right edge and the whole page scrolled sideways. `flex: 0 1 auto` with
+   `min-width: 0` lets this be the thing that shrinks, and below 560px it leaves
+   entirely — the same numbers are printed under the orbit, where there is room
+   for them. */
+.ca-bits {
+  margin: 0; flex: 0 1 auto; min-width: 0; overflow: hidden;
+  font: 12px/1 "VT323", ui-monospace, monospace; font-size: 15px;
+  color: var(--dim); letter-spacing: .06em; white-space: nowrap; text-overflow: ellipsis;
+}
+@media (max-width: 560px) { .ca-bits { display: none; } }
+.ca-controls { margin-left: auto; display: flex; gap: 6px; }
+.ca-nav { display: flex; gap: 12px; font-size: 13px; white-space: nowrap; }
+.ca-nav a { color: var(--dim); text-decoration: none; }
+.ca-nav a:hover { color: var(--cool); }
+.ca-btn {
+  min-height: 44px; padding: 6px 11px; font: 13px/1 inherit;
+  color: var(--ink); background: var(--panel); border: 1px solid var(--line);
+  border-radius: 7px; cursor: pointer;
+}
+.ca-btn:hover { border-color: var(--hot); }
+
+/* ------------------------------------------------------------------- shell */
+#caShell { display: block; }
+#caMain { padding: 14px; padding-bottom: calc(var(--ctl) + 20px); }
+#caRail { padding: 0 14px calc(var(--ctl) + 20px); }
+
+.ca-block {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; padding: 12px; margin-bottom: 14px;
+}
+.ca-h {
+  margin: 0 0 10px; font: 600 13px/1.2 inherit;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--ink);
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px;
+}
+.ca-h small {
+  font: 400 12px/1.3 inherit; letter-spacing: 0; text-transform: none; color: var(--dim);
+}
+.ca-note {
+  margin: 8px 0 0; font: 12px/1.4 inherit; color: var(--dim);
+}
+
+/* --------------------------------------------------------------- the seed row
+   Sixteen cells, always sixteen across — the row IS a bar, so wrapping it would
+   be a lie about time. `touch-action: none` is the single line that makes a
+   sideways drag DRAW instead of scrolling the page. */
+.ca-seedrow {
+  display: grid; grid-template-columns: repeat(16, 1fr); gap: 3px;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+/* NO `aspect-ratio` HERE, and no `min-width`. Sixteen cells must fit a 320px
+   phone, so the GRID owns the width (1fr each) and the cell owns only its
+   height. An aspect-ratio paired with a 44px min-height silently demanded 30px
+   per cell — 525px of row inside a 334px column, and the whole page scrolled
+   sideways. The 44px target is the ROW, reached by drag; the cell is a pixel in
+   a bar, not a button in a toolbar. */
+.ca-cell {
+  min-width: 0; height: 46px;
+  border: 1px solid var(--line); border-radius: 5px;
+  background: var(--panel2); cursor: pointer; padding: 0;
+  transition: background .06s linear;
+}
+/* the four beats of the bar, marked so the row is readable as music rather than
+   as sixteen identical boxes */
+.ca-cell:nth-child(4n+1) { border-left-color: var(--live); }
+.ca-cell.on { background: var(--hot); border-color: var(--hot); }
+.ca-cell:focus-visible { outline: 2px solid var(--cool); outline-offset: 2px; }
+.ca-word {
+  margin: 10px 0 0; font: 15px/1.3 "VT323", ui-monospace, monospace;
+  color: var(--cool); letter-spacing: .05em;
+}
+
+/* ----------------------------------------------------------------- the orbit
+   One row per SECTION, in playing order. The role tints the row, so the form is
+   legible as a colour column before you read a single word. */
+.ca-grow { display: flex; flex-direction: column; }
+.ca-orbit { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; }
+.ca-genpick {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  min-height: 44px; padding: 4px 8px;
+  background: var(--panel2); border: 1px solid var(--line);
+  border-left: 3px solid var(--line);
+  border-radius: 6px; cursor: pointer; color: var(--ink); text-align: left;
+}
+.ca-genpick:hover { border-color: var(--hot); }
+.ca-genpick:focus-visible { outline: 2px solid var(--cool); outline-offset: 1px; }
+.ca-role {
+  flex: 0 0 66px; font: 600 11px/1 inherit; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--dim);
+}
+.ca-gcells { flex: 1 1 auto; display: grid; grid-template-columns: repeat(16, 1fr); gap: 2px; }
+.ca-gcell { height: 18px; border-radius: 2px; background: #221d3c; display: block; }
+.ca-gcell.on { background: var(--live); }
+.ca-gmeta {
+  flex: 0 0 30px; text-align: right; font: 12px/1 "VT323", ui-monospace, monospace;
+  font-size: 14px; color: var(--dim); font-style: normal;
+}
+.r-chorus .ca-genpick { border-left-color: var(--hot); }
+.r-chorus .ca-role { color: var(--hot); }
+.r-chorus .ca-gcell.on { background: var(--hot); }
+.r-bridge .ca-genpick { border-left-color: var(--cool); }
+.r-bridge .ca-role { color: var(--cool); }
+.r-bridge .ca-gcell.on { background: var(--cool); }
+.r-rest .ca-genpick, .r-intro .ca-genpick { opacity: .62; }
+/* THE PLAYHEAD IS A CLASS, NOT A REPAINT (grid.js says why) */
+.ca-gen.now .ca-genpick { border-color: var(--ink); background: #251f47; }
+
+/* ------------------------------------------------------------- the rule grid */
+#caRules {
+  display: block; margin: 0 auto; border-radius: 8px; cursor: pointer;
+  touch-action: none; max-width: 100%;
+}
+#caRules:focus-visible { outline: 2px solid var(--cool); outline-offset: 2px; }
+
+/* ---------------------------------------------------------------- the tonnetz */
+.ca-tonnetz { width: 100%; }
+.ca-ton { width: 100%; height: auto; display: block; }
+.ca-tbg polygon { fill: none; stroke: var(--line); stroke-width: .7; }
+.ca-tpath { fill: none; stroke: var(--hot); stroke-width: 1.6; stroke-dasharray: 4 3; opacity: .8; }
+.ca-tsel polygon { fill: rgba(255, 95, 162, .22); stroke: var(--hot); stroke-width: 1.5; }
+.ca-tsel.min polygon { fill: rgba(109, 227, 255, .18); stroke: var(--cool); }
+.ca-tlab { fill: var(--ink); font: 700 11px/1 "Inter", system-ui, sans-serif; text-anchor: middle; }
+.ca-tnum { fill: var(--hot); font: 700 10px/1 "Inter", system-ui, sans-serif; text-anchor: middle; }
+.ca-tnode circle { fill: var(--bg); stroke: var(--line); stroke-width: 1; r: 9; }
+.ca-tpc { fill: var(--dim); font: 500 9px/1 "Inter", system-ui, sans-serif; text-anchor: middle; }
+
+/* -------------------------------------------------------------------- chips */
+.ca-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.ca-chip {
+  min-height: 44px; padding: 6px 12px; font: 13px/1 inherit;
+  color: var(--dim); background: var(--panel2); border: 1px solid var(--line);
+  border-radius: 22px; cursor: pointer;
+}
+.ca-chip:hover { border-color: var(--hot); color: var(--ink); }
+.ca-chip.on { background: var(--hot); border-color: var(--hot); color: var(--bg); font-weight: 600; }
+.ca-keychip { min-width: 44px; padding: 6px 8px; border-radius: 7px; font-family: "VT323", ui-monospace, monospace; font-size: 17px; }
+.ca-keychip.sharp { color: var(--live); }
+
+/* --------------------------------------------------------------- transport
+   Bottom-right of the page on a desk, a full-width bar above the safe area on a
+   phone — the corner the star map keeps its chips in, so the two front ends put
+   the same information in the same place. */
+#caCtl {
+  position: fixed; z-index: 40;
+  left: 0; right: 0; bottom: 0;
+  height: calc(var(--ctl) + env(safe-area-inset-bottom, 0px));
+  padding: 0 12px env(safe-area-inset-bottom, 0px);
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(12, 10, 26, .96);
+  border-top: 1px solid var(--line);
+  backdrop-filter: blur(8px);
+}
+.ca-play {
+  flex: 0 0 auto; width: 46px; height: 46px; border-radius: 23px;
+  font-size: 17px; line-height: 1; color: var(--bg); background: var(--hot);
+  border: none; cursor: pointer;
+}
+.ca-play.on { background: var(--cool); }
+.ca-pos {
+  font: 15px/1 "VT323", ui-monospace, monospace; color: var(--ink);
+  letter-spacing: .05em; white-space: nowrap;
+}
+.ca-vol {
+  flex: 1 1 auto; max-width: 190px; margin-left: auto; position: relative;
+  height: 44px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--panel2); overflow: hidden; cursor: ew-resize;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.ca-vol i { position: absolute; inset: 0 auto 0 0; background: #2e2752; display: block; }
+.ca-vol b {
+  position: absolute; inset: 0; display: flex; align-items: center; padding-left: 10px;
+  font: 600 11px/1 inherit; letter-spacing: .1em; text-transform: uppercase; color: var(--dim);
+}
+.ca-vol:focus-visible { outline: 2px solid var(--cool); outline-offset: 2px; }
+.ca-status { font-size: 11px; color: var(--dim); max-width: 30%; }
+
+/* -------------------------------------------------------------------- footer */
+#caFoot { color: var(--dim); font-size: 12px; line-height: 1.6; padding: 4px 2px 0; }
+#caFoot p { margin: 0 0 8px; }
+#caFoot code { font-family: ui-monospace, monospace; color: var(--live); }
+
+/* ================================================================= THE DESK
+   Two columns, viewport height, no page scroll: the orbit scrolls inside itself
+   and the rail is always there. Below 1000px this whole block is simply absent
+   and the page is one column that scrolls — which is why no module has to know
+   which layout it is in. */
+@media (min-width: 1000px) {
+  body { overflow: hidden; }
+  #caShell {
+    display: flex; align-items: stretch; gap: 0;
+    height: calc(100vh - 49px);
+  }
+  #caMain {
+    flex: 1 1 auto; min-width: 0; overflow-y: auto;
+    display: flex; flex-direction: column;
+    padding-bottom: calc(var(--ctl) + 16px);
+  }
+  #caRail {
+    flex: 0 0 400px; overflow-y: auto;
+    border-left: 1px solid var(--line);
+    padding: 14px 14px calc(var(--ctl) + 16px);
+  }
+  .ca-grow { flex: 1 1 auto; min-height: 0; }
+  #caCtl {
+    left: auto; right: 414px; bottom: 14px;
+    width: 380px; height: var(--ctl);
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 0 12px;
+  }
+}
+
+/* A phone at 320px still has to fit sixteen cells across, so the cell floor is
+   the grid's, not the finger's — the ROW is the target and the drag is the
+   gesture. Everything else on the page keeps its 44px. */
+@media (max-width: 560px) {
+  #cabar { gap: 8px; }
+  .ca-btn { padding: 6px 8px; }
+}
+@media (max-width: 400px) {
+  .ca-cell { height: 40px; }
+  .ca-role { flex-basis: 52px; font-size: 10px; }
+  .ca-gmeta { display: none; }
+  .ca-status { display: none; }
+}

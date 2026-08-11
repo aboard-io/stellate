@@ -159,6 +159,11 @@
   // four `PROGRESSIONS[x]||PROGRESSIONS.royal_road` fallbacks (engine + kernel +
   // verifier). Byte-stable: never fires on a valid state.
   function getProgression(name){
+    // A caller may hand a RESOLVED progression OBJECT instead of a catalogue
+    // name — engine/ca.js builds one from a neo-Riemannian PLR walk, in the
+    // exact shape voicing() returns. A string takes the identical path it
+    // always did, so every shipped state is byte-identical (the standing law).
+    if(name&&typeof name==="object"&&Array.isArray(name.chords)&&name.chords.length) return name;
     const p=PROGRESSIONS[name];
     if(!p) throw new Error("csd-engine: unknown progression '"+name+"' (no royal_road fallback — see gate 6)");
     return p;
