@@ -405,8 +405,13 @@
     const TONE={r5,r6,f6};
     const userCell=cells&&cells[kind];
     const cell=()=>{
+      // A cell may carry a 5th element: an AMP MULTIPLIER, which is how a step
+      // sequencer says ACCENT. It matters because on a 303 the accent circuit is
+      // not a volume trim — it boosts the VCA and sharpens the filter envelope
+      // (dsp/tb303.dsp), so an unaccented acid line is not acid. ABSENT => 1 =>
+      // the same 0.22 every bass event has always had, byte-identical.
       if(userCell&&userCell.length)
-        return userCell.map(([o,d,tone,semis])=>[o,d,pchAdd(TONE[tone]||r5,(semis|0))]);
+        return userCell.map(([o,d,tone,semis,acc])=>[o,d,pchAdd(TONE[tone]||r5,(semis|0)),acc]);
     let L;
     switch(kind){
       case "root":       L=[[0,7.5,r5]]; break;
@@ -465,7 +470,8 @@
     const out=[];
     const CELL=BASS_CELL_LEN[kind]||CHORD_BEATS;   // 8 for every legacy cell — byte-identical stride
     for(let t0=0;t0<cb;t0+=CELL)
-      for(const [o,d,p] of cell()){ if(t0+o>cb) continue; out.push({voice:"bass",beat:S+t0+o,dur:d,pch:p,amp:0.22}); }
+      for(const [o,d,p,acc] of cell()){ if(t0+o>cb) continue;
+        out.push({voice:"bass",beat:S+t0+o,dur:d,pch:p,amp:0.22*(acc>0?acc:1)}); }
     return out;
   }
   // E(k,n,rot) — euclidean rhythm (Bjorklund/Toussaint): the Strudel bd(3,16)
