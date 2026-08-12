@@ -15,7 +15,7 @@ rule   8 bits    one of the 256 elementary CA rules
 
 Everything else — the drum kit, the bass cell, the melody cell, the chord
 progression, and the **sections themselves** — is a pure function of those bits.
-`engine/ca.js` is 375 lines; `test/unit/ca.test.js` holds it with 1059 checks. The
+`engine/ca.js` is 375 lines; `test/unit/ca.test.js` holds it with 1072 checks. The
 whole thing — kernel, page, both gates, CSS and HTML — is 2,059 lines.
 
 ## The diagnosis
@@ -228,7 +228,7 @@ resolves **byte-identical to a clean boot**.
 
 ## Gates
 
-- `node test/unit/ca.test.js` — 1059 checks, pure node: the ring and its wrap, the
+- `node test/unit/ca.test.js` — 1072 checks, pure node: the ring and its wrap, the
   row involutions, all 256 orbits closing into a rho, every lens against a known
   row, PLR as a group (involutions on all 24 triads + the three closures), the
   engine accepting the progression object, **the change being absent-byte-identical**,
@@ -280,6 +280,59 @@ Four things closed it, none of them a new idea about music:
   generations; where to stop is a composer's decision, not the automaton's. And
   the cap is a COUNT: the reprise inserts a section, so "6 sections" handed back
   seven until `formGens` learned to drop the generation it displaces.
+
+## Making a song in a GENRE
+
+Paul: *"How do I make songs in a given genre? Let's say I wanted to do house
+music and then city pop."*
+
+Before this, you couldn't — beyond the timbres. The genre chip lent its
+**orchestra** (instruments, mix, tempo) while the rhythm, the harmony and the
+form all came from 24 genre-blind bits. So `citypop` gave you city pop
+instruments playing an automaton, over a PLR walk that had never heard of the
+1625.
+
+A genre, in this system's terms, is four things. The chip supplied one.
+
+| | before | now |
+|---|---|---|
+| orchestra | the chip | the chip |
+| tempo | the chip (unchangeable) | the chip, or the tempo tile |
+| groove | the automaton | **the anchor's own kit**, as a starting row |
+| harmony | the automaton | **the anchor's own progression**, if you want it |
+
+**`⌁ start from <genre>`** sets the last three in one gesture (one undo puts it
+back), and everything it sets stays editable — it is a starting point, not a mode.
+
+- **The row is DERIVED from the anchor's kit** (`seedFromKit`), not a hand-written
+  table, so it covers all 274 and cannot drift from the kits. Kicks keep their
+  actual cell; only snares move, to the nearest free snare cell.
+- **`harmony: "genre"`** simply leaves the resolved anchor's progression alone.
+  The automaton still writes the rhythm and the form; the kernel writes the chords.
+  This is the honest answer to the PLR limit documented above — city pop is the
+  1625, a ~20-letter PLR word, and no automaton is going to find it by accident.
+
+Measured: house → 123 bpm, `lofi`, kick on 0/2/4/6 with a backbeat. City pop → 99
+bpm, `pop_1625`, kick on 0/4 with its off-beat pickups intact.
+
+### Two things this got wrong first
+
+**Snapping every hit to its lane's nearest cell made every 4/4 genre the same
+row.** City pop's kit kicks on 0/2.5/4/6.5 — the pickups *are* the point — and
+rounding them onto the nearest downbeat turned it into four on the floor,
+byte-identical to house. Kicks now land where they fall (a syncopated one reads as
+a tick, which keeps the syncopation even though it loses the lane).
+
+**Reading only static `hits` left 43 of the 274 anchors with no starter at all** —
+not drumless genres, but kits keeping the kick in a `grid` and the snare in an
+`alt`. The reader takes the first branch of a variation rule now. The 43 that
+still come back empty are genuinely drumless (ambient, neoclassical, doomdrone),
+and they return nothing **and mean it**: a drumless genre has no groove to lend,
+and inventing a pulse for it would be the starter lying about the anchor.
+
+**A row cannot say "kick and clap together"**, which several kits do. That is the
+lens being sixteen bits, not a bug to engineer around. The starter is a skeleton
+to edit, and the UI says so.
 
 ## Open
 

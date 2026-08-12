@@ -20,7 +20,12 @@ const K = window.GenreKernel, E = window.CsdEngine, CA = window.CsdCA;
 // resolved number ON PURPOSE: writing 122 the moment the page loads would freeze
 // the tempo to whatever acidhouse happened to say, and switching to `jungle`
 // would then quietly stay at 122. Absent means following; a number means yours.
-export const DOC = { seed: 0x1249, rule: 110, key: 0, genre: "acidhouse", bpm: null, bars: 12 };
+export const DOC = { seed: 0x1249, rule: 110, key: 0, genre: "acidhouse", bpm: null, bars: 12,
+  // WHERE THE CHORDS COME FROM. "seed" = the automaton's own PLR walk, read off
+  // the row. "genre" = leave the base anchor's progression alone, because a
+  // genre's identity often IS its progression — city pop is the 1625 and no
+  // cellular automaton is going to find that by accident.
+  harmony: "seed" };
 // `loop` is NOT part of the document: it is a monitoring mode, like solo on a
 // mixer. It changes what you HEAR, never what the link says.
 export let LOOP = false;
@@ -31,7 +36,7 @@ export const BPM_MIN = 50, BPM_MAX = 200;
 // validated against K.GENRES — but a picker over 274 rows is the surface this
 // page is arguing against, so the chips are a spread across the space and the
 // URL is the escape hatch.
-export const BASES = ["acidhouse", "techno", "jungle", "dub", "boombap", "trap",
+export const BASES = ["house", "acidhouse", "techno", "disco", "jungle", "dub", "boombap", "trap",
   "vaporwave", "citypop", "ambient", "krautrock", "bossanova", "ragtime"];
 
 export const subs = [];
@@ -47,7 +52,7 @@ export function touch() {
 // here beyond "did anything actually change" — the orbit repaints on every cell
 // you tap and the cost is invisible.
 let _key = null, _res = null, _ev = null;
-const keyOf = () => DOC.seed + ":" + DOC.rule + ":" + DOC.key + ":" + DOC.genre + ":" + DOC.bpm + ":" + DOC.bars;
+const keyOf = () => [DOC.seed, DOC.rule, DOC.key, DOC.genre, DOC.bpm, DOC.bars, DOC.harmony].join(":");
 
 export function edit(p) { Object.assign(DOC, p); _key = null; push(); writeUrl(); touch(); }
 
@@ -56,7 +61,9 @@ export function resolved() {
   if (k === _key && _res) return _res;
   const t = K.track(DOC.genre, { seed: 7 });
   const base = JSON.parse(JSON.stringify(t.state || t));
-  _res = CA.apply(base, { seed: DOC.seed, rule: DOC.rule, key: DOC.key, engine: E, bars: DOC.bars });
+  _res = CA.apply(base, { seed: DOC.seed, rule: DOC.rule, key: DOC.key, engine: E,
+    bars: DOC.bars, harmony: DOC.harmony });
+  _res.stockProg = base.progression;
   // TEMPO IS NOT ONE OF THE 24 BITS, and it is not part of the orchestra either
   // — it is the third thing, alongside key: a property of the performance. It is
   // applied AFTER the automaton, so it changes nothing the lenses produced (the
@@ -83,7 +90,8 @@ export function playState() {
   if (k !== _lk || !_lr) {
     const t = K.track(DOC.genre, { seed: 7 });
     const base = JSON.parse(JSON.stringify(t.state || t));
-    _lr = CA.apply(base, { seed: DOC.seed, rule: DOC.rule, key: DOC.key, engine: E, audition: 0 });
+    _lr = CA.apply(base, { seed: DOC.seed, rule: DOC.rule, key: DOC.key, engine: E,
+      audition: 0, harmony: DOC.harmony });
     if (DOC.bpm) _lr.state.bpm = DOC.bpm;
     _lk = k;
   }
@@ -100,6 +108,38 @@ export function setCell(i, on) {
   if (i < 0 || i >= CA.N) return;
   const next = (on ? DOC.seed | (1 << i) : DOC.seed & ~(1 << i)) >>> 0 & CA.MASK;
   if (next !== DOC.seed) edit({ seed: next });
+}
+
+// ------------------------------------------------------------ START FROM A GENRE
+// The one-tap answer to "how do I make a house track". A genre chip only ever
+// lent you its ORCHESTRA — instruments, mix, tempo — while the rhythm, the
+// harmony and the form all came from 24 genre-blind bits, so picking `citypop`
+// gave you city pop timbres playing an automaton. This sets the other three:
+//
+//   the ROW      derived from the anchor's own kit (CA.seedFromKit), so house
+//                starts on four to the floor and boom bap starts on boom bap
+//   the HARMONY  switched to the anchor's progression — city pop's 1625
+//   the TEMPO    handed back to the anchor
+//
+// One gesture, so one undo puts you back. Everything it sets stays editable —
+// it is a starting point, not a mode.
+export function startFrom(g) {
+  if (!K.GENRES[g]) return;
+  beginGesture();
+  const t = K.track(g, { seed: 7 });
+  const st = t.state || t;
+  const seed = CA.seedForState(st, E) || DOC.seed;
+  edit({ genre: g, seed, harmony: "genre", bpm: null });
+  endGesture();
+}
+export const setHarmony = (h) => edit({ harmony: h === "genre" ? "genre" : "seed" });
+// the progression actually in force, for the readout
+export function progLabel() {
+  const r = resolved();
+  const p = r.state.progression;
+  if (typeof p === "object" && p.caTriads) return { plr: true, label: p.label.replace("CA · ", ""), chords: p.caTriads };
+  const got = E.PROGRESSIONS[p];
+  return { plr: false, label: (got && got.label) || String(p), chords: (got ? got.chords : []).map((c) => c.name) };
 }
 
 // ------------------------------------------------------------------ THE LOOP
@@ -185,6 +225,7 @@ export function readUrl() {
   if (b >= BPM_MIN && b <= BPM_MAX) DOC.bpm = b | 0;
   const n = parseInt(q.get("n"), 10);
   if (BARS.indexOf(n) >= 0) DOC.bars = n;
+  if (q.get("h") === "genre") DOC.harmony = "genre";
   _key = null;
 }
 export function url() {
@@ -196,6 +237,7 @@ export function url() {
   if (DOC.genre !== "acidhouse") u.searchParams.set("g", DOC.genre);
   if (DOC.bpm) u.searchParams.set("b", String(DOC.bpm));
   if (DOC.bars !== 12) u.searchParams.set("n", String(DOC.bars));
+  if (DOC.harmony === "genre") u.searchParams.set("h", "genre");
   return u.toString();
 }
 function writeUrl() { try { history.replaceState(null, "", url()); } catch (e) {} }

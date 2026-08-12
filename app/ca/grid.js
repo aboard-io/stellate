@@ -10,7 +10,7 @@
 // button with a real 44px target, the whole thing is reachable by keyboard and
 // readable by a screen reader, and THE PLAYHEAD IS A CLASS TOGGLE rather than a
 // repaint (the project's standing rule — app/daw/transport.js says why).
-import { DOC, cells, toggleCell, setCell, edit, resolved, subs, beginGesture, endGesture } from "./doc.js";
+import { DOC, cells, toggleCell, setCell, edit, resolved, subs, beginGesture, endGesture, progLabel } from "./doc.js";
 
 const CA = window.CsdCA;
 const $ = (t, c, x) => { const d = document.createElement(t); if (c) d.className = c; if (x != null) d.textContent = x; return d; };
@@ -78,8 +78,13 @@ export function paint() {
   const r = resolved(), orb = r.orbit;
   if (bitsEl) bitsEl.textContent = "seed " + DOC.seed.toString(16).padStart(4, "0").toUpperCase() + " · rule " + DOC.rule;
   if (wordEl) {
-    wordEl.textContent = "reads as " + r.state.progression.label.replace("CA · ", "")
-      + "  →  " + r.state.progression.caTriads.join("  ");
+    // the progression is a CA object only when the harmony comes from the seed;
+    // with `harmony:"genre"` it is a catalogue NAME, and reading .label off a
+    // string threw on every repaint (the console said so, the page did not)
+    const p = progLabel();
+    wordEl.textContent = p.plr
+      ? "reads as " + p.label + "  →  " + p.chords.join("  ")
+      : p.chords.join("  ") + "  ·  " + p.label;
   }
 
   // THE DIAGRAM. Rows are sections in playing order — which is why the reprise

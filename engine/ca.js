@@ -231,6 +231,103 @@
     });
   }
 
+  // ------------------------------------------------------------ genre starters
+  // THE ROW A GENRE WOULD HAVE DRAWN. A base anchor already carries a kit — the
+  // thing that makes house sound like house before a single note is chosen — so
+  // the starting row for a genre is DERIVED from that kit rather than hand-written
+  // per genre. No table to drift, and it works for all 274 anchors.
+  //
+  // KICK AND SNARE ONLY, deliberately. The lens is lossy: sixteen cells cannot
+  // carry three independent lanes, so lighting the hats too would light every
+  // cell, and reading THAT back gives one kick and fifteen hats — the opposite of
+  // the kit you started from. The kick/snare skeleton is what survives the round
+  // trip, and it is also what a person would tap first.
+  //
+  // Static `hits` only. An `alt`/`cyc`/`pick`/`grid` op is a variation rule rather
+  // than a statement about where the backbeat is, and this is a starting point,
+  // not a transcription.
+  //
+  // AND EACH HIT SNAPS TO ITS OWN LANE'S CELLS, which is the part that took a
+  // second attempt. Lighting the cell a hit literally falls on does not survive
+  // the round trip: `full`'s snares sit on engine beats 2 and 6, which are cells
+  // 4 and 12 — cells the drum lens calls KICK positions — so city pop's backbeat
+  // vanished the moment you read the row back. A kick hit therefore lights the
+  // nearest kick cell (i%4==0) and a snare hit the nearest snare cell (i%4==2),
+  // so `lensDrums(seedFromKit(kit))` gives back the skeleton it was built from.
+  // That round trip is the only thing that makes this a STARTER rather than a
+  // decoration.
+  // KICKS KEEP THEIR PLACE; SNARES MOVE TO A SNARE CELL. Snapping BOTH lanes made
+  // every genre the same row: city pop's kit kicks on 0/2.5/4/6.5 — the pickups
+  // are the whole point — and rounding them onto the nearest downbeat turned it
+  // into four on the floor, identical to house. So a kick lands where it actually
+  // falls (a syncopated one becomes a tick, which keeps the syncopation even
+  // though it loses the lane), and only snares are moved, to the nearest snare
+  // cell that is still free.
+  //
+  // A row CANNOT say "kick and clap together", which several kits do. That is the
+  // lens being sixteen bits, not a bug to engineer around; the starter is a
+  // skeleton to edit, and it says so.
+  // The offsets an op states, taking the FIRST branch of any variation rule. An
+  // `alt`/`cyc`/`last`/`pick` op is a rule about how the bar changes, not about
+  // where the backbeat is, and a `grid` is a pulse; a starter wants the plainest
+  // reading of each. Skipping them outright (the first cut) left 43 of the 274
+  // anchors with no starter row at all, because plenty of kits keep the kick in a
+  // grid and the snare in an alt.
+  function opHits(op) {
+    if (Array.isArray(op.hits)) return op.hits;
+    for (const k of ["alt", "cyc", "last", "pick"]) {
+      const v = op[k];
+      if (Array.isArray(v) && Array.isArray(v[0])) return v[0];
+    }
+    if (op.grid) {
+      const g = op.grid, n = g.n | 0, st = g.step != null ? +g.step : CELL_BEATS / Math.max(1, n);
+      const out = [];
+      for (let i = 0; i < n; i++) out.push([(g.from || 0) + i * st]);
+      return out;
+    }
+    return [];
+  }
+  function seedFromKit(kit) {
+    if (!kit || !kit.ops) return 0;
+    let row = 0;
+    const lit = (i) => (row >>> i) & 1;
+    for (const op of kit.ops) {
+      if (op.d !== "kick") continue;
+      for (const h of opHits(op)) {
+        const i = Math.max(0, Math.min(N - 1, Math.round(h[0] / STEP)));
+        row |= 1 << i;
+      }
+    }
+    for (const op of kit.ops) {
+      if (op.d !== "snare") continue;
+      for (const h of opHits(op)) {
+        const raw = Math.max(0, Math.min(N - 1, Math.round(h[0] / STEP)));
+        let best = -1, bd = Infinity;
+        for (let i = 2; i < N; i += 4) {
+          const d = Math.abs(i - raw) + (lit(i) ? 100 : 0);      // free cells first
+          if (d < bd) { bd = d; best = i; }
+        }
+        if (best >= 0) row |= 1 << best;
+      }
+    }
+    return row >>> 0;
+  }
+  // The starter for a resolved state: the kit its first drumming section names.
+  // A genuinely DRUMLESS anchor (ambient, drone) returns 0 and means it — there is
+  // no groove to lend, and the caller keeps the row it had rather than inventing
+  // a pulse the genre would never play.
+  function seedForState(st, E) {
+    E = E || engineRef();
+    const secs = (st && st.sections) || [];
+    for (const sec of secs) {
+      if (!sec.drums || sec.drums === "off") continue;
+      const kit = (st.kits && st.kits[sec.drums]) || (E.KITS && E.KITS[sec.drums]);
+      const row = seedFromKit(kit);
+      if (row) return row;
+    }
+    return 0;
+  }
+
   // ------------------------------------------------------------------- the form
   // ROLES ARE READ, NEVER WRITTEN. Each generation is classified from the row
   // itself, and the role picks an arrangement MASK — which lenses are audible —
@@ -391,7 +488,13 @@
     s.kits = Object.assign({}, s.kits, kits);
     s.bassCells = Object.assign({}, s.bassCells, bassCells);
     s.melodyCells = Object.assign({}, s.melodyCells, melodyCells);
-    s.progression = progression(seed, keyPc, E);
+    // HARMONY HAS TWO SOURCES and the choice is the composer's. The PLR walk is
+    // the automaton's own answer, read off the seed; but a genre's identity often
+    // IS its progression — city pop is the 1625, and no cellular automaton is
+    // going to find that by accident. `harmony:"genre"` simply leaves the resolved
+    // anchor's progression alone, so the CA supplies rhythm and form over harmony
+    // the kernel already knows.
+    if (opts.harmony !== "genre") s.progression = progression(seed, keyPc, E);
     s.sections = sections;
     // THE RACK LAW (csd-engine VOICE_STREAM): per-voice rng isolation, so the
     // drum lens and the melody lens cannot move each other's draws.
@@ -407,6 +510,7 @@
     at, lin, pop, ham, cells, fromCells, rot, ref, inv,
     step, orbit, gen, formLength, formGens,
     plr, word, triads, triadName, progression, PC, LETTER,
+    seedFromKit, seedForState,
     lensDrums, lensBass, lensMelody, roles, ROLES, apply };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.CsdCA = api;

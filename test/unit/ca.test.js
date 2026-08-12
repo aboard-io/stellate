@@ -350,6 +350,70 @@ head("8. the orbit IS the form");
   ok(ok4 === 64, "every seed under rule 110 yields at least four sections (" + ok4 + "/64)");
 }
 
+// ------------------------------------------------------- 9. making a GENRE
+head("9. starting from a genre");
+{
+  const K = require("../../engine/genre-kernel.js");
+  const st = (g) => JSON.parse(JSON.stringify((function (t) { return t.state || t; })(K.track(g, { seed: 7 }))));
+  const lane = (row, d) => (CA.lensDrums(row).ops.find((o) => o.d === d) || { hits: [] }).hits.map((h) => h[0]);
+
+  // THE STARTER ROW is derived from the anchor's own kit, not a hand table, so it
+  // works for all 274 and cannot drift from the kits.
+  const house = CA.seedForState(st("house"), E);
+  ok(lane(house, "kick").join(",") === "0,2,4,6", "house starts on four to the floor (got " + lane(house, "kick").join(",") + ")");
+  // >= 2, not exactly 2: the house kit also carries an `alt` pickup snare, and
+  // taking a variation rule's first branch is what fixed the 43 empty starters.
+  ok(lane(house, "snare").length >= 2, "...with a backbeat (" + lane(house, "snare").length + " snares)");
+  ok(lane(house, "snare").every((b) => Math.round(b / CA.STEP) % 4 === 2), "and every snare is on a snare cell");
+
+  // AND IT MUST ROUND-TRIP. Snapping every hit to its lane's nearest cell made
+  // every 4/4 genre the same row: city pop's kit kicks on the pickups (0/2.5/4/6.5)
+  // and rounding them onto downbeats turned it into house.
+  const city = CA.seedForState(st("citypop"), E);
+  ok(city !== house, "city pop does not start on the same row as house");
+  ok(CA.lensDrums(city).ops.some((o) => o.d === "hat"), "city pop keeps its off-beat pickups");
+
+  // EVERY ANCHOR WITH DRUMS must yield a row, and a DRUMLESS one must yield
+  // nothing and mean it. The first cut read only static `hits` ops and came back
+  // empty for 43 anchors — but those were kits keeping the kick in a `grid` and
+  // the snare in an `alt`, not drumless genres. Now the reader takes the first
+  // branch of a variation rule, and the only empty results are anchors whose
+  // every section says drums:"off" (ambient, neoclassical, doomdrone…). A
+  // drumless genre has no groove to lend, and inventing a pulse for it would be
+  // the starter lying about the anchor.
+  const distinct = new Set();
+  let emptyWithDrums = 0, drumless = 0;
+  for (const g of Object.keys(K.GENRES)) {
+    const s0 = st(g);
+    const hasDrums = (s0.sections || []).some((x) => x.drums && x.drums !== "off");
+    const row = CA.seedForState(s0, E);
+    if (!hasDrums) { drumless++; if (row) ok(false, g + " is drumless but produced a starter row"); continue; }
+    if (!row) { emptyWithDrums++; console.log("  no starter for " + g); } else distinct.add(row);
+  }
+  ok(emptyWithDrums === 0, "every anchor WITH drums yields a starter row (" + emptyWithDrums + " missing)");
+  ok(distinct.size >= 8, "and they are not all the same row (" + distinct.size + " distinct)");
+  console.log("  " + distinct.size + " distinct starter rows · " + drumless + " drumless anchors correctly yield none");
+
+  // HARMONY FROM THE GENRE. The point of the whole feature: city pop is the 1625
+  // and no automaton finds that by accident.
+  const seedH = CA.apply(st("citypop"), { seed: 0x1249, rule: 110, key: 0 });
+  const genH = CA.apply(st("citypop"), { seed: 0x1249, rule: 110, key: 0, harmony: "genre" });
+  ok(typeof seedH.state.progression === "object", "harmony:seed writes a resolved PLR progression");
+  ok(genH.state.progression === "pop_1625", "harmony:genre leaves the anchor's own progression alone (got " + genH.state.progression + ")");
+  const ev = E.buildEvents(genH.state);
+  ok(ev.pitched.length > 40 && ev.drums.length > 20, "and the result still renders (" + ev.pitched.length + " pitched)");
+  // the AUTOMATON still owns rhythm and form either way — only the chords moved
+  ok(JSON.stringify(genH.state.kits) === JSON.stringify(seedH.state.kits), "the kits are untouched by the harmony source");
+  ok(genH.state.sections.length === seedH.state.sections.length, "so is the form");
+  // and every anchor must survive it, since any of the 274 can be the base
+  let bad = 0;
+  for (const g of ["house", "citypop", "jungle", "ragtime", "dub", "techno", "ambient"]) {
+    try { const r = CA.apply(st(g), { seed: 0x2d63, rule: 90, harmony: "genre" }); E.buildEvents(r.state); }
+    catch (e) { bad++; console.log("  " + g + " threw: " + e.message); }
+  }
+  ok(bad === 0, "every probed anchor renders with its own harmony");
+}
+
 // ---------------------------------------------------------------------- done
 console.log("\n" + (fails ? "FAIL" : "PASS") + " — " + (checks - fails) + "/" + checks + " checks");
 process.exit(fails ? 1 : 0);

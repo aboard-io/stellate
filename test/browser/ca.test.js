@@ -238,6 +238,49 @@ async function main() {
   await page.evaluate(() => window.__CA.edit({ seed: 0x1249, rule: 110, key: 0, genre: "acidhouse", bars: 12, bpm: null }));
   await page.waitForTimeout(250);
 
+  // -------------------------------------------------- E4 making an ACTUAL genre
+  console.log("\nE4. start from a genre");
+  // The chip alone only ever lent the ORCHESTRA. `start from` sets the other
+  // three things a genre is: its groove, its progression and its tempo.
+  const made = {};
+  for (const g of ["house", "citypop"]) {
+    await page.evaluate((x) => window.__CA.startFrom(x), g);
+    await page.waitForTimeout(400);
+    made[g] = await page.evaluate(() => {
+      const r = window.__CA.resolved(), CA = window.CsdCA, seed = window.__CA.doc.seed;
+      const kit = CA.lensDrums(seed);
+      const lane = (d) => (kit.ops.find((o) => o.d === d) || { hits: [] }).hits.map((h) => h[0]);
+      return { seed, bpm: Math.round(r.state.bpm), prog: r.state.progression,
+        kick: lane("kick"), snare: lane("snare"), hat: lane("hat"),
+        harmony: window.__CA.doc.harmony, url: location.search, sections: r.plan.length };
+    });
+    console.log("    " + g + ": " + made[g].bpm + "bpm · " + made[g].prog + " · kick on " + made[g].kick.join("/"));
+  }
+  made.house.kick.join(",") === "0,2,4,6" ? ok("house starts on four to the floor") : fail("house kicks on " + made.house.kick);
+  made.house.snare.length >= 2 ? ok("...with a backbeat") : fail("house has no backbeat");
+  made.house.prog === "lofi" ? ok("and the anchor's own progression, not a PLR walk") : fail("house harmony is " + made.house.prog);
+  made.citypop.prog === "pop_1625" ? ok("city pop gets the 1625 — the thing that makes it city pop")
+    : fail("city pop harmony is " + made.citypop.prog);
+  made.citypop.bpm === 99 && made.house.bpm !== 99 ? ok("each brings its own tempo (" + made.house.bpm + " vs " + made.citypop.bpm + ")")
+    : fail("tempos did not follow: " + made.house.bpm + " / " + made.citypop.bpm);
+  made.citypop.seed !== made.house.seed
+    ? ok("and a different groove — snapping every hit to a downbeat used to make them identical")
+    : fail("city pop and house start on the same row");
+  made.citypop.hat.length > 0 ? ok("city pop keeps its off-beat pickups") : fail("city pop lost its pickups");
+  made.citypop.url.includes("h=genre") ? ok("the harmony source rides the URL") : fail("h=genre missing from " + made.citypop.url);
+  // it must still SOUND with the anchor's harmony — a string progression where the
+  // page expected an object threw on every repaint and only the console knew
+  const errsBefore = errors.length;
+  await page.evaluate(() => window.__CA.transport.start());
+  let gpeak = 0;
+  for (let i = 0; i < 16; i++) { await sleep(300); const v = await page.evaluate(() => window.__CA.transport.rms()); if (v > gpeak) gpeak = v; }
+  gpeak > 0.005 ? ok("a genre-harmony song sounds (peak " + gpeak.toFixed(4) + ")") : fail("silent: " + gpeak.toFixed(4));
+  errors.length === errsBefore ? ok("and repaints without a console error") : fail("errors during genre mode: " + errors.slice(errsBefore).join(" | "));
+  await page.evaluate(() => window.__CA.transport.stop());
+  await sleep(300);
+  await page.evaluate(() => window.__CA.edit({ seed: 0x1249, rule: 110, key: 0, genre: "acidhouse", bars: 12, bpm: null, harmony: "seed" }));
+  await page.waitForTimeout(250);
+
   // ------------------------------------------------- F the playhead is a class
   console.log("\nF. the playhead is a class, not a repaint");
   // E2/E3 stopped the transport; the playhead only exists while something plays

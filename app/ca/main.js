@@ -6,7 +6,7 @@
 // microseconds. That is not an optimisation; it is what the design is FOR.
 import { DOC, BASES, BARS, BPM_MIN, BPM_MAX, edit, readUrl, url, roll, resolved, touch, subs,
   bpm, bpmSet, setBpm, bpmRevert, undo, redo, canUndo, canRedo, playState as PLAYSTATE,
-  beginGesture, endGesture } from "./doc.js";
+  beginGesture, endGesture, startFrom } from "./doc.js";
 import * as GRID from "./grid.js";
 import * as RULES from "./rules.js";
 import * as TON from "./tonnetz.js";
@@ -25,7 +25,7 @@ GRID.buildOrbit($("caOrbit"), $("caWord"), $("caOrbitNote"), $("caBits"));
 LANES.build($("caLanes"));
 BITS.build($("caBits8"));
 RULES.build($("caRules"), $("caRuleNote"));
-TON.build($("caTonnetz"), $("caKey"));
+TON.build($("caTonnetz"), $("caKey"), $("caHarm"));
 PLAY.build($("caCtl"));
 
 // THE TEMPO, beside the bar it counts. Tempo used to ride the base genre alone,
@@ -95,6 +95,11 @@ $("caUndo").addEventListener("click", () => undo());
 $("caRedo").addEventListener("click", () => redo());
 subs.push(() => { $("caUndo").disabled = !canUndo(); $("caRedo").disabled = !canRedo(); });
 
+// ONE TAP TO A GENRE. The chip is the orchestra; this is the whole band.
+const startBtn = $("caStart");
+startBtn.addEventListener("click", () => startFrom(DOC.genre));
+subs.push(() => { startBtn.textContent = "\u2301 start from " + DOC.genre; });
+
 $("caDice").addEventListener("click", () => roll());
 $("caShare").addEventListener("click", async (e) => {
   const btn = e.currentTarget, was = btn.textContent;
@@ -123,7 +128,7 @@ touch();
 // than scraping selectors or racing a click.
 window.__CA = window.__CA || {};
 Object.assign(window.__CA, {
-  doc: DOC, edit, url, roll,
+  doc: DOC, edit, url, roll, startFrom, undo, redo,
   resolved: () => resolved(),
   plan: () => resolved().plan.map((p) => ({ pos: p.pos, gen: p.gen, role: p.role, density: p.density, row: p.row,
     drums: p.section.drums, bass: p.section.bass, melody: p.section.melody })),

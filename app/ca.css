@@ -299,6 +299,12 @@ a { color: var(--cool); }
 .ca-hist:disabled { opacity: .3; cursor: default; }
 .ca-hist:disabled:hover { border-color: var(--line); }
 .ca-barschips { margin-top: 10px; }
+.ca-start {
+  display: block; width: 100%; margin-top: 8px; min-height: 46px;
+  font: 600 13px/1 inherit; letter-spacing: .03em;
+  color: var(--bg); background: var(--cool); border: none; border-radius: 8px; cursor: pointer;
+}
+.ca-start:hover { background: #9aebff; }
 .ca-barschips .ca-chip { min-height: 40px; font-size: 12px; padding: 6px 10px; }
 .ca-pos {
   font: 15px/1 "VT323", ui-monospace, monospace; color: var(--ink);

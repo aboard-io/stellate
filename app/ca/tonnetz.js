@@ -13,14 +13,14 @@
 // drawing picks, for each chord, the occurrence NEAREST THE PREVIOUS ONE — which
 // is what makes an adjacent move look adjacent instead of teleporting across the
 // diagram. That choice is cosmetic; the harmony is the same either way.
-import { DOC, edit, resolved, subs } from "./doc.js";
+import { DOC, edit, resolved, subs, setHarmony, progLabel } from "./doc.js";
 
 const CA = window.CsdCA;
 const NS = "http://www.w3.org/2000/svg";
 const U = -3, U2 = 3, V = -2, V2 = 2;          // lattice extent
 const W = 46, H = 40;                          // node spacing
 
-let host = null, keyHost = null;
+let host = null, keyHost = null, srcHost = null;
 const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
 const px = (u, v) => [u * W + v * (W / 2), -v * H];
 const mod12 = (n) => ((n % 12) + 12) % 12;
@@ -36,8 +36,18 @@ function tri(u, v, min) {
   return { pts, cx, cy, root: min ? mod12(pcAt(u, v) + 4) : pcAt(u, v), min };
 }
 
-export function build(h, kh) {
-  host = h; keyHost = kh;
+export function build(h, kh, sh) {
+  host = h; keyHost = kh; srcHost = sh;
+  // WHERE THE CHORDS COME FROM — two chips, because it is a choice, not an
+  // amount. Two options and both short, so chips rather than a table.
+  srcHost.textContent = "";
+  for (const [id, label] of [["seed", "from the seed"], ["genre", "the genre's own"]]) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "ca-chip"; b.dataset.src = id;
+    b.textContent = label;
+    b.addEventListener("click", () => setHarmony(id));
+    srcHost.appendChild(b);
+  }
   keyHost.textContent = "";
   for (let k = 0; k < 12; k++) {
     // twelve chips read as a KEYBOARD, which is why this row stays chips rather
@@ -52,7 +62,29 @@ export function build(h, kh) {
 
 export function paint() {
   if (!host) return;
+  for (const b of srcHost.children) b.classList.toggle("on", b.dataset.src === DOC.harmony);
   for (const b of keyHost.children) b.classList.toggle("on", b.textContent === CA.PC[DOC.key]);
+
+  // THE LATTICE ONLY MEANS SOMETHING FOR A PLR WALK. An anchor's progression is
+  // a functional one the kernel already knows; drawing it on the Tonnetz would
+  // imply a parsimonious path it does not take. So when the harmony comes from
+  // the genre, the block says what is playing and hides the lattice rather than
+  // decorating it — and the key chips go with it, since the key is the anchor's.
+  if (DOC.harmony === "genre") {
+    const p = progLabel();
+    host.textContent = "";
+    const t = document.createElement("p");
+    t.className = "ca-word";
+    t.textContent = p.chords.join("  ");
+    host.appendChild(t);
+    const c = document.createElement("p");
+    c.className = "ca-note";
+    c.textContent = p.label + " — the anchor's own progression, so the automaton writes rhythm and form over harmony the kernel already knows.";
+    host.appendChild(c);
+    keyHost.style.display = "none";
+    return;
+  }
+  keyHost.style.display = "";
 
   const word = CA.word(DOC.seed);
   const walk = CA.triads(DOC.seed, DOC.key);      // the four triads, in order
