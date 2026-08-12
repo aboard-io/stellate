@@ -60,6 +60,7 @@ export function makeTile(o) {
     if (now - last < 320) { if (o.revert) o.revert(); paint(); last = 0; return; }   // double tap
     last = now;
     from = o.get(); at = e.clientX; dragging = true;
+    if (o.begin) o.begin();               // the whole drag is ONE undo
     try { el.setPointerCapture(e.pointerId); } catch (err) {}
   });
   el.addEventListener("pointermove", (e) => {
@@ -68,7 +69,7 @@ export function makeTile(o) {
     o.set(clamp(from + (e.clientX - at) / span * (o.max - o.min)));
     paint();
   });
-  const end = () => { dragging = false; };
+  const end = () => { if (dragging && o.end) o.end(); dragging = false; };
   el.addEventListener("pointerup", end);
   el.addEventListener("pointercancel", end);
   el.addEventListener("keydown", (e) => {

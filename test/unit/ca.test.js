@@ -278,6 +278,35 @@ head("8. the orbit IS the form");
     ok(hooks.every((h) => h.role === "chorus"), "both are choruses");
   }
 
+  // THE SECTION CAP IS A COUNT, NOT A SUGGESTION. The reprise inserts a section,
+  // so "6 sections" used to hand back seven and the control was a liar.
+  for (const cap of [4, 6, 8, 12]) {
+    for (const rule of [30, 90, 110, 150, 184, 22]) {
+      const g = CA.formGens(CA.orbit(0x1249, rule), cap);
+      ok(g.length <= cap, "rule " + rule + " at cap " + cap + " returns " + g.length + " sections, never more");
+    }
+  }
+
+  // AUDITION — one generation, alone, every lens on. This is what the page's
+  // loop button plays, and it is the difference between an instrument and a
+  // generator: without it the gap between "tap a cell" and "hear what that did"
+  // is the length of a whole song.
+  {
+    const a = CA.apply(base(), { seed: 0x1249, rule: 110, key: 0, audition: 0 });
+    ok(a.state.sections.length === 1, "audition is ONE section (got " + a.state.sections.length + ")");
+    ok(a.roles[0] === "loop", "and it carries the loop role, which the classifier never assigns");
+    ok(!CA.roles(CA.orbit(0x1249, 110), 12).includes("loop"), "...so no ordinary song can contain one");
+    const sec = a.state.sections[0];
+    ok(sec.pads && sec.drums !== "off" && sec.bass !== "off" && sec.melody !== "off",
+      "every lens is audible in audition — you hear the whole row, not the role's mask");
+    const e = E.buildEvents(a.state);
+    ok(e.drums.length > 8 && e.pitched.length > 8, "the audition renders real events (" + e.drums.length + " drums)");
+    ok(e.totalBeats <= 64, "and it is one pass of the progression, not a song (" + e.totalBeats + " beats)");
+    // it must follow the SEED, or the loop would audition something else
+    const b2 = CA.apply(base(), { seed: 0x0f0f, rule: 110, key: 0, audition: 0 });
+    ok(JSON.stringify(b2.state.kits) !== JSON.stringify(a.state.kits), "a different seed auditions a different bar");
+  }
+
   // AND IT MUST ACTUALLY PLAY. A form that renders no notes would pass every
   // structural check above.
   const ev = E.buildEvents(s1.state);

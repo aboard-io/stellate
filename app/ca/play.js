@@ -10,12 +10,12 @@
 // from the start of the walk. Every CA section is `cycles: 1` over a four-chord
 // progression, so the section index is serial / 4 — an integer division, not an
 // estimate, which is why the lit row and the sound cannot drift apart.
-import { DOC, state, resolved, subs } from "./doc.js";
+import { DOC, playState, resolved, subs, isLoop, setLoop } from "./doc.js";
 import { playhead } from "./grid.js";
 
 const CHORDS = 4;                     // a CA progression is always four chords
 let handle = null, playing = false, host = null;
-let btn = null, posEl = null, volEl = null, volFill = null, statusEl = null;
+let btn = null, loopBtn = null, posEl = null, volEl = null, volFill = null, statusEl = null;
 
 // ---------------------------------------------------------------- the volume
 // The tile gesture laid sideways: a RELATIVE drag (starting at the edge does not
@@ -43,6 +43,17 @@ export function build(h) {
   // a real click listener, because the AudioContext unlock has to ride the gesture
   btn.addEventListener("click", () => toggle());
   host.appendChild(btn);
+
+  // THE LOOP TOGGLE — the control that makes this an instrument. It repeats the
+  // seed bar with every lens on, so tapping a cell and hearing the difference are
+  // half a second apart instead of a song apart. Flipping it mid-playback lands
+  // at the next bar like any other edit; the getState callback does the work.
+  loopBtn = document.createElement("button");
+  loopBtn.type = "button"; loopBtn.className = "ca-loop"; loopBtn.id = "caLoop";
+  loopBtn.textContent = "\u27f3 bar";
+  loopBtn.title = "Loop the seed bar with everything on, so you can hear what you are drawing";
+  loopBtn.addEventListener("click", () => { setLoop(!isLoop()); paint(); });
+  host.appendChild(loopBtn);
 
   posEl = document.createElement("span");
   posEl.className = "ca-pos"; posEl.id = "caPos";
@@ -87,12 +98,17 @@ export function build(h) {
 
 function paint() {
   if (!btn) return;
+  if (loopBtn) {
+    loopBtn.classList.toggle("on", isLoop());
+    loopBtn.setAttribute("aria-pressed", isLoop() ? "true" : "false");
+  }
   btn.textContent = playing ? "■" : "▶";
   btn.setAttribute("aria-label", playing ? "Stop" : "Play");
   btn.classList.toggle("on", playing);
   if (!playing && posEl) {
     const r = resolved();
-    posEl.textContent = r.plan.length + " sections · " + Math.round(r.state.bpm) + " bpm";
+    posEl.textContent = isLoop() ? "looping the seed bar"
+      : r.plan.length + " sections · " + Math.round(r.state.bpm) + " bpm";
   }
 }
 
@@ -105,10 +121,18 @@ export async function start() {
   statusEl.textContent = "starting…";
   try {
     handle = await window.FaustLive.exploreLive(
-      () => state(),                            // re-read every bar: an edit lands live
+      () => playState(),                        // re-read every bar: an edit lands live
       (m) => { statusEl.textContent = m || ""; },
       { masterVol: vol,
         onBar: (info) => {
+          // IN LOOP MODE the played form is one section, so the serial keeps
+          // climbing and a section index means nothing. Light the seed's own row
+          // and count bars instead — which is what you want while auditioning.
+          if (isLoop()) {
+            playhead(0);
+            if (posEl) posEl.textContent = "loop · bar " + (1 + ((info.serial || 0) % CHORDS));
+            return;
+          }
           const pos = Math.floor((info.serial || 0) / CHORDS);
           const r = resolved();
           const p = r.plan[Math.min(pos, r.plan.length - 1)];
@@ -152,4 +176,5 @@ subs.push(() => {
 // checks "the button toggled" passes happily over a silent graph.
 window.__CA = window.__CA || {};
 window.__CA.transport = { isPlaying, start, stop, toggle, volume: () => vol, setVolume: setVol,
+  isLoop, setLoop,
   rms: () => { try { return handle && handle.rms ? handle.rms() : null; } catch (e) { return null; } } };

@@ -15,7 +15,7 @@ rule   8 bits    one of the 256 elementary CA rules
 
 Everything else — the drum kit, the bass cell, the melody cell, the chord
 progression, and the **sections themselves** — is a pure function of those bits.
-`engine/ca.js` is 375 lines; `test/unit/ca.test.js` holds it with 1025 checks. The
+`engine/ca.js` is 375 lines; `test/unit/ca.test.js` holds it with 1059 checks. The
 whole thing — kernel, page, both gates, CSS and HTML — is 2,059 lines.
 
 ## The diagnosis
@@ -228,7 +228,7 @@ resolves **byte-identical to a clean boot**.
 
 ## Gates
 
-- `node test/unit/ca.test.js` — 1025 checks, pure node: the ring and its wrap, the
+- `node test/unit/ca.test.js` — 1059 checks, pure node: the ring and its wrap, the
   row involutions, all 256 orbits closing into a rho, every lens against a known
   row, PLR as a group (involutions on all 24 triads + the three closures), the
   engine accepting the progression object, **the change being absent-byte-identical**,
@@ -240,8 +240,46 @@ resolves **byte-identical to a clean boot**.
   keeps sounding through a mid-playback edit, the playhead is a class and not a
   repaint, the URL round-trips, a hostile URL is inert, and the standing laws hold
   (zero `input[type=range]`, 44px floor, no sideways overflow at 390 or 1440).
+  Plus the instrument half: the loop sounds and keeps sounding while you draw into
+  it, the orbit does NOT collapse while auditioning, one drag is one undo, and
+  asking for six sections draws six.
 - `ca.html` is in `test/gates/social-meta.test.js`'s `PAGES`, so its head and its
   zero-inline-script are gated with every other page.
+
+## Composing with it — what it took
+
+Paul, on the shipped page: *"Right but how do I COMPOSE with this thing????"*
+
+The honest answer at that point was **you don't — you fish.** Roll, listen for
+three minutes, keep or reroll. That is a slot machine, and the reason was not
+conceptual: **the gap between "tap a cell" and "hear what that did" was the length
+of a song.** Every instrument ever built closes that gap; this one had not.
+
+Four things closed it, none of them a new idea about music:
+
+- **LOOP THE BAR** (`opts.audition`). One generation, alone, with every lens on.
+  `live.js` already walks the form and wraps at the end, so a one-section state
+  loops with no transport work, no loop points and no engine change. Tap a cell
+  while it runs and the next bar is different. *This is the whole difference
+  between an instrument and a generator.*
+  The trap it hid: folding the audition into `resolved()` collapsed the plan to a
+  single row and **the orbit view vanished with it**. The song you SEE and the
+  state the engine PLAYS are two separate builds now (`playState`).
+- **TEMPO.** There was none — bpm rode the base genre, so "faster" meant "pick a
+  different orchestra". A tile beside the bar it counts. Stored as `null` when
+  unset rather than the resolved number, so reverting and switching to `dub` lands
+  on 75 instead of freezing at whatever acidhouse said.
+- **UNDO.** Every edit here is GLOBAL — one cell rewrites the whole song — so an
+  accidental tap is not recoverable by hand the way a wrong note is. The document
+  is six numbers, so the stack is free.
+  Coalesced **by gesture, not by clock**: the first cut merged edits inside 400ms,
+  which is a guess about human speed that the machine gets to vote on — each edit
+  repaints the orbit, the lanes and 256 thumbnails, so under load one drag became
+  five undos. A drag knows when it starts and ends, so it says so.
+- **HOW LONG THE SONG IS** (`bars`, `?n=`). The orbit can run for hundreds of
+  generations; where to stop is a composer's decision, not the automaton's. And
+  the cap is a COUNT: the reprise inserts a section, so "6 sections" handed back
+  seven until `formGens` learned to drop the generation it displaces.
 
 ## Open
 

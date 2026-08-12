@@ -20,7 +20,11 @@ const K = window.GenreKernel, E = window.CsdEngine, CA = window.CsdCA;
 // resolved number ON PURPOSE: writing 122 the moment the page loads would freeze
 // the tempo to whatever acidhouse happened to say, and switching to `jungle`
 // would then quietly stay at 122. Absent means following; a number means yours.
-export const DOC = { seed: 0x1249, rule: 110, key: 0, genre: "acidhouse", bpm: null };
+export const DOC = { seed: 0x1249, rule: 110, key: 0, genre: "acidhouse", bpm: null, bars: 12 };
+// `loop` is NOT part of the document: it is a monitoring mode, like solo on a
+// mixer. It changes what you HEAR, never what the link says.
+export let LOOP = false;
+export const BARS = [4, 6, 8, 12];
 export const BPM_MIN = 50, BPM_MAX = 200;
 
 // The bases offered as chips. Any anchor works — `?g=` accepts all 274 and is
@@ -43,16 +47,16 @@ export function touch() {
 // here beyond "did anything actually change" — the orbit repaints on every cell
 // you tap and the cost is invisible.
 let _key = null, _res = null, _ev = null;
-const keyOf = () => DOC.seed + ":" + DOC.rule + ":" + DOC.key + ":" + DOC.genre + ":" + DOC.bpm;
+const keyOf = () => DOC.seed + ":" + DOC.rule + ":" + DOC.key + ":" + DOC.genre + ":" + DOC.bpm + ":" + DOC.bars;
 
-export function edit(p) { Object.assign(DOC, p); _key = null; writeUrl(); touch(); }
+export function edit(p) { Object.assign(DOC, p); _key = null; push(); writeUrl(); touch(); }
 
 export function resolved() {
   const k = keyOf();
   if (k === _key && _res) return _res;
   const t = K.track(DOC.genre, { seed: 7 });
   const base = JSON.parse(JSON.stringify(t.state || t));
-  _res = CA.apply(base, { seed: DOC.seed, rule: DOC.rule, key: DOC.key, engine: E });
+  _res = CA.apply(base, { seed: DOC.seed, rule: DOC.rule, key: DOC.key, engine: E, bars: DOC.bars });
   // TEMPO IS NOT ONE OF THE 24 BITS, and it is not part of the orchestra either
   // — it is the third thing, alongside key: a property of the performance. It is
   // applied AFTER the automaton, so it changes nothing the lenses produced (the
@@ -66,6 +70,26 @@ export function resolved() {
 export const state = () => resolved().state;
 export function events() { if (!_ev) _ev = E.buildEvents(state()); return _ev; }
 
+// WHAT THE ENGINE GETS, which is not always what the page SHOWS. `resolved()` is
+// always the whole song, because the orbit view must keep showing the form even
+// while you are auditioning one bar of it — folding the loop into resolved()
+// collapsed the plan to a single row and the song view vanished with it. So the
+// audition is a second, separate build, and `playState` is the only thing that
+// knows the difference.
+let _lk = null, _lr = null;
+export function playState() {
+  if (!LOOP) return state();
+  const k = keyOf();
+  if (k !== _lk || !_lr) {
+    const t = K.track(DOC.genre, { seed: 7 });
+    const base = JSON.parse(JSON.stringify(t.state || t));
+    _lr = CA.apply(base, { seed: DOC.seed, rule: DOC.rule, key: DOC.key, engine: E, audition: 0 });
+    if (DOC.bpm) _lr.state.bpm = DOC.bpm;
+    _lk = k;
+  }
+  return _lr.state;
+}
+
 // ------------------------------------------------------------------ the cells
 export const cells = () => CA.cells(DOC.seed);
 export function toggleCell(i) {
@@ -77,6 +101,60 @@ export function setCell(i, on) {
   const next = (on ? DOC.seed | (1 << i) : DOC.seed & ~(1 << i)) >>> 0 & CA.MASK;
   if (next !== DOC.seed) edit({ seed: next });
 }
+
+// ------------------------------------------------------------------ THE LOOP
+// Audition the seed bar on repeat. This is the single thing that separates an
+// instrument from a generator: without it the gap between "tap a cell" and
+// "hear what that did" is the length of a song, so you cannot hear a decision,
+// only a result. exploreLive re-reads getState() every chord bar and wraps at
+// the end of the form, so a one-section state loops with no transport work.
+export function setLoop(on) {
+  const v = !!on;
+  if (v === LOOP) return;
+  LOOP = v; _lk = null; touch();
+}
+export const isLoop = () => LOOP;
+
+// ---------------------------------------------------------------- THE HISTORY
+// The document is a handful of numbers, so undo is a stack of copies and costs
+// nothing. It exists because every edit here is GLOBAL — tapping one cell
+// rewrites the whole song — which makes an accidental change unrecoverable by
+// hand in a way that a note editor's never is.
+//
+// COALESCED BY GESTURE, NOT BY CLOCK. The first cut merged any two edits inside
+// 400ms, which is a guess about human speed that the machine gets to vote on:
+// each edit repaints the orbit, the lanes and 256 rule thumbnails, so under load
+// a five-cell drag exceeded the window and became five undos. A drag KNOWS when
+// it starts and ends, so it says so — and a discrete tap stays its own undo,
+// which is what anyone expects anyway.
+const HIST = [snap()], MAXH = 200;
+let hAt = 0, inGesture = false;
+function snap() { return { seed: DOC.seed, rule: DOC.rule, key: DOC.key, genre: DOC.genre, bpm: DOC.bpm, bars: DOC.bars }; }
+function push() {
+  const cur = snap();
+  if (JSON.stringify(cur) === JSON.stringify(HIST[hAt])) return;
+  if (inGesture && hAt === HIST.length - 1 && hAt > 0) { HIST[hAt] = cur; return; }
+  HIST.length = hAt + 1;
+  HIST.push(cur);
+  if (HIST.length > MAXH) HIST.shift();
+  hAt = HIST.length - 1;
+  inGesture = gestureOpen;    // the FIRST edit of a gesture opens a new entry;
+}                             // every later one inside it merges into that entry
+// A continuous gesture (a finger dragged across the row, a tile dragged) is ONE
+// undo. Call begin on pointerdown and end on pointerup; unbalanced calls are
+// harmless — the worst case is an extra undo step.
+export function beginGesture() { inGesture = false; gestureOpen = true; }
+export function endGesture() { gestureOpen = false; inGesture = false; }
+let gestureOpen = false;
+function restore(i) {
+  hAt = Math.max(0, Math.min(HIST.length - 1, i));
+  Object.assign(DOC, HIST[hAt]);
+  _key = null; writeUrl(); touch();
+}
+export const canUndo = () => hAt > 0;
+export const canRedo = () => hAt < HIST.length - 1;
+export function undo() { if (canUndo()) restore(hAt - 1); }
+export function redo() { if (canRedo()) restore(hAt + 1); }
 
 // ------------------------------------------------------------------ the tempo
 // `bpm()` is what is SOUNDING (yours, or the genre's); `bpmSet()` is whether you
@@ -105,6 +183,8 @@ export function readUrl() {
   if (g && K.GENRES[g]) DOC.genre = g;
   const b = parseInt(q.get("b"), 10);
   if (b >= BPM_MIN && b <= BPM_MAX) DOC.bpm = b | 0;
+  const n = parseInt(q.get("n"), 10);
+  if (BARS.indexOf(n) >= 0) DOC.bars = n;
   _key = null;
 }
 export function url() {
@@ -115,6 +195,7 @@ export function url() {
   if (DOC.key) u.searchParams.set("k", String(DOC.key));
   if (DOC.genre !== "acidhouse") u.searchParams.set("g", DOC.genre);
   if (DOC.bpm) u.searchParams.set("b", String(DOC.bpm));
+  if (DOC.bars !== 12) u.searchParams.set("n", String(DOC.bars));
   return u.toString();
 }
 function writeUrl() { try { history.replaceState(null, "", url()); } catch (e) {} }

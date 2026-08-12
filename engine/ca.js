@@ -238,6 +238,12 @@
   // chorus is stays a rule about what makes a chorus.
   const ROLES = {
     //        pads   bass   drums  melody
+    // AUDITION — not a role the classifier ever assigns. It is the mask for
+    // `opts.audition`: one generation, alone, on a loop, with every lens on, so
+    // you can hear the row you are drawing instead of hearing the song it grows
+    // into three minutes from now. An instrument needs the edit and the sound to
+    // be the same gesture; a generator does not, which is the whole difference.
+    loop:   { pads: true, bass: 1, drums: 1, melody: 1 },
     rest:   { pads: true, bass: 0, drums: 0, melody: 0 },
     intro:  { pads: true, bass: 0, drums: 0, melody: 0 },
     verse:  { pads: true, bass: 1, drums: 1, melody: 0 },
@@ -276,12 +282,19 @@
   // a SEQUENCE rule, not a diff — it names a generation the automaton already
   // produced, so it survives any change of seed or rule.
   function formGens(orb, cap) {
+    cap = cap || 12;
     const n = formLength(orb, cap);
     const gens = []; for (let i = 0; i < n; i++) gens.push(i);
     if (n >= 6) {
       let recurs = false;
       for (let i = 1; i < n; i++) if (gen(orb, i) === orb.seed) { recurs = true; break; }
-      if (!recurs) gens.splice(n - 1, 0, 0);        // reprise, then land on the outro
+      // THE CAP IS A COUNT, NOT A SUGGESTION. The reprise inserts a section, so
+      // asking for six and getting seven made the control a liar — drop the
+      // generation it would have displaced rather than overrunning.
+      if (!recurs) {
+        if (gens.length >= cap) gens.pop();
+        gens.splice(gens.length - 1, 0, 0);         // reprise, then land on the outro
+      }
     }
     return gens;
   }
@@ -346,8 +359,12 @@
     const keyPc = ((((opts.key | 0) % 12) + 12) % 12);
     const s = base;
     const orb = orbit(seed, rule);
-    const gens = formGens(orb, opts.bars || 12);
-    const rl = roles(orb, gens);
+    // AUDITION MODE: one generation, everything on. live.js walks the form and
+    // wraps at the end, so a one-section state simply loops — no new transport,
+    // no loop points, no engine change.
+    const solo = opts.audition != null;
+    const gens = solo ? [Math.max(0, opts.audition | 0)] : formGens(orb, opts.bars || 12);
+    const rl = solo ? ["loop"] : roles(orb, gens);
 
     // Vocabulary is named by GENERATION and sections are identified by POSITION,
     // because the reprise rule makes those two different: two sections can play

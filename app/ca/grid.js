@@ -10,7 +10,7 @@
 // button with a real 44px target, the whole thing is reachable by keyboard and
 // readable by a screen reader, and THE PLAYHEAD IS A CLASS TOGGLE rather than a
 // repaint (the project's standing rule — app/daw/transport.js says why).
-import { DOC, cells, toggleCell, setCell, edit, resolved, subs } from "./doc.js";
+import { DOC, cells, toggleCell, setCell, edit, resolved, subs, beginGesture, endGesture } from "./doc.js";
 
 const CA = window.CsdCA;
 const $ = (t, c, x) => { const d = document.createElement(t); if (c) d.className = c; if (x != null) d.textContent = x; return d; };
@@ -35,6 +35,7 @@ export function buildSeed(host) {
     b.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       painting = !cells()[i];              // draw if this cell was off, erase if it was on
+      beginGesture();                      // the whole drag is ONE undo
       toggleCell(i);
       try { b.setPointerCapture(e.pointerId); } catch (err) {}
     });
@@ -46,7 +47,7 @@ export function buildSeed(host) {
       const j = el && el.classList && el.classList.contains("ca-cell") ? +el.dataset.i : -1;
       if (j >= 0) setCell(j, painting);
     });
-    const end = () => { painting = null; };
+    const end = () => { painting = null; endGesture(); };
     b.addEventListener("pointerup", end);
     b.addEventListener("pointercancel", end);
     b.addEventListener("keydown", (e) => {

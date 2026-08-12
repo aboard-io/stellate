@@ -160,8 +160,89 @@ async function main() {
   stillOn ? ok("an edit mid-playback did not stop the transport") : fail("editing a cell stopped the music");
   stillLoud > 0 ? ok("and the graph is still sounding after the edit") : fail("the graph went silent after an edit");
 
+  // ------------------------------------------- E2 the loop makes it an instrument
+  console.log("\nE2. loop the bar");
+  await page.evaluate(() => window.__CA.transport.stop());
+  await sleep(300);
+  await page.evaluate(() => window.__CA.transport.setLoop(true));
+  await page.waitForTimeout(300);
+  // THE THING THAT BROKE FIRST: folding the audition into the resolved song
+  // collapsed the plan to one row and the orbit view vanished. The song view and
+  // the played state are separate builds and must stay so.
+  const loopRows = await page.locator("#caOrbit .ca-gen").count();
+  const loopSecs = await page.evaluate(() => window.__CA.playSections());
+  loopRows > 4 ? ok("the orbit still shows the whole song while looping (" + loopRows + " rows)")
+    : fail("the orbit collapsed to " + loopRows + " rows when the loop came on");
+  loopSecs === 1 ? ok("but the ENGINE gets one section") : fail("the played state has " + loopSecs + " sections");
+
+  await page.evaluate(() => window.__CA.transport.start());
+  let lpeak = 0;
+  for (let i = 0; i < 20; i++) { await sleep(300); const v = await page.evaluate(() => window.__CA.transport.rms()); if (v > lpeak) lpeak = v; }
+  lpeak > 0.005 ? ok("the loop sounds (peak " + lpeak.toFixed(4) + ")") : fail("the loop is silent: " + lpeak.toFixed(4));
+  (await page.locator("#caPos").textContent()).includes("loop")
+    ? ok("the readout counts bars rather than lying about a section index")
+    : fail("the loop readout still reports a section: " + (await page.locator("#caPos").textContent()));
+  // draw while it loops — the whole point
+  await page.locator("#caSeed .ca-cell").nth(2).click();
+  await sleep(2200);
+  (await page.evaluate(() => window.__CA.transport.isPlaying()))
+    ? ok("drawing a cell while looping does not stop it") : fail("editing stopped the loop");
+  (await page.evaluate(() => window.__CA.transport.rms())) > 0
+    ? ok("and it is still sounding after the edit") : fail("the loop went silent after an edit");
+  await page.evaluate(() => { window.__CA.transport.stop(); window.__CA.transport.setLoop(false); });
+  await sleep(300);
+
+  // ------------------------------------------------------- E3 undo and length
+  console.log("\nE3. undo, and how long the song is");
+  const u0 = await page.evaluate(() => window.__CA.doc.seed);
+  await page.locator("#caSeed .ca-cell").nth(7).click();
+  await page.waitForTimeout(500);
+  const u1 = await page.evaluate(() => window.__CA.doc.seed);
+  await page.locator("#caUndo").click();
+  await page.waitForTimeout(250);
+  (await page.evaluate(() => window.__CA.doc.seed)) === u0 ? ok("undo restores the seed") : fail("undo did not restore " + u0);
+  await page.locator("#caRedo").click();
+  await page.waitForTimeout(250);
+  (await page.evaluate(() => window.__CA.doc.seed)) === u1 ? ok("redo replays it") : fail("redo did not reach " + u1);
+  await page.locator("#caUndo").click();
+  await page.waitForTimeout(250);
+
+  // A DRAG is one undo, however many cells it crosses — and it is a GESTURE that
+  // says so, not a stopwatch. (The clock version merged edits inside 400ms, which
+  // let a slow repaint split one drag into five undos.) Discrete taps stay their
+  // own undo, which is what anyone expects.
+  const cellsBox = await page.locator("#caSeed").boundingBox();
+  const cw = cellsBox.width / 16, cy = cellsBox.y + cellsBox.height / 2;
+  await page.mouse.move(cellsBox.x + cw * 8.5, cy);
+  await page.mouse.down();
+  for (let i = 9; i < 14; i++) { await page.mouse.move(cellsBox.x + cw * (i + 0.5), cy); await sleep(60); }
+  await page.mouse.up();
+  await page.waitForTimeout(500);
+  const dragged = await page.evaluate(() => window.__CA.doc.seed);
+  const painted = ((dragged ^ u0).toString(2).match(/1/g) || []).length;
+  painted >= 4 ? ok("a drag across the row painted " + painted + " cells")
+    : fail("the drag painted " + painted + " cells, expected at least 4");
+  await page.locator("#caUndo").click();
+  await page.waitForTimeout(300);
+  (await page.evaluate(() => window.__CA.doc.seed)) === u0
+    ? ok("...and ONE undo takes all of it back") : fail("a five-cell drag needed more than one undo");
+
+  // THE CAP IS A COUNT. The reprise inserts a section, so asking for six and
+  // getting seven made the control a liar.
+  for (const n of [4, 6, 8]) {
+    await page.evaluate((v) => window.__CA.edit({ bars: v }), n);
+    await page.waitForTimeout(250);
+    const got = await page.locator("#caOrbit .ca-gen").count();
+    got === n ? ok(n + " sections means " + n + " rows") : fail("asked for " + n + " sections, drew " + got);
+  }
+  await page.evaluate(() => window.__CA.edit({ seed: 0x1249, rule: 110, key: 0, genre: "acidhouse", bars: 12, bpm: null }));
+  await page.waitForTimeout(250);
+
   // ------------------------------------------------- F the playhead is a class
   console.log("\nF. the playhead is a class, not a repaint");
+  // E2/E3 stopped the transport; the playhead only exists while something plays
+  await page.evaluate(() => window.__CA.transport.start());
+  await sleep(4000);
   const head = await page.evaluate(async () => {
     const strip = () => [...document.querySelectorAll("#caOrbit .ca-gen")]
       .map((r) => r.className.replace(/\s*now\s*/, " ").trim()).join("|");

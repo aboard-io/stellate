@@ -47,7 +47,7 @@
   <h1 class="ca-brand">STELLATE<span class="ca-tag">ca</span></h1>
   <p class="ca-bits" id="caBits">— · —</p>
   <div class="ca-controls">
-    <button id="caShare" class="ca-btn" title="Copy a link to these 24 bits">↗ link</button>
+    <button id="caShare" class="ca-btn" title="Copy a link to this song">↗ link</button>
     <button id="caDice" class="ca-btn" title="A new seed and rule">⤫ roll</button>
   </div>
   <nav class="ca-nav"><a href="daw.html">daw</a><a href="index.html">← star map</a></nav>
@@ -60,7 +60,11 @@
 <div id="caShell">
   <main id="caMain">
     <section class="ca-block" aria-labelledby="caSeedH">
-      <h2 id="caSeedH" class="ca-h">the seed<small>one bar · draw with a finger · everything below is this row, read differently</small></h2>
+      <h2 id="caSeedH" class="ca-h">the seed<small>one bar · draw with a finger · everything below is this row, read differently</small>
+        <span class="ca-hgap"></span>
+        <button id="caUndo" class="ca-btn ca-hist" title="Undo (⌘Z)">↶</button>
+        <button id="caRedo" class="ca-btn ca-hist" title="Redo (⇧⌘Z)">↷</button>
+      </h2>
       <div id="caSeed" class="ca-seedrow" role="group" aria-label="Seed row, sixteen cells"></div>
       <div id="caBeats" class="ca-beats" aria-hidden="true"></div>
       <!-- WHAT THE ROW TURNS INTO — the same sixteen columns, five lenses deep.
@@ -73,6 +77,7 @@
     <section class="ca-block ca-grow" aria-labelledby="caOrbitH">
       <h2 id="caOrbitH" class="ca-h">the orbit<small>each row is a section · tap one to make it the seed</small></h2>
       <div id="caOrbit" class="ca-orbit"></div>
+      <div id="caBars" class="ca-chips ca-barschips" role="group" aria-label="How many sections"></div>
       <p class="ca-note" id="caOrbitNote"></p>
     </section>
 
