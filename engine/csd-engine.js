@@ -1020,7 +1020,14 @@
   // melody phrases are 8-beat cells too; with chordEvery (cb) ≠ 8 the phrase
   // takes the front of the chord bar (long harmony breathes) or truncates.
   // cb=8 (every genre today) is byte-identical to the pre-lane engine.
-  function melodyEvents(style,base,prg,chords,k,rng,seed,cb,idiom,melGen,melCells,melWeave){
+  // `exact` (state.exactCells) — RENDER A CELL AS WRITTEN. The note() helper below
+  // deliberately mutates every phrase cell for humanity: a 9% chance to drop the
+  // note, an 11% chance to push it half a beat, a 9% chance to flip its octave.
+  // That is right for a pop lick and FATAL for imitative counterpoint — a fugue
+  // subject that randomly loses notes and flips octaves is not a subject, and
+  // engine/fugue.js was silently getting a different tune from the one it wrote.
+  // ABSENT/false => the three draws happen exactly as before, byte-identical.
+  function melodyEvents(style,base,prg,chords,k,rng,seed,cb,idiom,melGen,melCells,melWeave,exact){
     const PH=n=>(melCells&&melCells[n])||MEL_PHRASES[n];
     cb=cb||CHORD_BEATS;
     const out=[], cycleBeats=chords.length*cb;
@@ -1035,9 +1042,11 @@
       const Sb=base+ci*cb, lead=chord.lead.map(p=>pchAdd(p,k));
         // humanity: every chord's phrase mutates a little — drops, pushes, octave color
       const note=(o,d,idx,oct,bd)=>{
-        if(rng()<0.09) return;
-        if(rng()<0.11 && o+0.5+d<=8) o+=0.5;
-        if(rng()<0.09) oct=(oct||0)===0?1:0;
+        if(!exact){
+          if(rng()<0.09) return;
+          if(rng()<0.11 && o+0.5+d<=8) o+=0.5;
+          if(rng()<0.09) oct=(oct||0)===0?1:0;
+        }
         if(o>=cb) return;                                          // chordEvery<8 truncation (never fires at cb=8)
         out.push({voice:"melody",beat:Sb+o,dur:d,pch:pchAdd(lead[idx],12*(oct||0)),amp:0.13+rng()*0.025,...(bd?{bend:bd}:{})});
       };
@@ -2197,7 +2206,7 @@
           }
         });
         if(sec.melody&&sec.melody!=="off"){
-          const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,melR,state.seed,CBEATS,sec.soloIdiom,state.melodyGen,state.melodyCells,state.melodyWeave);
+          const mel=melodyEvents(sec.melody,cycleBase,prg,chords,k,melR,state.seed,CBEATS,sec.soloIdiom,state.melodyGen,state.melodyCells,state.melodyWeave,state.exactCells);
           // MUSIC-MIND melody rhythm cells (state.rhythm): per sounding bar, on
           // the DEDICATED mrng stream (seed+52200), fire ∝ complexity and snap
           // the bar's phrase onto a named cell grid (MM_CELLS — dotted pairs /
@@ -2248,7 +2257,7 @@
           mel.forEach(e=>pitched.push(e));
         }
         if(sec.counter&&sec.counter.pattern){              // countermelody layer (e.g. a brass section) over the main melody
-          const cm=melodyEvents(sec.counter.pattern,cycleBase,prg,chords,k,counterR,state.seed,CBEATS,null,state.melodyGen,state.melodyCells,state.melodyWeave);
+          const cm=melodyEvents(sec.counter.pattern,cycleBase,prg,chords,k,counterR,state.seed,CBEATS,null,state.melodyGen,state.melodyCells,state.melodyWeave,state.exactCells);
           cm.forEach(e=>{ e.solo=sec.counter.solo; if(sec.counter.octave) e.pch=pchAdd(e.pch,12*sec.counter.octave);
             if(sec.swell) e.amp *= 0.3 + 1.9*((e.beat-cur)/Math.max(1,secBeats)); });   // crescendo build across the section
           cm.forEach(e=>pitched.push(e));

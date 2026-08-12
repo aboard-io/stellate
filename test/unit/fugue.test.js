@@ -79,8 +79,8 @@ head("2. the exposition is an exposition");
     const end = last.at + F.spanOf(F.transform(q.subject, last.transform));
     ok(end <= q.total + 1e-6, "with " + t + ", the last entry ends inside the plan (" + end + " <= " + q.total + ")");
   }
-  for (const v of [2, 3, 4]) ok(F.plan({ voices: v }).entries.length === v, v + " voices");
-  ok(F.plan({ voices: 9 }).entries.length === 4, "more than four voices clamps to four");
+  for (const v of [2, 3]) ok(F.plan({ voices: v }).entries.length === v, v + " voices");
+  ok(F.plan({ voices: 9 }).entries.length === 3, "three voices is the ceiling — three registers is what the engine offers");
 }
 
 head("3. every entry reaches the cell");
@@ -89,7 +89,7 @@ head("3. every entry reaches the cell");
   // exposition spans three subject-lengths — so at the stock cb=8 the third
   // voice's entry landed past the end and was dropped SILENTLY. The chord bar is
   // sized to the plan now.
-  for (const voices of [2, 3, 4]) for (const overlap of [1, 0.5]) {
+  for (const voices of [2, 3]) for (const overlap of [1, 0.5]) {
     const r = F.build(base(), { voices, overlap });
     const notes = r.cells.upper.length + r.cells.lower.length;
     const want = r.plan.entries.length * r.plan.subject.length;
@@ -148,6 +148,87 @@ head("4. it renders, and it renders a fugue");
     if (e.pitched.length < 40 || e.drums.length) { bad++; console.log("  " + g + ": " + e.pitched.length + " pitched, " + e.drums.length + " drums"); }
   }
   ok(bad === 0, "every probed base renders a drumless, playable fugue");
+}
+
+head("5. THE SUBJECT IS AUDIBLE AS THE SUBJECT");
+{
+  // THE TEST THAT WAS MISSING, and the reason two silent corruptions shipped.
+  // Everything above checks the PLAN. None of it checks that the line you drew
+  // survives all the way to the rendered events — and it did not: the per-voice
+  // ladder offset clamped degrees 3 and 4 onto the same slot, so the first voice
+  // played a different tune from the one in the plan and nothing said so.
+  //
+  // So this reads the RENDERED pitched events, maps each pitch back to its ladder
+  // degree through the chord's own lead voicing, and demands that every entry
+  // carries the transformed subject's degree sequence EXACTLY.
+  const r = F.build(base(), { voices: 2, overlap: 1 });
+  const st = r.state;
+  const prg = E.getProgression(st.progression);
+  const lead = prg.chords[0].lead.map((x) => E.pchToMidi(x) + (st.keyOffset || 0));
+  // ladder degree -> semitone, for the FIRST chord (the first bar of the piece)
+  const degOf = (m) => {
+    for (let g = 0; g < F.LADDER; g++) {
+      const want = lead[g % 4] + (g >= 4 ? 12 : 0);
+      if (Math.abs(want - m) < 0.5) return g;
+    }
+    return -1;
+  };
+  // Read only the FIRST chord bar, against that chord's own voicing. The tape
+  // jitters onsets by up to a tenth of a beat, so the next bar's downbeat can
+  // land just before the boundary — measured against the wrong chord it looks
+  // like a stray, and widening the tolerance would hide a real one. Notes within
+  // a tenth of the boundary are excluded by position, not by whether they parse.
+  const EDGE = 0.2;
+  const ev = E.buildEvents(st).pitched
+    .filter((e) => e.voice === "melody" && e.beat < st.chordEvery - EDGE)
+    .sort((a, b) => a.beat - b.beat)
+    .map((e) => ({ beat: e.beat, g: degOf(E.pchToMidi(e.pch)) }));
+  const strays = ev.filter((e) => e.g < 0);
+  ok(strays.length === 0, "every rendered note in the first bar lands on a ladder degree ("
+    + strays.length + " strays" + (strays.length ? ": " + strays.map((x) => x.beat.toFixed(2)).join(",") : "") + ")");
+  // and the COUNT is right — a dropped note is the failure that started all this
+  ok(ev.length === r.cells.upper.filter((n) => n[0] < st.chordEvery - EDGE).length,
+    "and the bar renders exactly the notes the cell holds (" + ev.length + ")");
+
+  for (const entry of r.plan.entries) {
+    const want = F.shiftDeg(F.transform(r.plan.subject, entry.transform), entry.shift);
+    const lo = entry.at - 0.15, hi = Math.min(entry.at + F.spanOf(want) - 0.15, st.chordEvery - EDGE);
+    const got = ev.filter((e) => e.beat >= lo && e.beat < hi).map((e) => e.g);
+    const wantD = want.map((n) => n[2]);
+    ok(got.length === wantD.length,
+      "entry v" + entry.voice + " @" + entry.at + " renders " + wantD.length + " notes (got " + got.length + ")");
+    ok(got.join(",") === wantD.join(","),
+      "entry v" + entry.voice + " @" + entry.at + " (" + entry.role + ") IS the subject: want "
+      + wantD.join(",") + ", rendered " + got.join(","));
+  }
+
+  // AND THE SHAPE IS THE SAME SHAPE. A transposition may move the line; it may
+  // never bend it. This is the specific assertion the clamp would have failed.
+  const shape = (a) => a.slice(1).map((x, i) => x - a[i]).join(",");
+  const base0 = shape(r.plan.subject.map((n) => n[2]));
+  for (const entry of r.plan.entries) {
+    const want = F.shiftDeg(F.transform(r.plan.subject, entry.transform), entry.shift);
+    if (entry.transform !== "subject") continue;
+    ok(shape(want.map((n) => n[2])) === base0,
+      "the " + entry.role + " has the subject's exact interval shape (" + shape(want.map((n) => n[2])) + ")");
+  }
+  // every transposition the page offers must preserve it, or the page is lying
+  for (let n = 0; n <= 7; n++) {
+    ok(shape(F.shiftDeg(r.plan.subject, n).map((x) => x[2])) === base0,
+      "+" + n + " preserves the shape");
+  }
+  // a subject that spans the whole ladder cannot be transposed, and must be
+  // returned UNCHANGED rather than crushed
+  const wide = [[0, .5, 0], [.5, .5, 7], [1, .5, 3]];
+  ok(shape(F.shiftDeg(wide, 3).map((x) => x[2])) === shape(wide.map((x) => x[2])),
+    "a subject too wide to transpose comes back intact, not clamped");
+
+  // NOTHING IS DROPPED. A note past the end of the cell used to vanish in
+  // silence, which is how a three-voice exposition rendered as two.
+  for (const v of [2, 3]) for (const o of [1, 0.5, 0.25]) {
+    ok(F.build(base(), { voices: v, overlap: o }).cells.dropped.length === 0,
+      v + " voices at overlap " + o + ": no note falls off the end of the cell");
+  }
 }
 
 console.log("\n" + (fails ? "FAIL" : "PASS") + " — " + (checks - fails) + "/" + checks + " checks");

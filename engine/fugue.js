@@ -71,7 +71,29 @@
       .sort((a, b) => a[0] - b[0]);
   }
   const scale = (s, k) => s.map(([b, d, g]) => [+(b * k).toFixed(4), +(d * k).toFixed(4), g]);
-  const shiftDeg = (s, n) => (n ? s.map(([b, d, g]) => [b, d, clampDeg(g + n)]) : s);
+
+  // TRANSPOSITION MOVES THE WHOLE LINE OR NOTHING. Clamping each note into the
+  // ladder — which is what this did — silently changes the SHAPE, and the shape
+  // is the only thing that makes a restatement recognisable as the subject. With
+  // the stock subject, +2 was fine but the voice offset turned degrees 3 and 4
+  // into the same slot, so the "subject" the first voice played was a different
+  // tune from the one you drew, and nothing said so.
+  //
+  // So: shift by whole octaves (4 ladder slots) until the line fits, and if no
+  // placement fits, refuse and return it untransposed. A transposition that does
+  // not fit is a fact about the subject being too wide, not a licence to bend it.
+  function shiftDeg(s, n) {
+    if (!n || !s.length) return s.map((x) => x.slice());
+    let lo = 99, hi = -1;
+    for (const g of s.map((x) => x[2])) { lo = Math.min(lo, g); hi = Math.max(hi, g); }
+    let k = n;
+    while (hi + k > LADDER - 1 && lo + k - 4 >= 0) k -= 4;
+    if (hi + k > LADDER - 1 || lo + k < 0) return s.map((x) => x.slice());
+    return s.map(([b, d, g]) => [b, d, g + k]);
+  }
+  // does a transposition survive intact? the page prints this rather than
+  // pretending every interval is available
+  const shiftFits = (s, n) => shiftDeg(s, n).some((x, i) => x[2] !== s[i][2]) || !n;
 
   function transform(s, name) {
     switch (name) {
@@ -97,7 +119,10 @@
   function plan(opts) {
     opts = opts || {};
     const subject = opts.subject || DEFAULT_SUBJECT;
-    const voices = Math.max(2, Math.min(4, opts.voices || 3));
+    // THREE IS THE CEILING and it is a fact about the registers available, not a
+    // taste: melody + counter is two, and the answer's transposition makes the
+    // third. A fourth voice would need a fourth register and would have to clamp.
+    const voices = Math.max(2, Math.min(3, opts.voices || 3));
     const overlap = opts.overlap == null ? 1 : Math.max(0.25, Math.min(1, opts.overlap));
     const answer = opts.answer == null ? 2 : opts.answer | 0;
     const span = spanOf(subject);
@@ -125,29 +150,40 @@
   }
 
   // --------------------------------------------------------------- the cells
-  // Voices 0 and 1 ride ONE melody cell an octave apart (the ladder's two
-  // octaves); voice 2 rides the `counter` voice, which csd-engine already
-  // resolves through the same cell table and can drop an octave. Voice 3, if
-  // asked for, doubles voice 1 an octave down inside the counter cell.
+  // VOICES ARE SEPARATED BY A REAL OCTAVE, NEVER BY THE LADDER. The first cut
+  // gave voice 0 a +4 slot offset to put it in the ladder's upper octave — and
+  // any subject reaching degree 4 or above then clamped, which turned two
+  // different degrees into the same slot and destroyed the subject. The ladder is
+  // eight slots; it cannot hold three lines an octave apart, and pretending it
+  // can is how a fugue quietly stops being one.
+  //
+  // So voices 0 and 1 share the melody cell IN THE SAME REGISTER — which is
+  // exactly what a two-part invention is, and the answer's transposition is what
+  // tells them apart — and voice 2 rides the `counter` voice, whose `octave: -1`
+  // is a genuine octave outside the ladder. Three voices, three intact lines.
+  // That is the ceiling, and it is stated rather than clamped: a fourth voice
+  // would need a fourth register the engine does not offer here.
   //
   // A cell is [beat, dur, leadIndex, octShift] — the shipped phrase-cell format —
   // so nothing here needs a new interpreter, and a fugue is an ordinary state.
-  const VOICE_OCT = [1, 0, 0, 0];
   function cells(p, cb) {
     cb = cb || 8;
-    const upper = [], lower = [];
+    const upper = [], lower = [], dropped = [];
     for (const e of p.entries) {
       const notes = shiftDeg(transform(p.subject, e.transform), e.shift);
       const dest = e.voice <= 1 ? upper : lower;
       for (const [b, d, g] of notes) {
         const at = e.at + b;
-        if (at >= cb) continue;                      // a cell is one chord bar
-        const deg = clampDeg(g + (VOICE_OCT[e.voice] ? 4 : 0));
-        dest.push([+at.toFixed(4), Math.min(d, cb - at), deg % 4, deg >= 4 ? 1 : 0]);
+        // A NOTE PAST THE END OF THE CELL IS A BUG, NOT A TRIM. It used to be
+        // dropped in silence, which is how a three-voice exposition rendered as
+        // two. The chord bar is sized to the plan now, so this can only fire if a
+        // caller overrode chordEvery — and then it is counted and reported.
+        if (at >= cb) { dropped.push(at); continue; }
+        dest.push([+at.toFixed(4), Math.min(d, cb - at), g % 4, g >= 4 ? 1 : 0]);
       }
     }
     const bySort = (a, b) => a[0] - b[0] || a[2] - b[2];
-    return { upper: upper.sort(bySort), lower: lower.sort(bySort) };
+    return { upper: upper.sort(bySort), lower: lower.sort(bySort), dropped };
   }
 
   // ----------------------------------------------------------------- the state
@@ -188,11 +224,17 @@
     // the base is an ordinary anchor and may carry anything.
     s.thunk = null;
     s.perc = null;
+    // RENDER THE CELLS AS WRITTEN. csd-engine's note() mutates every phrase cell
+    // for humanity — 9% drop, 11% half-beat push, 9% octave flip — which is right
+    // for a lick and destroys a fugue subject. Imitation only works if the thing
+    // imitated arrives intact. (The tape's microtiming still applies; that is
+    // performance, not identity.)
+    s.exactCells = true;
     return { state: s, plan: p, cells: c, engine: E };
   }
 
   const api = { LADDER, DEFAULT_SUBJECT, TRANSFORMS, spanOf,
-    invert, retrograde, scale, shiftDeg, transform, plan, cells, build };
+    invert, retrograde, scale, shiftDeg, shiftFits, transform, plan, cells, build };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.CsdFugue = api;
 })(typeof window !== "undefined" ? window : globalThis);

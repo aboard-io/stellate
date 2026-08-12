@@ -200,7 +200,7 @@ buildTransforms();
 
 const pAns = chips($("fgAnswer"), [[0, "unison"], [1, "+1 · the third"], [2, "+2 · the fifth"], [3, "+3 · the top"], [4, "+4 · the octave"]],
   () => DOC.answer, (v) => edit({ answer: v }));
-const pVox = chips($("fgVoices"), [[2, "2 voices"], [3, "3 voices"], [4, "4 voices"]],
+const pVox = chips($("fgVoices"), [[2, "2 voices"], [3, "3 voices"]],
   () => DOC.voices, (v) => edit({ voices: v }));
 const pStr = chips($("fgStretto"), [[1, "1 · in turn"], [0.75, "¾"], [0.5, "½ · stretto"], [0.25, "¼ · pile-up"]],
   () => DOC.overlap, (v) => edit({ overlap: v }));

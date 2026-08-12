@@ -59,12 +59,38 @@ async function main() {
   await moved("drawing a note redraws the subject grid", "#fgGrid", () =>
     window.__FUGUE.edit({ subject: [[0, .5, 5], [.5, .5, 3], [1, .5, 1], [1.5, .5, 4]] }));
   await moved("changing the answer redraws its roll", "#fgAnsRoll", () => window.__FUGUE.edit({ answer: 4 }));
-  await moved("adding a voice redraws the entry map", "#fgMap", () => window.__FUGUE.edit({ voices: 4 }));
+  await moved("adding a voice redraws the entry map", "#fgMap", () => window.__FUGUE.edit({ voices: 2 }));
   await moved("stretto redraws the entry map", "#fgMap2", () => window.__FUGUE.edit({ overlap: 0.5 }));
   await moved("adding a transform marks its card", "#fgTrans", () => window.__FUGUE.edit({ later: ["retrograde"] }));
   await moved("and the whole-piece roll follows all of it", "#fgFull", () => window.__FUGUE.edit({ voices: 3 }));
 
   // the transform cards must draw THEIR OWN shape, or they are decoration
+  // THE CLAIM THE PAGE MAKES, checked end to end: every entry carries the
+  // subject's exact interval shape in the RENDERED events. The first version of
+  // this page failed this and shipped anyway, because nothing asked.
+  const shaped = await page.evaluate(() => {
+    window.__FUGUE.edit({ subject: [[0, .5, 0], [.5, .5, 1], [1, .5, 2], [1.5, .5, 1], [2, .5, 3], [2.5, .5, 2], [3, .5, 4], [3.5, .5, 2]],
+      voices: 3, overlap: 1, answer: 2, later: [] });
+    const F = window.CsdFugue, E = window.CsdEngine, K = window.GenreKernel;
+    const st = F.build(JSON.parse(JSON.stringify(K.track("neoclassical", { seed: 7 }))), { voices: 3 }).state;
+    const p = F.plan({ voices: 3 });
+    const lead = E.getProgression(st.progression).chords[0].lead.map((x) => E.pchToMidi(x) + (st.keyOffset || 0));
+    const deg = (m) => { for (let g = -4; g < 12; g++) { const w = lead[((g % 4) + 4) % 4] + Math.floor(g / 4) * 12; if (Math.abs(w - m) < 0.5) return g; } return null; };
+    const ev = E.buildEvents(st).pitched.filter((e) => e.voice === "melody" && e.beat < st.chordEvery - 0.2).sort((a, b) => a.beat - b.beat);
+    const shape = (a) => a.slice(1).map((x, i) => x - a[i]).join(",");
+    const want = shape(p.subject.map((n) => n[2]));
+    return p.entries.map((e) => {
+      const w = ev.filter((x) => x.beat >= e.at - 0.15 && x.beat < e.at + p.span - 0.15).map((x) => deg(E.pchToMidi(x.pch)));
+      return { role: e.role, got: shape(w), ok: shape(w) === want, n: w.length };
+    });
+  });
+  shaped.every((x) => x.ok) ? ok("every rendered entry carries the subject's exact shape (" + shaped[0].got + ")")
+    : fail("an entry is not the subject: " + JSON.stringify(shaped));
+  shaped.every((x) => x.n === 8) ? ok("and all eight notes of it, in every voice")
+    : fail("notes per entry: " + shaped.map((x) => x.n).join(","));
+  await page.evaluate(() => window.__FUGUE.edit({ voices: 3, later: [] }));
+  await sleep(250);
+
   const shapes = await page.evaluate(() => {
     const seen = new Set();
     for (const c of document.querySelectorAll(".fg-tcard")) seen.add(c.querySelector("svg").innerHTML);
@@ -100,7 +126,7 @@ async function main() {
   await sleep(300);
 
   console.log("\nE. the link and the laws");
-  await page.evaluate(() => window.__FUGUE.edit({ subject: [[0, .5, 2], [.5, .5, 5], [1, 1, 3]], voices: 4, overlap: 0.5, answer: 3, later: ["augmentation"], genre: "ragtime" }));
+  await page.evaluate(() => window.__FUGUE.edit({ subject: [[0, .5, 2], [.5, .5, 5], [1, 1, 3]], voices: 2, overlap: 0.5, answer: 3, later: ["augmentation"], genre: "ragtime" }));
   await sleep(300);
   const shared = await page.evaluate(() => window.__FUGUE.url());
   const p2 = await ctx.newPage();
@@ -109,7 +135,7 @@ async function main() {
   await p2.waitForFunction(() => window.__FUGUE && window.__FUGUE.ready);
   await p2.waitForTimeout(300);
   const round = await p2.evaluate(() => ({ ...window.__FUGUE.doc }));
-  (round.voices === 4 && round.overlap === 0.5 && round.answer === 3 && round.genre === "ragtime"
+  (round.voices === 2 && round.overlap === 0.5 && round.answer === 3 && round.genre === "ragtime"
     && round.later.join() === "augmentation" && round.subject.length === 3)
     ? ok("the whole document survives the link") : fail("round-trip lost " + JSON.stringify(round));
   if (e2.length) fail("errors on the shared link: " + e2.join(" | "));
