@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STELLATE FUGUE — one idea and the ways it comes back</title>
+<!-- ── SOCIAL / IDENTITY ──────────────────────────────────────────────────────
+     Same two rules as index.html: icon/manifest paths stay RELATIVE (this tree is
+     also served at aboardresearch.com/projects/stellate/), og:image + canonical
+     stay ABSOLUTE (a card crawler resolves nothing). The SITE-WIDE tags below are
+     byte-identical to the other pages on purpose — test/gates/social-meta.test.js
+     gates them against drift, since HTML has no include and this project has no
+     HTML build step. Per-page tags (title/description/url) are the only ones that
+     differ. NO INLINE SCRIPT ANYWHERE (not even in a comment — the CSP gate reads
+     the raw markup): production CSP has no 'unsafe-inline'. -->
+<meta name="description" content="A fugue is one subject and a list of the ways it comes back. Scroll: every option is documented in turn, and the effect of each is playing directly underneath it.">
+<meta name="author" content="Paul Ford">
+<meta name="theme-color" content="#0c0a1a">
+<meta name="color-scheme" content="dark">
+<link rel="canonical" href="https://stellate.app/fugue">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="STELLATE">
+<meta property="og:title" content="STELLATE FUGUE — one idea and the ways it comes back">
+<meta property="og:description" content="Six transforms — the Klein four-group crossed with a time scale — and that is the whole vocabulary of fugal writing.">
+<meta property="og:url" content="https://stellate.app/fugue">
+<meta property="og:image" content="https://stellate.app/assets/og-card.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE — draw a path through genre space.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="STELLATE FUGUE — one idea and the ways it comes back">
+<meta name="twitter:description" content="One subject, and every way it can come back. Scroll to see each option take effect.">
+<meta name="twitter:image" content="https://stellate.app/assets/og-card.png">
+<meta name="twitter:image:alt" content="A dark star field with a pink constellation path drawn through it, titled STELLATE.">
+<meta name="twitter:creator" content="@aboard">
+<meta name="twitter:site" content="@aboard">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
+<link rel="stylesheet" href="app/fugue.css">
+</head>
+<body>
+<header id="fgbar">
+  <h1 class="fg-brand">STELLATE<span class="fg-tag">fugue</span></h1>
+  <p class="fg-read" id="fgRead"></p>
+  <div class="fg-controls">
+    <button id="fgStop" class="fg-btn" title="Stop">■</button>
+    <a class="fg-btn" href="ca.html">ca</a>
+  </div>
+</header>
+
+<!-- THE PAGE IS THE DOCUMENTATION. Every option in the system gets a section,
+     in the order you would meet them, and the EFFECT of each is rendered in the
+     element directly below its prose — so scrolling is reading the manual and
+     playing the instrument at the same time. Unlike /ca, scrolling here is the
+     point: this surface is exhaustive on purpose. -->
+<main id="fgDoc">
+
+  <section class="fg-step" id="s-what">
+    <p class="fg-n">the whole system</p>
+    <h2>A fugue is one idea and a list of the ways it comes back.</h2>
+    <p>That is not a simplification — it is the entire document:</p>
+    <pre class="fg-code">subject   a short line, in ladder degrees
+entries   [{ at, voice, transform, shift }]</pre>
+    <p>Everything below derives from those two. Six sections, six options, and by
+    the bottom of the page you have seen all of them.</p>
+  </section>
+
+  <section class="fg-step" id="s-subject">
+    <p class="fg-n">option 1 · the subject</p>
+    <h2>Draw the idea.</h2>
+    <p>Eight slots up the side are the chord's own notes — its four tones, twice,
+    an octave apart. Writing the subject in <b>degrees of the chord</b> rather
+    than in pitches is what lets it survive underneath a moving harmony, which is
+    the one thing a fugue subject must do. Tap a column to move its note; tap the
+    lit cell to remove it.</p>
+    <div class="fg-effect">
+      <div id="fgGrid" class="fg-grid" role="group" aria-label="The subject"></div>
+      <div class="fg-row"><button class="fg-play" data-play="subject">▶ the subject alone</button>
+        <span class="fg-hint" id="fgSubHint"></span></div>
+    </div>
+  </section>
+
+  <section class="fg-step" id="s-answer">
+    <p class="fg-n">option 2 · the answer</p>
+    <h2>The second voice enters a fifth up.</h2>
+    <p>Tradition calls the first statement the <i>dux</i> and its reply the
+    <i>comes</i> — the same line, transposed. On this ladder the fifth of the
+    voicing is slot 2, so <b>the answer is +2 degrees</b>: the classical rule is
+    one integer. Move it and you hear why tradition picked that one.</p>
+    <div class="fg-effect">
+      <div id="fgAnswer" class="fg-chips" role="group" aria-label="Answer interval"></div>
+      <div id="fgAnsRoll" class="fg-roll"></div>
+      <div class="fg-row"><button class="fg-play" data-play="answer">▶ subject, then answer</button></div>
+    </div>
+  </section>
+
+  <section class="fg-step" id="s-voices">
+    <p class="fg-n">option 3 · the voices</p>
+    <h2>How many lines are arguing.</h2>
+    <p>Each voice enters in turn, alternating subject and answer, and keeps going
+    once it has. Two is a conversation, three is the usual, four is as many as an
+    ear reliably follows.</p>
+    <div class="fg-effect">
+      <div id="fgVoices" class="fg-chips" role="group" aria-label="Voices"></div>
+      <div id="fgMap" class="fg-map" aria-label="When each voice enters"></div>
+      <div class="fg-row"><button class="fg-play" data-play="exposition">▶ the exposition</button></div>
+    </div>
+  </section>
+
+  <section class="fg-step" id="s-stretto">
+    <p class="fg-n">option 4 · stretto</p>
+    <h2>Don't wait for it to finish.</h2>
+    <p>Stretto is the next voice entering before the last one is done. It is the
+    device every fugue saves for the end, because it is the proof that the subject
+    fits against itself — and nothing else in the piece raises the pressure the
+    same way. At 1 each voice waits its turn; at ¼ they pile in.</p>
+    <div class="fg-effect">
+      <div id="fgStretto" class="fg-chips" role="group" aria-label="Stretto"></div>
+      <div id="fgMap2" class="fg-map" aria-label="When each voice enters"></div>
+      <div class="fg-row"><button class="fg-play" data-play="exposition">▶ hear it tighten</button></div>
+    </div>
+  </section>
+
+  <section class="fg-step" id="s-transforms">
+    <p class="fg-n">option 5 · the transforms</p>
+    <h2>Six ways it can come back. There are no others.</h2>
+    <p>Turn the subject upside down and you get <b>inversion</b>; play it
+    backwards and you get <b>retrograde</b>. Each undoes itself, and they commute
+    — so together with doing nothing they make a group of exactly four. Add a
+    change of speed, <b>augmentation</b> and <b>diminution</b>, whose product is
+    also nothing, and the vocabulary is complete. Every fugue ever written uses
+    some of these six. Tap one to add it as a later entry.</p>
+    <div class="fg-effect">
+      <div id="fgTrans" class="fg-trans" role="group" aria-label="Transforms"></div>
+      <div class="fg-row"><span class="fg-hint" id="fgLaterHint"></span>
+        <button class="fg-play" data-play="later">▶ the entries you added</button></div>
+    </div>
+  </section>
+
+  <section class="fg-step" id="s-sound">
+    <p class="fg-n">option 6 · the instrument</p>
+    <h2>Which sound plays it.</h2>
+    <p>The counterpoint is written; this only decides who performs it. A fugue is
+    drumless by construction here, so the anchor lends its instruments, its key and
+    its harmony, and nothing else.</p>
+    <div class="fg-effect">
+      <div id="fgBase" class="fg-chips" role="group" aria-label="Instrument"></div>
+      <div id="fgPads" class="fg-chips" role="group" aria-label="Pads"></div>
+    </div>
+  </section>
+
+  <section class="fg-step" id="s-whole">
+    <p class="fg-n">all six, at once</p>
+    <h2>The piece.</h2>
+    <p id="fgSummary" class="fg-sum"></p>
+    <div class="fg-effect">
+      <div id="fgFull" class="fg-roll fg-tall"></div>
+      <div class="fg-row"><button class="fg-play fg-big" data-play="all">▶ play the fugue</button>
+        <button id="fgLink" class="fg-btn">↗ link</button></div>
+    </div>
+    <p class="fg-note">Made by <a href="mailto:paul.ford@aboard.com?subject=Stellate%20fugue">Paul Ford</a> at
+      <a href="https://aboard.com">Aboard</a> · <a href="https://github.com/aboard-io/stellate">open source</a> · MIT ·
+      <a href="ca.html">ca</a> · <a href="daw.html">daw</a> · <a href="index.html">star map</a></p>
+  </section>
+</main>
+
+<script src="engine/theory.js"></script>
+<script src="engine/pipes.js"></script>
+<script src="engine/csd-engine.js"></script>
+<script src="engine/fugue.js"></script>
+<script src="engine/genres-data.js"></script>
+<script src="engine/registry-data.js"></script>
+<script src="engine/genre-kernel.js"></script>
+<script src="engine/speech.js"></script>
+<script src="engine/faust/voices/state-engine.js"></script>
+<script src="engine/faust/voices/found-player.js"></script>
+<script src="engine/faust/voices/sampler.js"></script>
+<script src="engine/faust/live/live.js"></script>
+<script type="module" src="app/fugue/main.js"></script>
+</body>
+</html>
