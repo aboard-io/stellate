@@ -79,7 +79,12 @@ function render() {
     if (k >= 0) {
       anything = true;
       const row = el("div", "fg-row");
-      const b = el("button", "fg-play", "▶ " + builds[k].on.join(" + "));
+      // THE BED IS ALWAYS SOUNDING, so the label has to say so. It is not one of the
+      // layers (it cannot be muted without silencing the sampled kit), which means
+      // the very first ▶ is already bed + drums — calling it "drums" would be the
+      // page lying about what you are hearing.
+      const bed = (rows.find((x) => x.id === "found").data || {}).placed || [];
+      const b = el("button", "fg-play", "▶ " + (bed.length ? "bed + " : "") + builds[k].on.join(" + "));
       b.dataset.layer = String(k);
       row.appendChild(b);
       row.appendChild(el("span", "fg-hint", "the song with the voices after this muted — the found layer stays, it is not separable"));

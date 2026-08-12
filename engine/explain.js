@@ -63,8 +63,26 @@
     const prg = E.getProgression(st.progression);
     const kits = used("drums"), basses = used("bass"), mels = used("melody");
     const meta = st.genreMeta || {};
+    const placed = [...new Set(secs.map((x) => x.found && x.found.sourceId).filter(Boolean)
+      .concat((st.sampleEvents || []).map((x) => x.srcId).filter(Boolean)))];
+    const byId = {};
+    for (const f of st.foundSources || []) byId[f.id] = f.label || f.id;
     const rows = [];
     const R = (id, title, value, lines, data) => rows.push({ id, title, value, lines, data: data || null });
+
+    // ORDER IS BY WHAT DEPENDS ON WHAT, not by when I happened to write it. THE
+    // BED AND THE CLOCK ARE THE GROUND — neither depends on anything else in the
+    // state, and on an anchor like vaporwave the field recording is the floor the
+    // whole track sits on. Listing it fourth, after the form, described a song
+    // nobody builds. Then harmony (depends on nothing), form (depends on
+    // harmony), the four voices in the order the engine generates them, and last
+    // the treatments, which run over everything above.
+
+    R("found", "found sound", placed.length ? placed.length + (placed.length === 1 ? " source" : " sources") : "none",
+      placed.length ? [placed.map((id) => byId[id] || id).join(" · "), "the bed — it plays under everything",
+        "placed by the section's own rule"]
+        : ["no field recordings placed"],
+      { placed });
 
     R("clock", "clock", Math.round(st.bpm) + " bpm",
       [band(st.bpm, TEMPO), (st.chordEvery || 8) + " beats per chord",
@@ -94,11 +112,6 @@
         [st.rhythm && st.rhythm.complexity ? "variation " + pct(st.rhythm.complexity) : "no variation"])
         : ["this genre uses no bass"]);
 
-    R("melody", "melody", mels.length ? mels.join(" / ") : "none",
-      mels.length ? mels.map((m) => m + ": " + (MEL[m] || "a line")).concat(
-        [secs.filter((s) => s.melody && s.melody !== "off").length + " of " + secs.length + " sections"])
-        : ["this genre states no melody"]);
-
     R("pads", "pads", secs.filter((s) => s.pads).length + " of " + secs.length + " sections",
       ["the chord, sustained", "reverb " + pct(st.reverb)]);
 
@@ -106,14 +119,11 @@
     // (the kernel's own pitched-to-sampler rewrite), so a vaporwave anchor reports
     // 651 "sources" of which none are field recordings. What is actually PLACED is
     // what the sections name plus what the sample recipes emit.
-    const placed = [...new Set(secs.map((x) => x.found && x.found.sourceId).filter(Boolean)
-      .concat((st.sampleEvents || []).map((x) => x.srcId).filter(Boolean)))];
-    const byId = {};
-    for (const f of st.foundSources || []) byId[f.id] = f.label || f.id;
-    R("found", "found sound", placed.length ? placed.length + (placed.length === 1 ? " source" : " sources") : "none",
-      placed.length ? [placed.map((id) => byId[id] || id).join(" · "), "placed by the section's own rule"]
-        : ["no field recordings placed"],
-      { placed });
+
+    R("melody", "melody", mels.length ? mels.join(" / ") : "none",
+      mels.length ? mels.map((m) => m + ": " + (MEL[m] || "a line")).concat(
+        [secs.filter((s) => s.melody && s.melody !== "off").length + " of " + secs.length + " sections"])
+        : ["this genre states no melody"]);
 
     R("texture", "texture",
       [["crackle", st.crackle], ["pump", st.pump], ["grit", st.grit], ["autotune", st.autoTune]]
@@ -130,6 +140,7 @@
         (st.tone && st.tone.lowcut) ? "bottom cut at " + hz(st.tone.lowcut) : "full bottom"]);
 
     const pipes = (st.pipes || []).map((p) => p.id || p);
+
     R("notefx", "note effects", pipes.length ? pipes.join(" · ") : "none",
       pipes.length ? ["applied in order, before the mix"] : ["the notes are played as generated"]);
 
