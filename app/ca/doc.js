@@ -250,6 +250,8 @@ export function url() {
   if (DOC.bpm) u.searchParams.set("b", String(DOC.bpm));
   if (DOC.bars !== 12) u.searchParams.set("n", String(DOC.bars));
   if (DOC.harmony === "genre") u.searchParams.set("h", "genre");
+  // the surface you were on rides along, so a shared link opens where you were
+  try { const v = window.__CA && window.__CA.tab && window.__CA.tab(); if (v && v !== "song") u.searchParams.set("v", v); } catch (e) {}
   return u.toString();
 }
 function writeUrl() { try { history.replaceState(null, "", url()); } catch (e) {} }

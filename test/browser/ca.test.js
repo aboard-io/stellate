@@ -184,32 +184,45 @@ async function main() {
   await page.waitForTimeout(250);
 
   // ------------------------------------------------------- D the rule browser
-  console.log("\nD. the rule grid picks the rule it draws");
-  const pick = await page.evaluate(async () => {
+  console.log("\nD. the rule pane shows YOUR rule running");
+  // Not a wall of 256 others. Paul: "just show me the output of the rules instead
+  // of all 256 outputs" — a catalogue of rules you did not pick is noise around
+  // the one you did, and the eight switches are how you pick.
+  await page.evaluate(() => window.__CA.showTab("rule"));
+  await page.waitForTimeout(400);
+  const stepped = await page.evaluate(async () => {
+    const before = window.__CA.doc.rule;
     const cv = document.getElementById("caRules");
-    const r = cv.getBoundingClientRect();
-    const col = 6, row = 4, want = row * 16 + col;              // rule 70
-    const x = r.left + (col + 0.5) * (r.width / 16), y = r.top + (row + 0.5) * (r.height / 16);
-    cv.dispatchEvent(new PointerEvent("pointerdown", { clientX: x, clientY: y, bubbles: true, pointerType: "touch" }));
-    await new Promise((res) => setTimeout(res, 120));
-    return { want, got: window.__CA.doc.rule };
+    const snapA = cv.toDataURL().slice(-96);
+    document.querySelectorAll("#caRuleCtl .ca-rulestep")[1].click();   // ›
+    await new Promise((r) => setTimeout(r, 300));
+    const snapB = cv.toDataURL().slice(-96);
+    const after = window.__CA.doc.rule;
+    document.querySelectorAll("#caRuleCtl .ca-rulestep")[0].click();   // ‹
+    await new Promise((r) => setTimeout(r, 300));
+    return { before, after, back: window.__CA.doc.rule, redrew: snapA !== snapB,
+      label: document.querySelector(".ca-rulenum").textContent,
+      fits: cv.getBoundingClientRect().height <= document.getElementById("caPane").clientHeight };
   });
-  pick.got === pick.want ? ok("a tap on tile " + pick.want + " selected rule " + pick.got)
-    : fail("tapped tile " + pick.want + " but got rule " + pick.got);
-  // the thumbnails must re-read the CURRENT seed, or you are browsing a catalogue
-  // rather than the futures of the row in front of you
-  const reread = await page.evaluate(async () => {
+  stepped.after === stepped.before + 1 ? ok("› steps to the next rule") : fail("› gave " + stepped.after);
+  stepped.back === stepped.before ? ok("‹ steps back") : fail("‹ gave " + stepped.back);
+  stepped.redrew ? ok("and the diagram redraws — you watch YOUR rule, not a catalogue") : fail("the diagram did not change");
+  stepped.label.indexOf("rule " + stepped.before) === 0 ? ok("the number reads out (" + stepped.label + ")") : fail("label is " + stepped.label);
+  stepped.fits ? ok("the diagram fits the pane rather than scrolling below the fold") : fail("the diagram overflows its pane");
+  // the diagram must follow the SEED too, or it is not showing your row's future
+  const followsSeed = await page.evaluate(async () => {
     const cv = document.getElementById("caRules");
-    const snap = () => cv.toDataURL().length + ":" + cv.toDataURL().slice(-64);
-    const a = snap();
+    const a = cv.toDataURL().slice(-96);
     window.__CA.edit({ seed: 0x0f0f });
-    await new Promise((res) => setTimeout(res, 200));
-    const b = snap();
+    await new Promise((r) => setTimeout(r, 300));
+    const b = cv.toDataURL().slice(-96);
     window.__CA.edit({ seed: 0x1249, rule: 110 });
-    await new Promise((res) => setTimeout(res, 200));
+    await new Promise((r) => setTimeout(r, 300));
     return a !== b;
   });
-  reread ? ok("the 256 thumbnails redraw from the new seed") : fail("the rule grid did not re-read the seed");
+  followsSeed ? ok("and it re-reads the seed you are drawing") : fail("the diagram ignored a seed change");
+  await page.evaluate(() => window.__CA.showTab("song"));
+  await page.waitForTimeout(300);
 
   // ------------------------------------------------------------- E it SOUNDS
   console.log("\nE. it sounds");
@@ -425,6 +438,32 @@ async function main() {
     : fail("a hostile URL changed the song: " + JSON.stringify(hostile.doc));
   if (e3.length) fail("errors on the hostile link: " + e3.join(" | ")); else ok("and boots without an error");
   await p3.close();
+
+  // ------------------------------------------------------------ H0 ONE SCREEN
+  console.log("\nH0. one screen, one finger");
+  for (const [w, h, label] of [[390, 844, "phone"], [1440, 900, "desk"]]) {
+    await page.setViewportSize({ width: w, height: h });
+    await page.waitForTimeout(300);
+    for (const t of ["song", "rule", "harmony", "genre"]) {
+      await page.evaluate((x) => window.__CA.showTab(x), t);
+      await page.waitForTimeout(250);
+      const m = await page.evaluate(() => ({
+        page: document.documentElement.scrollHeight - document.documentElement.clientHeight,
+        body: document.body.scrollHeight - document.body.clientHeight,
+        seedVisible: document.getElementById("caSeed").getBoundingClientRect().bottom > 0,
+        ctlVisible: document.getElementById("caCtl").getBoundingClientRect().bottom <= window.innerHeight + 1,
+      }));
+      // THE PAGE MUST NOT SCROLL. Only the pane may, and only because a list of
+      // sections or 274 genres is a list. The seed is the instrument and never
+      // leaves the screen; the transport is always reachable.
+      m.page <= 1 && m.body <= 1 ? ok(label + "/" + t + ": the page does not scroll")
+        : fail(label + "/" + t + ": page scrolls by " + m.page + "/" + m.body);
+      m.seedVisible ? ok(label + "/" + t + ": the seed row is still on screen") : fail(label + "/" + t + ": the seed scrolled away");
+      m.ctlVisible ? ok(label + "/" + t + ": the transport is on screen") : fail(label + "/" + t + ": the transport is off screen");
+    }
+  }
+  await page.evaluate(() => window.__CA.showTab("song"));
+  await page.waitForTimeout(250);
 
   // -------------------------------------------------------------- H the laws
   console.log("\nH. the standing laws");

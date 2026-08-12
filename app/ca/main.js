@@ -12,6 +12,7 @@ import * as RULES from "./rules.js";
 import * as TON from "./tonnetz.js";
 import * as PLAY from "./play.js";
 import { makeTile } from "./tile.js";
+import * as TABS from "./tabs.js";
 import * as LANES from "./lanes.js";
 import * as BITS from "./rulebits.js";
 
@@ -24,8 +25,9 @@ GRID.buildSeed($("caSeed"));
 GRID.buildOrbit($("caOrbit"), $("caWord"), $("caOrbitNote"), $("caBits"));
 LANES.build($("caLanes"));
 BITS.build($("caBits8"));
-RULES.build($("caRules"), $("caRuleNote"));
+RULES.build($("caRules"), $("caRuleNote"), $("caRuleCtl"));
 TON.build($("caTonnetz"), $("caKey"), $("caHarm"));
+TABS.build($("caTabs"));
 PLAY.build($("caCtl"));
 
 // THE TEMPO, beside the bar it counts. Tempo used to ride the base genre alone,
@@ -88,6 +90,12 @@ function paintList() {
 findEl.addEventListener("input", paintList);
 paintList();
 subs.push(paintList);
+
+// A CANVAS MEASURES ZERO WHILE ITS PANE IS `hidden`, so the rule grid drew at
+// 0x0 the first time you opened that tab and stayed blank until a resize. Re-size
+// it on every tab change; it is one draw loop and costs nothing.
+TABS.onChange(() => RULES.resize());
+window.addEventListener("resize", () => { if (TABS.current() === "rule") RULES.resize(); });
 
 // the chips stay as a shortlist across the space — a place to start before you
 // know what you are looking for
@@ -170,5 +178,6 @@ Object.assign(window.__CA, {
   plan: () => resolved().plan.map((p) => ({ pos: p.pos, gen: p.gen, role: p.role, density: p.density, row: p.row,
     drums: p.section.drums, bass: p.section.bass, melody: p.section.melody })),
   playSections: () => PLAYSTATE().sections.length,
+  tab: () => TABS.current(), showTab: TABS.show,
   ready: true,
 });

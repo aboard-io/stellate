@@ -47,80 +47,75 @@
   <h1 class="ca-brand">STELLATE<span class="ca-tag">ca</span></h1>
   <p class="ca-bits" id="caBits">— · —</p>
   <div class="ca-controls">
-    <button id="caShare" class="ca-btn" title="Copy a link to this song">↗ link</button>
-    <button id="caDice" class="ca-btn" title="A new seed and rule">⤫ roll</button>
+    <button id="caUndo" class="ca-btn ca-hist" title="Undo (⌘Z)">↶</button>
+    <button id="caRedo" class="ca-btn ca-hist" title="Redo (⇧⌘Z)">↷</button>
+    <button id="caDice" class="ca-btn" title="A new seed and rule">⤫</button>
+    <button id="caShare" class="ca-btn" title="Copy a link to this song">↗</button>
   </div>
-  <nav class="ca-nav"><a href="daw.html">daw</a><a href="index.html">← star map</a></nav>
 </header>
 
-<!-- THE SHELL. Left: the seed you tap and the orbit it grows into — the song,
-     top to bottom. Right: the three things you can change about it (which rule,
-     which key, which sound). At ≥1000px the rail is permanent; below that it
-     stacks under the orbit. -->
+<!-- ONE SCREEN. No page scroll on any viewport: the seed and what it makes are
+     always on top, one PANE below shows whichever of the four surfaces you are
+     using, and the transport is pinned. The pane is the only thing that scrolls,
+     and the orbit is the only thing long enough to need it. Phone and desk are
+     the same layout at different widths — there is no second arrangement to keep
+     in sync, which is what "scattered" was. -->
 <div id="caShell">
-  <main id="caMain">
-    <section class="ca-block" aria-labelledby="caSeedH">
-      <h2 id="caSeedH" class="ca-h">the seed<small>one bar · draw with a finger · everything below is this row, read differently</small>
-        <span class="ca-hgap"></span>
-        <button id="caUndo" class="ca-btn ca-hist" title="Undo (⌘Z)">↶</button>
-        <button id="caRedo" class="ca-btn ca-hist" title="Redo (⇧⌘Z)">↷</button>
-      </h2>
-      <div id="caSeed" class="ca-seedrow" role="group" aria-label="Seed row, sixteen cells"></div>
-      <div id="caBeats" class="ca-beats" aria-hidden="true"></div>
-      <!-- WHAT THE ROW TURNS INTO — the same sixteen columns, five lenses deep.
-           This is the page's answer to "I tapped some boxes, so what?" -->
-      <div id="caLanes" class="ca-lanes" aria-label="What the seed row produces"></div>
-      <p class="ca-word" id="caWord"></p>
-    </section>
+  <section id="caTop">
+    <div id="caSeed" class="ca-seedrow" role="group" aria-label="Seed row, sixteen cells"></div>
+    <div id="caBeats" class="ca-beats" aria-hidden="true"></div>
+    <div id="caLanes" class="ca-lanes" aria-label="What the seed row produces"></div>
+  </section>
 
-    <section class="ca-block ca-grow" aria-labelledby="caOrbitH">
-      <h2 id="caOrbitH" class="ca-h">the orbit<small>each row is a section · tap one to make it the seed</small></h2>
+  <nav id="caTabs" role="tablist" aria-label="Surfaces"></nav>
+
+  <main id="caPane">
+    <section class="ca-pane" data-pane="song" aria-label="The song">
+      <p class="ca-why">every row is a section — the automaton grew them from your bar. tap a row to
+      make it the seed; tap ⟳ to loop that one measure.</p>
       <div id="caOrbit" class="ca-orbit"></div>
       <div id="caBars" class="ca-chips ca-barschips" role="group" aria-label="How many sections"></div>
       <p class="ca-note" id="caOrbitNote"></p>
+      <!-- ATTRIBUTION lives at the foot of the DEFAULT pane. The old page-level
+           footer went with the one-screen restructure and took the visible
+           credit with it; test/gates/social-meta.test.js caught that, which is
+           exactly what it is for. -->
+      <p class="ca-note ca-credit">A whole song in 24 bits — sixteen for the row, eight for the rule.
+        By <a href="mailto:paul.ford@aboard.com?subject=Stellate%20CA">Paul Ford</a> at
+        <a href="https://aboard.com">Aboard</a> ·
+        <a href="https://github.com/aboard-io/stellate">open source</a> · MIT ·
+        <a href="daw.html">daw</a> · <a href="index.html">star map</a></p>
     </section>
 
-    <footer id="caFoot">
-      <p>The document is <b>24 bits</b> — sixteen for the row, eight for the rule. Everything
-      else (kit, bass cell, melody cell, chord walk, and the sections) is a pure function of
-      those bits, read through a <b>lens</b> per track. You manipulate the rule system; the
-      sections are interpretations, never edits. See <code>docs/CA.md</code>.</p>
-      <p>Made by <a href="mailto:paul.ford@aboard.com?subject=Stellate%20CA">Paul Ford</a> at
-      <a href="https://aboard.com">Aboard</a> · <a href="https://github.com/aboard-io/stellate">open source</a> · MIT</p>
-    </footer>
-  </main>
-
-  <aside id="caRail" aria-label="Rules, harmony and sound">
-    <section class="ca-block" aria-labelledby="caRulesH">
-      <h2 id="caRulesH" class="ca-h">the rule<small>how each cell decides to live</small></h2>
-      <!-- A RULE IS EIGHT YES/NO ANSWERS. Each switch is one situation a cell
-           can be in — left/self/right — and whether it lives next generation.
-           Flip them and the rule number follows; that is all a rule is. -->
+    <section class="ca-pane" data-pane="rule" hidden aria-label="The rule">
+      <p class="ca-why">a cell looks at its neighbour, itself and its other neighbour — eight
+      situations, eight answers. the number on each is how many of your cells are in it.</p>
       <div id="caBits8" class="ca-nbrs" role="group" aria-label="The rule, as eight neighbourhood answers"></div>
-      <p class="ca-note ca-why">a cell looks at its neighbour, itself and its other neighbour — eight situations, eight answers</p>
-      <canvas id="caRules" tabindex="0" role="application"
-              aria-label="Rule browser: 256 rules as spacetime thumbnails. Arrow keys to move, Enter to pick."></canvas>
+      <div id="caRuleCtl" class="ca-rulectl" role="group" aria-label="Change rule"></div>
+      <p class="ca-why">your rule, running. rows are generations; the bright ones are the song.
+      tap a row to make it the seed.</p>
+      <canvas id="caRules" role="img" aria-label="Your rule running from your seed, forty-eight generations"></canvas>
       <p class="ca-note" id="caRuleNote" aria-live="polite"></p>
     </section>
 
-    <section class="ca-block" aria-labelledby="caTonH">
-      <h2 id="caTonH" class="ca-h">the harmony<small>where the chords come from</small></h2>
+    <section class="ca-pane" data-pane="harmony" hidden aria-label="The harmony">
+      <p class="ca-why">where the chords come from — the automaton's own walk, or the genre's.</p>
       <div id="caHarm" class="ca-chips" role="group" aria-label="Harmony source"></div>
+      <p class="ca-word" id="caWord"></p>
       <div id="caTonnetz" class="ca-tonnetz"></div>
       <div id="caKey" class="ca-chips" role="group" aria-label="Key"></div>
     </section>
 
-    <section class="ca-block" aria-labelledby="caBaseH">
-      <h2 id="caBaseH" class="ca-h">the genre<small>its instruments — and, in one tap, its groove and chords</small></h2>
+    <section class="ca-pane" data-pane="genre" hidden aria-label="The genre">
+      <p class="ca-why">the genre lends its instruments. <b>start from</b> also sets the row to its
+      own kit, its progression and its tempo — all still editable.</p>
+      <button id="caStart" class="ca-start" type="button"></button>
       <div id="caTempo" class="ca-tempo"></div>
       <input id="caFind" class="ca-find" type="search" placeholder="search 274 genres…" aria-label="Search genres">
       <div id="caList" class="ca-list" role="listbox" aria-label="Genres"></div>
-      <div id="caBase" class="ca-chips" role="group" aria-label="Recent genres"></div>
-      <button id="caStart" class="ca-start" type="button"></button>
-      <p class="ca-note ca-why">the chip lends the instruments. <b>start from</b> also sets the row to
-      that genre's own kit, its progression, and its tempo — all still editable.</p>
+      <div id="caBase" class="ca-chips" role="group" aria-label="Shortlist"></div>
     </section>
-  </aside>
+  </main>
 </div>
 
 <aside id="caCtl" aria-label="Transport"></aside>

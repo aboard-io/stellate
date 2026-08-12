@@ -427,6 +427,64 @@ understand the options in the system CA or how they connect to my 16 bits."*
     the rule does to this row: born cells in cyan, dead ones hatched. Flip an
     answer and the consequence is right there instead of three screens down.
 
+## ONE SCREEN (2026-08-12)
+
+*"Everything is scattered for our simple system. Figure out how to let me compose
+with one finger and no scrolling on a phone."* And: *"If I'm going to have the
+automata generator just show me the output of the rules instead of all 256."*
+
+Both right, and the first one was structural. The page had grown a header, a
+sticky seed block, an orbit, a section-count row, a footer, a **420px rail
+carrying four more panels**, and a transport — two arrangements to keep in sync,
+where every fix had to be made twice. That is most of what "scattered" was.
+
+**The layout is now one column at every width.** The seed and what it makes are
+always on top — that is the thing you play and it must never leave the screen —
+and everything else takes turns in ONE pane below, behind four tabs:
+`song · rule · chords · genre`. The pane is the only element that scrolls. The
+two-column rail is gone.
+
+Gated: at 390×844 and 1440×900, on **all four tabs**, the page scroll is zero, the
+seed row is on screen, and the transport is on screen. Twelve assertions that did
+not exist when the rail did.
+
+Two bugs this shook out:
+
+- **The header sat outside the 100dvh column**, so the page was exactly one header
+  taller than the screen — 57px of scroll on a phone, which is the entire thing
+  this layout exists to prevent. The flex column is the BODY now. (`100dvh`, not
+  `100vh`: a phone's viewport shrinks when the address bar appears and `vh` does
+  not notice, which puts the transport under the chrome.)
+- **A canvas measures zero while its pane is `hidden`**, so the rule diagram drew
+  at 0×0 the first time you opened that tab and stayed blank until a resize. It
+  re-sizes on every tab change and holds its last good width.
+
+### The 256-wall is gone
+
+The rule pane was a 16×16 grid of thumbnails — every rule's behaviour from your
+seed, pick one. It was a good answer to *"how do I choose a byte"* and the wrong
+question. **You do not choose a byte; you author eight answers on the switches,
+and what you need to see is what they do.** A wall of 255 rules you did not pick
+is noise around the one you did.
+
+It now draws one thing, large: your seed running under your rule, forty-eight
+generations, on the same sixteen columns as the seed row above it. It shows three
+things the orbit cannot, because the orbit stops at the song — where the song ends
+(bright vs dim), where the loop starts (a dashed line at the tail/cycle boundary),
+and whether the rule dies. Changing rule is `‹ ›` and `⤫`; stepping is how you
+find the neighbour of something you nearly like.
+
+And the diagram **fits its pane** rather than scrolling below the fold: a
+square-ish cell over 48 generations is 1000px tall, and a diagram that scrolls is
+the same failure as a page that scrolls, one level down.
+
+### What still scrolls, and why that is right
+
+The song pane with twelve sections, and the 274-genre list. Both are LISTS. Twelve
+44px rows cannot fit a phone under a permanent seed row and a transport, and the
+40px target floor is not negotiable for a scroll measurement — the gate caught me
+shrinking the section chips to 36px to win one, and it was right to.
+
 ## Open
 
 - **`/ca` needs its nginx block** on the droplet, as `/daw` still does; until then

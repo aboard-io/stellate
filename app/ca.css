@@ -68,10 +68,53 @@ a { color: var(--cool); }
 }
 .ca-btn:hover { border-color: var(--hot); }
 
-/* ------------------------------------------------------------------- shell */
-#caShell { display: block; }
-#caMain { padding: 14px; padding-bottom: calc(var(--ctl) + 20px); }
-#caRail { padding: 0 14px calc(var(--ctl) + 20px); }
+/* ============================================================== THE SHELL
+   ONE SCREEN, and the same one at every width. `100dvh` rather than `100vh`
+   because a phone's viewport shrinks when the address bar shows and `vh` does
+   not notice — the transport ends up under the chrome, which is exactly the
+   bug this layout exists to avoid. Nothing scrolls but the pane. */
+/* THE HEADER IS PART OF THE COLUMN, not something above it. Giving #caShell
+   100dvh while a 44px header sat outside it made the page exactly one header
+   taller than the screen — 57px of scroll on a phone, which is the whole bug
+   this layout exists to prevent. The flex column is the BODY. */
+body {
+  display: flex; flex-direction: column;
+  height: 100dvh; max-height: 100dvh; overflow: hidden;
+}
+#cabar { flex: 0 0 auto; position: static; }
+#caShell {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+#caTop {
+  flex: 0 0 auto; padding: 8px 10px 6px;
+  border-bottom: 1px solid var(--line); background: var(--panel);
+}
+#caPane {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  padding: 10px 10px calc(var(--ctl) + 14px);
+  -webkit-overflow-scrolling: touch;
+}
+.ca-pane { max-width: 940px; margin: 0 auto; }
+.ca-pane[hidden] { display: none; }
+
+/* THE TABS. Four, equal width, 46px — a thumb reaches any of them without
+   aiming, and the labels are words rather than icons because an icon for
+   "harmony" is a guess the user has to decode. */
+#caTabs {
+  flex: 0 0 auto; display: grid; grid-template-columns: repeat(4, 1fr);
+  background: var(--bg); border-bottom: 1px solid var(--line);
+}
+.ca-tab {
+  min-height: 46px; padding: 6px 4px; cursor: pointer;
+  font: 600 12px/1 inherit; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--dim); background: transparent; border: 0;
+  border-bottom: 2px solid transparent;
+}
+.ca-tab:hover { color: var(--ink); }
+.ca-tab.on { color: var(--hot); border-bottom-color: var(--hot); }
+.ca-tab:focus-visible { outline: 2px solid var(--cool); outline-offset: -3px; }
 
 .ca-block {
   background: var(--panel); border: 1px solid var(--line);
@@ -105,7 +148,7 @@ a { color: var(--cool); }
    sideways. The 44px target is the ROW, reached by drag; the cell is a pixel in
    a bar, not a button in a toolbar. */
 .ca-cell {
-  min-width: 0; height: 46px;
+  min-width: 0; height: 44px;
   border: 1px solid var(--line); border-radius: 5px;
   background: var(--panel2); cursor: pointer; padding: 0;
   transition: background .06s linear;
@@ -127,16 +170,16 @@ a { color: var(--cool); }
    What the row turns into. SAME sixteen-column grid as the seed row and the
    beat ruler, so a lit cell and the lane cell under it line up exactly — that
    alignment is the whole explanation. */
-.ca-lanes { margin-top: 10px; display: flex; flex-direction: column; gap: 3px; }
+.ca-lanes { margin-top: 8px; display: flex; flex-direction: column; gap: 2px; }
 .ca-lane { display: flex; align-items: center; gap: 8px; }
 .ca-lanes .ca-why { margin-top: 6px; }
 .ca-lanelab {
-  flex: 0 0 52px; text-align: right;
+  flex: 0 0 46px; text-align: right;
   font: 600 10px/1 inherit; letter-spacing: .08em; text-transform: uppercase; color: var(--dim);
 }
 .ca-lanecells { flex: 1 1 auto; display: grid; grid-template-columns: repeat(16, 1fr); gap: 3px; }
 .ca-lanecell {
-  height: 13px; border-radius: 3px; background: #191534; display: flex;
+  height: 12px; border-radius: 3px; background: #191534; display: flex;
   align-items: flex-end; justify-content: center;
   font: 700 9px/1 "Inter", system-ui, sans-serif; font-style: normal; color: var(--bg);
 }
@@ -152,7 +195,19 @@ a { color: var(--cool); }
 .l-melody .ca-lanecell.on {
   background: linear-gradient(to top, var(--cool) var(--h, 50%), #191534 var(--h, 50%));
 }
-.ca-why { color: #7a71a8; font-size: 11px; line-height: 1.5; }
+.ca-why { color: #7a71a8; font-size: 11px; line-height: 1.45; margin: 0 0 8px; }
+#caTop .ca-why { display: none; }   /* the lane names carry it; the pane says the rest */
+/* THE SONG PANE FITS TWELVE ROWS. The hint line and the section-count chips were
+   pushing the last two sections below the fold, which on a twelve-section song
+   means you cannot see the end of your own piece. The hint goes (the ⟳ on each
+   row is self-evident once you have used it once) and the chips get compact. */
+[data-pane="song"] > .ca-why { display: none; }
+[data-pane="song"] .ca-barschips { margin-top: 8px; }
+/* 40px is the floor and it is not negotiable for a scroll measurement —
+   these were 36 and the gate was right to fail them. */
+[data-pane="song"] .ca-barschips .ca-chip { min-height: 40px; font-size: 11px; padding: 4px 9px; }
+[data-pane="song"] .ca-note { margin-top: 6px; font-size: 11px; }
+.ca-credit { line-height: 1.6; opacity: .8; }
 /* THE NEXT LANE — one generation on, so the rule has a visible consequence on
    the row in front of you instead of three screens down in the orbit. */
 .ca-lane.l-next { margin-top: 5px; padding-top: 5px; border-top: 1px dashed var(--line); }
@@ -218,9 +273,9 @@ a { color: var(--cool); }
    One row per SECTION, in playing order. The role tints the row, so the form is
    legible as a colour column before you read a single word. */
 .ca-grow { display: flex; flex-direction: column; }
-.ca-orbit { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; }
+.ca-orbit { display: flex; flex-direction: column; gap: 3px; }
 .ca-genpick {
-  display: flex; align-items: center; gap: 10px; width: 100%;
+  display: flex; align-items: center; gap: 8px; width: 100%;
   min-height: 44px; padding: 4px 8px;
   background: var(--panel2); border: 1px solid var(--line);
   border-left: 3px solid var(--line);
@@ -233,7 +288,7 @@ a { color: var(--cool); }
   text-transform: uppercase; color: var(--dim);
 }
 .ca-gcells { flex: 1 1 auto; display: grid; grid-template-columns: repeat(16, 1fr); gap: 2px; }
-.ca-gcell { height: 18px; border-radius: 2px; background: #221d3c; display: block; }
+.ca-gcell { height: 16px; border-radius: 2px; background: #221d3c; display: block; }
 .ca-gcell.on { background: var(--live); }
 .ca-gmeta {
   flex: 0 0 30px; text-align: right; font: 12px/1 "VT323", ui-monospace, monospace;
@@ -260,14 +315,20 @@ a { color: var(--cool); }
 
 /* ------------------------------------------------------------- the rule grid */
 #caRules {
-  display: block; margin: 0 auto; border-radius: 8px; cursor: pointer;
+  display: block; margin: 8px auto 0; border-radius: 8px; cursor: pointer;
   touch-action: none; max-width: 100%;
 }
-#caRules:focus-visible { outline: 2px solid var(--cool); outline-offset: 2px; }
+/* stepping the rule, rather than browsing a wall of 255 you did not pick */
+.ca-rulectl { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+.ca-rulestep { min-width: 46px; font-size: 16px; }
+.ca-rulenum {
+  flex: 1 1 auto; text-align: center;
+  font: 17px/1 "VT323", ui-monospace, monospace; color: var(--ink); letter-spacing: .06em;
+}
 
 /* ---------------------------------------------------------------- the tonnetz */
 .ca-tonnetz { width: 100%; }
-.ca-ton { width: 100%; height: auto; display: block; }
+.ca-ton { width: 100%; height: auto; max-height: 42vh; display: block; }
 .ca-tbg polygon { fill: none; stroke: var(--line); stroke-width: .7; }
 .ca-tpath { fill: none; stroke: var(--hot); stroke-width: 1.6; stroke-dasharray: 4 3; opacity: .8; }
 .ca-tsel polygon { fill: rgba(255, 95, 162, .22); stroke: var(--hot); stroke-width: 1.5; }
@@ -329,7 +390,7 @@ a { color: var(--cool); }
   border: 1px solid var(--line); border-radius: 8px;
 }
 .ca-find:focus-visible { outline: 2px solid var(--cool); outline-offset: 1px; }
-.ca-list { max-height: 210px; overflow-y: auto; border-radius: 8px; }
+.ca-list { max-height: 46vh; overflow-y: auto; border-radius: 8px; border: 1px solid var(--line); }
 .ca-listrow {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   width: 100%; min-height: 44px; padding: 6px 12px; text-align: left; cursor: pointer;
@@ -371,61 +432,35 @@ a { color: var(--cool); }
 #caFoot p { margin: 0 0 8px; }
 #caFoot code { font-family: ui-monospace, monospace; color: var(--live); }
 
-/* ================================================================= THE DESK
-   Two columns, viewport height, no page scroll: the orbit scrolls inside itself
-   and the rail is always there. Below 1000px this whole block is simply absent
-   and the page is one column that scrolls — which is why no module has to know
-   which layout it is in. */
+/* ================================================================ THE DESK
+   The same one screen, wider. There is no second layout: the rail is gone, and
+   with it the class of bug where a fix landed on one arrangement and not the
+   other. All the desk gets is more room and a transport that stops being a
+   full-width bar. */
 @media (min-width: 1000px) {
-  body { overflow: hidden; }
-  #caShell {
-    display: flex; align-items: stretch; gap: 0;
-    height: calc(100vh - 49px);
-  }
-  #caMain {
-    flex: 1 1 auto; min-width: 0; overflow-y: auto;
-    display: flex; flex-direction: column;
-    padding-bottom: calc(var(--ctl) + 16px);
-  }
-  /* THE SEED STICKS. The row you edit and the orbit it grows were stacked, so
-     drawing a cell and watching the form change meant scrolling between them —
-     cause and effect on two different screens. The seed block now pins to the
-     top of the column that scrolls under it, which is the same fix the deck
-     applied when it put each radar under its own roll. */
-  #caMain > .ca-block:first-child {
-    position: sticky; top: 0; z-index: 8;
-    background: var(--panel);
-    box-shadow: 0 10px 18px -12px #000;
-  }
-  #caRail {
-    flex: 0 0 400px; overflow-y: auto;
-    border-left: 1px solid var(--line);
-    padding: 14px 14px calc(var(--ctl) + 16px);
-  }
-  .ca-grow { flex: 1 1 auto; min-height: 0; }
+  #caTop { padding: 12px 16px 10px; }
+  #caTop .ca-seedrow, #caTop .ca-beats, #caTop .ca-lanes { max-width: 940px; margin-left: auto; margin-right: auto; }
+  #caTop .ca-beats, #caTop .ca-lanes { margin-top: 6px; }
+  .ca-cell { height: 52px; }
+  .ca-lanecell { height: 14px; }
+  #caPane { padding: 14px 16px calc(var(--ctl) + 18px); }
   #caCtl {
-    left: auto; right: 414px; bottom: 14px;
-    width: 380px; height: var(--ctl);
-    border: 1px solid var(--line); border-radius: 12px;
-    padding: 0 12px;
+    left: auto; right: 16px; bottom: 14px; width: 400px;
+    height: var(--ctl); border: 1px solid var(--line); border-radius: 12px; padding: 0 12px;
   }
 }
 
-/* A phone at 320px still has to fit sixteen cells across, so the cell floor is
-   the grid's, not the finger's — the ROW is the target and the drag is the
-   gesture. Everything else on the page keeps its 44px. */
 @media (max-width: 560px) {
-  #cabar { gap: 8px; }
-  /* same rule, under the 48px header rather than under nothing */
-  #caMain > .ca-block:first-child {
-    position: sticky; top: 48px; z-index: 8;
-    background: var(--panel); box-shadow: 0 10px 18px -12px #000;
-  }
-  .ca-btn { padding: 6px 8px; }
-}
-@media (max-width: 400px) {
-  .ca-cell { height: 40px; }
-  .ca-role { flex-basis: 52px; font-size: 10px; }
+  #cabar { gap: 8px; padding: 6px 8px; min-height: 44px; }
+  .ca-bits { display: none; }
+  .ca-btn { padding: 6px 8px; min-width: 40px; }
+  .ca-brand { font-size: 15px; }
+  .ca-tab { font-size: 11px; letter-spacing: .06em; }
+  .ca-lanelab { flex-basis: 40px; font-size: 9px; }
+  .ca-role { flex-basis: 50px; font-size: 10px; }
+  .ca-genpick { min-height: 40px; }
+  .ca-genloop { min-height: 40px; width: 38px; }
+  .ca-gcell { height: 14px; }
   .ca-gmeta { display: none; }
   .ca-status { display: none; }
 }
