@@ -75,18 +75,36 @@ async function main() {
   });
   agree ? fail("orbit drifted from the kernel: " + agree) : ok("every orbit row IS its generation, role and cells");
 
-  // the arrangement grammar, ON SCREEN: choruses carry the melody, verses do not
+  // THE ARRANGEMENT GRAMMAR IS THE GENRE'S NOW, so "a chorus carries the melody"
+  // is not the contract — acidhouse never states a melody at all (the 303 is both
+  // bass and lead) and this used to assert one genre's habit as a law. What holds
+  // for every genre: a chorus differs from a verse, and no role turns on a lens
+  // the anchor never uses.
   const grammar = await page.evaluate(() => {
-    const p = window.__CA.plan();
-    return { chorusMel: p.filter((x) => x.role === "chorus").every((x) => x.melody !== "off" || x.density === 0),
-      verseMel: p.filter((x) => x.role === "verse").every((x) => x.melody === "off"),
-      bridgeDry: p.filter((x) => x.role === "bridge").every((x) => x.drums === "off" && x.bass === "off"),
-      roles: [...new Set(p.map((x) => x.role))] };
+    const p = window.__CA.plan(), st = window.__CA.resolved().state;
+    const sig = (x) => [x.drums !== "off", x.bass !== "off", x.melody !== "off"].join();
+    const ch = p.filter((x) => x.role === "chorus"), vs = p.filter((x) => x.role === "verse");
+    const everMel = (st.sections || []).some((x) => x.melody && x.melody !== "off");
+    return { differs: !ch.length || !vs.length || ch.some((c) => sig(c) !== sig(vs[0]) || c.row !== vs[0].row),
+      masks: window.CsdCA.masksFromState(st, window.CsdEngine),
+      everMel, roles: [...new Set(p.map((x) => x.role))] };
   });
-  grammar.chorusMel ? ok("every chorus carries the melody") : fail("a chorus is missing its melody");
-  grammar.verseMel ? ok("no verse carries the melody") : fail("a verse carries the melody");
-  grammar.bridgeDry ? ok("every bridge drops the rhythm section") : fail("a bridge kept its drums");
+  grammar.differs ? ok("a chorus differs from a verse — by arrangement or by row") : fail("chorus and verse are identical");
   console.log("    roles on screen: " + grammar.roles.join(" · "));
+
+  // the masks came from the ANCHOR, which is the whole change: a drumless genre
+  // must not be handed a kit by the fallback table
+  const rag = await page.evaluate(async () => {
+    window.__CA.startFrom("ragtime");
+    await new Promise((r) => setTimeout(r, 350));
+    const p = window.__CA.plan();
+    return { drums: p.some((x) => x.drums !== "off"), mel: p.some((x) => x.melody !== "off"), n: p.length };
+  });
+  !rag.drums ? ok("ragtime gets no drums in any role — the fixed table used to hand it a kit")
+    : fail("ragtime's CA song has drums");
+  rag.mel ? ok("...but keeps its melody, which is the whole instrument") : fail("ragtime lost its melody");
+  await page.evaluate(() => window.__CA.edit({ seed: 0x1249, rule: 110, key: 0, genre: "acidhouse", bars: 12, bpm: null, harmony: "seed" }));
+  await page.waitForTimeout(250);
 
   // ------------------------------------------------------- C an edit reshapes
   console.log("\nC. tapping a cell is a new song");
@@ -110,6 +128,60 @@ async function main() {
     ? ok("tapping a generation makes it the seed") : fail("reseeding from a generation did not take");
   await page.evaluate(() => window.__CA.edit({ seed: 0x1249, rule: 110 }));
   await page.waitForTimeout(160);
+
+  // ------------------------------------------- C2 the row is connected to the rule
+  console.log("\nC2. the sixteen bits and the eight answers are joined");
+  const joined = await page.evaluate(() => {
+    const sw = [...document.querySelectorAll("#caBits8 .ca-nbr")];
+    const counts = sw.map((b) => +(b.querySelector(".ca-nbrn").textContent || 0));
+    // every cell is in exactly one situation, so the counts must sum to 16
+    const sum = counts.reduce((a, b) => a + b, 0);
+    // hovering a switch lights exactly the cells in its situation
+    const target = sw.find((b) => +(b.querySelector(".ca-nbrn").textContent || 0) > 0);
+    target.dispatchEvent(new PointerEvent("pointerenter", { bubbles: true }));
+    const lit = document.querySelectorAll("#caSeed .ca-cell.gov").length;
+    const want = +(target.querySelector(".ca-nbrn").textContent || 0);
+    target.dispatchEvent(new PointerEvent("pointerleave", { bubbles: true }));
+    const after = document.querySelectorAll("#caSeed .ca-cell.gov").length;
+    const nextLane = document.querySelectorAll("#caLanes .l-next .ca-lanecell").length;
+    return { sum, lit, want, after, nextLane, switches: sw.length };
+  });
+  joined.switches === 8 ? ok("eight switches") : fail(joined.switches + " switches");
+  joined.sum === 16 ? ok("their counts sum to 16 — every cell is in exactly one situation")
+    : fail("the counts sum to " + joined.sum + ", not 16");
+  joined.lit === joined.want ? ok("hovering one lights exactly the " + joined.want + " cells it governs")
+    : fail("lit " + joined.lit + " cells, the switch claims " + joined.want);
+  joined.after === 0 ? ok("and clears on leave") : fail("the highlight stuck");
+  joined.nextLane === 16 ? ok("the NEXT lane shows what the rule does to this row") : fail("no NEXT lane");
+  // flipping a switch must change the next row — that is the consequence
+  const consequence = await page.evaluate(async () => {
+    const before = [...document.querySelectorAll("#caLanes .l-next .ca-lanecell")].map((c) => c.className).join("");
+    document.querySelectorAll("#caBits8 .ca-nbr")[3].click();
+    await new Promise((r) => setTimeout(r, 250));
+    const after = [...document.querySelectorAll("#caLanes .l-next .ca-lanecell")].map((c) => c.className).join("");
+    return before !== after;
+  });
+  consequence ? ok("flipping an answer visibly changes the next row") : fail("flipping a switch changed nothing on screen");
+  await page.evaluate(() => window.__CA.edit({ rule: 110 }));
+  await page.waitForTimeout(200);
+
+  // ------------------------------------------- C3 all 274 genres are reachable
+  console.log("\nC3. the 274");
+  const found = await page.evaluate(async () => {
+    const f = document.getElementById("caFind");
+    f.value = "citypop"; f.dispatchEvent(new Event("input", { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 200));
+    const rows = [...document.querySelectorAll("#caList .ca-listrow")];
+    const hit = rows.find((r) => r.textContent.indexOf("citypop") === 0);
+    if (hit) hit.click();
+    await new Promise((r) => setTimeout(r, 400));
+    return { rows: rows.length, genre: window.__CA.doc.genre, harmony: window.__CA.doc.harmony };
+  });
+  found.rows > 0 ? ok("searching finds a genre by name (" + found.rows + " hits)") : fail("search found nothing");
+  found.genre === "citypop" ? ok("and picking it starts you there") : fail("picking gave " + found.genre);
+  found.harmony === "genre" ? ok("with the genre's own harmony") : fail("harmony is " + found.harmony);
+  await page.evaluate(() => window.__CA.edit({ seed: 0x1249, rule: 110, key: 0, genre: "acidhouse", bars: 12, bpm: null, harmony: "seed" }));
+  await page.waitForTimeout(250);
 
   // ------------------------------------------------------- D the rule browser
   console.log("\nD. the rule grid picks the rule it draws");
@@ -189,7 +261,25 @@ async function main() {
     ? ok("drawing a cell while looping does not stop it") : fail("editing stopped the loop");
   (await page.evaluate(() => window.__CA.transport.rms())) > 0
     ? ok("and it is still sounding after the edit") : fail("the loop went silent after an edit");
-  await page.evaluate(() => { window.__CA.transport.stop(); window.__CA.transport.setLoop(false); });
+  // ...AND ANY MEASURE, not just the seed. Looping only generation 0 meant you
+  // could isolate the hook and nothing else — if generation 7 is the good one you
+  // had to reseed from it, destroying your seed, just to hear it alone.
+  const seedWas = await page.evaluate(() => window.__CA.doc.seed);
+  await page.locator(".ca-genloop").nth(4).click();
+  await sleep(500);
+  const anyLoop = await page.evaluate(() => ({ at: window.__CA.loopAt(), gen: window.__CA.loopGen(),
+    seed: window.__CA.doc.seed, secs: window.__CA.playSections(),
+    rows: document.querySelectorAll("#caOrbit .ca-gen").length }));
+  anyLoop.at === 4 ? ok("the ⟳ on a row auditions THAT measure") : fail("looping position is " + anyLoop.at);
+  anyLoop.seed === seedWas ? ok("...without touching the seed") : fail("auditioning a row rewrote the seed");
+  anyLoop.secs === 1 && anyLoop.rows > 4 ? ok("one section played, the whole song still shown") : fail("play/show split broke");
+  let apeak = 0;
+  for (let i = 0; i < 14; i++) { await sleep(300); const v = await page.evaluate(() => window.__CA.transport.rms()); if (v > apeak) apeak = v; }
+  apeak > 0.005 ? ok("and it sounds (peak " + apeak.toFixed(4) + ")") : fail("silent: " + apeak.toFixed(4));
+  (await page.evaluate(() => [...document.querySelectorAll("#caOrbit .ca-gen")].findIndex((r) => r.classList.contains("now")))) === 4
+    ? ok("the playhead lights the measure being auditioned") : fail("the playhead lit the wrong row");
+
+  await page.evaluate(() => { window.__CA.transport.stop(); window.__CA.transport.setLoop(false, 0); });
   await sleep(300);
 
   // ------------------------------------------------------- E3 undo and length

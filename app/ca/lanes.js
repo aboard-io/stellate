@@ -31,6 +31,7 @@ const WHY = [
   ["hat", "a hit off the beat, or anywhere inside a run"],
   ["bass", "one note per run, root/fifth — two or more lifts an octave"],
   ["melody", "climbs a step for every lit cell, then folds"],
+  ["next", "what the rule does to this row — ▲ born, ▽ died"],
 ];
 
 export function build(h) { host = h; }
@@ -70,6 +71,23 @@ export function paint() {
     lanes.push({ id: "melody", cells });
   }
 
+  // AND WHAT THE RULE DOES TO IT. The eight switches and the sixteen cells were
+  // two abstractions side by side with nothing joining them; this is the join.
+  // One more lane, same grid, showing the NEXT generation — a cell that came
+  // alive and a cell that died are marked differently, so flipping a switch has
+  // a visible consequence on the row in front of you rather than three screens
+  // down in the orbit.
+  {
+    const nxt = CA.step(row, DOC.rule), cells = new Array(CA.N).fill(null);
+    for (let i = 0; i < CA.N; i++) {
+      const was = CA.at(row, i), now = CA.at(nxt, i);
+      if (now && !was) cells[i] = { on: true, born: true };
+      else if (now) cells[i] = { on: true };
+      else if (was) cells[i] = { died: true };
+    }
+    lanes.push({ id: "next", cells });
+  }
+
   host.textContent = "";
   for (const lane of lanes) {
     const r = $("div", "ca-lane l-" + lane.id);
@@ -77,7 +95,8 @@ export function paint() {
     const g = $("span", "ca-lanecells");
     for (let i = 0; i < CA.N; i++) {
       const c = lane.cells[i];
-      const e = $("i", "ca-lanecell" + (c && c.on ? " on" : "") + (c && c.hold ? " hold" : "") + (c && c.hot ? " hot" : ""));
+      const e = $("i", "ca-lanecell" + (c && c.on ? " on" : "") + (c && c.hold ? " hold" : "")
+        + (c && c.hot ? " hot" : "") + (c && c.born ? " born" : "") + (c && c.died ? " died" : ""));
       if (c && c.text) e.textContent = c.text;
       if (c && c.h != null) e.style.setProperty("--h", (c.h * 100).toFixed(0) + "%");
       g.appendChild(e);

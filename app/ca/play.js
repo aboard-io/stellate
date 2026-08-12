@@ -10,7 +10,7 @@
 // from the start of the walk. Every CA section is `cycles: 1` over a four-chord
 // progression, so the section index is serial / 4 — an integer division, not an
 // estimate, which is why the lit row and the sound cannot drift apart.
-import { DOC, playState, resolved, subs, isLoop, setLoop } from "./doc.js";
+import { DOC, playState, resolved, subs, isLoop, setLoop, loopAt } from "./doc.js";
 import { playhead } from "./grid.js";
 
 const CHORDS = 4;                     // a CA progression is always four chords
@@ -107,7 +107,7 @@ function paint() {
   btn.classList.toggle("on", playing);
   if (!playing && posEl) {
     const r = resolved();
-    posEl.textContent = isLoop() ? "looping the seed bar"
+    posEl.textContent = isLoop() ? "looping measure " + (loopAt() + 1)
       : r.plan.length + " sections · " + Math.round(r.state.bpm) + " bpm";
   }
 }
@@ -129,7 +129,7 @@ export async function start() {
           // climbing and a section index means nothing. Light the seed's own row
           // and count bars instead — which is what you want while auditioning.
           if (isLoop()) {
-            playhead(0);
+            playhead(loopAt());
             if (posEl) posEl.textContent = "loop · bar " + (1 + ((info.serial || 0) % CHORDS));
             return;
           }

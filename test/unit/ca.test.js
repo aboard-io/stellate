@@ -238,13 +238,21 @@ head("8. the orbit IS the form");
     ok(sec.bass === "off" || !!s1.state.bassCells[sec.bass], sec.name + ": bass names a cell that exists");
     ok(sec.melody === "off" || !!s1.state.melodyCells[sec.melody], sec.name + ": melody names a cell that exists");
   }
-  // the arrangement grammar is audible, not cosmetic: a chorus must carry the
-  // melody a verse does not
+  // THE ARRANGEMENT GRAMMAR IS NOW PER GENRE, so "a chorus carries the melody" is
+  // no longer the contract — acidhouse never states a melody at all (the 303 is
+  // the bass and the lead), and asserting it here was asserting one genre's habit
+  // as a law. What must hold for every genre is that a chorus is DIFFERENT from a
+  // verse: by its arrangement where the genre has a spare lens, and otherwise by
+  // its row, which the automaton guarantees.
+  const lensOf = (sec) => ["pads:" + (sec.pads ? 1 : 0), "bass:" + (sec.bass !== "off"),
+    "drums:" + (sec.drums !== "off"), "melody:" + (sec.melody !== "off")].join("|");
+  const idx = (sec) => s1.state.sections.indexOf(sec);
   const roleOf = (r) => s1.state.sections.filter((x, i) => s1.roles[i] === r);
-  for (const c of roleOf("chorus")) ok(c.melody !== "off" || CA.pop(s1.plan[s1.state.sections.indexOf(c)].row) === 0,
-    "a chorus carries the melody");
-  for (const v of roleOf("verse")) ok(v.melody === "off", "a verse does not");
-  for (const b of roleOf("bridge")) ok(b.drums === "off" && b.bass === "off", "a bridge drops the rhythm section");
+  for (const c of roleOf("chorus")) {
+    const v = roleOf("verse")[0];
+    ok(!v || lensOf(c) !== lensOf(v) || s1.plan[idx(c)].row !== s1.plan[idx(v)].row,
+      "a chorus differs from a verse — by arrangement or by row");
+  }
 
   // THE REPRISE RULE — the one opinion the form layer holds. A hook heard once
   // is not a hook, so when the automaton never brings the seed back inside the
@@ -314,8 +322,10 @@ head("8. the orbit IS the form");
   ok(ev.drums.length > 20, "the song has drum events (" + ev.drums.length + ")");
   ok(ev.totalBeats > 100, "the song is longer than a bar (" + ev.totalBeats + " beats)");
   // the CA's own vocabulary is what is sounding, not the anchor's
-  ok(ev.pitched.some((e) => e.voice === "melody"), "the melody lens reaches the output");
   ok(ev.pitched.some((e) => e.voice === "bass"), "the bass lens reaches the output");
+  // NOT "the melody lens reaches the output" — acidhouse never states a melody,
+  // and the masks are the anchor's now. The melody lens is proved on a genre that
+  // actually uses one, below.
 
   // A SWEEP. Most of the 256 rules are dead or trivial on a 16-ring and that is
   // fine — the rule browser shows it rather than hiding it. But NONE of them may
@@ -412,6 +422,63 @@ head("9. starting from a genre");
     catch (e) { bad++; console.log("  " + g + " threw: " + e.message); }
   }
   ok(bad === 0, "every probed anchor renders with its own harmony");
+}
+
+// -------------------------------------------------- 10. the masks are the GENRE's
+head("10. what a chorus does is a fact about the genre");
+{
+  const K = require("../../engine/genre-kernel.js");
+  const st = (g) => JSON.parse(JSON.stringify((function (t) { return t.state || t; })(K.track(g, { seed: 7 }))));
+  const on = (m, r) => ["pads", "bass", "drums", "melody"].filter((k) => m[r] && m[r][k]);
+
+  // THE CEILING is the whole point: a lens the anchor NEVER uses is off for every
+  // role, fallback included. Ragtime has no kit in any section and the old fixed
+  // table handed its chorus a drum machine.
+  const rag = CA.masksFromState(st("ragtime"), E);
+  ok(!rag.chorus.drums && !rag.verse.drums && !rag.intro.drums, "ragtime never gets drums, in any role");
+  ok(rag.verse.melody, "but it keeps its melody, which is the whole instrument");
+  const ragSong = CA.apply(st("ragtime"), { seed: 0x1249, rule: 110, harmony: "genre" });
+  ok(!ragSong.state.sections.some((x) => x.drums !== "off"), "and a ragtime CA song renders drumless");
+  const ragEv = E.buildEvents(ragSong.state);
+  ok(ragEv.drums.length === 0 && ragEv.pitched.length > 60, "…with real pitched material (" + ragEv.pitched.length + ")");
+
+  const amb = CA.masksFromState(st("ambient"), E);
+  ok(!amb.verse.drums && !amb.chorus.drums, "ambient stays drumless too");
+
+  // A CHORUS MUST ADD SOMETHING the verse lacks — ordered after the ceiling, or a
+  // genre with no melody (jungle, acidhouse) gets the lift added and immediately
+  // taken back off.
+  let flat = 0, ceilingBreaks = 0;
+  for (const g of Object.keys(K.GENRES)) {
+    const s0 = st(g), m = CA.masksFromState(s0, E);
+    const ever = { pads: false, bass: false, drums: false, melody: false };
+    for (const sec of s0.sections) {
+      if (sec.pads) ever.pads = true;
+      if (sec.bass && sec.bass !== "off") ever.bass = true;
+      if (sec.drums && sec.drums !== "off") ever.drums = true;
+      if (sec.melody && sec.melody !== "off") ever.melody = true;
+    }
+    for (const r in m) for (const k in ever) if (m[r][k] && !ever[k]) ceilingBreaks++;
+    if (["pads", "bass", "drums", "melody"].every((k) => !!m.chorus[k] === !!m.verse[k])) flat++;
+  }
+  ok(ceilingBreaks === 0, "no role anywhere turns on a lens its genre never uses (" + ceilingBreaks + " breaks)");
+  ok(flat < 90, "most genres get a chorus that lifts (" + flat + "/274 differ only by their row)");
+  console.log("  " + (274 - flat) + "/274 anchors lift the arrangement on the chorus; " + flat + " differ by row alone");
+
+  // and a genre that DOES state a melody must reach the output through the lens
+  const cp = CA.apply(st("citypop"), { seed: 0x1249, rule: 110, harmony: "genre" });
+  const cpEv = E.buildEvents(cp.state);
+  ok(cpEv.pitched.some((e) => e.voice === "melody"), "city pop's melody lens reaches the output");
+
+  // NOTHING may go silent — the masks can only ever turn things OFF, so a bad
+  // derivation would show up here and nowhere else
+  let quiet = 0;
+  for (const g of Object.keys(K.GENRES)) {
+    const r = CA.apply(st(g), { seed: 0x2d63, rule: 90, harmony: "genre" });
+    const e = E.buildEvents(r.state);
+    if (e.pitched.length + e.drums.length < 10) { quiet++; console.log("  near-silent: " + g); }
+  }
+  ok(quiet === 0, "no anchor's CA song is near-silent under its own masks (" + quiet + ")");
 }
 
 // ---------------------------------------------------------------------- done

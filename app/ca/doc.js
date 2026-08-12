@@ -29,6 +29,9 @@ export const DOC = { seed: 0x1249, rule: 110, key: 0, genre: "acidhouse", bpm: n
 // `loop` is NOT part of the document: it is a monitoring mode, like solo on a
 // mixer. It changes what you HEAR, never what the link says.
 export let LOOP = false;
+// WHICH measure the loop plays — a position in the plan, not a generation, so it
+// means the same thing the orbit's rows do. 0 is the seed.
+export let LOOP_AT = 0;
 export const BARS = [4, 6, 8, 12];
 export const BPM_MIN = 50, BPM_MAX = 200;
 
@@ -53,6 +56,7 @@ export function touch() {
 // you tap and the cost is invisible.
 let _key = null, _res = null, _ev = null;
 const keyOf = () => [DOC.seed, DOC.rule, DOC.key, DOC.genre, DOC.bpm, DOC.bars, DOC.harmony].join(":");
+const loopKeyOf = () => keyOf() + ":" + LOOP_AT;
 
 export function edit(p) { Object.assign(DOC, p); _key = null; push(); writeUrl(); touch(); }
 
@@ -86,12 +90,12 @@ export function events() { if (!_ev) _ev = E.buildEvents(state()); return _ev; }
 let _lk = null, _lr = null;
 export function playState() {
   if (!LOOP) return state();
-  const k = keyOf();
+  const k = loopKeyOf();
   if (k !== _lk || !_lr) {
     const t = K.track(DOC.genre, { seed: 7 });
     const base = JSON.parse(JSON.stringify(t.state || t));
     _lr = CA.apply(base, { seed: DOC.seed, rule: DOC.rule, key: DOC.key, engine: E,
-      audition: 0, harmony: DOC.harmony });
+      audition: loopGen(), harmony: DOC.harmony });
     if (DOC.bpm) _lr.state.bpm = DOC.bpm;
     _lk = k;
   }
@@ -148,12 +152,20 @@ export function progLabel() {
 // "hear what that did" is the length of a song, so you cannot hear a decision,
 // only a result. exploreLive re-reads getState() every chord bar and wraps at
 // the end of the form, so a one-section state loops with no transport work.
-export function setLoop(on) {
-  const v = !!on;
-  if (v === LOOP) return;
-  LOOP = v; _lk = null; touch();
+export function setLoop(on, at) {
+  const v = !!on, pos = at == null ? LOOP_AT : Math.max(0, at | 0);
+  if (v === LOOP && pos === LOOP_AT) return;
+  LOOP = v; LOOP_AT = pos; _lk = null; touch();
 }
 export const isLoop = () => LOOP;
+export const loopAt = () => LOOP_AT;
+// The GENERATION under the loop position, which is what the audition renders.
+// Position and generation differ wherever the reprise put the seed back.
+export function loopGen() {
+  const p = resolved().plan;
+  const at = Math.min(LOOP_AT, p.length - 1);
+  return p[at] ? p[at].gen : 0;
+}
 
 // ---------------------------------------------------------------- THE HISTORY
 // The document is a handful of numbers, so undo is a stack of copies and costs

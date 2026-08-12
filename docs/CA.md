@@ -334,6 +334,99 @@ and inventing a pulse for it would be the starter lying about the anchor.
 lens being sixteen bits, not a bug to engineer around. The starter is a skeleton
 to edit, and the UI says so.
 
+## Paul's model, and where I think it breaks
+
+*"I choose a genre with the radar → this invokes a set of genre rules including
+instrumentation and structure and key and progressions → I manipulate rule
+systems → I hear a measure on loop until it sounds great → the rule system and
+genre rules interact to structure a whole song."*
+
+That is close to what this is, and steps 3 and 4 were the whole missing core.
+Three disagreements, recorded because the second one is a genuine fork:
+
+**The radar should be how you EXPLORE, not how you CHOOSE.** docs/DAW.md already
+records why: the radar is a lossy projection, so it returns the nearest real
+anchors to the shape you drew rather than the shape — which is exactly what the
+ghost outline is confessing. Wonderful for finding the place between city pop and
+vaporwave that has no name. Strictly worse than the word "house" when you want
+house. Both, not one.
+
+**"Genre rules including structure" collides with "the orbit is the form."** They
+cannot both own the sections, and the two resolutions are different products:
+
+  (i) the genre gives the section LIST and the CA fills each one — controllable,
+      better city pop, but the orbit stops being the song and becomes a bank of
+      rows, which abandons the premise;
+  (ii) the CA gives the form and the genre supplies WHAT EACH ROLE TURNS ON.
+
+Today `chorus = pads+bass+drums+melody` is one hardcoded table for all 274
+anchors. Under (ii) it becomes a function of the anchor: a city pop chorus adds
+the lead and opens up, a dub chorus drops the drums and floods the delay. That
+keeps the automaton doing the thing only it can do, and it is a far smaller
+change. **Paul chose (ii) — built, see below.**
+
+**"I hear a measure on loop" — but which measure?** That one was mine, not his:
+the loop played generation 0 and nothing else, so if generation 7 was the good
+one you had to reseed from it — destroying your seed — just to hear it alone.
+Every orbit row now carries a ⟳ that auditions it in place.
+
+## The masks are the genre's (2026-08-12)
+
+`chorus = pads+bass+drums+melody` was one hardcoded table for all 274 anchors,
+and it was wrong for most of them. **Ragtime has no kit in any section and the
+table handed its chorus a drum machine.** Acidhouse never states a melody — the
+303 is both bass and lead. Dub runs pads off and lets the breakdown carry them.
+
+So the masks are READ OFF THE ANCHOR, using the engine's own classifier: a CA
+role names one of `sectionTag`'s six node types, and the mask is whether that
+genre's sections of that type carry pads / bass / drums / melody, by majority.
+Derived, so it cannot drift from the anchors and it covers anchors invented later.
+
+Two guards, and the ORDER between them is the whole subtlety:
+
+- **The ceiling.** A role with no matching section falls back to the default
+  table — which is how ragtime got drums. A lens the anchor *never* uses is now
+  off for every role, fallback included. What a genre never does is as much a
+  fact about it as what it does.
+- **A chorus must add something.** Applied *after* the ceiling. The obvious lift
+  is the melody, and plenty of genres never state one: run it first and jungle's
+  chorus got a melody that the ceiling then took straight back off, leaving the
+  chorus identical to the verse. It now adds the first lens the verse lacks that
+  this genre actually uses — in jungle, the pads entering. Where a genre has
+  nothing spare, the chorus differs by its ROW and not its arrangement, which is
+  true of jungle and honest.
+
+Measured: **222 of 274 anchors lift the arrangement on the chorus**; 52 differ by
+row alone. Zero anchors render near-silent, and no role anywhere turns on a lens
+its genre never uses.
+
+## Three complaints, three fixes (2026-08-12)
+
+*"There are tons of genres. Also I have to scroll up and down constantly. I don't
+understand the options in the system CA or how they connect to my 16 bits."*
+
+- **274 genres, fourteen chips.** The chip row was a lie about the size of the
+  space — the other 260 were reachable only by hand-editing `?g=`. A **search
+  field** now lists all of them, and picking one *starts from* it. This is the
+  "name to choose" half of the radar argument above: strictly better than a radar
+  when you already know you want house. The radar — for finding the place between
+  two genres that has no name — is still to come.
+- **The scrolling.** The row you edit and the orbit it grows into were stacked, so
+  drawing a cell and watching the form change happened on two different screens.
+  The seed block is now **sticky** at the top of the column that scrolls under it
+  — the same fix the deck applied when it put each radar under its own roll. It
+  cost the tempo tile its place (moved to the genre panel) and the duplicated
+  "reads as" line, because a sticky block that eats the viewport is worse than no
+  sticky block.
+- **Eight switches beside sixteen boxes, with nothing joining them.** Two fixes,
+  both about consequence:
+  - each switch prints **how many of your cells are in that situation right now**,
+    and hovering or focusing it lights exactly those cells. The counts sum to 16,
+    because every cell is in exactly one situation — the gate asserts that sum.
+  - a **NEXT lane** under the others, on the same sixteen columns, showing what
+    the rule does to this row: born cells in cyan, dead ones hatched. Flip an
+    answer and the consequence is right there instead of three screens down.
+
 ## Open
 
 - **`/ca` needs its nginx block** on the droplet, as `/daw` still does; until then

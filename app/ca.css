@@ -127,15 +127,16 @@ a { color: var(--cool); }
    What the row turns into. SAME sixteen-column grid as the seed row and the
    beat ruler, so a lit cell and the lane cell under it line up exactly — that
    alignment is the whole explanation. */
-.ca-lanes { margin-top: 12px; display: flex; flex-direction: column; gap: 3px; }
+.ca-lanes { margin-top: 10px; display: flex; flex-direction: column; gap: 3px; }
 .ca-lane { display: flex; align-items: center; gap: 8px; }
+.ca-lanes .ca-why { margin-top: 6px; }
 .ca-lanelab {
   flex: 0 0 52px; text-align: right;
   font: 600 10px/1 inherit; letter-spacing: .08em; text-transform: uppercase; color: var(--dim);
 }
 .ca-lanecells { flex: 1 1 auto; display: grid; grid-template-columns: repeat(16, 1fr); gap: 3px; }
 .ca-lanecell {
-  height: 15px; border-radius: 3px; background: #191534; display: flex;
+  height: 13px; border-radius: 3px; background: #191534; display: flex;
   align-items: flex-end; justify-content: center;
   font: 700 9px/1 "Inter", system-ui, sans-serif; font-style: normal; color: var(--bg);
 }
@@ -152,6 +153,19 @@ a { color: var(--cool); }
   background: linear-gradient(to top, var(--cool) var(--h, 50%), #191534 var(--h, 50%));
 }
 .ca-why { color: #7a71a8; font-size: 11px; line-height: 1.5; }
+/* THE NEXT LANE — one generation on, so the rule has a visible consequence on
+   the row in front of you instead of three screens down in the orbit. */
+.ca-lane.l-next { margin-top: 5px; padding-top: 5px; border-top: 1px dashed var(--line); }
+.l-next .ca-lanecell.on { background: #4b4370; }
+.l-next .ca-lanecell.born { background: var(--cool); }
+.l-next .ca-lanecell.died { background: repeating-linear-gradient(45deg, #2a2350 0 2px, #191534 2px 4px); }
+/* the join between the eight switches and the sixteen cells: hovering or
+   focusing a switch lights exactly the cells in that situation */
+.ca-cell.gov { outline: 2px solid var(--cool); outline-offset: 1px; }
+.ca-lanecell.gov { outline: 2px solid var(--cool); outline-offset: 1px; }
+.ca-nbrn { font: 700 9px/1 inherit; font-style: normal; color: var(--live); min-height: 9px; }
+.ca-nbr.on .ca-nbrn { color: var(--hot); }
+.ca-nbr.idle { opacity: .38; }
 
 /* ------------------------------------------------------- THE EIGHT ANSWERS
    A rule is not a number you pick, it is eight yes/no answers you set. Each
@@ -196,7 +210,7 @@ a { color: var(--cool); }
 .ca-tile:focus-visible { outline: 2px solid var(--cool); outline-offset: 2px; }
 
 .ca-word {
-  margin: 10px 0 0; font: 15px/1.3 "VT323", ui-monospace, monospace;
+  margin: 8px 0 0; font: 15px/1.3 "VT323", ui-monospace, monospace;
   color: var(--cool); letter-spacing: .05em;
 }
 
@@ -234,6 +248,15 @@ a { color: var(--cool); }
 .r-rest .ca-genpick, .r-intro .ca-genpick { opacity: .62; }
 /* THE PLAYHEAD IS A CLASS, NOT A REPAINT (grid.js says why) */
 .ca-gen.now .ca-genpick { border-color: var(--ink); background: #251f47; }
+.ca-gen { display: flex; align-items: center; gap: 4px; }
+.ca-gen .ca-genpick { flex: 1 1 auto; min-width: 0; }
+.ca-genloop {
+  flex: 0 0 auto; width: 40px; min-height: 44px; padding: 0;
+  font-size: 15px; line-height: 1; color: var(--dim);
+  background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
+}
+.ca-genloop:hover { border-color: var(--hot); color: var(--ink); }
+.ca-genloop.on { background: var(--hot); border-color: var(--hot); color: var(--bg); }
 
 /* ------------------------------------------------------------- the rule grid */
 #caRules {
@@ -299,6 +322,25 @@ a { color: var(--cool); }
 .ca-hist:disabled { opacity: .3; cursor: default; }
 .ca-hist:disabled:hover { border-color: var(--line); }
 .ca-barschips { margin-top: 10px; }
+/* THE 274, as a search and a list rather than a wall of chips */
+.ca-find {
+  width: 100%; min-height: 44px; margin: 4px 0 8px; padding: 8px 12px;
+  font: 14px/1 inherit; color: var(--ink); background: var(--panel2);
+  border: 1px solid var(--line); border-radius: 8px;
+}
+.ca-find:focus-visible { outline: 2px solid var(--cool); outline-offset: 1px; }
+.ca-list { max-height: 210px; overflow-y: auto; border-radius: 8px; }
+.ca-listrow {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; min-height: 44px; padding: 6px 12px; text-align: left; cursor: pointer;
+  color: var(--ink); background: transparent; border: 0;
+  border-bottom: 1px solid var(--line); font: 13px/1.2 inherit;
+}
+.ca-listrow:hover { background: var(--panel2); }
+.ca-listrow.on { background: var(--hot); color: var(--bg); font-weight: 600; }
+.ca-listrow em { font-style: normal; font-size: 11px; color: var(--dim); }
+.ca-listrow.on em { color: var(--bg); opacity: .75; }
+
 .ca-start {
   display: block; width: 100%; margin-top: 8px; min-height: 46px;
   font: 600 13px/1 inherit; letter-spacing: .03em;
@@ -345,6 +387,16 @@ a { color: var(--cool); }
     display: flex; flex-direction: column;
     padding-bottom: calc(var(--ctl) + 16px);
   }
+  /* THE SEED STICKS. The row you edit and the orbit it grows were stacked, so
+     drawing a cell and watching the form change meant scrolling between them —
+     cause and effect on two different screens. The seed block now pins to the
+     top of the column that scrolls under it, which is the same fix the deck
+     applied when it put each radar under its own roll. */
+  #caMain > .ca-block:first-child {
+    position: sticky; top: 0; z-index: 8;
+    background: var(--panel);
+    box-shadow: 0 10px 18px -12px #000;
+  }
   #caRail {
     flex: 0 0 400px; overflow-y: auto;
     border-left: 1px solid var(--line);
@@ -364,6 +416,11 @@ a { color: var(--cool); }
    gesture. Everything else on the page keeps its 44px. */
 @media (max-width: 560px) {
   #cabar { gap: 8px; }
+  /* same rule, under the 48px header rather than under nothing */
+  #caMain > .ca-block:first-child {
+    position: sticky; top: 48px; z-index: 8;
+    background: var(--panel); box-shadow: 0 10px 18px -12px #000;
+  }
   .ca-btn { padding: 6px 8px; }
 }
 @media (max-width: 400px) {

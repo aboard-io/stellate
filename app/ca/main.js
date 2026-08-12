@@ -6,7 +6,7 @@
 // microseconds. That is not an optimisation; it is what the design is FOR.
 import { DOC, BASES, BARS, BPM_MIN, BPM_MAX, edit, readUrl, url, roll, resolved, touch, subs,
   bpm, bpmSet, setBpm, bpmRevert, undo, redo, canUndo, canRedo, playState as PLAYSTATE,
-  beginGesture, endGesture, startFrom } from "./doc.js";
+  beginGesture, endGesture, startFrom, loopAt, loopGen } from "./doc.js";
 import * as GRID from "./grid.js";
 import * as RULES from "./rules.js";
 import * as TON from "./tonnetz.js";
@@ -52,15 +52,52 @@ for (let i = 0; i < 16; i++) {
   beats.appendChild(b);
 }
 
-// the base chips. Twelve anchors spread across the space; `?g=` reaches all 274
-// (doc.js says why the picker is not a table).
+// THE 274. A chip row was a lie about the size of the space — fourteen anchors
+// visible and the other 260 reachable only by hand-editing `?g=`. A search field
+// is the one text control this page allows (the no-slider law is about
+// continuous values, not about typing a name), and it is strictly better than a
+// radar for the case where you already KNOW you want house. The radar is for the
+// other case — finding the place between two genres that has no name — and is
+// still to come.
+const findEl = $("caFind"), listEl = $("caList");
+const ALL = Object.keys(K.GENRES).sort();
+function paintList() {
+  const q = findEl.value.trim().toLowerCase();
+  const hits = (q ? ALL.filter((g) => g.indexOf(q) >= 0) : ALL).slice(0, 60);
+  listEl.textContent = "";
+  for (const g of hits) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "ca-listrow" + (g === DOC.genre ? " on" : "");
+    b.setAttribute("role", "option");
+    b.setAttribute("aria-selected", g === DOC.genre ? "true" : "false");
+    const n = document.createElement("span"); n.textContent = g;
+    const t = document.createElement("em"); t.textContent = Math.round(K.GENRES[g].bpm || 0) + " bpm";
+    b.append(n, t);
+    // ONE TAP IS THE WHOLE GENRE — picking from the list starts you there
+    // (groove, progression, tempo), which is what anyone means by "make it house"
+    b.addEventListener("click", () => { startFrom(g); findEl.value = ""; paintList(); });
+    listEl.appendChild(b);
+  }
+  if (!hits.length) {
+    const p = document.createElement("p");
+    p.className = "ca-note"; p.textContent = "no genre matches “" + q + "”";
+    listEl.appendChild(p);
+  }
+}
+findEl.addEventListener("input", paintList);
+paintList();
+subs.push(paintList);
+
+// the chips stay as a shortlist across the space — a place to start before you
+// know what you are looking for
 const baseHost = $("caBase");
 for (const g of BASES) {
   if (!K.GENRES[g]) continue;
   const b = document.createElement("button");
   b.type = "button"; b.className = "ca-chip";
   b.textContent = g;
-  b.addEventListener("click", () => edit({ genre: g }));
+  b.addEventListener("click", () => startFrom(g));
   baseHost.appendChild(b);
 }
 // a genre arriving by URL that is not one of the twelve still has to be visible,
@@ -128,7 +165,7 @@ touch();
 // than scraping selectors or racing a click.
 window.__CA = window.__CA || {};
 Object.assign(window.__CA, {
-  doc: DOC, edit, url, roll, startFrom, undo, redo,
+  doc: DOC, edit, url, roll, startFrom, undo, redo, loopAt, loopGen,
   resolved: () => resolved(),
   plan: () => resolved().plan.map((p) => ({ pos: p.pos, gen: p.gen, role: p.role, density: p.density, row: p.row,
     drums: p.section.drums, bass: p.section.bass, melody: p.section.melody })),

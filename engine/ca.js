@@ -333,6 +333,79 @@
   // itself, and the role picks an arrangement MASK — which lenses are audible —
   // not any notes. This is the whole point: you edit the automaton, and what a
   // chorus is stays a rule about what makes a chorus.
+  // WHAT EACH ROLE TURNS ON, PER GENRE. The table below is a fallback; the real
+  // masks are READ OFF THE ANCHOR, because "what a chorus does" is one of the
+  // most genre-specific facts there is and a single hardcoded table was wrong for
+  // most of the 274. Ragtime has no drums ANYWHERE — the fixed table gave it a
+  // chorus with a kit. Dub runs pads off and lets the breakdown carry them.
+  // Jungle never states a melody.
+  //
+  // The mapping is the engine's own: `sectionTag` already classifies every
+  // section a genre ships into one of six node types, so a CA role just names the
+  // node type it means, and the mask is whether that genre's sections of that
+  // type carry pads / bass / drums / melody. Derived, so it cannot drift from the
+  // anchors, and it covers every anchor including ones invented later.
+  const ROLE_NODE = { intro: "ground", verse: "build", chorus: "peak",
+    bridge: "exposed", outro: "cadence", rest: "release" };
+  function masksFromState(st, E) {
+    E = E || engineRef();
+    if (!E || !E.sectionTag || !st || !st.sections) return null;
+    const seen = {};
+    for (const sec of st.sections) {
+      const tag = E.sectionTag(sec.name);
+      const m = seen[tag] || (seen[tag] = { pads: 0, bass: 0, drums: 0, melody: 0, n: 0 });
+      m.n++;
+      if (sec.pads) m.pads++;
+      if (sec.bass && sec.bass !== "off") m.bass++;
+      if (sec.drums && sec.drums !== "off") m.drums++;
+      if (sec.melody && sec.melody !== "off") m.melody++;
+    }
+    // a lens is ON for a role when MOST of that genre's sections of that type use
+    // it — a majority rather than "any", so one atypical section does not decide
+    const out = {};
+    for (const role in ROLE_NODE) {
+      const m = seen[ROLE_NODE[role]];
+      if (!m || !m.n) continue;                       // no section of that type: keep the default
+      out[role] = { pads: m.pads * 2 >= m.n, bass: m.bass * 2 >= m.n ? 1 : 0,
+        drums: m.drums * 2 >= m.n ? 1 : 0, melody: m.melody * 2 >= m.n ? 1 : 0 };
+    }
+    // A GENRE THAT NEVER PLAYS A MELODY (jungle, most techno) would otherwise make
+    // its chorus indistinguishable from its verse, and the form would go flat. The
+    // chorus is the one role allowed to overrule the anchor: it must add SOMETHING
+    // the verse does not have.
+    // THE CEILING. A role with no matching section falls back to the default
+    // table, and the default table has drums — so ragtime, which has no kit in
+    // ANY section, got a chorus with a drum machine in it. What a genre NEVER
+    // does is as much a fact about it as what it does, so a lens the anchor never
+    // uses is off for every role, fallback or not. This is the guard that makes
+    // the fallback safe rather than a hole in the derivation.
+    const ever = { pads: false, bass: false, drums: false, melody: false };
+    for (const sec of st.sections) {
+      if (sec.pads) ever.pads = true;
+      if (sec.bass && sec.bass !== "off") ever.bass = true;
+      if (sec.drums && sec.drums !== "off") ever.drums = true;
+      if (sec.melody && sec.melody !== "off") ever.melody = true;
+    }
+    for (const role in ROLE_NODE) {
+      const m = Object.assign({}, ROLES[role], out[role] || {});
+      for (const k in ever) if (!ever[k]) m[k] = 0;
+      out[role] = m;
+    }
+    // A CHORUS MUST ADD SOMETHING. Ordered AFTER the ceiling, because the obvious
+    // lift is the melody and plenty of genres never state one — jungle's chorus
+    // came out identical to its verse when this ran first and the ceiling then
+    // took the melody straight back off. So it adds the first lens the verse
+    // lacks that this genre actually uses; in jungle that is the pads entering.
+    // If the genre uses nothing the verse does not, the chorus differs by its ROW
+    // and not its arrangement — which is true of jungle, and honest.
+    if (out.chorus && out.verse) {
+      const lack = ["melody", "pads", "drums", "bass"].filter((k) => ever[k] && !out.verse[k] === true);
+      const same = ["pads", "bass", "drums", "melody"].every((k) => !!out.chorus[k] === !!out.verse[k]);
+      if (same && lack.length) out.chorus = Object.assign({}, out.chorus, { [lack[0]]: 1 });
+    }
+    return out;
+  }
+
   const ROLES = {
     //        pads   bass   drums  melody
     // AUDITION — not a role the classifier ever assigns. It is the mask for
@@ -466,9 +539,12 @@
     // Vocabulary is named by GENERATION and sections are identified by POSITION,
     // because the reprise rule makes those two different: two sections can play
     // the same row, and they share its kit rather than carrying a copy each.
+    // the arrangement masks this base genre implies (opts.masks:false opts out)
+    const masks = opts.masks === false ? null : masksFromState(base, E);
     const kits = {}, bassCells = {}, melodyCells = {}, sections = [], plan = [];
     for (let p = 0; p < gens.length; p++) {
-      const g = gens[p], row = gen(orb, g), role = rl[p], m = ROLES[role] || ROLES.rest;
+      const g = gens[p], row = gen(orb, g), role = rl[p];
+      const m = (masks && masks[role]) || ROLES[role] || ROLES.rest;
       const kn = "ca_k" + g, bn = "ca_b" + g, mn = "ca_m" + g;
       const kit = lensDrums(row), bc = lensBass(row), mc = lensMelody(row);
       if (m.drums && kit.ops.length) kits[kn] = kit;
@@ -510,6 +586,7 @@
     at, lin, pop, ham, cells, fromCells, rot, ref, inv,
     step, orbit, gen, formLength, formGens,
     plr, word, triads, triadName, progression, PC, LETTER,
+    masksFromState, ROLE_NODE,
     seedFromKit, seedForState,
     lensDrums, lensBass, lensMelody, roles, ROLES, apply };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

@@ -10,7 +10,8 @@
 // button with a real 44px target, the whole thing is reachable by keyboard and
 // readable by a screen reader, and THE PLAYHEAD IS A CLASS TOGGLE rather than a
 // repaint (the project's standing rule — app/daw/transport.js says why).
-import { DOC, cells, toggleCell, setCell, edit, resolved, subs, beginGesture, endGesture, progLabel } from "./doc.js";
+import { DOC, cells, toggleCell, setCell, edit, resolved, subs, beginGesture, endGesture, progLabel,
+  setLoop, isLoop, loopAt } from "./doc.js";
 
 const CA = window.CsdCA;
 const $ = (t, c, x) => { const d = document.createElement(t); if (c) d.className = c; if (x != null) d.textContent = x; return d; };
@@ -110,6 +111,20 @@ export function paint() {
     // follow a shape you liked instead of hunting for the seed that made it.
     btn.addEventListener("click", () => edit({ seed: p.row }));
     row.appendChild(btn);
+    // AUDITION THIS ONE. "Loop a measure until it sounds great" is the whole
+    // working loop, and looping only the SEED meant you could isolate the hook
+    // and nothing else — if generation 7 is the good one you had to reseed from
+    // it (destroying your seed) just to hear it alone.
+    const lp = $("button", "ca-genloop" + (isLoop() && loopAt() === p.pos ? " on" : ""), "⟳");
+    lp.type = "button";
+    lp.title = "loop this measure alone";
+    lp.setAttribute("aria-label", "Loop " + p.role + " " + (p.pos + 1) + " on its own");
+    lp.setAttribute("aria-pressed", isLoop() && loopAt() === p.pos ? "true" : "false");
+    lp.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setLoop(!(isLoop() && loopAt() === p.pos), p.pos);
+    });
+    row.appendChild(lp);
     orbitHost.appendChild(row);
     genRows.push(row);
   }

@@ -22,6 +22,8 @@
 // have to be told about.
 import { DOC, edit, subs } from "./doc.js";
 
+const CA = window.CsdCA;
+
 const $ = (t, c, x) => { const d = document.createElement(t); if (c) d.className = c; if (x != null) d.textContent = x; return d; };
 
 let host = null;
@@ -37,19 +39,48 @@ export function build(h) {
     b.appendChild(top);
     b.appendChild($("span", "ca-nbrarrow", "↓"));
     b.appendChild($("i", "ca-nbrout"));
+    b.appendChild($("em", "ca-nbrn"));       // how many of YOUR cells are in this situation
     b.addEventListener("click", () => edit({ rule: (DOC.rule ^ (1 << nb)) & 255 }));
+    // SHOW WHICH CELLS THIS ONE GOVERNS. Eight abstract switches beside sixteen
+    // abstract boxes explain nothing about each other; hovering or focusing a
+    // switch now lights exactly the cells of your row that are in that situation,
+    // which is the only link that makes the rule concrete.
+    const lite = (on) => paintHi(on ? nb : -1);
+    b.addEventListener("pointerenter", () => lite(true));
+    b.addEventListener("pointerleave", () => lite(false));
+    b.addEventListener("focus", () => lite(true));
+    b.addEventListener("blur", () => lite(false));
     host.appendChild(b);
   }
 }
 
+// The neighbourhood value of every cell of the current row, which is the join
+// between the two halves of this page: cell i is in situation nb(i), and switch
+// nb decides what happens to it.
+export function nbOf(i) {
+  return (CA.at(DOC.seed, i - 1) << 2) | (CA.at(DOC.seed, i) << 1) | CA.at(DOC.seed, i + 1);
+}
+function paintHi(nb) {
+  const cells = document.querySelectorAll("#caSeed .ca-cell");
+  for (let i = 0; i < cells.length; i++) cells[i].classList.toggle("gov", nb >= 0 && nbOf(i) === nb);
+  const next = document.querySelectorAll("#caLanes .l-next .ca-lanecell");
+  for (let i = 0; i < next.length; i++) next[i].classList.toggle("gov", nb >= 0 && nbOf(i) === nb);
+}
+
 export function paint() {
   if (!host) return;
+  const counts = new Array(8).fill(0);
+  for (let i = 0; i < CA.N; i++) counts[nbOf(i)]++;
   for (const b of host.children) {
     const nb = +b.dataset.nb, on = (DOC.rule >>> nb) & 1;
+    const n = counts[nb];
+    b.querySelector(".ca-nbrn").textContent = n ? String(n) : "";
+    b.classList.toggle("idle", n === 0);
     b.classList.toggle("on", !!on);
     b.querySelector(".ca-nbrout").className = "ca-nbrout" + (on ? " on" : "");
     const nbs = ["off", "on"];
-    b.title = `left ${nbs[(nb >> 2) & 1]}, self ${nbs[(nb >> 1) & 1]}, right ${nbs[nb & 1]} → ${on ? "lives" : "dies"}`;
+    b.title = `left ${nbs[(nb >> 2) & 1]}, self ${nbs[(nb >> 1) & 1]}, right ${nbs[nb & 1]} → ${on ? "lives" : "dies"}`
+      + (n ? ` · ${n} of your cells are in this situation` : " · none of your cells are here");
     b.setAttribute("aria-label", b.title + ". Tap to flip.");
     b.setAttribute("aria-pressed", on ? "true" : "false");
   }
