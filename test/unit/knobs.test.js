@@ -134,5 +134,45 @@ head("4. the instrument dial is ordered, and it covers what is used");
     ok(idx("brass", "tuba") < idx("brass", "muted_trumpet"), "brass: tuba is below muted trumpet");
 }
 
+head("5. every dial position actually swaps the sound");
+{
+  // THE SILENT NO-OP THIS EXISTS FOR. The axis holds sampler ids and SYNTH MODEL
+  // ids side by side, because a family is a timbre neighbourhood and both live in
+  // it. setInstrument handled only samplers, so dialling onto `pluck` or `tb303`
+  // returned false and did nothing — the dial moved, the label changed, the sound
+  // did not.
+  const axis = Kn.instrumentAxis(K);
+  let failed = [], synths = 0, samplers = 0;
+  for (const f of Object.keys(axis)) {
+    for (const e of axis[f]) {
+      const s = st("vaporwave");
+      const okSet = Kn.setInstrument(s, "melody", e.id, K);
+      if (!okSet || Kn.instrumentOf(s, "melody") !== e.id) { failed.push(e.id); continue; }
+      (K.SAMPLERS[e.id] ? samplers++ : synths++);
+    }
+  }
+  ok(failed.length === 0, "every position on every dial changes the instrument (" + failed.length + " no-ops"
+    + (failed.length ? ": " + failed.slice(0, 5).join(",") : "") + ")");
+  ok(synths > 0 && samplers > 0, "and the axis really does mix synths and samplers (" + synths + " synth, " + samplers + " sampled)");
+
+  // and the result must still render, for both kinds
+  let broke = 0;
+  for (const id of ["bandoneon", "tb303", "cello", "pluck", "vibraphone"]) {
+    if (!Kn.positionOf(axis, id)) continue;
+    const s = st("vaporwave");
+    Kn.setInstrument(s, "melody", id, K);
+    try { if (E.buildEvents(s).pitched.length < 20) broke++; } catch (e) { broke++; }
+  }
+  ok(broke === 0, "a swapped voice still renders, sampled or synth (" + broke + " broke)");
+
+  // a sampled swap must inject its zones at vol 0, or the decoder never sees them
+  const z = st("vaporwave");
+  Kn.setInstrument(z, "melody", "bandoneon", K);
+  const inj = z.foundSources.filter((f) => f.id.indexOf("ins_bandoneon") === 0);
+  ok(inj.length > 0 && inj.every((f) => f.vol === 0), inj.length + " bandoneon zones injected at vol 0");
+  // an id the registry does not carry is refused
+  ok(Kn.setInstrument(st("vaporwave"), "melody", "../etc/passwd", K) === false, "an unknown id is refused");
+}
+
 console.log("\n" + (fails ? "FAIL" : "PASS") + " — " + (checks - fails) + "/" + checks + " checks");
 process.exit(fails ? 1 : 0);

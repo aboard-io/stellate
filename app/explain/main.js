@@ -22,6 +22,7 @@ let st = null, rows = null, builds = null, handle = null, playing = null;
 // difference is the whole reason a double-tap can give the genre's value back
 // (the copy-on-write law the rest of this repo runs on).
 const turn = {};
+const swap = {};          // slot -> instrument id you dialled to
 let submerge = 0;
 const AXIS = KN.instrumentAxis(K);
 
@@ -31,6 +32,7 @@ function resolve() {
   // gesture first, then the individual knobs — so turning `reverb` after
   // submerging says what you meant rather than being overwritten by it
   KN.SUBMERGE.apply(st, submerge);
+  for (const slot in swap) KN.setInstrument(st, slot, swap[slot], K);
   for (const id in turn) if (KN.byId[id]) KN.byId[id].write(st, turn[id]);
   rows = X.sheet(st, E);
   builds = X.buildStates(st);
@@ -52,7 +54,7 @@ function knob(k) {
   el.setAttribute("aria-valuemax", String(k.max));
   const fill = document.createElement("i"), lab = document.createElement("b"), val = document.createElement("span");
   el.append(fill, lab, val);
-  const fmt = (v) => (k.max > 100 ? Math.round(v) : v.toFixed(2)) + k.unit;
+  const fmt = (v) => (k.fmtText ? k.fmtText() : (k.max > 100 ? Math.round(v) : v.toFixed(2)) + k.unit);
   const paint = () => {
     const v = k.read(st), mine = turn[k.id] != null;
     fill.style.width = (100 * (v - k.min) / (k.max - k.min)).toFixed(1) + "%";
@@ -66,7 +68,12 @@ function knob(k) {
   el.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     const now = performance.now();
-    if (now - last < 320) { if (k.id === "submerge") submerge = 0; else delete turn[k.id]; last = 0; render(); return; }
+    if (now - last < 320) {
+      if (k.id === "submerge") submerge = 0;
+      else if (/^(fam|pos):/.test(k.id)) delete swap[k.id.split(":")[1]];
+      else delete turn[k.id];
+      last = 0; render(); return;
+    }
     last = now; from = k.read(st); at = e.clientX; drag = true;
     try { el.setPointerCapture(e.pointerId); } catch (err) {}
   });
@@ -74,7 +81,9 @@ function knob(k) {
     if (!drag) return;
     const w = el.getBoundingClientRect().width || 1;
     const nv = KN.clamp(from + (e.clientX - at) / w * (k.max - k.min), k.min, k.max);
-    if (k.id === "submerge") submerge = nv; else turn[k.id] = nv;
+    if (k.id === "submerge") submerge = nv;
+    else if (k.write.length >= 2 && /^(fam|pos):/.test(k.id)) k.write(st, nv);
+    else turn[k.id] = nv;
     resolve(); paint();
   });
   const end = () => { if (drag) { drag = false; render(); } };
@@ -89,7 +98,9 @@ function knob(k) {
     }
     e.preventDefault();
     const nv2 = KN.clamp(k.read(st) + d, k.min, k.max);
-    if (k.id === "submerge") submerge = nv2; else turn[k.id] = nv2;
+    if (k.id === "submerge") submerge = nv2;
+    else if (/^(fam|pos):/.test(k.id)) k.write(st, nv2);
+    else turn[k.id] = nv2;
     render();
   });
   paint();
@@ -123,7 +134,33 @@ function render() {
     // THE KNOBS THAT DRIVE THIS ROW, under the line that describes them. The row
     // says "88% reverb"; the knob under it is the reverb. That adjacency is the
     // whole reason the sheet stopped being read-only.
-    const grp = X.ROW_KNOBS[r.id];
+    // THE INSTRUMENT DIALS. S was the only part of the genre that did not
+      // interpolate; the axis derived from the catalogue's own cutoff assignments
+      // turns it into two dials — family, then position, dark to bright. Two
+      // knobs where there used to be a coin flip.
+      const SLOT = { bass: "bass", melody: "melody", pads: "pad" }[r.id];
+      if (SLOT) {
+        const cur = KN.instrumentOf(st, SLOT);
+        const at = KN.positionOf(AXIS, cur);
+        const fams = Object.keys(AXIS).sort();
+        if (at) {
+          anything = true;
+          const box = el("div", "sp-knobs");
+          box.appendChild(knob({ id: "fam:" + SLOT, label: SLOT + " family", min: 0, max: fams.length - 1, unit: "",
+            fmtText: () => at.family,
+            read: () => Math.max(0, fams.indexOf(at.family)),
+            write: (_, v) => { const f = fams[KN.clamp(Math.round(v), 0, fams.length - 1)];
+              swap[SLOT] = AXIS[f][Math.min(at.index, AXIS[f].length - 1)].id; } }));
+          box.appendChild(knob({ id: "pos:" + SLOT, label: SLOT + " · dark → bright", min: 0, max: Math.max(1, at.of - 1), unit: "",
+            fmtText: () => cur,
+            read: () => at.index,
+            write: (_, v) => { const list = AXIS[at.family];
+              swap[SLOT] = list[KN.clamp(Math.round(v), 0, list.length - 1)].id; } }));
+          fx.appendChild(box);
+        }
+      }
+
+      const grp = X.ROW_KNOBS[r.id];
     if (grp) {
       const mine = KN.HEADLINE.filter((k) => k.group === grp);
       if (mine.length) {
@@ -246,6 +283,6 @@ $("spLink").addEventListener("click", async (e) => {
 });
 
 render();
-window.__SPEC = { genre: () => genre, turn, submerge: () => submerge, knobs: KN, rows: () => rows, builds: () => builds, sheet: () => X.sheet(st, E),
+window.__SPEC = { genre: () => genre, turn, swap, axis: AXIS, submerge: () => submerge, knobs: KN, rows: () => rows, builds: () => builds, sheet: () => X.sheet(st, E),
   set: (g) => { genre = g; render(); }, play, stop, isPlaying: () => !!playing,
   rms: () => { try { return handle && handle.rms ? handle.rms() : null; } catch (e) { return null; } }, ready: true };

@@ -125,9 +125,30 @@ sweep read as going *up*. Off now reads as the maximum and writing the maximum
 writes 0 back, keeping the engine's idiom. It surfaced as a monotonicity failure,
 which is the only reason it was visible at all.
 
+### The dials, on screen
+
+`bass`, `pads` and `melody` each carry two: **family** and **dark → bright**.
+Six dials, plus the twelve headline knobs and submerge — nineteen on the page.
+A swap is `setInstrument`, the same rewrite `/daw`'s `sound` patch performs: the
+sampler spec merged over the existing recipe so level and sends survive, every
+zone pushed into `foundSources` at vol 0.
+
+Two bugs, both silent, both the same shape as everything else this session:
+
+- **The axis holds synths as well as samplers.** `lead` is
+  `sub · reese · tb303 · acid · atmosphere · modeld` — synth model ids — and
+  `setInstrument` handled only samplers, so dialling onto one returned `false`
+  and did nothing. The dial moved, the label changed, the sound did not. The gate
+  now walks **every position on every dial** and demands the instrument actually
+  change.
+- **The synth branch then accepted anything.** `setInstrument(st, "melody",
+  "../etc/passwd")` wrote it straight into the recipe. A model is only real if one
+  of the 274 anchors uses it, which is the same "can only reach audio the project
+  ships" law `PATCH_KEYS` holds on the DAW.
+
 ### Gates
 
-`node test/unit/knobs.test.js` — 50 checks: every knob reads inside its range on
+`node test/unit/knobs.test.js` — 55 checks: every knob reads inside its range on
 all 274 and round-trips, no two knobs share a path, **each one moves its own field
 and nothing else**, submerge is byte-identical at 0 and monotone in all four
 projections, every anchor survives being fully submerged and still renders, and

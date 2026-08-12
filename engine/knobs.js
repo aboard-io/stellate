@@ -150,7 +150,76 @@
     return null;
   }
 
-  const api = { HEADLINE, TRIM, ALL, byId, SUBMERGE, instrumentAxis, positionOf, get, set, clamp };
+  // SWAP A VOICE'S INSTRUMENT. The same rewrite /daw's `sound` patch performs
+  // (app/daw/song.js applySound): the sampler spec is MERGED over the existing
+  // recipe so level and sends survive, and every zone is pushed into
+  // `foundSources` at vol 0, which is how the kernel's own pitched-to-sampler
+  // path feeds the decoder. Doing anything else here would either lose the mix
+  // or leave the zones undecodable — and an id that is not a key of the
+  // committed registry is refused, so a dial can only ever reach audio the
+  // project already ships.
+  function setInstrument(st, slot, id, K_) {
+    K_ = K_ || root.GenreKernel;
+    // THE AXIS HOLDS BOTH KINDS. Its members are whatever the anchors assign —
+    // sampler ids (`bandoneon`) and synth model ids (`tb303`, `pluck`, `reese`)
+    // side by side, because a family is a timbre neighbourhood and both live in
+    // it. Handling only samplers meant dialling onto a synth returned false and
+    // did NOTHING, silently: the dial moved, the label changed, the sound did
+    // not. A synth is the simpler case — name the model and drop the sampler.
+    const S = K_ && K_.SAMPLERS && K_.SAMPLERS[id];
+    if (!S || !S.zones) {
+      // AND IT IS VALIDATED. The synth branch used to accept any string, so
+      // `setInstrument(st, "melody", "../etc/passwd")` happily wrote it into the
+      // recipe — the same class of hole `PATCH_KEYS` exists to close on the DAW.
+      // A model is only real if one of the 274 anchors actually uses it, which
+      // means a dial can never reach audio the project does not ship.
+      if (!id || !knownModels(K_).has(id)) return false;
+      const I0 = st.instruments || (st.instruments = {});
+      if (!I0[slot]) return false;
+      I0[slot] = Object.assign({}, I0[slot], { model: id, sampler: null, dx7: null });
+      return true;
+    }
+    const zones = S.zones.map((z, i) => ({ srcId: "ins_" + id + "_" + i, root: z.root, lo: z.lo, hi: z.hi,
+      vlo: z.vlo, vhi: z.vhi, loop: !!z.loop, loopStart: z.ls, loopEnd: z.le, len: z.len, sr: S.sr }));
+    const I = st.instruments || (st.instruments = {});
+    I[slot] = Object.assign({}, I[slot] || {}, { model: "sampler", sampler: { id, sr: S.sr, zones }, dx7: null });
+    st.foundSources = st.foundSources || [];
+    const have = new Set(st.foundSources.map((x) => x.id));
+    S.zones.forEach((z, i) => {
+      const sid = "ins_" + id + "_" + i;
+      if (have.has(sid)) return;
+      have.add(sid);
+      st.foundSources.push({ id: sid, label: S.label || id, url: "",
+        samplePath: "found/samples/instruments/" + S.dir + "/" + z.file,
+        vol: 0, pitch: 1, stretch: 0.5, cutoff: 18000 });
+    });
+    return true;
+  }
+  // every synth model the catalogue actually uses, computed once
+  let _models = null;
+  function knownModels(K_) {
+    if (_models) return _models;
+    _models = new Set();
+    K_ = K_ || root.GenreKernel;
+    if (!K_ || !K_.GENRES) return _models;
+    for (const g of Object.keys(K_.GENRES)) {
+      const t = K_.track(g, { seed: 7 }), s = t.state || t, I = s.instruments || {};
+      for (const slot of ["bass", "melody", "pad"]) {
+        const r = I[slot];
+        if (r && r.model && !(r.sampler && r.sampler.id)) _models.add(r.model);
+      }
+    }
+    return _models;
+  }
+
+  // what a slot is playing right now, as an id
+  const instrumentOf = (st, slot) => {
+    const r = (st.instruments || {})[slot];
+    return r ? (r.sampler && r.sampler.id) || r.model : null;
+  };
+
+  const api = { HEADLINE, TRIM, ALL, byId, SUBMERGE, instrumentAxis, positionOf,
+    setInstrument, instrumentOf, knownModels, get, set, clamp };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.CsdKnobs = api;
 })(typeof window !== "undefined" ? window : globalThis);
