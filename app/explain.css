@@ -35,3 +35,22 @@
 .sp-chords { display: flex; flex-wrap: wrap; gap: 6px; }
 .sp-chord { padding: 8px 12px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px;
   font: 15px/1 "VT323", ui-monospace, monospace; letter-spacing: .05em; color: var(--cool); }
+
+/* THE KNOBS. A fill tile, not a range input — drag anywhere, relative,
+   double-tap to give the value back to the genre. The dot marks one you moved,
+   because without it you cannot tell your 0.4 from the genre's 0.4. */
+.sp-knobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 6px; }
+#spSubmerge { margin-top: 12px; grid-template-columns: 1fr; }
+.sp-knob { position: relative; height: 46px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--panel2); overflow: hidden; cursor: ew-resize; touch-action: none;
+  user-select: none; -webkit-user-select: none; }
+.sp-knob i { position: absolute; inset: 0 auto 0 0; background: #2e2752; display: block; }
+.sp-knob.mine i { background: #4a2143; }
+.sp-knob b, .sp-knob span { position: absolute; top: 0; bottom: 0; display: flex; align-items: center;
+  font: 600 11px/1 inherit; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+.sp-knob b { left: 11px; }
+.sp-knob span { right: 11px; font-family: "VT323", ui-monospace, monospace; font-size: 16px;
+  letter-spacing: .03em; text-transform: none; color: var(--ink); }
+.sp-knob.mine b, .sp-knob.mine span { color: var(--hot); }
+.sp-knob:focus-visible { outline: 2px solid var(--cool); outline-offset: 2px; }
+#spSubmerge .sp-knob { height: 54px; border-color: var(--cool); }

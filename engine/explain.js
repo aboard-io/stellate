@@ -196,7 +196,12 @@
     return out;
   }
 
-  const api = { sheet, buildStates, LAYERS, TEMPO, AMOUNT, SWING, KIT, BASS, MEL, FORM };
+  // WHICH KNOBS BELONG TO WHICH ROW of the sheet, so the page can put a control
+  // under the line that describes it rather than in a panel somewhere else.
+  // Keyed on the knob's own `group`, which engine/knobs.js already declares.
+  const ROW_KNOBS = { clock: "clock", space: "space", texture: "texture", drums: "edit" };
+
+  const api = { sheet, buildStates, LAYERS, ROW_KNOBS, TEMPO, AMOUNT, SWING, KIT, BASS, MEL, FORM };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.CsdExplain = api;
 })(typeof window !== "undefined" ? window : globalThis);
