@@ -525,9 +525,10 @@ docs in `docs/`.
     `genre-specs` `pos-coverage` `coords-coverage` `live-walk-parity`
     `boot-smoke` `doc-counts`) plus the MUSIC-MIND/speech organ gates
     `theory`/`pipes`/`speech`. Pure node, CI-safe.
-  - `test/unit/` (36) — pure-node gates outside the release suite
+  - `test/unit/` (46) — pure-node gates outside the release suite
     (`meter` `invariants` `musicality` `melody-cells` `melody-weave`
-    `theory-tables` `midi-mine` `corpus-db` `snare-law` `strip-fuzz` …).
+    `theory-tables` `midi-mine` `corpus-db` `snare-law` `strip-fuzz`
+    `nukernel` …).
     `npm run test:unit` runs them (concurrently, via `test/run.js`); before that
     runner existed nothing globbed them at all and 33 gates only ever ran if
     somebody named the file.
