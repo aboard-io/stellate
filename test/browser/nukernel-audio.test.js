@@ -99,10 +99,15 @@ function taps() {
   await page.locator(".slot").nth(0).click();
   await page.click("#seed");
 
+  // SWITCH WHILE IT PLAYS for all but the first: assets used to be fetched only
+  // by the transport start, so a genre chosen mid-play had no instrument and no
+  // kit and fell straight through to the oscillator. That is the exact path a
+  // person takes, and it was the only one not covered.
   const seen = { rms: {}, worst: null };
+  let started = false;
   for (const g of GENRES) {
     await page.locator(".pchip", { hasText: new RegExp("^" + g + "$") }).click();
-    await page.click("#play");
+    if (!started) { await page.click("#play"); started = true; }
     await page.waitForTimeout(3500);                 // decode + a bar or two
     let peak = 0;
     for (let i = 0; i < 10; i++) {
@@ -111,9 +116,8 @@ function taps() {
       if (r > peak) peak = r;
     }
     seen.rms[g] = +peak.toFixed(4);
-    await page.click("#play");                        // stop
-    await page.waitForTimeout(120);
   }
+  await page.click("#play");                          // stop
 
   // (A) nothing clamps
   const writes = await page.evaluate(() => window.__param.filter(p => /\/freq$/.test(p.path)));

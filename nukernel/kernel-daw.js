@@ -355,7 +355,12 @@ const DRUMDIR = "../found/samples/drums/";
 const DRUMFILE = { k: "kick.wav", s: "snare.wav", h: "hatClosed.wav",
                    o: "hatOpen.wav", c: "clap.wav", p: "rim.wav" };
 const drumBufs = new Map();                       // "kit|lane" -> AudioBuffer
+// Assets currently being fetched. A note whose instrument is IN FLIGHT is
+// dropped, not played on the fallback oscillator: a moment of silence while a
+// guitar decodes is honest, a beep in its place is not.
+const inFlight = new Set();
 async function loadKit(kit) {
+  inFlight.add("kit:" + kit);
   await Promise.all(Object.entries(DRUMFILE).map(async ([lane, file]) => {
     const key = kit + "|" + lane;
     if (drumBufs.has(key)) return;
@@ -365,10 +370,11 @@ async function loadKit(kit) {
       drumBufs.set(key, await ctx.decodeAudioData(await r.arrayBuffer()));
     } catch (e) { drumBufs.set(key, null); }
   }));
+  inFlight.delete("kit:" + kit);
 }
 function playDrum(kit, lane, when, acc, vel) {
   const buf = kit && drumBufs.get(kit + "|" + lane);
-  if (!buf) return false;
+  if (!buf) return !!kit && inFlight.has("kit:" + kit);
   const lvl = (vel == null ? 5 : vel) / 9;
   if (lvl <= 0.001) return false;
   const src = ctx.createBufferSource(); src.buffer = buf;
@@ -390,6 +396,7 @@ const specOf = id => {
 async function loadInstrument(id) {
   const spec = specOf(id);
   if (!spec) return false;
+  inFlight.add("ins:" + id);
   await Promise.all(spec.zones.map(async z => {
     const key = id + "|" + z.file;
     if (zoneBufs.has(key)) return;
@@ -399,6 +406,7 @@ async function loadInstrument(id) {
       zoneBufs.set(key, await ctx.decodeAudioData(await r.arrayBuffer()));
     } catch (e) { zoneBufs.set(key, null); }
   }));
+  inFlight.delete("ins:" + id);
   return true;
 }
 // every instrument the song needs, decoded before the transport starts
@@ -491,7 +499,7 @@ function playSampled(id, midi, when, durSec, vel, gainMul) {
   const z = SP.zoneFor(spec.zones, midi);
   if (!z) return false;
   const buf = zoneBufs.get(id + "|" + z.file);
-  if (!buf) return false;
+  if (!buf) return inFlight.has("ins:" + id);      // loading: drop it, do not beep
   const lead = SP.zoneLeadIn ? SP.zoneLeadIn(buf, z, buf.sampleRate, spec.sr) : 0;
   const leadSec = lead ? lead / (buf.sampleRate || spec.sr) : 0;
   sampler.note(buf, when, {
@@ -669,9 +677,11 @@ function frame() {
   for (const p of phEls) p.style.transform = "translateX(" + x + "px)";
   requestAnimationFrame(frame);
 }
-async function startAt(boxIndex) {
-  initAudio(); if (ctx.state === "suspended") ctx.resume();
-  compile();
+// Everything the CURRENT song needs that is not already decoded. Called before
+// the transport starts AND on every song change while it is running — a genre
+// switched mid-play needs its guitar and its kit exactly as much as one chosen
+// before pressing play, and only the first case used to fetch them.
+async function ensureAssets(announce) {
   const need = instrumentsInSong().filter(id => {
     const sp = specOf(id); return sp && sp.zones.some(z => !zoneBufs.has(id + "|" + z.file));
   });
@@ -682,13 +692,18 @@ async function startAt(boxIndex) {
     ...SONG.filter(x => x.genre && GENRES[x.genre].synth).map(x => GENRES[x.genre].synth),
     ...SONG.filter(x => BASSSYNTH[x.bassop]).map(x => BASSSYNTH[x.bassop])])];
   const wantSynth = synths.filter(sp => !synthNodes.has(sp.dsp));
-  if (need.length || wantSynth.length || kits.length) {
-    document.getElementById("readout").textContent =
-      "loading " + [...need, ...wantSynth.map(x => x.dsp), ...kits].join(", ") + "\u2026";
-    await Promise.all([...need.map(loadInstrument), ...wantSynth.map(loadSynth),
-                       ...kits.map(loadKit)]);
-    draw();
-  }
+  if (!need.length && !wantSynth.length && !kits.length) return false;
+  if (announce) document.getElementById("readout").textContent =
+    "loading " + [...need, ...wantSynth.map(x => x.dsp), ...kits].join(", ") + "\u2026";
+  await Promise.all([...need.map(loadInstrument), ...wantSynth.map(loadSynth),
+                     ...kits.map(loadKit)]);
+  return true;
+}
+
+async function startAt(boxIndex) {
+  initAudio(); if (ctx.state === "suspended") ctx.resume();
+  compile();
+  if (await ensureAssets(true)) draw();
   if (!TL.length) {
     document.getElementById("readout").textContent =
       "nothing to play — click a genre to fill a box first";
@@ -737,7 +752,13 @@ function toggle(kind, value) {
   else if (kind === "artic") sec.artic = sec.artic === value ? null : value;
   songChanged();
 }
-function songChanged() { drawSong(); draw(); drawSlots(); save(); if (playing) compile(); }
+function songChanged() {
+  drawSong(); draw(); drawSlots(); save();
+  if (playing) {
+    compile();
+    ensureAssets(false).then(ok => { if (ok) draw(); });   // fetch what the change needs
+  }
+}
 
 /* ---------- the song row ---------- */
 function drawSong() {
