@@ -5,7 +5,7 @@
 // Boxes drag to REORDER, and only to reorder — nothing is dragged into them.
 // Click a box to play from there; double-click to loop it alone.
 const { harm, render, drums, bass, ROMAN, word, drop, envelope,
-        reverse, invert, rotate, fill, spread, KITOPS } = window.NuKernel;
+        reverse, invert, rotate, fill, spread, KITOPS, repeat, del } = window.NuKernel;
 const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL } = window.NuGenres;
 
 const DEFAULT_BPM = 126, NSLOTS = 8, NBOXES = 4;
@@ -41,7 +41,7 @@ const okBox = b => b && typeof b === "object" &&
   Object.prototype.hasOwnProperty.call(GENRES, b.genre) &&
   Array.isArray(b.slots) && b.slots.every(i => Number.isInteger(i) && i >= 0 && i < NSLOTS) &&
   Number.isFinite(b.len) && Number.isFinite(b.nudge) &&
-  Array.isArray(b.ops) && b.ops.every(o => Object.prototype.hasOwnProperty.call(OPS, o)) &&
+  Array.isArray(b.ops) &&
   (b.env === null || b.env === "in" || b.env === "out") &&
   (b.mode == null || Object.prototype.hasOwnProperty.call(MODES, b.mode)) &&
   (b.rate == null || Object.prototype.hasOwnProperty.call(RATES, b.rate)) &&
@@ -54,6 +54,11 @@ function load() {
   if (!raw || raw.v !== 1) return false;
   if (!Array.isArray(raw.slots) || raw.slots.length !== NSLOTS || !raw.slots.every(okPhrase)) return false;
   if (!Array.isArray(raw.song) || !raw.song.length || !raw.song.every(okBox)) return false;
+  // ops are FILTERED, not validated: the operator table changes as the palette
+  // does, and a song should lose an obsolete chip rather than lose itself.
+  for (const b of raw.song) b.ops = b.ops.filter(o => Object.prototype.hasOwnProperty.call(OPS, o));
+  for (const p2 of raw.slots) { if (!p2.inc) p2.inc = new Array(16).fill(0);
+                                if (!p2.stk) p2.stk = new Array(16).fill(0); }
   SLOTS = raw.slots; SONG = raw.song; SUBJ = SLOTS[slot];
   if (Number.isFinite(raw.bpm) && raw.bpm >= 70 && raw.bpm <= 160) {
     document.getElementById("bpm").value = raw.bpm;
@@ -69,7 +74,7 @@ function load() {
 /* ---------- phrases ---------- */
 const z = () => new Array(16).fill(0);
 const blank = () => ({ deg: z(), oct: z(), vel: new Array(16).fill(5),
-                       gate: z(), acc: z(), sld: z() });
+                       inc: z(), stk: z(), gate: z(), acc: z(), sld: z() });
 const isBlank = p => p.gate.every(g => !g);
 
 let SLOTS = Array.from({ length: NSLOTS }, blank);
@@ -85,6 +90,7 @@ function randomPhrase() {
     p.acc[i] = p.gate[i] && r(10) < 3 ? 1 : 0;
     p.sld[i] = p.gate[i] && r(10) < 2 ? 1 : 0;
     p.vel[i] = p.acc[i] ? 8 + r(2) : 3 + r(5);
+    p.inc[i] = r(12) === 0 ? (r(2) ? 1 : -1) : 0;   // a ramp on the odd step, not everywhere
   }
   return p;
 }
@@ -96,14 +102,21 @@ function randomPhrase() {
 // its whole form — the box just decides which part of it you hear.
 // Order matters and these do not commute: drop 2 then add 3 is not add 3 then
 // drop 2. Chips apply in the order you switch them on.
-const OPS = { rev: reverse(), inv: invert(4),
-              fill1: fill(1), fill2: fill(2), fill3: fill(3),
-              drop1: drop(1), drop2: drop(2), drop3: drop(3),
-              wide: spread(2), tight: spread(0.5) };
+// FOUR LIST FAMILIES, 1..4 each. repeat and delete change the SEQUENCE — repeat
+// stretches every element, delete removes every nth and CLOSES the gap, which is
+// the part `drop` never did — and raise/lower move it in scale degrees. Together
+// with the inc/stk ramps this is the arpeggiator: restructure the list, then let
+// it climb.
+const OPS = { rev: reverse(), inv: invert(4), wide: spread(2), tight: spread(0.5) };
 const OPLABEL = { rev: "reverse", inv: "invert",
-                  fill1: "add 1", fill2: "add 2", fill3: "add 3",
-                  drop1: "drop 1", drop2: "drop 2", drop3: "drop 3",
                   wide: "spread \u00d72", tight: "spread \u00f72" };
+for (let n = 1; n <= 4; n++) {
+  OPS["rep" + n] = repeat(n);   OPLABEL["rep" + n] = "repeat " + n;
+  OPS["del" + n] = del(n);      OPLABEL["del" + n] = "delete " + n;
+  OPS["up" + n] = transposeN(n); OPLABEL["up" + n] = "raise " + n;
+  OPS["dn" + n] = transposeN(-n); OPLABEL["dn" + n] = "lower " + n;
+}
+function transposeN(n) { return p => ({ ...p, deg: p.deg.map(d => d + n) }); }
 const ENVLABEL = { in: "fade in", out: "fade out" };
 
 const RATES = { half: 0.5, dbl: 2 };
@@ -117,14 +130,14 @@ const BASSOPS = { nobass: "no bass", walk: "walking", octaves: "octaves",
 // genres are legible as what they add to that.
 const emptyBox = () => ({ genre: "simple", slots: [], len: GENRES.simple.bars,
                           nudge: 0, ops: [], env: null, mode: null, rate: null, scale: null,
-                          kit: null, bassop: null });
+                          kit: null, bassop: null, clamp: null });
 
 // The genre a box actually renders with: its own definition, plus whatever the
 // box overrides. Mode and tempo are not pattern operators and not envelopes —
 // they are the third kind, a change to the GENRE the phrase is read through.
 const genreOf = sec => {
   const g = GENRES[sec.genre];
-  if (!sec.mode && !sec.rate && !sec.scale && !sec.kit && !sec.bassop) return g;
+  if (!sec.mode && !sec.rate && !sec.scale && !sec.kit && !sec.bassop && !sec.clamp) return g;
   const out = { ...g, ...(sec.mode ? { mode: MODES[sec.mode] } : {}),
                 ...(sec.scale ? { scale: SCALES[sec.scale] } : {}),
                 ...(sec.rate ? { rate: g.rate * RATES[sec.rate] } : {}) };
@@ -132,6 +145,7 @@ const genreOf = sec => {
     out.kit = KITOPS[sec.kit](g.kit || {}); out.fill = null;
     if (sec.kit === "nodrums") out.ghost = null;   // the ghost lane is not in the kit
   }
+  if (sec.clamp != null) out.incClamp = +sec.clamp;
   if (sec.bassop === "nobass") out.nobass = true;
   else if (sec.bassop === "reese" || sec.bassop === "wobble") out.nobass = false;
   else if (sec.bassop) { out.nobass = false; out.bassStyle = sec.bassop; }
@@ -651,6 +665,7 @@ function toggle(kind, value) {
   else if (kind === "scale") sec.scale = sec.scale === value ? null : value;
   else if (kind === "kit") sec.kit = sec.kit === value ? null : value;
   else if (kind === "bassop") sec.bassop = sec.bassop === value ? null : value;
+  else if (kind === "clamp") sec.clamp = sec.clamp === value ? null : value;
   songChanged();
 }
 function songChanged() { drawSong(); draw(); drawSlots(); save(); if (playing) compile(); }
@@ -710,6 +725,8 @@ function drawSong() {
     const tags = document.createElement("div"); tags.className = "btags";
     for (const o of sec.ops) tags.append(Object.assign(document.createElement("span"),
       { className: "tag", textContent: OPLABEL[o] }));
+    if (sec.clamp != null) tags.append(Object.assign(document.createElement("span"),
+      { className: "tag clp", textContent: "clamp " + (sec.clamp === "0" ? "off" : sec.clamp) }));
     if (sec.kit) tags.append(Object.assign(document.createElement("span"),
       { className: "tag kit", textContent: KITLABEL[sec.kit] }));
     if (sec.bassop) tags.append(Object.assign(document.createElement("span"),
@@ -842,7 +859,8 @@ function drawPalette() {
         : kind === "rate" ? sec.rate === v
         : kind === "scale" ? sec.scale === v
         : kind === "kit" ? sec.kit === v
-        : kind === "bassop" ? sec.bassop === v : false;
+        : kind === "bassop" ? sec.bassop === v
+        : kind === "clamp" ? sec.clamp === v : false;
       b.classList.toggle("on", !!on);
       b.setAttribute("aria-pressed", String(!!on));
     });
@@ -865,8 +883,14 @@ function drawPalette() {
   };
   group("genre", Object.keys(GENRES).map(k =>
     ["genre", k, GENRES[k].label, sec.genre === k, "gen"]));
-  group("pattern", Object.keys(OPS).filter(k => k !== "wide" && k !== "tight")
-    .map(k => ["op", k, OPLABEL[k], sec.ops.includes(k), ""]));
+  group("pattern", ["rev", "inv"].map(k => ["op", k, OPLABEL[k], sec.ops.includes(k), ""]));
+  for (const fam of [["repeat", "rep"], ["delete", "del"], ["raise", "up"], ["lower", "dn"]])
+    group(fam[0], [1, 2, 3, 4].map(n =>
+      ["op", fam[1] + n, String(n), sec.ops.includes(fam[1] + n), "lst"]));
+  group("ramp clamp", [["clamp", "0", "off", sec.clamp === "0", "clp"],
+                       ["clamp", "2", "2", sec.clamp === "2", "clp"],
+                       ["clamp", "4", "4", sec.clamp === "4", "clp"],
+                       ["clamp", "8", "8", sec.clamp === "8", "clp"]]);
   group("range", [
     ["op", "wide", OPLABEL.wide, sec.ops.includes("wide"), "rng"],
     ["op", "tight", OPLABEL.tight, sec.ops.includes("tight"), "rng"],
@@ -916,8 +940,8 @@ function drawSlots() {
 }
 
 /* ---------- slot editor ---------- */
-const ROWS = ["deg", "oct", "vel", "gate", "acc", "sld"];
-const RANGE = { deg: [-7, 7], oct: [-2, 2], vel: [0, 9] };
+const ROWS = ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"];
+const RANGE = { deg: [-7, 7], oct: [-2, 2], vel: [0, 9], inc: [-3, 3], stk: [-2, 2] };
 const clamp = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
 
 function drawEditor() {
@@ -936,6 +960,7 @@ function drawEditor() {
       if (num) {
         b.className = "cell deg" + (SUBJ.gate[i] ? "" : " rest") + (val === 0 ? " zero" : "");
         b.textContent = key === "vel" ? String(val) : (val > 0 ? "+" + val : String(val));
+        if (key === "inc" || key === "stk") b.classList.add("ramp");
         b.setAttribute("aria-label", "step " + (i + 1) + " " + key + " " + val);
       } else {
         b.className = "cell" + (val ? " on" : "");

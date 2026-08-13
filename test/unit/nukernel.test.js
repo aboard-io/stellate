@@ -38,6 +38,8 @@ const P = {
   deg:  [0, 3, -2, 5, 4, 0, -4, 2, 7, 3, 0, -1, 2, 6, 3, 1],
   oct:  [0, 0, 1, 0, -1, 0, 0, 0, 1, 0, 0, 0, -1, 1, 0, 0],
   vel:  [9, 5, 3, 8, 6, 4, 8, 2, 9, 6, 4, 7, 8, 3, 6, 5],
+  inc:  [0, 1, 0, 0, -1, 0, 0, 0, 2, 0, 0, 0, 0, -1, 0, 0],
+  stk:  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   gate: [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0],
   acc:  [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0],
   sld:  [0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0],
@@ -51,18 +53,23 @@ const allEvents = (p, g, bars) =>
    dead ghost layer both needed and neither had. */
 console.log("sensitivity — perturbing each vector must change the render");
 for (const gk of GK) {
-  const g = GENRES[gk], base = sig(allEvents(P, g, g.bars));
-  for (const key of ["deg", "oct", "vel", "gate", "acc", "sld"]) {
+  // A RAMP NEEDS MORE THAN ONE LOOP to be visible — it accumulates with the loop
+  // index, so in a one-bar form (Simple) it multiplies by zero and is correctly
+  // inert. Render four bars so inc/stk have somewhere to go.
+  const g = GENRES[gk], bars = Math.max(4, g.bars), base = sig(allEvents(P, g, bars));
+  for (const key of ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"]) {
     const q = clone(P);
     if (key === "deg") q.deg = q.deg.map(d => d + 2);
     else if (key === "oct") q.oct = q.oct.map(() => 1);
     else if (key === "vel") q.vel = q.vel.map(() => 1);
+    else if (key === "inc") q.inc = q.inc.map((_, i) => (i === 0 ? 2 : 0));
+    else if (key === "stk") q.stk = q.stk.map((_, i) => (i === 0 ? 1 : 0));
     else q[key] = q[key].map((b, i) => (i % 2 ? b : b ? 0 : 1));
     const pad = gk === "vaporwave" && (key === "deg" || key === "oct");
     // a vaporwave PAD reads chord tones, so deg/oct legitimately do not reach
     // voice 0 — but they must still reach the line voice, so the whole-render
     // signature has to move regardless
-    ok(sig(allEvents(q, g, g.bars)) !== base,
+    ok(sig(allEvents(q, g, bars)) !== base,
        gk + ": changing " + key + " did not change the rendered events" + (pad ? " (pad genre)" : ""));
   }
 }
@@ -118,9 +125,10 @@ const OPS = [K.rotate(5), K.rotate(-3), K.reverse(), K.transpose(9), K.transpose
              K.invert(0), K.invert(4), K.complement("gate"), K.complement("acc"),
              K.excerpt(2, 8), K.drop(1), K.drop(2), K.drop(3),
              K.fill(1), K.fill(2), K.fill(3), K.spread(2), K.spread(0.5), K.spread(0),
+             K.repeat(1), K.repeat(2), K.repeat(4), K.del(1), K.del(2), K.del(4),
              K.only("acc", K.rotate(3)),
              K.crossmap("acc", "sld")];
-const VECS = ["deg", "oct", "vel", "gate", "acc", "sld"];
+const VECS = ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"];
 const edge = [P, K.mapv(P, v => v.map(() => 0)), K.mapv(P, v => v.map(() => 1)),
               { ...clone(P), gate: new Array(N).fill(0) }];
 for (const op of OPS) {

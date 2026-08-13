@@ -9,6 +9,8 @@
 //         same phrase survives being read in any genre or any scale.
 //   oct   octave displacement — SIGNED, typically -2..+2
 //   vel   velocity 0..9 — CONTINUOUS level, the dynamics of the line
+//   inc   per-step RAMP: this step climbs inc[i] scale degrees every loop
+//   stk   per-step STICKY: the WHOLE sequence climbs sum(stk) degrees a loop
 //   gate  note or rest                   (binary)
 //   acc   accent                         (binary)
 //   sld   slide INTO this step           (binary, EDGE-valued — see reverse)
@@ -30,7 +32,9 @@
   // ---- indexing ------------------------------------------------------------
   // Patterns are necklaces, not lists: they have no ends. Every read is cyclic.
   const at = (v, i) => v[((i % v.length) + v.length) % v.length];
+  const Z = p => p.gate.map(() => 0);
   const mapv = (p, f) => ({ deg: f(p.deg), oct: f(p.oct), vel: f(p.vel || p.gate.map(() => 5)),
+                            inc: f(p.inc || Z(p)), stk: f(p.stk || Z(p)),
                             gate: f(p.gate), acc: f(p.acc), sld: f(p.sld) });
 
   // ---- the group -----------------------------------------------------------
@@ -73,6 +77,22 @@
   // time. Without this combinator that discipline is not even expressible —
   // every operator above rewrites all five at once.
   const only = (k, op) => p => ({ ...p, [k]: op(p)[k] });
+
+  // LIST OPERATIONS. repeat and del change the SEQUENCE, not just its gates —
+  // they stretch and close it, and every vector moves together, which is why
+  // they are mapv and not a gate mask. drop left a hole where a note had been;
+  // del closes the hole and drags the rest of the phrase forward, which is what
+  // makes it worth having. Both re-cycle to the original length, so a pattern is
+  // always the same sixteen steps and the operators stay closed.
+  const repeat = n => p => mapv(p, v => {
+    const out = [];
+    for (const x of v) for (let k = 0; k < n; k++) out.push(x);
+    return v.map((_, i) => out[i % out.length]);
+  });
+  const del = n => p => mapv(p, v => {
+    const out = v.filter((_, i) => n <= 1 || (i + 1) % n !== 0);
+    return out.length ? v.map((_, i) => out[i % out.length]) : v.map(() => 0);
+  });
 
   // DENSITY — the thinning/filling pair. Both are gate masks and both are LOSSY:
   // after either you cannot tell which gates were originally set, so they are
@@ -148,6 +168,18 @@
   // renders exactly as it did.
   const vel = (p, i) => (p.vel ? p.vel[i] : 5);
 
+  // THE RAMP. inc[i] moves THIS step every loop; stk moves the WHOLE sequence
+  // every loop, by the sum of its column. Both accumulate with the loop index,
+  // which is what makes a sixteen-step phrase into an arpeggio that goes
+  // somewhere — and why the clamp matters: unclamped, inc 1 on four steps walks
+  // off the instrument inside a minute.
+  const rampOf = (p, i, loop, clamp) => {
+    const stick = p.stk ? p.stk.reduce((a, x) => a + x, 0) : 0;
+    const raw = ((p.inc ? p.inc[i] : 0) + stick) * loop;
+    if (!clamp) return raw;
+    return Math.max(-clamp, Math.min(clamp, raw));
+  };
+
   const swing = (g, i) => (i % 2) * (g.swing || 0);
 
   // ---- harmony: a MODE, not a layer ---------------------------------------
@@ -213,9 +245,10 @@
         // again by that root is circular and would double the motion; under
         // `modal` there is nothing to follow.
         const rootShift = g.harmony === "cycle" ? mp(r, md) : 0;
+        const clamp = g.incClamp == null ? 7 : g.incClamp;   // 0 = let it run
         // one octave shift for the whole line, from its degree-pitch mean
         const on = [];
-        for (let i = 0; i < N; i++) if (p.gate[i]) on.push(pitch(p.deg[i], sc));
+        for (let i = 0; i < N; i++) if (p.gate[i]) on.push(pitch(p.deg[i] + rampOf(p, i, b, clamp), sc));
         const mean = on.length ? on.reduce((a, b2) => a + b2, 0) / on.length : 0;
         const shift = 12 * Math.round((ctr - mean) / 12);
         // A PAD IS ONE CHORD PER BAR, HELD. Firing it on every gated step of the
@@ -237,7 +270,7 @@
           const ns = [null];                             // pitched: registered below
           for (const n of ns) {
             const pitchOf = n == null
-              ? pitch(p.deg[i], sc) + shift + rootShift + 12 * p.oct[i]
+              ? pitch(p.deg[i] + rampOf(p, i, b, clamp), sc) + shift + rootShift + 12 * p.oct[i]
               : fold(n, ctr);                                    // chords voice per note
             ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: steps * legato / g.rate, v,
                       n: pitchOf, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });
@@ -357,7 +390,7 @@
     });
   };
 
-  const api = { at, mapv, spans, vel, drop, fill, spread, envelope, KITOPS, mapKit, swing, rotate, reverse, transpose, invert, complement,
+  const api = { at, mapv, spans, vel, drop, fill, spread, repeat, del, rampOf, envelope, KITOPS, mapKit, swing, rotate, reverse, transpose, invert, complement,
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, pitch, mp, fold, near,
                 harm, render, drums, bass };
