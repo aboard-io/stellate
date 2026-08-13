@@ -3,61 +3,60 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>One Phrase, Four Genres — nukernel</title>
-<meta name="description" content="A 70-line kernel: one 16-step seed phrase rendered as a fugue, an acid house track, or vaporwave.">
+<title>Song Boxes — nukernel</title>
+<meta name="description" content="Build a song by dragging genres, phrases and transforms into boxes. One 16-step phrase reads as a fugue, acid house, vaporwave or twelve-bar blues.">
 <meta name="robots" content="noindex">
 <link rel="stylesheet" href="kernel-daw.css">
 </head>
 <body>
+
 <div class="wrap">
   <div class="mast">
     <div>
-      <h1>One phrase, <em>four genres</em></h1>
-      <p class="sub">Sixteen steps of degree, octave, velocity, gate, accent and slide go in;
-        a fugue, an acid track, a vaporwave loop and a twelve-bar blues come out — same seed,
-        different operator words, different grid, different source of harmony.</p>
+      <h1>Drag a genre <em>into a box</em></h1>
+      <p class="sub">A song is a row of boxes. Drop a genre, a phrase and any transforms into each one,
+        then drag its right edge to make it longer. The same sixteen steps read four different ways.</p>
     </div>
     <div class="count">one phrase · <b>8</b> operators · <b>4</b> genres</div>
   </div>
 
   <div class="bar">
-    <div class="tabs" id="tabs"></div>
     <button class="btn go" id="play">▶ Play</button>
-    <button class="btn" id="mode" aria-pressed="false">Loop</button>
     <div class="knob"><label for="bpm">Tempo</label>
       <input type="range" id="bpm" min="70" max="160" value="126"><b id="bpmv">126</b></div>
     <div class="spacer"></div>
-    <button class="btn" id="seed">Seed</button>
-    <button class="btn" id="rnd">Random</button>
-    <button class="btn" id="clear">Clear</button>
     <button class="btn" id="reset">Reset all</button>
+  </div>
+
+  <div class="ed songwrap">
+    <div class="edhead">
+      <h2>Song</h2>
+      <p>Drop things in. Drag the right edge to lengthen. Click a box to see it below.
+         On a touchscreen, tap a chip to pick it up, then tap a box.</p>
+      <span class="spacer"></span>
+      <button class="btn" id="addbox">+ Box</button>
+    </div>
+    <div class="song" id="song"></div>
+    <div class="palette" id="palette"></div>
   </div>
 
   <div class="ed">
     <div class="edhead">
       <h2>Phrases</h2>
-      <p>Eight slots, all empty to start. Pick one, then <b>Seed</b>, <b>Random</b> or <b>Clear</b> it.
-         The selected slot is what plays.</p>
+      <p>Eight slots. Click one to edit it and pick it up; drag it into a box.</p>
     </div>
     <div class="slots" id="slots"></div>
     <div class="edhead">
-      <h2>Slot editor</h2>
+      <h2>Editing <span id="edslot">phrase 1</span></h2>
       <p>Click <b>deg</b>, <b>oct</b> and <b>vel</b> to raise, shift-click to lower — deg spans
          −7…+7, oct −2…+2, vel 0…9. Click <b>gate / acc / sld</b> to toggle. <b>vel</b> is how loud;
          <b>acc</b> is the 303 accent, which opens the filter and is what operators key on.</p>
+      <span class="spacer"></span>
+      <button class="btn" id="seed">Seed</button>
+      <button class="btn" id="rnd">Random</button>
+      <button class="btn" id="clear">Clear</button>
     </div>
     <div class="steps"><div class="stepgrid" id="stepgrid"></div></div>
-  </div>
-
-  <div class="ed" id="songpanel" hidden>
-    <div class="edhead">
-      <h2>Song</h2>
-      <p>Sections play in order, then the song repeats. Each is a genre, a phrase and its transforms.
-         <b>Repeat</b> counts whole loops of the genre, so a twelve-bar blues is never cut to eight.</p>
-      <span class="spacer"></span>
-      <button class="btn" id="addsec">+ Section</button>
-    </div>
-    <div class="seclist" id="seclist"></div>
   </div>
 
   <div class="daw">
@@ -67,16 +66,17 @@
   </div>
   <p class="readout" id="readout"></p>
 
-
   <details>
-    <summary>What each genre actually asks for</summary>
+    <summary>What the selected box asks for</summary>
     <pre id="src"></pre>
   </details>
 
-  <p class="note-b">Accents are outlined in amber. Slides ramp pitch from the previous note.
-    The bass lane is the harmony read at low density — in the fugue its roots are never written down,
-    they're computed from how far each voice transposed the subject on entry.</p>
+  <p class="note-b">Accents are outlined in amber, drum fills in orange, and note opacity is velocity —
+    so a fade is visible as well as audible. The bass lane is the harmony read at low density; in the
+    fugue its roots are never written down, they are computed from how far each voice transposed the
+    subject on entry.</p>
 </div>
+
 <!-- order matters: the algebra, then the genre table, then the UI -->
 <script src="kernel.js"></script>
 <script src="genres.js"></script>
