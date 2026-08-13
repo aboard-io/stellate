@@ -49,7 +49,11 @@ const okPhrase = p => p && typeof p === "object" &&
 const okBox = b => b && typeof b === "object" &&
   Array.isArray(b.stack) && b.stack.length &&
   b.stack.every(e => e && Object.prototype.hasOwnProperty.call(GENRES, e.g) &&
-    Array.isArray(e.slots) && e.slots.every(i => Number.isInteger(i) && i >= 0 && i < NSLOTS)) &&
+    Array.isArray(e.slots) && e.slots.every(i => Number.isInteger(i) && i >= 0 && i < NSLOTS) &&
+    (e.ops == null || Array.isArray(e.ops)) &&
+    (e.scale == null || Object.prototype.hasOwnProperty.call(SCALES, e.scale)) &&
+    (e.artic == null || ["staccato", "normal", "legato", "tie"].includes(e.artic)) &&
+    (e.cmode == null || ["hold", "loop", "reverse"].includes(e.cmode))) &&
   Number.isFinite(b.len) && Number.isFinite(b.nudge) &&
   Array.isArray(b.ops) &&
   (b.env === null || b.env === "in" || b.env === "out") &&
@@ -79,7 +83,9 @@ function applyState(raw) {
   // ops are FILTERED, not validated: the operator table changes as the palette
   // does, and a song should lose an obsolete chip rather than lose itself.
   for (const b of raw.song) {
-    b.ops = b.ops.filter(o => Object.prototype.hasOwnProperty.call(OPS, o));
+    b.ops = (b.ops || []).filter(o => Object.prototype.hasOwnProperty.call(OPS, o));
+    for (const e of b.stack) if (e.ops)
+      e.ops = e.ops.filter(o => Object.prototype.hasOwnProperty.call(OPS, o));
   }
   for (const p2 of raw.slots) { if (!p2.inc) p2.inc = new Array(16).fill(0);
                                 if (!p2.stk) p2.stk = new Array(16).fill(0); }
@@ -204,20 +210,21 @@ const emptyBox = () => ({ stack: [{ g: "simple", slots: [] }], len: GENRES.simpl
 // The genre a box actually renders with: its own definition, plus whatever the
 // box overrides. Mode and tempo are not pattern operators and not envelopes —
 // they are the third kind, a change to the GENRE the phrase is read through.
-const genreOf = sec => {
-  const g = GENRES[gid(sec)];
-  if (!sec.mode && !sec.rate && !sec.scale && !sec.kit && !sec.bassop
-      && !sec.clamp && !sec.cmode && !sec.artic) return g;
+const genreOf = (sec, ent) => {
+  const key = (ent && ent.g) || gid(sec);
+  const g = GENRES[key];
+  const scale = optOf(sec, ent, "scale"), artic = optOf(sec, ent, "artic");
+  const clamp = optOf(sec, ent, "clamp"), cmode = optOf(sec, ent, "cmode");
   const out = { ...g, ...(sec.mode ? { mode: MODES[sec.mode] } : {}),
-                ...(sec.scale ? { scale: SCALES[sec.scale] } : {}),
+                ...(scale ? { scale: SCALES[scale] } : {}),
                 ...(sec.rate ? { rate: g.rate * RATES[sec.rate] } : {}) };
   if (sec.kit) {
     out.kit = KITOPS[sec.kit](g.kit || {}); out.fill = null;
     if (sec.kit === "nodrums") out.ghost = null;   // the ghost lane is not in the kit
   }
-  if (sec.clamp != null) out.incClamp = +sec.clamp;
-  if (sec.cmode) out.incMode = sec.cmode;
-  if (sec.artic) out.artic = sec.artic;
+  if (clamp != null) out.incClamp = +clamp;
+  if (cmode) out.incMode = cmode;
+  if (artic) out.artic = artic;
   if (sec.bassop === "nobass") out.nobass = true;
   else if (sec.bassop === "reese" || sec.bassop === "wobble") out.nobass = false;
   else if (sec.bassop) { out.nobass = false; out.bassStyle = sec.bassop; }
@@ -227,6 +234,21 @@ let SONG = Array.from({ length: NBOXES }, emptyBox);
 let viewSec = 0, playingSec = -1, loopOnly = null, dragFrom = null, pendingStart = null;
 
 const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
+// WHICH OPTIONS BELONG TO A LAYER, and which to the box. The split is the same
+// rule stacking was built on: the authority owns everything that must be shared
+// for the box to be one piece of music — the grid, the groove, the key centre,
+// the section envelope — and everything else is per layer.
+//
+//   per layer   pattern ops, split/delete, spread, articulation, ramp limit
+//               and mode, subject scale
+//   per box     tempo, drums, bass, chord mode, fade, length, nudge
+//
+// A layer field left unset INHERITS the box's, so nothing diverges by accident
+// — which is how the fugue ended up reading pentatonic against a quartal riff.
+const LAYER_OPTS = new Set(["op", "artic", "clamp", "cmode", "scale"]);
+const optOf = (sec, ent, k) => (ent && ent[k] != null ? ent[k] : sec[k]);
+const opsOf = (sec, ent) => (ent && ent.ops ? ent.ops : sec.ops);
+
 const gid = sec => (sec.stack && sec.stack[0] && sec.stack[0].g) || null;
 const stackOf = sec => sec.stack || [];
 const focusOf = sec => Math.min(sec.focus || 0, stackOf(sec).length - 1);
@@ -250,7 +272,7 @@ function sectionEvents(sec) {
   const barSteps = 16 / g.rate, from = nudge * barSteps, to = (nudge + len) * barSteps;
 
   const phrasesFor = e => (e.slots.length ? e.slots : [null])
-    .map(i => word(i == null ? blank() : SLOTS[i], sec.ops.map(o => OPS[o])));
+    .map(i => word(i == null ? blank() : SLOTS[i], opsOf(sec, e).map(o => OPS[o])));
   const phrases = phrasesFor(stackOf(sec)[0]);
   const nP = phrases.length, out = [];
 
@@ -286,9 +308,12 @@ function sectionEvents(sec) {
     // sounding at once, which is what "out of tune" was. `mode` was inherited
     // and `scale` was not, which is exactly the kind of near-miss that reads as
     // a tuning problem rather than a missing line of code.
+    // the layer's OWN scale / articulation / ramp limit, each falling back to
+    // the box's; the authority still owns harmony, rate and the grid
+    const lo = genreOf(sec, ent);
     const lg = { ...L, harmony: g.harmony, roots: g.roots, rate: g.rate,
-                 mode: g.mode, scale: g.scale, incClamp: g.incClamp,
-                 incMode: g.incMode, artic: g.artic, kit: {}, ghost: null,
+                 mode: g.mode, scale: lo.scale, incClamp: lo.incClamp,
+                 incMode: lo.incMode, artic: lo.artic, kit: {}, ghost: null,
                  nobass: true, reg: v => L.reg(v) + 1 };
     // the layer reads ITS OWN phrases, dealt across ITS voices
     lPh.forEach((ph, pi) => {
@@ -426,7 +451,7 @@ function draw() {
   if (!ev.length) quiet.push("no events at all");
   else {
     if (!ev.some(e => e.kind === "line")) quiet.push(
-      sec.ops.includes("drop1") ? "no melody (drop 1)"
+      opsOf(sec, stackOf(sec)[0]).includes("drop1") ? "no melody (drop 1)"
         : !stackOf(sec).some(e => e.slots.length) ? "no melody (no phrase)" : "no melody");
     if (ev.every(e => (e.vel == null ? 5 : e.vel) === 0)) quiet.push("velocity 0 (a completed fade)");
   }
@@ -867,17 +892,31 @@ function toggle(kind, value) {
   } else if (kind === "focus") {
     sec.focus = +value;                        // which layer the phrase rail edits
   } else if (kind === "op") {
-    const i = sec.ops.indexOf(value);
-    i < 0 ? sec.ops.push(value) : sec.ops.splice(i, 1);
+    const ent = focused(sec);
+    if (!ent.ops) ent.ops = [...(sec.ops || [])];       // first edit forks the box's
+    const i = ent.ops.indexOf(value);
+    i < 0 ? ent.ops.push(value) : ent.ops.splice(i, 1);
   } else if (kind === "env") sec.env = sec.env === value ? null : value;
   else if (kind === "mode") sec.mode = sec.mode === value ? null : value;
   else if (kind === "rate") sec.rate = sec.rate === value ? null : value;
-  else if (kind === "scale") sec.scale = sec.scale === value ? null : value;
+  else if (kind === "scale") {
+    const ent = focused(sec);
+    ent.scale = optOf(sec, ent, "scale") === value ? null : value;
+  }
   else if (kind === "kit") sec.kit = sec.kit === value ? null : value;
   else if (kind === "bassop") sec.bassop = sec.bassop === value ? null : value;
-  else if (kind === "clamp") sec.clamp = sec.clamp === value ? null : value;
-  else if (kind === "cmode") sec.cmode = sec.cmode === value ? null : value;
-  else if (kind === "artic") sec.artic = sec.artic === value ? null : value;
+  else if (kind === "clamp") {
+    const ent = focused(sec);
+    ent.clamp = optOf(sec, ent, "clamp") === value ? null : value;
+  }
+  else if (kind === "cmode") {
+    const ent = focused(sec);
+    ent.cmode = optOf(sec, ent, "cmode") === value ? null : value;
+  }
+  else if (kind === "artic") {
+    const ent = focused(sec);
+    ent.artic = optOf(sec, ent, "artic") === value ? null : value;
+  }
   songChanged();
 }
 function songChanged() {
@@ -942,20 +981,23 @@ function drawSong() {
     box.append(prog);
 
     const tags = document.createElement("div"); tags.className = "btags";
-    for (const o of sec.ops) tags.append(Object.assign(document.createElement("span"),
+    const fe = i === viewSec ? focused(sec) : stackOf(sec)[0];
+    for (const o of opsOf(sec, fe)) tags.append(Object.assign(document.createElement("span"),
       { className: "tag", textContent: OPLABEL[o] }));
-    if (sec.clamp != null) tags.append(Object.assign(document.createElement("span"),
-      { className: "tag clp", textContent: "limit " + (sec.clamp === "0" ? "off" : sec.clamp) }));
-    if (sec.cmode) tags.append(Object.assign(document.createElement("span"),
-      { className: "tag clp", textContent: sec.cmode }));
-    if (sec.artic) tags.append(Object.assign(document.createElement("span"),
-      { className: "tag art", textContent: sec.artic }));
+    const fclamp = optOf(sec, fe, "clamp"), fcmode = optOf(sec, fe, "cmode"),
+          fartic = optOf(sec, fe, "artic"), fscale = optOf(sec, fe, "scale");
+    if (fclamp != null) tags.append(Object.assign(document.createElement("span"),
+      { className: "tag clp", textContent: "limit " + (fclamp === "0" ? "off" : fclamp) }));
+    if (fcmode) tags.append(Object.assign(document.createElement("span"),
+      { className: "tag clp", textContent: fcmode }));
+    if (fartic) tags.append(Object.assign(document.createElement("span"),
+      { className: "tag art", textContent: fartic }));
     if (sec.kit) tags.append(Object.assign(document.createElement("span"),
       { className: "tag kit", textContent: KITLABEL[sec.kit] }));
     if (sec.bassop) tags.append(Object.assign(document.createElement("span"),
       { className: "tag bas", textContent: BASSOPS[sec.bassop] }));
-    if (sec.scale) tags.append(Object.assign(document.createElement("span"),
-      { className: "tag rng", textContent: SCALELABEL[sec.scale] }));
+    if (fscale) tags.append(Object.assign(document.createElement("span"),
+      { className: "tag rng", textContent: SCALELABEL[fscale] }));
     if (sec.mode) tags.append(Object.assign(document.createElement("span"),
       { className: "tag mode", textContent: MODELABEL[sec.mode] }));
     if (sec.rate) tags.append(Object.assign(document.createElement("span"),
@@ -1082,17 +1124,18 @@ function drawPalette() {
   if (paletteBuilt) {
     el.querySelectorAll(".pchip").forEach(b => {
       const kind = b.dataset.kind, v = b.dataset.value;
+      const ent = LAYER_OPTS.has(kind) ? focused(sec) : null;
       const on = kind === "genre" ? stackOf(sec).some(e => e.g === v)
-        : kind === "op" ? sec.ops.includes(v)
+        : kind === "op" ? opsOf(sec, ent).includes(v)
         : kind === "env" ? sec.env === v
         : kind === "mode" ? sec.mode === v
         : kind === "rate" ? sec.rate === v
-        : kind === "scale" ? sec.scale === v
+        : kind === "scale" ? optOf(sec, ent, "scale") === v
         : kind === "kit" ? sec.kit === v
         : kind === "bassop" ? sec.bassop === v
-        : kind === "clamp" ? sec.clamp === v
-        : kind === "cmode" ? (sec.cmode || "hold") === v
-        : kind === "artic" ? (sec.artic || "normal") === v
+        : kind === "clamp" ? optOf(sec, ent, "clamp") === v
+        : kind === "cmode" ? (optOf(sec, ent, "cmode") || "hold") === v
+        : kind === "artic" ? (optOf(sec, ent, "artic") || "normal") === v
         : kind === "focus" ? String(focusOf(sec)) === v : false;
       b.classList.toggle("on", !!on);
       b.setAttribute("aria-pressed", String(!!on));
@@ -1121,31 +1164,31 @@ function drawPalette() {
       ["focus", String(i), GENRES[e.g].label + (e.slots.length
         ? " \u00b7 " + e.slots.map(n => n + 1).join("+") : " \u00b7 \u2014"),
         focusOf(sec) === i, "foc"]));
-  group("pattern", ["rev", "inv"].map(k => ["op", k, OPLABEL[k], sec.ops.includes(k), ""]));
-  group("split", [2, 3, 4, 5, 6, 7, 8].map(n =>
+  group("pattern \u00b7 layer", ["rev", "inv"].map(k => ["op", k, OPLABEL[k], sec.ops.includes(k), ""]));
+  group("split \u00b7 layer", [2, 3, 4, 5, 6, 7, 8].map(n =>
     ["op", "rep" + n, String(n), sec.ops.includes("rep" + n), "lst"]));
-  group("delete", [2, 3, 4, 5, 6, 7, 8].map(n =>
+  group("delete \u00b7 layer", [2, 3, 4, 5, 6, 7, 8].map(n =>
     ["op", "del" + n, String(n), sec.ops.includes("del" + n), "lst"]));
-  group("ramp limit", ["0", "2", "4", "8"].map(v =>
+  group("ramp limit \u00b7 layer", ["0", "2", "4", "8"].map(v =>
     ["clamp", v, v === "0" ? "off" : v, sec.clamp === v, "clp"]));
-  group("articulation", ["staccato", "normal", "legato", "tie"].map(v =>
+  group("articulation \u00b7 layer", ["staccato", "normal", "legato", "tie"].map(v =>
     ["artic", v, v, (sec.artic || "normal") === v, "art"]));
-  group("at the limit", [["cmode", "hold", "hold", (sec.cmode || "hold") === "hold", "clp"],
+  group("at the limit \u00b7 layer", [["cmode", "hold", "hold", (sec.cmode || "hold") === "hold", "clp"],
                          ["cmode", "loop", "loop", sec.cmode === "loop", "clp"],
                          ["cmode", "reverse", "reverse", sec.cmode === "reverse", "clp"]]);
-  group("range", [
+  group("range \u00b7 layer", [
     ["op", "wide", OPLABEL.wide, sec.ops.includes("wide"), "rng"],
     ["op", "tight", OPLABEL.tight, sec.ops.includes("tight"), "rng"],
     ...Object.keys(SCALES).map(k => ["scale", k, SCALELABEL[k], sec.scale === k, "rng"])]);
-  group("drums", Object.keys(KITLABEL).map(k =>
+  group("drums \u00b7 box", Object.keys(KITLABEL).map(k =>
     ["kit", k, KITLABEL[k], sec.kit === k, "kit"]));
-  group("bass", Object.keys(BASSOPS).map(k =>
+  group("bass \u00b7 box", Object.keys(BASSOPS).map(k =>
     ["bassop", k, BASSOPS[k], sec.bassop === k, "bas"]));
-  group("mode", Object.keys(MODES).map(k =>
+  group("chord mode \u00b7 box", Object.keys(MODES).map(k =>
     ["mode", k, MODELABEL[k], sec.mode === k, "mode"]));
-  group("tempo", Object.keys(RATES).map(k =>
+  group("tempo \u00b7 box", Object.keys(RATES).map(k =>
     ["rate", k, RATELABEL[k], sec.rate === k, "rate"]));
-  group("envelope", [["env", "in", "fade in", sec.env === "in", "env"],
+  group("envelope \u00b7 box", [["env", "in", "fade in", sec.env === "in", "env"],
                      ["env", "out", "fade out", sec.env === "out", "env"]]);
   paletteBuilt = true; paletteSig = sig;
 }
