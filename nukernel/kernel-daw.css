@@ -155,8 +155,8 @@ h1 em{font-style:normal;color:var(--accent)}
 .song.targeting .box{border-style:dashed;border-color:var(--accent2)}
 .box{
   position:relative;flex:0 0 auto;cursor:grab;background:var(--sunk);
-  border:1px solid var(--line);border-radius:2px;padding:7px 12px 7px 8px;
-  display:flex;flex-direction:column;gap:5px;cursor:pointer;
+  border:1px solid var(--line);border-radius:2px;padding:7px 13px;
+  display:flex;flex-direction:column;gap:4px;
 }
 .box.empty{border-style:dashed;color:var(--faint)}
 .box.sel{border-color:var(--accent2)}
@@ -171,9 +171,8 @@ h1 em{font-style:normal;color:var(--accent)}
 .bhead .x:hover{color:var(--accent)}
 .bgenre{font-size:12px;letter-spacing:.04em;color:var(--faint)}
 .bgenre.has{color:var(--ink);font-weight:600}
-.bphrase{font-size:10px;letter-spacing:.06em;color:var(--faint);
-  display:flex;flex-direction:column;gap:2px}
-.bphrase .mini{height:18px}
+.bphrase{font-size:11px;letter-spacing:.06em;color:var(--faint)}
+.bphrase.has{color:var(--ink)}
 .bphrase.has{color:var(--dim)}
 .bphrase .pn{font-size:10px;letter-spacing:.08em}
 .btags{display:flex;flex-wrap:wrap;gap:3px;margin-top:auto}

@@ -9,7 +9,7 @@ const { harm, render, drums, bass, ROMAN, word, drop, envelope,
 const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL } = window.NuGenres;
 
 const DEFAULT_BPM = 126, NSLOTS = 8, NBOXES = 4;
-const PX_PER_BAR = 22, BAR_PX = 26, MAX_LEN = 64;
+const PX_PER_BAR = 22, BAR_PX = 26, MAX_LEN = 64, MAX_NUDGE = 31;
 
 /* ---------- phrases ---------- */
 const z = () => new Array(16).fill(0);
@@ -71,7 +71,10 @@ const boxBars = b => (b.genre ? b.len : 0);
 function sectionEvents(sec) {
   if (!sec.genre) return { g: null, bars: 0, ev: [] };
   const g = genreOf(sec);
-  const len = Math.max(1, sec.len || g.bars), nudge = sec.nudge % g.bars;
+  // NUDGE is an absolute bar offset, not a phase modulo the form. Nudging a
+  // fugue past bar 4 starts it AFTER the exposition, which is a different piece
+  // of music from nudging within the first four bars — so it must not wrap.
+  const len = Math.max(1, sec.len || g.bars), nudge = Math.max(0, sec.nudge);
   const total = Math.ceil((nudge + len) / g.bars) * g.bars;
   const barSteps = 16 / g.rate, from = nudge * barSteps, to = (nudge + len) * barSteps;
 
@@ -149,7 +152,7 @@ function draw() {
   for (let b = 0; b < bars; b++) {
     const t = document.createElement("div"); t.className = "tick b";
     t.style.left = (b * 16 * stepW / g.rate) + "px";
-    t.textContent = "bar " + (sec.nudge % g.bars + b + 1);
+    t.textContent = "bar " + (sec.nudge + b + 1);
     ruler.append(t);
   }
   gridEl.append(ruler);
@@ -197,7 +200,7 @@ function draw() {
 
   const roots = g.harmony === "modal" ? "one mode, no motion"
     : "roots " + Array.from({ length: bars }, (_, b) =>
-        ROMAN[harm(SLOTS[sec.slots[0]] || blank(), g, sec.nudge % g.bars + b)]).join(" ") +
+        ROMAN[harm(SLOTS[sec.slots[0]] || blank(), g, sec.nudge + b)]).join(" ") +
       (g.harmony === "emergent" ? " (computed)" : "");
   document.getElementById("readout").textContent =
     "box " + (viewSec + 1) + " · " + GENRES[sec.genre].label + " · " +
@@ -355,8 +358,7 @@ function toggle(kind, value) {
   const sec = curSection();
   if (kind === "genre") {
     if (sec.genre === value) { SONG[viewSec] = emptyBox(); }
-    else { sec.genre = value; if (!sec.len) sec.len = GENRES[value].bars;
-           sec.nudge = sec.nudge % GENRES[value].bars; }
+    else { sec.genre = value; if (!sec.len) sec.len = GENRES[value].bars; }
   } else if (kind === "phrase") {
     if (!sec.genre) return;
     const i = sec.slots.indexOf(value);
@@ -397,20 +399,14 @@ function drawSong() {
     gl.textContent = sec.genre ? GENRES[sec.genre].label : "click a genre";
     box.append(gl);
 
+    // The box lists phrase NUMBERS. The contour picture belongs in the slot rail
+    // where you are choosing a phrase; repeating it here made the row a wall of
+    // little graphs you had to decode instead of a song you could read.
     const ph = document.createElement("div");
     ph.className = "bphrase" + (sec.slots.length ? " has" : "");
-    if (!sec.slots.length) ph.textContent = sec.genre ? "click a phrase" : "";
-    else for (const si of sec.slots) {
-      const p = SLOTS[si], row = document.createElement("span"); row.className = "mini";
-      for (let k = 0; k < 16; k++) {
-        const c = document.createElement("i");
-        if (p.gate[k]) { c.className = "on";
-          c.style.height = (18 + (p.deg[k] + 7) / 14 * 60) + "%";
-          c.style.opacity = String(0.35 + (p.vel[k] / 9) * 0.65); }
-        row.append(c);
-      }
-      ph.append(row);
-    }
+    ph.textContent = sec.slots.length
+      ? sec.slots.map(i => i + 1).join(" + ")
+      : (sec.genre ? "no phrase" : "");
     box.append(ph);
 
     const tags = document.createElement("div"); tags.className = "btags";
@@ -461,11 +457,10 @@ function drawSong() {
     if (sec.genre) {
       // LEFT grip nudges the window into the genre's form; RIGHT grip sets its
       // length. Trimming a clip from either end, which is the DAW gesture.
-      const gN = GENRES[sec.genre].bars;
       box.append(makeGrip("l", e0 => {
         const n0 = sec.nudge;
         return dx => {
-          const n = Math.max(0, Math.min(gN - 1, n0 + Math.round(dx / BAR_PX)));
+          const n = Math.max(0, Math.min(MAX_NUDGE, n0 + Math.round(dx / BAR_PX)));
           if (n !== sec.nudge) { sec.nudge = n; songChanged(); }
         };
       }));
@@ -605,7 +600,7 @@ function writeSrc() {
   out.innerHTML =
     g.label.toUpperCase() + "\n\n" +
     "form       " + g.bars + " bars\n" +
-    "window     " + sec.len + " bars from bar " + (sec.nudge % g.bars + 1) + "\n" +
+    "window     " + sec.len + " bars from bar " + (sec.nudge + 1) + "\n" +
     "phrases    " + (sec.slots.length
       ? sec.slots.map(i => i + 1).join(", ") + "  (voice v plays phrase v mod " + sec.slots.length + ")"
       : "none") + "\n" +

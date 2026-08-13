@@ -92,6 +92,12 @@
   // and per-voice offset compound without bound, so a four-voice fugue answered
   // at the fifth walks off the keyboard. Fold into the voice's octave window —
   // octave-equivalence as a quotient, and it is a requirement, not a polish.
+  //
+  // FOLD THE SCALE DEGREE ONLY. The window is thirteen semitones wide, so
+  // folding AFTER adding the step's octave displacement erases that vector
+  // entirely — an octave jump lands back where it started. deg is what needs
+  // bounding (transposition compounds); oct is a deliberate leap and is added
+  // after the fold, which is why it is a separate vector in the first place.
   const fold = (n, c) => { while (n < c - 6) n += 12; while (n > c + 6) n -= 12; return n; };
 
   // nearest mode degree to a pitch class — how a transposition becomes a root
@@ -167,10 +173,14 @@
           const legato = pad || p.sld[(i + steps) % N] ? 1 : 0.92;
           const ns = pad
             ? [r, r + 2, r + 4].map(d => mp(d, md))      // chord from HARMONY, not from the note
-            : [pitch(p.deg[i], sc) + 12 * p.oct[i]];
-          for (const n of ns)
+            : [null];                                // pitched: folded below
+          for (const n of ns) {
+            const pitchOf = n == null
+              ? fold(pitch(p.deg[i], sc), ctr) + 12 * p.oct[i]   // fold the degree, THEN leap
+              : fold(n, ctr);
             ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: steps * legato / g.rate, v,
-                      n: fold(n, ctr), acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });
+                      n: pitchOf, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });
+          }
         }
       }
     }
