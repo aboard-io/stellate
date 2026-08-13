@@ -73,6 +73,13 @@ h1 em{font-style:normal;color:var(--accent)}
 .knob{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim);
   letter-spacing:.08em;text-transform:uppercase}
 .knob input{width:118px;accent-color:var(--accent)}
+.knob select{
+  font:inherit;font-size:11px;letter-spacing:.04em;cursor:pointer;
+  background:var(--panel);color:var(--ink);border:1px solid var(--line);
+  border-radius:2px;padding:5px 6px;max-width:150px;
+}
+.knob select:hover{border-color:var(--accent2)}
+.knob span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
 .knob b{color:var(--ink);font-weight:600;min-width:44px;font-size:12px}
 .spacer{flex:1 1 auto}
 .readout{font-size:11px;color:var(--dim);letter-spacing:.06em}

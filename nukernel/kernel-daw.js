@@ -475,7 +475,7 @@ function draw() {
 // voice layer underneath it has exactly the seam we need.
 const SP = window.FaustSampler, REG = window.__REGISTRY;
 const SAMPLERS = (REG && REG.SAMPLERS) || {};
-const MEDIA = "../found/samples/instruments/";
+const MEDIA = "../found/samples/";
 
 // one instrument per genre, and one for the bass lane
 const INSTR = { simple: "yamaha_grand_piano", fugue: "rock_organ", acid: "clean_guitar",
@@ -521,11 +521,55 @@ function playDrum(kit, lane, when, acc, vel) {
   return true;
 }
 
+// ---- FONTS, the main app's own logic ----
+// engine/faust/data/fonts.json lists fourteen. Eleven are SOUNDFONTS: a
+// font-<key>.json carries its own zones per instrument under its own media base
+// (found/samples/instruments-<key>/), and an instrument the font does not cover
+// falls back to the default. Two are SYNTH fonts — Pure FM and Pure Analog — and
+// they are not a different set of samples at all: they flip every pitched voice
+// onto a Faust synth and the sampler stops being used.
+const FONTS = [
+  { key: "fluidr3", label: "Sampled", kind: "sample" },
+  { key: "sgm", label: "SGM Pro" }, { key: "windows", label: "Seattle Glass" },
+  { key: "montego", label: "Terrapin" }, { key: "sc55", label: "Oliphant" },
+  { key: "gravis", label: "Gravitas" }, { key: "gba", label: "Pocket Lad" },
+  { key: "emu_aps", label: "Rossum" }, { key: "diet_candy", label: "Diet Candy" },
+  { key: "blackberry", label: "Thumbfruit" }, { key: "8bit", label: "8-bit" },
+  { key: "dx7", label: "Pure FM", kind: "synth",
+    synth: { dsp: "dx7_alg5", root: "DX7", preset: "E.PIANO 1", level: 0.9 } },
+  { key: "analog", label: "Pure Analog", kind: "synth",
+    synth: { dsp: "modeld", root: "modeld", level: 0.8,
+             set: { cutoff: 2400, res: 0.28, envAmount: 1.6, envAttack: 0.006,
+                    envDecay: 0.5, envSustain: 0.4, oscMix: 0.4, drive: 0.3,
+                    glide: 0, drift: 6 } } },
+];
+let FONT = "fluidr3";
+const fontDef = () => FONTS.find(f => f.key === FONT) || FONTS[0];
+const isSynthFont = () => fontDef().kind === "synth";
+const fontData = new Map();                       // key -> font-<key>.json
+async function loadFont(key) {
+  // a SYNTH font has no zone file to fetch — it is a voice, not a sample set
+  const def = FONTS.find(f => f.key === key);
+  if (key === "fluidr3" || (def && def.kind === "synth") || fontData.has(key)) return;
+  try {
+    const r = await fetch(FAUSTDIR + "data/font-" + key + ".json");
+    fontData.set(key, r.ok ? await r.json() : null);
+  } catch (e) { fontData.set(key, null); }
+}
+
 const zoneBufs = new Map();                       // "id|file" -> AudioBuffer
 const specOf = id => {
+  // per-INSTRUMENT fallback, exactly as the main app does it: a font that does
+  // not carry this instrument serves the default one rather than going silent
+  const F = fontData.get(FONT);
+  if (F && F.instr && F.instr[id]) {
+    return { sr: F.instr[id].sr, dir: id, base: F.base,
+      zones: F.instr[id].zones.map(z => ({ file: z.file, root: z.root, lo: z.lo,
+        hi: z.hi, loop: !!z.loop, loopStart: z.ls, loopEnd: z.le, sr: F.instr[id].sr })) };
+  }
   const S = SAMPLERS[id];
   if (!S) return null;
-  return { sr: S.sr, dir: S.dir, zones: S.zones.map(z => ({
+  return { sr: S.sr, dir: S.dir, base: "instruments", zones: S.zones.map(z => ({
     file: z.file, root: z.root, lo: z.lo, hi: z.hi,
     loop: !!z.loop, loopStart: z.ls, loopEnd: z.le, len: z.len, sr: S.sr })) };
 };
@@ -534,10 +578,10 @@ async function loadInstrument(id) {
   if (!spec) return false;
   inFlight.add("ins:" + id);
   await Promise.all(spec.zones.map(async z => {
-    const key = id + "|" + z.file;
+    const key = FONT + "|" + id + "|" + z.file;
     if (zoneBufs.has(key)) return;
     try {
-      const r = await fetch(MEDIA + spec.dir + "/" + z.file);
+      const r = await fetch(MEDIA + (spec.base || "instruments") + "/" + spec.dir + "/" + z.file);
       if (!r.ok) throw new Error(r.status + " " + z.file);
       zoneBufs.set(key, await ctx.decodeAudioData(await r.arrayBuffer()));
     } catch (e) { zoneBufs.set(key, null); }
@@ -634,7 +678,7 @@ function playSampled(id, midi, when, durSec, vel, gainMul) {
   if (!spec || !sampler) return false;
   const z = SP.zoneFor(spec.zones, midi);
   if (!z) return false;
-  const buf = zoneBufs.get(id + "|" + z.file);
+  const buf = zoneBufs.get(FONT + "|" + id + "|" + z.file);
   if (!buf) return inFlight.has("ins:" + id);      // loading: drop it, do not beep
   const lead = SP.zoneLeadIn ? SP.zoneLeadIn(buf, z, buf.sampleRate, spec.sr) : 0;
   const leadSec = lead ? lead / (buf.sampleRate || spec.sr) : 0;
@@ -768,9 +812,12 @@ function tick() {
       const when = nextBarTime + e.off * sd;
       if (e.kind === "line") {
         const owner = e.layer || gid(SONG[bar.si]);
-        const gsyn = GENRES[owner].synth;
+        // A SYNTH FONT OVERRIDES THE GENRE. Pure FM and Pure Analog are not a
+        // sample set, they are "play everything on this voice" — including the
+        // genres that carry a signature synth of their own.
+        const gsyn = isSynthFont() ? fontDef().synth : GENRES[owner].synth;
         const id = INSTR[owner] || "yamaha_grand_piano";
-        const useSyn = gsyn && !(gsyn.lineOnly && e.pad);
+        const useSyn = gsyn && !(gsyn.lineOnly && e.pad && !isSynthFont());
         if (useSyn && playSynth(gsyn, e.n, when, e.dur * sd, e.acc, e.sld, e.vel)) { /* signature voice */ }
         else if (!playSampled(id, e.n, when, e.dur * sd, e.vel, 1))
           line(when, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel);
@@ -819,13 +866,15 @@ function frame() {
 // switched mid-play needs its guitar and its kit exactly as much as one chosen
 // before pressing play, and only the first case used to fetch them.
 async function ensureAssets(announce) {
+  await loadFont(FONT);
   const need = instrumentsInSong().filter(id => {
-    const sp = specOf(id); return sp && sp.zones.some(z => !zoneBufs.has(id + "|" + z.file));
+    const sp = specOf(id); return sp && sp.zones.some(z => !zoneBufs.has(FONT + "|" + id + "|" + z.file));
   });
   const kits = [...new Set(SONG.filter(x => gid(x) && GENRES[gid(x)].drumkit)
                                .map(x => GENRES[gid(x)].drumkit))]
     .filter(k => !drumBufs.has(k + "|k"));
   const synths = [...new Set([
+    ...(isSynthFont() ? [fontDef().synth] : []),
     ...SONG.flatMap(x => stackOf(x).filter(e => GENRES[e.g].synth).map(e => GENRES[e.g].synth)),
     ...SONG.filter(x => BASSSYNTH[x.bassop]).map(x => BASSSYNTH[x.bassop])])];
   const wantSynth = synths.filter(sp => !synthNodes.has(sp.dsp));
@@ -1309,6 +1358,46 @@ const putPhrase = make => () => {
 document.getElementById("seed").addEventListener("click", putPhrase(() => structuredClone(DEFAULT)));
 document.getElementById("rnd").addEventListener("click", putPhrase(randomPhrase));
 document.getElementById("clear").addEventListener("click", putPhrase(blank));
+// ---- fonts ----
+{
+  const sel = document.getElementById("font");
+  for (const f of FONTS) {
+    const o = document.createElement("option");
+    o.value = f.key; o.textContent = f.label + (f.kind === "synth" ? "  (synth)" : "");
+    sel.append(o);
+  }
+  sel.value = FONT;
+  sel.addEventListener("change", async e => {
+    FONT = e.target.value;
+    document.getElementById("readout").textContent = "loading " + fontDef().label + "\u2026";
+    await ensureAssets(false);
+    draw(); save();
+    if (playing) compile();
+  });
+}
+
+// ---- preset songs ----
+{
+  const sel = document.getElementById("preset");
+  for (const p2 of PRESETS) {
+    const o = document.createElement("option");
+    o.value = p2.name; o.textContent = p2.name; sel.append(o);
+  }
+  sel.addEventListener("change", e => {
+    const p2 = PRESETS.find(x => x.name === e.target.value);
+    e.target.selectedIndex = 0;
+    if (!p2) return;
+    if (!applyState(JSON.parse(JSON.stringify(p2.data)))) {
+      document.getElementById("readout").textContent = "that preset failed to load";
+      return;
+    }
+    if (playing) stop();
+    viewSec = 0; playingSec = -1; loopOnly = null; slot = 0; SUBJ = SLOTS[0];
+    paletteBuilt = false;
+    drawPalette(); drawSlots(); drawEditor(); drawSong(); draw(); save();
+  });
+}
+
 document.getElementById("savefile").addEventListener("click", saveFile);
 document.getElementById("loadfile").addEventListener("click",
   () => document.getElementById("loadinput").click());

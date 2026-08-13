@@ -128,6 +128,30 @@
       word: (v, s) => (v === 0 ? [] : [rotate(4 * s), ...(s % 2 ? [complement("acc")] : [])]),
     },
 
+    // NEW WAVE. Not a synth-pop cliche but the thing that actually separates it:
+    // an eighth-note MACHINE pulse under a melody that will not sit on the beat.
+    // The kit is a dry drum-machine four with a rim on the offbeat, the bass is
+    // octaves (the pumping eighth-note root that carries the whole genre), and
+    // the two voices answer each other a bar apart rather than stacking — the
+    // second enters late and thinned, which is the guitar-and-synth call the
+    // records are built on. Dorian by default: minor, but with the bright sixth.
+    newwave: {
+      label: "New Wave", rate: 1, bars: 4, voices: 2,
+      entry: v => v, reg: v => v - 1, realize: () => "line",
+      harmony: "cycle", roots: [0, 5, 3, 4],     // i VI iv v — the new-wave turn
+      mode: MODES.dorian,
+      drumkit: "electronic",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             o: [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0],   // rim on the offbeat
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },
+      bassStyle: "octaves",
+      tone: { wave: "sawtooth", cut: 2200, q: 2.4, atk: .004, rel: .55, gain: .28, verb: .16 },
+      words: ["the hook", "the answer, a bar late and thinned"],
+      word: (v, s2) => (v === 0 ? [] : [only("gate", rotate(4)), drop(3)]),
+    },
+
     // The inverted pipeline: the chord loop is the material and the phrase
     // decorates it. Also the only genre here reaching for the lossy operator —
     // excerpt keeps 8 of 16 steps and cycles them, which is the loop-a-fragment
