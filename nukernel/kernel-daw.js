@@ -344,6 +344,49 @@ function instrumentsInSong() {
   return [...ids];
 }
 let sampler = null;
+
+/* ---------- the Faust synth voices ---------- */
+// A genre carrying `synth` is never sampled: its identity IS the synthesis. The
+// tb303 voice takes the phrase's vectors one for one — freq from deg+oct, gate
+// from gate, accent from acc, slide from sld — which is not a coincidence, it is
+// what a 303 sequencer always was.
+//
+// Every Faust param is a real AudioParam (measured: parameters.size 11,
+// freq.setValueAtTime present), so notes are scheduled on the audio clock
+// exactly like the sampler's, with no timer poking values from the main thread.
+const FAUSTDIR = "../engine/faust/";
+const synthNodes = new Map();
+async function loadSynth(spec) {
+  if (synthNodes.has(spec.dsp)) return synthNodes.get(spec.dsp);
+  try {
+    const fw = await import(FAUSTDIR + "node_modules/@grame/faustwasm/dist/esm/index.js");
+    const fac = await fw.FaustWasmInstantiator.loadDSPFactory(
+      FAUSTDIR + "dist/" + spec.dsp + "-module.wasm",
+      FAUSTDIR + "dist/" + spec.dsp + "-meta.json");
+    const node = await new fw.FaustMonoDspGenerator().createNode(ctx, spec.dsp, fac);
+    node.connect(bus);
+    synthNodes.set(spec.dsp, node);
+    return node;
+  } catch (e) { synthNodes.set(spec.dsp, null); return null; }
+}
+const P = (node, name, dsp) => node.parameters.get("/" + dsp + "/" + name);
+function playSynth(spec, midi, when, durSec, acc, sld, vel) {
+  const node = synthNodes.get(spec.dsp);
+  if (!node) return false;
+  const d = spec.dsp, set = (n, v, t) => { const a = P(node, n, d); if (a) a.setValueAtTime(v, t); };
+  set("cutoff", spec.cutoff, when);
+  set("resonance", spec.resonance, when);
+  set("envmod", spec.envmod, when);
+  set("decay", spec.decay, when);
+  set("waveform", spec.waveform, when);
+  set("level", spec.level * (0.25 + 0.75 * ((vel == null ? 5 : vel) / 9)), when);
+  set("accent", acc ? 1 : 0, when);
+  set("slide", sld ? 1 : 0, when);
+  set("freq", hz(midi), when);
+  set("gate", 1, when);
+  set("gate", 0, Math.max(when + 0.02, when + durSec * 0.92));
+  return true;
+}
 function playSampled(id, midi, when, durSec, vel, gainMul) {
   const spec = specOf(id);
   if (!spec || !sampler) return false;
@@ -477,8 +520,10 @@ function tick() {
     for (const e of bar.ev) {
       const when = nextBarTime + e.off * sd;
       if (e.kind === "line") {
+        const gsyn = GENRES[SONG[bar.si].genre].synth;
         const id = INSTR[SONG[bar.si].genre] || "marimba";
-        if (!playSampled(id, e.n, when, e.dur * sd, e.vel, 1))
+        if (gsyn && playSynth(gsyn, e.n, when, e.dur * sd, e.acc, e.sld, e.vel)) { /* signature voice */ }
+        else if (!playSampled(id, e.n, when, e.dur * sd, e.vel, 1))
           line(when, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel);
       } else if (e.kind === "hit") hit(when, e.d, e.acc, e.vel);
       else if (e.kind === "bass") {
@@ -521,9 +566,13 @@ async function startAt(boxIndex) {
   const need = instrumentsInSong().filter(id => {
     const sp = specOf(id); return sp && sp.zones.some(z => !zoneBufs.has(id + "|" + z.file));
   });
-  if (need.length) {
-    document.getElementById("readout").textContent = "loading " + need.join(", ") + "\u2026";
-    await Promise.all(need.map(loadInstrument));
+  const synths = [...new Set(SONG.filter(x => x.genre && GENRES[x.genre].synth)
+                                 .map(x => GENRES[x.genre].synth))];
+  const wantSynth = synths.filter(sp => !synthNodes.has(sp.dsp));
+  if (need.length || wantSynth.length) {
+    document.getElementById("readout").textContent =
+      "loading " + [...need, ...wantSynth.map(x => x.dsp)].join(", ") + "\u2026";
+    await Promise.all([...need.map(loadInstrument), ...wantSynth.map(loadSynth)]);
     draw();
   }
   if (!TL.length) {

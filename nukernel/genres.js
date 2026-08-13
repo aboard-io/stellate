@@ -100,6 +100,12 @@
       label: "Acid house", rate: 1, bars: 4, voices: 2,
       entry: v => v, reg: v => -1 + v, realize: () => "line",
       harmony: "modal",
+      // THE SIGNATURE-SYNTH LAW, from state-engine.js SIGNATURE_MODELS: a genre
+      // whose identity IS a synthesis behaviour is never sampled. Acid is the
+      // canonical case — "the whole point of acid house" — because the accent
+      // and the slide are filter behaviour, and a sample cannot squelch.
+      synth: { dsp: "tb303", cutoff: 520, resonance: 0.86, envmod: 0.8,
+               decay: 0.42, waveform: 1, level: 0.85 },
       kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],     // 909, four on the floor
              c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
