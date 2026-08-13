@@ -201,8 +201,14 @@
   //   reverse  it turns round and comes back   (a triangle, a ping-pong)
   // Sign is carried outside the folding so a descending ramp mirrors an
   // ascending one exactly.
-  const rampOf = (p, i, loop, clamp, mode) => {
-    const stick = p.stk ? p.stk.reduce((a, x) => a + x, 0) : 0;
+  // `src` is the phrase AS WRITTEN. inc is explicitly per-step, so operators
+  // permuting it is correct — but stk describes the WHOLE SEQUENCE's drift per
+  // loop, and letting an operator move it makes the drift erratic: vaporwave's
+  // moving excerpt window carried the sticky column out of the pattern on two
+  // bars in four, so the ramp went 0, 0, 0, 6 — a lurch instead of a climb.
+  const rampOf = (p, i, loop, clamp, mode, src) => {
+    const st = (src || p).stk;
+    const stick = st ? st.reduce((a, x) => a + x, 0) : 0;
     const raw = ((p.inc ? p.inc[i] : 0) + stick) * loop;
     if (!clamp) return raw;
     const sign = raw < 0 ? -1 : 1, mag = Math.abs(raw);
@@ -286,6 +292,26 @@
         // stretched sample, which is why it stopped sounding like a guitar.
         const near6 = x => ((((x + 6) % 12) + 12) % 12) - 6;
         const rootShift = g.harmony === "cycle" ? near6(mp(r, md)) : 0;
+        // A RAMP UNDER A CHORD CYCLE CLIMBS THROUGH THE CHORD, not through the
+        // scale. Adding scale degrees moves the line by an amount that has
+        // nothing to do with the harmony underneath it, and in a genre whose
+        // whole identity IS the chord loop the melody simply drifts off the pad
+        // — measured on vaporwave, one of three pitch classes a bar landed on a
+        // chord tone. Stepping the ramp along the chord's own rungs is both
+        // consonant by construction and what an arpeggiator has always done.
+        // Under `modal` there is no chord to climb, and under `emergent` the
+        // chord came from the voices, so both keep the scale-degree ramp.
+        const chordPcs = g.harmony === "cycle"
+          ? new Set([r, r + 2, r + 4].map(d => (((mp(d, md) % 12) + 12) % 12))) : null;
+        const chordWalk = (base, k) => {
+          if (!chordPcs || !k) return base;
+          let n = base; const dir = k > 0 ? 1 : -1;
+          for (let c = 0; c < Math.abs(k) && c < 24; c++) {
+            let guard = 0;
+            do { n += dir; guard++; } while (!chordPcs.has(((n % 12) + 12) % 12) && guard < 24);
+          }
+          return n;
+        };
         const clamp = g.incClamp == null ? 7 : g.incClamp;   // 0 = let it run
         const cmode = g.incMode || "hold";
         // one octave shift for the whole line, from its degree-pitch mean
@@ -322,7 +348,10 @@
           const ns = [null];                             // pitched: registered below
           for (const n of ns) {
             const pitchOf = n == null
-              ? pitch(p.deg[i] + rampOf(p, i, b, clamp, cmode), sc) + shift + rootShift + 12 * p.oct[i]
+              ? (chordPcs
+                  ? chordWalk(pitch(p.deg[i], sc) + shift + rootShift + 12 * p.oct[i],
+                              rampOf(p, i, b, clamp, cmode, subj))
+                  : pitch(p.deg[i] + rampOf(p, i, b, clamp, cmode, subj), sc) + shift + rootShift + 12 * p.oct[i])
               : fold(n, ctr);                                    // chords voice per note
             barEv.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: steps * legato / g.rate, v,
                          n: pitchOf, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });

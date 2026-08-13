@@ -244,6 +244,13 @@ for (const gk of GK) {
   for (let b = 0; b < g.bars; b++) {
     const root = g.harmony === "cycle" ? K.mp(K.harm(P, g, b), g.mode || undefined) : 0;
     const allowed = new Set(sc.map(x => (((x + root) % 12) + 12) % 12));
+    // under a chord cycle a RAMPED note walks the chord's own rungs, and a
+    // chord tone is not always in the pentatonic — that is the point of it
+    if (g.harmony === "cycle") {
+      const r2 = K.harm(P, g, b);
+      for (const d of [r2, r2 + 2, r2 + 4])
+        allowed.add((((K.mp(d, g.mode || undefined) % 12) + 12) % 12));
+    }
     const bad = ev.filter(e => Math.floor(e.t / bs) === b)
                   .map(e => ((e.n % 12) + 12) % 12).filter(pc => !allowed.has(pc));
     ok(bad.length === 0,
