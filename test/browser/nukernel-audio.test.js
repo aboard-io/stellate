@@ -20,6 +20,11 @@
 //       on a boundary is the signature of a clamp, and it is a failure.
 //   (B) IT MAKES A SOUND. An AnalyserNode on the destination measures real
 //       output RMS per genre — the artifact, not the intent.
+//   (C) IT IS THE REAL INSTRUMENTS. The page keeps a hand-rolled oscillator
+//       voice as a fallback for a zone that failed to decode. That fallback is
+//       audible — it is why a mix of piano and organ once still sounded like
+//       boops — and it fires silently. If ANY oscillator starts, the sampled or
+//       synth path did not cover something, and this fails.
 "use strict";
 const { serve, launchChromium, capturePageErrors } = require("../lib/probe-harness.js");
 const path = require("path");
@@ -38,6 +43,7 @@ let checks = 0; const ok = (m) => { checks++; console.log("  ok:", m); };
 function taps() {
   window.__param = [];      // {node, path, value, min, max}
   window.__nodes = [];
+  window.__osc = 0;         // hand-rolled fallback voices that actually started
   const OW = window.AudioWorkletNode;
   window.AudioWorkletNode = function (ctx, name, opts) {
     const n = new OW(ctx, name, opts);
@@ -64,6 +70,12 @@ function taps() {
     AudioNode.prototype.connect = function (dest, ...rest) {
       if (dest === c.destination) { try { orig.call(this, an); } catch (e) {} }
       return orig.call(this, dest, ...rest);
+    };
+    const co = c.createOscillator.bind(c);
+    c.createOscillator = () => {
+      const o = co(); const s = o.start.bind(o);
+      o.start = (...x) => { window.__osc++; return s(...x); };
+      return o;
     };
     window.__rms = () => {
       const d = new Float32Array(an.fftSize); an.getFloatTimeDomainData(d);
@@ -128,6 +140,12 @@ function taps() {
     if (seen.rms[g] >= RMS_FLOOR) ok(`${g}: peak RMS ${seen.rms[g]}`);
     else fail(`${g}: peak RMS ${seen.rms[g]} — that is silence (floor ${RMS_FLOOR})`);
   }
+
+  // (C) no fallback fired
+  const osc = await page.evaluate(() => window.__osc);
+  if (osc) fail(`${osc} hand-rolled oscillator voice(s) started — a sampled or synth ` +
+                `voice did not cover something, and the fallback is audibly wrong`);
+  else ok("no oscillator fallback fired: every voice is a real instrument");
 
   if (errs.length) fail(`page errors: ${errs.slice(0, 3).join(" | ")}`);
   else ok("no page errors");

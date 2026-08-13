@@ -103,6 +103,7 @@
     // line is simultaneously melody, bass and the entire harmony.
     acid: {
       label: "Acid house", rate: 1, bars: 4, voices: 2,
+      drumkit: "electronic",              // the SAMPLED kit, not a sine and some noise
       entry: v => v, reg: v => -2 + v, realize: () => "line",
       harmony: "modal",
       // THE SIGNATURE-SYNTH LAW, from state-engine.js SIGNATURE_MODELS: a genre
@@ -134,6 +135,7 @@
     // realization and lossiness, which is why the dial is four numbers not one.
     vaporwave: {
       label: "Vaporwave", rate: .5, bars: 4, voices: 2,
+      drumkit: "room",              // the SAMPLED kit, not a sine and some noise
       entry: () => 0, reg: v => (v === 0 ? -1 : 0),
       realize: v => (v === 0 ? "pad" : "line"),
       harmony: "cycle", roots: [3, 4, 2, 5],   // iv v III VI
@@ -164,6 +166,7 @@
     // grid, swing bends it.
     blues: {
       label: "Blues", rate: 1, bars: 12, voices: 2, swing: 1 / 3,
+      drumkit: "jazz",              // the SAMPLED kit, not a sine and some noise
       scale: BLUES,
       entry: v => v * 4, reg: v => -v, realize: () => "line",
       harmony: "cycle", bassStyle: "walk",
@@ -186,6 +189,7 @@
     // that changes nothing about the alphabets.
     rock: {
       label: "Rock", rate: 1, bars: 8, voices: 2,
+      drumkit: "power",              // the SAMPLED kit, not a sine and some noise
       entry: () => 0, reg: v => v - 2, realize: () => "line",
       harmony: "cycle", roots: [0, 0, 6, 6, 3, 3, 0, 0],   // i i VII VII iv iv i i
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,1, 0,0,0,0],

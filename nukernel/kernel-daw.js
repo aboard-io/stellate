@@ -346,6 +346,39 @@ const INSTR = { simple: "yamaha_grand_piano", fugue: "rock_organ", acid: "clean_
                 vaporwave: "strings", blues: "steel_string_guitar", rock: "crunch_guitar" };
 const BASS_INSTR = "acoustic_bass";
 
+// THE DRUM KIT IS SAMPLED TOO. found/samples/drums/<kit>/ is the same
+// extraction the big engine plays — real kick, snare, hats, clap — and it is
+// what the hand-rolled sine-and-noise kit was standing in for. That stand-in is
+// why a mix of piano and organ still sounded like boops: everything melodic was
+// a real instrument and the drums were a pitch-dropped oscillator.
+const DRUMDIR = "../found/samples/drums/";
+const DRUMFILE = { k: "kick.wav", s: "snare.wav", h: "hatClosed.wav",
+                   o: "hatOpen.wav", c: "clap.wav", p: "rim.wav" };
+const drumBufs = new Map();                       // "kit|lane" -> AudioBuffer
+async function loadKit(kit) {
+  await Promise.all(Object.entries(DRUMFILE).map(async ([lane, file]) => {
+    const key = kit + "|" + lane;
+    if (drumBufs.has(key)) return;
+    try {
+      const r = await fetch(DRUMDIR + kit + "/" + file);
+      if (!r.ok) throw new Error(String(r.status));
+      drumBufs.set(key, await ctx.decodeAudioData(await r.arrayBuffer()));
+    } catch (e) { drumBufs.set(key, null); }
+  }));
+}
+function playDrum(kit, lane, when, acc, vel) {
+  const buf = kit && drumBufs.get(kit + "|" + lane);
+  if (!buf) return false;
+  const lvl = (vel == null ? 5 : vel) / 9;
+  if (lvl <= 0.001) return false;
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const g = ctx.createGain();
+  g.gain.value = (acc ? 1 : 0.72) * (0.45 + 0.55 * lvl) * (lane === "p" ? 0.5 : 1);
+  src.connect(g); g.connect(bus);
+  src.start(when);
+  return true;
+}
+
 const zoneBufs = new Map();                       // "id|file" -> AudioBuffer
 const specOf = id => {
   const S = SAMPLERS[id];
@@ -596,7 +629,10 @@ function tick() {
         if (useSyn && playSynth(gsyn, e.n, when, e.dur * sd, e.acc, e.sld, e.vel)) { /* signature voice */ }
         else if (!playSampled(id, e.n, when, e.dur * sd, e.vel, 1))
           line(when, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel);
-      } else if (e.kind === "hit") hit(when, e.d, e.acc, e.vel);
+      } else if (e.kind === "hit") {
+        const kit = GENRES[SONG[bar.si].genre].drumkit;
+        if (!playDrum(kit, e.d, when, e.acc, e.vel)) hit(when, e.d, e.acc, e.vel);
+      }
       else if (e.kind === "bass") {
         const bs = BASSSYNTH[SONG[bar.si].bassop];
         if (bs && playSynth(bs, e.n, when, e.dur * sd, 0, 0, e.vel)) { /* synth bass */ }
@@ -639,14 +675,18 @@ async function startAt(boxIndex) {
   const need = instrumentsInSong().filter(id => {
     const sp = specOf(id); return sp && sp.zones.some(z => !zoneBufs.has(id + "|" + z.file));
   });
+  const kits = [...new Set(SONG.filter(x => x.genre && GENRES[x.genre].drumkit)
+                               .map(x => GENRES[x.genre].drumkit))]
+    .filter(k => !drumBufs.has(k + "|k"));
   const synths = [...new Set([
     ...SONG.filter(x => x.genre && GENRES[x.genre].synth).map(x => GENRES[x.genre].synth),
     ...SONG.filter(x => BASSSYNTH[x.bassop]).map(x => BASSSYNTH[x.bassop])])];
   const wantSynth = synths.filter(sp => !synthNodes.has(sp.dsp));
-  if (need.length || wantSynth.length) {
+  if (need.length || wantSynth.length || kits.length) {
     document.getElementById("readout").textContent =
-      "loading " + [...need, ...wantSynth.map(x => x.dsp)].join(", ") + "\u2026";
-    await Promise.all([...need.map(loadInstrument), ...wantSynth.map(loadSynth)]);
+      "loading " + [...need, ...wantSynth.map(x => x.dsp), ...kits].join(", ") + "\u2026";
+    await Promise.all([...need.map(loadInstrument), ...wantSynth.map(loadSynth),
+                       ...kits.map(loadKit)]);
     draw();
   }
   if (!TL.length) {
