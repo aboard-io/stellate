@@ -4,12 +4,18 @@
 // (kernel-daw.js) wrap exactly the same code instead of each carrying a copy.
 //
 // A PATTERN is five parallel CYCLIC vectors of equal length:
-//   deg   scale-degree index into PENT — never an absolute pitch, so the same
-//         phrase survives being read in any genre
-//   oct   octave displacement per step   (binary)
+//   deg   scale degree — SIGNED and unbounded. Negative walks below the tonic,
+//         >len wraps into the octave above. Never an absolute pitch, so the
+//         same phrase survives being read in any genre or any scale.
+//   oct   octave displacement — SIGNED, typically -2..+2
 //   gate  note or rest                   (binary)
 //   acc   accent                         (binary)
 //   sld   slide INTO this step           (binary, EDGE-valued — see reverse)
+//
+// TWO TYPES, not one: deg and oct are integers, gate/acc/sld are binary. The
+// binary-only operators (`complement`, `crossmap`) are meaningless on the
+// integer pair — complementing an octave of -1 is not a musical idea. Every
+// other operator is type-agnostic because it only permutes positions.
 //
 // Every operator is TOTAL: pattern in, valid pattern out, no failure modes and
 // nothing to validate. That is what keeps the algebra small enough to search.

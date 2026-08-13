@@ -131,6 +131,7 @@ h1 em{font-style:normal;color:var(--accent)}
 .cell.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .cell.deg{background:var(--panel);color:var(--ink);border-color:var(--line)}
 .cell.deg.rest{opacity:.35}
+.cell.deg.zero{color:var(--faint)}
 
 /* ---- footer ---- */
 details{background:var(--panel);border:1px solid var(--line);border-radius:3px;

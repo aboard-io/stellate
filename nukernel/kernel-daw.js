@@ -241,7 +241,13 @@ function stop() {
 }
 
 /* ---------- phrase editor ---------- */
+// deg and oct are SIGNED integer rows; gate/acc/sld are binary toggles. The
+// kernel never clamped degree — pitch() has always taken any integer and let
+// Math.floor(d/len) carry the octave — it was only this editor that pinned it
+// to 0..5, which made the phrase far narrower than the algebra behind it.
 const ROWS = ["deg", "oct", "gate", "acc", "sld"];
+const RANGE = { deg: [-7, 7], oct: [-2, 2] };
+const clamp = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
 function drawEditor() {
   const el = document.getElementById("stepgrid"); el.innerHTML = "";
   el.append(Object.assign(document.createElement("div"), { className: "rowlab" }));
@@ -254,18 +260,20 @@ function drawEditor() {
     el.append(lb);
     for (let i = 0; i < 16; i++) {
       const b = document.createElement("button"); b.type = "button";
-      if (key === "deg") {
-        b.className = "cell deg" + (SUBJ.gate[i] ? "" : " rest");
-        b.textContent = SUBJ.deg[i];
-        b.setAttribute("aria-label", "step " + (i + 1) + " degree " + SUBJ.deg[i]);
+      const num = RANGE[key], val = SUBJ[key][i];
+      if (num) {
+        b.className = "cell deg" + (SUBJ.gate[i] ? "" : " rest") + (val === 0 ? " zero" : "");
+        b.textContent = val > 0 ? "+" + val : String(val);
+        b.setAttribute("aria-label", "step " + (i + 1) + " " + key + " " + val +
+          " (click raises, shift-click lowers, range " + num[0] + " to " + num[1] + ")");
       } else {
-        b.className = "cell" + (SUBJ[key][i] ? " on" : "");
-        b.textContent = SUBJ[key][i] ? "●" : "";
-        b.setAttribute("aria-label", "step " + (i + 1) + " " + key + (SUBJ[key][i] ? " on" : " off"));
+        b.className = "cell" + (val ? " on" : "");
+        b.textContent = val ? "●" : "";
+        b.setAttribute("aria-label", "step " + (i + 1) + " " + key + (val ? " on" : " off"));
       }
       b.addEventListener("click", ev => {
-        if (key === "deg") SUBJ.deg[i] = (SUBJ.deg[i] + (ev.shiftKey ? 5 : 1)) % 6;
-        else SUBJ[key][i] = SUBJ[key][i] ? 0 : 1;
+        if (num) SUBJ[key][i] = clamp(val + (ev.shiftKey ? -1 : 1), num);
+        else SUBJ[key][i] = val ? 0 : 1;
         drawEditor(); draw(); if (playing) compile();
       });
       el.append(b);
@@ -308,7 +316,8 @@ document.getElementById("clear").addEventListener("click", () => {
 document.getElementById("rnd").addEventListener("click", () => {
   const r = n => Math.floor(Math.random() * n);
   for (let i = 0; i < 16; i++) {
-    SUBJ.deg[i] = r(6); SUBJ.oct[i] = r(6) === 0 ? 1 : 0;
+    SUBJ.deg[i] = r(11) - 3;                       // -3..+7, the useful span
+    SUBJ.oct[i] = r(8) === 0 ? -1 : r(5) === 0 ? 1 : 0;
     SUBJ.gate[i] = r(10) < 7 ? 1 : 0;
     SUBJ.acc[i] = SUBJ.gate[i] && r(10) < 3 ? 1 : 0;
     SUBJ.sld[i] = SUBJ.gate[i] && r(10) < 2 ? 1 : 0;
