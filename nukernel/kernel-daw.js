@@ -609,8 +609,14 @@ let sampler = null;
 const FAUSTDIR = "../engine/faust/";
 const synthNodes = new Map();
 let dx7Presets = null;
-async function loadSynth(spec) {
-  if (synthNodes.has(spec.dsp)) return synthNodes.get(spec.dsp);
+// ONE NODE PER VOICE. A Faust mono DSP is exactly that — mono — so a four-voice
+// fugue routed through a single dx7 kept only the last note written to /DX7/freq
+// and the counterpoint collapsed to one line. The pool is keyed by dsp AND voice
+// index, which is how a monophonic voice becomes polyphonic: by there being
+// several of it, the way a real DX7 has sixteen.
+async function loadSynth(spec, v) {
+  const key = spec.dsp + "#" + v;
+  if (synthNodes.has(key)) return synthNodes.get(key);
   try {
     const fw = await import(FAUSTDIR + "node_modules/@grame/faustwasm/dist/esm/index.js");
     const fac = await fw.FaustWasmInstantiator.loadDSPFactory(
@@ -629,14 +635,14 @@ async function loadSynth(spec) {
       }
     }
     node.connect(bus);
-    synthNodes.set(spec.dsp, node);
+    synthNodes.set(key, node);
     return node;
-  } catch (e) { synthNodes.set(spec.dsp, null); return null; }
+  } catch (e) { synthNodes.set(key, null); return null; }
 }
 // Every voice takes freq/gate/level the same way; the rest is per-DSP and is
 // declared in the genre, so adding a synth is a data change rather than code.
-function playSynth(spec, midi, when, durSec, acc, sld, vel) {
-  const node = synthNodes.get(spec.dsp);
+function playSynth(spec, midi, when, durSec, acc, sld, vel, v) {
+  const node = synthNodes.get(spec.dsp + "#" + (v || 0));
   if (!node) return false;
   const set = (n, v, t) => {
     const a = node.parameters.get("/" + spec.root + "/" + n);
@@ -818,7 +824,7 @@ function tick() {
         const gsyn = isSynthFont() ? fontDef().synth : GENRES[owner].synth;
         const id = INSTR[owner] || "yamaha_grand_piano";
         const useSyn = gsyn && !(gsyn.lineOnly && e.pad && !isSynthFont());
-        if (useSyn && playSynth(gsyn, e.n, when, e.dur * sd, e.acc, e.sld, e.vel)) { /* signature voice */ }
+        if (useSyn && playSynth(gsyn, e.n, when, e.dur * sd, e.acc, e.sld, e.vel, e.v)) { /* signature voice */ }
         else if (!playSampled(id, e.n, when, e.dur * sd, e.vel, 1))
           line(when, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel);
       } else if (e.kind === "hit") {
@@ -827,7 +833,7 @@ function tick() {
       }
       else if (e.kind === "bass") {
         const bs = BASSSYNTH[SONG[bar.si].bassop];
-        if (bs && playSynth(bs, e.n, when, e.dur * sd, 0, 0, e.vel)) { /* synth bass */ }
+        if (bs && playSynth(bs, e.n, when, e.dur * sd, 0, 0, e.vel, 0)) { /* synth bass */ }
         else if (!playSampled(BASS_INSTR, e.n, when, e.dur * sd, e.vel, 1.25))
           line(when, e.n, e.dur * sd, 1, 0, null,
             { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false, e.vel);
@@ -867,6 +873,11 @@ function frame() {
 // before pressing play, and only the first case used to fetch them.
 async function ensureAssets(announce) {
   await loadFont(FONT);
+  // NOTHING DECODES WITHOUT AN AudioContext, and every loader caches its
+  // failures so a dead zone is not re-fetched every bar. Called before the
+  // transport has ever run — switching font or genre on a fresh page — that
+  // cache would poison every instrument permanently. Bail before touching them.
+  if (!ctx) return false;
   const need = instrumentsInSong().filter(id => {
     const sp = specOf(id); return sp && sp.zones.some(z => !zoneBufs.has(FONT + "|" + id + "|" + z.file));
   });
@@ -877,11 +888,20 @@ async function ensureAssets(announce) {
     ...(isSynthFont() ? [fontDef().synth] : []),
     ...SONG.flatMap(x => stackOf(x).filter(e => GENRES[e.g].synth).map(e => GENRES[e.g].synth)),
     ...SONG.filter(x => BASSSYNTH[x.bassop]).map(x => BASSSYNTH[x.bassop])])];
-  const wantSynth = synths.filter(sp => !synthNodes.has(sp.dsp));
+  // the widest stack in the song decides the pool depth — a four-voice fugue
+  // over a two-voice rock riff needs six, and nothing needs more than it uses
+  const need2 = Math.max(1, ...SONG.map(sec2 =>
+    stackOf(sec2).reduce((n, e) => n + (GENRES[e.g] ? GENRES[e.g].voices : 0), 0)));
+  const depth = Math.min(8, need2);
+  const wantSynth = [];
+  for (const sp of synths)
+    for (let v = 0; v < depth; v++)
+      if (!synthNodes.has(sp.dsp + "#" + v)) wantSynth.push([sp, v]);
   if (!need.length && !wantSynth.length && !kits.length) return false;
   if (announce) document.getElementById("readout").textContent =
-    "loading " + [...need, ...wantSynth.map(x => x.dsp), ...kits].join(", ") + "\u2026";
-  await Promise.all([...need.map(loadInstrument), ...wantSynth.map(loadSynth),
+    "loading " + [...need, ...new Set(wantSynth.map(x => x[0].dsp)), ...kits].join(", ") + "\u2026";
+  await Promise.all([...need.map(loadInstrument),
+                     ...wantSynth.map(([sp, v]) => loadSynth(sp, v)),
                      ...kits.map(loadKit)]);
   return true;
 }
@@ -1091,7 +1111,7 @@ function drawSong() {
       drawSong(); draw(); drawSlots(); startAt(i);
     });
 
-    if (sec.genre) {
+    if (gid(sec)) {
       // LEFT grip nudges the window into the genre's form; RIGHT grip sets its
       // length. Trimming a clip from either end, which is the DAW gesture.
       box.append(makeGrip("l", e0 => {
@@ -1369,6 +1389,7 @@ document.getElementById("clear").addEventListener("click", putPhrase(blank));
   sel.value = FONT;
   sel.addEventListener("change", async e => {
     FONT = e.target.value;
+    initAudio();                       // a select change is a user gesture
     document.getElementById("readout").textContent = "loading " + fontDef().label + "\u2026";
     await ensureAssets(false);
     draw(); save();

@@ -150,6 +150,29 @@ function taps() {
     else fail(`${g}: peak RMS ${seen.rms[g]} — that is silence (floor ${RMS_FLOOR})`);
   }
 
+  // (D) THE EDGES STILL TRIM. Length and nudge are the only controls with no
+  // audible signature of their own — a dead grip changes nothing you can hear,
+  // it just quietly stops working, and it had been dead since the stack refactor
+  // because the guard still tested a field that no longer exists.
+  {
+    const box = page.locator(".box").first();
+    const before = await page.locator(".bhead span").first().textContent();
+    const g = await box.locator(".grip.r").boundingBox();
+    if (!g) fail("the length grip does not exist");
+    else {
+      await page.mouse.move(g.x + 5, g.y + g.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(g.x + 5 + 4 * 26, g.y + g.height / 2, { steps: 10 });
+      await page.mouse.up();
+      const after = await page.locator(".bhead span").first().textContent();
+      if (after === before) fail(`the length grip did not change the box (${before})`);
+      else ok(`length grip: ${before} -> ${after}`);
+    }
+    const l = await box.locator(".grip.l").boundingBox();
+    if (!l) fail("the nudge grip does not exist");
+    else ok("both edge grips exist");
+  }
+
   // (C) no fallback fired
   const osc = await page.evaluate(() => window.__osc);
   if (osc) fail(`${osc} hand-rolled oscillator voice(s) started — a sampled or synth ` +
