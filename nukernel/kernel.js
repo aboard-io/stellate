@@ -61,6 +61,10 @@
   // every operator above rewrites all five at once.
   const only = (k, op) => p => ({ ...p, [k]: op(p)[k] });
 
+  // DROP every nth step — a gate mask, and a plain pattern operator like the
+  // rest of them.
+  const drop = n => p => ({ ...p, gate: p.gate.map((g, i) => ((i + 1) % n === 0 ? 0 : g)) });
+
   // An operator WORD is a list of operators applied left to right.
   const word = (p, ws) => ws.reduce((q, op) => op(q), p);
 
@@ -235,7 +239,23 @@
     return ev;
   }
 
-  const api = { at, mapv, spans, vel, swing, rotate, reverse, transpose, invert, complement,
+  // ---- ENVELOPES — a different type from operators --------------------------
+  // An operator is pattern -> pattern and TIMELESS: it cannot know where it is.
+  // A fade is a function of POSITION IN THE SECTION, so it cannot be one. These
+  // act on the rendered EVENT STREAM instead, scaling the velocity vector that
+  // now exists to be scaled. Operators compose by application; envelopes
+  // compose by multiplication. Keeping them in one list would be the same
+  // mistake as treating slide as node-valued: one notation, two types.
+  const envelope = (ev, kind, span) => {
+    if (!kind || !span) return ev;
+    return ev.map(e => {
+      const x = Math.min(1, Math.max(0, e.t / span));
+      const f = kind === "in" ? x : kind === "out" ? 1 - x : 1;
+      return { ...e, vel: Math.max(0, Math.round((e.vel == null ? 5 : e.vel) * f)) };
+    });
+  };
+
+  const api = { at, mapv, spans, vel, drop, envelope, swing, rotate, reverse, transpose, invert, complement,
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, pitch, mp, fold, near,
                 harm, render, drums, bass };

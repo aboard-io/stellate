@@ -148,6 +148,40 @@ h1 em{font-style:normal;color:var(--accent)}
 .cell.deg.rest{opacity:.35}
 .cell.deg.zero{color:var(--faint)}
 
+/* ---- song ---- */
+.seclist{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.sec{
+  flex:0 0 178px;background:var(--sunk);border:1px solid var(--line);border-radius:2px;
+  padding:8px;display:flex;flex-direction:column;gap:6px;cursor:pointer;
+}
+.sec.sel{border-color:var(--accent2)}
+.sec.live{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.sechead{display:flex;align-items:baseline;gap:6px;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--dim)}
+.sechead b{color:var(--ink);font-size:13px;letter-spacing:0}
+.sec.live .sechead b{color:var(--accent)}
+.sechead .x{margin-left:auto;appearance:none;background:none;border:0;cursor:pointer;
+  color:var(--faint);font:inherit;font-size:14px;line-height:1;padding:0 2px}
+.sechead .x:hover{color:var(--accent)}
+.field{display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--dim)}
+.field span{flex:0 0 46px}
+.field select{
+  flex:1;min-width:0;font:inherit;font-size:11px;text-transform:none;letter-spacing:0;
+  background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:2px;
+  padding:3px 4px;cursor:pointer;
+}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.chip{
+  appearance:none;font:inherit;font-size:10px;letter-spacing:.06em;cursor:pointer;
+  background:var(--panel);color:var(--dim);border:1px solid var(--line);border-radius:2px;
+  padding:3px 6px;
+}
+.chip:hover{color:var(--ink)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip.env.on{background:var(--accent2);border-color:var(--accent2);color:#231f16}
+:where(.chip,.field select,.sechead .x,.slot):focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+
 /* ---- footer ---- */
 details{background:var(--panel);border:1px solid var(--line);border-radius:3px;
   padding:10px 12px;box-shadow:var(--shadow)}

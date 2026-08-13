@@ -23,6 +23,7 @@
   <div class="bar">
     <div class="tabs" id="tabs"></div>
     <button class="btn go" id="play">▶ Play</button>
+    <button class="btn" id="mode" aria-pressed="false">Loop</button>
     <div class="knob"><label for="bpm">Tempo</label>
       <input type="range" id="bpm" min="70" max="160" value="126"><b id="bpmv">126</b></div>
     <div class="spacer"></div>
@@ -46,6 +47,17 @@
          <b>acc</b> is the 303 accent, which opens the filter and is what operators key on.</p>
     </div>
     <div class="steps"><div class="stepgrid" id="stepgrid"></div></div>
+  </div>
+
+  <div class="ed" id="songpanel" hidden>
+    <div class="edhead">
+      <h2>Song</h2>
+      <p>Sections play in order, then the song repeats. Each is a genre, a phrase and its transforms.
+         <b>Repeat</b> counts whole loops of the genre, so a twelve-bar blues is never cut to eight.</p>
+      <span class="spacer"></span>
+      <button class="btn" id="addsec">+ Section</button>
+    </div>
+    <div class="seclist" id="seclist"></div>
   </div>
 
   <div class="daw">

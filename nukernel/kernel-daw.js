@@ -5,7 +5,8 @@
 // Scheduling is BAR AT A TIME, not one flat event list, because the bar is the
 // unit the user switches genres on: a tab click sets `pending` and the swap
 // happens at the next bar line, so the bar you are hearing always finishes.
-const { harm, render, drums, bass, ROMAN } = window.NuKernel;
+const { harm, render, drums, bass, ROMAN, word, drop, envelope,
+        reverse, invert, rotate } = window.NuKernel;
 const { DEFAULT, GENRES, DRUMNAME } = window.NuGenres;
 
 const DEFAULT_GENRE = "acid", DEFAULT_BPM = 126, NSLOTS = 8;
@@ -19,6 +20,17 @@ let SLOTS = Array.from({ length: NSLOTS }, blank);
 let slot = 0;
 let SUBJ = SLOTS[slot];                       // by reference: cell edits mutate the slot
 let cur = DEFAULT_GENRE, pending = null;
+
+// A SECTION is genre + slot + transforms, and `reps` counts LOOPS OF THE GENRE
+// rather than bars: a section is always a whole number of the genre's own form,
+// so a twelve-bar blues is never cut to eight and acid is never cut mid-word.
+// TRANSFORMS are two types kept in two fields on purpose — `ops` are pattern
+// operators, `env` is an envelope over the section.
+const OPS = { rev: reverse(), inv: invert(4), drop2: drop(2), drop3: drop(3) };
+const OPLABEL = { rev: "reverse", inv: "invert", drop2: "drop 2", drop3: "drop 3" };
+let SONG = [], songMode = false, playingSec = -1;
+
+const newSection = () => ({ genre: cur, slot, reps: 1, ops: [], env: null });
 
 function selectSlot(i) {
   slot = i; SUBJ = SLOTS[i];
@@ -68,32 +80,45 @@ function drawSlots() {
 }
 
 /* ---------- arrangement model ---------- */
+let viewSec = 0;
+const curSection = () => (songMode && SONG.length)
+  ? SONG[Math.min(viewSec, SONG.length - 1)] : newSection();
+
+function showSection(si) {
+  if (!songMode || si === playingSec) return;
+  playingSec = si; viewSec = si; draw(); drawSong();
+}
+
 function build() {
-  const g = GENRES[cur], bars = g.bars;
-  const pitched = render(SUBJ, g, bars), dr = drums(SUBJ, g, bars), bs = bass(SUBJ, g, bars);
+  const sec = curSection();
+  const { g, bars, ev } = sectionEvents(sec);
   const lanes = [];
   for (let v = 0; v < g.voices; v++)
     lanes.push({ id: "v" + v, name: (g.realize(v) === "pad" ? "Pad " : "Voice ") + v,
       op: g.words[v] || "", kind: "pitch", color: "var(--v" + v + ")",
-      ev: pitched.filter(e => e.v === v) });
-  lanes.push({ id: "bass", name: "Bass", op: (g.bassStyle === "walk" ? "walking · " : "roots · ") + g.harmony, kind: "pitch",
-    color: "var(--vb)", ev: bs });
-  for (const d of [...new Set(dr.map(e => e.d))])
+      ev: ev.filter(e => e.kind === "line" && e.v === v) });
+  lanes.push({ id: "bass", name: "Bass",
+    op: (g.bassStyle === "walk" ? "walking · " : "roots · ") + g.harmony,
+    kind: "pitch", color: "var(--vb)", ev: ev.filter(e => e.kind === "bass") });
+  const hits = ev.filter(e => e.kind === "hit");
+  for (const d of [...new Set(hits.map(e => e.d))])
     lanes.push({ id: "d" + d, name: DRUMNAME[d] || d,
-      op: d === "p" ? "only(acc, rotate 3)" : (g.fill && g.fill[d]) ? "grid + fill on bar " + bars : "grid",
-      kind: "drum", color: "var(--drum)", ev: dr.filter(e => e.d === d) });
-  return { g, bars, lanes, steps: bars * 16 / g.rate };
+      op: d === "p" ? "only(acc, rotate 3)"
+        : (g.fill && g.fill[d]) ? "grid + fill every " + g.bars : "grid",
+      kind: "drum", color: "var(--drum)", ev: hits.filter(e => e.d === d) });
+  return { g, bars, lanes, steps: bars * 16 / g.rate, sec };
 }
 
 /* ---------- draw ---------- */
 const gridEl = document.getElementById("grid");
-let stepW = 7, model = null, phEls = [];
+let stepW = 7, model = null, phEls = [], viewSteps = 64;
 
 function draw() {
   model = build();
   const { g, lanes, steps, bars } = model;
   const avail = Math.max(560, document.getElementById("dawscroll").clientWidth - 118);
   stepW = Math.max(5, Math.min(22, avail / steps));
+  viewSteps = steps;
   const W = steps * stepW;
   gridEl.innerHTML = "";
   gridEl.style.gridTemplateColumns = "118px " + W + "px";
@@ -131,6 +156,7 @@ function draw() {
         d.className = "note" + (e.acc ? " acc" : "") + (e.fill ? " fill" : "");
         d.style.left = (e.t * stepW) + "px";
         d.style.background = L.color;
+        d.style.opacity = String(0.25 + 0.75 * ((e.vel == null ? 5 : e.vel) / 9));
         if (L.kind === "pitch") {
           const hh = Math.max(3, Math.min(7, 54 / (span + 2)));
           d.style.width = Math.max(2, (e.dur || 1) * stepW - 1) + "px";
@@ -153,8 +179,14 @@ function draw() {
   const roots = g.harmony === "modal" ? "one mode, no motion"
     : "roots " + Array.from({ length: bars }, (_, b) => ROMAN[harm(SUBJ, g, b)]).join(" → ") +
       (g.harmony === "emergent" ? " (computed, not written)" : "");
+  const { sec } = model;
+  const tag = songMode && SONG.length
+    ? "section " + (viewSec + 1) + "/" + SONG.length + " · phrase " + (sec.slot + 1) +
+      (sec.ops.length ? " · " + sec.ops.map(o => OPLABEL[o]).join(" + ") : "") +
+      (sec.env ? " · fade " + sec.env : "") + " · "
+    : "";
   document.getElementById("readout").textContent =
-    bars + "-bar loop · rate " + g.rate + " · " + g.voices + " voices · harmony " +
+    tag + bars + " bars · rate " + g.rate + " · " + g.voices + " voices · harmony " +
     g.harmony + " · " + roots;
 }
 
@@ -231,22 +263,46 @@ function hit(t, d, acc, vel) {
 }
 
 /* ---------- bar-at-a-time scheduler ---------- */
-let byBar = [], loopSteps = 0;
-function compile() {
-  const g = GENRES[cur], bars = g.bars;
-  byBar = Array.from({ length: bars }, () => []);
-  loopSteps = bars * 16 / g.rate;
-  const pitched = render(SUBJ, g, bars);
+// TL is a flat list of bars for whatever is playing — a single genre loop in
+// loop mode, the whole section list in song mode. The scheduler walks it and
+// never needs to know which mode it is in.
+let TL = [];
+
+// Everything one section contributes, already transformed.
+function sectionEvents(sec) {
+  const g = GENRES[sec.genre], bars = g.bars * sec.reps;
+  const phrase = word(SLOTS[sec.slot], sec.ops.map(o => OPS[o]));
+  const span = bars * 16 / g.rate;
+  const out = [];
+  const pitched = render(phrase, g, bars);
   for (let v = 0; v < g.voices; v++) {
     let prev = null;
     for (const e of pitched.filter(e => e.v === v)) {
-      byBar[Math.floor(e.t * g.rate / 16)].push({ ...e, kind: "line", prev,
-        pad: g.realize(v) === "pad" });
+      out.push({ ...e, kind: "line", prev, pad: g.realize(v) === "pad" });
       prev = e.n;
     }
   }
-  for (const e of drums(SUBJ, g, bars)) byBar[Math.floor(e.t * g.rate / 16)].push({ ...e, kind: "hit" });
-  for (const e of bass(SUBJ, g, bars)) byBar[Math.floor(e.t * g.rate / 16)].push({ ...e, kind: "bass" });
+  // Drums repeat PER GENRE-LOOP so the fill lands at the end of every form, not
+  // once at the end of the section. The pitched voices do NOT: their section
+  // counter has to run continuously or acid's rotate(4·section) resets.
+  const dr = drums(phrase, g, g.bars), loopSteps = g.bars * 16 / g.rate;
+  for (let r = 0; r < sec.reps; r++)
+    for (const e of dr) out.push({ ...e, kind: "hit", t: e.t + r * loopSteps });
+  for (const e of bass(phrase, g, bars)) out.push({ ...e, kind: "bass" });
+  return { g, bars, span, phrase, ev: envelope(out, sec.env, span) };
+}
+
+function compile() {
+  const secs = (songMode && SONG.length) ? SONG : [newSection()];
+  TL = [];
+  secs.forEach((sec, si) => {
+    const { g, bars, ev } = sectionEvents(sec);
+    const barSteps = 16 / g.rate;
+    for (let b = 0; b < bars; b++)
+      TL.push({ si, g, barSteps, first: b === 0, bars,
+                ev: ev.filter(e => Math.floor(e.t / barSteps) === b)
+                      .map(e => ({ ...e, off: e.t - b * barSteps })) });
+  });
 }
 const stepDur = () => 60 / (+document.getElementById("bpm").value) / 4;
 
@@ -255,22 +311,24 @@ function applyPending() {
   syncTabs(); compile(); draw(); writeSrc();
 }
 function tick() {
-  if (!playing) return;
+  if (!playing || !TL.length) return;
   const sd = stepDur(), look = ctx.currentTime + .15;
   while (nextBarTime < look) {
-    // a genre swap lands HERE — on the bar line, after the sounding bar finishes
-    if (pending) { nextBar = 0; applyPending(); }
-    const g = GENRES[cur], barSteps = 16 / g.rate;
-    if (nextBar === 0) passStart = nextBarTime;
-    for (const e of byBar[nextBar] || []) {
-      const when = nextBarTime + (e.t - nextBar * barSteps) * sd;
-      if (e.kind === "line") line(when, e.n, e.dur * sd, e.acc, e.sld, e.prev, g.tone, e.pad, e.vel);
+    // a genre swap lands HERE — on the bar line, after the sounding bar
+    // finishes. Song mode ignores it: the section list decides the genre.
+    if (pending && !songMode) { nextBar = 0; applyPending(); }
+    if (nextBar >= TL.length) nextBar = 0;
+    const bar = TL[nextBar];
+    if (bar.first) { passStart = nextBarTime; showSection(bar.si); }
+    for (const e of bar.ev) {
+      const when = nextBarTime + e.off * sd;
+      if (e.kind === "line") line(when, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel);
       else if (e.kind === "hit") hit(when, e.d, e.acc, e.vel);
       else if (e.kind === "bass") line(when, e.n, e.dur * sd, 1, 0, null,
         { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false, e.vel);
     }
-    nextBarTime += barSteps * sd;
-    nextBar = (nextBar + 1) % g.bars;
+    nextBarTime += bar.barSteps * sd;
+    nextBar = (nextBar + 1) % TL.length;
   }
 }
 function frame() {
@@ -278,7 +336,7 @@ function frame() {
   const sd = stepDur();
   let x = ((ctx.currentTime - passStart) / sd) * stepW;
   if (x < 0) x = 0;
-  const max = loopSteps * stepW;
+  const max = viewSteps * stepW;
   if (x > max) x = max;
   for (const p of phEls) p.style.transform = "translateX(" + x + "px)";
   requestAnimationFrame(frame);
@@ -358,6 +416,10 @@ for (const k of Object.keys(GENRES)) {
 syncTabs();
 
 document.getElementById("play").addEventListener("click", () => playing ? stop() : start());
+document.getElementById("mode").addEventListener("click", () => setMode(!songMode));
+document.getElementById("addsec").addEventListener("click", () => {
+  SONG.push(newSection()); viewSec = SONG.length - 1; songChanged();
+});
 document.getElementById("bpm").addEventListener("input", e => {
   document.getElementById("bpmv").textContent = e.target.value;
 });
@@ -375,13 +437,91 @@ document.getElementById("reset").addEventListener("click", () => {
   pending = null;
   SLOTS = Array.from({ length: NSLOTS }, blank);
   slot = 0; SUBJ = SLOTS[0];
+  SONG = []; viewSec = 0; playingSec = -1;
   cur = DEFAULT_GENRE;
+  setMode(false);
   const bpm = document.getElementById("bpm");
   bpm.value = DEFAULT_BPM; document.getElementById("bpmv").textContent = String(DEFAULT_BPM);
   syncTabs(); drawSlots(); drawEditor(); draw(); writeSrc();
   document.getElementById("dawscroll").scrollLeft = 0;
   document.querySelector(".steps").scrollLeft = 0;
 });
+
+/* ---------- song ---------- */
+function setMode(on) {
+  songMode = on;
+  if (songMode && !SONG.length) SONG.push(newSection());
+  document.getElementById("mode").textContent = songMode ? "Song" : "Loop";
+  document.getElementById("mode").setAttribute("aria-pressed", String(songMode));
+  document.getElementById("songpanel").hidden = !songMode;
+  viewSec = 0; playingSec = -1;
+  syncTabs(); drawSong(); draw(); if (playing) { compile(); nextBar = 0; nextBarTime = ctx.currentTime + .06; }
+}
+function songChanged() {
+  drawSong(); draw(); if (playing) compile();
+}
+function drawSong() {
+  const el = document.getElementById("seclist"); el.innerHTML = "";
+  SONG.forEach((sec, i) => {
+    const g = GENRES[sec.genre];
+    const card = document.createElement("div");
+    card.className = "sec" + (i === viewSec ? " sel" : "") + (i === playingSec ? " live" : "");
+
+    const head = document.createElement("div"); head.className = "sechead";
+    head.innerHTML = '<b>' + (i + 1) + '</b><span>' + (g.bars * sec.reps) + ' bars</span>';
+    const rm = document.createElement("button");
+    rm.type = "button"; rm.className = "x"; rm.textContent = "\u00d7";
+    rm.setAttribute("aria-label", "remove section " + (i + 1));
+    rm.addEventListener("click", () => {
+      SONG.splice(i, 1); if (!SONG.length) SONG.push(newSection());
+      viewSec = Math.min(viewSec, SONG.length - 1); songChanged();
+    });
+    head.append(rm); card.append(head);
+
+    const mk = (label, opts, val, on) => {
+      const w = document.createElement("label"); w.className = "field";
+      w.append(Object.assign(document.createElement("span"), { textContent: label }));
+      const sel = document.createElement("select");
+      for (const [v, t] of opts) {
+        const o = document.createElement("option"); o.value = v; o.textContent = t;
+        if (String(v) === String(val)) o.selected = true; sel.append(o);
+      }
+      sel.addEventListener("change", e => { on(e.target.value); songChanged(); });
+      w.append(sel); return w;
+    };
+    card.append(mk("genre", Object.keys(GENRES).map(k => [k, GENRES[k].label]), sec.genre,
+      v => { sec.genre = v; }));
+    card.append(mk("phrase", SLOTS.map((p, n) => [n, (n + 1) + (isBlank(p) ? " (empty)" : "")]), sec.slot,
+      v => { sec.slot = +v; }));
+    card.append(mk("repeat", [[1, "\u00d71"], [2, "\u00d72"], [4, "\u00d74"]], sec.reps,
+      v => { sec.reps = +v; }));
+
+    const chips = document.createElement("div"); chips.className = "chips";
+    for (const k of Object.keys(OPS)) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chip" + (sec.ops.includes(k) ? " on" : "");
+      b.textContent = OPLABEL[k]; b.setAttribute("aria-pressed", String(sec.ops.includes(k)));
+      b.addEventListener("click", () => {
+        const j = sec.ops.indexOf(k); j < 0 ? sec.ops.push(k) : sec.ops.splice(j, 1);
+        songChanged();
+      });
+      chips.append(b);
+    }
+    for (const [k, t] of [["in", "fade in"], ["out", "fade out"]]) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chip env" + (sec.env === k ? " on" : "");
+      b.textContent = t; b.setAttribute("aria-pressed", String(sec.env === k));
+      b.addEventListener("click", () => { sec.env = sec.env === k ? null : k; songChanged(); });
+      chips.append(b);
+    }
+    card.append(chips);
+    card.addEventListener("click", e => {
+      if (e.target.closest("button,select")) return;
+      viewSec = i; drawSong(); draw();
+    });
+    el.append(card);
+  });
+}
 
 function writeSrc() {
   const g = GENRES[cur];
@@ -406,4 +546,4 @@ function writeSrc() {
 }
 
 addEventListener("resize", () => draw());
-drawSlots(); drawEditor(); draw(); writeSrc();
+drawSlots(); drawEditor(); setMode(false); draw(); writeSrc();
