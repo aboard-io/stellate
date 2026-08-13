@@ -20,6 +20,9 @@
     <div class="knob"><label for="vol">Volume</label>
       <input type="range" id="vol" min="0" max="100" value="80"><b id="volv">80</b></div>
     <div class="spacer"></div>
+    <button class="btn" id="savefile">Save</button>
+    <button class="btn" id="loadfile">Load</button>
+    <input type="file" id="loadinput" accept="application/json,.json" hidden>
     <button class="btn" id="reset">Reset all</button>
   </div>
 
@@ -45,7 +48,8 @@
   <div class="ed songwrap">
     <div class="edhead">
       <h2>Song</h2>
-      <p>Click to play from a box, double-click to loop it, drag to reorder, trim the edges.</p>
+      <p>Click to play from a box, double-click to loop it, drag to reorder, trim the edges.
+         Genres stack — the first owns the harmony, the drums and the tempo; the rest layer over it.</p>
     </div>
     <div class="song" id="song"></div>
     <div class="palette" id="palette"></div>

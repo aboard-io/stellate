@@ -47,7 +47,8 @@ const okPhrase = p => p && typeof p === "object" &&
   ["deg", "oct", "vel", "gate", "acc", "sld"].every(k =>
     Array.isArray(p[k]) && p[k].length === 16 && p[k].every(Number.isFinite));
 const okBox = b => b && typeof b === "object" &&
-  Object.prototype.hasOwnProperty.call(GENRES, b.genre) &&
+  Array.isArray(b.genres) && b.genres.length &&
+  b.genres.every(k => Object.prototype.hasOwnProperty.call(GENRES, k)) &&
   Array.isArray(b.slots) && b.slots.every(i => Number.isInteger(i) && i >= 0 && i < NSLOTS) &&
   Number.isFinite(b.len) && Number.isFinite(b.nudge) &&
   Array.isArray(b.ops) &&
@@ -59,15 +60,20 @@ const okBox = b => b && typeof b === "object" &&
   (b.artic == null || ["staccato", "normal", "legato", "tie"].includes(b.artic)) &&
   (b.kit == null || Object.prototype.hasOwnProperty.call(KITLABEL, b.kit)) &&
   (b.bassop == null || Object.prototype.hasOwnProperty.call(BASSOPS, b.bassop));
-function load() {
-  let raw;
-  try { raw = JSON.parse(localStorage.getItem(STORE) || "null"); } catch (e) { return false; }
+// One validate-and-apply path for BOTH sources. A file off the desktop gets
+// exactly the same paranoia as a localStorage read — it is the same shape and
+// can be just as stale, and hand-edited on top of that.
+function applyState(raw) {
   if (!raw || raw.v !== 1) return false;
   if (!Array.isArray(raw.slots) || raw.slots.length !== NSLOTS || !raw.slots.every(okPhrase)) return false;
+  for (const b of raw.song || []) if (b && !b.genres) b.genres = b.genre ? [b.genre] : ["simple"];
   if (!Array.isArray(raw.song) || !raw.song.length || !raw.song.every(okBox)) return false;
   // ops are FILTERED, not validated: the operator table changes as the palette
   // does, and a song should lose an obsolete chip rather than lose itself.
-  for (const b of raw.song) b.ops = b.ops.filter(o => Object.prototype.hasOwnProperty.call(OPS, o));
+  for (const b of raw.song) {
+    if (!b.genres) b.genres = b.genre ? [b.genre] : ["simple"];   // pre-stack saves
+    b.ops = b.ops.filter(o => Object.prototype.hasOwnProperty.call(OPS, o));
+  }
   for (const p2 of raw.slots) { if (!p2.inc) p2.inc = new Array(16).fill(0);
                                 if (!p2.stk) p2.stk = new Array(16).fill(0); }
   SLOTS = raw.slots; SONG = raw.song; SUBJ = SLOTS[slot];
@@ -80,6 +86,45 @@ function load() {
     document.getElementById("volv").textContent = String(raw.vol);
   }
   return true;
+}
+function load() {
+  try { return applyState(JSON.parse(localStorage.getItem(STORE) || "null")); }
+  catch (e) { return false; }
+}
+
+// ---- desktop ----
+function songJSON() {
+  return JSON.stringify({ v: 1, slots: SLOTS, song: SONG,
+    bpm: +document.getElementById("bpm").value,
+    vol: +document.getElementById("vol").value }, null, 1);
+}
+function saveFile() {
+  const names = [...new Set(SONG.flatMap(b => b.genres || []))].join("-") || "song";
+  const blob = new Blob([songJSON()], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "nukernel-" + names + "-" + SONG.length + "box.json";
+  // the anchor must OUTLIVE the click: removing it in the same tick cancelled
+  // the download in chromium and nothing was ever written
+  document.body.append(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+}
+function loadFile(file) {
+  const fr = new FileReader();
+  fr.onload = () => {
+    let raw = null;
+    try { raw = JSON.parse(fr.result); } catch (e) { raw = null; }
+    if (!applyState(raw)) {
+      document.getElementById("readout").textContent =
+        "that file is not a nukernel song, or it is from an incompatible version";
+      return;
+    }
+    if (playing) stop();
+    viewSec = 0; playingSec = -1; loopOnly = null; slot = 0; SUBJ = SLOTS[0];
+    paletteBuilt = false;
+    drawPalette(); drawSlots(); drawEditor(); drawSong(); draw(); save();
+  };
+  fr.readAsText(file);
 }
 
 /* ---------- phrases ---------- */
@@ -135,7 +180,13 @@ const BASSOPS = { nobass: "no bass", walk: "walking", octaves: "octaves",
 // A new box is SIMPLE — the phrase played as written. There is no empty state
 // any more: a box always makes a sound as soon as it has a phrase, and the
 // genres are legible as what they add to that.
-const emptyBox = () => ({ genre: "simple", slots: [], len: GENRES.simple.bars,
+// A BOX CARRIES A STACK OF GENRES, not one. The FIRST is the authority: it owns
+// the harmony, the rate and the drums, and everything layered on top inherits
+// them. That rule is the whole reason to stack rather than multitrack — two
+// generators each writing their own progression is the mud, and a timeline of
+// parallel lanes would let you avoid deciding rather than make you decide.
+// Layers are lifted an octave so a fugue does not vanish under a guitar.
+const emptyBox = () => ({ genres: ["simple"], slots: [], len: GENRES.simple.bars,
                           nudge: 0, ops: [], env: null, mode: null, rate: null, scale: null,
                           kit: null, bassop: null, clamp: null, cmode: null, artic: null });
 
@@ -143,7 +194,7 @@ const emptyBox = () => ({ genre: "simple", slots: [], len: GENRES.simple.bars,
 // box overrides. Mode and tempo are not pattern operators and not envelopes —
 // they are the third kind, a change to the GENRE the phrase is read through.
 const genreOf = sec => {
-  const g = GENRES[sec.genre];
+  const g = GENRES[gid(sec)];
   if (!sec.mode && !sec.rate && !sec.scale && !sec.kit && !sec.bassop
       && !sec.clamp && !sec.cmode && !sec.artic) return g;
   const out = { ...g, ...(sec.mode ? { mode: MODES[sec.mode] } : {}),
@@ -165,7 +216,9 @@ let SONG = Array.from({ length: NBOXES }, emptyBox);
 let viewSec = 0, playingSec = -1, loopOnly = null, dragFrom = null, pendingStart = null;
 
 const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
-const boxBars = b => (b.genre ? b.len : 0);
+const gid = sec => (sec.genres && sec.genres[0]) || null;
+const boxBars = b => (gid(b) ? b.len : 0);
+const stackLabel = sec => (sec.genres || []).map(k => GENRES[k].label).join(" + ");
 
 /* ---------- what a box contributes ---------- */
 // MULTIPLE PHRASES combine by being dealt across the genre's own voices: voice v
@@ -173,7 +226,7 @@ const boxBars = b => (b.genre ? b.len : 0);
 // phrases in acid is two 303s running different patterns, which is what acid
 // records actually did. The voice count never changes — the phrases share it.
 function sectionEvents(sec) {
-  if (!sec.genre) return { g: null, bars: 0, ev: [] };
+  if (!gid(sec)) return { g: null, bars: 0, ev: [] };
   const g = genreOf(sec);
   // NUDGE is an absolute bar offset, not a phase modulo the form. Nudging a
   // fugue past bar 4 starts it AFTER the exposition, which is a different piece
@@ -205,8 +258,34 @@ function sectionEvents(sec) {
     for (const e of dr) out.push({ ...e, kind: "hit", t: e.t + r * loopSteps });
   for (const e of bass(lead, g, total)) out.push({ ...e, kind: "bass" });
 
+  // LAYERS. Each extra genre contributes only its pitched voices, rendered
+  // through the authority's harmony, rate and mode — its own kit, bass and
+  // progression are dropped, because a box has one groove and one key. Voice
+  // indices continue past the authority's so the lanes stay separate.
+  let vBase = g.voices;
+  for (const extra of (sec.genres || []).slice(1)) {
+    const L = GENRES[extra];
+    const lg = { ...L, harmony: g.harmony, roots: g.roots, rate: g.rate,
+                 mode: g.mode, incClamp: g.incClamp, incMode: g.incMode,
+                 artic: g.artic, kit: {}, ghost: null, nobass: true,
+                 reg: v => L.reg(v) + 1 };
+    // the layer reads the SAME phrases, dealt across ITS voices
+    phrases.forEach((ph, pi) => {
+      const lev = render(ph, lg, total);
+      for (let v = pi; v < L.voices; v += nP) {
+        let prev = null;
+        for (const e of lev.filter(e => e.v === v)) {
+          out.push({ ...e, kind: "line", prev, pad: L.realize(v) === "pad",
+                     v: vBase + v, layer: extra });
+          prev = e.n;
+        }
+      }
+    });
+    vBase += L.voices;
+  }
+
   const win = out.filter(e => e.t >= from && e.t < to).map(e => ({ ...e, t: e.t - from }));
-  return { g, bars: len, ev: envelope(win, sec.env, len * barSteps) };
+  return { g, bars: len, ev: envelope(win, sec.env, len * barSteps), vBase };
 }
 
 /* ---------- arrangement view of the selected box ---------- */
@@ -242,6 +321,15 @@ function draw() {
       op: (sec.slots.length > 1 ? "phrase " + (sec.slots[v % nP] + 1) + " · " : "") + (g.words[v] || ""),
       kind: "pitch", color: "var(--v" + v + ")",
       ev: ev.filter(e => e.kind === "line" && e.v === v) });
+  let lv = g.voices;
+  for (const extra of (sec.genres || []).slice(1)) {
+    const L = GENRES[extra];
+    for (let v = 0; v < L.voices; v++)
+      lanes.push({ name: L.label + " " + v, op: L.words[v] || "",
+        kind: "pitch", color: "var(--v" + ((v + 2) % 4) + ")",
+        ev: ev.filter(e => e.kind === "line" && e.v === lv + v) });
+    lv += L.voices;
+  }
   lanes.push({ name: "Bass", op: (g.bassStyle === "walk" ? "walking · " : "roots · ") + g.harmony,
     kind: "pitch", color: "var(--vb)", ev: ev.filter(e => e.kind === "bass") });
   const hits = ev.filter(e => e.kind === "hit");
@@ -321,7 +409,7 @@ function draw() {
     if (ev.every(e => (e.vel == null ? 5 : e.vel) === 0)) quiet.push("velocity 0 (a completed fade)");
   }
   document.getElementById("readout").textContent =
-    "box " + (viewSec + 1) + " · " + GENRES[sec.genre].label + " · " +
+    "box " + (viewSec + 1) + " · " + stackLabel(sec) + " · " +
     (sec.slots.length ? sec.slots.map(i => "phrase " + (i + 1)).join(" + ") : "no phrase") +
     " · " + bars + " bar" + (bars === 1 ? "" : "s") +
     (sec.nudge ? " nudged " + sec.nudge : "") + " · " + roots +
@@ -412,7 +500,7 @@ async function loadInstrument(id) {
 // every instrument the song needs, decoded before the transport starts
 function instrumentsInSong() {
   const ids = new Set([BASS_INSTR]);
-  for (const sec of SONG) if (sec.genre) ids.add(INSTR[sec.genre] || "yamaha_grand_piano");
+  for (const sec of SONG) for (const k of (sec.genres || [])) ids.add(INSTR[k] || "yamaha_grand_piano");
   return [...ids];
 }
 let sampler = null;
@@ -599,7 +687,7 @@ function compile() {
   TL = [];
   const list = loopOnly == null ? SONG.map((s, i) => [s, i]) : [[SONG[loopOnly], loopOnly]];
   for (const [sec, si] of list) {
-    if (!sec.genre) continue;
+    if (!gid(sec)) continue;
     const { g, bars, ev } = sectionEvents(sec);
     // A BOX THAT PRODUCES NOTHING TAKES NO TIME. Since Simple became the default
     // there is no "empty" box any more, so a fresh page was four boxes of which
@@ -631,14 +719,15 @@ function tick() {
     for (const e of bar.ev) {
       const when = nextBarTime + e.off * sd;
       if (e.kind === "line") {
-        const gsyn = GENRES[SONG[bar.si].genre].synth;
-        const id = INSTR[SONG[bar.si].genre] || "yamaha_grand_piano";
+        const owner = e.layer || gid(SONG[bar.si]);
+        const gsyn = GENRES[owner].synth;
+        const id = INSTR[owner] || "yamaha_grand_piano";
         const useSyn = gsyn && !(gsyn.lineOnly && e.pad);
         if (useSyn && playSynth(gsyn, e.n, when, e.dur * sd, e.acc, e.sld, e.vel)) { /* signature voice */ }
         else if (!playSampled(id, e.n, when, e.dur * sd, e.vel, 1))
           line(when, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel);
       } else if (e.kind === "hit") {
-        const kit = GENRES[SONG[bar.si].genre].drumkit;
+        const kit = GENRES[gid(SONG[bar.si])].drumkit;
         if (!playDrum(kit, e.d, when, e.acc, e.vel)) hit(when, e.d, e.acc, e.vel);
       }
       else if (e.kind === "bass") {
@@ -658,7 +747,7 @@ function frame() {
   const sd0 = stepDur();
   const box = document.querySelectorAll(".box")[playingSec];
   if (box) {
-    const g = GENRES[SONG[playingSec].genre];
+    const g = GENRES[gid(SONG[playingSec])];
     const total = SONG[playingSec].len * 16 / g.rate * sd0;
     const f = Math.max(0, Math.min(1, (ctx.currentTime - passStart) / total));
     const bar2 = box.querySelector(".fillbar");
@@ -685,11 +774,11 @@ async function ensureAssets(announce) {
   const need = instrumentsInSong().filter(id => {
     const sp = specOf(id); return sp && sp.zones.some(z => !zoneBufs.has(id + "|" + z.file));
   });
-  const kits = [...new Set(SONG.filter(x => x.genre && GENRES[x.genre].drumkit)
-                               .map(x => GENRES[x.genre].drumkit))]
+  const kits = [...new Set(SONG.filter(x => gid(x) && GENRES[gid(x)].drumkit)
+                               .map(x => GENRES[gid(x)].drumkit))]
     .filter(k => !drumBufs.has(k + "|k"));
   const synths = [...new Set([
-    ...SONG.filter(x => x.genre && GENRES[x.genre].synth).map(x => GENRES[x.genre].synth),
+    ...SONG.flatMap(x => (x.genres || []).filter(k => GENRES[k].synth).map(k => GENRES[k].synth)),
     ...SONG.filter(x => BASSSYNTH[x.bassop]).map(x => BASSSYNTH[x.bassop])])];
   const wantSynth = synths.filter(sp => !synthNodes.has(sp.dsp));
   if (!need.length && !wantSynth.length && !kits.length) return false;
@@ -729,13 +818,19 @@ function stop() {
 function toggle(kind, value) {
   const sec = curSection();
   if (kind === "genre") {
-    const to = sec.genre === value ? "simple" : value;   // clicking the live one falls back
-    const wasWholeForm = !sec.len || sec.len === GENRES[sec.genre].bars;
-    sec.genre = to;
-    if (wasWholeForm) sec.len = GENRES[to].bars;          // keep "one whole form" meaning that
+    const st = sec.genres, i = st.indexOf(value);
+    const wasWholeForm = !sec.len || sec.len === GENRES[st[0]].bars;
+    if (i >= 0) {
+      if (st.length === 1) return;                        // the last one cannot be removed
+      st.splice(i, 1);                                    // click again to take it off
+    } else if (st.length === 1 && st[0] === "simple") {
+      st[0] = value;             // Simple is the blank default: the first real
+                                 // genre REPLACES it rather than stacking on it
+    } else st.push(value);                                // anything after that layers
+    if (wasWholeForm) sec.len = GENRES[st[0]].bars;
     sec.nudge = Math.min(sec.nudge, 31);
   } else if (kind === "phrase") {
-    if (!sec.genre) return;
+    if (!gid(sec)) return;
     const i = sec.slots.indexOf(value);
     i < 0 ? sec.slots.push(value) : sec.slots.splice(i, 1);
   } else if (kind === "op") {
@@ -768,13 +863,13 @@ function drawSong() {
   SONG.forEach((sec, i) => {
     const bars = boxBars(sec);
     const box = document.createElement("div");
-    box.className = "box" + (sec.genre ? " full" : " empty") +
+    box.className = "box" + (gid(sec) ? " full" : " empty") +
       (i === viewSec ? " sel" : "") + (i === playingSec ? " live" : "") +
       (i === loopOnly ? " looped" : "") + (i === pendingStart ? " queued" : "");
-    box.style.width = (sec.genre ? Math.max(116, bars * PX_PER_BAR) : 116) + "px";
+    box.style.width = (gid(sec) ? Math.max(116, bars * PX_PER_BAR) : 116) + "px";
     box.draggable = true;
     box.setAttribute("aria-label", "box " + (i + 1) +
-      (sec.genre ? ", " + GENRES[sec.genre].label + ", " + bars + " bars" : ", empty"));
+      (gid(sec) ? ", " + stackLabel(sec) + ", " + bars + " bars" : ", empty"));
 
     const head = document.createElement("div"); head.className = "bhead";
     head.innerHTML = "<b>" + (i + 1) + "</b><span>" + bars + " bar" + (bars === 1 ? "" : "s") +
@@ -796,8 +891,8 @@ function drawSong() {
     box.append(head);
 
     const gl = document.createElement("div");
-    gl.className = "bgenre" + (sec.genre ? " has" : "");
-    gl.textContent = GENRES[sec.genre].label;
+    gl.className = "bgenre" + (gid(sec) ? " has" : "");
+    gl.textContent = stackLabel(sec);
     box.append(gl);
 
     // The box lists phrase NUMBERS. The contour picture belongs in the slot rail
@@ -946,7 +1041,7 @@ function drawPalette() {
   if (paletteBuilt) {
     el.querySelectorAll(".pchip").forEach(b => {
       const kind = b.dataset.kind, v = b.dataset.value;
-      const on = kind === "genre" ? sec.genre === v
+      const on = kind === "genre" ? sec.genres.includes(v)
         : kind === "op" ? sec.ops.includes(v)
         : kind === "env" ? sec.env === v
         : kind === "mode" ? sec.mode === v
@@ -978,7 +1073,7 @@ function drawPalette() {
     el.append(g);
   };
   group("genre", Object.keys(GENRES).map(k =>
-    ["genre", k, GENRES[k].label, sec.genre === k, "gen"]));
+    ["genre", k, GENRES[k].label, sec.genres.includes(k), "gen"]));
   group("pattern", ["rev", "inv"].map(k => ["op", k, OPLABEL[k], sec.ops.includes(k), ""]));
   group("split", [2, 3, 4, 5, 6, 7, 8].map(n =>
     ["op", "rep" + n, String(n), sec.ops.includes("rep" + n), "lst"]));
@@ -1080,7 +1175,7 @@ function drawEditor() {
 /* ---------- what the selected box asks for ---------- */
 function writeSrc() {
   const sec = curSection(), out = document.getElementById("src");
-  if (!sec.genre) { out.textContent = "(empty box)"; return; }
+  if (!gid(sec)) { out.textContent = "(empty box)"; return; }
   const g = genreOf(sec);
   const kit = Object.keys(g.kit || {}).length
     ? Object.entries(g.kit).map(([d, v]) => "  " + d + ": [" + v.join(",") + "]").join("\n")
@@ -1095,7 +1190,7 @@ function writeSrc() {
     "rate       " + g.rate + (sec.rate ? "  (" + RATELABEL[sec.rate] + ")" : "") +
       (g.swing ? "   swing " + g.swing.toFixed(2) : "") + "\n" +
     "scale      [" + (g.scale || [0, 3, 5, 7, 10]).join(" ") + "]  " +
-      (sec.scale ? SCALELABEL[sec.scale] : GENRES[sec.genre].scale ? "genre's own" : "minor pentatonic") +
+      (sec.scale ? SCALELABEL[sec.scale] : GENRES[gid(sec)].scale ? "genre's own" : "minor pentatonic") +
       "  \u2014 " + (12 / (g.scale || [0, 3, 5, 7, 10]).length).toFixed(1) +
       " semitones per degree-step\n" +
     "harmony    " + g.harmony + (g.roots ? "  [" + g.roots.map(r => ROMAN[r]).join(" ") + "]" : "") + "\n" +
@@ -1125,6 +1220,13 @@ const putPhrase = make => () => {
 document.getElementById("seed").addEventListener("click", putPhrase(() => structuredClone(DEFAULT)));
 document.getElementById("rnd").addEventListener("click", putPhrase(randomPhrase));
 document.getElementById("clear").addEventListener("click", putPhrase(blank));
+document.getElementById("savefile").addEventListener("click", saveFile);
+document.getElementById("loadfile").addEventListener("click",
+  () => document.getElementById("loadinput").click());
+document.getElementById("loadinput").addEventListener("change", e => {
+  if (e.target.files && e.target.files[0]) loadFile(e.target.files[0]);
+  e.target.value = "";                       // so the same file can be picked twice
+});
 document.getElementById("reset").addEventListener("click", () => {
   if (playing) stop();
   try { localStorage.removeItem(STORE); } catch (e) { /* nothing to clear */ }
