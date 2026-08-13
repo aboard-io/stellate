@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>One Phrase, Three Genres — nukernel</title>
+<meta name="description" content="A 70-line kernel: one 16-step seed phrase rendered as a fugue, an acid house track, or vaporwave.">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="kernel-daw.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="mast">
+    <div>
+      <h1>One phrase, <em>three genres</em></h1>
+      <p class="sub">A 70-line kernel. Sixteen steps of pitch, octave, gate, accent and slide go in;
+        a fugue, an acid track and a vaporwave loop come out — same seed, different operator words,
+        different grid, different source of harmony.</p>
+    </div>
+    <div class="count">kernel <b>70</b> lines · operators <b>8</b> · genres <b>3</b></div>
+  </div>
+
+  <div class="bar">
+    <div class="tabs" id="tabs"></div>
+    <button class="btn go" id="play">▶ Play</button>
+    <div class="knob"><label for="bpm">Tempo</label>
+      <input type="range" id="bpm" min="70" max="160" value="126"><b id="bpmv">126</b></div>
+    <div class="spacer"></div>
+    <button class="btn" id="rnd">Randomize phrase</button>
+    <button class="btn" id="reset">Reset all</button>
+  </div>
+
+  <div class="daw">
+    <div class="dawscroll" id="dawscroll">
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+  <p class="readout" id="readout"></p>
+
+  <div class="ed">
+    <div class="edhead">
+      <h2>The seed phrase</h2>
+      <p>Click <b>deg</b> to raise a scale degree (shift-click lowers). Click <b>oct / gate / acc / sld</b> to toggle.
+         Everything above is rebuilt from these five rows.</p>
+    </div>
+    <div class="steps"><div class="stepgrid" id="stepgrid"></div></div>
+  </div>
+
+  <details>
+    <summary>What each genre actually asks for</summary>
+    <pre id="src"></pre>
+  </details>
+
+  <p class="note-b">Accents are outlined in amber. Slides ramp pitch from the previous note.
+    The bass lane is the harmony read at low density — in the fugue its roots are never written down,
+    they're computed from how far each voice transposed the subject on entry.</p>
+</div>
+<script src="kernel-daw.js"></script>
+</body>
+</html>
