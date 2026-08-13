@@ -100,14 +100,18 @@
     // line is simultaneously melody, bass and the entire harmony.
     acid: {
       label: "Acid house", rate: 1, bars: 4, voices: 2,
-      entry: v => v, reg: v => -1 + v, realize: () => "line",
+      entry: v => v, reg: v => -2 + v, realize: () => "line",
       harmony: "modal",
       // THE SIGNATURE-SYNTH LAW, from state-engine.js SIGNATURE_MODELS: a genre
       // whose identity IS a synthesis behaviour is never sampled. Acid is the
       // canonical case — "the whole point of acid house" — because the accent
       // and the slide are filter behaviour, and a sample cannot squelch.
+      // The chirp is envmod x resonance: a big envelope amount into a near-self-
+      // oscillating filter re-sweeps from scratch on every note, which reads as a
+      // bleep rather than a bassline. Saw instead of square, a filter that opens
+      // less far and closes slower, and the resonance backed off the edge.
       synth: { dsp: "tb303", root: "tb303", level: 0.85,
-               set: { cutoff: 520, resonance: 0.86, envmod: 0.8, decay: 0.42, waveform: 1 } },
+               set: { cutoff: 340, resonance: 0.58, envmod: 0.42, decay: 0.78, waveform: 0 } },
       kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],     // 909, four on the floor
              c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
@@ -127,7 +131,7 @@
     // realization and lossiness, which is why the dial is four numbers not one.
     vaporwave: {
       label: "Vaporwave", rate: .5, bars: 4, voices: 2,
-      entry: () => 0, reg: v => (v === 0 ? -1 : 1),
+      entry: () => 0, reg: v => (v === 0 ? -1 : 0),
       realize: v => (v === 0 ? "pad" : "line"),
       harmony: "cycle", roots: [3, 4, 2, 5],   // iv v III VI
       // FM, from a real cartridge. "E.PIANO 1" is the DX7 patch vaporwave is

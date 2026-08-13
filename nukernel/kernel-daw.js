@@ -416,7 +416,19 @@ function playSynth(spec, midi, when, durSec, acc, sld, vel) {
   set("slide", sld ? 1 : 0, when);
   const lvl = spec.level * (0.25 + 0.75 * ((vel == null ? 5 : vel) / 9));
   set("level", lvl, when); set("gain", Math.min(1, lvl), when);
-  set("freq", hz(midi), when);
+  // FOLD INTO THE VOICE'S RANGE. A Faust freq param has a declared min/max —
+  // DX7 stops at 1000 Hz, bass_reese at 500 — and setting a value past it does
+  // not error, it CLAMPS, so every note above the ceiling collapses onto the
+  // same pitch. That is not "a bit high", it is out of tune. Fold by octaves,
+  // which keeps the pitch class and only moves the register.
+  const fa = node.parameters.get("/" + spec.root + "/freq");
+  let f = hz(midi);
+  if (fa) {
+    while (f > fa.maxValue && f / 2 >= fa.minValue) f /= 2;
+    while (f < fa.minValue && f * 2 <= fa.maxValue) f *= 2;
+    f = Math.max(fa.minValue, Math.min(fa.maxValue, f));
+  }
+  set("freq", f, when);
   set("gate", 1, when);
   set("gate", 0, Math.max(when + 0.02, when + durSec * 0.92));
   return true;
