@@ -137,8 +137,14 @@
              h: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
       fill: { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0] }, // bar 4: the snare answers itself
       tone: { wave: "sawtooth", cut: 1500, q: 2.2, atk: .05, rel: 1.6, gain: .20, verb: .55 },
-      words: ["excerpt(2,8) → pad", "excerpt(2,8) → line"],
-      word: () => [excerpt(2, 8)],
+      words: ["chords from the harmony", "a moving 8-step window on the phrase"],
+      // THE WINDOW MOVES. A fixed excerpt(2,8) looped ONE half-phrase for the
+      // whole section — six pitches, eight times over — and threw steps 11..16
+      // of the seed away entirely, so writing a melody changed almost nothing.
+      // Sliding the window four steps a bar keeps the loop-a-fragment identity
+      // that makes it vaporwave while letting the whole phrase through across
+      // the section.
+      word: (v, s) => [excerpt((s * 4) % 16, 8)],
     },
 
     // The first genre whose SCALE is not the default, and the first whose form
