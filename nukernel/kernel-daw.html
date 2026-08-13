@@ -13,7 +13,7 @@
   <div class="mast">
     <div>
       <h1>One phrase, <em>four genres</em></h1>
-      <p class="sub">Sixteen steps of pitch, octave, gate, accent and slide go in;
+      <p class="sub">Sixteen steps of degree, octave, velocity, gate, accent and slide go in;
         a fugue, an acid track, a vaporwave loop and a twelve-bar blues come out — same seed,
         different operator words, different grid, different source of harmony.</p>
     </div>
@@ -26,17 +26,24 @@
     <div class="knob"><label for="bpm">Tempo</label>
       <input type="range" id="bpm" min="70" max="160" value="126"><b id="bpmv">126</b></div>
     <div class="spacer"></div>
+    <button class="btn" id="seed">Seed</button>
+    <button class="btn" id="rnd">Random</button>
     <button class="btn" id="clear">Clear</button>
-    <button class="btn" id="rnd">Randomize</button>
     <button class="btn" id="reset">Reset all</button>
   </div>
 
   <div class="ed">
     <div class="edhead">
-      <h2>Seed generator</h2>
-      <p>Click <b>deg</b> and <b>oct</b> to raise (shift-click to lower) — both are signed,
-         deg spans −7…+7 and oct −2…+2. Click <b>gate / acc / sld</b> to toggle.
-         Everything below is rebuilt from these five rows.</p>
+      <h2>Phrases</h2>
+      <p>Eight slots, all empty to start. Pick one, then <b>Seed</b>, <b>Random</b> or <b>Clear</b> it.
+         The selected slot is what plays.</p>
+    </div>
+    <div class="slots" id="slots"></div>
+    <div class="edhead">
+      <h2>Slot editor</h2>
+      <p>Click <b>deg</b>, <b>oct</b> and <b>vel</b> to raise, shift-click to lower — deg spans
+         −7…+7, oct −2…+2, vel 0…9. Click <b>gate / acc / sld</b> to toggle. <b>vel</b> is how loud;
+         <b>acc</b> is the 303 accent, which opens the filter and is what operators key on.</p>
     </div>
     <div class="steps"><div class="stepgrid" id="stepgrid"></div></div>
   </div>

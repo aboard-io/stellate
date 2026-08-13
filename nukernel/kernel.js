@@ -8,11 +8,16 @@
 //         >len wraps into the octave above. Never an absolute pitch, so the
 //         same phrase survives being read in any genre or any scale.
 //   oct   octave displacement — SIGNED, typically -2..+2
+//   vel   velocity 0..9 — CONTINUOUS level, the dynamics of the line
 //   gate  note or rest                   (binary)
 //   acc   accent                         (binary)
 //   sld   slide INTO this step           (binary, EDGE-valued — see reverse)
 //
-// TWO TYPES, not one: deg and oct are integers, gate/acc/sld are binary. The
+// vel and acc are NOT the same knob. vel is how loud; acc is the 303's accent,
+// a categorical flag that opens the filter and that operators key on (the ghost
+// layer is `only("acc", …)`). Level is continuous, accent is an event.
+//
+// TWO TYPES, not one: deg/oct/vel are integers, gate/acc/sld are binary. The
 // binary-only operators (`complement`, `crossmap`) are meaningless on the
 // integer pair — complementing an octave of -1 is not a musical idea. Every
 // other operator is type-agnostic because it only permutes positions.
@@ -25,18 +30,18 @@
   // ---- indexing ------------------------------------------------------------
   // Patterns are necklaces, not lists: they have no ends. Every read is cyclic.
   const at = (v, i) => v[((i % v.length) + v.length) % v.length];
-  const map5 = (p, f) => ({ deg: f(p.deg), oct: f(p.oct), gate: f(p.gate),
-                            acc: f(p.acc), sld: f(p.sld) });
+  const mapv = (p, f) => ({ deg: f(p.deg), oct: f(p.oct), vel: f(p.vel || p.gate.map(() => 5)),
+                            gate: f(p.gate), acc: f(p.acc), sld: f(p.sld) });
 
   // ---- the group -----------------------------------------------------------
-  const rotate = k => p => map5(p, v => v.map((_, i) => at(v, i + k)));
+  const rotate = k => p => mapv(p, v => v.map((_, i) => at(v, i + k)));
 
   // Retrograde is NOT `reverse` on all five vectors. deg/oct/gate/acc live on
   // steps; sld lives on the TRANSITION INTO a step, i.e. on edges, not nodes.
   // Reversing the node vectors and the edge vector the same way leaves every
   // slide attached to the wrong side of its transition. Hence the shift.
   const reverse = () => p => {
-    const r = map5(p, v => [...v].reverse());
+    const r = mapv(p, v => [...v].reverse());
     r.sld = r.sld.map((_, i) => at(r.sld, i + 1));
     return r;
   };
@@ -49,7 +54,7 @@
   // The one LOSSY operator — take n steps from a and cycle them. Everything
   // else is information-preserving, so the subject can be recovered; this one
   // discards, which is how you get episodes rather than variations.
-  const excerpt = (a, n) => p => map5(p, v => v.map((_, i) => at(v, a + (i % n))));
+  const excerpt = (a, n) => p => mapv(p, v => v.map((_, i) => at(v, a + (i % n))));
 
   // The discipline that keeps a subject recognizable: move ONE vector at a
   // time. Without this combinator that discipline is not even expressible —
@@ -95,6 +100,10 @@
   // SWING bends the grid instead of permuting it — the first transformation
   // here that is not a rearrangement of steps. Delays every odd sixteenth by
   // `g.swing` of a step; 1/3 is a triplet shuffle.
+  // Absent vel reads as 5 (mezzo), so a phrase written before velocity existed
+  // renders exactly as it did.
+  const vel = (p, i) => (p.vel ? p.vel[i] : 5);
+
   const swing = (g, i) => (i % 2) * (g.swing || 0);
 
   // ---- harmony: a MODE, not a layer ---------------------------------------
@@ -152,7 +161,7 @@
             : [pitch(p.deg[i], sc) + 12 * p.oct[i]];
           for (const n of ns)
             ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: steps * legato / g.rate, v,
-                      n: fold(n, ctr), acc: p.acc[i], sld: p.sld[i] });
+                      n: fold(n, ctr), acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });
         }
       }
     }
@@ -178,13 +187,15 @@
       for (const [d, vec] of Object.entries(kit))
         for (let i = 0; i < N; i++)
           if (at(vec, i)) ev.push({ t: (b * N + i + swing(g, i)) / g.rate, d, acc: !!subj.acc[i],
+                                    vel: vel(subj, i),
                                     fill: b === bars - 1 && !!(g.fill && g.fill[d]) });
     }
     if (g.ghost) {
       const q = word(subj, g.ghost);
       for (let b = 0; b < bars; b++)
         for (let i = 0; i < N; i++)
-          if (q.acc[i] && !q.gate[i]) ev.push({ t: (b * N + i + swing(g, i)) / g.rate, d: "p", acc: 0 });
+          if (q.acc[i] && !q.gate[i])
+            ev.push({ t: (b * N + i + swing(g, i)) / g.rate, d: "p", acc: 0, vel: vel(q, i) });
     }
     return ev.sort((a, b) => a.t - b.t);
   }
@@ -207,7 +218,8 @@
         const mid = b % 2 === 0 ? [mp(r + 2), mp(r + 4)] : [mp(r + 4), mp(r + 2)];
         const tones = [mp(r), mid[0], mid[1], mp(nx) - 1];
         tones.forEach((n, q) =>
-          ev.push({ t: (b * N + q * 4) / g.rate, dur: 3.7 / g.rate, n: n + 36, r, walk: true }));
+          ev.push({ t: (b * N + q * 4) / g.rate, dur: 3.7 / g.rate, n: n + 36, r,
+                    walk: true, vel: q === 0 ? 7 : 5 }));
       }
       return ev;
     }
@@ -217,12 +229,13 @@
       const r = harm(subj, g, b);
       for (let i = 0; i < N; i++)
         if (subj.acc[i])
-          ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: sp[i] * 0.94 / g.rate, n: mp(r) + 36, r });
+          ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: sp[i] * 0.94 / g.rate,
+                    n: mp(r) + 36, r, vel: vel(subj, i) });
     }
     return ev;
   }
 
-  const api = { at, map5, spans, swing, rotate, reverse, transpose, invert, complement,
+  const api = { at, mapv, spans, vel, swing, rotate, reverse, transpose, invert, complement,
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, pitch, mp, fold, near,
                 harm, render, drums, bass };

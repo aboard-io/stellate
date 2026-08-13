@@ -8,9 +8,64 @@
 const { harm, render, drums, bass, ROMAN } = window.NuKernel;
 const { DEFAULT, GENRES, DRUMNAME } = window.NuGenres;
 
-const DEFAULT_GENRE = "acid", DEFAULT_BPM = 126;
-let SUBJ = structuredClone(DEFAULT);
+const DEFAULT_GENRE = "acid", DEFAULT_BPM = 126, NSLOTS = 8;
+const blank = () => ({ deg: z(), oct: z(), vel: new Array(16).fill(5),
+                       gate: z(), acc: z(), sld: z() });
+function z() { return new Array(16).fill(0); }
+
+// EIGHT SLOTS, all blank on load. A slot holds a phrase and nothing else — no
+// genre, no transforms — which is what lets the same phrase be read four ways.
+let SLOTS = Array.from({ length: NSLOTS }, blank);
+let slot = 0;
+let SUBJ = SLOTS[slot];                       // by reference: cell edits mutate the slot
 let cur = DEFAULT_GENRE, pending = null;
+
+function selectSlot(i) {
+  slot = i; SUBJ = SLOTS[i];
+  drawSlots(); drawEditor(); draw(); if (playing) compile();
+}
+function putSlot(phrase) {
+  SLOTS[slot] = phrase; SUBJ = SLOTS[slot];
+  drawSlots(); drawEditor(); draw(); if (playing) compile();
+}
+const isBlank = p => p.gate.every(g => !g);
+
+function randomPhrase() {
+  const r = n => Math.floor(Math.random() * n), p = blank();
+  for (let i = 0; i < 16; i++) {
+    p.deg[i] = r(11) - 3;
+    p.oct[i] = r(8) === 0 ? -1 : r(5) === 0 ? 1 : 0;
+    p.gate[i] = r(10) < 7 ? 1 : 0;
+    p.acc[i] = p.gate[i] && r(10) < 3 ? 1 : 0;
+    p.sld[i] = p.gate[i] && r(10) < 2 ? 1 : 0;
+    p.vel[i] = p.acc[i] ? 8 + r(2) : 3 + r(5);
+  }
+  return p;
+}
+
+function drawSlots() {
+  const el = document.getElementById("slots"); el.innerHTML = "";
+  SLOTS.forEach((p, i) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "slot" + (i === slot ? " sel" : "");
+    b.setAttribute("aria-pressed", String(i === slot));
+    b.setAttribute("aria-label", "phrase slot " + (i + 1) + (isBlank(p) ? ", empty" : ", filled"));
+    const mini = document.createElement("span"); mini.className = "mini";
+    for (let k = 0; k < 16; k++) {
+      const c = document.createElement("i");
+      if (p.gate[k]) {
+        c.className = "on";
+        c.style.height = (18 + (p.deg[k] + 7) / 14 * 60) + "%";
+        c.style.opacity = String(0.35 + (p.vel[k] / 9) * 0.65);
+      }
+      mini.append(c);
+    }
+    b.append(Object.assign(document.createElement("span"),
+      { className: "sn", textContent: (i + 1) + (isBlank(p) ? "" : " •") }), mini);
+    b.addEventListener("click", () => selectSlot(i));
+    el.append(b);
+  });
+}
 
 /* ---------- arrangement model ---------- */
 function build() {
@@ -134,7 +189,7 @@ function nz(t, dur, hp, gain) {
   g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(.0008, t + dur);
   s.connect(f); f.connect(g); g.connect(bus); s.start(t); s.stop(t + dur + .02);
 }
-function line(t, n, dur, acc, sld, prev, tone, padish) {
+function line(t, n, dur, acc, sld, prev, tone, padish, vel) {
   const o = ctx.createOscillator(), o2 = ctx.createOscillator();
   const f = ctx.createBiquadFilter(), g = ctx.createGain();
   o.type = o2.type = tone.wave; o2.detune.value = padish ? 9 : 4;
@@ -148,7 +203,8 @@ function line(t, n, dur, acc, sld, prev, tone, padish) {
   const co = tone.cut * (acc ? 2.4 : 1);
   f.frequency.setValueAtTime(Math.min(11000, co * 3.4), t);
   f.frequency.exponentialRampToValueAtTime(Math.max(160, co), t + Math.max(.06, dur * .85));
-  const pk = (acc ? 1 : .62) * tone.gain;
+  // vel is the level; acc is timbre (the filter boost above) plus a small lift
+  const pk = tone.gain * (0.18 + 0.82 * ((vel == null ? 5 : vel) / 9)) * (acc ? 1.12 : 1);
   g.gain.setValueAtTime(.0001, t);
   g.gain.linearRampToValueAtTime(pk, t + tone.atk);
   g.gain.setValueAtTime(pk, t + Math.max(tone.atk, dur * .7));   // HOLD, then release
@@ -157,8 +213,8 @@ function line(t, n, dur, acc, sld, prev, tone, padish) {
   const off = t + dur + tone.rel * .25 + .05;
   o.start(t); o2.start(t); o.stop(off); o2.stop(off);
 }
-function hit(t, d, acc) {
-  const a = acc ? 1.15 : .85;
+function hit(t, d, acc, vel) {
+  const a = (acc ? 1.15 : .85) * (0.45 + 0.55 * ((vel == null ? 5 : vel) / 9));
   if (d === "k") { const o = ctx.createOscillator(), g = ctx.createGain();
     o.frequency.setValueAtTime(126, t); o.frequency.exponentialRampToValueAtTime(43, t + .09);
     g.gain.setValueAtTime(.95 * a, t); g.gain.exponentialRampToValueAtTime(.001, t + .34);
@@ -208,10 +264,10 @@ function tick() {
     if (nextBar === 0) passStart = nextBarTime;
     for (const e of byBar[nextBar] || []) {
       const when = nextBarTime + (e.t - nextBar * barSteps) * sd;
-      if (e.kind === "line") line(when, e.n, e.dur * sd, e.acc, e.sld, e.prev, g.tone, e.pad);
-      else if (e.kind === "hit") hit(when, e.d, e.acc);
+      if (e.kind === "line") line(when, e.n, e.dur * sd, e.acc, e.sld, e.prev, g.tone, e.pad, e.vel);
+      else if (e.kind === "hit") hit(when, e.d, e.acc, e.vel);
       else if (e.kind === "bass") line(when, e.n, e.dur * sd, 1, 0, null,
-        { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false);
+        { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false, e.vel);
     }
     nextBarTime += barSteps * sd;
     nextBar = (nextBar + 1) % g.bars;
@@ -245,8 +301,8 @@ function stop() {
 // kernel never clamped degree — pitch() has always taken any integer and let
 // Math.floor(d/len) carry the octave — it was only this editor that pinned it
 // to 0..5, which made the phrase far narrower than the algebra behind it.
-const ROWS = ["deg", "oct", "gate", "acc", "sld"];
-const RANGE = { deg: [-7, 7], oct: [-2, 2] };
+const ROWS = ["deg", "oct", "vel", "gate", "acc", "sld"];
+const RANGE = { deg: [-7, 7], oct: [-2, 2], vel: [0, 9] };
 const clamp = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
 function drawEditor() {
   const el = document.getElementById("stepgrid"); el.innerHTML = "";
@@ -263,7 +319,7 @@ function drawEditor() {
       const num = RANGE[key], val = SUBJ[key][i];
       if (num) {
         b.className = "cell deg" + (SUBJ.gate[i] ? "" : " rest") + (val === 0 ? " zero" : "");
-        b.textContent = val > 0 ? "+" + val : String(val);
+        b.textContent = key === "vel" ? String(val) : (val > 0 ? "+" + val : String(val));
         b.setAttribute("aria-label", "step " + (i + 1) + " " + key + " " + val +
           " (click raises, shift-click lowers, range " + num[0] + " to " + num[1] + ")");
       } else {
@@ -305,36 +361,24 @@ document.getElementById("play").addEventListener("click", () => playing ? stop()
 document.getElementById("bpm").addEventListener("input", e => {
   document.getElementById("bpmv").textContent = e.target.value;
 });
-// CLEAR — empty the phrase to a blank canvas. The drums keep playing, because
-// the kit is genre data and never came from the seed.
-document.getElementById("clear").addEventListener("click", () => {
-  const z = () => new Array(16).fill(0);
-  SUBJ = { deg: z(), oct: z(), gate: z(), acc: z(), sld: z() };
-  drawEditor(); draw(); if (playing) compile();
-});
+// These three act on the SELECTED slot. The drums keep playing through a blank
+// phrase, because the kit is genre data and never came from the seed.
+document.getElementById("clear").addEventListener("click", () => putSlot(blank()));
+document.getElementById("seed").addEventListener("click", () => putSlot(structuredClone(DEFAULT)));
 
-document.getElementById("rnd").addEventListener("click", () => {
-  const r = n => Math.floor(Math.random() * n);
-  for (let i = 0; i < 16; i++) {
-    SUBJ.deg[i] = r(11) - 3;                       // -3..+7, the useful span
-    SUBJ.oct[i] = r(8) === 0 ? -1 : r(5) === 0 ? 1 : 0;
-    SUBJ.gate[i] = r(10) < 7 ? 1 : 0;
-    SUBJ.acc[i] = SUBJ.gate[i] && r(10) < 3 ? 1 : 0;
-    SUBJ.sld[i] = SUBJ.gate[i] && r(10) < 2 ? 1 : 0;
-  }
-  drawEditor(); draw(); if (playing) compile();
-});
+document.getElementById("rnd").addEventListener("click", () => putSlot(randomPhrase()));
 
 // RESET ALL — every part of it: transport, pending swap, phrase, genre, tempo,
 // and the scroll positions, back to the state the page loads in.
 document.getElementById("reset").addEventListener("click", () => {
   if (playing) stop();
   pending = null;
-  SUBJ = structuredClone(DEFAULT);
+  SLOTS = Array.from({ length: NSLOTS }, blank);
+  slot = 0; SUBJ = SLOTS[0];
   cur = DEFAULT_GENRE;
   const bpm = document.getElementById("bpm");
   bpm.value = DEFAULT_BPM; document.getElementById("bpmv").textContent = String(DEFAULT_BPM);
-  syncTabs(); drawEditor(); draw(); writeSrc();
+  syncTabs(); drawSlots(); drawEditor(); draw(); writeSrc();
   document.getElementById("dawscroll").scrollLeft = 0;
   document.querySelector(".steps").scrollLeft = 0;
 });
@@ -362,4 +406,4 @@ function writeSrc() {
 }
 
 addEventListener("resize", () => draw());
-drawEditor(); draw(); writeSrc();
+drawSlots(); drawEditor(); draw(); writeSrc();
