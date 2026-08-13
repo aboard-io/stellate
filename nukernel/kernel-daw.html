@@ -13,11 +13,11 @@
   <div class="mast">
     <div>
       <h1>One phrase, <em>three genres</em></h1>
-      <p class="sub">A 90-line kernel over a 58-line genre table. Sixteen steps of pitch, octave, gate, accent and slide go in;
+      <p class="sub">Sixteen steps of pitch, octave, gate, accent and slide go in;
         a fugue, an acid track and a vaporwave loop come out — same seed, different operator words,
         different grid, different source of harmony.</p>
     </div>
-    <div class="count">kernel <b>90</b> lines · genre table <b>58</b> · operators <b>8</b></div>
+    <div class="count">one phrase · <b>8</b> operators · <b>4</b>-bar loops</div>
   </div>
 
   <div class="bar">
@@ -30,6 +30,15 @@
     <button class="btn" id="reset">Reset all</button>
   </div>
 
+  <div class="ed">
+    <div class="edhead">
+      <h2>Seed generator</h2>
+      <p>Click <b>deg</b> to raise a scale degree (shift-click lowers). Click <b>oct / gate / acc / sld</b> to toggle.
+         Everything above is rebuilt from these five rows.</p>
+    </div>
+    <div class="steps"><div class="stepgrid" id="stepgrid"></div></div>
+  </div>
+
   <div class="daw">
     <div class="dawscroll" id="dawscroll">
       <div class="grid" id="grid"></div>
@@ -37,14 +46,6 @@
   </div>
   <p class="readout" id="readout"></p>
 
-  <div class="ed">
-    <div class="edhead">
-      <h2>The seed phrase</h2>
-      <p>Click <b>deg</b> to raise a scale degree (shift-click lowers). Click <b>oct / gate / acc / sld</b> to toggle.
-         Everything above is rebuilt from these five rows.</p>
-    </div>
-    <div class="steps"><div class="stepgrid" id="stepgrid"></div></div>
-  </div>
 
   <details>
     <summary>What each genre actually asks for</summary>

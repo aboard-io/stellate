@@ -35,7 +35,7 @@
     // lookup. (Known limit: it reads the ENTRY word, so the roots freeze once
     // all voices are in. Expositions genuinely work that way; episodes don't.)
     fugue: {
-      label: "Fugue", rate: 1, voices: 4,
+      label: "Fugue", rate: 1, bars: 4, voices: 4,
       entry: v => v, reg: v => 1 - v, realize: () => "line",
       kit: {}, harmony: "emergent",            // the empty kit IS the genre fact
       tone: { wave: "triangle", cut: 2600, q: 1.1, atk: .012, rel: .9, gain: .28, verb: .18 },
@@ -53,7 +53,7 @@
     // the one with no fugal equivalent (cyclic, not reflective). Modal: the 303
     // line is simultaneously melody, bass and the entire harmony.
     acid: {
-      label: "Acid house", rate: 1, voices: 2,
+      label: "Acid house", rate: 1, bars: 4, voices: 2,
       entry: v => v, reg: v => -1 + v, realize: () => "line",
       harmony: "modal",
       kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],     // 909, four on the floor
@@ -61,6 +61,8 @@
              o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
              h: [0,1,0,1, 0,1,0,1, 0,1,0,1, 0,1,0,1] },
       ghost: [only("acc", rotate(3))],         // accents alone, against an unrotated gate
+      fill: { o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 1,0,1,0],   // bar 4: hats double, clap answers
+              c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,1,0] },
       tone: { wave: "sawtooth", cut: 520, q: 11, atk: .004, rel: .75, gain: .30, verb: .06 },
       words: ["subject, unchanged", "rotate(4·section)"],
       word: (v, s) => (v === 0 ? [] : [rotate(4 * s), ...(s % 2 ? [complement("acc")] : [])]),
@@ -72,13 +74,14 @@
     // move. Restatement rate is ~1 like acid; what separates them is rate,
     // realization and lossiness, which is why the dial is four numbers not one.
     vaporwave: {
-      label: "Vaporwave", rate: .5, voices: 2,
+      label: "Vaporwave", rate: .5, bars: 4, voices: 2,
       entry: () => 0, reg: v => (v === 0 ? -1 : 1),
       realize: v => (v === 0 ? "pad" : "line"),
       harmony: "cycle", roots: [3, 4, 2, 5],   // iv v III VI
       kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],     // lazy, half-time at rate .5
              s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
              h: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
+      fill: { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0] }, // bar 4: the snare answers itself
       tone: { wave: "sawtooth", cut: 1500, q: 2.2, atk: .05, rel: 1.6, gain: .20, verb: .55 },
       words: ["excerpt(2,8) → pad", "excerpt(2,8) → line"],
       word: () => [excerpt(2, 8)],

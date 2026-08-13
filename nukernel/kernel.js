@@ -104,19 +104,40 @@
   // bar, a register and a realization. One mechanism covers both ends of the
   // dial: a fugue staggers entries and transforms each; acid layers entries
   // and transforms none.
+  // A note lasts until the next gated step, not one step. The gate vector
+  // already carries the rhythm; reading duration off it is what turns a row of
+  // uniform 16ths into a phrase with long and short notes. A note whose
+  // SUCCESSOR slides is held full length (that is what a slide is on a 303);
+  // everything else gets a hair of separation. Pads hold to the next chord.
+  const spans = gate => {
+    const N = gate.length, on = [];
+    for (let i = 0; i < N; i++) if (gate[i]) on.push(i);
+    const out = new Array(N).fill(0);
+    if (!on.length) return out;
+    on.forEach((i, k) => {
+      let d = on[(k + 1) % on.length] - i;
+      if (d <= 0) d += N;
+      out[i] = d;
+    });
+    return out;
+  };
+
   function render(subj, g, bars) {
     const N = subj.deg.length, ev = [];
     for (let v = 0; v < g.voices; v++) {
-      const ctr = 60 + 12 * g.reg(v);
+      const ctr = 60 + 12 * g.reg(v), pad = g.realize(v) === "pad";
       for (let b = g.entry(v); b < bars; b++) {
         const p = word(subj, g.word(v, b - g.entry(v))), r = harm(subj, g, b);
+        const sp = spans(p.gate);
         for (let i = 0; i < N; i++) {
           if (!p.gate[i]) continue;
-          const ns = g.realize(v) === "pad"
+          const steps = sp[i];
+          const legato = pad || p.sld[(i + steps) % N] ? 1 : 0.92;
+          const ns = pad
             ? [r, r + 2, r + 4].map(mp)                  // chord from HARMONY, not from the note
             : [pitch(p.deg[i]) + 12 * p.oct[i]];
           for (const n of ns)
-            ev.push({ t: (b * N + i) / g.rate, dur: 1 / g.rate, v,
+            ev.push({ t: (b * N + i) / g.rate, dur: steps * legato / g.rate, v,
                       n: fold(n, ctr), acc: p.acc[i], sld: p.sld[i] });
         }
       }
@@ -132,12 +153,19 @@
   // reaches the rhythm bed — and it needs `only`, because accents are a subset
   // of gates by construction, so any whole-pattern operator preserves that
   // containment and the layer can never fire.
+  // A kit repeated bar after bar is one bar, not a loop. `fill` is a partial
+  // kit merged over the base on the LAST bar of the loop — the standard three-
+  // bars-and-a-fill phrase, and the reason the drums have a four-bar shape
+  // rather than a one-bar shape.
   function drums(subj, g, bars) {
     const ev = [], N = subj.deg.length;
-    for (const [d, vec] of Object.entries(g.kit || {}))
-      for (let b = 0; b < bars; b++)
+    for (let b = 0; b < bars; b++) {
+      const kit = (g.fill && b === bars - 1) ? { ...g.kit, ...g.fill } : (g.kit || {});
+      for (const [d, vec] of Object.entries(kit))
         for (let i = 0; i < N; i++)
-          if (at(vec, i)) ev.push({ t: (b * N + i) / g.rate, d, acc: !!subj.acc[i] });
+          if (at(vec, i)) ev.push({ t: (b * N + i) / g.rate, d, acc: !!subj.acc[i],
+                                    fill: b === bars - 1 && !!(g.fill && g.fill[d]) });
+    }
     if (g.ghost) {
       const q = word(subj, g.ghost);
       for (let b = 0; b < bars; b++)
@@ -151,16 +179,17 @@
   // Root motion is the progression, so chords are not a separate stage in the
   // pipeline — they are this object at a different density.
   function bass(subj, g, bars) {
-    const ev = [], N = subj.deg.length;
+    const ev = [], N = subj.deg.length, sp = spans(subj.acc);   // holds to the next accent
     for (let b = 0; b < bars; b++) {
       const r = harm(subj, g, b);
       for (let i = 0; i < N; i++)
-        if (subj.acc[i]) ev.push({ t: (b * N + i) / g.rate, dur: 2 / g.rate, n: mp(r) + 36, r });
+        if (subj.acc[i])
+          ev.push({ t: (b * N + i) / g.rate, dur: sp[i] * 0.94 / g.rate, n: mp(r) + 36, r });
     }
     return ev;
   }
 
-  const api = { at, map5, rotate, reverse, transpose, invert, complement,
+  const api = { at, map5, spans, rotate, reverse, transpose, invert, complement,
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, pitch, mp, fold, near,
                 harm, render, drums, bass };
