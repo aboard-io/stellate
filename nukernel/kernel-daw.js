@@ -318,7 +318,7 @@ const SAMPLERS = (REG && REG.SAMPLERS) || {};
 const MEDIA = "../found/samples/instruments/";
 
 // one instrument per genre, and one for the bass lane
-const INSTR = { simple: "marimba", fugue: "rock_organ", acid: "clean_guitar",
+const INSTR = { simple: "yamaha_grand_piano", fugue: "rock_organ", acid: "clean_guitar",
                 vaporwave: "strings", blues: "steel_string_guitar", rock: "crunch_guitar" };
 const BASS_INSTR = "acoustic_bass";
 
@@ -347,7 +347,7 @@ async function loadInstrument(id) {
 // every instrument the song needs, decoded before the transport starts
 function instrumentsInSong() {
   const ids = new Set([BASS_INSTR]);
-  for (const sec of SONG) if (sec.genre) ids.add(INSTR[sec.genre] || "marimba");
+  for (const sec of SONG) if (sec.genre) ids.add(INSTR[sec.genre] || "yamaha_grand_piano");
   return [...ids];
 }
 let sampler = null;
@@ -550,7 +550,7 @@ function tick() {
       const when = nextBarTime + e.off * sd;
       if (e.kind === "line") {
         const gsyn = GENRES[SONG[bar.si].genre].synth;
-        const id = INSTR[SONG[bar.si].genre] || "marimba";
+        const id = INSTR[SONG[bar.si].genre] || "yamaha_grand_piano";
         const useSyn = gsyn && !(gsyn.lineOnly && e.pad);
         if (useSyn && playSynth(gsyn, e.n, when, e.dur * sd, e.acc, e.sld, e.vel)) { /* signature voice */ }
         else if (!playSampled(id, e.n, when, e.dur * sd, e.vel, 1))
