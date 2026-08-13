@@ -548,8 +548,13 @@ function compile() {
   TL = [];
   const list = loopOnly == null ? SONG.map((s, i) => [s, i]) : [[SONG[loopOnly], loopOnly]];
   for (const [sec, si] of list) {
-    if (!sec.genre) continue;                                // empty boxes are skipped
+    if (!sec.genre) continue;
     const { g, bars, ev } = sectionEvents(sec);
+    // A BOX THAT PRODUCES NOTHING TAKES NO TIME. Since Simple became the default
+    // there is no "empty" box any more, so a fresh page was four boxes of which
+    // three had no phrase — one bar of music followed by three bars of silence,
+    // for ever. A box with no events is skipped the way an empty one used to be.
+    if (!ev.length) continue;
     const barSteps = 16 / g.rate;
     for (let b = 0; b < bars; b++)
       TL.push({ si, g, barSteps, first: b === 0,

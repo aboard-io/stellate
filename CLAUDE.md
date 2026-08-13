@@ -532,7 +532,7 @@ docs in `docs/`.
     `npm run test:unit` runs them (concurrently, via `test/run.js`); before that
     runner existed nothing globbed them at all and 33 gates only ever ran if
     somebody named the file.
-  - `test/browser/` (25) + `test/starcruise/` (8) — the gates that launch real
+  - `test/browser/` (26) + `test/starcruise/` (8) — the gates that launch real
     chromium via `test/lib/probe-harness.js`. `npm run test:browser` globs
     exactly these two folders and nothing else. They `goto /index.html` (or
     `test/browser/live-test.html`, the FaustLive harness page) and read the

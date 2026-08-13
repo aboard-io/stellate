@@ -257,7 +257,10 @@ for (const mk of Object.keys(MODES)) {
 console.log("chromatic range — spread moves notes, the alphabet moves width");
 {
   const g = GENRES.simple;
-  const flat = { ...clone(P), oct: new Array(N).fill(0) };
+  // ramp-free as well as octave-free: inc/stk move notes per LOOP, which is a
+  // different axis from spread and would otherwise be read as spread failing
+  const flat = { ...clone(P), oct: new Array(N).fill(0),
+                 inc: new Array(N).fill(0), stk: new Array(N).fill(0) };
   const span = p2 => { const n = K.render(p2, g, g.bars).map(e => e.n);
                        return n.length ? Math.max(...n) - Math.min(...n) : 0; };
   const dir = p2 => K.render(p2, g, g.bars).map(e => e.n)
@@ -286,6 +289,34 @@ console.log("chromatic range — spread moves notes, the alphabet moves width");
     ok(Math.abs(K.pitch(sc.length, sc) - K.pitch(0, sc) - 12) < 1e-9,
        "scale of " + sc.length + " does not span an octave in its own length");
   }
+}
+
+/* ---------------------------------------------------------------- 9c. THE RAMP CLIMBS
+   inc and stk accumulate with the loop index, and the register fold must not
+   chase them: computing the octave shift from the RAMPED degrees re-centred the
+   line every few loops, so a rising arpeggio audibly fell back down. The ramp
+   sits on top of the registration, exactly like oct. */
+console.log("ramps climb monotonically and the fold does not chase them");
+{
+  const g = { ...GENRES.simple, bars: 8, incClamp: 0 };
+  const base = { ...clone(P), inc: new Array(N).fill(0), stk: new Array(N).fill(0) };
+  const first = p2 => Array.from({ length: 8 }, (_, b) =>
+    K.render(p2, g, 8).filter(e => Math.floor(e.t / 16) === b)[0].n);
+
+  for (const [name, key, sign] of [["inc up", "inc", 1], ["inc down", "inc", -1],
+                                   ["stk up", "stk", 1], ["stk down", "stk", -1]]) {
+    const q = clone(base);
+    q[key] = q[key].map((_, i) => (i === 0 ? sign : 0));
+    const seq = first(q);
+    const mono = seq.every((n, i) => i === 0 || (sign > 0 ? n >= seq[i - 1] : n <= seq[i - 1]));
+    ok(mono, name + " is not monotone across loops: " + seq.join(" "));
+    ok(Math.abs(seq[7] - seq[0]) > 6, name + " barely moved across eight loops: " + seq.join(" "));
+  }
+  // and the clamp still bounds it
+  const q2 = clone(base); q2.stk = q2.stk.map((_, i) => (i === 0 ? 1 : 0));
+  const clamped = Array.from({ length: 8 }, (_, b) =>
+    K.render(q2, { ...g, incClamp: 2 }, 8).filter(e => Math.floor(e.t / 16) === b)[0].n);
+  ok(new Set(clamped.slice(3)).size === 1, "clamp 2 did not stop the ramp: " + clamped.join(" "));
 }
 
 /* ---------------------------------------------------------------- 10. NOTE DURATION

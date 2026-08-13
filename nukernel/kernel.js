@@ -247,8 +247,15 @@
         const rootShift = g.harmony === "cycle" ? mp(r, md) : 0;
         const clamp = g.incClamp == null ? 7 : g.incClamp;   // 0 = let it run
         // one octave shift for the whole line, from its degree-pitch mean
+        // REGISTER THE PHRASE, NOT THE RAMP. The shift is computed from the
+        // degrees AS WRITTEN, with the per-loop ramp excluded. Include the ramp
+        // and the registration chases it: the mean climbs, the shift drops the
+        // line an octave to re-centre it, and a rising arpeggio audibly falls
+        // back down every third loop. The ramp is deliberate movement — the
+        // clamp is what bounds it — so it must sit ON TOP of the registration,
+        // exactly like oct.
         const on = [];
-        for (let i = 0; i < N; i++) if (p.gate[i]) on.push(pitch(p.deg[i] + rampOf(p, i, b, clamp), sc));
+        for (let i = 0; i < N; i++) if (p.gate[i]) on.push(pitch(p.deg[i], sc));
         const mean = on.length ? on.reduce((a, b2) => a + b2, 0) / on.length : 0;
         const shift = 12 * Math.round((ctr - mean) / 12);
         // A PAD IS ONE CHORD PER BAR, HELD. Firing it on every gated step of the

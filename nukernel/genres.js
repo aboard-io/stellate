@@ -65,7 +65,10 @@
     // and looped. It is the zero of the genre table, and the useful kind of zero
     // — every other genre is legible as what it ADDS to this.
     simple: {
-      label: "Simple", rate: 1, bars: 1, voices: 1,
+      // FOUR bars, not one: a per-loop ramp has nothing to accumulate over in a
+      // one-bar form, so inc and stk were inert in the one genre people reach
+      // for first. Simple is the phrase looping; four loops is the natural unit.
+      label: "Simple", rate: 1, bars: 4, voices: 1,
       entry: () => 0, reg: () => 0, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal",
       tone: { wave: "triangle", cut: 3200, q: 0.8, atk: .004, rel: .7, gain: .30, verb: .08 },
