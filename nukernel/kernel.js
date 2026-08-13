@@ -61,9 +61,21 @@
   // every operator above rewrites all five at once.
   const only = (k, op) => p => ({ ...p, [k]: op(p)[k] });
 
-  // DROP every nth step — a gate mask, and a plain pattern operator like the
-  // rest of them.
+  // DENSITY — the thinning/filling pair. Both are gate masks and both are LOSSY:
+  // after either you cannot tell which gates were originally set, so they are
+  // not inverses of each other. drop(3) then fill(3) is not the identity.
+  //
+  // fill is the more interesting half. A rest still carries a DEGREE — the deg
+  // vector has a value at every step, gated or not — so filling does not invent
+  // notes, it uncovers ones the phrase was already holding silent.
+  //
+  // n = 1 is degenerate at both ends: drop(1) is silence, fill(1) is every step.
+  // They are the annihilator and the unit of this family rather than variations,
+  // which is worth knowing before reaching for them — though drop(1) is useful
+  // precisely BECAUSE it is total: it silences the line and leaves the kit
+  // playing, which is a breakdown.
   const drop = n => p => ({ ...p, gate: p.gate.map((g, i) => ((i + 1) % n === 0 ? 0 : g)) });
+  const fill = n => p => ({ ...p, gate: p.gate.map((g, i) => ((i + 1) % n === 0 ? 1 : g)) });
 
   // An operator WORD is a list of operators applied left to right.
   const word = (p, ws) => ws.reduce((q, op) => op(q), p);
@@ -271,7 +283,7 @@
     });
   };
 
-  const api = { at, mapv, spans, vel, drop, envelope, swing, rotate, reverse, transpose, invert, complement,
+  const api = { at, mapv, spans, vel, drop, fill, envelope, swing, rotate, reverse, transpose, invert, complement,
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, pitch, mp, fold, near,
                 harm, render, drums, bass };

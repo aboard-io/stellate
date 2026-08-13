@@ -5,7 +5,7 @@
 // Boxes drag to REORDER, and only to reorder — nothing is dragged into them.
 // Click a box to play from there; double-click to loop it alone.
 const { harm, render, drums, bass, ROMAN, word, drop, envelope,
-        reverse, invert, rotate } = window.NuKernel;
+        reverse, invert, rotate, fill } = window.NuKernel;
 const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL } = window.NuGenres;
 
 const DEFAULT_BPM = 126, NSLOTS = 8, NBOXES = 4;
@@ -39,8 +39,14 @@ function randomPhrase() {
 // LEN and NUDGE are a window onto the genre's own form: a fugue with len 2 and
 // nudge 2 plays the last two bars of its four-bar form. The genre still renders
 // its whole form — the box just decides which part of it you hear.
-const OPS = { rev: reverse(), inv: invert(4), drop2: drop(2), drop3: drop(3) };
-const OPLABEL = { rev: "reverse", inv: "invert", drop2: "drop 2", drop3: "drop 3" };
+// Order matters and these do not commute: drop 2 then add 3 is not add 3 then
+// drop 2. Chips apply in the order you switch them on.
+const OPS = { rev: reverse(), inv: invert(4),
+              drop1: drop(1), drop2: drop(2), drop3: drop(3),
+              fill1: fill(1), fill2: fill(2), fill3: fill(3) };
+const OPLABEL = { rev: "reverse", inv: "invert",
+                  drop1: "drop 1", drop2: "drop 2", drop3: "drop 3",
+                  fill1: "add 1", fill2: "add 2", fill3: "add 3" };
 const ENVLABEL = { in: "fade in", out: "fade out" };
 
 const RATES = { half: 0.5, dbl: 2 };

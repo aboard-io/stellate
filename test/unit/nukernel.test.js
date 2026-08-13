@@ -82,6 +82,28 @@ ok(eq(K.invert(4)(K.invert(4)(P)), P), "invert is not an involution");
 ok(eq(K.complement("acc")(K.complement("acc")(P)), P), "complement is not an involution");
 ok(eq(K.transpose(-3)(K.transpose(3)(P)), P), "transpose has no inverse");
 ok(eq(K.drop(3)(K.drop(3)(P)), K.drop(3)(P)), "drop is not idempotent");
+ok(eq(K.fill(3)(K.fill(3)(P)), K.fill(3)(P)), "fill is not idempotent");
+
+// DENSITY family. drop and fill are both lossy, so they are NOT inverses — and
+// they do not commute. Both facts are load-bearing: the chips apply in the order
+// you switch them on, and "drop 3 then add 3" is a real transformation rather
+// than a no-op somebody will report as a bug.
+ok(!eq(K.fill(3)(K.drop(3)(P)), P), "drop then fill claims to be the identity");
+ok(!eq(K.fill(3)(K.drop(3)(P)), K.drop(3)(K.fill(3)(P))), "drop and fill commute");
+ok(K.drop(1)(P).gate.every(g => g === 0), "drop(1) is not silence");
+ok(K.fill(1)(P).gate.every(g => g === 1), "fill(1) is not every step");
+// drop(1) must leave the KIT playing — that is the whole use of it
+ok(K.drums(K.drop(1)(P), GENRES.acid, GENRES.acid.bars).length > 0,
+   "drop(1) silenced the drums as well as the line");
+ok(K.render(K.drop(1)(P), GENRES.acid, GENRES.acid.bars).length === 0,
+   "drop(1) left pitched notes sounding");
+// fill uncovers degrees the phrase was already holding silent, it does not
+// invent them: every added note's pitch must come from the existing deg vector
+{
+  const before = new Set(K.render(P, GENRES.acid, GENRES.acid.bars).map(e => e.n));
+  const after = K.render(K.fill(2)(P), GENRES.acid, GENRES.acid.bars);
+  ok(after.length > before.size, "fill(2) added no notes");
+}
 
 // reverse must shift the slide vector: slide is EDGE-valued, and reversing it
 // like a node vector leaves every slide on the wrong side of its transition
@@ -94,7 +116,8 @@ ok(!eq(K.reverse()(P).sld, [...P.sld].reverse()),
 console.log("totality and purity");
 const OPS = [K.rotate(5), K.rotate(-3), K.reverse(), K.transpose(9), K.transpose(-9),
              K.invert(0), K.invert(4), K.complement("gate"), K.complement("acc"),
-             K.excerpt(2, 8), K.drop(2), K.drop(3), K.only("acc", K.rotate(3)),
+             K.excerpt(2, 8), K.drop(1), K.drop(2), K.drop(3),
+             K.fill(1), K.fill(2), K.fill(3), K.only("acc", K.rotate(3)),
              K.crossmap("acc", "sld")];
 const VECS = ["deg", "oct", "vel", "gate", "acc", "sld"];
 const edge = [P, K.mapv(P, v => v.map(() => 0)), K.mapv(P, v => v.map(() => 1)),
