@@ -15,7 +15,7 @@
   "use strict";
   const K = (typeof module !== "undefined" && module.exports)
     ? require("./kernel.js") : root.NuKernel;
-  const { rotate, reverse, transpose, invert, complement, excerpt, only } = K;
+  const { rotate, reverse, transpose, invert, complement, excerpt, only, drop } = K;
 
   // The blues scale — minor pentatonic plus the flat five. The ♭5 is a passing
   // tone, not a chord tone, and it is the whole reason `scale` had to become a
@@ -124,6 +124,26 @@
       tone: { wave: "sawtooth", cut: 1100, q: 3.2, atk: .006, rel: .9, gain: .27, verb: .14 },
       words: ["subject", "answer — only(gate, rotate 8)"],
       word: (v, s) => (v === 0 ? [] : [only("gate", rotate(8))]),
+    },
+
+    // ROCK. The riff does not develop — restatement rate ~1, like acid — so what
+    // carries the genre is the BACKBEAT (snare on 2 and 4, which nothing else
+    // here has) and the octave doubling: two voices playing the same subject a
+    // register apart, which is a guitar and a bass on one riff. Eight-bar form,
+    // i-VII-iv, the modal rock cadence that natural minor already contains, so
+    // rock needs no scale and no mode override at all — the first genre added
+    // that changes nothing about the alphabets.
+    rock: {
+      label: "Rock", rate: 1, bars: 8, voices: 2,
+      entry: () => 0, reg: v => v - 1, realize: () => "line",
+      harmony: "cycle", roots: [0, 0, 6, 6, 3, 3, 0, 0],   // i i VII VII iv iv i i
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,1, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],      // the backbeat
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0] },   // bar 8: the turnaround
+      tone: { wave: "sawtooth", cut: 1800, q: 1.6, atk: .003, rel: .8, gain: .30, verb: .10 },
+      words: ["riff", "riff an octave up, thinned on odd bars"],
+      word: (v, s) => (v === 1 && s % 2 ? [drop(2)] : []),
     },
   };
 
