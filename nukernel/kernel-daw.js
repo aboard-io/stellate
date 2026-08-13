@@ -94,11 +94,11 @@ function randomPhrase() {
 // Order matters and these do not commute: drop 2 then add 3 is not add 3 then
 // drop 2. Chips apply in the order you switch them on.
 const OPS = { rev: reverse(), inv: invert(4),
-              drop1: drop(1), drop2: drop(2), drop3: drop(3),
-              fill1: fill(1), fill2: fill(2), fill3: fill(3) };
+              fill1: fill(1), fill2: fill(2), fill3: fill(3),
+              drop1: drop(1), drop2: drop(2), drop3: drop(3) };
 const OPLABEL = { rev: "reverse", inv: "invert",
-                  drop1: "drop 1", drop2: "drop 2", drop3: "drop 3",
-                  fill1: "add 1", fill2: "add 2", fill3: "add 3" };
+                  fill1: "add 1", fill2: "add 2", fill3: "add 3",
+                  drop1: "drop 1", drop2: "drop 2", drop3: "drop 3" };
 const ENVLABEL = { in: "fade in", out: "fade out" };
 
 const RATES = { half: 0.5, dbl: 2 };
