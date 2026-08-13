@@ -110,13 +110,9 @@ function randomPhrase() {
 const OPS = { rev: reverse(), inv: invert(4), wide: spread(2), tight: spread(0.5) };
 const OPLABEL = { rev: "reverse", inv: "invert",
                   wide: "spread \u00d72", tight: "spread \u00f72" };
-for (let n = 1; n <= 4; n++) {
-  OPS["rep" + n] = repeat(n);   OPLABEL["rep" + n] = "repeat " + n;
-  OPS["del" + n] = del(n);      OPLABEL["del" + n] = "delete " + n;
-  OPS["up" + n] = transposeN(n); OPLABEL["up" + n] = "raise " + n;
-  OPS["dn" + n] = transposeN(-n); OPLABEL["dn" + n] = "lower " + n;
-}
-function transposeN(n) { return p => ({ ...p, deg: p.deg.map(d => d + n) }); }
+for (let n = 1; n <= 8; n++) { OPS["rep" + n] = repeat(n); OPLABEL["rep" + n] = "repeat " + n; }
+for (let n = 2; n <= 8; n++) { OPS["del" + n] = del(n);    OPLABEL["del" + n] = "delete " + n; }
+// delete 1 would remove every element — the annihilator, not a variation.
 const ENVLABEL = { in: "fade in", out: "fade out" };
 
 const RATES = { half: 0.5, dbl: 2 };
@@ -901,9 +897,10 @@ function drawPalette() {
   group("genre", Object.keys(GENRES).map(k =>
     ["genre", k, GENRES[k].label, sec.genre === k, "gen"]));
   group("pattern", ["rev", "inv"].map(k => ["op", k, OPLABEL[k], sec.ops.includes(k), ""]));
-  for (const fam of [["repeat", "rep"], ["delete", "del"], ["raise", "up"], ["lower", "dn"]])
-    group(fam[0], [1, 2, 3, 4].map(n =>
-      ["op", fam[1] + n, String(n), sec.ops.includes(fam[1] + n), "lst"]));
+  group("repeat", [1, 2, 3, 4, 5, 6, 7, 8].map(n =>
+    ["op", "rep" + n, String(n), sec.ops.includes("rep" + n), "lst"]));
+  group("delete", [2, 3, 4, 5, 6, 7, 8].map(n =>
+    ["op", "del" + n, String(n), sec.ops.includes("del" + n), "lst"]));
   group("ramp clamp", [["clamp", "0", "off", sec.clamp === "0", "clp"],
                        ["clamp", "2", "2", sec.clamp === "2", "clp"],
                        ["clamp", "4", "4", sec.clamp === "4", "clp"],

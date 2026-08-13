@@ -84,9 +84,13 @@
   // del closes the hole and drags the rest of the phrase forward, which is what
   // makes it worth having. Both re-cycle to the original length, so a pattern is
   // always the same sixteen steps and the operators stay closed.
+  // repeat(n) DUPLICATES EVERY nth ELEMENT — repeat 1 doubles every note,
+  // repeat 2 doubles every other one. It is a stutter that thins as n grows,
+  // and it is the mirror of del(n), which removes every nth. Both recycle to
+  // the original length, so the pattern is always the same sixteen steps.
   const repeat = n => p => mapv(p, v => {
     const out = [];
-    for (const x of v) for (let k = 0; k < n; k++) out.push(x);
+    v.forEach((x, i) => { out.push(x); if ((i + 1) % n === 0) out.push(x); });
     return v.map((_, i) => out[i % out.length]);
   });
   const del = n => p => mapv(p, v => {
