@@ -195,6 +195,7 @@ h1 em{font-style:normal;color:var(--accent)}
 .loopmark{margin-left:auto;color:var(--accent2)}
 .box.dragging{opacity:.4}
 .tag.mode{background:var(--v2);color:#fff}
+.tag.rng{background:var(--v3);color:#fff}
 .tag.rate{background:var(--v1);color:#08150f}
 
 /* ---- palette ---- */
@@ -213,6 +214,7 @@ h1 em{font-style:normal;color:var(--accent)}
 .pchip.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .pchip.env.on{background:var(--accent2);border-color:var(--accent2);color:#231f16}
 .pchip.mode.on{background:var(--v2);border-color:var(--v2);color:#fff}
+.pchip.rng.on{background:var(--v3);border-color:var(--v3);color:#fff}
 .pchip.rate.on{background:var(--v1);border-color:var(--v1);color:#08150f}
 .pchip.dragging,.slot.dragging{opacity:.4}
 .slot.inbox{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}

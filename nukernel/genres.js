@@ -34,6 +34,19 @@
   const MODELABEL = { dorian: "dorian", phrygian: "phrygian",
                       harmonic: "harmonic", mixo: "mixolydian" };
 
+  // SCALES — the SUBJECT's alphabet, offered per section. Swapping it changes
+  // the chromatic width of a phrase without moving a single degree: the contour
+  // is identical, the span is not. Width per degree-step is 12 / length, so
+  // chromatic is the tightest reading of a phrase and quartal the widest.
+  const SCALES = {
+    chromatic: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],   // 1.0 semitone / step
+    whole:     [0, 2, 4, 6, 8, 10],                       // 2.0
+    augmented: [0, 4, 8],                                 // 4.0
+    quartal:   [0, 5],                                    // 6.0
+  };
+  const SCALELABEL = { chromatic: "chromatic", whole: "whole tone",
+                       augmented: "augmented", quartal: "quartal" };
+
   // ---- the seed phrase (16 steps) -----------------------------------------
   const DEFAULT = {
     deg:  [0, 3, 2, 0, 4, 3, 0, 2, 5, 3, 0, 4, 2, 0, 3, 1],
@@ -163,7 +176,7 @@
   const DRUMNAME = { k: "Kick", s: "Snare", c: "Clap", o: "Open hat",
                      h: "Hat", p: "Ghost perc" };
 
-  const api = { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL };
+  const api = { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuGenres = api;
 })(typeof window !== "undefined" ? window : globalThis);

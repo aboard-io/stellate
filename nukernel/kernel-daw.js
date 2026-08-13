@@ -5,8 +5,8 @@
 // Boxes drag to REORDER, and only to reorder — nothing is dragged into them.
 // Click a box to play from there; double-click to loop it alone.
 const { harm, render, drums, bass, ROMAN, word, drop, envelope,
-        reverse, invert, rotate, fill } = window.NuKernel;
-const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL } = window.NuGenres;
+        reverse, invert, rotate, fill, spread } = window.NuKernel;
+const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL } = window.NuGenres;
 
 const DEFAULT_BPM = 126, NSLOTS = 8, NBOXES = 4;
 const PX_PER_BAR = 22, BAR_PX = 26, MAX_LEN = 64, MAX_NUDGE = 31;
@@ -44,7 +44,8 @@ const okBox = b => b && typeof b === "object" &&
   Array.isArray(b.ops) && b.ops.every(o => Object.prototype.hasOwnProperty.call(OPS, o)) &&
   (b.env === null || b.env === "in" || b.env === "out") &&
   (b.mode == null || Object.prototype.hasOwnProperty.call(MODES, b.mode)) &&
-  (b.rate == null || Object.prototype.hasOwnProperty.call(RATES, b.rate));
+  (b.rate == null || Object.prototype.hasOwnProperty.call(RATES, b.rate)) &&
+  (b.scale == null || Object.prototype.hasOwnProperty.call(SCALES, b.scale));
 function load() {
   let raw;
   try { raw = JSON.parse(localStorage.getItem(STORE) || "null"); } catch (e) { return false; }
@@ -95,10 +96,12 @@ function randomPhrase() {
 // drop 2. Chips apply in the order you switch them on.
 const OPS = { rev: reverse(), inv: invert(4),
               fill1: fill(1), fill2: fill(2), fill3: fill(3),
-              drop1: drop(1), drop2: drop(2), drop3: drop(3) };
+              drop1: drop(1), drop2: drop(2), drop3: drop(3),
+              wide: spread(2), tight: spread(0.5) };
 const OPLABEL = { rev: "reverse", inv: "invert",
                   fill1: "add 1", fill2: "add 2", fill3: "add 3",
-                  drop1: "drop 1", drop2: "drop 2", drop3: "drop 3" };
+                  drop1: "drop 1", drop2: "drop 2", drop3: "drop 3",
+                  wide: "spread \u00d72", tight: "spread \u00f72" };
 const ENVLABEL = { in: "fade in", out: "fade out" };
 
 const RATES = { half: 0.5, dbl: 2 };
@@ -107,15 +110,16 @@ const RATELABEL = { half: "half time", dbl: "double time" };
 // any more: a box always makes a sound as soon as it has a phrase, and the
 // genres are legible as what they add to that.
 const emptyBox = () => ({ genre: "simple", slots: [], len: GENRES.simple.bars,
-                          nudge: 0, ops: [], env: null, mode: null, rate: null });
+                          nudge: 0, ops: [], env: null, mode: null, rate: null, scale: null });
 
 // The genre a box actually renders with: its own definition, plus whatever the
 // box overrides. Mode and tempo are not pattern operators and not envelopes —
 // they are the third kind, a change to the GENRE the phrase is read through.
 const genreOf = sec => {
   const g = GENRES[sec.genre];
-  if (!sec.mode && !sec.rate) return g;
+  if (!sec.mode && !sec.rate && !sec.scale) return g;
   return { ...g, ...(sec.mode ? { mode: MODES[sec.mode] } : {}),
+           ...(sec.scale ? { scale: SCALES[sec.scale] } : {}),
            ...(sec.rate ? { rate: g.rate * RATES[sec.rate] } : {}) };
 };
 let SONG = Array.from({ length: NBOXES }, emptyBox);
@@ -445,6 +449,7 @@ function toggle(kind, value) {
   } else if (kind === "env") sec.env = sec.env === value ? null : value;
   else if (kind === "mode") sec.mode = sec.mode === value ? null : value;
   else if (kind === "rate") sec.rate = sec.rate === value ? null : value;
+  else if (kind === "scale") sec.scale = sec.scale === value ? null : value;
   songChanged();
 }
 function songChanged() { drawSong(); draw(); drawSlots(); save(); if (playing) compile(); }
@@ -498,6 +503,8 @@ function drawSong() {
     const tags = document.createElement("div"); tags.className = "btags";
     for (const o of sec.ops) tags.append(Object.assign(document.createElement("span"),
       { className: "tag", textContent: OPLABEL[o] }));
+    if (sec.scale) tags.append(Object.assign(document.createElement("span"),
+      { className: "tag rng", textContent: SCALELABEL[sec.scale] }));
     if (sec.mode) tags.append(Object.assign(document.createElement("span"),
       { className: "tag mode", textContent: MODELABEL[sec.mode] }));
     if (sec.rate) tags.append(Object.assign(document.createElement("span"),
@@ -604,8 +611,12 @@ function drawPalette() {
   };
   group("genre", Object.keys(GENRES).map(k =>
     ["genre", k, GENRES[k].label, sec.genre === k, "gen"]));
-  group("pattern", Object.keys(OPS).map(k =>
-    ["op", k, OPLABEL[k], sec.ops.includes(k), ""]));
+  group("pattern", Object.keys(OPS).filter(k => k !== "wide" && k !== "tight")
+    .map(k => ["op", k, OPLABEL[k], sec.ops.includes(k), ""]));
+  group("range", [
+    ["op", "wide", OPLABEL.wide, sec.ops.includes("wide"), "rng"],
+    ["op", "tight", OPLABEL.tight, sec.ops.includes("tight"), "rng"],
+    ...Object.keys(SCALES).map(k => ["scale", k, SCALELABEL[k], sec.scale === k, "rng"])]);
   group("mode", Object.keys(MODES).map(k =>
     ["mode", k, MODELABEL[k], sec.mode === k, "mode"]));
   group("tempo", Object.keys(RATES).map(k =>
@@ -699,8 +710,10 @@ function writeSrc() {
       : "none") + "\n" +
     "rate       " + g.rate + (sec.rate ? "  (" + RATELABEL[sec.rate] + ")" : "") +
       (g.swing ? "   swing " + g.swing.toFixed(2) : "") + "\n" +
-    "scale      " + (g.scale ? "[" + g.scale.join(" ") + "]  (blues — flat five)"
-                             : "[0 3 5 7 10]  (minor pentatonic)") + "\n" +
+    "scale      [" + (g.scale || [0, 3, 5, 7, 10]).join(" ") + "]  " +
+      (sec.scale ? SCALELABEL[sec.scale] : GENRES[sec.genre].scale ? "genre's own" : "minor pentatonic") +
+      "  \u2014 " + (12 / (g.scale || [0, 3, 5, 7, 10]).length).toFixed(1) +
+      " semitones per degree-step\n" +
     "harmony    " + g.harmony + (g.roots ? "  [" + g.roots.map(r => ROMAN[r]).join(" ") + "]" : "") + "\n" +
     "mode       " + (sec.mode ? MODELABEL[sec.mode] + "  [" + MODES[sec.mode].join(" ") + "]"
                               : "natural minor  [0 2 3 5 7 8 10]") + "\n" +

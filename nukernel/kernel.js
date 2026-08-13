@@ -56,6 +56,19 @@
   // discards, which is how you get episodes rather than variations.
   const excerpt = (a, n) => p => mapv(p, v => v.map((_, i) => at(v, a + (i % n))));
 
+  // SPREAD — scale every degree's distance from a pivot. k>1 widens the
+  // intervals, k<1 narrows them, k=0 flattens to a monotone. It is the same
+  // family as invert: reflection about a pivot p is 2p-d, so invert(c) is
+  // exactly spread(-1, c/2). Rounding makes it lossy, so spread(2) then
+  // spread(0.5) is close to but not always the identity.
+  //
+  // Note what this does NOT do: it moves the notes within the alphabet, so the
+  // chromatic result depends on which scale the phrase is read through. To
+  // change the chromatic width WITHOUT touching the notes, change the scale —
+  // width per degree-step is exactly 12 / (notes in the scale).
+  const spread = (k, c = 0) => p =>
+    ({ ...p, deg: p.deg.map(d => Math.round(c + (d - c) * k)) });
+
   // The discipline that keeps a subject recognizable: move ONE vector at a
   // time. Without this combinator that discipline is not even expressible —
   // every operator above rewrites all five at once.
@@ -105,11 +118,17 @@
   // at the fifth walks off the keyboard. Fold into the voice's octave window —
   // octave-equivalence as a quotient, and it is a requirement, not a polish.
   //
-  // FOLD THE SCALE DEGREE ONLY. The window is thirteen semitones wide, so
-  // folding AFTER adding the step's octave displacement erases that vector
-  // entirely — an octave jump lands back where it started. deg is what needs
-  // bounding (transposition compounds); oct is a deliberate leap and is added
-  // after the fold, which is why it is a separate vector in the first place.
+  // FOLD THE LINE, NOT THE NOTE. Folding each note separately into a thirteen-
+  // semitone window bounds the register but also destroys every interval wider
+  // than an octave — a phrase whose intervals are doubled comes out NARROWER,
+  // because the wide leaps wrap. So register the whole line: take the mean of
+  // its degree-pitches, shift by whole octaves until that mean sits in the
+  // voice's window, and leave the intervals exactly as written.
+  //
+  // The mean is taken over the DEGREE pitches only, before the step's octave
+  // displacement is added. Include oct and the shift simply cancels it out, and
+  // the oct vector goes dead again. Per-note fold survives for pad CHORDS,
+  // where wrapping a voicing into a register is the right thing.
   const fold = (n, c) => { while (n < c - 6) n += 12; while (n > c + 6) n -= 12; return n; };
 
   // nearest mode degree to a pitch class — how a transposition becomes a root
@@ -179,6 +198,11 @@
       for (let b = g.entry(v); b < bars; b++) {
         const p = word(subj, g.word(v, b - g.entry(v))), r = harm(subj, g, b);
         const sp = spans(p.gate);
+        // one octave shift for the whole line, from its degree-pitch mean
+        const on = [];
+        for (let i = 0; i < N; i++) if (p.gate[i]) on.push(pitch(p.deg[i], sc));
+        const mean = on.length ? on.reduce((a, b2) => a + b2, 0) / on.length : 0;
+        const shift = 12 * Math.round((ctr - mean) / 12);
         for (let i = 0; i < N; i++) {
           if (!p.gate[i]) continue;
           const steps = sp[i];
@@ -188,8 +212,8 @@
             : [null];                                // pitched: folded below
           for (const n of ns) {
             const pitchOf = n == null
-              ? fold(pitch(p.deg[i], sc), ctr) + 12 * p.oct[i]   // fold the degree, THEN leap
-              : fold(n, ctr);
+              ? pitch(p.deg[i], sc) + shift + 12 * p.oct[i]      // line registered, THEN leap
+              : fold(n, ctr);                                    // chords voice per note
             ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: steps * legato / g.rate, v,
                       n: pitchOf, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });
           }
@@ -292,7 +316,7 @@
     });
   };
 
-  const api = { at, mapv, spans, vel, drop, fill, envelope, swing, rotate, reverse, transpose, invert, complement,
+  const api = { at, mapv, spans, vel, drop, fill, spread, envelope, swing, rotate, reverse, transpose, invert, complement,
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, pitch, mp, fold, near,
                 harm, render, drums, bass };

@@ -21,7 +21,7 @@
 // laws that make the operator set a group rather than a pile of functions.
 "use strict";
 const K = require("../../nukernel/kernel.js");
-const { DEFAULT, GENRES, MODES } = require("../../nukernel/genres.js");
+const { DEFAULT, GENRES, MODES, SCALES } = require("../../nukernel/genres.js");
 
 const GK = Object.keys(GENRES);
 let fails = 0, checks = 0;
@@ -117,7 +117,8 @@ console.log("totality and purity");
 const OPS = [K.rotate(5), K.rotate(-3), K.reverse(), K.transpose(9), K.transpose(-9),
              K.invert(0), K.invert(4), K.complement("gate"), K.complement("acc"),
              K.excerpt(2, 8), K.drop(1), K.drop(2), K.drop(3),
-             K.fill(1), K.fill(2), K.fill(3), K.only("acc", K.rotate(3)),
+             K.fill(1), K.fill(2), K.fill(3), K.spread(2), K.spread(0.5), K.spread(0),
+             K.only("acc", K.rotate(3)),
              K.crossmap("acc", "sld")];
 const VECS = ["deg", "oct", "vel", "gate", "acc", "sld"];
 const edge = [P, K.mapv(P, v => v.map(() => 0)), K.mapv(P, v => v.map(() => 1)),
@@ -227,6 +228,46 @@ for (const mk of Object.keys(MODES)) {
     .filter(e => g.realize(e.v) === "pad").map(e => ((e.n % 12) + 12) % 12));
   ok([...pcs].every(pc => MODES[mk].includes(pc)), mk + ": a pad chord left the mode");
   ok(pcs.size > 0, mk + ": no pad chord tones at all");
+}
+
+/* ---------------------------------------------------------------- 9b. CHROMATIC RANGE
+   Two independent ways to change how wide a line is, and the whole point is
+   that they are independent. spread MOVES THE NOTES within the alphabet;
+   swapping the alphabet changes the width while leaving every degree — and so
+   the exact contour — untouched. Both were flattened until the register fold
+   stopped wrapping each note separately. */
+console.log("chromatic range — spread moves notes, the alphabet moves width");
+{
+  const g = GENRES.simple;
+  const flat = { ...clone(P), oct: new Array(N).fill(0) };
+  const span = p2 => { const n = K.render(p2, g, g.bars).map(e => e.n);
+                       return n.length ? Math.max(...n) - Math.min(...n) : 0; };
+  const dir = p2 => K.render(p2, g, g.bars).map(e => e.n)
+                     .map((v, i, a) => (i ? Math.sign(v - a[i - 1]) : 0)).join("");
+
+  // monotone increasing in k, and k=0 collapses to a single pitch
+  const spans = [0, 0.5, 1, 2, 3].map(k => span(K.spread(k)(flat)));
+  ok(spans[0] === 0, "spread(0) is not a monotone");
+  ok(spans.every((s, i) => i === 0 || s > spans[i - 1]),
+     "spread does not widen monotonically: " + spans.join(","));
+  ok(!K.render(K.spread(2)(flat), g, g.bars).some((e, i, a) =>
+       i && Math.abs(e.n - a[i - 1].n) > 60), "spread(2) produced an absurd leap");
+
+  // the alphabet changes the width and NOTHING else
+  const base = { span: span(flat), dir: dir(flat) };
+  for (const [sc, wide] of [[SCALES.chromatic, false], [SCALES.whole, false],
+                            [SCALES.augmented, true], [SCALES.quartal, true]]) {
+    const gg = { ...g, scale: sc };
+    const n = K.render(flat, gg, gg.bars).map(e => e.n);
+    const s2 = Math.max(...n) - Math.min(...n);
+    const d2 = n.map((v, i, a) => (i ? Math.sign(v - a[i - 1]) : 0)).join("");
+    ok(d2 === base.dir, "swapping the alphabet changed the contour");
+    ok(wide ? s2 > base.span : s2 < base.span,
+       "alphabet of " + sc.length + " notes did not move the span the right way");
+    // width per degree-step is exactly 12 / length
+    ok(Math.abs(K.pitch(sc.length, sc) - K.pitch(0, sc) - 12) < 1e-9,
+       "scale of " + sc.length + " does not span an octave in its own length");
+  }
 }
 
 /* ---------------------------------------------------------------- 10. NOTE DURATION
