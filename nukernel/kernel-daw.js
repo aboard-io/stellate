@@ -297,6 +297,73 @@ function draw() {
     (quiet.length ? "  —  " + quiet.join(", ") : "");
 }
 
+/* ---------- the sampled engine ---------- */
+// THE SOUND COMES FROM THE PROJECT'S OWN SAMPLED LAYER, not from oscillators.
+// engine/faust/voices/sampler.js is the same SamplerLive live.js drives, and the
+// zones are the same FluidR3-class General MIDI extraction the big engine plays
+// (found/samples/instruments/<dir>/<file>). We do NOT go through
+// FaustLive.exploreLive: that takes a getState callback and calls
+// E.buildEvents(state) itself, so it generates its own events from a
+// genre-kernel state — there is no seam to hand it a nukernel event list. The
+// voice layer underneath it has exactly the seam we need.
+const SP = window.FaustSampler, REG = window.__REGISTRY;
+const SAMPLERS = (REG && REG.SAMPLERS) || {};
+const MEDIA = "../found/samples/instruments/";
+
+// one instrument per genre, and one for the bass lane
+const INSTR = { simple: "marimba", fugue: "harpsichord", acid: "clean_guitar",
+                vaporwave: "strings", blues: "steel_string_guitar", rock: "crunch_guitar" };
+const BASS_INSTR = "acoustic_bass";
+
+const zoneBufs = new Map();                       // "id|file" -> AudioBuffer
+const specOf = id => {
+  const S = SAMPLERS[id];
+  if (!S) return null;
+  return { sr: S.sr, dir: S.dir, zones: S.zones.map(z => ({
+    file: z.file, root: z.root, lo: z.lo, hi: z.hi,
+    loop: !!z.loop, loopStart: z.ls, loopEnd: z.le, len: z.len, sr: S.sr })) };
+};
+async function loadInstrument(id) {
+  const spec = specOf(id);
+  if (!spec) return false;
+  await Promise.all(spec.zones.map(async z => {
+    const key = id + "|" + z.file;
+    if (zoneBufs.has(key)) return;
+    try {
+      const r = await fetch(MEDIA + spec.dir + "/" + z.file);
+      if (!r.ok) throw new Error(r.status + " " + z.file);
+      zoneBufs.set(key, await ctx.decodeAudioData(await r.arrayBuffer()));
+    } catch (e) { zoneBufs.set(key, null); }
+  }));
+  return true;
+}
+// every instrument the song needs, decoded before the transport starts
+function instrumentsInSong() {
+  const ids = new Set([BASS_INSTR]);
+  for (const sec of SONG) if (sec.genre) ids.add(INSTR[sec.genre] || "marimba");
+  return [...ids];
+}
+let sampler = null;
+function playSampled(id, midi, when, durSec, vel, gainMul) {
+  const spec = specOf(id);
+  if (!spec || !sampler) return false;
+  const z = SP.zoneFor(spec.zones, midi);
+  if (!z) return false;
+  const buf = zoneBufs.get(id + "|" + z.file);
+  if (!buf) return false;
+  const lead = SP.zoneLeadIn ? SP.zoneLeadIn(buf, z, buf.sampleRate, spec.sr) : 0;
+  const leadSec = lead ? lead / (buf.sampleRate || spec.sr) : 0;
+  sampler.note(buf, when, {
+    rate: SP.rateFor(z, midi), durSec,
+    gain: 0.42 * (0.2 + 0.8 * ((vel == null ? 5 : vel) / 9)) * (gainMul || 1),
+    atk: 0.006, rel: 0.12, dry: 1, rsend: 0.14, dsend: 0,
+    offsetSec: leadSec,
+    loop: !!z.loop,
+    loopStartSec: (z.loopStart || 0) / spec.sr + leadSec,
+    loopEndSec: (z.loopEnd || 0) / spec.sr + leadSec });
+  return true;
+}
+
 /* ---------- audio ---------- */
 let ctx = null, bus = null, verb = null, verbGain = null, noise = null;
 let playing = false, timer = null;
@@ -315,6 +382,10 @@ function initAudio() {
   verb.buffer = ib;
   bus.connect(comp); bus.connect(verbGain); verbGain.connect(verb); verb.connect(comp);
   comp.connect(ctx.destination);
+  if (SP && SP.SamplerLive) {
+    try { sampler = SP.SamplerLive(ctx, { dry: bus, rev: verbGain, del: bus }); }
+    catch (e) { sampler = null; }
+  }
   const nl = ctx.sampleRate * .5; noise = ctx.createBuffer(1, nl, ctx.sampleRate);
   const nd = noise.getChannelData(0);
   for (let i = 0; i < nl; i++) nd[i] = Math.random() * 2 - 1;
@@ -405,10 +476,16 @@ function tick() {
     if (bar.first) { passStart = nextBarTime; showSection(bar.si); }
     for (const e of bar.ev) {
       const when = nextBarTime + e.off * sd;
-      if (e.kind === "line") line(when, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel);
-      else if (e.kind === "hit") hit(when, e.d, e.acc, e.vel);
-      else if (e.kind === "bass") line(when, e.n, e.dur * sd, 1, 0, null,
-        { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false, e.vel);
+      if (e.kind === "line") {
+        const id = INSTR[SONG[bar.si].genre] || "marimba";
+        if (!playSampled(id, e.n, when, e.dur * sd, e.vel, 1))
+          line(when, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel);
+      } else if (e.kind === "hit") hit(when, e.d, e.acc, e.vel);
+      else if (e.kind === "bass") {
+        if (!playSampled(BASS_INSTR, e.n, when, e.dur * sd, e.vel, 1.25))
+          line(when, e.n, e.dur * sd, 1, 0, null,
+            { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false, e.vel);
+      }
     }
     nextBarTime += bar.barSteps * sd;
     nextBar = (nextBar + 1) % TL.length;
@@ -438,9 +515,17 @@ function frame() {
   for (const p of phEls) p.style.transform = "translateX(" + x + "px)";
   requestAnimationFrame(frame);
 }
-function startAt(boxIndex) {
+async function startAt(boxIndex) {
   initAudio(); if (ctx.state === "suspended") ctx.resume();
   compile();
+  const need = instrumentsInSong().filter(id => {
+    const sp = specOf(id); return sp && sp.zones.some(z => !zoneBufs.has(id + "|" + z.file));
+  });
+  if (need.length) {
+    document.getElementById("readout").textContent = "loading " + need.join(", ") + "\u2026";
+    await Promise.all(need.map(loadInstrument));
+    draw();
+  }
   if (!TL.length) {
     document.getElementById("readout").textContent =
       "nothing to play — click a genre to fill a box first";
