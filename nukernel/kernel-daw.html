@@ -13,11 +13,11 @@
   <div class="mast">
     <div>
       <h1>One phrase, <em>three genres</em></h1>
-      <p class="sub">A 70-line kernel. Sixteen steps of pitch, octave, gate, accent and slide go in;
+      <p class="sub">A 90-line kernel over a 58-line genre table. Sixteen steps of pitch, octave, gate, accent and slide go in;
         a fugue, an acid track and a vaporwave loop come out — same seed, different operator words,
         different grid, different source of harmony.</p>
     </div>
-    <div class="count">kernel <b>70</b> lines · operators <b>8</b> · genres <b>3</b></div>
+    <div class="count">kernel <b>90</b> lines · genre table <b>58</b> · operators <b>8</b></div>
   </div>
 
   <div class="bar">
@@ -55,6 +55,9 @@
     The bass lane is the harmony read at low density — in the fugue its roots are never written down,
     they're computed from how far each voice transposed the subject on entry.</p>
 </div>
+<!-- order matters: the algebra, then the genre table, then the UI -->
+<script src="kernel.js"></script>
+<script src="genres.js"></script>
 <script src="kernel-daw.js"></script>
 </body>
 </html>
