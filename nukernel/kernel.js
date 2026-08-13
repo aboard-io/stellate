@@ -208,13 +208,23 @@
         for (let i = 0; i < N; i++) if (p.gate[i]) on.push(pitch(p.deg[i], sc));
         const mean = on.length ? on.reduce((a, b2) => a + b2, 0) / on.length : 0;
         const shift = 12 * Math.round((ctr - mean) / 12);
+        // A PAD IS ONE CHORD PER BAR, HELD. Firing it on every gated step of the
+        // phrase re-triggered the same three pitches sixteen times a bar, which
+        // reads as a stutter rather than a pad — the harmony only changes at the
+        // bar, so that is where the chord belongs.
+        if (pad) {
+          const first = p.gate.findIndex(Boolean);
+          if (first >= 0)
+            for (const n of [r, r + 2, r + 4].map(d => mp(d, md)))
+              ev.push({ t: (b * N) / g.rate, dur: N / g.rate, v,
+                        n: fold(n, ctr), acc: 0, sld: 0, vel: vel(p, first) });
+          continue;
+        }
         for (let i = 0; i < N; i++) {
           if (!p.gate[i]) continue;
           const steps = sp[i];
           const legato = pad || p.sld[(i + steps) % N] ? 1 : 0.92;
-          const ns = pad
-            ? [r, r + 2, r + 4].map(d => mp(d, md))      // chord from HARMONY, not from the note
-            : [null];                                // pitched: folded below
+          const ns = [null];                             // pitched: registered below
           for (const n of ns) {
             const pitchOf = n == null
               ? pitch(p.deg[i], sc) + shift + 12 * p.oct[i]      // line registered, THEN leap
