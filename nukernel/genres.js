@@ -22,6 +22,18 @@
   // genre field instead of a constant in kernel.js.
   const BLUES = [0, 3, 5, 6, 7, 10];
 
+  // MODES — the chord alphabet, offered as a per-section transform. Natural
+  // minor is the default; these are the four that change the colour most and
+  // still contain enough of the pentatonic that a subject stays in tune.
+  const MODES = {
+    dorian:   [0, 2, 3, 5, 7, 9, 10],
+    phrygian: [0, 1, 3, 5, 7, 8, 10],
+    harmonic: [0, 2, 3, 5, 7, 8, 11],
+    mixo:     [0, 2, 4, 5, 7, 9, 10],
+  };
+  const MODELABEL = { dorian: "dorian", phrygian: "phrygian",
+                      harmonic: "harmonic", mixo: "mixolydian" };
+
   // ---- the seed phrase (16 steps) -----------------------------------------
   const DEFAULT = {
     deg:  [0, 3, 2, 0, 4, 3, 0, 2, 5, 3, 0, 4, 2, 0, 3, 1],
@@ -118,7 +130,7 @@
   const DRUMNAME = { k: "Kick", s: "Snare", c: "Clap", o: "Open hat",
                      h: "Hat", p: "Ghost perc" };
 
-  const api = { DEFAULT, GENRES, DRUMNAME };
+  const api = { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuGenres = api;
 })(typeof window !== "undefined" ? window : globalThis);

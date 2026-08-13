@@ -1,19 +1,15 @@
 // kernel-daw.js — the UI ONLY. The algebra is kernel.js, the genre table is
 // genres.js; both load before this file (see kernel-daw.html).
 //
-// THE SONG IS THE SURFACE. A song is a row of boxes; you drag a genre, a phrase
-// or a transform into a box, and stretch its right edge to make it longer.
-// No dropdowns, no mode switch — Play plays the song.
+// THE SONG IS THE SURFACE. Select a box, then click things on and off in it.
+// Boxes drag to REORDER, and only to reorder — nothing is dragged into them.
+// Click a box to play from there; double-click to loop it alone.
 const { harm, render, drums, bass, ROMAN, word, drop, envelope,
         reverse, invert, rotate } = window.NuKernel;
-const { DEFAULT, GENRES, DRUMNAME } = window.NuGenres;
+const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL } = window.NuGenres;
 
-// Box width is proportional to BARS so the song reads as a timeline. Drag
-// sensitivity is deliberately NOT proportional — one REP_PX of travel adds one
-// loop whatever the genre, so stretching blues is not four times the effort of
-// stretching acid.
 const DEFAULT_BPM = 126, NSLOTS = 8, NBOXES = 4;
-const PX_PER_BAR = 22, REP_PX = 70, MAX_REPS = 8;
+const PX_PER_BAR = 22, BAR_PX = 26, MAX_LEN = 64;
 
 /* ---------- phrases ---------- */
 const z = () => new Array(16).fill(0);
@@ -39,71 +35,100 @@ function randomPhrase() {
 }
 
 /* ---------- song ---------- */
-// A BOX is genre + phrase + transforms + length. Empty boxes are skipped, so the
-// song plays while you are still building it. `reps` counts whole loops of the
-// genre, never bars — which is what keeps a twelve-bar blues from being cut to
-// eight when you stretch it.
+// A BOX is a genre, a SET of phrases, transforms, a length in bars and a nudge.
+// LEN and NUDGE are a window onto the genre's own form: a fugue with len 2 and
+// nudge 2 plays the last two bars of its four-bar form. The genre still renders
+// its whole form — the box just decides which part of it you hear.
 const OPS = { rev: reverse(), inv: invert(4), drop2: drop(2), drop3: drop(3) };
 const OPLABEL = { rev: "reverse", inv: "invert", drop2: "drop 2", drop3: "drop 3" };
 const ENVLABEL = { in: "fade in", out: "fade out" };
 
-const emptyBox = () => ({ genre: null, slot: null, reps: 1, ops: [], env: null });
-let SONG = Array.from({ length: NBOXES }, emptyBox);
-let viewSec = 0, playingSec = -1, armed = null;
+const RATES = { half: 0.5, dbl: 2 };
+const RATELABEL = { half: "half time", dbl: "double time" };
+const emptyBox = () =>
+  ({ genre: null, slots: [], len: 0, nudge: 0, ops: [], env: null, mode: null, rate: null });
 
-const boxBars = b => (b.genre ? GENRES[b.genre].bars * b.reps : 0);
-const phraseOf = b => (b.slot == null ? blank() : SLOTS[b.slot]);
+// The genre a box actually renders with: its own definition, plus whatever the
+// box overrides. Mode and tempo are not pattern operators and not envelopes —
+// they are the third kind, a change to the GENRE the phrase is read through.
+const genreOf = sec => {
+  const g = GENRES[sec.genre];
+  if (!sec.mode && !sec.rate) return g;
+  return { ...g, ...(sec.mode ? { mode: MODES[sec.mode] } : {}),
+           ...(sec.rate ? { rate: g.rate * RATES[sec.rate] } : {}) };
+};
+let SONG = Array.from({ length: NBOXES }, emptyBox);
+let viewSec = 0, playingSec = -1, loopOnly = null, dragFrom = null;
+
 const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
+const boxBars = b => (b.genre ? b.len : 0);
 
 /* ---------- what a box contributes ---------- */
+// MULTIPLE PHRASES combine by being dealt across the genre's own voices: voice v
+// plays phrase v % n. Two phrases in a four-voice fugue is a double fugue; two
+// phrases in acid is two 303s running different patterns, which is what acid
+// records actually did. The voice count never changes — the phrases share it.
 function sectionEvents(sec) {
-  if (!sec.genre) return { g: null, bars: 0, span: 0, ev: [] };
-  const g = GENRES[sec.genre], bars = g.bars * sec.reps;
-  const phrase = word(phraseOf(sec), sec.ops.map(o => OPS[o]));
-  const span = bars * 16 / g.rate, out = [];
+  if (!sec.genre) return { g: null, bars: 0, ev: [] };
+  const g = genreOf(sec);
+  const len = Math.max(1, sec.len || g.bars), nudge = sec.nudge % g.bars;
+  const total = Math.ceil((nudge + len) / g.bars) * g.bars;
+  const barSteps = 16 / g.rate, from = nudge * barSteps, to = (nudge + len) * barSteps;
 
-  const pitched = render(phrase, g, bars);
-  for (let v = 0; v < g.voices; v++) {
-    let prev = null;
-    for (const e of pitched.filter(e => e.v === v)) {
-      out.push({ ...e, kind: "line", prev, pad: g.realize(v) === "pad" });
-      prev = e.n;
+  const phrases = (sec.slots.length ? sec.slots : [null])
+    .map(i => word(i == null ? blank() : SLOTS[i], sec.ops.map(o => OPS[o])));
+  const nP = phrases.length, out = [];
+
+  phrases.forEach((ph, pi) => {
+    const pitched = render(ph, g, total);
+    for (let v = pi; v < g.voices; v += nP) {
+      let prev = null;
+      for (const e of pitched.filter(e => e.v === v)) {
+        out.push({ ...e, kind: "line", prev, pad: g.realize(v) === "pad" });
+        prev = e.n;
+      }
     }
-  }
-  // Drums repeat PER GENRE-LOOP so the fill lands at the end of every form, not
-  // once at the end of a stretched box. The pitched voices deliberately do not:
-  // their section counter must run continuously or acid's rotate(4·section)
-  // resets every four bars.
-  const dr = drums(phrase, g, g.bars), loopSteps = g.bars * 16 / g.rate;
-  for (let r = 0; r < sec.reps; r++)
-    for (const e of dr) out.push({ ...e, kind: "hit", t: e.t + r * loopSteps });
-  for (const e of bass(phrase, g, bars)) out.push({ ...e, kind: "bass" });
+  });
 
-  return { g, bars, span, ev: envelope(out, sec.env, span) };
+  // Drums and bass follow the FIRST phrase — the kit is genre data anyway, and
+  // the bass reads accents, which only one line can own.
+  const lead = phrases[0];
+  const dr = drums(lead, g, g.bars), loopSteps = g.bars * barSteps;
+  for (let r = 0; r < total / g.bars; r++)
+    for (const e of dr) out.push({ ...e, kind: "hit", t: e.t + r * loopSteps });
+  for (const e of bass(lead, g, total)) out.push({ ...e, kind: "bass" });
+
+  const win = out.filter(e => e.t >= from && e.t < to).map(e => ({ ...e, t: e.t - from }));
+  return { g, bars: len, ev: envelope(win, sec.env, len * barSteps) };
 }
 
 /* ---------- arrangement view of the selected box ---------- */
 const gridEl = document.getElementById("grid");
 let stepW = 7, phEls = [], viewSteps = 64;
 
+// The playhead marks which box is SOUNDING. It must not move the SELECTION —
+// the selected box is what every palette click acts on, and having playback
+// steal it means a click lands on whatever bar happened to be playing.
 function showSection(si) {
   if (si === playingSec) return;
-  playingSec = si; viewSec = si; draw(); drawSong();
+  playingSec = si; drawSong();
 }
 
 function draw() {
   const sec = curSection(), { g, bars, ev } = sectionEvents(sec);
   gridEl.innerHTML = ""; phEls = [];
-  writeSrc();
+  writeSrc(); drawPalette();
   if (!g) {
     document.getElementById("readout").textContent =
-      "box " + (viewSec + 1) + " is empty — drag a genre into it";
+      "box " + (viewSec + 1) + " is empty — click a genre below to fill it";
     return;
   }
   const lanes = [];
+  const nP = Math.max(1, sec.slots.length);
   for (let v = 0; v < g.voices; v++)
     lanes.push({ name: (g.realize(v) === "pad" ? "Pad " : "Voice ") + v,
-      op: g.words[v] || "", kind: "pitch", color: "var(--v" + v + ")",
+      op: (sec.slots.length > 1 ? "phrase " + (sec.slots[v % nP] + 1) + " · " : "") + (g.words[v] || ""),
+      kind: "pitch", color: "var(--v" + v + ")",
       ev: ev.filter(e => e.kind === "line" && e.v === v) });
   lanes.push({ name: "Bass", op: (g.bassStyle === "walk" ? "walking · " : "roots · ") + g.harmony,
     kind: "pitch", color: "var(--vb)", ev: ev.filter(e => e.kind === "bass") });
@@ -124,7 +149,7 @@ function draw() {
   for (let b = 0; b < bars; b++) {
     const t = document.createElement("div"); t.className = "tick b";
     t.style.left = (b * 16 * stepW / g.rate) + "px";
-    t.textContent = "bar " + (b + 1);
+    t.textContent = "bar " + (sec.nudge % g.bars + b + 1);
     ruler.append(t);
   }
   gridEl.append(ruler);
@@ -171,12 +196,13 @@ function draw() {
   });
 
   const roots = g.harmony === "modal" ? "one mode, no motion"
-    : "roots " + Array.from({ length: bars }, (_, b) => ROMAN[harm(phraseOf(sec), g, b)]).join(" ") +
-      (g.harmony === "emergent" ? " (computed, not written)" : "");
+    : "roots " + Array.from({ length: bars }, (_, b) =>
+        ROMAN[harm(SLOTS[sec.slots[0]] || blank(), g, sec.nudge % g.bars + b)]).join(" ") +
+      (g.harmony === "emergent" ? " (computed)" : "");
   document.getElementById("readout").textContent =
     "box " + (viewSec + 1) + " · " + GENRES[sec.genre].label + " · " +
-    (sec.slot == null ? "no phrase" : "phrase " + (sec.slot + 1)) + " · " +
-    bars + " bars · " + roots;
+    (sec.slots.length ? sec.slots.map(i => "phrase " + (i + 1)).join(" + ") : "no phrase") +
+    " · " + bars + " bars" + (sec.nudge ? " nudged " + sec.nudge : "") + " · " + roots;
 }
 
 /* ---------- audio ---------- */
@@ -254,19 +280,20 @@ function hit(t, d, acc, vel) {
   else if (d === "p") { nz(t, .05, 2600, .16 * a); }
 }
 
-/* ---------- scheduler: one flat list of bars for the whole song ---------- */
+/* ---------- scheduler ---------- */
 let TL = [];
 function compile() {
   TL = [];
-  SONG.forEach((sec, si) => {
-    if (!sec.genre) return;                                  // empty boxes are skipped
+  const list = loopOnly == null ? SONG.map((s, i) => [s, i]) : [[SONG[loopOnly], loopOnly]];
+  for (const [sec, si] of list) {
+    if (!sec.genre) continue;                                // empty boxes are skipped
     const { g, bars, ev } = sectionEvents(sec);
     const barSteps = 16 / g.rate;
     for (let b = 0; b < bars; b++)
       TL.push({ si, g, barSteps, first: b === 0,
                 ev: ev.filter(e => Math.floor(e.t / barSteps) === b)
                       .map(e => ({ ...e, off: e.t - b * barSteps })) });
-  });
+  }
 }
 const stepDur = () => 60 / (+document.getElementById("bpm").value) / 4;
 
@@ -290,24 +317,31 @@ function tick() {
 }
 function frame() {
   if (!playing) return;
+  if (viewSec !== playingSec) {                 // looking at a box that is not sounding
+    for (const p of phEls) p.style.transform = "translateX(-3px)";
+    return requestAnimationFrame(frame);
+  }
   const sd = stepDur();
   let x = ((ctx.currentTime - passStart) / sd) * stepW;
   x = Math.max(0, Math.min(viewSteps * stepW, x));
   for (const p of phEls) p.style.transform = "translateX(" + x + "px)";
   requestAnimationFrame(frame);
 }
-function start() {
+function startAt(boxIndex) {
   initAudio(); if (ctx.state === "suspended") ctx.resume();
   compile();
   if (!TL.length) {
     document.getElementById("readout").textContent =
-      "nothing to play — drag a genre into a box first";
+      "nothing to play — click a genre to fill a box first";
     return;
   }
-  playing = true; nextBar = 0; playingSec = -1;
+  const at = TL.findIndex(b => b.si === boxIndex && b.first);
+  playing = true; playingSec = -1;
+  nextBar = at < 0 ? 0 : at;
   nextBarTime = ctx.currentTime + .08; passStart = nextBarTime;
   document.getElementById("play").textContent = "■ Stop";
-  timer = setInterval(tick, 25); requestAnimationFrame(frame);
+  clearInterval(timer); timer = setInterval(tick, 25); requestAnimationFrame(frame);
+  drawSong();
 }
 function stop() {
   playing = false; clearInterval(timer); playingSec = -1;
@@ -316,36 +350,26 @@ function stop() {
   drawSong();
 }
 
-/* ---------- drag and drop, with click-to-place as the touch fallback ------- */
-const payload = (kind, value) => JSON.stringify({ kind, value });
-function syncArmed() {
-  document.querySelectorAll("[data-src]").forEach(el => {
-    const i = el.dataset.src.indexOf(":");
-    const k = el.dataset.src.slice(0, i), v = el.dataset.src.slice(i + 1);
-    el.classList.toggle("armed", !!armed && armed.kind === k && String(armed.value) === v);
-  });
-  document.getElementById("song").classList.toggle("targeting", !!armed);
-}
-function makeSource(el, kind, value) {
-  el.dataset.src = kind + ":" + value;
-  el.draggable = true;
-  el.addEventListener("dragstart", e => {
-    e.dataTransfer.setData("text/plain", payload(kind, value));
-    e.dataTransfer.effectAllowed = "copy";
-    el.classList.add("dragging");
-  });
-  el.addEventListener("dragend", () => el.classList.remove("dragging"));
-}
-function applyTo(sec, kind, value) {
-  if (kind === "genre") sec.genre = value;
-  else if (kind === "phrase") sec.slot = +value;
-  else if (kind === "op") {
+/* ---------- clicking things on and off in the selected box ---------- */
+function toggle(kind, value) {
+  const sec = curSection();
+  if (kind === "genre") {
+    if (sec.genre === value) { SONG[viewSec] = emptyBox(); }
+    else { sec.genre = value; if (!sec.len) sec.len = GENRES[value].bars;
+           sec.nudge = sec.nudge % GENRES[value].bars; }
+  } else if (kind === "phrase") {
+    if (!sec.genre) return;
+    const i = sec.slots.indexOf(value);
+    i < 0 ? sec.slots.push(value) : sec.slots.splice(i, 1);
+  } else if (kind === "op") {
     const i = sec.ops.indexOf(value);
     i < 0 ? sec.ops.push(value) : sec.ops.splice(i, 1);
   } else if (kind === "env") sec.env = sec.env === value ? null : value;
+  else if (kind === "mode") sec.mode = sec.mode === value ? null : value;
+  else if (kind === "rate") sec.rate = sec.rate === value ? null : value;
   songChanged();
 }
-function songChanged() { drawSong(); draw(); if (playing) compile(); }
+function songChanged() { drawSong(); draw(); drawSlots(); if (playing) compile(); }
 
 /* ---------- the song row ---------- */
 function drawSong() {
@@ -354,122 +378,166 @@ function drawSong() {
     const bars = boxBars(sec);
     const box = document.createElement("div");
     box.className = "box" + (sec.genre ? " full" : " empty") +
-      (i === viewSec ? " sel" : "") + (i === playingSec ? " live" : "");
+      (i === viewSec ? " sel" : "") + (i === playingSec ? " live" : "") +
+      (i === loopOnly ? " looped" : "");
     box.style.width = (sec.genre ? Math.max(116, bars * PX_PER_BAR) : 116) + "px";
+    box.draggable = true;
     box.setAttribute("aria-label", "box " + (i + 1) +
       (sec.genre ? ", " + GENRES[sec.genre].label + ", " + bars + " bars" : ", empty"));
 
     const head = document.createElement("div"); head.className = "bhead";
     head.innerHTML = "<b>" + (i + 1) + "</b><span>" +
-      (sec.genre ? bars + " bars" : "empty") + "</span>";
-    if (sec.genre) {
-      const x = document.createElement("button");
-      x.type = "button"; x.className = "x"; x.textContent = "×";
-      x.setAttribute("aria-label", "empty box " + (i + 1));
-      x.addEventListener("click", ev => { ev.stopPropagation(); SONG[i] = emptyBox(); songChanged(); });
-      head.append(x);
-    }
+      (sec.genre ? bars + " bar" + (bars === 1 ? "" : "s") +
+        (sec.nudge ? " +" + sec.nudge : "") : "empty") + "</span>" +
+      (i === loopOnly ? '<span class="loopmark">loop</span>' : "");
     box.append(head);
 
     const gl = document.createElement("div");
     gl.className = "bgenre" + (sec.genre ? " has" : "");
-    gl.textContent = sec.genre ? GENRES[sec.genre].label : "drop a genre";
+    gl.textContent = sec.genre ? GENRES[sec.genre].label : "click a genre";
     box.append(gl);
 
     const ph = document.createElement("div");
-    ph.className = "bphrase" + (sec.slot == null ? "" : " has");
-    if (sec.slot == null) ph.textContent = "drop a phrase";
-    else {
-      const p = SLOTS[sec.slot];
-      const mini = document.createElement("span"); mini.className = "mini";
+    ph.className = "bphrase" + (sec.slots.length ? " has" : "");
+    if (!sec.slots.length) ph.textContent = sec.genre ? "click a phrase" : "";
+    else for (const si of sec.slots) {
+      const p = SLOTS[si], row = document.createElement("span"); row.className = "mini";
       for (let k = 0; k < 16; k++) {
         const c = document.createElement("i");
         if (p.gate[k]) { c.className = "on";
           c.style.height = (18 + (p.deg[k] + 7) / 14 * 60) + "%";
           c.style.opacity = String(0.35 + (p.vel[k] / 9) * 0.65); }
-        mini.append(c);
+        row.append(c);
       }
-      ph.append(Object.assign(document.createElement("span"),
-        { className: "pn", textContent: "phrase " + (sec.slot + 1) }), mini);
+      ph.append(row);
     }
     box.append(ph);
 
     const tags = document.createElement("div"); tags.className = "btags";
     for (const o of sec.ops) tags.append(Object.assign(document.createElement("span"),
       { className: "tag", textContent: OPLABEL[o] }));
+    if (sec.mode) tags.append(Object.assign(document.createElement("span"),
+      { className: "tag mode", textContent: MODELABEL[sec.mode] }));
+    if (sec.rate) tags.append(Object.assign(document.createElement("span"),
+      { className: "tag rate", textContent: RATELABEL[sec.rate] }));
     if (sec.env) tags.append(Object.assign(document.createElement("span"),
       { className: "tag env", textContent: ENVLABEL[sec.env] }));
     box.append(tags);
 
-    box.addEventListener("dragover", e => { e.preventDefault(); box.classList.add("over"); });
+    // REORDER — boxes drag among themselves, and that is all dragging does now.
+    box.addEventListener("dragstart", e => {
+      dragFrom = i; box.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", String(i));
+    });
+    box.addEventListener("dragend", () => { dragFrom = null; drawSong(); });
+    box.addEventListener("dragover", e => {
+      if (dragFrom == null || dragFrom === i) return;
+      e.preventDefault(); box.classList.add("over");
+    });
     box.addEventListener("dragleave", () => box.classList.remove("over"));
     box.addEventListener("drop", e => {
       e.preventDefault(); box.classList.remove("over");
-      try { const d = JSON.parse(e.dataTransfer.getData("text/plain"));
-            applyTo(sec, d.kind, d.value); } catch (err) { /* not one of ours */ }
-    });
-    box.addEventListener("click", () => {
-      if (armed) { const a = armed; armed = null; syncArmed(); applyTo(sec, a.kind, a.value); return; }
-      viewSec = i; drawSong(); draw();
+      if (dragFrom == null || dragFrom === i) return;
+      const [moved] = SONG.splice(dragFrom, 1);
+      SONG.splice(i, 0, moved);
+      viewSec = i; dragFrom = null; songChanged();
+      if (playing) { compile(); nextBar = 0; }
     });
 
-    // STRETCH — drag the right edge. Steps in whole genre-loops, so a box can
-    // only ever be a whole number of the genre's own form.
+    // CLICK plays from here and carries on; DOUBLE-CLICK loops this box alone.
+    box.addEventListener("click", e => {
+      if (e.target.closest(".grip")) return;
+      viewSec = i; loopOnly = null;
+      drawSong(); draw(); drawSlots();
+      if (sec.genre) startAt(i);                // an empty box is only selected
+    });
+    box.addEventListener("dblclick", e => {
+      if (e.target.closest(".grip") || !sec.genre) return;
+      viewSec = i; loopOnly = i;
+      drawSong(); draw(); drawSlots(); startAt(i);
+    });
+
     if (sec.genre) {
-      const grip = document.createElement("div");
-      grip.className = "grip"; grip.title = "drag to lengthen";
-      grip.addEventListener("pointerdown", e => {
-        e.preventDefault(); e.stopPropagation();
-        const x0 = e.clientX, r0 = sec.reps;
-        const move = ev => {
-          const n = Math.max(1, Math.min(MAX_REPS, r0 + Math.round((ev.clientX - x0) / REP_PX)));
-          if (n !== sec.reps) { sec.reps = n; songChanged(); }
+      // LEFT grip nudges the window into the genre's form; RIGHT grip sets its
+      // length. Trimming a clip from either end, which is the DAW gesture.
+      const gN = GENRES[sec.genre].bars;
+      box.append(makeGrip("l", e0 => {
+        const n0 = sec.nudge;
+        return dx => {
+          const n = Math.max(0, Math.min(gN - 1, n0 + Math.round(dx / BAR_PX)));
+          if (n !== sec.nudge) { sec.nudge = n; songChanged(); }
         };
-        const up = () => {
-          removeEventListener("pointermove", move); removeEventListener("pointerup", up);
+      }));
+      box.append(makeGrip("r", e0 => {
+        const l0 = sec.len;
+        return dx => {
+          const n = Math.max(1, Math.min(MAX_LEN, l0 + Math.round(dx / BAR_PX)));
+          if (n !== sec.len) { sec.len = n; songChanged(); }
         };
-        addEventListener("pointermove", move); addEventListener("pointerup", up);
-      });
-      grip.addEventListener("click", e => e.stopPropagation());
-      box.append(grip);
+      }));
     }
     el.append(box);
   });
-  syncArmed();
+}
+function makeGrip(side, begin) {
+  const g = document.createElement("div");
+  g.className = "grip " + side;
+  g.title = side === "l" ? "drag to nudge into the form" : "drag to set length";
+  g.draggable = false;
+  g.addEventListener("dragstart", e => e.preventDefault());
+  g.addEventListener("pointerdown", e => {
+    e.preventDefault(); e.stopPropagation();
+    const x0 = e.clientX, apply = begin(e);
+    const move = ev => apply(ev.clientX - x0);
+    const up = () => { removeEventListener("pointermove", move); removeEventListener("pointerup", up); };
+    addEventListener("pointermove", move); addEventListener("pointerup", up);
+  });
+  g.addEventListener("click", e => e.stopPropagation());
+  return g;
 }
 
-/* ---------- palette ---------- */
+/* ---------- palette: click on / off in the selected box ---------- */
 function drawPalette() {
   const el = document.getElementById("palette"); el.innerHTML = "";
+  const sec = curSection();
   const group = (title, items) => {
     const g = document.createElement("div"); g.className = "pgroup";
     g.append(Object.assign(document.createElement("span"),
       { className: "plabel", textContent: title }));
-    for (const [kind, value, label, cls] of items) {
+    for (const [kind, value, label, on, cls] of items) {
       const b = document.createElement("button");
-      b.type = "button"; b.className = "pchip " + (cls || "");
-      b.textContent = label;
-      makeSource(b, kind, value);
-      b.addEventListener("click", () => {
-        armed = (armed && armed.kind === kind && armed.value === value) ? null : { kind, value };
-        syncArmed();
-      });
+      b.type = "button"; b.className = "pchip " + (cls || "") + (on ? " on" : "");
+      b.textContent = label; b.setAttribute("aria-pressed", String(!!on));
+      b.addEventListener("click", () => toggle(kind, value));
       g.append(b);
     }
     el.append(g);
   };
-  group("genres", Object.keys(GENRES).map(k => ["genre", k, GENRES[k].label, "gen"]));
-  group("transforms", [...Object.keys(OPS).map(k => ["op", k, OPLABEL[k], ""]),
-                       ["env", "in", "fade in", "env"], ["env", "out", "fade out", "env"]]);
+  group("genre", Object.keys(GENRES).map(k =>
+    ["genre", k, GENRES[k].label, sec.genre === k, "gen"]));
+  group("pattern", Object.keys(OPS).map(k =>
+    ["op", k, OPLABEL[k], sec.ops.includes(k), ""]));
+  group("mode", Object.keys(MODES).map(k =>
+    ["mode", k, MODELABEL[k], sec.mode === k, "mode"]));
+  group("tempo", Object.keys(RATES).map(k =>
+    ["rate", k, RATELABEL[k], sec.rate === k, "rate"]));
+  group("envelope", [["env", "in", "fade in", sec.env === "in", "env"],
+                     ["env", "out", "fade out", sec.env === "out", "env"]]);
 }
 
-/* ---------- phrase slots — editable, and drag sources ---------- */
+/* ---------- phrase slots: click toggles into the box AND opens the editor --- */
 function drawSlots() {
   const el = document.getElementById("slots"); el.innerHTML = "";
+  const sec = curSection();
   SLOTS.forEach((p, i) => {
+    const inBox = sec.slots.includes(i);
     const b = document.createElement("button");
-    b.type = "button"; b.className = "slot" + (i === slot ? " sel" : "");
-    b.setAttribute("aria-label", "phrase " + (i + 1) + (isBlank(p) ? ", empty" : ", filled"));
+    b.type = "button";
+    b.className = "slot" + (i === slot ? " sel" : "") + (inBox ? " inbox" : "");
+    b.setAttribute("aria-pressed", String(inBox));
+    b.setAttribute("aria-label", "phrase " + (i + 1) + (isBlank(p) ? ", empty" : ", filled") +
+      (inBox ? ", in box " + (viewSec + 1) : ""));
     const mini = document.createElement("span"); mini.className = "mini";
     for (let k = 0; k < 16; k++) {
       const c = document.createElement("i");
@@ -480,16 +548,13 @@ function drawSlots() {
     }
     b.append(Object.assign(document.createElement("span"),
       { className: "sn", textContent: (i + 1) + (isBlank(p) ? "" : " •") }), mini);
-    makeSource(b, "phrase", i);
     b.addEventListener("click", () => {
-      if (armed && armed.kind === "phrase" && armed.value === i) { armed = null; syncArmed(); return; }
-      armed = { kind: "phrase", value: i };
       slot = i; SUBJ = SLOTS[i];
-      drawSlots(); drawEditor(); draw();
+      toggle("phrase", i);
+      drawSlots(); drawEditor();
     });
     el.append(b);
   });
-  syncArmed();
 }
 
 /* ---------- slot editor ---------- */
@@ -533,17 +598,24 @@ function drawEditor() {
 function writeSrc() {
   const sec = curSection(), out = document.getElementById("src");
   if (!sec.genre) { out.textContent = "(empty box)"; return; }
-  const g = GENRES[sec.genre];
+  const g = genreOf(sec);
   const kit = Object.keys(g.kit || {}).length
     ? Object.entries(g.kit).map(([d, v]) => "  " + d + ": [" + v.join(",") + "]").join("\n")
     : '  {}   <span class="c">// a fugue has no drums. The empty kit is the fact.</span>';
   out.innerHTML =
     g.label.toUpperCase() + "\n\n" +
-    "bars       " + g.bars + " × " + sec.reps + " = " + boxBars(sec) + "\n" +
-    "rate       " + g.rate + (g.swing ? "   swing " + g.swing.toFixed(2) : "") + "\n" +
+    "form       " + g.bars + " bars\n" +
+    "window     " + sec.len + " bars from bar " + (sec.nudge % g.bars + 1) + "\n" +
+    "phrases    " + (sec.slots.length
+      ? sec.slots.map(i => i + 1).join(", ") + "  (voice v plays phrase v mod " + sec.slots.length + ")"
+      : "none") + "\n" +
+    "rate       " + g.rate + (sec.rate ? "  (" + RATELABEL[sec.rate] + ")" : "") +
+      (g.swing ? "   swing " + g.swing.toFixed(2) : "") + "\n" +
     "scale      " + (g.scale ? "[" + g.scale.join(" ") + "]  (blues — flat five)"
                              : "[0 3 5 7 10]  (minor pentatonic)") + "\n" +
     "harmony    " + g.harmony + (g.roots ? "  [" + g.roots.map(r => ROMAN[r]).join(" ") + "]" : "") + "\n" +
+    "mode       " + (sec.mode ? MODELABEL[sec.mode] + "  [" + MODES[sec.mode].join(" ") + "]"
+                              : "natural minor  [0 2 3 5 7 8 10]") + "\n" +
     "transforms " + (sec.ops.length || sec.env
       ? [...sec.ops.map(o => OPLABEL[o]), ...(sec.env ? [ENVLABEL[sec.env]] : [])].join(" + ")
       : "none") + "\n\n" +
@@ -551,12 +623,18 @@ function writeSrc() {
 }
 
 /* ---------- wiring ---------- */
-document.getElementById("play").addEventListener("click", () => playing ? stop() : start());
+document.getElementById("play").addEventListener("click",
+  () => playing ? stop() : (loopOnly = null, startAt(0)));
 document.getElementById("bpm").addEventListener("input", e => {
   document.getElementById("bpmv").textContent = e.target.value;
 });
 document.getElementById("addbox").addEventListener("click", () => {
-  SONG.push(emptyBox()); viewSec = SONG.length - 1; songChanged();
+  SONG.push(emptyBox()); viewSec = SONG.length - 1; songChanged(); drawSlots();
+});
+document.getElementById("delbox").addEventListener("click", () => {
+  if (SONG.length > 1) SONG.splice(viewSec, 1); else SONG[0] = emptyBox();
+  viewSec = Math.min(viewSec, SONG.length - 1); loopOnly = null;
+  songChanged(); drawSlots();
 });
 const putPhrase = make => () => {
   SLOTS[slot] = make(); SUBJ = SLOTS[slot];
@@ -569,12 +647,12 @@ document.getElementById("reset").addEventListener("click", () => {
   if (playing) stop();
   SLOTS = Array.from({ length: NSLOTS }, blank); slot = 0; SUBJ = SLOTS[0];
   SONG = Array.from({ length: NBOXES }, emptyBox);
-  viewSec = 0; playingSec = -1; armed = null;
+  viewSec = 0; playingSec = -1; loopOnly = null;
   const bpm = document.getElementById("bpm");
   bpm.value = DEFAULT_BPM; document.getElementById("bpmv").textContent = String(DEFAULT_BPM);
-  drawPalette(); drawSlots(); drawEditor(); drawSong(); draw();
+  drawSlots(); drawEditor(); drawSong(); draw();
   document.getElementById("dawscroll").scrollLeft = 0;
 });
 addEventListener("resize", () => draw());
 
-drawPalette(); drawSlots(); drawEditor(); drawSong(); draw();
+drawSlots(); drawEditor(); drawSong(); draw();

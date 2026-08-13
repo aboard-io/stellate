@@ -83,7 +83,10 @@
   // flat five, and the blue note is a passing tone the pentatonic cannot say.
   const pitch = (d, sc = PENT) =>
     sc[((d % sc.length) + sc.length) % sc.length] + 12 * Math.floor(d / sc.length);
-  const mp    = d => MODE[((d % 7) + 7) % 7] + 12 * Math.floor(d / 7);
+  // MODE is overridable per genre or per section, the same way `scale` is: the
+  // subject's alphabet and the chords' alphabet are separate decisions.
+  const mp = (d, md = MODE) =>
+    md[((d % md.length) + md.length) % md.length] + 12 * Math.floor(d / md.length);
 
   // The operators are closed on PATTERNS but NOT on REGISTER: transposition
   // and per-voice offset compound without bound, so a four-voice fugue answered
@@ -92,9 +95,9 @@
   const fold = (n, c) => { while (n < c - 6) n += 12; while (n > c + 6) n -= 12; return n; };
 
   // nearest mode degree to a pitch class — how a transposition becomes a root
-  const near = pc => {
+  const near = (pc, md = MODE) => {
     let b = 0, x = 99;
-    MODE.forEach((m, i) => {
+    md.forEach((m, i) => {
       const t = Math.min((m - pc + 120) % 12, (pc - m + 120) % 12);
       if (t < x) { x = t; b = i; }
     });
@@ -117,11 +120,12 @@
   function harm(subj, g, bar) {
     if (g.harmony === "cycle") return at(g.roots, bar);
     if (g.harmony === "emergent") {
+      const md = g.mode || MODE;
       // transposition of the subject IS modulation: an answer at the fifth is
       // the dominant because that is what an answer at the fifth means
       const v = Math.min(bar, g.voices - 1), sc = g.scale || PENT;
       const q = word(subj, g.word(v, 0));
-      return near((((pitch(q.deg[0], sc) - pitch(subj.deg[0], sc)) % 12) + 12) % 12);
+      return near((((pitch(q.deg[0], sc) - pitch(subj.deg[0], sc)) % 12) + 12) % 12, md);
     }
     return 0;                                            // modal: no motion
   }
@@ -152,7 +156,8 @@
   function render(subj, g, bars) {
     const N = subj.deg.length, ev = [];
     for (let v = 0; v < g.voices; v++) {
-      const ctr = 60 + 12 * g.reg(v), pad = g.realize(v) === "pad", sc = g.scale || PENT;
+      const ctr = 60 + 12 * g.reg(v), pad = g.realize(v) === "pad",
+            sc = g.scale || PENT, md = g.mode || MODE;
       for (let b = g.entry(v); b < bars; b++) {
         const p = word(subj, g.word(v, b - g.entry(v))), r = harm(subj, g, b);
         const sp = spans(p.gate);
@@ -161,7 +166,7 @@
           const steps = sp[i];
           const legato = pad || p.sld[(i + steps) % N] ? 1 : 0.92;
           const ns = pad
-            ? [r, r + 2, r + 4].map(mp)                  // chord from HARMONY, not from the note
+            ? [r, r + 2, r + 4].map(d => mp(d, md))      // chord from HARMONY, not from the note
             : [pitch(p.deg[i], sc) + 12 * p.oct[i]];
           for (const n of ns)
             ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: steps * legato / g.rate, v,
@@ -214,13 +219,14 @@
     // chromatic approach a semitone under the NEXT bar's root, which is why it
     // needs to look one bar ahead: a walking line is defined by where it is
     // going, not by the chord it is sitting on.
+    const md = g.mode || MODE;
     if (g.bassStyle === "walk") {
       for (let b = 0; b < bars; b++) {
         const r = harm(subj, g, b), nx = harm(subj, g, (b + 1) % bars);
         // alternate the direction of the middle two so three bars of one chord
         // do not walk the identical line three times
-        const mid = b % 2 === 0 ? [mp(r + 2), mp(r + 4)] : [mp(r + 4), mp(r + 2)];
-        const tones = [mp(r), mid[0], mid[1], mp(nx) - 1];
+        const mid = b % 2 === 0 ? [mp(r + 2, md), mp(r + 4, md)] : [mp(r + 4, md), mp(r + 2, md)];
+        const tones = [mp(r, md), mid[0], mid[1], mp(nx, md) - 1];
         tones.forEach((n, q) =>
           ev.push({ t: (b * N + q * 4) / g.rate, dur: 3.7 / g.rate, n: n + 36, r,
                     walk: true, vel: q === 0 ? 7 : 5 }));
@@ -234,7 +240,7 @@
       for (let i = 0; i < N; i++)
         if (subj.acc[i])
           ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: sp[i] * 0.94 / g.rate,
-                    n: mp(r) + 36, r, vel: vel(subj, i) });
+                    n: mp(r, md) + 36, r, vel: vel(subj, i) });
     }
     return ev;
   }

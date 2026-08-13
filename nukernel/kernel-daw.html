@@ -13,9 +13,10 @@
 <div class="wrap">
   <div class="mast">
     <div>
-      <h1>Drag a genre <em>into a box</em></h1>
-      <p class="sub">A song is a row of boxes. Drop a genre, a phrase and any transforms into each one,
-        then drag its right edge to make it longer. The same sixteen steps read four different ways.</p>
+      <h1>A song is a row of <em>boxes</em></h1>
+      <p class="sub">Pick a box, then click things on and off in it. Drag a box to move it in the song.
+        Its edges trim: the right sets length, the left nudges into the genre's form. The same
+        sixteen steps read four different ways.</p>
     </div>
     <div class="count">one phrase · <b>8</b> operators · <b>4</b> genres</div>
   </div>
@@ -31,10 +32,11 @@
   <div class="ed songwrap">
     <div class="edhead">
       <h2>Song</h2>
-      <p>Drop things in. Drag the right edge to lengthen. Click a box to see it below.
-         On a touchscreen, tap a chip to pick it up, then tap a box.</p>
+      <p>Click a box to play from there; double-click to loop it alone. Drag boxes to reorder.
+         Trim the right edge for length, the left to nudge into the form.</p>
       <span class="spacer"></span>
       <button class="btn" id="addbox">+ Box</button>
+      <button class="btn" id="delbox">− Box</button>
     </div>
     <div class="song" id="song"></div>
     <div class="palette" id="palette"></div>
@@ -43,7 +45,7 @@
   <div class="ed">
     <div class="edhead">
       <h2>Phrases</h2>
-      <p>Eight slots. Click one to edit it and pick it up; drag it into a box.</p>
+      <p>Click a phrase to edit it and switch it on or off in the selected box. Several at once is fine — the genre deals them across its voices, so two phrases in a fugue is a double fugue.</p>
     </div>
     <div class="slots" id="slots"></div>
     <div class="edhead">
