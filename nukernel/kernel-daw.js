@@ -21,7 +21,7 @@ function build() {
     lanes.push({ id: "v" + v, name: (g.realize(v) === "pad" ? "Pad " : "Voice ") + v,
       op: g.words[v] || "", kind: "pitch", color: "var(--v" + v + ")",
       ev: pitched.filter(e => e.v === v) });
-  lanes.push({ id: "bass", name: "Bass", op: "harmony · " + g.harmony, kind: "pitch",
+  lanes.push({ id: "bass", name: "Bass", op: (g.bassStyle === "walk" ? "walking · " : "roots · ") + g.harmony, kind: "pitch",
     color: "var(--vb)", ev: bs });
   for (const d of [...new Set(dr.map(e => e.d))])
     lanes.push({ id: "d" + d, name: DRUMNAME[d] || d,

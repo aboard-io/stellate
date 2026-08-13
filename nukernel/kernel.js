@@ -187,7 +187,26 @@
   // Root motion is the progression, so chords are not a separate stage in the
   // pipeline — they are this object at a different density.
   function bass(subj, g, bars) {
-    const ev = [], N = subj.deg.length, sp = spans(subj.acc);   // holds to the next accent
+    const ev = [], N = subj.deg.length;
+
+    // WALKING — quarter notes that arrive somewhere. Root, third, fifth, then a
+    // chromatic approach a semitone under the NEXT bar's root, which is why it
+    // needs to look one bar ahead: a walking line is defined by where it is
+    // going, not by the chord it is sitting on.
+    if (g.bassStyle === "walk") {
+      for (let b = 0; b < bars; b++) {
+        const r = harm(subj, g, b), nx = harm(subj, g, (b + 1) % bars);
+        // alternate the direction of the middle two so three bars of one chord
+        // do not walk the identical line three times
+        const mid = b % 2 === 0 ? [mp(r + 2), mp(r + 4)] : [mp(r + 4), mp(r + 2)];
+        const tones = [mp(r), mid[0], mid[1], mp(nx) - 1];
+        tones.forEach((n, q) =>
+          ev.push({ t: (b * N + q * 4) / g.rate, dur: 3.7 / g.rate, n: n + 36, r, walk: true }));
+      }
+      return ev;
+    }
+
+    const sp = spans(subj.acc);                                 // holds to the next accent
     for (let b = 0; b < bars; b++) {
       const r = harm(subj, g, b);
       for (let i = 0; i < N; i++)

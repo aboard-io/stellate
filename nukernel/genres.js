@@ -102,7 +102,7 @@
       label: "Blues", rate: 1, bars: 12, voices: 2, swing: 1 / 3,
       scale: BLUES,
       entry: v => v * 4, reg: v => -v, realize: () => "line",
-      harmony: "cycle",
+      harmony: "cycle", bassStyle: "walk",
       roots: [0,0,0,0, 3,3,0,0, 4,3,0,4],    // twelve bars, I IV V, turnaround
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
