@@ -104,8 +104,8 @@
       // whose identity IS a synthesis behaviour is never sampled. Acid is the
       // canonical case — "the whole point of acid house" — because the accent
       // and the slide are filter behaviour, and a sample cannot squelch.
-      synth: { dsp: "tb303", cutoff: 520, resonance: 0.86, envmod: 0.8,
-               decay: 0.42, waveform: 1, level: 0.85 },
+      synth: { dsp: "tb303", root: "tb303", level: 0.85,
+               set: { cutoff: 520, resonance: 0.86, envmod: 0.8, decay: 0.42, waveform: 1 } },
       kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],     // 909, four on the floor
              c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
@@ -128,6 +128,10 @@
       entry: () => 0, reg: v => (v === 0 ? -1 : 1),
       realize: v => (v === 0 ? "pad" : "line"),
       harmony: "cycle", roots: [3, 4, 2, 5],   // iv v III VI
+      // FM, from a real cartridge. "E.PIANO 1" is the DX7 patch vaporwave is
+      // actually made of; the pad stays sampled strings because a DX7 node is
+      // monophonic and a chord would collapse onto one voice.
+      synth: { dsp: "dx7_alg5", root: "DX7", preset: "E.PIANO 1", level: 0.9, lineOnly: true },
       kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],     // lazy, half-time at rate .5
              s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
              h: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },

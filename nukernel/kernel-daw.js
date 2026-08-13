@@ -110,7 +110,8 @@ const RATES = { half: 0.5, dbl: 2 };
 const RATELABEL = { half: "half time", dbl: "double time" };
 const KITLABEL = { nodrums: "no drums", shift: "shift kit",
                    halftime: "half-time kit", busy: "busy hats" };
-const BASSOPS = { nobass: "no bass", walk: "walking", octaves: "octaves" };
+const BASSOPS = { nobass: "no bass", walk: "walking", octaves: "octaves",
+                  reese: "reese", wobble: "wobble" };
 // A new box is SIMPLE — the phrase played as written. There is no empty state
 // any more: a box always makes a sound as soon as it has a phrase, and the
 // genres are legible as what they add to that.
@@ -132,6 +133,7 @@ const genreOf = sec => {
     if (sec.kit === "nodrums") out.ghost = null;   // the ghost lane is not in the kit
   }
   if (sec.bassop === "nobass") out.nobass = true;
+  else if (sec.bassop === "reese" || sec.bassop === "wobble") out.nobass = false;
   else if (sec.bassop) { out.nobass = false; out.bassStyle = sec.bassop; }
   return out;
 };
@@ -356,6 +358,7 @@ let sampler = null;
 // exactly like the sampler's, with no timer poking values from the main thread.
 const FAUSTDIR = "../engine/faust/";
 const synthNodes = new Map();
+let dx7Presets = null;
 async function loadSynth(spec) {
   if (synthNodes.has(spec.dsp)) return synthNodes.get(spec.dsp);
   try {
@@ -364,29 +367,50 @@ async function loadSynth(spec) {
       FAUSTDIR + "dist/" + spec.dsp + "-module.wasm",
       FAUSTDIR + "dist/" + spec.dsp + "-meta.json");
     const node = await new fw.FaustMonoDspGenerator().createNode(ctx, spec.dsp, fac);
+    // A CARTRIDGE PATCH is 144 params set once. data/dx7-presets.json is the
+    // real sysex decoded, so "E.PIANO 1" is the actual DX7 patch, not a
+    // sound-alike — and its `alg` picks which dx7_algN module to load.
+    if (spec.preset) {
+      if (!dx7Presets) dx7Presets = await (await fetch(FAUSTDIR + "data/dx7-presets.json")).json();
+      const pre = dx7Presets[spec.preset];
+      if (pre) for (const [path, v] of Object.entries(pre.params)) {
+        const a = node.parameters.get("/" + spec.root + path);
+        if (a) a.setValueAtTime(v, ctx.currentTime);
+      }
+    }
     node.connect(bus);
     synthNodes.set(spec.dsp, node);
     return node;
   } catch (e) { synthNodes.set(spec.dsp, null); return null; }
 }
-const P = (node, name, dsp) => node.parameters.get("/" + dsp + "/" + name);
+// Every voice takes freq/gate/level the same way; the rest is per-DSP and is
+// declared in the genre, so adding a synth is a data change rather than code.
 function playSynth(spec, midi, when, durSec, acc, sld, vel) {
   const node = synthNodes.get(spec.dsp);
   if (!node) return false;
-  const d = spec.dsp, set = (n, v, t) => { const a = P(node, n, d); if (a) a.setValueAtTime(v, t); };
-  set("cutoff", spec.cutoff, when);
-  set("resonance", spec.resonance, when);
-  set("envmod", spec.envmod, when);
-  set("decay", spec.decay, when);
-  set("waveform", spec.waveform, when);
-  set("level", spec.level * (0.25 + 0.75 * ((vel == null ? 5 : vel) / 9)), when);
+  const set = (n, v, t) => {
+    const a = node.parameters.get("/" + spec.root + "/" + n);
+    if (a && v != null) a.setValueAtTime(v, t);
+  };
+  for (const [k, v] of Object.entries(spec.set || {})) set(k, v, when);
   set("accent", acc ? 1 : 0, when);
   set("slide", sld ? 1 : 0, when);
+  const lvl = spec.level * (0.25 + 0.75 * ((vel == null ? 5 : vel) / 9));
+  set("level", lvl, when); set("gain", Math.min(1, lvl), when);
   set("freq", hz(midi), when);
   set("gate", 1, when);
   set("gate", 0, Math.max(when + 0.02, when + durSec * 0.92));
   return true;
 }
+// SYNTH BASSES, offered as bass transforms: a reese IS its detuned beating and
+// a wobble IS its LFO, so neither can be a sample — the same law as the 303.
+const BASSSYNTH = {
+  reese:  { dsp: "bass_reese",  root: "bass_reese",  level: 0.8,
+            set: { cutoff: 900, fenvAmount: 1.2, fenvAttack: 0.005, fenvDecay: 0.35 } },
+  wobble: { dsp: "bass_wobble", root: "bass_wobble", level: 0.8,
+            set: { cutoff: 1200, res: 0.38, wobbleHz: 3.2, fenvAmount: 1.5,
+                   fenvAttack: 0.004, fenvDecay: 0.4 } },
+};
 function playSampled(id, midi, when, durSec, vel, gainMul) {
   const spec = specOf(id);
   if (!spec || !sampler) return false;
@@ -522,12 +546,15 @@ function tick() {
       if (e.kind === "line") {
         const gsyn = GENRES[SONG[bar.si].genre].synth;
         const id = INSTR[SONG[bar.si].genre] || "marimba";
-        if (gsyn && playSynth(gsyn, e.n, when, e.dur * sd, e.acc, e.sld, e.vel)) { /* signature voice */ }
+        const useSyn = gsyn && !(gsyn.lineOnly && e.pad);
+        if (useSyn && playSynth(gsyn, e.n, when, e.dur * sd, e.acc, e.sld, e.vel)) { /* signature voice */ }
         else if (!playSampled(id, e.n, when, e.dur * sd, e.vel, 1))
           line(when, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel);
       } else if (e.kind === "hit") hit(when, e.d, e.acc, e.vel);
       else if (e.kind === "bass") {
-        if (!playSampled(BASS_INSTR, e.n, when, e.dur * sd, e.vel, 1.25))
+        const bs = BASSSYNTH[SONG[bar.si].bassop];
+        if (bs && playSynth(bs, e.n, when, e.dur * sd, 0, 0, e.vel)) { /* synth bass */ }
+        else if (!playSampled(BASS_INSTR, e.n, when, e.dur * sd, e.vel, 1.25))
           line(when, e.n, e.dur * sd, 1, 0, null,
             { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false, e.vel);
       }
@@ -566,8 +593,9 @@ async function startAt(boxIndex) {
   const need = instrumentsInSong().filter(id => {
     const sp = specOf(id); return sp && sp.zones.some(z => !zoneBufs.has(id + "|" + z.file));
   });
-  const synths = [...new Set(SONG.filter(x => x.genre && GENRES[x.genre].synth)
-                                 .map(x => GENRES[x.genre].synth))];
+  const synths = [...new Set([
+    ...SONG.filter(x => x.genre && GENRES[x.genre].synth).map(x => GENRES[x.genre].synth),
+    ...SONG.filter(x => BASSSYNTH[x.bassop]).map(x => BASSSYNTH[x.bassop])])];
   const wantSynth = synths.filter(sp => !synthNodes.has(sp.dsp));
   if (need.length || wantSynth.length) {
     document.getElementById("readout").textContent =
