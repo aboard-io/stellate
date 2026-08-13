@@ -186,7 +186,7 @@
     // that changes nothing about the alphabets.
     rock: {
       label: "Rock", rate: 1, bars: 8, voices: 2,
-      entry: () => 0, reg: v => v - 1, realize: () => "line",
+      entry: () => 0, reg: v => v - 2, realize: () => "line",
       harmony: "cycle", roots: [0, 0, 6, 6, 3, 3, 0, 0],   // i i VII VII iv iv i i
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,1, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],      // the backbeat

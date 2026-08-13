@@ -261,7 +261,14 @@
         // computed FROM the voices' own transpositions, so transposing them
         // again by that root is circular and would double the motion; under
         // `modal` there is nothing to follow.
-        const rootShift = g.harmony === "cycle" ? mp(r, md) : 0;
+        // TAKE THE NEAREST ROOT, not the literal one. mp(VII) is +10 semitones,
+        // and a riff does not climb ten semitones for the flat-VII — it drops
+        // two to the same pitch class. Folding the shift into [-6..+6] keeps the
+        // progression audible while keeping the line in one register; unfolded,
+        // rock's melody spanned 46 semitones and every note was a heavily
+        // stretched sample, which is why it stopped sounding like a guitar.
+        const near6 = x => ((((x + 6) % 12) + 12) % 12) - 6;
+        const rootShift = g.harmony === "cycle" ? near6(mp(r, md)) : 0;
         const clamp = g.incClamp == null ? 7 : g.incClamp;   // 0 = let it run
         const cmode = g.incMode || "hold";
         // one octave shift for the whole line, from its degree-pitch mean
@@ -288,19 +295,38 @@
                         n: fold(n, ctr), acc: 0, sld: 0, vel: vel(p, first) });
           continue;
         }
+        const ART = { staccato: 0.5, normal: 0.92, legato: 1, tie: 1 };
+        const artic = g.artic || "normal";
+        const barEv = [];
         for (let i = 0; i < N; i++) {
           if (!p.gate[i]) continue;
           const steps = sp[i];
-          const legato = pad || p.sld[(i + steps) % N] ? 1 : 0.92;
+          const legato = pad || p.sld[(i + steps) % N] ? 1 : (ART[artic] || 0.92);
           const ns = [null];                             // pitched: registered below
           for (const n of ns) {
             const pitchOf = n == null
               ? pitch(p.deg[i] + rampOf(p, i, b, clamp, cmode), sc) + shift + rootShift + 12 * p.oct[i]
               : fold(n, ctr);                                    // chords voice per note
-            ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: steps * legato / g.rate, v,
-                      n: pitchOf, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });
+            barEv.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: steps * legato / g.rate, v,
+                         n: pitchOf, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });
           }
         }
+        // TIE. repeat(n) duplicates notes, and duplicated notes re-attack — a
+        // machine-gun rather than a longer note. Under `tie`, consecutive events
+        // at the same pitch that meet end-to-end become ONE held note, which is
+        // what makes repeat musical instead of percussive.
+        if (artic === "tie") {
+          for (const e of barEv) {
+            const last = ev[ev.length - 1];
+            if (last && last.v === e.v && last.n === e.n &&
+                Math.abs(last.t + last.dur - e.t) < 1e-6) {
+              last.dur += e.dur;
+              last.vel = Math.max(last.vel, e.vel);
+              continue;
+            }
+            ev.push(e);
+          }
+        } else for (const e of barEv) ev.push(e);
       }
     }
     return ev.sort((a, b) => a.t - b.t);

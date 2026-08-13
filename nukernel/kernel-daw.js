@@ -56,6 +56,7 @@ const okBox = b => b && typeof b === "object" &&
   (b.rate == null || Object.prototype.hasOwnProperty.call(RATES, b.rate)) &&
   (b.scale == null || Object.prototype.hasOwnProperty.call(SCALES, b.scale)) &&
   (b.cmode == null || ["hold", "loop", "reverse"].includes(b.cmode)) &&
+  (b.artic == null || ["staccato", "normal", "legato", "tie"].includes(b.artic)) &&
   (b.kit == null || Object.prototype.hasOwnProperty.call(KITLABEL, b.kit)) &&
   (b.bassop == null || Object.prototype.hasOwnProperty.call(BASSOPS, b.bassop));
 function load() {
@@ -136,7 +137,7 @@ const BASSOPS = { nobass: "no bass", walk: "walking", octaves: "octaves",
 // genres are legible as what they add to that.
 const emptyBox = () => ({ genre: "simple", slots: [], len: GENRES.simple.bars,
                           nudge: 0, ops: [], env: null, mode: null, rate: null, scale: null,
-                          kit: null, bassop: null, clamp: null, cmode: null });
+                          kit: null, bassop: null, clamp: null, cmode: null, artic: null });
 
 // The genre a box actually renders with: its own definition, plus whatever the
 // box overrides. Mode and tempo are not pattern operators and not envelopes —
@@ -144,7 +145,7 @@ const emptyBox = () => ({ genre: "simple", slots: [], len: GENRES.simple.bars,
 const genreOf = sec => {
   const g = GENRES[sec.genre];
   if (!sec.mode && !sec.rate && !sec.scale && !sec.kit && !sec.bassop
-      && !sec.clamp && !sec.cmode) return g;
+      && !sec.clamp && !sec.cmode && !sec.artic) return g;
   const out = { ...g, ...(sec.mode ? { mode: MODES[sec.mode] } : {}),
                 ...(sec.scale ? { scale: SCALES[sec.scale] } : {}),
                 ...(sec.rate ? { rate: g.rate * RATES[sec.rate] } : {}) };
@@ -154,6 +155,7 @@ const genreOf = sec => {
   }
   if (sec.clamp != null) out.incClamp = +sec.clamp;
   if (sec.cmode) out.incMode = sec.cmode;
+  if (sec.artic) out.artic = sec.artic;
   if (sec.bassop === "nobass") out.nobass = true;
   else if (sec.bassop === "reese" || sec.bassop === "wobble") out.nobass = false;
   else if (sec.bassop) { out.nobass = false; out.bassStyle = sec.bassop; }
@@ -692,6 +694,7 @@ function toggle(kind, value) {
   else if (kind === "bassop") sec.bassop = sec.bassop === value ? null : value;
   else if (kind === "clamp") sec.clamp = sec.clamp === value ? null : value;
   else if (kind === "cmode") sec.cmode = sec.cmode === value ? null : value;
+  else if (kind === "artic") sec.artic = sec.artic === value ? null : value;
   songChanged();
 }
 function songChanged() { drawSong(); draw(); drawSlots(); save(); if (playing) compile(); }
@@ -755,6 +758,8 @@ function drawSong() {
       { className: "tag clp", textContent: "limit " + (sec.clamp === "0" ? "off" : sec.clamp) }));
     if (sec.cmode) tags.append(Object.assign(document.createElement("span"),
       { className: "tag clp", textContent: sec.cmode }));
+    if (sec.artic) tags.append(Object.assign(document.createElement("span"),
+      { className: "tag art", textContent: sec.artic }));
     if (sec.kit) tags.append(Object.assign(document.createElement("span"),
       { className: "tag kit", textContent: KITLABEL[sec.kit] }));
     if (sec.bassop) tags.append(Object.assign(document.createElement("span"),
@@ -889,7 +894,8 @@ function drawPalette() {
         : kind === "kit" ? sec.kit === v
         : kind === "bassop" ? sec.bassop === v
         : kind === "clamp" ? sec.clamp === v
-        : kind === "cmode" ? (sec.cmode || "hold") === v : false;
+        : kind === "cmode" ? (sec.cmode || "hold") === v
+        : kind === "artic" ? (sec.artic || "normal") === v : false;
       b.classList.toggle("on", !!on);
       b.setAttribute("aria-pressed", String(!!on));
     });
@@ -919,6 +925,8 @@ function drawPalette() {
     ["op", "del" + n, String(n), sec.ops.includes("del" + n), "lst"]));
   group("ramp limit", ["0", "2", "4", "8"].map(v =>
     ["clamp", v, v === "0" ? "off" : v, sec.clamp === v, "clp"]));
+  group("articulation", ["staccato", "normal", "legato", "tie"].map(v =>
+    ["artic", v, v, (sec.artic || "normal") === v, "art"]));
   group("at the limit", [["cmode", "hold", "hold", (sec.cmode || "hold") === "hold", "clp"],
                          ["cmode", "loop", "loop", sec.cmode === "loop", "clp"],
                          ["cmode", "reverse", "reverse", sec.cmode === "reverse", "clp"]]);

@@ -330,6 +330,31 @@ console.log("ramps climb monotonically and the fold does not chase them");
   ok(new Set(clamped.slice(3)).size === 1, "clamp 2 did not stop the ramp: " + clamped.join(" "));
 }
 
+/* ---------------------------------------------------------------- 9d. TIE + NEAREST ROOT
+   Two things that keep a line playable rather than merely correct. */
+console.log("tie merges repeats; the root shift takes the nearest octave");
+{
+  const rep = K.repeat(1)(P);
+  const loose = K.render(rep, GENRES.simple, 4);
+  const tied = K.render(rep, { ...GENRES.simple, artic: "tie" }, 4);
+  ok(tied.length < loose.length, "tie did not merge any repeated notes");
+  ok(Math.max(...tied.map(e => e.dur)) > Math.max(...loose.map(e => e.dur)),
+     "tie produced no longer note than the untied version");
+  ok(K.render(rep, { ...GENRES.simple, artic: "staccato" }, 4)
+       .every(e => e.dur <= loose[0].dur), "staccato is not shorter than normal");
+
+  // a cycle-harmony line must stay in ONE register: the root shift is folded to
+  // the nearest octave, so the flat-VII drops two rather than climbing ten
+  for (const gk of GK) {
+    const g = GENRES[gk];
+    if (g.harmony !== "cycle") continue;
+    const ns = K.render(P, g, g.bars).filter(e => g.realize(e.v) !== "pad").map(e => e.n);
+    ok(Math.max(...ns) - Math.min(...ns) <= 36,
+       gk + ": line spans " + (Math.max(...ns) - Math.min(...ns)) +
+       " semitones — the root shift is not folded to the nearest octave");
+  }
+}
+
 /* ---------------------------------------------------------------- 10. NOTE DURATION
    A note lasts to the next gated step. The bug this replaced was every note
    being exactly one step, which is a row of 16ths, not a phrase. */
