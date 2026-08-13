@@ -11,6 +11,53 @@ const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL } = window.NuGenres;
 const DEFAULT_BPM = 126, NSLOTS = 8, NBOXES = 4;
 const PX_PER_BAR = 22, BAR_PX = 26, MAX_LEN = 64, MAX_NUDGE = 31;
 
+/* ---------- persistence ---------- */
+// The song survives a reload; Reset all wipes it. Only plain data is stored —
+// genre and transform names are STRING KEYS, never the operator functions — so
+// the saved shape does not depend on the kernel's internals.
+//
+// The loader is deliberately paranoid. This shape has changed repeatedly (slots
+// became an array, len/nudge replaced reps, mode and rate arrived), and a
+// half-understood old save is worse than no save: it would restore a song that
+// silently plays nothing. Anything that fails validation is dropped whole.
+const STORE = "nukernel.song.v1";
+let saveTimer = null;
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(STORE, JSON.stringify({
+        v: 1, slots: SLOTS, song: SONG,
+        bpm: +document.getElementById("bpm").value,
+      }));
+    } catch (e) { /* private mode, or quota: not worth interrupting the music */ }
+  }, 250);
+}
+const okPhrase = p => p && typeof p === "object" &&
+  ["deg", "oct", "vel", "gate", "acc", "sld"].every(k =>
+    Array.isArray(p[k]) && p[k].length === 16 && p[k].every(Number.isFinite));
+const okBox = b => b && typeof b === "object" &&
+  (b.genre === null || Object.prototype.hasOwnProperty.call(GENRES, b.genre)) &&
+  Array.isArray(b.slots) && b.slots.every(i => Number.isInteger(i) && i >= 0 && i < NSLOTS) &&
+  Number.isFinite(b.len) && Number.isFinite(b.nudge) &&
+  Array.isArray(b.ops) && b.ops.every(o => Object.prototype.hasOwnProperty.call(OPS, o)) &&
+  (b.env === null || b.env === "in" || b.env === "out") &&
+  (b.mode == null || Object.prototype.hasOwnProperty.call(MODES, b.mode)) &&
+  (b.rate == null || Object.prototype.hasOwnProperty.call(RATES, b.rate));
+function load() {
+  let raw;
+  try { raw = JSON.parse(localStorage.getItem(STORE) || "null"); } catch (e) { return false; }
+  if (!raw || raw.v !== 1) return false;
+  if (!Array.isArray(raw.slots) || raw.slots.length !== NSLOTS || !raw.slots.every(okPhrase)) return false;
+  if (!Array.isArray(raw.song) || !raw.song.length || !raw.song.every(okBox)) return false;
+  SLOTS = raw.slots; SONG = raw.song; SUBJ = SLOTS[slot];
+  if (Number.isFinite(raw.bpm) && raw.bpm >= 70 && raw.bpm <= 160) {
+    document.getElementById("bpm").value = raw.bpm;
+    document.getElementById("bpmv").textContent = String(raw.bpm);
+  }
+  return true;
+}
+
 /* ---------- phrases ---------- */
 const z = () => new Array(16).fill(0);
 const blank = () => ({ deg: z(), oct: z(), vel: new Array(16).fill(5),
@@ -208,10 +255,20 @@ function draw() {
     : "roots " + Array.from({ length: bars }, (_, b) =>
         ROMAN[harm(SLOTS[sec.slots[0]] || blank(), g, sec.nudge + b)]).join(" ") +
       (g.harmony === "emergent" ? " (computed)" : "");
+  // Say WHY a box is silent rather than leaving it to be discovered by ear.
+  const quiet = [];
+  if (!ev.length) quiet.push("no events at all");
+  else {
+    if (!ev.some(e => e.kind === "line")) quiet.push(
+      sec.ops.includes("drop1") ? "no melody (drop 1)"
+        : !sec.slots.length ? "no melody (no phrase)" : "no melody");
+    if (ev.every(e => (e.vel == null ? 5 : e.vel) === 0)) quiet.push("velocity 0 (a completed fade)");
+  }
   document.getElementById("readout").textContent =
     "box " + (viewSec + 1) + " · " + GENRES[sec.genre].label + " · " +
     (sec.slots.length ? sec.slots.map(i => "phrase " + (i + 1)).join(" + ") : "no phrase") +
-    " · " + bars + " bars" + (sec.nudge ? " nudged " + sec.nudge : "") + " · " + roots;
+    " · " + bars + " bars" + (sec.nudge ? " nudged " + sec.nudge : "") + " · " + roots +
+    (quiet.length ? "  —  " + quiet.join(", ") : "");
 }
 
 /* ---------- audio ---------- */
@@ -377,7 +434,7 @@ function toggle(kind, value) {
   else if (kind === "rate") sec.rate = sec.rate === value ? null : value;
   songChanged();
 }
-function songChanged() { drawSong(); draw(); drawSlots(); if (playing) compile(); }
+function songChanged() { drawSong(); draw(); drawSlots(); save(); if (playing) compile(); }
 
 /* ---------- the song row ---------- */
 function drawSong() {
@@ -551,7 +608,7 @@ function drawSlots() {
       { className: "sn", textContent: (i + 1) + (isBlank(p) ? "" : " •") }), mini);
     b.addEventListener("click", () => {
       slot = i; SUBJ = SLOTS[i];
-      toggle("phrase", i);
+      toggle("phrase", i);              // toggle() calls songChanged(), which saves
       drawSlots(); drawEditor();
     });
     el.append(b);
@@ -588,7 +645,7 @@ function drawEditor() {
       b.addEventListener("click", ev => {
         if (num) SUBJ[key][i] = clamp(val + (ev.shiftKey ? -1 : 1), num);
         else SUBJ[key][i] = val ? 0 : 1;
-        drawEditor(); drawSlots(); drawSong(); draw(); if (playing) compile();
+        drawEditor(); drawSlots(); drawSong(); draw(); save(); if (playing) compile();
       });
       el.append(b);
     }
@@ -627,7 +684,7 @@ function writeSrc() {
 document.getElementById("play").addEventListener("click",
   () => playing ? stop() : (loopOnly = null, startAt(0)));
 document.getElementById("bpm").addEventListener("input", e => {
-  document.getElementById("bpmv").textContent = e.target.value;
+  document.getElementById("bpmv").textContent = e.target.value; save();
 });
 document.getElementById("addbox").addEventListener("click", () => {
   SONG.push(emptyBox()); viewSec = SONG.length - 1; songChanged(); drawSlots();
@@ -639,13 +696,14 @@ document.getElementById("delbox").addEventListener("click", () => {
 });
 const putPhrase = make => () => {
   SLOTS[slot] = make(); SUBJ = SLOTS[slot];
-  drawSlots(); drawEditor(); drawSong(); draw(); if (playing) compile();
+  drawSlots(); drawEditor(); drawSong(); draw(); save(); if (playing) compile();
 };
 document.getElementById("seed").addEventListener("click", putPhrase(() => structuredClone(DEFAULT)));
 document.getElementById("rnd").addEventListener("click", putPhrase(randomPhrase));
 document.getElementById("clear").addEventListener("click", putPhrase(blank));
 document.getElementById("reset").addEventListener("click", () => {
   if (playing) stop();
+  try { localStorage.removeItem(STORE); } catch (e) { /* nothing to clear */ }
   SLOTS = Array.from({ length: NSLOTS }, blank); slot = 0; SUBJ = SLOTS[0];
   SONG = Array.from({ length: NBOXES }, emptyBox);
   viewSec = 0; playingSec = -1; loopOnly = null;
@@ -656,4 +714,5 @@ document.getElementById("reset").addEventListener("click", () => {
 });
 addEventListener("resize", () => draw());
 
+load();
 drawSlots(); drawEditor(); drawSong(); draw();
