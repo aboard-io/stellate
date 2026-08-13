@@ -390,6 +390,33 @@ console.log("tie merges repeats; the root shift takes the nearest octave");
   }
 }
 
+/* ---------------------------------------------------------------- 9e. ONE ALPHABET A BOX
+   A layered genre must read the SAME subject alphabet as the one it is layered
+   on. The layer inherits the section's mode but once did not inherit its
+   `scale`, so an authority reading quartal played against a layer reading
+   pentatonic — six semitones per degree-step against two point four. That does
+   not sound like a missing override, it sounds like the tuning is broken. */
+console.log("a layer reads the authority's alphabet");
+{
+  const SC = SCALES.quartal;
+  const auth = { ...GENRES.rock, scale: SC };
+  const layer = { ...GENRES.fugue, scale: SC, harmony: auth.harmony,
+                  roots: auth.roots, rate: auth.rate };
+  const pcOf = g2 => new Set(K.render(P, g2, 8)
+    .filter(e => g2.realize(e.v) !== "pad").map(e => ((e.n % 12) + 12) % 12));
+  const a = [...pcOf(auth)], l = [...pcOf(layer)];
+  // both alphabets are the quartal set transposed by the shared roots, so the
+  // layer can introduce no pitch class the authority could not also play
+  const stray = l.filter(pc => !a.includes(pc));
+  ok(stray.length === 0,
+     "a layer sounded pitch classes its authority cannot: " + stray.join(","));
+  // and the guard that would have caught it: drop the inherited scale and the
+  // sets must diverge, or this test proves nothing
+  const naive = { ...GENRES.fugue, harmony: auth.harmony, roots: auth.roots, rate: auth.rate };
+  ok([...pcOf(naive)].some(pc => !a.includes(pc)),
+     "the un-inherited case does not diverge — this check cannot fail");
+}
+
 /* ---------------------------------------------------------------- 10. NOTE DURATION
    A note lasts to the next gated step. The bug this replaced was every note
    being exactly one step, which is a row of 16ths, not a phrase. */

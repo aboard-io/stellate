@@ -265,10 +265,16 @@ function sectionEvents(sec) {
   let vBase = g.voices;
   for (const extra of (sec.genres || []).slice(1)) {
     const L = GENRES[extra];
+    // The layer inherits EVERY section-level override, not some of them. The
+    // section's `scale` is the subject's alphabet, and leaving it out let the
+    // authority read quartal while the layer read pentatonic — two alphabets
+    // sounding at once, which is what "out of tune" was. `mode` was inherited
+    // and `scale` was not, which is exactly the kind of near-miss that reads as
+    // a tuning problem rather than a missing line of code.
     const lg = { ...L, harmony: g.harmony, roots: g.roots, rate: g.rate,
-                 mode: g.mode, incClamp: g.incClamp, incMode: g.incMode,
-                 artic: g.artic, kit: {}, ghost: null, nobass: true,
-                 reg: v => L.reg(v) + 1 };
+                 mode: g.mode, scale: g.scale, incClamp: g.incClamp,
+                 incMode: g.incMode, artic: g.artic, kit: {}, ghost: null,
+                 nobass: true, reg: v => L.reg(v) + 1 };
     // the layer reads the SAME phrases, dealt across ITS voices
     phrases.forEach((ph, pi) => {
       const lev = render(ph, lg, total);
