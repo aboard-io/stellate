@@ -5,7 +5,7 @@
 // Boxes drag to REORDER, and only to reorder — nothing is dragged into them.
 // Click a box to play from there; double-click to loop it alone.
 const { harm, render, drums, bass, ROMAN, word, drop, envelope,
-        reverse, invert, rotate, fill, spread } = window.NuKernel;
+        reverse, invert, rotate, fill, spread, KITOPS } = window.NuKernel;
 const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL } = window.NuGenres;
 
 const DEFAULT_BPM = 126, NSLOTS = 8, NBOXES = 4;
@@ -45,7 +45,9 @@ const okBox = b => b && typeof b === "object" &&
   (b.env === null || b.env === "in" || b.env === "out") &&
   (b.mode == null || Object.prototype.hasOwnProperty.call(MODES, b.mode)) &&
   (b.rate == null || Object.prototype.hasOwnProperty.call(RATES, b.rate)) &&
-  (b.scale == null || Object.prototype.hasOwnProperty.call(SCALES, b.scale));
+  (b.scale == null || Object.prototype.hasOwnProperty.call(SCALES, b.scale)) &&
+  (b.kit == null || Object.prototype.hasOwnProperty.call(KITLABEL, b.kit)) &&
+  (b.bassop == null || Object.prototype.hasOwnProperty.call(BASSOPS, b.bassop));
 function load() {
   let raw;
   try { raw = JSON.parse(localStorage.getItem(STORE) || "null"); } catch (e) { return false; }
@@ -106,24 +108,35 @@ const ENVLABEL = { in: "fade in", out: "fade out" };
 
 const RATES = { half: 0.5, dbl: 2 };
 const RATELABEL = { half: "half time", dbl: "double time" };
+const KITLABEL = { nodrums: "no drums", shift: "shift kit",
+                   halftime: "half-time kit", busy: "busy hats" };
+const BASSOPS = { nobass: "no bass", walk: "walking", octaves: "octaves" };
 // A new box is SIMPLE — the phrase played as written. There is no empty state
 // any more: a box always makes a sound as soon as it has a phrase, and the
 // genres are legible as what they add to that.
 const emptyBox = () => ({ genre: "simple", slots: [], len: GENRES.simple.bars,
-                          nudge: 0, ops: [], env: null, mode: null, rate: null, scale: null });
+                          nudge: 0, ops: [], env: null, mode: null, rate: null, scale: null,
+                          kit: null, bassop: null });
 
 // The genre a box actually renders with: its own definition, plus whatever the
 // box overrides. Mode and tempo are not pattern operators and not envelopes —
 // they are the third kind, a change to the GENRE the phrase is read through.
 const genreOf = sec => {
   const g = GENRES[sec.genre];
-  if (!sec.mode && !sec.rate && !sec.scale) return g;
-  return { ...g, ...(sec.mode ? { mode: MODES[sec.mode] } : {}),
-           ...(sec.scale ? { scale: SCALES[sec.scale] } : {}),
-           ...(sec.rate ? { rate: g.rate * RATES[sec.rate] } : {}) };
+  if (!sec.mode && !sec.rate && !sec.scale && !sec.kit && !sec.bassop) return g;
+  const out = { ...g, ...(sec.mode ? { mode: MODES[sec.mode] } : {}),
+                ...(sec.scale ? { scale: SCALES[sec.scale] } : {}),
+                ...(sec.rate ? { rate: g.rate * RATES[sec.rate] } : {}) };
+  if (sec.kit) {
+    out.kit = KITOPS[sec.kit](g.kit || {}); out.fill = null;
+    if (sec.kit === "nodrums") out.ghost = null;   // the ghost lane is not in the kit
+  }
+  if (sec.bassop === "nobass") out.nobass = true;
+  else if (sec.bassop) { out.nobass = false; out.bassStyle = sec.bassop; }
+  return out;
 };
 let SONG = Array.from({ length: NBOXES }, emptyBox);
-let viewSec = 0, playingSec = -1, loopOnly = null, dragFrom = null;
+let viewSec = 0, playingSec = -1, loopOnly = null, dragFrom = null, pendingStart = null;
 
 const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
 const boxBars = b => (b.genre ? b.len : 0);
@@ -381,6 +394,12 @@ function tick() {
   if (!playing || !TL.length) return;
   const sd = stepDur(), look = ctx.currentTime + .15;
   while (nextBarTime < look) {
+    if (pendingStart != null) {                    // a queued jump lands on the bar
+      const at2 = TL.findIndex(x => x.si === pendingStart && x.first);
+      pendingStart = null;
+      if (at2 >= 0) nextBar = at2;
+      drawSong();
+    }
     if (nextBar >= TL.length) nextBar = 0;
     const bar = TL[nextBar];
     if (bar.first) { passStart = nextBarTime; showSection(bar.si); }
@@ -397,6 +416,18 @@ function tick() {
 }
 function frame() {
   if (!playing) return;
+  const sd0 = stepDur();
+  const box = document.querySelectorAll(".box")[playingSec];
+  if (box) {
+    const g = GENRES[SONG[playingSec].genre];
+    const total = SONG[playingSec].len * 16 / g.rate * sd0;
+    const f = Math.max(0, Math.min(1, (ctx.currentTime - passStart) / total));
+    const bar2 = box.querySelector(".fillbar");
+    if (bar2) bar2.style.width = (f * 100).toFixed(2) + "%";
+  }
+  document.querySelectorAll(".box").forEach((b2, i2) => {
+    if (i2 !== playingSec) { const f2 = b2.querySelector(".fillbar"); if (f2) f2.style.width = "0%"; }
+  });
   if (viewSec !== playingSec) {                 // looking at a box that is not sounding
     for (const p of phEls) p.style.transform = "translateX(-3px)";
     return requestAnimationFrame(frame);
@@ -424,9 +455,10 @@ function startAt(boxIndex) {
   drawSong();
 }
 function stop() {
-  playing = false; clearInterval(timer); playingSec = -1;
+  playing = false; clearInterval(timer); playingSec = -1; pendingStart = null;
   document.getElementById("play").textContent = "▶ Play";
   for (const p of phEls) p.style.transform = "translateX(-3px)";
+  document.querySelectorAll(".fillbar").forEach(f => { f.style.width = "0%"; });
   drawSong();
 }
 
@@ -450,6 +482,8 @@ function toggle(kind, value) {
   else if (kind === "mode") sec.mode = sec.mode === value ? null : value;
   else if (kind === "rate") sec.rate = sec.rate === value ? null : value;
   else if (kind === "scale") sec.scale = sec.scale === value ? null : value;
+  else if (kind === "kit") sec.kit = sec.kit === value ? null : value;
+  else if (kind === "bassop") sec.bassop = sec.bassop === value ? null : value;
   songChanged();
 }
 function songChanged() { drawSong(); draw(); drawSlots(); save(); if (playing) compile(); }
@@ -462,7 +496,7 @@ function drawSong() {
     const box = document.createElement("div");
     box.className = "box" + (sec.genre ? " full" : " empty") +
       (i === viewSec ? " sel" : "") + (i === playingSec ? " live" : "") +
-      (i === loopOnly ? " looped" : "");
+      (i === loopOnly ? " looped" : "") + (i === pendingStart ? " queued" : "");
     box.style.width = (sec.genre ? Math.max(116, bars * PX_PER_BAR) : 116) + "px";
     box.draggable = true;
     box.setAttribute("aria-label", "box " + (i + 1) +
@@ -500,9 +534,17 @@ function drawSong() {
     ph.textContent = sec.slots.length ? sec.slots.map(i => i + 1).join(" + ") : "no phrase";
     box.append(ph);
 
+    const prog = document.createElement("div"); prog.className = "bprog";
+    prog.append(Object.assign(document.createElement("i"), { className: "fillbar" }));
+    box.append(prog);
+
     const tags = document.createElement("div"); tags.className = "btags";
     for (const o of sec.ops) tags.append(Object.assign(document.createElement("span"),
       { className: "tag", textContent: OPLABEL[o] }));
+    if (sec.kit) tags.append(Object.assign(document.createElement("span"),
+      { className: "tag kit", textContent: KITLABEL[sec.kit] }));
+    if (sec.bassop) tags.append(Object.assign(document.createElement("span"),
+      { className: "tag bas", textContent: BASSOPS[sec.bassop] }));
     if (sec.scale) tags.append(Object.assign(document.createElement("span"),
       { className: "tag rng", textContent: SCALELABEL[sec.scale] }));
     if (sec.mode) tags.append(Object.assign(document.createElement("span"),
@@ -535,11 +577,13 @@ function drawSong() {
     });
 
     // CLICK plays from here and carries on; DOUBLE-CLICK loops this box alone.
+    // Selecting is immediate; the JUMP waits for the bar line, so clicking
+    // around while it plays never chops a bar in half.
     box.addEventListener("click", e => {
       if (e.target.closest(".grip")) return;
       viewSec = i; loopOnly = null;
-      drawSong(); draw(); drawSlots();
-      startAt(i);
+      if (playing) { pendingStart = i; drawSong(); draw(); drawSlots(); }
+      else { drawSong(); draw(); drawSlots(); startAt(i); }
     });
     box.addEventListener("dblclick", e => {
       if (e.target.closest(".grip")) return;
@@ -567,8 +611,26 @@ function drawSong() {
     }
     el.append(box);
   });
+  // COPY duplicates the selected box — everything, including its transforms and
+  // its trim — which is how a song gets a repeated section without rebuilding it.
+  const copy = document.createElement("button");
+  copy.type = "button"; copy.className = "addbox copy";
+  copy.innerHTML = '<svg viewBox="0 0 20 20" aria-hidden="true">' +
+    '<rect x="6.5" y="2.5" width="11" height="13" rx="1.5"></rect>' +
+    '<path d="M13.5 17.5h-11v-13"></path></svg>';
+  copy.title = "duplicate the selected box";
+  copy.setAttribute("aria-label", "duplicate the selected box");
+  copy.addEventListener("click", () => {
+    const src = JSON.parse(JSON.stringify(curSection()));
+    SONG.splice(viewSec + 1, 0, src);
+    viewSec = viewSec + 1; songChanged();
+    if (playing) { compile(); }
+  });
+  el.append(copy);
+
   const add = document.createElement("button");
   add.type = "button"; add.className = "addbox"; add.textContent = "+";
+  add.title = "add an empty box";
   add.setAttribute("aria-label", "add a box");
   add.addEventListener("click", () => {
     SONG.push(emptyBox()); viewSec = SONG.length - 1; songChanged();
@@ -617,6 +679,10 @@ function drawPalette() {
     ["op", "wide", OPLABEL.wide, sec.ops.includes("wide"), "rng"],
     ["op", "tight", OPLABEL.tight, sec.ops.includes("tight"), "rng"],
     ...Object.keys(SCALES).map(k => ["scale", k, SCALELABEL[k], sec.scale === k, "rng"])]);
+  group("drums", Object.keys(KITLABEL).map(k =>
+    ["kit", k, KITLABEL[k], sec.kit === k, "kit"]));
+  group("bass", Object.keys(BASSOPS).map(k =>
+    ["bassop", k, BASSOPS[k], sec.bassop === k, "bas"]));
   group("mode", Object.keys(MODES).map(k =>
     ["mode", k, MODELABEL[k], sec.mode === k, "mode"]));
   group("tempo", Object.keys(RATES).map(k =>

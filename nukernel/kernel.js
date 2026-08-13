@@ -159,9 +159,14 @@
     if (g.harmony === "emergent") {
       const md = g.mode || MODE;
       // transposition of the subject IS modulation: an answer at the fifth is
-      // the dominant because that is what an answer at the fifth means
+      // the dominant because that is what an answer at the fifth means.
+      //
+      // Read the word the newest voice is playing AT THIS BAR, not the one it
+      // entered with. Reading the entry word froze the roots the moment every
+      // voice was in, which is true of an exposition and false of everything
+      // after it — an eight-bar fugue used to sit on one chord from bar 4.
       const v = Math.min(bar, g.voices - 1), sc = g.scale || PENT;
-      const q = word(subj, g.word(v, 0));
+      const q = word(subj, g.word(v, Math.max(0, bar - g.entry(v))));
       return near((((pitch(q.deg[0], sc) - pitch(subj.deg[0], sc)) % 12) + 12) % 12, md);
     }
     return 0;                                            // modal: no motion
@@ -222,6 +227,19 @@
     }
     return ev.sort((a, b) => a.t - b.t);
   }
+
+  // KIT OPERATORS. The kit is genre DATA, not a pattern, so these are kit->kit
+  // rather than pattern->pattern — a fourth type, and they belong here beside
+  // drums() rather than in the pattern group where they would silently do
+  // nothing to the melody.
+  const mapKit = (k, f) => Object.fromEntries(
+    Object.entries(k || {}).map(([d, v]) => [d, f(v, d)]));
+  const KITOPS = {
+    nodrums:  () => ({}),
+    shift:    k => mapKit(k, v => v.map((_, i) => at(v, i + 2))),
+    halftime: k => mapKit(k, (v, d) => v.map((x, i) => ((d === "k" || d === "s") && i % 8 !== 0 ? 0 : x))),
+    busy:     k => mapKit(k, (v, d) => (d === "h" || d === "o" ? v.map(() => 1) : v)),
+  };
 
   // ---- the grid: the CATEGORICAL half --------------------------------------
   // A kit is voice -> cyclic binary vector, and it does NOT derive from the
@@ -290,12 +308,15 @@
     const QUARTERS = [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0];
     const grid = subj.acc.some(Boolean) ? subj.acc : (g.bassGrid || QUARTERS);
     const sp = spans(grid);                                     // holds to the next hit
+    let alt = 0;
     for (let b = 0; b < bars; b++) {
       const r = harm(subj, g, b);
       for (let i = 0; i < N; i++)
-        if (at(grid, i))
+        if (at(grid, i)) {
+          const oct = g.bassStyle === "octaves" ? 12 * (alt++ % 2) : 0;
           ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: sp[i] * 0.94 / g.rate,
-                    n: mp(r, md) + 36, r, vel: vel(subj, i) });
+                    n: mp(r, md) + 36 + oct, r, vel: vel(subj, i) });
+        }
     }
     return ev;
   }
@@ -316,7 +337,7 @@
     });
   };
 
-  const api = { at, mapv, spans, vel, drop, fill, spread, envelope, swing, rotate, reverse, transpose, invert, complement,
+  const api = { at, mapv, spans, vel, drop, fill, spread, envelope, KITOPS, mapKit, swing, rotate, reverse, transpose, invert, complement,
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, pitch, mp, fold, near,
                 harm, render, drums, bass };

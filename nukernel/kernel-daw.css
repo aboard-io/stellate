@@ -153,12 +153,16 @@ h1 em{font-style:normal;color:var(--accent)}
 .songwrap{gap:12px}
 .song{display:flex;gap:8px;overflow-x:auto;padding:2px;align-items:stretch;min-height:126px}
 .addbox{
-  flex:0 0 auto;width:52px;align-self:stretch;cursor:pointer;
+  flex:0 0 auto;width:44px;align-self:stretch;cursor:pointer;
   appearance:none;font:inherit;font-size:22px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
   background:none;color:var(--faint);
   border:1px dashed var(--line);border-radius:2px;
 }
 .addbox:hover{border-color:var(--accent);color:var(--accent)}
+.addbox.copy{border-style:solid}
+.addbox.copy svg{width:19px;height:19px;fill:none;stroke:currentColor;
+  stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
 .song.targeting .box{border-style:dashed;border-color:var(--accent2)}
 .box{
   position:relative;flex:0 0 auto;cursor:grab;background:var(--sunk);
@@ -181,7 +185,10 @@ h1 em{font-style:normal;color:var(--accent)}
 .bphrase.has{color:var(--ink)}
 .bphrase.has{color:var(--dim)}
 .bphrase .pn{font-size:10px;letter-spacing:.08em}
-.btags{display:flex;flex-wrap:wrap;gap:3px;margin-top:auto}
+.bprog{height:3px;background:var(--hair);border-radius:2px;overflow:hidden;margin-top:auto}
+.fillbar{display:block;height:100%;width:0;background:var(--accent);border-radius:2px}
+.box.queued{border-style:dashed;border-color:var(--accent2)}
+.btags{display:flex;flex-wrap:wrap;gap:3px}
 .tag{font-size:9px;letter-spacing:.06em;text-transform:uppercase;
   background:var(--accent);color:#fff;border-radius:2px;padding:2px 5px}
 .tag.env{background:var(--accent2);color:#231f16}
@@ -196,6 +203,8 @@ h1 em{font-style:normal;color:var(--accent)}
 .box.dragging{opacity:.4}
 .tag.mode{background:var(--v2);color:#fff}
 .tag.rng{background:var(--v3);color:#fff}
+.tag.kit{background:var(--drum);color:#fff}
+.tag.bas{background:var(--vb);color:#0e1116}
 .tag.rate{background:var(--v1);color:#08150f}
 
 /* ---- palette ---- */
@@ -215,6 +224,8 @@ h1 em{font-style:normal;color:var(--accent)}
 .pchip.env.on{background:var(--accent2);border-color:var(--accent2);color:#231f16}
 .pchip.mode.on{background:var(--v2);border-color:var(--v2);color:#fff}
 .pchip.rng.on{background:var(--v3);border-color:var(--v3);color:#fff}
+.pchip.kit.on{background:var(--drum);border-color:var(--drum);color:#fff}
+.pchip.bas.on{background:var(--vb);border-color:var(--vb);color:#0e1116}
 .pchip.rate.on{background:var(--v1);border-color:var(--v1);color:#08150f}
 .pchip.dragging,.slot.dragging{opacity:.4}
 .slot.inbox{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
