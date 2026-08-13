@@ -312,6 +312,17 @@ console.log("ramps climb monotonically and the fold does not chase them");
     ok(mono, name + " is not monotone across loops: " + seq.join(" "));
     ok(Math.abs(seq[7] - seq[0]) > 6, name + " barely moved across eight loops: " + seq.join(" "));
   }
+  // the three limit behaviours are three SHAPES, not three strengths
+  {
+    const q3 = clone(base); q3.stk = q3.stk.map((_, i) => (i === 0 ? 1 : 0));
+    const seq = m => Array.from({ length: 12 }, (_, b) => K.rampOf(q3, 0, b, 4, m));
+    const hold = seq("hold"), loop = seq("loop"), rev = seq("reverse");
+    ok(hold.slice(4).every(v => v === 4), "hold does not settle at the limit: " + hold.join(" "));
+    ok(loop[5] === 0 && loop[9] === 4, "loop does not wrap back to zero: " + loop.join(" "));
+    ok(rev[5] === 3 && rev[8] === 0 && rev[9] === 1, "reverse does not turn round: " + rev.join(" "));
+    ok(new Set([hold.join(), loop.join(), rev.join()]).size === 3,
+       "the three limit modes are not three different shapes");
+  }
   // and the clamp still bounds it
   const q2 = clone(base); q2.stk = q2.stk.map((_, i) => (i === 0 ? 1 : 0));
   const clamped = Array.from({ length: 8 }, (_, b) =>

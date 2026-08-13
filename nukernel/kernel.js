@@ -177,11 +177,24 @@
   // which is what makes a sixteen-step phrase into an arpeggio that goes
   // somewhere — and why the clamp matters: unclamped, inc 1 on four steps walks
   // off the instrument inside a minute.
-  const rampOf = (p, i, loop, clamp) => {
+  // WHAT HAPPENS AT THE LIMIT is a third choice, and the three are genuinely
+  // different shapes rather than three strengths of the same one:
+  //   hold     the ramp stops and stays        (a rise that settles)
+  //   loop     it snaps back to zero and climbs again   (a sawtooth)
+  //   reverse  it turns round and comes back   (a triangle, a ping-pong)
+  // Sign is carried outside the folding so a descending ramp mirrors an
+  // ascending one exactly.
+  const rampOf = (p, i, loop, clamp, mode) => {
     const stick = p.stk ? p.stk.reduce((a, x) => a + x, 0) : 0;
     const raw = ((p.inc ? p.inc[i] : 0) + stick) * loop;
     if (!clamp) return raw;
-    return Math.max(-clamp, Math.min(clamp, raw));
+    const sign = raw < 0 ? -1 : 1, mag = Math.abs(raw);
+    if (mode === "loop") return sign * (mag % (clamp + 1));
+    if (mode === "reverse") {
+      const t = mag % (2 * clamp);
+      return sign * (t > clamp ? 2 * clamp - t : t);
+    }
+    return sign * Math.min(clamp, mag);
   };
 
   const swing = (g, i) => (i % 2) * (g.swing || 0);
@@ -250,6 +263,7 @@
         // `modal` there is nothing to follow.
         const rootShift = g.harmony === "cycle" ? mp(r, md) : 0;
         const clamp = g.incClamp == null ? 7 : g.incClamp;   // 0 = let it run
+        const cmode = g.incMode || "hold";
         // one octave shift for the whole line, from its degree-pitch mean
         // REGISTER THE PHRASE, NOT THE RAMP. The shift is computed from the
         // degrees AS WRITTEN, with the per-loop ramp excluded. Include the ramp
@@ -281,7 +295,7 @@
           const ns = [null];                             // pitched: registered below
           for (const n of ns) {
             const pitchOf = n == null
-              ? pitch(p.deg[i] + rampOf(p, i, b, clamp), sc) + shift + rootShift + 12 * p.oct[i]
+              ? pitch(p.deg[i] + rampOf(p, i, b, clamp, cmode), sc) + shift + rootShift + 12 * p.oct[i]
               : fold(n, ctr);                                    // chords voice per note
             ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: steps * legato / g.rate, v,
                       n: pitchOf, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });

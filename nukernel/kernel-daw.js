@@ -22,9 +22,12 @@ const PX_PER_BAR = 22, BAR_PX = 26, MAX_LEN = 64, MAX_NUDGE = 31;
 // silently plays nothing. Anything that fails validation is dropped whole.
 const STORE = "nukernel.song.v1";
 let saveTimer = null;
-function save() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
+function saveNow() {
+  clearTimeout(saveTimer); saveTimer = null;
+  writeStore();
+}
+function writeStore() {
+  {
     try {
       localStorage.setItem(STORE, JSON.stringify({
         v: 1, slots: SLOTS, song: SONG,
@@ -32,8 +35,14 @@ function save() {
         vol: +document.getElementById("vol").value,
       }));
     } catch (e) { /* private mode, or quota: not worth interrupting the music */ }
-  }, 250);
+  }
 }
+// Debounced during editing so a drag does not write on every frame — but
+// FLUSHED when the page goes away, or an edit made in the last quarter second
+// before a reload is simply lost.
+function save() { clearTimeout(saveTimer); saveTimer = setTimeout(writeStore, 250); }
+addEventListener("pagehide", saveNow);
+addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveNow(); });
 const okPhrase = p => p && typeof p === "object" &&
   ["deg", "oct", "vel", "gate", "acc", "sld"].every(k =>
     Array.isArray(p[k]) && p[k].length === 16 && p[k].every(Number.isFinite));
@@ -46,6 +55,7 @@ const okBox = b => b && typeof b === "object" &&
   (b.mode == null || Object.prototype.hasOwnProperty.call(MODES, b.mode)) &&
   (b.rate == null || Object.prototype.hasOwnProperty.call(RATES, b.rate)) &&
   (b.scale == null || Object.prototype.hasOwnProperty.call(SCALES, b.scale)) &&
+  (b.cmode == null || ["hold", "loop", "reverse"].includes(b.cmode)) &&
   (b.kit == null || Object.prototype.hasOwnProperty.call(KITLABEL, b.kit)) &&
   (b.bassop == null || Object.prototype.hasOwnProperty.call(BASSOPS, b.bassop));
 function load() {
@@ -126,14 +136,15 @@ const BASSOPS = { nobass: "no bass", walk: "walking", octaves: "octaves",
 // genres are legible as what they add to that.
 const emptyBox = () => ({ genre: "simple", slots: [], len: GENRES.simple.bars,
                           nudge: 0, ops: [], env: null, mode: null, rate: null, scale: null,
-                          kit: null, bassop: null, clamp: null });
+                          kit: null, bassop: null, clamp: null, cmode: null });
 
 // The genre a box actually renders with: its own definition, plus whatever the
 // box overrides. Mode and tempo are not pattern operators and not envelopes —
 // they are the third kind, a change to the GENRE the phrase is read through.
 const genreOf = sec => {
   const g = GENRES[sec.genre];
-  if (!sec.mode && !sec.rate && !sec.scale && !sec.kit && !sec.bassop && !sec.clamp) return g;
+  if (!sec.mode && !sec.rate && !sec.scale && !sec.kit && !sec.bassop
+      && !sec.clamp && !sec.cmode) return g;
   const out = { ...g, ...(sec.mode ? { mode: MODES[sec.mode] } : {}),
                 ...(sec.scale ? { scale: SCALES[sec.scale] } : {}),
                 ...(sec.rate ? { rate: g.rate * RATES[sec.rate] } : {}) };
@@ -142,6 +153,7 @@ const genreOf = sec => {
     if (sec.kit === "nodrums") out.ghost = null;   // the ghost lane is not in the kit
   }
   if (sec.clamp != null) out.incClamp = +sec.clamp;
+  if (sec.cmode) out.incMode = sec.cmode;
   if (sec.bassop === "nobass") out.nobass = true;
   else if (sec.bassop === "reese" || sec.bassop === "wobble") out.nobass = false;
   else if (sec.bassop) { out.nobass = false; out.bassStyle = sec.bassop; }
@@ -679,6 +691,7 @@ function toggle(kind, value) {
   else if (kind === "kit") sec.kit = sec.kit === value ? null : value;
   else if (kind === "bassop") sec.bassop = sec.bassop === value ? null : value;
   else if (kind === "clamp") sec.clamp = sec.clamp === value ? null : value;
+  else if (kind === "cmode") sec.cmode = sec.cmode === value ? null : value;
   songChanged();
 }
 function songChanged() { drawSong(); draw(); drawSlots(); save(); if (playing) compile(); }
@@ -739,7 +752,9 @@ function drawSong() {
     for (const o of sec.ops) tags.append(Object.assign(document.createElement("span"),
       { className: "tag", textContent: OPLABEL[o] }));
     if (sec.clamp != null) tags.append(Object.assign(document.createElement("span"),
-      { className: "tag clp", textContent: "clamp " + (sec.clamp === "0" ? "off" : sec.clamp) }));
+      { className: "tag clp", textContent: "limit " + (sec.clamp === "0" ? "off" : sec.clamp) }));
+    if (sec.cmode) tags.append(Object.assign(document.createElement("span"),
+      { className: "tag clp", textContent: sec.cmode }));
     if (sec.kit) tags.append(Object.assign(document.createElement("span"),
       { className: "tag kit", textContent: KITLABEL[sec.kit] }));
     if (sec.bassop) tags.append(Object.assign(document.createElement("span"),
@@ -873,7 +888,8 @@ function drawPalette() {
         : kind === "scale" ? sec.scale === v
         : kind === "kit" ? sec.kit === v
         : kind === "bassop" ? sec.bassop === v
-        : kind === "clamp" ? sec.clamp === v : false;
+        : kind === "clamp" ? sec.clamp === v
+        : kind === "cmode" ? (sec.cmode || "hold") === v : false;
       b.classList.toggle("on", !!on);
       b.setAttribute("aria-pressed", String(!!on));
     });
@@ -901,10 +917,11 @@ function drawPalette() {
     ["op", "rep" + n, String(n), sec.ops.includes("rep" + n), "lst"]));
   group("delete", [2, 3, 4, 5, 6, 7, 8].map(n =>
     ["op", "del" + n, String(n), sec.ops.includes("del" + n), "lst"]));
-  group("ramp clamp", [["clamp", "0", "off", sec.clamp === "0", "clp"],
-                       ["clamp", "2", "2", sec.clamp === "2", "clp"],
-                       ["clamp", "4", "4", sec.clamp === "4", "clp"],
-                       ["clamp", "8", "8", sec.clamp === "8", "clp"]]);
+  group("ramp limit", ["0", "2", "4", "8"].map(v =>
+    ["clamp", v, v === "0" ? "off" : v, sec.clamp === v, "clp"]));
+  group("at the limit", [["cmode", "hold", "hold", (sec.cmode || "hold") === "hold", "clp"],
+                         ["cmode", "loop", "loop", sec.cmode === "loop", "clp"],
+                         ["cmode", "reverse", "reverse", sec.cmode === "reverse", "clp"]]);
   group("range", [
     ["op", "wide", OPLABEL.wide, sec.ops.includes("wide"), "rng"],
     ["op", "tight", OPLABEL.tight, sec.ops.includes("tight"), "rng"],
