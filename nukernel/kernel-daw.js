@@ -199,7 +199,12 @@ function showSection(si) {
 
 function draw() {
   const sec = curSection(), { g, bars, ev } = sectionEvents(sec);
+  // hold the scroll across the rebuild: innerHTML = "" resets it to 0, which
+  // yanked the view back to bar 1 on every single chip click
+  const sc = document.getElementById("dawscroll");
+  const keepX = sc ? sc.scrollLeft : 0, keepY = sc ? sc.scrollTop : 0;
   gridEl.innerHTML = ""; phEls = [];
+  if (sc) requestAnimationFrame(() => { sc.scrollLeft = keepX; sc.scrollTop = keepY; });
   writeSrc(); drawPalette();
   if (!g) {
     document.getElementById("readout").textContent =
@@ -313,7 +318,7 @@ const SAMPLERS = (REG && REG.SAMPLERS) || {};
 const MEDIA = "../found/samples/instruments/";
 
 // one instrument per genre, and one for the bass lane
-const INSTR = { simple: "marimba", fugue: "harpsichord", acid: "clean_guitar",
+const INSTR = { simple: "marimba", fugue: "rock_organ", acid: "clean_guitar",
                 vaporwave: "strings", blues: "steel_string_guitar", rock: "crunch_guitar" };
 const BASS_INSTR = "acoustic_bass";
 
@@ -652,7 +657,9 @@ function songChanged() { drawSong(); draw(); drawSlots(); save(); if (playing) c
 
 /* ---------- the song row ---------- */
 function drawSong() {
-  const el = document.getElementById("song"); el.innerHTML = "";
+  const el = document.getElementById("song");
+  const keep = el.scrollLeft;
+  el.innerHTML = "";
   SONG.forEach((sec, i) => {
     const bars = boxBars(sec);
     const box = document.createElement("div");
@@ -798,6 +805,7 @@ function drawSong() {
     SONG.push(emptyBox()); viewSec = SONG.length - 1; songChanged();
   });
   el.append(add);
+  el.scrollLeft = keep;
 }
 function makeGrip(side, begin) {
   const g = document.createElement("div");
@@ -817,9 +825,30 @@ function makeGrip(side, begin) {
 }
 
 /* ---------- palette: click on / off in the selected box ---------- */
+// BUILT ONCE, then only its ON states change. Rebuilding it on every draw
+// destroyed the button under the pointer mid-click, which lost focus and made
+// the page jump — and it took the keyboard focus ring with it.
+let paletteBuilt = false;
 function drawPalette() {
-  const el = document.getElementById("palette"); el.innerHTML = "";
+  const el = document.getElementById("palette");
   const sec = curSection();
+  if (paletteBuilt) {
+    el.querySelectorAll(".pchip").forEach(b => {
+      const kind = b.dataset.kind, v = b.dataset.value;
+      const on = kind === "genre" ? sec.genre === v
+        : kind === "op" ? sec.ops.includes(v)
+        : kind === "env" ? sec.env === v
+        : kind === "mode" ? sec.mode === v
+        : kind === "rate" ? sec.rate === v
+        : kind === "scale" ? sec.scale === v
+        : kind === "kit" ? sec.kit === v
+        : kind === "bassop" ? sec.bassop === v : false;
+      b.classList.toggle("on", !!on);
+      b.setAttribute("aria-pressed", String(!!on));
+    });
+    return;
+  }
+  el.innerHTML = "";
   const group = (title, items) => {
     const g = document.createElement("div"); g.className = "pgroup";
     g.append(Object.assign(document.createElement("span"),
@@ -828,6 +857,7 @@ function drawPalette() {
       const b = document.createElement("button");
       b.type = "button"; b.className = "pchip " + (cls || "") + (on ? " on" : "");
       b.textContent = label; b.setAttribute("aria-pressed", String(!!on));
+      b.dataset.kind = kind; b.dataset.value = String(value);
       b.addEventListener("click", () => toggle(kind, value));
       g.append(b);
     }
@@ -851,6 +881,7 @@ function drawPalette() {
     ["rate", k, RATELABEL[k], sec.rate === k, "rate"]));
   group("envelope", [["env", "in", "fade in", sec.env === "in", "env"],
                      ["env", "out", "fade out", sec.env === "out", "env"]]);
+  paletteBuilt = true;
 }
 
 /* ---------- phrase slots: click toggles into the box AND opens the editor --- */

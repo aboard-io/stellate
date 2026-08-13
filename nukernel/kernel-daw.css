@@ -81,7 +81,11 @@ h1 em{font-style:normal;color:var(--accent)}
 /* ---- arrangement ---- */
 .daw{background:var(--panel);border:1px solid var(--line);border-radius:3px;
   box-shadow:var(--shadow);overflow:hidden}
-.dawscroll{overflow-x:auto;overflow-y:hidden}
+/* FIXED HEIGHT, not content height. The lane count changes every time a
+   transform is switched on — no drums removes four lanes, a fugue has four
+   voices where Simple has one — and letting the panel resize moved everything
+   below it on the page. It scrolls internally instead. */
+.dawscroll{overflow:auto;height:330px}
 .grid{display:grid;grid-template-columns:118px 1fr;min-width:min-content}
 .ruler,.rulerpad{height:26px;border-bottom:1px solid var(--line);background:var(--sunk)}
 .rulerpad{border-right:1px solid var(--line)}
@@ -165,6 +169,7 @@ h1 em{font-style:normal;color:var(--accent)}
   stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
 .song.targeting .box{border-style:dashed;border-color:var(--accent2)}
 .box{
+  min-height:132px;
   position:relative;flex:0 0 auto;cursor:grab;background:var(--sunk);
   border:1px solid var(--line);border-radius:2px;padding:7px 13px;
   display:flex;flex-direction:column;gap:4px;
@@ -188,7 +193,9 @@ h1 em{font-style:normal;color:var(--accent)}
 .bprog{height:3px;background:var(--hair);border-radius:2px;overflow:hidden;margin-top:auto}
 .fillbar{display:block;height:100%;width:0;background:var(--accent);border-radius:2px}
 .box.queued{border-style:dashed;border-color:var(--accent2)}
-.btags{display:flex;flex-wrap:wrap;gap:3px}
+/* fixed two-row well: tags wrapping to a new line grew the box and pushed the
+   whole page down every time a transform was switched on */
+.btags{display:flex;flex-wrap:wrap;gap:3px;height:34px;overflow:hidden;align-content:flex-start}
 .tag{font-size:9px;letter-spacing:.06em;text-transform:uppercase;
   background:var(--accent);color:#fff;border-radius:2px;padding:2px 5px}
 .tag.env{background:var(--accent2);color:#231f16}

@@ -203,6 +203,16 @@
       for (let b = g.entry(v); b < bars; b++) {
         const p = word(subj, g.word(v, b - g.entry(v))), r = harm(subj, g, b);
         const sp = spans(p.gate);
+        // FOLLOW THE CHORD. A melody sitting on the same pitches while the roots
+        // move under it is what makes a progression inaudible — the blues riff
+        // has to go up to the IV, that IS the blues. So a line is transposed by
+        // the bar's root.
+        //
+        // Only when the harmony is a CYCLE. Under `emergent` the roots were
+        // computed FROM the voices' own transpositions, so transposing them
+        // again by that root is circular and would double the motion; under
+        // `modal` there is nothing to follow.
+        const rootShift = g.harmony === "cycle" ? mp(r, md) : 0;
         // one octave shift for the whole line, from its degree-pitch mean
         const on = [];
         for (let i = 0; i < N; i++) if (p.gate[i]) on.push(pitch(p.deg[i], sc));
@@ -227,7 +237,7 @@
           const ns = [null];                             // pitched: registered below
           for (const n of ns) {
             const pitchOf = n == null
-              ? pitch(p.deg[i], sc) + shift + 12 * p.oct[i]      // line registered, THEN leap
+              ? pitch(p.deg[i], sc) + shift + rootShift + 12 * p.oct[i]
               : fold(n, ctr);                                    // chords voice per note
             ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: steps * legato / g.rate, v,
                       n: pitchOf, acc: p.acc[i], sld: p.sld[i], vel: vel(p, i) });

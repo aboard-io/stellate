@@ -215,12 +215,22 @@ console.log("harmony — modal, cycle, emergent");
    Both alphabets are per-genre facts. A subject may never sound a pitch class
    outside the scale it was read through. */
 console.log("scale and mode overrides");
+// Containment is relative to THE CHORD, not to the tonic. A cycle-harmony line
+// is transposed by the bar's root — the blues riff goes up to the IV — so its
+// pitch classes are the scale MOVED, and checking against the untransposed
+// scale would forbid the thing that makes a progression audible.
 for (const gk of GK) {
-  const g = GENRES[gk], sc = g.scale || K.PENT;
-  const pcs = new Set(K.render(P, g, g.bars)
-    .filter(e => g.realize(e.v) !== "pad").map(e => ((e.n % 12) + 12) % 12));
-  ok([...pcs].every(pc => sc.includes(pc)),
-     gk + ": a line sounded a pitch class outside its scale");
+  const g = GENRES[gk], sc = g.scale || K.PENT, bs = 16 / g.rate;
+  const ev = K.render(P, g, g.bars).filter(e => g.realize(e.v) !== "pad");
+  for (let b = 0; b < g.bars; b++) {
+    const root = g.harmony === "cycle" ? K.mp(K.harm(P, g, b), g.mode || undefined) : 0;
+    const allowed = new Set(sc.map(x => (((x + root) % 12) + 12) % 12));
+    const bad = ev.filter(e => Math.floor(e.t / bs) === b)
+                  .map(e => ((e.n % 12) + 12) % 12).filter(pc => !allowed.has(pc));
+    ok(bad.length === 0,
+       gk + " bar " + (b + 1) + ": pitch class outside the scale on that chord (" +
+       [...new Set(bad)].join(",") + ")");
+  }
 }
 for (const mk of Object.keys(MODES)) {
   const g = { ...GENRES.vaporwave, mode: MODES[mk] };
