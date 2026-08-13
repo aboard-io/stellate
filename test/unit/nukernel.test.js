@@ -276,6 +276,10 @@ console.log("bass sounds even when the phrase has no accents");
   const empty = K.mapv(P, v => v.map(() => 0));
   for (const gk of GK) {
     const g = GENRES[gk];
+    if (g.nobass) {                       // a genre may declare it has no bass at all
+      ok(K.bass(P, g, g.bars).length === 0, gk + ": nobass genre emitted bass anyway");
+      continue;
+    }
     ok(K.bass(flat, g, g.bars).length > 0, gk + ": no bass when the phrase has no accents");
     ok(K.bass(empty, g, g.bars).length > 0, gk + ": no bass for an empty phrase");
     // and the accented case must not have drifted

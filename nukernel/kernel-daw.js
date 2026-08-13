@@ -29,6 +29,7 @@ function save() {
       localStorage.setItem(STORE, JSON.stringify({
         v: 1, slots: SLOTS, song: SONG,
         bpm: +document.getElementById("bpm").value,
+        vol: +document.getElementById("vol").value,
       }));
     } catch (e) { /* private mode, or quota: not worth interrupting the music */ }
   }, 250);
@@ -37,7 +38,7 @@ const okPhrase = p => p && typeof p === "object" &&
   ["deg", "oct", "vel", "gate", "acc", "sld"].every(k =>
     Array.isArray(p[k]) && p[k].length === 16 && p[k].every(Number.isFinite));
 const okBox = b => b && typeof b === "object" &&
-  (b.genre === null || Object.prototype.hasOwnProperty.call(GENRES, b.genre)) &&
+  Object.prototype.hasOwnProperty.call(GENRES, b.genre) &&
   Array.isArray(b.slots) && b.slots.every(i => Number.isInteger(i) && i >= 0 && i < NSLOTS) &&
   Number.isFinite(b.len) && Number.isFinite(b.nudge) &&
   Array.isArray(b.ops) && b.ops.every(o => Object.prototype.hasOwnProperty.call(OPS, o)) &&
@@ -54,6 +55,10 @@ function load() {
   if (Number.isFinite(raw.bpm) && raw.bpm >= 70 && raw.bpm <= 160) {
     document.getElementById("bpm").value = raw.bpm;
     document.getElementById("bpmv").textContent = String(raw.bpm);
+  }
+  if (Number.isFinite(raw.vol) && raw.vol >= 0 && raw.vol <= 100) {
+    document.getElementById("vol").value = raw.vol;
+    document.getElementById("volv").textContent = String(raw.vol);
   }
   return true;
 }
@@ -98,8 +103,11 @@ const ENVLABEL = { in: "fade in", out: "fade out" };
 
 const RATES = { half: 0.5, dbl: 2 };
 const RATELABEL = { half: "half time", dbl: "double time" };
-const emptyBox = () =>
-  ({ genre: null, slots: [], len: 0, nudge: 0, ops: [], env: null, mode: null, rate: null });
+// A new box is SIMPLE — the phrase played as written. There is no empty state
+// any more: a box always makes a sound as soon as it has a phrase, and the
+// genres are legible as what they add to that.
+const emptyBox = () => ({ genre: "simple", slots: [], len: GENRES.simple.bars,
+                          nudge: 0, ops: [], env: null, mode: null, rate: null });
 
 // The genre a box actually renders with: its own definition, plus whatever the
 // box overrides. Mode and tempo are not pattern operators and not envelopes —
@@ -267,7 +275,8 @@ function draw() {
   document.getElementById("readout").textContent =
     "box " + (viewSec + 1) + " · " + GENRES[sec.genre].label + " · " +
     (sec.slots.length ? sec.slots.map(i => "phrase " + (i + 1)).join(" + ") : "no phrase") +
-    " · " + bars + " bars" + (sec.nudge ? " nudged " + sec.nudge : "") + " · " + roots +
+    " · " + bars + " bar" + (bars === 1 ? "" : "s") +
+    (sec.nudge ? " nudged " + sec.nudge : "") + " · " + roots +
     (quiet.length ? "  —  " + quiet.join(", ") : "");
 }
 
@@ -281,7 +290,7 @@ function initAudio() {
   ctx = new (window.AudioContext || window.webkitAudioContext)();
   const comp = ctx.createDynamicsCompressor();
   comp.threshold.value = -14; comp.ratio.value = 3.2; comp.knee.value = 8;
-  bus = ctx.createGain(); bus.gain.value = .9;
+  bus = ctx.createGain(); bus.gain.value = masterVol();
   verb = ctx.createConvolver(); verbGain = ctx.createGain(); verbGain.gain.value = .2;
   const len = ctx.sampleRate * 2.6, ib = ctx.createBuffer(2, len, ctx.sampleRate);
   for (let c = 0; c < 2; c++) { const d = ib.getChannelData(c);
@@ -293,6 +302,7 @@ function initAudio() {
   const nd = noise.getChannelData(0);
   for (let i = 0; i < nl; i++) nd[i] = Math.random() * 2 - 1;
 }
+const masterVol = () => (+document.getElementById("vol").value / 100) * 1.1;
 const hz = m => 440 * Math.pow(2, (m - 69) / 12);
 
 function nz(t, dur, hp, gain) {
@@ -420,8 +430,11 @@ function stop() {
 function toggle(kind, value) {
   const sec = curSection();
   if (kind === "genre") {
-    if (sec.genre === value) { SONG[viewSec] = emptyBox(); }
-    else { sec.genre = value; if (!sec.len) sec.len = GENRES[value].bars; }
+    const to = sec.genre === value ? "simple" : value;   // clicking the live one falls back
+    const wasWholeForm = !sec.len || sec.len === GENRES[sec.genre].bars;
+    sec.genre = to;
+    if (wasWholeForm) sec.len = GENRES[to].bars;          // keep "one whole form" meaning that
+    sec.nudge = Math.min(sec.nudge, 31);
   } else if (kind === "phrase") {
     if (!sec.genre) return;
     const i = sec.slots.indexOf(value);
@@ -451,15 +464,27 @@ function drawSong() {
       (sec.genre ? ", " + GENRES[sec.genre].label + ", " + bars + " bars" : ", empty"));
 
     const head = document.createElement("div"); head.className = "bhead";
-    head.innerHTML = "<b>" + (i + 1) + "</b><span>" +
-      (sec.genre ? bars + " bar" + (bars === 1 ? "" : "s") +
-        (sec.nudge ? " +" + sec.nudge : "") : "empty") + "</span>" +
+    head.innerHTML = "<b>" + (i + 1) + "</b><span>" + bars + " bar" + (bars === 1 ? "" : "s") +
+      (sec.nudge ? " +" + sec.nudge : "") + "</span>" +
       (i === loopOnly ? '<span class="loopmark">loop</span>' : "");
+    const x = document.createElement("button");
+    x.type = "button"; x.className = "x"; x.textContent = "×";
+    x.setAttribute("aria-label", "remove box " + (i + 1));
+    x.addEventListener("click", ev => {
+      ev.stopPropagation();
+      SONG.splice(i, 1);
+      if (!SONG.length) SONG.push(emptyBox());
+      viewSec = Math.min(viewSec, SONG.length - 1);
+      if (loopOnly != null) loopOnly = null;
+      songChanged();
+      if (playing) { compile(); nextBar = 0; }
+    });
+    head.append(x);
     box.append(head);
 
     const gl = document.createElement("div");
     gl.className = "bgenre" + (sec.genre ? " has" : "");
-    gl.textContent = sec.genre ? GENRES[sec.genre].label : "click a genre";
+    gl.textContent = GENRES[sec.genre].label;
     box.append(gl);
 
     // The box lists phrase NUMBERS. The contour picture belongs in the slot rail
@@ -467,9 +492,7 @@ function drawSong() {
     // little graphs you had to decode instead of a song you could read.
     const ph = document.createElement("div");
     ph.className = "bphrase" + (sec.slots.length ? " has" : "");
-    ph.textContent = sec.slots.length
-      ? sec.slots.map(i => i + 1).join(" + ")
-      : (sec.genre ? "no phrase" : "");
+    ph.textContent = sec.slots.length ? sec.slots.map(i => i + 1).join(" + ") : "no phrase";
     box.append(ph);
 
     const tags = document.createElement("div"); tags.className = "btags";
@@ -509,10 +532,10 @@ function drawSong() {
       if (e.target.closest(".grip")) return;
       viewSec = i; loopOnly = null;
       drawSong(); draw(); drawSlots();
-      if (sec.genre) startAt(i);                // an empty box is only selected
+      startAt(i);
     });
     box.addEventListener("dblclick", e => {
-      if (e.target.closest(".grip") || !sec.genre) return;
+      if (e.target.closest(".grip")) return;
       viewSec = i; loopOnly = i;
       drawSong(); draw(); drawSlots(); startAt(i);
     });
@@ -537,6 +560,13 @@ function drawSong() {
     }
     el.append(box);
   });
+  const add = document.createElement("button");
+  add.type = "button"; add.className = "addbox"; add.textContent = "+";
+  add.setAttribute("aria-label", "add a box");
+  add.addEventListener("click", () => {
+    SONG.push(emptyBox()); viewSec = SONG.length - 1; songChanged();
+  });
+  el.append(add);
 }
 function makeGrip(side, begin) {
   const g = document.createElement("div");
@@ -686,13 +716,10 @@ document.getElementById("play").addEventListener("click",
 document.getElementById("bpm").addEventListener("input", e => {
   document.getElementById("bpmv").textContent = e.target.value; save();
 });
-document.getElementById("addbox").addEventListener("click", () => {
-  SONG.push(emptyBox()); viewSec = SONG.length - 1; songChanged(); drawSlots();
-});
-document.getElementById("delbox").addEventListener("click", () => {
-  if (SONG.length > 1) SONG.splice(viewSec, 1); else SONG[0] = emptyBox();
-  viewSec = Math.min(viewSec, SONG.length - 1); loopOnly = null;
-  songChanged(); drawSlots();
+document.getElementById("vol").addEventListener("input", e => {
+  document.getElementById("volv").textContent = e.target.value;
+  if (bus) bus.gain.setTargetAtTime(masterVol(), ctx.currentTime, 0.02);
+  save();
 });
 const putPhrase = make => () => {
   SLOTS[slot] = make(); SUBJ = SLOTS[slot];
@@ -709,6 +736,9 @@ document.getElementById("reset").addEventListener("click", () => {
   viewSec = 0; playingSec = -1; loopOnly = null;
   const bpm = document.getElementById("bpm");
   bpm.value = DEFAULT_BPM; document.getElementById("bpmv").textContent = String(DEFAULT_BPM);
+  const vol = document.getElementById("vol");
+  vol.value = 80; document.getElementById("volv").textContent = "80";
+  if (bus) bus.gain.setTargetAtTime(masterVol(), ctx.currentTime, 0.02);
   drawSlots(); drawEditor(); drawSong(); draw();
   document.getElementById("dawscroll").scrollLeft = 0;
 });

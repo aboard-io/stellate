@@ -11,54 +11,44 @@
 <body>
 
 <div class="wrap">
-  <div class="mast">
-    <div>
-      <h1>A song is a row of <em>boxes</em></h1>
-      <p class="sub">Pick a box, then click things on and off in it. Drag a box to move it in the song.
-        Its edges trim: the right sets length, the left nudges into the genre's form. The same
-        sixteen steps read five different ways.</p>
-    </div>
-    <div class="count">one phrase · <b>8</b> operators · <b>5</b> genres</div>
-  </div>
+  <h1>Song <em>boxes</em></h1>
 
   <div class="bar">
     <button class="btn go" id="play">▶ Play</button>
     <div class="knob"><label for="bpm">Tempo</label>
       <input type="range" id="bpm" min="70" max="160" value="126"><b id="bpmv">126</b></div>
+    <div class="knob"><label for="vol">Volume</label>
+      <input type="range" id="vol" min="0" max="100" value="80"><b id="volv">80</b></div>
     <div class="spacer"></div>
     <button class="btn" id="reset">Reset all</button>
   </div>
 
-  <div class="ed songwrap">
-    <div class="edhead">
-      <h2>Song</h2>
-      <p>Click a box to play from there; double-click to loop it alone. Drag boxes to reorder.
-         Trim the right edge for length, the left to nudge into the form.</p>
-      <span class="spacer"></span>
-      <button class="btn" id="addbox">+ Box</button>
-      <button class="btn" id="delbox">− Box</button>
-    </div>
-    <div class="song" id="song"></div>
-    <div class="palette" id="palette"></div>
-  </div>
+
 
   <div class="ed">
     <div class="edhead">
       <h2>Phrases</h2>
-      <p>Click a phrase to edit it and switch it on or off in the selected box. Several at once is fine — the genre deals them across its voices, so two phrases in a fugue is a double fugue.</p>
+      <p>Click one to edit it and switch it on or off in the selected box.</p>
     </div>
     <div class="slots" id="slots"></div>
     <div class="edhead">
       <h2>Editing <span id="edslot">phrase 1</span></h2>
-      <p>Click <b>deg</b>, <b>oct</b> and <b>vel</b> to raise, shift-click to lower — deg spans
-         −7…+7, oct −2…+2, vel 0…9. Click <b>gate / acc / sld</b> to toggle. <b>vel</b> is how loud;
-         <b>acc</b> is the 303 accent, which opens the filter and is what operators key on.</p>
+      <p>Click to raise, shift-click to lower. <b>vel</b> is level; <b>acc</b> is the 303 accent.</p>
       <span class="spacer"></span>
       <button class="btn" id="seed">Seed</button>
       <button class="btn" id="rnd">Random</button>
       <button class="btn" id="clear">Clear</button>
     </div>
     <div class="steps"><div class="stepgrid" id="stepgrid"></div></div>
+  </div>
+
+  <div class="ed songwrap">
+    <div class="edhead">
+      <h2>Song</h2>
+      <p>Click to play from a box, double-click to loop it, drag to reorder, trim the edges.</p>
+    </div>
+    <div class="song" id="song"></div>
+    <div class="palette" id="palette"></div>
   </div>
 
   <div class="daw">
@@ -73,10 +63,6 @@
     <pre id="src"></pre>
   </details>
 
-  <p class="note-b">Accents are outlined in amber, drum fills in orange, and note opacity is velocity —
-    so a fade is visible as well as audible. The bass lane is the harmony read at low density; in the
-    fugue its roots are never written down, they are computed from how far each voice transposed the
-    subject on entry.</p>
 </div>
 
 <!-- order matters: the algebra, then the genre table, then the UI -->

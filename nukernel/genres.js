@@ -45,6 +45,19 @@
   };
 
   const GENRES = {
+    // SIMPLE — the phrase and nothing else. One voice, one bar, no kit, no bass,
+    // no harmonic motion, no operator word: the sixteen steps played as written
+    // and looped. It is the zero of the genre table, and the useful kind of zero
+    // — every other genre is legible as what it ADDS to this.
+    simple: {
+      label: "Simple", rate: 1, bars: 1, voices: 1,
+      entry: () => 0, reg: () => 0, realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal",
+      tone: { wave: "triangle", cut: 3200, q: 0.8, atk: .004, rel: .7, gain: .30, verb: .08 },
+      words: ["the phrase, as written"],
+      word: () => [],
+    },
+
     // Transform-heavy, staggered entries, no drums. Restatement rate ~0:
     // literal repetition after the exposition is a mistake, so every voice
     // carries a different word. Harmony is never written down — it is computed

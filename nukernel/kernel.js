@@ -235,6 +235,7 @@
   // Root motion is the progression, so chords are not a separate stage in the
   // pipeline — they are this object at a different density.
   function bass(subj, g, bars) {
+    if (g.nobass) return [];              // a genre may simply not have a bass part
     const ev = [], N = subj.deg.length;
 
     // WALKING — quarter notes that arrive somewhere. Root, third, fifth, then a
