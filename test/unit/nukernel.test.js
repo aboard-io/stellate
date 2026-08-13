@@ -266,6 +266,23 @@ for (const gk of GK) {
   ok(dr.some(e => e.fill), gk + ": no event is flagged as a fill");
 }
 
+/* ---------------------------------------------------------------- 12b. BASS ALWAYS SOUNDS
+   The root bass reads the accent vector for its rhythm. A phrase with no
+   accents — which is what every cleared or empty slot is — left it silent in
+   four of five genres. A bass part must not depend on the tune being emphatic. */
+console.log("bass sounds even when the phrase has no accents");
+{
+  const flat = { ...clone(P), acc: new Array(N).fill(0) };
+  const empty = K.mapv(P, v => v.map(() => 0));
+  for (const gk of GK) {
+    const g = GENRES[gk];
+    ok(K.bass(flat, g, g.bars).length > 0, gk + ": no bass when the phrase has no accents");
+    ok(K.bass(empty, g, g.bars).length > 0, gk + ": no bass for an empty phrase");
+    // and the accented case must not have drifted
+    ok(K.bass(P, g, g.bars).length > 0, gk + ": no bass for an accented phrase");
+  }
+}
+
 /* ---------------------------------------------------------------- 13. WALKING BASS */
 console.log("walking bass arrives on the next root");
 {

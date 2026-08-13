@@ -256,11 +256,19 @@
       return ev;
     }
 
-    const sp = spans(subj.acc);                                 // holds to the next accent
+    // The root bass borrows its rhythm from the melody's ACCENTS, which reads
+    // well until the melody has none — then the bass vanishes entirely, and an
+    // empty or cleared phrase has none by definition. A bass part should not
+    // depend on the tune being emphatic, so fall back to the genre's own pulse
+    // (quarter notes unless it says otherwise). With accents present this is
+    // byte-identical to before.
+    const QUARTERS = [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0];
+    const grid = subj.acc.some(Boolean) ? subj.acc : (g.bassGrid || QUARTERS);
+    const sp = spans(grid);                                     // holds to the next hit
     for (let b = 0; b < bars; b++) {
       const r = harm(subj, g, b);
       for (let i = 0; i < N; i++)
-        if (subj.acc[i])
+        if (at(grid, i))
           ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: sp[i] * 0.94 / g.rate,
                     n: mp(r, md) + 36, r, vel: vel(subj, i) });
     }
