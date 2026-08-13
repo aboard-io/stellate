@@ -90,6 +90,17 @@ ok(eq(K.complement("acc")(K.complement("acc")(P)), P), "complement is not an inv
 ok(eq(K.transpose(-3)(K.transpose(3)(P)), P), "transpose has no inverse");
 ok(eq(K.drop(3)(K.drop(3)(P)), K.drop(3)(P)), "drop is not idempotent");
 ok(eq(K.fill(3)(K.fill(3)(P)), K.fill(3)(P)), "fill is not idempotent");
+// SPLIT adds attacks inside long notes and is audible under any articulation —
+// which duplicating a list element is not, because a held note swallows its copy
+{
+  const before = P.gate.filter(Boolean).length;
+  ok(K.split(2)(P).gate.filter(Boolean).length > before, "split(2) added no attacks");
+  ok(K.split(1)(P).gate.join("") === P.gate.join(""), "split(1) is not the identity");
+  // under LEGATO — held notes, no gaps — a split must still produce extra
+  // attacks, which duplicating a list element could never do
+  const leg = g2 => K.render(g2, { ...GENRES.simple, artic: "legato" }, 4).length;
+  ok(leg(K.split(2)(P)) > leg(P), "split is inaudible under legato — the whole point of it");
+}
 
 // DENSITY family. drop and fill are both lossy, so they are NOT inverses — and
 // they do not commute. Both facts are load-bearing: the chips apply in the order
@@ -125,7 +136,7 @@ const OPS = [K.rotate(5), K.rotate(-3), K.reverse(), K.transpose(9), K.transpose
              K.invert(0), K.invert(4), K.complement("gate"), K.complement("acc"),
              K.excerpt(2, 8), K.drop(1), K.drop(2), K.drop(3),
              K.fill(1), K.fill(2), K.fill(3), K.spread(2), K.spread(0.5), K.spread(0),
-             K.repeat(1), K.repeat(2), K.repeat(4), K.del(1), K.del(2), K.del(4),
+             K.split(2), K.split(3), K.split(4), K.del(1), K.del(2), K.del(4),
              K.only("acc", K.rotate(3)),
              K.crossmap("acc", "sld")];
 const VECS = ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"];
@@ -334,24 +345,41 @@ console.log("ramps climb monotonically and the fold does not chase them");
    Two things that keep a line playable rather than merely correct. */
 console.log("tie merges repeats; the root shift takes the nearest octave");
 {
-  const rep = K.repeat(1)(P);
+  const rep = K.split(2)(P);
   const loose = K.render(rep, GENRES.simple, 4);
   const tied = K.render(rep, { ...GENRES.simple, artic: "tie" }, 4);
   ok(tied.length < loose.length, "tie did not merge any repeated notes");
   ok(Math.max(...tied.map(e => e.dur)) > Math.max(...loose.map(e => e.dur)),
      "tie produced no longer note than the untied version");
-  ok(K.render(rep, { ...GENRES.simple, artic: "staccato" }, 4)
-       .every(e => e.dur <= loose[0].dur), "staccato is not shorter than normal");
+  // total sounding time, not the longest note: a note whose successor slides is
+  // held full length under every articulation, so the max can tie
+  const total = a => a.reduce((s, e) => s + e.dur, 0);
+  ok(total(K.render(rep, { ...GENRES.simple, artic: "staccato" }, 4)) < total(loose),
+     "staccato does not sound for less time than normal");
 
   // a cycle-harmony line must stay in ONE register: the root shift is folded to
   // the nearest octave, so the flat-VII drops two rather than climbing ten
+  // MEASURE THE ROOT SHIFT ITSELF. A flat phrase — one degree, no octaves, no
+  // ramp — renders one pitch per bar, so the bar-to-bar difference IS the root
+  // shift and nothing else. Folded to the nearest octave it can never exceed a
+  // tritone; unfolded, the flat-VII alone is ten.
+  const flatP = { deg: new Array(N).fill(0), oct: new Array(N).fill(0),
+                  vel: new Array(N).fill(5), inc: new Array(N).fill(0),
+                  stk: new Array(N).fill(0), gate: new Array(N).fill(1),
+                  acc: new Array(N).fill(0), sld: new Array(N).fill(0) };
   for (const gk of GK) {
     const g = GENRES[gk];
     if (g.harmony !== "cycle") continue;
-    const ns = K.render(P, g, g.bars).filter(e => g.realize(e.v) !== "pad").map(e => e.n);
-    ok(Math.max(...ns) - Math.min(...ns) <= 36,
-       gk + ": line spans " + (Math.max(...ns) - Math.min(...ns)) +
-       " semitones — the root shift is not folded to the nearest octave");
+    const bs = 16 / g.rate;
+    const perBar = Array.from({ length: g.bars }, (_, b) =>
+      K.render(flatP, g, g.bars).filter(e => g.realize(e.v) !== "pad" &&
+        Math.floor(e.t / bs) === b).map(e => e.n)[0]);
+    // each shift is folded against the TONIC into [-6..+6], so the widest gap
+    // between any two bars is 12 — one octave, never more
+    const xs = perBar.filter(x => x != null);
+    const spread = Math.max(...xs) - Math.min(...xs);
+    ok(spread <= 12, gk + ": root shifts spread " + spread +
+       " semitones — not folded to the nearest octave");
   }
 }
 

@@ -84,15 +84,32 @@
   // del closes the hole and drags the rest of the phrase forward, which is what
   // makes it worth having. Both re-cycle to the original length, so a pattern is
   // always the same sixteen steps and the operators stay closed.
-  // repeat(n) DUPLICATES EVERY nth ELEMENT — repeat 1 doubles every note,
-  // repeat 2 doubles every other one. It is a stutter that thins as n grows,
-  // and it is the mirror of del(n), which removes every nth. Both recycle to
-  // the original length, so the pattern is always the same sixteen steps.
-  const repeat = n => p => mapv(p, v => {
-    const out = [];
-    v.forEach((x, i) => { out.push(x); if ((i + 1) % n === 0) out.push(x); });
-    return v.map((_, i) => out[i % out.length]);
-  });
+  // SPLIT, not repeat. Duplicating an element in the list cannot re-attack a
+  // note that is being HELD — under legato or tie the copy is swallowed by the
+  // note it duplicates and nothing is heard. Splitting works on DURATION
+  // instead: a note lasting s steps becomes n attacks of s/n, which is audible
+  // whatever the articulation, and is what an arpeggiator actually does.
+  //
+  // A note is subdivided as far as it will GO: asking for eight attacks inside
+  // a two-step note gives two, not nothing. Skipping instead left every chip
+  // above `split 2` looking dead on an ordinary phrase.
+  const split = n => p => {
+    if (n <= 1) return mapv(p, v => v.slice());
+    const N = p.gate.length, sp = spans(p.gate), out = mapv(p, v => v.slice());
+    for (let i = 0; i < N; i++) {
+      if (!p.gate[i] || sp[i] < 2) continue;
+      const parts = Math.min(n, sp[i]);
+      for (let k = 1; k < parts; k++) {
+        const j = (i + Math.round((k * sp[i]) / parts)) % N;
+        if (out.gate[j]) continue;                 // never overwrite a real note
+        out.gate[j] = 1;
+        out.deg[j] = p.deg[i]; out.oct[j] = p.oct[i]; out.vel[j] = p.vel ? p.vel[i] : 5;
+        out.inc[j] = p.inc ? p.inc[i] : 0; out.stk[j] = p.stk ? p.stk[i] : 0;
+        out.acc[j] = 0; out.sld[j] = 0;            // a subdivision is not an accent
+      }
+    }
+    return out;
+  };
   const del = n => p => mapv(p, v => {
     const out = v.filter((_, i) => n <= 1 || (i + 1) % n !== 0);
     return out.length ? v.map((_, i) => out[i % out.length]) : v.map(() => 0);
@@ -441,7 +458,7 @@
     });
   };
 
-  const api = { at, mapv, spans, vel, drop, fill, spread, repeat, del, rampOf, envelope, KITOPS, mapKit, swing, rotate, reverse, transpose, invert, complement,
+  const api = { at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, KITOPS, mapKit, swing, rotate, reverse, transpose, invert, complement,
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, pitch, mp, fold, near,
                 harm, render, drums, bass };
