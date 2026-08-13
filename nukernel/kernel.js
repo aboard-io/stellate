@@ -64,7 +64,10 @@
   const MODE  = [0, 2, 3, 5, 7, 8, 10];                 // natural minor
   const ROMAN = ["i", "ii°", "III", "iv", "v", "VI", "VII"];
 
-  const pitch = d => PENT[((d % 5) + 5) % 5] + 12 * Math.floor(d / 5);
+  // The subject's alphabet is a GENRE fact, not a constant: blues needs the
+  // flat five, and the blue note is a passing tone the pentatonic cannot say.
+  const pitch = (d, sc = PENT) =>
+    sc[((d % sc.length) + sc.length) % sc.length] + 12 * Math.floor(d / sc.length);
   const mp    = d => MODE[((d % 7) + 7) % 7] + 12 * Math.floor(d / 7);
 
   // The operators are closed on PATTERNS but NOT on REGISTER: transposition
@@ -83,6 +86,11 @@
     return b;
   };
 
+  // SWING bends the grid instead of permuting it — the first transformation
+  // here that is not a rearrangement of steps. Delays every odd sixteenth by
+  // `g.swing` of a step; 1/3 is a triplet shuffle.
+  const swing = (g, i) => (i % 2) * (g.swing || 0);
+
   // ---- harmony: a MODE, not a layer ---------------------------------------
   // Where the roots come from is itself a genre fact, and there are only three
   // sources: read them off the entry schedule, don't have any, or carry an
@@ -92,9 +100,9 @@
     if (g.harmony === "emergent") {
       // transposition of the subject IS modulation: an answer at the fifth is
       // the dominant because that is what an answer at the fifth means
-      const v = Math.min(bar, g.voices - 1);
+      const v = Math.min(bar, g.voices - 1), sc = g.scale || PENT;
       const q = word(subj, g.word(v, 0));
-      return near((((pitch(q.deg[0]) - pitch(subj.deg[0])) % 12) + 12) % 12);
+      return near((((pitch(q.deg[0], sc) - pitch(subj.deg[0], sc)) % 12) + 12) % 12);
     }
     return 0;                                            // modal: no motion
   }
@@ -125,7 +133,7 @@
   function render(subj, g, bars) {
     const N = subj.deg.length, ev = [];
     for (let v = 0; v < g.voices; v++) {
-      const ctr = 60 + 12 * g.reg(v), pad = g.realize(v) === "pad";
+      const ctr = 60 + 12 * g.reg(v), pad = g.realize(v) === "pad", sc = g.scale || PENT;
       for (let b = g.entry(v); b < bars; b++) {
         const p = word(subj, g.word(v, b - g.entry(v))), r = harm(subj, g, b);
         const sp = spans(p.gate);
@@ -135,9 +143,9 @@
           const legato = pad || p.sld[(i + steps) % N] ? 1 : 0.92;
           const ns = pad
             ? [r, r + 2, r + 4].map(mp)                  // chord from HARMONY, not from the note
-            : [pitch(p.deg[i]) + 12 * p.oct[i]];
+            : [pitch(p.deg[i], sc) + 12 * p.oct[i]];
           for (const n of ns)
-            ev.push({ t: (b * N + i) / g.rate, dur: steps * legato / g.rate, v,
+            ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: steps * legato / g.rate, v,
                       n: fold(n, ctr), acc: p.acc[i], sld: p.sld[i] });
         }
       }
@@ -163,14 +171,14 @@
       const kit = (g.fill && b === bars - 1) ? { ...g.kit, ...g.fill } : (g.kit || {});
       for (const [d, vec] of Object.entries(kit))
         for (let i = 0; i < N; i++)
-          if (at(vec, i)) ev.push({ t: (b * N + i) / g.rate, d, acc: !!subj.acc[i],
+          if (at(vec, i)) ev.push({ t: (b * N + i + swing(g, i)) / g.rate, d, acc: !!subj.acc[i],
                                     fill: b === bars - 1 && !!(g.fill && g.fill[d]) });
     }
     if (g.ghost) {
       const q = word(subj, g.ghost);
       for (let b = 0; b < bars; b++)
         for (let i = 0; i < N; i++)
-          if (q.acc[i] && !q.gate[i]) ev.push({ t: (b * N + i) / g.rate, d: "p", acc: 0 });
+          if (q.acc[i] && !q.gate[i]) ev.push({ t: (b * N + i + swing(g, i)) / g.rate, d: "p", acc: 0 });
     }
     return ev.sort((a, b) => a.t - b.t);
   }
@@ -184,12 +192,12 @@
       const r = harm(subj, g, b);
       for (let i = 0; i < N; i++)
         if (subj.acc[i])
-          ev.push({ t: (b * N + i) / g.rate, dur: sp[i] * 0.94 / g.rate, n: mp(r) + 36, r });
+          ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: sp[i] * 0.94 / g.rate, n: mp(r) + 36, r });
     }
     return ev;
   }
 
-  const api = { at, map5, spans, rotate, reverse, transpose, invert, complement,
+  const api = { at, map5, spans, swing, rotate, reverse, transpose, invert, complement,
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, pitch, mp, fold, near,
                 harm, render, drums, bass };

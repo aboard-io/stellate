@@ -25,7 +25,7 @@ function build() {
     color: "var(--vb)", ev: bs });
   for (const d of [...new Set(dr.map(e => e.d))])
     lanes.push({ id: "d" + d, name: DRUMNAME[d] || d,
-      op: d === "p" ? "only(acc, rotate 3)" : (g.fill && g.fill[d]) ? "grid + fill on bar 4" : "grid",
+      op: d === "p" ? "only(acc, rotate 3)" : (g.fill && g.fill[d]) ? "grid + fill on bar " + bars : "grid",
       kind: "drum", color: "var(--drum)", ev: dr.filter(e => e.d === d) });
   return { g, bars, lanes, steps: bars * 16 / g.rate };
 }
@@ -297,6 +297,14 @@ document.getElementById("play").addEventListener("click", () => playing ? stop()
 document.getElementById("bpm").addEventListener("input", e => {
   document.getElementById("bpmv").textContent = e.target.value;
 });
+// CLEAR — empty the phrase to a blank canvas. The drums keep playing, because
+// the kit is genre data and never came from the seed.
+document.getElementById("clear").addEventListener("click", () => {
+  const z = () => new Array(16).fill(0);
+  SUBJ = { deg: z(), oct: z(), gate: z(), acc: z(), sld: z() };
+  drawEditor(); draw(); if (playing) compile();
+});
+
 document.getElementById("rnd").addEventListener("click", () => {
   const r = n => Math.floor(Math.random() * n);
   for (let i = 0; i < 16; i++) {
@@ -334,7 +342,9 @@ function writeSrc() {
   document.getElementById("src").innerHTML =
     g.label.toUpperCase() + "\n\n" +
     "bars      " + g.bars + "\n" +
-    "rate      " + g.rate + "\n" +
+    "rate      " + g.rate + (g.swing ? "   swing " + g.swing.toFixed(2) : "") + "\n" +
+    "scale     " + (g.scale ? "[" + g.scale.join(" ") + "]  (blues — flat five)"
+                            : "[0 3 5 7 10]  (minor pentatonic)") + "\n" +
     "voices    " + g.voices + '   <span class="c">entry ' +
       Array.from({ length: g.voices }, (_, v) => "bar " + (g.entry(v) + 1)).join(", ") + "</span>\n" +
     "harmony   " + g.harmony + (g.roots ? "  [" + g.roots.map(r => ROMAN[r]).join(" ") + "]" : "") + "\n" +

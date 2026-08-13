@@ -17,6 +17,11 @@
     ? require("./kernel.js") : root.NuKernel;
   const { rotate, reverse, transpose, invert, complement, excerpt, only } = K;
 
+  // The blues scale — minor pentatonic plus the flat five. The ♭5 is a passing
+  // tone, not a chord tone, and it is the whole reason `scale` had to become a
+  // genre field instead of a constant in kernel.js.
+  const BLUES = [0, 3, 5, 6, 7, 10];
+
   // ---- the seed phrase (16 steps) -----------------------------------------
   const DEFAULT = {
     deg:  [0, 3, 2, 0, 4, 3, 0, 2, 5, 3, 0, 4, 2, 0, 3, 1],
@@ -85,6 +90,27 @@
       tone: { wave: "sawtooth", cut: 1500, q: 2.2, atk: .05, rel: 1.6, gain: .20, verb: .55 },
       words: ["excerpt(2,8) → pad", "excerpt(2,8) → line"],
       word: () => [excerpt(2, 8)],
+    },
+
+    // The first genre whose SCALE is not the default, and the first whose form
+    // is longer than its loop instinct: twelve bars, I-IV-V, with the turnaround
+    // in the last two. Building it settled a question — a "fixed form" is not a
+    // fourth harmony mode, it is just a `cycle` whose length is the form. And
+    // `swing` is the genuinely new thing: every other operator permutes the
+    // grid, swing bends it.
+    blues: {
+      label: "Blues", rate: 1, bars: 12, voices: 2, swing: 1 / 3,
+      scale: BLUES,
+      entry: v => v * 4, reg: v => -v, realize: () => "line",
+      harmony: "cycle",
+      roots: [0,0,0,0, 3,3,0,0, 4,3,0,4],    // twelve bars, I IV V, turnaround
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },   // shuffled by swing
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },  // bar 12: the turnaround
+      tone: { wave: "sawtooth", cut: 1100, q: 3.2, atk: .006, rel: .9, gain: .27, verb: .14 },
+      words: ["subject", "answer — only(gate, rotate 8)"],
+      word: (v, s) => (v === 0 ? [] : [only("gate", rotate(8))]),
     },
   };
 
