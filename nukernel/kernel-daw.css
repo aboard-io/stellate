@@ -240,6 +240,8 @@ h1 em{font-style:normal;color:var(--accent)}
 .pchip.lst.on{background:var(--v1);border-color:var(--v1);color:#08150f}
 .pchip.clp.on{background:var(--v3);border-color:var(--v3);color:#fff}
 .pchip.art.on{background:var(--v0);border-color:var(--v0);color:#fff}
+.pchip.foc{border-style:dashed}
+.pchip.foc.on{background:var(--accent2);border-color:var(--accent2);border-style:solid;color:#231f16}
 .pchip.bas.on{background:var(--vb);border-color:var(--vb);color:#0e1116}
 .pchip.rate.on{background:var(--v1);border-color:var(--v1);color:#08150f}
 .pchip.dragging,.slot.dragging{opacity:.4}

@@ -47,9 +47,9 @@ const okPhrase = p => p && typeof p === "object" &&
   ["deg", "oct", "vel", "gate", "acc", "sld"].every(k =>
     Array.isArray(p[k]) && p[k].length === 16 && p[k].every(Number.isFinite));
 const okBox = b => b && typeof b === "object" &&
-  Array.isArray(b.genres) && b.genres.length &&
-  b.genres.every(k => Object.prototype.hasOwnProperty.call(GENRES, k)) &&
-  Array.isArray(b.slots) && b.slots.every(i => Number.isInteger(i) && i >= 0 && i < NSLOTS) &&
+  Array.isArray(b.stack) && b.stack.length &&
+  b.stack.every(e => e && Object.prototype.hasOwnProperty.call(GENRES, e.g) &&
+    Array.isArray(e.slots) && e.slots.every(i => Number.isInteger(i) && i >= 0 && i < NSLOTS)) &&
   Number.isFinite(b.len) && Number.isFinite(b.nudge) &&
   Array.isArray(b.ops) &&
   (b.env === null || b.env === "in" || b.env === "out") &&
@@ -66,12 +66,19 @@ const okBox = b => b && typeof b === "object" &&
 function applyState(raw) {
   if (!raw || raw.v !== 1) return false;
   if (!Array.isArray(raw.slots) || raw.slots.length !== NSLOTS || !raw.slots.every(okPhrase)) return false;
-  for (const b of raw.song || []) if (b && !b.genres) b.genres = b.genre ? [b.genre] : ["simple"];
+  // every older shape climbs to the current one: genre -> genres -> stack
+  for (const b of raw.song || []) {
+    if (!b) continue;
+    if (!b.stack) {
+      const gs = b.genres || (b.genre ? [b.genre] : ["simple"]);
+      const sl = Array.isArray(b.slots) ? b.slots : [];
+      b.stack = gs.map(g2 => ({ g: g2, slots: [...sl] }));   // they shared slots before
+    }
+  }
   if (!Array.isArray(raw.song) || !raw.song.length || !raw.song.every(okBox)) return false;
   // ops are FILTERED, not validated: the operator table changes as the palette
   // does, and a song should lose an obsolete chip rather than lose itself.
   for (const b of raw.song) {
-    if (!b.genres) b.genres = b.genre ? [b.genre] : ["simple"];   // pre-stack saves
     b.ops = b.ops.filter(o => Object.prototype.hasOwnProperty.call(OPS, o));
   }
   for (const p2 of raw.slots) { if (!p2.inc) p2.inc = new Array(16).fill(0);
@@ -99,7 +106,7 @@ function songJSON() {
     vol: +document.getElementById("vol").value }, null, 1);
 }
 function saveFile() {
-  const names = [...new Set(SONG.flatMap(b => b.genres || []))].join("-") || "song";
+  const names = [...new Set(SONG.flatMap(b => stackOf(b).map(e => e.g)))].join("-") || "song";
   const blob = new Blob([songJSON()], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -186,7 +193,11 @@ const BASSOPS = { nobass: "no bass", walk: "walking", octaves: "octaves",
 // generators each writing their own progression is the mud, and a timeline of
 // parallel lanes would let you avoid deciding rather than make you decide.
 // Layers are lifted an octave so a fugue does not vanish under a guitar.
-const emptyBox = () => ({ genres: ["simple"], slots: [], len: GENRES.simple.bars,
+// Each entry in the stack carries ITS OWN phrases. Sharing one slot list across
+// the stack meant a layered fugue could only ever restate whatever the rock riff
+// was playing — which is not a counter-subject, it is a doubling. Rock on phrase
+// 3 with a fugue on phrases 2+1 underneath is the whole point of layering.
+const emptyBox = () => ({ stack: [{ g: "simple", slots: [] }], len: GENRES.simple.bars,
                           nudge: 0, ops: [], env: null, mode: null, rate: null, scale: null,
                           kit: null, bassop: null, clamp: null, cmode: null, artic: null });
 
@@ -216,9 +227,12 @@ let SONG = Array.from({ length: NBOXES }, emptyBox);
 let viewSec = 0, playingSec = -1, loopOnly = null, dragFrom = null, pendingStart = null;
 
 const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
-const gid = sec => (sec.genres && sec.genres[0]) || null;
+const gid = sec => (sec.stack && sec.stack[0] && sec.stack[0].g) || null;
+const stackOf = sec => sec.stack || [];
+const focusOf = sec => Math.min(sec.focus || 0, stackOf(sec).length - 1);
+const focused = sec => stackOf(sec)[focusOf(sec)] || { g: null, slots: [] };
 const boxBars = b => (gid(b) ? b.len : 0);
-const stackLabel = sec => (sec.genres || []).map(k => GENRES[k].label).join(" + ");
+const stackLabel = sec => stackOf(sec).map(e => GENRES[e.g].label).join(" + ");
 
 /* ---------- what a box contributes ---------- */
 // MULTIPLE PHRASES combine by being dealt across the genre's own voices: voice v
@@ -235,8 +249,9 @@ function sectionEvents(sec) {
   const total = Math.ceil((nudge + len) / g.bars) * g.bars;
   const barSteps = 16 / g.rate, from = nudge * barSteps, to = (nudge + len) * barSteps;
 
-  const phrases = (sec.slots.length ? sec.slots : [null])
+  const phrasesFor = e => (e.slots.length ? e.slots : [null])
     .map(i => word(i == null ? blank() : SLOTS[i], sec.ops.map(o => OPS[o])));
+  const phrases = phrasesFor(stackOf(sec)[0]);
   const nP = phrases.length, out = [];
 
   phrases.forEach((ph, pi) => {
@@ -263,8 +278,8 @@ function sectionEvents(sec) {
   // progression are dropped, because a box has one groove and one key. Voice
   // indices continue past the authority's so the lanes stay separate.
   let vBase = g.voices;
-  for (const extra of (sec.genres || []).slice(1)) {
-    const L = GENRES[extra];
+  for (const ent of stackOf(sec).slice(1)) {
+    const extra = ent.g, L = GENRES[extra], lPh = phrasesFor(ent), lnP = lPh.length;
     // The layer inherits EVERY section-level override, not some of them. The
     // section's `scale` is the subject's alphabet, and leaving it out let the
     // authority read quartal while the layer read pentatonic — two alphabets
@@ -275,10 +290,10 @@ function sectionEvents(sec) {
                  mode: g.mode, scale: g.scale, incClamp: g.incClamp,
                  incMode: g.incMode, artic: g.artic, kit: {}, ghost: null,
                  nobass: true, reg: v => L.reg(v) + 1 };
-    // the layer reads the SAME phrases, dealt across ITS voices
-    phrases.forEach((ph, pi) => {
+    // the layer reads ITS OWN phrases, dealt across ITS voices
+    lPh.forEach((ph, pi) => {
       const lev = render(ph, lg, total);
-      for (let v = pi; v < L.voices; v += nP) {
+      for (let v = pi; v < L.voices; v += lnP) {
         let prev = null;
         for (const e of lev.filter(e => e.v === v)) {
           out.push({ ...e, kind: "line", prev, pad: L.realize(v) === "pad",
@@ -321,17 +336,18 @@ function draw() {
     return;
   }
   const lanes = [];
-  const nP = Math.max(1, sec.slots.length);
+  const aSlots = stackOf(sec)[0].slots, nP = Math.max(1, aSlots.length);
   for (let v = 0; v < g.voices; v++)
     lanes.push({ name: (g.realize(v) === "pad" ? "Pad " : "Voice ") + v,
-      op: (sec.slots.length > 1 ? "phrase " + (sec.slots[v % nP] + 1) + " · " : "") + (g.words[v] || ""),
+      op: (aSlots.length > 1 ? "phrase " + (aSlots[v % nP] + 1) + " · " : "") + (g.words[v] || ""),
       kind: "pitch", color: "var(--v" + v + ")",
       ev: ev.filter(e => e.kind === "line" && e.v === v) });
   let lv = g.voices;
-  for (const extra of (sec.genres || []).slice(1)) {
-    const L = GENRES[extra];
+  for (const ent of stackOf(sec).slice(1)) {
+    const L = GENRES[ent.g], lnP = Math.max(1, ent.slots.length);
     for (let v = 0; v < L.voices; v++)
-      lanes.push({ name: L.label + " " + v, op: L.words[v] || "",
+      lanes.push({ name: L.label + " " + v,
+        op: (ent.slots.length ? "phrase " + (ent.slots[v % lnP] + 1) + " · " : "") + (L.words[v] || ""),
         kind: "pitch", color: "var(--v" + ((v + 2) % 4) + ")",
         ev: ev.filter(e => e.kind === "line" && e.v === lv + v) });
     lv += L.voices;
@@ -403,7 +419,7 @@ function draw() {
 
   const roots = g.harmony === "modal" ? "one mode, no motion"
     : "roots " + Array.from({ length: bars }, (_, b) =>
-        ROMAN[harm(SLOTS[sec.slots[0]] || blank(), g, sec.nudge + b)]).join(" ") +
+        ROMAN[harm(SLOTS[stackOf(sec)[0].slots[0]] || blank(), g, sec.nudge + b)]).join(" ") +
       (g.harmony === "emergent" ? " (computed)" : "");
   // Say WHY a box is silent rather than leaving it to be discovered by ear.
   const quiet = [];
@@ -411,12 +427,13 @@ function draw() {
   else {
     if (!ev.some(e => e.kind === "line")) quiet.push(
       sec.ops.includes("drop1") ? "no melody (drop 1)"
-        : !sec.slots.length ? "no melody (no phrase)" : "no melody");
+        : !stackOf(sec).some(e => e.slots.length) ? "no melody (no phrase)" : "no melody");
     if (ev.every(e => (e.vel == null ? 5 : e.vel) === 0)) quiet.push("velocity 0 (a completed fade)");
   }
   document.getElementById("readout").textContent =
     "box " + (viewSec + 1) + " · " + stackLabel(sec) + " · " +
-    (sec.slots.length ? sec.slots.map(i => "phrase " + (i + 1)).join(" + ") : "no phrase") +
+    stackOf(sec).map(e => GENRES[e.g].label + " " +
+      (e.slots.length ? e.slots.map(i => i + 1).join("+") : "no phrase")).join(" | ") +
     " · " + bars + " bar" + (bars === 1 ? "" : "s") +
     (sec.nudge ? " nudged " + sec.nudge : "") + " · " + roots +
     (quiet.length ? "  —  " + quiet.join(", ") : "");
@@ -506,7 +523,7 @@ async function loadInstrument(id) {
 // every instrument the song needs, decoded before the transport starts
 function instrumentsInSong() {
   const ids = new Set([BASS_INSTR]);
-  for (const sec of SONG) for (const k of (sec.genres || [])) ids.add(INSTR[k] || "yamaha_grand_piano");
+  for (const sec of SONG) for (const e of stackOf(sec)) ids.add(INSTR[e.g] || "yamaha_grand_piano");
   return [...ids];
 }
 let sampler = null;
@@ -784,7 +801,7 @@ async function ensureAssets(announce) {
                                .map(x => GENRES[gid(x)].drumkit))]
     .filter(k => !drumBufs.has(k + "|k"));
   const synths = [...new Set([
-    ...SONG.flatMap(x => (x.genres || []).filter(k => GENRES[k].synth).map(k => GENRES[k].synth)),
+    ...SONG.flatMap(x => stackOf(x).filter(e => GENRES[e.g].synth).map(e => GENRES[e.g].synth)),
     ...SONG.filter(x => BASSSYNTH[x.bassop]).map(x => BASSSYNTH[x.bassop])])];
   const wantSynth = synths.filter(sp => !synthNodes.has(sp.dsp));
   if (!need.length && !wantSynth.length && !kits.length) return false;
@@ -824,21 +841,31 @@ function stop() {
 function toggle(kind, value) {
   const sec = curSection();
   if (kind === "genre") {
-    const st = sec.genres, i = st.indexOf(value);
-    const wasWholeForm = !sec.len || sec.len === GENRES[st[0]].bars;
+    const st = sec.stack, i = st.findIndex(e => e.g === value);
+    const wasWholeForm = !sec.len || sec.len === GENRES[st[0].g].bars;
     if (i >= 0) {
       if (st.length === 1) return;                        // the last one cannot be removed
-      st.splice(i, 1);                                    // click again to take it off
-    } else if (st.length === 1 && st[0] === "simple") {
-      st[0] = value;             // Simple is the blank default: the first real
+      st.splice(i, 1);
+      sec.focus = Math.min(sec.focus || 0, st.length - 1);
+    } else if (st.length === 1 && st[0].g === "simple") {
+      st[0].g = value;           // Simple is the blank default: the first real
                                  // genre REPLACES it rather than stacking on it
-    } else st.push(value);                                // anything after that layers
-    if (wasWholeForm) sec.len = GENRES[st[0]].bars;
+    } else {
+      // a new layer INHERITS the authority's phrases, so it sounds the moment
+      // it is added; diverging from there is a click on the phrase rail. Empty
+      // was defensible and silent, and silent-on-add reads as broken.
+      st.push({ g: value, slots: [...st[0].slots] });
+      sec.focus = st.length - 1;
+    }
+    if (wasWholeForm) sec.len = GENRES[st[0].g].bars;
     sec.nudge = Math.min(sec.nudge, 31);
   } else if (kind === "phrase") {
-    if (!gid(sec)) return;
-    const i = sec.slots.indexOf(value);
-    i < 0 ? sec.slots.push(value) : sec.slots.splice(i, 1);
+    const ent = focused(sec);                  // phrases land on the FOCUSED layer
+    if (!ent.g) return;
+    const i = ent.slots.indexOf(value);
+    i < 0 ? ent.slots.push(value) : ent.slots.splice(i, 1);
+  } else if (kind === "focus") {
+    sec.focus = +value;                        // which layer the phrase rail edits
   } else if (kind === "op") {
     const i = sec.ops.indexOf(value);
     i < 0 ? sec.ops.push(value) : sec.ops.splice(i, 1);
@@ -905,8 +932,9 @@ function drawSong() {
     // where you are choosing a phrase; repeating it here made the row a wall of
     // little graphs you had to decode instead of a song you could read.
     const ph = document.createElement("div");
-    ph.className = "bphrase" + (sec.slots.length ? " has" : "");
-    ph.textContent = sec.slots.length ? sec.slots.map(i => i + 1).join(" + ") : "no phrase";
+    ph.className = "bphrase" + (stackOf(sec).some(e => e.slots.length) ? " has" : "");
+    ph.textContent = stackOf(sec).map(e =>
+      e.slots.length ? e.slots.map(i => i + 1).join("+") : "\u2014").join("  /  ");
     box.append(ph);
 
     const prog = document.createElement("div"); prog.className = "bprog";
@@ -1040,14 +1068,21 @@ function makeGrip(side, begin) {
 // BUILT ONCE, then only its ON states change. Rebuilding it on every draw
 // destroyed the button under the pointer mid-click, which lost focus and made
 // the page jump — and it took the keyboard focus ring with it.
-let paletteBuilt = false;
+let paletteBuilt = false, paletteSig = "";
 function drawPalette() {
   const el = document.getElementById("palette");
   const sec = curSection();
+  // The layer picker only EXISTS when there is more than one layer, and its
+  // chips are LABELLED with each layer's phrases — neither of which a
+  // build-once palette can update. Rebuild on a signature of the stack, so it
+  // still does not rebuild on an ordinary chip click, which is what kept the
+  // button from vanishing under the pointer.
+  const sig = stackOf(sec).map(e => e.g + ":" + e.slots.join(",")).join("|");
+  if (paletteBuilt && sig !== paletteSig) paletteBuilt = false;
   if (paletteBuilt) {
     el.querySelectorAll(".pchip").forEach(b => {
       const kind = b.dataset.kind, v = b.dataset.value;
-      const on = kind === "genre" ? sec.genres.includes(v)
+      const on = kind === "genre" ? stackOf(sec).some(e => e.g === v)
         : kind === "op" ? sec.ops.includes(v)
         : kind === "env" ? sec.env === v
         : kind === "mode" ? sec.mode === v
@@ -1057,7 +1092,8 @@ function drawPalette() {
         : kind === "bassop" ? sec.bassop === v
         : kind === "clamp" ? sec.clamp === v
         : kind === "cmode" ? (sec.cmode || "hold") === v
-        : kind === "artic" ? (sec.artic || "normal") === v : false;
+        : kind === "artic" ? (sec.artic || "normal") === v
+        : kind === "focus" ? String(focusOf(sec)) === v : false;
       b.classList.toggle("on", !!on);
       b.setAttribute("aria-pressed", String(!!on));
     });
@@ -1079,7 +1115,12 @@ function drawPalette() {
     el.append(g);
   };
   group("genre", Object.keys(GENRES).map(k =>
-    ["genre", k, GENRES[k].label, sec.genres.includes(k), "gen"]));
+    ["genre", k, GENRES[k].label, stackOf(sec).some(e => e.g === k), "gen"]));
+  if (stackOf(sec).length > 1)
+    group("editing layer", stackOf(sec).map((e, i) =>
+      ["focus", String(i), GENRES[e.g].label + (e.slots.length
+        ? " \u00b7 " + e.slots.map(n => n + 1).join("+") : " \u00b7 \u2014"),
+        focusOf(sec) === i, "foc"]));
   group("pattern", ["rev", "inv"].map(k => ["op", k, OPLABEL[k], sec.ops.includes(k), ""]));
   group("split", [2, 3, 4, 5, 6, 7, 8].map(n =>
     ["op", "rep" + n, String(n), sec.ops.includes("rep" + n), "lst"]));
@@ -1106,21 +1147,21 @@ function drawPalette() {
     ["rate", k, RATELABEL[k], sec.rate === k, "rate"]));
   group("envelope", [["env", "in", "fade in", sec.env === "in", "env"],
                      ["env", "out", "fade out", sec.env === "out", "env"]]);
-  paletteBuilt = true;
+  paletteBuilt = true; paletteSig = sig;
 }
 
 /* ---------- phrase slots: click toggles into the box AND opens the editor --- */
 function drawSlots() {
   const el = document.getElementById("slots"); el.innerHTML = "";
-  const sec = curSection();
+  const sec = curSection(), ent = focused(sec);
   SLOTS.forEach((p, i) => {
-    const inBox = sec.slots.includes(i);
+    const inBox = ent.slots.includes(i);
     const b = document.createElement("button");
     b.type = "button";
     b.className = "slot" + (i === slot ? " sel" : "") + (inBox ? " inbox" : "");
     b.setAttribute("aria-pressed", String(inBox));
     b.setAttribute("aria-label", "phrase " + (i + 1) + (isBlank(p) ? ", empty" : ", filled") +
-      (inBox ? ", in box " + (viewSec + 1) : ""));
+      (inBox ? ", in " + (ent.g ? GENRES[ent.g].label : "box") : ""));
     const mini = document.createElement("span"); mini.className = "mini";
     for (let k = 0; k < 16; k++) {
       const c = document.createElement("i");
@@ -1190,9 +1231,8 @@ function writeSrc() {
     g.label.toUpperCase() + "\n\n" +
     "form       " + g.bars + " bars\n" +
     "window     " + sec.len + " bars from bar " + (sec.nudge + 1) + "\n" +
-    "phrases    " + (sec.slots.length
-      ? sec.slots.map(i => i + 1).join(", ") + "  (voice v plays phrase v mod " + sec.slots.length + ")"
-      : "none") + "\n" +
+    "phrases    " + stackOf(sec).map(e => GENRES[e.g].label + ": " +
+      (e.slots.length ? e.slots.map(i => i + 1).join(", ") : "none")).join("\n           ") + "\n" +
     "rate       " + g.rate + (sec.rate ? "  (" + RATELABEL[sec.rate] + ")" : "") +
       (g.swing ? "   swing " + g.swing.toFixed(2) : "") + "\n" +
     "scale      [" + (g.scale || [0, 3, 5, 7, 10]).join(" ") + "]  " +

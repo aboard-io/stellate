@@ -104,9 +104,14 @@ function taps() {
   // kit and fell straight through to the oscillator. That is the exact path a
   // person takes, and it was the only one not covered.
   const seen = { rms: {}, worst: null };
-  let started = false;
+  let started = false, prev = null;
   for (const g of GENRES) {
+    // genres STACK, so switching means taking the previous one off first —
+    // clicking six in a row would otherwise build one six-deep box
     await page.locator(".pchip", { hasText: new RegExp("^" + g + "$") }).click();
+    if (prev && prev !== g)
+      await page.locator(".pchip", { hasText: new RegExp("^" + prev + "$") }).click();
+    prev = g;
     if (!started) { await page.click("#play"); started = true; }
     await page.waitForTimeout(3500);                 // decode + a bar or two
     let peak = 0;
