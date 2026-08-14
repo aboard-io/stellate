@@ -146,8 +146,11 @@ for (const f of PAGES) {
 //
 // `<script type="application/ld+json">` is DATA, not script: CSP never executes
 // it and script-src does not apply. It is allowed, and only it.
+let CSP_COUNT = 0;
 {
-  const CSP_PAGES = ["index.html", "access.html", "embed.html", "how.html", "colophon.html", "404.html", "daw.html"];
+  const CSP_PAGES = ["index.html", "access.html", "embed.html", "how.html", "colophon.html", "404.html", "daw.html",
+                     "nukernel/kernel-daw.html"];
+  CSP_COUNT = CSP_PAGES.length;
   const ON_ATTR = /\son[a-z]+\s*=\s*["']/gi;
   for (const f of CSP_PAGES) {
     const html = read(f);
@@ -196,5 +199,5 @@ if (fails.length) {
   console.log(`\nsocial-meta: FAIL — ${fails.length} problem(s)`);
   process.exit(1);
 }
-console.log(`social-meta: PASS — ${PAGES.length} pages carry a complete + non-drifted OG/Twitter/JSON-LD/oEmbed head, visible Paul Ford + Aboard attribution, every referenced asset exists, and 6 pages carry ZERO inline script (the CSP invariant)`);
+console.log(`social-meta: PASS — ${PAGES.length} pages carry a complete + non-drifted OG/Twitter/JSON-LD/oEmbed head, visible Paul Ford + Aboard attribution, every referenced asset exists, and ${CSP_COUNT} pages carry ZERO inline script (the CSP invariant)`);
 process.exit(0);
