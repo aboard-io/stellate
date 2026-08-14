@@ -10,6 +10,15 @@
 //   harmony                 emergent | modal | cycle
 //   kit/tone/realize        NOUNS — these snap; a fugue on a 303 is not a fugue
 //
+// `instr` is one of the nouns: WHICH SAMPLED INSTRUMENT each voice plays, by
+// registry id. A string is the whole genre; an ARRAY is read per voice with
+// the last entry covering the rest (the Isley Brothers are a Rhodes and a fuzz
+// guitar at the same time). It lives here beside kit and tone — instrument is
+// genre identity — and instruments.js instrOf() THROWS on a genre without one:
+// the old silent piano fallback is exactly how a rotted entry stayed hidden.
+// (The choral four want a real recorded voice, and the extraction has two —
+// aahs for the sustained music, oohs for the closer, brighter Bulgarian sound.)
+//
 // Loads AFTER kernel.js (see kernel-daw.html) — it is written in the operators.
 (function (root) {
   "use strict";
@@ -77,6 +86,7 @@
       // one-bar form, so inc and stk were inert in the one genre people reach
       // for first. Simple is the phrase looping; four loops is the natural unit.
       label: "Simple", rate: 1, bars: 4, voices: 1,
+      instr: "yamaha_grand_piano",
       entry: () => 0, reg: () => 0, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal",
       tone: { wave: "triangle", cut: 3200, q: 0.8, atk: .004, rel: .7, gain: .30, verb: .08 },
@@ -93,6 +103,7 @@
     // all voices are in. Expositions genuinely work that way; episodes don't.)
     fugue: {
       label: "Fugue", rate: 1, bars: 4, voices: 4,
+      instr: "rock_organ",
       entry: v => v, reg: v => 1 - v, realize: () => "line",
       kit: {}, harmony: "emergent",            // the empty kit IS the genre fact
       tone: { wave: "triangle", cut: 2600, q: 1.1, atk: .012, rel: .9, gain: .28, verb: .18 },
@@ -111,6 +122,7 @@
     // line is simultaneously melody, bass and the entire harmony.
     acid: {
       label: "Acid house", rate: 1, bars: 4, voices: 2,
+      instr: "clean_guitar",
       drumkit: "electronic",              // the SAMPLED kit, not a sine and some noise
       entry: v => v, reg: v => -2 + v, realize: () => "line",
       harmony: "modal",
@@ -147,6 +159,7 @@
     // I - V - vi - IV, and the second voice answers a bar late and thinned.
     newwave: {
       label: "New Wave", rate: 1, bars: 4, voices: 2,
+      instr: ["clean_guitar", "synth_strings_1"],
       entry: v => v, reg: v => v - 1, realize: () => "line",
       harmony: "cycle", roots: [0, 4, 5, 3],     // I V vi IV
       mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
@@ -170,6 +183,7 @@
     // realization and lossiness, which is why the dial is four numbers not one.
     vaporwave: {
       label: "Vaporwave", rate: .5, bars: 4, voices: 2,
+      instr: "strings",
       drumkit: "room",              // the SAMPLED kit, not a sine and some noise
       // BOTH VOICES SIT LOW. The pad was always down here; the melody was an
       // octave above it, up where the DX7's declared freq ceiling (1000 Hz) is
@@ -206,6 +220,7 @@
     // grid, swing bends it.
     blues: {
       label: "Blues", rate: 1, bars: 12, voices: 2, swing: 1 / 3,
+      instr: "steel_string_guitar",
       drumkit: "jazz",              // the SAMPLED kit, not a sine and some noise
       scale: BLUES,
       entry: v => v * 4, reg: v => -v, realize: () => "line",
@@ -229,6 +244,7 @@
     // that changes nothing about the alphabets.
     rock: {
       label: "Rock", rate: 1, bars: 8, voices: 2,
+      instr: "crunch_guitar",
       drumkit: "power",              // the SAMPLED kit, not a sine and some noise
       entry: () => 0, reg: v => v - 2, realize: () => "line",
       harmony: "cycle", roots: [0, 0, 6, 6, 3, 3, 0, 0],   // i i VII VII iv iv i i
@@ -257,6 +273,7 @@
     // because it is a zero, this has nothing because everything was taken away.
     gregorian: {
       label: "Gregorian", rate: 0.5, bars: 4, voices: 2,
+      instr: "ahh_choir",
       entry: () => 0, reg: v => -v, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal",
       mode: MODES.dorian, scale: DIATONIC,
@@ -275,6 +292,7 @@
     // the drone the whole tradition is built over.
     bulgarian: {
       label: "Bulgarian", rate: 1, bars: 4, voices: 2,
+      instr: "ohh_voices",
       drumkit: "acoustic",
       entry: () => 0, reg: v => v, realize: () => "line",
       harmony: "modal", mode: MODES.phrygian, scale: DIATONIC,
@@ -299,6 +317,7 @@
     // happens when eight transpositions of one line arrive on top of each other.
     spem: {
       label: "Spem in alium", rate: 0.5, bars: 8, voices: 8,
+      instr: "ahh_choir",
       entry: v => v, reg: v => (v % 4) - 1, realize: () => "line",
       kit: {}, nobass: true, harmony: "emergent",
       mode: MODES.dorian, scale: DIATONIC, artic: "legato",
@@ -317,6 +336,7 @@
     // elaborates, and having both makes the difference legible.
     counterpoint: {
       label: "Counterpoint", rate: 1, bars: 4, voices: 2,
+      instr: "harpsichord",
       entry: () => 0, reg: v => 1 - v, realize: () => "line",
       kit: {}, nobass: true, harmony: "emergent",
       scale: DIATONIC, artic: "legato",
@@ -334,6 +354,7 @@
     // because the whole point is that the progression is slower than the figure.
     neoclassical: {
       label: "Neoclassical", rate: 1, bars: 8, voices: 3,
+      instr: "felt_piano",
       entry: v => (v === 2 ? 4 : 0), reg: v => (v === 0 ? -1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
       kit: {}, harmony: "cycle", roots: [0,0, 5,5, 2,2, 6,6],
@@ -354,6 +375,7 @@
     // to listen TO, and the ramp (clamped, reversing) is what moves it.
     drone: {
       label: "Drone", rate: 0.25, bars: 4, voices: 2,
+      instr: "slow_strings",
       entry: () => 0, reg: v => v - 2, realize: v => (v === 0 ? "pad" : "line"),
       kit: {}, harmony: "modal", mode: MODES.dorian, scale: DIATONIC,
       artic: "tie", incClamp: 3, incMode: "reverse",
@@ -373,6 +395,7 @@
     // the insert chain exists now, so the genre may as well ask for it.
     sludge: {
       label: "Sludge", rate: 0.5, bars: 8, voices: 2,
+      instr: "overdrive_guitar",
       drumkit: "power",
       entry: () => 0, reg: v => v - 3, realize: () => "line",
       harmony: "cycle", mode: MODES.phrygian, roots: [0,0,0,0, 1,1,0,0],
@@ -397,6 +420,7 @@
     // A bandoneón and a violin, which the per-voice INSTR table can finally say.
     tango: {
       label: "Tango", rate: 1, bars: 4, voices: 3,
+      instr: ["bandoneon", "violin", "bandoneon"],
       entry: v => (v === 2 ? 2 : 0), reg: v => (v === 1 ? 1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
       drumkit: "acoustic",
@@ -422,6 +446,7 @@
     // passing tone here, it is the tonic chord.
     deathmetal: {
       label: "Death metal", rate: 1, bars: 8, voices: 2,
+      instr: "distortion_guitar",
       drumkit: "power",
       entry: () => 0, reg: v => v - 3, realize: () => "line",
       harmony: "cycle", mode: MODES.phrygian, roots: [0,0,1,1, 0,0,4,4],
@@ -447,6 +472,7 @@
     // monosynth any more than it can be a 303.
     eurythmics: {
       label: "Eurythmics", rate: 1, bars: 4, voices: 2,
+      instr: "synth_strings_1",
       drumkit: "electronic",
       entry: v => v, reg: v => v - 1, realize: () => "line",
       harmony: "cycle", roots: [0, 0, 5, 5],
@@ -476,6 +502,7 @@
     // syncopates rather than marches.
     isley: {
       label: "Isley Brothers", rate: 1, bars: 8, voices: 3, swing: 0.16,
+      instr: ["rhodes_ep", "overdrive_guitar", "rhodes_ep"],
       drumkit: "room",
       entry: v => (v === 1 ? 2 : 0), reg: v => (v === 1 ? 1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
@@ -508,6 +535,7 @@
     // learned to take a list.
     toto: {
       label: "Toto", rate: 1, bars: 8, voices: 3, swing: 1 / 3,
+      instr: ["synth_strings_1", "marimba", "clean_guitar"],
       drumkit: "room",
       entry: v => (v === 2 ? 4 : 0), reg: v => (v === 1 ? 1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
@@ -533,6 +561,7 @@
     // point, and the composer knows it.
     jodeci: {
       label: "Jodeci", rate: 1, bars: 4, voices: 2, swing: 0.28,
+      instr: ["ahh_choir", "rhodes_ep"],
       drumkit: "electronic",
       entry: () => 0, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
       harmony: "cycle", mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
@@ -558,6 +587,7 @@
     // seven-note alphabet is exactly transpose(2), and in parallel the whole way.
     beatles: {
       label: "Beatles", rate: 1, bars: 8, voices: 2,
+      instr: ["steel_string_guitar", "ohh_voices"],
       drumkit: "acoustic",
       entry: () => 0, reg: v => v, realize: () => "line",
       harmony: "cycle", mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
@@ -580,6 +610,7 @@
     // that it reads as feel rather than as swing.
     steely: {
       label: "Steely Dan", rate: 1, bars: 8, voices: 3, swing: 0.2,
+      instr: ["rhodes_ep", "jazz_guitar", "rhodes_ep"],
       drumkit: "jazz",
       entry: v => (v === 1 ? 2 : 0), reg: v => (v === 1 ? 1 : v - 1),
       realize: v => (v === 0 ? "pad" : "line"),
@@ -606,6 +637,7 @@
     // echo that IS the guitar sound, asked for by name.
     postrock: {
       label: "Post rock", rate: 0.5, bars: 8, voices: 3,
+      instr: ["slow_strings", "clean_guitar", "clean_guitar"],
       drumkit: "room",
       entry: v => v * 2, reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),

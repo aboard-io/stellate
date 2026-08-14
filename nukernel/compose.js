@@ -1,11 +1,12 @@
 // compose.js — the ARRANGER. One button, one whole song.
 //
-// Kept out of kernel-daw.js for the same reason genres.js is kept out of
+// Kept out of the UI tier for the same reason genres.js is kept out of
 // kernel.js: this is a POLICY, and the UI should not have opinions. It is pure —
 // (genre, rnd) in, a song object out, no DOM and no audio — so the node gate can
 // compose a thousand songs and check every one, which is the only way to know
 // that a generator that runs once per click is not producing rubbish nine times
-// in ten. Loads after genres.js, before kernel-daw.js (see kernel-daw.html).
+// in ten. Loads after genres.js, fields.js and song.js — it is written in
+// their vocabulary — and before presets.js and the UI (see kernel-daw.html).
 //
 // WHAT IT EMITS is exactly the shape Save writes and Load reads, so it goes
 // through applyState — the same validate-and-apply path as a file off somebody's
@@ -14,8 +15,10 @@
 // rather than a special case.
 (function (root) {
   "use strict";
-  const NG = (typeof module !== "undefined" && module.exports)
-    ? require("./genres.js") : root.NuGenres;
+  const isNode = typeof module !== "undefined" && module.exports;
+  const NG = isNode ? require("./genres.js") : root.NuGenres;
+  const NF = isNode ? require("./fields.js") : root.NuFields;
+  const NS = isNode ? require("./song.js") : root.NuSong;
   const { GENRES } = NG;
 
   // ---- SECTION ROLES -------------------------------------------------------
@@ -23,12 +26,9 @@
   // reach in and change the drums. That would be a nasty surprise — you would
   // relabel a section and lose the mix you had built on it. What the role does
   // is tell the composer what to BUILD, and tell you what you are looking at
-  // afterwards. It is the arrangement's vocabulary, and vocabulary is exactly
-  // what a row of eleven identical grey boxes was missing.
-  const ROLES = { drums: "drums", bass: "bass", groove: "groove",
-                  intro: "intro", verse: "verse", chorus: "chorus",
-                  bridge: "bridge", breakdown: "breakdown", drop: "drop",
-                  solo: "solo", outro: "outro" };
+  // afterwards. The table itself lives in fields.js with the rest of the
+  // vocabulary; re-exported here so the composer's API did not move.
+  const { ROLES } = NF;
   // The first three are the LAYERS OF AN INTRO, and they are separate names
   // rather than three sections all called "intro" for the same reason the roles
   // exist at all: a row of identically labelled boxes is a row of unlabelled
@@ -91,8 +91,9 @@
   // the one rule of melodic writing that survives every style. Everything below
   // is that walk with different parameters.
   const z = () => new Array(16).fill(0);
-  const blank = () => ({ deg: z(), oct: z(), vel: new Array(16).fill(5),
-                         inc: z(), stk: z(), gate: z(), acc: z(), sld: z() });
+  // the one blank-phrase constructor lives in song.js — this used to be a
+  // second copy of the same literal, which is how shapes drift
+  const blank = NS.blank;
 
   // RHYTHM comes first and separately, because rhythm is what makes a phrase
   // recognizable — you can re-pitch a hook completely and still know it. Built
@@ -163,13 +164,12 @@
   // One function per role, each answering the same question — what is different
   // about this section — and each allowed to say "nothing much", which is what
   // makes a verse a verse.
-  const skeleton = (role, G, gk) => ({
-    stack: [{ g: gk, slots: [] }], len: G.bars, nudge: 0, ops: [], env: null,
-    mode: null, rate: null, scale: null, kit: null, drumkit: null,
-    bassop: null, clamp: null, cmode: null, artic: null, fx: G.fx ? [...G.fx] : [],
-    rev: null, del: null, verb: null, dtime: null, lvl: null, pan: null,
-    mot: null, intro: null, outro: null, swing: null, groove: null, role,
-  });
+  //
+  // The box literal itself comes from song.js — one skeleton, not two copies —
+  // and only the composer's own opinion is added on top: a genre carrying `fx`
+  // seeds the chain (sludge played clean is not sludge).
+  const skeleton = (role, G, gk) =>
+    Object.assign(NS.skeleton(gk, role), { fx: G.fx ? [...G.fx] : [] });
 
   // ---- HOW A SONG STARTS ---------------------------------------------------
   // FOUR BARS OF DRUMS, THEN THE BASS COMES IN, THEN THE TUNE. That is how a
@@ -259,7 +259,7 @@
     } else if (role === "breakdown") {
       b.stack[0].slots = [S.sparse];
       b.len = Math.max(2, Math.floor(bars / 2));
-      b.lvl = "hush"; b.rev = "drown"; b.del = "some";
+      b.lvl = "hush"; b.rev = "drown"; b.echo = "some";
       if (kit) b.kit = pick(r, ["nokick", "nodrums", "snareonly"]);
       b.fx = [pick(r, ["sweep", "echo", "phaser"])];
       b.mot = "rise"; b.env = "in";
@@ -269,13 +269,13 @@
       b.lvl = "fwd";
       if (kit) { b.kit = chance(r, 0.5) ? "four" : null; b.bassop = pick(r, ["reese", "wobble", "eighths"]); }
       b.ops = [pick(r, ["rep2", "rep4", "rot2"])];
-      b.del = chance(r, 0.4) ? "touch" : null;
+      b.echo = chance(r, 0.4) ? "touch" : null;
       b.intro = chance(r, 0.4) ? "hit" : null;
     } else if (role === "solo") {
       b.stack[0].slots = chance(r, 0.5) ? [S.climb] : [S.climb, S.busy];
       b.ops = [pick(r, ["rep3", "rep4", "wide"])];
       b.vox = { cut: "bright", res: "hot", emod: "mid", dec: "short" };
-      b.lvl = "fwd"; b.del = "touch";
+      b.lvl = "fwd"; b.echo = "touch";
       if (kit) b.kit = chance(r, 0.5) ? "busy" : null;
       b.outro = "fill";
     } else {                                            // outro
@@ -299,22 +299,30 @@
     if (!GENRES[gk]) gk = "simple";
     const r = rng(seed == null ? 1 : seed), G = GENRES[gk];
     const kit = Object.keys(G.kit || {}).length > 0;
-    // eight slots, and every one of them is USED — a song that fills three and
-    // leaves five blank has not composed anything, it has made a phrase
+    // eight kinds of material, and every one of them is USED — a song that
+    // fills three slots and leaves five blank has not composed anything, it
+    // has made a phrase. The bank is then sized to NSLOTS (the registry's
+    // number, not a literal 8): if the bank ever grows, the composer pads
+    // with blanks rather than emitting a save the loader must stretch.
     const slots = [phrase(r, "hook"), phrase(r, "answer"), phrase(r, "riff"),
                    phrase(r, "counter"), phrase(r, "pad"), phrase(r, "busy"),
                    phrase(r, "sparse"), phrase(r, "climb")];
+    while (slots.length < NF.NSLOTS) slots.push(blank());
     const S = { hook: 0, answer: 1, riff: 2, counter: 3, pad: 4,
                 busy: 5, sparse: 6, climb: 7,
                 groove: kit ? pick(r, [null, "backbeat", "push", "laidback", "funk", "dub"]) : null,
                 swing: kit && chance(r, 0.3) ? pick(r, ["light", "swing", "shuffle"]) : null };
-    const plan = PLANS[PLAN_OF[gk] || "song"];
+    // NO SILENT DEFAULTS. Every genre must carry a plan and a tempo — the old
+    // `|| "song"` / `|| 120` fallbacks meant a new genre arranged like pop at
+    // 120 and every gate passed. The coverage gate in test/unit/nukernel.test.js
+    // fails loudly on a missing entry instead.
+    const plan = PLANS[PLAN_OF[gk]];
     // the plan's own "intro" is replaced by however this song decided to begin,
     // which may be one section or three
     const song = [...introSections(G, gk, r, S),
                   ...plan.slice(1).map(role => build(role, G, gk, r, S))];
-    return { v: 1, slots, song,
-             bpm: Math.max(70, Math.min(160, (BPM[gk] || 120) + Math.floor(r() * 9) - 4)),
+    return { v: NS.VERSION, slots, song,
+             bpm: Math.max(70, Math.min(160, BPM[gk] + Math.floor(r() * 9) - 4)),
              vol: 80 };
   }
 

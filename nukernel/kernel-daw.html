@@ -77,13 +77,22 @@
 
 </div>
 
-<!-- order matters: the sampled engine, then the algebra, then the genre table, then the UI -->
+<!-- order matters, and it is the layer graph: the sampled engine, the algebra
+     (kernel), the genre table (genres), the control vocabulary (fields), pure
+     persistence (song), the sound sources (instruments), arranger policy
+     (compose), the shipped songs (presets), then — only then — the UI.
+     The UI is ONE module entry: ui/main.js imports the ui/ and audio/ tiers
+     in layer order (ui/deps.js is the sole reader of these globals). A module
+     script is deferred, so it always runs after every classic script here. -->
 <script src="../engine/registry-data.js"></script>
 <script src="../engine/faust/voices/sampler.js"></script>
-<script src="presets.js"></script>
 <script src="kernel.js"></script>
 <script src="genres.js"></script>
+<script src="fields.js"></script>
+<script src="song.js"></script>
+<script src="instruments.js"></script>
 <script src="compose.js"></script>
-<script src="kernel-daw.js"></script>
+<script src="presets.js"></script>
+<script type="module" src="ui/main.js"></script>
 </body>
 </html>

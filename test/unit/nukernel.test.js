@@ -730,13 +730,15 @@ console.log("groove moves time and level, and never breaks the stream");
 console.log("the composer writes songs that are songs");
 {
   const C = require("../../nukernel/compose.js");
+  const { NSLOTS } = require("../../nukernel/fields.js");
   const seeds = Array.from({ length: 40 }, (_, i) => i + 1);
   let silent = 0, unused = 0, leaps = 0, notes = 0;
   for (const gk of GK) {
     for (const s of seeds) {
       const song = C.compose(gk, s), G = GENRES[gk];
-      // the shape Load reads, or it cannot come back
-      ok(song.v === 1 && song.slots.length === 8 && song.song.length >= 6,
+      // the shape Load reads, or it cannot come back (v:2 = `echo` for `del`,
+      // padded slot banks — see nukernel/song.js migrate)
+      ok(song.v === 2 && song.slots.length === NSLOTS && song.song.length >= 6,
          gk + "/" + s + ": not the saved shape");
       ok(song.bpm >= 70 && song.bpm <= 160, gk + "/" + s + ": bpm outside the control's range");
       ok(song.slots.every(p => ["deg", "oct", "vel", "gate", "acc", "sld", "inc", "stk"]
@@ -798,8 +800,9 @@ console.log("the composer writes songs that are songs");
        gk + ": the same seed composed two different songs");
     ok(JSON.stringify(C.compose(gk, 9)) !== JSON.stringify(C.compose(gk, 10)),
        gk + ": two different seeds composed the same song");
-    // and the plan fits the genre — a fugue does not have a drop
-    const plan = C.PLANS[C.PLAN_OF[gk] || "song"];
+    // and the plan fits the genre — a fugue does not have a drop. NO fallback:
+    // PLAN_OF must carry every genre (the coverage gate below enforces it)
+    const plan = C.PLANS[C.PLAN_OF[gk]];
     ok(plan && plan[0] === "intro" && plan[plan.length - 1] === "outro",
        gk + ": the plan does not start with an intro and end with an outro");
   }
@@ -842,6 +845,164 @@ console.log("the composer writes songs that are songs");
        "% of its intervals are leaps — that is noise, not a phrase");
   }
   void leaps; void notes;
+}
+
+/* ---------------------------------------------------------------- 21. THE LOADER
+   song.js is the one gate every song passes — localStorage, files, presets,
+   the composer — and until it was pure it was tested only by a browser. Now
+   the whole contract is provable here: round trip, typed errors, migration. */
+console.log("the loader — round trip, typed errors, clamps, migration");
+{
+  const S = require("../../nukernel/song.js");
+  const F = require("../../nukernel/fields.js");
+  const NI = require("../../nukernel/instruments.js");
+  const C = require("../../nukernel/compose.js");
+  const { PRESETS } = require("../../nukernel/presets.js");
+  const seeds = Array.from({ length: 40 }, (_, i) => i + 1);
+
+  // (a) ROUND TRIP: everything the composer can emit, the loader accepts —
+  // the contract that used to be one browser smoke check, now exhaustive.
+  for (const gk of GK) for (const s of seeds) {
+    const res = S.validateSong(C.compose(gk, s));
+    ok(res.ok, gk + "/" + s + ": the loader refused a composed song — " +
+       (res.errors[0] && res.errors[0].path));
+  }
+  // ...and through the full path, any-version in
+  ok(S.load(C.compose("rock", 3)).ok, "load() refused a composed song");
+
+  // (b) REGISTRY COVERAGE: every fields.js entry is complete. The registry is
+  // the single definition of every control, so an incomplete entry is a chip
+  // the palette cannot draw or a field validation cannot check.
+  for (const f of F.FIELDS) {
+    ok(typeof f.key === "string" && f.key, "a fields entry has no key");
+    ok(f.scope === "box" || f.scope === "layer", f.key + ": scope is not box|layer");
+    ok(typeof f.tab === "string" && f.tab, f.key + ": no palette tab");
+    ok(typeof f.group === "string" && f.group, f.key + ": no group title");
+    if (f.type === "int") {
+      ok(Number.isFinite(f.min) && Number.isFinite(f.max) && f.min <= f.max,
+         f.key + ": int field without a [min,max]");
+      ok(Number.isFinite(f.default) && f.default >= f.min && f.default <= f.max,
+         f.key + ": default outside its own range");
+      continue;
+    }
+    ok(f.table && typeof f.table === "object" && Object.keys(f.table).length,
+       f.key + ": no value table");
+    ok(f.labels && Object.keys(f.table).every(k => f.labels[k] != null),
+       f.key + ": a table value has no label");
+    if (f.type === "list") ok(Array.isArray(f.default), f.key + ": list default is not []");
+    else ok(f.default === null, f.key + ": enum default is not null (absent = genre's own)");
+  }
+  // the registry and the constructor agree on what a box IS
+  {
+    const b = S.emptyBox();
+    for (const f of F.FIELDS)
+      if (f.type !== "vox") ok(f.key in b, "emptyBox is missing registry field " + f.key);
+    const wrapped = { v: 2, slots: [S.blank()], song: [b], bpm: 126, vol: 80 };
+    ok(S.validateSong(wrapped).ok, "emptyBox does not validate");
+  }
+
+  // (c) EXHAUSTIVE TOGGLE: every value in the registry, applied to a fresh
+  // box, must produce a song the loader accepts — so no palette chip can ever
+  // write a song that refuses to come back.
+  const trial = box => S.validateSong(
+    { v: 2, slots: [S.blank()], song: [box], bpm: 126, vol: 80 });
+  for (const f of F.FIELDS) {
+    if (f.type === "int") continue;                  // clamped, checked below
+    for (const k of Object.keys(f.table)) {
+      const b = S.emptyBox();
+      if (f.type === "list") b[f.key] = [k];
+      else if (f.type === "vox") b.vox = { [f.key]: k };
+      else b[f.key] = k;
+      let r = trial(b);
+      ok(r.ok, f.key + "=" + k + " on the box: loader refused — " +
+         (r.errors[0] && r.errors[0].path));
+      if (f.scope === "layer") {                     // and on a stack entry
+        const b2 = S.emptyBox();
+        if (f.type === "list") b2.stack[0][f.key] = [k];
+        else if (f.type === "vox") b2.stack[0].vox = { [f.key]: k };
+        else b2.stack[0][f.key] = k;
+        r = trial(b2);
+        ok(r.ok, f.key + "=" + k + " on a layer: loader refused — " +
+           (r.errors[0] && r.errors[0].path));
+      }
+    }
+  }
+  // typed errors: a bad value names its field instead of shrugging
+  {
+    const b = S.emptyBox(); b.rev = "soaked";
+    const r = trial(b);
+    ok(!r.ok && /\.rev$/.test(r.errors[0].path),
+       "a bad send did not name its own field: " + JSON.stringify(r.errors[0]));
+  }
+  // the clamps: a hand-edited len of 1e9 comes back as MAX_LEN, not a hung tab
+  {
+    const b = S.emptyBox(); b.len = 1e9; b.nudge = -5;
+    const r = trial(b);
+    ok(r.ok && r.song.song[0].len === F.MAX_LEN && r.song.song[0].nudge === 0,
+       "len/nudge are not clamped into range: " +
+       (r.ok ? r.song.song[0].len + "/" + r.song.song[0].nudge : "rejected"));
+  }
+  // the filter rule: unknown ops/fx are dropped, never fatal — a song loses an
+  // obsolete chip rather than losing itself
+  {
+    const b = S.emptyBox(); b.ops = ["rev", "nonsense"]; b.fx = ["chorus", "nonsense"];
+    const r = trial(b);
+    ok(r.ok && r.song.song[0].ops.join(",") === "rev" &&
+       r.song.song[0].fx.join(",") === "chorus",
+       "the ops/fx filter rule does not filter");
+  }
+
+  // (d) GENRE COVERAGE: a genre is instrument + plan + tempo as much as it is
+  // a kit — and none of them may default silently. Three tables used to fall
+  // back (piano / pop plan / 120 bpm) and nothing could notice a rotted entry.
+  for (const gk of GK) {
+    const g = GENRES[gk];
+    ok(typeof g.instr === "string" ||
+       (Array.isArray(g.instr) && g.instr.length && g.instr.every(x => typeof x === "string")),
+       gk + ": no `instr` in genres.js");
+    for (let v = 0; v < g.voices; v++)
+      ok(typeof NI.instrOf(gk, v) === "string", gk + ": instrOf failed for voice " + v);
+    ok(C.PLANS[C.PLAN_OF[gk]], gk + ": no PLAN_OF entry");
+    ok(Number.isFinite(C.BPM[gk]) && C.BPM[gk] >= 70 && C.BPM[gk] <= 160,
+       gk + ": no BPM entry in the control's range");
+  }
+  // ...and the miss is LOUD, not a polite piano
+  {
+    let threw = false;
+    try { NI.instrOf("no_such_genre", 0); } catch (e) { threw = true; }
+    ok(threw, "instrOf did not throw for a genre without an instrument");
+  }
+
+  // (e) MIGRATION: the shipped preset (v:1, pre-stack, pre-mixer) and a v:1
+  // fixture with every legacy wrinkle still load after the v:2 bump.
+  {
+    const r = S.load(PRESETS[0].data);
+    ok(r.ok, "the shipped preset no longer loads: " +
+       JSON.stringify(r.errors && r.errors[0]));
+    ok(PRESETS[0].data.v === 1, "migrate MUTATED the shipped preset literal");
+    const r2 = S.load(PRESETS[0].data);
+    ok(r2.ok, "the shipped preset does not survive being loaded twice");
+  }
+  {
+    const oldPhrase = () => ({ deg: new Array(16).fill(0), oct: new Array(16).fill(0),
+                               vel: new Array(16).fill(5), gate: new Array(16).fill(1),
+                               acc: new Array(16).fill(0), sld: new Array(16).fill(0) });
+    const v1 = { v: 1, slots: [oldPhrase(), oldPhrase()],   // short bank, no inc/stk
+                 song: [{ genre: "acid", slots: [0], len: 4, nudge: 0,
+                          ops: ["rev"], del: "some" }],     // pre-stack, old `del`
+                 bpm: 126, vol: 80 };
+    const r = S.load(v1);
+    ok(r.ok, "a v:1 save no longer loads: " + JSON.stringify(r.errors && r.errors[0]));
+    if (r.ok) {
+      const b = r.song.song[0];
+      ok(b.stack && b.stack[0].g === "acid", "the stack climb is gone");
+      ok(b.echo === "some" && !("del" in b), "del was not renamed to echo");
+      ok(r.song.slots.length === F.NSLOTS, "a short slot bank was not padded to " + F.NSLOTS);
+      ok(r.song.slots.every(p => Array.isArray(p.inc) && Array.isArray(p.stk)),
+         "the ramp vectors were not backfilled");
+      ok(r.song.v === 2, "migrate did not stamp the current version");
+    }
+  }
 }
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +

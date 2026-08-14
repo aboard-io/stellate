@@ -33,14 +33,7 @@ h1{
   font-size:15px; line-height:1; margin:0; font-weight:600;
   letter-spacing:.16em; text-transform:uppercase; color:var(--dim);
 }
-h1 em{font-style:normal}
 h1 em{font-style:normal;color:var(--accent)}
-.sub{color:var(--dim);font-size:12px;margin:6px 0 0;max-width:62ch}
-.count{
-  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
-  white-space:nowrap;
-}
-.count b{color:var(--accent2);font-weight:600}
 
 /* ---- controls ---- */
 .bar{
@@ -48,19 +41,6 @@ h1 em{font-style:normal;color:var(--accent)}
   background:var(--panel);border:1px solid var(--line);border-radius:3px;
   padding:10px;box-shadow:var(--shadow);
 }
-.tabs{display:flex;gap:0;border:1px solid var(--line);border-radius:2px;overflow:hidden}
-.tab{
-  appearance:none;border:0;border-right:1px solid var(--line);background:transparent;
-  color:var(--dim);font:inherit;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
-  padding:8px 14px;cursor:pointer;
-}
-.tab:last-child{border-right:0}
-.tab:hover{color:var(--ink);background:var(--sunk)}
-.tab[aria-pressed="true"]{background:var(--accent);color:#fff}
-.tab.pending{color:var(--accent);box-shadow:inset 0 -3px 0 var(--accent)}
-.tab.pending::after{content:" ·";animation:blink 1s steps(2,end) infinite}
-@keyframes blink{50%{opacity:0}}
-@media (prefers-reduced-motion:reduce){.tab.pending::after{animation:none}}
 .btn{
   appearance:none;font:inherit;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
   background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:2px;
@@ -69,7 +49,7 @@ h1 em{font-style:normal;color:var(--accent)}
 .btn:hover{background:var(--sunk)}
 .btn.go{background:var(--accent);color:#fff;border-color:var(--accent);min-width:96px}
 .btn.go:hover{filter:brightness(1.08)}
-:where(.tab,.btn,.cell,.rowlab):focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+:where(.btn,.cell,.rowlab):focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
 .knob{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim);
   letter-spacing:.08em;text-transform:uppercase}
 .knob input{width:118px;accent-color:var(--accent)}
@@ -83,7 +63,6 @@ h1 em{font-style:normal;color:var(--accent)}
 .knob b{color:var(--ink);font-weight:600;min-width:44px;font-size:12px}
 .spacer{flex:1 1 auto}
 .readout{font-size:11px;color:var(--dim);letter-spacing:.06em}
-.readout span{color:var(--ink)}
 
 /* ---- arrangement ---- */
 .daw{background:var(--panel);border:1px solid var(--line);border-radius:3px;
@@ -126,8 +105,9 @@ h1 em{font-style:normal;color:var(--accent)}
 .edhead h2 span{color:var(--accent);text-transform:none;letter-spacing:.06em}
 .edhead h2{margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
 .edhead p{margin:0;font-size:11px;color:var(--dim)}
-.slots{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
-@media (max-width:720px){.slots{grid-template-columns:repeat(4,1fr)}}
+/* auto-fill, not repeat(8,...): the bank's size is NSLOTS (fields.js), and the
+   grid must not need editing when that number moves */
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
 .slot{
   appearance:none;font:inherit;cursor:pointer;padding:5px 6px 6px;
   background:var(--sunk);border:1px solid var(--line);border-radius:2px;
@@ -186,7 +166,6 @@ h1 em{font-style:normal;color:var(--accent)}
 .addbox.copy{border-style:solid}
 .addbox.copy svg{width:19px;height:19px;fill:none;stroke:currentColor;
   stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
-.song.targeting .box{border-style:dashed;border-color:var(--accent2)}
 .box{
   min-height:132px;
   position:relative;flex:0 0 auto;cursor:grab;background:var(--sunk);
@@ -213,9 +192,7 @@ h1 em{font-style:normal;color:var(--accent)}
 .bgenre{font-size:12px;letter-spacing:.04em;color:var(--faint)}
 .bgenre.has{color:var(--ink);font-weight:600}
 .bphrase{font-size:11px;letter-spacing:.06em;color:var(--faint)}
-.bphrase.has{color:var(--ink)}
 .bphrase.has{color:var(--dim)}
-.bphrase .pn{font-size:10px;letter-spacing:.08em}
 .bprog{height:3px;background:var(--hair);border-radius:2px;overflow:hidden;margin-top:auto}
 .fillbar{display:block;height:100%;width:0;background:var(--accent);border-radius:2px}
 .box.queued{border-style:dashed;border-color:var(--accent2)}
@@ -308,7 +285,6 @@ h1 em{font-style:normal;color:var(--accent)}
    chip is a knob on the voice itself */
 .pchip.fx.on{background:var(--v2);border-color:var(--v2);color:#fff}
 .pchip.vox.on{background:var(--v0);border-color:var(--v0);color:#fff}
-.pchip.dragging,.slot.dragging{opacity:.4}
 .slot.inbox{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .slot.inbox .sn{color:var(--accent)}
 :where(.pchip,.ptab,.bhead .x,.bhead .t,.slot,.box):focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
@@ -336,5 +312,4 @@ summary:hover{color:var(--ink)}
 details pre{margin:10px 0 0;overflow-x:auto;font-size:11.5px;line-height:1.65;
   color:var(--ink)}
 details .c{color:var(--faint)}
-.note-b{font-size:11px;color:var(--dim);line-height:1.7;margin:8px 0 0;max-width:78ch}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}

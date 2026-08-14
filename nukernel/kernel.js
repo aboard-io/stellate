@@ -1,7 +1,8 @@
 // kernel.js — the nukernel ALGEBRA. Pure, total, zero dependencies (UMD like
 // every engine file). No I/O, no DOM, no audio, no genre data: generators and
 // transformers only, so the ASCII printer (tri.js) and the browser DAW
-// (kernel-daw.js) wrap exactly the same code instead of each carrying a copy.
+// (ui/ + audio/ modules, entry ui/main.js) wrap exactly the same code instead
+// of each carrying a copy.
 //
 // A PATTERN is five parallel CYCLIC vectors of equal length:
 //   deg   scale degree — SIGNED and unbounded. Negative walks below the tonic,
@@ -620,7 +621,7 @@
   // can do — and they are the two transitions that actually mark a boundary
   // rather than smoothing one. (The third family, the filter sweeps, cannot live
   // here at all: they are a property of the SOUND, not of the event stream, so
-  // they are automation on the section's mixer channel — see kernel-daw.js.)
+  // they are automation on the section's mixer channel — see audio/mixer.js.)
   const SHAPES = {
     in:    x => x,
     out:   x => 1 - x,
