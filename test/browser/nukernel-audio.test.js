@@ -108,6 +108,17 @@ function taps() {
     // SITS is not something a broadband limiter can put back: the fraction of it
     // above ~4 kHz answers "did the sound change", and distortion, a filter and
     // a reverb tail all move it.
+    // the raw spectrum, for SHAPE comparisons. __hf's above-4kHz fraction is
+    // the right read for a filter closing; it is blind to treatments that
+    // relocate energy WITHIN bands (ring mod's sidebands, a mild saturation),
+    // which is exactly what "is this chain in the signal path" must detect
+    // whatever taste has done to the effect's intensity. Callers average
+    // linear magnitudes over a window and correlate.
+    window.__spec = () => {
+      const n = an.frequencyBinCount, d = new Float32Array(n);
+      an.getFloatFrequencyData(d);
+      return Array.from(d.slice(0, 512), (db) => Math.pow(10, db / 20));
+    };
     window.__hf = () => {
       const n = an.frequencyBinCount, d = new Float32Array(n);
       an.getFloatFrequencyData(d);                       // dBFS per bin
@@ -306,27 +317,47 @@ function taps() {
       await chip("forward").click();                   // back off for the spectrum read
     }
 
-    // ...AND IT IS AUDIBLE. `crunch` is the staged amp: three waveshaper stages
-    // that add harmonics, then a 4x12 cab that rolls the top off. Those two pull
-    // the spectrum in OPPOSITE directions, so "the highs go up" is not a
-    // property of the module and asserting it would be asserting a coincidence.
-    // What IS a property is that the sound changes — a decorative chain, one
-    // built and then bypassed, moves the spectrum by nothing at all. Averaged
-    // over a whole pass of the same four bars, a quarter is far outside the
-    // few-percent drift between two passes.
-    const clean = await hf(8);
+    // ...AND IT IS AUDIBLE — measured as spectral SHAPE, not the above-4kHz
+    // fraction. The old read failed the moment taste turned the crunch down
+    // (the 2026-08-14 retune left a one-stage half-mix amp that moves the HF
+    // fraction by ~13%, under the old 25% bar), and ring mod fooled it too:
+    // sidebands relocate energy WITHIN bands, 4% on the fraction. But "is the
+    // chain in the signal path" is not a question about intensity. Averaged
+    // linear spectra correlate at ~0.995 between two passes of the SAME sound
+    // (measured); any real treatment — the tamed crunch included — bends the
+    // shape to ~0.94. The 0.98 bar sits between with margin on both sides,
+    // and a decorative chain, built then bypassed, cannot cross it.
+    const spec = async (s) => {
+      let acc = null, n = 0;
+      for (let i = 0; i < s * 5; i++) {
+        await page.waitForTimeout(200);
+        const v = await page.evaluate(() => window.__spec());
+        acc = acc ? acc.map((x, j) => x + v[j]) : v; n++;
+      }
+      return acc.map(x => x / n);
+    };
+    const corr = (a, b2) => {
+      const ma = a.reduce((x, y) => x + y) / a.length, mb = b2.reduce((x, y) => x + y) / b2.length;
+      let num = 0, da = 0, db = 0;
+      for (let i = 0; i < a.length; i++) {
+        const x = a[i] - ma, y = b2[i] - mb; num += x * y; da += x * x; db += y * y;
+      }
+      return num / Math.sqrt(da * db);
+    };
+    const clean = await spec(8);
     await chip("crunch").click();
     await waitMix(m => m.channels.some(x => x.fx.length === 3), 20000);
-    const dirty = await hf(8);
+    const dirty = await spec(8);
     await page.click("#play");
-    const moved = Math.abs(dirty - clean) / (clean || 1);
-    console.log(`  spectrum above 4 kHz  : clean ${clean.toFixed(4)} -> crunch ${dirty.toFixed(4)} ` +
-                `(${(moved * 100).toFixed(0)}%)`);
-    if (moved > 0.25)
-      ok(`the insert chain changes the rendered sound: HF ${clean.toFixed(4)} -> ${dirty.toFixed(4)}`);
-    else fail(`switching on a distortion insert moved the spectrum by ${(moved * 100).toFixed(0)}% — ` +
-              `the chain is built but not in the signal path ` +
-              `(HF ${clean.toFixed(4)} -> ${dirty.toFixed(4)})`);
+    const r = corr(clean, dirty);
+    console.log(`  spectral shape corr   : clean vs crunch ${r.toFixed(4)} ` +
+                `(same-sound drift measures ~0.995, any real treatment ~0.94)`);
+    if (r < 0.98)
+      ok(`the insert chain changes the rendered sound: shape correlation ${r.toFixed(4)}`);
+    else fail(`switching on the crunch insert left the spectral shape at ` +
+              `${r.toFixed(4)} correlation (>= 0.98 is indistinguishable from ` +
+              `two passes of the same sound) — the chain is built but not in ` +
+              `the signal path`);
   }
 
   // (F) ONE BUTTON, A WHOLE SONG. The composer is pure and seeded, and
