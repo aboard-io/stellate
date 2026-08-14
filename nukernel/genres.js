@@ -24,7 +24,7 @@
   "use strict";
   const K = (typeof module !== "undefined" && module.exports)
     ? require("./kernel.js") : root.NuKernel;
-  const { rotate, reverse, transpose, invert, complement, excerpt, only, drop, fill } = K;
+  const { rotate, reverse, transpose, invert, complement, excerpt, only, drop, fill, del } = K;
 
   // The blues scale — minor pentatonic plus the flat five. The ♭5 is a passing
   // tone, not a chord tone, and it is the whole reason `scale` had to become a
@@ -110,6 +110,15 @@
     beatlesV: [{ d: 0 }, { d: 0 }, { d: 6 }, { d: 6 }, { d: 3 }, { d: 3 }, { d: 0 }, { d: 0 }],
     beatlesC: [{ d: 0 }, { d: 0 }, { d: 6 }, { d: 6 }, { d: 3 }, { d: 3 }, { d: 4 }, { d: 0 }],
   };
+
+  // THE SKANK — an absolute gate, written as its own total operator because no
+  // palette op can SAY a grid: every existing gate op rearranges or thins the
+  // gates the phrase already has, and the offbeat chop must not depend on what
+  // those happen to be. offbeats(4) is the reggae upstroke (steps 2 6 10 14);
+  // offbeats(2) is the double skank ska plays at speed. Total and pure like
+  // every operator: pattern in, pattern out, nothing mutated.
+  const offbeats = every => p =>
+    ({ ...p, gate: p.gate.map((_, i) => (i % every === every / 2 ? 1 : 0)) });
 
   // ---- the seed phrase (16 steps) -----------------------------------------
   const DEFAULT = {
@@ -725,6 +734,568 @@
       words: ["the strings, holding", "the first guitar", "the second, from bar 5"],
       word: v => (v === 2 ? [rotate(4), drop(2)] : []),
       fx: ["echo"],
+    },
+
+    // ---- THE RADIO DIAL ----------------------------------------------------
+    // The table was strong on art music, studio rock and dance and near-empty
+    // on the actual radio spectrum. Each genre below names its nearest existing
+    // neighbour (`near:`, which the confusion gate reads) and its comment says
+    // which FIELD separates them — that field is the genre, everything else is
+    // orchestration. Between them they exercise every piece of the depth round:
+    // reggae's skank proves PARTS, house's seventh loop proves PROGRESSION,
+    // motown proves the major modes, dnb proves the kit schedule, garage
+    // proves the period.
+
+    // BOOM BAP [isley]. The nearest record is the soul record it would have
+    // sampled, and the difference IS the sampling: the keys are a STAB whose
+    // gate is excerpt(0,8) — half the phrase's rhythm looped like a chop
+    // lifted off vinyl, voicing the sounding seventh chord, where isley plays
+    // the whole tune live. The snare hand (kitVel) does the rest — every
+    // backbeat at 9.
+    boombap: {
+      label: "Boom bap", rate: 1, bars: 4, voices: 2, swing: 0.2, near: "isley",
+      instr: ["electric_piano", "muted_trumpet"],
+      drumkit: "room",
+      entry: v => v * 2, reg: v => v - 1,
+      realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead"],
+      harmony: "cycle", roots: [0, 0, 3, 3], mode: MODES.dorian,
+      scale: MODES.dorian, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 0, q: "7" }, { d: 3, q: "7" }, { d: 3, q: "7" }],
+      maxHold: 3,
+      bassGrid: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kitVel: { s: [0,0,0,0, 9,0,0,0, 0,0,0,0, 9,0,0,0] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2000, q: 1.4, atk: .006, rel: .6, gain: .28, verb: .2 },
+      words: ["the chop — eight steps of the phrase's rhythm, chords on it",
+              "the horn, answering from bar 3"],
+      word: v => (v === 0 ? [excerpt(0, 8)] : [only("gate", rotate(8))]),
+    },
+
+    // TRAP [deathmetal] — and the neighbour is not a joke: both are minor,
+    // fast, sixteenth-hat music. What separates them is the HALF-TIME SNARE:
+    // one hit on beat 3 where death metal blasts eight, no distortion, and a
+    // bell up top where the tremolo guitar was. The hats carry the hand
+    // (kitVel) and the 808 ties.
+    trap: {
+      label: "Trap", rate: 1, bars: 4, voices: 2, near: "deathmetal",
+      instr: ["music_box", "square_lead"],
+      drumkit: "electronic",
+      entry: v => v * 2, reg: v => 1 - 2 * v, realize: () => "line",
+      harmony: "cycle", roots: [0, 0, 5, 5],
+      artic: "tie",
+      bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,0,1, 0,0,0,0],
+             s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { h: [7,2,4,2, 6,2,4,2, 7,2,4,2, 6,2,5,3] },
+      fill: { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 1,1,1,1] },
+      tone: { wave: "square", cut: 2400, q: 1.8, atk: .003, rel: .5, gain: .28, verb: .3 },
+      words: ["the bell, up top", "the sub line, tied"],
+      word: v => (v === 0 ? [] : [only("gate", rotate(4)), drop(2)]),
+    },
+
+    // HOUSE [acid]. Acid is modal with a 303 and no chords; house is a SEVENTH
+    // LOOP with piano stabs — the prog is the genre. ii7–V7–Imaj7–vi7 in a real
+    // major key, a stab part on the phrase's own rhythm, and the open hat on
+    // the offbeat doing the work acid's sixteenth hats did.
+    house: {
+      label: "House", rate: 1, bars: 4, voices: 2, near: "acid",
+      instr: ["bright_yamaha_grand", "polysynth"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => v - 1,
+      realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead"],
+      harmony: "cycle", roots: [1, 4, 0, 5], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 1, q: "7" }, { d: 4, q: "7" }, { d: 0, q: "7" }, { d: 5, q: "7" }],
+      bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      fill: { c: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "sawtooth", cut: 2400, q: 1.6, atk: .004, rel: .5, gain: .28, verb: .18 },
+      words: ["the piano stabs, on the tune's own rhythm", "the lead over the loop"],
+      word: () => [],
+    },
+
+    // UK GARAGE [house]. Same rave, different floor: the kick BREAKS (1 and
+    // the a-of-2) instead of stamping fours, the second snare is displaced,
+    // the swing is huge, and the two-bar shuffle is a PERIOD — the sixth type
+    // saying what house's straight grid cannot.
+    garage: {
+      label: "UK garage", rate: 1, bars: 4, voices: 2, swing: 0.28, near: "house",
+      instr: ["electric_piano", "solo_vox"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => v - 1, realize: () => "line",
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
+      maxHold: 2,                              // the chopped vocal breathes
+      bassStyle: "octaves",
+      period: [[], [only("gate", rotate(1))], [], [drop(2)]],
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,1,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,1, 0,0,0,0],
+             h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,1] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,1, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2600, q: 1.4, atk: .004, rel: .4, gain: .27, verb: .24 },
+      words: ["the chopped vocal", "the answer, shuffled off the beat"],
+      word: v => (v === 0 ? [] : [only("gate", rotate(3)), drop(3)]),
+    },
+
+    // DRUM & BASS [house]. The founding move is the BREAK, and a break is two
+    // bars, not one — so this is the kit schedule's proof genre: `kits` reads
+    // a different bar of drums on the even and odd bars, ghost layer armed,
+    // over a tied reese-register line and a pedal sub that refuses to move.
+    dnb: {
+      label: "Drum & bass", rate: 1, bars: 4, voices: 2, near: "house",
+      instr: ["fifth_sawtooth_wave", "echo_drops"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => v - 2, realize: () => "line",
+      harmony: "modal",
+      artic: "tie", maxHold: 2,
+      bassStyle: "pedal",
+      bassGrid: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kits: [
+        { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+          s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
+          h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+        { k: [1,0,0,1, 0,0,0,0, 0,1,0,0, 0,0,0,0],
+          s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,0,0],
+          h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      ],
+      ghost: [only("acc", rotate(1))],
+      fill: { s: [1,0,1,0, 1,0,1,0, 1,1,0,1, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 1200, q: 3, atk: .003, rel: .5, gain: .28, verb: .16 },
+      words: ["the reese line, tied", "the pads drifting over the break"],
+      word: (v, s) => (v === 0 ? [] : [rotate(8), drop(2)]),
+    },
+
+    // DISCO [newwave]. Both are bright four-square pop machines; what
+    // separates them is the SEVENTHS and the open hat. New wave is clipped
+    // triads and closed eighths; disco is a dorian seventh cycle, an open hat
+    // on EVERY offbeat, sixteenth hats under it, strings stabbing the chords
+    // and an octave bass — the whole record leans forward.
+    disco: {
+      label: "Disco", rate: 1, bars: 4, voices: 2, near: "newwave",
+      instr: ["strings", "clean_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1,
+      realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead"],
+      harmony: "cycle", roots: [0, 3, 2, 4], mode: MODES.dorian,
+      scale: MODES.dorian, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 3, q: "7" }, { d: 2, q: "7" }, { d: 4, q: "7" }],
+      maxHold: 2,
+      bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { h: [8,3,5,3, 7,3,5,3, 8,3,5,3, 7,3,6,4] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,1,1,0] },
+      tone: { wave: "sawtooth", cut: 2800, q: 1.4, atk: .005, rel: .5, gain: .27, verb: .28 },
+      words: ["the string stabs", "the guitar, answering"],
+      word: v => (v === 1 ? [only("gate", rotate(4))] : []),
+    },
+
+    // FUNK [isley]. Soul with the harmony taken away: MODAL, one dorian chord
+    // for the whole record, because the groove is the song. A clavinet where
+    // the Rhodes was, a sixteenth bass with a hard rest cap, ghost snares as
+    // a velocity fact (kitVel 2s between the 9s), and the ghost lane armed.
+    funk: {
+      label: "Funk", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "isley",
+      instr: ["clavinet", "brass_section"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1, realize: () => "line",
+      harmony: "modal", mode: MODES.dorian, scale: MODES.dorian,
+      artic: "staccato", maxHold: 2,
+      bassStyle: "sixteenths",
+      ghost: [only("acc", rotate(2))],
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,1, 1,0,0,0, 0,0,1,0, 1,0,0,0],
+             h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
+      kitVel: { s: [0,0,0,2, 9,0,0,0, 0,0,2,0, 9,0,0,0] },
+      fill: { s: [0,0,0,1, 1,0,0,1, 0,0,1,0, 1,0,1,1] },
+      tone: { wave: "square", cut: 2200, q: 2.2, atk: .003, rel: .3, gain: .28, verb: .14 },
+      words: ["the clavinet, chopped", "the horns, rotated off the beat"],
+      word: v => (v === 1 ? [only("gate", rotate(2)), drop(2)] : []),
+    },
+
+    // MOTOWN [beatles]. Both are bright sixties three-minute machines; the
+    // field that separates them is the SNARE ON ALL FOUR — the Funk Brothers'
+    // stamp, with the tambourine offbeats beside it — over a walking bass and
+    // an ionian I-vi-IV-V said with its sevenths out loud.
+    motown: {
+      label: "Motown", rate: 1, bars: 4, voices: 2, swing: 0.12, near: "beatles",
+      instr: ["upright_piano", "trumpet"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => v - 1,
+      realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead"],
+      harmony: "cycle", roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "dom7" }],
+      maxHold: 3,
+      bassStyle: "walk",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             p: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [1,0,0,0, 1,0,1,0, 1,0,1,0, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2600, q: 1.0, atk: .005, rel: .6, gain: .28, verb: .26 },
+      words: ["the piano, stabbing the changes", "the horn line over it"],
+      word: () => [],
+    },
+
+    // R&B [jodeci]. Jodeci is new jack — swung, triadic, a drum machine
+    // playing sixteenths. This is the other nineties: STRAIGHT time and
+    // EXTENDED chords, Imaj7–iii7–vi7–IVmaj7, a rim on 3, an EP that holds,
+    // and backing vocals that are a harmonize PIPE, chord-locked sixths.
+    rnb: {
+      label: "R&B", rate: 1, bars: 4, voices: 2, near: "jodeci",
+      instr: ["legend_ep_2", "synth_voice"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => v - 1,
+      realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", roots: [0, 2, 5, 3], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 2, q: "7" }, { d: 5, q: "7" }, { d: 3, q: "7" }],
+      maxHold: 2, artic: "legato",
+      pipes: [{ id: "harmonize", p: 0.4, gap: "sixth" }],
+      bassGrid: [1,0,0,1, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+      kit: { k: [1,0,0,1, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             h: [1,0,0,1, 0,1,0,0, 1,0,0,1, 0,0,1,0] },
+      fill: { h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2200, q: 1.0, atk: .01, rel: .9, gain: .26, verb: .38 },
+      words: ["the EP, holding the sevenths", "the melisma, with its rests"],
+      word: () => [],
+    },
+
+    // GOSPEL [motown]. Same church, one street over — and the field that
+    // separates them is the SECONDARY DOMINANT: I goes to IV through its own
+    // V7 (the one deliberate exit from the key), and the form ends on the
+    // plagal amen, IV–I inside the last bar. Shuffled hard, organ under
+    // everything, the answering choir arriving late a third up.
+    gospel: {
+      label: "Gospel", rate: 1, bars: 4, voices: 3, swing: 1 / 3, near: "motown",
+      instr: ["drawbarorgan", "ahh_choir", "ohh_voices"],
+      drumkit: "acoustic",
+      entry: v => v * 2, reg: v => (v === 0 ? -1 : v - 1),
+      realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", roots: [0, 0, 3, 3], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 0, q: "dom7" }, { d: 3, q: "7" },
+             [{ d: 3, q: "six", beats: 8 }, { d: 0, q: "7", beats: 8 }]],
+      maxHold: 4,
+      bassStyle: "walk",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 1,0,1,0, 1,1,1,0] },
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .02, rel: 1.2, gain: .26, verb: .45 },
+      words: ["the organ, walking the changes", "the lead voice",
+              "the choir, answering a third up from bar 5"],
+      word: v => (v === 2 ? [transpose(2), drop(2)] : []),
+    },
+
+    // REGGAE [dub]. The pair share the one-drop; what separates THIS one is
+    // that the harmony still moves (i–i–IV–v) while the kick refuses beat 1 —
+    // no kick on the one is the whole drama of the kit. The skank is the
+    // PARTS proof: a stab on an absolute offbeat gate, which was unsayable
+    // while a chord could only fire once a bar.
+    reggae: {
+      label: "Reggae", rate: 1, bars: 4, voices: 2, near: "dub",
+      instr: ["clean_guitar", "harmonica"],
+      drumkit: "room",
+      entry: v => v, reg: v => v,
+      realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead"],
+      harmony: "cycle", roots: [0, 0, 3, 4],
+      maxHold: 6,
+      bassGrid: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+      kit: { k: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             p: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      fill: { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2000, q: 1.2, atk: .008, rel: .7, gain: .27, verb: .3 },
+      words: ["the skank, offbeats only", "the melodica line, long notes"],
+      word: v => (v === 0 ? [offbeats(4)] : []),
+    },
+
+    // DUB [reggae]. Same one-drop, same skank — the difference is REFUSAL:
+    // the harmony collapses to one modal chord, the melody drops out two ways
+    // at once, the bass sits on the pedal, and the tape echo is on the genre
+    // (the sends are the instrument here, not the notes).
+    dub: {
+      label: "Dub", rate: 1, bars: 4, voices: 2, near: "reggae",
+      instr: ["clean_guitar", "echo_drops"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1,
+      realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead"],
+      harmony: "modal",
+      maxHold: 3,
+      bassStyle: "pedal",
+      kit: { k: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             p: [0,1,0,0, 0,0,0,1, 1,0,0,0, 0,0,1,0],
+             h: [0,0,1,0, 0,0,0,0, 0,0,1,0, 0,0,0,0] },
+      fill: { h: [0,0,1,0, 0,0,1,0, 1,0,1,0, 1,0,1,1] },
+      tone: { wave: "triangle", cut: 1500, q: 1.6, atk: .01, rel: 1.4, gain: .26, verb: .7 },
+      words: ["the skank, thinned", "the line, mostly dropped out"],
+      word: (v, s) => (v === 0 ? [offbeats(4), drop(2)]
+                              : [drop(2), ...(s % 2 ? [drop(3)] : [])]),
+      fx: ["echo"],
+    },
+
+    // SKA [reggae]. The same offbeat chop played at twice the density and
+    // twice the joy: the DOUBLE skank (every second step, not every fourth),
+    // a kick that dares to land on 1 and 3, a real backbeat, a walking bass
+    // and a major I-IV-V — reggae's rhythm cell in a completely different key
+    // of feeling.
+    ska: {
+      label: "Ska", rate: 1, bars: 4, voices: 2, near: "reggae",
+      instr: ["palm_muted_guitar", "trumpet"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => v,
+      realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead"],
+      harmony: "cycle", roots: [0, 3, 4, 0], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "staccato", maxHold: 2,
+      bassStyle: "walk",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,1,1,1] },
+      tone: { wave: "square", cut: 2600, q: 1.6, atk: .003, rel: .3, gain: .27, verb: .18 },
+      words: ["the double skank", "the horn line"],
+      word: v => (v === 0 ? [offbeats(2)] : []),
+    },
+
+    // AFROBEAT [funk]. Both are modal dorian groove machines; the field that
+    // separates them is the CROSS-RHYTHM — 3-3-3-3-2-2 on the percussion lane
+    // against the four, three staggered voices in rotated relations instead
+    // of two locked ones, and an eight-bar form because the groove is a place
+    // you stay, not a bar you loop.
+    afrobeat: {
+      label: "Afrobeat", rate: 1, bars: 8, voices: 3, near: "funk",
+      instr: ["clean_guitar", "tenor_sax", "brass_section"],
+      drumkit: "jazz",
+      entry: v => v * 2, reg: v => v - 1, realize: () => "line",
+      harmony: "modal", mode: MODES.dorian, scale: MODES.dorian,
+      maxHold: 3,
+      bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             s: [0,0,0,0, 0,1,0,0, 0,0,0,0, 0,1,0,0],
+             p: [1,0,0,1, 0,0,1,0, 0,1,0,0, 1,0,1,0],
+             h: [1,1,1,0, 1,1,1,0, 1,1,1,0, 1,1,1,0] },
+      fill: { s: [0,0,0,0, 0,1,0,1, 0,0,1,0, 1,1,0,1] },
+      tone: { wave: "triangle", cut: 2400, q: 1.4, atk: .005, rel: .5, gain: .27, verb: .2 },
+      words: ["the tenor guitar, chopping", "the sax, in threes against it",
+              "the horns, further out of phase"],
+      word: (v, s) => [[], [rotate(4), drop(2)], [rotate(8), drop(3)]][v],
+    },
+
+    // BOSSA NOVA [steely]. Both live on sevenths and understatement; the
+    // field that separates them is the CLAVE — the rim figure the whole bar
+    // hangs off — plus brushes, no snare at all, and the ii7–V7 packed into
+    // HALF a bar (`beats: 8`), which is the turnaround steely spreads over
+    // two whole bars.
+    bossa: {
+      label: "Bossa nova", rate: 1, bars: 4, voices: 2, near: "steely",
+      instr: ["nylon_string_guitar", "flute"],
+      drumkit: "brush",
+      entry: v => v, reg: v => v - 1,
+      realize: v => (v === 0 ? "pad" : "line"),
+      harmony: "cycle", roots: [0, 1, 0, 5], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [[{ d: 0, q: "7" }],
+             [{ d: 1, q: "7", beats: 8 }, { d: 4, q: "dom7", beats: 8 }],
+             [{ d: 0, q: "7" }], [{ d: 5, q: "7" }]],
+      pipes: [{ id: "strum", spread: 0.04 }],
+      artic: "legato", maxHold: 4,
+      bassStyle: "fifths",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             p: [1,0,0,1, 0,0,1,0, 0,0,1,0, 0,1,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { p: [1,0,0,1, 0,0,1,0, 1,0,1,0, 1,1,0,1] },
+      tone: { wave: "triangle", cut: 2400, q: 0.8, atk: .008, rel: .8, gain: .26, verb: .3 },
+      words: ["the guitar, rolling the sevenths", "the flute, saying very little"],
+      word: () => [],
+    },
+
+    // COUNTRY [beatles]. Both are I-loving guitar pop; the fields that
+    // separate them are the TRAIN BEAT — brushes on every offbeat eighth, no
+    // backbeat snare at all — and the FIFTHS bass, the boogie root-five
+    // figure. The fiddle answers late instead of doubling in thirds all the
+    // way, which is the difference between Nashville and Liverpool.
+    countrypop: {
+      label: "Country", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "beatles",
+      instr: ["banjo", "fiddle"],
+      drumkit: "acoustic",
+      entry: () => 0, reg: v => v, realize: () => "line",
+      harmony: "cycle", roots: [0, 4, 5, 3], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      maxHold: 3,
+      bassStyle: "fifths",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,1,0, 0,0,1,0, 1,0,1,0, 1,1,1,0] },
+      tone: { wave: "triangle", cut: 2800, q: 1.0, atk: .004, rel: .5, gain: .28, verb: .2 },
+      words: ["the banjo roll", "the fiddle, answering a third up"],
+      word: v => (v === 1 ? [only("gate", rotate(8)), transpose(2)] : []),
+    },
+
+    // SYNTH POP [eurythmics]. Eurythmics is a two-chord vamp with two lines;
+    // this is the FOUR-chord aeolian anthem (i–VI–III–VII, the loop under
+    // half the eighties) with a STAB where the second sequence was, a huge
+    // gated snare and — the tell — no hats at all.
+    synthpop: {
+      label: "Synth pop", rate: 1, bars: 4, voices: 2, near: "eurythmics",
+      instr: ["polysynth", "saw_wave"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => v - 1,
+      realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead"],
+      harmony: "cycle", roots: [0, 5, 2, 6],
+      scale: DIATONIC, diatonic: true,
+      artic: "staccato",
+      bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,1,0] },
+      tone: { wave: "sawtooth", cut: 2600, q: 2.0, atk: .003, rel: .4, gain: .28, verb: .26 },
+      words: ["the stab, on the tune's rhythm", "the hook, re-pitched every other bar"],
+      word: (v, s) => (v === 1 && s % 2 ? [only("deg", rotate(4))] : []),
+      fx: ["chorus"],
+    },
+
+    // SHOEGAZE [postrock]. Post rock is patience — half speed, staggered
+    // arrivals, one crescendo. Shoegaze is the same reverb with a BACKBEAT
+    // under it: full speed, a real snare, and both guitars playing the same
+    // phrase ONE DEGREE APART (bulgarian's held second, under fuzz), which is
+    // where the blur comes from — it is detune as counterpoint.
+    shoegaze: {
+      label: "Shoegaze", rate: 1, bars: 8, voices: 2, near: "postrock",
+      instr: ["overdrive_guitar", "overdrive_guitar"],
+      drumkit: "room",
+      entry: () => 0, reg: v => v - 1, realize: () => "line",
+      harmony: "cycle", roots: [0, 3, 5, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", incClamp: 4, incMode: "reverse",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0] },
+      tone: { wave: "sawtooth", cut: 1600, q: 1.6, atk: .02, rel: 1.6, gain: .26, verb: .8 },
+      words: ["the tune", "the same tune a second up — the blur"],
+      word: v => (v === 1 ? [transpose(1)] : []),
+      fx: ["crunch", "chorus"],
+    },
+
+    // CITY POP [toto]. Session players either side of the Pacific; the field
+    // that separates them is the SWING (a 0.1 lean, not the Porcaro triplet)
+    // and the ROYAL ROAD — IVmaj7–V7–iii7–vi7, the progression this whole
+    // project was once named after, finally in the table under its own flag.
+    // Slap-tight sixteenth bass, an EP stab, no ghost lane.
+    citypop: {
+      label: "City pop", rate: 1, bars: 4, voices: 2, swing: 0.1, near: "toto",
+      instr: ["electric_piano", "clean_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1,
+      realize: v => (v === 0 ? "pad" : "line"),
+      part: ["stab", "lead"],
+      harmony: "cycle", roots: [3, 4, 2, 5], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 3, q: "7" }, { d: 4, q: "7" }, { d: 2, q: "7" }, { d: 5, q: "7" }],
+      maxHold: 2,
+      bassStyle: "sixteenths",
+      kit: { k: [1,0,0,0, 0,0,0,1, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,1, 1,0,1,0, 1,1,1,0, 1,0,1,0] },
+      kitVel: { h: [8,3,5,3, 7,3,5,4, 8,3,6,3, 7,3,5,4] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2800, q: 1.0, atk: .005, rel: .6, gain: .27, verb: .3 },
+      words: ["the EP, stabbing the royal road", "the guitar, gliding over it"],
+      word: () => [],
+    },
+
+    // PUNK [rock]. Rock develops a riff; punk REFUSES to — the whole guitar
+    // is fill(2), every eighth a downstroke, staccato, no space and no
+    // dynamics, over a kick on every quarter and a major I-IV-V because
+    // subtlety is for prog. Three chords and the truth at 160.
+    punk: {
+      label: "Punk", rate: 1, bars: 4, voices: 2, near: "rock",
+      instr: ["distortion_guitar", "crunch_guitar"],
+      drumkit: "power",
+      entry: () => 0, reg: v => -1 - v, realize: () => "line",
+      harmony: "cycle", roots: [0, 3, 4, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "staccato",
+      bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2000, q: 1.8, atk: .002, rel: .3, gain: .3, verb: .1 },
+      words: ["every eighth, downstrokes", "the same riff, an octave under, as written"],
+      word: v => (v === 0 ? [only("gate", fill(2))] : []),
+      fx: ["crunch"],
+    },
+
+    // AMBIENT [drone]. Drone is a pedal that refuses to move; ambient is the
+    // same stillness with a HARMONY inside it — a lydian maj7 cycle two bars
+    // to the chord, no drums, no bass at all, a line that surfaces four bars
+    // in and barely moves. The moving chord is the entire difference.
+    ambient: {
+      label: "Ambient", rate: 0.5, bars: 8, voices: 2, near: "drone",
+      instr: ["halo_pad", "bowed_glass"],
+      entry: v => v * 4, reg: v => v - 1,
+      realize: v => (v === 0 ? "pad" : "line"),
+      kit: {}, nobass: true,
+      harmony: "cycle", roots: [0, 0, 3, 3, 5, 5, 4, 4],
+      mode: MODES.lydian, scale: MODES.lydian, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 0, q: "7" }, { d: 3, q: "7" }, { d: 3, q: "7" },
+             { d: 5, q: "7" }, { d: 5, q: "7" }, { d: 4, q: "7" }, { d: 4, q: "7" }],
+      artic: "tie", incClamp: 3, incMode: "reverse",
+      tone: { wave: "triangle", cut: 1800, q: 0.8, atk: .3, rel: 3.0, gain: .22, verb: .92 },
+      words: ["the pad, two bars to the chord", "a line that surfaces from bar 5"],
+      word: v => (v === 1 ? [drop(2)] : []),
+      fx: ["echo", "sweep"],
+    },
+
+    // TECHNO [acid]. Both are modal machines on a four; the field that
+    // separates them is WHERE THE INTEREST LIVES. Acid is one instrument
+    // breathing — the 303's filter is the melody. Techno strips even that:
+    // no claps, no ghost lane, no sixteenth hats, just the kick, the offbeat
+    // open hat, a staccato stab over a metal pad, and the section's own
+    // filter sweep doing what the 303's envelope did.
+    techno: {
+      label: "Techno", rate: 1, bars: 8, voices: 2, near: "acid",
+      instr: ["charang", "metal_pad"],
+      drumkit: "electronic",
+      entry: v => v * 2, reg: v => v - 2,
+      realize: v => (v === 1 ? "pad" : "line"),
+      harmony: "modal",
+      artic: "staccato", maxHold: 2,
+      bassStyle: "sixteenths",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      fill: { o: [0,0,1,0, 0,0,1,0, 1,0,1,0, 1,0,1,1] },
+      tone: { wave: "sawtooth", cut: 1400, q: 4, atk: .003, rel: .35, gain: .28, verb: .14 },
+      words: ["the stab, thinned every other bar", "the pad underneath"],
+      word: (v, s) => (v === 0 && s % 2 ? [del(2)] : []),
+      fx: ["sweep"],
     },
   };
 

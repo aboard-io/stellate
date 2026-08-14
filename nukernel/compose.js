@@ -82,6 +82,16 @@
     // post rock is an arc by construction — it is one crescendo — and the four
     // studio records are songs, because that is what they are
     postrock: "arc", toto: "song", jodeci: "song", beatles: "song", steely: "song",
+    // THE RADIO DIAL. The floor genres are dance records — they build and
+    // drop, they do not bridge. The pop half are songs, verse-chorus by
+    // birthright. Afrobeat and ambient are arcs: one is a groove you stay
+    // inside while the horns arrive, the other is one long breath.
+    boombap: "song", trap: "dance", house: "dance", garage: "dance",
+    dnb: "dance", disco: "dance", techno: "dance", dub: "dance",
+    funk: "song", motown: "song", rnb: "song", gospel: "song",
+    reggae: "song", ska: "song", bossa: "song", countrypop: "song",
+    synthpop: "song", shoegaze: "song", citypop: "song", punk: "song",
+    afrobeat: "arc", ambient: "arc",
   };
   // Where a genre wants to sit, in bpm. The tempo control tops out at 160 and
   // bottoms at 70, and a composer that leaves everything at 126 has not arranged
@@ -91,7 +101,14 @@
                 gregorian: 76, spem: 80, bulgarian: 96, neoclassical: 86, drone: 70,
                 // 126 is not a guess: it is the tempo of "Sweet Dreams"
                 tango: 118, deathmetal: 158, eurythmics: 126, isley: 96,
-                toto: 92, jodeci: 74, beatles: 124, steely: 100, postrock: 72 };
+                toto: 92, jodeci: 74, beatles: 124, steely: 100, postrock: 72,
+                // the dial tops out at 160, so dnb and punk sit ON the fence
+                // rather than past it — the kit density says the rest
+                boombap: 92, trap: 140, house: 122, garage: 132, dnb: 160,
+                disco: 118, funk: 100, motown: 122, rnb: 72, gospel: 76,
+                reggae: 76, dub: 74, ska: 156, afrobeat: 108, bossa: 132,
+                countrypop: 120, synthpop: 118, shoegaze: 104, citypop: 108,
+                punk: 160, ambient: 70, techno: 132 };
 
   // ---- the random source ---------------------------------------------------
   // Seeded, so a seed is a song. mulberry32 — small, well-distributed, and the
@@ -266,7 +283,12 @@
     const kit = Object.keys(G.kit || {}).length > 0;
     // A genre with no drums has nothing to bring in one layer at a time, so it
     // gets the one intro that is about the sound rather than the arrangement.
-    const shape = kit ? pick(r, INTROS) : "soft";
+    const shape0 = kit ? pick(r, INTROS) : "soft";
+    // A KIT SCHEDULE OUTRANKS A KIT OP: drums() reads g.kits before g.kit, and
+    // genreOf maps only g.kit — so "bass alone" cannot yet be said for a kits
+    // genre; the bed would keep drumming under the label. Until the UI phase
+    // teaches genreOf to map the schedule, a kits genre starts drums-first.
+    const shape = shape0 === "bassin" && G.kits ? "drums" : shape0;
     // four bars, or two in a half-time genre — four bars of vaporwave is
     // fifteen seconds of nothing but a kick, which is not an intro, it is a wait
     const n = Math.max(2, Math.min(4, G.rate < 1 ? 2 : 4));

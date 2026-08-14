@@ -726,7 +726,7 @@ console.log("groove moves time and level, and never breaks the stream");
 /* ---------------------------------------------------------------- 20. THE COMPOSER
    A generator that runs once per button click is the hardest kind of thing to
    trust: it is right nine times and you never see the tenth. So compose every
-   genre at forty seeds and check all 560 — the whole point of keeping the
+   genre at forty seeds and check every one — the whole point of keeping the
    arranger pure and seeded is that this is cheap. */
 console.log("the composer writes songs that are songs");
 {
@@ -977,6 +977,25 @@ console.log("the loader — round trip, typed errors, clamps, migration");
     try { NI.instrOf("no_such_genre", 0); } catch (e) { threw = true; }
     ok(threw, "instrOf did not throw for a genre without an instrument");
   }
+  // ...and every id NAMES A REAL SAMPLER. instrOf proves the field exists;
+  // this proves the string means something — a typo'd id used to sail through
+  // node and fail only in a browser with the sample layer fetched. The
+  // registry is a classic window-global script, so it is read here the way
+  // the page reads it: evaluated, not required.
+  {
+    const vm = require("vm"), fs = require("fs"), path = require("path");
+    const ctx = {}; ctx.window = ctx; vm.createContext(ctx);
+    vm.runInContext(fs.readFileSync(
+      path.join(__dirname, "../../engine/registry-data.js"), "utf8"), ctx);
+    const SAMPLERS = (ctx.__REGISTRY && ctx.__REGISTRY.SAMPLERS) || {};
+    ok(Object.keys(SAMPLERS).length > 100, "registry-data.js did not yield SAMPLERS");
+    ok(SAMPLERS[NI.BASS_INSTR], "BASS_INSTR is not a registry sampler");
+    for (const gk of GK) {
+      const e = GENRES[gk].instr, ids = Array.isArray(e) ? e : [e];
+      for (const id of ids)
+        ok(!!SAMPLERS[id], gk + ": instr \"" + id + "\" is not a SAMPLERS id");
+    }
+  }
 
   // (e) MIGRATION: the shipped preset (v:1, pre-stack, pre-mixer) and a v:1
   // fixture with every legacy wrinkle still load after the v:2 bump.
@@ -987,6 +1006,13 @@ console.log("the loader — round trip, typed errors, clamps, migration");
     ok(PRESETS[0].data.v === 1, "migrate MUTATED the shipped preset literal");
     const r2 = S.load(PRESETS[0].data);
     ok(r2.ok, "the shipped preset does not survive being loaded twice");
+    // ...and EVERY shipped preset, whatever its vintage: the radio-dial four
+    // are composer output frozen as literals, and they take the same door
+    for (const p of PRESETS) {
+      const ra = S.load(p.data), rb = S.load(p.data);
+      ok(ra.ok && rb.ok, "shipped preset \"" + p.name + "\" no longer loads twice: " +
+         JSON.stringify((ra.errors || rb.errors || [])[0]));
+    }
   }
   {
     const oldPhrase = () => ({ deg: new Array(16).fill(0), oct: new Array(16).fill(0),
@@ -1619,6 +1645,98 @@ console.log("song arc, prechorus, topline — the radio shape, measured");
          "hook/" + s + ": the climax is not one note that is highest AND loudest");
     }
   }
+}
+
+/* ---------------------------------------------------------------- 32. CONFUSION
+   Going from 23 to 45 genres is exactly where a table starts containing
+   duplicates, and the big engine already learned this lesson: its matrix must
+   stay diagonal-dominant at 274/274. This is nukernel's version — a feature
+   vector per genre computed from the RENDERED events only (never a config
+   field), a weighted distance over every pair, and a floor under the closest
+   one. Two genres with different labels and identical music fail by
+   construction, which the relabelled-clone canary proves on every run. */
+console.log("confusion — every genre is provably not a relabelled neighbour");
+{
+  const C = require("../../nukernel/compose.js");
+  // the vector: kick and snare STEP SETS (positions, not counts — a schedule
+  // wired only into velocity would not move them), hat/perc/line densities,
+  // the chordal share (pads + stabs), mean duration and the silent fraction
+  // (real only since maxHold exists), the pitch-class profile of everything
+  // pitched, the harmonic rhythm read off the BASS (distinct per-bar note
+  // sets — the consumer a decorative prog cannot reach), measured swing, bass
+  // density and register, and the composer's own tempo/rate/form numbers.
+  const featOf = (gk, g, bpm) => {
+    const bars = g.bars, bs = 16 / g.rate;
+    const line = K.render(P, g, bars);
+    const dr = K.drums(P, g, bars);
+    const ba = K.bass(P, g, bars);
+    const step = e => ((Math.round(e.t * g.rate) % 16) + 16) % 16;
+    const lane = ds => { const v = new Array(16).fill(0);
+      for (const e of dr) if (ds.includes(e.d)) v[step(e)] = 1; return v; };
+    const f = [], w = [];
+    const push = (x, wt) => { f.push(x); w.push(wt); };
+    for (const x of lane(["k"])) push(x, 1 / 8);
+    for (const x of lane(["s", "c"])) push(x, 1 / 8);
+    push(Math.min(1, dr.filter(e => e.d === "h" || e.d === "o").length / bars / 16), 1);
+    push(Math.min(1, dr.filter(e => e.d === "p").length / bars / 16), 0.5);
+    const mel = line.filter(e => e.part !== "pad" && e.part !== "stab");
+    push(line.length ? (line.length - mel.length) / line.length : 0, 1);
+    push(Math.min(1, mel.length / bars / 16), 1.5);
+    const durs = mel.map(e => e.dur * g.rate);
+    push(durs.length ? Math.min(1, durs.reduce((a, b) => a + b, 0) / durs.length / 8) : 0, 1);
+    let covered = 0, end = 0;
+    for (const [a, b] of mel.map(e => [e.t, e.t + e.dur]).sort((x, y) => x[0] - y[0])) {
+      covered += Math.max(0, Math.min(b, bars * bs) - Math.max(a, end));
+      end = Math.max(end, b);
+    }
+    push(1 - covered / (bars * bs), 1);
+    const pcv = new Array(12).fill(0);
+    for (const e of [...line, ...ba]) pcv[((e.n % 12) + 12) % 12] = 1;
+    for (const x of pcv) push(x, 1 / 6);
+    const bassBars = new Set(Array.from({ length: bars }, (_, b) =>
+      JSON.stringify([...new Set(ba.filter(e => e.t >= b * bs && e.t < (b + 1) * bs)
+        .map(e => e.n))].sort((x, y) => x - y))));
+    push(bars > 1 ? (bassBars.size - 1) / (bars - 1) : 0, 1.5);
+    const odd = [...line, ...dr].map(e => (e.t * g.rate) % 2).filter(x => x >= 1);
+    push(odd.length ? Math.min(1, (odd.reduce((a, x) => a + (x - 1), 0) / odd.length) / 0.5) : 0, 1);
+    push(Math.min(1, ba.length / bars / 16), 1);
+    push(ba.length ? ba.reduce((a, e) => a + e.n, 0) / ba.length / 127 : 0, 1);
+    push(((bpm == null ? C.BPM[gk] : bpm) - 70) / 90, 1.5);
+    push(g.rate / 2, 1);
+    push(g.bars / 12, 0.75);
+    push(g.voices / 8, 1);
+    return { f, w };
+  };
+  const dist = (a, b) => {
+    let s = 0, tw = 0;
+    for (let i = 0; i < a.f.length; i++) { s += a.w[i] * Math.abs(a.f[i] - b.f[i]); tw += a.w[i]; }
+    return s / tw;
+  };
+  // THE FLOOR. Measured on the shipped table the closest true pair (gregorian
+  // vs counterpoint — genuinely siblings) sits at 0.039; a relabel that only
+  // moved the tempo ten bpm measures under 0.01. 0.03 splits those worlds
+  // with headroom, and the render is deterministic so there is no flake in it.
+  const EPS = 0.03;
+  const F = {};
+  for (const gk of GK) F[gk] = featOf(gk, GENRES[gk]);
+  for (let i = 0; i < GK.length; i++)
+    for (let j = i + 1; j < GK.length; j++) {
+      const d = dist(F[GK[i]], F[GK[j]]);
+      ok(d > EPS, GK[i] + " and " + GK[j] + " render " + d.toFixed(4) +
+         " apart — closer than " + EPS + ", one is a relabel of the other");
+    }
+  // the canaries: a relabelled clone measures zero, and a clone that only
+  // changed its tempo still fails — so the gate cannot be passed by a rename
+  ok(dist(F.rock, featOf("rock", { ...GENRES.rock })) < EPS / 10,
+     "a byte-identical clone does not measure as a clone — the metric is broken");
+  ok(dist(F.rock, featOf("rock", { ...GENRES.rock }, C.BPM.rock + 10)) < EPS,
+     "a tempo-only relabel clears the floor — the gate proves nothing");
+  // every declared neighbour is a real genre, so the identity comments and the
+  // matrix stay honest together
+  for (const gk of GK)
+    if (GENRES[gk].near)
+      ok(!!GENRES[GENRES[gk].near],
+         gk + ": declares an unknown nearest neighbour \"" + GENRES[gk].near + "\"");
 }
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
