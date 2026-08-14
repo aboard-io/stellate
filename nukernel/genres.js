@@ -1302,8 +1302,33 @@
   const DRUMNAME = { k: "Kick", s: "Snare", c: "Clap", o: "Open hat",
                      h: "Hat", p: "Ghost perc" };
 
+  // ---- FAMILIES — the palette's bank-select clusters -----------------------
+  // Forty-five chips in one heap is not a menu, it is a haystack; the palette
+  // groups them under these headers. ONE table, not a field written by hand on
+  // each anchor: membership and display order are the same fact, a genre
+  // cannot land in two families, and the stamp below writes `family` onto the
+  // anchor so everything downstream reads it like any other genre field (the
+  // unit gate holds every anchor to exactly one). The clusters follow the
+  // MUSIC, not the machinery — jodeci and eurythmics are both drum machines,
+  // but one is soul and the other is a studio record, and the ear files them
+  // that way. `kernel` is simple alone, on purpose: it is the zero of the
+  // table and belongs to no tradition.
+  const FAMILIES = [
+    ["kernel", ["simple"]],
+    ["vox",    ["gregorian", "bulgarian", "spem", "counterpoint", "fugue"]],
+    ["club",   ["acid", "house", "techno", "garage", "dnb", "trap", "boombap"]],
+    ["soul",   ["motown", "isley", "funk", "disco", "gospel", "rnb", "jodeci"]],
+    ["groove", ["reggae", "dub", "ska", "afrobeat", "bossa"]],
+    ["band",   ["rock", "punk", "blues", "newwave", "sludge", "deathmetal"]],
+    ["studio", ["beatles", "steely", "toto", "eurythmics", "synthpop", "citypop"]],
+    ["drift",  ["ambient", "drone", "vaporwave", "shoegaze", "postrock", "neoclassical"]],
+    ["roots",  ["countrypop", "tango"]],
+  ];
+  for (const [fam, keys] of FAMILIES)
+    for (const k of keys) GENRES[k].family = fam;
+
   const api = { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL,
-                PROGS };
+                PROGS, FAMILIES };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuGenres = api;
 })(typeof window !== "undefined" ? window : globalThis);

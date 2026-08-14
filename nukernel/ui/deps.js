@@ -22,7 +22,7 @@ export const { harm, render, drums, bass, ROMAN, word, KITOPS,
 
 // ---- the genre table (genres.js) ----
 export const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL,
-               SCALES, SCALELABEL, PROGS } = window.NuGenres;
+               SCALES, SCALELABEL, PROGS, FAMILIES } = window.NuGenres;
 
 // ---- the control vocabulary (fields.js) — ONE definition of every control ----
 export const NuFields = window.NuFields;

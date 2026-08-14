@@ -272,8 +272,11 @@ function patchBox(sec, i, el) {
     // a clipped box has to say in words what it can no longer say in pixels
     (clipped ? " · " + mmss(secsOf(sec, bpm)) : "");
   el.loopmark.hidden = i !== loopOnly;
-  el.moveL.hidden = i === 0;
-  el.moveR.hidden = i === SONG.length - 1;
+  // a move key with nowhere to go GHOSTS (visibility, in CSS) instead of
+  // hiding: all four tool slots keep their seat, so ⟳ and × are at the same
+  // spot on every card and the cluster never reshuffles between boxes
+  el.moveL.classList.toggle("ghost", i === 0);
+  el.moveR.classList.toggle("ghost", i === SONG.length - 1);
   el.moveL.setAttribute("aria-label", "move box " + (i + 1) + " earlier");
   el.moveR.setAttribute("aria-label", "move box " + (i + 1) + " later");
   el.loopBtn.classList.toggle("on", i === loopOnly);

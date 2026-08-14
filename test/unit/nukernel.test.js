@@ -21,7 +21,7 @@
 // laws that make the operator set a group rather than a pile of functions.
 "use strict";
 const K = require("../../nukernel/kernel.js");
-const { DEFAULT, GENRES, MODES, SCALES } = require("../../nukernel/genres.js");
+const { DEFAULT, GENRES, MODES, SCALES, FAMILIES } = require("../../nukernel/genres.js");
 
 const GK = Object.keys(GENRES);
 let fails = 0, checks = 0;
@@ -2100,6 +2100,35 @@ console.log("kit operators reach the kit schedule (g.kits)");
   const four = hits("four").filter(e => e.d === "k");
   ok(four.length === 16,
      "kit \"four\" did not straighten the kick over the schedule (" + four.length + " kicks)");
+}
+
+/* ---------------------------------------------------------------- 35. GENRE FAMILIES
+   The palette clusters the genre bank under FAMILIES headers, and the table
+   is only trustworthy if it is TOTAL: every genre in exactly one family,
+   every family key naming a real genre, every stamped `family` field from
+   the allowed set. A genre missing from the table would silently vanish
+   from the sound page — the palette draws the clusters, not GENRES. */
+console.log("every genre carries exactly one family from the palette's set");
+{
+  const ALLOWED = new Set(["kernel", "vox", "club", "soul", "groove",
+                           "band", "studio", "drift", "roots"]);
+  ok(Array.isArray(FAMILIES) && FAMILIES.length === ALLOWED.size,
+     "FAMILIES is not the allowed set (" + (FAMILIES || []).length + " families)");
+  const seen = new Map();                       // genre key -> how many families
+  for (const [fam, keys] of FAMILIES) {
+    ok(ALLOWED.has(fam), "family \"" + fam + "\" is not in the allowed set");
+    ok(keys.length > 0, "family \"" + fam + "\" is empty");
+    for (const k of keys) {
+      ok(!!GENRES[k], "family \"" + fam + "\" names unknown genre \"" + k + "\"");
+      seen.set(k, (seen.get(k) || 0) + 1);
+    }
+  }
+  for (const gk of GK) {
+    ok(seen.get(gk) === 1, "genre \"" + gk + "\" is in " + (seen.get(gk) || 0) +
+       " families — must be exactly one");
+    ok(ALLOWED.has(GENRES[gk].family), "genre \"" + gk + "\" carries family \"" +
+       GENRES[gk].family + "\" — not in the allowed set");
+  }
 }
 
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +

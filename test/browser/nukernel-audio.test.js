@@ -394,20 +394,36 @@ function taps() {
         fail(`the move button did not reorder the song (${before.join(",")})`);
       else ok(`move button reorders without dragging: ${before[0]},${before[1]} -> ${after[0]},${after[1]}`);
     }
-    // and a value can go DOWN with an ordinary tap
+    // and a value can go DOWN with an ordinary tap: tapping a value cell opens
+    // the pop-up fader (ui/popfader.js) — which replaced the ± "Tap raises"
+    // mode toggle — and the fader's ▼ key steps the SAME phrase vector down
+    // through the same commit("phrase") path a scrub takes
     const cell = page.locator('.cell[aria-label^="step 3 deg"]').first();
     const read = async () => +(await cell.getAttribute("aria-label")).split(" ").pop();
     const v0 = await read();
-    await page.click("#stepdir");
     await cell.click();
-    const v1 = await read();
-    if (v1 < v0) ok(`a plain tap lowers a value once the toggle is set: ${v0} -> ${v1}`);
-    else fail(`with "tap lowers" set, tapping a cell went ${v0} -> ${v1} — ` +
-              `lowering a value still needs a shift key`);
-    await page.click("#stepdir");
-    await cell.click();
-    if ((await read()) > v1) ok("the toggle flips back and a tap raises again");
-    else fail("the raise/lower toggle does not flip back");
+    const pop = page.locator("#popfader");
+    if (!(await pop.isVisible())) fail("tapping a value cell did not open the pop-up fader");
+    else {
+      await pop.locator(".pfdown").click();
+      const v1 = await read();
+      if (v1 < v0) ok(`the fader's step-down key lowers the value: ${v0} -> ${v1}`);
+      else fail(`the pop-up fader's ▼ went ${v0} -> ${v1} — a value still cannot go down`);
+      await pop.locator(".pfclose").click();
+      if (await pop.isVisible()) fail("the pop-up fader's ✕ did not close it");
+      else ok("the fader closes on ✕");
+    }
+    // ...while a BINARY cell keeps tap-to-toggle: no fader, just the flip
+    const gcell = page.locator('.cell[aria-label^="step 3 gate"]').first();
+    const gread = async () => (await gcell.getAttribute("aria-label")).split(" ").pop();
+    const g0 = await gread();
+    await gcell.click();
+    const g1 = await gread();
+    if (g1 !== g0 && !(await pop.isVisible()))
+      ok(`a plain tap still toggles a gate: ${g0} -> ${g1}`);
+    else fail(`tapping a gate cell went ${g0} -> ${g1}` +
+              ((await pop.isVisible()) ? " and opened a fader" : ""));
+    await gcell.click();                                  // put the groove back
   }
 
   // (H) THE COMPOSED SONG DOES NOT COST NINE TIMES WHAT IT SHOULD.

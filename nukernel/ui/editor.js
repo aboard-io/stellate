@@ -11,6 +11,7 @@ import { SLOTS, SUBJ, slot, setSlot, putPhrase, curSection, commit, on } from ".
 import { isBlank, focused } from "./derive.js";
 import { toggle } from "./palette.js";
 import { buzz, pointers } from "./touch.js";
+import { openFader, refresh as refreshFader } from "./popfader.js";
 
 const gridEl = document.getElementById("stepgrid");
 const slotsEl = document.getElementById("slots");
@@ -18,12 +19,6 @@ const edslotEl = document.getElementById("edslot");
 
 /* ---------- the step grid ---------- */
 const ROWS = ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"];
-// WHICH WAY A TAP MOVES A VALUE. The ± button in the editor header rides this,
-// and it exists because shift-click does not exist on a phone. (Named
-// tapDirection because `stepDir` sat one typo away from `stepDur`, the audio
-// clock's step length — a UI toggle and a scheduling constant should not be
-// distinguishable by one character.)
-let tapDirection = 1;
 const RANGE = { deg: [-7, 7], oct: [-2, 2], vel: [0, 9], inc: [-3, 3], stk: [-2, 2] };
 const clampTo = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
 
@@ -60,15 +55,13 @@ function buildGrid() {
       // / q4 cream lives entirely in CSS off these two attributes
       b.dataset.row = key; b.dataset.q = String(1 + (i >> 2));
       const num = RANGE[key];
-      // SHIFT-CLICK IS NOT A GESTURE ON A PHONE. It was the only way to lower a
-      // value, so half of the phrase editor was unreachable on touch — you could
-      // raise a degree and never put it back. Three ways in now, and all three
-      // work everywhere:
-      //   drag       up/down on a cell scrubs it (pointer events, so touch too)
-      //   tap        moves it by the ± toggle in the header
-      //   shift-tap  inverts that, for the keyboard-and-mouse habit
-      // The binary rows are unaffected: a toggle has nowhere to go but the other
-      // way, so a tap has always been enough.
+      // TWO WAYS INTO A VALUE, both of them one-handed on a phone:
+      //   drag   up/down on the cell scrubs it (pointer events, so touch too)
+      //   tap    opens the pop-up fader beside the cell (ui/popfader.js) —
+      //          which replaced the ± "Tap raises" mode toggle: a tap now
+      //          SHOWS the value instead of moving it a remembered direction.
+      // The binary rows are unaffected: a toggle has nowhere to go but the
+      // other way, so a tap has always been enough there.
       if (num) {
         let from = null, fromX = 0, base = 0, moved = false, wasFine = false;
         b.addEventListener("pointerdown", ev => {
@@ -97,12 +90,16 @@ function buildGrid() {
         const end = () => { from = null; };
         b.addEventListener("pointerup", end);
         b.addEventListener("pointercancel", end);
-        b.addEventListener("click", ev => {
+        b.addEventListener("click", () => {
           if (moved) { moved = false; return; }              // that was a scrub
-          SUBJ[key][i] = clampTo(SUBJ[key][i] +
-            (ev.shiftKey ? -tapDirection : tapDirection), num);
-          buzz(4);
-          commit("phrase");
+          openFader({
+            anchor: b,
+            label: key + " · step " + (i + 1),
+            min: num[0], max: num[1],
+            fmt: key === "vel" ? String : v => (v > 0 ? "+" + v : String(v)),
+            get: () => SUBJ[key][i],
+            set: v => { SUBJ[key][i] = clampTo(v, num); commit("phrase"); },
+          });
         });
       } else {
         b.addEventListener("click", () => {
@@ -222,17 +219,20 @@ const put = make => () => { putPhrase(slot, make()); commit("phrase"); };
 document.getElementById("seed").addEventListener("click", put(() => structuredClone(DEFAULT)));
 document.getElementById("rnd").addEventListener("click", put(randomPhrase));
 document.getElementById("clear").addEventListener("click", put(blank));
+// the (?) key: the how-to paragraph, off by default — the editor no longer
+// spends three lines of a phone screen teaching before it shows the grid
 {
-  const b = document.getElementById("stepdir");
+  const b = document.getElementById("edhelp"), p = document.getElementById("edhint");
   b.addEventListener("click", () => {
-    tapDirection = -tapDirection;
-    b.textContent = tapDirection > 0 ? "Tap raises" : "Tap lowers";
-    b.setAttribute("aria-pressed", String(tapDirection < 0));
+    p.hidden = !p.hidden;
+    b.setAttribute("aria-expanded", String(!p.hidden));
   });
 }
 
 /* ---------- wiring ---------- */
 buildGrid();
 buildSlots();
-function patch() { patchGrid(); patchSlots(); }
+// refreshFader: an open fader shows a live value, and a song load or a second
+// finger scrubbing the same cell must move its LCD too
+function patch() { patchGrid(); patchSlots(); refreshFader(); }
 for (const t of ["song", "phrase", "box", "selection"]) on(t, patch);

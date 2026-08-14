@@ -6,7 +6,7 @@
 //
 // Layer graph: ui view — imports state/derive/deps only; every change leaves
 // through commit(), never through a direct call into audio.
-import { GENRES, MODELABEL, SCALELABEL, VOX, OPS, OPLABEL, MAX_FX, FX, ROLES,
+import { GENRES, FAMILIES, MODELABEL, SCALELABEL, VOX, OPS, OPLABEL, MAX_FX, FX, ROLES,
          RATELABEL, ARTICS, CMODES, CLAMPLABEL, OCTAVES, KITLABEL, DRUMKITS,
          BASSOPS, SWINGLABEL, GROOVELABEL, SENDLABEL, VERBS, DTLABEL,
          LEVELLABEL, PANLABEL, INLABEL, OUTLABEL, ENVLABEL, MOTLABEL,
@@ -170,10 +170,28 @@ export function drawPalette() {
     }
     return sec[kind] === v;
   };
+  // DEFAULT-LIT vs USER-SET — the machine's one state language: a lit chip is
+  // bright orange when YOU set it, dim (.dflt) when it is only the fallback
+  // answering — hold, normal, auto, oct 0, and the blank Simple kernel. Same
+  // aria-pressed either way: to the accessibility tree "on" is on; the dimming
+  // is the panel telling you which lights you own.
+  const isDflt = kind => {
+    const ent = LAYER_OPTS.has(kind) || VOX[kind] ? focused(sec) : null;
+    if (kind === "cmode") return optOf(sec, ent, "cmode") == null;
+    if (kind === "artic") return optOf(sec, ent, "artic") == null;
+    if (kind === "part") return optOf(sec, ent, "part") == null;
+    if (kind === "oct") return optOf(sec, ent, "oct") == null;
+    if (kind === "genre") {
+      const st = stackOf(sec);
+      return st.length === 1 && st[0].g === "simple";
+    }
+    return false;
+  };
   if (paletteBuilt) {
     el.querySelectorAll(".pchip").forEach(b => {
       const on2 = isOn(b.dataset.kind, b.dataset.value);
       b.classList.toggle("on", !!on2);
+      b.classList.toggle("dflt", !!on2 && isDflt(b.dataset.kind));
       b.setAttribute("aria-pressed", String(!!on2));
     });
     return;
@@ -201,19 +219,30 @@ export function drawPalette() {
   note.textContent = PNOTE[paletteTab] || "";
   if (note.textContent) el.append(note);
 
+  // A GROUP IS A BANK: silkscreen header over a uniform grid of keys, never a
+  // label beside a ragged run of chips. The header is a real <span> and the
+  // chips live in their own grid wrapper so the columns align — Elektron bank
+  // select, not a tag cloud. Rows whose labels are all short (the numbered op
+  // rows) take the compact grid; the gates click .pchip by text and data-*,
+  // and neither moved.
   const group = (title, items) => {
     const g = document.createElement("div"); g.className = "pgroup";
     g.append(Object.assign(document.createElement("span"),
       { className: "plabel", textContent: title }));
+    const wrap = document.createElement("div");
+    wrap.className = "pchips" +
+      (items.every(i => String(i[2]).length <= 4) ? " compact" : "");
     for (const [kind, value, label, cls] of items) {
       const b = document.createElement("button");
       const on2 = isOn(kind, String(value));
-      b.type = "button"; b.className = "pchip " + (cls || "") + (on2 ? " on" : "");
+      b.type = "button"; b.className = "pchip " + (cls || "") + (on2 ? " on" : "") +
+        (on2 && isDflt(kind) ? " dflt" : "");
       b.textContent = label; b.setAttribute("aria-pressed", String(!!on2));
       b.dataset.kind = kind; b.dataset.value = String(value);
       b.addEventListener("click", () => toggle(kind, value));
-      g.append(b);
+      wrap.append(b);
     }
+    g.append(wrap);
     el.append(g);
   };
   // one row per table, from the table — a new option is a new entry, never a
@@ -224,7 +253,10 @@ export function drawPalette() {
     group(title, keys.map(k => ["op", k, OPLABEL[k], cls]));
 
   if (paletteTab === "sound") {
-    group("genre", Object.keys(GENRES).map(k => ["genre", k, GENRES[k].label, "gen"]));
+    // the genre haystack, clustered: one bank per family, in FAMILIES order —
+    // the header names the tradition, the chips are its members
+    for (const [fam, keys] of FAMILIES)
+      group(fam, keys.map(k => ["genre", k, GENRES[k].label, "gen"]));
     if (stackOf(sec).length > 1)
       group("editing", stackOf(sec).map((e, i) =>
         ["focus", String(i), GENRES[e.g].label + (e.slots.length
@@ -272,7 +304,7 @@ export function drawPalette() {
     rowOf("swing", "swing", SWINGLABEL, "rate");
     rowOf("groove", "groove", GROOVELABEL, "rate");
   } else if (paletteTab === "fx") {
-    group("effects (up to " + MAX_FX + ", in the order you switch them on)",
+    group("effects · up to " + MAX_FX + ", in order",
       Object.keys(FX).map(k => ["fx", k, FX[k].label, "fx"]));
     rowOf("reverb", "rev", SENDLABEL, "env");
     rowOf("space", "verb", VERBS, "env");
@@ -294,6 +326,19 @@ export function drawPalette() {
     rowOf("outro", "outro", OUTLABEL, "env");
     rowOf("level over the section", "env", ENVLABEL, "env");
     rowOf("filter over the section", "mot", MOTLABEL, "mode");
+  }
+  // the lit tab must be IN VIEW — the strip scrolls instead of clipping now,
+  // and a page switch can land on a tab past the fold (MOVE's own tab sat
+  // invisible on the MOVE page at 390px). Scrolled by hand, horizontally,
+  // never scrollIntoView: that would also scroll the DECK vertically to the
+  // strip, yanking the arrangement off screen on the very page it owns.
+  {
+    const lit = el.querySelector(".ptab.on"), strip = lit && lit.parentElement;
+    if (strip && strip.scrollWidth > strip.clientWidth) {
+      const s = strip.getBoundingClientRect(), t = lit.getBoundingClientRect();
+      if (t.right > s.right) strip.scrollLeft += t.right - s.right + 8;
+      else if (t.left < s.left) strip.scrollLeft -= s.left - t.left + 8;
+    }
   }
   paletteBuilt = true; paletteSig = sig;
 }
