@@ -93,18 +93,27 @@
   // A note is subdivided as far as it will GO: asking for eight attacks inside
   // a two-step note gives two, not nothing. Skipping instead left every chip
   // above `split 2` looking dead on an ordinary phrase.
+  // THE SUBDIVISIONS CLIMB. A split note's copies are not copies: the step's own
+  // ramp is applied ONCE PER REPEAT, so a note carrying inc +1 split four ways
+  // plays d, d+1, d+2, d+3 — which is what an arpeggiator does, and what anyone
+  // who set a ramp and then split the note was plainly asking for. Before this,
+  // every subdivision sat on the same degree and inc only moved them together on
+  // the NEXT loop, so the two features could not be combined: the ramp was a
+  // property of the step and split made more steps, and nothing joined them up.
+  // A step with inc 0 is byte-identical to before.
   const split = n => p => {
     if (n <= 1) return mapv(p, v => v.slice());
     const N = p.gate.length, sp = spans(p.gate), out = mapv(p, v => v.slice());
     for (let i = 0; i < N; i++) {
       if (!p.gate[i] || sp[i] < 2) continue;
-      const parts = Math.min(n, sp[i]);
+      const parts = Math.min(n, sp[i]), step = p.inc ? p.inc[i] : 0;
       for (let k = 1; k < parts; k++) {
         const j = (i + Math.round((k * sp[i]) / parts)) % N;
         if (out.gate[j]) continue;                 // never overwrite a real note
         out.gate[j] = 1;
-        out.deg[j] = p.deg[i]; out.oct[j] = p.oct[i]; out.vel[j] = p.vel ? p.vel[i] : 5;
-        out.inc[j] = p.inc ? p.inc[i] : 0; out.stk[j] = p.stk ? p.stk[i] : 0;
+        out.deg[j] = p.deg[i] + k * step;          // the k-th repeat, k increments up
+        out.oct[j] = p.oct[i]; out.vel[j] = p.vel ? p.vel[i] : 5;
+        out.inc[j] = step; out.stk[j] = p.stk ? p.stk[i] : 0;
         out.acc[j] = 0; out.sld[j] = 0;            // a subdivision is not an accent
       }
     }
@@ -221,6 +230,60 @@
   };
 
   const swing = (g, i) => (i % 2) * (g.swing || 0);
+
+  // ---- GROOVE: the part of a performance that is not in the notes -----------
+  // Swing bends the grid. GROOVE bends the grid AND the dynamics, per sixteenth,
+  // as a repeating sixteen-slot fingerprint — some steps arrive a hair late, some
+  // arrive louder, and the pattern of which is the difference between a drum
+  // machine and a drummer. Two vectors per profile:
+  //
+  //   vel   a multiplier on the step's velocity   (1 = as written)
+  //   push  a shift in FRACTIONS OF A STEP        (+ late, − early, 0 = on the grid)
+  //
+  // `dub` is not invented: it is the mined per-16th velocity profile out of
+  // engine/pipes.js ACCENT_PROFILES, measured off the MIDIMAN dub rip, and it is
+  // the one family in that corpus that carried real signal (jazz and folk
+  // velocities measured flat — the negative result is recorded in pipes.js).
+  // The rest are written, and say so.
+  const GROOVES = {
+    // the backbeat lean: 2 and 4 loud, the ands soft, nothing moved
+    backbeat: { vel: [1.06,0.82,0.94,0.84, 1.12,0.8,0.96,0.84, 1.0,0.82,0.94,0.84, 1.14,0.8,0.98,0.86] },
+    // PUSH — the sixteenth before each beat arrives early and hard. This is the
+    // one that makes a straight pattern feel like it is leaning forwards.
+    push: { vel: [1.0,0.78,0.88,1.05, 1.0,0.78,0.88,1.05, 1.0,0.78,0.88,1.05, 1.0,0.78,0.88,1.08],
+            push: [0,0,0,-0.18, 0,0,0,-0.18, 0,0,0,-0.18, 0,0,0,-0.22] },
+    // LAID BACK — everything off the beat drags. A whole style of playing, and
+    // it is four numbers.
+    laidback: { vel: [1.05,0.8,0.9,0.8, 1.0,0.8,0.92,0.8, 1.02,0.8,0.9,0.8, 1.0,0.8,0.92,0.82],
+                push: [0,0.14,0.08,0.14, 0.03,0.14,0.08,0.14, 0,0.14,0.08,0.14, 0.03,0.14,0.08,0.16] },
+    // FUNK — the sixteenths carry it, and the ghosts between them are what you
+    // hear as the groove even though they are the quietest thing in the bar.
+    funk: { vel: [1.15,0.6,0.9,0.66, 1.0,0.62,0.95,0.6, 1.1,0.6,0.88,0.68, 1.0,0.62,0.98,0.7],
+            push: [0,0.06,-0.04,0.06, 0,0.06,-0.04,0.06, 0,0.06,-0.04,0.06, 0,0.06,-0.04,0.06] },
+    dub: { vel: [1.089,0.822,1.052,0.899, 1.076,0.777,1.065,0.843,
+                 1.083,0.852,1.063,0.877, 1.064,0.72,1.042,0.836],
+           push: [0,0.1,0.02,0.1, 0,0.1,0.02,0.1, 0,0.1,0.02,0.1, 0,0.1,0.02,0.12] },
+  };
+  // Applied to the RENDERED stream, because it is a function of where a note
+  // lands on the grid and an operator cannot know that. `barSteps` is the bar in
+  // this genre's own step units, so a half-time genre grooves at half the rate —
+  // which is correct: groove is a feel per BAR, not per sixteenth of a second.
+  // `amount` fades the whole thing in, so it is a dial and not a switch.
+  const groove = (ev, name, barSteps, amount) => {
+    const G = GROOVES[name];
+    if (!G || !barSteps) return ev;
+    const amt = amount == null ? 1 : Math.max(0, Math.min(1, amount));
+    if (!amt) return ev;
+    const unit = barSteps / 16;
+    return ev.map(e => {
+      const slot = ((Math.round((e.t % barSteps) / unit) % 16) + 16) % 16;
+      const vm = G.vel ? 1 + amt * (G.vel[slot] - 1) : 1;
+      const pu = G.push ? amt * G.push[slot] * unit : 0;
+      const out = { ...e, t: Math.max(0, e.t + pu) };
+      if (e.vel != null) out.vel = Math.max(0, Math.min(9, Math.round(e.vel * vm)));
+      return out;
+    }).sort((a, b) => a.t - b.t);
+  };
 
   // ---- harmony: a MODE, not a layer ---------------------------------------
   // Where the roots come from is itself a genre fact, and there are only three
@@ -384,11 +447,45 @@
   // nothing to the melody.
   const mapKit = (k, f) => Object.fromEntries(
     Object.entries(k || {}).map(([d, v]) => [d, f(v, d)]));
+  // A kit operator is total on kits the way a pattern operator is total on
+  // patterns: a lane the kit does not have is simply not there afterwards, and
+  // none of these can invent one. (`four` and `offbeat` are the two exceptions,
+  // and they are exceptions on purpose — putting a kick on every quarter is the
+  // one drum idea you reach for that no rearrangement of the existing lanes can
+  // express. Both write a lane the genre may not have had.)
+  const K16 = v => v.slice(0, 16).concat(new Array(Math.max(0, 16 - v.length)).fill(0));
   const KITOPS = {
     nodrums:  () => ({}),
+    // SUBTRACTIVE — take one lane away. Muting the kick is a breakdown; muting
+    // the hats is the same phrase heard from further off.
+    nokick:   k => Object.fromEntries(Object.entries(k || {}).filter(([d]) => d !== "k")),
+    nohats:   k => Object.fromEntries(Object.entries(k || {}).filter(([d]) => d !== "h" && d !== "o")),
+    snareonly: k => Object.fromEntries(Object.entries(k || {}).filter(([d]) => d === "s" || d === "c")),
     shift:    k => mapKit(k, v => v.map((_, i) => at(v, i + 2))),
     halftime: k => mapKit(k, (v, d) => v.map((x, i) => ((d === "k" || d === "s") && i % 8 !== 0 ? 0 : x))),
+    // DOUBLE TIME reads the kit at twice the rate — the bar's pattern played
+    // through twice — which is a different idea from `busy` (which fills a lane
+    // in) and from `rate` (which changes the grid the melody sits on too).
+    doubletime: k => mapKit(k, v => v.map((_, i) => at(v, i * 2))),
     busy:     k => mapKit(k, (v, d) => (d === "h" || d === "o" ? v.map(() => 1) : v)),
+    // SPARSE keeps only the downbeats of each quarter — the kit at its skeleton.
+    sparse:   k => mapKit(k, v => v.map((x, i) => (i % 4 === 0 ? x : 0))),
+    four:     k => ({ ...mapKit(k, v => v.slice()), k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0] }),
+    offbeat:  k => ({ ...mapKit(k, v => v.slice()), h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] }),
+    // SWAP puts the kick's rhythm on the snare and the snare's on the kick. It
+    // is the cheapest way to hear that a groove is a SHAPE and not a set of
+    // sounds — and on a backbeat it is the whole of drum'n'bass's founding move.
+    swap:     k => (k && k.k && k.s ? { ...mapKit(k, v => v.slice()), k: K16(k.s), s: K16(k.k) } : mapKit(k, v => v.slice())),
+    // ROLL fills the last quarter of the bar with snare — the tiny fill that
+    // makes a four-bar phrase turn over. It VARIES a snare, it does not conjure
+    // one: on a genre with no kit at all it is a no-op, because a fugue that
+    // suddenly grows a snare roll is not what "vary the drums" means. (`four`
+    // and `offbeat` are the two that do write a lane, and they are the exceptions
+    // on purpose — "give this a beat" is a different request from "change it".)
+    roll:     k => (k && k.s
+                    ? { ...mapKit(k, v => v.slice()),
+                        s: K16(k.s).map((x, i) => (i >= 12 ? 1 : x)) }
+                    : mapKit(k, v => v.slice())),
   };
 
   // ---- the grid: the CATEGORICAL half --------------------------------------
@@ -456,16 +553,35 @@
     // (quarter notes unless it says otherwise). With accents present this is
     // byte-identical to before.
     const QUARTERS = [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0];
-    const grid = subj.acc.some(Boolean) ? subj.acc : (g.bassGrid || QUARTERS);
+    // A STYLE MAY OWN THE RHYTHM. `eighths` and `sixteenths` are not a different
+    // choice of NOTE, they are a different DENSITY, so they override the accent
+    // grid rather than reading it — a driving eighth-note bass that goes quiet
+    // because the melody has no accents is not the part anyone asked for. Every
+    // style that predates this table has no entry and reads the accents exactly
+    // as it always did.
+    const STYLEGRID = {
+      eighths:    [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+      sixteenths: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
+    };
+    const grid = STYLEGRID[g.bassStyle]
+      || (subj.acc.some(Boolean) ? subj.acc : (g.bassGrid || QUARTERS));
     const sp = spans(grid);                                     // holds to the next hit
     let alt = 0;
     for (let b = 0; b < bars; b++) {
-      const r = harm(subj, g, b);
+      // PEDAL ignores the progression and sits on the tonic. It is the one bass
+      // style that is a statement about the HARMONY rather than the rhythm: the
+      // chords move over a bass that refuses to, which is where every drone and
+      // most of the tension in modal music comes from.
+      const r = g.bassStyle === "pedal" ? 0 : harm(subj, g, b);
       for (let i = 0; i < N; i++)
         if (at(grid, i)) {
-          const oct = g.bassStyle === "octaves" ? 12 * (alt++ % 2) : 0;
+          const k = alt++;
+          // octaves alternates register; fifths alternates the DEGREE, which is
+          // the boogie/country figure rather than a doubling
+          const oct = g.bassStyle === "octaves" ? 12 * (k % 2) : 0;
+          const deg = g.bassStyle === "fifths" && k % 2 ? r + 4 : r;
           ev.push({ t: (b * N + i + swing(g, i)) / g.rate, dur: sp[i] * 0.94 / g.rate,
-                    n: mp(r, md) + 36 + oct, r, vel: vel(subj, i) });
+                    n: mp(deg, md) + 36 + oct, r, vel: vel(subj, i) });
         }
     }
     return ev;
@@ -478,16 +594,123 @@
   // now exists to be scaled. Operators compose by application; envelopes
   // compose by multiplication. Keeping them in one list would be the same
   // mistake as treating slide as node-valued: one notation, two types.
+  // TWO FAMILIES, and they are different types again. `in` / `out` / `swell` are
+  // SHAPES — a curve over the section, scaling velocity, event count preserved.
+  // `drop` and `stutter` are CUTS — they add and remove events, which no curve
+  // can do — and they are the two transitions that actually mark a boundary
+  // rather than smoothing one. (The third family, the filter sweeps, cannot live
+  // here at all: they are a property of the SOUND, not of the event stream, so
+  // they are automation on the section's mixer channel — see kernel-daw.js.)
+  const SHAPES = {
+    in:    x => x,
+    out:   x => 1 - x,
+    swell: x => 1 - Math.abs(2 * x - 1),          // up and back down
+    duck:  x => Math.abs(2 * x - 1),              // out of the middle, into the edges
+  };
   const envelope = (ev, kind, span) => {
     if (!kind || !span) return ev;
+    // DROP — the last eighth of the section goes silent. The oldest trick in
+    // dance music and still the loudest: what you hear is the bar that follows.
+    if (kind === "drop") return ev.filter(e => e.t < span * 0.875);
+    // STUTTER — the last eighth repeats its own first quarter, four times. The
+    // events are real events, so it stutters whatever was actually there.
+    if (kind === "stutter") {
+      const win = span / 8, from = span - win, unit = win / 4;
+      const out = ev.filter(e => e.t < from);
+      const head = ev.filter(e => e.t >= from && e.t < from + unit);
+      for (let k = 0; k < 4; k++)
+        for (const e of head)
+          out.push({ ...e, t: e.t + k * unit,
+                     dur: Math.min(e.dur == null ? unit : e.dur, unit) });
+      return out.sort((a, b) => a.t - b.t);
+    }
+    const shape = SHAPES[kind];
+    if (!shape) return ev;
     return ev.map(e => {
       const x = Math.min(1, Math.max(0, e.t / span));
-      const f = kind === "in" ? x : kind === "out" ? 1 - x : 1;
+      const f = shape(x);
       return { ...e, vel: Math.max(0, Math.round((e.vel == null ? 5 : e.vel) * f)) };
     });
   };
 
-  const api = { at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, KITOPS, mapKit, swing, rotate, reverse, transpose, invert, complement,
+  // ---- INTRO and OUTRO: the two bars that are not like the others ----------
+  // A THIRD TYPE AGAIN, and the distinction is worth being pedantic about,
+  // because it is what stopped these being a pile of special cases. An operator
+  // is timeless. An envelope is a function of position over the WHOLE section.
+  // These are functions of position over ONE BAR at a known end — which means
+  // they can do the thing neither of the others can: replace what is there.
+  // A drum fill is not a louder last bar or a rotated kit, it is a DIFFERENT bar,
+  // and until something was allowed to delete events and write new ones there
+  // was no way to say so.
+  //
+  // Both take the windowed event stream, the section's length in steps and the
+  // steps in a bar, and both are total: an unknown name returns the stream.
+  const beatsOf = (t0, bs, steps) => steps.map(s => t0 + s * bs / 16);
+  // one drum event, written in the same shape drums() emits
+  const D = (t, d, acc, v) => ({ t, d, acc: !!acc, vel: v, kind: "hit", fill: true });
+
+  function intro(ev, kind, span, bs) {
+    if (!kind || !bs) return ev;
+    const inBar = e => e.t < bs, rest = ev.filter(e => !inBar(e));
+    const bar = ev.filter(inBar);
+    if (kind === "count") {
+      // a count-in: four rim clicks and nothing else, the fourth accented
+      const out = rest.slice();
+      beatsOf(0, bs, [0, 4, 8, 12]).forEach((t, i) => out.push(D(t, "p", i === 3, i === 3 ? 9 : 6)));
+      return out.sort((a, b) => a.t - b.t);
+    }
+    if (kind === "hit") {
+      // one downbeat and then space — the oldest way to say "here we go"
+      return [D(0, "k", 1, 9), D(0, "o", 1, 8), ...rest].sort((a, b) => a.t - b.t);
+    }
+    if (kind === "solo")  return [...bar.filter(e => e.kind === "line"), ...rest];
+    if (kind === "kit")   return [...bar.filter(e => e.kind === "hit"), ...rest];
+    if (kind === "swell") {
+      // the first bar alone fades up — a fade-in that does not eat the section
+      return [...bar.map(e => ({ ...e,
+        vel: Math.max(0, Math.round((e.vel == null ? 5 : e.vel) * (e.t / bs))) })), ...rest];
+    }
+    return ev;
+  }
+
+  function outro(ev, kind, span, bs) {
+    if (!kind || !bs || !span) return ev;
+    const from = Math.max(0, span - bs);
+    const inBar = e => e.t >= from, rest = ev.filter(e => !inBar(e));
+    const bar = ev.filter(inBar);
+    const keepLines = bar.filter(e => e.kind !== "hit");
+    if (kind === "fill") {
+      // THE FILL. Eighths for the first half of the bar, sixteenths for the
+      // second, accented on the beat — the standard shape, played as real snare
+      // events rather than as a kit vector, which is why it can accelerate at
+      // all. The kick stays on 1 so the bar still lands.
+      const out = [...rest, ...keepLines, D(from, "k", 1, 9)];
+      for (const s of [0, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15])
+        out.push(D(from + s * bs / 16, "s", s % 4 === 0, s < 8 ? 6 : 7 + (s % 2)));
+      out.push(D(from + 15 * bs / 16, "c", 1, 9));
+      return out.sort((a, b) => a.t - b.t);
+    }
+    if (kind === "roll") {
+      // an accelerating roll: slow, then faster, then a crash. Same idea as the
+      // fill, but it is a crescendo rather than a phrase.
+      const steps = [0, 4, 8, 10, 12, 13, 14, 15];
+      const out = [...rest, ...keepLines];
+      steps.forEach((s, i) => out.push(D(from + s * bs / 16, "s", i > 4, 4 + i)));
+      out.push(D(from + bs, "o", 1, 9));
+      return out.sort((a, b) => a.t - b.t);
+    }
+    if (kind === "crash") {
+      // everything stops and one cymbal holds the door open
+      return [...rest, D(from, "o", 1, 9), D(from, "k", 1, 9)].sort((a, b) => a.t - b.t);
+    }
+    if (kind === "break") return [...rest, ...bar.filter(e => e.kind === "hit")];
+    if (kind === "tail")  return [...rest, ...keepLines];
+    if (kind === "cut")   return ev.filter(e => e.t < span - bs / 4);
+    return ev;
+  }
+  const edges = (ev, i, o, span, bs) => outro(intro(ev, i, span, bs), o, span, bs);
+
+  const api = { at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, edges, intro, outro, groove, GROOVES, KITOPS, mapKit, swing, rotate, reverse, transpose, invert, complement,
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, pitch, mp, fold, near,
                 harm, render, drums, bass };

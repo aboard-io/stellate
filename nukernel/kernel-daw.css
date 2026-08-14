@@ -129,7 +129,7 @@ h1 em{font-style:normal;color:var(--accent)}
 .slots{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
 @media (max-width:720px){.slots{grid-template-columns:repeat(4,1fr)}}
 .slot{
-  appearance:none;font:inherit;cursor:grab;padding:5px 6px 6px;
+  appearance:none;font:inherit;cursor:pointer;padding:5px 6px 6px;
   background:var(--sunk);border:1px solid var(--line);border-radius:2px;
   display:flex;flex-direction:column;gap:4px;align-items:stretch;
 }
@@ -149,7 +149,7 @@ h1 em{font-style:normal;color:var(--accent)}
   padding:0;cursor:default}
 .num{font-size:10px;color:var(--faint);text-align:center}
 .num.q{color:var(--accent2)}
-.cell{
+.cell{touch-action:none;
   appearance:none;font:inherit;font-size:11px;height:24px;cursor:pointer;
   background:var(--sunk);border:1px solid var(--hair);border-radius:1px;color:var(--dim);
   display:flex;align-items:center;justify-content:center;padding:0;
@@ -190,7 +190,14 @@ h1 em{font-style:normal;color:var(--accent)}
   text-transform:uppercase;color:var(--dim)}
 .bhead b{color:var(--ink);font-size:13px;letter-spacing:0}
 .box.live .bhead b{color:var(--accent)}
-.bhead .x{margin-left:auto;appearance:none;background:none;border:0;cursor:pointer;
+.bhead .btools{margin-left:auto;display:flex;align-items:center;gap:1px}
+.bhead .t{
+  appearance:none;background:none;border:0;cursor:pointer;color:var(--faint);
+  font:inherit;font-size:11px;line-height:1;padding:3px 4px;border-radius:2px;
+}
+.bhead .t:hover{color:var(--accent);background:var(--sunk)}
+.bhead .t.on{color:var(--accent2)}
+.bhead .x{appearance:none;background:none;border:0;cursor:pointer;
   color:var(--faint);font:inherit;font-size:15px;line-height:1;padding:0 2px}
 .bhead .x:hover{color:var(--accent)}
 .bgenre{font-size:12px;letter-spacing:.04em;color:var(--faint)}
@@ -208,7 +215,10 @@ h1 em{font-style:normal;color:var(--accent)}
 .tag{font-size:9px;letter-spacing:.06em;text-transform:uppercase;
   background:var(--accent);color:#fff;border-radius:2px;padding:2px 5px}
 .tag.env{background:var(--accent2);color:#231f16}
-.grip{position:absolute;top:0;bottom:0;width:10px;cursor:ew-resize}
+/* touch-action:none, or dragging a grip on a phone scrolls the page instead —
+   the pointer handlers are touch-capable, the browser just has to be told that
+   this element wants the gesture. */
+.grip{position:absolute;top:0;bottom:0;width:10px;cursor:ew-resize;touch-action:none}
 .grip.r{right:0;border-left:1px solid transparent}
 .grip.l{left:0;border-right:1px solid transparent}
 .grip.r:hover{border-left-color:var(--accent)}
@@ -216,6 +226,12 @@ h1 em{font-style:normal;color:var(--accent)}
 .grip:hover{background:color-mix(in srgb,var(--accent) 20%,transparent)}
 .box.looped{border-style:double;border-width:3px;border-color:var(--accent2)}
 .loopmark{margin-left:auto;color:var(--accent2)}
+/* the section's NAME, in the head where you can find it at a glance */
+.bhead .role{
+  font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;
+  color:var(--accent);border:1px solid var(--accent);border-radius:2px;padding:0 4px;
+}
+.pchip.role.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .box.dragging{opacity:.4}
 .tag.mode{background:var(--v2);color:#fff}
 .tag.rng{background:var(--v3);color:#fff}
@@ -224,15 +240,31 @@ h1 em{font-style:normal;color:var(--accent)}
 .tag.clp{background:var(--v3);color:#fff}
 .tag.art{background:var(--v0);color:#fff}
 .tag.rate{background:var(--v1);color:#08150f}
+.tag.fx{background:var(--v2);color:#fff}
+.tag.vox{background:var(--v0);color:#fff}
 
-/* ---- palette ---- */
+/* ---- palette ----
+   Six tabs across the top, then one row per group. The tab strip takes the whole
+   width so the groups below it always start on a new line; before it existed the
+   palette was one flat run of a hundred and forty chips. */
 .palette{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;
   border-top:1px solid var(--hair);padding-top:10px}
+.ptabs{flex:1 0 100%;display:flex;gap:0;border:1px solid var(--line);border-radius:2px;
+  overflow:hidden;width:fit-content;max-width:100%}
+.ptab{
+  appearance:none;border:0;border-right:1px solid var(--line);background:transparent;
+  color:var(--dim);font:inherit;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  padding:7px 15px;cursor:pointer;
+}
+.ptab:last-child{border-right:0}
+.ptab:hover{color:var(--ink);background:var(--sunk)}
+.ptab.on{background:var(--accent);color:#fff}
+.pnote{flex:1 0 100%;margin:0;font-size:11px;color:var(--dim);max-width:82ch;line-height:1.6}
 .pgroup{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
 .plabel{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
   margin-right:2px}
 .pchip{
-  appearance:none;font:inherit;font-size:11px;letter-spacing:.05em;cursor:grab;
+  appearance:none;font:inherit;font-size:11px;letter-spacing:.05em;cursor:pointer;
   background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:2px;
   padding:5px 9px;
 }
@@ -251,10 +283,28 @@ h1 em{font-style:normal;color:var(--accent)}
 .pchip.foc.on{background:var(--accent2);border-color:var(--accent2);border-style:solid;color:#231f16}
 .pchip.bas.on{background:var(--vb);border-color:var(--vb);color:#0e1116}
 .pchip.rate.on{background:var(--v1);border-color:var(--v1);color:#08150f}
+/* the two new families: an FX chip is an insert (a box you go THROUGH), a vox
+   chip is a knob on the voice itself */
+.pchip.fx.on{background:var(--v2);border-color:var(--v2);color:#fff}
+.pchip.vox.on{background:var(--v0);border-color:var(--v0);color:#fff}
 .pchip.dragging,.slot.dragging{opacity:.4}
 .slot.inbox{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .slot.inbox .sn{color:var(--accent)}
-:where(.pchip,.bhead .x,.slot,.box):focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+:where(.pchip,.ptab,.bhead .x,.bhead .t,.slot,.box):focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+
+/* ---- touch ----
+   A coarse pointer has no hover, no shift key and a fingertip about nine
+   millimetres across. The controls that were sized for a mouse get bigger, and
+   the step cells get touch-action:none so a vertical scrub on a cell changes the
+   value instead of scrolling the page out from under it. */
+@media (pointer:coarse){
+  .cell{touch-action:none;min-height:34px}
+  .stepgrid{grid-template-columns:58px repeat(16,minmax(34px,1fr));min-width:660px}
+  .pchip{padding:8px 11px;font-size:12px}
+  .ptab{padding:10px 16px}
+  .bhead .t,.bhead .x{padding:6px 8px;font-size:13px}
+  .grip{width:16px}
+}
 
 /* ---- footer ---- */
 details{background:var(--panel);border:1px solid var(--line);border-radius:3px;

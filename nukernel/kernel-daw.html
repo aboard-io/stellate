@@ -20,6 +20,9 @@
     <div class="knob"><label for="vol">Volume</label>
       <input type="range" id="vol" min="0" max="100" value="80"><b id="volv">80</b></div>
     <div class="spacer"></div>
+    <label class="knob"><span>Compose</span>
+      <select id="composeg"></select></label>
+    <button class="btn go" id="compose">Write a song</button>
     <label class="knob"><span>Songs</span>
       <select id="preset"><option value="">choose…</option></select></label>
     <label class="knob"><span>Font</span><select id="font"></select></label>
@@ -34,8 +37,9 @@
   <div class="ed">
     <div class="edhead">
       <h2>Editing <span id="edslot">phrase 1</span></h2>
-      <p>Click to raise, shift-click to lower. <b>vel</b> is level; <b>acc</b> is the 303 accent.</p>
+      <p>Tap a cell to change it, or drag up and down to scrub. <b>vel</b> is level; <b>acc</b> is the 303 accent.</p>
       <span class="spacer"></span>
+      <button class="btn" id="stepdir" aria-pressed="false">Tap raises</button>
       <button class="btn" id="seed">Seed</button>
       <button class="btn" id="rnd">Random</button>
       <button class="btn" id="clear">Clear</button>
@@ -52,7 +56,8 @@
     <div class="edhead">
       <h2>Song</h2>
       <p>Click to play from a box, double-click to loop it, drag to reorder, trim the edges.
-         Genres stack — the first owns the harmony, drums and tempo; the rest layer over it, each with its own phrases.</p>
+         Genres stack — the first owns the harmony, drums and tempo; the rest ride on top of it, each with its own phrases.
+         Every box is also a mixer channel: its own effects, its own reverb and echo sends, its own way in and out.</p>
     </div>
     <div class="song" id="song"></div>
     <div class="palette" id="palette"></div>
@@ -78,6 +83,7 @@
 <script src="presets.js"></script>
 <script src="kernel.js"></script>
 <script src="genres.js"></script>
+<script src="compose.js"></script>
 <script src="kernel-daw.js"></script>
 </body>
 </html>

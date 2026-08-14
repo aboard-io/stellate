@@ -5,8 +5,10 @@
 // Boxes drag to REORDER, and only to reorder — nothing is dragged into them.
 // Click a box to play from there; double-click to loop it alone.
 const { harm, render, drums, bass, ROMAN, word, drop, envelope,
-        reverse, invert, rotate, fill, spread, KITOPS, split, del } = window.NuKernel;
+        reverse, invert, rotate, fill, spread, KITOPS, split, del, edges, groove,
+        transpose, complement, crossmap, excerpt, only } = window.NuKernel;
 const { DEFAULT, GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL } = window.NuGenres;
+const { compose, ROLES } = window.NuCompose;
 
 const DEFAULT_BPM = 126, NSLOTS = 8, NBOXES = 4;
 const PX_PER_BAR = 22, BAR_PX = 26, MAX_LEN = 64, MAX_NUDGE = 31;
@@ -46,24 +48,33 @@ addEventListener("visibilitychange", () => { if (document.visibilityState === "h
 const okPhrase = p => p && typeof p === "object" &&
   ["deg", "oct", "vel", "gate", "acc", "sld"].every(k =>
     Array.isArray(p[k]) && p[k].length === 16 && p[k].every(Number.isFinite));
+const has = (o, k) => k == null || Object.prototype.hasOwnProperty.call(o, k);
+const okVox = v => v == null || (typeof v === "object" &&
+  Object.keys(v).every(k => VOX[k] && (v[k] == null || VOX[k].t[v[k]] != null)));
 const okBox = b => b && typeof b === "object" &&
   Array.isArray(b.stack) && b.stack.length &&
   b.stack.every(e => e && Object.prototype.hasOwnProperty.call(GENRES, e.g) &&
     Array.isArray(e.slots) && e.slots.every(i => Number.isInteger(i) && i >= 0 && i < NSLOTS) &&
     (e.ops == null || Array.isArray(e.ops)) &&
-    (e.scale == null || Object.prototype.hasOwnProperty.call(SCALES, e.scale)) &&
+    has(SCALES, e.scale) &&
     (e.artic == null || ["staccato", "normal", "legato", "tie"].includes(e.artic)) &&
+    (e.oct == null || has(OCTAVES, String(e.oct))) && okVox(e.vox) &&
     (e.cmode == null || ["hold", "loop", "reverse"].includes(e.cmode))) &&
   Number.isFinite(b.len) && Number.isFinite(b.nudge) &&
   Array.isArray(b.ops) &&
-  (b.env === null || b.env === "in" || b.env === "out") &&
-  (b.mode == null || Object.prototype.hasOwnProperty.call(MODES, b.mode)) &&
-  (b.rate == null || Object.prototype.hasOwnProperty.call(RATES, b.rate)) &&
-  (b.scale == null || Object.prototype.hasOwnProperty.call(SCALES, b.scale)) &&
+  (b.env == null || has(ENVLABEL, b.env)) &&
+  has(MODES, b.mode) && has(RATES, b.rate) && has(SCALES, b.scale) &&
   (b.cmode == null || ["hold", "loop", "reverse"].includes(b.cmode)) &&
   (b.artic == null || ["staccato", "normal", "legato", "tie"].includes(b.artic)) &&
-  (b.kit == null || Object.prototype.hasOwnProperty.call(KITLABEL, b.kit)) &&
-  (b.bassop == null || Object.prototype.hasOwnProperty.call(BASSOPS, b.bassop));
+  has(KITLABEL, b.kit) && has(DRUMKITS, b.drumkit) && has(BASSOPS, b.bassop) &&
+  has(SWINGLABEL, b.swing) && has(GROOVELABEL, b.groove) && has(ROLES, b.role) &&
+  // the mixer half — every one of these is optional, and absent means "as the
+  // genre asks", so an older save is a valid new song with a default channel
+  (b.fx == null || Array.isArray(b.fx)) &&
+  has(SENDS, b.rev) && has(SENDS, b.del) && has(VERBS, b.verb) &&
+  has(DTIMES, b.dtime) && has(LEVELS, b.lvl) && has(PANS, b.pan) &&
+  has(MOTLABEL, b.mot) && has(INLABEL, b.intro) && has(OUTLABEL, b.outro) &&
+  (b.oct == null || has(OCTAVES, String(b.oct))) && okVox(b.vox);
 // One validate-and-apply path for BOTH sources. A file off the desktop gets
 // exactly the same paranoia as a localStorage read — it is the same shape and
 // can be just as stale, and hand-edited on top of that.
@@ -84,6 +95,7 @@ function applyState(raw) {
   // does, and a song should lose an obsolete chip rather than lose itself.
   for (const b of raw.song) {
     b.ops = (b.ops || []).filter(o => Object.prototype.hasOwnProperty.call(OPS, o));
+    b.fx = (b.fx || []).filter(k => FX[k]).slice(0, MAX_FX);
     for (const e of b.stack) if (e.ops)
       e.ops = e.ops.filter(o => Object.prototype.hasOwnProperty.call(OPS, o));
   }
@@ -133,6 +145,7 @@ function loadFile(file) {
       return;
     }
     if (playing) stop();
+    dropChannels();                 // a new song is a new mix; keep no old ones
     viewSec = 0; playingSec = -1; loopOnly = null; slot = 0; SUBJ = SLOTS[0];
     paletteBuilt = false;
     drawPalette(); drawSlots(); drawEditor(); drawSong(); draw(); save();
@@ -182,14 +195,158 @@ const OPLABEL = { rev: "reverse", inv: "invert",
 for (let n = 2; n <= 8; n++) { OPS["rep" + n] = split(n); OPLABEL["rep" + n] = "split " + n; }
 for (let n = 2; n <= 8; n++) { OPS["del" + n] = del(n);    OPLABEL["del" + n] = "delete " + n; }
 // delete 1 would remove every element — the annihilator, not a variation.
-const ENVLABEL = { in: "fade in", out: "fade out" };
+//
+// THE REST OF THE ALGEBRA, which the palette had simply never offered. kernel.js
+// exports eleven operator families and four of them were reachable; the missing
+// ones are not exotic corners, they are the moves an acid line is MADE of — the
+// rotate that walks the sequence past itself, the accent flip, the slide map,
+// the loop-a-fragment. Every one is a call into an operator that already existed
+// and is already gated by test/unit/nukernel.test.js.
+for (let n = 1; n <= 7; n++) { OPS["rot" + n] = rotate(n); OPLABEL["rot" + n] = String(n); }
+// ONE VECTOR AT A TIME — the `only` discipline, which is what keeps a subject
+// recognizable while its rhythm or its pitches move underneath it. Rotating the
+// gate alone re-times the phrase and keeps every note; rotating deg alone keeps
+// the rhythm and re-pitches it. The pair is the whole idea of a variation, and
+// neither was reachable from the UI.
+for (const n of [2, 4, 8]) {
+  OPS["gat" + n] = only("gate", rotate(n)); OPLABEL["gat" + n] = "rhythm " + n;
+  OPS["pit" + n] = only("deg", rotate(n));  OPLABEL["pit" + n] = "pitch " + n;
+}
+for (const n of [2, 3, 4]) { OPS["thin" + n] = drop(n); OPLABEL["thin" + n] = String(n); }
+for (const n of [2, 3, 4]) { OPS["dens" + n] = fill(n); OPLABEL["dens" + n] = String(n); }
+for (const n of [-2, -1, 1, 2]) {
+  const k = "tr" + (n < 0 ? "m" : "p") + Math.abs(n);
+  OPS[k] = transpose(n); OPLABEL[k] = (n > 0 ? "+" : "−") + Math.abs(n);
+}
+for (const n of [4, 8]) { OPS["ex" + n] = excerpt(0, n); OPLABEL["ex" + n] = String(n); }
+OPS.accflip  = complement("acc");       OPLABEL.accflip  = "flip accents";
+OPS.gateflip = complement("gate");      OPLABEL.gateflip = "negative";
+OPS.slides   = crossmap("acc", "sld");  OPLABEL.slides   = "accents slide";
+OPS.stick    = crossmap("gate", "acc"); OPLABEL.stick    = "accent all";
+
+// TRANSITIONS, in two families that are genuinely different types. LEVEL runs on
+// the event stream (kernel.js `envelope`); MOTION is automation on the section's
+// mixer channel, because a filter opening is a fact about the SOUND and there is
+// no event to hang it on. Offering both under one heading is the point — from
+// the outside they answer the same question, "how does this section arrive".
+const ENVLABEL = { in: "fade in", out: "fade out", swell: "swell",
+                   duck: "duck", drop: "drop", stutter: "stutter" };
+const MOTLABEL = { open: "filter open", close: "filter close",
+                   rise: "riser", pump: "pump" };
+// INTRO / OUTRO — the two bars that are not like the others (kernel.js `edges`).
+// These are the ones that actually announce a section, because they are the only
+// transforms allowed to write events that were not there: a drum fill is a
+// different bar, not a louder one.
+const INLABEL  = { count: "count-in", hit: "downbeat", solo: "melody alone",
+                   kit: "drums alone", swell: "swell in" };
+const OUTLABEL = { fill: "drum fill", roll: "snare roll", crash: "crash",
+                   break: "drum break", tail: "no drums", cut: "cut short" };
 
 const RATES = { half: 0.5, dbl: 2 };
 const RATELABEL = { half: "half time", dbl: "double time" };
-const KITLABEL = { nodrums: "no drums", shift: "shift kit",
-                   halftime: "half-time kit", busy: "busy hats" };
-const BASSOPS = { nobass: "no bass", walk: "walking", octaves: "octaves",
-                  reese: "reese", wobble: "wobble" };
+// SWING bends the grid — every odd sixteenth arrives late by this fraction of a
+// step. It was a genre constant (blues alone had it, at a triplet third); as a
+// box control it is the difference between a pattern and a performance, and it
+// belongs to the section rather than to the genre for the same reason tempo does.
+const SWINGS = { straight: 0, light: 0.12, swing: 0.22, shuffle: 1 / 3, hard: 0.42 };
+const SWINGLABEL = { straight: "straight", light: "light", swing: "swing",
+                     shuffle: "shuffle", hard: "hard shuffle" };
+// GROOVE is the other half, and it is not the same half. Swing moves the odd
+// sixteenths and nothing else; a groove is a sixteen-slot fingerprint of BOTH
+// timing and loudness — which steps lean late, which land hard — and it is what
+// separates a drum machine from a drummer. `dub` is mined rather than written
+// (engine/pipes.js ACCENT_PROFILES, off the MIDIMAN dub rip).
+const GROOVELABEL = { backbeat: "backbeat", push: "pushed", laidback: "laid back",
+                      funk: "funk", dub: "dub" };
+// EVERY KIT OPERATOR kernel.js has, which is thirteen rather than four.
+const KITLABEL = { nodrums: "none", nokick: "no kick", nohats: "no hats",
+                   snareonly: "snare only", shift: "shift", halftime: "half time",
+                   doubletime: "double time", busy: "busy hats", sparse: "sparse",
+                   four: "four on the floor", offbeat: "offbeat hats",
+                   swap: "swap kick/snare", roll: "roll" };
+// WHICH SAMPLED KIT — found/samples/drums/<kit>/, the same extraction the big
+// engine plays. A genre names one; a box may borrow another, which is the
+// difference between playing a beat and playing it on somebody else's drums.
+const DRUMKITS = { acoustic: "acoustic", brush: "brushes", electronic: "electronic",
+                   jazz: "jazz", power: "power", room: "room" };
+const BASSOPS = { nobass: "none", walk: "walking", octaves: "octaves",
+                  fifths: "fifths", pedal: "pedal", eighths: "eighths",
+                  sixteenths: "sixteenths", reese: "reese", wobble: "wobble" };
+
+/* ---------- the effects a section can carry ---------- */
+// THESE ARE THE BIG ENGINE'S OWN EFFECTS, not lookalikes. Each entry is exactly
+// the {type, params} shape engine/faust/voices/state-engine.js `insertChain`
+// normalizes and engine/faust/voices/sampler.js `buildInsertNodes` builds — the
+// same function the main app's live ring path calls to put a chorus on a pad.
+// nukernel already loads sampler.js for the sampled voices, so the whole insert
+// library came along with it and was simply never called. The defaults below are
+// the ones the module declares, chosen to be audible on one bar.
+const FX = {
+  chorus:   { label: "chorus",     params: { rate: 0.7, depth: 0.6, mix: 0.45 } },
+  phaser:   { label: "phaser",     params: { rate: 0.35, depth: 0.8, mix: 0.7 } },
+  flanger:  { label: "flanger",    params: { rate: 0.3, depth: 0.9, feedback: 0.6, mix: 0.6 } },
+  tremolo:  { label: "tremolo",    params: { rate: 5, depth: 0.8, mix: 0.9 } },
+  leslie:   { label: "leslie",     params: { speed: 0.7, depth: 0.85, mix: 0.6 } },
+  wah:      { label: "auto-wah",   params: { base: 320, range: 2.2, sens: 0.7, q: 4, mix: 0.9 } },
+  ringmod:  { label: "ring mod",   params: { freq: 180, mix: 0.4 } },
+  sweep:    { label: "filter sweep", type: "filtersweep",
+              params: { lo: 400, hi: 5200, res: 0.35, rateBars: 4 } },
+  fenv:     { label: "squelch",    type: "fenv",
+              params: { base: 380, amount: 2.4, sens: 0.7, res: 0.6, decay: 0.16, mix: 1 } },
+  echo:     { label: "tape echo",  type: "delay",
+              params: { timeBars: 0.1875, feedback: 0.4, tone: 2800, mix: 0.35 } },
+  crunch:   { label: "crunch",     type: "higain",
+              params: { drive: 0.6, stages: 2, gate: 0.2, low: 0.55, mid: 0.35,
+                        high: 0.6, presence: 0.5, level: 0.55, mix: 0.9 } },
+};
+const MAX_FX = 3;                 // an insert chain, not a pedalboard floor
+// the {type, params} list buildInsertNodes wants, from the box's chip keys
+const fxChain = keys => (keys || []).filter(k => FX[k])
+  .map(k => ({ type: FX[k].type || k, params: { ...FX[k].params } }));
+
+// SENDS ARE DISCRETE, like everything else here. A chip is a decision; a slider
+// is a fiddle, and the whole surface is chips on purpose.
+const SENDS = { none: 0, touch: 0.12, some: 0.3, wet: 0.55, drown: 0.9 };
+const SENDLABEL = { none: "dry", touch: "touch", some: "some", wet: "wet", drown: "drown" };
+const VERBS = { room: "room", hall: "hall", plate: "plate" };
+// echo time as a fraction of a bar — the subdivisions worth having
+const DTIMES = { "16": 0.0625, "8": 0.125, "d8": 0.1875, "4": 0.25, "d4": 0.375, "2": 0.5 };
+const DTLABEL = { "16": "1/16", "8": "1/8", d8: "dotted", "4": "1/4", d4: "dotted 1/4", "2": "1/2" };
+const LEVELS = { hush: 0.4, back: 0.7, norm: 1, fwd: 1.35 };
+const LEVELLABEL = { hush: "hush", back: "back", norm: "normal", fwd: "forward" };
+const PANS = { l: -0.7, hl: -0.35, c: 0, hr: 0.35, r: 0.7 };
+const PANLABEL = { l: "left", hl: "left-ish", c: "centre", hr: "right-ish", r: "right" };
+
+/* ---------- what a voice can be told to do ---------- */
+// THE SYNTH KNOBS, as chips. A signature synth is the one place where the sound
+// IS the genre — acid's accent and slide are filter behaviour, which is why
+// genres.js declares tb303 and refuses to sample it — and until now the filter
+// was a constant baked into the genre. These five are the 303's actual front
+// panel, and because they are written as a NORMALIZED position rather than a
+// number in Hz, the same chips drive the Model D and the reese/wobble basses
+// through their own differently-named params (see setVox).
+const VOX = {
+  cut:  { labels: { dark: "dark", warm: "warm", open: "open", bright: "bright", scream: "screaming" },
+          t: { dark: 0.06, warm: 0.16, open: 0.34, bright: 0.6, scream: 0.9 }, log: true },
+  res:  { labels: { soft: "soft", med: "medium", hot: "hot", edge: "on the edge" },
+          t: { soft: 0.2, med: 0.5, hot: 0.75, edge: 0.95 } },
+  emod: { labels: { none: "none", low: "low", mid: "mid", max: "max" },
+          t: { none: 0.02, low: 0.3, mid: 0.6, max: 0.95 } },
+  dec:  { labels: { snap: "snap", short: "short", long: "long", drone: "drone" },
+          t: { snap: 0.04, short: 0.16, long: 0.45, drone: 0.9 } },
+  wave: { labels: { saw: "saw", square: "square" }, t: { saw: 0, square: 1 } },
+};
+// The param a knob rides, per DSP naming. First name that EXISTS on the node
+// wins, so one chip covers tb303 / modeld / bass_reese / bass_wobble without a
+// per-synth table — and a DSP that has none of them (the DX7) is simply not
+// touched rather than being fed a param it does not own.
+const VOXPARAM = { cut: ["cutoff"], res: ["resonance", "res"],
+                   emod: ["envmod", "envAmount", "fenvAmount"],
+                   dec: ["decay", "envDecay", "fenvDecay"],
+                   wave: ["waveform", "oscMix"] };
+// REGISTER, per layer — the one voice transformation that works on a sampled
+// instrument as well as a synth, because it moves the note and not the timbre.
+const OCTAVES = { "-2": "−2", "-1": "−1", "0": "0", "1": "+1", "2": "+2" };
 // A new box is SIMPLE — the phrase played as written. There is no empty state
 // any more: a box always makes a sound as soon as it has a phrase, and the
 // genres are legible as what they add to that.
@@ -203,9 +360,19 @@ const BASSOPS = { nobass: "no bass", walk: "walking", octaves: "octaves",
 // the stack meant a layered fugue could only ever restate whatever the rock riff
 // was playing — which is not a counter-subject, it is a doubling. Rock on phrase
 // 3 with a fugue on phrases 2+1 underneath is the whole point of layering.
+// A BOX IS ALSO A MIXER CHANNEL. `fx` is its insert chain, `rev`/`del` its two
+// sends, `verb`/`dtime` which reverb and which echo subdivision it is sent TO,
+// `lvl`/`pan` where it sits, `mot` its filter automation. All of it is the same
+// per-section-strip idea the big engine's state-engine.js carries per VOICE —
+// see the mixer section below, which builds the real thing out of the same
+// engine/faust/voices/sampler.js code.
 const emptyBox = () => ({ stack: [{ g: "simple", slots: [] }], len: GENRES.simple.bars,
                           nudge: 0, ops: [], env: null, mode: null, rate: null, scale: null,
-                          kit: null, bassop: null, clamp: null, cmode: null, artic: null });
+                          kit: null, drumkit: null, bassop: null, clamp: null, cmode: null,
+                          artic: null, fx: [], rev: null, del: null, verb: null,
+                          dtime: null, lvl: null, pan: null, mot: null,
+                          intro: null, outro: null, swing: null, groove: null,
+                          role: null });
 
 // The genre a box actually renders with: its own definition, plus whatever the
 // box overrides. Mode and tempo are not pattern operators and not envelopes —
@@ -218,6 +385,8 @@ const genreOf = (sec, ent) => {
   const out = { ...g, ...(sec.mode ? { mode: MODES[sec.mode] } : {}),
                 ...(scale ? { scale: SCALES[scale] } : {}),
                 ...(sec.rate ? { rate: g.rate * RATES[sec.rate] } : {}) };
+  if (sec.drumkit) out.drumkit = sec.drumkit;      // borrow another kit's SOUND
+  if (sec.swing) out.swing = SWINGS[sec.swing];    // "straight" is 0, and means it
   if (sec.kit) {
     out.kit = KITOPS[sec.kit](g.kit || {}); out.fill = null;
     if (sec.kit === "nodrums") out.ghost = null;   // the ghost lane is not in the kit
@@ -245,11 +414,36 @@ const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
 //
 // A layer field left unset INHERITS the box's, so nothing diverges by accident
 // — which is how the fugue ended up reading pentatonic against a quartal riff.
-const LAYER_OPTS = new Set(["op", "artic", "clamp", "cmode", "scale"]);
+const LAYER_OPTS = new Set(["op", "artic", "clamp", "cmode", "scale", "oct", "vox"]);
 const optOf = (sec, ent, k) => (ent && ent[k] != null ? ent[k] : sec[k]);
 const opsOf = (sec, ent) => (ent && ent.ops ? ent.ops : sec.ops);
+// the synth knobs are an OBJECT of independent settings, so they inherit
+// knob-by-knob rather than whole: setting the filter on a layer must not throw
+// away the resonance it was inheriting from the box.
+const voxOf = (sec, ent, k) => (ent && ent.vox && ent.vox[k] != null
+  ? ent.vox[k] : (sec.vox ? sec.vox[k] : null));
+const voxAll = (sec, ent) => {
+  const out = {};
+  for (const k of Object.keys(VOX)) { const v = voxOf(sec, ent, k); if (v != null) out[k] = v; }
+  return Object.keys(out).length ? out : null;
+};
+const octOf = (sec, ent) => +(optOf(sec, ent, "oct") || 0);
 
 const gid = sec => (sec.stack && sec.stack[0] && sec.stack[0].g) || null;
+// WHICH SAMPLED KIT a box actually plays. The genre names one, the box may
+// borrow another — and a genre that names NONE can still be given drums (four
+// on the floor under a fugue), in which case it needs a real kit rather than the
+// oscillator fallback, so it gets the plain acoustic one. A box with no drum
+// lanes at all still gets null, because loading six wavs for a kit that will
+// never fire is a fetch for nothing.
+const kitOf = sec => {
+  if (!gid(sec)) return null;
+  if (sec.drumkit) return sec.drumkit;
+  const g = GENRES[gid(sec)];
+  if (g.drumkit) return g.drumkit;
+  const k = sec.kit && KITOPS[sec.kit] ? KITOPS[sec.kit](g.kit || {}) : (g.kit || {});
+  return Object.keys(k).length || g.ghost ? "acoustic" : null;
+};
 const stackOf = sec => sec.stack || [];
 const focusOf = sec => Math.min(sec.focus || 0, stackOf(sec).length - 1);
 const focused = sec => stackOf(sec)[focusOf(sec)] || { g: null, slots: [] };
@@ -273,16 +467,24 @@ function sectionEvents(sec) {
 
   const phrasesFor = e => (e.slots.length ? e.slots : [null])
     .map(i => word(i == null ? blank() : SLOTS[i], opsOf(sec, e).map(o => OPS[o])));
-  const phrases = phrasesFor(stackOf(sec)[0]);
+  const a0 = stackOf(sec)[0];
+  const phrases = phrasesFor(a0);
   const nP = phrases.length, out = [];
+  // REGISTER and the SYNTH KNOBS ride the events, not the genre. Both are
+  // per-layer, and by the time the scheduler sees an event the only thing left
+  // that says which layer it came from is the event itself — the authority's
+  // notes carry no `layer` tag at all. Tagging here is what lets one box put a
+  // dark 303 an octave down under a bright one on top.
+  const aOct = 12 * octOf(sec, a0), aVox = voxAll(sec, a0);
 
   phrases.forEach((ph, pi) => {
     const pitched = render(ph, g, total);
     for (let v = pi; v < g.voices; v += nP) {
       let prev = null;
       for (const e of pitched.filter(e => e.v === v)) {
-        out.push({ ...e, kind: "line", prev, pad: g.realize(v) === "pad" });
-        prev = e.n;
+        out.push({ ...e, n: e.n + aOct, kind: "line", prev,
+                   vox: aVox, pad: g.realize(v) === "pad" });
+        prev = e.n + aOct;
       }
     }
   });
@@ -293,7 +495,8 @@ function sectionEvents(sec) {
   const dr = drums(lead, g, g.bars), loopSteps = g.bars * barSteps;
   for (let r = 0; r < total / g.bars; r++)
     for (const e of dr) out.push({ ...e, kind: "hit", t: e.t + r * loopSteps });
-  for (const e of bass(lead, g, total)) out.push({ ...e, kind: "bass" });
+  for (const e of bass(lead, g, total))
+    out.push({ ...e, kind: "bass", vox: voxAll(sec, null) });
 
   // LAYERS. Each extra genre contributes only its pitched voices, rendered
   // through the authority's harmony, rate and mode — its own kit, bass and
@@ -312,18 +515,19 @@ function sectionEvents(sec) {
     // the box's; the authority still owns harmony, rate and the grid
     const lo = genreOf(sec, ent);
     const lg = { ...L, harmony: g.harmony, roots: g.roots, rate: g.rate,
-                 mode: g.mode, scale: lo.scale, incClamp: lo.incClamp,
+                 swing: g.swing, mode: g.mode, scale: lo.scale, incClamp: lo.incClamp,
                  incMode: lo.incMode, artic: lo.artic, kit: {}, ghost: null,
                  nobass: true, reg: v => L.reg(v) + 1 };
     // the layer reads ITS OWN phrases, dealt across ITS voices
+    const lOct = 12 * octOf(sec, ent), lVox = voxAll(sec, ent);
     lPh.forEach((ph, pi) => {
       const lev = render(ph, lg, total);
       for (let v = pi; v < L.voices; v += lnP) {
         let prev = null;
         for (const e of lev.filter(e => e.v === v)) {
-          out.push({ ...e, kind: "line", prev, pad: L.realize(v) === "pad",
-                     v: vBase + v, layer: extra });
-          prev = e.n;
+          out.push({ ...e, n: e.n + lOct, kind: "line", prev, vox: lVox,
+                     pad: L.realize(v) === "pad", v: vBase + v, layer: extra });
+          prev = e.n + lOct;
         }
       }
     });
@@ -331,7 +535,18 @@ function sectionEvents(sec) {
   }
 
   const win = out.filter(e => e.t >= from && e.t < to).map(e => ({ ...e, t: e.t - from }));
-  return { g, bars: len, ev: envelope(win, sec.env, len * barSteps), vBase };
+  // ORDER MATTERS, and this is the only order that makes sense. The envelope is
+  // a curve over the whole section, so it must see the section as written; the
+  // intro and outro REPLACE bars, so they must go last or the curve would fade
+  // the fill it never knew about.
+  const span = len * barSteps;
+  // GROOVE LAST, so the drum fill grooves too. It is the only stage that moves
+  // events in TIME rather than in pitch or level, and it has to see the final
+  // stream — a fill written after the groove would be the one bar in the section
+  // sitting flat on the grid, which is exactly what you notice.
+  return { g, bars: len, vBase,
+           ev: groove(edges(envelope(win, sec.env, span), sec.intro, sec.outro, span, barSteps),
+                      sec.groove, barSteps, 1) };
 }
 
 /* ---------- arrangement view of the selected box ---------- */
@@ -479,7 +694,14 @@ const MEDIA = "../found/samples/";
 
 // one instrument per genre, and one for the bass lane
 const INSTR = { simple: "yamaha_grand_piano", fugue: "rock_organ", acid: "clean_guitar",
-                vaporwave: "strings", blues: "steel_string_guitar", rock: "crunch_guitar" };
+                vaporwave: "strings", blues: "steel_string_guitar", rock: "crunch_guitar",
+                newwave: "clean_guitar",
+                // the choral four all want a real recorded voice, and the
+                // extraction has two of them — aahs for the sustained music,
+                // oohs for the closer, brighter Bulgarian sound
+                gregorian: "ahh_choir", spem: "ahh_choir", bulgarian: "ohh_voices",
+                counterpoint: "harpsichord", neoclassical: "felt_piano",
+                drone: "slow_strings", sludge: "distortion_guitar" };
 const BASS_INSTR = "acoustic_bass";
 
 // THE DRUM KIT IS SAMPLED TOO. found/samples/drums/<kit>/ is the same
@@ -508,7 +730,7 @@ async function loadKit(kit) {
   }));
   inFlight.delete("kit:" + kit);
 }
-function playDrum(kit, lane, when, acc, vel) {
+function playDrum(kit, lane, when, acc, vel, chan) {
   const buf = kit && drumBufs.get(kit + "|" + lane);
   if (!buf) return !!kit && inFlight.has("kit:" + kit);
   const lvl = (vel == null ? 5 : vel) / 9;
@@ -516,7 +738,7 @@ function playDrum(kit, lane, when, acc, vel) {
   const src = ctx.createBufferSource(); src.buffer = buf;
   const g = ctx.createGain();
   g.gain.value = (acc ? 1 : 0.72) * (0.45 + 0.55 * lvl) * (lane === "p" ? 0.5 : 1);
-  src.connect(g); g.connect(bus);
+  src.connect(g); g.connect((chan && chan.drumIn) || bus);
   src.start(when);
   return true;
 }
@@ -595,7 +817,6 @@ function instrumentsInSong() {
   for (const sec of SONG) for (const e of stackOf(sec)) ids.add(INSTR[e.g] || "yamaha_grand_piano");
   return [...ids];
 }
-let sampler = null;
 
 /* ---------- the Faust synth voices ---------- */
 // A genre carrying `synth` is never sampled: its identity IS the synthesis. The
@@ -614,8 +835,15 @@ let dx7Presets = null;
 // and the counterpoint collapsed to one line. The pool is keyed by dsp AND voice
 // index, which is how a monophonic voice becomes polyphonic: by there being
 // several of it, the way a real DX7 has sixteen.
-async function loadSynth(spec, v) {
-  const key = spec.dsp + "#" + v;
+// ONE NODE PER VOICE PER CHANNEL. The pool was already keyed by voice, for the
+// reason below; a section's insert chain and its sends are a property of the
+// NODE'S CONNECTION, so a 303 that is dry in box 1 and drowned in box 3 has to
+// be two nodes. The key is the channel's own signature, so two boxes with the
+// same chain still share — and a song with no effects is exactly as many nodes
+// as it was before.
+const synthKey = (spec, v, chan) => spec.dsp + "#" + v + "@" + (chan ? chan.key : "-");
+async function loadSynth(spec, v, chan) {
+  const key = synthKey(spec, v, chan);
   if (synthNodes.has(key)) return synthNodes.get(key);
   try {
     const fw = await import(FAUSTDIR + "node_modules/@grame/faustwasm/dist/esm/index.js");
@@ -634,21 +862,42 @@ async function loadSynth(spec, v) {
         if (a) a.setValueAtTime(v, ctx.currentTime);
       }
     }
-    node.connect(bus);
+    node.connect((chan && chan.input) || bus);
     synthNodes.set(key, node);
     return node;
   } catch (e) { synthNodes.set(key, null); return null; }
 }
+// THE VOICE KNOBS, applied generically. A chip carries a NORMALIZED position, not
+// a number in Hz, so the same "bright" means bright on a 303 (cutoff 60..6000),
+// on a Model D (60..16000) and on a reese (60..6000) without a per-synth table —
+// and because the value is derived from the param's OWN declared range it can
+// never land on a boundary, which is the clamp the audio gate exists to catch.
+// (cutoff is heard in octaves, so it is interpolated in octaves — `log` below;
+// the first param name the DSP actually owns wins, and a DSP that owns none of
+// them, like the DX7, is simply left alone.)
 // Every voice takes freq/gate/level the same way; the rest is per-DSP and is
 // declared in the genre, so adding a synth is a data change rather than code.
-function playSynth(spec, midi, when, durSec, acc, sld, vel, v) {
-  const node = synthNodes.get(spec.dsp + "#" + (v || 0));
+function playSynth(spec, midi, when, durSec, acc, sld, vel, v, chan, vox) {
+  const node = synthNodes.get(synthKey(spec, v || 0, chan));
   if (!node) return false;
   const set = (n, v, t) => {
     const a = node.parameters.get("/" + spec.root + "/" + n);
     if (a && v != null) a.setValueAtTime(v, t);
   };
   for (const [k, v] of Object.entries(spec.set || {})) set(k, v, when);
+  // the section's own knobs, AFTER the genre's — that is what makes them an
+  // override rather than a suggestion
+  if (vox) for (const [k, val] of Object.entries(vox)) {
+    const def = VOX[k]; if (!def || def.t[val] == null) continue;
+    for (const name of (VOXPARAM[k] || [])) {
+      const a = node.parameters.get("/" + spec.root + "/" + name);
+      if (!a) continue;
+      const t = def.t[val], lo = a.minValue, hi = a.maxValue;
+      const nv = def.log && lo > 0 ? lo * Math.pow(hi / lo, t) : lo + t * (hi - lo);
+      set(name, Math.max(lo, Math.min(hi, nv)), when);
+      break;
+    }
+  }
   set("accent", acc ? 1 : 0, when);
   set("slide", sld ? 1 : 0, when);
   const lvl = spec.level * (0.25 + 0.75 * ((vel == null ? 5 : vel) / 9));
@@ -679,19 +928,46 @@ const BASSSYNTH = {
             set: { cutoff: 1200, res: 0.38, wobbleHz: 3.2, fenvAmount: 1.5,
                    fenvAttack: 0.004, fenvDecay: 0.4 } },
 };
-function playSampled(id, midi, when, durSec, vel, gainMul) {
+const zoneSpan = new Map();
+function foldToZones(zones, midi) {
+  let sp = zoneSpan.get(zones);
+  if (!sp) {
+    sp = { lo: Infinity, hi: -Infinity };
+    for (const z of zones) { if (z.lo < sp.lo) sp.lo = z.lo; if (z.hi > sp.hi) sp.hi = z.hi; }
+    zoneSpan.set(zones, sp);
+  }
+  if (!(sp.hi >= sp.lo)) return midi;
+  let m = midi;
+  while (m < sp.lo && m + 12 <= sp.hi) m += 12;
+  while (m > sp.hi && m - 12 >= sp.lo) m -= 12;
+  return Math.max(sp.lo, Math.min(sp.hi, m));
+}
+function playSampled(id, midi, when, durSec, vel, gainMul, chan, strip) {
   const spec = specOf(id);
-  if (!spec || !sampler) return false;
-  const z = SP.zoneFor(spec.zones, midi);
+  const player = chan && chan.player;
+  if (!spec || !player) return false;
+  // FOLD INTO THE INSTRUMENT'S RANGE, the same law playSynth applies to a Faust
+  // freq param and for the same reason. A sampler's zones cover a finite span,
+  // and now that a layer can be moved two octaves either way a note can land
+  // outside it — where zoneFor returns null, playSampled returns false, and the
+  // note comes out of the oscillator fallback. Folding by octaves keeps the
+  // pitch class and only moves the register.
+  const midi2 = foldToZones(spec.zones, midi);
+  const z = SP.zoneFor(spec.zones, midi2);
   if (!z) return false;
   const buf = zoneBufs.get(FONT + "|" + id + "|" + z.file);
   if (!buf) return inFlight.has("ins:" + id);      // loading: drop it, do not beep
   const lead = SP.zoneLeadIn ? SP.zoneLeadIn(buf, z, buf.sampleRate, spec.sr) : 0;
   const leadSec = lead ? lead / (buf.sampleRate || spec.sr) : 0;
-  sampler.note(buf, when, {
-    rate: SP.rateFor(z, midi), durSec,
+  player.note(buf, when, {
+    rate: SP.rateFor(z, midi2), durSec,
     gain: 0.42 * (0.2 + 0.8 * ((vel == null ? 5 : vel) / 9)) * (gainMul || 1),
-    atk: 0.006, rel: 0.12, dry: 1, rsend: 0.14, dsend: 0,
+    // THE STRIP IS WHERE THE MIX HAPPENS. sampler.js builds it — the same node
+    // chain the big engine's live path builds from the same spec.
+    strip,
+    // the sends are the SECTION's, not the note's: every tap goes to the channel
+    // input and the channel decides how wet the whole box is
+    atk: 0.006, rel: 0.12, dry: 1, rsend: 0, dsend: 0,
     offsetSec: leadSec,
     loop: !!z.loop,
     loopStartSec: (z.loopStart || 0) / spec.sr + leadSec,
@@ -699,45 +975,285 @@ function playSampled(id, midi, when, durSec, vel, gainMul) {
   return true;
 }
 
-/* ---------- audio ---------- */
-let ctx = null, bus = null, verb = null, verbGain = null, noise = null;
+/* ---------- audio: THE MIX ---------- */
+// THE MIXING IS THE BIG ENGINE'S MIXING, and none of the three pieces below is
+// a reimplementation of it — each one is a call into the code that already ships:
+//
+//   channel strips  STRIP_PROFILES, lifted from engine/faust/voices/state-engine.js
+//                   and handed to SamplerLive as `strip`. sampler.js then builds
+//                   the real chain (HPF/LPF/EQ -> saturation -> compressor ->
+//                   chorus/phaser), which is why a bass now sits under a lead
+//                   instead of beside it.
+//   inserts         SP.buildInsertNodes — literally the function live.js calls to
+//                   put a phaser on a pad. Per SECTION here rather than per voice.
+//   the master bus  live.js's own chain, numbers and all: glue compressor ->
+//                   makeup -> brickwall limiter -> a ceiling lowpass. The comment
+//                   there explains why it exists, and it applies word for word
+//                   here: without it the sampled voices are unmastered and play
+//                   at about -22 dBFS, which is the "why is this so quiet and
+//                   so flat" that started this.
+//
+// What is NOT borrowed is the topology: the big engine mixes per VOICE because a
+// genre is one continuous thing. A song box is a SECTION, and a section is the
+// unit you want to reverb, echo, filter and place — so the channel is per box.
+const STRIPS = {
+  // BASS — kill subsonics, roll the top off, low-mid warmth, slow glue comp.
+  bass: { hpf: 30, lpf: 5200, eq: { f: 110, gain: 2.5, q: 0.9 }, sat: 0.34, satMix: 0.42,
+          comp: { thresh: 0.22, ratio: 3, atk: 0.02, rel: 0.18, makeup: 1.05 }, trim: 0.98 },
+  // PAD — declutter the lows, scoop a little mud, wide ensemble chorus + a slow
+  //   shallow phaser. The widest air: pads carry the space.
+  pad: { hpf: 120, eq: { f: 300, gain: -1.5, q: 0.8 }, sat: 0.17, satMix: 0.3,
+         comp: { thresh: 0.3, ratio: 2, atk: 0.03, rel: 0.28, makeup: 1.02 },
+         chorus: { rate: 0.45, baseMs: 14, depthMs: 6, mix: 0.32 },
+         phase: { rate: 0.22, lo: 300, hi: 1600, stages: 4, mix: 0.18 }, trim: 0.9 },
+  // LEAD — clear the rumble, presence lift at 3 kHz, a touch of grit, fast comp.
+  lead: { hpf: 200, eq: { f: 3000, gain: 3, q: 0.8 }, sat: 0.3, satMix: 0.44,
+          comp: { thresh: 0.25, ratio: 3, atk: 0.008, rel: 0.12, makeup: 1.04 },
+          chorus: { rate: 0.8, baseMs: 11, depthMs: 4, mix: 0.18 }, trim: 0.95 },
+};
+// DRUMS get a strip too, but a transient-preserving one — a subsonic HPF and a
+// whisper of glue saturation, NO compressor and no dulling filter. It is one
+// long-lived pair of nodes per channel rather than per note: the drums are
+// buffers fired straight at it, not sampler notes.
+const DRUM_HPF = 28, DRUM_SAT = 0.15, DRUM_SATMIX = 0.22;
+
+let ctx = null, masterIn = null, bus = null, outGain = null, topLP = null, noise = null;
+let REV = null, delA = null, delB = null, delLP = null, delBus = null;
 let playing = false, timer = null;
 let nextBarTime = 0, nextBar = 0, passStart = 0;
+
+// a decaying-noise impulse response — three of them, because "which reverb" is
+// a different question from "how much", and a plate is not a small hall
+function impulse(sec, decay, damp) {
+  const len = Math.max(1, Math.floor(ctx.sampleRate * sec));
+  const b = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const d = b.getChannelData(c);
+    let lp = 0;
+    for (let i = 0; i < len; i++) {
+      const n = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+      lp += (n - lp) * damp;                       // damping = the room's absorption
+      d[i] = lp;
+    }
+  }
+  return b;
+}
+function satCurve(G, mix) {
+  const N = 1024, c = new Float32Array(N);
+  for (let i = 0; i < N; i++) { const x = (i / (N - 1)) * 2 - 1, s = Math.tanh(x * G) / G; c[i] = x + mix * (s - x); }
+  return c;
+}
 
 function initAudio() {
   if (ctx) return;
   ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const comp = ctx.createDynamicsCompressor();
-  comp.threshold.value = -14; comp.ratio.value = 3.2; comp.knee.value = 8;
-  bus = ctx.createGain(); bus.gain.value = masterVol();
-  verb = ctx.createConvolver(); verbGain = ctx.createGain(); verbGain.gain.value = .2;
-  const len = ctx.sampleRate * 2.6, ib = ctx.createBuffer(2, len, ctx.sampleRate);
-  for (let c = 0; c < 2; c++) { const d = ib.getChannelData(c);
-    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
-  verb.buffer = ib;
-  bus.connect(comp); bus.connect(verbGain); verbGain.connect(verb); verb.connect(comp);
-  comp.connect(ctx.destination);
-  if (SP && SP.SamplerLive) {
-    try { sampler = SP.SamplerLive(ctx, { dry: bus, rev: verbGain, del: bus }); }
-    catch (e) { sampler = null; }
-  }
+  masterIn = ctx.createGain();
+  bus = masterIn;                                  // where anything unrouted lands
+  // ---- the master chain, live.js's numbers ----
+  const busComp = ctx.createDynamicsCompressor();
+  busComp.threshold.value = -22; busComp.knee.value = 28; busComp.ratio.value = 2.2;
+  busComp.attack.value = 0.015; busComp.release.value = 0.25;
+  const makeup = ctx.createGain(); makeup.gain.value = 2.2;
+  const limiter = ctx.createDynamicsCompressor();
+  limiter.threshold.value = -1.5; limiter.knee.value = 0; limiter.ratio.value = 20;
+  limiter.attack.value = 0.002; limiter.release.value = 0.12;
+  topLP = ctx.createBiquadFilter(); topLP.type = "lowpass";
+  topLP.frequency.value = 16000; topLP.Q.value = 0.5;
+  outGain = ctx.createGain(); outGain.gain.value = masterVol();
+  masterIn.connect(busComp); busComp.connect(makeup); makeup.connect(limiter);
+  limiter.connect(topLP); topLP.connect(outGain); outGain.connect(ctx.destination);
+  // ---- three reverbs, each its own send bus ----
+  const mkVerb = (irSec, decay, damp, hp, ret) => {
+    const inp = ctx.createGain();
+    const f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp; f.Q.value = 0.7;
+    const cv = ctx.createConvolver(); cv.buffer = impulse(irSec, decay, damp);
+    const g = ctx.createGain(); g.gain.value = ret;
+    inp.connect(f); f.connect(cv); cv.connect(g); g.connect(masterIn);
+    return inp;
+  };
+  REV = { room:  mkVerb(1.1, 3.4, 0.42, 220, 1.0),
+          hall:  mkVerb(3.2, 2.0, 0.30, 180, 0.9),
+          plate: mkVerb(1.9, 2.4, 0.85, 320, 0.85) };
+  // ---- one PING-PONG echo bus. Cross-fed delays panned hard, so a section sent
+  // to the echo throws its repeats across the stereo field instead of thickening
+  // the middle — which is the whole reason to have a send rather than an insert.
+  delBus = ctx.createGain();
+  delA = ctx.createDelay(2.0); delB = ctx.createDelay(2.0);
+  delLP = ctx.createBiquadFilter(); delLP.type = "lowpass"; delLP.frequency.value = 2800;
+  const fbA = ctx.createGain(), fbB = ctx.createGain();
+  fbA.gain.value = fbB.gain.value = 0.42;
+  const panL = ctx.createStereoPanner(), panR = ctx.createStereoPanner();
+  panL.pan.value = -0.75; panR.pan.value = 0.75;
+  delBus.connect(delA);
+  delA.connect(delLP); delLP.connect(fbA); fbA.connect(delB);
+  delB.connect(fbB); fbB.connect(delA);
+  delA.connect(panL); delB.connect(panR);
+  panL.connect(masterIn); panR.connect(masterIn);
+  setDelayTime(0.1875);
   const nl = ctx.sampleRate * .5; noise = ctx.createBuffer(1, nl, ctx.sampleRate);
   const nd = noise.getChannelData(0);
   for (let i = 0; i < nl; i++) nd[i] = Math.random() * 2 - 1;
 }
+const barSec = () => 4 * 60 / (+document.getElementById("bpm").value);
+function setDelayTime(bars) {
+  if (!delA) return;
+  const t = Math.min(1.9, Math.max(0.02, bars * barSec()));
+  // eased, not jumped: a feedback delay whose time moves is a tape machine
+  // changing speed, and that is a nicer thing to hear than a click
+  try { delA.delayTime.setTargetAtTime(t, ctx.currentTime, 0.05);
+        delB.delayTime.setTargetAtTime(t, ctx.currentTime, 0.05); } catch (e) {}
+}
+
+/* ---------- a section's mixer channel ---------- */
+// KEYED BY WHAT IT IS, NOT BY WHICH BOX IT IS. Two boxes asking for the same
+// chain get the same channel, which is both correct (they sound the same) and
+// what keeps a long song from building forty insert chains. It also means a box
+// that is dragged, copied or deleted needs no channel bookkeeping at all.
+const CHAN = new Map();
+const sendOf = (sec, k, dflt) => (sec[k] != null ? SENDS[sec[k]] : dflt);
+function chanSpec(sec) {
+  const g = GENRES[gid(sec)] || GENRES.simple;
+  return {
+    fx: (sec.fx || []).filter(k => FX[k]).slice(0, MAX_FX),
+    // ABSENT MEANS "AS THE GENRE ASKS". Every genre already declares how wet it
+    // wants to be (tone.verb — vaporwave .55, acid .06), and that number was
+    // being thrown away: every voice went out on a flat 0.14 send. Reading it as
+    // the default send makes the genre table mean what it says.
+    rev: sendOf(sec, "rev", g.tone && g.tone.verb != null ? g.tone.verb : 0.15),
+    del: sendOf(sec, "del", 0),
+    verb: sec.verb || (g.tone && g.tone.verb > 0.4 ? "hall" : "room"),
+    lvl: sec.lvl ? LEVELS[sec.lvl] : 1,
+    pan: sec.pan ? PANS[sec.pan] : 0,
+    mot: sec.mot || null,
+  };
+}
+function channelFor(sec) {
+  const spec = chanSpec(sec), key = JSON.stringify(spec);
+  const got = CHAN.get(key);
+  if (got) return got;
+  const input = ctx.createGain();
+  let node = input;
+  const nodes = [input];
+  const chain = n => { node.connect(n); node = n; nodes.push(n); };
+  // MOTION first, so a filter transition sweeps the section BEFORE its effects
+  // rather than after them — closing down onto a reverb tail is a fade, closing
+  // down into one is a door shutting.
+  let mot = null;
+  if (spec.mot === "open" || spec.mot === "close") {
+    mot = ctx.createBiquadFilter(); mot.type = "lowpass"; mot.Q.value = 2.2; chain(mot);
+  } else if (spec.mot === "rise") {
+    mot = ctx.createBiquadFilter(); mot.type = "highpass"; mot.Q.value = 1.6; chain(mot);
+  } else if (spec.mot === "pump") {
+    mot = ctx.createGain(); chain(mot);
+  }
+  // BAKED AT BUILD TIME: the tempo-synced inserts (the echo's timeBars, a
+  // sweep's rateBars) resolve against the bpm as it is NOW, and a later tempo
+  // drag does not re-time them until the chain rebuilds. Same contract the big
+  // engine states for its own insert chains — a perceptual-twin class of
+  // difference, and re-instantiating every effect on a slider drag is worse.
+  let oscs = [], stages = [];
+  if (spec.fx.length && SP && SP.buildInsertNodes) {
+    try {
+      const ch = SP.buildInsertNodes(ctx, fxChain(spec.fx), barSec());
+      node.connect(ch.input); node = ch.output; oscs = ch.oscs || [];
+      stages = ch.stages || [];
+      nodes.push(...(ch.nodes || []));
+    } catch (e) { /* an insert that will not build must not take the section with it */ }
+  }
+  const pan = ctx.createStereoPanner(); pan.pan.value = spec.pan; chain(pan);
+  const lvl = ctx.createGain(); lvl.gain.value = spec.lvl; chain(lvl);
+  lvl.connect(masterIn);
+  const rs = ctx.createGain(); rs.gain.value = spec.rev; lvl.connect(rs);
+  rs.connect(REV[spec.verb] || REV.room);
+  const ds = ctx.createGain(); ds.gain.value = spec.del; lvl.connect(ds); ds.connect(delBus);
+  nodes.push(rs, ds);
+  // the drum sub-strip: transient-preserving, long-lived, one per channel
+  const dHP = ctx.createBiquadFilter(); dHP.type = "highpass"; dHP.frequency.value = DRUM_HPF;
+  const dSat = ctx.createWaveShaper(); dSat.curve = satCurve(1 + 3 * DRUM_SAT, DRUM_SATMIX);
+  dSat.oversample = "2x";
+  dHP.connect(dSat); dSat.connect(input);
+  let player = null;
+  if (SP && SP.SamplerLive) {
+    // every send taps the CHANNEL, so a note's own dry/rev/del all arrive at the
+    // same place and the section's sends decide what happens next — exactly the
+    // routing live.js uses when a voice carries an insert chain
+    try { player = SP.SamplerLive(ctx, { dry: input, rev: input, del: input }); }
+    catch (e) { player = null; }
+  }
+  const c = { key, input, drumIn: dHP, player, mot, motKind: spec.mot, oscs, nodes,
+              spec, stages, rs, ds };
+  CHAN.set(key, c);
+  return c;
+}
+// WHAT THE MIXER ACTUALLY BUILT, for test/browser/nukernel-audio.test.js. The
+// declared chain and the built chain are two different things — buildInsertNodes
+// reports what it could not build in `skipped`, and an effect that silently
+// passed dry is exactly the failure a screenshot cannot see.
+window.__nuMix = () => ({
+  master: !!(masterIn && outGain),
+  verbs: REV ? Object.keys(REV) : [],
+  channels: [...CHAN.values()].map(c => ({
+    fx: c.spec.fx, stages: c.stages, motion: c.motKind,
+    rev: +c.rs.gain.value.toFixed(3), del: +c.ds.gain.value.toFixed(3),
+    level: c.spec.lvl, pan: c.spec.pan, verb: c.spec.verb })),
+});
+// A TRANSITION IS ARMED WHEN ITS SECTION STARTS, and re-armed on every pass —
+// which is what makes it a transition rather than a setting. Silent when the
+// channel has no motion node, so the scheduler can call it unconditionally.
+function armMotion(chan, when, durSec, spb) {
+  if (!chan || !chan.mot) return;
+  const p = chan.motKind === "pump" ? chan.mot.gain : chan.mot.frequency;
+  try {
+    p.cancelScheduledValues(when);
+    if (chan.motKind === "open") {
+      p.setValueAtTime(320, when); p.exponentialRampToValueAtTime(16000, when + durSec);
+    } else if (chan.motKind === "close") {
+      p.setValueAtTime(16000, when); p.exponentialRampToValueAtTime(320, when + durSec);
+    } else if (chan.motKind === "rise") {
+      p.setValueAtTime(20, when); p.exponentialRampToValueAtTime(1400, when + durSec);
+    } else {
+      // PUMP — a duck on every beat. Not a real sidechain (there is no detector
+      // reading the kick), but the same gesture and the same reason: it makes
+      // room on the beat, so a busy section breathes instead of smearing.
+      for (let t = 0; t < durSec; t += spb) {
+        p.setValueAtTime(0.32, when + t);
+        p.exponentialRampToValueAtTime(1, when + Math.min(durSec, t + spb * 0.85));
+      }
+    }
+  } catch (e) {}
+}
+function dropChannels() {
+  for (const c of CHAN.values()) {
+    for (const o of c.oscs) { try { o.stop(); } catch (e) {} }
+    for (const n of c.nodes) { try { n.disconnect(); } catch (e) {} }
+    try { c.input.disconnect(); c.drumIn.disconnect(); } catch (e) {}
+  }
+  CHAN.clear();
+  for (const k of [...synthNodes.keys()]) {
+    const n = synthNodes.get(k); if (n) { try { n.disconnect(); } catch (e) {} }
+  }
+  synthNodes.clear();
+}
 const masterVol = () => (+document.getElementById("vol").value / 100) * 1.1;
 const hz = m => 440 * Math.pow(2, (m - 69) / 12);
 
-function nz(t, dur, hp, gain) {
+// THE FALLBACK VOICES, counted. They are the sound of something not covered by a
+// real instrument, they fire silently, and test/browser/nukernel-audio.test.js
+// fails on any of them — but only if it can tell them apart from the oscillators
+// the effect LFOs now legitimately start, which is what this counter is for.
+window.__nuFallback = 0;
+function nz(t, dur, hp, gain, chan) {
   const s = ctx.createBufferSource(); s.buffer = noise;
   const f = ctx.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp;
   const g = ctx.createGain();
   g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(.0008, t + dur);
-  s.connect(f); f.connect(g); g.connect(bus); s.start(t); s.stop(t + dur + .02);
+  // nz is only ever a DRUM noise, so it lands on the channel's drum sub-strip
+  s.connect(f); f.connect(g); g.connect((chan && chan.drumIn) || bus); s.start(t); s.stop(t + dur + .02);
 }
-function line(t, n, dur, acc, sld, prev, tone, padish, vel) {
+function line(t, n, dur, acc, sld, prev, tone, padish, vel, chan) {
   const lvl = (vel == null ? 5 : vel) / 9;
   if (lvl <= 0.001) return;                       // a completed fade-out is silence
+  window.__nuFallback++;
   const o = ctx.createOscillator(), o2 = ctx.createOscillator();
   const f = ctx.createBiquadFilter(), g = ctx.createGain();
   o.type = o2.type = tone.wave; o2.detune.value = padish ? 9 : 4;
@@ -756,27 +1272,30 @@ function line(t, n, dur, acc, sld, prev, tone, padish, vel) {
   g.gain.linearRampToValueAtTime(pk, t + tone.atk);
   g.gain.setValueAtTime(pk, t + Math.max(tone.atk, dur * .7));
   g.gain.exponentialRampToValueAtTime(.0008, t + dur + tone.rel * .25);
-  o.connect(f); o2.connect(f); f.connect(g); g.connect(bus);
+  const dest = (chan && chan.input) || bus;
+  o.connect(f); o2.connect(f); f.connect(g); g.connect(dest);
   const off = t + dur + tone.rel * .25 + .05;
   o.start(t); o2.start(t); o.stop(off); o2.stop(off);
 }
-function hit(t, d, acc, vel) {
+function hit(t, d, acc, vel, chan) {
   const lvl = (vel == null ? 5 : vel) / 9;
   if (lvl <= 0.001) return;
+  window.__nuFallback++;
+  const dest = (chan && chan.drumIn) || bus;
   const a = (acc ? 1.15 : .85) * (0.45 + 0.55 * lvl);
   if (d === "k") { const o = ctx.createOscillator(), g = ctx.createGain();
     o.frequency.setValueAtTime(126, t); o.frequency.exponentialRampToValueAtTime(43, t + .09);
     g.gain.setValueAtTime(.95 * a, t); g.gain.exponentialRampToValueAtTime(.001, t + .34);
-    o.connect(g); g.connect(bus); o.start(t); o.stop(t + .36); }
-  else if (d === "s") { nz(t, .19, 900, .42 * a);
+    o.connect(g); g.connect(dest); o.start(t); o.stop(t + .36); }
+  else if (d === "s") { nz(t, .19, 900, .42 * a, chan);
     const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "triangle";
     o.frequency.setValueAtTime(196, t);
     g.gain.setValueAtTime(.3 * a, t); g.gain.exponentialRampToValueAtTime(.001, t + .13);
-    o.connect(g); g.connect(bus); o.start(t); o.stop(t + .15); }
-  else if (d === "c") { [0, .011, .023].forEach(o2 => nz(t + o2, .1, 1400, .3 * a)); }
-  else if (d === "o") { nz(t, .26, 6600, .14 * a); }
-  else if (d === "h") { nz(t, .035, 7800, .13 * a); }
-  else if (d === "p") { nz(t, .05, 2600, .16 * a); }
+    o.connect(g); g.connect(dest); o.start(t); o.stop(t + .15); }
+  else if (d === "c") { [0, .011, .023].forEach(o2 => nz(t + o2, .1, 1400, .3 * a, chan)); }
+  else if (d === "o") { nz(t, .26, 6600, .14 * a, chan); }
+  else if (d === "h") { nz(t, .035, 7800, .13 * a, chan); }
+  else if (d === "p") { nz(t, .05, 2600, .16 * a, chan); }
 }
 
 /* ---------- scheduler ---------- */
@@ -793,9 +1312,15 @@ function compile() {
     // for ever. A box with no events is skipped the way an empty one used to be.
     if (!ev.length) continue;
     const barSteps = 16 / g.rate;
+    // GROOVE CAN PUSH THE LAST SIXTEENTH PAST THE BAR LINE, by design — that is
+    // what a late note IS. Clamping the BUCKET rather than the time keeps the
+    // event in the last bar with an offset a hair over a bar, and since bars are
+    // scheduled in sequence with lookahead that lands it at exactly the right
+    // moment instead of dropping it on the floor.
+    const bucket = e => Math.min(bars - 1, Math.floor(e.t / barSteps));
     for (let b = 0; b < bars; b++)
       TL.push({ si, g, barSteps, first: b === 0,
-                ev: ev.filter(e => Math.floor(e.t / barSteps) === b)
+                ev: ev.filter(e => bucket(e) === b)
                       .map(e => ({ ...e, off: e.t - b * barSteps })) });
   }
 }
@@ -813,30 +1338,38 @@ function tick() {
     }
     if (nextBar >= TL.length) nextBar = 0;
     const bar = TL[nextBar];
-    if (bar.first) { passStart = nextBarTime; showSection(bar.si); }
+    const sec = SONG[bar.si], chan = channelFor(sec);
+    if (bar.first) {
+      passStart = nextBarTime; showSection(bar.si);
+      // the section's own echo time, and its transition, both land on the bar it
+      // starts — a transition re-arms every pass, which is what makes it one
+      setDelayTime(DTIMES[sec.dtime || "d8"]);
+      armMotion(chan, nextBarTime, bar.barSteps * sd * boxBars(sec), sd * 4);
+    }
     for (const e of bar.ev) {
       const when = nextBarTime + e.off * sd;
       if (e.kind === "line") {
-        const owner = e.layer || gid(SONG[bar.si]);
+        const owner = e.layer || gid(sec);
         // A SYNTH FONT OVERRIDES THE GENRE. Pure FM and Pure Analog are not a
         // sample set, they are "play everything on this voice" — including the
         // genres that carry a signature synth of their own.
         const gsyn = isSynthFont() ? fontDef().synth : GENRES[owner].synth;
         const id = INSTR[owner] || "yamaha_grand_piano";
         const useSyn = gsyn && !(gsyn.lineOnly && e.pad && !isSynthFont());
-        if (useSyn && playSynth(gsyn, e.n, when, e.dur * sd, e.acc, e.sld, e.vel, e.v)) { /* signature voice */ }
-        else if (!playSampled(id, e.n, when, e.dur * sd, e.vel, 1))
-          line(when, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel);
+        if (useSyn && playSynth(gsyn, e.n, when, e.dur * sd, e.acc, e.sld, e.vel, e.v, chan, e.vox)) { /* signature voice */ }
+        else if (!playSampled(id, e.n, when, e.dur * sd, e.vel, 1, chan,
+                              e.pad ? STRIPS.pad : STRIPS.lead))
+          line(when, e.n, e.dur * sd, e.acc, e.sld, e.prev, bar.g.tone, e.pad, e.vel, chan);
       } else if (e.kind === "hit") {
-        const kit = GENRES[gid(SONG[bar.si])].drumkit;
-        if (!playDrum(kit, e.d, when, e.acc, e.vel)) hit(when, e.d, e.acc, e.vel);
+        const kit = kitOf(sec);
+        if (!playDrum(kit, e.d, when, e.acc, e.vel, chan)) hit(when, e.d, e.acc, e.vel, chan);
       }
       else if (e.kind === "bass") {
-        const bs = BASSSYNTH[SONG[bar.si].bassop];
-        if (bs && playSynth(bs, e.n, when, e.dur * sd, 0, 0, e.vel, 0)) { /* synth bass */ }
-        else if (!playSampled(BASS_INSTR, e.n, when, e.dur * sd, e.vel, 1.25))
+        const bs = BASSSYNTH[sec.bassop];
+        if (bs && playSynth(bs, e.n, when, e.dur * sd, 0, 0, e.vel, 0, chan, e.vox)) { /* synth bass */ }
+        else if (!playSampled(BASS_INSTR, e.n, when, e.dur * sd, e.vel, 1.25, chan, STRIPS.bass))
           line(when, e.n, e.dur * sd, 1, 0, null,
-            { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false, e.vel);
+            { wave: "square", cut: 340, q: 5, atk: .006, rel: .8, gain: .26 }, false, e.vel, chan);
       }
     }
     nextBarTime += bar.barSteps * sd;
@@ -881,27 +1414,31 @@ async function ensureAssets(announce) {
   const need = instrumentsInSong().filter(id => {
     const sp = specOf(id); return sp && sp.zones.some(z => !zoneBufs.has(FONT + "|" + id + "|" + z.file));
   });
-  const kits = [...new Set(SONG.filter(x => gid(x) && GENRES[gid(x)].drumkit)
-                               .map(x => GENRES[gid(x)].drumkit))]
+  const kits = [...new Set(SONG.filter(x => gid(x)).map(x => kitOf(x)).filter(Boolean))]
     .filter(k => !drumBufs.has(k + "|k"));
-  const synths = [...new Set([
-    ...(isSynthFont() ? [fontDef().synth] : []),
-    ...SONG.flatMap(x => stackOf(x).filter(e => GENRES[e.g].synth).map(e => GENRES[e.g].synth)),
-    ...SONG.filter(x => BASSSYNTH[x.bassop]).map(x => BASSSYNTH[x.bassop])])];
-  // the widest stack in the song decides the pool depth — a four-voice fugue
-  // over a two-voice rock riff needs six, and nothing needs more than it uses
-  const need2 = Math.max(1, ...SONG.map(sec2 =>
-    stackOf(sec2).reduce((n, e) => n + (GENRES[e.g] ? GENRES[e.g].voices : 0), 0)));
-  const depth = Math.min(8, need2);
+  // PER SECTION, because a synth node has to be wired into that section's own
+  // channel. The depth is the box's OWN voice count rather than the widest box
+  // in the song — a two-voice acid box does not need six 303s to exist because a
+  // fugue elsewhere does, and now that nodes multiply by channel that stopped
+  // being a rounding error.
   const wantSynth = [];
-  for (const sp of synths)
-    for (let v = 0; v < depth; v++)
-      if (!synthNodes.has(sp.dsp + "#" + v)) wantSynth.push([sp, v]);
+  for (const sec2 of SONG) {
+    if (!gid(sec2)) continue;
+    const chan = channelFor(sec2);
+    const depth = Math.min(8, Math.max(1, stackOf(sec2)
+      .reduce((n, e) => n + (GENRES[e.g] ? GENRES[e.g].voices : 0), 0)));
+    const specs = isSynthFont() ? [fontDef().synth]
+      : stackOf(sec2).filter(e => GENRES[e.g].synth).map(e => GENRES[e.g].synth);
+    if (BASSSYNTH[sec2.bassop]) specs.push(BASSSYNTH[sec2.bassop]);
+    for (const sp of specs)
+      for (let v = 0; v < depth; v++)
+        if (!synthNodes.has(synthKey(sp, v, chan))) wantSynth.push([sp, v, chan]);
+  }
   if (!need.length && !wantSynth.length && !kits.length) return false;
   if (announce) document.getElementById("readout").textContent =
     "loading " + [...need, ...new Set(wantSynth.map(x => x[0].dsp)), ...kits].join(", ") + "\u2026";
   await Promise.all([...need.map(loadInstrument),
-                     ...wantSynth.map(([sp, v]) => loadSynth(sp, v)),
+                     ...wantSynth.map(([sp, v, c]) => loadSynth(sp, v, c)),
                      ...kits.map(loadKit)]);
   return true;
 }
@@ -944,6 +1481,11 @@ function toggle(kind, value) {
     } else if (st.length === 1 && st[0].g === "simple") {
       st[0].g = value;           // Simple is the blank default: the first real
                                  // genre REPLACES it rather than stacking on it
+      // A GENRE MAY ASK FOR AN EFFECT. Sludge played clean is not sludge — the
+      // distortion is as much the genre as the ♭II is — so a genre carrying `fx`
+      // seeds the box's chain when the box has none of its own. The chips light
+      // up, so it is an offer you can see and switch off, not a hidden default.
+      if (!sec.fx.length && GENRES[value].fx) sec.fx = [...GENRES[value].fx];
     } else {
       // a new layer INHERITS the authority's phrases, so it sounds the moment
       // it is added; diverging from there is a click on the phrase rail. Empty
@@ -986,13 +1528,59 @@ function toggle(kind, value) {
     const ent = focused(sec);
     ent.artic = optOf(sec, ent, "artic") === value ? null : value;
   }
+  else if (kind === "oct") {
+    const ent = focused(sec);
+    ent.oct = String(optOf(sec, ent, "oct") || "0") === value ? null : value;
+  }
+  else if (VOX[kind]) {
+    // A VOICE KNOB IS PER LAYER, like every other thing about how a line sounds
+    // — the dark 303 underneath and the bright one on top are one box.
+    const ent = focused(sec);
+    if (!ent.vox) ent.vox = {};
+    ent.vox[kind] = voxOf(sec, ent, kind) === value ? null : value;
+    if (ent.vox[kind] == null) delete ent.vox[kind];
+  }
+  else if (kind === "fx") {
+    // AN INSERT CHAIN IS ORDERED. Chips apply in the order you switch them on,
+    // exactly like the pattern operators, and for the same reason: a chorus into
+    // a crunch is not a crunch into a chorus.
+    if (!sec.fx) sec.fx = [];
+    const i = sec.fx.indexOf(value);
+    if (i >= 0) sec.fx.splice(i, 1);
+    else if (sec.fx.length < MAX_FX) sec.fx.push(value);
+  }
+  else if (BOXOPTS.has(kind)) sec[kind] = sec[kind] === value ? null : value;
   songChanged();
 }
+// the plain one-of-these box fields, all toggled the same way
+const BOXOPTS = new Set(["kit", "drumkit", "bassop", "swing", "groove", "rev", "del",
+                         "verb", "dtime", "lvl", "pan", "mot", "intro", "outro", "role"]);
 function songChanged() {
   drawSong(); draw(); drawSlots(); save();
   if (playing) {
     compile();
     ensureAssets(false).then(ok => { if (ok) draw(); });   // fetch what the change needs
+  }
+  pruneChannels();
+}
+// CHANNELS ARE CHEAP BUT NOT FREE — an insert chain is real nodes and a synth
+// voice is a WASM instance. Keyed by what they are, they accumulate as you try
+// things; this drops the ones no box is asking for any more, but only once there
+// are enough of them to matter, so an A/B between two chains does not rebuild
+// on every click.
+function pruneChannels() {
+  if (!ctx || CHAN.size <= 12) return;
+  const live = new Set(SONG.filter(s => gid(s)).map(s => JSON.stringify(chanSpec(s))));
+  for (const [key, c] of [...CHAN]) {
+    if (live.has(key)) continue;
+    for (const o of c.oscs) { try { o.stop(); } catch (e) {} }
+    for (const n of c.nodes) { try { n.disconnect(); } catch (e) {} }
+    try { c.input.disconnect(); c.drumIn.disconnect(); } catch (e) {}
+    CHAN.delete(key);
+    for (const k of [...synthNodes.keys()]) if (k.endsWith("@" + key)) {
+      const n = synthNodes.get(k); if (n) { try { n.disconnect(); } catch (e) {} }
+      synthNodes.delete(k);
+    }
   }
 }
 
@@ -1013,22 +1601,54 @@ function drawSong() {
       (gid(sec) ? ", " + stackLabel(sec) + ", " + bars + " bars" : ", empty"));
 
     const head = document.createElement("div"); head.className = "bhead";
-    head.innerHTML = "<b>" + (i + 1) + "</b><span>" + bars + " bar" + (bars === 1 ? "" : "s") +
+    // THE ROLE GOES IN THE HEAD, not in the tag pile. A song row is something you
+    // read at a glance to find the second chorus, and "chorus" competing with
+    // eleven other chips for attention is not a label, it is more noise.
+    head.innerHTML = "<b>" + (i + 1) + "</b>" +
+      (sec.role ? '<span class="role">' + ROLES[sec.role] + "</span>" : "") +
+      "<span>" + bars + " bar" + (bars === 1 ? "" : "s") +
       (sec.nudge ? " +" + sec.nudge : "") + "</span>" +
       (i === loopOnly ? '<span class="loopmark">loop</span>' : "");
-    const x = document.createElement("button");
-    x.type = "button"; x.className = "x"; x.textContent = "×";
-    x.setAttribute("aria-label", "remove box " + (i + 1));
-    x.addEventListener("click", ev => {
-      ev.stopPropagation();
+    // BUTTONS, BECAUSE DRAG-AND-DROP IS A DESKTOP FICTION. HTML5 dragstart does
+    // not fire on touch at all — not partially, not badly, at all — so reordering
+    // a song on a phone was impossible and looked like a bug in the page rather
+    // than a missing feature. ◀ ▶ move the box, ⟲ loops it. Drag and double-click
+    // still work where they work; these are what make the same actions reachable
+    // everywhere, and they are better for the keyboard besides.
+    const btn = (cls, glyph, label, fn) => {
+      const b2 = document.createElement("button");
+      b2.type = "button"; b2.className = cls; b2.textContent = glyph;
+      b2.setAttribute("aria-label", label);
+      b2.addEventListener("click", ev => { ev.stopPropagation(); fn(); });
+      return b2;
+    };
+    const move = d => {
+      const j = i + d;
+      if (j < 0 || j >= SONG.length) return;
+      const [m] = SONG.splice(i, 1); SONG.splice(j, 0, m);
+      viewSec = j; if (loopOnly != null) loopOnly = j;
+      songChanged();
+      if (playing) { compile(); nextBar = 0; }
+    };
+    const tools = document.createElement("span"); tools.className = "btools";
+    if (i > 0) tools.append(btn("t", "◀", "move box " + (i + 1) + " earlier", () => move(-1)));
+    if (i < SONG.length - 1)
+      tools.append(btn("t", "▶", "move box " + (i + 1) + " later", () => move(1)));
+    tools.append(btn("t" + (i === loopOnly ? " on" : ""), "⟳",
+      (i === loopOnly ? "stop looping box " : "loop box ") + (i + 1), () => {
+        viewSec = i; loopOnly = loopOnly === i ? null : i;
+        drawSong(); draw(); drawSlots();
+        if (playing || loopOnly != null) startAt(i);
+      }));
+    tools.append(btn("x", "×", "remove box " + (i + 1), () => {
       SONG.splice(i, 1);
       if (!SONG.length) SONG.push(emptyBox());
       viewSec = Math.min(viewSec, SONG.length - 1);
       if (loopOnly != null) loopOnly = null;
       songChanged();
       if (playing) { compile(); nextBar = 0; }
-    });
-    head.append(x);
+    }));
+    head.append(tools);
     box.append(head);
 
     const gl = document.createElement("div");
@@ -1049,30 +1669,40 @@ function drawSong() {
     prog.append(Object.assign(document.createElement("i"), { className: "fillbar" }));
     box.append(prog);
 
+    // WHAT THIS BOX IS DOING, as chips, in the order you would read it: what the
+    // line is, what the drums are, what the mix is, how it arrives and leaves.
     const tags = document.createElement("div"); tags.className = "btags";
     const fe = i === viewSec ? focused(sec) : stackOf(sec)[0];
-    for (const o of opsOf(sec, fe)) tags.append(Object.assign(document.createElement("span"),
-      { className: "tag", textContent: OPLABEL[o] }));
+    const tag = (cls, text) => tags.append(Object.assign(document.createElement("span"),
+      { className: "tag " + cls, textContent: text }));
+    for (const o of opsOf(sec, fe)) tag("", OPLABEL[o]);
     const fclamp = optOf(sec, fe, "clamp"), fcmode = optOf(sec, fe, "cmode"),
-          fartic = optOf(sec, fe, "artic"), fscale = optOf(sec, fe, "scale");
-    if (fclamp != null) tags.append(Object.assign(document.createElement("span"),
-      { className: "tag clp", textContent: "limit " + (fclamp === "0" ? "off" : fclamp) }));
-    if (fcmode) tags.append(Object.assign(document.createElement("span"),
-      { className: "tag clp", textContent: fcmode }));
-    if (fartic) tags.append(Object.assign(document.createElement("span"),
-      { className: "tag art", textContent: fartic }));
-    if (sec.kit) tags.append(Object.assign(document.createElement("span"),
-      { className: "tag kit", textContent: KITLABEL[sec.kit] }));
-    if (sec.bassop) tags.append(Object.assign(document.createElement("span"),
-      { className: "tag bas", textContent: BASSOPS[sec.bassop] }));
-    if (fscale) tags.append(Object.assign(document.createElement("span"),
-      { className: "tag rng", textContent: SCALELABEL[fscale] }));
-    if (sec.mode) tags.append(Object.assign(document.createElement("span"),
-      { className: "tag mode", textContent: MODELABEL[sec.mode] }));
-    if (sec.rate) tags.append(Object.assign(document.createElement("span"),
-      { className: "tag rate", textContent: RATELABEL[sec.rate] }));
-    if (sec.env) tags.append(Object.assign(document.createElement("span"),
-      { className: "tag env", textContent: ENVLABEL[sec.env] }));
+          fartic = optOf(sec, fe, "artic"), fscale = optOf(sec, fe, "scale"),
+          foct = optOf(sec, fe, "oct"), fvox = voxAll(sec, fe);
+    if (foct) tag("rng", "oct " + OCTAVES[String(foct)]);
+    if (fclamp != null) tag("clp", "limit " + (fclamp === "0" ? "off" : fclamp));
+    if (fcmode) tag("clp", fcmode);
+    if (fartic) tag("art", fartic);
+    if (fscale) tag("rng", SCALELABEL[fscale]);
+    if (fvox) for (const [k, v] of Object.entries(fvox)) tag("vox", VOX[k].labels[v]);
+    if (sec.kit) tag("kit", KITLABEL[sec.kit]);
+    if (sec.drumkit) tag("kit", DRUMKITS[sec.drumkit]);
+    if (sec.bassop) tag("bas", BASSOPS[sec.bassop]);
+    if (sec.swing) tag("rate", SWINGLABEL[sec.swing]);
+    if (sec.groove) tag("rate", GROOVELABEL[sec.groove]);
+    if (sec.mode) tag("mode", MODELABEL[sec.mode]);
+    if (sec.rate) tag("rate", RATELABEL[sec.rate]);
+    for (const f of (sec.fx || [])) tag("fx", FX[f].label);
+    if (sec.rev) tag("env", "reverb " + SENDLABEL[sec.rev]);
+    if (sec.verb) tag("env", VERBS[sec.verb]);
+    if (sec.del) tag("env", "echo " + SENDLABEL[sec.del]);
+    if (sec.dtime) tag("env", DTLABEL[sec.dtime]);
+    if (sec.lvl) tag("bas", LEVELLABEL[sec.lvl]);
+    if (sec.pan) tag("bas", PANLABEL[sec.pan]);
+    if (sec.intro) tag("env", "in: " + INLABEL[sec.intro]);
+    if (sec.env) tag("env", ENVLABEL[sec.env]);
+    if (sec.mot) tag("mode", MOTLABEL[sec.mot]);
+    if (sec.outro) tag("env", "out: " + OUTLABEL[sec.outro]);
     box.append(tags);
 
     // REORDER — boxes drag among themselves, and that is all dragging does now.
@@ -1179,7 +1809,22 @@ function makeGrip(side, begin) {
 // BUILT ONCE, then only its ON states change. Rebuilding it on every draw
 // destroyed the button under the pointer mid-click, which lost focus and made
 // the page jump — and it took the keyboard focus ring with it.
-let paletteBuilt = false, paletteSig = "";
+let paletteBuilt = false, paletteSig = "", paletteTab = "sound";
+const PTABS = [["sound", "sound"], ["line", "line"], ["voice", "voice"],
+               ["rhythm", "rhythm"], ["fx", "effects"], ["move", "transitions"]];
+// One sentence per tab, and only where the answer is not obvious from the chips.
+// The two that need it are the two that are per LAYER — which is a real fact
+// about how a stacked box works and used to be repeated, uselessly, on twelve
+// separate group labels.
+const PNOTE = {
+  line: "These apply to the layer you are editing, not to the whole box. " +
+        "They compose in the order you switch them on.",
+  voice: "Also per layer. The five synth knobs reach any voice that has them — " +
+         "the 303, the Model D, the reese and wobble basses.",
+  fx: "The whole section goes through this chain, and out to the two sends.",
+  move: "Intro and outro replace the first and last bar; the other two shape " +
+        "the whole section.",
+};
 function drawPalette() {
   const el = document.getElementById("palette");
   const sec = curSection();
@@ -1190,34 +1835,62 @@ function drawPalette() {
   // button from vanishing under the pointer.
   const sig = stackOf(sec).map(e => e.g + ":" + e.slots.join(",")).join("|");
   if (paletteBuilt && sig !== paletteSig) paletteBuilt = false;
+  // IS THIS CHIP ON? One function, so the build path and the cheap refresh path
+  // can never disagree \u2014 which they had already started to, and a chip that
+  // lights up only after a rebuild is indistinguishable from a chip that does
+  // not work.
+  const isOn = (kind, v) => {
+    const ent = LAYER_OPTS.has(kind) || VOX[kind] ? focused(sec) : null;
+    if (kind === "genre") return stackOf(sec).some(e => e.g === v);
+    if (kind === "op") return opsOf(sec, ent).includes(v);
+    if (kind === "focus") return String(focusOf(sec)) === v;
+    if (kind === "fx") return sec.fx.includes(v);
+    if (VOX[kind]) return voxOf(sec, ent, kind) === v;
+    if (kind === "scale") return optOf(sec, ent, "scale") === v;
+    if (kind === "clamp") return optOf(sec, ent, "clamp") === v;
+    if (kind === "oct") return String(optOf(sec, ent, "oct") || "0") === v;
+    if (kind === "cmode") return (optOf(sec, ent, "cmode") || "hold") === v;
+    if (kind === "artic") return (optOf(sec, ent, "artic") || "normal") === v;
+    return sec[kind] === v;
+  };
   if (paletteBuilt) {
     el.querySelectorAll(".pchip").forEach(b => {
-      const kind = b.dataset.kind, v = b.dataset.value;
-      const ent = LAYER_OPTS.has(kind) ? focused(sec) : null;
-      const on = kind === "genre" ? stackOf(sec).some(e => e.g === v)
-        : kind === "op" ? opsOf(sec, ent).includes(v)
-        : kind === "env" ? sec.env === v
-        : kind === "mode" ? sec.mode === v
-        : kind === "rate" ? sec.rate === v
-        : kind === "scale" ? optOf(sec, ent, "scale") === v
-        : kind === "kit" ? sec.kit === v
-        : kind === "bassop" ? sec.bassop === v
-        : kind === "clamp" ? optOf(sec, ent, "clamp") === v
-        : kind === "cmode" ? (optOf(sec, ent, "cmode") || "hold") === v
-        : kind === "artic" ? (optOf(sec, ent, "artic") || "normal") === v
-        : kind === "focus" ? String(focusOf(sec)) === v : false;
+      const on = isOn(b.dataset.kind, b.dataset.value);
       b.classList.toggle("on", !!on);
       b.setAttribute("aria-pressed", String(!!on));
     });
     return;
   }
   el.innerHTML = "";
+  // TABS, because there are now a hundred and forty of these and a hundred and
+  // forty chips in one heap is not a palette, it is a haystack. Six headings,
+  // each answering one question about the section, and the question is the
+  // heading. (This is also what replaced the "\u00b7 layer" / "\u00b7 box" suffix on every
+  // group label: the suffix was on twelve labels and told you the same two
+  // things over and over. What is per layer is now said once, at the top of the
+  // LINE and VOICE tabs, where it is actually a fact you need.)
+  const tabs = document.createElement("div"); tabs.className = "ptabs";
+  for (const [k, lab] of PTABS) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "ptab" + (k === paletteTab ? " on" : "");
+    b.textContent = lab; b.setAttribute("aria-pressed", String(k === paletteTab));
+    b.addEventListener("click", () => {
+      paletteTab = k; paletteBuilt = false; drawPalette();
+    });
+    tabs.append(b);
+  }
+  el.append(tabs);
+  const note = document.createElement("p"); note.className = "pnote";
+  note.textContent = PNOTE[paletteTab] || "";
+  if (note.textContent) el.append(note);
+
   const group = (title, items) => {
     const g = document.createElement("div"); g.className = "pgroup";
     g.append(Object.assign(document.createElement("span"),
       { className: "plabel", textContent: title }));
-    for (const [kind, value, label, on, cls] of items) {
+    for (const [kind, value, label, cls] of items) {
       const b = document.createElement("button");
+      const on = isOn(kind, String(value));
       b.type = "button"; b.className = "pchip " + (cls || "") + (on ? " on" : "");
       b.textContent = label; b.setAttribute("aria-pressed", String(!!on));
       b.dataset.kind = kind; b.dataset.value = String(value);
@@ -1226,39 +1899,69 @@ function drawPalette() {
     }
     el.append(g);
   };
-  group("genre", Object.keys(GENRES).map(k =>
-    ["genre", k, GENRES[k].label, stackOf(sec).some(e => e.g === k), "gen"]));
-  if (stackOf(sec).length > 1)
-    group("editing layer", stackOf(sec).map((e, i) =>
-      ["focus", String(i), GENRES[e.g].label + (e.slots.length
-        ? " \u00b7 " + e.slots.map(n => n + 1).join("+") : " \u00b7 \u2014"),
-        focusOf(sec) === i, "foc"]));
-  group("pattern \u00b7 layer", ["rev", "inv"].map(k => ["op", k, OPLABEL[k], sec.ops.includes(k), ""]));
-  group("split \u00b7 layer", [2, 3, 4, 5, 6, 7, 8].map(n =>
-    ["op", "rep" + n, String(n), sec.ops.includes("rep" + n), "lst"]));
-  group("delete \u00b7 layer", [2, 3, 4, 5, 6, 7, 8].map(n =>
-    ["op", "del" + n, String(n), sec.ops.includes("del" + n), "lst"]));
-  group("ramp limit \u00b7 layer", ["0", "2", "4", "8"].map(v =>
-    ["clamp", v, v === "0" ? "off" : v, sec.clamp === v, "clp"]));
-  group("articulation \u00b7 layer", ["staccato", "normal", "legato", "tie"].map(v =>
-    ["artic", v, v, (sec.artic || "normal") === v, "art"]));
-  group("at the limit \u00b7 layer", [["cmode", "hold", "hold", (sec.cmode || "hold") === "hold", "clp"],
-                         ["cmode", "loop", "loop", sec.cmode === "loop", "clp"],
-                         ["cmode", "reverse", "reverse", sec.cmode === "reverse", "clp"]]);
-  group("range \u00b7 layer", [
-    ["op", "wide", OPLABEL.wide, sec.ops.includes("wide"), "rng"],
-    ["op", "tight", OPLABEL.tight, sec.ops.includes("tight"), "rng"],
-    ...Object.keys(SCALES).map(k => ["scale", k, SCALELABEL[k], sec.scale === k, "rng"])]);
-  group("drums \u00b7 box", Object.keys(KITLABEL).map(k =>
-    ["kit", k, KITLABEL[k], sec.kit === k, "kit"]));
-  group("bass \u00b7 box", Object.keys(BASSOPS).map(k =>
-    ["bassop", k, BASSOPS[k], sec.bassop === k, "bas"]));
-  group("chord mode \u00b7 box", Object.keys(MODES).map(k =>
-    ["mode", k, MODELABEL[k], sec.mode === k, "mode"]));
-  group("tempo \u00b7 box", Object.keys(RATES).map(k =>
-    ["rate", k, RATELABEL[k], sec.rate === k, "rate"]));
-  group("envelope \u00b7 box", [["env", "in", "fade in", sec.env === "in", "env"],
-                     ["env", "out", "fade out", sec.env === "out", "env"]]);
+  // one row per table, from the table \u2014 a new option is a new entry, never a
+  // new line of UI code
+  const rowOf = (title, kind, table, cls) =>
+    group(title, Object.keys(table).map(k => [kind, k, table[k], cls]));
+  const opRow = (title, keys, cls) =>
+    group(title, keys.map(k => ["op", k, OPLABEL[k], cls]));
+
+  if (paletteTab === "sound") {
+    group("genre", Object.keys(GENRES).map(k => ["genre", k, GENRES[k].label, "gen"]));
+    if (stackOf(sec).length > 1)
+      group("editing", stackOf(sec).map((e, i) =>
+        ["focus", String(i), GENRES[e.g].label + (e.slots.length
+          ? " \u00b7 " + e.slots.map(n => n + 1).join("+") : " \u00b7 \u2014"), "foc"]));
+    rowOf("section", "role", ROLES, "role");
+    rowOf("chord mode", "mode", MODELABEL, "mode");
+    rowOf("tempo", "rate", RATELABEL, "rate");
+    rowOf("articulation", "artic", { staccato: "staccato", normal: "normal",
+                                     legato: "legato", tie: "tie" }, "art");
+  } else if (paletteTab === "line") {
+    opRow("pattern", ["rev", "inv", "gateflip", "accflip", "slides", "stick"], "");
+    opRow("rotate", ["rot1", "rot2", "rot3", "rot4", "rot5", "rot6", "rot7"], "lst");
+    opRow("rotate rhythm only", ["gat2", "gat4", "gat8"], "lst");
+    opRow("rotate pitch only", ["pit2", "pit4", "pit8"], "lst");
+    opRow("split", ["rep2", "rep3", "rep4", "rep5", "rep6", "rep7", "rep8"], "lst");
+    opRow("delete", ["del2", "del3", "del4", "del5", "del6", "del7", "del8"], "lst");
+    opRow("thin", ["thin2", "thin3", "thin4"], "lst");
+    opRow("fill in", ["dens2", "dens3", "dens4"], "lst");
+    opRow("loop a fragment", ["ex4", "ex8"], "lst");
+    opRow("shift degrees", ["trm2", "trm1", "trp1", "trp2"], "lst");
+  } else if (paletteTab === "voice") {
+    rowOf("register", "oct", OCTAVES, "rng");
+    group("width", [["op", "wide", OPLABEL.wide, "rng"],
+                    ["op", "tight", OPLABEL.tight, "rng"]]);
+    rowOf("alphabet", "scale", SCALELABEL, "rng");
+    rowOf("filter", "cut", VOX.cut.labels, "vox");
+    rowOf("resonance", "res", VOX.res.labels, "vox");
+    rowOf("env mod", "emod", VOX.emod.labels, "vox");
+    rowOf("decay", "dec", VOX.dec.labels, "vox");
+    rowOf("waveform", "wave", VOX.wave.labels, "vox");
+    group("ramp limit", ["0", "2", "4", "8"].map(v =>
+      ["clamp", v, v === "0" ? "off" : v, "clp"]));
+    rowOf("at the limit", "cmode", { hold: "hold", loop: "loop", reverse: "reverse" }, "clp");
+  } else if (paletteTab === "rhythm") {
+    rowOf("drum pattern", "kit", KITLABEL, "kit");
+    rowOf("drum sound", "drumkit", DRUMKITS, "kit");
+    rowOf("bass", "bassop", BASSOPS, "bas");
+    rowOf("swing", "swing", SWINGLABEL, "rate");
+    rowOf("groove", "groove", GROOVELABEL, "rate");
+  } else if (paletteTab === "fx") {
+    group("effects (up to " + MAX_FX + ", in the order you switch them on)",
+      Object.keys(FX).map(k => ["fx", k, FX[k].label, "fx"]));
+    rowOf("reverb", "rev", SENDLABEL, "env");
+    rowOf("space", "verb", VERBS, "env");
+    rowOf("echo", "del", SENDLABEL, "env");
+    rowOf("echo time", "dtime", DTLABEL, "env");
+    rowOf("level", "lvl", LEVELLABEL, "bas");
+    rowOf("place", "pan", PANLABEL, "bas");
+  } else {
+    rowOf("intro", "intro", INLABEL, "env");
+    rowOf("outro", "outro", OUTLABEL, "env");
+    rowOf("level over the section", "env", ENVLABEL, "env");
+    rowOf("filter over the section", "mot", MOTLABEL, "mode");
+  }
   paletteBuilt = true; paletteSig = sig;
 }
 
@@ -1295,6 +1998,9 @@ function drawSlots() {
 
 /* ---------- slot editor ---------- */
 const ROWS = ["deg", "oct", "vel", "inc", "stk", "gate", "acc", "sld"];
+// WHICH WAY A TAP MOVES A VALUE. The ± button in the editor header rides this,
+// and it exists because shift-click does not exist on a phone.
+let stepDir = 1;
 const RANGE = { deg: [-7, 7], oct: [-2, 2], vel: [0, 9], inc: [-3, 3], stk: [-2, 2] };
 const clamp = (v, [lo, hi]) => Math.max(lo, Math.min(hi, v));
 
@@ -1321,11 +2027,44 @@ function drawEditor() {
         b.textContent = val ? "●" : "";
         b.setAttribute("aria-label", "step " + (i + 1) + " " + key + (val ? " on" : " off"));
       }
-      b.addEventListener("click", ev => {
-        if (num) SUBJ[key][i] = clamp(val + (ev.shiftKey ? -1 : 1), num);
-        else SUBJ[key][i] = val ? 0 : 1;
-        drawEditor(); drawSlots(); drawSong(); draw(); save(); if (playing) compile();
-      });
+      // SHIFT-CLICK IS NOT A GESTURE ON A PHONE. It was the only way to lower a
+      // value, so half of the phrase editor was unreachable on touch — you could
+      // raise a degree and never put it back. Three ways in now, and all three
+      // work everywhere:
+      //   drag       up/down on a cell scrubs it (pointer events, so touch too)
+      //   tap        moves it by the ± toggle in the header
+      //   shift-tap  inverts that, for the keyboard-and-mouse habit
+      // The binary rows are unaffected: a toggle has nowhere to go but the other
+      // way, so a tap has always been enough.
+      if (num) {
+        let from = null, base = 0, moved = false;
+        b.addEventListener("pointerdown", ev => {
+          from = ev.clientY; base = SUBJ[key][i]; moved = false;
+          try { b.setPointerCapture(ev.pointerId); } catch (e) {}
+        });
+        b.addEventListener("pointermove", ev => {
+          if (from == null) return;
+          const step = Math.round((from - ev.clientY) / 14);   // up is more
+          if (!step) return;
+          const v = clamp(base + step, num);
+          if (v === SUBJ[key][i]) return;
+          moved = true; SUBJ[key][i] = v;
+          drawEditor(); drawSlots(); drawSong(); draw(); if (playing) compile();
+        });
+        const end = () => { if (moved) save(); from = null; };
+        b.addEventListener("pointerup", end);
+        b.addEventListener("pointercancel", end);
+        b.addEventListener("click", ev => {
+          if (moved) { moved = false; return; }              // that was a scrub
+          SUBJ[key][i] = clamp(SUBJ[key][i] + (ev.shiftKey ? -stepDir : stepDir), num);
+          drawEditor(); drawSlots(); drawSong(); draw(); save(); if (playing) compile();
+        });
+      } else {
+        b.addEventListener("click", () => {
+          SUBJ[key][i] = SUBJ[key][i] ? 0 : 1;
+          drawEditor(); drawSlots(); drawSong(); draw(); save(); if (playing) compile();
+        });
+      }
       el.append(b);
     }
   }
@@ -1335,7 +2074,7 @@ function drawEditor() {
 function writeSrc() {
   const sec = curSection(), out = document.getElementById("src");
   if (!gid(sec)) { out.textContent = "(empty box)"; return; }
-  const g = genreOf(sec);
+  const g = genreOf(sec), cs = chanSpec(sec);
   const kit = Object.keys(g.kit || {}).length
     ? Object.entries(g.kit).map(([d, v]) => "  " + d + ": [" + v.join(",") + "]").join("\n")
     : '  {}   <span class="c">// a fugue has no drums. The empty kit is the fact.</span>';
@@ -1356,8 +2095,20 @@ function writeSrc() {
                               : "natural minor  [0 2 3 5 7 8 10]") + "\n" +
     "transforms " + (sec.ops.length || sec.env
       ? [...sec.ops.map(o => OPLABEL[o]), ...(sec.env ? [ENVLABEL[sec.env]] : [])].join(" + ")
-      : "none") + "\n\n" +
-    "kit\n" + kit;
+      : "none") + "\n" +
+    // THE CHANNEL, in the same terms the palette used to ask for it. A box that
+    // sounds wrong is usually a mix question, and until this line existed the
+    // panel could tell you everything about the notes and nothing about the mix.
+    "channel    " + (sec.fx && sec.fx.length ? sec.fx.map(k => FX[k].label).join(" -> ")
+                                             : "no inserts") + "\n" +
+    "sends      reverb " + Math.round(cs.rev * 100) + "% -> " + cs.verb +
+      " · echo " + Math.round(cs.del * 100) + "%" +
+      (sec.dtime ? " at " + DTLABEL[sec.dtime] : "") + "\n" +
+    "place      level " + cs.lvl.toFixed(2) + " · pan " + cs.pan.toFixed(2) +
+      (cs.mot ? " · " + MOTLABEL[cs.mot] : "") + "\n" +
+    "edges      " + (sec.intro ? INLABEL[sec.intro] : "straight in") + " / " +
+      (sec.outro ? OUTLABEL[sec.outro] : "straight out") + "\n\n" +
+    "kit        " + (kitOf(sec) || "none") + "\n" + kit;
 }
 
 /* ---------- wiring ---------- */
@@ -1368,13 +2119,21 @@ document.getElementById("bpm").addEventListener("input", e => {
 });
 document.getElementById("vol").addEventListener("input", e => {
   document.getElementById("volv").textContent = e.target.value;
-  if (bus) bus.gain.setTargetAtTime(masterVol(), ctx.currentTime, 0.02);
+  if (outGain) outGain.gain.setTargetAtTime(masterVol(), ctx.currentTime, 0.02);
   save();
 });
 const putPhrase = make => () => {
   SLOTS[slot] = make(); SUBJ = SLOTS[slot];
   drawSlots(); drawEditor(); drawSong(); draw(); save(); if (playing) compile();
 };
+{
+  const b = document.getElementById("stepdir");
+  b.addEventListener("click", () => {
+    stepDir = -stepDir;
+    b.textContent = stepDir > 0 ? "Tap raises" : "Tap lowers";
+    b.setAttribute("aria-pressed", String(stepDir < 0));
+  });
+}
 document.getElementById("seed").addEventListener("click", putPhrase(() => structuredClone(DEFAULT)));
 document.getElementById("rnd").addEventListener("click", putPhrase(randomPhrase));
 document.getElementById("clear").addEventListener("click", putPhrase(blank));
@@ -1397,6 +2156,42 @@ document.getElementById("clear").addEventListener("click", putPhrase(blank));
   });
 }
 
+// ---- the composer ----
+// ONE BUTTON. It writes eight phrases and an arrangement of them — nine boxes
+// with roles, its own tempo, its own groove, its own mix — and hands the result
+// to applyState, the SAME validate-and-apply path a file off the desktop takes.
+// If the composer ever emitted a song the loader would refuse, the loader
+// refuses it and says so, rather than there being a second, more trusted way in.
+{
+  const sel = document.getElementById("composeg");
+  sel.append(Object.assign(document.createElement("option"),
+    { value: "", textContent: "surprise me" }));
+  for (const k of Object.keys(GENRES))
+    sel.append(Object.assign(document.createElement("option"),
+      { value: k, textContent: GENRES[k].label }));
+  document.getElementById("compose").addEventListener("click", () => {
+    const keys = Object.keys(GENRES);
+    const gk = sel.value || keys[Math.floor(Math.random() * keys.length)];
+    // the seed is not exposed as a control, but it IS a real seed: the same
+    // number is the same song, which is what makes the composer testable
+    const seed = (Math.random() * 0xffffffff) >>> 0;
+    const song = compose(gk, seed);
+    if (!applyState(song)) {
+      document.getElementById("readout").textContent =
+        "the composer produced a song the loader rejected — that is a bug, not a taste";
+      return;
+    }
+    if (playing) stop();
+    dropChannels();
+    viewSec = 0; playingSec = -1; loopOnly = null; slot = 0; SUBJ = SLOTS[0];
+    paletteBuilt = false;
+    drawPalette(); drawSlots(); drawEditor(); drawSong(); draw(); save();
+    document.getElementById("readout").textContent =
+      GENRES[gk].label + " · seed " + seed + " · " +
+      song.song.map(b => b.role).join(" → ") + "  —  press play";
+  });
+}
+
 // ---- preset songs ----
 {
   const sel = document.getElementById("preset");
@@ -1413,6 +2208,7 @@ document.getElementById("clear").addEventListener("click", putPhrase(blank));
       return;
     }
     if (playing) stop();
+    dropChannels();                 // a new song is a new mix; keep no old ones
     viewSec = 0; playingSec = -1; loopOnly = null; slot = 0; SUBJ = SLOTS[0];
     paletteBuilt = false;
     drawPalette(); drawSlots(); drawEditor(); drawSong(); draw(); save();
@@ -1431,12 +2227,13 @@ document.getElementById("reset").addEventListener("click", () => {
   try { localStorage.removeItem(STORE); } catch (e) { /* nothing to clear */ }
   SLOTS = Array.from({ length: NSLOTS }, blank); slot = 0; SUBJ = SLOTS[0];
   SONG = Array.from({ length: NBOXES }, emptyBox);
+  dropChannels(); paletteBuilt = false;
   viewSec = 0; playingSec = -1; loopOnly = null;
   const bpm = document.getElementById("bpm");
   bpm.value = DEFAULT_BPM; document.getElementById("bpmv").textContent = String(DEFAULT_BPM);
   const vol = document.getElementById("vol");
   vol.value = 80; document.getElementById("volv").textContent = "80";
-  if (bus) bus.gain.setTargetAtTime(masterVol(), ctx.currentTime, 0.02);
+  if (outGain) outGain.gain.setTargetAtTime(masterVol(), ctx.currentTime, 0.02);
   drawSlots(); drawEditor(); drawSong(); draw();
   document.getElementById("dawscroll").scrollLeft = 0;
 });

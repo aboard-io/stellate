@@ -15,12 +15,20 @@
   "use strict";
   const K = (typeof module !== "undefined" && module.exports)
     ? require("./kernel.js") : root.NuKernel;
-  const { rotate, reverse, transpose, invert, complement, excerpt, only, drop } = K;
+  const { rotate, reverse, transpose, invert, complement, excerpt, only, drop, fill } = K;
 
   // The blues scale — minor pentatonic plus the flat five. The ♭5 is a passing
   // tone, not a chord tone, and it is the whole reason `scale` had to become a
   // genre field instead of a constant in kernel.js.
   const BLUES = [0, 3, 5, 6, 7, 10];
+  // THE FULL SEVEN. Everything before the choral genres read the subject through
+  // a five-note alphabet, which is what made every line leap: pentatonic has no
+  // semitone, so there is no such thing as a step in it. Plainchant, counterpoint
+  // and a Tallis motet are made almost entirely of steps — the whole grammar is
+  // "move by one, leap rarely, resolve the leap by stepping back" — so they read
+  // the subject through the mode itself. Same degrees, same contour, a completely
+  // different music.
+  const DIATONIC = [0, 2, 3, 5, 7, 8, 10];
 
   // MODES — the chord alphabet, offered as a per-section transform. Natural
   // minor is the default; these are the four that change the colour most and
@@ -223,6 +231,152 @@
       tone: { wave: "sawtooth", cut: 1800, q: 1.6, atk: .003, rel: .8, gain: .30, verb: .10 },
       words: ["riff", "riff an octave up, thinned on odd bars"],
       word: (v, s) => (v === 1 && s % 2 ? [drop(2)] : []),
+    },
+
+    // ---- THE VOICES ------------------------------------------------------
+    // Four genres that are all one thing — people singing, unaccompanied — and
+    // are nonetheless four completely different pieces of machinery. Putting
+    // them next to each other is the argument: the kernel's "genre" is a policy
+    // about voices, entries and alphabets, and if that is true then chant and a
+    // forty-part motet should be reachable from the same four numbers as acid
+    // house. They are.
+
+    // GREGORIAN. One line, doubled at the octave (the men-and-boys doubling every
+    // schola has always used), free-flowing, no pulse to speak of and no harmony
+    // at all — `modal`, which here means what it means in chant: one mode, no
+    // motion, the whole piece is the melody. It is the emptiest genre in the
+    // table and it is not the same emptiness as Simple: Simple has nothing
+    // because it is a zero, this has nothing because everything was taken away.
+    gregorian: {
+      label: "Gregorian", rate: 0.5, bars: 4, voices: 2,
+      entry: () => 0, reg: v => -v, realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal",
+      mode: MODES.dorian, scale: DIATONIC,
+      artic: "legato", incClamp: 2,
+      tone: { wave: "triangle", cut: 2100, q: 0.7, atk: .09, rel: 2.2, gain: .26, verb: .78 },
+      words: ["the chant", "the same line an octave below"],
+      word: () => [],
+    },
+
+    // BULGARIAN. Le Mystère des Voix Bulgares, and the two things that make it
+    // unmistakable are both cheap to say here. The first is the SECOND: the
+    // upper voice sings a step above the melody and stays there — a dissonance
+    // held as if it were a consonance, which is the sound. The second is the
+    // LIMP: a kick on 1, 8 and 15 divides sixteen steps as 7+7+2, so the bar
+    // never sits down where you expect. Underneath both, a pedal — the ison,
+    // the drone the whole tradition is built over.
+    bulgarian: {
+      label: "Bulgarian", rate: 1, bars: 4, voices: 2,
+      drumkit: "acoustic",
+      entry: () => 0, reg: v => v, realize: () => "line",
+      harmony: "modal", mode: MODES.phrygian, scale: DIATONIC,
+      bassStyle: "pedal",
+      bassGrid: [1,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,1,0],
+      kit: { k: [1,0,0,0, 0,0,0,1, 0,0,0,0, 0,0,1,0],
+             p: [0,0,1,0, 1,0,0,0, 0,1,0,1, 0,0,0,1] },
+      artic: "legato",
+      tone: { wave: "sawtooth", cut: 2600, q: 1.4, atk: .03, rel: 1.1, gain: .26, verb: .5 },
+      words: ["the melody", "a second above it, and staying there"],
+      word: v => (v === 0 ? [] : [transpose(1)]),
+    },
+
+    // SPEM IN ALIUM — Tallis, forty voices in eight choirs, and the thing it is
+    // famous for is not the counterpoint, it is the ARCHITECTURE: the entries
+    // sweep around the room, choir by choir, and the piece is the wave rather
+    // than any line in it. That is `entry: v => v` with eight voices and eight
+    // bars, which is the fugue's own mechanism turned up until it stops being
+    // imitation and becomes weather. Forty voices would be forty sampled choirs
+    // and a dead browser; eight is one per choir, which is the structural unit
+    // anyway. Harmony is emergent — nobody wrote the chords down, they are what
+    // happens when eight transpositions of one line arrive on top of each other.
+    spem: {
+      label: "Spem in alium", rate: 0.5, bars: 8, voices: 8,
+      entry: v => v, reg: v => (v % 4) - 1, realize: () => "line",
+      kit: {}, nobass: true, harmony: "emergent",
+      mode: MODES.dorian, scale: DIATONIC, artic: "legato",
+      tone: { wave: "triangle", cut: 2400, q: 0.8, atk: .07, rel: 2.6, gain: .17, verb: .85 },
+      words: ["choir 1", "choir 2", "choir 3", "choir 4",
+              "choir 5", "choir 6", "choir 7", "choir 8"],
+      word: (v, s) => [transpose([0, 4, 2, -3, 3, -2, 5, 1][v % 8]),
+                       ...(s % 2 ? [rotate(2)] : [])],
+    },
+
+    // COUNTERPOINT — the species exercise, and deliberately NOT the fugue. A
+    // fugue is four voices, staggered, each with its own word; this is two
+    // voices that start together and are locked in CONTRARY MOTION for the whole
+    // piece: where one rises the other falls, because that is what invert(4)
+    // means. It is the smallest complete statement of the idea the fugue then
+    // elaborates, and having both makes the difference legible.
+    counterpoint: {
+      label: "Counterpoint", rate: 1, bars: 4, voices: 2,
+      entry: () => 0, reg: v => 1 - v, realize: () => "line",
+      kit: {}, nobass: true, harmony: "emergent",
+      scale: DIATONIC, artic: "legato",
+      tone: { wave: "square", cut: 2800, q: 1.0, atk: .006, rel: .6, gain: .22, verb: .3 },
+      words: ["the line", "contrary motion — every rise is a fall"],
+      word: (v, s) => (v === 0 ? [] : [invert(4), transpose(s % 2 ? -2 : 2)]),
+    },
+
+    // ---- THE SLOW ONES ---------------------------------------------------
+
+    // NEOCLASSICAL. Sustained strings holding one chord a bar while a piano
+    // figure turns over them, and a second piano an octave up that does not
+    // arrive until bar 5 — the entry IS the arrangement, and it is the only
+    // gesture the style really has. Eight bars of i-VI-III-VII, two bars each,
+    // because the whole point is that the progression is slower than the figure.
+    neoclassical: {
+      label: "Neoclassical", rate: 1, bars: 8, voices: 3,
+      entry: v => (v === 2 ? 4 : 0), reg: v => (v === 0 ? -1 : v - 1),
+      realize: v => (v === 0 ? "pad" : "line"),
+      kit: {}, harmony: "cycle", roots: [0,0, 5,5, 2,2, 6,6],
+      scale: DIATONIC, artic: "legato",
+      bassGrid: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+      tone: { wave: "triangle", cut: 2600, q: 0.8, atk: .02, rel: 1.4, gain: .24, verb: .52 },
+      words: ["strings, one chord a bar", "the piano figure",
+              "the figure again, higher, from bar 5"],
+      word: v => (v === 2 ? [transpose(2)] : []),
+      fx: ["chorus"],
+    },
+
+    // DRONE. The genre that is a refusal: rate 0.25, so one loop of the phrase
+    // takes four bars, `tie` so consecutive same-pitch notes fuse into one long
+    // one, a pedal bass that never leaves the tonic, and a reverb you could lose
+    // a coat in. The line is there — thinned to half its notes — precisely so
+    // that it is not a pad-only genre: something has to move or there is nothing
+    // to listen TO, and the ramp (clamped, reversing) is what moves it.
+    drone: {
+      label: "Drone", rate: 0.25, bars: 4, voices: 2,
+      entry: () => 0, reg: v => v - 2, realize: v => (v === 0 ? "pad" : "line"),
+      kit: {}, harmony: "modal", mode: MODES.dorian, scale: DIATONIC,
+      artic: "tie", incClamp: 3, incMode: "reverse",
+      bassStyle: "pedal", bassGrid: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
+      tone: { wave: "sawtooth", cut: 900, q: 1.8, atk: .35, rel: 3.2, gain: .22, verb: .9 },
+      words: ["the drone", "a line that barely moves"],
+      word: v => (v === 1 ? [drop(2)] : []),
+      fx: ["sweep"],
+    },
+
+    // SLUDGE. Half the speed of everything else, tuned into the floor (reg -3
+    // and -2), and the progression is two chords: i and ♭II. That flat second is
+    // the whole genre — it is why the mode is phrygian, because phrygian is the
+    // only mode that contains it, and a doom riff walking up a semitone and
+    // stopping there is a thing nothing else in this table can say. It ships
+    // with `crunch` already on: a sampled guitar played clean is not sludge, and
+    // the insert chain exists now, so the genre may as well ask for it.
+    sludge: {
+      label: "Sludge", rate: 0.5, bars: 8, voices: 2,
+      drumkit: "power",
+      entry: () => 0, reg: v => v - 3, realize: () => "line",
+      harmony: "cycle", mode: MODES.phrygian, roots: [0,0,0,0, 1,1,0,0],
+      bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             h: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0] },
+      fill: { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 1,0,1,0] },
+      tone: { wave: "sawtooth", cut: 900, q: 2.2, atk: .004, rel: 1.2, gain: .3, verb: .25 },
+      words: ["the riff", "the riff an octave under, thinned"],
+      word: v => (v === 1 ? [drop(2)] : []),
+      fx: ["crunch"],
     },
   };
 

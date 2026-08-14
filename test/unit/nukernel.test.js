@@ -488,6 +488,317 @@ console.log("walking bass arrives on the next root");
   }
 }
 
+/* ---------------------------------------------------------------- 14. KIT OPERATORS
+   A kit operator is total on kits the way a pattern operator is total on
+   patterns. Two of the thirteen (`four`, `offbeat`) are deliberately allowed to
+   WRITE a lane the genre did not have, because putting a kick on every quarter
+   is an idea no rearrangement of the existing lanes can express — so they are
+   the two exceptions, and the test says which. */
+console.log("kit operators are total, and only two of them invent a lane");
+{
+  const WRITES = new Set(["four", "offbeat"]);
+  for (const gk of GK) {
+    const g = GENRES[gk], base = g.kit || {};
+    for (const [name, op] of Object.entries(K.KITOPS)) {
+      const out = op(base);
+      ok(out && typeof out === "object", gk + "/" + name + ": did not return a kit");
+      for (const [lane, vec] of Object.entries(out)) {
+        ok(Array.isArray(vec) && vec.length === 16,
+           gk + "/" + name + ": lane " + lane + " is not sixteen steps");
+        ok(vec.every(x => x === 0 || x === 1),
+           gk + "/" + name + ": lane " + lane + " left the binary alphabet");
+        ok(WRITES.has(name) || base[lane],
+           gk + "/" + name + ": invented lane " + lane + " out of nothing");
+      }
+      // and it must be a KIT: drums() has to accept whatever comes out
+      ok(K.drums(P, { ...g, kit: out, fill: null }, g.bars).length >= 0,
+         gk + "/" + name + ": drums() would not read the result");
+    }
+    // the subtractive ones actually subtract
+    ok(!("k" in K.KITOPS.nokick(base)), gk + ": nokick left a kick");
+    ok(!Object.keys(K.KITOPS.nodrums(base)).length, gk + ": nodrums left a lane");
+    if (base.k && base.s)
+      ok(K.KITOPS.swap(base).k.join("") === base.s.join("") &&
+         K.KITOPS.swap(base).s.join("") === base.k.join(""),
+         gk + ": swap did not exchange the kick and the snare");
+  }
+  // double time is the bar's pattern read at twice the rate, not a busier lane
+  const k = { h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0], k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0] };
+  ok(K.KITOPS.doubletime(k).k.join("") === "1000100010001000",
+     "double time did not double the kick");
+  ok(K.KITOPS.sparse(k).h.filter(Boolean).length === 4, "sparse did not thin to the quarters");
+}
+
+/* ---------------------------------------------------------------- 15. BASS STYLES
+   Every style must SOUND, and the two that own their own rhythm must own it
+   even when the phrase has no accents to read — which is the whole reason
+   STYLEGRID exists, and is the bug the accent-reading bass had in a different
+   shape. */
+console.log("bass styles: each is a different part, and none of them is silent");
+{
+  const g = GENRES.rock, flat = { ...clone(P), acc: new Array(N).fill(0) };
+  const shapes = {};
+  for (const st of ["walk", "octaves", "fifths", "pedal", "eighths", "sixteenths", undefined]) {
+    const gg = { ...g, bassStyle: st }, name = st || "roots";
+    const ev = K.bass(P, gg, g.bars);
+    ok(ev.length > 0, name + ": emitted no bass at all");
+    ok(ev.every(e => e.n > 0 && Number.isFinite(e.n)), name + ": emitted a nonsense pitch");
+    ok(K.bass(flat, gg, g.bars).length > 0, name + ": went silent on an unaccented phrase");
+    shapes[name] = JSON.stringify(ev.map(e => [e.t, e.n]));
+  }
+  // they are genuinely different parts, not one part with a different label
+  const seen = new Map();
+  for (const [name, s] of Object.entries(shapes)) {
+    ok(!seen.has(s), name + " renders identically to " + seen.get(s));
+    seen.set(s, name);
+  }
+  ok(K.bass(P, { ...g, bassStyle: "eighths" }, 1).length === 8, "eighths is not eight a bar");
+  ok(K.bass(P, { ...g, bassStyle: "sixteenths" }, 1).length === 16, "sixteenths is not sixteen a bar");
+  // PEDAL refuses the progression — that is the definition of it
+  const ped = K.bass(P, { ...g, bassStyle: "pedal" }, g.bars);
+  ok(new Set(ped.map(e => e.n)).size === 1, "the pedal bass moved off the tonic");
+  ok(new Set(K.bass(P, g, g.bars).map(e => e.n)).size > 1,
+     "the root bass does NOT follow the progression (so pedal proves nothing)");
+}
+
+/* ---------------------------------------------------------------- 16. THE EDGES
+   intro/outro are a third type: not timeless like an operator, not a curve over
+   the section like an envelope, but a rewrite of ONE bar at a known end. That is
+   what lets a drum fill be a different bar rather than a louder one — and the
+   test that matters is exactly that: the fill bar must contain drum events the
+   section never had. */
+console.log("intro and outro rewrite the first and last bar");
+{
+  const g = GENRES.rock, bs = 16 / g.rate, span = g.bars * bs;
+  const ev = [...K.render(P, g, g.bars),
+              ...K.drums(P, g, g.bars).map(e => ({ ...e, kind: "hit" }))]
+    .map(e => ({ kind: e.kind || "line", ...e })).sort((a, b) => a.t - b.t);
+  const inBar = l => l.filter(e => e.t < bs);
+  const lastBar = l => l.filter(e => e.t >= span - bs);
+
+  ok(K.edges(ev, null, null, span, bs) === ev, "edges with no ends copied the stream");
+  for (const k of Object.keys({ count: 1, hit: 1, solo: 1, kit: 1, swell: 1 })) {
+    const out = K.intro(ev, k, span, bs);
+    ok(out.every(e => Number.isFinite(e.t) && e.t >= 0), "intro " + k + ": a bad time");
+    // NOTHING PAST THE FIRST BAR MOVES. An intro that quietly edited bar 6 would
+    // be a transition in name only.
+    ok(JSON.stringify(out.filter(e => e.t >= bs)) ===
+       JSON.stringify(ev.filter(e => e.t >= bs)),
+       "intro " + k + " changed the section after its own bar");
+  }
+  ok(inBar(K.intro(ev, "solo", span, bs)).every(e => e.kind === "line"),
+     "intro solo left drums in the first bar");
+  ok(inBar(K.intro(ev, "kit", span, bs)).every(e => e.kind === "hit"),
+     "intro kit left the melody in the first bar");
+  ok(inBar(K.intro(ev, "count", span, bs)).length === 4,
+     "the count-in is not four clicks");
+
+  for (const k of Object.keys({ fill: 1, roll: 1, crash: 1, break: 1, tail: 1, cut: 1 })) {
+    const out = K.outro(ev, k, span, bs);
+    ok(JSON.stringify(out.filter(e => e.t < span - bs)) ===
+       JSON.stringify(ev.filter(e => e.t < span - bs)),
+       "outro " + k + " changed the section before its own bar");
+  }
+  // THE FILL IS A DIFFERENT BAR. Snare hits the section did not have, and more
+  // of them in the second half than the first — which is what makes it a fill
+  // rather than a busier loop.
+  const fl = lastBar(K.outro(ev, "fill", span, bs)).filter(e => e.d === "s");
+  const was = lastBar(ev).filter(e => e.d === "s").length;
+  ok(fl.length > was, "the drum fill added no snare (was " + was + ", now " + fl.length + ")");
+  ok(fl.filter(e => e.t >= span - bs / 2).length > fl.filter(e => e.t < span - bs / 2).length,
+     "the fill does not accelerate into the bar line");
+  ok(fl.every(e => e.fill), "a fill event is not flagged as a fill");
+  const roll = lastBar(K.outro(ev, "roll", span, bs)).filter(e => e.d === "s");
+  const gaps = roll.map((e, i, a) => (i ? e.t - a[i - 1].t : null)).filter(x => x != null);
+  ok(gaps.every((x, i) => i === 0 || x <= gaps[i - 1]), "the roll does not accelerate");
+  ok(!lastBar(K.outro(ev, "tail", span, bs)).some(e => e.kind === "hit"),
+     "outro tail left the drums playing");
+  ok(lastBar(K.outro(ev, "break", span, bs)).every(e => e.kind === "hit"),
+     "outro break left the melody playing");
+  ok(K.outro(ev, "cut", span, bs).every(e => e.t < span - bs / 4), "cut did not cut");
+  ok(lastBar(K.outro(ev, "crash", span, bs)).length === 2, "the crash is not one gesture");
+  // and the two ends compose without either eating the other
+  const both = K.edges(ev, "count", "fill", span, bs);
+  ok(inBar(both).length === 4, "the outro ate the intro");
+  ok(lastBar(both).some(e => e.fill), "the intro ate the outro");
+}
+
+/* ---------------------------------------------------------------- 17. ENVELOPE SHAPES */
+console.log("envelope shapes and cuts");
+{
+  const g = GENRES.acid, span = g.bars * 16 / g.rate, ev = K.render(P, g, g.bars);
+  const mid = e => Math.abs(e.t - span / 2) < span / 8;
+  const sw = K.envelope(ev, "swell", span);
+  ok(sw.length === ev.length, "swell changed the event count");
+  ok(sw.filter(mid).every(e => e.vel > 0), "the swell is silent in the middle");
+  ok(sw[0].vel < sw.filter(mid)[0].vel && sw[sw.length - 1].vel < sw.filter(mid)[0].vel,
+     "the swell does not rise and fall");
+  const dk = K.envelope(ev, "duck", span);
+  ok(dk.filter(mid).every(e => e.vel <= sw.filter(mid)[0].vel), "duck does not duck");
+  ok(K.envelope(ev, "drop", span).every(e => e.t < span * 0.875), "drop left the last eighth");
+  const st = K.envelope(ev, "stutter", span);
+  ok(st.length >= ev.length, "stutter removed events instead of repeating them");
+  ok(st.every(e => e.t < span), "stutter ran past the end of the section");
+  ok(K.envelope(ev, "nonsense", span) === ev, "an unknown envelope was not a no-op");
+}
+
+/* ---------------------------------------------------------------- 18. SPLIT CLIMBS
+   A split note's copies are not copies. The step's own ramp applies once per
+   repeat, which is what turns split from a stutter into an arpeggio — and is
+   what anyone who set a ramp AND split the note was asking for. A step with no
+   ramp must be byte-identical to the old behaviour, or every existing song
+   changes underneath its author. */
+console.log("split applies the ramp once per repeat");
+{
+  const flat = { deg: new Array(N).fill(2), oct: new Array(N).fill(0),
+                 vel: new Array(N).fill(5), inc: new Array(N).fill(0),
+                 stk: new Array(N).fill(0),
+                 gate: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+                 acc: new Array(N).fill(0), sld: new Array(N).fill(0) };
+  ok(eq(K.split(4)(flat).deg, new Array(N).fill(2)),
+     "a ramp-free split moved a degree — every existing song just changed");
+  const ramp = clone(flat); ramp.inc = ramp.inc.map((_, i) => (i % 4 === 0 ? 1 : 0));
+  const out = K.split(4)(ramp);
+  // the note at step 0 lasts four steps and splits into 0,1,2,3 — climbing
+  ok(out.deg.slice(0, 4).join(",") === "2,3,4,5",
+     "split did not climb by the ramp: " + out.deg.slice(0, 4).join(","));
+  ok(out.gate.slice(0, 4).every(Boolean), "split did not subdivide the note");
+  // ...and each subdivision keeps the ramp, so it goes on climbing every loop
+  ok(out.inc.slice(0, 4).every(x => x === 1), "a subdivision lost the ramp");
+  const down = clone(ramp); down.inc = down.inc.map(x => -x);
+  ok(K.split(4)(down).deg.slice(0, 4).join(",") === "2,1,0,-1", "a falling ramp did not fall");
+  // and it is AUDIBLE as pitch, not just as data
+  const g = { ...GENRES.simple, incClamp: 0 };
+  const pitches = K.render(K.split(4)(ramp), g, 1).map(e => e.n).slice(0, 4);
+  ok(new Set(pitches).size === 4, "the split arpeggio came out on one pitch: " + pitches.join(","));
+  ok(pitches.every((n, i) => i === 0 || n > pitches[i - 1]), "the split arpeggio does not ascend");
+}
+
+/* ---------------------------------------------------------------- 19. SWING + GROOVE
+   Swing bends the grid. Groove bends the grid AND the dynamics, per sixteenth.
+   They are two knobs because they are two different claims, and the test that
+   matters for both is that they move real events without breaking the stream. */
+console.log("groove moves time and level, and never breaks the stream");
+{
+  const g = GENRES.rock, bs = 16 / g.rate;
+  const ev = [...K.render(P, g, g.bars),
+              ...K.drums(P, g, g.bars).map(e => ({ ...e, kind: "hit" }))]
+    .sort((a, b) => a.t - b.t);
+  ok(K.groove(ev, null, bs, 1) === ev, "groove(null) copied the stream");
+  ok(K.groove(ev, "funk", bs, 0) === ev, "groove at amount 0 is not a no-op");
+  for (const name of Object.keys(K.GROOVES)) {
+    const out = K.groove(ev, name, bs, 1);
+    ok(out.length === ev.length, name + ": changed the event count");
+    ok(out.every(e => e.t >= 0 && Number.isFinite(e.t)), name + ": produced a bad time");
+    ok(out.every(e => e.vel == null || (e.vel >= 0 && e.vel <= 9)),
+       name + ": left velocity out of range");
+    ok(out.every((e, i) => i === 0 || e.t >= out[i - 1].t), name + ": came back unsorted");
+    // it has to actually DO something, and something you could hear
+    const movedT = out.filter((e, i) => Math.abs(e.t - ev[i].t) > 1e-9).length;
+    const movedV = out.filter((e, i) => e.vel !== ev[i].vel).length;
+    ok(movedV > 0, name + ": changed no velocity at all");
+    ok(K.GROOVES[name].push ? movedT > 0 : movedT === 0,
+       name + ": its timing claim and what it did disagree");
+    // and it must stay INSIDE the sixteenth it belongs to — a groove that walks
+    // a note onto the next step is a rewrite, not a feel
+    ok(out.every((e, i) => Math.abs(e.t - ev[i].t) < bs / 16),
+       name + ": moved a note further than one sixteenth");
+  }
+  // amount is a dial: half the profile is half the departure
+  const half = K.groove(ev, "funk", bs, 0.5), full = K.groove(ev, "funk", bs, 1);
+  const dev = l => l.reduce((a, e, i) => a + Math.abs(e.t - ev[i].t), 0);
+  ok(dev(half) < dev(full) && dev(half) > 0, "groove amount is not a dial");
+  // SWING is the other one, and it is genre-level: a section that asks for
+  // straight must get straight even from a genre that swings
+  const swung = K.render(P, { ...GENRES.blues, swing: 1 / 3 }, 4).map(e => e.t);
+  const flatT = K.render(P, { ...GENRES.blues, swing: 0 }, 4).map(e => e.t);
+  ok(swung.some((t, i) => t > flatT[i]), "swing 1/3 moved nothing");
+  ok(swung.every((t, i) => t >= flatT[i]), "swing moved a note earlier");
+}
+
+/* ---------------------------------------------------------------- 20. THE COMPOSER
+   A generator that runs once per button click is the hardest kind of thing to
+   trust: it is right nine times and you never see the tenth. So compose every
+   genre at forty seeds and check all 560 — the whole point of keeping the
+   arranger pure and seeded is that this is cheap. */
+console.log("the composer writes songs that are songs");
+{
+  const C = require("../../nukernel/compose.js");
+  const seeds = Array.from({ length: 40 }, (_, i) => i + 1);
+  let silent = 0, unused = 0, leaps = 0, notes = 0;
+  for (const gk of GK) {
+    for (const s of seeds) {
+      const song = C.compose(gk, s), G = GENRES[gk];
+      // the shape Load reads, or it cannot come back
+      ok(song.v === 1 && song.slots.length === 8 && song.song.length >= 6,
+         gk + "/" + s + ": not the saved shape");
+      ok(song.bpm >= 70 && song.bpm <= 160, gk + "/" + s + ": bpm outside the control's range");
+      ok(song.slots.every(p => ["deg", "oct", "vel", "gate", "acc", "sld", "inc", "stk"]
+        .every(k => Array.isArray(p[k]) && p[k].length === 16 && p[k].every(Number.isFinite))),
+        gk + "/" + s + ": a phrase is not a valid pattern");
+      const used = new Set();
+      for (const b of song.song) {
+        ok(C.ROLES[b.role], gk + "/" + s + ": a section has no role");
+        ok(b.stack.length && b.stack.every(e => GENRES[e.g]), gk + "/" + s + ": bad stack");
+        ok(b.stack[0].slots.length, gk + "/" + s + "/" + b.role + ": a section with no phrase");
+        ok(b.len >= 1 && b.nudge >= 0, gk + "/" + s + ": bad window");
+        for (const e of b.stack) for (const i of e.slots) used.add(i);
+        // EVERY SECTION MUST SOUND. A composed song with a silent bridge is the
+        // failure nobody reports, because it reads as a deliberate pause.
+        const g2 = { ...G, ...(b.mode ? { mode: MODES[b.mode] } : {}) };
+        let ev = 0;
+        for (const e of b.stack)
+          for (const i of e.slots)
+            ev += K.render(song.slots[i], g2, G.bars).length +
+                  K.drums(song.slots[i], g2, G.bars).length +
+                  K.bass(song.slots[i], g2, G.bars).length;
+        if (!ev) { silent++; ok(false, gk + "/" + s + ": the " + b.role + " is silent"); }
+      }
+      // IT WRITES EIGHT PHRASES. If it only ever reaches for three it has not
+      // arranged anything, it has looped one idea and labelled the loops — which
+      // is exactly what the arc plan was doing before this check existed.
+      if (used.size < 4) unused++;
+    }
+    // SEEDED, so a seed is a song: the composer is reproducible or it is a slot
+    // machine, and a slot machine cannot be debugged.
+    ok(JSON.stringify(C.compose(gk, 9)) === JSON.stringify(C.compose(gk, 9)),
+       gk + ": the same seed composed two different songs");
+    ok(JSON.stringify(C.compose(gk, 9)) !== JSON.stringify(C.compose(gk, 10)),
+       gk + ": two different seeds composed the same song");
+    // and the plan fits the genre — a fugue does not have a drop
+    const plan = C.PLANS[C.PLAN_OF[gk] || "song"];
+    ok(plan && plan[0] === "intro" && plan[plan.length - 1] === "outro",
+       gk + ": the plan does not start with an intro and end with an outro");
+  }
+  ok(!silent, silent + " composed sections are silent");
+  ok(!unused, unused + " composed songs use fewer than four of their eight phrases");
+  {
+    let spent = 0;
+    for (const gk of GK) for (const s of seeds) {
+      const song = C.compose(gk, s), u = new Set();
+      for (const b of song.song) for (const e of b.stack) for (const i of e.slots) u.add(i);
+      spent += u.size;
+    }
+    const avg = spent / (GK.length * seeds.length);
+    ok(avg >= 5.5, "the composer spends only " + avg.toFixed(1) + " of its eight phrases on average");
+  }
+  // THE PHRASES ARE WALKS, NOT NOISE. A tune moves mostly by step; if the
+  // average interval is a fifth, the composer is a random number generator with
+  // a nice comment on it.
+  for (const kind of ["hook", "answer", "riff", "counter", "climb"]) {
+    let big = 0, all = 0;
+    for (const s of seeds) {
+      const p = C.phrase(C.rng(s * 31), kind);
+      const on = p.deg.filter((_, i) => p.gate[i]);
+      for (let i = 1; i < on.length; i++) { all++; if (Math.abs(on[i] - on[i - 1]) > 2) big++; }
+    }
+    ok(all > 20, kind + ": too few notes to judge");
+    ok(big / all < 0.25, kind + ": " + Math.round(100 * big / all) +
+       "% of its intervals are leaps — that is noise, not a phrase");
+  }
+  void leaps; void notes;
+}
+
 console.log("\nnukernel: " + (checks - fails) + "/" + checks + " checks pass across " +
             GK.length + " genres");
 if (fails) { console.error("nukernel: " + fails + " FAILURE(S)"); process.exit(1); }
